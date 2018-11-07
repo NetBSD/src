@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.17 2018/11/05 19:45:56 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.18 2018/11/07 21:20:23 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -355,10 +355,10 @@ done:
  * returns the first entry in hw.disknames matching a cdrom_device, or
  * first entry on error or no match
  */
-const char *
-get_default_cdrom(void)
+bool
+get_default_cdrom(char *cd, size_t max_len)
 {
-	static const char *cdrom_devices[] = { CD_NAMES, 0};
+	static const char *cdrom_devices[] = { CD_NAMES, 0 };
 	static const char mib_name[] = "hw.disknames";
 	size_t len;
 	char *disknames;
@@ -502,8 +502,40 @@ is_ffs_wedge(const char *dev)
 	return res;
 }
 
+/*
+ * Does this device match an entry in our default CDROM device list?
+ */
+static bool
+is_cdrom_device(const char *dev)
+{
+	static const char *cdrom_devices[] = { CD_NAMES, 0 };
+	char pat[SSTRSIZE], *star;
+	const char **dev_pat;
+
+	for (dev_pat = cdrom_devices; *dev_pat; dev_pat++) {
+		strcpy(pat, *dev_pat);
+		star = strchr(pat, '*');
+		if (star)
+			*star = 0;
+
+		if (strcmp(dev, pat) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Multi-purpose helper function:
+ * iterate all known disks, either
+ *  - skip all CD devices
+ *  - recognize the first available CD device and set its name
+ * When doing non-CDs, optionally skip non-partionable devices
+ * (i.e. wedges).
+ */
 static int
-get_disks(struct disk_desc *dd, bool with_non_partitionable)
+get_disks(struct disk_desc *dd, bool with_non_partitionable,
+	char *cd_dev, size_t max_len)
 {
 	static const int mib[] = { CTL_HW, HW_DISKNAMES };
 	static const unsigned int miblen = __arraycount(mib);
@@ -528,6 +560,18 @@ get_disks(struct disk_desc *dd, bool with_non_partitionable)
 	}
 
 	for (xd = strtok(disk_names, " "); xd != NULL; xd = strtok(NULL, " ")) {
+		/* is this a CD device? */
+		if (is_cdrom_device(xd)) {
+			if (cd_dev && max_len) {
+				/* return first found CD device name */
+				strlcpy(cd_dev, xd, max_len);
+				return 1;
+			} else {
+				/* skip this device */
+				continue;
+			}
+		}
+
 		strlcpy(dd->dd_name, xd, sizeof dd->dd_name - 2);
 		dd->dd_no_mbr = false;
 		dd->dd_no_part = false;
@@ -600,7 +644,7 @@ find_disks(const char *doingwhat)
 	pm_devs_t *pm_i, *pm_last = NULL;
 
 	/* Find disks. */
-	numdisks = get_disks(disks, partman_go <= 0);
+	numdisks = get_disks(disks, partman_go <= 0, NULL, 0);
 
 	/* need a redraw here, kernel messages hose everything */
 	touchwin(stdscr);
@@ -1187,12 +1231,15 @@ done_with_disks:
 #endif
 	}
 
+	if (cdrom_dev[0] == 0)
+		get_default_cdrom(cdrom_dev, sizeof(cdrom_dev));
+
 	/* Add /kern, /proc and /dev/pts to fstab and make mountpoint. */
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
 	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
-	    get_default_cdrom());
+	    cdrom_dev);
 	scripting_fprintf(f, "%stmpfs\t\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n",
 	    tmpfs_on_var_shm() ? "" : "#");
 	make_target_dir("/kern");

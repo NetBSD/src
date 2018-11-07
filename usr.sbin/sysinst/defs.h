@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.20 2018/10/06 18:45:37 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.21 2018/11/07 21:20:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,7 +179,7 @@ enum {
 		       (p)->pi_fstype == FS_BSDFFS)
 
 /* standard cd0 device */
-#define CD_NAMES "cd0a"
+#define CD_NAMES "cd*"
 
 /* Types */
 
@@ -473,7 +473,7 @@ int	md_update(void);
 void	toplevel(void);
 
 /* from disks.c */
-const char *get_default_cdrom(void);
+bool	get_default_cdrom(char *, size_t);
 int	find_disks(const char *);
 struct menudesc;
 void	fmt_fspart(struct menudesc *, int, void *);
