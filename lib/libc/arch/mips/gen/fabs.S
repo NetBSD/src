@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.8 2009/12/14 01:07:42 matt Exp $	*/
+/*	$NetBSD: fabs.S,v 1.9 2018/11/07 22:21:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,17 +33,22 @@
  */
 
 #include <mips/asm.h>
+#include <mips/math.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
 #else
-	RCSID("$NetBSD: fabs.S,v 1.8 2009/12/14 01:07:42 matt Exp $")
+	RCSID("$NetBSD: fabs.S,v 1.9 2018/11/07 22:21:42 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 
 	.set	noreorder
+
+#ifndef __HAVE_LONG_DOUBLE
+STRONG_ALIAS(fabsl, fabs)
+#endif
 
 /*
  * fabs(x)

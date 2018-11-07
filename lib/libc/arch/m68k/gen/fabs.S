@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.11 2013/07/17 06:43:32 matt Exp $	*/
+/*	$NetBSD: fabs.S,v 1.12 2018/11/07 22:21:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,8 +30,13 @@
  */
 
 #include <machine/asm.h>
+#include <machine/math.h>
 
-RCSID("$NetBSD: fabs.S,v 1.11 2013/07/17 06:43:32 matt Exp $")
+RCSID("$NetBSD: fabs.S,v 1.12 2018/11/07 22:21:42 riastradh Exp $")
+
+#ifndef __HAVE_LONG_DOUBLE
+STRONG_ALIAS(fabsl, fabs)
+#endif
 
 ENTRY(fabs)
 #if defined(__SVR4_ABI__) && defined(__HAVE_FPU__)

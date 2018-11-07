@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.c,v 1.4 2005/12/24 21:42:32 perry Exp $	*/
+/*	$NetBSD: fabs.c,v 1.5 2018/11/07 22:21:42 riastradh Exp $	*/
 
 /*	$OpenBSD: fabs.c,v 1.3 2002/10/21 18:41:05 mickey Exp $	*/
 
@@ -6,7 +6,13 @@
  * Written by Miodrag Vallat.  Public domain
  */
 
+#include <sys/cdefs.h>
+
 #include <math.h>
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(fasbl, fabs)
+#endif
 
 double
 fabs(double val)
