@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2018/05/01 19:59:46 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2018/11/07 01:14:19 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -67,6 +67,7 @@ native-binutils: .native/.configure_done
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM} \
+			--disable-initfini-array \
 			${BRANDING} \
 		)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
