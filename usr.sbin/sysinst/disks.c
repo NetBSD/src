@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.18 2018/11/07 21:20:23 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.19 2018/11/07 21:59:30 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -509,17 +509,28 @@ static bool
 is_cdrom_device(const char *dev)
 {
 	static const char *cdrom_devices[] = { CD_NAMES, 0 };
-	char pat[SSTRSIZE], *star;
+	char pat[SSTRSIZE], comp[SSTRSIZE], *star, *p;
 	const char **dev_pat;
+
+	/* trim device number off */
+	strcpy(comp, dev);
+	for (p = comp + strlen(comp) - 1; p != comp; p--)
+		if (!isdigit((unsigned char)*p))
+			break;
+	if (p != comp)
+		p[1] = 0;
 
 	for (dev_pat = cdrom_devices; *dev_pat; dev_pat++) {
 		strcpy(pat, *dev_pat);
 		star = strchr(pat, '*');
-		if (star)
+		if (star) {
 			*star = 0;
-
-		if (strcmp(dev, pat) == 0)
-			return true;
+			if (strcmp(comp, pat) == 0)
+				return true;
+		} else {
+			if (strcmp(dev, pat) == 0)
+				return true;
+		}
 	}
 
 	return false;
