@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2018/11/03 18:30:00 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2018/11/07 21:20:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,7 +148,7 @@ init(void)
 
 	for (arg = fflagopts; arg->name != NULL; arg++) {
 		if (arg->var == cdrom_dev)
-			strlcpy(arg->var, get_default_cdrom(), arg->size);
+			get_default_cdrom(arg->var, arg->size);
 		else
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
