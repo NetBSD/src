@@ -30,4 +30,4 @@ extern reloc_howto_type *
 riscv_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 
 extern reloc_howto_type *
-riscv_elf_rtype_to_howto (unsigned int r_type);
+riscv_elf_rtype_to_howto (bfd *, unsigned int r_type);
