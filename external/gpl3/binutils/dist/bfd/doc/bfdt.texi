@@ -49,8 +49,9 @@ struct bfd
      least-recently-used list of BFDs.  */
   struct bfd *lru_prev, *lru_next;
 
-  /* When a file is closed by the caching routines, BFD retains
-     state information on the file here...  */
+  /* Track current file position (or current buffer offset for
+     in-memory BFDs).  When a file is closed by the caching routines,
+     BFD retains state information on the file here.  */
   ufile_ptr where;
 
   /* File modified time, if mtime_set is TRUE.  */
@@ -279,21 +280,15 @@ struct bfd
     @{
       struct aout_data_struct *aout_data;
       struct artdata *aout_ar_data;
-      struct _oasys_data *oasys_obj_data;
-      struct _oasys_ar_data *oasys_ar_data;
       struct coff_tdata *coff_obj_data;
       struct pe_tdata *pe_obj_data;
       struct xcoff_tdata *xcoff_obj_data;
       struct ecoff_tdata *ecoff_obj_data;
-      struct ieee_data_struct *ieee_data;
-      struct ieee_ar_data_struct *ieee_ar_data;
       struct srec_data_struct *srec_data;
       struct verilog_data_struct *verilog_data;
       struct ihex_data_struct *ihex_data;
       struct tekhex_data_struct *tekhex_data;
       struct elf_obj_tdata *elf_obj_data;
-      struct nlm_obj_tdata *nlm_obj_data;
-      struct bout_data_struct *bout_data;
       struct mmo_data_struct *mmo_data;
       struct sun_core_struct *sun_core_data;
       struct sco5_core_struct *sco5_core_data;
@@ -453,6 +448,24 @@ The BFD error handler acts like vprintf.
 typedef void (*bfd_error_handler_type) (const char *, va_list);
 
 @end example
+@findex _bfd_error_handler
+@subsubsection @code{_bfd_error_handler}
+@strong{Synopsis}
+@example
+void _bfd_error_handler (const char *fmt, ...) ATTRIBUTE_PRINTF_1;
+@end example
+@strong{Description}@*
+This is the default routine to handle BFD error messages.
+Like fprintf (stderr, ...), but also handles some extra format
+specifiers.
+
+%pA section name from section.  For group components, prints
+group name too.
+%pB file name from bfd.  For archive components, prints
+archive too.
+
+Beware: Only supports a maximum of 9 format arguments.
+
 @findex bfd_set_error_handler
 @subsubsection @code{bfd_set_error_handler}
 @strong{Synopsis}
@@ -878,7 +891,7 @@ a no-op for other formats.
 @subsubsection @code{bfd_emul_get_commonpagesize}
 @strong{Synopsis}
 @example
-bfd_vma bfd_emul_get_commonpagesize (const char *);
+bfd_vma bfd_emul_get_commonpagesize (const char *, bfd_boolean);
 @end example
 @strong{Description}@*
 Returns the common page size, in bytes, as determined by

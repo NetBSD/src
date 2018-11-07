@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OBJCOPY 1"
-.TH OBJCOPY 1 "2018-01-27" "binutils-2.30" "GNU Development Tools"
+.TH OBJCOPY 1 "2018-07-09" "binutils-2.30.90" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -194,7 +194,7 @@ objcopy [\fB\-F\fR \fIbfdname\fR|\fB\-\-target=\fR\fIbfdname\fR]
         [\fB\-\-localize\-symbols=\fR\fIfilename\fR]
         [\fB\-\-globalize\-symbols=\fR\fIfilename\fR]
         [\fB\-\-weaken\-symbols=\fR\fIfilename\fR]
-        [\fB\-\-add\-symbol\fR \fIname\fR=[\fIsection\fR:]\fIvalue\fR[,\fIflags\fR]
+        [\fB\-\-add\-symbol\fR \fIname\fR=[\fIsection\fR:]\fIvalue\fR[,\fIflags\fR]]
         [\fB\-\-alt\-machine\-code=\fR\fIindex\fR]
         [\fB\-\-prefix\-symbols=\fR\fIstring\fR]
         [\fB\-\-prefix\-sections=\fR\fIstring\fR]
@@ -969,8 +969,8 @@ distribution and the second a debugging information file which is only
 needed if debugging abilities are required.  The suggested procedure
 to create these files is as follows:
 .RS 4
-.IP "1.<Link the executable as normal.  Assuming that is is called>" 4
-.IX Item "1.<Link the executable as normal. Assuming that is is called>"
+.IP "1.<Link the executable as normal.  Assuming that it is called>" 4
+.IX Item "1.<Link the executable as normal. Assuming that it is called>"
 \&\f(CW\*(C`foo\*(C'\fR then...
 .ie n .IP "1.<Run ""objcopy \-\-only\-keep\-debug foo foo.dbg"" to>" 4
 .el .IP "1.<Run \f(CWobjcopy \-\-only\-keep\-debug foo foo.dbg\fR to>" 4

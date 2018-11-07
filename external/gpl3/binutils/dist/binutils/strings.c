@@ -125,7 +125,7 @@ static struct option long_options[] =
   {"print-file-name", no_argument, NULL, 'f'},
   {"bytes", required_argument, NULL, 'n'},
   {"radix", required_argument, NULL, 't'},
-  {"include-all-whitespace", required_argument, NULL, 'w'},
+  {"include-all-whitespace", no_argument, NULL, 'w'},
   {"encoding", required_argument, NULL, 'e'},
   {"target", required_argument, NULL, 'T'},
   {"output-separator", required_argument, NULL, 's'},

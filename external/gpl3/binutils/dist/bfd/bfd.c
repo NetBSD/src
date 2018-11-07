@@ -74,8 +74,9 @@ CODE_FRAGMENT
 .     least-recently-used list of BFDs.  *}
 .  struct bfd *lru_prev, *lru_next;
 .
-.  {* When a file is closed by the caching routines, BFD retains
-.     state information on the file here...  *}
+.  {* Track current file position (or current buffer offset for
+.     in-memory BFDs).  When a file is closed by the caching routines,
+.     BFD retains state information on the file here.  *}
 .  ufile_ptr where;
 .
 .  {* File modified time, if mtime_set is TRUE.  *}
@@ -304,21 +305,15 @@ CODE_FRAGMENT
 .    {
 .      struct aout_data_struct *aout_data;
 .      struct artdata *aout_ar_data;
-.      struct _oasys_data *oasys_obj_data;
-.      struct _oasys_ar_data *oasys_ar_data;
 .      struct coff_tdata *coff_obj_data;
 .      struct pe_tdata *pe_obj_data;
 .      struct xcoff_tdata *xcoff_obj_data;
 .      struct ecoff_tdata *ecoff_obj_data;
-.      struct ieee_data_struct *ieee_data;
-.      struct ieee_ar_data_struct *ieee_ar_data;
 .      struct srec_data_struct *srec_data;
 .      struct verilog_data_struct *verilog_data;
 .      struct ihex_data_struct *ihex_data;
 .      struct tekhex_data_struct *tekhex_data;
 .      struct elf_obj_tdata *elf_obj_data;
-.      struct nlm_obj_tdata *nlm_obj_data;
-.      struct bout_data_struct *bout_data;
 .      struct mmo_data_struct *mmo_data;
 .      struct sun_core_struct *sun_core_data;
 .      struct sco5_core_struct *sco5_core_data;
@@ -451,28 +446,28 @@ static bfd_error_type input_error = bfd_error_no_error;
 
 const char *const bfd_errmsgs[] =
 {
-  N_("No error"),
-  N_("System call error"),
-  N_("Invalid bfd target"),
-  N_("File in wrong format"),
-  N_("Archive object file in wrong format"),
-  N_("Invalid operation"),
-  N_("Memory exhausted"),
-  N_("No symbols"),
-  N_("Archive has no index; run ranlib to add one"),
-  N_("No more archived files"),
-  N_("Malformed archive"),
+  N_("no error"),
+  N_("system call error"),
+  N_("invalid bfd target"),
+  N_("file in wrong format"),
+  N_("archive object file in wrong format"),
+  N_("invalid operation"),
+  N_("memory exhausted"),
+  N_("no symbols"),
+  N_("archive has no index; run ranlib to add one"),
+  N_("no more archived files"),
+  N_("malformed archive"),
   N_("DSO missing from command line"),
-  N_("File format not recognized"),
-  N_("File format is ambiguous"),
-  N_("Section has no contents"),
-  N_("Nonrepresentable section on output"),
-  N_("Symbol needs debug section which does not exist"),
-  N_("Bad value"),
-  N_("File truncated"),
-  N_("File too big"),
-  N_("Error reading %s: %s"),
-  N_("#<Invalid error code>")
+  N_("file format not recognized"),
+  N_("file format is ambiguous"),
+  N_("section has no contents"),
+  N_("nonrepresentable section on output"),
+  N_("symbol needs debug section which does not exist"),
+  N_("bad value"),
+  N_("file truncated"),
+  N_("file too big"),
+  N_("error reading %s: %s"),
+  N_("#<invalid error code>")
 };
 
 /*
@@ -649,10 +644,7 @@ union _bfd_doprnt_args
 };
 
 /* This macro and _bfd_doprnt taken from libiberty _doprnt.c, tidied a
-   little and extended to handle '%A', '%B' and positional parameters.
-   'L' as a modifer for integer formats is used for bfd_vma and
-   bfd_size_type args, which vary in size depending on BFD
-   configuration.  */
+   little and extended to handle '%pA', '%pB' and positional parameters.  */
 
 #define PRINT_TYPE(TYPE, FIELD) \
   do								\
@@ -800,21 +792,6 @@ _bfd_doprnt (FILE *stream, const char *format, union _bfd_doprnt_args *args)
 		  PRINT_TYPE (int, i);
 		else
 		  {
-		    /* L modifier for bfd_vma or bfd_size_type may be
-		       either long long or long.  */
-		    if (ptr[-2] == 'L')
-		      {
-			sptr[-2] = 'l';
-			if (BFD_ARCH_SIZE < 64 || BFD_HOST_64BIT_LONG)
-			  wide_width = 1;
-			else
-			  {
-			    sptr[-1] = 'l';
-			    *sptr++ = ptr[-1];
-			    *sptr = '\0';
-			  }
-		      }
-
 		    switch (wide_width)
 		      {
 		      case 0:
@@ -866,53 +843,55 @@ _bfd_doprnt (FILE *stream, const char *format, union _bfd_doprnt_args *args)
 	      PRINT_TYPE (char *, p);
 	      break;
 	    case 'p':
-	      PRINT_TYPE (void *, p);
-	      break;
-	    case 'A':
-	      {
-		asection *sec;
-		bfd *abfd;
-		const char *group = NULL;
-		struct coff_comdat_info *ci;
+	      if (*ptr == 'A')
+		{
+		  asection *sec;
+		  bfd *abfd;
+		  const char *group = NULL;
+		  struct coff_comdat_info *ci;
 
-		sec = (asection *) args[arg_no].p;
-		if (sec == NULL)
-		  /* Invoking %A with a null section pointer is an
-		     internal error.  */
-		  abort ();
-		abfd = sec->owner;
-		if (abfd != NULL
-		    && bfd_get_flavour (abfd) == bfd_target_elf_flavour
-		    && elf_next_in_group (sec) != NULL
-		    && (sec->flags & SEC_GROUP) == 0)
-		  group = elf_group_name (sec);
-		else if (abfd != NULL
-			 && bfd_get_flavour (abfd) == bfd_target_coff_flavour
-			 && (ci = bfd_coff_get_comdat_section (sec->owner,
-							       sec)) != NULL)
-		  group = ci->name;
-		if (group != NULL)
-		  result = fprintf (stream, "%s[%s]", sec->name, group);
-		else
-		  result = fprintf (stream, "%s", sec->name);
-	      }
-	      break;
-	    case 'B':
-	      {
-		bfd *abfd;
+		  ptr++;
+		  sec = (asection *) args[arg_no].p;
+		  if (sec == NULL)
+		    /* Invoking %pA with a null section pointer is an
+		       internal error.  */
+		    abort ();
+		  abfd = sec->owner;
+		  if (abfd != NULL
+		      && bfd_get_flavour (abfd) == bfd_target_elf_flavour
+		      && elf_next_in_group (sec) != NULL
+		      && (sec->flags & SEC_GROUP) == 0)
+		    group = elf_group_name (sec);
+		  else if (abfd != NULL
+			   && bfd_get_flavour (abfd) == bfd_target_coff_flavour
+			   && (ci = bfd_coff_get_comdat_section (sec->owner,
+								 sec)) != NULL)
+		    group = ci->name;
+		  if (group != NULL)
+		    result = fprintf (stream, "%s[%s]", sec->name, group);
+		  else
+		    result = fprintf (stream, "%s", sec->name);
+		}
+	      else if (*ptr == 'B')
+		{
+		  bfd *abfd;
 
-		abfd = (bfd *) args[arg_no].p;
-		if (abfd == NULL)
-		  /* Invoking %B with a null bfd pointer is an
-		     internal error.  */
-		  abort ();
-		else if (abfd->my_archive
-			 && !bfd_is_thin_archive (abfd->my_archive))
-		  result = fprintf (stream, "%s(%s)",
-				    abfd->my_archive->filename, abfd->filename);
-		else
-		  result = fprintf (stream, "%s", abfd->filename);
-	      }
+		  ptr++;
+		  abfd = (bfd *) args[arg_no].p;
+		  if (abfd == NULL)
+		    /* Invoking %pB with a null bfd pointer is an
+		       internal error.  */
+		    abort ();
+		  else if (abfd->my_archive
+			   && !bfd_is_thin_archive (abfd->my_archive))
+		    result = fprintf (stream, "%s(%s)",
+				      abfd->my_archive->filename,
+				      abfd->filename);
+		  else
+		    result = fprintf (stream, "%s", abfd->filename);
+		}
+	      else
+		PRINT_TYPE (void *, p);
 	      break;
 	    default:
 	      abort();
@@ -1049,12 +1028,6 @@ _bfd_doprnt_scan (const char *format, union _bfd_doprnt_args *args)
 		  arg_type = Int;
 		else
 		  {
-		    if (ptr[-2] == 'L')
-		      {
-			if (BFD_ARCH_SIZE < 64 || BFD_HOST_64BIT_LONG)
-			  wide_width = 1;
-		      }
-
 		    switch (wide_width)
 		      {
 		      case 0:
@@ -1094,9 +1067,11 @@ _bfd_doprnt_scan (const char *format, union _bfd_doprnt_args *args)
 	      }
 	      break;
 	    case 's':
+	      arg_type = Ptr;
+	      break;
 	    case 'p':
-	    case 'A':
-	    case 'B':
+	      if (*ptr == 'A' || *ptr == 'B')
+		ptr++;
 	      arg_type = Ptr;
 	      break;
 	    default:
@@ -1112,14 +1087,6 @@ _bfd_doprnt_scan (const char *format, union _bfd_doprnt_args *args)
 
   return arg_count;
 }
-
-/* This is the default routine to handle BFD error messages.
-   Like fprintf (stderr, ...), but also handles some extra format specifiers.
-
-   %A section name from section.  For group components, prints group name too.
-   %B file name from bfd.  For archive components, prints archive too.
-
-   Beware: Only supports a maximum of 9 format arguments.  */
 
 static void
 error_handler_internal (const char *fmt, va_list ap)
@@ -1181,6 +1148,26 @@ error_handler_internal (const char *fmt, va_list ap)
    the messages and deal with them itself.  */
 
 static bfd_error_handler_type _bfd_error_internal = error_handler_internal;
+
+/*
+FUNCTION
+	_bfd_error_handler
+
+SYNOPSIS
+	void _bfd_error_handler (const char *fmt, ...) ATTRIBUTE_PRINTF_1;
+
+DESCRIPTION
+	This is the default routine to handle BFD error messages.
+	Like fprintf (stderr, ...), but also handles some extra format
+	specifiers.
+
+	%pA section name from section.  For group components, prints
+	group name too.
+	%pB file name from bfd.  For archive components, prints
+	archive too.
+
+	Beware: Only supports a maximum of 9 format arguments.
+*/
 
 void
 _bfd_error_handler (const char *fmt, ...)
@@ -2158,7 +2145,7 @@ FUNCTION
 	bfd_emul_get_commonpagesize
 
 SYNOPSIS
-	bfd_vma bfd_emul_get_commonpagesize (const char *);
+	bfd_vma bfd_emul_get_commonpagesize (const char *, bfd_boolean);
 
 DESCRIPTION
 	Returns the common page size, in bytes, as determined by
@@ -2169,15 +2156,22 @@ RETURNS
 */
 
 bfd_vma
-bfd_emul_get_commonpagesize (const char *emul)
+bfd_emul_get_commonpagesize (const char *emul, bfd_boolean relro)
 {
   const bfd_target *target;
 
   target = bfd_find_target (emul, NULL);
   if (target != NULL
       && target->flavour == bfd_target_elf_flavour)
-    return xvec_get_elf_backend_data (target)->commonpagesize;
+    {
+      const struct elf_backend_data *bed;
 
+      bed = xvec_get_elf_backend_data (target);
+      if (relro)
+	return bed->relropagesize;
+      else
+	return bed->commonpagesize;
+    }
   return 0;
 }
 

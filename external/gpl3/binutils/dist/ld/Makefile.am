@@ -17,7 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 #
 
-AUTOMAKE_OPTIONS = dejagnu no-texinfo.tex no-dist foreign
+AUTOMAKE_OPTIONS = dejagnu no-texinfo.tex no-dist foreign info-in-builddir
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 TEXINFO_TEX = ../texinfo/texinfo.tex
 
@@ -80,7 +80,7 @@ INCDIR	= $(BASEDIR)/include
 # What version of the manual to build
 DOCVER = gen
 
-# Options to extract the man page from ld.texinfo
+# Options to extract the man page from ld.texi
 MANCONF = -Dman
 
 TEXI2POD = perl $(BASEDIR)/etc/texi2pod.pl $(AM_MAKEINFOFLAGS)
@@ -135,9 +135,9 @@ CXXFLAGS_FOR_TARGET = `echo $(CXXFLAGS) | sed -e 's/-fsanitize=address//g' -e 's
 
 transform = s/^ld-new$$/$(installed_linker)/;@program_transform_name@
 bin_PROGRAMS = ld-new
-info_TEXINFOS = ld.texinfo
+info_TEXINFOS = ld.texi
 ld_TEXINFOS = configdoc.texi
-noinst_TEXINFOS = ldint.texinfo
+noinst_TEXINFOS = ldint.texi
 man_MANS = ld.1
 
 AM_MAKEINFOFLAGS = -I $(srcdir) -I $(BFDDIR)/doc -I ../bfd/doc \
@@ -166,16 +166,13 @@ ALL_EMULATION_SOURCES = \
 	earclinux.c \
 	earclinux_nps.c \
 	earclinux_prof.c \
-	earm_epoc_pe.c \
 	earm_wince_pe.c \
-	earmaoutb.c \
-	earmaoutl.c \
-	earmcoff.c \
 	earmelf.c \
 	earmelf_fbsd.c \
 	earmelf_fuchsia.c \
 	earmelf_linux.c \
 	earmelf_linux_eabi.c \
+	earmelf_linux_fdpiceabi.c \
 	earmelf_nacl.c \
 	earmelf_nbsd.c \
 	earmelf_nbsd_eabi.c \
@@ -187,6 +184,7 @@ ALL_EMULATION_SOURCES = \
 	earmelfb_fuchsia.c \
 	earmelfb_linux.c \
 	earmelfb_linux_eabi.c \
+	earmelfb_linux_fdpiceabi.c \
 	earmelfb_nacl.c \
 	earmelfb_nbsd.c \
 	earmelfb_nbsd_eabi.c \
@@ -213,8 +211,6 @@ ALL_EMULATION_SOURCES = \
 	eavrxmega6.c \
 	eavrxmega7.c \
 	eavrtiny.c   \
-	ecoff_i860.c \
-	ecoff_sparc.c \
 	ecrisaout.c \
 	ecriself.c \
 	ecrislinux.c \
@@ -222,10 +218,7 @@ ALL_EMULATION_SOURCES = \
 	ed30v_e.c \
 	ed30v_o.c \
 	ed30velf.c \
-	edelta68.c \
 	eelf32_dlx.c \
-	eelf32_i860.c \
-	eelf32_i960.c \
 	eelf32_sparc.c \
 	eelf32_sparc_sol2.c \
 	eelf32_sparc_vxworks.c \
@@ -248,7 +241,6 @@ ALL_EMULATION_SOURCES = \
 	eelf32frv.c \
 	eelf32frvfd.c \
 	eelf32ft32.c \
-	eelf32i370.c \
 	eelf32ip2k.c \
 	eelf32iq10.c \
 	eelf32iq2000.c \
@@ -287,6 +279,8 @@ ALL_EMULATION_SOURCES = \
 	eelf32ppcvxworks.c \
 	eelf32ppcwindiss.c \
 	eelf32lriscv.c \
+	eelf32lriscv_ilp32f.c \
+	eelf32lriscv_ilp32.c \
 	eelf32rl78.c \
 	eelf32rx.c \
 	eelf32tilegx.c \
@@ -309,53 +303,30 @@ ALL_EMULATION_SOURCES = \
 	eelf_i386_vxworks.c \
 	eelf_iamcu.c \
 	eelf_s390.c \
-	egld960.c \
-	egld960coff.c \
-	eh8300.c \
 	eh8300elf.c \
 	eh8300elf_linux.c \
-	eh8300h.c \
 	eh8300helf.c \
 	eh8300helf_linux.c \
-	eh8300hn.c \
 	eh8300hnelf.c \
-	eh8300s.c \
 	eh8300self.c \
 	eh8300self_linux.c \
-	eh8300sn.c \
 	eh8300snelf.c \
-	eh8300sx.c \
 	eh8300sxelf.c \
 	eh8300sxelf_linux.c \
-	eh8300sxn.c \
 	eh8300sxnelf.c \
-	eh8500.c \
-	eh8500b.c \
-	eh8500c.c \
-	eh8500m.c \
-	eh8500s.c \
-	ehp300bsd.c \
-	ehp3hpux.c \
 	ehppaelf.c \
 	ehppalinux.c \
 	ehppanbsd.c \
 	ehppaobsd.c \
-	ei386aout.c \
 	ei386beos.c \
 	ei386bsd.c \
-	ei386coff.c \
 	ei386go32.c \
-	ei386linux.c \
 	ei386lynx.c \
-	ei386mach.c \
 	ei386moss.c \
 	ei386msdos.c \
-	ei386nbsd.c \
 	ei386nto.c \
-	ei386nw.c \
 	ei386pe.c \
 	ei386pe_posix.c \
-	elnk960.c \
 	em32relf.c \
 	em32relf_linux.c \
 	em32rlelf.c \
@@ -364,16 +335,9 @@ ALL_EMULATION_SOURCES = \
 	em68hc11elfb.c \
 	em68hc12elf.c \
 	em68hc12elfb.c \
-	em68k4knbsd.c \
-	em68kaout.c \
-	em68kaux.c \
-	em68kcoff.c \
 	em68kelf.c \
 	em68kelfnbsd.c \
-	em68klinux.c \
-	em68knbsd.c \
-	em68kpsos.c \
-	em88kbcs.c \
+	em9s12zelf.c \
 	emcorepe.c \
 	emn10200.c \
 	emn10300.c \
@@ -385,7 +349,6 @@ ALL_EMULATION_SOURCES = \
 	ends32belf.c \
 	ends32belf16m.c \
 	ends32belf_linux.c \
-	enews.c \
 	ens32knbsd.c \
 	enios2elf.c \
 	enios2linux.c \
@@ -395,17 +358,12 @@ ALL_EMULATION_SOURCES = \
 	epjlelf.c \
 	eppclynx.c \
 	eppcmacos.c \
-	eppcnw.c \
 	eppcpe.c \
 	epruelf.c \
-	eriscix.c \
 	escore3_elf.c \
 	escore7_elf.c \
 	esh.c \
 	eshelf.c \
-	eshelf32.c \
-	eshelf32_linux.c \
-	eshelf32_nbsd.c \
 	eshelf_fd.c \
 	eshelf_linux.c \
 	eshelf_nbsd.c \
@@ -414,22 +372,12 @@ ALL_EMULATION_SOURCES = \
 	eshelf_vxworks.c \
 	eshl.c \
 	eshlelf.c \
-	eshlelf32.c \
-	eshlelf32_linux.c \
-	eshlelf32_nbsd.c \
 	eshlelf_fd.c \
 	eshlelf_linux.c \
 	eshlelf_nbsd.c \
 	eshlelf_nto.c \
 	eshlelf_vxworks.c \
-	eshlsymbian.c \
 	eshpe.c \
-	esparcaout.c \
-	esparclinux.c \
-	esparcnbsd.c \
-	est2000.c \
-	esun3.c \
-	esun4.c \
 	etic30aout.c \
 	etic30coff.c \
 	etic3xcoff.c \
@@ -440,10 +388,7 @@ ALL_EMULATION_SOURCES = \
 	ev850.c \
 	ev850_rh850.c \
 	evanilla.c \
-	evax.c \
 	evaxnbsd.c \
-	evsta.c \
-	ew65.c \
 	exgateelf.c \
 	ez80.c \
 	ez8001.c \
@@ -507,6 +452,8 @@ ALL_64_EMULATION_SOURCES = \
 	eelf64hppa.c \
 	eelf64lppc.c \
 	eelf64lriscv.c \
+	eelf64lriscv_lp64f.c \
+	eelf64lriscv_lp64.c \
 	eelf64ltsmip.c \
 	eelf64ltsmip_fbsd.c \
 	eelf64mmix.c \
@@ -526,11 +473,7 @@ ALL_64_EMULATION_SOURCES = \
 	eelf_x86_64_sol2.c \
 	ehppa64linux.c \
 	ei386pep.c \
-	emmo.c \
-	eshelf64.c \
-	eshelf64_nbsd.c \
-	eshlelf64.c \
-	eshlelf64_nbsd.c
+	emmo.c
 
 ALL_64_EMULATIONS = $(ALL_64_EMULATION_SOURCES:.c=.@OBJEXT@)
 
@@ -604,15 +547,16 @@ endif
 	$(COMPILE) -c `test -f deffilep.c || echo $(srcdir)/`deffilep.c $(NO_WERROR)
 endif
 
-# At the moment this is just a list of those emulation template files
-# that contain internationalised strings.
-EMULATION_FILES = emultempl/pe.em emultempl/armcoff.em
+SRC_POTFILES = $(CFILES) $(HFILES)
+BLD_POTFILES = $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES)
 
-POTFILES = $(CFILES) $(HFILES) $(EMULATION_FILES)
+po/SRC-POTFILES.in: @MAINT@ Makefile
+	for f in $(SRC_POTFILES); do echo $$f; done | LC_ALL=C sort > $@-tmp \
+	  && mv $@-tmp $(srcdir)/po/SRC-POTFILES.in
 
-po/POTFILES.in: @MAINT@ Makefile
-	for f in $(POTFILES); do echo $$f; done | LC_ALL=C sort > tmp \
-	  && mv tmp $(srcdir)/po/POTFILES.in
+po/BLD-POTFILES.in: @MAINT@ Makefile $(BLD_POTFILES)
+	for f in $(BLD_POTFILES); do echo $$f; done | LC_ALL=C sort > $@-tmp \
+	  && mv $@-tmp $(srcdir)/po/BLD-POTFILES.in
 
 ldmain.@OBJEXT@: ldmain.c config.status
 if am__fastdepCC
@@ -756,27 +700,15 @@ earclinux_prof.c: $(srcdir)/emulparams/arclinux_prof.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/arclinux.em \
   $(srcdir)/scripttempl/arclinux.sc ${GEN_DEPENDS}
 
-earm_epoc_pe.c: $(srcdir)/emulparams/arm_epoc_pe.sh \
-  $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/epocpe.sc ${GEN_DEPENDS}
-
 earm_wince_pe.c: $(srcdir)/emulparams/arm_wince_pe.sh \
   $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/pe.sc ${GEN_DEPENDS}
-
-earmaoutb.c:	$(srcdir)/emulparams/armaoutb.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/armaout.sc ${GEN_DEPENDS}
-
-earmaoutl.c:	$(srcdir)/emulparams/armaoutl.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/armaout.sc ${GEN_DEPENDS}
-
-earmcoff.c:	$(srcdir)/emulparams/armcoff.sh \
-  $(srcdir)/emultempl/armcoff.em $(srcdir)/scripttempl/armcoff.sc ${GEN_DEPENDS}
 
 earmelf.c: $(srcdir)/emulparams/armelf.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 earmelf_fbsd.c: $(srcdir)/emulparams/armelf_fbsd.sh \
-  $(srcdir)/emulparams/armelf.sh \
+  $(srcdir)/emulparams/armelf.sh $(srcdir)/emulparams/elf_fbsd.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -789,6 +721,11 @@ earmelf_linux.c: $(srcdir)/emulparams/armelf_linux.sh \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 earmelf_linux_eabi.c: $(srcdir)/emulparams/armelf_linux_eabi.sh \
+  $(srcdir)/emulparams/armelf_linux.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
+earmelf_linux_fdpiceabi.c: $(srcdir)/emulparams/armelf_linux_fdpiceabi.sh \
   $(srcdir)/emulparams/armelf_linux.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -833,10 +770,12 @@ earmelfb.c: $(srcdir)/emulparams/armelfb.sh $(srcdir)/emulparams/armelf.sh \
 
 earmelfb_fbsd.c: $(srcdir)/emulparams/armelfb_fbsd.sh \
   $(srcdir)/emulparams/armelf_fbsd.sh \
+  $(srcdir)/emulparams/armelf.sh $(srcdir)/emulparams/elf_fbsd.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 earmelfb_fuchsia.c: $(srcdir)/emulparams/armelfb_fuchsia.sh \
+  $(srcdir)/emulparams/armelf_fuchsia.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -847,6 +786,12 @@ earmelfb_linux.c: $(srcdir)/emulparams/armelfb_linux.sh \
 
 earmelfb_linux_eabi.c: $(srcdir)/emulparams/armelfb_linux_eabi.sh \
   $(srcdir)/emulparams/armelf_linux_eabi.sh \
+  $(srcdir)/emulparams/armelf_linux.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
+earmelfb_linux_fdpiceabi.c: $(srcdir)/emulparams/armelfb_linux_fdpiceabi.sh \
+  $(srcdir)/emulparams/armelf_linux_fdpiceabi.sh \
   $(srcdir)/emulparams/armelf_linux.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -965,12 +910,6 @@ eavrtiny.c: $(srcdir)/emulparams/avrtiny.sh \
   $(srcdir)/emultempl/avrelf.em $(ELF_DEPS) $(srcdir)/scripttempl/avr.sc \
   ${GEN_DEPENDS}
 
-ecoff_i860.c: $(srcdir)/emulparams/coff_i860.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i860coff.sc ${GEN_DEPENDS}
-
-ecoff_sparc.c: $(srcdir)/emulparams/coff_sparc.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/sparccoff.sc ${GEN_DEPENDS}
-
 ecrisaout.c: $(srcdir)/emulparams/crisaout.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/crisaout.sc ${GEN_DEPENDS}
 
@@ -992,17 +931,8 @@ ed30v_o.c: $(srcdir)/emulparams/d30v_o.sh \
 ed30velf.c: $(srcdir)/emulparams/d30velf.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/elfd30v.sc ${GEN_DEPENDS}
 
-edelta68.c: $(srcdir)/emulparams/delta68.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/delta68.sc ${GEN_DEPENDS}
-
 eelf32_dlx.c: $(srcdir)/emulparams/elf32_dlx.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/dlx.sc ${GEN_DEPENDS}
-
-eelf32_i860.c: $(srcdir)/emulparams/elf32_i860.sh \
-  $(ELF_GEN_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eelf32_i960.c: $(srcdir)/emulparams/elf32_i960.sh \
-  $(ELF_GEN_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32_sparc.c: $(srcdir)/emulparams/elf32_sparc.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -1166,9 +1096,6 @@ eelf32frvfd.c: $(srcdir)/emulparams/elf32frvfd.sh \
 eelf32ft32.c: $(srcdir)/emulparams/elf32ft32.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-eelf32i370.c: $(srcdir)/emulparams/elf32i370.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elfi370.sc ${GEN_DEPENDS}
-
 eelf32ip2k.c: $(srcdir)/emulparams/elf32ip2k.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -1226,6 +1153,16 @@ eelf32lriscv.c: $(srcdir)/emulparams/elf32lriscv.sh \
   $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
   ${GEN_DEPENDS}
 
+eelf32lriscv_ilp32f.c: $(srcdir)/emulparams/elf32lriscv_ilp32f.sh \
+  $(srcdir)/emulparams/elf32lriscv-defs.sh $(ELF_DEPS) \
+  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
+  ${GEN_DEPENDS}
+
+eelf32lriscv_ilp32.c: $(srcdir)/emulparams/elf32lriscv_ilp32.sh \
+  $(srcdir)/emulparams/elf32lriscv-defs.sh $(ELF_DEPS) \
+  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
+  ${GEN_DEPENDS}
+
 eelf32lsmip.c: $(srcdir)/emulparams/elf32lsmip.sh \
   $(srcdir)/emulparams/elf32lmip.sh $(srcdir)/emulparams/elf32bmip.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/mipself.em $(srcdir)/scripttempl/elf.sc \
@@ -1278,7 +1215,7 @@ eelf32microblaze.c: $(srcdir)/emulparams/elf32microblaze.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elfmicroblaze.sc ${GEN_DEPENDS}
 
 eelf32mipswindiss.c: $(srcdir)/emulparams/elf32mipswindiss.sh $(ELF_DEPS) \
-  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+  $(srcdir)/emultempl/mipself.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32moxie.c: $(srcdir)/emulparams/elf32moxie.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -1426,23 +1363,11 @@ eelf_iamcu.c: $(srcdir)/emulparams/elf_iamcu.sh \
 eelf_s390.c: $(srcdir)/emulparams/elf_s390.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-egld960.c: $(srcdir)/emulparams/gld960.sh \
-  $(srcdir)/emultempl/gld960.em $(srcdir)/scripttempl/i960.sc ${GEN_DEPENDS}
-
-egld960coff.c: $(srcdir)/emulparams/gld960coff.sh \
-  $(srcdir)/emultempl/gld960c.em $(srcdir)/scripttempl/i960.sc ${GEN_DEPENDS}
-
-eh8300.c: $(srcdir)/emulparams/h8300.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300.sc ${GEN_DEPENDS}
-
 eh8300elf.c: $(srcdir)/emulparams/h8300elf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eh8300elf_linux.c: $(srcdir)/emulparams/h8300elf_linux.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eh8300h.c: $(srcdir)/emulparams/h8300h.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300h.sc ${GEN_DEPENDS}
 
 eh8300helf.c: $(srcdir)/emulparams/h8300helf.sh \
   $(srcdir)/emulparams/h8300elf.sh \
@@ -1452,15 +1377,9 @@ eh8300helf_linux.c: $(srcdir)/emulparams/h8300helf_linux.sh \
   $(srcdir)/emulparams/h8300elf_linux.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-eh8300hn.c: $(srcdir)/emulparams/h8300hn.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300hn.sc ${GEN_DEPENDS}
-
 eh8300hnelf.c: $(srcdir)/emulparams/h8300hnelf.sh \
   $(srcdir)/emulparams/h8300elf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eh8300s.c: $(srcdir)/emulparams/h8300s.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300s.sc ${GEN_DEPENDS}
 
 eh8300self.c: $(srcdir)/emulparams/h8300self.sh \
   $(srcdir)/emulparams/h8300elf.sh \
@@ -1470,15 +1389,9 @@ eh8300self_linux.c: $(srcdir)/emulparams/h8300self_linux.sh \
   $(srcdir)/emulparams/h8300elf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-eh8300sn.c: $(srcdir)/emulparams/h8300sn.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300sn.sc ${GEN_DEPENDS}
-
 eh8300snelf.c: $(srcdir)/emulparams/h8300snelf.sh \
   $(srcdir)/emulparams/h8300elf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eh8300sx.c: $(srcdir)/emulparams/h8300sx.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300sx.sc ${GEN_DEPENDS}
 
 eh8300sxelf.c: $(srcdir)/emulparams/h8300sxelf.sh \
   $(srcdir)/emulparams/h8300elf.sh \
@@ -1488,33 +1401,9 @@ eh8300sxelf_linux.c: $(srcdir)/emulparams/h8300sxelf_linux.sh \
   $(srcdir)/emulparams/h8300elf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-eh8300sxn.c: $(srcdir)/emulparams/h8300sxn.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300sxn.sc ${GEN_DEPENDS}
-
 eh8300sxnelf.c: $(srcdir)/emulparams/h8300sxnelf.sh \
   $(srcdir)/emulparams/h8300elf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eh8500.c: $(srcdir)/emulparams/h8500.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8500.sc ${GEN_DEPENDS}
-
-eh8500b.c: $(srcdir)/emulparams/h8500b.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8500b.sc ${GEN_DEPENDS}
-
-eh8500c.c: $(srcdir)/emulparams/h8500c.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8500c.sc ${GEN_DEPENDS}
-
-eh8500m.c: $(srcdir)/emulparams/h8500m.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8500m.sc ${GEN_DEPENDS}
-
-eh8500s.c: $(srcdir)/emulparams/h8500s.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8500s.sc ${GEN_DEPENDS}
-
-ehp300bsd.c: $(srcdir)/emulparams/hp300bsd.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-ehp3hpux.c: $(srcdir)/emulparams/hp3hpux.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 
 ehppaelf.c: $(srcdir)/emulparams/hppaelf.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/hppaelf.em \
@@ -1533,29 +1422,17 @@ ehppaobsd.c: $(srcdir)/emulparams/hppaobsd.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/hppaelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-ei386aout.c: $(srcdir)/emulparams/i386aout.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
 ei386beos.c: $(srcdir)/emulparams/i386beos.sh \
   $(srcdir)/emultempl/beos.em $(srcdir)/scripttempl/i386beos.sc ${GEN_DEPENDS}
 
 ei386bsd.c: $(srcdir)/emulparams/i386bsd.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 
-ei386coff.c: $(srcdir)/emulparams/i386coff.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i386coff.sc ${GEN_DEPENDS}
-
 ei386go32.c: $(srcdir)/emulparams/i386go32.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i386go32.sc ${GEN_DEPENDS}
 
-ei386linux.c: $(srcdir)/emulparams/i386linux.sh \
-  $(srcdir)/emultempl/linux.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
 ei386lynx.c: $(srcdir)/emulparams/i386lynx.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-ei386mach.c: $(srcdir)/emulparams/i386mach.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 
 ei386moss.c: $(srcdir)/emulparams/i386moss.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -1563,14 +1440,8 @@ ei386moss.c: $(srcdir)/emulparams/i386moss.sh \
 ei386msdos.c: $(srcdir)/emulparams/i386msdos.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i386msdos.sc ${GEN_DEPENDS}
 
-ei386nbsd.c:	$(srcdir)/emulparams/i386nbsd.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
 ei386nto.c:	$(srcdir)/emulparams/i386nto.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-ei386nw.c:	$(srcdir)/emulparams/i386nw.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/nw.sc ${GEN_DEPENDS}
 
 ei386pe.c: $(srcdir)/emulparams/i386pe.sh \
   $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/pe.sc ${GEN_DEPENDS}
@@ -1580,9 +1451,6 @@ ei386pe_posix.c: $(srcdir)/emulparams/i386pe_posix.sh \
 
 ei386pep.c: $(srcdir)/emulparams/i386pep.sh \
   $(srcdir)/emultempl/pep.em $(srcdir)/scripttempl/pep.sc ${GEN_DEPENDS}
-
-elnk960.c: $(srcdir)/emulparams/lnk960.sh \
-  $(srcdir)/emultempl/lnk960.em $(srcdir)/scripttempl/i960.sc ${GEN_DEPENDS}
 
 em32relf.c: $(srcdir)/emulparams/m32relf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -1612,18 +1480,6 @@ em68hc12elfb.c: $(srcdir)/emulparams/m68hc12elfb.sh \
   $(srcdir)/emultempl/m68hc1xelf.em $(ELF_DEPS) \
   $(srcdir)/scripttempl/elfm68hc12.sc ${GEN_DEPENDS}
 
-em68k4knbsd.c:	$(srcdir)/emulparams/m68k4knbsd.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-em68kaout.c: $(srcdir)/emulparams/m68kaout.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-em68kaux.c: $(srcdir)/emulparams/m68kaux.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/m68kaux.sc ${GEN_DEPENDS}
-
-em68kcoff.c: $(srcdir)/emulparams/m68kcoff.sh \
-  $(srcdir)/emultempl/m68kcoff.em $(srcdir)/scripttempl/m68kcoff.sc ${GEN_DEPENDS}
-
 em68kelf.c: $(srcdir)/emulparams/m68kelf.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/m68kelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -1633,17 +1489,9 @@ em68kelfnbsd.c: $(srcdir)/emulparams/m68kelfnbsd.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/m68kelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-em68klinux.c: $(srcdir)/emulparams/m68klinux.sh \
-  $(srcdir)/emultempl/linux.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-em68knbsd.c:	$(srcdir)/emulparams/m68knbsd.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-em68kpsos.c:	$(srcdir)/emulparams/m68kpsos.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/psos.sc ${GEN_DEPENDS}
-
-em88kbcs.c: $(srcdir)/emulparams/m88kbcs.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/m88kbcs.sc ${GEN_DEPENDS}
+em9s12zelf.c: $(srcdir)/emulparams/m9s12zelf.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/generic.em \
+  $(srcdir)/scripttempl/elfm9s12z.sc ${GEN_DEPENDS}
 
 emcorepe.c: $(srcdir)/emulparams/mcorepe.sh \
   $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/pe.sc ${GEN_DEPENDS}
@@ -1686,9 +1534,6 @@ ends32elf_linux.c: $(srcdir)/emulparams/nds32elf_linux.sh \
 ends32belf_linux.c: $(srcdir)/emulparams/nds32belf_linux.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/nds32elf.em \
   $(srcdir)/scripttempl/nds32elf.sc ${GEN_DEPENDS}
-
-enews.c: $(srcdir)/emulparams/news.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 
 enios2elf.c: $(srcdir)/emulparams/nios2elf.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/nios2elf.em \
@@ -1783,18 +1628,12 @@ eppclynx.c: $(srcdir)/emulparams/ppclynx.sh \
 eppcmacos.c:	$(srcdir)/emulparams/ppcmacos.sh \
   $(srcdir)/emultempl/aix.em $(srcdir)/scripttempl/aix.sc ${GEN_DEPENDS}
 
-eppcnw.c:	$(srcdir)/emulparams/ppcnw.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/nw.sc ${GEN_DEPENDS}
-
 eppcpe.c: $(srcdir)/emulparams/ppcpe.sh \
   $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/ppcpe.sc ${GEN_DEPENDS}
 
 epruelf.c: $(srcdir)/emulparams/pruelf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/pru.sc \
   $(srcdir)/emultempl/pruelf.em ${GEN_DEPENDS}
-
-eriscix.c: $(srcdir)/emulparams/riscix.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 
 escore3_elf.c: $(srcdir)/emulparams/score3_elf.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/scoreelf.em \
@@ -1809,23 +1648,6 @@ esh.c: $(srcdir)/emulparams/sh.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/sh.sc ${GEN_DEPENDS}
 
 eshelf.c: $(srcdir)/emulparams/shelf.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshelf32.c: $(srcdir)/emulparams/shelf32.sh \
-  $(INCDIR)/libiberty.h \
-  $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshelf32_linux.c: $(srcdir)/emulparams/shelf32_linux.sh \
-  $(srcdir)/emulparams/shelf32.sh \
-  $(INCDIR)/libiberty.h \
-  $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshelf32_nbsd.c: $(srcdir)/emulparams/shelf32_nbsd.sh \
-  $(srcdir)/emulparams/shelf32.sh \
-  $(INCDIR)/libiberty.h \
-  $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eshelf_fd.c: $(srcdir)/emulparams/shelf_fd.sh \
@@ -1857,23 +1679,6 @@ eshlelf.c: $(srcdir)/emulparams/shlelf.sh \
   $(srcdir)/emulparams/shelf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
-eshlelf32.c: $(srcdir)/emulparams/shlelf32.sh \
-  $(INCDIR)/libiberty.h $(srcdir)/emulparams/shelf32.sh \
-  $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshlelf32_linux.c: $(srcdir)/emulparams/shlelf32_linux.sh \
-  $(srcdir)/emulparams/shelf32_linux.sh $(srcdir)/emulparams/shelf32.sh \
-  $(INCDIR)/libiberty.h \
-  $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshlelf32_nbsd.c: $(srcdir)/emulparams/shlelf32_nbsd.sh \
-  $(srcdir)/emulparams/shelf32_nbsd.sh $(srcdir)/emulparams/shelf32.sh \
-  $(INCDIR)/libiberty.h \
-  $(srcdir)/emultempl/sh64elf.em $(INCDIR)/elf/sh.h $(BFDDIR)/elf-bfd.h \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
 eshlelf_fd.c: $(srcdir)/emulparams/shlelf_fd.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
@@ -1893,30 +1698,8 @@ eshlelf_vxworks.c: $(srcdir)/emulparams/shlelf_vxworks.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc $(srcdir)/emultempl/vxworks.em \
   ${GEN_DEPENDS}
 
-eshlsymbian.c: $(srcdir)/emulparams/shlsymbian.sh \
-  $(srcdir)/emulparams/shelf.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf32sh-symbian.sc ${GEN_DEPENDS}
-
 eshpe.c: $(srcdir)/emulparams/shpe.sh \
   $(srcdir)/emultempl/pe.em $(srcdir)/scripttempl/pe.sc ${GEN_DEPENDS}
-
-esparcaout.c: $(srcdir)/emulparams/sparcaout.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-esparclinux.c: $(srcdir)/emulparams/sparclinux.sh \
-  $(srcdir)/emultempl/linux.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-esparcnbsd.c:	$(srcdir)/emulparams/sparcnbsd.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-est2000.c: $(srcdir)/emulparams/st2000.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/st2000.sc ${GEN_DEPENDS}
-
-esun3.c: $(srcdir)/emulparams/sun3.sh \
-  $(srcdir)/emultempl/sunos.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-esun4.c: $(srcdir)/emulparams/sun4.sh \
-  $(srcdir)/emultempl/sunos.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 
 etic30aout.c: $(srcdir)/emulparams/tic30aout.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/tic30aout.sc ${GEN_DEPENDS}
@@ -1948,17 +1731,8 @@ ev850_rh850.c: $(srcdir)/emulparams/v850_rh850.sh $(srcdir)/emultempl/v850elf.em
 evanilla.c: $(srcdir)/emulparams/vanilla.sh \
   $(srcdir)/emultempl/vanilla.em $(srcdir)/scripttempl/vanilla.sc ${GEN_DEPENDS}
 
-evax.c: $(srcdir)/emulparams/vax.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
 evaxnbsd.c: $(srcdir)/emulparams/vaxnbsd.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-evsta.c: $(srcdir)/emulparams/vsta.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-
-ew65.c: $(srcdir)/emulparams/w65.sh \
-  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/w65.sc ${GEN_DEPENDS}
 
 exgateelf.c: $(srcdir)/emulparams/xgateelf.sh \
   $(srcdir)/emultempl/generic.em $(ELF_DEPS) \
@@ -2063,6 +1837,18 @@ eelf64lriscv.c: $(srcdir)/emulparams/elf64lriscv.sh \
   $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
   ${GEN_DEPENDS}
 
+eelf64lriscv_lp64f.c: $(srcdir)/emulparams/elf64lriscv_lp64f.sh \
+  $(srcdir)/emulparams/elf64lriscv-defs.sh \
+  $(srcdir)/emulparams/elf32lriscv-defs.sh $(ELF_DEPS) \
+  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
+  ${GEN_DEPENDS}
+
+eelf64lriscv_lp64.c: $(srcdir)/emulparams/elf64lriscv_lp64.sh \
+  $(srcdir)/emulparams/elf64lriscv-defs.sh \
+  $(srcdir)/emulparams/elf32lriscv-defs.sh $(ELF_DEPS) \
+  $(srcdir)/emultempl/riscvelf.em $(srcdir)/scripttempl/elf.sc \
+  ${GEN_DEPENDS}
+
 eelf64ltsmip.c: $(srcdir)/emulparams/elf64ltsmip.sh \
   $(srcdir)/emulparams/elf64btsmip.sh $(srcdir)/emulparams/elf64bmip-defs.sh \
   $(srcdir)/emulparams/elf32bmipn32-defs.sh $(ELF_DEPS) \
@@ -2142,22 +1928,6 @@ emmo.c: $(srcdir)/emulparams/mmo.sh $(srcdir)/emultempl/mmix-elfnmmo.em \
   $(srcdir)/emultempl/mmo.em $(srcdir)/scripttempl/DWARF.sc \
   $(srcdir)/scripttempl/mmo.sc ${GEN_DEPENDS}
 
-eshelf64.c: $(srcdir)/emulparams/shelf64.sh $(srcdir)/emulparams/shelf32.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshelf64_nbsd.c: $(srcdir)/emulparams/shelf64_nbsd.sh \
-  $(srcdir)/emulparams/shelf32_nbsd.sh $(srcdir)/emulparams/shelf32.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshlelf64.c: $(srcdir)/emulparams/shlelf64.sh \
-  $(srcdir)/emulparams/shelf64.sh $(srcdir)/emulparams/shelf32.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
-eshlelf64_nbsd.c: $(srcdir)/emulparams/shlelf64_nbsd.sh \
-  $(srcdir)/emulparams/shelf64_nbsd.sh \
-  $(srcdir)/emulparams/shelf32_nbsd.sh $(srcdir)/emulparams/shelf32.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-
 
 # We need this for automake to use YLWRAP.
 EXTRA_ld_new_SOURCES = deffilep.y ldlex.l
@@ -2228,11 +1998,11 @@ NetBSD_DISABLED_configdoc.texi:
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
-ld.1: $(srcdir)/ld.texinfo configdoc.texi
+ld.1: $(srcdir)/ld.texi configdoc.texi
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_ld.1:
 	touch $@
-	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
+	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texi > ld.pod
 	-($(POD2MAN) ld.pod | \
 		sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || \
@@ -2296,10 +2066,3 @@ distclean-local:
 	rm -rf ldscripts
 
 MAINTAINERCLEANFILES += ld.info
-
-# Automake 1.9 will only build info files in the objdir if they are
-# mentioned in DISTCLEANFILES.  It doesn't have to be unconditional,
-# though, so we use a bogus condition.
-if GENINSRC_NEVER
-DISTCLEANFILES += ld.info
-endif

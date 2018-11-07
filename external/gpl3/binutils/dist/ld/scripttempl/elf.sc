@@ -361,7 +361,7 @@ OUTPUT_ARCH(${OUTPUT_ARCH})
 ${RELOCATING+ENTRY(${ENTRY})}
 
 ${RELOCATING+${LIB_SEARCH_DIRS}}
-${RELOCATING+${EXECUTABLE_SYMBOLS}}
+${RELOCATING+${CREATE_SHLIB-${EXECUTABLE_SYMBOLS}}}
 ${RELOCATING+${INPUT_FILES}}
 ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
   if gld -r is used and the intermediate file has sections starting
@@ -590,7 +590,11 @@ cat <<EOF
   .exception_ranges ${RELOCATING-0} : ONLY_IF_RW { *(.exception_ranges .exception_ranges*) }
 
   /* Thread Local Storage sections  */
-  .tdata	${RELOCATING-0} : { *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*}) }
+  .tdata	${RELOCATING-0} :
+   {
+     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__tdata_start = .);}}
+     *(.tdata${RELOCATING+ .tdata.* .gnu.linkonce.td.*})
+   }
   .tbss		${RELOCATING-0} : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} }
 
   ${RELOCATING+${PREINIT_ARRAY}}
@@ -636,9 +640,9 @@ cat <<EOF
   ${SDATA_GOT+${OTHER_GOT_SECTIONS}}
   ${DATA_SDATA-${SDATA}}
   ${DATA_SDATA-${OTHER_SDATA_SECTIONS}}
-  ${RELOCATING+${DATA_END_SYMBOLS-${USER_LABEL_PREFIX}_edata = .; PROVIDE (${USER_LABEL_PREFIX}edata = .);}}
+  ${RELOCATING+${DATA_END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}${USER_LABEL_PREFIX}_edata = .${CREATE_SHLIB+)}; PROVIDE (${USER_LABEL_PREFIX}edata = .);}}
   ${RELOCATING+. = .;}
-  ${RELOCATING+${USER_LABEL_PREFIX}__bss_start = .;}
+  ${RELOCATING+${CREATE_SHLIB+PROVIDE (}${USER_LABEL_PREFIX}__bss_start = .${CREATE_SHLIB+)};}
   ${RELOCATING+${OTHER_BSS_SYMBOLS}}
   ${DATA_SDATA-${SBSS}}
   ${BSS_PLT+${PLT}}
@@ -671,7 +675,7 @@ cat <<EOF
   ${LARGE_BSS_AFTER_BSS-${LARGE_BSS}}
   ${RELOCATING+. = ALIGN(${ALIGNMENT});}
   ${RELOCATING+${OTHER_END_SYMBOLS}}
-  ${RELOCATING+${END_SYMBOLS-${USER_LABEL_PREFIX}_end = .; PROVIDE (${USER_LABEL_PREFIX}end = .);}}
+  ${RELOCATING+${END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}${USER_LABEL_PREFIX}_end = .${CREATE_SHLIB+)}; PROVIDE (${USER_LABEL_PREFIX}end = .);}}
   ${RELOCATING+${DATA_SEGMENT_END}}
   ${TINY_DATA_SECTION}
   ${TINY_BSS_SECTION}

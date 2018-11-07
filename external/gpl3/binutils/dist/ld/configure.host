@@ -24,8 +24,3 @@
 #  HDEFINES		host specific compiler flags
 
 HDEFINES=
-
-case "${host}" in
-     m88*-*-dgux*)
-	HDEFINES=-D__using_DGUX ;;
-esac

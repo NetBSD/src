@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OBJDUMP 1"
-.TH OBJDUMP 1 "2018-01-27" "binutils-2.30" "GNU Development Tools"
+.TH OBJDUMP 1 "2018-07-09" "binutils-2.30.90" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -163,7 +163,7 @@ objdump [\fB\-a\fR|\fB\-\-archive\-headers\fR]
         [\fB\-R\fR|\fB\-\-dynamic\-reloc\fR]
         [\fB\-s\fR|\fB\-\-full\-contents\fR]
         [\fB\-W[lLiaprmfFsoRtUuTgAckK]\fR|
-         \fB\-\-dwarf\fR[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames\-interp,=str,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links,=follow\-links]
+         \fB\-\-dwarf\fR[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,=frames\-interp,=str,=loc,=Ranges,=pubtypes,=trace_info,=trace_abbrev,=trace_aranges,=gdb_index,=addr,=cu_index,=links,=follow\-links]]
         [\fB\-G\fR|\fB\-\-stabs\fR]
         [\fB\-t\fR|\fB\-\-syms\fR]
         [\fB\-T\fR|\fB\-\-dynamic\-syms\fR]
@@ -253,9 +253,9 @@ choose an appropriate demangling style for your compiler.
 .IP "\fB\-\-debugging\fR" 4
 .IX Item "--debugging"
 .PD
-Display debugging information.  This attempts to parse \s-1STABS\s0 and \s-1IEEE\s0
+Display debugging information.  This attempts to parse \s-1STABS\s0
 debugging format information stored in the file and print it out using
-a C like syntax.  If neither of these formats are found this option
+a C like syntax.  If no \s-1STABS\s0 debuging was found this option
 falls back on the \fB\-W\fR option to print any \s-1DWARF\s0 information in
 the file.
 .IP "\fB\-e\fR" 4
@@ -426,7 +426,7 @@ precision \s-1FP\s0 instructions, \fBquarkse_em\fR selects the printing of
 special QuarkSE-EM instructions, \fBfpuda\fR selects the printing
 of double precision assist instructions, \fBfpus\fR selects the
 printing of \s-1FPU\s0 single precision \s-1FP\s0 instructions, while \fBfpud\fR
-selects the printing of \s-1FPU\s0 souble precision \s-1FP\s0 instructions.
+selects the printing of \s-1FPU\s0 double precision \s-1FP\s0 instructions.
 Additionally, one can choose to have all the immediates printed in
 hexadecimal using \fBhex\fR.  By default, the short immediates are
 printed using the decimal representation, while the long immediate
@@ -459,6 +459,11 @@ disassembler to interpret all instructions as Thumb instructions by
 using the switch \fB\-\-disassembler\-options=force\-thumb\fR.  This can be
 useful when attempting to disassemble thumb code produced by other
 compilers.
+.Sp
+For AArch64 targets this switch can be used to set whether instructions are
+disassembled as the most general instruction using the \fB\-M no-aliases\fR
+option or whether instruction notes should be generated as comments in the
+disasssembly using \fB\-M notes\fR.
 .Sp
 For the x86, some of the options duplicate functions of the \fB\-m\fR
 switch, but allow finer grained control.  Multiple selections from the

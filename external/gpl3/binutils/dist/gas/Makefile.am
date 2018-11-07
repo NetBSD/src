@@ -17,7 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 #
 
-AUTOMAKE_OPTIONS = 1.11 dejagnu foreign no-dist
+AUTOMAKE_OPTIONS = dejagnu foreign no-dist subdir-objects
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
 
 SUBDIRS = doc po
@@ -43,14 +43,14 @@ AM_CFLAGS = $(WARN_CFLAGS) $(ZLIBINC)
 
 TARG_CPU = @target_cpu_type@
 TARG_CPU_C = $(srcdir)/config/tc-@target_cpu_type@.c
-TARG_CPU_O = tc-@target_cpu_type@.@OBJEXT@
+TARG_CPU_O = config/tc-@target_cpu_type@.@OBJEXT@
 TARG_CPU_H = $(srcdir)/config/tc-@target_cpu_type@.h
 OBJ_FORMAT_C = $(srcdir)/config/obj-@obj_format@.c
-OBJ_FORMAT_O = obj-@obj_format@.@OBJEXT@
+OBJ_FORMAT_O = config/obj-@obj_format@.@OBJEXT@
 OBJ_FORMAT_H = $(srcdir)/config/obj-@obj_format@.h
 TARG_ENV_H = $(srcdir)/config/te-@te_file@.h
 ATOF_TARG_C = $(srcdir)/config/atof-@atof@.c
-ATOF_TARG_O = atof-@atof@.@OBJEXT@
+ATOF_TARG_O = config/atof-@atof@.@OBJEXT@
 
 # use @target_cpu_type@ for refering to configured target name
 IT_HDRS=itbl-parse.h $(srcdir)/itbl-ops.h
@@ -148,10 +148,7 @@ TARGET_CPU_CFILES = \
 	config/tc-h8300.c \
 	config/tc-hppa.c \
 	config/tc-ia64.c \
-	config/tc-i370.c \
 	config/tc-i386.c \
-	config/tc-i860.c \
-	config/tc-i960.c \
 	config/tc-ip2k.c \
 	config/tc-iq2000.c \
 	config/tc-lm32.c \
@@ -159,6 +156,7 @@ TARGET_CPU_CFILES = \
 	config/tc-m32r.c \
 	config/tc-m68hc11.c \
 	config/tc-m68k.c \
+	config/tc-s12z.c \
 	config/tc-mcore.c \
 	config/tc-mep.c \
 	config/tc-metag.c \
@@ -184,7 +182,6 @@ TARGET_CPU_CFILES = \
 	config/tc-s390.c \
 	config/tc-score.c \
 	config/tc-sh.c \
-	config/tc-sh64.c \
 	config/tc-sparc.c \
 	config/tc-spu.c \
 	config/tc-tic30.c \
@@ -225,10 +222,7 @@ TARGET_CPU_HFILES = \
 	config/tc-h8300.h \
 	config/tc-hppa.h \
 	config/tc-ia64.h \
-	config/tc-i370.h \
 	config/tc-i386.h \
-	config/tc-i860.h \
-	config/tc-i960.h \
 	config/tc-ip2k.h \
 	config/tc-iq2000.h \
 	config/tc-lm32.h \
@@ -236,6 +230,7 @@ TARGET_CPU_HFILES = \
 	config/tc-m32r.h \
 	config/tc-m68hc11.h \
 	config/tc-m68k.h \
+	config/tc-s12z.h \
 	config/tc-mcore.h \
 	config/tc-mep.h \
 	config/tc-metag.h \
@@ -260,7 +255,6 @@ TARGET_CPU_HFILES = \
 	config/tc-s390.h \
 	config/tc-score.h \
 	config/tc-sh.h \
-	config/tc-sh64.h \
 	config/tc-sparc.h \
 	config/tc-spu.h \
 	config/tc-tic30.h \
@@ -314,8 +308,6 @@ TARG_ENV_HFILES = \
 	config/te-armfbsdeabi.h \
 	config/te-armfbsdvfp.h \
 	config/te-armlinuxeabi.h \
-	config/te-dynix.h \
-	config/te-epoc-pe.h \
 	config/te-freebsd.h \
 	config/te-generic.h \
 	config/te-gnu.h \
@@ -323,22 +315,15 @@ TARG_ENV_HFILES = \
 	config/te-hppa.h \
 	config/te-hppa64.h \
 	config/te-hppalinux64.h \
-	config/te-i386aix.h \
 	config/te-ia64aix.h \
 	config/te-interix.h \
 	config/te-lynx.h \
-	config/te-mach.h \
 	config/te-macos.h \
 	config/te-nbsd.h \
 	config/te-nbsd532.h \
-	config/te-netware.h \
 	config/te-pc532mach.h \
 	config/te-pe.h \
-	config/te-psos.h \
-	config/te-riscix.h \
 	config/te-solaris.h \
-	config/te-sparcaout.h \
-	config/te-sun3.h \
 	config/te-svr4.h \
 	config/te-symbian.h \
 	config/te-tmips.h \

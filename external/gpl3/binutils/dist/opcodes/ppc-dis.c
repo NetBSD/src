@@ -340,7 +340,10 @@ powerpc_init_dialect (struct disassemble_info *info)
       dialect = ppc_parse_cpu (dialect, &sticky, "vle");
       break;
     default:
-      dialect = ppc_parse_cpu (dialect, &sticky, "power9") | PPC_OPCODE_ANY;
+      if (info->arch == bfd_arch_powerpc)
+	dialect = ppc_parse_cpu (dialect, &sticky, "power9") | PPC_OPCODE_ANY;
+      else
+	dialect = ppc_parse_cpu (dialect, &sticky, "pwr");
       break;
     }
 
@@ -356,19 +359,20 @@ powerpc_init_dialect (struct disassemble_info *info)
       else if ((new_cpu = ppc_parse_cpu (dialect, &sticky, opt)) != 0)
 	dialect = new_cpu;
       else
-	fprintf (stderr, _("warning: ignoring unknown -M%s option\n"), opt);
+	/* xgettext: c-format */
+	opcodes_error_handler (_("warning: ignoring unknown -M%s option"), opt);
     }
 
   info->private_data = priv;
   POWERPC_DIALECT(info) = dialect;
 }
 
-#define PPC_OPCD_SEGS 64
-static unsigned short powerpc_opcd_indices[PPC_OPCD_SEGS+1];
-#define VLE_OPCD_SEGS 32
-static unsigned short vle_opcd_indices[VLE_OPCD_SEGS+1];
-#define SPE2_OPCD_SEGS 13
-static unsigned short spe2_opcd_indices[SPE2_OPCD_SEGS+1];
+#define PPC_OPCD_SEGS (1 + PPC_OP (-1))
+static unsigned short powerpc_opcd_indices[PPC_OPCD_SEGS + 1];
+#define VLE_OPCD_SEGS (1 + VLE_OP_TO_SEG (VLE_OP (-1, 0xffff)))
+static unsigned short vle_opcd_indices[VLE_OPCD_SEGS + 1];
+#define SPE2_OPCD_SEGS (1 + SPE2_XOP_TO_SEG (SPE2_XOP (-1)))
+static unsigned short spe2_opcd_indices[SPE2_OPCD_SEGS + 1];
 
 /* Calculate opcode table indices to speed up disassembly,
    and init dialect.  */
@@ -376,62 +380,45 @@ static unsigned short spe2_opcd_indices[SPE2_OPCD_SEGS+1];
 void
 disassemble_init_powerpc (struct disassemble_info *info)
 {
-  int i;
-  unsigned short last;
-
   if (powerpc_opcd_indices[PPC_OPCD_SEGS] == 0)
     {
-      i = powerpc_num_opcodes;
-      while (--i >= 0)
+      unsigned seg, idx, op;
+
+      /* PPC opcodes */
+      for (seg = 0, idx = 0; seg <= PPC_OPCD_SEGS; seg++)
 	{
-	  unsigned op = PPC_OP (powerpc_opcodes[i].opcode);
-	  powerpc_opcd_indices[op] = i;
+	  powerpc_opcd_indices[seg] = idx;
+	  for (; idx < powerpc_num_opcodes; idx++)
+	    if (seg < PPC_OP (powerpc_opcodes[idx].opcode))
+	      break;
 	}
 
-      last = powerpc_num_opcodes;
-      for (i = PPC_OPCD_SEGS; i > 0; --i)
+      /* VLE opcodes */
+      for (seg = 0, idx = 0; seg <= VLE_OPCD_SEGS; seg++)
 	{
-	  if (powerpc_opcd_indices[i] == 0)
-	    powerpc_opcd_indices[i] = last;
-	  last = powerpc_opcd_indices[i];
+	  vle_opcd_indices[seg] = idx;
+	  for (; idx < vle_num_opcodes; idx++)
+	    {
+	      op = VLE_OP (vle_opcodes[idx].opcode, vle_opcodes[idx].mask);
+	      if (seg < VLE_OP_TO_SEG (op))
+		break;
+	    }
 	}
 
-      i = vle_num_opcodes;
-      while (--i >= 0)
+      /* SPE2 opcodes */
+      for (seg = 0, idx = 0; seg <= SPE2_OPCD_SEGS; seg++)
 	{
-	  unsigned op = VLE_OP (vle_opcodes[i].opcode, vle_opcodes[i].mask);
-	  unsigned seg = VLE_OP_TO_SEG (op);
-	  vle_opcd_indices[seg] = i;
-	}
-
-      last = vle_num_opcodes;
-      for (i = VLE_OPCD_SEGS; i > 0; --i)
-	{
-	  if (vle_opcd_indices[i] == 0)
-	    vle_opcd_indices[i] = last;
-	  last = vle_opcd_indices[i];
+	  spe2_opcd_indices[seg] = idx;
+	  for (; idx < spe2_num_opcodes; idx++)
+	    {
+	      op = SPE2_XOP (spe2_opcodes[idx].opcode);
+	      if (seg < SPE2_XOP_TO_SEG (op))
+		break;
+	    }
 	}
     }
 
-  /* SPE2 opcodes */
-  i = spe2_num_opcodes;
-  while (--i >= 0)
-    {
-      unsigned xop = SPE2_XOP (spe2_opcodes[i].opcode);
-      unsigned seg = SPE2_XOP_TO_SEG (xop);
-      spe2_opcd_indices[seg] = i;
-    }
-
-  last = spe2_num_opcodes;
-  for (i = SPE2_OPCD_SEGS; i > 1; --i)
-    {
-      if (spe2_opcd_indices[i] == 0)
-	spe2_opcd_indices[i] = last;
-      last = spe2_opcd_indices[i];
-    }
-
-  if (info->arch == bfd_arch_powerpc)
-    powerpc_init_dialect (info);
+  powerpc_init_dialect (info);
 }
 
 /* Print a big endian PowerPC instruction.  */
@@ -448,14 +435,6 @@ int
 print_insn_little_powerpc (bfd_vma memaddr, struct disassemble_info *info)
 {
   return print_insn_powerpc (memaddr, info, 0, get_powerpc_dialect (info));
-}
-
-/* Print a POWER (RS/6000) instruction.  */
-
-int
-print_insn_rs6000 (bfd_vma memaddr, struct disassemble_info *info)
-{
-  return print_insn_powerpc (memaddr, info, 1, PPC_OPCODE_POWER);
 }
 
 /* Extract the operand value from the PowerPC or POWER instruction.  */
@@ -681,28 +660,22 @@ print_insn_powerpc (bfd_vma memaddr,
   int status;
   uint64_t insn;
   const struct powerpc_opcode *opcode;
-  bfd_boolean insn_is_short;
+  int insn_length = 4;  /* Assume we have a normal 4-byte instruction.  */
 
   status = (*info->read_memory_func) (memaddr, buffer, 4, info);
+
+  /* The final instruction may be a 2-byte VLE insn.  */
+  if (status != 0 && (dialect & PPC_OPCODE_VLE) != 0)
+    {
+      /* Clear buffer so unused bytes will not have garbage in them.  */
+      buffer[0] = buffer[1] = buffer[2] = buffer[3] = 0;
+      status = (*info->read_memory_func) (memaddr, buffer, 2, info);
+    }
+
   if (status != 0)
     {
-      /* The final instruction may be a 2-byte VLE insn.  */
-      if ((dialect & PPC_OPCODE_VLE) != 0)
-        {
-          /* Clear buffer so unused bytes will not have garbage in them.  */
-          buffer[0] = buffer[1] = buffer[2] = buffer[3] = 0;
-          status = (*info->read_memory_func) (memaddr, buffer, 2, info);
-          if (status != 0)
-            {
-              (*info->memory_error_func) (status, memaddr, info);
-              return -1;
-            }
-        }
-      else
-        {
-          (*info->memory_error_func) (status, memaddr, info);
-          return -1;
-        }
+      (*info->memory_error_func) (status, memaddr, info);
+      return -1;
     }
 
   if (bigendian)
@@ -712,12 +685,15 @@ print_insn_powerpc (bfd_vma memaddr,
 
   /* Get the major opcode of the insn.  */
   opcode = NULL;
-  insn_is_short = FALSE;
   if ((dialect & PPC_OPCODE_VLE) != 0)
     {
       opcode = lookup_vle (insn);
-      if (opcode != NULL)
-	insn_is_short = PPC_OP_SE_VLE(opcode->mask);
+      if (opcode != NULL && PPC_OP_SE_VLE (opcode->mask))
+	{
+	  /* The operands will be fetched out of the 16-bit instruction.  */
+	  insn >>= 16;
+	  insn_length = 2;
+	}
     }
   if (opcode == NULL && (dialect & PPC_OPCODE_SPE2) != 0)
     opcode = lookup_spe2 (insn);
@@ -739,10 +715,6 @@ print_insn_powerpc (bfd_vma memaddr,
       else
 	(*info->fprintf_func) (info->stream, "%s", opcode->name);
 
-      if (insn_is_short)
-        /* The operands will be fetched out of the 16-bit instruction.  */
-        insn >>= 16;
-
       /* Now extract and print the operands.  */
       need_comma = 0;
       need_paren = 0;
@@ -752,12 +724,6 @@ print_insn_powerpc (bfd_vma memaddr,
 	  int64_t value;
 
 	  operand = powerpc_operands + *opindex;
-
-	  /* Operands that are marked FAKE are simply ignored.  We
-	     already made sure that the extract function considered
-	     the instruction to be valid.  */
-	  if ((operand->flags & PPC_OPERAND_FAKE) != 0)
-	    continue;
 
 	  /* If all of the optional operands have the value zero,
 	     then don't print any of them.  */
@@ -834,16 +800,8 @@ print_insn_powerpc (bfd_vma memaddr,
 	    }
 	}
 
-      /* We have found and printed an instruction.
-         If it was a short VLE instruction we have more to do.  */
-      if (insn_is_short)
-        {
-          memaddr += 2;
-          return 2;
-        }
-      else
-        /* Otherwise, return.  */
-        return 4;
+      /* We have found and printed an instruction.  */
+      return insn_length;
     }
 
   /* We could not find a match.  */
