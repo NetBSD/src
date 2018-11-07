@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.9 2013/10/01 15:41:17 skrll Exp $
+#	$NetBSD: mknative-binutils,v 1.10 2018/11/07 01:14:19 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -22,7 +22,7 @@ get_libbfd () {
 	{
 		getvars bfd/Makefile \
 			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
-			INCLUDES TDEFAULTS
+			INCLUDES TDEFAULTS HAVEVECS
 	} | write_mk external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/defs.mk
 
 	write_c external/gpl3/binutils/lib/libbfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
@@ -96,6 +96,7 @@ get_binutils () {
                 DEFS INCLUDES as_new_OBJECTS as_new_LDADD | 
 	sed	-e s/G_as_new_OBJECTS/G_OBJS/ \
 		-e s/G_as_new_LDADD=/G_OBJS+=/ \
+		-e s@config/@@ \
 		-e 's/\.\..*a//' |
 	write_mk external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/defs.mk
 
