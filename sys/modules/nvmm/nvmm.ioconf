@@ -1,0 +1,7 @@
+#	$NetBSD: nvmm.ioconf,v 1.1 2018/11/07 07:43:08 maxv Exp $
+
+ioconf		nvmm
+
+include		"conf/files"
+
+pseudo-device   nvmm

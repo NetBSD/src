@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.259 2018/07/17 18:55:24 joerg Exp $
+# $NetBSD: md.amd64,v 1.260 2018/11/07 07:43:07 maxv Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -677,6 +677,11 @@
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mm_malloc.h			comp-obsolete		obsolete
 ./usr/include/mmintrin.h			comp-obsolete		obsolete
+./usr/include/dev/nvmm				comp-c-include
+./usr/include/dev/nvmm/nvmm.h			comp-c-include
+./usr/include/dev/nvmm/nvmm_ioctl.h		comp-c-include
+./usr/include/dev/nvmm/x86			comp-c-include
+./usr/include/dev/nvmm/x86/nvmm_x86.h		comp-c-include
 ./usr/include/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/x64_64				comp-obsolete		obsolete
 ./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
