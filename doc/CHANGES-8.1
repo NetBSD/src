@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.49 2018/11/06 14:48:37 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.50 2018/11/07 09:13:44 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1611,4 +1611,10 @@ sys/fs/puffs/puffs_vnops.c			1.213
 
 	Fix use after RECLAIM in PUFFS filesystems.
 	[manu, ticket #1082]
+
+external/gpl2/groff/dist/configure		1.2
+
+	Test for other variants to declare exit(3) to fix
+	the cross-compile from FreeBSD.
+	[sevan, ticket #1083]
 
