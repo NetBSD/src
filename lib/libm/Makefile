@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.204 2018/06/13 08:19:36 kamil Exp $
+#  $NetBSD: Makefile,v 1.205 2018/11/07 04:00:12 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -123,14 +123,14 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_logf.S e_log10.S e_log10f.S e_log2.S e_log2f.S e_remainder.S \
 	    e_remainderf.S e_scalb.S e_scalbf.S e_sqrt.S e_sqrtf.S s_atan.S \
-	    s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S s_cos.S \
-	    s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S \
+	    s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
+	    s_finite.S s_finitef.S s_floor.S s_floorf.S \
 	    s_log1p.S s_log1pf.S s_logb.S s_logbf.S s_logbl.S \
 	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
-	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S lrint.S 
+	    s_significandf.S lrint.S
 # do not pick up the i387 asm version for the following functions;
 # it is incorrect
-.for f in modf ilogb ilogbl ilogbf
+.for f in cos cosf modf ilogb ilogbl ilogbf sin sinf tan tanf
 s_${f}.o s_${f}.pico s_${f}.po s_${f}.go s_${f}.d: s_${f}.c
 .endfor
 
