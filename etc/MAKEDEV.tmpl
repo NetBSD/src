@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.195 2018/11/04 12:48:01 maxv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.196 2018/11/07 07:43:07 maxv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -258,6 +258,7 @@
 #	nsmb*	SMB requester
 #	nvme*	Non-Volatile Memory Host Controller Interface device driver
 #	nvme*ns* Non-Volatile Memory namespace
+#	nvmm	NetBSD Virtual Machine Monitor
 #	openfirm OpenFirmware accessor
 #	pad*	Pseudo-audio device driver
 #	pci*	PCI bus access devices
@@ -277,7 +278,7 @@
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
 #	tap*	virtual Ethernet device
-#	tprof   task profiler
+#	tprof	task profiler
 #	tun*	network tunnel driver
 #	twa	3ware Apache control interface
 #	twe	3ware Escalade control interface
@@ -2203,6 +2204,10 @@ nvme[0-9]*ns[0-9]*)
 nvme[0-9]*)
 	unit=${i#nvme}
 	mkdev nvme$unit c %nvme_chr% $(($unit * 65536))
+	;;
+
+nvmm)
+	mkdev nvmm c %nvmm_chr% 0
 	;;
 
 autofs)
