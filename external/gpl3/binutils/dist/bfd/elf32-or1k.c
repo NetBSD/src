@@ -701,8 +701,8 @@ or1k_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an Or1k ELF reloc.  */
 
-static void
-or1k_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+or1k_info_to_howto_rela (bfd * abfd,
 			 arelent * cache_ptr,
 			 Elf_Internal_Rela * dst)
 {
@@ -712,10 +712,13 @@ or1k_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_OR1K_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid OR1K reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = & or1k_elf_howto_table[r_type];
+  return TRUE;
 }
 
 
@@ -962,7 +965,8 @@ or1k_elf_relocate_section (bfd *output_bfd,
 	  /* Addend should be zero.  */
 	  if (rel->r_addend != 0)
 	    _bfd_error_handler
-	      (_("internal error: addend should be zero for R_OR1K_GOT16"));
+	      (_("internal error: addend should be zero for %s"),
+	       "R_OR1K_GOT16");
 
 	  break;
 
@@ -1049,7 +1053,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
 		      {
 			BFD_FAIL ();
 			_bfd_error_handler
-			  (_("%B: probably compiled without -fPIC?"),
+			  (_("%pB: probably compiled without -fPIC?"),
 			   input_bfd);
 			bfd_set_error (bfd_error_bad_value);
 			return FALSE;
@@ -1071,7 +1075,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
 	  /* TODO: implement support for local dynamic.  */
 	  BFD_FAIL ();
 	  _bfd_error_handler
-	    (_("%B: support for local dynamic not implemented"),
+	    (_("%pB: support for local dynamic not implemented"),
 	     input_bfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -1206,7 +1210,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
 	     be used as linker input.  */
 	  BFD_FAIL ();
 	  _bfd_error_handler
-	    (_("%B: will not resolve runtime TLS relocation"),
+	    (_("%pB: will not resolve runtime TLS relocation"),
 	     input_bfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -1526,7 +1530,7 @@ or1k_elf_check_relocs (bfd *abfd,
 		      {
 			_bfd_error_handler
 			  /* xgettext:c-format */
-			  (_("%B: bad relocation section name `%s\'"),
+			  (_("%pB: bad relocation section name `%s\'"),
 			   abfd, name);
 		      }
 
@@ -2278,7 +2282,7 @@ maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 
       info->flags |= DF_TEXTREL;
       info->callbacks->minfo
-	(_("%B: dynamic relocation against `%T' in read-only section `%A'\n"),
+	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
 	 sec->owner, h->root.root.string, sec);
 
       /* Not an error, just cut short the traversal.  */
@@ -2638,7 +2642,8 @@ elf32_or1k_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if ((in_flags & EF_OR1K_NODELAY) != (out_flags & EF_OR1K_NODELAY))
     {
       _bfd_error_handler
-	(_("%B: EF_OR1K_NODELAY flag mismatch with previous modules"), ibfd);
+	(_("%pB: %s flag mismatch with previous modules"),
+	 ibfd, "EF_OR1K_NODELAY");
 
       bfd_set_error (bfd_error_bad_value);
       return FALSE;

@@ -170,7 +170,7 @@
    (SYS DCFGR    #x007 "Debug configuration register")
    (SYS PCCFGR   #x008 "Performance counters configuration register")
    (SYS NPC      #x010 "Next program counter")
-   (SYS SR       #x011 "Supervision Regsiter")
+   (SYS SR       #x011 "Supervision Register")
    (SYS PPC      #x012 "Previous program counter")
    (SYS FPCSR    #x014 "Floating point control status register")
    (.unsplice
