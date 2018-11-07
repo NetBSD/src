@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/05 19:45:56 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2018/11/07 21:20:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,4 +80,4 @@
 #ifdef CD_NAMES
 #undef CD_NAMES
 #endif
-#define CD_NAMES "ace1a"
+#define CD_NAMES "ace1"
