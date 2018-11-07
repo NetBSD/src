@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.209 2018/08/28 03:41:38 riastradh Exp $
+#	$NetBSD: Makefile,v 1.210 2018/11/07 07:43:08 maxv Exp $
 
 .include <bsd.own.mk>
 
@@ -200,6 +200,10 @@ SUBDIR+=	powernow
 SUBDIR+=	tco
 SUBDIR+=	tprof_x86
 SUBDIR+=	vmt
+.endif
+
+.if ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	nvmm
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \

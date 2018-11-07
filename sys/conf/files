@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1215 2018/10/19 21:09:10 jakllsch Exp $
+#	$NetBSD: files,v 1.1216 2018/11/07 07:43:07 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1547,6 +1547,11 @@ include "lib/libx86emu/files.x86emu"
 # "tprof" profiler.
 #
 include	"dev/tprof/files.tprof"
+
+#
+# NetBSD Virtual Machine Monitor.
+#
+include	"dev/nvmm/files.nvmm"
 
 #
 # alternate memory device
