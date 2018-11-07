@@ -78,6 +78,7 @@
 
 #define ELFOSABI_C6000_ELFABI 64 /* Bare-metal TMS320C6000 */
 #define ELFOSABI_C6000_LINUX 65 /* Linux TMS320C6000 */
+#define ELFOSABI_ARM_FDPIC   65 /* ARM FDPIC */
 #define ELFOSABI_ARM	     97	/* ARM */
 #define ELFOSABI_STANDALONE 255	/* Standalone (embedded) application */
 
@@ -338,6 +339,7 @@
 #define EM_RISCV 	243 	/* RISC-V */
 #define EM_LANAI	244	/* Lanai 32-bit processor.  */
 #define EM_BPF		247	/* Linux BPF – in-kernel virtual machine.  */
+#define EM_NFP		250	/* Netronome Flow Processor.  */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large
    random numbers (0x8523, 0xa7f2, etc.) to minimize the chances of collision
@@ -365,6 +367,9 @@
 
 /* Unofficial value for Web Assembly binaries, as used by LLVM.  */
 #define EM_WEBASSEMBLY		0x4157
+
+/* Freescale S12Z.   The Freescale toolchain generates elf files with this value.  */
+#define EM_S12Z               0x4DEF
 
 /* DLX magic number.  Written in the absense of an ABI.  */
 #define EM_DLX			0x5aa5
@@ -1016,6 +1021,9 @@
 #define	DF_1_SINGLETON	0x02000000
 #define	DF_1_STUB	0x04000000
 #define	DF_1_PIE	0x08000000
+#define	DF_1_KMOD	0x10000000
+#define	DF_1_WEAKFILTER	0x20000000
+#define	DF_1_NOCOMMON	0x40000000
 
 /* Flag values for the DT_FLAGS entry.	*/
 #define DF_ORIGIN	(1 << 0)

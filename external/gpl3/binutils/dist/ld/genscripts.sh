@@ -155,9 +155,9 @@ append_to_lib_path()
 	lib="=${lib}"
       fi
       skip_lib=no
-      if test -n "${LIBPATH_SUFFIX}"; then
+      for libpath_suffix in ${LIBPATH_SUFFIX}; do
 	case "${lib}" in
-	  *${LIBPATH_SUFFIX})
+	  *${libpath_suffix})
 	    case :${lib_path1}: in
 	      *:${lib}:*) ;;
 	      ::) lib_path1=${lib} ;;
@@ -171,13 +171,13 @@ append_to_lib_path()
 	    fi
 	    if test "${skip_lib}" = "no"; then
 	      case :${lib_path1}: in
-		*:${lib}${LIBPATH_SUFFIX}:*) ;;
-		::) lib_path1=${lib}${LIBPATH_SUFFIX} ;;
-	        *) lib_path1=${lib_path1}:${lib}${LIBPATH_SUFFIX} ;;
+		*:${lib}${libpath_suffix}:*) ;;
+		::) lib_path1=${lib}${libpath_suffix} ;;
+		*) lib_path1=${lib_path1}:${lib}${libpath_suffix} ;;
 	      esac
 	    fi ;;
 	esac
-      fi
+      done
       if test "${skip_lib}" = "no"; then
 	case :${lib_path1}:${lib_path2}: in
 	  *:${lib}:*) ;;
@@ -203,10 +203,12 @@ if [ "${LIB_PATH}" != ":" ] ; then
     # because 64bit libraries may be in both places, depending on
     # cross-development setup method (e.g.: /usr/s390x-linux/lib64
     # vs. /usr/s390-linux/lib64)
-    case "${NATIVE}:${LIBPATH_SUFFIX}:${TOOL_LIB}" in
-      :* | *::* | *:*:*${LIBPATH_SUFFIX}) ;;
-      *) libs="${exec_prefix}/${target_alias}/lib${LIBPATH_SUFFIX}" ;;
-    esac
+    for libpath_suffix in ${LIBPATH_SUFFIX}; do
+      case "${NATIVE}:${libpath_suffix}:${TOOL_LIB}" in
+	:* | *::* | *:*:*${libpath_suffix}) ;;
+	*) libs="${exec_prefix}/${target_alias}/lib${libpath_suffix}" ;;
+      esac
+    done
     libs="${exec_prefix}/${TOOL_LIB}/lib ${libs}"
   fi
   #NetBSD: don't spam linker scripts like this.

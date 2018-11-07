@@ -77,6 +77,8 @@ static const char * const riscv_pred_succ[16] =
   (EXTRACT_RVC_IMM (x) << RISCV_IMM_BITS)
 #define EXTRACT_RVC_SIMM3(x) \
   (RV_X(x, 10, 2) | (-RV_X(x, 12, 1) << 2))
+#define EXTRACT_RVC_UIMM8(x) \
+  (RV_X(x, 5, 8))
 #define EXTRACT_RVC_ADDI4SPN_IMM(x) \
   ((RV_X(x, 6, 1) << 2) | (RV_X(x, 5, 1) << 3) | (RV_X(x, 11, 2) << 4) | (RV_X(x, 7, 4) << 6))
 #define EXTRACT_RVC_ADDI16SP_IMM(x) \
@@ -114,6 +116,8 @@ static const char * const riscv_pred_succ[16] =
   ENCODE_RVC_IMM ((x) >> RISCV_IMM_BITS)
 #define ENCODE_RVC_SIMM3(x) \
   (RV_X(x, 0, 3) << 10)
+#define ENCODE_RVC_UIMM8(x) \
+  (RV_X(x, 0, 8) << 5)
 #define ENCODE_RVC_ADDI4SPN_IMM(x) \
   ((RV_X(x, 2, 1) << 6) | (RV_X(x, 3, 1) << 5) | (RV_X(x, 4, 2) << 11) | (RV_X(x, 6, 4) << 7))
 #define ENCODE_RVC_ADDI16SP_IMM(x) \
@@ -143,6 +147,7 @@ static const char * const riscv_pred_succ[16] =
 #define VALID_RVC_IMM(x) (EXTRACT_RVC_IMM(ENCODE_RVC_IMM(x)) == (x))
 #define VALID_RVC_LUI_IMM(x) (ENCODE_RVC_LUI_IMM(x) != 0 && EXTRACT_RVC_LUI_IMM(ENCODE_RVC_LUI_IMM(x)) == (x))
 #define VALID_RVC_SIMM3(x) (EXTRACT_RVC_SIMM3(ENCODE_RVC_SIMM3(x)) == (x))
+#define VALID_RVC_UIMM8(x) (EXTRACT_RVC_UIMM8(ENCODE_RVC_UIMM8(x)) == (x))
 #define VALID_RVC_ADDI4SPN_IMM(x) (EXTRACT_RVC_ADDI4SPN_IMM(ENCODE_RVC_ADDI4SPN_IMM(x)) == (x))
 #define VALID_RVC_ADDI16SP_IMM(x) (EXTRACT_RVC_ADDI16SP_IMM(ENCODE_RVC_ADDI16SP_IMM(x)) == (x))
 #define VALID_RVC_LW_IMM(x) (EXTRACT_RVC_LW_IMM(ENCODE_RVC_LW_IMM(x)) == (x))
@@ -223,7 +228,17 @@ static const char * const riscv_pred_succ[16] =
 #define OP_MASK_CSR		0xfff
 #define OP_SH_CSR		20
 
+#define OP_MASK_FUNCT3         0x7
+#define OP_SH_FUNCT3           12
+#define OP_MASK_FUNCT7         0x7f
+#define OP_SH_FUNCT7           25
+#define OP_MASK_FUNCT2         0x3
+#define OP_SH_FUNCT2           25
+
 /* RVC fields.  */
+
+#define OP_MASK_OP2            0x3
+#define OP_SH_OP2              0
 
 #define OP_MASK_CRS2 0x1f
 #define OP_SH_CRS2 2
@@ -231,6 +246,11 @@ static const char * const riscv_pred_succ[16] =
 #define OP_SH_CRS1S 7
 #define OP_MASK_CRS2S 0x7
 #define OP_SH_CRS2S 2
+
+#define OP_MASK_CFUNCT4                0xf
+#define OP_SH_CFUNCT4          12
+#define OP_MASK_CFUNCT3                0x7
+#define OP_SH_CFUNCT3          13
 
 /* ABI names for selected x-registers.  */
 
@@ -340,5 +360,6 @@ extern const char * const riscv_fpr_names_numeric[NFPR];
 extern const char * const riscv_fpr_names_abi[NFPR];
 
 extern const struct riscv_opcode riscv_opcodes[];
+extern const struct riscv_opcode riscv_insn_types[];
 
 #endif /* _RISCV_H_ */
