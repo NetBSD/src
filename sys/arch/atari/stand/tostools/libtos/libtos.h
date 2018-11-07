@@ -1,4 +1,4 @@
-/*	$NetBSD: libtos.h,v 1.6 2011/07/17 20:54:37 joerg Exp $	*/
+/*	$NetBSD: libtos.h,v 1.7 2018/11/07 22:51:47 maya Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -58,14 +58,14 @@
 #define	VA_LIST	va_list
 #endif
 
-#ifndef int8_t
+#ifndef __NetBSD__
 /*
  * My TOS/MiNT installation does not define these (Leo 09/10/2001).
  */
 typedef	unsigned char	u_int8_t;
 typedef	unsigned short	u_int16_t;
 typedef	unsigned long	u_int32_t;
-#endif /* int8_t */
+#endif /* __NetBSD__ */
 
 struct kparamb;
 struct osdsc;
