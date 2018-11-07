@@ -31,8 +31,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)fabs.s	8.1 (Berkeley) 6/4/93" */
-RCSID("$NetBSD: fabs.S,v 1.4 2011/01/25 02:38:15 matt Exp $")
+RCSID("$NetBSD: fabs.S,v 1.5 2018/11/07 22:21:42 riastradh Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+STRONG_ALIAS(fabsl, fabs)
 
 /* fabs - floating absolute value */
 
