@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.3 2017/03/22 23:11:08 chs Exp $ */
+/* $NetBSD: fenv.c,v 1.4 2018/11/07 06:47:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.3 2017/03/22 23:11:08 chs Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.4 2018/11/07 06:47:38 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -63,7 +63,7 @@ __weak_alias(feupdateenv,_feupdateenv)
 
 const fenv_t __fe_dfl_env = {
 	.__fpsr = 0,
-	.__fpcr = FPCR_FZ|FPCR_DN|FPCR_RN,
+	.__fpcr = __SHIFTIN(FPCR_RN, FPCR_RMODE),
 };
 
 /*
