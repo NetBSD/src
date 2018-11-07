@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 2018/11/05 17:04:03 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.14 2018/11/07 21:20:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -419,64 +419,83 @@ get_iso9660_volname(int dev, int sess, char *volname)
 static int
 get_available_cds(void)
 {
-	char dname[16], volname[80];
+	static const char *cdrom_devices[] = { CD_NAMES, 0 };
+	char dname[16], volname[80], fmt[80], tmp[80], *star;
 	struct cd_info *info = cds;
 	struct disklabel label;
 	int i, part, dev, error, sess, ready, count = 0;
 
-	for (i = 0; i < MAX_CD_DEVS; i++) {
-		sprintf(dname, "/dev/rcd%d%c", i, 'a'+RAW_PART);
-		dev = open(dname, O_RDONLY, 0);
-		if (dev == -1)
-			break;
-		ready = 0;
-		error = ioctl(dev, DIOCTUR, &ready);
-		if (error != 0 || ready == 0) {
-			close(dev);
-			continue;
-		}
-		error = ioctl(dev, DIOCGDINFO, &label);
-		close(dev);
-		if (error == 0) {
-			for (part = 0; part < label.d_npartitions; part++) {
-				if (label.d_partitions[part].p_fstype
-					== FS_UNUSED
-				    || label.d_partitions[part].p_size == 0)
-					continue;
-				if (label.d_partitions[part].p_fstype
-				    == FS_ISO9660) {
-					sess = label.d_partitions[part]
-					    .p_cdsession;
-					sprintf(dname, "/dev/rcd%d%c", i,
-					    'a'+part);
-					dev = open(dname, O_RDONLY, 0);
-					if (dev == -1)
-						continue;
-					error = get_iso9660_volname(dev, sess,
-					    volname);
-					close(dev);
-					if (error) continue;
-					sprintf(info->device_name, "cd%d%c",
-						i, 'a'+part);
-					sprintf(info->menu, "%s (%s)",
-						info->device_name,
-						volname);
-				} else {
-					/*
-					 * All install CDs use partition
-					 * a for the sets.
-					 */
-					if (part > 0)
-						continue;
-					sprintf(info->device_name, "cd%d%c",
-						i, 'a'+part);
-					strcpy(info->menu, info->device_name);
-				}
-				info++;
-				if (++count >= MAX_CD_INFOS)
-					break;
+	for (const char **dev_pat = cdrom_devices; *dev_pat; dev_pat++) {
+		for (i = 0; i < MAX_CD_DEVS; i++) {
+			strcpy(fmt, *dev_pat);
+			star = strchr(fmt, '*');
+			if (star) {
+				strcpy(star, "%d");
+				sprintf(tmp, "/dev/r%s%%c", fmt);
+				sprintf(dname, tmp, i, 'a'+RAW_PART);
+			} else {
+				sprintf(dname, "/dev/r%s%c", fmt,
+				    'a'+RAW_PART);
 			}
+			dev = open(dname, O_RDONLY, 0);
+			if (dev == -1)
+				continue;
+			ready = 0;
+			error = ioctl(dev, DIOCTUR, &ready);
+			if (error != 0 || ready == 0) {
+				close(dev);
+				continue;
+			}
+			error = ioctl(dev, DIOCGDINFO, &label);
+			close(dev);
+			if (error == 0) {
+				for (part = 0; part < label.d_npartitions;
+				    part++) {
+					if (label.d_partitions[part].p_fstype
+						== FS_UNUSED
+					    || label.d_partitions[part].p_size == 0)
+						continue;
+					if (label.d_partitions[part].p_fstype
+					    == FS_ISO9660) {
+						sess = label.d_partitions[part]
+						    .p_cdsession;
+						sprintf(dname, "/dev/rcd%d%c", i,
+						    'a'+part);
+						dev = open(dname, O_RDONLY, 0);
+						if (dev == -1)
+							continue;
+						error = get_iso9660_volname(dev, sess,
+						    volname);
+						close(dev);
+						if (error) continue;
+						sprintf(info->device_name, "cd%d%c",
+							i, 'a'+part);
+						sprintf(info->menu, "%s (%s)",
+							info->device_name,
+							volname);
+					} else {
+						/*
+						 * All install CDs use partition
+						 * a for the sets.
+						 */
+						if (part > 0)
+							continue;
+						sprintf(info->device_name, "cd%d%c",
+							i, 'a'+part);
+						strcpy(info->menu, info->device_name);
+					}
+					info++;
+					if (++count >= MAX_CD_INFOS)
+						break;
+				}
+			}
+			if (++count >= MAX_CD_INFOS)
+				break;
+			if (!star)
+				break;
 		}
+		if (++count >= MAX_CD_INFOS)
+			break;
 	}
 	return count;
 }
