@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.88 2018/08/29 16:26:25 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89 2018/11/07 07:14:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -258,6 +258,10 @@ struct pmap {
 					 ptp mapped */
 	uint64_t pm_ncsw;		/* for assertions */
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
+
+	/* Used by NVMM. */
+	void (*pm_tlb_flush)(struct pmap *);
+	void *pm_data;
 };
 
 /* macro to access pm_pdirpa slots */
