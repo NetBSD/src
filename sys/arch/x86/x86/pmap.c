@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.309 2018/10/31 06:26:26 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.310 2018/11/07 07:14:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.309 2018/10/31 06:26:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.310 2018/11/07 07:14:51 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2378,6 +2378,7 @@ pmap_create(void)
 #endif
 	pmap->pm_flags = 0;
 	pmap->pm_gc_ptp = NULL;
+	pmap->pm_tlb_flush = NULL;
 
 	kcpuset_create(&pmap->pm_cpus, true);
 	kcpuset_create(&pmap->pm_kernel_cpus, true);
