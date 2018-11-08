@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.2 2018/11/02 08:18:18 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.3 2018/11/08 08:28:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <aarch64/vmparam.h>
 #include <aarch64/cpufunc.h>
 #include <aarch64/armreg.h>
+#include <aarch64/machdep.h>
 
 #define __MD_VIRTUAL_SHIFT	48	/* 49bit address space, cut half */
 #define __MD_CANONICAL_BASE	0xFFFF000000000000
@@ -43,6 +44,8 @@
 #define __MD_SHADOW_SIZE	(1ULL << (__MD_VIRTUAL_SHIFT - KASAN_SHADOW_SCALE_SHIFT))
 #define KASAN_MD_SHADOW_START	(AARCH64_KSEG_END)
 #define KASAN_MD_SHADOW_END	(KASAN_MD_SHADOW_START + __MD_SHADOW_SIZE)
+
+static bool __md_early __read_mostly = true;
 
 static inline int8_t *
 kasan_md_addr_to_shad(const void *addr)
@@ -64,7 +67,10 @@ __md_palloc(void)
 {
 	paddr_t pa;
 
-	pmap_alloc_pdp(pmap_kernel(), &pa);
+	if (__predict_false(__md_early))
+		pa = (paddr_t)bootpage_alloc();
+	else
+		pmap_alloc_pdp(pmap_kernel(), &pa);
 
 	return pa;
 }
@@ -78,7 +84,11 @@ kasan_md_shadow_map_page(vaddr_t va)
 	size_t idx;
 
 	l0pa = reg_ttbr1_el1_read();
-	l0 = (void *)AARCH64_PA_TO_KVA(l0pa);
+	if (__predict_false(__md_early)) {
+		l0 = (void *)KERN_PHYSTOV(l0pa);
+	} else {
+		l0 = (void *)AARCH64_PA_TO_KVA(l0pa);
+	}
 
 	idx = l0pde_index(va);
 	pde = l0[idx];
@@ -88,7 +98,11 @@ kasan_md_shadow_map_page(vaddr_t va)
 	} else {
 		pa = l0pde_pa(pde);
 	}
-	l1 = (void *)AARCH64_PA_TO_KVA(pa);
+	if (__predict_false(__md_early)) {
+		l1 = (void *)KERN_PHYSTOV(pa);
+	} else {
+		l1 = (void *)AARCH64_PA_TO_KVA(pa);
+	}
 
 	idx = l1pde_index(va);
 	pde = l1[idx];
@@ -98,7 +112,11 @@ kasan_md_shadow_map_page(vaddr_t va)
 	} else {
 		pa = l1pde_pa(pde);
 	}
-	l2 = (void *)AARCH64_PA_TO_KVA(pa);
+	if (__predict_false(__md_early)) {
+		l2 = (void *)KERN_PHYSTOV(pa);
+	} else {
+		l2 = (void *)AARCH64_PA_TO_KVA(pa);
+	}
 
 	idx = l2pde_index(va);
 	pde = l2[idx];
@@ -108,7 +126,11 @@ kasan_md_shadow_map_page(vaddr_t va)
 	} else {
 		pa = l2pde_pa(pde);
 	}
-	l3 = (void *)AARCH64_PA_TO_KVA(pa);
+	if (__predict_false(__md_early)) {
+		l3 = (void *)KERN_PHYSTOV(pa);
+	} else {
+		l3 = (void *)AARCH64_PA_TO_KVA(pa);
+	}
 
 	idx = l3pte_index(va);
 	pde = l3[idx];
@@ -120,7 +142,12 @@ kasan_md_shadow_map_page(vaddr_t va)
 	}
 }
 
-#define kasan_md_early_init(a)	__nothing
+static void
+kasan_md_early_init(void *stack)
+{
+	kasan_shadow_map(stack, USPACE);
+	__md_early = false;
+}
 
 static void
 kasan_md_init(void)
