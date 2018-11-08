@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.412 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.413 2018/11/08 06:43:52 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.412 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.413 2018/11/08 06:43:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1817,7 +1817,7 @@ after_listen:
 		 * ts_rtt is increased by 1 to denote a valid sample,
 		 * with 0 indicating an invalid measurement.  This
 		 * extra 1 must be removed when ts_rtt is used, or
-		 * else an an erroneous extra 500 ms will result.
+		 * else an erroneous extra 500 ms will result.
 		 */
 		ts_rtt = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
 		if (ts_rtt > TCP_PAWS_IDLE)
