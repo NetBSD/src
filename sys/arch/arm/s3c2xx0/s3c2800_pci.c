@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.23 2017/04/19 12:34:14 jmcneill Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.24 2018/11/08 06:49:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.23 2017/04/19 12:34:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.24 2018/11/08 06:49:09 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -202,6 +202,7 @@ struct arm32_pci_chipset sspci_chipset = {
 	s3c2800_pci_bus_maxdevs,
 	s3c2800_pci_make_tag,
 	s3c2800_pci_decompose_tag,
+	NULL,
 	s3c2800_pci_conf_read,
 	s3c2800_pci_conf_write,
 	NULL,		/* intr_v */
