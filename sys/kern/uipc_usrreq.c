@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.186 2018/05/11 09:43:59 roy Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.187 2018/11/08 04:30:37 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.186 2018/05/11 09:43:59 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.187 2018/11/08 04:30:37 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -345,11 +345,13 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 		unp_dispose(control);
 		m_freem(control);
 		m_freem(m);
-		soroverflow(so2);
-		return (ENOBUFS);
+		/* Don't call soroverflow because we're returning this
+		 * error directly to the sender. */
+		so2->so_rcv.sb_overflowed++;
+		return ENOBUFS;
 	} else {
 		sorwakeup(so2);
-		return (0);
+		return 0;
 	}
 }
 
