@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.58 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: dir.c,v 1.59 2018/11/08 06:34:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.58 2017/02/08 16:11:40 rin Exp $");
+__RCSID("$NetBSD: dir.c,v 1.59 2018/11/08 06:34:40 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ dirscan(struct inodesc *idesc)
 	}
 
 	/*
-	 * If we are are swapping byte order in directory entries, just swap
+	 * If we are swapping byte order in directory entries, just swap
 	 * this block and return.
 	 */
 	if (do_dirswap) {

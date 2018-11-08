@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.15 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: twereg.h,v 1.16 2018/11/08 06:34:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ struct twe_param {
  * From 3ware's documentation:
  *
  *   All parameters maintained by the controller are grouped into related
- *   tables.  Tables are are accessed indirectly via get and set parameter
+ *   tables.  Tables are accessed indirectly via get and set parameter
  *   commands.  To access a specific parameter in a table, the table ID and
  *   parameter index are used to uniquely identify a parameter.  Table
  *   0xffff is the directory table and provides a list of the table IDs and
