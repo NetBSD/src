@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/11/08 21:47:04 christos Exp $
-
-.include <bsd.init.mk>
+#	$NetBSD: Makefile,v 1.5 2018/11/08 23:20:52 christos Exp $
 
 SUBDIR=	bootia32
 .if ${MACHINE} == "amd64"
