@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.24 2018/10/30 09:25:13 sborrill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.25 2018/11/08 12:09:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.24 2018/10/30 09:25:13 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.25 2018/11/08 12:09:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -966,6 +966,7 @@ static void	wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *);
 static void	wm_gig_downshift_workaround_ich8lan(struct wm_softc *);
 static void	wm_hv_phy_workaround_ich8lan(struct wm_softc *);
 static void	wm_lv_phy_workaround_ich8lan(struct wm_softc *);
+static int	wm_k1_workaround_lpt_lp(struct wm_softc *, bool);
 static int	wm_k1_gig_workaround_hv(struct wm_softc *, int);
 static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
@@ -1869,10 +1870,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 					0, &sc->sc_iot, &sc->sc_ioh,
 					NULL, &sc->sc_ios) == 0) {
 				sc->sc_flags |= WM_F_IOH_VALID;
-			} else {
+			} else
 				aprint_error_dev(sc->sc_dev,
 				    "WARNING: unable to map I/O space\n");
-			}
 		}
 
 	}
@@ -3258,9 +3258,9 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		error = 0;
 
-		if (cmd == SIOCSIFCAP) {
+		if (cmd == SIOCSIFCAP)
 			error = (*ifp->if_init)(ifp);
-		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
@@ -3858,7 +3858,7 @@ wm_phy_post_reset(struct wm_softc *sc)
 	/* Perform any necessary post-reset workarounds */
 	if (sc->sc_type == WM_T_PCH)
 		wm_hv_phy_workaround_ich8lan(sc);
-	if (sc->sc_type == WM_T_PCH2)
+	else if (sc->sc_type == WM_T_PCH2)
 		wm_lv_phy_workaround_ich8lan(sc);
 
 	/* Clear the host wakeup bit after lcd reset */
@@ -3873,7 +3873,16 @@ wm_phy_post_reset(struct wm_softc *sc)
 	/* Configure the LCD with the extended configuration region in NVM */
 	wm_init_lcd_from_nvm(sc);
 
-	/* Configure the LCD with the OEM bits in NVM */
+	/* XXX Configure the LCD with the OEM bits in NVM */
+
+	if (sc->sc_type == WM_T_PCH2) {
+		/* Ungate automatic PHY configuration on non-managed 82579 */
+		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID) == 0) {
+			delay(10 * 1000);
+			wm_gate_hw_phy_config_ich8lan(sc, false);
+		}
+		/* XXX Set EEE LPI Update Timer to 200usec */	
+	}
 }
 
 /* Only for PCH and newer */
@@ -4510,9 +4519,8 @@ wm_reset(struct wm_softc *sc)
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
-		} else {
+		} else
 			CSR_WRITE(sc, WMREG_EIAC_82574, 0);
-		}
 	}
 
 	/* Stop the transmit and receive processes. */
@@ -4651,6 +4659,14 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
+	/* Set Phy Config Counter to 50msec */
+	if (sc->sc_type == WM_T_PCH2) {
+		reg = CSR_READ(sc, WMREG_FEXTNVM3);
+		reg &= ~FEXTNVM3_PHY_CFG_COUNTER_MASK;
+		reg |= FEXTNVM3_PHY_CFG_COUNTER_50MS;
+		CSR_WRITE(sc, WMREG_FEXTNVM3, reg);
+	}
+	
 	if (phy_reset != 0)
 		wm_get_cfg_done(sc);
 
@@ -5867,9 +5883,9 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_RLPML, ETHER_MAX_LEN_JUMBO);
 	}
 
-	if (MCLBYTES == 2048) {
+	if (MCLBYTES == 2048)
 		sc->sc_rctl |= RCTL_2k;
-	} else {
+	else {
 		if (sc->sc_type >= WM_T_82543) {
 			switch (MCLBYTES) {
 			case 4096:
@@ -5886,7 +5902,8 @@ wm_init_locked(struct ifnet *ifp)
 				    MCLBYTES);
 				break;
 			}
-		} else panic("wm_init: i82542 requires MCLBYTES = 2048");
+		} else
+			panic("wm_init: i82542 requires MCLBYTES = 2048");
 	}
 
 	/* Enable ECC */
@@ -6926,9 +6943,9 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	if ((m0->m_pkthdr.csum_flags &
 	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_IPv4)) != 0) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
-	} else {
+	} else
 		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
-	}
+
 	ipcse = offset + iphl - 1;
 
 	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
@@ -7657,22 +7674,22 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	if (m0->m_pkthdr.csum_flags &
 	    (M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
 		WM_Q_EVCNT_INCR(txq, tusum);
-		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_TSOv4))
 			cmdc |= NQTXC_CMD_TCP;
-		} else {
+		else
 			cmdc |= NQTXC_CMD_UDP;
-		}
+
 		cmdc |= NQTXC_CMD_IP4;
 		*fieldsp |= NQTXD_FIELDS_TUXSM;
 	}
 	if (m0->m_pkthdr.csum_flags &
 	    (M_CSUM_UDPv6 | M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
 		WM_Q_EVCNT_INCR(txq, tusum6);
-		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_TSOv6))
 			cmdc |= NQTXC_CMD_TCP;
-		} else {
+		else
 			cmdc |= NQTXC_CMD_UDP;
-		}
+
 		cmdc |= NQTXC_CMD_IP6;
 		*fieldsp |= NQTXD_FIELDS_TUXSM;
 	}
@@ -7970,9 +7987,9 @@ retry:
 				    htole32(WTX_CMD_VLE);
 				txq->txq_descs[nexttx].wtx_fields.wtxu_vlan =
 				    htole16(vlan_get_tag(m0));
-			} else {
+			} else
 				txq->txq_descs[nexttx].wtx_fields.wtxu_vlan =0;
-			}
+
 			dcmdlen = 0;
 		} else {
 			/* setup an advanced data descriptor */
@@ -8188,13 +8205,27 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 			WM_Q_EVCNT_INCR(txq, underrun);
 #endif /* WM_EVENT_COUNTERS */
 
-		if (status & (WTX_ST_EC | WTX_ST_LC)) {
+		/*
+		 * 82574 and newer's document says the status field has neither
+		 * EC (Excessive Collision) bit nor LC (Late Collision) bit
+		 * (reserved). Refer "PCIe GbE Controller Open Source Software
+		 * Developer's Manual", 82574 datasheet and newer.
+		 *
+		 * XXX I saw the LC bit was set on I218 even though the media
+		 * was full duplex, so the bit might be used for other
+		 * meaning ...(I have no document).
+		 */
+
+		if (((status & (WTX_ST_EC | WTX_ST_LC)) != 0)
+		    && ((sc->sc_type < WM_T_82574)
+			|| (sc->sc_type == WM_T_80003))) {
 			ifp->if_oerrors++;
 			if (status & WTX_ST_LC)
 				log(LOG_WARNING, "%s: late collision\n",
 				    device_xname(sc->sc_dev));
 			else if (status & WTX_ST_EC) {
-				ifp->if_collisions += 16;
+				ifp->if_collisions +=
+				    TX_COLLISION_THRESHOLD + 1;
 				log(LOG_WARNING, "%s: excessive collisions\n",
 				    device_xname(sc->sc_dev));
 			}
@@ -8657,10 +8688,12 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		__func__));
 
 	if (icr & ICR_LSC) {
-		uint32_t reg;
 		uint32_t status = CSR_READ(sc, WMREG_STATUS);
+		uint32_t reg;
+		bool link;
 
-		if ((status & STATUS_LU) != 0) {
+		link = status & STATUS_LU;
+		if (link) {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
 				device_xname(sc->sc_dev),
 				(status & STATUS_FD) ? "FDX" : "HDX"));
@@ -8668,7 +8701,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
 				device_xname(sc->sc_dev)));
 		}
-		if ((sc->sc_type == WM_T_ICH8) && ((status & STATUS_LU) == 0))
+		if ((sc->sc_type == WM_T_ICH8) && (link == false))
 			wm_gig_downshift_workaround_ich8lan(sc);
 
 		if ((sc->sc_type == WM_T_ICH8)
@@ -8748,8 +8781,12 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			CSR_WRITE(sc, WMREG_FEXTNVM4, reg);
 		}
 
-		/* XXX Work-around I218 hang issue */
-		/* e1000_k1_workaround_lpt_lp() */
+		/* Work-around I218 hang issue */
+		if ((sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM) ||
+		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V) ||
+		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM3) ||
+		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V3))
+			wm_k1_workaround_lpt_lp(sc, link);
 
 		if (sc->sc_type >= WM_T_PCH_LPT) {
 			/*
@@ -9807,10 +9844,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 				CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
 			}
 		}
-	} else {
+	} else
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
-	}
 
 	/*
 	 * If the MAC is PCH2 or PCH_LPT and failed to detect MII PHY, call
@@ -10066,27 +10102,34 @@ wm_gmii_mdic_readreg(device_t dev, int phy, int reg)
 	    MDIC_REGADD(reg));
 
 	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
+		delay(50);
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(50);
 	}
 
 	if ((mdic & MDIC_READY) == 0) {
 		log(LOG_WARNING, "%s: MDIC read timed out: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
-		rv = 0;
+		return 0;
 	} else if (mdic & MDIC_E) {
 #if 0 /* This is normal if no PHY is present. */
 		log(LOG_WARNING, "%s: MDIC read error: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
 #endif
-		rv = 0;
+		return 0;
 	} else {
 		rv = MDIC_DATA(mdic);
 		if (rv == 0xffff)
 			rv = 0;
 	}
+
+	/*
+	 * Allow some time after each MDIC transaction to avoid
+	 * reading duplicate data in the next MDIC transaction.
+	 */
+	if (sc->sc_type == WM_T_PCH2)
+		delay(100);
 
 	return rv;
 }
@@ -10113,18 +10156,28 @@ wm_gmii_mdic_writereg(device_t dev, int phy, int reg, int val)
 	    MDIC_REGADD(reg) | MDIC_DATA(val));
 
 	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
+		delay(50);
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(50);
 	}
 
-	if ((mdic & MDIC_READY) == 0)
+	if ((mdic & MDIC_READY) == 0) {
 		log(LOG_WARNING, "%s: MDIC write timed out: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
-	else if (mdic & MDIC_E)
+		return;
+	} else if (mdic & MDIC_E) {
 		log(LOG_WARNING, "%s: MDIC write error: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
+		return;
+	}
+
+	/*
+	 * Allow some time after each MDIC transaction to avoid
+	 * reading duplicate data in the next MDIC transaction.
+	 */
+	if (sc->sc_type == WM_T_PCH2)
+		delay(100);
 }
 
 /*
@@ -12123,9 +12176,8 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 		hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
 
 	/* May be check the Flash Des Valid bit in Hw status */
-	if ((hsfsts & HSFSTS_FLDVAL) == 0) {
+	if ((hsfsts & HSFSTS_FLDVAL) == 0)
 		return error;
-	}
 
 	/* Clear FCERR in Hw status by writing 1 */
 	/* Clear DAEL in Hw status by writing a 1 */
@@ -14361,6 +14413,77 @@ wm_lv_phy_workaround_ich8lan(struct wm_softc *sc)
 	wm_set_mdio_slow_mode_hv(sc);
 }
 
+/**
+ *  e1000_k1_workaround_lpt_lp - K1 workaround on Lynxpoint-LP
+ *  @link: link up bool flag
+ *
+ *  When K1 is enabled for 1Gbps, the MAC can miss 2 DMA completion indications
+ *  preventing further DMA write requests.  Workaround the issue by disabling
+ *  the de-assertion of the clock request when in 1Gpbs mode.
+ *  Also, set appropriate Tx re-transmission timeouts for 10 and 100Half link
+ *  speeds in order to avoid Tx hangs.
+ **/
+static int
+wm_k1_workaround_lpt_lp(struct wm_softc *sc, bool link)
+{
+	uint32_t fextnvm6 = CSR_READ(sc, WMREG_FEXTNVM6);
+	uint32_t status = CSR_READ(sc, WMREG_STATUS);
+	uint32_t speed = __SHIFTOUT(status, STATUS_SPEED);
+	uint16_t phyreg;
+
+	if (link && (speed == STATUS_SPEED_1000)) {
+		sc->phy.acquire(sc);
+		int rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		    &phyreg);
+		if (rv != 0)
+			goto release;
+		rv = wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		    phyreg & ~KUMCTRLSTA_K1_ENABLE);
+		if (rv != 0)
+			goto release;
+		delay(20);
+		CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6 | FEXTNVM6_REQ_PLL_CLK);
+		
+		rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		    &phyreg);
+release:
+		sc->phy.release(sc);
+		return rv;
+	}
+
+	fextnvm6 &= ~FEXTNVM6_REQ_PLL_CLK;
+
+	struct mii_softc *child = LIST_FIRST(&sc->sc_mii.mii_phys);
+	if (((child != NULL) && (child->mii_mpd_rev > 5))
+	    || !link
+	    || ((speed == STATUS_SPEED_100) && (status & STATUS_FD)))
+		goto update_fextnvm6;
+
+	phyreg = wm_gmii_hv_readreg(sc->sc_dev, 2, I217_INBAND_CTRL);
+
+	/* Clear link status transmit timeout */
+	phyreg &= ~I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_MASK;
+	if (speed == STATUS_SPEED_100) {
+		/* Set inband Tx timeout to 5x10us for 100Half */
+		phyreg |= 5 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+		/* Do not extend the K1 entry latency for 100Half */
+		fextnvm6 &= ~FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+	} else {
+		/* Set inband Tx timeout to 50x10us for 10Full/Half */
+		phyreg |= 50 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+		/* Extend the K1 entry latency for 10 Mbps */
+		fextnvm6 |= FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+	}
+
+	wm_gmii_hv_writereg(sc->sc_dev, 2, I217_INBAND_CTRL, phyreg);
+
+update_fextnvm6:
+	CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6);
+	return 0;
+}
+	
 static int
 wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
 {
@@ -14521,9 +14644,8 @@ wm_phy_is_accessible_pchlan(struct wm_softc *sc)
 			continue;
 		break;
 	}
-	if (!MII_INVALIDID(id1) && !MII_INVALIDID(id2)) {
+	if (!MII_INVALIDID(id1) && !MII_INVALIDID(id2))
 		goto out;
-	}
 
 	if (sc->sc_type < WM_T_PCH_LPT) {
 		sc->phy.release(sc);
