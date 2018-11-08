@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.22 2018/11/02 13:46:24 maya Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.23 2018/11/08 06:49:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.22 2018/11/02 13:46:24 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.23 2018/11/08 06:49:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ struct arm32_pci_chipset ifpga_pci_chipset = {
 	ifpga_pci_bus_maxdevs,
 	ifpga_pci_make_tag,
 	ifpga_pci_decompose_tag,
+	NULL,
 	ifpga_pci_conf_read,
 	ifpga_pci_conf_write,
 	NULL,	/* intr_v */
