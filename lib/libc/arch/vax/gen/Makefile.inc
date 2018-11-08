@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.17 2010/07/06 05:59:52 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2018/11/08 18:19:37 riastradh Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S bswap64.S \
-	fabs.S frexp.c \
+	fabs.S fabsf.S frexp.c \
 	fpclassifyf.c fpclassifyd.c \
 	infinityf.c infinity.c infinityl.c \
 	isfinitef.c isfinited.c \
