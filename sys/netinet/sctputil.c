@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.13 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.14 2018/11/08 06:34:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.13 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.14 2018/11/08 06:34:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2027,7 +2027,7 @@ sctp_notify_assoc_change(u_int32_t event, struct sctp_tcb *stcb,
 	printf("notify: %d\n", event);
 #endif
 	/*
-	 * First if we are are going down dump everything we
+	 * First if we are going down dump everything we
 	 * can to the socket rcv queue.
 	 */
 	if ((event == SCTP_SHUTDOWN_COMP) || (event == SCTP_COMM_LOST)) {
