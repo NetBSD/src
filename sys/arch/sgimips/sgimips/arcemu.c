@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.23 2018/02/08 09:05:18 dholland Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.24 2018/11/08 06:43:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.23 2018/02/08 09:05:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.24 2018/11/08 06:43:52 msaitoh Exp $");
 
 #ifndef _LP64
 
@@ -507,7 +507,7 @@ arcemu_ip6_GetMemoryDescriptor(void *mem)
 	if (memcfg & 0x10) {
 		pages *= 4096;
 
-#if 0 // may cause an an exception and bring us down in flames; disable until tested
+#if 0 // may cause an exception and bring us down in flames; disable until tested
 		/* check for aliasing and adjust page count if necessary */
 		volatile uint8_t *tp1, *tp2;
 		uint8_t tmp;

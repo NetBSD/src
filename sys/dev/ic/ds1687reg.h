@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.10 2008/05/04 12:50:38 martin Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.11 2018/11/08 06:43:52 msaitoh Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  * The DS1686 contains 14 basic clock-related registers and 50 bytes of
  * user RAM laid out for compatibility with the register layout of the
  * DS1287/MC14818 chips.  It also includes an extended mode which allows
- * access to these same basic registers as well an an extended register
+ * access to these same basic registers as well an extended register
  * set and NVRAM area; this extended register set includes a century
  * register for Y2k compliant date storage.
  *
