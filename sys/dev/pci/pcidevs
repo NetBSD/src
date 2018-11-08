@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1349 2018/10/16 00:07:08 jmcneill Exp $
+$NetBSD: pcidevs,v 1.1350 2018/11/08 04:04:42 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5047,6 +5047,8 @@ product INTEL 100SERIES_LP_I2C_0 0x9d60	100 Series I2C 0
 product INTEL 100SERIES_LP_I2C_1 0x9d61	100 Series I2C 1
 product INTEL 100SERIES_LP_I2C_2 0x9d62	100 Series I2C 2
 product INTEL 100SERIES_LP_I2C_3 0x9d63	100 Series I2C 3
+product INTEL 100SERIES_LP_I2C_4 0x9d64	100 Series I2C 4
+product INTEL 100SERIES_LP_I2C_5 0x9d65	100 Series I2C 5
 product INTEL 100SERIES_LP_UART_2 0x9d66 100 Series UART 2
 product INTEL 100SERIES_LP_HDA	0x9d70	100 Series HD Audio
 product INTEL 2HS_U_HDA		0x9d71	200 Series HD Audio
