@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.88 2018/11/08 02:11:54 manu Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.89 2018/11/08 09:00:24 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.88 2018/11/08 02:11:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.89 2018/11/08 09:00:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -311,7 +311,7 @@ Static const struct usbd_quirk_entry {
 	{ UQ_LOST_CS_DESC, NULL }},
 
  /* NXP PN533 corrupts its USB configuration descriptors */
- { USB_VENDOR_PHILIPSSEMI,	USB_PRODUCT_PHILIPSSEMT_PN533,		ANY,
+ { USB_VENDOR_PHILIPSSEMI,	USB_PRODUCT_PHILIPSSEMI_PN533,		ANY,
 	{ UQ_DESC_CORRUPT, desc_pn533 }},
  { USB_VENDOR_SHUTTLE,		USB_PRODUCT_SHUTTLE_SCL3711,		ANY,
 	{ UQ_DESC_CORRUPT, desc_pn533 }},
