@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.20 2018/11/08 11:15:58 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.21 2018/11/08 11:56:56 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,6 +110,8 @@ static int fsck_preen(const char *, int, const char *, bool silent);
 static void fixsb(const char *, const char *, char);
 static bool is_gpt(const char *);
 static int incoregpt(pm_devs_t *, partinfo *);
+static bool enumerate_disks(void *state,
+	bool (*func)(void *state, const char *dev));
 
 
 static bool tmpfs_on_var_shm(void);
@@ -351,46 +353,48 @@ done:
 		strcpy(dd->dd_descr, dd->dd_name);
 }
 
-/* disknames - contains device names without partition letters
- * cdrom_devices - contains devices including partition letters
- * returns the first entry in hw.disknames matching a cdrom_device, or
- * first entry on error or no match
+/*
+ * State for helper callback for get_default_cdrom
+ */
+struct default_cdrom_data {
+	char *device;
+	size_t max_len;
+	bool found;
+};
+
+/*
+ * Helper function for get_default_cdrom, gets passed a device
+ * name and a void pointer to default_cdrom_data.
+ */
+static bool
+get_default_cdrom_helper(void *state, const char *dev)
+{
+	struct default_cdrom_data *data = state;
+
+	strlcpy(data->device, dev, data->max_len);
+	data->found = true;
+
+	return false;	/* one is enough, stop iteration */
+}
+
+/*
+ * Set the argument to the name of the first CD devices actually
+ * available, leave it unmodified otherwise.
+ * Return true if a device has been found.
  */
 bool
 get_default_cdrom(char *cd, size_t max_len)
 {
-	static const char *cdrom_devices[] = { CD_NAMES, 0 };
-	static const char mib_name[] = "hw.disknames";
-	size_t len;
-	char *disknames;
-	char *last;
-	char *name;
-	const char **arg;
-	const char *cd_dev;
+	struct default_cdrom_data state;
 
-	/* On error just use first entry in cdrom_devices */
-	if (sysctlbyname(mib_name, NULL, &len, NULL, 0) == -1)
-		return cdrom_devices[0];
-	if ((disknames = malloc(len + 2)) == 0) /* skip on malloc fail */
-		return cdrom_devices[0];
+	state.device = cd;
+	state.max_len = max_len;
+	state.found = false;
 
-	(void)sysctlbyname(mib_name, disknames, &len, NULL, 0);
-	for ((name = strtok_r(disknames, " ", &last)); name;
-	    (name = strtok_r(NULL, " ", &last))) {
-		for (arg = cdrom_devices; *arg; ++arg) {
-			cd_dev = *arg;
-			/* skip unit and partition */
-			if (strncmp(cd_dev, name, strlen(cd_dev) - 2) != 0)
-				continue;
-			if (name != disknames)
-				strcpy(disknames, name);
-			strcat(disknames, "a");
-			/* XXX: leaks, but so what? */
-			return disknames;
-		}
-	}
-	free(disknames);
-	return cdrom_devices[0];
+	if (enumerate_disks(&state, get_default_cdrom_helper))
+		return state.found;
+
+	return false;
 }
 
 static void
@@ -520,109 +524,139 @@ is_cdrom_device(const char *dev)
 
 /*
  * Multi-purpose helper function:
- * iterate all known disks, either
- *  - skip all CD devices
- *  - recognize the first available CD device and set its name
- * When doing non-CDs, optionally skip non-partionable devices
- * (i.e. wedges).
+ * iterate all known disks, invoke a callback for each.
+ * Stop iteration when the callback returns false.
+ * Return true when iteration actually happend, false on error.
  */
-static int
-get_disks(struct disk_desc *dd, bool with_non_partitionable,
-	char *cd_dev, size_t max_len)
+static bool
+enumerate_disks(void *state, bool (*func)(void *state, const char *dev))
 {
 	static const int mib[] = { CTL_HW, HW_DISKNAMES };
 	static const unsigned int miblen = __arraycount(mib);
 	const char *xd;
-	struct disklabel l;
-	int numdisks;
-	size_t len;
 	char *disk_names;
-
-	/* initialize */
-	numdisks = 0;
+	size_t len;
 
 	if (sysctl(mib, miblen, NULL, &len, NULL, 0) == -1)
-		return 0;
+		return false;
+
 	disk_names = malloc(len);
 	if (disk_names == NULL)
-		return 0;
+		return false;
 
 	if (sysctl(mib, miblen, disk_names, &len, NULL, 0) == -1) {
 		free(disk_names);
-		return 0;
+		return false;
 	}
 
 	for (xd = strtok(disk_names, " "); xd != NULL; xd = strtok(NULL, " ")) {
-		/* is this a CD device? */
-		if (is_cdrom_device(xd)) {
-			if (cd_dev && max_len) {
-				/* return first found CD device name */
-				strlcpy(cd_dev, xd, max_len);
-				return 1;
-			} else {
-				/* skip this device */
-				continue;
-			}
-		}
-
-		strlcpy(dd->dd_name, xd, sizeof dd->dd_name - 2);
-		dd->dd_no_mbr = false;
-		dd->dd_no_part = false;
-
-		if (strncmp(xd, "dk", 2) == 0) {
-			char *endp;
-			int e;
-
-			/* if this device is dkNNNN, no partitioning is possible */
-			strtou(xd+2, &endp, 10, 0, INT_MAX, &e);
-			if (endp && *endp == 0 && e == 0)
-				dd->dd_no_part = true;
-		}
-		if (dd->dd_no_part && !with_non_partitionable)
-			continue;
-
-		if (!get_geom(dd->dd_name, &l)) {
-			if (errno == ENOENT)
-				break;
-			if (errno != ENOTTY || !dd->dd_no_part)
-				/*
-				 * Allow plain partitions,
-				 * like already existing wedges
-				 * (like dk0) if marked as
-				 * non-partitioning device.
-				 * For all other cases, continue
-				 * with the next disk.
-				 */
-				continue;
-			if (!is_ffs_wedge(dd->dd_name))
-				continue;
-		}
-
-		/*
-		 * Exclude a disk mounted as root partition,
-		 * in case of install-image on a USB memstick.
-		 */
-		if (is_active_rootpart(dd->dd_name, 0))
-			continue;
-
-		if (!dd->dd_no_part) {
-			dd->dd_cyl = l.d_ncylinders;
-			dd->dd_head = l.d_ntracks;
-			dd->dd_sec = l.d_nsectors;
-			dd->dd_secsize = l.d_secsize;
-			dd->dd_totsec = l.d_secperunit;
-		}
-		if (dd->dd_no_part)
-			get_wedge_descr(dd);
-		else
-			get_descr(dd);
-		dd++;
-		numdisks++;
-		if (numdisks == MAX_DISKS)
+		if (!(*func)(state, xd))
 			break;
 	}
 	free(disk_names);
-	return numdisks;
+
+	return true;
+}
+
+/*
+ * Helper state for get_disks
+ */
+struct get_disks_state {
+	int numdisks;
+	struct disk_desc *dd;
+	bool with_non_partitionable;
+};
+
+/*
+ * Helper function for get_disks enumartion
+ */
+static bool
+get_disks_helper(void *arg, const char *dev)
+{
+	struct get_disks_state *state = arg;
+	struct disklabel l;
+
+	/* is this a CD device? */
+	if (is_cdrom_device(dev))
+		return true;
+
+	strlcpy(state->dd->dd_name, dev, sizeof state->dd->dd_name - 2);
+	state->dd->dd_no_mbr = false;
+	state->dd->dd_no_part = false;
+
+	if (strncmp(dev, "dk", 2) == 0) {
+		char *endp;
+		int e;
+
+		/* if this device is dkNNNN, no partitioning is possible */
+		strtou(dev+2, &endp, 10, 0, INT_MAX, &e);
+		if (endp && *endp == 0 && e == 0)
+			state->dd->dd_no_part = true;
+	}
+	if (state->dd->dd_no_part && !state->with_non_partitionable)
+		return true;
+
+	if (!get_geom(state->dd->dd_name, &l)) {
+		if (errno == ENOENT)
+			return true;
+		if (errno != ENOTTY || !state->dd->dd_no_part)
+			/*
+			 * Allow plain partitions,
+			 * like already existing wedges
+			 * (like dk0) if marked as
+			 * non-partitioning device.
+			 * For all other cases, continue
+			 * with the next disk.
+			 */
+			return true;
+		if (!is_ffs_wedge(state->dd->dd_name))
+			return true;
+	}
+
+	/*
+	 * Exclude a disk mounted as root partition,
+	 * in case of install-image on a USB memstick.
+	 */
+	if (is_active_rootpart(state->dd->dd_name, 0))
+		return true;
+
+	if (!state->dd->dd_no_part) {
+		state->dd->dd_cyl = l.d_ncylinders;
+		state->dd->dd_head = l.d_ntracks;
+		state->dd->dd_sec = l.d_nsectors;
+		state->dd->dd_secsize = l.d_secsize;
+		state->dd->dd_totsec = l.d_secperunit;
+	}
+	if (state->dd->dd_no_part)
+		get_wedge_descr(state->dd);
+	else
+		get_descr(state->dd);
+	state->dd++;
+	state->numdisks++;
+	if (state->numdisks == MAX_DISKS)
+		return false;
+
+	return true;
+}
+
+/*
+ * Get all disk devices that are not CDs.
+ * Optionally leave out those that can not be partitioned further.
+ */
+static int
+get_disks(struct disk_desc *dd, bool with_non_partitionable)
+{
+	struct get_disks_state state;
+
+	/* initialize */
+	state.numdisks = 0;
+	state.dd = dd;
+	state.with_non_partitionable = with_non_partitionable;
+
+	if (enumerate_disks(&state, get_disks_helper))
+		return state.numdisks;
+
+	return 0;
 }
 
 int
@@ -637,7 +671,7 @@ find_disks(const char *doingwhat)
 	pm_devs_t *pm_i, *pm_last = NULL;
 
 	/* Find disks. */
-	numdisks = get_disks(disks, partman_go <= 0, NULL, 0);
+	numdisks = get_disks(disks, partman_go <= 0);
 
 	/* need a redraw here, kernel messages hose everything */
 	touchwin(stdscr);
