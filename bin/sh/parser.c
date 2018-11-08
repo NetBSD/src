@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.150 2018/08/19 23:50:27 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.151 2018/11/08 18:37:42 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.150 2018/08/19 23:50:27 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.151 2018/11/08 18:37:42 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2469,6 +2469,9 @@ expandonstack(char *ps, int lineno)
 	xflag = save_x;
 	popfilesupto(savetopfile);
 	handler = savehandler;
+
+	if (exception == EXEXIT)
+		longjmp(handler->loc, 1);
 
 	if (result != NULL) {
 		INTON;
