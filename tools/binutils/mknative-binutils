@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.10 2018/11/07 01:14:19 christos Exp $
+#	$NetBSD: mknative-binutils,v 1.11 2018/11/08 02:08:35 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -96,7 +96,7 @@ get_binutils () {
                 DEFS INCLUDES as_new_OBJECTS as_new_LDADD | 
 	sed	-e s/G_as_new_OBJECTS/G_OBJS/ \
 		-e s/G_as_new_LDADD=/G_OBJS+=/ \
-		-e s@config/@@ \
+		-e s@config/@@g \
 		-e 's/\.\..*a//' |
 	write_mk external/gpl3/binutils/usr.bin/gas/arch/$MACHINE_ARCH/defs.mk
 
