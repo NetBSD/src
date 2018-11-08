@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2456 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2457 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -242,3 +242,6 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	libc: Update to tzcode2018f. [christos 20181019]
 	tzdata: updated to 2018g [kre 20181027]
 	libc: Update to tzcode2018g. [christos 20181027]
+	kernel: Add NVMM, the NetBSD virtualization driver, with initial
+		support for x86. [maxv 20181107]
+	aarch64: Add support for kASan. [maxv 20181108]
