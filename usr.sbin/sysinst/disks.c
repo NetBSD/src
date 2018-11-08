@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.19 2018/11/07 21:59:30 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.20 2018/11/08 11:15:58 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <util.h>
 #include <uuid.h>
 
@@ -509,29 +510,10 @@ static bool
 is_cdrom_device(const char *dev)
 {
 	static const char *cdrom_devices[] = { CD_NAMES, 0 };
-	char pat[SSTRSIZE], comp[SSTRSIZE], *star, *p;
-	const char **dev_pat;
 
-	/* trim device number off */
-	strcpy(comp, dev);
-	for (p = comp + strlen(comp) - 1; p != comp; p--)
-		if (!isdigit((unsigned char)*p))
-			break;
-	if (p != comp)
-		p[1] = 0;
-
-	for (dev_pat = cdrom_devices; *dev_pat; dev_pat++) {
-		strcpy(pat, *dev_pat);
-		star = strchr(pat, '*');
-		if (star) {
-			*star = 0;
-			if (strcmp(comp, pat) == 0)
-				return true;
-		} else {
-			if (strcmp(dev, pat) == 0)
-				return true;
-		}
-	}
+	for (const char **dev_pat = cdrom_devices; *dev_pat; dev_pat++)
+		if (fnmatch(*dev_pat, dev, 0) == 0)
+			return true;
 
 	return false;
 }
