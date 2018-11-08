@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.49 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.50 2018/11/08 10:55:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.49 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.50 2018/11/08 10:55:41 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -63,18 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.49 2018/09/03 16:29:29 riastradh E
 #include <machine/sysarch.h>
 #include <machine/mtrr.h>
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(XEN)
 #undef	IOPERM	/* not implemented */
 #else
-#if defined(XEN)
-#undef	IOPERM
-#else /* defined(XEN) */
 #define	IOPERM
-#endif /* defined(XEN) */
 #endif
 
-#ifdef XEN
-#undef	USER_LDT
+#if defined(XEN) && defined(USER_LDT)
+#error "USER_LDT not supported on XEN"
 #endif
 
 extern struct vm_map *kernel_map;
