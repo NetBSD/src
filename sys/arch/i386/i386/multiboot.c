@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.23 2016/05/30 17:45:26 dholland Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.24 2018/11/08 06:23:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.23 2016/05/30 17:45:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.24 2018/11/08 06:23:48 msaitoh Exp $");
 
 #include "opt_multiboot.h"
 
@@ -519,7 +519,7 @@ setup_bootpath(struct multiboot_info *mi)
  * Sets up the console bootinfo structure if the user gave a 'console'
  * argument on the boot command line.  The Multiboot information
  * structure gives no hint about this, so the only way to know where the
- * console is is to let the user specify it.
+ * console is to let the user specify it.
  *
  * If there wasn't any 'console' argument, this does not generate any
  * bootinfo entry, falling back to the kernel's default console.
