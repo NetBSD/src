@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.50 2018/11/07 09:13:44 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.51 2018/11/08 12:11:27 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1617,4 +1617,32 @@ external/gpl2/groff/dist/configure		1.2
 	Test for other variants to declare exit(3) to fix
 	the cross-compile from FreeBSD.
 	[sevan, ticket #1083]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.167
+sys/dev/pci/ixgbe/ixv.c				1.107
+
+	Don't set LRO capability flag because we don't support it yet.
+	[msaitoh, ticket #1084]
+
+sys/dev/mii/inbmphyreg.h		1.11
+sys/dev/pci/if_wmreg.h			1.108
+sys/dev/pci/if_wm.c			1.590-1.596 via patch
+
+	- 82574 and newer document says the status field has neither EC
+	  (Excessive Collision) bit nor LC (Late Collision) bit (reserved), so
+	  don't check the bit.
+	- Add workaround for DMA hang problem which result in TX device timeout
+	  on PCH_LPT with I218. Same as FreeBSD and Linux. This workaround is
+	  only for device ID 0x155a, 0x15a2, 0x1559 and 0x15a3.
+	- Fix a PCH2 specific bug that wrong PHY register value can be read
+	  when boot. Same as FreeBSD and Linux.
+	- After writing MDIC register, don't read quickly the same register but
+	  do delay(50). Same as other OSes.
+	- Add missing wm_gate_hw_phy_config_ich8lan(false) in
+	  wm_phy_post_reset() on PCH2. wm_gate_hw_phy_config_ich8lan(true) is
+	  called in wm_reset(), so wm_gate_hw_phy_config_ich8lan(false) should
+	  be called after reset in wm_phy_post_reset().
+	- On PCH2, set the phy config counter to 50msec after (PHY) reset.
+	- KNF & Use macro.
+	[msaitoh, ticket #1085]
 
