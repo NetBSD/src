@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.21 2018/11/07 21:20:23 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.22 2018/11/08 20:29:37 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -475,6 +475,9 @@ void	toplevel(void);
 /* from disks.c */
 bool	get_default_cdrom(char *, size_t);
 int	find_disks(const char *);
+bool enumerate_disks(void *state,bool (*func)(void *state, const char *dev));
+bool is_cdrom_device(const char *dev);
+
 struct menudesc;
 void	fmt_fspart(struct menudesc *, int, void *);
 void	disp_cur_fspart(int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.21 2018/11/08 11:56:56 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.22 2018/11/08 20:29:37 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,8 +110,6 @@ static int fsck_preen(const char *, int, const char *, bool silent);
 static void fixsb(const char *, const char *, char);
 static bool is_gpt(const char *);
 static int incoregpt(pm_devs_t *, partinfo *);
-static bool enumerate_disks(void *state,
-	bool (*func)(void *state, const char *dev));
 
 
 static bool tmpfs_on_var_shm(void);
@@ -371,7 +369,11 @@ get_default_cdrom_helper(void *state, const char *dev)
 {
 	struct default_cdrom_data *data = state;
 
+	if (!is_cdrom_device(dev))
+		return true;
+
 	strlcpy(data->device, dev, data->max_len);
+	strlcat(data->device, "a", data->max_len); /* default to partition a */
 	data->found = true;
 
 	return false;	/* one is enough, stop iteration */
@@ -510,7 +512,7 @@ is_ffs_wedge(const char *dev)
 /*
  * Does this device match an entry in our default CDROM device list?
  */
-static bool
+bool
 is_cdrom_device(const char *dev)
 {
 	static const char *cdrom_devices[] = { CD_NAMES, 0 };
@@ -528,7 +530,7 @@ is_cdrom_device(const char *dev)
  * Stop iteration when the callback returns false.
  * Return true when iteration actually happend, false on error.
  */
-static bool
+bool
 enumerate_disks(void *state, bool (*func)(void *state, const char *dev))
 {
 	static const int mib[] = { CTL_HW, HW_DISKNAMES };
