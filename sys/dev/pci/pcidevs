@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1350 2018/11/08 04:04:42 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1351 2018/11/08 06:44:50 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7028,7 +7028,7 @@ product SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
 product SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
 product SCHNEIDERKOCH	SK9821v2	0x4320	SK-9821 v2.0
 product SCHNEIDERKOCH	SK_9DX1		0x4400	SK-NET SK-9DX1 Gigabit Ethernet
-/* These next two are are really subsystem IDs */
+/* These next two are really subsystem IDs */
 product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
 product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
 
