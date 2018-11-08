@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.5 2018/10/12 01:28:57 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.6 2018/11/08 08:28:07 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,8 +35,9 @@
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
+#include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.5 2018/10/12 01:28:57 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.6 2018/11/08 08:28:07 maxv Exp $")
 
 /*
  * At IPL_SCHED:
@@ -139,6 +140,13 @@ ENTRY_NP(cpu_switchto_softint)
 	str	x5, [x19, #L_MD_CPACR]
 #endif
 	str	x0, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp = softlwp; */
+
+#ifdef KASAN
+	/* clear the new stack */
+	stp	x0, xzr, [sp, #-16]!
+	bl	_C_LABEL(kasan_softint)
+	ldp	x0, xzr, [sp], #16
+#endif
 
 	/* onto new stack */
 	ldr	x4, [x0, #L_MD_UTF]

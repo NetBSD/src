@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.13 2018/11/01 20:34:49 maxv Exp $
+#	$NetBSD: Makefile.aarch64,v 1.14 2018/11/08 08:28:07 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -41,7 +41,8 @@ CFLAGS+=	-mno-omit-leaf-frame-pointer
 
 .if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
 KASANFLAGS=	-fsanitize=kernel-address \
-		--param asan-globals=1
+		--param asan-globals=1 --param asan-stack=1 \
+		-fasan-shadow-offset=0xDFFF208000000000
 .for f in subr_asan.c
 KASANFLAGS.${f}=	# empty
 .endfor
