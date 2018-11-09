@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.208 2018/09/23 07:24:19 maxv Exp $
+# $NetBSD: mi,v 1.209 2018/11/09 21:33:50 abs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1603,6 +1603,7 @@
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	share
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	use_inet6,share
+./usr/share/examples/slip/slip.login		misc-slip-examples	share
 ./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete
