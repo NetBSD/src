@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64_reboot.c,v 1.2 2018/05/31 23:22:50 mrg Exp $	*/
+/*	$NetBSD: aarch64_reboot.c,v 1.3 2018/11/09 04:05:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.2 2018/05/31 23:22:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.3 2018/11/09 04:05:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -236,11 +236,9 @@ cpu_reboot(int howto, char *bootstr)
 	/* Say NO to interrupts for the duration of the dump */
 	int s = splhigh();
 
-#if notyet	/* XXX */
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-#endif
 
 	splx(s);
 
