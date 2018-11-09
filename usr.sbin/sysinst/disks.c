@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.22 2018/11/08 20:29:37 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.23 2018/11/09 15:20:36 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -619,7 +619,8 @@ get_disks_helper(void *arg, const char *dev)
 	 * Exclude a disk mounted as root partition,
 	 * in case of install-image on a USB memstick.
 	 */
-	if (is_active_rootpart(state->dd->dd_name, 0))
+	if (is_active_rootpart(state->dd->dd_name,
+	    state->dd->dd_no_part ? -1 : 0))
 		return true;
 
 	if (!state->dd->dd_no_part) {

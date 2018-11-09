@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.3 2015/10/18 09:21:55 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.4 2018/11/09 15:20:36 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.3 2015/10/18 09:21:55 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.4 2018/11/09 15:20:36 martin Exp $");
 #endif
 
 /*
@@ -186,8 +186,12 @@ is_active_rootpart(const char *dev, int ptn)
 	if (strcmp(dev, rootdev) != 0)
 		return 0;
 
+	if (ptn < 0)
+		return 1;	/* device only check, or wedge */
+
 	mib[1] = KERN_ROOT_PARTITION;
 	varlen = sizeof rootptn;
+	rootptn = -1;
 	if (sysctl(mib, 2, &rootptn, &varlen, NULL, 0) < 0)
 		return 1;
 
