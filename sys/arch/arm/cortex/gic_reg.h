@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.7 2018/08/08 19:01:54 jmcneill Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.8 2018/11/09 23:36:24 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -149,6 +149,12 @@
 #define	GICD_CTRL_EnableGrp1NS		__BIT(1)	// GICv3
 #define	GICD_CTRL_Enable		__BIT(0)
 
+#define	GICD_TYPER_No1N			__BIT(25)	// GICv3
+#define	GICD_TYPER_A3V			__BIT(24)	// GICv3
+#define	GICD_TYPER_IDbits		__BITS(23,19)	// GICv3
+#define	GICD_TYPER_DVIS			__BIT(18)	// GICv3
+#define	GICD_TYPER_LPIS			__BIT(17)	// GICv3
+#define	GICD_TYPER_MBIS			__BIT(16)	// GICv3
 #define	GICD_TYPER_LSPI			__BITS(15,11)
 #define	GICD_TYPER_SecurityExtn		__BIT(10)
 #define	GICD_TYPER_CPUNumber		__BITS(7,5)
@@ -190,7 +196,7 @@
 #define	GICD_IROUTER_Aff1		__BITS(15,8)
 #define	GICD_IROUTER_Aff0		__BITS(7,0)
 
-#define	GICR_CTRL		0x0000	// Redistributor Control Register
+#define	GICR_CTLR		0x0000	// Redistributor Control Register
 #define	GICR_IIDR		0x0004	// Implementor Identification Register
 #define	GICR_TYPER		0x0008	// Redistributor Type Register
 #define	GICR_STATUSR		0x0010	// Error Reporting Status Register, optional
@@ -215,12 +221,12 @@
 #define	GICR_IGRPMODR0		0x10D00	// Interrupt Group Modifier Register 0
 #define	GICR_NSACR		0x10E00	// Non-Secure Access Control Register
 
-#define	GICR_CTRL_UWP			__BIT(31)
-#define	GICR_CTRL_DPG1S			__BIT(26)
-#define	GICR_CTRL_DPG1NS		__BIT(25)
-#define	GICR_CTRL_DPG0			__BIT(24)
-#define	GICR_CTRL_RWP			__BIT(3)
-#define	GICR_CTRL_Enable_LPIs		__BIT(0)
+#define	GICR_CTLR_UWP			__BIT(31)
+#define	GICR_CTLR_DPG1S			__BIT(26)
+#define	GICR_CTLR_DPG1NS		__BIT(25)
+#define	GICR_CTLR_DPG0			__BIT(24)
+#define	GICR_CTLR_RWP			__BIT(3)
+#define	GICR_CTLR_Enable_LPIs		__BIT(0)
 
 #define	GICR_TYPER_Affinity_Value	__BITS(63,32)
 #define	GICR_TYPER_Affinity_Value_Aff3	__BITS(63,56)
@@ -238,6 +244,40 @@
 #define	GICR_WAKER_ChildrenAsleep	__BIT(2)
 #define	GICR_WAKER_ProcessorSleep	__BIT(1)
 
+#define	GICR_PROPBASER_OuterCache	__BITS(58,56)
+#define	GICR_PROPBASER_Physical_Address	__BITS(51,12)
+#define	GICR_PROPBASER_Shareability	__BITS(11,10)
+#define	GICR_PROPBASER_InnerCache	__BITS(9,7)
+#define	GICR_PROPBASER_IDbits		__BITS(4,0)
+
+#define	GICR_PENDBASER_PTZ		__BIT(62)
+#define	GICR_PENDBASER_OuterCache	__BITS(58,56)
+#define	GICR_PENDBASER_Physical_Address	__BITS(51,16)
+#define	GICR_PENDBASER_Shareability	__BITS(11,10)
+#define	GICR_PENDBASER_InnerCache	__BITS(9,7)
+
+#define	GICR_Shareability_NS		0	// Non-shareable
+#define	GICR_Shareability_IS		1	// Inner Shareable
+#define	GICR_Shareability_OS		2	// Outer Shareable
+
+#define	GICR_Cache_DEVICE_nGnRnE	0	// Device-nGnRnE
+#define	GICR_Cache_NORMAL_NC		1	// Non-cacheable
+#define	GICR_Cache_NORMAL_RA_WT		2	// Cacheable Read-allocate, Write-through
+#define	GICR_Cache_NORMAL_RA_WB		3	// Cacheable Read-allocate, Write-back
+#define	GICR_Cache_NORMAL_WA_WT		4	// Cacheable Write-allocate, Write-through
+#define	GICR_Cache_NORMAL_WA_WB		5	// Cacheable Write-allocate, Write-back
+#define	GICR_Cache_NORMAL_RA_WA_WT	6	// Cacheable Read-allocate, Write-allocate, Write-through
+#define	GICR_Cache_NORMAL_RA_WA_WB	7	// Cacheable Read-allocate, Write-allocate, Write-back
+
+/*
+ * GICv3 Locality-specific Peripheral Interrupts
+ */
+
+#define	GIC_LPI_BASE			0x2000	// Base LPI INTID
+
+#define	GIC_LPICONF_Priority		__BITS(7,2)
+#define	GIC_LPICONF_Res1		__BIT(1)
+#define	GIC_LPICONF_Enable		__BIT(0)
 
 /*
  * GICv1 names
@@ -266,7 +306,9 @@
 #define	GICv1_ICCHPIR		GICC_HPPIR
 #define	GICv1_ICCIIDR		GICC_IIDR
 
-/* GICv2m (MSI) */
+/*
+ * GICv2m (MSI)
+ */
 
 #define GIC_MSI_TYPER		0x0008
 #define GIC_MSI_SETSPI		0x0040
@@ -275,5 +317,107 @@
 
 #define GIC_MSI_TYPER_BASE	__BITS(25,16)	// Starting SPI of MSIs
 #define GIC_MSI_TYPER_NUMBER	__BITS(9,0)	// Count of MSIs
+
+/*
+ * GICv3 Interrupt Translation Service (ITS)
+ */
+
+#define	GITS_CTLR		0x00000		// ITS control register
+#define	GITS_IIDR		0x00004		// ITS Identification register
+#define	GITS_TYPER		0x00008		// ITS Type register
+#define	GITS_CBASER		0x00080		// ITS Command Queue Descriptor
+#define	GITS_CWRITER		0x00088		// ITS Write register
+#define	GITS_CREADR		0x00090		// ITS Read register
+#define	GITS_BASERn(n)		(0x00100+8*(n))	// ITS Translation Table Descriptors
+#define	GITS_PIDR2		0x0FFE8		// ITS Peripheral ID2 Register
+#define	GITS_TRANSLATER		0x10040		// ITS Translation register
+
+#define	GITS_CTLR_Quiescent		__BIT(31)
+#define	GITS_CTLR_ITS_Number		__BITS(7,4)
+#define	GITS_CTLR_ImDe			__BIT(1)
+#define	GITS_CTLR_Enabled		__BIT(0)
+
+#define	GITS_TYPER_VMOVP		__BIT(37)
+#define	GITS_TYPER_CIL			__BIT(36)
+#define	GITS_TYPER_CIDbits		__BITS(35,32)
+#define	GITS_TYPER_HCC			__BITS(31,24)
+#define	GITS_TYPER_PTA			__BIT(19)
+#define	GITS_TYPER_SEIS			__BIT(18)
+#define	GITS_TYPER_Devbits		__BITS(17,13)
+#define	GITS_TYPER_ID_bits		__BITS(12,8)
+#define	GITS_TYPER_ITT_entry_size	__BITS(7,4)
+#define	GITS_TYPER_CCT			__BIT(2)
+#define	GITS_TYPER_Virtual		__BIT(1)
+#define	GITS_TYPER_Physical		__BIT(0)
+
+#define	GITS_CBASER_Valid		__BIT(63)
+#define	GITS_CBASER_InnerCache		__BITS(61,59)
+#define	GITS_CBASER_OuterCache		__BITS(55,53)
+#define	GITS_CBASER_Physical_Address	__BITS(51,12)
+#define	GITS_CBASER_Shareability	__BITS(11,10)
+#define	GITS_CBASER_Size		__BITS(7,0)
+
+#define	GITS_CWRITER_Offset		__BITS(19,5)
+#define	GITS_CWRITER_Retry		__BIT(0)
+
+#define	GITS_CREADR_Offset		__BITS(19,5)
+#define	GITS_CREADR_Stalled		__BIT(0)
+
+#define	GITS_BASER_Valid		__BIT(63)
+#define	GITS_BASER_Indirect		__BIT(62)
+#define	GITS_BASER_InnerCache		__BITS(61,59)
+#define	GITS_BASER_Type			__BITS(58,56)
+#define	GITS_BASER_OuterCache		__BITS(55,53)
+#define	GITS_BASER_Entry_Size		__BITS(52,48)
+#define	GITS_BASER_Physical_Address	__BITS(47,12)
+#define	GITS_BASER_Shareability		__BITS(11,10)
+#define	GITS_BASER_Page_Size		__BITS(9,8)
+#define	GITS_BASER_Size			__BITS(7,0)
+
+#define	GITS_Shareability_NS		0	// Non-shareable
+#define	GITS_Shareability_IS		1	// Inner Shareable
+#define	GITS_Shareability_OS		2	// Outer Shareable
+
+#define	GITS_Cache_DEVICE_nGnRnE	0	// Device-nGnRnE
+#define	GITS_Cache_NORMAL_NC		1	// Non-cacheable
+#define	GITS_Cache_NORMAL_RA_WT		2	// Cacheable Read-allocate, Write-through
+#define	GITS_Cache_NORMAL_RA_WB		3	// Cacheable Read-allocate, Write-back
+#define	GITS_Cache_NORMAL_WA_WT		4	// Cacheable Write-allocate, Write-through
+#define	GITS_Cache_NORMAL_WA_WB		5	// Cacheable Write-allocate, Write-back
+#define	GITS_Cache_NORMAL_RA_WA_WT	6	// Cacheable Read-allocate, Write-allocate, Write-through
+#define	GITS_Cache_NORMAL_RA_WA_WB	7	// Cacheable Read-allocate, Write-allocate, Write-back
+
+#define	GITS_Type_Unimplemented		0	// Unimplemented
+#define	GITS_Type_Devices		1	// Devices table
+#define	GITS_Type_vPEs			2	// vPEs table
+#define	GITS_Type_InterruptCollections	4	// Interrupt collections table
+
+#define	GITS_Page_Size_4KB		0
+#define	GITS_Page_Size_16KB		1
+#define	GITS_Page_Size_64KB		2
+
+struct gicv3_its_command {
+	uint64_t	dw[4];
+};
+
+#define	GITS_CMD_MOVI			0x01
+#define	GITS_CMD_INT			0x03
+#define	GITS_CMD_CLEAR			0x04
+#define	GITS_CMD_SYNC			0x05
+#define	GITS_CMD_MAPD			0x08
+#define	GITS_CMD_MAPC			0x09
+#define	GITS_CMD_MAPTI			0x0A
+#define	GITS_CMD_MAPI			0x0B
+#define	GITS_CMD_INV			0x0C
+#define	GITS_CMD_INVALL			0x0D
+#define	GITS_CMD_MOVALL			0x0E
+#define	GITS_CMD_DISCARD		0x0F
+#define	GITS_CMD_VMOVI			0x21
+#define	GITS_CMD_VMOVP			0x22
+#define	GITS_CMD_VSYNC			0x25
+#define	GITS_CMD_VMAPP			0x29
+#define	GITS_CMD_VMAPTI			0x2A
+#define	GITS_CMD_VMAPI			0x2B
+#define	GITS_CMD_VINVALL		0x2D
 
 #endif /* !_ARM_CORTEX_GICREG_H_ */
