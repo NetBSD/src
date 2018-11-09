@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.4 2018/11/05 11:50:15 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.5 2018/11/09 23:36:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.4 2018/11/05 11:50:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.5 2018/11/09 23:36:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.4 2018/11/05 11:50:15 jmcneill Exp $");
 
 #define	PICTOSOFTC(pic)	\
 	((void *)((uintptr_t)(pic) - offsetof(struct gicv3_softc, sc_pic)))
+#define	LPITOSOFTC(lpi) \
+	((void *)((uintptr_t)(lpi) - offsetof(struct gicv3_softc, sc_lpi)))
 
 #define	IPL_TO_PRIORITY(ipl)	((IPL_HIGH - (ipl)) << 4)
 
@@ -110,7 +112,7 @@ gicv3_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	if (group == 0) {
 		sc->sc_enabled_sgippi |= mask;
 		gicr_write_4(sc, ci->ci_gic_redist, GICR_ISENABLER0, mask);
-		while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTRL) & GICR_CTRL_RWP)
+		while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR) & GICR_CTLR_RWP)
 			;
 	} else {
 		gicd_write_4(sc, GICD_ISENABLERn(group), mask);
@@ -129,7 +131,7 @@ gicv3_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 	if (group == 0) {
 		sc->sc_enabled_sgippi &= ~mask;
 		gicr_write_4(sc, ci->ci_gic_redist, GICR_ICENABLER0, mask);
-		while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTRL) & GICR_CTRL_RWP)
+		while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR) & GICR_CTLR_RWP)
 			;
 	} else {
 		gicd_write_4(sc, GICD_ICENABLERn(group), mask);
@@ -251,7 +253,7 @@ gicv3_redist_enable(struct gicv3_softc *sc, struct cpu_info *ci)
 	gicr_write_4(sc, ci->ci_gic_redist, GICR_ICENABLER0, ~0);
 
 	/* Wait for register write to complete */
-	while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTRL) & GICR_CTRL_RWP)
+	while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR) & GICR_CTLR_RWP)
 		;
 
 	/* Set default priorities */
@@ -286,7 +288,7 @@ gicv3_redist_enable(struct gicv3_softc *sc, struct cpu_info *ci)
 	gicr_write_4(sc, ci->ci_gic_redist, GICR_ISENABLER0, sc->sc_enabled_sgippi);
 
 	/* Wait for register write to complete */
-	while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTRL) & GICR_CTRL_RWP)
+	while (gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR) & GICR_CTLR_RWP)
 		;
 }
 
@@ -457,11 +459,148 @@ static const struct pic_ops gicv3_picops = {
 #endif
 };
 
+static void
+gicv3_lpi_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
+{
+	struct gicv3_softc * const sc = LPITOSOFTC(pic);
+	int bit;
+
+	while ((bit = ffs(mask)) != 0) {
+		sc->sc_lpiconf.base[irqbase + bit - 1] |= GIC_LPICONF_Enable;
+		mask &= ~__BIT(bit - 1);
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, irqbase, 32, BUS_DMASYNC_PREWRITE);
+}
+
+static void
+gicv3_lpi_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
+{
+	struct gicv3_softc * const sc = LPITOSOFTC(pic);
+	const u_int off = irqbase - pic->pic_irqbase;
+	int bit;
+
+	while ((bit = ffs(mask)) != 0) {
+		sc->sc_lpiconf.base[off + bit - 1] &= ~GIC_LPICONF_Enable;
+		mask &= ~__BIT(bit - 1);
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, off, 32, BUS_DMASYNC_PREWRITE);
+}
+
+static void
+gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
+{
+	struct gicv3_softc * const sc = LPITOSOFTC(pic);
+
+	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_PRIORITY(is->is_ipl) | GIC_LPICONF_Res1;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, is->is_irq, 1, BUS_DMASYNC_PREWRITE);
+}
+
+static void
+gicv3_lpi_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
+{
+	struct gicv3_softc * const sc = LPITOSOFTC(pic);
+	struct gicv3_cpu_init *cpu_init;
+	uint32_t ctlr;
+
+	/* If physical LPIs are not supported on this redistributor, just return. */
+	const uint64_t typer = gicr_read_8(sc, ci->ci_gic_redist, GICR_TYPER);
+	if ((typer & GICR_TYPER_PLPIS) == 0)
+		return;
+
+	/* Interrupt target address for this CPU, used by ITS when GITS_TYPER.PTA == 0 */
+	sc->sc_processor_id[cpu_index(ci)] = __SHIFTOUT(typer, GICR_TYPER_Processor_Number);
+
+	/* Disable LPIs before making changes */
+	ctlr = gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR);
+	ctlr &= ~GICR_CTLR_Enable_LPIs;
+	gicr_write_4(sc, ci->ci_gic_redist, GICR_CTLR, ctlr);
+	arm_dsb();
+
+	/* Setup the LPI configuration table */
+	const uint64_t propbase = sc->sc_lpiconf.segs[0].ds_addr |
+	    __SHIFTIN(ffs(pic->pic_maxsources) - 1, GICR_PROPBASER_IDbits) |
+	    __SHIFTIN(GICR_Shareability_NS, GICR_PROPBASER_Shareability) |
+	    __SHIFTIN(GICR_Cache_NORMAL_NC, GICR_PROPBASER_InnerCache);
+	gicr_write_8(sc, ci->ci_gic_redist, GICR_PROPBASER, propbase);
+
+	/* Setup the LPI pending table */
+	const uint64_t pendbase = sc->sc_lpipend[cpu_index(ci)].segs[0].ds_addr |
+	    __SHIFTIN(GICR_Shareability_NS, GICR_PENDBASER_Shareability) |
+	    __SHIFTIN(GICR_Cache_NORMAL_NC, GICR_PENDBASER_InnerCache) |
+	    GICR_PENDBASER_PTZ;
+	gicr_write_8(sc, ci->ci_gic_redist, GICR_PENDBASER, pendbase);
+
+	/* Enable LPIs */
+	ctlr = gicr_read_4(sc, ci->ci_gic_redist, GICR_CTLR);
+	ctlr |= GICR_CTLR_Enable_LPIs;
+	gicr_write_4(sc, ci->ci_gic_redist, GICR_CTLR, ctlr);
+	arm_dsb();
+
+	/* Setup ITS if present */
+	LIST_FOREACH(cpu_init, &sc->sc_cpu_init, list)
+		cpu_init->func(cpu_init->arg, ci);
+}
+
+static const struct pic_ops gicv3_lpiops = {
+	.pic_unblock_irqs = gicv3_lpi_unblock_irqs,
+	.pic_block_irqs = gicv3_lpi_block_irqs,
+	.pic_establish_irq = gicv3_lpi_establish_irq,
+#ifdef MULTIPROCESSOR
+	.pic_cpu_init = gicv3_lpi_cpu_init,
+#endif
+};
+
+void
+gicv3_dma_alloc(struct gicv3_softc *sc, struct gicv3_dma *dma, bus_size_t len, bus_size_t align)
+{
+	int nsegs, error;
+
+	dma->len = len;
+	error = bus_dmamem_alloc(sc->sc_dmat, dma->len, align, 0, dma->segs, 1, &nsegs, BUS_DMA_WAITOK);
+	if (error)
+		panic("bus_dmamem_alloc failed: %d", error);
+	error = bus_dmamem_map(sc->sc_dmat, dma->segs, nsegs, len, (void **)&dma->base, BUS_DMA_WAITOK);
+	if (error)
+		panic("bus_dmamem_map failed: %d", error);
+	error = bus_dmamap_create(sc->sc_dmat, len, 1, len, 0, BUS_DMA_WAITOK, &dma->map);
+	if (error)
+		panic("bus_dmamap_create failed: %d", error);
+	error = bus_dmamap_load(sc->sc_dmat, dma->map, dma->base, dma->len, NULL, BUS_DMA_WAITOK);
+	if (error)
+		panic("bus_dmamap_load failed: %d", error);
+
+	memset(dma->base, 0, dma->len);
+	bus_dmamap_sync(sc->sc_dmat, dma->map, 0, dma->len, BUS_DMASYNC_PREWRITE);
+}
+
+static void
+gicv3_lpi_init(struct gicv3_softc *sc)
+{
+	/*
+	 * Allocate LPI configuration table
+	 */
+	gicv3_dma_alloc(sc, &sc->sc_lpiconf, sc->sc_lpi.pic_maxsources, 0x1000);
+	KASSERT((sc->sc_lpiconf.segs[0].ds_addr & ~GICR_PROPBASER_Physical_Address) == 0);
+
+	/*
+	 * Allocate LPI pending tables
+	 */
+	const bus_size_t lpipend_sz = (sc->sc_lpi.pic_maxsources + sc->sc_lpi.pic_irqbase) / NBBY;
+	for (int cpuindex = 0; cpuindex < MAXCPUS; cpuindex++) {
+		gicv3_dma_alloc(sc, &sc->sc_lpipend[cpuindex], lpipend_sz, 0x10000);
+		KASSERT((sc->sc_lpipend[cpuindex].segs[0].ds_addr & ~GICR_PENDBASER_Physical_Address) == 0);
+	}
+}
+
 void
 gicv3_irq_handler(void *frame)
 {
 	struct cpu_info * const ci = curcpu();
 	struct gicv3_softc * const sc = gicv3_softc;
+	struct pic_softc *pic;
 	const int oldipl = ci->ci_cpl;
 
 	ci->ci_data.cpu_nintr++;
@@ -472,10 +611,11 @@ gicv3_irq_handler(void *frame)
 		if (irq == ICC_IAR_INTID_SPURIOUS)
 			break;
 
-		if (irq >= sc->sc_pic.pic_maxsources)
+		pic = irq >= GIC_LPI_BASE ? &sc->sc_lpi : &sc->sc_pic;
+		if (irq - pic->pic_irqbase >= pic->pic_maxsources)
 			continue;
 
-		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
+		struct intrsource * const is = pic->pic_sources[irq - pic->pic_irqbase];
 		KASSERT(is != NULL);
 
 		const int ipl = is->is_ipl;
@@ -500,6 +640,8 @@ gicv3_init(struct gicv3_softc *sc)
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
+	LIST_INIT(&sc->sc_cpu_init);
+
 	sc->sc_pic.pic_ops = &gicv3_picops;
 	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(gicd_typer);
 	snprintf(sc->sc_pic.pic_name, sizeof(sc->sc_pic.pic_name), "gicv3");
@@ -507,6 +649,15 @@ gicv3_init(struct gicv3_softc *sc)
 	sc->sc_pic.pic_cpus = kcpuset_running;
 #endif
 	pic_add(&sc->sc_pic, 0);
+
+	if ((gicd_typer & GICD_TYPER_LPIS) != 0) {
+		sc->sc_lpi.pic_ops = &gicv3_lpiops;
+		sc->sc_lpi.pic_maxsources = 8192;	/* Min. required by GICv3 spec */
+		snprintf(sc->sc_lpi.pic_name, sizeof(sc->sc_lpi.pic_name), "gicv3-lpi");
+		pic_add(&sc->sc_lpi, GIC_LPI_BASE);
+
+		gicv3_lpi_init(sc);
+	}
 
 	KASSERT(gicv3_softc == NULL);
 	gicv3_softc = sc;
@@ -525,6 +676,8 @@ gicv3_init(struct gicv3_softc *sc)
 	gicv3_dist_enable(sc);
 
 	gicv3_cpu_init(&sc->sc_pic, curcpu());
+	if ((gicd_typer & GICD_TYPER_LPIS) != 0)
+		gicv3_lpi_cpu_init(&sc->sc_lpi, curcpu());
 
 #ifdef __HAVE_PIC_FAST_SOFTINTS
 	intr_establish(SOFTINT_BIO, IPL_SOFTBIO, IST_MPSAFE | IST_EDGE, pic_handle_softint, (void *)SOFTINT_BIO);
