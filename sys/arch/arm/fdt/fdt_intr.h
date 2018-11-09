@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.h,v 1.4 2018/09/05 10:20:47 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.h,v 1.5 2018/11/09 23:35:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -36,8 +36,8 @@
 #define	__HAVE_PIC_SET_PRIORITY
 #define	__HAVE_PIC_PENDING_INTRS
 
-#define	PIC_MAXSOURCES		480
-#define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES + 32)
+#define	PIC_MAXSOURCES		8192
+#define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES * 2 + 32)
 
 void	arm_fdt_irq_set_handler(void (*)(void *));
 void	arm_fdt_irq_handler(void *);
