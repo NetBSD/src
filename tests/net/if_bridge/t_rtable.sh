@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.3 2018/04/18 04:03:12 ozaki-r Exp $
+#	$NetBSD: t_rtable.sh,v 1.4 2018/11/09 06:45:03 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -96,7 +96,7 @@ get_number_of_caches()
 
 	export RUMP_SERVER=$SOCK2
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	echo $(($(/sbin/brconfig bridge0 |grep -A 100 "Address cache" |wc -l) - 1))
+	echo $(/sbin/brconfig bridge0 addr |wc -l)
 	unset LD_PRELOAD
 }
 
@@ -441,6 +441,49 @@ bridge_rtable_delete_member_cleanup()
 }
 
 
+atf_test_case bridge_rtable_manyaddrs cleanup
+bridge_rtable_manyaddrs_head()
+{
+
+	atf_set "descr" "Tests brconfig addr under many MAC addresses"
+	atf_set "require.progs" "rump_server"
+}
+
+bridge_rtable_manyaddrs_body()
+{
+	local addr=
+
+	setup
+	setup_bridge
+
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 maxaddr 1024
+
+	# Fill the MAC addresses
+	for i in 1 2 3 4; do
+		for j in $(seq 0 255); do
+			addr="00:11:22:33:4$i:$(printf "%02x" $j)"
+			atf_check -s exit:0 -o empty \
+			    /sbin/brconfig bridge0 static shmif0 $addr
+		done
+
+		n=$(get_number_of_caches)
+		atf_check_equal $n $((i * 256))
+	done
+
+
+	rump_server_destroy_ifaces
+}
+
+bridge_rtable_manyaddrs_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+
 atf_init_test_cases()
 {
 
@@ -449,5 +492,6 @@ atf_init_test_cases()
 	atf_add_test_case bridge_rtable_timeout
 	atf_add_test_case bridge_rtable_maxaddr
 	atf_add_test_case bridge_rtable_delete_member
+	atf_add_test_case bridge_rtable_manyaddrs
 	# TODO: brconfig static/flushall/discover/learn
 }
