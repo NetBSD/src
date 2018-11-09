@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.60.2.9 2018/08/11 13:34:21 martin Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.60.2.10 2018/11/09 11:28:39 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -307,6 +307,8 @@ struct livengood_tcpip_ctxdesc {
 #define EECD_SEC1VAL_VALMASK (EECD_EE_AUTORD | EECD_EE_PRES) /* Valid Mask */
 
 #define	WMREG_FEXTNVM6	0x0010	/* Future Extended NVM 6 */
+#define	FEXTNVM6_REQ_PLL_CLK	__BIT(8)
+#define	FEXTNVM6_ENABLE_K1_ENTRY_CONDITION __BIT(9)
 #define	FEXTNVM6_K1_OFF_ENABLE	__BIT(31)
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
