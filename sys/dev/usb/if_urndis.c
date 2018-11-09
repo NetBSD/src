@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.18 2018/06/26 06:48:02 msaitoh Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.19 2018/11/09 21:57:09 maya Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.18 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.19 2018/11/09 21:57:09 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -289,7 +289,18 @@ urndis_ctrl_handle_init(struct urndis_softc *sc,
 		return RNDIS_STATUS_FAILURE;
 	}
 
-	sc->sc_lim_pktsz = le32toh(msg->rm_pktmaxsz);
+	if (le32toh(msg->rm_ver_major) != RNDIS_MAJOR_VERSION ||
+	    le32toh(msg->rm_ver_minor) != RNDIS_MINOR_VERSION) {
+		printf("%s: version not %u.%u (current version: %u.%u)\n",
+		    DEVNAME(sc), RNDIS_MAJOR_VERSION, RNDIS_MINOR_VERSION,
+		    le32toh(msg->rm_ver_major), le32toh(msg->rm_ver_minor));
+
+		return RNDIS_STATUS_FAILURE;
+	}
+
+	sc->sc_maxppt = le32toh(msg->rm_pktmaxcnt);
+	sc->sc_maxtsz = le32toh(msg->rm_pktmaxsz);
+	sc->sc_palign = 1U << le32toh(msg->rm_align);
 
 	return le32toh(msg->rm_status);
 }
@@ -402,8 +413,8 @@ urndis_ctrl_init(struct urndis_softc *sc)
 	msg->rm_type = htole32(REMOTE_NDIS_INITIALIZE_MSG);
 	msg->rm_len = htole32(sizeof(*msg));
 	msg->rm_rid = htole32(0);
-	msg->rm_ver_major = htole32(1);
-	msg->rm_ver_minor = htole32(1);
+	msg->rm_ver_major = htole32(RNDIS_MAJOR_VERSION);
+	msg->rm_ver_minor = htole32(RNDIS_MINOR_VERSION);
 	msg->rm_max_xfersz = htole32(RNDIS_BUFSZ);
 
 	DPRINTF(("%s: urndis_ctrl_init send: type %u len %u rid %u ver_major %u "
@@ -743,7 +754,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, uint32_t len)
 	ifp = GET_IFP(sc);
 	offset = 0;
 
-	while (len > 0) {
+	while (len > 1) {
 		msg = (struct urndis_packet_msg *)((char*)c->sc_buf + offset);
 		m = c->sc_mbuf;
 
