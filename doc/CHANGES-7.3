@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.11 2018/10/30 19:54:56 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.12 2018/11/09 11:29:12 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -168,4 +168,36 @@ sys/net/npf/npf_ctl.c				1.47 (partial, patch)
 	Increase copyin buffer size to 4MB to allow larger rulesets
 	to be loaded.
 	[sborrill, ticket #1646]
+
+sys/dev/mii/inbmphyreg.h			1.11
+sys/dev/pci/if_wm.c				1.586-1.588, 1.590-1.596 via patch
+sys/dev/pci/if_wmreg.h				1.108
+
+	- rename tu event counter to txunderrun.
+	- Try m_defrag() to reduce the number of DMA segment if
+	  bus_dmamap_load_mbuf() returned EFBIG. When m_defrag()
+	  is called, txqNNdefrag event counter is incremented.
+	  If the 2nd try of bus_dmamap_load_mbuf() failed,
+	  txqNNtoomanyseg event counter is incremented.
+	- Reduce the max number of DMA segments from 256 to 64 (it's
+	  the same value as other BSD's (EM_MAX_SCATTER) and more
+	  than before if_wm.c rev. 1.75's value (40)) because we do
+	  m_defrag() now.
+	- 82574 and newer document says the status field has neither EC
+	  (Excessive Collision) bit nor LC (Late Collision) bit
+	  (reserved), so don't check the bit.
+	- Add workaround for DMA hang problem which result in TX device
+	  timeout on PCH_LPT with I218. Same as FreeBSD and Linux. This
+	  workaround is only for device ID 0x155a, 0x15a2, 0x1559 and 0x15a3.
+	- Fix a PCH2 specific bug that wrong PHY register value can be read
+	   when boot. Same as FreeBSD and Linux.
+	- After writing MDIC register, don't read quickly the same register
+	  but do delay(50). Same as other OSes.
+	- Add missing wm_gate_hw_phy_config_ich8lan(false) in
+	  wm_phy_post_reset() on PCH2. wm_gate_hw_phy_config_ich8lan(true)
+	  is called in wm_reset(), so wm_gate_hw_phy_config_ich8lan(false)
+	  should be called after reset in wm_phy_post_reset().
+	- On PCH2, set the phy config counter to 50msec after (PHY) reset.
+	- KNF & Use macro.
+	[msaitoh, ticket #1648]
 
