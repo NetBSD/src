@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.107 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: in.h,v 1.108 2018/11/09 11:46:28 maya Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,14 +42,14 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
-#ifndef uint8_t
+#ifndef	_BSD_UINT8_T_
 typedef __uint8_t	uint8_t;
-#define	uint8_t		__uint8_t
+#define	_BSD_UINT8_T_
 #endif
 
-#ifndef uint32_t
+#ifndef	_BSD_UINT32_T_
 typedef __uint32_t	uint32_t;
-#define	uint32_t	__uint32_t
+#define	_BSD_UINT32_T_
 #endif
 
 #include <sys/ansi.h>
