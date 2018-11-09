@@ -1,4 +1,4 @@
-/* $NetBSD: kcore.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: kcore.h,v 1.2 2018/11/09 04:05:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 typedef struct cpu_kcore_hdr {
 	uint64_t kh_tcr1;		/* TCR for EL1 */
 	uint64_t kh_ttbr1;		/* TTBR for EL1 */
+	uint64_t kh_nramsegs;
 	phys_ram_seg_t kh_ramsegs[0];
 } cpu_kcore_hdr_t;
 
