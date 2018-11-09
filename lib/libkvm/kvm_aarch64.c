@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.4 2018/11/01 05:37:11 mrg Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.5 2018/11/09 04:06:40 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.4 2018/11/01 05:37:11 mrg Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.5 2018/11/09 04:06:40 mrg Exp $");
 
 /*ARGSUSED*/
 void
@@ -83,7 +83,7 @@ lose:
 	}
 
 	const cpu_kcore_hdr_t * const cpu_kh = kd->cpu_data;
-	const u_int tg1 = cpu_kh->kh_tcr1 & TCR_TG1; 
+	const uint64_t tg1 = cpu_kh->kh_tcr1 & TCR_TG1; 
 	const u_int t1siz = __SHIFTOUT(cpu_kh->kh_tcr1, TCR_T1SZ);
 
 	/*
