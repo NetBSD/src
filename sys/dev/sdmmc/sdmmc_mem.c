@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.65 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.66 2018/11/09 14:38:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.65 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.66 2018/11/09 14:38:36 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1640,7 +1640,7 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 	if (error)
 		return error;
 
-	if (index == EXT_CSD_HS_TIMING && value >= 2) {
+	if (index == EXT_CSD_FLUSH_CACHE || (index == EXT_CSD_HS_TIMING && value >= 2)) {
 		do {
 			memset(&cmd, 0, sizeof(cmd));
 			cmd.c_opcode = MMC_SEND_STATUS;
@@ -1661,7 +1661,7 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
-			    "error waiting for high speed switch: %d\n",
+			    "error waiting for data ready after switch command: %d\n",
 			    error);
 			return error;
 		}
