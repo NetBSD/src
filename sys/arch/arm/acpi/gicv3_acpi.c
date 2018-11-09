@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.1 2018/10/21 21:18:41 jmcneill Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.2 2018/11/09 23:36:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.1 2018/10/21 21:18:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.2 2018/11/09 23:36:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,12 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.1 2018/10/21 21:18:41 jmcneill Exp 
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/cortex/gicv3.h>
+#include <arm/cortex/gicv3_its.h>
 #include <arm/cortex/gic_reg.h>
 
 #define	GICD_SIZE	0x10000
 #define	GICR_SIZE	0x20000
+#define	GITS_SIZE	0x20000
 
 extern struct bus_space arm_generic_bs_tag;
+extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 struct gicv3_acpi_softc {
 	struct gicv3_softc	sc_gic;
@@ -65,6 +68,7 @@ static void	gicv3_acpi_attach(device_t, device_t, void *);
 
 static int	gicv3_acpi_map_dist(struct gicv3_acpi_softc *);
 static int	gicv3_acpi_map_redist(struct gicv3_acpi_softc *);
+static int	gicv3_acpi_map_its(struct gicv3_acpi_softc *);
 
 CFATTACH_DECL_NEW(gicv3_acpi, sizeof(struct gicv3_acpi_softc), gicv3_acpi_match, gicv3_acpi_attach, NULL, NULL);
 
@@ -99,6 +103,7 @@ gicv3_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gic.sc_dev = self;
 	sc->sc_gic.sc_bst = &arm_generic_bs_tag;
+	sc->sc_gic.sc_dmat = &arm_generic_dma_tag;
 	sc->sc_madt_gicd = gicd;
 
 	aprint_naive("\n");
@@ -121,6 +126,8 @@ gicv3_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to initialize GIC: %d\n", error);
 		return;
 	}
+
+	gicv3_acpi_map_its(sc);
 
 	arm_fdt_irq_set_handler(gicv3_irq_handler);
 }
@@ -261,6 +268,39 @@ gicv3_acpi_map_redist(struct gicv3_acpi_softc *sc)
 
 	if (sc->sc_gic.sc_bsh_r_count == 0)
 		return ENXIO;
+
+	return 0;
+}
+
+static ACPI_STATUS
+gicv3_acpi_map_gits(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
+{
+	struct gicv3_acpi_softc * const sc = aux;
+	ACPI_MADT_GENERIC_TRANSLATOR *gits;
+	bus_space_handle_t bsh;
+
+	if (hdrp->Type != ACPI_MADT_TYPE_GENERIC_TRANSLATOR)
+		return AE_OK;
+
+	gits = (ACPI_MADT_GENERIC_TRANSLATOR *)hdrp;
+
+	if (bus_space_map(sc->sc_gic.sc_bst, gits->BaseAddress, GITS_SIZE, 0, &bsh) != 0) {
+		aprint_error_dev(sc->sc_gic.sc_dev, "failed to map ITS at 0x%" PRIx64 " len %#x\n",
+		    gits->BaseAddress, GITS_SIZE);
+		return AE_OK;
+	}
+
+	aprint_normal_dev(sc->sc_gic.sc_dev, "ITS #%#x at 0x%" PRIx64 "\n", gits->TranslationId, gits->BaseAddress);
+
+	gicv3_its_init(&sc->sc_gic, bsh, gits->BaseAddress, gits->TranslationId);
+
+	return AE_OK;
+}
+
+static int
+gicv3_acpi_map_its(struct gicv3_acpi_softc *sc)
+{
+	acpi_madt_walk(gicv3_acpi_map_gits, sc);
 
 	return 0;
 }
