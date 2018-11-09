@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1192 2018/10/11 15:41:07 christos Exp $
+# $NetBSD: mi,v 1.1193 2018/11/09 21:33:50 abs Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2249,6 +2249,7 @@
 ./usr/share/examples/racoon/roadwarrior/client	base-netutil-examples
 ./usr/share/examples/racoon/roadwarrior/server	base-netutil-examples
 ./usr/share/examples/rtadvd			base-router-examples
+./usr/share/examples/slip			base-slip-examples
 ./usr/share/examples/smbfs			base-sysutil-examples
 ./usr/share/examples/supfiles			base-sup-examples
 ./usr/share/examples/syslogd			base-sysutil-examples
