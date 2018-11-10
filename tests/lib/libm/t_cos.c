@@ -1,4 +1,4 @@
-/* $NetBSD: t_cos.c,v 1.6 2018/11/07 04:00:13 riastradh Exp $ */
+/* $NetBSD: t_cos.c,v 1.7 2018/11/10 23:04:16 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -179,8 +179,8 @@ ATF_TC_BODY(cosf_angles, tc)
 
 		assert(cos_theta != 0);
 		if (!(fabsf((cosf(theta) - cos_theta)/cos_theta) <= eps)) {
-			atf_tc_fail_nonfatal("cosf(%d deg) = %.8g != %.8g",
-			    deg, cos(theta), cos_theta);
+			atf_tc_fail_nonfatal("cosf(%d deg = %.8g) = %.8g"
+			    " != %.8g", deg, theta, cos(theta), cos_theta);
 		}
 	}
 }
