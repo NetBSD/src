@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95 2017/12/23 10:15:52 nakayama Exp $
+#	$NetBSD: Makefile,v 1.96 2018/11/10 01:38:02 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -211,6 +211,12 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-s3
 .endif	# ${MACHINE} == "ibmnws"
+
+.if ${MACHINE} == "iyonix"
+SUBDIR+= \
+	xf86-video-nv \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "iyonix"
 
 .if ${MACHINE} == "luna68k"
 SUBDIR+= \
