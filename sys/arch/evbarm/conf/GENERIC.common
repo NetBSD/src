@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.30 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: GENERIC.common,v 1.31 2018/11/10 16:19:58 martin Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -147,7 +147,7 @@ pseudo-device	npf			# NPF packet filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM
-#pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 
