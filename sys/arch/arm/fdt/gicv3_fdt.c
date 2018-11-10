@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.3 2018/09/29 18:27:36 jmcneill Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.4 2018/11/10 01:24:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.3 2018/09/29 18:27:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.4 2018/11/10 01:24:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,6 +136,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = phandle;
 	sc->sc_gic.sc_dev = self;
 	sc->sc_gic.sc_bst = faa->faa_bst;
+	sc->sc_gic.sc_dmat = faa->faa_dmat;
 
 	error = gicv3_fdt_map_registers(sc);
 	if (error) {
