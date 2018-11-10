@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.6 2018/11/10 01:56:28 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.7 2018/11/10 11:46:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.6 2018/11/10 01:56:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.7 2018/11/10 11:46:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -556,7 +556,7 @@ static void
 gicv3_lpi_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
-	struct gicv3_cpu_init *cpu_init;
+	struct gicv3_lpi_callback *cb;
 	uint32_t ctlr;
 
 	/* If physical LPIs are not supported on this redistributor, just return. */
@@ -594,9 +594,37 @@ gicv3_lpi_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	arm_dsb();
 
 	/* Setup ITS if present */
-	LIST_FOREACH(cpu_init, &sc->sc_cpu_init, list)
-		cpu_init->func(cpu_init->arg, ci);
+	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list)
+		cb->cpu_init(cb->priv, ci);
 }
+
+#ifdef MULTIPROCESSOR
+static void
+gicv3_lpi_get_affinity(struct pic_softc *pic, size_t irq, kcpuset_t *affinity)
+{
+	struct gicv3_softc * const sc = LPITOSOFTC(pic);
+	struct gicv3_lpi_callback *cb;
+
+	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list)
+		cb->get_affinity(cb->priv, irq, affinity);
+}
+
+static int
+gicv3_lpi_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affinity)
+{
+	struct gicv3_softc * const sc = LPITOSOFTC(pic);
+	struct gicv3_lpi_callback *cb;
+	int error = EINVAL;
+
+	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list) {
+		error = cb->set_affinity(cb->priv, irq, affinity);
+		if (error)
+			return error;
+	}
+
+	return error;
+}
+#endif
 
 static const struct pic_ops gicv3_lpiops = {
 	.pic_unblock_irqs = gicv3_lpi_unblock_irqs,
@@ -604,6 +632,8 @@ static const struct pic_ops gicv3_lpiops = {
 	.pic_establish_irq = gicv3_lpi_establish_irq,
 #ifdef MULTIPROCESSOR
 	.pic_cpu_init = gicv3_lpi_cpu_init,
+	.pic_get_affinity = gicv3_lpi_get_affinity,
+	.pic_set_affinity = gicv3_lpi_set_affinity,
 #endif
 };
 
@@ -695,7 +725,7 @@ gicv3_init(struct gicv3_softc *sc)
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
-	LIST_INIT(&sc->sc_cpu_init);
+	LIST_INIT(&sc->sc_lpi_callbacks);
 
 	for (n = 0; n < MAXCPUS; n++)
 		sc->sc_irouter[n] = UINT64_MAX;
