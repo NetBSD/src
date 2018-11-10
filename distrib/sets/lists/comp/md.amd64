@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.260 2018/11/07 07:43:07 maxv Exp $
+# $NetBSD: md.amd64,v 1.261 2018/11/10 09:28:56 maxv Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -682,6 +682,7 @@
 ./usr/include/dev/nvmm/nvmm_ioctl.h		comp-c-include
 ./usr/include/dev/nvmm/x86			comp-c-include
 ./usr/include/dev/nvmm/x86/nvmm_x86.h		comp-c-include
+./usr/include/nvmm.h				comp-c-include
 ./usr/include/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/x64_64				comp-obsolete		obsolete
 ./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
@@ -783,6 +784,12 @@
 ./usr/lib/i386/libi386.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libi386_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libi386_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/libnvmm.a				comp-c-lib		compatfile
+./usr/lib/libnvmm.so				comp-sys-shlib		compat,pic
+./usr/lib/libnvmm.so.0				comp-sys-shlib		compat,pic
+./usr/lib/libnvmm.so.0.1			comp-sys-shlib		compat,pic
+./usr/lib/libnvmm_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libnvmm_pic.a				comp-c-piclib		compat,pic,picinstall
 ./usr/lib/libx86_64.a				comp-c-lib
 ./usr/lib/libx86_64_p.a				comp-c-proflib		profile
 ./usr/lib/libx86_64_pic.a			comp-c-piclib		pic,picinstall
@@ -888,3 +895,6 @@
 ./usr/share/ldscripts/i386nbsd.xn		comp-obsolete		obsolete
 ./usr/share/ldscripts/i386nbsd.xr		comp-obsolete		obsolete
 ./usr/share/ldscripts/i386nbsd.xu		comp-obsolete		obsolete
+./usr/share/man/cat3/libnvmm.0			comp-c-catman		.cat
+./usr/share/man/html3/libnvmm.html		comp-c-htmlman		html
+./usr/share/man/man3/libnvmm.3			comp-c-man		.man

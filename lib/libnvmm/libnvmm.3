@@ -1,0 +1,484 @@
+.Dd September 12, 2018
+.Dt LIBNVMM 3
+.Os
+.Sh NAME
+.Nm libnvmm
+.Nd NetBSD Virtualization API
+.Sh LIBRARY
+.Lb libnvmm
+.Sh SYNOPSIS
+.In nvmm.h
+.Ft int
+.Fn nvmm_capability "struct nvmm_capability *cap"
+.Ft int
+.Fn nvmm_machine_create "struct nvmm_machine *mach"
+.Ft int
+.Fn nvmm_machine_destroy "struct nvmm_machine *mach"
+.Ft int
+.Fn nvmm_machine_configure "struct nvmm_machine *mach" "uint64_t op" \
+    "void *conf"
+.Ft int
+.Fn nvmm_vcpu_create "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid"
+.Ft int
+.Fn nvmm_vcpu_destroy "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid"
+.Ft int
+.Fn nvmm_vcpu_getstate "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
+    "void *state" "uint64_t flags"
+.Ft int
+.Fn nvmm_vcpu_setstate "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
+    "void *state" "uint64_t flags"
+.Ft int
+.Fn nvmm_vcpu_inject "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
+    "struct nvmm_event *event"
+.Ft int
+.Fn nvmm_vcpu_run "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
+    "struct nvmm_exit *exit"
+.Ft int
+.Fn nvmm_gpa_map "struct nvmm_machine *mach" "uintptr_t hva" "gpaddr_t gpa" \
+    "size_t size" "int flags"
+.Ft int
+.Fn nvmm_gpa_unmap "struct nvmm_machine *mach" "uintptr_t hva" "gpaddr_t gpa" \
+    "size_t size"
+.Ft int
+.Fn nvmm_gva_to_gpa "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
+    "gvaddr_t gva" "gpaddr_t *gpa" "nvmm_prot_t *prot"
+.Ft int
+.Fn nvmm_gpa_to_hva "struct nvmm_machine *mach" "gpaddr_t gpa" \
+    "uintptr_t *hva"
+.Ft int
+.Fn nvmm_assist_io "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
+    "struct nvmm_exit *exit" "void (*cb)(struct nvmm_io *)"
+.Ft int
+.Fn nvmm_assist_mem "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
+    "struct nvmm_exit *exit" "void (*cb)(struct nvmm_mem *)"
+.Sh DESCRIPTION
+.Nm
+provides a library for VMM software to handle hardware-accelerated virtual
+machines in
+.Nx .
+A virtual machine is described by an opaque structure,
+.Cd nvmm_machine .
+VMM software should not attempt to modify this structure directly, and should
+use the API provided by
+.Nm
+to handle virtual machines.
+.Pp
+.Fn nvmm_capability
+gets the capabilities of NVMM.
+.Pp
+.Fn nvmm_machine_create
+creates a virtual machine in the kernel.
+The
+.Fa mach
+structure is initialized, and describes the machine.
+.Pp
+.Fn nvmm_machine_destroy
+destroys the virtual machine described in
+.Fa mach .
+.Pp
+.Fn nvmm_machine_configure
+configures, on the machine
+.Fa mach ,
+the parameter indicated in
+.Fa op .
+.Fa conf
+describes the value of the parameter.
+.Pp
+.Fn nvmm_vcpu_create
+creates a virtual CPU in the machine
+.Fa mach ,
+giving it the CPU id
+.Fa cpuid .
+.Pp
+.Fn nvmm_vcpu_destroy
+destroys the virtual CPU identified by
+.Fa cpuid
+in the machine
+.Fa mach .
+.Pp
+.Fn nvmm_vcpu_getstate
+gets the state of the virtual CPU identified by
+.Fa cpuid
+in the machine
+.Fa mach .
+The
+.Fa state
+argument is the address of a state area, and
+.Fa flags
+is the bitmap of the components that are to be retrieved.
+See
+.Sx VCPU State Area
+below for details.
+.Pp
+.Fn nvmm_vcpu_setstate
+sets the state of the virtual CPU identified by
+.Fa cpuid
+in the machine
+.Fa mach .
+The
+.Fa state
+argument is the address of a state area, and
+.Fa flags
+is the bitmap of the components that are to be set.
+See
+.Sx VCPU State Area
+below for details.
+.Pp
+.Fn nvmm_vcpu_run
+runs the CPU identified by
+.Fa cpuid
+in the machine
+.Fa mach ,
+until a VM exit is triggered.
+The
+.Fa exit
+structure is filled to indicate the exit reason, and the associated parameters
+if any.
+.Pp
+.Fn nvmm_gpa_map
+makes the guest physical memory area beginning on address
+.Fa gpa
+and of size
+.Fa size
+available in the machine
+.Fa mach .
+The area is mapped in the calling process' virtual address space, at address
+.Fa hva .
+.Pp
+.Fn nvmm_gpa_unmap
+removes the guest physical memory area beginning on address
+.Fa gpa
+and of size
+.Fa size
+from the machine
+.Fa mach .
+It also unmaps the area beginning on
+.Fa hva
+from the calling process' virtual address space.
+.Pp
+.Fn nvmm_gva_to_gpa
+translates, on the CPU
+.Fa cpuid
+from the machine
+.Fa mach ,
+the guest virtual address given in
+.Fa gva
+into a guest physical address returned in
+.Fa gpa .
+The associated page premissions are returned in
+.Fa prot .
+.Fa gva
+must be page-aligned.
+.Pp
+.Fn nvmm_gpa_to_hva
+translates, on the machine
+.Fa mach ,
+the guest physical address indicated in
+.Fa gpa
+into a host virtual address returned in
+.Fa hva .
+.Fa gpa
+must be page-aligned.
+.Pp
+.Fn nvmm_assist_io
+emulates the I/O operation described in
+.Fa exit
+on CPU
+.Fa cpuid
+from machine
+.Fa mach .
+.Fa cb
+will be called to handle the transaction.
+See
+.Sx I/O Assist
+below for details.
+.Pp
+.Fn nvmm_assist_mem
+emulates the Mem operation described in
+.Fa exit
+on CPU
+.Fa cpuid
+from machine
+.Fa mach .
+.Fa cb
+will be called to handle the transaction.
+See
+.Sx Mem Assist
+below for details.
+.Ss NVMM Capability
+The
+.Cd nvmm_capability
+structure helps VMM software identify the capabilities offered by NVMM on the
+host:
+.Bd -literal
+struct nvmm_capability {
+	uint64_t version;
+	uint64_t state_size;
+	uint64_t max_machines;
+	uint64_t max_vcpus;
+	uint64_t max_ram;
+	union {
+		struct {
+			...
+		} x86;
+		uint64_t rsvd[8];
+	} u;
+};
+.Ed
+.Pp
+For example, the
+.Cd max_machines
+field indicates the maximum number of virtual machines supported, while
+.Cd max_vcpus
+indicates the maximum number of VCPUs supported per virtual machine.
+.Ss VCPU State Area
+A VCPU state area is a structure that entirely defines the content of the
+registers of a VCPU.
+Only one such structure exists, for x86:
+.Bd -literal
+struct nvmm_x64_state {
+	...
+};
+.Ed
+.Pp
+Refer to functional examples to see precisely how to use this structure.
+.Ss Exit Reasons
+The
+.Cd nvmm_exit
+structure is used to handle VM exits:
+.Bd -literal
+enum nvmm_exit_reason {
+	NVMM_EXIT_NONE		= 0x0000000000000000,
+
+	/* General. */
+	NVMM_EXIT_MEMORY	= 0x0000000000000001,
+	NVMM_EXIT_IO		= 0x0000000000000002,
+	NVMM_EXIT_MSR		= 0x0000000000000003,
+	NVMM_EXIT_INT_READY	= 0x0000000000000004,
+	NVMM_EXIT_NMI_READY	= 0x0000000000000005,
+	NVMM_EXIT_SHUTDOWN	= 0x0000000000000006,
+
+	/* Instructions (x86). */
+	...
+
+	NVMM_EXIT_INVALID	= 0xFFFFFFFFFFFFFFFF
+};
+
+struct nvmm_exit {
+	enum nvmm_exit_reason reason;
+	union {
+		...
+	} u;
+	uint64_t exitstate[8];
+};
+.Ed
+.Pp
+The
+.Va reason
+field indicates the reason of the VM exit.
+Additional parameters describing the exit can be present in
+.Va u .
+.Va exitstate
+contains a partial, implementation-specific VCPU state, usable as a fast-path
+to retrieve certain state values.
+.Pp
+It is possible that a VM exit was caused by a reason internal to the host
+kernel, and that VMM software should not be concerned with.
+In this case, the exit reason is set to
+.Cd NVMM_EXIT_NONE .
+This gives a chance for VMM software to halt the VM in its tracks.
+.Pp
+Refer to functional examples to see precisely how to handle VM exits.
+.Ss Event Injection
+It is possible to inject an event into a VCPU.
+An event can be a hardware interrupt, a software interrupt, or a software
+exception, defined by:
+.Bd -literal
+enum nvmm_event_type {
+	NVMM_EVENT_INTERRUPT_HW,
+	NVMM_EVENT_INTERRUPT_SW,
+	NVMM_EVENT_EXCEPTION
+};
+
+struct nvmm_event {
+	enum nvmm_event_type type;
+	uint64_t vector;
+	union {
+		uint64_t error;
+		uint64_t prio;
+	} u;
+};
+.Ed
+.Pp
+This describes an event of type
+.Va type ,
+to be sent to vector number
+.Va vector ,
+with a possible additional
+.Va error
+or
+.Va prio
+code that is implementation-specific.
+.Pp
+It is possible that the VCPU is in a state where it cannot receive this
+event, if:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+the event is a hardware interrupt, and the VCPU runs with interrupts disabled,
+or
+.It
+the event is a non-maskable interrupt (NMI), and the VCPU is already in a
+in-NMI context.
+.El
+.Pp
+In this case,
+.Fn nvmm_vcpu_inject
+will return
+.Er EAGAIN ,
+and NVMM will cause a VM exit with reason
+.Cd NVMM_EXIT_INT_READY
+or
+.Cd NVMM_EXIT_NMI_READY
+to indicate that VMM software can now reinject the desired event.
+.Ss I/O Assist
+When a VM exit occurs with reason
+.Cd NVMM_EXIT_IO ,
+it is necessary for VMM software to emulate the associated I/O operation.
+.Nm
+provides an easy way for VMM software to perform that.
+.Pp
+.Fn nvmm_assist_io
+will call the
+.Fa cb
+callback function and give it a
+.Cd nvmm_io
+structure as argument.
+This structure describes an I/O transaction:
+.Bd -literal
+struct nvmm_io {
+	uint64_t port;
+	bool in;
+	size_t size;
+	uint8_t data[8];
+};
+.Ed
+.Pp
+The callback can emulate the operation using this descriptor, following two
+unique cases:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+The operation is an input.
+In this case, the callback should fill
+.Va data
+with the desired value.
+.It
+The operation is an output.
+In this case, the callback should read
+.Va data
+to retrieve the desired value.
+.El
+.Pp
+In either case,
+.Va port
+will indicate the I/O port,
+.Va in
+will indicate if the operation is an input, and
+.Va size
+will indicate the size of the access.
+.Ss Mem Assist
+When a VM exit occurs with reason
+.Cd NVMM_EXIT_MEMORY ,
+it is necessary for VMM software to emulate the associated memory operation.
+.Nm
+provides an easy way for VMM software to perform that, similar to the I/O
+Assist.
+.Pp
+.Fn nvmm_assist_mem
+will call the
+.Fa cb
+callback function and give it a
+.Cd nvmm_mem
+structure as argument.
+This structure describes a Mem transaction:
+.Bd -literal
+struct nvmm_mem {
+	gvaddr_t gva;
+	gpaddr_t gpa;
+	bool write;
+	size_t size;
+	uint8_t data[8];
+};
+.Ed
+.Pp
+The callback can emulate the operation using this descriptor, following two
+unique cases:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+The operation is a read.
+In this case, the callback should fill
+.Va data
+with the desired value.
+.It
+The operation is a write.
+In this case, the callback should read
+.Va data
+to retrieve the desired value.
+.El
+.Pp
+In either case,
+.Va gva
+will indicate the guest virtual address,
+.Va gpa
+will indicate the guest physical address,
+.Va write
+will indicate if the access is a write, and
+.Va size
+will indicate the size of the access.
+.Sh RETURN VALUES
+Upon successful completion, each of these functions returns zero.
+Otherwise, a value of \-1 is returned and the global
+variable
+.Va errno
+is set to indicate the error.
+.Sh FILES
+Functional examples:
+.Pp
+.Bl -tag -width XXXX -compact
+.It Pa src/share/examples/nvmm/toyvirt/
+Example of virtualizer.
+Launches the binary given as argument in a virtual machine.
+.It Pa src/share/examples/nvmm/smallkern/
+Example of a kernel that can be executed by toyvirt.
+.El
+.Sh ERRORS
+These functions will fail if:
+.Bl -tag -width [ENOBUFS]
+.It Bq Er EEXIST
+An attempt was made to create a machine or a VCPU that already exists.
+.It Bq Er EFAULT
+An attempt was made to emulate a memory-based operation in a guest, and the
+guest page tables did not have the permissions necessary for the operation
+to complete successfully.
+.It Bq Er EINVAL
+An inappropriate parameter was used.
+.It Bq Er ENOBUFS
+The maximum number of machines or VCPUs was reached.
+.It Bq Er ENOENT
+A query was made on a machine or a VCPU that does not exist.
+.It Bq Er EPERM
+An attempt was made to access a machine that does not belong to the process.
+.El
+.Pp
+In addition,
+.Fn nvmm_vcpu_inject
+uses the following error codes:
+.Bl -tag -width [ENOBUFS]
+.It Bq Er EAGAIN
+The VCPU cannot receive the event immediately.
+.El
+.Sh AUTHORS
+NVMM was designed and implemented by
+.An Maxime Villard .
