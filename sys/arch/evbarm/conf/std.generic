@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic,v 1.3 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: std.generic,v 1.4 2018/11/10 16:19:58 martin Exp $
 #
 # 	generic NetBSD/evbarm with FDT support
 
@@ -41,3 +41,6 @@ makeoptions	KERNEL_BASE_VIRT="0x80000040"
 # General options
 options 	CHILD_MAX=1024	# 160 is too few
 options 	OPEN_MAX=1024	# 128 is too few
+
+options 	NTP		# NTP phase/frequency locked loop
+
