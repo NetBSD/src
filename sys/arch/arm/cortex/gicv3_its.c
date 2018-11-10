@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.1 2018/11/09 23:36:24 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.2 2018/11/10 11:46:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.1 2018/11/09 23:36:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.2 2018/11/10 11:46:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -149,6 +149,23 @@ gits_command_mapi(struct gicv3_its *its, uint32_t deviceid, uint32_t eventid, ui
 	 */
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.dw[0] = GITS_CMD_MAPI | ((uint64_t)deviceid << 32);
+	cmd.dw[1] = eventid;
+	cmd.dw[2] = icid;
+
+	gits_command(its, &cmd);
+}
+
+static inline void
+gits_command_movi(struct gicv3_its *its, uint32_t deviceid, uint32_t eventid, uint16_t icid)
+{
+	struct gicv3_its_command cmd;
+
+	/*
+	 * Update the ICID field in the ITT entry for the event defined by DeviceID and
+	 * EventID.
+	 */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.dw[0] = GITS_CMD_MOVI | ((uint64_t)deviceid << 32);
 	cmd.dw[1] = eventid;
 	cmd.dw[2] = icid;
 
@@ -379,8 +396,8 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gicv3_its * const its = msi->msi_priv;
+	struct cpu_info * const ci = cpu_lookup(0);
 	struct gicv3_its_device *dev;
-	struct cpu_info *ci = curcpu();	/* XXX */
 	pci_intr_handle_t *vectors;
 	int n, off;
 
@@ -412,6 +429,11 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 		gicv3_its_msi_enable(its, lpi);
 
 		/*
+		 * Record target PE
+		 */
+		its->its_targets[lpi - its->its_pic->pic_irqbase] = ci;
+
+		/*
 		 * Map event
 		 */
 		gits_command_mapi(its, devid, lpi, cpu_index(ci));
@@ -427,8 +449,8 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gicv3_its * const its = msi->msi_priv;
+	struct cpu_info *ci = cpu_lookup(0);
 	struct gicv3_its_device *dev;
-	struct cpu_info *ci = curcpu();	/* XXX */
 	pci_intr_handle_t *vectors;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
@@ -477,6 +499,11 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
 
 		gicv3_its_msix_enable(its, lpi, msix_vec, bst, bsh);
+
+		/*
+		 * Record target PE
+		 */
+		its->its_targets[lpi - its->its_pic->pic_irqbase] = ci;
 
 		/*
 		 * Map event
@@ -531,6 +558,7 @@ gicv3_its_msi_intr_release(struct arm_pci_msi *msi, pci_intr_handle_t *pih,
 		if (pih[n] & ARM_PCI_INTR_MSI)
 			gicv3_its_msi_disable(its, lpi);
 		gicv3_its_msi_free_lpi(its, lpi);
+		its->its_targets[lpi - its->its_pic->pic_irqbase] = NULL;
 		struct intrsource * const is =
 		    its->its_pic->pic_sources[lpi - its->its_pic->pic_irqbase];
 		if (is != NULL)
@@ -658,6 +686,44 @@ gicv3_its_cpu_init(void *priv, struct cpu_info *ci)
 	gits_wait(its);
 }
 
+static void
+gicv3_its_get_affinity(void *priv, size_t irq, kcpuset_t *affinity)
+{
+	struct gicv3_its * const its = priv;
+	struct cpu_info *ci;
+
+	kcpuset_zero(affinity);
+	ci = its->its_targets[irq - its->its_pic->pic_irqbase];
+	if (ci)
+		kcpuset_set(affinity, cpu_index(ci));
+}
+
+static int
+gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
+{
+	struct gicv3_its * const its = priv;
+	const struct pci_attach_args *pa;
+	struct cpu_info *ci;
+
+	const int set = kcpuset_countset(affinity);
+	if (set != 1)
+		return EINVAL;
+
+	pa = its->its_pa[irq - its->its_pic->pic_irqbase];
+	if (pa == NULL)
+		return EINVAL;
+
+	ci = cpu_lookup(kcpuset_ffs(affinity));
+
+	const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
+	gits_command_movi(its, devid, devid, cpu_index(ci));
+	gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
+
+	its->its_targets[irq - its->its_pic->pic_irqbase] = ci;
+
+	return 0;
+}
+
 int
 gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
     uint64_t its_base, uint32_t its_id)
@@ -678,11 +744,14 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
 	its->its_pic = &sc->sc_lpi;
 	KASSERT(its->its_pic->pic_maxsources > 0);
 	its->its_pa = kmem_zalloc(sizeof(struct pci_attach_args *) * its->its_pic->pic_maxsources, KM_SLEEP);
+	its->its_targets = kmem_zalloc(sizeof(struct cpu_info *) * its->its_pic->pic_maxsources, KM_SLEEP);
 	its->its_gic = sc;
-	its->its_init.func = gicv3_its_cpu_init;
-	its->its_init.arg = its;
+	its->its_cb.cpu_init = gicv3_its_cpu_init;
+	its->its_cb.get_affinity = gicv3_its_get_affinity;
+	its->its_cb.set_affinity = gicv3_its_set_affinity;
+	its->its_cb.priv = its;
 	LIST_INIT(&its->its_devices);
-	LIST_INSERT_HEAD(&sc->sc_cpu_init, &its->its_init, list);
+	LIST_INSERT_HEAD(&sc->sc_lpi_callbacks, &its->its_cb, list);
 
 	gicv3_its_command_init(sc, its);
 	gicv3_its_table_init(sc, its);
