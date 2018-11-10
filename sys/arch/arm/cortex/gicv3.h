@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.2 2018/11/09 23:36:24 jmcneill Exp $ */
+/* $NetBSD: gicv3.h,v 1.3 2018/11/10 01:56:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -58,7 +58,7 @@ struct gicv3_softc {
 	u_int			sc_bsh_r_count;
 
 	uint32_t		sc_enabled_sgippi;
-	uint64_t		sc_default_irouter;
+	uint64_t		sc_irouter[MAXCPUS];
 
 	/* LPI configuration table */
 	struct gicv3_dma	sc_lpiconf;
