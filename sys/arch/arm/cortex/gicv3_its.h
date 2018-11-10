@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.1 2018/11/09 23:36:24 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.2 2018/11/10 11:46:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -52,10 +52,11 @@ struct gicv3_its {
 	uint64_t		its_rdbase[MAXCPUS];
 
 	struct gicv3_softc	*its_gic;
-	struct gicv3_cpu_init	its_init;
+	struct gicv3_lpi_callback its_cb;
 
 	struct pic_softc	*its_pic;
 	const struct pci_attach_args **its_pa;
+	struct cpu_info		**its_targets;
 
 	LIST_HEAD(, gicv3_its_device) its_devices;
 

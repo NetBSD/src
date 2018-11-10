@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.3 2018/11/10 01:56:28 jmcneill Exp $ */
+/* $NetBSD: gicv3.h,v 1.4 2018/11/10 11:46:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -38,11 +38,14 @@ struct gicv3_dma {
 	bus_size_t		len;
 };
 
-struct gicv3_cpu_init {
-	void			(*func)(void *, struct cpu_info *ci);
-	void			*arg;
+struct gicv3_lpi_callback {
+	void			(*cpu_init)(void *, struct cpu_info *);
+	void			(*get_affinity)(void *, size_t, kcpuset_t *);
+	int			(*set_affinity)(void *, size_t, const kcpuset_t *);
 
-	LIST_ENTRY(gicv3_cpu_init) list;
+	void			*priv;
+
+	LIST_ENTRY(gicv3_lpi_callback) list;
 };
 
 struct gicv3_softc {
@@ -69,8 +72,8 @@ struct gicv3_softc {
 	/* Unique identifier for PEs */
 	u_int			sc_processor_id[MAXCPUS];
 
-	/* CPU init callbacks */
-	LIST_HEAD(, gicv3_cpu_init) sc_cpu_init;
+	/* Callbacks */
+	LIST_HEAD(, gicv3_lpi_callback) sc_lpi_callbacks;
 };
 
 int	gicv3_init(struct gicv3_softc *);
