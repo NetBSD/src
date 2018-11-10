@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.80 2018/11/10 09:42:42 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.81 2018/11/10 10:52:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.80 2018/11/10 09:42:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.81 2018/11/10 10:52:52 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -505,7 +505,7 @@ cpu_probe_winchip(struct cpu_info *ci)
 		 *    bit in the FCR MSR.
 		 */
 		ci->ci_feat_val[0] |= CPUID_CX8;
-		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | 0x00000001);
+		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | VIA_ACE_ECX8);
 		break;
 	}
 }
@@ -598,9 +598,8 @@ cpu_probe_c3(struct cpu_info *ci)
 
 		    if (ace_enable) {
 			msr = rdmsr(MSR_VIA_ACE);
-			wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
+			wrmsr(MSR_VIA_ACE, msr | VIA_ACE_ENABLE);
 		    }
-
 		}
 	}
 
