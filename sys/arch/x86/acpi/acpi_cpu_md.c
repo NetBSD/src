@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.78 2016/12/08 11:31:12 nat Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.79 2018/11/10 09:42:42 maxv Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.78 2016/12/08 11:31:12 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.79 2018/11/10 09:42:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.78 2016/12/08 11:31:12 nat Exp $")
 #include <x86/cpufunc.h>
 #include <x86/cputypes.h>
 #include <x86/cpuvar.h>
-#include <x86/cpu_msr.h>
 #include <x86/machdep.h>
 #include <x86/x86/tsc.h>
 
