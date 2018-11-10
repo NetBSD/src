@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.79 2018/07/04 07:55:57 maya Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.80 2018/11/10 09:42:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.79 2018/07/04 07:55:57 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.80 2018/11/10 09:42:42 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.79 2018/07/04 07:55:57 maya Exp $");
 #include <x86/cputypes.h>
 #include <x86/cacheinfo.h>
 #include <x86/cpuvar.h>
-#include <x86/cpu_msr.h>
 #include <x86/fpu.h>
 
 #include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
