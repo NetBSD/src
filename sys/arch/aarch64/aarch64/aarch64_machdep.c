@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.19 2018/11/09 04:05:27 mrg Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.20 2018/11/10 18:29:08 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.19 2018/11/09 04:05:27 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.20 2018/11/10 18:29:08 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -146,6 +146,7 @@ cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
 	pmapboot_enter(AARCH64_PA_TO_KVA(memory_start), memory_start,
 	    memory_size, L1_SIZE, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
 	    bootpage_alloc, NULL);
+	aarch64_tlbi_all();
 
 	/*
 	 * at this point, whole kernel image is mapped as "rwx".
