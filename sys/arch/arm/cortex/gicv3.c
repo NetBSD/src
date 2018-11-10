@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.5 2018/11/09 23:36:24 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.6 2018/11/10 01:56:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.5 2018/11/09 23:36:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.6 2018/11/10 01:56:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,6 +66,12 @@ static inline void
 gicd_write_4(struct gicv3_softc *sc, bus_size_t reg, uint32_t val)
 {
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_d, reg, val);
+}
+
+static inline uint64_t
+gicd_read_8(struct gicv3_softc *sc, bus_size_t reg)
+{
+	return bus_space_read_8(sc->sc_bst, sc->sc_bsh_d, reg);
 }
 
 static inline void
@@ -177,7 +183,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			irouter = GICD_IROUTER_Interrupt_Routing_mode;
 		} else {
 			/* Route non-MP-safe interrupts to the primary PE only */
-			irouter = sc->sc_default_irouter;
+			irouter = sc->sc_irouter[0];
 		}
 		gicd_write_8(sc, GICD_IROUTER(is->is_irq), irouter);
 
@@ -365,19 +371,17 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	ci->ci_gic_redist = gicv3_find_redist(sc);
 	ci->ci_gic_sgir = gicv3_sgir(sc);
 
-	if (CPU_IS_PRIMARY(ci)) {
-		/* Store route to primary CPU for non-MPSAFE SPIs */
-		const uint64_t cpu_identity = gicv3_cpu_identity();
-		const u_int aff0 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff0);
-		const u_int aff1 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff1);
-		const u_int aff2 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff2);
-		const u_int aff3 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff3);
-		sc->sc_default_irouter =
-		    __SHIFTIN(aff0, GICD_IROUTER_Aff0) |
-		    __SHIFTIN(aff1, GICD_IROUTER_Aff1) |
-		    __SHIFTIN(aff2, GICD_IROUTER_Aff2) |
-		    __SHIFTIN(aff3, GICD_IROUTER_Aff3);
-	}
+	/* Store route to CPU for SPIs */
+	const uint64_t cpu_identity = gicv3_cpu_identity();
+	const u_int aff0 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff0);
+	const u_int aff1 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff1);
+	const u_int aff2 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff2);
+	const u_int aff3 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff3);
+	sc->sc_irouter[cpu_index(ci)] =
+	    __SHIFTIN(aff0, GICD_IROUTER_Aff0) |
+	    __SHIFTIN(aff1, GICD_IROUTER_Aff1) |
+	    __SHIFTIN(aff2, GICD_IROUTER_Aff2) |
+	    __SHIFTIN(aff3, GICD_IROUTER_Aff3);
 
 	/* Enable System register access and disable IRQ/FIQ bypass */
 	icc_sre = ICC_SRE_EL1_SRE | ICC_SRE_EL1_DFB | ICC_SRE_EL1_DIB;
@@ -446,6 +450,54 @@ gicv3_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 			icc_sgi1r_write(intid | aff | targets);
 	}
 }
+
+static void
+gicv3_get_affinity(struct pic_softc *pic, size_t irq, kcpuset_t *affinity)
+{
+	struct gicv3_softc * const sc = PICTOSOFTC(pic);
+	const size_t group = irq / 32;
+	int n;
+
+	kcpuset_zero(affinity);
+	if (group == 0) {
+		/* All CPUs are targets for group 0 (SGI/PPI) */
+		for (n = 0; n < ncpu; n++) {
+			if (sc->sc_irouter[n] != UINT64_MAX)
+				kcpuset_set(affinity, n);
+		}
+	} else {
+		/* Find distributor targets (SPI) */
+		const uint64_t irouter = gicd_read_8(sc, GICD_IROUTER(irq));
+		for (n = 0; n < ncpu; n++) {
+			if (irouter == GICD_IROUTER_Interrupt_Routing_mode ||
+			    irouter == sc->sc_irouter[n])
+				kcpuset_set(affinity, n);
+		}
+	}
+}
+
+static int
+gicv3_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affinity)
+{
+	struct gicv3_softc * const sc = PICTOSOFTC(pic);
+	const size_t group = irq / 32;
+	uint64_t irouter;
+
+	if (group == 0)
+		return EINVAL;
+
+	const int set = kcpuset_countset(affinity);
+	if (set == ncpu)
+		irouter = GICD_IROUTER_Interrupt_Routing_mode;
+	else if (set == 1)
+		irouter = sc->sc_irouter[kcpuset_ffs(affinity)];
+	else
+		return EINVAL;
+
+	gicd_write_8(sc, GICD_IROUTER(irq), irouter);
+
+	return 0;
+}
 #endif
 
 static const struct pic_ops gicv3_picops = {
@@ -456,6 +508,8 @@ static const struct pic_ops gicv3_picops = {
 #ifdef MULTIPROCESSOR
 	.pic_cpu_init = gicv3_cpu_init,
 	.pic_ipi_send = gicv3_ipi_send,
+	.pic_get_affinity = gicv3_get_affinity,
+	.pic_set_affinity = gicv3_set_affinity,
 #endif
 };
 
@@ -637,10 +691,14 @@ int
 gicv3_init(struct gicv3_softc *sc)
 {
 	const uint32_t gicd_typer = gicd_read_4(sc, GICD_TYPER);
+	int n;
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
 	LIST_INIT(&sc->sc_cpu_init);
+
+	for (n = 0; n < MAXCPUS; n++)
+		sc->sc_irouter[n] = UINT64_MAX;
 
 	sc->sc_pic.pic_ops = &gicv3_picops;
 	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(gicd_typer);
