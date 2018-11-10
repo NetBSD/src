@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1078 2018/10/06 18:52:59 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1079 2018/11/10 01:40:46 macallan Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -980,7 +980,7 @@ MKCOMPATMODULES:=	no
 # These platforms use softfloat by default.
 #
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
-MKSOFTFLOAT?=	yes
+MKSOFTFLOAT?=	no
 .endif
 
 #
@@ -1206,6 +1206,7 @@ MKSLJIT=	yes
     ${MACHINE} == "hpcsh"	|| \
     ${MACHINE} == "i386"	|| \
     ${MACHINE} == "ibmnws"	|| \
+    ${MACHINE} == "iyonix"	|| \
     ${MACHINE} == "luna68k"	|| \
     ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "macppc"	|| \
