@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 2018/11/08 20:29:37 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.16 2018/11/11 10:06:09 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -431,7 +431,7 @@ get_available_cds_helper(void *arg, const char *device)
 	struct disklabel label;
 	int part, dev, error, sess, ready;
 
-	if (!is_cdrom_device(device))
+	if (!is_cdrom_device(device, false))
 		return true;
 
 	sprintf(dname, "/dev/r%s%c", device, 'a'+RAW_PART);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.24 2018/11/11 09:17:10 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.25 2018/11/11 10:06:09 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -369,7 +369,7 @@ get_default_cdrom_helper(void *state, const char *dev)
 {
 	struct default_cdrom_data *data = state;
 
-	if (!is_cdrom_device(dev))
+	if (!is_cdrom_device(dev, false))
 		return true;
 
 	strlcpy(data->device, dev, data->max_len);
@@ -511,11 +511,12 @@ is_ffs_wedge(const char *dev)
 
 /*
  * Does this device match an entry in our default CDROM device list?
+ * If looking for install targets, we also flag floopy devices.
  */
 bool
-is_cdrom_device(const char *dev)
+is_cdrom_device(const char *dev, bool as_target)
 {
-	static const char *cdrom_devices[] = {
+	static const char *target_devices[] = {
 #ifdef CD_NAMES
 		CD_NAMES
 #endif
@@ -530,8 +531,15 @@ is_cdrom_device(const char *dev)
 #endif
 		0
 	};
+	static const char *src_devices[] = {
+#ifdef CD_NAMES
+		CD_NAMES ,
+#endif
+		0
+	};
 
-	for (const char **dev_pat = cdrom_devices; *dev_pat; dev_pat++)
+	for (const char **dev_pat = as_target ? target_devices : src_devices;
+	     *dev_pat; dev_pat++)
 		if (fnmatch(*dev_pat, dev, 0) == 0)
 			return true;
 
@@ -593,7 +601,7 @@ get_disks_helper(void *arg, const char *dev)
 	struct disklabel l;
 
 	/* is this a CD device? */
-	if (is_cdrom_device(dev))
+	if (is_cdrom_device(dev, true))
 		return true;
 
 	strlcpy(state->dd->dd_name, dev, sizeof state->dd->dd_name - 2);
