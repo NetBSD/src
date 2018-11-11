@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.12 2018/07/09 10:07:42 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.13 2018/11/11 11:44:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -115,6 +115,19 @@
 
 &ohci1 {
 	status = "okay";
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>, <&uart1_rts_cts_pins>;
+	status = "okay";
+	bluetooth {
+		compatible = "realtek,rtl8723cs-bt";
+		reset-gpios = <&r_pio 0 4 GPIO_ACTIVE_LOW>; /* PL4 */
+		device-wake-gpios = <&r_pio 0 5 GPIO_ACTIVE_LOW>; /* PL5 */
+		host-wake-gpios = <&r_pio 0 6 GPIO_ACTIVE_HIGH>; /* PL6 */
+		firmware-postfix = "pinebook";
+	};
 };
 
 &usb_otg {
