@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.5 2018/10/29 00:14:37 christos Exp $	*/
+/*	$NetBSD: unlz.c,v 1.6 2018/11/11 01:42:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -575,7 +575,12 @@ lz_decode(int fin, int fdout, unsigned dict_size, off_t *insize)
 	}
 	if (insize)
 		*insize = rv;
+#if 0
+	/* Does not work with pipes */
 	rv = ftello(lz.fout);
+#else
+	rv = data_size;
+#endif
 out:
 	lz_destroy(&lz);
 	return rv;
