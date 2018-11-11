@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.189 2016/11/11 15:29:36 njoly Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.190 2018/11/11 11:17:49 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189 2016/11/11 15:29:36 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.190 2018/11/11 11:17:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -424,6 +424,7 @@ sys___gettimeofday50(struct lwp *l, const struct sys___gettimeofday50_args *uap,
 	struct timezone tzfake;
 
 	if (SCARG(uap, tp)) {
+		memset(&atv, 0, sizeof(atv));
 		microtime(&atv);
 		error = copyout(&atv, SCARG(uap, tp), sizeof(atv));
 		if (error)
