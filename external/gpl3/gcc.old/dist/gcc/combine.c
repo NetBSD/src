@@ -329,8 +329,16 @@ struct insn_link {
 
 static struct insn_link **uid_log_links;
 
-#define INSN_COST(INSN)		(uid_insn_cost[INSN_UID (INSN)])
-#define LOG_LINKS(INSN)		(uid_log_links[INSN_UID (INSN)])
+static inline int
+insn_uid_check (const_rtx insn)
+{
+  int uid = INSN_UID (insn);
+  gcc_checking_assert (uid <= max_uid_known);
+  return uid;
+}
+
+#define INSN_COST(INSN)		(uid_insn_cost[insn_uid_check (INSN)])
+#define LOG_LINKS(INSN)		(uid_log_links[insn_uid_check (INSN)])
 
 #define FOR_EACH_LOG_LINK(L, INSN)				\
   for ((L) = LOG_LINKS (INSN); (L); (L) = (L)->next)
@@ -678,7 +686,7 @@ find_single_use (rtx dest, rtx_insn *insn, rtx_insn **ploc)
   for (next = NEXT_INSN (insn);
        next && BLOCK_FOR_INSN (next) == bb;
        next = NEXT_INSN (next))
-    if (INSN_P (next) && dead_or_set_p (next, dest))
+    if (NONDEBUG_INSN_P (next) && dead_or_set_p (next, dest))
       {
 	FOR_EACH_LOG_LINK (link, next)
 	  if (link->insn == insn && link->regno == REGNO (dest))
@@ -1129,7 +1137,7 @@ combine_instructions (rtx_insn *f, unsigned int nregs)
 
   int new_direct_jump_p = 0;
 
-  for (first = f; first && !INSN_P (first); )
+  for (first = f; first && !NONDEBUG_INSN_P (first); )
     first = NEXT_INSN (first);
   if (!first)
     return 0;
@@ -2277,7 +2285,7 @@ cant_combine_insn_p (rtx_insn *insn)
   /* If this isn't really an insn, we can't do anything.
      This can occur when flow deletes an insn that it has merged into an
      auto-increment address.  */
-  if (! INSN_P (insn))
+  if (!NONDEBUG_INSN_P (insn))
     return 1;
 
   /* Never combine loads and stores involving hard regs that are likely
@@ -2947,7 +2955,8 @@ try_combine (rtx_insn *i3, rtx_insn *i2, rtx_insn *i1, rtx_insn *i0,
       && is_parallel_of_n_reg_sets (PATTERN (i2), 2)
       && can_split_parallel_of_n_reg_sets (i2, 2)
       && !reg_used_between_p (SET_DEST (XVECEXP (PATTERN (i2), 0, 0)), i2, i3)
-      && !reg_used_between_p (SET_DEST (XVECEXP (PATTERN (i2), 0, 1)), i2, i3))
+      && !reg_used_between_p (SET_DEST (XVECEXP (PATTERN (i2), 0, 1)), i2, i3)
+      && !find_reg_note (i2, REG_UNUSED, 0))
     {
       /* If there is no I1, there is no I0 either.  */
       i0 = i1;
@@ -4171,7 +4180,8 @@ try_combine (rtx_insn *i3, rtx_insn *i2, rtx_insn *i1, rtx_insn *i0,
 		    || insn != BB_HEAD (this_basic_block->next_bb));
 	   insn = NEXT_INSN (insn))
 	{
-	  if (INSN_P (insn) && reg_referenced_p (ni2dest, PATTERN (insn)))
+	  if (NONDEBUG_INSN_P (insn)
+	      && reg_referenced_p (ni2dest, PATTERN (insn)))
 	    {
 	      FOR_EACH_LOG_LINK (link, insn)
 		if (link->insn == i3)
@@ -4312,9 +4322,9 @@ try_combine (rtx_insn *i3, rtx_insn *i2, rtx_insn *i1, rtx_insn *i0,
 	    for (temp_insn = NEXT_INSN (i2);
 		 temp_insn
 		 && (this_basic_block->next_bb == EXIT_BLOCK_PTR_FOR_FN (cfun)
-			  || BB_HEAD (this_basic_block) != temp_insn);
+		     || BB_HEAD (this_basic_block) != temp_insn);
 		 temp_insn = NEXT_INSN (temp_insn))
-	      if (temp_insn != i3 && INSN_P (temp_insn))
+	      if (temp_insn != i3 && NONDEBUG_INSN_P (temp_insn))
 		FOR_EACH_LOG_LINK (link, temp_insn)
 		  if (link->insn == i2)
 		    link->insn = i3;
@@ -5425,11 +5435,15 @@ subst (rtx x, rtx from, rtx to, int in_dest, int in_cond, int unique_copy)
 		    x = gen_rtx_CLOBBER (mode, const0_rtx);
 		}
 	      else if (CONST_SCALAR_INT_P (new_rtx)
-		       && GET_CODE (x) == ZERO_EXTEND)
+		       && (GET_CODE (x) == ZERO_EXTEND
+			   || GET_CODE (x) == FLOAT
+			   || GET_CODE (x) == UNSIGNED_FLOAT))
 		{
-		  x = simplify_unary_operation (ZERO_EXTEND, GET_MODE (x),
-						new_rtx, GET_MODE (XEXP (x, 0)));
-		  gcc_assert (x);
+		  x = simplify_unary_operation (GET_CODE (x), GET_MODE (x),
+						new_rtx,
+						GET_MODE (XEXP (x, 0)));
+		  if (!x)
+		    return gen_rtx_CLOBBER (VOIDmode, const0_rtx);
 		}
 	      else
 		SUBST (XEXP (x, i), new_rtx);
@@ -5571,7 +5585,11 @@ combine_simplify_rtx (rtx x, machine_mode op0_mode, int in_dest,
 	  /* If everything is a comparison, what we have is highly unlikely
 	     to be simpler, so don't use it.  */
 	  && ! (COMPARISON_P (x)
-		&& (COMPARISON_P (true_rtx) || COMPARISON_P (false_rtx))))
+		&& (COMPARISON_P (true_rtx) || COMPARISON_P (false_rtx)))
+	  /* Similarly, if we end up with one of the expressions the same
+	     as the original, it is certainly not simpler.  */
+	  && ! rtx_equal_p (x, true_rtx)
+	  && ! rtx_equal_p (x, false_rtx))
 	{
 	  rtx cop1 = const0_rtx;
 	  enum rtx_code cond_code = simplify_comparison (NE, &cond, &cop1);
@@ -6259,7 +6277,7 @@ simplify_if_then_else (rtx x)
 			  pc_rtx, pc_rtx, 0, 0, 0);
       if (reg_mentioned_p (from, false_rtx))
 	false_rtx = subst (known_cond (copy_rtx (false_rtx), false_code,
-				   from, false_val),
+				       from, false_val),
 			   pc_rtx, pc_rtx, 0, 0, 0);
 
       SUBST (XEXP (x, 1), swapped ? false_rtx : true_rtx);
@@ -7326,7 +7344,14 @@ make_extraction (machine_mode mode, rtx inner, HOST_WIDE_INT pos,
   if (pos_rtx && CONST_INT_P (pos_rtx))
     pos = INTVAL (pos_rtx), pos_rtx = 0;
 
-  if (GET_CODE (inner) == SUBREG && subreg_lowpart_p (inner))
+  if (GET_CODE (inner) == SUBREG
+      && subreg_lowpart_p (inner)
+      && (paradoxical_subreg_p (inner)
+	  /* If trying or potentionally trying to extract
+	     bits outside of is_mode, don't look through
+	     non-paradoxical SUBREGs.  See PR82192.  */
+	  || (pos_rtx == NULL_RTX
+	      && pos + len <= GET_MODE_PRECISION (is_mode))))
     {
       /* If going from (subreg:SI (mem:QI ...)) to (mem:QI ...),
 	 consider just the QI as the memory to extract from.
@@ -7352,7 +7377,12 @@ make_extraction (machine_mode mode, rtx inner, HOST_WIDE_INT pos,
       if (new_rtx != 0)
 	return gen_rtx_ASHIFT (mode, new_rtx, XEXP (inner, 1));
     }
-  else if (GET_CODE (inner) == TRUNCATE)
+  else if (GET_CODE (inner) == TRUNCATE
+	   /* If trying or potentionally trying to extract
+	      bits outside of is_mode, don't look through
+	      TRUNCATE.  See PR82192.  */
+	   && pos_rtx == NULL_RTX
+	   && pos + len <= GET_MODE_PRECISION (is_mode))
     inner = XEXP (inner, 0);
 
   inner_mode = GET_MODE (inner);
@@ -9005,6 +9035,7 @@ if_then_else_cond (rtx x, rtx *ptrue, rtx *pfalse)
 
 	  if (COMPARISON_P (cond0)
 	      && COMPARISON_P (cond1)
+	      && SCALAR_INT_MODE_P (mode)
 	      && ((GET_CODE (cond0) == reversed_comparison_code (cond1, NULL)
 		   && rtx_equal_p (XEXP (cond0, 0), XEXP (cond1, 0))
 		   && rtx_equal_p (XEXP (cond0, 1), XEXP (cond1, 1)))
@@ -9153,12 +9184,12 @@ known_cond (rtx x, enum rtx_code cond, rtx reg, rtx val)
 	  if (COMPARISON_P (x))
 	    {
 	      if (comparison_dominates_p (cond, code))
-		return const_true_rtx;
+		return VECTOR_MODE_P (GET_MODE (x)) ? x : const_true_rtx;
 
 	      code = reversed_comparison_code (x, NULL);
 	      if (code != UNKNOWN
 		  && comparison_dominates_p (cond, code))
-		return const0_rtx;
+		return CONST0_RTX (GET_MODE (x));
 	      else
 		return x;
 	    }
@@ -9201,7 +9232,7 @@ known_cond (rtx x, enum rtx_code cond, rtx reg, rtx val)
 	  /* We must simplify subreg here, before we lose track of the
 	     original inner_mode.  */
 	  new_rtx = simplify_subreg (GET_MODE (x), r,
-				 inner_mode, SUBREG_BYTE (x));
+				     inner_mode, SUBREG_BYTE (x));
 	  if (new_rtx)
 	    return new_rtx;
 	  else
@@ -9226,7 +9257,7 @@ known_cond (rtx x, enum rtx_code cond, rtx reg, rtx val)
 	  /* We must simplify the zero_extend here, before we lose
 	     track of the original inner_mode.  */
 	  new_rtx = simplify_unary_operation (ZERO_EXTEND, GET_MODE (x),
-					  r, inner_mode);
+					      r, inner_mode);
 	  if (new_rtx)
 	    return new_rtx;
 	  else
@@ -13941,6 +13972,17 @@ distribute_notes (rtx notes, rtx_insn *from_insn, rtx_insn *i3, rtx_insn *i2,
 		  && CALL_P (from_insn)
 		  && find_reg_fusage (from_insn, USE, XEXP (note, 0)))
 		place = from_insn;
+	      else if (i2 && reg_set_p (XEXP (note, 0), PATTERN (i2)))
+		{
+		  /* If the new I2 sets the same register that is marked
+		     dead in the note, we do not in general know where to
+		     put the note.  One important case we _can_ handle is
+		     when the note comes from I3.  */
+		  if (from_insn == i3)
+		    place = i3;
+		  else
+		    break;
+		}
 	      else if (reg_referenced_p (XEXP (note, 0), PATTERN (i3)))
 		place = i3;
 	      else if (i2 != 0 && next_nonnote_nondebug_insn (i2) == i3
@@ -13954,11 +13996,6 @@ distribute_notes (rtx notes, rtx_insn *from_insn, rtx_insn *i3, rtx_insn *i2,
 		       || rtx_equal_p (XEXP (note, 0), elim_i0))
 		break;
 	      tem_insn = i3;
-	      /* If the new I2 sets the same register that is marked dead
-		 in the note, we do not know where to put the note.
-		 Give up.  */
-	      if (i2 != 0 && reg_set_p (XEXP (note, 0), PATTERN (i2)))
-		break;
 	    }
 
 	  if (place == 0)
