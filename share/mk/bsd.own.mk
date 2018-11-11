@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1081 2018/11/11 08:28:35 maya Exp $
+#	$NetBSD: bsd.own.mk,v 1.1082 2018/11/11 18:02:23 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -485,8 +485,8 @@ TOOL_CTFCONVERT=	ctfconvert
 TOOL_CTFMERGE=		ctfmerge
 TOOL_CVSLATEST=		cvslatest
 TOOL_DB=		db
-TOOL_DTC=		dtc
 TOOL_DISKLABEL=		disklabel
+TOOL_DTC=		dtc
 TOOL_EQN=		eqn
 TOOL_FDISK=		fdisk
 TOOL_FGEN=		fgen
