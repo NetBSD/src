@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.320 2018/10/31 06:26:25 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.321 2018/11/11 10:58:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.320 2018/10/31 06:26:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.321 2018/11/11 10:58:40 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -626,6 +626,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Round down the stackpointer to a multiple of 16 for the ABI. */
 	fp = (struct sigframe_siginfo *)(((unsigned long)sp & ~15) - 8);
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
@@ -633,7 +634,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
 	mutex_exit(p->p_lock);
