@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.13 2018/09/03 16:29:23 riastradh Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.14 2018/11/11 21:24:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.13 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.14 2018/11/11 21:24:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,15 +39,25 @@ __KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.13 2018/09/03 16:29:23 riastradh Exp $
 #include <sys/kmem.h>
 #include <sys/queue.h>
 
+#include <dev/pci/pcivar.h>
+
 #include <arm/cortex/gic_intr.h>
+#include <arm/cortex/gic_reg.h>
+#include <arm/cortex/gic_v2m.h>
 #include <arm/cortex/mpcore_var.h>
 
 #include <dev/fdt/fdtvar.h>
 
 #define	GIC_MAXIRQ	1020
 
+extern struct pic_softc *pic_list[];
+
+struct gic_fdt_softc;
+struct gic_fdt_irq;
+
 static int	gic_fdt_match(device_t, cfdata_t, void *);
 static void	gic_fdt_attach(device_t, device_t, void *);
+static void	gic_fdt_attach_v2m(struct gic_fdt_softc *, bus_space_tag_t, int);
 
 static int	gic_fdt_intr(void *);
 
@@ -61,9 +71,6 @@ struct fdtbus_interrupt_controller_func gic_fdt_funcs = {
 	.disestablish = gic_fdt_disestablish,
 	.intrstr = gic_fdt_intrstr
 };
-
-struct gic_fdt_softc;
-struct gic_fdt_irq;
 
 struct gic_fdt_irqhandler {
 	struct gic_fdt_irq	*ih_irq;
@@ -87,7 +94,10 @@ struct gic_fdt_irq {
 
 struct gic_fdt_softc {
 	device_t		sc_dev;
+	device_t		sc_gicdev;
 	int			sc_phandle;
+
+	int			sc_v2m_count;
 
 	struct gic_fdt_irq	*sc_irq[GIC_MAXIRQ];
 };
@@ -107,7 +117,7 @@ gic_fdt_match(device_t parent, cfdata_t cf, void *aux)
 	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -115,15 +125,16 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct gic_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	bus_addr_t addr_d, addr_c;
 	bus_size_t size_d, size_c;
 	bus_space_handle_t bsh;
-	int error;
+	int error, child;
 
 	sc->sc_dev = self;
-	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_phandle = phandle;
 
-	error = fdtbus_register_interrupt_controller(self, faa->faa_phandle,
+	error = fdtbus_register_interrupt_controller(self, phandle,
 	    &gic_fdt_funcs);
 	if (error) {
 		aprint_error(": couldn't register with fdtbus: %d\n", error);
@@ -160,9 +171,58 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_off2 = addr_c - addr,
 	};
 
-	config_found(self, &mpcaa, NULL);
+	sc->sc_gicdev = config_found(self, &mpcaa, NULL);
 
 	arm_fdt_irq_set_handler(armgic_irq_handler);
+
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!fdtbus_status_okay(child))
+			continue;
+		const char * const v2m_compat[] = { "arm,gic-v2m-frame", NULL };
+		if (of_match_compatible(child, v2m_compat))
+			gic_fdt_attach_v2m(sc, faa->faa_bst, child);
+	}
+}
+
+static void
+gic_fdt_attach_v2m(struct gic_fdt_softc *sc, bus_space_tag_t bst, int phandle)
+{
+	struct gic_v2m_frame *frame;
+	u_int base_spi, num_spis;
+	bus_space_handle_t bsh;
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error_dev(sc->sc_gicdev, "couldn't get V2M address\n");
+		return;
+	}
+
+	if (bus_space_map(bst, addr, size, 0, &bsh) != 0) {
+		aprint_error_dev(sc->sc_gicdev, "couldn't map V2M frame\n");
+		return;
+	}
+	const uint32_t typer = bus_space_read_4(bst, bsh, GIC_MSI_TYPER);
+	bus_space_unmap(bst, bsh, size);
+
+	if (of_getprop_uint32(phandle, "arm,msi-base-spi", &base_spi))
+		base_spi = __SHIFTOUT(typer, GIC_MSI_TYPER_BASE);
+	if (of_getprop_uint32(phandle, "arm,msi-num-spis", &num_spis))
+		num_spis = __SHIFTOUT(typer, GIC_MSI_TYPER_NUMBER);
+
+	frame = kmem_zalloc(sizeof(*frame), KM_SLEEP);
+	frame->frame_reg = addr;
+	frame->frame_pic = pic_list[0];
+	frame->frame_base = base_spi;
+	frame->frame_count = num_spis;
+
+	if (gic_v2m_init(frame, sc->sc_gicdev, sc->sc_v2m_count++) != 0) {
+		aprint_error_dev(sc->sc_gicdev, "failed to initialize GICv2m\n");
+	} else {
+		aprint_normal_dev(sc->sc_gicdev, "GICv2m @ %#" PRIx64 ", SPIs %u-%u\n",
+		    (uint64_t)frame->frame_reg, frame->frame_base,
+		    frame->frame_base + frame->frame_count);
+	}
 }
 
 static void *
