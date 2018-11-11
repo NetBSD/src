@@ -1,7 +1,8 @@
-# $NetBSD: md.amd64,v 1.102 2018/10/01 08:23:53 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.103 2018/11/11 12:03:08 maxv Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
+./usr/lib/libnvmm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
@@ -11,6 +12,7 @@
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.1.debug	comp-compat-shlib	compat,pic,debug,pam
 ./usr/libdata/debug/usr/lib/i386/libproc.so.1.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
 ./usr/libdata/debug/usr/lib/i386/librtld_db.so.0.0.debug	comp-compat-shlib	compat,pic,debug,dtrace
+./usr/libdata/debug/usr/lib/libnvmm.so.0.1.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/lib/libx86_64.so.0.0.debug	comp-sys-shlib		pic,debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat

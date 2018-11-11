@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.276 2018/09/30 15:56:47 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.277 2018/11/11 12:03:08 maxv Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -11,6 +11,9 @@
 ./usr/lib/i386/libproc.so.1.0			base-compat-shlib	compat,pic,dtrace
 ./usr/lib/i386/librtld_db.so.0			base-compat-shlib	compat,pic,dtrace
 ./usr/lib/i386/librtld_db.so.0.0		base-compat-shlib	compat,pic,dtrace
+./usr/lib/libnvmm.so				base-sys-shlib		pic
+./usr/lib/libnvmm.so.0				base-sys-shlib		pic
+./usr/lib/libnvmm.so.0.1			base-sys-shlib		pic
 ./usr/lib/libx86_64.so				base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0			base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib		pic
