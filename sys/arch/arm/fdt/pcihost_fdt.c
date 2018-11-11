@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.2 2018/09/09 13:40:28 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.3 2018/11/11 21:24:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.2 2018/09/09 13:40:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.3 2018/11/11 21:24:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.2 2018/09/09 13:40:28 jmcneill Exp
 #include <dev/pci/pciconf.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <arm/pci/pci_msi_machdep.h>
 
 #define	IH_INDEX_MASK			0x0000ffff
 #define	IH_MPSAFE			0x80000000
@@ -72,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.2 2018/09/09 13:40:28 jmcneill Exp
 #define	PHYS_HI_FUNCTION		__BITS(10,8)
 #define	PHYS_HI_REGISTER		__BITS(7,0)
 
+static int pcihost_segment = 0;
+
 enum pcihost_type {
 	PCIHOST_CAM = 1,
 	PCIHOST_ECAM,
@@ -86,6 +90,7 @@ struct pcihost_softc {
 
 	enum pcihost_type	sc_type;
 
+	u_int			sc_seg;
 	u_int			sc_bus_min;
 	u_int			sc_bus_max;
 
@@ -103,6 +108,7 @@ static void	pcihost_attach_hook(device_t, device_t,
 static int	pcihost_bus_maxdevs(void *, int);
 static pcitag_t	pcihost_make_tag(void *, int, int, int);
 static void	pcihost_decompose_tag(void *, pcitag_t, int *, int *, int *);
+static u_int	pcihost_get_segment(void *);
 static pcireg_t	pcihost_conf_read(void *, pcitag_t, int);
 static void	pcihost_conf_write(void *, pcitag_t, int, pcireg_t);
 static int	pcihost_conf_hook(void *, int, int, int, pcireg_t);
@@ -178,6 +184,15 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 		sc->sc_bus_max = PCIHOST_DEFAULT_BUS_MAX;
 	}
 
+	/*
+	 * Assign a fixed PCI segment ("domain") number. If the property is not
+	 * present, assign one. The binding spec says if this property is used to
+	 * assign static segment numbers, all host bridges should have segments
+	 * astatic assigned to prevent overlaps.
+	 */
+	if (of_getprop_uint32(sc->sc_phandle, "linux,pci-domain", &sc->sc_seg))
+		sc->sc_seg = pcihost_segment++;
+
 	pcihost_init(&sc->sc_pc, sc);
 
 	if (pcihost_config(sc) != 0)
@@ -189,6 +204,12 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 			PCI_FLAGS_MWI_OKAY |
 			PCI_FLAGS_MEM_OKAY |
 			PCI_FLAGS_IO_OKAY;
+#ifdef __HAVE_PCI_MSI_MSIX
+	if (sc->sc_type == PCIHOST_ECAM) {
+		pba.pba_flags |= PCI_FLAGS_MSI_OKAY |
+				 PCI_FLAGS_MSIX_OKAY;
+	}
+#endif
 	pba.pba_iot = sc->sc_bst;
 	pba.pba_memt = sc->sc_bst;
 	pba.pba_dmat = sc->sc_dmat;
@@ -196,7 +217,7 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat64 = sc->sc_dmat;
 #endif
 	pba.pba_pc = &sc->sc_pc;
-	pba.pba_bus = 0;
+	pba.pba_bus = sc->sc_bus_min;
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
@@ -209,6 +230,7 @@ pcihost_init(pci_chipset_tag_t pc, void *priv)
 	pc->pc_bus_maxdevs = pcihost_bus_maxdevs;
 	pc->pc_make_tag = pcihost_make_tag;
 	pc->pc_decompose_tag = pcihost_decompose_tag;
+	pc->pc_get_segment = pcihost_get_segment;
 	pc->pc_conf_read = pcihost_conf_read;
 	pc->pc_conf_write = pcihost_conf_write;
 	pc->pc_conf_hook = pcihost_conf_hook;
@@ -228,7 +250,16 @@ pcihost_config(struct pcihost_softc *sc)
 {
 	struct extent *ioext = NULL, *memext = NULL, *pmemext = NULL;
 	const u_int *ranges;
+	u_int probe_only;
 	int error, len;
+
+	/*
+	 * If this flag is set, skip configuration of the PCI bus and use existing config.
+	 */
+	if (of_getprop_uint32(sc->sc_phandle, "linux,pci-probe-only", &probe_only))
+		probe_only = 0;
+	if (probe_only)
+		return 0;
 
 	ranges = fdtbus_get_prop(sc->sc_phandle, "ranges", &len);
 	if (ranges == NULL) {
@@ -332,6 +363,14 @@ pcihost_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp)
 		*fp = (tag >> 8) & 0x7;
+}
+
+static u_int
+pcihost_get_segment(void *v)
+{
+	struct pcihost_softc *sc = v;
+
+	return sc->sc_seg;
 }
 
 static pcireg_t
@@ -489,16 +528,24 @@ pcihost_find_intr(struct pcihost_softc *sc, pci_intr_handle_t ih, int *pihandle)
 static const char *
 pcihost_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
+	const int irq = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
+	const int vec = __SHIFTOUT(ih, ARM_PCI_INTR_MSI_VEC);
 	struct pcihost_softc *sc = v;
 	const u_int *specifier;
 	int ihandle;
 
-	specifier = pcihost_find_intr(sc, ih & IH_INDEX_MASK, &ihandle);
-	if (specifier == NULL)
-		return NULL;
+	if (ih & ARM_PCI_INTR_MSIX) {
+		snprintf(buf, len, "irq %d (MSI-X vec %d)", irq, vec);
+	} else if (ih & ARM_PCI_INTR_MSI) {
+		snprintf(buf, len, "irq %d (MSI vec %d)", irq, vec);
+	} else {
+		specifier = pcihost_find_intr(sc, ih & IH_INDEX_MASK, &ihandle);
+		if (specifier == NULL)
+			return NULL;
 
-	if (!fdtbus_intr_str_raw(ihandle, specifier, buf, len))
-		return NULL;
+		if (!fdtbus_intr_str_raw(ihandle, specifier, buf, len))
+			return NULL;
+	}
 
 	return buf;
 }
@@ -532,6 +579,9 @@ pcihost_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 	const int flags = (ih & IH_MPSAFE) ? FDT_INTR_MPSAFE : 0;
 	const u_int *specifier;
 	int ihandle;
+
+	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
+		return arm_pci_msi_intr_establish(&sc->sc_pc, ih, ipl, callback, arg);
 
 	specifier = pcihost_find_intr(sc, ih & IH_INDEX_MASK, &ihandle);
 	if (specifier == NULL)
