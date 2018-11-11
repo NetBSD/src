@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.8 2018/11/11 01:26:00 riastradh Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.9 2018/11/11 01:26:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,13 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.8 2018/11/11 01:26:00 riastradh Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.9 2018/11/11 01:26:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/ptrace.h>
 
 #include <err.h>
+#include <fenv.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,10 +104,12 @@ trigger_ill(void)
 static void
 trigger_fpe(void)
 {
-	volatile int a = getpid();
-	volatile int b = strtol("0", NULL, 0);
+	volatile double a = getpid();
+	volatile double b = strtol("0", NULL, 0);
 
-	usleep(a/b);
+	feenableexcept(FE_ALL_EXCEPT);
+
+	usleep((int)(a/b));
 }
 
 static void
