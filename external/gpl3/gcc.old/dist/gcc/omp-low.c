@@ -1559,6 +1559,8 @@ omp_copy_decl (tree var, copy_body_data *cb)
 
   if (TREE_CODE (var) == LABEL_DECL)
     {
+      if (FORCED_LABEL (var) || DECL_NONLOCAL (var))
+	return var;
       new_var = create_artificial_label (DECL_SOURCE_LOCATION (var));
       DECL_CONTEXT (new_var) = current_function_decl;
       insert_decl_map (&ctx->cb, var, new_var);
@@ -2061,13 +2063,16 @@ scan_sharing_clauses (tree clauses, omp_context *ctx,
 	  /* Global variables with "omp declare target" attribute
 	     don't need to be copied, the receiver side will use them
 	     directly.  However, global variables with "omp declare target link"
-	     attribute need to be copied.  */
+	     attribute need to be copied.  Or when ALWAYS modifier is used.  */
 	  if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_MAP
 	      && DECL_P (decl)
 	      && ((OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_FIRSTPRIVATE_POINTER
 		   && (OMP_CLAUSE_MAP_KIND (c)
 		       != GOMP_MAP_FIRSTPRIVATE_REFERENCE))
 		  || TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE)
+	      && OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_ALWAYS_TO
+	      && OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_ALWAYS_FROM
+	      && OMP_CLAUSE_MAP_KIND (c) != GOMP_MAP_ALWAYS_TOFROM
 	      && is_global_var (maybe_lookup_decl_in_outer_ctx (decl, ctx))
 	      && varpool_node::get_create (decl)->offloadable
 	      && !lookup_attribute ("omp declare target link",
@@ -4075,6 +4080,43 @@ build_omp_barrier (tree lhs)
   if (lhs)
     gimple_call_set_lhs (g, lhs);
   return g;
+}
+
+/* Remove omp_member_access_dummy_var variables from gimple_bind_vars
+   of BIND if in a method.  */
+
+static void
+maybe_remove_omp_member_access_dummy_vars (gbind *bind)
+{
+  if (DECL_ARGUMENTS (current_function_decl)
+      && DECL_ARTIFICIAL (DECL_ARGUMENTS (current_function_decl))
+      && (TREE_CODE (TREE_TYPE (DECL_ARGUMENTS (current_function_decl)))
+	  == POINTER_TYPE))
+    {
+      tree vars = gimple_bind_vars (bind);
+      for (tree *pvar = &vars; *pvar; )
+	if (omp_member_access_dummy_var (*pvar))
+	  *pvar = DECL_CHAIN (*pvar);
+	else
+	  pvar = &DECL_CHAIN (*pvar);
+      gimple_bind_set_vars (bind, vars);
+    }
+}
+
+/* Remove omp_member_access_dummy_var variables from BLOCK_VARS of
+   block and its subblocks.  */
+
+static void
+remove_member_access_dummy_vars (tree block)
+{
+  for (tree *pvar = &BLOCK_VARS (block); *pvar; )
+    if (omp_member_access_dummy_var (*pvar))
+      *pvar = DECL_CHAIN (*pvar);
+    else
+      pvar = &DECL_CHAIN (*pvar);
+
+  for (block = BLOCK_SUBBLOCKS (block); block; block = BLOCK_CHAIN (block))
+    remove_member_access_dummy_vars (block);
 }
 
 /* If a context was created for STMT when it was scanned, return it.  */
@@ -10651,24 +10693,28 @@ expand_omp_simd (struct omp_region *region, struct omp_for_data *fd)
 	      tree itype2 = TREE_TYPE (fd->loops[i - 1].v);
 	      if (POINTER_TYPE_P (itype2))
 		itype2 = signed_type_for (itype2);
+	      t = fold_convert (itype2, fd->loops[i - 1].step);
+	      t = force_gimple_operand_gsi (&gsi, t, true, NULL_TREE, true,
+					    GSI_SAME_STMT);
 	      t = build3 (COND_EXPR, itype2,
 			  build2 (fd->loops[i].cond_code, boolean_type_node,
 				  fd->loops[i].v,
 				  fold_convert (itype, fd->loops[i].n2)),
-			  build_int_cst (itype2, 0),
-			  fold_convert (itype2, fd->loops[i - 1].step));
+			  build_int_cst (itype2, 0), t);
 	      if (POINTER_TYPE_P (TREE_TYPE (fd->loops[i - 1].v)))
 		t = fold_build_pointer_plus (fd->loops[i - 1].v, t);
 	      else
 		t = fold_build2 (PLUS_EXPR, itype2, fd->loops[i - 1].v, t);
 	      expand_omp_build_assign (&gsi, fd->loops[i - 1].v, t);
 
+	      t = fold_convert (itype, fd->loops[i].n1);
+	      t = force_gimple_operand_gsi (&gsi, t, true, NULL_TREE, true,
+					    GSI_SAME_STMT);
 	      t = build3 (COND_EXPR, itype,
 			  build2 (fd->loops[i].cond_code, boolean_type_node,
 				  fd->loops[i].v,
 				  fold_convert (itype, fd->loops[i].n2)),
-			  fd->loops[i].v,
-			  fold_convert (itype, fd->loops[i].n1));
+			  fd->loops[i].v, t);
 	      expand_omp_build_assign (&gsi, fd->loops[i].v, t);
 	    }
 	}
@@ -15175,10 +15221,14 @@ lower_omp_for (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       rhs_p = gimple_omp_for_initial_ptr (stmt, i);
       if (!is_gimple_min_invariant (*rhs_p))
 	*rhs_p = get_formal_tmp_var (*rhs_p, &body);
+      else if (TREE_CODE (*rhs_p) == ADDR_EXPR)
+	recompute_tree_invariant_for_addr_expr (*rhs_p);
 
       rhs_p = gimple_omp_for_final_ptr (stmt, i);
       if (!is_gimple_min_invariant (*rhs_p))
 	*rhs_p = get_formal_tmp_var (*rhs_p, &body);
+      else if (TREE_CODE (*rhs_p) == ADDR_EXPR)
+	recompute_tree_invariant_for_addr_expr (*rhs_p);
 
       rhs_p = &TREE_OPERAND (gimple_omp_for_incr (stmt, i), 1);
       if (!is_gimple_min_invariant (*rhs_p))
@@ -15244,6 +15294,7 @@ lower_omp_for (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   pop_gimplify_context (new_stmt);
 
   gimple_bind_append_vars (new_stmt, ctx->block_vars);
+  maybe_remove_omp_member_access_dummy_vars (new_stmt);
   BLOCK_VARS (block) = gimple_bind_vars (new_stmt);
   if (BLOCK_VARS (block))
     TREE_USED (block) = 1;
@@ -15342,6 +15393,7 @@ create_task_copyfn (gomp_task *task_stmt, omp_context *ctx)
   splay_tree_node n;
   struct omp_taskcopy_context tcctx;
   location_t loc = gimple_location (task_stmt);
+  size_t looptempno = 0;
 
   child_fn = gimple_omp_task_copy_fn (task_stmt);
   child_cfun = DECL_STRUCT_FUNCTION (child_fn);
@@ -15455,6 +15507,15 @@ create_task_copyfn (gomp_task *task_stmt, omp_context *ctx)
 	t = build2 (MODIFY_EXPR, TREE_TYPE (dst), dst, src);
 	append_to_statement_list (t, &list);
 	break;
+      case OMP_CLAUSE__LOOPTEMP_:
+	/* Fields for first two _looptemp_ clauses are initialized by
+	   GOMP_taskloop*, the rest are handled like firstprivate.  */
+        if (looptempno < 2)
+	  {
+	    looptempno++;
+	    break;
+	  }
+	/* FALLTHRU */
       case OMP_CLAUSE_FIRSTPRIVATE:
 	decl = OMP_CLAUSE_DECL (c);
 	if (is_variable_sized (decl))
@@ -15480,7 +15541,10 @@ create_task_copyfn (gomp_task *task_stmt, omp_context *ctx)
 	  src = decl;
 	dst = build_simple_mem_ref_loc (loc, arg);
 	dst = omp_build_component_ref (dst, f);
-	t = lang_hooks.decls.omp_clause_copy_ctor (c, dst, src);
+	if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE__LOOPTEMP_)
+	  t = build2 (MODIFY_EXPR, TREE_TYPE (dst), dst, src);
+	else
+	  t = lang_hooks.decls.omp_clause_copy_ctor (c, dst, src);
 	append_to_statement_list (t, &list);
 	break;
       case OMP_CLAUSE_PRIVATE:
@@ -15694,6 +15758,7 @@ lower_omp_taskreg (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   /* Declare all the variables created by mapping and the variables
      declared in the scope of the parallel body.  */
   record_vars_into (ctx->block_vars, child_fn);
+  maybe_remove_omp_member_access_dummy_vars (par_bind);
   record_vars_into (gimple_bind_vars (par_bind), child_fn);
 
   if (ctx->record_type)
@@ -16062,6 +16127,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       /* Declare all the variables created by mapping and the variables
 	 declared in the scope of the target body.  */
       record_vars_into (ctx->block_vars, child_fn);
+      maybe_remove_omp_member_access_dummy_vars (tgt_bind);
       record_vars_into (gimple_bind_vars (tgt_bind), child_fn);
     }
 
@@ -17050,6 +17116,7 @@ lower_omp_1 (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       break;
     case GIMPLE_BIND:
       lower_omp (gimple_bind_body_ptr (as_a <gbind *> (stmt)), ctx);
+      maybe_remove_omp_member_access_dummy_vars (as_a <gbind *> (stmt));
       break;
     case GIMPLE_OMP_PARALLEL:
     case GIMPLE_OMP_TASK:
@@ -17947,6 +18014,16 @@ execute_lower_omp (void)
       all_contexts = NULL;
     }
   BITMAP_FREE (task_shared_vars);
+
+  /* If current function is a method, remove artificial dummy VAR_DECL created
+     for non-static data member privatization, they aren't needed for
+     debuginfo nor anything else, have been already replaced everywhere in the
+     IL and cause problems with LTO.  */
+  if (DECL_ARGUMENTS (current_function_decl)
+      && DECL_ARTIFICIAL (DECL_ARGUMENTS (current_function_decl))
+      && (TREE_CODE (TREE_TYPE (DECL_ARGUMENTS (current_function_decl)))
+	  == POINTER_TYPE))
+    remove_member_access_dummy_vars (DECL_INITIAL (current_function_decl));
   return 0;
 }
 
@@ -18027,7 +18104,7 @@ diagnose_sb_0 (gimple_stmt_iterator *gsi_p,
     }
   if (kind == NULL)
     {
-      gcc_checking_assert (flag_openmp);
+      gcc_checking_assert (flag_openmp || flag_openmp_simd);
       kind = "OpenMP";
     }
 
@@ -18446,7 +18523,7 @@ public:
   /* opt_pass methods: */
   virtual bool gate (function *)
   {
-    return flag_cilkplus || flag_openacc || flag_openmp;
+    return flag_cilkplus || flag_openacc || flag_openmp || flag_openmp_simd;
   }
   virtual unsigned int execute (function *)
     {

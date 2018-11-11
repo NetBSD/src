@@ -4696,7 +4696,12 @@ gimplify_modify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p,
      side as statements and throw away the assignment.  Do this after
      gimplify_modify_expr_rhs so we handle TARGET_EXPRs of addressable
      types properly.  */
-  if (zero_sized_type (TREE_TYPE (*from_p)) && !want_value)
+  if (zero_sized_type (TREE_TYPE (*from_p))
+      && !want_value
+      /* Don't do this for calls that return addressable types, expand_call
+	 relies on those having a lhs.  */
+      && !(TREE_ADDRESSABLE (TREE_TYPE (*from_p))
+	   && TREE_CODE (*from_p) == CALL_EXPR))
     {
       gimplify_stmt (from_p, pre_p);
       gimplify_stmt (to_p, pre_p);
@@ -5529,10 +5534,13 @@ gimplify_cleanup_point_expr (tree *expr_p, gimple_seq *pre_p)
 
 /* Insert a cleanup marker for gimplify_cleanup_point_expr.  CLEANUP
    is the cleanup action required.  EH_ONLY is true if the cleanup should
-   only be executed if an exception is thrown, not on normal exit.  */
+   only be executed if an exception is thrown, not on normal exit.
+   If FORCE_UNCOND is true perform the cleanup unconditionally;  this is
+   only valid for clobbers.  */
 
 static void
-gimple_push_cleanup (tree var, tree cleanup, bool eh_only, gimple_seq *pre_p)
+gimple_push_cleanup (tree var, tree cleanup, bool eh_only, gimple_seq *pre_p,
+		     bool force_uncond = false)
 {
   gimple *wce;
   gimple_seq cleanup_stmts = NULL;
@@ -5564,22 +5572,31 @@ gimple_push_cleanup (tree var, tree cleanup, bool eh_only, gimple_seq *pre_p)
 	   }
 	   val
       */
-      tree flag = create_tmp_var (boolean_type_node, "cleanup");
-      gassign *ffalse = gimple_build_assign (flag, boolean_false_node);
-      gassign *ftrue = gimple_build_assign (flag, boolean_true_node);
+      if (force_uncond)
+	{
+	  gimplify_stmt (&cleanup, &cleanup_stmts);
+	  wce = gimple_build_wce (cleanup_stmts);
+	  gimplify_seq_add_stmt (&gimplify_ctxp->conditional_cleanups, wce);
+	}
+      else
+	{
+	  tree flag = create_tmp_var (boolean_type_node, "cleanup");
+	  gassign *ffalse = gimple_build_assign (flag, boolean_false_node);
+	  gassign *ftrue = gimple_build_assign (flag, boolean_true_node);
 
-      cleanup = build3 (COND_EXPR, void_type_node, flag, cleanup, NULL);
-      gimplify_stmt (&cleanup, &cleanup_stmts);
-      wce = gimple_build_wce (cleanup_stmts);
+	  cleanup = build3 (COND_EXPR, void_type_node, flag, cleanup, NULL);
+	  gimplify_stmt (&cleanup, &cleanup_stmts);
+	  wce = gimple_build_wce (cleanup_stmts);
 
-      gimplify_seq_add_stmt (&gimplify_ctxp->conditional_cleanups, ffalse);
-      gimplify_seq_add_stmt (&gimplify_ctxp->conditional_cleanups, wce);
-      gimplify_seq_add_stmt (pre_p, ftrue);
+	  gimplify_seq_add_stmt (&gimplify_ctxp->conditional_cleanups, ffalse);
+	  gimplify_seq_add_stmt (&gimplify_ctxp->conditional_cleanups, wce);
+	  gimplify_seq_add_stmt (pre_p, ftrue);
 
-      /* Because of this manipulation, and the EH edges that jump
-	 threading cannot redirect, the temporary (VAR) will appear
-	 to be used uninitialized.  Don't warn.  */
-      TREE_NO_WARNING (var) = 1;
+	  /* Because of this manipulation, and the EH edges that jump
+	     threading cannot redirect, the temporary (VAR) will appear
+	     to be used uninitialized.  Don't warn.  */
+	  TREE_NO_WARNING (var) = 1;
+	}
     }
   else
     {
@@ -5656,11 +5673,7 @@ gimplify_target_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 					    NULL);
 	  TREE_THIS_VOLATILE (clobber) = true;
 	  clobber = build2 (MODIFY_EXPR, TREE_TYPE (temp), temp, clobber);
-	  if (cleanup)
-	    cleanup = build2 (COMPOUND_EXPR, void_type_node, cleanup,
-			      clobber);
-	  else
-	    cleanup = clobber;
+	  gimple_push_cleanup (temp, clobber, false, pre_p, true);
 	}
 
       if (cleanup)
@@ -8712,9 +8725,25 @@ gimplify_omp_for (tree *expr_p, gimple_seq *pre_p)
 	  t = TREE_VEC_ELT (OMP_FOR_INIT (for_stmt), i);
 	  if (!is_gimple_constant (TREE_OPERAND (t, 1)))
 	    {
+	      tree type = TREE_TYPE (TREE_OPERAND (t, 0));
 	      TREE_OPERAND (t, 1)
 		= get_initialized_tmp_var (TREE_OPERAND (t, 1),
-					   pre_p, NULL);
+					   gimple_seq_empty_p (for_pre_body)
+					   ? pre_p : &for_pre_body, NULL);
+	      /* Reference to pointer conversion is considered useless,
+		 but is significant for firstprivate clause.  Force it
+		 here.  */
+	      if (TREE_CODE (type) == POINTER_TYPE
+		  && (TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 1)))
+		      == REFERENCE_TYPE))
+		{
+		  tree v = create_tmp_var (TYPE_MAIN_VARIANT (type));
+		  tree m = build2 (INIT_EXPR, TREE_TYPE (v), v,
+				   TREE_OPERAND (t, 1));
+		  gimplify_and_add (m, gimple_seq_empty_p (for_pre_body)
+				       ? pre_p : &for_pre_body);
+		  TREE_OPERAND (t, 1) = v;
+		}
 	      tree c = build_omp_clause (input_location,
 					 OMP_CLAUSE_FIRSTPRIVATE);
 	      OMP_CLAUSE_DECL (c) = TREE_OPERAND (t, 1);
@@ -8726,10 +8755,25 @@ gimplify_omp_for (tree *expr_p, gimple_seq *pre_p)
 	  t = TREE_VEC_ELT (OMP_FOR_COND (for_stmt), i);
 	  if (!is_gimple_constant (TREE_OPERAND (t, 1)))
 	    {
+	      tree type = TREE_TYPE (TREE_OPERAND (t, 0));
 	      TREE_OPERAND (t, 1)
 		= get_initialized_tmp_var (TREE_OPERAND (t, 1),
 					   gimple_seq_empty_p (for_pre_body)
 					   ? pre_p : &for_pre_body, NULL);
+	      /* Reference to pointer conversion is considered useless,
+		 but is significant for firstprivate clause.  Force it
+		 here.  */
+	      if (TREE_CODE (type) == POINTER_TYPE
+		  && (TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 1)))
+		      == REFERENCE_TYPE))
+		{
+		  tree v = create_tmp_var (TYPE_MAIN_VARIANT (type));
+		  tree m = build2 (INIT_EXPR, TREE_TYPE (v), v,
+				   TREE_OPERAND (t, 1));
+		  gimplify_and_add (m, gimple_seq_empty_p (for_pre_body)
+				       ? pre_p : &for_pre_body);
+		  TREE_OPERAND (t, 1) = v;
+		}
 	      tree c = build_omp_clause (input_location,
 					 OMP_CLAUSE_FIRSTPRIVATE);
 	      OMP_CLAUSE_DECL (c) = TREE_OPERAND (t, 1);

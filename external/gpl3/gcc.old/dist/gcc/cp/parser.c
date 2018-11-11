@@ -8920,12 +8920,20 @@ cp_parser_binary_expression (cp_parser* parser, bool cast_p,
       if (no_toplevel_fold_p
 	  && lookahead_prec <= current.prec
 	  && sp == stack)
-	current.lhs = build2_loc (combined_loc,
-				  current.tree_type,
-				  TREE_CODE_CLASS (current.tree_type)
-				  == tcc_comparison
-				  ? boolean_type_node : TREE_TYPE (current.lhs),
-				  current.lhs, rhs);
+	{
+	  if (current.lhs == error_mark_node || rhs == error_mark_node)
+	    current.lhs = error_mark_node;
+	  else
+	    {
+	      current.lhs
+		= build_min (current.tree_type,
+			     TREE_CODE_CLASS (current.tree_type)
+			     == tcc_comparison
+			     ? boolean_type_node : TREE_TYPE (current.lhs),
+			     current.lhs.get_value (), rhs.get_value ());
+	      SET_EXPR_LOCATION (current.lhs, combined_loc);
+	    }
+	}
       else
         {
           current.lhs = build_x_binary_op (combined_loc, current.tree_type,
@@ -10559,6 +10567,18 @@ cp_parser_statement (cp_parser* parser, tree in_statement_expr,
 		"attributes at the beginning of statement are ignored");
 }
 
+/* Append ATTR to attribute list ATTRS.  */
+
+static tree
+attr_chainon (tree attrs, tree attr)
+{
+  if (attrs == error_mark_node)
+    return error_mark_node;
+  if (attr == error_mark_node)
+    return error_mark_node;
+  return chainon (attrs, attr);
+}
+
 /* Parse the label for a labeled-statement, i.e.
 
    identifier :
@@ -10664,7 +10684,7 @@ cp_parser_label_for_labeled_statement (cp_parser* parser, tree attributes)
       else if (!cp_parser_parse_definitely (parser))
 	;
       else
-	attributes = chainon (attributes, attrs);
+	attributes = attr_chainon (attributes, attrs);
     }
 
   if (attributes != NULL_TREE)
@@ -11459,7 +11479,7 @@ cp_parser_perform_range_for_lookup (tree range, tree *begin, tree *end)
 				  /*protect=*/2, /*want_type=*/false,
 				  tf_warning_or_error);
 
-      if (member_begin != NULL_TREE || member_end != NULL_TREE)
+      if (member_begin != NULL_TREE && member_end != NULL_TREE)
 	{
 	  /* Use the member functions.  */
 	  if (member_begin != NULL_TREE)
@@ -12634,8 +12654,7 @@ cp_parser_decl_specifier_seq (cp_parser* parser,
 		  else
 		    {
 		      decl_specs->std_attributes
-			= chainon (decl_specs->std_attributes,
-				   attrs);
+			= attr_chainon (decl_specs->std_attributes, attrs);
 		      if (decl_specs->locations[ds_std_attribute] == 0)
 			decl_specs->locations[ds_std_attribute] = token->location;
 		    }
@@ -12643,9 +12662,8 @@ cp_parser_decl_specifier_seq (cp_parser* parser,
 		}
 	    }
 
-	    decl_specs->attributes
-	      = chainon (decl_specs->attributes,
-			 attrs);
+	  decl_specs->attributes
+	    = attr_chainon (decl_specs->attributes, attrs);
 	  if (decl_specs->locations[ds_attribute] == 0)
 	    decl_specs->locations[ds_attribute] = token->location;
 	  continue;
@@ -17575,7 +17593,7 @@ cp_parser_namespace_definition (cp_parser* parser)
   if (post_ident_attribs)
     {
       if (attribs)
-        attribs = chainon (attribs, post_ident_attribs);
+        attribs = attr_chainon (attribs, post_ident_attribs);
       else
         attribs = post_ident_attribs;
     }
@@ -18705,7 +18723,7 @@ cp_parser_init_declarator (cp_parser* parser,
       decl = grokfield (declarator, decl_specifiers,
 			initializer, !is_non_constant_init,
 			/*asmspec=*/NULL_TREE,
-			chainon (attributes, prefix_attributes));
+			attr_chainon (attributes, prefix_attributes));
       if (decl && TREE_CODE (decl) == FUNCTION_DECL)
 	cp_parser_save_default_args (parser, decl);
       cp_finalize_omp_declare_simd (parser, decl);
@@ -20058,9 +20076,9 @@ cp_parser_type_specifier_seq (cp_parser* parser,
       /* Check for attributes first.  */
       if (cp_next_tokens_can_be_attribute_p (parser))
 	{
-	  type_specifier_seq->attributes =
-	    chainon (type_specifier_seq->attributes,
-		     cp_parser_attributes_opt (parser));
+	  type_specifier_seq->attributes
+	    = attr_chainon (type_specifier_seq->attributes,
+			    cp_parser_attributes_opt (parser));
 	  continue;
 	}
 
@@ -20539,8 +20557,8 @@ cp_parser_parameter_declaration (cp_parser *parser,
       parser->default_arg_ok_p = saved_default_arg_ok_p;
       /* After the declarator, allow more attributes.  */
       decl_specifiers.attributes
-	= chainon (decl_specifiers.attributes,
-		   cp_parser_attributes_opt (parser));
+	= attr_chainon (decl_specifiers.attributes,
+			cp_parser_attributes_opt (parser));
 
       /* If the declarator is a template parameter pack, remember that and
 	 clear the flag in the declarator itself so we don't get errors
@@ -22491,7 +22509,7 @@ cp_parser_member_declaration (cp_parser* parser)
 		 which are not.  */
 	      first_attribute = attributes;
 	      /* Combine the attributes.  */
-	      attributes = chainon (prefix_attributes, attributes);
+	      attributes = attr_chainon (prefix_attributes, attributes);
 
 	      /* Create the bitfield declaration.  */
 	      decl = grokbitfield (identifier
@@ -22548,7 +22566,7 @@ cp_parser_member_declaration (cp_parser* parser)
 		 which are not.  */
 	      first_attribute = attributes;
 	      /* Combine the attributes.  */
-	      attributes = chainon (prefix_attributes, attributes);
+	      attributes = attr_chainon (prefix_attributes, attributes);
 
 	      /* If it's an `=', then we have a constant-initializer or a
 		 pure-specifier.  It is not correct to parse the
@@ -22662,10 +22680,13 @@ cp_parser_member_declaration (cp_parser* parser)
 	  cp_finalize_oacc_routine (parser, decl, false);
 
 	  /* Reset PREFIX_ATTRIBUTES.  */
-	  while (attributes && TREE_CHAIN (attributes) != first_attribute)
-	    attributes = TREE_CHAIN (attributes);
-	  if (attributes)
-	    TREE_CHAIN (attributes) = NULL_TREE;
+	  if (attributes != error_mark_node)
+	    {
+	      while (attributes && TREE_CHAIN (attributes) != first_attribute)
+		attributes = TREE_CHAIN (attributes);
+	      if (attributes)
+		TREE_CHAIN (attributes) = NULL_TREE;
+	    }
 
 	  /* If there is any qualification still in effect, clear it
 	     now; we will be starting fresh with the next declarator.  */
@@ -23765,7 +23786,7 @@ cp_parser_gnu_attributes_opt (cp_parser* parser)
 	cp_parser_skip_to_end_of_statement (parser);
 
       /* Add these new attributes to the list.  */
-      attributes = chainon (attributes, attribute_list);
+      attributes = attr_chainon (attributes, attribute_list);
     }
 
   return attributes;
@@ -28876,7 +28897,7 @@ cp_parser_objc_class_ivars (cp_parser* parser)
 	     which are not.  */
 	  first_attribute = attributes;
 	  /* Combine the attributes.  */
-	  attributes = chainon (prefix_attributes, attributes);
+	  attributes = attr_chainon (prefix_attributes, attributes);
 
 	  if (width)
 	      /* Create the bitfield declaration.  */
@@ -28893,10 +28914,13 @@ cp_parser_objc_class_ivars (cp_parser* parser)
 	    objc_add_instance_variable (decl);
 
 	  /* Reset PREFIX_ATTRIBUTES.  */
-	  while (attributes && TREE_CHAIN (attributes) != first_attribute)
-	    attributes = TREE_CHAIN (attributes);
-	  if (attributes)
-	    TREE_CHAIN (attributes) = NULL_TREE;
+	  if (attributes != error_mark_node)
+	    {
+	      while (attributes && TREE_CHAIN (attributes) != first_attribute)
+		attributes = TREE_CHAIN (attributes);
+	      if (attributes)
+		TREE_CHAIN (attributes) = NULL_TREE;
+	    }
 
 	  token = cp_lexer_peek_token (parser->lexer);
 
@@ -29426,8 +29450,8 @@ cp_parser_objc_struct_declaration (cp_parser *parser)
 	 which are not.  */
       first_attribute = attributes;
       /* Combine the attributes.  */
-      attributes = chainon (prefix_attributes, attributes);
-      
+      attributes = attr_chainon (prefix_attributes, attributes);
+
       decl = grokfield (declarator, &declspecs,
 			NULL_TREE, /*init_const_expr_p=*/false,
 			NULL_TREE, attributes);
@@ -29436,10 +29460,13 @@ cp_parser_objc_struct_declaration (cp_parser *parser)
 	return error_mark_node;
       
       /* Reset PREFIX_ATTRIBUTES.  */
-      while (attributes && TREE_CHAIN (attributes) != first_attribute)
-	attributes = TREE_CHAIN (attributes);
-      if (attributes)
-	TREE_CHAIN (attributes) = NULL_TREE;
+      if (attributes != error_mark_node)
+	{
+	  while (attributes && TREE_CHAIN (attributes) != first_attribute)
+	    attributes = TREE_CHAIN (attributes);
+	  if (attributes)
+	    TREE_CHAIN (attributes) = NULL_TREE;
+	}
 
       DECL_CHAIN (decl) = decls;
       decls = decl;
@@ -33355,7 +33382,7 @@ static tree
 cp_parser_omp_for_loop_init (cp_parser *parser,
 			     enum tree_code code,
 			     tree &this_pre_body,
-			     vec<tree, va_gc> *for_block,
+			     vec<tree, va_gc> *&for_block,
 			     tree &init,
 			     tree &orig_init,
 			     tree &decl,
@@ -36357,7 +36384,7 @@ cp_parser_omp_declare_reduction (cp_parser *parser, cp_token *pragma_tok,
       initializer-clause[opt] new-line
    #pragma omp declare target new-line  */
 
-static void
+static bool
 cp_parser_omp_declare (cp_parser *parser, cp_token *pragma_tok,
 		       enum pragma_context context)
 {
@@ -36371,7 +36398,7 @@ cp_parser_omp_declare (cp_parser *parser, cp_token *pragma_tok,
 	  cp_lexer_consume_token (parser->lexer);
 	  cp_parser_omp_declare_simd (parser, pragma_tok,
 				      context);
-	  return;
+	  return true;
 	}
       cp_ensure_no_omp_declare_simd (parser);
       if (strcmp (p, "reduction") == 0)
@@ -36379,23 +36406,24 @@ cp_parser_omp_declare (cp_parser *parser, cp_token *pragma_tok,
 	  cp_lexer_consume_token (parser->lexer);
 	  cp_parser_omp_declare_reduction (parser, pragma_tok,
 					   context);
-	  return;
+	  return false;
 	}
       if (!flag_openmp)  /* flag_openmp_simd  */
 	{
 	  cp_parser_skip_to_pragma_eol (parser, pragma_tok);
-	  return;
+	  return false;
 	}
       if (strcmp (p, "target") == 0)
 	{
 	  cp_lexer_consume_token (parser->lexer);
 	  cp_parser_omp_declare_target (parser, pragma_tok);
-	  return;
+	  return false;
 	}
     }
   cp_parser_error (parser, "expected %<simd%> or %<reduction%> "
 			   "or %<target%>");
   cp_parser_require_pragma_eol (parser, pragma_tok);
+  return false;
 }
 
 /* OpenMP 4.5:
@@ -37370,8 +37398,7 @@ cp_parser_pragma (cp_parser *parser, enum pragma_context context, bool *if_p)
       return false;
 
     case PRAGMA_OMP_DECLARE_REDUCTION:
-      cp_parser_omp_declare (parser, pragma_tok, context);
-      return false;
+      return cp_parser_omp_declare (parser, pragma_tok, context);
 
     case PRAGMA_OACC_DECLARE:
       cp_parser_oacc_declare (parser, pragma_tok);

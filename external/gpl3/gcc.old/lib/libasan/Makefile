@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2018/08/02 00:03:32 mrg Exp $
+# $NetBSD: Makefile,v 1.5 2018/11/11 22:49:47 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
