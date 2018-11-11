@@ -1,6 +1,6 @@
-// <experimental/regex> -*- C++ -*-
+// Reference-counted COW wide string instantiations for I/O -*- C++ -*-
 
-// Copyright (C) 2015-2016 Free Software Foundation, Inc.
+// Copyright (C) 2014-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,50 +22,42 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file experimental/regex
- *  This is a TS C++ Library header.
- */
+//
+// ISO C++ 14882: 21  Strings library
+//
 
-#ifndef _GLIBCXX_EXPERIMENTAL_REGEX
-#define _GLIBCXX_EXPERIMENTAL_REGEX 1
+#define _GLIBCXX_USE_CXX11_ABI 0
+#include <bits/c++config.h>
 
-#pragma GCC system_header
+#ifdef _GLIBCXX_USE_WCHAR_T
+#include <ostream>
+#include <istream>
 
-#if __cplusplus <= 201103L
-# include <bits/c++14_warning.h>
-#else
-
-#include <regex>
-#include <experimental/string>
+#if ! _GLIBCXX_USE_DUAL_ABI
+# error This file should not be compiled for this configuration.
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
-namespace experimental
-{
-inline namespace fundamentals_v2
-{
-#if _GLIBCXX_USE_CXX11_ABI
-namespace pmr
-{
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  template<typename _BidirectionalIterator>
-    using match_results
-      = std::match_results<_BidirectionalIterator, polymorphic_allocator<
-			     sub_match<_BidirectionalIterator>>>;
+  // The equivalent SSO wstring instantiations are in c++98/misc-inst.cc,
+  // repeat them for COW wstring
 
-  typedef match_results<const char*> cmatch;
-  typedef match_results<const wchar_t*> wcmatch;
-  typedef match_results<string::const_iterator> smatch;
-  typedef match_results<wstring::const_iterator> wsmatch;
+  // string related to iostreams
+  template
+    basic_istream<wchar_t>&
+    operator>>(basic_istream<wchar_t>&, wstring&);
+  template
+    basic_ostream<wchar_t>&
+    operator<<(basic_ostream<wchar_t>&, const wstring&);
+  template
+    basic_istream<wchar_t>&
+    getline(basic_istream<wchar_t>&, wstring&, wchar_t);
+  template
+    basic_istream<wchar_t>&
+    getline(basic_istream<wchar_t>&, wstring&);
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace pmr
+} // namespace
 #endif
-} // namespace fundamentals_v2
-} // namespace experimental
-} // namespace std
-
-#endif // C++14
-
-#endif // _GLIBCXX_EXPERIMENTAL_REGEX
