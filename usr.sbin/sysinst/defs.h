@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.22 2018/11/08 20:29:37 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.23 2018/11/11 09:17:10 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -178,8 +178,14 @@ enum {
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
 		       (p)->pi_fstype == FS_BSDFFS)
 
-/* standard cd0 device */
+/*
+ * We do not offer CDs or floppies as installation target usually.
+ * Architectures might want to undefine if they want to allow
+ * these devices or redefine if they have unusual CD device names.
+ * Do not define to empty or an empty string, undefine instead.
+ */
 #define CD_NAMES "cd*"
+#define FLOPPY_NAMES "fd*"
 
 /* Types */
 
