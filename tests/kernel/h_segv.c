@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.7 2018/05/30 17:48:13 kamil Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.8 2018/11/11 01:26:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,17 +29,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.7 2018/05/30 17:48:13 kamil Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.8 2018/11/11 01:26:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/ptrace.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
+
 #include <err.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 static int flags;
 #define F_RECURSE 	1
