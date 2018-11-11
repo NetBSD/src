@@ -443,48 +443,68 @@ namespace
 	return false;
       }
 
+    size_t count = from_st->st_size;
 #ifdef _GLIBCXX_USE_SENDFILE
     off_t offset = 0;
-    const auto n = ::sendfile(out.fd, in.fd, &offset, from_st->st_size);
-    if (n < 0 && (errno == ENOSYS || errno == EINVAL))
+    ssize_t n = ::sendfile(out.fd, in.fd, &offset, count);
+    if (n < 0 && errno != ENOSYS && errno != EINVAL)
       {
-#endif
-	__gnu_cxx::stdio_filebuf<char> sbin(in.fd, std::ios::in);
-	__gnu_cxx::stdio_filebuf<char> sbout(out.fd, std::ios::out);
-	if (sbin.is_open())
-	  in.fd = -1;
-	if (sbout.is_open())
-	  out.fd = -1;
-	if (from_st->st_size && !(std::ostream(&sbout) << &sbin))
-	  {
-	    ec = std::make_error_code(std::errc::io_error);
-	    return false;
-	  }
-	if (!sbout.close() || !sbin.close())
+	ec.assign(errno, std::generic_category());
+	return false;
+      }
+    if ((size_t)n == count)
+      {
+	if (!out.close() || !in.close())
 	  {
 	    ec.assign(errno, std::generic_category());
 	    return false;
 	  }
-
 	ec.clear();
 	return true;
+      }
+    else if (n > 0)
+      count -= n;
+#endif // _GLIBCXX_USE_SENDFILE
+
+    using std::ios;
+    __gnu_cxx::stdio_filebuf<char> sbin(in.fd, ios::in|ios::binary);
+    __gnu_cxx::stdio_filebuf<char> sbout(out.fd, ios::out|ios::binary);
+
+    if (sbin.is_open())
+      in.fd = -1;
+    if (sbout.is_open())
+      out.fd = -1;
 
 #ifdef _GLIBCXX_USE_SENDFILE
-      }
-    if (n != from_st->st_size)
+    if (n != 0)
       {
-	ec.assign(errno, std::generic_category());
-	return false;
-      }
-    if (!out.close() || !in.close())
-      {
-	ec.assign(errno, std::generic_category());
-	return false;
-      }
+	if (n < 0)
+	  n = 0;
 
+	const auto p1 = sbin.pubseekoff(n, ios::beg, ios::in);
+	const auto p2 = sbout.pubseekoff(n, ios::beg, ios::out);
+
+	const std::streampos errpos(std::streamoff(-1));
+	if (p1 == errpos || p2 == errpos)
+	  {
+	    ec = std::make_error_code(std::errc::io_error);
+	    return false;
+	  }
+      }
+#endif
+
+    if (count && !(std::ostream(&sbout) << &sbin))
+      {
+	ec = std::make_error_code(std::errc::io_error);
+	return false;
+      }
+    if (!sbout.close() || !sbin.close())
+      {
+	ec.assign(errno, std::generic_category());
+	return false;
+      }
     ec.clear();
     return true;
-#endif
   }
 }
 #endif
@@ -1199,26 +1219,45 @@ fs::read_symlink(const path& p)
 
 fs::path fs::read_symlink(const path& p, error_code& ec)
 {
+  path result;
 #ifdef _GLIBCXX_HAVE_SYS_STAT_H
   stat_type st;
   if (::lstat(p.c_str(), &st))
     {
       ec.assign(errno, std::generic_category());
-      return {};
+      return result;
     }
-  std::string buf(st.st_size, '\0');
-  ssize_t len = ::readlink(p.c_str(), &buf.front(), buf.size());
-  if (len == -1)
+  std::string buf(st.st_size ? st.st_size + 1 : 128, '\0');
+  do
     {
-      ec.assign(errno, std::generic_category());
-      return {};
+      ssize_t len = ::readlink(p.c_str(), &buf.front(), buf.size());
+      if (len == -1)
+	{
+	  ec.assign(errno, std::generic_category());
+	  return result;
+	}
+      else if (len == (ssize_t)buf.size())
+	{
+	  if (buf.size() > 4096)
+	    {
+	      ec.assign(ENAMETOOLONG, std::generic_category());
+	      return result;
+	    }
+	  buf.resize(buf.size() * 2);
+	}
+      else
+	{
+	  buf.resize(len);
+	  result.assign(buf);
+	  ec.clear();
+	  break;
+	}
     }
-  ec.clear();
-  return path{buf.data(), buf.data()+len};
+  while (true);
 #else
   ec = std::make_error_code(std::errc::not_supported);
-  return {};
 #endif
+  return result;
 }
 
 
@@ -1235,16 +1274,15 @@ fs::remove(const path& p)
 bool
 fs::remove(const path& p, error_code& ec) noexcept
 {
-  if (exists(symlink_status(p, ec)))
+    if (::remove(p.c_str()) == 0)
     {
-      if (::remove(p.c_str()) == 0)
-	{
-	  ec.clear();
-	  return true;
-	}
-      else
-	ec.assign(errno, std::generic_category());
+      ec.clear();
+      return true;
     }
+  else if (errno == ENOENT)
+    ec.clear();
+  else
+    ec.assign(errno, std::generic_category());
   return false;
 }
 
@@ -1253,7 +1291,7 @@ std::uintmax_t
 fs::remove_all(const path& p)
 {
   error_code ec;
-  bool result = remove_all(p, ec);
+  const auto result = remove_all(p, ec);
   if (ec.value())
     _GLIBCXX_THROW_OR_ABORT(filesystem_error("cannot remove all", p, ec));
   return result;
@@ -1262,14 +1300,28 @@ fs::remove_all(const path& p)
 std::uintmax_t
 fs::remove_all(const path& p, error_code& ec) noexcept
 {
-  auto fs = symlink_status(p, ec);
-  uintmax_t count = 0;
-  if (ec.value() == 0 && fs.type() == file_type::directory)
-    for (directory_iterator d(p, ec), end; ec.value() == 0 && d != end; ++d)
-      count += fs::remove_all(d->path(), ec);
-  if (ec.value())
+    const auto s = symlink_status(p, ec);
+  if (!status_known(s))
     return -1;
-  return fs::remove(p, ec) ? ++count : -1;  // fs:remove() calls ec.clear()
+
+  ec.clear();
+  if (s.type() == file_type::not_found)
+    return 0;
+
+  uintmax_t count = 0;
+  if (s.type() == file_type::directory)
+    {
+      for (directory_iterator d(p, ec), end; !ec && d != end; d.increment(ec))
+	count += fs::remove_all(d->path(), ec);
+      if (ec.value() == ENOENT)
+	ec.clear();
+      else if (ec)
+	return -1;
+    }
+
+  if (fs::remove(p, ec))
+    ++count;
+  return ec ? -1 : count;
 }
 
 void
@@ -1339,10 +1391,11 @@ fs::space(const path& p, error_code& ec) noexcept
       ec.assign(errno, std::generic_category());
   else
     {
+      uintmax_t fragment_size = f.f_frsize;
       info = space_info{
-	f.f_blocks * f.f_frsize,
-	f.f_bfree * f.f_frsize,
-	f.f_bavail * f.f_frsize
+	f.f_blocks * fragment_size,
+	f.f_bfree * fragment_size,
+	f.f_bavail * fragment_size
       };
       ec.clear();
     }
