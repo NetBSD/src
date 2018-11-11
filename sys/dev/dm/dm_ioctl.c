@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.32 2018/01/05 14:22:05 christos Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.33 2018/11/11 10:21:11 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.32 2018/01/05 14:22:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.33 2018/11/11 10:21:11 mlelstv Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -542,10 +542,13 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
+
+	/* Make inactive table active, if it exists */
+	if (dmv->flags & DM_INACTIVE_PRESENT_FLAG)
+		dm_table_switch_tables(&dmv->table_head);
+
 	atomic_and_32(&dmv->flags, ~(DM_SUSPEND_FLAG | DM_INACTIVE_PRESENT_FLAG));
 	atomic_or_32(&dmv->flags, DM_ACTIVE_PRESENT_FLAG);
-
-	dm_table_switch_tables(&dmv->table_head);
 
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);
 
