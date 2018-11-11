@@ -470,6 +470,7 @@ in the following sections.
 \&\fB\-include\fR \fIfile\fR  \fB\-imacros\fR \fIfile\fR 
 \&\fB\-iprefix\fR \fIfile\fR  \fB\-iwithprefix\fR \fIdir\fR 
 \&\fB\-iwithprefixbefore\fR \fIdir\fR  \fB\-isystem\fR \fIdir\fR 
+\&\fB\-cxx\-isystem\fR \fIdir\fR 
 \&\fB\-imultilib\fR \fIdir\fR \fB\-isysroot\fR \fIdir\fR 
 \&\fB\-M  \-MM  \-MF  \-MG  \-MP  \-MQ  \-MT  \-nostdinc  
 \&\-P  \-fdebug\-cpp \-ftrack\-macro\-expansion \-fworking\-directory 
@@ -492,7 +493,8 @@ in the following sections.
 .IX Item "Directory Options"
 \&\fB\-B\fR\fIprefix\fR \fB\-I\fR\fIdir\fR \fB\-iplugindir=\fR\fIdir\fR 
 \&\fB\-iquote\fR\fIdir\fR \fB\-L\fR\fIdir\fR \fB\-no\-canonical\-prefixes \-I\- 
-\&\-\-sysroot=\fR\fIdir\fR \fB\-\-no\-sysroot\-suffix\fR
+\&\-iremap\fR\fIsrc\fR\fB:\fR\fIdst\fR \fB\-cxx\-isystem=\fR\fIdir\fR 
+\&\fB\-\-sysroot=\fR\fIdir\fR \fB\-\-no\-sysroot\-suffix\fR
 .IP "\fICode Generation Options\fR" 4
 .IX Item "Code Generation Options"
 \&\fB\-fcall\-saved\-\fR\fIreg\fR  \fB\-fcall\-used\-\fR\fIreg\fR 
@@ -10063,6 +10065,12 @@ as a system directory, so that it gets the same special treatment as
 is applied to the standard system directories.
 If \fIdir\fR begins with \f(CW\*(C`=\*(C'\fR, then the \f(CW\*(C`=\*(C'\fR will be replaced
 by the sysroot prefix; see \fB\-\-sysroot\fR and \fB\-isysroot\fR.
+.IP "\fB\-cxx\-isystem\fR \fIdir\fR" 4
+.IX Item "-cxx-isystem dir"
+Search \fIdir\fR for \*(C+ header files, after all directories specified by
+\&\fB\-I\fR but before the standard system directories.  Mark it
+as a system directory, so that it gets the same special treatment as
+is applied to the standard system directories.
 .IP "\fB\-iquote\fR \fIdir\fR" 4
 .IX Item "-iquote dir"
 Search \fIdir\fR only for header files requested with
@@ -10092,6 +10100,11 @@ files previously preprocessed with \f(CW\*(C`\-E \-fdirectives\-only\*(C'\fR.
 With both \fB\-E\fR and \fB\-fpreprocessed\fR, the rules for
 \&\fB\-fpreprocessed\fR take precedence.  This enables full preprocessing of
 files previously preprocessed with \f(CW\*(C`\-E \-fdirectives\-only\*(C'\fR.
+.IP "\fB\-iremap\fR \fIsrc\fR\fB:\fR\fIdst\fR" 4
+.IX Item "-iremap src:dst"
+Replace the prefix \fIsrc\fR in _\|_FILE_\|_ with \fIdst\fR at expansion time.
+This option can be specified more than once.  Processing stops at the first
+match.
 .IP "\fB\-fdollars\-in\-identifiers\fR" 4
 .IX Item "-fdollars-in-identifiers"
 Accept \fB$\fR in identifiers.
@@ -11798,6 +11811,11 @@ file name is made by appending \fI.gimple\fR to the source file name.
 .IX Item "cfg"
 Dump the control flow graph of each function to a file.  The file name is
 made by appending \fI.cfg\fR to the source file name.
+.IP "\fB\-iremap\fR \fIsrc\fR\fB:\fR\fIdst\fR" 4
+.IX Item "-iremap src:dst"
+Replace the prefix \fIsrc\fR in _\|_FILE_\|_ with \fIdst\fR at expansion time.
+This option can be specified more than once.  Processing stops at the first
+match.
 .IP "\fBch\fR" 4
 .IX Item "ch"
 Dump each function after copying loop headers.  The file name is made by
@@ -23451,6 +23469,38 @@ permits the correct alignment of \s-1COMMON\s0 variables should be
 used when generating code.  It is enabled by default if
 \&\s-1GCC\s0 detects that the target assembler found during configuration
 supports the feature.
+.IP "\fB\-mindirect\-branch=\fR\fIchoice\fR" 4
+.IX Item "-mindirect-branch=choice"
+Convert indirect call and jump with \fIchoice\fR.  The default is
+\&\fBkeep\fR, which keeps indirect call and jump unmodified.
+\&\fBthunk\fR converts indirect call and jump to call and return thunk.
+\&\fBthunk-inline\fR converts indirect call and jump to inlined call
+and return thunk.  \fBthunk-extern\fR converts indirect call and jump
+to external call and return thunk provided in a separate object file.
+You can control this behavior for a specific function by using the
+function attribute \f(CW\*(C`indirect_branch\*(C'\fR.
+.Sp
+Note that \fB\-mcmodel=large\fR is incompatible with
+\&\fB\-mindirect\-branch=thunk\fR nor
+\&\fB\-mindirect\-branch=thunk\-extern\fR since the thunk function may
+not be reachable in large code model.
+.IP "\fB\-mfunction\-return=\fR\fIchoice\fR" 4
+.IX Item "-mfunction-return=choice"
+Convert function return with \fIchoice\fR.  The default is \fBkeep\fR,
+which keeps function return unmodified.  \fBthunk\fR converts function
+return to call and return thunk.  \fBthunk-inline\fR converts function
+return to inlined call and return thunk.  \fBthunk-extern\fR converts
+function return to external call and return thunk provided in a separate
+object file.  You can control this behavior for a specific function by
+using the function attribute \f(CW\*(C`function_return\*(C'\fR.
+.Sp
+Note that \fB\-mcmodel=large\fR is incompatible with
+\&\fB\-mfunction\-return=thunk\fR nor
+\&\fB\-mfunction\-return=thunk\-extern\fR since the thunk function may
+not be reachable in large code model.
+.IP "\fB\-mindirect\-branch\-register\fR" 4
+.IX Item "-mindirect-branch-register"
+Force indirect call and jump via register.
 .PP
 See also under \fBx86 Options\fR for standard options.
 .PP
@@ -23767,10 +23817,15 @@ This variable is the same as \fB\s-1DEPENDENCIES_OUTPUT\s0\fR (see above),
 except that system header files are not ignored, so it implies
 \&\fB\-M\fR rather than \fB\-MM\fR.  However, the dependence on the
 main input file is omitted.
+.IP "\fB\s-1CPP_RESTRICTED\s0\fR" 4
+.IX Item "CPP_RESTRICTED"
+If this variable is defined, cpp will skip any include file which is not a
+regular file, and will continue searching for the requested name (this is
+always done if the found file is a directory).
 .SH "BUGS"
 .IX Header "BUGS"
 For instructions on reporting bugs, see
-<\fBhttp://gcc.gnu.org/bugs.html\fR>.
+<\fBhttp://www.NetBSD.org/Misc/send\-pr.html\fR>.
 .SH "FOOTNOTES"
 .IX Header "FOOTNOTES"
 .IP "1." 4
