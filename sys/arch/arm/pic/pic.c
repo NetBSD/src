@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.45 2018/10/12 21:46:32 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.46 2018/11/11 10:14:14 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.45 2018/10/12 21:46:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.46 2018/11/11 10:14:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -901,7 +901,187 @@ intr_string(intr_handle_t irq, char *buf, size_t len)
 	return NULL;
 }
 
+static struct intrsource *
+intr_get_source(const char *intrid)
+{
+	struct intrsource *is;
+	intrid_t buf;
+	size_t slot;
+	int irq;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	for (slot = 0; slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const pic = pic_list[slot];
+		if (pic == NULL || pic->pic_irqbase < 0)
+			continue;
+		for (irq = 0; irq < pic->pic_maxsources; irq++) {
+			is = pic->pic_sources[irq - pic->pic_irqbase];
+			if (is == NULL || is->is_source[0] == '\0')
+				continue;
+
+			snprintf(buf, sizeof(buf), "%s %s", pic->pic_name, is->is_source);
+			if (strcmp(buf, intrid) == 0)
+				return is;
+		}
+	}
+
+	return NULL;
+}
+
+struct intrids_handler *
+interrupt_construct_intrids(const kcpuset_t *cpuset)
+{
+	struct intrids_handler *iih;
+	struct intrsource *is;
+	int count, irq, n;
+	size_t slot;
+
+	if (kcpuset_iszero(cpuset))
+		return NULL;
+
+	count = 0;
+	for (slot = 0; slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const pic = pic_list[slot];
+		if (pic != NULL && pic->pic_irqbase >= 0) {
+			for (irq = 0; irq < pic->pic_maxsources; irq++) {
+				is = pic->pic_sources[irq - pic->pic_irqbase];
+				if (is && is->is_source[0] != '\0')
+					count++;
+			}
+		}
+	}
+
+	iih = kmem_zalloc(sizeof(int) + sizeof(intrid_t) * count, KM_SLEEP);
+	iih->iih_nids = count;
+
+	for (n = 0, slot = 0; n < count && slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const pic = pic_list[slot];
+		if (pic == NULL || pic->pic_irqbase < 0)
+			continue;
+		for (irq = 0; irq < pic->pic_maxsources; irq++) {
+			is = pic->pic_sources[irq - pic->pic_irqbase];
+			if (is == NULL || is->is_source[0] == '\0')
+				continue;
+
+			snprintf(iih->iih_intrids[n++], sizeof(intrid_t), "%s %s",
+			    pic->pic_name, is->is_source);
+		}
+	}
+
+	return iih;
+}
+
+void
+interrupt_destruct_intrids(struct intrids_handler *iih)
+{
+	if (iih == NULL)
+		return;
+
+	kmem_free(iih, sizeof(int) + sizeof(intrid_t) * iih->iih_nids);
+}
+
+void
+interrupt_get_available(kcpuset_t *cpuset)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	kcpuset_zero(cpuset);
+
+	mutex_enter(&cpu_lock);
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if ((ci->ci_schedstate.spc_flags & SPCF_NOINTR) == 0)
+			kcpuset_set(cpuset, cpu_index(ci));
+	}
+	mutex_exit(&cpu_lock);
+}
+
+void
+interrupt_get_devname(const char *intrid, char *buf, size_t len)
+{
+	buf[0] = '\0';
+}
+
+struct interrupt_get_count_arg {
+	struct intrsource *is;
+	uint64_t count;
+	u_int cpu_idx;
+};
+
+static void
+interrupt_get_count_cb(void *v0, void *v1, struct cpu_info *ci)
+{
+	struct pic_percpu * const pcpu = v0;
+	struct interrupt_get_count_arg * const arg = v1;
+
+	if (arg->cpu_idx != cpu_index(ci))
+		return;
+
+	arg->count = pcpu->pcpu_evs[arg->is->is_irq].ev_count;
+}
+
+uint64_t
+interrupt_get_count(const char *intrid, u_int cpu_idx)
+{
+	struct interrupt_get_count_arg arg;
+	struct intrsource *is;
+	uint64_t count;
+
+	count = 0;
+
+	mutex_enter(&cpu_lock);
+	is = intr_get_source(intrid);
+	if (is != NULL && is->is_pic != NULL) {
+		arg.is = is;
+		arg.count = 0;
+		arg.cpu_idx = cpu_idx;
+		percpu_foreach(is->is_pic->pic_percpu, interrupt_get_count_cb, &arg);
+		count = arg.count;
+	}
+	mutex_exit(&cpu_lock);
+
+	return count;
+}
+
 #ifdef MULTIPROCESSOR
+void
+interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
+{
+	struct intrsource *is;
+	struct pic_softc *pic;
+
+	kcpuset_zero(cpuset);
+
+	mutex_enter(&cpu_lock);
+	is = intr_get_source(intrid);
+	if (is != NULL) {
+		pic = is->is_pic;
+		if (pic && pic->pic_ops->pic_get_affinity)
+			pic->pic_ops->pic_get_affinity(pic, is->is_irq, cpuset);
+	}
+	mutex_exit(&cpu_lock);
+}
+
+int
+interrupt_distribute_handler(const char *intrid, const kcpuset_t *newset,
+    kcpuset_t *oldset)
+{
+	struct intrsource *is;
+	int error;
+
+	mutex_enter(&cpu_lock);
+	is = intr_get_source(intrid);
+	if (is == NULL) {
+		error = ENOENT;
+	} else {
+		error = interrupt_distribute(is, newset, oldset);
+	}
+	mutex_exit(&cpu_lock);
+
+	return error;
+}
+
 int
 interrupt_distribute(void *ih, const kcpuset_t *newset, kcpuset_t *oldset)
 {
