@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.3 2018/09/01 19:35:53 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.4 2018/11/11 22:39:25 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.3 2018/09/01 19:35:53 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.4 2018/11/11 22:39:25 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -348,6 +348,7 @@ static const char * armclkb_parents[] = { "clk_core_b_lpll_src", "clk_core_b_bpl
 static const char * mux_pll_src_cpll_gpll_parents[] = { "cpll", "gpll" };
 static const char * mux_pll_src_cpll_gpll_npll_parents[] = { "cpll", "gpll", "npll" };
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
+static const char * mux_pll_src_cpll_gpll_npll_24m_parents[] = { "cpll", "gpll", "npll", "xin24m" };
 static const char * mux_pll_src_cpll_gpll_npll_ppll_upll_24m_parents[] = { "cpll", "gpll", "npll", "ppll", "upll", "xin24m" };
 static const char * mux_aclk_perilp0_parents[] = { "cpll_aclk_perilp0_src", "gpll_aclk_perilp0_src" };
 static const char * mux_hclk_perilp1_parents[] = { "cpll_hclk_perilp1_src", "gpll_hclk_perilp1_src" };
@@ -359,6 +360,8 @@ static const char * mux_uart2_parents[] = { "clk_uart2_div", "clk_uart2_frac", "
 static const char * mux_uart3_parents[] = { "clk_uart3_div", "clk_uart3_frac", "xin24m" };
 static const char * mux_rmii_parents[] = { "clk_gmac", "clkin_gmac" };
 static const char * mux_aclk_gmac_parents[] = { "cpll_aclk_gmac_src", "gpll_aclk_gmac_src" };
+static const char * mux_pll_src_24m_pciephy_parents[] = { "xin24m", "clk_pciephy_ref100m" };
+static const char * mux_pciecore_cru_phy_parents[] = { "clk_pcie_core_cru", "clk_pcie_core_phy" };
 
 static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK3399_PLL(RK3399_PLL_APLLL, "lpll", pll_parents,
@@ -733,6 +736,33 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(RK3399_PCLK_I2C6, "pclk_rki2c6", "pclk_perilp1", CLKGATE_CON(22), 8),
 	RK_GATE(RK3399_PCLK_I2C2, "pclk_rki2c2", "pclk_perilp1", CLKGATE_CON(22), 9),
 	RK_GATE(RK3399_PCLK_I2C3, "pclk_rki2c3", "pclk_perilp1", CLKGATE_CON(22), 10),
+
+	/* PCIe */
+	RK_GATE(RK3399_ACLK_PERF_PCIE, "aclk_perf_pcie", "aclk_perihp", CLKGATE_CON(20), 2),
+	RK_GATE(RK3399_ACLK_PCIE, "aclk_pcie", "aclk_perihp", CLKGATE_CON(20), 10),
+	RK_GATE(RK3399_PCLK_PCIE, "pclk_pcie", "pclk_perihp", CLKGATE_CON(20), 11),
+	RK_COMPOSITE(RK3399_SCLK_PCIE_PM, "clk_pcie_pm", mux_pll_src_cpll_gpll_npll_24m_parents,
+		     CLKSEL_CON(17),	/* muxdiv_reg */
+		     __BITS(10,8),	/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(6),	/* gate_reg */
+		     __BIT(2),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(RK3399_SCLK_PCIEPHY_REF100M, "clk_pciephy_ref100m", "npll",
+			   CLKSEL_CON(18),	/* div_reg */
+			   __BITS(15,11),	/* div_mask */
+			   CLKGATE_CON(12),	/* gate_reg */
+			   __BIT(6),		/* gate_mask */
+			   0),
+	RK_MUX(RK3399_SCLK_PCIEPHY_REF, "clk_pciephy_ref", mux_pll_src_24m_pciephy_parents, CLKSEL_CON(18), __BIT(10)),
+	RK_COMPOSITE(0, "clk_pcie_core_cru", mux_pll_src_cpll_gpll_npll_parents,
+		     CLKSEL_CON(18),	/* muxdiv_reg */
+		     __BITS(9,8),	/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(6),	/* gate_reg */
+		     __BIT(3),		/* gate_mask */
+		     0),
+	RK_MUX(RK3399_SCLK_PCIE_CORE, "clk_pcie_core", mux_pciecore_cru_phy_parents, CLKSEL_CON(18), __BIT(7)),
 };
 
 static int
