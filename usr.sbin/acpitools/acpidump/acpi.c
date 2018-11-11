@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.40 2018/11/05 07:39:57 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.41 2018/11/11 00:24:01 maya Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.40 2018/11/05 07:39:57 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.41 2018/11/11 00:24:01 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1236,7 +1236,7 @@ acpi_handle_bgrt(ACPI_TABLE_HEADER *sdp)
 	degree = ((unsigned int)(bgrt->Status & ACPI_BGRT_ORIENTATION_OFFSET)
 	    >> 1) * 90;
 	printf("\tDegree=%u\n", degree);
-	printf("\tDisplayed=%hhu\n", bgrt->Status & ACPI_BGRT_DISPLAYED);
+	printf("\tDisplayed=%u\n", bgrt->Status & ACPI_BGRT_DISPLAYED);
 	printf("\tImage Type=");
 	switch (bgrt->ImageType) {
 	case 0:
