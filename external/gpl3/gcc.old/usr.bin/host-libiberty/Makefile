@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2018/11/11 22:50:12 mrg Exp $
 
 libiberty/libiberty.a:
 	[ ! -d libiberty ] && mkdir libiberty || true

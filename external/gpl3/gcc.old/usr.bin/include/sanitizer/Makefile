@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/08/12 21:48:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/11/11 22:50:12 mrg Exp $
 
 .include "../../../Makefile.gcc_path"
 

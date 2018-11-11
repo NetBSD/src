@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/07/23 01:10:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2018/11/11 22:49:37 mrg Exp $
 
 SUBDIR+= lib
 
