@@ -233,13 +233,11 @@
 /* Define to 1 if you have the `reallocarray' function. */
 #define HAVE_REALLOCARRAY 1
 
-#ifdef notyet
 /* Define if recvmmsg is implemented */
 #define HAVE_RECVMMSG 1
 
 /* Define if sendmmsg is implemented */
 #define HAVE_SENDMMSG 1
-#endif
 
 /* Define to 1 if you have the `setregid' function. */
 #define HAVE_SETREGID 1

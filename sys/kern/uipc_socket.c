@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.255.2.3 2018/06/09 15:16:30 martin Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.255.2.4 2018/11/12 09:43:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.255.2.3 2018/06/09 15:16:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.255.2.4 2018/11/12 09:43:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1970,6 +1970,10 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 		break;
 
 	case SO_ERROR:
+		if (so->so_error == 0) {
+			so->so_error = so->so_rerror;
+			so->so_rerror = 0;
+		}
 		error = sockopt_setint(sopt, so->so_error);
 		so->so_error = 0;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.186.6.1 2018/03/18 10:57:01 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.186.6.2 2018/11/12 09:43:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.186.6.1 2018/03/18 10:57:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.186.6.2 2018/11/12 09:43:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -809,14 +809,11 @@ sys_sendmmsg(struct lwp *l, const struct sys_sendmmsg_args *uap,
 	}
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
 
 	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
-	 * will catch it next time.
+	 * If we succeeded at least once, return 0.
 	 */
 	if (dg)
 		return 0;
@@ -1062,6 +1059,16 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 	if ((error = fd_getsock(s, &so)) != 0)
 		return error;
 
+	/*
+	 * If so->so_rerror holds a deferred error return it now.
+	 */
+	if (so->so_rerror) {
+		error = so->so_rerror;
+		so->so_rerror = 0;
+		fd_putfile(s);
+		return error;
+	}
+
 	vlen = SCARG(uap, vlen);
 	if (vlen > 1024)
 		vlen = 1024;
@@ -1126,17 +1133,17 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 		m_free(from);
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
-
-	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
+	 * If we succeeded at least once, return 0, hopefully so->so_rerror
 	 * will catch it next time.
 	 */
-	if (dg)
-		return 0;
+	if (error && dg > 0) {
+		so->so_rerror = error;
+		error = 0;
+	}
+
+	fd_putfile(s);
 
 	return error;
 }
