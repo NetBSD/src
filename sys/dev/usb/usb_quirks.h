@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.27 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.27.10.1 2018/11/12 16:01:35 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -49,8 +49,11 @@ struct usbd_quirks {
 #define UQ_NO_UNION_NRM 0x8000  /* has no normal UNION descriptor */
 #define UQ_LOST_CS_DESC 0x10000 /* look everywhere for the CS descriptors */
 #define UQ_APPLE_ISO	0x20000	/* force ISO layout on Apple keyboards */
+#define UQ_DESC_CORRUPT	0x40000	/* may corrupt its config descriptors */
+	const usb_descriptor_t **desc;	/* Replacement for UQ_DESC_CORRUPT */
 };
 
 extern const struct usbd_quirks usbd_no_quirk;
 
+usbd_status usbd_get_desc_fake(struct usbd_device *, int, int, int, void *);
 const struct usbd_quirks *usbd_find_quirk(usb_device_descriptor_t *);

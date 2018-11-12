@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.66.2.1 2017/11/02 21:29:52 snj Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.66.2.2 2018/11/12 16:01:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.66.2.1 2017/11/02 21:29:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.66.2.2 2018/11/12 16:01:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.66.2.1 2017/11/02 21:29:52 snj Exp 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usb_quirks.h>
 #include <dev/usb/usbhist.h>
 
 #define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(usbdebug,1,FMT,A,B,C,D)
@@ -59,17 +60,33 @@ usbd_status
 usbd_get_desc(struct usbd_device *dev, int type, int index, int len, void *desc)
 {
 	usb_device_request_t req;
+	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
 	DPRINTFN(3,"type=%jd, index=%jd, len=%jd", type, index, len, 0);
+
+	/*
+	 * Provide hard-coded configuration descriptors
+	 * for devices that may corrupt it. This cannot
+	 * be done for device descriptors which are used
+	 * to identify the device.
+	 */
+	if (type != UDESC_DEVICE &&
+	    dev->ud_quirks->uq_flags & UQ_DESC_CORRUPT) {
+		err = usbd_get_desc_fake(dev, type, index, len, desc);
+		goto out;
+	}
 
 	req.bmRequestType = UT_READ_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, type, index);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, len);
-	return usbd_do_request(dev, &req, desc);
+	err = usbd_do_request(dev, &req, desc);
+
+out:
+	return err;
 }
 
 usbd_status
