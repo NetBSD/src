@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.218 2018/10/05 22:12:38 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.219 2018/11/12 06:55:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.218 2018/10/05 22:12:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.219 2018/11/12 06:55:03 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2459,7 +2459,8 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 
 	size_t len = strlen(p->p_path) + 1;
 	if (oldp != NULL) {
-		error = sysctl_copyout(l, p->p_path, oldp, *oldlenp);
+		size_t copylen = uimin(len, *oldlenp);
+		error = sysctl_copyout(l, p->p_path, oldp, copylen);
 		if (error == 0 && *oldlenp < len)
 			error = ENOSPC;
 	}
