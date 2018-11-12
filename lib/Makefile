@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.262 2018/11/10 09:28:56 maxv Exp $
+#	$NetBSD: Makefile,v 1.263 2018/11/12 09:25:42 martin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -50,7 +50,7 @@ SUBDIR+=	librumpclient
 SUBDIR+=	libskey
 .endif
 
-.if ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "x86_64" && ${MLIBDIR:Unone} != "i386"
 SUBDIR+=	libnvmm
 .endif
 
