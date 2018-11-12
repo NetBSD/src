@@ -1,4 +1,4 @@
-.\"	$NetBSD: sliplogin.8,v 1.9 2003/08/07 11:25:43 agc Exp $
+.\"	$NetBSD: sliplogin.8,v 1.10 2018/11/12 00:50:54 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)sliplogin.8	8.2 (Berkeley) 1/5/94
 .\"
-.Dd January 5, 1994
+.Dd November 11, 2018
 .Dt SLIPLOGIN 8
 .Os
 .Sh NAME
@@ -166,6 +166,16 @@ is in group
 and mode 4550 (setuid root, only group
 .Em slip
 can execute binary).
+.Sh FILES
+.Bl -tag -width /usr/share/examples/slip/slip.login -compact
+.It Pa /usr/share/examples/slip/slip.login
+Sample slip.login script
+.It Pa /etc/sliphome/slip.login.loginname
+Login script for
+.Em loginname 
+.It Pa /etc/sliphome/slip.hosts
+Per host settings
+.El 
 .Sh DIAGNOSTICS
 .Nm
 logs various information to the system log daemon,
