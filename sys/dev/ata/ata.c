@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.145 2018/10/24 20:25:52 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.146 2018/11/12 18:51:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.145 2018/10/24 20:25:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.146 2018/11/12 18:51:01 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -952,6 +952,8 @@ out:
 void
 ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 {
+	ata_channel_lock_owned(drvp->chnl_softc);
+
 	/*
 	 * Downgrade decision: if we get NERRS_MAX in NXFER.
 	 * We start with n_dmaerrs set to NERRS_MAX-1 so that the
@@ -1771,6 +1773,8 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	struct atac_softc *atac = chp->ch_atac;
 	device_t drv_dev = drvp->drv_softc;
 	int cf_flags = device_cfdata(drv_dev)->cf_flags;
+
+	ata_channel_lock_owned(drvp->chnl_softc);
 
 	/* if drive or controller don't know its mode, we can't do much */
 	if ((drvp->drive_flags & ATA_DRIVE_MODE) == 0 ||
