@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.47 2018/05/13 00:04:23 christos Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.48 2018/11/12 06:53:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.47 2018/05/13 00:04:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.48 2018/11/12 06:53:43 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, int *len,
 		}
 
 		ktrkuser(mbuftypes[MT_CONTROL], cmsg, cmsg->cmsg_len);
-		error = copyout(&cmsg32, *q, MAX(i, sizeof(cmsg32)));
+		error = copyout(&cmsg32, *q, MIN(i, sizeof(cmsg32)));
 		if (error)
 			return (error);
 		if (i > CMSG32_LEN(0)) {
