@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.727.2.1 2018/10/31 09:32:21 martin Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727.2.2 2018/11/12 16:02:17 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.1 2018/10/31 09:30:10 martin Exp
+ *	NetBSD: usbdevs,v 1.736.2.2 2018/11/12 16:01:35 martin Exp
  */
 
 /*
@@ -2595,6 +2595,7 @@
 
 /* Philips Semiconductor products */
 #define	USB_PRODUCT_PHILIPSSEMI_HUB1122	0x1122		/* hub */
+#define	USB_PRODUCT_PHILIPSSEMI_PN533	0x2533		/* NFC PN533 */
 
 /* P.I. Engineering products */
 #define	USB_PRODUCT_PIENGINEERING_PS2USB	0x020b		/* PS2 to Mac USB Adapter */
@@ -2938,6 +2939,8 @@
 #define	USB_PRODUCT_SHUTTLE_CDRW	0x0101		/* CD-RW Device */
 #define	USB_PRODUCT_SHUTTLE_ORCA	0x0325		/* eUSB ORCA Quad Reader */
 #define	USB_PRODUCT_SHUTTLE_SCM	0x1010		/* SCM Micro */
+#define	USB_PRODUCT_SHUTTLE_SCL3711	0x5591		/* SCM Micro SCL3711-NFC&RW */
+#define	USB_PRODUCT_SHUTTLE_SCL3712	0x5594		/* SCM Micro SCL3712-NFC&RW */
 
 /* Siemens products */
 #define	USB_PRODUCT_SIEMENS_SPEEDSTREAM	0x1001		/* SpeedStream USB */
