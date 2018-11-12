@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.2 2018/11/09 23:36:58 jmcneill Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.3 2018/11/12 12:56:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,10 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pci.h"
+
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.2 2018/11/09 23:36:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.3 2018/11/12 12:56:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,7 +70,9 @@ static void	gicv3_acpi_attach(device_t, device_t, void *);
 
 static int	gicv3_acpi_map_dist(struct gicv3_acpi_softc *);
 static int	gicv3_acpi_map_redist(struct gicv3_acpi_softc *);
+#if NPCI > 0
 static int	gicv3_acpi_map_its(struct gicv3_acpi_softc *);
+#endif
 
 CFATTACH_DECL_NEW(gicv3_acpi, sizeof(struct gicv3_acpi_softc), gicv3_acpi_match, gicv3_acpi_attach, NULL, NULL);
 
@@ -127,7 +131,9 @@ gicv3_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+#if NPCI > 0
 	gicv3_acpi_map_its(sc);
+#endif
 
 	arm_fdt_irq_set_handler(gicv3_irq_handler);
 }
@@ -272,6 +278,7 @@ gicv3_acpi_map_redist(struct gicv3_acpi_softc *sc)
 	return 0;
 }
 
+#if NPCI > 0
 static ACPI_STATUS
 gicv3_acpi_map_gits(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
@@ -304,3 +311,4 @@ gicv3_acpi_map_its(struct gicv3_acpi_softc *sc)
 
 	return 0;
 }
+#endif

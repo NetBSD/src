@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.8 2018/10/31 15:42:54 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.9 2018/11/12 12:56:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,11 @@
  * SUCH DAMAGE.
  */
 
+#include "pci.h"
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.8 2018/10/31 15:42:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.9 2018/11/12 12:56:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,7 +70,9 @@ static int	acpi_fdt_efi_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 
 static void	acpi_fdt_sysctl_init(void);
 
+#if NPCI > 0
 static struct acpi_pci_context acpi_fdt_pci_context;
+#endif
 
 static uint64_t smbios_table = 0;
 
@@ -115,13 +118,11 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	if (!acpi_probe())
 		aprint_error_dev(self, "failed to probe ACPI\n");
 
+	memset(&aa, 0, sizeof(aa));
+#if NPCI > 0
 	acpi_fdt_pci_context.ap_pc = arm_acpi_pci_chipset;
 	acpi_fdt_pci_context.ap_pc.pc_conf_v = &acpi_fdt_pci_context;
 	acpi_fdt_pci_context.ap_seg = 0;
-
-	aa.aa_iot = 0;
-	aa.aa_memt = faa->faa_bst;
-	aa.aa_pc = &acpi_fdt_pci_context.ap_pc;
 	aa.aa_pciflags =
 	    /*PCI_FLAGS_IO_OKAY |*/ PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | 
@@ -129,7 +130,10 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 #ifdef __HAVE_PCI_MSI_MSIX
 	aa.aa_pciflags |= PCI_FLAGS_MSI_OKAY | PCI_FLAGS_MSIX_OKAY;
 #endif
-	aa.aa_ic = 0;
+	aa.aa_pc = &acpi_fdt_pci_context.ap_pc;
+#endif
+
+	aa.aa_memt = faa->faa_bst;
 	aa.aa_dmat = faa->faa_dmat;
 #ifdef _PCI_HAVE_DMA64
 	aa.aa_dmat64 = faa->faa_dmat;

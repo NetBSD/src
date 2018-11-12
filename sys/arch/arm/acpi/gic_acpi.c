@@ -1,4 +1,4 @@
-/* $NetBSD: gic_acpi.c,v 1.2 2018/10/21 00:42:05 jmcneill Exp $ */
+/* $NetBSD: gic_acpi.c,v 1.3 2018/11/12 12:56:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pci.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_acpi.c,v 1.2 2018/10/21 00:42:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_acpi.c,v 1.3 2018/11/12 12:56:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,7 +61,9 @@ static int	gic_acpi_match(device_t, cfdata_t, void *);
 static void	gic_acpi_attach(device_t, device_t, void *);
 
 static ACPI_STATUS gic_acpi_find_gicc(ACPI_SUBTABLE_HEADER *, void *);
+#if NPCI > 0
 static ACPI_STATUS gic_acpi_find_msi_frame(ACPI_SUBTABLE_HEADER *, void *);
+#endif
 
 CFATTACH_DECL_NEW(gic_acpi, 0, gic_acpi_match, gic_acpi_attach, NULL, NULL);
 
@@ -122,10 +126,12 @@ gic_acpi_attach(device_t parent, device_t self, void *aux)
 	};
 
 	armgic = config_found(self, &mpcaa, NULL);
+	if (armgic != NULL)
+		arm_fdt_irq_set_handler(armgic_irq_handler);
 
-	arm_fdt_irq_set_handler(armgic_irq_handler);
-
+#if NPCI > 0
 	acpi_madt_walk(gic_acpi_find_msi_frame, armgic);
+#endif
 }
 
 static ACPI_STATUS
@@ -141,6 +147,7 @@ gic_acpi_find_gicc(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 	return AE_LIMIT;
 }
 
+#if NPCI > 0
 static ACPI_STATUS
 gic_acpi_find_msi_frame(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
@@ -181,3 +188,4 @@ gic_acpi_find_msi_frame(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 
 	return AE_OK;
 }
+#endif
