@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2014/07/20 14:52:29 macallan Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2018/11/12 20:09:07 scole Exp $
 #
 #	etc.macppc/Makefile.inc -- macppc-specific etc Makefile targets
 #
@@ -8,6 +8,6 @@
 
 KERNEL_SETS=		GENERIC GENERIC.MP GENERIC_601
 
-BUILD_KERNELS+=		INSTALL GENERIC_MD
+BUILD_KERNELS+=		INSTALL INSTALL_601 GENERIC_MD
 
 INSTALLATION_DIRS+=	installation/floppy
