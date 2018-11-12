@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.45 2018/11/12 18:51:01 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.46 2018/11/12 20:54:03 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.45 2018/11/12 18:51:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.46 2018/11/12 20:54:03 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -161,7 +161,7 @@ static void mvsata_atapi_poll(struct ata_channel *, struct ata_xfer *);
 static void mvsata_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *,
 				   int);
 static void mvsata_atapi_reset(struct ata_channel *, struct ata_xfer *);
-static void mvsata_atapi_phase_complete(struct ata_xfer *);
+static void mvsata_atapi_phase_complete(struct ata_xfer *, int);
 static void mvsata_atapi_done(struct ata_channel *, struct ata_xfer *);
 static void mvsata_atapi_polldsc(void *);
 #endif
@@ -2422,7 +2422,7 @@ again:
 			xfer->c_bcount -= sc_xfer->datalen;
 		sc_xfer->resid = xfer->c_bcount;
 		/* this will unlock channel lock too */
-		mvsata_atapi_phase_complete(xfer);
+		mvsata_atapi_phase_complete(xfer, tfd);
 		return 1;
 
 	default:
@@ -2522,14 +2522,13 @@ mvsata_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 }
 
 static void
-mvsata_atapi_phase_complete(struct ata_xfer *xfer)
+mvsata_atapi_phase_complete(struct ata_xfer *xfer, int tfd)
 {
 	struct ata_channel *chp = xfer->c_chp;
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int tfd = 0;
 
 	ata_channel_lock_owned(chp);
 
@@ -2654,7 +2653,7 @@ mvsata_atapi_polldsc(void *arg)
 	ata_channel_lock(chp);
 
 	/* this will unlock channel lock too */
-	mvsata_atapi_phase_complete(xfer);
+	mvsata_atapi_phase_complete(xfer, 0);
 }
 #endif	/* NATAPIBUS > 0 */
 
