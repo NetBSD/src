@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.736.2.1 2018/10/31 09:30:10 martin Exp $
+$NetBSD: usbdevs,v 1.736.2.2 2018/11/12 16:01:35 martin Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2588,6 +2588,7 @@ product PHILIPS RT2870		0x200f	RT2870
 
 /* Philips Semiconductor products */
 product PHILIPSSEMI HUB1122	0x1122	hub
+product PHILIPSSEMI PN533	0x2533	NFC PN533
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
@@ -2931,6 +2932,8 @@ product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
 product SHUTTLE CDRW		0x0101	CD-RW Device
 product SHUTTLE ORCA		0x0325	eUSB ORCA Quad Reader
 product SHUTTLE SCM		0x1010	SCM Micro
+product SHUTTLE SCL3711		0x5591	SCM Micro SCL3711-NFC&RW
+product SHUTTLE SCL3712		0x5594	SCM Micro SCL3712-NFC&RW
 
 /* Siemens products */
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
