@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.51 2018/11/08 12:11:27 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.52 2018/11/12 08:57:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1645,4 +1645,19 @@ sys/dev/pci/if_wm.c			1.590-1.596 via patch
 	- On PCH2, set the phy config counter to 50msec after (PHY) reset.
 	- KNF & Use macro.
 	[msaitoh, ticket #1085]
+
+bin/sh/parser.c					1.152
+
+	Avoid crash from redirect on null compound command.
+	[kre, ticket #1086]
+
+sys/net/if_gif.c				1.145
+
+	Fix ALTQ on gif(4).
+	[knakahara, ticket #1087]
+
+sys/kern/kern_proc.c				1.219 (patch)
+
+	Fix buffer overflow, which can lead to severe information leak.
+	[maxv, ticket #1088]
 
