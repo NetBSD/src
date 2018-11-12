@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.9 2018/11/11 01:26:08 riastradh Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.10 2018/11/12 05:02:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.9 2018/11/11 01:26:08 riastradh Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.10 2018/11/12 05:02:00 riastradh Exp $");
+
+#define	__TEST_FENV
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -107,7 +109,9 @@ trigger_fpe(void)
 	volatile double a = getpid();
 	volatile double b = strtol("0", NULL, 0);
 
+#ifdef __HAVE_FENV
 	feenableexcept(FE_ALL_EXCEPT);
+#endif
 
 	usleep((int)(a/b));
 }
