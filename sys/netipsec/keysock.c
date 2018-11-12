@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.58.2.2 2018/04/09 13:34:10 bouyer Exp $	*/
+/*	$NetBSD: keysock.c,v 1.58.2.3 2018/11/12 12:23:20 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.58.2.2 2018/04/09 13:34:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.58.2.3 2018/11/12 12:23:20 martin Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -207,7 +207,9 @@ key_sendup0(
 		    __func__);
 		PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 		m_freem(m);
-		soroverflow(rp->rcb_socket);
+		/* Don't call soroverflow because we're returning this
+		 * error directly to the sender. */
+		rp->rcb_socket->so_rcv.sb_overflowed++;
 		error = ENOBUFS;
 	} else {
 		sorwakeup(rp->rcb_socket);
