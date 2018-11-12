@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.18 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.19 2018/11/12 20:00:46 scole Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,7 @@
 
 #include <sys/types.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/spr.h>
 
 #include <sys/bootblock.h>
 
@@ -68,15 +69,21 @@ __asm(
 "	addi	%r8,8,(_start)@l\n"
 "	li	%r9,0x40	\n"	/* loop 64 times (for 2048 bytes of bootxx) */
 "	mtctr	%r9		\n"
-"1:				\n"
-"	dcbf	%r0,%r8		\n"
+"				\n"
+"1:	dcbf	%r0,%r8		\n"
 "	icbi	%r0,%r8		\n"
 "	addi	%r8,%r8,0x20	\n"
 "	bdnz	1b		\n"
 "	sync			\n"
 
 "	li	%r0,0		\n"
-"	mtdbatu	3,%r0		\n"
+"				\n"	/* test for 601 cpu */
+"	mfspr	%r9,287		\n"	/* mfpvbr %r9 PVR = 287 */
+"	srwi	%r9,%r9,0x10	\n"
+"	cmplwi	%r9,0x02	\n"	/* 601 cpu == 0x0001 */
+"	blt	2f		\n"	/* skip over non-601 BAT setup */
+"				\n"
+"	mtdbatu 3,%r0		\n"	/* non-601 BAT */
 "	mtibatu	3,%r0		\n"
 "	isync			\n"
 "	li	%r8,0x1ffe	\n"	/* map the lowest 256MB */
@@ -86,13 +93,61 @@ __asm(
 "	mtibatl	3,%r9		\n"
 "	mtibatu	3,%r8		\n"
 "	isync			\n"
-
+"	b	3f		\n"
+"				\n"
+"2:	mfmsr	%r8		\n"	/* 601 BAT */
+"	mtmsr	%r0		\n"
+"	isync			\n"
+"				\n"
+"	mtibatu 0,%r0		\n"
+"	mtibatu 1,%r0		\n"
+"	mtibatu 2,%r0		\n"
+"	mtibatu 3,%r0		\n"
+"				\n"
+"	li	%r9,0x7f	\n"
+"	mtibatl 0,%r9		\n"
+"	li	%r9,0x1a	\n"
+"	mtibatu 0,%r9		\n"
+"				\n"
+"	lis %r9,0x80		\n"
+"	addi %r9,%r9,0x7f	\n"
+"	mtibatl 1,%r9		\n"
+"	lis %r9,0x80		\n"
+"	addi %r9,%r9,0x1a	\n"
+"	mtibatu 1,%r9		\n"
+"				\n"
+"	lis %r9,0x100		\n"
+"	addi %r9,%r9,0x7f	\n"
+"	mtibatl 2,%r9		\n"
+"	lis %r9,0x100		\n"
+"	addi %r9,%r9,0x1a	\n"
+"	mtibatu 2,%r9		\n"
+"				\n"
+"	lis %r9,0x180		\n"
+"	addi %r9,%r9,0x7f	\n"
+"	mtibatl 3,%r9		\n"
+"	lis %r9,0x180		\n"
+"	addi %r9,%r9,0x1a	\n"
+"	mtibatu 3,%r9		\n"
+"				\n"
+"	isync			\n"
+"				\n"
+"	mtmsr	%r8		\n"
+"	isync			\n"
+"				\n"
 	/*
 	 * setup 32 KB of stack with 32 bytes overpad (see above)
 	 */
-"	lis	%r1,(stack+32768)@ha\n"
+"3:	lis	%r1,(stack+32768)@ha\n"
 "	addi	%r1,%r1,(stack+32768)@l\n"
-"	stw	%r0,0(%r1)	\n"	/* terminate the frame link chain */
+	/*
+	 * terminate the frame link chain,
+	 * clear by bytes to avoid ppc601 alignment exceptions
+	 */
+"	stb	%r0,0(%r1)	\n"
+"	stb	%r0,1(%r1)	\n"
+"	stb	%r0,2(%r1)	\n"
+"	stb	%r0,3(%r1)	\n"
 
 "	b	startup		\n"
 );
@@ -258,9 +313,13 @@ void
 startup(int arg1, int arg2, void *openfirm)
 {
 	int fd, blk, chosen, options, j;
+	uint32_t cpuvers;
 	size_t i;
 	char *addr;
 	char bootpath[128];
+
+	__asm volatile ("mfpvr %0" : "=r"(cpuvers));
+	cpuvers >>= 16;
 
 	openfirmware = openfirm;
 
@@ -302,17 +361,19 @@ startup(int arg1, int arg2, void *openfirm)
 	}
 	putstr(". done!\r\nstarting stage 2...\r\n");
 
-	/*
-	 * enable D/I cache
-	 */
-	__asm(
-		"mtdbatu	3,%0\n\t"
-		"mtdbatl	3,%1\n\t"
-		"mtibatu	3,%0\n\t"
-		"mtibatl	3,%1\n\t"
-		"isync"
-	   ::	"r"(BATU(0, BAT_BL_256M, BAT_Vs)),
-		"r"(BATL(0, 0, BAT_PP_RW)));
+	if (cpuvers != MPC601) {
+		/*
+		 * enable D/I cache
+		 */
+		__asm(
+			"mtdbatu	3,%0\n\t"
+			"mtdbatl	3,%1\n\t"
+			"mtibatu	3,%0\n\t"
+			"mtibatl	3,%1\n\t"
+			"isync"
+		::	"r"(BATU(0, BAT_BL_256M, BAT_Vs)),
+			"r"(BATL(0, 0, BAT_PP_RW)));
+	}
 
 	entry_point(0, 0, openfirm);
 	for (;;);			/* just in case */
