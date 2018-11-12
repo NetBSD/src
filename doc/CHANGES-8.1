@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.52 2018/11/12 08:57:23 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.53 2018/11/12 09:44:17 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1660,4 +1660,11 @@ sys/kern/kern_proc.c				1.219 (patch)
 
 	Fix buffer overflow, which can lead to severe information leak.
 	[maxv, ticket #1088]
+
+external/bsd/nsd/include/config.h		1.5
+sys/kern/uipc_socket.c				1.267
+sys/kern/uipc_syscalls.c			1.198,1.199
+
+	Fix sendmmsg() and recvmmsg() and re-enable them for NSD.
+	[hannken, ticket #1089]
 
