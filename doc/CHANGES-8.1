@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.53 2018/11/12 09:44:17 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.54 2018/11/12 12:24:42 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1667,4 +1667,15 @@ sys/kern/uipc_syscalls.c			1.198,1.199
 
 	Fix sendmmsg() and recvmmsg() and re-enable them for NSD.
 	[hannken, ticket #1089]
+
+sys/dev/usb/ugen.c				1.141
+
+	Enfore USB timeout on ugen(4) write operations.
+	[manu, ticket #1090]
+
+sys/kern/uipc_usrreq.c				1.187
+sys/netipsec/keysock.c				1.66
+
+	Don't call soroverflow when we return the error to the sender.
+	[roy, ticket #1092]
 
