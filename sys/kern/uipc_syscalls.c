@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.198 2018/11/07 09:59:12 hannken Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.199 2018/11/12 09:21:13 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.198 2018/11/07 09:59:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.199 2018/11/12 09:21:13 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1124,17 +1124,16 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 
 	*retval = dg;
 
-	if (error)
-		so->so_rerror = error;
-
-	fd_putfile(s);
-
 	/*
 	 * If we succeeded at least once, return 0, hopefully so->so_rerror
 	 * will catch it next time.
 	 */
-	if (dg)
-		return 0;
+	if (error && dg > 0) {
+		so->so_rerror = error;
+		error = 0;
+	}
+
+	fd_putfile(s);
 
 	return error;
 }
