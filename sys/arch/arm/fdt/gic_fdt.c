@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.14 2018/11/11 21:24:28 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.15 2018/11/12 12:41:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "pci.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.14 2018/11/11 21:24:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.15 2018/11/12 12:41:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,7 +59,9 @@ struct gic_fdt_irq;
 
 static int	gic_fdt_match(device_t, cfdata_t, void *);
 static void	gic_fdt_attach(device_t, device_t, void *);
+#if NPCI > 0
 static void	gic_fdt_attach_v2m(struct gic_fdt_softc *, bus_space_tag_t, int);
+#endif
 
 static int	gic_fdt_intr(void *);
 
@@ -129,7 +133,7 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr_d, addr_c;
 	bus_size_t size_d, size_c;
 	bus_space_handle_t bsh;
-	int error, child;
+	int error;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -175,15 +179,18 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 
 	arm_fdt_irq_set_handler(armgic_irq_handler);
 
-	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+#if NPCI > 0
+	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
 		const char * const v2m_compat[] = { "arm,gic-v2m-frame", NULL };
 		if (of_match_compatible(child, v2m_compat))
 			gic_fdt_attach_v2m(sc, faa->faa_bst, child);
 	}
+#endif
 }
 
+#if NPCI > 0
 static void
 gic_fdt_attach_v2m(struct gic_fdt_softc *sc, bus_space_tag_t bst, int phandle)
 {
@@ -224,6 +231,7 @@ gic_fdt_attach_v2m(struct gic_fdt_softc *sc, bus_space_tag_t bst, int phandle)
 		    frame->frame_base + frame->frame_count);
 	}
 }
+#endif
 
 static void *
 gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
