@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.132 2018/11/12 18:51:01 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.133 2018/11/12 20:54:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.132 2018/11/12 18:51:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.133 2018/11/12 20:54:03 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -89,7 +89,7 @@ static int	wdc_atapi_start(struct ata_channel *,struct ata_xfer *);
 static int	wdc_atapi_intr(struct ata_channel *, struct ata_xfer *, int);
 static void	wdc_atapi_kill_xfer(struct ata_channel *,
 				    struct ata_xfer *, int);
-static void	wdc_atapi_phase_complete(struct ata_xfer *);
+static void	wdc_atapi_phase_complete(struct ata_xfer *, int);
 static void	wdc_atapi_poll(struct ata_channel *, struct ata_xfer *);
 static void	wdc_atapi_done(struct ata_channel *, struct ata_xfer *);
 static void	wdc_atapi_reset(struct ata_channel *, struct ata_xfer *);
@@ -1018,7 +1018,7 @@ again:
 #endif
 		sc_xfer->resid = xfer->c_bcount;
 		/* this will unlock channel lock too */
-		wdc_atapi_phase_complete(xfer);
+		wdc_atapi_phase_complete(xfer, tfd);
 		return(1);
 
 	default:
@@ -1058,7 +1058,7 @@ again:
 }
 
 static void
-wdc_atapi_phase_complete(struct ata_xfer *xfer)
+wdc_atapi_phase_complete(struct ata_xfer *xfer, int tfd)
 {
 	struct ata_channel *chp = xfer->c_chp;
 	struct atac_softc *atac = chp->ch_atac;
@@ -1067,7 +1067,6 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 #endif
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int tfd = 0;
 
 	ata_channel_lock_owned(chp);
 
@@ -1207,5 +1206,5 @@ wdc_atapi_polldsc(void *arg)
 	ata_channel_lock(chp);
 
 	/* this will unlock channel lock too */
-	wdc_atapi_phase_complete(xfer);
+	wdc_atapi_phase_complete(xfer, 0);
 }
