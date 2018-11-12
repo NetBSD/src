@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.32 2018/08/17 16:04:39 macallan Exp $	*/
+/*	$NetBSD: Locore.c,v 1.33 2018/11/12 20:00:46 scole Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,11 +81,11 @@ __asm(
 "				\n" /* test for 601 */
 "	mfspr	%r0,287		\n" /* mfpvbr %r0 PVR = 287 */
 "	srwi	%r0,%r0,0x10	\n"
-"	cmpi	0,1,%r0,0x02	\n" /* 601 CPU = 0x0001 */
+"	cmplwi	%r0,0x02	\n" /* 601 CPU = 0x0001 */
 "	blt	2f		\n" /* skip over non-601 BAT setup */
-"	cmpi	0,1,%r0,0x39	\n" /* PPC970 */
+"	cmplwi	%r0,0x39	\n" /* PPC970 */
 "	blt	0f		\n"
-"	cmpi	0,1,%r0,0x45	\n" /* PPC970GX */
+"	cmplwi	%r0,0x45	\n" /* PPC970GX */
 "	ble	1f		\n"
 	/* non PPC 601 BATs */
 "0:	li	%r0,0		\n"
@@ -177,7 +177,13 @@ __asm(
 "				\n"
 "5:	cmpw	0,%r8,%r9	\n"
 "	bge	6f		\n"
-"	stw	%r0,0(%r8)	\n"
+	/*
+	 * clear by bytes to avoid ppc601 alignment exceptions
+	 */
+"	stb	%r0,0(%r8)	\n"
+"	stb	%r0,1(%r8)	\n"
+"	stb	%r0,2(%r8)	\n"
+"	stb	%r0,3(%r8)	\n"
 "	addi	%r8,%r8,4	\n"
 "	b	5b		\n"
 "				\n"
