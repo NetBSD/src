@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.161 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.162 2018/11/12 18:10:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.161 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.162 2018/11/12 18:10:36 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -846,6 +846,13 @@ cpu_hatch(void *v)
 	struct pcb *pcb;
 	int s, i;
 
+	/* ------------------------------------------------------------- */
+
+	/*
+	 * This section of code must be compiled with SSP disabled, to
+	 * prevent a race against cpu0. See sys/conf/ssp.mk.
+	 */
+
 	cpu_init_msrs(ci, true);
 	cpu_probe(ci);
 	cpu_speculation_init(ci);
@@ -862,6 +869,8 @@ cpu_hatch(void *v)
 	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
 	tsc_sync_ap(ci);
+
+	/* ------------------------------------------------------------- */
 
 	/*
 	 * Wait to be brought online.
