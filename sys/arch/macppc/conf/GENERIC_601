@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.21 2018/08/01 20:04:12 maxv Exp $
+# $NetBSD: GENERIC_601,v 1.22 2018/11/12 20:03:42 scole Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.21 $"
+ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	32
 
@@ -163,6 +163,7 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options         WSDISPLAY_SCROLLSUPPORT
 
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
@@ -289,6 +290,7 @@ uhub*	at uhub? port ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 
 ums*	at uhidev? reportid ?				# USB Mice
+wsmouse* at ums? mux 0
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 uhid*	at uhidev? reportid ?				# USB Generic HID
 
@@ -327,13 +329,13 @@ pseudo-device	vnd			# disk-like interface to files
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
-#pseudo-device	bpfilter		# packet filter
+pseudo-device	bpfilter		# packet filter
 #pseudo-device	npf			# NPF packet filter
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	tun			# network tunneling over tty
-pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
@@ -368,3 +370,9 @@ pseudo-device   drvctl
 #options VERIFIED_EXEC_FP_SHA512
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+
+#rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+#rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+
+#rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+#ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
