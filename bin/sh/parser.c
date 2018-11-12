@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.132.2.6 2018/09/10 15:45:11 martin Exp $	*/
+/*	$NetBSD: parser.c,v 1.132.2.7 2018/11/12 08:46:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.132.2.6 2018/09/10 15:45:11 martin Exp $");
+__RCSID("$NetBSD: parser.c,v 1.132.2.7 2018/11/12 08:46:54 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -597,7 +597,7 @@ command(void)
 	tokpushback++;
 	*rpp = NULL;
 	if (redir) {
-		if (n1->type != NSUBSHELL) {
+		if (n1 == NULL || n1->type != NSUBSHELL) {
 			n2 = stalloc(sizeof(struct nredir));
 			n2->type = NREDIR;
 			n2->nredir.n = n1;
