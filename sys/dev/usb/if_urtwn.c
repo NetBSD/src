@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.64 2018/09/12 21:57:18 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.65 2018/11/13 10:35:32 mlelstv Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.64 2018/09/12 21:57:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.65 2018/11/13 10:35:32 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -484,7 +484,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 
 	/* override default methods */
@@ -508,6 +508,9 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(URTWN_TX_RADIOTAP_PRESENT);
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ieee80211_announce(ic);
 
