@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.41 2012/03/05 02:20:18 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.42 2018/11/13 14:52:30 mlelstv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -110,12 +110,14 @@ accumulate_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 	const pgp_contents_t	*content = &pkt->u;
 	pgp_keyring_t		*keyring;
 	accumulate_t		*accumulate;
+	pgp_key_t		*key;
 
 	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "accumulate callback: packet tag %u\n", pkt->tag);
 	}
 	accumulate = pgp_callback_arg(cbinfo);
 	keyring = accumulate->keyring;
+	key = keyring->keyc > 0 ? &keyring->keys[keyring->keyc - 1] : NULL;
 	switch (pkt->tag) {
 	case PGP_PTAG_CT_PUBLIC_KEY:
 	case PGP_PTAG_CT_PUBLIC_SUBKEY:
@@ -131,17 +133,26 @@ accumulate_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 					content->userid,
 					keyring->keyc - 1);
 		}
-		if (keyring->keyc == 0) {
-			PGP_ERROR_1(cbinfo->errors, PGP_E_P_NO_USERID, "%s",
-			    "No userid found");
+		if (key != NULL) {
+			pgp_add_userid(key, content->userid);
 		} else {
-			pgp_add_userid(&keyring->keys[keyring->keyc - 1], content->userid);
+			PGP_ERROR_1(cbinfo->errors, PGP_E_P_NO_USERID, "%s",
+			    "No key for userid found");
 		}
 		return PGP_KEEP_MEMORY;
 	case PGP_PARSER_PACKET_END:
-		if (keyring->keyc > 0) {
-			pgp_add_subpacket(&keyring->keys[keyring->keyc - 1],
-						&content->packet);
+		if (key != NULL) {
+			switch (content->packet.tag) {
+			case PGP_PTAG_CT_RESERVED:
+				(void) fprintf(stderr, "Invalid packet tag\n");
+				break;
+			case PGP_PTAG_CT_PUBLIC_KEY:
+			case PGP_PTAG_CT_USER_ID:
+				break;
+			default:
+				pgp_add_subpacket(key, &content->packet);
+				break;
+			}
 			return PGP_KEEP_MEMORY;
 		}
 		return PGP_RELEASE_MEMORY;
