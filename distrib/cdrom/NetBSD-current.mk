@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-current.mk,v 1.8 2010/10/05 14:16:20 tsutsui Exp $
+# $NetBSD: NetBSD-current.mk,v 1.9 2018/11/13 03:03:22 scole Exp $
 #
 # Configuration file for NetBSD-current.
 
@@ -31,7 +31,8 @@ EXTFILES.macppc=	macppc.bootxx:macppc/binary/sets/base.tgz,./usr/mdec/bootxx \
 			macppc.ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot
 INTFILES.macppc=	ofwboot.xcf:macppc/installation/ofwboot.xcf,link \
 			ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot \
-			netbsd.macppc:macppc/binary/kernel/netbsd-INSTALL.gz,link
+			netbsd.macppc:macppc/binary/kernel/netbsd-INSTALL.gz,link \
+			netbsd.601:macppc/binary/kernel/netbsd-INSTALL_601.gz,link
 
 # BOOTFILE.pmax is absolute
 BOOTFILE.pmax=		${EXTFILEDIR}/pmax.bootxx
