@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.8 2018/11/09 23:36:24 jmcneill Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.9 2018/11/13 22:25:28 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -143,10 +143,8 @@
 #define	GICD_CTRL_RWP			__BIT(31)	// GICv3
 #define	GICD_CTRL_E1NWF			__BIT(7)	// GICv3
 #define	GICD_CTRL_DS			__BIT(6)	// GICv3
-#define	GICD_CTRL_ARE_NS		__BIT(5)	// GICv3
-#define	GICD_CTRL_ARE_S			__BIT(4)	// GICv3
-#define	GICD_CTRL_EnableGrp1S		__BIT(2)	// GICv3
-#define	GICD_CTRL_EnableGrp1NS		__BIT(1)	// GICv3
+#define	GICD_CTRL_ARE_NS		__BIT(4)	// GICv3
+#define	GICD_CTRL_EnableGrp1A		__BIT(1)	// GICv3
 #define	GICD_CTRL_Enable		__BIT(0)
 
 #define	GICD_TYPER_No1N			__BIT(25)	// GICv3
