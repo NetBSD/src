@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.7 2018/11/10 11:46:31 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.8 2018/11/13 10:33:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.7 2018/11/10 11:46:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.8 2018/11/13 10:33:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -673,7 +673,7 @@ gicv3_lpi_init(struct gicv3_softc *sc)
 	 * Allocate LPI pending tables
 	 */
 	const bus_size_t lpipend_sz = (sc->sc_lpi.pic_maxsources + sc->sc_lpi.pic_irqbase) / NBBY;
-	for (int cpuindex = 0; cpuindex < MAXCPUS; cpuindex++) {
+	for (int cpuindex = 0; cpuindex < ncpu; cpuindex++) {
 		gicv3_dma_alloc(sc, &sc->sc_lpipend[cpuindex], lpipend_sz, 0x10000);
 		KASSERT((sc->sc_lpipend[cpuindex].segs[0].ds_addr & ~GICR_PENDBASER_Physical_Address) == 0);
 	}
