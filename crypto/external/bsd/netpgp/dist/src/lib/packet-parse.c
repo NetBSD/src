@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.51 2012/03/05 02:20:18 christos Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.52 2018/11/13 14:52:30 mlelstv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -866,6 +866,7 @@ pgp_subpacket_free(pgp_subpacket_t *packet)
 {
 	free(packet->raw);
 	packet->raw = NULL;
+	packet->tag = PGP_PTAG_CT_RESERVED;
 }
 
 /**
@@ -3066,11 +3067,12 @@ parse_mdc(pgp_region_t *region, pgp_stream_t *stream)
 static int 
 parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
 {
-	pgp_packet_t	pkt;
-	pgp_region_t	region;
-	uint8_t		ptag;
-	unsigned	indeterminate = 0;
-	int		ret;
+	pgp_packet_t		pkt;
+	pgp_region_t		region;
+	pgp_content_enum	tag;
+	uint8_t			ptag;
+	unsigned		indeterminate = 0;
+	int			ret;
 
 	pkt.u.ptag.position = stream->readinfo.position;
 
@@ -3142,6 +3144,9 @@ parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
 		(void) fprintf(stderr, "parse_packet: type %u\n",
 			       pkt.u.ptag.type);
 	}
+
+	/* save tag for accumulator */
+	tag = pkt.u.ptag.type;
 	switch (pkt.u.ptag.type) {
 	case PGP_PTAG_CT_SIGNATURE:
 		ret = parse_sig(&region, stream);
@@ -3232,6 +3237,7 @@ parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
 	if (ret > 0 && stream->readinfo.accumulate) {
 		pkt.u.packet.length = stream->readinfo.alength;
 		pkt.u.packet.raw = stream->readinfo.accumulated;
+		pkt.u.packet.tag = tag;
 		stream->readinfo.accumulated = NULL;
 		stream->readinfo.asize = 0;
 		CALLBACK(PGP_PARSER_PACKET_END, &stream->cbinfo, &pkt);
