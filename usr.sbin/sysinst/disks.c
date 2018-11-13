@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.25 2018/11/11 10:06:09 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.26 2018/11/13 17:22:04 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -619,6 +619,11 @@ get_disks_helper(void *arg, const char *dev)
 	}
 	if (state->dd->dd_no_part && !state->with_non_partitionable)
 		return true;
+
+	if (strncmp(dev, "xbd", 3) == 0 || strncmp(dev, "raid", 4) == 0) {
+		/* if this device is xbd or raid, don't set up an MBR */
+		state->dd->dd_no_mbr = true;
+	}
 
 	if (!get_geom(state->dd->dd_name, &l)) {
 		if (errno == ENOENT)
