@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2018/11/12 17:46:53 nakayama Exp $
+# $NetBSD: Makefile,v 1.3 2018/11/13 09:00:09 martin Exp $
+
+.if ${MACHINE_ARCH} == "x86_64" && ${MLIBDIR:Unone} != "i386"
 
 .include <bsd.own.mk>
 
@@ -13,3 +15,5 @@ INCSDIR=	/usr/include
 WARNS=		5
 
 .include <bsd.lib.mk>
+
+.endif
