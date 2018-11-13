@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.45 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: BEAGLEBONE,v 1.46 2018/11/13 11:00:55 mlelstv Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -158,53 +158,13 @@ pseudo-device	wsfont
 tiotg* 	at mainbus? base 0x47400000 size 0x5000 intrbase 17
 motg*	at tiotg? port ?
 usb*		at motg?
-uhub*		at usb?
-uhub*		at uhub? port ?
 
-uhidev*		at uhub?
+# USB device drivers
+include "dev/usb/usbdevices.config"
 
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
+# needed for umidi
+midi*          at midibus?
 
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB generic touchscreen
-uts*	at uhidev? reportid ?
-wsmouse* at uts? mux 0
-
-# USB Modem
-umodem* at uhub? port ? configuration ?
-ucom*	at umodem?
-# Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
-
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-
-uipaq*	at uhub? port ?		# iPAQ PDAs
-ucom*	at uipaq? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
-
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-
-
-umass*		at uhub? port ? configuration ? interface ?
 # SCSI bus support
 scsibus*	at scsi?
 # SCSI devices
