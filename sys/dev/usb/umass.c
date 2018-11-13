@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.165 2018/10/24 09:41:24 martin Exp $	*/
+/*	$NetBSD: umass.c,v 1.166 2018/11/13 10:30:57 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.165 2018/10/24 09:41:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.166 2018/11/13 10:30:57 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -801,7 +801,9 @@ umass_detach(device_t self, int flags)
 
 	DPRINTFM(UDMASS_USB, "sc %#jx detached", (uintptr_t)sc, 0, 0, 0);
 
+	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = true;
+	mutex_exit(&sc->sc_lock);
 
 	pmf_device_deregister(self);
 
@@ -1179,9 +1181,6 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 		   "sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
 		   sc->sc_wire);
 
-	if (sc->sc_dying)
-		return;
-
 	/*
 	 * State handling for BBB transfers.
 	 *
@@ -1196,6 +1195,18 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 	DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx, transfer_state %jd dir %jd",
 	    (uintptr_t)sc, (uintptr_t)xfer, sc->transfer_state,
 	    sc->transfer_dir);
+
+	if (err == USBD_CANCELLED) {
+		DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx cancelled",
+		    (uintptr_t)sc, (uintptr_t)xfer, 0, 0);
+
+		sc->transfer_state = TSTATE_IDLE;
+		sc->transfer_cb(sc, sc->transfer_priv, 0, STATUS_TIMEOUT);
+		return;
+	}
+
+	if (sc->sc_dying)
+		return;
 
 	switch (sc->transfer_state) {
 
@@ -1634,6 +1645,14 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
 		   "sc->sc_wire == 0x%02x wrong for umass_cbi_state\n",
 		   sc->sc_wire);
+
+	if (err == USBD_CANCELLED) {
+		DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx cancelled",
+			(uintptr_t)sc, (uintptr_t)xfer, 0, 0);
+		sc->transfer_state = TSTATE_IDLE;
+		sc->transfer_cb(sc, sc->transfer_priv, 0, STATUS_TIMEOUT);
+		return;
+	}
 
 	if (sc->sc_dying)
 		return;
