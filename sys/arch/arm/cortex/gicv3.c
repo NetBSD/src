@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.8 2018/11/13 10:33:03 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.9 2018/11/13 22:25:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.8 2018/11/13 10:33:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.9 2018/11/13 22:25:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -245,7 +245,7 @@ gicv3_dist_enable(struct gicv3_softc *sc)
 		;
 
 	/* Enable Affinity routing and G1NS interrupts */
-	gicd_ctrl = GICD_CTRL_EnableGrp1NS | GICD_CTRL_Enable | GICD_CTRL_ARE_NS;
+	gicd_ctrl = GICD_CTRL_EnableGrp1A | GICD_CTRL_Enable | GICD_CTRL_ARE_NS;
 	gicd_write_4(sc, GICD_CTRL, gicd_ctrl);
 }
 
