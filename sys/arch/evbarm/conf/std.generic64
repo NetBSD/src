@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic64,v 1.8 2018/10/21 00:42:06 jmcneill Exp $
+#	$NetBSD: std.generic64,v 1.9 2018/11/13 06:06:29 ryo Exp $
 #
 #	generic NetBSD/evbarm64 with FDT support
 
@@ -16,14 +16,14 @@ options 	DRAM_BLOCKS=256
 options 	EVBARM_BOARDTYPE="FDT"
 options 	FDT				# Flattened Device Tree support
 options 	FPU_VFP
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	PCI_NETBSD_CONFIGURE
 options 	__HAVE_PCI_CONF_HOOK
 options 	__HAVE_PCI_MSI_MSIX
 
 # XXXNH not yet
 #options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
-#options 	MODULAR
-#options 	MODULAR_DEFAULT_AUTOLOAD
 
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.generic64"
 
