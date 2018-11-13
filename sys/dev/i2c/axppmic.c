@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.14 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.15 2018/11/13 18:27:32 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.14 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.15 2018/11/13 18:27:32 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.14 2018/06/26 06:03:57 thorpej Exp $")
 #define	AXP_BATTDISCHG_LO_REG	0x7d
 
 #define	AXP_ADC_RAW(_hi, _lo)	\
-	(((u_int)(_hi) << 4) | ((lo) & 0xf))
+	(((u_int)(_hi) << 4) | ((_lo) & 0xf))
 
 #define	AXP_FUEL_GAUGE_CTRL_REG	0xb8
 #define	 AXP_FUEL_GAUGE_CTRL_EN	__BIT(7)
