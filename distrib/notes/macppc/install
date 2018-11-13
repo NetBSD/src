@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.39 2012/10/06 05:28:46 jnemeth Exp $
+.\"	$NetBSD: install,v 1.40 2018/11/13 18:48:25 scole Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -298,6 +298,15 @@ listing if it is present on the disk.  For example:
 .No 0 \*[Gt] Ic "boot cd:,\eOFWBOOT.XCF;1 NETBSD.MACPPC;1"
 .disp)
 .Note)
+.(Note
+PowerPC 601 machines need to specify the
+.Pa NETBSD.601
+kernel when booting from the install CD, and use the
+.Pa kern-GENERIC_601.tgz
+and
+.Pa netbsd-INSTALL_601.gz
+kernels.
+.Note)
 .Pp
 If the
 .Ic dir
@@ -335,6 +344,7 @@ usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
 .(disp
 .No 0 \*[Gt] Ic "boot cd:0 NETBSD.MACPPC"
+.No 0 \*[Gt] Ic "boot cd:0 NETBSD.601"
 .No 0 \*[Gt] Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
 .No 0 \*[Gt] Ic "boot scsi/sd@3:0 NETBSD.MACPPC"
 .No 0 \*[Gt] Ic "boot ata/atapi-disk:0 NETBSD.MACPPC"
