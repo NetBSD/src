@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.5 2018/11/13 21:20:11 skrll Exp $
+#	$NetBSD: Makefile.buildboot,v 1.6 2018/11/13 21:22:37 skrll Exp $
 
 NOPIE=yes
 NOSSP=yes
@@ -32,7 +32,7 @@ BINMODE=	444
 
 CPPFLAGS+=	-nostdinc -I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 		-I${.OBJDIR}
-CFLAGS+=	-Os -msoft-float -Wno-main
+CFLAGS+=	-Os -fno-delete-null-pointer-checks -msoft-float -Wno-main
 CFLAGS+=	-fno-builtin
 CFLAGS+=	-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
 
