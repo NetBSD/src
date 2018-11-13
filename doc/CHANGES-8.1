@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.55 2018/11/12 16:03:17 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.56 2018/11/13 16:57:45 snj Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1690,4 +1690,9 @@ sys/dev/usb/usbdevs_data.h			(regen)
 	Add PN533 based NFC devices and a workaround for an errata
 	in those chips destroying USB descirptors.
 	[manu, ticket #1091]
+
+sys/compat/netbsd32/netbsd32_socket.c		1.48 via patch
+
+	Fix inverted logic, which leads to buffer overflow.
+	[maxv, ticket #1093]
 
