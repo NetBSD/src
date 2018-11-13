@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.154 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.155 2018/11/13 10:51:49 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.154 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.155 2018/11/13 10:51:49 mlelstv Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1934,19 +1934,50 @@ re_init(struct ifnet *ifp)
 	 * moderation, which dramatically improves TX frame rate.
 	 */
 
-	if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
-		CSR_WRITE_4(sc, RTK_TIMERINT, 0x400);
-	else {
-		if ((sc->sc_quirk & RTKQ_IM_HW) == 0) {
-			if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
-				CSR_WRITE_4(sc, RTK_TIMERINT_8169, 15000);
-			} else {
-				CSR_WRITE_4(sc, RTK_TIMERINT_8169, 0x800);
-			}
-		} else {
-			CSR_WRITE_4(sc, RTK_TIMERINT_8169, 0);
-		}
+	unsigned defer;		/* timer interval / ns */
+	unsigned period;	/* busclock period / ns */
 
+	/*
+	 * Maximum frame rate
+	 * 1500 byte PDU -> 81274 Hz
+	 *   46 byte PDU -> 1488096 Hz
+	 *
+	 * Deferring interrupts by up to 128us needs descriptors for
+	 * 1500 byte PDU -> 10.4 frames
+	 *   46 byte PDU -> 190.4 frames
+	 *
+	 */
+	defer = 128000;
+
+	if ((sc->sc_quirk & RTKQ_IM_HW) == 0) {
+		period = 1;
+		defer = 0;
+	} else if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
+		period = 8;
+	} else {
+		switch (CSR_READ_4(sc, RTK_CFG2_BUSFREQ) & 0x7) {
+		case RTK_BUSFREQ_33MHZ:
+			period = 30;
+			break;
+		case RTK_BUSFREQ_66MHZ:
+			period = 15;
+			break;
+		default:
+			/* lowest possible clock */
+			period = 60;
+			break;
+		}
+	}
+
+	/* Timer Interrupt register address varies */
+	uint16_t re8139_reg;
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
+		re8139_reg = RTK_TIMERINT;
+	else
+		re8139_reg = RTK_TIMERINT_8169;
+	CSR_WRITE_4(sc, re8139_reg, defer / period);
+
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		/*
 		 * For 8169 gigE NICs, set the max allowed RX packet
 		 * size so we can receive jumbo frames.
