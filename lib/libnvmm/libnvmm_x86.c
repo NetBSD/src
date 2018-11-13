@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.2 2018/11/11 00:06:48 maya Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.3 2018/11/13 06:57:14 maya Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #include <machine/vmparam.h>
 #include <machine/pte.h>
 #include <machine/psl.h>
-#include <dev/nvmm/x86/nvmm_x86.h>
 
 #include "nvmm.h"
 
