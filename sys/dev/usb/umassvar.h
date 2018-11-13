@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.38 2016/07/03 07:27:37 skrll Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.39 2018/11/13 10:30:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -135,6 +135,7 @@ typedef void (*umass_callback)(struct umass_softc *, void *, int, int);
 #define STATUS_CMD_UNKNOWN	1	/* will have to fetch sense */
 #define STATUS_CMD_FAILED	2	/* transfer was ok, command failed */
 #define STATUS_WIRE_FAILED	3	/* couldn't even get command across */
+#define STATUS_TIMEOUT		4	/* transfer aborted */
 
 typedef void (*umass_wire_xfer)(struct umass_softc *, int, void *, int, void *,
 				int, int, u_int, int, umass_callback, void *);
