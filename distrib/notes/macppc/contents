@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.14 2018/06/24 09:38:47 leot Exp $
+.\"	$NetBSD: contents,v 1.15 2018/11/13 18:48:25 scole Exp $
 .\"
 .\" Copyright (c) 1999-2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,6 +91,15 @@ kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
 and 2.4 systems (i.e. those that have floppy drives).
 It has a RAM-disk installer.
 .
+.			It Pa netbsd-INSTALL_601.gz
+.
+A gzipped
+.Nx
+kernel containing code only for PowerPC 601 machines, Open Firmware
+1.0.5, 1.1.22, 2.0.x, and 2.4 systems (i.e. those that have floppy drives).
+It has a RAM-disk installer.
+.
+.
 .		tag) \" binary/kernel/
 .
 .		It Pa sets/
@@ -111,6 +120,13 @@ see below.
 kernel.  The second image has the installation tools.
 Only usable on models that ship with a floppy drive (pre-Open Firmware 3);
 see below.
+.
+.
+.		It Pa floppy/boot601_1.fs
+.		It Pa floppy/boot601_2.fs
+.
+Same as boot1.fs, boot2.fs, except for PowerPC 601 machines only.
+.
 .
 .		It Pa ofwboot.xcf
 .

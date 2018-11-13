@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.549 2018/08/07 08:26:42 martin Exp $
+.\"	$NetBSD: main,v 1.550 2018/11/13 18:48:25 scole Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -380,6 +380,24 @@ kernel is called
 .Pa NETBSD.MACPPC .
 You may want to read the section below on
 .Sx Open Firmware boot syntax
+.\}
+.if \n[macppc] \{\
+.It
+.Pp
+PowerPC 601 machines need to use separate boot floppies 
+.Pa macppc/installation/floppy/boot601_1.fs
+and
+.Pa macppc/installation/floppy/boot602_2.fs ,
+a different kernel set
+.Pa kern-GENERIC_601.tgz ,
+and a different install kernel
+.Pa netbsd-INSTALL_601.gz .
+The same boot CD can be used but at the boot prompt you must specify
+the 601 kernel, i.e., replace
+.Ic netbsd.macppc
+with
+.Ic netbsd.601
+.
 .\}
 .if \n[sparc]:\n[sparc64] \{\
 .It

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.19 2017/06/07 09:14:32 he Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.20 2018/11/13 18:48:25 scole Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -1257,7 +1257,11 @@ Use a tool to write the boot floppy images
 .Pa installation/floppy/boot1.fs
 and
 .Pa installation/floppy/boot2.fs
-to two floppy disks.
+to two floppy disks.  PowerPC 601 machines should use
+.Pa installation/floppy/boot601_1.fs
+and
+.Pa installation/floppy/boot601_2.fs
+instead.
 .Pp
 .(bullet -compact
 .Em From an UNIX-like machine
@@ -1513,7 +1517,8 @@ machine.
 .It
 Copy
 .Pa netbsd-INSTALL.gz No and Pa ofwboot.xcf
-to the disk.
+to the disk.  PowerPC 601 machines need to use
+.Pa netbsd-INSTALL_601.gz .
 .It
 Rename
 .Pa netbsd-INSTALL.gz No to Pa netbsd.gz ,
