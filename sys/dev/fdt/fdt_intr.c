@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.19 2018/10/21 05:32:39 skrll Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.20 2018/11/13 01:06:37 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.19 2018/10/21 05:32:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.20 2018/11/13 01:06:37 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,7 +91,7 @@ fdtbus_get_interrupt_parent(int phandle)
 		 * If the node has an interrupt-map, use it. The caller is responsible
 		 * for parsing the interrupt-map and finding the real interrupt parent.
 		 */
-		if (of_hasprop(iparent, "interrupt-map"))
+		if (phandle != iparent && of_hasprop(iparent, "interrupt-map"))
 			return iparent;
 
 		/*
