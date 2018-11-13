@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.20 2018/11/10 18:29:08 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.21 2018/11/13 10:30:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.20 2018/11/10 18:29:08 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.21 2018/11/13 10:30:35 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -247,7 +247,8 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 
 	/* XXX: arm/arm32/bus_dma.c refers physical_{start,end} */
 	physical_start = bootconfig.dram[0].address;
-	physical_end = physical_start + ptoa(bootconfig.dram[0].pages);
+	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address +
+		       ptoa(bootconfig.dram[bootconfig.dramblocks - 1].pages);
 
 	/*
 	 * msgbuf is allocated from the bottom of any one of memory blocks
