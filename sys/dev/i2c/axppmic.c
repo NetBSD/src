@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.15 2018/11/13 18:27:32 jakllsch Exp $ */
+/* $NetBSD: axppmic.c,v 1.16 2018/11/13 19:06:05 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.15 2018/11/13 18:27:32 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.16 2018/11/13 19:06:05 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,17 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.15 2018/11/13 18:27:32 jakllsch Exp $"
 #define	AXP_BATT_CAP_REG	0xb9
 #define	 AXP_BATT_CAP_VALID	__BIT(7)
 #define	 AXP_BATT_CAP_PERCENT	__BITS(6,0)
+
+#define	AXP_BATT_MAX_CAP_HI_REG	0xe0
+#define	 AXP_BATT_MAX_CAP_VALID	__BIT(7)
+#define	AXP_BATT_MAX_CAP_LO_REG	0xe1
+
+#define	AXP_BATT_COULOMB_HI_REG	0xe2
+#define	 AXP_BATT_COULOMB_VALID	__BIT(7)
+#define	AXP_BATT_COULOMB_LO_REG	0xe3
+
+#define	AXP_COULOMB_RAW(_hi, _lo)	\
+	(((u_int)(_hi & ~__BIT(7)) << 8) | (_lo))
 
 #define	AXP_BATT_CAP_WARN_REG	0xe6
 #define	 AXP_BATT_CAP_WARN_LV1	__BITS(7,4)
@@ -229,6 +240,8 @@ enum axppmic_sensor {
 	AXP_SENSOR_BATT_CHARGE_CURRENT,
 	AXP_SENSOR_BATT_DISCHARGE_CURRENT,
 	AXP_SENSOR_BATT_CAPACITY_PERCENT,
+	AXP_SENSOR_BATT_MAXIMUM_CAPACITY,
+	AXP_SENSOR_BATT_CURRENT_CAPACITY,
 	AXP_NSENSORS
 };
 
@@ -274,6 +287,8 @@ static const struct axppmic_config axp803_config = {
 	.batsense_step = 1100,
 	.charge_step = 1000,
 	.discharge_step = 1000,
+	.maxcap_step = 1456,
+	.coulomb_step = 1456,
 	.poklirq = AXPPMIC_IRQ(5, __BIT(3)),
 	.acinirq = AXPPMIC_IRQ(1, __BITS(6,5)),
 	.vbusirq = AXPPMIC_IRQ(1, __BITS(3,2)),
@@ -495,6 +510,22 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 			e->value_cur = AXP_ADC_RAW(hi, lo) * c->discharge_step;
 		}
 		break;
+	case AXP_SENSOR_BATT_MAXIMUM_CAPACITY:
+		if (battery_present &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_MAX_CAP_HI_REG, &hi, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_MAX_CAP_LO_REG, &lo, flags) == 0) {
+			e->state = (hi & AXP_BATT_MAX_CAP_VALID) ? ENVSYS_SVALID : ENVSYS_SINVALID;
+			e->value_cur = AXP_COULOMB_RAW(hi, lo) * c->maxcap_step;
+		}
+		break;
+	case AXP_SENSOR_BATT_CURRENT_CAPACITY:
+		if (battery_present &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_COULOMB_HI_REG, &hi, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_COULOMB_LO_REG, &lo, flags) == 0) {
+			e->state = (hi & AXP_BATT_COULOMB_VALID) ? ENVSYS_SVALID : ENVSYS_SINVALID;
+			e->value_cur = AXP_COULOMB_RAW(hi, lo) * c->coulomb_step;
+		}
+		break;
 	}
 }
 
@@ -651,6 +682,24 @@ axppmic_attach_battery(struct axppmic_softc *sc)
 		e->state = ENVSYS_SINVALID;
 		e->flags = ENVSYS_FPERCENT;
 		strlcpy(e->desc, "battery percent", sizeof(e->desc));
+		sysmon_envsys_sensor_attach(sc->sc_sme, e);
+	}
+
+	if (c->maxcap_step) {
+		e = &sc->sc_sensor[AXP_SENSOR_BATT_MAXIMUM_CAPACITY];
+		e->private = AXP_SENSOR_BATT_MAXIMUM_CAPACITY;
+		e->units = ENVSYS_SAMPHOUR;
+		e->state = ENVSYS_SINVALID;
+		strlcpy(e->desc, "battery maximum capacity", sizeof(e->desc));
+		sysmon_envsys_sensor_attach(sc->sc_sme, e);
+	}
+
+	if (c->coulomb_step) {
+		e = &sc->sc_sensor[AXP_SENSOR_BATT_CURRENT_CAPACITY];
+		e->private = AXP_SENSOR_BATT_CURRENT_CAPACITY;
+		e->units = ENVSYS_SAMPHOUR;
+		e->state = ENVSYS_SINVALID;
+		strlcpy(e->desc, "battery current capacity", sizeof(e->desc));
 		sysmon_envsys_sensor_attach(sc->sc_sme, e);
 	}
 }
