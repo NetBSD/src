@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.47 2018/10/20 06:35:34 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.48 2018/11/13 20:48:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.47 2018/10/20 06:35:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.48 2018/11/13 20:48:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -261,7 +261,6 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	    pv->pv_pa + pv->pv_size - 1, pv->pv_va);
 	pv++;
 
-#if !defined(__HAVE_GENERIC_START)
 	/*
 	 * Add a free block for any memory before the kernel.
 	 */
@@ -275,7 +274,6 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 		    pv->pv_pa + pv->pv_size - 1, pv->pv_va);
 		pv++;
 	}
-#endif
 
 	bmi->bmi_nfreeblocks = pv - bmi->bmi_freeblocks;
 
