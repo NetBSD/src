@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.55 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.56 2018/11/13 10:30:57 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.55 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.56 2018/11/13 10:30:57 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -136,12 +136,17 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->sc_channel.chan_id = scbus->sc_channel.chan_ntargets - 1;
 	DPRINTFM(UDMASS_USB, "sc %#jx: SCSI", (uintptr_t)sc, 0, 0, 0);
 
+	mutex_enter(&sc->sc_lock);
 	sc->sc_refcnt++;
+	mutex_exit(&sc->sc_lock);
 	scbus->base.sc_child =
 	    config_found_ia(sc->sc_dev, "scsi", &scbus->sc_channel,
 		scsiprint);
+	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeupold(sc->sc_dev);
+		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+	mutex_exit(&sc->sc_lock);
+
 
 	return 0;
 }
@@ -164,12 +169,16 @@ umass_atapi_attach(struct umass_softc *sc)
 	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
 	DPRINTFM(UDMASS_USB, "sc %#jxp: ATAPI", (uintptr_t)sc, 0, 0, 0);
 
+	mutex_enter(&sc->sc_lock);
 	sc->sc_refcnt++;
+	mutex_exit(&sc->sc_lock);
 	scbus->base.sc_child =
 	    config_found_ia(sc->sc_dev, "atapi", &scbus->sc_channel,
 		atapiprint);
+	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeupold(sc->sc_dev);
+		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }
@@ -443,6 +452,10 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 
 	case STATUS_WIRE_FAILED:
 		xs->error = XS_RESET;
+		break;
+
+	case STATUS_TIMEOUT:
+		xs->error = XS_TIMEOUT;
 		break;
 
 	default:
