@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.46 2018/11/11 10:14:14 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.47 2018/11/13 20:24:48 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.46 2018/11/11 10:14:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.47 2018/11/13 20:24:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -916,7 +916,7 @@ intr_get_source(const char *intrid)
 		if (pic == NULL || pic->pic_irqbase < 0)
 			continue;
 		for (irq = 0; irq < pic->pic_maxsources; irq++) {
-			is = pic->pic_sources[irq - pic->pic_irqbase];
+			is = pic->pic_sources[irq];
 			if (is == NULL || is->is_source[0] == '\0')
 				continue;
 
@@ -945,7 +945,7 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 		struct pic_softc * const pic = pic_list[slot];
 		if (pic != NULL && pic->pic_irqbase >= 0) {
 			for (irq = 0; irq < pic->pic_maxsources; irq++) {
-				is = pic->pic_sources[irq - pic->pic_irqbase];
+				is = pic->pic_sources[irq];
 				if (is && is->is_source[0] != '\0')
 					count++;
 			}
@@ -960,7 +960,7 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 		if (pic == NULL || pic->pic_irqbase < 0)
 			continue;
 		for (irq = 0; irq < pic->pic_maxsources; irq++) {
-			is = pic->pic_sources[irq - pic->pic_irqbase];
+			is = pic->pic_sources[irq];
 			if (is == NULL || is->is_source[0] == '\0')
 				continue;
 
