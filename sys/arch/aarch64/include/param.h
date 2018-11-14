@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.4 2018/10/12 01:28:58 ryo Exp $ */
+/* $NetBSD: param.h,v 1.5 2018/11/14 20:03:28 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -93,8 +93,8 @@
 #define MAXPHYS			65536	/* max I/O transfer size */
 #endif
 
-#define NKMEMPAGES_MAX_DEFAULT	((2048UL * 1024 * 1024) >> PAGE_SHIFT)
-#define NKMEMPAGES_MIN_DEFAULT	((128UL * 1024 * 1024) >> PAGE_SHIFT)
+#define NKMEMPAGES_MIN_DEFAULT		((128UL * 1024 * 1024) >> PAGE_SHIFT)
+#define NKMEMPAGES_MAX_UNLIMITED	1
 
 #ifdef AARCH64_PAGE_SHIFT
 #if (1 << AARCH64_PAGE_SHIFT) & ~0x141000
