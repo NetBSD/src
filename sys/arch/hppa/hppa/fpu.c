@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.24 2012/04/06 12:21:59 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.25 2018/11/14 10:58:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24 2012/04/06 12:21:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.25 2018/11/14 10:58:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,12 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 
 	/* See if we have a present and functioning hardware FPU. */
 	fpu_present = (ccr_enable & HPPA_FPUS) == HPPA_FPUS;
+	if (!fpu_present) {
+		fpu_csw = 0;
+		curcpu()->ci_fpu_state = 0;
+
+		return;
+	}
 
 	KASSERT(fpu_present);
 	/* Initialize the FPU and get its version. */

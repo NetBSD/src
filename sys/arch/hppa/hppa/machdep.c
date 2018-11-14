@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2018/11/14 10:58:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2018/11/14 10:58:04 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -374,7 +374,7 @@ const struct hppa_cpu_info cpu_types[] = {
 	{ "PA7300LC", "Velociraptor", "PCXL2",
 	  hpcxl2, HPPA_CPU_PCXL2,
 	  HPPA_FTRS_TLBU | HPPA_FTRS_BTLBU | HPPA_FTRS_HVT, "1.1e",
-	  desidhash_l, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
+	  NULL, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g },
 #endif
 #ifdef HP8000_CPU
@@ -809,9 +809,6 @@ cpuid(void)
 
 	if (hppa_cpu_info->hci_chip_name == NULL)
 		panic("bad model string for 0x%x", pdc_model.hwmodel);
-	else if (hppa_cpu_info->desidhash == NULL)
-		panic("no kernel support for %s",
-		    hppa_cpu_info->hci_chip_name);
 
 	/*
 	 * TODO: HPT on 7200 is not currently supported
@@ -825,7 +822,10 @@ cpuid(void)
 	cpu_hpt_init = hppa_cpu_info->hptinit;
 	cpu_desidhash = hppa_cpu_info->desidhash;
 
-	cpu_revision = (*cpu_desidhash)();
+	if (cpu_desidhash)
+		cpu_revision = (*cpu_desidhash)();
+	else
+		cpu_revision = 0;
 
 	/* force strong ordering for now */
 	if (hppa_cpu_ispa20_p())
