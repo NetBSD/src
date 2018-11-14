@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.11 2018/06/14 08:38:24 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.12 2018/11/14 05:07:48 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -449,6 +449,9 @@ vlan_configs_body_common()
 
 	atf_check -s exit:0 rump.ifconfig shmif0 create
 	atf_check -s exit:0 rump.ifconfig shmif1 create
+	# unset U/L bit to detect a bug fixed by if_vlan.c:r1.132
+	atf_check -s exit:0 rump.ifconfig shmif0 link b0:a0:75:00:01:00 active
+	atf_check -s exit:0 rump.ifconfig shmif1 link b0:a0:75:00:01:01 active
 	atf_check -s exit:0 rump.ifconfig vlan0 create
 
 	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
