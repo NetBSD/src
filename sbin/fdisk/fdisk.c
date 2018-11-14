@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.155 2018/08/27 14:55:46 sevan Exp $ */
+/*	$NetBSD: fdisk.c,v 1.156 2018/11/14 12:05:29 mlelstv Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.155 2018/08/27 14:55:46 sevan Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.156 2018/11/14 12:05:29 mlelstv Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2685,7 +2685,7 @@ validate_bootsel(struct mbr_bootsel *mbs)
 {
 	unsigned int key = mbs->mbrbs_defkey;
 	unsigned int tmo;
-	size_t i;
+	size_t i, j;
 
 	if (v_flag)
 		return 0;
@@ -2717,8 +2717,9 @@ validate_bootsel(struct mbr_bootsel *mbs)
 
 	/* Check the menu strings are printable */
 	/* Unfortunately they aren't zero filled... */
-	for (i = 0; i < sizeof(mbs->mbrbs_nametab); i++) {
-		int c = (uint8_t)mbs->mbrbs_nametab[0][i];
+	for (j = 0; j < __arraycount(mbs->mbrbs_nametab); ++j)
+	for (i = 0; i < sizeof(mbs->mbrbs_nametab[j]); i++) {
+		int c = (uint8_t)mbs->mbrbs_nametab[j][i];
 		if (c == 0 || isprint(c))
 			continue;
 		return 3;
