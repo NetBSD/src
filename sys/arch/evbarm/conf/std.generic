@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic,v 1.5 2018/11/10 19:35:19 martin Exp $
+#	$NetBSD: std.generic,v 1.6 2018/11/14 11:02:52 jmcneill Exp $
 #
 # 	generic NetBSD/evbarm with FDT support
 
@@ -30,6 +30,7 @@ options 	__HAVE_GENERIC_START
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_PCI_CONF_HOOK
+options 	__HAVE_PCI_MSI_MSIX
 
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.generic"
 
