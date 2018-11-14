@@ -1,4 +1,4 @@
-/*	$NetBSD: md_var.h,v 1.2 2017/04/08 18:02:55 scole Exp $	*/
+/*	$NetBSD: md_var.h,v 1.3 2018/11/14 21:10:59 scole Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -68,6 +68,14 @@ struct reg;
 struct thread;
 struct trapframe;
 
+/*
+ * Return value from ia64_init. Describes stack to switch to.
+ */
+struct ia64_init_return {
+        uint64_t        bspstore;
+        uint64_t        sp;
+};
+
 void	busdma_swi(void);
 int	copyout_regstack(struct thread *, uint64_t *, uint64_t *);
 void	cpu_mp_add(u_int, u_int, u_int);
@@ -78,7 +86,7 @@ void	ia64_flush_dirty(struct thread *, struct _special *);
 uint64_t ia64_get_hcdp(void);
 int	ia64_highfp_drop(struct thread *);
 int	ia64_highfp_save(struct thread *);
-void	ia64_init(void);
+struct ia64_init_return ia64_init(void);
 void	ia64_probe_sapics(void);
 int	interrupt(uint64_t, struct trapframe *);
 void	map_gateway_page(void);
