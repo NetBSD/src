@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.48 2018/11/12 06:53:43 maxv Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.49 2018/11/14 17:51:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.48 2018/11/12 06:53:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.49 2018/11/14 17:51:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,16 @@ netbsd32_recvmmsg(struct lwp *l, const struct netbsd32_recvmmsg_args *uap,
 	if ((error = fd_getsock(s, &so)) != 0)
 		return error;
 
+	/*
+	 * If so->so_rerror holds a deferred error return it now.
+	 */
+	if (so->so_rerror) {
+		error = so->so_rerror;
+		so->so_rerror = 0;
+		fd_putfile(s);
+		return error;
+	}
+
 	vlen = SCARG(uap, vlen);
 	if (vlen > 1024)
 		vlen = 1024;
@@ -350,17 +360,17 @@ netbsd32_recvmmsg(struct lwp *l, const struct netbsd32_recvmmsg_args *uap,
 		m_free(from);
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
-
-	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
+	 * If we succeeded at least once, return 0, hopefully so->so_rerror
 	 * will catch it next time.
 	 */
-	if (dg)
-		return 0;
+	if (error && dg > 0) {
+		so->so_rerror = error;
+		error = 0;
+	}
+
+	fd_putfile(s);
 
 	return error;
 }
@@ -597,14 +607,11 @@ netbsd32_sendmmsg(struct lwp *l, const struct netbsd32_sendmmsg_args *uap,
 	}
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
 
 	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
-	 * will catch it next time.
+	 * If we succeeded at least once, return 0.
 	 */
 	if (dg)
 		return 0;
