@@ -1,11 +1,8 @@
-/*	$NetBSD: isa_defs.h,v 1.2 2015/02/21 15:00:30 ozaki-r Exp $	*/
+/*	$NetBSD: isa_defs.h,v 1.3 2018/11/14 17:09:08 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,23 +26,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#ifndef	_OSNET_SYS_ISA_DEFS_H_
+#define	_OSNET_SYS_ISA_DEFS_H_
 
-#if defined(__i386__)
-#if !defined(_ILP32)
-#define _ILP32
-#endif
+#include <sys/cdefs.h>
 
-#elif defined(__amd64__)
-#if !defined(_LP64)
-#define _LP64
-#endif
-
-#elif defined(__arm__)
-#if !defined(_ILP32)
-#define _ILP32
-#endif
-
+#ifdef _LP64
+__CTASSERT(sizeof(int) == 4);
+__CTASSERT(sizeof(long) == 8);
+__CTASSERT(sizeof(void *) == 8);
 #else
-#error "architecture not supported"
+/*
+ * For 64-bit architectures the compiler defines _LP64.  All else in
+ * NetBSD is ILP32 for now.
+ */
+__CTASSERT(sizeof(int) == 4);
+__CTASSERT(sizeof(long) == 4);
+__CTASSERT(sizeof(void *) == 4);
+#define	_ILP32	1
 #endif
+
+#endif	/* _OSNET_SYS_ISA_DEFS_H_ */
