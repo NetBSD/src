@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.596 2018/11/03 21:39:10 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.597 2018/11/14 03:41:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.596 2018/11/03 21:39:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.597 2018/11/14 03:41:20 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -463,6 +463,8 @@ struct wm_queue {
 struct wm_phyop {
 	int (*acquire)(struct wm_softc *);
 	void (*release)(struct wm_softc *);
+	int (*readreg_locked)(device_t, int, int, uint16_t *);
+	int (*writereg_locked)(device_t, int, int, uint16_t);
 	int reset_delay_us;
 };
 
@@ -716,7 +718,7 @@ static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
 static void	wm_phy_post_reset(struct wm_softc *);
-static void	wm_write_smbus_addr(struct wm_softc *);
+static int	wm_write_smbus_addr(struct wm_softc *);
 static void	wm_init_lcd_from_nvm(struct wm_softc *);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
@@ -819,16 +821,18 @@ static void	wm_gmii_i82543_writereg(device_t, int, int, int);
 static int	wm_gmii_mdic_readreg(device_t, int, int);
 static void	wm_gmii_mdic_writereg(device_t, int, int, int);
 static int	wm_gmii_i82544_readreg(device_t, int, int);
+static int	wm_gmii_i82544_readreg_locked(device_t, int, int, uint16_t *);
 static void	wm_gmii_i82544_writereg(device_t, int, int, int);
+static int	wm_gmii_i82544_writereg_locked(device_t, int, int, uint16_t);
 static int	wm_gmii_i80003_readreg(device_t, int, int);
 static void	wm_gmii_i80003_writereg(device_t, int, int, int);
 static int	wm_gmii_bm_readreg(device_t, int, int);
 static void	wm_gmii_bm_writereg(device_t, int, int, int);
 static void	wm_access_phy_wakeup_reg_bm(device_t, int, int16_t *, int);
 static int	wm_gmii_hv_readreg(device_t, int, int);
-static int	wm_gmii_hv_readreg_locked(device_t, int, int);
+static int	wm_gmii_hv_readreg_locked(device_t, int, int, uint16_t *);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
-static void	wm_gmii_hv_writereg_locked(device_t, int, int, int);
+static int	wm_gmii_hv_writereg_locked(device_t, int, int, uint16_t);
 static int	wm_gmii_82580_readreg(device_t, int, int);
 static void	wm_gmii_82580_writereg(device_t, int, int, int);
 static int	wm_gmii_gs40g_readreg(device_t, int, int);
@@ -948,7 +952,7 @@ static void	wm_smbustopci(struct wm_softc *);
 static void	wm_init_manageability(struct wm_softc *);
 static void	wm_release_manageability(struct wm_softc *);
 static void	wm_get_wakeup(struct wm_softc *);
-static void	wm_ulp_disable(struct wm_softc *);
+static int	wm_ulp_disable(struct wm_softc *);
 static void	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
@@ -3826,6 +3830,7 @@ wm_get_cfg_done(struct wm_softc *sc)
 		else
 			wm_get_auto_rd_done(sc);
 
+		/* Clear PHY Reset Asserted bit */
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if ((reg & STATUS_PHYRA) != 0)
 			CSR_WRITE(sc, WMREG_STATUS, reg & ~STATUS_PHYRA);
@@ -3886,19 +3891,23 @@ wm_phy_post_reset(struct wm_softc *sc)
 }
 
 /* Only for PCH and newer */
-static void
+static int
 wm_write_smbus_addr(struct wm_softc *sc)
 {
 	uint32_t strap, freq;
-	uint32_t phy_data;
+	uint16_t phy_data;
+	int rv;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+	KASSERT(CSR_READ(sc, WMREG_EXTCNFCTR) & EXTCNFCTR_MDIO_SW_OWNERSHIP);
 
 	strap = CSR_READ(sc, WMREG_STRAP);
 	freq = __SHIFTOUT(strap, STRAP_FREQ);
 
-	phy_data = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, HV_SMB_ADDR);
+	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, HV_SMB_ADDR, &phy_data);
+	if (rv != 0)
+		return -1;
 
 	phy_data &= ~HV_SMB_ADDR_ADDR;
 	phy_data |= __SHIFTOUT(strap, STRAP_SMBUSADDR);
@@ -3920,7 +3929,8 @@ wm_write_smbus_addr(struct wm_softc *sc)
 		}
 	}
 
-	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_SMB_ADDR, phy_data);
+	return wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_SMB_ADDR,
+	    phy_data);
 }
 
 void
@@ -4012,9 +4022,8 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 		reg_addr &= IGPHY_MAXREGADDR;
 		reg_addr |= phy_page;
 
-		sc->phy.release(sc); /* XXX */
-		sc->sc_mii.mii_writereg(sc->sc_dev, 1, reg_addr, reg_data);
-		sc->phy.acquire(sc); /* XXX */
+		KASSERT(sc->phy.writereg_locked != NULL);
+		sc->phy.writereg_locked(sc->sc_dev, 1, reg_addr, reg_data);
 	}
 
 release:	
@@ -9708,6 +9717,13 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 	sc->sc_phytype = new_phytype;
 	mii->mii_readreg = new_readreg;
 	mii->mii_writereg = new_writereg;
+	if (new_readreg == wm_gmii_hv_readreg) {
+		sc->phy.readreg_locked = wm_gmii_hv_readreg_locked;
+		sc->phy.writereg_locked = wm_gmii_hv_writereg_locked;
+	} else if (new_readreg == wm_gmii_i82544_readreg) {
+		sc->phy.readreg_locked = wm_gmii_i82544_readreg_locked;
+		sc->phy.writereg_locked = wm_gmii_i82544_writereg_locked;
+	}
 }
 
 /*
@@ -10189,12 +10205,24 @@ static int
 wm_gmii_i82544_readreg(device_t dev, int phy, int reg)
 {
 	struct wm_softc *sc = device_private(dev);
-	int rv;
+	uint16_t val;
 
 	if (sc->phy.acquire(sc)) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
+
+	wm_gmii_i82544_readreg_locked(dev, phy, reg, &val);
+	
+	sc->phy.release(sc);
+
+	return val;
+}
+
+static int
+wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
+{
+	struct wm_softc *sc = device_private(dev);
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		switch (sc->sc_phytype) {
@@ -10213,10 +10241,9 @@ wm_gmii_i82544_readreg(device_t dev, int phy, int reg)
 		}
 	}
 	
-	rv = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
-	sc->phy.release(sc);
+	*val = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
 
-	return rv;
+	return 0;
 }
 
 /*
@@ -10233,6 +10260,15 @@ wm_gmii_i82544_writereg(device_t dev, int phy, int reg, int val)
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
+
+	wm_gmii_i82544_writereg_locked(dev, phy, reg & MII_ADDRMASK, val);
+	sc->phy.release(sc);
+}
+
+static int
+wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
+{
+	struct wm_softc *sc = device_private(dev);
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		switch (sc->sc_phytype) {
@@ -10252,7 +10288,8 @@ wm_gmii_i82544_writereg(device_t dev, int phy, int reg, int val)
 	}
 			
 	wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
-	sc->phy.release(sc);
+
+	return 0;
 }
 
 /*
@@ -10522,7 +10559,7 @@ static int
 wm_gmii_hv_readreg(device_t dev, int phy, int reg)
 {
 	struct wm_softc *sc = device_private(dev);
-	int rv;
+	uint16_t val;
 
 	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(dev), __func__));
@@ -10531,25 +10568,23 @@ wm_gmii_hv_readreg(device_t dev, int phy, int reg)
 		return 0;
 	}
 
-	rv = wm_gmii_hv_readreg_locked(dev, phy, reg);
+	wm_gmii_hv_readreg_locked(dev, phy, reg, &val);
 	sc->phy.release(sc);
-	return rv;
+	return val;
 }
 
 static int
-wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg)
+wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 {
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
-	uint16_t val;
-	int rv;
 
 	phy = (page >= HV_INTC_FC_PAGE_START) ? 1 : phy;
 
 	/* Page 800 works differently than the rest so it has its own func */
 	if (page == BM_WUC_PAGE) {
-		wm_access_phy_wakeup_reg_bm(dev, reg, &val, 1);
-		return val;
+		wm_access_phy_wakeup_reg_bm(dev, reg, val, 1);
+		return 0;
 	}
 
 	/*
@@ -10573,8 +10608,8 @@ wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg)
 		    page << BME1000_PAGE_SHIFT);
 	}
 
-	rv = wm_gmii_mdic_readreg(dev, phy, regnum & MII_ADDRMASK);
-	return rv;
+	*val = wm_gmii_mdic_readreg(dev, phy, regnum & MII_ADDRMASK);
+	return 0;
 }
 
 /*
@@ -10601,8 +10636,8 @@ wm_gmii_hv_writereg(device_t dev, int phy, int reg, int val)
 	sc->phy.release(sc);
 }
 
-static void
-wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, int val)
+static int
+wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct wm_softc *sc = device_private(dev);
 	uint16_t page = BM_PHY_REG_PAGE(reg);
@@ -10616,7 +10651,7 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, int val)
 
 		tmp = val;
 		wm_access_phy_wakeup_reg_bm(dev, reg, &tmp, 0);
-		return;
+		return 0;
 	}
 
 	/*
@@ -10625,7 +10660,7 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, int val)
 	 */
 	if ((page > 0) && (page < HV_INTC_FC_PAGE_START)) {
 		printf("gmii_hv_writereg!!!\n");
-		return;
+		return -1;
 	}
 
 	{
@@ -10659,6 +10694,8 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, int val)
 	}
 
 	wm_gmii_mdic_writereg(dev, phy, regnum & MII_ADDRMASK, val);
+
+	return 0;
 }
 
 /*
@@ -13898,11 +13935,12 @@ wm_get_wakeup(struct wm_softc *sc)
  * Unconfigure Ultra Low Power mode.
  * Only for I217 and newer (see below).
  */
-static void
+static int
 wm_ulp_disable(struct wm_softc *sc)
 {
 	uint32_t reg;
-	int i = 0;
+	uint16_t phyreg;
+	int i = 0, rv = 0;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -13912,7 +13950,7 @@ wm_ulp_disable(struct wm_softc *sc)
 	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I217_V)
 	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM2)
 	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V2))
-		return;
+		return 0;
 
 	if ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID) != 0) {
 		/* Request ME un-configure ULP mode in the PHY */
@@ -13925,7 +13963,7 @@ wm_ulp_disable(struct wm_softc *sc)
 		while ((CSR_READ(sc, WMREG_FWSM) & FWSM_ULP_CFG_DONE) != 0) {
 			if (i++ == 30) {
 				printf("%s timed out\n", __func__);
-				return;
+				return -1;
 			}
 			delay(10 * 1000);
 		}
@@ -13933,7 +13971,7 @@ wm_ulp_disable(struct wm_softc *sc)
 		reg &= ~H2ME_ENFORCE_SETTINGS;
 		CSR_WRITE(sc, WMREG_H2ME, reg);
 
-		return;
+		return 0;
 	}
 
 	/* Acquire semaphore */
@@ -13943,8 +13981,8 @@ wm_ulp_disable(struct wm_softc *sc)
 	wm_toggle_lanphypc_pch_lpt(sc);
 
 	/* Unforce SMBus mode in PHY */
-	reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, CV_SMB_CTRL);
-	if (reg == 0x0000 || reg == 0xffff) {
+	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, CV_SMB_CTRL, &phyreg);
+	if (rv != 0) {
 		uint32_t reg2;
 
 		printf("%s: Force SMBus first.\n", __func__);
@@ -13953,22 +13991,30 @@ wm_ulp_disable(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg2);
 		delay(50 * 1000);
 
-		reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, CV_SMB_CTRL);
+		rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, CV_SMB_CTRL,
+		    &phyreg);
+		if (rv != 0)
+			goto release;
 	}
-	reg &= ~CV_SMB_CTRL_FORCE_SMBUS;
-	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, CV_SMB_CTRL, reg);
+	phyreg &= ~CV_SMB_CTRL_FORCE_SMBUS;
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, CV_SMB_CTRL, phyreg);
 
 	/* Unforce SMBus mode in MAC */
 	reg = CSR_READ(sc, WMREG_CTRL_EXT);
 	reg &= ~CTRL_EXT_FORCE_SMBUS;
 	CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 
-	reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, HV_PM_CTRL);
-	reg |= HV_PM_CTRL_K1_ENA;
-	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_PM_CTRL, reg);
+	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, HV_PM_CTRL, &phyreg);
+	if (rv != 0)
+		goto release;
+	phyreg |= HV_PM_CTRL_K1_ENA;
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_PM_CTRL, phyreg);
 
-	reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1);
-	reg &= ~(I218_ULP_CONFIG1_IND
+	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1,
+		&phyreg);
+	if (rv != 0)
+		goto release;
+	phyreg &= ~(I218_ULP_CONFIG1_IND
 	    | I218_ULP_CONFIG1_STICKY_ULP
 	    | I218_ULP_CONFIG1_RESET_TO_SMBUS
 	    | I218_ULP_CONFIG1_WOL_HOST
@@ -13976,18 +14022,21 @@ wm_ulp_disable(struct wm_softc *sc)
 	    | I218_ULP_CONFIG1_EN_ULP_LANPHYPC
 	    | I218_ULP_CONFIG1_DIS_CLR_STICKY_ON_PERST
 	    | I218_ULP_CONFIG1_DIS_SMB_PERST);
-	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1, reg);
-	reg |= I218_ULP_CONFIG1_START;
-	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1, reg);
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1, phyreg);
+	phyreg |= I218_ULP_CONFIG1_START;
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1, phyreg);
 
 	reg = CSR_READ(sc, WMREG_FEXTNVM7);
 	reg &= ~FEXTNVM7_DIS_SMB_PERST;
 	CSR_WRITE(sc, WMREG_FEXTNVM7, reg);
 
+release:
 	/* Release semaphore */
 	sc->phy.release(sc);
 	wm_gmii_reset(sc);
 	delay(50 * 1000);
+
+	return rv;
 }
 
 /* WOL in the newer chipset interfaces (pchlan) */
@@ -14530,6 +14579,8 @@ wm_configure_k1_ich8lan(struct wm_softc *sc, int k1_enable)
 	uint16_t kmreg;
 	int rv;
 
+	KASSERT(CSR_READ(sc, WMREG_EXTCNFCTR) & EXTCNFCTR_MDIO_SW_OWNERSHIP);
+
 	rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG, &kmreg);
 	if (rv != 0)
 		return;
@@ -14628,25 +14679,33 @@ wm_reset_mdicnfg_82580(struct wm_softc *sc)
 static bool
 wm_phy_is_accessible_pchlan(struct wm_softc *sc)
 {
-	int i;
 	uint32_t reg;
 	uint16_t id1, id2;
+	int i, rv;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+	KASSERT(CSR_READ(sc, WMREG_EXTCNFCTR) & EXTCNFCTR_MDIO_SW_OWNERSHIP);
+
 	id1 = id2 = 0xffff;
 	for (i = 0; i < 2; i++) {
-		id1 = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, MII_PHYIDR1);
-		if (MII_INVALIDID(id1))
+		rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, MII_PHYIDR1,
+		    &id1);
+		if ((rv != 0) || MII_INVALIDID(id1))
 			continue;
-		id2 = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, MII_PHYIDR2);
-		if (MII_INVALIDID(id2))
+		rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, MII_PHYIDR2,
+		    &id2);
+		if ((rv != 0) || MII_INVALIDID(id2))
 			continue;
 		break;
 	}
 	if (!MII_INVALIDID(id1) && !MII_INVALIDID(id2))
 		goto out;
 
+	/*
+	 * In case the PHY needs to be in mdio slow mode,
+	 * set slow mode and try to get the PHY id again.
+	 */
 	if (sc->sc_type < WM_T_PCH_LPT) {
 		sc->phy.release(sc);
 		wm_set_mdio_slow_mode_hv(sc);
@@ -14662,12 +14721,14 @@ out:
 	if (sc->sc_type >= WM_T_PCH_LPT) {
 		/* Only unforce SMBus if ME is not active */
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID) == 0) {
+			uint16_t phyreg;
+
 			/* Unforce SMBus mode in PHY */
-			reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2,
-			    CV_SMB_CTRL);
-			reg &= ~CV_SMB_CTRL_FORCE_SMBUS;
+			rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 2,
+			    CV_SMB_CTRL, &phyreg);
+			phyreg &= ~CV_SMB_CTRL_FORCE_SMBUS;
 			wm_gmii_hv_writereg_locked(sc->sc_dev, 2,
-			    CV_SMB_CTRL, reg);
+			    CV_SMB_CTRL, phyreg);
 
 			/* Unforce SMBus mode in MAC */
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
