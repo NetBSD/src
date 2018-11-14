@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 2018/04/14 19:58:20 scole Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 2018/11/14 21:10:59 scole Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -117,47 +117,67 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb1, *pcb2;
-	struct trapframe *tf;
-	
-	pcb1 = lwp_getpcb(l1);
-	pcb2 = lwp_getpcb(l2);
+	vaddr_t ua1 = uvm_lwp_getuarea(l1);
+	vaddr_t ua2 = uvm_lwp_getuarea(l2);
+	struct pcb *pcb1 = lwp_getpcb(l1);
+	struct pcb *pcb2 = lwp_getpcb(l2);
 
-	/* Copy pcb from lwp l1 to l2. */
+	struct trapframe *tf;
+	uint64_t ndirty;
+
+	/*
+	 * Save the preserved registers and the high FP registers in the
+	 * PCB if we're the parent (ie l1 == curlwp) so that we have
+	 * a valid PCB. This also causes a RSE flush. We don't have to
+	 * do that otherwise, because there wouldn't be anything important
+	 * to save.
+	 *
+	 * Copy pcb from lwp l1 to l2.
+	 */
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		if (savectx(pcb1) != 0)
-			panic("unexpected return from savectx");
+			panic("unexpected return from savectx()");
 		/* ia64_highfp_save(td1); XXX */
 	} else {
 		KASSERT(l1 == &lwp0);
 	}
 
 	/*
-	 * XXX this seems incomplete, each thread apparently needs its
-	 * own stack and bspstore, and to re-adjust the RSE "ndirty"
-	 * registers.  See
-	 * http://fxr.watson.org/fxr/source/ia64/ia64/vm_machdep.c?v=FREEBSD10#L262
-	 * Also should verify u-area usage is consistent, which may be
-	 * different than freebsd.
+	 * create the child's kernel stack and backing store. We basicly
+	 * create an image of the parent's stack and backing store and
+	 * adjust where necessary.
 	 */
 	*pcb2 = *pcb1;
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
-	l2->l_md.md_tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
+	l2->l_md.md_tf = (struct trapframe *)(ua2 + UAREA_TF_OFFSET);
 	l2->l_md.md_astpending = 0;
-
+	l2->l_md.user_stack = NULL;
+	l2->l_md.user_stack_size = 0;
+	
         /*
 	 * Copy the trapframe.
 	 */
 	tf = l2->l_md.md_tf;
 	*tf = *l1->l_md.md_tf;
 
+	/* XXX need something like this, but still not correct */
+	ndirty = tf->tf_special.ndirty + (tf->tf_special.bspstore & 0x1ffUL);
+	memcpy((void *)(ua2 + UAREA_BSPSTORE_OFFSET),
+	       (void *)(ua1 + UAREA_BSPSTORE_OFFSET), ndirty);
+
         /*
 	 * If specified, give the child a different stack.
 	 */
-	if (stack != NULL)
-		tf->tf_special.sp = (unsigned long)stack + stacksize;
+	if (stack != NULL) {
+		l2->l_md.user_stack = stack;
+		l2->l_md.user_stack_size = stacksize;
+		tf->tf_special.sp = (unsigned long)stack + UAREA_SP_OFFSET;
+		tf->tf_special.bspstore = (unsigned long)stack + UAREA_BSPSTORE_OFFSET;
+
+		memcpy(stack, (void *)(ua1 + UAREA_BSPSTORE_OFFSET), ndirty);
+	}
 
 	/* Set-up the return values as expected by the fork() libc stub. */
 	if (tf->tf_special.psr & IA64_PSR_IS) {
@@ -171,8 +191,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	tf->tf_scratch.gr2 = (unsigned long)FDESC_FUNC(func);
 	tf->tf_scratch.gr3 = (unsigned long)arg;
-	pcb2->pcb_special.sp = (unsigned long)tf - 16;
+
+	pcb2->pcb_special.sp = ua2 + UAREA_SP_OFFSET;
 	pcb2->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
+	pcb2->pcb_special.bspstore = ua2 + UAREA_BSPSTORE_OFFSET + ndirty;
 	pcb2->pcb_special.pfs = 0;
 
 	return;
@@ -186,7 +208,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 int
 vmapbuf(struct buf *bp, vsize_t len)
 {
-printf("%s: not yet\n", __func__);
+	panic("XXX %s implement", __func__);
 	return 0;
 }
 
@@ -196,6 +218,6 @@ printf("%s: not yet\n", __func__);
 void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
-printf("%s: not yet\n", __func__);
+	panic("XXX %s implement", __func__);
 	return;
 }

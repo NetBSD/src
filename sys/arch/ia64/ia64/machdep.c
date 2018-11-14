@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2017/04/08 17:46:01 scole Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2018/11/14 21:10:59 scole Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -152,7 +152,7 @@ extern uint64_t ia64_gateway_page[];
 uint64_t pa_bootinfo;
 struct bootinfo bootinfo;
 
-
+extern vaddr_t kstack, kstack_top;
 extern vaddr_t kernel_text, end;
 
 struct fpswa_iface *fpswa_iface;
@@ -377,9 +377,10 @@ calculate_frequencies(void)
 
 /* XXXX: Don't allocate 'ci' on stack. */
 register struct cpu_info *ci __asm__("r13");
-void
+struct ia64_init_return
 ia64_init(void)
 {
+	struct ia64_init_return ret;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	struct pcb *pcb0;
 	struct efi_md *md;
@@ -620,33 +621,15 @@ ia64_init(void)
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
 	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
+	lwp0.l_md.md_tf = (struct trapframe *)(v + UAREA_TF_OFFSET);
 
-	/*
-	 * Process u-area is organised as follows:
-	 *
-	 *  -----------------------------------------------------------
-	 * |  P  |                  |                    | 16Bytes | T |
-	 * |  C  | Register Stack   |      Memory Stack  | <-----> | F |
-	 * |  B  | ------------->   |       <----------  |         |   |
-	 *  -----------------------------------------------------------
-	 *        ^                                      ^
-	 *        |___ bspstore                          |___ sp
-	 *
-	 *                 --------------------------->
-         *                       Higher Addresses
-	 *
-	 *	PCB: struct pcb;    TF: struct trapframe;
-	 */
-
-
-	lwp0.l_md.md_tf = (struct trapframe *)(v + USPACE) - 1;
-
+	lwp0.l_md.user_stack = NULL;
+	lwp0.l_md.user_stack_size = 0;
+	
 	pcb0 = lwp_getpcb(&lwp0);
-
-	/* 16 bytes is the scratch area defined by the ia64 ABI. */
-	pcb0->pcb_special.sp = (vaddr_t)lwp0.l_md.md_tf - 16;
-	pcb0->pcb_special.bspstore = v + 1;
-
+	pcb0->pcb_special.sp = v + UAREA_SP_OFFSET;
+	pcb0->pcb_special.bspstore = v + UAREA_BSPSTORE_OFFSET;
+	
 	mutex_init(&pcb0->pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
 
 	/*
@@ -684,8 +667,10 @@ ia64_init(void)
 	 * sane) context as the initial context for new threads that are
 	 * forked from us.
 	 */
+#if 0	/* XXX */
 	if (savectx(pcb0))
 		panic("savectx failed");
+#endif
 
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
@@ -699,6 +684,11 @@ ia64_init(void)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	ret.bspstore = pcb0->pcb_special.bspstore;
+	ret.sp = pcb0->pcb_special.sp;
+	
+	return (ret);
 }
 
 uint64_t

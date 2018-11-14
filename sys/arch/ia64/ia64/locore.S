@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2017/04/08 17:45:22 scole Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2018/11/14 21:10:59 scole Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -94,6 +94,22 @@ ENTRY_NOPROFILE(start, 1)
 	;;
 	br.call.sptk.many rp=ia64_init
 	;;
+        /* We have the new bspstore in r8 and the new sp in r9.
+           Switch onto the new stack and call mi_startup(). */
+{       .mmi
+        mov     ar.rsc = 0
+        ;;
+        mov     ar.bspstore = r8
+        mov     sp = r9
+        ;;
+}
+{       .mmi
+        loadrs
+        ;;
+        mov     ar.rsc = 3
+        nop     0
+        ;;
+}	
 	br.call.sptk.many rp=main
 	;;
 	/* NOTREACHED */
