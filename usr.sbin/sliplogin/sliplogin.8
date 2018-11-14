@@ -1,4 +1,4 @@
-.\"	$NetBSD: sliplogin.8,v 1.10 2018/11/12 00:50:54 christos Exp $
+.\"	$NetBSD: sliplogin.8,v 1.11 2018/11/14 18:28:18 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,8 @@
 is used to turn the terminal line on standard input into
 a Serial Line IP
 .Pq Tn SLIP
-link to a remote host.  To do this, the program
-searches the file
+link to a remote host.
+To do this, the program searches the file
 .Pa /etc/sliphome/slip.hosts
 for an entry matching
 .Ar loginname
@@ -53,11 +53,9 @@ If a matching entry is found, the line is configured appropriately
 for slip (8-bit transparent i/o) and converted to
 .Tn SLIP
 line
-discipline.  Then a shell script is invoked to initialize the slip
-interface with the appropriate local and remote
-.Tn IP
-address,
-netmask, etc.
+discipline.
+Then a shell script is invoked to initialize the slip interface
+with the appropriate local and remote IP address, netmask, etc.
 .Pp
 The usual initialization script is
 .Pa /etc/sliphome/slip.login
@@ -67,7 +65,8 @@ will be executed instead if it exists.
 The script is invoked with the parameters
 .Bl -tag -width slipunit
 .It Em slipunit
-The unit number of the slip interface assigned to this line.  E.g.,
+The unit number of the slip interface assigned to this line.
+E.g.,
 .Sy 0
 for
 .Sy sl0 .
@@ -80,17 +79,19 @@ entry, in order starting with
 .Ar loginname .
 .El
 .Pp
-Only the super-user may attach a network interface.  The interface is
+Only the super-user may attach a network interface.
+The interface is
 automatically detached when the other end hangs up or the
 .Nm
-process dies.  If the kernel slip
-module has been configured for it, all routes through that interface will
-also disappear at the same time.  If there is other processing a site
-would like done on hangup, the file
+process dies.
+If the kernel slip module has been configured for it, all routes
+through that interface will also disappear at the same time.
+If there is other processing a site would like done on hangup, the file
 .Pa /etc/sliphome/slip.logout
 or
 .Pa /etc/sliphome/slip.logout. Ns Ar loginname
-is executed if it exists.  It is given the same arguments as the login script.
+is executed if it exists.
+It is given the same arguments as the login script.
 .Ss Format of /etc/sliphome/slip.hosts
 Comments (lines starting with a `#') and blank lines are ignored.
 Other lines must start with a
@@ -115,11 +116,21 @@ and
 are the IP host names or addresses of the local and remote ends of the
 slip line and
 .Em netmask
-is the appropriate IP netmask.  These arguments are passed
-directly to
+is the appropriate IP netmask.
+These arguments are passed directly to
 .Xr ifconfig 8 .
 .Em opt-args
 are optional arguments used to configure the line.
+.Sh FILES
+.Bl -tag -width /usr/share/examples/slip/slip.login -compact
+.It Pa /usr/share/examples/slip/slip.login
+Sample slip.login script
+.It Pa /etc/sliphome/slip.login.loginname
+Login script for
+.Em loginname
+.It Pa /etc/sliphome/slip.hosts
+Per host settings
+.El
 .Sh EXAMPLES
 The normal use of
 .Nm
@@ -127,7 +138,8 @@ is to create a
 .Pa /etc/passwd
 entry for each legal, remote slip site with
 .Nm
-as the shell for that entry.  E.g.,
+as the shell for that entry.
+For example:
 .Bd -literal
 Sfoo:ikhuy6:2010:1:slip line to foo:/tmp:/usr/sbin/sliplogin
 .Ed
@@ -156,8 +168,8 @@ Note that
 .Nm
 must be setuid to root and, while not a security hole, moral defectives
 can use it to place terminal lines in an unusable state and/or deny
-access to legitimate users of a remote slip line.  To prevent this,
-a site can create a group, say
+access to legitimate users of a remote slip line.
+To prevent this, a site can create a group, say
 .Em slip ,
 that only the slip login accounts are put in then make sure that
 .Pa /usr/sbin/sliplogin
@@ -166,16 +178,6 @@ is in group
 and mode 4550 (setuid root, only group
 .Em slip
 can execute binary).
-.Sh FILES
-.Bl -tag -width /usr/share/examples/slip/slip.login -compact
-.It Pa /usr/share/examples/slip/slip.login
-Sample slip.login script
-.It Pa /etc/sliphome/slip.login.loginname
-Login script for
-.Em loginname 
-.It Pa /etc/sliphome/slip.hosts
-Per host settings
-.El 
 .Sh DIAGNOSTICS
 .Nm
 logs various information to the system log daemon,
