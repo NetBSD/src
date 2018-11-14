@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.2 2018/11/10 09:42:42 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.3 2018/11/14 19:14:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.2 2018/11/10 09:42:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.3 2018/11/14 19:14:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -843,7 +843,7 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	case NVMM_EXIT_MSR_RDMSR:
 		if (exit->u.msr.msr == MSR_CR_PAT) {
 			pat = cpudata->vmcb->state.g_pat;
-			state->gprs[NVMM_X64_GPR_RAX] = (pat & 0xFFFFFFFF);
+			cpudata->vmcb->state.rax = (pat & 0xFFFFFFFF);
 			state->gprs[NVMM_X64_GPR_RDX] = (pat >> 32);
 			goto handled;
 		}
@@ -949,7 +949,7 @@ svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->reason = NVMM_EXIT_NONE;
 
 	val = (state->gprs[NVMM_X64_GPR_RDX] << 32) |
-	    (state->gprs[NVMM_X64_GPR_RAX] & 0xFFFFFFFF);
+	    (vmcb->state.rax & 0xFFFFFFFF);
 
 	if (__predict_false(state->gprs[NVMM_X64_GPR_RCX] != 0)) {
 		goto error;
