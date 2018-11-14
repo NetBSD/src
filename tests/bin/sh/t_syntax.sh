@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.9 2017/08/21 00:56:22 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.10 2018/11/14 02:37:51 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1197,6 +1197,34 @@ z_PR_52426_body() {
 		'case break in (/);; (\/);; (/\|/\));; (\\//);; esac'
 }
 
+atf_test_case z_PR_53712
+z_PR_53712_head() {
+	atf_set "descr" "Check for avoiding the core dump from PR bin/53712"
+}
+z_PR_53712_body() {
+	atf_require_prog sysctl
+	atf_require_prog rm
+
+	# Don't want to have to deal with all the possible ways
+	# that the systcm might be configured to drop core files...
+	sysctl -w proc.$$.corename=core ||
+		atf_skip "Unable to set file name for core dump file"
+	rm -f core
+
+	${TEST_SH} -c '{ } > out'; S=$?
+	test -f core &&
+		atf_fail "PR bin/53712: ${TEST_SH} dumps core: status=$S"
+	test "$S" -lt 128 ||
+		atf_fail "PR bin/53712: ${TEST_SH} reported status $S (core?)"
+
+	# It doesn't matter here whether or not there was an error
+	# from the empty compound, or whether "out" was created
+	# just that no core dump appeared, and the shell did not
+	# exit because of a signal.
+
+	return 0
+}
+
 atf_init_test_cases() {
 	atf_add_test_case a_basic_tokenisation
 	atf_add_test_case b_comments
@@ -1219,4 +1247,5 @@ atf_init_test_cases() {
 
 	atf_add_test_case z_PR_48498
 	atf_add_test_case z_PR_52426
+	atf_add_test_case z_PR_53712
 }
