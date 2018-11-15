@@ -2483,7 +2483,10 @@ extern void dtrace_helpers_destroy(proc_t *);
 #define	ARG2_MASK	0x1f
 #define	OFFSET_SHIFT	15
 #define	OFFSET_SIZE	7
+#if 0
+/* conflicts with lzjb.c */
 #define	OFFSET_MASK	((1 << OFFSET_SIZE) - 1)
+#endif
 
 #define	DTRACE_INVOP_PUSHM	1
 #define	DTRACE_INVOP_RET	2
