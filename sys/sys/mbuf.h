@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.212 2018/11/15 10:06:07 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.213 2018/11/15 10:23:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -819,7 +819,7 @@ void	m_tag_prepend(struct mbuf *, struct m_tag *);
 void	m_tag_unlink(struct mbuf *, struct m_tag *);
 void	m_tag_delete(struct mbuf *, struct m_tag *);
 void	m_tag_delete_chain(struct mbuf *);
-struct	m_tag *m_tag_find(const struct mbuf *, int, struct m_tag *);
+struct	m_tag *m_tag_find(const struct mbuf *, int);
 struct	m_tag *m_tag_copy(struct m_tag *);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
 
