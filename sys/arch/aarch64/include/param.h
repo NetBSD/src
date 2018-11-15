@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.5 2018/11/14 20:03:28 jakllsch Exp $ */
+/* $NetBSD: param.h,v 1.6 2018/11/15 04:56:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -131,8 +131,10 @@
 #endif
 
 #ifdef _KERNEL
+#ifndef __HIDE_DELAY
 void delay(unsigned int);
 #define	DELAY(x)	delay(x)
+#endif
 #endif
 /*
  * Compatibility /dev/zero mapping.
