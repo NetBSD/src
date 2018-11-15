@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.16 2018/11/15 04:59:02 riastradh Exp $	*/
+/*	$NetBSD: efi.c,v 1.17 2018/11/15 11:20:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.16 2018/11/15 04:59:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.17 2018/11/15 11:20:59 kre Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -48,14 +48,14 @@ const struct uuid EFI_UUID_SMBIOS = EFI_TABLE_SMBIOS;
 const struct uuid EFI_UUID_SMBIOS3 = EFI_TABLE_SMBIOS3;
 
 static vaddr_t 	efi_getva(paddr_t);
-static void 	efi_relva(vaddr_t);
+static void 	efi_relva(paddr_t, vaddr_t);
 struct efi_cfgtbl *efi_getcfgtblhead(void);
 void 		efi_aprintcfgtbl(void);
 void 		efi_aprintuuid(const struct uuid *);
 bool 		efi_uuideq(const struct uuid *, const struct uuid *);
 
 static bool efi_is32x64 = false;
-static paddr_t efi_systbl_pa = NULL;
+static paddr_t efi_systbl_pa = (paddr_t)NULL;
 static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
 static struct efi_e820memmap {
