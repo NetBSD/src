@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.6 2018/06/03 13:16:30 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.7 2018/11/15 10:34:21 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,6 +75,7 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+#include "defsizes.h"
 #include "endian.h"
 
 #define NO_BOOTMENU (-0x100)
@@ -1277,7 +1278,24 @@ edit_mbr(mbr_info_t *mbri)
 	if (partman_go)
 		usefull = 0;
 	else {
-		msg_display(MSG_fullpart, pm->diskdev);
+		uint64_t m_size =
+		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB;
+		char min_size[5], build_size[5];
+
+		humanize_number(min_size, sizeof(min_size),
+		    3 * m_size * 1024*1024UL,
+		    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+		humanize_number(build_size, sizeof(build_size),
+		     SYSTEM_BUILD_SIZE * 1024 * 1024UL, "", HN_AUTOSCALE,
+		     HN_B | HN_NOSPACE | HN_DECIMAL);
+
+		msg_display_subst(MSG_fullpart, 7,
+		    pm->diskdev,
+		    msg_string(MSG_parttype_mbr),
+		    msg_string(MSG_parttype_disklabel),
+		    msg_string(MSG_parttype_mbr_short),
+		    msg_string(MSG_parttype_disklabel_short),
+		    min_size, build_size);
 		process_menu(MENU_fullpart, &usefull);
 	}
 
