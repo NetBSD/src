@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.440 2018/10/30 05:54:42 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.441 2018/11/15 10:23:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.440 2018/10/30 05:54:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.441 2018/11/15 10:23:56 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2860,7 +2860,7 @@ if_tunnel_check_nesting(struct ifnet *ifp, struct mbuf *m, int limit)
 	struct m_tag *mtag;
 	int *count;
 
-	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO);
 	if (mtag != NULL) {
 		count = (int *)(mtag + 1);
 		if (++(*count) > limit) {

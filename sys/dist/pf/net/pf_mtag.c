@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_mtag.c,v 1.2 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: pf_mtag.c,v 1.3 2018/11/15 10:23:55 maxv Exp $	*/
 /*	$OpenBSD: pf.c,v 1.504 2005/10/17 08:43:35 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_mtag.c,v 1.2 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_mtag.c,v 1.3 2018/11/15 10:23:55 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ pf_find_mtag(struct mbuf *m)
 {
 	struct m_tag	*mtag;
 
-	if ((mtag = m_tag_find(m, PACKET_TAG_PF, NULL)) == NULL)
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF)) == NULL)
 		return (NULL);
 
 	return ((struct pf_mtag *)(mtag + 1));
@@ -62,7 +62,7 @@ pf_get_mtag(struct mbuf *m)
 {
 	struct m_tag	*mtag;
 
-	if ((mtag = m_tag_find(m, PACKET_TAG_PF, NULL)) == NULL) {
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF)) == NULL) {
 		mtag = m_tag_get(PACKET_TAG_PF, sizeof(struct pf_mtag),
 		    M_NOWAIT);
 		if (mtag == NULL)

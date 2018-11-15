@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.204 2018/05/19 06:44:08 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.205 2018/11/15 10:23:56 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.204 2018/05/19 06:44:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.205 2018/11/15 10:23:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1483,7 +1483,7 @@ ip6_addaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_INET6);
 	if (!mtag) {
 		mtag = m_tag_get(PACKET_TAG_INET6, sizeof(struct ip6aux),
 		    M_NOWAIT);
@@ -1500,7 +1500,7 @@ ip6_findaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_INET6);
 	return mtag;
 }
 
@@ -1509,7 +1509,7 @@ ip6_delaux(struct mbuf *m)
 {
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m, PACKET_TAG_INET6, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_INET6);
 	if (mtag)
 		m_tag_delete(m, mtag);
 }

@@ -1,4 +1,4 @@
-.\"     $NetBSD: m_tag.9,v 1.7 2018/11/15 10:06:06 maxv Exp $
+.\"     $NetBSD: m_tag.9,v 1.8 2018/11/15 10:23:55 maxv Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .Ft void
 .Fn m_tag_delete_chain "struct mbuf *m"
 .Ft struct m_tag *
-.Fn m_tag_find "struct mbuf *m" "int type" "struct m_tag *t"
+.Fn m_tag_find "struct mbuf *m" "int type"
 .Ft struct m_tag *
 .Fn m_tag_copy "struct m_tag *m"
 .Ft int
@@ -121,18 +121,11 @@ followed by
 Unlink and free mbuf tags from the mbuf
 .Fa m .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn m_tag_find "m" "type" "t"
+.It Fn m_tag_find "m" "type"
 Find an mbuf tag with type
 .Fa type
-after the mbuf tag
-.Fa t
 in the tag chain associated with the mbuf
 .Fa m .
-If
-.Fa t
-is
-.Dv NULL ,
-search from the first mbuf tag.
 If an mbuf tag is found, return a pointer to it.
 Otherwise return
 .Dv NULL .
