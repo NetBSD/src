@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.131 2018/11/10 10:52:51 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.132 2018/11/15 03:50:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -386,16 +386,18 @@
 #define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
 #define CPUID_SEF_AVX512_BITALG	__BIT(12)
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
+#define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
 
-#define CPUID_SEF_FLAGS1	"\20" \
-	"\1" "PREFETCHWT1" "\2" "AVX512_VBMI" "\3" "UMIP" "\4" "PKU"	\
-	"\5" "OSPKE"			"\7" "AVX512_VBMI2"		\
-	"\11" "GFNI"	"\12" "VAES"	"\13" "VPCLMULQDQ" "\14" "AVX512_VNNI"\
-	"\15" "AVX512_BITALG"		"\17" "AVX512_VPOPCNTDQ"	\
-					"\27" "RDPID"			\
-					"\37" "SGXLC"
+#define CPUID_SEF_FLAGS1	"\177\20" \
+	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	\
+	"b\4OSPKE\0"			"b\6AVX512_VBMI2\0"		\
+	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
+	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
+	"f\21\5MAWAU\0"							\
+					"b\26RDPID\0"			\
+					"b\36SGXLC\0"
 
 /* %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
