@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.48 2018/08/08 02:26:08 simonb Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.49 2018/11/15 03:17:51 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.48 2018/08/08 02:26:08 simonb Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.49 2018/11/15 03:17:51 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -204,9 +204,9 @@ _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 /*
  * _cursesi_addbyte -
  *	Internal function to add a byte and update the row and column
- * positions as appropriate.  This function is only used in the narrow
- * character version of curses.  If update_cursor is non-zero then character
- * interpretation.
+ * positions as appropriate.  If char_interp is non-zero then
+ * character interpretation is done on the byte.  This function is
+ * only used in the narrow character version of curses.
  */
 int
 _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
