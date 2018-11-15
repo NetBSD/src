@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.10 2018/05/31 07:03:57 maxv Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.11 2018/11/15 10:23:56 maxv Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.10 2018/05/31 07:03:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.11 2018/11/15 10:23:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -257,7 +257,7 @@ ipsecif4_fragout(struct ipsec_variant *var, int family, struct mbuf *m, int mtu)
 
 	KASSERT(if_ipsec_heldref_variant(var));
 
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS);
 	if (mtag)
 		m_tag_delete(m, mtag);
 
@@ -299,7 +299,7 @@ ipsecif4_encap_func(struct mbuf *m, struct ip *ip, struct ipsec_variant *var)
 
 	src = satosin(var->iv_psrc);
 	dst = satosin(var->iv_pdst);
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS);
 	if (mtag) {
 		u_int16_t *ports;
 
@@ -423,7 +423,7 @@ ipsecif6_encap_func(struct mbuf *m, struct ip6_hdr *ip6, struct ipsec_variant *v
 
 	src = satosin6(var->iv_psrc);
 	dst = satosin6(var->iv_pdst);
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS);
 	if (mtag) {
 		u_int16_t *ports;
 
