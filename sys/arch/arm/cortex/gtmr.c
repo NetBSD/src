@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.37 2018/10/30 10:38:11 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.38 2018/11/15 17:15:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.37 2018/10/30 10:38:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.38 2018/11/15 17:15:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -282,9 +282,11 @@ gtmr_intr(void *arg)
 	}
 #endif
 
-	KASSERTMSG(delta > sc->sc_autoinc / 100,
-	    "%s: interrupting too quickly (delta=%"PRIu64") autoinc=%lu",
-	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
+	if (!ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
+		KASSERTMSG(delta > sc->sc_autoinc / 100,
+		    "%s: interrupting too quickly (delta=%"PRIu64") autoinc=%lu",
+		    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
+	}
 
 	/*
 	 * If we got interrupted too soon (delta < sc->sc_autoinc)
