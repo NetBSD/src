@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.3 2018/11/15 10:34:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,13 +34,23 @@
 
 /* MBR Message catalog -- Polish, i386 version */
 
+
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = inner partitioning name	BSD disklabel
+ *  $3 = short version of $1		MBR
+ *  $4 = short version of $2		disklabel
+ *  $5 = size needed for NetBSD		250M
+ *  $6 = size needed to build NetBSD	15G
+ */
 message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz
+{Zainstalujemy teraz NetBSD na dysku $0. Mozesz wybrac, czy chcesz
 zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
 
 Instalacja na czesci dysku, tworzy partycje, lub 'plaster', dla NetBSD
-w tablicy partycji MBR twojego dysku. Instalacja na calym dysku jest
-`zdecydowanie polecana': zabiera ona caly MBR. Spowoduje to calkowita
+w tablicy partycji $3 twojego dysku. Instalacja na calym dysku jest
+`zdecydowanie polecana': zabiera ona caly $3. Spowoduje to calkowita
 utrate danych na dysku. Uniemozliwia ona take pozniejsza instalacje kilku
 systemow na tym dysku (chyba, ze nadpiszesz NetBSD i przeinstalujesz uzywajac
 tylko czesci dysku).

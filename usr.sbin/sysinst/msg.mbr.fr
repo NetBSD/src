@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.4 2015/04/20 14:10:31 maxv Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.5 2018/11/15 10:34:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,14 +34,24 @@
 
 /* MD Message catalog -- french, i386 version */
 
+
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = inner partitioning name	BSD disklabel
+ *  $3 = short version of $1		MBR
+ *  $4 = short version of $2		disklabel
+ *  $5 = size needed for NetBSD		250M
+ *  $6 = size needed to build NetBSD	15G
+ */
 message fullpart
-{Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
+{Nous allons maintenant installer NetBSD sur votre disque $0. Vous devez
 choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
 sur une partie de celui-ci.
 Une installation sur une partie du disque crée une partition, ou `slice', pour
-NetBSD dans le secteur de démarrage (Master Boot Record, alias MBR) de votre
+NetBSD dans le secteur de démarrage ($1) de votre
 disque. Une installation sur la totalité du disque est `dangereusement
-dédiée' : elle réinitialise complètement le MBR, ce qui efface tout système
+dédiée' : elle réinitialise complètement le $3, ce qui efface tout système
 d'exploitation ou données existants sur le disque. Cela rend également
 impossible l'installation ultérieure d'un deuxième système d'exploitation,
 sauf si vous réinstallez complètement NetBSD en utilisant uniquement une
