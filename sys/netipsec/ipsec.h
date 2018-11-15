@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.84 2018/10/27 05:42:23 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.85 2018/11/15 10:23:56 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -248,7 +248,7 @@ extern int crypto_support;
 #define ipsec_indone(m)	\
 	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
 #define ipsec_outdone(m) \
-	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE, NULL) != NULL)
+	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE) != NULL)
 
 void ipsec_pcbconn(struct inpcbpolicy *);
 void ipsec_pcbdisconn(struct inpcbpolicy *);

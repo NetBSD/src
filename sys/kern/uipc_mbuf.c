@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.222 2018/11/15 10:06:07 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.223 2018/11/15 10:23:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.222 2018/11/15 10:06:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.223 2018/11/15 10:23:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -2272,14 +2272,11 @@ m_tag_delete_chain(struct mbuf *m)
 }
 
 struct m_tag *
-m_tag_find(const struct mbuf *m, int type, struct m_tag *t)
+m_tag_find(const struct mbuf *m, int type)
 {
 	struct m_tag *p;
 
-	if (t == NULL)
-		p = SLIST_FIRST(&m->m_pkthdr.tags);
-	else
-		p = SLIST_NEXT(t, m_tag_link);
+	p = SLIST_FIRST(&m->m_pkthdr.tags);
 	while (p != NULL) {
 		if (p->m_tag_id == type)
 			return p;
