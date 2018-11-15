@@ -391,7 +391,7 @@ zfs_deadman_init(void)
 #endif	/* __FreeBSD__ */
 
 #ifdef __NetBSD__
-#ifdef _HARDKERNEL
+#ifdef _KERNEL
 static struct workqueue *spa_workqueue;
 
 static void spa_deadman(void *arg);
@@ -420,10 +420,10 @@ zfs_deadman_fini(void)
 	workqueue_destroy(spa_workqueue);
 	spa_workqueue = NULL;
 }
-#else /* !_HARDKERNEL */
+#else /* !_KERNEL */
 #define zfs_deadman_init() /* nothing */
 #define zfs_deadman_fini() /* nothing */
-#endif /* !_HARDKERNEL */
+#endif /* !_KERNEL */
 #endif /* __NetBSD__ */
 
 /*
@@ -664,7 +664,7 @@ spa_deadman(void *arg)
 #endif
 }
 
-#ifdef _HARDKERNEL
+#ifdef _KERNEL
 static void
 spa_deadman_timeout(void *arg)
 {
@@ -771,7 +771,7 @@ spa_add(const char *name, nvlist_t *config, const char *altroot)
 #endif
 #endif
 #ifdef __NetBSD__
-#ifdef _HARDKERNEL
+#ifdef _KERNEL
 	callout_init(&spa->spa_deadman_cycid, 0);
 	callout_setfunc(&spa->spa_deadman_cycid, spa_deadman_timeout, spa);
 #endif
@@ -892,7 +892,7 @@ spa_remove(spa_t *spa)
 #endif
 #endif
 #ifdef __NetBSD__
-#ifdef _HARDKERNEL
+#ifdef _KERNEL
 	callout_drain(&spa->spa_deadman_cycid);
 #endif
 #endif
