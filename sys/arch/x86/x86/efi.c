@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.17 2018/11/15 11:20:59 kre Exp $	*/
+/*	$NetBSD: efi.c,v 1.18 2018/11/15 16:58:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.17 2018/11/15 11:20:59 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.18 2018/11/15 16:58:56 riastradh Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -55,7 +55,7 @@ void 		efi_aprintuuid(const struct uuid *);
 bool 		efi_uuideq(const struct uuid *, const struct uuid *);
 
 static bool efi_is32x64 = false;
-static paddr_t efi_systbl_pa = (paddr_t)NULL;
+static paddr_t efi_systbl_pa;
 static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
 static struct efi_e820memmap {
