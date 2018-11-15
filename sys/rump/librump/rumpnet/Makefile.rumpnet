@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.22 2017/04/14 02:43:28 ozaki-r Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.23 2018/11/15 09:38:57 maxv Exp $
 #
 
 LIB=		rumpnet
@@ -20,7 +20,7 @@ SRCS+=	rumpnet_if_wrappers.c
 SRCS+=	rumpnet_syscalls.c
 
 # sys/kern networking (sockets, mbufs, etc.)
-SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
+SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c	\
 	uipc_socket.c uipc_socket2.c uipc_syscalls.c
 
 # sys/net
