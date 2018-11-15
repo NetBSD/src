@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.4 2018/07/14 07:54:04 maxv Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.5 2018/11/15 07:20:31 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -116,6 +116,93 @@ init_intel_arch1(void)
 	}
 
 	return table;
+}
+
+/*
+ * Intel Silvermont/Airmont.
+ */
+static struct name_to_event intel_silvermont_airmont_names[] = {
+	{ "REHABQ.LD_BLOCK_ST_FORWARD",		0x03, 0x01, true },
+	{ "REHABQ.LD_BLOCK_STD_NOTREADY",	0x03, 0x02, true },
+	{ "REHABQ.ST_SPLITS",			0x03, 0x04, true },
+	{ "REHABQ.LD_SPLITS",			0x03, 0x08, true },
+	{ "REHABQ.LOCK",			0x03, 0x10, true },
+	{ "REHABQ.STA_FULL",			0x03, 0x20, true },
+	{ "REHABQ.ANY_LD",			0x03, 0x40, true },
+	{ "REHABQ.ANY_ST",			0x03, 0x80, true },
+	{ "MEM_UOPS_RETIRED.L1_MISS_LOADS",	0x04, 0x01, true },
+	{ "MEM_UOPS_RETIRED.L2_HIT_LOADS",	0x04, 0x02, true },
+	{ "MEM_UOPS_RETIRED.L2_MISS_LOADS",	0x04, 0x04, true },
+	{ "MEM_UOPS_RETIRED.DTLB_MISS_LOADS",	0x04, 0x08, true },
+	{ "MEM_UOPS_RETIRED.UTLB_MISS",		0x04, 0x10, true },
+	{ "MEM_UOPS_RETIRED.HITM",		0x04, 0x20, true },
+	{ "MEM_UOPS_RETIRED.ALL_LOADS",		0x04, 0x40, true },
+	{ "MEM_UOP_RETIRED.ALL_STORES",		0x04, 0x80, true },
+	{ "PAGE_WALKS.D_SIDE_CYCLES",		0x05, 0x01, true },
+	{ "PAGE_WALKS.I_SIDE_CYCLES",		0x05, 0x02, true },
+	{ "PAGE_WALKS.WALKS",			0x05, 0x03, true },
+	{ "LONGEST_LAT_CACHE.MISS",		0x2E, 0x41, true },
+	{ "LONGEST_LAT_CACHE.REFERENCE",	0x2E, 0x4F, true },
+	{ "L2_REJECT_XQ.ALL",			0x30, 0x00, true },
+	{ "CORE_REJECT_L2Q.ALL",		0x31, 0x00, true },
+	{ "CPU_CLK_UNHALTED.CORE_P",		0x3C, 0x00, true },
+	{ "CPU_CLK_UNHALTED.REF_P",		0x3C, 0x01, true },
+	{ "ICACHE.HIT",				0x80, 0x01, true },
+	{ "ICACHE.MISSES",			0x80, 0x02, true },
+	{ "ICACHE.ACCESSES",			0x80, 0x03, true },
+	{ "OFFCORE_RESPONSE_0",			0xB7, 0x01, true },
+	{ "OFFCORE_RESPONSE_1",			0xB7, 0x02, true },
+	{ "INST_RETIRED.ANY_P",			0xC0, 0x00, true },
+	{ "UOPS_RETIRED.MS",			0xC2, 0x01, true },
+	{ "UOPS_RETIRED.ALL",			0xC2, 0x10, true },
+	{ "MACHINE_CLEARS.SMC",			0xC3, 0x01, true },
+	{ "MACHINE_CLEARS.MEMORY_ORDERING",	0xC3, 0x02, true },
+	{ "MACHINE_CLEARS.FP_ASSIST",		0xC3, 0x04, true },
+	{ "MACHINE_CLEARS.ALL",			0xC3, 0x08, true },
+	{ "BR_INST_RETIRED.ALL_BRANCHES",	0xC4, 0x00, true },
+	{ "BR_INST_RETIRED.JCC",		0xC4, 0x7E, true },
+	{ "BR_INST_RETIRED.FAR_BRANCH",		0xC4, 0xBF, true },
+	{ "BR_INST_RETIRED.NON_RETURN_IND",	0xC4, 0xEB, true },
+	{ "BR_INST_RETIRED.RETURN",		0xC4, 0xF7, true },
+	{ "BR_INST_RETIRED.CALL",		0xC4, 0xF9, true },
+	{ "BR_INST_RETIRED.IND_CALL",		0xC4, 0xFB, true },
+	{ "BR_INST_RETIRED.REL_CALL",		0xC4, 0xFD, true },
+	{ "BR_INST_RETIRED.TAKEN_JCC",		0xC4, 0xFE, true },
+	{ "BR_MISP_RETIRED.ALL_BRANCHES",	0xC5, 0x00, true },
+	{ "BR_MISP_RETIRED.JCC",		0xC5, 0x7E, true },
+	{ "BR_MISP_RETIRED.FAR",		0xC5, 0xBF, true },
+	{ "BR_MISP_RETIRED.NON_RETURN_IND",	0xC5, 0xEB, true },
+	{ "BR_MISP_RETIRED.RETURN",		0xC5, 0xF7, true },
+	{ "BR_MISP_RETIRED.CALL",		0xC5, 0xF9, true },
+	{ "BR_MISP_RETIRED.IND_CALL",		0xC5, 0xFB, true },
+	{ "BR_MISP_RETIRED.REL_CALL",		0xC5, 0xFD, true },
+	{ "BR_MISP_RETIRED.TAKEN_JCC",		0xC5, 0xFE, true },
+	{ "NO_ALLOC_CYCLES.ROB_FULL",		0xCA, 0x01, true },
+	{ "NO_ALLOC_CYCLES.RAT_STALL",		0xCA, 0x20, true },
+	{ "NO_ALLOC_CYCLES.ALL",		0xCA, 0x3F, true },
+	{ "NO_ALLOC_CYCLES.NOT_DELIVERED",	0xCA, 0x50, true },
+	{ "RS_FULL_STALL.MEC",			0xCB, 0x01, true },
+	{ "RS_FULL_STALL.ALL",			0xCB, 0x1F, true },
+	{ "CYCLES_DIV_BUSY.ANY",		0xCD, 0x01, true },
+	{ "BACLEARS.ALL",			0xE6, 0x01, true },
+	{ "BACLEARS.RETURN",			0xE6, 0x08, true },
+	{ "BACLEARS.COND",			0xE6, 0x10, true },
+	{ "MS_DECODED.MS_ENTRY",		0xE7, 0x01, true },
+};
+
+static struct event_table intel_silvermont_airmont = {
+	.tablename = "Intel Silvermont/Airmont",
+	.names = intel_silvermont_airmont_names,
+	.nevents = sizeof(intel_silvermont_airmont_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
+
+static struct event_table *
+init_intel_silvermont_airmont(void)
+{
+
+	return &intel_silvermont_airmont;
 }
 
 /*
@@ -309,6 +396,14 @@ init_intel_generic(void)
 
 	if (CPUID_TO_FAMILY(eax) == 6) {
 		switch (CPUID_TO_MODEL(eax)) {
+		case 0x37: /* Silvermont (Bay Trail) */
+		case 0x4A: /* Silvermont (Tangier) */
+		case 0x4C: /* Airmont (Braswell, Cherry Trail) */
+		case 0x4D: /* Silvermont (Avoton, Rangeley) */
+		case 0x5A: /* Silvermont (Anniedale) */
+		case 0x5D: /* Silvermont (SoFIA) */
+			table->next = init_intel_silvermont_airmont();
+			break;
 		case 0x4E: /* Skylake */
 		case 0x5E: /* Skylake */
 		case 0x8E: /* Kabylake */
