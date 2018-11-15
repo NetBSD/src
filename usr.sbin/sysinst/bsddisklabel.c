@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.4 2018/06/03 13:16:30 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.5 2018/11/15 10:34:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,7 @@
 #include <dirent.h>
 #include "defs.h"
 #include "md.h"
+#include "defsizes.h"
 #include "endian.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
@@ -68,19 +69,6 @@
 #endif
 #ifndef PART_USR
 #define PART_USR	PART_ANY
-#endif
-
-#ifndef DEFVARSIZE
-#define DEFVARSIZE	32
-#endif
-#ifndef DEFROOTSIZE
-#define DEFROOTSIZE	32
-#endif
-#ifndef DEFUSRSIZE
-#define DEFUSRSIZE	128
-#endif
-#ifndef DEFSWAPSIZE
-#define DEFSWAPSIZE	128
 #endif
 
 int

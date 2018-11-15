@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.3 2018/11/15 10:34:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,22 +36,32 @@
 
 /* NB: Lines ending in spaces force line breaks */
 
-message fullpart
-{We are now going to install NetBSD on the disk %s.
 
-NetBSD requires a single partition in the disk's MBR partition table,
-this is split further by the NetBSD disklabel.
-NetBSD can also access file systems in other MBR partitions.
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = inner partitioning name	BSD disklabel
+ *  $3 = short version of $1		MBR
+ *  $4 = short version of $2		disklabel
+ *  $5 = size needed for NetBSD		250M
+ *  $6 = size needed to build NetBSD	15G
+ */
+message fullpart
+{We are now going to install NetBSD on the disk $0.
+
+NetBSD requires a single partition in the disk's $1
+partition table, this is split further by the $2.
+NetBSD can also access file systems in other $3 partitions.
 
 If you select 'Use the entire disk' then the previous contents of the
-disk will be overwritten and a single MBR partition used to cover the
+disk will be overwritten and a single $3 partition used to cover the
 entire disk. 
 If you want to install more than one operating system then edit the
-MBR partition table and create a partition for NetBSD.
+$3 partition table and create a partition for NetBSD.
 
-A few hundred MB is enough for a basic installation, but you should allow
+About $5 is enough for a basic installation, but you should allow
 extra for additional software and user files. 
-Allow at least 5GB if you want to build NetBSD itself.
+Allow at least $6 if you want to build NetBSD itself.
 }
 
 message Select_your_choice
