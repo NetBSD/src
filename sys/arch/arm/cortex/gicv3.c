@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.9 2018/11/13 22:25:28 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.10 2018/11/15 00:01:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.9 2018/11/13 22:25:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.10 2018/11/15 00:01:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -397,9 +397,8 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	/* Set initial priority mask */
 	gicv3_set_priority(pic, IPL_HIGH);
 
-	/* Disable preemption */
-	const uint32_t icc_bpr = __SHIFTIN(0x7, ICC_BPR_EL1_BinaryPoint);
-	icc_bpr1_write(icc_bpr);
+	/* Set the binary point field to the minimum value */
+	icc_bpr1_write(0);
 
 	/* Enable group 1 interrupt signaling */
 	icc_igrpen1_write(ICC_IGRPEN_EL1_Enable);
