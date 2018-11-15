@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.89 2018/07/04 19:26:09 jdolecek Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.90 2018/11/15 10:56:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.89 2018/07/04 19:26:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.90 2018/11/15 10:56:29 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2102,7 +2102,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		if (sk_newbuf(sc_if, cur, NULL, dmamap) == ENOBUFS) {
 			struct mbuf		*m0;
 			m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
-			    total_len + ETHER_ALIGN, 0, ifp, NULL);
+			    total_len + ETHER_ALIGN, 0, ifp);
 			sk_newbuf(sc_if, cur, m, dmamap);
 			if (m0 == NULL) {
 				aprint_error_dev(sc_if->sk_dev, "no receive "
