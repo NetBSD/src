@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.177 2018/03/15 03:21:58 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.178 2018/11/15 14:19:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.177 2018/03/15 03:21:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.178 2018/11/15 14:19:23 maxv Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -744,6 +744,7 @@ uvm_swap_stats(char *ptr, int misc,
 			inuse = btodb((uint64_t)sdp->swd_npginuse <<
 			    PAGE_SHIFT);
 
+			memset(&sep, 0, sizeof(sep));
 			swapent_cvt(&sep, sdp, inuse);
 			if (f)
 				(*f)(&sep, &sep);
