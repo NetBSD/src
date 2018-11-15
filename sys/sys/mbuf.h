@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.214 2018/11/15 10:56:30 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.215 2018/11/15 11:18:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -823,19 +823,19 @@ struct	m_tag *m_tag_copy(struct m_tag *);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
 
 /* Packet tag types */
-#define PACKET_TAG_NONE				0  /* Nothing */
-#define PACKET_TAG_SO				4  /* sending socket pointer */
-#define PACKET_TAG_PF				11 /* packet filter */
-#define PACKET_TAG_ALTQ_QID			12 /* ALTQ queue id */
-#define PACKET_TAG_IPSEC_OUT_DONE		18
-#define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
-#define	PACKET_TAG_INET6			26 /* IPv6 info */
-#define	PACKET_TAG_TUNNEL_INFO			28 /* tunnel identification and
-						    * protocol callback, for
-						    * loop detection/recovery
-						    */
-#define	PACKET_TAG_MPLS				29 /* Indicate it's for MPLS */
-#define	PACKET_TAG_SRCROUTE			30 /* IPv4 source routing */
+#define PACKET_TAG_NONE			0  /* Nothing */
+#define PACKET_TAG_SO			4  /* sending socket pointer */
+#define PACKET_TAG_PF			11 /* packet filter */
+#define PACKET_TAG_ALTQ_QID		12 /* ALTQ queue id */
+#define PACKET_TAG_IPSEC_OUT_DONE	18
+#define PACKET_TAG_IPSEC_NAT_T_PORTS	25 /* two uint16_t */
+#define PACKET_TAG_INET6		26 /* IPv6 info */
+#define PACKET_TAG_TUNNEL_INFO		28 /* tunnel identification and
+					    * protocol callback, for loop
+					    * detection/recovery
+					    */
+#define PACKET_TAG_MPLS			29 /* Indicate it's for MPLS */
+#define PACKET_TAG_SRCROUTE		30 /* IPv4 source routing */
 
 /*
  * Return the number of bytes in the mbuf chain, m.
