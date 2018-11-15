@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.115 2018/07/31 20:54:18 sevan Exp $
+.\"	$NetBSD: ifconfig.8,v 1.116 2018/11/15 04:37:20 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd July 31, 2018
+.Dd November 15, 2018
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -528,7 +528,7 @@ Refer to the man page for the specific driver
 for more information.
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
-.It Cm linkstr
+.It Cm linkstr Ar str
 Set a link-level string parameter for the interface.
 This functionality varies from interface to interface.
 Refer to the man page for the specific driver
