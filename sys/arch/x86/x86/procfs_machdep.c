@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.24 2018/08/20 08:53:48 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.25 2018/11/15 04:53:54 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.24 2018/08/20 08:53:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.25 2018/11/15 04:53:54 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,9 +421,9 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 		left = 0;
 
 	l = snprintf(p, left,
-	    "apicid\t\t: %d\n"
-	    "initial apicid\t: %d\n",
-	    ci->ci_acpiid,
+	    "apicid\t\t: %lu\n"
+	    "initial apicid\t: %u\n",
+	    ci->ci_cpuid,
 	    ci->ci_initapicid
 	);
 	size += l;
