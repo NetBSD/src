@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.321 2018/11/11 10:58:40 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.322 2018/11/15 04:59:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.321 2018/11/11 10:58:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.322 2018/11/15 04:59:02 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -2285,23 +2285,30 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	kpreempt_enable();
 }
 
-#ifdef __HAVE_DIRECT_MAP
 bool
 mm_md_direct_mapped_io(void *addr, paddr_t *paddr)
 {
 	vaddr_t va = (vaddr_t)addr;
 
+#ifdef __HAVE_DIRECT_MAP
 	if (va >= PMAP_DIRECT_BASE && va < PMAP_DIRECT_END) {
 		*paddr = PMAP_DIRECT_UNMAP(va);
 		return true;
 	}
+#else
+	__USE(va);
+#endif
+
 	return false;
 }
 
 bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 {
+#ifdef __HAVE_DIRECT_MAP
 	*vaddr = PMAP_DIRECT_MAP(paddr);
 	return true;
-}
+#else
+	return false;
 #endif
+}
