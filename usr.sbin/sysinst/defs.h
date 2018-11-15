@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.25 2018/11/14 02:30:00 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.26 2018/11/15 10:23:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -553,6 +553,7 @@ void	do_reinstall_sets(void);
 void	restore_etc(void);
 
 /* from util.c */
+void	msg_display_subst(const char *, size_t, ...);
 int	ask_yesno(const char *);
 int	ask_noyes(const char *);
 int	dir_exists_p(const char *);
