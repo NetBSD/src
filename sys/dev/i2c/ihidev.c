@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.5 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.6 2018/11/15 23:01:45 jakllsch Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.5 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.6 2018/11/15 23:01:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,7 @@ ihidev_maxrepid(void *buf, int len)
 	maxid = -1;
 	h.report_ID = 0;
 	for (d = hid_start_parse(buf, len, hid_none); hid_get_item(d, &h); )
-		if (h.report_ID > maxid)
+		if ((int)h.report_ID > maxid)
 			maxid = h.report_ID;
 	hid_end_parse(d);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: hid.c,v 1.3 2018/11/15 23:01:45 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.3 2018/11/15 23:01:45 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -122,6 +122,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 	uint32_t oldpos;
 	const u_char *data;
 	int32_t dval;
+	uint32_t uval;
 	const u_char *p;
 	struct hid_item *hi;
 	int i;
@@ -173,13 +174,17 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		switch(bSize) {
 		case 0:
 			dval = 0;
+			uval = dval;
 			break;
 		case 1:
-			dval = (int8_t)*data++;
+			dval = *data++;
+			uval = dval;
+			dval = (int8_t)dval;
 			break;
 		case 2:
 			dval = *data++;
 			dval |= *data++ << 8;
+			uval = dval;
 			dval = (int16_t)dval;
 			break;
 		case 4:
@@ -187,6 +192,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			dval |= *data++ << 8;
 			dval |= *data++ << 16;
 			dval |= *data++ << 24;
+			uval = dval;
 			dval = (int32_t)dval;
 			break;
 		default:
@@ -194,8 +200,8 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			continue;
 		}
 
-		DPRINTFN(5,("hid_get_item: bType=%d bTag=%d dval=%d\n",
-			 bType, bTag, dval));
+		DPRINTFN(5,("hid_get_item: bType=%d bTag=%d dval=%d uval=%u\n",
+			 bType, bTag, dval, uval));
 		switch (bType) {
 		case 0:			/* Main */
 			switch (bTag) {
@@ -209,7 +215,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 					continue;
 				}
 				c->kind = retkind;
-				c->flags = dval;
+				c->flags = uval;
 				if (c->flags & HIO_VARIABLE) {
 					s->multimax = c->loc.count;
 					s->multi = 0;
@@ -242,7 +248,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				goto ret;
 			case 10:	/* Collection */
 				c->kind = hid_collection;
-				c->collection = dval;
+				c->collection = uval;
 				c->collevel++;
 				*h = *c;
 				hid_clear_local(c);
@@ -265,7 +271,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		case 1:		/* Global */
 			switch (bTag) {
 			case 0:
-				c->_usage_page = dval << 16;
+				c->_usage_page = uval << 16;
 				break;
 			case 1:
 				c->logical_minimum = dval;
@@ -280,20 +286,20 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				c->physical_maximum = dval;
 				break;
 			case 5:
-				c->unit_exponent = dval;
+				c->unit_exponent = uval;
 				break;
 			case 6:
-				c->unit = dval;
+				c->unit = uval;
 				break;
 			case 7:
-				c->loc.size = dval;
+				c->loc.size = uval;
 				break;
 			case 8:
-				c->report_ID = dval;
+				c->report_ID = uval;
 				c->loc.pos = 0;
 				break;
 			case 9:
-				c->loc.count = dval;
+				c->loc.count = uval;
 				break;
 			case 10: /* Push */
 				hi = kmem_alloc(sizeof(*hi), KM_SLEEP);
@@ -317,50 +323,44 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		case 2:		/* Local */
 			switch (bTag) {
 			case 0:
-				if (bSize == 1)
-					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2)
-					dval = c->_usage_page | (dval&0xffff);
-				c->usage = dval;
+				if (bSize < 4)
+					uval = c->_usage_page | uval;
+				c->usage = uval;
 				if (s->nu < MAXUSAGE)
-					s->usages[s->nu++] = dval;
+					s->usages[s->nu++] = uval;
 				/* else XXX */
 				break;
 			case 1:
 				s->minset = 1;
-				if (bSize == 1)
-					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2)
-					dval = c->_usage_page | (dval&0xffff);
-				c->usage_minimum = dval;
+				if (bSize < 4)
+					uval = c->_usage_page | uval;
+				c->usage_minimum = uval;
 				break;
 			case 2:
-				if (bSize == 1)
-					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2)
-					dval = c->_usage_page | (dval&0xffff);
-				c->usage_maximum = dval;
+				if (bSize < 4)
+					uval = c->_usage_page | uval;
+				c->usage_maximum = uval;
 				break;
 			case 3:
-				c->designator_index = dval;
+				c->designator_index = uval;
 				break;
 			case 4:
-				c->designator_minimum = dval;
+				c->designator_minimum = uval;
 				break;
 			case 5:
-				c->designator_maximum = dval;
+				c->designator_maximum = uval;
 				break;
 			case 7:
-				c->string_index = dval;
+				c->string_index = uval;
 				break;
 			case 8:
-				c->string_minimum = dval;
+				c->string_minimum = uval;
 				break;
 			case 9:
-				c->string_maximum = dval;
+				c->string_maximum = uval;
 				break;
 			case 10:
-				c->set_delimiter = dval;
+				c->set_delimiter = uval;
 				break;
 			default:
 				aprint_normal("Local bTag=%d\n", bTag);

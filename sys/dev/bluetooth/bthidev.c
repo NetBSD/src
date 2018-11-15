@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.30 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.31 2018/11/15 23:01:45 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.30 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.31 2018/11/15 23:01:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -284,7 +284,7 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	h.report_ID = 0;
 	d = hid_start_parse(desc, dlen, hid_none);
 	while (hid_get_item(d, &h)) {
-		if (h.report_ID > maxid)
+		if ((int)h.report_ID > maxid)
 			maxid = h.report_ID;
 	}
 	hid_end_parse(d);
