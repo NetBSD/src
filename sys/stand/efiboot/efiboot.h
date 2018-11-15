@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.8 2018/10/26 20:56:35 mrg Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.9 2018/11/15 23:52:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -33,6 +33,7 @@
 #include <lib/libkern/libkern.h>
 
 #include <loadfile.h>
+#include <net.h>
 
 #include "efiboot_machdep.h"
 
@@ -45,6 +46,7 @@ struct boot_command {
 /* conf.c */
 extern struct fs_ops null_fs_ops;
 extern struct fs_ops tftp_fs_ops;
+extern struct fs_ops nfs_fs_ops;
 
 /* boot.c */
 void boot(void);
@@ -82,15 +84,19 @@ int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 
 /* efinet.c */
+struct efi_net_if {
+	const char *if_name;
+	uint8_t if_mac[6];
+};
 int efi_net_open(struct open_file *, ...);
 void efi_net_probe(void);
 void efi_net_show(void);
 int efi_net_get_booted_interface_unit(void);
+int efi_net_get_booted_macaddr(uint8_t *);
 extern struct netif_driver efinetif;
 
 /* efipxe.c */
 void efi_pxe_probe(void);
-void efi_pxe_show(void);
 bool efi_pxe_match_booted_interface(const EFI_MAC_ADDRESS *, UINT32);
 
 /* exec.c */
