@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.9 2018/11/03 18:30:00 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.10 2018/11/15 10:34:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1248,4 +1248,8 @@ message Auto_add_swap_part
 {A swap partition (named %s) seems to exist on %s. 
 Do you want to use that?}
 
+message parttype_mbr {Master Boot Record (MBR)}
+message parttype_mbr_short {MBR}
+message parttype_disklabel {BSD disklabel}
+message parttype_disklabel_short {disklabel}
 

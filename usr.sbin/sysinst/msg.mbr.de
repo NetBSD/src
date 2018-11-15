@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.3 2018/11/15 10:34:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,21 +36,29 @@
 
 /* NB: Lines ending in spaces force line breaks */
 
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = inner partitioning name	BSD disklabel
+ *  $3 = short version of $1		MBR
+ *  $4 = short version of $2		disklabel
+ *  $5 = size needed for NetBSD		250M
+ *  $6 = size needed to build NetBSD	15G
+ */
 message fullpart
-{NetBSD wird auf die Festplatte %s installiert.
+{NetBSD wird auf die Festplatte $0 installiert.
 
-NetBSD benötigt eine eigene Partition in der Partitionstabelle des Master
-Boot Record (MBR). Diese Partition wird später durch das NetBSD-Disklabel
-weiter aufgeteilt. NetBSD kann auch auf Dateisysteme zugreifen, die in
-anderen MBR-Partitionen definiert werden.
+NetBSD benötigt eine eigene Partition im $1. Diese Partition
+wird später durch das $2 weiter aufgeteilt.
+NetBSD kann auch auf Dateisysteme in anderen $3-Partitionen zugreifen.
 
-Wenn Sie 'Die ganze Festplatte nutzen' auswählen, werden alle MBR-Partitionen
-gelöscht und eine NetBSD-Partition für die gesamte Festplatte erstellt.
-Wenn Sie mehr als ein Betriebssystem installieren möchten, bearbeiten Sie
-die MBR-Partitionstabelle und erstellen eine kleinere NetBSD Partition.
+'Die ganze Festplatte nutzen' löscht alle vorhandenen $3-Partitionen.
+Um auch andere Betriebssysteme zu nutzen, erstellen Sie eine
+$3 Partition.
 
-Einige hundert MB reichen für eine Basisinstallation, allerdings sollten
-Sie auch Platz für zusätzliche Software und Anwenderdaten einkalkulieren.
+Etwa $5 reichen für eine Basisinstallation, aber Sie sollten
+zusätzlichen Platz für Erweiterungen und Benutzerdateien einrechnen. 
+Reservieren Sie mindestens $6 wenn Sie NetBSD selbst compilieren möchten.
 }
 
 message Select_your_choice
