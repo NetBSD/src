@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1082 2018/11/11 18:02:23 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1083 2018/11/15 09:23:50 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1363,7 +1363,12 @@ ${var}?= no
 
 # Default to USE_XZ_SETS on some 64bit architectures where decompressor
 # memory will likely not be in short supply.
-.if ${MACHINE} == "amd64" || ${MACHINE} == "sparc64" || ${MACHINE} == "alpha"
+# Since pigz can not create .xz format files currently, disable .xz
+# format if USE_PIGZGZIP is enabled.
+.if ${USE_PIGZGZIP} == "no" && \
+		(${MACHINE} == "amd64" || \
+		 ${MACHINE} == "sparc64" || \
+		 ${MACHINE} == "alpha")
 USE_XZ_SETS?= yes
 .else
 USE_XZ_SETS?= no
