@@ -3614,12 +3614,12 @@ vdev_deadman(vdev_t *vd)
 			delta = gethrtime() - fio->io_timestamp;
 			if (delta > spa_deadman_synctime(spa)) {
 				zfs_dbgmsg("SLOW IO: zio timestamp %lluns, "
-				    "delta %lluns, last io %lluns",
+				    "delta %"PRIu64"ns, last io %lluns",
 				    fio->io_timestamp, delta,
 				    vq->vq_io_complete_ts);
 
 				printf("SLOW IO: zio timestamp %lluns, "
-				    "delta %luns, last io %lluns",
+				    "delta %"PRIu64"ns, last io %lluns",
 				    fio->io_timestamp, delta,
 				    vq->vq_io_complete_ts);
 
