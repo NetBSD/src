@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.4 2018/06/26 06:48:03 msaitoh Exp $	*/
+/*	$NetBSD: can.c,v 1.5 2018/11/15 10:06:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.4 2018/06/26 06:48:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.5 2018/11/15 10:06:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ can_mbuf_tag_clean(struct mbuf *m)
 	if (sotag)
 		m_tag_unlink(m, sotag);
 
-	m_tag_delete_nonpersistent(m);
+	m_tag_delete_chain(m);
 	if (sotag)
 		m_tag_prepend(m, sotag);
 }

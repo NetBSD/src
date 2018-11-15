@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.174 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.175 2018/11/15 10:06:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.174 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.175 2018/11/15 10:06:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -919,7 +919,7 @@ icmp_reflect(struct mbuf *m)
 		memmove(ip + 1, (char *)ip + optlen,
 		    (unsigned)(m->m_len - sizeof(struct ip)));
 	}
-	m_tag_delete_nonpersistent(m);
+	m_tag_delete_chain(m);
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	/*
