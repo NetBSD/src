@@ -1,4 +1,4 @@
-.\"     $NetBSD: m_tag.9,v 1.5 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: m_tag.9,v 1.6 2018/11/15 09:38:57 maxv Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd September 7, 2004
+.Dd November 15, 2018
 .Dt M_TAG 9
 .Os
 .Sh NAME
@@ -206,7 +206,7 @@ is the last tag in the chain.
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
 The mbuf tagging interfaces are implemented within the file
-.Pa sys/kern/uipc_mbuf2.c .
+.Pa sys/kern/uipc_mbuf.c .
 .Pp
 The
 .Dv PACKET_TAG_
