@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.15 2018/10/31 16:11:29 jmcneill Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.16 2018/11/15 22:15:43 jdolecek Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.15 2018/10/31 16:11:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.16 2018/11/15 22:15:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -139,9 +139,6 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* check if memory space access is enabled */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-#ifdef DEBUG
-	printf("%s: csr: %08x\n", __func__, csr);
-#endif
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
 		sc->sc_ios = 0;
 		aprint_error_dev(self, "memory access is disabled\n");
