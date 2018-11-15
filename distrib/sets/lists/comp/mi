@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2237 2018/10/28 00:44:37 uwe Exp $
+#	$NetBSD: mi,v 1.2238 2018/11/15 10:06:06 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11235,13 +11235,13 @@
 ./usr/share/man/cat9/m_tag_copy_chain.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_delete.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_delete_chain.0	comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_delete_nonpersistent.0	comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_delete_nonpersistent.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/m_tag_find.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_first.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_first.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/m_tag_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_get.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_next.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_init.0		comp-obsolete		obsolete
+./usr/share/man/cat9/m_tag_next.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/m_tag_prepend.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_unlink.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/makeiplcookie.0		comp-sys-catman		.cat
@@ -19048,13 +19048,13 @@
 ./usr/share/man/html9/m_tag_copy_chain.html	comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_delete.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_delete_chain.html	comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_delete_nonpersistent.html	comp-sys-htmlman	html
+./usr/share/man/html9/m_tag_delete_nonpersistent.html	comp-obsolete	obsolete
 ./usr/share/man/html9/m_tag_find.html		comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_first.html		comp-sys-htmlman	html
+./usr/share/man/html9/m_tag_first.html		comp-obsolete	obsolete
 ./usr/share/man/html9/m_tag_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_get.html		comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_init.html		comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_next.html		comp-sys-htmlman	html
+./usr/share/man/html9/m_tag_init.html		comp-obsolete	obsolete
+./usr/share/man/html9/m_tag_next.html		comp-obsolete	obsolete
 ./usr/share/man/html9/m_tag_prepend.html	comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_unlink.html		comp-sys-htmlman	html
 ./usr/share/man/html9/makeiplcookie.html	comp-sys-htmlman	html
@@ -27015,13 +27015,13 @@
 ./usr/share/man/man9/m_tag_copy_chain.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_delete.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_delete_chain.9	comp-sys-man		.man
-./usr/share/man/man9/m_tag_delete_nonpersistent.9	comp-sys-man		.man
+./usr/share/man/man9/m_tag_delete_nonpersistent.9	comp-obsolete		obsolete
 ./usr/share/man/man9/m_tag_find.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_first.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_first.9		comp-obsolete		obsolete
 ./usr/share/man/man9/m_tag_free.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_get.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_init.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_next.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_init.9		comp-obsolete		obsolete
+./usr/share/man/man9/m_tag_next.9		comp-obsolete		obsolete
 ./usr/share/man/man9/m_tag_prepend.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_unlink.9		comp-sys-man		.man
 ./usr/share/man/man9/makeiplcookie.9		comp-sys-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.105 2018/08/10 06:46:09 maxv Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.106 2018/11/15 10:06:07 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.105 2018/08/10 06:46:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.106 2018/11/15 10:06:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -298,7 +298,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 #endif /* ALTQ */
 
-	m_tag_delete_nonpersistent(m);
+	m_tag_delete_chain(m);
 
 #ifdef MPLS
 	if (rt != NULL && rt_gettag(rt) != NULL &&

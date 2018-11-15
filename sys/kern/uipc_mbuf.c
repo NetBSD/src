@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.221 2018/11/15 09:38:57 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.222 2018/11/15 10:06:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.221 2018/11/15 09:38:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.222 2018/11/15 10:06:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1721,7 +1721,7 @@ m_remove_pkthdr(struct mbuf *m)
 {
 	KASSERT(m->m_flags & M_PKTHDR);
 
-	m_tag_delete_chain(m, NULL);
+	m_tag_delete_chain(m);
 	m->m_flags &= ~M_PKTHDR;
 	memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 }
@@ -1730,7 +1730,8 @@ void
 m_copy_pkthdr(struct mbuf *to, struct mbuf *from)
 {
 	KASSERT((to->m_flags & M_EXT) == 0);
-	KASSERT((to->m_flags & M_PKTHDR) == 0 || m_tag_first(to) == NULL);
+	KASSERT((to->m_flags & M_PKTHDR) == 0 ||
+	    SLIST_FIRST(&to->m_pkthdr.tags) == NULL);
 	KASSERT((from->m_flags & M_PKTHDR) != 0);
 
 	to->m_pkthdr = from->m_pkthdr;
@@ -1745,7 +1746,8 @@ void
 m_move_pkthdr(struct mbuf *to, struct mbuf *from)
 {
 	KASSERT((to->m_flags & M_EXT) == 0);
-	KASSERT((to->m_flags & M_PKTHDR) == 0 || m_tag_first(to) == NULL);
+	KASSERT((to->m_flags & M_PKTHDR) == 0 ||
+	    SLIST_FIRST(&to->m_pkthdr.tags) == NULL);
 	KASSERT((from->m_flags & M_PKTHDR) != 0);
 
 	to->m_pkthdr = from->m_pkthdr;
@@ -1905,7 +1907,7 @@ m_free(struct mbuf *m)
 	mbstat_type_add(m->m_type, -1);
 
 	if (m->m_flags & M_PKTHDR)
-		m_tag_delete_chain(m, NULL);
+		m_tag_delete_chain(m);
 
 	n = m->m_next;
 
@@ -2257,28 +2259,17 @@ m_tag_delete(struct mbuf *m, struct m_tag *t)
 }
 
 void
-m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
+m_tag_delete_chain(struct mbuf *m)
 {
 	struct m_tag *p, *q;
 
-	if (t != NULL)
-		p = t;
-	else
-		p = SLIST_FIRST(&m->m_pkthdr.tags);
+	p = SLIST_FIRST(&m->m_pkthdr.tags);
 	if (p == NULL)
 		return;
 	while ((q = SLIST_NEXT(p, m_tag_link)) != NULL)
 		m_tag_delete(m, q);
 	m_tag_delete(m, p);
 }
-
-void
-m_tag_delete_nonpersistent(struct mbuf *m)
-{
-	/* NetBSD has no persistent tags yet, so just delete all tags. */
-	m_tag_delete_chain(m, NULL);
-}
-
 
 struct m_tag *
 m_tag_find(const struct mbuf *m, int type, struct m_tag *t)
@@ -2320,11 +2311,11 @@ m_tag_copy_chain(struct mbuf *to, struct mbuf *from)
 {
 	struct m_tag *p, *t, *tprev = NULL;
 
-	m_tag_delete_chain(to, NULL);
+	m_tag_delete_chain(to);
 	SLIST_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
 		t = m_tag_copy(p);
 		if (t == NULL) {
-			m_tag_delete_chain(to, NULL);
+			m_tag_delete_chain(to);
 			return 0;
 		}
 		if (tprev == NULL)
@@ -2334,22 +2325,4 @@ m_tag_copy_chain(struct mbuf *to, struct mbuf *from)
 		tprev = t;
 	}
 	return 1;
-}
-
-void
-m_tag_init(struct mbuf *m)
-{
-	SLIST_INIT(&m->m_pkthdr.tags);
-}
-
-struct m_tag *
-m_tag_first(struct mbuf *m)
-{
-	return (SLIST_FIRST(&m->m_pkthdr.tags));
-}
-
-struct m_tag *
-m_tag_next(struct mbuf *m, struct m_tag *t)
-{
-	return (SLIST_NEXT(t, m_tag_link));
 }
