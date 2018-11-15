@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2018/11/14 21:10:59 scole Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2018/11/15 20:39:18 scole Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -667,10 +667,8 @@ ia64_init(void)
 	 * sane) context as the initial context for new threads that are
 	 * forked from us.
 	 */
-#if 0	/* XXX */
 	if (savectx(pcb0))
 		panic("savectx failed");
-#endif
 
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
