@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2018/11/02 01:22:39 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2018/11/15 23:52:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -72,7 +72,7 @@ static const char *efi_memory_type[] = {
 static char default_device[32];
 static char initrd_path[255];
 static char dtb_path[255];
-static char bootfile[255];
+static char netbsd_path[255];
 
 #define	DEFTIMEOUT	5
 #define DEFFILENAME	names[0]
@@ -146,7 +146,6 @@ command_dev(char *arg)
 	} else {
 		efi_block_show();
 		efi_net_show();
-		efi_pxe_show();
 	}
 
 	if (strlen(default_device) > 0) {
@@ -323,9 +322,9 @@ get_dtb_path(void)
 int
 set_bootfile(const char *arg)
 {
-	if (strlen(arg) + 1 > sizeof(bootfile))
+	if (strlen(arg) + 1 > sizeof(netbsd_path))
 		return ERANGE;
-	strcpy(bootfile, arg);
+	strcpy(netbsd_path, arg);
 	return 0;
 }
 
@@ -388,7 +387,7 @@ boot(void)
 	print_banner();
 	printf("Press return to boot now, any other key for boot prompt\n");
 
-	if (bootfile[0] != '\0')
+	if (netbsd_path[0] != '\0')
 		currname = -1;
 	else
 		currname = 0;
@@ -396,13 +395,13 @@ boot(void)
 	for (; currname < (int)NUMNAMES; currname++) {
 		if (currname >= 0)
 			set_bootfile(names[currname]);
-		printf("booting %s - starting in ", bootfile);
+		printf("booting %s - starting in ", netbsd_path);
 
 		c = awaitkey(DEFTIMEOUT, 1);
 		if (c != '\r' && c != '\n' && c != '\0')
 			bootprompt(); /* does not return */
 
-		exec_netbsd(bootfile, "");
+		exec_netbsd(netbsd_path, "");
 	}
 
 	bootprompt();	/* does not return */

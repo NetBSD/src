@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.1 2018/09/03 00:04:02 jmcneill Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.2 2018/11/15 23:52:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,7 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
 #include <lib/libsa/bootp.h>
+#include <lib/libsa/nfs.h>
 
 #include "dev_net.h"
 
@@ -68,6 +69,18 @@ net_open(struct open_file *f, ...)
 
 		printf("boot: client ip: %s\n", inet_ntoa(myip));
 		printf("boot: server ip: %s\n", inet_ntoa(rootip));
+		if (rootpath[0] != '\0')
+			printf("boot: server path: %s\n", rootpath);
+		if (bootfile[0] != '\0')
+			printf("boot: file name: %s\n", bootfile);
+	}
+
+	if (rootpath[0] != '\0') {
+		error = nfs_mount(net_socket, rootip, rootpath);
+		if (error) {
+			printf("NFS mount error=%d\n", errno);
+			goto fail;
+		}
 	}
 
 	f->f_devdata = &net_socket;

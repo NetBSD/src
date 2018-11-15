@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2018/11/01 00:43:38 jmcneill Exp $
+$NetBSD: version,v 1.8 2018/11/15 23:52:33 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -11,3 +11,4 @@ is taken as the current.
 1.4:	Add bootfile support.
 1.5:	EFI runtime support.
 1.6:	Add GPT support.
+1.7:	Add NFS support.

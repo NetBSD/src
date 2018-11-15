@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.3 2018/09/04 21:29:54 jmcneill Exp $	*/
+/*	$NetBSD: efinet.c,v 1.4 2018/11/15 23:52:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -465,7 +465,7 @@ efi_net_show(void)
 		eni = dif->dif_private;
 		net = eni->net;
 
-		printf("net net%d", dif->dif_unit);
+		printf("net%d", dif->dif_unit);
 		if (net->Mode != NULL) {
 			for (UINT32 x = 0; x < net->Mode->HwAddressSize; x++) {
 				printf("%c%02x", x == 0 ? ' ' : ':',
@@ -501,6 +501,27 @@ efi_net_get_booted_interface_unit(void)
 }
 
 int
+efi_net_get_booted_macaddr(uint8_t *mac)
+{
+	const struct netif_dif *dif;
+	const struct efinetinfo *eni;
+	EFI_SIMPLE_NETWORK *net;
+	int i;
+
+	for (i = 0; i < efinetif.netif_nifs; i++) {
+		dif = &efinetif.netif_ifs[i];
+		eni = dif->dif_private;
+		net = eni->net;
+		if (eni->bootdev && net->Mode != NULL && net->Mode->HwAddressSize == 6) {
+			memcpy(mac, net->Mode->PermanentAddress.Addr, 6);
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+int
 efi_net_open(struct open_file *f, ...)
 {
 	char **file, pathbuf[PATH_MAX], *default_device, *path, *ep;
@@ -508,7 +529,7 @@ efi_net_open(struct open_file *f, ...)
 	struct devdesc desc;
 	intmax_t dev;
 	va_list ap;
-	int n;
+	int n, error;
 
 	va_start(ap, f);
 	fname = va_arg(ap, const char *);
@@ -551,5 +572,9 @@ efi_net_open(struct open_file *f, ...)
 	strlcpy(desc.d_name, "net", sizeof(desc.d_name));
 	desc.d_unit = dev;
 
-	return DEV_OPEN(f->f_dev)(f, &desc);
+	error = DEV_OPEN(f->f_dev)(f, &desc);
+	if (error)
+		return error;
+
+	return 0;
 }

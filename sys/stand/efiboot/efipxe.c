@@ -1,4 +1,4 @@
-/*	$NetBSD: efipxe.c,v 1.1 2018/09/03 00:04:02 jmcneill Exp $	*/
+/*	$NetBSD: efipxe.c,v 1.2 2018/11/15 23:52:33 jmcneill Exp $	*/
 /*	$OpenBSD: efipxe.c,v 1.3 2018/01/30 20:19:06 naddy Exp $	*/
 
 /*
@@ -109,21 +109,6 @@ efi_pxe_probe(void)
 
 		TAILQ_INSERT_TAIL(&efi_pxelist, epi, list);
 		nefipxes++;
-	}
-}
-
-void
-efi_pxe_show(void)
-{
-	const struct efipxeinfo *epi;
-	UINT32 i, n;
-
-	n = 0;
-	TAILQ_FOREACH(epi, &efi_pxelist, list) {
-		printf("pxe pxe%d", n++);
-		for (i = 0; i < epi->addrsz; i++)
-			printf("%c%02x", i == 0 ? ' ' : ':', epi->mac.Addr[i]);
-		printf("\n");
 	}
 }
 
