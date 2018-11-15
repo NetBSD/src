@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.223 2018/11/15 10:23:55 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.224 2018/11/15 10:37:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.223 2018/11/15 10:23:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.224 2018/11/15 10:37:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -2242,12 +2242,14 @@ m_tag_free(struct m_tag *t)
 void
 m_tag_prepend(struct mbuf *m, struct m_tag *t)
 {
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	SLIST_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
 }
 
 void
 m_tag_unlink(struct mbuf *m, struct m_tag *t)
 {
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	SLIST_REMOVE(&m->m_pkthdr.tags, t, m_tag, m_tag_link);
 }
 
@@ -2263,6 +2265,8 @@ m_tag_delete_chain(struct mbuf *m)
 {
 	struct m_tag *p, *q;
 
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+
 	p = SLIST_FIRST(&m->m_pkthdr.tags);
 	if (p == NULL)
 		return;
@@ -2275,6 +2279,8 @@ struct m_tag *
 m_tag_find(const struct mbuf *m, int type)
 {
 	struct m_tag *p;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 	p = SLIST_FIRST(&m->m_pkthdr.tags);
 	while (p != NULL) {
@@ -2307,6 +2313,8 @@ int
 m_tag_copy_chain(struct mbuf *to, struct mbuf *from)
 {
 	struct m_tag *p, *t, *tprev = NULL;
+
+	KASSERT((from->m_flags & M_PKTHDR) != 0);
 
 	m_tag_delete_chain(to);
 	SLIST_FOREACH(p, &from->m_pkthdr.tags, m_tag_link) {
