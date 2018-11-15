@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.54 2018/11/03 15:02:32 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.55 2018/11/15 23:53:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.54 2018/11/03 15:02:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.55 2018/11/15 23:53:40 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -63,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.54 2018/11/03 15:02:32 skrll Exp $
 #include <sys/uuid.h>
 #include <sys/disk.h>
 #include <sys/md5.h>
+#include <sys/pserialize.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
 
 #include <dev/cons.h>
 #include <uvm/uvm_extern.h>
@@ -696,6 +700,23 @@ fdt_detect_root_device(device_t dev)
 		device_t dv = dkwedge_find_by_wname(label);
 		if (dv != NULL)
 			booted_device = dv;
+	}
+
+	if (of_hasprop(chosen, "netbsd,booted-mac-address")) {
+		const uint8_t *macaddr = fdtbus_get_prop(chosen, "netbsd,booted-mac-address", &len);
+		if (macaddr == NULL || len != 6)
+			return;
+		int s = pserialize_read_enter();
+		struct ifnet *ifp;
+		IFNET_READER_FOREACH(ifp) {
+			if (memcmp(macaddr, CLLADDR(ifp->if_sadl), len) == 0) {
+				device_t dv = device_find_by_xname(ifp->if_xname);
+				if (dv != NULL)
+					booted_device = dv;
+				break;
+			}
+		}
+		pserialize_read_exit(s);
 	}
 }
 
