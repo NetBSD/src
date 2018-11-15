@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.24 2018/10/31 06:26:26 maxv Exp $
+#	$NetBSD: files.kern,v 1.25 2018/11/15 09:38:57 maxv Exp $
 
 #
 # kernel sources
@@ -174,7 +174,6 @@ file	kern/tty_tty.c			kern
 file	kern/uipc_accf.c		kern
 file	kern/uipc_domain.c		kern
 file	kern/uipc_mbuf.c		kern
-file	kern/uipc_mbuf2.c		kern
 file	kern/uipc_mbufdebug.c		kern & ether
 file	net/link_proto.c		kern	# XXX
 file	kern/uipc_proto.c		kern
