@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.73 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.74 2018/11/15 23:01:46 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.73 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.74 2018/11/15 23:01:46 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -395,7 +395,7 @@ uhidev_maxrepid(void *buf, int len)
 	maxid = -1;
 	h.report_ID = 0;
 	for (d = hid_start_parse(buf, len, hid_none); hid_get_item(d, &h); )
-		if (h.report_ID > maxid)
+		if ((int)h.report_ID > maxid)
 			maxid = h.report_ID;
 	hid_end_parse(d);
 	return maxid;
