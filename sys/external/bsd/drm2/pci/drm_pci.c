@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.31 2018/08/28 03:41:39 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.32 2018/11/15 06:53:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.31 2018/08/28 03:41:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.32 2018/11/15 06:53:58 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -105,6 +105,14 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 			    " 0x%"PRIxMAX"\n", unit, (uintmax_t)type);
 			continue;
 		}
+
+		/*
+		 * If it's a 64-bit mapping, don't interpret the second
+		 * half of it as another BAR in the next iteration of
+		 * the loop -- move on to the next unit.
+		 */
+		if (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
+			unit++;
 
 		/* Inquire about it.  We'll map it in drm_legacy_ioremap.  */
 		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg, type,
