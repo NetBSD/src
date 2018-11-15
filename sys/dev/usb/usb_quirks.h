@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.28 2018/11/08 02:11:54 manu Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.29 2018/11/15 02:35:23 manu Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ struct usbd_quirks {
 #define UQ_LOST_CS_DESC 0x10000 /* look everywhere for the CS descriptors */
 #define UQ_APPLE_ISO	0x20000	/* force ISO layout on Apple keyboards */
 #define UQ_DESC_CORRUPT	0x40000	/* may corrupt its config descriptors */
+#define UQ_MISS_OUT_ACK	0x80000	/* may fail to ack output */
 	const usb_descriptor_t **desc;	/* Replacement for UQ_DESC_CORRUPT */
 };
 
