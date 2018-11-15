@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 2018/06/03 05:55:08 chs Exp $	*/
+/*	$NetBSD: proc.h,v 1.9 2018/11/15 04:55:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -85,12 +85,6 @@
 typedef	struct lwp	_kthread;
 typedef	struct lwp	kthread_t;
 typedef struct lwp	*kthread_id_t;
-
-#if (KSTACK_PAGES * PAGE_SIZE) < 16384
-#define	ZFS_KSTACK_PAGES	(16384 / PAGE_SIZE)
-#else
-#define	ZFS_KSTACK_PAGES	0
-#endif
 
 struct contract {
 };
