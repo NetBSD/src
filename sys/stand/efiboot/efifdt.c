@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.13 2018/11/02 01:22:39 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.14 2018/11/15 23:52:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -194,6 +194,7 @@ void
 efi_fdt_bootargs(const char *bootargs)
 {
 	struct efi_block_part *bpart = efi_block_boot_part();
+	uint8_t macaddr[6];
 	int chosen;
 
 	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
@@ -229,6 +230,8 @@ efi_fdt_bootargs(const char *bootargs)
 		default:
 			break;
 		}
+	} else if (efi_net_get_booted_macaddr(macaddr) == 0) {
+		fdt_setprop(fdt_data, chosen, "netbsd,booted-mac-address", macaddr, sizeof(macaddr));
 	}
 }
 
