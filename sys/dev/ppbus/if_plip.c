@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.32 2018/11/05 18:37:18 mlelstv Exp $ */
+/* $NetBSD: if_plip.c,v 1.33 2018/11/15 10:56:30 maxv Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.32 2018/11/05 18:37:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.33 2018/11/15 10:56:30 maxv Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -606,7 +606,7 @@ lp_intr(void *arg)
 		if (len <= CLPIPHDRLEN)
 			goto err;
 		len -= CLPIPHDRLEN;
-		top = m_devget(sc->sc_ifbuf + CLPIPHDRLEN, len, 0, ifp, NULL);
+		top = m_devget(sc->sc_ifbuf + CLPIPHDRLEN, len, 0, ifp);
 	}
 	/* FreeBSD protocol receiving */
 	else {
@@ -642,7 +642,7 @@ end:
 		if (len <= LPIPHDRLEN)
 			goto err;
 		len -= LPIPHDRLEN;
-		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp, NULL);
+		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp);
 	}
 
 	if (top == NULL) {

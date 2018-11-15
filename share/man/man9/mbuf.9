@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.64 2018/05/07 10:53:45 maxv Exp $
+.\"	$NetBSD: mbuf.9,v 1.65 2018/11/15 10:56:29 maxv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,7 @@
 .Ft struct mbuf *
 .Fn m_gethdr "int how" "int type"
 .Ft struct mbuf *
-.Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy)(const void *, void *, size_t)"
+.Fn m_devget "char *buf" "int totlen" "int off" "struct ifnet *ifp"
 .Ft struct mbuf *
 .Fn m_copym "struct mbuf *m" "int off" "int len" "int wait"
 .Ft struct mbuf *
@@ -254,11 +254,10 @@ from caller.
 The
 .Fa type
 parameter is an mbuf type.
-.It Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy)(const void *, void *, size_t)"
+.It Fn m_devget "char *buf" "int totlen" "int off" "struct ifnet *ifp"
 Copies
 .Fa len
-bytes from device local memory into mbufs using copy routine
-.Fa copy .
+bytes from device local memory into mbufs.
 If parameter
 .Fa off
 is non-zero, the packet is supposed to be trailer-encapsulated and

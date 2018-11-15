@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.224 2018/11/15 10:37:26 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.225 2018/11/15 10:56:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.224 2018/11/15 10:37:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.225 2018/11/15 10:56:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1322,13 +1322,12 @@ extpacket:
  * Routine to copy from device local memory into mbufs.
  */
 struct mbuf *
-m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
-    void (*copy)(const void *from, void *to, size_t len))
+m_devget(char *buf, int totlen, int off, struct ifnet *ifp)
 {
 	struct mbuf *m;
 	struct mbuf *top = NULL, **mp = &top;
-	int off = off0, len;
 	char *cp, *epkt;
+	int len;
 
 	cp = buf;
 	epkt = cp + totlen;
@@ -1380,10 +1379,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 				len = m->m_len;
 		}
 
-		if (copy)
-			copy(cp, mtod(m, void *), (size_t)len);
-		else
-			memcpy(mtod(m, void *), cp, (size_t)len);
+		memcpy(mtod(m, void *), cp, (size_t)len);
 
 		cp += len;
 		*mp = m;

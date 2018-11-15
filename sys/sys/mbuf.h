@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.213 2018/11/15 10:23:56 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.214 2018/11/15 10:56:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -773,8 +773,7 @@ MALLOC_DECLARE(M_SONAME);
 
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_copypacket(struct mbuf *, int);
-struct	mbuf *m_devget(char *, int, int, struct ifnet *,
-    void (*copy)(const void *, void *, size_t));
+struct	mbuf *m_devget(char *, int, int, struct ifnet *);
 struct	mbuf *m_dup(struct mbuf *, int, int, int);
 struct	mbuf *m_get(int, int);
 struct	mbuf *m_gethdr(int, int);

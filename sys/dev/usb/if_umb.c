@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.6 2018/09/20 09:48:54 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.7 2018/11/15 10:56:30 maxv Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.6 2018/09/20 09:48:54 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.7 2018/11/15 10:56:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2026,7 +2026,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 
 		dp = buf + doff;
 		DPRINTFN(3, "%s: decap %d bytes\n", DEVNAM(sc), dlen);
-		m = m_devget(dp, dlen, 0, ifp, NULL);
+		m = m_devget(dp, dlen, 0, ifp);
 		if (m == NULL) {
 			ifp->if_iqdrops++;
 			continue;

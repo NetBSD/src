@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.24 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.25 2018/11/15 10:56:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.24 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.25 2018/11/15 10:56:29 maxv Exp $");
 
 #include "vlan.h"
 
@@ -1526,7 +1526,7 @@ ale_rxeof(struct ale_softc *sc)
 		 * on these low-end consumer ethernet controller.
 		 */
 		m = m_devget((char *)(rs + 1), length - ETHER_CRC_LEN,
-		    0, ifp, NULL);
+		    0, ifp);
 		if (m == NULL) {
 			ifp->if_iqdrops++;
 			ale_rx_update_page(sc, &rx_page, length, &prod);
