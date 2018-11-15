@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 2018/11/11 10:06:09 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.17 2018/11/15 10:23:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,6 +34,8 @@
 
 /* util.c -- routines that don't really fit anywhere else... */
 
+#include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -1790,5 +1792,81 @@ const char *
 set_postfix(const char *set_name)
 {
 	return use_tgz_for_set(set_name) ? dist_tgz_postfix : dist_postfix;
+}
+
+/*
+ * Replace positional arguments (encoded as $0 .. $N) in the
+ * message by the strings passed as ...
+ */
+void
+msg_display_subst(const char *master, size_t argc, ...)
+{
+	va_list ap;
+	const char **args, **arg;
+	const char *src, *p, *last;
+	char *out, *t;
+	size_t len;
+
+	args = malloc(sizeof(const char *)*argc);
+	if (args == NULL)
+		return;
+
+	arg = args;
+	va_start(ap, argc);
+	for (size_t i = 0; i < argc; i++)
+		*arg++ = va_arg(ap, const char*);
+	va_end(ap);
+
+	src = msg_string(master);
+	len = strlen(src);
+	for (p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
+		char *endp = NULL;
+		size_t n;
+		int e;
+
+		/* $ followed by a correct numeric position? */
+		n = strtou(p+1, &endp, 10, 0, INT_MAX, &e);
+		if ((e == 0 || e == ENOTSUP) && n < argc) {
+			len += strlen(args[n]);
+			len -= endp-p;
+			p = endp-1;
+		}
+	}
+
+	out = malloc(len+1);
+	if (out == NULL) {
+		free(args);
+		return;
+	}
+
+	t = out;
+	for (last = src, p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
+		char *endp = NULL;
+		size_t n;
+		int e;
+
+		/* $ followed by a correct numeric position? */
+		n = strtou(p+1, &endp, 10, 0, INT_MAX, &e);
+		if ((e == 0 || e == ENOTSUP) && n < argc) {
+			size_t l = p-last;
+			memcpy(t, last, l);
+			t += l;
+			strcpy(t, args[n]);
+			t += strlen(args[n]);
+			last = endp;
+		}
+	}
+	if (*last) {
+		strcpy(t, last);
+		t += strlen(last);
+	} else {
+		*t = 0;
+	}
+	assert((size_t)(t-out) == len);
+
+	msg_display(out);
+
+	free(out);
+	free(args);
 }
 
