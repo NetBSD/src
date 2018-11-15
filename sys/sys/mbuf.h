@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.211 2018/10/12 05:49:38 msaitoh Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.212 2018/11/15 10:06:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -818,14 +818,10 @@ void	m_tag_free(struct m_tag *);
 void	m_tag_prepend(struct mbuf *, struct m_tag *);
 void	m_tag_unlink(struct mbuf *, struct m_tag *);
 void	m_tag_delete(struct mbuf *, struct m_tag *);
-void	m_tag_delete_chain(struct mbuf *, struct m_tag *);
-void	m_tag_delete_nonpersistent(struct mbuf *);
+void	m_tag_delete_chain(struct mbuf *);
 struct	m_tag *m_tag_find(const struct mbuf *, int, struct m_tag *);
 struct	m_tag *m_tag_copy(struct m_tag *);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
-void	m_tag_init(struct mbuf *);
-struct	m_tag *m_tag_first(struct mbuf *);
-struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 /* Packet tag types */
 #define PACKET_TAG_NONE				0  /* Nothing */

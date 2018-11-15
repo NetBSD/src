@@ -1,4 +1,4 @@
-.\"     $NetBSD: m_tag.9,v 1.6 2018/11/15 09:38:57 maxv Exp $
+.\"     $NetBSD: m_tag.9,v 1.7 2018/11/15 10:06:06 maxv Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -36,13 +36,9 @@
 .Nm m_tag_unlink ,
 .Nm m_tag_delete ,
 .Nm m_tag_delete_chain ,
-.Nm m_tag_delete_nonpersistent ,
 .Nm m_tag_find ,
 .Nm m_tag_copy ,
-.Nm m_tag_copy_chain ,
-.Nm m_tag_init ,
-.Nm m_tag_first ,
-.Nm m_tag_next
+.Nm m_tag_copy_chain
 .Nd mbuf tagging interfaces
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
@@ -58,21 +54,13 @@
 .Ft void
 .Fn m_tag_delete "struct mbuf *m" "struct m_tag *t"
 .Ft void
-.Fn m_tag_delete_chain "struct mbuf *m" "struct m_tag *t"
-.Ft void
-.Fn m_tag_delete_nonpersistent "struct mbuf *"
+.Fn m_tag_delete_chain "struct mbuf *m"
 .Ft struct m_tag *
 .Fn m_tag_find "struct mbuf *m" "int type" "struct m_tag *t"
 .Ft struct m_tag *
 .Fn m_tag_copy "struct m_tag *m"
 .Ft int
 .Fn m_tag_copy_chain "struct mbuf *to" "struct mbuf *from"
-.Ft void
-.Fn m_tag_init "struct mbuf *m"
-.Ft struct m_tag *
-.Fn m_tag_first "struct mbuf *m"
-.Ft struct m_tag *
-.Fn m_tag_next "struct mbuf *m" "struct m_tag *t"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -129,21 +117,8 @@ The same as
 followed by
 .Fn m_tag_free .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn m_tag_delete_chain "m" "t"
-Unlink and free mbuf tags beginning with the mbuf tag
-.Fa t
-from the mbuf
-.Fa m .
-If
-.Fa t
-is
-.Dv NULL ,
-.Fn m_tag_delete_chain
-unlinks and frees all mbuf tags associated with the mbuf
-.Fa m .
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn m_tag_delete_nonpersistent "m"
-Unlink and free all non persistent tags associated with the mbuf
+.It Fn m_tag_delete_chain "m"
+Unlink and free mbuf tags from the mbuf
 .Fa m .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn m_tag_find "m" "type" "t"
@@ -179,28 +154,6 @@ If
 already has any mbuf tags, they will be unlinked and freed beforehand.
 Return 1 on success.
 Otherwise return 0.
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn m_tag_init "m"
-Initialize mbuf tag chain of the mbuf
-.Fa m .
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn m_tag_first "m"
-Return the first mbuf tag associated with the mbuf
-.Fa m .
-Return
-.Dv NULL
-if no mbuf tags are found.
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.It Fn m_tag_next "m" "t"
-Return the next mbuf tag after
-.Fa t
-associated with the mbuf
-.Fa m .
-Return
-.Dv NULL
-if
-.Fa t
-is the last tag in the chain.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .El
 .\" ------------------------------------------------------------
