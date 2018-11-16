@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.5 2018/11/12 12:56:05 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.6 2018/11/16 23:03:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5 2018/11/12 12:56:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6 2018/11/16 23:03:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +83,7 @@ ACPI_STATUS
 acpi_md_OsInstallInterruptHandler(UINT32 irq, ACPI_OSD_HANDLER handler, void *context,
     void **cookiep, const char *xname)
 {
-	const int ipl = IPL_TTY;
-	const int type = IST_LEVEL;	/* TODO: MADT */
-
-	*cookiep = intr_establish(irq, ipl, type, (int (*)(void *))handler, context);
-
-	return *cookiep == NULL ? AE_NO_MEMORY : AE_OK;
+	return AE_NOT_IMPLEMENTED;
 }
 
 void
@@ -198,6 +193,18 @@ void
 acpi_md_OsDisableInterrupt(void)
 {
 	cpsid(I32_bit);
+}
+
+void *
+acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *), void *arg, bool mpsafe, const char *xname)
+{
+	return intr_establish_xname(irq, ipl, type | (mpsafe ? IST_MPSAFE : 0), handler, arg, xname);
+}
+
+void
+acpi_md_intr_disestablish(void *ih)
+{
+	intr_disestablish(ih);
 }
 
 int
