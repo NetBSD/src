@@ -1,8 +1,8 @@
-#	$NetBSD: shlib_version,v 1.42 2017/01/02 12:38:16 roy Exp $
+#	$NetBSD: shlib_version,v 1.43 2018/11/16 10:12:00 blymn Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #	Remember to run `make fileio.h` when changing
 #	Remember to increment the major numbers of libform, libmenu and
 #	libpanel when the libcurses major number increments.
 #
 major=7
-minor=1
+minor=2
