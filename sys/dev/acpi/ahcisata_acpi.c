@@ -1,4 +1,4 @@
-/* $NetBSD: ahcisata_acpi.c,v 1.3 2018/10/15 18:58:35 jdolecek Exp $ */
+/* $NetBSD: ahcisata_acpi.c,v 1.4 2018/11/16 23:18:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_acpi.c,v 1.3 2018/10/15 18:58:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_acpi.c,v 1.4 2018/11/16 23:18:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_acpi.c,v 1.3 2018/10/15 18:58:35 jdolecek E
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <dev/pci/pcireg.h>
 
@@ -102,8 +103,8 @@ ahcisata_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_BIO, type, ahci_intr, sc);
+	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_BIO, false, ahci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;
