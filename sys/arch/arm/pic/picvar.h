@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.21 2018/11/09 23:34:20 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.22 2018/11/16 15:06:22 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,7 +75,7 @@ uint32_t pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	    uint32_t pending);
 #endif /* __HAVE_PIC_PENDING_INTRS */
 void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
-	    int (*func)(void *), void *arg);
+	    int (*func)(void *), void *arg, const char *);
 int	pic_alloc_irq(struct pic_softc *pic);
 void	pic_disestablish_source(struct intrsource *is);
 #ifdef MULTIPROCESSOR
@@ -87,6 +87,8 @@ void	pic_dispatch(struct intrsource *is, void *frame);
 
 void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 	    void *arg);
+void	*intr_establish_xname(int irq, int ipl, int type, int (*func)(void *),
+	    void *arg, const char *xname);
 void	intr_disestablish(void *);
 const char *intr_string(intr_handle_t, char *, size_t);
 #ifdef MULTIPROCESSOR
@@ -121,6 +123,7 @@ struct intrsource {
 	uint8_t is_iplidx;
 	bool is_mpsafe;
 	char is_source[16];
+	char *is_xname;
 };
 
 struct pic_percpu {

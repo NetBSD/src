@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.47 2018/11/13 20:24:48 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.48 2018/11/16 15:06:22 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.47 2018/11/13 20:24:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.48 2018/11/16 15:06:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -742,7 +742,7 @@ pic_percpu_evcnt_attach(void *v0, void *v1, struct cpu_info *ci)
 
 void *
 pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
-	int (*func)(void *), void *arg)
+	int (*func)(void *), void *arg, const char *xname)
 {
 	struct intrsource *is;
 	int off, nipl;
@@ -819,6 +819,14 @@ unblock:
 	(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
 	    __BIT(is->is_irq & 0x1f));
 
+	if (xname) {
+		if (is->is_xname == NULL)
+			is->is_xname = kmem_zalloc(INTRDEVNAMEBUF, KM_SLEEP);
+		if (is->is_xname[0] != '\0')
+			strlcat(is->is_xname, ", ", INTRDEVNAMEBUF);
+		strlcat(is->is_xname, xname, INTRDEVNAMEBUF);
+	}
+
 	/* We're done. */
 	return is;
 }
@@ -844,6 +852,10 @@ pic_disestablish_source(struct intrsource *is)
 	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
 	pic->pic_sources[irq] = NULL;
 	pic__iplsources[pic_ipl_offset[is->is_ipl] + is->is_iplidx] = NULL;
+	if (is->is_xname != NULL) {
+		kmem_free(is->is_xname, INTRDEVNAMEBUF);
+		is->is_xname = NULL;
+	}
 	/*
 	 * Now detach the per-cpu evcnts.
 	 */
@@ -855,6 +867,13 @@ pic_disestablish_source(struct intrsource *is)
 void *
 intr_establish(int irq, int ipl, int type, int (*func)(void *), void *arg)
 {
+	return intr_establish_xname(irq, ipl, type, func, arg, NULL);
+}
+
+void *
+intr_establish_xname(int irq, int ipl, int type, int (*func)(void *), void *arg,
+    const char *xname)
+{
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 
@@ -865,7 +884,7 @@ intr_establish(int irq, int ipl, int type, int (*func)(void *), void *arg)
 		if (pic->pic_irqbase <= irq
 		    && irq < pic->pic_irqbase + pic->pic_maxsources) {
 			return pic_establish_intr(pic, irq - pic->pic_irqbase,
-			    ipl, type, func, arg);
+			    ipl, type, func, arg, xname);
 		}
 	}
 
@@ -1000,7 +1019,15 @@ interrupt_get_available(kcpuset_t *cpuset)
 void
 interrupt_get_devname(const char *intrid, char *buf, size_t len)
 {
-	buf[0] = '\0';
+	struct intrsource *is;
+
+	mutex_enter(&cpu_lock);
+	is = intr_get_source(intrid);
+	if (is == NULL || is->is_xname == NULL)
+		buf[0] = '\0';
+	else
+		strlcpy(buf, is->is_xname, len);
+	mutex_exit(&cpu_lock);
 }
 
 struct interrupt_get_count_arg {
