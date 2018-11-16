@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2017/12/13 16:50:46 scole Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2018/11/16 19:46:52 jmcneill Exp $	*/
 
 /* XXX: cherry: To Be fixed when we switch on interrupts. */
 
@@ -72,6 +72,7 @@ typedef uint64_t intr_handle_t;
 const char *intr_string(intr_handle_t, char *, size_t);
 
 void *intr_establish(int, int, int, int (*)(void *), void *);
+void *intr_establish_xname(int, int, int, int (*)(void *), void *, const char *);
 void intr_disestablish(void *);
 void ia64_handle_intr(void *);
 
