@@ -1,4 +1,4 @@
-/* $NetBSD: makecontext.c,v 1.1 2014/08/10 05:47:36 matt Exp $ */
+/* $NetBSD: makecontext.c,v 1.2 2018/11/16 10:51:08 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1 2014/08/10 05:47:36 matt Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.2 2018/11/16 10:51:08 ryo Exp $");
 #endif
 
 #include <stddef.h>
@@ -63,9 +63,9 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	va_list ap;
 	va_start(ap, argc);
 
-	/* Pass up to four arguments in r0-3. */
+	/* Pass up to eight arguments in x0-x7. */
 	for (int i = 0; i < argc && i < 8; i++) {
-		gr[_REG_X0 + i] = va_arg(ap, int);
+		gr[_REG_X0 + i] = va_arg(ap, __greg_t);
 	}
 
 	/* Pass any additional arguments on the stack. */
