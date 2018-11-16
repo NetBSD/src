@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_acpi.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $ */
+/* $NetBSD: gtmr_acpi.c,v 1.2 2018/11/16 23:24:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_acpi.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_acpi.c,v 1.2 2018/11/16 23:24:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,7 @@ gtmr_acpi_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": irq %d\n", irq);
 
-	ih = intr_establish(irq, ipl, type | IST_MPSAFE, gtmr_intr, NULL);
+	ih = intr_establish_xname(irq, ipl, type | IST_MPSAFE, gtmr_intr, NULL, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;
