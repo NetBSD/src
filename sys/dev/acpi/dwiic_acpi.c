@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_acpi.c,v 1.1 2018/10/17 00:03:47 jmcneill Exp $ */
+/* $NetBSD: dwiic_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.1 2018/10/17 00:03:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.1 2018/10/17 00:03:47 jmcneill Exp 
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 #include <dev/acpi/acpi_i2c.h>
 
 #include <dev/ic/dwiic_var.h>
@@ -113,8 +114,8 @@ dwiic_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_VM, type, dwiic_intr, sc);
+	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_VM, true, dwiic_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, mem->ar_length);
