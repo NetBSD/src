@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.19 2018/03/20 12:14:52 bouyer Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.20 2018/11/16 23:03:55 jmcneill Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.19 2018/03/20 12:14:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20 2018/11/16 23:03:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,6 +263,27 @@ void
 acpi_md_OsRemoveInterruptHandler(void *cookie)
 {
 	intr_disestablish(cookie);
+}
+
+void *
+acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *),
+    void *arg, bool mpsafe, const char *xname)
+{
+	struct pic *pic;
+	int pin;
+
+	pic = intr_findpic(irq);
+	if (pic == NULL)
+		return NULL;
+	pin = irq - pic->pic_vecbase;
+
+	return intr_establish_xname(irq, pic, pin, type, ipl, handler, arg, mpsafe, xname);
+}
+
+void
+acpi_md_intr_disestablish(void *ih)
+{
+	intr_disestablish(ih);
 }
 
 ACPI_STATUS
