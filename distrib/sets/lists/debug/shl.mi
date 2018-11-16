@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.209 2018/09/23 13:36:04 christos Exp $
+# $NetBSD: shl.mi,v 1.210 2018/11/16 13:02:52 martin Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -82,7 +82,8 @@
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.12.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libctf.so.3.0.debug			comp-sys-debug	debug,compatfile,ctf
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug		comp-obsolete	debug,obsolete,compatfile
-./usr/libdata/debug/usr/lib/libcurses.so.7.1.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libcurses.so.7.1.debug		comp-obsolete	debug,obsolete,compatfile
+./usr/libdata/debug/usr/lib/libcurses.so.7.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdes.so.12.0.debug			comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libdes.so.14.0.debug			comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
