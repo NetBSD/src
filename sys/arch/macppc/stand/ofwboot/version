@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.13 2010/10/17 15:33:04 phx Exp $
+$NetBSD: version,v 1.14 2018/11/16 14:58:54 tsutsui Exp $
 
 1.1:		Initial revision from NetBSD/powerpc.
 1.2:		Use MI loadfile().
@@ -14,3 +14,4 @@ $NetBSD: version,v 1.13 2010/10/17 15:33:04 phx Exp $
 1.11:		Check floppyboot and disable LOAD_NOTE to avoid backward seek.
 1.12:		Read Apple Partition Map to find the root partition, when
 		no OF path was specified.
+1.13:		Fix boot failure of installation floppies
