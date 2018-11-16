@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.84 2015/06/03 14:07:05 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.85 2018/11/16 02:39:02 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -500,11 +500,6 @@ node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 		puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
 	}
 
-	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_NODELEAK) {
-		PERFUSE_NODE_DATA(pn)->pnd_flags &= ~PND_NODELEAK;
-		ps->ps_nodeleakcount--;
-	}
-
 	ps->ps_destroy_msg(pm);
 
 	return 0;
@@ -672,7 +667,7 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 					       "failed: %d", name, error);
 				} else {
 					fd->ino = pn->pn_va.va_fileid;
-					(void)perfuse_node_reclaim(pu, pn);
+					(void)perfuse_node_reclaim2(pu, pn, 1);
 				}
 			}
 		}
@@ -1135,7 +1130,7 @@ perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	case NAMEI_RENAME:
 		error = sticky_access(opc, pn, pcn->pcn_cred);
 		if (error != 0) {
-			(void)perfuse_node_reclaim(pu, pn);
+			(void)perfuse_node_reclaim2(pu, pn, 1);
 			goto out;
 		}
 		break;
@@ -1182,7 +1177,7 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 		error = node_lookup_common(pu, opc, NULL, pcn->pcn_name,
 					   pcn->pcn_cred, &pn);
 		if (error == 0)	{
-			(void)perfuse_node_reclaim(pu, pn);
+			(void)perfuse_node_reclaim2(pu, pn, 1);
 			error = EEXIST;
 			goto out;
 		}
@@ -2682,17 +2677,22 @@ out:
 }
 
 int 
-perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
+perfuse_node_reclaim2(struct puffs_usermount *pu,
+		      puffs_cookie_t opc, int nlookup)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
 	struct perfuse_node_data *pnd;
 	struct fuse_forget_in *ffi;
-	int nlookup;
-	struct timespec now;
 	
-	if (opc == 0)
+#ifdef PERFUSE_DEBUG
+		if (perfuse_diagflags & PDF_RECLAIM)
+			DPRINTF("%s called with opc = %p, nlookup = %d\n",
+				__func__, (void *)opc, nlookup);
+#endif
+	if (opc == 0 || nlookup == 0) {
 		return 0;
+	}
 
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
@@ -2703,43 +2703,23 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 	if (pnd->pnd_nodeid == FUSE_ROOT_ID)
 		return 0;
 
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_RECLAIM)
+		DPRINTF("%s (nodeid %"PRId64") reclaimed, nlookup = %d/%d\n", 
+			perfuse_node_path(ps, opc), pnd->pnd_nodeid,
+			nlookup, pnd->pnd_puffs_nlookup);
+#endif
 	/*
-	 * There is a race condition between reclaim and lookup.
-	 * When looking up an already known node, the kernel cannot
-	 * hold a reference on the result until it gets the PUFFS
-	 * reply. It mayy therefore reclaim the node after the 
-	 * userland looked it up, and before it gets the reply. 
-	 * On rely, the kernel re-creates the node, but at that 
-	 * time the node has been reclaimed in userland.
-	 *
-	 * In order to avoid this, we refuse reclaiming nodes that
-	 * are too young since the last lookup - and that we do 
-	 * not have removed on our own, of course. 
+	 * The kernel tells us how many lookups it made, which allows
+	 * us to detect that we have an uncompleted lookup and that the
+	 * node should not dispear.
 	 */
-	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
-		DERR(EX_OSERR, "clock_gettime failed"); 
-
-	if (timespeccmp(&pnd->pnd_cn_expire, &now, >) && 
-	    !(pnd->pnd_flags & PND_REMOVED)) {
-		if (!(pnd->pnd_flags & PND_NODELEAK)) {
-			ps->ps_nodeleakcount++;
-			pnd->pnd_flags |= PND_NODELEAK;
-		}
-		DWARNX("possible leaked node:: opc = %p \"%s\"",
-		       opc, pnd->pnd_name);
+	pnd->pnd_puffs_nlookup -= nlookup;
+	if (pnd->pnd_puffs_nlookup > 0)
 		return 0;
-	}
 
 	node_ref(opc);
 	pnd->pnd_flags |= PND_RECLAIMED;
-	pnd->pnd_puffs_nlookup--;
-	nlookup = pnd->pnd_puffs_nlookup;
-
-#ifdef PERFUSE_DEBUG
-	if (perfuse_diagflags & PDF_RECLAIM)
-		DPRINTF("%s (nodeid %"PRId64") reclaimed\n", 
-			perfuse_node_path(ps, opc), pnd->pnd_nodeid);
-#endif
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
@@ -2751,7 +2731,7 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 			pnd->pnd_flags & PND_OPEN ? "open " : "not open",
 			pnd->pnd_flags & PND_RFH ? "r" : "",
 			pnd->pnd_flags & PND_WFH ? "w" : "",
-			pnd->pnd_flags & PND_BUSY ? "" : " none",
+			pnd->pnd_flags & PND_BUSY ? " busy" : "",
 			pnd->pnd_flags & PND_INREADDIR ? " readdir" : "",
 			pnd->pnd_flags & PND_INWRITE ? " write" : "",
 			pnd->pnd_flags & PND_INOPEN ? " open" : "");
@@ -2768,17 +2748,6 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 	 */
 	while (pnd->pnd_ref > 1)
 		requeue_request(pu, opc, PCQ_REF);
-
-	/*
-	 * reclaim cancel?
-	 */
-	if (pnd->pnd_puffs_nlookup > nlookup) {
-		pnd->pnd_flags &= ~PND_RECLAIMED;
-		perfuse_node_cache(ps, opc);
-		node_rele(opc);
-		return 0;
-	}
-
 
 #ifdef PERFUSE_DEBUG
 	if ((pnd->pnd_flags & PND_OPEN) ||
@@ -2816,6 +2785,16 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 	perfuse_destroy_pn(pu, opc);
 
 	return 0;
+}
+
+int
+perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
+{
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_RECLAIM)
+		DPRINTF("perfuse_node_reclaim called\n");
+#endif
+	return perfuse_node_reclaim2(pu, opc, 1);
 }
 
 int 
