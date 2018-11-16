@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.16 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.17 2018/11/16 15:06:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,7 +117,7 @@ static int bcmpax_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 static const char *bcmpax_intr_string(void *, pci_intr_handle_t, char *, size_t);
 static const struct evcnt *bcmpax_intr_evcnt(void *, pci_intr_handle_t);
 static void *bcmpax_intr_establish(void *, pci_intr_handle_t, int,
-	   int (*)(void *), void *);
+	   int (*)(void *), void *, const char *);
 static void bcmpax_intr_disestablish(void *, void *);
 
 static int bcmpax_conf_hook(void *, int, int, int, pcireg_t);
@@ -570,7 +570,7 @@ bcmpax_intr_evcnt(void *v, pci_intr_handle_t pih)
 
 static void *
 bcmpax_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
-   int (*func)(void *), void *arg)
+   int (*func)(void *), void *arg, const char *xname)
 {
 	struct bcmpax_softc * const sc = v;
 

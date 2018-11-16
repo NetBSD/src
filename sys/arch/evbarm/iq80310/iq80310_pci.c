@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.14 2018/10/23 08:38:18 jmcneill Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.15 2018/11/16 15:06:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.14 2018/10/23 08:38:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.15 2018/11/16 15:06:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ int	iq80310_pci_intr_map(const struct pci_attach_args *,
 const char *iq80310_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *iq80310_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*iq80310_pci_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *);
+	    int, int (*func)(void *), void *, const char *);
 void	iq80310_pci_intr_disestablish(void *, void *);
 
 void
@@ -246,7 +246,7 @@ iq80310_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 void *
 iq80310_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 
 	return (iq80310_intr_establish(ih, ipl, func, arg));

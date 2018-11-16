@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.2 2018/11/10 11:46:31 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.3 2018/11/16 15:06:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.2 2018/11/10 11:46:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.3 2018/11/16 15:06:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -520,7 +520,7 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 
 static void *
 gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
-    pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg)
+    pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg, const char *xname)
 {
 	struct gicv3_its * const its = msi->msi_priv;
 	const struct pci_attach_args *pa;
@@ -530,7 +530,7 @@ gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
 	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
 	intrh = pic_establish_intr(its->its_pic, lpi - its->its_pic->pic_irqbase, ipl,
-	    IST_EDGE | mpsafe, func, arg);
+	    IST_EDGE | mpsafe, func, arg, xname);
 	if (intrh == NULL)
 		return NULL;
 

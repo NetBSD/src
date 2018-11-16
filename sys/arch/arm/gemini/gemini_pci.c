@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $");
 
 #include "opt_gemini.h"
 #include "opt_pci.h"
@@ -89,7 +89,7 @@ const char	*gemini_pci_intr_string(void *, pci_intr_handle_t,
 		    char *, size_t);
 const struct evcnt *gemini_pci_intr_evcnt(void *, pci_intr_handle_t);
 void		*gemini_pci_intr_establish(void *, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
+		    int, int (*)(void *), void *, const char *);
 void		gemini_pci_intr_disestablish(void *, void *);
 int		gemini_pci_intr_handler(void *v);
 
@@ -388,7 +388,7 @@ gemini_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 void *
 gemini_pci_intr_establish(void *v, pci_intr_handle_t pci_ih, int ipl,
-	int (*func)(void *), void *arg)
+	int (*func)(void *), void *arg, const char *xname)
 {
 	pcireg_t r;
 	void *ih=NULL;
@@ -402,8 +402,8 @@ gemini_pci_intr_establish(void *v, pci_intr_handle_t pci_ih, int ipl,
 	gemini_pci_conf_write(v, 0, GEMINI_PCI_CFG_REG_CTL2, r);
 
 	if (gemini_pci_intrq_empty())
-		ih = intr_establish(irq, ipl, IST_LEVEL_HIGH,
-			gemini_pci_intr_handler, v);
+		ih = intr_establish_xname(irq, ipl, IST_LEVEL_HIGH,
+			gemini_pci_intr_handler, v, xname);
 
 	cookie = gemini_pci_intrq_insert(ih, func, arg);
 	if (cookie == NULL) {

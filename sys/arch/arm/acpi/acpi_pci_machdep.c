@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.7 2018/11/03 12:03:05 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.8 2018/11/16 15:06:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.7 2018/11/03 12:03:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.8 2018/11/16 15:06:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,7 +88,8 @@ static const struct evcnt *acpi_pci_md_intr_evcnt(void *, pci_intr_handle_t);
 static int	acpi_pci_md_intr_setattr(void *, pci_intr_handle_t *, int,
 					uint64_t);
 static void *	acpi_pci_md_intr_establish(void *, pci_intr_handle_t,
-					 int, int (*)(void *), void *);
+					 int, int (*)(void *), void *,
+					 const char *);
 static void	acpi_pci_md_intr_disestablish(void *, void *);
 
 struct arm32_pci_chipset arm_acpi_pci_chipset = {
@@ -381,17 +382,17 @@ acpi_pci_md_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data
 
 static void *
 acpi_pci_md_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*callback)(void *), void *arg)
+    int (*callback)(void *), void *arg, const char *xname)
 {
 	struct acpi_pci_context * const ap = v;
 
 	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
-		return arm_pci_msi_intr_establish(&ap->ap_pc, ih, ipl, callback, arg);
+		return arm_pci_msi_intr_establish(&ap->ap_pc, ih, ipl, callback, arg, xname);
 
 	const int irq = (int)__SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
 	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
-	return intr_establish(irq, ipl, IST_LEVEL | mpsafe, callback, arg);
+	return intr_establish_xname(irq, ipl, IST_LEVEL | mpsafe, callback, arg, xname);
 }
 
 static void
