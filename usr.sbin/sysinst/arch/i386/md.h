@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2018/11/07 21:20:23 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2018/11/16 19:54:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,10 +48,12 @@
 /* constants and defines */
 #define	DEFUSRSIZE	0
 #define	DEFSWAPSIZE	(-1)
-#define	DEFROOTSIZE	32
+#define	DEFROOTSIZE	90
 
 /* Megs required for a full X installation. */
-#define XNEEDMB 50
+#define XNEEDMB 250
+
+#define DEBNEEDMB	1024	 /* Extra megs for debug sets */
 
 /* use UFS2 by default for ffs */
 #define	DEFAULT_UFS2

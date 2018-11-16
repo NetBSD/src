@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/16 19:54:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,7 +51,8 @@
 #define	SYSVBFS_SIZE	ews4800mips_sysvbfs_size()
 
 #define	DEFROOTSIZE	200	/* Default root size */
-#define	XNEEDMB		100	/* Extra megs for full X installation */
+#define	XNEEDMB		250	/* Extra megs for full X installation */
+#define DEBNEEDMB	900	/* Extra megs for debug sets */
 
 #define	SET_KERNEL_1_NAME	"kern-GENERIC"
 
