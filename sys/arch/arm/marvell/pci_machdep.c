@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.13 2018/11/03 17:26:41 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.14 2018/11/16 15:06:22 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2018/11/03 17:26:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2018/11/16 15:06:22 jmcneill Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -73,7 +73,7 @@ static int gtpci_gpp_intr_map(const struct pci_attach_args *,
 static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t,
     char *, size_t);
 static const struct evcnt *gtpci_gpp_intr_evcnt(void *, pci_intr_handle_t);
-static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *), void *);
+static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *), void *, const char *);
 static void gtpci_gpp_intr_disestablish(void *, void *);
 
 struct arm32_pci_chipset arm32_gtpci_chipset = {
@@ -381,7 +381,7 @@ gtpci_gpp_intr_evcnt(void *v, pci_intr_handle_t pin)
 
 static void *
 gtpci_gpp_intr_establish(void *v, pci_intr_handle_t int_pin, int ipl,
-		         int (*intrhand)(void *), void *intrarg)
+		         int (*intrhand)(void *), void *intrarg, const char *xname)
 {
 	struct gtpci_softc *sc = v;
 	prop_array_t int2gpp;

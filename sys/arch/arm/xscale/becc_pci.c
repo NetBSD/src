@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -80,7 +80,7 @@ const char	*becc_pci_intr_string(void *, pci_intr_handle_t,
 		    char *, size_t);
 const struct evcnt *becc_pci_intr_evcnt(void *, pci_intr_handle_t);
 void		*becc_pci_intr_establish(void *, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
+		    int, int (*)(void *), void *, const char *);
 void		becc_pci_intr_disestablish(void *, void *);
 
 #define	PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
@@ -394,7 +394,7 @@ becc_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 void *
 becc_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 
 	return (becc_intr_establish(ih, ipl, func, arg));
