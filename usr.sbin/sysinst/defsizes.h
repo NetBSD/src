@@ -1,4 +1,4 @@
-/*	$NetBSD: defsizes.h,v 1.1 2018/11/15 10:34:21 martin Exp $	*/
+/*	$NetBSD: defsizes.h,v 1.2 2018/11/16 19:54:03 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -43,10 +43,10 @@
 #define DEFVARSIZE	32
 #endif
 #ifndef DEFROOTSIZE
-#define DEFROOTSIZE	32
+#define DEFROOTSIZE	40
 #endif
 #ifndef DEFUSRSIZE
-#define DEFUSRSIZE	128
+#define DEFUSRSIZE	800
 #endif
 #ifndef DEFSWAPSIZE
 #define DEFSWAPSIZE	128
