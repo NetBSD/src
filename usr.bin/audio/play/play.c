@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.55 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.56 2018/11/16 13:55:17 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.55 2015/08/05 06:54:39 mrg Exp $");
+__RCSID("$NetBSD: play.c,v 1.56 2018/11/16 13:55:17 mlelstv Exp $");
 #endif
 
 
@@ -248,7 +248,7 @@ play(char *file)
 	 * or if we failed to mmap the file, try to read it instead, so
 	 * that filesystems, etc, that do not support mmap() work
 	 */
-	if (S_ISREG(sb.st_rdev & S_IFMT) == 0 || 
+	if (!S_ISREG(sb.st_mode) || 
 	    ((off_t)sizet_filesize != filesize) ||
 	    (oaddr = addr = mmap(0, sizet_filesize, PROT_READ,
 	    MAP_SHARED, fd, 0)) == MAP_FAILED) {
