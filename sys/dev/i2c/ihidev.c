@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.6 2018/11/15 23:01:45 jakllsch Exp $ */
+/* $NetBSD: ihidev.c,v 1.7 2018/11/16 23:05:50 jmcneill Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.6 2018/11/15 23:01:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.7 2018/11/16 23:05:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ CFATTACH_DECL_NEW(ihidev, sizeof(struct ihidev_softc),
 static bool	ihidev_suspend(device_t, const pmf_qual_t *);
 static bool	ihidev_resume(device_t, const pmf_qual_t *);
 static int	ihidev_hid_command(struct ihidev_softc *, int, void *, bool);
-static unsigned int ihidev_intr(void *);
+static int	ihidev_intr(void *);
 static int	ihidev_reset(struct ihidev_softc *, bool);
 static int	ihidev_hid_desc_parse(struct ihidev_softc *);
 
@@ -208,8 +208,8 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 	{
 		char buf[100];
 
-		sc->sc_ih = acpi_intr_establish(self,
-		    sc->sc_phandle, ihidev_intr, sc, device_xname(self));
+		sc->sc_ih = acpi_intr_establish(self, sc->sc_phandle, IPL_TTY,
+		    false, ihidev_intr, sc, device_xname(self));
 		if (sc->sc_ih == NULL)
 			aprint_error_dev(self, "can't establish interrupt\n");
 		aprint_normal_dev(self, "interrupting at %s\n",
@@ -264,7 +264,7 @@ ihidev_detach(device_t self, int flags)
 	mutex_enter(&sc->sc_intr_lock);
 #if NACPICA > 0
 	if (sc->sc_ih != NULL)
-		acpi_intr_disestablish(sc->sc_ih, ihidev_intr);
+		acpi_intr_disestablish(sc->sc_ih);
 #endif
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER,
 	    &I2C_HID_POWER_OFF, true))
@@ -651,7 +651,7 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 	return (0);
 }
 
-static unsigned int
+static int
 ihidev_intr(void *arg)
 {
 	struct ihidev_softc *sc = arg;

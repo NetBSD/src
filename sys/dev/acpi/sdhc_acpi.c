@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.5 2018/05/08 03:27:17 mlelstv Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.6 2018/11/16 23:05:50 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.5 2018/05/08 03:27:17 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.6 2018/11/16 23:05:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.5 2018/05/08 03:27:17 mlelstv Exp $"
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
@@ -53,7 +54,7 @@ struct sdhc_acpi_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	bus_size_t sc_memsize;
-	int sc_irq;
+	void *sc_ih;
 
 	ACPI_HANDLE sc_crs, sc_srs;
 	ACPI_BUFFER sc_crs_buffer;
@@ -62,7 +63,6 @@ struct sdhc_acpi_softc {
 CFATTACH_DECL_NEW(sdhc_acpi, sizeof(struct sdhc_acpi_softc),
     sdhc_acpi_match, sdhc_acpi_attach, sdhc_acpi_detach, NULL);
 
-static uint32_t	sdhc_acpi_intr(void *);
 static void	sdhc_acpi_intel_emmc_hw_reset(struct sdhc_softc *,
 		    struct sdhc_host *);
 
@@ -140,7 +140,6 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	sc->sc.sc_dmat = aa->aa_dmat;
 	sc->sc.sc_host = NULL;
 	sc->sc_memt = aa->aa_memt;
-	sc->sc_irq = -1;
 
 	slot = sdhc_acpi_find_slot(aa->aa_node->ad_devinfo);
 	if (slot->type == SLOT_TYPE_EMMC)
@@ -180,14 +179,13 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 		goto cleanup;
 	}
 
-	/* XXX acpi_intr_establish? */
-	rv = AcpiOsInstallInterruptHandler(irq->ar_irq, sdhc_acpi_intr, sc);
-	if (ACPI_FAILURE(rv)) {
+	sc->sc_ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_BIO, false, sdhc_intr, &sc->sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self,
 		    "couldn't establish interrupt handler\n");
 		goto unmap;
 	}
-	sc->sc_irq = irq->ar_irq;
 
 	sc->sc.sc_host = kmem_zalloc(sizeof(struct sdhc_host *), KM_NOSLEEP);
 	if (sc->sc.sc_host == NULL) {
@@ -217,10 +215,9 @@ fail:
 		kmem_free(sc->sc.sc_host, sizeof(struct sdhc_host *));
 	sc->sc.sc_host = NULL;
 intr_disestablish:
-	if (sc->sc_irq >= 0)
-		/* XXX acpi_intr_disestablish? */
-		AcpiOsRemoveInterruptHandler(sc->sc_irq, sdhc_acpi_intr);
-	sc->sc_irq = -1;
+	if (sc->sc_ih != NULL)
+		acpi_intr_disestablish(sc->sc_ih);
+	sc->sc_ih = NULL;
 unmap:
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsize);
 	sc->sc_memsize = 0;
@@ -243,9 +240,8 @@ sdhc_acpi_detach(device_t self, int flags)
 	if (rv)
 		return rv;
 
-	if (sc->sc_irq >= 0)
-		/* XXX acpi_intr_disestablish? */
-		AcpiOsRemoveInterruptHandler(sc->sc_irq, sdhc_acpi_intr);
+	if (sc->sc_ih != NULL)
+		acpi_intr_disestablish(sc->sc_ih);
 
 	if (sc->sc.sc_host != NULL)
 		kmem_free(sc->sc.sc_host, sizeof(struct sdhc_host *));
@@ -273,16 +269,6 @@ sdhc_acpi_resume(device_t self, const pmf_qual_t *qual)
 	}
 
 	return sdhc_resume(self, qual);
-}
-
-static uint32_t
-sdhc_acpi_intr(void *context)
-{
-	struct sdhc_acpi_softc *sc = context;
-
-	if (!sdhc_intr(&sc->sc))
-		return ACPI_INTERRUPT_NOT_HANDLED;
-	return ACPI_INTERRUPT_HANDLED;
 }
 
 static void

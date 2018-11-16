@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.13 2018/10/12 23:25:29 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.14 2018/11/16 23:05:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.13 2018/10/12 23:25:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.14 2018/11/16 23:05:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.13 2018/10/12 23:25:29 jmcneill Exp 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
+
+#include <machine/acpi_machdep.h>
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi_util")
@@ -550,18 +552,19 @@ out:
 struct acpi_irq_handler {
 	ACPI_HANDLE aih_hdl;
 	uint32_t aih_irq;
-	int (*aih_intr)(void *);
+	void *aih_ih;
 };
 
 void *
-acpi_intr_establish(device_t dev, uint64_t c,
-    unsigned int (*intr)(void *), void *iarg, const char *xname)
+acpi_intr_establish(device_t dev, uint64_t c, int ipl, bool mpsafe,
+    int (*intr)(void *), void *iarg, const char *xname)
 {
 	ACPI_STATUS rv;
 	ACPI_HANDLE hdl = (void *)(uintptr_t)c;
 	struct acpi_resources res;
 	struct acpi_irq *irq;
 	struct acpi_irq_handler *aih = NULL;
+	void *ih;
 
 	rv = acpi_resource_parse(dev, hdl, "_CRS", &res,
 	    &acpi_resource_parse_ops_quiet);
@@ -572,30 +575,28 @@ acpi_intr_establish(device_t dev, uint64_t c,
 	if (irq == NULL)
 		goto end;
 
-	aih = kmem_alloc(sizeof(struct acpi_irq_handler), KM_NOSLEEP);
-	if (aih == NULL)
+	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
+	ih = acpi_md_intr_establish(irq->ar_irq, ipl, type, intr, iarg, mpsafe, xname);
+	if (ih == NULL)
 		goto end;
 
+	aih = kmem_alloc(sizeof(struct acpi_irq_handler), KM_SLEEP);
 	aih->aih_hdl = hdl;
 	aih->aih_irq = irq->ar_irq;
-	rv = AcpiOsInstallInterruptHandler_xname(irq->ar_irq, intr, iarg, xname);
-	if (ACPI_FAILURE(rv)) {
-		kmem_free(aih, sizeof(struct acpi_irq_handler));
-		aih = NULL;
-	}
+	aih->aih_ih = ih;
+
 end:
 	acpi_resource_cleanup(&res);
 	return aih;
 }
 
 void
-acpi_intr_disestablish(void *c, unsigned int (*intr)(void *))
+acpi_intr_disestablish(void *c)
 {
 	struct acpi_irq_handler *aih = c;
 
-	AcpiOsRemoveInterruptHandler(aih->aih_irq, intr);
+	acpi_md_intr_disestablish(aih->aih_ih);
 	kmem_free(aih, sizeof(struct acpi_irq_handler));
-	return;
 }
 
 const char *
