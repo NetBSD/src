@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.8 2017/12/13 16:50:46 scole Exp $ */
+/* $NetBSD: interrupt.c,v 1.9 2018/11/16 19:46:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2017/12/13 16:50:46 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2018/11/16 19:46:52 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -254,6 +254,14 @@ ia64_intr_unmask(void *arg)
 		sapic_unmask(i->sapic, i->irq);
 }
 #endif
+
+void *
+intr_establish_xname(int irq, int type, int level, int (*func)(void *),
+    void *arg, const char *xname)
+{
+	/* TODO: xname support */
+	return intr_establish(irq, type, level, func, arg);
+}
 
 void *
 intr_establish(int irq, int type, int level, int (*func)(void *), void *arg)
