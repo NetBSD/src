@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.7 2018/03/20 12:14:52 bouyer Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.8 2018/11/16 23:03:55 jmcneill Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
  * Machine-dependent routines for ACPICA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7 2018/03/20 12:14:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2018/11/16 23:03:55 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -74,29 +74,34 @@ acpi_md_OsGetRootPointer(void)
 	return acpi_root_phys;
 }
 
-ACPI_STATUS
-acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
-				  ACPI_OSD_HANDLER ServiceRoutine,
-				  void *Context, void **cookiep,
-				  const char *xname)
+static int
+acpi_isa_irq_to_vector(UINT32 irq)
 {
 	static int isa_irq_to_vector_map[16] = {
 	        /* i8259 IRQ translation, first 16 entries */
 		0x2f, 0x20, 0x2e, 0x2d, 0x2c, 0x2b, 0x2a, 0x29,
 		0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21,
 	};
-	int irq;
-	void *ih;
 
-	if (has_i8259 && InterruptNumber < 16)
-		irq = isa_irq_to_vector_map[InterruptNumber];
-	else
-		irq = InterruptNumber;
+	if (has_i8259 && irq < 16)
+		return isa_irq_to_vector_map[InterruptNumber];
+
+	return irq;
+}
+
+ACPI_STATUS
+acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
+				  ACPI_OSD_HANDLER ServiceRoutine,
+				  void *Context, void **cookiep,
+				  const char *xname)
+{
+	const int vec = acpi_isa_irq_to_vector(irq);
+	void *ih;
 
 	/*
 	 * XXX probably, IPL_BIO is enough.
 	 */
-	ih = intr_establish(irq, IST_LEVEL, IPL_TTY,
+	ih = intr_establish(vec, IST_LEVEL, IPL_TTY,
 	    (int (*)(void *)) ServiceRoutine, Context);
 	if (ih == NULL)
 		return AE_NO_MEMORY;
@@ -109,6 +114,21 @@ acpi_md_OsRemoveInterruptHandler(void *cookie)
 {
 
 	intr_disestablish(cookie);
+}
+
+void *
+acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *),
+    void *arg, bool mpsafe, const char *xname)
+{
+	const int vec = acpi_isa_irq_to_vector(irq);
+
+	return intr_establish(vec, type, ipl, handler, arg);
+}
+
+void
+acpi_md_intr_disestablish(void *ih)
+{
+	intr_disestablish(ih);
 }
 
 ACPI_STATUS
