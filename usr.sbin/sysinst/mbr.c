@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.7 2018/11/15 10:34:21 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.8 2018/11/16 19:55:18 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1283,7 +1283,7 @@ edit_mbr(mbr_info_t *mbri)
 		char min_size[5], build_size[5];
 
 		humanize_number(min_size, sizeof(min_size),
-		    3 * m_size * 1024*1024UL,
+		    2 * m_size * 1024*1024UL,
 		    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 		humanize_number(build_size, sizeof(build_size),
 		     SYSTEM_BUILD_SIZE * 1024 * 1024UL, "", HN_AUTOSCALE,
