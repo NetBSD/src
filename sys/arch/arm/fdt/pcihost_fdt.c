@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.4 2018/11/16 15:06:21 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.5 2018/11/16 19:32:01 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.4 2018/11/16 15:06:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.5 2018/11/16 19:32:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,7 +118,7 @@ static int	pcihost_intr_map(const struct pci_attach_args *,
 				    pci_intr_handle_t *);
 static const char *pcihost_intr_string(void *, pci_intr_handle_t,
 					  char *, size_t);
-const struct evcnt *pcihost_intr_evcnt(void *, pci_intr_handle_t);
+static const struct evcnt *pcihost_intr_evcnt(void *, pci_intr_handle_t);
 static int	pcihost_intr_setattr(void *, pci_intr_handle_t *, int,
 					uint64_t);
 static void *	pcihost_intr_establish(void *, pci_intr_handle_t,
