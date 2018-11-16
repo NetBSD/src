@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.15 2018/11/02 15:01:18 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.16 2018/11/16 15:06:22 jmcneill Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -104,7 +104,7 @@ struct arm32_pci_chipset {
 	int		(*pc_intr_setattr)(void *, pci_intr_handle_t *,
 			    int, uint64_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
-			    int, int (*)(void *), void *);
+			    int, int (*)(void *), void *, const char *);
 	void		(*pc_intr_disestablish)(void *, void *);
 
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -159,7 +159,7 @@ struct arm32_pci_chipset {
 #define	pci_intr_evcnt(c, ih)						\
     (*(c)->pc_intr_evcnt)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\
-    (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
+    (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), NULL)
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -176,6 +176,13 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ihp,
 	if (!pc->pc_intr_setattr)
 		return ENODEV;
 	return pc->pc_intr_setattr(pc, ihp, attr, data);
+}
+
+static inline void *
+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg, const char *xname)
+{
+	return pc->pc_intr_establish(pc->pc_intr_v, ih, level, func, arg, xname);
 }
 
 #ifdef __HAVE_PCI_MSI_MSIX
