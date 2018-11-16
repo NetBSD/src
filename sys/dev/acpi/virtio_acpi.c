@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.1 2018/10/21 12:26:38 jmcneill Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.1 2018/10/21 12:26:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,12 +39,14 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.1 2018/10/21 12:26:38 jmcneill Exp
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #define	VIRTIO_PRIVATE
 #include <dev/virtio/virtio_mmiovar.h>
 
 struct virtio_acpi_softc {
 	struct virtio_mmio_softc	sc_msc;
+	ACPI_HANDLE			sc_handle;
 	int				sc_irq;
 	int				sc_irqtype;
 };
@@ -90,6 +92,7 @@ virtio_acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 	int error;
 
+	sc->sc_handle = aa->aa_node->ad_handle;
 	msc->sc_iot = aa->aa_memt;
 	vsc->sc_dev = self;
 	vsc->sc_dmat = aa->aa_dmat;
@@ -164,7 +167,8 @@ virtio_acpi_setup_interrupts(struct virtio_mmio_softc *msc)
 	struct virtio_acpi_softc * const sc = (struct virtio_acpi_softc *)msc;
 	struct virtio_softc * const vsc = &msc->sc_sc;
 
-	msc->sc_ih = intr_establish(sc->sc_irq, IPL_VM, sc->sc_irqtype, virtio_mmio_intr, msc);
+	msc->sc_ih = acpi_intr_establish(vsc->sc_dev, (uint64_t)sc->sc_handle,
+            IPL_VM, false, virtio_mmio_intr, msc, device_xname(vsc->sc_dev));
 	if (msc->sc_ih == NULL) {
 		aprint_error_dev(vsc->sc_dev, "couldn't install interrupt handler\n");
 		return -1;
@@ -179,7 +183,7 @@ static void
 virtio_acpi_free_interrupts(struct virtio_mmio_softc *msc)
 {
 	if (msc->sc_ih != NULL) {
-		intr_disestablish(msc->sc_ih);
+		acpi_intr_disestablish(msc->sc_ih);
 		msc->sc_ih = NULL;
 	}
 }

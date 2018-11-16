@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_acpi.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $ */
+/* $NetBSD: plcom_acpi.c,v 1.2 2018/11/16 23:18:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_acpi.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_acpi.c,v 1.2 2018/11/16 23:18:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom_acpi.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp 
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>
@@ -109,8 +110,8 @@ plcom_acpi_attach(device_t parent, device_t self, void *aux)
 
 	plcom_attach_subr(sc);
 
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_SERIAL, type | IST_MPSAFE, plcomintr, sc);
+	ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_SERIAL, true, plcomintr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't install interrupt handler\n");
 		return;

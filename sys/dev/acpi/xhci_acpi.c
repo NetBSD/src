@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.1 2018/10/26 23:33:38 jmcneill Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.1 2018/10/26 23:33:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.1 2018/10/26 23:33:38 jmcneill Exp $
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 #include <dev/acpi/acpi_usb.h>
 
 static const char * const compatible[] = {
@@ -113,7 +114,7 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	irq = acpi_res_irq(&res, 0);
-	if (mem == NULL) {
+	if (irq == NULL) {
 		aprint_error_dev(self, "couldn't find irq resource\n");
 		goto done;
 	}
@@ -126,8 +127,8 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_USB, type, xhci_intr, sc);
+        ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	    IPL_USB, true, xhci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
