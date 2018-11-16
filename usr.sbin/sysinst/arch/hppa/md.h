@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/16 19:54:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,8 +49,9 @@
 #define DEFSWAPRAM	64	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
-#define DEFUSRSIZE	240	/* Default /usr size, if /home */
-#define XNEEDMB		80	/* Extra megs for full X installation */
+#define DEFUSRSIZE	700	/* Default /usr size, if /home */
+#define XNEEDMB		250	/* Extra megs for full X installation */
+#define DEBNEEDMB	850	/* Extra megs for debug sets */
 
 /* have support for booting from UFS2 */
 #define HAVE_UFS2_BOOT
