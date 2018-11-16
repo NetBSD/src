@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.16 2018/04/20 10:39:37 roy Exp $	*/
+/*	$NetBSD: dump.c,v 1.17 2018/11/16 08:57:10 ozaki-r Exp $	*/
 /*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
@@ -138,23 +138,23 @@ if_dump(void)
 		if (rai->advlinkopt)
 			fprintf(fp, "  Link-layer address: %s\n",
 			    ether_str(rai->sdl));
-		fprintf(fp, "  MTU: %d\n", rai->phymtu);
+		fprintf(fp, "  MTU: %u\n", rai->phymtu);
 
 		/* Router configuration variables */
-		fprintf(fp, "  DefaultLifetime: %d, MaxAdvInterval: %d, "
-		    "MinAdvInterval: %d\n", rai->lifetime, rai->maxinterval,
+		fprintf(fp, "  DefaultLifetime: %u, MaxAdvInterval: %u, "
+		    "MinAdvInterval: %u\n", rai->lifetime, rai->maxinterval,
 		    rai->mininterval);
 		fprintf(fp, "  Flags: %s%s%s, ",
 		    rai->managedflg ? "M" : "", rai->otherflg ? "O" : "",
 		    "");
 		fprintf(fp, "Preference: %s, ",
 			rtpref_str[(rai->rtpref >> 3) & 0xff]);
-		fprintf(fp, "MTU: %d\n", rai->linkmtu);
-		fprintf(fp, "  ReachableTime: %d, RetransTimer: %d, "
-			"CurHopLimit: %d\n", rai->reachabletime,
+		fprintf(fp, "MTU: %u\n", rai->linkmtu);
+		fprintf(fp, "  ReachableTime: %u, RetransTimer: %u, "
+			"CurHopLimit: %u\n", rai->reachabletime,
 			rai->retranstimer, rai->hoplimit);
 		if (rai->clockskew)
-			fprintf(fp, "  Clock skew: %dsec\n",
+			fprintf(fp, "  Clock skew: %usec\n",
 			    rai->clockskew);
 		TAILQ_FOREACH(pfx, &rai->prefix, next) {
 			if (pfx == TAILQ_FIRST(&rai->prefix))
@@ -176,8 +176,7 @@ if_dump(void)
 			if (pfx->validlifetime == ND6_INFINITE_LIFETIME)
 				fprintf(fp, "vltime: infinity");
 			else
-				fprintf(fp, "vltime: %ld",
-					(long)pfx->validlifetime);
+				fprintf(fp, "vltime: %u", pfx->validlifetime);
 			if (pfx->vltimeexpire != 0)
 				fprintf(fp, "(decr,expire %lld), ", (long long)
 					(pfx->vltimeexpire > now.tv_sec ?
@@ -187,8 +186,7 @@ if_dump(void)
 			if (pfx->preflifetime ==  ND6_INFINITE_LIFETIME)
 				fprintf(fp, "pltime: infinity");
 			else
-				fprintf(fp, "pltime: %ld",
-					(long)pfx->preflifetime);
+				fprintf(fp, "pltime: %u", pfx->preflifetime);
 			if (pfx->pltimeexpire != 0)
 				fprintf(fp, "(decr,expire %lld), ", (long long)
 					(pfx->pltimeexpire > now.tv_sec ?
