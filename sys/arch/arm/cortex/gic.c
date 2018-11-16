@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.37 2018/09/10 19:43:58 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.38 2018/11/16 23:25:09 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.37 2018/09/10 19:43:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.38 2018/11/16 23:25:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -677,35 +677,35 @@ armgic_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 #ifdef __HAVE_PIC_FAST_SOFTINTS
-	intr_establish(SOFTINT_BIO, IPL_SOFTBIO, IST_MPSAFE | IST_EDGE,
-	    pic_handle_softint, (void *)SOFTINT_BIO);
-	intr_establish(SOFTINT_CLOCK, IPL_SOFTCLOCK, IST_MPSAFE | IST_EDGE,
-	    pic_handle_softint, (void *)SOFTINT_CLOCK);
-	intr_establish(SOFTINT_NET, IPL_SOFTNET, IST_MPSAFE | IST_EDGE,
-	    pic_handle_softint, (void *)SOFTINT_NET);
-	intr_establish(SOFTINT_SERIAL, IPL_SOFTSERIAL, IST_MPSAFE | IST_EDGE,
-	    pic_handle_softint, (void *)SOFTINT_SERIAL);
+	intr_establish_xname(SOFTINT_BIO, IPL_SOFTBIO, IST_MPSAFE | IST_EDGE,
+	    pic_handle_softint, (void *)SOFTINT_BIO, "softint bio");
+	intr_establish_xname(SOFTINT_CLOCK, IPL_SOFTCLOCK, IST_MPSAFE | IST_EDGE,
+	    pic_handle_softint, (void *)SOFTINT_CLOCK, "softint clock");
+	intr_establish_xname(SOFTINT_NET, IPL_SOFTNET, IST_MPSAFE | IST_EDGE,
+	    pic_handle_softint, (void *)SOFTINT_NET, "softint net");
+	intr_establish_xname(SOFTINT_SERIAL, IPL_SOFTSERIAL, IST_MPSAFE | IST_EDGE,
+	    pic_handle_softint, (void *)SOFTINT_SERIAL, "softint serial");
 #endif
 #ifdef MULTIPROCESSOR
 	armgic_cpu_init(&sc->sc_pic, curcpu());
 
-	intr_establish(ARMGIC_SGI_IPIBASE + IPI_AST, IPL_VM,
-	    IST_MPSAFE | IST_EDGE, pic_ipi_ast, (void *)-1);
-	intr_establish(ARMGIC_SGI_IPIBASE + IPI_XCALL, IPL_HIGH,
-	    IST_MPSAFE | IST_EDGE, pic_ipi_xcall, (void *)-1);
-	intr_establish(ARMGIC_SGI_IPIBASE + IPI_GENERIC, IPL_HIGH,
-	    IST_MPSAFE | IST_EDGE, pic_ipi_generic, (void *)-1);
-	intr_establish(ARMGIC_SGI_IPIBASE + IPI_NOP, IPL_VM,
-	    IST_MPSAFE | IST_EDGE, pic_ipi_nop, (void *)-1);
-	intr_establish(ARMGIC_SGI_IPIBASE + IPI_SHOOTDOWN, IPL_SCHED,
-	    IST_MPSAFE | IST_EDGE, pic_ipi_shootdown, (void *)-1);
+	intr_establish_xname(ARMGIC_SGI_IPIBASE + IPI_AST, IPL_VM,
+	    IST_MPSAFE | IST_EDGE, pic_ipi_ast, (void *)-1, "IPI ast");
+	intr_establish_xname(ARMGIC_SGI_IPIBASE + IPI_XCALL, IPL_HIGH,
+	    IST_MPSAFE | IST_EDGE, pic_ipi_xcall, (void *)-1, "IPI xcall");
+	intr_establish_xname(ARMGIC_SGI_IPIBASE + IPI_GENERIC, IPL_HIGH,
+	    IST_MPSAFE | IST_EDGE, pic_ipi_generic, (void *)-1, "IPI generic");
+	intr_establish_xname(ARMGIC_SGI_IPIBASE + IPI_NOP, IPL_VM,
+	    IST_MPSAFE | IST_EDGE, pic_ipi_nop, (void *)-1, "IPI nop");
+	intr_establish_xname(ARMGIC_SGI_IPIBASE + IPI_SHOOTDOWN, IPL_SCHED,
+	    IST_MPSAFE | IST_EDGE, pic_ipi_shootdown, (void *)-1, "IPI shootdown");
 #ifdef DDB
-	intr_establish(ARMGIC_SGI_IPIBASE + IPI_DDB, IPL_HIGH,
-	    IST_MPSAFE | IST_EDGE, pic_ipi_ddb, NULL);
+	intr_establish_xname(ARMGIC_SGI_IPIBASE + IPI_DDB, IPL_HIGH,
+	    IST_MPSAFE | IST_EDGE, pic_ipi_ddb, NULL, "IPI ddb");
 #endif
 #ifdef __HAVE_PREEMPTION
-	intr_establish(ARMGIC_SGI_IPIBASE + IPI_KPREEMPT, IPL_VM,
-	    IST_MPSAFE | IST_EDGE, pic_ipi_kpreempt, (void *)-1);
+	intr_establish_xname(ARMGIC_SGI_IPIBASE + IPI_KPREEMPT, IPL_VM,
+	    IST_MPSAFE | IST_EDGE, pic_ipi_kpreempt, (void *)-1, "IPI kpreempt");
 #endif
 #endif
 
