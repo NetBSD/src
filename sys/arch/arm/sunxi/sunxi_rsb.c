@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.5 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.6 2018/11/17 19:30:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.5 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.6 2018/11/17 19:30:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,6 +90,7 @@ struct sunxi_rsb_softc {
 	device_t sc_i2cdev;
 	void *sc_ih;
 	uint32_t sc_stat;
+	bool sc_busy;
 
 	uint16_t sc_rsb_last_da;
 };
@@ -326,7 +327,13 @@ sunxi_rsb_acquire_bus(void *priv, int flags)
 {
 	struct sunxi_rsb_softc *sc = priv;
 
-	mutex_enter(&sc->sc_lock);
+	for (;;) {
+		mutex_enter(&sc->sc_lock);
+		if (sc->sc_busy == false)
+			break;
+		mutex_exit(&sc->sc_lock);
+	}
+	sc->sc_busy = true;
 
 	return 0;
 }
@@ -336,6 +343,7 @@ sunxi_rsb_release_bus(void *priv, int flags)
 {
 	struct sunxi_rsb_softc *sc = priv;
 
+	sc->sc_busy = false;
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -349,6 +357,7 @@ sunxi_rsb_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	int error, i;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_busy == true);
 
 	if (cmdlen != 1 || (len != 1 && len != 2 && len != 4))
 		return EINVAL;
