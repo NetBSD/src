@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.3 2018/11/17 20:36:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.3 2018/11/17 20:36:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $
 #define	 DA_FCTL_HUB_EN	__BIT(31)
 #define	 DA_FCTL_FTX	__BIT(25)
 #define	 DA_FCTL_FRX	__BIT(24)
+#define	 DA_FCTL_TXIM	__BIT(2)
+#define	 DA_FCTL_RXIM	__BITS(1,0)
 #define	DA_FSTA		0x18
 #define	DA_INT		0x1c
 #define	 DA_INT_TX_DRQ	__BIT(7)
@@ -79,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2 2018/05/16 10:15:20 jmcneill Exp $
 #define	DA_CLKD		0x24
 #define	 DA_CLKD_MCLKO_EN __BIT(7)
 #define	 DA_CLKD_BCLKDIV __BITS(6,4)
+#define	  DA_CLKD_BCLKDIV_8	3
 #define	  DA_CLKD_BCLKDIV_16	5
 #define	 DA_CLKD_MCLKDIV __BITS(3,0)
 #define	  DA_CLKD_MCLKDIV_1	0
@@ -264,6 +267,8 @@ sunxi_i2s_set_params(void *priv, int setmode, int usemode,
 			return EINVAL;
 		sc->sc_pchan.ch_params = pfil->req_size > 0 ?
 		    pfil->filters[0].param : *play;
+		pfil->prepend(pfil, linear16_16_to_linear32,
+		    &sc->sc_pchan.ch_params);
 	}
 	if (rec && (setmode & AUMODE_RECORD)) {
 		index = auconv_set_converter(&sc->sc_format, 1,
@@ -272,6 +277,8 @@ sunxi_i2s_set_params(void *priv, int setmode, int usemode,
 			return EINVAL;
 		sc->sc_rchan.ch_params = rfil->req_size > 0 ?
 		    rfil->filters[0].param : *rec;
+		rfil->prepend(rfil, linear32_32_to_linear16,
+		    &sc->sc_rchan.ch_params);
 	}
 
 	return 0;
@@ -600,7 +607,7 @@ sunxi_i2s_dai_set_sysclk(audio_dai_tag_t dai, u_int rate, int dir)
 	/* XXX */
 
 	val = DA_CLKD_MCLKO_EN;
-	val |= __SHIFTIN(DA_CLKD_BCLKDIV_16, DA_CLKD_BCLKDIV);
+	val |= __SHIFTIN(DA_CLKD_BCLKDIV_8, DA_CLKD_BCLKDIV);
 	val |= __SHIFTIN(DA_CLKD_MCLKDIV_1, DA_CLKD_MCLKDIV);
 
 	I2S_WRITE(sc, DA_CLKD, val);
