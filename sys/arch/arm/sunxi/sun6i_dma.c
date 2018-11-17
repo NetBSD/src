@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.6 2018/11/17 20:35:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.6 2018/11/17 20:35:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $
 #define DMA_CFG_REG(n)			(0x0100 + (n) * 0x40 + 0x0C)
 #define  DMA_CFG_DEST_DATA_WIDTH		__BITS(26,25)
 #define   DMA_CFG_DATA_WIDTH(n)			((n) >> 4)
-#define  DMA_CFG_DEST_BST_LEN			__BITS(24,23)
 #define	  DMA_CFG_BST_LEN(n)			((n) == 1 ? 0 : (((n) >> 3) + 1))
 #define  DMA_CFG_DEST_ADDR_MODE			__BITS(22,21)
 #define   DMA_CFG_ADDR_MODE_LINEAR		0
@@ -72,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.5 2018/05/10 00:07:08 jmcneill Exp $
 #define  DMA_CFG_DEST_DRQ_TYPE			__BITS(20,16)
 #define	  DMA_CFG_DRQ_TYPE_SDRAM		1
 #define  DMA_CFG_SRC_DATA_WIDTH			__BITS(10,9)
-#define  DMA_CFG_SRC_BST_LEN			__BITS(8,7)
 #define  DMA_CFG_SRC_ADDR_MODE			__BITS(6,5)
 #define  DMA_CFG_SRC_DRQ_TYPE			__BITS(4,0)
 #define DMA_CUR_SRC_REG(n)		(0x0100 + (n) * 0x40 + 0x10)
@@ -97,10 +95,12 @@ struct sun6idma_config {
 	bool		autogate;
 	bus_size_t	autogate_reg;
 	uint32_t	autogate_mask;
+	uint32_t	burst_mask;
 };
 
 static const struct sun6idma_config sun6i_a31_dma_config = {
-	.num_channels = 16
+	.num_channels = 16,
+	.burst_mask = __BITS(8,7),
 };
 
 static const struct sun6idma_config sun8i_a83t_dma_config = {
@@ -108,6 +108,7 @@ static const struct sun6idma_config sun8i_a83t_dma_config = {
 	.autogate = true,
 	.autogate_reg = 0x20,
 	.autogate_mask = 0x4,
+	.burst_mask = __BITS(8,7),
 };
 
 static const struct sun6idma_config sun8i_h3_dma_config = {
@@ -115,6 +116,7 @@ static const struct sun6idma_config sun8i_h3_dma_config = {
 	.autogate = true,
 	.autogate_reg = 0x28,
 	.autogate_mask = 0x4,
+	.burst_mask = __BITS(7,6),
 };
 
 static const struct sun6idma_config sun50i_a64_dma_config = {
@@ -122,6 +124,7 @@ static const struct sun6idma_config sun50i_a64_dma_config = {
 	.autogate = true,
 	.autogate_reg = 0x28,
 	.autogate_mask = 0x4,
+	.burst_mask = __BITS(7,6),
 };
 
 static const struct of_compat_data compat_data[] = {
@@ -151,6 +154,8 @@ struct sun6idma_softc {
 	bus_dma_tag_t		sc_dmat;
 	int			sc_phandle;
 	void			*sc_ih;
+
+	uint32_t		sc_burst_mask;
 
 	kmutex_t		sc_lock;
 
@@ -251,11 +256,11 @@ sun6idma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 	dev_burst = DMA_CFG_BST_LEN(req->dreq_dev_opt.opt_burst_len);
 
 	mem_cfg = __SHIFTIN(mem_width, DMA_CFG_SRC_DATA_WIDTH) |
-	    __SHIFTIN(mem_burst, DMA_CFG_SRC_BST_LEN) |
+	    __SHIFTIN(mem_burst, sc->sc_burst_mask) |
 	    __SHIFTIN(DMA_CFG_ADDR_MODE_LINEAR, DMA_CFG_SRC_ADDR_MODE) |
 	    __SHIFTIN(DMA_CFG_DRQ_TYPE_SDRAM, DMA_CFG_SRC_DRQ_TYPE);
 	dev_cfg = __SHIFTIN(dev_width, DMA_CFG_SRC_DATA_WIDTH) |
-	    __SHIFTIN(dev_burst, DMA_CFG_SRC_BST_LEN) |
+	    __SHIFTIN(dev_burst, sc->sc_burst_mask) |
 	    __SHIFTIN(DMA_CFG_ADDR_MODE_IO, DMA_CFG_SRC_ADDR_MODE) |
 	    __SHIFTIN(ch->ch_portid, DMA_CFG_SRC_DRQ_TYPE);
 
@@ -398,6 +403,7 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 
 	conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
+	sc->sc_burst_mask = conf->burst_mask;
 	sc->sc_nchan = conf->num_channels;
 	sc->sc_chan = kmem_alloc(sizeof(*sc->sc_chan) * sc->sc_nchan, KM_SLEEP);
 
