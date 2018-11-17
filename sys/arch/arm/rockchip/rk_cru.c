@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.8 2018/09/21 12:04:07 skrll Exp $ */
+/* $NetBSD: rk_cru.c,v 1.9 2018/11/17 16:51:51 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.8 2018/09/21 12:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.9 2018/11/17 16:51:51 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,7 +144,7 @@ rk_cru_clock_get_rate(void *priv, struct clk *clkp)
 
 	clkp_parent = clk_get_parent(clkp);
 	if (clkp_parent == NULL) {
-		aprint_error("%s: no parent for %s\n", __func__, clk->base.name);
+		aprint_debug("%s: no parent for %s\n", __func__, clk->base.name);
 		return 0;
 	}
 
