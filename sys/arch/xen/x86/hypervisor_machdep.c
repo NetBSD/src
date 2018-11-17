@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.29 2018/10/26 05:33:21 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.30 2018/11/17 05:26:46 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.29 2018/10/26 05:33:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.30 2018/11/17 05:26:46 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,47 +322,22 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 void
 hypervisor_unmask_event(unsigned int ev)
 {
-	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	volatile struct vcpu_info *vci;
+
+	KASSERT(ev > 0 && ev < NR_EVENT_CHANNELS);
 
 #ifdef PORT_DEBUG
 	if (ev == PORT_DEBUG)
 		printf("hypervisor_unmask_event %d\n", ev);
 #endif
 
-	xen_atomic_clear_bit(&s->evtchn_mask[0], ev);
-	/*
-	 * The following is basically the equivalent of
-	 * 'hw_resend_irq'. Just like a real IO-APIC we 'lose the
-	 * interrupt edge' if the channel is masked.
-	 */
-	if (!xen_atomic_test_bit(&s->evtchn_pending[0], ev))
-		return;
+	/* Xen unmasks the evtchn_mask[0]:ev bit for us. */
+	evtchn_op_t op;
+	op.cmd = EVTCHNOP_unmask;
+	op.u.unmask.port = ev;
+	if (HYPERVISOR_event_channel_op(&op) != 0)
+		panic("Failed to unmask event %d\n", ev);
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (!xen_atomic_test_bit(&ci->ci_evtmask[0], ev))
-			continue;
-		vci = ci->ci_vcpu;
-		if (__predict_true(ci == curcpu())) {
-			if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
-				ev>>LONG_SHIFT))
-				xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
-		}
-		if (!vci->evtchn_upcall_mask) {
-			if (__predict_true(ci == curcpu())) {
-				hypervisor_force_callback();
-			} else {
-				if (__predict_false(
-				    xen_send_ipi(ci, XEN_IPI_HVCB))) {
-					panic("xen_send_ipi(cpu%d, "
-					    "XEN_IPI_HVCB) failed\n",
-					    (int) ci->ci_cpuid);
-				}
-			}
-		}
-	}
+	return;
 }
 
 void
