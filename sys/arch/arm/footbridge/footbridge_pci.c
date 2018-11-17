@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.30 2018/10/23 08:38:18 jmcneill Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.31 2018/11/17 01:45:25 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.30 2018/10/23 08:38:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.31 2018/11/17 01:45:25 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ int		footbridge_pci_intr_map(const struct pci_attach_args *,
 const char	*footbridge_pci_intr_string(void *, pci_intr_handle_t,
 		    char *, size_t);
 void		*footbridge_pci_intr_establish(void *, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
+		    int, int (*)(void *), void *, const char *);
 void		footbridge_pci_intr_disestablish(void *, void *);
 const struct evcnt *footbridge_pci_intr_evcnt(void *, pci_intr_handle_t);
 
@@ -335,15 +335,15 @@ footbridge_pci_intr_establish(
 	pci_intr_handle_t ih,
 	int level,
 	int (*func)(void *),
-	void *arg)
+	void *arg, const char *xname)
 {
 	void *intr;
 	char buf[PCI_INTRSTR_LEN];
 	const char *intrstr;
 
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%" PRIx64 ", level=%d, func=%p, arg=%p)\n",
-	    pcv, ih, level, func, arg);
+	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%" PRIx64 ", level=%d, func=%p, arg=%p, xname=%s)\n",
+	    pcv, ih, level, func, arg, xname);
 #endif
 
 	/* Copy the interrupt string to a private buffer */
