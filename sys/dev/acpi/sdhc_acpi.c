@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.6 2018/11/16 23:05:50 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.7 2018/11/17 07:06:25 kre Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.6 2018/11/16 23:05:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.7 2018/11/17 07:06:25 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -179,7 +179,8 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 		goto cleanup;
 	}
 
-	sc->sc_ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+	sc->sc_ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_BIO, false, sdhc_intr, &sc->sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self,
