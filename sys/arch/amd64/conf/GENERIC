@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.506 2018/10/07 08:00:49 maxv Exp $
+# $NetBSD: GENERIC,v 1.507 2018/11/17 20:29:49 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.506 $"
+#ident		"GENERIC-$Revision: 1.507 $"
 
 maxusers	64		# estimated number of users
 
@@ -243,8 +243,9 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # wscons options
 #
 # builtin terminal emulations
-#options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
+#options 	WSEMUL_DEFAULT="\"vt100\""  # NB: default is "sun" if enabled
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
