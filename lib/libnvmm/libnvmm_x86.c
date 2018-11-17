@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.3 2018/11/13 06:57:14 maya Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.4 2018/11/17 16:11:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -334,6 +334,7 @@ x86_gva_to_gpa(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 	if ((state->crs[NVMM_X64_CR_CR0] & CR0_PG) == 0) {
 		/* No paging. */
+		*prot = NVMM_PROT_ALL;
 		*gpa = gva;
 		return 0;
 	}
