@@ -5,10 +5,10 @@ Short term:
  - merge TSan, MSan and libFuzzer ATF tests
  - prepare MKSANITIZER readme
  - upstream local patches, mostly to compiler-rt
- - develop fts(3) interceptors (MSan, for ls(1), find(1), mtree(8)
- - investigate and address the libcxx failing tests on NetBSD
 
 Long term:
+ - develop fts(3) interceptors (MSan, for ls(1), find(1), mtree(8)
+ - investigate and address the libcxx failing tests on NetBSD
  - FILE and DIR sanitization (needed by at least: ESan, MSan)
  - add missing interceptors (mostly MSan-centric)
  - improve the framework for ioctl(2) database and handle special cases when a
