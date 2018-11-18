@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.96 2018/11/18 01:39:55 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.97 2018/11/18 01:54:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.96 2018/11/18 01:39:55 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.97 2018/11/18 01:54:30 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1486,21 +1486,12 @@ quickch(void)
 	 * Find how many lines from the top of the screen are unchanged.
 	 */
 	for (top = 0; top < __virtscr->maxy; top++) {
-#ifndef HAVE_WCHAR
 		if (__virtscr->alines[top]->flags & __ISDIRTY &&
 		    (__virtscr->alines[top]->hash != curscr->alines[top]->hash ||
 		    !lineeq(__virtscr->alines[top]->line,
 		    curscr->alines[top]->line,
 		    (size_t) __virtscr->maxx)))
 			break;
-#else
-		if (__virtscr->alines[top]->flags & __ISDIRTY &&
-		    (__virtscr->alines[top]->hash != curscr->alines[top]->hash ||
-		    !lineeq(__virtscr->alines[top]->line,
-		    curscr->alines[top]->line,
-	(size_t) __virtscr->maxx )))
-			break;
-#endif /* HAVE_WCHAR */
 		else
 			__virtscr->alines[top]->flags &= ~__ISDIRTY;
 	}
@@ -1508,21 +1499,12 @@ quickch(void)
 	 * Find how many lines from bottom of screen are unchanged.
 	 */
 	for (bot = __virtscr->maxy - 1; bot >= 0; bot--) {
-#ifndef HAVE_WCHAR
 		if (__virtscr->alines[bot]->flags & __ISDIRTY &&
 		    (__virtscr->alines[bot]->hash != curscr->alines[bot]->hash ||
 		    !lineeq(__virtscr->alines[bot]->line,
 		    curscr->alines[bot]->line,
 		    (size_t) __virtscr->maxx)))
 			break;
-#else
-		if (__virtscr->alines[bot]->flags & __ISDIRTY &&
-		    (__virtscr->alines[bot]->hash != curscr->alines[bot]->hash ||
-		    !lineeq(__virtscr->alines[bot]->line,
-		    curscr->alines[bot]->line,
-		    (size_t) __virtscr->maxx )))
-			break;
-#endif /* HAVE_WCHAR */
 		else
 			__virtscr->alines[bot]->flags &= ~__ISDIRTY;
 	}
@@ -1582,17 +1564,10 @@ quickch(void)
 					continue;
 				for (curw = startw, curs = starts;
 					curs < starts + bsize; curw++, curs++)
-#ifndef HAVE_WCHAR
 					if (!lineeq(__virtscr->alines[curw]->line,
 					    curscr->alines[curs]->line,
 					    (size_t) __virtscr->maxx))
 						break;
-#else
-					if (!lineeq(__virtscr->alines[curw]->line,
-					    curscr->alines[curs]->line,
-					    (size_t) __virtscr->maxx))
-						break;
-#endif /* HAVE_WCHAR */
 				if (curs == starts + bsize)
 					goto done;
 			}
@@ -1741,19 +1716,11 @@ done:
 			if ((n > 0 && target >= top && target < top + n) ||
 			    (n < 0 && target <= bot && target > bot + n))
 			{
-#ifndef HAVE_WCHAR
 				if (clp->hash != blank_hash ||
 				    !lineeq(clp->line, clp->line + 1,
-				    (__virtscr->maxx - 1)) ||
+					    (__virtscr->maxx - 1)) ||
 				    !celleq(clp->line, buf))
 				{
-#else
-				if (clp->hash != blank_hash
-				    || !lineeq(clp->line, clp->line + 1,
-				    (unsigned int) (__virtscr->maxx - 1))
-				    || !celleq(clp->line, buf))
-				{
-#endif /* HAVE_WCHAR */
 					for (i = __virtscr->maxx;
 					    i > BLANKSIZE;
 					    i -= BLANKSIZE) {
