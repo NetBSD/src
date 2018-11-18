@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.1 2018/11/07 07:43:08 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.2 2018/11/18 07:42:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.1 2018/11/07 07:43:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.2 2018/11/18 07:42:24 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,7 @@ nvmm_gpa_map(struct nvmm_ioc_gpa_map *args)
 	/* Map the uobj into the machine address space, as pageable. */
 	error = uvm_map(&mach->vm->vm_map, &gpa, args->size, mach->uobj,
 	    args->gpa, 0, UVM_MAPFLAG(UVM_PROT_RWX, UVM_PROT_RWX,
-	    UVM_INH_NONE, UVM_ADV_NORMAL, UVM_FLAG_FIXED));
+	    UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED));
 	if (error) {
 		uao_detach(mach->uobj);
 		goto out;
@@ -565,7 +565,7 @@ nvmm_gpa_map(struct nvmm_ioc_gpa_map *args)
 	/* Map the uobj into the user address space, as pageable. */
 	error = uvm_map(&vmspace->vm_map, &uva, args->size, mach->uobj,
 	    args->gpa, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-	    UVM_INH_SHARE, UVM_ADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_UNMAP));
+	    UVM_INH_SHARE, UVM_ADV_RANDOM, UVM_FLAG_FIXED|UVM_FLAG_UNMAP));
 	if (error) {
 		uao_detach(mach->uobj);
 		goto out;
