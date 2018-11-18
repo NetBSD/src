@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.56 2018/11/13 16:57:45 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.57 2018/11/18 12:00:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1695,4 +1695,22 @@ sys/compat/netbsd32/netbsd32_socket.c		1.48 via patch
 
 	Fix inverted logic, which leads to buffer overflow.
 	[maxv, ticket #1093]
+
+sys/arch/x86/x86/procfs_machdep.c		1.25
+
+	Fix output of LAPIC ID and initial APIC ID.
+	[msaitoh, ticket #1094]
+
+sys/arch/newsmips/apbus/apbus.c			1.23
+sys/arch/newsmips/apbus/apbus_subr.c		1.10
+sys/arch/newsmips/apbus/apbusvar.h		1.10
+sys/arch/newsmips/conf/std.newsmips		1.18
+
+	Fix news5000 panic during boot on APbus attach. PR port-newsmips/53626.
+	[tsutsui, ticket #1095]
+
+libexec/makewhatis/makewhatis.c			1.50,1.51
+
+	Fix time.h include.
+	[sevan, ticket #1096]
 
