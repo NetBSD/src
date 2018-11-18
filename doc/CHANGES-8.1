@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.57 2018/11/18 12:00:18 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.58 2018/11/18 19:34:52 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1713,4 +1713,12 @@ libexec/makewhatis/makewhatis.c			1.50,1.51
 
 	Fix time.h include.
 	[sevan, ticket #1096]
+
+sys/arch/macppc/stand/ofwboot/ofdev.c		1.27
+sys/arch/macppc/stand/ofwboot/version		1.14
+
+	Fix boot failure from installation floppies.
+	PR port-macppc/53727.
+	[tsutsui, ticket #1097]
+
 
