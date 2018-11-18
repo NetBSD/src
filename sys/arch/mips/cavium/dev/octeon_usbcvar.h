@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_usbcvar.h,v 1.5 2018/11/18 11:45:46 skrll Exp $	*/
+/*	$NetBSD: octeon_usbcvar.h,v 1.6 2018/11/18 11:48:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -96,7 +96,6 @@ typedef struct octeon_usbc_hostch { /* FIXME */
 
 typedef struct octeon_usbc_xfer {
 	struct usbd_xfer xfer;
-	struct usb_task	abort_task;
 } octeon_usbc_xfer_t;
 
 
