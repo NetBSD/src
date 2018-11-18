@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus_subr.c,v 1.9 2014/03/24 20:05:20 christos Exp $	*/
+/*	$NetBSD: apbus_subr.c,v 1.9.22.1 2018/11/18 11:54:02 martin Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,14 +27,46 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus_subr.c,v 1.9 2014/03/24 20:05:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus_subr.c,v 1.9.22.1 2018/11/18 11:54:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <mips/locore.h>
+#include <mips/pte.h>
+
+#include <machine/wired_map.h>
+
 #include <newsmips/apbus/apbusvar.h>
 
 static void apctl_dump(struct apbus_ctl *);
+
+#define	APBUS_ROMWORK_VA	0xfff00000
+
+void
+apbus_map_romwork(void)
+{
+	static bool mapped = false;
+	vaddr_t apbd_work_va;
+	vsize_t apbd_work_sz;
+	paddr_t apbd_work_pa;
+
+	if (!mapped) {
+		/* map PROM work RAM into VA 0xFFF00000 - 0xFFFFFFFF */
+		apbd_work_va = APBUS_ROMWORK_VA;
+		apbd_work_sz = MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_1M);
+		apbd_work_pa = ctob(physmem);
+
+		mapped = mips3_wired_enter_page(apbd_work_va, apbd_work_pa,
+		    apbd_work_sz);
+		if (!mapped) {
+			printf("%s: cannot allocate APbus PROM work\n",
+			    __func__);
+		}
+	}
+}
 
 void *
 apbus_device_to_hwaddr(struct apbus_dev *apbus_dev)
