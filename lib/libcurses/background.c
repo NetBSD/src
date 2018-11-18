@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.20 2018/11/18 21:01:16 uwe Exp $	*/
+/*	$NetBSD: background.c,v 1.21 2018/11/18 22:11:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.20 2018/11/18 21:01:16 uwe Exp $");
+__RCSID("$NetBSD: background.c,v 1.21 2018/11/18 22:11:38 uwe Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -134,39 +134,34 @@ getbkgd(WINDOW *win)
 	return ((chtype) ((win->bch & A_CHARTEXT) | battr));
 }
 
-int bkgrnd(const cchar_t *wch)
-{
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
-	return wbkgrnd( stdscr, wch );
-#endif /* HAVE_WCHAR */
-}
 
-void bkgrndset(const cchar_t *wch)
-{
 #ifdef HAVE_WCHAR
+
+int
+bkgrnd(const cchar_t *wch)
+{
+	return wbkgrnd( stdscr, wch );
+}
+
+
+void
+bkgrndset(const cchar_t *wch)
+{
 	wbkgrndset( stdscr, wch );
-#endif /* HAVE_WCHAR */
 }
 
-int getbkgrnd(cchar_t *wch)
+
+int
+getbkgrnd(cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wgetbkgrnd( stdscr, wch );
-#endif /* HAVE_WCHAR */
 }
 
-int wbkgrnd(WINDOW *win, const cchar_t *wch)
+
+int
+wbkgrnd(WINDOW *win, const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
-/*	int	y, x, i; */
 	attr_t battr;
-/*	nschar_t *np, *tnp, *pnp; */
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wbkgrnd: (%p), '%s', %x\n",
@@ -186,12 +181,12 @@ int wbkgrnd(WINDOW *win, const cchar_t *wch)
 	wbkgrndset(win, wch);
 	__touchwin(win);
 	return OK;
-#endif /* HAVE_WCHAR */
 }
 
-void wbkgrndset(WINDOW *win, const cchar_t *wch)
+
+void
+wbkgrndset(WINDOW *win, const cchar_t *wch)
 {
-#ifdef HAVE_WCHAR
 	attr_t battr;
 	nschar_t *np, *tnp;
 	int i;
@@ -252,14 +247,12 @@ void wbkgrndset(WINDOW *win, const cchar_t *wch)
 		battr |= __default_color;
 	win->battr = battr;
 	SET_BGWCOL((*win), 1);
-#endif /* HAVE_WCHAR */
 }
 
-int wgetbkgrnd(WINDOW *win, cchar_t *wch)
+
+int
+wgetbkgrnd(WINDOW *win, cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	nschar_t *np;
 
 	/* Background attributes (check colour). */
@@ -278,5 +271,48 @@ int wgetbkgrnd(WINDOW *win, cchar_t *wch)
 	}
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }
+
+#else  /* !HAVE_WCHAR */
+
+int
+bkgrnd(const cchar_t *wch)
+{
+	return ERR;
+}
+
+
+void
+bkgrndset(const cchar_t *wch)
+{
+	return;
+}
+
+int
+getbkgrnd(cchar_t *wch)
+{
+	return ERR;
+}
+
+
+int
+wbkgrnd(WINDOW *win, const cchar_t *wch)
+{
+	return ERR;
+}
+
+
+void
+wbkgrndset(WINDOW *win, const cchar_t *wch)
+{
+	return;
+}
+
+
+int
+wgetbkgrnd(WINDOW *win, cchar_t *wch)
+{
+	return ERR;
+}
+
+#endif /* !HAVE_WCHAR */
