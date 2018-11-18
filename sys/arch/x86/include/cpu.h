@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2018/11/18 10:24:09 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.100 2018/11/18 23:50:48 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -286,7 +286,8 @@ struct cpu_info {
 	 * Clockframe for timer interrupt handler.
 	 * Saved at entry via event callback.
 	 */
-	struct clockframe ci_event_clockframe;
+	vaddr_t ci_xen_clockf_pc; /* RIP at last event interrupt */
+	bool ci_xen_clockf_usermode; /* Was the guest in usermode ? */
 
 	/* Event counters for various pathologies that might happen.  */
 	struct evcnt	ci_xen_cpu_tsc_backwards_evcnt;
