@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.94 2018/11/18 01:05:30 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.95 2018/11/18 01:19:29 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.94 2018/11/18 01:05:30 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.95 2018/11/18 01:19:29 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,8 +57,8 @@ static void	scrolln(int, int, int, int, int);
 static int	_wnoutrefresh(WINDOW *, int, int, int, int, int, int);
 
 #ifdef HAVE_WCHAR
-int cellcmp( __LDATA *, __LDATA * );
-int linecmp( __LDATA *, __LDATA *, size_t );
+static int celleq(__LDATA *, __LDATA *);
+static int lineeq(__LDATA *, __LDATA *, size_t);
 #endif /* HAVE_WCHAR */
 
 #define	CHECK_INTERVAL		5 /* Change N lines before checking typeahead */
@@ -1229,10 +1229,10 @@ makech(int wy)
 #endif /* DEBUG */
 		if (!(wlp->flags & __ISFORCED) &&
 		     (((nsp->attr & __WCWIDTH) != __WCWIDTH) &&
-		       cellcmp(nsp, csp)))
+		       celleq(nsp, csp)))
 		{
 			if (wx <= lch) {
-				while (wx <= lch && cellcmp( csp, nsp )) {
+				while (wx <= lch && celleq( csp, nsp )) {
 					nsp++;
 					if (!_cursesi_screen->curwin)
 						++csp;
@@ -1261,7 +1261,7 @@ makech(int wy)
 			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc)
 			{
 #else
-		while ((!cellcmp(nsp, csp) || (wlp->flags & __ISFORCED)) &&
+		while ((!celleq(nsp, csp) || (wlp->flags & __ISFORCED)) &&
 			wx <= lch)
 		{
 			if (ce != NULL && wx >= nlsp
@@ -1487,7 +1487,7 @@ quickch(void)
 #else
 		if (__virtscr->alines[top]->flags & __ISDIRTY &&
 		    (__virtscr->alines[top]->hash != curscr->alines[top]->hash ||
-		    !linecmp(__virtscr->alines[top]->line,
+		    !lineeq(__virtscr->alines[top]->line,
 		    curscr->alines[top]->line,
 	(size_t) __virtscr->maxx )))
 			break;
@@ -1510,7 +1510,7 @@ quickch(void)
 #else
 		if (__virtscr->alines[bot]->flags & __ISDIRTY &&
 		    (__virtscr->alines[bot]->hash != curscr->alines[bot]->hash ||
-		    !linecmp(__virtscr->alines[bot]->line,
+		    !lineeq(__virtscr->alines[bot]->line,
 		    curscr->alines[bot]->line,
 		    (size_t) __virtscr->maxx )))
 			break;
@@ -1581,7 +1581,7 @@ quickch(void)
 					    __LDATASIZE) != 0)
 						break;
 #else
-					if (!linecmp(__virtscr->alines[curw]->line,
+					if (!lineeq(__virtscr->alines[curw]->line,
 					    curscr->alines[curs]->line,
 					    (size_t) __virtscr->maxx))
 						break;
@@ -1743,9 +1743,9 @@ done:
 				{
 #else
 				if (clp->hash != blank_hash
-				    || !linecmp(clp->line, clp->line + 1,
+				    || !lineeq(clp->line, clp->line + 1,
 				    (unsigned int) (__virtscr->maxx - 1))
-				    || !cellcmp(clp->line, buf))
+				    || !celleq(clp->line, buf))
 				{
 #endif /* HAVE_WCHAR */
 					for (i = __virtscr->maxx;
@@ -2035,8 +2035,8 @@ __unsetattr(int checkms)
 #ifdef HAVE_WCHAR
 /* compare two cells on screen, must have the same forground/background,
  * and the same sequence of non-spacing characters */
-int
-cellcmp( __LDATA *x, __LDATA *y )
+static int
+celleq(__LDATA *x, __LDATA *y)
 {
 	nschar_t *xnp = x->nsp, *ynp = y->nsp;
 	int ret = ( x->ch == y->ch ) && ( x->attr == y->attr );
@@ -2058,14 +2058,14 @@ cellcmp( __LDATA *x, __LDATA *y )
 }
 
 /* compare two line segments */
-int
-linecmp( __LDATA *xl, __LDATA *yl, size_t len )
+static int
+lineeq(__LDATA *xl, __LDATA *yl, size_t len)
 {
 	int i = 0;
 	__LDATA *xp = xl, *yp = yl;
 
 	for (i = 0; i < len; i++, xp++, yp++) {
-		if (!cellcmp(xp, yp))
+		if (!celleq(xp, yp))
 			return 0;
 	}
 	return 1;
