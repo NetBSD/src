@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.5 2018/11/16 15:41:27 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.6 2018/11/18 20:22:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.5 2018/11/16 15:41:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.6 2018/11/18 20:22:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,6 +67,8 @@ struct acpipchb_softc {
 
 	ACPI_HANDLE		sc_handle;
 	ACPI_INTEGER		sc_bus;
+
+	struct bus_space	sc_pciio_bst;
 };
 
 static struct arm32_dma_range ahcipchb_coherent_ranges[] = {
@@ -80,6 +82,8 @@ static struct arm32_dma_range ahcipchb_coherent_ranges[] = {
 
 static int	acpipchb_match(device_t, cfdata_t, void *);
 static void	acpipchb_attach(device_t, device_t, void *);
+
+static void	acpipchb_setup_pciio(struct acpipchb_softc *, struct pcibus_attach_args *);
 
 CFATTACH_DECL_NEW(acpipchb, sizeof(struct acpipchb_softc),
 	acpipchb_match, acpipchb_attach, NULL, NULL);
@@ -140,7 +144,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_flags = aa->aa_pciflags;
-	pba.pba_iot = aa->aa_iot;
+	pba.pba_iot = 0;
 	pba.pba_memt = aa->aa_memt;
 	pba.pba_dmat = &sc->sc_dmat;
 #ifdef _PCI_HAVE_DMA64
@@ -149,5 +153,59 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_ap.ap_pc;
 	pba.pba_bus = sc->sc_bus;
 
+	acpipchb_setup_pciio(sc, &pba);
+
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+struct acpipchb_setup_pciio_args {
+	struct acpipchb_softc *sc;
+	struct pcibus_attach_args *pba;
+};
+
+static ACPI_STATUS
+acpipchb_setup_pciio_cb(ACPI_RESOURCE *res, void *ctx)
+{
+	struct acpipchb_setup_pciio_args * const args = ctx;
+	struct acpipchb_softc * const sc = args->sc;
+	struct pcibus_attach_args *pba = args->pba;
+
+	if (res->Type != ACPI_RESOURCE_TYPE_ADDRESS32 &&
+	    res->Type != ACPI_RESOURCE_TYPE_ADDRESS64)
+		return AE_OK;
+
+	if (res->Data.Address.ResourceType != ACPI_IO_RANGE)
+		return AE_OK;
+
+	sc->sc_pciio_bst = *pba->pba_memt;
+	sc->sc_pciio_bst.bs_cookie = &sc->sc_pciio_bst;
+
+	switch (res->Type) {
+	case ACPI_RESOURCE_TYPE_ADDRESS32:
+		sc->sc_pciio_bst.bs_base = res->Data.Address32.Address.TranslationOffset;
+		sc->sc_pciio_bst.bs_stride = res->Data.Address32.Address.Granularity;
+		break;
+	case ACPI_RESOURCE_TYPE_ADDRESS64:
+		sc->sc_pciio_bst.bs_base = res->Data.Address64.Address.TranslationOffset;
+		sc->sc_pciio_bst.bs_stride = res->Data.Address64.Address.Granularity;
+		break;
+	}
+
+	aprint_debug_dev(sc->sc_dev, "PCI I/O base %#lx stride %d\n", sc->sc_pciio_bst.bs_base, sc->sc_pciio_bst.bs_stride);
+
+	pba->pba_iot = &sc->sc_pciio_bst;
+	pba->pba_flags |= PCI_FLAGS_IO_OKAY;
+
+	return AE_LIMIT;
+}
+
+static void
+acpipchb_setup_pciio(struct acpipchb_softc *sc, struct pcibus_attach_args *pba)
+{
+	struct acpipchb_setup_pciio_args args;
+
+	args.sc = sc;
+	args.pba = pba;
+
+	AcpiWalkResources(sc->sc_handle, "_CRS", acpipchb_setup_pciio_cb, &args);
 }
