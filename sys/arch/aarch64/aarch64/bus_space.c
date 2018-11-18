@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.5 2018/06/16 13:53:45 jmcneill Exp $ */
+/* $NetBSD: bus_space.c,v 1.6 2018/11/18 20:21:48 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.5 2018/06/16 13:53:45 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.6 2018/11/18 20:21:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ bs_protos(generic_dsb)
 struct bus_space arm_generic_bs_tag = {
 	.bs_cookie = &arm_generic_bs_tag,
 
+	.bs_base = 0,
 	.bs_stride = 0,
 	.bs_flags = 0,
 
@@ -168,6 +169,7 @@ struct bus_space arm_generic_bs_tag = {
 struct bus_space aarch64_generic_dsb_bs_tag = {
 	.bs_cookie = &aarch64_generic_dsb_bs_tag,
 
+	.bs_base = 0,
 	.bs_stride = 0,
 	.bs_flags = 0,
 
@@ -290,6 +292,7 @@ struct bus_space aarch64_generic_dsb_bs_tag = {
 struct bus_space arm_generic_a4x_bs_tag = {
 	.bs_cookie = &arm_generic_a4x_bs_tag,
 
+	.bs_base = 0,
 	.bs_stride = 2,
 	.bs_flags = 0,
 
@@ -412,6 +415,7 @@ struct bus_space arm_generic_a4x_bs_tag = {
 struct bus_space aarch64_generic_a4x_dsb_bs_tag = {
 	.bs_cookie = &aarch64_generic_a4x_dsb_bs_tag,
 
+	.bs_base = 0,
 	.bs_stride = 2,
 	.bs_flags = 0,
 
@@ -535,10 +539,14 @@ int
 generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
+	const struct bus_space *bs = t;
 	const struct pmap_devmap *pd;
 	paddr_t startpa, endpa, pa;
 	vaddr_t va;
 	int pmapflags;
+
+	if (bs)
+		bpa += bs->bs_base;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		*bshp = pd->pd_va + (bpa - pd->pd_pa);

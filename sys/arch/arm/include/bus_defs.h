@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.11 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.12 2018/11/18 20:21:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ struct bus_space {
 	void		*bs_cookie;
 
 	/* used for aarch64. require ".bs_cookie = bus_space" */
+	bus_addr_t	bs_base;
 	int		bs_stride;	/* offset <<= bs_stride (if needed) */
 	int		bs_flags;
 

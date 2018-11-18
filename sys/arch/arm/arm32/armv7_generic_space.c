@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.8 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.9 2018/11/18 20:21:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.8 2018/04/01 04:35:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.9 2018/11/18 20:21:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,10 +291,14 @@ int
 armv7_generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
+	const struct bus_space *bs = t;
 	u_long startpa, endpa, pa;
 	const struct pmap_devmap *pd;
 	int pmapflags;
 	vaddr_t va;
+
+	if (bs)
+		bpa += bs->bs_base;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
