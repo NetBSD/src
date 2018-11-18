@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.103 2017/06/27 23:24:19 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.104 2018/11/18 17:09:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.103 2017/06/27 23:24:19 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.104 2018/11/18 17:09:39 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -335,17 +335,6 @@ read_char(EditLine *el, wchar_t *cp)
 				goto again;
 			}
 		case (size_t)-2:
-			/*
-			 * We don't support other multibyte charsets.
-			 * The second condition shouldn't happen
-			 * and is here merely for additional safety.
-			 */
-			if ((el->el_flags & CHARSET_IS_UTF8) == 0 ||
-			    cbp >= MB_LEN_MAX) {
-				errno = EILSEQ;
-				*cp = L'\0';
-				return -1;
-			}
 			/* Incomplete sequence, read another byte. */
 			goto again;
 		default:
