@@ -1,4 +1,4 @@
-# $NetBSD: t_patterns.sh,v 1.3 2018/11/18 01:24:44 kre Exp $
+# $NetBSD: t_patterns.sh,v 1.4 2018/11/18 13:41:24 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -675,10 +675,28 @@ case_matching_body() {
 	# The first of the "set" tests pair was reported as broken bu
 	# Martijn Dekker (private mail) (Nov 2018).
 
-	cm "'\'" "'\'"							#262
-	cm "'\'" '"$var"' "var='\\'"; cf "'\'" '$var' "var='\\'"	#264
-	cm '$1' '"$2"' 'set -- \\ \\'; cf '$1' '$2' 'set -- \\ \\'	#266
-	cf '$1' '"$2"' 'set -- \\ \\\\'; cm '$1' '$2' 'set -- \\ \\\\'	#268
+	cm "'\\'" "'\\'"; cf "'\\'" "'\\\\'"				#263
+	cm "'\\'" '"$var"' "var='\\'"; cf "'\\'" '$var' "var='\\'"	#265
+	cm '$1' '"$2"' 'set -- \\ \\'; cf '$1' '$2' 'set -- \\ \\'	#267
+	cf '$1' '"$2"' 'set -- \\ \\\\'; cm '$1' '$2' 'set -- \\ \\\\'	#269
+	cm "'\\'" "\$( echo '\\\\' )"; cf "'\\'" "\$( echo '\\' )"	#271
+	cm "'\\'" "\"\$( echo '\\' )\""					#272
+	cf "'\\'" "\"\$( echo '\\\\' )\""				#273
+
+	if X=$( ${TEST_SH} -c 'printf %s '"\$'\\\\'" 2>/dev/null ) &&
+	    [ "$X" = '\' ]
+	then
+		# TEST_SH supports $'...' so we can test it as well
+		# note these are $'\\' and $'\\\\' as patterns.
+		# They should be identical to '\' and '\\'
+		cm "'\\'" "\$'\\\\'"; cf "'\\'" "\$'\\\\\\\\'"		#275
+	else
+		# uncomment this if we need to keep sub-test numbering sane
+		# it isn't needed as long as this remains last.
+		# (nb: this is just a repeat of sub-test 263)
+
+		# cm "'\\'" "'\\'"; cf "'\\'" "'\\\\'"			#275
+	fi
 
 	results
 }
