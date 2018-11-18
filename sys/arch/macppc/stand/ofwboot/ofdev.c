@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.26 2012/02/19 12:02:55 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.26.32.1 2018/11/18 19:33:44 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -437,10 +437,11 @@ devopen(struct open_file *of, const char *name, char **file)
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without partitions */
-		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &nread) != 0
-		    || nread != DEV_BSIZE
-		    || getdisklabel(buf, &label)) {
+		if (!floppyboot &&
+		    (strategy(&ofdev, F_READ,
+			      LABELSECTOR, DEV_BSIZE, buf, &nread) != 0
+		     || nread != DEV_BSIZE
+		     || getdisklabel(buf, &label))) {
 			/* Else try APM or MBR partitions */
 			struct drvr_map *map = (struct drvr_map *)buf;
 
