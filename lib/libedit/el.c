@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.96 2018/01/01 22:32:46 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.97 2018/11/18 17:09:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.96 2018/01/01 22:32:46 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.97 2018/11/18 17:09:39 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -96,10 +96,6 @@ el_init_internal(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
          * Initialize all the modules. Order is important!!!
          */
 	el->el_flags = flags;
-	if (setlocale(LC_CTYPE, NULL) != NULL){
-		if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
-			el->el_flags |= CHARSET_IS_UTF8;
-	}
 
 	if (terminal_init(el) == -1) {
 		el_free(el->el_prog);
@@ -301,7 +297,7 @@ el_wset(EditLine *el, int op, ...)
 		void *ptr = va_arg(ap, void *);
 
 		rv = hist_set(el, func, ptr);
-		if (!(el->el_flags & CHARSET_IS_UTF8))
+		if (MB_CUR_MAX == 1)
 			el->el_flags &= ~NARROW_HISTORY;
 		break;
 	}
