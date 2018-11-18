@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/18 10:34:46 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -156,8 +156,12 @@ typedef struct {
  */
 extern struct apple_part_map_entry new_map[];
 
+
+/* Megs for the / partition, if separate */
+#define	DEFROOTSIZE	60
+
 /* Megs required for a full X installation. */
-#define XNEEDMB 50
+#define XNEEDMB		225
 
 /*
  * Machine-specific command to write a new label to a disk.
