@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.97 2018/11/18 01:54:30 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.98 2018/11/18 02:17:24 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.97 2018/11/18 01:54:30 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.98 2018/11/18 02:17:24 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1213,36 +1213,23 @@ makech(int wy)
 
 	while (wx <= lch) {
 #ifdef DEBUG
-		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d\n", wx, lch);
-#endif /* DEBUG */
 #ifndef HAVE_WCHAR
-		if (!(wlp->flags & __ISFORCED) && celleq(nsp, csp))
-		{
-			if (wx <= lch) {
-				while (wx <= lch && celleq(nsp, csp))
-				{
-					nsp++;
-					if (!_cursesi_screen->curwin)
-						++csp;
-					++wx;
-				}
-				continue;
-			}
-			break;
-		}
+		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d\n", wx, lch);
 #else
-#ifdef DEBUG
 		__CTRACE(__CTRACE_REFRESH, "makech: nsp=(%x,%x,%x,%x,%p)\n",
 			nsp->ch, nsp->attr, win->bch, win->battr, nsp->nsp);
 		__CTRACE(__CTRACE_REFRESH, "makech: csp=(%x,%x,%x,%x,%p)\n",
 			csp->ch, csp->attr, win->bch, win->battr, csp->nsp);
+#endif
 #endif /* DEBUG */
 		if (!(wlp->flags & __ISFORCED) &&
-		     (((nsp->attr & __WCWIDTH) != __WCWIDTH) &&
-		       celleq(nsp, csp)))
+#ifdef HAVE_WCHAR
+		    ((nsp->attr & __WCWIDTH) != __WCWIDTH) &&
+#endif
+		    celleq(nsp, csp))
 		{
 			if (wx <= lch) {
-				while (wx <= lch && celleq( csp, nsp )) {
+				while (wx <= lch && celleq(nsp, csp)) {
 					nsp++;
 					if (!_cursesi_screen->curwin)
 						++csp;
@@ -1252,7 +1239,7 @@ makech(int wy)
 			}
 			break;
 		}
-#endif /* HAVE_WCHAR */
+
 		domvcur(win, _cursesi_screen->ly, _cursesi_screen->lx, wy, wx);
 
 #ifdef DEBUG
