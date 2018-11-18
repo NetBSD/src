@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.31 2018/11/18 10:24:09 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.32 2018/11/18 23:50:48 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.31 2018/11/18 10:24:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.32 2018/11/18 23:50:48 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,8 @@ do_hypervisor_callback(struct intrframe *regs)
 
 	/* Save trapframe for clock handler */
 	KASSERT(regs != NULL);
-	ci->ci_event_clockframe.cf_if = *regs;
+	ci->ci_xen_clockf_usermode = USERMODE(regs->if_tf.tf_cs);
+	ci->ci_xen_clockf_pc = regs->if_tf.tf_rip;
 
 	// DDD printf("do_hypervisor_callback\n");
 
