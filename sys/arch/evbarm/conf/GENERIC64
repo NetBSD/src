@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.63 2018/11/18 15:50:26 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.64 2018/11/18 15:52:04 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -58,6 +58,7 @@ makeoptions	DTS="
 "
 options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
+#options 	CPU_THUNDERX
 options 	SOC_BCM2837
 options 	SOC_RK3328
 options 	SOC_RK3399
