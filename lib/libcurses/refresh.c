@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.98 2018/11/18 02:17:24 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.99 2018/11/18 02:34:39 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.98 2018/11/18 02:17:24 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.99 2018/11/18 02:34:39 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1249,24 +1249,19 @@ makech(int wy)
 #endif
 		_cursesi_screen->ly = wy;
 		_cursesi_screen->lx = wx;
-#ifndef HAVE_WCHAR
 		while (wx <= lch &&
 		       (!celleq(nsp, csp)
 			|| (wlp->flags & __ISFORCED)))
 		{
-			if (ce != NULL &&
-			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc)
-			{
+#ifndef HAVE_WCHAR
+			if (ce != NULL && wx >= nlsp
+			    && nsp->ch == ' ' && nsp->attr == lspc)
 #else
-		while ((!celleq(nsp, csp) || (wlp->flags & __ISFORCED)) &&
-			wx <= lch)
-		{
 			if (ce != NULL && wx >= nlsp
 			   && nsp->ch == (wchar_t)btowc((int)' ') /* XXX */
 			   && (nsp->attr & WA_ATTRIBUTES) == lspc)
-			{
-
 #endif
+			{
 				/* Check for clear to end-of-line. */
 				cep = &curscr->alines[wy]->line[win->maxx - 1];
 #ifndef HAVE_WCHAR
