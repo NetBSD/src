@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.95 2018/11/18 01:19:29 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.96 2018/11/18 01:39:55 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.95 2018/11/18 01:19:29 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.96 2018/11/18 01:39:55 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -59,6 +59,18 @@ static int	_wnoutrefresh(WINDOW *, int, int, int, int, int, int);
 #ifdef HAVE_WCHAR
 static int celleq(__LDATA *, __LDATA *);
 static int lineeq(__LDATA *, __LDATA *, size_t);
+#else  /* !HAVE_WCHAR */
+static inline int
+celleq(__LDATA *x, __LDATA *y)
+{
+	return memcmp(x, y, sizeof(__LDATA)) == 0;
+}
+
+static int
+lineeq(__LDATA *xl, __LDATA *yl, size_t len)
+{
+	return memcmp(xl, yl, len * __LDATASIZE) == 0;
+}
 #endif /* HAVE_WCHAR */
 
 #define	CHECK_INTERVAL		5 /* Change N lines before checking typeahead */
@@ -1204,12 +1216,10 @@ makech(int wy)
 		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d\n", wx, lch);
 #endif /* DEBUG */
 #ifndef HAVE_WCHAR
-		if (!(wlp->flags & __ISFORCED) &&
-		    (memcmp(nsp, csp, sizeof(__LDATA)) == 0))
+		if (!(wlp->flags & __ISFORCED) && celleq(nsp, csp))
 		{
 			if (wx <= lch) {
-				while (wx <= lch &&
-				    memcmp(nsp, csp, sizeof(__LDATA)) == 0)
+				while (wx <= lch && celleq(nsp, csp))
 				{
 					nsp++;
 					if (!_cursesi_screen->curwin)
@@ -1254,7 +1264,7 @@ makech(int wy)
 		_cursesi_screen->lx = wx;
 #ifndef HAVE_WCHAR
 		while (wx <= lch &&
-		       ((memcmp(nsp, csp, sizeof(__LDATA)) != 0)
+		       (!celleq(nsp, csp)
 			|| (wlp->flags & __ISFORCED)))
 		{
 			if (ce != NULL &&
@@ -1479,10 +1489,9 @@ quickch(void)
 #ifndef HAVE_WCHAR
 		if (__virtscr->alines[top]->flags & __ISDIRTY &&
 		    (__virtscr->alines[top]->hash != curscr->alines[top]->hash ||
-		    memcmp(__virtscr->alines[top]->line,
+		    !lineeq(__virtscr->alines[top]->line,
 		    curscr->alines[top]->line,
-		    (size_t) __virtscr->maxx * __LDATASIZE)
-		    != 0))
+		    (size_t) __virtscr->maxx)))
 			break;
 #else
 		if (__virtscr->alines[top]->flags & __ISDIRTY &&
@@ -1502,10 +1511,9 @@ quickch(void)
 #ifndef HAVE_WCHAR
 		if (__virtscr->alines[bot]->flags & __ISDIRTY &&
 		    (__virtscr->alines[bot]->hash != curscr->alines[bot]->hash ||
-		    memcmp(__virtscr->alines[bot]->line,
+		    !lineeq(__virtscr->alines[bot]->line,
 		    curscr->alines[bot]->line,
-		    (size_t) __virtscr->maxx * __LDATASIZE)
-		    != 0))
+		    (size_t) __virtscr->maxx)))
 			break;
 #else
 		if (__virtscr->alines[bot]->flags & __ISDIRTY &&
@@ -1575,10 +1583,9 @@ quickch(void)
 				for (curw = startw, curs = starts;
 					curs < starts + bsize; curw++, curs++)
 #ifndef HAVE_WCHAR
-					if (memcmp(__virtscr->alines[curw]->line,
+					if (!lineeq(__virtscr->alines[curw]->line,
 					    curscr->alines[curs]->line,
-					    (size_t) __virtscr->maxx *
-					    __LDATASIZE) != 0)
+					    (size_t) __virtscr->maxx))
 						break;
 #else
 					if (!lineeq(__virtscr->alines[curw]->line,
@@ -1736,10 +1743,9 @@ done:
 			{
 #ifndef HAVE_WCHAR
 				if (clp->hash != blank_hash ||
-				    memcmp(clp->line, clp->line + 1,
-				    (__virtscr->maxx - 1)
-				    * __LDATASIZE) ||
-				    memcmp(clp->line, buf, __LDATASIZE))
+				    !lineeq(clp->line, clp->line + 1,
+				    (__virtscr->maxx - 1)) ||
+				    !celleq(clp->line, buf))
 				{
 #else
 				if (clp->hash != blank_hash
