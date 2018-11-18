@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.15 2018/03/16 17:56:32 ryo Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.16 2018/11/18 06:28:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.15 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.16 2018/11/18 06:28:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,11 +94,27 @@ const struct bus_space i80321_bs_tag_template = {
 	.bs_r_4 = generic_bs_r_4,
 	.bs_r_8 = bs_notimpl_bs_r_8,
 
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* read (single, stream) */
+	.bs_r_1_s = generic_bs_r_1,
+	.bs_r_2_s = generic_armv4_bs_r_2,
+	.bs_r_4_s = generic_bs_r_4,
+	.bs_r_8_s = bs_notimpl_bs_r_8,
+#endif
+
 	/* read multiple */
 	.bs_rm_1 = generic_bs_rm_1,
 	.bs_rm_2 = generic_armv4_bs_rm_2,
 	.bs_rm_4 = generic_bs_rm_4,
 	.bs_rm_8 = bs_notimpl_bs_rm_8,
+
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* read multiple, stream */
+	.bs_rm_1_s = generic_bs_rm_1,
+	.bs_rm_2_s = generic_armv4_bs_rm_2,
+	.bs_rm_4_s = generic_bs_rm_4,
+	.bs_rm_8_s = bs_notimpl_bs_rm_8,
+#endif
 
 	/* read region */
 	.bs_rr_1 = generic_bs_rr_1,
@@ -106,11 +122,27 @@ const struct bus_space i80321_bs_tag_template = {
 	.bs_rr_4 = generic_bs_rr_4,
 	.bs_rr_8 = bs_notimpl_bs_rr_8,
 
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* read region, stream */
+	.bs_rr_1_s = generic_bs_rr_1,
+	.bs_rr_2_s = generic_armv4_bs_rr_2,
+	.bs_rr_4_s = generic_bs_rr_4,
+	.bs_rr_8_s = bs_notimpl_bs_rr_8,
+#endif
+
 	/* write (single) */
 	.bs_w_1 = generic_bs_w_1,
 	.bs_w_2 = generic_armv4_bs_w_2,
 	.bs_w_4 = generic_bs_w_4,
 	.bs_w_8 = bs_notimpl_bs_w_8,
+
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* write (single, stream) */
+	.bs_w_1_s = generic_bs_w_1,
+	.bs_w_2_s = generic_armv4_bs_w_2,
+	.bs_w_4_s = generic_bs_w_4,
+	.bs_w_8_s = bs_notimpl_bs_w_8,
+#endif
 
 	/* write multiple */
 	.bs_wm_1 = generic_bs_wm_1,
@@ -118,11 +150,27 @@ const struct bus_space i80321_bs_tag_template = {
 	.bs_wm_4 = generic_bs_wm_4,
 	.bs_wm_8 = bs_notimpl_bs_wm_8,
 
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* write multiple, stream */
+	.bs_wm_1_s = generic_bs_wm_1,
+	.bs_wm_2_s = generic_armv4_bs_wm_2,
+	.bs_wm_4_s = generic_bs_wm_4,
+	.bs_wm_8_s = bs_notimpl_bs_wm_8,
+#endif
+
 	/* write region */
 	.bs_wr_1 = generic_bs_wr_1,
 	.bs_wr_2 = generic_armv4_bs_wr_2,
 	.bs_wr_4 = generic_bs_wr_4,
 	.bs_wr_8 = bs_notimpl_bs_wr_8,
+
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* write region, stream */
+	.bs_wr_1_s = generic_bs_wr_1,
+	.bs_wr_2_s = generic_armv4_bs_wr_2,
+	.bs_wr_4_s = generic_bs_wr_4,
+	.bs_wr_8_s = bs_notimpl_bs_wr_8,
+#endif
 
 	/* set multiple */
 	.bs_sm_1 = bs_notimpl_bs_sm_1,
@@ -164,6 +212,7 @@ i80321_io_bs_init(bus_space_tag_t bs, void *cookie)
 	bs->bs_free = i80321_io_bs_free;
 
 	bs->bs_vaddr = i80321_io_bs_vaddr;
+	bs->bs_mmap = i80321_io_bs_mmap;
 }
 
 void
@@ -177,7 +226,6 @@ i80321_mem_bs_init(bus_space_tag_t bs, void *cookie)
 	bs->bs_unmap = i80321_mem_bs_unmap;
 	bs->bs_alloc = i80321_mem_bs_alloc;
 	bs->bs_free = i80321_mem_bs_free;
-
 	bs->bs_mmap = i80321_mem_bs_mmap;
 }
 
@@ -243,6 +291,25 @@ i80321_io_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	*bshp = winvaddr + (bpa - busbase);
 
 	return (0);
+}
+
+paddr_t
+i80321_io_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
+{
+	struct i80321_softc *sc = t;
+	paddr_t bpa = addr + off, winpaddr, busbase;
+
+	if (bpa >= sc->sc_ioout_xlate &&
+	    bpa < (sc->sc_ioout_xlate + VERDE_OUT_XLATE_IO_WIN_SIZE)) {
+		busbase = sc->sc_ioout_xlate;
+		winpaddr = VERDE_OUT_XLATE_IO_WIN0_BASE;		
+	} else
+		return (EINVAL);
+
+	if ((bpa) >= (busbase + VERDE_OUT_XLATE_IO_WIN_SIZE))
+		return (EINVAL);
+
+	return (arm_btop(winpaddr + (bpa - busbase)));
 }
 
 void
@@ -334,7 +401,9 @@ i80321_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
+		    ((flags & BUS_SPACE_MAP_PREFETCHABLE) ?
+		       ARM_MMAP_WRITECOMBINE : 0));
 	}
 	pmap_update(pmap_kernel());
 
@@ -375,7 +444,40 @@ i80321_mem_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 paddr_t
 i80321_mem_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 {
+#ifndef I80321_USE_DIRECT_WIN
+	struct i80321_softc *sc = t;
+#endif
+	uint32_t busbase;
+	paddr_t pa, physbase, bpa = addr + off, pflags = 0;
 
-	/* XXX */
-	return (-1);
+#ifdef I80321_USE_DIRECT_WIN
+	if (
+#if VERDE_OUT_DIRECT_WIN_BASE != 0
+	    bpa >= (VERDE_OUT_DIRECT_WIN_BASE) &&
+#endif
+	    bpa < (VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SIZE)) {
+		busbase = VERDE_OUT_DIRECT_WIN_BASE;
+		physbase = VERDE_OUT_DIRECT_WIN_BASE;
+	} else
+		return (EINVAL);
+	if (bpa >= (VERDE_OUT_DIRECT_WIN_BASE +
+	    VERDE_OUT_DIRECT_WIN_SIZE))
+		return (EINVAL);
+#else
+	if (bpa >= sc->sc_owin[0].owin_xlate_lo &&
+	    bpa < (sc->sc_owin[0].owin_xlate_lo +
+		   VERDE_OUT_XLATE_MEM_WIN_SIZE)) {
+		busbase = sc->sc_owin[0].owin_xlate_lo;
+		physbase = sc->sc_iwin[1].iwin_xlate;
+	} else
+		return (EINVAL);
+	if (bpa >= (busbase + VERDE_OUT_XLATE_MEM_WIN_SIZE))
+		return (EINVAL);
+#endif
+
+	pa = trunc_page((bpa - busbase) + physbase);
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
+		pflags = ARM_MMAP_WRITECOMBINE;
+	}
+	return (arm_btop(pa) | pflags);
 }
