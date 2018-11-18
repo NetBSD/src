@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.6 2018/11/15 04:56:52 riastradh Exp $ */
+/* $NetBSD: param.h,v 1.7 2018/11/18 15:52:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #define _AARCH64_PARAM_H_
 
 #ifdef __aarch64__
+
+#ifdef _KERNEL_OPT
+#include "opt_cputypes.h"
+#endif
 
 /*
  * Machine dependent constants for all ARM processors
@@ -131,18 +135,23 @@
 #endif
 
 #ifdef _KERNEL
+
+#if defined(CPU_THUNDERX)
+#define COHERENCY_UNIT	128
+#define CACHE_LINE_SIZE	128
+#endif
+
 #ifndef __HIDE_DELAY
 void delay(unsigned int);
 #define	DELAY(x)	delay(x)
 #endif
-#endif
 /*
  * Compatibility /dev/zero mapping.
  */
-#ifdef _KERNEL
 #ifdef COMPAT_16
 #define COMPAT_ZERODEV(x)	(x == makedev(0, _DEV_ZERO_oARM))
 #endif
+
 #endif /* _KERNEL */
 
 #define aarch64_btop(x)		((unsigned long)(x) >> PGSHIFT)
