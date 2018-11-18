@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:47 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/18 10:34:46 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,9 +36,14 @@
 /* md.h -- Machine specific definitions for the shark */
 
 /* Constants and defines */
+/* Megs for the /usr partition, if separate */
+#define	DEFUSRSIZE	980
 
 /* Megs required for a full X installation. */
-#define XNEEDMB 60
+#define XNEEDMB 	225
+
+/* Megs required for debug sets */
+#define	DEBNEEDMB	980
 
 /*
  *  Default filesets to fetch and install during installation
