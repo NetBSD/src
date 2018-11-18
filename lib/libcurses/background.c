@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.19 2018/11/18 20:26:29 uwe Exp $	*/
+/*	$NetBSD: background.c,v 1.20 2018/11/18 21:01:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.19 2018/11/18 20:26:29 uwe Exp $");
+__RCSID("$NetBSD: background.c,v 1.20 2018/11/18 21:01:16 uwe Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -95,13 +95,8 @@ wbkgd(WINDOW *win, chtype ch)
 	__CTRACE(__CTRACE_ATTR, "wbkgd: (%p), '%s', %08x\n",
 	    win, unctrl(ch & __CHARTEXT), ch & __ATTRIBUTES);
 #endif
-
-	/* Background attributes (check colour). */
-	if (__using_color && !(ch & __COLOR))
-		ch |= __default_color;
-
-	win->battr = (attr_t) ch & __ATTRIBUTES;
 	wbkgdset(win, ch);
+
 	for (y = 0; y < win->maxy; y++)
 		for (x = 0; x < win->maxx; x++) {
 			/* Copy character if space */
