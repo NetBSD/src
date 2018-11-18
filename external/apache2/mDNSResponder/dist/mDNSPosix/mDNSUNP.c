@@ -304,7 +304,7 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
             continue;   /* ignore if interface not up */
 
 
-#if 0
+#ifdef notdef
 	/*
 	 * Include the loopback so that we return at least one
 	 * address, so that mdnsd does not exit before we get
