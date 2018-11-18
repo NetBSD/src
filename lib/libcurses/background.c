@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.17 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: background.c,v 1.18 2018/11/18 18:52:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.17 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: background.c,v 1.18 2018/11/18 18:52:29 uwe Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -67,7 +67,7 @@ wbkgdset(WINDOW *win, chtype ch)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wbkgdset: (%p), '%s', %08x\n",
-	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
+	    win, unctrl(ch & __CHARTEXT), ch & __ATTRIBUTES);
 #endif
 
 	/* Background character. */
@@ -91,7 +91,7 @@ wbkgd(WINDOW *win, chtype ch)
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wbkgd: (%p), '%s', %08x\n",
-	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
+	    win, unctrl(ch & __CHARTEXT), ch & __ATTRIBUTES);
 #endif
 
 	/* Background attributes (check colour). */
@@ -103,7 +103,7 @@ wbkgd(WINDOW *win, chtype ch)
 	for (y = 0; y < win->maxy; y++)
 		for (x = 0; x < win->maxx; x++) {
 			/* Copy character if space */
-			if (ch & A_CHARTEXT && win->alines[y]->line[x].ch == ' ')
+			if (ch & __CHARTEXT && win->alines[y]->line[x].ch == ' ')
 				win->alines[y]->line[x].ch = ch & __CHARTEXT;
 			/* Merge attributes */
 			if (win->alines[y]->line[x].attr & __ALTCHARSET)
