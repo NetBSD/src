@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.22 2011/02/20 07:56:31 matt Exp $	*/
+/*	$NetBSD: apbus.c,v 1.22.48.1 2018/11/18 11:54:02 martin Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22 2011/02/20 07:56:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22.48.1 2018/11/18 11:54:02 martin Exp $");
 
 #define __INTR_PRIVATE
 
@@ -99,6 +99,7 @@ apbusattach(device_t parent, device_t self, void *aux)
 	struct newsmips_intr *ip;
 	int i;
 
+	apbus_map_romwork();
 	mips_set_wbflush(apbus_wbflush);
 
 	*(volatile uint32_t *)(NEWS5000_APBUS_INTST) = 0xffffffff;
