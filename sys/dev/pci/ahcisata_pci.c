@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.42 2018/10/25 21:03:19 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.43 2018/11/18 16:34:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.42 2018/10/25 21:03:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.43 2018/11/18 16:34:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.42 2018/10/25 21:03:19 jdolecek E
 #include <dev/pci/pciidevar.h>
 #include <dev/ic/ahcisatavar.h>
 
-struct ahci_pci_quirk { 
+struct ahci_pci_quirk {
 	pci_vendor_id_t  vendor;	/* Vendor ID */
 	pci_product_id_t product;	/* Product ID */
 	int              quirks;	/* quirks; same as sc_ahci_quirks */
