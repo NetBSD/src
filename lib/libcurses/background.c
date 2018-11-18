@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.18 2018/11/18 18:52:29 uwe Exp $	*/
+/*	$NetBSD: background.c,v 1.19 2018/11/18 20:26:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.18 2018/11/18 18:52:29 uwe Exp $");
+__RCSID("$NetBSD: background.c,v 1.19 2018/11/18 20:26:29 uwe Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -50,7 +50,8 @@ bkgdset(chtype ch)
 
 /*
  * bkgd --
- *	Set new background and new background attributes on stdscr.
+ *	Set new background attributes on stdscr and apply them to its
+ *	contents.
  */
 int
 bkgd(chtype ch)
@@ -60,7 +61,7 @@ bkgd(chtype ch)
 
 /*
  * wbkgdset
- *	Set new background attributes.
+ *	Set new background attributes on the specified window.
  */
 void
 wbkgdset(WINDOW *win, chtype ch)
@@ -82,7 +83,8 @@ wbkgdset(WINDOW *win, chtype ch)
 
 /*
  * wbkgd --
- *	Set new background and new background attributes.
+ *	Set new background attributes on the specified window and
+ *	apply them to its contents.
  */
 int
 wbkgd(WINDOW *win, chtype ch)
