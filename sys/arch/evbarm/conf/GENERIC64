@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.64 2018/11/18 15:52:04 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.65 2018/11/18 20:23:18 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -401,10 +401,15 @@ midi*		at midibus?
 # Virtio devices
 virtio*		at fdt?			# Virtio MMIO device
 virtio*		at acpi?
+virtio*		at pci? dev ? function ?
 #viomb*		at virtio?		# Virtio memory balloon device
 ld*		at virtio?		# Virtio disk device
 vioif*		at virtio?		# Virtio network device
 viornd*		at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
+
+# SCSI bus support
+scsibus*	at scsi?
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
 
 cinclude "arch/evbarm/conf/GENERIC64.local"
