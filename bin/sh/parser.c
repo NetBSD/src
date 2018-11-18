@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.152 2018/11/09 02:11:04 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.153 2018/11/18 17:23:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.152 2018/11/09 02:11:04 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.153 2018/11/18 17:23:37 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1725,7 +1725,7 @@ readcstyleesc(char *out)
 		pungetc();
 		return out;
 	}
-	if (SQSYNTAX[vc] == CCTL)
+	if (NEEDESC(vc))
 		USTPUTC(CTLESC, out);
 	USTPUTC(vc, out);
 	return out;
@@ -1826,10 +1826,17 @@ readtoken1(int firstc, char const *syn, int magicq)
 			quotef = 1;	/* current token is quoted */
 			if (ISDBLQUOTE() && c != '\\' && c != '`' &&
 			    c != '$' && (c != '"' || magicq)) {
+				/*
+				 * retain the \ (which we *know* needs CTLESC)
+				 * when in "..." and the following char is
+				 * not one of the magic few.)
+				 * Otherwise the \ has done its work, and
+				 * is dropped.
+				 */
 				USTPUTC(CTLESC, out);
 				USTPUTC('\\', out);
 			}
-			if (SQSYNTAX[c] == CCTL || SQSYNTAX[c] == CSBACK)
+			if (NEEDESC(c))
 				USTPUTC(CTLESC, out);
 			else if (!magicq) {
 				USTPUTC(CTLQUOTEMARK, out);

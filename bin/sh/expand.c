@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.127 2018/07/22 23:07:48 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.128 2018/11/18 17:23:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.127 2018/07/22 23:07:48 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.128 2018/11/18 17:23:37 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ STATIC const char *
 argstr(const char *p, int flag)
 {
 	char c;
-	int quotes = flag & (EXP_GLOB | EXP_CASE | EXP_REDIR);	/* do CTLESC */
+	const int quotes = flag & EXP_QNEEDED;		/* do CTLESC */
 	int firsteq = 1;
 	const char *ifs = NULL;
 	int ifs_split = EXP_IFS_SPLIT;
@@ -353,7 +353,7 @@ exptilde(const char *p, int flag)
 	const char *startp = p;
 	struct passwd *pw;
 	const char *home;
-	int quotes = flag & (EXP_GLOB | EXP_CASE);
+	const int quotes = flag & EXP_QNEEDED;
 	char *user;
 	struct stackmark smark;
 #ifdef DEBUG
@@ -423,7 +423,7 @@ exptilde(const char *p, int flag)
 		CTRACE(DBG_EXPAND, (": returning unused \"%s\"\n", startp));
 		return startp;
 	} while ((c = *home++) != '\0') {
-		if (quotes && SQSYNTAX[(int)c] == CCTL)
+		if (quotes && NEEDESC(c))
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
 	}
@@ -570,9 +570,8 @@ expbackq(union node *cmd, int quoted, int flag)
 	struct nodelist *saveargbackq;
 	char lastc;
 	int startloc = dest - stackblock();
-	char const *syntax = quoted? DQSYNTAX : BASESYNTAX;
 	int saveherefd;
-	int quotes = flag & (EXP_GLOB | EXP_CASE);
+	const int quotes = flag & EXP_QNEEDED;
 	int nnl;
 	struct stackmark smark;
 
@@ -646,7 +645,7 @@ expbackq(union node *cmd, int quoted, int flag)
 					}
 					CHECKSTRSPACE(2, dest);
 				}
-				if (quotes && syntax[(int)lastc] == CCTL)
+				if (quotes && quoted && NEEDESC(lastc))
 					USTPUTC(CTLESC, dest);
 				USTPUTC(lastc, dest);
 			}
@@ -847,7 +846,7 @@ evalvar(const char *p, int flag)
 	int startloc;
 	int varlen;
 	int apply_ifs;
-	int quotes = flag & (EXP_GLOB | EXP_CASE | EXP_REDIR);
+	const int quotes = flag & EXP_QNEEDED;
 
 	varflags = (unsigned char)*p++;
 	subtype = varflags & VSTYPE;
@@ -907,7 +906,7 @@ evalvar(const char *p, int flag)
 				 */
 				while (--special > 0) {
 /*						not needed, it is a number...
-					if (quotes && syntax[(int)*var] == CCTL)
+					if (quotes && NEEDESC(*var))
 						STPUTC(CTLESC, expdest);
 */
 					STPUTC(*var++, expdest);
@@ -919,20 +918,19 @@ evalvar(const char *p, int flag)
 				STADJUST(-varlen, expdest);
 			}
 		} else {
-			char const *syntax = (varflags & VSQUOTE) ? DQSYNTAX
-								  : BASESYNTAX;
 
 			if (subtype == VSLENGTH) {
 				for (;*val; val++)
 					varlen++;
-			} else {
-				while (*val) {
-					if (quotes && (varflags & VSQUOTE) &&
-					    (syntax[(int)*val] == CCTL ||
-					     syntax[(int)*val] == CBACK))
+			} else if (quotes && varflags & VSQUOTE) {
+				for (; (c = *val) != '\0'; val++) {
+					if (NEEDESC(c))
 						STPUTC(CTLESC, expdest);
-					STPUTC(*val++, expdest);
+					STPUTC(c, expdest);
 				}
+			} else {
+				while (*val)
+					STPUTC(*val++, expdest);
 			}
 		}
 	}
@@ -1113,17 +1111,15 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 	int i;
 	int sep;
 	char **ap;
-	char const *syntax;
 
 	if (subtype == VSLENGTH)	/* no magic required ... */
 		flag &= ~EXP_FULL;
 
 #define STRTODEST(p) \
 	do {\
-		if (flag & (EXP_GLOB | EXP_CASE) && subtype != VSLENGTH) { \
-			syntax = quoted? DQSYNTAX : BASESYNTAX; \
+		if ((flag & EXP_QNEEDED) && quoted) { \
 			while (*p) { \
-				if (syntax[(int)*p] == CCTL) \
+				if (NEEDESC(*p)) \
 					STPUTC(CTLESC, expdest); \
 				STPUTC(*p++, expdest); \
 			} \
@@ -1170,8 +1166,8 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 			if (!*ap)
 				break;
 			if (sep) {
-				if (quoted && (flag & (EXP_GLOB|EXP_CASE)) &&
-				    (SQSYNTAX[sep] == CCTL || SQSYNTAX[sep] == CSBACK))
+				if (quoted && (flag & EXP_QNEEDED) &&
+				    NEEDESC(sep))
 					STPUTC(CTLESC, expdest);
 				STPUTC(sep, expdest);
 			} else
