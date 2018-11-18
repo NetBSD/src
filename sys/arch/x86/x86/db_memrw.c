@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.6 2018/03/16 04:48:19 ozaki-r Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7 2018/11/18 14:16:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.6 2018/03/16 04:48:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7 2018/11/18 14:16:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,8 +71,7 @@ db_validate_address(vaddr_t addr)
 	struct pmap *pmap;
 
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap ||
-	    addr >= VM_MIN_KERNEL_ADDRESS
-	   )
+	    addr >= VM_MIN_KERNEL_ADDRESS)
 		pmap = pmap_kernel();
 	else
 		pmap = p->p_vmspace->vm_map.pmap;
