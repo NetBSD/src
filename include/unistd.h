@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.150 2018/08/15 10:21:42 martin Exp $	*/
+/*	$NetBSD: unistd.h,v 1.151 2018/11/18 19:22:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -244,9 +244,9 @@ pid_t	 getsid(pid_t);
  */
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
-#ifndef	intptr_t
-typedef	__intptr_t	intptr_t;
-#define	intptr_t	__intptr_t
+#ifndef _BSD_INTPTR_T_
+typedef __intptr_t      intptr_t;
+#define _BSD_INTPTR_T_
 #endif
 
 #define F_ULOCK		0
