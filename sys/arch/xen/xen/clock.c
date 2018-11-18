@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.72 2018/10/26 05:33:21 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.73 2018/11/18 10:24:10 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.72 2018/10/26 05:33:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.73 2018/11/18 10:24:10 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -811,6 +811,7 @@ xen_timer_handler(void *cookie, struct clockframe *frame)
 	KASSERT(cpu_intr_p());
 	KASSERT(cookie == ci);
 
+	frame = &ci->ci_event_clockframe;
 again:
 	/*
 	 * Find how many nanoseconds of Xen system time has elapsed

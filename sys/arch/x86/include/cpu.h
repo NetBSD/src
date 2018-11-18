@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.98 2018/10/05 18:51:52 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.99 2018/11/18 10:24:09 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,6 +92,15 @@ struct cpu_tss {
 	struct i386tss tss;
 	uint8_t iomap[IOMAPSIZE];
 } __packed;
+
+/*
+ * Arguments to hardclock, softclock and statclock
+ * encapsulate the previous machine state in an opaque
+ * clockframe; for now, use generic intrframe.
+ */
+struct clockframe {
+	struct intrframe cf_if;
+};
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
@@ -273,6 +282,12 @@ struct cpu_info {
 	/* Xen periodic timer interrupt handle.  */
 	struct intrhand	*ci_xen_timer_intrhand;
 
+	/*
+	 * Clockframe for timer interrupt handler.
+	 * Saved at entry via event callback.
+	 */
+	struct clockframe ci_event_clockframe;
+
 	/* Event counters for various pathologies that might happen.  */
 	struct evcnt	ci_xen_cpu_tsc_backwards_evcnt;
 	struct evcnt	ci_xen_tsc_delta_negative_evcnt;
@@ -376,15 +391,6 @@ void cpu_speculation_init(struct cpu_info *);
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
-
-/*
- * Arguments to hardclock, softclock and statclock
- * encapsulate the previous machine state in an opaque
- * clockframe; for now, use generic intrframe.
- */
-struct clockframe {
-	struct intrframe cf_if;
-};
 
 /*
  * Give a profiling tick to the current process when the user profiling
