@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.93 2018/11/18 00:45:44 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.94 2018/11/18 01:05:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.93 2018/11/18 00:45:44 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.94 2018/11/18 01:05:30 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1743,9 +1743,9 @@ done:
 				{
 #else
 				if (clp->hash != blank_hash
-				    || linecmp(clp->line, clp->line + 1,
+				    || !linecmp(clp->line, clp->line + 1,
 				    (unsigned int) (__virtscr->maxx - 1))
-				    || cellcmp(clp->line, buf))
+				    || !cellcmp(clp->line, buf))
 				{
 #endif /* HAVE_WCHAR */
 					for (i = __virtscr->maxx;
