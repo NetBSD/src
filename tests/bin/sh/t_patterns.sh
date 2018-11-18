@@ -1,4 +1,4 @@
-# $NetBSD: t_patterns.sh,v 1.2 2018/07/20 18:25:56 kre Exp $
+# $NetBSD: t_patterns.sh,v 1.3 2018/11/18 01:24:44 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -670,6 +670,15 @@ case_matching_body() {
 	cf a '[![:alpha:]]'; cm 0; cm '"["'; cf aa; cm .; cf '""'	#250
 	cf '"["' '[!][:alpha:][!]'; cf a; cm 0; cf !; cf "']'"; cm %	#256
 	cf a '[$var]' 'var="![:alpha:]"'; cm 0; cm !; cm "']'"; cm @	#261
+
+	# Next some tests of patterns containing (intended literal) '\'
+	# The first of the "set" tests pair was reported as broken bu
+	# Martijn Dekker (private mail) (Nov 2018).
+
+	cm "'\'" "'\'"							#262
+	cm "'\'" '"$var"' "var='\\'"; cf "'\'" '$var' "var='\\'"	#264
+	cm '$1' '"$2"' 'set -- \\ \\'; cf '$1' '$2' 'set -- \\ \\'	#266
+	cf '$1' '"$2"' 'set -- \\ \\\\'; cm '$1' '$2' 'set -- \\ \\\\'	#268
 
 	results
 }
