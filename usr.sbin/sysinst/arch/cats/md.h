@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/18 10:34:45 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2018/11/18 10:37:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,6 +38,7 @@
 /* Constants and defines */
 
 #define DEFROOTSIZE	80	/* Default root size */
+#define DEFUSRSIZE	960	/* Default /usr size, if /home */
 #define XNEEDMB		225	/* Extra megs for full X installation */
 #define DEBNEEDMB	980	/* Extra megs for debug sets */
 
