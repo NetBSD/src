@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89 2018/11/07 07:14:51 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.90 2018/11/19 20:28:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -86,9 +86,9 @@
 #define pl3_i(VA)	(((VA_SIGN_POS(VA)) & L3_FRAME) >> L3_SHIFT)
 #define pl4_i(VA)	(((VA_SIGN_POS(VA)) & L4_FRAME) >> L4_SHIFT)
 #define pl_i(va, lvl) \
-        (((VA_SIGN_POS(va)) & ptp_masks[(lvl)-1]) >> ptp_shifts[(lvl)-1])
+        (((VA_SIGN_POS(va)) & ptp_frames[(lvl)-1]) >> ptp_shifts[(lvl)-1])
 
-#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_masks[(lvl)-1], (lvl))
+#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_frames[(lvl)-1], (lvl))
 
 /*
  * PTP macros:
