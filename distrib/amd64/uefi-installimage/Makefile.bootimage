@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.7 2018/10/07 10:33:44 martin Exp $
+#	$NetBSD: Makefile.bootimage,v 1.8 2018/11/19 20:05:37 aymeric Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -228,6 +228,7 @@ SETS_DEFAULT+=	xbase xcomp xetc xfont xserver
 .endif
 
 KERN_SET?=	kern-GENERIC
+COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
 TAR_SUFF=	${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 SETS?=		${SETS_DEFAULT}
 IMG_SETS=	${KERN_SET} ${SETS}
@@ -263,7 +264,9 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 		false; 							\
 	fi
 	@echo Extracting ${set}.${TAR_SUFF} ...
-	@(cd ${WORKDIR}; ${TOOL_PAX} ${PAX_TIMESTAMP} -rnz -f ${SETS_DIR}/${set}.${TAR_SUFF} .)
+	@(cd ${WORKDIR}; ${TOOL_PAX} ${PAX_TIMESTAMP} -rn \
+		--use-compress-program=${COMPRESS_PROGRAM:Q} \
+		-f ${SETS_DIR}/${set}.${TAR_SUFF} .)
 .endfor
 .if defined(SECONDARY_BOOT)
 	@echo Copying secondary boot...
