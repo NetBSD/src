@@ -1,4 +1,4 @@
-/*	$NetBSD: consumer.h,v 1.4 2018/08/27 15:29:54 riastradh Exp $	*/
+/*	$NetBSD: consumer.h,v 1.5 2018/11/19 10:48:59 maya Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #ifdef FDT
 
+#include <machine/limits.h>
 #include <dev/fdt/fdtvar.h>
 
 struct regulator {
