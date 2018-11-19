@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.597 2018/11/14 03:41:20 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.598 2018/11/19 06:38:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.597 2018/11/14 03:41:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.598 2018/11/19 06:38:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5490,6 +5490,27 @@ wm_init_locked(struct ifnet *ifp)
 	/* Reset the PHY. */
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_gmii_reset(sc);
+
+	if (sc->sc_type >= WM_T_ICH8) {
+		reg = CSR_READ(sc, WMREG_GCR);
+		/*
+		 * ICH8 No-snoop bits are opposite polarity. Set to snoop by
+		 * default after reset.
+		 */
+		if (sc->sc_type == WM_T_ICH8)
+			reg |= GCR_NO_SNOOP_ALL;
+		else
+			reg &= ~GCR_NO_SNOOP_ALL;
+		CSR_WRITE(sc, WMREG_GCR, reg);
+	}
+	if ((sc->sc_type >= WM_T_ICH8)
+	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER)
+	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3)) {
+
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		reg |= CTRL_EXT_RO_DIS;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+	}
 
 	/* Calculate (E)ITR value */
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0 && sc->sc_type != WM_T_82575) {
