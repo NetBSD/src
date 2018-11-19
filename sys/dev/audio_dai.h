@@ -1,4 +1,4 @@
-/* $NetBSD: audio_dai.h,v 1.2 2018/05/11 22:48:55 jmcneill Exp $ */
+/* $NetBSD: audio_dai.h,v 1.3 2018/11/19 09:23:05 maya Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,8 @@
 
 #ifndef _DEV_AUDIO_DAI_H
 #define _DEV_AUDIO_DAI_H
+
+#include <sys/param.h>
 
 #include <dev/audio_if.h>
 
