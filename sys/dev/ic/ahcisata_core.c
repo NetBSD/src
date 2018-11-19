@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.67 2018/11/19 19:52:08 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.68 2018/11/19 21:52:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.67 2018/11/19 19:52:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.68 2018/11/19 21:52:24 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -791,13 +791,11 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
-	int i;
+	int i, error = 0;
 	uint32_t sig;
 
-	KASSERT((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) == 0);
 	ata_channel_lock_owned(chp);
 
-again:
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
@@ -809,6 +807,9 @@ again:
 		 */
 		ahci_channel_start(sc, chp, flags, 1);
 	} else {
+		/* Can't handle command still running without CLO */
+		KASSERT((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) == 0);
+
 		ahci_channel_start(sc, chp, flags, 0);
 	}
 	if (drive > 0) {
@@ -834,12 +835,12 @@ again:
 	case TIMEOUT:
 		aprint_error("%s port %d: setting WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
-		if (sigp)
-			*sigp = 0xffffffff;
+		error = EBUSY;
 		goto end;
 	default:
 		break;
 	}
+
 	cmd_h->cmdh_flags = htole16(RHD_FISLEN / 4 |
 	    (drive << AHCI_CMDH_F_PMP_SHIFT));
 	cmd_h->cmdh_prdbc = 0;
@@ -850,21 +851,9 @@ again:
 	switch (ahci_exec_fis(chp, 310, flags, c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
-		if ((sc->sc_ahci_quirks & AHCI_QUIRK_BADPMPRESET) != 0 &&
-		    drive == PMP_PORT_CTL) {
-			/*
-			 * some controllers fails to reset when
-			 * targeting a PMP but a single drive is attached.
-			 * try again with port 0
-			 */
-			drive = 0;
-			ahci_channel_stop(sc, chp, flags);
-			goto again;
-		}
 		aprint_error("%s port %d: clearing WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
-		if (sigp)
-			*sigp = 0xffffffff;
+		error = EBUSY;
 		goto end;
 	default:
 		break;
@@ -885,8 +874,6 @@ skip_reset:
 	if (i == AHCI_RST_WAIT) {
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
 		    AHCINAME(sc), sig);
-		if (sigp)
-			*sigp = 0xffffffff;
 		goto end;
 	}
 	AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
@@ -904,7 +891,7 @@ end:
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	ahci_channel_start(sc, chp, flags,
 	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
-	return 0;
+	return error;
 }
 
 static void
@@ -972,6 +959,7 @@ ahci_probe_drive(struct ata_channel *chp)
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	uint32_t sig;
 	uint8_t c_slot;
+	int error;
 
 	ata_channel_lock(chp);
 
@@ -993,9 +981,24 @@ ahci_probe_drive(struct ata_channel *chp)
 	    achp->ahcic_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
 		ata_delay(chp, 500, "ahcidv", AT_WAIT);
+
+		/* Initial value, used in case the soft reset fails */
+		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
+
 		if (sc->sc_ahci_cap & AHCI_CAP_SPM) {
-			ahci_do_reset_drive(chp, PMP_PORT_CTL, AT_WAIT, &sig,
-			    c_slot);
+			error = ahci_do_reset_drive(chp, PMP_PORT_CTL, AT_WAIT,
+			    &sig, c_slot);
+
+			/* If probe for PMP failed, just fallback to drive 0 */
+			if (error) {
+				aprint_error("%s port %d: drive %d reset "
+				    "failing, disabling PMP\n",
+				    AHCINAME(sc), chp->ch_channel,
+				PMP_PORT_CTL);
+
+				sc->sc_ahci_cap &= ~AHCI_CAP_SPM;
+				ahci_reset_channel(chp, AT_WAIT);
+			}
 		} else {
 			ahci_do_reset_drive(chp, 0, AT_WAIT, &sig, c_slot);
 		}
