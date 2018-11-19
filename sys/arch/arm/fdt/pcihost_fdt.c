@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.5 2018/11/16 19:32:01 jakllsch Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.6 2018/11/19 11:08:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.5 2018/11/16 19:32:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.6 2018/11/19 11:08:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -203,15 +203,14 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_MRL_OKAY |
 			PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY |
-			PCI_FLAGS_MEM_OKAY |
-			PCI_FLAGS_IO_OKAY;
+			PCI_FLAGS_MEM_OKAY;
 #ifdef __HAVE_PCI_MSI_MSIX
 	if (sc->sc_type == PCIHOST_ECAM) {
 		pba.pba_flags |= PCI_FLAGS_MSI_OKAY |
 				 PCI_FLAGS_MSIX_OKAY;
 	}
 #endif
-	pba.pba_iot = sc->sc_bst;
+	pba.pba_iot = 0;
 	pba.pba_memt = sc->sc_bst;
 	pba.pba_dmat = sc->sc_dmat;
 #ifdef _PCI_HAVE_DMA64
