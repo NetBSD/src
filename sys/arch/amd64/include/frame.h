@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.19 2018/11/19 10:05:09 kre Exp $	*/
+/*	$NetBSD: frame.h,v 1.20 2018/11/19 15:43:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,8 +101,8 @@ struct intrframe {
 /*
  * Need arch independany way to access IP and CS from intrframe
  */
-#define	_INTRFRAME_IP	if_tf.tf_cs
-#define	_INTRFRAME_CS	if_tf.tf_rip
+#define	_INTRFRAME_CS	if_tf.tf_cs
+#define	_INTRFRAME_IP	if_tf.tf_rip
 #endif
 
 /*
