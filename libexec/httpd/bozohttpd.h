@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.49 2018/05/04 18:07:23 christos Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.50 2018/11/19 04:12:22 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -175,7 +175,8 @@ typedef struct bozo_httpreq_t {
 #endif
 	struct qheaders		hr_headers;
 	struct qheaders		hr_replheaders;
-	int			hr_nheaders;
+	unsigned		hr_nheaders;
+	size_t			hr_header_bytes;
 } bozo_httpreq_t;
 
 /* helper to access the "active" host name from a httpd/request pair */
@@ -198,6 +199,9 @@ typedef struct bozoprefs_t {
 #ifndef BOZO_MMAPSZ
 #define BOZO_MMAPSZ	(BOZO_WRSZ * 1024)
 #endif
+
+/* only allow this many total headers bytes */
+#define BOZO_HEADERS_MAX_SIZE (16 * 1024)
 
 /* debug flags */
 #define DEBUG_NORMAL	1
