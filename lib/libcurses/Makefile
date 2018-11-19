@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2018/11/18 01:23:57 uwe Exp $
+#	$NetBSD: Makefile,v 1.89 2018/11/19 01:08:22 uwe Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -28,6 +28,7 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 
 MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \
+	curses_cchar.3 \
 	curses_chgat.3 curses_clear.3 curses_color.3 \
 	curses_cursor.3 curses_default_colors.3 \
 	curses_delch.3 curses_deleteln.3 curses_echochar.3 curses_fileio.3 \
@@ -60,6 +61,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_attributes.3 attrset.3 curses_tty.3 beep.3 \
 	 curses_background.3 bkgd.3 curses_background.3 bkgdset.3 \
 	 curses_border.3 border.3 curses_border.3 box.3 \
+	 curses_cchar.3 getcchar.3 \
+	 curses_cchar.3 setcchar.3 \
 	 curses_chgat.3 chgat.3 curses_chgat.3 mvchgat.3 \
 	 curses_chgat.3 mvwchgat.3 curses_chgat.3 wchgat.3 \
 	 curses_color.3 can_change_color.3 curses_tty.3 cbreak.3 \
