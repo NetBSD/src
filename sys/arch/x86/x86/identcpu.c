@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.82 2018/11/10 11:08:54 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.83 2018/11/19 22:21:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.82 2018/11/10 11:08:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.83 2018/11/19 22:21:32 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -822,9 +822,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 	 * supervisor trap. OSXSAVE flag seems to be reliably set according
 	 * to whether XSAVE is actually available.
 	 */
-#ifdef XEN_USE_XSAVE
 	if ((ci->ci_feat_val[1] & CPUID2_OSXSAVE) == 0)
-#endif
 		return;
 #endif
 
