@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.310 2018/11/07 07:14:51 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.311 2018/11/19 20:28:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.310 2018/11/07 07:14:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.311 2018/11/19 20:28:01 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -239,7 +239,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.310 2018/11/07 07:14:51 maxv Exp $");
  *   lock it when adding or removing pmaps from this list.
  */
 
-const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
+const vaddr_t ptp_frames[] = PTP_FRAME_INITIALIZER;
 const int ptp_shifts[] = PTP_SHIFT_INITIALIZER;
 const long nkptpmax[] = NKPTPMAX_INITIALIZER;
 const long nbpd[] = NBPD_INITIALIZER;
@@ -3539,7 +3539,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			/*
 			 * skip a range corresponding to an invalid pde.
 			 */
-			blkendva = (va & ptp_masks[lvl - 1]) + nbpd[lvl - 1];
+			blkendva = (va & ptp_frames[lvl - 1]) + nbpd[lvl - 1];
  			continue;
 		}
 
