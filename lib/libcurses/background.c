@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.24 2018/11/18 22:53:22 uwe Exp $	*/
+/*	$NetBSD: background.c,v 1.25 2018/11/19 20:37:04 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.24 2018/11/18 22:53:22 uwe Exp $");
+__RCSID("$NetBSD: background.c,v 1.25 2018/11/19 20:37:04 uwe Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -89,32 +89,33 @@ wbkgdset(WINDOW *win, chtype ch)
 int
 wbkgd(WINDOW *win, chtype ch)
 {
-	int	y, x;
+	chtype obch;
+	int y, x;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wbkgd: (%p), '%s', %08x\n",
 	    win, unctrl(ch & __CHARTEXT), ch & __ATTRIBUTES);
 #endif
+	obch = win->bch;
 	wbkgdset(win, ch);
 
-	for (y = 0; y < win->maxy; y++)
+	for (y = 0; y < win->maxy; y++) {
 		for (x = 0; x < win->maxx; x++) {
-			/* Copy character if space */
-			if (ch & __CHARTEXT && win->alines[y]->line[x].ch == ' ')
-				win->alines[y]->line[x].ch = ch & __CHARTEXT;
-			/* Merge attributes */
-			if (win->alines[y]->line[x].attr & __ALTCHARSET)
-				win->alines[y]->line[x].attr =
-				    (ch & __ATTRIBUTES) | __ALTCHARSET;
-			else
-				win->alines[y]->line[x].attr =
-				    ch & __ATTRIBUTES;
+			__LDATA *cp = &win->alines[y]->line[x];
+
+			/* Update/switch background characters */
+			if (cp->ch == obch)
+				cp->ch = win->bch;
+
+			/* Update/merge attributes */
+			cp->attr = win->battr | (cp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
-			SET_WCOL(win->alines[y]->line[x], 1);
+			SET_WCOL(*cp, 1);
 #endif
 		}
+	}
 	__touchwin(win);
-	return(OK);
+	return OK;
 }
 
 /*
