@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.4 2018/11/10 01:24:06 jmcneill Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.5 2018/11/19 13:54:15 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.4 2018/11/10 01:24:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.5 2018/11/19 13:54:15 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -310,7 +310,7 @@ gicv3_fdt_disestablish(device_t dev, void *ih)
 
 	for (n = 0; n < GICV3_MAXIRQ; n++) {
 		firq = sc->sc_irq[n];
-		if (firq->intr_ih != ih)
+		if (firq == NULL || firq->intr_ih != ih)
 			continue;
 
 		KASSERT(firq->intr_refcnt > 0);
