@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2018/11/15 10:23:32 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.18 2018/11/19 17:17:43 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1795,29 +1795,17 @@ set_postfix(const char *set_name)
 }
 
 /*
- * Replace positional arguments (encoded as $0 .. $N) in the
- * message by the strings passed as ...
+ * Replace positional arguments (encoded as $0 .. $N) in the string
+ * passed by the contents of the passed argument array.
+ * Caller must free() the result string.
  */
-void
-msg_display_subst(const char *master, size_t argc, ...)
+char*
+str_arg_subst(const char *src, size_t argc, const char **argv)
 {
-	va_list ap;
-	const char **args, **arg;
-	const char *src, *p, *last;
+	const char *p, *last;
 	char *out, *t;
 	size_t len;
 
-	args = malloc(sizeof(const char *)*argc);
-	if (args == NULL)
-		return;
-
-	arg = args;
-	va_start(ap, argc);
-	for (size_t i = 0; i < argc; i++)
-		*arg++ = va_arg(ap, const char*);
-	va_end(ap);
-
-	src = msg_string(master);
 	len = strlen(src);
 	for (p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
 		char *endp = NULL;
@@ -1827,17 +1815,15 @@ msg_display_subst(const char *master, size_t argc, ...)
 		/* $ followed by a correct numeric position? */
 		n = strtou(p+1, &endp, 10, 0, INT_MAX, &e);
 		if ((e == 0 || e == ENOTSUP) && n < argc) {
-			len += strlen(args[n]);
+			len += strlen(argv[n]);
 			len -= endp-p;
 			p = endp-1;
 		}
 	}
 
 	out = malloc(len+1);
-	if (out == NULL) {
-		free(args);
-		return;
-	}
+	if (out == NULL)
+		return NULL;
 
 	t = out;
 	for (last = src, p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
@@ -1851,8 +1837,8 @@ msg_display_subst(const char *master, size_t argc, ...)
 			size_t l = p-last;
 			memcpy(t, last, l);
 			t += l;
-			strcpy(t, args[n]);
-			t += strlen(args[n]);
+			strcpy(t, argv[n]);
+			t += strlen(argv[n]);
 			last = endp;
 		}
 	}
@@ -1864,9 +1850,35 @@ msg_display_subst(const char *master, size_t argc, ...)
 	}
 	assert((size_t)(t-out) == len);
 
-	msg_display(out);
+	return out;
+}
 
-	free(out);
+/*
+ * Replace positional arguments (encoded as $0 .. $N) in the
+ * message by the strings passed as ...
+ */
+void
+msg_display_subst(const char *master, size_t argc, ...)
+{
+	va_list ap;
+	const char **args, **arg;
+	char *out;
+
+	args = malloc(sizeof(const char *)*argc);
+	if (args == NULL)
+		return;
+
+	arg = args;
+	va_start(ap, argc);
+	for (size_t i = 0; i < argc; i++)
+		*arg++ = va_arg(ap, const char*);
+	va_end(ap);
+
+	out = str_arg_subst(msg_string(master), argc, args);
+	if (out != NULL) {
+		msg_display(out);
+		free(out);
+	}
 	free(args);
 }
 
