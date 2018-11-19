@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.38 2018/10/24 20:07:37 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.39 2018/11/19 19:52:08 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.38 2018/10/24 20:07:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.39 2018/11/19 19:52:08 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -573,7 +573,7 @@ siisata_intr_port(struct siisata_channel *schp)
 			}
 		} else {
 			aprint_error_dev(sc->sc_atac.atac_dev, "fatal error %d"
-			    " on channel %d (ctx 0x%x), resetting\n",
+			    " on port %d (ctx 0x%x), resetting\n",
 			    ec, chp->ch_channel,
 			    PRREAD(sc, PRX(chp->ch_channel, PRO_PCR)));
 
@@ -753,7 +753,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 
-	SIISATA_DEBUG_PRINT(("%s: %s channel %d\n", SIISATANAME(sc), __func__,
+	SIISATA_DEBUG_PRINT(("%s: %s port %d\n", SIISATANAME(sc), __func__,
 	    chp->ch_channel), DEBUG_FUNCS);
 
 	ata_channel_lock_owned(chp);
@@ -1672,7 +1672,7 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		if (periph == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: unable to allocate periph for "
-			    "channel %d drive %d\n", __func__,
+			    "port %d drive %d\n", __func__,
 			    chp->ch_channel, target);
 			return;
 		}
