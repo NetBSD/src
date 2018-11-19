@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.68 2018/11/19 21:52:24 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.69 2018/11/19 22:05:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.68 2018/11/19 21:52:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.69 2018/11/19 22:05:22 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -840,6 +840,13 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	default:
 		break;
 	}
+
+	/*
+	 * SATA specification has toggle period for SRST bit of 5 usec. Some
+	 * controllers fail to process the SRST clear operation unless
+	 * we wait for at least this period between the set and clear commands.
+	 */
+	ata_delay(chp, 10, "ahcirstw", flags);
 
 	cmd_h->cmdh_flags = htole16(RHD_FISLEN / 4 |
 	    (drive << AHCI_CMDH_F_PMP_SHIFT));
