@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.1 2018/11/10 09:28:56 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.2 2018/11/19 21:45:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@ _nvmm_area_add(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t hva,
 		    gpa < mach->areas[i].gpa + mach->areas[i].size) {
 			goto error;
 		}
-		if (gpa + size >= mach->areas[i].gpa &&
-		    gpa + size < mach->areas[i].gpa + mach->areas[i].size) {
+		if (gpa + size > mach->areas[i].gpa &&
+		    gpa + size <= mach->areas[i].gpa + mach->areas[i].size) {
 			goto error;
 		}
 		if (gpa < mach->areas[i].gpa &&
@@ -70,13 +70,13 @@ _nvmm_area_add(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t hva,
 		}
 	}
 
-	mach->nareas++;
-	ptr = realloc(mach->areas, mach->nareas * sizeof(struct nvmm_area));
+	ptr = realloc(mach->areas, (mach->nareas + 1) *
+	    sizeof(struct nvmm_area));
 	if (ptr == NULL)
 		return -1;
 	mach->areas = ptr;
 
-	area = &mach->areas[mach->nareas-1];
+	area = &mach->areas[mach->nareas++];
 	area->gpa = gpa;
 	area->hva = hva;
 	area->size = size;
@@ -106,7 +106,7 @@ _nvmm_area_delete(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t hva,
 		return -1;
 	}
 
-	memcpy(&mach->areas[i], &mach->areas[i+1],
+	memmove(&mach->areas[i], &mach->areas[i+1],
 	    (mach->nareas - i - 1) * sizeof(struct nvmm_area));
 	mach->nareas--;
 
