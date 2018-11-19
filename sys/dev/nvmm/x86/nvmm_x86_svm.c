@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.3 2018/11/14 19:14:40 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.4 2018/11/19 17:35:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.3 2018/11/14 19:14:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.4 2018/11/19 17:35:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -770,7 +770,7 @@ svm_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 #define SVM_EXIT_IO_SZ8		__BIT(4)
 #define SVM_EXIT_IO_REP		__BIT(3)
 #define SVM_EXIT_IO_STR		__BIT(2)
-#define SVM_EXIT_IO_TYPE	__BIT(0)
+#define SVM_EXIT_IO_IN		__BIT(0)
 
 static const int seg_to_nvmm[] = {
 	[0] = NVMM_X64_SEG_ES,
@@ -791,7 +791,7 @@ svm_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	exit->reason = NVMM_EXIT_IO;
 
-	if (info & SVM_EXIT_IO_TYPE) {
+	if (info & SVM_EXIT_IO_IN) {
 		exit->u.io.type = NVMM_EXIT_IO_IN;
 	} else {
 		exit->u.io.type = NVMM_EXIT_IO_OUT;
