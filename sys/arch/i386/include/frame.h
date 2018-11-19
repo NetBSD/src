@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.37 2017/08/12 13:11:23 maxv Exp $	*/
+/*	$NetBSD: frame.h,v 1.38 2018/11/19 10:05:09 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,14 @@ struct intrframe {
 	int	if_esp;
 	int	if_ss;
 };
+
+#ifdef XEN
+/*
+ * need arch independant way to access ip and cs from intrframe
+ */
+#define	_INTRFRAME_CS	if_cs
+#define	_INTRFRAME_IP	if_eip
+#endif
 
 /*
  * Stack frame inside cpu_switchto()
