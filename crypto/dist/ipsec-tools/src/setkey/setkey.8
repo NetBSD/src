@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.34 2012/02/18 13:51:29 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.35 2018/11/19 04:54:37 ozaki-r Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 18, 2012
+.Dd November 19, 2018
 .Dt SETKEY 8
 .Os
 .\"
@@ -160,60 +160,60 @@ Lines starting with hash signs
 .Pq Sq #
 are treated as comment lines.
 .Bl -tag -width Ds
-.It Li add Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
+.It Cm add Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi \
 Oo Ar extensions Oc Ar algorithm ... Li ;
 Add an SAD entry.
-.Li add
+.Cm add
 can fail for multiple reasons, including when the key length does
 not match the specified algorithm.
 .\"
-.It Li get Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
+.It Cm get Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
 Show an SAD entry.
 .\"
-.It Li delete Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
+.It Cm delete Oo Fl 46n Oc Ar src Ar dst Ar protocol Ar spi Li ;
 Remove an SAD entry.
 .\"
-.It Li deleteall Oo Fl 46n Oc Ar src Ar dst Ar protocol Li ;
+.It Cm deleteall Oo Fl 46n Oc Ar src Ar dst Ar protocol Li ;
 Remove all SAD entries that match the specification.
 .\"
-.It Li flush Oo Ar protocol Oc Li ;
+.It Cm flush Oo Ar protocol Oc Li ;
 Clear all SAD entries matched by the options.
 .Fl F
 on the command line achieves the same functionality.
 .\"
-.It Li dump Oo Ar protocol Oc Li ;
+.It Cm dump Oo Ar protocol Oc Li ;
 Dumps all SAD entries matched by the options.
 .Fl D
 on the command line achieves the same functionality.
 .\"
-.It Li spdadd Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
+.It Cm spdadd Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
 Ar label Ar policy Li ;
 Add an SPD entry.
 .\"
-.It Li spdadd tagged Ar tag Ar policy Li ;
+.It Cm spdadd tagged Ar tag Ar policy Li ;
 Add an SPD entry based on a PF tag.
 .Ar tag
 must be a string surrounded by double quotes.
 .\"
-.It Li spdupdate Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
+.It Cm spdupdate Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
 Ar label Ar policy Li ;
 Updates an SPD entry.
 .\"
-.It Li spdupdate tagged Ar tag Ar policy Li ;
+.It Cm spdupdate tagged Ar tag Ar policy Li ;
 Update an SPD entry based on a PF tag.
 .Ar tag
 must be a string surrounded by double quotes.
 .\"
-.It Li spddelete Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
+.It Cm spddelete Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
 Fl P Ar direction Li ;
 Delete an SPD entry.
 .\"
-.It Li spdflush Li ;
+.It Cm spdflush Li ;
 Clear all SPD entries.
 .Fl FP
 on the command line achieves the same functionality.
 .\"
-.It Li spddump Li ;
+.It Cm spddump Li ;
 Dumps all SPD entries.
 .Fl DP
 on the command line achieves the same functionality.
@@ -251,19 +251,19 @@ avoids FQDN resolution and requires addresses to be numeric addresses.
 .Ar protocol
 is one of following:
 .Bl -tag -width Fl -compact
-.It Li esp
+.It Cm esp
 ESP based on rfc2406
-.It Li esp-old
+.It Cm esp-old
 ESP based on rfc1827
-.It Li esp-udp
+.It Cm esp-udp
 UDP encapsulated ESP for NAT traversal (rfc3948)
-.It Li ah
+.It Cm ah
 AH based on rfc2402
-.It Li ah-old
+.It Cm ah-old
 AH based on rfc1826
-.It Li ipcomp
+.It Cm ipcomp
 IPComp
-.It Li tcp
+.It Cm tcp
 TCP-MD5 based on rfc2385
 .El
 .\"
@@ -290,11 +290,11 @@ take some of the following:
 Specify a security protocol mode for use.
 .Ar mode
 is one of following:
-.Li transport , tunnel ,
+.Cm transport , tunnel ,
 or
-.Li any .
+.Cm any .
 The default value is
-.Li any .
+.Cm any .
 .\"
 .It Fl r Ar size
 Specify window size of bytes for replay prevention.
@@ -314,11 +314,11 @@ defines the content of the ESP padding.
 .Ar pad_option
 is one of following:
 .Bl -tag -width random-pad -compact
-.It Li zero-pad
+.It Cm zero-pad
 All the paddings are zero.
-.It Li random-pad
+.It Cm random-pad
 A series of randomized values are used.
-.It Li seq-pad
+.It Cm seq-pad
 A series of sequential increasing numbers started from 1 are used.
 .El
 .\"
@@ -433,12 +433,12 @@ You can use one of the words in
 as
 .Ar upperspec ,
 or
-.Li icmp6 ,
-.Li ip4 ,
-.Li gre ,
+.Cm icmp6 ,
+.Cm ip4 ,
+.Cm gre ,
 or
-.Li any .
-.Li any
+.Cm any .
+.Cm any
 stands for
 .Dq any protocol .
 You can also use the protocol number.
@@ -500,21 +500,21 @@ The string representation of the label that is interpreted by the LSM.
 is in one of the following three formats:
 .Bl -item -compact
 .It
-.Fl P Ar direction [priority specification] Li discard
+.Fl P Ar direction [priority specification] Cm discard
 .It
-.Fl P Ar direction [priority specification] Li none
+.Fl P Ar direction [priority specification] Cm none
 .It
-.Fl P Ar direction [priority specification] Li ipsec
+.Fl P Ar direction [priority specification] Cm ipsec
 .Ar protocol/mode/src-dst/level Op ...
 .El
 .Pp
 You must specify the direction of its policy as
 .Ar direction .
 Either
-.Ar out ,
-.Ar in ,
+.Cm out ,
+.Cm in ,
 or
-.Ar fwd
+.Cm fwd
 can be used.
 .Pp
 .Ar priority specification
@@ -539,10 +539,12 @@ is an integer in the range from \-2147483647 to 214783648.
 .It Ar {priority,prio} base {+,\-} offset
 .Ar base
 is either
-.Li low (\-1073741824) ,
-.Li def (0) ,
-or
-.Li high (1073741824)
+.Cm low
+(\-1073741824),
+.Cm def
+(0), or
+.Cm high
+(1073741824)
 .Pp
 .Ar offset
 is an unsigned integer.
@@ -550,32 +552,32 @@ It can be up to 1073741824 for
 positive offsets, and up to 1073741823 for negative offsets.
 .El
 .Pp
-.Li discard
+.Cm discard
 means the packet matching indexes will be discarded.
-.Li none
+.Cm none
 means that IPsec operation will not take place onto the packet.
-.Li ipsec
+.Cm ipsec
 means that IPsec operation will take place onto the packet.
 .Pp
 The
 .Ar protocol/mode/src-dst/level
 part specifies the rule how to process the packet.
 Either
-.Li ah ,
-.Li esp ,
+.Cm ah ,
+.Cm esp ,
 or
-.Li ipcomp
+.Cm ipcomp
 must be used as
 .Ar protocol .
 .Ar mode
 is either
-.Li transport
+.Cm transport
 or
-.Li tunnel .
+.Cm tunnel .
 If
 .Ar mode
 is
-.Li tunnel ,
+.Cm tunnel ,
 you must specify the end-point addresses of the SA as
 .Ar src
 and
@@ -586,7 +588,7 @@ between these addresses, which is used to specify the SA to use.
 If
 .Ar mode
 is
-.Li transport ,
+.Cm transport ,
 both
 .Ar src
 and
@@ -594,39 +596,39 @@ and
 can be omitted.
 .Ar level
 is to be one of the following:
-.Li default , use , require ,
+.Cm default , use , require ,
 or
-.Li unique .
+.Cm unique .
 If the SA is not available in every level, the kernel will
 ask the key exchange daemon to establish a suitable SA.
-.Li default
+.Cm default
 means the kernel consults the system wide default for the protocol
 you specified, e.g. the
-.Li esp_trans_deflev
+.Cm esp_trans_deflev
 sysctl variable, when the kernel processes the packet.
-.Li use
+.Cm use
 means that the kernel uses an SA if it's available,
 otherwise the kernel keeps normal operation.
-.Li require
+.Cm require
 means SA is required whenever the kernel sends a packet matched
 with the policy.
-.Li unique
+.Cm unique
 is the same as
-.Li require ;
+.Cm require ;
 in addition, it allows the policy to match the unique out-bound SA.
 You just specify the policy level
-.Li unique ,
+.Cm unique ,
 .Xr racoon 8
 will configure the SA for the policy.
 If you configure the SA by manual keying for that policy,
 you can put a decimal number as the policy identifier after
-.Li unique
+.Cm unique
 separated by a colon
 .Sq \&:
 like:
-.Li unique:number
+.Cm unique : Ns Ar number
 in order to bind this policy to the SA.
-.Li number
+.Ar number
 must be between 1 and 32767.
 It corresponds to
 .Ar extensions Fl u
@@ -658,9 +660,9 @@ They can be displayed in SPD dump using
 .Fl DPp .
 .Pp
 Note that
-.Dq Li discard
+.Cm discard
 and
-.Dq Li none
+.Cm none
 are not in the syntax described in
 .Xr ipsec_set_policy 3 .
 There are a few differences in the syntax.
@@ -733,13 +735,13 @@ aes-gmac	160/224/288	rfc4543
 .Ed
 .Pp
 Note that the first 128/192/256 bits of a key for
-.Li aes-ctr ,
-.Li aes-gcm-16
+.Cm aes-ctr ,
+.Cm aes-gcm-16
 or
-.Li aes-gmac
+.Cm aes-gmac
 will be used as AES key, and the remaining 32 bits will be used as nonce.
 Also note that
-.Li aes-gmac
+.Cm aes-gmac
 does not encrypt the payload, it only provides authentication.
 .Pp
 These compression algorithms can be used as
@@ -757,9 +759,9 @@ deflate		rfc2394
 .\"
 .Ss RFC vs Linux kernel semantics
 The Linux kernel uses the
-.Ar fwd
+.Cm fwd
 policy instead of the
-.Ar in
+.Cm in
 policy for packets what are forwarded through that particular box.
 .Pp
 In
@@ -775,13 +777,13 @@ mode,
 .Bl -item
 .It
 creates
-.Ar fwd
+.Cm fwd
 policies for every
-.Ar in
+.Cm in
 policy inserted
 .It
 (not implemented yet) filters out all
-.Ar fwd
+.Cm fwd
 policies
 .El
 .Sh RETURN VALUES
