@@ -1,0 +1,11 @@
+HTTP/1.1 413 Payload Too Large
+Content-Type: text/html
+Content-Length: 239
+Server: bozohttpd/20180824
+Allow: GET, HEAD, POST
+
+<html><head><title>413 Payload Too Large</title></head>
+<body><h1>413 Payload Too Large</h1>
+/: <pre>Use smaller requests</pre>
+<hr><address><a href="//space-bird.eterna23.net/">space-bird.eterna23.net</a></address>
+</body></html>
