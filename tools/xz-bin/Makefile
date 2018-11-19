@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2018/09/25 05:42:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2018/11/19 20:00:28 aymeric Exp $
 
-HOSTPROG=	xz
+HOSTPROG=	${_TOOL_PREFIX}xz
 HOST_SRCDIR=	external/public-domain/xz/bin/xz
 
 .include "${.PARSEDIR}/../xz-include/Makefile.inc"
