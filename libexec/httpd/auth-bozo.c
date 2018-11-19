@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.18 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.19 2018/11/19 04:13:09 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -147,6 +147,10 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
 		char	*pass = NULL;
 		ssize_t	alen;
 
+		/* free prior entries. */
+		free(request->hr_authuser);
+		free(request->hr_authpass);
+
 		alen = base64_decode((unsigned char *)str + 6,
 					(size_t)(len - 6),
 					(unsigned char *)authbuf,
@@ -158,8 +162,6 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
 			return bozo_http_error(httpd, 400, request,
 			    "bad authorization field");
 		*pass++ = '\0';
-		free(request->hr_authuser);
-		free(request->hr_authpass);
 		request->hr_authuser = bozostrdup(httpd, request, authbuf);
 		request->hr_authpass = bozostrdup(httpd, request, pass);
 		debug((httpd, DEBUG_FAT,
