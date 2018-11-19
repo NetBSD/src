@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.88 2018/08/24 11:41:16 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.89 2018/11/19 04:12:22 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20180824"
+#define SERVER_SOFTWARE		"bozohttpd/20181118"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -546,6 +546,18 @@ process_method(bozo_httpreq_t *request, const char *method)
 	return bozo_http_error(httpd, 404, request, "unknown method");
 }
 
+/* check header byte count */
+static int
+bozo_got_header_length(bozo_httpreq_t *request, size_t len)
+{
+	request->hr_header_bytes += len;
+	if (request->hr_header_bytes < BOZO_HEADERS_MAX_SIZE)
+		return 0;
+
+	return bozo_http_error(request->hr_httpd, 413, request,
+		"too many headers");
+}
+
 /*
  * This function reads a http request from stdin, returning a pointer to a
  * bozo_httpreq_t structure, describing the request.
@@ -719,6 +731,9 @@ bozo_read_request(bozohttpd_t *httpd)
 				len--, str++;
 			while (*val == ' ' || *val == '\t')
 				val++;
+
+			if (bozo_got_header_length(request, len))
+				goto cleanup;
 
 			if (bozo_auth_check_headers(request, val, str, len))
 				goto next_header;
@@ -2069,6 +2084,7 @@ static struct errors_map {
 	{ 403,	"403 Forbidden",	"Access to this item has been denied",},
 	{ 404, 	"404 Not Found",	"This item has not been found", },
 	{ 408, 	"408 Request Timeout",	"This request took too long", },
+	{ 413, 	"413 Payload Too Large", "Use smaller requests", },
 	{ 417,	"417 Expectation Failed","Expectations not available", },
 	{ 420,	"420 Enhance Your Calm","Chill, Winston", },
 	{ 500,	"500 Internal Error",	"An error occured on the server", },
