@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2238 2018/11/15 10:06:06 maxv Exp $
+#	$NetBSD: mi,v 1.2239 2018/11/19 01:08:21 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6247,6 +6247,7 @@
 ./usr/share/man/cat3/curses_attributes.0	comp-c-catman		.cat
 ./usr/share/man/cat3/curses_background.0	comp-c-catman		.cat
 ./usr/share/man/cat3/curses_border.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_cchar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_chgat.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_clear.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_color.0		comp-c-catman		.cat
@@ -7111,6 +7112,7 @@
 ./usr/share/man/cat3/getc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc_unlocked.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getcap.0			comp-obsolete		obsolete
+./usr/share/man/cat3/getcchar.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/getch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar_unlocked.0		comp-c-catman		.cat
@@ -9461,6 +9463,7 @@
 ./usr/share/man/cat3/set_top_row.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setbuf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setbuffer.0		comp-c-catman		.cat
+./usr/share/man/cat3/setcchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setclasscontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setdisktab.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setdomainname.0		comp-c-catman		.cat
@@ -14151,6 +14154,7 @@
 ./usr/share/man/html3/curses_attributes.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_background.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_border.html	comp-c-htmlman		html
+./usr/share/man/html3/curses_cchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_chgat.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_clear.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_color.html		comp-c-htmlman		html
@@ -15023,6 +15027,7 @@
 ./usr/share/man/html3/getc.html			comp-c-htmlman		html
 ./usr/share/man/html3/getc_unlocked.html	comp-c-htmlman		html
 ./usr/share/man/html3/getcap.html		comp-obsolete		obsolete
+./usr/share/man/html3/getcchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/getch.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar_unlocked.html	comp-c-htmlman		html
@@ -17352,6 +17357,7 @@
 ./usr/share/man/html3/set_top_row.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuf.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuffer.html		comp-c-htmlman		html
+./usr/share/man/html3/setcchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/setclasscontext.html	comp-c-htmlman		html
 ./usr/share/man/html3/setdisktab.html		comp-c-htmlman		html
 ./usr/share/man/html3/setdomainname.html	comp-c-htmlman		html
@@ -21997,6 +22003,7 @@
 ./usr/share/man/man3/curses_attributes.3	comp-c-man		.man
 ./usr/share/man/man3/curses_background.3	comp-c-man		.man
 ./usr/share/man/man3/curses_border.3		comp-c-man		.man
+./usr/share/man/man3/curses_cchar.3		comp-c-man		.man
 ./usr/share/man/man3/curses_chgat.3		comp-c-man		.man
 ./usr/share/man/man3/curses_clear.3		comp-c-man		.man
 ./usr/share/man/man3/curses_color.3		comp-c-man		.man
@@ -22872,6 +22879,7 @@
 ./usr/share/man/man3/getc.3			comp-c-man		.man
 ./usr/share/man/man3/getc_unlocked.3		comp-c-man		.man
 ./usr/share/man/man3/getcap.3			comp-obsolete		obsolete
+./usr/share/man/man3/getcchar.3			comp-c-man		.man
 ./usr/share/man/man3/getch.3			comp-c-man		.man
 ./usr/share/man/man3/getchar.3			comp-c-man		.man
 ./usr/share/man/man3/getchar_unlocked.3		comp-c-man		.man
@@ -25246,6 +25254,7 @@
 ./usr/share/man/man3/set_top_row.3		comp-c-man		.man
 ./usr/share/man/man3/setbuf.3			comp-c-man		.man
 ./usr/share/man/man3/setbuffer.3		comp-c-man		.man
+./usr/share/man/man3/setcchar.3			comp-c-man		.man
 ./usr/share/man/man3/setclasscontext.3		comp-c-man		.man
 ./usr/share/man/man3/setdisktab.3		comp-c-man		.man
 ./usr/share/man/man3/setdomainname.3		comp-c-man		.man
