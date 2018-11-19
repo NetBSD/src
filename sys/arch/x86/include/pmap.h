@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.90 2018/11/19 20:28:01 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.91 2018/11/19 20:44:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -75,6 +75,8 @@
 #define pl2_pi(VA)	(((VA_SIGN_POS(VA)) & L2_MASK) >> L2_SHIFT)
 #define pl3_pi(VA)	(((VA_SIGN_POS(VA)) & L3_MASK) >> L3_SHIFT)
 #define pl4_pi(VA)	(((VA_SIGN_POS(VA)) & L4_MASK) >> L4_SHIFT)
+#define pl_pi(va, lvl) \
+        (((VA_SIGN_POS(va)) & ptp_masks[(lvl)-1]) >> ptp_shifts[(lvl)-1])
 
 /*
  * pl*_i: generate index into pde/pte arrays in virtual space
