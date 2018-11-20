@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.52 2018/11/20 01:15:50 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.53 2018/11/20 01:19:51 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -225,10 +225,10 @@ typedef struct bozoprefs_t {
 #ifndef NO_DEBUG
 void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define debug(x)	debug__ x
-#define have_debug	(0)
+#define have_debug	(1)
 #else
 #define	debug(x)
-#define have_debug	(1)
+#define have_debug	(0)
 #endif /* NO_DEBUG */
 
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
