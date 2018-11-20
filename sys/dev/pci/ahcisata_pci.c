@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.43 2018/11/18 16:34:07 skrll Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.44 2018/11/20 12:23:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.43 2018/11/18 16:34:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.44 2018/11/20 12:23:01 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ahcisata_pci.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -287,21 +291,62 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pcitag = pa->pa_tag;
 
 	pci_aprint_devinfo(pa, "AHCI disk controller");
-	
-	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0) != 0) {
-		aprint_error_dev(self, "couldn't map interrupt\n");
-		return;
+
+
+	/* Allocation settings */
+	int counts[PCI_INTR_TYPE_SIZE] = {
+		[PCI_INTR_TYPE_INTX] = 1,
+#ifndef AHCISATA_DISABLE_MSI
+		[PCI_INTR_TYPE_MSI] = 1,
+#endif
+#ifndef AHCISATA_DISABLE_MSIX
+		[PCI_INTR_TYPE_MSIX] = 1,
+#endif
+	};
+
+alloc_retry:
+	/* Allocate and establish the interrupt. */
+	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
+		aprint_error_dev(self, "can't allocate handler\n");
+		goto fail;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, psc->sc_pihp[0],
-	    intrbuf, sizeof(intrbuf));
+
+	intrstr = pci_intr_string(pa->pa_pc, psc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, psc->sc_pihp[0],
 	    IPL_BIO, ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
 	if (psc->sc_ih == NULL) {
-		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
-		psc->sc_pihp = NULL;
-
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		return;
+		const pci_intr_type_t intr_type = pci_intr_type(pa->pa_pc,
+		    psc->sc_pihp[0]);
+		pci_intr_release(pa->pa_pc, psc->sc_pihp, 1);
+		psc->sc_ih = NULL;
+		switch (intr_type) {
+#ifndef AHCISATA_DISABLE_MSIX
+		case PCI_INTR_TYPE_MSIX:
+			/* The next try is for MSI: Disable MSIX */
+			counts[PCI_INTR_TYPE_INTX] = 1;
+#ifndef AHCISATA_DISABLE_MSI
+			counts[PCI_INTR_TYPE_MSI] = 1;,
+#endif
+			counts[PCI_INTR_TYPE_MSIX] = 0;
+			goto alloc_retry;
+#endif
+#ifndef AHCISATA_DISABLE_MSI
+		case PCI_INTR_TYPE_MSI:
+			/* The next try is for INTx: Disable MSI */
+			counts[PCI_INTR_TYPE_MSI] = 0;
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			goto alloc_retry;
+#endif
+		case PCI_INTR_TYPE_INTX:
+		default:
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			aprint_error_dev(self, "couldn't establish interrupt");
+			if (intrstr != NULL)
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
+			goto fail;
+		}
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -331,6 +376,20 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, ahci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	return;
+fail:
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+	}
+	if (sc->sc_ahcis) {
+		bus_space_unmap(sc->sc_ahcit, sc->sc_ahcih, sc->sc_ahcis);
+		sc->sc_ahcis = 0;
+	}
+
+	return;
+
 }
 
 static void
