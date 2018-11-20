@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.53 2018/11/20 01:19:51 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.54 2018/11/20 01:23:06 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -222,13 +222,13 @@ typedef struct bozoprefs_t {
 #define BOZO_DEAD
 #endif
 
-#ifndef NO_DEBUG
+#ifdef NO_DEBUG
+#define	debug(x)
+#define have_debug	(0)
+#else
 void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define debug(x)	debug__ x
 #define have_debug	(1)
-#else
-#define	debug(x)
-#define have_debug	(0)
 #endif /* NO_DEBUG */
 
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
@@ -365,11 +365,11 @@ const char *bozo_content_type(bozo_httpreq_t *, const char *);
 const char *bozo_content_encoding(bozo_httpreq_t *, const char *);
 bozo_content_map_t *bozo_match_content_map(bozohttpd_t *, const char *, int);
 bozo_content_map_t *bozo_get_content_map(bozohttpd_t *, const char *);
-#ifndef NO_DYNAMIC_CONTENT
-void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *,
-				  const char *, const char *);
+#ifdef NO_DYNAMIC_CONTENT
 #define have_dynamic_content				(0)
 #else
+void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *,
+				  const char *, const char *);
 #define have_dynamic_content				(1)
 #endif
 
