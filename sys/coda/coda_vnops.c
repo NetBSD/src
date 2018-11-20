@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.106 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.107 2018/11/20 19:05:25 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.106 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.107 2018/11/20 19:05:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1537,6 +1537,7 @@ coda_readdir(void *v)
 /* upcall decl */
 /* locals */
     int error = 0;
+    enum vtype saved_type;
 
     MARK_ENTRY(CODA_READDIR_STATS);
 
@@ -1569,7 +1570,13 @@ coda_readdir(void *v)
 	/* Have UFS handle the call. */
 	CODADEBUG(CODA_READDIR, myprintf(("%s: fid = %s, refcnt = %d\n",
 	    __func__, coda_f2s(&cp->c_fid), vp->v_usecount)); )
+	saved_type = vp->v_type;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vp->v_type = VDIR; /* pretend the container file is a dir */
 	error = VOP_READDIR(vp, uiop, cred, eofflag, cookies, ncookies);
+	vp->v_type = saved_type;
+	VOP_UNLOCK(vp);
+
 	if (error)
 	    MARK_INT_FAIL(CODA_READDIR_STATS);
 	else
