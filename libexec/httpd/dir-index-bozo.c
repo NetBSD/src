@@ -1,9 +1,9 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.25 2015/12/29 04:21:46 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.26 2018/11/20 01:06:46 mrg Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

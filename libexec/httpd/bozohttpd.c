@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.89 2018/11/19 04:12:22 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.90 2018/11/20 01:06:46 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2017 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20181118"
+#define SERVER_SOFTWARE		"bozohttpd/20181119"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -166,8 +166,19 @@
 
 #include "bozohttpd.h"
 
-#ifndef MAX_WAIT_TIME
-#define	MAX_WAIT_TIME	60	/* hang around for 60 seconds max */
+#ifndef INITIAL_TIMEOUT
+#define	INITIAL_TIMEOUT		"30"	/* wait for 30 seconds initially */
+#endif
+#ifndef HEADER_WAIT_TIME
+#define	HEADER_WAIT_TIME	"10"	/* need more headers every 10 seconds */
+#endif
+#ifndef TOTAL_MAX_REQ_TIME
+#define	TOTAL_MAX_REQ_TIME	"600"	/* must have total request in 600 */
+#endif					/* seconds */
+
+/* if monotonic time is not available try real time. */
+#ifndef CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC CLOCK_REALTIME
 #endif
 
 /* variables and functions */
@@ -175,7 +186,7 @@
 #define LOG_FTP LOG_DAEMON
 #endif
 
-volatile sig_atomic_t	alarmhit;
+volatile sig_atomic_t	timeout_hit;
 
 /*
  * check there's enough space in the prefs and names arrays.
@@ -378,7 +389,34 @@ bozo_clean_request(bozo_httpreq_t *request)
 static void
 alarmer(int sig)
 {
-	alarmhit = 1;
+	timeout_hit = 1;
+}
+
+
+/*
+ * set a timeout for "initial", "header", or "request".
+ */
+int
+bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
+		 const char *target, const char *time)
+{
+	const char *cur, *timeouts[] = {
+		"initial timeout",
+		"header timeout",
+		"request timeout",
+		NULL,
+	};
+	/* adjust minlen if more timeouts appear with conflicting names */
+	const size_t minlen = 1;
+	size_t len = strlen(target);
+
+	for (cur = timeouts[0]; len >= minlen && *cur; cur++) {
+		if (strncmp(target, cur, len) == 0) {
+			bozo_set_pref(httpd, prefs, cur, time);
+			return 0;
+		}
+	}
+	return 1;
 }
 
 /*
@@ -575,6 +613,7 @@ bozo_read_request(bozohttpd_t *httpd)
 	int	line = 0;
 	socklen_t slen;
 	bozo_httpreq_t *request;
+	struct timespec ots, ts;
 
 	/*
 	 * if we're in daemon mode, bozo_daemon_fork() will return here twice
@@ -657,10 +696,39 @@ bozo_read_request(bozohttpd_t *httpd)
 	sa.sa_flags = 0;
 	sigaction(SIGALRM, &sa, NULL);
 
-	alarm(MAX_WAIT_TIME);
+	
+	if (clock_gettime(CLOCK_MONOTONIC, &ots) != 0) {
+		(void)bozo_http_error(httpd, 500, NULL,
+			"clock_gettime failed");
+		goto cleanup;
+	}
+
+	alarm(httpd->initial_timeout);
 	while ((str = bozodgetln(httpd, STDIN_FILENO, &len, bozo_read)) != NULL) {
 		alarm(0);
-		if (alarmhit) {
+
+		if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+			(void)bozo_http_error(httpd, 500, NULL,
+				"clock_gettime failed");
+			goto cleanup;
+		}
+		/*
+		 * don't timeout if old tv_sec is not more than current
+		 * tv_sec, or if current tv_sec is less than the request
+		 * timeout (these shouldn't happen, but the first could
+		 * if monotonic time is not available.)
+		 *
+		 * the other timeout and header size checks should ensure
+		 * that even if time it set backwards or forwards a very
+		 * long way, timeout will eventually happen, even if this
+		 * one fails.
+		 */
+		if (ts.tv_sec > ots.tv_sec &&
+		    ts.tv_sec > httpd->request_timeout &&
+		    ts.tv_sec - httpd->request_timeout > ots.tv_sec)
+			timeout_hit = 1;
+
+		if (timeout_hit) {
 			(void)bozo_http_error(httpd, 408, NULL,
 					"request timed out");
 			goto cleanup;
@@ -668,7 +736,6 @@ bozo_read_request(bozohttpd_t *httpd)
 		line++;
 
 		if (line == 1) {
-
 			if (len < 1) {
 				(void)bozo_http_error(httpd, 404, NULL,
 						"null method");
@@ -744,9 +811,16 @@ bozo_read_request(bozohttpd_t *httpd)
 				request->hr_content_type = hdr->h_value;
 			else if (strcasecmp(hdr->h_header, "content-length") == 0)
 				request->hr_content_length = hdr->h_value;
-			else if (strcasecmp(hdr->h_header, "host") == 0)
+			else if (strcasecmp(hdr->h_header, "host") == 0) {
+				if (request->hr_host) {
+					/* RFC 7230 (HTTP/1.1): 5.4 */
+					(void)bozo_http_error(httpd, 400, request,
+						"Only allow one Host: header");
+					goto cleanup;
+				}
 				request->hr_host = bozostrdup(httpd, request,
 							      hdr->h_value);
+			}
 			/* RFC 2616 (HTTP/1.1): 14.20 */
 			else if (strcasecmp(hdr->h_header, "expect") == 0) {
 				(void)bozo_http_error(httpd, 417, request,
@@ -769,7 +843,7 @@ bozo_read_request(bozohttpd_t *httpd)
 			    hdr->h_header, hdr->h_value));
 		}
 next_header:
-		alarm(MAX_WAIT_TIME);
+		alarm(httpd->header_timeout);
 	}
 
 	/* now, clear it all out */
@@ -2146,7 +2220,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		portbuf[0] = '\0';
 
 	if (request && request->hr_file) {
-		char *file = NULL, *user = NULL, *user_escaped = NULL;
+		char *file = NULL, *user = NULL;
 		int file_alloc = 0;
 		const char *hostname = BOZOHOST(httpd, request);
 
@@ -2159,6 +2233,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 
 #ifndef NO_USER_SUPPORT
 		if (request->hr_user != NULL) {
+			char *user_escaped;
+
 			user_escaped = bozo_escape_html(NULL, request->hr_user);
 			if (user_escaped == NULL)
 				user_escaped = request->hr_user;
@@ -2205,6 +2281,9 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	bozo_printf(httpd, "Server: %s\r\n", httpd->server_software);
 	if (request && request->hr_allow)
 		bozo_printf(httpd, "Allow: %s\r\n", request->hr_allow);
+	/* RFC 7231 (HTTP/1.1) 6.5.7 */
+	if (code == 408 && request->hr_proto == httpd->consts.http_11)
+		bozo_printf(httpd, "Connection: close\r\n");
 	bozo_printf(httpd, "\r\n");
 	/* According to the RFC 2616 sec. 9.4 HEAD method MUST NOT return a
 	 * message-body in the response */
@@ -2399,16 +2478,26 @@ bozo_init_httpd(bozohttpd_t *httpd)
 int
 bozo_init_prefs(bozohttpd_t *httpd, bozoprefs_t *prefs)
 {
+	int rv = 0;
+
 	/* make sure everything is clean */
 	(void) memset(prefs, 0x0, sizeof(*prefs));
 
 	/* set up default values */
-	if (!bozo_set_pref(httpd, prefs, "server software", SERVER_SOFTWARE) ||
-	    !bozo_set_pref(httpd, prefs, "index.html", INDEX_HTML) ||
-	    !bozo_set_pref(httpd, prefs, "public_html", PUBLIC_HTML))
-		return 0;
+	if (!bozo_set_pref(httpd, prefs, "server software", SERVER_SOFTWARE))
+		rv = 1;
+	if (!bozo_set_pref(httpd, prefs, "index.html", INDEX_HTML))
+		rv = 1;
+	if (!bozo_set_pref(httpd, prefs, "public_html", PUBLIC_HTML))
+		rv = 1;
+	if (!bozo_set_pref(httpd, prefs, "initial timeout", INITIAL_TIMEOUT))
+		rv = 1;
+	if (!bozo_set_pref(httpd, prefs, "header timeout", HEADER_WAIT_TIME))
+		rv = 1;
+	if (!bozo_set_pref(httpd, prefs, "request timeout", TOTAL_MAX_REQ_TIME))
+		rv = 1;
 
-	return 1;
+	return rv;
 }
 
 /* set default values */
@@ -2500,6 +2589,15 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	}
 	if ((cp = bozo_get_pref(prefs, "public_html")) != NULL) {
 		httpd->public_html = bozostrdup(httpd, NULL, cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "initial timeout")) != NULL) {
+		httpd->initial_timeout = atoi(cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "header timeout")) != NULL) {
+		httpd->header_timeout = atoi(cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "request timeout")) != NULL) {
+		httpd->request_timeout = atoi(cp);
 	}
 	httpd->server_software =
 	    bozostrdup(httpd, NULL, bozo_get_pref(prefs, "server software"));

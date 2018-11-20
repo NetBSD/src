@@ -1,9 +1,9 @@
-/*	$NetBSD: content-bozo.c,v 1.14 2016/07/19 09:27:40 shm Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.15 2018/11/20 01:06:46 mrg Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2015 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
