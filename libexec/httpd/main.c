@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2018/11/20 01:15:50 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -53,56 +53,6 @@
 #ifndef LOG_FTP
 #define LOG_FTP LOG_DAEMON
 #endif
-
-#ifdef NO_DAEMON_MODE
-#define have_daemon_mode (0)
-#else
-#define have_daemon_mode (1)
-#endif
-
-#ifdef NO_DEBUG
-#define have_debug (0)
-#else
-#define have_debug (1)
-#endif
-
-#ifdef NO_USER_SUPPORT
-#define have_user (0)
-#else
-#define have_user (1)
-#endif
-
-#ifdef NO_CGIBIN_SUPPORT
-#define have_cgibin (0)
-#else
-#define have_cgibin (1)
-#endif
-
-#ifdef NO_DYNAMIC_CONTENT
-#define have_dynamic_content (0)
-#else
-#define have_dynamic_content (1)
-#endif
-
-#ifdef NO_LUA_SUPPORT
-#define have_lua (0)
-#else
-#define have_lua (1)
-#endif
-
-#ifdef NO_DIRINDEX_SUPPORT
-#define have_dirindex (0)
-#else
-#define have_dirindex (1)
-#endif
-
-#ifdef NO_SSL_SUPPORT
-#define have_ssl (0)
-#else
-#define have_ssl (1)
-#endif
-
-#define have_all (1)
 
 /* print a usage message, and then exit */
 BOZO_DEAD static void
