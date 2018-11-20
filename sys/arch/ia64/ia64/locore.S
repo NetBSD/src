@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2018/11/14 21:10:59 scole Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2018/11/20 20:36:24 scole Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -81,19 +81,37 @@ ENTRY_NOPROFILE(start, 1)
 	movl	r16=pa_bootinfo
 	;;
 }
+{	.mmi	
 	st8	[r16]=r8		// save the PA of the bootinfo block
 	loadrs				// invalidate regs
+	mov     r17=IA64_DCR_DEFAULT
 	;;
+}
+{	.mmi
+	mov	cr.dcr=r17
 	mov	ar.rsc=3		// turn rse back on
+	nop	0
 	;;
+}
+{	.mmi
+	srlz.d	
 	alloc	r16=ar.pfs,0,0,1,0
-	;;
-	movl	out0=0			// we are linked at the right address 
+	mov	out0=r0			// we are linked at the right address 
 	;;				// we just need to process fptrs
-//	br.call.sptk.many rp=_reloc	// XXX:	Look into relocs
-	;;
+	}
+#if 0  /* XXX: Look into relocs */	
+{	.mib
+	nop	0
+	nop	0
+	br.call.sptk.many rp=_reloc
+}
+#endif	
+{	.mib
+	nop	0
+	nop	0
 	br.call.sptk.many rp=ia64_init
 	;;
+}
         /* We have the new bspstore in r8 and the new sp in r9.
            Switch onto the new stack and call mi_startup(). */
 {       .mmi
@@ -109,9 +127,13 @@ ENTRY_NOPROFILE(start, 1)
         mov     ar.rsc = 3
         nop     0
         ;;
-}	
+}
+{	.mib
+	nop	0
+	nop	0
 	br.call.sptk.many rp=main
 	;;
+}
 	/* NOTREACHED */
 1:	br.cond.sptk.few 1b
 END(start)
