@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.8 2018/10/04 09:09:29 ryo Exp $
+# $NetBSD: genassym.cf,v 1.9 2018/11/20 01:59:51 mrg Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -305,8 +305,8 @@ define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
-define	CI_MIDR			offsetof(struct cpu_info, ci_midr)
-define	CI_MPIDR		offsetof(struct cpu_info, ci_mpidr)
+define	CI_MIDR			offsetof(struct cpu_info, ci_id.ac_midr)
+define	CI_MPIDR		offsetof(struct cpu_info, ci_id.ac_mpidr)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)

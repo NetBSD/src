@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.2 2018/05/08 11:42:43 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.3 2018/11/20 01:59:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.2 2018/05/08 11:42:43 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.3 2018/11/20 01:59:51 mrg Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -506,110 +506,40 @@ identify_mpidr(const char *cpuname, uint32_t mpidr)
 
 }
 
-static void *
-sysctlfetch(const char *sname, size_t *lenp)
-{
-	size_t len;
-	void *data;
-
-	if (sysctlbyname(sname, NULL, &len, NULL, 0) != 0) {
-		warn("sysctlbyname: %s", sname);
-		return NULL;
-	}
-
-	data = malloc(len);
-	if (data == NULL) {
-		warn("malloc");
-		return NULL;
-	}
-
-	if (sysctlbyname(sname, data, &len, NULL, 0) != 0) {
-		warn("sysctlbyname: %s", sname);
-		free(data);
-		return NULL;
-	}
-
-	*lenp = len;
-	return data;
-}
-
 void
 identifycpu(int fd, const char *cpuname)
 {
-	void *regs;
+	char path[128];
 	size_t len;
+	struct aarch64_sysctl_cpu_id id;
 
-	/* MIDR_EL1 */
-	regs = sysctlfetch("machdep.cpu_id", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint32_t))
-			identify_midr(cpuname, ((uint32_t *)regs)[0]);
-		free(regs);
-	}
+	snprintf(path, sizeof path, "machdep.%s.cpu_id", cpuname);
+	len = sizeof(id);
+	if (sysctlbyname(path, &id, &len, 0, 0) == -1)
+		err(1, "couldn't get %s", path);
 
-	/* REVIDR_EL1 */
-	regs = sysctlfetch("machdep.id_revidr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint32_t))
-			identify_revidr(cpuname, ((uint32_t *)regs)[0]);
-		free(regs);
-	}
+	identify_midr(cpuname, id.ac_midr);
+	identify_revidr(cpuname, id.ac_revidr);
+	identify_mpidr(cpuname, id.ac_mpidr);
+	print_fieldinfo(cpuname, "isa features 0",
+	    id_aa64isar0_fieldinfo, id.ac_aa64isar0);
+	print_fieldinfo(cpuname, "memory model 0",
+	    id_aa64mmfr0_fieldinfo, id.ac_aa64mmfr0);
+	print_fieldinfo(cpuname, "processor feature 0",
+	    id_aa64pfr0_fieldinfo, id.ac_aa64pfr0);
 
-	/* MPIDR_EL1 */
-	regs = sysctlfetch("machdep.id_mpidr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			identify_mpidr(cpuname, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* ID_AA64ISAR0_EL1 */
-	regs = sysctlfetch("machdep.id_aa64isar", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			print_fieldinfo(cpuname, "isa features 0",
-			    id_aa64isar0_fieldinfo, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* ID_AA64MMFR0_EL1 */
-	regs = sysctlfetch("machdep.id_aa64mmfr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			print_fieldinfo(cpuname, "memory model 0",
-			    id_aa64mmfr0_fieldinfo, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* ID_AA64PFR0_EL1 */
-	regs = sysctlfetch("machdep.id_aa64pfr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint64_t))
-			print_fieldinfo(cpuname, "processor feature 0",
-			    id_aa64pfr0_fieldinfo, ((uint64_t *)regs)[0]);
-		free(regs);
-	}
-
-	/* MVFR[012]_EL1 */
-	regs = sysctlfetch("machdep.id_mvfr", &len);
-	if (regs != NULL) {
-		if (len >= sizeof(uint32_t))
-			print_fieldinfo(cpuname, "media and VFP features 0",
-			    mvfr0_fieldinfo, ((uint32_t *)regs)[0]);
-		if (len >= sizeof(uint32_t) * 2)
-			print_fieldinfo(cpuname, "media and VFP features 1",
-			    mvfr1_fieldinfo, ((uint32_t *)regs)[1]);
-		if (len >= sizeof(uint32_t) * 3)
-			print_fieldinfo(cpuname, "media and VFP features 2",
-			    mvfr2_fieldinfo, ((uint32_t *)regs)[2]);
-		free(regs);
-	}
+	print_fieldinfo(cpuname, "media and VFP features 0",
+	    mvfr0_fieldinfo, id.ac_mvfr0);
+	print_fieldinfo(cpuname, "media and VFP features 1",
+	    mvfr1_fieldinfo, id.ac_mvfr1);
+	print_fieldinfo(cpuname, "media and VFP features 2",
+	    mvfr2_fieldinfo, id.ac_mvfr2);
 }
 
 bool
 identifycpu_bind(void)
 {
-	return true;
+	return false;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.10 2018/10/18 09:01:51 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.11 2018/11/20 01:59:51 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,9 @@
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/evcnt.h>
+
 #include <aarch64/frame.h>
+#include <aarch64/armreg.h>
 
 struct clockframe {
 	struct trapframe cf_tf;
@@ -88,8 +90,7 @@ struct cpu_info {
 	/* ACPI */
 	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
 
-	uint64_t ci_midr;	/* MIDR_EL1 */
-	uint64_t ci_mpidr;	/* MPIDR_EL1 */
+	struct aarch64_sysctl_cpu_id ci_id;
 
 	struct aarch64_cache_info *ci_cacheinfo;
 
