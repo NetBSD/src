@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.9 2018/11/20 21:42:52 uwe Exp $ */
+/*   $NetBSD: cchar.c,v 1.10 2018/11/20 22:02:31 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.9 2018/11/20 21:42:52 uwe Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.10 2018/11/20 22:02:31 uwe Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -66,8 +66,10 @@ getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
 
 	if (wch == NULL)
 		return (int)len;
-	if (attrs == 0 || color_pair == 0)
+
+	if (attrs == NULL || color_pair == NULL)
 		return ERR;
+
 	if (len > 0) {
 		*attrs = wcval->attributes;
 		if (__using_color)
