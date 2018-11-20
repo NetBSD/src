@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.44 2018/11/20 12:23:01 skrll Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.45 2018/11/20 15:16:43 prlw1 Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.44 2018/11/20 12:23:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.45 2018/11/20 15:16:43 prlw1 Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -326,7 +326,7 @@ alloc_retry:
 			/* The next try is for MSI: Disable MSIX */
 			counts[PCI_INTR_TYPE_INTX] = 1;
 #ifndef AHCISATA_DISABLE_MSI
-			counts[PCI_INTR_TYPE_MSI] = 1;,
+			counts[PCI_INTR_TYPE_MSI] = 1;
 #endif
 			counts[PCI_INTR_TYPE_MSIX] = 0;
 			goto alloc_retry;
