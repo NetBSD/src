@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.3 2015/05/10 10:14:02 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.4 2018/11/20 19:02:07 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.3 2015/05/10 10:14:02 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.4 2018/11/20 19:02:07 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -374,29 +374,31 @@ edit_ptn(menudesc *menu, void *arg)
 {
 	static menu_ent fs_fields[] = {
 #define PTN_MENU_FSKIND		0
-	    {NULL, MENU_selfskind, OPT_SUB, NULL},
+	    { .opt_menu=MENU_selfskind, .opt_flags=OPT_SUB },
 #define PTN_MENU_START		1
-	    {NULL, OPT_NOMENU, 0, edit_fs_start},
+	    { .opt_menu=OPT_NOMENU, .opt_action=edit_fs_start },
 #define PTN_MENU_SIZE		2
-	    {NULL, OPT_NOMENU, 0, edit_fs_size},
+	    { .opt_menu=OPT_NOMENU, .opt_action=edit_fs_size },
 #define PTN_MENU_END		3
-	    {NULL, OPT_NOMENU, OPT_IGNORE, NULL},	/* displays 'end' */
+	    { .opt_menu=OPT_NOMENU, .opt_flags=OPT_IGNORE },	/* displays 'end' */
 #define PTN_MENU_NEWFS		4
-	    {NULL, OPT_NOMENU, 0, edit_fs_preserve},
+	    { .opt_menu=OPT_NOMENU, .opt_action=edit_fs_preserve },
 #define PTN_MENU_ISIZE		5
-	    {NULL, OPT_NOMENU, 0, edit_fs_isize},
+	    { .opt_menu=OPT_NOMENU, .opt_action=edit_fs_isize },
 #define PTN_MENU_BSIZE		6
-	    {NULL, MENU_selbsize, OPT_SUB, NULL},
+	    { .opt_menu=MENU_selbsize, .opt_flags=OPT_SUB },
 #define PTN_MENU_FSIZE		7
-	    {NULL, MENU_selfsize, OPT_SUB, NULL},
+	    { .opt_menu=MENU_selfsize, .opt_flags=OPT_SUB },
 #define PTN_MENU_MOUNT		8
-	    {NULL, OPT_NOMENU, 0, edit_fs_mount},
+	    { .opt_menu=OPT_NOMENU, .opt_action=edit_fs_mount },
 #define PTN_MENU_MOUNTOPT	9
-	    {NULL, MENU_mountoptions, OPT_SUB, NULL},
+	    { .opt_menu=MENU_mountoptions, .opt_flags=OPT_SUB },
 #define PTN_MENU_MOUNTPT	10
-	    {NULL, OPT_NOMENU, 0, edit_fs_mountpt},
-	    {MSG_askunits, MENU_sizechoice, OPT_SUB, NULL},
-	    {MSG_restore, OPT_NOMENU, 0, edit_restore},
+	    { .opt_menu=OPT_NOMENU, .opt_action=edit_fs_mountpt },
+	    { .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
+	      .opt_flags=OPT_SUB },
+	    { .opt_name=MSG_restore, .opt_menu=OPT_NOMENU,
+	      .opt_action=edit_restore},
 	};
 	static int fspart_menu = -1;
 	static menu_ent all_fstypes[FSMAXTYPES];
