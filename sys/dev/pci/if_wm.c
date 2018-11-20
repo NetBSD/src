@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.599 2018/11/20 03:52:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.600 2018/11/20 04:04:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.599 2018/11/20 03:52:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.600 2018/11/20 04:04:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -720,6 +720,7 @@ static void	wm_get_cfg_done(struct wm_softc *);
 static void	wm_phy_post_reset(struct wm_softc *);
 static int	wm_write_smbus_addr(struct wm_softc *);
 static void	wm_init_lcd_from_nvm(struct wm_softc *);
+static int	wm_oem_bits_config_ich8lan(struct wm_softc *, bool);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
 static void	wm_reset_phy(struct wm_softc *);
@@ -955,6 +956,7 @@ static void	wm_get_wakeup(struct wm_softc *);
 static int	wm_ulp_disable(struct wm_softc *);
 static void	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
+static void	wm_suspend_workarounds_ich8lan(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
 static void	wm_disable_aspm(struct wm_softc *);
 /* LPLU (Low Power Link Up) */
@@ -3878,7 +3880,8 @@ wm_phy_post_reset(struct wm_softc *sc)
 	/* Configure the LCD with the extended configuration region in NVM */
 	wm_init_lcd_from_nvm(sc);
 
-	/* XXX Configure the LCD with the OEM bits in NVM */
+	/* Configure the LCD with the OEM bits in NVM */
+	wm_oem_bits_config_ich8lan(sc, true);
 
 	if (sc->sc_type == WM_T_PCH2) {
 		/* Ungate automatic PHY configuration on non-managed 82579 */
@@ -4031,6 +4034,72 @@ release:
 	return;
 }
     
+/*
+ *  wm_oem_bits_config_ich8lan - SW-based LCD Configuration
+ *  @sc:       pointer to the HW structure
+ *  @d0_state: boolean if entering d0 or d3 device state
+ *
+ *  SW will configure Gbe Disable and LPLU based on the NVM. The four bits are
+ *  collectively called OEM bits.  The OEM Write Enable bit and SW Config bit
+ *  in NVM determines whether HW should configure LPLU and Gbe Disable.
+ */
+int
+wm_oem_bits_config_ich8lan(struct wm_softc *sc, bool d0_state)
+{
+	uint32_t mac_reg;
+	uint16_t oem_reg;
+	int rv;
+
+	if (sc->sc_type < WM_T_PCH)
+		return 0;
+
+	rv = sc->phy.acquire(sc);
+	if (rv != 0)
+		return rv;
+
+	if (sc->sc_type == WM_T_PCH) {
+		mac_reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+		if ((mac_reg & EXTCNFCTR_OEM_WRITE_ENABLE) != 0)
+			goto release;
+	}
+
+	mac_reg = CSR_READ(sc, WMREG_FEXTNVM);
+	if ((mac_reg & FEXTNVM_SW_CONFIG_ICH8M) == 0)
+		goto release;
+
+	mac_reg = CSR_READ(sc, WMREG_PHY_CTRL);
+	
+	rv = wm_gmii_hv_readreg_locked(sc->sc_dev, 1, HV_OEM_BITS, &oem_reg);
+	if (rv != 0)
+		goto release;
+	oem_reg &= ~(HV_OEM_BITS_A1KDIS | HV_OEM_BITS_LPLU);
+
+	if (d0_state) {
+		if ((mac_reg & PHY_CTRL_GBE_DIS) != 0)
+			oem_reg |= HV_OEM_BITS_A1KDIS;
+		if ((mac_reg & PHY_CTRL_D0A_LPLU) != 0)
+			oem_reg |= HV_OEM_BITS_LPLU;
+	} else {
+		if ((mac_reg & (PHY_CTRL_GBE_DIS | PHY_CTRL_NOND0A_GBE_DIS))
+		    != 0)
+			oem_reg |= HV_OEM_BITS_A1KDIS;
+		if ((mac_reg & (PHY_CTRL_D0A_LPLU | PHY_CTRL_NOND0A_LPLU))
+		    != 0)
+			oem_reg |= HV_OEM_BITS_LPLU;
+	}
+
+	/* Set Restart auto-neg to activate the bits */
+	if ((d0_state || (sc->sc_type != WM_T_PCH))
+	    && (wm_phy_resetisblocked(sc) == false))
+		oem_reg |= HV_OEM_BITS_ANEGNOW;
+
+	rv = wm_gmii_hv_writereg_locked(sc->sc_dev, 1, HV_OEM_BITS, oem_reg);
+
+release:
+	sc->phy.release(sc);
+
+	return rv;
+}
 
 /* Init hardware bits */
 void
@@ -14121,6 +14190,85 @@ wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *sc)
 	}
 }
 
+/*
+ *  e1000_suspend_workarounds_ich8lan - workarounds needed during S0->Sx
+ *  @sc: pointer to the HW structure
+ *
+ *  During S0 to Sx transition, it is possible the link remains at gig
+ *  instead of negotiating to a lower speed.  Before going to Sx, set
+ *  'Gig Disable' to force link speed negotiation to a lower speed based on
+ *  the LPLU setting in the NVM or custom setting.  For PCH and newer parts,
+ *  the OEM bits PHY register (LED, GbE disable and LPLU configurations) also
+ *  needs to be written.
+ *  Parts that support (and are linked to a partner which support) EEE in
+ *  100Mbps should disable LPLU since 100Mbps w/ EEE requires less power
+ *  than 10Mbps w/o EEE.
+ */
+static void
+wm_suspend_workarounds_ich8lan(struct wm_softc *sc)
+{
+	uint32_t phy_ctrl;
+
+	phy_ctrl = CSR_READ(sc, WMREG_PHY_CTRL);
+	phy_ctrl |= PHY_CTRL_GBE_DIS;
+
+	if (sc->sc_phytype == WMPHY_I217) {
+		uint16_t devid = sc->sc_pcidevid;
+
+		if ((devid == PCI_PRODUCT_INTEL_I218_LM) ||
+		    (devid == PCI_PRODUCT_INTEL_I218_V) ||
+		    (devid == PCI_PRODUCT_INTEL_I218_LM3) ||
+		    (devid == PCI_PRODUCT_INTEL_I218_V3) ||
+		    (sc->sc_type >= WM_T_PCH_SPT))
+			CSR_WRITE(sc, WMREG_FEXTNVM6,
+			    CSR_READ(sc, WMREG_FEXTNVM6)
+			    & ~FEXTNVM6_REQ_PLL_CLK);
+
+#if 0 /* notyet */
+		if (sc->phy.acquire(sc) != 0)
+			goto out;
+
+		/* XXX Do workaround for EEE */
+
+		/*
+		 * For i217 Intel Rapid Start Technology support,
+		 * when the system is going into Sx and no manageability engine
+		 * is present, the driver must configure proxy to reset only on
+		 * power good.	LPI (Low Power Idle) state must also reset only
+		 * on power good, as well as the MTA (Multicast table array).
+		 * The SMBus release must also be disabled on LCD reset.
+		 */
+
+		/*
+		 * Enable MTA to reset for Intel Rapid Start Technology
+		 * Support
+		 */
+
+		sc->phy.release(sc);
+#endif
+	}
+#if 0
+out:
+#endif
+	CSR_WRITE(sc, WMREG_PHY_CTRL, phy_ctrl);
+
+	if (sc->sc_type == WM_T_ICH8)
+		wm_gig_downshift_workaround_ich8lan(sc);
+
+	if (sc->sc_type >= WM_T_PCH) {
+		wm_oem_bits_config_ich8lan(sc, false);
+
+		/* Reset PHY to activate OEM bits on 82577/8 */
+		if (sc->sc_type == WM_T_PCH)
+			wm_reset_phy(sc);
+		
+		if (sc->phy.acquire(sc) != 0)
+			return;
+		wm_write_smbus_addr(sc);
+		sc->phy.release(sc);
+	}
+}
+
 static void
 wm_enable_wakeup(struct wm_softc *sc)
 {
@@ -14139,38 +14287,6 @@ wm_enable_wakeup(struct wm_softc *sc)
 	    | CTRL_SWDPIN(3));
 	CSR_WRITE(sc, WMREG_WUC, WUC_APME);
 
-	/* ICH workaround */
-	switch (sc->sc_type) {
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
-	case WM_T_PCH:
-	case WM_T_PCH2:
-	case WM_T_PCH_LPT:
-	case WM_T_PCH_SPT:
-	case WM_T_PCH_CNP:
-		/* Disable gig during WOL */
-		reg = CSR_READ(sc, WMREG_PHY_CTRL);
-		reg |= PHY_CTRL_D0A_LPLU | PHY_CTRL_GBE_DIS;
-		CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
-		if (sc->sc_type == WM_T_PCH)
-			wm_gmii_reset(sc);
-
-		/* Power down workaround */
-		if (sc->sc_phytype == WMPHY_82577) {
-			struct mii_softc *child;
-
-			/* Assume that the PHY is copper */
-			child = LIST_FIRST(&sc->sc_mii.mii_phys);
-			if ((child != NULL) && (child->mii_mpd_rev <= 2))
-				sc->sc_mii.mii_writereg(sc->sc_dev, 1,
-				    (768 << 5) | 25, 0x0444); /* magic num */
-		}
-		break;
-	default:
-		break;
-	}
-
 	/* Keep the laser running on fiber adapters */
 	if ((sc->sc_mediatype == WM_MEDIATYPE_FIBER)
 	    || (sc->sc_mediatype == WM_MEDIATYPE_SERDES)) {
@@ -14178,6 +14294,10 @@ wm_enable_wakeup(struct wm_softc *sc)
 		reg |= CTRL_EXT_SWDPIN(3);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 	}
+
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9) ||
+	    (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH))
+		wm_suspend_workarounds_ich8lan(sc);
 
 	reg = CSR_READ(sc, WMREG_WUFC) | WUFC_MAG;
 #if 0	/* for the multicast packet */
@@ -14188,6 +14308,7 @@ wm_enable_wakeup(struct wm_softc *sc)
 	if (sc->sc_type >= WM_T_PCH)
 		wm_enable_phy_wakeup(sc);
 	else {
+		/* Enable wakeup by the MAC */
 		CSR_WRITE(sc, WMREG_WUC, CSR_READ(sc, WMREG_WUC) | WUC_PME_EN);
 		CSR_WRITE(sc, WMREG_WUFC, reg);
 	}
