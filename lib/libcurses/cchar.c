@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.7 2018/11/20 17:48:19 uwe Exp $ */
+/*   $NetBSD: cchar.c,v 1.8 2018/11/20 21:41:31 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.7 2018/11/20 17:48:19 uwe Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.8 2018/11/20 21:41:31 uwe Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -58,11 +58,11 @@ getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
 	wchar_t *wp;
 	size_t len;
 
-	if (opts)
+	if (__predict_false(opts != NULL))
 		return ERR;
 
-	len = (wp = wmemchr(wcval->vals, L'\0', CCHARW_MAX))
-		? wp - wcval->vals : CCHARW_MAX;
+	wp = wmemchr(wcval->vals, L'\0', CCHARW_MAX);
+	len = wp ? wp - wcval->vals : CCHARW_MAX;
 
 	if (wch == NULL)
 		return (int)len;
@@ -95,10 +95,12 @@ setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 	int i;
 	size_t len;
 
-	if (opts || (len = wcslen(wch)) > CCHARW_MAX
-		|| (len > 1 && wcwidth(wch[0]) < 0)) {
+	if (__predict_false(opts != NULL))
 		return ERR;
-	}
+
+	len = wcslen(wch);
+	if (len > CCHARW_MAX || (len > 1 && wcwidth(wch[0]) < 0))
+		return ERR;
 
 	/*
 	 * If we have a following spacing-character, stop at that point.  We
