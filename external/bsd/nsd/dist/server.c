@@ -2209,6 +2209,7 @@ handle_udp(int fd, short event, void* arg)
 	for (i = 0; i < recvcount; i++) {
 	loopstart:
 		received = msgs[i].msg_len;
+		queries[i]->addrlen = msgs[i].msg_hdr.msg_namelen;
 		q = queries[i];
 		if (received == -1) {
 			log_msg(LOG_ERR, "recvmmsg %d failed %s", i, strerror(
@@ -2217,6 +2218,7 @@ handle_udp(int fd, short event, void* arg)
 			/* No zone statup */
 			query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
 			iovecs[i].iov_len = buffer_remaining(q->packet);
+			msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
 			goto swap_drop;
 		}
 
@@ -2264,6 +2266,7 @@ handle_udp(int fd, short event, void* arg)
 		} else {
 			query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
 			iovecs[i].iov_len = buffer_remaining(q->packet);
+			msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
 		swap_drop:
 			STATUP(data->nsd, dropped);
 			ZTATUP(data->nsd, q->zone, dropped);
@@ -2304,6 +2307,7 @@ handle_udp(int fd, short event, void* arg)
 	for(i=0; i<recvcount; i++) {
 		query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
 		iovecs[i].iov_len = buffer_remaining(queries[i]->packet);
+		msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
 	}
 }
 
@@ -2344,13 +2348,15 @@ handle_udp(int fd, short event, void* arg)
 	}
 	for (i = 0; i < recvcount; i++) {
 		received = msgs[i].msg_len;
-		msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
+		queries[i]->addrlen = msgs[i].msg_hdr.msg_namelen;
 		if (received == -1) {
 			log_msg(LOG_ERR, "recvmmsg failed");
 			STATUP(data->nsd, rxerr);
 			/* No zone statup */
 			/* the error can be found in msgs[i].msg_hdr.msg_flags */
 			query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
+			iovecs[i].iov_len = buffer_remaining(queries[i]->packet);
+			msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
 			continue;
 		}
 		q = queries[i];
@@ -2442,6 +2448,8 @@ handle_udp(int fd, short event, void* arg)
 #ifndef NONBLOCKING_IS_BROKEN
 #ifdef HAVE_RECVMMSG
 		query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
+		iovecs[i].iov_len = buffer_remaining(queries[i]->packet);
+		msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
 #endif
 	}
 #endif
