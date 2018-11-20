@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.70 2018/11/20 08:47:55 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.71 2018/11/20 19:19:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.70 2018/11/20 08:47:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.71 2018/11/20 19:19:21 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -999,7 +999,7 @@ ahci_probe_drive(struct ata_channel *chp)
 			/* If probe for PMP failed, just fallback to drive 0 */
 			if (error) {
 				aprint_error("%s port %d: drive %d reset "
-				    "failing, disabling PMP\n",
+				    "failed, disabling PMP\n",
 				    AHCINAME(sc), chp->ch_channel,
 				PMP_PORT_CTL);
 
