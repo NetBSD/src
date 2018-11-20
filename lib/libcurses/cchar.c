@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.6 2017/01/06 13:53:18 roy Exp $ */
+/*   $NetBSD: cchar.c,v 1.7 2018/11/20 17:48:19 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.6 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.7 2018/11/20 17:48:19 uwe Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -70,7 +70,10 @@ getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
 		return ERR;
 	if (len > 0) {
 		*attrs = wcval->attributes;
-		*color_pair = COLOR_PAIR(wcval ->attributes);
+		if (__using_color)
+			*color_pair = PAIR_NUMBER(wcval->attributes);
+		else
+			*color_pair = 0;
 		wmemcpy(wch, wcval->vals, (unsigned)len);
 		wch[len] = L'\0';
 	}
@@ -110,7 +113,9 @@ setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 
 	memset(wcval, 0, sizeof(*wcval));
 	if (len != 0) {
-		wcval->attributes = attrs | color_pair;
+		wcval->attributes = attrs & ~__COLOR;
+		if (__using_color && color_pair)
+			wcval->attributes |= COLOR_PAIR(color_pair);
 		wcval->elements = 1;
 		memcpy(&wcval->vals, wch, len * sizeof(wchar_t));
 	}
