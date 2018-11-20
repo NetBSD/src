@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.5 2018/11/15 10:34:21 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.6 2018/11/20 19:02:07 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -366,8 +366,9 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 		{ PART_ANY,	{ '/', 'h', 'o', 'm', 'e', '\0' },	0,
 		  0, 0, 0 },
 	}, {
-		{ NULL, OPT_NOMENU, 0, set_ptn_size },
-		{ MSG_askunits, MENU_sizechoice, OPT_SUB, NULL },
+		{ .opt_menu=OPT_NOMENU, .opt_action=set_ptn_size },
+		{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
+		  .opt_flags=OPT_SUB },
 	}, 0, 0, NULL, { 0 } };
 
 	if (maxpart > MAXPARTITIONS)
