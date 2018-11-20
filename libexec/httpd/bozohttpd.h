@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.50 2018/11/19 04:12:22 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.51 2018/11/20 01:06:46 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2017 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,6 +117,9 @@ typedef struct bozohttpd_t {
 	int		 hide_dots;	/* hide .* */
 	int		 process_cgi;	/* use the cgi handler */
 	char		*cgibin;	/* cgi-bin directory */
+	unsigned	initial_timeout;/* first line timeout */
+	unsigned	header_timeout;	/* header lines timeout */
+	unsigned	request_timeout;/* total session timeout */
 #ifndef NO_LUA_SUPPORT
 	int		 process_lua;	/* use the Lua handler */
 	SIMPLEQ_HEAD(, lua_state_map)	lua_states;
@@ -326,10 +329,10 @@ void	bozo_daemon_closefds(bozohttpd_t *);
 /* tilde-luzah-bozo.c */
 #ifdef NO_USER_SUPPORT
 #define bozo_user_transform(x)				0
-#define bozo_user_free(x)					0
+#define bozo_user_free(x)				/* nothing */
 #else
 int	bozo_user_transform(bozo_httpreq_t *);
-#define bozo_user_free(x)					free(x)
+#define bozo_user_free(x)				free(x)
 #endif /* NO_USER_SUPPORT */
 
 
@@ -365,6 +368,7 @@ int bozo_setup(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 bozo_httpreq_t *bozo_read_request(bozohttpd_t *);
 void bozo_process_request(bozo_httpreq_t *);
 void bozo_clean_request(bozo_httpreq_t *);
+int bozo_set_timeout(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 bozoheaders_t *addmerge_reqheader(bozo_httpreq_t *, const char *,
 				  const char *, ssize_t);
 bozoheaders_t *addmerge_replheader(bozo_httpreq_t *, const char *,
