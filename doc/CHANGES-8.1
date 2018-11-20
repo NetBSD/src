@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.58 2018/11/18 19:34:52 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.59 2018/11/20 16:06:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1721,4 +1721,15 @@ sys/arch/macppc/stand/ofwboot/version		1.14
 	PR port-macppc/53727.
 	[tsutsui, ticket #1097]
 
+external/bsd/nsd/dist/server.c			1.2
+
+	Fix NSD when built with --enable-recvmmsg.
+	[hannken, ticket #1098]
+
+sys/dev/usb/usb_quirks.c			1.90
+sys/dev/usb/usb_quirks.h			1.29
+sys/dev/usb/usbdi.c				1.179,1.180
+
+	Workaround NBP PN533 USB toggle bit bugs.
+	[manu, ticket #1099]
 
