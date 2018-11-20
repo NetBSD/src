@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.8 2018/11/16 19:55:18 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.9 2018/11/20 19:02:07 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -959,24 +959,25 @@ edit_mbr_entry(menudesc *m, void *arg)
 
 	static menu_ent ptn_opts[] = {
 #define PTN_OPT_TYPE		0
-		{NULL, OPT_NOMENU, 0, edit_mbr_type},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_type },
 #define PTN_OPT_START		1
-		{NULL, OPT_NOMENU, 0, edit_mbr_start},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_start },
 #define PTN_OPT_SIZE		2
-		{NULL, OPT_NOMENU, 0, edit_mbr_size},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_size },
 #define PTN_OPT_END		3
-		{NULL, OPT_NOMENU, OPT_IGNORE, NULL},	/* display end */
+		{ .opt_menu=OPT_NOMENU, .opt_flags=OPT_IGNORE }, /* display end */
 #define PTN_OPT_ACTIVE		4
-		{NULL, OPT_NOMENU, 0, edit_mbr_active},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_active },
 #define PTN_OPT_INSTALL		5
-		{NULL, OPT_NOMENU, 0, edit_mbr_install},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_install },
 #ifdef BOOTSEL
 #define PTN_OPT_BOOTMENU	6
-		{NULL, OPT_NOMENU, 0, edit_mbr_bootmenu},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_bootmenu },
 #define PTN_OPT_BOOTDEFAULT	7
-		{NULL, OPT_NOMENU, 0, edit_mbr_bootdefault},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_bootdefault },
 #endif
-		{MSG_askunits, MENU_sizechoice, OPT_SUB, NULL},
+		{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
+		  .opt_flags=OPT_SUB },
 	};
 
 	if (ptn_menu == -1)
