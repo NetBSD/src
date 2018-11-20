@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.69 2018/11/19 22:05:22 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.70 2018/11/20 08:47:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.69 2018/11/19 22:05:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.70 2018/11/20 08:47:55 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -829,7 +829,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	memset(cmd_tbl->cmdt_cfis, 0, 64);
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
-	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_RST;
+	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_RST | WDCTL_4BIT;
 	switch (ahci_exec_fis(chp, 100, flags, c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
@@ -854,7 +854,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	memset(cmd_tbl->cmdt_cfis, 0, 64);
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
-	cmd_tbl->cmdt_cfis[rhd_control] = 0;
+	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_4BIT;
 	switch (ahci_exec_fis(chp, 310, flags, c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
