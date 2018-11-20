@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.51 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.52 2018/11/20 01:15:50 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -225,8 +225,10 @@ typedef struct bozoprefs_t {
 #ifndef NO_DEBUG
 void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define debug(x)	debug__ x
+#define have_debug	(0)
 #else
 #define	debug(x)
+#define have_debug	(1)
 #endif /* NO_DEBUG */
 
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
@@ -256,19 +258,23 @@ char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
 
 #define bozo_noop	do { /* nothing */ } while (/*CONSTCOND*/0)
 
+#define have_all					(1)
+
 /* ssl-bozo.c */
 #ifdef NO_SSL_SUPPORT
-#define bozo_ssl_set_opts(w, x, y)	bozo_noop
-#define bozo_ssl_set_ciphers(w, x, y)	bozo_noop
-#define bozo_ssl_init(x)		bozo_noop
-#define bozo_ssl_accept(x)		(0)
-#define bozo_ssl_destroy(x)		bozo_noop
+#define bozo_ssl_set_opts(w, x, y)			bozo_noop
+#define bozo_ssl_set_ciphers(w, x, y)			bozo_noop
+#define bozo_ssl_init(x)				bozo_noop
+#define bozo_ssl_accept(x)				(0)
+#define bozo_ssl_destroy(x)				bozo_noop
+#define have_ssl					(0)
 #else
 void	bozo_ssl_set_opts(bozohttpd_t *, const char *, const char *);
 void	bozo_ssl_set_ciphers(bozohttpd_t *, const char *);
 void	bozo_ssl_init(bozohttpd_t *);
 int	bozo_ssl_accept(bozohttpd_t *);
 void	bozo_ssl_destroy(bozohttpd_t *);
+#define have_ssl					(1)
 #endif
 
 
@@ -283,64 +289,74 @@ void	bozo_auth_check_401(bozo_httpreq_t *, int);
 void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #else
-#define	bozo_auth_init(x)			bozo_noop
-#define	bozo_auth_check(x, y)			0
-#define	bozo_auth_cleanup(x)			bozo_noop
-#define	bozo_auth_check_headers(y, z, a, b)	0
-#define	bozo_auth_check_special_files(x, y)	0
-#define	bozo_auth_check_401(x, y)		bozo_noop
-#define	bozo_auth_cgi_setenv(x, y)		bozo_noop
-#define	bozo_auth_cgi_count(x)			0
+#define	bozo_auth_init(x)				bozo_noop
+#define	bozo_auth_check(x, y)				(0)
+#define	bozo_auth_cleanup(x)				bozo_noop
+#define	bozo_auth_check_headers(y, z, a, b)		(0)
+#define	bozo_auth_check_special_files(x, y)		(0)
+#define	bozo_auth_check_401(x, y)			bozo_noop
+#define	bozo_auth_cgi_setenv(x, y)			bozo_noop
+#define	bozo_auth_cgi_count(x)				(0)
 #endif /* DO_HTPASSWD */
 
 
 /* cgi-bozo.c */
 #ifdef NO_CGIBIN_SUPPORT
-#define	bozo_process_cgi(h)				0
+#define	bozo_process_cgi(h)				(0)
+#define have_cgibin					(0)
 #else
 void	bozo_cgi_setbin(bozohttpd_t *, const char *);
 void	bozo_setenv(bozohttpd_t *, const char *, const char *, char **);
 int	bozo_process_cgi(bozo_httpreq_t *);
 void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
+#define have_cgibin					(1)
 #endif /* NO_CGIBIN_SUPPORT */
 
 
 /* lua-bozo.c */
 #ifdef NO_LUA_SUPPORT
-#define bozo_process_lua(h)				0
+#define bozo_process_lua(h)				(0)
+#define have_lua					(0)
 #else
 void	bozo_add_lua_map(bozohttpd_t *, const char *, const char *);
 int	bozo_process_lua(bozo_httpreq_t *);
+#define have_lua					(1)
 #endif /* NO_LUA_SUPPORT */
 
 
 /* daemon-bozo.c */
 #ifdef NO_DAEMON_MODE
 #define bozo_daemon_init(x)				bozo_noop
-#define bozo_daemon_fork(x)				0
+#define bozo_daemon_fork(x)				(0)
 #define bozo_daemon_closefds(x)				bozo_noop
+#define have_daemon_mode				(0)
 #else
 void	bozo_daemon_init(bozohttpd_t *);
 int	bozo_daemon_fork(bozohttpd_t *);
 void	bozo_daemon_closefds(bozohttpd_t *);
+#define have_daemon_mode				(1)
 #endif /* NO_DAEMON_MODE */
 
 
 /* tilde-luzah-bozo.c */
 #ifdef NO_USER_SUPPORT
-#define bozo_user_transform(x)				0
+#define bozo_user_transform(x)				(0)
 #define bozo_user_free(x)				/* nothing */
+#define have_user					(0)
 #else
 int	bozo_user_transform(bozo_httpreq_t *);
 #define bozo_user_free(x)				free(x)
+#define have_user					(1)
 #endif /* NO_USER_SUPPORT */
 
 
 /* dir-index-bozo.c */
 #ifdef NO_DIRINDEX_SUPPORT
-#define bozo_dir_index(a, b, c)				0
+#define bozo_dir_index(a, b, c)				(0)
+#define have_dirindex					(0)
 #else
 int	bozo_dir_index(bozo_httpreq_t *, const char *, int);
+#define have_dirindex					(1)
 #endif /* NO_DIRINDEX_SUPPORT */
 
 
@@ -352,6 +368,9 @@ bozo_content_map_t *bozo_get_content_map(bozohttpd_t *, const char *);
 #ifndef NO_DYNAMIC_CONTENT
 void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *,
 				  const char *, const char *);
+#define have_dynamic_content				(0)
+#else
+#define have_dynamic_content				(1)
 #endif
 
 /* I/O */
