@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.86.8.1 2018/11/12 16:01:35 martin Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.86.8.2 2018/11/20 16:05:38 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.86.8.1 2018/11/12 16:01:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.86.8.2 2018/11/20 16:05:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -310,13 +310,24 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_ZOOM,		USB_PRODUCT_ZOOM_3095,			ANY,
 	{ UQ_LOST_CS_DESC, NULL }},
 
- /* NXP PN533 corrupts its USB configuration descriptors */
+ /*
+  * NXP PN533 bugs
+  * 
+  * 1. It corrupts its USB descriptors. The quirk is to provide hardcoded
+  *    descriptors instead of getting them from the device.
+  * 2. It mishandles the USB toggle bit. This causes some replies to be
+  *    filered out by the USB host controller and be reported as timed out.
+  *    NFC tool's libnfc workaround this bug by sending a dummy frame to
+  *    resync the toggle bit, but in order to succeed, that operation must
+  *    not be reported as failed. The quirk is therefore to pretend to 
+  *    userland that output timeouts are successes.
+  */
  { USB_VENDOR_PHILIPSSEMI,	USB_PRODUCT_PHILIPSSEMI_PN533,		ANY,
-	{ UQ_DESC_CORRUPT, desc_pn533 }},
+	{ UQ_DESC_CORRUPT | UQ_MISS_OUT_ACK, desc_pn533 }},
  { USB_VENDOR_SHUTTLE,		USB_PRODUCT_SHUTTLE_SCL3711,		ANY,
-	{ UQ_DESC_CORRUPT, desc_pn533 }},
+	{ UQ_DESC_CORRUPT | UQ_MISS_OUT_ACK, desc_pn533 }},
  { USB_VENDOR_SHUTTLE,		USB_PRODUCT_SHUTTLE_SCL3712,		ANY,
-	{ UQ_DESC_CORRUPT, desc_pn533 }},
+	{ UQ_DESC_CORRUPT | UQ_MISS_OUT_ACK, desc_pn533 }},
  { 0, 0, 0, { 0, NULL } }
 };
 

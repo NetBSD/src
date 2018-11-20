@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.173.2.3 2018/09/27 14:52:26 martin Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.173.2.4 2018/11/20 16:05:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.173.2.3 2018/09/27 14:52:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.173.2.4 2018/11/20 16:05:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -897,9 +897,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	int sync = xfer->ux_flags & USBD_SYNCHRONOUS;
-	int erred =
-	    xfer->ux_status == USBD_CANCELLED ||
-	    xfer->ux_status == USBD_TIMEOUT;
+	int erred;
 	int polling = bus->ub_usepolling;
 	int repeat = pipe->up_repeat;
 
@@ -913,6 +911,27 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	KASSERTMSG(xfer->ux_state == XFER_ONQU, "xfer %p state is %x", xfer,
 	    xfer->ux_state);
 	KASSERT(pipe != NULL);
+
+	/*
+	 * If device is known to miss out ack, then pretend that
+	 * output timeout is a success. Userland should handle
+	 * the logic to verify that the operation succeeded.
+	 */
+	if (pipe->up_dev->ud_quirks &&
+	    pipe->up_dev->ud_quirks->uq_flags & UQ_MISS_OUT_ACK &&
+	    xfer->ux_status == USBD_TIMEOUT &&
+	    !usbd_xfer_isread(xfer)) {
+		USBHIST_LOG(usbdebug, "Possible output ack miss for xfer %#jx: "
+		    "hiding write timeout to %d.%s for %d bytes written",
+		    (uintptr_t)xfer, curlwp->l_proc->p_pid, curlwp->l_lid,
+		    xfer->ux_length);
+
+		xfer->ux_status = USBD_NORMAL_COMPLETION;
+		xfer->ux_actlen = xfer->ux_length;
+	}
+
+	erred = xfer->ux_status == USBD_CANCELLED ||
+	        xfer->ux_status == USBD_TIMEOUT;
 
 	if (!repeat) {
 		/* Remove request from queue. */
