@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.18 2018/11/20 20:53:50 jdolecek Exp $ */
+/* $NetBSD: pmap.h,v 1.19 2018/11/21 12:34:21 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -54,16 +54,6 @@
 #ifndef KASAN
 #define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
 #define PMAP_UNMAP_POOLPAGE(va)		AARCH64_KVA_TO_PA(va)
-
-#define PMAP_DIRECT
-static __inline int
-pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
-    int (*process)(void *, size_t, void *), void *arg)
-{
-	vaddr_t va = AARCH64_PA_TO_KVA(pa);
-
-	return process((void *)(va + pgoff), len, arg);
-}
 #endif
 
 struct pmap {
