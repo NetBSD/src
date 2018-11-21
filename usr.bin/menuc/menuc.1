@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.31 2017/07/03 21:34:20 wiz Exp $
+.\"	$NetBSD: menuc.1,v 1.32 2018/11/21 20:04:48 martin Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 2, 2004
+.Dd November 20, 2018
 .Dt MENUC 1
 .Os
 .Sh NAME
@@ -130,12 +130,13 @@ The
 is as described above.
 .Pp
 There are four kinds of menu definition elements.
-The first one just declares whether the programmer wants dynamic menus
-available.
-The default is static menus only.
-The static menus are the ones defined by the menu definitions and do not
+The first one just declares whether the programmer wants dynamic menus,
+dynamic messages and argument expansion in menus available.
+All these option default to off (or static only).
+.Pp
+Static menus are the ones defined by the menu definitions and do not
 change at run time.
-The dynamic menus provide the programmer with a method to create and
+Dynamic menus provide the programmer with a method to create and
 modify menus during the running of the program.
 To include dynamic menus, one needs only add the declaration:
 .Dl allow dynamic menus ;
@@ -143,6 +144,18 @@ The semicolon is required to terminate this declaration.
 This declaration may appear anywhere in the
 .Ar file ,
 but usually appears before any menus are defined.
+See below for a detailed explanation of dynamic menus.
+.Pp
+To allow dynamic messages, one needs to add the declaration:
+.Dl allow dynamic messages ;
+This enables internationalization by loading message files at
+run time.
+.Pp
+To allow argument expansion on static menu strings, one needs to add
+the declaration:
+.Dl allow expand ;
+This enables the expand action.
+See below for a detailed explanation.
 .Pp
 The next element is a code block to execute if the curses
 screen can not be successfully initialized.
@@ -249,6 +262,7 @@ The final element is the actual static menu definitions.
 The format and order for a menu definition is:
 .Bd -ragged -offset indent
 menu <name> <options> ;
+  <expand action>
   <display action>
   <menu items>
   <exit action>
@@ -271,6 +285,11 @@ The options are a comma separated list of options as in the
 .Dq default
 declaration.
 These override the options from the most recent default declaration.
+.Pp
+The expand action is optional and only available if the global option
+.Dq allow expand
+has been declared (see above).
+For an example see below.
 .Pp
 The display action is optional and provides C code to
 execute at each and every time the menu is displayed for processing.
@@ -407,6 +426,20 @@ int new_menu(const char *title, menu_ent *opts, int numopts,
 void free_menu (int menu_no);
 .Ed
 .Pp
+If
+.Dq allow expand
+has been declared, the menudesc structure contains another member, expand_act:
+.Bd -literal
+        void       (*expand_act)(struct menudesc *, void *);
+        void       (*post_act)(struct menudesc *, void *);
+        void       (*exit_act)(struct menudesc *, void *);
+        void       (*draw_line)(struct menudesc *, int, void *);
+.Ed
+This function is called (if not NULL) once when initializing
+a menu, before the display action
+.Dv post_act
+is called.
+.Pp
 The
 .Ar title
 is the title displayed at the top of the menu.
@@ -458,6 +491,45 @@ If
 A
 .Dv NULL
 help pointer will disable the help feature for the menu.
+.Sh MENU ITEM EXPANSION
+With the
+.Dq enable expansion
+declaration in effect, static menus may be customized before being displayed.
+This allows parameter substition or special formatting of the menu item
+strings without having to resort to a full dynamic menu.
+Expanded strings are stored in the
+.Dv opt_exp_name
+member of struct
+.Dv menu_ent .
+This string is prefered over the non-expanded string
+.Dv opt_name
+when displaying the menu.
+The expand action code is responsible for filling this pointers.
+When leaving the menu, all
+.Dv opt_exp_name
+pointers that are populated will be automatically freed (by calling
+.Fn free 3 . )
+.Pp
+A very simple (and nonsensial) example for an expand option would
+be:
+.Bd -literal
+	expand action {
+		int i;
+		for (i = 0; i < menu->numopts; i++) {
+			const char *s = MSG_XLAT(menu->opts[i].opt_name);
+			if (s == NULL) continue;
+			char *t = strdup(s);
+			t[0] = tolower((unsigned char)t[0]);
+			menu->opts[i].opt_exp_name = t;
+		}
+	};
+.Ed
+which would force the first character of all menu items to lower case.
+The
+.Fn free 3
+call for the
+.Fn strdup 3
+call in above code is automatically handled on menu exit.
 .Sh FILES
 .Bl -item
 .It
