@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.16 2012/03/06 16:55:18 mbalmer Exp $	*/
+/*	$NetBSD: scan.l,v 1.17 2018/11/21 20:04:48 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,6 +95,8 @@ option	{ return OPTION; }
 default { return DEFAULT; }
 
 display { return DISPLAY; }
+
+expand { return EXPAND; }
 
 error { return ERROR; }
 
