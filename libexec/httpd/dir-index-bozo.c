@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.26 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.27 2018/11/21 10:25:17 mrg Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -157,7 +157,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		if (strcmp(name, "..") == 0) {
 			bozo_printf(httpd, "<a href=\"../\">");
 			l += bozo_printf(httpd, "Parent Directory");
-		} else if (S_ISDIR(sb.st_mode)) {
+		} else if (!nostat && S_ISDIR(sb.st_mode)) {
 			bozo_printf(httpd, "<a href=\"%s/\">", urlname);
 			l += bozo_printf(httpd, "%s/", htmlname);
 		} else if (strchr(name, ':') != NULL) {
@@ -185,6 +185,10 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		if (nostat)
 			bozo_printf(httpd, "?                         ?");
 		else {
+			unsigned long long len;
+
+			len = ((unsigned long long)sb.st_size + 1023) / 1024;
+
 			tm = gmtime(&sb.st_mtime);
 			strftime(buf, sizeof buf, "%d-%b-%Y %R", tm);
 			l += bozo_printf(httpd, "%s", buf);
@@ -199,8 +203,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 			spacebuf[i] = '\0';
 			bozo_printf(httpd, "%s", spacebuf);
 
-			bozo_printf(httpd, "%12llukB",
-				    (unsigned long long)sb.st_size >> 10);
+			bozo_printf(httpd, "%12llukB", len);
 		}
 		bozo_printf(httpd, "\r\n");
 	}
