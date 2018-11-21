@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.91 2018/11/21 09:37:02 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.92 2018/11/21 17:39:19 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1204,7 +1204,7 @@ check_mapping(bozo_httpreq_t *request)
 		return;
 	}
 
-	fmap = mmap(NULL, st.st_size, PROT_READ, 0, mapfile, 0);
+	fmap = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, mapfile, 0);
 	if (fmap == NULL) {
 		bozowarn(httpd, "could not mmap " REMAP_FILE ", error %d",
 		    errno);
