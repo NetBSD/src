@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.13 2018/11/18 19:43:03 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.14 2018/11/21 12:12:44 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -220,4 +220,13 @@ sys/arch/macppc/stand/ofwboot/version		1.14
 	PR port-macppc/53727.
 	[tsutsui, ticket #1651]
 
+sys/compat/netbsd32/netbsd32_socket.c		1.48 (patch)
+
+	Fix a buffer overflow.
+	[maxv, ticket #1652]
+
+sys/kern/kern_event.c				1.104
+
+	Fix kernel info leak.
+	[maxv, ticket #1653]
 
