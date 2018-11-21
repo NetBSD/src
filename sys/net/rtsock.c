@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.213.2.10 2018/05/05 19:07:51 martin Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.213.2.11 2018/11/21 12:01:11 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.10 2018/05/05 19:07:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.11 2018/11/21 12:01:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1294,7 +1294,7 @@ again:
 			if (rw->w_tmemsize < len) {
 				if (rw->w_tmem)
 					kmem_free(rw->w_tmem, rw->w_tmemsize);
-				rw->w_tmem = kmem_alloc(len, KM_SLEEP);
+				rw->w_tmem = kmem_zalloc(len, KM_SLEEP);
 				rw->w_tmemsize = len;
 			}
 			if (rw->w_tmem) {
@@ -1863,7 +1863,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 again:
 	/* we may return here if a later [re]alloc of the t_mem buffer fails */
 	if (w.w_tmemneeded) {
-		w.w_tmem = kmem_alloc(w.w_tmemneeded, KM_SLEEP);
+		w.w_tmem = kmem_zalloc(w.w_tmemneeded, KM_SLEEP);
 		w.w_tmemsize = w.w_tmemneeded;
 		w.w_tmemneeded = 0;
 	}
