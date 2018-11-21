@@ -1,5 +1,8 @@
-#	$NetBSD: files.ti,v 1.1 2017/10/26 01:16:32 jakllsch Exp $
+#	$NetBSD: files.ti,v 1.2 2018/11/21 08:55:05 skrll Exp $
 #
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
 
 include "arch/evbarm/conf/files.fdt"
 
