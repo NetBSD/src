@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.59 2012/03/06 16:55:18 mbalmer Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.60 2018/11/21 20:04:48 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -213,7 +213,13 @@ init_menu(menudesc *m)
 	if (w == 0) {
 		int l;
 		for (i = 0; i < m->numopts; i++) {
+#ifdef MENU_EXPANDS
+			tp = m->opts[i].opt_exp_name ?
+			    m->opts[i].opt_exp_name :
+			    MSG_XLAT(m->opts[i].opt_name);
+#else
 			tp = MSG_XLAT(m->opts[i].opt_name);
+#endif
 			if (tp == NULL)
 				continue;
 			l = strlen(tp);
@@ -359,7 +365,14 @@ draw_menu(menudesc *m, void *arg)
 	for (opt = m->topline; opt < m->numopts; opt++) {
 		if (cury >= maxy)
 			break;
-		draw_menu_line(m, opt, cury++, arg, m->opts[opt].opt_name);
+		draw_menu_line(m, opt, cury++, arg,
+#ifdef MENU_EXPANDS
+		    m->opts[opt].opt_exp_name ?
+		    	m->opts[opt].opt_exp_name : m->opts[opt].opt_name
+#else
+		    m->opts[opt].opt_name
+#endif
+		    );
 	}
 
 	/* Add the exit option. */
@@ -481,6 +494,21 @@ process_help(menudesc *m)
 	/* Some code thinks that wrefresh(stdout) is a good idea... */
 	wclear(stdscr);
 }
+
+#ifdef MENU_EXPANDS
+static void
+free_exp_menu_items(menudesc *m)
+{
+	int i;
+
+	for (i = 0; i < m->numopts; i++) {
+		if (m->opts[i].opt_exp_name != NULL) {
+			free(__UNCONST(m->opts[i].opt_exp_name));
+			m->opts[i].opt_exp_name = NULL;
+		}
+	}
+}
+#endif
 
 static void
 process_req(menudesc *m, void *arg, int req)
@@ -667,6 +695,12 @@ process_menu(int num, void *arg)
 		if (isendwin())
 			/* I'm not sure this is needed with netbsd's curses */
 			doupdate();
+#ifdef MENU_EXPANDS
+		/* Expand the menu items, if needed */
+		if (m->expand_act && m->mw == NULL)
+			(*m->expand_act)(m, arg);
+#endif
+
 		/* Process the display action */
 		if (m->post_act)
 			(*m->post_act)(m, arg);
@@ -725,6 +759,11 @@ process_menu(int num, void *arg)
 			overwrite(m->sv_mw, m->mw);
 		wnoutrefresh(m->mw);
 	}
+
+#ifdef MENU_EXPANDS
+	/* Free expanded menu items, if any */
+	free_exp_menu_items(m);
+#endif
 
 	/* Process the exit action */
 	if (m->exit_act)
@@ -801,6 +840,9 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 	m->h = h;
 	m->w = w;
 	m->mopt = mopt | MC_VALID;
+#ifdef MENU_EXPANDS
+	m->expand_act = NULL;
+#endif
 	m->post_act = post_act;
 	m->draw_line = draw_line;
 	m->exit_act = exit_act;
