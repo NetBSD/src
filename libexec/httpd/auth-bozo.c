@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.20 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.21 2018/11/21 09:37:02 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -42,10 +42,6 @@
 
 #include "bozohttpd.h"
 
-#ifndef AUTH_FILE
-#define AUTH_FILE		".htpasswd"
-#endif
-
 static	ssize_t	base64_decode(const unsigned char *, size_t,
 			    unsigned char *, size_t);
 
@@ -68,7 +64,6 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 		strcpy(dir, ".");
 	else {
 		*basename++ = '\0';
-			/* ensure basename(file) != AUTH_FILE */
 		if (bozo_check_special_files(request, basename))
 			return 1;
 	}
@@ -170,18 +165,6 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
 			/* don't store in request->headers */
 		return 1;
 	}
-	return 0;
-}
-
-int
-bozo_auth_check_special_files(bozo_httpreq_t *request,
-				const char *name)
-{
-	bozohttpd_t *httpd = request->hr_httpd;
-
-	if (strcmp(name, AUTH_FILE) == 0)
-		return bozo_http_error(httpd, 403, request,
-				"no permission to open authfile");
 	return 0;
 }
 
