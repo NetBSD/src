@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.86 2018/11/21 06:10:25 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.87 2018/11/21 10:34:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.86 2018/11/21 06:10:25 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.87 2018/11/21 10:34:53 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1813,7 +1813,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 	}
 	if (ci->ci_cpuid_level >= 4) {
 		x86_cpuid2(4, 0, descs);
-		core_max = (descs[0] >> 26) + 1;
+		core_max = __SHIFTOUT(descs[0], CPUID_DCP_CORE_P_PKG) + 1;
 	}
 	assert(lp_max >= core_max);
 	smt_max = lp_max / core_max;
@@ -2098,6 +2098,14 @@ identifycpu(int fd, const char *cpuname)
 		print_bits(cpuname, "DSPM-eax", CPUID_DSPM_FLAGS, descs[0]);
 		print_bits(cpuname, "DSPM-ecx", CPUID_DSPM_FLAGS1, descs[2]);
 	}
+	if ((ci->ci_cpuid_level >= 7)
+	    && ((cpu_vendor == CPUVENDOR_INTEL)
+		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		x86_cpuid(7, descs);
+		aprint_verbose("%s: SEF highest subleaf %08x\n",
+		    cpuname, descs[0]);
+	}
+
 	if (cpu_vendor == CPUVENDOR_AMD) {
 		x86_cpuid(0x80000000, descs);
 		if (descs[0] >= 0x80000007)
@@ -2117,13 +2125,11 @@ identifycpu(int fd, const char *cpuname)
 		int32_t bi_index;
 
 		for (bi_index = 1; bi_index <= ci->ci_cpuid_level; bi_index++) {
+#if 0
 			x86_cpuid(bi_index, descs);
 			switch (bi_index) {
-			case 7:
-				aprint_verbose("%s: SEF highest subleaf %08x\n",
-				    cpuname, descs[0]);
+			case 0x0b:
 				break;
-#if 0
 			default:
 				aprint_verbose("%s: basic %08x-eax %08x\n",
 				    cpuname, bi_index, descs[0]);
@@ -2134,8 +2140,8 @@ identifycpu(int fd, const char *cpuname)
 				aprint_verbose("%s: basic %08x-edx %08x\n",
 				    cpuname, bi_index, descs[3]);
 				break;
-#endif
 			}
+#endif
 		}
 	}
 
