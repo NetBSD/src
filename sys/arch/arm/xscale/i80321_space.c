@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.17 2018/11/21 09:49:39 thorpej Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.18 2018/11/21 19:03:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.17 2018/11/21 09:49:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.18 2018/11/21 19:03:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,9 +306,6 @@ i80321_io_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 	} else
 		return (-1);
 
-	if ((bpa) >= (busbase + VERDE_OUT_XLATE_IO_WIN_SIZE))
-		return (-1);
-
 	return (arm_btop(winpaddr + (bpa - busbase)));
 }
 
@@ -460,9 +457,6 @@ i80321_mem_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 		physbase = VERDE_OUT_DIRECT_WIN_BASE;
 	} else
 		return (-1);
-	if (bpa >= (VERDE_OUT_DIRECT_WIN_BASE +
-	    VERDE_OUT_DIRECT_WIN_SIZE))
-		return (-1);
 #else
 	if (bpa >= sc->sc_owin[0].owin_xlate_lo &&
 	    bpa < (sc->sc_owin[0].owin_xlate_lo +
@@ -470,8 +464,6 @@ i80321_mem_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 		busbase = sc->sc_owin[0].owin_xlate_lo;
 		physbase = sc->sc_iwin[1].iwin_xlate;
 	} else
-		return (-1);
-	if (bpa >= (busbase + VERDE_OUT_XLATE_MEM_WIN_SIZE))
 		return (-1);
 #endif
 
