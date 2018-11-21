@@ -1,4 +1,4 @@
-#	$NetBSD: std.ti,v 1.4 2018/11/21 08:49:58 skrll Exp $
+#	$NetBSD: std.ti,v 1.5 2018/11/21 08:55:05 skrll Exp $
 #
 
 machine		evbarm arm
@@ -18,6 +18,7 @@ options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
+options 	__HAVE_GENERIC_START
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 options 	LOADADDRESS="0x80008000"
