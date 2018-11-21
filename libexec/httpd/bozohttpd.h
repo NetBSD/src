@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.54 2018/11/20 01:23:06 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.55 2018/11/21 09:37:02 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -217,9 +217,11 @@ typedef struct bozoprefs_t {
 #if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__lint__)
 #define BOZO_PRINTFLIKE(x,y) __attribute__((__format__(__printf__, x,y)))
 #define BOZO_DEAD __attribute__((__noreturn__))
+#define BOZO_CHECKRET __attribute__((__warn_unused_result__))
 #else
 #define BOZO_PRINTFLIKE(x,y)
 #define BOZO_DEAD
+#define BOZO_CHECKRET
 #endif
 
 #ifdef NO_DEBUG
@@ -231,9 +233,33 @@ void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define have_debug	(1)
 #endif /* NO_DEBUG */
 
+/*
+ * bozohttpd special files.  avoid serving these out.
+ *
+ * When you add some .bz* file, make sure to also check it in
+ * bozo_check_special_files()
+ */
+
+#ifndef DIRECT_ACCESS_FILE
+#define DIRECT_ACCESS_FILE	".bzdirect"
+#endif
+#ifndef REDIRECT_FILE
+#define REDIRECT_FILE		".bzredirect"
+#endif
+#ifndef ABSREDIRECT_FILE
+#define ABSREDIRECT_FILE	".bzabsredirect"
+#endif
+#ifndef REMAP_FILE
+#define REMAP_FILE		".bzremap"
+#endif
+#ifndef AUTH_FILE
+#define AUTH_FILE		".htpasswd"
+#endif
+
+/* be sure to always return this error up */
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
-int	bozo_check_special_files(bozo_httpreq_t *, const char *);
+int	bozo_check_special_files(bozo_httpreq_t *, const char *) BOZO_CHECKRET;
 char	*bozo_http_date(char *, size_t);
 void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
 			  const char *);
@@ -284,7 +310,6 @@ void	bozo_auth_init(bozo_httpreq_t *);
 int	bozo_auth_check(bozo_httpreq_t *, const char *);
 void	bozo_auth_cleanup(bozo_httpreq_t *);
 int	bozo_auth_check_headers(bozo_httpreq_t *, char *, char *, ssize_t);
-int	bozo_auth_check_special_files(bozo_httpreq_t *, const char *);
 void	bozo_auth_check_401(bozo_httpreq_t *, int);
 void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 int	bozo_auth_cgi_count(bozo_httpreq_t *);
@@ -293,7 +318,6 @@ int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #define	bozo_auth_check(x, y)				(0)
 #define	bozo_auth_cleanup(x)				bozo_noop
 #define	bozo_auth_check_headers(y, z, a, b)		(0)
-#define	bozo_auth_check_special_files(x, y)		(0)
 #define	bozo_auth_check_401(x, y)			bozo_noop
 #define	bozo_auth_cgi_setenv(x, y)			bozo_noop
 #define	bozo_auth_cgi_count(x)				(0)
