@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.132 2018/11/15 03:50:22 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.133 2018/11/21 06:09:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -282,7 +282,7 @@
 #define CPUID_DCP_COMPLEX	__BIT(2)	/* Complex cache indexing */
 
 /*
- * Intel Digital Thermal Sensor and
+ * Intel/AMD Digital Thermal Sensor and
  * Power Management, Fn0000_0006 - %eax.
  */
 #define CPUID_DSPM_DTS	__BIT(0)	/* Digital Thermal Sensor */
@@ -313,7 +313,7 @@
 	"25" "HWP_IGNIDL"
 
 /*
- * Intel Digital Thermal Sensor and
+ * Intel/AMD Digital Thermal Sensor and
  * Power Management, Fn0000_0006 - %ecx.
  */
 #define CPUID_DSPM_HWF	0x00000001	/* MSR_APERF/MSR_MPERF available */
@@ -322,7 +322,7 @@
 #define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF" "\4" "EPB"
 
 /*
- * Intel Structured Extended Feature leaf Fn0000_0007
+ * Intel/AMD Structured Extended Feature leaf Fn0000_0007
  * %eax == 0: Subleaf 0
  *	%eax: The Maximum input value for supported subleaf.
  *	%ebx: Feature bits.
@@ -353,6 +353,7 @@
 #define CPUID_SEF_ADX		__BIT(19) /* ADCX/ADOX instructions */
 #define CPUID_SEF_SMAP		__BIT(20) /* Supervisor-Mode Access Prevention */
 #define CPUID_SEF_AVX512_IFMA	__BIT(21) /* AVX-512 Integer Fused Multiply Add */
+/* Bit 22 was PCOMMIT */
 #define CPUID_SEF_CLFLUSHOPT	__BIT(23) /* Cache Line FLUSH OPTimized */
 #define CPUID_SEF_CLWB		__BIT(24) /* Cache Line Write Back */
 #define CPUID_SEF_PT		__BIT(25) /* Processor Trace */
@@ -414,7 +415,7 @@
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP"		"\40" "SSBD"
 
 /*
- * CPUID Processor extended state Enumeration Fn0000000d
+ * Intel/AMD CPUID Processor extended state Enumeration Fn0000000d
  *
  * %ecx == 0: supported features info:
  *	%eax: Valid bits of lower 32bits of XCR0
