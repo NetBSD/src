@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.91.2.2 2018/01/16 13:26:12 martin Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.91.2.3 2018/11/21 12:05:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.91.2.2 2018/01/16 13:26:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.91.2.3 2018/11/21 12:05:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,6 +584,7 @@ filt_proc(struct knote *kn, long hint)
 		 * event with the parent's pid.  Register knote with new
 		 * process.
 		 */
+		memset(&kev, 0, sizeof(kev));
 		kev.ident = hint & NOTE_PDATAMASK;	/* pid */
 		kev.filter = kn->kn_filter;
 		kev.flags = kn->kn_flags | EV_ADD | EV_ENABLE | EV_FLAG1;
