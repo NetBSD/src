@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.59 2018/11/20 16:06:49 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.60 2018/11/21 12:06:14 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1732,4 +1732,19 @@ sys/dev/usb/usbdi.c				1.179,1.180
 
 	Workaround NBP PN533 USB toggle bit bugs.
 	[manu, ticket #1099]
+
+sys/kern/kern_exec.c				1.462
+
+	Fix stack info leak.
+	[maxv, ticket #1100]
+
+sys/net/rtsock.c				1.244
+
+	Fix kernel info leak.
+	[maxv, ticket #1101]
+
+sys/kern/kern_event.c				1.104
+
+	Fix kernel info leak.
+	[maxv, ticket #1102]
 
