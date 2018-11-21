@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.90 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.91 2018/11/21 09:37:02 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,25 +109,8 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20181119"
+#define SERVER_SOFTWARE		"bozohttpd/20181121"
 #endif
-#ifndef DIRECT_ACCESS_FILE
-#define DIRECT_ACCESS_FILE	".bzdirect"
-#endif
-#ifndef REDIRECT_FILE
-#define REDIRECT_FILE		".bzredirect"
-#endif
-#ifndef ABSREDIRECT_FILE
-#define ABSREDIRECT_FILE	".bzabsredirect"
-#endif
-#ifndef REMAP_FILE
-#define REMAP_FILE		".bzremap"
-#endif
-
-/*
- * When you add some .bz* file, make sure to also check it in
- * bozo_check_special_files()
- */
 
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -696,7 +679,6 @@ bozo_read_request(bozohttpd_t *httpd)
 	sa.sa_flags = 0;
 	sigaction(SIGALRM, &sa, NULL);
 
-	
 	if (clock_gettime(CLOCK_MONOTONIC, &ots) != 0) {
 		(void)bozo_http_error(httpd, 500, NULL,
 			"clock_gettime failed");
@@ -1466,32 +1448,33 @@ check_bzredirect(bozo_httpreq_t *request)
 	 * if this pathname is really a directory, but doesn't end in /,
 	 * use it as the directory to look for the redir file.
 	 */
-	if((size_t)snprintf(dir, sizeof(dir), "%s", request->hr_file + 1) >=
-	  sizeof(dir)) {
-		bozo_http_error(httpd, 404, request,
+	if ((size_t)snprintf(dir, sizeof(dir), "%s", request->hr_file + 1) >=
+	  sizeof(dir))
+		return bozo_http_error(httpd, 404, request,
 		  "file path too long");
-		return -1;
-	}
 	debug((httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
 	basename = strrchr(dir, '/');
 
 	if ((!basename || basename[1] != '\0') &&
 	    lstat(dir, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 		strcpy(path, dir);
+		basename = dir;
 	} else if (basename == NULL) {
 		strcpy(path, ".");
 		strcpy(dir, "");
+		basename = request->hr_file + 1;
 	} else {
 		*basename++ = '\0';
-		bozo_check_special_files(request, basename);
 		strcpy(path, dir);
 	}
+	if (bozo_check_special_files(request, basename))
+		return -1;
 
 	debug((httpd, DEBUG_FAT, "check_bzredirect: path %s", path));
 
 	if ((size_t)snprintf(redir, sizeof(redir), "%s/%s", path,
 	  REDIRECT_FILE) >= sizeof(redir)) {
-		bozo_http_error(httpd, 404, request,
+		return bozo_http_error(httpd, 404, request,
 		    "redirectfile path too long");
 		return -1;
 	}
@@ -1502,9 +1485,8 @@ check_bzredirect(bozo_httpreq_t *request)
 	} else {
 		if((size_t)snprintf(redir, sizeof(redir), "%s/%s", path,
 		  ABSREDIRECT_FILE) >= sizeof(redir)) {
-			bozo_http_error(httpd, 404, request,
+			return bozo_http_error(httpd, 404, request,
 			  "redirectfile path too long");
-			return -1;
 		}
 		if (lstat(redir, &sb) < 0 || !S_ISLNK(sb.st_mode))
 			return 0;
@@ -1528,9 +1510,8 @@ check_bzredirect(bozo_httpreq_t *request)
 	if (!absolute && redirpath[0] != '/') {
 		if ((size_t)snprintf(finalredir = redir, sizeof(redir), "%s%s/%s",
 		  (strlen(dir) > 0 ? "/" : ""), dir, redirpath) >= sizeof(redir)) {
-			bozo_http_error(httpd, 404, request,
+			return bozo_http_error(httpd, 404, request,
 			  "redirect path too long");
-			return -1;
 		}
 	} else
 		finalredir = redirpath;
@@ -1566,21 +1547,15 @@ bozo_decode_url_percent(bozo_httpreq_t *request, char *str)
 		debug((httpd, DEBUG_EXPLODING,
 			"fu_%%: got s == %%, s[1]s[2] == %c%c",
 			s[1], s[2]));
-		if (s[1] == '\0' || s[2] == '\0') {
-			(void)bozo_http_error(httpd, 400, request,
+		if (s[1] == '\0' || s[2] == '\0')
+			return bozo_http_error(httpd, 400, request,
 			    "percent hack missing two chars afterwards");
-			return 1;
-		}
-		if (s[1] == '0' && s[2] == '0') {
-			(void)bozo_http_error(httpd, 404, request,
-					"percent hack was %00");
-			return 1;
-		}
-		if (s[1] == '2' && s[2] == 'f') {
-			(void)bozo_http_error(httpd, 404, request,
-					"percent hack was %2f (/)");
-			return 1;
-		}
+		if (s[1] == '0' && s[2] == '0')
+			return bozo_http_error(httpd, 404, request,
+			    "percent hack was %00");
+		if (s[1] == '2' && s[2] == 'f')
+			return bozo_http_error(httpd, 404, request,
+			    "percent hack was %2f (/)");
 
 		buf[0] = *++s;
 		buf[1] = *++s;
@@ -1589,11 +1564,9 @@ bozo_decode_url_percent(bozo_httpreq_t *request, char *str)
 		*t = (char)strtol(buf, NULL, 16);
 		debug((httpd, DEBUG_EXPLODING,
 				"fu_%%: strtol put '%02x' into *t", *t));
-		if (*t++ == '\0') {
-			(void)bozo_http_error(httpd, 400, request,
-					"percent hack got a 0 back");
-			return 1;
-		}
+		if (*t++ == '\0')
+			return bozo_http_error(httpd, 400, request,
+			    "percent hack got a 0 back");
 
 		while (*s && *s != '%') {
 			if (end && s >= end)
@@ -1685,7 +1658,9 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 	switch (check_bzredirect(request)) {
 	case -1:
 		goto bad_done;
-	case 1:
+	case 0:
+		break;
+	default:
 		return 0;
 	}
 
@@ -1963,7 +1938,11 @@ bozo_check_special_files(bozo_httpreq_t *request, const char *name)
 	if (strcmp(name, REMAP_FILE) == 0)
 		return bozo_http_error(httpd, 403, request,
 		    "no permission to open redirect file");
-	return bozo_auth_check_special_files(request, name);
+	if (strcmp(name, AUTH_FILE) == 0)
+		return bozo_http_error(httpd, 403, request,
+		    "no permission to open authfile");
+
+	return 0;
 }
 
 /* generic header printing routine */
