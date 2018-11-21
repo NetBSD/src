@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.14 2013/11/30 20:20:42 joerg Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.15 2018/11/21 21:01:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.14 2013/11/30 20:20:42 joerg Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.15 2018/11/21 21:01:41 skrll Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -70,7 +70,7 @@ ENTRY(swapcontext)
 #endif
 #if !defined(__thumb__)
 	str	sp, [r0, #_UC_REGS_SP]	/* Adjust saved SP. */
-	str	lr, [r0, #_UC_REGS_PC]	/* Adjust saved SP. */
+	str	lr, [r0, #_UC_REGS_PC]	/* Adjust saved PC. */
 #else
 	mov	r2, sp
 	str	r2, [r0, #_UC_REGS_SP]	/* Adjust saved SP. */
