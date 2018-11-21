@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2012/10/27 17:17:58 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2018/11/21 20:36:41 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2012/10/27 17:17:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2018/11/21 20:36:41 macallan Exp $");
 
 #include "opt_md.h"
 
@@ -138,7 +138,7 @@ device_register(device_t dev, void *aux)
 		}
 	}
 
-	if (device_is_a(dev, "genfb") &&
+	if ((device_is_a(dev, "genfb") || device_is_a(dev, "gffb")) &&
 	    device_is_a(device_parent(dev), "pci") ) {
 		prop_dictionary_t dict = device_properties(dev);
 		struct pci_attach_args *pa = aux;
@@ -178,6 +178,13 @@ device_register(device_t dev, void *aux)
 			bootconfig.height + 1);
 		prop_dictionary_set_uint32(dict, "depth",
 			1 << bootconfig.log2_bpp);
+		/*
+		 * XXX
+		 * at least RISC OS 5.28 seems to use the graphics hardware in
+		 * BGR mode when in 32bit colour, so take that into account
+		 */
+		if (bootconfig.log2_bpp == 5)
+			prop_dictionary_set_bool(dict, "is_bgr", 1);
 		prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
 }
