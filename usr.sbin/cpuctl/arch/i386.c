@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.85 2018/06/20 04:04:50 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.86 2018/11/21 06:10:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.85 2018/06/20 04:04:50 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.86 2018/11/21 06:10:25 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ struct cpu_info {
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_family;	 /* from ci_signature */
 	uint32_t	ci_model;	 /* from ci_signature */
-	uint32_t	ci_feat_val[9];	 /* X86 CPUID feature bits
+	uint32_t	ci_feat_val[10]; /* X86 CPUID feature bits
 					  *	[0] basic features %edx
 					  *	[1] basic features %ecx
 					  *	[2] extended features %edx
@@ -106,8 +106,9 @@ struct cpu_info {
 					  *	[4] VIA padlock features
 					  *	[5] structure ext. feat. %ebx
 					  *	[6] structure ext. feat. %ecx
-					  *	[7] XCR0 bits (d:0 %eax)
-					  *	[8] xsave flags (d:1 %eax)
+					  *     [7] structure ext. feat. %edx
+					  *	[8] XCR0 bits (d:0 %eax)
+					  *	[9] xsave flags (d:1 %eax)
 					  */
 	uint32_t	ci_cpu_class;	 /* CPU class */
 	uint32_t	ci_brand_id;	 /* Intel brand id */
@@ -1672,19 +1673,20 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	x86_cpuid(7, descs);
 	ci->ci_feat_val[5] = descs[1];
 	ci->ci_feat_val[6] = descs[2];
+	ci->ci_feat_val[7] = descs[3];
 
 	if (ci->ci_cpuid_level < 0xd)
 		return;
 
 	/* Get support XCR0 bits */
 	x86_cpuid2(0xd, 0, descs);
-	ci->ci_feat_val[7] = descs[0];	/* Actually 64 bits */
+	ci->ci_feat_val[8] = descs[0];	/* Actually 64 bits */
 	ci->ci_cur_xsave = descs[1];
 	ci->ci_max_xsave = descs[2];
 
 	/* Additional flags (eg xsaveopt support) */
 	x86_cpuid2(0xd, 1, descs);
-	ci->ci_feat_val[8] = descs[0];	 /* Actually 64 bits */
+	ci->ci_feat_val[9] = descs[0];	 /* Actually 64 bits */
 }
 
 static void
@@ -2034,18 +2036,17 @@ identifycpu(int fd, const char *cpuname)
 	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
 		print_bits(cpuname, "features5", CPUID_SEF_FLAGS,
 		    ci->ci_feat_val[5]);
-	if (cpu_vendor == CPUVENDOR_INTEL)
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
 		print_bits(cpuname, "features6", CPUID_SEF_FLAGS1,
 		    ci->ci_feat_val[6]);
 
-	if ((cpu_vendor == CPUVENDOR_INTEL) && (ci->ci_cpuid_level >= 7)) {
-		x86_cpuid(7, descs);
-		print_bits(cpuname, "SEF edx", CPUID_SEF_FLAGS2, descs[3]);
-	}
+	if (cpu_vendor == CPUVENDOR_INTEL)
+		print_bits(cpuname, "features7", CPUID_SEF_FLAGS2,
+		    ci->ci_feat_val[7]);
 
-	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[7]);
+	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[8]);
 	print_bits(cpuname, "xsave instructions", CPUID_PES1_FLAGS,
-	    ci->ci_feat_val[8]);
+	    ci->ci_feat_val[9]);
 
 	if (ci->ci_max_xsave != 0) {
 		aprint_normal("%s: xsave area size: current %d, maximum %d",
@@ -2090,54 +2091,48 @@ identifycpu(int fd, const char *cpuname)
 
 	identifycpu_cpuids(ci);
 
-#ifdef INTEL_CORETEMP
-	if (cpu_vendor == CPUVENDOR_INTEL && ci->ci_cpuid_level >= 0x06)
-		coretemp_register(ci);
-#endif
-
+	if ((ci->ci_cpuid_level >= 6)
+	    && ((cpu_vendor == CPUVENDOR_INTEL)
+		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		x86_cpuid(6, descs);
+		print_bits(cpuname, "DSPM-eax", CPUID_DSPM_FLAGS, descs[0]);
+		print_bits(cpuname, "DSPM-ecx", CPUID_DSPM_FLAGS1, descs[2]);
+	}
 	if (cpu_vendor == CPUVENDOR_AMD) {
-		uint32_t data[4];
-
-		x86_cpuid(0x80000000, data);
-		if (data[0] >= 0x80000007)
+		x86_cpuid(0x80000000, descs);
+		if (descs[0] >= 0x80000007)
 			powernow_probe(ci);
 
-		if ((data[0] >= 0x8000000a)
+		if ((descs[0] >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
-			x86_cpuid(0x8000000a, data);
+			x86_cpuid(0x8000000a, descs);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
-			    data[0] & 0xf);
-			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
+			    descs[0] & 0xf);
+			aprint_verbose("%s: SVM NASID %d\n", cpuname,
+			    descs[1]);
 			print_bits(cpuname, "SVM features",
-			    CPUID_AMD_SVM_FLAGS, data[3]);
+			    CPUID_AMD_SVM_FLAGS, descs[3]);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
-		uint32_t data[4];
 		int32_t bi_index;
 
 		for (bi_index = 1; bi_index <= ci->ci_cpuid_level; bi_index++) {
-			x86_cpuid(bi_index, data);
+			x86_cpuid(bi_index, descs);
 			switch (bi_index) {
-			case 6:
-				print_bits(cpuname, "DSPM-eax",
-				    CPUID_DSPM_FLAGS, data[0]);
-				print_bits(cpuname, "DSPM-ecx",
-				    CPUID_DSPM_FLAGS1, data[2]);
-				break;
 			case 7:
 				aprint_verbose("%s: SEF highest subleaf %08x\n",
-				    cpuname, data[0]);
+				    cpuname, descs[0]);
 				break;
 #if 0
 			default:
 				aprint_verbose("%s: basic %08x-eax %08x\n",
-				    cpuname, bi_index, data[0]);
+				    cpuname, bi_index, descs[0]);
 				aprint_verbose("%s: basic %08x-ebx %08x\n",
-				    cpuname, bi_index, data[1]);
+				    cpuname, bi_index, descs[1]);
 				aprint_verbose("%s: basic %08x-ecx %08x\n",
-				    cpuname, bi_index, data[2]);
+				    cpuname, bi_index, descs[2]);
 				aprint_verbose("%s: basic %08x-edx %08x\n",
-				    cpuname, bi_index, data[3]);
+				    cpuname, bi_index, descs[3]);
 				break;
 #endif
 			}
