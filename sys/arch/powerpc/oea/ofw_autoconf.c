@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.22 2018/08/17 15:54:35 macallan Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.23 2018/11/21 17:54:42 scole Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.22 2018/08/17 15:54:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.23 2018/11/21 17:54:42 scole Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -242,6 +242,11 @@ device_register(device_t dev, void *aux)
 
 		dict = device_properties(dev);
 		copy_disp_props(dev, ca->ca_node, dict);
+	}
+
+	/* cannot read useful display properties for platinum */
+	if (device_is_a(dev, "platinumfb")) {
+		return;
 	}
 
 #if NGTPCI > 0
