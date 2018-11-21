@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.10 2013/10/18 20:19:36 christos Exp $	 */
+/*	$NetBSD: defs.h,v 1.11 2018/11/21 20:04:48 martin Exp $	 */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,6 +65,7 @@ EXTERN char *sys_name INIT("menu_sys.def");
 
 EXTERN int do_dynamic INIT(0);
 EXTERN int do_msgxlat INIT(0);
+EXTERN int do_expands INIT(0);
 EXTERN int line_no INIT(1);
 EXTERN int had_errors INIT(FALSE);
 EXTERN int max_strlen INIT(1);

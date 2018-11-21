@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.46 2012/03/06 16:55:18 mbalmer Exp $	*/
+/*	$NetBSD: mdb.c,v 1.47 2018/11/21 20:04:48 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.46 2012/03/06 16:55:18 mbalmer Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.47 2018/11/21 20:04:48 martin Exp $");
 #endif
 
 
@@ -163,6 +163,8 @@ write_menu_file(char *initcode)
 		(void)fprintf(out_file, "#define MSG_XLAT(x) (x)\n");
 	if (do_dynamic)
 		(void)fprintf(out_file, "#define DYNAMIC_MENUS\n");
+	if (do_expands)
+		(void)fprintf(out_file, "#define MENU_EXPANDS\n");
 	if (do_dynamic || do_msgxlat)
 		(void)fprintf(out_file, "\n");
 
@@ -171,6 +173,9 @@ write_menu_file(char *initcode)
 		"typedef struct menu_ent menu_ent;\n"	
 		"struct menu_ent {\n"
 		"	const char	*opt_name;\n"
+		"#ifdef	MENU_EXPANDS\n"
+		"	const char	*opt_exp_name;\n"
+		"#endif\n"
 		"	int		opt_menu;\n"
 		"	int		opt_flags;\n"
 		"	int		(*opt_action)(menudesc *, void *);\n"
@@ -192,7 +197,12 @@ write_menu_file(char *initcode)
 		"	WINDOW		*mw;\n"
 		"	WINDOW		*sv_mw;\n"
 		"	const char	*helpstr;\n"
-		"	const char	*exitstr;\n"
+		"	const char	*exitstr;\n");
+	if (do_expands)
+		(void)fprintf(out_file,
+			"	void		(*expand_act)(menudesc *, "
+			    "void *);\n");
+	(void)fprintf(out_file,
 		"	void		(*post_act)(menudesc *, void *);\n"
 		"	void		(*exit_act)(menudesc *, void *);\n"
 		"	void		(*draw_line)(menudesc *, int, void *);\n"
@@ -263,6 +273,14 @@ write_menu_file(char *initcode)
 
 	/* func defs */
 	for (i = 0; i < menu_no; i++) {
+		if (do_expands && strlen(menus[i]->info->expact.code)) {
+			(void)fprintf(out_file, "/*ARGSUSED*/\n"
+			    "static void menu_%d_expact(menudesc *menu, void *arg)\n{\n", i);
+			if (menus[i]->info->expact.endwin)
+				(void)fprintf(out_file, "\tendwin();\n");
+			(void)fprintf(out_file, "\t%s\n}\n\n",
+			    menus[i]->info->expact.code);
+		}
 		if (strlen(menus[i]->info->postact.code)) {
 			(void)fprintf(out_file, "/*ARGSUSED*/\n"
 			    "static void menu_%d_postact(menudesc *menu, void *arg)\n{\n", i);
@@ -307,7 +325,8 @@ write_menu_file(char *initcode)
 		for (j = 0, toptn = menus[i]->info->optns; toptn;
 		    toptn = toptn->next, j++) {
 			name_is_code += toptn->name_is_code;
-			(void)fprintf(out_file, "\t{%s,%d,%d,",
+			(void)fprintf(out_file, "\t{ .opt_name = %s, "
+				".opt_menu=%d, .opt_flags=%d, .opt_action=",
 				toptn->name_is_code ? "0" : toptn->name,
 				toptn->menu,
 				(toptn->issub ? OPT_SUB : 0)
@@ -380,6 +399,12 @@ write_menu_file(char *initcode)
 			(void)fprintf(out_file, "%s", menus[i]->info->exitstr);
 		else
 			(void)fprintf(out_file, "\"Exit\"");
+		if (do_expands) {
+			if (strlen(menus[i]->info->expact.code))
+				(void)fprintf(out_file, ",menu_%d_expact", i);
+			else
+				(void)fprintf(out_file, ",NULL");
+		}
 		if (strlen(menus[i]->info->postact.code))
 			(void)fprintf(out_file, ",menu_%d_postact", i);
 		else
@@ -397,7 +422,10 @@ write_menu_file(char *initcode)
 
 	}
 	(void)fprintf(out_file, "{NULL, 0, 0, 0, 0, 0, 0, 0, 0, "
-		"NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};\n\n");
+		"NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL");
+	if (do_expands)
+		(void)fprintf(out_file, ", NULL");
+	(void)fprintf(out_file, "}};\n\n");
 
 	/* __menu_initerror: initscr failed. */
 	(void)fprintf(out_file, 
