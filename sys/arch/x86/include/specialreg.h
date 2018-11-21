@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.133 2018/11/21 06:09:49 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.134 2018/11/21 12:18:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -413,6 +413,23 @@
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
 					"\33" "IBRS"	"\34" "STIBP"	\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP"		"\40" "SSBD"
+
+/*
+ * Intel CPUID Extended Topology Enumeration Fn0000000b
+ * %ecx == level number
+ *	%eax: See below.
+ *	%ebx: Number of logical processors at this level.
+ *	%ecx: See below.
+ *	%edx: x2APIC ID of the current logical processor.
+ */
+/* %eax */
+#define CPUID_TOP_SHIFTNUM	__BITS(4, 0) /* Topology ID shift value */
+/* %ecx */
+#define CPUID_TOP_LVLNUM	__BITS(7, 0) /* Level number */
+#define CPUID_TOP_LVLTYPE	__BITS(15, 8) /* Level type */
+#define CPUID_TOP_LVLTYPE_INVAL	0	 	/* Invalid */
+#define CPUID_TOP_LVLTYPE_SMT	1	 	/* SMT */
+#define CPUID_TOP_LVLTYPE_CORE	2	 	/* Core */
 
 /*
  * Intel/AMD CPUID Processor extended state Enumeration Fn0000000d
