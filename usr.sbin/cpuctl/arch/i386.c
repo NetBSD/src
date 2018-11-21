@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.87 2018/11/21 10:34:53 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.88 2018/11/21 12:19:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.87 2018/11/21 10:34:53 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.88 2018/11/21 12:19:51 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1786,22 +1786,13 @@ print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
 }
 
 static void
-identifycpu_cpuids(struct cpu_info *ci)
+identifycpu_cpuids_intel_0x04(struct cpu_info *ci)
 {
-	const char *cpuname = ci->ci_dev;
 	u_int lp_max = 1;	/* logical processors per package */
 	u_int smt_max;		/* smt per core */
 	u_int core_max = 1;	/* core per package */
 	u_int smt_bits, core_bits;
 	uint32_t descs[4];
-
-	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
-	ci->ci_packageid = ci->ci_initapicid;
-	ci->ci_coreid = 0;
-	ci->ci_smtid = 0;
-	if (cpu_vendor != CPUVENDOR_INTEL) {
-		return;
-	}
 
 	/*
 	 * 253668.pdf 7.10.2
@@ -1811,32 +1802,110 @@ identifycpu_cpuids(struct cpu_info *ci)
 		x86_cpuid(1, descs);
 		lp_max = __SHIFTOUT(descs[1], CPUID_HTT_CORES);
 	}
-	if (ci->ci_cpuid_level >= 4) {
-		x86_cpuid2(4, 0, descs);
-		core_max = __SHIFTOUT(descs[0], CPUID_DCP_CORE_P_PKG) + 1;
-	}
+	x86_cpuid2(4, 0, descs);
+	core_max = __SHIFTOUT(descs[0], CPUID_DCP_CORE_P_PKG) + 1;
+
 	assert(lp_max >= core_max);
 	smt_max = lp_max / core_max;
 	smt_bits = ilog2(smt_max - 1) + 1;
 	core_bits = ilog2(core_max - 1) + 1;
-	if (smt_bits + core_bits) {
+
+	if (smt_bits + core_bits)
 		ci->ci_packageid = ci->ci_initapicid >> (smt_bits + core_bits);
+
+	if (core_bits)
+		ci->ci_coreid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS(smt_bits, smt_bits + core_bits - 1));
+
+	if (smt_bits)
+		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS((int)0, (int)(smt_bits - 1)));
+}
+
+static void
+identifycpu_cpuids_intel_0x0b(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
+	u_int smt_bits, core_bits, core_shift = 0, pkg_shift = 0;
+	uint32_t descs[4];
+	int i;
+
+	x86_cpuid(0x0b, descs);
+	if (descs[1] == 0) {
+		identifycpu_cpuids_intel_0x04(ci);
+		return;
 	}
+
+	for (i = 0; ; i++) {
+		unsigned int shiftnum, lvltype;
+		x86_cpuid2(0x0b, i, descs);
+
+		/* On invalid level, (EAX and) EBX return 0 */
+		if (descs[1] == 0)
+			break;
+
+		shiftnum = __SHIFTOUT(descs[0], CPUID_TOP_SHIFTNUM);
+		lvltype = __SHIFTOUT(descs[2], CPUID_TOP_LVLTYPE);
+		switch (lvltype) {
+		case CPUID_TOP_LVLTYPE_SMT:
+			core_shift = shiftnum;
+			break;
+		case CPUID_TOP_LVLTYPE_CORE:
+			pkg_shift = shiftnum;
+			break;
+		case CPUID_TOP_LVLTYPE_INVAL:
+			aprint_verbose("%s: Invalid level type\n", cpuname);
+			break;
+		default:
+			aprint_verbose("%s: Unknown level type(%d) \n",
+			    cpuname, lvltype);
+			break;
+		}
+	}
+
+	assert(pkg_shift >= core_shift);
+	smt_bits = core_shift;
+	core_bits = pkg_shift - core_shift;
+
+	ci->ci_packageid = ci->ci_initapicid >> pkg_shift;
+
+	if (core_bits)
+		ci->ci_coreid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS(core_shift, pkg_shift - 1));
+
+	if (smt_bits)
+		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS((int)0, core_shift - 1));
+}
+
+static void
+identifycpu_cpuids_intel(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
+
+	if (ci->ci_cpuid_level >= 0x0b)
+		identifycpu_cpuids_intel_0x0b(ci);
+	else if (ci->ci_cpuid_level >= 4)
+		identifycpu_cpuids_intel_0x04(ci);
+
 	aprint_verbose("%s: Cluster/Package ID %u\n", cpuname,
 	    ci->ci_packageid);
-	if (core_bits) {
-		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
+	aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
+	aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
+}
 
-		ci->ci_coreid =
-		    __SHIFTOUT(ci->ci_initapicid, core_mask);
-		aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
-	}
-	if (smt_bits) {
-		u_int smt_mask = __BITS((int)0, (int)(smt_bits - 1));
+static void
+identifycpu_cpuids(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
 
-		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid, smt_mask);
-		aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
-	}
+	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
+	ci->ci_packageid = ci->ci_initapicid;
+	ci->ci_coreid = 0;
+	ci->ci_smtid = 0;
+
+	if (cpu_vendor == CPUVENDOR_INTEL)
+		identifycpu_cpuids_intel(ci);
 }
 
 void
