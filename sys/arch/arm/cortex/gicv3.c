@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.11 2018/11/17 00:17:54 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.12 2018/11/21 11:44:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.11 2018/11/17 00:17:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.12 2018/11/21 11:44:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -489,7 +489,7 @@ gicv3_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affinity)
 	if (set == ncpu)
 		irouter = GICD_IROUTER_Interrupt_Routing_mode;
 	else if (set == 1)
-		irouter = sc->sc_irouter[kcpuset_ffs(affinity)];
+		irouter = sc->sc_irouter[kcpuset_ffs(affinity) - 1];
 	else
 		return EINVAL;
 

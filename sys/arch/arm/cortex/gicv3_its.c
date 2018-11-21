@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.3 2018/11/16 15:06:21 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.4 2018/11/21 11:44:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.3 2018/11/16 15:06:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.4 2018/11/21 11:44:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -713,7 +713,7 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 	if (pa == NULL)
 		return EINVAL;
 
-	ci = cpu_lookup(kcpuset_ffs(affinity));
+	ci = cpu_lookup(kcpuset_ffs(affinity) - 1);
 
 	const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
 	gits_command_movi(its, devid, devid, cpu_index(ci));
