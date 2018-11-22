@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.5 2016/10/22 21:55:06 christos Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.6 2018/11/22 22:16:45 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.5 2016/10/22 21:55:06 christos Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.6 2018/11/22 22:16:45 uwe Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -51,11 +51,7 @@ __RCSID("$NetBSD: add_wchstr.c,v 1.5 2016/10/22 21:55:06 christos Exp $");
 int
 add_wchstr(const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wadd_wchnstr(stdscr, wchstr, -1);
-#endif
 }
 
 
@@ -66,11 +62,7 @@ add_wchstr(const cchar_t *wchstr)
 int
 wadd_wchstr(WINDOW *win, const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wadd_wchnstr(win, wchstr, -1);
-#endif
 }
 
 
@@ -82,11 +74,7 @@ wadd_wchstr(WINDOW *win, const cchar_t *wchstr)
 int
 add_wchnstr(const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wadd_wchnstr(stdscr, wchstr, n);
-#endif
 }
 
 
@@ -97,11 +85,7 @@ add_wchnstr(const cchar_t *wchstr, int n)
 int
 mvadd_wchstr(int y, int x, const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwadd_wchnstr(stdscr, y, x, wchstr, -1);
-#endif
 }
 
 
@@ -112,11 +96,7 @@ mvadd_wchstr(int y, int x, const cchar_t *wchstr)
 int
 mvwadd_wchstr(WINDOW *win, int y, int x, const cchar_t *wchstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwadd_wchnstr(win, y, x, wchstr, -1);
-#endif
 }
 
 
@@ -128,11 +108,7 @@ mvwadd_wchstr(WINDOW *win, int y, int x, const cchar_t *wchstr)
 int
 mvadd_wchnstr(int y, int x, const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwadd_wchnstr(stdscr, y, x, wchstr, n);
-#endif
 }
 
 
@@ -144,14 +120,10 @@ mvadd_wchnstr(int y, int x, const cchar_t *wchstr, int n)
 int
 mvwadd_wchnstr(WINDOW *win, int y, int x, const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wadd_wchnstr(win, wchstr, n);
-#endif
 }
 
 
@@ -163,9 +135,6 @@ mvwadd_wchnstr(WINDOW *win, int y, int x, const cchar_t *wchstr, int n)
 int
 wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	const cchar_t *chp;
 	wchar_t wc;
 	int cw, x, y, sx, ex, newx, i, cnt;
@@ -334,5 +303,4 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	__touchline(win, y, sx, ex);
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }

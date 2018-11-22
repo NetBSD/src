@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.4 2017/01/06 13:53:18 roy Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.5 2018/11/22 22:16:45 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,16 +36,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.4 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.5 2018/11/22 22:16:45 uwe Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
 /* prototypes for private functions */
-#ifdef HAVE_WCHAR
 static int __wgetn_wstr(WINDOW *, wchar_t *, int);
-#endif /* HAVE_WCHAR */
 
 /*
  * getn_wstr --
@@ -55,11 +53,7 @@ static int __wgetn_wstr(WINDOW *, wchar_t *, int);
 int
 getn_wstr(wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wgetn_wstr(stdscr, wstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -71,11 +65,7 @@ __warn_references(get_wstr,
 int
 get_wstr(wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wget_wstr(stdscr, wstr);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -85,11 +75,7 @@ get_wstr(wchar_t *wstr)
 int
 mvgetn_wstr(int y, int x, wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwgetn_wstr(stdscr, y, x, wstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -101,11 +87,7 @@ __warn_references(mvget_wstr,
 int
 mvget_wstr(int y, int x, wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return mvwget_wstr(stdscr, y, x, wstr);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -116,14 +98,10 @@ mvget_wstr(int y, int x, wchar_t *wstr)
 int
 mvwgetn_wstr(WINDOW *win, int y, int x, wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wgetn_wstr(win, wstr, n);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -135,14 +113,10 @@ __warn_references(mvget_wstr,
 int
 mvwget_wstr(WINDOW *win, int y, int x, wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
 	return wget_wstr(win, wstr);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -154,11 +128,7 @@ __warn_references(wget_wstr,
 int
 wget_wstr(WINDOW *win, wchar_t *wstr)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return __wgetn_wstr(win, wstr, -1);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -169,9 +139,6 @@ wget_wstr(WINDOW *win, wchar_t *wstr)
 int
 wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	if (n < 1)
 		return ERR;
 	if (n == 1) {
@@ -179,10 +146,8 @@ wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 		return ERR;
 	}
 	return __wgetn_wstr(win, wstr, n);
-#endif /* HAVE_WCHAR */
 }
 
-#ifdef HAVE_WCHAR
 /*
  * __wgetn_wstr --
  *	The actual implementation.
@@ -288,4 +253,3 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 	*wstr = L'\0';
 	return OK;
 }
-#endif /* HAVE_WCHAR */
