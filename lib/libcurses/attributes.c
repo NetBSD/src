@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.24 2018/10/29 01:27:39 uwe Exp $	*/
+/*	$NetBSD: attributes.c,v 1.25 2018/11/22 23:29:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,13 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.24 2018/10/29 01:27:39 uwe Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.25 2018/11/22 23:29:09 uwe Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
-void __wcolor_set(WINDOW *, attr_t);
+static void __wcolor_set(WINDOW *, attr_t);
 
 #ifndef _CURSES_USE_MACROS
 /*
@@ -282,6 +282,34 @@ wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
 }
 
 /*
+ * wcolor_set --
+ *	Set color pair on window
+ */
+/* ARGSUSED */
+int
+wcolor_set(WINDOW *win, short pair, void *opt)
+{
+#ifdef DEBUG
+	__CTRACE(__CTRACE_COLOR, "wolor_set: win %p, pair %d\n", win, pair);
+#endif
+	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));
+	return OK;
+}
+
+/*
+ * getattrs --
+ *	Get window attributes.
+ */
+chtype
+getattrs(WINDOW *win)
+{
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "getattrs: win %p\n", win);
+#endif
+	return((chtype) win->wattr);
+}
+
+/*
  * wattron --
  *	Test and set attributes.
  */
@@ -321,34 +349,6 @@ wattrset(WINDOW *win, int attr)
 	wattr_off(win, __ATTRIBUTES, NULL);
 	wattr_on(win, (attr_t) attr, NULL);
 	return OK;
-}
-
-/*
- * wcolor_set --
- *	Set color pair on window
- */
-/* ARGSUSED */
-int
-wcolor_set(WINDOW *win, short pair, void *opt)
-{
-#ifdef DEBUG
-	__CTRACE(__CTRACE_COLOR, "wolor_set: win %p, pair %d\n", win, pair);
-#endif
-	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));
-	return OK;
-}
-
-/*
- * getattrs --
- *	Get window attributes.
- */
-chtype
-getattrs(WINDOW *win)
-{
-#ifdef DEBUG
-	__CTRACE(__CTRACE_ATTR, "getattrs: win %p\n", win);
-#endif
-	return((chtype) win->wattr);
 }
 
 /*
@@ -444,7 +444,7 @@ term_attrs(void)
  * __wcolor_set --
  * Set color attribute on window
  */
-void
+static void
 __wcolor_set(WINDOW *win, attr_t attr)
 {
 	const TERMINAL *t = win->screen->term;
