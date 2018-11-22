@@ -3,6 +3,13 @@ if test "${board}" = "am335x" ; then
 	setenv mmcpart 0:1
 	setenv bootargs root=ld0a
 fi
+if test "${board}" = "de0-nano-soc" ; then
+	setenv kernel netbsd-GENERIC.ub
+	setenv bootargs 'root=ld0a'
+	setenv mmcpart 0:1
+	setenv use_fdt 1
+	setenv fdtfile socfpga_cyclone5_de0_sockit.dtb
+fi
 if test "${soc}" = "exynos" ; then
 	setenv kernel netbsd-GENERIC.ub
 	setenv bootargs 'root=ld1a'
