@@ -1,4 +1,4 @@
-/*	$NetBSD: natt_terminator.c,v 1.1 2017/10/30 15:59:23 ozaki-r Exp $	*/
+/*	$NetBSD: natt_terminator.c,v 1.2 2018/11/22 04:51:41 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -41,6 +41,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+static void
+usage(void)
+{
+	const char *prog = "natt_terminator";
+
+	fprintf(stderr, "Usage: %s [-46] <addr> <port>\n", prog);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -49,17 +57,34 @@ main(int argc, char **argv)
 	int s, e;
 	const char *addr, *port;
 	int option;
+	int c, family = AF_INET;
 
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s <addr> <port>\n", argv[0]);
+	while ((c = getopt(argc, argv, "46")) != -1) {
+		switch (c) {
+		case '4':
+			family = AF_INET;
+			break;
+		case '6':
+			family = AF_INET6;
+			break;
+		default:
+			usage();
+			return 1;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 2) {
+		usage();
 		return 1;
 	}
 
-	addr = argv[1];
-	port = argv[2];
+	addr = argv[0];
+	port = argv[1];
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_flags = 0;
