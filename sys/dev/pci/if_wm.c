@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.600 2018/11/20 04:04:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.601 2018/11/22 15:09:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.600 2018/11/20 04:04:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.601 2018/11/22 15:09:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -974,6 +974,8 @@ static void	wm_hv_phy_workaround_ich8lan(struct wm_softc *);
 static void	wm_lv_phy_workaround_ich8lan(struct wm_softc *);
 static int	wm_k1_workaround_lpt_lp(struct wm_softc *, bool);
 static int	wm_k1_gig_workaround_hv(struct wm_softc *, int);
+static int	wm_k1_workaround_lv(struct wm_softc *);
+static int	wm_link_stall_workaround_hv(struct wm_softc *);
 static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
@@ -8850,23 +8852,6 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
 		}
 
-		if ((sc->sc_phytype == WMPHY_82578)
-		    && (IFM_SUBTYPE(sc->sc_mii.mii_media_active)
-			== IFM_1000_T)) {
-
-			if ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0) {
-				delay(200*1000); /* XXX too big */
-
-				/* Link stall fix for link up */
-				wm_gmii_hv_writereg(sc->sc_dev, 1,
-				    HV_MUX_DATA_CTRL,
-				    HV_MUX_DATA_CTRL_GEN_TO_MAC
-				    | HV_MUX_DATA_CTRL_FORCE_SPEED);
-				wm_gmii_hv_writereg(sc->sc_dev, 1,
-				    HV_MUX_DATA_CTRL,
-				    HV_MUX_DATA_CTRL_GEN_TO_MAC);
-			}
-		}
 		/*
 		 * I217 Packet Loss issue:
 		 * ensure that FEXTNVM4 Beacon Duration is set correctly
@@ -8905,6 +8890,21 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			else
 				reg &= ~FEXTNVM6_K1_OFF_ENABLE;
 			CSR_WRITE(sc, WMREG_FEXTNVM6, reg);
+		}
+
+		if (!link)
+			return;
+
+		switch (sc->sc_type) {
+		case WM_T_PCH2:
+			wm_k1_workaround_lv(sc);
+			/* FALLTHROUGH */
+		case WM_T_PCH:
+			if (sc->sc_phytype == WMPHY_82578)
+				wm_link_stall_workaround_hv(sc);
+			break;
+		default:
+			break;
 		}
 	} else if (icr & ICR_RXSEQ) {
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK Receive sequence error\n",
@@ -14528,7 +14528,16 @@ out:
 	return;
 }
 
-/* WOL from S5 stops working */
+/*
+ *  wm_gig_downshift_workaround_ich8lan - WoL from S5 stops working
+ *  @sc: pointer to the HW structure
+ *
+ *  Steps to take when dropping from 1Gb/s (eg. link cable removal (LSC),
+ *  LPLU, Gig disable, MDIC PHY reset):
+ *    1) Set Kumeran Near-end loopback
+ *    2) Clear Kumeran Near-end loopback
+ *  Should only be called for ICH8[m] devices with any 1G Phy.
+ */
 static void
 wm_gig_downshift_workaround_ich8lan(struct wm_softc *sc)
 {
@@ -14561,7 +14570,7 @@ wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
 	if (sc->sc_phytype == WMPHY_82577)
 		wm_set_mdio_slow_mode_hv(sc);
 
-	/* (PCH rev.2) && (82577 && (phy rev 2 or 3)) */
+	/* XXX (PCH rev.2) && (82577 && (phy rev 2 or 3)) */
 
 	/* (82577 && (phy rev 1 or 2)) || (82578 & phy rev 1)*/
 
@@ -14594,6 +14603,10 @@ wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
 	wm_k1_gig_workaround_hv(sc, 1);
 }
 
+/*
+ *  wm_lv_phy_workarounds_ich8lan - A series of Phy workarounds to be
+ *  done after every PHY reset.
+ */
 static void
 wm_lv_phy_workaround_ich8lan(struct wm_softc *sc)
 {
@@ -14602,7 +14615,11 @@ wm_lv_phy_workaround_ich8lan(struct wm_softc *sc)
 		device_xname(sc->sc_dev), __func__));
 	KASSERT(sc->sc_type == WM_T_PCH2);
 
+	/* Set MDIO slow mode before any other MDIO access */
 	wm_set_mdio_slow_mode_hv(sc);
+
+	/* XXX set MSE higher to enable link to stay up when noise is high */
+	/* XXX drop link after 5 times MSE threshold was reached */
 }
 
 /**
@@ -14676,6 +14693,16 @@ update_fextnvm6:
 	return 0;
 }
 	
+/*
+ *  wm_k1_gig_workaround_hv - K1 Si workaround
+ *  @sc:   pointer to the HW structure
+ *  @link: link up bool flag
+ *
+ *  If K1 is enabled for 1Gbps, the MAC might stall when transitioning
+ *  from a lower speed.  This workaround disables K1 whenever link is at 1Gig
+ *  If link is down, the function will restore the default K1 setting located
+ *  in the NVM.
+ */
 static int
 wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
 {
@@ -14705,6 +14732,88 @@ wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
 	return 0;
 }
 
+/*
+ *  wm_k1_gig_workaround_lv - K1 Si workaround
+ *  @sc:   pointer to the HW structure
+ *
+ *  Workaround to set the K1 beacon duration for 82579 parts in 10Mbps
+ *  Disable K1 for 1000 and 100 speeds
+ */
+static int
+wm_k1_workaround_lv(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int phyreg;
+	
+	if (sc->sc_type != WM_T_PCH2)
+		return 0;
+
+	/* Set K1 beacon duration based on 10Mbps speed */
+	phyreg = wm_gmii_hv_readreg(sc->sc_dev, 2, HV_M_STATUS);
+
+	if ((phyreg & (HV_M_STATUS_LINK_UP | HV_M_STATUS_AUTONEG_COMPLETE))
+	    == (HV_M_STATUS_LINK_UP | HV_M_STATUS_AUTONEG_COMPLETE)) {
+		if (phyreg &
+		    (HV_M_STATUS_SPEED_1000 | HV_M_STATUS_SPEED_100)) {
+			/* LV 1G/100 Packet drop issue wa  */
+			phyreg = wm_gmii_hv_readreg(sc->sc_dev, 1, HV_PM_CTRL);
+			phyreg &= ~HV_PM_CTRL_K1_ENA;
+			wm_gmii_hv_writereg(sc->sc_dev, 1, HV_PM_CTRL, phyreg);
+		} else {
+			/* For 10Mbps */
+			reg = CSR_READ(sc, WMREG_FEXTNVM4);
+			reg &= ~FEXTNVM4_BEACON_DURATION;
+			reg |= FEXTNVM4_BEACON_DURATION_16US;
+			CSR_WRITE(sc, WMREG_FEXTNVM4, reg);
+		}
+	}
+
+	return 0;
+}
+
+/*
+ *  wm_link_stall_workaround_hv - Si workaround
+ *  @sc: pointer to the HW structure
+ *
+ *  This function works around a Si bug where the link partner can get
+ *  a link up indication before the PHY does. If small packets are sent
+ *  by the link partner they can be placed in the packet buffer without
+ *  being properly accounted for by the PHY and will stall preventing
+ *  further packets from being received.  The workaround is to clear the
+ *  packet buffer after the PHY detects link up.
+ */
+static int
+wm_link_stall_workaround_hv(struct wm_softc *sc)
+{
+	int phyreg;
+
+	if (sc->sc_phytype != WMPHY_82578)
+		return 0;
+
+	/* Do not apply workaround if in PHY loopback bit 14 set */
+	phyreg =  wm_gmii_hv_readreg(sc->sc_dev, 2, MII_BMCR);
+	if ((phyreg & BMCR_LOOP) != 0)
+		return 0;
+
+	/* check if link is up and at 1Gbps */
+	phyreg = wm_gmii_hv_readreg(sc->sc_dev, 2, BM_CS_STATUS);
+	phyreg &= BM_CS_STATUS_LINK_UP | BM_CS_STATUS_RESOLVED
+	    | BM_CS_STATUS_SPEED_MASK;
+	if (phyreg != (BM_CS_STATUS_LINK_UP | BM_CS_STATUS_RESOLVED
+		| BM_CS_STATUS_SPEED_1000))
+		return 0;
+
+	delay(200 * 1000);	/* XXX too big */
+
+	/* flush the packets in the fifo buffer */
+	wm_gmii_hv_writereg(sc->sc_dev, 1, HV_MUX_DATA_CTRL,
+	    HV_MUX_DATA_CTRL_GEN_TO_MAC | HV_MUX_DATA_CTRL_FORCE_SPEED);
+	wm_gmii_hv_writereg(sc->sc_dev, 1, HV_MUX_DATA_CTRL,
+	    HV_MUX_DATA_CTRL_GEN_TO_MAC);
+
+	return 0;
+}
+
 static void
 wm_set_mdio_slow_mode_hv(struct wm_softc *sc)
 {
@@ -14715,6 +14824,14 @@ wm_set_mdio_slow_mode_hv(struct wm_softc *sc)
 	    reg | HV_KMRN_MDIO_SLOW);
 }
 
+/*
+ *  wm_configure_k1_ich8lan - Configure K1 power state
+ *  @sc: pointer to the HW structure
+ *  @enable: K1 state to configure
+ *
+ *  Configure the K1 power state based on the provided parameter.
+ *  Assumes semaphore already acquired.
+ */
 static void
 wm_configure_k1_ich8lan(struct wm_softc *sc, int k1_enable)
 {
