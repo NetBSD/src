@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.42 2018/11/22 08:54:08 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.43 2018/11/22 18:42:06 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <netinet/in.h>
 
@@ -380,6 +381,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	const char *type, *clen, *info, *cgihandler;
 	char	*query, *s, *t, *path, *env, *command, *file, *url;
 	char	**envp, **curenvp, **argv, **search_string_argv = NULL;
+	char	**lastenvp;
 	char	*uri;
 	size_t	i, len, search_string_argc = 0;
 	ssize_t rbytes;
@@ -506,6 +508,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	for (ix = 0; ix < envpsize; ix++)
 		envp[ix] = NULL;
 	curenvp = envp;
+	lastenvp = envp + envpsize;
 
 	SIMPLEQ_FOREACH(headp, &request->hr_headers, h_next) {
 		const char *s2;
@@ -587,6 +590,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 				strerror(errno));
 
 	*curenvp = 0;
+	assert(lastenvp > curenvp);
 
 	/*
 	 * We create 2 procs: one to become the CGI, one read from
