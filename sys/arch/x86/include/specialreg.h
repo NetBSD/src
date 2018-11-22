@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.134 2018/11/21 12:18:53 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.135 2018/11/22 06:14:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -280,6 +280,24 @@
 #define CPUID_DCP_INVALIDATE	__BIT(0)	/* WB invalidate/invalidate */
 #define CPUID_DCP_INCLUSIVE	__BIT(1)	/* Cache inclusiveness */
 #define CPUID_DCP_COMPLEX	__BIT(2)	/* Complex cache indexing */
+
+/*
+ * Intel/AMD MONITOR/MWAIT
+ * Fn0000_0005
+ */
+/* %eax */
+#define CPUID_MON_MINSIZE	__BITS(15, 0)  /* Smallest monitor-line size */
+/* %ebx */
+#define CPUID_MON_MAXSIZE	__BITS(15, 0)  /* Largest monitor-line size */
+/* %ecx */
+#define CPUID_MON_EMX		__BIT(0)       /* MONITOR/MWAIT Extensions */
+#define CPUID_MON_IBE		__BIT(1)       /* Interrupt as Break Event */
+
+#define CPUID_MON_FLAGS	"\20" \
+	"\1" "EMX"	"\2" "IBE"
+
+/* %edx: number of substates for specific C-state */
+#define CPUID_MON_SUBSTATE(edx, cstate) (((edx) >> (cstate * 4)) & 0x0000000f)
 
 /*
  * Intel/AMD Digital Thermal Sensor and
