@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.88 2018/11/21 12:19:51 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.89 2018/11/22 06:15:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.88 2018/11/21 12:19:51 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.89 2018/11/22 06:15:06 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2160,6 +2160,29 @@ identifycpu(int fd, const char *cpuname)
 
 	identifycpu_cpuids(ci);
 
+	if ((ci->ci_cpuid_level >= 5)
+	    && ((cpu_vendor == CPUVENDOR_INTEL)
+		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		uint16_t lmin, lmax;
+		x86_cpuid(5, descs);
+		
+		print_bits(cpuname, "MONITOR/MWAIT extensions",
+		    CPUID_MON_FLAGS, descs[2]);
+		lmin = __SHIFTOUT(descs[0], CPUID_MON_MINSIZE);
+		lmax = __SHIFTOUT(descs[1], CPUID_MON_MAXSIZE);
+		aprint_normal("%s: monitor-line size %hu", cpuname, lmin);
+		if (lmin != lmax)
+			aprint_normal("-%hu", lmax);
+		aprint_normal("\n");
+
+		for (i = 0; i <= 7; i++) {
+			unsigned int num = CPUID_MON_SUBSTATE(descs[3], i);
+
+			if (num != 0)
+				aprint_normal("%s: C%u substates %u\n",
+				    cpuname, i, num);
+		}
+	}
 	if ((ci->ci_cpuid_level >= 6)
 	    && ((cpu_vendor == CPUVENDOR_INTEL)
 		|| (cpu_vendor == CPUVENDOR_AMD))) {
