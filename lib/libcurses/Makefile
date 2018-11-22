@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2018/11/19 01:08:22 uwe Exp $
+#	$NetBSD: Makefile,v 1.90 2018/11/22 22:00:49 uwe Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -20,7 +20,8 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	curses.c delch.c deleteln.c delwin.c echochar.c erase.c fileio.c \
 	flushok.c fullname.c getch.c getstr.c getyx.c id_subwins.c idlok.c \
 	idcok.c immedok.c inch.c inchstr.c initscr.c insch.c insdelln.c \
-	insertln.c instr.c keypad.c keyname.c leaveok.c line.c meta.c move.c \
+	insertln.c insstr.c instr.c keypad.c keyname.c leaveok.c line.c \
+	meta.c move.c \
 	mvwin.c newwin.c nodelay.c notimeout.c overlay.c overwrite.c pause.c \
 	printw.c putchar.c refresh.c resize.c ripoffline.c scanw.c screen.c \
 	scroll.c scrollok.c setterm.c slk.c standout.c syncok.c timeout.c \
@@ -45,7 +46,7 @@ LIBDPLIBS+=	terminfo	${.CURDIR}/../libterminfo
 .if !defined(DISABLE_WCHAR)
 CPPFLAGS+=-DHAVE_WCHAR
 SRCS+= cchar.c add_wch.c add_wchstr.c addwstr.c echo_wchar.c ins_wch.c \
-	insstr.c ins_wstr.c get_wch.c get_wstr.c in_wch.c in_wchstr.c \
+	ins_wstr.c get_wch.c get_wstr.c in_wch.c in_wchstr.c \
 	inwstr.c
 .else
 CPPFLAGS+=-DDISABLE_WCHAR
