@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.18 2018/10/28 21:08:13 aymeric Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.19 2018/11/22 21:08:19 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.18 2018/10/28 21:08:13 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.19 2018/11/22 21:08:19 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -362,10 +362,15 @@ a9tmr_intr(void *arg)
 	return 1;
 }
 
+/* XXX This conflicts with gtmr, hence the temporary weak alias kludge */
+#if 1
+void a9tmr_setstatclockrate(int);
 void
-setstatclockrate(int newhz)
+a9tmr_setstatclockrate(int newhz)
 {
 }
+__weak_alias(setstatclockrate, a9tmr_setstatclockrate);
+#endif
 
 static u_int
 a9tmr_get_timecount(struct timecounter *tc)

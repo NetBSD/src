@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.13 2018/11/05 07:41:46 skrll Exp $
+#	$NetBSD: GENERIC,v 1.14 2018/11/22 21:08:19 aymeric Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -14,7 +14,7 @@ include	"arch/evbarm/conf/GENERIC.common"
 #
 makeoptions	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
+makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip socfpga"
 makeoptions	DTS="
 	bcm2836-rpi-2-b.dts
 	bcm2837-rpi-3-b.dts
@@ -28,6 +28,8 @@ makeoptions	DTS="
 	exynos5422-odroidxu3-lite.dts
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
+
+	socfpga_cyclone5_de0_sockit.dts
 
 	sun4i-a10-a1000.dts
 	sun4i-a10-ba10-tvbox.dts
@@ -208,6 +210,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	EARLYCONS=exynos, CONSADDR=0x12c20000
 
 #options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
+#options 	EARLYCONS=cycv, CONSADDR=0xffc02000
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 
@@ -239,6 +242,8 @@ cpufreqdt*	at cpu?
 psci*		at fdt?
 
 # Clock and reset controllers
+cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
+cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk*	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk*	at fdt? pass 3		# Exynos5422 clock controller
 sun4ia10ccu*	at fdt? pass 2		# Allwinner A10/A20 CCU
@@ -277,6 +282,8 @@ sunxisramc*     at fdt? pass 4          # SRAM controller
 syscon*		at fdt? pass 1		# Generic System Controller
 
 # Timer
+a9tmr* 		at fdt? pass 2		# ARM Cortex A5/A9 Timer
+arma9tmr* 	at a9tmr?
 gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
 mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
@@ -285,6 +292,7 @@ sunxitimer*     at fdt?                 # Allwinner async timer
 tegratimer*	at fdt?			# Timers
 
 # Watchdog
+dwcwdt* 	at fdt?			# DesignWare watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
 watchdog*	at fdt?			# Broadcom BCM283x watchdog
 
@@ -296,6 +304,10 @@ exyointr*	at fdt? pass 1		# Samsung Exynos ICU
 tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
 sunxiintc*	at fdt? pass 1		# Allwinner INTC
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
+
+# Level 2 Cache Controller
+l2cc* 		at fdt? pass 2		# ARM Cortex A9 L2 Cache Controller
+arml2cc* 	at l2cc?
 
 # Memory controller
 tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
