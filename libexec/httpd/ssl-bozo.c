@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.24 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.25 2018/11/22 08:54:08 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -323,6 +323,10 @@ bozo_ssl_set_ciphers(bozohttpd_t *httpd, const char *ciphers)
 
 #endif /* NO_SSL_SUPPORT */
 
+/*
+ * These functions are always present, so that caller code can simply
+ * use bozo_*() for IO, regardless of SSL.
+ */
 int
 bozo_printf(bozohttpd_t *httpd, const char *fmt, ...)
 {
