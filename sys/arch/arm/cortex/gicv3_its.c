@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.4 2018/11/21 11:44:26 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.5 2018/11/22 20:47:37 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.4 2018/11/21 11:44:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.5 2018/11/22 20:47:37 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -693,7 +693,7 @@ gicv3_its_get_affinity(void *priv, size_t irq, kcpuset_t *affinity)
 	struct cpu_info *ci;
 
 	kcpuset_zero(affinity);
-	ci = its->its_targets[irq - its->its_pic->pic_irqbase];
+	ci = its->its_targets[irq];
 	if (ci)
 		kcpuset_set(affinity, cpu_index(ci));
 }
@@ -709,7 +709,7 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 	if (set != 1)
 		return EINVAL;
 
-	pa = its->its_pa[irq - its->its_pic->pic_irqbase];
+	pa = its->its_pa[irq];
 	if (pa == NULL)
 		return EINVAL;
 
@@ -719,7 +719,7 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 	gits_command_movi(its, devid, devid, cpu_index(ci));
 	gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 
-	its->its_targets[irq - its->its_pic->pic_irqbase] = ci;
+	its->its_targets[irq] = ci;
 
 	return 0;
 }
