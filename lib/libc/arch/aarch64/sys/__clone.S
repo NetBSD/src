@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: __clone.S,v 1.2 2018/11/22 08:30:58 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ ENTRY(__clone)
 	 * x0 == pid of child in parent, x0 == pid of parent in child.
 	 */
 	/* if this is the parent then just return the pid */
-	cbnz	x1, 1f
+	cbz	x1, 1f
 
 	/*
 	 * This is the child
