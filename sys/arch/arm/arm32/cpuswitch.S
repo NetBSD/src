@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.92 2017/07/01 15:30:41 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.93 2018/11/22 21:28:21 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.92 2017/07/01 15:30:41 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.93 2018/11/22 21:28:21 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -386,7 +386,7 @@ ENTRY_NP(softint_switch)
 
 #ifdef _ARM_ARCH_6
 	/*
-	 * Save user read/write thread/process id register in cause it was
+	 * Save user read/write thread/process id register in case it was
 	 * set in userland.
 	 */
 	mrc	p15, 0, r0, c13, c0, 2
