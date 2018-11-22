@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.41 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.42 2018/11/22 08:54:08 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -62,7 +62,7 @@
  */
 static const char *
 content_cgihandler(bozohttpd_t *httpd, bozo_httpreq_t *request,
-		const char *file)
+		   const char *file)
 {
 	bozo_content_map_t	*map;
 
@@ -123,7 +123,6 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 	/* much of this code is like bozo_read_request()'s header loop. */
 	SIMPLEQ_INIT(&headers);
 	write_header = nph == 0;
-	/* was read(2) here - XXX - agc */
 	while (nph == 0 &&
 		(str = bozodgetln(httpd, in, &len, bozo_read)) != NULL) {
 		char	*hdr_name, *hdr_value;

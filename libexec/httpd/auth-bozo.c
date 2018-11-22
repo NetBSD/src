@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.21 2018/11/21 09:37:02 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.22 2018/11/22 08:54:08 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -117,6 +117,7 @@ bozo_auth_init(bozo_httpreq_t *request)
 {
 	request->hr_authuser = NULL;
 	request->hr_authpass = NULL;
+	request->hr_authrealm = NULL;
 }
 
 void
