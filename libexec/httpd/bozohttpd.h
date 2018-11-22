@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.55 2018/11/21 09:37:02 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.56 2018/11/22 08:54:08 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -289,7 +289,7 @@ char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
 /* ssl-bozo.c */
 #ifdef NO_SSL_SUPPORT
 #define bozo_ssl_set_opts(w, x, y)			bozo_noop
-#define bozo_ssl_set_ciphers(w, x, y)			bozo_noop
+#define bozo_ssl_set_ciphers(w, x)			bozo_noop
 #define bozo_ssl_init(x)				bozo_noop
 #define bozo_ssl_accept(x)				(0)
 #define bozo_ssl_destroy(x)				bozo_noop
@@ -326,13 +326,13 @@ int	bozo_auth_cgi_count(bozo_httpreq_t *);
 
 /* cgi-bozo.c */
 #ifdef NO_CGIBIN_SUPPORT
+#define bozo_cgi_setbin(h,s)				bozo_noop
 #define	bozo_process_cgi(h)				(0)
 #define have_cgibin					(0)
 #else
 void	bozo_cgi_setbin(bozohttpd_t *, const char *);
 void	bozo_setenv(bozohttpd_t *, const char *, const char *, char **);
 int	bozo_process_cgi(bozo_httpreq_t *);
-void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
 #define have_cgibin					(1)
 #endif /* NO_CGIBIN_SUPPORT */
 
@@ -340,6 +340,7 @@ void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
 /* lua-bozo.c */
 #ifdef NO_LUA_SUPPORT
 #define bozo_process_lua(h)				(0)
+#define bozo_add_lua_map(h,s,t)				bozo_noop
 #define have_lua					(0)
 #else
 void	bozo_add_lua_map(bozohttpd_t *, const char *, const char *);
@@ -390,11 +391,19 @@ const char *bozo_content_encoding(bozo_httpreq_t *, const char *);
 bozo_content_map_t *bozo_match_content_map(bozohttpd_t *, const char *, int);
 bozo_content_map_t *bozo_get_content_map(bozohttpd_t *, const char *);
 #ifdef NO_DYNAMIC_CONTENT
+#define bozo_add_content_map_mime(h,s,t,u,v)		bozo_noop
 #define have_dynamic_content				(0)
 #else
 void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *,
 				  const char *, const char *);
 #define have_dynamic_content				(1)
+#endif
+
+/* additional cgi-bozo.c */
+#if have_cgibin && have_dynamic_content
+void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
+#else
+#define	bozo_add_content_map_cgi(h,s,t)
 #endif
 
 /* I/O */
