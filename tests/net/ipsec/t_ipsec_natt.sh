@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.1 2017/10/30 15:59:23 ozaki-r Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.2 2018/11/22 04:51:41 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -31,11 +31,12 @@ SOCK_REMOTE=unix://ipsec_natt_remote
 BUS_LOCAL=./bus_ipsec_natt_local
 BUS_NAT=./bus_ipsec_natt_nat
 BUS_REMOTE=./bus_ipsec_natt_remote
+BUS_GLOBAL=./bus_ipsec_natt_global
 
 DEBUG=${DEBUG:-false}
 HIJACKING_NPF="${HIJACKING},blanket=/dev/npf"
 
-setup_servers()
+setup_servers_ipv4()
 {
 
 	rump_server_crypto_start $SOCK_LOCAL netipsec
@@ -45,6 +46,22 @@ setup_servers()
 	rump_server_add_iface $SOCK_NAT shmif0 $BUS_LOCAL
 	rump_server_add_iface $SOCK_NAT shmif1 $BUS_NAT
 	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS_NAT
+}
+
+setup_servers_ipv6()
+{
+
+	rump_server_crypto_start $SOCK_LOCAL netipsec netinet6 ipsec
+	rump_server_crypto_start $SOCK_REMOTE netipsec netinet6 ipsec
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS_GLOBAL
+	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS_GLOBAL
+}
+
+setup_servers()
+{
+	local proto=$1
+
+	setup_servers_$proto
 }
 
 setup_sp()
@@ -151,17 +168,24 @@ PIDSFILE=./terminator.pids
 start_natt_terminator()
 {
 	local sock=$1
-	local ip=$2
-	local port=$3
-	local pidsfile=$4
+	local proto=$2
+	local ip=$3
+	local port=$4
+	local pidsfile=$5
 	local backup=$RUMP_SERVER
-	local pid=
+	local pid= opt=
 	local terminator="$(atf_get_srcdir)/natt_terminator"
+
+	if [ "$proto" = "ipv6" ]; then
+	    opt="-6"
+	else
+	    opt="-4"
+	fi
 
 	export RUMP_SERVER=$sock
 
 	env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    $terminator $ip $port &
+	    $terminator $opt $ip $port &
 	pid=$!
 	if [ ! -f $PIDSFILE ]; then
 		touch $PIDSFILE
@@ -189,7 +213,7 @@ stop_natt_terminators()
 	rm -f $PIDSFILE
 }
 
-test_ipsec_natt_transport()
+test_ipsec_natt_transport_ipv4()
 {
 	local algo=$1
 	local ip_local=10.0.1.2
@@ -204,7 +228,7 @@ test_ipsec_natt_transport()
 	local algo_args="$(generate_algo_args esp-udp $algo)"
 	local pid= port=
 
-	setup_servers
+	setup_servers ipv4
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
@@ -278,7 +302,7 @@ test_ipsec_natt_transport()
 	    cat $outfile
 
 	# Launch a nc server as a terminator of NAT-T on outside the NAPT
-	start_natt_terminator $SOCK_REMOTE $ip_remote 4500
+	start_natt_terminator $SOCK_REMOTE ipv4 $ip_remote 4500
 	echo zzz > $file_send
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -288,7 +312,7 @@ test_ipsec_natt_transport()
 	    nc -u -w 3 -p 4500 $ip_remote 4500 < $file_send
 	# Launch a nc server as a terminator of NAT-T on inside the NAPT,
 	# taking over port 4500 of the local host.
-	start_natt_terminator $SOCK_LOCAL $ip_local 4500
+	start_natt_terminator $SOCK_LOCAL ipv4 $ip_local 4500
 
 	# We need to keep the servers for NAT-T
 
@@ -337,14 +361,106 @@ test_ipsec_natt_transport()
 	stop_natt_terminators
 }
 
-add_test_ipsec_natt_transport()
+test_ipsec_natt_transport_ipv6_without_nat()
 {
 	local algo=$1
+	local ip_local_phys=fc00::1
+	local ip_local_ipsecif=fc00:1111::1
+	local ip_remote_phys=fc00::2
+	local ip_remote_ipsecif=fc00:2222::1
+	local outfile=./out
+	local npffile=./npf.conf
+	local file_send=./file.send
+	local file_recv=./file.recv
+	local algo_args="$(generate_algo_args esp-udp $algo)"
+	local pid=
+	local port=4500
+
+	setup_servers ipv6
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_local_phys/64
+
+	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_remote_phys/64
+
+	extract_new_packets $BUS_GLOBAL > $outfile
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_remote_phys
+
+	extract_new_packets $BUS_GLOBAL > $outfile
+	$DEBUG && cat $outfile
+	atf_check -s exit:0 \
+	    -o match:"$ip_local_phys > $ip_remote_phys: ICMP6, echo request" \
+	    cat $outfile
+	atf_check -s exit:0 \
+	    -o match:"$ip_remote_phys > $ip_local_phys: ICMP6, echo reply" \
+	    cat $outfile
+
+	# Create ESP-UDP ipsecif(4) connections
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.ifconfig ipsec0 create
+	atf_check -s exit:0 rump.ifconfig ipsec0 link0 # enable nat-t
+	atf_check -s exit:0 rump.ifconfig ipsec0 link2 # ensure IPv6 forward
+	atf_check -s exit:0 rump.ifconfig ipsec0 tunnel $ip_local_phys $ip_remote_phys
+	atf_check -s exit:0 rump.ifconfig ipsec0 inet6 $ip_local_ipsecif
+	atf_check -s exit:0 -o ignore \
+	    rump.route -n add -inet6 $ip_remote_ipsecif $ip_local_ipsecif
+	start_natt_terminator $SOCK_LOCAL ipv6 $ip_local_phys $port
+
+	add_sa "esp-udp" "$algo_args" $ip_local_phys $ip_remote_phys \
+	    $ip_local_phys 10000 $port
+
+	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s exit:0 rump.ifconfig ipsec0 create
+	atf_check -s exit:0 rump.ifconfig ipsec0 link0 # enable nat-t
+	atf_check -s exit:0 rump.ifconfig ipsec0 link2 # ensure IPv6 forward
+	atf_check -s exit:0 rump.ifconfig ipsec0 tunnel $ip_remote_phys $ip_local_phys
+	atf_check -s exit:0 rump.ifconfig ipsec0 inet6 $ip_remote_ipsecif
+	atf_check -s exit:0 -o ignore \
+	    rump.route -n add -inet6 $ip_local_ipsecif $ip_remote_ipsecif
+	start_natt_terminator $SOCK_REMOTE ipv6 $ip_remote_phys $port
+
+	# ping should still work
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 5 $ip_remote_ipsecif
+
+	# Check UDP encapsulation
+	extract_new_packets $BUS_GLOBAL > $outfile
+	$DEBUG && cat $outfile
+
+	atf_check -s exit:0 \
+	    -o match:"${ip_local_phys}\.$port > ${ip_remote_phys}\.4500: UDP-encap" \
+	    cat $outfile
+	atf_check -s exit:0 \
+	    -o match:"${ip_remote_phys}\.4500 > ${ip_local_phys}\.$port: UDP-encap" \
+	    cat $outfile
+
+	# Kill the NAT-T terminator
+	stop_natt_terminators
+	export RUMP_SERVER=$SOCK_REMOTE
+	stop_natt_terminators
+}
+
+test_ipsec_natt_transport_ipv6()
+{
+	local algo=$1
+
+	test_ipsec_natt_transport_ipv6_without_nat $algo
+}
+
+add_test_ipsec_natt_transport()
+{
+	local proto=$1
+	local algo=$2
 	local _algo=$(echo $algo | sed 's/-//g')
 	local name= desc=
 
-	desc="Test IPsec NAT-T ($algo)"
-	name="ipsec_natt_transport_${_algo}"
+	desc="Test IPsec $proto NAT-T ($algo)"
+	name="ipsec_natt_transport_${proto}_${_algo}"
 
 	atf_test_case ${name} cleanup
 	eval "
@@ -353,7 +469,7 @@ add_test_ipsec_natt_transport()
 	        atf_set require.progs rump_server setkey nc
 	    }
 	    ${name}_body() {
-	        test_ipsec_natt_transport $algo
+	        test_ipsec_natt_transport_$proto $algo
 	        rump_server_destroy_ifaces
 	    }
 	    ${name}_cleanup() {
@@ -371,6 +487,7 @@ atf_init_test_cases()
 	local algo=
 
 	for algo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
-		add_test_ipsec_natt_transport $algo
+		add_test_ipsec_natt_transport ipv4 $algo
+		add_test_ipsec_natt_transport ipv6 $algo
 	done
 }
