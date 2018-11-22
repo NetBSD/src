@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.27 2018/11/21 10:25:17 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.28 2018/11/22 08:54:08 mrg Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -80,17 +80,16 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		file[strlen(file) - strlen(httpd->index_html)] = '\0';
 		dirpath = file;
 	}
-	debug((httpd, DEBUG_FAT, "bozo_dir_index: dirpath ``%s''", dirpath));
+	debug((httpd, DEBUG_FAT, "bozo_dir_index: dirpath '%s'", dirpath));
 	if (stat(dirpath, &sb) < 0 ||
 	    (dp = opendir(dirpath)) == NULL) {
 		if (errno == EPERM)
-			(void)bozo_http_error(httpd, 403, request,
-			    "no permission to open directory");
+			bozo_http_error(httpd, 403, request,
+					"no permission to open directory");
 		else if (errno == ENOENT)
-			(void)bozo_http_error(httpd, 404, request, "no file");
+			bozo_http_error(httpd, 404, request, "no file");
 		else
-			(void)bozo_http_error(httpd, 500, request,
-					"open directory");
+			bozo_http_error(httpd, 500, request, "open directory");
 		goto done;
 		/* NOTREACHED */
 	}
