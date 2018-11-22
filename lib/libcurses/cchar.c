@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.10 2018/11/20 22:02:31 uwe Exp $ */
+/*   $NetBSD: cchar.c,v 1.11 2018/11/22 22:16:45 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.10 2018/11/20 22:02:31 uwe Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.11 2018/11/22 22:16:45 uwe Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -52,9 +52,6 @@ int
 getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
          short *color_pair, void *opts)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	wchar_t *wp;
 	size_t len;
 
@@ -80,7 +77,6 @@ getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
 		wch[len] = L'\0';
 	}
 	return OK;
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -91,9 +87,6 @@ int
 setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 	 short color_pair, const void *opts)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	int i;
 	size_t len;
 
@@ -125,7 +118,6 @@ setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 	}
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }
 
 void

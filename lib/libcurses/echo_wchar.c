@@ -1,4 +1,4 @@
-/*   $NetBSD: echo_wchar.c,v 1.2 2007/05/28 15:01:55 blymn Exp $ */
+/*   $NetBSD: echo_wchar.c,v 1.3 2018/11/22 22:16:45 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: echo_wchar.c,v 1.2 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: echo_wchar.c,v 1.3 2018/11/22 22:16:45 uwe Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -49,11 +49,7 @@ __RCSID("$NetBSD: echo_wchar.c,v 1.2 2007/05/28 15:01:55 blymn Exp $");
 int
 echo_wchar(const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	return wecho_wchar(stdscr, wch);
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -63,16 +59,12 @@ echo_wchar(const cchar_t *wch)
 int
 wecho_wchar(WINDOW *win, const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	int retval;
 
 	retval = wadd_wch(win, wch);
 	if (retval == OK)
 		 retval = wrefresh(win);
 	return retval;
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -83,9 +75,6 @@ wecho_wchar(WINDOW *win, const cchar_t *wch)
 int
 pecho_wchar(WINDOW *pad, const cchar_t *wch)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	int retval;
 
 	retval = wadd_wch(pad, wch);
@@ -93,5 +82,4 @@ pecho_wchar(WINDOW *pad, const cchar_t *wch)
 		 retval = prefresh(pad, pad->pbegy, pad->pbegx,
 			pad->sbegy, pad->sbegx, pad->smaxy, pad->smaxx);
 	return retval;
-#endif /* HAVE_WCHAR */
 }
