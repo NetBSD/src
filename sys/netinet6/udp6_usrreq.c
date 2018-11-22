@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.143 2018/11/06 04:27:41 ozaki-r Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.144 2018/11/22 04:48:34 knakahara Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.143 2018/11/06 04:27:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.144 2018/11/22 04:48:34 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.143 2018/11/06 04:27:41 ozaki-r Ex
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
+#include <netipsec/esp.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
@@ -135,6 +136,10 @@ static int udp6_recvspace = 40 * (1024 + sizeof(struct sockaddr_in6));
 
 static void udp6_notify(struct in6pcb *, int);
 static void sysctl_net_inet6_udp6_setup(struct sysctllog **);
+#ifdef IPSEC
+static int udp6_espinudp(struct mbuf **, int, struct sockaddr *,
+	struct socket *);
+#endif
 
 #ifdef UDP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -298,7 +303,9 @@ udp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int s;
 	int error = 0;
+	struct in6pcb *in6p;
 	int family;
+	int optval;
 
 	family = so->so_proto->pr_domain->dom_family;
 
@@ -324,7 +331,42 @@ udp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		error = EAFNOSUPPORT;
 		goto end;
 	}
-	error = EINVAL;
+
+	switch (op) {
+	case PRCO_SETOPT:
+		in6p = sotoin6pcb(so);
+
+		switch (sopt->sopt_name) {
+		case UDP_ENCAP:
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+
+			switch(optval) {
+			case 0:
+				in6p->in6p_flags &= ~IN6P_ESPINUDP;
+				break;
+
+			case UDP_ENCAP_ESPINUDP:
+				in6p->in6p_flags |= IN6P_ESPINUDP;
+				break;
+
+			default:
+				error = EINVAL;
+				break;
+			}
+			break;
+
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
 
 end:
 	splx(s);
@@ -374,7 +416,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 int
 udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
-    struct mbuf *m, int off)
+    struct mbuf **mp, int off)
 {
 	u_int16_t sport, dport;
 	int rcvcnt;
@@ -382,6 +424,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 	const struct in_addr *dst4;
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
+	struct mbuf *m = *mp;
 
 	rcvcnt = 0;
 	off += sizeof(struct udphdr);	/* now, offset of payload */
@@ -480,6 +523,32 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 			if (in6p == 0)
 				return rcvcnt;
 		}
+
+#ifdef IPSEC
+		/* Handle ESP over UDP */
+		if (in6p->in6p_flags & IN6P_ESPINUDP) {
+			struct sockaddr *sa = (struct sockaddr *)src;
+
+			switch (udp6_espinudp(mp, off, sa, in6p->in6p_socket)) {
+			case -1: /* Error, m was freed */
+				rcvcnt = -1;
+				goto bad;
+
+			case 1: /* ESP over UDP */
+				rcvcnt++;
+				goto bad;
+
+			case 0: /* plain UDP */
+			default: /* Unexpected */
+				/*
+				 * Normal UDP processing will take place,
+				 * m may have changed.
+				 */
+				m = *mp;
+				break;
+			}
+		}
+#endif
 
 		udp6_sendup(m, off, sin6tosa(src), in6p->in6p_socket);
 		rcvcnt++;
@@ -624,7 +693,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	dst.sin6_addr = ip6->ip6_dst;
 	dst.sin6_port = uh->uh_dport;
 
-	if (udp6_realinput(AF_INET6, &src, &dst, m, off) == 0) {
+	if (udp6_realinput(AF_INET6, &src, &dst, &m, off) == 0) {
 		if (m->m_flags & M_MCAST) {
 			UDP6_STATINC(UDP6_STAT_NOPORTMCAST);
 			goto bad;
@@ -1307,6 +1376,121 @@ udp6_statinc(u_int stat)
 	KASSERT(stat < UDP6_NSTATS);
 	UDP6_STATINC(stat);
 }
+
+#ifdef IPSEC
+/*
+ * Returns:
+ *     1 if the packet was processed
+ *     0 if normal UDP processing should take place
+ *    -1 if an error occurred and m was freed
+ */
+static int
+udp6_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
+    struct socket *so)
+{
+	const size_t skip = sizeof(struct udphdr);
+	size_t len;
+	void *data;
+	size_t minlen;
+	int ip6hdrlen;
+	struct ip6_hdr *ip6;
+	struct m_tag *tag;
+	struct udphdr *udphdr;
+	u_int16_t sport, dport;
+	struct mbuf *m = *mp;
+	uint32_t *marker;
+
+	/*
+	 * Collapse the mbuf chain if the first mbuf is too short
+	 * The longest case is: UDP + non ESP marker + ESP
+	 */
+	minlen = off + sizeof(u_int64_t) + sizeof(struct esp);
+	if (minlen > m->m_pkthdr.len)
+		minlen = m->m_pkthdr.len;
+
+	if (m->m_len < minlen) {
+		if ((*mp = m_pullup(m, minlen)) == NULL) {
+			return -1;
+		}
+		m = *mp;
+	}
+
+	len = m->m_len - off;
+	data = mtod(m, char *) + off;
+
+	/* Ignore keepalive packets */
+	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
+		m_freem(m);
+		*mp = NULL; /* avoid any further processing by caller ... */
+		return 1;
+	}
+
+	/* Handle Non-ESP marker (32bit). If zero, then IKE. */
+	marker = (uint32_t *)data;
+	if (len <= sizeof(uint32_t))
+		return 0;
+	if (marker[0] == 0)
+		return 0;
+
+	/*
+	 * Get the UDP ports. They are handled in network
+	 * order everywhere in IPSEC_NAT_T code.
+	 */
+	udphdr = (struct udphdr *)((char *)data - skip);
+	sport = udphdr->uh_sport;
+	dport = udphdr->uh_dport;
+
+	/*
+	 * Remove the UDP header (and possibly the non ESP marker)
+	 * IPv6 header length is ip6hdrlen
+	 * Before:
+	 *   <---- off --->
+	 *   +-----+------+-----+
+	 *   | IP6 |  UDP | ESP |
+	 *   +-----+------+-----+
+	 *         <-skip->
+	 * After:
+	 *          +-----+-----+
+	 *          | IP6 | ESP |
+	 *          +-----+-----+
+	 *   <-skip->
+	 */
+	ip6hdrlen = off - sizeof(struct udphdr);
+	memmove(mtod(m, char *) + skip, mtod(m, void *), ip6hdrlen);
+	m_adj(m, skip);
+
+	ip6 = mtod(m, struct ip6_hdr *);
+	ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - skip);
+	ip6->ip6_nxt = IPPROTO_ESP;
+
+	/*
+	 * We have modified the packet - it is now ESP, so we should not
+	 * return to UDP processing ...
+	 *
+	 * Add a PACKET_TAG_IPSEC_NAT_T_PORT tag to remember
+	 * the source UDP port. This is required if we want
+	 * to select the right SPD for multiple hosts behind
+	 * same NAT
+	 */
+	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
+	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
+		m_freem(m);
+		return -1;
+	}
+	((u_int16_t *)(tag + 1))[0] = sport;
+	((u_int16_t *)(tag + 1))[1] = dport;
+	m_tag_prepend(m, tag);
+
+	if (ipsec_used)
+		ipsec6_common_input(&m, &ip6hdrlen, IPPROTO_ESP);
+	else
+		m_freem(m);
+
+	/* We handled it, it shouldn't be handled by UDP */
+	*mp = NULL; /* avoid free by caller ... */
+	return 1;
+}
+#endif /* IPSEC */
 
 PR_WRAP_USRREQS(udp6)
 #define	udp6_attach	udp6_attach_wrapper

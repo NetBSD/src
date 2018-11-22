@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.49 2017/03/02 05:26:24 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.50 2018/11/22 04:48:34 knakahara Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -137,6 +137,8 @@ struct	in6pcb {
 #define IN6P_LOWPORT		0x2000000 /* user wants "low" port binding */
 #define IN6P_ANONPORT		0x4000000 /* port chosen for user */
 #define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
+/* XXX should move to an UDP control block */
+#define IN6P_ESPINUDP		INP_ESPINUDP /* ESP over UDP for NAT-T */
 
 #define IN6P_RFC2292		0x40000000 /* RFC2292 */
 #define IN6P_MTU		0x80000000 /* use minimum MTU */

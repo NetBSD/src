@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.256 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.257 2018/11/22 04:48:34 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.256 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.257 2018/11/22 04:48:34 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -413,7 +413,7 @@ udp_input(struct mbuf *m, int off, int proto)
 		in6_in_2_v4mapin6(&ip->ip_dst, &dst6.sin6_addr);
 		dst6.sin6_port = uh->uh_dport;
 
-		n += udp6_realinput(AF_INET, &src6, &dst6, m, iphlen);
+		n += udp6_realinput(AF_INET, &src6, &dst6, &m, iphlen);
 	}
 #endif
 

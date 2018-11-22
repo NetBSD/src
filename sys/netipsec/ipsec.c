@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.166 2018/10/27 05:42:23 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.167 2018/11/22 04:48:34 knakahara Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.166 2018/10/27 05:42:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.167 2018/11/22 04:48:34 knakahara Exp $");
 
 /*
  * IPsec controller part.
@@ -1829,6 +1829,42 @@ skippolicycheck:
 	*errorp = error;
 	*needipsecp = needipsec;
 	return sp;
+}
+
+/*
+ * calculate UDP checksum for UDP encapsulated ESP for IPv6.
+ *
+ * RFC2460(Internet Protocol, Version 6 Specification) says:
+ *
+ *   IPv6 receivers MUST discard UDP packets with a zero checksum.
+ *
+ * There is more relaxed speficication RFC6935(IPv6 and UDP Checksums for
+ * Tunneled Packets). The document allows zero checksum. It's too
+ * late to publish, there are a lot of interoperability problems...
+ */
+void
+ipsec6_udp_cksum(struct mbuf *m)
+{
+	struct ip6_hdr *ip6;
+	uint16_t plen, uh_sum;
+	int off;
+
+	/* must called after m_pullup() */
+	KASSERT(m->m_len >= sizeof(struct ip6_hdr));
+
+	ip6 = mtod(m, struct ip6_hdr *);
+	KASSERT(ip6->ip6_nxt == IPPROTO_UDP);
+
+	/* ip6->ip6_plen can not be updated before ip6_output() */
+	plen = m->m_pkthdr.len - sizeof(*ip6);
+	KASSERT(plen >= sizeof(struct udphdr));
+
+	uh_sum = in6_cksum(m, IPPROTO_UDP, sizeof(*ip6), plen);
+	if (uh_sum == 0)
+		uh_sum = 0xffff;
+
+	off = sizeof(*ip6) + offsetof(struct udphdr, uh_sum);
+	m_copyback(m, off, sizeof(uh_sum), (void *)&uh_sum);
 }
 #endif /* INET6 */
 
