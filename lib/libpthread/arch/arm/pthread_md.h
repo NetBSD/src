@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.10 2017/07/17 20:24:07 skrll Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.11 2018/11/22 20:38:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -66,15 +66,8 @@ pthread__sp(void)
  * Set initial, sane values for registers whose values aren't just
  * "don't care".
  */
-#ifdef __APCS_26__
-#define _INITCONTEXT_U_MD(ucp)						\
-/* Set R15_MODE_USR in the PC */					\
-	(ucp)->uc_mcontext.__gregs[_REG_PC] =				\
-	 ((ucp)->uc_mcontext.__gregs[_REG_PC] & 0x3fffffc) | 0x0;
-#else
 /* Set CPSR to PSR_USR32_MODE (0x10) from arm/armreg.h */
 #define _INITCONTEXT_U_MD(ucp)						\
 	(ucp)->uc_mcontext.__gregs[_REG_CPSR] = 0x10;
-#endif
 
 #endif /* _LIB_PTHREAD_ARM_MD_H */
