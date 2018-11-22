@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.25 2018/11/22 23:29:09 uwe Exp $	*/
+/*	$NetBSD: attributes.c,v 1.26 2018/11/22 23:37:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.25 2018/11/22 23:29:09 uwe Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.26 2018/11/22 23:37:31 uwe Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -199,8 +199,8 @@ wattr_on(WINDOW *win, attr_t attr, void *opt)
 	if (attr & __UNDERSCORE && t_enter_underline_mode(t) != NULL &&
 	    t_exit_underline_mode(t) != NULL)
 		wunderscore(win);
-	if ((attr_t) attr & __COLOR)
-		__wcolor_set(win, (attr_t) attr);
+	if (attr & __COLOR)
+		__wcolor_set(win, attr);
 	return OK;
 }
 
@@ -253,7 +253,7 @@ wattr_off(WINDOW *win, attr_t attr, void *opt)
 		wstandend(win);
 	if (attr & __UNDERSCORE)
 		wunderend(win);
-	if ((attr_t) attr & __COLOR) {
+	if (attr & __COLOR) {
 		if (max_colors != 0)
 			win->wattr &= ~__COLOR;
 	}
