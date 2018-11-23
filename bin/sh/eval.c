@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.162 2018/10/09 02:43:41 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.163 2018/11/23 23:37:22 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.162 2018/10/09 02:43:41 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.163 2018/11/23 23:37:22 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,6 +233,8 @@ evalstring(char *s, int flag)
 			else
 				evaltree(n, flag);
 			any = 1;
+			if (evalskip)
+				break;
 		}
 		rststackmark(&smark);
 	}
