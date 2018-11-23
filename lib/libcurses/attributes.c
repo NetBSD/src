@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.27 2018/11/23 11:11:59 uwe Exp $	*/
+/*	$NetBSD: attributes.c,v 1.28 2018/11/23 11:15:14 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.27 2018/11/23 11:11:59 uwe Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.28 2018/11/23 11:15:14 uwe Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -49,9 +49,9 @@ static void __wcolor_set(WINDOW *, attr_t);
  */
 /* ARGSUSED */
 int
-attr_get(attr_t *attr, short *pair, void *opt)
+attr_get(attr_t *attr, short *pair, void *opts)
 {
-	return wattr_get(stdscr, attr, pair, opt);
+	return wattr_get(stdscr, attr, pair, opts);
 }
 
 /*
@@ -60,9 +60,9 @@ attr_get(attr_t *attr, short *pair, void *opt)
  */
 /* ARGSUSED */
 int
-attr_on(attr_t attr, void *opt)
+attr_on(attr_t attr, void *opts)
 {
-	return wattr_on(stdscr, attr, opt);
+	return wattr_on(stdscr, attr, opts);
 }
 
 /*
@@ -71,9 +71,9 @@ attr_on(attr_t attr, void *opt)
  */
 /* ARGSUSED */
 int
-attr_off(attr_t attr, void *opt)
+attr_off(attr_t attr, void *opts)
 {
-	return wattr_off(stdscr, attr, opt);
+	return wattr_off(stdscr, attr, opts);
 }
 
 /*
@@ -82,9 +82,9 @@ attr_off(attr_t attr, void *opt)
  */
 /* ARGSUSED */
 int
-attr_set(attr_t attr, short pair, void *opt)
+attr_set(attr_t attr, short pair, void *opts)
 {
-	return wattr_set(stdscr, attr, pair, opt);
+	return wattr_set(stdscr, attr, pair, opts);
 }
 
 /*
@@ -93,9 +93,9 @@ attr_set(attr_t attr, short pair, void *opt)
  */
 /* ARGSUSED */
 int
-color_set(short pair, void *opt)
+color_set(short pair, void *opts)
 {
-	return wcolor_set(stdscr, pair, opt);
+	return wcolor_set(stdscr, pair, opts);
 }
 
 /*
@@ -137,7 +137,7 @@ attrset(int attr)
  */
 /* ARGSUSED */
 int
-wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
+wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opts)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattr_get: win %p\n", win);
@@ -159,9 +159,9 @@ wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
  *	Test and set wide attributes on window
  */
 int
-wattr_on(WINDOW *win, attr_t attr, void *opt)
+wattr_on(WINDOW *win, attr_t attr, void *opts)
 {
-	if (__predict_false(opt != NULL))
+	if (__predict_false(opts != NULL))
 		return ERR;
 
 	return __wattr_on(win, attr);
@@ -175,9 +175,9 @@ wattr_on(WINDOW *win, attr_t attr, void *opt)
  *	which attributes should really be set in refresh.c:makech().
  */
 int
-wattr_off(WINDOW *win, attr_t attr, void *opt)
+wattr_off(WINDOW *win, attr_t attr, void *opts)
 {
-	if (__predict_false(opt != NULL))
+	if (__predict_false(opts != NULL))
 		return ERR;
 
 	return __wattr_off(win, attr);
@@ -189,13 +189,13 @@ wattr_off(WINDOW *win, attr_t attr, void *opt)
  *	Set wide attributes and color pair on window
  */
 int
-wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
+wattr_set(WINDOW *win, attr_t attr, short pair, void *opts)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattr_set: win %p, attr %08x, pair %d\n",
 	    win, attr, pair);
 #endif
-	if (__predict_false(opt != NULL))
+	if (__predict_false(opts != NULL))
 		return ERR;
 
 	/*
@@ -215,7 +215,7 @@ wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
  */
 /* ARGSUSED */
 int
-wcolor_set(WINDOW *win, short pair, void *opt)
+wcolor_set(WINDOW *win, short pair, void *opts)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "wolor_set: win %p, pair %d\n", win, pair);
