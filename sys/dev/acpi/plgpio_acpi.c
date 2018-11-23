@@ -1,4 +1,4 @@
-/* $NetBSD: plgpio_acpi.c,v 1.4 2018/10/23 09:19:02 jmcneill Exp $ */
+/* $NetBSD: plgpio_acpi.c,v 1.5 2018/11/23 14:08:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.4 2018/10/23 09:19:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.5 2018/11/23 14:08:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.4 2018/10/23 09:19:02 jmcneill Exp
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 #include <dev/acpi/acpi_event.h>
 
 #include <dev/gpio/gpiovar.h>
@@ -108,7 +109,7 @@ plgpio_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	irq = acpi_res_irq(&res, 0);
-	if (mem == NULL) {
+	if (irq == NULL) {
 		aprint_error_dev(self, "couldn't find irq resource\n");
 		goto done;
 	}
@@ -130,8 +131,8 @@ plgpio_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_VM, type, plgpio_acpi_intr, asc);
+	ih = acpi_intr_establish(self, (uint64_t)asc->sc_handle,
+	    IPL_VM, false, plgpio_acpi_intr, asc, device_xname(self));
 	if (ih == NULL)
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 
