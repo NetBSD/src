@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.93 2018/11/22 08:54:08 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.94 2018/11/23 08:11:20 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,9 +109,8 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20181122"
+#define SERVER_SOFTWARE		"bozohttpd/20181123"
 #endif
-
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
 #endif
