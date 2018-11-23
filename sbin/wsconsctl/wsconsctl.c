@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.18 2008/08/25 00:14:46 dholland Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.19 2018/11/23 06:31:57 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -207,8 +207,10 @@ main(int argc, char **argv)
 				}
 				rd_field(f, p, do_merge);
 				f->flags |= FLG_SET;
+				if (do_merge)
+					f->flags |= FLG_MODIFIED;
 				(*putval)(fd);
-				f->flags &= ~FLG_SET;
+				f->flags &= ~(FLG_SET | FLG_MODIFIED);
 			}
 		} else {
 			for (i = 0; i < argc; i++) {
