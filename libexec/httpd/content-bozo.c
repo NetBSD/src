@@ -1,4 +1,4 @@
-/*	$NetBSD: content-bozo.c,v 1.15 2018/11/20 01:06:46 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.16 2018/11/23 08:11:20 mrg Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -181,6 +181,7 @@ static bozo_content_map_t static_content_map[] = {
 static bozo_content_map_t *
 search_map(bozo_content_map_t *map, const char *name, size_t len)
 {
+
 	for ( ; map && map->name; map++) {
 		const size_t namelen = strlen(map->name);
 
@@ -194,21 +195,17 @@ search_map(bozo_content_map_t *map, const char *name, size_t len)
 /* match a suffix on a file - dynamiconly means no static content search */
 bozo_content_map_t *
 bozo_match_content_map(bozohttpd_t *httpd, const char *name,
-			const int dynamiconly)
+		       const int dynamiconly)
 {
 	bozo_content_map_t	*map;
 	size_t			 len;
 
 	len = strlen(name);
-	if ((map = search_map(httpd->dynamic_content_map, name, len)) != NULL) {
-		return map;
-	}
-	if (!dynamiconly) {
-		if ((map = search_map(static_content_map, name, len)) != NULL) {
-			return map;
-		}
-	}
-	return NULL;
+	map = search_map(httpd->dynamic_content_map, name, len);
+	if (map == NULL && !dynamiconly)
+		map = search_map(static_content_map, name, len);
+
+	return map;
 }
 
 /*

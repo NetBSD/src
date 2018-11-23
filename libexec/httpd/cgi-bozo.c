@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.43 2018/11/22 18:42:06 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.44 2018/11/23 08:11:20 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -147,7 +147,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 				"%s: writing HTTP header "
 				"from status %s ..", __func__, hdr_value));
 			bozo_printf(httpd, "%s %s\r\n", request->hr_proto,
-					hdr_value);
+				    hdr_value);
 			bozo_flush(httpd, stdout);
 			write_header = 0;
 			free(hdr_name);
@@ -174,7 +174,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 			"%s:  writing delayed HTTP headers ..", __func__));
 		SIMPLEQ_FOREACH_SAFE(hdr, &headers, h_next, nhdr) {
 			bozo_printf(httpd, "%s: %s\r\n", hdr->h_header,
-					hdr->h_value);
+				    hdr->h_value);
 			free(hdr->h_header);
 			free(hdr);
 		}
@@ -190,7 +190,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 
 		while (rbytes) {
 			wbytes = bozo_write(httpd, STDOUT_FILENO, buf,
-						(size_t)rbytes);
+					    (size_t)rbytes);
 			if (wbytes > 0) {
 				rbytes -= wbytes;
 				bp += wbytes;
@@ -223,9 +223,8 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 	*args_len = 0;
 
 	/* URI MUST not contain any unencoded '=' - RFC3875, section 4.4 */
-	if (strchr(query, '=')) {
+	if (strchr(query, '='))
 		return NULL;
-	}
 
 	str = bozostrdup(httpd, request, query);
 
@@ -289,7 +288,7 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 		/* search-word MUST have at least one schar */
 		if (*s == '\0')
 			goto parse_err;
-		while(*s) {
+		while (*s) {
 			/* check if it's unreserved */
 			if (isalpha((int)*s) || isdigit((int)*s) ||
 			    strchr(UNRESERVED_CHAR, *s)) {
@@ -348,7 +347,7 @@ bozo_cgi_setbin(bozohttpd_t *httpd, const char *path)
 {
 	httpd->cgibin = bozostrdup(httpd, NULL, path);
 	debug((httpd, DEBUG_OBESE, "cgibin (cgi-bin directory) is %s",
-		httpd->cgibin));
+	       httpd->cgibin));
 }
 
 /* help build up the environ pointer */
@@ -444,7 +443,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	} else if (len - 1 == CGIBIN_PREFIX_LEN)	/* url is "/cgi-bin/" */
 		append_index_html(httpd, &file);
 
-	/* RFC3875  sect. 4.4. - search-string support */
+	/* RFC3875 sect. 4.4. - search-string support */
 	if (query != NULL) {
 		search_string_argv = parse_search_string(request, query,
 		    &search_string_argc);
