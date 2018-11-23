@@ -1,4 +1,4 @@
-/* $NetBSD: swapcontext.S,v 1.3 2018/11/23 11:38:07 skrll Exp $ */
+/* $NetBSD: swapcontext.S,v 1.4 2018/11/23 12:39:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.3 2018/11/23 11:38:07 skrll Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.4 2018/11/23 12:39:18 skrll Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /* LINTSTUB: int swapcontext(ucontext_t * restrict, ucontext_t * restrict); */
@@ -42,12 +42,12 @@ ENTRY(swapcontext)
 	sub	sp, sp, #32		/* allocate stack frame */
 	stp	x29, x30, [sp, #16]	/* save FP & LR */
 	add	x29, sp, #16		/* new FP */
-	stp	x0, x1, [sp, #0]	/* save oucp & ucp */
+	stp	x0, x1, [sp, #0]	/* save oucp (x0) & ucp (x1) */
 
 	bl	_C_LABEL(_getcontext)	/* getcontext(oucp) */
 	mov	x3, x0			/* save return value */
 
-	ldp	x2, x0, [sp, #0]	/* restore oucp & ucp */
+	ldp	x2, x0, [sp, #0]	/* load oucp (x2) & ucp (x0) */
 	ldp	x29, x30, [sp, #16]	/* restore FP & LR */
 	add	sp, sp, #32		/* free stack frame */
 
