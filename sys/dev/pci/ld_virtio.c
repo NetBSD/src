@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.25 2018/07/12 13:05:39 jakllsch Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.26 2018/11/23 18:08:11 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.25 2018/07/12 13:05:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.26 2018/11/23 18:08:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_virtio = vsc;
 
 	virtio_child_attach_start(vsc, self, IPL_BIO, &sc->sc_vq,
-	    NULL, virtio_vq_intr, 0,
+	    NULL, virtio_vq_intr, VIRTIO_F_PCI_INTR_MSIX,
 	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
 	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE |
 	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE),
