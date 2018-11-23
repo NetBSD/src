@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.5 2018/11/22 20:47:37 jakllsch Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.6 2018/11/23 11:48:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.5 2018/11/22 20:47:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.6 2018/11/23 11:48:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -281,26 +281,30 @@ gicv3_its_devid(pci_chipset_tag_t pc, pcitag_t tag)
 	return (b << 8) | (d << 3) | f;
 }
 
-static struct gicv3_its_device *
-gicv3_its_device_lookup(struct gicv3_its *its, uint32_t devid)
+static void
+gicv3_its_device_map(struct gicv3_its *its, uint32_t devid)
 {
 	struct gicv3_its_device *dev;
 
 	LIST_FOREACH(dev, &its->its_devices, dev_list)
 		if (dev->dev_id == devid)
-			return dev;
+			return;
 
 	const uint64_t typer = gits_read_8(its, GITS_TYPER);
 	const u_int id_bits = __SHIFTOUT(typer, GITS_TYPER_ID_bits) + 1;
 	const u_int itt_entry_size = __SHIFTOUT(typer, GITS_TYPER_ITT_entry_size) + 1;
-	const u_int itt_size = roundup2(itt_entry_size * (1 << id_bits), GITS_ITT_ALIGN);
+	const u_int itt_size = roundup2((itt_entry_size * (1 << id_bits)) / NBBY, GITS_ITT_ALIGN);
 
 	dev = kmem_alloc(sizeof(*dev), KM_SLEEP);
 	dev->dev_id = devid;
 	gicv3_dma_alloc(its->its_gic, &dev->dev_itt, itt_size, GITS_ITT_ALIGN);
 	LIST_INSERT_HEAD(&its->its_devices, dev, dev_list);
 
-	return dev;
+	/*
+	 * Map the device to the ITT
+	 */
+	gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, id_bits - 1, true);
+	gits_wait(its);
 }
 
 static void
@@ -397,7 +401,6 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 {
 	struct gicv3_its * const its = msi->msi_priv;
 	struct cpu_info * const ci = cpu_lookup(0);
-	struct gicv3_its_device *dev;
 	pci_intr_handle_t *vectors;
 	int n, off;
 
@@ -411,12 +414,7 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 
 	const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
 
-	/*
-	 * Map device
-	 */
-	dev = gicv3_its_device_lookup(its, devid);
-	gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, id_bits - 1, true);
-	gits_wait(its);
+	gicv3_its_device_map(its, devid);
 
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
 	for (n = 0; n < *count; n++) {
@@ -450,7 +448,6 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 {
 	struct gicv3_its * const its = msi->msi_priv;
 	struct cpu_info *ci = cpu_lookup(0);
-	struct gicv3_its_device *dev;
 	pci_intr_handle_t *vectors;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
@@ -482,12 +479,7 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 
 	const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
 
-	/*
-	 * Map device
-	 */
-	dev = gicv3_its_device_lookup(its, devid);
-	gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, id_bits - 1, true);
-	gits_wait(its);
+	gicv3_its_device_map(its, devid);
 
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
 	for (n = 0; n < *count; n++) {
