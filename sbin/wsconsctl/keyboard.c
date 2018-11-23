@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.9 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: keyboard.c,v 1.10 2018/11/23 06:31:57 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "wsconsctl.h"
 
@@ -48,6 +49,9 @@ static struct wskbd_bell_data dfbell;
 static struct wscons_keymap mapdata[KS_NUMKEYCODES];
 struct wskbd_map_data kbmap = /* used in map_parse.y and in util.c */
     { KS_NUMKEYCODES, mapdata };
+static struct wscons_keymap oldmapdata[KS_NUMKEYCODES];
+static struct wskbd_map_data oldkbmap =
+    { KS_NUMKEYCODES, oldmapdata };
 static struct wskbd_keyrepeat_data repeat;
 static struct wskbd_keyrepeat_data dfrepeat;
 static struct wskbd_scroll_data scroll;
@@ -78,6 +82,29 @@ struct field keyboard_field_tab[] = {
 
 int keyboard_field_tab_len = sizeof(keyboard_field_tab) /
 	sizeof(keyboard_field_tab[0]);
+
+static void
+diff_kmap(struct wskbd_map_data *omap, struct wskbd_map_data *nmap)
+{
+	unsigned int u;
+	struct wscons_keymap *op, *np;
+
+	for (u = 0; u < nmap->maplen; u++) {
+		op = omap->map + u;
+		np = nmap->map + u;
+		if (op->command == np->command &&
+		    op->group1[0] == np->group1[0] &&
+		    op->group1[1] == np->group1[1] &&
+		    op->group2[0] == np->group2[0] &&
+		    op->group2[1] == np->group2[1]) {
+			np->command = KS_voidSymbol;
+			np->group1[0] = KS_voidSymbol;
+			np->group1[1] = KS_voidSymbol;
+			np->group2[0] = KS_voidSymbol;
+			np->group2[1] = KS_voidSymbol;
+		}
+	}
+}
 
 void
 keyboard_get_values(int fd)
@@ -112,6 +139,7 @@ keyboard_get_values(int fd)
 		kbmap.maplen = KS_NUMKEYCODES;
 		if (ioctl(fd, WSKBDIO_GETMAP, &kbmap) < 0)
 			err(EXIT_FAILURE, "WSKBDIO_GETMAP");
+		memcpy(oldmapdata, mapdata, sizeof(oldmapdata));
 	}
 
 	repeat.which = 0;
@@ -200,7 +228,11 @@ keyboard_put_values(int fd)
 	if (field_by_value(&kbmap)->flags & FLG_SET) {
 		if (ioctl(fd, WSKBDIO_SETMAP, &kbmap) < 0)
 			err(EXIT_FAILURE, "WSKBDIO_SETMAP");
-		pr_field(field_by_value(&kbmap), " -> ");
+		if (field_by_value(&kbmap)->flags & FLG_MODIFIED) {
+			diff_kmap(&oldkbmap, &kbmap);
+			pr_field(field_by_value(&kbmap), " +> ");
+		} else
+			pr_field(field_by_value(&kbmap), " -> ");
 	}
 
 	repeat.which = 0;
