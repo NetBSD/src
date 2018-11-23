@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.12 2018/11/21 11:44:26 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.13 2018/11/23 11:49:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.12 2018/11/21 11:44:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.13 2018/11/23 11:49:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -530,15 +530,14 @@ static void
 gicv3_lpi_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t mask)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
-	const u_int off = irqbase - pic->pic_irqbase;
 	int bit;
 
 	while ((bit = ffs(mask)) != 0) {
-		sc->sc_lpiconf.base[off + bit - 1] &= ~GIC_LPICONF_Enable;
+		sc->sc_lpiconf.base[irqbase + bit - 1] &= ~GIC_LPICONF_Enable;
 		mask &= ~__BIT(bit - 1);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, off, 32, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, irqbase, 32, BUS_DMASYNC_PREWRITE);
 }
 
 static void
@@ -546,7 +545,7 @@ gicv3_lpi_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 
-	sc->sc_lpiconf.base[is->is_irq] = IPL_TO_PRIORITY(is->is_ipl) | GIC_LPICONF_Res1;
+	sc->sc_lpiconf.base[is->is_irq] = 0x80 | IPL_TO_PRIORITY(is->is_ipl) | GIC_LPICONF_Res1;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_lpiconf.map, is->is_irq, 1, BUS_DMASYNC_PREWRITE);
 }
@@ -671,7 +670,7 @@ gicv3_lpi_init(struct gicv3_softc *sc)
 	/*
 	 * Allocate LPI pending tables
 	 */
-	const bus_size_t lpipend_sz = (sc->sc_lpi.pic_maxsources + sc->sc_lpi.pic_irqbase) / NBBY;
+	const bus_size_t lpipend_sz = sc->sc_lpi.pic_maxsources / NBBY;
 	for (int cpuindex = 0; cpuindex < ncpu; cpuindex++) {
 		gicv3_dma_alloc(sc, &sc->sc_lpipend[cpuindex], lpipend_sz, 0x10000);
 		KASSERT((sc->sc_lpipend[cpuindex].segs[0].ds_addr & ~GICR_PENDBASER_Physical_Address) == 0);
