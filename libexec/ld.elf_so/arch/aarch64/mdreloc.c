@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.10 2018/09/20 19:02:22 jakllsch Exp $ */
+/* $NetBSD: mdreloc.c,v 1.11 2018/11/23 10:59:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.10 2018/09/20 19:02:22 jakllsch Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.11 2018/11/23 10:59:20 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -439,7 +439,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	int err = 0;
-	
+
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
 		err = _rtld_relocate_plt_object(obj, rela, NULL);
 		if (err)
