@@ -1,4 +1,4 @@
-/* $NetBSD: swapcontext.S,v 1.2 2018/11/21 21:04:15 skrll Exp $ */
+/* $NetBSD: swapcontext.S,v 1.3 2018/11/23 11:38:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.2 2018/11/21 21:04:15 skrll Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.3 2018/11/23 11:38:07 skrll Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /* LINTSTUB: int swapcontext(ucontext_t * restrict, ucontext_t * restrict); */
@@ -58,7 +58,9 @@ ENTRY(swapcontext)
 	str	x4, [x2, #_UC_REGS_SP]	/* Adjust saved SP. */
 	str	x30, [x2, #_UC_REGS_PC]	/* Adjust saved PC. */
 
-	cbz	x3, _C_LABEL(setcontext)/* setcontext if getcontext succeeded */
+	cbnz	x3, 1f
+	b	_C_LABEL(setcontext)	/* setcontext if getcontext succeeded */
+1:
 	mov	x0, x3			/* restore getcontext return value */
 	ret				/* return on error from getcontext */
 END(swapcontext)
