@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.12 2012/12/24 01:20:44 khorben Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.13 2018/11/23 06:31:57 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2012 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ struct field {
 #define FLG_DISABLED	0x0010		/* variable is not available */
 #define FLG_GET		0x0100		/* read this variable from driver */
 #define FLG_SET		0x0200		/* write this variable to driver */
+#define FLG_MODIFIED	0x0400		/* value was merged with += */
 	int flags;
 };
 
