@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.11 2018/11/23 10:59:20 skrll Exp $ */
+/* $NetBSD: mdreloc.c,v 1.12 2018/11/23 11:26:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.11 2018/11/23 10:59:20 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.12 2018/11/23 11:26:05 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -215,7 +215,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 	for (const Elf_Rela *rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
 		Elf_Addr	tmp;
-		unsigned long	symnum;
+		unsigned long	symnum = ULONG_MAX;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
@@ -310,12 +310,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
-			    "addend = %p, contents = %p, symbol = %s",
+			    "addend = %p, contents = %p",
 			    (u_long)ELF_R_SYM(rela->r_info),
 			    (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
-			    (void *)*where,
-			    obj->strtab + obj->symtab[symnum].st_name));
+			    (void *)*where));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
