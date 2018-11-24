@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.220 2018/11/24 16:18:36 maxv Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.221 2018/11/24 19:22:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.220 2018/11/24 16:18:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.221 2018/11/24 19:22:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -317,6 +317,13 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	return result;
 }
 
+static int
+proc_ctor(void *arg __unused, void *obj, int flags __unused)
+{
+	memset(obj, 0, sizeof(struct proc));
+	return 0;
+}
+
 /*
  * Initialize global process hashing structures.
  */
@@ -356,7 +363,7 @@ procinit(void)
 	KASSERT(proc_specificdata_domain != NULL);
 
 	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
-	    "procpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "procpl", NULL, IPL_NONE, proc_ctor, NULL, NULL);
 
 	proc_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    proc_listener_cb, NULL);
@@ -747,7 +754,6 @@ proc_alloc(void)
 	struct proc *p;
 
 	p = pool_cache_get(proc_cache, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
 	p->p_stat = SIDL;			/* protect against others */
 	proc_initspecific(p);
 	kdtrace_proc_ctor(NULL, p);
@@ -1672,7 +1678,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 	sysctl_unlock();
 
-	kbuf = kmem_alloc(sizeof(*kbuf), KM_SLEEP);
+	kbuf = kmem_zalloc(sizeof(*kbuf), KM_SLEEP);
 	marker = kmem_alloc(sizeof(*marker), KM_SLEEP);
 	marker->p_flag = PK_MARKER;
 
@@ -2170,8 +2176,6 @@ fill_proc(const struct proc *psrc, struct proc *p)
 {
 	const bool allowaddr = get_expose_address(curproc);
 
-	memset(p, 0, sizeof(*p));
-
 	COND_SET_VALUE(p->p_list, psrc->p_list, allowaddr);
 	COND_SET_VALUE(p->p_auxlock, psrc->p_auxlock, allowaddr);
 	COND_SET_VALUE(p->p_lock, psrc->p_lock, allowaddr);
@@ -2271,8 +2275,6 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
-	memset(ep, 0, sizeof(*ep));
-
 	const bool allowaddr = get_expose_address(curproc);
 
 	COND_SET_VALUE(ep->e_paddr, p, allowaddr);
@@ -2339,7 +2341,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 
 	sigemptyset(&ss1);
 	sigemptyset(&ss2);
-	memset(ki, 0, sizeof(*ki));
 
 	COND_SET_VALUE(ki->p_paddr, PTRTOUINT64(p), allowaddr);
 	COND_SET_VALUE(ki->p_fd, PTRTOUINT64(p->p_fd), allowaddr);
