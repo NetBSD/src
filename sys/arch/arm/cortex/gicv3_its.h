@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.2 2018/11/10 11:46:31 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.3 2018/11/24 22:08:53 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _ARM_CORTEX_GICV3_ITS_H
 #define _ARM_CORTEX_GICV3_ITS_H
+
+#include <dev/pci/pcivar.h>
 
 #include <arm/pci/pci_msi_machdep.h>
 #include <arm/cortex/gic_reg.h>
