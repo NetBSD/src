@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.56 2018/11/22 08:54:08 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.57 2018/11/24 13:02:46 christos Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -407,7 +407,7 @@ void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
 #endif
 
 /* I/O */
-int bozo_printf(bozohttpd_t *, const char *, ...) BOZO_PRINTFLIKE(2, 3);;
+int bozo_printf(bozohttpd_t *, const char *, ...) BOZO_PRINTFLIKE(2, 3);
 ssize_t bozo_read(bozohttpd_t *, int, void *, size_t);
 ssize_t bozo_write(bozohttpd_t *, int, const void *, size_t);
 int bozo_flush(bozohttpd_t *, FILE *);
