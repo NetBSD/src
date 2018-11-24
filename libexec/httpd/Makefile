@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.2 2016/04/10 10:33:11 martin Exp $
+#	$NetBSD: Makefile,v 1.22.2.2.4.1 2018/11/24 17:23:20 martin Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -48,18 +48,8 @@ CPPFLAGS+=	-DHAVE_NBUTIL_H
 LDADD+=		-lnbutil
 .endif
 
-.include <bsd.own.mk>
-
-.if ${MKCRYPTO} != "no"
-
 LDADD+=	-lssl -lcrypto
 DPADD+=	${LIBSSL} ${LIBCRYPTO}
-
-.else
-
-COPTS+=	-DNO_SSL_SUPPORT
-
-.endif
 
 #
 # Build release things.
