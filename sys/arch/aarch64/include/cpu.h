@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.11 2018/11/20 01:59:51 mrg Exp $ */
+/* $NetBSD: cpu.h,v 1.12 2018/11/24 22:49:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -54,6 +54,11 @@ struct clockframe {
 #define CLKF_USERMODE(cf)	((((cf)->cf_tf.tf_spsr) & 0x0f) == 0)
 #define CLKF_PC(cf)		((cf)->cf_tf.tf_pc)
 #define CLKF_INTR(cf)		((void)(cf), curcpu()->ci_intr_depth > 1)
+
+/*
+ * LWP_PC: Find out the program counter for the given lwp.
+ */
+#define LWP_PC(l)		((l)->l_md.md_utf->tf_pc)
 
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
