@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.97 2018/11/24 13:08:10 christos Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.98 2018/11/24 18:38:59 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1924,8 +1924,9 @@ int
 bozo_check_special_files(bozo_httpreq_t *request, const char *name)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
+	size_t i;
 
-	for (size_t i = 0; specials[i].file; i++)
+	for (i = 0; specials[i].file; i++)
 		if (strcmp(name, specials[i].file) == 0)
 			return bozo_http_error(httpd, 403, request,
 					       specials[i].name);
