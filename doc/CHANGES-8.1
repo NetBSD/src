@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.60 2018/11/21 12:06:14 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.61 2018/11/24 23:51:05 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1747,4 +1747,51 @@ sys/kern/kern_event.c				1.104
 
 	Fix kernel info leak.
 	[maxv, ticket #1102]
+
+usr.sbin/mtree/create.c				1.76
+
+	Avoid null de-reference.
+	[sevan, ticket #1103]
+
+libexec/httpd/testsuite/data/.bzremap           up to 1.1
+libexec/httpd/testsuite/t12.out                 up to 1.1
+libexec/httpd/testsuite/t12.in                  up to 1.1
+libexec/httpd/testsuite/t13.out                 up to 1.1
+libexec/httpd/testsuite/t13.in                  up to 1.1
+libexec/httpd/testsuite/t14.out                 up to 1.1
+libexec/httpd/testsuite/t14.in                  up to 1.1
+libexec/httpd/testsuite/t15.out                 up to 1.1
+libexec/httpd/testsuite/t15.in                  up to 1.1
+libexec/httpd/CHANGES                           up to 1.28
+libexec/httpd/auth-bozo.c                       up to 1.22
+libexec/httpd/bozohttpd.8                       up to 1.74
+libexec/httpd/bozohttpd.c                       up to 1.96
+libexec/httpd/bozohttpd.h                       up to 1.56
+libexec/httpd/cgi-bozo.c                        up to 1.44
+libexec/httpd/content-bozo.c                    up to 1.16
+libexec/httpd/daemon-bozo.c                     up to 1.19
+libexec/httpd/dir-index-bozo.c                  up to 1.28
+libexec/httpd/main.c                            up to 1.21
+libexec/httpd/ssl-bozo.c                        up to 1.25
+libexec/httpd/tilde-luzah-bozo.c                up to 1.16
+libexec/httpd/lua/bozo.lua                      up to 1.3
+libexec/httpd/lua/glue.c                        up to 1.5
+libexec/httpd/lua/optparse.lua                  up to 1.2
+libexec/httpd/testsuite/Makefile                up to 1.11
+libexec/httpd/testsuite/html_cmp                up to 1.6
+libexec/httpd/testsuite/t3.out                  up to 1.4
+libexec/httpd/testsuite/t5.out                  up to 1.4
+libexec/httpd/testsuite/t6.out                  up to 1.4
+libexec/httpd/testsuite/test-bigfile            up to 1.5
+libexec/httpd/testsuite/test-simple             up to 1.5
+
+	Sync with HEAD as of 2018-11-24. Includes various changes:
+	Cosmetic changes to Lua binding in bozohttpd.
+	Fix -C scripts execution and document restrictions.
+	Add support for remapping requested paths via a .bzredirect file.
+	Handle redirections for any protocol, not just http:.
+	Fix a denial of service attack against header contents, which
+	is now bounded at 16KiB.
+	Fix access checks for special files.
+	[mrg, #1104]
 
