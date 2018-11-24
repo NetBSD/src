@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.219 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.220 2018/11/24 16:58:40 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.219 2018/05/03 07:13:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.220 2018/11/24 16:58:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1713,6 +1713,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 int
 sysctl_inpcblist(SYSCTLFN_ARGS)
 {
+	const bool allowaddr = get_expose_address(curproc);
 	struct sockaddr_in *in;
 	const struct inpcb *inp;
 #ifdef INET6
@@ -1798,9 +1799,12 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 				pcb.ki_tflags = tp->t_flags;
 			}
 
-			pcb.ki_pcbaddr = PTRTOUINT64(inp);
-			pcb.ki_ppcbaddr = PTRTOUINT64(inp->inp_ppcb);
-			pcb.ki_sockaddr = PTRTOUINT64(inp->inp_socket);
+			COND_SET_VALUE(pcb.ki_pcbaddr,
+			    PTRTOUINT64(inp), allowaddr);
+			COND_SET_VALUE(pcb.ki_ppcbaddr,
+			    PTRTOUINT64(inp->inp_ppcb), allowaddr);
+			COND_SET_VALUE(pcb.ki_sockaddr,
+			    PTRTOUINT64(inp->inp_socket), allowaddr);
 
 			pcb.ki_rcvq = inp->inp_socket->so_rcv.sb_cc;
 			pcb.ki_sndq = inp->inp_socket->so_snd.sb_cc;
@@ -1835,9 +1839,12 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 				pcb.ki_tflags = tp->t_flags;
 			}
 
-			pcb.ki_pcbaddr = PTRTOUINT64(in6p);
-			pcb.ki_ppcbaddr = PTRTOUINT64(in6p->in6p_ppcb);
-			pcb.ki_sockaddr = PTRTOUINT64(in6p->in6p_socket);
+			COND_SET_VALUE(pcb.ki_pcbaddr,
+			    PTRTOUINT64(in6p), allowaddr);
+			COND_SET_VALUE(pcb.ki_ppcbaddr,
+			    PTRTOUINT64(in6p->in6p_ppcb), allowaddr);
+			COND_SET_VALUE(pcb.ki_sockaddr,
+			    PTRTOUINT64(in6p->in6p_socket), allowaddr);
 
 			pcb.ki_rcvq = in6p->in6p_socket->so_rcv.sb_cc;
 			pcb.ki_sndq = in6p->in6p_socket->so_snd.sb_cc;
