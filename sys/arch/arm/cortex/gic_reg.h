@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.9 2018/11/13 22:25:28 jmcneill Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.10 2018/11/24 15:40:57 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -334,6 +334,11 @@
 #define	GITS_CTLR_ITS_Number		__BITS(7,4)
 #define	GITS_CTLR_ImDe			__BIT(1)
 #define	GITS_CTLR_Enabled		__BIT(0)
+
+#define	GITS_IIDR_ProductID		__BITS(31,24)
+#define	GITS_IIDR_Variant		__BITS(19,16)
+#define	GITS_IIDR_Revision		__BITS(15,12)
+#define	GITS_IIDR_Implementor		__BITS(11,0)
 
 #define	GITS_TYPER_VMOVP		__BIT(37)
 #define	GITS_TYPER_CIL			__BIT(36)
