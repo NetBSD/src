@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2018/11/22 18:21:59 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2018/11/24 02:30:56 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -253,6 +253,9 @@ main(int argc, char **argv)
 			if (!have_daemon_mode)
 				goto no_daemon_mode;
 
+			bozo_set_pref(&httpd, &prefs, "bind address", optarg);
+			break;
+
 		case 'L':
 			if (!have_lua)
 				bozoerr(&httpd, 1, "Lua support not enabled");
@@ -369,9 +372,6 @@ main(int argc, char **argv)
 				goto no_ssl;
 
 			bozo_ssl_set_ciphers(&httpd, optarg);
-			break;
-
-			bozo_set_pref(&httpd, &prefs, "bind address", optarg);
 			break;
 
 		default:
