@@ -26,8 +26,8 @@
        [DONE] - kern.lwp
        [DONE] - sysctl_inpcblist
        [DONE] - sysctl_unpcblist
-       - sysctl_doevcnt
-       - sysctl_dobuf
+       [DONE] - sysctl_doevcnt
+       [DONE] - sysctl_dobuf
 
 -- Be careful with dmesg.
 
