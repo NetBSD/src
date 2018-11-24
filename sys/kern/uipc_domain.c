@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.104 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.105 2018/11/24 17:16:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.104 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.105 2018/11/24 17:16:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -472,6 +472,7 @@ sockaddr_format(const struct sockaddr *sa, char *buf, size_t len)
 static void
 sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 {
+	const bool allowaddr = get_expose_address(curproc);
 	struct unpcb *unp = sotounpcb(so);
 	struct sockaddr_un *un = unp->unp_addr;
 
@@ -482,9 +483,9 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	pcb->ki_protocol = so->so_proto->pr_protocol;
 	pcb->ki_pflags = unp->unp_flags;
 
-	pcb->ki_pcbaddr = PTRTOUINT64(unp);
+	COND_SET_VALUE(pcb->ki_pcbaddr, PTRTOUINT64(unp), allowaddr);
 	/* pcb->ki_ppcbaddr = unp has no ppcb... */
-	pcb->ki_sockaddr = PTRTOUINT64(so);
+	COND_SET_VALUE(pcb->ki_sockaddr, PTRTOUINT64(so), allowaddr);
 
 	pcb->ki_sostate = so->so_state;
 	/* pcb->ki_prstate = unp has no state... */
@@ -523,10 +524,11 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	}
 
 	pcb->ki_inode = unp->unp_ino;
-	pcb->ki_vnode = PTRTOUINT64(unp->unp_vnode);
-	pcb->ki_conn = PTRTOUINT64(unp->unp_conn);
-	pcb->ki_refs = PTRTOUINT64(unp->unp_refs);
-	pcb->ki_nextref = PTRTOUINT64(unp->unp_nextref);
+	COND_SET_VALUE(pcb->ki_vnode, PTRTOUINT64(unp->unp_vnode), allowaddr);
+	COND_SET_VALUE(pcb->ki_conn, PTRTOUINT64(unp->unp_conn), allowaddr);
+	COND_SET_VALUE(pcb->ki_refs, PTRTOUINT64(unp->unp_refs), allowaddr);
+	COND_SET_VALUE(pcb->ki_nextref, PTRTOUINT64(unp->unp_nextref),
+	    allowaddr);
 }
 
 static int
