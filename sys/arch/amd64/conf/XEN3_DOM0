@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.158 2018/10/23 19:58:52 jdolecek Exp $
+# $NetBSD: XEN3_DOM0,v 1.159 2018/11/24 18:23:29 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.158 $"
+#ident		"XEN3_DOM0-$Revision: 1.159 $"
 
 maxusers	32		# estimated number of users
 
@@ -519,6 +519,7 @@ dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
+mfii*	at pci? dev ? function ?	# LSI MegaRAID SAS (Fusion and newer)
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
 mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II
