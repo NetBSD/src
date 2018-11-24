@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.6 2018/10/30 16:41:51 skrll Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.7 2018/11/24 22:17:12 rjs Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.6 2018/10/30 16:41:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.7 2018/11/24 22:17:12 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,7 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.6 2018/10/30 16:41:51 skrll Exp 
 extern struct bus_space arm_generic_bs_tag;
 extern struct bus_space arm_generic_a4x_bs_tag;
 
+#if NPLCOM > 0
 static struct plcom_instance plcom_console;
+#endif
 
 static const struct pmap_devmap *
 acpi_platform_devmap(void)
