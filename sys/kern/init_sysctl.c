@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.218 2018/10/05 22:12:38 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.219 2018/11/24 17:26:27 maxv Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.218 2018/10/05 22:12:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.219 2018/11/24 17:26:27 maxv Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1600,6 +1600,7 @@ sysctl_consdev(SYSCTLFN_ARGS)
 static void
 fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
+	const bool allowaddr = get_expose_address(curproc);
 	struct proc *p = l->l_proc;
 	struct timeval tv;
 
@@ -1609,8 +1610,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 
 	kl->l_forw = 0;
 	kl->l_back = 0;
-	kl->l_laddr = PTRTOUINT64(l);
-	kl->l_addr = PTRTOUINT64(l->l_addr);
+	COND_SET_VALUE(kl->l_laddr, PTRTOUINT64(l), allowaddr);
+	COND_SET_VALUE(kl->l_addr, PTRTOUINT64(l->l_addr), allowaddr);
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
 	kl->l_flag = L_INMEM;
@@ -1627,7 +1628,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_usrpri = l->l_priority;
 	if (l->l_wchan)
 		strncpy(kl->l_wmesg, l->l_wmesg, sizeof(kl->l_wmesg));
-	kl->l_wchan = PTRTOUINT64(l->l_wchan);
+	COND_SET_VALUE(kl->l_wchan, PTRTOUINT64(l->l_wchan), allowaddr);
 	kl->l_cpuid = cpu_index(l->l_cpu);
 	bintime2timeval(&l->l_rtime, &tv);
 	kl->l_rtime_sec = tv.tv_sec;
