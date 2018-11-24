@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.179 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.180 2018/11/24 18:15:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.179 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.180 2018/11/24 18:15:23 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -348,6 +348,8 @@ scsipi_get_tag(struct scsipi_xfer *xs)
 	int bit, tag;
 	u_int word;
 
+	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
+
 	bit = 0;	/* XXX gcc */
 	for (word = 0; word < PERIPH_NTAGWORDS; word++) {
 		bit = ffs(periph->periph_freetags[word]);
@@ -388,6 +390,8 @@ scsipi_put_tag(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int word, bit;
+
+	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 
 	word = xs->xs_tag_id >> 5;
 	bit = xs->xs_tag_id & 0x1f;
@@ -466,6 +470,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 		    (periph->periph_flags & PERIPH_RECOVERING) != 0)
 			goto wait_for_opening;
 		periph->periph_active++;
+		KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 		break;
 
  wait_for_opening:
@@ -511,6 +516,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 		if ((flags & XS_CTL_NOSLEEP) == 0)
 			mutex_enter(chan_mtx(periph->periph_channel));
 		TAILQ_INSERT_TAIL(&periph->periph_xferq, xs, device_q);
+		KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 		if ((flags & XS_CTL_NOSLEEP) == 0)
 			mutex_exit(chan_mtx(periph->periph_channel));
 	}
@@ -534,6 +540,7 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 	int flags = xs->xs_control;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_free_xs\n"));
+	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 
 	TAILQ_REMOVE(&periph->periph_xferq, xs, device_q);
 	callout_destroy(&xs->xs_callout);
@@ -1790,6 +1797,7 @@ scsipi_enqueue(struct scsipi_xfer *xs)
 	 * If the xfer is to be polled, and there are already jobs on
 	 * the queue, we can't proceed.
 	 */
+	KASSERT(mutex_owned(chan_mtx(chan)));
 	if ((xs->xs_control & XS_CTL_POLL) != 0 &&
 	    TAILQ_FIRST(&chan->chan_queue) != NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
