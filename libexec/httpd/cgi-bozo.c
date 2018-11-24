@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.37.4.1 2017/12/04 19:44:13 snj Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.37.4.2 2018/11/24 17:13:51 martin Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2017 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <netinet/in.h>
 
@@ -62,7 +63,7 @@
  */
 static const char *
 content_cgihandler(bozohttpd_t *httpd, bozo_httpreq_t *request,
-		const char *file)
+		   const char *file)
 {
 	bozo_content_map_t	*map;
 
@@ -103,7 +104,7 @@ parse_header(bozo_httpreq_t *request, const char *str, ssize_t len,
 	*hdr_val = value;
 
 	return 0;
-} 
+}
 
 /*
  * handle parsing a CGI header output, transposing a Status: header
@@ -123,7 +124,6 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 	/* much of this code is like bozo_read_request()'s header loop. */
 	SIMPLEQ_INIT(&headers);
 	write_header = nph == 0;
-	/* was read(2) here - XXX - agc */
 	while (nph == 0 &&
 		(str = bozodgetln(httpd, in, &len, bozo_read)) != NULL) {
 		char	*hdr_name, *hdr_value;
@@ -144,10 +144,10 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 		 */
 		if (strcasecmp(hdr_name, "status") == 0) {
 			debug((httpd, DEBUG_OBESE,
-				"bozo_process_cgi:  writing HTTP header "
-				"from status %s ..", hdr_value));
+				"%s: writing HTTP header "
+				"from status %s ..", __func__, hdr_value));
 			bozo_printf(httpd, "%s %s\r\n", request->hr_proto,
-					hdr_value);
+				    hdr_value);
 			bozo_flush(httpd, stdout);
 			write_header = 0;
 			free(hdr_name);
@@ -163,7 +163,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 
 	if (write_header) {
 		debug((httpd, DEBUG_OBESE,
-			"bozo_process_cgi:  writing HTTP header .."));
+			"%s: writing HTTP header ..", __func__));
 		bozo_printf(httpd,
 			"%s 200 OK\r\n", request->hr_proto);
 		bozo_flush(httpd, stdout);
@@ -171,10 +171,10 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 
 	if (nheaders) {
 		debug((httpd, DEBUG_OBESE,
-			"bozo_process_cgi:  writing delayed HTTP headers .."));
+			"%s:  writing delayed HTTP headers ..", __func__));
 		SIMPLEQ_FOREACH_SAFE(hdr, &headers, h_next, nhdr) {
 			bozo_printf(httpd, "%s: %s\r\n", hdr->h_header,
-					hdr->h_value);
+				    hdr->h_value);
 			free(hdr->h_header);
 			free(hdr);
 		}
@@ -190,7 +190,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 
 		while (rbytes) {
 			wbytes = bozo_write(httpd, STDOUT_FILENO, buf,
-						(size_t)rbytes);
+					    (size_t)rbytes);
 			if (wbytes > 0) {
 				rbytes -= wbytes;
 				bp += wbytes;
@@ -223,9 +223,8 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 	*args_len = 0;
 
 	/* URI MUST not contain any unencoded '=' - RFC3875, section 4.4 */
-	if (strchr(query, '=')) {
+	if (strchr(query, '='))
 		return NULL;
-	}
 
 	str = bozostrdup(httpd, request, query);
 
@@ -289,7 +288,7 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 		/* search-word MUST have at least one schar */
 		if (*s == '\0')
 			goto parse_err;
-		while(*s) {
+		while (*s) {
 			/* check if it's unreserved */
 			if (isalpha((int)*s) || isdigit((int)*s) ||
 			    strchr(UNRESERVED_CHAR, *s)) {
@@ -348,7 +347,7 @@ bozo_cgi_setbin(bozohttpd_t *httpd, const char *path)
 {
 	httpd->cgibin = bozostrdup(httpd, NULL, path);
 	debug((httpd, DEBUG_OBESE, "cgibin (cgi-bin directory) is %s",
-		httpd->cgibin));
+	       httpd->cgibin));
 }
 
 /* help build up the environ pointer */
@@ -381,6 +380,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	const char *type, *clen, *info, *cgihandler;
 	char	*query, *s, *t, *path, *env, *command, *file, *url;
 	char	**envp, **curenvp, **argv, **search_string_argv = NULL;
+	char	**lastenvp;
 	char	*uri;
 	size_t	i, len, search_string_argc = 0;
 	ssize_t rbytes;
@@ -415,7 +415,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		     file,
 		     query ? "?" : "",
 		     query ? query : "");
-	debug((httpd, DEBUG_NORMAL, "bozo_process_cgi: url `%s'", url));
+	debug((httpd, DEBUG_NORMAL, "%s: url `%s'", __func__, url));
 
 	path = NULL;
 	envp = NULL;
@@ -433,17 +433,17 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		cgihandler = content_cgihandler(httpd, request, file + 1);
 		if (cgihandler == NULL) {
 			debug((httpd, DEBUG_FAT,
-				"bozo_process_cgi: no handler, returning"));
+				"%s: no handler, returning", __func__));
 			goto out;
 		}
 		if (len == 0 || file[len - 1] == '/')
 			append_index_html(httpd, &file);
-		debug((httpd, DEBUG_NORMAL, "bozo_process_cgi: cgihandler `%s'",
-		    cgihandler));
+		debug((httpd, DEBUG_NORMAL, "%s: cgihandler `%s'",
+		    __func__, cgihandler));
 	} else if (len - 1 == CGIBIN_PREFIX_LEN)	/* url is "/cgi-bin/" */
 		append_index_html(httpd, &file);
 
-	/* RFC3875  sect. 4.4. - search-string support */
+	/* RFC3875 sect. 4.4. - search-string support */
 	if (query != NULL) {
 		search_string_argv = parse_search_string(request, query,
 		    &search_string_argc);
@@ -498,8 +498,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	    (request->hr_serverport && *request->hr_serverport ? 1 : 0);
 
 	debug((httpd, DEBUG_FAT,
-		"bozo_process_cgi: path `%s', cmd `%s', info `%s', "
-		"query `%s', nph `%d', envpsize `%d'",
+		"%s: path `%s', cmd `%s', info `%s', "
+		"query `%s', nph `%d', envpsize `%d'", __func__,
 		path, command, strornull(info),
 		strornull(query), nph, envpsize));
 
@@ -507,6 +507,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	for (ix = 0; ix < envpsize; ix++)
 		envp[ix] = NULL;
 	curenvp = envp;
+	lastenvp = envp + envpsize;
 
 	SIMPLEQ_FOREACH(headp, &request->hr_headers, h_next) {
 		const char *s2;
@@ -517,8 +518,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		strcpy(t, "HTTP_");
 		t += strlen(t);
 		for (s2 = headp->h_header; *s2; t++, s2++)
-			if (islower((u_int)*s2))
-				*t = toupper((u_int)*s2);
+			if (islower((unsigned)*s2))
+				*t = toupper((unsigned)*s2);
 			else if (*s2 == '-')
 				*t = '_';
 			else
@@ -575,11 +576,11 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_setenv(httpd, "REDIRECT_STATUS", "200", curenvp++);
 	bozo_auth_cgi_setenv(request, &curenvp);
 
-	debug((httpd, DEBUG_FAT, "bozo_process_cgi: going exec %s with args:",
+	debug((httpd, DEBUG_FAT, "%s: going exec %s with args:", __func__,
 	    path));
 
 	for (i = 0; argv[i] != NULL; i++) {
-		debug((httpd, DEBUG_FAT, "bozo_process_cgi: argv[%zu] = `%s'",
+		debug((httpd, DEBUG_FAT, "%s: argv[%zu] = `%s'", __func__,
 		    i, argv[i]));
 	}
 
@@ -588,6 +589,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 				strerror(errno));
 
 	*curenvp = 0;
+	assert(lastenvp > curenvp);
 
 	/*
 	 * We create 2 procs: one to become the CGI, one read from

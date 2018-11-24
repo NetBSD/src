@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.18 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.18.8.1 2018/11/24 17:13:51 martin Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,6 @@
 
 #include "bozohttpd.h"
 
-#ifndef AUTH_FILE
-#define AUTH_FILE		".htpasswd"
-#endif
-
 static	ssize_t	base64_decode(const unsigned char *, size_t,
 			    unsigned char *, size_t);
 
@@ -68,7 +64,6 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 		strcpy(dir, ".");
 	else {
 		*basename++ = '\0';
-			/* ensure basename(file) != AUTH_FILE */
 		if (bozo_check_special_files(request, basename))
 			return 1;
 	}
@@ -122,6 +117,7 @@ bozo_auth_init(bozo_httpreq_t *request)
 {
 	request->hr_authuser = NULL;
 	request->hr_authpass = NULL;
+	request->hr_authrealm = NULL;
 }
 
 void
@@ -147,6 +143,10 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
 		char	*pass = NULL;
 		ssize_t	alen;
 
+		/* free prior entries. */
+		free(request->hr_authuser);
+		free(request->hr_authpass);
+
 		alen = base64_decode((unsigned char *)str + 6,
 					(size_t)(len - 6),
 					(unsigned char *)authbuf,
@@ -158,8 +158,6 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
 			return bozo_http_error(httpd, 400, request,
 			    "bad authorization field");
 		*pass++ = '\0';
-		free(request->hr_authuser);
-		free(request->hr_authpass);
 		request->hr_authuser = bozostrdup(httpd, request, authbuf);
 		request->hr_authpass = bozostrdup(httpd, request, pass);
 		debug((httpd, DEBUG_FAT,
@@ -168,18 +166,6 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
 			/* don't store in request->headers */
 		return 1;
 	}
-	return 0;
-}
-
-int
-bozo_auth_check_special_files(bozo_httpreq_t *request,
-				const char *name)
-{
-	bozohttpd_t *httpd = request->hr_httpd;
-
-	if (strcmp(name, AUTH_FILE) == 0)
-		return bozo_http_error(httpd, 403, request,
-				"no permission to open authfile");
 	return 0;
 }
 

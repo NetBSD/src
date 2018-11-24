@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.47 2017/01/31 14:36:09 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.47.4.1 2018/11/24 17:13:51 martin Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2017 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,6 +117,9 @@ typedef struct bozohttpd_t {
 	int		 hide_dots;	/* hide .* */
 	int		 process_cgi;	/* use the cgi handler */
 	char		*cgibin;	/* cgi-bin directory */
+	unsigned	initial_timeout;/* first line timeout */
+	unsigned	header_timeout;	/* header lines timeout */
+	unsigned	request_timeout;/* total session timeout */
 #ifndef NO_LUA_SUPPORT
 	int		 process_lua;	/* use the Lua handler */
 	SIMPLEQ_HEAD(, lua_state_map)	lua_states;
@@ -175,7 +178,8 @@ typedef struct bozo_httpreq_t {
 #endif
 	struct qheaders		hr_headers;
 	struct qheaders		hr_replheaders;
-	int			hr_nheaders;
+	unsigned		hr_nheaders;
+	size_t			hr_header_bytes;
 } bozo_httpreq_t;
 
 /* helper to access the "active" host name from a httpd/request pair */
@@ -199,6 +203,9 @@ typedef struct bozoprefs_t {
 #define BOZO_MMAPSZ	(BOZO_WRSZ * 1024)
 #endif
 
+/* only allow this many total headers bytes */
+#define BOZO_HEADERS_MAX_SIZE (16 * 1024)
+
 /* debug flags */
 #define DEBUG_NORMAL	1
 #define DEBUG_FAT	2
@@ -207,21 +214,52 @@ typedef struct bozoprefs_t {
 
 #define	strornull(x)	((x) ? (x) : "<null>")
 
-#if defined(__GNUC__) && __GNUC__ >= 3
+#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__lint__)
 #define BOZO_PRINTFLIKE(x,y) __attribute__((__format__(__printf__, x,y)))
 #define BOZO_DEAD __attribute__((__noreturn__))
+#define BOZO_CHECKRET __attribute__((__warn_unused_result__))
+#else
+#define BOZO_PRINTFLIKE(x,y)
+#define BOZO_DEAD
+#define BOZO_CHECKRET
 #endif
 
-#ifndef NO_DEBUG
+#ifdef NO_DEBUG
+#define	debug(x)
+#define have_debug	(0)
+#else
 void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define debug(x)	debug__ x
-#else
-#define	debug(x)
+#define have_debug	(1)
 #endif /* NO_DEBUG */
 
+/*
+ * bozohttpd special files.  avoid serving these out.
+ *
+ * When you add some .bz* file, make sure to also check it in
+ * bozo_check_special_files()
+ */
+
+#ifndef DIRECT_ACCESS_FILE
+#define DIRECT_ACCESS_FILE	".bzdirect"
+#endif
+#ifndef REDIRECT_FILE
+#define REDIRECT_FILE		".bzredirect"
+#endif
+#ifndef ABSREDIRECT_FILE
+#define ABSREDIRECT_FILE	".bzabsredirect"
+#endif
+#ifndef REMAP_FILE
+#define REMAP_FILE		".bzremap"
+#endif
+#ifndef AUTH_FILE
+#define AUTH_FILE		".htpasswd"
+#endif
+
+/* be sure to always return this error up */
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
-int	bozo_check_special_files(bozo_httpreq_t *, const char *);
+int	bozo_check_special_files(bozo_httpreq_t *, const char *) BOZO_CHECKRET;
 char	*bozo_http_date(char *, size_t);
 void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
 			  const char *);
@@ -246,19 +284,23 @@ char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
 
 #define bozo_noop	do { /* nothing */ } while (/*CONSTCOND*/0)
 
+#define have_all					(1)
+
 /* ssl-bozo.c */
 #ifdef NO_SSL_SUPPORT
-#define bozo_ssl_set_opts(w, x, y)	bozo_noop
-#define bozo_ssl_set_ciphers(w, x, y)	bozo_noop
-#define bozo_ssl_init(x)		bozo_noop
-#define bozo_ssl_accept(x)		(0)
-#define bozo_ssl_destroy(x)		bozo_noop
+#define bozo_ssl_set_opts(w, x, y)			bozo_noop
+#define bozo_ssl_set_ciphers(w, x)			bozo_noop
+#define bozo_ssl_init(x)				bozo_noop
+#define bozo_ssl_accept(x)				(0)
+#define bozo_ssl_destroy(x)				bozo_noop
+#define have_ssl					(0)
 #else
 void	bozo_ssl_set_opts(bozohttpd_t *, const char *, const char *);
 void	bozo_ssl_set_ciphers(bozohttpd_t *, const char *);
 void	bozo_ssl_init(bozohttpd_t *);
 int	bozo_ssl_accept(bozohttpd_t *);
 void	bozo_ssl_destroy(bozohttpd_t *);
+#define have_ssl					(1)
 #endif
 
 
@@ -268,69 +310,78 @@ void	bozo_auth_init(bozo_httpreq_t *);
 int	bozo_auth_check(bozo_httpreq_t *, const char *);
 void	bozo_auth_cleanup(bozo_httpreq_t *);
 int	bozo_auth_check_headers(bozo_httpreq_t *, char *, char *, ssize_t);
-int	bozo_auth_check_special_files(bozo_httpreq_t *, const char *);
 void	bozo_auth_check_401(bozo_httpreq_t *, int);
 void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #else
-#define	bozo_auth_init(x)			bozo_noop
-#define	bozo_auth_check(x, y)			0
-#define	bozo_auth_cleanup(x)			bozo_noop
-#define	bozo_auth_check_headers(y, z, a, b)	0
-#define	bozo_auth_check_special_files(x, y)	0
-#define	bozo_auth_check_401(x, y)		bozo_noop
-#define	bozo_auth_cgi_setenv(x, y)		bozo_noop
-#define	bozo_auth_cgi_count(x)			0
+#define	bozo_auth_init(x)				bozo_noop
+#define	bozo_auth_check(x, y)				(0)
+#define	bozo_auth_cleanup(x)				bozo_noop
+#define	bozo_auth_check_headers(y, z, a, b)		(0)
+#define	bozo_auth_check_401(x, y)			bozo_noop
+#define	bozo_auth_cgi_setenv(x, y)			bozo_noop
+#define	bozo_auth_cgi_count(x)				(0)
 #endif /* DO_HTPASSWD */
 
 
 /* cgi-bozo.c */
 #ifdef NO_CGIBIN_SUPPORT
-#define	bozo_process_cgi(h)				0
+#define bozo_cgi_setbin(h,s)				bozo_noop
+#define	bozo_process_cgi(h)				(0)
+#define have_cgibin					(0)
 #else
 void	bozo_cgi_setbin(bozohttpd_t *, const char *);
 void	bozo_setenv(bozohttpd_t *, const char *, const char *, char **);
 int	bozo_process_cgi(bozo_httpreq_t *);
-void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
+#define have_cgibin					(1)
 #endif /* NO_CGIBIN_SUPPORT */
 
 
 /* lua-bozo.c */
 #ifdef NO_LUA_SUPPORT
-#define bozo_process_lua(h)				0
+#define bozo_process_lua(h)				(0)
+#define bozo_add_lua_map(h,s,t)				bozo_noop
+#define have_lua					(0)
 #else
 void	bozo_add_lua_map(bozohttpd_t *, const char *, const char *);
 int	bozo_process_lua(bozo_httpreq_t *);
+#define have_lua					(1)
 #endif /* NO_LUA_SUPPORT */
 
 
 /* daemon-bozo.c */
 #ifdef NO_DAEMON_MODE
 #define bozo_daemon_init(x)				bozo_noop
-#define bozo_daemon_fork(x)				0
+#define bozo_daemon_fork(x)				(0)
 #define bozo_daemon_closefds(x)				bozo_noop
+#define have_daemon_mode				(0)
 #else
 void	bozo_daemon_init(bozohttpd_t *);
 int	bozo_daemon_fork(bozohttpd_t *);
 void	bozo_daemon_closefds(bozohttpd_t *);
+#define have_daemon_mode				(1)
 #endif /* NO_DAEMON_MODE */
 
 
 /* tilde-luzah-bozo.c */
 #ifdef NO_USER_SUPPORT
-#define bozo_user_transform(x)				0
-#define bozo_user_free(x)					0
+#define bozo_user_transform(x)				(0)
+#define bozo_user_free(x)				/* nothing */
+#define have_user					(0)
 #else
 int	bozo_user_transform(bozo_httpreq_t *);
-#define bozo_user_free(x)					free(x)
+#define bozo_user_free(x)				free(x)
+#define have_user					(1)
 #endif /* NO_USER_SUPPORT */
 
 
 /* dir-index-bozo.c */
 #ifdef NO_DIRINDEX_SUPPORT
-#define bozo_dir_index(a, b, c)				0
+#define bozo_dir_index(a, b, c)				(0)
+#define have_dirindex					(0)
 #else
 int	bozo_dir_index(bozo_httpreq_t *, const char *, int);
+#define have_dirindex					(1)
 #endif /* NO_DIRINDEX_SUPPORT */
 
 
@@ -339,9 +390,20 @@ const char *bozo_content_type(bozo_httpreq_t *, const char *);
 const char *bozo_content_encoding(bozo_httpreq_t *, const char *);
 bozo_content_map_t *bozo_match_content_map(bozohttpd_t *, const char *, int);
 bozo_content_map_t *bozo_get_content_map(bozohttpd_t *, const char *);
-#ifndef NO_DYNAMIC_CONTENT
+#ifdef NO_DYNAMIC_CONTENT
+#define bozo_add_content_map_mime(h,s,t,u,v)		bozo_noop
+#define have_dynamic_content				(0)
+#else
 void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *,
 				  const char *, const char *);
+#define have_dynamic_content				(1)
+#endif
+
+/* additional cgi-bozo.c */
+#if have_cgibin && have_dynamic_content
+void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
+#else
+#define	bozo_add_content_map_cgi(h,s,t)
 #endif
 
 /* I/O */
@@ -358,6 +420,7 @@ int bozo_setup(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 bozo_httpreq_t *bozo_read_request(bozohttpd_t *);
 void bozo_process_request(bozo_httpreq_t *);
 void bozo_clean_request(bozo_httpreq_t *);
+int bozo_set_timeout(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 bozoheaders_t *addmerge_reqheader(bozo_httpreq_t *, const char *,
 				  const char *, ssize_t);
 bozoheaders_t *addmerge_replheader(bozo_httpreq_t *, const char *,

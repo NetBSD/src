@@ -1,9 +1,9 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.25 2015/12/29 04:21:46 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.25.8.1 2018/11/24 17:13:51 martin Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,17 +80,16 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		file[strlen(file) - strlen(httpd->index_html)] = '\0';
 		dirpath = file;
 	}
-	debug((httpd, DEBUG_FAT, "bozo_dir_index: dirpath ``%s''", dirpath));
+	debug((httpd, DEBUG_FAT, "bozo_dir_index: dirpath '%s'", dirpath));
 	if (stat(dirpath, &sb) < 0 ||
 	    (dp = opendir(dirpath)) == NULL) {
 		if (errno == EPERM)
-			(void)bozo_http_error(httpd, 403, request,
-			    "no permission to open directory");
+			bozo_http_error(httpd, 403, request,
+					"no permission to open directory");
 		else if (errno == ENOENT)
-			(void)bozo_http_error(httpd, 404, request, "no file");
+			bozo_http_error(httpd, 404, request, "no file");
 		else
-			(void)bozo_http_error(httpd, 500, request,
-					"open directory");
+			bozo_http_error(httpd, 500, request, "open directory");
 		goto done;
 		/* NOTREACHED */
 	}
@@ -157,7 +156,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		if (strcmp(name, "..") == 0) {
 			bozo_printf(httpd, "<a href=\"../\">");
 			l += bozo_printf(httpd, "Parent Directory");
-		} else if (S_ISDIR(sb.st_mode)) {
+		} else if (!nostat && S_ISDIR(sb.st_mode)) {
 			bozo_printf(httpd, "<a href=\"%s/\">", urlname);
 			l += bozo_printf(httpd, "%s/", htmlname);
 		} else if (strchr(name, ':') != NULL) {
@@ -185,6 +184,10 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		if (nostat)
 			bozo_printf(httpd, "?                         ?");
 		else {
+			unsigned long long len;
+
+			len = ((unsigned long long)sb.st_size + 1023) / 1024;
+
 			tm = gmtime(&sb.st_mtime);
 			strftime(buf, sizeof buf, "%d-%b-%Y %R", tm);
 			l += bozo_printf(httpd, "%s", buf);
@@ -199,8 +202,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 			spacebuf[i] = '\0';
 			bozo_printf(httpd, "%s", spacebuf);
 
-			bozo_printf(httpd, "%12llukB",
-				    (unsigned long long)sb.st_size >> 10);
+			bozo_printf(httpd, "%12llukB", len);
 		}
 		bozo_printf(httpd, "\r\n");
 	}

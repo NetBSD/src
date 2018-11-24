@@ -1,11 +1,12 @@
 #! /bin/sh
-# $NetBSD: test-bigfile,v 1.4 2017/01/31 14:33:54 mrg Exp $
+# $NetBSD: test-bigfile,v 1.4.4.1 2018/11/24 17:13:51 martin Exp $
 
-test="$1"	# partial4000 or partial8000
-bozohttpd="$2"
-wget="$3"
-datadir="$4"
-verbose="$5"
+test="$1"; shift	# partial4000 or partial8000
+bozohttpd="$1"; shift
+wget="$1"; shift
+datadir="$1"; shift
+verbose="$1"; shift
+host="$1"; shift
 
 tmperr="tmp.$test.err"
 
@@ -21,7 +22,7 @@ bozotestport=11111
 cp "${datadir}/bigfile.${test}" ./bigfile
 
 # fire up bozohttpd
-${bozohttpd} -b -b -I ${bozotestport} -n -s -f "${datadir}" &
+${bozohttpd} -b -b -I ${bozotestport} -n -s -f "$@" "${datadir}" "${host}" &
 bozopid=$!
 
 "${wget}" -c http://localhost:${bozotestport}/bigfile

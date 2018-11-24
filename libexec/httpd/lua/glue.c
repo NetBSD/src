@@ -48,24 +48,6 @@
 
 int luaopen_bozohttpd(lua_State *);
 
-#if 0
-typedef struct strarg_t {
-	const char	*s;	/* string */
-	const int	 n;	/* corresponding int value */
-} strarg_t;
-
-/* map a string onto an int */
-static int
-findtype(strarg_t *strs, const char *s)
-{
-	strarg_t	*sp;
-
-	for (sp = strs ; sp->s && strcasecmp(sp->s, s) != 0 ; sp++) {
-	}
-	return sp->n;
-}
-#endif
-
 /* init() */
 static int
 l_new(lua_State *L)
@@ -102,18 +84,20 @@ l_init_prefs(lua_State *L)
 	return 1;
 }
 
-/* bozo_set_pref(prefs, name, value) */
+/* bozo_set_pref(httpd, prefs, name, value) */
 static int
 l_bozo_set_pref(lua_State *L)
 {
+	bozohttpd_t	*httpd;
 	bozoprefs_t	*prefs;
 	const char	*name;
 	const char	*value;
 
-	prefs = lua_touserdata(L, 1);
-	name = luaL_checkstring(L, 2);
-	value = luaL_checkstring(L, 3);
-	lua_pushnumber(L, bozo_set_pref(prefs, name, value));
+	httpd = lua_touserdata(L, 1);
+	prefs = lua_touserdata(L, 2);
+	name = luaL_checkstring(L, 3);
+	value = luaL_checkstring(L, 4);
+	lua_pushnumber(L, bozo_set_pref(httpd, prefs, name, value));
 	return 1;
 }
 
@@ -163,16 +147,17 @@ l_bozo_read_request(lua_State *L)
 	return 1;
 }
 
-/* bozo_process_request(httpd, req) */
+/* bozo_process_request(req) */
 static int
 l_bozo_process_request(lua_State *L)
 {
 	bozo_httpreq_t	*req;
-	bozohttpd_t	*httpd;
 
-	httpd = lua_touserdata(L, 1);
-	req = lua_touserdata(L, 2);
-	bozo_process_request(httpd, req);
+	req = lua_touserdata(L, 1);
+	if (req == NULL) {
+		return 0;
+	}
+	bozo_process_request(req);
 	lua_pushnumber(L, 1);
 	return 1;
 }
@@ -184,6 +169,9 @@ l_bozo_clean_request(lua_State *L)
 	bozo_httpreq_t	*req;
 
 	req = lua_touserdata(L, 1);
+	if (req == NULL) {
+		return 0;
+	}
 	bozo_clean_request(req);
 	lua_pushnumber(L, 1);
 	return 1;
@@ -250,7 +238,7 @@ l_bozo_cgi_map(lua_State *L)
 	return 1;
 }
 
-const struct luaL_reg libluabozohttpd[] = {
+const struct luaL_Reg libluabozohttpd[] = {
 	{ "new",		l_new },
 	{ "init_httpd",		l_init_httpd },
 	{ "init_prefs",		l_init_prefs },
@@ -273,6 +261,10 @@ const struct luaL_reg libluabozohttpd[] = {
 int 
 luaopen_bozohttpd(lua_State *L)
 {
-	luaL_openlib(L, "bozohttpd", libluabozohttpd, 0);
+#if LUA_VERSION_NUM >= 502
+        luaL_newlib(L, libluabozohttpd);
+#else
+        luaL_register(L, "bozohttpd", libluabozohttpd); 
+#endif
 	return 1;
 }

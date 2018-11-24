@@ -1,4 +1,15 @@
-$NetBSD: CHANGES,v 1.25 2017/01/31 14:33:54 mrg Exp $
+$NetBSD: CHANGES,v 1.25.4.1 2018/11/24 17:13:51 martin Exp $
+
+changes in bozohttpd 20181121:
+	o  add url remap support via .bzremap file, from martin@netbsd.org
+	o  handle redirections for any protocol, not just http:
+	o  fix a denial of service attack against header contents, which
+	   is now bounded at 16KiB.  reported by JP
+	o  reduce default timeouts, and add expand timeouts to handle the
+	   initial line, each header, and the total time spent
+	o  add -T option to expose new timeout settings
+	o  minor RFC fixes related to timeout handling
+	o  fix special file (.htpasswd, .bz*) bypass.  reported by JP.
 
 changes in bozohttpd 20170201:
 	o  fix an infinite loop in cgi processing

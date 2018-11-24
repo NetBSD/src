@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.65 2017/01/31 14:36:09 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.65.4.1 2018/11/24 17:13:51 martin Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2017 Matthew R. Green
+.\" Copyright (c) 1997-2018 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 1, 2017
+.Dd November 19, 2018
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
 .Op Fl S Ar server_software
+.Op Fl T Ar type timeout
 .Op Fl U Ar username
 .Op Fl Z Ar cert privkey
 .Op Fl c Ar cgibin
@@ -105,7 +106,7 @@ The
 directory is expected to contain the CGI programs to be used.
 .Nm
 looks for URL's in the form of
-.Em /cgi-bin/\*[Lt]scriptname\*[Gt]
+.Em /cgi-bin/<scriptname>
 where
 .Aq scriptname
 is a valid CGI program in the
@@ -219,7 +220,7 @@ option.
 .It Fl P Ar pidfile
 Causes
 .Nm
-to create a pid file in
+to create a PID file in
 .Ar pidfile
 when run in daemon mode with the
 .Fl b
@@ -236,6 +237,19 @@ Sets the internal server version to
 .Ar server_software .
 .It Fl s
 Forces logging to be set to stderr always.
+.It Fl T Ar type timeout
+Set the timeout for
+.Ar type
+to
+.Ar timeout .
+The valid values of
+.Ar type
+are
+.Dq initial timeout ,
+.Dq header timeout ,
+and
+.Dq request timeout .
+The default values are 30 seconds, 10 seconds and 600 seconds, respectively.
 .It Fl t Ar chrootdir
 Makes
 .Nm
@@ -284,7 +298,7 @@ If no directory exists in
 for the request, then
 .Ar slashdir
 will be used.
-The default behaviour is to return 404 (Not Found.)
+The default behavior is to return 404 (Not Found.)
 .It Fl v Ar virtualroot
 Enables virtual hosting support.
 Directories in
@@ -314,7 +328,7 @@ Sets the list of SSL ciphers (see
 .Xr SSL_CTX_set_cipher_list 3 ) .
 .It Fl Z Ar certificate_path privatekey_path
 Sets the path to the server certificate file and the private key file
-in pem format.
+in PEM format.
 It also causes
 .Nm
 to start SSL mode.
@@ -388,9 +402,9 @@ Lua support (NO_LUA_SUPPORT),
 and SSL support (NO_SSL_SUPPORT)
 by defining the listed macros when building
 .Nm .
-.Ss HTTP BASIC AUTHORISATION
+.Ss HTTP BASIC AUTHORIZATION
 .Nm
-has support for HTTP Basic Authorisation.
+has support for HTTP Basic Authorization.
 If a file named
 .Pa .htpasswd
 exists in the directory of the current request,
@@ -406,7 +420,7 @@ This does not recursively protect any sub-directories.
 The
 .Pa .htpasswd
 file contains lines delimited with a colon containing
-usernames and passwords hashed with
+user names and passwords hashed with
 .Xr crypt 3 ,
 for example:
 .Bd -literal
@@ -424,7 +438,7 @@ While
 .Nm
 distributed with
 .Nx
-has support for HTTP Basic Authorisation enabled by default,
+has support for HTTP Basic Authorization enabled by default,
 in the portable distribution it is excluded.
 Compile
 .Nm
@@ -458,7 +472,7 @@ looks for a couple of special files in directories that allow certain features
 to be provided on a per-directory basis.
 In addition to the
 .Pa .htpasswd
-used by HTTP basic authorisation,
+used by HTTP basic authorization,
 if a
 .Pa .bzdirect
 file is found (contents are irrelevant)
@@ -478,7 +492,7 @@ If a
 .Pa .bzabsredirect
 symbolic link is found,
 .Nm
-will redirect to the absolute url pointed to by this symlink.
+will redirect to the absolute URL pointed to by this symlink.
 This is useful to redirect to different servers.
 Two forms of redirection are supported - symbolic link without schema will use
 .Em http://
@@ -488,7 +502,38 @@ will redirect to
 .Em http://NetBSD.org/
 Otherwise provided schema will be used i.e. symbolic link to
 .Em ftp://NetBSD.org/
-will redirect to provided the URL.
+will redirect to the provided URL.
+If a
+.Pa .bzremap
+file is found at the root of a (virtual) server, it is expected to contain
+rewrite mappings for URLs.
+.Pp
+These remappings are performed internally in the server before authentication
+happens and can be used to hide implementation details, like the CGI handler
+specific suffix for non cgi scripts in authorized directories.
+.Pp
+The map file consists of lines two paths separated by a colon, where the left
+side needs to exactly match a (sub) path of the request and will be replaced
+by the right side.
+.Pp
+The first match always wins.
+.Pp
+A
+.Pa .bzremap
+file could look like this:
+.Bd -literal
+/nic/update:/auth-dir/updipv4.pl
+.Ed
+.Pp
+The remap file should be short, access to it is slow and needs to happen
+on each request.
+If a request path needs to include a colon
+.Pq Li \&:
+character, it can be escaped
+with a backslash
+.Pq Li \e
+The right hand side of the colon is always used verbatim, no escape sequences
+are interpreted.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an
 .Xr inetd.conf 5
@@ -514,6 +559,29 @@ Typically this will be like:
 .Bd -literal
 httpd -C .php /usr/pkg/bin/php-cgi /var/www
 .Ed
+.Pp
+Note that a plain script interpreter can not be used directly as a cgihandler,
+as there are no command line options passed from
+.Nm
+to avoid security issues.
+.Pp
+If no CGI-aware wrapper exists, a simple shell script like the following
+might do.
+.Pp
+It would be invoked like:
+.Bd -literal
+httpd -C .pl /www-scripts/bin/run.perl /var/www
+.Ed
+and the script could look like:
+.Bd -literal
+#! /bin/sh
+
+if [ -r "$SCRIPT_FILENAME" -a -x "$SCRIPT_FILENAME" ]; then
+	exec /usr/pkg/bin/perl "$SCRIPT_FILENAME"
+fi
+
+exit 1
+.Ed
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
 .Xr inetd 8
@@ -531,7 +599,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20170201.
+version 20181123.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -590,7 +658,8 @@ provided initial IPv6 support
 .It
 .An Martin Husemann
 .Aq Mt martin@NetBSD.org
-provided .bzabsredirect support, and fixed various redirection issues
+provided .bzabsredirect and .bzredir support, and fixed various
+redirection issues
 .It
 .An Arto Huusko
 .Aq Mt arto.huusko@pp2.inet.fi
@@ -606,11 +675,11 @@ provided cgi-bin enhancements
 .It
 .An Nicolas Jombart
 .Aq Mt ecu@ipv42.net
-provided fixes for HTTP basic authorisation support
+provided fixes for HTTP basic authorization support
 .It
 .An Antti Kantee
 .Aq Mt pooka@NetBSD.org
-provided fixes for HTTP basic authorisation support
+provided fixes for HTTP basic authorization support
 .It
 .An Thomas Klausner
 .Aq Mt wiz@NetBSD.org
@@ -644,7 +713,7 @@ option (pidfile support) and provided some man page fixes.
 .An Luke Mewburn
 .Aq Mt lukem@NetBSD.org
 provided many various fixes, including cgi-bin fixes and enhancements,
-HTTP basic authorisation support and much code clean up
+HTTP basic authorization support and much code clean up
 .It
 .An Rajeev V. Pillai
 .Aq Mt rajeev_v_pillai@yahoo.com
@@ -686,7 +755,7 @@ provided a man page fix
 .It
 .An Holger Weiss
 .Aq Mt holger@CIS.FU-Berlin.DE
-provided http authorisation fixes
+provided http authorization fixes
 .It
 .Aq Mt xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
