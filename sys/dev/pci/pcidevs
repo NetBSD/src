@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1353 2018/11/24 14:37:48 skrll Exp $
+$NetBSD: pcidevs,v 1.1354 2018/11/24 14:41:56 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -649,6 +649,7 @@ vendor QINHENG2		0x1c00	Nanjing QinHeng Electronics (PCIe)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor HGST		0x1c58	HGST, Inc.
 vendor BEIJING_MEMBLAZE	0x1c5f	Beijing Memblaze Technology Co. Ltd.
+vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
 vendor HINT		0x3388	HiNT
@@ -6758,6 +6759,9 @@ product RISCOM N2	0x5568	N2
 /* RNS products */
 product RNS FDDI	0x2200	2200 FDDI
 
+/* Rockchip products */
+product ROCKCHIP RK3399_RC	0x0100	RK3399 Root Complex
+ 
 /* S2io products */
 product S2IO XFRAME	0x5831	Xframe 10 Gigabit Ethernet Adapter
 product S2IO XFRAME2	0x5832	Xframe2 10 Gigabit Ethernet Adapter
