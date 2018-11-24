@@ -1,9 +1,9 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.14 2015/12/28 07:37:59 mrg Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.14.8.1 2018/11/24 17:13:51 martin Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.16 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  *        ala transform_request().
  *
  * transform_request() is supposed to check that we have user support
- * enabled.
+ * enabled.  returns 0 if handled/error, 1 if continue.
  */
 int
 bozo_user_transform(bozo_httpreq_t *request)
@@ -90,7 +90,7 @@ bozo_user_transform(bozo_httpreq_t *request)
 	if (pw == NULL) {
 		free(request->hr_user);
 		request->hr_user = NULL;
-		(void)bozo_http_error(httpd, 404, request, "no such user");
+		bozo_http_error(httpd, 404, request, "no such user");
 		return 0;
 	}
 
@@ -101,15 +101,14 @@ bozo_user_transform(bozo_httpreq_t *request)
 	if (chdir(pw->pw_dir) < 0) {
 		bozowarn(httpd, "chdir1 error: %s: %s", pw->pw_dir,
 			strerror(errno));
-		(void)bozo_http_error(httpd, 404, request,
-			"can't chdir to homedir");
+		bozo_http_error(httpd, 404, request, "can't chdir to homedir");
 		return 0;
 	}
 	if (chdir(httpd->public_html) < 0) {
 		bozowarn(httpd, "chdir2 error: %s: %s", httpd->public_html,
 			strerror(errno));
-		(void)bozo_http_error(httpd, 404, request,
-			"can't chdir to public_html");
+		bozo_http_error(httpd, 404, request,
+				"can't chdir to public_html");
 		return 0;
 	}
 	if (s == NULL || *s == '\0') {

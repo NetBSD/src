@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.22 2015/12/28 07:37:59 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.22.8.1 2018/11/24 17:13:51 martin Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -62,7 +63,7 @@
 
 #ifndef BOZO_SSL_OPTIONS
 #define BOZO_SSL_OPTIONS					\
-	(SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1)
+	((long)(SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1))
 #endif
 
   /* this structure encapsulates the ssl info */
@@ -322,6 +323,10 @@ bozo_ssl_set_ciphers(bozohttpd_t *httpd, const char *ciphers)
 
 #endif /* NO_SSL_SUPPORT */
 
+/*
+ * These functions are always present, so that caller code can simply
+ * use bozo_*() for IO, regardless of SSL.
+ */
 int
 bozo_printf(bozohttpd_t *httpd, const char *fmt, ...)
 {

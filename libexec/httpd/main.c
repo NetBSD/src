@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.16 2016/10/04 18:33:00 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.16.6.1 2018/11/24 17:13:51 martin Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
 
 /*
- * Copyright (c) 1997-2016 Matthew R. Green
+ * Copyright (c) 1997-2018 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,65 +61,75 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozowarn(httpd, "usage: %s [options] slashdir [virtualhostname]",
 			progname);
 	bozowarn(httpd, "options:");
-#ifndef NO_DEBUG
-	bozowarn(httpd, "   -d\t\t\tenable debug support");
-#endif
-	bozowarn(httpd, "   -s\t\t\talways log to stderr");
-#ifndef NO_DYNAMIC_CONTENT
-	bozowarn(httpd, "   -M arg t c c11\tadd this mime extenstion");
-#endif
-#ifndef NO_USER_SUPPORT
-	bozowarn(httpd, "   -u\t\t\tenable ~user/public_html support");
-	bozowarn(httpd, "   -p dir\t\tchange `public_html' directory name");
-#ifndef NO_CGIBIN_SUPPORT
-	bozowarn(httpd, "   -E\t\t\tenable CGI support for user dirs");
-#endif
-#endif
-#ifndef NO_CGIBIN_SUPPORT
-#ifndef NO_DYNAMIC_CONTENT
-	bozowarn(httpd, "   -C arg prog\t\tadd this CGI handler");
-#endif
-	bozowarn(httpd,
-		"   -c cgibin\t\tenable cgi-bin support in this directory");
-#endif
-#ifndef NO_LUA_SUPPORT
-	bozowarn(httpd, "   -L arg script\tadd this Lua script");
-#endif
-	bozowarn(httpd, "   -I port\t\tbind or use on this port");
-#ifndef NO_DAEMON_MODE
-	bozowarn(httpd, "   -b\t\t\tbackground and go into daemon mode");
-	bozowarn(httpd, "   -f\t\t\tkeep daemon mode in the foreground");
-	bozowarn(httpd,
-		"   -i address\t\tbind on this address (daemon mode only)");
-	bozowarn(httpd, "   -P pidfile\t\tpath to the pid file to create");
-#endif
-	bozowarn(httpd, "   -S version\t\tset server version string");
-	bozowarn(httpd, "   -t dir\t\tchroot to `dir'");
-	bozowarn(httpd, "   -U username\t\tchange user to `user'");
-	bozowarn(httpd,
-		"   -e\t\t\tdon't clean the environment (-t and -U only)");
-	bozowarn(httpd,
-		"   -v virtualroot\tenable virtual host support "
-		"in this directory");
-	bozowarn(httpd, "   -V\t\tUnknown virtual hosts go to `slashdir'");
-#ifndef NO_DIRINDEX_SUPPORT
-	bozowarn(httpd,
-		"   -X\t\t\tenable automatic directory index support");
-	bozowarn(httpd,
-		"   -H\t\t\thide files starting with a period (.)"
-		" in index mode");
-#endif
-	bozowarn(httpd,
-		"   -x index\t\tchange default `index.html' file name");
-#ifndef NO_SSL_SUPPORT
-	bozowarn(httpd,
-		"   -z ciphers\t\tspecify SSL ciphers");
-	bozowarn(httpd,
-		"   -Z cert privkey\tspecify path to server certificate"
-			" and private key file\n"
-		"\t\t\tin pem format and enable bozohttpd in SSL mode");
-#endif /* NO_SSL_SUPPORT */
-	bozowarn(httpd, "   -G print version number and exit");
+
+	if (have_daemon_mode)
+		bozowarn(httpd, "   -b\t\t\tbackground and go into daemon mode");
+	if (have_cgibin &&
+	    have_dynamic_content)
+		bozowarn(httpd, "   -C arg prog\t\tadd this CGI handler");
+	if (have_cgibin)
+		bozowarn(httpd, "   -c cgibin\t\tenable cgi-bin support in "
+				"this directory");
+	if (have_debug)
+		bozowarn(httpd, "   -d\t\t\tenable debug support");
+	if (have_cgibin)
+		bozowarn(httpd, "   -E\t\t\tenable CGI support for user dirs");
+	if (have_user &&
+	    have_cgibin)
+		bozowarn(httpd, "   -e\t\t\tdon't clean the environment "
+				"(-t and -U only)");
+	if (have_daemon_mode)
+		bozowarn(httpd, "   -f\t\t\tforeground in daemon mode");
+	if (have_all)
+		bozowarn(httpd, "   -G print version number and exit");
+	if (have_dirindex)
+		bozowarn(httpd, "   -H\t\t\thide files starting with a period "
+				"(.) in index mode");
+	if (have_all)
+		bozowarn(httpd, "   -I port\t\tbind or use on this port");
+	if (have_daemon_mode)
+		bozowarn(httpd, "   -i address\t\tbind on this address "
+				"(daemon mode only)");
+	if (have_lua)
+		bozowarn(httpd, "   -L arg script\tadd this Lua script");
+	if (have_dynamic_content)
+		bozowarn(httpd, "   -M arg t c c11\tadd this mime extenstion");
+	if (have_daemon_mode)
+		bozowarn(httpd, "   -P pidfile\t\tpid file path");
+	if (have_user)
+		bozowarn(httpd, "   -p dir\t\t\"public_html\" directory name");
+
+	if (have_all) {
+		bozowarn(httpd, "   -S version\t\tset server version string");
+		bozowarn(httpd, "   -s\t\t\talways log to stderr");
+		bozowarn(httpd, "   -T type timeout\tset `type' timeout");
+		bozowarn(httpd, "   -t dir\t\tchroot to `dir'");
+		bozowarn(httpd, "   -U username\t\tchange user to `user'");
+	}
+	if (have_user)
+		bozowarn(httpd, "   -u\t\t\tenable ~user/public_html support");
+
+	if (have_all) {
+		bozowarn(httpd, "   -V\t\t\tUnknown virtual hosts go to "
+				"`slashdir'");
+		bozowarn(httpd, "   -v virtualroot\tenable virtual host "
+				"support in this directory");
+	}
+
+	if (have_dirindex)
+		bozowarn(httpd, "   -X\t\t\tdirectory index support");
+	if (have_all)
+		bozowarn(httpd, "   -x index\t\tdefault \"index.html\" "
+				"file name");
+
+	if (have_ssl) {
+		bozowarn(httpd, "   -Z cert privkey\tspecify path to server "
+				"certificate and private key file\n"
+				"\t\t\tin pem format and enable bozohttpd in "
+				"SSL mode");
+		bozowarn(httpd, "   -z ciphers\t\tspecify SSL ciphers");
+	}
+
 	bozoerr(httpd, 1, "%s failed to start", progname);
 }
 
@@ -150,100 +160,14 @@ main(int argc, char **argv)
 	 */
 
 	while ((c = getopt(argc, argv,
-	    "C:EGHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
+	    "C:EGHI:L:M:P:S:T:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
 		switch (c) {
 
-		case 'L':
-#ifdef NO_LUA_SUPPORT
-			bozoerr(&httpd, 1,
-				"Lua support is not enabled");
-			/* NOTREACHED */
-#else
-			/* make sure there's two argument */
-			if (argc - optind < 1)
-				usage(&httpd, progname);
-			bozo_add_lua_map(&httpd, optarg, argv[optind]);
-			optind++;
-			break;
-#endif /* NO_LUA_SUPPORT */
-		case 'M':
-#ifdef NO_DYNAMIC_CONTENT
-			bozoerr(&httpd, 1,
-				"dynamic mime content support is not enabled");
-			/* NOTREACHED */
-#else
-			/* make sure there's four arguments */
-			if (argc - optind < 3)
-				usage(&httpd, progname);
-			bozo_add_content_map_mime(&httpd, optarg, argv[optind],
-			    argv[optind+1], argv[optind+2]);
-			optind += 3;
-			break;
-#endif /* NO_DYNAMIC_CONTENT */
-
-		case 'n':
-			bozo_set_pref(&httpd, &prefs, "numeric", "true");
-			break;
-
-		case 's':
-			bozo_set_pref(&httpd, &prefs, "log to stderr", "true");
-			break;
-
-		case 'S':
-			bozo_set_pref(&httpd, &prefs, "server software",
-				      optarg);
-			break;
-		case 'Z':
-#ifdef NO_SSL_SUPPORT
-			bozoerr(&httpd, 1, "ssl support is not enabled");
-			/* NOT REACHED */
-#else
-			/* make sure there's two arguments */
-			if (argc - optind < 1)
-				usage(&httpd, progname);
-			bozo_ssl_set_opts(&httpd, optarg, argv[optind++]);
-			break;
-#endif /* NO_SSL_SUPPORT */
-
-		case 'z':
-#ifdef NO_SSL_SUPPORT
-			bozoerr(&httpd, 1, "ssl support is not enabled");
-			/* NOT REACHED */
-#else
-			bozo_ssl_set_ciphers(&httpd, optarg);
-			break;
-#endif /* NO_SSL_SUPPORT */
-
-		case 'U':
-			bozo_set_pref(&httpd, &prefs, "username", optarg);
-			break;
-
-		case 'V':
-			bozo_set_pref(&httpd, &prefs, "unknown slash", "true");
-			break;
-
-		case 'v':
-			bozo_set_pref(&httpd, &prefs, "virtual base", optarg);
-			break;
-
-		case 'x':
-			bozo_set_pref(&httpd, &prefs, "index.html", optarg);
-			break;
-
-		case 'I':
-			bozo_set_pref(&httpd, &prefs, "port number", optarg);
-			break;
-
-#ifdef NO_DAEMON_MODE
 		case 'b':
-		case 'e':
-		case 'f':
-		case 'i':
-		case 'P':
-			bozoerr(&httpd, 1, "Daemon mode is not enabled");
-			/* NOTREACHED */
-#else
-		case 'b':
+			if (!have_daemon_mode)
+ no_daemon_mode:
+				bozoerr(&httpd, 1, "Daemon mode not enabled");
+
 			/*
 			 * test suite support - undocumented
 			 * background == 2 (aka, -b -b) means to
@@ -254,104 +178,54 @@ main(int argc, char **argv)
 			bozo_set_pref(&httpd, &prefs, "background", val);
 			break;
 
-		case 'e':
-			bozo_set_pref(&httpd, &prefs, "dirty environment",
-				      "true");
-			break;
-
-		case 'f':
-			bozo_set_pref(&httpd, &prefs, "foreground", "true");
-			break;
-
-		case 'i':
-			bozo_set_pref(&httpd, &prefs, "bind address", optarg);
-			break;
-
-		case 'P':
-			bozo_set_pref(&httpd, &prefs, "pid file", optarg);
-			break;
-#endif /* NO_DAEMON_MODE */
-
-#ifdef NO_CGIBIN_SUPPORT
 		case 'c':
-		case 'C':
-			bozoerr(&httpd, 1, "CGI is not enabled");
-			/* NOTREACHED */
-#else
-		case 'c':
+			if (!have_cgibin)
+				bozoerr(&httpd, 1, "CGI not enabled");
+
 			bozo_cgi_setbin(&httpd, optarg);
 			break;
 
 		case 'C':
-#  ifdef NO_DYNAMIC_CONTENT
-			bozoerr(&httpd, 1,
-				"dynamic CGI handler support is not enabled");
-			/* NOTREACHED */
-#  else
+			if (!have_dynamic_content && !have_cgibin)
+				bozoerr(&httpd, 1,
+				    "dynamic CGI handler support not enabled");
+
 			/* make sure there's two arguments */
 			if (argc - optind < 1)
 				usage(&httpd, progname);
 			bozo_add_content_map_cgi(&httpd, optarg,
 					argv[optind++]);
 			break;
-#  endif /* NO_DYNAMIC_CONTENT */
-#endif /* NO_CGIBIN_SUPPORT */
 
 		case 'd':
+			if (!have_debug)
+				bozowarn(&httpd, "Debugging not enabled");
 			httpd.debug++;
-#ifdef NO_DEBUG
-			if (httpd.debug == 1)
-				bozowarn(&httpd, "Debugging is not enabled");
-#endif /* NO_DEBUG */
 			break;
 
-		case 't':
-			bozo_set_pref(&httpd, &prefs, "chroot dir", optarg);
-			break;
-
-#ifdef NO_USER_SUPPORT
-		case 'p':
-		case 'u':
 		case 'E':
-			bozoerr(&httpd, 1, "User support is not enabled");
-			/* NOTREACHED */
-#else
-		case 'p':
-			bozo_set_pref(&httpd, &prefs, "public_html", optarg);
-			break;
+			if (have_user &&
+			    have_cgibin)
+				bozoerr(&httpd, 1, "CGI not enabled");
 
-		case 'u':
-			bozo_set_pref(&httpd, &prefs, "enable users", "true");
-			break;
-#ifndef NO_CGIBIN_SUPPORT
-		case 'E':
 			bozo_set_pref(&httpd, &prefs, "enable user cgibin",
 				      "true");
 			break;
-#else
-		case 'E':
-			bozoerr(&httpd, 1, "CGI is not enabled");
-			/* NOTREACHED */
-#endif /* NO_CGIBIN_SPPORT */
-#endif /* NO_USER_SUPPORT */
 
-#ifdef NO_DIRINDEX_SUPPORT
-		case 'H':
-		case 'X':
-			bozoerr(&httpd, 1,
-				"directory indexing is not enabled");
-			/* NOTREACHED */
-#else
-		case 'H':
-			bozo_set_pref(&httpd, &prefs, "hide dots", "true");
-			break;
+		case 'e':
+			if (!have_daemon_mode)
+				goto no_daemon_mode;
 
-		case 'X':
-			bozo_set_pref(&httpd, &prefs, "directory indexing",
+			bozo_set_pref(&httpd, &prefs, "dirty environment",
 				      "true");
 			break;
 
-#endif /* NO_DIRINDEX_SUPPORT */
+		case 'f':
+			if (!have_daemon_mode)
+				goto no_daemon_mode;
+
+			bozo_set_pref(&httpd, &prefs, "foreground", "true");
+			break;
 
 		case 'G':
 			{
@@ -361,6 +235,144 @@ main(int argc, char **argv)
 				printf("bozohttpd version %s\n", version);
 			}
 			return 0;
+
+		case 'H':
+			if (!have_dirindex)
+ no_dirindex_support:
+				bozoerr(&httpd, 1,
+					"directory indexing not enabled");
+
+			bozo_set_pref(&httpd, &prefs, "hide dots", "true");
+			break;
+
+		case 'I':
+			bozo_set_pref(&httpd, &prefs, "port number", optarg);
+			break;
+
+		case 'i':
+			if (!have_daemon_mode)
+				goto no_daemon_mode;
+
+			bozo_set_pref(&httpd, &prefs, "bind address", optarg);
+			break;
+
+		case 'L':
+			if (!have_lua)
+				bozoerr(&httpd, 1, "Lua support not enabled");
+
+			/* make sure there's two argument */
+			if (argc - optind < 1)
+				usage(&httpd, progname);
+			bozo_add_lua_map(&httpd, optarg, argv[optind]);
+			optind++;
+			break;
+
+		case 'M':
+			if (!have_dynamic_content)
+				bozoerr(&httpd, 1,
+				    "dynamic mime content support not enabled");
+
+			/* make sure there're four arguments */
+			if (argc - optind < 3)
+				usage(&httpd, progname);
+			bozo_add_content_map_mime(&httpd, optarg, argv[optind],
+			    argv[optind+1], argv[optind+2]);
+			optind += 3;
+			break;
+
+		case 'n':
+			bozo_set_pref(&httpd, &prefs, "numeric", "true");
+			break;
+
+		case 'P':
+			if (!have_daemon_mode)
+				goto no_daemon_mode;
+
+			bozo_set_pref(&httpd, &prefs, "pid file", optarg);
+			break;
+
+		case 'p':
+			if (!have_user)
+ no_user_support:
+				bozoerr(&httpd, 1, "User support not enabled");
+
+			bozo_set_pref(&httpd, &prefs, "public_html", optarg);
+			break;
+
+		case 'S':
+			bozo_set_pref(&httpd, &prefs, "server software",
+				      optarg);
+			break;
+
+		case 's':
+			bozo_set_pref(&httpd, &prefs, "log to stderr", "true");
+			break;
+
+		case 'T':
+			/* make sure there're two arguments */
+			if (argc - optind < 1)
+				usage(&httpd, progname);
+			if (bozo_set_timeout(&httpd, &prefs,
+					     optarg, argv[optind])) {
+				bozoerr(&httpd, 1,
+					"invalid type '%s'", optarg);
+				/* NOTREACHED */
+			}
+			optind++;
+			break;
+
+		case 't':
+			bozo_set_pref(&httpd, &prefs, "chroot dir", optarg);
+			break;
+
+		case 'U':
+			bozo_set_pref(&httpd, &prefs, "username", optarg);
+			break;
+
+		case 'u':
+			if (!have_user)
+				goto no_user_support;
+
+			bozo_set_pref(&httpd, &prefs, "enable users", "true");
+			break;
+
+			bozo_set_pref(&httpd, &prefs, "directory indexing",
+				      "true");
+			break;
+
+		case 'V':
+			bozo_set_pref(&httpd, &prefs, "unknown slash", "true");
+			break;
+
+		case 'v':
+			bozo_set_pref(&httpd, &prefs, "virtual base", optarg);
+			break;
+
+		case 'X':
+			if (!have_dirindex)
+				goto no_dirindex_support;
+
+		case 'x':
+			bozo_set_pref(&httpd, &prefs, "index.html", optarg);
+			break;
+
+		case 'Z':
+			if (!have_ssl)
+ no_ssl:
+				bozoerr(&httpd, 1, "ssl support not enabled");
+
+			/* make sure there's two arguments */
+			if (argc - optind < 1)
+				usage(&httpd, progname);
+			bozo_ssl_set_opts(&httpd, optarg, argv[optind++]);
+			break;
+
+		case 'z':
+			if (!have_ssl)
+				goto no_ssl;
+
+			bozo_ssl_set_ciphers(&httpd, optarg);
+			break;
 
 		default:
 			usage(&httpd, progname);
