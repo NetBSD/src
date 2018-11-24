@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.33 2017/06/27 23:23:09 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.34 2018/11/24 12:17:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.33 2017/06/27 23:23:09 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.34 2018/11/24 12:17:35 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -509,36 +509,14 @@ terminal_move_to_line(EditLine *el, int where)
 		return;
 	}
 	if ((del = where - el->el_cursor.v) > 0) {
-		while (del > 0) {
-			if (EL_HAS_AUTO_MARGINS &&
-			    el->el_display[el->el_cursor.v][0] != '\0') {
-                                size_t h = (size_t)
-				    (el->el_terminal.t_size.h - 1);
-                                for (; h > 0 &&
-                                         el->el_display[el->el_cursor.v][h] ==
-                                                 MB_FILL_CHAR;
-                                         h--)
-                                                continue;
-				/* move without newline */
-				terminal_move_to_char(el, (int)h);
-				terminal_overwrite(el, &el->el_display
-				    [el->el_cursor.v][el->el_cursor.h],
-				    (size_t)(el->el_terminal.t_size.h -
-				    el->el_cursor.h));
-				/* updates Cursor */
-				del--;
-			} else {
-				if ((del > 1) && GoodStr(T_DO)) {
-					terminal_tputs(el, tgoto(Str(T_DO), del,
-					    del), del);
-					del = 0;
-				} else {
-					for (; del > 0; del--)
-						terminal__putc(el, '\n');
-					/* because the \n will become \r\n */
-					el->el_cursor.h = 0;
-				}
-			}
+		if ((del > 1) && GoodStr(T_DO)) {
+			terminal_tputs(el, tgoto(Str(T_DO), del, del), del);
+			del = 0;
+		} else {
+			for (; del > 0; del--)
+				terminal__putc(el, '\n');
+			/* because the \n will become \r\n */
+			el->el_cursor.h = 0;
 		}
 	} else {		/* del < 0 */
 		if (GoodStr(T_UP) && (-del > 1 || !GoodStr(T_up)))
