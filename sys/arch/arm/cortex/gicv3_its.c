@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.7 2018/11/23 16:01:27 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.8 2018/11/24 15:40:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.7 2018/11/23 16:01:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.8 2018/11/24 15:40:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -55,6 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.7 2018/11/23 16:01:27 jmcneill Exp $
 #define	GITS_COMMANDS_ALIGN	0x10000
 
 #define	GITS_ITT_ALIGN		0x100
+
+/*
+ * IIDR values used for errata
+ */
+#define GITS_IIDR_PID_CAVIUM_THUNDERX	0xa1
+#define GITS_IIDR_IMP_CAVIUM		0x34c
+
 
 static inline uint32_t
 gits_read_4(struct gicv3_its *its, bus_size_t reg)
@@ -594,7 +601,26 @@ gicv3_its_table_init(struct gicv3_softc *sc, struct gicv3_its *its)
 	int tab;
 
 	const uint64_t typer = gits_read_8(its, GITS_TYPER);
-	const u_int devbits = __SHIFTOUT(typer, GITS_TYPER_Devbits) + 1;
+
+	/* devbits and innercache defaults */
+	u_int devbits = __SHIFTOUT(typer, GITS_TYPER_Devbits) + 1;
+	u_int innercache = GITS_Cache_NORMAL_NC;
+
+	uint32_t iidr = gits_read_4(its, GITS_IIDR);
+	const uint32_t ctx =
+	   __SHIFTIN(GITS_IIDR_IMP_CAVIUM, GITS_IIDR_Implementor) |
+	   __SHIFTIN(GITS_IIDR_PID_CAVIUM_THUNDERX, GITS_IIDR_ProductID) |
+	   __SHIFTIN(0, GITS_IIDR_Variant);
+	const uint32_t mask =
+	    GITS_IIDR_Implementor |
+	    GITS_IIDR_ProductID |
+	    GITS_IIDR_Variant;
+
+	if ((iidr & mask) == ctx) {
+		devbits = 20;		/* 8Mb */
+		innercache = GITS_Cache_DEVICE_nGnRnE;
+		aprint_normal_dev(sc->sc_dev, "Cavium ThunderX errata detected\n");
+	}
 
 	for (tab = 0; tab < 8; tab++) {
 		baser = gits_read_8(its, GITS_BASERn(tab));
@@ -646,11 +672,11 @@ gicv3_its_table_init(struct gicv3_softc *sc, struct gicv3_its *its)
 		baser &= ~GITS_BASER_Physical_Address;
 		baser |= its->its_tab[tab].segs[0].ds_addr;
 		baser &= ~GITS_BASER_InnerCache;
-		baser |= __SHIFTIN(GITS_Cache_NORMAL_NC, GITS_BASER_InnerCache);
+		baser |= __SHIFTIN(innercache, GITS_BASER_InnerCache);
 		baser &= ~GITS_BASER_Shareability;
 		baser |= __SHIFTIN(GITS_Shareability_NS, GITS_BASER_Shareability);
 		baser |= GITS_BASER_Valid;
-		
+
 		gits_write_8(its, GITS_BASERn(tab), baser);
 	}
 }
