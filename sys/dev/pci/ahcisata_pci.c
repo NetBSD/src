@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.45 2018/11/20 15:16:43 prlw1 Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.46 2018/11/24 15:35:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.45 2018/11/20 15:16:43 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.46 2018/11/24 15:35:45 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -220,6 +220,8 @@ CFATTACH_DECL3_NEW(ahcisata_pci, sizeof(struct ahci_pci_softc),
     ahci_pci_match, ahci_pci_attach, ahci_pci_detach, NULL,
     NULL, ahci_pci_childdetached, DVF_DETACH_SHUTDOWN);
 
+#define	AHCI_PCI_ABAR_CAVIUM	0x10
+
 static int
 ahci_pci_has_quirk(pci_vendor_id_t vendor, pci_product_id_t product)
 {
@@ -231,6 +233,20 @@ ahci_pci_has_quirk(pci_vendor_id_t vendor, pci_product_id_t product)
 			return ahci_pci_quirks[i].quirks;
 	return 0;
 }
+
+static int
+ahci_pci_abar(struct pci_attach_args *pa)
+{
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CAVIUM) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CAVIUM_THUNDERX_AHCI ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CAVIUM_THUNDERX_RAID) {
+			return AHCI_PCI_ABAR_CAVIUM;
+		}
+	}
+
+	return AHCI_PCI_ABAR;
+}
+
 
 static int
 ahci_pci_match(device_t parent, cfdata_t match, void *aux)
@@ -253,9 +269,9 @@ ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 	    (force == false))
 		return 0;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &regt, &regh, NULL, &size) != 0)
+	int bar = ahci_pci_abar(pa);
+	pcireg_t memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	if (pci_mapreg_map(pa, bar, memtype, 0, &regt, &regh, NULL, &size) != 0)
 		return 0;
 
 	if ((PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
@@ -281,9 +297,10 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_atac.atac_dev = self;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_ahcit, &sc->sc_ahcih, NULL, &sc->sc_ahcis) != 0) {
+	int bar = ahci_pci_abar(pa);
+	pcireg_t memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	if (pci_mapreg_map(pa, bar, memtype, 0, &sc->sc_ahcit, &sc->sc_ahcih,
+	    NULL, &sc->sc_ahcis) != 0) {
 		aprint_error_dev(self, "can't map ahci registers\n");
 		return;
 	}
