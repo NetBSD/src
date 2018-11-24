@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.12 2014/02/25 18:30:11 pooka Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.13 2018/11/24 17:40:37 maxv Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.12 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.13 2018/11/24 17:40:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -204,13 +204,16 @@ static size_t
 sysctl_fillevcnt(const struct evcnt *ev, struct xevcnt_sysctl *xevs,
 	size_t *copylenp)
 {
+	const bool allowaddr = get_expose_address(curproc);
 	const size_t copylen = offsetof(struct evcnt_sysctl, ev_strings)
 	    + ev->ev_grouplen + 1 + ev->ev_namelen + 1;
 	const size_t len = roundup2(copylen, sizeof(uint64_t));
+
 	if (xevs != NULL) {
 		xevs->evs.ev_count = ev->ev_count;
-		xevs->evs.ev_addr = PTRTOUINT64(ev);
-		xevs->evs.ev_parent = PTRTOUINT64(ev->ev_parent);
+		COND_SET_VALUE(xevs->evs.ev_addr, PTRTOUINT64(ev), allowaddr);
+		COND_SET_VALUE(xevs->evs.ev_parent, PTRTOUINT64(ev->ev_parent),
+		    allowaddr);
 		xevs->evs.ev_type = ev->ev_type;
 		xevs->evs.ev_grouplen = ev->ev_grouplen;
 		xevs->evs.ev_namelen = ev->ev_namelen;
@@ -257,7 +260,7 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 	sysctl_unlock();
 
 	if (oldp != NULL && xevs0 == NULL)
-		xevs0 = kmem_alloc(sizeof(*xevs0), KM_SLEEP);
+		xevs0 = kmem_zalloc(sizeof(*xevs0), KM_SLEEP);
 
 	retries = 100;
  retry:
