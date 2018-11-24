@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.29 2018/11/23 11:16:59 uwe Exp $	*/
+/*	$NetBSD: attributes.c,v 1.30 2018/11/24 01:04:18 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.29 2018/11/23 11:16:59 uwe Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.30 2018/11/24 01:04:18 uwe Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -105,7 +105,7 @@ color_set(short pair, void *opts)
 int
 attron(int attr)
 {
-	return __wattr_on(stdscr, (attr_t) attr);
+	return wattron(stdscr, attr);
 }
 
 /*
@@ -115,7 +115,7 @@ attron(int attr)
 int
 attroff(int attr)
 {
-	return __wattr_off(stdscr, (attr_t) attr);
+	return wattroff(stdscr, attr);
 }
 
 /*
