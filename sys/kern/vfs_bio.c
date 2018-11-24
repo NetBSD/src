@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.277 2018/08/29 09:05:17 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.278 2018/11/24 17:52:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.277 2018/08/29 09:05:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.278 2018/11/24 17:52:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1746,8 +1746,11 @@ buf_syncwait(void)
 }
 
 static void
-sysctl_fillbuf(buf_t *i, struct buf_sysctl *o)
+sysctl_fillbuf(const buf_t *i, struct buf_sysctl *o)
 {
+	const bool allowaddr = get_expose_address(curproc);
+
+	memset(o, 0, sizeof(*o));
 
 	o->b_flags = i->b_flags | i->b_cflags | i->b_oflags;
 	o->b_error = i->b_error;
@@ -1756,13 +1759,13 @@ sysctl_fillbuf(buf_t *i, struct buf_sysctl *o)
 	o->b_bufsize = i->b_bufsize;
 	o->b_bcount = i->b_bcount;
 	o->b_resid = i->b_resid;
-	o->b_addr = PTRTOUINT64(i->b_data);
+	COND_SET_VALUE(o->b_addr, PTRTOUINT64(i->b_data), allowaddr);
 	o->b_blkno = i->b_blkno;
 	o->b_rawblkno = i->b_rawblkno;
-	o->b_iodone = PTRTOUINT64(i->b_iodone);
-	o->b_proc = PTRTOUINT64(i->b_proc);
-	o->b_vp = PTRTOUINT64(i->b_vp);
-	o->b_saveaddr = PTRTOUINT64(i->b_saveaddr);
+	COND_SET_VALUE(o->b_iodone, PTRTOUINT64(i->b_iodone), allowaddr);
+	COND_SET_VALUE(o->b_proc, PTRTOUINT64(i->b_proc), allowaddr);
+	COND_SET_VALUE(o->b_vp, PTRTOUINT64(i->b_vp), allowaddr);
+	COND_SET_VALUE(o->b_saveaddr, PTRTOUINT64(i->b_saveaddr), allowaddr);
 	o->b_lblkno = i->b_lblkno;
 }
 
