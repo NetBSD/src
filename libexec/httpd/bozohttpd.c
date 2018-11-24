@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.94 2018/11/23 08:11:20 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.95 2018/11/24 00:47:51 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -395,7 +395,7 @@ alarmer(int sig)
  */
 int
 bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
-		 const char *target, const char *time)
+		 const char *target, const char *val)
 {
 	const char *cur, *timeouts[] = {
 		"initial timeout",
@@ -409,7 +409,7 @@ bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
 
 	for (cur = timeouts[0]; len >= minlen && *cur; cur++) {
 		if (strncmp(target, cur, len) == 0) {
-			bozo_set_pref(httpd, prefs, cur, time);
+			bozo_set_pref(httpd, prefs, cur, val);
 			return 0;
 		}
 	}
