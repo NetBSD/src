@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.11 2011/02/08 03:26:12 haad Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.12 2018/11/24 11:27:37 mlelstv Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -25,7 +25,9 @@
 #include <sys/sysctl.h>
 
 #include <fcntl.h>
+#include <paths.h>
 #include <dirent.h>
+#include <fts.h>
 #include <limits.h>
 
 #include <dm.h>
@@ -367,40 +369,31 @@ static int _unmarshal_status(struct dm_task *dmt, struct dm_ioctl *dmi)
 }
 
 static char *
-get_dev_name(char *d_name, uint32_t d_major, uint32_t d_minor)
+get_dev_name(dev_t dev)
 {
+	static char * const dirs[2] = { _PATH_DEV, NULL };
 	static char d_buf[MAXPATHLEN];
-	struct dirent *dire;
-	struct stat st;
-	DIR *dev_dir;
-
-	int err;
+	FTS *ftsp;
+	FTSENT *fe;
 	char *name;
 
-	dev_dir = opendir("/dev");
+	if ((ftsp = fts_open(dirs, FTS_NOCHDIR | FTS_PHYSICAL, NULL)) == NULL)
+		return NULL;
 
-	while ((dire = readdir(dev_dir)) != NULL) {
-
-		if (strstr(dire->d_name, d_name) == NULL)
+	name = NULL;
+	while ((fe = fts_read(ftsp)) != NULL) {
+		if (fe->fts_info != FTS_DEFAULT)
 			continue;
-
-		snprintf(d_buf, MAXPATHLEN, "/dev/%s", dire->d_name);
-
-		if ((err = stat(d_buf, &st)) < 0)
-			printf("stat failed with %d", err);
-
-		if (st.st_mode & S_IFBLK){
-			if ((major(st.st_rdev) == d_major) && (minor(st.st_rdev) == d_minor)) {
-				strncpy(d_buf, dire->d_name, strlen(dire->d_name) + 1);
+		if (S_ISBLK(fe->fts_statp->st_mode)) {
+			if (fe->fts_statp->st_rdev == dev) {
+				strlcpy(d_buf, fe->fts_path, sizeof(d_buf));
 				name = d_buf;
 				break;
 			}
 		}
-
-		memset(d_buf, '0', sizeof(d_buf));
 	}
 
-	(void)closedir(dev_dir);
+	fts_close(ftsp);
 
 	return name;
 }
@@ -417,13 +410,15 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 		  uint32_t dev_minor)
 {
 	int r;
-	uint32_t major, dm_major;
+	uint32_t dm_major;
+	int major;
 	char *name;
 	mode_t mode;
 	dev_t dev;
 	size_t val_len,i;
 	struct kinfo_drivers *kd;
 
+	major = -1;
 	mode = 0;
 
 	nbsd_get_dm_major(&dm_major, DM_BLOCK_MAJOR);
@@ -432,7 +427,7 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 		return 0;
 
 	if (sysctlbyname("kern.drivers",NULL,&val_len,NULL,0) < 0) {
-		printf("sysctlbyname failed");
+		printf("sysctlbyname failed\n");
 		return 0;
 	}
 
@@ -442,7 +437,8 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 	}
 
 	if (sysctlbyname("kern.drivers", kd, &val_len, NULL, 0) < 0) {
-		printf("sysctlbyname failed kd");
+		free(kd);
+		printf("sysctlbyname failed kd\n");
 		return 0;
 	}
 
@@ -453,18 +449,22 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 		}
 	}
 
-	dev = MKDEV(major,dev_minor);
-
-	mode |= S_IFBLK;
-
-	if ((name = devname(dev,mode)) == NULL)
-		name = get_dev_name(kd[i].d_name, major, dev_minor);
-
-	r = snprintf(buf, (size_t) bufsize, "/dev/%s",name);
+	if (major != -1) {
+		dev = MKDEV(major,dev_minor);
+		mode |= S_IFBLK;
+		if ((name = devname(dev,mode)) == NULL)
+			name = get_dev_name(dev);
+	} else
+		name = NULL;
 
 	free(kd);
 
-	if (r < 0 || r > bufsize - 1 || name == NULL)
+	if (name == NULL)
+		r = snprintf(buf, (size_t) bufsize, "%d:%d", dev_major, dev_minor);
+	else
+		r = snprintf(buf, (size_t) bufsize, _PATH_DEV "%s", name);
+
+	if (r < 0 || r > bufsize - 1)
 		return 0;
 
 	return 1;
