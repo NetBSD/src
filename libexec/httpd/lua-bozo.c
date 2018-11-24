@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.10.2.1.2.1 2016/04/15 18:55:49 snj Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.10.2.1.2.2 2018/11/24 17:23:47 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -51,8 +51,8 @@
 
 #define FORM	"application/x-www-form-urlencoded"
 
-static int
-lua_flush(lua_State *L)
+static bozohttpd_t *
+httpd_instance(lua_State *L)
 {
 	bozohttpd_t *httpd;
 
@@ -60,6 +60,14 @@ lua_flush(lua_State *L)
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	httpd = lua_touserdata(L, -1);
 	lua_pop(L, 1);
+
+	return httpd;
+}
+
+static int
+lua_flush(lua_State *L)
+{
+	bozohttpd_t *httpd = httpd_instance(L);
 
 	bozo_flush(httpd, stdout);
 	return 0;
@@ -68,63 +76,57 @@ lua_flush(lua_State *L)
 static int
 lua_print(lua_State *L)
 {
-	bozohttpd_t *httpd;
+	bozohttpd_t *httpd = httpd_instance(L);
 
-	lua_pushstring(L, "bozohttpd");
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	httpd = lua_touserdata(L, -1);
-	lua_pop(L, 1);
-
-	bozo_printf(httpd, "%s\r\n", lua_tostring(L, -1));
+	bozo_printf(httpd, "%s\r\n", lua_tostring(L, 1));
 	return 0;
 }
 
 static int
 lua_read(lua_State *L)
 {
-	bozohttpd_t *httpd;
-	int n, len;
+	bozohttpd_t *httpd = httpd_instance(L);
+	luaL_Buffer lbuf;
 	char *data;
+	lua_Integer len;
+	ssize_t n;
 
-	lua_pushstring(L, "bozohttpd");
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	httpd = lua_touserdata(L, -1);
-	lua_pop(L, 1);
+	len = luaL_checkinteger(L, 1);
+	data = luaL_buffinitsize(L, &lbuf, (size_t)len);
 
-	len = luaL_checkinteger(L, -1);
-	data = bozomalloc(httpd, len + 1);
-	n = bozo_read(httpd, STDIN_FILENO, data, len);
-	if (n >= 0) {
-		data[n] = '\0';
-		lua_pushstring(L, data);
-	} else
+	if ((n = bozo_read(httpd, STDIN_FILENO, data, len)) >= 0) {
+		luaL_pushresultsize(&lbuf, n);
+		return 1;
+	} else {
 		lua_pushnil(L);
-	free(data);
-	return 1;
+		lua_pushstring(L, "bozo_read() call failed");
+		return 2;
+	}
 }
 
 static int
 lua_register_handler(lua_State *L)
 {
+	bozohttpd_t *httpd = httpd_instance(L);
 	lua_state_map_t *map;
 	lua_handler_t *handler;
-	bozohttpd_t *httpd;
+	const char *name;
+	int ref;
 
 	lua_pushstring(L, "lua_state_map");
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	map = lua_touserdata(L, -1);
-	lua_pushstring(L, "bozohttpd");
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	httpd = lua_touserdata(L, -1);
-	lua_pop(L, 2);
+	lua_pop(L, 1);
 
-	luaL_checkstring(L, 1);
+	name = luaL_checkstring(L, 1);
+
 	luaL_checktype(L, 2, LUA_TFUNCTION);
+	lua_pushvalue(L, 2);
+	ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
 	handler = bozomalloc(httpd, sizeof(lua_handler_t));
-
-	handler->name = bozostrdup(httpd, NULL, lua_tostring(L, 1));
-	handler->ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	handler->name = bozostrdup(httpd, NULL, name);
+	handler->ref = ref;
 	SIMPLEQ_INSERT_TAIL(&map->handlers, handler, h_next);
 	httpd->process_lua = 1;
 	return 0;
@@ -133,23 +135,26 @@ lua_register_handler(lua_State *L)
 static int
 lua_write(lua_State *L)
 {
-	bozohttpd_t *httpd;
+	bozohttpd_t *httpd = httpd_instance(L);
 	const char *data;
+	size_t len;
+	ssize_t n;
 
-	lua_pushstring(L, "bozohttpd");
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	httpd = lua_touserdata(L, -1);
-	lua_pop(L, 1);
-
-	data = luaL_checkstring(L, -1);
-	lua_pushinteger(L, bozo_write(httpd, STDIN_FILENO, data, strlen(data)));
-	return 1;
+	data = luaL_checklstring(L, 1, &len);
+	if ((n = bozo_write(httpd, STDIN_FILENO, data, len)) >= 0) {
+		lua_pushinteger(L, n);
+		return 1;
+	} else {
+		lua_pushnil(L);
+		lua_pushstring(L, "bozo_write() call failed");
+		return 2;
+	}
 }
 
 static int
 luaopen_httpd(lua_State *L)
 {
-	struct luaL_Reg functions[] = {
+	static struct luaL_Reg functions[] = {
 		{ "flush",		lua_flush },
 		{ "print",		lua_print },
 		{ "read",		lua_read },

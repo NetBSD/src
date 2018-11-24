@@ -42,7 +42,7 @@ function OptionParser(t)
   end
   function o.parse_args()
     -- expand options (e.g. "--input=file" -> "--input", "file")
-    local arg = {unpack(arg)}
+    local arg = {table.unpack(arg)}
     for i=#arg,1,-1 do local v = arg[i]
       local flag, val = v:match('^(%-%-%w+)=(.*)')
       if flag then
