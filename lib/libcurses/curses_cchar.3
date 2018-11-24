@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_cchar.3,v 1.1 2018/11/19 01:08:22 uwe Exp $
+.\"	$NetBSD: curses_cchar.3,v 1.2 2018/11/24 11:04:39 wiz Exp $
 .\"
 .\" Copyright (c) 2018 Valery Ushakov
 .\" All rights reserved.
@@ -55,12 +55,12 @@
 .Fa "const void *opts"
 .Fc
 .Sh DESCRIPTION
-Curses uses opaque type
+Curses uses the opaque type
 .Vt cchar_t
 to represent a string of wide characters up to an
 implementation-dependent length along with a color pair and zero or
 more attributes.
-A null 
+A null
 .Vt cchar_t
 object is an object that references an empty wide-character string.
 Arrays of
@@ -71,19 +71,19 @@ object.
 .Pp
 Objects of type
 .Vt cchar_t
-can be manipulated using
+can be manipulated using the
 .Nm getcchar
 and
 .Nm setcchar
 functions.
-Both these functions take as their last paramter the
+Both these functions take as their last parameter the
 .Fa opts
 argument which is reserved for future extensions.
 Currently, the application must provide a null pointer as
 .Fa opts .
 .\"
 .Pp
-When
+When the
 .Nm getcchar
 function is called with non-null
 .Fa wch
@@ -96,7 +96,7 @@ is copied to the
 .Fa wch
 array.
 The attributes are stored in
-.Fa attrs ,
+.Fa attrs
 and the color pair is stored in
 .Fa color_pair .
 In this case it returns
