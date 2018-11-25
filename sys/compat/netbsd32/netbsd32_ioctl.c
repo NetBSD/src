@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.99 2018/10/12 05:06:05 rin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.100 2018/11/25 17:58:29 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.99 2018/10/12 05:06:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.100 2018/11/25 17:58:29 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -287,20 +287,27 @@ netbsd32_to_plistref(struct netbsd32_plistref *s32p, struct plistref *p, u_long 
 }
 
 static inline void
+netbsd32_to_nvlist_ref_t(netbsd32_nvlist_ref_t *s32p, nvlist_ref_t *p, u_long cmd)
+{
+
+	p->buf = NETBSD32PTR64(s32p->buf);
+	p->len = s32p->len;
+	p->flags = s32p->flags;
+}
+
+static inline void
 netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
 {
 
 	*p = (u_long)*s32p;
 }
 
-#ifdef notdef
 static inline void
 netbsd32_to_voidp(netbsd32_voidp *s32p, voidp *p, u_long cmd)
 {
 
 	*p = (void *)NETBSD32PTR64(*s32p);
 }
-#endif
 
 static inline void
 netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_long cmd)
@@ -308,6 +315,28 @@ netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_lo
 
 	p->wc_names = (char *)NETBSD32PTR64(s32p->wc_names);
 	p->wc_count = s32p->wc_count;
+}
+
+static inline void
+netbsd32_to_npf_ioctl_table(
+    const struct netbsd32_npf_ioctl_table *s32p,
+    struct npf_ioctl_table *p,
+    u_long cmd)
+{
+
+       p->nct_cmd = s32p->nct_cmd;
+       p->nct_name = NETBSD32PTR64(s32p->nct_name);
+       switch (s32p->nct_cmd) {
+       case NPF_CMD_TABLE_LOOKUP:
+       case NPF_CMD_TABLE_ADD:
+       case NPF_CMD_TABLE_REMOVE:
+               p->nct_data.ent = s32p->nct_data.ent;
+               break;
+       case NPF_CMD_TABLE_LIST:
+               p->nct_data.buf.buf = NETBSD32PTR64(s32p->nct_data.buf.buf);
+               p->nct_data.buf.len = s32p->nct_data.buf.len;
+               break;
+       }
 }
 
 static inline void
@@ -740,6 +769,15 @@ netbsd32_from_plistref(struct plistref *p, struct netbsd32_plistref *s32p, u_lon
 }
 
 static inline void
+netbsd32_from_nvlist_ref_t(nvlist_ref_t *p, netbsd32_nvlist_ref_t *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->buf, p->buf);
+	s32p->len = p->len;
+	s32p->flags = p->flags;
+}
+
+static inline void
 netbsd32_from_wdog_conf(struct wdog_conf *p, struct netbsd32_wdog_conf *s32p, u_long cmd)
 {
 
@@ -857,14 +895,12 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 	*s32p = (netbsd32_u_long)*p;
 }
 
-#ifdef notdef
 static inline void
 netbsd32_from_voidp(voidp *p, netbsd32_voidp *s32p, u_long cmd)
 {
 
 	NETBSD32PTR32(*s32p, *p);
 }
-#endif
 
 static inline void
 netbsd32_from_clockctl_settimeofday(
@@ -932,6 +968,28 @@ netbsd32_from_ksyms_gvalue(
 
 	NETBSD32PTR32(s32p->kv_name, p->kv_name);
 	s32p->kv_value = p->kv_value;
+}
+
+static inline void
+netbsd32_from_npf_ioctl_table(
+    const struct npf_ioctl_table *p,
+    struct netbsd32_npf_ioctl_table *s32p,
+    u_long cmd)
+{
+
+       s32p->nct_cmd = p->nct_cmd;
+       NETBSD32PTR32(s32p->nct_name, p->nct_name);
+       switch (p->nct_cmd) {
+       case NPF_CMD_TABLE_LOOKUP:
+       case NPF_CMD_TABLE_ADD:
+       case NPF_CMD_TABLE_REMOVE:
+               s32p->nct_data.ent = p->nct_data.ent;
+               break;
+       case NPF_CMD_TABLE_LIST:
+               NETBSD32PTR32(s32p->nct_data.buf.buf, p->nct_data.buf.buf);
+               s32p->nct_data.buf.len = p->nct_data.buf.len;
+               break;
+       }
 }
 
 static inline void
@@ -1421,6 +1479,19 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(KIOCGSYMBOL, ksyms_gsymbol);
 	case KIOCGVALUE32:
 		IOCTL_STRUCT_CONV_TO(KIOCGVALUE, ksyms_gvalue);
+
+        case IOC_NPF_LOAD32:
+                IOCTL_CONV_TO(IOC_NPF_LOAD, nvlist_ref_t);
+        case IOC_NPF_TABLE32:
+                IOCTL_STRUCT_CONV_TO(IOC_NPF_TABLE, npf_ioctl_table);
+        case IOC_NPF_STATS32:
+                IOCTL_CONV_TO(IOC_NPF_STATS, voidp);
+        case IOC_NPF_SAVE32:
+                IOCTL_CONV_TO(IOC_NPF_SAVE, nvlist_ref_t);
+        case IOC_NPF_RULE32:
+                IOCTL_CONV_TO(IOC_NPF_RULE, nvlist_ref_t);
+        case IOC_NPF_CONN_LOOKUP32:
+                IOCTL_CONV_TO(IOC_NPF_CONN_LOOKUP, nvlist_ref_t);
 
 	case DRVRESCANBUS32:
 		IOCTL_STRUCT_CONV_TO(DRVRESCANBUS, devrescanargs);
