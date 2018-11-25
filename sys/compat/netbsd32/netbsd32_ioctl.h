@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.65 2018/10/11 15:23:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.66 2018/11/25 17:58:29 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -560,6 +560,29 @@ struct netbsd32_ksyms_gvalue {
 #define	KIOCGVALUE32	_IOWR('l', 4, struct netbsd32_ksyms_gvalue)
 #define	KIOCGSYMBOL32	_IOWR('l', 5, struct netbsd32_ksyms_gsymbol)
 #endif /* KIOCGSYMBOL */
+
+#include <net/npf/npf.h>
+
+typedef struct netbsd32_npf_ioctl_buf {
+	netbsd32_voidp		buf;
+	netbsd32_size_t		len;
+} netbsd32_npf_ioctl_buf_t;
+
+typedef struct netbsd32_npf_ioctl_table {
+        int			nct_cmd;  
+        netbsd32_charp		nct_name;
+        union {
+		npf_ioctl_ent_t ent;
+		netbsd32_npf_ioctl_buf_t buf;
+        } nct_data;
+} netbsd32_npf_ioctl_table_t;
+
+#define IOC_NPF_LOAD32		_IOWR('N', 102, netbsd32_nvlist_ref_t)
+#define IOC_NPF_TABLE32		_IOW('N', 103, struct netbsd32_npf_ioctl_table)
+#define IOC_NPF_STATS32		_IOW('N', 104, netbsd32_voidp)
+#define IOC_NPF_SAVE32		_IOR('N', 105, netbsd32_nvlist_ref_t)
+#define IOC_NPF_RULE32		_IOWR('N', 107, netbsd32_nvlist_ref_t)
+#define IOC_NPF_CONN_LOOKUP32	_IOWR('N', 108, netbsd32_nvlist_ref_t)
 
 /* From sys/drvctlio.h */
 struct netbsd32_devlistargs {
