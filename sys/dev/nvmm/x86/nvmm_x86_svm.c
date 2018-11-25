@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.5 2018/11/22 07:37:12 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.6 2018/11/25 14:09:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.5 2018/11/22 07:37:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.6 2018/11/25 14:09:57 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1205,6 +1205,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	exit->exitstate[NVMM_X64_EXITSTATE_CR8] = __SHIFTOUT(vmcb->ctrl.v,
 	    VMCB_CTRL_V_TPR);
+	exit->exitstate[NVMM_X64_EXITSTATE_RFLAGS] = vmcb->state.rflags;
 
 	return 0;
 }
