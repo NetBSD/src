@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.2 2018/11/18 07:42:24 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.3 2018/11/25 14:11:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.2 2018/11/18 07:42:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.3 2018/11/25 14:11:24 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ nvmm_gpa_map(struct nvmm_ioc_gpa_map *args)
 		error = EINVAL;
 		goto out;
 	}
-	if (args->gpa + args->size >= mach->gpa_end) {
+	if (args->gpa + args->size > mach->gpa_end) {
 		error = EINVAL;
 		goto out;
 	}
