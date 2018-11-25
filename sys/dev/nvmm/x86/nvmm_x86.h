@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.1 2018/11/07 07:43:08 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.2 2018/11/25 14:09:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -123,7 +123,8 @@ struct nvmm_x64_state_seg {
 };
 
 /* VM exit state indexes. */
-#define NVMM_X64_EXITSTATE_CR8	0
+#define NVMM_X64_EXITSTATE_CR8		0
+#define NVMM_X64_EXITSTATE_RFLAGS	1
 
 /* Flags. */
 #define NVMM_X64_STATE_SEGS	0x01
