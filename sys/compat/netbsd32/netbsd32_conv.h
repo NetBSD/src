@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.35 2018/05/10 02:36:07 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.36 2018/11/25 17:58:29 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -47,6 +47,8 @@
 #include <compat/sys/dirent.h>
 
 #include <prop/plistref.h>
+
+#include <nv.h>
 
 #include <compat/netbsd32/netbsd32.h>
 
@@ -794,6 +796,34 @@ netbsd32_copyout_plistref(netbsd32_pointer_t n32p, struct plistref *p)
 	n32plist.pref_len = p->pref_len;
 	return copyout(&n32plist, NETBSD32PTR64(n32p),
 	    sizeof(struct netbsd32_plistref));
+}
+
+static __inline int
+netbsd32_copyin_nvlist_ref_t(netbsd32_pointer_t n32p, nvlist_ref_t *p)
+{
+	netbsd32_nvlist_ref_t n32nv;
+	int error;
+
+	error = copyin(NETBSD32PTR64(n32p), &n32nv,
+	    sizeof(netbsd32_nvlist_ref_t));
+	if (error)
+		return error;
+	p->buf = NETBSD32PTR64(n32nv.buf);
+	p->len = n32nv.len;
+	p->flags = n32nv.flags;
+	return 0;
+}
+
+static __inline int
+netbsd32_copyout_nvlist_ref_t(netbsd32_pointer_t n32p, nvlist_ref_t *p)
+{
+	netbsd32_nvlist_ref_t n32nv;
+
+	NETBSD32PTR32(n32nv.buf, p->buf);
+	n32nv.len = p->len;
+	n32nv.flags = p->flags;
+	return copyout(&n32nv, NETBSD32PTR64(n32p),
+	    sizeof(netbsd32_nvlist_ref_t));
 }
 
 static __inline void
