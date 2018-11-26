@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.61 2018/11/24 23:51:05 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.62 2018/11/26 17:29:36 snj Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1794,4 +1794,27 @@ libexec/httpd/testsuite/test-simple             up to 1.5
 	is now bounded at 16KiB.
 	Fix access checks for special files.
 	[mrg, #1104]
+
+sys/dev/dksubr.c				1.104
+
+	rnd_add_uint32() doens't support concurent calls for the same
+	rnd_source, call it with dksc->sc_iolock held.
+	[bouyer, ticket #1105]
+
+sys/kern/subr_evcnt.c				1.13 via patch
+
+	Fix kernel information leak.
+	[maxv, ticket #1106]
+
+sys/dev/pci/if_bge.c				1.316
+
+	bge(4): Fix TSO4 for 5717 and newer.
+	[bouyer, ticket #1107]
+
+sys/dev/pci/if_wm.c				1.599
+
+	wm(4):
+	- Fix a bug that i82578 PHY can't detect correctly.
+	- Print PHY OUI and model number if a PHY's can't be identified.
+	[msaitoh, ticket #1108]
 
