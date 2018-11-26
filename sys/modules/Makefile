@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.40 2018/11/26 01:52:50 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.41 2018/11/26 11:21:15 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -271,7 +271,8 @@ SUBDIR+=	wmihp
 SUBDIR+=	wmimsi
 .endif
 
-.if ${MACHINE_CPU} == "arm" \
+.if ${MACHINE_ARCH} == "x86_64" \
+    || ${MACHINE_CPU} == "arm" \
     || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_09	compat_netbsd32_12
@@ -291,20 +292,6 @@ SUBDIR+=	compat_netbsd32_sysvipc_50
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
-SUBDIR+=	compat_netbsd32
-SUBDIR+=	compat_netbsd32_09	compat_netbsd32_12
-SUBDIR+=	compat_netbsd32_13	compat_netbsd32_16
-SUBDIR+=	compat_netbsd32_20	compat_netbsd32_30
-SUBDIR+=	compat_netbsd32_40	compat_netbsd32_50
-SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
-SUBDIR+=	compat_netbsd32_43
-SUBDIR+=	compat_netbsd32_mqueue
-SUBDIR+=	compat_netbsd32_nfssrv
-SUBDIR+=	compat_netbsd32_ptrace
-SUBDIR+=	compat_netbsd32_sysvipc
-SUBDIR+=	compat_netbsd32_sysvipc_10
-SUBDIR+=	compat_netbsd32_sysvipc_14
-SUBDIR+=	compat_netbsd32_sysvipc_50
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
