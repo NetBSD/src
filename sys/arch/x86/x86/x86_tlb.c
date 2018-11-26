@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.1.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.1.2.2 2018/11/26 01:52:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.1.2.1 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.1.2.2 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -226,6 +226,11 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 #ifndef XEN
 	KASSERT((pte & PG_G) == 0 || pm == pmap_kernel());
 #endif
+
+	if (__predict_false(pm->pm_tlb_flush != NULL)) {
+		(*pm->pm_tlb_flush)(pm);
+		return;
+	}
 
 	/*
 	 * If tearing down the pmap, do nothing.  We will flush later

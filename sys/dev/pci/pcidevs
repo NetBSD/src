@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1319.2.11 2018/10/20 06:58:31 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1319.2.12 2018/11/26 01:52:32 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -649,6 +649,7 @@ vendor QINHENG2		0x1c00	Nanjing QinHeng Electronics (PCIe)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor HGST		0x1c58	HGST, Inc.
 vendor BEIJING_MEMBLAZE	0x1c5f	Beijing Memblaze Technology Co. Ltd.
+vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
 vendor HINT		0x3388	HiNT
@@ -1935,7 +1936,58 @@ product BUSLOGIC FLASHPOINT	0x8130	FlashPoint
 product C4T GPPCI		0x6773	GPPCI
 
 /* Cavium products */
-product CAVIUM NITROX		0x0001	Nitrox XL
+product CAVIUM NITROX			0x0001	Nitrox XL
+product CAVIUM THUNDERX_MRML		0xa001	Master RML Bridge to RSL devices
+product CAVIUM THUNDERX_PCIB		0xa002	PCI Bridge
+product CAVIUM THUNDERX_RESET		0xa00e	Reset Controller
+product CAVIUM THUNDERX_RNG		0xa018	Random Number Generator
+product CAVIUM THUNDERX_XHCI		0xa01b	xHCI USB Controller
+product CAVIUM THUNDERX_AHCI		0xa01c	AHCI SATA Controller
+product CAVIUM THUNDERX_RAID		0xa01d	RAID Coprocessor
+product CAVIUM THUNDERX_NIC		0xa01e	Network Interface Controller
+product CAVIUM THUNDERX_TNS		0xa01f	Traffic Network Switch
+product CAVIUM THUNDERX_LMC		0xa022	DRAM Controller
+product CAVIUM THUNDERX_BGX		0xa026	Common Ethernet Interface
+product CAVIUM THUNDERX_L2C_TAD		0xa02e	Level 2 cache tag and data
+product CAVIUM THUNDERX_L2C_CBC		0xa02f	L2C-CBC
+product CAVIUM THUNDERX_L2C_MCI		0xa030	L2C-MCI
+
+product CAVIUM THUNDERX_SMMU		0xa008	SMMU
+product CAVIUM THUNDERX_GIC		0xa009	Generic Interrupt Controller
+product CAVIUM THUNDERX_GPIO		0xa00a	GPIO Controller
+product CAVIUM THUNDERX_MPI_SPI		0xa00b	MPI / SPI Controller
+product CAVIUM THUNDERX_MIO_PTP		0xa00c	MIO-PTP Controller
+product CAVIUM THUNDERX_MIX		0xa00d	MIX Network Controller
+product CAVIUM THUNDERX_UART		0xa00f	UART Controller
+product CAVIUM THUNDERX_EMMC_SD		0xa010	eMMC/SD Controller
+product CAVIUM THUNDERX_MIO_BOOT	0xa011	MIO-BOOT Controller
+product CAVIUM THUNDERX_TWSI_I2C	0xa012	TWSI / I2C Controller
+product CAVIUM THUNDERX_CCPI		0xa013	CCPI (Multi-node connect)
+product CAVIUM THUNDERX_VRM		0xa014	Voltage Regulator Module
+product CAVIUM THUNDERX_PSLI		0xa015	PCIe Switch Logic Interface
+product CAVIUM THUNDERX_KM		0xa016	Key Memory
+product CAVIUM THUNDERX_GST		0xa017	GTI (Global System Timers)
+product CAVIUM THUNDERX_DFA		0xa019	DFA
+product CAVIUM THUNDERX_ZIP		0xa01a	Zip Coprocessor
+product CAVIUM THUNDERX_PEM		0xa020	PEM (PCI Express Interface)
+product CAVIUM THUNDERX_L2C		0xa021	L2C (Level-2 Cache Controller)
+product CAVIUM THUNDERX_OCLA		0xa023	OCLA (On-Chip Logic Analyzer)
+product CAVIUM THUNDERX_OSM		0xa024	OSM
+product CAVIUM THUNDERX_GSER		0xa025	GSER (General Serializer/Deserializer)
+product CAVIUM THUNDERX_IOBN		0xa027	IOBN
+product CAVIUM THUNDERX_NCSCI		0xa029	NCSI (Network Controller Sideband Interface)
+product CAVIUM THUNDERX_SGPIO		0xa02a	SGPIO (Serial GPIO controller for SATA disk lights)
+product CAVIUM THUNDERX_SMI_MDIO	0xa02b	SMI / MDIO Controller
+product CAVIUM THUNDERX_DAP		0xa02c	DAP (Debug Access Port)
+product CAVIUM THUNDERX_PCIERC		0xa02d	PCIERC (PCIe Root Complex)
+product CAVIUM THUNDERX_MIOS_FUS	0xa031	MIO-FUS (Fuse Access Controller)
+product CAVIUM THUNDERX_FUSE		0xa032	FUSF (Fuse Controller)
+product CAVIUM THUNDERX_RNGVF		0xa033	Random Number Generator virtual function
+product CAVIUM THUNDERX_NICVF		0xa034	Network Interface Controller virtual function
+product CAVIUM THUNDERX_PB		0xa035	Parallel Bus
+product CAVIUM THUNDERX_RAIDVF		0xa036	RAD (RAID acceleration engine) virtual function
+product CAVIUM THUNDERX_ZIPVF		0xa037	ZIP virtual function
+product CAVIUM THUNDERX_CA		0xa040	CPT Cryptographic Accelerator
 
 /* Chelsio products */
 product CHELSIO PE9000		0x0020	PE9000 10GbE
@@ -5047,6 +5099,8 @@ product INTEL 100SERIES_LP_I2C_0 0x9d60	100 Series I2C 0
 product INTEL 100SERIES_LP_I2C_1 0x9d61	100 Series I2C 1
 product INTEL 100SERIES_LP_I2C_2 0x9d62	100 Series I2C 2
 product INTEL 100SERIES_LP_I2C_3 0x9d63	100 Series I2C 3
+product INTEL 100SERIES_LP_I2C_4 0x9d64	100 Series I2C 4
+product INTEL 100SERIES_LP_I2C_5 0x9d65	100 Series I2C 5
 product INTEL 100SERIES_LP_UART_2 0x9d66 100 Series UART 2
 product INTEL 100SERIES_LP_HDA	0x9d70	100 Series HD Audio
 product INTEL 2HS_U_HDA		0x9d71	200 Series HD Audio
@@ -5057,7 +5111,9 @@ product INTEL PINEVIEW_M_HB	0xa010	Pineview Host Bridge
 product INTEL PINEVIEW_M_IGD	0xa011	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_M_IGD_1	0xa012	Pineview Integrated Graphics Device
 product INTEL Z170_AHCI		0xa102	Z170 AHCI
+product INTEL 100SERIES_AHCI_2	0xa103	HM170, QM170 AHCI
 product INTEL Z170_3RD_AHCI	0xa106	Z170 3rd Party RAID
+product INTEL 100SERIES_3RD_RAID 0xa107	HM170, QM170 3rd Party RAID
 product INTEL 100SERIES_PCIE_1	0xa110	100 Series PCIE
 product INTEL 100SERIES_PCIE_2	0xa111	100 Series PCIE
 product INTEL 100SERIES_PCIE_3	0xa112	100 Series PCIE
@@ -5093,9 +5149,20 @@ product INTEL 100SERIES_MEI_2	0xa13b	100 Series MEI 2
 product INTEL 100SERIES_IDE_R	0xa13c	100 Series IDE-R
 product INTEL 100SERIES_KT	0xa13d	100 Series KT
 product INTEL 100SERIES_MEI_3	0xa13e	100 Series MEI 3
+product INTEL H110_LPC		0xa143	H110 LPC
 product INTEL H170_LPC		0xa144	H170 LPC
 product INTEL Z170_LPC		0xa145	Z170 LPC
 product INTEL Q170_LPC		0xa146	Q170 LPC
+product INTEL Q150_LPC		0xa147	Q150 LPC
+product INTEL B150_LPC		0xa148	B150 LPC
+product INTEL C236_LPC		0xa149	C236 LPC
+product INTEL C232_LPC		0xa14a	C232 LPC
+product INTEL QM170_LPC		0xa14d	QM170 LPC
+product INTEL HM170_LPC		0xa14e	HM170 LPC
+product INTEL CM236_LPC		0xa150	CM236 LPC
+product INTEL HM175_LPC		0xa152	HM175 LPC
+product INTEL QM175_LPC		0xa153	QM175 LPC
+product INTEL CM238_LPC		0xa154	CM238 LPC
 product INTEL 100SERIES_I2C_0	0xa160	100 Series I2C 0
 product INTEL 100SERIES_I2C_1	0xa161	100 Series I2C 1
 product INTEL 100SERIES_I2C_2	0xa162	100 Series I2C 2
@@ -5106,6 +5173,7 @@ product INTEL 100SERIES_PCIE_18	0xa168	100 Series PCIE
 product INTEL 100SERIES_PCIE_19	0xa169	100 Series PCIE
 product INTEL 100SERIES_PCIE_20	0xa16a	100 Series PCIE
 product INTEL 100SERIES_HDA	0xa170	100 Series HD Audio
+product INTEL 100SERIES_HDA_2	0xa171	100 Series HD Audio
 product INTEL C620_AHCI		0xa182	C620 AHCI
 product INTEL C620_3RD_RAID	0xa186	C620 3rd Party RAID
 product INTEL C620_PCIE_0	0xa190	C620 PCIe Root Port
@@ -6691,6 +6759,9 @@ product RISCOM N2	0x5568	N2
 /* RNS products */
 product RNS FDDI	0x2200	2200 FDDI
 
+/* Rockchip products */
+product ROCKCHIP RK3399_RC	0x0100	RK3399 Root Complex
+ 
 /* S2io products */
 product S2IO XFRAME	0x5831	Xframe 10 Gigabit Ethernet Adapter
 product S2IO XFRAME2	0x5832	Xframe2 10 Gigabit Ethernet Adapter
@@ -7026,7 +7097,7 @@ product SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
 product SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
 product SCHNEIDERKOCH	SK9821v2	0x4320	SK-9821 v2.0
 product SCHNEIDERKOCH	SK_9DX1		0x4400	SK-NET SK-9DX1 Gigabit Ethernet
-/* These next two are are really subsystem IDs */
+/* These next two are really subsystem IDs */
 product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
 product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
 

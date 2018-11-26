@@ -4136,6 +4136,16 @@ class Output_section : public Output_data
   input_sections()
   { return this->input_sections_; }
 
+  // For -r and --emit-relocs, we need to keep track of the associated
+  // relocation section.
+  Output_section*
+  reloc_section() const
+  { return this->reloc_section_; }
+
+  void
+  set_reloc_section(Output_section* os)
+  { this->reloc_section_ = os; }
+
  protected:
   // Return the output section--i.e., the object itself.
   Output_section*
@@ -4623,6 +4633,8 @@ class Output_section : public Output_data
   Output_fill* free_space_fill_;
   // Amount added as patch space for incremental linking.
   off_t patch_space_;
+  // Associated relocation section, when emitting relocations.
+  Output_section* reloc_section_;
 };
 
 // An output segment.  PT_LOAD segments are built from collections of

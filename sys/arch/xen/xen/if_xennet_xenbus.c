@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.74.2.3 2018/09/06 06:55:44 pgoyette Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.74.2.4 2018/11/26 01:52:28 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.74.2.3 2018/09/06 06:55:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.74.2.4 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -517,7 +517,7 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 		goto abort_resume;
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	sc->sc_ih = intr_establish_xname(0, &xen_pic, sc->sc_evtchn, IST_LEVEL,
+	sc->sc_ih = intr_establish_xname(-1, &xen_pic, sc->sc_evtchn, IST_LEVEL,
 	    IPL_NET, &xennet_handler, sc, false, device_xname(dev));
 	KASSERT(sc->sc_ih != NULL);
 	return true;
@@ -1386,7 +1386,7 @@ xennet_init(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		sc->sc_rx_ring.sring->rsp_event =
 		    sc->sc_rx_ring.rsp_cons + 1;
-		hypervisor_enable_event(sc->sc_evtchn);
+		hypervisor_unmask_event(sc->sc_evtchn);
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 		xennet_reset(sc);
 	}

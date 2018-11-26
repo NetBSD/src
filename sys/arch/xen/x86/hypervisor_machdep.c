@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.28.18.1 2018/11/26 01:52:28 pgoyette Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28.18.1 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouy
 #include <xen/xenpmap.h>
 
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 /*
  * arch-dependent p2m frame lists list (L3 and L2)
@@ -259,6 +261,11 @@ do_hypervisor_callback(struct intrframe *regs)
 	vci = ci->ci_vcpu;
 	level = ci->ci_ilevel;
 
+	/* Save trapframe for clock handler */
+	KASSERT(regs != NULL);
+	ci->ci_xen_clockf_usermode = USERMODE(regs->_INTRFRAME_CS);
+	ci->ci_xen_clockf_pc = regs->_INTRFRAME_IP;
+
 	// DDD printf("do_hypervisor_callback\n");
 
 #ifdef EARLY_DEBUG_EVENT
@@ -320,47 +327,22 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 void
 hypervisor_unmask_event(unsigned int ev)
 {
-	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	volatile struct vcpu_info *vci;
+
+	KASSERT(ev > 0 && ev < NR_EVENT_CHANNELS);
 
 #ifdef PORT_DEBUG
 	if (ev == PORT_DEBUG)
 		printf("hypervisor_unmask_event %d\n", ev);
 #endif
 
-	xen_atomic_clear_bit(&s->evtchn_mask[0], ev);
-	/*
-	 * The following is basically the equivalent of
-	 * 'hw_resend_irq'. Just like a real IO-APIC we 'lose the
-	 * interrupt edge' if the channel is masked.
-	 */
-	if (!xen_atomic_test_bit(&s->evtchn_pending[0], ev))
-		return;
+	/* Xen unmasks the evtchn_mask[0]:ev bit for us. */
+	evtchn_op_t op;
+	op.cmd = EVTCHNOP_unmask;
+	op.u.unmask.port = ev;
+	if (HYPERVISOR_event_channel_op(&op) != 0)
+		panic("Failed to unmask event %d\n", ev);
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (!xen_atomic_test_bit(&ci->ci_evtmask[0], ev))
-			continue;
-		vci = ci->ci_vcpu;
-		if (__predict_true(ci == curcpu())) {
-			if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
-				ev>>LONG_SHIFT))
-				xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
-		}
-		if (!vci->evtchn_upcall_mask) {
-			if (__predict_true(ci == curcpu())) {
-				hypervisor_force_callback();
-			} else {
-				if (__predict_false(
-				    xen_send_ipi(ci, XEN_IPI_HVCB))) {
-					panic("xen_send_ipi(cpu%d, "
-					    "XEN_IPI_HVCB) failed\n",
-					    (int) ci->ci_cpuid);
-				}
-			}
-		}
-	}
+	return;
 }
 
 void
@@ -392,7 +374,10 @@ evt_enable_event(unsigned int port, unsigned int l1i,
 		 unsigned int l2i, void *args)
 {
 	KASSERT(args == NULL);
-	hypervisor_enable_event(port);
+	hypervisor_unmask_event(port);
+#if NPCI > 0 || NISA > 0
+	hypervisor_ack_pirq_event(port);
+#endif /* NPCI > 0 || NISA > 0 */
 }
 
 void

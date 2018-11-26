@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.h,v 1.8.58.1 2018/10/20 06:58:30 pgoyette Exp $ */
+/* $NetBSD: acpi_pci.h,v 1.8.58.2 2018/11/26 01:52:30 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,5 +38,6 @@ struct acpi_devnode	*acpi_pcidev_find(uint16_t, uint16_t,
 					  uint16_t, uint16_t);
 device_t		 acpi_pcidev_find_dev(struct acpi_devnode *);
 struct acpi_devnode	*acpi_pciroot_find(uint16_t, uint16_t);
+ACPI_INTEGER		 acpi_pci_ignore_boot_config(ACPI_HANDLE);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_PCI_H */

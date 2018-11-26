@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.5.2.4 2018/10/20 06:58:46 pgoyette Exp $ */
+/* $NetBSD: efiboot.c,v 1.5.2.5 2018/11/26 01:52:52 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,8 @@
 
 #include <sys/reboot.h>
 
+#include <libfdt.h>
+
 EFI_HANDLE IH;
 EFI_DEVICE_PATH *efi_bootdp;
 EFI_LOADED_IMAGE *efi_li;
@@ -41,7 +43,7 @@ EFI_LOADED_IMAGE *efi_li;
 int howto = 0;
 
 static EFI_PHYSICAL_ADDRESS heap_start;
-static UINTN heap_size = 1 * 1024 * 1024;
+static UINTN heap_size = 8 * 1024 * 1024;
 static EFI_EVENT delay_ev = 0;
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE, EFI_SYSTEM_TABLE *);
@@ -82,28 +84,107 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 
 	efi_acpi_probe();
 	efi_fdt_probe();
-	efi_file_system_probe();
-	efi_block_probe();
 	efi_pxe_probe();
 	efi_net_probe();
+	efi_file_system_probe();
+	efi_block_probe();
 
 	boot();
 
 	return EFI_SUCCESS;
 }
 
+#ifdef EFIBOOT_RUNTIME_ADDRESS
+static uint64_t
+efi_runtime_alloc_va(uint64_t npages)
+{
+	static uint64_t va = EFIBOOT_RUNTIME_ADDRESS;
+	static uint64_t sz = EFIBOOT_RUNTIME_SIZE;
+	uint64_t nva;
+
+	if (sz < (npages * EFI_PAGE_SIZE))
+		panic("efi_acpi_alloc_va: couldn't allocate %" PRIu64 " pages", npages);
+
+	nva = va;
+	va += (npages * EFI_PAGE_SIZE);
+	sz -= (npages * EFI_PAGE_SIZE);
+
+	return nva;
+}
+#endif
+
+#ifdef EFIBOOT_RUNTIME_ADDRESS
+static void
+efi_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries, UINTN mapkey, UINTN descsize, UINT32 descver)
+{
+	EFI_MEMORY_DESCRIPTOR *md, *vmd, *vmemmap;
+	EFI_STATUS status;
+	int n, nrt;
+	void *fdt;
+
+	fdt = efi_fdt_data();
+
+	vmemmap = alloc(nentries * descsize);
+	if (vmemmap == NULL)
+		panic("FATAL: couldn't allocate virtual memory map");
+
+	for (n = 0, nrt = 0, vmd = vmemmap, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
+		if ((md->Attribute & EFI_MEMORY_RUNTIME) == 0)
+			continue;
+		md->VirtualStart = efi_runtime_alloc_va(md->NumberOfPages);
+
+		switch (md->Type) {
+		case EfiRuntimeServicesCode:
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-code", md->PhysicalStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-code", md->VirtualStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-code", md->NumberOfPages * EFI_PAGE_SIZE);
+			break;
+		case EfiRuntimeServicesData:
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-data", md->PhysicalStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-data", md->VirtualStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-data", md->NumberOfPages * EFI_PAGE_SIZE);
+			break;
+		case EfiMemoryMappedIO:
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-mmio", md->PhysicalStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-mmio", md->VirtualStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-mmio", md->NumberOfPages * EFI_PAGE_SIZE);
+			break;
+		default:
+			break;
+		}
+
+		*vmd = *md;
+		vmd = NextMemoryDescriptor(vmd, descsize);
+		++nrt;
+	}
+
+	status = uefi_call_wrapper(RT->SetVirtualAddressMap, 4, nrt * descsize, descsize, descver, vmemmap);
+	if (EFI_ERROR(status)) {
+		printf("WARNING: SetVirtualAddressMap failed\n");
+		return;
+	}
+}
+#endif
+
 void
 efi_cleanup(void)
 {
 	EFI_STATUS status;
+	EFI_MEMORY_DESCRIPTOR *memmap;
 	UINTN nentries, mapkey, descsize;
 	UINT32 descver;
 
-	LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
+	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
 
 	status = uefi_call_wrapper(BS->ExitBootServices, 2, IH, mapkey);
-	if (EFI_ERROR(status))
+	if (EFI_ERROR(status)) {
 		printf("WARNING: ExitBootServices failed\n");
+		return;
+	}
+
+#ifdef EFIBOOT_RUNTIME_ADDRESS
+	efi_set_virtual_address_map(memmap, nentries, mapkey, descsize, descver);
+#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.11 2014/03/29 19:28:27 christos Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.11.28.1 2018/11/26 01:52:22 pgoyette Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.11 2014/03/29 19:28:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.11.28.1 2018/11/26 01:52:22 pgoyette Exp $");
 
 /*
  * IXM1200 PCI interrupt support.
@@ -56,7 +56,7 @@ int ixm1200_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *ixm1200_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *ixm1200_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *ixm1200_pci_intr_establish(void *, pci_intr_handle_t, int,
-	int (*func)(void *), void *);
+	int (*func)(void *), void *, const char *);
 void ixm1200_pci_intr_disestablish(void *, void *);
 
 void
@@ -92,7 +92,7 @@ ixm1200_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 ixm1200_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	snprintf(buf, len, "IXM1200 irq %ld", ih);
+	snprintf(buf, len, "IXM1200 irq %" PRIu64, ih);
 	return buf;
 }
 
@@ -103,11 +103,12 @@ ixm1200_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 }
 
 void *
-ixm1200_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg)
+ixm1200_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl, int (*func)(void *),
+    void *arg, const char *xname)
 {
 #ifdef PCI_DEBUG
-	printf("ixm1200_pci_intr_establish(v=%p, irq=%d, ipl=%d, func=%p, arg=%p)\n",
-		v, (int) ih, ipl, func, arg);
+	printf("ixm1200_pci_intr_establish(v=%p, irq=%d, ipl=%d, func=%p, arg=%p, xname=%s)\n",
+		v, (int) ih, ipl, func, arg, xname);
 #endif
 
 	return (ixp12x0_intr_establish(ih, ipl, func, arg));

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:47 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.26.1 2018/11/26 01:52:58 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,10 +47,11 @@
 #define PART_FIRST_FREE	PART_D
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
-#define DEFROOTSIZE	32	/* Default root size */
+#define DEFROOTSIZE	48	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
-#define DEFUSRSIZE	100	/* Default /usr size, if /home */
-#define XNEEDMB		35	/* Extra megs for full X installation */
+#define DEFUSRSIZE	700	/* Default /usr size, if /home */
+#define XNEEDMB		256	/* Extra megs for full X installation */
+#define DEBNEEDMB	800	/* Extra megs for debug sets */
 
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
@@ -63,11 +64,6 @@
 #define SET_KERNEL_2_NAME	"kern-GENERIC_SCSI3"
 #define SET_KERNEL_3_NAME	"kern-GENERIC_SUN4U"
 #define SET_KERNEL_4_NAME	"kern-GENERIC.MP"
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- */
-#define DISK_NAMES "sd", "xy", "xd"
 
 /*
  * Machine-specific command to write a new label to a disk.

@@ -34,6 +34,7 @@ extern "C" {
 
 #include "ansidecl.h"
 #include "symcat.h"
+#include "diagnostics.h"
 #include <stdarg.h>
 #include <sys/stat.h>
 
@@ -89,6 +90,24 @@ extern "C" {
 #define BFD_HOST_U_64_BIT @BFD_HOST_U_64_BIT@
 typedef BFD_HOST_64_BIT bfd_int64_t;
 typedef BFD_HOST_U_64_BIT bfd_uint64_t;
+#endif
+
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#else
+# if BFD_HOST_64BIT_LONG
+#  define BFD_PRI64 "l"
+# elif defined (__MSVCRT__)
+#  define BFD_PRI64 "I64"
+# else
+#  define BFD_PRI64 "ll"
+# endif
+# undef PRId64
+# define PRId64 BFD_PRI64 "d"
+# undef PRIu64
+# define PRIu64 BFD_PRI64 "u"
+# undef PRIx64
+# define PRIx64 BFD_PRI64 "x"
 #endif
 
 #if BFD_ARCH_SIZE >= 64
@@ -563,6 +582,8 @@ void bfd_putb64 (bfd_uint64_t, void *);
 void bfd_putl64 (bfd_uint64_t, void *);
 void bfd_putb32 (bfd_vma, void *);
 void bfd_putl32 (bfd_vma, void *);
+void bfd_putb24 (bfd_vma, void *);
+void bfd_putl24 (bfd_vma, void *);
 void bfd_putb16 (bfd_vma, void *);
 void bfd_putl16 (bfd_vma, void *);
 
@@ -590,8 +611,6 @@ extern bfd_boolean _bfd_handle_already_linked
 
 /* Externally visible ECOFF routines.  */
 
-extern bfd_vma bfd_ecoff_get_gp_value
-  (bfd * abfd);
 extern bfd_boolean bfd_ecoff_set_gp_value
   (bfd *abfd, bfd_vma gp_value);
 extern bfd_boolean bfd_ecoff_set_regmasks
@@ -760,8 +779,6 @@ extern bfd_boolean bfd_sunos_size_dynamic_sections
 
 extern bfd_boolean bfd_i386linux_size_dynamic_sections
   (bfd *, struct bfd_link_info *);
-extern bfd_boolean bfd_m68klinux_size_dynamic_sections
-  (bfd *, struct bfd_link_info *);
 extern bfd_boolean bfd_sparclinux_size_dynamic_sections
   (bfd *, struct bfd_link_info *);
 
@@ -829,9 +846,6 @@ union internal_auxent;
 
 extern bfd_boolean bfd_coff_set_symbol_class
   (bfd *, struct bfd_symbol *, unsigned int);
-
-extern bfd_boolean bfd_m68k_coff_create_embedded_relocs
-  (bfd *, struct bfd_link_info *, struct bfd_section *, struct bfd_section *, char **);
 
 /* ARM VFP11 erratum workaround support.  */
 typedef enum

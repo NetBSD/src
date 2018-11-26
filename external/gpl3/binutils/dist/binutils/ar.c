@@ -75,6 +75,9 @@ int silent_create = 0;
 /* Nonzero means describe each action performed.  */
 int verbose = 0;
 
+/* Nonzero means display offsets of files in the archive.  */
+int display_offsets = 0;
+
 /* Nonzero means preserve dates of members when extracting them.  */
 int preserve_dates = 0;
 
@@ -268,13 +271,13 @@ usage (int help)
 #if BFD_SUPPORTS_PLUGINS
   /* xgettext:c-format */
   const char *command_line
-    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoPsSTuvV]"
+    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
 	" [--plugin <name>] [member-name] [count] archive-file file...\n");
 
 #else
   /* xgettext:c-format */
   const char *command_line
-    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoPsSTuvV]"
+    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
 	" [member-name] [count] archive-file file...\n");
 #endif
   s = help ? stdout : stderr;
@@ -290,7 +293,7 @@ usage (int help)
   fprintf (s, _("  q[f]         - quick append file(s) to the archive\n"));
   fprintf (s, _("  r[ab][f][u]  - replace existing or insert new file(s) into the archive\n"));
   fprintf (s, _("  s            - act as ranlib\n"));
-  fprintf (s, _("  t            - display contents of archive\n"));
+  fprintf (s, _("  t[O][v]      - display contents of the archive\n"));
   fprintf (s, _("  x[o]         - extract file(s) from the archive\n"));
   fprintf (s, _(" command specific modifiers:\n"));
   fprintf (s, _("  [a]          - put file(s) after [member-name]\n"));
@@ -313,6 +316,7 @@ usage (int help)
   fprintf (s, _("  [f]          - truncate inserted file names\n"));
   fprintf (s, _("  [P]          - use full path names when matching\n"));
   fprintf (s, _("  [o]          - preserve original dates\n"));
+  fprintf (s, _("  [O]          - display offsets of files in the archive\n"));
   fprintf (s, _("  [u]          - only replace files that are newer than current archive contents\n"));
   fprintf (s, _(" generic modifiers:\n"));
   fprintf (s, _("  [c]          - do not warn if the library had to be created\n"));
@@ -473,7 +477,7 @@ decode_options (int argc, char **argv)
       argv = new_argv;
     }
 
-  while ((c = getopt_long (argc, argv, "hdmpqrtxlcoVsSuvabiMNfPTDU",
+  while ((c = getopt_long (argc, argv, "hdmpqrtxlcoOVsSuvabiMNfPTDU",
 			   long_options, NULL)) != EOF)
     {
       switch (c)
@@ -527,6 +531,9 @@ decode_options (int argc, char **argv)
           break;
         case 'o':
           preserve_dates = 1;
+          break;
+        case 'O':
+          display_offsets = 1;
           break;
         case 'V':
           show_version = TRUE;
@@ -1503,5 +1510,5 @@ ranlib_touch (const char *archname)
 static void
 print_descr (bfd *abfd)
 {
-  print_arelt_descr (stdout, abfd, verbose);
+  print_arelt_descr (stdout, abfd, verbose, display_offsets);
 }

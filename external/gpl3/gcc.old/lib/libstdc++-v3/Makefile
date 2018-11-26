@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2018/09/06 06:53:30 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2018/11/26 01:51:56 pgoyette Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -154,7 +154,8 @@ CXX11_ALWAYS=	localename.cc \
 		compatibility-atomic-c++0x.cc \
 		compatibility-thread-c++0x.cc \
 		compatibility-chrono.cc \
-		compatibility-condvar.cc
+		compatibility-condvar.cc \
+		ios_failure.cc
 .for _s in ${SRCS:M*.cc}
 . if empty(COPTS.${_s}:M-std=*)
 COPTS.${_s}+= -std=gnu++98

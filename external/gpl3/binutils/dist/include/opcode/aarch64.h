@@ -178,6 +178,8 @@ enum aarch64_opnd
   AARCH64_OPND_Ed,	/* AdvSIMD Vector Element Vd.  */
   AARCH64_OPND_En,	/* AdvSIMD Vector Element Vn.  */
   AARCH64_OPND_Em,	/* AdvSIMD Vector Element Vm.  */
+  AARCH64_OPND_Em16,	/* AdvSIMD Vector Element Vm restricted to V0 - V15 when
+			   qualifier is S_H.  */
   AARCH64_OPND_LVn,	/* AdvSIMD Vector register list used in e.g. TBL.  */
   AARCH64_OPND_LVt,	/* AdvSIMD Vector register list used in ld/st.  */
   AARCH64_OPND_LVt_AL,	/* AdvSIMD Vector register list for loading single
@@ -272,6 +274,7 @@ enum aarch64_opnd
   AARCH64_OPND_SVE_ADDR_RI_U6x2,    /* SVE [<Xn|SP>, #<uimm6>*2].  */
   AARCH64_OPND_SVE_ADDR_RI_U6x4,    /* SVE [<Xn|SP>, #<uimm6>*4].  */
   AARCH64_OPND_SVE_ADDR_RI_U6x8,    /* SVE [<Xn|SP>, #<uimm6>*8].  */
+  AARCH64_OPND_SVE_ADDR_R,	    /* SVE [<Xn|SP>].  */
   AARCH64_OPND_SVE_ADDR_RR,	    /* SVE [<Xn|SP>, <Xm|XZR>].  */
   AARCH64_OPND_SVE_ADDR_RR_LSL1,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #1].  */
   AARCH64_OPND_SVE_ADDR_RR_LSL2,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #2].  */
@@ -764,7 +767,11 @@ extern aarch64_opcode aarch64_opcode_table[];
 #define F_LSE_SZ (1 << 27)
 /* Require an exact qualifier match, even for NIL qualifiers.  */
 #define F_STRICT (1ULL << 28)
-/* Next bit is 29.  */
+/* This system instruction is used to read system registers.  */
+#define F_SYS_READ (1ULL << 29)
+/* This system instruction is used to write system registers.  */
+#define F_SYS_WRITE (1ULL << 30)
+/* Next bit is 31.  */
 
 static inline bfd_boolean
 alias_opcode_p (const aarch64_opcode *opcode)
@@ -956,9 +963,17 @@ struct aarch64_opnd_info
 	  unsigned preind : 1;		/* Pre-indexed.  */
 	  unsigned postind : 1;		/* Post-indexed.  */
 	} addr;
+
+      struct
+	{
+	  /* The encoding of the system register.  */
+	  aarch64_insn value;
+
+	  /* The system register flags.  */
+	  uint32_t flags;
+	} sysreg;
+
       const aarch64_cond *cond;
-      /* The encoding of the system register.  */
-      aarch64_insn sysreg;
       /* The encoding of the PSTATE field.  */
       aarch64_insn pstatefield;
       const aarch64_sys_ins_reg *sysins_op;
@@ -1092,6 +1107,7 @@ struct aarch64_operand_error
   int index;
   const char *error;
   int data[3];	/* Some data for extra information.  */
+  bfd_boolean non_fatal;
 };
 
 typedef struct aarch64_operand_error aarch64_operand_error;
@@ -1116,7 +1132,8 @@ aarch64_get_opcode (enum aarch64_op);
 /* Generate the string representation of an operand.  */
 extern void
 aarch64_print_operand (char *, size_t, bfd_vma, const aarch64_opcode *,
-		       const aarch64_opnd_info *, int, int *, bfd_vma *);
+		       const aarch64_opnd_info *, int, int *, bfd_vma *,
+		       char **);
 
 /* Miscellaneous interface.  */
 
@@ -1137,7 +1154,8 @@ extern int
 aarch64_zero_register_p (const aarch64_opnd_info *);
 
 extern int
-aarch64_decode_insn (aarch64_insn, aarch64_inst *, bfd_boolean);
+aarch64_decode_insn (aarch64_insn, aarch64_inst *, bfd_boolean,
+		     aarch64_operand_error *errors);
 
 /* Given an operand qualifier, return the expected data element size
    of a qualified operand.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.27.16.1 2018/09/06 06:55:50 pgoyette Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.27.16.2 2018/11/26 01:52:31 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.27.16.1 2018/09/06 06:55:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.27.16.2 2018/11/26 01:52:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -567,7 +567,7 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 		 * discovery. If we don't have a link-level address,
 		 * just stick the thing on the broadcast channel.
 		 */
-		mtag = m_tag_find(m, MTAG_FIREWIRE_HWADDR, 0);
+		mtag = m_tag_find(m, MTAG_FIREWIRE_HWADDR);
 		if (mtag == NULL)
 			destfw = 0;
 		else

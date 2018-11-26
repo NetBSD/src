@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.139.2.2 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.139.2.3 2018/11/26 01:52:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.139.2.2 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.139.2.3 2018/11/26 01:52:29 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1801,14 +1801,11 @@ linux_sys_sendmmsg(struct lwp *l, const struct linux_sys_sendmmsg_args *uap,
 	}
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
 
 	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
-	 * will catch it next time.
+	 * If we succeeded at least once, return 0.
 	 */
 	if (dg)
 		return 0;
@@ -1848,6 +1845,16 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 	s = SCARG(uap, s);
 	if ((error = fd_getsock(s, &so)) != 0)
 		return error;
+
+	/*
+	 * If so->so_rerror holds a deferred error return it now.
+	 */
+	if (so->so_rerror) {
+		error = so->so_rerror;
+		so->so_rerror = 0;
+		fd_putfile(s);
+		return error;
+	}
 
 	vlen = SCARG(uap, vlen);
 	if (vlen > 1024)
@@ -1919,17 +1926,17 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 		m_free(from);
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
-
-	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
+	 * If we succeeded at least once, return 0, hopefully so->so_rerror
 	 * will catch it next time.
 	 */
-	if (dg)
-		return 0;
+	if (error && dg > 0) {
+		so->so_rerror = error;
+		error = 0;
+	}
+
+	fd_putfile(s);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.49.12.3 2018/09/27 01:33:31 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.49.12.4 2018/11/26 01:52:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.3 2018/09/27 01:33:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.4 2018/11/26 01:52:29 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -70,6 +70,7 @@ netbsd32___ntp_gettime50(struct lwp *l,
 	if (SCARG_P32(uap, ntvp)) {
 		(*vec_ntp_gettime)(&ntv);
 
+		memset(&ntv32, 0, sizeof(ntv32));
 		ntv32.time.tv_sec = ntv.time.tv_sec;
 		ntv32.time.tv_nsec = ntv.time.tv_nsec;
 		ntv32.maxerror = (netbsd32_long)ntv.maxerror;

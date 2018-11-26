@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.76.2.4 2018/09/06 06:55:44 pgoyette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.76.2.5 2018/11/26 01:52:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -75,6 +75,8 @@
 #define pl2_pi(VA)	(((VA_SIGN_POS(VA)) & L2_MASK) >> L2_SHIFT)
 #define pl3_pi(VA)	(((VA_SIGN_POS(VA)) & L3_MASK) >> L3_SHIFT)
 #define pl4_pi(VA)	(((VA_SIGN_POS(VA)) & L4_MASK) >> L4_SHIFT)
+#define pl_pi(va, lvl) \
+        (((VA_SIGN_POS(va)) & ptp_masks[(lvl)-1]) >> ptp_shifts[(lvl)-1])
 
 /*
  * pl*_i: generate index into pde/pte arrays in virtual space
@@ -86,9 +88,9 @@
 #define pl3_i(VA)	(((VA_SIGN_POS(VA)) & L3_FRAME) >> L3_SHIFT)
 #define pl4_i(VA)	(((VA_SIGN_POS(VA)) & L4_FRAME) >> L4_SHIFT)
 #define pl_i(va, lvl) \
-        (((VA_SIGN_POS(va)) & ptp_masks[(lvl)-1]) >> ptp_shifts[(lvl)-1])
+        (((VA_SIGN_POS(va)) & ptp_frames[(lvl)-1]) >> ptp_shifts[(lvl)-1])
 
-#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_masks[(lvl)-1], (lvl))
+#define	pl_i_roundup(va, lvl)	pl_i((va)+ ~ptp_frames[(lvl)-1], (lvl))
 
 /*
  * PTP macros:
@@ -258,6 +260,10 @@ struct pmap {
 					 ptp mapped */
 	uint64_t pm_ncsw;		/* for assertions */
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
+
+	/* Used by NVMM. */
+	void (*pm_tlb_flush)(struct pmap *);
+	void *pm_data;
 };
 
 /* macro to access pm_pdirpa slots */

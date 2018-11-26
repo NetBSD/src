@@ -47,6 +47,7 @@ class Task;
 class Task_token;
 class Pluginobj;
 class Plugin_rescan;
+class Plugin_recorder;
 
 // This class represents a single plugin library.
 
@@ -114,6 +115,10 @@ class Plugin
     this->args_.push_back(arg);
   }
 
+  const std::string&
+  filename() const
+  { return this->filename_; }
+
  private:
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin&);
@@ -146,10 +151,18 @@ class Plugin_manager
       options_(options), workqueue_(NULL), task_(NULL), input_objects_(NULL),
       symtab_(NULL), layout_(NULL), dirpath_(NULL), mapfile_(NULL),
       this_blocker_(NULL), extra_search_path_(), lock_(NULL),
-      initialize_lock_(&lock_)
+      initialize_lock_(&lock_), defsym_defines_set_(),
+      recorder_(NULL)
   { this->current_ = plugins_.end(); }
 
   ~Plugin_manager();
+
+  // Returns true if the symbol name is used in the LHS of a defsym.
+  bool
+  is_defsym_def(const char* sym_name) const
+  {
+    return defsym_defines_set_.find(sym_name) != defsym_defines_set_.end();
+  }
 
   // Add a plugin library.
   void
@@ -309,6 +322,10 @@ class Plugin_manager
   layout()
   { return this->layout_; }
 
+  Plugin_recorder*
+  recorder() const
+  { return this->recorder_; }
+
  private:
   Plugin_manager(const Plugin_manager&);
   Plugin_manager& operator=(const Plugin_manager&);
@@ -402,6 +419,13 @@ class Plugin_manager
   std::string extra_search_path_;
   Lock* lock_;
   Initialize_lock initialize_lock_;
+
+  // Keep track of all symbols defined by defsym.
+  typedef Unordered_set<std::string> Defsym_defines_set;
+  Defsym_defines_set defsym_defines_set_;
+
+  // Class to record plugin actions.
+  Plugin_recorder* recorder_;
 };
 
 

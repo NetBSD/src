@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.154.2.2 2018/10/20 06:58:29 pgoyette Exp $
+#	$NetBSD: files.sparc64,v 1.154.2.3 2018/11/26 01:52:27 pgoyette Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -44,6 +44,10 @@ file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
 file	arch/sparc64/dev/vpci.c			vpci
 file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro | vpci
+
+device jbusi2c: i2cexec, i2c_bitbang, i2cbus
+attach jbusi2c at mainbus
+file	arch/sparc64/dev/jbus-i2c.c		jbusi2c
 
 define  central {}
 device	central: central

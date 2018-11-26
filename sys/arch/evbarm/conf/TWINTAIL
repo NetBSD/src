@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.72.2.1 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: TWINTAIL,v 1.72.2.2 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -216,7 +216,6 @@ opio0 	at obio?  intr 2
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#wd* at umass?
 
 # USB audio
 #uaudio*	at uhub? port ? configuration ?

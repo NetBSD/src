@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.5.18.1 2018/09/06 06:56:36 pgoyette Exp $	*/
+/*	$NetBSD: sched.h,v 1.5.18.2 2018/11/26 01:52:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -60,13 +60,22 @@ schedule_timeout_uninterruptible(long timeout)
 	int start, end;
 
 	if (cold) {
-		DELAY(timeout);
+		unsigned us;
+		if (hz <= 1000) {
+			unsigned ms = hztoms(MIN(timeout, mstohz(INT_MAX)));
+			us = MIN(ms, INT_MAX/1000)*1000;
+		} else if (hz <= 1000000) {
+			us = MIN(timeout, (INT_MAX/1000000)/hz)*hz*1000000;
+		} else {
+			us = timeout/(1000000/hz);
+		}
+		DELAY(us);
 		return 0;
 	}
 
 	start = hardclock_ticks;
-	/* XXX Integer truncation...not likely to matter here.  */
-	(void)kpause("loonix", false /*!intr*/, timeout, NULL);
+	/* Caller is expected to loop anyway, so no harm in truncating.  */
+	(void)kpause("loonix", false /*!intr*/, MIN(timeout, INT_MAX), NULL);
 	end = hardclock_ticks;
 
 	remain = timeout - (end - start);

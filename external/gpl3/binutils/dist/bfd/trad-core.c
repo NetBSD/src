@@ -293,12 +293,16 @@ const bfd_target core_trad_vec =
       trad_unix_core_file_p		/* a core file */
     },
     {				/* bfd_set_format */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
     {				/* bfd_write_contents */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),

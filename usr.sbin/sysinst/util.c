@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7.14.3 2018/10/20 06:58:47 pgoyette Exp $	*/
+/*	$NetBSD: util.c,v 1.7.14.4 2018/11/26 01:52:55 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,6 +34,8 @@
 
 /* util.c -- routines that don't really fit anywhere else... */
 
+#include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -413,72 +415,97 @@ get_iso9660_volname(int dev, int sess, char *volname)
 }
 
 /*
+ * Local state while iterating CDs and collecting volumes
+ */
+struct get_available_cds_state {
+	struct cd_info *info;
+	size_t count;
+};
+
+/*
+ * Callback function: if this is a CD, enumerate all volumes on it
+ */
+static bool
+get_available_cds_helper(void *arg, const char *device)
+{
+	struct get_available_cds_state *state = arg;
+	char dname[16], volname[80];
+	struct disklabel label;
+	int part, dev, error, sess, ready;
+
+	if (!is_cdrom_device(device, false))
+		return true;
+
+	sprintf(dname, "/dev/r%s%c", device, 'a'+RAW_PART);
+	dev = open(dname, O_RDONLY, 0);
+	if (dev == -1)
+		return true;
+
+	ready = 0;
+	error = ioctl(dev, DIOCTUR, &ready);
+	if (error != 0 || ready == 0) {
+		close(dev);
+		return true;
+	}
+	error = ioctl(dev, DIOCGDINFO, &label);
+	close(dev);
+	if (error != 0)
+		return true;
+
+	for (part = 0; part < label.d_npartitions; part++) {
+
+		if (label.d_partitions[part].p_fstype == FS_UNUSED
+		    || label.d_partitions[part].p_size == 0)
+			continue;
+
+		if (label.d_partitions[part].p_fstype == FS_ISO9660) {
+			sess = label.d_partitions[part].p_cdsession;
+			sprintf(dname, "/dev/r%s%c", device, 'a'+part);
+			dev = open(dname, O_RDONLY, 0);
+			if (dev == -1)
+				continue;
+			error = get_iso9660_volname(dev, sess, volname);
+			close(dev);
+			if (error)
+				continue;
+			sprintf(state->info->device_name,
+			    "%s%c", device, 'a'+part);
+			sprintf(state->info->menu, "%s (%s)",
+			    state->info->device_name, volname);
+		} else {
+			/*
+			 * All install CDs use partition
+			 * a for the sets.
+			 */
+			if (part > 0)
+				continue;
+			sprintf(state->info->device_name,
+			    "%s%c", device, 'a'+part);
+			strcpy(state->info->menu, state->info->device_name);
+		}
+		state->info++;
+		if (++state->count >= MAX_CD_INFOS)
+			return false;
+	}
+
+	return true;
+}
+
+/*
  * Get a list of all available CD media (not drives!), return
  * the number of entries collected.
  */
 static int
 get_available_cds(void)
 {
-	char dname[16], volname[80];
-	struct cd_info *info = cds;
-	struct disklabel label;
-	int i, part, dev, error, sess, ready, count = 0;
+	struct get_available_cds_state data;
 
-	for (i = 0; i < MAX_CD_DEVS; i++) {
-		sprintf(dname, "/dev/rcd%d%c", i, 'a'+RAW_PART);
-		dev = open(dname, O_RDONLY, 0);
-		if (dev == -1)
-			break;
-		ready = 0;
-		error = ioctl(dev, DIOCTUR, &ready);
-		if (error != 0 || ready == 0) {
-			close(dev);
-			continue;
-		}
-		error = ioctl(dev, DIOCGDINFO, &label);
-		close(dev);
-		if (error == 0) {
-			for (part = 0; part < label.d_npartitions; part++) {
-				if (label.d_partitions[part].p_fstype
-					== FS_UNUSED
-				    || label.d_partitions[part].p_size == 0)
-					continue;
-				if (label.d_partitions[part].p_fstype
-				    == FS_ISO9660) {
-					sess = label.d_partitions[part]
-					    .p_cdsession;
-					sprintf(dname, "/dev/rcd%d%c", i,
-					    'a'+part);
-					dev = open(dname, O_RDONLY, 0);
-					if (dev == -1)
-						continue;
-					error = get_iso9660_volname(dev, sess,
-					    volname);
-					close(dev);
-					if (error) continue;
-					sprintf(info->device_name, "cd%d%c",
-						i, 'a'+part);
-					sprintf(info->menu, "%s (%s)",
-						info->device_name,
-						volname);
-				} else {
-					/*
-					 * All install CDs use partition
-					 * a for the sets.
-					 */
-					if (part > 0)
-						continue;
-					sprintf(info->device_name, "cd%d%c",
-						i, 'a'+part);
-					strcpy(info->menu, info->device_name);
-				}
-				info++;
-				if (++count >= MAX_CD_INFOS)
-					break;
-			}
-		}
-	}
-	return count;
+	data.info = cds;
+	data.count = 0;
+
+	enumerate_disks(&data, get_available_cds_helper);
+
+	return data.count;
 }
 
 static int
@@ -1757,12 +1784,101 @@ use_tgz_for_set(const char *set_name)
 			return dist->force_tgz;
 	}
 
-	return false;
+	return true;
 }
 
 /* Return the postfix used for a given set */
-const char *set_postfix(const char *set_name)
+const char *
+set_postfix(const char *set_name)
 {
 	return use_tgz_for_set(set_name) ? dist_tgz_postfix : dist_postfix;
+}
+
+/*
+ * Replace positional arguments (encoded as $0 .. $N) in the string
+ * passed by the contents of the passed argument array.
+ * Caller must free() the result string.
+ */
+char*
+str_arg_subst(const char *src, size_t argc, const char **argv)
+{
+	const char *p, *last;
+	char *out, *t;
+	size_t len;
+
+	len = strlen(src);
+	for (p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
+		char *endp = NULL;
+		size_t n;
+		int e;
+
+		/* $ followed by a correct numeric position? */
+		n = strtou(p+1, &endp, 10, 0, INT_MAX, &e);
+		if ((e == 0 || e == ENOTSUP) && n < argc) {
+			len += strlen(argv[n]);
+			len -= endp-p;
+			p = endp-1;
+		}
+	}
+
+	out = malloc(len+1);
+	if (out == NULL)
+		return NULL;
+
+	t = out;
+	for (last = src, p = strchr(src, '$'); p; p = strchr(p+1, '$')) {
+		char *endp = NULL;
+		size_t n;
+		int e;
+
+		/* $ followed by a correct numeric position? */
+		n = strtou(p+1, &endp, 10, 0, INT_MAX, &e);
+		if ((e == 0 || e == ENOTSUP) && n < argc) {
+			size_t l = p-last;
+			memcpy(t, last, l);
+			t += l;
+			strcpy(t, argv[n]);
+			t += strlen(argv[n]);
+			last = endp;
+		}
+	}
+	if (*last) {
+		strcpy(t, last);
+		t += strlen(last);
+	} else {
+		*t = 0;
+	}
+	assert((size_t)(t-out) == len);
+
+	return out;
+}
+
+/*
+ * Replace positional arguments (encoded as $0 .. $N) in the
+ * message by the strings passed as ...
+ */
+void
+msg_display_subst(const char *master, size_t argc, ...)
+{
+	va_list ap;
+	const char **args, **arg;
+	char *out;
+
+	args = malloc(sizeof(const char *)*argc);
+	if (args == NULL)
+		return;
+
+	arg = args;
+	va_start(ap, argc);
+	for (size_t i = 0; i < argc; i++)
+		*arg++ = va_arg(ap, const char*);
+	va_end(ap);
+
+	out = str_arg_subst(msg_string(master), argc, args);
+	if (out != NULL) {
+		msg_display(out);
+		free(out);
+	}
+	free(args);
 }
 

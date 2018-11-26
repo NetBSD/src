@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.70.14.1 2018/09/06 06:56:48 pgoyette Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.70.14.2 2018/11/26 01:52:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.70.14.1 2018/09/06 06:56:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.70.14.2 2018/11/26 01:52:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,6 +453,7 @@ uvm_pglistalloc_simple(int num, paddr_t low, paddr_t high,
 {
 	int fl, error;
 	uvm_physseg_t psi;
+	int count = 0;
 
 	/* Default to "lose". */
 	error = ENOMEM;
@@ -462,6 +463,7 @@ again:
 	 * Block all memory allocation and lock the free list.
 	 */
 	mutex_spin_enter(&uvm_fpageqlock);
+	count++;
 
 	/* Are there even any free pages? */
 	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
@@ -499,7 +501,8 @@ out:
 		if (waitok) {
 			/* XXX perhaps some time limitation? */
 #ifdef DEBUG
-			printf("pglistalloc waiting\n");
+			if (count == 1)
+				printf("pglistalloc waiting\n");
 #endif
 			uvm_wait("pglalloc");
 			goto again;

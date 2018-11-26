@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.2.26.2 2018/06/25 07:26:12 pgoyette Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.2.26.3 2018/11/26 01:52:55 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,7 @@
 #include <dirent.h>
 #include "defs.h"
 #include "md.h"
+#include "defsizes.h"
 #include "endian.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
@@ -68,19 +69,6 @@
 #endif
 #ifndef PART_USR
 #define PART_USR	PART_ANY
-#endif
-
-#ifndef DEFVARSIZE
-#define DEFVARSIZE	32
-#endif
-#ifndef DEFROOTSIZE
-#define DEFROOTSIZE	32
-#endif
-#ifndef DEFUSRSIZE
-#define DEFUSRSIZE	128
-#endif
-#ifndef DEFSWAPSIZE
-#define DEFSWAPSIZE	128
 #endif
 
 int
@@ -378,8 +366,9 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 		{ PART_ANY,	{ '/', 'h', 'o', 'm', 'e', '\0' },	0,
 		  0, 0, 0 },
 	}, {
-		{ NULL, OPT_NOMENU, 0, set_ptn_size },
-		{ MSG_askunits, MENU_sizechoice, OPT_SUB, NULL },
+		{ .opt_menu=OPT_NOMENU, .opt_action=set_ptn_size },
+		{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
+		  .opt_flags=OPT_SUB },
 	}, 0, 0, NULL, { 0 } };
 
 	if (maxpart > MAXPARTITIONS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.26.1 2018/11/26 01:52:56 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@
 
 
 /* Megs required for a full X installation. */
-#define XNEEDMB 50
+#define XNEEDMB 225
 
 
 /*
@@ -55,14 +55,6 @@
  */
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On amiga, disks are always named "sd", regardless they are attached
- * to the IDE bus or to the SCSI bus.
- */
-#define DISK_NAMES "sd"
 
 /*
  * Machine-specific command to write a new label to a disk.

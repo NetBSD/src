@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gcc_path,v 1.6.2.1 2018/09/06 06:52:06 pgoyette Exp $
+#	$NetBSD: Makefile.gcc_path,v 1.6.2.2 2018/11/26 01:51:16 pgoyette Exp $
 
 # Define some commom paths
 

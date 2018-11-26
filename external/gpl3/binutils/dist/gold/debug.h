@@ -40,10 +40,11 @@ const int DEBUG_RELAXATION = 0x8;
 const int DEBUG_INCREMENTAL = 0x10;
 const int DEBUG_LOCATION = 0x20;
 const int DEBUG_TARGET = 0x40;
+const int DEBUG_PLUGIN = 0x80;
 
 const int DEBUG_ALL = (DEBUG_TASK | DEBUG_SCRIPT | DEBUG_FILES
 		       | DEBUG_RELAXATION | DEBUG_INCREMENTAL
-		       | DEBUG_LOCATION | DEBUG_TARGET);
+		       | DEBUG_LOCATION | DEBUG_TARGET | DEBUG_PLUGIN);
 
 // Convert a debug string to the appropriate enum.
 inline int
@@ -59,6 +60,7 @@ debug_string_to_enum(const char* arg)
     { "incremental", DEBUG_INCREMENTAL },
     { "location", DEBUG_LOCATION },
     { "target", DEBUG_TARGET },
+    { "plugin", DEBUG_PLUGIN },
     { "all", DEBUG_ALL }
   };
 

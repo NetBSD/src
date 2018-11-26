@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.11.2.3 2018/09/30 01:45:51 pgoyette Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.11.2.4 2018/11/26 01:52:47 pgoyette Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.3 2018/09/30 01:45:51 pgoyette Exp $");
+<<<<<<< xhci_pci.c
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.4 2018/11/26 01:52:47 pgoyette Exp $");
+=======
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.4 2018/11/26 01:52:47 pgoyette Exp $");
+>>>>>>> 1.17
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -139,9 +143,6 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* check if memory space access is enabled */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-#ifdef DEBUG
-	printf("%s: csr: %08x\n", __func__, csr);
-#endif
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
 		sc->sc_ios = 0;
 		aprint_error_dev(self, "memory access is disabled\n");
@@ -186,6 +187,9 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 #ifndef XHCI_DISABLE_MSI
 		[PCI_INTR_TYPE_MSI] = 1,
 #endif
+#ifndef XHCI_DISABLE_MSIX
+		[PCI_INTR_TYPE_MSIX] = 1,
+#endif
 	};
 
 alloc_retry:
@@ -203,11 +207,23 @@ alloc_retry:
 		pci_intr_release(pc, psc->sc_pihp, 1);
 		psc->sc_ih = NULL;
 		switch (intr_type) {
+#ifndef XHCI_DISABLE_MSIX
+		case PCI_INTR_TYPE_MSIX:
+			/* The next try is for MSI: Disable MSIX */
+			counts[PCI_INTR_TYPE_MSIX] = 0;
+#ifndef XHCI_DISABLE_MSI
+			counts[PCI_INTR_TYPE_MSI] = 1;
+#endif
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			goto alloc_retry;
+#endif
+#ifndef XHCI_DISABLE_MSI
 		case PCI_INTR_TYPE_MSI:
 			/* The next try is for INTx: Disable MSI */
 			counts[PCI_INTR_TYPE_MSI] = 0;
 			counts[PCI_INTR_TYPE_INTX] = 1;
 			goto alloc_retry;
+#endif
 		case PCI_INTR_TYPE_INTX:
 		default:
 			aprint_error_dev(self, "couldn't establish interrupt");

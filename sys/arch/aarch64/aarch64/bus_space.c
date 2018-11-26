@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.1.28.3 2018/06/25 07:25:37 pgoyette Exp $ */
+/* $NetBSD: bus_space.c,v 1.1.28.4 2018/11/26 01:52:16 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.1.28.3 2018/06/25 07:25:37 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.1.28.4 2018/11/26 01:52:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

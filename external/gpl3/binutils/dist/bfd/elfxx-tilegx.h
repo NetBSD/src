@@ -76,7 +76,7 @@ tilegx_elf_gc_mark_hook (asection *,
 extern bfd_vma
 tilegx_elf_plt_sym_val (bfd_vma, const asection *, const arelent *);
 
-extern void
+extern bfd_boolean
 tilegx_info_to_howto_rela (bfd *, arelent *, Elf_Internal_Rela *);
 
 extern int

@@ -1667,6 +1667,17 @@ Sized_dwarf_line_info<size, big_endian>::read_header_prolog(
   header_.min_insn_length = *lineptr;
   lineptr += 1;
 
+  if (header_.version < 4)
+    header_.max_ops_per_insn = 1;
+  else
+    {
+      // DWARF 4 added the maximum_operations_per_instruction field.
+      header_.max_ops_per_insn = *lineptr;
+      lineptr += 1;
+      // TODO: Add support for values other than 1.
+      gold_assert(header_.max_ops_per_insn == 1);
+    }
+
   header_.default_is_stmt = *lineptr;
   lineptr += 1;
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52.2.1 2018/03/15 09:12:07 pgoyette Exp $
+# $NetBSD: Makefile,v 1.52.2.2 2018/11/26 01:52:52 pgoyette Exp $
 
 NOMAN=		# defined
 
@@ -66,5 +66,7 @@ t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 CPPFLAGS.t_subr_prf.c=	-Wno-pointer-sign	# XXX platform vs kernel SHA2
 
 CLEANFILES+=	t_subr_prf.c
+
+LDADD.h_segv+=	-lm
 
 .include <bsd.test.mk>

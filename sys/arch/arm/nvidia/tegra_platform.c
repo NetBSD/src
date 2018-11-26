@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.9.2.6 2018/10/20 06:58:25 pgoyette Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.9.2.7 2018/11/26 01:52:19 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.9.2.6 2018/10/20 06:58:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.9.2.7 2018/11/26 01:52:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,6 +68,23 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.9.2.6 2018/10/20 06:58:25 pgoye
 #define	PLLP_OUT0_FREQ	408000000
 
 void tegra_platform_early_putchar(char);
+
+void
+tegra_platform_early_putchar(char c)
+{
+#ifdef CONSADDR
+#define CONSADDR_VA	(CONSADDR - TEGRA_APB_BASE + TEGRA_APB_VBASE)
+
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+
+	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = c;
+#endif
+}
 
 static const struct pmap_devmap *
 tegra_platform_devmap(void)
@@ -131,23 +148,6 @@ tegra_platform_init_attach_args(struct fdt_attach_args *faa)
 	faa->faa_bst = &arm_generic_bs_tag;
 	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
-}
-
-void
-tegra_platform_early_putchar(char c)
-{
-#ifdef CONSADDR
-#define CONSADDR_VA	(CONSADDR - TEGRA_APB_BASE + TEGRA_APB_VBASE)
-
-	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
-	    (volatile uint32_t *)CONSADDR_VA :
-	    (volatile uint32_t *)CONSADDR;
-
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
-		;
-
-	uartaddr[com_data] = c;
-#endif
 }
 
 static void
@@ -223,7 +223,6 @@ static const struct arm_platform tegra124_platform = {
 	.ap_devmap = tegra_platform_devmap,
 	.ap_bootstrap = tegra124_platform_bootstrap,
 	.ap_init_attach_args = tegra_platform_init_attach_args,
-	.ap_early_putchar = tegra_platform_early_putchar,
 	.ap_device_register = tegra_platform_device_register,
 	.ap_reset = tegra_platform_reset,
 	.ap_delay = tegra_platform_delay,
@@ -239,7 +238,6 @@ static const struct arm_platform tegra210_platform = {
 	.ap_devmap = tegra_platform_devmap,
 	.ap_bootstrap = tegra210_platform_bootstrap,
 	.ap_init_attach_args = tegra_platform_init_attach_args,
-	.ap_early_putchar = tegra_platform_early_putchar,
 	.ap_device_register = tegra_platform_device_register,
 	.ap_reset = tegra_platform_reset,
 	.ap_delay = tegra_platform_delay,

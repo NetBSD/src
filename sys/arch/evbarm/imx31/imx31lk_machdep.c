@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.19.14.4 2018/09/30 01:45:41 pgoyette Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.19.14.5 2018/11/26 01:52:22 pgoyette Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.19.14.4 2018/09/30 01:45:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.19.14.5 2018/11/26 01:52:22 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -698,7 +698,7 @@ printf("%s: textsize %#lx, totalsize %#lx\n",
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 	printf("pmap ");
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 

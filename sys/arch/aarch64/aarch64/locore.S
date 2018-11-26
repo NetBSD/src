@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4.2.7 2018/10/20 06:58:23 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.4.2.8 2018/11/26 01:52:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,13 +32,14 @@
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_fdt.h"
+#include "opt_kasan.h"
 #include "opt_multiprocessor.h"
 
 #include <aarch64/asm.h>
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.4.2.7 2018/10/20 06:58:23 pgoyette Exp $")
+RCSID("$NetBSD: locore.S,v 1.4.2.8 2018/11/26 01:52:16 pgoyette Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -180,6 +181,10 @@ vstart:
 	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
 	DPRINTREG("curcpu           = ", x0);
 
+#ifdef KASAN
+	ADDR	x0, lwp0uspace
+	bl	_C_LABEL(kasan_early_init)
+#endif
 
 	mov	fp, #0			/* trace back starts here */
 	PRINT("initarm\n")

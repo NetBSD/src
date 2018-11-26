@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.19.12.1 2018/06/25 07:25:13 pgoyette Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.19.12.2 2018/11/26 01:50:00 pgoyette Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.19.12.1 2018/06/25 07:25:13 pgoyette Exp $
+ * $Id: m_netbsd.c,v 1.19.12.2 2018/11/26 01:50:00 pgoyette Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.19.12.1 2018/06/25 07:25:13 pgoyette Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.19.12.2 2018/11/26 01:50:00 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -306,7 +306,7 @@ machine_init(statics)
 	int mib[2];
 	size_t size;
 	struct clockinfo clockinfo;
-	struct timeval boottime;
+	struct timespec boottime;
 
 	if ((kd = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, "kvm_open")) == NULL)
 		return -1;

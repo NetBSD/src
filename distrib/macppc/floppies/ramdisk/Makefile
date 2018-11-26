@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.48 2017/01/24 18:04:03 christos Exp $
+#	$NetBSD: Makefile,v 1.48.10.1 2018/11/26 01:49:56 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
-# This must be kept in sync with config option MEMORY_DISK_ROOT_SIZE
-# in both
+# This must be kept in sync with config option MEMORY_DISK_ROOT_SIZE in
 #   src/sys/arch/macppc/conf/INSTALL
+#   src/sys/arch/macppc/conf/INSTALL_601
 #   src/sys/arch/macppc/conf/GENERIC_MD
 IMAGESIZE=	2560k
 MAKEFS_FLAGS+=	-f 15

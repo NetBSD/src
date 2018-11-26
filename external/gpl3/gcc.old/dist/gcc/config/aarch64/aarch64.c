@@ -1110,7 +1110,7 @@ aarch64_load_symref_appropriately (rtx dest, rtx imm,
 	    emit_move_insn (gp_rtx, gen_rtx_HIGH (Pmode, s));
 
 	    if (mode != GET_MODE (gp_rtx))
-	      gp_rtx = simplify_gen_subreg (mode, gp_rtx, GET_MODE (gp_rtx), 0);
+             gp_rtx = gen_lowpart (mode, gp_rtx);
 	  }
 
 	if (mode == ptr_mode)
@@ -5337,7 +5337,7 @@ aarch64_class_max_nregs (reg_class_t regclass, machine_mode mode)
 {
   switch (regclass)
     {
-    case CALLER_SAVE_REGS:
+    case TAILCALL_ADDR_REGS:
     case POINTER_REGS:
     case GENERAL_REGS:
     case ALL_REGS:
@@ -5417,7 +5417,7 @@ aarch64_elf_asm_constructor (rtx symbol, int priority)
       section *s;
       char buf[18];
       snprintf (buf, sizeof (buf), ".init_array.%.5u", priority);
-      s = get_section (buf, SECTION_WRITE, NULL);
+      s = get_section (buf, SECTION_WRITE | SECTION_NOTYPE, NULL);
       switch_to_section (s);
       assemble_align (POINTER_SIZE);
       assemble_aligned_integer (POINTER_BYTES, symbol);
@@ -5434,7 +5434,7 @@ aarch64_elf_asm_destructor (rtx symbol, int priority)
       section *s;
       char buf[18];
       snprintf (buf, sizeof (buf), ".fini_array.%.5u", priority);
-      s = get_section (buf, SECTION_WRITE, NULL);
+      s = get_section (buf, SECTION_WRITE | SECTION_NOTYPE, NULL);
       switch_to_section (s);
       assemble_align (POINTER_SIZE);
       assemble_aligned_integer (POINTER_BYTES, symbol);
@@ -7383,10 +7383,10 @@ aarch64_register_move_cost (machine_mode mode,
     = aarch64_tune_params.regmove_cost;
 
   /* Caller save and pointer regs are equivalent to GENERAL_REGS.  */
-  if (to == CALLER_SAVE_REGS || to == POINTER_REGS)
+  if (to == TAILCALL_ADDR_REGS || to == POINTER_REGS)
     to = GENERAL_REGS;
 
-  if (from == CALLER_SAVE_REGS || from == POINTER_REGS)
+  if (from == TAILCALL_ADDR_REGS || from == POINTER_REGS)
     from = GENERAL_REGS;
 
   /* Moving between GPR and stack cost is the same as GP2GP.  */

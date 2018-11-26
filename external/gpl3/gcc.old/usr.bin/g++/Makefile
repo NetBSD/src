@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2018/09/06 06:53:35 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2018/11/26 01:52:04 pgoyette Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++

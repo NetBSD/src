@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.260.2.4 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.260.2.5 2018/11/26 01:52:50 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.4 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.5 2018/11/26 01:52:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -376,7 +376,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #ifdef MPLS
 	{
 		struct m_tag *mtag;
-		mtag = m_tag_find(m, PACKET_TAG_MPLS, NULL);
+		mtag = m_tag_find(m, PACKET_TAG_MPLS);
 		if (mtag != NULL) {
 			/* Having the tag itself indicates it's MPLS */
 			etype = htons(ETHERTYPE_MPLS);

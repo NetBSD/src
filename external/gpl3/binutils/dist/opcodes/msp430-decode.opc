@@ -24,7 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ansidecl.h"
+#include "bfd.h"
+#include "opintl.h"
 #include "opcode/msp430-decode.h"
 
 static int trace = 0;
@@ -140,9 +141,9 @@ immediate (int bytes, int sign_extend, LocalData *ld)
 	i -= 0x100000000ULL;
       break;
     default:
-      fprintf (stderr,
-	       "Programmer error: immediate() called with invalid byte count %d\n",
-	       bytes);
+      opcodes_error_handler
+	(_("internal error: immediate() called with invalid byte count %d"),
+	   bytes);
       abort ();
     }
   return i;

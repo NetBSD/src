@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.244.2.3 2018/09/06 06:55:50 pgoyette Exp $	*/
+/*	$NetBSD: wi.c,v 1.244.2.4 2018/11/26 01:52:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244.2.3 2018/09/06 06:55:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244.2.4 2018/11/26 01:52:31 pgoyette Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2512,7 +2512,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		/* XXX wi_len looks in u_int8_t, not in u_int16_t */
-		m = m_devget((char *)&wreq.wi_val, wreq.wi_len, 0, ifp, NULL);
+		m = m_devget((char *)&wreq.wi_val, wreq.wi_len, 0, ifp);
 		if (m == NULL) {
 			error = ENOMEM;
 			break;

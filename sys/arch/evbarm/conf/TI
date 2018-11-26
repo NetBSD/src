@@ -1,4 +1,4 @@
-#	$NetBSD: TI,v 1.2.4.1 2018/07/28 04:37:31 pgoyette Exp $
+#	$NetBSD: TI,v 1.2.4.2 2018/11/26 01:52:21 pgoyette Exp $
 #
 
 include "arch/evbarm/conf/std.ti"
@@ -18,11 +18,11 @@ makeoptions     DTS="
 makeoptions	DEBUG="-g"      # compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
-#options		DIAGNOSTIC
-#options		DEBUG
+#options 	DIAGNOSTIC
+#options 	DEBUG
 options  	LOCKDEBUG
 
-options		CPU_CORTEXA8
+options 	CPU_CORTEXA8
 
 options 	OMAP_SYSTEM_CLOCK_FREQ="48000000UL"
 

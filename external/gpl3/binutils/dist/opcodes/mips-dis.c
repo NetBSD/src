@@ -563,7 +563,7 @@ const struct mips_arch_choice mips_arch_choices[] =
   { "mips32r6",	1, bfd_mach_mipsisa32r6, CPU_MIPS32R6,
     ISA_MIPS32R6,
     (ASE_EVA | ASE_MSA | ASE_VIRT | ASE_XPA | ASE_MCU | ASE_MT | ASE_DSP
-     | ASE_DSPR2 | ASE_DSPR3),
+     | ASE_DSPR2 | ASE_DSPR3 | ASE_CRC | ASE_GINV),
     mips_cp0_names_mips3264r2,
     mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
     mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
@@ -602,7 +602,8 @@ const struct mips_arch_choice mips_arch_choices[] =
   { "mips64r6",	1, bfd_mach_mipsisa64r6, CPU_MIPS64R6,
     ISA_MIPS64R6,
     (ASE_EVA | ASE_MSA | ASE_MSA64 | ASE_XPA | ASE_VIRT | ASE_VIRT64
-     | ASE_MCU | ASE_MT | ASE_DSP | ASE_DSPR2 | ASE_DSPR3),
+     | ASE_MCU | ASE_MT | ASE_DSP | ASE_DSPR2 | ASE_DSPR3 | ASE_CRC
+     | ASE_CRC64 | ASE_GINV),
     mips_cp0_names_mips3264r2,
     mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
     mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
@@ -925,6 +926,12 @@ parse_mips_ase_option (const char *option)
   if (CONST_STRNEQ (option, "xpa"))
     {
       mips_ase |= ASE_XPA;
+      return TRUE;
+    }
+
+  if (CONST_STRNEQ (option, "ginv"))
+    {
+      mips_ase |= ASE_GINV;
       return TRUE;
     }
 
@@ -2566,6 +2573,10 @@ with the -M switch (multiple options should be separated by commas):\n"));
   fprintf (stream, _("\n\
   xpa                      Recognize the eXtended Physical Address (XPA)\n\
                            ASE instructions.\n"));
+
+  fprintf (stream, _("\n\
+  ginv                     Recognize the Global INValidate (GINV) ASE\n\
+                           instructions.\n"));
 
   fprintf (stream, _("\n\
   gpr-names=ABI            Print GPR names according to specified ABI.\n\

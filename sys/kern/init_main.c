@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.495.2.2 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.495.2.3 2018/11/26 01:52:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495.2.2 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495.2.3 2018/11/26 01:52:50 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -663,7 +663,16 @@ main(void)
 	 * munched in mi_switch() after the time got set.
 	 */
 	getnanotime(&time);
-	boottime = time;
+	{
+		struct timespec ut;
+		/*
+		 * was:
+		 *	boottime = time;
+		 * but we can do better
+		 */
+		nanouptime(&ut);
+		timespecsub(&time, &ut, &boottime);
+	}
 
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
@@ -889,12 +898,14 @@ check_console(struct lwp *l)
 
 	error = namei_simple_kernel("/dev/console",
 				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error == 0)
+	if (error == 0) {
 		vrele(vp);
-	else if (error == ENOENT)
-		printf("warning: no /dev/console\n");
-	else
+	} else if (error == ENOENT) {
+		if (boothowto & (AB_VERBOSE|AB_DEBUG))
+			printf("warning: no /dev/console\n");
+	} else {
 		printf("warning: lookup /dev/console: error %d\n", error);
+	}
 }
 
 /*

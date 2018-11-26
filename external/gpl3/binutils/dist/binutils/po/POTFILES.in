@@ -26,15 +26,11 @@ elfedit.c
 emul_aix.c
 emul_vanilla.c
 filemode.c
-ieee.c
-ieee.c
 is-ranlib.c
 is-strip.c
 maybe-ranlib.c
 maybe-strip.c
 mclex.c
-nlmconv.c
-nlmconv.h
 nm.c
 not-ranlib.c
 not-strip.c

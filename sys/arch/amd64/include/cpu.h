@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61.2.1 2018/03/22 01:44:41 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61.2.2 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,8 +83,13 @@ cpu_set_curpri(int pri)
 }
 #endif	/* __GNUC__ && !_MODULE */
 
+#ifdef XEN
+#define	CLKF_USERMODE(frame)	(curcpu()->ci_xen_clockf_usermode)
+#define CLKF_PC(frame)		(curcpu()->ci_xen_clockf_pc)
+#else /* XEN */
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_tf.tf_cs)
 #define CLKF_PC(frame)		((frame)->cf_if.if_tf.tf_rip)
+#endif /* XEN */
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 #define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
 

@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.1.28.3 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: param.h,v 1.1.28.4 2018/11/26 01:52:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #define _AARCH64_PARAM_H_
 
 #ifdef __aarch64__
+
+#ifdef _KERNEL_OPT
+#include "opt_cputypes.h"
+#endif
 
 /*
  * Machine dependent constants for all ARM processors
@@ -93,8 +97,8 @@
 #define MAXPHYS			65536	/* max I/O transfer size */
 #endif
 
-#define NKMEMPAGES_MAX_DEFAULT	((2048UL * 1024 * 1024) >> PAGE_SHIFT)
-#define NKMEMPAGES_MIN_DEFAULT	((128UL * 1024 * 1024) >> PAGE_SHIFT)
+#define NKMEMPAGES_MIN_DEFAULT		((128UL * 1024 * 1024) >> PAGE_SHIFT)
+#define NKMEMPAGES_MAX_UNLIMITED	1
 
 #ifdef AARCH64_PAGE_SHIFT
 #if (1 << AARCH64_PAGE_SHIFT) & ~0x141000
@@ -131,16 +135,23 @@
 #endif
 
 #ifdef _KERNEL
+
+#if defined(CPU_THUNDERX)
+#define COHERENCY_UNIT	128
+#define CACHE_LINE_SIZE	128
+#endif
+
+#ifndef __HIDE_DELAY
 void delay(unsigned int);
 #define	DELAY(x)	delay(x)
 #endif
 /*
  * Compatibility /dev/zero mapping.
  */
-#ifdef _KERNEL
 #ifdef COMPAT_16
 #define COMPAT_ZERODEV(x)	(x == makedev(0, _DEV_ZERO_oARM))
 #endif
+
 #endif /* _KERNEL */
 
 #define aarch64_btop(x)		((unsigned long)(x) >> PGSHIFT)

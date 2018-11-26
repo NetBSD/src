@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.65.2.3 2018/07/28 04:37:43 pgoyette Exp $	*/
+/*	$NetBSD: clock.c,v 1.65.2.4 2018/11/26 01:52:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65.2.3 2018/07/28 04:37:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65.2.4 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -763,13 +763,13 @@ xen_resumeclocks(struct cpu_info *ci)
 	snprintf(intr_xname, sizeof(intr_xname), "%s clock",
 	    device_xname(ci->ci_dev));
 	/* XXX sketchy function pointer cast -- fix the API, please */
-	ci->ci_xen_timer_intrhand = intr_establish_xname(0, &xen_pic, evtch,
+	ci->ci_xen_timer_intrhand = intr_establish_xname(-1, &xen_pic, evtch,
 	    IST_LEVEL, IPL_CLOCK, (int (*)(void *))xen_timer_handler, ci, true,
 	    intr_xname);
 	if (ci->ci_xen_timer_intrhand == NULL)
 		panic("failed to establish timer interrupt handler");
 
-	hypervisor_enable_event(evtch);
+	hypervisor_unmask_event(evtch);
 
 	aprint_verbose("Xen %s: using event channel %d\n", intr_xname, evtch);
 
@@ -811,6 +811,7 @@ xen_timer_handler(void *cookie, struct clockframe *frame)
 	KASSERT(cpu_intr_p());
 	KASSERT(cookie == ci);
 
+	frame = NULL; /* We use values cached in curcpu()  */
 again:
 	/*
 	 * Find how many nanoseconds of Xen system time has elapsed

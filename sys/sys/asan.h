@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.7.2.2 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: asan.h,v 1.7.2.3 2018/11/26 01:52:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,6 +39,11 @@
 #include <sys/types.h>
 
 #ifdef KASAN
+void kasan_shadow_map(void *, size_t);
+void kasan_early_init(void *);
+void kasan_init(void);
+void kasan_softint(struct lwp *);
+
 void kasan_add_redzone(size_t *);
 void kasan_alloc(const void *, size_t, size_t);
 void kasan_free(const void *, size_t);

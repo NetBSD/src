@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.18.12.1 2018/03/22 01:44:47 pgoyette Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.18.12.2 2018/11/26 01:52:28 pgoyette Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18.12.1 2018/03/22 01:44:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18.12.2 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,19 +151,40 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
     const char *xname)
 {
 	void *ih;
+
+	ih = acpi_md_intr_establish(InterruptNumber, IPL_TTY, IST_LEVEL,
+	    (int (*)(void *))ServiceRoutine, Context, false, xname);
+	if (ih == NULL)
+		return AE_NO_MEMORY;
+
+	*cookiep = ih;
+
+	return AE_OK;
+}
+
+void
+acpi_md_OsRemoveInterruptHandler(void *cookie)
+{
+	intr_disestablish(cookie);
+}
+
+void *
+acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
+    int (*handler)(void *), void *arg, bool mpsafe, const char *xname)
+{
+	void *ih;
 	struct pic *pic;
 #if NIOAPIC > 0
 	struct ioapic_softc *sc;
 	struct acpi_md_override ovr;
 	struct mp_intr_map tmpmap, *mip, **mipp = NULL;
 #endif
-	int irq, pin, type, redir, mpflags;
+	int irq, pin, redir, mpflags;
 
 	/*
 	 * ACPI interrupts default to level-triggered active-low.
 	 */
 
-	type = IST_LEVEL;
 	mpflags = (MPS_INTTR_LEVEL << 2) | MPS_INTPO_ACTLO;
 	redir = IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 
@@ -239,11 +260,8 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 		irq = pin = (int)InterruptNumber;
 	}
 
-	/*
-	 * XXX probably, IPL_BIO is enough.
-	 */
-	ih = intr_establish_xname(irq, pic, pin, type, IPL_TTY,
-	    (int (*)(void *)) ServiceRoutine, Context, false, xname);
+	ih = intr_establish_xname(irq, pic, pin, type, ipl,
+	    handler, arg, mpsafe, xname);
 
 #if NIOAPIC > 0
 	if (mipp) {
@@ -251,18 +269,13 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 	}
 #endif
 
-	if (ih == NULL)
-		return AE_NO_MEMORY;
-
-	*cookiep = ih;
-
-	return AE_OK;
+	return ih;
 }
 
 void
-acpi_md_OsRemoveInterruptHandler(void *cookie)
+acpi_md_intr_disestablish(void *ih)
 {
-	intr_disestablish(cookie);
+	intr_disestablish(ih);
 }
 
 ACPI_STATUS

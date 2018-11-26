@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.22.2.1 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: MINI2440,v 1.22.2.2 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -270,7 +270,6 @@ uhub*	at uhub? port ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd* at umass?
 
 # USB audio
 #uaudio*	at uhub? port ? configuration ?

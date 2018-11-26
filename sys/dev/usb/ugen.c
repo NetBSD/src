@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.139.2.5 2018/09/29 21:36:14 pgoyette Exp $	*/
+/*	$NetBSD: ugen.c,v 1.139.2.6 2018/11/26 01:52:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.2.5 2018/09/29 21:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.2.6 2018/11/26 01:52:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1462,6 +1462,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	uint8_t conf, alt;
 	int cdesclen;
 	int error;
+	int dir;
 
 	DPRINTFN(5, ("ugenioctl: cmd=%08lx\n", cmd));
 	if (sc->sc_dying)
@@ -1484,14 +1485,13 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			sce->state &= ~UGEN_SHORT_OK;
 		return 0;
 	case USB_SET_TIMEOUT:
-		sce = &sc->sc_endpoints[endpt][IN];
-		if (sce == NULL
-		    /* XXX this shouldn't happen, but the distinction between
-		       input and output pipes isn't clear enough.
-		       || sce->pipeh == NULL */
-			)
-			return EINVAL;
-		sce->timeout = *(int *)addr;
+		for (dir = OUT; dir <= IN; dir++) {
+			sce = &sc->sc_endpoints[endpt][dir];
+			if (sce == NULL)
+				return EINVAL;
+
+			sce->timeout = *(int *)addr;
+		}
 		return 0;
 	case USB_SET_BULK_RA:
 		if (endpt == USB_CONTROL_ENDPOINT)

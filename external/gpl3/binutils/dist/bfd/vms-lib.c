@@ -2330,12 +2330,24 @@ const bfd_target alpha_vms_lib_txt_vec =
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
   bfd_getl16, bfd_getl_signed_16, bfd_putl16,
-
-  {_bfd_dummy_target, _bfd_dummy_target,	/* bfd_check_format.  */
-   _bfd_vms_lib_txt_archive_p, _bfd_dummy_target},
-  {bfd_false, bfd_false, bfd_false, bfd_false},	/* bfd_set_format.  */
-  {bfd_false, bfd_false, bfd_false, bfd_false},	/* bfd_write_contents.  */
-
+  {				/* bfd_check_format.  */
+    _bfd_dummy_target,
+    _bfd_dummy_target,
+    _bfd_vms_lib_txt_archive_p,
+    _bfd_dummy_target
+  },
+  {				/* bfd_set_format.  */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents.  */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
   BFD_JUMP_TABLE_GENERIC (_bfd_generic),
   BFD_JUMP_TABLE_COPY (_bfd_generic),
   BFD_JUMP_TABLE_CORE (_bfd_nocore),

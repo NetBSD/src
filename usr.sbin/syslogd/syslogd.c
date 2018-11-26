@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.124.2.1 2018/05/21 04:36:20 pgoyette Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.124.2.2 2018/11/26 01:52:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.124.2.1 2018/05/21 04:36:20 pgoyette Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.124.2.2 2018/11/26 01:52:59 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,7 @@ typedef struct deadq_entry {
 #define DQ_TIMO_INIT	2
 
 #define	RCVBUFLEN	16384
+int	buflen = RCVBUFLEN;
 /*
  * Intervals at which we flush out "message repeated" messages,
  * in seconds after previous message is logged.	 After each flush,
@@ -192,6 +193,7 @@ int	SyncKernel = 0;		/* write kernel messages synchronously */
 int	UniquePriority = 0;	/* only log specified priority */
 int	LogFacPri = 0;		/* put facility and priority in log messages: */
 				/* 0=no, 1=numeric, 2=names */
+int	LogOverflow = 1;	/* 0=no, any other value = yes */
 bool	BSDOutputFormat = true;	/* if true emit traditional BSD Syslog lines,
 				 * otherwise new syslog-protocol lines
 				 *
@@ -315,10 +317,15 @@ main(int argc, char *argv[])
 	/* should we set LC_TIME="C" to ensure correct timestamps&parsing? */
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "b:dnsSf:m:o:p:P:ru:g:t:TUv")) != -1)
+	while ((ch = getopt(argc, argv, "b:B:dnsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
 		switch(ch) {
 		case 'b':
 			bindhostname = optarg;
+			break;
+		case 'B':
+			buflen = atoi(optarg);
+			if (buflen < RCVBUFLEN)
+				buflen = RCVBUFLEN;
 			break;
 		case 'd':		/* debug */
 			Debug = D_DEFAULT;
@@ -388,6 +395,9 @@ main(int argc, char *argv[])
 		case 'v':		/* log facility and priority */
 			if (LogFacPri < 2)
 				LogFacPri++;
+			break;
+		case 'X':
+			LogOverflow = 0;
 			break;
 		default:
 			usage();
@@ -657,7 +667,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsTUv] [-b bind_address] [-f config_file] [-g group]\n"
+	    "usage: %s [-dnrSsTUvX] [-B buffer_length] [-b bind_address]\n"
+	    "\t[-f config_file] [-g group]\n"
 	    "\t[-m mark_interval] [-P file_list] [-p log_socket\n"
 	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
 	    getprogname());
@@ -667,15 +678,15 @@ usage(void)
 static void
 setsockbuf(int fd, const char *name)
 {
-	int buflen;
+	int curbuflen;
 	socklen_t socklen = sizeof(buflen);
-	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buflen, &socklen) == -1) {
+
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &curbuflen, &socklen) == -1) {
 		logerror("getsockopt: SO_RCVBUF: `%s'", name);
 		return;
 	}
-	if (buflen >= RCVBUFLEN)
+	if (curbuflen >= buflen)
 		return;
-	buflen = RCVBUFLEN;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buflen, socklen) == -1) {
 		logerror("setsockopt: SO_RCVBUF: `%s'", name);
 		return;
@@ -705,7 +716,10 @@ dispatch_read_klog(int fd, short event, void *ev)
 	if (rv > 0) {
 		klog_linebuf[klog_linebufoff + rv] = '\0';
 		printsys(klog_linebuf);
-	} else if (rv < 0 && errno != EINTR) {
+	} else if (rv < 0 &&
+	    errno != EINTR &&
+	    (errno != ENOBUFS || LogOverflow))
+	{
 		/*
 		 * /dev/klog has croaked.  Disable the event
 		 * so it won't bother us again.
@@ -749,7 +763,10 @@ dispatch_read_funix(int fd, short event, void *ev)
 	if (rv > 0) {
 		linebuf[rv] = '\0';
 		printline(LocalFQDN, linebuf, 0);
-	} else if (rv < 0 && errno != EINTR) {
+	} else if (rv < 0 &&
+	    errno != EINTR &&
+	    (errno != ENOBUFS || LogOverflow))
+	{
 		logerror("recvfrom() unix `%.*s'",
 			(int)SUN_PATHLEN(&myname), myname.sun_path);
 	}
@@ -784,7 +801,9 @@ dispatch_read_finet(int fd, short event, void *ev)
 	len = sizeof(frominet);
 	rv = recvfrom(fd, linebuf, linebufsize-1, 0,
 	    (struct sockaddr *)&frominet, &len);
-	if (rv == 0 || (rv < 0 && errno == EINTR))
+	if (rv == 0 ||
+	    (rv < 0 && (errno == EINTR ||
+			(errno == ENOBUFS && LogOverflow == 0))))
 		return;
 	else if (rv < 0) {
 		logerror("recvfrom inet");

@@ -413,6 +413,8 @@ extern u_int arm_dcache_align_mask;
 extern struct arm_cache_info arm_pcache;
 extern struct arm_cache_info arm_scache;
 
+extern uint32_t cpu_ttb;
+
 #endif	/* _GRRRRUMP */
 
 #endif	/* _KERNEL */

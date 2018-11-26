@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.13 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.14 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -240,3 +240,15 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	amdccp(4): Add driver for AMD Cryptographic Coprocessor RNG.
 		[jakllsch 20181019]
 	libc: Update to tzcode2018f. [christos 20181019]
+	tzdata: updated to 2018g [kre 20181027]
+	libc: Update to tzcode2018g. [christos 20181027]
+	kernel: Add NVMM, the NetBSD virtualization driver, with initial
+		support for x86. [maxv 20181107]
+	aarch64: Add support for kASan. [maxv 20181108]
+	aarch64: Add support for ARM Server Base System Architecture (SBSA).
+		The SBSA is a hardware system architecture for servers based on
+		64-bit ARM processors. The Server Base Boot Requirements (SBBR)
+		specification defines a UEFI + ACPI interface for OS bootstrap,
+		which is supported by a combination of a new UEFI bootloader
+		(bootaa64.efi) and the addition of ACPI support in the
+		GENERIC64 kernel config. [jmcneill 20181124]

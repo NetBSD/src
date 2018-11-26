@@ -51,8 +51,8 @@ nds32_elf_create_output_section_statements (void)
   if (strstr (bfd_get_target (link_info.output_bfd), "nds32") == NULL)
     {
       /* Check the output target is nds32.  */
-      einfo (_("%F%X%P: error: Cannot change output format whilst "
-	       "linking NDS32 binaries.\n"));
+      einfo (_("%F%P: error: cannot change output format whilst "
+	       "linking %s binaries\n"), "NDS32");
       return;
     }
 
@@ -121,7 +121,8 @@ nds32_elf_after_open (void)
 	       && abi_ver != (elf_elfheader (abfd)->e_flags & EF_NDS_ABI))
 	{
 	  /* Incompatible objects.  */
-	  einfo (_("%F%B: ABI version of object files mismatched\n"), abfd);
+	  einfo (_("%F%P: %pB: ABI version of object files mismatched\n"),
+		 abfd);
 	}
 
 #if defined NDS32_EX9_EXT
@@ -166,7 +167,7 @@ nds32_elf_after_open (void)
 	      if (bfd_link_pic (&link_info))
 		{
 		  /* For PIE or shared object, all input must be PIC.  */
-		  einfo (_("%B: must use -fpic to compile this file "
+		  einfo (_("%P: %pB: must use -fpic to compile this file "
 			   "for shared object or PIE\n"), abfd);
 		}
 	      else
@@ -190,14 +191,6 @@ nds32_elf_after_open (void)
 static void
 nds32_elf_after_allocation (void)
 {
-  if (target_optimize & NDS32_RELAX_EX9_ON
-      || (ex9_import_file != NULL && update_ex9_table == 1))
-    {
-      /* Initialize ex9 hash table.  */
-      if (!nds32_elf_ex9_init ())
-	return;
-    }
-
   /* Call default after allocation callback.
      1. This is where relaxation is done.
      2. It calls gld${EMULATION_NAME}_map_segments to build ELF segment table.
@@ -269,31 +262,35 @@ PARSE_AND_LIST_LONGOPTS='
 '
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
-  --m[no-]fp-as-gp            Disable/enable fp-as-gp relaxation\n\
-  --mexport-symbols=FILE      Exporting symbols in linker script\n\
-"));
+  --m[no-]fp-as-gp            Disable/enable fp-as-gp relaxation\n"));
+  fprintf (file, _("\
+  --mexport-symbols=FILE      Exporting symbols in linker script\n"));
 
 #if defined NDS32_EX9_EXT
   fprintf (file, _("\
-  --m[no-]ex9                 Disable/enable link-time EX9 relaxation\n\
-  --mexport-ex9=FILE          Export EX9 table after linking\n\
-  --mimport-ex9=FILE          Import Ex9 table for EX9 relaxation\n\
-  --mupdate-ex9               Update existing EX9 table\n\
-  --mex9-limit=NUM            Maximum number of entries in ex9 table\n\
-  --mex9-loop-aware           Avoid generate EX9 instruction inside loop\n\
-"));
+  --m[no-]ex9                 Disable/enable link-time EX9 relaxation\n"));
+  fprintf (file, _("\
+  --mexport-ex9=FILE          Export EX9 table after linking\n"));
+  fprintf (file, _("\
+  --mimport-ex9=FILE          Import Ex9 table for EX9 relaxation\n"));
+  fprintf (file, _("\
+  --mupdate-ex9               Update existing EX9 table\n"));
+  fprintf (file, _("\
+  --mex9-limit=NUM            Maximum number of entries in ex9 table\n"));
+  fprintf (file, _("\
+  --mex9-loop-aware           Avoid generate EX9 instruction inside loop\n"));
 #endif
 
 #if defined NDS32_IFC_EXT
   fprintf (file, _("\
-  --m[no-]ifc                 Disable/enable link-time IFC optimization\n\
-  --mifc-loop-aware           Avoid generate IFC instruction inside loop\n\
-"));
+  --m[no-]ifc                 Disable/enable link-time IFC optimization\n"));
+  fprintf (file, _("\
+  --mifc-loop-aware           Avoid generate IFC instruction inside loop\n"));
 #endif
 '
 PARSE_AND_LIST_ARGS_CASES='
   case OPTION_BASELINE:
-    einfo (_("%P: --mbaseline is not used anymore.\n"));
+    einfo (_("%P: --mbaseline is not used anymore\n"));
     break;
   case OPTION_ELIM_GC_RELOCS:
     eliminate_gc_relocs = 1;
@@ -304,11 +301,11 @@ PARSE_AND_LIST_ARGS_CASES='
     break;
   case OPTION_REDUCE_FP_UPDATE:
   case OPTION_NO_REDUCE_FP_UPDATE:
-    einfo (_("%P: --relax-[no-]reduce-fp-updat is not used anymore.\n"));
+    einfo (_("%P: --relax-[no-]reduce-fp-updat is not used anymore\n"));
     break;
   case OPTION_EXPORT_SYMBOLS:
     if (!optarg)
-      einfo (_("Missing file for --mexport-symbols.\n"), optarg);
+      einfo (_("%P: missing file for --mexport-symbols\n"), optarg);
 
     if(strcmp (optarg, "-") == 0)
       sym_ld_script = stdout;
@@ -316,7 +313,7 @@ PARSE_AND_LIST_ARGS_CASES='
       {
 	sym_ld_script = fopen (optarg, FOPEN_WT);
 	if(sym_ld_script == NULL)
-	  einfo (_("%P%F: cannot open map file %s: %E.\n"), optarg);
+	  einfo (_("%F%P: cannot open map file %s: %E\n"), optarg);
       }
     break;
 #if defined NDS32_EX9_EXT
@@ -328,7 +325,7 @@ PARSE_AND_LIST_ARGS_CASES='
     break;
   case OPTION_EXPORT_EX9:
     if (!optarg)
-      einfo (_("Missing file for --mexport-ex9=<file>.\n"));
+      einfo (_("%P: missing file for --mexport-ex9=<file>\n"));
 
     if(strcmp (optarg, "-") == 0)
       ex9_export_file = stdout;
@@ -336,16 +333,16 @@ PARSE_AND_LIST_ARGS_CASES='
       {
 	ex9_export_file = fopen (optarg, "wb");
 	if(ex9_export_file == NULL)
-	  einfo (_("ERROR %P%F: cannot open ex9 export file %s.\n"), optarg);
+	  einfo (_("%F%P: cannot open ex9 export file %s\n"), optarg);
       }
     break;
   case OPTION_IMPORT_EX9:
     if (!optarg)
-      einfo (_("Missing file for --mimport-ex9=<file>.\n"));
+      einfo (_("%P: missing file for --mimport-ex9=<file>\n"));
 
     ex9_import_file = fopen (optarg, "rb+");
     if(ex9_import_file == NULL)
-      einfo (_("ERROR %P%F: cannot open ex9 import file %s.\n"), optarg);
+      einfo (_("%F%P: cannot open ex9 import file %s\n"), optarg);
     break;
   case OPTION_UPDATE_EX9:
     update_ex9_table = 1;
@@ -355,10 +352,7 @@ PARSE_AND_LIST_ARGS_CASES='
       {
 	ex9_limit = atoi (optarg);
 	if (ex9_limit > 511 || ex9_limit < 1)
-	  {
-	    einfo (_("ERROR: the range of ex9_limit must between 1 and 511\n"));
-	    exit (1);
-	  }
+	  einfo (_("%F%P: the range of ex9_limit must between 1 and 511\n"));
       }
     break;
   case OPTION_EX9_LOOP:

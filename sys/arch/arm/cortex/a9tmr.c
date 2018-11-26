@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.14.16.2 2018/10/20 06:58:25 pgoyette Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.14.16.3 2018/11/26 01:52:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14.16.2 2018/10/20 06:58:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14.16.3 2018/11/26 01:52:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,6 +149,9 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 
 	bus_space_subregion(sc->sc_memt, sc->sc_memh,
 	    mpcaa->mpcaa_off1, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
+
+	/* Enable the timer early for delay(), disable all other features */
+	a9tmr_global_write(sc, TMR_GBL_CTL, TMR_CTL_ENABLE);
 
 	if (mpcaa->mpcaa_irq != -1) {
 		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
@@ -359,10 +362,15 @@ a9tmr_intr(void *arg)
 	return 1;
 }
 
+/* XXX This conflicts with gtmr, hence the temporary weak alias kludge */
+#if 1
+void a9tmr_setstatclockrate(int);
 void
-setstatclockrate(int newhz)
+a9tmr_setstatclockrate(int newhz)
 {
 }
+__weak_alias(setstatclockrate, a9tmr_setstatclockrate);
+#endif
 
 static u_int
 a9tmr_get_timecount(struct timecounter *tc)

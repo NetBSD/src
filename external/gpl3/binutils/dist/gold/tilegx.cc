@@ -688,6 +688,7 @@ const Target::Target_info Target_tilegx<64, false>::tilegx_info =
   NULL,                 // attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -716,6 +717,7 @@ const Target::Target_info Target_tilegx<32, false>::tilegx_info =
   NULL,                 // attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -744,6 +746,7 @@ const Target::Target_info Target_tilegx<64, true>::tilegx_info =
   NULL,                 // attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -772,6 +775,7 @@ const Target::Target_info Target_tilegx<32, true>::tilegx_info =
   NULL,                  // attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 // tilegx relocation handlers

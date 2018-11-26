@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.45 2017/07/07 16:59:35 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.45.4.1 2018/11/26 01:52:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -402,7 +402,7 @@ LOCK_CAS_DEBUG_LOCALS
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	add	sp, sp, #(TF_PC-TF_R0);	/* Adjust the stack pointer */	   \
- 	ldr	lr, [sp], #0x0004	/* Pop the return address */
+ 	ldr	lr, [sp], #4		/* Pop the return address */
 
 #define PULLIDLEFRAME							   \
 	add	sp, sp, #TF_R4;		/* Adjust the stack pointer */	   \
@@ -484,7 +484,7 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
-	ldr     r0, [sp], #0x0008;	/* Pop the SPSR from stack */	   \
+	ldr     r0, [sp], #TF_R0;	/* Pop the SPSR from stack */	   \
 	msr     spsr_fsxc, r0;		/* restore SPSR */		   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;	  		/* NOP for previous instruction */ \

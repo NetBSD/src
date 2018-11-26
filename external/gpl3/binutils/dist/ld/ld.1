@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "LD 1"
-.TH LD 1 "2018-01-27" "binutils-2.30" "GNU Development Tools"
+.TH LD 1 "2018-06-24" "binutils-2.30.90" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -292,20 +292,6 @@ finds an object with an audit entry while searching for shared libraries,
 it will add a corresponding \f(CW\*(C`DT_DEPAUDIT\*(C'\fR entry in the output file.
 This option is only meaningful on \s-1ELF\s0 platforms supporting the rtld-audit
 interface.
-.IP "\fB\-A\fR \fIarchitecture\fR" 4
-.IX Item "-A architecture"
-.PD 0
-.IP "\fB\-\-architecture=\fR\fIarchitecture\fR" 4
-.IX Item "--architecture=architecture"
-.PD
-In the current release of \fBld\fR, this option is useful only for the
-Intel 960 family of architectures.  In that \fBld\fR configuration, the
-\&\fIarchitecture\fR argument identifies the particular architecture in
-the 960 family, enabling some safeguards and modifying the
-archive-library search path.
-.Sp
-Future releases of \fBld\fR may support similar functionality for
-other architecture families.
 .IP "\fB\-b\fR \fIinput-format\fR" 4
 .IX Item "-b input-format"
 .PD 0
@@ -1446,6 +1432,10 @@ This option is similar to the \fB\-\-emit\-relocs\fR option except
 that the relocs are stored in a target specific section.  This option
 is only supported by the \fB\s-1BFIN\s0\fR, \fB\s-1CR16\s0\fR and \fIM68K\fR
 targets.
+.IP "\fB\-\-disable\-multiple\-abs\-defs\fR" 4
+.IX Item "--disable-multiple-abs-defs"
+Do not allow multiple definitions with symbols included
+in filename invoked by \-R or \-\-just\-symbols
 .IP "\fB\-\-fatal\-warnings\fR" 4
 .IX Item "--fatal-warnings"
 .PD 0
@@ -2493,11 +2483,16 @@ uwin, pw, etc.  For instance, cygwin DLLs typically use
 .IP "\fB\-\-enable\-auto\-import\fR" 4
 .IX Item "--enable-auto-import"
 Do sophisticated linking of \f(CW\*(C`_symbol\*(C'\fR to \f(CW\*(C`_\|_imp_\|_symbol\*(C'\fR for
-\&\s-1DATA\s0 imports from DLLs, and create the necessary thunking symbols when
-building the import libraries with those \s-1DATA\s0 exports. Note: Use of the
-\&'auto\-import' extension will cause the text section of the image file
-to be made writable. This does not conform to the PE-COFF format
-specification published by Microsoft.
+\&\s-1DATA\s0 imports from DLLs, thus making it possible to bypass the dllimport
+mechanism on the user side and to reference unmangled symbol names.
+[This option is specific to the i386 \s-1PE\s0 targeted port of the linker]
+.Sp
+The following remarks pertain to the original implementation of the
+feature and are obsolete nowadays for Cygwin and MinGW targets.
+.Sp
+Note: Use of the 'auto\-import' extension will cause the text section
+of the image file to be made writable. This does not conform to the
+PE-COFF format specification published by Microsoft.
 .Sp
 Note \- use of the 'auto\-import' extension will also cause read only
 data which would normally be placed into the .rdata section to be
@@ -2622,7 +2617,6 @@ A fourth way to avoid this problem is to re-code your
 library to use a functional interface rather than a data interface
 for the offending variables (e.g. \fIset_foo()\fR and \fIget_foo()\fR accessor
 functions).
-[This option is specific to the i386 \s-1PE\s0 targeted port of the linker]
 .IP "\fB\-\-disable\-auto\-import\fR" 4
 .IX Item "--disable-auto-import"
 Do not attempt to do sophisticated linking of \f(CW\*(C`_symbol\*(C'\fR to
@@ -2637,8 +2631,7 @@ environment to adjust references to such data in your client code.
 [This option is specific to the i386 \s-1PE\s0 targeted port of the linker]
 .IP "\fB\-\-disable\-runtime\-pseudo\-reloc\fR" 4
 .IX Item "--disable-runtime-pseudo-reloc"
-Do not create pseudo relocations for non-zero offset \s-1DATA\s0 imports from
-DLLs.
+Do not create pseudo relocations for non-zero offset \s-1DATA\s0 imports from DLLs.
 [This option is specific to the i386 \s-1PE\s0 targeted port of the linker]
 .IP "\fB\-\-enable\-extra\-pe\-debug\fR" 4
 .IX Item "--enable-extra-pe-debug"

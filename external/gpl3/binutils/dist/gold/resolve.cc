@@ -394,7 +394,7 @@ Symbol_table::resolve(Sized_symbol<size>* to,
 				    object, &adjust_common_sizes,
 				    &adjust_dyndef, is_default_version))
     {
-      elfcpp::STB tobinding = to->binding();
+      elfcpp::STB orig_tobinding = to->binding();
       typename Sized_symbol<size>::Value_type tovalue = to->value();
       this->override(to, sym, st_shndx, is_ordinary, object, version);
       if (adjust_common_sizes)
@@ -408,7 +408,7 @@ Symbol_table::resolve(Sized_symbol<size>* to,
 	{
 	  // We are overriding an UNDEF or WEAK UNDEF with a DYN DEF.
 	  // Remember which kind of UNDEF it was for future reference.
-	  to->set_undef_binding(tobinding);
+	  to->set_undef_binding(orig_tobinding);
 	}
     }
   else
@@ -430,6 +430,11 @@ Symbol_table::resolve(Sized_symbol<size>* to,
       // merge the visibility.
       to->override_visibility(sym.get_st_visibility());
     }
+
+  // If we have a non-WEAK reference from a regular object to a
+  // dynamic object, mark the dynamic object as needed.
+  if (to->is_from_dynobj() && to->in_reg() && !to->is_undef_binding_weak())
+    to->object()->set_is_needed();
 
   if (adjust_common_sizes && parameters->options().warn_common())
     {
@@ -621,6 +626,13 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
           && to->version() == NULL
           && is_default_version)
         return true;
+      // Or, if the existing definition is in an unused --as-needed library,
+      // and the reference is weak, let the new definition override.
+      if (to->in_reg()
+	  && to->is_undef_binding_weak()
+	  && to->object()->as_needed()
+	  && !to->object()->is_needed())
+	return true;
       return false;
 
     case UNDEF * 16 + DYN_DEF:
@@ -637,16 +649,12 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
 
     case COMMON * 16 + DYN_DEF:
     case WEAK_COMMON * 16 + DYN_DEF:
-    case DYN_COMMON * 16 + DYN_DEF:
-    case DYN_WEAK_COMMON * 16 + DYN_DEF:
       // Ignore a dynamic definition if we already have a common
       // definition.
       return false;
 
     case DEF * 16 + DYN_WEAK_DEF:
     case WEAK_DEF * 16 + DYN_WEAK_DEF:
-    case DYN_DEF * 16 + DYN_WEAK_DEF:
-    case DYN_WEAK_DEF * 16 + DYN_WEAK_DEF:
       // Ignore a weak dynamic definition if we already have a
       // definition.
       return false;
@@ -670,10 +678,23 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
 
     case COMMON * 16 + DYN_WEAK_DEF:
     case WEAK_COMMON * 16 + DYN_WEAK_DEF:
-    case DYN_COMMON * 16 + DYN_WEAK_DEF:
-    case DYN_WEAK_COMMON * 16 + DYN_WEAK_DEF:
       // Ignore a weak dynamic definition if we already have a common
       // definition.
+      return false;
+
+    case DYN_COMMON * 16 + DYN_DEF:
+    case DYN_WEAK_COMMON * 16 + DYN_DEF:
+    case DYN_DEF * 16 + DYN_WEAK_DEF:
+    case DYN_WEAK_DEF * 16 + DYN_WEAK_DEF:
+    case DYN_COMMON * 16 + DYN_WEAK_DEF:
+    case DYN_WEAK_COMMON * 16 + DYN_WEAK_DEF:
+      // If the existing definition is in an unused --as-needed library,
+      // and the reference is weak, let a new dynamic definition override.
+      if (to->in_reg()
+	  && to->is_undef_binding_weak()
+	  && to->object()->as_needed()
+	  && !to->object()->is_needed())
+	return true;
       return false;
 
     case DEF * 16 + UNDEF:

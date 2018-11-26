@@ -43,12 +43,6 @@
    compatible instructions.  */
 #define SYSV386_COMPAT 1
 #endif
-#ifndef OLDGCC_COMPAT
-/* Set non-zero to cater for old (<= 2.8.1) versions of gcc that could
-   generate nonsense fsubp, fsubrp, fdivp and fdivrp with operands
-   reversed.  */
-#define OLDGCC_COMPAT SYSV386_COMPAT
-#endif
 
 #define MOV_AX_DISP32 0xa0
 #define POP_SEG_SHORT 0x07

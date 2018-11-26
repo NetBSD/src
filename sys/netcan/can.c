@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.2.12.2 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: can.c,v 1.2.12.3 2018/11/26 01:52:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.2.12.2 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.2.12.3 2018/11/26 01:52:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,11 +267,11 @@ can_mbuf_tag_clean(struct mbuf *m)
 {
 	struct m_tag *sotag;
 
-	sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
+	sotag = m_tag_find(m, PACKET_TAG_SO);
 	if (sotag)
 		m_tag_unlink(m, sotag);
 
-	m_tag_delete_nonpersistent(m);
+	m_tag_delete_chain(m);
 	if (sotag)
 		m_tag_prepend(m, sotag);
 }
@@ -330,7 +330,7 @@ canintr(void)
 #if 0
 		m_claim(m, &can_rx_mowner);
 #endif
-		sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
+		sotag = m_tag_find(m, PACKET_TAG_SO);
 		if (sotag) {
 			sender_canp = *(struct canpcb **)(sotag + 1);
 			m_tag_delete(m, sotag);

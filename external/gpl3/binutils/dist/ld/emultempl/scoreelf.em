@@ -52,8 +52,8 @@ score_elf_after_open (void)
 	 These will only be created if the output format is an score format,
 	 hence we do not support linking and changing output formats at the
 	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo (_("%F%X%P: error: cannot change output format "
-	       "whilst linking S+core binaries\n"));
+      einfo (_("%F%P: error: cannot change output format "
+	       "whilst linking %s binaries\n"), "S+core");
       return;
     }
 

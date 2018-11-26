@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.19.4.3 2018/10/20 06:58:24 pgoyette Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.19.4.4 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19.4.3 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19.4.4 2018/11/26 01:52:17 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -263,12 +263,13 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 			uvm_page_physload(start, end, start, end, VM_FREELIST_DEFAULT);
 			continue;
 		}
+		VPRINTF("\n");
 		paddr_t segend = end;
 		for (size_t j = 0; j < nbp; j++ /*, start = segend, segend = end */) {
 			paddr_t bp_start = bp[j].bp_start;
 			paddr_t bp_end = bp_start + bp[j].bp_pages;
 
-			VPRINTF("\n   bp %2zu start %08lx  end %08lx\n",
+			VPRINTF("   bp %2zu start %08lx  end %08lx\n",
 			    j, ptoa(bp_start), ptoa(bp_end));
 			KASSERT(bp_start < bp_end);
 			if (start > bp_end || segend < bp_start)
@@ -286,7 +287,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 				uvm_page_physload(start, segend, start, segend,
 				    vm_freelist);
 				VPRINTF("         start %08lx  end %08lx"
-				    "... loading in freelist %d", ptoa(start),
+				    "... loading in freelist %d\n", ptoa(start),
 				    ptoa(segend), vm_freelist);
 				start = segend;
 				segend = end;
@@ -294,7 +295,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 		}
 	}
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where the managed kernel virtual memory is */
 	VPRINTF("pmap ");
 	pmap_bootstrap(kvm_base, kvm_base + kvm_size);
 

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.189.2.4 2018/09/30 01:45:07 pgoyette Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.189.2.5 2018/11/26 01:49:59 pgoyette Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -258,6 +258,7 @@
 #	nsmb*	SMB requester
 #	nvme*	Non-Volatile Memory Host Controller Interface device driver
 #	nvme*ns* Non-Volatile Memory namespace
+#	nvmm	NetBSD Virtual Machine Monitor
 #	openfirm OpenFirmware accessor
 #	pad*	Pseudo-audio device driver
 #	pci*	PCI bus access devices
@@ -277,6 +278,7 @@
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
 #	tap*	virtual Ethernet device
+#	tprof	task profiler
 #	tun*	network tunnel driver
 #	twa	3ware Apache control interface
 #	twe	3ware Escalade control interface
@@ -1240,6 +1242,10 @@ dk[0-9]*)
 	mkdev $name$unit b $blk  $unit 0640 $g_operator
 	;;
 
+tprof)
+	mkdev tprof c %tprof_chr% 0
+	;;
+
 ttyCY[0-9]*)
 	# Each unit number creates 32 pairs of {tty,dty} device nodes:
 	# ttyCY0 => device nodes [td]tyCY000 to [td]tyCY031;
@@ -2198,6 +2204,10 @@ nvme[0-9]*ns[0-9]*)
 nvme[0-9]*)
 	unit=${i#nvme}
 	mkdev nvme$unit c %nvme_chr% $(($unit * 65536))
+	;;
+
+nvmm)
+	mkdev nvmm c %nvmm_chr% 0
 	;;
 
 autofs)

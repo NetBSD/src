@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.2.2.2 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: acpipchb.c,v 1.2.2.3 2018/11/26 01:52:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.2.2.2 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.2.2.3 2018/11/26 01:52:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,11 +52,23 @@ __KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.2.2.2 2018/10/20 06:58:24 pgoyette Ex
 #include <dev/pci/pciconf.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_mcfg.h>
 
 #include <arm/acpi/acpi_pci_machdep.h>
 
 #define	PCIHOST_CACHELINE_SIZE		arm_dcache_align
+
+struct acpipchb_bus_space {
+	struct bus_space	bs;
+
+	bus_addr_t		min;
+	bus_addr_t		max;
+	bus_addr_t		offset;
+
+	int			(*map)(void *, bus_addr_t, bus_size_t,
+				       int, bus_space_handle_t *);
+};
 
 struct acpipchb_softc {
 	device_t		sc_dev;
@@ -66,6 +78,8 @@ struct acpipchb_softc {
 
 	ACPI_HANDLE		sc_handle;
 	ACPI_INTEGER		sc_bus;
+
+	struct acpipchb_bus_space sc_pciio_bst;
 };
 
 static struct arm32_dma_range ahcipchb_coherent_ranges[] = {
@@ -79,6 +93,8 @@ static struct arm32_dma_range ahcipchb_coherent_ranges[] = {
 
 static int	acpipchb_match(device_t, cfdata_t, void *);
 static void	acpipchb_attach(device_t, device_t, void *);
+
+static void	acpipchb_setup_pciio(struct acpipchb_softc *, struct pcibus_attach_args *);
 
 CFATTACH_DECL_NEW(acpipchb, sizeof(struct acpipchb_softc),
 	acpipchb_match, acpipchb_attach, NULL, NULL);
@@ -132,14 +148,14 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ap.ap_pc.pc_conf_v = &sc->sc_ap;
 	sc->sc_ap.ap_seg = seg;
 
-	if (acpimcfg_configure_bus(self, &sc->sc_ap.ap_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0) {
-		aprint_error_dev(self, "failed to configure PCI bus\n");
-		return;
+	if (acpi_pci_ignore_boot_config(sc->sc_handle)) {
+		if (acpimcfg_configure_bus(self, &sc->sc_ap.ap_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0)
+			aprint_error_dev(self, "failed to configure bus\n");
 	}
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_flags = aa->aa_pciflags;
-	pba.pba_iot = aa->aa_iot;
+	pba.pba_iot = 0;
 	pba.pba_memt = aa->aa_memt;
 	pba.pba_dmat = &sc->sc_dmat;
 #ifdef _PCI_HAVE_DMA64
@@ -148,5 +164,76 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_ap.ap_pc;
 	pba.pba_bus = sc->sc_bus;
 
+	acpipchb_setup_pciio(sc, &pba);
+
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+struct acpipchb_setup_pciio_args {
+	struct acpipchb_softc *sc;
+	struct pcibus_attach_args *pba;
+};
+
+static int
+acpipchb_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
+    bus_space_handle_t *bshp)
+{
+	struct acpipchb_bus_space * const abs = t;
+
+	if (bpa < abs->min || bpa + size >= abs->max)
+		return ERANGE;
+
+	return abs->map(t, bpa + abs->offset, size, flag, bshp);
+}
+
+static ACPI_STATUS
+acpipchb_setup_pciio_cb(ACPI_RESOURCE *res, void *ctx)
+{
+	struct acpipchb_setup_pciio_args * const args = ctx;
+	struct acpipchb_softc * const sc = args->sc;
+	struct acpipchb_bus_space * const abs = &sc->sc_pciio_bst;
+	struct pcibus_attach_args *pba = args->pba;
+
+	if (res->Type != ACPI_RESOURCE_TYPE_ADDRESS32 &&
+	    res->Type != ACPI_RESOURCE_TYPE_ADDRESS64)
+		return AE_OK;
+
+	if (res->Data.Address.ResourceType != ACPI_IO_RANGE)
+		return AE_OK;
+
+	abs->bs = *pba->pba_memt;
+	abs->bs.bs_cookie = abs;
+	abs->map = abs->bs.bs_map;
+	abs->bs.bs_map = acpipchb_bus_space_map;
+
+	switch (res->Type) {
+	case ACPI_RESOURCE_TYPE_ADDRESS32:
+		abs->min = res->Data.Address32.Address.Minimum;
+		abs->max = res->Data.Address32.Address.Maximum;
+		abs->offset = res->Data.Address32.Address.TranslationOffset;
+		break;
+	case ACPI_RESOURCE_TYPE_ADDRESS64:
+		abs->min = res->Data.Address64.Address.Minimum;
+		abs->max = res->Data.Address64.Address.Maximum;
+		abs->offset = res->Data.Address64.Address.TranslationOffset;
+		break;
+	}
+
+	aprint_debug_dev(sc->sc_dev, "PCI I/O [%#lx-%#lx] -> %#lx\n", abs->min, abs->max, abs->offset);
+
+	pba->pba_iot = &sc->sc_pciio_bst.bs;
+	pba->pba_flags |= PCI_FLAGS_IO_OKAY;
+
+	return AE_LIMIT;
+}
+
+static void
+acpipchb_setup_pciio(struct acpipchb_softc *sc, struct pcibus_attach_args *pba)
+{
+	struct acpipchb_setup_pciio_args args;
+
+	args.sc = sc;
+	args.pba = pba;
+
+	AcpiWalkResources(sc->sc_handle, "_CRS", acpipchb_setup_pciio_cb, &args);
 }

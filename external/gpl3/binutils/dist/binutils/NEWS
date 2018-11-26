@@ -1,5 +1,19 @@
 -*- text -*-
 
+Changes in 2.31:
+
+* Add support for disassembling netronome Flow Processor (NFP) firmware files.
+
+* The AArch64 port now supports showing disassembly notes which are emitted
+  when inconsistencies are found with the instruction that may result in the
+  instruction being invalid.  These can be turned on with the option -M notes
+  to objdump.
+
+* The AArch64 port now emits warnings when a combination of an instruction and
+  a named register could be invalid.
+
+* Added O modifier to ar to display member offsets inside an archive
+
 Changes in 2.30:
 
 * Add --debug-dump=links option to readelf and --dwarf=links option to objdump

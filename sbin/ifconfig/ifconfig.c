@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.236 2016/01/07 11:32:21 roy Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.236.14.1 2018/11/26 01:52:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.236 2016/01/07 11:32:21 roy Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.236.14.1 2018/11/26 01:52:14 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1484,6 +1484,7 @@ usage(void)
 		"\t[ arp | -arp ]\n"
 		"\t[ preference n ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
+		"\t[ linkstr str | -linkstr ]\n"
 		"       %s -a [-b] [-d] [-h] %s[-u] [-v] [-z] [ af ]\n"
 		"       %s -l [-b] [-d] [-s] [-u]\n"
 		"       %s -C\n"

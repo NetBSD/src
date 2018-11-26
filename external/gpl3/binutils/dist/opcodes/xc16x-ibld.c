@@ -753,8 +753,9 @@ xc16x_cgen_insert_operand (CGEN_CPU_DESC cd,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while building insn.\n"),
-	       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while building insn"),
+	 opindex);
       abort ();
   }
 
@@ -973,8 +974,9 @@ xc16x_cgen_extract_operand (CGEN_CPU_DESC cd,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while decoding insn.\n"),
-	       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while decoding insn"),
+	 opindex);
       abort ();
     }
 
@@ -1194,8 +1196,9 @@ xc16x_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while getting int operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while getting int operand"),
+	 opindex);
       abort ();
   }
 
@@ -1397,8 +1400,9 @@ xc16x_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while getting vma operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while getting vma operand"),
+	 opindex);
       abort ();
   }
 
@@ -1601,8 +1605,9 @@ xc16x_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while setting int operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while setting int operand"),
+	 opindex);
       abort ();
   }
 }
@@ -1795,8 +1800,9 @@ xc16x_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
     default :
       /* xgettext:c-format */
-      fprintf (stderr, _("Unrecognized field %d while setting vma operand.\n"),
-		       opindex);
+      opcodes_error_handler
+	(_("internal error: unrecognized field %d while setting vma operand"),
+	 opindex);
       abort ();
   }
 }

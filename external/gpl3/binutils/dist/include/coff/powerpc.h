@@ -37,8 +37,6 @@
 
 /* extra NT defines */
 #define PPCMAGIC       0760         /* peeked on aa PowerPC Windows NT box */
-#define DOSMAGIC       0x5a4d       /* from arm.h, i386.h */
-#define NT_SIGNATURE   0x00004550   /* from arm.h, i386.h */
 
 /* from winnt.h */
 #define IMAGE_NT_OPTIONAL_HDR_MAGIC        0x10b

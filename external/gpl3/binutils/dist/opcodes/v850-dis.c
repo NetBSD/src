@@ -450,7 +450,8 @@ disassemble (bfd_vma memaddr,
 		      case 0xffe00001: regs = list12_regs; break;
 		      default:
 			/* xgettext:c-format */
-			fprintf (stderr, _("unknown operand shift: %x\n"), operand->shift);
+			opcodes_error_handler (_("unknown operand shift: %x"),
+					       operand->shift);
 			abort ();
 		      }
 
@@ -460,10 +461,17 @@ disassemble (bfd_vma memaddr,
 			  {
 			    switch (regs[ i ])
 			      {
-			      default: mask |= (1 << regs[ i ]); break;
+			      default:
+				mask |= (1 << regs[ i ]);
+				break;
+			      case 0:
 				/* xgettext:c-format */
-			      case 0:  fprintf (stderr, _("unknown reg: %d\n"), i ); abort ();
-			      case -1: pc = 1; break;
+				opcodes_error_handler (_("unknown reg: %d"), i);
+				abort ();
+				break;
+			      case -1:
+				pc = 1;
+				break;
 			      }
 			  }
 		      }

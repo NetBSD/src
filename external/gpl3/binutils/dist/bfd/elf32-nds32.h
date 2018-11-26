@@ -46,6 +46,13 @@ extern "C" {
 #define R_NDS32_RELAX_ENTRY_EX9_FLAG				(1 << 2)
 /* Enable IFC optimization for this section.  */
 #define R_NDS32_RELAX_ENTRY_IFC_FLAG				(1 << 3)
+/* Two bits for ICT to comply with files without directive.  */
+/* ICT small model.  */
+#define R_NDS32_RELAX_ENTRY_ICT_SMALL                           (0x2 << 4)
+/* ICT large model.  */
+#define R_NDS32_RELAX_ENTRY_ICT_LARGE                           (0x3 << 4)
+/* Mask for get ict bits.  */
+#define R_NDS32_RELAX_ENTRY_ICT_MASK                            (0x3 << 4)
 
 
 /* Relocation flags for R_NDS32_INSN16.  */

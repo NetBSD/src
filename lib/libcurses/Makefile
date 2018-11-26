@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84.10.1 2018/06/25 07:25:35 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.84.10.2 2018/11/26 01:52:12 pgoyette Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -20,7 +20,8 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	curses.c delch.c deleteln.c delwin.c echochar.c erase.c fileio.c \
 	flushok.c fullname.c getch.c getstr.c getyx.c id_subwins.c idlok.c \
 	idcok.c immedok.c inch.c inchstr.c initscr.c insch.c insdelln.c \
-	insertln.c instr.c keypad.c keyname.c leaveok.c line.c meta.c move.c \
+	insertln.c insstr.c instr.c keypad.c keyname.c leaveok.c line.c \
+	meta.c move.c \
 	mvwin.c newwin.c nodelay.c notimeout.c overlay.c overwrite.c pause.c \
 	printw.c putchar.c refresh.c resize.c ripoffline.c scanw.c screen.c \
 	scroll.c scrollok.c setterm.c slk.c standout.c syncok.c timeout.c \
@@ -28,10 +29,11 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 
 MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \
+	curses_cchar.3 \
 	curses_chgat.3 curses_clear.3 curses_color.3 \
 	curses_cursor.3 curses_default_colors.3 \
 	curses_delch.3 curses_deleteln.3 curses_echochar.3 curses_fileio.3 \
-	curses_inch.3 curses_input.3 curses_insertch.3 curses_insertln.3 \
+	curses_inch.3 curses_input.3 curses_insch.3 curses_insertln.3 \
 	curses_insdelln.3 curses_keyname.3 curses_line.3 curses_pad.3 \
 	curses_print.3 curses_refresh.3 curses_scanw.3 curses_screen.3 \
 	curses_scroll.3 curses_slk.3 curses_standout.3 curses_termcap.3 \
@@ -44,7 +46,7 @@ LIBDPLIBS+=	terminfo	${.CURDIR}/../libterminfo
 .if !defined(DISABLE_WCHAR)
 CPPFLAGS+=-DHAVE_WCHAR
 SRCS+= cchar.c add_wch.c add_wchstr.c addwstr.c echo_wchar.c ins_wch.c \
-	insstr.c ins_wstr.c get_wch.c get_wstr.c in_wch.c in_wchstr.c \
+	ins_wstr.c get_wch.c get_wstr.c in_wch.c in_wchstr.c \
 	inwstr.c
 .else
 CPPFLAGS+=-DDISABLE_WCHAR
@@ -60,6 +62,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_attributes.3 attrset.3 curses_tty.3 beep.3 \
 	 curses_background.3 bkgd.3 curses_background.3 bkgdset.3 \
 	 curses_border.3 border.3 curses_border.3 box.3 \
+	 curses_cchar.3 getcchar.3 \
+	 curses_cchar.3 setcchar.3 \
 	 curses_chgat.3 chgat.3 curses_chgat.3 mvchgat.3 \
 	 curses_chgat.3 mvwchgat.3 curses_chgat.3 wchgat.3 \
 	 curses_color.3 can_change_color.3 curses_tty.3 cbreak.3 \
@@ -98,7 +102,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_inch.3 inchnstr.3 curses_inch.3 inchstr.3 \
 	 curses_inch.3 innstr.3 curses_color.3 init_color.3 \
 	 curses_color.3 init_pair.3 curses_screen.3 initscr.3 \
-	 curses_insertch.3 insch.3 curses_insdelln.3 insdelln.3 \
+	 curses_insch.3 insch.3 curses_insdelln.3 insdelln.3 \
 	 curses_insertln.3 insertln.3 curses_inch.3 instr.3 \
 	 curses_tty.3 intrflush.3 \
 	 curses_input.3 is_keypad.3 \
@@ -124,8 +128,10 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_line.3 mvwhline.3 curses_window.3 mvwin.3 \
 	 curses_inch.3 mvinchnstr.3 \
 	 curses_inch.3 mvinchstr.3 curses_inch.3 mvinnstr.3 \
+	 curses_insch.3 mvinsch.3 \
 	 curses_inch.3 mvinstr.3 curses_inch.3 mvwinchnstr.3 \
 	 curses_inch.3 mvwinchstr.3 curses_inch.3 mvwinnstr.3 \
+	 curses_insch.3 mvwinsch.3 \
 	 curses_inch.3 mvwinstr.3 curses_print.3 mvwprintw.3 \
 	 curses_line.3 mvwvline.3 curses_tty.3 napms.3 \
 	 curses_pad.3 newpad.3 curses_screen.3 newterm.3 \
@@ -186,7 +192,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_input.3 wgetnstr.3 curses_input.3 wgetstr.3 \
 	 curses_line.3 whline.3 curses_inch.3 winch.3 \
 	 curses_inch.3 winchnstr.3 curses_inch.3 winchstr.3 \
-	 curses_inch.3 winnstr.3 curses_insertch.3 winsch.3 \
+	 curses_inch.3 winnstr.3 curses_insch.3 winsch.3 \
 	 curses_insdelln.3 winsdelln.3 curses_insertln.3 winsertln.3 \
 	 curses_inch.3 winstr.3 curses_cursor.3 wmove.3 \
 	 curses_refresh.3 wnoutrefresh.3 curses_print.3 wprintw.3 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.23.2.7 2018/10/20 06:58:25 pgoyette Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.23.2.8 2018/11/26 01:52:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.7 2018/10/20 06:58:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.8 2018/11/26 01:52:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -272,16 +272,21 @@ gtmr_intr(void *arg)
 	uint64_t delta = now - ci->ci_lastintr;
 
 #ifdef DIAGNOSTIC
-	const uint64_t then = gtmr_cntv_cval_read();
-	struct gtmr_percpu * const pc = percpu_getref(sc->sc_percpu);
-	KASSERTMSG(then <= now, "%"PRId64, now - then);
-	KASSERTMSG(then + pc->pc_delta >= ci->ci_lastintr + sc->sc_autoinc,
-	    "%"PRId64, then + pc->pc_delta - ci->ci_lastintr - sc->sc_autoinc);
+	struct gtmr_percpu *pc = NULL;
+	if (!ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
+		const uint64_t then = gtmr_cntv_cval_read();
+		pc = percpu_getref(sc->sc_percpu);
+		KASSERTMSG(then <= now, "%"PRId64, now - then);
+		KASSERTMSG(then + pc->pc_delta >= ci->ci_lastintr + sc->sc_autoinc,
+		    "%"PRId64, then + pc->pc_delta - ci->ci_lastintr - sc->sc_autoinc);
+	}
 #endif
 
-	KASSERTMSG(delta > sc->sc_autoinc / 100,
-	    "%s: interrupting too quickly (delta=%"PRIu64") autoinc=%lu",
-	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
+	if (!ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
+		KASSERTMSG(delta > sc->sc_autoinc / 100,
+		    "%s: interrupting too quickly (delta=%"PRIu64") autoinc=%lu",
+		    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
+	}
 
 	/*
 	 * If we got interrupted too soon (delta < sc->sc_autoinc)
@@ -298,9 +303,11 @@ gtmr_intr(void *arg)
 	ci->ci_lastintr = now;
 
 #ifdef DIAGNOSTIC
-	KASSERT(delta == (uint32_t) delta);
-	pc->pc_delta = delta;
-	percpu_putref(sc->sc_percpu);
+	if (!ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
+		KASSERT(delta == (uint32_t) delta);
+		pc->pc_delta = delta;
+		percpu_putref(sc->sc_percpu);
+	}
 #endif
 
 	hardclock(cf);

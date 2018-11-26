@@ -1272,7 +1272,7 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an M32R ELF reloc.  */
 
-static void
+static bfd_boolean
 m32r_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 			arelent *cache_ptr,
 			Elf_Internal_Rela *dst)
@@ -1283,21 +1283,34 @@ m32r_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type > (unsigned int) R_M32R_GNU_VTENTRY)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid M32R reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &m32r_elf_howto_table[r_type];
+  return TRUE;
 }
 
-static void
+static bfd_boolean
 m32r_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 		    arelent *cache_ptr,
 		    Elf_Internal_Rela *dst)
 {
-  BFD_ASSERT ((ELF32_R_TYPE(dst->r_info) == (unsigned int) R_M32R_NONE)
-	      || ((ELF32_R_TYPE(dst->r_info) > (unsigned int) R_M32R_GNU_VTENTRY)
-		  && (ELF32_R_TYPE(dst->r_info) < (unsigned int) R_M32R_max)));
-  cache_ptr->howto = &m32r_elf_howto_table[ELF32_R_TYPE(dst->r_info)];
+  unsigned int r_type = ELF32_R_TYPE (dst->r_info);
+
+  if (r_type == (unsigned int) R_M32R_NONE
+      || ((r_type > (unsigned int) R_M32R_GNU_VTENTRY)
+	  && (r_type < (unsigned int) R_M32R_max)))
+    {
+      cache_ptr->howto = &m32r_elf_howto_table[r_type];
+      return TRUE;
+    }
+
+  /* xgettext:c-format */
+  _bfd_error_handler (_("%pB: unsupported relocation type %#x"), abfd, r_type);
+  bfd_set_error (bfd_error_bad_value);
+  return FALSE;  
 }
 
 
@@ -2094,7 +2107,7 @@ maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 
       info->flags |= DF_TEXTREL;
       info->callbacks->minfo
-	(_("%B: dynamic relocation against `%T' in read-only section `%A'\n"),
+	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
 	 sec->owner, h->root.root.string, sec);
 
       /* Not an error, just cut short the traversal.  */
@@ -2401,7 +2414,7 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       if (r_type < 0 || r_type >= (int) R_M32R_max)
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: unknown relocation type %d"),
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			      input_bfd, (int) r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  ret = FALSE;
@@ -2523,11 +2536,11 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B(%A+%#Lx): unresolvable %s relocation "
+		    (_("%pB(%pA+%#" PRIx64 "): unresolvable %s relocation "
 		       "against symbol `%s'"),
 		     input_bfd,
 		     input_section,
-		     rel->r_offset,
+		     (uint64_t) rel->r_offset,
 		     howto->name,
 		     h->root.root.string);
 		}
@@ -2968,7 +2981,8 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		  {
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: The target (%s) of an %s relocation is in the wrong section (%A)"),
+		      (_("%pB: the target (%s) of an %s relocation"
+			 " is in the wrong section (%pA)"),
 		       input_bfd,
 		       sym_name,
 		       m32r_elf_howto_table[(int) r_type].name,
@@ -3470,7 +3484,7 @@ m32r_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	  || ((in_flags  & EF_M32R_ARCH) == E_M32R2_ARCH))
 	{
 	  _bfd_error_handler
-	    (_("%B: Instruction set mismatch with previous modules"), ibfd);
+	    (_("%pB: instruction set mismatch with previous modules"), ibfd);
 
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -3854,8 +3868,7 @@ m32r_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 #define elf_backend_create_dynamic_sections	m32r_elf_create_dynamic_sections
 #define bfd_elf32_bfd_link_hash_table_create	m32r_elf_link_hash_table_create
 #define elf_backend_size_dynamic_sections	m32r_elf_size_dynamic_sections
-#define elf_backend_omit_section_dynsym \
-  ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+#define elf_backend_omit_section_dynsym		_bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_sections	m32r_elf_finish_dynamic_sections
 #define elf_backend_adjust_dynamic_symbol	m32r_elf_adjust_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol	m32r_elf_finish_dynamic_symbol

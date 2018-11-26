@@ -161,6 +161,12 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 	if (ctx->link_fd == -1)
 		return -1;
 
+#ifdef SO_RERROR
+	int n = 1;
+	if (setsockopt(ctx->link_fd, SOL_SOCKET, SO_RERROR,
+	    &n, sizeof(n)) == -1)
+		logerr(__func__);
+#endif
 #if defined(RO_MSGFILTER)
 	if (setsockopt(ctx->link_fd, PF_ROUTE, RO_MSGFILTER,
 	    &msgfilter, sizeof(msgfilter)) == -1)

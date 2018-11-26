@@ -2320,7 +2320,7 @@ vectorizable_call (gimple *gs, gimple_stmt_iterator *gsi, gimple **vec_stmt,
       if (cfn != CFN_LAST)
 	fndecl = targetm.vectorize.builtin_vectorized_function
 	  (cfn, vectype_out, vectype_in);
-      else
+      else if (callee)
 	fndecl = targetm.vectorize.builtin_md_vectorized_function
 	  (callee, vectype_out, vectype_in);
     }
@@ -5078,14 +5078,33 @@ vectorizable_operation (gimple *stmt, gimple_stmt_iterator *gsi,
       /* Handle uses.  */
       if (j == 0)
 	{
-	  if (op_type == binary_op || op_type == ternary_op)
+	  if (op_type == binary_op)
 	    vect_get_vec_defs (op0, op1, stmt, &vec_oprnds0, &vec_oprnds1,
 			       slp_node, -1);
+	  else if (op_type == ternary_op)
+	    {
+	      if (slp_node)
+		{
+		  auto_vec<tree> ops(3);
+		  ops.quick_push (op0);
+		  ops.quick_push (op1);
+		  ops.quick_push (op2);
+		  auto_vec<vec<tree> > vec_defs(3);
+		  vect_get_slp_defs (ops, slp_node, &vec_defs, -1);
+		  vec_oprnds0 = vec_defs[0];
+		  vec_oprnds1 = vec_defs[1];
+		  vec_oprnds2 = vec_defs[2];
+		}
+	      else
+		{ 
+		  vect_get_vec_defs (op0, op1, stmt, &vec_oprnds0, &vec_oprnds1,
+				     NULL, -1);
+		  vect_get_vec_defs (op2, NULL_TREE, stmt, &vec_oprnds2, NULL,
+				     NULL, -1);
+		}
+	    }
 	  else
 	    vect_get_vec_defs (op0, NULL_TREE, stmt, &vec_oprnds0, NULL,
-			       slp_node, -1);
-	  if (op_type == ternary_op)
-	    vect_get_vec_defs (op2, NULL_TREE, stmt, &vec_oprnds2, NULL,
 			       slp_node, -1);
 	}
       else
@@ -5316,6 +5335,12 @@ vectorizable_store (gimple *stmt, gimple_stmt_iterator *gsi, gimple **vec_stmt,
     }
 
   op = gimple_assign_rhs1 (stmt);
+
+  /* In the case this is a store from a STRING_CST make sure
+     native_encode_expr can handle it.  */
+  if (TREE_CODE (op) == STRING_CST
+      && ! can_native_encode_string_p (op))
+    return false;
 
   if (!vect_is_simple_use (op, vinfo, &def_stmt, &dt, &rhs_vectype))
     {
@@ -6912,10 +6937,16 @@ vectorizable_load (gimple *stmt, gimple_stmt_iterator *gsi, gimple **vec_stmt,
 	     not only the number of vector stmts the permutation result
 	     fits in.  */
 	  if (slp_perm)
-	    vec_num = (group_size * vf + nunits - 1) / nunits;
+	    {
+	      vec_num = (group_size * vf + nunits - 1) / nunits;
+	      group_gap_adj = vf * group_size - nunits * vec_num;
+	    }
 	  else
-	    vec_num = SLP_TREE_NUMBER_OF_VEC_STMTS (slp_node);
-	  group_gap_adj = vf * group_size - nunits * vec_num;
+	    {
+	      vec_num = SLP_TREE_NUMBER_OF_VEC_STMTS (slp_node);
+	      group_gap_adj
+		= group_size - SLP_INSTANCE_GROUP_SIZE (slp_node_instance);
+	    }
     	}
       else
 	vec_num = group_size;
@@ -7076,6 +7107,7 @@ vectorizable_load (gimple *stmt, gimple_stmt_iterator *gsi, gimple **vec_stmt,
     aggr_type = vectype;
 
   prev_stmt_info = NULL;
+  int group_elt = 0;
   for (j = 0; j < ncopies; j++)
     {
       /* 1. Create the vector or array pointer update chain.  */
@@ -7367,10 +7399,27 @@ vectorizable_load (gimple *stmt, gimple_stmt_iterator *gsi, gimple **vec_stmt,
 	      /* Store vector loads in the corresponding SLP_NODE.  */
 	      if (slp && !slp_perm)
 		SLP_TREE_VEC_STMTS (slp_node).quick_push (new_stmt);
+
+	      /* With SLP permutation we load the gaps as well, without
+	         we need to skip the gaps after we manage to fully load
+		 all elements.  group_gap_adj is GROUP_SIZE here.  */
+	      group_elt += nunits;
+	      if (group_gap_adj != 0 && ! slp_perm
+		  && group_elt == group_size - group_gap_adj)
+		{
+		  bool ovf;
+		  tree bump
+		    = wide_int_to_tree (sizetype,
+					wi::smul (TYPE_SIZE_UNIT (elem_type),
+						  group_gap_adj, &ovf));
+		  dataref_ptr = bump_vector_ptr (dataref_ptr, ptr_incr, gsi,
+						 stmt, bump);
+		  group_elt = 0;
+		}
 	    }
 	  /* Bump the vector pointer to account for a gap or for excess
 	     elements loaded for a permuted SLP load.  */
-	  if (group_gap_adj != 0)
+	  if (group_gap_adj != 0 && slp_perm)
 	    {
 	      bool ovf;
 	      tree bump

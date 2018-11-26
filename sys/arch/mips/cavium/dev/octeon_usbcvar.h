@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_usbcvar.h,v 1.3.18.1 2018/04/16 01:59:55 pgoyette Exp $	*/
+/*	$NetBSD: octeon_usbcvar.h,v 1.3.18.2 2018/11/26 01:52:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -96,7 +96,6 @@ typedef struct octeon_usbc_hostch { /* FIXME */
 
 typedef struct octeon_usbc_xfer {
 	struct usbd_xfer xfer;
-	struct usb_task	abort_task;
 } octeon_usbc_xfer_t;
 
 
@@ -107,7 +106,7 @@ typedef struct octeon_usbc_soft_ed {
 	u_int8_t	ref_count;
 
 	struct octeon_usbc_soft_td	*std_head;
-	
+
 	u_int8_t	status;
 #define	USBC_ENDPT_STATUS_SKIP		0
 #define USBC_ENDPT_STATUS_READY		1
@@ -176,7 +175,7 @@ typedef struct octeon_usbc_soft_td {
 typedef struct octeon_usbc_softc {
 	device_t		sc_dev;
 	struct usbd_bus		sc_bus;
-	
+
 	bus_space_tag_t         sc_bust;	/* iobus space */
 	bus_space_handle_t	sc_regh;	/* usbc register space */
 

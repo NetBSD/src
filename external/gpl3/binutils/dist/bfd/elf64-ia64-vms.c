@@ -240,13 +240,24 @@ static asection *get_got
 
 /* Given a ELF reloc, return the matching HOWTO structure.  */
 
-static void
+static bfd_boolean
 elf64_ia64_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 			  arelent *bfd_reloc,
 			  Elf_Internal_Rela *elf_reloc)
 {
-  bfd_reloc->howto
-    = ia64_elf_lookup_howto ((unsigned int) ELF64_R_TYPE (elf_reloc->r_info));
+  unsigned int r_type = ELF32_R_TYPE (elf_reloc->r_info);
+
+  bfd_reloc->howto = ia64_elf_lookup_howto (r_type);
+  if (bfd_reloc->howto == NULL)
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 
@@ -584,9 +595,9 @@ elf64_ia64_relax_section (bfd *abfd, asection *sec,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: Can't relax br at %#Lx in section `%A'."
-		   " Please use brl or indirect branch."),
-		 sec->owner, roff, sec);
+		(_("%pB: can't relax br at %#" PRIx64 " in section `%pA';"
+		   " please use brl or indirect branch"),
+		 sec->owner, (uint64_t) roff, sec);
 	      bfd_set_error (bfd_error_bad_value);
 	      goto error_return;
 	    }
@@ -3278,8 +3289,8 @@ elf64_ia64_choose_gp (bfd *abfd, struct bfd_link_info *info, bfd_boolean final)
 overflow:
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: short data segment overflowed (%#Lx >= 0x400000)"),
-	     abfd, max_short_vma - min_short_vma);
+	    (_("%pB: short data segment overflowed (%#" PRIx64 " >= 0x400000)"),
+	     abfd, (uint64_t) (max_short_vma - min_short_vma));
 	  return FALSE;
 	}
       else if ((gp_val > min_short_vma
@@ -3288,7 +3299,7 @@ overflow:
 		   && max_short_vma - gp_val >= 0x200000))
 	{
 	  _bfd_error_handler
-	    (_("%B: __gp does not cover short data segment"), abfd);
+	    (_("%pB: __gp does not cover short data segment"), abfd);
 	  return FALSE;
 	}
     }
@@ -3425,16 +3436,20 @@ elf64_ia64_relocate_section (bfd *output_bfd,
       r_type = ELF64_R_TYPE (rel->r_info);
       if (r_type > R_IA64_MAX_RELOC_CODE)
 	{
-	  _bfd_error_handler
-	    /* xgettext:c-format */
-	    (_("%B: unknown relocation type %d"),
-	     input_bfd, (int) r_type);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      input_bfd, (int) r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  ret_val = FALSE;
 	  continue;
 	}
 
       howto = ia64_elf_lookup_howto (r_type);
+      if (howto == NULL)
+	{
+	  ret_val = FALSE;
+	  continue;
+	}
       r_symndx = ELF64_R_SYM (rel->r_info);
       h = NULL;
       sym = NULL;
@@ -3554,7 +3569,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 		     shared libraries nor dynamic executables.  */
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: non-pic code with imm relocation against"
+		    (_("%pB: non-pic code with imm relocation against"
 		       " dynamic symbol `%s'"),
 		     input_bfd,
 		     h ? h->root.root.string
@@ -3618,7 +3633,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: @gprel relocation against dynamic symbol %s"),
+		(_("%pB: @gprel relocation against dynamic symbol %s"),
 		 input_bfd,
 		 h ? h->root.root.string
 		   : bfd_elf_sym_name (input_bfd, symtab_hdr, sym,
@@ -3677,7 +3692,7 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 		      /* ??? People shouldn't be doing non-pic code in
 			 shared libraries.  Hork.  */
 		      _bfd_error_handler
-			(_("%B: linking non-pic code in a position independent executable"),
+			(_("%pB: linking non-pic code in a position independent executable"),
 			 input_bfd);
 		      ret_val = FALSE;
 		      continue;
@@ -3779,13 +3794,13 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 
 	      if (r_type == R_IA64_PCREL21BI)
 		/* xgettext:c-format */
-		msg = _("%B: @internal branch to dynamic symbol %s");
+		msg = _("%pB: @internal branch to dynamic symbol %s");
 	      else if (r_type == R_IA64_PCREL21F || r_type == R_IA64_PCREL21M)
 		/* xgettext:c-format */
-		msg = _("%B: speculation fixup to dynamic symbol %s");
+		msg = _("%pB: speculation fixup to dynamic symbol %s");
 	      else
 		/* xgettext:c-format */
-		msg = _("%B: @pcrel relocation against dynamic symbol %s");
+		msg = _("%pB: @pcrel relocation against dynamic symbol %s");
 	      _bfd_error_handler (msg, input_bfd,
 				  h ? h->root.root.string
 				  : bfd_elf_sym_name (input_bfd,
@@ -3946,10 +3961,10 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 	      case R_IA64_LTOFF_DTPREL22:
 		_bfd_error_handler
 		  /* xgettext:c-format */
-		  (_("%B: missing TLS section for relocation %s against `%s'"
-		     " at %#Lx in section `%A'."),
+		  (_("%pB: missing TLS section for relocation %s against `%s'"
+		     " at %#" PRIx64 " in section `%pA'."),
 		   input_bfd, howto->name, name,
-		   rel->r_offset, input_section);
+		   (uint64_t) rel->r_offset, input_section);
 		break;
 
 	      case R_IA64_PCREL21B:
@@ -3963,10 +3978,11 @@ elf64_ia64_relocate_section (bfd *output_bfd,
 		       that the section is too big to relax.  */
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: Can't relax br (%s) to `%s' at %#Lx in section"
-			 " `%A' with size %#Lx (> 0x1000000)."),
-		       input_bfd, howto->name, name, rel->r_offset,
-		       input_section, input_section->size);
+		      (_("%pB: Can't relax br (%s) to `%s' "
+			 "at %#" PRIx64 " in section `%pA' "
+			 "with size %#" PRIx64 " (> 0x1000000)."),
+		       input_bfd, howto->name, name, (uint64_t) rel->r_offset,
+		       input_section, (uint64_t) input_section->size);
 		    break;
 		  }
 		/* Fall through.  */
@@ -4254,7 +4270,7 @@ elf64_ia64_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if ((in_flags & EF_IA_64_TRAPNIL) != (out_flags & EF_IA_64_TRAPNIL))
     {
       _bfd_error_handler
-	(_("%B: linking trap-on-NULL-dereference with non-trapping files"),
+	(_("%pB: linking trap-on-NULL-dereference with non-trapping files"),
 	 ibfd);
 
       bfd_set_error (bfd_error_bad_value);
@@ -4263,7 +4279,7 @@ elf64_ia64_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if ((in_flags & EF_IA_64_BE) != (out_flags & EF_IA_64_BE))
     {
       _bfd_error_handler
-	(_("%B: linking big-endian files with little-endian files"),
+	(_("%pB: linking big-endian files with little-endian files"),
 	 ibfd);
 
       bfd_set_error (bfd_error_bad_value);
@@ -4272,7 +4288,7 @@ elf64_ia64_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if ((in_flags & EF_IA_64_ABI64) != (out_flags & EF_IA_64_ABI64))
     {
       _bfd_error_handler
-	(_("%B: linking 64-bit files with 32-bit files"),
+	(_("%pB: linking 64-bit files with 32-bit files"),
 	 ibfd);
 
       bfd_set_error (bfd_error_bad_value);
@@ -4281,7 +4297,7 @@ elf64_ia64_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if ((in_flags & EF_IA_64_CONS_GP) != (out_flags & EF_IA_64_CONS_GP))
     {
       _bfd_error_handler
-	(_("%B: linking constant-gp files with non-constant-gp files"),
+	(_("%pB: linking constant-gp files with non-constant-gp files"),
 	 ibfd);
 
       bfd_set_error (bfd_error_bad_value);
@@ -4291,7 +4307,7 @@ elf64_ia64_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       != (out_flags & EF_IA_64_NOFUNCDESC_CONS_GP))
     {
       _bfd_error_handler
-	(_("%B: linking auto-pic files with non-auto-pic files"),
+	(_("%pB: linking auto-pic files with non-auto-pic files"),
 	 ibfd);
 
       bfd_set_error (bfd_error_bad_value);
@@ -5134,15 +5150,15 @@ error_free_dyn:
 		  if (normal_bfd == NULL)
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("Warning: alignment %u of common symbol `%s' in %B"
-			 " is greater than the alignment (%u) of its section %A"),
+		      (_("warning: alignment %u of common symbol `%s' in %pB"
+			 " is greater than the alignment (%u) of its section %pA"),
 		       1 << common_align, name, common_bfd,
 		       1 << normal_align, h->root.u.def.section);
 		  else
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("Warning: alignment %u of symbol `%s' in %B"
-			 " is smaller than %u in %B"),
+		      (_("warning: alignment %u of symbol `%s' in %pB"
+			 " is smaller than %u in %pB"),
 		       1 << normal_align, name, normal_bfd,
 		       1 << common_align, common_bfd);
 		}
@@ -5157,9 +5173,10 @@ error_free_dyn:
 		  && ! size_change_ok)
 		_bfd_error_handler
 		  /* xgettext:c-format */
-		  (_("Warning: size of symbol `%s' changed"
-		     " from %Lu in %B to %Lu in %B"),
-		   name, h->size, old_bfd, isym->st_size, abfd);
+		  (_("warning: size of symbol `%s' changed"
+		     " from %" PRIu64 " in %pB to %" PRIu64 " in %pB"),
+		   name, (uint64_t) h->size, old_bfd,
+		   (uint64_t) isym->st_size, abfd);
 
 	      h->size = isym->st_size;
 	    }
@@ -5183,8 +5200,8 @@ error_free_dyn:
 		  if (h->type != STT_NOTYPE && ! type_change_ok)
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("Warning: type of symbol `%s' changed"
-			 " from %d to %d in %B"),
+		      (_("warning: type of symbol `%s' changed"
+			 " from %d to %d in %pB"),
 		       name, h->type, type, abfd);
 
 		  h->type = type;
@@ -5481,7 +5498,7 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 #define elf_backend_size_dynamic_sections \
 	elf64_ia64_size_dynamic_sections
 #define elf_backend_omit_section_dynsym \
-  ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+	_bfd_elf_omit_section_dynsym_all
 #define elf_backend_relocate_section \
 	elf64_ia64_relocate_section
 #define elf_backend_finish_dynamic_symbol \

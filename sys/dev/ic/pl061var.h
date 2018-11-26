@@ -1,4 +1,4 @@
-/* $NetBSD: pl061var.h,v 1.1.2.2 2018/10/20 06:58:31 pgoyette Exp $ */
+/* $NetBSD: pl061var.h,v 1.1.2.3 2018/11/26 01:52:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -36,6 +36,8 @@ struct plgpio_softc {
 
 	struct gpio_chipset_tag	sc_gc;
 	gpio_pin_t		sc_pins[8];
+
+	uint32_t		sc_reserved_mask;
 };
 
 void	plgpio_attach(struct plgpio_softc *);

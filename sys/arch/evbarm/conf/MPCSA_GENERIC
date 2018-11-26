@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.55.2.4 2018/09/06 06:55:30 pgoyette Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.55.2.5 2018/11/26 01:52:21 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55.2.4 $"
+#ident 		"GENERIC-$Revision: 1.55.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -455,7 +455,6 @@ uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB audio
 #uaudio*	at uhub? port ? configuration ?

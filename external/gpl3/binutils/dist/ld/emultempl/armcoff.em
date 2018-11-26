@@ -118,7 +118,8 @@ gld${EMULATION_NAME}_before_allocation (void)
 	    (is->the_bfd, & link_info, support_old_code))
 	  {
 	    /* xgettext:c-format */
-	    einfo (_("Errors encountered processing file %s"), is->filename);
+	    einfo (_("%P: errors encountered processing file %s\n"),
+		   is->filename);
 	  }
       }
   }
@@ -140,8 +141,8 @@ gld${EMULATION_NAME}_after_open (void)
 	 These will only be created if the output format is an arm format,
 	 hence we do not support linking and changing output formats at the
 	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo (_("%F%X%P: error: cannot change output format "
-	       "whilst linking ARM binaries\n"));
+      einfo (_("%F%P: error: cannot change output format "
+	       "whilst linking %s binaries\n"), "ARM");
       return;
     }
 

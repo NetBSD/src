@@ -1,3 +1,80 @@
+2018-07-18  Nick Clifton  <nickc@redhat.com>
+
+	2.31.1 Release point.
+
+2018-07-18  Nick Clifton  <nickc@redhat.com>
+
+	* (DEVO_SUPPORT): Fix typo in previous delta.
+	(do_proto_toplev): Add --quiet option to configure command line.
+
+2018-07-16  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (DEVO_SUPPORT): Add test-driver and ar-lib.
+
+2018-07-06  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* config.sub: Sync with upstream version 2018-07-03.
+
+2018-07-05  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* config.guess: Sync with upstream version 2018-06-26.
+	* config.sub: Sync with upstream version 2018-07-02.
+
+2018-06-24  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+
+2018-06-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* libtool.m4: Use AC_LANG_SOURCE.
+	* configure.ac: Remove AC_PREREQ, use AC_LANG_SOURCE.
+	* README-maintainer-mode: Update version requirements.
+	* ar-lib: New file.
+	* test-driver: New file.
+	* configure: Re-generate.
+
+2018-06-18  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* Makefile.def (fortran): Add check-target-libgomp-fortran.
+	* Makefile.tpl (check-target-libgomp-fortran): New phony target.
+	* Makefile.in: Regenerate.
+
+	* configure: Regenerate.
+
+2018-06-18  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* configure.ac: Sync with GCC, remove MPX-related things.
+
+2018-05-01  Nick Clifton  <nickc@redhat.com>
+
+	* config.guess: Synchronize with config project master sources.
+	* config.sub: Likewise.
+
+2018-05-01  Francois H. Theron  <francois.theron@netronome.com>
+
+	* configure.ac: Added "nfp" target.
+	* configure: Regenerate.
+
+2018-02-13  Maciej W. Rozycki  <macro@mips.com>
+
+	* configure.ac <wasm32-*-*> (noconfigdirs): Add `ld'.
+	* configure: Regenerate.
+
+2018-01-30  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (do_proto_toplev): Add patterns for more junk files
+	to delete before creating the tarball.
+
+2018-01-29  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (do_proto_toplev): Strip patch remnant files from
+	the sources before creating the tarball.
+
+2018-01-13  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh: Update copyright notice.  Change reference to devo
+	to be a reference to root.
+
 2018-01-10  Nick Clifton  <nickc@redhat.com>
 
 	* config-ml.in: Sync with gcc sources.

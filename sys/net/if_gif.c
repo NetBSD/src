@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.139.2.4 2018/10/20 06:58:45 pgoyette Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.139.2.5 2018/11/26 01:52:50 pgoyette Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.139.2.4 2018/10/20 06:58:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.139.2.5 2018/11/26 01:52:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -487,7 +487,8 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
 
-	error = gif_transmit_direct(var, m);
+	error = if_transmit_lock(ifp, m);
+
 end:
 	if (var != NULL)
 		gif_putref_variant(var, &psref);

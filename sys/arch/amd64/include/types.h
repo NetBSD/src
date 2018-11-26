@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.54.2.3 2018/09/06 06:55:24 pgoyette Exp $	*/
+/*	$NetBSD: types.h,v 1.54.2.4 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,6 +94,8 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__HAVE_INTR_CONTROL
 #define	__HAVE_CPU_RNG
 #define	__HAVE_COMPAT_NETBSD32
+#define	__HAVE_MM_MD_DIRECT_MAPPED_IO
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 #ifdef _KERNEL_OPT
 #define	__HAVE_RAS
@@ -104,8 +106,6 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #if !defined(KASAN)
 #define	__HAVE_PCPU_AREA 1
 #define	__HAVE_DIRECT_MAP 1
-#define	__HAVE_MM_MD_DIRECT_MAPPED_IO
-#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #endif
 #if !defined(NO_PCI_MSI_MSIX)
 #define	__HAVE_PCI_MSI_MSIX

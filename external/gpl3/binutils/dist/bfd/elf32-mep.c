@@ -375,11 +375,10 @@ mep_final_link_relocate
 
 /* Set the howto pointer for a MEP ELF reloc.  */
 
-static void
-mep_info_to_howto_rela
-    (bfd *		 abfd ATTRIBUTE_UNUSED,
-     arelent *		 cache_ptr,
-     Elf_Internal_Rela * dst)
+static bfd_boolean
+mep_info_to_howto_rela (bfd *		    abfd,
+			arelent *	    cache_ptr,
+			Elf_Internal_Rela * dst)
 {
   unsigned int r_type;
 
@@ -387,10 +386,13 @@ mep_info_to_howto_rela
   if (r_type >= R_MEP_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid MEP reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = & mep_elf_howto_table [r_type];
+  return TRUE;
 }
 
 /* Relocate a MEP ELF section.
@@ -585,7 +587,7 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   old_flags = elf_elfheader (obfd)->e_flags;
 
 #ifdef DEBUG
-  _bfd_error_handler ("%B: old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s",
+  _bfd_error_handler ("%pB: old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s",
 		      ibfd, old_flags, new_flags, elf_flags_init (obfd) ? "yes" : "no");
 #endif
 
@@ -617,7 +619,7 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       else
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B and %B are for different cores"),
+	  _bfd_error_handler (_("%pB and %pB are for different cores"),
 			      last_ibfd, ibfd);
 	  bfd_set_error (bfd_error_invalid_target);
 	  return FALSE;
@@ -636,7 +638,7 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       else
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B and %B are for different configurations"),
+	  _bfd_error_handler (_("%pB and %pB are for different configurations"),
 			      last_ibfd, ibfd);
 	  bfd_set_error (bfd_error_invalid_target);
 	  return FALSE;

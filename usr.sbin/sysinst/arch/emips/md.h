@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.26.1 2018/11/26 01:52:56 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,14 +48,9 @@
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
-#define DEFUSRSIZE	120	/* Default /usr size, if /home */
-#define XNEEDMB		100	/* Extra megs for full X installation */
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- */
-#define DISK_NAMES "ace", "sd", "wd", "ld", "raid"
+#define DEFUSRSIZE	800	/* Default /usr size, if /home */
+#define XNEEDMB		256	/* Extra megs for full X installation */
+#define DEBNEEDMB	900	/* Extra megs for debug sets */
 
 /* have support for booting from UFS2 */
 #define HAVE_UFS2_BOOT
@@ -86,4 +81,4 @@
 #ifdef CD_NAMES
 #undef CD_NAMES
 #endif
-#define CD_NAMES "ace1a"
+#define CD_NAMES "ace1"

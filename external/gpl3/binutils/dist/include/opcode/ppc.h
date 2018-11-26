@@ -75,11 +75,11 @@ struct powerpc_opcode
    in the order in which the disassembler should consider
    instructions.  */
 extern const struct powerpc_opcode powerpc_opcodes[];
-extern const int powerpc_num_opcodes;
+extern const unsigned int powerpc_num_opcodes;
 extern const struct powerpc_opcode vle_opcodes[];
-extern const int vle_num_opcodes;
+extern const unsigned int vle_num_opcodes;
 extern const struct powerpc_opcode spe2_opcodes[];
-extern const int spe2_num_opcodes;
+extern const unsigned int spe2_num_opcodes;
 
 /* Values defined for the flags field of a struct powerpc_opcode.  */
 
@@ -404,14 +404,6 @@ extern const unsigned int num_powerpc_operands;
 
 /* Valid range of operand is 0..n rather than 0..n-1.  */
 #define PPC_OPERAND_PLUS1 (0x20000)
-
-/* This operand does not actually exist in the assembler input.  This
-   is used to support extended mnemonics such as mr, for which two
-   operands fields are identical.  The assembler should call the
-   insert function with any op value.  The disassembler should call
-   the extract function, ignore the return value, and check the value
-   placed in the valid argument.  */
-#define PPC_OPERAND_FAKE (0x40000)
 
 /* This operand is optional, and is zero if omitted.  This is used for
    example, in the optional BF field in the comparison instructions.  The

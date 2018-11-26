@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.2.2.2 2018/10/20 06:58:24 pgoyette Exp $
+#	$NetBSD: files.acpi,v 1.2.2.3 2018/11/26 01:52:17 pgoyette Exp $
 #
 # Configuration info for ACPI compliant ARM boards.
 #
@@ -11,7 +11,7 @@ defflag	opt_pcifixup.h		ACPI_PCI_FIXUP
 include "dev/acpi/files.acpi"
 
 file	arch/arm/acpi/acpi_machdep.c		acpi
-file	arch/arm/acpi/acpi_pci_machdep.c	acpi
+file	arch/arm/acpi/acpi_pci_machdep.c	acpi & pci
 file	arch/arm/acpi/acpi_platform.c		acpi
 file	arch/arm/acpi/acpi_table.c		acpi
 
@@ -21,8 +21,15 @@ file	arch/arm/acpi/cpu_acpi.c		cpu_acpi
 attach	gic at acpimadtbus with gic_acpi
 file	arch/arm/acpi/gic_acpi.c		gic_acpi
 
+attach	gicvthree at acpimadtbus with gicv3_acpi
+file	arch/arm/acpi/gicv3_acpi.c		gicv3_acpi
+
 attach	gtmr at acpisdtbus with gtmr_acpi
 file	arch/arm/acpi/gtmr_acpi.c		gtmr_acpi
+
+device	sbsawdt: sysmon_wdog
+attach	sbsawdt at acpigtdtbus with sbsawdt_acpi
+file	arch/arm/acpi/sbsawdt_acpi.c		sbsawdt_acpi
 
 attach	plcom at acpinodebus with plcom_acpi
 file	arch/arm/acpi/plcom_acpi.c		plcom_acpi

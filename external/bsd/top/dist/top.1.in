@@ -4,7 +4,7 @@
 .nr D @DEFAULT_DELAY@
 .nr L @HAVE_GETOPT_LONG@
 .nr K @ENABLE_KILL@
-.TH TOP 1 "August 26, 2018"
+.TH TOP 1 "November 5, 2018"
 .UC 4
 .SH NAME
 top \- display and update information about the top cpu processes
@@ -294,7 +294,7 @@ Change the number of processes to display (prompt for new number).
 .TP
 .B o
 Change the order in which the display is sorted.  This command is not
-available on all systems.  The sort key names vary fron system to system
+available on all systems.  The sort key names vary from system to system
 but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq, \*(lqsize\*(rq,
 \*(lqtime\*(rq.  The default is cpu.
 .TP

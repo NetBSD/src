@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.145.2.3 2018/09/06 06:51:32 pgoyette Exp $	*/
+/*	$NetBSD: parser.c,v 1.145.2.4 2018/11/26 01:49:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.145.2.3 2018/09/06 06:51:32 pgoyette Exp $");
+__RCSID("$NetBSD: parser.c,v 1.145.2.4 2018/11/26 01:49:54 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -590,7 +590,7 @@ command(void)
 	tokpushback++;
 	*rpp = NULL;
 	if (redir) {
-		if (n1->type != NSUBSHELL) {
+		if (n1 == NULL || n1->type != NSUBSHELL) {
 			n2 = stalloc(sizeof(struct nredir));
 			n2->type = NREDIR;
 			n2->nredir.n = n1;
@@ -1725,7 +1725,7 @@ readcstyleesc(char *out)
 		pungetc();
 		return out;
 	}
-	if (SQSYNTAX[vc] == CCTL)
+	if (NEEDESC(vc))
 		USTPUTC(CTLESC, out);
 	USTPUTC(vc, out);
 	return out;
@@ -1826,10 +1826,17 @@ readtoken1(int firstc, char const *syn, int magicq)
 			quotef = 1;	/* current token is quoted */
 			if (ISDBLQUOTE() && c != '\\' && c != '`' &&
 			    c != '$' && (c != '"' || magicq)) {
+				/*
+				 * retain the \ (which we *know* needs CTLESC)
+				 * when in "..." and the following char is
+				 * not one of the magic few.)
+				 * Otherwise the \ has done its work, and
+				 * is dropped.
+				 */
 				USTPUTC(CTLESC, out);
 				USTPUTC('\\', out);
 			}
-			if (SQSYNTAX[c] == CCTL || SQSYNTAX[c] == CSBACK)
+			if (NEEDESC(c))
 				USTPUTC(CTLESC, out);
 			else if (!magicq) {
 				USTPUTC(CTLQUOTEMARK, out);
@@ -2469,6 +2476,9 @@ expandonstack(char *ps, int lineno)
 	xflag = save_x;
 	popfilesupto(savetopfile);
 	handler = savehandler;
+
+	if (exception == EXEXIT)
+		longjmp(handler->loc, 1);
 
 	if (result != NULL) {
 		INTON;

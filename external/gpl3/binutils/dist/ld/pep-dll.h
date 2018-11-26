@@ -52,10 +52,11 @@ extern void pep_dll_build_sections  (bfd *, struct bfd_link_info *);
 extern void pep_exe_build_sections  (bfd *, struct bfd_link_info *);
 extern void pep_dll_fill_sections  (bfd *, struct bfd_link_info *);
 extern void pep_exe_fill_sections  (bfd *, struct bfd_link_info *);
-extern void pep_walk_relocs_of_symbol
-  (struct bfd_link_info *, char *, int (*) (arelent *, asection *, char *));
+extern void pep_find_data_imports  (const char *,
+				    void (*cb) (arelent *, asection *, char *,
+						const char *));
 extern void pep_create_import_fixup  (arelent * rel, asection *, bfd_vma,
-				      char *);
+				      char *, const char *);
 extern bfd_boolean pep_bfd_is_dll  (bfd *);
 extern void pep_output_file_set_long_section_names (bfd *);
 

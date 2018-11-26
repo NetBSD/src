@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.12.16.3 2018/09/30 01:45:50 pgoyette Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.12.16.4 2018/11/26 01:52:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -193,6 +193,7 @@ struct sk_softc {
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	bus_size_t		sk_bsize;	/* bus space size */
 	void			*sk_intrhand;	/* irq handler handle */
+	pci_intr_handle_t	*sk_pihp;
 	pci_chipset_tag_t	sk_pc;
 	u_int8_t		sk_fibertype;
 	u_int8_t		sk_type;

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.20.2.7 2018/10/20 06:58:26 pgoyette Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.20.2.8 2018/11/26 01:52:20 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20.2.7 2018/10/20 06:58:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20.2.8 2018/11/26 01:52:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -187,6 +187,8 @@ sunxi_platform_uart_freq(void)
 static void
 sunxi_platform_bootstrap(void)
 {
+	arm_fdt_cpu_bootstrap();
+
 	void *fdt_data = __UNCONST(fdtbus_get_data());
 	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
 	if (chosen_off < 0)
@@ -207,8 +209,6 @@ sunxi_platform_bootstrap(void)
 		fdt_setprop_string(fdt_data, chosen_off,
 		    "stdout-path", "serial0:115200n8");
 	}
-
-	arm_fdt_cpu_bootstrap();
 }
 
 
@@ -300,7 +300,6 @@ static const struct arm_platform sun4i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun4i_platform_reset,
 	.ap_delay = sun4i_platform_delay,
@@ -313,7 +312,6 @@ static const struct arm_platform sun5i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun4i_platform_reset,
 	.ap_delay = sun4i_platform_delay,
@@ -327,7 +325,6 @@ static const struct arm_platform sun6i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun6i_platform_reset,
 	.ap_delay = gtmr_delay,
@@ -341,7 +338,6 @@ static const struct arm_platform sun7i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun4i_platform_reset,
 	.ap_delay = sun4i_platform_delay,
@@ -355,7 +351,6 @@ static const struct arm_platform sun8i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun6i_platform_reset,
 	.ap_delay = gtmr_delay,
@@ -371,7 +366,6 @@ static const struct arm_platform sun9i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun9i_platform_reset,
 	.ap_delay = gtmr_delay,
@@ -385,7 +379,6 @@ static const struct arm_platform sun50i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun6i_platform_reset,
 	.ap_delay = gtmr_delay,
@@ -400,7 +393,6 @@ static const struct arm_platform sun50i_h6_platform = {
 	.ap_devmap = sunxi_platform_devmap,
 	.ap_bootstrap = sunxi_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_early_putchar = sunxi_platform_early_putchar,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun50i_h6_platform_reset,
 	.ap_delay = gtmr_delay,

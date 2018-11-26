@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.3.2.3 2018/09/30 01:45:57 pgoyette Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.3.2.4 2018/11/26 01:52:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -33,6 +33,7 @@
 #include <lib/libkern/libkern.h>
 
 #include <loadfile.h>
+#include <net.h>
 
 #include "efiboot_machdep.h"
 
@@ -45,6 +46,7 @@ struct boot_command {
 /* conf.c */
 extern struct fs_ops null_fs_ops;
 extern struct fs_ops tftp_fs_ops;
+extern struct fs_ops nfs_fs_ops;
 
 /* boot.c */
 void boot(void);
@@ -52,13 +54,12 @@ void clearit(void);
 void print_banner(void);
 extern const struct boot_command commands[];
 void command_help(char *);
-int set_default_device(char *);
+int set_default_device(const char *);
 char *get_default_device(void);
-int set_initrd_path(char *);
+int set_initrd_path(const char *);
 char *get_initrd_path(void);
-int set_dtb_path(char *);
+int set_dtb_path(const char *);
 char *get_dtb_path(void);
-extern int howto;
 
 /* console.c */
 int ischar(void);
@@ -71,6 +72,7 @@ void efi_cleanup(void);
 void efi_exit(void);
 void efi_delay(int);
 void efi_reboot(void);
+extern int howto;
 
 /* efichar.c */
 size_t ucs2len(const CHAR16 *);
@@ -82,15 +84,19 @@ int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 
 /* efinet.c */
+struct efi_net_if {
+	const char *if_name;
+	uint8_t if_mac[6];
+};
 int efi_net_open(struct open_file *, ...);
 void efi_net_probe(void);
 void efi_net_show(void);
 int efi_net_get_booted_interface_unit(void);
+int efi_net_get_booted_macaddr(uint8_t *);
 extern struct netif_driver efinetif;
 
 /* efipxe.c */
 void efi_pxe_probe(void);
-void efi_pxe_show(void);
 bool efi_pxe_match_booted_interface(const EFI_MAC_ADDRESS *, UINT32);
 
 /* exec.c */

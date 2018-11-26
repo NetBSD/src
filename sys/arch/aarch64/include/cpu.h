@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1.28.5 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: cpu.h,v 1.1.28.6 2018/11/26 01:52:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,9 @@
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/evcnt.h>
+
 #include <aarch64/frame.h>
+#include <aarch64/armreg.h>
 
 struct clockframe {
 	struct trapframe cf_tf;
@@ -52,6 +54,11 @@ struct clockframe {
 #define CLKF_USERMODE(cf)	((((cf)->cf_tf.tf_spsr) & 0x0f) == 0)
 #define CLKF_PC(cf)		((cf)->cf_tf.tf_pc)
 #define CLKF_INTR(cf)		((void)(cf), curcpu()->ci_intr_depth > 1)
+
+/*
+ * LWP_PC: Find out the program counter for the given lwp.
+ */
+#define LWP_PC(l)		((l)->l_md.md_utf->tf_pc)
 
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
@@ -88,8 +95,7 @@ struct cpu_info {
 	/* ACPI */
 	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
 
-	uint64_t ci_midr;	/* MIDR_EL1 */
-	uint64_t ci_mpidr;	/* MPIDR_EL1 */
+	struct aarch64_sysctl_cpu_id ci_id;
 
 	struct aarch64_cache_info *ci_cacheinfo;
 

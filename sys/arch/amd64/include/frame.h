@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.18 2017/06/14 00:40:05 chs Exp $	*/
+/*	$NetBSD: frame.h,v 1.18.4.1 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,14 @@ struct intrframe {
 	uint64_t	if_ppl;		/* Old interrupt mask level */
 	struct trapframe if_tf;
 };
+
+#ifdef XEN
+/*
+ * Need arch independany way to access IP and CS from intrframe
+ */
+#define	_INTRFRAME_CS	if_tf.tf_cs
+#define	_INTRFRAME_IP	if_tf.tf_rip
+#endif
 
 /*
  * Stack frame inside cpu_switchto()

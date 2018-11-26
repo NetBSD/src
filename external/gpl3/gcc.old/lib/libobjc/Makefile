@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2018/11/26 01:51:56 pgoyette Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined

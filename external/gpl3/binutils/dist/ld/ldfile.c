@@ -598,7 +598,7 @@ ldfile_open_command_file_1 (const char *name, bfd_boolean default_only)
   if (ldlex_input_stack == NULL)
     {
       bfd_set_error (bfd_error_system_call);
-      einfo (_("%P%F: cannot open linker script file %s: %E\n"), name);
+      einfo (_("%F%P: cannot open linker script file %s: %E\n"), name);
       return;
     }
 
@@ -663,5 +663,5 @@ ldfile_set_output_arch (const char *string, enum bfd_architecture defarch)
   else if (defarch != bfd_arch_unknown)
     ldfile_output_architecture = defarch;
   else
-    einfo (_("%P%F: cannot represent machine `%s'\n"), string);
+    einfo (_("%F%P: cannot represent machine `%s'\n"), string);
 }

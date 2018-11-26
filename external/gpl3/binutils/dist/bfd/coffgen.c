@@ -175,7 +175,7 @@ make_a_section_from_file (bfd *abfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext: c-format */
-		(_("%B: unable to initialize compress status for section %s"),
+		(_("%pB: unable to initialize compress status for section %s"),
 		 abfd, name);
 	      return FALSE;
 	    }
@@ -199,7 +199,7 @@ make_a_section_from_file (bfd *abfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext: c-format */
-		(_("%B: unable to initialize decompress status for section %s"),
+		(_("%pB: unable to initialize decompress status for section %s"),
 		 abfd, name);
 	      return FALSE;
 	    }
@@ -835,7 +835,7 @@ coff_mangle_symbols (bfd *bfd_ptr)
 	  for (i = 0; i < s->u.syment.n_numaux; i++)
 	    {
 	      combined_entry_type *a = s + i + 1;
-
+	      
 	      BFD_ASSERT (! a->is_sym);
 	      if (a->fix_tag)
 		{
@@ -1547,7 +1547,9 @@ coff_pointerize_aux (bfd *abfd,
 
   if ((ISFCN (type) || ISTAG (n_sclass) || n_sclass == C_BLOCK
        || n_sclass == C_FCN)
-      && auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l > 0)
+      && auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l > 0
+      && auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l
+      < (long) obj_raw_syment_count (abfd))
     {
       auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.p =
 	table_base + auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l;
@@ -1555,7 +1557,8 @@ coff_pointerize_aux (bfd *abfd,
     }
   /* A negative tagndx is meaningless, but the SCO 3.2v4 cc can
      generate one, so we must be careful to ignore it.  */
-  if (auxent->u.auxent.x_sym.x_tagndx.l > 0)
+  if ((unsigned long) auxent->u.auxent.x_sym.x_tagndx.l
+      < obj_raw_syment_count (abfd))
     {
       auxent->u.auxent.x_sym.x_tagndx.p =
 	table_base + auxent->u.auxent.x_sym.x_tagndx.l;
@@ -1646,8 +1649,8 @@ _bfd_coff_get_external_symbols (bfd *abfd)
 	  && size > bfd_get_file_size (abfd)))
 
     {
-      _bfd_error_handler (_("%B: corrupt symbol count: %#Lx"),
-			  abfd, obj_raw_syment_count (abfd));
+      _bfd_error_handler (_("%pB: corrupt symbol count: %#" PRIx64 ""),
+			  abfd, (uint64_t) obj_raw_syment_count (abfd));
       return FALSE;
     }
 
@@ -1655,8 +1658,10 @@ _bfd_coff_get_external_symbols (bfd *abfd)
   if (syms == NULL)
     {
       /* PR 21013: Provide an error message when the alloc fails.  */
-      _bfd_error_handler (_("%B: not enough memory to allocate space for %#Lx symbols of size %#Lx"),
-			  abfd, obj_raw_syment_count (abfd), symesz);
+      _bfd_error_handler (_("%pB: not enough memory to allocate space "
+			    "for %#" PRIx64 " symbols of size %#" PRIx64),
+			  abfd, (uint64_t) obj_raw_syment_count (abfd),
+			  (uint64_t) symesz);
       return FALSE;
     }
 
@@ -1722,7 +1727,7 @@ _bfd_coff_read_string_table (bfd *abfd)
     {
       _bfd_error_handler
 	/* xgettext: c-format */
-	(_("%B: bad string table size %Lu"), abfd, strsize);
+	(_("%pB: bad string table size %" PRIu64), abfd, (uint64_t) strsize);
       bfd_set_error (bfd_error_bad_value);
       return NULL;
     }
@@ -3021,7 +3026,7 @@ coff_gc_sweep (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 
 	  if (info->print_gc_sections && o->size != 0)
 	    /* xgettext: c-format */
-	    _bfd_error_handler (_("Removing unused section '%A' in file '%B'"),
+	    _bfd_error_handler (_("removing unused section '%pA' in file '%pB'"),
 				o, sub);
 
 #if 0
@@ -3098,7 +3103,7 @@ bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
   if (!bed->can_gc_sections
       || !is_coff_hash_table (info->hash))
     {
-      _bfd_error_handler(_("Warning: gc-sections option ignored"));
+      _bfd_error_handler(_("warning: gc-sections option ignored"));
       return TRUE;
     }
 #endif

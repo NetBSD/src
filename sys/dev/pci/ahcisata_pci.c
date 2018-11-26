@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.38 2016/10/13 17:11:09 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.38.14.1 2018/11/26 01:52:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.38 2016/10/13 17:11:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.38.14.1 2018/11/26 01:52:32 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ahcisata_pci.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -42,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.38 2016/10/13 17:11:09 jdolecek E
 #include <dev/pci/pciidevar.h>
 #include <dev/ic/ahcisatavar.h>
 
-struct ahci_pci_quirk { 
+struct ahci_pci_quirk {
 	pci_vendor_id_t  vendor;	/* Vendor ID */
 	pci_product_id_t product;	/* Product ID */
 	int              quirks;	/* quirks; same as sc_ahci_quirks */
@@ -200,18 +204,23 @@ struct ahci_pci_softc {
 	struct ahci_softc ah_sc;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	void * sc_ih;
+	pci_intr_handle_t *sc_pihp;
+	void *sc_ih;
 };
 
 static int  ahci_pci_has_quirk(pci_vendor_id_t, pci_product_id_t);
 static int  ahci_pci_match(device_t, cfdata_t, void *);
 static void ahci_pci_attach(device_t, device_t, void *);
 static int  ahci_pci_detach(device_t, int);
+static void ahci_pci_childdetached(device_t, device_t);
 static bool ahci_pci_resume(device_t, const pmf_qual_t *);
 
 
-CFATTACH_DECL_NEW(ahcisata_pci, sizeof(struct ahci_pci_softc),
-    ahci_pci_match, ahci_pci_attach, ahci_pci_detach, NULL);
+CFATTACH_DECL3_NEW(ahcisata_pci, sizeof(struct ahci_pci_softc),
+    ahci_pci_match, ahci_pci_attach, ahci_pci_detach, NULL,
+    NULL, ahci_pci_childdetached, DVF_DETACH_SHUTDOWN);
+
+#define	AHCI_PCI_ABAR_CAVIUM	0x10
 
 static int
 ahci_pci_has_quirk(pci_vendor_id_t vendor, pci_product_id_t product)
@@ -224,6 +233,20 @@ ahci_pci_has_quirk(pci_vendor_id_t vendor, pci_product_id_t product)
 			return ahci_pci_quirks[i].quirks;
 	return 0;
 }
+
+static int
+ahci_pci_abar(struct pci_attach_args *pa)
+{
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CAVIUM) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CAVIUM_THUNDERX_AHCI ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CAVIUM_THUNDERX_RAID) {
+			return AHCI_PCI_ABAR_CAVIUM;
+		}
+	}
+
+	return AHCI_PCI_ABAR;
+}
+
 
 static int
 ahci_pci_match(device_t parent, cfdata_t match, void *aux)
@@ -246,9 +269,9 @@ ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 	    (force == false))
 		return 0;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &regt, &regh, NULL, &size) != 0)
+	int bar = ahci_pci_abar(pa);
+	pcireg_t memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	if (pci_mapreg_map(pa, bar, memtype, 0, &regt, &regh, NULL, &size) != 0)
 		return 0;
 
 	if ((PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
@@ -270,14 +293,14 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	bool ahci_cap_64bit;
 	bool ahci_bad_64bit;
-	pci_intr_handle_t intrhandle;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_atac.atac_dev = self;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_ahcit, &sc->sc_ahcih, NULL, &sc->sc_ahcis) != 0) {
+	int bar = ahci_pci_abar(pa);
+	pcireg_t memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	if (pci_mapreg_map(pa, bar, memtype, 0, &sc->sc_ahcit, &sc->sc_ahcih,
+	    NULL, &sc->sc_ahcis) != 0) {
 		aprint_error_dev(self, "can't map ahci registers\n");
 		return;
 	}
@@ -285,18 +308,62 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pcitag = pa->pa_tag;
 
 	pci_aprint_devinfo(pa, "AHCI disk controller");
-	
-	if (pci_intr_map(pa, &intrhandle) != 0) {
-		aprint_error_dev(self, "couldn't map interrupt\n");
-		return;
+
+
+	/* Allocation settings */
+	int counts[PCI_INTR_TYPE_SIZE] = {
+		[PCI_INTR_TYPE_INTX] = 1,
+#ifndef AHCISATA_DISABLE_MSI
+		[PCI_INTR_TYPE_MSI] = 1,
+#endif
+#ifndef AHCISATA_DISABLE_MSIX
+		[PCI_INTR_TYPE_MSIX] = 1,
+#endif
+	};
+
+alloc_retry:
+	/* Allocate and establish the interrupt. */
+	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
+		aprint_error_dev(self, "can't allocate handler\n");
+		goto fail;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle,
-	    intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_BIO,
-	    ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
+
+	intrstr = pci_intr_string(pa->pa_pc, psc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, psc->sc_pihp[0],
+	    IPL_BIO, ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
 	if (psc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		return;
+		const pci_intr_type_t intr_type = pci_intr_type(pa->pa_pc,
+		    psc->sc_pihp[0]);
+		pci_intr_release(pa->pa_pc, psc->sc_pihp, 1);
+		psc->sc_ih = NULL;
+		switch (intr_type) {
+#ifndef AHCISATA_DISABLE_MSIX
+		case PCI_INTR_TYPE_MSIX:
+			/* The next try is for MSI: Disable MSIX */
+			counts[PCI_INTR_TYPE_INTX] = 1;
+#ifndef AHCISATA_DISABLE_MSI
+			counts[PCI_INTR_TYPE_MSI] = 1;
+#endif
+			counts[PCI_INTR_TYPE_MSIX] = 0;
+			goto alloc_retry;
+#endif
+#ifndef AHCISATA_DISABLE_MSI
+		case PCI_INTR_TYPE_MSI:
+			/* The next try is for INTx: Disable MSI */
+			counts[PCI_INTR_TYPE_MSI] = 0;
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			goto alloc_retry;
+#endif
+		case PCI_INTR_TYPE_INTX:
+		default:
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			aprint_error_dev(self, "couldn't establish interrupt");
+			if (intrstr != NULL)
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
+			goto fail;
+		}
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -326,6 +393,29 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, ahci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	return;
+fail:
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+	}
+	if (sc->sc_ahcis) {
+		bus_space_unmap(sc->sc_ahcit, sc->sc_ahcih, sc->sc_ahcis);
+		sc->sc_ahcis = 0;
+	}
+
+	return;
+
+}
+
+static void
+ahci_pci_childdetached(device_t dv, device_t child)
+{
+	struct ahci_pci_softc *psc = device_private(dv);
+	struct ahci_softc *sc = &psc->ah_sc;
+
+	ahci_childdetached(sc, child);
 }
 
 static int
@@ -343,8 +433,15 @@ ahci_pci_detach(device_t dv, int flags)
 
 	pmf_device_deregister(dv);
 
-	if (psc->sc_ih != NULL)
+	if (psc->sc_ih != NULL) {
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
+	}
+
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+	}
 
 	bus_space_unmap(sc->sc_ahcit, sc->sc_ahcih, sc->sc_ahcis);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.101.2.1 2018/10/20 06:58:30 pgoyette Exp $
+#	$NetBSD: files.acpi,v 1.101.2.2 2018/11/26 01:52:30 pgoyette Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -21,6 +21,7 @@ device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpisdtbus, acpigtdtb
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
+file	dev/acpi/acpi_event.c		acpi
 file	dev/acpi/acpi_i2c.c		acpi
 file	dev/acpi/acpi_mcfg.c		acpi & pci
 file	dev/acpi/acpi_pci.c		acpi
@@ -31,6 +32,7 @@ file	dev/acpi/acpi_resource.c	acpi
 file	dev/acpi/acpi_srat.c		acpi
 file	dev/acpi/acpi_slit.c		acpi
 file	dev/acpi/acpi_timer.c		acpi
+file	dev/acpi/acpi_usb.c		acpi
 file	dev/acpi/acpi_util.c		acpi
 file	dev/acpi/acpi_wakedev.c		acpi
 file	dev/acpi/acpi_verbose.c		acpi & acpiverbose
@@ -77,6 +79,11 @@ file	dev/acpi/acpi_display.c		acpivga|acpiout
 device	acpifan: sysmon_envsys
 attach	acpifan at acpinodebus
 file	dev/acpi/acpi_fan.c		acpifan
+
+# ACPI Generic Event Device
+device	acpiged
+attach	acpiged at acpinodebus
+file	dev/acpi/acpi_ged.c		acpiged
 
 # ACPI Power Meter
 device	acpipmtr: sysmon_envsys
@@ -244,5 +251,17 @@ file	dev/acpi/dwiic_acpi.c		dwiic_acpi
 # AMD Cryptographic Coprocessor
 attach	amdccp at acpinodebus with amdccp_acpi
 file	dev/acpi/amdccp_acpi.c		amdccp_acpi
+
+# QEMU Virtio
+attach	virtio at acpinodebus with virtio_acpi
+file	dev/acpi/virtio_acpi.c		virtio_acpi
+
+# EHCI-compliant USB controller
+attach	ehci at acpinodebus with ehci_acpi
+file	dev/acpi/ehci_acpi.c		ehci_acpi
+
+# XHCI-compliant USB controller
+attach	xhci at acpinodebus with xhci_acpi
+file	dev/acpi/xhci_acpi.c		xhci_acpi
 
 include	"dev/acpi/wmi/files.wmi"

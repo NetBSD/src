@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.109.2.2 2018/09/06 06:55:48 pgoyette Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.109.2.3 2018/11/26 01:52:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109.2.2 2018/09/06 06:55:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109.2.3 2018/11/26 01:52:30 pgoyette Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109.2.2 2018/09/06 06:55:48 pgoyette E
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
@@ -129,6 +128,15 @@ const struct ata_bustype wdc_ata_bustype = {
 	wdc_ata_addref,
 	wdc_ata_delref,
 	ata_kill_pending,
+	NULL,
+};
+
+static const struct ata_xfer_ops wdc_bio_xfer_ops = {
+	.c_start = wdc_ata_bio_start,
+	.c_poll = wdc_ata_bio_poll,
+	.c_abort = wdc_ata_bio_done,
+	.c_intr = wdc_ata_bio_intr,
+	.c_kill_xfer = wdc_ata_bio_kill_xfer
 };
 
 /*
@@ -161,11 +169,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
-	xfer->c_start = wdc_ata_bio_start;
-	xfer->c_poll = wdc_ata_bio_poll;
-	xfer->c_abort = wdc_ata_bio_done;
-	xfer->c_intr = wdc_ata_bio_intr;
-	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
+	xfer->ops = &wdc_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
@@ -479,8 +483,8 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
 			if ((xfer->c_flags & C_POLL) == 0)
-				callout_reset(&xfer->c_timo_callout,
-				    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
+				callout_reset(&chp->c_timo_callout,
+				    ATA_DELAY / 1000 * hz, wdctimeout, chp);
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -550,8 +554,8 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 		/* start timeout machinery */
 		if ((xfer->c_flags & C_POLL) == 0)
-			callout_reset(&xfer->c_timo_callout,
-			    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
+			callout_reset(&chp->c_timo_callout,
+			    ATA_DELAY / 1000 * hz, wdctimeout, chp);
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / drvp->lp->d_secsize;
@@ -725,10 +729,8 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		if (drv_err != WDC_ATA_ERR)
 			goto end;
 		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA) {
-			ata_channel_unlock(chp);
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
-			ata_channel_lock(chp);
 			goto err;
 		}
 	}

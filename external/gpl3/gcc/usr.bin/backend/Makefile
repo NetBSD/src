@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43.2.4 2018/07/28 04:37:19 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.43.2.5 2018/11/26 01:51:11 pgoyette Exp $
 
 LIBISPRIVATE=	yes
 
@@ -18,6 +18,7 @@ CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I${HOST_LIBIBERTYOBJ}/libiberty
 HOST_CPPFLAGS+=	${BOTH_CPPFLAGS} -DGENERATOR_FILE
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
+DPSRCS+=	${DIST}/gcc/BASE-VER
 CPPFLAGS+=	-I${DIST}/libgcc
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${MACHINE_ARCH}
 

@@ -39,6 +39,7 @@ Tasks remaining, first couple seem most important:
 - implement __cloneS ptrace.S sbrk.S shmat.S
 - implement kvm_ia64.c
 - implement pmc (performance monitoring counters) for ia64 pmc registers
+- cpuctl
 - optional(?) mutex.h/lock_stubs.S, mutex_enter()/mutex_exit() __HAVE_MUTEX_STUBS
        mutex_spin_enter()/mutex_spin_exit() __HAVE_SPIN_MUTEX_STUBS
 - rwlock.h rw_enter(),rw_exit(),rw_tryenter() __HAVE_RW_STUBS, implemented already?
@@ -48,6 +49,7 @@ Tasks remaining, first couple seem most important:
   do we want commands more like netbsd i386 bootloader? e.g., add
   command to boot nfs from loader.efi instead of hack now
 - ia64 implement __HAVE_FAST_SOFTINTS?
+- want or need __HAVE_CPU_UAREA_ROUTINES, cpu_uarea_alloc,  cpu_uarea_free
 - fix all "[Nn]ot yet" and "XXX" functions everywhere
 - create/fix sys/arch/ia64/include/pci_machdep.h and implement actual functions,
   need to handle "multiple" pci busses like from http://www.openpa.net/systems/il/rp3400-bus.txt,
@@ -61,3 +63,7 @@ Tasks remaining, first couple seem most important:
 - add ia32 emulation, port from freebsd
 - add rump stuff/MKRUMP
 - create install EFI/cdrom/netbsd
+
+Pie in the sky
+- Xen and itanium!
+- qemu and itanium

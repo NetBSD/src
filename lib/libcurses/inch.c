@@ -1,4 +1,4 @@
-/*	$NetBSD: inch.c,v 1.11 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: inch.c,v 1.11.12.1 2018/11/26 01:52:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inch.c,v 1.11 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: inch.c,v 1.11.12.1 2018/11/26 01:52:12 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -92,6 +92,6 @@ winch(WINDOW *win)
 	attr = (attr_t) ((win)->alines[(win)->cury]->line[(win)->curx].attr &
 	    __ATTRIBUTES);
 	if (__using_color && ((attr & __COLOR) == __default_color))
-		attr &= ~__default_color;
+		attr &= ~__COLOR;
 	return (ch | attr);
 }

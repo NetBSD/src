@@ -30,8 +30,7 @@ TEXT_START_ADDR=0x10000
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 
-SDATA_START_SYMBOLS="__global_pointer$ = . + 0x800;"
-SDATA_START_SYMBOLS="${CREATE_SHLIB-${SDATA_START_SYMBOLS}}
+SDATA_START_SYMBOLS="${CREATE_SHLIB-__global_pointer$ = . + 0x800;}
     *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata .srodata.*)"
 
 INITIAL_READONLY_SECTIONS=".interp         : { *(.interp) } ${CREATE_PIE-${INITIAL_READONLY_SECTIONS}}"

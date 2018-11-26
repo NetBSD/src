@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.105.2.1 2018/09/06 06:55:40 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.105.2.2 2018/11/26 01:52:27 pgoyette Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.105.2.1 $"
+#ident 		"GENERIC-$Revision: 1.105.2.2 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -148,7 +148,6 @@ usb*		at ohci?
 uhub*		at usb?
 uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 uplcom* 	at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter

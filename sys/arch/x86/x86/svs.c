@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.13.2.6 2018/09/06 06:55:44 pgoyette Exp $	*/
+/*	$NetBSD: svs.c,v 1.13.2.7 2018/11/26 01:52:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13.2.6 2018/09/06 06:55:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13.2.7 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include "opt_svs.h"
 
@@ -237,7 +237,7 @@ struct svs_utls {
 static pd_entry_t *
 svs_tree_add(struct cpu_info *ci, vaddr_t va)
 {
-	extern const vaddr_t ptp_masks[];
+	extern const vaddr_t ptp_frames[];
 	extern const int ptp_shifts[];
 	extern const long nbpd[];
 	pd_entry_t *dstpde;

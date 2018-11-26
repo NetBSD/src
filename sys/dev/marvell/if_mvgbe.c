@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.49.8.2 2018/09/06 06:55:50 pgoyette Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.49.8.3 2018/11/26 01:52:31 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.49.8.2 2018/09/06 06:55:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.49.8.3 2018/11/26 01:52:31 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2053,7 +2053,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 		if (mvgbe_newbuf(sc, cur, NULL, dmamap) == ENOBUFS) {
 			struct mbuf *m0;
 
-			m0 = m_devget(mtod(m, char *), total_len, 0, ifp, NULL);
+			m0 = m_devget(mtod(m, char *), total_len, 0, ifp);
 			mvgbe_newbuf(sc, cur, m, dmamap);
 			if (m0 == NULL) {
 				aprint_error_ifnet(ifp,

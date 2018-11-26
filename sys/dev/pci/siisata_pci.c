@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.16 2017/06/21 22:48:05 jdolecek Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.16.4.1 2018/11/26 01:52:47 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.16 2017/06/21 22:48:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.16.4.1 2018/11/26 01:52:47 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -67,12 +67,14 @@ struct siisata_pci_softc {
 	struct siisata_softc si_sc;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	void * sc_ih;
+	pci_intr_handle_t *sc_pihp;
+	void *sc_ih;
 };
 
 static int siisata_pci_match(device_t, cfdata_t, void *);
 static void siisata_pci_attach(device_t, device_t, void *);
 static int siisata_pci_detach(device_t, int);
+static void siisata_pci_childdetached(device_t, device_t);
 static bool siisata_pci_resume(device_t, const pmf_qual_t *);
 
 struct siisata_pci_board {
@@ -109,8 +111,9 @@ static const struct siisata_pci_board siisata_pci_boards[] = {
 	},
 };
 
-CFATTACH_DECL_NEW(siisata_pci, sizeof(struct siisata_pci_softc),
-    siisata_pci_match, siisata_pci_attach, siisata_pci_detach, NULL);
+CFATTACH_DECL3_NEW(siisata_pci, sizeof(struct siisata_pci_softc),
+    siisata_pci_match, siisata_pci_attach, siisata_pci_detach, NULL,
+    NULL, siisata_pci_childdetached, DVF_DETACH_SHUTDOWN);
 
 static const struct siisata_pci_board *
 siisata_pci_lookup(const struct pci_attach_args * pa)
@@ -147,7 +150,6 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pcireg_t csr, memtype;
 	const struct siisata_pci_board *spbp;
-	pci_intr_handle_t intrhandle;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	uint32_t gcreg;
@@ -209,17 +211,20 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = pa->pa_dmat;
 
 	/* map interrupt */
-	if (pci_intr_map(pa, &intrhandle) != 0) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0) != 0) {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
+	intrstr = pci_intr_string(pa->pa_pc, psc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle,
+	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, psc->sc_pihp[0],
 	    IPL_BIO, siisata_intr, sc, device_xname(self));
 	if (psc->sc_ih == NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
 		aprint_error_dev(self, "couldn't establish interrupt at %s\n",
@@ -292,12 +297,27 @@ siisata_pci_detach(device_t dv, int flags)
 
 	if (psc->sc_ih != NULL) {
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
 	}
 
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+	}
+	
 	bus_space_unmap(sc->sc_prt, sc->sc_prh, sc->sc_prs);
 	bus_space_unmap(sc->sc_grt, sc->sc_grh, sc->sc_grs);
 
 	return 0;
+}
+
+static void
+siisata_pci_childdetached(device_t dv, device_t child)
+{
+	struct siisata_pci_softc *psc = device_private(dv);
+	struct siisata_softc *sc = &psc->si_sc;
+
+	siisata_childdetached(sc, child);
 }
 
 static bool

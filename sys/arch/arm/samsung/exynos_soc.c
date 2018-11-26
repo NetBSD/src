@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.32.4.4 2018/10/20 06:58:26 pgoyette Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.32.4.5 2018/11/26 01:52:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.32.4.4 2018/10/20 06:58:26 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.32.4.5 2018/11/26 01:52:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -489,7 +489,6 @@ exynos_bootstrap(int soc)
 	bus_addr_t exynos_pmu_offset;
 	bus_addr_t exynos_sysreg_offset;
 	bus_addr_t exynos_cmu_apll_offset;
-	const vaddr_t iobase = EXYNOS_CORE_VBASE;
 
 	switch (soc) {
 #ifdef SOC_EXYNOS4
@@ -532,7 +531,7 @@ exynos_bootstrap(int soc)
 	if (error)
 		panic("%s: failed to map in Exynos SFR registers: %d",
 			__func__, error);
-	KASSERT(exynos_core_bsh == iobase);
+	KASSERT(exynos_core_bsh == EXYNOS_CORE_VBASE);
 
 	error = bus_space_map(&armv7_generic_bs_tag, audiocore_pbase,
 		audiocore_size, 0, &exynos_audiocore_bsh);

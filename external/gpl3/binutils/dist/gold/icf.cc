@@ -327,6 +327,16 @@ get_section_contents(bool first_iteration,
 
       for (; it_v != v.end(); ++it_v, ++it_s, ++it_a, ++it_o, ++it_addend_size)
         {
+	  Symbol* gsym = *it_s;
+	  bool is_section_symbol = false;
+
+	  // A -1 value in the symbol vector indicates a local section symbol.
+	  if (gsym == reinterpret_cast<Symbol*>(-1))
+	    {
+	      is_section_symbol = true;
+	      gsym = NULL;
+	    }
+
 	  if (first_iteration
 	      && it_v->first != NULL)
 	    {
@@ -354,7 +364,7 @@ get_section_contents(bool first_iteration,
 
 	  // It would be nice if we could use format macros in inttypes.h
 	  // here but there are not in ISO/IEC C++ 1998.
-          snprintf(addend_str, sizeof(addend_str), "%llx %llx %llux",
+          snprintf(addend_str, sizeof(addend_str), "%llx %llx %llx",
                    static_cast<long long>((*it_a).first),
 		   static_cast<long long>((*it_a).second),
 		   static_cast<unsigned long long>(*it_o));
@@ -367,8 +377,8 @@ get_section_contents(bool first_iteration,
 	      if (first_iteration)
                 {
 		  // If the symbol name is available, use it.
-                  if ((*it_s) != NULL)
-                      buffer.append((*it_s)->name());
+                  if (gsym != NULL)
+                      buffer.append(gsym->name());
                   // Append the addend.
                   buffer.append(addend_str);
                   buffer.append("@");
@@ -395,10 +405,10 @@ get_section_contents(bool first_iteration,
             symtab->icf()->section_to_int_map();
           Icf::Uniq_secn_id_map::iterator section_id_map_it =
             section_id_map.find(reloc_secn);
-          bool is_sym_preemptible = (*it_s != NULL
-				     && !(*it_s)->is_from_dynobj()
-				     && !(*it_s)->is_undefined()
-				     && (*it_s)->is_preemptible());
+          bool is_sym_preemptible = (gsym != NULL
+				     && !gsym->is_from_dynobj()
+				     && !gsym->is_undefined()
+				     && gsym->is_preemptible());
           if (!is_sym_preemptible
               && section_id_map_it != section_id_map.end())
             {
@@ -436,27 +446,41 @@ get_section_contents(bool first_iteration,
                   uint64_t entsize =
                     (it_v->first)->section_entsize(it_v->second);
 		  long long offset = it_a->first;
-		  // Handle SHT_RELA and SHT_REL addends, only one of these
-		  // addends exists.
-		  // Get the SHT_RELA addend.  For RELA relocations, we have
-		  // the addend from the relocation.
-		  uint64_t reloc_addend_value = it_a->second;
 
-		  // Handle SHT_REL addends.
-		  // For REL relocations, we need to fetch the addend from the
-		  // section contents.
-                  const unsigned char* reloc_addend_ptr =
-		    contents + static_cast<unsigned long long>(*it_o);
+		  // Handle SHT_RELA and SHT_REL addends. Only one of these
+		  // addends exists. When pointing to a merge section, the
+		  // addend only matters if it's relative to a section
+		  // symbol. In order to unambiguously identify the target
+		  // of the relocation, the compiler (and assembler) must use
+		  // a local non-section symbol unless Symbol+Addend does in
+		  // fact point directly to the target. (In other words,
+		  // a bias for a pc-relative reference or a non-zero based
+		  // access forces the use of a local symbol, and the addend
+		  // is used only to provide that bias.)
+		  uint64_t reloc_addend_value = 0;
+		  if (is_section_symbol)
+		    {
+		      // Get the SHT_RELA addend.  For RELA relocations,
+		      // we have the addend from the relocation.
+		      reloc_addend_value = it_a->second;
 
-		  // Update the addend value with the SHT_REL addend if
-		  // available.
-		  get_rel_addend(reloc_addend_ptr, *it_addend_size,
-				 &reloc_addend_value);
+		      // Handle SHT_REL addends.
+		      // For REL relocations, we need to fetch the addend
+		      // from the section contents.
+		      const unsigned char* reloc_addend_ptr =
+			contents + static_cast<unsigned long long>(*it_o);
 
-		  // Ignore the addend when it is a negative value.  See the
-		  // comments in Merged_symbol_value::value in object.h.
-		  if (reloc_addend_value < 0xffffff00)
-		    offset = offset + reloc_addend_value;
+		      // Update the addend value with the SHT_REL addend if
+		      // available.
+		      get_rel_addend(reloc_addend_ptr, *it_addend_size,
+				     &reloc_addend_value);
+
+		      // Ignore the addend when it is a negative value.
+		      // See the comments in Merged_symbol_value::value
+		      // in object.h.
+		      if (reloc_addend_value < 0xffffff00)
+			offset = offset + reloc_addend_value;
+		    }
 
                   section_size_type secn_len;
 
@@ -517,10 +541,10 @@ get_section_contents(bool first_iteration,
                     }
 		  buffer.append("@");
                 }
-              else if ((*it_s) != NULL)
+              else if (gsym != NULL)
                 {
                   // If symbol name is available use that.
-                  buffer.append((*it_s)->name());
+                  buffer.append(gsym->name());
                   // Append the addend.
                   buffer.append(addend_str);
                   buffer.append("@");

@@ -772,13 +772,13 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
     case IMPORT_CONST:
       /* XXX code yet to be written.  */
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: Unhandled import type; %x"),
+      _bfd_error_handler (_("%pB: unhandled import type; %x"),
 			  abfd, import_type);
       return FALSE;
 
     default:
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: Unrecognised import type; %x"),
+      _bfd_error_handler (_("%pB: unrecognized import type; %x"),
 			  abfd, import_type);
       return FALSE;
     }
@@ -793,7 +793,7 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
 
     default:
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: Unrecognised import name type; %x"),
+      _bfd_error_handler (_("%pB: unrecognized import name type; %x"),
 			  abfd, import_name_type);
       return FALSE;
     }
@@ -1167,12 +1167,6 @@ pe_ILF_object_p (bfd * abfd)
 #endif
       break;
 
-    case IMAGE_FILE_MACHINE_M68K:
-#ifdef MC68AGIC
-      magic = MC68MAGIC;
-#endif
-      break;
-
     case IMAGE_FILE_MACHINE_R3000:
     case IMAGE_FILE_MACHINE_R4000:
     case IMAGE_FILE_MACHINE_R10000:
@@ -1214,7 +1208,7 @@ pe_ILF_object_p (bfd * abfd)
     default:
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: Unrecognised machine type (0x%x)"
+	(_("%pB: unrecognised machine type (0x%x)"
 	   " in Import Library Format archive"),
 	 abfd, machine);
       bfd_set_error (bfd_error_malformed_archive);
@@ -1227,7 +1221,7 @@ pe_ILF_object_p (bfd * abfd)
     {
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: Recognised but unhandled machine type (0x%x)"
+	(_("%pB: recognised but unhandled machine type (0x%x)"
 	   " in Import Library Format archive"),
 	 abfd, machine);
       bfd_set_error (bfd_error_wrong_format);
@@ -1245,7 +1239,7 @@ pe_ILF_object_p (bfd * abfd)
   if (size == 0)
     {
       _bfd_error_handler
-	(_("%B: size field is zero in Import Library Format header"), abfd);
+	(_("%pB: size field is zero in Import Library Format header"), abfd);
       bfd_set_error (bfd_error_malformed_archive);
 
       return NULL;
@@ -1277,7 +1271,7 @@ pe_ILF_object_p (bfd * abfd)
       || (bfd_size_type) ((bfd_byte *) source_dll - ptr) >= size)
     {
       _bfd_error_handler
-	(_("%B: string not null terminated in ILF object file."), abfd);
+	(_("%pB: string not null terminated in ILF object file"), abfd);
       bfd_set_error (bfd_error_malformed_archive);
       bfd_release (abfd, ptr);
       return NULL;
@@ -1332,8 +1326,9 @@ pe_bfd_read_buildid (bfd *abfd)
   if (dataoff >= section->size
       || size > section->size - dataoff)
     {
-      _bfd_error_handler (_("%B: Error: Debug Data ends beyond end of debug directory."),
-			  abfd);
+      _bfd_error_handler
+	(_("%pB: error: debug data ends beyond end of debug directory"),
+	 abfd);
       return;
     }
 
@@ -1386,7 +1381,7 @@ static const bfd_target *
 pe_bfd_object_p (bfd * abfd)
 {
   bfd_byte buffer[6];
-  struct external_PEI_DOS_hdr dos_hdr;
+  struct external_DOS_hdr dos_hdr;
   struct external_PEI_IMAGE_hdr image_hdr;
   struct internal_filehdr internal_f;
   struct internal_aouthdr internal_a;
@@ -1420,7 +1415,7 @@ pe_bfd_object_p (bfd * abfd)
 
   /* There are really two magic numbers involved; the magic number
      that says this is a NT executable (PEI) and the magic number that
-     determines the architecture.  The former is DOSMAGIC, stored in
+     determines the architecture.  The former is IMAGE_DOS_SIGNATURE, stored in
      the e_magic field.  The latter is stored in the f_magic field.
      If the NT magic number isn't valid, the architecture magic number
      could be mimicked by some other field (specifically, the number
@@ -1428,7 +1423,7 @@ pe_bfd_object_p (bfd * abfd)
      correctly for a PEI file, check the e_magic number here, and, if
      it doesn't match, clobber the f_magic number so that we don't get
      a false match.  */
-  if (H_GET_16 (abfd, dos_hdr.e_magic) != DOSMAGIC)
+  if (H_GET_16 (abfd, dos_hdr.e_magic) != IMAGE_DOS_SIGNATURE)
     {
       bfd_set_error (bfd_error_wrong_format);
       return NULL;

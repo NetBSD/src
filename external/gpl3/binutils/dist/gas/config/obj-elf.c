@@ -48,10 +48,6 @@
 #include "elf/ppc.h"
 #endif
 
-#ifdef TC_I370
-#include "elf/i370.h"
-#endif
-
 #ifdef TC_I386
 #include "elf/x86-64.h"
 #endif
@@ -117,8 +113,8 @@ static const pseudo_typeS elf_pseudo_table[] =
   {"subsection", obj_elf_subsection, 0},
 
   /* These are GNU extensions to aid in garbage collecting C++ vtables.  */
-  {"vtable_inherit", (void (*) (int)) &obj_elf_vtable_inherit, 0},
-  {"vtable_entry", (void (*) (int)) &obj_elf_vtable_entry, 0},
+  {"vtable_inherit", obj_elf_vtable_inherit, 0},
+  {"vtable_entry", obj_elf_vtable_entry, 0},
 
   /* A GNU extension for object attributes.  */
   {"gnu_attribute", obj_elf_gnu_attribute, 0},
@@ -128,7 +124,7 @@ static const pseudo_typeS elf_pseudo_table[] =
   {"4byte", cons, 4},
   {"8byte", cons, 8},
   /* These are used for dwarf2.  */
-  { "file", (void (*) (int)) dwarf2_directive_file, 0 },
+  { "file", dwarf2_directive_file, 0 },
   { "loc",  dwarf2_directive_loc,  0 },
   { "loc_mark_labels", dwarf2_directive_loc_mark_labels, 0 },
 
@@ -1019,7 +1015,6 @@ obj_elf_section (int push)
   subsegT new_subsection = -1;
   unsigned int info = 0;
 
-#ifndef TC_I370
   if (flag_mri)
     {
       char mri_type;
@@ -1039,7 +1034,6 @@ obj_elf_section (int push)
 
       return;
     }
-#endif /* ! defined (TC_I370) */
 
   name = obj_elf_section_name ();
   if (name == NULL)
@@ -1460,7 +1454,7 @@ obj_elf_symver (int ignore ATTRIBUTE_UNUSED)
    syntax is ".vtable_inherit CHILDNAME, PARENTNAME".  */
 
 struct fix *
-obj_elf_vtable_inherit (int ignore ATTRIBUTE_UNUSED)
+obj_elf_get_vtable_inherit (void)
 {
   char *cname, *pname;
   symbolS *csym, *psym;
@@ -1524,12 +1518,21 @@ obj_elf_vtable_inherit (int ignore ATTRIBUTE_UNUSED)
 		  0, psym, 0, 0, BFD_RELOC_VTABLE_INHERIT);
 }
 
+/* This is a version of obj_elf_get_vtable_inherit() that is
+   suitable for use in struct _pseudo_type tables.  */
+
+void
+obj_elf_vtable_inherit (int ignore ATTRIBUTE_UNUSED)
+{
+  (void) obj_elf_get_vtable_inherit ();
+}
+
 /* This handles the .vtable_entry pseudo-op, which is used to indicate
    to the linker that a vtable slot was used.  The syntax is
    ".vtable_entry tablename, offset".  */
 
 struct fix *
-obj_elf_vtable_entry (int ignore ATTRIBUTE_UNUSED)
+obj_elf_get_vtable_entry (void)
 {
   symbolS *sym;
   offsetT offset;
@@ -1555,6 +1558,15 @@ obj_elf_vtable_entry (int ignore ATTRIBUTE_UNUSED)
 
   return fix_new (frag_now, frag_now_fix (), 0, sym, offset, 0,
 		  BFD_RELOC_VTABLE_ENTRY);
+}
+
+/* This is a version of obj_elf_get_vtable_entry() that is
+   suitable for use in struct _pseudo_type tables.  */
+
+void
+obj_elf_vtable_entry (int ignore ATTRIBUTE_UNUSED)
+{
+  (void) obj_elf_get_vtable_entry ();
 }
 
 #define skip_whitespace(str)  do { if (*(str) == ' ') ++(str); } while (0)
@@ -2461,7 +2473,8 @@ elf_adjust_symtab (void)
       sy = symbol_find_exact (group_name);
       if (!sy
 	  || (sy != symbol_lastP
-	      && (sy->sy_next == NULL
+	      && (sy->sy_flags.sy_local_symbol
+		  || sy->sy_next == NULL
 		  || sy->sy_next->sy_previous != sy)))
 	{
 	  /* Create the symbol now.  */
@@ -2635,103 +2648,6 @@ elf_frob_file_after_relocs (void)
     }
 #endif /* NEED_ECOFF_DEBUG */
 }
-
-#ifdef SCO_ELF
-
-/* Heavily plagiarized from obj_elf_version.  The idea is to emit the
-   SCO specific identifier in the .notes section to satisfy the SCO
-   linker.
-
-   This looks more complicated than it really is.  As opposed to the
-   "obvious" solution, this should handle the cross dev cases
-   correctly.  (i.e, hosting on a 64 bit big endian processor, but
-   generating SCO Elf code) Efficiency isn't a concern, as there
-   should be exactly one of these sections per object module.
-
-   SCO OpenServer 5 identifies it's ELF modules with a standard ELF
-   .note section.
-
-   int_32 namesz  = 4 ;  Name size
-   int_32 descsz  = 12 ; Descriptive information
-   int_32 type    = 1 ;
-   char   name[4] = "SCO" ; Originator name ALWAYS SCO + NULL
-   int_32 version = (major ver # << 16)  | version of tools ;
-   int_32 source  = (tool_id << 16 ) | 1 ;
-   int_32 info    = 0 ;    These are set by the SCO tools, but we
-			   don't know enough about the source
-			   environment to set them.  SCO ld currently
-			   ignores them, and recommends we set them
-			   to zero.  */
-
-#define SCO_MAJOR_VERSION 0x1
-#define SCO_MINOR_VERSION 0x1
-
-void
-sco_id (void)
-{
-
-  char *name;
-  unsigned int c;
-  char ch;
-  char *p;
-  asection *seg = now_seg;
-  subsegT subseg = now_subseg;
-  Elf_Internal_Note i_note;
-  Elf_External_Note e_note;
-  asection *note_secp = NULL;
-  int i, len;
-
-  /* create the .note section */
-
-  note_secp = subseg_new (".note", 0);
-  bfd_set_section_flags (stdoutput,
-			 note_secp,
-			 SEC_HAS_CONTENTS | SEC_READONLY);
-
-  /* process the version string */
-
-  i_note.namesz = 4;
-  i_note.descsz = 12;		/* 12 descriptive bytes */
-  i_note.type = NT_VERSION;	/* Contains a version string */
-
-  p = frag_more (sizeof (i_note.namesz));
-  md_number_to_chars (p, i_note.namesz, 4);
-
-  p = frag_more (sizeof (i_note.descsz));
-  md_number_to_chars (p, i_note.descsz, 4);
-
-  p = frag_more (sizeof (i_note.type));
-  md_number_to_chars (p, i_note.type, 4);
-
-  p = frag_more (4);
-  strcpy (p, "SCO");
-
-  /* Note: this is the version number of the ELF we're representing */
-  p = frag_more (4);
-  md_number_to_chars (p, (SCO_MAJOR_VERSION << 16) | (SCO_MINOR_VERSION), 4);
-
-  /* Here, we pick a magic number for ourselves (yes, I "registered"
-     it with SCO.  The bottom bit shows that we are compat with the
-     SCO ABI.  */
-  p = frag_more (4);
-  md_number_to_chars (p, 0x4c520000 | 0x0001, 4);
-
-  /* If we knew (or cared) what the source language options were, we'd
-     fill them in here.  SCO has given us permission to ignore these
-     and just set them to zero.  */
-  p = frag_more (4);
-  md_number_to_chars (p, 0x0000, 4);
-
-  frag_align (2, 0, 0);
-
-  /* We probably can't restore the current segment, for there likely
-     isn't one yet...  */
-  if (seg && subseg)
-    subseg_set (seg, subseg);
-
-}
-
-#endif /* SCO_ELF */
 
 static void
 elf_generate_asm_lineno (void)

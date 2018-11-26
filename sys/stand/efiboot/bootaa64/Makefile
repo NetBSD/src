@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.2.3 2018/10/20 06:58:46 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2.2.4 2018/11/26 01:52:52 pgoyette Exp $
 
 PROG=		bootaa64.efi
 OBJFMT=		binary
@@ -9,7 +9,9 @@ EXTRA_SOURCES+=	cache.S
 
 COPTS+=		-mgeneral-regs-only -fno-jump-tables
 CFLAGS+=	-DEFIBOOT_ALIGN=0x200000
-#CFLAGS+=	-DEFIBOOT_ACPI
+CFLAGS+=	-DEFIBOOT_RUNTIME_ADDRESS=0xffff800000000000L
+CFLAGS+=	-DEFIBOOT_RUNTIME_SIZE=0x40000000UL
+CFLAGS+=	-DEFIBOOT_ACPI
 
 .include "${.CURDIR}/../Makefile.efiboot"
 

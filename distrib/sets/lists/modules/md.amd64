@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.75.2.10 2018/09/23 21:38:08 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.75.2.11 2018/11/26 01:49:58 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -173,6 +173,8 @@
 ./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nvme				base-obsolete		obsolete
 ./@MODULEDIR@/nvme/nvme.kmod			base-obsolete		obsolete
+./@MODULEDIR@/nvmm				base-kernel-modules	kmod
+./@MODULEDIR@/nvmm/nvmm.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/odcm				base-kernel-modules	kmod

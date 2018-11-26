@@ -1846,6 +1846,11 @@ static const struct opcode32 arm_opcodes[] =
   /* MP Extension instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_MP), 0xf410f000, 0xfc70f000, "pldw\t%a"},
 
+  /* Speculation Barriers.  */
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V3), 0xe320f014, 0xffffffff, "csdb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V3), 0xf57ff040, 0xffffffff, "ssbb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V3), 0xf57ff044, 0xffffffff, "pssbb"},
+
   /* V7 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf450f000, 0xfd70f000, "pli\t%P"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0x0320f0f0, 0x0ffffff0, "dbg%c\t#%0-3d"},
@@ -1900,9 +1905,6 @@ static const struct opcode32 arm_opcodes[] =
     0x01a00f90, 0x0ff00ff0, "strexd%c\t%12-15R, %0-3r, [%16-19R]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
     0x01e00f90, 0x0ff00ff0, "strexh%c\t%12-15R, %0-3R, [%16-19R]"},
-
-  /* CSDB.  */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V3), 0xe320f014, 0xffffffff, "csdb"},
 
   /* ARM V6K NOP hints.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
@@ -2530,7 +2532,7 @@ static const struct opcode16 thumb_opcodes[] =
 
   /* ARMv8-M Security Extensions instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M), 0x4784, 0xff87, "blxns\t%3-6r"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M), 0x4704, 0xff07, "bxns\t%3-6r"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M), 0x4704, 0xff87, "bxns\t%3-6r"},
 
   /* ARM V8 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),  0xbf50, 0xffff, "sevl%c"},
@@ -2799,6 +2801,11 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
     0xfad0f0a0, 0xfff0f0f0, "crc32cw\t%8-11R, %16-19R, %0-3R"},
 
+  /* Speculation Barriers.  */
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8014, 0xffffffff, "csdb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3bf8f40, 0xffffffff, "ssbb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3bf8f44, 0xffffffff, "pssbb"},
+
   /* V7 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf910f000, 0xff70f000, "pli%c\t%a"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf3af80f0, 0xfffffff0, "dbg%c\t#%0-3d"},
@@ -2821,9 +2828,6 @@ static const struct opcode32 thumb32_opcodes[] =
 
   /* Security extension instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_SEC),  0xf7f08000, 0xfff0f000, "smc%c\t%K"},
-
-  /* CSDB.  */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8014, 0xffffffff, "csdb"},
 
   /* Instructions defined in the basic V6T2 set.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8000, 0xffffffff, "nop%c.w"},
@@ -3393,7 +3397,7 @@ print_insn_coprocessor (bfd_vma pc,
   struct arm_private_data *private_data = info->private_data;
   arm_feature_set allowed_arches = ARM_ARCH_NONE;
 
-  ARM_FEATURE_COPY (allowed_arches, private_data->features);
+  allowed_arches = private_data->features;
 
   for (insn = coprocessor_opcodes; insn->assembler; insn++)
     {
@@ -3419,7 +3423,7 @@ print_insn_coprocessor (bfd_vma pc,
 	    continue;
 
 	  case SENTINEL_GENERIC_START:
-	    ARM_FEATURE_COPY (allowed_arches, private_data->features);
+	    allowed_arches = private_data->features;
 	    continue;
 
 	  default:
@@ -6145,14 +6149,17 @@ parse_arm_disassembler_options (const char *options)
 	      }
 
 	  if (i >= NUM_ARM_OPTIONS)
-	    fprintf (stderr, _("Unrecognised register name set: %s\n"), opt);
+	    /* xgettext: c-format */
+	    opcodes_error_handler (_("unrecognised register name set: %s"),
+				   opt);
 	}
       else if (CONST_STRNEQ (opt, "force-thumb"))
 	force_thumb = 1;
       else if (CONST_STRNEQ (opt, "no-force-thumb"))
 	force_thumb = 0;
       else
-	fprintf (stderr, _("Unrecognised disassembler option: %s\n"), opt);
+	/* xgettext: c-format */
+	opcodes_error_handler (_("unrecognised disassembler option: %s"), opt);
     }
 
   return;

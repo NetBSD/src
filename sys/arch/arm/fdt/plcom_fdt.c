@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_fdt.c,v 1.1.12.1 2018/09/30 01:45:38 pgoyette Exp $ */
+/* $NetBSD: plcom_fdt.c,v 1.1.12.2 2018/11/26 01:52:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.1.12.1 2018/09/30 01:45:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.1.12.2 2018/11/26 01:52:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,6 +102,10 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map device\n");
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal(": ARM PL011 UART\n");
+
 	plcom_attach_subr(sc);
 
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);

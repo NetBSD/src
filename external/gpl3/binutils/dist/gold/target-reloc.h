@@ -120,7 +120,7 @@ enum Comdat_behavior
   CB_UNDETERMINED,   // Not yet determined -- need to look at section name.
   CB_PRETEND,        // Attempt to map to the corresponding kept section.
   CB_IGNORE,         // Ignore the relocation.
-  CB_WARNING         // Print a warning.
+  CB_ERROR           // Print an error.
 };
 
 class Default_comdat_behavior
@@ -138,7 +138,7 @@ class Default_comdat_behavior
     if (strcmp(name, ".eh_frame") == 0
 	|| strcmp(name, ".gcc_except_table") == 0)
       return CB_IGNORE;
-    return CB_WARNING;
+    return CB_ERROR;
   }
 };
 
@@ -224,6 +224,52 @@ issue_undefined_symbol_error(const Symbol* sym)
   return true;
 }
 
+template<int size, bool big_endian>
+inline void
+issue_discarded_error(
+  const Relocate_info<size, big_endian>* relinfo,
+  size_t shndx,
+  section_offset_type offset,
+  unsigned int r_sym,
+  const Symbol* gsym)
+{
+  Sized_relobj_file<size, big_endian>* object = relinfo->object;
+
+  if (gsym == NULL)
+    {
+      gold_error_at_location(
+	  relinfo, shndx, offset,
+	  _("relocation refers to local symbol \"%s\" [%u], "
+	    "which is defined in a discarded section"),
+	  object->get_symbol_name(r_sym), r_sym);
+    }
+  else
+    {
+      gold_error_at_location(
+	  relinfo, shndx, offset,
+	  _("relocation refers to global symbol \"%s\", "
+	    "which is defined in a discarded section"),
+	  gsym->demangled_name().c_str());
+    }
+
+  bool is_ordinary;
+  typename elfcpp::Elf_types<size>::Elf_Addr value;
+  unsigned int orig_shndx = object->symbol_section_and_value(r_sym, &value,
+							     &is_ordinary);
+  if (orig_shndx != elfcpp::SHN_UNDEF)
+    {
+      unsigned int key_symndx;
+      Relobj* kept_obj = object->find_kept_section_object(orig_shndx,
+							  &key_symndx);
+      if (key_symndx != 0)
+	gold_info(_("  section group signature: \"%s\""),
+		  object->get_symbol_name(key_symndx));
+      if (kept_obj != NULL)
+	gold_info(_("  prevailing definition is from %s"),
+		  kept_obj->name().c_str());
+    }
+}
+
 // This function implements the generic part of relocation processing.
 // The template parameter Relocate must be a class type which provides
 // a single function, relocate(), which implements the machine
@@ -305,6 +351,7 @@ relocate_section(
       const Symbol_value<size> *psymval;
       bool is_defined_in_discarded_section;
       unsigned int shndx;
+      const Symbol* gsym = NULL;
       if (r_sym < local_count
 	  && (reloc_symbol_changes == NULL
 	      || (*reloc_symbol_changes)[i] == NULL))
@@ -327,7 +374,6 @@ relocate_section(
 	}
       else
 	{
-	  const Symbol* gsym;
 	  if (reloc_symbol_changes != NULL
 	      && (*reloc_symbol_changes)[i] != NULL)
 	    gsym = (*reloc_symbol_changes)[i];
@@ -360,11 +406,11 @@ relocate_section(
       Symbol_value<size> symval2;
       if (is_defined_in_discarded_section)
 	{
+	  std::string name = object->section_name(relinfo->data_shndx);
+
 	  if (comdat_behavior == CB_UNDETERMINED)
-	    {
-	      std::string name = object->section_name(relinfo->data_shndx);
 	      comdat_behavior = relocate_comdat_behavior.get(name.c_str());
-	    }
+
 	  if (comdat_behavior == CB_PRETEND)
 	    {
 	      // FIXME: This case does not work for global symbols.
@@ -374,7 +420,7 @@ relocate_section(
 	      // script.
 	      bool found;
 	      typename elfcpp::Elf_types<size>::Elf_Addr value =
-		object->map_to_kept_section(shndx, &found);
+		  object->map_to_kept_section(shndx, name, &found);
 	      if (found)
 		symval2.set_output_value(value + psymval->input_value());
 	      else
@@ -382,10 +428,8 @@ relocate_section(
 	    }
 	  else
 	    {
-	      if (comdat_behavior == CB_WARNING)
-		gold_warning_at_location(relinfo, i, offset,
-					 _("relocation refers to discarded "
-					   "section"));
+	      if (comdat_behavior == CB_ERROR)
+	        issue_discarded_error(relinfo, i, offset, r_sym, gsym);
 	      symval2.set_output_value(0);
 	    }
 	  symval2.set_no_output_symtab_entry();

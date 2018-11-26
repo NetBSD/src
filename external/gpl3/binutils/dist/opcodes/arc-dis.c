@@ -778,7 +778,8 @@ parse_option (const char *option)
   else if (CONST_STRNEQ (option, "hex"))
     print_hex = TRUE;
   else
-    fprintf (stderr, _("Unrecognised disassembler option: %s\n"), option);
+    /* xgettext:c-format */
+    opcodes_error_handler (_("unrecognised disassembler option: %s"), option);
 }
 
 #define ARC_CPU_TYPE_A6xx(NAME,EXTRA)			\
@@ -820,7 +821,8 @@ parse_cpu_option (const char *option)
 	}
     }
 
-  fprintf (stderr, _("Unrecognised disassembler CPU option: %s\n"), option);
+  /* xgettext:c-format */
+  opcodes_error_handler (_("unrecognised disassembler CPU option: %s"), option);
   return ARC_OPCODE_NONE;
 }
 

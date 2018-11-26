@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45.2.3 2018/09/06 06:55:24 pgoyette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.45.2.4 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -150,7 +150,8 @@ extern pt_entry_t *pte_base;
 #define NKL2_START_ENTRIES	0
 #define NKL1_START_ENTRIES	0
 
-#define PTP_MASK_INITIALIZER	{ L1_FRAME, L2_FRAME, L3_FRAME, L4_FRAME }
+#define PTP_MASK_INITIALIZER	{ L1_MASK, L2_MASK, L3_MASK, L4_MASK }
+#define PTP_FRAME_INITIALIZER	{ L1_FRAME, L2_FRAME, L3_FRAME, L4_FRAME }
 #define PTP_SHIFT_INITIALIZER	{ L1_SHIFT, L2_SHIFT, L3_SHIFT, L4_SHIFT }
 #define NKPTP_INITIALIZER	{ NKL1_START_ENTRIES, NKL2_START_ENTRIES, \
 				  NKL3_START_ENTRIES, NKL4_START_ENTRIES }

@@ -862,14 +862,13 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 
 #ifndef MY_bfd_debug_info_start
-#define MY_bfd_debug_info_start		bfd_void
+#define MY_bfd_debug_info_start		_bfd_void_bfd
 #endif
 #ifndef MY_bfd_debug_info_end
-#define MY_bfd_debug_info_end		bfd_void
+#define MY_bfd_debug_info_end		_bfd_void_bfd
 #endif
 #ifndef MY_bfd_debug_info_accumulate
-#define MY_bfd_debug_info_accumulate	\
-		(void (*) (bfd*, struct bfd_section *)) bfd_void
+#define MY_bfd_debug_info_accumulate	_bfd_void_bfd_asection
 #endif
 
 #ifndef MY_core_file_failing_command
@@ -968,6 +967,9 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #ifndef MY_bfd_define_common_symbol
 #define MY_bfd_define_common_symbol bfd_generic_define_common_symbol
 #endif
+#ifndef MY_bfd_link_hide_symbol
+#define MY_bfd_link_hide_symbol _bfd_generic_link_hide_symbol
+#endif
 #ifndef MY_bfd_define_start_stop
 #define MY_bfd_define_start_stop bfd_generic_define_start_stop
 #endif
@@ -1036,8 +1038,7 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 
 #ifndef MY_bfd_is_target_special_symbol
-#define MY_bfd_is_target_special_symbol  \
-  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define MY_bfd_is_target_special_symbol _bfd_bool_bfd_asymbol_false
 #endif
 
 #ifndef MY_bfd_free_cached_info
@@ -1099,12 +1100,24 @@ const bfd_target tic30_aout_vec =
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Headers.  */
-  {_bfd_dummy_target, MY_object_p,		/* bfd_check_format.  */
-   bfd_generic_archive_p, MY_core_file_p},
-  {bfd_false, MY_mkobject,			/* bfd_set_format.  */
-   _bfd_generic_mkarchive, bfd_false},
-  {bfd_false, MY_write_object_contents,		/* bfd_write_contents.  */
-   _bfd_write_archive_contents, bfd_false},
+  {				/* bfd_check_format.  */
+    _bfd_dummy_target,
+    MY_object_p,
+    bfd_generic_archive_p,
+    MY_core_file_p
+  },
+  {				/* bfd_set_format.  */
+    _bfd_bool_bfd_false_error,
+    MY_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents.  */
+    _bfd_bool_bfd_false_error,
+    MY_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
   BFD_JUMP_TABLE_GENERIC (MY),
   BFD_JUMP_TABLE_COPY (MY),

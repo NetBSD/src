@@ -1,3 +1,52 @@
+2018-10-26  Release Manager
+
+	* GCC 6.5.0 released.
+
+2018-10-15  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2018-03-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/84761
+	* sanitizer_common/sanitizer_linux_libcdep.cc (__GLIBC_PREREQ):
+	Define if not defined.
+	(DL_INTERNAL_FUNCTION): Don't define.
+	(InitTlsSize): For __i386__ if not compiled against glibc 2.27+
+	determine at runtime whether to use regparm(3), stdcall calling
+	convention for older glibcs or normal calling convention for
+	newer glibcs for call to _dl_get_tls_static_info.
+
+2017-09-23  Matthias Klose  <doko@ubuntu.com>
+
+	Backported from the gcc-7-branch:
+	2018-05-31  Matthias Klose  <doko@ubuntu.com>
+
+	PR sanitizer/86012
+	* sanitizer_common/sanitizer_platform_limits_posix.cc: Define
+	SIZEOF_STRUCT_USTAT for 32bit sparc.
+
+2017-09-21  Matthias Klose  <doko@ubuntu.com>
+
+	Backported from the gcc-7-branch:
+	2018-05-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR sanitizer/85835
+	* sanitizer_common/sanitizer_platform_limits_posix.cc: Don't
+	include <sys/ustat.h> for Linux.
+	(SIZEOF_STRUCT_USTAT): New.
+	(struct_ustat_sz): Use SIZEOF_STRUCT_USTAT for Linux.
+
+2017-09-07  Matthias Klose  <doko@ubuntu.com>
+
+	Backported from mainline
+	2017-07-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/81066
+	* sanitizer_common/sanitizer_linux.h: Cherry-pick upstream r307969.
+	* sanitizer_common/sanitizer_linux.cc: Likewise.
+	* sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc: Likewise.
+	* tsan/tsan_platform_linux.cc: Likewise.
+
 2017-07-04  Release Manager
 
 	* GCC 6.4.0 released.

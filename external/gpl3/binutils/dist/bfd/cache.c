@@ -237,13 +237,12 @@ close_one (void)
 static FILE *
 bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
 {
-  bfd *orig_bfd = abfd;
   if ((abfd->flags & BFD_IN_MEMORY) != 0)
     abort ();
 
-  while (abfd->my_archive != NULL
-	 && !bfd_is_thin_archive (abfd->my_archive))
-    abfd = abfd->my_archive;
+  if (abfd->my_archive != NULL
+      && !bfd_is_thin_archive (abfd->my_archive))
+    abort ();
 
   if (abfd->iostream != NULL)
     {
@@ -270,8 +269,8 @@ bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
     return (FILE *) abfd->iostream;
 
   /* xgettext:c-format */
-  _bfd_error_handler (_("reopening %B: %s\n"),
-		      orig_bfd, bfd_errmsg (bfd_get_error ()));
+  _bfd_error_handler (_("reopening %pB: %s\n"),
+		      abfd, bfd_errmsg (bfd_get_error ()));
   return NULL;
 }
 
@@ -301,25 +300,9 @@ cache_bseek (struct bfd *abfd, file_ptr offset, int whence)
    first octet in the file, NOT the beginning of the archive header.  */
 
 static file_ptr
-cache_bread_1 (struct bfd *abfd, void *buf, file_ptr nbytes)
+cache_bread_1 (FILE *f, void *buf, file_ptr nbytes)
 {
-  FILE *f;
   file_ptr nread;
-  /* FIXME - this looks like an optimization, but it's really to cover
-     up for a feature of some OSs (not solaris - sigh) that
-     ld/pe-dll.c takes advantage of (apparently) when it creates BFDs
-     internally and tries to link against them.  BFD seems to be smart
-     enough to realize there are no symbol records in the "file" that
-     doesn't exist but attempts to read them anyway.  On Solaris,
-     attempting to read zero bytes from a NULL file results in a core
-     dump, but on other platforms it just returns zero bytes read.
-     This makes it to something reasonable. - DJ */
-  if (nbytes == 0)
-    return 0;
-
-  f = bfd_cache_lookup (abfd, CACHE_NORMAL);
-  if (f == NULL)
-    return 0;
 
 #if defined (__VAX) && defined (VMS)
   /* Apparently fread on Vax VMS does not keep the record length
@@ -355,6 +338,11 @@ static file_ptr
 cache_bread (struct bfd *abfd, void *buf, file_ptr nbytes)
 {
   file_ptr nread = 0;
+  FILE *f;
+
+  f = bfd_cache_lookup (abfd, CACHE_NORMAL);
+  if (f == NULL)
+    return -1;
 
   /* Some filesystems are unable to handle reads that are too large
      (for instance, NetApp shares with oplocks turned off).  To avoid
@@ -368,7 +356,7 @@ cache_bread (struct bfd *abfd, void *buf, file_ptr nbytes)
       if (chunk_size > max_chunk_size)
 	chunk_size = max_chunk_size;
 
-      chunk_nread = cache_bread_1 (abfd, (char *) buf + nread, chunk_size);
+      chunk_nread = cache_bread_1 (f, (char *) buf + nread, chunk_size);
 
       /* Update the nread count.
 
@@ -389,14 +377,14 @@ cache_bread (struct bfd *abfd, void *buf, file_ptr nbytes)
 }
 
 static file_ptr
-cache_bwrite (struct bfd *abfd, const void *where, file_ptr nbytes)
+cache_bwrite (struct bfd *abfd, const void *from, file_ptr nbytes)
 {
   file_ptr nwrite;
   FILE *f = bfd_cache_lookup (abfd, CACHE_NORMAL);
 
   if (f == NULL)
     return 0;
-  nwrite = fwrite (where, 1, nbytes, f);
+  nwrite = fwrite (from, 1, nbytes, f);
   if (nwrite < nbytes && ferror (f))
     {
       bfd_set_error (bfd_error_system_call);
@@ -467,11 +455,6 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 
       if (pagesize_m1 == 0)
 	pagesize_m1 = getpagesize () - 1;
-
-      /* Handle archive members.  */
-      if (abfd->my_archive != NULL
-	  && !bfd_is_thin_archive (abfd->my_archive))
-	offset += abfd->origin;
 
       /* Align.  */
       pg_offset = offset & ~pagesize_m1;

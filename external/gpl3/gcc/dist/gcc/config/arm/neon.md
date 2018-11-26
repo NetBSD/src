@@ -1045,12 +1045,12 @@
 )
 
 (define_insn_and_split "ashldi3_neon"
-  [(set (match_operand:DI 0 "s_register_operand"	    "= w, w,?&r,?r,?&r, ?w,w")
-	(ashift:DI (match_operand:DI 1 "s_register_operand" " 0w, w, 0r, 0,  r, 0w,w")
-		   (match_operand:SI 2 "general_operand"    "rUm, i,  r, i,  i,rUm,i")))
-   (clobber (match_scratch:SI 3				    "= X, X,?&r, X,  X,  X,X"))
-   (clobber (match_scratch:SI 4				    "= X, X,?&r, X,  X,  X,X"))
-   (clobber (match_scratch:DI 5				    "=&w, X,  X, X,  X, &w,X"))
+  [(set (match_operand:DI 0 "s_register_operand"	    "= w, w, &r, r, &r, ?w,?w")
+	(ashift:DI (match_operand:DI 1 "s_register_operand" " 0w, w, 0r, 0,  r, 0w, w")
+		   (match_operand:SI 2 "general_operand"    "rUm, i,  r, i,  i,rUm, i")))
+   (clobber (match_scratch:SI 3				    "= X, X, &r, X,  X,  X, X"))
+   (clobber (match_scratch:SI 4				    "= X, X, &r, X,  X,  X, X"))
+   (clobber (match_scratch:DI 5				    "=&w, X,  X, X,  X, &w, X"))
    (clobber (reg:CC_C CC_REGNUM))]
   "TARGET_NEON"
   "#"
@@ -1145,7 +1145,7 @@
 ;; ashrdi3_neon
 ;; lshrdi3_neon
 (define_insn_and_split "<shift>di3_neon"
-  [(set (match_operand:DI 0 "s_register_operand"	     "= w, w,?&r,?r,?&r,?w,?w")
+  [(set (match_operand:DI 0 "s_register_operand"	     "= w, w, &r, r, &r,?w,?w")
 	(RSHIFTS:DI (match_operand:DI 1 "s_register_operand" " 0w, w, 0r, 0,  r,0w, w")
 		    (match_operand:SI 2 "reg_or_int_operand" "  r, i,  r, i,  i, r, i")))
    (clobber (match_scratch:SI 3				     "=2r, X, &r, X,  X,2r, X"))
@@ -5583,28 +5583,22 @@ if (BYTES_BIG_ENDIAN)
 })
 
 (define_insn "neon_vabd<mode>_2"
- [(set (match_operand:VDQ 0 "s_register_operand" "=w")
-       (abs:VDQ (minus:VDQ (match_operand:VDQ 1 "s_register_operand" "w")
-                           (match_operand:VDQ 2 "s_register_operand" "w"))))]
- "TARGET_NEON && (!<Is_float_mode> || flag_unsafe_math_optimizations)"
+ [(set (match_operand:VCVTF 0 "s_register_operand" "=w")
+       (abs:VCVTF (minus:VCVTF (match_operand:VCVTF 1 "s_register_operand" "w")
+			 (match_operand:VCVTF 2 "s_register_operand" "w"))))]
+ "TARGET_NEON && flag_unsafe_math_optimizations"
  "vabd.<V_s_elem> %<V_reg>0, %<V_reg>1, %<V_reg>2"
- [(set (attr "type")
-       (if_then_else (ne (symbol_ref "<Is_float_mode>") (const_int 0))
-                     (const_string "neon_fp_abd_s<q>")
-                     (const_string "neon_abd<q>")))]
+ [(set_attr "type" "neon_fp_abd_s<q>")]
 )
 
 (define_insn "neon_vabd<mode>_3"
- [(set (match_operand:VDQ 0 "s_register_operand" "=w")
-       (abs:VDQ (unspec:VDQ [(match_operand:VDQ 1 "s_register_operand" "w")
-                             (match_operand:VDQ 2 "s_register_operand" "w")]
-                 UNSPEC_VSUB)))]
- "TARGET_NEON && (!<Is_float_mode> || flag_unsafe_math_optimizations)"
+ [(set (match_operand:VCVTF 0 "s_register_operand" "=w")
+       (abs:VCVTF (unspec:VCVTF [(match_operand:VCVTF 1 "s_register_operand" "w")
+			    (match_operand:VCVTF 2 "s_register_operand" "w")]
+		UNSPEC_VSUB)))]
+ "TARGET_NEON && flag_unsafe_math_optimizations"
  "vabd.<V_if_elem> %<V_reg>0, %<V_reg>1, %<V_reg>2"
- [(set (attr "type")
-       (if_then_else (ne (symbol_ref "<Is_float_mode>") (const_int 0))
-                     (const_string "neon_fp_abd_s<q>")
-                     (const_string "neon_abd<q>")))]
+ [(set_attr "type" "neon_fp_abd_s<q>")]
 )
 
 ;; Copy from core-to-neon regs, then extend, not vice-versa

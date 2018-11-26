@@ -1762,7 +1762,11 @@ print_fmmov (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 	    const insn_template *template,
 	    disassemble_info *outf)
 {
-  char buf[OPERAND_WIDTH];
+  /* We used to have buf[OPERAND_WIDTH] here, but gcc v8 complains
+     about the snprintf()s below possibly truncating the output.
+     (There is no way to tell gcc that this truncation is intentional).
+     So now we use an extra wide buffer.  */
+  char buf[OPERAND_WIDTH * 2];
   char data_buf[REG_WIDTH];
   char fpu_buf[REG_WIDTH];
   bfd_boolean to_fpu = MAJOR_OPCODE (insn_word) == OPC_GET;
@@ -1783,9 +1787,9 @@ print_fmmov (unsigned int insn_word, bfd_vma pc ATTRIBUTE_UNUSED,
 		   convert_fx_rmask (rmask), is_mmovl);
 
   if (to_fpu)
-    snprintf (buf, OPERAND_WIDTH, "%s,%s", fpu_buf, data_buf);
+    snprintf (buf, sizeof buf, "%s,%s", fpu_buf, data_buf);
   else
-    snprintf (buf, OPERAND_WIDTH, "%s,%s", data_buf, fpu_buf);
+    snprintf (buf, sizeof buf, "%s,%s", data_buf, fpu_buf);
 
   print_insn (outf, "F", template->name, buf);
 }

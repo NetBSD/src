@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.211 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.211.8.1 2018/11/26 01:52:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.211 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.211.8.1 2018/11/26 01:52:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -913,7 +913,10 @@ puffs_vnop_open(void *v)
 		 * - we do not want to discard cached write by direct write
 		 * - read cache is now useless and should be freed
 		 */
+		mutex_enter(&pn->pn_sizemtx);
 		flushvncache(vp, 0, 0, true);
+		mutex_exit(&pn->pn_sizemtx);
+
 		if (mode & FREAD)
 			pn->pn_stat |= PNODE_RDIRECT;
 		if (mode & FWRITE)
@@ -1467,6 +1470,10 @@ puffs_vnop_reclaim(void *v)
 		notifyserver = false;
 	}
 
+	/* See the comment on top of puffs_vnop_inactive(). */
+	if (vp->v_type == VNON)
+		notifyserver = false;
+
 	/*
 	 * purge info from kernel before issueing FAF, since we
 	 * don't really know when we'll get around to it after
@@ -1720,6 +1727,11 @@ puffs_vnop_fsync(void *v)
 	pn = VPTOPP(vp);
 	KASSERT(pn != NULL);
 	pmp = MPTOPUFFSMP(vp->v_mount);
+
+	/* See the comment on top of puffs_vnop_inactive(). */
+	if (vp->v_type == VNON)
+		return 0;
+
 	if (ap->a_flags & FSYNC_WAIT) {
 		mutex_enter(&pn->pn_sizemtx);
 	} else {

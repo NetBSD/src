@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.278.2.2 2018/09/06 06:55:19 pgoyette Exp $
+#	$NetBSD: shlib_version,v 1.278.2.3 2018/11/26 01:52:10 pgoyette Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -52,5 +52,6 @@
 # - clean-up initialisation order between crt0.o, rtld and libc.
 # - move environ and __ps_strings from crt0.o into libc.
 # - move statfs() to libcompat since we have statvfs()
+# - the syscall stubs for the (obsolete) lfs syscalls should be removed
 major=12
 minor=211

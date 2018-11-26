@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.44.14.2 2018/09/06 06:55:48 pgoyette Exp $ */
+/*	$NetBSD: ld_ataraid.c,v 1.44.14.3 2018/11/26 01:52:30 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.44.14.2 2018/09/06 06:55:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.44.14.3 2018/11/26 01:52:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.44.14.2 2018/09/06 06:55:48 pgoyett
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
@@ -103,6 +102,8 @@ static int	ld_ataraid_match(device_t, cfdata_t, void *);
 static void	ld_ataraid_attach(device_t, device_t, void *);
 
 static int	ld_ataraid_dump(struct ld_softc *, void *, int, int);
+static int	ld_ataraid_ioctl(struct ld_softc *, u_long, void *, int32_t,
+    bool);
 
 static int     cbufpool_ctor(void *, void *, int);
 static void    cbufpool_dtor(void *, void *);
@@ -171,6 +172,7 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	ld->sc_secsize = 512;				/* XXX */
 	ld->sc_maxqueuecnt = 128;			/* XXX */
 	ld->sc_dump = ld_ataraid_dump;
+	ld->sc_ioctl = ld_ataraid_ioctl;
 
 	switch (aai->aai_level) {
 	case AAI_L_SPAN:
@@ -715,6 +717,72 @@ ld_ataraid_biodisk(struct ld_ataraid_softc *sc, struct bioc_disk *bd)
 	return 0;
 }
 #endif /* NBIO > 0 */
+
+static int
+ld_ataraid_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag,
+    bool poll)
+{
+	struct ld_ataraid_softc *sc = (void *)ld;
+	int error, i, j;
+	kauth_cred_t uc;
+
+	uc = kauth_cred_get();
+
+	switch (cmd) {
+	case DIOCGCACHE:
+	    {
+		int dkcache = 0;
+
+		/*
+		 * We pass this call down to all components and report
+		 * intersection of the flags returned by the components.
+		 * If any errors out, we return error. ATA RAID components
+		 * can only change via BIOS, device feature flags will remain
+		 * static. RCE/WCE can change if set directly on underlying
+		 * device.
+		 */
+		for (error = 0, i = 0; i < sc->sc_aai->aai_ndisks; i++) {
+			KASSERT(sc->sc_vnodes[i] != NULL);
+
+			error = VOP_IOCTL(sc->sc_vnodes[i], cmd, &j,
+				      flag, uc);
+			if (error)
+				break;
+
+			if (i == 0)
+				dkcache = j;
+			else
+				dkcache = DKCACHE_COMBINE(dkcache, j);
+		}
+
+		*((int *)addr) = dkcache;
+		break;
+	    }
+
+	case DIOCCACHESYNC:
+	    {
+		/*
+		 * We pass this call down to all components and report
+		 * the first error we encounter.
+		 */
+		for (error = 0, i = 0; i < sc->sc_aai->aai_ndisks; i++) {
+			KASSERT(sc->sc_vnodes[i] != NULL);
+
+			j = VOP_IOCTL(sc->sc_vnodes[i], cmd, addr,
+				      flag, uc);
+			if (j != 0 && error == 0)
+				error = j;
+		}
+		break;
+	    }
+
+	default:
+		error = EPASSTHROUGH;
+		break;
+	}
+
+	return error;
+}
 
 MODULE(MODULE_CLASS_DRIVER, ld_ataraid, "ld,ataraid");
 

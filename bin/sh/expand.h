@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.23 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: expand.h,v 1.23.4.1 2018/11/26 01:49:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,7 @@ struct arglist {
 #define EXP_NL		0x100	/* keep CRTNONL in output */
 
 #define EXP_FULL	(EXP_SPLIT | EXP_GLOB)
+#define EXP_QNEEDED	(EXP_GLOB | EXP_CASE | EXP_REDIR)
 
 union node;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.22.2.3 2018/09/06 06:55:34 pgoyette Exp $
+#	$NetBSD: NETBOOKPRO,v 1.22.2.4 2018/11/26 01:52:24 pgoyette Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22.2.3 $"
+#ident 		"GENERIC-$Revision: 1.22.2.4 $"
 
 # estimated number of users
 maxusers	32
@@ -262,7 +262,6 @@ wskbd*	at ukbd? console ? mux 1
 
 # USB Mass Storage
 umass* at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # Bluetooth USB Controllers
 ubt*	at uhub? port ?

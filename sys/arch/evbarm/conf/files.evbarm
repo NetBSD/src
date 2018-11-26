@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.28.2.3 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: files.evbarm,v 1.28.2.4 2018/11/26 01:52:21 pgoyette Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -36,6 +36,10 @@ include "dev/sdmmc/files.sdmmc"			# SD/MMC devices
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/usb/files.usb"			# USB devices
 
+#
+# Machine-dependent drivers
+#
+include "arch/arm/pci/files.pci"		# MD PCI support code
 
 # Kernel boot arguments
 defparam	opt_machdep.h			BOOT_ARGS

@@ -134,6 +134,10 @@ START_RELOC_NUMBERS (elf_ppc_reloc_type)
   RELOC_NUMBER (R_PPC_EMB_BIT_FLD,	115)
   RELOC_NUMBER (R_PPC_EMB_RELSDA,	116)
 
+/* Marker reloc for inline plt call insns.  */
+  RELOC_NUMBER (R_PPC_PLTSEQ,		119)
+  RELOC_NUMBER (R_PPC_PLTCALL,		120)
+
 /* PowerPC VLE relocations.  */
   RELOC_NUMBER (R_PPC_VLE_REL8,		216)
   RELOC_NUMBER (R_PPC_VLE_REL15,	217)

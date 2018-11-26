@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42.12.1 2018/06/25 07:26:09 pgoyette Exp $
+# $NetBSD: Makefile,v 1.42.12.2 2018/11/26 01:52:53 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ TESTSDIR=	${TESTSBASE}/lib/libm
 .if ${MACHINE} == "alpha"
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .endif
+COPTS+=	-fno-builtin
 
 CPPFLAGS.t_fenv.c+=	-D__TEST_FENV
 CPPFLAGS.t_fe_round.c+=	-D__TEST_FENV

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.13 2018/10/12 22:30:54 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.14 2018/11/26 01:52:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.13 2018/10/12 22:30:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.14 2018/11/26 01:52:29 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -951,6 +951,7 @@ compat_50_netbsd32_ntp_gettime(struct lwp *l,
 	if (SCARG_P32(uap, ntvp)) {
 		(*vec_ntp_gettime)(&ntv);
 
+		memset(&ntv32, 0, sizeof(ntv32));
 		ntv32.time.tv_sec = (int32_t)ntv.time.tv_sec;
 		ntv32.time.tv_nsec = ntv.time.tv_nsec;
 		ntv32.maxerror = (netbsd32_long)ntv.maxerror;

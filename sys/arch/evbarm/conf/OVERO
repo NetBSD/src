@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.50.2.2 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: OVERO,v 1.50.2.3 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -281,7 +281,6 @@ uhub*		at uhub? port ?
 umass*		at uhub? port ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
-wd*		at umass?
 
 # Pseudo-Devices
 

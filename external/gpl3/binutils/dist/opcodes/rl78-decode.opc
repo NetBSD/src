@@ -24,7 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ansidecl.h"
+#include "bfd.h"
+#include "opintl.h"
 #include "opcode/rl78.h"
 
 static int trace = 0;
@@ -100,7 +101,10 @@ immediate (int bytes, int sign_extend, LocalData * ld)
 	i -= 0x1000000;
       break;
     default:
-      fprintf (stderr, "Programmer error: immediate() called with invalid byte count %d\n", bytes);
+      opcodes_error_handler
+	/* xgettext:c-format */
+	(_("internal error: immediate() called with invalid byte count %d"),
+	   bytes);
       abort();
     }
   return i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.18.12.1 2018/06/25 07:25:26 pgoyette Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.18.12.2 2018/11/26 01:50:01 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -789,7 +789,7 @@ void zfs_netbsd_setsize(vnode_t *, off_t);
 #define getf		fd_getfile
 #define releasef	fd_putfile
 
-#define callout_drain(x) callout_stop(x)
+#define callout_drain(x) callout_halt(x, NULL)
 
 #endif	/* _KERNEL */
 

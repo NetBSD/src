@@ -468,7 +468,7 @@ rs6000coff_core_p (bfd *abfd)
 
   /* Issue warning if the core file was truncated during writing.  */
   if (c_flag & CORE_TRUNC)
-    _bfd_error_handler (_("%B: warning core file truncated"), abfd);
+    _bfd_error_handler (_("%pB: warning core file truncated"), abfd);
 
   /* Allocate core file header.  */
 #ifndef BFD64

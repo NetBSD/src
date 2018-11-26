@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.10.14.2 2018/09/30 01:46:01 pgoyette Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.10.14.3 2018/11/26 01:52:55 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -33,10 +33,6 @@
  */
 
 /* MI Message catalog -- english, machine independent */
-
-message usage
-{usage: sysinst [-D] [-f definition_file] [-r release] [-C bg:fg]
-}
 
 message sysinst_message_language
 {Installation messages in English}
@@ -1197,4 +1193,9 @@ Do you want to newfs (format) it?}
 message Auto_add_swap_part
 {A swap partition (named %s) seems to exist on %s. 
 Do you want to use that?}
+
+message parttype_mbr {Master Boot Record (MBR)}
+message parttype_mbr_short {MBR}
+message parttype_disklabel {BSD disklabel}
+message parttype_disklabel_short {disklabel}
 

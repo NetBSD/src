@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.21.2.3 2018/07/28 04:37:31 pgoyette Exp $
+#	$NetBSD: ARMADAXP,v 1.21.2.4 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -204,7 +204,6 @@ uhub*		at uhub? port ?
 
 # USB Mass Storage
 umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
 
