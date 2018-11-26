@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.97.2.1 2017/09/01 09:59:10 martin Exp $ */
+/* $NetBSD: dksubr.c,v 1.97.2.2 2018/11/26 17:13:07 snj Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.97.2.1 2017/09/01 09:59:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.97.2.2 2018/11/26 17:13:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,11 +459,11 @@ dk_done1(struct dk_softc *dksc, struct buf *bp, bool lock)
 	if (lock)
 		mutex_enter(&dksc->sc_iolock);
 	disk_unbusy(dk, bp->b_bcount - bp->b_resid, (bp->b_flags & B_READ));
-	if (lock)
-		mutex_exit(&dksc->sc_iolock);
 
 	if ((dksc->sc_flags & DKF_NO_RND) == 0)
 		rnd_add_uint32(&dksc->sc_rnd_source, bp->b_rawblkno);
+	if (lock)
+		mutex_exit(&dksc->sc_iolock);
 
 	biodone(bp);
 }
