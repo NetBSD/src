@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/01/26 01:32:34 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2018/11/26 08:48:43 mlelstv Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -22,6 +22,7 @@ CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
 CPPFLAGS+=	-DCOREDUMP -DNTP -DVMSWAP
 CPPFLAGS+=	-DNTP -DKTRACE -DMODULAR
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .PATH:	${S}/compat/netbsd32
 SRCS+=	netbsd32_compat_09.c netbsd32_compat_10.c
