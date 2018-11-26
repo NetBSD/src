@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.5 2018/09/27 02:44:24 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.6 2018/11/26 12:36:15 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -9,6 +9,7 @@ KMOD=	compat_netbsd32_13
 CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DCOMPAT_13 -DCOMPAT_14 -DCOMPAT_16 -DCOMPAT_20 -DCOMPAT_30
 CPPFLAGS+=	-DCOMPAT_40 -DCOMPAT_50 -DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 SRCS+=	netbsd32_compat_13.c
 
