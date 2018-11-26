@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.6 2018/11/26 07:45:47 knakahara Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.7 2018/11/26 23:20:57 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -312,6 +312,45 @@ init_intel_goldmont(void)
 }
 
 /*
+ * Intel Goldmont Plus (Additions from Goldmont)
+ */
+static struct name_to_event intel_goldmontplus_names[] = {
+	{ "INST_RETIRED.ANY",				0x00,	0x01, true },
+	{ "DTLB_LOAD_MISSES.WALK_COMPLETED_4K",		0x08,	0x02, true },
+	{ "DTLB_LOAD_MISSES.WALK_COMPLETED_2M_4M",	0x08,	0x04, true },
+	{ "DTLB_LOAD_MISSES.WALK_COMPLETED_1GB",	0x08,	0x08, true },
+	{ "DTLB_LOAD_MISSES.WALK_PENDING",		0x08,	0x10, true },
+	{ "DTLB_STORE_MISSES.WALK_COMPLETED_4K",	0x49,	0x02, true },
+	{ "DTLB_STORE_MISSES.WALK_COMPLETED_2M_4M",	0x49,	0x04, true },
+	{ "DTLB_STORE_MISSES.WALK_COMPLETED_1GB",	0x49,	0x08, true },
+	{ "DTLB_STORE_MISSES.WALK_PENDING",		0x49,	0x10, true },
+	{ "EPT.WALK_PENDING",				0x4F,	0x10, true },
+	{ "ITLB_MISSES.WALK_COMPLETED_4K",		0x85,	0x08, true },
+	{ "ITLB_MISSES.WALK_COMPLETED_2M_4M",		0x85,	0x04, true },
+	{ "ITLB_MISSES.WALK_COMPLETED_1GB",		0x85,	0x08, true },
+	{ "ITLB_MISSES.WALK_PENDING",			0x85,	0x10, true },
+	{ "TLB_FLUSHES.STLB_ANY",			0xBD,	0x20, true },
+	{ "MACHINE_CLEARS.PAGE_FAULT",			0xC3,	0x20, true },
+};
+
+static struct event_table intel_goldmontplus = {
+	.tablename = "Intel Goldmont Plus",
+	.names = intel_goldmontplus_names,
+	.nevents = sizeof(intel_goldmontplus_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
+
+static struct event_table *
+init_intel_goldmontplus(void)
+{
+
+	intel_goldmont.next = &intel_goldmontplus;
+
+	return &intel_goldmont;
+}
+
+/*
  * Intel Skylake/Kabylake.
  *
  * The events that are not listed, because they are of little interest or
@@ -513,6 +552,9 @@ init_intel_generic(void)
 		case 0x5C: /* Goldmont (Apollo Lake) */
 		case 0x5F: /* Goldmont (Denvertion) */
 			table->next = init_intel_goldmont();
+			break;
+		case 0x7A: /* Goldmont Plus (Gemini Lake) */
+			table->next = init_intel_goldmontplus();
 			break;
 		case 0x4E: /* Skylake */
 		case 0x5E: /* Skylake */
