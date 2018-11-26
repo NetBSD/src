@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.194 2018/07/04 18:15:27 kamil Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.195 2018/11/26 17:18:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.194 2018/07/04 18:15:27 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.195 2018/11/26 17:18:01 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1856,7 +1856,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	mutex_exit(&lp->lp_lock);
 
 	KPREEMPT_DISABLE(l);
-	l->l_lwpctl->lc_curcpu = (int)curcpu()->ci_data.cpu_index;
+	l->l_lwpctl->lc_curcpu = (int)cpu_index(curcpu());
 	KPREEMPT_ENABLE(l);
 
 	return 0;
