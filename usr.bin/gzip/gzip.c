@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.112.2.3 2018/11/26 01:52:54 pgoyette Exp $	*/
+/*	$NetBSD: gzip.c,v 1.112.2.4 2018/11/26 12:05:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,11 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-<<<<<<< gzip.c
-__RCSID("$NetBSD: gzip.c,v 1.112.2.3 2018/11/26 01:52:54 pgoyette Exp $");
-=======
-__RCSID("$NetBSD: gzip.c,v 1.112.2.3 2018/11/26 01:52:54 pgoyette Exp $");
->>>>>>> 1.116
+__RCSID("$NetBSD: gzip.c,v 1.112.2.4 2018/11/26 12:05:55 pgoyette Exp $");
 #endif /* not lint */
 
 /*
