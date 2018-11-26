@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.5 2018/11/15 07:20:31 knakahara Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.6 2018/11/26 07:45:47 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -206,6 +206,112 @@ init_intel_silvermont_airmont(void)
 }
 
 /*
+ * Intel Goldmont
+ */
+static struct name_to_event intel_goldmont_names[] = {
+	{ "LD_BLOCKS.ALL_BLOCK",			0x03,	0x10, true },
+	{ "LD_BLOCKS.UTLB_MISS",			0x03,	0x08, true },
+	{ "LD_BLOCKS.STORE_FORWARD",			0x03,	0x02, true },
+	{ "LD_BLOCKS.DATA_UNKNOWN",			0x03,	0x01, true },
+	{ "LD_BLOCKS.4K_ALIAS",				0x03,	0x04, true },
+	{ "PAGE_WALKS.D_SIDE_CYCLES",			0x05,	0x01, true },
+	{ "PAGE_WALKS.I_SIDE_CYCLES",			0x05,	0x02, true },
+	{ "PAGE_WALKS.CYCLES",				0x05,	0x03, true },
+	{ "UOPS_ISSUED.ANY",				0x0E,	0x00, true },
+	{ "MISALIGN_MEM_REF.LOAD_PAGE_SPLIT",		0x13,	0x02, true },
+	{ "MISALIGN_MEM_REF.STORE_PAGE_SPLIT",		0x13,	0x04, true },
+	{ "LONGEST_LAT_CACHE.REFERENCE",		0x2E,	0x4F, true },
+	{ "LONGEST_LAT_CACHE.MISS",			0x2E,	0x41, true },
+	{ "L2_REJECT_XQ.ALL",				0x30,	0x00, true },
+	{ "CORE_REJECT_L2Q.ALL",			0x31,	0x00, true },
+	{ "CPU_CLK_UNHALTED.CORE_P",			0x3C,	0x00, true },
+	{ "CPU_CLK_UNHALTED.REF",			0x3C,	0x01, true },
+	{ "DL1.DIRTY_EVICTION",				0x51,	0x01, true },
+	{ "ICACHE.HIT",					0x80,	0x01, true },
+	{ "ICACHE.MISSES",				0x80,	0x02, true },
+	{ "ICACHE.ACCESSES",				0x80,	0x03, true },
+	{ "ITLB.MISS",					0x81,	0x04, true },
+	{ "FETCH_STALL.ALL",				0x86,	0x00, true },
+	{ "FETCH_STALL.ITLB_FILL_PENDING_CYCLES",	0x86,	0x01, true },
+	{ "FETCH_STALL.ICACHE_FILL_PENDING_CYCLES",	0x86,	0x02, true },
+	{ "UOPS_NOT_DELIVERED.ANY",			0x9C,	0x00, true },
+	{ "OFFCORE_RESPONSE.0",				0xB7,	0x01, true },
+	{ "OFFCORE_RESPONSE.1",				0xB7,	0x02, true },
+	{ "INST_RETIRED.ANY_P",				0xC0,	0x00, true },
+	{ "UOPS_RETIRED.ANY",				0xC2,	0x00, true },
+	{ "UOPS_RETIRED.MS",				0xC2,	0x01, true },
+	{ "UOPS_RETIRED.FPDIV",				0xC2,	0x08, true },
+	{ "UOPS_RETIRED.IDIV",				0xC2,	0x10, true },
+	{ "MACHINE_CLEARS.SMC",				0xC3,	0x01, true },
+	{ "MACHINE_CLEARS.MEMORY_ORDERING",		0xC3,	0x02, true },
+	{ "MACHINE_CLEARS.FP_ASSIST",			0xC3,	0x04, true },
+	{ "MACHINE_CLEARS.DISAMBIGUATION",		0xC3,	0x08, true },
+	{ "MACHINE_CLEARS.ALL",				0xC3,	0x00, true },
+	{ "BR_INST_RETIRED.ALL_BRANCHES",		0xC4,	0x00, true },
+	{ "BR_INST_RETIRED.JCC",			0xC4,	0x7E, true },
+	{ "BR_INST_RETIRED.ALL_TAKEN_BRANCHES",		0xC4,	0x80, true },
+	{ "BR_INST_RETIRED.TAKEN_JCC",			0xC4,	0xFE, true },
+	{ "BR_INST_RETIRED.CALL",			0xC4,	0xF9, true },
+	{ "BR_INST_RETIRED.REL_CALL",			0xC4,	0xFD, true },
+	{ "BR_INST_RETIRED.IND_CALL",			0xC4,	0xFB, true },
+	{ "BR_INST_RETIRED.RETURN",			0xC4,	0xF7, true },
+	{ "BR_INST_RETIRED.NON_RETURN_IND",		0xC4,	0xEB, true },
+	{ "BR_INST_RETIRED.FAR_BRANCH",			0xC4,	0xBF, true },
+	{ "BR_MISP_RETIRED.ALL_BRANCHES",		0xC5,	0x00, true },
+	{ "BR_MISP_RETIRED.JCC",			0xC5,	0x7E, true },
+	{ "BR_MISP_RETIRED.TAKEN_JCC",			0xC5,	0xFE, true },
+	{ "BR_MISP_RETIRED.IND_CALL",			0xC5,	0xFB, true },
+	{ "BR_MISP_RETIRED.RETURN",			0xC5,	0xF7, true },
+	{ "BR_MISP_RETIRED.NON_RETURN_IND",		0xC5,	0xEB, true },
+	{ "ISSUE_SLOTS_NOT_CONSUMED.RESOURCE_FULL",	0xCA,	0x01, true },
+	{ "ISSUE_SLOTS_NOT_CONSUMED.RECOVERY",		0xCA,	0x02, true },
+	{ "ISSUE_SLOTS_NOT_CONSUMED.ANY",		0xCA,	0x00, true },
+	{ "HW_INTERRUPTS.RECEIVED",			0xCB,	0x01, true },
+	{ "HW_INTERRUPTS.MASKED",			0xCB,	0x02, true },
+	{ "HW_INTERRUPTS.PENDING_AND_MASKED",		0xCB,	0x04, true },
+	{ "CYCLES_DIV_BUSY.ALL",			0xCD,	0x00, true },
+	{ "CYCLES_DIV_BUSY.IDIV",			0xCD,	0x01, true },
+	{ "CYCLES_DIV_BUSY.FPDIV",			0xCD,	0x02, true },
+	{ "MEM_UOPS_RETIRED.ALL_LOADS",			0xD0,	0x81, true },
+	{ "MEM_UOPS_RETIRED.ALL_STORES",		0xD0,	0x82, true },
+	{ "MEM_UOPS_RETIRED.ALL",			0xD0,	0x83, true },
+	{ "MEM_UOPS_RETIRED.DTLB_MISS_LOADS",		0xD0,	0x11, true },
+	{ "MEM_UOPS_RETIRED.DTLB_MISS_STORES",		0xD0,	0x12, true },
+	{ "MEM_UOPS_RETIRED.DTLB_MISS",			0xD0,	0x13, true },
+	{ "MEM_UOPS_RETIRED.LOCK_LOADS",		0xD0,	0x21, true },
+	{ "MEM_UOPS_RETIRED.SPLIT_LOADS",		0xD0,	0x41, true },
+	{ "MEM_UOPS_RETIRED.SPLIT_STORES",		0xD0,	0x42, true },
+	{ "MEM_UOPS_RETIRED.SPLIT",			0xD0,	0x43, true },
+	{ "MEM_LOAD_UOPS_RETIRED.L1_HIT",		0xD1,	0x01, true },
+	{ "MEM_LOAD_UOPS_RETIRED.L1_MISS",		0xD1,	0x08, true },
+	{ "MEM_LOAD_UOPS_RETIRED.L2_HIT",		0xD1,	0x02, true },
+	{ "MEM_LOAD_UOPS_RETIRED.L2_MISS",		0xD1,	0x10, true },
+	{ "MEM_LOAD_UOPS_RETIRED.HITM",			0xD1,	0x20, true },
+	{ "MEM_LOAD_UOPS_RETIRED.WCB_HIT",		0xD1,	0x40, true },
+	{ "MEM_LOAD_UOPS_RETIRED.DRAM_HIT",		0xD1,	0x80, true },
+	{ "BACLEARS.ALL",				0xE6,	0x01, true },
+	{ "BACLEARS.RETURN",				0xE6,	0x08, true },
+	{ "BACLEAR.CONDS",				0xE6,	0x10, true },
+	{ "MS_DECODED.MS_ENTRY",			0xE7,	0x01, true },
+	{ "DECODED_RESTRICTION.PREDECODE_WRONG",	0xE9,	0x01, true },
+};
+
+static struct event_table intel_goldmont = {
+	.tablename = "Intel Goldmont",
+	.names = intel_goldmont_names,
+	.nevents = sizeof(intel_goldmont_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
+
+static struct event_table *
+init_intel_goldmont(void)
+{
+
+	return &intel_goldmont;
+}
+
+/*
  * Intel Skylake/Kabylake.
  *
  * The events that are not listed, because they are of little interest or
@@ -403,6 +509,10 @@ init_intel_generic(void)
 		case 0x5A: /* Silvermont (Anniedale) */
 		case 0x5D: /* Silvermont (SoFIA) */
 			table->next = init_intel_silvermont_airmont();
+			break;
+		case 0x5C: /* Goldmont (Apollo Lake) */
+		case 0x5F: /* Goldmont (Denvertion) */
+			table->next = init_intel_goldmont();
 			break;
 		case 0x4E: /* Skylake */
 		case 0x5E: /* Skylake */
