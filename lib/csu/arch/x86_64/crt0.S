@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.3 2011/07/01 02:59:05 joerg Exp $ */
+/* $NetBSD: crt0.S,v 1.4 2018/11/26 17:37:46 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -35,7 +35,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.3 2011/07/01 02:59:05 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.4 2018/11/26 17:37:46 joerg Exp $")
 
 STRONG_ALIAS(_start,__start)
 	.hidden ___start
@@ -44,6 +44,5 @@ _ENTRY(__start)
 	andq    $~15,%rsp
 	subq    $8,%rsp
 	movq	%rdx, %rdi
-	movq	%rcx, %rsi
-	movq	%rbx, %rdx
+	movq	%rbx, %rsi
 	jmp	___start
