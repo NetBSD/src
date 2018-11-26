@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.135 2018/11/22 06:14:35 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.136 2018/11/26 04:43:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -431,6 +431,43 @@
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
 					"\33" "IBRS"	"\34" "STIBP"	\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP"		"\40" "SSBD"
+
+/*
+ * Intel CPUID Architectural Performance Monitoring Fn0000000a
+ *
+ * See also src/usr.sbin/tprof/arch/tprof_x86.c
+ */
+
+/* %eax */
+#define CPUID_PERF_VERSION	__BITS(7, 0)   /* Version ID */
+#define CPUID_PERF_NGPPC	__BITS(15, 8)  /* Num of G.P. perf counter */
+#define CPUID_PERF_NBWGPPC	__BITS(23, 16) /* Bit width of G.P. perfcnt */
+#define CPUID_PERF_BVECLEN	__BITS(31, 24) /* Length of EBX bit vector */
+
+#define CPUID_PERF_FLAGS0	"\177\20"	\
+	"f\0\10VERSION\0" "f\10\10GPCounter\0"	\
+	"f\20\10GPBitwidth\0" "f\30\10Vectorlen\0"
+
+/* %ebx */
+#define CPUID_PERF_CORECYCL	__BIT(0)       /* No core cycle */
+#define CPUID_PERF_INSTRETRY	__BIT(1)       /* No instruction retried */
+#define CPUID_PERF_REFCYCL	__BIT(2)       /* No reference cycles */
+#define CPUID_PERF_LLCREF	__BIT(3)       /* No LLCache reference */
+#define CPUID_PERF_LLCMISS	__BIT(4)       /* No LLCache miss */
+#define CPUID_PERF_BRINSRETR	__BIT(5)       /* No branch inst. retried */
+#define CPUID_PERF_BRMISPRRETR	__BIT(6)       /* No branch mispredict retry */
+
+#define CPUID_PERF_FLAGS1	"\177\20"				      \
+	"b\0\1CORECYCL\0" "b\1\1INSTRETRY\0" "b\2\1REFCYCL\0" "b\3\1LLCREF\0" \
+	"b\4\1LLCMISS\0" "b\5\1BRINSRETR\0" "b\6\1BRMISPRRETR\0"
+
+/* %edx */
+#define CPUID_PERF_NFFPC	__BITS(4, 0)   /* Num of fixed-funct perfcnt */
+#define CPUID_PERF_NBWFFPC	__BITS(12, 5)  /* Bit width of fixed-func pc */
+#define CPUID_PERF_ANYTHREADDEPR __BIT(15)      /* Any Thread deprecation */
+
+#define CPUID_PERF_FLAGS3	"\177\20"				\
+	"f\0\5FixedFunc\0" "f\5\10FFBitwidth\0" "b\17ANYTHREADDEPR\0"
 
 /*
  * Intel CPUID Extended Topology Enumeration Fn0000000b
