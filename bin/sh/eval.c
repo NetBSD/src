@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.163 2018/11/23 23:37:22 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.164 2018/11/26 13:47:39 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.163 2018/11/23 23:37:22 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.164 2018/11/26 13:47:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -873,6 +873,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	volatile int temp_path;
 	const int savefuncline = funclinebase;
 	const int savefuncabs = funclineabs;
+	volatile int cmd_flags = 0;
 
 	vforked = 0;
 	/* First expand the arguments. */
@@ -979,11 +980,16 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 	/* Now locate the command. */
 	if (argc == 0) {
-		cmdentry.cmdtype = CMDSPLBLTIN;
+		/*
+		 * the empty command begins as a normal builtin, and
+		 * remains that way while redirects are processed, then
+		 * will become special before we get to doing the
+		 * var assigns.
+		 */
+		cmdentry.cmdtype = CMDBUILTIN;
 		cmdentry.u.bltin = bltincmd;
 	} else {
 		static const char PATH[] = "PATH=";
-		int cmd_flags = 0;
 
 		/*
 		 * Modify the command lookup path, if a PATH= assignment
@@ -1224,9 +1230,11 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			exitshell(exitstatus);
 		break;
 
-	case CMDBUILTIN:
 	case CMDSPLBLTIN:
-		VXTRACE(DBG_EVAL, ("builtin command%s:  ",vforked?" VF":""), trargs(argv));
+		VTRACE(DBG_EVAL, ("special "));
+	case CMDBUILTIN:
+		VXTRACE(DBG_EVAL, ("builtin command [%d]%s:  ", argc,
+		    vforked ? " VF" : ""), trargs(argv));
 		mode = (cmdentry.u.bltin == execcmd) ? 0 : REDIR_PUSH;
 		if (flags == EV_BACKCMD) {
 			memout.nleft = 0;
@@ -1253,6 +1261,15 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				mklocal(path - 5 /* PATH= */, 0);
 			}
 			redirect(cmd->ncmd.redirect, mode);
+
+			/*
+			 * the empty command is regarded as a normal
+			 * builtin for the purposes of redirects, but
+			 * is a special builtin for var assigns.
+			 * (unless we are the "command" command.)
+			 */
+			if (argc == 0 && !(cmd_flags & DO_NOFUNC))
+				cmdentry.cmdtype = CMDSPLBLTIN;
 
 			/* exec is a special builtin, but needs this list... */
 			cmdenviron = varlist.list;
