@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.92.2.4 2018/06/25 07:26:08 pgoyette Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.92.2.5 2018/11/26 01:52:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.92.2.4 2018/06/25 07:26:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.92.2.5 2018/11/26 01:52:52 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -814,7 +814,8 @@ ubc_alloc_direct(struct uvm_object *uobj, voff_t offset, vsize_t *lenp,
 {
 	voff_t pgoff;
 	int error;
-	int gpflags = flags | PGO_NOTIMESTAMP | PGO_SYNCIO | PGO_ALLPAGES;
+	int gpflags = flags | PGO_NOTIMESTAMP | PGO_SYNCIO | PGO_ALLPAGES
+	    | PGO_NOBLOCKALLOC;
 	int access_type = VM_PROT_READ;
 	UVMHIST_FUNC("ubc_alloc_direct"); UVMHIST_CALLED(ubchist);
 

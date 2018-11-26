@@ -120,7 +120,7 @@ to allow users to throw it away.
 
 There is one word of type information within the symbol, so if the
 format supports symbol type information within symbols (for example, COFF,
-IEEE, Oasys) and the type is simple enough to fit within one word
+Oasys) and the type is simple enough to fit within one word
 (nearly everything but aggregates), the information will be preserved.
 
 @item relocation level
@@ -146,5 +146,5 @@ pointer to the symbol, which allows finding out the address of the
 function whose line number is being described. The rest of the list is
 made up of pairs: offsets into the section and line numbers. Any format
 which can simply derive this information can pass it successfully
-between formats (COFF, IEEE and Oasys).
+between formats.
 @end table

@@ -35,10 +35,13 @@ fragment <<EOF
 /* Whether to run tls optimization.  */
 static int notlsopt = 0;
 
+/* Whether to convert inline PLT calls to direct.  */
+static int no_inline_opt = 0;
+
 /* Choose the correct place for .got.  */
 static int old_got = 0;
 
-static struct ppc_elf_params params = { PLT_UNSET, 0, 1, -1,
+static struct ppc_elf_params params = { PLT_UNSET, 0, -1,
 					0, 0, 0, 0, 0, 0, 0 };
 
 static void
@@ -116,10 +119,32 @@ EOF
 fi
 fragment <<EOF
 static void
+prelim_size_sections (void)
+{
+  if (expld.phase != lang_mark_phase_enum)
+    {
+      expld.phase = lang_mark_phase_enum;
+      expld.dataseg.phase = exp_seg_none;
+      one_lang_size_sections_pass (NULL, FALSE);
+      /* We must not cache anything from the preliminary sizing.  */
+      lang_reset_memory_regions ();
+    }
+}
+
+static void
 ppc_before_allocation (void)
 {
   if (is_ppc_elf (link_info.output_bfd))
     {
+      if (!no_inline_opt
+	  && !bfd_link_relocatable (&link_info))
+	{
+	  prelim_size_sections ();
+
+	  if (!ppc_elf_inline_plt (&link_info))
+	    einfo (_("%X%P: inline PLT: %E\n"));
+	}
+
       if (ppc_elf_tls_setup (link_info.output_bfd, &link_info)
 	  && !notlsopt)
 	{
@@ -147,13 +172,7 @@ ppc_before_allocation (void)
       asection *o;
 
       /* Run lang_size_sections (if not already done).  */
-      if (expld.phase != lang_mark_phase_enum)
-	{
-	  expld.phase = lang_mark_phase_enum;
-	  expld.dataseg.phase = exp_seg_none;
-	  one_lang_size_sections_pass (NULL, FALSE);
-	  lang_reset_memory_regions ();
-	}
+      prelim_size_sections ();
 
       for (o = link_info.output_bfd->sections; o != NULL; o = o->next)
 	{
@@ -212,6 +231,8 @@ ppc_finish (void)
 {
   if (params.ppc476_workaround)
     lang_for_each_statement (no_zero_padding);
+  if (!ppc_finish_symbols (&link_info))
+    einfo (_("%X%P: ppc_finish_symbols problem %E\n"));
   finish_default ();
 }
 
@@ -246,10 +267,9 @@ enum ppc32_opt
   OPTION_NO_TLS_GET_ADDR_OPT,
   OPTION_NEW_PLT,
   OPTION_OLD_PLT,
-  OPTION_SPECULATE_INDIRECT_JUMPS,
-  OPTION_NO_SPECULATE_INDIRECT_JUMPS,
   OPTION_PLT_ALIGN,
   OPTION_NO_PLT_ALIGN,
+  OPTION_NO_INLINE_OPT,
   OPTION_OLD_GOT,
   OPTION_STUBSYMS,
   OPTION_NO_STUBSYMS,
@@ -269,10 +289,9 @@ if test -z "$VXWORKS_BASE_EM_FILE" ; then
   PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "secure-plt", no_argument, NULL, OPTION_NEW_PLT },
   { "bss-plt", no_argument, NULL, OPTION_OLD_PLT },
-  { "speculate-indirect-jumps", no_argument, NULL, OPTION_SPECULATE_INDIRECT_JUMPS },
-  { "no-speculate-indirect-jumps", no_argument, NULL, OPTION_NO_SPECULATE_INDIRECT_JUMPS },
   { "plt-align", optional_argument, NULL, OPTION_PLT_ALIGN },
   { "no-plt-align", no_argument, NULL, OPTION_NO_PLT_ALIGN },
+  { "no-inline-optimize", no_argument, NULL, OPTION_NO_INLINE_OPT },
   { "sdata-got", no_argument, NULL, OPTION_OLD_GOT },'
 fi
 PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
@@ -284,54 +303,51 @@ PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
 
 PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'
   fprintf (file, _("\
-  --emit-stub-syms            Label linker stubs with a symbol.\n"
+  --emit-stub-syms            Label linker stubs with a symbol\n"
 		   ));
   fprintf (file, _("\
-  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol.\n"
+  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol\n"
 		   ));
   fprintf (file, _("\
-  --no-tls-optimize           Don'\''t try to optimize TLS accesses.\n"
+  --no-tls-optimize           Don'\''t try to optimize TLS accesses\n"
 		   ));
   fprintf (file, _("\
-  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call.\n"
+  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call\n"
 		   ));'
 if test -z "$VXWORKS_BASE_EM_FILE" ; then
   PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'\
   fprintf (file, _("\
-  --secure-plt                Use new-style PLT if possible.\n"
+  --secure-plt                Use new-style PLT if possible\n"
 		   ));
   fprintf (file, _("\
-  --bss-plt                   Force old-style BSS PLT.\n"
+  --bss-plt                   Force old-style BSS PLT\n"
 		   ));
   fprintf (file, _("\
-  --speculate-indirect-jumps  PLT call stubs without speculation barrier.\n"
+  --plt-align                 Align PLT call stubs to fit cache lines\n"
 		   ));
   fprintf (file, _("\
-  --no-speculate-indirect-jumps PLT call stubs with speculation barrier.\n"
+  --no-plt-align              Dont'\''t align individual PLT call stubs\n"
 		   ));
   fprintf (file, _("\
-  --plt-align                 Align PLT call stubs to fit cache lines.\n"
+  --no-inline-optimize        Don'\''t convert inline PLT to direct calls\n"
 		   ));
   fprintf (file, _("\
-  --no-plt-align              Dont'\''t align individual PLT call stubs.\n"
-		   ));
-  fprintf (file, _("\
-  --sdata-got                 Force GOT location just before .sdata.\n"
+  --sdata-got                 Force GOT location just before .sdata\n"
 		   ));'
 fi
 PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'\
   fprintf (file, _("\
   --ppc476-workaround [=pagesize]\n\
-                              Avoid a cache bug on ppc476.\n"
+                              Avoid a cache bug on ppc476\n"
 		   ));
   fprintf (file, _("\
-  --no-ppc476-workaround      Disable workaround.\n"
+  --no-ppc476-workaround      Disable workaround\n"
 		   ));
   fprintf (file, _("\
-  --no-pic-fixup              Don'\''t edit non-pic to pic.\n"
+  --no-pic-fixup              Don'\''t edit non-pic to pic\n"
 		   ));
   fprintf (file, _("\
-  --vle-reloc-fixup           Correct old object file 16A/16D relocation.\n"
+  --vle-reloc-fixup           Correct old object file 16A/16D relocation\n"
 		   ));
 '
 
@@ -360,21 +376,13 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
       params.plt_style = PLT_OLD;
       break;
 
-    case OPTION_SPECULATE_INDIRECT_JUMPS:
-      params.speculate_indirect_jumps = 1;
-      break;
-
-    case OPTION_NO_SPECULATE_INDIRECT_JUMPS:
-      params.speculate_indirect_jumps = 0;
-      break;
-
     case OPTION_PLT_ALIGN:
       if (optarg != NULL)
 	{
 	  char *end;
 	  unsigned long val = strtoul (optarg, &end, 0);
 	  if (*end || val > 5)
-	    einfo (_("%P%F: invalid --plt-align `%s'\''\n"), optarg);
+	    einfo (_("%F%P: invalid --plt-align `%s'\''\n"), optarg);
 	  params.plt_stub_align = val;
 	}
       else
@@ -383,6 +391,10 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 
     case OPTION_NO_PLT_ALIGN:
       params.plt_stub_align = 0;
+      break;
+
+    case OPTION_NO_INLINE_OPT:
+      no_inline_opt = 1;
       break;
 
     case OPTION_OLD_GOT:
@@ -403,7 +415,7 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 	  if (*end
 	      || (params.pagesize < 4096 && params.pagesize != 0)
 	      || params.pagesize != (params.pagesize & -params.pagesize))
-	    einfo (_("%P%F: invalid pagesize `%s'\''\n"), optarg);
+	    einfo (_("%F%P: invalid pagesize `%s'\''\n"), optarg);
 	}
       break;
 

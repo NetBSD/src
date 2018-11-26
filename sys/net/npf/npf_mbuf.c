@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.14.3 2018/09/30 01:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.14.4 2018/11/26 01:52:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -338,7 +338,7 @@ nbuf_find_tag(nbuf_t *nbuf, uint32_t *val)
 
 	KASSERT(m_flags_p(m, M_PKTHDR));
 
-	mt = m_tag_find(m, PACKET_TAG_NPF, NULL);
+	mt = m_tag_find(m, PACKET_TAG_NPF);
 	if (mt == NULL) {
 		return EINVAL;
 	}

@@ -66,6 +66,6 @@ gld${EMULATION_NAME}_map_segments (bfd_boolean need_layout)
   while (need_layout && --tries);
 
   if (tries == 0)
-    einfo (_("%P%F: looping in map_segments"));
+    einfo (_("%F%P: looping in map_segments"));
 }
 EOF

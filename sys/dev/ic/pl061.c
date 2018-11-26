@@ -1,4 +1,4 @@
-/* $NetBSD: pl061.c,v 1.1.2.2 2018/10/20 06:58:31 pgoyette Exp $ */
+/* $NetBSD: pl061.c,v 1.1.2.3 2018/11/26 01:52:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl061.c,v 1.1.2.2 2018/10/20 06:58:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl061.c,v 1.1.2.3 2018/11/26 01:52:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,8 @@ plgpio_attach(struct plgpio_softc *sc)
 	sc->sc_gc.gp_pin_write = plgpio_pin_write;
 	sc->sc_gc.gp_pin_ctl = plgpio_pin_ctl;
 
-	const uint32_t cnf = PLGPIO_READ(sc, PL061_GPIOAFSEL_REG);
+	const uint32_t cnf = PLGPIO_READ(sc, PL061_GPIOAFSEL_REG) |
+	    sc->sc_reserved_mask;
 
 	for (pin = 0; pin < 8; pin++) {
 		sc->sc_pins[pin].pin_num = pin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.289.2.5 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.289.2.6 2018/11/26 01:52:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.5 2018/09/30 01:45:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.6 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -149,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.5 2018/09/30 01:45:48 pgoyette Exp 
 #include <sys/intr.h>
 #include <sys/xcall.h>
 #include <sys/kcore.h>
+#include <sys/asan.h>
 
 #include <uvm/uvm.h>
 #include <uvm/pmap/pmap_pvt.h>
@@ -239,6 +240,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.5 2018/09/30 01:45:48 pgoyette Exp 
  */
 
 const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
+const vaddr_t ptp_frames[] = PTP_FRAME_INITIALIZER;
 const int ptp_shifts[] = PTP_SHIFT_INITIALIZER;
 const long nkptpmax[] = NKPTPMAX_INITIALIZER;
 const long nbpd[] = NBPD_INITIALIZER;
@@ -2377,6 +2379,7 @@ pmap_create(void)
 #endif
 	pmap->pm_flags = 0;
 	pmap->pm_gc_ptp = NULL;
+	pmap->pm_tlb_flush = NULL;
 
 	kcpuset_create(&pmap->pm_cpus, true);
 	kcpuset_create(&pmap->pm_kernel_cpus, true);
@@ -3537,7 +3540,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			/*
 			 * skip a range corresponding to an invalid pde.
 			 */
-			blkendva = (va & ptp_masks[lvl - 1]) + nbpd[lvl - 1];
+			blkendva = (va & ptp_frames[lvl - 1]) + nbpd[lvl - 1];
  			continue;
 		}
 
@@ -4494,7 +4497,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 #endif
 
 #ifdef KASAN
-	void kasan_shadow_map(void *, size_t);
 	kasan_shadow_map((void *)pmap_maxkvaddr,
 	    (size_t)(maxkvaddr - pmap_maxkvaddr));
 #endif

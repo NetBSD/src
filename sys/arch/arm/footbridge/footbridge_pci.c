@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.29 2017/04/19 08:30:00 skrll Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.29.10.1 2018/11/26 01:52:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.29 2017/04/19 08:30:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.29.10.1 2018/11/26 01:52:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ int		footbridge_pci_intr_map(const struct pci_attach_args *,
 const char	*footbridge_pci_intr_string(void *, pci_intr_handle_t,
 		    char *, size_t);
 void		*footbridge_pci_intr_establish(void *, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
+		    int, int (*)(void *), void *, const char *);
 void		footbridge_pci_intr_disestablish(void *, void *);
 const struct evcnt *footbridge_pci_intr_evcnt(void *, pci_intr_handle_t);
 
@@ -314,18 +314,18 @@ const char *
 footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
+	printf("footbridge_pci_intr_string(pcv=%p, ih=0x%" PRIx64 ")\n", pcv, ih);
 #endif
 	if (ih == 0)
-		panic("footbridge_pci_intr_string: bogus handle 0x%lx", ih);
+		panic("footbridge_pci_intr_string: bogus handle 0x%" PRIx64, ih);
 
 #if NISA > 0
 	if (ih >= 0x80 && ih <= 0x8f) {
-		snprintf(buf, len, "isairq %ld", (ih & 0x0f));
+		snprintf(buf, len, "isairq %" PRIu64, (ih & 0x0f));
 		return buf;
 	}
 #endif
-	snprintf(buf, len, "irq %ld", ih);
+	snprintf(buf, len, "irq %" PRIu64, ih);
 	return buf;	
 }
 
@@ -335,15 +335,15 @@ footbridge_pci_intr_establish(
 	pci_intr_handle_t ih,
 	int level,
 	int (*func)(void *),
-	void *arg)
+	void *arg, const char *xname)
 {
 	void *intr;
 	char buf[PCI_INTRSTR_LEN];
 	const char *intrstr;
 
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, func=%p, arg=%p)\n",
-	    pcv, ih, level, func, arg);
+	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%" PRIx64 ", level=%d, func=%p, arg=%p, xname=%s)\n",
+	    pcv, ih, level, func, arg, xname);
 #endif
 
 	/* Copy the interrupt string to a private buffer */

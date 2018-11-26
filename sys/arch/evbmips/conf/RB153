@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.19.2.1 2018/09/06 06:55:33 pgoyette Exp $
+#	$NetBSD: RB153,v 1.19.2.2 2018/11/26 01:52:24 pgoyette Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.19.2.1 $"
+#ident 		"RB153-$Revision: 1.19.2.2 $"
 
 maxusers	32
 
@@ -139,7 +139,6 @@ uhub*		at usb?
 uhub*		at uhub? port ? configuration ? interface ?
 ugen*		at uhub? port ?
 umass*		at uhub? port ?
-wd*		at umass?
 
 options	PCI_NETBSD_CONFIGURE
 admpci*		at mainbus?

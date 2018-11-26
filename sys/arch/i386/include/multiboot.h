@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.h,v 1.8.62.1 2018/04/16 01:59:54 pgoyette Exp $	*/
+/*	$NetBSD: multiboot.h,v 1.8.62.2 2018/11/26 01:52:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ extern struct multiboot_header *Multiboot_Header;
 #define MULTIBOOT_INFO_HAS_LOADER_NAME	0x00000200
 #define MULTIBOOT_INFO_HAS_APM_TABLE	0x00000400
 #define MULTIBOOT_INFO_HAS_VBE		0x00000800
+#define MULTIBOOT_INFO_HAS_FRAMEBUFFER	0x00001000
 
 #if !defined(_LOCORE)
 struct multiboot_info {
@@ -138,6 +139,32 @@ struct multiboot_info {
 	uint16_t	unused_mi_vbe_interface_seg;
 	uint16_t	unused_mi_vbe_interface_off;
 	uint16_t	unused_mi_vbe_interface_len;
+
+	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_FRAMEBUFFER. */
+	uint64_t	framebuffer_addr;
+	uint32_t	framebuffer_pitch;
+	uint32_t	framebuffer_width;
+	uint32_t	framebuffer_height;
+	uint8_t		framebuffer_bpp;
+#define MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED 	0
+#define MULTIBOOT_FRAMEBUFFER_TYPE_RGB     	1
+#define MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT     2
+	uint8_t framebuffer_type;
+	union {
+		struct {
+			uint32_t framebuffer_palette_addr;
+			uint16_t framebuffer_palette_num_colors;
+		};
+		struct {
+			uint8_t framebuffer_red_field_position;
+			uint8_t framebuffer_red_mask_size;
+			uint8_t framebuffer_green_field_position;
+			uint8_t framebuffer_green_mask_size;
+			uint8_t framebuffer_blue_field_position;
+			uint8_t framebuffer_blue_mask_size;
+		};
+	};
+
 };
 
 /* --------------------------------------------------------------------- */

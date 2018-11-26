@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.23 2017/01/10 21:56:50 roy Exp $	*/
+/*	$NetBSD: attributes.c,v 1.23.12.1 2018/11/26 01:52:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,13 +31,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.23 2017/01/10 21:56:50 roy Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.23.12.1 2018/11/26 01:52:12 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
-void __wcolor_set(WINDOW *, attr_t);
+static int __wattr_off(WINDOW *, attr_t);
+static int __wattr_on(WINDOW *, attr_t);
+static void __wcolor_set(WINDOW *, attr_t);
+
 
 #ifndef _CURSES_USE_MACROS
 /*
@@ -46,9 +49,9 @@ void __wcolor_set(WINDOW *, attr_t);
  */
 /* ARGSUSED */
 int
-attr_get(attr_t *attr, short *pair, void *opt)
+attr_get(attr_t *attr, short *pair, void *opts)
 {
-	return wattr_get(stdscr, attr, pair, opt);
+	return wattr_get(stdscr, attr, pair, opts);
 }
 
 /*
@@ -57,9 +60,9 @@ attr_get(attr_t *attr, short *pair, void *opt)
  */
 /* ARGSUSED */
 int
-attr_on(attr_t attr, void *opt)
+attr_on(attr_t attr, void *opts)
 {
-	return wattr_on(stdscr, attr, opt);
+	return wattr_on(stdscr, attr, opts);
 }
 
 /*
@@ -68,9 +71,9 @@ attr_on(attr_t attr, void *opt)
  */
 /* ARGSUSED */
 int
-attr_off(attr_t attr, void *opt)
+attr_off(attr_t attr, void *opts)
 {
-	return wattr_off(stdscr, attr, opt);
+	return wattr_off(stdscr, attr, opts);
 }
 
 /*
@@ -79,9 +82,9 @@ attr_off(attr_t attr, void *opt)
  */
 /* ARGSUSED */
 int
-attr_set(attr_t attr, short pair, void *opt)
+attr_set(attr_t attr, short pair, void *opts)
 {
-	return wattr_set(stdscr, attr, pair, opt);
+	return wattr_set(stdscr, attr, pair, opts);
 }
 
 /*
@@ -90,9 +93,9 @@ attr_set(attr_t attr, short pair, void *opt)
  */
 /* ARGSUSED */
 int
-color_set(short pair, void *opt)
+color_set(short pair, void *opts)
 {
-	return wcolor_set(stdscr, pair, opt);
+	return wcolor_set(stdscr, pair, opts);
 }
 
 /*
@@ -102,7 +105,7 @@ color_set(short pair, void *opt)
 int
 attron(int attr)
 {
-	return wattr_on(stdscr, (attr_t) attr, NULL);
+	return wattron(stdscr, attr);
 }
 
 /*
@@ -112,7 +115,7 @@ attron(int attr)
 int
 attroff(int attr)
 {
-	return wattr_off(stdscr, (attr_t) attr, NULL);
+	return wattroff(stdscr, attr);
 }
 
 /*
@@ -134,7 +137,7 @@ attrset(int attr)
  */
 /* ARGSUSED */
 int
-wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
+wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opts)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattr_get: win %p\n", win);
@@ -155,53 +158,13 @@ wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
  * wattr_on --
  *	Test and set wide attributes on window
  */
-/* ARGSUSED */
 int
-wattr_on(WINDOW *win, attr_t attr, void *opt)
+wattr_on(WINDOW *win, attr_t attr, void *opts)
 {
-	const TERMINAL *t = win->screen->term;
+	if (__predict_false(opts != NULL))
+		return ERR;
 
-#ifdef DEBUG
-	__CTRACE(__CTRACE_ATTR, "wattr_on: win %p, attr %08x\n", win, attr);
-#endif
-	/* If can enter modes, set the relevent attribute bits. */
-	if (t_exit_attribute_mode(t) != NULL) {
-		if (attr & __BLINK && t_enter_blink_mode(t) != NULL)
-			win->wattr |= __BLINK;
-		if (attr & __BOLD && t_enter_bold_mode(t) != NULL)
-			win->wattr |= __BOLD;
-		if (attr & __DIM && t_enter_dim_mode(t) != NULL)
-			win->wattr |= __DIM;
-		if (attr & __BLANK && t_enter_secure_mode(t) != NULL)
-			win->wattr |= __BLANK;
-		if (attr & __PROTECT && t_enter_protected_mode(t) != NULL)
-			win->wattr |= __PROTECT;
-		if (attr & __REVERSE && t_enter_reverse_mode(t) != NULL)
-			win->wattr |= __REVERSE;
-#ifdef HAVE_WCHAR
-		if (attr & WA_LOW && t_enter_low_hl_mode(t) != NULL)
-			win->wattr |= WA_LOW;
-		if (attr & WA_TOP && t_enter_top_hl_mode(t) != NULL)
-			win->wattr |= WA_TOP;
-		if (attr & WA_LEFT && t_enter_left_hl_mode(t) != NULL)
-			win->wattr |= WA_LEFT;
-		if (attr & WA_RIGHT && t_enter_right_hl_mode(t) != NULL)
-			win->wattr |= WA_RIGHT;
-		if (attr & WA_HORIZONTAL && t_enter_horizontal_hl_mode(t) != NULL)
-			win->wattr |= WA_HORIZONTAL;
-		if (attr & WA_VERTICAL && t_enter_vertical_hl_mode(t) != NULL)
-			win->wattr |= WA_VERTICAL;
-#endif /* HAVE_WCHAR */
-	}
-	if (attr & __STANDOUT && t_enter_standout_mode(t) != NULL &&
-	    t_exit_standout_mode(t) != NULL)
-		wstandout(win);
-	if (attr & __UNDERSCORE && t_enter_underline_mode(t) != NULL &&
-	    t_exit_underline_mode(t) != NULL)
-		wunderscore(win);
-	if ((attr_t) attr & __COLOR)
-		__wcolor_set(win, (attr_t) attr);
-	return OK;
+	return __wattr_on(win, attr);
 }
 
 /*
@@ -211,115 +174,38 @@ wattr_on(WINDOW *win, attr_t attr, void *opt)
  *	Note that the 'me' sequence unsets all attributes.  We handle
  *	which attributes should really be set in refresh.c:makech().
  */
-/* ARGSUSED */
 int
-wattr_off(WINDOW *win, attr_t attr, void *opt)
+wattr_off(WINDOW *win, attr_t attr, void *opts)
 {
-	const TERMINAL *t = win->screen->term;
+	if (__predict_false(opts != NULL))
+		return ERR;
 
-#ifdef DEBUG
-	__CTRACE(__CTRACE_ATTR, "wattr_off: win %p, attr %08x\n", win, attr);
-#endif
-	/* If can do exit modes, unset the relevent attribute bits. */
-	if (t_exit_attribute_mode(t) != NULL) {
-		if (attr & __BLINK)
-			win->wattr &= ~__BLINK;
-		if (attr & __BOLD)
-			win->wattr &= ~__BOLD;
-		if (attr & __DIM)
-			win->wattr &= ~__DIM;
-		if (attr & __BLANK)
-			win->wattr &= ~__BLANK;
-		if (attr & __PROTECT)
-			win->wattr &= ~__PROTECT;
-		if (attr & __REVERSE)
-			win->wattr &= ~__REVERSE;
-#ifdef HAVE_WCHAR
-		if (attr & WA_LOW)
-			win->wattr &= ~WA_LOW;
-		if (attr & WA_TOP)
-			win->wattr &= ~WA_TOP;
-		if (attr & WA_LEFT)
-			win->wattr &= ~WA_LEFT;
-		if (attr & WA_RIGHT)
-			win->wattr &= ~WA_RIGHT;
-		if (attr & WA_HORIZONTAL)
-			win->wattr &= ~WA_HORIZONTAL;
-	if (attr & WA_VERTICAL)
-			win->wattr &= ~WA_VERTICAL;
-#endif /* HAVE_WCHAR */
-	}
-	if (attr & __STANDOUT)
-		wstandend(win);
-	if (attr & __UNDERSCORE)
-		wunderend(win);
-	if ((attr_t) attr & __COLOR) {
-		if (max_colors != 0)
-			win->wattr &= ~__COLOR;
-	}
-	return OK;
+	return __wattr_off(win, attr);
 }
+
 
 /*
  * wattr_set --
  *	Set wide attributes and color pair on window
  */
 int
-wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
+wattr_set(WINDOW *win, attr_t attr, short pair, void *opts)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattr_set: win %p, attr %08x, pair %d\n",
 	    win, attr, pair);
 #endif
-	wattr_off(win, __ATTRIBUTES, opt);
+	if (__predict_false(opts != NULL))
+		return ERR;
+
 	/*
 	 * This overwrites any colour setting from the attributes
 	 * and is compatible with ncurses.
 	 */
 	attr = (attr & ~__COLOR) | COLOR_PAIR(pair);
-	wattr_on(win, attr, opt);
-	return OK;
-}
 
-/*
- * wattron --
- *	Test and set attributes.
- */
-int
-wattron(WINDOW *win, int attr)
-{
-#ifdef DEBUG
-	__CTRACE(__CTRACE_ATTR, "wattron: win %p, attr %08x\n", win, attr);
-#endif
-	return wattr_on(win, (attr_t) attr, NULL);
-}
-
-/*
- * wattroff --
- *	Test and unset attributes.
- */
-int
-wattroff(WINDOW *win, int attr)
-{
-#ifdef DEBUG
-	__CTRACE(__CTRACE_ATTR, "wattroff: win %p, attr %08x\n", win, attr);
-#endif
-	return wattr_off(win, (attr_t) attr, NULL);
-}
-
-/*
- * wattrset --
- *	Set specific attribute modes.
- *	Unset others.
- */
-int
-wattrset(WINDOW *win, int attr)
-{
-#ifdef DEBUG
-	__CTRACE(__CTRACE_ATTR, "wattrset: win %p, attr %08x\n", win, attr);
-#endif
-	wattr_off(win, __ATTRIBUTES, NULL);
-	wattr_on(win, (attr_t) attr, NULL);
+	__wattr_off(win, WA_ATTRIBUTES);
+	__wattr_on(win, attr);
 	return OK;
 }
 
@@ -329,7 +215,7 @@ wattrset(WINDOW *win, int attr)
  */
 /* ARGSUSED */
 int
-wcolor_set(WINDOW *win, short pair, void *opt)
+wcolor_set(WINDOW *win, short pair, void *opts)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "wolor_set: win %p, pair %d\n", win, pair);
@@ -349,6 +235,48 @@ getattrs(WINDOW *win)
 	__CTRACE(__CTRACE_ATTR, "getattrs: win %p\n", win);
 #endif
 	return((chtype) win->wattr);
+}
+
+/*
+ * wattron --
+ *	Test and set attributes.
+ */
+int
+wattron(WINDOW *win, int attr)
+{
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "wattron: win %p, attr %08x\n", win, attr);
+#endif
+	return __wattr_on(win, (attr_t) attr);
+}
+
+/*
+ * wattroff --
+ *	Test and unset attributes.
+ */
+int
+wattroff(WINDOW *win, int attr)
+{
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "wattroff: win %p, attr %08x\n", win, attr);
+#endif
+	return __wattr_off(win, (attr_t) attr);
+}
+
+/*
+ * wattrset --
+ *	Set specific attribute modes.
+ *	Unset others.
+ */
+int
+wattrset(WINDOW *win, int attr)
+{
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "wattrset: win %p, attr %08x\n", win, attr);
+#endif
+	__wattr_off(win, __ATTRIBUTES);
+	__wattr_on(win, (attr_t) attr);
+	return OK;
 }
 
 /*
@@ -440,11 +368,106 @@ term_attrs(void)
 	return attr;
 }
 
-/*
- * __wcolor_set --
- * Set color attribute on window
- */
-void
+
+static int
+__wattr_on(WINDOW *win, attr_t attr)
+{
+	const TERMINAL *t = win->screen->term;
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "wattr_on: win %p, attr %08x\n", win, attr);
+#endif
+	/* If can enter modes, set the relevent attribute bits. */
+	if (t_exit_attribute_mode(t) != NULL) {
+		if (attr & __BLINK && t_enter_blink_mode(t) != NULL)
+			win->wattr |= __BLINK;
+		if (attr & __BOLD && t_enter_bold_mode(t) != NULL)
+			win->wattr |= __BOLD;
+		if (attr & __DIM && t_enter_dim_mode(t) != NULL)
+			win->wattr |= __DIM;
+		if (attr & __BLANK && t_enter_secure_mode(t) != NULL)
+			win->wattr |= __BLANK;
+		if (attr & __PROTECT && t_enter_protected_mode(t) != NULL)
+			win->wattr |= __PROTECT;
+		if (attr & __REVERSE && t_enter_reverse_mode(t) != NULL)
+			win->wattr |= __REVERSE;
+#ifdef HAVE_WCHAR
+		if (attr & WA_LOW && t_enter_low_hl_mode(t) != NULL)
+			win->wattr |= WA_LOW;
+		if (attr & WA_TOP && t_enter_top_hl_mode(t) != NULL)
+			win->wattr |= WA_TOP;
+		if (attr & WA_LEFT && t_enter_left_hl_mode(t) != NULL)
+			win->wattr |= WA_LEFT;
+		if (attr & WA_RIGHT && t_enter_right_hl_mode(t) != NULL)
+			win->wattr |= WA_RIGHT;
+		if (attr & WA_HORIZONTAL && t_enter_horizontal_hl_mode(t) != NULL)
+			win->wattr |= WA_HORIZONTAL;
+		if (attr & WA_VERTICAL && t_enter_vertical_hl_mode(t) != NULL)
+			win->wattr |= WA_VERTICAL;
+#endif /* HAVE_WCHAR */
+	}
+	if (attr & __STANDOUT && t_enter_standout_mode(t) != NULL &&
+	    t_exit_standout_mode(t) != NULL)
+		wstandout(win);
+	if (attr & __UNDERSCORE && t_enter_underline_mode(t) != NULL &&
+	    t_exit_underline_mode(t) != NULL)
+		wunderscore(win);
+	if (attr & __COLOR)
+		__wcolor_set(win, attr);
+	return OK;
+}
+
+
+static int
+__wattr_off(WINDOW *win, attr_t attr)
+{
+	const TERMINAL *t = win->screen->term;
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "wattr_off: win %p, attr %08x\n", win, attr);
+#endif
+	/* If can do exit modes, unset the relevent attribute bits. */
+	if (t_exit_attribute_mode(t) != NULL) {
+		if (attr & __BLINK)
+			win->wattr &= ~__BLINK;
+		if (attr & __BOLD)
+			win->wattr &= ~__BOLD;
+		if (attr & __DIM)
+			win->wattr &= ~__DIM;
+		if (attr & __BLANK)
+			win->wattr &= ~__BLANK;
+		if (attr & __PROTECT)
+			win->wattr &= ~__PROTECT;
+		if (attr & __REVERSE)
+			win->wattr &= ~__REVERSE;
+#ifdef HAVE_WCHAR
+		if (attr & WA_LOW)
+			win->wattr &= ~WA_LOW;
+		if (attr & WA_TOP)
+			win->wattr &= ~WA_TOP;
+		if (attr & WA_LEFT)
+			win->wattr &= ~WA_LEFT;
+		if (attr & WA_RIGHT)
+			win->wattr &= ~WA_RIGHT;
+		if (attr & WA_HORIZONTAL)
+			win->wattr &= ~WA_HORIZONTAL;
+		if (attr & WA_VERTICAL)
+			win->wattr &= ~WA_VERTICAL;
+#endif /* HAVE_WCHAR */
+	}
+	if (attr & __STANDOUT)
+		wstandend(win);
+	if (attr & __UNDERSCORE)
+		wunderend(win);
+	if (attr & __COLOR) {
+		if (max_colors != 0)
+			win->wattr &= ~__COLOR;
+	}
+	return OK;
+}
+
+
+static void
 __wcolor_set(WINDOW *win, attr_t attr)
 {
 	const TERMINAL *t = win->screen->term;

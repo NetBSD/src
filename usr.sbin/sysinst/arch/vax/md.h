@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:47 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.26.1 2018/11/26 01:52:59 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,19 +49,15 @@
 #define DEFSWAPRAM	16	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	32	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
-#define DEFUSRSIZE	70	/* Default /usr size, if /home */
-#define XNEEDMB		35	/* Extra megs for full X installation */
+#define DEFUSRSIZE	450	/* Default /usr size, if /home */
+#define XNEEDMB 	150	/* Extra megs for full X installation */
+#define DEBNEEDMB	650	/* Extra megs for debug sets */
 
 /*
  * Default filesets to fetch and install during installation
  * or upgrade.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- */
-#define DISK_NAMES "sd", "ra", "rd", "hp"
 
 /*
  * Machine-specific command to write a new label to a disk.
@@ -74,4 +70,4 @@
 #ifdef CD_NAMES
 #undef CD_NAMES
 #endif
-#define CD_NAMES "cd0a","racd0a"
+#define CD_NAMES "cd*","racd*"

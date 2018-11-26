@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.31 2017/07/03 21:34:20 wiz Exp $
+.\"	$NetBSD: menuc.1,v 1.31.4.1 2018/11/26 01:52:54 pgoyette Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 2, 2004
+.Dd November 20, 2018
 .Dt MENUC 1
 .Os
 .Sh NAME
@@ -50,14 +50,6 @@ The standard base name of the files is
 The
 .Fl o Ar name
 can be used to specify a different base name.
-.Sh ENVIRONMENT
-.Bl -tag -width MENUDEF
-.It Ev MENUDEF
-Can be set to point to a different set of definition files for
-.Nm .
-The current location defaults to
-.Pa /usr/share/misc .
-.El
 .Sh MENU DESCRIPTIONS
 The input
 .Ar file
@@ -66,18 +58,16 @@ It also contains comments, initial C code that is required to provide
 for definitions and other code necessary for the menu system, and an
 option declaration if dynamic menus are requested.
 .Pp
-Comments may appear anywhere in the input
-.Ar file
+Comments may appear anywhere in the input file
 and are like a space in the input.
 They are like C comments starting with
-.Em /*
+.Li "/*"
 and ending with
-.Em */ .
+.Li "*/" .
 They are unlike C comments in that they may be nested.
 A comment does not end until a matching end comment is found.
 .Pp
-In many places, C code is included in the definition
-.Ar file .
+In many places, C code is included in the definition file.
 All C code is passed verbatim to the C output file.
 .Nm
 comments do not start in C code and comments in the C code are
@@ -85,26 +75,24 @@ passed verbatim to the output.
 The C comments are not recognized by
 .Nm .
 In all cases, C code starts with a left brace
-.Pq Em \&{
+.Pq Ql \&{
 and ends with the matching right brace
-.Pq Em \&} .
+.Pq Ql \&} .
 It is important to recognize that in code segments, any brace
 will be counted, even if it is in a C comment inside the code.
 .Pp
-The
-.Ar file
+The file
 contains an initial (and optional) code block followed by any
 number of menu definition elements in any order.
 The initial code block usually contains includes of header files used by
-code in the menu code blocks later in the
-.Ar file .
+code in the menu code blocks later in the file.
 If
 .Dv USER_MENU_INIT
-is #defined, then it will be evaluated before the
+preprocessor symbol
+is defined, then it will be evaluated before the
 rest of the menu is initialised, if it evaluates to a non-zero value
 then the initialisation will fail.
-The file is free format, so the actual formatting of the input
-.Ar file
+The file is free format, so the actual formatting of the input file
 is to the taste of the programmer.
 .Pp
 All other C code that will appear in an
@@ -113,15 +101,16 @@ This will be specified as
 .Aq Em action
 in later text.
 Such an action will appear as:
-.Dl action <opt_endwin> <code>
-in the
-.Ar file .
+.Pp
+.D1 Li action Ao Em opt_endwin Ac Ao Em code Ac
+.Pp
+in the file.
 The
 .Aq Em opt_endwin ,
-if present is:
-.Dl ( endwin )
+is optional
+.Ql "(endwin)"
 and specifies that the curses
-.Fn endwin
+.Xr endwin 3
 function should be called before executing the code and
 then reinstating the current curses window after the
 code has been run.
@@ -130,50 +119,65 @@ The
 is as described above.
 .Pp
 There are four kinds of menu definition elements.
-The first one just declares whether the programmer wants dynamic menus
-available.
-The default is static menus only.
-The static menus are the ones defined by the menu definitions and do not
+The first one just declares whether the programmer wants dynamic menus,
+dynamic messages and argument expansion in menus available.
+All these option default to off (or static only).
+.Pp
+Static menus are the ones defined by the menu definitions and do not
 change at run time.
-The dynamic menus provide the programmer with a method to create and
+Dynamic menus provide the programmer with a method to create and
 modify menus during the running of the program.
 To include dynamic menus, one needs only add the declaration:
-.Dl allow dynamic menus ;
+.Pp
+.Dl "allow dynamic menus;"
+.Pp
 The semicolon is required to terminate this declaration.
-This declaration may appear anywhere in the
-.Ar file ,
+This declaration may appear anywhere in the file,
 but usually appears before any menus are defined.
+See below for a detailed explanation of dynamic menus.
+.Pp
+To enable internationalization by loading message files at
+run time one needs to add the declaration:
+.Pp
+.Dl "allow dynamic messages;"
+.Pp
+To allow argument expansion on static menu strings (see below for a
+detailed explanation), one needs to add the declaration:
+.Pp
+.Dl "allow expand;"
 .Pp
 The next element is a code block to execute if the curses
 screen can not be successfully initialized.
 The declaration
-.Dl error code ;
+.Pp
+.D1 Li error Li action Ao Em code Ac Ns Li \&;
+.Pp
 tells the menu system to execute the associated code block
 if the initialization fails.
 If no code is provided, a default code block is used that prints
-.Dl Could not initialize curses.
+.Dq Could not initialize curses.
 and exits.
-This element may appear anywhere in the
-.Ar file
+This element may appear anywhere in the file
 but usually appears before any menus are defined.
 .Pp
-The next element defines default options for menus.
 Each menu is built from a list of options.
 These options include the location of the upper left corner of the menu,
-whether there is a "box" drawn around the menu, whether the menu is
+whether there is a
+.Dq box
+drawn around the menu, whether the menu is
 scrollable, the menu's title, whether shortcut letters are
 allowed, whether a standard exit option should be included
 in the menu and text associated with the standard exit option.
+.Pp
+The
+.Ic default
+declaration defines default options for menus.
 The general format is:
-.Dl default <comma separated option list> ;
+.Pp
+.D1 Li default Ao Em comma separated option list Ac Ns Li \&;
 .Pp
 The supported options are:
-.Bl -tag -width ".Ic exitstring Va text"
-.It Ic x = Va startx
-The column number of the upper left corner of the menu window.
-If
-.Va startx
-is -1 the menu will be centered horizontally.
+.Bl -tag -width ".Ic exitstring Va text" -offset indent
 .It Ic y = Va starty
 The row number of the upper left corner of the menu window.
 If
@@ -181,10 +185,15 @@ If
 is negative then the menu will be placed below any message text, but
 in at least row
 .Va -starty .
+.It Ic x = Va startx
+The column number of the upper left corner of the menu window.
+If
+.Va startx
+is -1 the menu will be centered horizontally.
 .It Ic h = Va height
 Specifies the number of menu entries to be displayed.
 If zero, the height will be based on the number of entries.
-.It Ic h = Va width
+.It Ic w = Va width
 Specifies the width of the menu window.
 If zero, the width will be that of the longest menu text line.
 .It Ic title Va text
@@ -197,34 +206,35 @@ If specified, draw a box around the menu.
 If specified, clear the window before performing the
 .Va action .
 .It Ic exit
-If specified add an addition option to exit the menu.
+If specified, add an additional option to exit the menu.
 .It Ic exitstring Va text
 The menu label for the
 .Va exit
 option.
-If not specified defaults to "exit".
+If not specified defaults to
+.Dq "Exit" .
 .It Ic default exit
-If specified, place the cursor on the
-.Va exit
+If specified, place the cursor on the exit
 line of the menu, instead of the top line.
 .It Ic shortcut
 If specified, add alphabetic tags to each menu line.
 .It Ic scrollable
 If specified, and the menu has more lines than will fit in its window, then
 only part of the menu will be displayed and the
-.Sq <
+.Ql <
 and
-.Sq >
+.Ql >
 keys will scroll the displayed menu lines.
 .It Ic always scroll
 If specified, allow for the scroll message line even if the menu doesn't
 appear to have too many lines.
 Useful for dynamic menus, when the number of entries isn't known when the
-menu window is created..
+menu window is created.
 .It Ic sub menu
 If specified, the screen contents that the menu window overwrites are saved
 and restored when the menu exits.
 .El
+.Pp
 The
 .Ic box , clear , exit , default exit , shortcut , scrollable , always scroll ,
 and
@@ -235,61 +245,88 @@ in order to negate a default.
 .Pp
 The
 .Va text
-arguments can be either a quoted text string or a name #defined to something
-suitable for initialising a const char * field.
+arguments can be either a quoted text string or a preprocessor symbol defined
+to something suitable for initialising a
+.Vt "const char *"
+field.
 .Pp
-The default declaration may appear multiple times.
+The
+.Ic default
+declaration may appear multiple times.
 Each time, it sets the default values for menu definitions that follow
-in the
-.Ar file .
+in the file.
 In each menu definition, any or all of these default definitions
 may be overridden for that menu.
 .Pp
-The final element is the actual static menu definitions.
+The
+.Ic menu
+element is the actual static menu definitions.
 The format and order for a menu definition is:
-.Bd -ragged -offset indent
-menu <name> <options> ;
-  <display action>
-  <menu items>
-  <exit action>
-  <help text>
+.Bd -unfilled -offset indent
+.Li menu Ao Em name Ac Ao Em options Ac Ns Li \&;
+.Li " " Aq Em expand action
+.Li " " Aq Em display action
+.Li " " Aq Em menu items
+.Li " " Aq Em exit action
+.Li " " Aq Em help text
 .Ed
 .Pp
-Names are unquoted strings of alpha-numeric and underscore
+Menu names are unquoted strings of alpha-numeric and underscore
 characters.
 They must start with an alpha character.
 In C source, a menu named
 .Dq foo
 is appears as
-.Dq MENU_foo .
+.Li MENU_foo .
 (Capitalization is important.)
 This is important, because the menu is displayed and processed by
 calling the function
-.Dl process_menu (MENU_foo, arg) ;
+.Pp
+.Dl "process_menu(MENU_foo, arg);"
 .Pp
 The options are a comma separated list of options as in the
-.Dq default
+.Ic default
 declaration.
 These override the options from the most recent default declaration.
+.Pp
+The expand action is optional and only available if the global option
+.Ic allow expand
+has been declared (see above).
+For an example see below.
 .Pp
 The display action is optional and provides C code to
 execute at each and every time the menu is displayed for processing.
 If it is included, the format is:
-.Dl display <action> ;
+.Pp
+.Dl display Ao Em action Ac Ns Li \&;
 .Pp
 The bulk of the menu definition is the specification
 of the menu items.
 The general format of a menu item is:
-.Dl option <string>, <element_list> ;
+.Pp
+.Dl option Ao Em string Ac Ns Li \&, Ao Em element_list Ac Ns Li \&;
+.Pp
 The
 .Aq Em string
 is the text displayed for the menu item, this must be a quoted string
-or a name #defined to something that will initialise a const char * field.
+or a preprocessor symbol defined to something that will initialise a
+.Vt "const char *"
+field.
 There may be an arbitrary number of these items.
 (If there are shortcuts in the menu, a practical limit
 of 51 should be recognized.
-It produces shortcuts a to w, y, z, and A to Z.
-x is the shortcut for the exit item.)
+It produces shortcuts
+.Sq a
+to
+.Sq w ,
+.Sq y ,
+.Sq z ,
+and
+.Sq A
+to
+.Sq Z .
+.Sq x
+is the shortcut for the exit item.)
 .Pp
 The
 .Aq Em element_list
@@ -298,51 +335,74 @@ They may appear in any order.
 .Pp
 The first element processed when a menu item
 is selected is the associated action.
-The next element to be processed is the sub or next menu option.
+The next element to be processed is the
+.Ic sub
+or
+.Ic next menu
+option.
 They are declared as:
-.Dl next menu <name>
-.Dl sub menu <name>
-The difference between these two is that a sub
+.Pp
+.Dl sub menu Aq Em name
+and
+.Dl next menu Aq Em name
+.Pp
+The difference between these two is that a
+.Dq sub
 menu will return to the current menu when exited.
-The next menu will just replace the current
+The
+.Dq next
+menu will just replace the current
 menu and when exited, will return to where the
 current menu would have gone.
-Only one of menu element may be used for each menu item.
+Only one of
+.Ic menu
+element may be used for each menu item.
 Finally, after processing both the action and a sub menu,
 the current menu will be exited if the element
+.Pp
 .Dl exit
+.Pp
 is specified.
 .Em Note :
 If
-.Em exit
-is specified, next menu will not work because
+.Ic exit
+is specified,
+.Ic next menu
+will not work because
 the menu system will exit the
 .Em current
 menu, even if current has been set by
-.Em next menu .
+.Ic next menu .
 .Pp
 After all menu items, the final two menu definition
 elements may appear.
-The exit action is optional and provides C code to
+The
+.Aq Em exit action
+is optional and provides C code to
 execute in the process of exiting a menu.
 If it is included, the format is:
-.Dl exit <action> ;
+.Pp
+.Dl exit Ao Em action Ac Ns Li \&;
 .Pp
 The final part of the menu definition is the optional
-help string.
+.Aq Em help string .
 The format is:
-.Dl help <text> ;
+.Pp
+.Dl help Ao Em text Ac Ns Li \&;
+.Pp
 This text is displayed in a full page
 help window if the question mark is typed.
 The actual help text starts with a left brace
-.Pq Em \&{
+.Pq Ql \&{
 and ends with the matching right brace
-.Pq Em \&} .
+.Pq Ql \&} .
 The braces are not included in the
 help string, but all other characters between
 them are included.
 Newlines in the code translate to newlines in the help text.
-Alternatively, the name of a const char * variable may be given.
+Alternatively, the name of a
+.Vt const char *
+variable may be given.
 .Sh DYNAMIC MENUS
 If requested,
 .Nm
@@ -407,57 +467,124 @@ int new_menu(const char *title, menu_ent *opts, int numopts,
 void free_menu (int menu_no);
 .Ed
 .Pp
+If
+.Ic allow expand
+has been declared, the
+.Vt menudesc
+structure contains another member,
+.Fa expand_act :
+.Pp
+.Dl "void (*expand_act)(struct menudesc *, void *);"
+.Pp
+This function (if not null) is called once when initializing
+a menu, before the display action
+.Fa post_act
+is called.
+.Pp
 The
-.Ar title
+.Fa title
 is the title displayed at the top of the menu.
 The
-.Ar opts
+.Fa opts
 is an array of menu entry definitions that has
-.Ar numopts
+.Fa numopts
 elements.
 The programmer must build this array and
 fill in all of the fields before processing calling
 .Fn process_menu
 for the new menu.
 The fields of the
-.Ar opts
+.Fa opts
 may change at any time.
 For example,
-.Em opt_name
+.Fa opt_name
 may change as a result of selecting that option.
 When the menu is redisplayed, the new text is printed.
-Arguments,
-.Ar x , y , h ,
+Arguments
+.Fa x , y , h ,
 and
-.Ar w
+.Fa w
 are the same as the options in the menu description.
-.Ar mopt
+.Fa mopt
 is the boolean options.
-Note, box, clear, exit and shortcuts are enabled by default.
+Note,
+.Ic box ,
+.Ic clear ,
+.Ic exit
+and
+.Ic shortcuts
+are enabled by default.
 You need to add option flags to turn them off or turn on scrollable menus.
 The options
-.Ar post_act ,
+.Fa post_act ,
 and
-.Ar exit_act
+.Fa exit_act
 are function pointers to the display action and the exit action.
-If they are
-.Dv NULL ,
+If they are null,
 no call will be made.
-.Ar draw_line
-will be called to display the menu line if the corresponding opt_name
-field is
-.Dv NULL .
-.Ar help
+.Fa draw_line
+will be called to display the menu line if the corresponding
+.Fa opt_name
+field is null.
+.Fa help
 is the text to display in a help screen.
+A null
+.Fa help
+pointer will disable the help feature for the menu.
 And finally,
-.Ar exitstr
-is the text for the 'exit' line of the menu.
-If
-.Dv NULL ,
-"Exit" is used.
-A
-.Dv NULL
-help pointer will disable the help feature for the menu.
+.Fa exitstr
+is the text for the exit line of the menu.
+If it's null, string
+.Dq Exit
+is used.
+.Sh MENU ITEM EXPANSION
+With the
+.Ic enable expansion
+declaration in effect, static menus may be customized before being displayed.
+This allows parameter substition or special formatting of the menu item
+strings without having to resort to a full dynamic menu.
+Expanded strings are stored in the
+.Fa opt_exp_name
+member of struct
+.Vt menu_ent .
+This string is prefered over the non-expanded string
+.Fa opt_name
+when displaying the menu.
+The expand action code is responsible for filling this pointers.
+When leaving the menu, all
+.Fa opt_exp_name
+pointers that are populated will be automatically freed by calling
+.Xr free 3 .
+.Pp
+A very simple (and nonsensial) example for an expand option would
+be:
+.Bd -literal -offset indent
+expand action {
+	int i;
+	for (i = 0; i < menu->numopts; i++) {
+		const char *s = MSG_XLAT(menu->opts[i].opt_name);
+		if (s == NULL)
+			continue;
+		char *t = strdup(s);
+		t[0] = tolower((unsigned char)t[0]);
+		menu->opts[i].opt_exp_name = t;
+	}
+};
+.Ed
+which would force the first character of all menu items to lower case.
+The
+.Xr free 3
+call for the
+.Xr strdup 3
+call in above code is automatically handled on menu exit.
+.Sh ENVIRONMENT
+.Bl -tag -width ".Ev MENUDEF"
+.It Ev MENUDEF
+Can be set to point to a different set of definition files for
+.Nm .
+The current location defaults to
+.Pa /usr/share/misc .
+.El
 .Sh FILES
 .Bl -item
 .It
@@ -475,9 +602,10 @@ an executable program could be produced by the following commands.
 menuc -o example example.mc
 cc -o example example.c -lcurses
 .Ed
+.Pp
 A much more complete example is available with the source
 distribution in a subdirectory called
-.Em testm .
+.Pa testm .
 .Bd -literal
 /* This is an example menu definition file for menuc. */
 

@@ -30,6 +30,8 @@
 #include <sys/time.h>
 #include <sys/errno.h>
 
+#include <sys/nvnamespace.h>
+
 #if defined(_KERNEL) && !defined(_BOOT)
 #include <sys/kmem.h>
 #endif

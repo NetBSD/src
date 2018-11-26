@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.23.8.1 2018/09/06 06:55:33 pgoyette Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.23.8.2 2018/11/26 01:52:24 pgoyette Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -187,7 +187,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?

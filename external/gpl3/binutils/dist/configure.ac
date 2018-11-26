@@ -31,7 +31,6 @@ m4_include([lt~obsolete.m4])
 m4_include([config/isl.m4])
 
 AC_INIT(move-if-change)
-AC_PREREQ(2.64)
 AC_DISABLE_OPTION_CHECKING
 
 progname=$0
@@ -157,7 +156,6 @@ target_libraries="target-libgcc \
 		target-libstdc++-v3 \
 		target-libsanitizer \
 		target-libvtv \
-		target-libmpx \
 		target-libssp \
 		target-libquadmath \
 		target-libgfortran \
@@ -600,22 +598,6 @@ if test -d ${srcdir}/libvtv; then
     fi
 fi
 
-
-# Enable libmpx on supported systems by request.
-if test -d ${srcdir}/libmpx; then
-    if test x$enable_libmpx = x; then
-       AC_MSG_CHECKING([for libmpx support])
-       if (srcdir=${srcdir}/libmpx; \
-               . ${srcdir}/configure.tgt; \
-               test "$LIBMPX_SUPPORTED" != "yes")
-       then
-           AC_MSG_RESULT([no])
-           noconfigdirs="$noconfigdirs target-libmpx"
-       else
-           AC_MSG_RESULT([yes])
-       fi
-    fi
-fi
 
 # Disable libhsail-rt on unsupported systems.
 if test -d ${srcdir}/libhsail-rt; then
@@ -1108,6 +1090,10 @@ case "${target}" in
   mt-*-*)
     noconfigdirs="$noconfigdirs sim"
     ;;
+  nfp-*-*)
+    noconfigdirs="$noconfigdirs ld gas gdb gprof sim"
+    noconfigdirs="$noconfigdirs $target_libraries"
+    ;;
   powerpc-*-aix*)
     # copied from rs6000-*-* entry
     noconfigdirs="$noconfigdirs gprof"
@@ -1190,6 +1176,9 @@ case "${target}" in
     ;;
   vax-*-*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+    ;;
+  wasm32-*-*)
+    noconfigdirs="$noconfigdirs ld"
     ;;
 esac
 
@@ -1296,11 +1285,11 @@ if test "$GCC" = yes; then
   LDFLAGS="$LDFLAGS -static-libstdc++ -static-libgcc"
   AC_MSG_CHECKING([whether g++ accepts -static-libstdc++ -static-libgcc])
   AC_LANG_PUSH(C++)
-  AC_LINK_IFELSE([
+  AC_LINK_IFELSE([AC_LANG_SOURCE([
 #if (__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 5)
 #error -static-libstdc++ not implemented
 #endif
-int main() {}],
+int main() {}])],
     [AC_MSG_RESULT([yes]); have_static_libs=yes],
     [AC_MSG_RESULT([no])])
   AC_LANG_POP(C++)
@@ -2687,16 +2676,6 @@ fi
 if echo " ${target_configdirs} " | grep " libvtv " > /dev/null 2>&1 &&
    test "$enable_vtable_verify" != no; then
   bootstrap_target_libs=${bootstrap_target_libs}target-libvtv,
-fi
-
-# If we are building libmpx and $BUILD_CONFIG contains bootstrap-mpx,
-# bootstrap it.
-if echo " ${target_configdirs} " | grep " libmpx " > /dev/null 2>&1; then
-  case "$BUILD_CONFIG" in
-    *bootstrap-mpx* )
-      bootstrap_target_libs=${bootstrap_target_libs}target-libmpx,
-      ;;
-  esac
 fi
 
 # Determine whether gdb needs tk/tcl or not.

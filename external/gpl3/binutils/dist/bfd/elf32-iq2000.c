@@ -22,6 +22,7 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/iq2000.h"
+#include "libiberty.h"
 
 /* Forward declarations.  */
 
@@ -416,7 +417,7 @@ iq2000_final_link_relocate (reloc_howto_type *	howto,
 
 /* Set the howto pointer for a IQ2000 ELF reloc.  */
 
-static void
+static bfd_boolean
 iq2000_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
 			   arelent * cache_ptr,
 			   Elf_Internal_Rela * dst)
@@ -435,15 +436,18 @@ iq2000_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
       break;
 
     default:
-      if (r_type >= (unsigned int) R_IQ2000_max)
+      if (r_type >= ARRAY_SIZE (iq2000_elf_howto_table))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: invalid IQ2000 reloc number: %d"), abfd, r_type);
-	  r_type = 0;
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      abfd, r_type);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
 	}
       cache_ptr->howto = & iq2000_elf_howto_table [r_type];
       break;
     }
+  return TRUE;
 }
 
 /* Look through the relocs for a section during the first phase.
@@ -825,7 +829,7 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	  error = TRUE;
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: compiled with %s and linked with modules compiled with %s"),
+	    (_("%pB: compiled with %s and linked with modules compiled with %s"),
 	     ibfd, new_opt, old_opt);
 	}
 
@@ -839,7 +843,7 @@ iq2000_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: uses different e_flags (%#x) fields than previous modules (%#x)"),
+	    (_("%pB: uses different e_flags (%#x) fields than previous modules (%#x)"),
 	     ibfd, new_flags, old_flags);
 	}
     }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.145.2.1 2018/09/30 01:45:51 pgoyette Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.145.2.2 2018/11/26 01:52:49 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.145.2.1 2018/09/30 01:45:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.145.2.2 2018/11/26 01:52:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -1389,11 +1389,6 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		if (!error && WSSCREEN_HAS_EMULATOR(scr)) {
 			(*scr->scr_dconf->wsemul->reset)
 				(scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
-#ifdef DEBUG
-			printf("resize: %d %d\n",
-			    scr->scr_dconf->scrdata->nrows,
-			    scr->scr_dconf->scrdata->ncols); 
-#endif
 			if (scr->scr_dconf->wsemul->resize) {
 				(*scr->scr_dconf->wsemul->resize)
 					(scr->scr_dconf->wsemulcookie,

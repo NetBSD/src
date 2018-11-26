@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.40 2012/11/04 22:32:01 christos Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.40.28.1 2018/11/26 01:52:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.40 2012/11/04 22:32:01 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.40.28.1 2018/11/26 01:52:55 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ getboottime(void)
 {
 	int mib[2];
 	size_t size;
-	struct timeval tm;
+	struct timespec tm;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;

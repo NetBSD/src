@@ -127,6 +127,9 @@
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
 
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
 /* Define to 1 if you have the `readv' function. */
 #undef HAVE_READV
 
@@ -228,6 +231,10 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

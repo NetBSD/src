@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.3.2.2 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.3.2.3 2018/11/26 01:52:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pci.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3.2.2 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3.2.3 2018/11/26 01:52:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3.2.2 2018/10/20 06:58:24 pgoyett
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
+#if NPCI > 0
 #include <dev/acpi/acpi_mcfg.h>
+#endif
 
 #include <arm/pic/picvar.h>
 
@@ -79,12 +83,7 @@ ACPI_STATUS
 acpi_md_OsInstallInterruptHandler(UINT32 irq, ACPI_OSD_HANDLER handler, void *context,
     void **cookiep, const char *xname)
 {
-	const int ipl = IPL_TTY;
-	const int type = IST_LEVEL;	/* TODO: MADT */
-
-	*cookiep = intr_establish(irq, ipl, type, (int (*)(void *))handler, context);
-
-	return *cookiep == NULL ? AE_NO_MEMORY : AE_OK;
+	return AE_NOT_IMPLEMENTED;
 }
 
 void
@@ -196,6 +195,18 @@ acpi_md_OsDisableInterrupt(void)
 	cpsid(I32_bit);
 }
 
+void *
+acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *), void *arg, bool mpsafe, const char *xname)
+{
+	return intr_establish_xname(irq, ipl, type | (mpsafe ? IST_MPSAFE : 0), handler, arg, xname);
+}
+
+void
+acpi_md_intr_disestablish(void *ih)
+{
+	intr_disestablish(ih);
+}
+
 int
 acpi_md_sleep(int state)
 {
@@ -216,11 +227,23 @@ acpi_md_ncpus(void)
 }
 
 static ACPI_STATUS
-acpi_md_madt_probe(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
+acpi_md_madt_probe_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
 	struct acpi_softc * const sc = aux;
 
-	config_found_ia(sc->sc_dev, "acpimadtbus", hdrp, NULL);
+	if (hdrp->Type == ACPI_MADT_TYPE_GENERIC_INTERRUPT)
+		config_found_ia(sc->sc_dev, "acpimadtbus", hdrp, NULL);
+
+	return AE_OK;
+}
+
+static ACPI_STATUS
+acpi_md_madt_probe_gic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
+{
+	struct acpi_softc * const sc = aux;
+
+	if (hdrp->Type == ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR)
+		config_found_ia(sc->sc_dev, "acpimadtbus", hdrp, NULL);
 
 	return AE_OK;
 }
@@ -240,11 +263,14 @@ acpi_md_callback(struct acpi_softc *sc)
 {
 	ACPI_TABLE_HEADER *hdrp;
 
+#if NPCI > 0
 	acpimcfg_init(&arm_generic_bs_tag, NULL);
+#endif
 
 	if (acpi_madt_map() != AE_OK)
 		panic("Failed to map MADT");
-	acpi_madt_walk(acpi_md_madt_probe, sc);
+	acpi_madt_walk(acpi_md_madt_probe_cpu, sc);
+	acpi_madt_walk(acpi_md_madt_probe_gic, sc);
 	acpi_madt_unmap();
 
 	if (acpi_gtdt_map() != AE_OK)

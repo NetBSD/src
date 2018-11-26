@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libcpp,v 1.5 2017/07/23 01:12:16 mrg Exp $
+#	$NetBSD: Makefile.libcpp,v 1.5.2.1 2018/11/26 01:52:03 pgoyette Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBCPP_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBCPP_=1

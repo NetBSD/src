@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.376.2.5 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.376.2.6 2018/11/26 01:52:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.5 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.6 2018/11/26 01:52:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1221,7 +1221,7 @@ ip_srcroute(struct mbuf *m0)
 	struct ip_srcrt *isr;
 	struct m_tag *mtag;
 
-	mtag = m_tag_find(m0, PACKET_TAG_SRCROUTE, NULL);
+	mtag = m_tag_find(m0, PACKET_TAG_SRCROUTE);
 	if (mtag == NULL)
 		return NULL;
 	isr = (struct ip_srcrt *)(mtag + 1);

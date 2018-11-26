@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.1.2.4 2018/10/20 06:58:25 pgoyette Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.1.2.5 2018/11/26 01:52:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -178,9 +178,13 @@
 #define CPU_ID_CORTEX_A75_P(n)	((n & 0xff0ff0f0) == 0x410fd0a0)
 
 #define CPU_ID_THUNDERXRX	0x43000a10
+#define CPU_ID_THUNDERXP1d0	0x43000a10
+#define CPU_ID_THUNDERXP1d1	0x43000a11
+#define CPU_ID_THUNDERXP2d1	0x431f0a11
 #define CPU_ID_THUNDERX81XXRX	0x43000a20
 #define CPU_ID_THUNDERX83XXRX	0x43000a30
 #define CPU_ID_THUNDERX2RX	0x43000af0
+
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_TI925T		0x54029250

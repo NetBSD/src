@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.10 2016/01/16 21:31:38 christos Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.10.14.1 2018/11/26 01:52:12 pgoyette Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,7 @@ extern int isnan(),finite();
 	 && DBL_MIN_EXP == LDBL_MIN_EXP
 #ifdef __weak_alias
 __weak_alias(fmodl, fmod);
+__weak_alias(modfl, fmod);
 #endif
 #endif
 

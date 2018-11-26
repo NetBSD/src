@@ -165,15 +165,15 @@ elf_cr16c_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-static void
+static bfd_boolean
 elf_cr16c_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 			 arelent *cache_ptr ATTRIBUTE_UNUSED,
 			 Elf_Internal_Rela *dst ATTRIBUTE_UNUSED)
 {
-  abort ();
+  return FALSE;
 }
 
-static void
+static bfd_boolean
 elf_cr16c_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 			     arelent *cache_ptr,
 			     Elf_Internal_Rela *dst)
@@ -183,10 +183,13 @@ elf_cr16c_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= RINDEX_16C_MAX)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid CR16C reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &elf_howto_table[r_type];
+  return TRUE;
 }
 
 /* Perform a relocation as part of a final link.  */

@@ -499,6 +499,7 @@ Target::Target_info Target_sparc<32, true>::sparc_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -527,6 +528,7 @@ Target::Target_info Target_sparc<64, true>::sparc_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 // We have to take care here, even when operating in little-endian

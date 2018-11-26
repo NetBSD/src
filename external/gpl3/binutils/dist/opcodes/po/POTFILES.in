@@ -59,19 +59,13 @@ frv-opc.h
 ft32-dis.c
 ft32-opc.c
 h8300-dis.c
-h8500-dis.c
-h8500-opc.h
 hppa-dis.c
-i370-dis.c
-i370-opc.c
 i386-dis.c
 i386-gen.c
 i386-init.h
 i386-opc.c
 i386-opc.h
 i386-tbl.h
-i860-dis.c
-i960-dis.c
 ia64-asmtab.c
 ia64-asmtab.h
 ia64-dis.c
@@ -129,7 +123,6 @@ m68hc11-dis.c
 m68hc11-opc.c
 m68k-dis.c
 m68k-opc.c
-m88k-dis.c
 mcore-dis.c
 mcore-opc.h
 mep-asm.c
@@ -161,6 +154,7 @@ mt-opc.c
 mt-opc.h
 nds32-asm.c
 nds32-dis.c
+nfp-dis.c
 nios2-dis.c
 nios2-opc.c
 ns32k-dis.c
@@ -183,6 +177,7 @@ rl78-decode.c
 rl78-dis.c
 rx-decode.c
 rx-dis.c
+s12z-dis.c
 s390-dis.c
 s390-mkopc.c
 s390-opc.c
@@ -191,9 +186,6 @@ score-opc.h
 score7-dis.c
 sh-dis.c
 sh-opc.h
-sh64-dis.c
-sh64-opc.c
-sh64-opc.h
 sparc-dis.c
 sparc-opc.c
 spu-dis.c
@@ -215,8 +207,6 @@ v850-opc.c
 vax-dis.c
 visium-dis.c
 visium-opc.c
-w65-dis.c
-w65-opc.h
 wasm32-dis.c
 xc16x-asm.c
 xc16x-desc.c

@@ -1179,6 +1179,7 @@ bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out)
   bfd_byte *contents;
   unsigned int crc_offset;
   char *name;
+  bfd_size_type size;
 
   BFD_ASSERT (abfd);
   BFD_ASSERT (crc32_out);
@@ -1186,6 +1187,12 @@ bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out)
   sect = bfd_get_section_by_name (abfd, GNU_DEBUGLINK);
 
   if (sect == NULL)
+    return NULL;
+
+  size = bfd_get_section_size (sect);
+
+  /* PR 22794: Make sure that the section has a reasonable size.  */
+  if (size < 8 || size >= bfd_get_size (abfd))
     return NULL;
 
   if (!bfd_malloc_and_get_section (abfd, sect, &contents))
@@ -1197,10 +1204,10 @@ bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out)
 
   /* CRC value is stored after the filename, aligned up to 4 bytes.  */
   name = (char *) contents;
-  /* PR 17597: avoid reading off the end of the buffer.  */
-  crc_offset = strnlen (name, bfd_get_section_size (sect)) + 1;
+  /* PR 17597: Avoid reading off the end of the buffer.  */
+  crc_offset = strnlen (name, size) + 1;
   crc_offset = (crc_offset + 3) & ~3;
-  if (crc_offset + 4 > bfd_get_section_size (sect))
+  if (crc_offset + 4 > size)
     return NULL;
 
   *crc32 = bfd_get_32 (abfd, contents + crc_offset);
@@ -1261,6 +1268,7 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
   bfd_byte *contents;
   unsigned int buildid_offset;
   char *name;
+  bfd_size_type size;
 
   BFD_ASSERT (abfd);
   BFD_ASSERT (buildid_len);
@@ -1269,6 +1277,10 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
   sect = bfd_get_section_by_name (abfd, GNU_DEBUGALTLINK);
 
   if (sect == NULL)
+    return NULL;
+
+  size = bfd_get_section_size (sect);
+  if (size < 8 || size >= bfd_get_size (abfd))
     return NULL;
 
   if (!bfd_malloc_and_get_section (abfd, sect, & contents))
@@ -1280,11 +1292,11 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
 
   /* BuildID value is stored after the filename.  */
   name = (char *) contents;
-  buildid_offset = strnlen (name, bfd_get_section_size (sect)) + 1;
+  buildid_offset = strnlen (name, size) + 1;
   if (buildid_offset >= bfd_get_section_size (sect))
     return NULL;
 
-  *buildid_len = bfd_get_section_size (sect) - buildid_offset;
+  *buildid_len = size - buildid_offset;
   *buildid_out = bfd_malloc (*buildid_len);
   memcpy (*buildid_out, contents + buildid_offset, *buildid_len);
 
@@ -1865,10 +1877,11 @@ get_build_id (bfd *abfd)
   inote.descdata = inote.namedata + BFD_ALIGN (inote.namesz, 4);
   /* FIXME: Should we check for extra notes in this section ?  */
 
-  if (inote.descsz == 0
+  if (inote.descsz <= 0
       || inote.type != NT_GNU_BUILD_ID
       || inote.namesz != 4 /* sizeof "GNU"  */
       || strncmp (inote.namedata, "GNU", 4) != 0
+      || inote.descsz > 0x7ffffffe
       || size < (12 + BFD_ALIGN (inote.namesz, 4) + inote.descsz))
     {
       free (contents);

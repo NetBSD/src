@@ -735,12 +735,6 @@ avr_set_current_function (tree decl)
 
       name = default_strip_name_encoding (name);
 
-      /* Silently ignore 'signal' if 'interrupt' is present.  AVR-LibC startet
-         using this when it switched from SIGNAL and INTERRUPT to ISR.  */
-
-      if (cfun->machine->is_interrupt)
-        cfun->machine->is_signal = 0;
-
       /* Interrupt handlers must be  void __vector (void)  functions.  */
 
       if (args && TREE_CODE (TREE_VALUE (args)) != VOID_TYPE)
@@ -749,14 +743,36 @@ avr_set_current_function (tree decl)
       if (TREE_CODE (ret) != VOID_TYPE)
         error_at (loc, "%qs function cannot return a value", isr);
 
+#if defined WITH_AVRLIBC
+      /* Silently ignore 'signal' if 'interrupt' is present.  AVR-LibC startet
+         using this when it switched from SIGNAL and INTERRUPT to ISR.  */
+
+      if (cfun->machine->is_interrupt)
+        cfun->machine->is_signal = 0;
+
       /* If the function has the 'signal' or 'interrupt' attribute, ensure
          that the name of the function is "__vector_NN" so as to catch
          when the user misspells the vector name.  */
 
       if (!STR_PREFIX_P (name, "__vector"))
-        warning_at (loc, 0, "%qs appears to be a misspelled %s handler",
-                    name, isr);
+        warning_at (loc, OPT_Wmisspelled_isr, "%qs appears to be a misspelled "
+                    "%qs handler, missing %<__vector%> prefix", name, isr);
+#endif // AVR-LibC naming conventions
     }
+
+#if defined WITH_AVRLIBC
+  // Common problem is using "ISR" without first including avr/interrupt.h.
+  const char *name = IDENTIFIER_POINTER (DECL_NAME (decl));
+  name = default_strip_name_encoding (name);
+  if (0 == strcmp ("ISR", name)
+      || 0 == strcmp ("INTERRUPT", name)
+      || 0 == strcmp ("SIGNAL", name))
+    {
+      warning_at (loc, OPT_Wmisspelled_isr, "%qs is a reserved identifier"
+                  " in AVR-LibC.  Consider %<#include <avr/interrupt.h>%>"
+                  " before using the %qs macro", name, name);
+    }
+#endif // AVR-LibC naming conventions
 
   /* Don't print the above diagnostics more than once.  */
 
@@ -3490,7 +3506,7 @@ out_movqi_r_mr (rtx_insn *insn, rtx op[], int *plen)
   if (CONSTANT_ADDRESS_P (x))
     {
       int n_words = AVR_TINY ? 1 : 2;
-      return optimize > 0 && io_address_operand (x, QImode)
+      return io_address_operand (x, QImode)
         ? avr_asm_len ("in %0,%i1", op, plen, -1)
         : avr_asm_len ("lds %0,%m1", op, plen, -n_words);
     }
@@ -3745,7 +3761,7 @@ out_movhi_r_mr (rtx_insn *insn, rtx op[], int *plen)
   else if (CONSTANT_ADDRESS_P (base))
     {
       int n_words = AVR_TINY ? 2 : 4;
-      return optimize > 0 && io_address_operand (base, HImode)
+      return io_address_operand (base, HImode)
         ? avr_asm_len ("in %A0,%i1" CR_TAB
                        "in %B0,%i1+1", op, plen, -2)
 
@@ -4873,7 +4889,7 @@ out_movqi_mr_r (rtx_insn *insn, rtx op[], int *plen)
   if (CONSTANT_ADDRESS_P (x))
     {
       int n_words = AVR_TINY ? 1 : 2;
-      return optimize > 0 && io_address_operand (x, QImode)
+      return io_address_operand (x, QImode)
         ? avr_asm_len ("out %i0,%1", op, plen, -1)
         : avr_asm_len ("sts %m0,%1", op, plen, -n_words);
     }
@@ -4949,13 +4965,12 @@ avr_out_movhi_mr_r_xmega (rtx_insn *insn, rtx op[], int *plen)
 
   if (CONSTANT_ADDRESS_P (base))
     {
-      int n_words = AVR_TINY ? 2 : 4;
-      return optimize > 0 && io_address_operand (base, HImode)
+      return io_address_operand (base, HImode)
         ? avr_asm_len ("out %i0,%A1" CR_TAB
                        "out %i0+1,%B1", op, plen, -2)
 
         : avr_asm_len ("sts %m0,%A1" CR_TAB
-                       "sts %m0+1,%B1", op, plen, -n_words);
+                       "sts %m0+1,%B1", op, plen, -4);
     }
 
   if (reg_base > 0)
@@ -5132,7 +5147,7 @@ out_movhi_mr_r (rtx_insn *insn, rtx op[], int *plen)
   if (CONSTANT_ADDRESS_P (base))
     {
       int n_words = AVR_TINY ? 2 : 4;
-      return optimize > 0 && io_address_operand (base, HImode)
+      return io_address_operand (base, HImode)
         ? avr_asm_len ("out %i0+1,%B1" CR_TAB
                        "out %i0,%A1", op, plen, -2)
 
@@ -9055,10 +9070,12 @@ avr_handle_addr_attribute (tree *node, tree name, tree args,
   bool io_p = (strncmp (IDENTIFIER_POINTER (name), "io", 2) == 0);
   location_t loc = DECL_SOURCE_LOCATION (*node);
 
-  if (TREE_CODE (*node) != VAR_DECL)
+  if (!VAR_P (*node))
     {
-      warning_at (loc, 0, "%qE attribute only applies to variables", name);
+      warning_at (loc, OPT_Wattributes, "%qE attribute only applies to "
+		  "variables", name);
       *no_add = true;
+      return NULL_TREE;
     }
 
   if (args != NULL_TREE)
@@ -9068,8 +9085,8 @@ avr_handle_addr_attribute (tree *node, tree name, tree args,
       tree arg = TREE_VALUE (args);
       if (TREE_CODE (arg) != INTEGER_CST)
 	{
-	  warning (0, "%qE attribute allows only an integer constant argument",
-		   name);
+	  warning_at (loc, OPT_Wattributes, "%qE attribute allows only an "
+		      "integer constant argument", name);
 	  *no_add = true;
 	}
       else if (io_p
@@ -9078,19 +9095,20 @@ avr_handle_addr_attribute (tree *node, tree name, tree args,
 			? low_io_address_operand : io_address_operand)
 			 (GEN_INT (TREE_INT_CST_LOW (arg)), QImode)))
 	{
-	  warning_at (loc, 0, "%qE attribute address out of range", name);
+	  warning_at (loc, OPT_Wattributes, "%qE attribute address "
+		      "out of range", name);
 	  *no_add = true;
 	}
       else
 	{
 	  tree attribs = DECL_ATTRIBUTES (*node);
-	  const char *names[] = { "io", "io_low", "address", NULL } ;
+	  const char *names[] = { "io", "io_low", "address", NULL };
 	  for (const char **p = names; *p; p++)
 	    {
 	      tree other = lookup_attribute (*p, attribs);
 	      if (other && TREE_VALUE (other))
 		{
-		  warning_at (loc, 0,
+		  warning_at (loc, OPT_Wattributes,
 			      "both %s and %qE attribute provide address",
 			      *p, name);
 		  *no_add = true;
@@ -9101,7 +9119,8 @@ avr_handle_addr_attribute (tree *node, tree name, tree args,
     }
 
   if (*no_add == false && io_p && !TREE_THIS_VOLATILE (*node))
-    warning_at (loc, 0, "%qE attribute on non-volatile variable", name);
+    warning_at (loc, OPT_Wattributes, "%qE attribute on non-volatile variable",
+		name);
 
   return NULL_TREE;
 }
@@ -9149,11 +9168,11 @@ avr_attribute_table[] =
     false },
   { "OS_main",   0, 0, false, true,  true,   avr_handle_fntype_attribute,
     false },
-  { "io",        0, 1, false, false, false,  avr_handle_addr_attribute,
+  { "io",        0, 1, true, false, false,  avr_handle_addr_attribute,
     false },
-  { "io_low",    0, 1, false, false, false,  avr_handle_addr_attribute,
+  { "io_low",    0, 1, true, false, false,  avr_handle_addr_attribute,
     false },
-  { "address",   1, 1, false, false, false,  avr_handle_addr_attribute,
+  { "address",   1, 1, true, false, false,  avr_handle_addr_attribute,
     false },
   { NULL,        0, 0, false, false, false, NULL, false }
 };
@@ -9591,18 +9610,26 @@ avr_encode_section_info (tree decl, rtx rtl, int new_decl_p)
 
   if (new_decl_p
       && decl && DECL_P (decl)
-      && NULL_TREE == DECL_INITIAL (decl)
       && !DECL_EXTERNAL (decl)
       && avr_progmem_p (decl, DECL_ATTRIBUTES (decl)))
     {
-      // Don't warn for (implicit) aliases like in PR80462.
-      tree asmname = DECL_ASSEMBLER_NAME (decl);
-      varpool_node *node = varpool_node::get_for_asmname (asmname);
-      bool alias_p = node && node->alias;
+      if (!TREE_READONLY (decl))
+        {
+          // This might happen with C++ if stuff needs constructing.
+          error ("variable %q+D with dynamic initialization put "
+                 "into program memory area", decl);
+        }
+      else if (NULL_TREE == DECL_INITIAL (decl))
+        {
+          // Don't warn for (implicit) aliases like in PR80462.
+          tree asmname = DECL_ASSEMBLER_NAME (decl);
+          varpool_node *node = varpool_node::get_for_asmname (asmname);
+          bool alias_p = node && node->alias;
 
-      if (!alias_p)
-        warning (OPT_Wuninitialized, "uninitialized variable %q+D put into "
-                 "program memory area", decl);
+          if (!alias_p)
+            warning (OPT_Wuninitialized, "uninitialized variable %q+D put "
+                     "into program memory area", decl);
+        }
     }
 
   default_encode_section_info (decl, rtl, new_decl_p);
@@ -9864,6 +9891,33 @@ avr_memory_move_cost (machine_mode mode,
 }
 
 
+/* Cost for mul highpart.  X is a LSHIFTRT, i.e. the outer TRUNCATE is
+   already stripped off.  */
+
+static int
+avr_mul_highpart_cost (rtx x, int)
+{
+  if (AVR_HAVE_MUL
+      && LSHIFTRT == GET_CODE (x)
+      && MULT == GET_CODE (XEXP (x, 0))
+      && CONST_INT_P (XEXP (x, 1)))
+    {
+      // This is the wider mode.
+      machine_mode mode = GET_MODE (x);
+  
+      // The middle-end might still have PR81444, i.e. it is calling the cost
+      // functions with strange modes.  Fix this now by also considering
+      // PSImode (should actually be SImode instead).
+      if (HImode == mode || PSImode == mode || SImode == mode)
+        {
+          return COSTS_N_INSNS (2);
+        }
+    }
+
+  return 10000;
+}
+
+
 /* Mutually recursive subroutine of avr_rtx_cost for calculating the
    cost of an RTX operand given its context.  X is the rtx of the
    operand, MODE is its mode, and OUTER is the rtx_code of this
@@ -9903,7 +9957,7 @@ avr_operand_rtx_cost (rtx x, machine_mode mode, enum rtx_code outer,
    In either case, *TOTAL contains the cost result.  */
 
 static bool
-avr_rtx_costs_1 (rtx x, machine_mode mode, int outer_code ATTRIBUTE_UNUSED,
+avr_rtx_costs_1 (rtx x, machine_mode mode, int outer_code,
                  int opno ATTRIBUTE_UNUSED, int *total, bool speed)
 {
   enum rtx_code code = GET_CODE (x);
@@ -10544,6 +10598,12 @@ avr_rtx_costs_1 (rtx x, machine_mode mode, int outer_code ATTRIBUTE_UNUSED,
       return true;
 
     case LSHIFTRT:
+      if (outer_code == TRUNCATE)
+        {
+          *total = avr_mul_highpart_cost (x, speed);
+          return true;
+        }
+
       switch (mode)
 	{
 	case QImode:
@@ -10721,16 +10781,10 @@ avr_rtx_costs_1 (rtx x, machine_mode mode, int outer_code ATTRIBUTE_UNUSED,
       return true;
 
     case TRUNCATE:
-      if (AVR_HAVE_MUL
-          && LSHIFTRT == GET_CODE (XEXP (x, 0))
-          && MULT == GET_CODE (XEXP (XEXP (x, 0), 0))
-          && CONST_INT_P (XEXP (XEXP (x, 0), 1)))
+      if (LSHIFTRT == GET_CODE (XEXP (x, 0)))
         {
-          if (QImode == mode || HImode == mode)
-            {
-              *total = COSTS_N_INSNS (2);
-              return true;
-            }
+          *total = avr_mul_highpart_cost (XEXP (x, 0), speed);
+          return true;
         }
       break;
 
@@ -10779,8 +10833,7 @@ avr_address_cost (rtx x, machine_mode mode ATTRIBUTE_UNUSED,
     }
   else if (CONSTANT_ADDRESS_P (x))
     {
-      if (optimize > 0
-          && io_address_operand (x, QImode))
+      if (io_address_operand (x, QImode))
         cost = 2;
     }
 

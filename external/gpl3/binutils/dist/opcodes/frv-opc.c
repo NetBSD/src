@@ -32,6 +32,7 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 #include "libiberty.h"
 
 /* -- opc.c */
+#include "opintl.h"
 #include "elf/frv.h"
 #include <stdio.h>
 
@@ -454,9 +455,9 @@ add_next_to_vliw (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE unit)
 
   if (next <= 0)
     {
-      fprintf (stderr, "frv-opc.c line %d: bad vliw->next_slot value.\n",
-	       __LINE__);
-      abort (); /* Should never happen.  */
+      /* xgettext:c-format */
+      opcodes_error_handler (_("internal error: bad vliw->next_slot value"));
+      abort ();
     }
 
   /* The table is sorted by units allowed within slots, so vliws with
@@ -764,8 +765,8 @@ fr500_check_insn_major_constraints (FRV_VLIW *vliw, CGEN_ATTR_VALUE_ENUM_TYPE ma
 	&&   ! find_major_in_vliw (vliw, FR500_MAJOR_F_6)
 	&&   ! find_major_in_vliw (vliw, FR500_MAJOR_F_7);
     default:
-      fprintf (stderr, "frv-opc.c, line %d: bad major code, aborting.\n",
-	       __LINE__);
+      /* xgettext:c-format */
+      opcodes_error_handler (_("internal error: bad major code"));
       abort ();
       break;
     }
@@ -814,9 +815,9 @@ frv_vliw_add_insn (FRV_VLIW *vliw, const CGEN_INSN *insn)
   unit = CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_UNIT);
   if (unit == UNIT_NIL)
     {
-      fprintf (stderr, "frv-opc.c line %d: bad insn unit.\n",
-	       __LINE__);
-      abort (); /* No UNIT specified for this insn in frv.cpu.  */
+      /* xgettext:c-format */
+      opcodes_error_handler (_("internal error: bad insn unit"));
+      abort ();
     }
 
   switch (vliw->mach)

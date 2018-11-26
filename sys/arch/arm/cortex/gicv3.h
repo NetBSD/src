@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.1.2.2 2018/09/06 06:55:26 pgoyette Exp $ */
+/* $NetBSD: gicv3.h,v 1.1.2.3 2018/11/26 01:52:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,21 +31,53 @@
 
 #include <sys/intr.h>
 
+struct gicv3_dma {
+	bus_dma_segment_t	segs[1];
+	bus_dmamap_t		map;
+	uint8_t			*base;
+	bus_size_t		len;
+};
+
+struct gicv3_lpi_callback {
+	void			(*cpu_init)(void *, struct cpu_info *);
+	void			(*get_affinity)(void *, size_t, kcpuset_t *);
+	int			(*set_affinity)(void *, size_t, const kcpuset_t *);
+
+	void			*priv;
+
+	LIST_ENTRY(gicv3_lpi_callback) list;
+};
+
 struct gicv3_softc {
-	struct pic_softc	sc_pic;
+	struct pic_softc	sc_pic;		/* SGI/PPI/SGIs */
+	struct pic_softc	sc_lpi;		/* LPIs */
 	device_t		sc_dev;
 
 	bus_space_tag_t		sc_bst;
+	bus_dma_tag_t		sc_dmat;
 
 	bus_space_handle_t	sc_bsh_d;	/* GICD */
 	bus_space_handle_t	*sc_bsh_r;	/* GICR */
 	u_int			sc_bsh_r_count;
 
 	uint32_t		sc_enabled_sgippi;
-	uint64_t		sc_default_irouter;
+	uint64_t		sc_irouter[MAXCPUS];
+
+	/* LPI configuration table */
+	struct gicv3_dma	sc_lpiconf;
+
+	/* LPI pending tables */
+	struct gicv3_dma	sc_lpipend[MAXCPUS];
+
+	/* Unique identifier for PEs */
+	u_int			sc_processor_id[MAXCPUS];
+
+	/* Callbacks */
+	LIST_HEAD(, gicv3_lpi_callback) sc_lpi_callbacks;
 };
 
 int	gicv3_init(struct gicv3_softc *);
+void	gicv3_dma_alloc(struct gicv3_softc *, struct gicv3_dma *, bus_size_t, bus_size_t);
 void	gicv3_irq_handler(void *);
 
 #endif /* _ARM_CORTEX_GICV3_H */

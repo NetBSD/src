@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.7.4.4 2018/10/20 06:58:28 pgoyette Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.7.4.5 2018/11/26 01:52:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.7.4.4 2018/10/20 06:58:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.7.4.5 2018/11/26 01:52:23 pgoyette Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.7.4.4 2018/10/20 06:58:28 pg
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 extern int _end[];
@@ -108,15 +108,6 @@ void nitrogen6_platform_early_putchar(char);
 #include <sys/kgdb.h>
 #endif
 
-static dev_type_cnputc(earlyconsputc);
-static dev_type_cngetc(earlyconsgetc);
-
-static struct consdev earlycons = {
-	.cn_putc = earlyconsputc,
-	.cn_getc = earlyconsgetc,
-	.cn_pollc = nullcnpollc,
-};
-
 static void
 earlyconsputc(dev_t dev, int c)
 {
@@ -126,8 +117,14 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;	/* XXX */
+	return 0;
 }
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
 
 /*
  * Static device mappings. These peripheral registers are mapped at

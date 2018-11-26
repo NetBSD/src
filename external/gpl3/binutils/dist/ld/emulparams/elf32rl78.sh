@@ -11,10 +11,6 @@ ELFSIZE=32
 # EXTRA_EM_FILE=needrelax
 MAXPAGESIZE=256
 
-STACK_ADDR="(DEFINED(__stack) ? __stack : 0xffedc)"
+STACK_ADDR="${CREATE_SHLIB-(DEFINED(__stack) ? __stack : 0xffedc)}"
 STACK_SENTINEL="LONG(0xdead)"
-# We do not need .stack for shared library.
-test -n "$CREATE_SHLIB" && unset STACK_ADDR
-
-OTHER_SYMBOLS="PROVIDE (__rl78_abs__ = 0);"
-test -n "$CREATE_SHLIB" && unset OTHER_SYMBOLS
+OTHER_SYMBOLS="${CREATE_SHLIB-PROVIDE (__rl78_abs__ = 0);}"

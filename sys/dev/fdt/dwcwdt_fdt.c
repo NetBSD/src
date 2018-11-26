@@ -1,4 +1,4 @@
-/* $NetBSD: dwcwdt_fdt.c,v 1.1.2.3 2018/10/20 06:58:31 pgoyette Exp $ */
+/* $NetBSD: dwcwdt_fdt.c,v 1.1.2.4 2018/11/26 01:52:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.1.2.3 2018/10/20 06:58:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.1.2.4 2018/11/26 01:52:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -191,6 +191,10 @@ dwcwdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	rst = fdtbus_reset_get_index(phandle, 0);
+	if (rst && fdtbus_reset_assert(rst) != 0) {
+		aprint_error(": couldn't assert reset\n");
+		return;
+	}
 	if (rst && fdtbus_reset_deassert(rst) != 0) {
 		aprint_error(": couldn't de-assert reset\n");
 		return;

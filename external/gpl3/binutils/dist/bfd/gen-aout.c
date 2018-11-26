@@ -93,9 +93,6 @@ main (int argc, char** argv)
 #ifdef vax
   arch = "vax";
 #endif
-#ifdef m68k
-  arch = "m68k";
-#endif
   if (arch[0] == '1')
     {
       fprintf (stderr, _("warning: preprocessor substituted architecture name inside string;"));

@@ -389,15 +389,6 @@ typedef struct
     }							\
   while (0)
 
-#define ARM_FEATURE_COPY(F1, F2)		\
-  do						\
-    {						\
-      (F1).core[0] = (F2).core[0];		\
-      (F1).core[1] = (F2).core[1];		\
-      (F1).coproc = (F2).coproc;		\
-    }						\
-  while (0)
-
 #define ARM_FEATURE_EQUAL(T1,T2)		\
   (   (T1).core[0] == (T2).core[0]		\
    && (T1).core[1] == (T2).core[1]		\

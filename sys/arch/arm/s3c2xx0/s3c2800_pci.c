@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.23 2017/04/19 12:34:14 jmcneill Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.23.10.1 2018/11/26 01:52:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.23 2017/04/19 12:34:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.23.10.1 2018/11/26 01:52:19 pgoyette Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -152,7 +152,7 @@ int	s3c2800_pci_intr_map(const struct pci_attach_args *,
 const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *s3c2800_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *s3c2800_pci_intr_establish(void *, pci_intr_handle_t, int,
-				  int (*) (void *), void *);
+				  int (*) (void *), void *, const char *);
 void	s3c2800_pci_intr_disestablish(void *, void *);
 
 #define	PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
@@ -202,6 +202,7 @@ struct arm32_pci_chipset sspci_chipset = {
 	s3c2800_pci_bus_maxdevs,
 	s3c2800_pci_make_tag,
 	s3c2800_pci_decompose_tag,
+	NULL,
 	s3c2800_pci_conf_read,
 	s3c2800_pci_conf_write,
 	NULL,		/* intr_v */
@@ -514,7 +515,7 @@ s3c2800_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 
 void *
 s3c2800_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
-			   int (*func) (void *), void *arg)
+			   int (*func) (void *), void *arg, const char *xname)
 {
 	struct sspci_softc *sc = pcv;
 	struct sspci_irq_handler *handler;
@@ -522,7 +523,7 @@ s3c2800_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 
 #ifdef PCI_DEBUG
 	printf("s3c2800_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, "
-	    "func=%p, arg=%p)\n", pcv, ih, level, func, arg);
+	    "func=%p, arg=%p, xname=%s)\n", pcv, ih, level, func, arg, xname);
 #endif
 
 	handler = malloc(sizeof *handler, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);

@@ -80,6 +80,7 @@
 #endif
 
 #ifdef __NetBSD__
+#include <dev/mm.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 #include <uvm/uvm_extern.h>

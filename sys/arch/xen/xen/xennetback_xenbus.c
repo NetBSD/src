@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.61.2.4 2018/09/06 06:55:44 pgoyette Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.61.2.5 2018/11/26 01:52:28 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.61.2.4 2018/09/06 06:55:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.61.2.5 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -556,12 +556,12 @@ xennetback_connect(struct xnetback_instance *xneti)
 	xneti->xni_status = CONNECTED;
 	xen_wmb();
 
-	xneti->xni_ih = intr_establish_xname(0, &xen_pic, xneti->xni_evtchn,
+	xneti->xni_ih = intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
 	    IST_LEVEL, IPL_NET, xennetback_evthandler, xneti, false,
 	    xneti->xni_if.if_xname);
 	KASSERT(xneti->xni_ih != NULL);
 	xennetback_ifinit(&xneti->xni_if);
-	hypervisor_enable_event(xneti->xni_evtchn);
+	hypervisor_unmask_event(xneti->xni_evtchn);
 	hypervisor_notify_via_evtchn(xneti->xni_evtchn);
 	return 0;
 

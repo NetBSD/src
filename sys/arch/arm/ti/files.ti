@@ -1,8 +1,5 @@
-#	$NetBSD: files.ti,v 1.2.4.1 2018/03/22 01:44:44 pgoyette Exp $
+#	$NetBSD: files.ti,v 1.2.4.2 2018/11/26 01:52:20 pgoyette Exp $
 #
-
-include arch/arm/pic/files.pic
-include arch/arm/cortex/files.cortex
 
 file	arch/arm/arm32/arm32_boot.c
 file	arch/arm/arm32/arm32_kvminit.c

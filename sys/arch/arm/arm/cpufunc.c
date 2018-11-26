@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.167.2.4 2018/10/20 06:58:24 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.167.2.5 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.4 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.5 2018/11/26 01:52:17 pgoyette Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -117,6 +117,9 @@ struct	arm_cache_info arm_scache;
 
 u_int	arm_dcache_align;
 u_int	arm_dcache_align_mask;
+
+// Define a TTB value that can never be used.
+uint32_t cpu_ttb = ~0;
 
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
@@ -3561,8 +3564,6 @@ cpu_earlydevice_va_p(void)
 		return false;
 
 	/* Don't access cpu_ttb unless the mmu is enabled */
-	extern uint32_t cpu_ttb;
-
 	const bool cpul1pt_p =
 	    ((armreg_ttbr_read() & -L1_TABLE_SIZE) == cpu_ttb) ||
 	    ((armreg_ttbr1_read() & -L1_TABLE_SIZE) == cpu_ttb);

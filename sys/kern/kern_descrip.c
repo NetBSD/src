@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.231.8.4 2018/10/20 06:58:45 pgoyette Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.231.8.5 2018/11/26 01:52:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231.8.4 2018/10/20 06:58:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231.8.5 2018/11/26 01:52:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,8 @@ static int	filedescopen(dev_t, int, int, lwp_t *);
 
 static int sysctl_kern_file(SYSCTLFN_PROTO);
 static int sysctl_kern_file2(SYSCTLFN_PROTO);
-static void fill_file(struct kinfo_file *, const file_t *, const fdfile_t *,
+static void fill_file(struct file *, const struct file *);
+static void fill_file2(struct kinfo_file *, const file_t *, const fdfile_t *,
 		      int, pid_t);
 
 const struct cdevsw filedesc_cdevsw = {
@@ -149,6 +150,8 @@ fd_sys_init(void)
 	static struct sysctllog *clog;
 
 	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	LIST_INIT(&filehead);
 
 	file_cache = pool_cache_init(sizeof(file_t), coherency_unit, 0,
 	    0, "file", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
@@ -1988,6 +1991,8 @@ sysctl_file_marker_reset(void)
 static int
 sysctl_kern_file(SYSCTLFN_ARGS)
 {
+	const bool allowaddr = get_expose_address(curproc);
+	struct filelist flist;
 	int error;
 	size_t buflen;
 	struct file *fp, fbuf;
@@ -2014,13 +2019,18 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 		return 0;
 	}
 	sysctl_unlock();
-	error = sysctl_copyout(l, &filehead, where, sizeof(filehead));
+	if (allowaddr) {
+		memcpy(&flist, &filehead, sizeof(flist));
+	} else {
+		memset(&flist, 0, sizeof(flist));
+	}
+	error = sysctl_copyout(l, &flist, where, sizeof(flist));
 	if (error) {
 		sysctl_relock();
 		return error;
 	}
-	buflen -= sizeof(filehead);
-	where += sizeof(filehead);
+	buflen -= sizeof(flist);
+	where += sizeof(flist);
 
 	/*
 	 * followed by an array of file structures
@@ -2088,7 +2098,7 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 				break;
 			}
 
-			memcpy(&fbuf, fp, sizeof(fbuf));
+			fill_file(&fbuf, fp);
 			mutex_exit(&fp->f_lock);
 			error = sysctl_copyout(l, &fbuf, where, sizeof(fbuf));
 			if (error) {
@@ -2233,7 +2243,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				}
 				if (len >= elem_size && elem_count > 0) {
 					mutex_enter(&fp->f_lock);
-					fill_file(&kf, fp, ff, i, p->p_pid);
+					fill_file2(&kf, fp, ff, i, p->p_pid);
 					mutex_exit(&fp->f_lock);
 					mutex_exit(&fd->fd_lock);
 					error = sysctl_copyout(l,
@@ -2284,7 +2294,30 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 }
 
 static void
-fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
+fill_file(struct file *fp, const struct file *fpsrc)
+{
+	const bool allowaddr = get_expose_address(curproc);
+
+	memset(fp, 0, sizeof(*fp));
+
+	fp->f_offset = fpsrc->f_offset;
+	COND_SET_VALUE(fp->f_cred, fpsrc->f_cred, allowaddr);
+	COND_SET_VALUE(fp->f_ops, fpsrc->f_ops, allowaddr);
+	COND_SET_VALUE(fp->f_undata, fpsrc->f_undata, allowaddr);
+	COND_SET_VALUE(fp->f_list, fpsrc->f_list, allowaddr);
+	COND_SET_VALUE(fp->f_lock, fpsrc->f_lock, allowaddr);
+	fp->f_flag = fpsrc->f_flag;
+	fp->f_marker = fpsrc->f_marker;
+	fp->f_type = fpsrc->f_type;
+	fp->f_advice = fpsrc->f_advice;
+	fp->f_count = fpsrc->f_count;
+	fp->f_msgcount = fpsrc->f_msgcount;
+	fp->f_unpcount = fpsrc->f_unpcount;
+	COND_SET_VALUE(fp->f_unplist, fpsrc->f_unplist, allowaddr);
+}
+
+static void
+fill_file2(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 	  int i, pid_t pid)
 {
 	const bool allowaddr = get_expose_address(curproc);

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1.28.8 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: pmap.h,v 1.1.28.9 2018/11/26 01:52:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
 #ifdef __aarch64__
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_kasan.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
@@ -47,9 +51,10 @@
 
 #define __HAVE_VM_PAGE_MD
 
+#ifndef KASAN
 #define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
 #define PMAP_UNMAP_POOLPAGE(va)		AARCH64_KVA_TO_PA(va)
-
+#endif
 
 struct pmap {
 	kmutex_t pm_lock;

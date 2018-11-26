@@ -436,10 +436,6 @@ static FILE *base_file;
 static const char *mname = "arm";
 #endif
 
-#ifdef DLLTOOL_DEFAULT_ARM_EPOC
-static const char *mname = "arm-epoc";
-#endif
-
 #ifdef DLLTOOL_DEFAULT_ARM_WINCE
 static const char *mname = "arm-wince";
 #endif
@@ -733,17 +729,7 @@ mtable[] =
   }
   ,
   {
-#define MARM_EPOC 9
-    "arm-epoc", ".byte", ".short", ".long", ".asciz", "@",
-    "ldr\tip,[pc]\n\tldr\tpc,[ip]\n\t.long",
-    ".global", ".space", ".align\t2",".align\t4", "",
-    "epoc-pe-arm-little", bfd_arch_arm,
-    arm_jtab, sizeof (arm_jtab), 8,
-    0, 0, 0, 0, 0, 0
-  }
-  ,
-  {
-#define MARM_WINCE 10
+#define MARM_WINCE 9
     "arm-wince", ".byte", ".short", ".long", ".asciz", "@",
     "ldr\tip,[pc]\n\tldr\tpc,[ip]\n\t.long",
     ".global", ".space", ".align\t2",".align\t4", "-mapcs-32",
@@ -753,7 +739,7 @@ mtable[] =
   }
   ,
   {
-#define MX86 11
+#define MX86 10
     "i386:x86-64", ".byte", ".short", ".long", ".asciz", "#",
     "jmp *", ".global", ".space", ".align\t2",".align\t4", "",
     "pe-x86-64",bfd_arch_i386,
@@ -908,7 +894,6 @@ rvaafter (int mach)
     case MMCORE_LE:
     case MMCORE_ELF:
     case MMCORE_ELF_LE:
-    case MARM_EPOC:
     case MARM_WINCE:
       break;
     default:
@@ -934,7 +919,6 @@ rvabefore (int mach)
     case MMCORE_LE:
     case MMCORE_ELF:
     case MMCORE_ELF_LE:
-    case MARM_EPOC:
     case MARM_WINCE:
       return ".rva\t";
     default:
@@ -958,7 +942,6 @@ asm_prefix (int mach, const char *name)
     case MMCORE_LE:
     case MMCORE_ELF:
     case MMCORE_ELF_LE:
-    case MARM_EPOC:
     case MARM_WINCE:
       break;
     case M386:

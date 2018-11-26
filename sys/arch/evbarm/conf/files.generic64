@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.1.2.6 2018/10/20 06:58:27 pgoyette Exp $
+#	$NetBSD: files.generic64,v 1.1.2.7 2018/11/26 01:52:21 pgoyette Exp $
 #
 # A generic (aarch64) kernel configuration info
 #
@@ -11,7 +11,6 @@ include "arch/evbarm/conf/files.fdt"
 # Add other board files here
 #
 include "arch/arm/acpi/files.acpi"
-include "arch/arm/amd/files.seattle"
 include "arch/arm/broadcom/files.bcm2835"
 include "arch/arm/cavium/files.thunderx"
 include "arch/arm/nvidia/files.tegra"

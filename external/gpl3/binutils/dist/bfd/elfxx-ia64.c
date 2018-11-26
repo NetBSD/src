@@ -196,12 +196,12 @@ static unsigned char elf_code_to_howto_index[R_IA64_MAX_RELOC_CODE + 1];
 reloc_howto_type *
 ia64_elf_lookup_howto (unsigned int rtype)
 {
-  static int inited = 0;
+  static bfd_boolean inited = FALSE;
   int i;
 
   if (!inited)
     {
-      inited = 1;
+      inited = TRUE;
 
       memset (elf_code_to_howto_index, 0xff, sizeof (elf_code_to_howto_index));
       for (i = 0; i < NELEMS (ia64_howto_table); ++i)
@@ -209,15 +209,15 @@ ia64_elf_lookup_howto (unsigned int rtype)
     }
 
   if (rtype > R_IA64_MAX_RELOC_CODE)
-    return 0;
+    return NULL;
   i = elf_code_to_howto_index[rtype];
   if (i >= NELEMS (ia64_howto_table))
-    return 0;
+    return NULL;
   return ia64_howto_table + i;
 }
 
-reloc_howto_type*
-ia64_elf_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+reloc_howto_type *
+ia64_elf_reloc_type_lookup (bfd *abfd,
 			    bfd_reloc_code_real_type bfd_code)
 {
   unsigned int rtype;
@@ -320,7 +320,12 @@ ia64_elf_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     case BFD_RELOC_IA64_DTPREL64LSB:	rtype = R_IA64_DTPREL64LSB; break;
     case BFD_RELOC_IA64_LTOFF_DTPREL22:	rtype = R_IA64_LTOFF_DTPREL22; break;
 
-    default: return 0;
+    default:
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, (int) bfd_code);
+      bfd_set_error (bfd_error_bad_value);
+      return NULL;
     }
   return ia64_elf_lookup_howto (rtype);
 }

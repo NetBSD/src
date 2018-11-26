@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.485.2.10 2018/10/20 06:58:24 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.485.2.11 2018/11/26 01:52:16 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.485.2.10 $"
+#ident		"GENERIC-$Revision: 1.485.2.11 $"
 
 maxusers	64		# estimated number of users
 
@@ -244,8 +244,9 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # wscons options
 #
 # builtin terminal emulations
-#options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
+#options 	WSEMUL_DEFAULT="\"vt100\""  # NB: default is "sun" if enabled
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
@@ -613,6 +614,7 @@ dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
+mfii*	at pci? dev ? function ?	# LSI MegaRAID SAS (Fusion and newer)
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
 mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II

@@ -196,6 +196,26 @@ extern const aarch64_operand aarch64_operands[];
 #define OPD_F_OD_LSB		5
 #define OPD_F_NO_ZR		0x00000100	/* ZR index not allowed.  */
 
+/* Register flags.  */
+
+#undef F_DEPRECATED
+#define F_DEPRECATED	(1 << 0)  /* Deprecated system register.  */
+
+#undef F_ARCHEXT
+#define F_ARCHEXT	(1 << 1)  /* Architecture dependent system register.  */
+
+#undef F_HASXT
+#define F_HASXT		(1 << 2)  /* System instruction register <Xt>
+				     operand.  */
+
+#undef F_REG_READ
+#define F_REG_READ	(1 << 3)  /* Register can only be used to read values
+				     out of.  */
+
+#undef F_REG_WRITE
+#define F_REG_WRITE	(1 << 4)  /* Register can only be written to but not
+				     read from.  */
+
 static inline bfd_boolean
 operand_has_inserter (const aarch64_operand *operand)
 {

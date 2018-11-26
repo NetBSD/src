@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.1.26.1 2018/11/26 01:52:57 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,10 +57,11 @@
 #define PART_FIRST_FREE	PART_F
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
-#define DEFROOTSIZE	20	/* Default root size */
+#define DEFROOTSIZE	40	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
-#define DEFUSRSIZE	240	/* Default /usr size, if created */
-#define XNEEDMB		120	/* Extra megs for full X installation */
+#define DEFUSRSIZE	700	/* Default /usr size, if created */
+#define XNEEDMB		250	/* Extra megs for full X installation */
+#define DEBNEEDMB	800	/* Extra megs for debug sets */
 
 /*
  *  Default filesets to fetch and install during installation
@@ -68,13 +69,6 @@
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On  hp300, allow "rd" HP-IB and "sd" scsi disks.
- */
-#define DISK_NAMES "rd", "sd"
 
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.394.2.5 2018/09/30 01:45:50 pgoyette Exp $
+#	$NetBSD: files.pci,v 1.394.2.6 2018/11/26 01:52:32 pgoyette Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -152,6 +152,11 @@ file	dev/pci/isp_pci.c		isp_pci
 attach	mfi at pci with mfi_pci
 file	dev/pci/mfi_pci.c		mfi_pci
 
+# LSI MegaRAID SAS Fusion RAID controllers 
+device	mfii: scsi
+attach	mfii at pci
+file	dev/pci/mfii.c			mfii
+
 # LSILogic Fusion-MPT I/O Processor family
 # device declaration in sys/conf/files
 attach	mpt at pci with mpt_pci
@@ -234,6 +239,8 @@ file	dev/pci/pciide.c		pciide
 # AHCI SATA controllers
 attach	ahcisata at pci with ahcisata_pci
 file	dev/pci/ahcisata_pci.c		ahcisata_pci
+defflag	opt_ahcisata_pci.h		AHCISATA_DISABLE_MSI
+defflag	opt_ahcisata_pci.h		AHCISATA_DISABLE_MSIX
 
 # Acard IDE controllers
 device	acardide: ata, ata_dma, ata_udma, pciide_common, wdc_common
@@ -634,6 +641,7 @@ file	dev/pci/usb_pci.c		ehci_pci | ehci_cardbus
 attach	xhci at pci with xhci_pci
 file	dev/pci/xhci_pci.c		xhci_pci
 defflag	opt_xhci_pci.h			XHCI_DISABLE_MSI
+defflag	opt_xhci_pci.h			XHCI_DISABLE_MSIX
 
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci

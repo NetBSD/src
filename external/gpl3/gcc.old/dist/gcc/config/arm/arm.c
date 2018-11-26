@@ -15926,12 +15926,23 @@ operands_ok_ldrd_strd (rtx rt, rtx rt2, rtx rn, HOST_WIDE_INT offset,
   return true;
 }
 
+/* Return true if a 64-bit access with alignment ALIGN and with a
+   constant offset OFFSET from the base pointer is permitted on this
+   architecture.  */
+static bool
+align_ok_ldrd_strd (HOST_WIDE_INT align, HOST_WIDE_INT offset)
+{
+  return (unaligned_access
+	  ? (align >= BITS_PER_WORD && (offset & 3) == 0)
+	  : (align >= 2 * BITS_PER_WORD && (offset & 7) == 0));
+}
+
 /* Helper for gen_operands_ldrd_strd.  Returns true iff the memory
    operand MEM's address contains an immediate offset from the base
-   register and has no side effects, in which case it sets BASE and
-   OFFSET accordingly.  */
+   register and has no side effects, in which case it sets BASE,
+   OFFSET and ALIGN accordingly.  */
 static bool
-mem_ok_for_ldrd_strd (rtx mem, rtx *base, rtx *offset)
+mem_ok_for_ldrd_strd (rtx mem, rtx *base, rtx *offset, HOST_WIDE_INT *align)
 {
   rtx addr;
 
@@ -15950,6 +15961,7 @@ mem_ok_for_ldrd_strd (rtx mem, rtx *base, rtx *offset)
   gcc_assert (MEM_P (mem));
 
   *offset = const0_rtx;
+  *align = MEM_ALIGN (mem);
 
   addr = XEXP (mem, 0);
 
@@ -15990,7 +16002,7 @@ gen_operands_ldrd_strd (rtx *operands, bool load,
                         bool const_store, bool commute)
 {
   int nops = 2;
-  HOST_WIDE_INT offsets[2], offset;
+  HOST_WIDE_INT offsets[2], offset, align[2];
   rtx base = NULL_RTX;
   rtx cur_base, cur_offset, tmp;
   int i, gap;
@@ -16002,7 +16014,8 @@ gen_operands_ldrd_strd (rtx *operands, bool load,
      registers, and the corresponding memory offsets.  */
   for (i = 0; i < nops; i++)
     {
-      if (!mem_ok_for_ldrd_strd (operands[nops+i], &cur_base, &cur_offset))
+      if (!mem_ok_for_ldrd_strd (operands[nops+i], &cur_base, &cur_offset,
+				 &align[i]))
         return false;
 
       if (i == 0)
@@ -16114,6 +16127,7 @@ gen_operands_ldrd_strd (rtx *operands, bool load,
       /* Swap the instructions such that lower memory is accessed first.  */
       std::swap (operands[0], operands[1]);
       std::swap (operands[2], operands[3]);
+      std::swap (align[0], align[1]);
       if (const_store)
         std::swap (operands[4], operands[5]);
     }
@@ -16125,6 +16139,9 @@ gen_operands_ldrd_strd (rtx *operands, bool load,
 
   /* Make sure accesses are to consecutive memory locations.  */
   if (gap != 4)
+    return false;
+
+  if (!align_ok_ldrd_strd (align[0], offset))
     return false;
 
   /* Make sure we generate legal instructions.  */
@@ -19331,6 +19348,11 @@ arm_r3_live_at_start_p (void)
 static int
 arm_compute_static_chain_stack_bytes (void)
 {
+  /* Once the value is updated from the init value of -1, do not
+     re-compute.  */
+  if (cfun->machine->static_chain_stack_bytes != -1)
+    return cfun->machine->static_chain_stack_bytes;
+
   /* See the defining assertion in arm_expand_prologue.  */
   if (IS_NESTED (arm_current_func_type ())
       && ((TARGET_APCS_FRAME && frame_pointer_needed && TARGET_ARM)
@@ -21562,6 +21584,11 @@ arm_expand_prologue (void)
 	 handling of SP as restoring from the CFA.  */
       emit_insn (gen_movsi (stack_pointer_rtx, r1));
     }
+
+  /* Let's compute the static_chain_stack_bytes required and store it.  Right
+     now the value must the -1 as stored by arm_init_machine_status ().  */
+  cfun->machine->static_chain_stack_bytes
+    = arm_compute_static_chain_stack_bytes ();
 
   /* The static chain register is the same as the IP register.  If it is
      clobbered when creating the frame, we need to save and restore it.  */
@@ -24655,6 +24682,7 @@ arm_init_machine_status (void)
 #if ARM_FT_UNKNOWN != 0
   machine->func_type = ARM_FT_UNKNOWN;
 #endif
+  machine->static_chain_stack_bytes = -1;
   return machine;
 }
 
@@ -26723,7 +26751,10 @@ static bool
 arm_array_mode_supported_p (machine_mode mode,
 			    unsigned HOST_WIDE_INT nelems)
 {
-  if (TARGET_NEON
+  /* We don't want to enable interleaved loads and stores for BYTES_BIG_ENDIAN
+     for now, as the lane-swapping logic needs to be extended in the expanders.
+     See PR target/82518.  */
+  if (TARGET_NEON && !BYTES_BIG_ENDIAN
       && (VALID_NEON_DREG_MODE (mode) || VALID_NEON_QREG_MODE (mode))
       && (nelems >= 2 && nelems <= 4))
     return true;

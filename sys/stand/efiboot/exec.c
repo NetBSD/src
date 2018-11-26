@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.3.2.4 2018/10/20 06:58:46 pgoyette Exp $ */
+/* $NetBSD: exec.c,v 1.3.2.5 2018/11/26 01:52:52 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -168,10 +168,14 @@ exec_netbsd(const char *fname, const char *args)
 		efi_fdt_initrd(initrd_addr, initrd_size);
 		efi_fdt_bootargs(args);
 		efi_fdt_memory_map();
-		efi_fdt_fini();
 	}
 
 	efi_cleanup();
+
+	if (efi_fdt_size() > 0) {
+		efi_fdt_fini();
+	}
+
 	efi_boot_kernel(marks);
 
 	/* This should not happen.. */

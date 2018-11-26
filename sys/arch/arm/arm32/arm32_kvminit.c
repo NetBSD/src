@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.41.2.2 2018/10/20 06:58:24 pgoyette Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.41.2.3 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.2.2 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.2.3 2018/11/26 01:52:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -261,7 +261,6 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	    pv->pv_pa + pv->pv_size - 1, pv->pv_va);
 	pv++;
 
-#if !defined(__HAVE_GENERIC_START)
 	/*
 	 * Add a free block for any memory before the kernel.
 	 */
@@ -275,7 +274,6 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 		    pv->pv_pa + pv->pv_size - 1, pv->pv_va);
 		pv++;
 	}
-#endif
 
 	bmi->bmi_nfreeblocks = pv - bmi->bmi_freeblocks;
 
@@ -422,9 +420,6 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	if (zero_p)
 		memset((void *)pv->pv_va, 0, nbytes);
 }
-
-// Define a TTB value that can never be used.
-uint32_t cpu_ttb = ~0;
 
 void
 arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
@@ -970,7 +965,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	/* Switch tables */
 	VPRINTF("switching to new L1 page table @%#lx...\n", l1pt_pa);
 
-	extern uint32_t cpu_ttb;
 	cpu_ttb = l1pt_pa;
 
 	cpu_domains(DOMAIN_DEFAULT);

@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.44.2.1 2018/09/06 06:55:34 pgoyette Exp $
+#	$NetBSD: WZERO3,v 1.44.2.2 2018/11/26 01:52:24 pgoyette Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.44.2.1 $"
+#ident 		"GENERIC-$Revision: 1.44.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -215,7 +215,6 @@ uhid* at uhidev? reportid ?
 
 # USB Mass Storage
 umass* at uhub? port ? configuration ? interface ?
-wd* at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.44.14.1 2018/05/21 04:36:04 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.44.14.2 2018/11/26 01:52:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.44.14.1 2018/05/21 04:36:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.44.14.2 2018/11/26 01:52:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, int *len,
 		}
 
 		ktrkuser(mbuftypes[MT_CONTROL], cmsg, cmsg->cmsg_len);
-		error = copyout(&cmsg32, *q, MAX(i, sizeof(cmsg32)));
+		error = copyout(&cmsg32, *q, MIN(i, sizeof(cmsg32)));
 		if (error)
 			return (error);
 		if (i > CMSG32_LEN(0)) {
@@ -289,6 +289,16 @@ netbsd32_recvmmsg(struct lwp *l, const struct netbsd32_recvmmsg_args *uap,
 	if ((error = fd_getsock(s, &so)) != 0)
 		return error;
 
+	/*
+	 * If so->so_rerror holds a deferred error return it now.
+	 */
+	if (so->so_rerror) {
+		error = so->so_rerror;
+		so->so_rerror = 0;
+		fd_putfile(s);
+		return error;
+	}
+
 	vlen = SCARG(uap, vlen);
 	if (vlen > 1024)
 		vlen = 1024;
@@ -350,17 +360,17 @@ netbsd32_recvmmsg(struct lwp *l, const struct netbsd32_recvmmsg_args *uap,
 		m_free(from);
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
-
-	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
+	 * If we succeeded at least once, return 0, hopefully so->so_rerror
 	 * will catch it next time.
 	 */
-	if (dg)
-		return 0;
+	if (error && dg > 0) {
+		so->so_rerror = error;
+		error = 0;
+	}
+
+	fd_putfile(s);
 
 	return error;
 }
@@ -597,14 +607,11 @@ netbsd32_sendmmsg(struct lwp *l, const struct netbsd32_sendmmsg_args *uap,
 	}
 
 	*retval = dg;
-	if (error)
-		so->so_error = error;
 
 	fd_putfile(s);
 
 	/*
-	 * If we succeeded at least once, return 0, hopefully so->so_error
-	 * will catch it next time.
+	 * If we succeeded at least once, return 0.
 	 */
 	if (dg)
 		return 0;

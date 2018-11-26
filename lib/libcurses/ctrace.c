@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.21 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.21.12.1 2018/11/26 01:52:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.21 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.21.12.1 2018/11/26 01:52:12 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,8 +55,8 @@ static int tracemask;	/* Areas of trace output we want. */
 
 static int init_done = 0;
 
-void
-__CTRACE_init()
+static void
+__CTRACE_init(void)
 {
 	char *tf, *tm;
 
@@ -85,7 +85,6 @@ __CTRACE_init()
 void
 __CTRACE(int area, const char *fmt,...)
 {
-	struct timeval tv;
         static int seencr = 1;
 	va_list ap;
 
@@ -93,8 +92,9 @@ __CTRACE(int area, const char *fmt,...)
 		__CTRACE_init();
 	if (tracefp == NULL || !(tracemask & area))
 		return;
-	gettimeofday(&tv, NULL);
+
         if (seencr && (tracemask & __CTRACE_TSTAMP)) {
+		struct timeval tv;
                 gettimeofday(&tv, NULL);
                 (void)fprintf(tracefp, "%llu.%06lu: ",
 		    (long long)tv.tv_sec, (long)tv.tv_usec);

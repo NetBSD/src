@@ -6737,8 +6737,8 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_truncate_arname			bfd_bsd_truncate_arname
 #define som_slurp_extended_name_table		_bfd_slurp_extended_name_table
 #define som_construct_extended_name_table	_bfd_archive_coff_construct_extended_name_table
-#define som_update_armap_timestamp		bfd_true
-#define som_bfd_is_target_special_symbol   ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define som_update_armap_timestamp		_bfd_bool_bfd_true
+#define som_bfd_is_target_special_symbol        _bfd_bool_bfd_asymbol_false
 #define som_get_lineno				_bfd_nosymbols_get_lineno
 #define som_bfd_make_debug_symbol		_bfd_nosymbols_bfd_make_debug_symbol
 #define som_read_minisymbols			_bfd_generic_read_minisymbols
@@ -6759,6 +6759,7 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_bfd_discard_group			bfd_generic_discard_group
 #define som_section_already_linked		_bfd_generic_section_already_linked
 #define som_bfd_define_common_symbol		bfd_generic_define_common_symbol
+#define som_bfd_link_hide_symbol		_bfd_generic_link_hide_symbol
 #define som_bfd_define_start_stop		bfd_generic_define_start_stop
 #define som_bfd_merge_private_bfd_data		_bfd_generic_bfd_merge_private_bfd_data
 #define som_bfd_copy_private_header_data	_bfd_generic_bfd_copy_private_header_data
@@ -6797,16 +6798,16 @@ const bfd_target hppa_som_vec =
    _bfd_dummy_target
   },
   {
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     som_mkobject,
     _bfd_generic_mkarchive,
-    bfd_false
+    _bfd_bool_bfd_false_error
   },
   {
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     som_write_object_contents,
     _bfd_write_archive_contents,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
 #undef som
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.28.4.1 2018/07/28 04:37:57 pgoyette Exp $ */
+/* $NetBSD: if_plip.c,v 1.28.4.2 2018/11/26 01:52:47 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.28.4.1 2018/07/28 04:37:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.28.4.2 2018/11/26 01:52:47 pgoyette Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -375,8 +375,10 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifp->if_flags |= IFF_UP;
 	/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
+		if (cmd == SIOCSIFFLAGS) {
+			if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+				break;
+		}
 		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
 			if ((error = ppbus_request_bus(ppbus, dev, 0, 0)))
 				break;
@@ -604,7 +606,7 @@ lp_intr(void *arg)
 		if (len <= CLPIPHDRLEN)
 			goto err;
 		len -= CLPIPHDRLEN;
-		top = m_devget(sc->sc_ifbuf + CLPIPHDRLEN, len, 0, ifp, NULL);
+		top = m_devget(sc->sc_ifbuf + CLPIPHDRLEN, len, 0, ifp);
 	}
 	/* FreeBSD protocol receiving */
 	else {
@@ -640,7 +642,7 @@ end:
 		if (len <= LPIPHDRLEN)
 			goto err;
 		len -= LPIPHDRLEN;
-		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp, NULL);
+		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp);
 	}
 
 	if (top == NULL) {

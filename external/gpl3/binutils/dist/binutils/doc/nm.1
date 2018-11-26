@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "NM 1"
-.TH NM 1 "2018-01-27" "binutils-2.30" "GNU Development Tools"
+.TH NM 1 "2018-07-09" "binutils-2.30.90" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -182,7 +182,9 @@ linking.
 .el .IP "\f(CWb\fR" 4
 .IX Item "b"
 .PD
-The symbol is in the uninitialized data section (known as \s-1BSS\s0).
+The symbol is in the \s-1BSS\s0 data section.  This section typically
+contains zero-initialized or uninitialized data, although the exact
+behavior is system dependent.
 .ie n .IP """C""" 4
 .el .IP "\f(CWC\fR" 4
 .IX Item "C"
@@ -249,7 +251,8 @@ The symbol is in a read only data section.
 .el .IP "\f(CWs\fR" 4
 .IX Item "s"
 .PD
-The symbol is in an uninitialized data section for small objects.
+The symbol is in an uninitialized or zero-initialized data section
+for small objects.
 .ie n .IP """T""" 4
 .el .IP "\f(CWT\fR" 4
 .IX Item "T"

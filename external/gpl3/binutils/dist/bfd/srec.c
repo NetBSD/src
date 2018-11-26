@@ -257,7 +257,7 @@ srec_bad_byte (bfd *abfd,
 	}
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B:%d: Unexpected character `%s' in S-record file\n"),
+	(_("%pB:%d: unexpected character `%s' in S-record file"),
 	 abfd, lineno, buf);
       bfd_set_error (bfd_error_bad_value);
     }
@@ -485,7 +485,7 @@ srec_scan (bfd *abfd)
 	    if (bytes < min_bytes)
 	      {
 		/* xgettext:c-format */
-		_bfd_error_handler (_("%B:%d: byte count %d too small\n"),
+		_bfd_error_handler (_("%pB:%d: byte count %d too small"),
 				    abfd, lineno, bytes);
 		bfd_set_error (bfd_error_bad_value);
 		goto error_return;
@@ -578,7 +578,7 @@ srec_scan (bfd *abfd)
 		  {
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B:%d: Bad checksum in S-record file\n"),
+		      (_("%pB:%d: bad checksum in S-record file"),
 		       abfd, lineno);
 		    bfd_set_error (bfd_error_bad_value);
 		    goto error_return;
@@ -612,7 +612,7 @@ srec_scan (bfd *abfd)
 		  {
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B:%d: Bad checksum in S-record file\n"),
+		      (_("%pB:%d: bad checksum in S-record file"),
 		       abfd, lineno);
 		    bfd_set_error (bfd_error_bad_value);
 		    goto error_return;
@@ -1257,7 +1257,7 @@ srec_print_symbol (bfd *abfd,
 #define	srec_close_and_cleanup			  _bfd_generic_close_and_cleanup
 #define srec_bfd_free_cached_info		  _bfd_generic_bfd_free_cached_info
 #define srec_new_section_hook			  _bfd_generic_new_section_hook
-#define srec_bfd_is_target_special_symbol	  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define srec_bfd_is_target_special_symbol	  _bfd_bool_bfd_asymbol_false
 #define srec_bfd_is_local_label_name		  bfd_generic_is_local_label_name
 #define srec_get_lineno				  _bfd_nosymbols_get_lineno
 #define srec_find_nearest_line			  _bfd_nosymbols_find_nearest_line
@@ -1278,6 +1278,7 @@ srec_print_symbol (bfd *abfd,
 #define srec_bfd_discard_group			  bfd_generic_discard_group
 #define srec_section_already_linked		  _bfd_generic_section_already_linked
 #define srec_bfd_define_common_symbol		  bfd_generic_define_common_symbol
+#define srec_bfd_link_hide_symbol		  _bfd_generic_link_hide_symbol
 #define srec_bfd_define_start_stop		  bfd_generic_define_start_stop
 #define srec_bfd_link_hash_table_create		  _bfd_generic_link_hash_table_create
 #define srec_bfd_link_add_symbols		  _bfd_generic_link_add_symbols
@@ -1316,16 +1317,16 @@ const bfd_target srec_vec =
     _bfd_dummy_target,
   },
   {
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     srec_mkobject,
     _bfd_generic_mkarchive,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     srec_write_object_contents,
     _bfd_write_archive_contents,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (srec),
@@ -1372,16 +1373,16 @@ const bfd_target symbolsrec_vec =
     _bfd_dummy_target,
   },
   {
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     srec_mkobject,
     _bfd_generic_mkarchive,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     symbolsrec_write_object_contents,
     _bfd_write_archive_contents,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (srec),

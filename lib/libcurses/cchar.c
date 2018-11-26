@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.6 2017/01/06 13:53:18 roy Exp $ */
+/*   $NetBSD: cchar.c,v 1.6.12.1 2018/11/26 01:52:12 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.6 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.6.12.1 2018/11/26 01:52:12 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -52,30 +52,31 @@ int
 getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
          short *color_pair, void *opts)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	wchar_t *wp;
 	size_t len;
 
-	if (opts)
+	if (__predict_false(opts != NULL))
 		return ERR;
 
-	len = (wp = wmemchr(wcval->vals, L'\0', CCHARW_MAX))
-		? wp - wcval->vals : CCHARW_MAX;
+	wp = wmemchr(wcval->vals, L'\0', CCHARW_MAX);
+	len = wp ? wp - wcval->vals : CCHARW_MAX;
 
 	if (wch == NULL)
 		return (int)len;
-	if (attrs == 0 || color_pair == 0)
+
+	if (attrs == NULL || color_pair == NULL)
 		return ERR;
+
 	if (len > 0) {
 		*attrs = wcval->attributes;
-		*color_pair = COLOR_PAIR(wcval ->attributes);
-		wmemcpy(wch, wcval->vals, (unsigned)len);
+		if (__using_color)
+			*color_pair = PAIR_NUMBER(wcval->attributes);
+		else
+			*color_pair = 0;
+		wmemcpy(wch, wcval->vals, len);
 		wch[len] = L'\0';
 	}
 	return OK;
-#endif /* HAVE_WCHAR */
 }
 
 /*
@@ -86,16 +87,15 @@ int
 setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 	 short color_pair, const void *opts)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	int i;
 	size_t len;
 
-	if (opts || (len = wcslen(wch)) > CCHARW_MAX
-		|| (len > 1 && wcwidth(wch[0]) < 0)) {
+	if (__predict_false(opts != NULL))
 		return ERR;
-	}
+
+	len = wcslen(wch);
+	if (len > CCHARW_MAX || (len > 1 && wcwidth(wch[0]) < 0))
+		return ERR;
 
 	/*
 	 * If we have a following spacing-character, stop at that point.  We
@@ -110,13 +110,14 @@ setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 
 	memset(wcval, 0, sizeof(*wcval));
 	if (len != 0) {
-		wcval->attributes = attrs | color_pair;
+		wcval->attributes = attrs & ~__COLOR;
+		if (__using_color && color_pair)
+			wcval->attributes |= COLOR_PAIR(color_pair);
 		wcval->elements = 1;
 		memcpy(&wcval->vals, wch, len * sizeof(wchar_t));
 	}
 
 	return OK;
-#endif /* HAVE_WCHAR */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.123.2.6 2018/10/20 06:58:29 pgoyette Exp $	*/
+/*	$NetBSD: intr.c,v 1.123.2.7 2018/11/26 01:52:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.6 2018/10/20 06:58:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.7 2018/11/26 01:52:28 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1294,7 +1294,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		 * Shared interrupt - we can't rebind.
 		 * The port is shared instead.
 		 */
-		evtchn = irq2port[gsi];
+		evtchn = irq2port[gsi] - 1;
 	}
 
 	pih = pirq_establish(gsi, evtchn, handler, arg, level,

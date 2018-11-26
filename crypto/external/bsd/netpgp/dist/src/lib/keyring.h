@@ -96,6 +96,8 @@ pgp_seckey_t *pgp_decrypt_seckey(const pgp_key_t *, FILE *);
 
 unsigned   pgp_keyring_fileread(pgp_keyring_t *, const unsigned,
 					const char *);
+unsigned   pgp_keyring_filewrite(pgp_keyring_t *, const unsigned,
+					const char *, uint8_t *);
 
 int pgp_keyring_list(pgp_io_t *, const pgp_keyring_t *, const int);
 int pgp_keyring_json(pgp_io_t *, const pgp_keyring_t *, mj_t *, const int);
@@ -110,7 +112,7 @@ unsigned pgp_is_key_supported(const pgp_key_t *);
 
 uint8_t *pgp_add_userid(pgp_key_t *, const uint8_t *);
 pgp_subpacket_t *pgp_add_subpacket(pgp_key_t *,
-						const pgp_subpacket_t *);
+					const pgp_subpacket_t *);
 
 unsigned pgp_add_selfsigned_userid(pgp_key_t *, uint8_t *);
 

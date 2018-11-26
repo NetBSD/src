@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.26.2.2 2018/07/28 04:37:31 pgoyette Exp $
+#	$NetBSD: N900,v 1.26.2.3 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -287,7 +287,6 @@ prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 #uhub*		at usb?
 #uhub*		at uhub? port ?
 #umass*		at uhub? port ? configuration ? interface ?
-#wd*		at umass?
 #uhidev*		at uhub?
 #ukbd*		at uhidev?
 #ums*		at uhidev?

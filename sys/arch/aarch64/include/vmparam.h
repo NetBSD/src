@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.2.20.4 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: vmparam.h,v 1.2.20.5 2018/11/26 01:52:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -132,6 +132,12 @@
  */
 #define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
 #define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
+
+/*
+ * Reserved space for EFI runtime services
+ */
+#define	EFI_RUNTIME_VA		0xffff800000000000L
+#define	EFI_RUNTIME_SIZE	0x0000000040000000L
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define USRIOSIZE		(PAGE_SIZE / 8)

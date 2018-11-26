@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.168.2.5 2018/09/30 01:45:56 pgoyette Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.168.2.6 2018/11/26 01:52:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.168.2.5 2018/09/30 01:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.168.2.6 2018/11/26 01:52:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -382,7 +382,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
 	/* move PF m_tag to new packet, if it exists */
-	mtag = m_tag_find(n, PACKET_TAG_PF, NULL);
+	mtag = m_tag_find(n, PACKET_TAG_PF);
 	if (mtag != NULL) {
 		m_tag_unlink(n, mtag);
 		m_tag_prepend(m, mtag);
@@ -919,7 +919,7 @@ icmp_reflect(struct mbuf *m)
 		memmove(ip + 1, (char *)ip + optlen,
 		    (unsigned)(m->m_len - sizeof(struct ip)));
 	}
-	m_tag_delete_nonpersistent(m);
+	m_tag_delete_chain(m);
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	/*

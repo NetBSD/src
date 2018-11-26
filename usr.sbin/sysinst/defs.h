@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9.14.5 2018/10/20 06:58:47 pgoyette Exp $	*/
+/*	$NetBSD: defs.h,v 1.9.14.6 2018/11/26 01:52:55 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -178,8 +178,14 @@ enum {
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
 		       (p)->pi_fstype == FS_BSDFFS)
 
-/* standard cd0 device */
-#define CD_NAMES "cd0a"
+/*
+ * We do not offer CDs or floppies as installation target usually.
+ * Architectures might want to undefine if they want to allow
+ * these devices or redefine if they have unusual CD device names.
+ * Do not define to empty or an empty string, undefine instead.
+ */
+#define CD_NAMES "cd*"
+#define FLOPPY_NAMES "fd*"
 
 /* Types */
 
@@ -473,8 +479,13 @@ int	md_update(void);
 void	toplevel(void);
 
 /* from disks.c */
-const char *get_default_cdrom(void);
+bool	get_default_cdrom(char *, size_t);
 int	find_disks(const char *);
+bool enumerate_disks(void *state,bool (*func)(void *state, const char *dev));
+bool is_cdrom_device(const char *dev, bool as_target);
+bool is_bootable_device(const char *dev);
+bool is_partitionable_device(const char *dev);
+
 struct menudesc;
 void	fmt_fspart(struct menudesc *, int, void *);
 void	disp_cur_fspart(int, int);
@@ -542,6 +553,8 @@ void	do_reinstall_sets(void);
 void	restore_etc(void);
 
 /* from util.c */
+char*	str_arg_subst(const char *, size_t, const char **);
+void	msg_display_subst(const char *, size_t, ...);
 int	ask_yesno(const char *);
 int	ask_noyes(const char *);
 int	dir_exists_p(const char *);

@@ -1,4 +1,4 @@
-/* $NetBSD: fabs.S,v 1.3 2000/06/14 06:49:02 cgd Exp $ */
+/* $NetBSD: fabs.S,v 1.3.102.1 2018/11/26 01:52:10 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,6 +28,8 @@
  */
 
 #include <machine/asm.h>
+
+STRONG_ALIAS(fabsl, fabs)
 
 LEAF(fabs, 1)
 	cpys	fzero, fa0, fv0

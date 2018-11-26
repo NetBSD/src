@@ -28,7 +28,7 @@
 static reloc_howto_type * mt_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
 
-static void mt_info_to_howto_rela
+static bfd_boolean mt_info_to_howto_rela
   (bfd *, arelent *, Elf_Internal_Rela *);
 
 static bfd_reloc_status_type mt_elf_relocate_hi16
@@ -227,11 +227,10 @@ mt_elf_relocate_hi16
 
 /* Set the howto pointer for a MT ELF reloc.  */
 
-static void
-mt_info_to_howto_rela
-    (bfd *		 abfd ATTRIBUTE_UNUSED,
-     arelent *		 cache_ptr,
-     Elf_Internal_Rela * dst)
+static bfd_boolean
+mt_info_to_howto_rela (bfd *		    abfd,
+		       arelent *	    cache_ptr,
+		       Elf_Internal_Rela *  dst)
 {
   unsigned int r_type;
 
@@ -239,10 +238,13 @@ mt_info_to_howto_rela
   if (r_type >= (unsigned int) R_MT_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid MT reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = & mt_elf_howto_table [r_type];
+  return TRUE;
 }
 
 /* Perform a single relocation.  By default we use the standard BFD
@@ -520,7 +522,7 @@ mt_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   old_flags = elf_elfheader (obfd)->e_flags;
 
 #ifdef DEBUG
-  _bfd_error_handler ("%B: old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s",
+  _bfd_error_handler ("%pB: old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s",
 		      ibfd, old_flags, new_flags, elf_flags_init (obfd) ? "yes" : "no");
 #endif
 

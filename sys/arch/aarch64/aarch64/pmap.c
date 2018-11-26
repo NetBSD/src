@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.28.7 2018/10/20 06:58:23 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.28.8 2018/11/26 01:52:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.7 2018/10/20 06:58:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.8 2018/11/26 01:52:16 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
+#include "opt_kasan.h"
 #include "opt_multiprocessor.h"
 #include "opt_pmap.h"
 #include "opt_uvmhist.h"
@@ -40,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.7 2018/10/20 06:58:23 pgoyette Exp $
 #include <sys/kmem.h>
 #include <sys/vmem.h>
 #include <sys/atomic.h>
+#include <sys/asan.h>
 
 #include <uvm/uvm.h>
 
@@ -1302,7 +1304,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	unsigned int idx;
 	int error = 0;
 	const bool user = (pm != pmap_kernel());
-	bool executable;
+	bool need_sync_icache;
 	bool l3only = true;
 
 	UVMHIST_FUNC(__func__);
@@ -1405,7 +1407,13 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #ifdef UVMHIST
 	opte = pte;
 #endif
-	executable = l3pte_executable(pte, user);
+	need_sync_icache = (prot & VM_PROT_EXECUTE);
+
+#ifdef KASAN
+	if (!user) {
+		kasan_shadow_map((void *)va, PAGE_SIZE);
+	}
+#endif
 
 	if (l3pte_valid(pte)) {
 		KASSERT(!kenter);	/* pmap_kenter_pa() cannot override */
@@ -1413,7 +1421,11 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		PMAP_COUNT(remappings);
 
 		/* pte is Already mapped */
-		if (l3pte_pa(pte) != pa) {
+		if (l3pte_pa(pte) == pa) {
+			if (need_sync_icache && l3pte_executable(pte, user))
+				need_sync_icache = false;
+
+		} else {
 			struct vm_page *opg;
 
 #ifdef PMAPCOUNTERS
@@ -1492,7 +1504,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	pte = pa | attr;
 
-	if (!executable && (prot & VM_PROT_EXECUTE)) {
+	if (need_sync_icache) {
 		/* non-exec -> exec */
 		UVMHIST_LOG(pmaphist,
 		    "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",

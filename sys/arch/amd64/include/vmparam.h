@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.45.2.1 2018/09/06 06:55:24 pgoyette Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.45.2.2 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,10 +133,12 @@
 #define VM_MAX_KERNEL_ADDRESS_DEFAULT	0xffffc00000000000
 #endif
 
+#if defined(_KMEMUSER) || defined(_KERNEL)
 extern vaddr_t vm_min_kernel_address;
 extern vaddr_t vm_max_kernel_address;
 #define VM_MIN_KERNEL_ADDRESS	vm_min_kernel_address
 #define VM_MAX_KERNEL_ADDRESS	vm_max_kernel_address
+#endif
 
 /*
  * The address to which unspecified mapping requests default

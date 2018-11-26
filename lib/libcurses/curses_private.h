@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.62.10.2 2018/10/20 06:58:22 pgoyette Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.62.10.3 2018/11/26 01:52:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -133,6 +133,7 @@ struct __window {		/* Window structure. */
 #define __ISDERWIN	0x00100000	/* "window" is derived from parent */
 #define __IMMEDOK	0x00200000	/* refreshed when changed */
 #define __SYNCOK	0x00400000	/* sync when changed */
+#define __HALFDELAY	0x00800000	/* In half delay mode */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
@@ -278,7 +279,6 @@ struct __screen {
 	char padchar;
 	int endwin;
 	int notty;
-	int half_delay;
 	int resized;
 	wchar_t *unget_list;
 	int unget_len, unget_pos;
@@ -332,7 +332,6 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 #define __CTRACE_ERASE		0x00000800
 #define __CTRACE_FILEIO		0x00001000
 #define __CTRACE_ALL		0x7fffffff
-void	 __CTRACE_init(void);
 void	 __CTRACE(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
 #endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2185.2.11 2018/10/20 06:58:17 pgoyette Exp $
+#	$NetBSD: mi,v 1.2185.2.12 2018/11/26 01:49:57 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6247,6 +6247,7 @@
 ./usr/share/man/cat3/curses_attributes.0	comp-c-catman		.cat
 ./usr/share/man/cat3/curses_background.0	comp-c-catman		.cat
 ./usr/share/man/cat3/curses_border.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_cchar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_chgat.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_clear.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_color.0		comp-c-catman		.cat
@@ -6258,8 +6259,9 @@
 ./usr/share/man/cat3/curses_fileio.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_inch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_input.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_insch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_insdelln.0		comp-c-catman		.cat
-./usr/share/man/cat3/curses_insertch.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_insertch.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_insertln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_keyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_line.0		comp-c-catman		.cat
@@ -7110,6 +7112,7 @@
 ./usr/share/man/cat3/getc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc_unlocked.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getcap.0			comp-obsolete		obsolete
+./usr/share/man/cat3/getcchar.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/getch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar_unlocked.0		comp-c-catman		.cat
@@ -8436,6 +8439,7 @@
 ./usr/share/man/cat3/mvinchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvinchstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvinnstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvinsch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvinstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvprintw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvvline.0			comp-c-catman		.cat
@@ -8449,6 +8453,7 @@
 ./usr/share/man/cat3/mvwgetnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwgetstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwhline.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvwinsch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwinchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwinchstr.0		comp-c-catman		.cat
@@ -9458,6 +9463,7 @@
 ./usr/share/man/cat3/set_top_row.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setbuf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setbuffer.0		comp-c-catman		.cat
+./usr/share/man/cat3/setcchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setclasscontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setdisktab.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setdomainname.0		comp-c-catman		.cat
@@ -11232,13 +11238,13 @@
 ./usr/share/man/cat9/m_tag_copy_chain.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_delete.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_delete_chain.0	comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_delete_nonpersistent.0	comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_delete_nonpersistent.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/m_tag_find.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_first.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_first.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/m_tag_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_get.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_next.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_init.0		comp-obsolete		obsolete
+./usr/share/man/cat9/m_tag_next.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/m_tag_prepend.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_tag_unlink.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/makeiplcookie.0		comp-sys-catman		.cat
@@ -14148,6 +14154,7 @@
 ./usr/share/man/html3/curses_attributes.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_background.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_border.html	comp-c-htmlman		html
+./usr/share/man/html3/curses_cchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_chgat.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_clear.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_color.html		comp-c-htmlman		html
@@ -14159,8 +14166,9 @@
 ./usr/share/man/html3/curses_fileio.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_inch.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_input.html		comp-c-htmlman		html
+./usr/share/man/html3/curses_insch.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_insdelln.html	comp-c-htmlman		html
-./usr/share/man/html3/curses_insertch.html	comp-c-htmlman		html
+./usr/share/man/html3/curses_insertch.html	comp-obsolete		obsolete
 ./usr/share/man/html3/curses_insertln.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_keyname.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_line.html		comp-c-htmlman		html
@@ -15019,6 +15027,7 @@
 ./usr/share/man/html3/getc.html			comp-c-htmlman		html
 ./usr/share/man/html3/getc_unlocked.html	comp-c-htmlman		html
 ./usr/share/man/html3/getcap.html		comp-obsolete		obsolete
+./usr/share/man/html3/getcchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/getch.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar_unlocked.html	comp-c-htmlman		html
@@ -16311,6 +16320,7 @@
 ./usr/share/man/html3/mvinchnstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvinchstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvinnstr.html		comp-c-htmlman		html
+./usr/share/man/html3/mvinsch.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvinstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvprintw.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvvline.html		comp-c-htmlman		html
@@ -16328,6 +16338,7 @@
 ./usr/share/man/html3/mvwinchnstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwinchstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwinnstr.html		comp-c-htmlman		html
+./usr/share/man/html3/mvwinsch.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwinstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwprintw.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwvline.html		comp-c-htmlman		html
@@ -17346,6 +17357,7 @@
 ./usr/share/man/html3/set_top_row.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuf.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuffer.html		comp-c-htmlman		html
+./usr/share/man/html3/setcchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/setclasscontext.html	comp-c-htmlman		html
 ./usr/share/man/html3/setdisktab.html		comp-c-htmlman		html
 ./usr/share/man/html3/setdomainname.html	comp-c-htmlman		html
@@ -19042,13 +19054,13 @@
 ./usr/share/man/html9/m_tag_copy_chain.html	comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_delete.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_delete_chain.html	comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_delete_nonpersistent.html	comp-sys-htmlman	html
+./usr/share/man/html9/m_tag_delete_nonpersistent.html	comp-obsolete	obsolete
 ./usr/share/man/html9/m_tag_find.html		comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_first.html		comp-sys-htmlman	html
+./usr/share/man/html9/m_tag_first.html		comp-obsolete	obsolete
 ./usr/share/man/html9/m_tag_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_get.html		comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_init.html		comp-sys-htmlman	html
-./usr/share/man/html9/m_tag_next.html		comp-sys-htmlman	html
+./usr/share/man/html9/m_tag_init.html		comp-obsolete	obsolete
+./usr/share/man/html9/m_tag_next.html		comp-obsolete	obsolete
 ./usr/share/man/html9/m_tag_prepend.html	comp-sys-htmlman	html
 ./usr/share/man/html9/m_tag_unlink.html		comp-sys-htmlman	html
 ./usr/share/man/html9/makeiplcookie.html	comp-sys-htmlman	html
@@ -21991,6 +22003,7 @@
 ./usr/share/man/man3/curses_attributes.3	comp-c-man		.man
 ./usr/share/man/man3/curses_background.3	comp-c-man		.man
 ./usr/share/man/man3/curses_border.3		comp-c-man		.man
+./usr/share/man/man3/curses_cchar.3		comp-c-man		.man
 ./usr/share/man/man3/curses_chgat.3		comp-c-man		.man
 ./usr/share/man/man3/curses_clear.3		comp-c-man		.man
 ./usr/share/man/man3/curses_color.3		comp-c-man		.man
@@ -22002,8 +22015,9 @@
 ./usr/share/man/man3/curses_fileio.3		comp-c-man		.man
 ./usr/share/man/man3/curses_inch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_input.3		comp-c-man		.man
+./usr/share/man/man3/curses_insch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_insdelln.3		comp-c-man		.man
-./usr/share/man/man3/curses_insertch.3		comp-c-man		.man
+./usr/share/man/man3/curses_insertch.3		comp-obsolete		obsolete
 ./usr/share/man/man3/curses_insertln.3		comp-c-man		.man
 ./usr/share/man/man3/curses_keyname.3		comp-c-man		.man
 ./usr/share/man/man3/curses_line.3		comp-c-man		.man
@@ -22865,6 +22879,7 @@
 ./usr/share/man/man3/getc.3			comp-c-man		.man
 ./usr/share/man/man3/getc_unlocked.3		comp-c-man		.man
 ./usr/share/man/man3/getcap.3			comp-obsolete		obsolete
+./usr/share/man/man3/getcchar.3			comp-c-man		.man
 ./usr/share/man/man3/getch.3			comp-c-man		.man
 ./usr/share/man/man3/getchar.3			comp-c-man		.man
 ./usr/share/man/man3/getchar_unlocked.3		comp-c-man		.man
@@ -24192,6 +24207,7 @@
 ./usr/share/man/man3/mvinchnstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvinchstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvinnstr.3			comp-c-man		.man
+./usr/share/man/man3/mvinsch.3			comp-c-man		.man
 ./usr/share/man/man3/mvinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvprintw.3			comp-c-man		.man
 ./usr/share/man/man3/mvvline.3			comp-c-man		.man
@@ -24209,6 +24225,7 @@
 ./usr/share/man/man3/mvwinchnstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvwinchstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvwinnstr.3		comp-c-man		.man
+./usr/share/man/man3/mvwinsch.3			comp-c-man		.man
 ./usr/share/man/man3/mvwinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvwprintw.3		comp-c-man		.man
 ./usr/share/man/man3/mvwvline.3			comp-c-man		.man
@@ -25237,6 +25254,7 @@
 ./usr/share/man/man3/set_top_row.3		comp-c-man		.man
 ./usr/share/man/man3/setbuf.3			comp-c-man		.man
 ./usr/share/man/man3/setbuffer.3		comp-c-man		.man
+./usr/share/man/man3/setcchar.3			comp-c-man		.man
 ./usr/share/man/man3/setclasscontext.3		comp-c-man		.man
 ./usr/share/man/man3/setdisktab.3		comp-c-man		.man
 ./usr/share/man/man3/setdomainname.3		comp-c-man		.man
@@ -27006,13 +27024,13 @@
 ./usr/share/man/man9/m_tag_copy_chain.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_delete.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_delete_chain.9	comp-sys-man		.man
-./usr/share/man/man9/m_tag_delete_nonpersistent.9	comp-sys-man		.man
+./usr/share/man/man9/m_tag_delete_nonpersistent.9	comp-obsolete		obsolete
 ./usr/share/man/man9/m_tag_find.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_first.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_first.9		comp-obsolete		obsolete
 ./usr/share/man/man9/m_tag_free.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_get.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_init.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_next.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_init.9		comp-obsolete		obsolete
+./usr/share/man/man9/m_tag_next.9		comp-obsolete		obsolete
 ./usr/share/man/man9/m_tag_prepend.9		comp-sys-man		.man
 ./usr/share/man/man9/m_tag_unlink.9		comp-sys-man		.man
 ./usr/share/man/man9/makeiplcookie.9		comp-sys-man		.man

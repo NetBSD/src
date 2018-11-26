@@ -35,9 +35,16 @@
 #include "mj.h"
 #include "defs.h"
 
-/* save 'n' chars of 's' in malloc'd memory */
+#define JSON_ESCAPE '\xac'
+#define JSON_INDENT 4
+
+/*
+ * save 'n' chars of 's' in malloc'd memory
+ *
+ * optionally encode embedded quotes and null bytes
+ */
 static char *
-strnsave(const char *s, int n, unsigned encoded)
+strnsave(const char *s, int n, int encoded)
 {
 	char	*newc;
 	char	*cp;
@@ -47,19 +54,20 @@ strnsave(const char *s, int n, unsigned encoded)
 		n = (int)strlen(s);
 	}
 	NEWARRAY(char, cp, n + n + 1, "strnsave", return NULL);
-	if (encoded) {
+	switch (encoded) {
+	case MJ_JSON_ENCODE:
 		newc = cp;
 		for (i = 0 ; i < n ; i++) {
-			if ((uint8_t)*s == 0xac) {
-				*newc++ = (char)0xac;
+			if (*s == JSON_ESCAPE) {
+				*newc++ = JSON_ESCAPE;
 				*newc++ = '1';
 				s += 1;
 			} else if (*s == '"') {
-				*newc++ = (char)0xac;
+				*newc++ = JSON_ESCAPE;
 				*newc++ = '2';
 				s += 1;
 			} else if (*s == 0x0) {
-				*newc++ = (char)0xac;
+				*newc++ = JSON_ESCAPE;
 				*newc++ = '0';
 				s += 1;
 			} else {
@@ -67,9 +75,11 @@ strnsave(const char *s, int n, unsigned encoded)
 			}
 		}
 		*newc = 0x0;
-	} else {
+		break;
+	default:
 		(void) memcpy(cp, s, (unsigned)n);
 		cp[n] = 0x0;
+		break;
 	}
 	return cp;
 }
@@ -168,7 +178,7 @@ indent(FILE *fp, unsigned depth, const char *trailer)
 	unsigned	i;
 
 	for (i = 0 ; i < depth ; i++) {
-		(void) fprintf(fp, "    ");
+		(void) fprintf(fp, " ");
 	}
 	if (trailer) {
 		(void) fprintf(fp, "%s", trailer);
@@ -225,7 +235,11 @@ mj_create(mj_t *atom, const char *type, ...)
 	return 1;
 }
 
-/* put a JSON tree into a text string */
+/*
+ * put a JSON tree into a text string
+ *
+ * optionally keep encoded quotes and null bytes
+ */
 int
 mj_snprint(char *buf, size_t size, mj_t *atom, int encoded)
 {
@@ -244,55 +258,66 @@ mj_snprint(char *buf, size_t size, mj_t *atom, int encoded)
 	case MJ_NUMBER:
 		return snprintf(buf, size, "%s", atom->value.s);
 	case MJ_STRING:
-		if (encoded) {
+		if (size < 3)
+			return 0;
+		switch (encoded) {
+		case MJ_JSON_ENCODE:
 			return snprintf(buf, size, "\"%s\"", atom->value.s);
-		}
-		for (bp = buf, *bp++ = '"', s = atom->value.s ;
-		     (size_t)(bp - buf) < size && (unsigned)(s - atom->value.s) < atom->c ; ) {
-			if ((uint8_t)*s == 0xac) {
-				switch(s[1]) {
-				case '0':
-					*bp++ = 0x0;
-					s += 2;
-					break;
-				case '1':
-					*bp++ = (char)0xac;
-					s += 2;
-					break;
-				case '2':
-					*bp++ = '"';
-					s += 2;
-					break;
-				default:
-					(void) fprintf(stderr, "unrecognised character '%02x'\n", (uint8_t)s[1]);
-					s += 1;
-					break;
+		default:
+			for (bp = buf, *bp++ = '"', s = atom->value.s ;
+			     (size_t)(bp - buf) < size - 2 && (unsigned)(s - atom->value.s) < atom->c ; ) {
+				if (*s == JSON_ESCAPE) {
+					switch(s[1]) {
+					case '0':
+						if ((size_t)(bp - buf) < size - 3)
+							break;
+						*bp++ = '\\';
+						*bp++ = '0';
+						s += 2;
+						break;
+					case '1':
+						*bp++ = JSON_ESCAPE;
+						s += 2;
+						break;
+					case '2':
+						if ((size_t)(bp - buf) < size - 3)
+							break;
+						*bp++ = '\\';
+						*bp++ = '"';
+						s += 2;
+						break;
+					default:
+						(void) fprintf(stderr, "unrecognised character '%02x'\n", (uint8_t)s[1]);
+						s += 1;
+						break;
+					}
+				} else {
+					*bp++ = *s++;
 				}
-			} else {
-				*bp++ = *s++;
 			}
+			*bp++ = '"';
+			*bp = 0x0;
+			return bp - buf;
 		}
-		*bp++ = '"';
-		*bp = 0x0;
-		return (int)(bp - buf) - 1;
+		break;
 	case MJ_ARRAY:
 		cc = snprintf(buf, size, "[ ");
 		for (i = 0 ; i < atom->c ; i++) {
+			const char *sep = i+1 < atom->c ? ", " : " ";
+
 			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i], encoded);
-			if (i < atom->c - 1) {
-				cc += snprintf(&buf[cc], size - cc, ", ");
-			}
+			cc += snprintf(&buf[cc], size - cc, "%s", sep);
 		}
 		return cc + snprintf(&buf[cc], size - cc, "]\n");
 	case MJ_OBJECT:
 		cc = snprintf(buf, size, "{ ");
-		for (i = 0 ; i < atom->c ; i += 2) {
+		for (i = 0 ; i < atom->c - 1; i += 2) {
+			const char *sep = i+2 < atom->c ? ", " : " ";
+
 			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i], encoded);
 			cc += snprintf(&buf[cc], size - cc, ":");
 			cc += mj_snprint(&buf[cc], size - cc, &atom->value.v[i + 1], encoded);
-			if (i + 1 < atom->c - 1) {
-				cc += snprintf(&buf[cc], size - cc, ", ");
-			}
+			cc += snprintf(&buf[cc], size - cc, "%s", sep);
 		}
 		return cc + snprintf(&buf[cc], size - cc, "}\n");
 	default:
@@ -305,13 +330,13 @@ mj_snprint(char *buf, size_t size, mj_t *atom, int encoded)
 int
 mj_asprint(char **buf, mj_t *atom, int encoded)
 {
-	int	 size;
+	size_t	size;
 
-	size = mj_string_size(atom);
-	if ((*buf = calloc(1, (unsigned)(size + 1))) == NULL) {
+	size = mj_string_size(atom) + 1;
+	if ((*buf = calloc(1, size)) == NULL) {
 		return -1;
 	}
-	return mj_snprint(*buf, (unsigned)(size + 1), atom, encoded) + 1;
+	return mj_snprint(*buf, size, atom, encoded);
 }
 
 /* read into a JSON tree from a string */
@@ -322,11 +347,11 @@ mj_parse(mj_t *atom, const char *s, int *from, int *to, int *tok)
 
 	switch(atom->type = *tok = gettok(s, from, to, tok)) {
 	case MJ_NUMBER:
-		atom->value.s = strnsave(&s[*from], *to - *from, MJ_JSON_ENCODE);
+		atom->value.s = strnsave(&s[*from], *to - *from, MJ_HUMAN);
 		atom->c = atom->size = (unsigned)strlen(atom->value.s);
 		return gettok(s, from, to, tok);
 	case MJ_STRING:
-		atom->value.s = strnsave(&s[*from + 1], *to - *from - 2, MJ_HUMAN);
+		atom->value.s = strnsave(&s[*from + 1], *to - *from - 2, MJ_JSON_ENCODE);
 		atom->c = atom->size = (unsigned)strlen(atom->value.s);
 		return gettok(s, from, to, tok);
 	case MJ_NULL:
@@ -460,29 +485,35 @@ mj_string_size(mj_t *atom)
 	switch(atom->type) {
 	case MJ_NULL:
 	case MJ_TRUE:
+		/* true */
 		return 4;
 	case MJ_FALSE:
+		/* false */
 		return 5;
 	case MJ_NUMBER:
 		return atom->c;
 	case MJ_STRING:
+		/* "string" */
 		return atom->c + 2;
 	case MJ_ARRAY:
+		/* start '[ ' */
 		for (cc = 2, i = 0 ; i < atom->c ; i++) {
 			cc += mj_string_size(&atom->value.v[i]);
-			if (i < atom->c - 1) {
-				cc += 2;
-			}
+			/* separator ', ' or ' ' */
+			cc += (i < atom->c - 1) ? 2 : 1;
 		}
-		return cc + 1 + 1;
+		/* end ']' */
+		return cc + 1;
 	case MJ_OBJECT:
+		/* start '{ ' */
 		for (cc = 2, i = 0 ; i < atom->c ; i += 2) {
+			/* key:value */
 			cc += mj_string_size(&atom->value.v[i]) + 1 + mj_string_size(&atom->value.v[i + 1]);
-			if (i + 1 < atom->c - 1) {
-				cc += 2;
-			}
+			/* separator ', ' or ' ' */
+			cc += (i < atom->c - 1) ? 2 : 1;
 		}
-		return cc + 1 + 1;
+		/* end '}' */
+		return cc + 1;
 	default:
 		(void) fprintf(stderr, "mj_string_size: weird type %d\n", atom->type);
 		return 0;
@@ -607,20 +638,20 @@ mj_pretty(mj_t *mj, void *vp, unsigned depth, const char *trailer)
 	case MJ_STRING:
 		indent(fp, depth, NULL);
 		mj_asprint(&s, mj, MJ_HUMAN);
-		(void) fprintf(fp, "\"%s\"", s);
+		(void) fprintf(fp, "%s", s);
 		free(s);
 		break;
 	case MJ_ARRAY:
 		indent(fp, depth, "[\n");
 		for (i = 0 ; i < mj->c ; i++) {
-			mj_pretty(&mj->value.v[i], fp, depth + 1, (i < mj->c - 1) ? ",\n" : "\n");
+			mj_pretty(&mj->value.v[i], fp, depth + JSON_INDENT, (i < mj->c - 1) ? ",\n" : "\n");
 		}
 		indent(fp, depth, "]");
 		break;
 	case MJ_OBJECT:
 		indent(fp, depth, "{\n");
 		for (i = 0 ; i < mj->c ; i += 2) {
-			mj_pretty(&mj->value.v[i], fp, depth + 1, " : ");
+			mj_pretty(&mj->value.v[i], fp, depth + JSON_INDENT, " : ");
 			mj_pretty(&mj->value.v[i + 1], fp, 0, (i < mj->c - 2) ? ",\n" : "\n");
 		}
 		indent(fp, depth, "}");

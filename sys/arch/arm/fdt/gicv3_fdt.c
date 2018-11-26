@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.2.2.3 2018/09/30 01:45:38 pgoyette Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.2.2.4 2018/11/26 01:52:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,12 @@
  * SUCH DAMAGE.
  */
 
+#include "pci.h"
+
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.2.2.3 2018/09/30 01:45:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.2.2.4 2018/11/26 01:52:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.2.2.3 2018/09/30 01:45:38 pgoyette E
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/cortex/gicv3.h>
+#include <arm/cortex/gicv3_its.h>
 #include <arm/cortex/gic_reg.h>
 
 #define	GICV3_MAXIRQ	1020
@@ -58,6 +61,9 @@ static int	gicv3_fdt_match(device_t, cfdata_t, void *);
 static void	gicv3_fdt_attach(device_t, device_t, void *);
 
 static int	gicv3_fdt_map_registers(struct gicv3_fdt_softc *);
+#if NPCI > 0
+static void	gicv3_fdt_attach_its(struct gicv3_fdt_softc *, bus_space_tag_t, int);
+#endif
 
 static int	gicv3_fdt_intr(void *);
 
@@ -136,6 +142,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = phandle;
 	sc->sc_gic.sc_dev = self;
 	sc->sc_gic.sc_bst = faa->faa_bst;
+	sc->sc_gic.sc_dmat = faa->faa_dmat;
 
 	error = gicv3_fdt_map_registers(sc);
 	if (error) {
@@ -150,6 +157,16 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to initialize GIC: %d\n", error);
 		return;
 	}
+
+#if NPCI > 0
+	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!fdtbus_status_okay(child))
+			continue;
+		const char * const its_compat[] = { "arm,gic-v3-its", NULL };
+		if (of_match_compatible(child, its_compat))
+			gicv3_fdt_attach_its(sc, faa->faa_bst, child);
+	}
+#endif
 
 	arm_fdt_irq_set_handler(gicv3_irq_handler);
 }
@@ -220,6 +237,31 @@ gicv3_fdt_map_registers(struct gicv3_fdt_softc *sc)
 
 	return 0;
 }
+
+#if NPCI > 0
+static void
+gicv3_fdt_attach_its(struct gicv3_fdt_softc *sc, bus_space_tag_t bst, int phandle)
+{
+	bus_space_handle_t bsh;
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error_dev(sc->sc_gic.sc_dev, "couldn't get ITS address\n");
+		return;
+	}
+
+	if (bus_space_map(bst, addr, size, 0, &bsh) != 0) {
+		aprint_error_dev(sc->sc_gic.sc_dev, "couldn't map ITS\n");
+		return;
+	}
+
+	gicv3_its_init(&sc->sc_gic, bsh, addr, 0);
+
+	aprint_verbose_dev(sc->sc_gic.sc_dev, "ITS @ %#" PRIxBUSADDR "\n",
+	    addr);
+}
+#endif
 
 static void *
 gicv3_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
@@ -309,7 +351,7 @@ gicv3_fdt_disestablish(device_t dev, void *ih)
 
 	for (n = 0; n < GICV3_MAXIRQ; n++) {
 		firq = sc->sc_irq[n];
-		if (firq->intr_ih != ih)
+		if (firq == NULL || firq->intr_ih != ih)
 			continue;
 
 		KASSERT(firq->intr_refcnt > 0);

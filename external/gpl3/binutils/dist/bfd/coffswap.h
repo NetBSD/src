@@ -618,17 +618,6 @@ coff_swap_aouthdr_in (bfd * abfd, void * aouthdr_ext1, void * aouthdr_int1)
   aouthdr_int->data_start =
     GET_AOUTHDR_DATA_START (abfd, aouthdr_ext->data_start);
 
-#ifdef I960
-  aouthdr_int->tagentries = H_GET_32 (abfd, aouthdr_ext->tagentries);
-#endif
-
-#ifdef APOLLO_M68
-  H_PUT_32 (abfd, aouthdr_int->o_inlib, aouthdr_ext->o_inlib);
-  H_PUT_32 (abfd, aouthdr_int->o_sri, aouthdr_ext->o_sri);
-  H_PUT_32 (abfd, aouthdr_int->vid[0], aouthdr_ext->vid);
-  H_PUT_32 (abfd, aouthdr_int->vid[1], aouthdr_ext->vid + 4);
-#endif
-
 #ifdef RS6000COFF_C
 #ifdef XCOFF64
   aouthdr_int->o_toc = H_GET_64 (abfd, aouthdr_ext->o_toc);
@@ -688,10 +677,6 @@ coff_swap_aouthdr_out (bfd * abfd, void * in, void * out)
 			  aouthdr_out->text_start);
   PUT_AOUTHDR_DATA_START (abfd, aouthdr_in->data_start,
 			  aouthdr_out->data_start);
-
-#ifdef I960
-  H_PUT_32 (abfd, aouthdr_in->tagentries, aouthdr_out->tagentries);
-#endif
 
 #ifdef RS6000COFF_C
 #ifdef XCOFF64
@@ -767,9 +752,6 @@ coff_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
   scnhdr_int->s_flags = GET_SCNHDR_FLAGS (abfd, scnhdr_ext->s_flags);
   scnhdr_int->s_nreloc = GET_SCNHDR_NRELOC (abfd, scnhdr_ext->s_nreloc);
   scnhdr_int->s_nlnno = GET_SCNHDR_NLNNO (abfd, scnhdr_ext->s_nlnno);
-#ifdef I960
-  scnhdr_int->s_align = GET_SCNHDR_ALIGN (abfd, scnhdr_ext->s_align);
-#endif
 #ifdef COFF_ADJUST_SCNHDR_IN_POST
   COFF_ADJUST_SCNHDR_IN_POST (abfd, ext, in);
 #endif
@@ -794,10 +776,6 @@ coff_swap_scnhdr_out (bfd * abfd, void * in, void * out)
   PUT_SCNHDR_RELPTR (abfd, scnhdr_int->s_relptr, scnhdr_ext->s_relptr);
   PUT_SCNHDR_LNNOPTR (abfd, scnhdr_int->s_lnnoptr, scnhdr_ext->s_lnnoptr);
   PUT_SCNHDR_FLAGS (abfd, scnhdr_int->s_flags, scnhdr_ext->s_flags);
-#if defined(M88)
-  H_PUT_32 (abfd, scnhdr_int->s_nlnno, scnhdr_ext->s_nlnno);
-  H_PUT_32 (abfd, scnhdr_int->s_nreloc, scnhdr_ext->s_nreloc);
-#else
   if (scnhdr_int->s_nlnno <= MAX_SCNHDR_NLNNO)
     PUT_SCNHDR_NLNNO (abfd, scnhdr_int->s_nlnno, scnhdr_ext->s_nlnno);
   else
@@ -808,7 +786,7 @@ coff_swap_scnhdr_out (bfd * abfd, void * in, void * out)
       buf[sizeof (scnhdr_int->s_name)] = '\0';
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: warning: %s: line number overflow: 0x%lx > 0xffff"),
+	(_("%pB: warning: %s: line number overflow: 0x%lx > 0xffff"),
 	 abfd, buf, scnhdr_int->s_nlnno);
       PUT_SCNHDR_NLNNO (abfd, 0xffff, scnhdr_ext->s_nlnno);
     }
@@ -822,17 +800,13 @@ coff_swap_scnhdr_out (bfd * abfd, void * in, void * out)
       memcpy (buf, scnhdr_int->s_name, sizeof (scnhdr_int->s_name));
       buf[sizeof (scnhdr_int->s_name)] = '\0';
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: %s: reloc overflow: 0x%lx > 0xffff"),
+      _bfd_error_handler (_("%pB: %s: reloc overflow: 0x%lx > 0xffff"),
 			  abfd, buf, scnhdr_int->s_nreloc);
       bfd_set_error (bfd_error_file_truncated);
       PUT_SCNHDR_NRELOC (abfd, 0xffff, scnhdr_ext->s_nreloc);
       ret = 0;
     }
-#endif
 
-#ifdef I960
-  PUT_SCNHDR_ALIGN (abfd, scnhdr_int->s_align, scnhdr_ext->s_align);
-#endif
 #ifdef COFF_ADJUST_SCNHDR_OUT_POST
   COFF_ADJUST_SCNHDR_OUT_POST (abfd, in, out);
 #endif

@@ -124,7 +124,7 @@ osf_core_core_file_p (bfd *abfd)
 	  flags = SEC_HAS_CONTENTS;
 	  break;
 	default:
-	  _bfd_error_handler (_("Unhandled OSF/1 core file section type %d\n"),
+	  _bfd_error_handler (_("unhandled OSF/1 core file section type %d"),
 			      core_scnhdr.scntype);
 	  continue;
 	}
@@ -201,12 +201,16 @@ const bfd_target core_osf_vec =
       osf_core_core_file_p		/* a core file */
     },
     {				/* bfd_set_format */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
     {				/* bfd_write_contents */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),

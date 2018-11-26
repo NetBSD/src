@@ -1604,6 +1604,11 @@ dhcp_openudp(struct interface *ifp)
 	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1)
 		goto eexit;
+#ifdef SO_RERROR
+	n = 1;
+	if (setsockopt(s, SOL_SOCKET, SO_RERROR, &n, sizeof(n)) == -1)
+		goto eexit;
+#endif
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(BOOTPC);

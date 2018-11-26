@@ -2760,7 +2760,13 @@ allocno_copy_cost_saving (ira_allocno_t allocno, int hard_regno)
 	}
       else
 	gcc_unreachable ();
-      cost += cp->freq * ira_register_move_cost[allocno_mode][rclass][rclass];
+      cost += cp->freq *
+            (   ira_register_move_cost
+             && ira_register_move_cost[allocno_mode]
+	     && ira_register_move_cost[allocno_mode][rclass]
+	    )
+	   ? ira_register_move_cost[allocno_mode][rclass][rclass] 
+	   : 0;
     }
   return cost;
 }

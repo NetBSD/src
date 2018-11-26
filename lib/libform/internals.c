@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.38 2016/03/09 19:47:13 christos Exp $	*/
+/*	$NetBSD: internals.c,v 1.38.14.1 2018/11/26 01:52:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.38 2016/03/09 19:47:13 christos Exp $");
+__RCSID("$NetBSD: internals.c,v 1.38.14.1 2018/11/26 01:52:12 pgoyette Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -1845,7 +1845,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	if (pos >= row->length) {
 		  /* make sure the string is terminated if we are at the
 		   * end of the string, the terminator would be missing
-		   * if we are are at the end of the field.
+		   * if we are at the end of the field.
 		   */
 		row->string[pos + 1] = '\0';
 	}

@@ -24,6 +24,11 @@ SECTIONS
 	{
 		*(.rodata)
 		*(.rodata.*)
+		. = ALIGN(64);
+		__CTOR_LIST__ = .;
+		*(.ctors)
+		*(.init_array)
+		__CTOR_END__ = .;
 	}
 
 	PROVIDE(_etext = .);

@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.75 2017/12/31 03:04:44 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.75.2.1 2018/11/26 01:52:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.75 2017/12/31 03:04:44 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.75.2.1 2018/11/26 01:52:55 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ cwalk(FILE *fp)
 	host[sizeof(host) - 1] = '\0';
 	if ((user = getlogin()) == NULL) {
 		struct passwd *pw;
-		user = (pw = getpwuid(getuid())) == NULL ? pw->pw_name :
+		user = (pw = getpwuid(getuid())) != NULL ? pw->pw_name :
 		    "<unknown>";
 	}
 

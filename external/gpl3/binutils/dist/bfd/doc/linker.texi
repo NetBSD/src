@@ -393,6 +393,24 @@ Return TRUE on success and FALSE on failure.
 
 @end example
 
+@findex _bfd_generic_link_hide_symbol
+@subsubsection @code{_bfd_generic_link_hide_symbol}
+@strong{Synopsis}
+@example
+void _bfd_generic_link_hide_symbol
+   (bfd *output_bfd, struct bfd_link_info *info,
+    struct bfd_link_hash_entry *h);
+@end example
+@strong{Description}@*
+Hide symbol @var{h}.
+This is an internal function.  It should not be called from
+outside the BFD library.
+@example
+#define bfd_link_hide_symbol(output_bfd, info, h) \
+       BFD_SEND (output_bfd, _bfd_link_hide_symbol, (output_bfd, info, h))
+
+@end example
+
 @findex bfd_generic_define_start_stop
 @subsubsection @code{bfd_generic_define_start_stop}
 @strong{Synopsis}

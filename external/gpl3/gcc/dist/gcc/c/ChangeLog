@@ -1,3 +1,32 @@
+2018-10-26  Release Manager
+
+	* GCC 6.5.0 released.
+
+2018-06-25  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2017-12-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR debug/83550
+	* c-decl.c (finish_struct): Set DECL_SOURCE_LOCATION on
+	TYPE_STUB_DECL and call rest_of_type_compilation before processing
+	incomplete vars rather than after it.
+
+	2017-09-29  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/82340
+	* c-decl.c (build_compound_literal): Use c_apply_type_quals_to_decl
+	instead of trying to set just TREE_READONLY manually.
+
+2017-12-10  Tom de Vries  <tom@codesourcery.com>
+
+	backport from trunk:
+	PR c/81875
+	2017-09-16  Tom de Vries  <tom@codesourcery.com>
+
+	* c-parser.c (c_parser_omp_for_loop): Fold only operands of cond, not
+	cond itself.
+
 2017-07-04  Release Manager
 
 	* GCC 6.4.0 released.

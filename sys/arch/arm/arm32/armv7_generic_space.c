@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.6.2.2 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.6.2.3 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.6.2.2 2018/04/07 04:12:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.6.2.3 2018/11/26 01:52:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

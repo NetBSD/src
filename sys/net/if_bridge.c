@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.148.2.5 2018/09/30 01:45:56 pgoyette Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.148.2.6 2018/11/26 01:52:50 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148.2.5 2018/09/30 01:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148.2.6 2018/11/26 01:52:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1059,6 +1059,12 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 		return 0;
 
 	BRIDGE_RT_LOCK(sc);
+
+	/* The passed buffer is not enough, tell a required size. */
+	if (bac->ifbac_len < (sizeof(bareq) * sc->sc_brtcnt)) {
+		count = sc->sc_brtcnt;
+		goto out;
+	}
 
 	len = bac->ifbac_len;
 	BRIDGE_RTLIST_WRITER_FOREACH(brt, sc) {

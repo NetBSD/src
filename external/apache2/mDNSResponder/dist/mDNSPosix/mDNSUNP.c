@@ -303,8 +303,16 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
         if ((flags & IFF_UP) == 0)
             continue;   /* ignore if interface not up */
 
+
+#ifdef notdef
+	/*
+	 * Include the loopback so that we return at least one
+	 * address, so that mdnsd does not exit before we get
+	 * a dhcp address
+	 */
 	if ((flags & IFF_LOOPBACK))
 	    continue;	/* ignore loopback interfaces */
+#endif
 
 	/* Skip addresses we can't use */
 #ifdef SIOCGIFAFLAG_IN

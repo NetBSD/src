@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.23.4.1 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.23.4.2 2018/11/26 01:52:19 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.23.4.1 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.23.4.2 2018/11/26 01:52:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,7 +122,8 @@ const struct evcnt *tegra_pcie_intr_evcnt(void *, pci_intr_handle_t);
 static int	tegra_pcie_intr_setattr(void *, pci_intr_handle_t *, int,
 					uint64_t);
 static void *	tegra_pcie_intr_establish(void *, pci_intr_handle_t,
-					 int, int (*)(void *), void *);
+					 int, int (*)(void *), void *,
+					 const char *);
 static void	tegra_pcie_intr_disestablish(void *, void *);
 
 CFATTACH_DECL_NEW(tegra_pcie, sizeof(struct tegra_pcie_softc),
@@ -770,7 +771,7 @@ tegra_pcie_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data)
 
 static void *
 tegra_pcie_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*callback)(void *), void *arg)
+    int (*callback)(void *), void *arg, const char *xname)
 {
 	struct tegra_pcie_softc *sc = v;
 	struct tegra_pcie_ih *pcie_ih;

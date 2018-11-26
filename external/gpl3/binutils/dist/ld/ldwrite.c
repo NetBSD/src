@@ -57,7 +57,7 @@ build_link_order (lang_statement_union_type *statement)
 
 	link_order = bfd_new_link_order (link_info.output_bfd, output_section);
 	if (link_order == NULL)
-	  einfo (_("%P%F: bfd_new_link_order failed\n"));
+	  einfo (_("%F%P: bfd_new_link_order failed\n"));
 
 	link_order->type = bfd_data_link_order;
 	link_order->offset = statement->data_statement.output_offset;
@@ -203,7 +203,7 @@ build_link_order (lang_statement_union_type *statement)
 
 	link_order = bfd_new_link_order (link_info.output_bfd, output_section);
 	if (link_order == NULL)
-	  einfo (_("%P%F: bfd_new_link_order failed\n"));
+	  einfo (_("%F%P: bfd_new_link_order failed\n"));
 
 	link_order->offset = rs->output_offset;
 	link_order->size = bfd_get_reloc_size (rs->howto);
@@ -255,7 +255,7 @@ build_link_order (lang_statement_union_type *statement)
 	    link_order = bfd_new_link_order (link_info.output_bfd,
 					     output_section);
 	    if (link_order == NULL)
-	      einfo (_("%P%F: bfd_new_link_order failed\n"));
+	      einfo (_("%F%P: bfd_new_link_order failed\n"));
 
 	    if ((i->flags & SEC_NEVER_LOAD) != 0
 		&& (i->flags & SEC_DEBUGGING) == 0)
@@ -296,7 +296,7 @@ build_link_order (lang_statement_union_type *statement)
 	link_order = bfd_new_link_order (link_info.output_bfd,
 					 output_section);
 	if (link_order == NULL)
-	  einfo (_("%P%F: bfd_new_link_order failed\n"));
+	  einfo (_("%F%P: bfd_new_link_order failed\n"));
 	link_order->type = bfd_data_link_order;
 	link_order->size = statement->padding_statement.size;
 	link_order->offset = statement->padding_statement.output_offset;

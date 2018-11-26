@@ -34,7 +34,7 @@ static reloc_howto_type *
 bfd_elf32_bfd_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type *
 bfd_elf32_bfd_reloc_name_lookup (bfd *, const char *);
-static void
+static bfd_boolean
 xgate_info_to_howto_rel (bfd *, arelent *, Elf_Internal_Rela *);
 static bfd_boolean
 xgate_elf_set_mach_from_flags (bfd *);
@@ -395,7 +395,7 @@ bfd_elf32_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   for (i = 0; i < ARRAY_SIZE (xgate_reloc_map); i++)
     if (xgate_reloc_map[i].bfd_reloc_val == code)
       return &elf_xgate_howto_table[xgate_reloc_map[i].elf_reloc_val];
-
+  
   return NULL;
 }
 
@@ -414,8 +414,8 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for an XGATE ELF reloc.  */
 
-static void
-xgate_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+xgate_info_to_howto_rel (bfd *abfd,
 			 arelent *cache_ptr,
 			 Elf_Internal_Rela *dst)
 {
@@ -425,10 +425,13 @@ xgate_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_XGATE_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid XGate reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &elf_xgate_howto_table[r_type];
+  return TRUE;
 }
 
 /* Destroy an XGATE ELF linker hash table.  */
@@ -701,12 +704,12 @@ elf32_xgate_post_process_headers (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_in
 #define TARGET_BIG_SYM			     xgate_elf32_vec
 #define TARGET_BIG_NAME			     "elf32-xgate"
 
-#define elf_info_to_howto		     0
+#define elf_info_to_howto		     NULL
 #define elf_info_to_howto_rel		     xgate_info_to_howto_rel
 #define elf_backend_check_relocs	     elf32_xgate_check_relocs
 #define elf_backend_relocate_section	     elf32_xgate_relocate_section
 #define elf_backend_object_p		     xgate_elf_set_mach_from_flags
-#define elf_backend_final_write_processing   0
+#define elf_backend_final_write_processing   NULL
 #define elf_backend_can_gc_sections	     1
 #define elf_backend_special_sections	     elf32_xgate_special_sections
 #define elf_backend_post_process_headers     elf32_xgate_post_process_headers

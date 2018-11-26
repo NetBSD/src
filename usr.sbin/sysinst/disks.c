@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.13.12.2 2018/06/25 07:26:12 pgoyette Exp $ */
+/*	$NetBSD: disks.c,v 1.13.12.3 2018/11/26 01:52:55 pgoyette Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,10 +36,12 @@
 
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <util.h>
 #include <uuid.h>
 
@@ -109,12 +111,6 @@ static void fixsb(const char *, const char *, char);
 static bool is_gpt(const char *);
 static int incoregpt(pm_devs_t *, partinfo *);
 
-#ifndef DISK_NAMES
-#define DISK_NAMES "wd", "sd", "ld", "raid"
-#endif
-
-static const char *disk_names[] = { DISK_NAMES,
-				    "vnd", "cgd", "dk:no_part", NULL };
 
 static bool tmpfs_on_var_shm(void);
 
@@ -355,46 +351,52 @@ done:
 		strcpy(dd->dd_descr, dd->dd_name);
 }
 
-/* disknames - contains device names without partition letters
- * cdrom_devices - contains devices including partition letters
- * returns the first entry in hw.disknames matching a cdrom_device, or
- * first entry on error or no match
+/*
+ * State for helper callback for get_default_cdrom
  */
-const char *
-get_default_cdrom(void)
+struct default_cdrom_data {
+	char *device;
+	size_t max_len;
+	bool found;
+};
+
+/*
+ * Helper function for get_default_cdrom, gets passed a device
+ * name and a void pointer to default_cdrom_data.
+ */
+static bool
+get_default_cdrom_helper(void *state, const char *dev)
 {
-	static const char *cdrom_devices[] = { CD_NAMES, 0};
-	static const char mib_name[] = "hw.disknames";
-	size_t len;
-	char *disknames;
-	char *last;
-	char *name;
-	const char **arg;
-	const char *cd_dev;
+	struct default_cdrom_data *data = state;
 
-	/* On error just use first entry in cdrom_devices */
-	if (sysctlbyname(mib_name, NULL, &len, NULL, 0) == -1)
-		return cdrom_devices[0];
-	if ((disknames = malloc(len + 2)) == 0) /* skip on malloc fail */
-		return cdrom_devices[0];
+	if (!is_cdrom_device(dev, false))
+		return true;
 
-	(void)sysctlbyname(mib_name, disknames, &len, NULL, 0);
-	for ((name = strtok_r(disknames, " ", &last)); name;
-	    (name = strtok_r(NULL, " ", &last))) {
-		for (arg = cdrom_devices; *arg; ++arg) {
-			cd_dev = *arg;
-			/* skip unit and partition */
-			if (strncmp(cd_dev, name, strlen(cd_dev) - 2) != 0)
-				continue;
-			if (name != disknames)
-				strcpy(disknames, name);
-			strcat(disknames, "a");
-			/* XXX: leaks, but so what? */
-			return disknames;
-		}
-	}
-	free(disknames);
-	return cdrom_devices[0];
+	strlcpy(data->device, dev, data->max_len);
+	strlcat(data->device, "a", data->max_len); /* default to partition a */
+	data->found = true;
+
+	return false;	/* one is enough, stop iteration */
+}
+
+/*
+ * Set the argument to the name of the first CD devices actually
+ * available, leave it unmodified otherwise.
+ * Return true if a device has been found.
+ */
+bool
+get_default_cdrom(char *cd, size_t max_len)
+{
+	struct default_cdrom_data state;
+
+	state.device = cd;
+	state.max_len = max_len;
+	state.found = false;
+
+	if (enumerate_disks(&state, get_default_cdrom_helper))
+		return state.found;
+
+	return false;
 }
 
 static void
@@ -507,76 +509,218 @@ is_ffs_wedge(const char *dev)
 	return res;
 }
 
+/*
+ * Does this device match an entry in our default CDROM device list?
+ * If looking for install targets, we also flag floopy devices.
+ */
+bool
+is_cdrom_device(const char *dev, bool as_target)
+{
+	static const char *target_devices[] = {
+#ifdef CD_NAMES
+		CD_NAMES
+#endif
+#if defined(CD_NAMES) && defined(FLOPPY_NAMES)
+		,
+#endif
+#ifdef FLOPPY_NAMES
+		FLOPPY_NAMES
+#endif
+#if defined(CD_NAMES) || defined(FLOPPY_NAMES)
+		,
+#endif
+		0
+	};
+	static const char *src_devices[] = {
+#ifdef CD_NAMES
+		CD_NAMES ,
+#endif
+		0
+	};
+
+	for (const char **dev_pat = as_target ? target_devices : src_devices;
+	     *dev_pat; dev_pat++)
+		if (fnmatch(*dev_pat, dev, 0) == 0)
+			return true;
+
+	return false;
+}
+
+/* does this device match any entry in the driver list? */
+static bool
+dev_in_list(const char *dev, const char **list)
+{
+
+	for ( ; *list; list++) {
+
+		size_t len = strlen(*list);
+
+		/* start of name matches? */
+		if (strncmp(dev, *list, len) == 0) {
+			char *endp;
+			int e;
+
+			/* remainder of name is a decimal number? */
+			strtou(dev+len, &endp, 10, 0, INT_MAX, &e);
+			if (endp && *endp == 0 && e == 0)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+bool
+is_bootable_device(const char *dev)
+{
+	static const char *non_bootable_devs[] = {
+		"raid",	/* bootcode lives outside of raid */
+		"xbd",	/* xen virtual device, can not boot from that */
+		NULL
+	};
+
+	return !dev_in_list(dev, non_bootable_devs);
+}
+
+bool
+is_partitionable_device(const char *dev)
+{
+	static const char *non_partitionable_devs[] = {
+		"dk",	/* this is alreay a partioned slice */
+		NULL
+	};
+
+	return !dev_in_list(dev, non_partitionable_devs);
+}
+
+/*
+ * Multi-purpose helper function:
+ * iterate all known disks, invoke a callback for each.
+ * Stop iteration when the callback returns false.
+ * Return true when iteration actually happend, false on error.
+ */
+bool
+enumerate_disks(void *state, bool (*func)(void *state, const char *dev))
+{
+	static const int mib[] = { CTL_HW, HW_DISKNAMES };
+	static const unsigned int miblen = __arraycount(mib);
+	const char *xd;
+	char *disk_names;
+	size_t len;
+
+	if (sysctl(mib, miblen, NULL, &len, NULL, 0) == -1)
+		return false;
+
+	disk_names = malloc(len);
+	if (disk_names == NULL)
+		return false;
+
+	if (sysctl(mib, miblen, disk_names, &len, NULL, 0) == -1) {
+		free(disk_names);
+		return false;
+	}
+
+	for (xd = strtok(disk_names, " "); xd != NULL; xd = strtok(NULL, " ")) {
+		if (!(*func)(state, xd))
+			break;
+	}
+	free(disk_names);
+
+	return true;
+}
+
+/*
+ * Helper state for get_disks
+ */
+struct get_disks_state {
+	int numdisks;
+	struct disk_desc *dd;
+	bool with_non_partitionable;
+};
+
+/*
+ * Helper function for get_disks enumartion
+ */
+static bool
+get_disks_helper(void *arg, const char *dev)
+{
+	struct get_disks_state *state = arg;
+	struct disklabel l;
+
+	/* is this a CD device? */
+	if (is_cdrom_device(dev, true))
+		return true;
+
+	memset(state->dd, 0, sizeof(*state->dd));
+	strlcpy(state->dd->dd_name, dev, sizeof state->dd->dd_name - 2);
+	state->dd->dd_no_mbr = !is_bootable_device(dev);
+	state->dd->dd_no_part = !is_partitionable_device(dev);
+
+	if (state->dd->dd_no_part && !state->with_non_partitionable)
+		return true;
+
+	if (!get_geom(state->dd->dd_name, &l)) {
+		if (errno == ENOENT)
+			return true;
+		if (errno != ENOTTY || !state->dd->dd_no_part)
+			/*
+			 * Allow plain partitions,
+			 * like already existing wedges
+			 * (like dk0) if marked as
+			 * non-partitioning device.
+			 * For all other cases, continue
+			 * with the next disk.
+			 */
+			return true;
+		if (!is_ffs_wedge(state->dd->dd_name))
+			return true;
+	}
+
+	/*
+	 * Exclude a disk mounted as root partition,
+	 * in case of install-image on a USB memstick.
+	 */
+	if (is_active_rootpart(state->dd->dd_name,
+	    state->dd->dd_no_part ? -1 : 0))
+		return true;
+
+	if (!state->dd->dd_no_part) {
+		state->dd->dd_cyl = l.d_ncylinders;
+		state->dd->dd_head = l.d_ntracks;
+		state->dd->dd_sec = l.d_nsectors;
+		state->dd->dd_secsize = l.d_secsize;
+		state->dd->dd_totsec = l.d_secperunit;
+	}
+	if (state->dd->dd_no_part)
+		get_wedge_descr(state->dd);
+	else
+		get_descr(state->dd);
+	state->dd++;
+	state->numdisks++;
+	if (state->numdisks == MAX_DISKS)
+		return false;
+
+	return true;
+}
+
+/*
+ * Get all disk devices that are not CDs.
+ * Optionally leave out those that can not be partitioned further.
+ */
 static int
 get_disks(struct disk_desc *dd, bool with_non_partitionable)
 {
-	const char **xd;
-	char *cp;
-	struct disklabel l;
-	int i;
-	int numdisks;
+	struct get_disks_state state;
 
 	/* initialize */
-	numdisks = 0;
+	state.numdisks = 0;
+	state.dd = dd;
+	state.with_non_partitionable = with_non_partitionable;
 
-	for (xd = disk_names; *xd != NULL; xd++) {
-		for (i = 0; i < MAX_DISKS; i++) {
-			strlcpy(dd->dd_name, *xd, sizeof dd->dd_name - 2);
-			cp = strchr(dd->dd_name, ':');
-			if (cp != NULL) {
-				dd->dd_no_mbr = !strcmp(cp, ":no_mbr");
-				dd->dd_no_part = !strcmp(cp, ":no_part");
-			} else {
-				dd->dd_no_mbr = false;
-				dd->dd_no_part = false;
-				cp = strchr(dd->dd_name, 0);
-			}
-			if (dd->dd_no_part && !with_non_partitionable)
-				continue;
+	if (enumerate_disks(&state, get_disks_helper))
+		return state.numdisks;
 
-			snprintf(cp, 2 + 1, "%d", i);
-			if (!get_geom(dd->dd_name, &l)) {
-				if (errno == ENOENT)
-					break;
-				if (errno != ENOTTY || !dd->dd_no_part)
-					/*
-					 * Allow plain partitions,
-					 * like already existing wedges
-					 * (like dk0) if marked as
-					 * non-partitioning device.
-					 * For all other cases, continue
-					 * with the next disk.
-					 */
-					continue;
-				if (!is_ffs_wedge(dd->dd_name))
-					continue;
-			}
-
-			/*
-			 * Exclude a disk mounted as root partition,
-			 * in case of install-image on a USB memstick.
-			 */
-			if (is_active_rootpart(dd->dd_name, 0))
-				continue;
-
-			if (!dd->dd_no_part) {
-				dd->dd_cyl = l.d_ncylinders;
-				dd->dd_head = l.d_ntracks;
-				dd->dd_sec = l.d_nsectors;
-				dd->dd_secsize = l.d_secsize;
-				dd->dd_totsec = l.d_secperunit;
-			}
-			if (dd->dd_no_part)
-				get_wedge_descr(dd);
-			else
-				get_descr(dd);
-			dd++;
-			numdisks++;
-			if (numdisks >= MAX_DISKS)
-				return numdisks;
-		}
-	}
-	return numdisks;
+	return 0;
 }
 
 int
@@ -1178,12 +1322,15 @@ done_with_disks:
 #endif
 	}
 
+	if (cdrom_dev[0] == 0)
+		get_default_cdrom(cdrom_dev, sizeof(cdrom_dev));
+
 	/* Add /kern, /proc and /dev/pts to fstab and make mountpoint. */
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
 	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
-	    get_default_cdrom());
+	    cdrom_dev);
 	scripting_fprintf(f, "%stmpfs\t\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n",
 	    tmpfs_on_var_shm() ? "" : "#");
 	make_target_dir("/kern");

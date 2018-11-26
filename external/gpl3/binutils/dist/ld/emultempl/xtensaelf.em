@@ -267,7 +267,7 @@ replace_instruction_table_sections (bfd *abfd, asection *sec)
       if (! replace_insn_sec_with_prop_sec (abfd, insn_sec_name, prop_sec_name,
 					    &message))
 	{
-	  einfo (_("%P: warning: failed to convert %s table in %B (%s); subsequent disassembly may be incomplete\n"),
+	  einfo (_("%P: warning: failed to convert %s table in %pB (%s); subsequent disassembly may be incomplete\n"),
 		 insn_sec_name, abfd, message);
 	}
     }
@@ -384,7 +384,7 @@ check_xtensa_info (bfd *abfd, asection *info_sec)
 
   data = xmalloc (info_sec->size);
   if (! bfd_get_section_contents (abfd, info_sec, data, 0, info_sec->size))
-    einfo (_("%F%P:%B: cannot read contents of section %A\n"), abfd, info_sec);
+    einfo (_("%F%P: %pB: cannot read contents of section %pA\n"), abfd, info_sec);
 
   if (info_sec->size > 24
       && info_sec->size >= 24 + bfd_get_32 (abfd, data + 4)
@@ -395,11 +395,11 @@ check_xtensa_info (bfd *abfd, asection *info_sec)
 					  &mismatch, &errmsg))
     {
       if (mismatch)
-	einfo (_("%P:%B: warning: incompatible Xtensa configuration (%s)\n"),
+	einfo (_("%P: %pB: warning: incompatible Xtensa configuration (%s)\n"),
 	       abfd, errmsg);
     }
   else
-    einfo (_("%P:%B: warning: cannot parse .xtensa.info section\n"), abfd);
+    einfo (_("%P: %pB: warning: cannot parse .xtensa.info section\n"), abfd);
 
   free (data);
 }
@@ -450,7 +450,7 @@ elf_xtensa_before_allocation (void)
 	 cannot go any further if there are any mismatches.  */
       if ((is_big_endian && f->the_bfd->xvec->byteorder == BFD_ENDIAN_LITTLE)
 	  || (!is_big_endian && f->the_bfd->xvec->byteorder == BFD_ENDIAN_BIG))
-	einfo (_("%F%P: cross-endian linking for %B not supported\n"),
+	einfo (_("%F%P: cross-endian linking for %pB not supported\n"),
 	       f->the_bfd);
 
       if (! first_bfd)

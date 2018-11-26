@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.434.2.9 2018/09/30 01:45:44 pgoyette Exp $
+# $NetBSD: ALL,v 1.434.2.10 2018/11/26 01:52:25 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.434.2.9 $"
+#ident		"ALL-$Revision: 1.434.2.10 $"
 
 maxusers	64		# estimated number of users
 
@@ -825,6 +825,7 @@ dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
+mfii*	at pci? dev ? function ?	# LSI MegaRAID SAS (Fusion and newer)
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
 mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II

@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.3.2.7 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: armreg.h,v 1.3.2.8 2018/11/26 01:52:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ AARCH64REG_WRITE_INLINE(fpcr)
 #define	 FPCR_RM		2		//  Round towards Minus infinity
 #define	 FPCR_RZ		3		//  Round towards Zero
 #define	FPCR_STRIDE		__BITS(21,20)
+#define	FPCR_FZ16		__BIT(19)	// Flush-To-Zero for FP16
 #define	FPCR_LEN		__BITS(18,16)
 #define	FPCR_IDE		__BIT(15)	// Input Denormal Exception enable
 #define	FPCR_IXE		__BIT(12)	// IneXact Exception enable
@@ -250,12 +251,20 @@ AARCH64REG_READ_INLINE(id_aa64mmfr0_el1)
 #define	 ID_AA64MMFR0_EL1_PARANGE_256T	 5
 
 AARCH64REG_READ_INLINE(id_aa64mmfr1_el1)
+AARCH64REG_READ_INLINE(id_aa64mmfr2_el1)
 AARCH64REG_READ_INLINE(id_aa64pfr0_el1)
 AARCH64REG_READ_INLINE(id_aa64pfr1_el1)
+AARCH64REG_READ_INLINE(id_aa64zfr0_el1)
 AARCH64REG_READ_INLINE(id_pfr1_el1)
 AARCH64REG_READ_INLINE(isr_el1)
 AARCH64REG_READ_INLINE(midr_el1)
 AARCH64REG_READ_INLINE(mpidr_el1)
+
+#define	MIDR_EL1_IMPL		__BITS(31,24)		// Implementor
+#define	MIDR_EL1_VARIANT	__BITS(23,20)		// CPU Variant
+#define	MIDR_EL1_ARCH		__BITS(19,16)		// Architecture
+#define	MIDR_EL1_PARTNUM	__BITS(15,4)		// PartNum
+#define	MIDR_EL1_REVISION	__BITS(3,0)		// Revision
 
 #define	MPIDR_AFF3		__BITS(32,39)
 #define	MPIDR_U	 		__BIT(30)		// 1 = Uni-Processor System
@@ -303,9 +312,11 @@ AARCH64REG_READ_INLINE(mvfr1_el1)
 #define	 MVFR1_FPHP_NONE	 0
 #define	 MVFR1_FPHP_HALF_SINGLE	 1
 #define	 MVFR1_FPHP_HALF_DOUBLE	 2
+#define	 MVFR1_FPHP_HALF_ARITH	 3
 #define	MVFR1_SIMDHP		__BITS(23,20)
 #define	 MVFR1_SIMDHP_NONE	 0
 #define	 MVFR1_SIMDHP_HALF	 1
+#define	 MVFR1_SIMDHP_HALF_ARITH 3
 #define	MVFR1_SIMDSP		__BITS(19,16)
 #define	 MVFR1_SIMDSP_NONE	 0
 #define	 MVFR1_SIMDSP_SINGLE	 1
@@ -1132,5 +1143,34 @@ gtmr_cntv_cval_read(void)
 	return reg_cntv_cval_el0_read();
 }
 #endif /* _KERNEL */
+
+/*
+ * Structure attached to machdep.cpuN.cpu_id sysctl node.
+ * Always add new members to the end, and avoid arrays.
+ */
+struct aarch64_sysctl_cpu_id {
+	uint64_t ac_midr;	/* Main ID Register */
+	uint64_t ac_revidr;	/* Revision ID Register */
+	uint64_t ac_mpidr;	/* Multiprocessor Affinity Register */
+
+	uint64_t ac_aa64dfr0;	/* A64 Debug Feature Register 0 */
+	uint64_t ac_aa64dfr1;	/* A64 Debug Feature Register 1 */
+
+	uint64_t ac_aa64isar0;	/* A64 Instruction Set Attribute Register 0 */
+	uint64_t ac_aa64isar1;	/* A64 Instruction Set Attribute Register 1 */
+
+	uint64_t ac_aa64mmfr0;	/* A64 Memroy Model Feature Register 0 */
+	uint64_t ac_aa64mmfr1;	/* A64 Memroy Model Feature Register 1 */
+	uint64_t ac_aa64mmfr2;	/* A64 Memroy Model Feature Register 2 */
+
+	uint64_t ac_aa64pfr0;	/* A64 Processor Feature Register 0 */
+	uint64_t ac_aa64pfr1;	/* A64 Processor Feature Register 1 */
+
+	uint64_t ac_aa64zfr0;	/* A64 SVE Feature ID Register 0 */
+
+	uint32_t ac_mvfr0;	/* Media and VFP Feature Register 0 */
+	uint32_t ac_mvfr1;	/* Media and VFP Feature Register 1 */
+	uint32_t ac_mvfr2;	/* Media and VFP Feature Register 2 */
+};
 
 #endif /* _AARCH64_ARMREG_H_ */

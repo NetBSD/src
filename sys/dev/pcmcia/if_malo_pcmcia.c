@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.16.2.1 2018/07/28 04:37:57 pgoyette Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.16.2.2 2018/11/26 01:52:47 pgoyette Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.16.2.1 2018/07/28 04:37:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.16.2.2 2018/11/26 01:52:47 pgoyette Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1044,7 +1044,7 @@ cmalo_rx(struct malo_softc *sc)
 #define ETHER_ALIGN	2 /* XXX */
 	/* prepare mbuf */
 	m = m_devget(sc->sc_data + rxdesc->pkgoffset,
-	    rxdesc->pkglen, ETHER_ALIGN, ifp, NULL);
+	    rxdesc->pkglen, ETHER_ALIGN, ifp);
 	if (m == NULL) {
 		DPRINTF(1, "RX m_devget failed\n");
 		ifp->if_ierrors++;

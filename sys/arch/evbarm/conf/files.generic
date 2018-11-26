@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic,v 1.1.2.3 2018/10/20 06:58:27 pgoyette Exp $
+#	$NetBSD: files.generic,v 1.1.2.4 2018/11/26 01:52:21 pgoyette Exp $
 #
 # A generic (aarch32) kernel configuration info
 #
@@ -17,8 +17,10 @@ file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
 # Add other board files here
+include "arch/arm/altera/files.altera"
 include "arch/arm/broadcom/files.bcm2835"
 include "arch/arm/nvidia/files.tegra"
 include "arch/arm/samsung/files.exynos"
 include "arch/arm/sunxi/files.sunxi"
 include "arch/arm/vexpress/files.vexpress"
+include "arch/arm/virt/files.virt"

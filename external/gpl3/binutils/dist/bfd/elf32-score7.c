@@ -2214,7 +2214,7 @@ score_elf_final_link_relocate (reloc_howto_type *howto,
 
 /* Score backend functions.  */
 
-void
+bfd_boolean
 s7_bfd_score_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 			    arelent *bfd_reloc,
 			    Elf_Internal_Rela *elf_reloc)
@@ -2223,9 +2223,10 @@ s7_bfd_score_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 
   r_type = ELF32_R_TYPE (elf_reloc->r_info);
   if (r_type >= ARRAY_SIZE (elf32_score_howto_table))
-    bfd_reloc->howto = NULL;
-  else
-    bfd_reloc->howto = &elf32_score_howto_table[r_type];
+    return FALSE;
+
+  bfd_reloc->howto = &elf32_score_howto_table[r_type];
+  return TRUE;
 }
 
 /* Relocate an score ELF section.  */
@@ -2288,7 +2289,8 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
 
-      s7_bfd_score_info_to_howto (input_bfd, &bfd_reloc, (Elf_Internal_Rela *) rel);
+      if (! s7_bfd_score_info_to_howto (input_bfd, &bfd_reloc, (Elf_Internal_Rela *) rel))
+	continue;
       howto = bfd_reloc.howto;
 
       h = NULL;
@@ -2627,7 +2629,7 @@ s7_bfd_score_elf_check_relocs (bfd *abfd,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: Malformed reloc detected for section %A"), abfd, sec);
+	    (_("%pB: malformed reloc detected for section %pA"), abfd, sec);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -2681,8 +2683,8 @@ s7_bfd_score_elf_check_relocs (bfd *abfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: CALL15 reloc at %#Lx not against global symbol"),
-		 abfd, rel->r_offset);
+		(_("%pB: CALL15 reloc at %#" PRIx64 " not against global symbol"),
+		 abfd, (uint64_t) rel->r_offset);
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -3850,7 +3852,7 @@ s7_elf32_score_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
   if (((in_flags & EF_SCORE_PIC) != 0) != ((out_flags & EF_SCORE_PIC) != 0))
     {
-      _bfd_error_handler (_("%B: warning: linking PIC files with non-PIC files"), ibfd);
+      _bfd_error_handler (_("%pB: warning: linking PIC files with non-PIC files"), ibfd);
     }
 
   /* Maybe dependency fix compatibility should be checked here.  */
@@ -3871,5 +3873,4 @@ s7_elf32_score_new_section_hook (bfd *abfd, asection *sec)
   return _bfd_elf_new_section_hook (abfd, sec);
 }
 
-#define elf_backend_omit_section_dynsym \
-  ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+#define elf_backend_omit_section_dynsym _bfd_elf_omit_section_dynsym_all

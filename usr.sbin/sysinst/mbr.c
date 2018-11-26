@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.5.14.1 2018/06/25 07:26:12 pgoyette Exp $ */
+/*	$NetBSD: mbr.c,v 1.5.14.2 2018/11/26 01:52:55 pgoyette Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,6 +75,7 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+#include "defsizes.h"
 #include "endian.h"
 
 #define NO_BOOTMENU (-0x100)
@@ -958,24 +959,25 @@ edit_mbr_entry(menudesc *m, void *arg)
 
 	static menu_ent ptn_opts[] = {
 #define PTN_OPT_TYPE		0
-		{NULL, OPT_NOMENU, 0, edit_mbr_type},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_type },
 #define PTN_OPT_START		1
-		{NULL, OPT_NOMENU, 0, edit_mbr_start},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_start },
 #define PTN_OPT_SIZE		2
-		{NULL, OPT_NOMENU, 0, edit_mbr_size},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_size },
 #define PTN_OPT_END		3
-		{NULL, OPT_NOMENU, OPT_IGNORE, NULL},	/* display end */
+		{ .opt_menu=OPT_NOMENU, .opt_flags=OPT_IGNORE }, /* display end */
 #define PTN_OPT_ACTIVE		4
-		{NULL, OPT_NOMENU, 0, edit_mbr_active},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_active },
 #define PTN_OPT_INSTALL		5
-		{NULL, OPT_NOMENU, 0, edit_mbr_install},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_install },
 #ifdef BOOTSEL
 #define PTN_OPT_BOOTMENU	6
-		{NULL, OPT_NOMENU, 0, edit_mbr_bootmenu},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_bootmenu },
 #define PTN_OPT_BOOTDEFAULT	7
-		{NULL, OPT_NOMENU, 0, edit_mbr_bootdefault},
+		{ .opt_menu=OPT_NOMENU, .opt_action=edit_mbr_bootdefault },
 #endif
-		{MSG_askunits, MENU_sizechoice, OPT_SUB, NULL},
+		{ .opt_name=MSG_askunits, .opt_menu=MENU_sizechoice,
+		  .opt_flags=OPT_SUB },
 	};
 
 	if (ptn_menu == -1)
@@ -1277,7 +1279,24 @@ edit_mbr(mbr_info_t *mbri)
 	if (partman_go)
 		usefull = 0;
 	else {
-		msg_display(MSG_fullpart, pm->diskdev);
+		uint64_t m_size =
+		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB;
+		char min_size[5], build_size[5];
+
+		humanize_number(min_size, sizeof(min_size),
+		    2 * m_size * 1024*1024UL,
+		    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+		humanize_number(build_size, sizeof(build_size),
+		     SYSTEM_BUILD_SIZE * 1024 * 1024UL, "", HN_AUTOSCALE,
+		     HN_B | HN_NOSPACE | HN_DECIMAL);
+
+		msg_display_subst(MSG_fullpart, 7,
+		    pm->diskdev,
+		    msg_string(MSG_parttype_mbr),
+		    msg_string(MSG_parttype_disklabel),
+		    msg_string(MSG_parttype_mbr_short),
+		    msg_string(MSG_parttype_disklabel_short),
+		    min_size, build_size);
 		process_menu(MENU_fullpart, &usefull);
 	}
 

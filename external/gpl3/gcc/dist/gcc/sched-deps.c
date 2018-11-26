@@ -2850,9 +2850,11 @@ sched_macro_fuse_insns (rtx_insn *insn)
     {
       rtx insn_set = single_set (insn);
 
+      if (!insn_set)
+	return;
+
       prev = prev_nonnote_nondebug_insn (insn);
       if (!prev
-          || !insn_set
           || !single_set (prev))
         return;
 
@@ -2919,6 +2921,8 @@ sched_analyze_insn (struct deps_desc *deps, rtx x, rtx_insn *insn)
 	= alloc_INSN_LIST (insn, deps->sched_before_next_jump);
 
       /* Make sure epilogue insn is scheduled after preceding jumps.  */
+      add_dependence_list (insn, deps->last_pending_memory_flush, 1,
+			   REG_DEP_ANTI, true);
       add_dependence_list (insn, deps->pending_jump_insns, 1, REG_DEP_ANTI,
 			   true);
     }

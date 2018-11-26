@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.31 2010/03/23 20:28:59 drochner Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.31.44.1 2018/11/26 01:52:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.31 2010/03/23 20:28:59 drochner Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.31.44.1 2018/11/26 01:52:11 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -166,7 +166,7 @@ st_hash(const char *name, size_t len, int tabsz)
 
 /*
  * uidtb_start
- *	creates an an empty uidtb
+ *	creates an empty uidtb
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -187,7 +187,7 @@ uidtb_start(void)
 
 /*
  * gidtb_start
- *	creates an an empty gidtb
+ *	creates an empty gidtb
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -208,7 +208,7 @@ gidtb_start(void)
 
 /*
  * usrtb_start
- *	creates an an empty usrtb
+ *	creates an empty usrtb
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -229,7 +229,7 @@ usrtb_start(void)
 
 /*
  * grptb_start
- *	creates an an empty grptb
+ *	creates an empty grptb
  * Return:
  *	0 if ok, -1 otherwise
  */

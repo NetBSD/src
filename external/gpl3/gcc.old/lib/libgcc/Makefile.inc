@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7.2.1 2018/09/06 06:53:14 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.7.2.2 2018/11/26 01:51:45 pgoyette Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 

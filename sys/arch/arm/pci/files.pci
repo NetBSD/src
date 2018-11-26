@@ -1,0 +1,4 @@
+# $NetBSD: files.pci,v 1.1.2.2 2018/11/26 01:52:19 pgoyette Exp $
+
+# PCI MSI/MSI-X support
+file	arch/arm/pci/pci_msi_machdep.c		pci & __have_pci_msi_msix

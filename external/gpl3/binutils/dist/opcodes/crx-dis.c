@@ -244,7 +244,7 @@ powerof2 (int x)
 void
 getregliststring (int mask, char *string, enum REG_ARG_TYPE core_cop)
 {
-  char temp_string[5];
+  char temp_string[16];
   int i;
 
   string[0] = '{';

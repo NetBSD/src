@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.268.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.268.2.5 2018/11/26 01:52:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.4 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.5 2018/11/26 01:52:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -605,6 +605,11 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			rt->rt_rmx.rmx_mtu = 0;
 		}
 		rt->rt_flags |= RTF_LOCAL;
+
+		if (ISSET(info->rti_flags, RTF_DONTCHANGEIFA)) {
+			pserialize_read_exit(s);
+			goto out;
+		}
 		/*
 		 * make sure to set rt->rt_ifa to the interface
 		 * address we are using, otherwise we will have trouble

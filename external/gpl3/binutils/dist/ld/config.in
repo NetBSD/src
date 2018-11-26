@@ -19,6 +19,10 @@
 /* Define to 1 if you want to enable -z relro in ELF linker by default. */
 #undef DEFAULT_LD_Z_RELRO
 
+/* Define to 1 if you want to enable -z separate-code in ELF linker by
+   default. */
+#undef DEFAULT_LD_Z_SEPARATE_CODE
+
 /* Define to 1 if you want to set DT_RUNPATH instead of DT_RPATH by default.
    */
 #undef DEFAULT_NEW_DTAGS
@@ -229,6 +233,11 @@
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #undef YYTEXT_POINTER
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

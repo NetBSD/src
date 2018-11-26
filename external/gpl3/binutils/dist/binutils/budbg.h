@@ -44,12 +44,6 @@ extern bfd_boolean parse_stab
 extern bfd_boolean write_stabs_in_sections_debugging_info
   (bfd *, void *, bfd_byte **, bfd_size_type *, bfd_byte **, bfd_size_type *);
 
-/* Routines used to read and write IEEE debugging information.  */
-
-extern bfd_boolean parse_ieee (void *, bfd *, const bfd_byte *, bfd_size_type);
-
-extern bfd_boolean write_ieee_debugging_info (bfd *, void *);
-
 /* Routine used to read COFF debugging information.  */
 
 extern bfd_boolean parse_coff (bfd *, asymbol **, long, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.5 2014/12/30 10:10:22 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.5.14.1 2018/11/26 01:52:55 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,8 +59,13 @@
 
 #define MAXBUF 256
 
-#ifdef DEBUG
-#define Xsystem(y) printf ("%s\n", y), 0
+#if defined(DEBUG) && defined(DEBUG_SYSTEM)
+static inline int
+Xsystem(const char *y)
+{
+	printf ("%s\n", y);
+	return 0;
+}
 #else
 #define Xsystem(y) system(y)
 #endif
@@ -74,8 +79,9 @@ static int script_flip (menudesc *, void *);
 #define BUFSIZE 4096
 
 menu_ent logmenu [2] = {
-	{ NULL, OPT_NOMENU, 0, log_flip},
-	{ NULL, OPT_NOMENU, 0, script_flip} };
+	{ .opt_menu=OPT_NOMENU, .opt_action=log_flip},
+	{ .opt_menu=OPT_NOMENU, .opt_action=script_flip}
+};
 
 static void
 log_menu_label(menudesc *m, int opt, void *arg)

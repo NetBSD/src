@@ -17,7 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 #
 
-AUTOMAKE_OPTIONS = cygnus
+AUTOMAKE_OPTIONS = info-in-builddir no-texinfo.tex foreign
 
 # What version of the manual you want; "all" includes everything
 CONFIG=all
@@ -35,7 +35,6 @@ man_MANS = \
 	addr2line.1 \
 	ar.1 \
 	dlltool.1 \
-	nlmconv.1 \
 	nm.1 \
 	objcopy.1 \
 	objdump.1 \
@@ -84,15 +83,6 @@ NetBSD_DISABLED_dlltool.1:
 	-($(POD2MAN) dlltool.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f dlltool.pod
-
-nlmconv.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
-	@echo "NOT REBUILDING $@"
-NetBSD_DISABLED_nlmconv.1:
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dnlmconv < $(binutils_TEXI) > nlmconv.pod
-	-($(POD2MAN) nlmconv.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
-		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
-	rm -f nlmconv.pod
 
 nm.1:	$(binutils_TEXI) $(binutils_TEXINFOS)
 	@echo "NOT REBUILDING $@"

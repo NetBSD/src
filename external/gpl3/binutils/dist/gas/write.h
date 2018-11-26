@@ -106,10 +106,6 @@ struct fix
   struct fix *fx_next;
 
   /* If NULL, no bitfix's to do.  */
-  /* Only i960-coff and ns32k use this, and i960-coff stores an
-     integer.  This can probably be folded into tc_fix_data, below.
-     @@ Alpha also uses it, but only to disable certain relocation
-     processing.  */
   bit_fixS *fx_bit_fixP;
 
   bfd_reloc_code_real_type fx_r_type;

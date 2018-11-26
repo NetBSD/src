@@ -252,8 +252,8 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
 	      if (bfd_get_error () == bfd_error_no_memory)
 		_bfd_error_handler
 		  /* xgettext:c-format */
-		  (_("error: %B(%A) is too large (%#Lx bytes)"),
-		  abfd, sec, sz);
+		  (_("error: %pB(%pA) is too large (%#" PRIx64 " bytes)"),
+		  abfd, sec, (uint64_t) sz);
 	      return FALSE;
 	    }
 	}

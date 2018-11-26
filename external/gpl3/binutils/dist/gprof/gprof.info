@@ -1,4 +1,4 @@
-This is gprof.info, produced by makeinfo version 6.3 from gprof.texi.
+This is gprof.info, produced by makeinfo version 6.4 from gprof.texi.
 
 This file documents the gprof profiler of the GNU system.
 
@@ -27,7 +27,7 @@ to determine which parts of a program are taking most of the execution
 time.  We assume that you know how to write, compile, and execute
 programs.  GNU 'gprof' was written by Jay Fenlason.
 
-   This manual is for 'gprof' (GNU Binutils) version 2.30.0.
+   This manual is for 'gprof' (GNU Binutils) version 2.30.90.
 
    This document is distributed under the terms of the GNU Free
 Documentation License version 1.3.  A copy of the license is included in
@@ -2425,34 +2425,34 @@ their use in free software.
 
 Tag Table:
 Node: Top719
-Node: Introduction2044
-Node: Compiling4535
-Node: Executing8591
-Node: Invoking11379
-Node: Output Options12794
-Node: Analysis Options19886
-Node: Miscellaneous Options23806
-Node: Deprecated Options25060
-Node: Symspecs27123
-Node: Output28949
-Node: Flat Profile29989
-Node: Call Graph34942
-Node: Primary38174
-Node: Callers40762
-Node: Subroutines42880
-Node: Cycles44721
-Node: Line-by-line51498
-Node: Annotated Source55574
-Node: Inaccuracy58572
-Node: Sampling Error58830
-Node: Assumptions61734
-Node: How do I?63204
-Node: Incompatibilities64761
-Node: Details66255
-Node: Implementation66648
-Node: File Format72547
-Node: Internals76835
-Node: Debugging85325
-Node: GNU Free Documentation License86915
+Node: Introduction2045
+Node: Compiling4536
+Node: Executing8592
+Node: Invoking11380
+Node: Output Options12795
+Node: Analysis Options19887
+Node: Miscellaneous Options23807
+Node: Deprecated Options25061
+Node: Symspecs27124
+Node: Output28950
+Node: Flat Profile29990
+Node: Call Graph34943
+Node: Primary38175
+Node: Callers40763
+Node: Subroutines42881
+Node: Cycles44722
+Node: Line-by-line51499
+Node: Annotated Source55575
+Node: Inaccuracy58573
+Node: Sampling Error58831
+Node: Assumptions61735
+Node: How do I?63205
+Node: Incompatibilities64762
+Node: Details66256
+Node: Implementation66649
+Node: File Format72548
+Node: Internals76836
+Node: Debugging85326
+Node: GNU Free Documentation License86916
 
 End Tag Table

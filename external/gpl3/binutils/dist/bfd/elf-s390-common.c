@@ -223,25 +223,6 @@ elf_s390_allocate_local_syminfo (bfd *abfd, Elf_Internal_Shdr *symtab_hdr)
   return TRUE;
 }
 
-/* Pick ELFOSABI_GNU if IFUNC symbols are used.  */
-
-static bfd_boolean
-elf_s390_add_symbol_hook (bfd *abfd,
-			  struct bfd_link_info *info,
-			  Elf_Internal_Sym *sym,
-			  const char **namep ATTRIBUTE_UNUSED,
-			  flagword *flagsp ATTRIBUTE_UNUSED,
-			  asection **secp ATTRIBUTE_UNUSED,
-			  bfd_vma *valp ATTRIBUTE_UNUSED)
-{
-  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
-      && (abfd->flags & DYNAMIC) == 0
-      && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
-    elf_tdata (info->output_bfd)->has_gnu_symbols |= elf_gnu_symbol_ifunc;
-
-  return TRUE;
-}
-
 /* Whether to sort relocs output by ld -r or ld --emit-relocs, by
    r_offset.  Don't do so for code sections.  We want to keep ordering
    of GDCALL / PLT32DBL for TLS optimizations as is.  On the other
@@ -286,12 +267,12 @@ elf_s390_merge_obj_attributes (bfd *ibfd, struct bfd_link_info *info)
   if (in_attr->i > 2)
     _bfd_error_handler
       /* xgettext:c-format */
-      (_("Warning: %B uses unknown vector ABI %d"), ibfd,
+      (_("warning: %pB uses unknown vector ABI %d"), ibfd,
        in_attr->i);
   else if (out_attr->i > 2)
     _bfd_error_handler
       /* xgettext:c-format */
-      (_("Warning: %B uses unknown vector ABI %d"), obfd,
+      (_("warning: %pB uses unknown vector ABI %d"), obfd,
        out_attr->i);
   else if (in_attr->i != out_attr->i)
     {
@@ -303,7 +284,7 @@ elf_s390_merge_obj_attributes (bfd *ibfd, struct bfd_link_info *info)
 
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("Warning: %B uses vector %s ABI, %B uses %s ABI"),
+	    (_("warning: %pB uses vector %s ABI, %pB uses %s ABI"),
 	     ibfd, abi_str[in_attr->i], obfd, abi_str[out_attr->i]);
 	}
       if (in_attr->i > out_attr->i)

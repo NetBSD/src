@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113.4.1 2018/06/25 07:25:04 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.113.4.2 2018/11/26 01:49:54 pgoyette Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -26,7 +26,7 @@ SCRIPT_ENV= \
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 CPPFLAGS+= -DUSE_LRAND48
 #XXX: For testing only.
-#CPPFLAGS+=-DDEBUG=3
+#CPPFLAGS+=-DDEBUG=1
 #COPTS+=-g
 #CFLAGS+=-funsigned-char
 #TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char" -funsigned-char

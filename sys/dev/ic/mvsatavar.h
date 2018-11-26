@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatavar.h,v 1.3.2.1 2018/09/06 06:55:50 pgoyette Exp $	*/
+/*	$NetBSD: mvsatavar.h,v 1.3.2.2 2018/11/26 01:52:31 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -73,8 +73,6 @@ struct mvsata_port {
 	enum mvsata_edmamode port_edmamode_negotiated;
 	enum mvsata_edmamode port_edmamode_curr;
 
-	volatile uint32_t port_quetagidx;	/* Host Queue Tag valid */
-
 	int port_prev_erqqop;		/* previous Req Queue Out-Pointer */
 	bus_dma_tag_t port_dmat;
 	union mvsata_crqb *port_crqb;	/* EDMA Command Request Block */
@@ -96,10 +94,6 @@ struct mvsata_port {
 	bus_space_handle_t port_sata_sstatus;	/* SATA Interface status reg */
 
 	struct _fix_phy_param _fix_phy_param;
-
-	/* Recovery context */
-	uint32_t port_hold_slots;
-	bool port_recovering;
 };
 
 struct mvsata_hc {

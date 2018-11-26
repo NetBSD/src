@@ -349,7 +349,7 @@ typedef struct aout_symbol
 
 enum aout_subformat {
   default_format = 0,
-  /* Used on HP 9000/300 running HP/UX.  See hp300hpux.c.  */
+  /* Used on HP 9000/300 running HP/UX.  */
   gnu_encap_format,
   /* Used on Linux, 386BSD, etc.  See include/aout/aout64.h.  */
   q_magic_format
@@ -617,8 +617,7 @@ extern bfd_boolean NAME (aout, bfd_free_cached_info)
 #endif
 
 #ifndef aout_32_bfd_is_target_special_symbol
-#define aout_32_bfd_is_target_special_symbol \
-  ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define aout_32_bfd_is_target_special_symbol _bfd_bool_bfd_asymbol_false
 #endif
 
 #ifndef WRITE_HEADERS

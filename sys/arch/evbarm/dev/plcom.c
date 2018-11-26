@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.53.2.1 2018/10/20 06:58:27 pgoyette Exp $	*/
+/*	$NetBSD: plcom.c,v 1.53.2.2 2018/11/26 01:52:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.53.2.1 2018/10/20 06:58:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.53.2.2 2018/11/26 01:52:21 pgoyette Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -438,8 +438,6 @@ plcom_attach_subr(struct plcom_softc *sc)
 	struct plcom_instance *pi = &sc->sc_pi;
 	struct tty *tp;
 
-	aprint_naive("\n");
-
 	callout_init(&sc->sc_diag_callout, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
@@ -500,7 +498,6 @@ plcom_attach_subr(struct plcom_softc *sc)
 			break;
 		}
 	}
-	aprint_normal("\n");
 
 	if (ISSET(sc->sc_hwflags, PLCOM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;

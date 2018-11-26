@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.6.4.4 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: DUOVERO,v 1.6.4.5 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -227,7 +227,6 @@ uhub*		at uhub? port ?
 umass*		at uhub? port ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
-wd*		at umass?
 
 # Pseudo-Devices
 

@@ -1,16 +1,7 @@
-#	$NetBSD: files.altera,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $
+#	$NetBSD: files.altera,v 1.1.2.3 2018/11/26 01:52:17 pgoyette Exp $
 #
 # Configuration for Altera SoC
 #
-
-file 	arch/arm/arm32/arm32_boot.c
-file 	arch/arm/arm32/arm32_kvminit.c
-file 	arch/arm/arm32/arm32_reboot.c
-file 	arch/arm/arm32/irq_dispatch.S
-
-file 	arch/arm/arm32/armv7_generic_space.c
-file 	arch/arm/arm/arm_generic_dma.c
-file 	arch/arm/arm/bus_space_a4x.S
 
 file 	arch/arm/altera/cycv_platform.c
 

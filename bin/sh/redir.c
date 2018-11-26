@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.59.2.1 2018/09/06 06:51:32 pgoyette Exp $	*/
+/*	$NetBSD: redir.c,v 1.59.2.2 2018/11/26 01:49:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.59.2.1 2018/09/06 06:51:32 pgoyette Exp $");
+__RCSID("$NetBSD: redir.c,v 1.59.2.2 2018/11/26 01:49:54 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -299,7 +299,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		break;
 	case NFROMTO:
 		fname = redir->nfile.expfname;
-		if ((f = open(fname, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0)
+		if ((f = open(fname, O_RDWR|O_CREAT, 0666)) < 0)
 			goto ecreate;
 		VTRACE(DBG_REDIR, ("openredirect(<> '%s') -> %d", fname, f));
 		break;

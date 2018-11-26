@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.418.2.6 2018/10/20 06:58:23 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.418.2.7 2018/11/26 01:52:15 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -546,13 +546,9 @@ MLINKS+=m_tag.9 m_tag_copy.9 \
 	m_tag.9 m_tag_copy_chain.9 \
 	m_tag.9 m_tag_delete.9 \
 	m_tag.9 m_tag_delete_chain.9 \
-	m_tag.9 m_tag_delete_nonpersistent.9 \
 	m_tag.9 m_tag_find.9 \
-	m_tag.9 m_tag_first.9 \
 	m_tag.9 m_tag_free.9 \
 	m_tag.9 m_tag_get.9 \
-	m_tag.9 m_tag_init.9 \
-	m_tag.9 m_tag_next.9 \
 	m_tag.9 m_tag_prepend.9 \
 	m_tag.9 m_tag_unlink.9
 MLINKS+=namecache.9 cache_lookup.9 \

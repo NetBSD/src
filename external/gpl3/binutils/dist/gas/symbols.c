@@ -108,6 +108,7 @@ save_symbol_name (const char *name)
   size_t name_length;
   char *ret;
 
+  gas_assert (name != NULL);
   name_length = strlen (name) + 1;	/* +1 for \0.  */
   obstack_grow (&notes, name, name_length);
   ret = (char *) obstack_finish (&notes);
@@ -407,8 +408,7 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
 		}
 	      else
 		{
-#if (!defined (OBJ_AOUT) && !defined (OBJ_MAYBE_AOUT) \
-     && !defined (OBJ_BOUT) && !defined (OBJ_MAYBE_BOUT))
+#if (!defined (OBJ_AOUT) && !defined (OBJ_MAYBE_AOUT))
 		  static const char *od_buf = "";
 #else
 		  char od_buf[100];
@@ -1356,7 +1356,7 @@ resolve_symbol_value (symbolS *symp)
 	     operands must be absolute.  We already handled the case of
 	     addition or subtraction of a constant above.  This will
 	     probably need to be changed for an object file format which
-	     supports arbitrary expressions, such as IEEE-695.  */
+	     supports arbitrary expressions.  */
 	  if (!(seg_left == absolute_section
 		&& seg_right == absolute_section)
 	      && !(op == O_eq || op == O_ne)

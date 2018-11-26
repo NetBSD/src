@@ -56,6 +56,8 @@
 extern char *stpcpy (char *__dest, const char *__src);
 #endif
 
+#define opcodes_error_handler _bfd_error_handler
+
 /* Use sigsetjmp/siglongjmp without saving the signal mask if possible.
    It is faster than setjmp/longjmp on systems where the signal mask is
    saved.  */

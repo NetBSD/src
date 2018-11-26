@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2015/11/14 23:00:17 pgoyette Exp $	*/
+/*	$NetBSD: md.h,v 1.2.14.1 2018/11/26 01:52:56 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,11 +46,12 @@
 #include "mbr.h"
 
 /* constants and defines */
-#define	DEFUSRSIZE	0
-#define	DEFSWAPSIZE	(-1)
+#define DEFROOTSIZE	128	/* Default root size */
+#define DEFUSRSIZE	0	/* Default /usr size, if /home */
+#define XNEEDMB		300	/* Extra megs for full X installation */
+#define DEBNEEDMB	1400	/* Extra megs for debug sets */
 
-/* Megs required for a full X installation. */
-#define XNEEDMB 50
+#define	DEFSWAPSIZE	(-1)
 
 /* use UFS2 by default for ffs */
 #define	DEFAULT_UFS2
@@ -83,14 +84,6 @@
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On amd64, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
- * disks and "raid" raidframe disks.
- */
-#define DISK_NAMES "wd", "sd", "ld", "raid:no_mbr", "xbd:no_mbr"
 
 /*
  * Machine-specific command to write a new label to a disk.

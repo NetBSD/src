@@ -1,9 +1,11 @@
-#	$NetBSD: bsd.powerpc-booke.mk,v 1.3 2014/08/10 17:46:54 joerg Exp $
+#	$NetBSD: bsd.powerpc-booke.mk,v 1.3.26.1 2018/11/26 01:52:50 pgoyette Exp $
 
 .ifndef _BSD_POWERPC_BOOKE_MK_
 _BSD_POWERPC_BOOKE_MK_=1
 
 KMODULEARCHDIR:=	powerpc-booke
+
+.include <bsd.own.mk>
 
 # gcc emits bad code with these options
 #CPPFLAGS+=	-mcpu=8548

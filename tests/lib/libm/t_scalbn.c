@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.14.12.1 2018/06/25 07:26:09 pgoyette Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.14.12.2 2018/11/26 01:52:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.14.12.1 2018/06/25 07:26:09 pgoyette Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.14.12.2 2018/11/26 01:52:53 pgoyette Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -97,9 +97,12 @@ ATF_TC_BODY(scalbn_val, tc)
 		    fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW),
 		    tests[i].except);
 #endif
-		ATF_CHECK_MSG(fabs(rv-tests[i].result)<2.0*DBL_EPSILON,
-		    "test %zu: return value %g instead of %g (difference %g)",
-		    i, rv, tests[i].result, tests[i].result-rv);
+		/* scalbn is always exact except for underflow or overflow.  */
+		ATF_CHECK_MSG(rv == tests[i].result,
+		    "test %zu: return value %.17g instead of %.17g"
+		    " (error %.17g)",
+		    i, rv, tests[i].result,
+		    fabs((tests[i].result - rv)/tests[i].result));
 	}
 }
 
@@ -239,9 +242,12 @@ ATF_TC_BODY(scalbnf_val, tc)
 		ATF_CHECK_EQ_MSG(errno, tests[i].error,
 		    "test %zu: errno %d instead of %d", i, errno,
 		    tests[i].error);
-		ATF_CHECK_MSG(fabs(rv-tests[i].result)<2.0*FLT_EPSILON,
-		    "test %zu: return value %g instead of %g (difference %g)",
-		    i, rv, tests[i].result, tests[i].result-rv);
+		/* scalbn is always exact except for underflow or overflow.  */
+		ATF_CHECK_MSG(rv == (float)tests[i].result,
+		    "test %zu: return value %.8g instead of %.8g"
+		    " (error %.8g)",
+		    i, rv, tests[i].result,
+		    fabsf((tests[i].result - rv)/tests[i].result));
 	}
 }
 
@@ -384,9 +390,12 @@ ATF_TC_BODY(scalbnl_val, tc)
 		ATF_CHECK_EQ_MSG(errno, tests[i].error,
 		    "test %zu: errno %d instead of %d", i, errno,
 		    tests[i].error);
-		ATF_CHECK_MSG(fabsl(rv-(long double)tests[i].result)<2.0*LDBL_EPSILON,
-		    "test %zu: return value %Lg instead of %Lg (difference %Lg)",
-		    i, rv, (long double)tests[i].result, (long double)tests[i].result-rv);
+		/* scalbn is always exact except for underflow or overflow.  */
+		ATF_CHECK_MSG(rv == (long double)tests[i].result,
+		    "test %zu: return value %.35Lg instead of %.35Lg"
+		    " (error %.35Lg)",
+		    i, rv, (long double)tests[i].result,
+		    fabsl(((long double)tests[i].result - rv)/tests[i].result));
 	}
 #endif
 }

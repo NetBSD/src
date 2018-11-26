@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.9 2018/10/20 06:58:27 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.10 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -58,6 +58,7 @@ makeoptions	DTS="
 "
 options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
+options 	CPU_THUNDERX
 options 	SOC_BCM2837
 options 	SOC_RK3328
 options 	SOC_RK3399
@@ -85,6 +86,10 @@ options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 #options 	EARLYCONS=thunderx, CONSADDR=0x87e024000000
 #options 	EARLYCONS=virt
 
+# Kernel Address Sanitizer (kASan).
+#makeoptions 	KASAN=1		# Kernel Address Sanitizer
+#options 	KASAN
+
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
@@ -93,6 +98,9 @@ config		netbsd		root on ? type ?
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
 
+# EFI runtime support
+options 	EFI_RUNTIME
+
 # Device tree support
 armfdt0		at root
 simplebus*	at fdt? pass 0
@@ -100,6 +108,9 @@ simplebus*	at fdt? pass 0
 # ACPI support
 acpifdt*	at fdt? pass 1
 acpi*		at acpifdt?
+acpibut*	at acpi?
+acpiged*	at acpi?
+acpilid*	at acpi?
 
 # CPUs
 cpus*		at fdt? pass 0
@@ -134,6 +145,7 @@ armgtmr0	at gtmr?
 tegratimer*	at fdt?			# Timers
 
 # Watchdog
+sbsawdt*	at acpi?		# ARM SBSA-compliant watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
 watchdog*	at fdt?			# Broadcom BCM283x watchdog
 
@@ -144,6 +156,7 @@ gic*		at fdt? pass 1		# ARM GICv2
 gic*		at acpi?
 armgic0		at gic?
 gicvthree*	at fdt? pass 1		# ARM GICv3
+gicvthree*	at acpi?
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
@@ -153,6 +166,7 @@ tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
 bcmmbox*	at fdt?			# Broadcom VideoCore IV mailbox
 vcmbox*		at bcmmbox?
 qemufwcfg*	at fdt?			# QEMU Firmware Configuration device
+qemufwcfg*	at acpi?
 
 # DMA controller
 bcmdmac*	at fdt?			# Broadcom BCM283x DMA controller
@@ -205,7 +219,7 @@ tegra210xphy*	at tegra210xpad?
 pcihost*	at fdt?			# Generic PCI host controller
 acpipchb*	at acpi?		# ACPI PCIe host bridge
 tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
-pci*		at pcibus? 
+pci*		at pcibus?
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
 
@@ -372,11 +386,13 @@ tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
 dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
 ehci*		at pci?			# EHCI
+ehci*		at acpi?		# EHCI
 motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
 ohci*		at pci?			# OHCI
 xhci*		at fdt?			# XHCI
 xhci*		at pci?			# XHCI
+xhci*		at acpi?		# XHCI
 usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
@@ -384,10 +400,16 @@ midi*		at midibus?
 
 # Virtio devices
 virtio*		at fdt?			# Virtio MMIO device
+virtio*		at acpi?
+virtio*		at pci? dev ? function ?
 #viomb*		at virtio?		# Virtio memory balloon device
 ld*		at virtio?		# Virtio disk device
 vioif*		at virtio?		# Virtio network device
 viornd*		at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
+
+# SCSI bus support
+scsibus*	at scsi?
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
 
 cinclude "arch/evbarm/conf/GENERIC64.local"

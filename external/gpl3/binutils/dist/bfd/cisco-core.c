@@ -317,102 +317,110 @@ extern const bfd_target core_cisco_le_vec;
 
 const bfd_target core_cisco_be_vec =
 {
-    "cisco-ios-core-big",
-    bfd_target_unknown_flavour,
-    BFD_ENDIAN_BIG,		/* target byte order */
-    BFD_ENDIAN_BIG,		/* target headers byte order */
-    (HAS_RELOC | EXEC_P |	/* object flags */
-     HAS_LINENO | HAS_DEBUG |
-     HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-    (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
-    0,				/* symbol prefix */
-    ' ',			/* ar_pad_char */
-    16,				/* ar_max_namelen */
-    0,				/* match priority.  */
-    bfd_getb64, bfd_getb_signed_64, bfd_putb64,
-    bfd_getb32, bfd_getb_signed_32, bfd_putb32,
-    bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* data */
-    bfd_getb64, bfd_getb_signed_64, bfd_putb64,
-    bfd_getb32, bfd_getb_signed_32, bfd_putb32,
-    bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
+  "cisco-ios-core-big",
+  bfd_target_unknown_flavour,
+  BFD_ENDIAN_BIG,		/* target byte order */
+  BFD_ENDIAN_BIG,		/* target headers byte order */
+  (HAS_RELOC | EXEC_P		/* object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  0,				/* symbol prefix */
+  ' ',				/* ar_pad_char */
+  16,				/* ar_max_namelen */
+  0,				/* match priority.  */
+  bfd_getb64, bfd_getb_signed_64, bfd_putb64,
+  bfd_getb32, bfd_getb_signed_32, bfd_putb32,
+  bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* data */
+  bfd_getb64, bfd_getb_signed_64, bfd_putb64,
+  bfd_getb32, bfd_getb_signed_32, bfd_putb32,
+  bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
 
-    {				/* bfd_check_format */
-     _bfd_dummy_target,		/* unknown format */
-     _bfd_dummy_target,		/* object file */
-     _bfd_dummy_target,		/* archive */
-     cisco_core_file_p	/* a core file */
-    },
-    {				/* bfd_set_format */
-     bfd_false, bfd_false,
-     bfd_false, bfd_false
-    },
-    {				/* bfd_write_contents */
-     bfd_false, bfd_false,
-     bfd_false, bfd_false
-    },
+  {				/* bfd_check_format */
+    _bfd_dummy_target,			/* unknown format */
+    _bfd_dummy_target,			/* object file */
+    _bfd_dummy_target,			/* archive */
+    cisco_core_file_p			/* a core file */
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
 
-       BFD_JUMP_TABLE_GENERIC (_bfd_generic),
-       BFD_JUMP_TABLE_COPY (_bfd_generic),
-       BFD_JUMP_TABLE_CORE (cisco),
-       BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
-       BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
-       BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
-       BFD_JUMP_TABLE_WRITE (_bfd_generic),
-       BFD_JUMP_TABLE_LINK (_bfd_nolink),
-       BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+  BFD_JUMP_TABLE_GENERIC (_bfd_generic),
+  BFD_JUMP_TABLE_COPY (_bfd_generic),
+  BFD_JUMP_TABLE_CORE (cisco),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
+  BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
+  BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
+  BFD_JUMP_TABLE_WRITE (_bfd_generic),
+  BFD_JUMP_TABLE_LINK (_bfd_nolink),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-    & core_cisco_le_vec,
+  &core_cisco_le_vec,
 
-    NULL	/* backend_data */
+  NULL				/* backend_data */
 };
 
 const bfd_target core_cisco_le_vec =
 {
-    "cisco-ios-core-little",
-    bfd_target_unknown_flavour,
-    BFD_ENDIAN_LITTLE,		/* target byte order */
-    BFD_ENDIAN_LITTLE,		/* target headers byte order */
-    (HAS_RELOC | EXEC_P |	/* object flags */
-     HAS_LINENO | HAS_DEBUG |
-     HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-    (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
-    0,							   /* symbol prefix */
-    ' ',						   /* ar_pad_char */
-    16,							   /* ar_max_namelen */
-    0,				/* match_priority */
-    bfd_getl64, bfd_getl_signed_64, bfd_putl64,
-    bfd_getl32, bfd_getl_signed_32, bfd_putl32,
-    bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */
-    bfd_getl64, bfd_getl_signed_64, bfd_putl64,
-    bfd_getl32, bfd_getl_signed_32, bfd_putl32,
-    bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
+  "cisco-ios-core-little",
+  bfd_target_unknown_flavour,
+  BFD_ENDIAN_LITTLE,		/* target byte order */
+  BFD_ENDIAN_LITTLE,		/* target headers byte order */
+  (HAS_RELOC | EXEC_P		/* object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  0,				/* symbol prefix */
+  ' ',				/* ar_pad_char */
+  16,				/* ar_max_namelen */
+  0,				/* match_priority */
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+  bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+  bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+  bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+  bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
-    {				/* bfd_check_format */
-     _bfd_dummy_target,		/* unknown format */
-     _bfd_dummy_target,		/* object file */
-     _bfd_dummy_target,		/* archive */
-     cisco_core_file_p	/* a core file */
-    },
-    {				/* bfd_set_format */
-     bfd_false, bfd_false,
-     bfd_false, bfd_false
-    },
-    {				/* bfd_write_contents */
-     bfd_false, bfd_false,
-     bfd_false, bfd_false
-    },
+  {				/* bfd_check_format */
+    _bfd_dummy_target,			/* unknown format */
+    _bfd_dummy_target,			/* object file */
+    _bfd_dummy_target,			/* archive */
+    cisco_core_file_p			/* a core file */
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error
+  },
 
-       BFD_JUMP_TABLE_GENERIC (_bfd_generic),
-       BFD_JUMP_TABLE_COPY (_bfd_generic),
-       BFD_JUMP_TABLE_CORE (cisco),
-       BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
-       BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
-       BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
-       BFD_JUMP_TABLE_WRITE (_bfd_generic),
-       BFD_JUMP_TABLE_LINK (_bfd_nolink),
-       BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+  BFD_JUMP_TABLE_GENERIC (_bfd_generic),
+  BFD_JUMP_TABLE_COPY (_bfd_generic),
+  BFD_JUMP_TABLE_CORE (cisco),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
+  BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
+  BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
+  BFD_JUMP_TABLE_WRITE (_bfd_generic),
+  BFD_JUMP_TABLE_LINK (_bfd_nolink),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-    &core_cisco_be_vec,
+  &core_cisco_be_vec,
 
-    NULL			/* backend_data */
+  NULL				/* backend_data */
 };

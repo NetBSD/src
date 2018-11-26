@@ -1,6 +1,8 @@
-/*	$NetBSD: fabs.c,v 1.2 2006/07/05 18:07:22 ross Exp $	*/
+/*	$NetBSD: fabs.c,v 1.2.84.1 2018/11/26 01:52:11 pgoyette Exp $	*/
 
 #include <math.h>
+
+__strong_alias(fabsl, fabs)
 
 double
 fabs(double x)

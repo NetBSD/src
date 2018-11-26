@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.65.2.2 2018/09/30 01:45:40 pgoyette Exp $
+#	$NetBSD: SMDK2410,v 1.65.2.3 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -245,7 +245,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd* at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?

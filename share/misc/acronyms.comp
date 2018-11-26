@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193.2.5 2018/09/30 01:45:35 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.193.2.6 2018/11/26 01:52:15 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1548,6 +1548,7 @@ WS	web services
 WTC	write through caching
 WWAN	wireless wide area network
 WWW	world wide web
+WYSIAYG	what you see is all you get
 WYSIWYG	what you see is what you get
 XBAR	crossbar
 XDMCP	X Display Manager control protocol

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.20 2017/04/21 12:18:59 jmcneill Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.20.10.1 2018/11/26 01:52:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.20 2017/04/21 12:18:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.20.10.1 2018/11/26 01:52:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ int		ifpga_pci_intr_map (const struct pci_attach_args *,
 const char	*ifpga_pci_intr_string (void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *ifpga_pci_intr_evcnt (void *, pci_intr_handle_t);
 void		*ifpga_pci_intr_establish (void *, pci_intr_handle_t, int,
-		    int (*)(void *), void *);
+		    int (*)(void *), void *, const char *);
 void		ifpga_pci_intr_disestablish (void *, void *);
 
 struct arm32_pci_chipset ifpga_pci_chipset = {
@@ -107,6 +107,7 @@ struct arm32_pci_chipset ifpga_pci_chipset = {
 	ifpga_pci_bus_maxdevs,
 	ifpga_pci_make_tag,
 	ifpga_pci_decompose_tag,
+	NULL,
 	ifpga_pci_conf_read,
 	ifpga_pci_conf_write,
 	NULL,	/* intr_v */
@@ -335,12 +336,12 @@ const char *
 ifpga_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #ifdef PCI_DEBUG
-	printf("ifpga_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
+	printf("ifpga_pci_intr_string(pcv=%p, ih=0x%" PRIu64 ")\n", pcv, ih);
 #endif
 	if (ih == 0)
-		panic("ifpga_pci_intr_string: bogus handle 0x%lx", ih);
+		panic("ifpga_pci_intr_string: bogus handle 0x%" PRIu64, ih);
 
-	snprintf(buf, len, "pciint%ld", ih - IFPGA_INTRNUM_PCIINT0);
+	snprintf(buf, len, "pciint%" PRIu64, ih - IFPGA_INTRNUM_PCIINT0);
 	return buf;	
 }
 
@@ -354,13 +355,13 @@ ifpga_pci_intr_evcnt(void *pcv, pci_intr_handle_t ih)
 
 void *
 ifpga_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
-    int (*func) (void *), void *arg)
+    int (*func) (void *), void *arg, const char *xname)
 {
 	void *intr;
 
 #ifdef PCI_DEBUG
-	printf("ifpga_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, "
-	    "func=%p, arg=%p)\n", pcv, ih, level, func, arg);
+	printf("ifpga_pci_intr_establish(pcv=%p, ih=0x%" PRIu64 ", level=%d, "
+	    "func=%p, arg=%p, xname=%s)\n", pcv, ih, level, func, arg, xname);
 #endif
 
 	intr = ifpga_intr_establish(ih, level, func, arg);

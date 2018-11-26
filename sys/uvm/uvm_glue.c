@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.163.16.1 2018/09/06 06:56:48 pgoyette Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.163.16.2 2018/11/26 01:52:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.16.1 2018/09/06 06:56:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.16.2 2018/11/26 01:52:52 pgoyette Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -246,7 +246,6 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
 		struct vm_page *pg;
 		vaddr_t va;
-
 #if defined(PMAP_ALLOC_POOLPAGE)
 		pg = PMAP_ALLOC_POOLPAGE(
 		   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
@@ -257,8 +256,7 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 		if (pg == NULL)
 			return NULL;
 		va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
-		if (va == 0)
-			uvm_pagefree(pg);
+		KASSERT(va != 0);
 		return (void *)va;
 	}
 #endif

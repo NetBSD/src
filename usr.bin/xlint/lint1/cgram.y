@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.95.2.2 2018/09/06 06:56:50 pgoyette Exp $ */
+/* $NetBSD: cgram.y,v 1.95.2.3 2018/11/26 01:52:54 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.95.2.2 2018/09/06 06:56:50 pgoyette Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.95.2.3 2018/11/26 01:52:54 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -234,6 +234,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_UNUSED
 %token <y_type>		T_AT_USED
 %token <y_type>		T_AT_VISIBILITY
+%token <y_type>		T_AT_WARN_UNUSED_RESULT
 %token <y_type>		T_AT_WEAK
 
 %left	T_COMMA
@@ -561,6 +562,7 @@ type_attribute_spec:
 	| T_AT_UNUSED {
 		addused();
 	}
+	| T_AT_WARN_UNUSED_RESULT
 	| T_AT_WEAK
 	| T_AT_VISIBILITY T_LPARN constant T_RPARN
 	| T_QUAL {

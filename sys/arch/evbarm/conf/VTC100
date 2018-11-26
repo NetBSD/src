@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.15.4.3 2018/07/28 04:37:31 pgoyette Exp $
+#	$NetBSD: VTC100,v 1.15.4.4 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -266,7 +266,6 @@ ums*		at uhidev? reportid ?
 wsmouse*	at ums? mux 0
 
 umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
 # SCSI bus support
 scsibus*	at scsi?
 # SCSI devices

@@ -39,8 +39,6 @@
 @set HPPA
 @set I370
 @set I80386
-@set I860
-@set I960
 @set IA64
 @set IP2K
 @set LM32
@@ -48,6 +46,7 @@
 @set M32R
 @set xc16x
 @set M68HC11
+@set S12Z
 @set M680X0
 @set MCORE
 @set METAG

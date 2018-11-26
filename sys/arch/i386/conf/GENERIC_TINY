@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.157.2.2 2018/09/30 01:45:44 pgoyette Exp $
+#	$NetBSD: GENERIC_TINY,v 1.157.2.3 2018/11/26 01:52:25 pgoyette Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -448,7 +448,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#wd*	at umass?
 
 # USB Ethernet adapters
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters

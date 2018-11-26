@@ -5139,7 +5139,7 @@ mDNSexport int udsserver_init(dnssd_sock_t skts[], mDNSu32 count)
             umask(mask);
             if (ret < 0)
             {
-                my_perror("ERROR: bind(listenfd, (struct sockaddr *) &laddr, sizeof(laddr)); failed");
+                LogMsg("ERROR: bind(listenfd, (struct sockaddr *) &laddr, sizeof(laddr)); failed `%s': %s", boundPath, strerror(errno));
                 goto error;
             }
         }

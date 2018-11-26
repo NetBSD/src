@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.27.40.3 2018/09/30 01:45:34 pgoyette Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.27.40.4 2018/11/26 01:52:14 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.27.40.3 2018/09/30 01:45:34 pgoyette Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.27.40.4 2018/11/26 01:52:14 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 #ifndef SMALL
 	char tbuf[64];
 	char *memf, *nlistf;
-	struct timeval boottime;
+	struct timespec boottime;
 	struct timespec lasttime;
 	intmax_t sec;
 	long nsec, fsec;
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 		radix = ".";	/* could also select "," */
 
 	boottime.tv_sec = 0;
-	boottime.tv_usec = 0;
+	boottime.tv_nsec = 0;
 	lasttime.tv_sec = 0;
 	lasttime.tv_nsec = 0;
 	deltas = quiet = humantime = 0;
@@ -337,6 +337,13 @@ main(int argc, char *argv[])
 					struct tm tm;
 
 					t = boottime.tv_sec + sec;
+					if (nsec + boottime.tv_nsec >=
+					    ( 1L		/* 1 second */
+						 * 1000L	/* ms */
+						 * 1000L	/* us */
+						 * 1000L	/* ns */ ))
+							t++;
+
 					if (localtime_r(&t, &tm) != NULL) {
 						strftime(tbuf, sizeof(tbuf),
 						    "%a %b %e %H:%M:%S %Z %Y",

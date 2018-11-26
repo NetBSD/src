@@ -344,6 +344,11 @@ class Symbol
   set_in_dyn()
   { this->in_dyn_ = true; }
 
+  // Return whether this symbol is defined in a dynamic object.
+  bool
+  from_dyn() const
+  { return this->source_ == FROM_OBJECT && this->object()->is_dynamic(); }
+
   // Return whether this symbol has been seen in a real ELF object.
   // (IN_REG will return TRUE if the symbol has been seen in either
   // a real ELF object or an object claimed by a plugin.)

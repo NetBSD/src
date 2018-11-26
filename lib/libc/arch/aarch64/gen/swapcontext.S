@@ -1,4 +1,4 @@
-/* $NetBSD: swapcontext.S,v 1.1 2014/08/10 05:47:36 matt Exp $ */
+/* $NetBSD: swapcontext.S,v 1.1.24.1 2018/11/26 01:52:10 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,22 +33,22 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.1 2014/08/10 05:47:36 matt Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.1.24.1 2018/11/26 01:52:10 pgoyette Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /* LINTSTUB: int swapcontext(ucontext_t * restrict, ucontext_t * restrict); */
 
 ENTRY(swapcontext)
 	sub	sp, sp, #32		/* allocate stack frame */
-	stp	x29, x30, [sp, #16]	/* save FP & RA */
+	stp	x29, x30, [sp, #16]	/* save FP & LR */
 	add	x29, sp, #16		/* new FP */
-	stp	x0, x1, [sp, #0]	/* save oucp & ucp */
+	stp	x0, x1, [sp, #0]	/* save oucp (x0) & ucp (x1) */
 
 	bl	_C_LABEL(_getcontext)	/* getcontext(oucp) */
 	mov	x3, x0			/* save return value */
 
-	ldp	x2, x0, [sp, #0]	/* restore oucp & ucp */
-	ldp	x29, x30, [sp, #16]	/* restore FP & RA */
+	ldp	x2, x0, [sp, #0]	/* load oucp (x2) & ucp (x0) */
+	ldp	x29, x30, [sp, #16]	/* restore FP & LR */
 	add	sp, sp, #32		/* free stack frame */
 
 	/*
@@ -56,9 +56,11 @@ ENTRY(swapcontext)
 	 */
 	mov	x4, sp			/* Get SP */
 	str	x4, [x2, #_UC_REGS_SP]	/* Adjust saved SP. */
-	str	x30, [x2, #_UC_REGS_PC]	/* Adjust saved LR. */
+	str	x30, [x2, #_UC_REGS_PC]	/* Adjust saved PC. */
 
-	cbz	x3, _C_LABEL(setcontext)/* setcontext if getcontext succeeded */
+	cbnz	x3, 1f
+	b	_C_LABEL(setcontext)	/* setcontext if getcontext succeeded */
+1:
 	mov	x0, x3			/* restore getcontext return value */
 	ret				/* return on error from getcontext */
 END(swapcontext)

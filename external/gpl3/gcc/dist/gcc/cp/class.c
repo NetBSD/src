@@ -1999,12 +1999,14 @@ fixup_type_variants (tree t)
 static void
 fixup_may_alias (tree klass)
 {
-  tree t;
+  tree t, v;
 
   for (t = TYPE_POINTER_TO (klass); t; t = TYPE_NEXT_PTR_TO (t))
-    TYPE_REF_CAN_ALIAS_ALL (t) = true;
+    for (v = TYPE_MAIN_VARIANT (t); v; v = TYPE_NEXT_VARIANT (v))
+      TYPE_REF_CAN_ALIAS_ALL (v) = true;
   for (t = TYPE_REFERENCE_TO (klass); t; t = TYPE_NEXT_REF_TO (t))
-    TYPE_REF_CAN_ALIAS_ALL (t) = true;
+    for (v = TYPE_MAIN_VARIANT (t); v; v = TYPE_NEXT_VARIANT (v))
+      TYPE_REF_CAN_ALIAS_ALL (v) = true;
 }
 
 /* Early variant fixups: we apply attributes at the beginning of the class
@@ -2667,19 +2669,20 @@ update_vtable_entry_for_fn (tree t, tree binfo, tree fn, tree* virtuals,
 	     order.  Of course it is lame that we have to repeat the
 	     search here anyway -- we should really be caching pieces
 	     of the vtable and avoiding this repeated work.  */
-	  tree thunk_binfo, base_binfo;
+	  tree thunk_binfo = NULL_TREE;
+	  tree base_binfo = TYPE_BINFO (base_return);
 
 	  /* Find the base binfo within the overriding function's
 	     return type.  We will always find a thunk_binfo, except
 	     when the covariancy is invalid (which we will have
 	     already diagnosed).  */
-	  for (base_binfo = TYPE_BINFO (base_return),
-	       thunk_binfo = TYPE_BINFO (over_return);
-	       thunk_binfo;
-	       thunk_binfo = TREE_CHAIN (thunk_binfo))
-	    if (SAME_BINFO_TYPE_P (BINFO_TYPE (thunk_binfo),
-				   BINFO_TYPE (base_binfo)))
-	      break;
+	  if (base_binfo)
+	    for (thunk_binfo = TYPE_BINFO (over_return); thunk_binfo;
+		 thunk_binfo = TREE_CHAIN (thunk_binfo))
+	      if (SAME_BINFO_TYPE_P (BINFO_TYPE (thunk_binfo),
+				     BINFO_TYPE (base_binfo)))
+		break;
+	  gcc_assert (thunk_binfo || errorcount);
 
 	  /* See if virtual inheritance is involved.  */
 	  for (virtual_offset = thunk_binfo;

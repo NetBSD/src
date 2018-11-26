@@ -29,15 +29,15 @@
 START_RELOC_NUMBERS (elf_i860_reloc_type)
      RELOC_NUMBER (R_860_NONE,      0x00)	/* No reloc */
      RELOC_NUMBER (R_860_32,        0x01)	/* S+A  */
-     RELOC_NUMBER (R_860_COPY,	    0x02)	/* No calculation */
+     RELOC_NUMBER (R_860_COPY,      0x02)	/* No calculation */
      RELOC_NUMBER (R_860_GLOB_DAT,  0x03)	/* S, Create GOT entry */
      RELOC_NUMBER (R_860_JUMP_SLOT, 0x04)	/* S+A, Create PLT entry */
      RELOC_NUMBER (R_860_RELATIVE,  0x05)	/* B+A, Adj by program base */
-     RELOC_NUMBER (R_860_PC26,      0x30)	/* (S+A-P) >> 2 */ 
-     RELOC_NUMBER (R_860_PLT26,	    0x31)	/* (L+A-P) >> 2 */
+     RELOC_NUMBER (R_860_PC26,      0x30)	/* (S+A-P) >> 2 */
+     RELOC_NUMBER (R_860_PLT26,     0x31)	/* (L+A-P) >> 2 */
      RELOC_NUMBER (R_860_PC16,      0x32)	/* (S+A-P) >> 2 */
      RELOC_NUMBER (R_860_LOW0,      0x40)	/* S+A */
-     RELOC_NUMBER (R_860_SPLIT0,    0x42)	/* S+A */       
+     RELOC_NUMBER (R_860_SPLIT0,    0x42)	/* S+A */
      RELOC_NUMBER (R_860_LOW1,      0x44)	/* S+A */
      RELOC_NUMBER (R_860_SPLIT1,    0x46)	/* S+A */
      RELOC_NUMBER (R_860_LOW2,      0x48)	/* S+A */

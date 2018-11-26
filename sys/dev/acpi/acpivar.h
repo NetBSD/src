@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.74.16.2 2018/10/20 06:58:30 pgoyette Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.74.16.3 2018/11/26 01:52:30 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -222,17 +222,17 @@ struct acpi_iorange {
 struct acpi_mem {
 	SIMPLEQ_ENTRY(acpi_mem) ar_list;
 	int		ar_index;
-	uint32_t	ar_base;
-	uint32_t	ar_length;
+	bus_addr_t	ar_base;
+	bus_size_t	ar_length;
 };
 
 struct acpi_memrange {
 	SIMPLEQ_ENTRY(acpi_memrange) ar_list;
 	int		ar_index;
-	uint32_t	ar_low;
-	uint32_t	ar_high;
-	uint32_t	ar_length;
-	uint32_t	ar_align;
+	bus_addr_t	ar_low;
+	bus_addr_t	ar_high;
+	bus_size_t	ar_length;
+	bus_size_t	ar_align;
 };
 
 struct acpi_irq {
@@ -282,9 +282,9 @@ struct acpi_resource_parse_ops {
 	void	(*iorange)(device_t, void *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 
-	void	(*memory)(device_t, void *, uint32_t, uint32_t);
-	void	(*memrange)(device_t, void *, uint32_t, uint32_t,
-		    uint32_t, uint32_t);
+	void	(*memory)(device_t, void *, uint64_t, uint64_t);
+	void	(*memrange)(device_t, void *, uint64_t, uint64_t,
+		    uint64_t, uint64_t);
 
 	void	(*irq)(device_t, void *, uint32_t, uint32_t);
 	void	(*drq)(device_t, void *, uint32_t);

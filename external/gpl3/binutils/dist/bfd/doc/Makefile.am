@@ -17,7 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 #
 
-AUTOMAKE_OPTIONS = 1.9 cygnus
+AUTOMAKE_OPTIONS = info-in-builddir no-texinfo.tex foreign
 
 DOCFILES = aoutx.texi  archive.texi archures.texi \
 	bfdt.texi  cache.texi coffcode.texi \
@@ -68,7 +68,7 @@ SRCIPROT = $(srcdir)/../cache.c $(srcdir)/../libbfd.c \
 
 TEXIDIR = $(srcdir)/../../texinfo/fsf
 
-info_TEXINFOS = bfd.texinfo
+info_TEXINFOS = bfd.texi
 bfd_TEXINFOS = $(DOCFILES) bfdsumm.texi
 
 MKDOC = chew$(EXEEXT_FOR_BUILD)
@@ -116,7 +116,7 @@ archures.stamp: $(srcdir)/../archures.c $(srcdir)/doc.str $(MKDOC)
 	touch $@
 
 # We use bfdt.texi, rather than bfd.texi, to avoid conflicting with
-# bfd.texinfo on an 8.3 filesystem.
+# bfd.texi on an 8.3 filesystem.
 bfdt.texi: bfdt.stamp ; @true
 bfdt.stamp: $(srcdir)/../bfd.c $(srcdir)/doc.str $(MKDOC)
 	./$(MKDOC) -f $(srcdir)/doc.str < $(srcdir)/../bfd.c >bfd.tmp
@@ -277,6 +277,7 @@ libbfd.h: $(LIBBFD_H_DEP)
 	echo "#ifdef __cplusplus" >> $@
 	echo "}" >> $@
 	echo "#endif" >> $@
+	echo "#endif" >> $@
 
 LIBCOFF_H_DEP = \
 	$(srcdir)/../libcoff-in.h	\
@@ -298,6 +299,7 @@ libcoff.h: $(LIBCOFF_H_DEP)
 	done
 	echo "#ifdef __cplusplus" >> $@
 	echo "}" >> $@
+	echo "#endif" >> $@
 	echo "#endif" >> $@
 
 BFD_H_DEP = \
@@ -366,10 +368,3 @@ MAINTAINERCLEANFILES = $(DOCFILES)
 install: install-info
 
 MAINTAINERCLEANFILES += bfd.info
-
-# Automake 1.9 will only build info files in the objdir if they are
-# mentioned in DISTCLEANFILES.  It doesn't have to be unconditional,
-# though, so we use a bogus condition.
-if GENINSRC_NEVER
-DISTCLEANFILES += bfd.info
-endif

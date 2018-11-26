@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hacks,v 1.5.2.1 2018/09/06 06:53:10 pgoyette Exp $
+#	$NetBSD: Makefile.hacks,v 1.5.2.2 2018/11/26 01:51:44 pgoyette Exp $
 
 # some random crap we need in a few places
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.55 2017/07/03 21:35:32 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.55.4.1 2018/11/26 01:52:59 pgoyette Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 28, 2012
+.Dd November 4, 2018
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -37,7 +37,8 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnrSsTUv
+.Op Fl dnrSsTUvX
+.Op Fl B Ar buffer_length
 .Op Fl b Ar bind_address
 .Op Fl f Ar config_file
 .Op Fl g Ar group
@@ -56,6 +57,13 @@ reads and logs messages to the system console, log files, other
 machines and/or users as specified by its configuration file.
 The options are as follows:
 .Bl -tag -width 15n
+.It Fl B Ar buffer_length
+Sets the receiving buffer length.
+The default is 16384 bytes.
+If syslogd reports buffer overflow, this needs increasing.
+If you don't care about it being reported, see the
+.Fl X
+option.
 .It Fl b Ar bind_address
 Specify one specific IP address or hostname to bind to.
 If a hostname is specified, the IPv4 or IPv6 address
@@ -118,20 +126,16 @@ which
 runs is subject to attack over the network and it is desired
 that the machine be protected from attempts to remotely fill logs
 and similar attacks.
-.It Fl t Ar chroot_dir
-.Xr chroot 2
-to
-.Ar chroot_dir
-after the sockets and log files have been opened.
 .It Fl T
 Always use the local time and date for messages received from the
 network, instead of the timestamp field supplied in the message
 by the remote host.
 This is useful if some of the originating hosts can't keep time
 properly or are unable to generate a correct timestamp.
-.It Fl u Ar user
-Set UID to
-.Ar user
+.It Fl t Ar chroot_dir
+.Xr chroot 2
+to
+.Ar chroot_dir
 after the sockets and log files have been opened.
 .It Fl U
 Unique priority logging.
@@ -143,12 +147,18 @@ This option changes the default priority comparison from
 .Sq >=
 to
 .Sq = .
+.It Fl u Ar user
+Set UID to
+.Ar user
+after the sockets and log files have been opened.
 .It Fl v
 Verbose logging.
 If specified once, the numeric facility and priority are logged with
 each locally-written message.
 If specified more than once, the names of the facility and priority are
 logged with each locally-written message.
+.It Fl X
+Disable logging of buffer overflow.
 .El
 .Pp
 .Nm

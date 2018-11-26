@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.169.2.4 2018/10/20 06:58:19 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.169.2.5 2018/11/26 01:49:59 pgoyette Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -392,6 +392,7 @@
 ./usr/share/examples/racoon/roadwarrior/client
 ./usr/share/examples/racoon/roadwarrior/server
 ./usr/share/examples/rtadvd
+./usr/share/examples/slip
 ./usr/share/examples/smbfs
 ./usr/share/examples/supfiles
 ./usr/share/examples/syslogd

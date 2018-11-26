@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.5.4.4 2018/09/06 06:55:30 pgoyette Exp $
+# $NetBSD: CUBOX,v 1.5.4.5 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -277,7 +277,6 @@ wskbd*	at ukbd? console ? mux 1
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives

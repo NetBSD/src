@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.31 2012/12/24 01:20:12 khorben Exp $ */
+/*	$NetBSD: util.c,v 1.31.28.1 2018/11/26 01:52:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006, 2012 The NetBSD Foundation, Inc.
@@ -420,7 +420,7 @@ rd_field(struct field *f, char *val, int merge)
 			}
 		}
 		kbmap.maplen = newkbmap.maplen;
-		bcopy(newkbmap.map, kbmap.map,
+		memcpy(kbmap.map, newkbmap.map,
 		    kbmap.maplen * sizeof(struct wscons_keymap));
 		break;
 	case FMT_COLOR:

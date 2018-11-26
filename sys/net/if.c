@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.16 2018/10/20 06:58:45 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.17 2018/11/26 01:52:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.16 2018/10/20 06:58:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.17 2018/11/26 01:52:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1777,8 +1777,8 @@ ifa_psref_init(struct ifaddr *ifa)
 void
 ifaref(struct ifaddr *ifa)
 {
-	KASSERT(!ISSET(ifa->ifa_flags, IFA_DESTROYING));
-	ifa->ifa_refcnt++;
+
+	atomic_inc_uint(&ifa->ifa_refcnt);
 }
 
 void
@@ -1787,7 +1787,7 @@ ifafree(struct ifaddr *ifa)
 	KASSERT(ifa != NULL);
 	KASSERT(ifa->ifa_refcnt > 0);
 
-	if (--ifa->ifa_refcnt == 0) {
+	if (atomic_dec_uint_nv(&ifa->ifa_refcnt) == 0) {
 		free(ifa, M_IFADDR);
 	}
 }
@@ -2177,7 +2177,8 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 	struct psref psref;
 
 	if (cmd != RTM_ADD || (ifa = rt->rt_ifa) == NULL ||
-	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL)
+	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL ||
+	    ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
 		return;
 	if ((ifa = ifaof_ifpforaddr_psref(dst, ifp, &psref)) != NULL) {
 		rt_replace_ifa(rt, ifa);
@@ -2430,6 +2431,9 @@ p2p_rtrequest(int req, struct rtentry *rt,
 			break;
 
 		rt->rt_ifp = lo0ifp;
+
+		if (ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
+			break;
 
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (equal(rt_getkey(rt), ifa->ifa_addr))
@@ -2850,7 +2854,7 @@ if_tunnel_check_nesting(struct ifnet *ifp, struct mbuf *m, int limit)
 	struct m_tag *mtag;
 	int *count;
 
-	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO);
 	if (mtag != NULL) {
 		count = (int *)(mtag + 1);
 		if (++(*count) > limit) {

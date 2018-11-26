@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.16.1 2018/07/28 04:37:26 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.19.16.2 2018/11/26 01:52:17 pgoyette Exp $
 
 INCSDIR= /usr/include/amd64
 

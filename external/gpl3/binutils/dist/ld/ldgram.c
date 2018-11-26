@@ -2404,7 +2404,7 @@ yyreduce:
   case 16:
 #line 208 "ldgram.y" /* yacc.c:1646  */
     {
-			einfo(_("%P%F: unrecognised keyword in MRI style script '%s'\n"),(yyvsp[0].name));
+			einfo(_("%F%P: unrecognised keyword in MRI style script '%s'\n"),(yyvsp[0].name));
 			}
 #line 2410 "ldgram.c" /* yacc.c:1646  */
     break;
@@ -4216,7 +4216,7 @@ yyreduce:
 			  else
 			    {
 			      einfo (_("\
-%X%P:%S: unknown phdr type `%s' (try integer literal)\n"),
+%X%P:%pS: unknown phdr type `%s' (try integer literal)\n"),
 				     NULL, s);
 			      (yyval.etree) = exp_intop (0);
 			    }
@@ -4245,7 +4245,7 @@ yyreduce:
 		  else if (strcmp ((yyvsp[-2].name), "FLAGS") == 0 && (yyvsp[-1].etree) != NULL)
 		    (yyval.phdr).flags = (yyvsp[-1].etree);
 		  else
-		    einfo (_("%X%P:%S: PHDRS syntax error at `%s'\n"),
+		    einfo (_("%X%P:%pS: PHDRS syntax error at `%s'\n"),
 			   NULL, (yyvsp[-2].name));
 		}
 #line 4252 "ldgram.c" /* yacc.c:1646  */
@@ -4774,7 +4774,7 @@ yyerror(arg)
     einfo (_("%P:%s: file format not recognized; treating as linker script\n"),
 	   ldlex_filename ());
   if (error_index > 0 && error_index < ERROR_NAME_MAX)
-    einfo ("%P%F:%S: %s in %s\n", NULL, arg, error_names[error_index - 1]);
+    einfo ("%F%P:%pS: %s in %s\n", NULL, arg, error_names[error_index - 1]);
   else
-    einfo ("%P%F:%S: %s\n", NULL, arg);
+    einfo ("%F%P:%pS: %s\n", NULL, arg);
 }

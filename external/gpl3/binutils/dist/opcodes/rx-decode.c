@@ -1,3 +1,4 @@
+/* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
 #line 1 "rx-decode.opc"
 /* -*- c -*- */
 /* Copyright (C) 2012-2018 Free Software Foundation, Inc.

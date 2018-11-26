@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.23.2.3 2018/10/20 06:58:27 pgoyette Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.23.2.4 2018/11/26 01:52:21 pgoyette Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -237,7 +237,6 @@ uhub*	at uhub? port ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives

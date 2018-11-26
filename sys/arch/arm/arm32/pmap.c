@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.364.2.3 2018/10/20 06:58:24 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.364.2.4 2018/11/26 01:52:17 pgoyette Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364.2.3 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364.2.4 2018/11/26 01:52:17 pgoyette Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6096,14 +6096,12 @@ pmap_init_l1(struct l1_ttable *l1, pd_entry_t *l1pt)
  * spread over a number of disparate files/functions.
  *
  * We are passed the following parameters
- *  - kernel_l1pt
- *    This is a pointer to the base of the kernel's L1 translation table.
  *  - vstart
  *    1MB-aligned start of managed kernel virtual memory.
  *  - vend
  *    1MB-aligned end of managed kernel virtual memory.
  *
- * We use the first parameter to build the metadata (struct l1_ttable and
+ * We use 'kernel_l1pt' to build the metadata (struct l1_ttable and
  * struct l2_dtable) necessary to track kernel mappings.
  */
 #define	PMAP_STATIC_L2_SIZE 16

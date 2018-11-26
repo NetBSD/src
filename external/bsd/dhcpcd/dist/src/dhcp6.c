@@ -3620,6 +3620,11 @@ dhcp6_listen(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &n, sizeof(n)) == -1)
 		goto errexit;
 
+#ifdef SO_RERROR
+	n = 1;
+	if (setsockopt(s, SOL_SOCKET, SO_RERROR, &n, sizeof(n)) == -1)
+		goto errexit;
+#endif
 	memset(&sa, 0, sizeof(sa));
 	sa.sin6_family = AF_INET6;
 	sa.sin6_port = htons(DHCP6_CLIENT_PORT);

@@ -26,7 +26,6 @@
 
 /* Fixup debug sections since we will never relax them.  */
 #define TC_LINKRELAX_FIXUP(seg) (seg->flags & SEC_ALLOC)
-#ifdef OBJ_ELF
 #ifndef TE_LINUX
 #define TARGET_FORMAT "elf32-h8300"
 #else
@@ -35,17 +34,11 @@
 #define LOCAL_LABEL_PREFIX '.'
 #define LOCAL_LABEL(NAME) (NAME[0] == '.' && NAME[1] == 'L')
 #define FAKE_LABEL_NAME ".L0\001"
-#endif
 
 struct fix;
 struct internal_reloc;
 
 #define WORKING_DOT_WORD
-
-#define COFF_MAGIC ( Smode && Nmode ? 0x8304 : Hmode && Nmode ? 0x8303 : Smode ? 0x8302 : Hmode ? 0x8301 : 0x8300)
-#define IGNORE_NONSTANDARD_ESCAPES
-
-#define tc_coff_symbol_emit_hook(a) ; /* not used */
 
 /* No shared lib support, so we don't need to ensure externally
    visible symbols can be overridden.  */
@@ -55,11 +48,8 @@ struct internal_reloc;
 #define DWARF2_LINE_MIN_INSN_LENGTH 2
 #define DWARF2_USE_FIXED_ADVANCE_PC 0
 
-#ifdef OBJ_ELF
 /* Provide mappings from the original H8 COFF relocation names to
-   their corresponding BFD relocation names.  This allows us to use
-   most of tc-h8300.c without modifications for both ELF and COFF
-   ports.  */
+   their corresponding BFD relocation names.  */
 #define R_MOV24B1 BFD_RELOC_H8_DIR24A8
 #define R_MOVL1 BFD_RELOC_H8_DIR32A16
 #define R_RELLONG BFD_RELOC_32
@@ -74,12 +64,8 @@ struct internal_reloc;
 /* We do not want to adjust any relocations to make implementation of
    linker relaxations easier.  */
 #define tc_fix_adjustable(FIX) 0
-#endif
 
 #define LISTING_HEADER "Renesas H8/300 GAS "
-#ifndef OBJ_ELF
-#define RELOC_32 1234
-#endif
 
 extern int Hmode;
 extern int Smode;

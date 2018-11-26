@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.15 2018/09/27 03:53:30 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.16 2018/11/26 01:52:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -913,6 +913,13 @@ struct netbsd32_plistref {
 	netbsd32_pointer_t pref_plist;
 	netbsd32_size_t pref_len;
 };
+
+/* <nv.h> */
+typedef struct {
+	netbsd32_pointer_t buf;
+	netbsd32_size_t    len;
+	int                flags;
+} netbsd32_nvlist_ref_t;
 
 /* from <ufs/lfs/lfs.h> */
 typedef netbsd32_pointer_t netbsd32_block_infop_t;  /* XXX broken */
