@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.175.2.3 2018/11/26 01:52:49 pgoyette Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.175.2.4 2018/11/26 10:43:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,11 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< usbdi.c
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.175.2.3 2018/11/26 01:52:49 pgoyette Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.175.2.3 2018/11/26 01:52:49 pgoyette Exp $");
->>>>>>> 1.180
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.175.2.4 2018/11/26 10:43:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
