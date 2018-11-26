@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.310.2.2 2017/11/24 08:39:09 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.310.2.3 2018/11/26 17:22:32 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.310.2.2 2017/11/24 08:39:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.310.2.3 2018/11/26 17:22:32 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2555,8 +2555,13 @@ bge_blockinit(struct bge_softc *sc)
 	 */
 	if (BGE_IS_5717_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x2a);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0xa0);
+		if (ifp->if_mtu > ETHERMTU) {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x7e);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0xea);
+		} else {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x2a);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0xa0);
+		}
 	} else if (BGE_IS_5705_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 
@@ -3060,8 +3065,11 @@ bge_blockinit(struct bge_softc *sc)
 		if (ifp->if_mtu <= ETHERMTU)
 			val |= BGE_RDMAMODE_JMB_2K_MMRR;
 	}
-	if (sc->bge_flags & BGEF_TSO)
+	if (sc->bge_flags & BGEF_TSO) {
 		val |= BGE_RDMAMODE_TSO4_ENABLE;
+		if (BGE_IS_5717_PLUS(sc))
+			val |= BGE_RDMAMODE_TSO6_ENABLE;
+	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
 		val |= CSR_READ_4(sc, BGE_RDMA_MODE) &
@@ -3641,6 +3649,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 		if ((PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5754) &&
 		    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5754M))
 			sc->bge_flags |= BGEF_TSO;
+		/* TSO on BCM5719 A0 does not work. */
+		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719) &&
+		    (sc->bge_chipid == BGE_CHIPID_BCM5719_A0))
+			sc->bge_flags &= ~BGEF_TSO;
 	}
 
 	capmask = 0xffffffff; /* XXX BMSR_DEFCAPMASK */
@@ -5221,7 +5233,7 @@ doit:
 		if (__predict_false(m0->m_len <
 				    (hlen + sizeof(struct tcphdr)))) {
 
-			aprint_debug_dev(sc->bge_dev,
+			aprint_error_dev(sc->bge_dev,
 			    "TSO: hard case m0->m_len == %d < ip/tcp hlen %zd,"
 			    "not handled yet\n",
 			     m0->m_len, hlen+ sizeof(struct tcphdr));
@@ -5298,7 +5310,13 @@ doit:
 		 */
 		tcp_seg_flags = 0;
 		if (iptcp_opt_words) {
-			if (BGE_IS_5705_PLUS(sc)) {
+			if (BGE_IS_5717_PLUS(sc)) {
+				tcp_seg_flags =
+					(iptcp_opt_words & 0x3) << 14;
+				txbd_tso_flags |=
+				    ((iptcp_opt_words & 0xF8) << 7) |
+				    ((iptcp_opt_words & 0x4) << 2);
+			} else if (BGE_IS_5705_PLUS(sc)) {
 				tcp_seg_flags =
 					iptcp_opt_words << 11;
 			} else {
