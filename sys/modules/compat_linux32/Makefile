@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/08/02 17:22:51 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2018/11/26 15:02:11 mlelstv Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -7,6 +7,7 @@ KMOD=	compat_linux32
 
 CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DCOMPAT_LINUX
 CPPFLAGS+=	-DCOMPAT_LINUX32 -DCOMPAT_NETBSD32
+CPPFLAGS+=      -I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .PATH:	${S}/compat/linux32/common
 SRCS+=	linux32_dirent.c linux32_exec.c linux32_exec_elf32.c linux32_fcntl.c
