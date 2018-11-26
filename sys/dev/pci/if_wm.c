@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.25 2018/11/08 12:09:18 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.26 2018/11/26 17:24:51 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.25 2018/11/08 12:09:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.26 2018/11/26 17:24:51 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9534,7 +9534,7 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 	} else {
 		/* It's not the first call. Use PHY OUI and model */
 		switch (phy_oui) {
-		case MII_OUI_ATHEROS: /* XXX ??? */
+		case MII_OUI_ATTANSIC: /* XXX ??? */
 			switch (phy_model) {
 			case 0x0004: /* XXX */
 				new_phytype = WMPHY_82578;
@@ -9611,8 +9611,9 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 			break;
 		}
 		if (new_phytype == WMPHY_UNKNOWN)
-			aprint_verbose_dev(dev, "%s: unknown PHY model\n",
-			    __func__);
+			aprint_verbose_dev(dev,
+			    "%s: unknown PHY model. OUI=%06x, model=%04x\n",
+			    __func__, phy_oui, phy_model);
 
 		if ((sc->sc_phytype != WMPHY_UNKNOWN)
 		    && (sc->sc_phytype != new_phytype )) {
