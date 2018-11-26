@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.S,v 1.1 2013/07/13 18:52:35 skrll Exp $	*/
+/*	$NetBSD: crt0.S,v 1.2 2018/11/26 17:37:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2013/07/13 18:52:35 skrll Exp $")
+RCSID("$NetBSD: crt0.S,v 1.2 2018/11/26 17:37:45 joerg Exp $")
 
 	.import	_GLOBAL_OFFSET_TABLE_
 	.hidden	___start
@@ -55,13 +55,11 @@ L$lpc:	addil   L'_GLOBAL_OFFSET_TABLE_ - ($PIC_pcrel$0 - 8), %r27
 
 	/*
 	 * void ___start(void (*cleanup)(void),
-	 *    const Obj_Entry *obj,
 	 *    struct ps_strings *ps_strings);
 	 */
-	copy	%arg0, %arg3		; ps_strings -> tmp
+	copy	%arg0, %arg2		; ps_strings -> tmp
 	copy	%arg1, %arg0		; cleanup -> arg0
-	copy	%arg2, %arg1		; obj -> arg1
 	b	___start
-	copy	%arg3, %arg2		; ps_strings (tmp) -> arg2
+	copy	%arg2, %arg1		; ps_strings -> arg1
 
 EXIT(_start)
