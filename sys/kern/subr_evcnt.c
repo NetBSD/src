@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.12 2014/02/25 18:30:11 pooka Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.12.22.1 2018/11/26 17:19:46 snj Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.12 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.12.22.1 2018/11/26 17:19:46 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -257,7 +257,7 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 	sysctl_unlock();
 
 	if (oldp != NULL && xevs0 == NULL)
-		xevs0 = kmem_alloc(sizeof(*xevs0), KM_SLEEP);
+		xevs0 = kmem_zalloc(sizeof(*xevs0), KM_SLEEP);
 
 	retries = 100;
  retry:
