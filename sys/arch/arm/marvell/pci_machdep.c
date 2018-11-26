@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14 2018/11/16 15:06:22 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.15 2018/11/26 11:53:58 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14 2018/11/16 15:06:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15 2018/11/26 11:53:58 jmcneill Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -77,30 +77,26 @@ static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(vo
 static void gtpci_gpp_intr_disestablish(void *, void *);
 
 struct arm32_pci_chipset arm32_gtpci_chipset = {
-	NULL,	/* conf_v */
-	gtpci_attach_hook,
-	gtpci_bus_maxdevs,
-	gtpci_make_tag,
-	gtpci_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = gtpci_attach_hook,
+	.pc_bus_maxdevs = gtpci_bus_maxdevs,
+	.pc_make_tag = gtpci_make_tag,
+	.pc_decompose_tag = gtpci_decompose_tag,
 #if NGTPCI_MBUS > 0
-	gtpci_mbus_conf_read,		/* XXXX: always this functions */
-	gtpci_mbus_conf_write,
+	.pc_conf_read = gtpci_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_write = gtpci_mbus_conf_write,
 #else
-	gtpci_conf_read,
-	gtpci_conf_write,
+	.pc_conf_read = gtpci_conf_read,
+	.pc_conf_write = gtpci_conf_write,
 #endif
-	NULL,	/* intr_v */
-	gtpci_gpp_intr_map,
-	gtpci_gpp_intr_string,
-	gtpci_gpp_intr_evcnt,
-	NULL,	/* intr_setattr */
-	gtpci_gpp_intr_establish,
-	gtpci_gpp_intr_disestablish,
+	.pc_intr_map = gtpci_gpp_intr_map,
+	.pc_intr_string = gtpci_gpp_intr_string,
+	.pc_intr_evcnt = gtpci_gpp_intr_evcnt,
+	.pc_intr_establish = gtpci_gpp_intr_establish,
+	.pc_intr_disestablish = gtpci_gpp_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	gtpci_conf_hook,
+	.pc_conf_hook = gtpci_conf_hook,
 #endif
-	gtpci_conf_interrupt,
+	.pc_conf_interrupt = gtpci_conf_interrupt,
 };
 #endif
 
@@ -110,179 +106,151 @@ static pcireg_t mvpex_mbus_conf_read(void *, pcitag_t, int);
 #endif
 
 struct arm32_pci_chipset arm32_mvpex0_chipset = {
-	NULL,	/* conf_v */
-	mvpex_attach_hook,
-	mvpex_bus_maxdevs,
-	mvpex_make_tag,
-	mvpex_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = mvpex_attach_hook,
+	.pc_bus_maxdevs = mvpex_bus_maxdevs,
+	.pc_make_tag = mvpex_make_tag,
+	.pc_decompose_tag = mvpex_decompose_tag,
 #if NMVPEX_MBUS > 0
-	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_read = mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
-	mvpex_conf_read,
+	.pc_conf_read = mvpex_conf_read,
 #endif
-	mvpex_conf_write,
-	NULL,	/* intr_v */
-	mvpex_intr_map,
-	mvpex_intr_string,
-	mvpex_intr_evcnt,
-	NULL,	/* intr_setattr */
-	mvpex_intr_establish,
-	mvpex_intr_disestablish,
+	.pc_conf_write = mvpex_conf_write,
+	.pc_intr_map = mvpex_intr_map,
+	.pc_intr_string = mvpex_intr_string,
+	.pc_intr_evcnt = mvpex_intr_evcnt,
+	.pc_intr_establish = mvpex_intr_establish,
+	.pc_intr_disestablish = mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	mvpex_conf_hook,
+	.pc_conf_hook = mvpex_conf_hook,
 #endif
-	mvpex_conf_interrupt,
+	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex1_chipset = {
-	NULL,	/* conf_v */
-	mvpex_attach_hook,
-	mvpex_bus_maxdevs,
-	mvpex_make_tag,
-	mvpex_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = mvpex_attach_hook,
+	.pc_bus_maxdevs = mvpex_bus_maxdevs,
+	.pc_make_tag = mvpex_make_tag,
+	.pc_decompose_tag = mvpex_decompose_tag,
 #if NMVPEX_MBUS > 0
-	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_read = mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
-	mvpex_conf_read,
+	.pc_conf_read = mvpex_conf_read,
 #endif
-	mvpex_conf_write,
-	NULL,	/* intr_v */
-	mvpex_intr_map,
-	mvpex_intr_string,
-	mvpex_intr_evcnt,
-	NULL,	/* intr_setattr */
-	mvpex_intr_establish,
-	mvpex_intr_disestablish,
+	.pc_conf_write = mvpex_conf_write,
+	.pc_intr_map = mvpex_intr_map,
+	.pc_intr_string = mvpex_intr_string,
+	.pc_intr_evcnt = mvpex_intr_evcnt,
+	.pc_intr_establish = mvpex_intr_establish,
+	.pc_intr_disestablish = mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	mvpex_conf_hook,
+	.pc_conf_hook = mvpex_conf_hook,
 #endif
-	mvpex_conf_interrupt,
+	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex2_chipset = {
-	NULL,	/* conf_v */
-	mvpex_attach_hook,
-	mvpex_bus_maxdevs,
-	mvpex_make_tag,
-	mvpex_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = mvpex_attach_hook,
+	.pc_bus_maxdevs = mvpex_bus_maxdevs,
+	.pc_make_tag = mvpex_make_tag,
+	.pc_decompose_tag = mvpex_decompose_tag,
 #if NMVPEX_MBUS > 0
-	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_read = mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
-	mvpex_conf_read,
+	.pc_conf_read = mvpex_conf_read,
 #endif
-	mvpex_conf_write,
-	NULL,	/* intr_v */
-	mvpex_intr_map,
-	mvpex_intr_string,
-	mvpex_intr_evcnt,
-	NULL,	/* intr_setattr */
-	mvpex_intr_establish,
-	mvpex_intr_disestablish,
+	.pc_conf_write = mvpex_conf_write,
+	.pc_intr_map = mvpex_intr_map,
+	.pc_intr_string = mvpex_intr_string,
+	.pc_intr_evcnt = mvpex_intr_evcnt,
+	.pc_intr_establish = mvpex_intr_establish,
+	.pc_intr_disestablish = mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	mvpex_conf_hook,
+	.pc_conf_hook = mvpex_conf_hook,
 #endif
-	mvpex_conf_interrupt,
+	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex3_chipset = {
-	NULL,	/* conf_v */
-	mvpex_attach_hook,
-	mvpex_bus_maxdevs,
-	mvpex_make_tag,
-	mvpex_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = mvpex_attach_hook,
+	.pc_bus_maxdevs = mvpex_bus_maxdevs,
+	.pc_make_tag = mvpex_make_tag,
+	.pc_decompose_tag = mvpex_decompose_tag,
 #if NMVPEX_MBUS > 0
-	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_read = mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
-	mvpex_conf_read,
+	.pc_conf_read = mvpex_conf_read,
 #endif
-	mvpex_conf_write,
-	NULL,	/* intr_v */
-	mvpex_intr_map,
-	mvpex_intr_string,
-	mvpex_intr_evcnt,
-	NULL,	/* intr_setattr */
-	mvpex_intr_establish,
-	mvpex_intr_disestablish,
+	.pc_conf_write = mvpex_conf_write,
+	.pc_intr_map = mvpex_intr_map,
+	.pc_intr_string = mvpex_intr_string,
+	.pc_intr_evcnt = mvpex_intr_evcnt,
+	.pc_intr_establish = mvpex_intr_establish,
+	.pc_intr_disestablish = mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	mvpex_conf_hook,
+	.pc_conf_hook = mvpex_conf_hook,
 #endif
-	mvpex_conf_interrupt,
+	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex4_chipset = {
-	NULL,	/* conf_v */
-	mvpex_attach_hook,
-	mvpex_bus_maxdevs,
-	mvpex_make_tag,
-	mvpex_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = mvpex_attach_hook,
+	.pc_bus_maxdevs = mvpex_bus_maxdevs,
+	.pc_make_tag = mvpex_make_tag,
+	.pc_decompose_tag = mvpex_decompose_tag,
 #if NMVPEX_MBUS > 0
-	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_read = mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
-	mvpex_conf_read,
+	.pc_conf_read = mvpex_conf_read,
 #endif
-	mvpex_conf_write,
-	NULL,	/* intr_v */
-	mvpex_intr_map,
-	mvpex_intr_string,
-	mvpex_intr_evcnt,
-	NULL,	/* intr_setattr */
-	mvpex_intr_establish,
-	mvpex_intr_disestablish,
+	.pc_conf_write = mvpex_conf_write,
+	.pc_intr_map = mvpex_intr_map,
+	.pc_intr_string = mvpex_intr_string,
+	.pc_intr_evcnt = mvpex_intr_evcnt,
+	.pc_intr_establish = mvpex_intr_establish,
+	.pc_intr_disestablish = mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	mvpex_conf_hook,
+	.pc_conf_hook = mvpex_conf_hook,
 #endif
-	mvpex_conf_interrupt,
+	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex5_chipset = {
-	NULL,	/* conf_v */
-	mvpex_attach_hook,
-	mvpex_bus_maxdevs,
-	mvpex_make_tag,
-	mvpex_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = mvpex_attach_hook,
+	.pc_bus_maxdevs = mvpex_bus_maxdevs,
+	.pc_make_tag = mvpex_make_tag,
+	.pc_decompose_tag = mvpex_decompose_tag,
 #if NMVPEX_MBUS > 0
-	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_read = mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
-	mvpex_conf_read,
+	.pc_conf_read = mvpex_conf_read,
 #endif
-	mvpex_conf_write,
-	NULL,	/* intr_v */
-	mvpex_intr_map,
-	mvpex_intr_string,
-	mvpex_intr_evcnt,
-	NULL,	/* intr_setattr */
-	mvpex_intr_establish,
-	mvpex_intr_disestablish,
+	.pc_conf_write = mvpex_conf_write,
+	.pc_intr_map = mvpex_intr_map,
+	.pc_intr_string = mvpex_intr_string,
+	.pc_intr_evcnt = mvpex_intr_evcnt,
+	.pc_intr_establish = mvpex_intr_establish,
+	.pc_intr_disestablish = mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	mvpex_conf_hook,
+	.pc_conf_hook = mvpex_conf_hook,
 #endif
-	mvpex_conf_interrupt,
+	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex6_chipset = {
-	NULL,	/* conf_v */
-	mvpex_attach_hook,
-	mvpex_bus_maxdevs,
-	mvpex_make_tag,
-	mvpex_decompose_tag,
-	NULL,	/* get_segment */
+	.pc_attach_hook = mvpex_attach_hook,
+	.pc_bus_maxdevs = mvpex_bus_maxdevs,
+	.pc_make_tag = mvpex_make_tag,
+	.pc_decompose_tag = mvpex_decompose_tag,
 #if NMVPEX_MBUS > 0
-	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+	.pc_conf_read = mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
-	mvpex_conf_read,
+	.pc_conf_read = mvpex_conf_read,
 #endif
-	mvpex_conf_write,
-	NULL,	/* intr_v */
-	mvpex_intr_map,
-	mvpex_intr_string,
-	mvpex_intr_evcnt,
-	NULL,	/* intr_setattr */
-	mvpex_intr_establish,
-	mvpex_intr_disestablish,
+	.pc_conf_write = mvpex_conf_write,
+	.pc_intr_map = mvpex_intr_map,
+	.pc_intr_string = mvpex_intr_string,
+	.pc_intr_evcnt = mvpex_intr_evcnt,
+	.pc_intr_establish = mvpex_intr_establish,
+	.pc_intr_disestablish = mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
-	mvpex_conf_hook,
+	.pc_conf_hook = mvpex_conf_hook,
 #endif
-	mvpex_conf_interrupt,
+	.pc_conf_interrupt = mvpex_conf_interrupt,
 };
 #endif /* NMVPEX > 0 */
 
