@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.210 2018/11/07 07:43:08 maxv Exp $
+#	$NetBSD: Makefile,v 1.211 2018/11/27 00:32:13 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -258,6 +258,7 @@ SUBDIR+=	wmimsi
 .endif
 
 .if ${MACHINE_CPU} == "arm" \
+    || ${MACHINE_ARCH} == "sparc64" \
     || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_mqueue
@@ -429,6 +430,14 @@ SUBDIR+=	viomb
 SUBDIR+=	virtio
 SUBDIR+=	virtio_pci
 SUBDIR+=	vioscsi
+.endif
+
+# We need these four locally	XXX-PRG
+.if ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	ld
+SUBDIR+=	ld_nvme
+SUBDIR+=	nvme
+SUBDIR+=	ksem
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot
