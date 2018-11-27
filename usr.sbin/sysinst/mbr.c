@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.9 2018/11/20 19:02:07 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.10 2018/11/27 17:13:41 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1284,10 +1284,10 @@ edit_mbr(mbr_info_t *mbri)
 		char min_size[5], build_size[5];
 
 		humanize_number(min_size, sizeof(min_size),
-		    2 * m_size * 1024*1024UL,
+		    2 * m_size * MEG,
 		    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 		humanize_number(build_size, sizeof(build_size),
-		     SYSTEM_BUILD_SIZE * 1024 * 1024UL, "", HN_AUTOSCALE,
+		     SYSTEM_BUILD_SIZE * MEG, "", HN_AUTOSCALE,
 		     HN_B | HN_NOSPACE | HN_DECIMAL);
 
 		msg_display_subst(MSG_fullpart, 7,
@@ -1485,7 +1485,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 
 	ptn_0_offset = bsec;
 	/* use 1MB default offset on large disks as fdisk(8) */
-	if (pm->dlsize > 2048 * 1024 * 128)
+	if ((unsigned long)pm->dlsize > 128 * GIG / 512)
 		ptn_0_offset = 2048;
 
 	memset(mbri, 0, sizeof *mbri);
@@ -1917,7 +1917,7 @@ get_ptn_alignment(struct mbr_partition *mbrp0)
 		}
 	} else {
 		/* Use 1MB offset for large (>128GB) disks */
-		if (pm->dlsize > 2048 * 1024 * 128) {
+		if ((unsigned long)pm->dlsize > 128 * GIG / 512) {
 			ptn_alignment = 2048;
 			ptn_0_offset = 2048;
 		}
