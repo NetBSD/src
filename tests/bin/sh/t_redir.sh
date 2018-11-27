@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.9 2016/05/14 00:33:02 kre Exp $
+# $NetBSD: t_redir.sh,v 1.10 2018/11/27 09:55:32 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -326,6 +326,74 @@ nl='
     "#$T: Incorrect Out2: Should be 'line 1\\nline 2\\nline 3' is '$(cat Out2)'"
 }
 
+atf_test_case do_redirect_input_output
+do_redirect_input_output_head()
+{
+	atf_set "descr" "Test Input+Output (BiDir) redirections"
+}
+do_redirect_input_output_body()
+{
+nl='
+'
+	T=0
+	i() { T=$(expr "$T" + 1); }
+
+	rm -f Output 2>/dev/null || :
+	test -f Output && atf_fail "Unable to remove Output file"
+#1
+	i; atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c '<> Output'
+	test -f Output || atf_fail "#$T: Did not make Output file"
+
+#2
+	echo data >Output 2>/dev/null || :
+	i
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'<>Output'
+	test -f Output || atf_fail "#$T: Removed Output file"
+	test -s Output || atf_fail "#$T: Did not keep data in Output file"
+	test "$(cat Output)" = "data" ||
+	  atf_fail "#$T: Incorrect Output: Should be 'data' is '$(cat Output)'"
+
+#3
+	rm -f Output 2>/dev/null || :
+	i
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'echo Hello 1<>Output'
+	test -s Output || atf_fail "#$T: Did not keep non-empty Output file"
+	test "$(cat Output)" = "Hello" ||
+	  atf_fail "#$T: Incorrect Output: Should be 'Hello' is '$(cat Output)'"
+
+#4
+	printf data >Output 2>/dev/null || :
+	i
+	atf_check -s exit:0 -o inline:'data' -e empty ${TEST_SH} -c \
+		'cat <>Output'
+	test -f Output || atf_fail "#$T: Removed Output file"
+	test -s Output || atf_fail "#$T: Did not keep data in Output file"
+	test "$(cat Output)" = "data" ||
+	  atf_fail "#$T: Incorrect Output: Should be 'data' is '$(cat Output)'"
+
+#5
+	echo data >Output 2>/dev/null || :
+	i
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'echo Hello 1<>Output'
+	test -s Output || atf_fail "#$T: Did not make non-empty Output file"
+	test "$(cat Output)" = "Hello" ||
+	  atf_fail "#$T: Incorrect Output: Should be 'Hello' is '$(cat Output)'"
+
+#6
+	printf data >Output 2>/dev/null || :
+	i
+	atf_check -s exit:0 -o inline:data -e empty ${TEST_SH} -c \
+		'{ cat >&3; printf file; } <>Output 3>&1 >&0'
+	test -f Output || atf_fail "#$T: Removed Output file"
+	test -s Output || atf_fail "#$T: Did not keep data in Output file"
+	test "$(cat Output)" = "datafile" ||
+	  atf_fail \
+	      "#$T: Incorrect Output: Should be 'datafile' is '$(cat Output)'"
+}
+
 atf_test_case fd_redirections
 fd_redirections_head()
 {
@@ -583,6 +651,37 @@ incorrect_redirections_body() {
 	test -f '>' || atf_file "File '>' not created when it should"
 	test "$(cat '>')" = 'A Line Output' || atf_fail \
 	    "Output file ('>') contains '$(cat '>')' instead of 'A Line Output'"
+
+	rm -fr OutDir
+	atf-check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -c ': > OutDir/stdout; printf foo'
+	atf-check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -c ': > OutDir/stdout || printf foo; printf bar'
+	atf-check -s exit:0 -o inline:bar -e not-empty \
+		${TEST_SH} -c '> OutDir/stdout; printf bar'
+	atf-check -s exit:0 -o inline:foobar -e not-empty \
+		${TEST_SH} -c '> OutDir/stdout || printf foo; printf bar'
+	atf-check -s exit:0 -o inline:bar -e not-empty \
+		${TEST_SH} -c 'command : > OutDir/stdout; printf bar'
+	atf-check -s exit:0 -o inline:foobar -e not-empty ${TEST_SH} -c \
+		'command : > OutDir/stdout || printf foo; printf bar'
+	atf-check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -c ': <> OutDir/stdout; printf foo'
+
+	atf-check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -c ': >&8 ; printf foo'
+	atf-check -s not-exit:0 -o empty -e not-empty \
+		${TEST_SH} -c ': >&8 || printf foo; printf bar'
+	atf-check -s exit:0 -o inline:bar -e not-empty \
+		${TEST_SH} -c '>&8 ; printf bar'
+	atf-check -s exit:0 -o inline:foobar -e not-empty \
+		${TEST_SH} -c '>&8 || printf foo; printf bar'
+	atf-check -s exit:0 -o inline:bar -e not-empty \
+		${TEST_SH} -c 'command : >&7; printf bar'
+	atf-check -s exit:0 -o inline:foobar -e not-empty ${TEST_SH} -c \
+		'command : >&7 || printf foo; printf bar'
+
+	return 0
 }
 
 # Many more tests in t_here, so here we have just rudimentary checks
@@ -891,6 +990,7 @@ atf_init_test_cases() {
 	atf_add_test_case basic_test_method_test
 	atf_add_test_case do_input_redirections
 	atf_add_test_case do_output_redirections
+	atf_add_test_case do_redirect_input_output
 	atf_add_test_case fd_redirections
 	atf_add_test_case local_redirections
 	atf_add_test_case incorrect_redirections
