@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.27 2018/11/19 17:17:43 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.28 2018/11/27 17:13:41 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,8 @@ const char *getfslabelname(uint8_t);
 #define max(a,b)	((a) > (b) ? (a) : (b))
 
 /* constants */
-#define MEG (1024 * 1024)
+#define MEG (1024 * 1024UL)
+#define GIG (1024 * MEG)
 #define STRSIZE 255
 #define SSTRSIZE 30
 
