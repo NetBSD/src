@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.23 2018/11/20 19:02:07 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.24 2018/11/27 17:13:41 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2504,7 +2504,7 @@ pm_menufmt(menudesc *m, int opt, void *arg)
 			snprintf(buf, STRSIZE, "dk%d: %s",
 				part_num,
 				wedges[part_num].pm->bsdlabel[wedges[part_num].ptn].pi_mount);
-			wprintw(m->mw, "   %-30.29s %-22.21s %11uM",
+			wprintw(m->mw, "   %-30.29s %-22.21s %11luM",
 				buf,
 				(wedges[part_num].pm->bsdlabel[wedges[part_num].ptn].lvmpv) ? 
 					"lvm pv" :
@@ -2523,7 +2523,7 @@ pm_menufmt(menudesc *m, int opt, void *arg)
 						strlen (pm_cur->bsdlabel[part_num].pi_mount ) < 1 ||
 						pm_cur->bsdlabel[part_num].pi_flags & PIF_MOUNT) ?
 						"" : msg_string(MSG_pmunused));
-			wprintw(m->mw, "   %-30.29s %-22.21s %11uM",
+			wprintw(m->mw, "   %-30.29s %-22.21s %11luM",
 				buf,
 				(pm_cur->bsdlabel[part_num].lvmpv) ? 
 					"lvm pv" :
@@ -2533,7 +2533,7 @@ pm_menufmt(menudesc *m, int opt, void *arg)
 		case PM_SPEC_T:
 			snprintf(buf, STRSIZE, "%s: %s",
 				pm_cur->diskdev_descr, pm_cur->bsdlabel[0].pi_mount);
-			wprintw(m->mw, "%-33.32s %-22.21s %11uM", buf,
+			wprintw(m->mw, "%-33.32s %-22.21s %11luM", buf,
 				getfslabelname(pm_cur->bsdlabel[0].pi_fstype),
 				pm_cur->bsdlabel[0].pi_size / (MEG / pm_cur->sectorsize));
 			break;
