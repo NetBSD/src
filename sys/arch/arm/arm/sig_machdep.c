@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.50 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.51 2018/11/27 14:09:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.50 2018/01/24 09:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.51 2018/11/27 14:09:53 maxv Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/cpu.h>
@@ -105,13 +105,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp = (struct sigframe_siginfo *)STACK_ALIGN(fp, STACK_ALIGNBYTES);
 
 	/* populate the siginfo frame */
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
 	mutex_exit(p->p_lock);

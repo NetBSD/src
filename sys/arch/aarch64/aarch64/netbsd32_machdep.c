@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.2 2018/10/12 01:28:57 ryo Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3 2018/11/27 14:09:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.2 2018/10/12 01:28:57 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3 2018/11/27 14:09:53 maxv Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -223,6 +223,8 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp = (struct netbsd32_sigframe_siginfo *)sp;
 	fp = (struct netbsd32_sigframe_siginfo *)STACK_ALIGN(fp - 1, 8);
 
+	memset(&frame, 0, sizeof(frame));
+
 	/* XXX: netbsd32_ksi_to_si32 */
 	netbsd32_si_to_si32(&frame.sf_si, (const siginfo_t *)&ksi->ksi_info);
 
@@ -231,7 +233,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK) ?
 	    _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, signo);
 
 	mutex_exit(p->p_lock);
