@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.7 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: sha1.3,v 1.8 2018/11/27 03:29:36 kamil Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
 .\"
 .\" See http://csrc.nist.gov/fips/fip180-1.txt for the detailed standard
 .\"
-.Dd July 10, 1997
+.Dd November 27, 2018
 .Dt SHA1 3
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm SHA1Transform ,
 .Nm SHA1End ,
 .Nm SHA1File ,
+.Nm SHA1FileChunk ,
 .Nm SHA1Data
 .Nd calculate the NIST Secure Hash Algorithm
 .Sh SYNOPSIS
@@ -44,6 +45,8 @@
 .Fn SHA1End "SHA1_CTX *context" "char *buf"
 .Ft "char *"
 .Fn SHA1File "char *filename" "char *buf"
+.Ft "char *"  
+.Fn SHA1FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA1Data "uint8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
@@ -119,6 +122,23 @@ If
 .Fn SHA1File
 is unable to open the file a NULL pointer is returned.
 .Pp
+.Fn SHA1FileChunk
+behaves like
+.Fn SHA1File
+but calculates the digest only for that portion of the file starting at
+.Fa offset
+and continuing for
+.Fa length
+bytes or until end of file is reached, whichever comes first.
+A zero
+.Fa length
+can be specified to read until end of file.
+A negative
+.Fa length
+or
+.Fa offset
+will be ignored.
+.Pp
 The
 .Fn SHA1Data
 function
@@ -190,6 +210,7 @@ This implementation of SHA-1 was written by Steve Reid.
 The
 .Fn SHA1End ,
 .Fn SHA1File ,
+.Fn SHA1FileChunk ,
 and
 .Fn SHA1Data
 helper functions are derived from code written by Poul-Henning Kamp.
