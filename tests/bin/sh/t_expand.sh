@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.19 2018/04/21 21:28:35 kre Exp $
+# $NetBSD: t_expand.sh,v 1.20 2018/11/27 09:59:30 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,6 +63,28 @@ dollar_at_body() {
 		'set -- -; shift; n_arg() { echo $#; }; n_arg "$@"'
 }
 
+atf_test_case dollar_at_unquoted_or_conditional
+dollar_at_unquoted_or_conditional_head() {
+	atf_set "descr" 'Sometime during 2013 the expansion of "${1+$@}"' \
+			' (where $1 and $2 (and maybe more) are set)' \
+			' seems to have broken.  Check for this bug.'
+}
+dollar_at_unquoted_or_conditional_body() {
+
+	atf_check -s exit:0 -o inline:'a\na\nb\nb\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n $@'
+	atf_check -s exit:0 -o inline:'a\na\nb\nb\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n ${1+$@}'
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n "$@"'
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n ${1+"$@"}'
+
+	# This is the one that fails when the bug is present
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n "${1+$@}"'
+}
+
 atf_test_case dollar_at_with_text
 dollar_at_with_text_head() {
 	atf_set "descr" "Test \$@ expansion when it is surrounded by text" \
@@ -106,24 +128,229 @@ EOF
 	for f in 1 2
 	do
 		atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+			". ./h-f${f}; "'set -- ; delim_argv $@'
+		atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
 			". ./h-f${f}; "'set -- ; delim_argv "$@"'
 		atf_check -s exit:0 -o inline:'>foobar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- ; delim_argv "foo$@bar"'
+		atf_check -s exit:0 -o inline:'>foobar<\n' -e empty \
+			${TEST_SH} -c \
+			". ./h-f${f}; "'set -- ; delim_argv foo"$@"bar'
 		atf_check -s exit:0 -o inline:'>foo  bar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- ; delim_argv "foo $@ bar"'
+		atf_check -s exit:0 -o inline:'>foo  bar<\n' -e empty \
+			${TEST_SH} -c \
+			". ./h-f${f}; "'set -- ; delim_argv foo" $@ "bar'
 
 		atf_check -s exit:0 -o inline:'>a< >b< >c<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- a b c; delim_argv "$@"'
+
 		atf_check -s exit:0 -o inline:'>fooa< >b< >cbar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- a b c; delim_argv "foo$@bar"'
+
 		atf_check -s exit:0 -o inline:'>foo a< >b< >c bar<\n' -e empty \
 			${TEST_SH} -c \
 			". ./h-f${f}; "'set -- a b c; delim_argv "foo $@ bar"'
 	done
+}
+
+atf_test_case dollar_at_empty_and_conditional
+dollar_at_empty_and_conditional_head() {
+	atf_set "descr" 'Test $@ expansion when there are no args, and ' \
+	                'when conditionally expanded.'
+}
+dollar_at_empty_and_conditional_body() {
+
+	# same task, implementation different from previous,
+	# that these work is also a test...
+
+	cat <<'EOF' > h-f3
+
+delim_argv() {
+	str=
+	for Arg; do
+		str="${str:+${str} }>${Arg}<"
+	done
+	printf '%s\n' "${str}"
+}
+
+EOF
+
+	chmod +x h-f3
+
+	# in these we give printf a first arg of "", which makes
+	# the first output char be \n, then the $@ produces anything else
+	# (we need to make sure we don't end up with:
+	#	printf %s\\n
+	# -- that is, no operands for the %s, that's unspecified)
+
+	atf_check -s exit:0 -o inline:'\na a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n "" "$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n "" "$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n ""${1+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n """${1+$@}"'
+
+	# in these we prefix (concat) the $@ expansion with "" to make
+	# sure there is always at least one arg for the %s in printf
+	# If there is anything else there, the prepended nothing vanishes
+	atf_check -s exit:0 -o inline:'a a\nb b\n' -e empty \
+		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n """$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n """$@"'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n ""${1+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty \
+		${TEST_SH} -c 'set -- ; printf %s\\n """${1+$@}"'
+
+	atf_check -s exit:0 -o inline:'>a< >b< >c<\n' -e empty ${TEST_SH} -c \
+		'. ./h-f3; set -- a b c; delim_argv "${1+$@}"'
+	atf_check -s exit:0 -o inline:'>a< >b< >c<\n' -e empty ${TEST_SH} -c \
+		'. ./h-f3; set -- a b c; delim_argv ${1+"$@"}'
+	atf_check -s exit:0 -o inline:'>fooa< >b< >cbar<\n' -e empty \
+		${TEST_SH} -c \
+		    '. ./h-f3; set -- a b c; delim_argv "foo${1+$@}bar"'
+	atf_check -s exit:0 -o inline:'>fooa< >b< >cbar<\n' -e empty \
+		${TEST_SH} -c \
+		    '. ./h-f3; set -- a b c; delim_argv foo${1+"$@"}bar'
+	atf_check -s exit:0 -o inline:'>foo a< >b< >c bar<\n' -e empty \
+		${TEST_SH} -c \
+		     '. ./h-f3; set -- a b c; delim_argv "foo ${1+$@} bar"'
+	atf_check -s exit:0 -o inline:'>foo a< >b< >c bar<\n' -e empty \
+		${TEST_SH} -c \
+		     '. ./h-f3; set -- a b c; delim_argv "foo "${1+"$@"}" bar"'
+
+	# since $1 is not set, we get nothing ($@ is irrelevant)
+	# (note here we are not using printf, don't need to guarantee an arg)
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv ${1+"$@"}'
+
+	# here since $1 is not set we get "" as the special $@ properties
+	# do not apply, and ${foo+anything} generates nothing if foo is unset
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv "${1+$@}"'
+
+	# in this one we get the initial "" followed by nothing
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv ""${1+"$@"}'
+	# which we verify by changing the "" to X, and including Y
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv X${1+"$@"Y}'
+	# and again, done differently (the ${1+...} produces nothing at all
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv X ${1+"$@"}'
+	# in these two we get the initial "" and then nothing
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv """${1+$@}"'
+	atf_check -s exit:0 -o inline:'>< ><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- ; delim_argv "" "${1+$@}"'
+
+	# now we repeat all those with $1 set (so we eval the $@)
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv ""${1+"$@"}'
+	atf_check -s exit:0 -o inline:'>XaY<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv X${1+"$@"Y}'
+	atf_check -s exit:0 -o inline:'>X< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv X ${1+"$@"}'
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv """${1+$@}"'
+	atf_check -s exit:0 -o inline:'>< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; set -- a ; delim_argv "" "${1+$@}"'
+
+	# now we do all of those again, but testing $X instead of $1 (X set)
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv "${X+$@}"'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv "" "${X+$@}"'
+
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>Xa<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< >a<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a ; delim_argv "" "${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< >a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b ; delim_argv "" "${X+$@}"'
+
+	# and again, but testing $X where X is unset
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv "${X+$@}"'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< ><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- ; delim_argv "" "${X+$@}"'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a b; delim_argv ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv ""${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv X${X+"$@"}'
+	atf_check -s exit:0 -o inline:'>X<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv X ${X+"$@"}'
+	atf_check -s exit:0 -o inline:'><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a ; delim_argv """${X+$@}"'
+	atf_check -s exit:0 -o inline:'>< ><\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a; delim_argv "" "${X+$@}"'
+
+	# a few that stretch belief...
+
+	atf_check -s exit:0 -o inline:'>a< >b<\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- a b ; delim_argv ${X+${1+"$@"}}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; X=1; set -- ; delim_argv ${X+${1+"$@"}}'
+	atf_check -s exit:0 -o inline:'\n' -e empty ${TEST_SH} -c \
+		 '. ./h-f3; unset X; set -- a b ; delim_argv ${X+${1+"$@"}}'
+
+	# and now for something completely different
+
+	atf_check -s exit:0 -o inline:'>a< >b< >ca< >b< >c<\n' -e empty \
+		${TEST_SH} -c '. ./h-f3; set -- a b c; delim_argv "$@$@"'
+	atf_check -s exit:0 -o inline:'>a< >b< >ca b c<\n' -e empty \
+		${TEST_SH} -c '. ./h-f3; set -- a b c; delim_argv "$@$*"'
+	atf_check -s exit:0 -o inline:'>a b ca< >b< >c<\n' -e empty \
+		${TEST_SH} -c '. ./h-f3; set -- a b c; delim_argv "$*$@"'
+	atf_check -s exit:0 -o inline:'>a a++b + ca a< >< >b < > c<\n'	\
+		-e empty ${TEST_SH} -c					\
+		'. ./h-f3; set -- "a a" "" "b " " c"; IFS=+; delim_argv "$*$@"'
+	atf_check -s exit:0 -o inline:'>a< >a< >< >b < > ca+a< >< >b < > c<\n' \
+		-e empty ${TEST_SH} -c					       \
+		'. ./h-f3; set -- "a+a" "" "b " " c"; IFS=+; delim_argv $*"$@"'
 }
 
 atf_test_case strip
@@ -1054,7 +1281,9 @@ atf_init_test_cases() {
 
 	atf_add_test_case arithmetic
 	atf_add_test_case dollar_at
+	atf_add_test_case dollar_at_unquoted_or_conditional
 	atf_add_test_case dollar_at_with_text
+	atf_add_test_case dollar_at_empty_and_conditional
 	atf_add_test_case dollar_hash
 	atf_add_test_case dollar_star
 	atf_add_test_case dollar_star_in_quoted_word
