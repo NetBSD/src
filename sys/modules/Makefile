@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.212 2018/11/27 05:39:00 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.213 2018/11/27 06:31:15 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -430,13 +430,6 @@ SUBDIR+=	viomb
 SUBDIR+=	virtio
 SUBDIR+=	virtio_pci
 SUBDIR+=	vioscsi
-.endif
-
-# We need these four locally	XXX-PRG
-.if ${MACHINE_ARCH} == "x86_64"
-SUBDIR+=	ld
-SUBDIR+=	ld_nvme
-SUBDIR+=	nvme
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot
