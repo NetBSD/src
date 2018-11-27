@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.211 2018/11/27 00:32:13 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.212 2018/11/27 05:39:00 msaitoh Exp $
 
 .include <bsd.own.mk>
 
@@ -437,7 +437,6 @@ SUBDIR+=	vioscsi
 SUBDIR+=	ld
 SUBDIR+=	ld_nvme
 SUBDIR+=	nvme
-SUBDIR+=	ksem
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot
