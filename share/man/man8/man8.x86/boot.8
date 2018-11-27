@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.13 2018/11/25 18:14:55 maya Exp $
+.\"	$NetBSD: boot.8,v 1.14 2018/11/27 10:35:03 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -423,8 +423,8 @@ See
 in
 .Xr x86/boot_console 8 .
 .It Xo Ic ip Ns = Ns
-.Ar my_ip Ns : Ns Ar serv_ip Ns : Ns Ar gw_ip Ns : Ns
-.Ar mask Ns : Ns Ar host Ns : Ns Ar iface
+.Ar my_ip : Ns Ar serv_ip : Ns Ar gw_ip : Ns
+.Ar mask : Ns Ar host : Ns Ar iface
 .Xc
 Specify various parameters for a network boot (IPs are in
 dot notation),
@@ -447,7 +447,7 @@ or
 .Dq eth0
 .Pc
 .El
-.It Ic nfsroot Ns = Ns Ar address Ns : Ns Ar rootpath
+.It Ic nfsroot Ns = Ns Ar address : Ns Ar rootpath
 Boot the system with root on NFS.
 .Ar address
 is the address of the NFS server, and
