@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.8 2018/11/27 18:29:17 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.9 2018/11/28 03:17:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.8 2018/11/27 18:29:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.9 2018/11/28 03:17:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,13 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.8 2018/11/27 18:29:17 jmcneill E
 #include <arm/acpi/acpi_table.h>
 
 #include <libfdt.h>
-
-#define	SPCR_INTERFACE_TYPE_COM16550		0x0000
-#define	SPCR_INTERFACE_TYPE_COM16450		0x0001
-#define	SPCR_INTERFACE_TYPE_PL011		0x0003
-#define	SPCR_INTERFACE_TYPE_SBSA_32BIT		0x000d
-#define	SPCR_INTERFACE_TYPE_SBSA_GENERIC	0x000e
-#define	SPCR_INTERFACE_TYPE_BCM2835		0x0010
 
 #define	SPCR_BAUD_UNKNOWN			0
 #define	SPCR_BAUD_9600				3
@@ -143,14 +136,14 @@ acpi_platform_startup(void)
 		    spcr->SerialPort.Address != 0) {
 			switch (spcr->InterfaceType) {
 #if NPLCOM > 0
-			case SPCR_INTERFACE_TYPE_PL011:
-			case SPCR_INTERFACE_TYPE_SBSA_32BIT:
-			case SPCR_INTERFACE_TYPE_SBSA_GENERIC:
+			case ACPI_DBG2_ARM_PL011:
+			case ACPI_DBG2_ARM_SBSA_32BIT:
+			case ACPI_DBG2_ARM_SBSA_GENERIC:
 				plcom_console.pi_type = PLCOM_TYPE_PL011;
 				plcom_console.pi_iot = &arm_generic_bs_tag;
 				plcom_console.pi_iobase = spcr->SerialPort.Address;
 				plcom_console.pi_size = PL011COM_UART_SIZE;
-				if (spcr->InterfaceType == SPCR_INTERFACE_TYPE_SBSA_32BIT) {
+				if (spcr->InterfaceType == ACPI_DBG2_ARM_SBSA_32BIT) {
 					plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
 				} else {
 					plcom_console.pi_flags = ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8 ?
@@ -161,8 +154,8 @@ acpi_platform_startup(void)
 				break;
 #endif
 #if NCOM > 0
-			case SPCR_INTERFACE_TYPE_COM16550:
-			case SPCR_INTERFACE_TYPE_COM16450:
+			case ACPI_DBG2_16550_COMPATIBLE:
+			case ACPI_DBG2_16550_SUBSET:
 				if (ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8) {
 					comcnattach(&arm_generic_bs_tag, spcr->SerialPort.Address, baud_rate, -1,
 					    COM_TYPE_NORMAL, TTYDEF_CFLAG);
@@ -171,7 +164,7 @@ acpi_platform_startup(void)
 					    COM_TYPE_NORMAL, TTYDEF_CFLAG);
 				}
 				break;
-			case SPCR_INTERFACE_TYPE_BCM2835:
+			case ACPI_DBG2_BCM2835:
 				comcnattach(&arm_generic_a4x_bs_tag, spcr->SerialPort.Address + 0x40, baud_rate, -1,
 				    COM_TYPE_BCMAUXUART, TTYDEF_CFLAG);
 				cn_set_magic("+++++");
