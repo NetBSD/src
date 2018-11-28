@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.25.2.2.2.6 2018/11/24 17:23:47 martin Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.25.2.2.2.7 2018/11/28 19:57:50 martin Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -234,14 +234,14 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 	 */
 	*args_len = 1;
 	/* count '+' in str */
-	for (s = str; (s = strchr(s, '+')); (*args_len)++)
+	for (s = str; (s = strchr(s, '+')) != NULL; (*args_len)++)
 		s++;
 	
 	args = bozomalloc(httpd, sizeof(*args) * (*args_len + 1));
  
 	args[0] = str;
 	args[*args_len] = NULL;
-	for (s = str, i = 0; (s = strchr(s, '+'));) {
+	for (s = str, i = 0; (s = strchr(s, '+')) != NULL;) {
 		*s = '\0';
 		s++;
 		args[i++] = s;
