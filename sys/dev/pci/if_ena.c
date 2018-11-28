@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.7 2018/11/28 16:51:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.8 2018/11/28 19:07:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3626,7 +3626,7 @@ ena_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct ena_com_dev_get_features_ctx get_feat_ctx;
 	static int version_printed;
-	struct ena_adapter *adapter = device_private(parent);
+	struct ena_adapter *adapter = device_private(self);
 	struct ena_com_dev *ena_dev = NULL;
 	uint16_t tx_sgl_size = 0;
 	uint16_t rx_sgl_size = 0;
