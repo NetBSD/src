@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16.6.1 2018/11/24 17:13:51 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.16.6.2 2018/11/28 19:50:37 martin Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -336,10 +336,6 @@ main(int argc, char **argv)
 			bozo_set_pref(&httpd, &prefs, "enable users", "true");
 			break;
 
-			bozo_set_pref(&httpd, &prefs, "directory indexing",
-				      "true");
-			break;
-
 		case 'V':
 			bozo_set_pref(&httpd, &prefs, "unknown slash", "true");
 			break;
@@ -351,6 +347,10 @@ main(int argc, char **argv)
 		case 'X':
 			if (!have_dirindex)
 				goto no_dirindex_support;
+
+			bozo_set_pref(&httpd, &prefs, "directory indexing",
+				      "true");
+			break;
 
 		case 'x':
 			bozo_set_pref(&httpd, &prefs, "index.html", optarg);
