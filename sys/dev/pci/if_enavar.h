@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enavar.h,v 1.4 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: if_enavar.h,v 1.5 2018/11/28 19:06:54 jmcneill Exp $	*/
 
 /*-
  * BSD LICENSE
@@ -63,8 +63,8 @@
 #define	ENA_ADMIN_MSIX_VEC		1
 #define	ENA_MAX_MSIX_VEC(io_queues)	(ENA_ADMIN_MSIX_VEC + (io_queues))
 
-#define	ENA_REG_BAR			0
-#define	ENA_MEM_BAR			2
+#define	ENA_REG_BAR			PCI_BAR(0)
+#define	ENA_MEM_BAR			PCI_BAR(2)
 
 #define	ENA_BUS_DMA_SEGS		32
 
