@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.63 2018/11/28 05:10:54 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.64 2018/11/28 19:51:30 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1815,4 +1815,13 @@ sys/dev/pci/if_wm.c				1.599
 
 	wm(4): Fix a bug that i82578 workarounds didn't work correctly.
 	[msaitoh, ticket #1108]
+
+libexec/httpd/CHANGES				1.29,1.30
+libexec/httpd/bozohttpd.c			1.97-1.99
+libexec/httpd/bozohttpd.h			1.57
+libexec/httpd/cgi-bozo.c			1.45
+libexec/httpd/main.c				1.22
+
+	Fix -X option parsing and miscelaneous cleanup.
+	[mrg, ticket #1109]
 
