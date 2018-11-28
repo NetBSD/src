@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.15 2018/11/24 17:25:39 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.16 2018/11/28 16:30:37 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -279,4 +279,15 @@ libexec/httpd/testsuite/test-simple             up to 1.5
 	is now bounded at 16KiB.
 	Fix access checks for special files.
 	[mrg, ticket #1655]
+
+sys/dev/pci/if_wm.c				1.599
+
+	- Fix a bug that i82578 PHY can't detect correctly.
+	- Print PHY OUI and model number if a PHY's can't be identified.
+	[msaitoh, ticket #1656]
+
+sys/net/rtsock.c				1.244 (adapted)
+
+	Fix kernel info leak (2 bytes of padding in struct if_msghdr)
+	[maxv, ticket #1657]
 
