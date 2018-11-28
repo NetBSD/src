@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.16 2018/11/28 16:30:37 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.17 2018/11/28 19:40:25 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -290,4 +290,9 @@ sys/net/rtsock.c				1.244 (adapted)
 
 	Fix kernel info leak (2 bytes of padding in struct if_msghdr)
 	[maxv, ticket #1657]
+
+sys/kern/kern_exec.c				1.462
+
+	Fix stack info leak.
+	[maxv, ticket #1658]
 
