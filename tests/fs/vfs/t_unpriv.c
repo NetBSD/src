@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.15 2018/11/28 09:58:58 hannken Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.16 2018/11/28 10:01:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -187,20 +187,18 @@ flags(const atf_tc_t *tc, const char *mp)
 
 	if (rump_sys_stat(name, &st) == -1)
 		atf_tc_fail_errno("stat");
-	if (FSTYPE_ZFS(tc))
-		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rump_sys_chflags(name, st.st_flags) == -1) {
 		if (errno == EOPNOTSUPP)
 			atf_tc_skip("file flags not supported by file system");
 		atf_tc_fail_errno("chflags");
 	}
 
-	fflags = st.st_flags | UF_IMMUTABLE;
+	fflags = st.st_flags | UF_NODUMP;
 
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
-	fflags |= UF_IMMUTABLE;
+	fflags |= UF_NODUMP;
 	if (rump_sys_chflags(name, fflags) != -1 || errno != EPERM)
 		atf_tc_fail_errno("chflags");
 	rump_pub_lwproc_releaselwp();
@@ -208,7 +206,7 @@ flags(const atf_tc_t *tc, const char *mp)
 	if (rump_sys_chflags(name, fflags) == -1)
 		atf_tc_fail_errno("chflags");
 
-	fflags &= ~UF_IMMUTABLE;
+	fflags &= ~UF_NODUMP;
 	if (rump_sys_chflags(name, fflags) == -1)
 		atf_tc_fail_errno("chflags");
 
