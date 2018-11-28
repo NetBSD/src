@@ -1,4 +1,7 @@
-$NetBSD: CHANGES,v 1.25.4.1 2018/11/24 17:13:51 martin Exp $
+$NetBSD: CHANGES,v 1.25.4.2 2018/11/28 19:50:37 martin Exp $
+
+changes in bozohttpd 20181125:
+	o  fixes for option parsing introduced in bozohttpd 20181123
 
 changes in bozohttpd 20181121:
 	o  add url remap support via .bzremap file, from martin@netbsd.org
@@ -9,7 +12,7 @@ changes in bozohttpd 20181121:
 	   initial line, each header, and the total time spent
 	o  add -T option to expose new timeout settings
 	o  minor RFC fixes related to timeout handling
-	o  fix special file (.htpasswd, .bz*) bypass.  reported by JP.
+	o  fix special file (.htpasswd, .bz*) bypass.  reported by JP
 
 changes in bozohttpd 20170201:
 	o  fix an infinite loop in cgi processing
@@ -94,7 +97,7 @@ changes in bozohttpd 20100617:
 
 changes in bozohttpd 20100509:
 	o  major rework and clean up of internal interfaces.  move the main
-	   program into main.c, the remaining parts are useable as library.
+	   program into main.c, the remaining parts are useable as library
 	   add bindings for lua.  by Alistair G. Crooks <agc@netbsd.org>
 	o  fix http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=566325
 

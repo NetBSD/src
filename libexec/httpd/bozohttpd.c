@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.86.4.2 2018/11/24 17:13:51 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.86.4.3 2018/11/28 19:50:37 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20181124"
+#define SERVER_SOFTWARE		"bozohttpd/20181125"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -1018,6 +1018,7 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 		case '"':
 			if (absolute)
 				goto leave_it;
+			/*FALLTHROUGH*/
 		case '\n':
 		case '\r':
 		case ' ':
@@ -1026,8 +1027,8 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 			d += 3;
 			len += 3;
 			break;
-		leave_it:
 		default:
+		leave_it:
 			*d++ = *s++;
 			len++;
 			break;
@@ -1477,7 +1478,6 @@ check_bzredirect(bozo_httpreq_t *request)
 			     REDIRECT_FILE) >= sizeof(redir)) {
 		return bozo_http_error(httpd, 404, request,
 		    "redirectfile path too long");
-		return -1;
 	}
 	if (lstat(redir, &sb) == 0) {
 		if (!S_ISLNK(sb.st_mode))
@@ -1924,8 +1924,9 @@ int
 bozo_check_special_files(bozo_httpreq_t *request, const char *name)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
+	size_t i;
 
-	for (size_t i = 0; specials[i].file; i++)
+	for (i = 0; specials[i].file; i++)
 		if (strcmp(name, specials[i].file) == 0)
 			return bozo_http_error(httpd, 403, request,
 					       specials[i].name);
