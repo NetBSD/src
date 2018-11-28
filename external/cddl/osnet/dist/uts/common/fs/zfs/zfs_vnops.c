@@ -5467,7 +5467,8 @@ zfs_netbsd_rename(void *v)
 
 	VN_RELE(fdvp);
 	VN_RELE(tdvp);
-	VN_RELE(fvp);
+	if (fvp != NULL)
+		VN_RELE(fvp);
 	if (tvp != NULL)
 		VN_RELE(tvp);
 
