@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.44 2018/11/06 09:13:17 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.45 2018/11/28 09:14:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.44 2018/11/06 09:13:17 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.45 2018/11/28 09:14:03 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,8 @@ static int synaptics_max_speed_x = 32;
 static int synaptics_max_speed_y = 32;
 static int synaptics_max_speed_z = 2;
 static int synaptics_movement_threshold = 4;
-static int synaptics_fscroll_min = 5;
-static int synaptics_fscroll_max = 12;
+static int synaptics_fscroll_min = 13;
+static int synaptics_fscroll_max = 14;
 static int synaptics_dz_hold = 30;
 static int synaptics_movement_enable = 1;
 
@@ -793,7 +793,7 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "finger_scroll-min",
-	    SYSCTL_DESCR("Minimum width for finger scrolling detection"),
+	    SYSCTL_DESCR("Minimum width at which y cursor movements will be converted to scroll wheel events"),
 	    pms_sysctl_synaptics_verify, 0,
 	    &synaptics_fscroll_min,
 	    0, CTL_HW, root_num, CTL_CREATE,
@@ -805,7 +805,7 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "finger_scroll-max",
-	    SYSCTL_DESCR("Maximum width for finger scrolling detection"),
+	    SYSCTL_DESCR("Maximum width at which y cursor movements will be converted to scroll wheel events"),
 	    pms_sysctl_synaptics_verify, 0,
 	    &synaptics_fscroll_max,
 	    0, CTL_HW, root_num, CTL_CREATE,
@@ -817,7 +817,7 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "finger_scroll-hysteresis",
-	    SYSCTL_DESCR("Number of packets to stay in finger scroll mode"),
+	    SYSCTL_DESCR("Number of packets to keep reporting y cursor movements as scroll wheel events"),
 	    pms_sysctl_synaptics_verify, 0,
 	    &synaptics_dz_hold,
 	    0, CTL_HW, root_num, CTL_CREATE,
@@ -901,6 +901,10 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 		/* make sure we avoid the "magic" widths, 4 and below
 		   are for fingers, 15 is palm detect. */
 		if ((t < 5) || (t > 14))
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_dz_hold_nodenum) {
+		if (t < 0)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_movement_enable_nodenum) {
