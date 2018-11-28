@@ -5345,9 +5345,11 @@ zfs_netbsd_setattr(void *v)
 	cred_t *cred = ap->a_cred;
 	znode_t *zp = VTOZ(vp);
 	xvattr_t xvap;
-	u_long fflags;
+	kauth_action_t action;
+	u_long fflags, sfflags = 0;
 	uint64_t zflags;
 	int error, flags = 0;
+	bool changing_sysflags;
 
 	vattr_init_mask(vap);
 	vap->va_mask &= ~AT_NOSET;
@@ -5365,40 +5367,14 @@ zfs_netbsd_setattr(void *v)
 		fflags = vap->va_flags;
 		if ((fflags & ~(SF_IMMUTABLE|SF_APPEND|SF_NOUNLINK|UF_NODUMP)) != 0)
 			return (EOPNOTSUPP);
-		/*
-		 * Callers may only modify the file flags on objects they
-		 * have VADMIN rights for.
-		 */
-		if ((error = VOP_ACCESS(vp, VWRITE, cred)) != 0)
-			return (error);
-		/*
-		 * Unprivileged processes are not permitted to unset system
-		 * flags, or modify flags if any system flags are set.
-		 * Privileged non-jail processes may not modify system flags
-		 * if securelevel > 0 and any existing system flags are set.
-		 * Privileged jail processes behave like privileged non-jail
-		 * processes if the security.jail.chflags_allowed sysctl is
-		 * is non-zero; otherwise, they behave like unprivileged
-		 * processes.
-		 */
-		if (kauth_authorize_system(cred, KAUTH_SYSTEM_CHSYSFLAGS, 0,
-			NULL, NULL, NULL) != 0) {
-
-			if (zflags &
-			    (ZFS_IMMUTABLE | ZFS_APPENDONLY | ZFS_NOUNLINK)) {
-				return (EPERM);
-			}
-			if (fflags &
-			    (SF_IMMUTABLE | SF_APPEND | SF_NOUNLINK)) {
-				return (EPERM);
-			}
-		}
 
 #define	FLAG_CHANGE(fflag, zflag, xflag, xfield)	do {		\
 	if (((fflags & (fflag)) && !(zflags & (zflag))) ||		\
 	    ((zflags & (zflag)) && !(fflags & (fflag)))) {		\
 		XVA_SET_REQ(&xvap, (xflag));				\
 		(xfield) = ((fflags & (fflag)) != 0);			\
+		if (((fflag) & SF_SETTABLE) != 0)			\
+			sfflags |= (fflag);				\
 	}								\
 } while (0)
 		/* Convert chflags into ZFS-type flags. */
@@ -5412,6 +5388,23 @@ zfs_netbsd_setattr(void *v)
 		FLAG_CHANGE(UF_NODUMP, ZFS_NODUMP, XAT_NODUMP,
 		    xvap.xva_xoptattrs.xoa_nodump);
 #undef	FLAG_CHANGE
+
+		action = KAUTH_VNODE_WRITE_FLAGS;
+		changing_sysflags = false;
+
+		if (zflags & (ZFS_IMMUTABLE|ZFS_APPENDONLY|ZFS_NOUNLINK)) {
+			action |= KAUTH_VNODE_HAS_SYSFLAGS;
+		}
+		if (sfflags != 0) {
+			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
+			changing_sysflags = true;
+		}
+
+		error = kauth_authorize_vnode(cred, action, vp, NULL,
+		    genfs_can_chflags(cred, vp->v_type, zp->z_uid,
+		    changing_sysflags));
+		if (error)
+			return error;
 	}
 
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
