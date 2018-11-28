@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.8 2018/11/24 15:40:57 skrll Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.9 2018/11/28 22:54:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.8 2018/11/24 15:40:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.9 2018/11/28 22:54:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -293,22 +293,25 @@ static int
 gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 {
 	struct gicv3_its_device *dev;
+	u_int vectors;
 
-	LIST_FOREACH(dev, &its->its_devices, dev_list)
-		if (dev->dev_id == devid)
-			return EEXIST;
-
-	const u_int vectors = MAX(2, count);
-	if (!powerof2(vectors))
-		return EINVAL;
+	vectors = MAX(2, count);
+	while (!powerof2(vectors))
+		vectors++;
 
 	const uint64_t typer = gits_read_8(its, GITS_TYPER);
 	const u_int id_bits = __SHIFTOUT(typer, GITS_TYPER_ID_bits) + 1;
 	const u_int itt_entry_size = __SHIFTOUT(typer, GITS_TYPER_ITT_entry_size) + 1;
 	const u_int itt_size = roundup(vectors * itt_entry_size, GITS_ITT_ALIGN);
 
+	LIST_FOREACH(dev, &its->its_devices, dev_list)
+		if (dev->dev_id == devid) {
+			return itt_size <= dev->dev_size ? 0 : EEXIST;
+		}
+
 	dev = kmem_alloc(sizeof(*dev), KM_SLEEP);
 	dev->dev_id = devid;
+	dev->dev_size = itt_size;
 	gicv3_dma_alloc(its->its_gic, &dev->dev_itt, itt_size, GITS_ITT_ALIGN);
 	LIST_INSERT_HEAD(&its->its_devices, dev, dev_list);
 
