@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.62 2018/11/26 17:29:36 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.63 2018/11/28 05:10:54 snj Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1813,8 +1813,6 @@ sys/dev/pci/if_bge.c				1.316
 
 sys/dev/pci/if_wm.c				1.599
 
-	wm(4):
-	- Fix a bug that i82578 PHY can't detect correctly.
-	- Print PHY OUI and model number if a PHY's can't be identified.
+	wm(4): Fix a bug that i82578 workarounds didn't work correctly.
 	[msaitoh, ticket #1108]
 
