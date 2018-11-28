@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.5 2018/11/27 17:13:41 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.6 2018/11/28 00:44:08 kre Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.5 2018/11/27 17:13:41 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.6 2018/11/28 00:44:08 kre Exp $");
 #endif
 
 #include <sys/types.h>
@@ -237,7 +237,7 @@ set_ptype(partinfo *p, int fstype, int flag)
 			p->pi_fsize = 512;
 		else if (p->pi_size < (1000 * MEG / 512))
 			p->pi_fsize = 1024;
-		else if (p->pi_size < (128 * GIG / 512))
+		else if (p->pi_size < (128 * (GIG / 512)))
 			p->pi_fsize = 2048;
 		else
 			p->pi_fsize = 4096;
