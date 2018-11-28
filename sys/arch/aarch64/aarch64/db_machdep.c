@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.9 2018/10/12 01:28:57 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.10 2018/11/28 08:16:46 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.9 2018/10/12 01:28:57 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.10 2018/11/28 08:16:46 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -761,14 +761,16 @@ void
 db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	if (addr >= ncpu) {
-		db_printf("cpu %"DDB_EXPR_FMT"d out of range", addr);
+	u_int cpuno = (u_int)addr;
+
+	if (!have_addr || (cpuno >= ncpu)) {
+		db_printf("cpu: 0..%d\n", ncpu - 1);
 		return;
 	}
 
-	struct cpu_info *new_ci = cpu_lookup(addr);
+	struct cpu_info *new_ci = cpu_lookup(cpuno);
 	if (new_ci == NULL) {
-		db_printf("cpu %"DDB_EXPR_FMT"d does not exist", addr);
+		db_printf("cpu %u does not exist", cpuno);
 		return;
 	}
 
