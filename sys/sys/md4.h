@@ -1,4 +1,4 @@
-/*	$NetBSD: md4.h,v 1.8 2016/07/01 16:43:16 christos Exp $	*/
+/*	$NetBSD: md4.h,v 1.9 2018/11/28 05:19:13 kamil Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 
 #define MD4_DIGEST_LENGTH 16
+#define MD4_DIGEST_STRING_LENGTH 33
 #define MD4_BLOCK_LENGTH 64
 
 /* MD4 context. */
