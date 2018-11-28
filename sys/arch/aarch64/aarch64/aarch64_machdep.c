@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.22 2018/11/20 01:59:51 mrg Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.23 2018/11/28 09:16:19 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.22 2018/11/20 01:59:51 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.23 2018/11/28 09:16:19 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -389,6 +389,8 @@ parse_mi_bootargs(char *args)
 {
 	int val;
 
+	if (get_bootconf_option(args, "-1", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= RB_MD1;
 	if (get_bootconf_option(args, "-s", BOOTOPT_TYPE_BOOLEAN, &val) && val)
 		boothowto |= RB_SINGLE;
 	if (get_bootconf_option(args, "-d", BOOTOPT_TYPE_BOOLEAN, &val) && val)
@@ -401,6 +403,8 @@ parse_mi_bootargs(char *args)
 		boothowto |= AB_VERBOSE;
 	if (get_bootconf_option(args, "-x", BOOTOPT_TYPE_BOOLEAN, &val) && val)
 		boothowto |= AB_DEBUG;
+	if (get_bootconf_option(args, "-z", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= AB_SILENT;
 }
 
 void

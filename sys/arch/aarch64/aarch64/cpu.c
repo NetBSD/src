@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13 2018/11/20 01:59:51 mrg Exp $ */
+/* $NetBSD: cpu.c,v 1.14 2018/11/28 09:16:19 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.13 2018/11/20 01:59:51 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.14 2018/11/28 09:16:19 ryo Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.13 2018/11/20 01:59:51 mrg Exp $");
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
+#include <sys/reboot.h>
 #include <sys/sysctl.h>
 
 #include <aarch64/armreg.h>
@@ -109,6 +110,12 @@ cpu_attach(device_t dv, cpuid_t id)
 		cpu_setup_id(ci);
 	} else {
 #ifdef MULTIPROCESSOR
+		if ((boothowto & RB_MD1) != 0) {
+			aprint_naive("\n");
+			aprint_normal(": multiprocessor boot disabled\n");
+			return;
+		}
+
 		KASSERT(unit < MAXCPUS);
 		ci = &cpu_info_store[unit];
 
@@ -485,6 +492,9 @@ cpu_setup_sysctl(device_t dv, struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
+	if ((boothowto & RB_MD1) != 0)
+		return;
+
 	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	VPRINTF("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
