@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.408.2.5 2018/02/25 21:16:07 snj Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.408.2.6 2018/11/28 19:39:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.408.2.5 2018/02/25 21:16:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.408.2.6 2018/11/28 19:39:56 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1390,6 +1390,8 @@ copyoutargs(struct execve_data * restrict data, struct lwp *l,
 	struct exec_package	* const epp = &data->ed_pack;
 	struct proc		*p = l->l_proc;
 	int			error;
+
+	memset(&data->ed_arginfo, 0, sizeof(data->ed_arginfo));
 
 	/* remember information about the process */
 	data->ed_arginfo.ps_nargvstr = data->ed_argc;
