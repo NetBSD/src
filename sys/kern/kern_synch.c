@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.318 2018/08/14 01:06:01 ozaki-r Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.319 2018/11/28 09:44:49 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.318 2018/08/14 01:06:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.319 2018/11/28 09:44:49 mlelstv Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -292,7 +292,12 @@ preempt(void)
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
 	l->l_nivcsw++;
-	(void)mi_switch(l);
+	if (mi_switch(l) == 0) {
+		/* we didn't switch */
+		lwp_lock(l);
+		l->l_nivcsw--;
+		lwp_unlock(l);
+	}
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 
