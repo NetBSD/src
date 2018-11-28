@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.5 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.6 2018/11/28 11:50:48 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1593,26 +1593,41 @@ ena_rx_checksum(struct ena_ring *rx_ring, struct ena_com_rx_ctx *ena_rx_ctx,
     struct mbuf *mbuf)
 {
 
-	/* if IP and error */
-	if (unlikely((ena_rx_ctx->l3_proto == ENA_ETH_IO_L3_PROTO_IPV4) &&
-	    ena_rx_ctx->l3_csum_err)) {
-		/* ipv4 checksum error */
-		mbuf->m_pkthdr.csum_flags = 0;
-		counter_u64_add(rx_ring->rx_stats.bad_csum, 1);
-		ena_trace(ENA_DBG, "RX IPv4 header checksum error");
-		return;
-	}
-
-	/* if TCP/UDP */
-	if ((ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_TCP) ||
-	    (ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_UDP)) {
-		if (ena_rx_ctx->l4_csum_err) {
-			/* TCP/UDP checksum error */
-			mbuf->m_pkthdr.csum_flags = M_CSUM_IPv4_BAD;
+	/* IPv4 */
+	if ((ena_rx_ctx->l3_proto == ENA_ETH_IO_L3_PROTO_IPV4)) {
+		mbuf->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+		if (ena_rx_ctx->l3_csum_err) {
+			/* ipv4 checksum error */
+			mbuf->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 			counter_u64_add(rx_ring->rx_stats.bad_csum, 1);
-			ena_trace(ENA_DBG, "RX L4 checksum error");
-		} else {
-			mbuf->m_pkthdr.csum_flags = M_CSUM_IPv4;
+			ena_trace(ENA_DBG, "RX IPv4 header checksum error");
+			return;
+		}
+
+		/*  TCP/UDP */
+		if ((ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_TCP) ||
+		    (ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_UDP)) {
+			mbuf->m_pkthdr.csum_flags |= (ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_TCP) ? M_CSUM_TCPv4 : M_CSUM_UDPv4;
+			if (ena_rx_ctx->l4_csum_err) {
+				/* TCP/UDP checksum error */
+				mbuf->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+				counter_u64_add(rx_ring->rx_stats.bad_csum, 1);
+				ena_trace(ENA_DBG, "RX L4 checksum error");
+			}
+		}
+	}
+	/* IPv6 */
+	else if ((ena_rx_ctx->l3_proto == ENA_ETH_IO_L3_PROTO_IPV6)) {
+		/*  TCP/UDP */
+		if ((ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_TCP) ||
+		    (ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_UDP)) {
+			mbuf->m_pkthdr.csum_flags |= (ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_TCP) ? M_CSUM_TCPv6 : M_CSUM_UDPv6;
+			if (ena_rx_ctx->l4_csum_err) {
+				/* TCP/UDP checksum error */
+				mbuf->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+				counter_u64_add(rx_ring->rx_stats.bad_csum, 1);
+				ena_trace(ENA_DBG, "RX L4 checksum error");
+			}
 		}
 	}
 }
