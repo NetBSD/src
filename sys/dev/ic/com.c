@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.348 2018/05/27 17:05:06 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.349 2018/11/28 22:28:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.348 2018/05/27 17:05:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.349 2018/11/28 22:28:46 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -388,11 +388,13 @@ com_attach_subr(struct com_softc *sc)
 	const char *fifo_msg = NULL;
 	prop_dictionary_t	dict;
 	bool is_console = true;
+	bool force_console = false;
 
 	aprint_naive("\n");
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
+	prop_dictionary_get_bool(dict, "force_console", &force_console);
 	callout_init(&sc->sc_diag_callout, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
@@ -414,9 +416,12 @@ com_attach_subr(struct com_softc *sc)
 
 	CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 
-	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
-	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
+	if ((bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
+	    regsp->cr_iobase == comcons_info.regs.cr_iobase) || force_console) {
 		comconsattached = 1;
+
+		if (force_console)
+			memcpy(regsp, &comcons_info.regs, sizeof(*regsp));
 
 		if (cn_tab == NULL && comcnreattach() != 0) {
 			printf("can't re-init serial console @%lx\n",
