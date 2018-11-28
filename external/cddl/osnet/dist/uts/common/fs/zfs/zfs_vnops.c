@@ -5336,10 +5336,11 @@ zfs_netbsd_setattr(void *v)
 	vnode_t *vp = ap->a_vp;
 	vattr_t *vap = ap->a_vap;
 	cred_t *cred = ap->a_cred;
+	znode_t *zp = VTOZ(vp);
 	xvattr_t xvap;
 	u_long fflags;
 	uint64_t zflags;
-	int flags = 0;
+	int error, flags = 0;
 
 	vattr_init_mask(vap);
 	vap->va_mask &= ~AT_NOSET;
@@ -5405,6 +5406,16 @@ zfs_netbsd_setattr(void *v)
 		    xvap.xva_xoptattrs.xoa_nodump);
 #undef	FLAG_CHANGE
 	}
+
+	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
+	    vap->va_birthtime.tv_sec != VNOVAL) {
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		     NULL, genfs_can_chtimes(vp, vap->va_vaflags, zp->z_uid,
+		     cred));
+		if (error)
+			return error;
+	}
+
 	return (zfs_setattr(vp, (vattr_t *)&xvap, flags, cred, NULL));
 }
 
