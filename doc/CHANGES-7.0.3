@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.116 2018/11/28 19:38:19 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.117 2018/11/28 19:58:15 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5594,4 +5594,13 @@ sys/kern/kern_exec.c				1.462
 
 	Fix stack info leak.
 	[maxv, ticket #1658]
+
+libexec/httpd/CHANGES				1.29,1.30
+libexec/httpd/bozohttpd.c			1.97-1.99
+libexec/httpd/bozohttpd.h			1.57
+libexec/httpd/cgi-bozo.c			1.45
+libexec/httpd/main.c				1.22
+
+	Fix -X option parsing and miscelaneous cleanup.
+	[mrg, ticket #1659]
 
