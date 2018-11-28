@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.3 2018/11/24 22:08:53 jakllsch Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.4 2018/11/28 22:54:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 struct gicv3_its_device {
 	uint32_t		dev_id;
+	u_int			dev_size;
 	struct gicv3_dma	dev_itt;
 
 	LIST_ENTRY(gicv3_its_device) dev_list;
