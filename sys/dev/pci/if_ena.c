@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.6 2018/11/28 11:50:48 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.7 2018/11/28 16:51:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1889,8 +1889,8 @@ ena_enable_msix(struct ena_adapter *adapter)
 	    max_type) != 0) {
 		aprint_error_dev(adapter->pdev,
 		    "failed to allocate interrupt\n");
-                return ENOSPC;
-        }
+		return ENOSPC;
+	}
 
 	adapter->sc_nintrs = counts[PCI_INTR_TYPE_MSIX];
 
