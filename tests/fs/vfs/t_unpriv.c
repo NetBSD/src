@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.13 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.14 2018/11/28 09:57:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -144,8 +144,6 @@ times(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 	if (rump_sys_setuid(1) == -1)
 		atf_tc_fail_errno("setuid");
-	if (FSTYPE_ZFS(tc))
-		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (rump_sys_utimes(name, NULL) != -1 || errno != EACCES)
 		atf_tc_fail_errno("utimes");
 	rump_pub_lwproc_releaselwp();
