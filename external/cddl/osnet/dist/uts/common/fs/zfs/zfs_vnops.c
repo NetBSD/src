@@ -5053,6 +5053,10 @@ zfs_netbsd_access(void *v)
 	KASSERT(VOP_ISLOCKED(vp));
 	error = zfs_access(vp, zfs_mode, 0, cred, NULL);
 
+	/* We expect EACCES as common error. */
+	if (error == EPERM)
+		error = EACCES;
+
 	return (error);
 }
 
