@@ -5128,8 +5128,15 @@ zfs_netbsd_lookup(void *v)
 				error = EJUSTRETURN;
 				break;
 			}
-			/* FALLTHROUGH */
+			break;
 		case DELETE:
+			if (error == 0) {
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+				if (error) {
+					VN_RELE(*vpp);
+					*vpp = NULL;
+				}
+			}
 			break;
 		}
 	}
