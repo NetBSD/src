@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.143 2018/11/05 03:51:31 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.144 2018/11/28 08:26:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -671,8 +671,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MSI_MDATA64		0xc	/* 64-bit Message Data Register
 					 * offset
 					 */
-#define	PCI_MSI_MASK		0x10	/* Vector Mask register */
-#define	PCI_MSI_PENDING		0x14	/* Vector Pending register */
+
+#define	PCI_MSI_MASK		0x0c	/* Vector Mask register */
+#define	PCI_MSI_MASK64		0x10	/* 64-bit Vector Mask register */
+
+#define	PCI_MSI_PENDING		0x10	/* Vector Pending register */
+#define	PCI_MSI_PENDING64	0x14	/* 64-bit Vector Pending register */
 
 #define	PCI_MSI_CTL_MASK	__BITS(31, 16)
 #define	PCI_MSI_CTL_EXTMDATA_EN	__SHIFTIN(__BIT(10), PCI_MSI_CTL_MASK)
