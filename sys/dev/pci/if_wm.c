@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.601 2018/11/22 15:09:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.602 2018/11/28 08:19:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.601 2018/11/22 15:09:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.602 2018/11/28 08:19:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14733,7 +14733,7 @@ wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
 }
 
 /*
- *  wm_k1_gig_workaround_lv - K1 Si workaround
+ *  wm_k1_workaround_lv - K1 Si workaround
  *  @sc:   pointer to the HW structure
  *
  *  Workaround to set the K1 beacon duration for 82579 parts in 10Mbps
