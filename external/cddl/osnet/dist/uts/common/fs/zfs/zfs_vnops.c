@@ -4191,11 +4191,13 @@ zfs_rename(vnode_t *sdvp, vnode_t **svpp, struct componentname *scnp,
 		goto unlockout;
 	}
 
+#ifndef __NetBSD__
 	/* If source and target are the same file, there is nothing to do. */
 	if ((*svpp) == (*tvpp)) {
 		error = 0;
 		goto unlockout;
 	}
+#endif
 
 	if (((*svpp)->v_type == VDIR && (*svpp)->v_mountedhere != NULL) ||
 	    ((*tvpp) != NULL && (*tvpp)->v_type == VDIR &&
