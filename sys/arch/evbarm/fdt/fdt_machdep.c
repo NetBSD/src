@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.55 2018/11/15 23:53:40 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.56 2018/11/28 09:16:19 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.55 2018/11/15 23:53:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.56 2018/11/28 09:16:19 ryo Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -545,9 +545,11 @@ initarm(void *arg)
 	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
 	     nfdt_physmem);
 
-	VPRINTF("mpstart\n");
-	if (plat->ap_mpstart)
-		plat->ap_mpstart();
+	if ((boothowto & RB_MD1) == 0) {
+		VPRINTF("mpstart\n");
+		if (plat->ap_mpstart)
+			plat->ap_mpstart();
+	}
 
 	/*
 	 * Now we have APs started the pages used for stacks and L1PT can
