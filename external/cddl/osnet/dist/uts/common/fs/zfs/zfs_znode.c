@@ -1204,6 +1204,7 @@ zfs_zget_cleaner(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
 	hdl = dmu_buf_get_user(db);
 	KASSERT(hdl != NULL);
 	zp = sa_get_userdata(hdl);
+	sa_buf_rele(db, NULL);
 	*zpp = zp;
 	return (0);
 }
