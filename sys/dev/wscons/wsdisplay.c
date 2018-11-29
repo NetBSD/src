@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.148 2018/11/15 13:50:51 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.149 2018/11/29 23:18:40 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.148 2018/11/15 13:50:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.149 2018/11/29 23:18:40 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.148 2018/11/15 13:50:51 jmcneill Exp
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/sysctl.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wseventvar.h>
@@ -70,6 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.148 2018/11/15 13:50:51 jmcneill Exp
 #include <dev/cons.h>
 
 #include "locators.h"
+
+#ifdef WSDISPLAY_MULTICONS
+static bool wsdisplay_multicons_enable = true;
+#endif
 
 /* Console device before replaced by wsdisplay */
 static struct consdev *wsdisplay_ocn;
@@ -277,7 +282,8 @@ wsscreen_getc_poll(void *priv)
 	struct wsscreen *scr = priv;
 	int c;
 
-	if (wsdisplay_ocn && wsdisplay_ocn->cn_getc &&
+	if (wsdisplay_multicons_enable &&
+	    wsdisplay_ocn && wsdisplay_ocn->cn_getc &&
 	    WSSCREEN_HAS_EMULATOR(scr) && WSSCREEN_HAS_TTY(scr)) {
 		struct tty *tp = scr->scr_tty;
 		do {
@@ -1670,7 +1676,8 @@ wsdisplaystart(struct tty *tp)
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
 						  tbuf, n, 0);
 #ifdef WSDISPLAY_MULTICONS
-		if (scr->scr_dconf == &wsdisplay_console_conf &&
+		if (wsdisplay_multicons_enable &&
+		    scr->scr_dconf == &wsdisplay_console_conf &&
 		    wsdisplay_ocn && wsdisplay_ocn->cn_putc) {
 			for (int i = 0; i < n; i++)
 				wsdisplay_ocn->cn_putc(
@@ -1689,7 +1696,8 @@ wsdisplaystart(struct tty *tp)
 			    (scr->scr_dconf->wsemulcookie, tbuf, n, 0);
 
 #ifdef WSDISPLAY_MULTICONS
-			if (scr->scr_dconf == &wsdisplay_console_conf &&
+			if (wsdisplay_multicons_enable &&
+			    scr->scr_dconf == &wsdisplay_console_conf &&
 			    wsdisplay_ocn && wsdisplay_ocn->cn_putc) {
 				for (int i = 0; i < n; i++)
 					wsdisplay_ocn->cn_putc(
@@ -2293,7 +2301,7 @@ wsdisplay_cnputc(dev_t dev, int i)
 	(*dc->wsemul->output)(dc->wsemulcookie, &c, 1, 1);
 
 #ifdef WSDISPLAY_MULTICONS
-	if (wsdisplay_ocn && wsdisplay_ocn->cn_putc)
+	if (wsdisplay_multicons_enable && wsdisplay_ocn && wsdisplay_ocn->cn_putc)
 		wsdisplay_ocn->cn_putc(wsdisplay_ocn->cn_dev, i);
 #endif
 }
@@ -2310,7 +2318,7 @@ wsdisplay_getc(dev_t dev)
 	}
 
 #ifdef WSDISPLAY_MULTICONS
-	if (wsdisplay_ocn && wsdisplay_ocn->cn_getc) {
+	if (wsdisplay_multicons_enable && wsdisplay_ocn && wsdisplay_ocn->cn_getc) {
 		c = wsdisplay_ocn->cn_getc(wsdisplay_ocn->cn_dev);
 		if (c >= 0)
 			return c;
@@ -2337,7 +2345,7 @@ wsdisplay_pollc(dev_t dev, int on)
 
 #ifdef WSDISPLAY_MULTICONS
 	/* notify to old console driver */
-	if (wsdisplay_ocn && wsdisplay_ocn->cn_pollc)
+	if (wsdisplay_multicons_enable && wsdisplay_ocn && wsdisplay_ocn->cn_pollc)
 		wsdisplay_ocn->cn_pollc(wsdisplay_ocn->cn_dev, on);
 #endif
 }
@@ -2358,3 +2366,24 @@ wsdisplay_unset_cons_kbd(void)
 	wsdisplay_cons_kbd_getc = NULL;
 	wsdisplay_cons_kbd_pollc = NULL;
 }
+
+#ifdef WSDISPLAY_MULTICONS
+SYSCTL_SETUP(sysctl_hw_wsdisplay_setup, "sysctl hw.wsdisplay subtree setup")
+{
+	const struct sysctlnode *wsdisplay_node;
+
+	if (sysctl_createv(clog, 0, NULL, &wsdisplay_node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "wsdisplay", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+		return;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "multicons",
+	    SYSCTL_DESCR("Enable wsdisplay multicons"),
+	    NULL, 0, &wsdisplay_multicons_enable, 0,
+	    CTL_HW, wsdisplay_node->sysctl_num, CTL_CREATE, CTL_EOL);
+}
+#endif
