@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.1 2018/11/10 09:28:56 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.2 2018/11/29 19:55:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -41,16 +41,9 @@
 #include <dev/nvmm/x86/nvmm_x86.h>
 #endif
 
-struct nvmm_area {
-	gpaddr_t gpa;
-	uintptr_t hva;
-	size_t size;
-};
-
 struct nvmm_machine {
 	nvmm_machid_t machid;
-	struct nvmm_area *areas;
-	size_t nareas;
+	void *areas; /* opaque */
 };
 
 struct nvmm_io {
