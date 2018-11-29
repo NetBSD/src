@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.19 2018/11/29 08:37:12 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.20 2018/11/29 08:57:16 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -303,4 +303,9 @@ libexec/httpd/main.c				1.22
 
 	Fix -X option parsing and miscelaneous cleanup.
 	[mrg, ticket #1659]
+
+sys/kern/kern_time.c				1.192
+
+	Fix kernel info leak.
+	[maxv, ticket #1660]
 
