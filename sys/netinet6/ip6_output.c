@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.212 2018/08/10 06:46:09 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.213 2018/11/29 10:02:52 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.212 2018/08/10 06:46:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.213 2018/11/29 10:02:52 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -578,6 +578,7 @@ ip6_output(
 
 	/* Ensure we only send from a valid address. */
 	if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
+	    (flags & IPV6_FORWARDING) == 0 &&
 	    (error = ip6_ifaddrvalid(&src0, &dst0)) != 0)
 	{
 		char ip6buf[INET6_ADDRSTRLEN];
