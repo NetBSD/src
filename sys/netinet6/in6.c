@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.271 2018/11/29 09:51:21 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.272 2018/11/29 09:54:23 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.271 2018/11/29 09:51:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.272 2018/11/29 09:54:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2204,7 +2204,7 @@ in6_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia6_flags & IN6_IFF_DETACHED) {
 			ia->ia6_flags &= ~IN6_IFF_DETACHED;
-			if (if_do_dad(ifp)) {
+			if (ip6_dad_enabled() && if_do_dad(ifp)) {
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
 				nd6log(LOG_ERR, "%s marked tentative\n",
 				    IN6_PRINT(ip6buf,
