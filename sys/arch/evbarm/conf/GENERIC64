@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.66 2018/11/23 12:15:14 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.67 2018/11/29 11:23:49 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -321,6 +321,10 @@ atabus*		at ata?
 atapibus*	at atapi?
 wd*		at atabus? drive ?
 cd*		at atapibus? drive ?
+
+# NVMe
+nvme*		at pci? dev ? function ?
+ld*		at nvme? nsid ?
 
 # SPI controllers
 bcmspi*		at fdt?			# Broadcom BCM283x SPI
