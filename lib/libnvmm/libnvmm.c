@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.2 2018/11/19 21:45:37 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.3 2018/11/29 19:55:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,8 +39,18 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/queue.h>
 
 #include "nvmm.h"
+
+typedef struct __area {
+	LIST_ENTRY(__area) list;
+	gpaddr_t gpa;
+	uintptr_t hva;
+	size_t size;
+} area_t;
+
+typedef LIST_HEAD(, __area) area_list_t;
 
 static int nvmm_fd = -1;
 static size_t nvmm_page_size = 0;
@@ -48,69 +58,126 @@ static size_t nvmm_page_size = 0;
 /* -------------------------------------------------------------------------- */
 
 static int
-_nvmm_area_add(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t hva,
+__area_unmap(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
+ size_t size)
+{
+	struct nvmm_ioc_gpa_unmap args;
+	int ret;
+
+	args.machid = mach->machid;
+	args.gpa = gpa;
+	args.size = size;
+
+	ret = ioctl(nvmm_fd, NVMM_IOC_GPA_UNMAP, &args);
+	if (ret == -1)
+		return -1;
+
+	ret = munmap((void *)hva, size);
+
+	return ret;
+}
+
+static int
+__area_dig_hole(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
     size_t size)
 {
-	struct nvmm_area *area;
-	void *ptr;
-	size_t i;
+	area_list_t *areas = mach->areas;
+	area_t *ent, *tmp, *nxt;
+	size_t diff;
 
-	for (i = 0; i < mach->nareas; i++) {
-		if (gpa >= mach->areas[i].gpa &&
-		    gpa < mach->areas[i].gpa + mach->areas[i].size) {
-			goto error;
+	LIST_FOREACH_SAFE(ent, areas, list, nxt) {
+		/* Case 1. */
+		if ((gpa < ent->gpa) && (gpa + size > ent->gpa)) {
+			diff = (gpa + size) - ent->gpa;
+			if (__area_unmap(mach, ent->hva, ent->gpa, diff) == -1) {
+				return -1;
+			}
+			ent->gpa  += diff;
+			ent->hva  += diff;
+			ent->size -= diff;
 		}
-		if (gpa + size > mach->areas[i].gpa &&
-		    gpa + size <= mach->areas[i].gpa + mach->areas[i].size) {
-			goto error;
+
+		/* Case 2. */
+		if ((gpa >= ent->gpa) && (gpa + size <= ent->gpa + ent->size)) {
+			/* First half. */
+			tmp = malloc(sizeof(*tmp));
+			tmp->gpa = ent->gpa;
+			tmp->hva = ent->hva;
+			tmp->size = (gpa - ent->gpa);
+			LIST_INSERT_BEFORE(ent, tmp, list);
+			/* Second half. */
+			ent->gpa  += tmp->size;
+			ent->hva  += tmp->size;
+			ent->size -= tmp->size;
+			diff = size;
+			if (__area_unmap(mach, ent->hva, ent->gpa, diff) == -1) {
+				return -1;
+			}
+			ent->gpa  += diff;
+			ent->hva  += diff;
+			ent->size -= diff;
 		}
-		if (gpa < mach->areas[i].gpa &&
-		    gpa + size >= mach->areas[i].gpa + mach->areas[i].size) {
-			goto error;
+
+		/* Case 3. */
+		if ((gpa < ent->gpa + ent->size) &&
+		    (gpa + size > ent->gpa + ent->size)) {
+			diff = (ent->gpa + ent->size) - gpa;
+			if (__area_unmap(mach, hva, gpa, diff) == -1) {
+				return -1;
+			}
+			ent->size -= diff;
+		}
+
+		/* Case 4. */
+		if ((gpa < ent->gpa + ent->size) &&
+		    (gpa + size > ent->gpa + ent->size)) {
+			if (__area_unmap(mach, ent->hva, ent->gpa, ent->size) == -1) {
+				return -1;
+			}
+			LIST_REMOVE(ent, list);
+			free(ent);
 		}
 	}
 
-	ptr = realloc(mach->areas, (mach->nareas + 1) *
-	    sizeof(struct nvmm_area));
-	if (ptr == NULL)
-		return -1;
-	mach->areas = ptr;
+	return 0;
+}
 
-	area = &mach->areas[mach->nareas++];
+static int
+__area_add(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa, size_t size)
+{
+	area_list_t *areas = mach->areas;
+	area_t *area;
+	int ret;
+
+	area = malloc(sizeof(*area));
+	if (area == NULL)
+		return -1;
 	area->gpa = gpa;
 	area->hva = hva;
 	area->size = size;
 
-	return 0;
-
-error:
-	errno = EEXIST;
-	return -1;
-}
-
-static int
-_nvmm_area_delete(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t hva,
-    size_t size)
-{
-	size_t i;
-
-	for (i = 0; i < mach->nareas; i++) {
-		if (gpa == mach->areas[i].gpa &&
-		    hva == mach->areas[i].hva &&
-		    size == mach->areas[i].size) {
-			break;
-		}
-	}
-	if (i == mach->nareas) {
-		errno = ENOENT;
+	ret = __area_dig_hole(mach, hva, gpa, size);
+	if (ret == -1) {
+		free(area);
 		return -1;
 	}
 
-	memmove(&mach->areas[i], &mach->areas[i+1],
-	    (mach->nareas - i - 1) * sizeof(struct nvmm_area));
-	mach->nareas--;
-
+	LIST_INSERT_HEAD(areas, area, list);
 	return 0;
+}
+
+static void
+__area_remove_all(struct nvmm_machine *mach)
+{
+	area_list_t *areas = mach->areas;
+	area_t *ent;
+
+	while ((ent = LIST_FIRST(areas)) != NULL) {
+		LIST_REMOVE(ent, list);
+		free(ent);
+	}
+
+	free(areas);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -150,17 +217,26 @@ int
 nvmm_machine_create(struct nvmm_machine *mach)
 {
 	struct nvmm_ioc_machine_create args;
+	area_list_t *areas;
 	int ret;
 
 	if (nvmm_init() == -1) {
 		return -1;
 	}
 
-	ret = ioctl(nvmm_fd, NVMM_IOC_MACHINE_CREATE, &args);
-	if (ret == -1)
+	areas = calloc(1, sizeof(*areas));
+	if (areas == NULL)
 		return -1;
 
+	ret = ioctl(nvmm_fd, NVMM_IOC_MACHINE_CREATE, &args);
+	if (ret == -1) {
+		free(areas);
+		return -1;
+	}
+
 	memset(mach, 0, sizeof(*mach));
+	LIST_INIT(areas);
+	mach->areas = areas;
 	mach->machid = args.machid;
 
 	return 0;
@@ -182,7 +258,7 @@ nvmm_machine_destroy(struct nvmm_machine *mach)
 	if (ret == -1)
 		return -1;
 
-	free(mach->areas);
+	__area_remove_all(mach);
 
 	return 0;
 }
@@ -351,6 +427,10 @@ nvmm_gpa_map(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 		return -1;
 	}
 
+	ret = __area_add(mach, hva, gpa, size);
+	if (ret == -1)
+		return -1;
+
 	args.machid = mach->machid;
 	args.hva = hva;
 	args.gpa = gpa;
@@ -358,13 +438,9 @@ nvmm_gpa_map(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 	args.flags = flags;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_GPA_MAP, &args);
-	if (ret == -1)
-		return -1;
-
-	ret = _nvmm_area_add(mach, gpa, hva, size);
 	if (ret == -1) {
-		nvmm_gpa_unmap(mach, hva, gpa, size);
-		return -1;
+		/* Can't recover. */
+		abort();
 	}
 
 	return 0;
@@ -374,28 +450,11 @@ int
 nvmm_gpa_unmap(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
     size_t size)
 {
-	struct nvmm_ioc_gpa_unmap args;
-	int ret;
-
 	if (nvmm_init() == -1) {
 		return -1;
 	}
 
-	ret = _nvmm_area_delete(mach, gpa, hva, size);
-	if (ret == -1)
-		return -1;
-
-	args.machid = mach->machid;
-	args.gpa = gpa;
-	args.size = size;
-
-	ret = ioctl(nvmm_fd, NVMM_IOC_GPA_UNMAP, &args);
-	if (ret == -1)
-		return -1;
-
-	ret = munmap((void *)hva, size);
-
-	return ret;
+	return __area_dig_hole(mach, hva, gpa, size);
 }
 
 /*
@@ -405,22 +464,23 @@ nvmm_gpa_unmap(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 int
 nvmm_gpa_to_hva(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t *hva)
 {
-	size_t i;
+	area_list_t *areas = mach->areas;
+	area_t *ent;
 
 	if (gpa % nvmm_page_size != 0) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	for (i = 0; i < mach->nareas; i++) {
-		if (gpa < mach->areas[i].gpa) {
+	LIST_FOREACH(ent, areas, list) {
+		if (gpa < ent->gpa) {
 			continue;
 		}
-		if (gpa >= mach->areas[i].gpa + mach->areas[i].size) {
+		if (gpa >= ent->gpa + ent->size) {
 			continue;
 		}
 
-		*hva = mach->areas[i].hva + (gpa - mach->areas[i].gpa);
+		*hva = ent->hva + (gpa - ent->gpa);
 		return 0;
 	}
 
