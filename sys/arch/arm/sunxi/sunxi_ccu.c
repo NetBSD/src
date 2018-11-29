@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.c,v 1.12 2018/09/21 12:04:07 skrll Exp $ */
+/* $NetBSD: sunxi_ccu.c,v 1.13 2018/11/29 20:33:09 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.12 2018/09/21 12:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.13 2018/11/29 20:33:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -369,6 +369,6 @@ sunxi_ccu_print(struct sunxi_ccu_softc *sc)
         	    clkp_parent ? "<-" : "",
         	    clkp_parent ? clkp_parent->name : "",
         	    type);
-		aprint_debug("%10d Hz\n", clk_get_rate(&clk->base));
+		aprint_debug("%10u Hz\n", clk_get_rate(&clk->base));
 	}
 }
