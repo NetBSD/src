@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.64 2018/11/28 19:51:30 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.65 2018/11/29 08:52:08 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1824,4 +1824,14 @@ libexec/httpd/main.c				1.22
 
 	Fix -X option parsing and miscelaneous cleanup.
 	[mrg, ticket #1109]
+
+sys/kern/kern_time.c				1.192
+
+	Fix kernel info leak.
+	[maxv, ticket #1110]
+
+sys/arch/amd64/amd64/machdep.c			1.321
+
+	Fix stack info leak.
+	[maxv, ticket #1111]
 
