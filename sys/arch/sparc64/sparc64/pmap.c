@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.308 2018/01/27 23:07:36 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.309 2018/11/29 20:58:36 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.308 2018/01/27 23:07:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.309 2018/11/29 20:58:36 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -765,7 +765,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 
 		m_len = mdesc_get_len();
 		m_va = kdata_alloc(m_len, 16);
-		m_pa = kdatap + (m_va - kdata);
+		m_pa = pmap_kextract(m_va);
 		mdesc_init(m_va, m_pa, m_len);
 	}
 
