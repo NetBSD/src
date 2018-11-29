@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.45 2018/06/23 03:32:48 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.46 2018/11/29 11:45:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.45 2018/06/23 03:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.46 2018/11/29 11:45:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -570,6 +570,7 @@ ptrace_get_siginfo(struct proc *t, struct ptrace_methods *ptm, void *addr,
 {
 	struct ptrace_siginfo psi;
 
+	memset(&psi, 0, sizeof(psi));
 	psi.psi_siginfo._info = t->p_sigctx.ps_info;
 	psi.psi_lwpid = t->p_sigctx.ps_lwp;
 	DPRINTF(("%s: lwp=%d signal=%d\n", __func__, psi.psi_lwpid,
