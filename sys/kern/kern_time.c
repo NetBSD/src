@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.192 2018/11/28 15:10:40 maxv Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.193 2018/11/29 17:40:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.192 2018/11/28 15:10:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.193 2018/11/29 17:40:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1166,6 +1166,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		if (spare == NULL) {
 			mutex_spin_exit(&timer_lock);
 			spare = pool_get(&ptimer_pool, PR_WAITOK);
+			memset(spare, 0, sizeof(*spare));
 			goto retry;
 		}
 		pt = spare;
