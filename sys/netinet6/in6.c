@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.270 2018/10/30 05:56:02 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.271 2018/11/29 09:51:21 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.270 2018/10/30 05:56:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.271 2018/11/29 09:51:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1269,7 +1269,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia6_flags |= IN6_IFF_DETACHED;
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	} else if ((hostIsNew || was_tentative) && if_do_dad(ifp) &&
-	           ip6_dad_count > 0) {
+	           ip6_dad_enabled()) {
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 	}
 

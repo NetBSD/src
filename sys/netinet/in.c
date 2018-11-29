@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.231 2018/05/13 22:42:51 khorben Exp $	*/
+/*	$NetBSD: in.c,v 1.232 2018/11/29 09:51:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.231 2018/05/13 22:42:51 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.232 2018/11/29 09:51:20 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1155,11 +1155,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	if (ifp->if_link_state == LINK_STATE_DOWN) {
 		ia->ia4_flags |= IN_IFF_DETACHED;
 		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
-	} else if (hostIsNew && if_do_dad(ifp)
-#if NARP > 0
-	    && ip_dad_count > 0
-#endif
-	)
+	} else if (hostIsNew && if_do_dad(ifp) && ip_dad_enabled())
 		ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
 
 	/*

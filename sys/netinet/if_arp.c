@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.276 2018/10/30 05:54:41 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.277 2018/11/29 09:51:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.276 2018/10/30 05:54:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.277 2018/11/29 09:51:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1491,7 +1491,7 @@ arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 	} else {
 		ia->ia_dad_start = arp_dad_start;
 		ia->ia_dad_stop = arp_dad_stop;
-		if (ia->ia4_flags & IN_IFF_TRYTENTATIVE && ip_dad_count > 0)
+		if (ia->ia4_flags & IN_IFF_TRYTENTATIVE && ip_dad_enabled())
 			ia->ia4_flags |= IN_IFF_TENTATIVE;
 		else
 			arpannounce1(ifa);
@@ -1597,7 +1597,7 @@ arp_dad_start(struct ifaddr *ifa)
 
 	/*
 	 * If we don't need DAD, don't do it.
-	 * - DAD is disabled (ip_dad_count == 0)
+	 * - DAD is disabled
 	 */
 	if (!(ia->ia4_flags & IN_IFF_TENTATIVE)) {
 		log(LOG_DEBUG,
@@ -1606,7 +1606,7 @@ arp_dad_start(struct ifaddr *ifa)
 		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	if (!ip_dad_count) {
+	if (!ip_dad_enabled()) {
 		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
 		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		arpannounce1(ifa);
@@ -1806,7 +1806,7 @@ arp_dad_duplicated(struct ifaddr *ifa, const char *sha)
 		return;
 	} else {
 		/* If DAD is disabled, just report the duplicate. */
-		if (ip_dad_count == 0) {
+		if (!ip_dad_enabled()) {
 			log(LOG_ERR,
 			    "%s: DAD ignoring duplicate address %s from %s\n",
 			    if_name(ifp), iastr, sha);

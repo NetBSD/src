@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.156 2018/05/19 08:22:58 maxv Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.157 2018/11/29 09:51:21 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.156 2018/05/19 08:22:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.157 2018/11/29 09:51:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1187,7 +1187,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	/*
 	 * If we don't need DAD, don't do it.
 	 * There are several cases:
-	 * - DAD is disabled (ip6_dad_count == 0)
+	 * - DAD is disabled
 	 * - the interface address is anycast
 	 */
 	if (!(ia->ia6_flags & IN6_IFF_TENTATIVE)) {
@@ -1198,7 +1198,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	if (ia->ia6_flags & IN6_IFF_ANYCAST || !ip6_dad_count) {
+	if (ia->ia6_flags & IN6_IFF_ANYCAST || !ip6_dad_enabled()) {
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		return;
