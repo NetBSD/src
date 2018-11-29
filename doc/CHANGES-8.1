@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.65 2018/11/29 08:52:08 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.66 2018/11/29 15:00:45 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1834,4 +1834,14 @@ sys/arch/amd64/amd64/machdep.c			1.321
 
 	Fix stack info leak.
 	[maxv, ticket #1111]
+
+sys/kern/sys_ptrace_common.c			1.46
+
+	Fix stack info leak.
+	[maxv, ticket #1112]
+
+sys/kern/kern_sig.c				1.350
+
+	Fix kernel info leak.
+	[maxv, ticket #1113]
 
