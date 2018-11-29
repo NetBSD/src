@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.179.8.1 2016/03/03 15:42:26 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.179.8.2 2018/11/29 08:56:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.8.1 2016/03/03 15:42:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.8.2 2018/11/29 08:56:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -566,6 +566,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 		pts = timers_alloc(p);
 
 	pt = pool_get(&ptimer_pool, PR_WAITOK);
+	memset(pt, 0, sizeof(*pt));
 	if (evp != NULL) {
 		if (((error =
 		    (*fetch_event)(evp, &pt->pt_ev, sizeof(pt->pt_ev))) != 0) ||
