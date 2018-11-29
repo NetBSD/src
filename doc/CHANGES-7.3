@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.18 2018/11/28 19:54:54 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.19 2018/11/29 08:37:12 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -282,8 +282,7 @@ libexec/httpd/testsuite/test-simple             up to 1.5
 
 sys/dev/pci/if_wm.c				1.599
 
-	- Fix a bug that i82578 PHY can't detect correctly.
-	- Print PHY OUI and model number if a PHY's can't be identified.
+	Fix a bug that i82578 workarounds didn't work correctly.
 	[msaitoh, ticket #1656]
 
 sys/net/rtsock.c				1.244 (adapted)
