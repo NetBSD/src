@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1354 2018/11/24 14:41:56 skrll Exp $
+$NetBSD: pcidevs,v 1.1355 2018/11/29 23:52:49 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -649,6 +649,7 @@ vendor QINHENG2		0x1c00	Nanjing QinHeng Electronics (PCIe)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor HGST		0x1c58	HGST, Inc.
 vendor BEIJING_MEMBLAZE	0x1c5f	Beijing Memblaze Technology Co. Ltd.
+vendor AMAZON		0x1d0f	Amazon.com, Inc.
 vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
@@ -953,6 +954,11 @@ product ALTIMA AC1000	0x03e8	AC1000 Gigabit Ethernet
 product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
 product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 product ALTIMA AC1003	0x03eb	AC1003 Gigabit Ethernet
+
+/* Amazon.com, Inc. products */
+product AMAZON UART	0x8250	16650-compatible UART
+product AMAZON NVME	0x8061	NVMe SSD
+product AMAZON ENA	0xec20	Elastic Network Adapter
 
 /* AMD products */
 product AMD AMD64_HT	0x1100	K8 AMD64 HyperTransport Configuration
