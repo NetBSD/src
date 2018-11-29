@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.336.4.2 2018/04/12 13:42:48 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.336.4.3 2018/11/29 14:59:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.336.4.2 2018/04/12 13:42:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.336.4.3 2018/11/29 14:59:56 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -189,6 +189,13 @@ signal_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	return result;
 }
 
+static int
+sigacts_ctor(void *arg __unused, void *obj, int flags __unused)
+{
+	memset(obj, 0, sizeof(struct sigacts));
+	return 0;
+}
+
 /*
  * signal_init:
  *
@@ -202,7 +209,7 @@ signal_init(void)
 
 	sigacts_cache = pool_cache_init(sizeof(struct sigacts), 0, 0, 0,
 	    "sigacts", sizeof(struct sigacts) > PAGE_SIZE ?
-	    &sigactspool_allocator : NULL, IPL_NONE, NULL, NULL, NULL);
+	    &sigactspool_allocator : NULL, IPL_NONE, sigacts_ctor, NULL, NULL);
 	ksiginfo_cache = pool_cache_init(sizeof(ksiginfo_t), 0, 0, 0,
 	    "ksiginfo", NULL, IPL_VM, NULL, NULL, NULL);
 
