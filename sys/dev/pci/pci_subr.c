@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.209 2018/11/30 09:05:35 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.210 2018/11/30 10:18:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.209 2018/11/30 09:05:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.210 2018/11/30 10:18:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1756,7 +1756,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
 	pcireg_t reg; /* for each register */
 	pcireg_t val; /* for each bitfield */
-	bool check_link = true;
 	bool check_slot = false;
 	unsigned int pcie_devtype;
 	bool check_upstreamport = false;
@@ -1803,11 +1802,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
 		printf("Root Complex Integrated Endpoint\n");
-		check_link = false;
 		break;
 	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* 0xa */
 		printf("Root Complex Event Collector\n");
-		check_link = false;
 		break;
 	default:
 		printf("unknown\n");
@@ -1884,7 +1881,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Transaction Pending", reg, PCIE_DCSR_TRANSACTION_PND);
 	onoff("Emergency Power Reduction Detected", reg, PCIE_DCSR_EMGPWRREDD);
 
-	if (check_link) {
+	if (PCIE_HAS_LINKREGS(pcie_devtype)) {
 		/* Link Capability Register */
 		reg = regs[o2i(capoff + PCIE_LCAP)];
 		printf("    Link Capabilities Register: 0x%08x\n", reg);
@@ -2235,7 +2232,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	}
 	onoff("End-End TLP Prefix Blocking on", reg, PCIE_DCSR2_EETLP);
 
-	if (check_link) {
+	if (PCIE_HAS_LINKREGS(pcie_devtype)) {
 		bool drs_supported = false;
 
 		/* Link Capability 2 */
