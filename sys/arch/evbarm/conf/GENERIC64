@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.68 2018/11/30 16:28:07 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.69 2018/11/30 16:28:43 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -226,6 +226,7 @@ pci*		at ppb?
 # Ethernet
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
+ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
