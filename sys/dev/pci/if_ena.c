@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.10 2018/11/30 11:37:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.11 2018/11/30 14:07:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1670,9 +1670,7 @@ ena_rx_cleanup(struct ena_ring *rx_ring)
 	uint16_t next_to_clean;
 	uint32_t refill_required;
 	uint32_t refill_threshold;
-#ifdef LRO
 	uint32_t do_if_input = 0;
-#endif
 	unsigned int qid;
 	int rc, i;
 	int budget = RX_BUDGET;
@@ -1735,12 +1733,12 @@ ena_rx_cleanup(struct ena_ring *rx_ring)
 		counter_u64_add_protected(adapter->hw_stats.rx_bytes,
 		    mbuf->m_pkthdr.len);
 		counter_exit();
-#ifdef LRO
 		/*
 		 * LRO is only for IP/TCP packets and TCP checksum of the packet
 		 * should be computed by hardware.
 		 */
 		do_if_input = 1;
+#ifdef LRO
 		if (((ifp->if_capenable & IFCAP_LRO) != 0)  &&
 		    ((mbuf->m_pkthdr.csum_flags & CSUM_IP_VALID) != 0) &&
 		    (ena_rx_ctx.l4_proto == ENA_ETH_IO_L4_PROTO_TCP)) {
@@ -1754,12 +1752,12 @@ ena_rx_cleanup(struct ena_ring *rx_ring)
 			    (tcp_lro_rx(&rx_ring->lro, mbuf, 0) == 0))
 					do_if_input = 0;
 		}
+#endif
 		if (do_if_input != 0) {
 			ena_trace(ENA_DBG | ENA_RXPTH,
 			    "calling if_input() with mbuf %p", mbuf);
-			(*ifp->if_input)(ifp, mbuf);
+			if_percpuq_enqueue(ifp->if_percpuq, mbuf);
 		}
-#endif
 
 		counter_enter();
 		counter_u64_add_protected(rx_ring->rx_stats.cnt, 1);
@@ -2500,7 +2498,7 @@ ena_setup_ifnet(device_t pdev, struct ena_adapter *adapter,
 		ena_trace(ENA_ALERT, "can not allocate ifnet structure\n");
 		return (ENXIO);
 	}
-	if_initname(ifp, device_xname(pdev), device_unit(pdev));
+	if_initname(ifp, "ena", device_unit(pdev));
 	if_setdev(ifp, pdev);
 	if_setsoftc(ifp, adapter);
 
