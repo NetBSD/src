@@ -1,4 +1,4 @@
-/*	$NetBSD: t_full.c,v 1.9 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_full.c,v 1.10 2018/11/30 09:52:39 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,8 @@ fillfs(const atf_tc_t *tc, const char *mp)
 	size_t bonus;
 	int fd, i = 0;
 
-	if (FSTYPE_P2K_FFS(tc) || FSTYPE_PUFFS(tc) || FSTYPE_RUMPFS(tc)) {
+	if (FSTYPE_P2K_FFS(tc) || FSTYPE_PUFFS(tc) || FSTYPE_RUMPFS(tc) ||
+	    FSTYPE_ZFS(tc)) {
 		atf_tc_skip("fs does not support explicit block allocation "
 		    "(GOP_ALLOC)");
 	}
@@ -77,8 +78,6 @@ fillfs(const atf_tc_t *tc, const char *mp)
 		if (n == -1)
 			break;
 	}
-	if (FSTYPE_ZFS(tc))
-		atf_tc_expect_fail("PR kern/47656: Test known to be broken");
 	if (n == -1) {
 		if (errno != ENOSPC)
 			atf_tc_fail_errno("write");
