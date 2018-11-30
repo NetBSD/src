@@ -1182,7 +1182,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 			 * holding up the transaction if the data copy hangs
 			 * up on a pagefault (e.g., from an NFS server mapping).
 			 */
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 			size_t cbytes;
 #endif
 
@@ -1190,7 +1190,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 			    max_blksz);
 			ASSERT(abuf != NULL);
 			ASSERT(arc_buf_size(abuf) == max_blksz);
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 			if (error = uiocopy(abuf->b_data, max_blksz,
 			    UIO_WRITE, uio, &cbytes)) {
 				dmu_return_arcbuf(abuf);
@@ -1202,17 +1202,6 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 			ssize_t resid = uio->uio_resid;
 
 			error = vn_io_fault_uiomove(abuf->b_data, max_blksz, uio);
-			if (error != 0) {
-				uio->uio_offset -= resid - uio->uio_resid;
-				uio->uio_resid = resid;
-				dmu_return_arcbuf(abuf);
-				break;
-			}
-#endif
-#ifdef __NetBSD__
-			ssize_t resid = uio->uio_resid;
-
-			error = uiomove(abuf->b_data, max_blksz, UIO_WRITE, uio);
 			if (error != 0) {
 				uio->uio_offset -= resid - uio->uio_resid;
 				uio->uio_resid = resid;
@@ -1297,7 +1286,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 				dmu_assign_arcbuf(sa_get_db(zp->z_sa_hdl),
 				    woff, abuf, tx);
 			}
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 			ASSERT(tx_bytes <= uio->uio_resid);
 			uioskip(uio, tx_bytes);
 #endif
