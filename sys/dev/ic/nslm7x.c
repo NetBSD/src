@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.71 2018/03/07 09:25:56 msaitoh Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.72 2018/11/30 05:49:23 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.71 2018/03/07 09:25:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.72 2018/11/30 05:49:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2270,6 +2270,9 @@ lm_attach(struct lm_softc *lmsc)
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(lmsc->sc_sme);
 	}
+	if (!pmf_device_register(lmsc->sc_dev, NULL, NULL))
+		aprint_error_dev(lmsc->sc_dev,
+		    "couldn't establish power handler\n");
 }
 
 /*
@@ -2282,6 +2285,7 @@ lm_detach(struct lm_softc *lmsc)
 	callout_halt(&lmsc->sc_callout, NULL);
 	callout_destroy(&lmsc->sc_callout);
 	sysmon_envsys_unregister(lmsc->sc_sme);
+	pmf_device_deregister(lmsc->sc_dev);
 }
 
 static void
