@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.67 2018/11/29 11:23:49 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.68 2018/11/30 16:28:07 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -262,9 +262,11 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 #athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
-com*		at fdt?	pass 4		# UART
-plcom*		at fdt?	pass 4		# ARM PL011 UART
+com*		at fdt?	pass 4			# UART
+plcom*		at fdt?	pass 4			# ARM PL011 UART
 plcom*		at acpi?
+puc*		at pci? dev ? function ?	# PCI "universal" comm. cards
+com*		at puc? port ?
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
