@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.349 2018/11/28 22:28:46 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.350 2018/11/30 16:26:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.349 2018/11/28 22:28:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.350 2018/11/30 16:26:19 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -379,6 +379,16 @@ com_enable_debugport(struct com_softc *sc)
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_MCR, sc->sc_mcr);
 }
 
+static void
+com_intr_poll(void *arg)
+{
+	struct com_softc * const sc = arg;
+
+	comintr(sc);
+
+	callout_schedule(&sc->sc_poll_callout, 1);
+}
+
 void
 com_attach_subr(struct com_softc *sc)
 {
@@ -396,6 +406,8 @@ com_attach_subr(struct com_softc *sc)
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 	prop_dictionary_get_bool(dict, "force_console", &force_console);
 	callout_init(&sc->sc_diag_callout, 0);
+	callout_init(&sc->sc_poll_callout, 0);
+	callout_setfunc(&sc->sc_poll_callout, com_intr_poll, sc);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 #if defined(COM_16650)
@@ -676,6 +688,9 @@ fifodone:
 	com_config(sc);
 
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
+
+	if (ISSET(sc->sc_hwflags, COM_HW_POLL))
+		callout_schedule(&sc->sc_poll_callout, 1);
 }
 
 void
