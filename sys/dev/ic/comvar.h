@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.87 2018/05/27 17:05:06 jmcneill Exp $	*/
+/*	$NetBSD: comvar.h,v 1.88 2018/11/30 16:26:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,7 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
 #define	COM_HW_AFE	0x400
+#define	COM_HW_POLL	0x800
 
 /* Buffer size for character buffer */
 #ifndef COM_RING_SIZE
@@ -166,7 +167,8 @@ struct com_softc {
 	void *sc_si;
 	struct tty *sc_tty;
 
-	struct callout sc_diag_callout;
+	callout_t sc_diag_callout;
+	callout_t sc_poll_callout;
 
 	int sc_frequency;
 
