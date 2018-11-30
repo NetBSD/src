@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.145 2018/11/30 09:05:35 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.146 2018/11/30 10:18:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1152,6 +1152,13 @@ typedef u_int8_t pci_revision_t;
 
 #define PCIE_SLCAP2	0x34	/* Slot Capabilities 2 Register */
 #define PCIE_SLCSR2	0x38	/* Slot Control & Status 2 Register */
+
+/*
+ * Other than Root Complex Integrated Endpoint and Root Complex Event Collector
+ * have link related registers.
+ */
+#define PCIE_HAS_LINKREGS(type) (((type) != PCIE_XCAP_TYPE_ROOT_INTEP) && \
+	    ((type) != PCIE_XCAP_TYPE_ROOT_EVNTC))
 
 /* Only root port and root complex event collector have PCIE_RCR & PCIE_RSR */
 #define PCIE_HAS_ROOTREGS(type) (((type) == PCIE_XCAP_TYPE_ROOT) || \
