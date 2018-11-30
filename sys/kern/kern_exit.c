@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.268.8.1 2018/04/12 13:42:48 martin Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.268.8.2 2018/11/30 10:32:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.268.8.1 2018/04/12 13:42:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.268.8.2 2018/11/30 10:32:22 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -661,6 +661,7 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 	if (child == NULL) {
 		mutex_exit(proc_lock);
 		*pid = 0;
+		*status = 0;
 		return error;
 	}
 	*pid = child->p_pid;
