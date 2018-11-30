@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2458 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2459 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -252,3 +252,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		which is supported by a combination of a new UEFI bootloader
 		(bootaa64.efi) and the addition of ACPI support in the
 		GENERIC64 kernel config. [jmcneill 20181124]
+	ena(4): Add support for Amazon.com Elastic Network Adapter (ENA).
+		[netbsd 20181130]
