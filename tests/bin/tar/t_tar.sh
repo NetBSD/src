@@ -1,4 +1,4 @@
-# $NetBSD: t_tar.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_tar.sh,v 1.2 2018/11/30 00:53:41 christos Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,7 +45,53 @@ append_body() {
 	atf_check -s eq:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
+atf_test_case rd_base256_size
+rd_base256_size_head() {
+	atf_set "descr" "Test extracting an archive whose member size" \
+	                "is encoded as base-256 number (GNU style)"
+}
+rd_base256_size_body() {
+	# prepare random file data for comparison
+	# take 0x1200CF bytes in order to test that we:
+	# - handle multiple bytes of size field correctly
+	# - do not fail on NUL bytes
+	# - do not fail on char values > 0x80 (with signed char)
+	dd if=/dev/urandom of=reference.bin bs=1179855 count=1
+	# write test archive header
+	# - filename
+	printf 'output.bin' > test.tar
+	# - pad to 100 octets
+	head -c 90 /dev/zero >> test.tar
+	# - mode, uid, gid
+	printf '%07d\0%07d\0%07d\0' 644 177776 177775 >> test.tar
+	# - size (base-256)
+	printf '\x80\0\0\0\0\0\0\0\0\x12\x00\xCF' >> test.tar
+	# - timestamp, checksum
+	printf '%011d\0%06d\0 0' 13377546642 12460 >> test.tar
+	# - pad empty linkname (100 octets)
+	head -c 100 /dev/zero >> test.tar
+	# - magic, user name
+	printf 'ustar  \0nobody' >> test.tar
+	# - pad user name field to 32 bytes
+	head -c 26 /dev/zero >> test.tar
+	# - group name
+	printf 'nogroup' >> test.tar
+	# - pad to full block
+	head -c 208 /dev/zero >> test.tar
+	# append file data to the test archive
+	cat reference.bin >> test.tar
+	# pad to full block + append two terminating null blocks
+	head -c 1450 /dev/zero >> test.tar
+
+	# test extracting the test archive
+	atf_check -s eq:0 -o empty -e empty tar -xf test.tar
+
+	# ensure that output.bin is equal to reference.bin
+	atf_check -s eq:0 -o empty -e empty cmp output.bin reference.bin
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case append
+	atf_add_test_case rd_base256_size
 }
