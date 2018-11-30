@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.207 2018/11/05 03:51:31 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.208 2018/11/30 08:19:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.207 2018/11/05 03:51:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.208 2018/11/30 08:19:45 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1791,7 +1791,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case PCIE_XCAP_TYPE_DOWN:	/* 0x6 */
 		printf("Downstream Port of PCI Express Switch\n");
 		check_slot = true;
-		check_rootport = true;
 		break;
 	case PCIE_XCAP_TYPE_PCIE2PCI:	/* 0x7 */
 		printf("PCI Express to PCI/PCI-X Bridge\n");
