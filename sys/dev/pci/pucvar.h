@@ -1,4 +1,4 @@
-/*	$NetBSD: pucvar.h,v 1.11 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.12 2018/11/30 16:26:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -95,6 +95,7 @@ struct puc_attach_args {
 
 	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	intrhandle;
+	bool			poll;
 	pcitag_t		tag;
 
 	bus_addr_t		a;

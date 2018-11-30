@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_puc.c,v 1.14 2014/03/29 19:28:24 christos Exp $ */
+/* $NetBSD: atppc_puc.c,v 1.15 2018/11/30 16:26:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_atppc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.14 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.15 2018/11/30 16:26:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,11 @@ atppc_puc_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;
+
+	if (aa->poll) {
+		aprint_error(": polling not supported\n");
+		return;
+	}
 
 	printf(": AT Parallel Port\n");
 
