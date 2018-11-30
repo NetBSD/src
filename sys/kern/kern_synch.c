@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.321 2018/11/28 19:46:22 mlelstv Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.322 2018/11/30 15:05:35 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.321 2018/11/28 19:46:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.322 2018/11/30 15:05:35 mlelstv Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -285,10 +285,6 @@ void
 preempt(void)
 {
 	struct lwp *l = curlwp;
-
-	/* check if the scheduler has another LWP to run */
-	if ((l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) == 0)
-		return;
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
