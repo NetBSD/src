@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.318 2018/11/30 17:52:11 jdolecek Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.319 2018/11/30 17:53:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.318 2018/11/30 17:52:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.319 2018/11/30 17:53:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3762,7 +3762,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	int counts[PCI_INTR_TYPE_SIZE] = {
 		[PCI_INTR_TYPE_INTX] = 1,
 		[PCI_INTR_TYPE_MSI] = 1,
-		[PCI_INTR_TYPE_MSIX] = 0, /* MSI-X will be used in future */
+		[PCI_INTR_TYPE_MSIX] = 1,
 	};
 	int max_type = PCI_INTR_TYPE_MSIX;
 
