@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.208 2018/11/30 08:19:45 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.209 2018/11/30 09:05:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.208 2018/11/30 08:19:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.209 2018/11/30 09:05:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1758,7 +1758,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	pcireg_t val; /* for each bitfield */
 	bool check_link = true;
 	bool check_slot = false;
-	bool check_rootport = false;
+	unsigned int pcie_devtype;
 	bool check_upstreamport = false;
 	unsigned int pciever;
 	unsigned int i;
@@ -1770,7 +1770,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	pciever = (unsigned int)(PCIE_XCAP_VER(reg));
 	printf("      Capability version: %u\n", pciever);
 	printf("      Device type: ");
-	switch (PCIE_XCAP_TYPE(reg)) {
+	pcie_devtype = PCIE_XCAP_TYPE(reg);
+	switch (pcie_devtype) {
 	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
 		printf("PCI Express Endpoint device\n");
 		check_upstreamport = true;
@@ -1782,7 +1783,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case PCIE_XCAP_TYPE_ROOT:	/* 0x4 */
 		printf("Root Port of PCI Express Root Complex\n");
 		check_slot = true;
-		check_rootport = true;
 		break;
 	case PCIE_XCAP_TYPE_UP:		/* 0x5 */
 		printf("Upstream Port of PCI Express Switch\n");
@@ -1808,7 +1808,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* 0xa */
 		printf("Root Complex Event Collector\n");
 		check_link = false;
-		check_rootport = true;
 		break;
 	default:
 		printf("unknown\n");
@@ -2081,7 +2080,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Data Link Layer State Changed", reg, PCIE_SLCSR_LACS);
 	}
 
-	if (check_rootport == true) {
+	if (PCIE_HAS_ROOTREGS(pcie_devtype)) {
 		/* Root Control Register */
 		reg = regs[o2i(capoff + PCIE_RCR)];
 		printf("    Root Control Register: 0x%04x\n", reg & 0xffff);
