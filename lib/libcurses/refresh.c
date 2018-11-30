@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.101 2018/11/18 02:46:24 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.102 2018/11/30 04:38:14 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.101 2018/11/18 02:46:24 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.102 2018/11/30 04:38:14 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1033,9 +1033,9 @@ putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
 
 	/* Disable auto margins temporarily. */
 	if (enter_am_mode && exit_am_mode) {
-		tputs(enter_am_mode, 0, __cputchar);
-		error = putch(nsp, csp, wy, wx);
 		tputs(exit_am_mode, 0, __cputchar);
+		error = putch(nsp, csp, wy, wx);
+		tputs(enter_am_mode, 0, __cputchar);
 		return error;
 	}
 
