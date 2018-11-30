@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.39 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: puc.c,v 1.40 2018/11/30 16:26:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.39 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.40 2018/11/30 16:26:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,7 @@ puc_attach(device_t parent, device_t self, void *aux)
 	pcireg_t subsys;
 	int i, barindex;
 	int locs[PUCCF_NLOCS];
+	bool poll = false;
 
 	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_desc = puc_find_description(PCI_VENDOR(pa->pa_id),
@@ -215,8 +216,7 @@ puc_attach(device_t parent, device_t self, void *aux)
 
 	/* Map interrupt. */
 	if (pci_intr_map(pa, &intrhandle)) {
-		aprint_error_dev(self, "couldn't map interrupt\n");
-		return;
+		poll = true;
 	}
 	/*
 	 * XXX the sub-devices establish the interrupts, for the
@@ -288,6 +288,7 @@ puc_attach(device_t parent, device_t self, void *aux)
 		paa.pc = pa->pa_pc;
 		paa.tag = pa->pa_tag;
 		paa.intrhandle = intrhandle;
+		paa.poll = poll;
 		paa.a = sc->sc_bar_mappings[barindex].a +
 		    sc->sc_desc->ports[i].offset;
 		paa.t = sc->sc_bar_mappings[barindex].t;
