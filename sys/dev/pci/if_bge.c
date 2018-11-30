@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.317 2018/11/27 19:17:02 bouyer Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.318 2018/11/30 17:52:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.317 2018/11/27 19:17:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.318 2018/11/30 17:52:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3372,8 +3372,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	const struct bge_product *bp;
 	const struct bge_revision *br;
 	pci_chipset_tag_t	pc;
-	int counts[PCI_INTR_TYPE_SIZE];
-	pci_intr_type_t intr_type, max_type;
 	const char		*intrstr = NULL;
 	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
 	uint32_t		command;
@@ -3761,17 +3759,18 @@ bge_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	/* MSI-X will be used in future */
-	counts[PCI_INTR_TYPE_MSI] = 1;
-	counts[PCI_INTR_TYPE_INTX] = 1;
-	/* Check MSI capability */
-	if (bge_can_use_msi(sc) != 0) {
-		max_type = PCI_INTR_TYPE_MSI;
-		sc->bge_flags |= BGEF_MSI;
-	} else
-		max_type = PCI_INTR_TYPE_INTX;
+	int counts[PCI_INTR_TYPE_SIZE] = {
+		[PCI_INTR_TYPE_INTX] = 1,
+		[PCI_INTR_TYPE_MSI] = 1,
+		[PCI_INTR_TYPE_MSIX] = 0, /* MSI-X will be used in future */
+	};
+	int max_type = PCI_INTR_TYPE_MSIX;
 
-alloc_retry:
+	if (!bge_can_use_msi(sc)) {
+		/* MSI broken, allow only INTx */
+		max_type = PCI_INTR_TYPE_INTX;
+	}
+
 	if (pci_intr_alloc(pa, &sc->bge_pihp, counts, max_type) != 0) {
 		aprint_error_dev(sc->bge_dev, "couldn't alloc interrupt\n");
 		return;
@@ -3784,31 +3783,27 @@ alloc_retry:
 	sc->bge_intrhand = pci_intr_establish_xname(pc, sc->bge_pihp[0],
 	    IPL_NET, bge_intr, sc, device_xname(sc->bge_dev));
 	if (sc->bge_intrhand == NULL) {
-		intr_type = pci_intr_type(pc, sc->bge_pihp[0]);
-		aprint_error_dev(sc->bge_dev,"unable to establish %s\n",
-		    (intr_type == PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
 		pci_intr_release(pc, sc->bge_pihp, 1);
-		switch (intr_type) {
-		case PCI_INTR_TYPE_MSI:
-			/* The next try is for INTx: Disable MSI */
-			max_type = PCI_INTR_TYPE_INTX;
-			counts[PCI_INTR_TYPE_INTX] = 1;
-			sc->bge_flags &= ~BGEF_MSI;
-			goto alloc_retry;
-		case PCI_INTR_TYPE_INTX:
-		default:
-			/* See below */
-			break;
-		}
-	}
+		sc->bge_pihp = NULL;
 
-	if (sc->bge_intrhand == NULL) {
-		aprint_error_dev(sc->bge_dev,
-		    "couldn't establish interrupt%s%s\n",
-		    intrstr ? " at " : "", intrstr ? intrstr : "");
+		aprint_error_dev(self, "couldn't establish interrupt");
+		if (intrstr != NULL)
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(sc->bge_dev, "interrupting at %s\n", intrstr);
+
+	switch (pci_intr_type(pc, sc->bge_pihp[0])) {
+	case PCI_INTR_TYPE_MSIX:
+	case PCI_INTR_TYPE_MSI:
+		KASSERT(bge_can_use_msi(sc));
+		sc->bge_flags |= BGEF_MSI;
+		break;
+	default:
+		/* nothing to do */
+		break;
+	}
 
 	/*
 	 * All controllers except BCM5700 supports tagged status but
