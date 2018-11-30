@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enavar.h,v 1.5 2018/11/28 19:06:54 jmcneill Exp $	*/
+/*	$NetBSD: if_enavar.h,v 1.6 2018/11/30 14:07:30 jmcneill Exp $	*/
 
 /*-
  * BSD LICENSE
@@ -273,6 +273,7 @@ struct ena_ring {
 			struct workqueue *cmpl_tq;
 		};
 	};
+	u_int task_pending;
 
 	union {
 		struct ena_stats_tx tx_stats;
@@ -472,16 +473,71 @@ getsbinuptime(void)
  */
 #define buf_ring_alloc(a, b, c, d)	(void *)&a
 #define drbr_free(ifp, b)		do { } while (0)
-#define drbr_flush(ifp, b)		do { } while (0)
-#define drbr_advance(ifp, b)		do { } while (0)
+#define drbr_flush(ifp, b)		IFQ_PURGE(&(ifp)->if_snd)
+#define drbr_advance(ifp, b)					\
+	({							\
+		struct mbuf *__m;				\
+		IFQ_DEQUEUE(&(ifp)->if_snd, __m);		\
+		__m;						\
+	})
 #define drbr_putback(ifp, b, m)		do { } while (0)
-#define drbr_empty(ifp, b)		false
-#define drbr_peek(ifp, b)		NULL
-#define drbr_enqueue(ifp, b, m)		0
+#define drbr_empty(ifp, b)		IFQ_IS_EMPTY(&(ifp)->if_snd)
+#define drbr_peek(ifp, b)					\
+	({							\
+		struct mbuf *__m;				\
+		IFQ_POLL(&(ifp)->if_snd, __m);			\
+		__m;						\
+	})
+#define drbr_enqueue(ifp, b, m)					\
+	({							\
+		int __err;					\
+		IFQ_ENQUEUE(&(ifp)->if_snd, m, __err);		\
+		__err;						\
+	})
 #define m_getjcl(a, b, c, d)		NULL
 #define MJUM16BYTES			MCLBYTES
-#define m_append(m, len, cp)		0
-#define m_collapse(m, how, maxfrags)	NULL
+#define m_append(m, len, cp)		ena_m_append(m, len, cp)
+#define m_collapse(m, how, maxfrags)	m_defrag(m, how)	/* XXX */
 /* XXX XXX XXX */
 
+static inline int
+ena_m_append(struct mbuf *m0, int len, const void *cpv)
+{
+	struct mbuf *m, *n;
+	int remainder, space;
+	const char *cp = cpv;
+
+	KASSERT(len != M_COPYALL);
+	for (m = m0; m->m_next != NULL; m = m->m_next)
+		continue;
+	remainder = len;
+	space = M_TRAILINGSPACE(m);
+	if (space > 0) {
+		/*
+		 * Copy into available space.
+		 */
+		if (space > remainder)
+			space = remainder;
+		memmove(mtod(m, char *) + m->m_len, cp, space);
+		m->m_len += space;
+		cp = cp + space, remainder -= space;
+	}
+	while (remainder > 0) {
+		/*
+		 * Allocate a new mbuf; could check space
+		 * and allocate a cluster instead.
+		 */
+		n = m_get(M_DONTWAIT, m->m_type);
+		if (n == NULL)
+			break;
+		n->m_len = uimin(MLEN, remainder);
+		memmove(mtod(n, void *), cp, n->m_len);
+		cp += n->m_len, remainder -= n->m_len;
+		m->m_next = n;
+		m = n;
+	}
+	if (m0->m_flags & M_PKTHDR)
+		m0->m_pkthdr.len += len - remainder;
+	return (remainder == 0);
+}
 #endif /* !(ENA_H) */
