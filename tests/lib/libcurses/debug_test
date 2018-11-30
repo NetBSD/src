@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# Set up the environment to run the test frame.  Option flags:
+#
+# -c : Set up curses tracing, assumes the curses lib has been built with
+#      debug enabled.  Default trace mask traces input, can be overridden
+#      by setting the trace mask in the environment before calling the
+#      script.
+# -s : Specify the slave command.  Defaults to "../slave/slave"
+# -v : Enable verbose output
+#
+BASEDIR="/usr/tests/lib/libcurses"
+CHECK_PATH="${BASEDIR}/check_files/"
+export CHECK_PATH
+INCLUDE_PATH="${BASEDIR}/tests/"
+export INCLUDE_PATH
+#
+SLAVE="${BASEDIR}/slave"
+#
+ARGS=""
+#
+while /usr/bin/true
+do
+    case $1 in
+	-c)
+	    CURSES_TRACE_FILE="/tmp/ctrace"
+	    if [ "X$CURSES_TRACE_MASK" = "X" ]; then
+		CURSES_TRACE_MASK=0x00000082
+	    fi
+	    export CURSES_TRACE_FILE
+	    export CURSES_TRACE_MASK
+	    ;;
+
+	-s)
+	    SLAVE=$2
+	    shift
+	    ;;
+
+	-v)
+	    ARGS="-v"
+	    ;;
+
+	*)
+	    break
+	    ;;
+    esac
+
+    shift
+done
+#
+exec ${BASEDIR}/director ${ARGS} -s ${SLAVE} ${INCLUDE_PATH}/$@
