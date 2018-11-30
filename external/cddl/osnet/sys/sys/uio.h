@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.11 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: uio.h,v 1.12 2018/11/30 09:53:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -107,23 +107,35 @@ zfs_uiomove(void *cp, size_t n, enum uio_rw dir, uio_t *uio)
 	return (uiomove(cp, n, uio));
 }
 
+#define	ZFS_MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+
 static __inline int
 zfs_uiocopy(void *cp, size_t n, enum uio_rw dir, uio_t *uio, size_t *cbytes)
 {
-	uio_t uio2;
-	int err;
-	
-	memcpy(&uio2, uio, sizeof(*uio));
-	assert(uio->uio_rw == dir);
-	if ((err = uiomove(cp, n, &uio2)) != 0)
-		return err;
+	uio_t auio;
+	struct iovec aiov;
+	size_t cnt;
+	int i, error;
 
-	*cbytes = (size_t)(uio->uio_resid - uio2.uio_resid);
+	*cbytes = 0;
+	memcpy(&auio, uio, sizeof(*uio));
+	for (i = 0; i < uio->uio_iovcnt && n > 0; i++) {
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		aiov = uio->uio_iov[i];
+		cnt = ZFS_MIN(aiov.iov_len, n);
+		if (cnt == 0)
+			continue;
+		error = uiomove(cp, cnt, &auio);
+		if (error)
+			return error;
+		cp = (char *)cp + cnt;
+		n -= cnt;
+		*cbytes += cnt;
+	}
 
-	return (0);
+	return 0;
 }
-
-#define	ZFS_MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
 
 static __inline void
 zfs_uioskip(uio_t *uiop, size_t n)
