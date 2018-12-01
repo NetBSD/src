@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.24 2017/08/21 13:20:49 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.25 2018/12/01 01:21:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@
 
 union node *parsecmd(int);
 void fixredir(union node *, const char *, int);
-int goodname(char *);
+int goodname(const char *);
 const char *getprompt(void *);
 const char *expandstr(char *, int);
 
