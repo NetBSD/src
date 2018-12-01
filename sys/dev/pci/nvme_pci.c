@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.23 2018/12/01 13:31:48 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.24 2018/12/01 13:32:55 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.23 2018/12/01 13:31:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.24 2018/12/01 13:32:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 	if (counts[PCI_INTR_TYPE_MSIX] < 1) {
 		counts[PCI_INTR_TYPE_MSIX] = 0;
 	} else if (!nvme_pci_mq || !nvme_pci_mpsafe) {
-		if (counts[PCI_INTR_TYPE_MSI] > 2)
+		if (counts[PCI_INTR_TYPE_MSIX] > 2)
 			counts[PCI_INTR_TYPE_MSIX] = 2;	/* adminq + 1 ioq */
 	}
 
