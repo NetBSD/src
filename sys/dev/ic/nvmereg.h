@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.12 2018/12/01 15:07:58 jdolecek Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.13 2018/12/01 18:25:39 jdolecek Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -519,7 +519,7 @@ struct nvm_identify_controller {
 	uint16_t	oncs;		/* Optional NVM Command Support */
 #define	NVME_ID_CTRLR_ONCS_TIMESTAMP	__BIT(6)
 #define	NVME_ID_CTRLR_ONCS_RESERVATION	__BIT(5)
-#define	NVME_ID_CTRLR_ONCS_SAVE		__BIT(4)
+#define	NVME_ID_CTRLR_ONCS_SET_FEATURES	__BIT(4)
 #define	NVME_ID_CTRLR_ONCS_WRITE_ZERO	__BIT(3)
 #define	NVME_ID_CTRLR_ONCS_DSM		__BIT(2)
 #define	NVME_ID_CTRLR_ONCS_WRITE_UNC	__BIT(1)
