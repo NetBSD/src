@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.264 2018/12/01 01:51:38 msaitoh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.265 2018/12/01 02:08:16 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.264 2018/12/01 01:51:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.265 2018/12/01 02:08:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -449,8 +449,7 @@ config_interrupts_thread(void *cookie)
 		dc->dc_dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 		if (!device_pmf_is_registered(dc->dc_dev))
 			aprint_debug_dev(dc->dc_dev,
-			    "WARNING: power management not supported\n",
-			    device_xname(dc->dc_dev));
+			    "WARNING: power management not supported\n");
 		config_pending_decr(dc->dc_dev);
 		kmem_free(dc, sizeof(*dc));
 	}
