@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.11 2018/04/18 10:10:26 nonaka Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.12 2018/12/01 15:07:58 jdolecek Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -230,7 +230,6 @@ NVME_CTASSERT(sizeof(struct nvme_sqe_io) == 64, "bad size for nvme_sqe_io");
 
 struct nvme_cqe {
 	uint32_t	cdw0;
-#define NVME_CQE_CDW0_VWC_WCE	__BIT(1)	/* Volatile Write Cache Enable */
 
 	uint32_t	_reserved;
 
@@ -368,6 +367,10 @@ NVME_CTASSERT(sizeof(struct nvme_cqe) == 16, "bad size for nvme_cqe");
 #define NVM_FEAT_RESERVATION_PERSISTANCE	0x83
 /* 0x84-0xBF - command set specific (reserved) */
 /* 0xC0-0xFF - vendor specific */
+
+#define NVM_SET_FEATURES_SV		__BIT(31)	/* Persist */
+
+#define NVM_VOLATILE_WRITE_CACHE_WCE	__BIT(0) 	/* Write Cache Enable */
 
 /* Power State Descriptor Data */
 struct nvm_identify_psd {
@@ -514,8 +517,9 @@ struct nvm_identify_controller {
 	uint32_t	nn;		/* Number of Namespaces */
 
 	uint16_t	oncs;		/* Optional NVM Command Support */
+#define	NVME_ID_CTRLR_ONCS_TIMESTAMP	__BIT(6)
 #define	NVME_ID_CTRLR_ONCS_RESERVATION	__BIT(5)
-#define	NVME_ID_CTRLR_ONCS_SET_FEATURES	__BIT(4)
+#define	NVME_ID_CTRLR_ONCS_SAVE		__BIT(4)
 #define	NVME_ID_CTRLR_ONCS_WRITE_ZERO	__BIT(3)
 #define	NVME_ID_CTRLR_ONCS_DSM		__BIT(2)
 #define	NVME_ID_CTRLR_ONCS_WRITE_UNC	__BIT(1)
