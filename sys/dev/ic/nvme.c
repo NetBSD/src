@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.39 2018/04/18 10:11:45 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.40 2018/12/01 08:03:44 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.39 2018/04/18 10:11:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.40 2018/12/01 08:03:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1409,7 +1409,13 @@ nvme_q_create(struct nvme_softc *sc, struct nvme_queue *q)
 	if (rv != 0)
 		goto fail;
 
+	nvme_ccb_put(sc->sc_admin_q, ccb);
+	return 0;
+
 fail:
+	if (sc->sc_use_mq)
+		sc->sc_intr_disestablish(sc, q->q_id);
+
 	nvme_ccb_put(sc->sc_admin_q, ccb);
 	return rv;
 }
