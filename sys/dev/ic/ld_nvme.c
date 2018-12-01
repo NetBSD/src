@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.20 2018/04/18 10:11:45 nonaka Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.21 2018/12/01 15:07:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.20 2018/04/18 10:11:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.21 2018/12/01 15:07:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,14 @@ ld_nvme_getcache(struct ld_softc *ld, int *addr)
 }
 
 static int
+ld_nvme_setcache(struct ld_softc *ld, int addr)
+{
+	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
+
+	return nvme_admin_setcache(sc->sc_nvme, addr);
+}
+
+static int
 ld_nvme_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
 {
 	int error;
@@ -211,6 +219,10 @@ ld_nvme_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool po
 
 	case DIOCGCACHE:
 		error = ld_nvme_getcache(ld, (int *)addr);
+		break;
+
+	case DIOCSCACHE:
+		error = ld_nvme_setcache(ld, *(int *)addr);
 		break;
 
 	default:
