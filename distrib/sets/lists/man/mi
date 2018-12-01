@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1628 2018/11/24 18:37:50 bouyer Exp $
+# $NetBSD: mi,v 1.1629 2018/12/01 11:17:28 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1058,6 +1058,7 @@
 ./usr/share/man/cat4/emips/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/emuxki.0			man-sys-catman		.cat
 ./usr/share/man/cat4/en.0			man-obsolete		obsolete
+./usr/share/man/cat4/ena.0			man-sys-catman		.cat
 ./usr/share/man/cat4/envsys.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ep.0			man-sys-catman		.cat
 ./usr/share/man/cat4/epic.0			man-sys-catman		.cat
@@ -4211,6 +4212,7 @@
 ./usr/share/man/html4/emips/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/emuxki.html		man-sys-htmlman		html
 ./usr/share/man/html4/en.html			man-obsolete		obsolete
+./usr/share/man/html4/ena.html			man-sys-htmlman		html
 ./usr/share/man/html4/envsys.html		man-sys-htmlman		html
 ./usr/share/man/html4/ep.html			man-sys-htmlman		html
 ./usr/share/man/html4/epic.html			man-sys-htmlman		html
@@ -7136,6 +7138,7 @@
 ./usr/share/man/man4/emips/intro.4		man-sys-man		.man
 ./usr/share/man/man4/emuxki.4			man-sys-man		.man
 ./usr/share/man/man4/en.4			man-obsolete		obsolete
+./usr/share/man/man4/ena.4			man-sys-man		.man
 ./usr/share/man/man4/envsys.4			man-sys-man		.man
 ./usr/share/man/man4/ep.4			man-sys-man		.man
 ./usr/share/man/man4/epic.4			man-sys-man		.man
