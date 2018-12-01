@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdbr.3,v 1.5 2017/10/24 17:01:15 abhinav Exp $
+.\"	$NetBSD: cdbr.3,v 1.6 2018/12/01 02:43:43 kamil Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd October 24, 2017
+.Dd December 1, 2018
 .Dt CDBR 3
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Fo cdbr_open_mem
 .Fa "void *base"
 .Fa "size_t size"
+.Fa "int flags"
 .Fa "void (*unmap)(void *, void *, size_t)"
 .Fa "void *cookie"
 .Fc
