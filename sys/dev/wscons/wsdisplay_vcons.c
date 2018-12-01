@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.38 2017/06/02 19:33:51 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.39 2018/12/01 00:28:45 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.38 2017/06/02 19:33:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.39 2018/12/01 00:28:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ static void vcons_unlock(struct vcons_screen *);
 #ifdef VCONS_DRAW_INTR
 static void vcons_intr(void *);
 static void vcons_softintr(void *);
-static void vcons_intr_enable(device_t);
+static void vcons_init_thread(void *);
 #endif
 
 int
@@ -180,8 +180,11 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	callout_setfunc(&vd->intr, vcons_intr, vd);
 	vd->intr_valid = 1;
 
-	/* XXX assume that the 'dev' arg is never dereferenced */
-	config_interrupts((device_t)vd, vcons_intr_enable);
+	if (kthread_create(PRI_NONE, 0, NULL, vcons_init_thread, vd, NULL,
+	    "vcons_init") != 0) {
+		printf("%s: unable to create thread.\n", __func__);
+		return -1;
+	}
 #endif
 	return 0;
 }
@@ -1456,12 +1459,13 @@ vcons_softintr(void *cookie)
 }
 
 static void
-vcons_intr_enable(device_t dev)
+vcons_init_thread(void *cookie)
 {
-	/* the 'dev' arg we pass to config_interrupts isn't a device_t */
-	struct vcons_data *vd = (struct vcons_data *)dev;
+	struct vcons_data *vd = (struct vcons_data *)cookie;
+
 	vd->use_intr = 2;
 	callout_schedule(&vd->intr, mstohz(33));
+	kthread_exit(0);
 }
 #endif /* VCONS_DRAW_INTR */
 
