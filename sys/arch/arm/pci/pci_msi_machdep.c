@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.c,v 1.4 2018/11/27 20:08:05 jdolecek Exp $ */
+/* $NetBSD: pci_msi_machdep.c,v 1.5 2018/12/01 20:38:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.4 2018/11/27 20:08:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5 2018/12/01 20:38:45 skrll Exp $");
 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -212,9 +212,8 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *
 	if (msix_count == -1)
 		msix_count = pci_msix_count(pa->pa_pc, pa->pa_tag);
 	if (msix_count > 0 && (error = pci_msix_alloc_exact(pa, ihps, msix_count)) == 0) {
-		if (counts == NULL)
-			return EINVAL;
-		counts[PCI_INTR_TYPE_MSIX] = msix_count;
+		if (counts != NULL)
+			counts[PCI_INTR_TYPE_MSIX] = msix_count;
 		return 0;
 	}
 
