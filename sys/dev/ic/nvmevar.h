@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.17 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.18 2018/12/01 15:07:58 jdolecek Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -186,3 +186,4 @@ int	nvme_ns_dobio(struct nvme_softc *, uint16_t, void *,
     struct buf *, void *, size_t, int, daddr_t, int, nvme_nnc_done);
 int	nvme_ns_sync(struct nvme_softc *, uint16_t, int);
 int	nvme_admin_getcache(struct nvme_softc *, int *);
+int	nvme_admin_setcache(struct nvme_softc *, int);
