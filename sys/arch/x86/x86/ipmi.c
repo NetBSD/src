@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.67 2018/10/14 17:37:40 jdolecek Exp $ */
+/*	$NetBSD: ipmi.c,v 1.68 2018/12/01 01:56:30 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.67 2018/10/14 17:37:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.68 2018/12/01 01:56:30 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2143,6 +2143,7 @@ ipmi_thread(void *cookie)
 		}
 	}
 	mutex_exit(&sc->sc_poll_mtx);
+	self->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 	kthread_exit(0);
 }
 
@@ -2167,7 +2168,8 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	if (kthread_create(PRI_NONE, 0, NULL, ipmi_thread, self,
 	    &sc->sc_kthread, "%s", device_xname(self)) != 0) {
 		aprint_error_dev(self, "unable to create thread, disabled\n");
-	}
+	} else
+		self->dv_flags |= DVF_ATTACH_INPROGRESS;
 }
 
 static int

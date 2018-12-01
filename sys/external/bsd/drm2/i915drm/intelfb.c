@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.15 2018/08/27 15:09:35 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.16 2018/12/01 01:56:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.15 2018/08/27 15:09:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.16 2018/12/01 01:56:30 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -119,6 +119,7 @@ intelfb_attach(device_t parent, device_t self, void *aux)
 		    error);
 		goto fail1;
 	}
+	self->dv_flags |= DVF_ATTACH_INPROGRESS;
 	sc->sc_scheduled = true;
 
 	/* Success!  */
@@ -181,7 +182,7 @@ intelfb_attach_task(struct i915drmkms_task *task)
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "failed to attach drmfb: %d\n",
 		    error);
-		return;
+		goto out;
 	}
 
 	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, &intelfb_shutdown))
@@ -189,6 +190,8 @@ intelfb_attach_task(struct i915drmkms_task *task)
 		    "failed to register shutdown handler\n");
 
 	sc->sc_attached = true;
+out:
+	sc->sc_dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 }
 
 static bool
