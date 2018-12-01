@@ -29,7 +29,7 @@ TLS offset computation. If such alternative entry points exist (currently
 only i386), also add a weak reference to 0 in src/lib/libc/tls/tls.c.
 
 The generic implementation can be found in tls.c and is used with
-__HAVE_COMMON___TLS_GET_ADDR. It depends on ___lwp_getprivate_fast
+__HAVE_COMMON___TLS_GET_ADDR. It depends on __lwp_getprivate_fast
 (see below).
 
 (5) Implement the necessary relocation records in mdreloc.c.  There are
@@ -59,7 +59,7 @@ def->st_value - defobj->tlsoffset + rela->r_addend
 
 e.g. starting offset is counting down from the TCB.
 
-(6) Implement _lwp_getprivate_fast() in machine/mcontext.h and set
+(6) Implement __lwp_getprivate_fast() in machine/mcontext.h and set
 __HAVE___LWP_GETPRIVATE_FAST in machine/types.h.
 
 (7) Test using src/tests/lib/libc/tls.  Make sure with "objdump -R" that
