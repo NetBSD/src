@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.17 2018/10/07 23:17:52 rillig Exp $	*/
+/*	$NetBSD: alias.c,v 1.18 2018/12/01 01:20:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.17 2018/10/07 23:17:52 rillig Exp $");
+__RCSID("$NetBSD: alias.c,v 1.18 2018/12/01 01:20:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,11 +143,11 @@ unalias(char *name)
 				ckfree(ap);
 				INTON;
 			}
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 #ifdef mkinit
@@ -187,12 +187,12 @@ lookupalias(const char *name, int check)
 	for (; ap; ap = ap->next) {
 		if (equal(name, ap->name)) {
 			if (check && (ap->flag & ALIASINUSE))
-				return (NULL);
-			return (ap);
+				return NULL;
+			return ap;
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 const char *
@@ -256,7 +256,7 @@ aliascmd(int argc, char **argv)
 
 	if (argc == 1) {
 		list_aliases();
-		return (0);
+		return 0;
 	}
 
 	while ((n = *++argv) != NULL) {
@@ -275,7 +275,7 @@ aliascmd(int argc, char **argv)
 		}
 	}
 
-	return (ret);
+	return ret;
 }
 
 int
@@ -286,13 +286,13 @@ unaliascmd(int argc, char **argv)
 	while ((i = nextopt("a")) != '\0') {
 		if (i == 'a') {
 			rmaliases();
-			return (0);
+			return 0;
 		}
 	}
 	for (i = 0; *argptr; argptr++)
 		i = unalias(*argptr);
 
-	return (i);
+	return i;
 }
 
 STATIC struct alias **
