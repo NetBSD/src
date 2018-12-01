@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.154 2018/12/01 01:21:06 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.155 2018/12/01 07:02:23 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.154 2018/12/01 01:21:06 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.155 2018/12/01 07:02:23 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ STATIC union node *andor(void);
 STATIC union node *pipeline(void);
 STATIC union node *command(void);
 STATIC union node *simplecmd(union node **, union node *);
-STATIC union node *makename(int);
+STATIC union node *makeword(int);
 STATIC void parsefname(void);
 STATIC int slurp_heredoc(char *const, const int, const int);
 STATIC void readheredocs(void);
@@ -411,7 +411,7 @@ command(void)
 		if (lasttoken==TWORD && !quoteflag && equal(wordtext,"in")) {
 			app = &ap;
 			while (readtoken() == TWORD) {
-				n2 = makename(startlinno);
+				n2 = makeword(startlinno);
 				*app = n2;
 				app = &n2->narg.next;
 			}
@@ -454,7 +454,7 @@ command(void)
 		n1->type = NCASE;
 		n1->ncase.lineno = startlinno - elided_nl;
 		consumetoken(TWORD);
-		n1->ncase.expr = makename(startlinno);
+		n1->ncase.expr = makeword(startlinno);
 		linebreak();
 		if (lasttoken != TWORD || !equal(wordtext, "in"))
 			synexpect(-1, "in");
@@ -487,7 +487,7 @@ command(void)
 			for (;;) {
 				if (lasttoken < TWORD)
 					synexpect(TWORD, 0);
-				*app = ap = makename(startlinno);
+				*app = ap = makeword(startlinno);
 				checkkwd = 2;
 				if (readtoken() != TPIPE)
 					break;
@@ -649,7 +649,7 @@ simplecmd(union node **rpp, union node *redir)
 		if (readtoken() == TWORD) {
 			if (line == 0)
 				line = startlinno;
-			n = makename(startlinno);
+			n = makeword(startlinno);
 			*app = n;
 			app = &n->narg.next;
 		} else if (lasttoken == TREDIR) {
@@ -707,7 +707,7 @@ simplecmd(union node **rpp, union node *redir)
 }
 
 STATIC union node *
-makename(int lno)
+makeword(int lno)
 {
 	union node *n;
 
@@ -737,7 +737,7 @@ fixredir(union node *n, const char *text, int err)
 		if (err)
 			synerror("Bad fd number");
 		else
-			n->ndup.vname = makename(startlinno - elided_nl);
+			n->ndup.vname = makeword(startlinno - elided_nl);
 	}
 }
 
@@ -788,7 +788,7 @@ parsefname(void)
 	} else if (n->type == NTOFD || n->type == NFROMFD) {
 		fixredir(n, wordtext, 0);
 	} else {
-		n->nfile.fname = makename(startlinno - elided_nl);
+		n->nfile.fname = makeword(startlinno - elided_nl);
 	}
 }
 
@@ -960,13 +960,7 @@ readheredocs(void)
 		l = slurp_heredoc(here->eofmark, here->striptabs,
 		    here->here->nhere.type == NHERE);
 
-		n = stalloc(sizeof(struct narg));
-		n->narg.type = NARG;
-		n->narg.next = NULL;
-		n->narg.text = wordtext;
-		n->narg.lineno = line;
-		n->narg.backquote = backquotelist;
-		here->here->nhere.doc = n;
+		here->here->nhere.doc = n = makeword(line);
 
 		if (here->here->nhere.type == NHERE)
 			continue;
