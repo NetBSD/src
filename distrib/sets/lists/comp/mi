@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2239 2018/11/19 01:08:21 uwe Exp $
+#	$NetBSD: mi,v 1.2240 2018/12/01 02:43:43 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6064,6 +6064,7 @@
 ./usr/share/man/cat3/cdbr_find.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cdbr_get.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cdbr_open.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbr_open_mem.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cdbw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cdbw_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cdbw_open.0		comp-c-catman		.cat
@@ -14013,6 +14014,7 @@
 ./usr/share/man/html3/cdbr_find.html		comp-c-htmlman		html
 ./usr/share/man/html3/cdbr_get.html		comp-c-htmlman		html
 ./usr/share/man/html3/cdbr_open.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbr_open_mem.html	comp-c-htmlman		html
 ./usr/share/man/html3/cdbw.html			comp-c-htmlman		html
 ./usr/share/man/html3/cdbw_close.html		comp-c-htmlman		html
 ./usr/share/man/html3/cdbw_open.html		comp-c-htmlman		html
@@ -21820,6 +21822,7 @@
 ./usr/share/man/man3/cdbr_find.3		comp-c-man		.man
 ./usr/share/man/man3/cdbr_get.3			comp-c-man		.man
 ./usr/share/man/man3/cdbr_open.3		comp-c-man		.man
+./usr/share/man/man3/cdbr_open_mem.3		comp-c-man		.man
 ./usr/share/man/man3/cdbw.3			comp-c-man		.man
 ./usr/share/man/man3/cdbw_close.3		comp-c-man		.man
 ./usr/share/man/man3/cdbw_open.3		comp-c-man		.man
