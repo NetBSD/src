@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.153 2018/11/18 17:23:37 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.154 2018/12/01 01:21:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.153 2018/11/18 17:23:37 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.154 2018/12/01 01:21:06 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2254,9 +2254,9 @@ noexpand(char *text)
  */
 
 int
-goodname(char *name)
+goodname(const char *name)
 {
-	char *p;
+	const char *p;
 
 	p = name;
 	if (! is_name(*p))
