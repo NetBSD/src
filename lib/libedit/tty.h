@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.22 2018/01/01 22:32:46 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.23 2018/12/02 16:58:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -464,6 +464,7 @@ libedit_private int	tty_cookedmode(EditLine *);
 libedit_private int	tty_quotemode(EditLine *);
 libedit_private int	tty_noquotemode(EditLine *);
 libedit_private void	tty_bind_char(EditLine *, int);
+libedit_private int	tty_get_signal_character(EditLine *, int);
 
 typedef struct {
     ttyperm_t t_t;
