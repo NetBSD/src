@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.66 2018/12/02 18:12:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.66 2018/12/02 18:12:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,7 +684,8 @@ pcn_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, pcn_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, pcn_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
