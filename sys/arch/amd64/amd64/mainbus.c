@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.38 2017/05/23 08:54:38 nonaka Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.38 2017/05/23 08:54:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.38 2017/05/23 08:54:38 nonaka Exp $");
 #include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
+#ifdef __HAVE_PCI_MSI_MSIX
 #include <arch/x86/pci/msipic.h>
+#endif /* __HAVE_PCI_MSI_MSIX */
 #endif
 
 /*
@@ -179,7 +181,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
+#ifdef __HAVE_PCI_MSI_MSIX
 	msipic_init();
+#endif
 
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
@@ -209,9 +213,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (acpi_present)
 		mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
-#endif
 
 	if (!mpacpi_active) {
+#endif		
 #ifdef MPBIOS
 		if (mpbios_present)
 			mpbios_scan(self, &numcpus);
@@ -227,7 +231,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
                         
 			config_found_ia(self, "cpubus", &caa, mainbus_print);
 		}
+#if NACPICA > 0		
 	}
+#endif
 
 #if NISADMA > 0 && NACPICA > 0
 	/*
