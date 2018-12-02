@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.286 2018/08/03 02:34:31 kamil Exp $
+#	$NetBSD: bsd.sys.mk,v 1.287 2018/12/02 21:00:13 maxv Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -231,6 +231,14 @@ CPUFLAGS+=	-Wa,--fatal-warnings
 #.endif
 CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
+
+.if ${KLEAK:U0} > 0
+KLEAKFLAGS=	-fsanitize-coverage=trace-pc
+.for f in subr_kleak.c
+KLEAKFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KLEAKFLAGS.${.IMPSRC:T}:U${KLEAKFLAGS}}
+.endif
 
 .if !defined(NOPIE) && (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 # Position Independent Executable flags

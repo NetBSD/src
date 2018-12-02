@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 2018/08/22 12:07:43 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.27 2018/12/02 21:00:13 maxv Exp $	*/
 
 #ifdef __x86_64__
 
@@ -11,6 +11,7 @@
 #include <machine/cpu.h>
 #if defined(_KERNEL_OPT)
 #include "opt_kasan.h"
+#include "opt_kleak.h"
 #endif
 #endif
 
@@ -61,7 +62,7 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#ifdef KASAN
+#if defined(KASAN) || defined(KLEAK)
 #define	UPAGES		8
 #elif defined(DIAGNOSTIC)
 #define	UPAGES		5		/* pages of u-area (1 for redzone) */
