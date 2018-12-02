@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.508 2018/11/24 18:23:29 bouyer Exp $
+# $NetBSD: GENERIC,v 1.509 2018/12/02 21:00:13 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.508 $"
+#ident		"GENERIC-$Revision: 1.509 $"
 
 maxusers	64		# estimated number of users
 
@@ -124,6 +124,10 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #makeoptions 	KASAN=1		# Kernel Address Sanitizer
 #options 	KASAN
 #no options	SVS
+
+# Kernel Info Leak Detector.
+#makeoptions 	KLEAK=1
+#options 	KLEAK
 
 # Compatibility options
 # x86_64 never shipped with a.out binaries; the two options below are
