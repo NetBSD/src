@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.279 2018/10/05 22:12:37 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.280 2018/12/02 21:00:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -43,6 +43,7 @@
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_gprof.h"
+#include "opt_kleak.h"
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
@@ -268,6 +269,18 @@ int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
 int	copyout(const void *, void *, size_t);
+
+#ifdef KLEAK
+#define copyout		kleak_copyout
+#define copyoutstr	kleak_copyoutstr
+int	kleak_copyout(const void *, void *, size_t);
+int	kleak_copyoutstr(const void *, void *, size_t, size_t *);
+void	kleak_fill_area(void *, size_t);
+void	kleak_fill_stack(void);
+#else
+#define kleak_fill_area(a, b)	__nothing
+#define kleak_fill_stack()	__nothing
+#endif
 
 #ifdef _KERNEL
 typedef	int	(*copyin_t)(const void *, void *, size_t);
