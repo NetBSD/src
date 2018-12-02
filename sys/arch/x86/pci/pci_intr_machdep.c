@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.47 2018/11/27 21:03:50 jdolecek Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.48 2018/12/02 08:19:44 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.47 2018/11/27 21:03:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.48 2018/12/02 08:19:44 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.47 2018/11/27 21:03:50 jdolec
 #include <machine/mpbiosvar.h>
 #include <machine/pic.h>
 #include <x86/pci/pci_msi_machdep.h>
+#else
+#include <machine/i82093var.h>
 #endif
 
 #ifdef MPBIOS
@@ -232,8 +234,10 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 		    buf, len);
 	}
 
+#if defined(__HAVE_PCI_MSI_MSIX)	
 	if (INT_VIA_MSI(ih))
 		return x86_pci_msi_string(pc, ih, buf, len);
+#endif
 
 	return intr_string(ih & ~MPSAFE_MASK, buf, len);
 }
@@ -319,6 +323,8 @@ pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 		    pc, ih, level, func, arg);
 	}
 
+
+#ifdef __HAVE_PCI_MSI_MSIX
 	if (INT_VIA_MSI(ih)) {
 		if (MSI_INT_IS_MSIX(ih))
 			return x86_pci_msix_establish(pc, ih, level, func, arg,
@@ -327,7 +333,7 @@ pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 			return x86_pci_msi_establish(pc, ih, level, func, arg,
 			    xname);
 	}
-
+#endif
 	if (pci_intr_find_intx_irq(ih, &irq, &pic, &pin)) {
 		aprint_normal("%s: bad pic %d\n", __func__,
 		    APIC_IRQ_APIC(ih));

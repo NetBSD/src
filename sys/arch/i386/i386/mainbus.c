@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.103 2017/05/23 08:54:38 nonaka Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.103 2017/05/23 08:54:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.103 2017/05/23 08:54:38 nonaka Exp $")
 #include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
+#ifdef __HAVE_PCI_MSI_MSIX
 #include <arch/x86/pci/msipic.h>
+#endif /* __HAVE_PCI_MSI_MSIX */
 #endif
 
 void	mainbus_childdetached(device_t, device_t);
