@@ -1,3 +1,5 @@
+.\" $NetBSD: ena.4,v 1.2 2018/12/02 10:06:45 wiz Exp $
+.\"
 .\" Copyright (c) 2015-2017 Amazon.com, Inc. or its affiliates.
 .\" All rights reserved.
 .\"
@@ -25,14 +27,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $NetBSD: ena.4,v 1.1 2018/12/01 11:17:28 jdolecek Exp $
-.\"
 .Dd December 1, 2018
 .Dt ENA 4
 .Os
 .Sh NAME
 .Nm ena
-.Nd "NetBSD kernel driver for Elastic Network Adapter (ENA) family"
+.Nd NetBSD kernel driver for Elastic Network Adapter (ENA) family
 .Sh SYNOPSIS
 .Cd "ena* at pci? dev ? function ?"
 .Sh DESCRIPTION
@@ -47,7 +47,8 @@ The driver supports a range of ENA devices, is link-speed independent
 (i.e., the same driver is used for 10GbE, 25GbE, 40GbE, etc.), and has
 a negotiated and extendable feature set.
 .Pp
-Some ENA devices support SR-IOV. This driver is used for both the
+Some ENA devices support SR-IOV.
+This driver is used for both the
 SR-IOV Physical Function (PF) and Virtual Function (VF) devices.
 .Pp
 The ENA devices enable high speed and low overhead network traffic
@@ -70,8 +71,8 @@ to recover in a manner transparent to the application, as well as
 debug logs.
 .Pp
 Some of the ENA devices support a working mode called Low-latency
-Queue (LLQ), which saves several more microseconds. This feature might
-be implemented for driver in future releases.
+Queue (LLQ), which saves several more microseconds.
+This feature might be implemented for the driver in future releases.
 .Sh HARDWARE
 Supported PCI vendor ID/device IDs:
 .Pp
@@ -92,6 +93,7 @@ Supported PCI vendor ID/device IDs:
 .Xr pci 4 ,
 .Xr ifconfig 8
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was originally written by
