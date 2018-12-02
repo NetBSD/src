@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.135 2018/10/24 03:51:21 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.136 2018/12/02 08:19:44 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.135 2018/10/24 03:51:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.136 2018/12/02 08:19:44 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -184,7 +184,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.135 2018/10/24 03:51:21 cherry Exp $");
 #include <x86/pci/msipic.h>
 #include <x86/pci/pci_msi_machdep.h>
 
-#if NPCI == 0
+#if NPCI == 0 || !defined(__HAVE_PCI_MSI_MSIX)
 #define msipic_is_msi_pic(PIC)	(false)
 #endif
 
@@ -500,6 +500,7 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t l
 	int ih = 0;
 
 #if NPCI > 0
+#if defined(__HAVE_PCI_MSI_MSIX)	
 	if ((pic->pic_type == PIC_MSI) || (pic->pic_type == PIC_MSIX)) {
 		uint64_t pih;
 		int dev, vec;
@@ -516,6 +517,7 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t l
 
 		return x86_pci_msi_string(NULL, pih, buf, len);
 	}
+#endif /* __HAVE_PCI_MSI_MSIX */	
 #endif
 
 #if defined(XEN)
