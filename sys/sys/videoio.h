@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.10 2017/10/02 13:47:58 jmcneill Exp $ */
+/* $NetBSD: videoio.h,v 1.11 2018/12/02 00:40:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,6 +38,8 @@
 #endif
 
 #ifndef _KERNEL
+#ifndef __linux_sized_types__
+#define __linux_sized_types__
 #define __u64	uint64_t
 #define __u32	uint32_t
 #define __u16	uint16_t
@@ -46,6 +48,7 @@
 #define __s32	int32_t
 #define __s16	int16_t
 #define __s8	int8_t
+#endif /* __linux_sized_types__ */
 #endif
 
 typedef uint64_t v4l2_std_id;
