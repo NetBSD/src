@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.147 2018/06/09 17:41:55 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.148 2018/12/02 16:58:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.147 2018/06/09 17:41:55 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.148 2018/12/02 16:58:13 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2414,4 +2414,20 @@ void
 rl_resize_terminal(void)
 {
 	el_resize(e);
+}
+
+void
+rl_reset_after_signal(void)
+{
+	if (rl_prep_term_function)
+		(*rl_prep_term_function)();
+}
+
+void
+rl_echo_signal_char(int sig)
+{
+	int c = tty_get_signal_character(e, sig);
+	if (c == -1)
+		return;
+	re_putc(e, c, 0);
 }
