@@ -1,4 +1,4 @@
-# $NetBSD: ssp.mk,v 1.2 2017/01/08 17:10:35 christos Exp $
+# $NetBSD: ssp.mk,v 1.3 2018/12/02 21:00:13 maxv Exp $
 
 .if ${USE_SSP:Uno} == "yes"
 COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
@@ -9,6 +9,8 @@ COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
 .if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS.cpu.c+=		-fno-stack-protector
 .endif
+
+COPTS.subr_kleak.c+=	-fno-stack-protector
 
 # The following files use alloca(3) or variable array allocations.
 # Their full name is noted as documentation.

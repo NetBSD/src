@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.227 2018/09/10 13:11:05 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.228 2018/12/02 21:00:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.227 2018/09/10 13:11:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.228 2018/12/02 21:00:13 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
+#include "opt_kleak.h"
 #endif
 
 #include <sys/param.h>
@@ -103,6 +104,14 @@ static void pool_redzone_check(struct pool *, void *);
 # define pool_redzone_init(pp, sz)	/* NOTHING */
 # define pool_redzone_fill(pp, ptr)	/* NOTHING */
 # define pool_redzone_check(pp, ptr)	/* NOTHING */
+#endif
+
+#ifdef KLEAK
+static void pool_kleak_fill(struct pool *, void *);
+static void pool_cache_kleak_fill(pool_cache_t, void *);
+#else
+#define pool_kleak_fill(pp, ptr)	__nothing
+#define pool_cache_kleak_fill(pc, ptr)	__nothing
 #endif
 
 static void *pool_page_alloc_meta(struct pool *, int);
@@ -937,6 +946,7 @@ pool_get(struct pool *pp, int flags)
 	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
 	FREECHECK_OUT(&pp->pr_freecheck, v);
 	pool_redzone_fill(pp, v);
+	pool_kleak_fill(pp, v);
 	return (v);
 }
 
@@ -2256,6 +2266,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 
 	FREECHECK_OUT(&pc->pc_freecheck, object);
 	pool_redzone_fill(&pc->pc_pool, object);
+	pool_cache_kleak_fill(pc, object);
 	return false;
 }
 
@@ -2303,6 +2314,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			splx(s);
 			FREECHECK_OUT(&pc->pc_freecheck, object);
 			pool_redzone_fill(&pc->pc_pool, object);
+			pool_cache_kleak_fill(pc, object);
 			return object;
 		}
 
@@ -2727,6 +2739,26 @@ pool_page_free_meta(struct pool *pp, void *v)
 
 	vmem_free(kmem_meta_arena, (vmem_addr_t)v, pp->pr_alloc->pa_pagesz);
 }
+
+#ifdef KLEAK
+static void
+pool_kleak_fill(struct pool *pp, void *p)
+{
+	if (__predict_false(pp->pr_roflags & PR_NOTOUCH)) {
+		return;
+	}
+	kleak_fill_area(p, pp->pr_size);
+}
+
+static void
+pool_cache_kleak_fill(pool_cache_t pc, void *p)
+{
+	if (__predict_false(pc->pc_ctor != NULL || pc->pc_dtor != NULL)) {
+		return;
+	}
+	pool_kleak_fill(&pc->pc_pool, p);
+}
+#endif
 
 #ifdef POOL_REDZONE
 #if defined(_LP64)
