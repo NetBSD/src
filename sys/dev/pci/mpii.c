@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.13 2018/11/24 18:11:22 bouyer Exp $ */
+/* $NetBSD: mpii.c,v 1.14 2018/12/02 13:22:28 jdolecek Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.13 2018/11/24 18:11:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.14 2018/12/02 13:22:28 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -621,8 +621,8 @@ mpii_attach(device_t parent, device_t self, void *aux)
 		goto free_dev;
 	}
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
-	    mpii_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_BIO,
+	    mpii_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr)
