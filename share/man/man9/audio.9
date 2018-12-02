@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.48 2018/12/02 09:18:26 isaki Exp $
+.\"	$NetBSD: audio.9,v 1.49 2018/12/02 09:22:30 isaki Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -420,7 +420,7 @@ is that some buses need special allocation to do DMA.
 Returns the address of the buffer, or 0 on failure.
 .It Dv void freem(void *hdl, void *addr, size_t size)
 optional, is called to free memory allocated by
-.Va alloc .
+.Va allocm .
 If not supplied
 .Xr free 9
 is used.
