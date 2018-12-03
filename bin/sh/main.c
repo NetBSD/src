@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.77 2018/12/03 02:38:30 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.78 2018/12/03 06:43:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.77 2018/12/03 02:38:30 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.78 2018/12/03 06:43:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,7 +378,8 @@ exitcmd(int argc, char **argv)
 	if (stoppedjobs())
 		return 0;
 	if (argc > 1)
-		exitstatus = number(argv[1]);
-	exitshell(exitstatus);
+		exitshell(number(argv[1]));
+	else
+		exitshell_savedstatus();
 	/* NOTREACHED */
 }

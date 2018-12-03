@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.167 2018/12/03 06:42:25 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.168 2018/12/03 06:43:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.167 2018/12/03 06:42:25 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.168 2018/12/03 06:43:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,10 @@ __RCSID("$NetBSD: eval.c,v 1.167 2018/12/03 06:42:25 kre Exp $");
 #endif
 
 
-STATIC enum skipstate evalskip;	/* != SKIPNONE if we are skipping commands */
-STATIC int skipcount;		/* number of levels to skip */
+STATIC struct skipsave s_k_i_p;
+#define	evalskip	(s_k_i_p.state)
+#define	skipcount	(s_k_i_p.count)
+
 STATIC int loopnest;		/* current loop nesting level */
 STATIC int funcnest;		/* depth of function calls */
 STATIC int builtin_flags;	/* evalcommand flags for builtins */
@@ -278,6 +280,8 @@ evaltree(union node *n, int flags)
 		next = NULL;
 		CTRACE(DBG_EVAL, ("pid %d, evaltree(%p: %s(%d), %#x) called\n",
 		    getpid(), n, NODETYPENAME(n->type), n->type, flags));
+		if (n->type != NCMD && traps_invalid)
+			free_traps();
 		switch (n->type) {
 		case NSEMI:
 			evaltree(n->nbinary.ch1, sflags);
@@ -1026,6 +1030,9 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			cmdentry.cmdtype = CMDBUILTIN;
 	}
 
+	if (traps_invalid && cmdentry.cmdtype != CMDSPLBLTIN)
+		free_traps();
+
 	/* Fork off a child process if necessary. */
 	if (cmd->ncmd.backgnd || (have_traps() && (flags & EV_EXIT) != 0)
 	 || ((cmdentry.cmdtype == CMDNORMAL || cmdentry.cmdtype == CMDUNKNOWN)
@@ -1373,6 +1380,18 @@ enum skipstate
 current_skipstate(void)
 {
 	return evalskip;
+}
+
+void
+save_skipstate(struct skipsave *p)
+{
+	*p = s_k_i_p;
+}
+
+void
+restore_skipstate(const struct skipsave *p)
+{
+	s_k_i_p = *p;
 }
 
 void

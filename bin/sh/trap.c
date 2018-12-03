@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 2018/10/28 18:26:52 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 2018/12/03 06:43:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.46 2018/10/28 18:26:52 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.47 2018/12/03 06:43:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,9 @@ __RCSID("$NetBSD: trap.c,v 1.46 2018/10/28 18:26:52 kre Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+
+#include <sys/resource.h>
 
 #include "shell.h"
 #include "main.h"
@@ -76,10 +79,17 @@ __RCSID("$NetBSD: trap.c,v 1.46 2018/10/28 18:26:52 kre Exp $");
 #define S_RESET 5		/* temporary - to reset a hard ignored sig */
 
 
-char *trap[NSIG];		/* trap handler commands */
 MKINIT char sigmode[NSIG];	/* current value of signal */
-static volatile char gotsig[NSIG];/* indicates specified signal received */
-volatile int pendingsigs;	/* indicates some signal received */
+static volatile sig_atomic_t gotsig[NSIG];/* indicates specified signal received */
+volatile sig_atomic_t pendingsigs;	/* indicates some signal received */
+
+int traps_invalid;		/* in a subshell, but trap[] not yet cleared */
+static char * volatile trap[NSIG];	/* trap handler commands */
+static int in_dotrap;
+static int last_trapsig;
+
+static int exiting;		/* exitshell() has been done */
+static int exiting_status;	/* the status to use for exit() */
 
 static int getsigaction(int, sig_t *);
 STATIC const char *trap_signame(int);
@@ -161,12 +171,15 @@ trapcmd(int argc, char **argv)
 
 	ap = argv + 1;
 
+	CTRACE(DBG_TRAP, ("trapcmd: "));
 	if (argc == 2 && strcmp(*ap, "-l") == 0) {
+		CTRACE(DBG_TRAP, ("-l\n"));
 		out1str("EXIT");
 		printsignals(out1, 4);
 		return 0;
 	}
 	if (argc == 2 && strcmp(*ap, "-") == 0) {
+		CTRACE(DBG_TRAP, ("-\n"));
 		for (signo = 0; signo < NSIG; signo++) {
 			if (trap[signo] == NULL)
 				continue;
@@ -177,9 +190,11 @@ trapcmd(int argc, char **argv)
 				setsignal(signo, 0);
 			INTON;
 		}
+		traps_invalid = 0;
 		return 0;
 	}
 	if (argc >= 2 && strcmp(*ap, "-p") == 0) {
+		CTRACE(DBG_TRAP, ("-p "));
 		printonly = 1;
 		ap++;
 		argc--;
@@ -193,6 +208,7 @@ trapcmd(int argc, char **argv)
 	if (argc <= 1) {
 		int count;
 
+		CTRACE(DBG_TRAP, ("*all*\n"));
 		if (printonly) {
 			for (count = 0, signo = 0 ; signo < NSIG ; signo++)
 				if (trap[signo] == NULL) {
@@ -239,8 +255,12 @@ trapcmd(int argc, char **argv)
 
 		return 0;
 	}
+	CTRACE(DBG_TRAP, ("\n"));
 
 	action = NULL;
+
+	if (!printonly && traps_invalid)
+		free_traps();
 
 	if (!printonly && !is_number(*ap)) {
 		if ((*ap)[0] == '-' && (*ap)[1] == '\0')
@@ -285,6 +305,11 @@ trapcmd(int argc, char **argv)
 		if (action)
 			action = savestr(action);
 
+		VTRACE(DBG_TRAP, ("trap for %d from %s%s%s to %s%s%s\n", signo,
+			trap[signo] ? "'" : "", trap[signo] ? trap[signo] : "-",
+			trap[signo] ? "'" : "", action ?  "'" : "",
+			action ? action : "-", action ?  "'" : ""));
+
 		if (trap[signo])
 			ckfree(trap[signo]);
 
@@ -304,24 +329,40 @@ trapcmd(int argc, char **argv)
  * Takes one arg vfork, to tell it to not be destructive of
  * the parents variables.
  */
-
 void
 clear_traps(int vforked)
 {
-	char **tp;
+	char * volatile *tp;
 
-	for (tp = trap ; tp < &trap[NSIG] ; tp++) {
+	VTRACE(DBG_TRAP, ("clear_traps(%d)\n", vforked));
+	if (!vforked)
+		traps_invalid = 1;
+
+	for (tp = &trap[1] ; tp < &trap[NSIG] ; tp++) {
 		if (*tp && **tp) {	/* trap not NULL or SIG_IGN */
 			INTOFF;
-			if (!vforked) {
-				ckfree(*tp);
-				*tp = NULL;
-			}
-			if (tp != &trap[0])
-				setsignal(tp - trap, vforked);
+			setsignal(tp - trap, vforked == 1);
 			INTON;
 		}
 	}
+	if (vforked == 2)
+		free_traps();
+}
+
+void
+free_traps(void)
+{
+	char * volatile *tp;
+
+	VTRACE(DBG_TRAP, ("free_traps%s\n", traps_invalid ? "(invalid)" : ""));
+	INTOFF;
+	for (tp = trap ; tp < &trap[NSIG] ; tp++)
+		if (*tp && **tp) {
+			ckfree(*tp);
+			*tp = NULL;
+		}
+	traps_invalid = 0;
+	INTON;
 }
 
 /*
@@ -330,7 +371,10 @@ clear_traps(int vforked)
 int
 have_traps(void)
 {
-	char **tp;
+	char * volatile *tp;
+
+	if (traps_invalid)
+		return 0;
 
 	for (tp = trap ; tp < &trap[NSIG] ; tp++)
 		if (*tp && **tp)	/* trap not NULL or SIG_IGN */
@@ -342,8 +386,7 @@ have_traps(void)
  * Set the signal handler for the specified signal.  The routine figures
  * out what it should be set to.
  */
-
-sig_t
+void
 setsignal(int signo, int vforked)
 {
 	int action;
@@ -356,6 +399,9 @@ setsignal(int signo, int vforked)
 		action = S_CATCH;
 	else
 		action = S_IGN;
+
+	VTRACE(DBG_TRAP, ("setsignal(%d%s) -> %d", signo,
+	    vforked ? ", VF" : "", action));
 	if (rootshell && !vforked && action == S_DFL) {
 		switch (signo) {
 		case SIGINT:
@@ -369,20 +415,30 @@ setsignal(int signo, int vforked)
 #endif
 			/* FALLTHROUGH */
 		case SIGTERM:
-			if (iflag)
+			if (rootshell && iflag)
 				action = S_IGN;
 			break;
 #if JOBS
 		case SIGTSTP:
 		case SIGTTOU:
-			if (mflag)
+			if (rootshell && mflag)
 				action = S_IGN;
 			break;
 #endif
 		}
 	}
 
-	t = &sigmode[signo - 1];
+	/*
+	 * Never let users futz with SIGCHLD
+	 * instead we will give them pseudo SIGCHLD's
+	 * when background jobs complete.
+	 */
+	if (signo == SIGCHLD)
+		action = S_DFL;
+
+	VTRACE(DBG_TRAP, (" -> %d", action));
+
+	t = &sigmode[signo];
 	tsig = *t;
 	if (tsig == 0) {
 		/*
@@ -394,8 +450,13 @@ setsignal(int signo, int vforked)
 			 * here, but other shells don't. We don't alter
 			 * sigmode, so that we retry every time.
 			 */
-			return 0;
+			VTRACE(DBG_TRAP, (" getsigaction (%d)\n", errno));
+			return;
 		}
+		VTRACE(DBG_TRAP, (" [%s]%s%s", sigact==SIG_IGN ? "IGN" :
+		    sigact==SIG_DFL ? "DFL" : "caught",
+		    iflag ? "i" : "", mflag ? "m" : ""));
+
 		if (sigact == SIG_IGN) {
 			/*
 			 * POSIX 3.14.13 states that non-interactive shells
@@ -418,18 +479,25 @@ setsignal(int signo, int vforked)
 			tsig = S_RESET;	/* force to be set */
 		}
 	}
+	VTRACE(DBG_TRAP, (" tsig=%d\n", tsig));
+
 	if (tsig == S_HARD_IGN || tsig == action)
-		return 0;
+		return;
+
 	switch (action) {
 		case S_DFL:	sigact = SIG_DFL;	break;
 		case S_CATCH:  	sigact = onsig;		break;
 		case S_IGN:	sigact = SIG_IGN;	break;
 	}
+
 	sig = signal(signo, sigact);
+
 	if (sig != SIG_ERR) {
 		sigset_t ss;
+
 		if (!vforked)
 			*t = action;
+
 		if (action == S_CATCH)
 			(void)siginterrupt(signo, 1);
 		/*
@@ -440,7 +508,7 @@ setsignal(int signo, int vforked)
 		(void)sigaddset(&ss, signo);
 		(void)sigprocmask(SIG_UNBLOCK, &ss, NULL);
 	}
-	return sig;
+	return;
 }
 
 /*
@@ -464,26 +532,50 @@ getsigaction(int signo, sig_t *sigact)
 void
 ignoresig(int signo, int vforked)
 {
-	if (sigmode[signo - 1] != S_IGN && sigmode[signo - 1] != S_HARD_IGN) {
+	if (sigmode[signo] == 0)
+		setsignal(signo, vforked);
+
+	VTRACE(DBG_TRAP, ("ignoresig(%d%s)\n", signo, vforked ? ", VF" : ""));
+	if (sigmode[signo] != S_IGN && sigmode[signo] != S_HARD_IGN) {
 		signal(signo, SIG_IGN);
+		if (!vforked)
+			sigmode[signo] = S_IGN;
 	}
-	if (!vforked)
-		sigmode[signo - 1] = S_HARD_IGN;
+}
+
+char *
+child_trap(void)
+{
+	char * p;
+
+	p = trap[SIGCHLD];
+
+	if (p != NULL && *p == '\0')
+		p = NULL;
+
+	return p;
 }
 
 
 #ifdef mkinit
 INCLUDE <signal.h>
 INCLUDE "trap.h"
+INCLUDE "shell.h"
+INCLUDE "show.h"
 
 SHELLPROC {
 	char *sm;
 
-	clear_traps(0);
+	INTOFF;
+	clear_traps(2);
 	for (sm = sigmode ; sm < sigmode + NSIG ; sm++) {
-		if (*sm == S_IGN)
+		if (*sm == S_IGN) {
 			*sm = S_HARD_IGN;
+			VTRACE(DBG_TRAP, ("SHELLPROC: %d -> hard_ign\n",
+			    (sm - sigmode) + 1));
+		}
 	}
+	INTON;
 }
 #endif
 
@@ -499,13 +591,23 @@ onsig(int signo)
 	CTRACE(DBG_SIG, ("Signal %d, had: pending %d, gotsig[%d]=%d\n",
 	    signo, pendingsigs, signo, gotsig[signo]));
 
+	/*			This should not be needed.
 	signal(signo, onsig);
+	*/
+
 	if (signo == SIGINT && trap[SIGINT] == NULL) {
 		onint();
 		return;
 	}
-	gotsig[signo] = 1;
-	pendingsigs++;
+
+	/*
+	 * if the signal will do nothing, no point reporting it
+	 */
+	if (trap[signo] != NULL && trap[signo][0] != '\0' &&
+	    signo != SIGCHLD) {
+		gotsig[signo] = 1;
+		pendingsigs++;
+	}
 }
 
 
@@ -519,29 +621,50 @@ void
 dotrap(void)
 {
 	int i;
-	int savestatus;
 	char *tr;
+	int savestatus;
+	struct skipsave saveskip;
 
+	in_dotrap++;
+
+	CTRACE(DBG_TRAP, ("dotrap[%d]: %d pending, traps %sinvalid\n",
+	    in_dotrap, pendingsigs, traps_invalid ? "" : "not "));
 	for (;;) {
+		pendingsigs = 0;
 		for (i = 1 ; ; i++) {
-			if (i >= NSIG) {
-				pendingsigs = 0;
+			if (i >= NSIG)
 				return;
-			}
 			if (gotsig[i])
 				break;
 		}
 		gotsig[i] = 0;
-		savestatus=exitstatus;
-		CTRACE(DBG_TRAP|DBG_SIG, ("dotrap %d: \"%s\"\n", i,
-		    trap[i] ? trap[i] : "-NULL-"));
-		if ((tr = trap[i]) != NULL) {
+
+		if (traps_invalid)
+			continue;
+
+		tr = trap[i];
+
+		CTRACE(DBG_TRAP|DBG_SIG, ("dotrap %d: %s%s%s\n", i,
+		    tr ? "\"" : "", tr ? tr : "NULL", tr ? "\"" : ""));
+
+		if (tr != NULL) {
+			last_trapsig = i;
+			save_skipstate(&saveskip);
+			savestatus = exitstatus;
+
 			tr = savestr(tr);	/* trap code may free trap[i] */
 			evalstring(tr, 0);
 			ckfree(tr);
+
+			if (current_skipstate() == SKIPNONE ||
+			    saveskip.state != SKIPNONE) {
+				restore_skipstate(&saveskip);
+				exitstatus = savestatus;
+			}
 		}
-		exitstatus=savestatus;
 	}
+
+	in_dotrap--;
 }
 
 int
@@ -578,33 +701,78 @@ setinteractive(int on)
 /*
  * Called to exit the shell.
  */
-
 void
 exitshell(int status)
 {
-	struct jmploc loc1, loc2;
+	CTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
+	    ("pid %d: exitshell(%d)\n", getpid(), status));
+
+	exiting = 1;
+	exiting_status = status;
+	exitshell_savedstatus();
+}
+
+void
+exitshell_savedstatus(void)
+{
+	struct jmploc loc;
 	char *p;
+	volatile int sig = 0;
+	int s;
+	sigset_t sigs;
 
 	CTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
-	    ("pid %d, exitshell(%d)\n", getpid(), status));
+         ("pid %d: exitshell_savedstatus()%s $?=%d xs=%d dt=%d ts=%d\n",
+	    getpid(), exiting ? " exiting" : "", exitstatus,
+	    exiting_status, in_dotrap, last_trapsig));
 
-	if (setjmp(loc1.loc)) {
-		goto l1;
+	if (!exiting) {
+		if (in_dotrap && last_trapsig) {
+			sig = last_trapsig;
+			exiting_status = sig + 128;
+		} else
+			exiting_status = exitstatus;
 	}
-	if (setjmp(loc2.loc)) {
-		goto l2;
+	exitstatus = exiting_status;
+
+	if (!setjmp(loc.loc)) {
+		handler = &loc;
+
+		if (!traps_invalid && (p = trap[0]) != NULL && *p != '\0') {
+			reset_eval();
+			trap[0] = NULL;
+			VTRACE(DBG_TRAP, ("exit trap: \"%s\"\n", p));
+			evalstring(p, 0);
+		}
 	}
-	handler = &loc1;
-	if ((p = trap[0]) != NULL && *p != '\0') {
-		trap[0] = NULL;
-		VTRACE(DBG_TRAP, ("exit trap: \"%s\"\n", p));
-		evalstring(p, 0);
-	}
- l1:	handler = &loc2;			/* probably unnecessary */
-	flushall();
+
+	INTOFF;			/*  we're done, no more interrupts. */
+
+	if (!setjmp(loc.loc)) {
+		handler = &loc;		/* probably unnecessary */
+		flushall();
 #if JOBS
-	setjobctl(0);
+		setjobctl(0);
 #endif
- l2:	_exit(status);
+	}
+
+	if ((s = sig) != 0 && s != SIGSTOP && s != SIGTSTP && s != SIGTTIN &&
+	    s != SIGTTOU) {
+		struct rlimit nocore;
+
+		/*
+		 * if the signal is of the core dump variety, don't...
+		 */
+		nocore.rlim_cur = nocore.rlim_max = 0;
+		(void) setrlimit(RLIMIT_CORE, &nocore);
+
+		signal(s, SIG_DFL);
+		sigemptyset(&sigs);
+		sigaddset(&sigs, s);
+		sigprocmask(SIG_UNBLOCK, &sigs, NULL);
+
+		kill(getpid(), s);
+	}
+	_exit(exiting_status);
 	/* NOTREACHED */
 }
