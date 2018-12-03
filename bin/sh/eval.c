@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.166 2018/12/03 06:40:26 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.167 2018/12/03 06:42:25 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.166 2018/12/03 06:40:26 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.167 2018/12/03 06:42:25 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1085,7 +1085,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				}
 				savehandler = handler;
 				handler = &jmploc;
-				listmklocal(varlist.list, VEXPORT | VNOFUNC);
+				listmklocal(varlist.list,
+				    VDOEXPORT | VEXPORT | VNOFUNC);
 				forkchild(jp, cmd, mode, vforked);
 				break;
 			default:
@@ -1189,7 +1190,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			    cmdentry.lineno, cmdentry.lno_frel?" (=1)":"",
 			    funclinebase));
 		}
-		listmklocal(varlist.list, VEXPORT);
+		listmklocal(varlist.list, VDOEXPORT | VEXPORT);
 		/* stop shell blowing its stack */
 		if (++funcnest > 1000)
 			error("too many nested function calls");
@@ -1317,7 +1318,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		    (vforked ? REDIR_VFORK : 0) | REDIR_KEEP);
 		if (!vforked)
 			for (sp = varlist.list ; sp ; sp = sp->next)
-				setvareq(sp->text, VEXPORT|VSTACK);
+				setvareq(sp->text, VDOEXPORT|VEXPORT|VSTACK);
 		envp = environment();
 		shellexec(argv, envp, path, cmdentry.u.index, vforked);
 		break;
@@ -1579,7 +1580,7 @@ execcmd(int argc, char **argv)
 		mflag = 0;
 		optschanged();
 		for (sp = cmdenviron; sp; sp = sp->next)
-			setvareq(sp->text, VEXPORT|VSTACK);
+			setvareq(sp->text, VDOEXPORT|VEXPORT|VSTACK);
 		shellexec(argv + 1, environment(), pathval(), 0, 0);
 	}
 	return 0;
