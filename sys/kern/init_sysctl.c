@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.219 2018/11/24 17:26:27 maxv Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.220 2018/12/03 00:11:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.219 2018/11/24 17:26:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.220 2018/12/03 00:11:02 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #include "opt_gprof.h"
+#include "opt_kaslr.h"
 #include "pty.h"
 
 #include <sys/types.h>
@@ -85,7 +86,11 @@ int kern_has_sysvmsg = 0;
 int kern_has_sysvshm = 0;
 int kern_has_sysvsem = 0;
 
+#ifdef KASLR
 int kern_expose_address = 0;
+#else
+int kern_expose_address = 1;
+#endif
 
 static const u_int sysctl_lwpprflagmap[] = {
 	LPR_DETACHED, L_DETACHED,
