@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.15 2018/12/03 22:34:36 bouyer Exp $ */
+/* $NetBSD: mpii.c,v 1.16 2018/12/03 23:23:30 bouyer Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.15 2018/12/03 22:34:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.16 2018/12/03 23:23:30 bouyer Exp $");
 
 #include "bio.h"
 
@@ -615,6 +615,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	adapt->adapt_max_periph = adapt->adapt_openings;
 	adapt->adapt_request = mpii_scsipi_request;
 	adapt->adapt_minphys = minphys;
+	adapt->adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
 	memset(chan, 0, sizeof(*chan));
 	chan->chan_adapter = adapt;
