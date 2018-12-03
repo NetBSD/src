@@ -1,7 +1,7 @@
-/*	$NetBSD: syntax.c,v 1.6 2018/07/20 22:47:26 kre Exp $	*/
+/*	$NetBSD: syntax.c,v 1.7 2018/12/03 06:40:26 kre Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syntax.c,v 1.6 2018/07/20 22:47:26 kre Exp $");
+__RCSID("$NetBSD: syntax.c,v 1.7 2018/12/03 06:40:26 kre Exp $");
 
 #include <limits.h>
 #include "shell.h"
@@ -12,12 +12,12 @@ __RCSID("$NetBSD: syntax.c,v 1.6 2018/07/20 22:47:26 kre Exp $");
 #error initialisation assumes 'CWORD' is zero
 #endif
 
-#define ndx(ch) (ch + 1 - CHAR_MIN)
+#define ndx(ch) (ch + 2 - CHAR_MIN)
 #define set(ch, val) [ndx(ch)] = val,
 #define set_range(s, e, val) [ndx(s) ... ndx(e)] = val,
 
 /* syntax table used when not in quotes */
-const char basesyntax[257] = { CEOF,
+const char basesyntax[258] = { CFAKE, CEOF,
     set_range(CTL_FIRST, CTL_LAST, CCTL)
     set('\n', CNL)
     set('\\', CBACK)
@@ -38,7 +38,7 @@ const char basesyntax[257] = { CEOF,
 };
 
 /* syntax table used when in double quotes */
-const char dqsyntax[257] = { CEOF,
+const char dqsyntax[258] = { CFAKE, CEOF,
     set_range(CTL_FIRST, CTL_LAST, CCTL)
     set('\n', CNL)
     set('\\', CBACK)
@@ -60,7 +60,7 @@ const char dqsyntax[257] = { CEOF,
 };
 
 /* syntax table used when in single quotes */
-const char sqsyntax[257] = { CEOF,
+const char sqsyntax[258] = { CFAKE, CEOF,
     set_range(CTL_FIRST, CTL_LAST, CCTL)
     set('\n', CNL)
     set('\'', CSQUOTE)
@@ -79,7 +79,7 @@ const char sqsyntax[257] = { CEOF,
 };
 
 /* syntax table used when in arithmetic */
-const char arisyntax[257] = { CEOF,
+const char arisyntax[258] = { CFAKE, CEOF,
     set_range(CTL_FIRST, CTL_LAST, CCTL)
     set('\n', CNL)
     set('\\', CBACK)
@@ -93,7 +93,7 @@ const char arisyntax[257] = { CEOF,
 };
 
 /* character classification table */
-const char is_type[257] = { 0,
+const char is_type[258] = { 0, 0,
     set_range('0', '9', ISDIGIT)
     set_range('a', 'z', ISLOWER)
     set_range('A', 'Z', ISUPPER)

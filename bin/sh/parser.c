@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.155 2018/12/01 07:02:23 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.156 2018/12/03 06:40:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.155 2018/12/01 07:02:23 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.156 2018/12/03 06:40:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,6 @@ MKINIT struct parse_state parse_state;
 union parse_state_p psp = { .c_current_parser = &parse_state };
 
 static const struct parse_state init_parse_state = {	/* all 0's ... */
-	.ps_noalias = 0,
 	.ps_heredoclist = NULL,
 	.ps_parsebackquote = 0,
 	.ps_doprompt = 0,
@@ -184,7 +183,7 @@ list(int nlflag)
 
 	CTRACE(DBG_PARSE, ("list(%d): entered @%d\n",nlflag,plinno));
 
-	checkkwd = 2;
+	checkkwd = CHKNL | CHKKWD | CHKALIAS;
 	if (nlflag == 0 && tokendlist[peektoken()])
 		return NULL;
 	ntop = n1 = NULL;
@@ -237,7 +236,7 @@ list(int nlflag)
 			else
 				tokpushback++;
 
-			checkkwd = 2;
+			checkkwd = CHKNL | CHKKWD | CHKALIAS;
 			if (!nlflag && tokendlist[peektoken()])
 				return ntop;
 			break;
@@ -290,7 +289,7 @@ pipeline(void)
 	CTRACE(DBG_PARSE, ("pipeline: entered @%d\n", plinno));
 
 	negate = 0;
-	checkkwd = 2;
+	checkkwd = CHKNL | CHKKWD | CHKALIAS;
 	while (readtoken() == TNOT) {
 		CTRACE(DBG_PARSE, ("pipeline: TNOT recognized\n"));
 #ifndef BOGUS_NOT_COMMAND
@@ -345,7 +344,7 @@ command(void)
 
 	CTRACE(DBG_PARSE, ("command: entered @%d\n", plinno));
 
-	checkkwd = 2;
+	checkkwd = CHKNL | CHKKWD | CHKALIAS;
 	redir = NULL;
 	n1 = NULL;
 	rpp = &redir;
@@ -389,7 +388,7 @@ command(void)
 			tokpushback++;
 		}
 		consumetoken(TFI);
-		checkkwd = 1;
+		checkkwd = CHKKWD | CHKALIAS;
 		break;
 	case TWHILE:
 	case TUNTIL:
@@ -399,7 +398,7 @@ command(void)
 		consumetoken(TDO);
 		n1->nbinary.ch2 = list(0);
 		consumetoken(TDONE);
-		checkkwd = 1;
+		checkkwd = CHKKWD | CHKALIAS;
 		break;
 	case TFOR:
 		if (readtoken() != TWORD || quoteflag || ! goodname(wordtext))
@@ -438,7 +437,7 @@ command(void)
 			if (lasttoken != TNL && lasttoken != TSEMI)
 				tokpushback++;
 		}
-		checkkwd = 2;
+		checkkwd = CHKNL | CHKKWD | CHKALIAS;
 		if ((t = readtoken()) == TDO)
 			t = TDONE;
 		else if (t == TBEGIN)
@@ -447,7 +446,7 @@ command(void)
 			synexpect(TDO, 0);
 		n1->nfor.body = list(0);
 		consumetoken(t);
-		checkkwd = 1;
+		checkkwd = CHKKWD | CHKALIAS;
 		break;
 	case TCASE:
 		n1 = stalloc(sizeof(struct ncase));
@@ -459,8 +458,7 @@ command(void)
 		if (lasttoken != TWORD || !equal(wordtext, "in"))
 			synexpect(-1, "in");
 		cpp = &n1->ncase.cases;
-		noalias = 1;
-		checkkwd = 2;
+		checkkwd = CHKNL | CHKKWD;
 		readtoken();
 		/*
 		 * Both ksh and bash accept 'case x in esac'
@@ -488,36 +486,32 @@ command(void)
 				if (lasttoken < TWORD)
 					synexpect(TWORD, 0);
 				*app = ap = makeword(startlinno);
-				checkkwd = 2;
+				checkkwd = CHKNL | CHKKWD;
 				if (readtoken() != TPIPE)
 					break;
 				app = &ap->narg.next;
 				readtoken();
 			}
-			noalias = 0;
 			if (lasttoken != TRP)
 				synexpect(TRP, 0);
 			cp->nclist.lineno = startlinno;
 			cp->nclist.body = list(0);
 
-			checkkwd = 2;
+			checkkwd = CHKNL | CHKKWD | CHKALIAS;
 			if ((t = readtoken()) != TESAC) {
 				if (t != TENDCASE && t != TCASEFALL) {
-					noalias = 0;
 					synexpect(TENDCASE, 0);
 				} else {
 					if (t == TCASEFALL)
 						cp->type = NCLISTCONT;
-					noalias = 1;
-					checkkwd = 2;
+					checkkwd = CHKNL | CHKKWD;
 					readtoken();
 				}
 			}
 			cpp = &cp->nclist.next;
 		}
-		noalias = 0;
 		*cpp = NULL;
-		checkkwd = 1;
+		checkkwd = CHKKWD | CHKALIAS;
 		break;
 	case TLP:
 		n1 = stalloc(sizeof(struct nredir));
@@ -527,14 +521,14 @@ command(void)
 		if (n1->nredir.n == NULL)
 			synexpect(-1, 0);
 		consumetoken(TRP);
-		checkkwd = 1;
+		checkkwd = CHKKWD | CHKALIAS;
 		break;
 	case TBEGIN:
 		n1 = list(0);
 		if (posix && n1 == NULL)
 			synexpect(-1, 0);
 		consumetoken(TEND);
-		checkkwd = 1;
+		checkkwd = CHKKWD | CHKALIAS;
 		break;
 
 	case TBACKGND:
@@ -621,6 +615,7 @@ simplecmd(union node **rpp, union node *redir)
 	union node *args, **app;
 	union node *n = NULL;
 	int line = 0;
+	int savecheckkwd;
 #ifdef BOGUS_NOT_COMMAND
 	union node *n2;
 	int negate = 0;
@@ -645,13 +640,17 @@ simplecmd(union node **rpp, union node *redir)
 	tokpushback++;
 #endif
 
+	savecheckkwd = CHKALIAS;
 	for (;;) {
+		checkkwd = savecheckkwd;
 		if (readtoken() == TWORD) {
 			if (line == 0)
 				line = startlinno;
 			n = makeword(startlinno);
 			*app = n;
 			app = &n->narg.next;
+			if (savecheckkwd != 0 && !isassignment(wordtext))
+				savecheckkwd = 0;
 		} else if (lasttoken == TREDIR) {
 			if (line == 0)
 				line = startlinno;
@@ -992,33 +991,29 @@ STATIC int
 readtoken(void)
 {
 	int t;
-	int savecheckkwd = checkkwd;
 #ifdef DEBUG
 	int alreadyseen = tokpushback;
+	int savecheckkwd = checkkwd;
 #endif
 	struct alias *ap;
 
  top:
 	t = xxreadtoken();
 
-	if (checkkwd) {
-		/*
-		 * eat newlines
-		 */
-		if (checkkwd == 2) {
-			checkkwd = 0;
-			while (t == TNL) {
-				readheredocs();
-				t = xxreadtoken();
-			}
-		} else
-			checkkwd = 0;
-		/*
-		 * check for keywords and aliases
-		 */
-		if (t == TWORD && !quoteflag) {
-			const char *const *pp;
+	if (checkkwd & CHKNL) {
+		while (t == TNL) {
+			readheredocs();
+			t = xxreadtoken();
+		}
+	}
 
+	/*
+	 * check for keywords and aliases
+	 */
+	if (t == TWORD && !quoteflag) {
+		const char *const *pp;
+
+		if (checkkwd & CHKKWD)
 			for (pp = parsekwd; *pp; pp++) {
 				if (**pp == *wordtext && equal(*pp, wordtext)) {
 					lasttoken = t = pp -
@@ -1029,21 +1024,23 @@ readtoken(void)
 					goto out;
 				}
 			}
-			if (!noalias &&
-			    (ap = lookupalias(wordtext, 1)) != NULL) {
-				VTRACE(DBG_PARSE,
-				    ("alias '%s' recognized -> <:%s:>\n",
-				    wordtext, ap->val));
-				pushstring(ap->val, strlen(ap->val), ap);
-				checkkwd = savecheckkwd;
-				goto top;
-			}
+
+		if (checkkwd & CHKALIAS &&
+		    (ap = lookupalias(wordtext, 1)) != NULL) {
+			VTRACE(DBG_PARSE,
+			    ("alias '%s' recognized -> <:%s:>\n",
+			    wordtext, ap->val));
+			pushstring(ap->val, strlen(ap->val), ap);
+			goto top;
 		}
- out:
-		checkkwd = (t == TNOT) ? savecheckkwd : 0;
 	}
-	VTRACE(DBG_PARSE, ("%stoken %s %s @%d\n", alreadyseen ? "reread " : "",
-	    tokname[t], t == TWORD ? wordtext : "", plinno));
+ out:
+	if (t != TNOT)
+		checkkwd = 0;
+
+	VTRACE(DBG_PARSE, ("%stoken %s %s @%d (chkkwd %x->%x)\n",
+	    alreadyseen ? "reread " : "", tokname[t],
+	    t == TWORD ? wordtext : "", plinno, savecheckkwd, checkkwd));
 	return (t);
 }
 
@@ -1086,7 +1083,7 @@ xxreadtoken(void)
 	for (;;) {	/* until token or start of word found */
 		c = pgetc_macro();
 		switch (c) {
-		case ' ': case '\t':
+		case ' ': case '\t': case PFAKE:
 			continue;
 		case '#':
 			while ((c = pgetc()) != '\n' && c != PEOF)
@@ -1774,6 +1771,10 @@ readtoken1(int firstc, char const *syn, int magicq)
 			out = insert_elided_nl(out);
 		CHECKSTRSPACE(6, out);	/* permit 6 calls to USTPUTC */
 		switch (syntax[c]) {
+		case CFAKE:
+			if (syntax == BASESYNTAX && varnest == 0)
+				break;
+			continue;
 		case CNL:	/* '\n' */
 			if (syntax == BASESYNTAX && varnest == 0)
 				break;	/* exit loop */
@@ -2259,6 +2260,17 @@ goodname(const char *name)
 		if (! is_in_name(*p))
 			return 0;
 	}
+	return 1;
+}
+
+int
+isassignment(const char *p)
+{
+	if (!is_name(*p))
+		return 0;
+	while (*++p != '=')
+		if (*p == '\0' || !is_in_name(*p))
+			return 0;
 	return 1;
 }
 

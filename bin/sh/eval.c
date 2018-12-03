@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.165 2018/11/30 23:22:45 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.166 2018/12/03 06:40:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.165 2018/11/30 23:22:45 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.166 2018/12/03 06:40:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -888,18 +888,11 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	varflag = 1;
 	/* Expand arguments, ignoring the initial 'name=value' ones */
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
-		char *p = argp->narg.text;
-
-		line_number = argp->narg.lineno;
-		if (varflag && is_name(*p)) {
-			do {
-				p++;
-			} while (is_in_name(*p));
-			if (*p == '=')
-				continue;
-		}
-		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
+		if (varflag && isassignment(argp->narg.text))
+			continue;
 		varflag = 0;
+		line_number = argp->narg.lineno;
+		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
 	}
 	*arglist.lastp = NULL;
 
@@ -908,15 +901,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	/* Now do the initial 'name=value' ones we skipped above */
 	varlist.lastp = &varlist.list;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
-		char *p = argp->narg.text;
-
 		line_number = argp->narg.lineno;
-		if (!is_name(*p))
-			break;
-		do
-			p++;
-		while (is_in_name(*p));
-		if (*p != '=')
+		if (!isassignment(argp->narg.text))
 			break;
 		expandarg(argp, &varlist, EXP_VARTILDE);
 	}
