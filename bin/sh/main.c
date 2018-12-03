@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.76 2018/08/22 20:08:54 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.77 2018/12/03 02:38:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.76 2018/08/22 20:08:54 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.77 2018/12/03 02:38:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: main.c,v 1.76 2018/08/22 20:08:54 kre Exp $");
 
 int rootpid;
 int rootshell;
+struct jmploc main_handler;
 int max_user_fd;
 #if PROFILE
 short profile_buf[16384];
@@ -102,7 +103,6 @@ STATIC void read_profile(const char *);
 int
 main(int argc, char **argv)
 {
-	struct jmploc jmploc;
 	struct stackmark smark;
 	volatile int state;
 	char *shinit;
@@ -123,7 +123,7 @@ main(int argc, char **argv)
 	monitor(4, etext, profile_buf, sizeof profile_buf, 50);
 #endif
 	state = 0;
-	if (setjmp(jmploc.loc)) {
+	if (setjmp(main_handler.loc)) {
 		/*
 		 * When a shell procedure is executed, we raise the
 		 * exception EXSHELLPROC to clean up before executing
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 		else
 			goto state4;
 	}
-	handler = &jmploc;
+	handler = &main_handler;
 #ifdef DEBUG
 #if DEBUG >= 2
 	debug = 1;	/* this may be reset by procargs() later */

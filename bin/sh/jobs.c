@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.102 2018/10/28 18:16:01 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.103 2018/12/03 02:38:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.102 2018/10/28 18:16:01 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.103 2018/12/03 02:38:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1161,8 +1161,11 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
 	wasroot = rootshell;
 	CTRACE(DBG_JOBS, ("Child shell %d %sforked from %d (mode %d)\n",
 	    getpid(), vforked?"v":"", getppid(), mode));
-	if (!vforked)
+
+	if (!vforked) {
 		rootshell = 0;
+		handler = &main_handler;
+	}
 
 	closescript(vforked);
 	clear_traps(vforked);

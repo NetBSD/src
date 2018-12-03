@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.11 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.12 2018/12/03 02:38:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,6 +36,7 @@
 
 extern int rootpid;	/* pid of main shell */
 extern int rootshell;	/* true if we aren't a child of the main shell */
+extern struct jmploc main_handler;	/* top level exception handler */
 
 void readcmdfile(char *);
 void cmdloop(int);
