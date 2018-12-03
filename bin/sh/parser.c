@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.156 2018/12/03 06:40:26 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.157 2018/12/03 06:41:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.156 2018/12/03 06:40:26 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.157 2018/12/03 06:41:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1834,10 +1834,8 @@ readtoken1(int firstc, char const *syn, int magicq)
 			if (NEEDESC(c))
 				USTPUTC(CTLESC, out);
 			else if (!magicq) {
-				USTPUTC(CTLQUOTEMARK, out);
+				USTPUTC(CTLESC, out);
 				USTPUTC(c, out);
-				if (varnest != 0)
-					USTPUTC(CTLQUOTEEND, out);
 				continue;
 			}
 			USTPUTC(c, out);
@@ -1859,7 +1857,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			/* End of single quotes... */
 			TS_POP();
-			if (syntax == BASESYNTAX && varnest != 0)
+			if (syntax == BASESYNTAX)
 				USTPUTC(CTLQUOTEEND, out);
 			continue;
 		case CDQUOTE:
@@ -1871,6 +1869,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 			quotef = 1;
 			if (arinest) {
 				if (ISDBLQUOTE()) {
+					USTPUTC(CTLQUOTEEND, out);
 					TS_POP();
 				} else {
 					TS_PUSH();
@@ -1884,8 +1883,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 				continue;
 			if (ISDBLQUOTE()) {
 				TS_POP();
-				if (varnest != 0)
-					USTPUTC(CTLQUOTEEND, out);
+				USTPUTC(CTLQUOTEEND, out);
 			} else {
 				TS_PUSH();
 				syntax = DQSYNTAX;
@@ -2137,7 +2135,7 @@ parsesub: {
 				synerror("no modifiers allowed with ${#var}");
 			pungetc();
 		}
-		if (ISDBLQUOTE() || arinest)
+		if (quoted || arinest)
 			flags |= VSQUOTE;
 		if (subtype >= VSTRIMLEFT && subtype <= VSTRIMRIGHTMAX)
 			flags |= VSPATQ;
@@ -2148,7 +2146,7 @@ parsesub: {
 			arinest = 0;
 			if (subtype > VSASSIGN) {	/* # ## % %% */
 				syntax = BASESYNTAX;
-				CLRDBLQUOTE();
+				quoted = 0;
 			}
 		}
 	} else if (c == '\'' && syntax == BASESYNTAX) {
@@ -2232,7 +2230,7 @@ noexpand(char *text)
 
 	p = text;
 	while ((c = *p++) != '\0') {
-		if (c == CTLQUOTEMARK)
+		if (c == CTLQUOTEMARK || c == CTLQUOTEEND)
 			continue;
 		if (c == CTLESC)
 			p++;
