@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.107 2018/10/31 06:26:25 maxv Exp $
+#	$NetBSD: files.amd64,v 1.108 2018/12/03 00:12:22 christos Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -28,8 +28,7 @@ defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
 #
 
 defflag			USER_LDT
-defflag			KASLR
-defflag eisa.h EISA
+defflag eisa.h		EISA
 
 # Start code
 file	arch/amd64/amd64/locore.S		machdep
