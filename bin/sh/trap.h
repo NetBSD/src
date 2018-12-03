@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.23 2018/08/19 23:50:27 kre Exp $	*/
+/*	$NetBSD: trap.h,v 1.24 2018/12/03 06:43:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,12 +36,17 @@
 
 extern volatile int pendingsigs;
 
+extern int traps_invalid;
+
 void clear_traps(int);
+void free_traps(void);
 int have_traps(void);
-sig_t setsignal(int, int);
+void setsignal(int, int);
 void ignoresig(int, int);
 void onsig(int);
 void dotrap(void);
+char *child_trap(void);
 void setinteractive(int);
 void exitshell(int) __dead;
+void exitshell_savedstatus(void) __dead;
 int lastsig(void);
