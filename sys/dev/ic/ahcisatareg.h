@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.13 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.14 2018/12/03 20:00:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -97,7 +97,7 @@ struct ahci_r_fis {
 /* class Mass storage, subclass SATA, interface AHCI */
 #define PCI_INTERFACE_SATA_AHCI	0x01
 
-#define AHCI_PCI_ABAR	0x24 /* native ACHI registers (memory mapped) */
+#define AHCI_PCI_ABAR	0x24 /* native AHCI registers (memory mapped) */
 
 /*  ABAR registers */
 /* Global registers */
