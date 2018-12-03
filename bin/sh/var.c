@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.70 2018/07/13 22:43:44 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.71 2018/12/03 06:42:25 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.70 2018/07/13 22:43:44 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.71 2018/12/03 06:42:25 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,15 +323,17 @@ initvar(void)
 void
 choose_ps1(void)
 {
+	uid_t u = geteuid();
+
 	if ((vps1.flags & (VTEXTFIXED|VSTACK)) == 0)
 		free(vps1.text);
-	vps1.text = strdup(geteuid() ? "PS1=$ " : "PS1=# ");
+	vps1.text = strdup(u != 0 ? "PS1=$ " : "PS1=# ");
 	vps1.flags &= ~(VTEXTFIXED|VSTACK);
 
 	/*
 	 * Update PSc whenever we feel the need to update PS1
 	 */
-	setvarsafe("PSc", (geteuid() == 0 ? "#" : "$"), 0);
+	setvarsafe("PSc", (u == 0 ? "#" : "$"), 0);
 }
 
 /*
@@ -480,9 +482,11 @@ setvareq(char *s, int flags)
 		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
 		if (flags & VNOEXPORT)
 			vp->flags &= ~VEXPORT;
+		if (flags & VDOEXPORT)
+			vp->flags &= ~VNOEXPORT;
 		if (vp->flags & VNOEXPORT)
 			flags &= ~VEXPORT;
-		vp->flags |= flags & ~VNOFUNC;
+		vp->flags |= flags & ~(VNOFUNC | VDOEXPORT);
 		vp->text = s;
 
 		/*
@@ -495,20 +499,22 @@ setvareq(char *s, int flags)
 		INTON;
 		return;
 	}
-	VTRACE(DBG_VARS, ("new\n"));
 	/* not found */
 	if (flags & VNOSET) {
+		VTRACE(DBG_VARS, ("new noset\n"));
 		if ((flags & (VTEXTFIXED|VSTACK)) == 0)
 			ckfree(s);
 		return;
 	}
 	vp = ckmalloc(sizeof (*vp));
-	vp->flags = flags & ~(VNOFUNC|VFUNCREF);
+	vp->flags = flags & ~(VNOFUNC|VFUNCREF|VDOEXPORT);
 	vp->text = s;
 	vp->name_len = nlen;
-	vp->next = *vpp;
 	vp->func = NULL;
+	vp->next = *vpp;
 	*vpp = vp;
+
+	VTRACE(DBG_VARS, ("new [%s] (%d) %#x\n", s, nlen, vp->flags));
 }
 
 
@@ -853,26 +859,32 @@ exportcmd(int argc, char **argv)
 
 	res = 0;
 	while ((name = *argptr++) != NULL) {
+		int len;
+
 		f = flag;
-		if ((p = strchr(name, '=')) != NULL) {
-			p++;
-		} else {
-			vp = find_var(name, NULL, NULL);
-			if (vp != NULL) {
-				if (nflg)
-					vp->flags &= ~flag;
-				else if (flag&VEXPORT && vp->flags&VNOEXPORT)
-					res = 1;
-				else {
-					vp->flags |= flag;
-					if (flag == VNOEXPORT)
-						vp->flags &= ~VEXPORT;
-				}
+
+		vp = find_var(name, NULL, &len);
+		p = name + len;
+		if (*p++ != '=')
+			p = NULL;
+
+		if (vp != NULL) {
+			if (nflg)
+				vp->flags &= ~flag;
+			else if (flag&VEXPORT && vp->flags&VNOEXPORT) {
+				sh_warnx("%.*s: not available for export",
+				    len, name);
+				res = 1;
+			} else {
+				vp->flags |= flag;
+				if (flag == VNOEXPORT)
+					vp->flags &= ~VEXPORT;
+			}
+			if (p == NULL)
 				continue;
-			} else
-				f |= VUNSET;
-		}
-		if (!nflg)
+		} 
+
+		if (!nflg || p != NULL)
 			setvar(name, p, f);
 	}
 	return res;
@@ -946,7 +958,10 @@ mklocal(const char *name, int flags)
 			lvp->text = vp->text;
 			lvp->flags = vp->flags;
 			vp->flags |= VSTRFIXED|VTEXTFIXED;
-			if (vp->flags & VNOEXPORT)
+			if (flags & (VDOEXPORT | VUNSET))
+				vp->flags &= ~VNOEXPORT;
+			if (vp->flags & VNOEXPORT &&
+			    (flags & (VEXPORT|VDOEXPORT|VUNSET)) == VEXPORT)
 				flags &= ~VEXPORT;
 			if (flags & (VNOEXPORT | VUNSET))
 				vp->flags &= ~VEXPORT;
@@ -986,7 +1001,7 @@ poplocalvars(void)
 	while ((lvp = localvars) != NULL) {
 		localvars = lvp->next;
 		vp = lvp->vp;
-		VTRACE(DBG_VARS, ("poplocalvar %s", vp ? vp->text : "-"));
+		VTRACE(DBG_VARS, ("poplocalvar %s\n", vp ? vp->text : "-"));
 		if (vp == NULL) {	/* $- saved */
 			memcpy(optlist, lvp->text, sizeof_optlist);
 			ckfree(lvp->text);
@@ -1124,7 +1139,7 @@ strequal(const char *p, const char *q)
  * Search for a variable.
  * 'name' may be terminated by '=' or a NUL.
  * vppp is set to the pointer to vp, or the list head if vp isn't found
- * lenp is set to the number of charactets in 'name'
+ * lenp is set to the number of characters in 'name'
  */
 
 STATIC struct var *
@@ -1138,10 +1153,11 @@ find_var(const char *name, struct var ***vppp, int *lenp)
 	hashval = 0;
 	while (*p && *p != '=')
 		hashval = 2 * hashval + (unsigned char)*p++;
-	len = p - name;
 
+	len = p - name;
 	if (lenp)
 		*lenp = len;
+
 	vpp = &vartab[hashval % VTABSIZE];
 	if (vppp)
 		*vppp = vpp;

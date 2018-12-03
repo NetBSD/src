@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.36 2017/10/28 03:59:11 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.37 2018/12/03 06:42:25 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@
 #define VNOFUNC		0x0100	/* don't call the callback function */
 #define VFUNCREF	0x0200	/* the function is called on ref, not set */
 
+#define VDOEXPORT	0x2000	/* obey VEXPORT even if VNOEXPORT */
 #define VNOSET		0x4000	/* do not set variable - just readonly test */
 #define VNOERROR	0x8000	/* be quiet if set fails (no error msg) */
 
