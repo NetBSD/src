@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.158 2018/12/04 12:23:43 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.159 2018/12/04 20:46:56 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.158 2018/12/04 12:23:43 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.159 2018/12/04 20:46:56 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -661,20 +661,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 *
 	 * Otherwise, process as defined in RFC 2461.
 	 */
-	if (ifa &&
-	    (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_TENTATIVE))
-	{
-		nd6_dad_na_input(ifa);
-		ifa_release(ifa, &psref_ia);
-		ifa = NULL;
-		goto freeit;
-	}
-
-	/* Just for safety, maybe unnecessary. */
 	if (ifa) {
-		log(LOG_ERR,
-		    "nd6_na_input: duplicate IP6 address %s\n",
-		    IN6_PRINT(ip6buf, &taddr6));
+		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_TENTATIVE)
+			nd6_dad_na_input(ifa);
+		else
+			log(LOG_ERR,
+			    "nd6_na_input: duplicate IP6 address %s\n",
+			    IN6_PRINT(ip6buf, &taddr6));
 		ifa_release(ifa, &psref_ia);
 		ifa = NULL;
 		goto freeit;
