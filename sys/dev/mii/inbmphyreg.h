@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.9.8.2 2018/11/08 12:09:18 martin Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.9.8.3 2018/12/04 11:21:32 martin Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -74,6 +74,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #define BME1000_PSCR_DOWNSHIFT_COUNTER_MASK     0x7000
 #define BME1000_PSCR_DOWNSHIFT_COUNTER_SHIFT    12
 
+/* BM PHY Copper Specific Status */
+#define BM_CS_STATUS		BME1000_REG(0, 17)
+#define BM_CS_STATUS_LINK_UP	0x0400
+#define BM_CS_STATUS_RESOLVED	0x0800
+#define BM_CS_STATUS_SPEED_MASK	0xC000
+#define BM_CS_STATUS_SPEED_1000	0x8000
+
 #define BME1000_PHY_PAGE_SELECT	BME1000_REG(0, 22) /* Page Select */
 
 #define BME1000_BIAS_SETTING	29
@@ -90,6 +97,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HV_OEM_BITS_LPLU	(1 << 2)
 #define HV_OEM_BITS_A1KDIS	(1 << 6)
 #define HV_OEM_BITS_ANEGNOW	(1 << 10)
+
+/* 82577 Mobile Phy Status Register */
+#define HV_M_STATUS		BME1000_REG(0, 26)
+#define HV_M_STATUS_AUTONEG_COMPLETE 0x1000
+#define HV_M_STATUS_SPEED_MASK	0x0300
+#define HV_M_STATUS_SPEED_1000	0x0200
+#define HV_M_STATUS_SPEED_100	0x0100
+#define HV_M_STATUS_LINK_UP	0x0040
 
 #define HV_LED_CONFIG		BME1000_REG(0, 30)
 
