@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.18 2013/04/21 04:28:05 kiyohara Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.19 2018/12/04 09:27:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.18 2013/04/21 04:28:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.19 2018/12/04 09:27:59 mlelstv Exp $");
 
 #include "opt_rasops.h"
 
@@ -159,7 +159,7 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 
 		/* Do underline */
-		if (attr & 1) {
+		if (attr & WSATTR_UNDERLINE) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			*rp = (*rp & lmask) | (fg & rmask);
 		}
@@ -196,7 +196,7 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 
 		/* Do underline */
-		if (attr & 1) {
+		if (attr & WSATTR_UNDERLINE) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			rp[0] = (rp[0] & lmask) | (fg & ~lmask);
 			rp[1] = (rp[1] & rmask) | (fg & ~rmask);
@@ -309,7 +309,7 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if ((attr & WSATTR_UNDERLINE) != 0)
 		*(int16_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
 
 	stamp_mutex--;
@@ -375,7 +375,7 @@ rasops2_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp -= ri->ri_stride << 1;
 		rp[0] = rp[1] = rp[2] = stamp[15];
 	}
@@ -444,7 +444,7 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if ((attr & WSATTR_UNDERLINE) != 0)
 		*(int32_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
 
 	stamp_mutex--;

@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.78 2018/11/29 23:44:50 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.79 2018/12/04 09:27:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.78 2018/11/29 23:44:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.79 2018/12/04 09:27:59 mlelstv Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -570,13 +570,13 @@ rasops_allocattr_color(void *cookie, int fg, int bg, int flg,
 	if ((flg & WSATTR_HILIT) != 0)
 		fg += 8;
 
-	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
+	flg = flg & WSATTR_USERMASK;
 
 	if (rasops_isgray[fg])
-		flg |= 2;
+		flg |= WSATTR_PRIVATE1;
 
 	if (rasops_isgray[bg])
-		flg |= 4;
+		flg |= WSATTR_PRIVATE2;
 
 	*attr = (bg << 16) | (fg << 24) | flg;
 	return (0);
@@ -903,7 +903,7 @@ rasops_unpack_attr(long attr, int *fg, int *bg, int *underline)
 	*fg = ((u_int)attr >> 24) & 0xf;
 	*bg = ((u_int)attr >> 16) & 0xf;
 	if (underline != NULL)
-		*underline = (u_int)attr & 1;
+		*underline = (u_int)attr & WSATTR_UNDERLINE;
 }
 
 /*
@@ -1366,7 +1366,7 @@ rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do rotated char sans (side)underline */
 	ri->ri_real_ops.putchar(cookie, col, ri->ri_rows - row - 1, uc,
-	    attr & ~1);
+	    attr & ~WSATTR_UNDERLINE);
 
 	/* Do rotated underline */
 	rp = ri->ri_bits + col * ri->ri_yscale + (ri->ri_rows - row - 1) * 
@@ -1374,7 +1374,7 @@ rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int16_t c = (int16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
 
 		while (height--) {
@@ -1493,7 +1493,7 @@ rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do rotated char sans (side)underline */
 	ri->ri_real_ops.putchar(cookie, ri->ri_cols - col - 1, row, uc,
-	    attr & ~1);
+	    attr & ~WSATTR_UNDERLINE);
 
 	/* Do rotated underline */
 	rp = ri->ri_bits + (ri->ri_cols - col - 1) * ri->ri_yscale +
@@ -1502,7 +1502,7 @@ rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int16_t c = (int16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
 
 		while (height--) {
