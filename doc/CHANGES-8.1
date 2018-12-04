@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.67 2018/11/30 10:33:44 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.68 2018/12/04 12:07:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1850,4 +1850,108 @@ sys/kern/kern_exit.c				1.273
 
 	Fix info leak.
 	[maxv, ticket #1114]
+
+sys/dev/mii/miidevs				1.130,1.131
+sys/dev/miidevs.h				(regen)
+sys/dev/miidevs_data.h				(regen)
+
+	Sort OUI by number. No functional change.
+	Add ASIX Ax88x9x.
+	Add description for DP83846A.
+	[msaitoh, ticket #1116]
+
+sys/dev/mii/inbmphyreg.h			1.12
+sys/dev/pci/if_wm.c				1.597,1.598-1.602
+sys/dev/pci/if_wmreg.h				1.109
+
+	- Fix race condition in wm_init_lcd_from_nvm().
+	- Check error status on some register's read/write.
+	- Control TX/RX descriptor snooping control bits on ICH8
+	  and newer.
+	- Disable relax ordering on 82546GB(Device ID 0x1099 and 0x10b5)
+	  or >= ICH8. Same as other OSes.
+	- Add wm_oem_bits_config_ich8lan() to control LPLU and GbE setting
+	  base on the NVM's info. This is for PCH and newer.
+	- Add some PHY workaround for suspend/resume.  This is for ICH8
+	  and newer.
+	- Add i82578 specific link stall workaround.
+	- Add PCH2 specific workaround for link layer's stability.
+	- Add comment. Modify comment.
+	[msaitoh, ticket #1117]
+
+sys/dev/pci/pci_subr.c				1.207-1.210
+sys/dev/pci/pcireg.h				1.143-1.146
+
+	- Decode PCI Enhanced Allocation.
+	- Fix the definition of PCI MSI vector mask and pending register.
+	  This problem was not a real bug because PCI_MSI{MASK,PENDING} were
+	  not used from anywhere.
+	- The downstream port of PCIe switch is not a root port, so don't
+	  print root port related registers.
+	- Add new macro PCIE_HAS_ROOTREGS(pcie_devtype) and use it. No
+	  functional change.
+	- Add new PCIE_HAS_LINKREGS(pcie_devtype) and use it. No functional
+	  change.
+	[msaitoh, ticket #1118]
+
+sys/dev/pci/pcidevs				1.1345-1.1347,1.1349-1.1355
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add some Intel devices. Some of them are found in Core i7-8550U.
+	Add Toshiba's XG4 and XG5 NVMe SSD.
+	Add C62x to the descriptions of Intel C620 series devices.
+	Add 0xa1ca for Intel C629 LPC or eSPI.
+	Add AMD Seattle Host Bridge and PCIE root port devices.
+	Add two other I2C devices of Intel.
+	Add some Intel 100 series and C230 series devices.
+	Add a whole bunch of Cavium ThunderX devices.
+	Add Rockchip vendor ID and a device.
+	Add Amazon.com UART, NVMe, and ENA PCI IDs.
+	[msaitoh, ticket #1119]
+
+sys/arch/x86/include/specialreg.h		1.132-1.136
+sys/arch/x86/x86/cpu_topology.c			1.14
+usr.sbin/cpuctl/arch/i386.c			1.85-1.90
+
+	Add MAWAU (for BND{LD,ST}X instruction) from the latest Intel SDM.
+	AMD also has CPUID 0x06 and 0x0d.
+	PCOMMIT was obsoleted.
+	Use ci_feat_val[7] as CPUID 7 %edx to match x86/cpu.h
+	AMD also has CPUID 6.
+	Remove unused code for coretemp.
+	Consistently use descs[] instead of data[].
+	AMD also reports CPUID 7's highest subleaf. Print it.
+	Add Intel CPUID Extended Topology Enumeration Fn0000000b definitions.
+	Add Intel/AMD MONITOR/MWAIT leaf.
+	Add Intel CPUID Architectural Performance Monitoring leaf Fn0000000a.
+	Print Intel CPUID Architectural Performance Monitoring leaf Fn0000000a.
+	[msaitoh, ticket #1120]
+
+usr.sbin/acpitool/acpidump/acpi.c		1.30-1.37, 1.39 via patch
+usr.sbin/acpitool/acpidump/acpidump.8		1.11-1.13 via patch
+
+	- Add ACPI LPIT (Low Power Idle Table) from FreeBSD r336185.
+	- Decode DMAR's ANDD (ACPI Name Space).
+	- Add X2APIC_MODE flag of DMAR.
+	- Remove extra newline in SPMI table.
+	- FACS is optional if the HW_REDUCED_ACPI flag is set in the FADT.
+	- Print SPCR's Interface Type and ARMH GIC Interrupt Type.
+	- Decode Generic Timer Description Table(GTDT).
+	- Don't print PM_TMR_BLK if the value is 0.
+	- Don't print X_PM_TMR_BLK if the address value is 0.
+	- Decode CSRT (Core System Resources Table).
+	[msaitoh, ticket #1121]
+
+sys/dev/ld.c					1.105
+
+	Take kernel lock for ioctl calls when backend isn't tagged MPSAFE.
+	[mlelstv, ticket #1122]
+
+sys/dev/pci/pcidevs				1.1356
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add 2 Symbios products.
+	[bouyer, ticket #1123]
 
