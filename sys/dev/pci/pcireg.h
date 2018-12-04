@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.130.2.7 2018/10/30 09:32:32 sborrill Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.130.2.8 2018/12/04 11:29:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -671,8 +671,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MSI_MDATA64		0xc	/* 64-bit Message Data Register
 					 * offset
 					 */
-#define	PCI_MSI_MASK		0x10	/* Vector Mask register */
-#define	PCI_MSI_PENDING		0x14	/* Vector Pending register */
+
+#define	PCI_MSI_MASK		0x0c	/* Vector Mask register */
+#define	PCI_MSI_MASK64		0x10	/* 64-bit Vector Mask register */
+
+#define	PCI_MSI_PENDING		0x10	/* Vector Pending register */
+#define	PCI_MSI_PENDING64	0x14	/* 64-bit Vector Pending register */
 
 #define	PCI_MSI_CTL_MASK	__BITS(31, 16)
 #define	PCI_MSI_CTL_EXTMDATA_EN	__SHIFTIN(__BIT(10), PCI_MSI_CTL_MASK)
@@ -1148,6 +1152,18 @@ typedef u_int8_t pci_revision_t;
 
 #define PCIE_SLCAP2	0x34	/* Slot Capabilities 2 Register */
 #define PCIE_SLCSR2	0x38	/* Slot Control & Status 2 Register */
+
+/*
+ * Other than Root Complex Integrated Endpoint and Root Complex Event Collector
+ * have link related registers.
+ */
+#define PCIE_HAS_LINKREGS(type) (((type) != PCIE_XCAP_TYPE_ROOT_INTEP) && \
+	    ((type) != PCIE_XCAP_TYPE_ROOT_EVNTC))
+
+/* Only root port and root complex event collector have PCIE_RCR & PCIE_RSR */
+#define PCIE_HAS_ROOTREGS(type) (((type) == PCIE_XCAP_TYPE_ROOT) || \
+	    ((type) == PCIE_XCAP_TYPE_ROOT_EVNTC))
+
 
 /*
  * Capability ID: 0x11
@@ -1866,6 +1882,54 @@ struct pci_rom {
  * Extended capability ID: 0x0014
  * Enhanced Allocation
  */
+#define	PCI_EA_CAP1	0x00	/* Capability First */
+#define	PCI_EA_CAP1_NUMENTRIES	__BITS(21, 16)	/* Num Entries */
+#define	PCI_EA_CAP2	0x04	/* Capability Second (for type1) */
+#define	PCI_EA_CAP2_SECONDARY	__BITS(7, 0)   /* Fixed Secondary Bus No. */
+#define	PCI_EA_CAP2_SUBORDINATE	__BITS(15, 8)  /* Fixed Subordinate Bus No. */
+
+/* Bit definitions for the first DW of each entry */
+#define PCI_EA_ES	__BITS(2, 0)	/* Entry Size */
+#define PCI_EA_BEI	__BITS(7, 4)	/* BAR Equivalent Indicator */
+#define PCI_EA_BEI_BAR0		0	/* BAR0 (10h) */
+#define PCI_EA_BEI_BAR1		1	/* BAR1 (14h) */
+#define PCI_EA_BEI_BAR2		2	/* BAR2 (18h) */
+#define PCI_EA_BEI_BAR3		3	/* BAR3 (1ch) */
+#define PCI_EA_BEI_BAR4		4	/* BAR4 (20h) */
+#define PCI_EA_BEI_BAR5		5	/* BAR5 (24h) */
+#define PCI_EA_BEI_BEHIND	6	/* Behind the function (for type1) */
+#define PCI_EA_BEI_NOTIND	7	/* Not Indicated */
+#define PCI_EA_BEI_EXPROM	8	/* Expansion ROM */
+#define PCI_EA_BEI_VFBAR0	9	/* VF BAR0 */
+#define PCI_EA_BEI_VFBAR1	10	/* VF BAR1 */
+#define PCI_EA_BEI_VFBAR2	11	/* VF BAR2 */
+#define PCI_EA_BEI_VFBAR3	12	/* VF BAR3 */
+#define PCI_EA_BEI_VFBAR4	13	/* VF BAR4 */
+#define PCI_EA_BEI_VFBAR5	14	/* VF BAR5 */
+#define PCI_EA_BEI_RESERVED	15	/* Reserved (treat as Not Indicated) */
+
+#define PCI_EA_PP	__BITS(15, 8)	/* Primary Properties */
+#define PCI_EA_SP	__BITS(23, 16)	/* Secondary Properties */
+/* PP and SP's values */
+#define PCI_EA_PROP_MEM_NONPREF	0x00	/* Memory Space, Non-Prefetchable */
+#define PCI_EA_PROP_MEM_PREF	0x01	/* Memory Space, Prefetchable */
+#define PCI_EA_PROP_IO		0x02	/* I/O Space */
+#define PCI_EA_PROP_VF_MEM_NONPREF 0x03	/* Resorce for VF use. Mem. Non-Pref */
+#define PCI_EA_PROP_VF_MEM_PREF	0x04	/* Resorce for VF use. Mem. Prefetch */
+#define PCI_EA_PROP_BB_MEM_NONPREF 0x05	/* Behind Bridge: MEM. Non-Pref */
+#define PCI_EA_PROP_BB_MEM_PREF 0x06	/* Behind Bridge: MEM. Prefetch */
+#define PCI_EA_PROP_BB_IO	0x07	/* Behind Bridge: I/O Space */
+#define PCI_EA_PROP_MEM_UNAVAIL	0xfd	/* Memory Space Unavailable */
+#define PCI_EA_PROP_IO_UNAVAIL	0xfe	/* IO Space Unavailable */
+#define PCI_EA_PROP_UNAVAIL	0xff	/* Entry Unavailable for use */
+
+#define PCI_EA_W	__BIT(30)	/* Writable */
+#define PCI_EA_E	__BIT(31)	/* Enable for this entry */
+
+#define PCI_EA_LOWMASK	__BITS(31, 2)	/* Low register's mask */
+#define PCI_EA_BASEMAXOFFSET_S	__BIT(1)	/* Field Size */
+#define PCI_EA_BASEMAXOFFSET_64BIT __BIT(1)	/* 64bit */
+#define PCI_EA_BASEMAXOFFSET_32BIT 0		/* 32bit */
 
 /*
  * Extended capability ID: 0x0015
