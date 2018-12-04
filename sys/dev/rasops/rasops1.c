@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.23 2010/05/04 04:57:34 macallan Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.24 2018/12/04 09:27:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.23 2010/05/04 04:57:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.24 2018/12/04 09:27:59 mlelstv Exp $");
 
 #include "opt_rasops.h"
 
@@ -180,7 +180,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 
 		/* Do underline */
-		if ((attr & 1) != 0) {
+		if ((attr & WSATTR_UNDERLINE) != 0) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			tmp = (*rp & lmask) | (fg & rmask);
 			*rp = tmp;
@@ -257,7 +257,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 
 		/* Do underline */
-		if ((attr & 1) != 0) {
+		if ((attr & WSATTR_UNDERLINE) != 0) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			tmp = (rp[0] & lmask) | (fg & ~lmask);
 			tmp2 = (rp[1] & rmask) | (fg & ~rmask);
@@ -344,7 +344,7 @@ rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp[-(ri->ri_stride << 1)] = fg;
 		if (ri->ri_hwbits) {
 			hrp[-(ri->ri_stride << 1)] = fg;
@@ -426,7 +426,7 @@ rasops1_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		/* XXX alignment?! */
 		*(int16_t *)(rp - (ri->ri_stride << 1)) = fg;
 		if (ri->ri_hwbits) {
