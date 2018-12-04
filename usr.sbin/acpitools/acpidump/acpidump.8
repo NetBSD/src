@@ -1,4 +1,4 @@
-.\" $NetBSD: acpidump.8,v 1.7.18.1 2017/11/22 15:54:09 martin Exp $
+.\" $NetBSD: acpidump.8,v 1.7.18.2 2018/12/04 11:58:10 martin Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
@@ -30,7 +30,7 @@
 .\"
 .\" $FreeBSD: head/usr.sbin/acpi/acpidump/acpidump.8 267668 2014-06-20 09:57:27Z bapt $
 .\"
-.Dd September 1, 2017
+.Dd November 1, 2018
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -99,6 +99,7 @@ utility dumps contents of the following tables:
 .It BERT
 .It BOOT
 .It CPEP
+.It CSRT
 .It DBG2
 .It DBGP
 .It DMAR
@@ -108,8 +109,10 @@ utility dumps contents of the following tables:
 .It ERST
 .It FACS
 .It FADT
+.It GTDT
 .It HEST
 .It HPET
+.It LPIT
 .It MADT
 .It MCFG
 .It MSCT
