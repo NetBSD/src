@@ -1,4 +1,8 @@
-$NetBSD: CHANGES,v 1.30 2018/11/25 23:48:14 mrg Exp $
+$NetBSD: CHANGES,v 1.31 2018/12/04 02:52:42 mrg Exp $
+
+changes in bozohttpd 20181204:
+	o  change directory indexing to use html tables.  from
+	   rajeev_v_pillai@yahoo.com
 
 changes in bozohttpd 20181125:
 	o  fixes for option parsing introduced in bozohttpd 20181123
