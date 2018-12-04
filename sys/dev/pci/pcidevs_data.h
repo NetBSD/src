@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1280.2.11 2018/12/04 11:43:54 martin Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1280.2.12 2018/12/04 12:03:43 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.11 2018/12/04 11:34:59 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.12 2018/12/04 12:02:12 martin Exp
  */
 
 /*
@@ -10214,9 +10214,13 @@ static const uint16_t pci_products[] = {
 	    27572, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS3516, 
 	    27388, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS3516_1, 
+	    27388, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS3416, 
 	    27396, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS3508, 
+	    27404, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS3508_1, 
 	    27404, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS3408, 
 	    27412, 0,
@@ -17145,9 +17149,9 @@ static const char pci_words[] = { "."
 	    "53c1510\0" /* 1 refs @ 27364 */
 	    "53c895A\0" /* 1 refs @ 27372 */
 	    "53c875A\0" /* 1 refs @ 27380 */
-	    "SAS3516\0" /* 2 refs @ 27388 */
+	    "SAS3516\0" /* 3 refs @ 27388 */
 	    "SAS3416\0" /* 2 refs @ 27396 */
-	    "SAS3508\0" /* 2 refs @ 27404 */
+	    "SAS3508\0" /* 3 refs @ 27404 */
 	    "SAS3408\0" /* 2 refs @ 27412 */
 	    "SAS3504\0" /* 2 refs @ 27420 */
 	    "SAS3404\0" /* 2 refs @ 27428 */
