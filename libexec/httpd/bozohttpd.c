@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.99 2018/11/25 07:37:20 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.100 2018/12/04 00:26:15 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1023,7 +1023,7 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 		case '\r':
 		case ' ':
 		encode_it:
-			snprintf(d, 4, "%%%02X", *s++);
+			snprintf(d, 4, "%%%02X", (unsigned char)*s++);
 			d += 3;
 			len += 3;
 			break;
