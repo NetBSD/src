@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.100 2018/12/04 00:26:15 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.101 2018/12/04 02:52:42 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1441,7 +1441,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	bozohttpd_t *httpd = request->hr_httpd;
 	struct stat sb;
 	char dir[MAXPATHLEN], redir[MAXPATHLEN], redirpath[MAXPATHLEN + 1],
-	    path[MAXPATHLEN];
+	    path[MAXPATHLEN + 1];
 	char *basename, *finalredir;
 	int rv, absolute;
 
@@ -2076,6 +2076,9 @@ bozo_escape_html(bozohttpd_t *httpd, const char *url)
 		case '&':
 			j += 5;
 			break;
+		case '"':
+			j += 6;
+			break;
 		}
 	}
 
@@ -2105,6 +2108,10 @@ bozo_escape_html(bozohttpd_t *httpd, const char *url)
 		case '&':
 			memcpy(tmp + j, "&amp;", 5);
 			j += 5;
+			break;
+		case '"':
+			memcpy(tmp + j, "&quot;", 6);
+			j += 6;
 			break;
 		default:
 			tmp[j++] = url[i];
