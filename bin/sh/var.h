@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.37 2018/12/03 06:42:25 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.38 2018/12/04 14:03:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@
 #define VNOFUNC		0x0100	/* don't call the callback function */
 #define VFUNCREF	0x0200	/* the function is called on ref, not set */
 
+#define VSPECIAL	0x1000	/* magic properties not lost when set */
 #define VDOEXPORT	0x2000	/* obey VEXPORT even if VNOEXPORT */
 #define VNOSET		0x4000	/* do not set variable - just readonly test */
 #define VNOERROR	0x8000	/* be quiet if set fails (no error msg) */
@@ -76,6 +77,7 @@ struct localvar {
 	struct var *vp;			/* the variable that was made local */
 	int flags;			/* saved flags */
 	char *text;			/* saved text */
+	union var_func_union v_u;	/* saved function */
 };
 
 
