@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.48 2018/11/30 17:47:54 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.49 2018/12/04 19:34:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.48 2018/11/30 17:47:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.49 2018/12/04 19:34:27 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -311,8 +311,14 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, "AHCI disk controller");
 
+	int counts[PCI_INTR_TYPE_SIZE] = {
+		[PCI_INTR_TYPE_INTX] = 1,
+		[PCI_INTR_TYPE_MSI] = 1,
+		[PCI_INTR_TYPE_MSIX] = 0, /* XXX not working */
+	};
+
 	/* Allocate and establish the interrupt. */
-	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSI)) {
 		aprint_error_dev(self, "can't allocate handler\n");
 		goto fail;
 	}
