@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.163 2018/12/04 19:22:42 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.164 2018/12/04 19:27:22 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.163 2018/12/04 19:22:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.164 2018/12/04 19:27:22 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -188,10 +188,10 @@ struct cpu_info *cpu_starting;
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
 static void    	cpu_start_secondary(struct cpu_info *ci);
-#endif
 #if NLAPIC > 0
 static void	cpu_copy_trampoline(paddr_t);
 #endif
+#endif /* MULTIPROCESSOR */
 
 /*
  * Runs once per boot once multiprocessor goo has been detected and
@@ -987,6 +987,7 @@ cpu_debug_dump(void)
 }
 #endif
 
+#ifdef MULTIPROCESSOR
 #if NLAPIC > 0
 static void
 cpu_copy_trampoline(paddr_t pdir_pa)
@@ -1028,7 +1029,6 @@ cpu_copy_trampoline(paddr_t pdir_pa)
 }
 #endif
 
-#ifdef MULTIPROCESSOR
 int
 mp_cpu_start(struct cpu_info *ci, paddr_t target)
 {
