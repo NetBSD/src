@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.159 2018/12/04 20:46:56 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.160 2018/12/04 21:01:48 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.159 2018/12/04 20:46:56 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.160 2018/12/04 21:01:48 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -81,8 +81,7 @@ static void nd6_dad_starttimer(struct dadq *, int);
 static void nd6_dad_destroytimer(struct dadq *);
 static void nd6_dad_timer(struct dadq *);
 static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
-static void nd6_dad_ns_input(struct ifaddr *, struct nd_opt_nonce *);
-static void nd6_dad_na_input(struct ifaddr *);
+static void nd6_dad_input(struct ifaddr *, struct nd_opt_nonce *);
 static void nd6_dad_duplicated(struct ifaddr *, struct dadq *);
 
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
@@ -306,7 +305,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 * silently ignore it.
 		 */
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
-			nd6_dad_ns_input(ifa, ndopts.nd_opts_nonce);
+			nd6_dad_input(ifa, ndopts.nd_opts_nonce);
 		ifa_release(ifa, &psref_ia);
 		ifa = NULL;
 
@@ -663,7 +662,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 */
 	if (ifa) {
 		if (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_TENTATIVE)
-			nd6_dad_na_input(ifa);
+			nd6_dad_input(ifa, NULL);
 		else
 			log(LOG_ERR,
 			    "nd6_na_input: duplicate IP6 address %s\n",
@@ -1446,7 +1445,7 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 }
 
 static void
-nd6_dad_ns_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
+nd6_dad_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 {
 	struct dadq *dp;
 	bool found_nonce = false;
@@ -1465,25 +1464,4 @@ nd6_dad_ns_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 		nd6_dad_destroytimer(dp);
 		ifafree(ifa);
 	}
-}
-
-static void
-nd6_dad_na_input(struct ifaddr *ifa)
-{
-	struct dadq *dp;
-
-	KASSERT(ifa != NULL);
-
-	mutex_enter(&nd6_dad_lock);
-	dp = nd6_dad_find(ifa, NULL, NULL);
-	if (dp == NULL) {
-		mutex_exit(&nd6_dad_lock);
-		return;
-	}
-
-	nd6_dad_duplicated(ifa, dp);
-	nd6_dad_stoptimer(dp);
-	mutex_exit(&nd6_dad_lock);
-	nd6_dad_destroytimer(dp);
-	ifafree(ifa);
 }
