@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.9.22.2 2018/04/09 18:12:50 martin Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.9.22.3 2018/12/04 11:52:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.9.22.2 2018/04/09 18:12:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.9.22.3 2018/12/04 11:52:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -92,7 +92,8 @@ x86_cpu_topology(struct cpu_info *ci)
 		if (ci->ci_max_cpuid >= 4) {
 			/* Maximum number of Cores per package (eax[31:26]). */
 			x86_cpuid2(4, 0, descs);
-			core_max = (descs[0] >> 26) + 1;
+			core_max = __SHIFTOUT(descs[0], CPUID_DCP_CORE_P_PKG)
+			    + 1;
 		} else {
 			core_max = 1;
 		}

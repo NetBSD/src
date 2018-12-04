@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.3 2018/04/09 18:04:32 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.4 2018/12/04 11:52:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.3 2018/04/09 18:04:32 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.4 2018/12/04 11:52:57 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,13 +92,13 @@ __RCSID("$NetBSD: i386.c,v 1.74.6.3 2018/04/09 18:04:32 martin Exp $");
 
 struct cpu_info {
 	const char	*ci_dev;
-	int32_t		ci_cpu_type;     /* for cpu's without cpuid */
+	int32_t		ci_cpu_type;	 /* for cpu's without cpuid */
 	int32_t		ci_cpuid_level;	 /* highest cpuid supported */
 	uint32_t	ci_cpuid_extlevel; /* highest cpuid extended func lv */
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_family;	 /* from ci_signature */
 	uint32_t	ci_model;	 /* from ci_signature */
-	uint32_t	ci_feat_val[9];	 /* X86 CPUID feature bits
+	uint32_t	ci_feat_val[10]; /* X86 CPUID feature bits
 					  *	[0] basic features %edx
 					  *	[1] basic features %ecx
 					  *	[2] extended features %edx
@@ -106,8 +106,9 @@ struct cpu_info {
 					  *	[4] VIA padlock features
 					  *	[5] structure ext. feat. %ebx
 					  *	[6] structure ext. feat. %ecx
-					  *	[7] XCR0 bits (d:0 %eax)
-					  *	[8] xsave flags (d:1 %eax)
+					  *     [7] structure ext. feat. %edx
+					  *	[8] XCR0 bits (d:0 %eax)
+					  *	[9] xsave flags (d:1 %eax)
 					  */
 	uint32_t	ci_cpu_class;	 /* CPU class */
 	uint32_t	ci_brand_id;	 /* Intel brand id */
@@ -161,9 +162,9 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 static const char * const i386_intel_brand[] = {
 	"",		    /* Unsupported */
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
-	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"Pentium III",	    /* Intel (R) Pentium (R) III processor */
 	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
-	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"Pentium III",	    /* Intel (R) Pentium (R) III processor */
 	"",		    /* 0x05: Reserved */
 	"Mobile Pentium III",/* Mobile Intel (R) Pentium (R) III processor-M */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */    
@@ -177,11 +178,11 @@ static const char * const i386_intel_brand[] = {
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 	"",		    /* 0x10: Reserved */
 	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
-	"Celeron M",        /* Intel (R) Celeron (R) M processor */
+	"Celeron M",	    /* Intel (R) Celeron (R) M processor */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
-	"Celeron",          /* Intel (R) Celeron (R) processor */
+	"Celeron",	    /* Intel (R) Celeron (R) processor */
 	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
-	"Pentium M",        /* Intel (R) Pentium (R) M processor */
+	"Pentium M",	    /* Intel (R) Pentium (R) M processor */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };
 
@@ -215,8 +216,8 @@ static void	powernow_probe(struct cpu_info *);
 static void	intel_family_new_probe(struct cpu_info *);
 static void	via_cpu_probe(struct cpu_info *);
 /* (Cache) Info functions */
-static void 	intel_cpu_cacheinfo(struct cpu_info *);
-static void 	amd_cpu_cacheinfo(struct cpu_info *);
+static void	intel_cpu_cacheinfo(struct cpu_info *);
+static void	amd_cpu_cacheinfo(struct cpu_info *);
 static void	via_cpu_cacheinfo(struct cpu_info *);
 static void	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
 static void	transmeta_cpu_info(struct cpu_info *);
@@ -251,7 +252,7 @@ const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	  NULL, NULL, NULL },			/* CPU_486DLC */
 	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
 	  NULL, NULL, NULL },		/* CPU_6x86 */
-	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
+	{ CPUVENDOR_NEXGEN,"NexGen","586",	CPUCLASS_386,
 	  NULL, NULL, NULL },			/* CPU_NX586 */
 };
 
@@ -1672,19 +1673,20 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	x86_cpuid(7, descs);
 	ci->ci_feat_val[5] = descs[1];
 	ci->ci_feat_val[6] = descs[2];
+	ci->ci_feat_val[7] = descs[3];
 
 	if (ci->ci_cpuid_level < 0xd)
 		return;
 
 	/* Get support XCR0 bits */
 	x86_cpuid2(0xd, 0, descs);
-	ci->ci_feat_val[7] = descs[0];	/* Actually 64 bits */
+	ci->ci_feat_val[8] = descs[0];	/* Actually 64 bits */
 	ci->ci_cur_xsave = descs[1];
 	ci->ci_max_xsave = descs[2];
 
 	/* Additional flags (eg xsaveopt support) */
 	x86_cpuid2(0xd, 1, descs);
-	ci->ci_feat_val[8] = descs[0];   /* Actually 64 bits */
+	ci->ci_feat_val[9] = descs[0];	 /* Actually 64 bits */
 }
 
 static void
@@ -1784,22 +1786,13 @@ print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
 }
 
 static void
-identifycpu_cpuids(struct cpu_info *ci)
+identifycpu_cpuids_intel_0x04(struct cpu_info *ci)
 {
-	const char *cpuname = ci->ci_dev;
 	u_int lp_max = 1;	/* logical processors per package */
 	u_int smt_max;		/* smt per core */
 	u_int core_max = 1;	/* core per package */
 	u_int smt_bits, core_bits;
 	uint32_t descs[4];
-
-	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
-	ci->ci_packageid = ci->ci_initapicid;
-	ci->ci_coreid = 0;
-	ci->ci_smtid = 0;
-	if (cpu_vendor != CPUVENDOR_INTEL) {
-		return;
-	}
 
 	/*
 	 * 253668.pdf 7.10.2
@@ -1809,32 +1802,110 @@ identifycpu_cpuids(struct cpu_info *ci)
 		x86_cpuid(1, descs);
 		lp_max = __SHIFTOUT(descs[1], CPUID_HTT_CORES);
 	}
-	if (ci->ci_cpuid_level >= 4) {
-		x86_cpuid2(4, 0, descs);
-		core_max = (descs[0] >> 26) + 1;
-	}
+	x86_cpuid2(4, 0, descs);
+	core_max = __SHIFTOUT(descs[0], CPUID_DCP_CORE_P_PKG) + 1;
+
 	assert(lp_max >= core_max);
 	smt_max = lp_max / core_max;
 	smt_bits = ilog2(smt_max - 1) + 1;
 	core_bits = ilog2(core_max - 1) + 1;
-	if (smt_bits + core_bits) {
+
+	if (smt_bits + core_bits)
 		ci->ci_packageid = ci->ci_initapicid >> (smt_bits + core_bits);
+
+	if (core_bits)
+		ci->ci_coreid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS(smt_bits, smt_bits + core_bits - 1));
+
+	if (smt_bits)
+		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS((int)0, (int)(smt_bits - 1)));
+}
+
+static void
+identifycpu_cpuids_intel_0x0b(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
+	u_int smt_bits, core_bits, core_shift = 0, pkg_shift = 0;
+	uint32_t descs[4];
+	int i;
+
+	x86_cpuid(0x0b, descs);
+	if (descs[1] == 0) {
+		identifycpu_cpuids_intel_0x04(ci);
+		return;
 	}
+
+	for (i = 0; ; i++) {
+		unsigned int shiftnum, lvltype;
+		x86_cpuid2(0x0b, i, descs);
+
+		/* On invalid level, (EAX and) EBX return 0 */
+		if (descs[1] == 0)
+			break;
+
+		shiftnum = __SHIFTOUT(descs[0], CPUID_TOP_SHIFTNUM);
+		lvltype = __SHIFTOUT(descs[2], CPUID_TOP_LVLTYPE);
+		switch (lvltype) {
+		case CPUID_TOP_LVLTYPE_SMT:
+			core_shift = shiftnum;
+			break;
+		case CPUID_TOP_LVLTYPE_CORE:
+			pkg_shift = shiftnum;
+			break;
+		case CPUID_TOP_LVLTYPE_INVAL:
+			aprint_verbose("%s: Invalid level type\n", cpuname);
+			break;
+		default:
+			aprint_verbose("%s: Unknown level type(%d) \n",
+			    cpuname, lvltype);
+			break;
+		}
+	}
+
+	assert(pkg_shift >= core_shift);
+	smt_bits = core_shift;
+	core_bits = pkg_shift - core_shift;
+
+	ci->ci_packageid = ci->ci_initapicid >> pkg_shift;
+
+	if (core_bits)
+		ci->ci_coreid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS(core_shift, pkg_shift - 1));
+
+	if (smt_bits)
+		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid,
+		    __BITS((int)0, core_shift - 1));
+}
+
+static void
+identifycpu_cpuids_intel(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
+
+	if (ci->ci_cpuid_level >= 0x0b)
+		identifycpu_cpuids_intel_0x0b(ci);
+	else if (ci->ci_cpuid_level >= 4)
+		identifycpu_cpuids_intel_0x04(ci);
+
 	aprint_verbose("%s: Cluster/Package ID %u\n", cpuname,
 	    ci->ci_packageid);
-	if (core_bits) {
-		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
+	aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
+	aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
+}
 
-		ci->ci_coreid =
-		    __SHIFTOUT(ci->ci_initapicid, core_mask);
-		aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
-	}
-	if (smt_bits) {
-		u_int smt_mask = __BITS((int)0, (int)(smt_bits - 1));
+static void
+identifycpu_cpuids(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
 
-		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid, smt_mask);
-		aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
-	}
+	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
+	ci->ci_packageid = ci->ci_initapicid;
+	ci->ci_coreid = 0;
+	ci->ci_smtid = 0;
+
+	if (cpu_vendor == CPUVENDOR_INTEL)
+		identifycpu_cpuids_intel(ci);
 }
 
 void
@@ -1928,7 +1999,7 @@ identifycpu(int fd, const char *cpuname)
 			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
 			name = cpufam->cpu_models[ci->ci_model];
 			if (name == NULL || *name == '\0')
-			    name = cpufam->cpu_model_default;
+				name = cpufam->cpu_model_default;
 			class = cpufam->cpu_class;
 			ci->ci_info = cpufam->cpu_info;
 
@@ -1944,7 +2015,7 @@ identifycpu(int fd, const char *cpuname)
 				    __arraycount(i386_intel_brand) &&
 				    i386_intel_brand[ci->ci_brand_id])
 					name =
-					     i386_intel_brand[ci->ci_brand_id];
+					    i386_intel_brand[ci->ci_brand_id];
 			}
 
 			if (cpu_vendor == CPUVENDOR_AMD) {
@@ -2034,22 +2105,21 @@ identifycpu(int fd, const char *cpuname)
 	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
 		print_bits(cpuname, "features5", CPUID_SEF_FLAGS,
 		    ci->ci_feat_val[5]);
-	if (cpu_vendor == CPUVENDOR_INTEL)
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
 		print_bits(cpuname, "features6", CPUID_SEF_FLAGS1,
 		    ci->ci_feat_val[6]);
 
-	if ((cpu_vendor == CPUVENDOR_INTEL) && (ci->ci_cpuid_level >= 7)) {
-		x86_cpuid(7, descs);
-		print_bits(cpuname, "SEF edx", CPUID_SEF_FLAGS2, descs[3]);
-	}
+	if (cpu_vendor == CPUVENDOR_INTEL)
+		print_bits(cpuname, "features7", CPUID_SEF_FLAGS2,
+		    ci->ci_feat_val[7]);
 
-	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[7]);
+	print_bits(cpuname, "xsave features", XCR0_FLAGS1, ci->ci_feat_val[8]);
 	print_bits(cpuname, "xsave instructions", CPUID_PES1_FLAGS,
-	    ci->ci_feat_val[8]);
+	    ci->ci_feat_val[9]);
 
 	if (ci->ci_max_xsave != 0) {
 		aprint_normal("%s: xsave area size: current %d, maximum %d",
-			cpuname, ci->ci_cur_xsave, ci->ci_max_xsave);
+		    cpuname, ci->ci_cur_xsave, ci->ci_max_xsave);
 		aprint_normal(", xgetbv %sabled\n",
 		    ci->ci_feat_val[1] & CPUID2_OSXSAVE ? "en" : "dis");
 		if (ci->ci_feat_val[1] & CPUID2_OSXSAVE)
@@ -2090,56 +2160,85 @@ identifycpu(int fd, const char *cpuname)
 
 	identifycpu_cpuids(ci);
 
-#ifdef INTEL_CORETEMP
-	if (cpu_vendor == CPUVENDOR_INTEL && ci->ci_cpuid_level >= 0x06)
-		coretemp_register(ci);
-#endif
+	if ((ci->ci_cpuid_level >= 5)
+	    && ((cpu_vendor == CPUVENDOR_INTEL)
+		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		uint16_t lmin, lmax;
+		x86_cpuid(5, descs);
+		
+		print_bits(cpuname, "MONITOR/MWAIT extensions",
+		    CPUID_MON_FLAGS, descs[2]);
+		lmin = __SHIFTOUT(descs[0], CPUID_MON_MINSIZE);
+		lmax = __SHIFTOUT(descs[1], CPUID_MON_MAXSIZE);
+		aprint_normal("%s: monitor-line size %hu", cpuname, lmin);
+		if (lmin != lmax)
+			aprint_normal("-%hu", lmax);
+		aprint_normal("\n");
+
+		for (i = 0; i <= 7; i++) {
+			unsigned int num = CPUID_MON_SUBSTATE(descs[3], i);
+
+			if (num != 0)
+				aprint_normal("%s: C%u substates %u\n",
+				    cpuname, i, num);
+		}
+	}
+	if ((ci->ci_cpuid_level >= 6)
+	    && ((cpu_vendor == CPUVENDOR_INTEL)
+		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		x86_cpuid(6, descs);
+		print_bits(cpuname, "DSPM-eax", CPUID_DSPM_FLAGS, descs[0]);
+		print_bits(cpuname, "DSPM-ecx", CPUID_DSPM_FLAGS1, descs[2]);
+	}
+	if ((ci->ci_cpuid_level >= 7)
+	    && ((cpu_vendor == CPUVENDOR_INTEL)
+		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		x86_cpuid(7, descs);
+		aprint_verbose("%s: SEF highest subleaf %08x\n",
+		    cpuname, descs[0]);
+	}
 
 	if (cpu_vendor == CPUVENDOR_AMD) {
-		uint32_t data[4];
-
-		x86_cpuid(0x80000000, data);
-		if (data[0] >= 0x80000007)
+		x86_cpuid(0x80000000, descs);
+		if (descs[0] >= 0x80000007)
 			powernow_probe(ci);
 
-		if ((data[0] >= 0x8000000a)
-		   && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
-			x86_cpuid(0x8000000a, data);
+		if ((descs[0] >= 0x8000000a)
+		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
+			x86_cpuid(0x8000000a, descs);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
-			    data[0] & 0xf);
-			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
-			print_bits(cpuname, "SVM features", CPUID_AMD_SVM_FLAGS,
-				   data[3]);
+			    descs[0] & 0xf);
+			aprint_verbose("%s: SVM NASID %d\n", cpuname,
+			    descs[1]);
+			print_bits(cpuname, "SVM features",
+			    CPUID_AMD_SVM_FLAGS, descs[3]);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
-		uint32_t data[4];
 		int32_t bi_index;
 
 		for (bi_index = 1; bi_index <= ci->ci_cpuid_level; bi_index++) {
-			x86_cpuid(bi_index, data);
+			x86_cpuid(bi_index, descs);
 			switch (bi_index) {
-			case 6:
-				print_bits(cpuname, "DSPM-eax",
-				    CPUID_DSPM_FLAGS, data[0]);
-				print_bits(cpuname, "DSPM-ecx",
-				    CPUID_DSPM_FLAGS1, data[2]);
+			case 0x0a:
+				print_bits(cpuname, "Perfmon-eax",
+				    CPUID_PERF_FLAGS0, descs[0]);
+				print_bits(cpuname, "Perfmon-ebx",
+				    CPUID_PERF_FLAGS1, descs[1]);
+				print_bits(cpuname, "Perfmon-edx",
+				    CPUID_PERF_FLAGS3, descs[3]);
 				break;
-			case 7:
-				aprint_verbose("%s: SEF highest subleaf %08x\n",
-				    cpuname, data[0]);
-				break;
-#if 0
 			default:
+#if 0
 				aprint_verbose("%s: basic %08x-eax %08x\n",
-				    cpuname, bi_index, data[0]);
+				    cpuname, bi_index, descs[0]);
 				aprint_verbose("%s: basic %08x-ebx %08x\n",
-				    cpuname, bi_index, data[1]);
+				    cpuname, bi_index, descs[1]);
 				aprint_verbose("%s: basic %08x-ecx %08x\n",
-				    cpuname, bi_index, data[2]);
+				    cpuname, bi_index, descs[2]);
 				aprint_verbose("%s: basic %08x-edx %08x\n",
-				    cpuname, bi_index, data[3]);
-				break;
+				    cpuname, bi_index, descs[3]);
 #endif
+				break;
 			}
 		}
 	}
@@ -2176,7 +2275,7 @@ identifycpu(int fd, const char *cpuname)
 		printf("%s: UCode version: 0x%"PRIx64"\n", cpuname, ucvers.amd.version);
 	else if (cpu_vendor == CPUVENDOR_INTEL)
 		printf("%s: microcode version 0x%x, platform ID %d\n", cpuname,
-		       ucvers.intel1.ucodeversion, ucvers.intel1.platformid);
+		    ucvers.intel1.ucodeversion, ucvers.intel1.platformid);
 }
 
 static const struct x86_cache_info *
@@ -2213,14 +2312,14 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
 		aprint_verbose("%s ", cai->cai_string);
 	} else {
 		(void)humanize_number(human_num, sizeof(human_num),
-			cai->cai_totalsize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		    cai->cai_totalsize, "B", HN_AUTOSCALE, HN_NOSPACE);
 		aprint_verbose("%s %dB/line ", human_num, cai->cai_linesize);
 	}
 	switch (cai->cai_associativity) {
-	case    0:
+	case	0:
 		aprint_verbose("disabled");
 		break;
-	case    1:
+	case	1:
 		aprint_verbose("direct-mapped");
 		break;
 	case 0xff:
@@ -2254,7 +2353,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 		aprint_verbose("%s", cai->cai_string);
 	} else {
 		(void)humanize_number(human_num, sizeof(human_num),
-			cai->cai_linesize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		    cai->cai_linesize, "B", HN_AUTOSCALE, HN_NOSPACE);
 		aprint_verbose("%d %s entries ", cai->cai_totalsize,
 		    human_num);
 		switch (cai->cai_associativity) {
@@ -2299,7 +2398,7 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 	}
 	if (ci->ci_cinfo[CAI_PREFETCH].cai_linesize != 0) {
 		aprint_verbose_dev(ci->ci_dev, "%dB prefetching",
-			ci->ci_cinfo[CAI_PREFETCH].cai_linesize);
+		    ci->ci_cinfo[CAI_PREFETCH].cai_linesize);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}

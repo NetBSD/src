@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.7 2018/09/23 17:35:33 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.8 2018/12/04 11:52:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -282,7 +282,25 @@
 #define CPUID_DCP_COMPLEX	__BIT(2)	/* Complex cache indexing */
 
 /*
- * Intel Digital Thermal Sensor and
+ * Intel/AMD MONITOR/MWAIT
+ * Fn0000_0005
+ */
+/* %eax */
+#define CPUID_MON_MINSIZE	__BITS(15, 0)  /* Smallest monitor-line size */
+/* %ebx */
+#define CPUID_MON_MAXSIZE	__BITS(15, 0)  /* Largest monitor-line size */
+/* %ecx */
+#define CPUID_MON_EMX		__BIT(0)       /* MONITOR/MWAIT Extensions */
+#define CPUID_MON_IBE		__BIT(1)       /* Interrupt as Break Event */
+
+#define CPUID_MON_FLAGS	"\20" \
+	"\1" "EMX"	"\2" "IBE"
+
+/* %edx: number of substates for specific C-state */
+#define CPUID_MON_SUBSTATE(edx, cstate) (((edx) >> (cstate * 4)) & 0x0000000f)
+
+/*
+ * Intel/AMD Digital Thermal Sensor and
  * Power Management, Fn0000_0006 - %eax.
  */
 #define CPUID_DSPM_DTS	__BIT(0)	/* Digital Thermal Sensor */
@@ -313,7 +331,7 @@
 	"25" "HWP_IGNIDL"
 
 /*
- * Intel Digital Thermal Sensor and
+ * Intel/AMD Digital Thermal Sensor and
  * Power Management, Fn0000_0006 - %ecx.
  */
 #define CPUID_DSPM_HWF	0x00000001	/* MSR_APERF/MSR_MPERF available */
@@ -322,7 +340,7 @@
 #define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF" "\4" "EPB"
 
 /*
- * Intel Structured Extended Feature leaf Fn0000_0007
+ * Intel/AMD Structured Extended Feature leaf Fn0000_0007
  * %eax == 0: Subleaf 0
  *	%eax: The Maximum input value for supported subleaf.
  *	%ebx: Feature bits.
@@ -353,6 +371,7 @@
 #define CPUID_SEF_ADX		__BIT(19) /* ADCX/ADOX instructions */
 #define CPUID_SEF_SMAP		__BIT(20) /* Supervisor-Mode Access Prevention */
 #define CPUID_SEF_AVX512_IFMA	__BIT(21) /* AVX-512 Integer Fused Multiply Add */
+/* Bit 22 was PCOMMIT */
 #define CPUID_SEF_CLFLUSHOPT	__BIT(23) /* Cache Line FLUSH OPTimized */
 #define CPUID_SEF_CLWB		__BIT(24) /* Cache Line Write Back */
 #define CPUID_SEF_PT		__BIT(25) /* Processor Trace */
@@ -386,16 +405,18 @@
 #define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
 #define CPUID_SEF_AVX512_BITALG	__BIT(12)
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
+#define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
 
-#define CPUID_SEF_FLAGS1	"\20" \
-	"\1" "PREFETCHWT1" "\2" "AVX512_VBMI" "\3" "UMIP" "\4" "PKU"	\
-	"\5" "OSPKE"			"\7" "AVX512_VBMI2"		\
-	"\11" "GFNI"	"\12" "VAES"	"\13" "VPCLMULQDQ" "\14" "AVX512_VNNI"\
-	"\15" "AVX512_BITALG"		"\17" "AVX512_VPOPCNTDQ"	\
-					"\27" "RDPID"			\
-					"\37" "SGXLC"
+#define CPUID_SEF_FLAGS1	"\177\20" \
+	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	\
+	"b\4OSPKE\0"			"b\6AVX512_VBMI2\0"		\
+	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
+	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
+	"f\21\5MAWAU\0"							\
+					"b\26RDPID\0"			\
+					"b\36SGXLC\0"
 
 /* %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
@@ -412,7 +433,61 @@
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP"		"\40" "SSBD"
 
 /*
- * CPUID Processor extended state Enumeration Fn0000000d
+ * Intel CPUID Architectural Performance Monitoring Fn0000000a
+ *
+ * See also src/usr.sbin/tprof/arch/tprof_x86.c
+ */
+
+/* %eax */
+#define CPUID_PERF_VERSION	__BITS(7, 0)   /* Version ID */
+#define CPUID_PERF_NGPPC	__BITS(15, 8)  /* Num of G.P. perf counter */
+#define CPUID_PERF_NBWGPPC	__BITS(23, 16) /* Bit width of G.P. perfcnt */
+#define CPUID_PERF_BVECLEN	__BITS(31, 24) /* Length of EBX bit vector */
+
+#define CPUID_PERF_FLAGS0	"\177\20"	\
+	"f\0\10VERSION\0" "f\10\10GPCounter\0"	\
+	"f\20\10GPBitwidth\0" "f\30\10Vectorlen\0"
+
+/* %ebx */
+#define CPUID_PERF_CORECYCL	__BIT(0)       /* No core cycle */
+#define CPUID_PERF_INSTRETRY	__BIT(1)       /* No instruction retried */
+#define CPUID_PERF_REFCYCL	__BIT(2)       /* No reference cycles */
+#define CPUID_PERF_LLCREF	__BIT(3)       /* No LLCache reference */
+#define CPUID_PERF_LLCMISS	__BIT(4)       /* No LLCache miss */
+#define CPUID_PERF_BRINSRETR	__BIT(5)       /* No branch inst. retried */
+#define CPUID_PERF_BRMISPRRETR	__BIT(6)       /* No branch mispredict retry */
+
+#define CPUID_PERF_FLAGS1	"\177\20"				      \
+	"b\0\1CORECYCL\0" "b\1\1INSTRETRY\0" "b\2\1REFCYCL\0" "b\3\1LLCREF\0" \
+	"b\4\1LLCMISS\0" "b\5\1BRINSRETR\0" "b\6\1BRMISPRRETR\0"
+
+/* %edx */
+#define CPUID_PERF_NFFPC	__BITS(4, 0)   /* Num of fixed-funct perfcnt */
+#define CPUID_PERF_NBWFFPC	__BITS(12, 5)  /* Bit width of fixed-func pc */
+#define CPUID_PERF_ANYTHREADDEPR __BIT(15)      /* Any Thread deprecation */
+
+#define CPUID_PERF_FLAGS3	"\177\20"				\
+	"f\0\5FixedFunc\0" "f\5\10FFBitwidth\0" "b\17ANYTHREADDEPR\0"
+
+/*
+ * Intel CPUID Extended Topology Enumeration Fn0000000b
+ * %ecx == level number
+ *	%eax: See below.
+ *	%ebx: Number of logical processors at this level.
+ *	%ecx: See below.
+ *	%edx: x2APIC ID of the current logical processor.
+ */
+/* %eax */
+#define CPUID_TOP_SHIFTNUM	__BITS(4, 0) /* Topology ID shift value */
+/* %ecx */
+#define CPUID_TOP_LVLNUM	__BITS(7, 0) /* Level number */
+#define CPUID_TOP_LVLTYPE	__BITS(15, 8) /* Level type */
+#define CPUID_TOP_LVLTYPE_INVAL	0	 	/* Invalid */
+#define CPUID_TOP_LVLTYPE_SMT	1	 	/* SMT */
+#define CPUID_TOP_LVLTYPE_CORE	2	 	/* Core */
+
+/*
+ * Intel/AMD CPUID Processor extended state Enumeration Fn0000000d
  *
  * %ecx == 0: supported features info:
  *	%eax: Valid bits of lower 32bits of XCR0
