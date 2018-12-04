@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.136 2018/12/02 08:19:44 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.137 2018/12/04 19:27:22 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.136 2018/12/02 08:19:44 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.137 2018/12/04 19:27:22 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1493,7 +1493,9 @@ void
 cpu_intr_init(struct cpu_info *ci)
 {
 #if !defined(XEN)
+#if (NLAPIC > 0) || defined(MULTIPROCESSOR) || defined(__HAVE_PREEMPTION)
 	struct intrsource *isp;
+#endif
 #if NLAPIC > 0
 	static int first = 1;
 #if defined(MULTIPROCESSOR)
