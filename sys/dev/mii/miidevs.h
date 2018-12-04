@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.128.6.2 2018/07/26 21:09:42 snj Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.128.6.3 2018/12/04 11:16:33 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.125.6.2 2018/07/26 21:09:22 snj Exp
+ *	NetBSD: miidevs,v 1.125.6.3 2018/12/04 11:15:20 martin Exp
  */
 
 /*-
@@ -56,36 +56,36 @@
  * Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
  */
 
-#define	MII_OUI_AGERE	0x00053d	/* Agere */
-#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
-#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
-#define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
-#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_CICADA	0x0003f1	/* Cicada Semiconductor */
+#define	MII_OUI_AGERE	0x00053d	/* Agere */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
-#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
-#define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
-#define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
+#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
+#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
-#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
-#define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
-#define	MII_OUI_INTEL	0x00aa00	/* Intel */
-#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
+#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
+#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
-#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
-#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
-#define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
-#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
-#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
-#define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
-#define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
-#define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_SMSC	0x00800f	/* SMSC */
-#define	MII_OUI_TI	0x080028	/* Texas Instruments */
+#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
+#define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
+#define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
+#define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
+#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
+#define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
+#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
+#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
+#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
+#define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
+#define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
+#define	MII_OUI_TI	0x080028	/* Texas Instruments */
 
 /* Some Intel 82553's use an alternative OUI. */
 #define	MII_OUI_xxINTEL	0x001f00	/* Intel */
@@ -110,6 +110,7 @@
 #define	MII_OUI_xxXAQTI	0xace000	/* XaQti Corp. */
 
 /* Don't know what's going on here. */
+#define	MII_OUI_xxASIX	0x000674	/* Asix Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 
@@ -124,6 +125,10 @@
  */
 #define	MII_MODEL_AGERE_ET1011	0x0004
 #define	MII_STR_AGERE_ET1011	"Agere ET1011 10/100/1000baseT PHY"
+
+/* Asix semiconductor PHYs */
+#define	MII_MODEL_xxASIX_AX88X9X	0x0031
+#define	MII_STR_xxASIX_AX88X9X	"Ax88x9x internal PHY"
 
 /* Atheros PHYs */
 #define	MII_MODEL_ATHEROS_F1	0x0001
@@ -446,7 +451,7 @@
 #define	MII_MODEL_xxNATSEMI_DP83843	0x0001
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83815	0x0002
-#define	MII_STR_xxNATSEMI_DP83815	"DP83815 10/100 media interface"
+#define	MII_STR_xxNATSEMI_DP83815	"DP83815/DP83846A 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83847	0x0003
 #define	MII_STR_xxNATSEMI_DP83847	"DP83847 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83891	0x0005
