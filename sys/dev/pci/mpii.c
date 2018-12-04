@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.16 2018/12/03 23:23:30 bouyer Exp $ */
+/* $NetBSD: mpii.c,v 1.17 2018/12/04 19:54:02 bouyer Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.16 2018/12/03 23:23:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.17 2018/12/04 19:54:02 bouyer Exp $");
 
 #include "bio.h"
 
@@ -433,7 +433,8 @@ static const struct mpii_pci_product {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3508 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3508_1 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516_1 }
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516_1 },
+	{ 0, 0}
 };
 
 int
