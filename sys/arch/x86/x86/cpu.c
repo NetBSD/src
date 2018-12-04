@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.162 2018/11/12 18:10:36 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.163 2018/12/04 19:22:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.162 2018/11/12 18:10:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.163 2018/12/04 19:22:42 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -320,7 +320,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	if (ncpu == maxcpus) {
+	if (ncpu > maxcpus) {
 #ifndef _LP64
 		aprint_error(": too many CPUs, please use NetBSD/amd64\n");
 #else
