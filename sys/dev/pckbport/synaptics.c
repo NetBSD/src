@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.45 2018/11/28 09:14:03 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.46 2018/12/04 10:10:15 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.45 2018/11/28 09:14:03 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.46 2018/12/04 10:10:15 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ static int synaptics_button3 = SYNAPTICS_EDGE_LEFT + 2 * (SYNAPTICS_EDGE_RIGHT -
 static int synaptics_two_fingers_emul = 0;
 static int synaptics_scale_x = 16;
 static int synaptics_scale_y = 16;
-static int synaptics_scale_z = 1;
+static int synaptics_scale_z = 32;
 static int synaptics_max_speed_x = 32;
 static int synaptics_max_speed_y = 32;
 static int synaptics_max_speed_z = 2;
@@ -867,7 +867,8 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_scale_x_nodenum ||
-	    node.sysctl_num == synaptics_scale_y_nodenum) {
+	    node.sysctl_num == synaptics_scale_y_nodenum ||
+	    node.sysctl_num == synaptics_scale_z_nodenum) {
 		if (t < 1 || t > (SYNAPTICS_EDGE_MAX / 4))
 			return (EINVAL);
 	} else
