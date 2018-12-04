@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.160 2018/12/04 21:01:48 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.161 2018/12/04 21:16:54 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.160 2018/12/04 21:01:48 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.161 2018/12/04 21:16:54 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -306,11 +306,9 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
 			nd6_dad_input(ifa, ndopts.nd_opts_nonce);
-		ifa_release(ifa, &psref_ia);
-		ifa = NULL;
-
 		goto freeit;
 	}
+
 	ifa_release(ifa, &psref_ia);
 	ifa = NULL;
 
