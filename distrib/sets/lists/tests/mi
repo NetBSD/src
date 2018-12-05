@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.795 2018/09/23 13:36:04 christos Exp $
+# $NetBSD: mi,v 1.796 2018/12/05 02:45:05 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1270,6 +1270,7 @@
 ./usr/tests/bin/sh/dotcmd/while_return_until	tests-bin-tests	compattestfile,atf
 ./usr/tests/bin/sh/dotcmd/while_return_while	tests-bin-tests	compattestfile,atf
 ./usr/tests/bin/sh/t_arith			tests-bin-tests		compattestfile,atf
+./usr/tests/bin/sh/t_builtins			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_cmdsub			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_compexit			tests-obsolete		obsolete
 ./usr/tests/bin/sh/t_evaltested			tests-bin-tests		compattestfile,atf
