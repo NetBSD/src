@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.221 2018/11/24 19:22:17 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.222 2018/12/05 18:16:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,13 +62,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.221 2018/11/24 19:22:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.222 2018/12/05 18:16:51 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_kaslr.h"
 #endif
 
 #if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
@@ -219,7 +220,13 @@ static const int	maxuprc	= MAXUPRC;
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
+static int sysctl_security_expose_address(SYSCTLFN_PROTO);
 
+#ifdef KASLR
+static int kern_expose_address_= 0;
+#else
+static int kern_expose_address = 1;
+#endif
 /*
  * The process list descriptors, used during pid allocation and
  * by sysctl.  No locking on this data structure is needed since
@@ -241,7 +248,7 @@ static pool_cache_t proc_cache;
 
 static kauth_listener_t proc_listener;
 
-static void fill_proc(const struct proc *, struct proc *);
+static void fill_proc(const struct proc *, struct proc *, bool);
 static int fill_pathname(struct lwp *, pid_t, void *, size_t *);
 
 static int
@@ -280,6 +287,16 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 			break;
 
 		case KAUTH_REQ_PROCESS_CANSEE_KPTR:
+			if (!kern_expose_address)
+				break;
+
+			if (kern_expose_address == 1 && !(p->p_flag & PK_KMEM))
+				break;
+
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
 		default:
 			break;
 		}
@@ -374,6 +391,12 @@ procinit_sysctl(void)
 {
 	static struct sysctllog *clog;
 
+	sysctl_createv(&clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "expose_address",
+		       SYSCTL_DESCR("Enable exposing kernel addresses"),
+		       sysctl_security_expose_address, 0,
+		       &kern_expose_address, 0, CTL_KERN, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc",
@@ -1639,6 +1662,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	u_int elem_size, kelem_size, elem_count;
 	size_t buflen, needed;
 	bool match, zombie, mmmbrains;
+	const bool allowaddr = get_expose_address(curproc);
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1799,10 +1823,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		if (buflen >= elem_size &&
 		    (type == KERN_PROC || elem_count > 0)) {
 			if (type == KERN_PROC) {
-				fill_proc(p, &kbuf->kproc.kp_proc);
-				fill_eproc(p, &kbuf->kproc.kp_eproc, zombie);
+				fill_proc(p, &kbuf->kproc.kp_proc, allowaddr);
+				fill_eproc(p, &kbuf->kproc.kp_eproc, zombie,
+				    allowaddr);
 			} else {
-				fill_kproc2(p, &kbuf->kproc2, zombie);
+				fill_kproc2(p, &kbuf->kproc2, zombie,
+				    allowaddr);
 				elem_count--;
 			}
 			mutex_exit(p->p_lock);
@@ -2172,10 +2198,8 @@ done:
  * Fill in a proc structure for the specified process.
  */
 static void
-fill_proc(const struct proc *psrc, struct proc *p)
+fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 {
-	const bool allowaddr = get_expose_address(curproc);
-
 	COND_SET_VALUE(p->p_list, psrc->p_list, allowaddr);
 	COND_SET_VALUE(p->p_auxlock, psrc->p_auxlock, allowaddr);
 	COND_SET_VALUE(p->p_lock, psrc->p_lock, allowaddr);
@@ -2267,15 +2291,13 @@ fill_proc(const struct proc *psrc, struct proc *p)
  * Fill in an eproc structure for the specified process.
  */
 void
-fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
+fill_eproc(struct proc *p, struct eproc *ep, bool zombie, bool allowaddr)
 {
 	struct tty *tp;
 	struct lwp *l;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
-
-	const bool allowaddr = get_expose_address(curproc);
 
 	COND_SET_VALUE(ep->e_paddr, p, allowaddr);
 	COND_SET_VALUE(ep->e_sess, p->p_session, allowaddr);
@@ -2325,7 +2347,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
  * Fill in a kinfo_proc2 structure for the specified process.
  */
 void
-fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
+fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 {
 	struct tty *tp;
 	struct lwp *l, *l2;
@@ -2336,8 +2358,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
-
-	const bool allowaddr = get_expose_address(curproc);
 
 	sigemptyset(&ss1);
 	sigemptyset(&ss2);
@@ -2602,4 +2622,44 @@ proc_getauxv(struct proc *p, void **buf, size_t *len)
 	*len = size;
 
 	return 0;
+}
+
+
+static int
+sysctl_security_expose_address(SYSCTLFN_ARGS)
+{
+	int expose_address, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &expose_address;
+	expose_address = *(int *)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_KERNADDR,
+	    0, NULL, NULL, NULL))
+		return EPERM;
+
+	switch (expose_address) {
+	case 0:
+	case 1:
+	case 2:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	*(int *)rnode->sysctl_data = expose_address;
+
+	return 0;
+}
+
+bool
+get_expose_address(struct proc *p)
+{
+	/* allow only if sysctl variable is set or privileged */
+	return kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
+	    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL) == 0;
 }
