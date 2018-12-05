@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.21 2018/12/05 10:35:14 sevan Exp $
+.\"	$NetBSD: vmstat.1,v 1.22 2018/12/05 23:42:23 sevan Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -186,6 +186,11 @@ seconds between each display.
 If no repeat
 .Ar count
 is specified, the default is infinity.
+The
+.Nm
+command will accept and honor a negative number of
+.Ar wait
+seconds.
 .El
 .Pp
 By default,
