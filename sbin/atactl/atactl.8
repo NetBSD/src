@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.26 2018/11/03 10:51:14 wiz Exp $
+.\"	$NetBSD: atactl.8,v 1.27 2018/12/05 06:49:54 mrg Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2018
+.Dd December 5, 2018
 .Dt ATACTL 8
 .Os
 .Sh NAME
@@ -162,6 +162,8 @@ information if known to
 Currently, only
 .Dq micron
 has a vendor-specific table.
+If the vendor is not supplied, it may be guessed from devices' model
+or other data available.
 .It Ar offline #
 Runs the numbered offline self-test on the drive.
 .It Ar error-log
@@ -273,6 +275,10 @@ It was based heavily on the
 .Xr scsictl 8
 command written by
 .An Jason R. Thorpe .
+.An Matthew R. Green
+significantly enhanced the 
+.Cm smart status
+support.
 .Sh BUGS
 The output from the
 .Cm identify
