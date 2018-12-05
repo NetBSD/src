@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 2018/12/03 06:43:19 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 2018/12/05 03:14:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.47 2018/12/03 06:43:19 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.48 2018/12/05 03:14:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -571,8 +571,6 @@ SHELLPROC {
 	for (sm = sigmode ; sm < sigmode + NSIG ; sm++) {
 		if (*sm == S_IGN) {
 			*sm = S_HARD_IGN;
-			VTRACE(DBG_TRAP, ("SHELLPROC: %d -> hard_ign\n",
-			    (sm - sigmode) + 1));
 		}
 	}
 	INTON;
