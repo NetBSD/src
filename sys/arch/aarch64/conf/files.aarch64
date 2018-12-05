@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.10 2018/11/18 15:52:03 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.11 2018/12/05 21:43:33 jmcneill Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -137,3 +137,6 @@ file	arch/aarch64/aarch64/netbsd32_syscall.c		compat_netbsd32
 #file	arch/aarch64/aarch64/linux_sigcode.S	compat_linux
 #file	arch/aarch64/aarch64/linux_syscall.c	compat_linux
 #file	arch/aarch64/aarch64/linux_trap.c	compat_linux
+
+# profiling support
+file	dev/tprof/tprof_armv8.c			tprof

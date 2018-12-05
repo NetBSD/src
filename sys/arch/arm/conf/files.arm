@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.146 2018/10/28 10:21:42 jmcneill Exp $
+#	$NetBSD: files.arm,v 1.147 2018/12/05 21:43:33 jmcneill Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -249,3 +249,6 @@ include "compat/linux/arch/arm/files.linux_arm"
 file	arch/arm/arm/linux_sigcode.S		compat_linux
 file	arch/arm/arm/linux_syscall.c		compat_linux
 file	arch/arm/arm/linux_trap.c		compat_linux
+
+# profiling support
+file	dev/tprof/tprof_armv7.c			tprof
