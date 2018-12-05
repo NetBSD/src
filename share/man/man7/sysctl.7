@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.136 2018/12/05 18:16:51 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.137 2018/12/05 21:15:20 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -524,7 +524,7 @@ calls used by
 .Xr fstat 1
 and
 .Xr sockstat 1 .
-If it is set to 
+If it is set to
 .Dv 0
 access is not allowed.
 If it is set to
@@ -532,11 +532,11 @@ If it is set to
 then only processes that have opened
 .Pa /dev/kmem
 can have access.
-If it is set to 
+If it is set to
 .Dv 2
 every process is allowed.
 Defaults to
-.Dv 0 
+.Dv 0
 for
 .Dv KASLR
 kernels
@@ -544,7 +544,7 @@ and
 .Dv 1
 otherwise.
 Allowing general access renders KASLR ineffective; allowing only kmem
-accessing programs, weakens KASLR if those programs can be subverted
+accessing programs weakens KASLR if those programs can be subverted
 to leak the addresses.
 .It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
 Perform a crash dump on system
