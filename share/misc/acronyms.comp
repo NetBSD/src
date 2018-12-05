@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.217 2018/11/19 18:29:59 sevan Exp $
+$NetBSD: acronyms.comp,v 1.218 2018/12/05 14:44:54 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -253,10 +253,13 @@ COS	class of service
 COW	copy-on-write
 CP	continuous pilot
 CPB	core performance boost
+CPC	central processor complex
+CPC	cpu performance counters
 CPE	common phase error
 CPE	common platform enumeration
 CPER	common platform error record
 CPG	clock pulse generator
+CPI	cycles per instruction
 CPL	current privilege level
 CPLD	complex programmable logic device
 CPP	C preprocessor
@@ -659,6 +662,7 @@ IOMMU	input/output memory management unit
 IOT	Internet of Things
 IP	Internet Protocol
 IP	intellectual property
+IPC	instructions per cycle
 IPC	interprocess communication
 IPE	integrated programming environment
 IPI	interprocessor interrupt
@@ -761,6 +765,7 @@ LMM	link management mode
 LNO	loop nest optimization
 LOC	lines of code
 LOM	lights-out management
+LPE	Linux performance events
 LPC	low pin count
 LPS	local positioning system
 LRC	longitudinal redundancy check
@@ -1039,6 +1044,7 @@ PGE	page global enable
 PGP	Pretty Good Privacy
 PHB	PCI host bridge
 PHP	PHP: Hypertext Preprocessor
+PIC	performance instrumentation counters
 PIC	position independent code
 PIC	programmable interrupt controller
 PICNIC	problem in chair, not in computer
@@ -1062,10 +1068,13 @@ PLRU	pseudo LRU
 PLTM	package level thermal management
 PM	power management
 PM	{phase,pulse} modulation
+PMC	performance monitoring counters
 PME	power management event
+PMI	performance monitoring infrastructure
 PMI	platform management interrupt
 PMIO	port-mapped input/output
 PMT	photo-multiplier tube
+PMU	performance monitoring units
 PMU	power management unit
 PNG	portable network graphics
 PNP	plug and play
