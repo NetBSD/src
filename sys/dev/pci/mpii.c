@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.17 2018/12/04 19:54:02 bouyer Exp $ */
+/* $NetBSD: mpii.c,v 1.18 2018/12/05 10:38:22 bouyer Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.17 2018/12/04 19:54:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.18 2018/12/05 10:38:22 bouyer Exp $");
 
 #include "bio.h"
 
@@ -2003,8 +2003,6 @@ mpii_event_sas_work(struct work *wq, void *xsc)
 				if (!ISSET(dev->flags, MPII_DF_HIDDEN)) {
 					scsipi_target_detach(&sc->sc_chan,
 					    dev->slot, 0, DETACH_FORCE);
-					sysmon_envsys_sensor_detach(sc->sc_sme,
-					    &sc->sc_sensors[dev->slot]);
 				}
 
 				free(dev, M_DEVBUF);
