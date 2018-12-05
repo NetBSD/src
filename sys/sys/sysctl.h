@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.228 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.229 2018/12/05 18:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1055,8 +1055,8 @@ typedef int (*sysctlfn)(SYSCTLFN_PROTO);
 /*
  * used in more than just sysctl
  */
-void	fill_eproc(struct proc *, struct eproc *, bool);
-void	fill_kproc2(struct proc *, struct kinfo_proc2 *, bool);
+void	fill_eproc(struct proc *, struct eproc *, bool, bool);
+void	fill_kproc2(struct proc *, struct kinfo_proc2 *, bool, bool);
 
 /*
  * subsystem setup

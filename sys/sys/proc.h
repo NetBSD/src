@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.349 2018/08/10 21:44:59 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.350 2018/12/05 18:16:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -378,6 +378,7 @@ struct proc {
 #define	PK_SYSTEM	0x00000002 /* System process (kthread) */
 #define	PK_SYSVSEM	0x00000004 /* Used SysV semaphores */
 #define	PK_SUGID	0x00000100 /* Had set id privileges since last exec */
+#define	PK_KMEM		0x00000200 /* Has kmem access */
 #define	PK_EXEC		0x00004000 /* Process called exec */
 #define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
