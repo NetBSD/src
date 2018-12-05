@@ -1,6 +1,6 @@
-# $NetBSD: t_builtins.sh,v 1.1 2018/12/05 02:45:06 kre Exp $
+# $NetBSD: t_builtins.sh,v 1.2 2018/12/05 02:48:04 kre Exp $
 #
-# Copyright (c) 2017 The NetBSD Foundation, Inc.
+# Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
