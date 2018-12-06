@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.21 2018/11/19 20:28:01 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.22 2018/12/06 17:44:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.21 2018/11/19 20:28:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.22 2018/12/06 17:44:28 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -237,19 +237,17 @@ struct svs_utls {
 static pd_entry_t *
 svs_tree_add(struct cpu_info *ci, vaddr_t va)
 {
-	extern const vaddr_t ptp_frames[];
+	extern const vaddr_t ptp_masks[];
 	extern const int ptp_shifts[];
-	extern const long nbpd[];
 	pd_entry_t *dstpde;
-	size_t i, pidx, mod;
 	struct vm_page *pg;
+	size_t i, pidx;
 	paddr_t pa;
 
 	dstpde = ci->ci_svs_updir;
-	mod = (size_t)-1;
 
 	for (i = PTP_LEVELS; i > 1; i--) {
-		pidx = pl_i(va % mod, i);
+		pidx = pl_pi(va, i);
 
 		if (!pmap_valid_entry(dstpde[pidx])) {
 			pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
@@ -263,7 +261,6 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 
 		pa = (paddr_t)(dstpde[pidx] & PG_FRAME);
 		dstpde = (pd_entry_t *)PMAP_DIRECT_MAP(pa);
-		mod = nbpd[i-1];
 	}
 
 	return dstpde;
@@ -279,7 +276,7 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	/* Create levels L4, L3 and L2. */
 	dstpde = svs_tree_add(ci, va);
 
-	pidx = pl1_i(va % NBPD_L2);
+	pidx = pl1_pi(va);
 
 	/*
 	 * If 'va' is in a large page, we need to compute its physical
@@ -369,7 +366,7 @@ svs_utls_init(struct cpu_info *ci)
 	if (pmap_valid_entry(L1_BASE[pl1_i(utlsva)])) {
 		panic("%s: local page already mapped", __func__);
 	}
-	pidx = pl1_i(utlsva % NBPD_L2);
+	pidx = pl1_pi(utlsva);
 	if (pmap_valid_entry(pd[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
