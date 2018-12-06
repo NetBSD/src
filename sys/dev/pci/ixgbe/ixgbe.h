@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.52 2018/12/03 04:39:44 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.53 2018/12/06 13:25:02 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -574,6 +574,10 @@ struct adapter {
 	void 			(*init_locked)(struct adapter *);
 	void 			(*stop_locked)(void *);
 
+	/* Firmware error check */
+	u_int                   recovery_mode;
+	struct callout          recovery_mode_timer;
+
 	/* Misc stats maintained by the driver */
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt   		mbuf_defrag_failed;
@@ -743,6 +747,18 @@ ixv_check_ether_addr(u8 *addr)
 		status = FALSE;
 
 	return (status);
+}
+
+/*
+ * This checks the adapter->recovery_mode software flag which is
+ * set by ixgbe_fw_recovery_mode().
+ *
+ */
+static inline bool
+ixgbe_fw_recovery_mode_swflag(struct adapter *adapter)
+{
+	return (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) &&
+	    atomic_load_acq_uint(&adapter->recovery_mode);
 }
 
 /* Shared Prototypes */
