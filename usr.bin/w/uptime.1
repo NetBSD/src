@@ -1,4 +1,4 @@
-.\"	$NetBSD: uptime.1,v 1.11 2018/12/06 19:01:53 sevan Exp $
+.\"	$NetBSD: uptime.1,v 1.12 2018/12/06 19:15:35 sevan Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,8 @@ utility.
 .Nm
 displays the current time, the length of time the system has been up, the number
 of users, and the load average of the system over the last 1, 5, and 15 minutes.
+The load average is obtained using
+.Xr getloadavg 3 .
 .Sh FILES
 .Bl -tag -width /netbsd
 .It Pa /netbsd
@@ -53,7 +55,8 @@ system name list
 .El
 .Sh SEE ALSO
 .Xr top 1 ,
-.Xr w 1
+.Xr w 1 ,
+.Xr getloadavg 3
 .Sh HISTORY
 The
 .Nm
