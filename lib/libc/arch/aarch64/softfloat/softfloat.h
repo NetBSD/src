@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.h,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: softfloat.h,v 1.2 2018/12/06 19:17:13 tih Exp $ */
 
 /* This is a derivative work. */
 
@@ -46,6 +46,7 @@ the `FLOAT128' macro and the quadruple-precision format `float128'.
 
 #include "softfloat-qp.h"
 
+#include <sys/endian.h>
 #include <machine/ieeefp.h>
 
 /*
@@ -63,7 +64,11 @@ typedef struct {
 #endif
 #ifdef FLOAT128
 typedef struct {
+#if _BYTE_ORDER == _BIG_ENDIAN
     unsigned long long high, low;
+#else
+    unsigned long long low, high;
+#endif
 } float128;
 #endif
 
