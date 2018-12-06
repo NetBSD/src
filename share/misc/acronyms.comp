@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.218 2018/12/05 14:44:54 sevan Exp $
+$NetBSD: acronyms.comp,v 1.219 2018/12/06 14:22:48 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -179,6 +179,7 @@ BTS	bit test [and] set
 BTS	bug tracking system
 BW	bandwidth
 BWM	block-write mode
+BUAG	big ugly ASCII graphic
 CA	certificate authority
 CAD	computer-aided design
 CAM	computer assisted manufacturing
@@ -319,6 +320,8 @@ DCC	direct cable connect
 DCD	data carrier detect
 DCE	data control equipment
 DCE	distributed computing environment
+DCIM	data center infrastructure management
+DCIM	digital camera images
 DCL	Digital Command Language
 DCOM	distributed component object model
 DCOP	Desktop COmmunication Protocol
@@ -1263,6 +1266,7 @@ SDL	Simple Declarative Language
 SDL	Simple Direct-media Layer 
 SDLC	{software,system,systems} development life cycle
 SDN	software defined networking
+SDP	Session Description Protocol
 SDRAM	synchronous dynamic random access memory
 SDS	software defined storage
 SDT	syntax-directed translation
