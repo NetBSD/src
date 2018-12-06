@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.8 2018/07/31 09:19:34 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.9 2018/12/06 13:25:02 msaitoh Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -272,4 +272,20 @@ ixgbe_pci_enable_busmaster(pci_chipset_tag_t pc, pcitag_t tag)
 		pci_cmd_word |= PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pci_cmd_word);
 	}
+}
+
+u_int
+atomic_load_acq_uint(volatile u_int *p)
+{
+	u_int rv;
+
+	rv = *p;
+	/*
+	 * XXX
+	 * membar_sync() is far more than we need on most CPUs;
+	 * we just don't have an MI load-acqure operation.
+	 */
+	membar_sync();
+
+	return rv;
 }

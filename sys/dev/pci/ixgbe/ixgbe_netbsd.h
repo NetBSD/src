@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.8 2018/04/25 08:46:19 msaitoh Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.9 2018/12/06 13:25:02 msaitoh Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,5 +95,7 @@ void ixgbe_dmamap_unload(ixgbe_dma_tag_t *, bus_dmamap_t);
 
 struct mbuf *ixgbe_getjcl(ixgbe_extmem_head_t *, int, int, int, size_t);
 void ixgbe_pci_enable_busmaster(pci_chipset_tag_t, pcitag_t);
+
+u_int atomic_load_acq_uint(volatile u_int *);
 
 #endif /* _IXGBE_NETBSD_H */

@@ -250,6 +250,64 @@ ixgbe_vf_set_default_vlan(struct adapter *adapter, struct ixgbe_vf *vf,
 } /* ixgbe_vf_set_default_vlan */
 
 
+static void
+ixgbe_clear_vfmbmem(struct ixgbe_hw *hw, struct ixgbe_vf *vf)
+{
+	uint32_t vf_index = IXGBE_VF_INDEX(vf->pool);
+	uint16_t mbx_size = hw->mbx.size;
+	uint16_t i;
+
+	IXGBE_CORE_LOCK_ASSERT(adapter);
+
+	for (i = 0; i < mbx_size; ++i)
+		IXGBE_WRITE_REG_ARRAY(hw, IXGBE_PFMBMEM(vf_index), i, 0x0);
+} /* ixgbe_clear_vfmbmem */
+
+
+static void
+ixgbe_toggle_txdctl(struct ixgbe_hw *hw, struct ixgbe_vf *vf)
+{
+	uint32_t vf_index, offset, reg;
+	uint8_t  queue_count, i;
+
+	IXGBE_CORE_LOCK_ASSERT(adapter);
+
+	vf_index = IXGBE_VF_INDEX(vf->pool);
+
+	/* Determine number of queues by checking
+	 * number of virtual functions */
+	reg = IXGBE_READ_REG(hw, IXGBE_GCR_EXT);
+	switch (reg & IXGBE_GCR_EXT_VT_MODE_MASK) {
+	case IXGBE_GCR_EXT_VT_MODE_64:
+		queue_count = 2;
+		break;
+	case IXGBE_GCR_EXT_VT_MODE_32:
+		queue_count = 4;
+		break;
+	default:
+		return;
+	}
+
+	/* Toggle queues */
+	for (i = 0; i < queue_count; ++i) {
+		/* Calculate offset of current queue */
+		offset = queue_count * vf_index + i;
+
+		/* Enable queue */
+		reg = IXGBE_READ_REG(hw, IXGBE_PVFTXDCTL(offset));
+		reg |= IXGBE_TXDCTL_ENABLE;
+		IXGBE_WRITE_REG(hw, IXGBE_PVFTXDCTL(offset), reg);
+		IXGBE_WRITE_FLUSH(hw);
+
+		/* Disable queue */
+		reg = IXGBE_READ_REG(hw, IXGBE_PVFTXDCTL(offset));
+		reg &= ~IXGBE_TXDCTL_ENABLE;
+		IXGBE_WRITE_REG(hw, IXGBE_PVFTXDCTL(offset), reg);
+		IXGBE_WRITE_FLUSH(hw);
+	}
+} /* ixgbe_toggle_txdctl */
+
+
 static boolean_t
 ixgbe_vf_frame_size_compatible(struct adapter *adapter, struct ixgbe_vf *vf)
 {
@@ -305,6 +363,8 @@ ixgbe_process_vf_reset(struct adapter *adapter, struct ixgbe_vf *vf)
 	// XXX clear multicast addresses
 
 	ixgbe_clear_rar(&adapter->hw, vf->rar_index);
+	ixgbe_clear_vfmbmem(&adapter->hw, vf);
+	ixgbe_toggle_txdctl(&adapter->hw, vf);
 
 	vf->api_ver = IXGBE_API_VER_UNKNOWN;
 } /* ixgbe_process_vf_reset */
