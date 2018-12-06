@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.222 2018/12/05 18:16:51 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.223 2018/12/06 13:51:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.222 2018/12/05 18:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.223 2018/12/06 13:51:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -223,7 +223,7 @@ static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
 static int sysctl_security_expose_address(SYSCTLFN_PROTO);
 
 #ifdef KASLR
-static int kern_expose_address_= 0;
+static int kern_expose_address = 0;
 #else
 static int kern_expose_address = 1;
 #endif
