@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.5 2018/01/04 20:57:29 kamil Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.6 2018/12/06 06:29:56 kamil Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtonum.c,v 1.5 2018/01/04 20:57:29 kamil Exp $");
+__RCSID("$NetBSD: strtonum.c,v 1.6 2018/12/06 06:29:56 kamil Exp $");
 
 #include "namespace.h"
 
@@ -49,6 +49,11 @@ strtonum(const char *nptr, long long minval, long long maxval,
 
 	if (errstr == NULL)
 		errstr = &resp;
+
+	if (minval > maxval) {
+		*errstr = "invalid";
+		return 0;
+	}
 
 	rv = (long long)strtoi(nptr, NULL, 10, minval, maxval, &e);
 
