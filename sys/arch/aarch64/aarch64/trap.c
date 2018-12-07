@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.11 2018/10/12 01:28:57 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.12 2018/12/07 18:46:27 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.11 2018/10/12 01:28:57 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.12 2018/12/07 18:46:27 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -295,6 +295,15 @@ void
 interrupt(struct trapframe *tf)
 {
 	struct cpu_info * const ci = curcpu();
+
+#ifdef STACKCHECKS
+	struct lwp *l = curlwp;
+	void *sp = (void *)reg_sp_read();
+	if (l->l_addr >= sp) {
+		panic("lwp/interrupt stack overflow detected."
+		    " lwp=%p, sp=%p, l_addr=%p", l, sp, l->l_addr);
+	}
+#endif
 
 	/* enable traps */
 	daif_enable(DAIF_D|DAIF_A);
