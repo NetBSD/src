@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.388.4.3 2018/10/31 09:30:10 martin Exp $
+#	$NetBSD: files.pci,v 1.388.4.4 2018/12/07 17:11:37 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -146,6 +146,11 @@ file	dev/pci/isp_pci.c		isp_pci
 # device declaration in sys/conf/files
 attach	mfi at pci with mfi_pci
 file	dev/pci/mfi_pci.c		mfi_pci
+
+# LSI MegaRAID SAS Fusion RAID controllers 
+device	mfii: scsi
+attach	mfii at pci
+file	dev/pci/mfii.c			mfii
 
 # LSILogic Fusion-MPT I/O Processor family
 # device declaration in sys/conf/files
