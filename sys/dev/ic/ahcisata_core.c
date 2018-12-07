@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.71 2018/11/20 19:19:21 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.72 2018/12/07 22:22:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.71 2018/11/20 19:19:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.72 2018/12/07 22:22:12 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -125,7 +125,6 @@ const struct ata_bustype ahci_ata_bustype = {
 	ahci_channel_recover,
 };
 
-static void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
 static void ahci_setup_port(struct ahci_softc *sc, int i);
 
 static void
@@ -166,6 +165,9 @@ ahci_reset(struct ahci_softc *sc)
 			AHCI_WRITE(sc, AHCI_CAP2, sc->sc_init_data.cap2);
 		AHCI_WRITE(sc, AHCI_PI, sc->sc_init_data.ports);
 	}
+
+	/* Check if hardware reverted to single message MSI */
+	sc->sc_ghc_mrsm = ISSET(AHCI_READ(sc, AHCI_GHC), AHCI_GHC_MRSM);
 
 	return 0;
 }
@@ -372,6 +374,14 @@ ahci_attach(struct ahci_softc *sc)
 			    AHCINAME(sc));
 			break;
 		}
+
+		/* Optional intr establish per active port */
+		if (sc->sc_intr_establish && sc->sc_intr_establish(sc, i) != 0){
+			aprint_error("%s: intr establish hook failed\n",
+			    AHCINAME(sc));
+			break;
+		}
+
 		achp = &sc->sc_channels[i];
 		chp = &achp->ata_channel;
 		sc->sc_chanarray[i] = chp;
@@ -581,16 +591,19 @@ ahci_intr(void *v)
 		AHCI_WRITE(sc, AHCI_IS, is);
 		for (i = 0; i < AHCI_MAX_PORTS; i++)
 			if (is & (1U << i))
-				ahci_intr_port(sc, &sc->sc_channels[i]);
+				ahci_intr_port(&sc->sc_channels[i]);
 	}
+
 	return r;
 }
 
-static void
-ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
+int
+ahci_intr_port(void *v)
 {
-	uint32_t is, tfd, sact;
+	struct ahci_channel *achp = v;
 	struct ata_channel *chp = &achp->ata_channel;
+	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+	uint32_t is, tfd, sact;
 	struct ata_xfer *xfer;
 	int slot = -1;
 	bool recover = false;
@@ -703,6 +716,8 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		ata_thread_run(chp, 0, ATACH_TH_RECOVERY, tfd); 
 		ata_channel_unlock(chp);
 	}
+
+	return 1;
 }
 
 static void
@@ -1167,7 +1182,7 @@ ahci_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		if (xfer->c_ata_c.flags & AT_DONE)
 			break;
 		ata_channel_unlock(chp);
-		ahci_intr_port(sc, achp);
+		ahci_intr_port(achp);
 		ata_channel_lock(chp);
 		ata_delay(chp, 10, "ahcipl", xfer->c_ata_c.flags);
 	}
@@ -1410,7 +1425,7 @@ ahci_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	for (int i = 0; i < ATA_DELAY * 10; i++) {
 		if (xfer->c_bio.flags & ATA_ITSDONE)
 			break;
-		ahci_intr_port(sc, achp);
+		ahci_intr_port(achp);
 		delay(100);
 	}
 	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
@@ -1907,7 +1922,7 @@ ahci_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	for (int i = 0; i < ATA_DELAY / 10; i++) {
 		if (xfer->c_scsipi->xs_status & XS_STS_DONE)
 			break;
-		ahci_intr_port(sc, achp);
+		ahci_intr_port(achp);
 		delay(10000);
 	}
 	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
