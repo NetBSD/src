@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.312 2018/11/19 20:44:51 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.313 2018/12/07 15:47:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.312 2018/11/19 20:44:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.313 2018/12/07 15:47:11 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.312 2018/11/19 20:44:51 maxv Exp $");
 #include "opt_xen.h"
 #include "opt_svs.h"
 #include "opt_kasan.h"
+#include "opt_kaslr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1360,6 +1361,9 @@ slotspace_rand(int type, size_t sz, size_t align)
 
 	/* Select a hole. */
 	cpu_earlyrng(&hole, sizeof(hole));
+#ifdef NO_X86_ASLR
+	hole = 0;
+#endif
 	hole %= nholes;
 	startsl = holes[hole].start;
 	endsl = holes[hole].end;
@@ -1367,6 +1371,9 @@ slotspace_rand(int type, size_t sz, size_t align)
 
 	/* Select an area within the hole. */
 	cpu_earlyrng(&va, sizeof(va));
+#ifdef NO_X86_ASLR
+	va = 0;
+#endif
 	winsize = ((endsl - startsl) * NBPD_L4) - sz;
 	va %= winsize;
 	va = rounddown(va, align);
