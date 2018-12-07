@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.18 2018/10/19 00:12:56 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.19 2018/12/07 05:09:39 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.18 2018/10/19 00:12:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.19 2018/12/07 05:09:39 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -509,6 +509,7 @@ if_ipsec_in_enqueue(struct mbuf *m, int af, struct ifnet *ifp)
 		ifp->if_ibytes += pktlen;
 		ifp->if_ipackets++;
 	} else {
+		ifp->if_iqdrops++;
 		m_freem(m);
 	}
 
