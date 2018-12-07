@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.13 2018/12/07 09:28:31 ozaki-r Exp $
+#	$NetBSD: t_vlan.sh,v 1.14 2018/12/07 09:29:01 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -342,7 +342,7 @@ vlan_vlanid_body_common()
 	$atf_ifconfig vlan0 create
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s not-exit:0 -e ignore\
+	atf_check -s not-exit:0 -e match:"^usage: rump.ifconfig" \
 	    rump.ifconfig vlan0 vlan -1 vlanif shmif0
 
 	# $config_and_ping 0 # reserved vlan id
@@ -368,14 +368,14 @@ vlan_vlanid_body_common()
 	done
 
 	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
-	atf_check -s not-exit:0 -e ignore \
+	atf_check -s not-exit:0 -e match:"SIOCSETVLAN: Device busy" \
 	    rump.ifconfig vlan0 vlan 2 vlanif shmif0
 
-	atf_check -s not-exit:0 -e ignore \
+	atf_check -s not-exit:0 -e match:"SIOCSETVLAN: Device busy" \
 	    rump.ifconfig vlan0 vlan 1 vlanif shmif1
 
 	$atf_ifconfig vlan0 -vlanif
-	atf_check -s not-exit:0 -e ignore \
+	atf_check -s not-exit:0 -e match:"Invalid argument" \
 	    rump.ifconfig vlan0 $local0/$prefix
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -469,8 +469,8 @@ vlan_configs_body_common()
 	$atf_ifconfig vlan0 -vlanif shmif0
 
 	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 -e ignore rump.ifconfig vlan0 -vlanif shmif1
-	atf_check -s exit:0 -e ignore rump.ifconfig vlan0 -vlanif shmif2
+	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif shmif1
+	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif shmif2
 
 	$atf_ifconfig vlan0 -vlanif
 
@@ -659,7 +659,8 @@ vlan_multicast_body_common()
 	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
 
 	# delete a non-existing address
-	atf_check -s not-exit:0 -e ignore $HIJACKING $siocXmulti del vlan0 $mcaddr
+	atf_check -s not-exit:0 -e match:"Invalid argument" \
+	    $HIJACKING $siocXmulti del vlan0 $mcaddr
 
 	# add an address to different interfaces
 	$atf_siocXmulti add vlan0 $mcaddr
