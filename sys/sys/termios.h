@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.34 2017/10/25 06:32:59 kre Exp $	*/
+/*	$NetBSD: termios.h,v 1.35 2018/12/07 18:45:13 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -212,34 +212,34 @@ struct termios {
 /*
  * Standard speeds
  */
-#define B0	0U
-#define B50	50U
-#define B75	75U
-#define B110	110U
-#define B134	134U
-#define B150	150U
-#define B200	200U
-#define B300	300U
-#define B600	600U
-#define B1200	1200U
-#define	B1800	1800U
-#define B2400	2400U
-#define B4800	4800U
-#define B9600	9600U
-#define B19200	19200U
-#define B38400	38400U
+#define B0		0U
+#define B50		50U
+#define B75		75U
+#define B110		110U
+#define B134		134U
+#define B150		150U
+#define B200		200U
+#define B300		300U
+#define B600		600U
+#define B1200		1200U
+#define B1800		1800U
+#define B2400		2400U
+#define B4800		4800U
+#define B9600		9600U
+#define B19200		19200U
+#define B38400		38400U
 #if defined(_NETBSD_SOURCE)
-#define B7200	7200U
-#define B14400	14400U
-#define B28800	28800U
-#define B57600	57600U
-#define B76800	76800U
-#define B115200	115200U
-#define B230400	230400U
-#define B460800	460800U
-#define B921600	921600U
-#define EXTA	19200U
-#define EXTB	38400U
+#define B7200		7200U
+#define B14400		14400U
+#define B28800		28800U
+#define B57600		57600U
+#define B76800		76800U
+#define B115200 	115200U
+#define B230400 	230400U
+#define B460800 	460800U
+#define B921600 	921600U
+#define EXTA		19200U
+#define EXTB		38400U
 #endif  /* defined(_NETBSD_SOURCE) */
 
 #ifndef _KERNEL
