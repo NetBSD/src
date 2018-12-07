@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.20 2018/10/24 19:38:00 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.21 2018/12/07 22:22:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -86,7 +86,9 @@ struct ahci_softc {
 
 	void	(*sc_channel_start)(struct ahci_softc *, struct ata_channel *);
 	void	(*sc_channel_stop)(struct ahci_softc *, struct ata_channel *);
+	int	(*sc_intr_establish)(struct ahci_softc *, int);
 
+	bool sc_ghc_mrsm;
 	bool sc_save_init_data;
 	struct {
 		uint32_t cap;
@@ -121,4 +123,5 @@ void ahci_childdetached(struct ahci_softc *, device_t);
 void ahci_resume(struct ahci_softc *);
 
 int  ahci_intr(void *);
+int  ahci_intr_port(void *);
 
