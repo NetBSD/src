@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.410 2018/11/24 18:23:29 bouyer Exp $
+#	$NetBSD: files.pci,v 1.411 2018/12/07 09:36:26 msaitoh Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -378,6 +378,7 @@ file	dev/pci/toshide.c	toshide
 device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
+defflag opt_ppb.h	PPB_USEINTR
 
 # Cyclades Cyclom-8/16/32
 attach	cy at pci with cy_pci
