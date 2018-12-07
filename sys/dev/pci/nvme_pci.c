@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.24 2018/12/01 13:32:55 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.25 2018/12/07 08:52:43 msaitoh Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.24 2018/12/01 13:32:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.25 2018/12/07 08:52:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_iot = pa->pa_memt;
-	error = pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START,
+	error = pci_mapreg_info(pa->pa_pc, pa->pa_tag, NVME_PCI_BAR,
 	    memtype, &memaddr, &sc->sc_ios, &flags);
 	if (error) {
 		aprint_error_dev(self, "can't get map info\n");
@@ -190,7 +190,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		    msixoff + PCI_MSIX_TBLOFFSET);
 		table_offset = msixtbl & PCI_MSIX_TBLOFFSET_MASK;
 		bir = msixtbl & PCI_MSIX_PBABIR_MASK;
-		if (bir == 0) {
+		if (bir == PCI_MAPREG_NUM(NVME_PCI_BAR)) {
 			sc->sc_ios = table_offset;
 		}
 	}
