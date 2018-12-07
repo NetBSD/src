@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.219 2018/12/06 14:22:48 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.220 2018/12/07 16:36:30 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -367,6 +367,7 @@ DMA	direct memory access
 DMI	desktop management interface
 DMS	document management system
 DMT	discrete multitone modulation
+DMU	data management layer
 DNARD	Digital network appliance reference design
 DND	drag and drop
 DNS	Domain Name System
@@ -396,6 +397,7 @@ DSA	digital signature algorithm
 DSAP	destination service access point
 DSB	double-sideband modulation
 DSDT	differentiated system descriptor table
+DSL	dataset and snapshot layer
 DSL	digital subscriber line
 DSL	domain specific language
 DSLAM	digital subscriber line access multiplexer
@@ -1330,6 +1332,7 @@ SOHO	small office/home office
 SOL	serial over LAN
 SP	service pack
 SP	stack pointer
+SPA	storage pool allocator
 SPARC	scalable processor architecture
 SPARQL	SPARQL Protocol and RDF Query Language
 SPD	security policy database
@@ -1583,9 +1586,13 @@ YANG	yet another next generation
 YAWPFAPR	you are welcome; please file a problem report
 YP	Yellow Pages
 YTD	year to date
+ZAP	ZFS attribute processor
 ZBR	zone bit recording
 ZFOD	zero-filled on demand
-ZFS    zettabyte file system
+ZFS	zettabyte file system
 ZIF	zero insertion force
 ZIFS	zero insertion force socket
+ZIL	ZFS intent log
 ZMA	zone multicast address
+ZPL	ZFS Posix layer
+ZVOL	ZFS Volume
