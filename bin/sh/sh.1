@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.146.2.5 2017/10/25 07:03:10 snj Exp $
+.\"	$NetBSD: sh.1,v 1.146.2.6 2018/12/07 13:23:49 martin Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2315,6 +2315,21 @@ Making
 local causes any shell options that are changed via the set command inside the
 function to be restored to their original values when the function
 returns.
+If any of the shell's magic variables
+(those which return a value which may vary without
+the variable being explicitly altered,
+e.g.:
+.Dv SECONDS
+or
+.Dv HOSTNAME )
+are made local in a function,
+they will lose their special properties when set
+within the function, including by the
+.Ic local
+command itself
+(if not to be set in the function, there is little point
+in making a variable local)
+but those properties will be restored when the function returns.
 .Pp
 It is an error to use
 .Ic local
@@ -2985,6 +3000,30 @@ above, which are documented further above in
 If unset
 .Dq $HOME/.editrc
 is used.
+.It Ev ENV
+Names the file sourced at startup by the shell.
+Unused by this shell after initialization,
+but is usually passed through the environment to
+descendant shells.
+.It Ev EUSER
+Set to the login name of the effective user id running the shell,
+as returned by
+.Bd -compact -literal -offset indent
+getpwuid(geteuid())->pw_name
+.Ed
+.Po
+See
+.Xr getpwuid 3
+and
+.Xr geteuid 2
+for more details.
+.Pc
+This is obtained each time
+.Ev EUSER
+is expanded, so changes to the shell's execution identity
+cause updates without further action.
+If unset, it returns nothing.
+If set it loses its special properties, and is simply a variable.
 .It Ev HISTSIZE
 The number of lines in the history buffer for the shell.
 .It Ev HOME
@@ -3003,8 +3042,7 @@ This is obtained each time
 is expanded, so changes to the system's name are reflected
 without further action.
 If unset, it returns nothing.
-Setting it does nothing except reverse the effect of an earlier
-.Ic unset .
+If set it loses its special properties, and is simply a variable.
 .It Ev IFS
 Input Field Separators.
 This is normally set to
@@ -3056,6 +3094,22 @@ The default search path for executables.
 See the
 .Sx Path Search
 section above.
+.It Ev POSIXLY_CORRECT
+If set in the environment upon initialization of the shell,
+then the shell option
+.Ic posix
+will be set.
+.Po
+See the description of the
+.Ic set
+command in the
+.Sx Built-ins
+section.
+.Pc
+After initialization it is unused by the shell,
+but is usually passed through the environment to
+descendant processes, including other instances of the shell,
+which may interpret it in a similar way.
 .It Ev PPID
 The process identified of the parent process of the
 current shell.
@@ -3147,8 +3201,8 @@ assigned before
 is first accessed after shell initialization.
 .It Ev SECONDS
 Returns the number of seconds since the current shell was started.
-Attempts to set this variable are ignored.
 If unset, it remains unset, and returns nothing, unless set again.
+If set, it loses its special properties, and becomes a normal variable.
 .It Ev START_TIME
 Initialised by the shell to the number of seconds since the Epoch
 (see
@@ -3160,7 +3214,7 @@ represents the current time, if
 .Ev START_TIME
 has not been modified, and
 .Ev SECONDS
-is not unset.
+has not been set or unset.
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
@@ -3182,8 +3236,7 @@ if set, or current local time if not, and returns the result.
 If unset
 .Ev ToD
 returns nothing.
-Setting it has no effect, other than to reverse the effect of an earlier
-.Ic unset .
+If set, it loses its special properties, and becomes a normal variable.
 .It Ev ToD_FORMAT
 Can be set to the
 .Xr strftime 3
