@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.55.2.3 2018/08/25 14:45:37 martin Exp $	*/
+/*	$NetBSD: var.c,v 1.55.2.4 2018/12/07 13:23:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.55.2.3 2018/08/25 14:45:37 martin Exp $");
+__RCSID("$NetBSD: var.c,v 1.55.2.4 2018/12/07 13:23:49 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ const struct varinit varinit[] = {
 #endif
 	{ &voptind,	VSTRFIXED|VTEXTFIXED|VNOFUNC,	"OPTIND=1",
 	   { .set_func= getoptsreset } },
-	{ &line_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"LINENO=1",
+	{ &line_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF|VSPECIAL,	"LINENO=1",
 	   { .ref_func= get_lineno } },
 #ifndef SMALL
 	{ &tod,		VSTRFIXED|VTEXTFIXED|VFUNCREF,	"ToD=",
@@ -181,7 +181,7 @@ const struct varinit varinit[] = {
 	   { .ref_func= get_seconds } },
 	{ &euname,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"EUSER=",
 	   { .ref_func= get_euser } },
-	{ &random_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"RANDOM=",
+	{ &random_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF|VSPECIAL,	"RANDOM=",
 	   { .ref_func= get_random } },
 #endif
 	{ NULL,	0,				NULL,
@@ -450,6 +450,13 @@ setvareq(char *s, int flags)
 
 		if ((vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 			ckfree(vp->text);
+
+		/*
+		 * if we set a magic var, the magic dissipates,
+		 * unless it is very special indeed.
+		 */
+		if (vp->rfunc && (vp->flags & (VFUNCREF|VSPECIAL)) == VFUNCREF)
+			vp->rfunc = NULL;
 
 		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
 		if (flags & VNOEXPORT)
@@ -901,6 +908,7 @@ mklocal(const char *name, int flags)
 		char *p;
 		p = ckmalloc(sizeof_optlist);
 		lvp->text = memcpy(p, optlist, sizeof_optlist);
+		lvp->rfunc = NULL;
 		vp = NULL;
 	} else {
 		vp = find_var(name, &vpp, NULL);
@@ -914,9 +922,11 @@ mklocal(const char *name, int flags)
 			vp = *vpp;	/* the new variable */
 			lvp->text = NULL;
 			lvp->flags = VUNSET;
+			lvp->rfunc = NULL;
 		} else {
 			lvp->text = vp->text;
 			lvp->flags = vp->flags;
+			lvp->v_u = vp->v_u;
 			vp->flags |= VSTRFIXED|VTEXTFIXED;
 			if (vp->flags & VNOEXPORT)
 				flags &= ~VEXPORT;
@@ -966,12 +976,13 @@ poplocalvars(void)
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
 			(void)unsetvar(vp->text, 0);
 		} else {
-			if (vp->func && (vp->flags & (VNOFUNC|VFUNCREF)) == 0)
-				(*vp->func)(lvp->text + vp->name_len + 1);
+			if (lvp->func && (lvp->flags & (VNOFUNC|VFUNCREF)) == 0)
+				(*lvp->func)(lvp->text + vp->name_len + 1);
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
 			vp->flags = lvp->flags;
 			vp->text = lvp->text;
+			vp->v_u = lvp->v_u;
 		}
 		ckfree(lvp);
 	}
