@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.220 2018/12/07 16:36:30 sevan Exp $
+$NetBSD: acronyms.comp,v 1.221 2018/12/07 17:58:29 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1454,6 +1454,7 @@ TTM	translation table maps
 TTY	teletype
 TUI	{terminal,text-based,textual} user interface
 TX	{transmit out,transmitter}
+TXG	transaction group
 TZ	time zone
 UAC	user {access,account} control
 UAF	use-after-free
