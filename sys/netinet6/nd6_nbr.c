@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.161 2018/12/04 21:16:54 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.162 2018/12/07 14:47:24 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.161 2018/12/04 21:16:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.162 2018/12/07 14:47:24 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.161 2018/12/04 21:16:54 roy Exp $");
 
 struct dadq;
 static struct dadq *nd6_dad_find(struct ifaddr *, struct nd_opt_nonce *, bool *);
+static bool nd6_dad_ownnonce(struct ifaddr *, struct nd_opt_nonce *nonce);
 static void nd6_dad_starttimer(struct dadq *, int);
 static void nd6_dad_destroytimer(struct dadq *);
 static void nd6_dad_timer(struct dadq *);
@@ -307,6 +308,16 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
 			nd6_dad_input(ifa, ndopts.nd_opts_nonce);
 		goto freeit;
+	}
+
+	/*
+	 * It looks that sender is performing DAD.
+	 * Check that the nonce is not being used by the same address
+	 * on another interface.
+	 */
+	if (IN6_IS_ADDR_UNSPECIFIED(&saddr6) && ndopts.nd_opts_nonce != NULL) {
+		if (nd6_dad_ownnonce(ifa, ndopts.nd_opts_nonce))
+			goto freeit;
 	}
 
 	ifa_release(ifa, &psref_ia);
@@ -1088,17 +1099,33 @@ static kmutex_t nd6_dad_lock;
 static struct dadq *
 nd6_dad_find(struct ifaddr *ifa, struct nd_opt_nonce *nonce, bool *found_nonce)
 {
+	struct in6_addr *myaddr6, *dadaddr6;
+	bool match_ifa;
 	struct dadq *dp;
 	int i, nonce_max;
 
 	KASSERT(mutex_owned(&nd6_dad_lock));
+	KASSERT(ifa != NULL);
+
+	myaddr6 = IFA_IN6(ifa);
+	if (nonce != NULL &&
+	    nonce->nd_opt_nonce_len != (ND_OPT_NONCE_LEN + 2) / 8)
+		nonce = NULL;
+	match_ifa = nonce == NULL || found_nonce == NULL || *found_nonce == false;
+	if (found_nonce != NULL)
+		*found_nonce = false;
 
 	TAILQ_FOREACH(dp, &dadq, dad_list) {
-		if (dp->dad_ifa != ifa)
-			continue;
+		if (match_ifa) {
+			if (dp->dad_ifa != ifa)
+				continue;
+		} else {
+			dadaddr6 = IFA_IN6(dp->dad_ifa);
+			if (!IN6_ARE_ADDR_EQUAL(myaddr6, dadaddr6))
+				continue;
+		}
 
-		if (nonce == NULL ||
-		    nonce->nd_opt_nonce_len != (ND_OPT_NONCE_LEN + 2) / 8)
+		if (nonce == NULL)
 			break;
 
 		nonce_max = MIN(dp->dad_ns_ocount, ND_OPT_NONCE_STORE);
@@ -1115,7 +1142,7 @@ nd6_dad_find(struct ifaddr *ifa, struct nd_opt_nonce *nonce, bool *found_nonce)
 			log(LOG_DEBUG,
 			    "%s: detected a looped back NS message for %s\n",
 			    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???",
-			    IN6_PRINT(ip6buf, IFA_IN6(ifa)));
+			    IN6_PRINT(ip6buf, myaddr6));
 			dp->dad_ns_lcount++;
 			continue;
 		}
@@ -1123,6 +1150,18 @@ nd6_dad_find(struct ifaddr *ifa, struct nd_opt_nonce *nonce, bool *found_nonce)
 		break;
 	}
 	return dp;
+}
+
+static bool
+nd6_dad_ownnonce(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
+{
+	bool found_nonce = true;
+
+	mutex_enter(&nd6_dad_lock);
+	nd6_dad_find(ifa, nonce, &found_nonce);
+	mutex_exit(&nd6_dad_lock);
+
+	return found_nonce;
 }
 
 static void
