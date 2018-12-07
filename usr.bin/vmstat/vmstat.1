@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.20 2009/10/21 22:18:37 wiz Exp $
+.\"	$NetBSD: vmstat.1,v 1.20.38.1 2018/12/07 13:09:14 martin Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 22, 2009
+.Dd December 5, 2018
 .Dt VMSTAT 1
 .Os
 .Sh NAME
@@ -186,12 +186,16 @@ seconds between each display.
 If no repeat
 .Ar count
 is specified, the default is infinity.
+The
+.Nm
+command will accept and honor a negative number of
+.Ar wait
+seconds.
 .El
 .Pp
 By default,
 .Nm
 displays the following information:
-.Pp
 .Bl -tag -width memory
 .It procs
 Information about the numbers of processes in various states.
@@ -288,7 +292,8 @@ apparent which are recomputed every second.
 .Xr ps 1 ,
 .Xr systat 1 ,
 .Xr iostat 8 ,
-.Xr pstat 8
+.Xr pstat 8 ,
+.Xr kernhist 9
 .Pp
 The sections starting with
 .Dq Interpreting system activity
