@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.11 2018/11/15 10:23:56 maxv Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.12 2018/12/07 09:11:04 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.11 2018/11/15 10:23:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.12 2018/12/07 09:11:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -364,10 +364,9 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	KASSERT(sp->policy != IPSEC_POLICY_ENTRUST);
 	KASSERT(sp->policy != IPSEC_POLICY_BYPASS);
 	if (sp->policy != IPSEC_POLICY_IPSEC) {
-		struct ifnet *ifp = &var->iv_softc->ipsec_if;
 		m_freem(m);
-		IF_DROP(&ifp->if_snd);
-		return 0;
+		error = ENETUNREACH;
+		goto done;
 	}
 
 	/* get flowinfo */
