@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.103 2018/07/16 06:18:31 maxv Exp $
+#	$NetBSD: files.x86,v 1.104 2018/12/07 15:47:11 maxv Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -16,6 +16,9 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 
 # To be able to test for NetBSD/xen in shared files
 defflag	opt_xen.h		DO_NOT_DEFINE
+
+# Option to have a static kernel memory layout
+defflag opt_kaslr.h	NO_X86_ASLR
 
 defflag	SVS
 
