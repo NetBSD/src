@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.8 2012/09/19 21:24:29 bouyer Exp $ */
+/* $NetBSD: mfireg.h,v 1.8.30.1 2018/12/07 17:11:37 martin Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -182,12 +182,12 @@
  ((MEGASAS_THUNDERBOLT_NEW_MSG_SIZE - \
    (sizeof(struct mfi_mpi2_request_raid_scsi_io) - sizeof(mpi2_sge_io_union))\
   ) / sizeof(mpi2_sge_io_union))
- 
-/* 
+
+/*
  * (Command frame size allocaed in SRB ext - Raid SCSI IO message size)
- * / size of SGL ; 
+ * / size of SGL ;
  * (1280 - 256) / 16 = 64
- */   
+ */
 #define MEGASAS_THUNDERBOLT_MAX_SGE_IN_CHAINMSG \
   ((MR_COMMAND_SIZE - MEGASAS_THUNDERBOLT_NEW_MSG_SIZE) / \
    sizeof(mpi2_sge_io_union))
@@ -234,8 +234,8 @@
 #define MR_DCMD_PD_GET_LIST		0x02010000
 #define MR_DCMD_PD_LIST_QUERY		0x02010100
 #define MR_DCMD_PD_GET_INFO		0x02020000
-#define MD_DCMD_PD_SET_STATE		0x02030100
-#define MD_DCMD_PD_REBUILD		0x02040100
+#define MR_DCMD_PD_SET_STATE		0x02030100
+#define MR_DCMD_PD_REBUILD		0x02040100
 #define MR_DCMD_PD_BLINK		0x02070100
 #define MR_DCMD_PD_UNBLINK		0x02070200
 #define MR_DCMD_LD_MAP_GET_INFO		0x0300e101
@@ -243,7 +243,12 @@
 #define MR_DCMD_LD_GET_LIST		0x03010000
 #define MR_DCMD_LD_GET_INFO		0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES	0x03030000
-#define MD_DCMD_CONF_GET		0x04010000
+#define MR_DCMD_CONF_GET		0x04010000
+#define MR_DCMD_CFG_ADD			0x04020000
+#define MR_DCMD_CFG_CLEAR		0x04030000
+#define MR_DCMD_CFG_MAKE_SPARE		0x04040000
+#define MR_DCMD_CFG_FOREIGN_SCAN	0x04060100
+#define MR_DCMD_CFG_FOREIGN_CLEAR	0x04060500
 #define MR_DCMD_BBU_GET_STATUS		0x05010000
 #define MR_DCMD_BBU_GET_CAPACITY_INFO	0x05020000
 #define MR_DCMD_BBU_GET_DESIGN_INFO	0x05030000
@@ -259,6 +264,12 @@
 
 /* mailbox bytes in direct command */
 #define MFI_MBOX_SIZE			12
+
+union mfi_mbox {
+	uint8_t                 b[MFI_MBOX_SIZE];
+	uint16_t                s[6];
+	uint32_t                w[3];
+} __packed __aligned(4);
 
 /* mfi completion codes */
 typedef enum {
@@ -370,9 +381,17 @@ typedef enum {
 
 /* XXX should be in mfi_evt_args ? */
 #define MR_EVT_CTRL_HOST_BUS_SCAN_REQUESTED	0x0152
-#define MR_EVT_PD_REMOVED			0x0070
+#define MR_EVT_ARGS_PD_ADDRESS			0x1d
 #define MR_EVT_PD_INSERTED			0x005b
+#define MR_EVT_PD_REMOVED			0x0070
+#define MR_EVT_PD_STATE_CHANGE			0x0072
 #define MR_EVT_LD_CHANGE			0x0051
+#define MR_EVT_LD_CREATED			0x008a
+#define MR_EVT_LD_DELETED			0x008b
+#define MR_EVT_PD_REMOVED_EXT			0x00f8
+#define MR_EVT_PD_INSERTED_EXT			0x00f7
+
+
 
 typedef enum {
 	MR_PD_QUERY_TYPE_ALL =			0,
@@ -493,7 +512,7 @@ struct mfi_pass_frame {
 struct mfi_dcmd_frame {
 	struct mfi_frame_header mdf_header;
 	uint32_t		mdf_opcode;
-	uint8_t			mdf_mbox[MFI_MBOX_SIZE];
+	union mfi_mbox		mdf_mbox;
 	union mfi_sgl		mdf_sgl;
 } __packed;
 #define MFI_DCMD_MBOX_PEND_FLAG	0x1
@@ -572,6 +591,37 @@ struct mfi_evtarg_pd {
 	uint8_t			mep_encl_index;
 	uint8_t			mep_slot_number;
 } __packed;
+
+struct mfi_evtarg_pd_state {
+	struct mfi_evtarg_pd	pd;
+	uint32_t		prev_state;
+	uint32_t		new_state;
+} __packed;
+
+struct mfi_evtarg_pd_address {
+	uint16_t		device_id;
+	uint16_t		encl_id;
+
+	union {
+		struct {
+			uint8_t			encl_index;
+			uint8_t			slot_number;
+		} __packed		pd_address;
+		struct {
+			uint8_t			encl_position;
+			uint8_t			encl_connector_index;
+		} __packed		encl_address;
+	} __packed		address;
+
+        uint8_t			scsi_dev_type;
+
+	union {
+		uint8_t			port_bitmap;
+		uint8_t			port_numbers;
+	} __packed		connected;
+
+	uint64_t		sas_addr[2];
+} __packed __aligned(8);
 
 struct mfi_evt_detail {
 	uint32_t				med_seq_num;
@@ -655,11 +705,7 @@ struct mfi_evt_detail {
 			struct mfi_progress	prog;
 		} __packed			pd_prog;
 
-		struct {
-			struct mfi_evtarg_pd	pd;
-			uint32_t		prev_state;
-			uint32_t		new_state;
-		} __packed			pd_state;
+		struct mfi_evtarg_pd_state	pd_state;
 
 		struct {
 			uint16_t		vendor_id;
@@ -681,6 +727,8 @@ struct mfi_evt_detail {
 			uint32_t		elog;
 			char			str[64];
 		} __packed			ecc;
+
+		struct mfi_evtarg_pd_address	pd_address;
 
 		uint8_t				b[96];
 		uint16_t			s[48];
@@ -1028,13 +1076,13 @@ struct mfi_pd_address {
 	u_quad_t		mpa_sas_address[2];
 } __packed;
 
-#define MAX_SYS_PDS 240
+#define MFI_MAX_PD 256
 struct mfi_pd_list {
 	uint32_t		mpl_size;
 	uint32_t		mpl_no_pd;
-	struct mfi_pd_address	mpl_address[MAX_SYS_PDS];
+	struct mfi_pd_address	mpl_address[MFI_MAX_PD];
 } __packed;
-#define MFI_PD_LIST_SIZE	(256 * sizeof(struct mfi_pd_address) + 8)
+#define MFI_PD_LIST_SIZE	(sizeof(struct mfi_pd_list))
 
 struct mfi_pd {
 	uint16_t		mfp_id;
@@ -1175,7 +1223,7 @@ struct mfi_bbu_state {
 } __packed;
 
 union mfi_bbu_status_detail {
-	struct mfi_ibbu_state	ibbu; 
+	struct mfi_ibbu_state	ibbu;
 	struct mfi_bbu_state	bbu;	
 };
 
@@ -1200,6 +1248,21 @@ struct mfi_bbu_status {
 #define MFI_BBU_STATE_LEARN_CYC_FAIL	(1 << 7)
 #define MFI_BBU_STATE_LEARN_CYC_TIMEOUT (1 << 8)
 #define MFI_BBU_STATE_I2C_ERR_DETECT	(1 << 9)
+#define MFI_BBU_STATE_REPLACE_PACK      (1 << 10)
+#define MFI_BBU_STATE_CAPACITY_LOW      (1 << 11)
+#define MFI_BBU_STATE_LEARN_REQUIRED    (1 << 12)
+#define MFI_BBU_STATE_BAD_IBBU  ( \
+                                    MFI_BBU_STATE_PACK_MISSING | \
+                                    MFI_BBU_STATE_VOLTAGE_LOW | \
+                                    MFI_BBU_STATE_DISCHARGE_ACTIVE | \
+                                    MFI_BBU_STATE_LEARN_CYC_REQ | \
+                                    MFI_BBU_STATE_LEARN_CYC_ACTIVE | \
+                                    MFI_BBU_STATE_REPLACE_PACK | \
+                                    MFI_BBU_STATE_CAPACITY_LOW)
+#define MFI_BBU_STATE_BAD_BBU   ( \
+                                    MFI_BBU_STATE_PACK_MISSING | \
+                                    MFI_BBU_STATE_REPLACE_PACK | \
+                                    MFI_BBU_STATE_CAPACITY_LOW)
 	uint8_t			pad[20];
 	union mfi_bbu_status_detail detail;
 } __packed;
@@ -1603,7 +1666,7 @@ union mfi_mpi2_request_descriptor {
 	uint64_t				words;
 };
 
-/* 
+/*
  * Request descriptor types
  */
 #define MFI_REQ_DESCRIPT_FLAGS_LD_IO		0x7
@@ -1689,9 +1752,9 @@ struct io_request_info {
 	uint8_t		fpOkForIo;
 };
 
-/*    
- * Define MFI Address Context union. 
- */   
+/*
+ * Define MFI Address Context union.
+ */
 #ifdef MFI_ADDRESS_IS_uint64_t
 typedef uint64_t     mfi_address;
 #else
