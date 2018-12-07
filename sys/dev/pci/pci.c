@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.152 2017/04/05 04:04:54 msaitoh Exp $	*/
+/*	$NetBSD: pci.c,v 1.152.6.1 2018/12/07 13:27:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152 2017/04/05 04:04:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152.6.1 2018/12/07 13:27:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -881,7 +881,70 @@ pci_conf_capture(pci_chipset_tag_t pc, pcitag_t tag,
 	for (off = 0; off < 16; off++)
 		pcs->reg[off] = pci_conf_read(pc, tag, (off * 4));
 
-	return;
+	/* For PCI-X */
+	if (pci_get_capability(pc, tag, PCI_CAP_PCIX, &off, NULL) != 0)
+		pcs->x_csr = pci_conf_read(pc, tag, off + PCIX_CMD);
+
+	/* For PCIe */
+	if (pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS, &off, NULL) != 0) {
+		pcireg_t xcap = pci_conf_read(pc, tag, off + PCIE_XCAP);
+		unsigned int devtype;
+
+		devtype = PCIE_XCAP_TYPE(xcap);
+		pcs->e_dcr = (uint16_t)pci_conf_read(pc, tag, off + PCIE_DCSR);
+
+		if (PCIE_HAS_LINKREGS(devtype))
+			pcs->e_lcr = (uint16_t)pci_conf_read(pc, tag,
+			    off + PCIE_LCSR);
+
+		if ((xcap & PCIE_XCAP_SI) != 0)
+			pcs->e_slcr = (uint16_t)pci_conf_read(pc, tag,
+			    off + PCIE_SLCSR);
+
+		if (PCIE_HAS_ROOTREGS(devtype))
+			pcs->e_rcr = (uint16_t)pci_conf_read(pc, tag,
+			    off + PCIE_RCR);
+
+		if (__SHIFTOUT(xcap, PCIE_XCAP_VER_MASK) >= 2) {
+			pcs->e_dcr2 = (uint16_t)pci_conf_read(pc, tag,
+			    off + PCIE_DCSR2);
+
+			if (PCIE_HAS_LINKREGS(devtype))
+				pcs->e_lcr2 = (uint16_t)pci_conf_read(pc, tag,
+			    off + PCIE_LCSR2);
+
+			/* XXX PCIE_SLCSR2 (It's reserved by the PCIe spec) */
+		}
+	}
+
+	/* For MSI */
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL) != 0) {
+		bool bit64, pvmask;
+		
+		pcs->msi_ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+
+		bit64 = pcs->msi_ctl & PCI_MSI_CTL_64BIT_ADDR;
+		pvmask = pcs->msi_ctl & PCI_MSI_CTL_PERVEC_MASK;
+
+		/* Address */
+		pcs->msi_maddr = pci_conf_read(pc, tag, off + PCI_MSI_MADDR);
+		if (bit64)
+			pcs->msi_maddr64_hi = pci_conf_read(pc, tag,
+			    off + PCI_MSI_MADDR64_HI);
+
+		/* Data */
+		pcs->msi_mdata = pci_conf_read(pc, tag,
+		    off + (bit64 ? PCI_MSI_MDATA64 : PCI_MSI_MDATA));
+
+		/* Per-vector masking */
+		if (pvmask)
+			pcs->msi_mask = pci_conf_read(pc, tag,
+			    off + (bit64 ? PCI_MSI_MASK64 : PCI_MSI_MASK));
+	}
+
+	/* For MSI-X */
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL) != 0)
+		pcs->msix_ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
 }
 
 void
@@ -897,7 +960,80 @@ pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
 			pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
 	}
 
-	return;
+	/* For PCI-X */
+	if (pci_get_capability(pc, tag, PCI_CAP_PCIX, &off, NULL) != 0)
+		pci_conf_write(pc, tag, off + PCIX_CMD, pcs->x_csr);
+
+	/* For PCIe */
+	if (pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS, &off, NULL) != 0) {
+		pcireg_t xcap = pci_conf_read(pc, tag, off + PCIE_XCAP);
+		unsigned int devtype;
+
+		devtype = PCIE_XCAP_TYPE(xcap);
+		pci_conf_write(pc, tag, off + PCIE_DCSR, pcs->e_dcr);
+
+		/*
+		 * PCIe capability is variable sized. To not to write the next
+		 * area, check the existence of each register.
+		 */
+		if (PCIE_HAS_LINKREGS(devtype))
+			pci_conf_write(pc, tag, off + PCIE_LCSR, pcs->e_lcr);
+
+		if ((xcap & PCIE_XCAP_SI) != 0)
+			pci_conf_write(pc, tag, off + PCIE_SLCSR, pcs->e_slcr);
+
+		if (PCIE_HAS_ROOTREGS(devtype))
+			pci_conf_write(pc, tag, off + PCIE_RCR, pcs->e_rcr);
+
+		if (__SHIFTOUT(xcap, PCIE_XCAP_VER_MASK) >= 2) {
+			pci_conf_write(pc, tag, off + PCIE_DCSR2, pcs->e_dcr2);
+
+			if (PCIE_HAS_LINKREGS(devtype))
+				pci_conf_write(pc, tag, off + PCIE_LCSR2,
+				    pcs->e_lcr2);
+
+			/* XXX PCIE_SLCSR2 (It's reserved by the PCIe spec) */
+		}
+	}
+
+	/* For MSI */
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL) != 0) {
+		pcireg_t reg;
+		bool bit64, pvmask;
+
+		/* First, drop Enable bit in case it's already set. */
+		reg = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
+		pci_conf_write(pc, tag, off + PCI_MSI_CTL,
+		    reg & ~PCI_MSI_CTL_MSI_ENABLE);
+
+		bit64 = pcs->msi_ctl & PCI_MSI_CTL_64BIT_ADDR;
+		pvmask = pcs->msi_ctl & PCI_MSI_CTL_PERVEC_MASK;
+
+		/* Address */
+		pci_conf_write(pc, tag, off + PCI_MSI_MADDR, pcs->msi_maddr);
+
+		if (bit64)
+			pci_conf_write(pc, tag,
+			    off + PCI_MSI_MADDR64_HI, pcs->msi_maddr64_hi);
+
+		/* Data */
+		pci_conf_write(pc, tag,
+		    off + (bit64 ? PCI_MSI_MDATA64 : PCI_MSI_MDATA),
+		    pcs->msi_mdata);
+
+		/* Per-vector masking */
+		if (pvmask)
+			pci_conf_write(pc, tag,
+			    off + (bit64 ? PCI_MSI_MASK64 : PCI_MSI_MASK),
+			    pcs->msi_mask);
+
+		/* Write CTRL register in the end */
+		pci_conf_write(pc, tag, off + PCI_MSI_CTL, pcs->msi_ctl);
+	}
+
+	/* For MSI-X */
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL) != 0)
+		pci_conf_write(pc, tag, off + PCI_MSIX_CTL, pcs->msix_ctl);
 }
 
 /*
