@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.12 2018/11/14 05:07:48 knakahara Exp $
+#	$NetBSD: t_vlan.sh,v 1.13 2018/12/07 09:28:31 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -45,43 +45,45 @@ DEBUG=${DEBUG:-false}
 
 vlan_create_destroy_body_common()
 {
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+
 	export RUMP_SERVER=${SOCK_LOCAL}
 
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 destroy
 
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig vlan0 down
-	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig vlan0 down
+	$atf_ifconfig vlan0 destroy
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 1 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+	$atf_ifconfig shmif0 create
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig vlan0 destroy
 
 	# more than one vlan interface with a same parent interface
-	atf_check -s exit:0 rump.ifconfig shmif1 create
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan1 create
-	atf_check -s exit:0 rump.ifconfig vlan1 vlan 11 vlanif shmif0
+	$atf_ifconfig shmif1 create
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan1 create
+	$atf_ifconfig vlan1 vlan 11 vlanif shmif0
 
 	# more than one interface with another parent interface
-	atf_check -s exit:0 rump.ifconfig vlan2 create
-	atf_check -s exit:0 rump.ifconfig vlan2 vlan 12 vlanif shmif1
-	atf_check -s exit:0 rump.ifconfig vlan3 create
-	atf_check -s exit:0 rump.ifconfig vlan3 vlan 13 vlanif shmif1
-	atf_check -s exit:0 rump.ifconfig shmif0 destroy
+	$atf_ifconfig vlan2 create
+	$atf_ifconfig vlan2 vlan 12 vlanif shmif1
+	$atf_ifconfig vlan3 create
+	$atf_ifconfig vlan3 vlan 13 vlanif shmif1
+	$atf_ifconfig shmif0 destroy
 	atf_check -s exit:0 -o not-match:'shmif0' rump.ifconfig vlan0
 	atf_check -s exit:0 -o not-match:'shmif0' rump.ifconfig vlan1
 	atf_check -s exit:0 -o match:'shmif1' rump.ifconfig vlan2
 	atf_check -s exit:0 -o match:'shmif1' rump.ifconfig vlan3
-	atf_check -s exit:0 rump.ifconfig vlan0 destroy
-	atf_check -s exit:0 rump.ifconfig vlan1 destroy
-	atf_check -s exit:0 rump.ifconfig vlan2 destroy
-	atf_check -s exit:0 rump.ifconfig vlan3 destroy
+	$atf_ifconfig vlan0 destroy
+	$atf_ifconfig vlan1 destroy
+	$atf_ifconfig vlan2 destroy
+	$atf_ifconfig vlan3 destroy
 
 }
 
@@ -133,6 +135,7 @@ vlan_create_destroy6_cleanup()
 
 vlan_basic_body_common()
 {
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 	local outfile=./out
 	local af=inet
 	local prefix=24
@@ -152,23 +155,23 @@ vlan_basic_body_common()
 	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig shmif0 up
+	$atf_ifconfig shmif0 up
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig shmif0 up
+	$atf_ifconfig shmif0 up
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $af $local0/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig -w 10
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $local0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig -w 10
 
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $af $remote0/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig -w 10
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $remote0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig -w 10
 
 	extract_new_packets $BUS > $outfile
 
@@ -178,11 +181,11 @@ vlan_basic_body_common()
 	extract_new_packets $BUS > $outfile
 	atf_check -s exit:0 -o match:'vlan 10' cat $outfile
 
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 20 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $af $local0/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig -w 10
+	$atf_ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 vlan 20 vlanif shmif0
+	$atf_ifconfig vlan0 $af $local0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig -w 10
 
 	extract_new_packets $BUS > $outfile
 	atf_check -s not-exit:0 -o ignore $ping_cmd $remote0
@@ -191,11 +194,11 @@ vlan_basic_body_common()
 	atf_check -s exit:0 -o match:'vlan 20' cat $outfile
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $af $local0/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig -w 10
+	$atf_ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $local0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig -w 10
 
 	atf_check -s exit:0 -o ignore rump.ifconfig -z vlan0
 	atf_check -s exit:0 -o ignore $ping_cmd $remote0
@@ -254,52 +257,55 @@ vlan_basic6_cleanup()
 
 vlanid_config_and_ping()
 {
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 	local vlanid=$1
 	shift
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan $vlanid vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $IP_LOCAL0/24
-	atf_check -s exit:0 rump.ifconfig vlan0 up
+	$atf_ifconfig vlan0 vlan $vlanid vlanif shmif0
+	$atf_ifconfig vlan0 $IP_LOCAL0/24
+	$atf_ifconfig vlan0 up
 
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan $vlanid vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $IP_REMOTE0/24
-	atf_check -s exit:0 rump.ifconfig vlan0 up
+	$atf_ifconfig vlan0 vlan $vlanid vlanif shmif0
+	$atf_ifconfig vlan0 $IP_REMOTE0/24
+	$atf_ifconfig vlan0 up
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP_REMOTE0
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 -vlanif
 
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 -vlanif
 }
 
 vlanid_config_and_ping6()
 {
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 	local vlanid=$1
 	shift
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan $vlanid vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 inet6 $IP6_LOCAL0/64
-	atf_check -s exit:0 rump.ifconfig vlan0 up
+	$atf_ifconfig vlan0 vlan $vlanid vlanif shmif0
+	$atf_ifconfig vlan0 inet6 $IP6_LOCAL0/64
+	$atf_ifconfig vlan0 up
 
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan $vlanid vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 inet6 $IP6_REMOTE0/64
-	atf_check -s exit:0 rump.ifconfig vlan0 up
+	$atf_ifconfig vlan0 vlan $vlanid vlanif shmif0
+	$atf_ifconfig vlan0 inet6 $IP6_REMOTE0/64
+	$atf_ifconfig vlan0 up
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 $IP6_REMOTE0
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 -vlanif
 
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 -vlanif
 }
 
 vlan_vlanid_body_common()
 {
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 	local af=inet
 	local prefix=24
 	local sysctl_param="net.inet.ip.dad_count=0"
@@ -327,13 +333,13 @@ vlan_vlanid_body_common()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.sysctl -w $sysctl_param
-	atf_check -s exit:0 rump.ifconfig shmif0 up
-	atf_check -s exit:0 rump.ifconfig vlan0 create
+	$atf_ifconfig shmif0 up
+	$atf_ifconfig vlan0 create
 
 	export RUMP_SERVER=$SOCK_REMOTE
 	atf_check -s exit:0 -o ignore rump.sysctl -w $sysctl_param
-	atf_check -s exit:0 rump.ifconfig shmif0 up
-	atf_check -s exit:0 rump.ifconfig vlan0 create
+	$atf_ifconfig shmif0 up
+	$atf_ifconfig vlan0 create
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s not-exit:0 -e ignore\
@@ -361,35 +367,35 @@ vlan_vlanid_body_common()
 		    rump.ifconfig vlan0 vlan "${TAG}" vlanif shmif0
 	done
 
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 1 vlanif shmif0
+	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
 	atf_check -s not-exit:0 -e ignore \
 	    rump.ifconfig vlan0 vlan 2 vlanif shmif0
 
 	atf_check -s not-exit:0 -e ignore \
 	    rump.ifconfig vlan0 vlan 1 vlanif shmif1
 
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 -vlanif
 	atf_check -s not-exit:0 -e ignore \
 	    rump.ifconfig vlan0 $local0/$prefix
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $af $local0/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig vlan1 create
-	atf_check -s exit:0 rump.ifconfig vlan1 vlan 11 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan1 $af $local1/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan1 up
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $local0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig vlan1 create
+	$atf_ifconfig vlan1 vlan 11 vlanif shmif0
+	$atf_ifconfig vlan1 $af $local1/$prefix
+	$atf_ifconfig vlan1 up
 
 	export RUMP_SERVER=$SOCK_REMOTE
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $af $remote0/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan0 up
-	atf_check -s exit:0 rump.ifconfig vlan1 create
-	atf_check -s exit:0 rump.ifconfig vlan1 vlan 11 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan1 $af $remote1/$prefix
-	atf_check -s exit:0 rump.ifconfig vlan1 up
+	$atf_ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $remote0/$prefix
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig vlan1 create
+	$atf_ifconfig vlan1 vlan 11 vlanif shmif0
+	$atf_ifconfig vlan1 $af $remote1/$prefix
+	$atf_ifconfig vlan1 up
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore $ping_cmd $remote0
@@ -445,47 +451,49 @@ vlan_vlanid6_cleanup()
 
 vlan_configs_body_common()
 {
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+
 	export RUMP_SERVER=${SOCK_LOCAL}
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif1 create
+	$atf_ifconfig shmif0 create
+	$atf_ifconfig shmif1 create
 	# unset U/L bit to detect a bug fixed by if_vlan.c:r1.132
-	atf_check -s exit:0 rump.ifconfig shmif0 link b0:a0:75:00:01:00 active
-	atf_check -s exit:0 rump.ifconfig shmif1 link b0:a0:75:00:01:01 active
-	atf_check -s exit:0 rump.ifconfig vlan0 create
+	$atf_ifconfig shmif0 link b0:a0:75:00:01:00 active
+	$atf_ifconfig shmif1 link b0:a0:75:00:01:01 active
+	$atf_ifconfig vlan0 create
 
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 -vlanif
 
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif shmif0
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 -vlanif shmif0
 
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
 	atf_check -s exit:0 -e ignore rump.ifconfig vlan0 -vlanif shmif1
 	atf_check -s exit:0 -e ignore rump.ifconfig vlan0 -vlanif shmif2
 
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 -vlanif
 
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
 	atf_check -s exit:0 -e match:'Invalid argument' \
 	    rump.ifconfig vlan0 mtu 1497
-	atf_check -s exit:0 rump.ifconfig vlan0 mtu 1496
-	atf_check -s exit:0 rump.ifconfig vlan0 mtu 42
+	$atf_ifconfig vlan0 mtu 1496
+	$atf_ifconfig vlan0 mtu 42
 	atf_check -s exit:0 -e match:'Invalid argument' \
 	    rump.ifconfig vlan0 mtu 41
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	$atf_ifconfig vlan0 -vlanif
 
-	atf_check -s exit:0 rump.ifconfig vlan1 create
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan1 create
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
 	atf_check -s not-exit:0 -e match:'File exists' \
 	    rump.ifconfig vlan1 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan1 vlan 10 vlanif shmif1
+	$atf_ifconfig vlan1 vlan 10 vlanif shmif1
 
-	atf_check -s exit:0 rump.ifconfig vlan1 -vlanif shmif1
-	atf_check -s exit:0 rump.ifconfig vlan1 vlan 10 vlanif shmif1
+	$atf_ifconfig vlan1 -vlanif shmif1
+	$atf_ifconfig vlan1 vlan 10 vlanif shmif1
 
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 -vlanif shmif0
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
 }
 
 atf_test_case vlan_configs cleanup
@@ -533,21 +541,22 @@ vlan_configs6_cleanup()
 
 vlan_bridge_body_common()
 {
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 
 	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 rump.ifconfig shmif0 up
+	$atf_ifconfig shmif0 up
 
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 up
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 up
 	$DEBUG && rump.ifconfig vlan0
 
-	atf_check -s exit:0 rump.ifconfig bridge0 create
+	$atf_ifconfig bridge0 create
 	# Adjust to the MTU of a vlan on a shmif
-	atf_check -s exit:0 rump.ifconfig bridge0 mtu 1496
-	atf_check -s exit:0 rump.ifconfig bridge0 up
+	$atf_ifconfig bridge0 mtu 1496
+	$atf_ifconfig bridge0 up
 	# Test brconfig add
 	atf_check -s exit:0 $HIJACKING brconfig bridge0 add vlan0
 	$DEBUG && brconfig bridge0
@@ -556,7 +565,7 @@ vlan_bridge_body_common()
 
 	atf_check -s exit:0 $HIJACKING brconfig bridge0 add vlan0
 	# Test vlan destruction with bridge
-	atf_check -s exit:0 rump.ifconfig vlan0 destroy
+	$atf_ifconfig vlan0 destroy
 
 	rump_server_destroy_ifaces
 }
@@ -607,7 +616,7 @@ vlan_bridge6_cleanup()
 
 vlan_multicast_body_common()
 {
-
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 	local af="inet"
 	local local0=$IP_LOCAL0
 	local local1=$IP_LOCAL1
@@ -615,6 +624,7 @@ vlan_multicast_body_common()
 	local eth_mcaddr=$ETH_IP_MCADDR0
 	local prefix=24
 	local siocXmulti="$(atf_get_srcdir)/siocXmulti"
+	local atf_siocXmulti="atf_check -s exit:0 $HIJACKING $siocXmulti"
 
 	if [ x"$1" =  x"inet6" ]; then
 		af="inet6"
@@ -627,58 +637,58 @@ vlan_multicast_body_common()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr net0 up
-	atf_check -s exit:0 rump.ifconfig vlan0 create
-	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan0 $af $local0/$prefix up
-	atf_check -s exit:0 rump.ifconfig vlan1 create
-	atf_check -s exit:0 rump.ifconfig vlan1 vlan 11 vlanif shmif0
-	atf_check -s exit:0 rump.ifconfig vlan1 $af $local1/$prefix up
-	atf_check -s exit:0 rump.ifconfig -w 10
+	$atf_ifconfig shmif0 create
+	$atf_ifconfig shmif0 linkstr net0 up
+	$atf_ifconfig vlan0 create
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 $af $local0/$prefix up
+	$atf_ifconfig vlan1 create
+	$atf_ifconfig vlan1 vlan 11 vlanif shmif0
+	$atf_ifconfig vlan1 $af $local1/$prefix up
+	$atf_ifconfig -w 10
 
 	# check the initial state
 	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
 
 	# add a multicast address
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	$atf_siocXmulti add vlan0 $mcaddr
 	atf_check -s exit:0 -o match:"$eth_mcaddr" $HIJACKING ifmcstat
 
 	# delete the address
-	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+	$atf_siocXmulti del vlan0 $mcaddr
 	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
 
 	# delete a non-existing address
 	atf_check -s not-exit:0 -e ignore $HIJACKING $siocXmulti del vlan0 $mcaddr
 
 	# add an address to different interfaces
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan1 $mcaddr
+	$atf_siocXmulti add vlan0 $mcaddr
+	$atf_siocXmulti add vlan1 $mcaddr
 	atf_check -s exit:0 -o match:"${eth_mcaddr}: 2" $HIJACKING ifmcstat
-	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+	$atf_siocXmulti del vlan0 $mcaddr
 
 	# delete the address with invalid interface
 	atf_check -s not-exit:0 -e match:"Invalid argument" \
 	    $HIJACKING $siocXmulti del vlan0 $mcaddr
 
-	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan1 $mcaddr
+	$atf_siocXmulti del vlan1 $mcaddr
 
 	# add and delete a same address more than once
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
+	$atf_siocXmulti add vlan0 $mcaddr
+	$atf_siocXmulti add vlan0 $mcaddr
+	$atf_siocXmulti add vlan0 $mcaddr
 	atf_check -s exit:0 -o match:"${eth_mcaddr}: 3" $HIJACKING ifmcstat
-	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
-	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
-	atf_check -s exit:0 $HIJACKING $siocXmulti del vlan0 $mcaddr
+	$atf_siocXmulti del vlan0 $mcaddr
+	$atf_siocXmulti del vlan0 $mcaddr
+	$atf_siocXmulti del vlan0 $mcaddr
 	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
 
 	# delete all address added to parent device when remove
 	# the config of parent interface
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
-	atf_check -s exit:0 $HIJACKING $siocXmulti add vlan0 $mcaddr
-	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif shmif0
+	$atf_siocXmulti add vlan0 $mcaddr
+	$atf_siocXmulti add vlan0 $mcaddr
+	$atf_siocXmulti add vlan0 $mcaddr
+	$atf_ifconfig vlan0 -vlanif shmif0
 	atf_check -s exit:0 -o not-match:"$eth_mcaddr" $HIJACKING ifmcstat
 }
 
