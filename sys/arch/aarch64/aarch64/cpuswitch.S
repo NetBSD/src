@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.6 2018/11/08 08:28:07 maxv Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.7 2018/12/07 18:27:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.6 2018/11/08 08:28:07 maxv Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.7 2018/12/07 18:27:03 ryo Exp $")
 
 /*
  * At IPL_SCHED:
@@ -76,6 +76,7 @@ ENTRY_NP(cpu_switchto)
 	/* We are done with the old lwp */
 
 .Lrestore_lwp:
+	DISABLE_INTERRUPT
 #if L_MD_KTF + 8 == L_MD_CPACR
 	ldp	x4, x5, [x1, #L_MD_KTF]	/* get trapframe ptr and cpacr_el1 */
 #else
@@ -87,6 +88,7 @@ ENTRY_NP(cpu_switchto)
 
 	mrs	x3, tpidr_el1
 	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
+	ENABLE_INTERRUPT
 
 	/*
 	 * Restore callee save registers.
