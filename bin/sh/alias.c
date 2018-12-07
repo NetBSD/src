@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.15 2014/06/18 18:17:30 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.15.16.1 2018/12/07 13:14:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.15 2014/06/18 18:17:30 christos Exp $");
+__RCSID("$NetBSD: alias.c,v 1.15.16.1 2018/12/07 13:14:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,17 +67,9 @@ setalias(char *name, char *val)
 {
 	struct alias *ap, **app;
 
+	(void) unalias(name);	/* old one (if any) is now gone */
 	app = hashalias(name);
-	for (ap = *app; ap; ap = ap->next) {
-		if (equal(name, ap->name)) {
-			INTOFF;
-			ckfree(ap->val);
-			ap->val	= savestr(val);
-			INTON;
-			return;
-		}
-	}
-	/* not found */
+
 	INTOFF;
 	ap = ckmalloc(sizeof (struct alias));
 	ap->name = savestr(name);
