@@ -41,6 +41,9 @@ Long term:
  - oom-killer ATF tests and fixes
  - uvm_map.c E2BIG workaround or limit raise (1MB -> 10MB?), needed by libFuzzer
  - utime(3) allow changing actime regardless of noatime mount property
+ - NetBSD tar: handle character escaping in file names (\\ \), needed in
+   check-lld (lld::reproduce-backslash.s)
+
 
 Unspecified:
  - kernel-tsan? upstream development is stalled with patches for Linux 4.2
