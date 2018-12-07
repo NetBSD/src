@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.68 2018/12/04 12:07:53 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.69 2018/12/07 13:28:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1954,4 +1954,39 @@ sys/dev/pci/pcidevs_data.h			(regen)
 
 	Add 2 Symbios products.
 	[bouyer, ticket #1123]
+
+usr.bin/vmstat/vmstat.1				1.21,1.22
+
+	Suggest kernhist(9) which is required for vmstat -u and -U.
+	Document that vmstat -w -1 is accepted.
+	[sevan, ticket #1124]
+
+bin/sh/redir.c					1.61
+
+	Fix the <> redirection operator to not truncate the named file.
+	[kre, ticket #1125]
+
+bin/sh/alias.c					1.19
+
+	Avoid core dumps from sh in alias processing.
+	[kre, ticket #1126]
+
+bin/sh/sh.1					1.211 (patch)
+bin/sh/var.c					1.72
+bin/sh/var.h					1.38 (patch)
+
+	Change /bin/sh magic variable semantics, so that if
+	one of them (other than LINENO or RANDOM) is used
+	as a normal variable (by setting it to any value)
+	then that variable loses its special properties, and
+	simply acts like any other variable.  These variables
+	already acted normally (for what that is) if unset.
+	[kre, ticket #1127]
+
+sys/dev/pci/pci.c				1.153
+sys/dev/pci/pcivar.h				1.113
+
+	Save control registers in PCI-X, PCIe, MSI and MSI-X capability
+	area when suspending and restore them on resume.
+	[msaitoh, ticket #1128]
 
