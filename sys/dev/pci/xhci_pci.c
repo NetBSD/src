@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.18 2018/11/30 17:47:54 jdolecek Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.19 2018/12/07 08:28:44 msaitoh Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.18 2018/11/30 17:47:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.19 2018/12/07 08:28:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -125,9 +125,11 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	const pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pcireg_t csr, memtype, usbrev;
-	int err;
 	uint32_t hccparams;
 	char intrbuf[PCI_INTRSTR_LEN];
+	bus_addr_t memaddr;
+	int flags, msixoff;
+	int err;
 
 	sc->sc_dev = self;
 
@@ -146,19 +148,38 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* map MMIO registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_CBMEM);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, PCI_CBMEM, memtype, 0,
-			   &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_ios)) {
-			sc->sc_ios = 0;
-			aprint_error_dev(self, "can't map mem space\n");
-			return;
-		}
-		break;
-	default:
+	if (PCI_MAPREG_TYPE(memtype) != PCI_MAPREG_TYPE_MEM) {
 		sc->sc_ios = 0;
 		aprint_error_dev(self, "BAR not 64 or 32-bit MMIO\n");
+		return;
+	}
+
+	sc->sc_iot = pa->pa_memt;
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_CBMEM, memtype,
+	    &memaddr, &sc->sc_ios, &flags) != 0) {
+		sc->sc_ios = 0;
+		aprint_error_dev(self, "can't get map info\n");
+		return;
+	}
+
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSIX, &msixoff,
+	    NULL)) {
+		pcireg_t msixtbl;
+		uint32_t table_offset;
+		int bir;
+
+		msixtbl = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    msixoff + PCI_MSIX_TBLOFFSET);
+		table_offset = msixtbl & PCI_MSIX_TBLOFFSET_MASK;
+		bir = msixtbl & PCI_MSIX_PBABIR_MASK;
+		/* Shrink map area for MSI-X table */
+		if (bir == PCI_MAPREG_NUM(PCI_CBMEM))
+			sc->sc_ios = table_offset;
+	}
+	if (bus_space_map(sc->sc_iot, memaddr, sc->sc_ios, flags,
+	    &sc->sc_ioh)) {
+		sc->sc_ios = 0;
+		aprint_error_dev(self, "can't map mem space\n");
 		return;
 	}
 
