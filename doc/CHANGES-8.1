@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.71 2018/12/07 19:41:30 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.72 2018/12/08 12:27:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2012,4 +2012,27 @@ sys/dev/pci/mpiireg.h				1.1
 	(Megaraid 2208, codenamed Thunderbold) are also supported by mfi(4).
 	mpii(4) will take precedence if both drivers are enabled.
 	[bouyer, ticket #1129]
+
+sys/dev/pci/if_bge.c				1.317,1.320
+sys/dev/pci/if_bgereg.h				1.94
+sys/dev/pci/if_bgevar.h				1.24
+
+	bge(4): fix and workaround hardware bugs in TSO4 support for BCM5720
+	and similar.
+	[bouyer, ticket #1130]
+
+share/man/man4/mpii.4				1.3,1.4
+sys/dev/pci/mfii.c				1.3
+sys/dev/pci/mpii.c				1.15-1.18 (adapted)
+sys/dev/pci/mpiireg.h				1.2
+
+	sync mpii(4) with OpenBSD, adding support for the SAS3xxx controllers,
+	and making the driver MP-safe.
+	[bouyer, ticket #1131]
+
+sys/compat/linux/common/linux_socket.c		(apply patch, see 1.140,
+						workaround without ABI change)
+
+	Fix linux emulation of sendto(2).
+	[tsutsui, ticket #1132]
 
