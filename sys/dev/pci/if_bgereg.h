@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.93 2017/04/13 04:27:46 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.93.4.1 2018/12/08 12:10:22 martin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1547,6 +1547,11 @@
 #define	BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_BD_512	0x00020000
 #define	BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_BD_4K	0x00030000
 #define	BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_LSO_4K	0x000C0000
+#define BGE_RDMA_TX_LENGTH_WA_5719		0x02000000
+#define BGE_RDMA_TX_LENGTH_WA_5720		0x00200000
+
+#define BGE_RDMA_LENGTH			0x4BE0
+#define BGE_NUM_RDMA_CHANNELS		4
 
 /*
  * Write DMA control registers

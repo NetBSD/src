@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.23 2017/04/12 05:59:43 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.23.4.1 2018/12/08 12:10:22 martin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -249,6 +249,8 @@ struct bge_bcom_hack {
 
 struct txdmamap_pool_entry {
 	bus_dmamap_t dmamap;
+	bus_dmamap_t dmamap32;
+	bool is_dma32;
 	SLIST_ENTRY(txdmamap_pool_entry) link;
 };
 
@@ -276,6 +278,8 @@ struct bge_softc {
 	uint32_t		bge_return_ring_cnt;
 	uint32_t		bge_tx_prodidx;
 	bus_dma_tag_t		bge_dmatag;
+	bus_dma_tag_t		bge_dmatag32;
+	bool			bge_dma64;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
 	uint32_t		bge_msicap;
