@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_com.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $ */
+/*	$NetBSD: ingenic_com.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,12 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.7 2018/12/08 17:46:12 thorpej Exp 
 
 #include <mips/ingenic/ingenic_var.h>
 #include <mips/ingenic/ingenic_regs.h>
-
-#include "opt_com.h"
-
-#ifndef COM_REGMAP
-#error We need COM_REGMAP
-#endif
 
 volatile int32_t *com0addr = (int32_t *)MIPS_PHYS_TO_KSEG1(JZ_UART0);
 
