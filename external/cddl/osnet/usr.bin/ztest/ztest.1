@@ -1,4 +1,4 @@
-.\"     $NetBSD: ztest.1,v 1.1 2018/12/08 01:28:27 sevan Exp $
+.\"     $NetBSD: ztest.1,v 1.2 2018/12/08 12:18:37 wiz Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,24 @@
 .Nd ZFS stress test utility
 .Sh SYNOPSIS
 .Nm
-.Op Fl vsamrRdtgikpfVETFPBh
+.Op Fl EhV
+.Op Fl a Ar shift
+.Op Fl B Ar path
+.Op Fl d Ar datasets
+.Op Fl F Ar loops
+.Op Fl f Ar path
+.Op Fl g Ar threshold
+.Op Fl i Ar count
+.Op Fl k Ar percent
+.Op Fl m Ar copies
+.Op Fl P Ar passtime
+.Op Fl p Ar name
+.Op Fl R Ar parity
+.Op Fl r Ar disks
+.Op Fl s Ar size
+.Op Fl T Ar time
+.Op Fl t Ar threads
+.Op Fl v Ar vdevs
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,84 +83,73 @@ temporary file to pass information to child processes which allows shared
 memory to survive
 .Xr exec 3
 syscall.
-A copy of the ztest_shared_hdr_t struct containing information on the size and
-number of shared structures in the file is always stored at offset 0 of the
-file.
+A copy of the
+.Vt ztest_shared_hdr_t
+struct containing information on the size and number of shared
+structures in the file is always stored at offset 0 of the file.
 .Pp
 For backwards compatibility testing
 .Nm
 can invoke an alternative version of
 .Nm
-after a SIGLKILL using the
+after a
+.Dv SIGKILL
+signal using the
 .Fl B
 flag.
-.sp
+.Pp
 The following options are available:
-.sp
-.Fl v
-vdevs (default: 5)
-.sp
-.Fl s
-size of each vdev (default: 256M)
-.sp
-.Fl a
+.Bl -tag -width 5n
+.It Fl a Ar shift
 alignment shift (default: 9) use 0 for random
-.sp
-.Fl m
-mirror copies (default: 2)
-.sp
-.Fl r
-raidz disks (default: 4)
-.sp
-.Fl R
-raidz parity (default: 1)
-.sp
-.Fl d
+.It Fl B Ar path
+alt ztest (default: <none>) alternate ztest path
+.It Fl d Ar datasets
 datasets (default: 7)
-.sp
-.Fl t
-threads (default: 23)
-.sp
-.Fl g
-gang block threshold (default: 32K)
-.sp
-.Fl i
-init count (default: 1) initialize pool i times
-.sp
-.Fl k
-kill percentage (default: 70%)
-.sp
-.Fl p
-pool name (default: ztest)
-.sp
-.Fl f
-dir (default: /tmp) file directory for vdev files
-.sp
-.Fl V
-verbose (use multiple times to increase verbosity)
-.sp
-.Fl E
+.It Fl E
 use existing pool instead of creating new one
-.sp
-.Fl T
-time (default: 300 sec) total run time
-.sp
-.Fl F
+.It Fl F Ar loops
 freezeloops (default: 50) max loops in
 .Fn spa_freeze
-.sp
-.Fl P
+.It Fl f Ar path
+dir (default:
+.Pa /tmp )
+file directory for vdev files
+.It Fl g Ar threshold
+gang block threshold (default: 32K)
+.It Fl h
+print help
+.It Fl i Ar count
+init count (default: 1) initialize pool
+.Ar count
+times
+.It Fl k Ar percent
+kill percentage (default: 70%)
+.It Fl m Ar copies
+mirror copies (default: 2)
+.It Fl P Ar passtime
 passtime (default: 60 sec) time per pass
-.sp
-.Fl B
-alt ztest (default: <none>) alternate ztest path
-.sp
-.Fl h
-(print help)
+.It Fl p Ar name
+pool name (default: ztest)
+.It Fl R Ar parity
+raidz parity (default: 1)
+.It Fl r Ar disks
+raidz disks (default: 4)
+.It Fl s Ar size
+size of each vdev (default: 256M)
+.It Fl T Ar time
+time (default: 300 sec) total run time
+.It Fl t Ar threads
+threads (default: 23)
+.It Fl V
+verbose (use multiple times to increase verbosity)
+.It Fl v Ar vdevs
+number of vdevs (default: 5)
+.El
 .Sh AUTHORS
 This man page was written by
 .An Sevan Janiyan
-.Aq sevan@NetBSD.org .
+.Aq Mt sevan@NetBSD.org .
 .Sh CAVEATS
 To allow for backward compatibilty testing using older versions of
 .Nm
