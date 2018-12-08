@@ -1,4 +1,4 @@
-/* $NetBSD: rpi_vcmbox.c,v 1.4 2014/10/04 13:18:34 mlelstv Exp $ */
+/* $NetBSD: rpi_vcmbox.c,v 1.5 2018/12/08 06:53:11 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.4 2014/10/04 13:18:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.5 2018/12/08 06:53:11 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -233,6 +233,7 @@ vcmbox_cpufreq_init(struct vcmbox_softc *sc)
 {
 	const struct sysctlnode *node, *cpunode, *freqnode;
 	int error;
+	static char available[20];
 
 	error = vcmbox_read_clockrate(sc, VCPROPTAG_GET_MIN_CLOCKRATE,
 	    VCPROP_CLK_ARM, &sc->sc_cpu_minrate);
@@ -296,6 +297,16 @@ vcmbox_cpufreq_init(struct vcmbox_softc *sc)
 	if (error)
 		goto sysctl_failed;
 	sc->sc_node_max = node->sysctl_num;
+
+	snprintf(available, sizeof(available), "%" PRIu32 " %" PRIu32,
+	    RATE2MHZ(sc->sc_cpu_minrate), RATE2MHZ(sc->sc_cpu_maxrate));
+
+	error = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_STRING, "available", NULL,
+	    NULL, 0, available, strlen(available),
+	    CTL_CREATE, CTL_EOL);
+	if (error)
+		goto sysctl_failed;
 
 	return 0;
 
