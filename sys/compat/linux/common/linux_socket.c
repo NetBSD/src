@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.138.6.2 2018/05/12 10:29:08 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.138.6.3 2018/12/08 12:24:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.2 2018/05/12 10:29:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.3 2018/12/08 12:24:18 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -401,6 +401,7 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	struct msghdr   msg;
 	struct iovec    aiov;
 	struct sockaddr_big nam;
+	struct mbuf *m;
 	int bflags;
 	int error;
 
@@ -415,13 +416,31 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	msg.msg_control = NULL;
 
 	if (SCARG(uap, tolen)) {
+		size_t solen;
+
 		/* Read in and convert the sockaddr */
 		error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
 		    SCARG(uap, tolen));
 		if (error)
 			return (error);
-		msg.msg_name = &nam;
-		msg.msg_namelen = SCARG(uap, tolen);
+
+		/*
+		 * XXX
+		 * Copy sockaddr_big to mbuf because sockargs() called from
+		 * do_sys_sendmsg_so() can't handle sockaddr in msg_name
+		 * already copied into the kernel space.
+		 */
+		solen = nam.sb_len;
+		m = m_get(M_WAIT, MT_SONAME);
+		if (solen > MLEN) {
+			MEXTMALLOC(m, solen, M_WAITOK);
+		}
+		m->m_len = solen;
+		memcpy(mtod(m, void *), &nam, solen);
+
+		msg.msg_flags |= MSG_NAMEMBUF;
+		msg.msg_name = m;
+		msg.msg_namelen = solen;
 	}
 
 	msg.msg_iov = &aiov;
