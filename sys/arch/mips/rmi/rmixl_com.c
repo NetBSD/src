@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.6 2018/12/08 17:46:12 thorpej Exp $ */
+/* $Id: rmixl_com.c,v 1.7 2018/12/08 21:14:37 thorpej Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.6 2018/12/08 17:46:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.7 2018/12/08 21:14:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.6 2018/12/08 17:46:12 thorpej Exp $"
 #include <mips/rmi/rmixl_obiovar.h>
 #include <mips/rmi/rmixl_comvar.h>
 
-#include "opt_com.h"
-
 /* span of UART regs in bytes */
 #define RMIXL_IO_DEV_UART_SIZE	(COM_NPORTS * sizeof(uint32_t))
 
@@ -140,10 +138,6 @@ static void rmixl_com_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(com_rmixl, sizeof(struct rmixl_com_softc),
     rmixl_com_match, rmixl_com_attach, NULL, NULL);
-
-#ifndef	COM_REGMAP
-#error	COM_REGMAP not defined!
-#endif
 
 volatile int32_t *com0addr = (int32_t *)
 	MIPS_PHYS_TO_KSEG1(RMIXL_IO_DEV_PBASE + RMIXL_IO_DEV_UART_1);
