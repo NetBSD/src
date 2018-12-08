@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.9 2018/11/28 22:54:11 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.10 2018/12/08 15:04:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.9 2018/11/28 22:54:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.10 2018/12/08 15:04:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -282,11 +282,14 @@ gicv3_its_msi_free_lpi(struct gicv3_its *its, int lpi)
 static uint32_t
 gicv3_its_devid(pci_chipset_tag_t pc, pcitag_t tag)
 {
+	uint32_t devid;
 	int b, d, f;
 
 	pci_decompose_tag(pc, tag, &b, &d, &f);
 
-	return (b << 8) | (d << 3) | f;
+	devid = (b << 8) | (d << 3) | f;
+
+	return pci_get_devid(pc, devid);
 }
 
 static int
