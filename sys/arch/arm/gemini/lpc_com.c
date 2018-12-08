@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc_com.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: lpc_com.c,v 1.5 2018/12/08 17:46:09 thorpej Exp $	*/
 
 /* adapted from:
  *	NetBSD: gemini_com.c,v 1.1 2008/10/24 04:23:18 matt Exp
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.5 2018/12/08 17:46:09 thorpej Exp $");
 
 #include "opt_com.h"
 #include "locators.h"
@@ -170,7 +170,7 @@ lpc_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	} 
 
-	COM_INIT_REGS(sc->sc_com.sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_com.sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(&sc->sc_com);
 	aprint_naive("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.13 2018/12/08 17:46:09 thorpej Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.12 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.13 2018/12/08 17:46:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ com_jazzio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 	sc->sc_frequency = com_freq;
 	SET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE); /* XXX - NEC M403 */
 	jazzio_intr_establish(ja->ja_intr, comintr, sc);

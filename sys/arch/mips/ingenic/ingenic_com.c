@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_com.c,v 1.6 2017/05/19 07:43:31 skrll Exp $ */
+/*	$NetBSD: ingenic_com.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.6 2017/05/19 07:43:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ void	ingenic_putchar(char);
 # define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
 #endif
 
-
 void		ingenic_com_cnattach(void);
 
 static int	ingenic_com_match(device_t, cfdata_t , void *);
@@ -81,8 +80,20 @@ CFATTACH_DECL_NEW(ingenic_com, sizeof(struct ingenic_com_softc),
 
 static bus_space_handle_t regh = 0;
 static bus_addr_t cons_com = 0;
-static struct com_regs regs;
+static struct com_regs cons_regs;
 extern bus_space_tag_t apbus_memt;
+
+static void
+ingenic_com_init_regs(struct com_regs *regs, bus_space_tag_t st,
+		      bus_space_handle_t sh, bus_addr_t addr)
+{
+
+	com_init_regs(regs, st, sh, addr);
+	for (size_t i = 0; i < __arraycount(regs->cr_map); i++) {
+		regs->cr_map[i] = regs->cr_map[i] << 2;
+	}
+	regs->cr_nports <<= 2;
+}
 
 void
 ingenic_putchar_init(void)
@@ -148,18 +159,12 @@ ingenic_puts(const char *restrict s)
 void
 ingenic_com_cnattach(void)
 {
-	int i;
 
 	bus_space_map(apbus_memt, JZ_UART0, 0x100, 0, &regh);
 	cons_com = JZ_UART0;
-	memset(&regs, 0, sizeof(regs));
-	COM_INIT_REGS(regs, apbus_memt, regh, JZ_UART0);
-	for (i = 0; i < 16; i++) {
-		regs.cr_map[i] = regs.cr_map[i] << 2;
-	}
-	regs.cr_nports = 32;
+	ingenic_com_init_regs(&cons_regs, apbus_memt, regh, JZ_UART0);
 
-	comcnattach1(&regs, 115200, 48000000, COM_TYPE_INGENIC, CONMODE);
+	comcnattach1(&cons_regs, 115200, 48000000, COM_TYPE_INGENIC, CONMODE);
 }
 
 static int
@@ -179,7 +184,6 @@ ingenic_com_attach(device_t parent, device_t self, void *args)
 	struct ingenic_com_softc *isc = device_private(self);
 	struct com_softc *sc = &isc->sc_com;
 	struct apbus_attach_args *aa = args;
-	int i;
 
 	sc->sc_dev = self;
 	sc->sc_frequency = 48000000;
@@ -191,11 +195,8 @@ ingenic_com_attach(device_t parent, device_t self, void *args)
 	} else {
 		bus_space_map(apbus_memt, aa->aa_addr, 0x1000, 0, &isc->sc_regh);
 	}
-	memset(&sc->sc_regs, 0, sizeof(sc->sc_regs));
-	COM_INIT_REGS(sc->sc_regs, aa->aa_bst, isc->sc_regh, aa->aa_addr);
-	for (i = 0; i < 16; i++)
-		sc->sc_regs.cr_map[i] = sc->sc_regs.cr_map[i] << 2;
-	sc->sc_regs.cr_nports = 32;
+	ingenic_com_init_regs(&sc->sc_regs, aa->aa_bst, isc->sc_regh,
+			      aa->aa_addr);
 
 	com_attach_subr(sc);
 	evbmips_intr_establish(aa->aa_irq, comintr, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.12 2011/07/19 15:17:20 dyoung Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.13 2018/12/08 17:46:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.12 2011/07/19 15:17:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.13 2018/12/08 17:46:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
 		}
 	csc->sc_dev = self;
 	csc->sc_frequency = COM_FREQ;
-	COM_INIT_REGS(csc->sc_regs, iot, ioh, ma->ma_addr1);
+	com_init_regs(&csc->sc_regs, iot, ioh, ma->ma_addr1);
 
 	/* sanity check */
 	if (!comprobe1(iot, ioh)) {
