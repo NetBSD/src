@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.49 2018/12/04 19:34:27 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.50 2018/12/08 15:31:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,14 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.49 2018/12/04 19:34:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.50 2018/12/08 15:31:30 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
 #endif
 
 #include <sys/types.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -207,7 +207,8 @@ struct ahci_pci_softc {
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 	pci_intr_handle_t *sc_pihp;
-	void *sc_ih;
+	int sc_nintr;
+	void **sc_ih;
 };
 
 static int  ahci_pci_has_quirk(pci_vendor_id_t, pci_product_id_t);
@@ -286,16 +287,105 @@ ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 	return ret;
 }
 
+static int
+ahci_pci_intr_establish(struct ahci_softc *sc, int port)
+{
+	struct ahci_pci_softc *psc = (struct ahci_pci_softc *)sc;
+	device_t self = sc->sc_atac.atac_dev;
+	char intrbuf[PCI_INTRSTR_LEN];
+	char intr_xname[INTRDEVNAMEBUF];
+	const char *intrstr;
+	int vec;
+	int (*intr_handler)(void *);
+	void *intr_arg;
+
+	KASSERT(psc->sc_pihp != NULL);
+	KASSERT(psc->sc_nintr > 0);
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s", device_xname(self));
+
+	if (psc->sc_nintr == 1 || sc->sc_ghc_mrsm) {
+		/* Only one interrupt, established on vector 0 */
+		intr_handler = ahci_intr;
+		intr_arg = sc;
+		vec = 0;
+
+		if (psc->sc_ih[vec] != NULL) {
+			/* Already established, nothing more to do */
+			goto out;
+		}
+
+	} else {
+		/*
+		 * Theoretically AHCI device can have less MSI/MSI-X vectors
+		 * than supported ports. Hardware is allowed to revert
+		 * to single message MSI, but not required to do so.
+		 * So handle the case when it did not revert to single MSI.
+		 * In this case last available interrupt vector is used
+		 * for port == max vector, and all further ports.
+		 * This last vector must use the general interrupt handler,
+		 * since it needs to be able to handle several ports.
+		 * NOTE: such case was never actually observed yet
+		 */
+		if (sc->sc_atac.atac_nchannels > psc->sc_nintr
+		    && port >= (psc->sc_nintr - 1)) {
+			intr_handler = ahci_intr;
+			intr_arg = sc;
+			vec = psc->sc_nintr - 1;
+
+			if (psc->sc_ih[vec] != NULL) {
+				/* Already established, nothing more to do */
+				goto out;
+			}
+
+			if (port == vec) {
+				/* Print error once */
+				aprint_error_dev(self,
+				    "port %d independant interrupt vector not "
+				    "available, sharing with further ports",
+				    port);
+			}
+		} else {
+			/* Vector according to port */
+			KASSERT(port < psc->sc_nintr);
+			KASSERT(psc->sc_ih[port] == NULL);
+			intr_handler = ahci_intr_port;
+			intr_arg = &sc->sc_channels[port];
+			vec = port;
+
+			snprintf(intr_xname, sizeof(intr_xname), "%s port%d",
+			    device_xname(self), port);
+		}
+	}
+
+	intrstr = pci_intr_string(psc->sc_pc, psc->sc_pihp[vec], intrbuf,
+	    sizeof(intrbuf));
+	psc->sc_ih[vec] = pci_intr_establish_xname(psc->sc_pc,
+	    psc->sc_pihp[vec], IPL_BIO, intr_handler, intr_arg, intr_xname);
+	if (psc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt");
+		if (intrstr != NULL)
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
+		goto fail;
+	}
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+
+out:
+	return 0;
+
+fail:
+	return EAGAIN;
+}
+
 static void
 ahci_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct ahci_pci_softc *psc = device_private(self);
 	struct ahci_softc *sc = &psc->ah_sc;
-	const char *intrstr;
 	bool ahci_cap_64bit;
 	bool ahci_bad_64bit;
-	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_atac.atac_dev = self;
 
@@ -314,29 +404,18 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	int counts[PCI_INTR_TYPE_SIZE] = {
 		[PCI_INTR_TYPE_INTX] = 1,
 		[PCI_INTR_TYPE_MSI] = 1,
-		[PCI_INTR_TYPE_MSIX] = 0, /* XXX not working */
+		[PCI_INTR_TYPE_MSIX] = -1,
 	};
 
 	/* Allocate and establish the interrupt. */
-	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSI)) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
 		aprint_error_dev(self, "can't allocate handler\n");
 		goto fail;
 	}
 
-	intrstr = pci_intr_string(pa->pa_pc, psc->sc_pihp[0], intrbuf,
-	    sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, psc->sc_pihp[0],
-	    IPL_BIO, ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
-	if (psc->sc_ih == NULL) {
-		pci_intr_release(pa->pa_pc, psc->sc_pihp, 1);
-		psc->sc_ih = NULL;
-		aprint_error_dev(self, "couldn't establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
-		goto fail;
-	}
-	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+	psc->sc_nintr = counts[pci_intr_type(pa->pa_pc, psc->sc_pihp[0])];
+	psc->sc_ih = kmem_zalloc(sizeof(void *) * psc->sc_nintr, KM_SLEEP);
+	sc->sc_intr_establish = ahci_pci_intr_establish;
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -368,7 +447,7 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 fail:
 	if (psc->sc_pihp != NULL) {
-		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, psc->sc_nintr);
 		psc->sc_pihp = NULL;
 	}
 	if (sc->sc_ahcis) {
@@ -405,12 +484,20 @@ ahci_pci_detach(device_t dv, int flags)
 	pmf_device_deregister(dv);
 
 	if (psc->sc_ih != NULL) {
-		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		for (int intr = 0; intr < psc->sc_nintr; intr++) {
+			if (psc->sc_ih[intr] != NULL) {
+				pci_intr_disestablish(psc->sc_pc,
+				    psc->sc_ih[intr]);
+				psc->sc_ih[intr] = NULL;
+			}
+		}
+
+		kmem_free(psc->sc_ih, sizeof(void *) * psc->sc_nintr);
 		psc->sc_ih = NULL;
 	}
 
 	if (psc->sc_pihp != NULL) {
-		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, psc->sc_nintr);
 		psc->sc_pihp = NULL;
 	}
 
