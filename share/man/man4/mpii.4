@@ -1,4 +1,4 @@
-.\"	$NetBSD: mpii.4,v 1.2 2012/04/19 20:13:48 wiz Exp $
+.\"	$NetBSD: mpii.4,v 1.2.28.1 2018/12/08 12:17:13 martin Exp $
 .\"	OpenBSD: mpii.4,v 1.8 2010/10/01 12:27:36 mikeb Exp
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd April 19, 2012
+.Dd December 3, 2018
 .Dt MPII 4
 .Os
 .Sh NAME
@@ -34,20 +34,39 @@ family of chipsets:
 .Bl -dash -offset indent -compact
 .It
 LSISAS2004,
-LSISAS2008
+LSISAS2008,
+LSISAS2108,
+LSISAS2208,
+LSISAS2216,
+LSISAS2308,
+LSISAS3004,
+LSISAS3008,
+LSISAS3108,
+LSISAS3408,
+LSISAS3416,
+LSISAS3508,
+LSISAS3516
 .El
 .Pp
 These chipsets can be found on the following controllers:
 .Pp
 .Bl -dash -offset indent -compact
 .It
-Dell PERC H200
+Dell PERC H200, HBA330, 12Gbps SAS HBA
 .It
-LSI SAS 9200-8e, SAS 9211-4i, SAS 9211-8i
+IBM ServeRAID H1110
+.It
+Lenovo N2215, ThinkSystem 430
+.It
+LSI SAS 9200-8e, SAS 9207-8i, SAS 9211-4i, SAS 9211-8i
+.It
+Broadcom SAS 9300, HBA 9400
 .El
 .Pp
-Some models of these controllers have varying degrees of support for RAID 0
-and RAID 1.
+Some models of these controllers carry an Integrated RAID (IR) firmware
+providing support for RAID 0, RAID 1, RAID10 or RAID5 using SAS or SATA
+drives.
+All RAID configuration is done through the controllers' BIOSes.
 .Pp
 .Nm
 supports monitoring of the logical disks in the controller through the
@@ -94,4 +113,4 @@ do not use a SCSI-like identifier.
 Instead they use an opaque ID and leave discovery order up to the operating
 system.
 The code to handle this is currently not implemented and therefore it is not a
-good idea to run this driver on a multi-boot machine or with more than 1 drive.
+good idea to run this driver on a multi-boot machine.

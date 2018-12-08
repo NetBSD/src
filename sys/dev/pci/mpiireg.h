@@ -1,7 +1,7 @@
-/* $NetBSD: mpiireg.h,v 1.2.2.2 2018/12/07 17:11:37 martin Exp $ */
-/*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
+/* $NetBSD: mpiireg.h,v 1.2.2.3 2018/12/08 12:17:13 martin Exp $ */
+/*	$OpenBSD: mpiireg.h,v 1.13 2018/06/19 10:32:41 jmatthew Exp $	*/
 /*
- * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
+ * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
  * Copyright (c) 2005 - 2010 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2005 - 2010 Marco Peereboom <marco@openbsd.org>
@@ -58,18 +58,18 @@
 
 #define MPII_HOSTDIAG			(0x08)
 #define  MPII_HOSTDIAG_BDS_MASK		(0x00001800) /* boot device select */
-#define   MPII_HOSTDIAG_BDS_DEFAULT 	(0<<11)	/* default address map, flash */
+#define   MPII_HOSTDIAG_BDS_DEFAULT	(0<<11)	/* default address map, flash */
 #define   MPII_HOSTDIAG_BDS_HCDW	(1<<11)	/* host code and data window */
 #define  MPII_HOSTDIAG_CLEARFBS		(1<<10) /* clear flash bad sig */
 #define  MPII_HOSTDIAG_FORCE_HCB_ONBOOT (1<<9)	/* force host controlled boot */
 #define  MPII_HOSTDIAG_HCB_MODE		(1<<8)	/* host controlled boot mode */
-#define  MPII_HOSTDIAG_DWRE		(1<<7) 	/* diag reg write enabled */
-#define  MPII_HOSTDIAG_FBS		(1<<6) 	/* flash bad sig */
-#define  MPII_HOSTDIAG_RESET_HIST	(1<<5) 	/* reset history */
-#define  MPII_HOSTDIAG_DIAGWR_EN	(1<<4) 	/* diagnostic write enabled */
-#define  MPII_HOSTDIAG_RESET_ADAPTER	(1<<2) 	/* reset adapter */
-#define  MPII_HOSTDIAG_HOLD_IOC_RESET	(1<<1) 	/* hold ioc in reset */
-#define  MPII_HOSTDIAG_DIAGMEM_EN	(1<<0) 	/* diag mem enable */
+#define  MPII_HOSTDIAG_DWRE		(1<<7)	/* diag reg write enabled */
+#define  MPII_HOSTDIAG_FBS		(1<<6)	/* flash bad sig */
+#define  MPII_HOSTDIAG_RESET_HIST	(1<<5)	/* reset history */
+#define  MPII_HOSTDIAG_DIAGWR_EN	(1<<4)	/* diagnostic write enabled */
+#define  MPII_HOSTDIAG_RESET_ADAPTER	(1<<2)	/* reset adapter */
+#define  MPII_HOSTDIAG_HOLD_IOC_RESET	(1<<1)	/* hold ioc in reset */
+#define  MPII_HOSTDIAG_DIAGMEM_EN	(1<<0)	/* diag mem enable */
 
 #define MPII_DIAGRWDATA			(0x10)
 
@@ -81,12 +81,12 @@
 #define  MPII_INTR_STATUS_SYS2IOCDB	(1<<31) /* ioc written to by host */
 #define  MPII_INTR_STATUS_RESET		(1<<30) /* physical ioc reset */
 #define  MPII_INTR_STATUS_REPLY		(1<<3)	/* reply message interrupt */
-#define  MPII_INTR_STATUS_IOC2SYSDB	(1<<0) 	/* ioc write to doorbell */
+#define  MPII_INTR_STATUS_IOC2SYSDB	(1<<0)	/* ioc write to doorbell */
 
 #define MPII_INTR_MASK			(0x34)
 #define  MPII_INTR_MASK_RESET		(1<<30) /* ioc reset intr mask */
-#define  MPII_INTR_MASK_REPLY		(1<<3) 	/* reply message intr mask */
-#define  MPII_INTR_MASK_DOORBELL	(1<<0) 	/* doorbell interrupt mask */
+#define  MPII_INTR_MASK_REPLY		(1<<3)	/* reply message intr mask */
+#define  MPII_INTR_MASK_DOORBELL	(1<<0)	/* doorbell interrupt mask */
 
 #define MPII_DCR_DATA			(0x38)
 
@@ -125,9 +125,29 @@
 
 struct mpii_sge {
 	u_int32_t		sg_hdr;
-	u_int32_t		sg_lo_addr;
-	u_int32_t		sg_hi_addr;
-} __packed;
+	u_int32_t		sg_addr_lo;
+	u_int32_t		sg_addr_hi;
+} __packed __aligned(4);
+
+/*
+ * SAS3 (IEEE) Scatter Gather Lists
+ */
+
+#define MPII_IEEE_SGE_ADDR_MASK		(0x03)
+#define MPII_IEEE_SGE_ADDR_SYSTEM	(0x00)
+#define MPII_IEEE_SGE_ADDR_IOCDDR	(0x01)
+#define MPII_IEEE_SGE_ADDR_IOCPLB	(0x02)
+#define MPII_IEEE_SGE_ADDR_IOCPLBNTA	(0x03)
+#define MPII_IEEE_SGE_END_OF_LIST	(0x40)
+#define MPII_IEEE_SGE_CHAIN_ELEMENT	(0x80)
+
+struct mpii_ieee_sge {
+	u_int64_t		sg_addr;
+	u_int32_t		sg_len;
+	u_int16_t		_reserved;
+	u_int8_t		sg_next_chain_offset;
+	u_int8_t		sg_flags;
+} __packed __aligned(8);
 
 struct mpii_fw_tce {
 	u_int8_t		reserved1;
@@ -140,7 +160,7 @@ struct mpii_fw_tce {
 	u_int32_t		image_offset;
 
 	u_int32_t		image_size;
-} __packed;
+} __packed __aligned(4);
 
 /*
  * Messages
@@ -290,7 +310,7 @@ struct mpii_msg_request {
 	u_int8_t		vp_id;
 	u_int8_t		vf_id;
 	u_int16_t		reserved6;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_reply {
 	u_int16_t		reserved1;
@@ -304,12 +324,12 @@ struct mpii_msg_reply {
 	u_int8_t		vp_id;
 	u_int8_t		vf_if;
 	u_int16_t		reserved4;
-	
+
 	u_int16_t		reserved5;
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 /* ioc init */
 
@@ -346,14 +366,17 @@ struct mpii_msg_iocinit_request {
 
 	u_int32_t		system_reply_address_high;
 
-	u_int64_t		system_request_frame_base_address;
+	u_int32_t		system_request_frame_base_address_lo;
+	u_int32_t		system_request_frame_base_address_hi;
 
-	u_int64_t		reply_descriptor_post_queue_address;
+	u_int32_t		reply_descriptor_post_queue_address_lo;
+	u_int32_t		reply_descriptor_post_queue_address_hi;
 
-	u_int64_t		reply_free_queue_address;
+	u_int32_t		reply_free_queue_address_lo;
+	u_int32_t		reply_free_queue_address_hi;
 
 	u_int64_t		timestamp;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_iocinit_reply {
 	u_int8_t		whoinit;
@@ -373,7 +396,7 @@ struct mpii_msg_iocinit_reply {
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_iocfacts_request {
 	u_int16_t		reserved1;
@@ -387,7 +410,7 @@ struct mpii_msg_iocfacts_request {
 	u_int8_t		vp_id;
 	u_int8_t		vf_id;
 	u_int16_t		reserved4;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_iocfacts_reply {
 	u_int8_t		msg_version_min;
@@ -461,7 +484,7 @@ struct mpii_msg_iocfacts_reply {
 	u_int16_t		max_persistent_entries;
 
 	u_int32_t		reserved4;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_portfacts_request {
 	u_int16_t		reserved1;
@@ -475,7 +498,7 @@ struct mpii_msg_portfacts_request {
 	u_int8_t		vp_id;
 	u_int8_t		vf_id;
 	u_int16_t		reserved3;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_portfacts_reply {
 	u_int16_t		reserved1;
@@ -502,11 +525,12 @@ struct mpii_msg_portfacts_reply {
 #define MPII_PORTFACTS_PORTTYPE_ISCSI			(0x20)
 #define MPII_PORTFACTS_PORTTYPE_SAS_PHYSICAL		(0x30)
 #define MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL		(0x31)
+#define MPII_PORTFACTS_PORTTYPE_TRI_MODE		(0x40)
 	u_int16_t		reserved6;
 
 	u_int16_t		max_posted_cmd_buffers;
 	u_int16_t		reserved7;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_portenable_request {
 	u_int16_t		reserved1;
@@ -514,14 +538,14 @@ struct mpii_msg_portenable_request {
 	u_int8_t		function;
 
 	u_int8_t		reserved2;
-	u_int8_t		port_flags;	
+	u_int8_t		port_flags;
 	u_int8_t		reserved3;
 	u_int8_t		msg_flags;
 
 	u_int8_t		vp_id;
 	u_int8_t		vf_id;
 	u_int16_t		reserved4;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_portenable_reply {
 	u_int16_t		reserved1;
@@ -541,7 +565,7 @@ struct mpii_msg_portenable_reply {
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_event_request {
 	u_int16_t		reserved1;
@@ -561,12 +585,12 @@ struct mpii_msg_event_request {
 	u_int32_t		reserved6;
 
 	u_int32_t		event_masks[4];
-	
+
 	u_int16_t		sas_broadcase_primitive_masks;
 	u_int16_t		reserved7;
 
 	u_int32_t		reserved8;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_event_reply {
 	u_int16_t		event_data_length;
@@ -594,7 +618,7 @@ struct mpii_msg_event_reply {
 	u_int32_t		event_context;
 
 	/* event data follows */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_eventack_request {
 	u_int16_t		reserved1;
@@ -612,7 +636,7 @@ struct mpii_msg_eventack_request {
 	u_int16_t		reserved4;
 
 	u_int32_t		event_context;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_eventack_reply {
 	u_int16_t		reserved1;
@@ -630,7 +654,7 @@ struct mpii_msg_eventack_reply {
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_fwupload_request {
 	u_int8_t		image_type;
@@ -661,7 +685,7 @@ struct mpii_msg_fwupload_request {
 	struct mpii_fw_tce	tce;
 
 	/* followed by an sgl */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_fwupload_reply {
 	u_int8_t		image_type;
@@ -682,7 +706,7 @@ struct mpii_msg_fwupload_reply {
 	u_int32_t		ioc_loginfo;
 
 	u_int32_t		actual_image_size;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_scsi_io {
 	u_int16_t		dev_handle;
@@ -696,7 +720,7 @@ struct mpii_msg_scsi_io {
 	u_int8_t		vp_id;
 	u_int8_t		vf_id;
 	u_int16_t		reserved3;
-	
+
 	u_int32_t		sense_buffer_low_address;
 
 	u_int16_t		sgl_flags;
@@ -745,7 +769,7 @@ struct mpii_msg_scsi_io {
 	u_int8_t		cdb[MPII_CDB_LEN];
 
 	/* followed by an sgl */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_scsi_io_error {
 	u_int16_t		dev_handle;
@@ -761,25 +785,23 @@ struct mpii_msg_scsi_io_error {
 	u_int16_t		reserved3;
 
 	u_int8_t		scsi_status;
-
-#define MPII_SCSIIO_ERR_STATUS_SUCCESS			(0x00)
-#define MPII_SCSIIO_ERR_STATUS_CHECK_COND		(0x02)
-#define MPII_SCSIIO_ERR_STATUS_BUSY			(0x04)
-#define MPII_SCSIIO_ERR_STATUS_INTERMEDIATE		(0x08)
-#define MPII_SCSIIO_ERR_STATUS_INTERMEDIATE_CONDMET	(0x10)
-#define MPII_SCSIIO_ERR_STATUS_RESERVATION_CONFLICT	(0x14)
-#define MPII_SCSIIO_ERR_STATUS_CMD_TERM			(0x22)
-#define MPII_SCSIIO_ERR_STATUS_TASK_SET_FULL		(0x28)
-#define MPII_SCSIIO_ERR_STATUS_ACA_ACTIVE		(0x30)
-#define MPII_SCSIIO_ERR_STATUS_TASK_ABORTED		(0x40)
-
+#define MPII_SCSIIO_STATUS_GOOD				(0x00)
+#define MPII_SCSIIO_STATUS_CHECK_COND			(0x02)
+#define MPII_SCSIIO_STATUS_COND_MET			(0x04)
+#define MPII_SCSIIO_STATUS_BUSY				(0x08)
+#define MPII_SCSIIO_STATUS_INTERMEDIATE			(0x10)
+#define MPII_SCSIIO_STATUS_INTERMEDIATE_CONDMET		(0x14)
+#define MPII_SCSIIO_STATUS_RESERVATION_CONFLICT		(0x18)
+#define MPII_SCSIIO_STATUS_CMD_TERM			(0x22)
+#define MPII_SCSIIO_STATUS_TASK_SET_FULL		(0x28)
+#define MPII_SCSIIO_STATUS_ACA_ACTIVE			(0x30)
+#define MPII_SCSIIO_STATUS_TASK_ABORTED			(0x40)
 	u_int8_t		scsi_state;
-#define MPII_SCSIIO_ERR_STATE_AUTOSENSE_VALID		(1<<0)
-#define MPII_SCSIIO_ERR_STATE_AUTOSENSE_FAILED		(1<<1)
-#define MPII_SCSIIO_ERR_STATE_NO_SCSI_STATUS		(1<<2)
-#define MPII_SCSIIO_ERR_STATE_TERMINATED		(1<<3)
-#define MPII_SCSIIO_ERR_STATE_RESPONSE_INFO_VALID	(1<<4)
-#define MPII_SCSIIO_ERR_STATE_QUEUE_TAG_REJECTED	(0xffff)
+#define MPII_SCSIIO_STATE_AUTOSENSE_VALID		(1<<0)
+#define MPII_SCSIIO_STATE_AUTOSENSE_FAILED		(1<<1)
+#define MPII_SCSIIO_STATE_NO_SCSI_STATUS		(1<<2)
+#define MPII_SCSIIO_STATE_TERMINATED			(1<<3)
+#define MPII_SCSIIO_STATE_RESPONSE_INFO_VALID		(1<<4)
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
@@ -798,7 +820,7 @@ struct mpii_msg_scsi_io_error {
 	u_int32_t		reserved5;
 
 	u_int32_t		reserved6;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_request_descr {
 	u_int8_t		request_flags;
@@ -812,16 +834,16 @@ struct mpii_request_descr {
 
 	u_int16_t		lmid;
 	u_int16_t		dev_handle;
-} __packed;
+} __packed __aligned(8);
 
 struct mpii_reply_descr {
 	u_int8_t		reply_flags;
-#define MPII_REPLY_DESCR_TYPE_MASK               	(0x0f)
-#define MPII_REPLY_DESCR_SCSI_IO_SUCCESS         	(0x00)
-#define MPII_REPLY_DESCR_ADDRESS_REPLY           	(0x01)
-#define MPII_REPLY_DESCR_TARGET_ASSIST_SUCCESS    	(0x02)
-#define MPII_REPLY_DESCR_TARGET_COMMAND_BUFFER   	(0x03)
-#define MPII_REPLY_DESCR_UNUSED                  	(0x0f)
+#define MPII_REPLY_DESCR_TYPE_MASK			(0x0f)
+#define MPII_REPLY_DESCR_SCSI_IO_SUCCESS		(0x00)
+#define MPII_REPLY_DESCR_ADDRESS_REPLY			(0x01)
+#define MPII_REPLY_DESCR_TARGET_ASSIST_SUCCESS		(0x02)
+#define MPII_REPLY_DESCR_TARGET_COMMAND_BUFFER		(0x03)
+#define MPII_REPLY_DESCR_UNUSED				(0x0f)
 	u_int8_t		vf_id;
 	u_int16_t		smid;
 
@@ -829,7 +851,7 @@ struct mpii_reply_descr {
 		u_int32_t	data;
 		u_int32_t	frame_addr;	/* Address Reply */
 	};
-} __packed;
+} __packed __aligned(8);
 
 struct mpii_request_header {
 	u_int16_t		function_dependent1;
@@ -843,7 +865,7 @@ struct mpii_request_header {
 	u_int8_t		vp_id;
 	u_int8_t		vf_id;
 	u_int16_t		reserved;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_scsi_task_request {
 	u_int16_t		dev_handle;
@@ -870,7 +892,7 @@ struct mpii_msg_scsi_task_request {
 
 	u_int16_t		task_mid;
 	u_int16_t		reserved5;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_scsi_task_reply {
 	u_int16_t		dev_handle;
@@ -892,7 +914,7 @@ struct mpii_msg_scsi_task_reply {
 	u_int32_t		ioc_loginfo;
 
 	u_int32_t		termination_count;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_sas_oper_request {
 	u_int8_t		operation;
@@ -936,7 +958,7 @@ struct mpii_msg_sas_oper_request {
 	u_int32_t		ioc_param_value;
 
 	u_int64_t		reserved5;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_sas_oper_reply {
 	u_int8_t		operation;
@@ -956,7 +978,7 @@ struct mpii_msg_sas_oper_reply {
 	u_int16_t		ioc_status;
 
 	u_int32_t		ioc_loginfo;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_raid_action_request {
 	u_int8_t	action;
@@ -981,7 +1003,7 @@ struct mpii_msg_raid_action_request {
 #define MPII_RAID_VOL_WRITE_CACHE_ENABLE		(0x02)
 
 	struct mpii_sge	action_sge;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_raid_action_reply {
 	u_int8_t	action;
@@ -1001,7 +1023,7 @@ struct mpii_msg_raid_action_reply {
 	u_int16_t	ioc_status;
 
 	u_int32_t	action_data[5];
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_hdr {
 	u_int8_t		page_version;
@@ -1009,9 +1031,9 @@ struct mpii_cfg_hdr {
 	u_int8_t		page_number;
 	u_int8_t		page_type;
 #define MPII_CONFIG_REQ_PAGE_TYPE_ATTRIBUTE		(0xf0)
-#define MPI2_CONFIG_PAGEATTR_READ_ONLY              	(0x00)
-#define MPI2_CONFIG_PAGEATTR_CHANGEABLE             	(0x10)
-#define MPI2_CONFIG_PAGEATTR_PERSISTENT             	(0x20)
+#define MPI2_CONFIG_PAGEATTR_READ_ONLY			(0x00)
+#define MPI2_CONFIG_PAGEATTR_CHANGEABLE			(0x10)
+#define MPI2_CONFIG_PAGEATTR_PERSISTENT			(0x20)
 
 #define MPII_CONFIG_REQ_PAGE_TYPE_MASK			(0x0f)
 #define MPII_CONFIG_REQ_PAGE_TYPE_IO_UNIT		(0x00)
@@ -1021,7 +1043,7 @@ struct mpii_cfg_hdr {
 #define MPII_CONFIG_REQ_PAGE_TYPE_MANUFACTURING		(0x09)
 #define MPII_CONFIG_REQ_PAGE_TYPE_RAID_PD		(0x0a)
 #define MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED		(0x0f)
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_ecfg_hdr {
 	u_int8_t		page_version;
@@ -1035,7 +1057,14 @@ struct mpii_ecfg_hdr {
 #define MPII_CONFIG_REQ_PAGE_TYPE_RAID_CONFIG		(0x16)
 #define MPII_CONFIG_REQ_PAGE_TYPE_DRIVER_MAPPING	(0x17)
 	u_int8_t		reserved2;
-} __packed;
+} __packed __aligned(4);
+
+/* config page address formats */
+#define MPII_PGAD_SAS_DEVICE_FORM_MASK			(0xf0000000)
+#define MPII_PGAD_SAS_DEVICE_FORM_GET_NEXT_HANDLE	(0x00000000)
+#define MPII_PGAD_SAS_DEVICE_FORM_HANDLE		(0x20000000)
+
+#define MPII_PGAD_SAS_DEVICE_HANDLE_MASK		(0x0000ffff)
 
 struct mpii_msg_config_request {
 	u_int8_t		action;
@@ -1057,10 +1086,10 @@ struct mpii_msg_config_request {
 #define MPII_CONFIG_REQ_EXTPAGE_TYPE_SAS_DEVICE		(0x12)
 #define MPII_CONFIG_REQ_EXTPAGE_TYPE_SAS_PHY		(0x13)
 #define MPII_CONFIG_REQ_EXTPAGE_TYPE_LOG		(0x14)
-#define MPI2_CONFIG_EXTPAGETYPE_ENCLOSURE            	(0x15)
-#define MPI2_CONFIG_EXTPAGETYPE_RAID_CONFIG         	(0x16)
-#define MPI2_CONFIG_EXTPAGETYPE_DRIVER_MAPPING      	(0x17)
-#define MPI2_CONFIG_EXTPAGETYPE_SAS_PORT            	(0x18)
+#define MPI2_CONFIG_EXTPAGETYPE_ENCLOSURE		(0x15)
+#define MPI2_CONFIG_EXTPAGETYPE_RAID_CONFIG		(0x16)
+#define MPI2_CONFIG_EXTPAGETYPE_DRIVER_MAPPING		(0x17)
+#define MPI2_CONFIG_EXTPAGETYPE_SAS_PORT		(0x18)
 	u_int8_t		msg_flags;
 
 	u_int8_t		vp_id;
@@ -1075,7 +1104,7 @@ struct mpii_msg_config_request {
 /* XXX lots of defns here */
 
 	struct mpii_sge		page_buffer;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_msg_config_reply {
 	u_int8_t		action;
@@ -1097,7 +1126,7 @@ struct mpii_msg_config_reply {
 	u_int32_t		ioc_loginfo;
 
 	struct mpii_cfg_hdr	config_header;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_manufacturing_pg0 {
 	struct mpii_cfg_hdr	config_header;
@@ -1107,7 +1136,7 @@ struct mpii_cfg_manufacturing_pg0 {
 	char			board_name[16];
 	char			board_assembly[16];
 	char			board_tracer_number[16];
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_ioc_pg1 {
 	struct mpii_cfg_hdr     config_header;
@@ -1125,7 +1154,7 @@ struct mpii_cfg_ioc_pg1 {
 	u_int32_t       reserved1;
 
 	u_int32_t       reserved2;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_ioc_pg3 {
 	struct mpii_cfg_hdr	config_header;
@@ -1134,7 +1163,7 @@ struct mpii_cfg_ioc_pg3 {
 	u_int8_t		reserved[3];
 
 	/* followed by a list of mpii_cfg_raid_physdisk structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_ioc_pg8 {
 	struct mpii_cfg_hdr	config_header;
@@ -1161,16 +1190,16 @@ struct mpii_cfg_ioc_pg8 {
 #define	MPII_IOC_PG8_IRFLAGS_LOW_VOLUME_MAPPING		(0<<0)
 #define	MPII_IOC_PG8_IRFLAGS_HIGH_VOLUME_MAPPING	(1<<0)
 	u_int16_t		reserved4;
-	
+
 	u_int32_t		reserved5;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_raid_physdisk {
 	u_int8_t		phys_disk_id;
 	u_int8_t		phys_disk_bus;
 	u_int8_t		phys_disk_ioc;
 	u_int8_t		phys_disk_num;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_fc_port_pg0 {
 	struct mpii_cfg_hdr	config_header;
@@ -1208,7 +1237,7 @@ struct mpii_cfg_fc_port_pg0 {
 	u_int8_t		max_hard_aliases_supported;
 	u_int8_t		num_current_aliases;
 	u_int8_t		reserved2;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_fc_port_pg1 {
 	struct mpii_cfg_hdr	config_header;
@@ -1228,7 +1257,7 @@ struct mpii_cfg_fc_port_pg1 {
 	u_int8_t		rr_tov;
 	u_int8_t		initiator_dev_to;
 	u_int8_t		initiator_lo_pend_to;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_fc_device_pg0 {
 	struct mpii_cfg_hdr	config_header;
@@ -1251,7 +1280,7 @@ struct mpii_cfg_fc_device_pg0 {
 	u_int8_t		fc_ph_high_version;
 	u_int8_t		current_target_id;
 	u_int8_t		current_bus;
-} __packed;
+} __packed __aligned(4);
 
 #define MPII_CFG_RAID_VOL_ADDR_HANDLE		(1<<28)
 
@@ -1308,14 +1337,14 @@ struct mpii_cfg_raid_vol_pg0 {
 #define MPII_CFG_RAID_VOL_0_INACTIVE_INSUF_META		(0x05)
 
 	/* followed by a list of mpii_cfg_raid_vol_pg0_physdisk structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_raid_vol_pg0_physdisk {
 	u_int8_t		raid_set_num;
 	u_int8_t		phys_disk_map;
 	u_int8_t		phys_disk_num;
 	u_int8_t		reserved;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_raid_vol_pg1 {
 	struct mpii_cfg_hdr	config_header;
@@ -1334,7 +1363,7 @@ struct mpii_cfg_raid_vol_pg1 {
 	u_int32_t		reserved2;
 
 	u_int32_t		reserved3;
-} __packed;
+} __packed __aligned(4);
 
 #define MPII_CFG_RAID_PHYS_DISK_ADDR_NUMBER		(1<<28)
 
@@ -1399,7 +1428,7 @@ struct mpii_cfg_raid_physdisk_pg0 {
 	u_int16_t		reserved4;
 
 	u_int32_t		reserved5;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_raid_physdisk_pg1 {
 	struct mpii_cfg_hdr	config_header;
@@ -1411,7 +1440,7 @@ struct mpii_cfg_raid_physdisk_pg1 {
 	u_int32_t		reserved2;
 
 	/* followed by mpii_cfg_raid_physdisk_path structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_raid_physdisk_path {
 	u_int8_t		phys_disk_id;
@@ -1427,7 +1456,7 @@ struct mpii_cfg_raid_physdisk_path {
 	u_int16_t		flags;
 #define MPII_CFG_RAID_PHYDISK_PATH_INVALID	(1<<0)
 #define MPII_CFG_RAID_PHYDISK_PATH_BROKEN	(1<<1)
-} __packed;
+} __packed __aligned(4);
 
 #define MPII_CFG_SAS_DEV_ADDR_NEXT		(0<<28)
 #define MPII_CFG_SAS_DEV_ADDR_BUS		(1<<28)
@@ -1490,7 +1519,7 @@ struct mpii_cfg_sas_dev_pg0 {
 	u_int8_t		reserved1;
 
 	u_int64_t		reserved2;
-} __packed;
+} __packed __aligned(4);
 
 #define MPII_CFG_RAID_CONFIG_ACTIVE_CONFIG		(2<<28)
 
@@ -1514,7 +1543,7 @@ struct mpii_cfg_raid_config_pg0 {
 	u_int8_t		reserved2[3];
 
 	/* followed by struct mpii_raid_config_element structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_raid_config_element {
 	u_int16_t		element_flags;
@@ -1527,7 +1556,7 @@ struct mpii_raid_config_element {
 	u_int8_t		hot_spare_pool;
 	u_int8_t		phys_disk_num;
 	u_int16_t		phys_disk_dev_handle;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_cfg_dpm_pg0 {
 	struct mpii_ecfg_hdr	config_header;
@@ -1538,7 +1567,7 @@ struct mpii_cfg_dpm_pg0 {
 #define MPII_DPM_ADDRESS_START_ENTRY_MASK		(0x0000ffff)
 
 	/* followed by struct mpii_dpm_entry structs */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_dpm_entry {
 	u_int64_t		physical_identifier;
@@ -1549,7 +1578,7 @@ struct mpii_dpm_entry {
 	u_int32_t		physical_bits_mapping;
 
 	u_int32_t		reserved1;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_evt_sas_discovery {
 	u_int8_t		flags;
@@ -1566,7 +1595,7 @@ struct mpii_evt_sas_discovery {
 	u_int8_t		reserved1;
 
 	u_int32_t		discovery_status;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_evt_ir_status {
 	u_int16_t		vol_dev_handle;
@@ -1594,7 +1623,7 @@ struct mpii_evt_ir_volume {
 
 	u_int32_t		new_value;
 	u_int32_t		prev_value;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_evt_ir_physical_disk {
 	u_int16_t		reserved1;
@@ -1612,7 +1641,7 @@ struct mpii_evt_ir_physical_disk {
 
 	u_int32_t		new_value;
 	u_int32_t		previous_value;
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_evt_sas_tcl {
 	u_int16_t		enclosure_handle;
@@ -1631,7 +1660,7 @@ struct mpii_evt_sas_tcl {
 	u_int8_t		physical_port;
 
 	/* followed by num_entries number of struct mpii_evt_phy_entry */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_evt_phy_entry {
 	u_int16_t		dev_handle;
@@ -1640,7 +1669,7 @@ struct mpii_evt_phy_entry {
 #define MPII_EVENT_SAS_TOPO_PS_RC_MASK			(0x0f)
 #define MPII_EVENT_SAS_TOPO_PS_RC_ADDED			(0x01)
 #define MPII_EVENT_SAS_TOPO_PS_RC_MISSING		(0x02)
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_evt_ir_cfg_change_list {
 	u_int8_t		num_elements;
@@ -1651,7 +1680,7 @@ struct mpii_evt_ir_cfg_change_list {
 #define MPII_EVT_IR_CFG_CHANGE_LIST_FOREIGN		(0x1)
 
 	/* followed by num_elements struct mpii_evt_ir_cfg_elements */
-} __packed;
+} __packed __aligned(4);
 
 struct mpii_evt_ir_cfg_element {
 	u_int16_t		element_flags;
@@ -1673,4 +1702,4 @@ struct mpii_evt_ir_cfg_element {
 #define MPII_EVT_IR_CFG_ELEMENT_RC_PD_DELETED		(0x09)
 	u_int8_t		phys_disk_num;
 	u_int16_t		phys_disk_dev_handle;
-} __packed;
+} __packed __aligned(4);
