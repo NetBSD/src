@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.89 2018/12/08 17:46:13 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.90 2018/12/08 21:14:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -76,7 +76,6 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_RING_SIZE	2048
 #endif
 
-#ifdef	COM_REGMAP
 #define	COM_REG_RXDATA		0
 #define	COM_REG_TXDATA		1
 #define	COM_REG_DLBL		2
@@ -104,35 +103,6 @@ struct com_regs {
 	bus_size_t		cr_nports;
 	bus_size_t		cr_map[42];
 };
-#else /* ! COM_REGMAP */
-#define	COM_REG_RXDATA		com_data
-#define	COM_REG_TXDATA		com_data
-#define	COM_REG_DLBL		com_dlbl
-#define	COM_REG_DLBH		com_dlbh
-#define	COM_REG_IER		com_ier
-#define	COM_REG_IIR		com_iir
-#define	COM_REG_FIFO		com_fifo
-#define	COM_REG_EFR		com_efr
-#define	COM_REG_LCR		com_lctl
-#define	COM_REG_MCR		com_mcr
-#define	COM_REG_LSR		com_lsr
-#define	COM_REG_MSR		com_msr
-#define	COM_REG_TCR		com_msr
-#define	COM_REG_TLR		com_scratch
-#define	COM_REG_MDR1		8
-#define COM_REG_USR		com_usr		/* 16750/DW APB */
-#define	COM_REG_TFL		com_tfl		/* DW APB */
-#define	COM_REG_RFL		com_rfl		/* DW APB */
-#define	COM_REG_HALT		com_halt	/* DW APB */
-
-struct com_regs {
-	bus_space_tag_t		cr_iot;
-	bus_space_handle_t	cr_ioh;
-	bus_addr_t		cr_iobase;
-	bus_size_t		cr_nports;
-};
-
-#endif /* COM_REGMAP */
 
 void	com_init_regs(struct com_regs *, bus_space_tag_t, bus_space_handle_t,
 		      bus_addr_t);
