@@ -45,8 +45,10 @@ extern "C" {
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 # define OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 #endif
-#ifndef OPENSSL_NO_DEVCRYPTOENG
-# define OPENSSL_NO_DEVCRYPTOENG
+#if 0
+# ifndef OPENSSL_NO_DEVCRYPTOENG
+#  define OPENSSL_NO_DEVCRYPTOENG
+# endif
 #endif
 #if !defined(_LP64) || defined(__sparc64__)
 # ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
