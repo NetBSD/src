@@ -1,4 +1,4 @@
-/*	$NetBSD: com_cpcbus.c,v 1.11 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: com_cpcbus.c,v 1.12 2018/12/08 17:46:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.11 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.12 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,7 @@ com_cpc_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_com.sc_regs, caa->cpca_tag, ioh, iobase);
+	com_init_regs(&sc->sc_com.sc_regs, caa->cpca_tag, ioh, iobase);
 
 	sc->sc_com.sc_frequency = CPC_COM_SPEED(caa->cpca_freq);
 

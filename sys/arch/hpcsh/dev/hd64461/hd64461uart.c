@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.28 2011/07/19 15:30:52 dyoung Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.29 2018/12/08 17:46:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.28 2011/07/19 15:30:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.29 2018/12/08 17:46:11 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -59,18 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.28 2011/07/19 15:30:52 dyoung Exp 
 #include <hpcsh/dev/hd64461/hd64461uartvar.h>
 #include <hpcsh/dev/hd64461/hd64461uartreg.h>
 
-#define	HD64461UART_INIT_REGS(regs, tag, hdl, addr)			\
-	do {								\
-		int i;							\
-									\
-		regs.cr_iot = tag;					\
-		regs.cr_ioh = hdl;					\
-		regs.cr_iobase = addr;					\
-		regs.cr_nports = COM_NPORTS;				\
-		for (i = 0; i < __arraycount(regs.cr_map); i++)		\
-			regs.cr_map[i] = com_std_map[i] << 1;		\
-	} while (0)
-
 STATIC struct hd64461uart_chip {
 	struct hpcsh_bus_space __tag_body;
 	bus_space_tag_t io_tag;
@@ -101,6 +89,17 @@ STATIC void hd64461uart_init(void);
 #define COMCN_SPEED	19200
 #endif
 
+static void
+hd64461uart_init_regs(struct com_regs *regs, bus_space_tag_t tag,
+		      bus_space_handle_t hdl, bus_addr_t addr)
+{
+
+	com_init_regs(regs, tag, hdl, addr);
+	for (size_t i = 0; i < __arraycount(regs->cr_map); i++)
+		regs->cr_map[i] = regs->cr_map[i] << 1;
+	regs->cr_nports <<= 1;
+}
+
 void
 hd64461uartcnprobe(struct consdev *cp)
 {
@@ -122,7 +121,7 @@ hd64461uartcninit(struct consdev *cp)
 
 	hd64461uart_init();
 
-	HD64461UART_INIT_REGS(regs, hd64461uart_chip.io_tag, 0x0, 0x0);
+	hd64461uart_init_regs(&regs, hd64461uart_chip.io_tag, 0x0, 0x0);
 	comcnattach1(&regs, COMCN_SPEED, COM_FREQ, COM_TYPE_NORMAL, CONMODE);
 
 	hd64461uart_chip.console = 1;
@@ -145,7 +144,7 @@ hd64461uart_kgdb_init(void)
 
 	hd64461uart_init();
 
-	HD64461UART_INIT_REGS(regs, hd64461uart_chip.io_tag, NULL, 0x0);
+	hd64461uart_init_regs(&regs, hd64461uart_chip.io_tag, NULL, 0x0);
 	if (com_kgdb_attach1(&regs,
 	    kgdb_rate, COM_FREQ, COM_TYPE_NORMAL, CONMODE) != 0) {
 		printf("%s: KGDB console open failed.\n", __func__);
@@ -185,7 +184,7 @@ hd64461uart_attach(device_t parent, device_t self, void *aux)
 
 	bus_space_map(sc->sc_chip->io_tag, 0x0, 8, 0, &ioh);
 	csc->sc_frequency = COM_FREQ;
-	HD64461UART_INIT_REGS(csc->sc_regs, sc->sc_chip->io_tag, ioh, 0x0);
+	hd64461uart_init_regs(&csc->sc_regs, sc->sc_chip->io_tag, ioh, 0x0);
 
 	/* switch port to UART */
 

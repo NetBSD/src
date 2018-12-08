@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.35 2018/05/05 21:16:31 ryoon Exp $ */
+/* $NetBSD: com_acpi.c,v 1.36 2018/12/08 17:46:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.35 2018/05/05 21:16:31 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.36 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,7 +138,7 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "can't map i/o space\n");
 			goto out;
 		}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, base);
+	com_init_regs(&sc->sc_regs, iot, ioh, base);
 
 	aprint_normal("%s", device_xname(self));
 

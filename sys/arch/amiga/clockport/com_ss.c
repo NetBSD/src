@@ -1,4 +1,4 @@
-/*      $NetBSD: com_ss.c,v 1.1 2012/04/17 09:59:03 rkujawa Exp $ */
+/*      $NetBSD: com_ss.c,v 1.2 2018/12/08 17:46:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ com_ss_attach(device_t parent, device_t self, void *aux)
 
 	bus_space_map(caa->cp_iot, 0, COM_SS_REGS, 0, &ioh);
 
-	COM_INIT_REGS(sc->sc_regs, caa->cp_iot, ioh, 0 /* off */);
+	com_init_regs(&sc->sc_regs, caa->cp_iot, ioh, 0 /* off */);
 
 	com_attach_subr(sc);
 

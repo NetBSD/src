@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.3 2018/07/17 00:42:06 christos Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.4 2018/12/08 17:46:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.3 2018/07/17 00:42:06 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.4 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,7 +137,7 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
+	com_init_regs(&sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 
