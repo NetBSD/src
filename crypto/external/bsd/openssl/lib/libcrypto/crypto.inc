@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.8 2018/09/23 13:33:04 christos Exp $
+#	$NetBSD: crypto.inc,v 1.9 2018/12/08 22:35:44 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -15,6 +15,7 @@ ctype.c \
 cversion.c \
 ebcdic.c \
 ex_data.c \
+getenv.c \
 init.c \
 mem.c \
 mem_dbg.c \
