@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.169 2018/12/06 13:25:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.170 2018/12/08 14:57:11 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3566,7 +3566,8 @@ ixgbe_detach(device_t dev, int flags)
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT, ctrl_ext);
 
 	callout_halt(&adapter->timer, NULL);
-	callout_halt(&adapter->recovery_mode_timer, NULL);
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE)
+		callout_halt(&adapter->recovery_mode_timer, NULL);
 
 	if (adapter->feat_en & IXGBE_FEATURE_NETMAP)
 		netmap_detach(adapter->ifp);
