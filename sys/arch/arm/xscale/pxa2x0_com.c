@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.14 2018/12/08 17:46:10 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.14 2018/12/08 17:46:10 thorpej Exp $");
 
 #include "opt_com.h"
 
@@ -156,7 +156,7 @@ pxauart_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map registers\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	switch (pxa->pxa_addr) {
 	case PXA2X0_FFUART_BASE: cken = CKEN_FFUART; break;

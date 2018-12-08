@@ -1,4 +1,4 @@
-/* $NetBSD: com_eumb.c,v 1.8 2011/12/29 10:27:36 phx Exp $ */
+/* $NetBSD: com_eumb.c,v 1.9 2018/12/08 17:46:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.8 2011/12/29 10:27:36 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.9 2018/12/08 17:46:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,7 +94,7 @@ com_eumb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_regs = cnregs;
 	} else {
 		bus_space_map(eaa->eumb_bt, comaddr, COM_NPORTS, 0, &ioh);
-		COM_INIT_REGS(sc->sc_regs, eaa->eumb_bt, ioh, comaddr);
+		com_init_regs(&sc->sc_regs, eaa->eumb_bt, ioh, comaddr);
 	}
 	sc->sc_frequency = 4 * ticks_per_sec;
 	epicirq = (eaa->eumb_unit == 1) ? 25 : 24;

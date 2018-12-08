@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.3 2017/10/26 23:28:15 jmcneill Exp $ */
+/* $NetBSD: ti_com.c,v 1.4 2018/12/08 17:46:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.3 2017/10/26 23:28:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.4 2018/12/08 17:46:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,7 +113,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
+	com_init_regs(&sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");

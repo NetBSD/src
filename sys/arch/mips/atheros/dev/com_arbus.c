@@ -1,4 +1,4 @@
-/* $NetBSD: com_arbus.c,v 1.12 2014/02/23 20:56:29 martin Exp $ */
+/* $NetBSD: com_arbus.c,v 1.13 2018/12/08 17:46:12 thorpej Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.12 2014/02/23 20:56:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.13 2018/12/08 17:46:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,8 @@ struct com_arbus_softc {
 	struct com_softc sc_com;
 };
 
-static void com_arbus_initmap(struct com_regs *);
+static void com_arbus_init_regs(struct com_regs *, bus_space_tag_t,
+				bus_space_handle_t, bus_addr_t, bus_size_t);
 //static bus_space_tag_t com_arbus_get_bus_space_tag(void);
 static int com_arbus_match(device_t, cfdata_t , void *);
 static void com_arbus_attach(device_t, device_t, void *);
@@ -158,6 +159,7 @@ int
 com_arbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct arbus_attach_args	*aa = aux;
+	bus_space_handle_t		bsh;
 	struct com_regs			regs;
 	int				rv;
 
@@ -168,17 +170,14 @@ com_arbus_match(device_t parent, cfdata_t cf, void *aux)
 		return 1;
 
 	if (bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size,
-		0, &regs.cr_ioh))
+		0, &bsh))
 		return 0;
 
-	regs.cr_iot = aa->aa_bst;
-	regs.cr_iobase = aa->aa_addr;
-	regs.cr_nports = aa->aa_size;
-	com_arbus_initmap(&regs);
+	com_arbus_init_regs(&regs, aa->aa_bst, bsh, aa->aa_addr, aa->aa_size);
 
 	rv = com_probe_subr(&regs);
 
-	bus_space_unmap(aa->aa_bst, regs.cr_ioh, aa->aa_size);
+	bus_space_unmap(aa->aa_bst, bsh, aa->aa_size);
 
 	return rv;
 }
@@ -211,17 +210,17 @@ com_arbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, aa->aa_bst, ioh, aa->aa_addr);
-	sc->sc_regs.cr_nports = aa->aa_size;
-	com_arbus_initmap(&sc->sc_regs);
+	com_arbus_init_regs(&sc->sc_regs, aa->aa_bst, ioh, aa->aa_addr,
+			    aa->aa_size);
 
 	com_attach_subr(sc);
 
 	arbus_intr_establish(aa->aa_cirq, aa->aa_mirq, comintr, sc);
 }
 
-void
-com_arbus_initmap(struct com_regs *regsp)
+static void
+com_arbus_init_regs(struct com_regs *regsp, bus_space_tag_t st,
+		    bus_space_handle_t sh, bus_addr_t addr, bus_size_t size)
 {
 #if _BYTE_ORDER == _BIG_ENDIAN
 	int off = 3;
@@ -229,25 +228,28 @@ com_arbus_initmap(struct com_regs *regsp)
 	int off = 0;
 #endif
 
+	com_init_regs(regsp, st, sh, addr);
+
 	/* rewrite the map to shift for alignment */
 	for (size_t i = 0; i < __arraycount(regsp->cr_map); i++) {
-		regsp->cr_map[i] = (com_std_map[i] * 4) + off;
+		regsp->cr_map[i] = (regsp->cr_map[i] * 4) + off;
 	}
+	regsp->cr_nports = size;
 }
 
 void
 com_arbus_cnattach(bus_addr_t addr, uint32_t freq)
 {
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
 	struct com_regs		regs;
 
-	regs.cr_iot = arbus_get_bus_space_tag();
-	regs.cr_iobase = addr;
-	regs.cr_nports = 0x1000;
-	com_arbus_initmap(&regs);
+	bst = arbus_get_bus_space_tag();
 
-	if (bus_space_map(regs.cr_iot, regs.cr_iobase, regs.cr_nports, 0,
-		&regs.cr_ioh))
+	if (bus_space_map(bst, addr, 0x1000, 0, &bsh))
 		return;
+
+	com_arbus_init_regs(&regs, bst, bsh, addr, 0x1000);
 
 	comcnattach1(&regs, com_arbus_baud, freq, COM_TYPE_NORMAL, CONMODE);
 }

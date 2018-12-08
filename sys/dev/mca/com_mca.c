@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.22 2009/11/23 02:13:47 rmind Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.23 2018/12/08 17:46:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.22 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.23 2018/12/08 17:46:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ com_mca_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, ma->ma_iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, ma->ma_iot, ioh, iobase);
 	sc->sc_frequency = COM_FREQ;
 
 	aprint_normal(" slot %d i/o %#x-%#x irq %d", ma->ma_slot + 1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.24 2011/07/01 18:50:41 dyoung Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.25 2018/12/08 17:46:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.24 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.25 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ com_obio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	if (osc->osc_tadpole) {
 		*AUXIO4M_REG |= (AUXIO4M_LED|AUXIO4M_LTE);

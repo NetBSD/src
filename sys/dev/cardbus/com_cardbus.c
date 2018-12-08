@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.30 2011/08/01 11:20:27 drochner Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.31 2018/12/08 17:46:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.30 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.31 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, csc->cc_addr);
+	com_init_regs(&sc->sc_regs, iot, ioh, csc->cc_addr);
 
 	csc->cc_base = csc->cc_addr;
 	csc->cc_csr = PCI_COMMAND_MASTER_ENABLE;

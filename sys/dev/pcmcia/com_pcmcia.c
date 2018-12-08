@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.61 2009/11/23 02:13:47 rmind Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.62 2018/12/08 17:46:14 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.61 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.62 2018/12/08 17:46:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ com_pcmcia_attach(device_t parent, device_t self, void *aux)
 	}
 
 	cfe = pa->pf->cfe;
-	COM_INIT_REGS(sc->sc_regs, cfe->iospace[0].handle.iot,
+	com_init_regs(&sc->sc_regs, cfe->iospace[0].handle.iot,
 	    cfe->iospace[0].handle.ioh, -1);
 
 	error = com_pcmcia_enable(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.29 2009/11/23 02:13:47 rmind Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.30 2018/12/08 17:46:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.29 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.30 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ com_multi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * We're living on a commulti.
 	 */
-	COM_INIT_REGS(sc->sc_regs, ca->ca_iot, ca->ca_ioh, ca->ca_iobase);
+	com_init_regs(&sc->sc_regs, ca->ca_iot, ca->ca_ioh, ca->ca_iobase);
 	sc->sc_frequency = 115200 * 16;
 
 	if (ca->ca_noien)

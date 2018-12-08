@@ -1,4 +1,4 @@
-/*	$NetBSD: com_intio.c,v 1.1 2012/04/29 07:17:12 tsutsui Exp $	*/
+/*	$NetBSD: com_intio.c,v 1.2 2018/12/08 17:46:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_intio.c,v 1.1 2012/04/29 07:17:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_intio.c,v 1.2 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ com_intio_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_1(iot, ioh, COM_PSX16550_REG_VECT, ia->ia_intr);
 
 	sc->sc_frequency = COM_PSX16550_FREQ;
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	/* PSX16550 uses MCR_DRS to switch interrupt priority level */
 	SET(sc->sc_mcr, MCR_DRS);	/* 0: ipl2 / 1: ipl4 */
