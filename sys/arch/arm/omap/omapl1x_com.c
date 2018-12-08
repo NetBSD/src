@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_com.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_com.c,v 1.2 2018/12/08 17:46:10 thorpej Exp $");
 
 #include "opt_com.h"
 
@@ -111,7 +111,7 @@ omapl1xcom_attach(device_t parent, device_t self, void *aux)
 		panic(": can't map registers\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");

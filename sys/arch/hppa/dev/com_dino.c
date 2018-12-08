@@ -131,7 +131,7 @@ com_dino_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map I/O space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, ca->ca_iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, ca->ca_iot, ioh, iobase);
 
 	/* select clock freq */
 	regs->test = COM_DINO_CLK_SEL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.25 2018/11/30 16:26:59 jmcneill Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.26 2018/12/08 17:46:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.25 2018/11/30 16:26:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.26 2018/12/08 17:46:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(" (%s-compatible)", serialtype[iface]);
 	aprint_normal(": ");
 
-	COM_INIT_REGS(sc->sc_regs, aa->t, aa->h, aa->a);
+	com_init_regs(&sc->sc_regs, aa->t, aa->h, aa->a);
 	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
 
 	if (!aa->poll) {

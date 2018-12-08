@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.29 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.30 2018/12/08 17:46:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.29 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isapnp.c,v 1.30 2018/12/08 17:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ com_isapnp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, ipa->ipa_iot, ipa->ipa_io[0].h,
+	com_init_regs(&sc->sc_regs, ipa->ipa_iot, ipa->ipa_io[0].h,
 	    ipa->ipa_io[0].base);
 
 	/*

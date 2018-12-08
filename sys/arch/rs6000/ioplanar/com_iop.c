@@ -1,4 +1,4 @@
-/*	$NetBSD: com_iop.c,v 1.4 2011/07/18 17:26:55 dyoung Exp $	*/
+/*	$NetBSD: com_iop.c,v 1.5 2018/12/08 17:46:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_iop.c,v 1.4 2011/07/18 17:26:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_iop.c,v 1.5 2018/12/08 17:46:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,7 +116,7 @@ com_iop_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, idaa->idaa_iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, idaa->idaa_iot, ioh, iobase);
 
 	aprint_normal("i/o %#x-%#x irq %d", iobase, iobase + COM_NPORTS - 1,
 	    irq);
