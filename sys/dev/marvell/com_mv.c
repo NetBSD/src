@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.8 2018/12/08 17:46:13 thorpej Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.9 2018/12/08 21:14:37 thorpej Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,9 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.8 2018/12/08 17:46:13 thorpej Exp $");
-
-#include "opt_com.h"
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.9 2018/12/08 21:14:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,11 +59,9 @@ mvuart_init_regs(struct com_regs *regs, bus_space_tag_t tag,
 {
 
 	com_init_regs(regs, tag, hdl, addr);
-#ifdef COM_REGMAP
 	for (size_t i = 0; i < __arraycount(regs->cr_map); i++)
 		regs->cr_map[i] = regs->cr_map[i] << 2;
 	regs->cr_nports = size;
-#endif
 }
 
 
@@ -132,7 +128,6 @@ mvuart_attach(device_t parent, device_t self, void *aux)
 	marvell_intr_establish(mva->mva_irq, IPL_SERIAL, comintr, sc);
 }
 
-#ifdef COM_REGMAP
 int mvuart_cnattach(bus_space_tag_t, bus_addr_t, int, uint32_t, int);
 
 int
@@ -145,4 +140,3 @@ mvuart_cnattach(bus_space_tag_t iot, bus_addr_t addr, int baud,
 
 	return comcnattach1(&regs, baud, sysfreq, COM_TYPE_16550_NOERS, mode);
 }
-#endif /* COM_REGMAP */

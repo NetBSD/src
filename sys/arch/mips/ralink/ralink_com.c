@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_com.c,v 1.6 2018/12/08 17:46:12 thorpej Exp $	*/
+/*	$NetBSD: ralink_com.c,v 1.7 2018/12/08 21:14:36 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -130,7 +130,7 @@
 /* ralink_com.c -- Ralink 3052 uart console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.6 2018/12/08 17:46:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.7 2018/12/08 21:14:36 thorpej Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -151,8 +151,6 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.6 2018/12/08 17:46:12 thorpej Exp $
 #include <mips/ralink/ralink_reg.h>
 #include <mips/ralink/ralink_var.h>
 
-#include "opt_com.h"
-
 struct ralink_com_softc {
 	struct com_softc sc_com;
 	void *sc_ih;
@@ -170,10 +168,6 @@ CFATTACH_DECL_NEW(ralink_com, sizeof(struct ralink_com_softc),
 
 #define CONMODE	\
 	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-
-#ifndef COM_REGMAP
-#error  COM_REGMAP not defined!
-#endif
 
 #ifndef RALINK_CONADDR
 #define RALINK_CONADDR	RA_UART_LITE_BASE	/* default console is UART_LITE */

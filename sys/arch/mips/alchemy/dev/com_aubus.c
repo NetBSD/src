@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $ */
+/* $NetBSD: com_aubus.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,10 +69,6 @@ CFATTACH_DECL_NEW(com_aubus, sizeof(struct com_aubus_softc),
     com_aubus_probe, com_aubus_attach, NULL, NULL);
 
 #define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-
-#ifndef	COM_REGMAP
-#error	COM_REGMAP not defined!
-#endif
 
 int
 com_aubus_probe(device_t parent, cfdata_t cf, void *aux)

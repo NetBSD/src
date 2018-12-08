@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.351 2018/12/08 17:46:13 thorpej Exp $ */
+/* $NetBSD: com.c,v 1.352 2018/12/08 21:14:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.351 2018/12/08 17:46:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.352 2018/12/08 21:14:37 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -128,7 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.351 2018/12/08 17:46:13 thorpej Exp $");
 
 #include "ioconf.h"
 
-#ifdef	COM_REGMAP
 #define	CSR_WRITE_1(r, o, v)	\
 	bus_space_write_1((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o], v)
 #define	CSR_READ_1(r, o)	\
@@ -139,18 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.351 2018/12/08 17:46:13 thorpej Exp $");
 	bus_space_read_2((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o])
 #define	CSR_WRITE_MULTI(r, o, p, n)	\
 	bus_space_write_multi_1((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o], p, n)
-#else
-#define	CSR_WRITE_1(r, o, v)	\
-	bus_space_write_1((r)->cr_iot, (r)->cr_ioh, o, v)
-#define	CSR_READ_1(r, o)	\
-	bus_space_read_1((r)->cr_iot, (r)->cr_ioh, o)
-#define	CSR_WRITE_2(r, o, v)	\
-	bus_space_write_2((r)->cr_iot, (r)->cr_ioh, o, v)
-#define	CSR_READ_2(r, o)	\
-	bus_space_read_2((r)->cr_iot, (r)->cr_ioh, o)
-#define	CSR_WRITE_MULTI(r, o, p, n)	\
-	bus_space_write_multi_1((r)->cr_iot, (r)->cr_ioh, o, p, n)
-#endif
 
 
 static void com_enable_debugport(struct com_softc *);
@@ -248,7 +235,6 @@ int	com_kgdb_getc(void *);
 void	com_kgdb_putc(void *, int);
 #endif /* KGDB */
 
-#ifdef COM_REGMAP
 /* initializer for typical 16550-ish hardware */
 #define	COM_REG_STD { \
 	com_data, com_data, com_dlbl, com_dlbh, com_ier, com_iir, com_fifo, \
@@ -257,7 +243,6 @@ void	com_kgdb_putc(void *, int);
 	0, 0, 0, 0, 0, 0, 0, com_halt }
 
 static const bus_size_t com_std_map[42] = COM_REG_STD;
-#endif /* COM_REGMAP */
 
 #define	COMDIALOUT_MASK	TTDIALOUT_MASK
 
@@ -288,9 +273,7 @@ com_init_regs(struct com_regs *regs, bus_space_tag_t st, bus_space_handle_t sh,
 	regs->cr_ioh = sh;
 	regs->cr_iobase = addr;
 	regs->cr_nports = COM_NPORTS;
-#ifdef COM_REGMAP
 	memcpy(regs->cr_map, com_std_map, sizeof(regs->cr_map));
-#endif
 }
 
 /*ARGSUSED*/
