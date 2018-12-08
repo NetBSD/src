@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: com_aubus.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.7 2018/12/08 17:46:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,7 +62,8 @@ static int	com_aubus_probe(device_t, cfdata_t , void *);
 static void	com_aubus_attach(device_t, device_t, void *);
 static int	com_aubus_enable(struct com_softc *);
 static void	com_aubus_disable(struct com_softc *);
-static void	com_aubus_initmap(struct com_regs *);
+static void	com_aubus_init_regs(struct com_regs *, bus_space_tag_t,
+				    bus_space_handle_t, bus_addr_t);
 
 CFATTACH_DECL_NEW(com_aubus, sizeof(struct com_aubus_softc),
     com_aubus_probe, com_aubus_attach, NULL, NULL);
@@ -91,20 +92,20 @@ com_aubus_attach(device_t parent, device_t self, void *aux)
 	struct com_aubus_softc *asc = device_private(self);
 	struct com_softc *sc = &asc->sc_com;
 	struct aubus_attach_args *aa = aux;
+	bus_space_handle_t bsh;
 	int addr = aa->aa_addr;
 
 	sc->sc_dev = self;
-	sc->sc_regs.cr_iot = aa->aa_st;
-	sc->sc_regs.cr_iobase = addr;
 	asc->sc_irq = aa->aa_irq[0];
 
-	if (com_is_console(aa->aa_st, addr, &sc->sc_regs.cr_ioh) == 0 &&
+	if (com_is_console(aa->aa_st, addr, &bsh) == 0 &&
 	    bus_space_map(aa->aa_st, addr, AUCOM_NPORTS, 0,
 		&sc->sc_regs.cr_ioh) != 0) {
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
-	com_aubus_initmap(&sc->sc_regs);
+
+	com_aubus_init_regs(&sc->sc_regs, aa->aa_st, bsh, addr);
 
 	/*
 	 * The input to the clock divider is the internal pbus clock (1/4 the
@@ -176,8 +177,12 @@ com_aubus_disable(struct com_softc *sc)
 }
 
 void
-com_aubus_initmap(struct com_regs *regsp)
+com_aubus_init_regs(struct com_regs *regsp, bus_space_tag_t bst,
+		    bus_space_handle_t bsh, bus_addr_t addr)
 {
+
+	com_init_regs(regsp, bst, bsh, addr);
+
 	regsp->cr_nports = AUCOM_NPORTS;
 	regsp->cr_map[COM_REG_RXDATA] = AUCOM_RXDATA;
 	regsp->cr_map[COM_REG_TXDATA] = AUCOM_TXDATA;
@@ -199,10 +204,8 @@ com_aubus_cnattach(bus_addr_t addr, int baud)
 	struct com_regs		regs;
 	uint32_t		sysfreq;
 
-	regs.cr_iot = aubus_st;
-	regs.cr_iobase = addr;
-	regs.cr_nports = AUCOM_NPORTS;
-	com_aubus_initmap(&regs);
+	com_aubus_init_regs(&regs, aubus_st, (bus_space_handle_t)0/*XXX*/,
+			    addr);
 
 	sysfreq = curcpu()->ci_cpu_freq / 4;
 

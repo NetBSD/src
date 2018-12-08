@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.9 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: tegra_com.c,v 1.10 2018/12/08 17:46:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.9 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.10 2018/12/08 17:46:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,7 +131,7 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
+	com_init_regs(&sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");

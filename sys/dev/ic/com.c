@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.350 2018/11/30 16:26:19 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.351 2018/12/08 17:46:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.350 2018/11/30 16:26:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.351 2018/12/08 17:46:13 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -256,7 +256,7 @@ void	com_kgdb_putc(void *, int);
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, com_usr, com_tfl, com_rfl, \
 	0, 0, 0, 0, 0, 0, 0, com_halt }
 
-const bus_size_t com_std_map[42] = COM_REG_STD;
+static const bus_size_t com_std_map[42] = COM_REG_STD;
 #endif /* COM_REGMAP */
 
 #define	COMDIALOUT_MASK	TTDIALOUT_MASK
@@ -271,6 +271,27 @@ const bus_size_t com_std_map[42] = COM_REG_STD;
 #define	BW	BUS_SPACE_BARRIER_WRITE
 #define COM_BARRIER(r, f) \
 	bus_space_barrier((r)->cr_iot, (r)->cr_ioh, 0, (r)->cr_nports, (f))
+
+/*
+ * com_init_regs --
+ *	Driver front-ends use this to initialize our register map
+ *	in the standard fashion.  They may then tailor the map to
+ *	their own particular requirements.
+ */
+void
+com_init_regs(struct com_regs *regs, bus_space_tag_t st, bus_space_handle_t sh,
+	      bus_addr_t addr)
+{
+
+	memset(regs, 0, sizeof(*regs));
+	regs->cr_iot = st;
+	regs->cr_ioh = sh;
+	regs->cr_iobase = addr;
+	regs->cr_nports = COM_NPORTS;
+#ifdef COM_REGMAP
+	memcpy(regs->cr_map, com_std_map, sizeof(regs->cr_map));
+#endif
+}
 
 /*ARGSUSED*/
 int
@@ -350,11 +371,7 @@ comprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	struct com_regs	regs;
 
-	regs.cr_iot = iot;
-	regs.cr_ioh = ioh;
-#ifdef	COM_REGMAP
-	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));
-#endif
+	com_init_regs(&regs, iot, ioh, 0/*XXX*/);
 
 	return com_probe_subr(&regs);
 }
@@ -2508,13 +2525,7 @@ comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 {
 	struct com_regs	regs;
 
-	memset(&regs, 0, sizeof regs);
-	regs.cr_iot = iot;
-	regs.cr_iobase = iobase;
-	regs.cr_nports = COM_NPORTS;
-#ifdef	COM_REGMAP
-	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));
-#endif
+	com_init_regs(&regs, iot, (bus_space_handle_t)0/*XXX*/, iobase);
 
 	return comcnattach1(&regs, rate, frequency, type, cflag);
 }
@@ -2591,12 +2602,7 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 {
 	struct com_regs regs;
 
-	regs.cr_iot = iot;
-	regs.cr_nports = COM_NPORTS;
-	regs.cr_iobase = iobase;
-#ifdef COM_REGMAP
-	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));
-#endif
+	com_init_regs(&regs, iot, (bus_space_handle_t)0/*XXX*/, iobase);
 
 	return com_kgdb_attach1(&regs, rate, frequency, type, cflag);
 }

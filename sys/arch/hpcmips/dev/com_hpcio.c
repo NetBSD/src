@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.11 2008/03/14 15:09:10 cube Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.12 2018/12/08 17:46:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.11 2008/03/14 15:09:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.12 2018/12/08 17:46:11 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -327,7 +327,7 @@ com_hpcio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map bus space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, addr);
+	com_init_regs(&sc->sc_regs, iot, ioh, addr);
 
 	sc->enable = NULL;
 	sc->disable = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_elb.c,v 1.9 2011/07/01 19:02:32 dyoung Exp $	*/
+/*	$NetBSD: com_elb.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.9 2011/07/01 19:02:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,7 +80,7 @@ com_elb_attach(device_t parent, device_t self, void *aux)
 	bus_space_map(eaa->elb_bt,
 	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base),
 	    COM_NPORTS, 0, &ioh);
-	COM_INIT_REGS(sc->sc_regs, eaa->elb_bt, ioh,
+	com_init_regs(&sc->sc_regs, eaa->elb_bt, ioh,
 	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base));
 
 	sc->sc_frequency = COM_FREQ;
