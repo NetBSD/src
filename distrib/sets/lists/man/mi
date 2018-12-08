@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1629 2018/12/01 11:17:28 jdolecek Exp $
+# $NetBSD: mi,v 1.1630 2018/12/08 01:47:21 sevan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -653,6 +653,7 @@
 ./usr/share/man/cat1/zless.0			man-util-catman		.cat
 ./usr/share/man/cat1/zmore.0			man-util-catman		.cat
 ./usr/share/man/cat1/znew.0			man-util-catman		.cat
+./usr/share/man/cat1/ztest.0			man-zfs-catman		zfs,.cat
 ./usr/share/man/cat3/atari/ahdi_buildlabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/atari/ahdi_checklabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/atari/ahdi_readlabel.0	man-obsolete		obsolete
@@ -3862,6 +3863,7 @@
 ./usr/share/man/html1/zless.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
+./usr/share/man/html1/ztest.html		man-zfs-htmlman		zfs,html
 ./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
 ./usr/share/man/html3lua/bozohttpd.html		man-sys-htmlman		html
@@ -6718,6 +6720,7 @@
 ./usr/share/man/man1/xmlwf.1			man-util-man		.man
 ./usr/share/man/man1/xz.1			man-util-man		.man
 ./usr/share/man/man1/xzcat.1			man-util-man		.man
+./usr/share/man/man1/ztest.1			man-zfs-man		zfs,.man
 ./usr/share/man/man1/yes.1			man-util-man		.man
 ./usr/share/man/man1/ypcat.1			man-nis-man		yp,.man
 ./usr/share/man/man1/ypmatch.1			man-nis-man		yp,.man

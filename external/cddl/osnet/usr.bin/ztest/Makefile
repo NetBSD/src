@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2014/10/30 21:15:13 justin Exp $
+#	$NetBSD: Makefile,v 1.4 2018/12/08 01:47:21 sevan Exp $
 
 .include "../../Makefile.zfs"
 
 PROG=	ztest
-MKMAN=	no
+MAN= 	ztest.1
 
 DPADD=	${LIBM} ${LIBNVPAIR} ${LIBUMEM} ${LIBZPOOL} ${LIBPTHREAD} \
 	${LIBZ} ${LIBAVL}
