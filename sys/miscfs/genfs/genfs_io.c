@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.72 2018/05/28 21:04:38 chs Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.73 2018/12/09 20:32:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.72 2018/05/28 21:04:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.73 2018/12/09 20:32:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ genfs_getpages(void *v)
 	const bool memwrite = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = memwrite && (flags & PGO_NOBLOCKALLOC) == 0;
+	const bool need_wapbl = (vp->v_mount->mnt_wapbl &&
+			(flags & PGO_JOURNALLOCKED) == 0);
 	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
 	bool holds_wapbl = false;
 	struct mount *trans_mount = NULL;
@@ -313,7 +315,7 @@ startover:
 		 * XXX: This assumes that we come here only via
 		 * the mmio path
 		 */
-		if (blockalloc && vp->v_mount->mnt_wapbl) {
+		if (blockalloc && need_wapbl) {
 			error = WAPBL_BEGIN(trans_mount);
 			if (error)
 				goto out_err_free;
