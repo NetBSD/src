@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.12 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: universe_pci.c,v 1.13 2018/12/09 11:14:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.12 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.13 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ univ_pci_attach(struct univ_pci_data *d, struct pci_attach_args *pa, const char 
 	 * Use a low interrupt level (the lowest?).
 	 * We will raise before calling a subdevice's handler.
 	 */
-	d->ih = pci_intr_establish(pc, ih, IPL_BIO, univ_pci_intr, d);
+	d->ih = pci_intr_establish_xname(pc, ih, IPL_BIO, univ_pci_intr, d,
+	    name);
 	if (d->ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt", name);
 		if (intrstr != NULL)

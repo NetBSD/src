@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.108 2018/09/03 16:29:32 riastradh Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.109 2018/12/09 11:14:02 jdolecek Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.108 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.109 2018/12/09 11:14:02 jdolecek Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -256,7 +256,8 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwi_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pct, ih, IPL_NET, iwi_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		softint_disestablish(sc->sc_soft_ih);
 		sc->sc_soft_ih = NULL;

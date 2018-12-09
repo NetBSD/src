@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.23 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.23 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,8 @@ icp_pci_attach(device_t parent, device_t self, void *aux)
 		goto bail_out;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	icp->icp_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, icp_intr, icp);
+	icp->icp_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, icp_intr,
+	    icp, device_xname(self));
 	if (icp->icp_ih == NULL) {
 		aprint_error("couldn't establish interrupt");
 		if (intrstr != NULL)
