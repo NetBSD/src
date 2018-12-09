@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.6 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.7 2018/12/09 11:49:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,8 +640,8 @@ cxgb_setup_msix(adapter_t *sc, int msix_count)
         printf("cxgb_setup_msix(%d): pci_intr_map() failed\n", __LINE__);
         return (EINVAL);
     }
-    sc->intr_cookie = pci_intr_establish(sc->pa.pa_pc, sc->intr_handle,
-                        IPL_NET, cxgb_async_intr, sc);
+    sc->intr_cookie = pci_intr_establish_xname(sc->pa.pa_pc, sc->intr_handle,
+                        IPL_NET, cxgb_async_intr, sc, device_xname(sc->dev));
     if (sc->intr_cookie == NULL)
     {
         printf("cxgb_setup_msix(%d): pci_intr_establish() failed\n", __LINE__);
@@ -1124,9 +1124,9 @@ cxgb_up(struct adapter *sc)
             goto out;
         }
         device_printf(sc->dev, "allocated intr_handle=%d\n", sc->intr_handle);
-        sc->intr_cookie = pci_intr_establish(sc->pa.pa_pc,
+        sc->intr_cookie = pci_intr_establish_xname(sc->pa.pa_pc,
                     sc->intr_handle, IPL_NET,
-                    sc->cxgb_intr, sc);
+                    sc->cxgb_intr, sc, device_xname(sc->dev));
         if (sc->intr_cookie == NULL)
         {
             device_printf(sc->dev, "Cannot establish interrupt\n");
