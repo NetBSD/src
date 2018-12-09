@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.49 2018/12/09 10:06:56 jdolecek Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.50 2018/12/09 10:38:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.49 2018/12/09 10:06:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.50 2018/12/09 10:38:53 jdolecek Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -137,6 +137,13 @@ ath_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_pci_softc *sc = device_private(self);
 
+	/* XXX re-establishing interrupt shouldn't be needed */
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, sc->sc_pih, IPL_NET,
+	    ath_intr, &sc->sc_sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't map interrupt\n");
+		return false;
+	}
 	return ath_resume(&sc->sc_sc);
 }
 
