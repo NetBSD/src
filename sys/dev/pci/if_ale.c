@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.25 2018/11/15 10:56:29 maxv Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.26 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.25 2018/11/15 10:56:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.26 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include "vlan.h"
 
@@ -426,7 +426,8 @@ ale_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, ale_intr, sc);
+	sc->sc_irq_handle = pci_intr_establish_xname(pc, ih, IPL_NET, ale_intr,
+	    sc, device_xname(self));
 	if (sc->sc_irq_handle == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)

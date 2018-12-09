@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.86 2017/10/20 07:06:08 jdolecek Exp $	*/
+/*	$NetBSD: viaide.c,v 1.87 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.86 2017/10/20 07:06:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.87 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1125,8 +1125,9 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
-	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-	    intrhandle, IPL_BIO, pciide_pci_intr, sc);
+	sc->sc_pci_ih = pci_intr_establish_xname(pa->pa_pc,
+	    intrhandle, IPL_BIO, pciide_pci_intr, sc,
+	    device_xname(sc->sc_wdcdev.sc_atac.atac_dev));
 	if (sc->sc_pci_ih == NULL) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't establish native-PCI interrupt");

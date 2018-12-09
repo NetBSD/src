@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.17 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.17 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -218,7 +218,8 @@ et_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, et_intr, sc);
+	sc->sc_irq_handle = pci_intr_establish_xname(pc, ih, IPL_NET, et_intr,
+	    sc, device_xname(self));
 	if (sc->sc_irq_handle == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)

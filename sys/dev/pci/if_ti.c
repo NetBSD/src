@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.105 2018/07/18 23:10:28 sevan Exp $ */
+/* $NetBSD: if_ti.c,v 1.106 2018/12/09 11:14:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.105 2018/07/18 23:10:28 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.106 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -1664,7 +1664,8 @@ ti_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ti_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, ti_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
