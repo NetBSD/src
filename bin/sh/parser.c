@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.157 2018/12/03 06:41:30 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.158 2018/12/09 17:33:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.157 2018/12/03 06:41:30 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.158 2018/12/09 17:33:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1230,6 +1230,7 @@ currentstate(VSS *stack)
 	return &stack->tokenstate[stack->cur];
 }
 
+#ifdef notdef
 static inline struct tokenstate *
 prevstate(VSS *stack)
 {
@@ -1239,6 +1240,7 @@ prevstate(VSS *stack)
 		return &stack->tokenstate[0];
 	return &stack->prev->tokenstate[LEVELS_PER_BLOCK - 1];
 }
+#endif
 
 static inline VSS *
 bump_state_level(VSS *stack)
@@ -1307,9 +1309,11 @@ cleanup_state_stack(VSS *stack)
  */
 #define	ISDBLQUOTE()	(currentstate(stack)->ts_quoted & QS)
 #define	SETDBLQUOTE()	(currentstate(stack)->ts_quoted = QS | DQ)
+#ifdef notdef
 #define	CLRDBLQUOTE()	(currentstate(stack)->ts_quoted =		\
 			    stack->cur != 0 || stack->prev ?		\
 				prevstate(stack)->ts_quoted & QF : 0)
+#endif
 
 /*
  * This set are just to avoid excess typing and line lengths...
