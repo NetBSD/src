@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.66 2018/12/09 11:14:02 jdolecek Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.65 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.66 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -246,7 +246,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nfe_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, nfe_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)

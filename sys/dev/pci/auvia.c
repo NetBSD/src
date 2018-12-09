@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.79 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: auvia.c,v 1.80 2018/12/09 11:14:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.79 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.80 2018/12/09 11:14:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,8 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auvia_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, auvia_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)

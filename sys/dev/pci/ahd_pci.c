@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.37 2018/06/23 06:45:51 maxv Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.38 2018/12/09 11:14:01 jdolecek Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.37 2018/06/23 06:45:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.38 2018/12/09 11:14:01 jdolecek Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -537,7 +537,8 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	ahd->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahd_intr, ahd);
+	ahd->ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, ahd_intr,
+	    ahd, device_xname(self));
 	if (ahd->ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt",
 		       ahd_name(ahd));

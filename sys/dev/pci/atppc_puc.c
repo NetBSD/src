@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_puc.c,v 1.15 2018/11/30 16:26:59 jmcneill Exp $ */
+/* $NetBSD: atppc_puc.c,v 1.16 2018/12/09 11:14:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_atppc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.15 2018/11/30 16:26:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.16 2018/12/09 11:14:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,8 @@ atppc_puc_attach(device_t parent, device_t self, void *aux)
 
 	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf,
 	    sizeof(intrbuf));
-	sc->sc_ieh = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
-	    atppcintr, sc);
+	sc->sc_ieh = pci_intr_establish_xname(aa->pc, aa->intrhandle, IPL_TTY,
+	    atppcintr, sc, device_xname(self));
 	if (sc->sc_ieh == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)

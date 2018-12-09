@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx_pci.c,v 1.7 2018/04/24 18:34:30 maya Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.8 2018/12/09 11:14:02 jdolecek Exp $	*/
 /*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
 
 
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.7 2018/04/24 18:34:30 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.8 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -154,8 +154,8 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, sc->sc_pihp[0], intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, sc->sc_pihp[0], IPL_SDMMC,
-	    rtsx_intr, &sc->sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, sc->sc_pihp[0], IPL_SDMMC,
+	    rtsx_intr, &sc->sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;

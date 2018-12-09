@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.15 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.15 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -146,7 +146,8 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* establish interrupt */
 	intrstr = pci_intr_string(psc->psc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_NET, bwi_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(psc->psc_pc, ih, IPL_NET, bwi_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)

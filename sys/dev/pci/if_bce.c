@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.47 2018/06/26 06:48:01 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.48 2018/12/09 11:14:02 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.47 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.48 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include "vlan.h"
 
@@ -326,7 +326,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
-	sc->bce_intrhand = pci_intr_establish(pc, ih, IPL_NET, bce_intr, sc);
+	sc->bce_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, bce_intr,
+	    sc, device_xname(self));
 
 	if (sc->bce_intrhand == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");

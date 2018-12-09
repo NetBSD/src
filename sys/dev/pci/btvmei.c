@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.30 2014/03/29 19:28:24 christos Exp $ */
+/* $NetBSD: btvmei.c,v 1.31 2018/12/09 11:14:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.30 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.31 2018/12/09 11:14:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,8 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	 * Use a low interrupt level (the lowest?).
 	 * We will raise before calling a subdevice's handler.
 	 */
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, b3_617_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, b3_617_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
