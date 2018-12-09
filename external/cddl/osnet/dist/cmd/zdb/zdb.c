@@ -1144,8 +1144,8 @@ dump_history(spa_t *spa)
 			(void) snprintf(internalstr,
 			    sizeof (internalstr),
 			    "[internal %s txg:%lld] %s",
-			    zfs_history_event_names[ievent], txg,
-			    intstr);
+			    zfs_history_event_names[ievent], 
+			    (u_longlong_t)txg, intstr);
 			cmd = internalstr;
 		}
 		tsec = time;
@@ -2048,7 +2048,7 @@ dump_uberblock(uberblock_t *ub, const char *header, const char *footer)
 {
 	time_t timestamp = ub->ub_timestamp;
 
-	(void) printf(header ? header : "");
+	(void) printf("%s", header);
 	(void) printf("\tmagic = %016llx\n", (u_longlong_t)ub->ub_magic);
 	(void) printf("\tversion = %llu\n", (u_longlong_t)ub->ub_version);
 	(void) printf("\ttxg = %llu\n", (u_longlong_t)ub->ub_txg);
@@ -2060,7 +2060,7 @@ dump_uberblock(uberblock_t *ub, const char *header, const char *footer)
 		snprintf_blkptr(blkbuf, sizeof (blkbuf), &ub->ub_rootbp);
 		(void) printf("\trootbp = %s\n", blkbuf);
 	}
-	(void) printf(footer ? footer : "");
+	(void) printf("%s", footer);
 }
 
 static void
