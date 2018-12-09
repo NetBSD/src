@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.66 2018/06/26 06:34:55 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.67 2018/12/09 19:21:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.66 2018/06/26 06:34:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.67 2018/12/09 19:21:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,8 +844,9 @@ iic_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 }
 
 
-CFATTACH_DECL2_NEW(iic, sizeof(struct iic_softc),
-    iic_match, iic_attach, iic_detach, NULL, iic_rescan, iic_child_detach);
+CFATTACH_DECL3_NEW(iic, sizeof(struct iic_softc),
+    iic_match, iic_attach, iic_detach, NULL, iic_rescan, iic_child_detach,
+    DVF_DETACH_SHUTDOWN);
 
 MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec,i2c_bitbang");
 
