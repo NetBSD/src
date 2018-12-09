@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_pci.c,v 1.23 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: if_rtw_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2010 David Young.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.23 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,8 +248,8 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih, intrbuf, sizeof(intrbuf));
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
-	    rtw_intr, sc);
+	psc->psc_ih = pci_intr_establish_xname(psc->psc_pc, psc->psc_pih,
+	    IPL_NET, rtw_intr, sc, device_xname(self));
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
@@ -298,9 +298,9 @@ rtw_pci_resume(device_t self, const pmf_qual_t *qual)
 	struct rtw_pci_softc *psc = device_private(self);
 	struct rtw_softc *sc = &psc->psc_rtw;
 
-	/* Establish the interrupt. */
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
-	    rtw_intr, sc);
+	/* XXX re-establishing interrupt shouldn't be needed */
+	psc->psc_ih = pci_intr_establish_xname(psc->psc_pc, psc->psc_pih,
+	    IPL_NET, rtw_intr, sc, device_xname(self));
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		return false;

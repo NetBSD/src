@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.45 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: oboe.c,v 1.46 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.45 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.46 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,8 @@ oboe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_IR, oboe_intr, sc);
+	sc->sc_ih  = pci_intr_establish_xname(pa->pa_pc, ih, IPL_IR, oboe_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstring != NULL)

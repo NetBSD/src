@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.63 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: cz.c,v 1.64 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.63 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.64 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,8 +344,8 @@ cz_attach(device_t parent, device_t self, void *aux)
 		goto polling_mode;
 	} else {
 		intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-		cz->cz_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY,
-		    cz_intr, cz);
+		cz->cz_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_TTY,
+		    cz_intr, cz, device_xname(self));
 	}
 	if (cz->cz_ih == NULL) {
 		aprint_error_dev(cz->cz_dev, "unable to establish interrupt");
