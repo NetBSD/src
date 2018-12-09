@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.58 2018/12/09 19:16:10 jdolecek Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.59 2018/12/09 19:21:17 jdolecek Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.58 2018/12/09 19:16:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.59 2018/12/09 19:21:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ static int	ichsmb_intr(void *);
 
 CFATTACH_DECL3_NEW(ichsmb, sizeof(struct ichsmb_softc),
     ichsmb_match, ichsmb_attach, ichsmb_detach, NULL, ichsmb_rescan,
-    ichsmb_chdet, 0);
+    ichsmb_chdet, DVF_DETACH_SHUTDOWN);
 
 
 static int
