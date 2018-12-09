@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.28 2017/10/20 07:06:08 jdolecek Exp $	*/
+/*	$NetBSD: artsata.c,v 1.29 2018/12/09 11:14:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.28 2017/10/20 07:06:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.29 2018/12/09 11:14:01 jdolecek Exp $");
 
 #include "opt_pciide.h"
 
@@ -139,8 +139,9 @@ artisea_mapregs(const struct pci_attach_args *pa, struct pciide_channel *cp,
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle,
 		    intrbuf, sizeof(intrbuf));
-		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-		    intrhandle, IPL_BIO, pci_intr, sc);
+		sc->sc_pci_ih = pci_intr_establish_xname(pa->pa_pc,
+		    intrhandle, IPL_BIO, pci_intr, sc,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev));
 		if (sc->sc_pci_ih != NULL) {
 			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "using %s for native-PCI interrupt\n", intrstr);

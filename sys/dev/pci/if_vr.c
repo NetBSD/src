@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.125 2018/07/18 23:10:28 sevan Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.126 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.125 2018/07/18 23:10:28 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.126 2018/12/09 11:14:02 jdolecek Exp $");
 
 
 
@@ -1562,8 +1562,8 @@ vr_attach(device_t parent, device_t self, void *aux)
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
 		    sizeof(intrbuf));
-		sc->vr_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-						vr_intr, sc);
+		sc->vr_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle,
+		    IPL_NET, vr_intr, sc, device_xname(self));
 		if (sc->vr_ih == NULL) {
 			aprint_error_dev(self, "couldn't establish interrupt");
 			if (intrstr != NULL)

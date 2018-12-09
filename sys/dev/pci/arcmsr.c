@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.38 2018/09/03 16:29:32 riastradh Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.39 2018/12/09 11:14:01 jdolecek Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.38 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.39 2018/12/09 11:14:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -628,8 +628,8 @@ arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 
 	pci_intr_setattr(pa->pa_pc, &ih, PCI_INTR_MPSAFE, true);
 
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-	    arc_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO,
+	    arc_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": unable to map interrupt [2]\n");
 		goto unmap;

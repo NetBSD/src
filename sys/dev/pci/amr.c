@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.63 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: amr.c,v 1.64 2018/12/09 11:14:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.63 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.64 2018/12/09 11:14:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,8 @@ amr_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	amr->amr_ih = pci_intr_establish(pc, ih, IPL_BIO, amr_intr, amr);
+	amr->amr_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, amr_intr, amr,
+	    device_xname(self));
 	if (amr->amr_ih == NULL) {
 		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)

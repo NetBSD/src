@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.33 2018/07/18 23:10:28 sevan Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.34 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.33 2018/07/18 23:10:28 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.34 2018/12/09 11:14:02 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -420,7 +420,8 @@ kse_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, kse_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, kse_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)

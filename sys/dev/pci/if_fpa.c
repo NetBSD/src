@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.61 2018/06/22 04:17:42 msaitoh Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.62 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.61 2018/06/22 04:17:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.62 2018/12/09 11:14:02 jdolecek Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -472,7 +472,8 @@ pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
 	return;
     }
     intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
-    sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET, pdq_pci_ifintr, sc);
+    sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_NET,
+        pdq_pci_ifintr, sc, device_xname(self));
     if (sc->sc_ih == NULL) {
 	aprint_error_dev(self, "couldn't establish interrupt");
 	if (intrstr != NULL)

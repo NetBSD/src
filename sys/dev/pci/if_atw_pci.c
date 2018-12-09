@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.27 2016/07/14 04:00:46 msaitoh Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.28 2018/12/09 11:14:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.27 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.28 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,9 @@ atw_pci_resume(device_t self, const pmf_qual_t *qual)
 	struct atw_pci_softc *psc = device_private(self);
 	struct atw_softc *sc = &psc->psc_atw;
 
-	/* Establish the interrupt. */
-	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
-	    IPL_NET, atw_intr, sc);
+	/* XXX re-establishing interrupt shouldn't be needed */
+	psc->psc_intrcookie = pci_intr_establish_xname(psc->psc_pc, psc->psc_ih,
+	    IPL_NET, atw_intr, sc, device_xname(self));
 	if (psc->psc_intrcookie == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		return false;
@@ -257,8 +257,8 @@ atw_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, psc->psc_ih, intrbuf, sizeof(intrbuf));
-	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
-	    atw_intr, sc);
+	psc->psc_intrcookie = pci_intr_establish_xname(pc, psc->psc_ih, IPL_NET,
+	    atw_intr, sc, device_xname(self));
 	if (psc->psc_intrcookie == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)

@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $ */
+/* $NetBSD: if_lmc.c,v 1.68 2018/12/09 11:14:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.68 2018/12/09 11:14:02 jdolecek Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -5477,10 +5477,10 @@ nbsd_attach(device_t parent, device_t self, void *aux)
     nbsd_detach(self, 0);
     return;
     }
-  if ((sc->irq_cookie = pci_intr_establish(pa->pa_pc, sc->intr_handle,
-   IPL_NET, bsd_interrupt, sc)) == NULL)
+  if ((sc->irq_cookie = pci_intr_establish_xname(pa->pa_pc, sc->intr_handle,
+   IPL_NET, bsd_interrupt, sc, device_xname(self))) == NULL)
     {
-    aprint_error("%s: pci_intr_establish() failed\n", NAME_UNIT);
+    aprint_error("%s: couldn't map interrupt\n", NAME_UNIT);
     nbsd_detach(self, 0);
     return;
     }

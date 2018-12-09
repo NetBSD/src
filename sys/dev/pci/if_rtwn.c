@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.17 2018/06/29 04:02:10 thorpej Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.17 2018/06/29 04:02:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -253,8 +253,8 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(sc->sc_pc, sc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_pihp[0], IPL_NET,
-	    rtwn_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, sc->sc_pihp[0], IPL_NET,
+	    rtwn_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
