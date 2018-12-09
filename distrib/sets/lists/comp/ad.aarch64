@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.24 2018/08/14 14:48:01 rjs Exp $
+# $NetBSD: ad.aarch64,v 1.25 2018/12/09 15:08:05 alnsn Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -42,6 +42,7 @@
 ./usr/include/aarch64/rwlock.h			comp-c-include
 ./usr/include/aarch64/setjmp.h			comp-c-include
 ./usr/include/aarch64/signal.h			comp-c-include
+./usr/include/aarch64/sljit_machdep.h		comp-c-include
 ./usr/include/aarch64/sysarch.h			comp-c-include
 ./usr/include/aarch64/trap.h			comp-obsolete		obsolete
 ./usr/include/aarch64/types.h			comp-c-include
