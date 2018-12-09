@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.6 2018/02/22 01:50:26 christos Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.7 2018/12/09 11:12:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.6 2018/02/22 01:50:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.7 2018/12/09 11:12:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -156,8 +156,8 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 
 		if (mem->ar_length != TPM_SIZE) {
 			aprint_error_dev(sc->sc_dev,
-			    "wrong size mem %u != %u\n",
-			    mem->ar_length, TPM_SIZE);
+			    "wrong size mem %"PRIu64" != %u\n",
+			    (uint64_t)mem->ar_length, TPM_SIZE);
 			goto out;
 		}
 
