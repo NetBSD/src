@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.102 2018/12/10 21:03:48 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.103 2018/12/10 21:19:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.102 2018/12/10 21:03:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.103 2018/12/10 21:19:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -301,7 +301,7 @@ int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
 
 static int wapbl_replay_isopen1(struct wapbl_replay *);
 
-struct wapbl_ops wapbl_ops = {
+const struct wapbl_ops wapbl_ops = {
 	.wo_wapbl_discard	= wapbl_discard,
 	.wo_wapbl_replay_isopen	= wapbl_replay_isopen1,
 	.wo_wapbl_replay_can_read = wapbl_replay_can_read,
