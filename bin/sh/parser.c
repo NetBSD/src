@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.90.4.1 2016/08/27 15:20:48 bouyer Exp $	*/
+/*	$NetBSD: parser.c,v 1.90.4.2 2018/12/10 17:20:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.90.4.1 2016/08/27 15:20:48 bouyer Exp $");
+__RCSID("$NetBSD: parser.c,v 1.90.4.2 2018/12/10 17:20:03 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -528,7 +528,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 	tokpushback++;
 	*rpp = NULL;
 	if (redir) {
-		if (n1->type != NSUBSHELL) {
+		if (n1 == NULL || n1->type != NSUBSHELL) {
 			n2 = (union node *)stalloc(sizeof (struct nredir));
 			n2->type = NREDIR;
 			n2->nredir.n = n1;
