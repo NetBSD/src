@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.73 2018/12/09 20:32:37 jdolecek Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.74 2018/12/10 21:10:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.73 2018/12/09 20:32:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.74 2018/12/10 21:10:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,11 @@ genfs_getpages(void *v)
 
 	KASSERT(vp->v_type == VREG || vp->v_type == VDIR ||
 	    vp->v_type == VLNK || vp->v_type == VBLK);
+
+#ifdef DIAGNOSTIC
+	if ((flags & PGO_JOURNALLOCKED) && vp->v_mount->mnt_wapbl)
+                WAPBL_JLOCK_ASSERT(vp->v_mount);
+#endif
 
 	error = vdead_check(vp, VDEAD_NOWAIT);
 	if (error) {
@@ -868,6 +873,11 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 
 	UVMHIST_LOG(ubchist, "vp %#jx pages %jd off 0x%jx len 0x%jx",
 	    (uintptr_t)vp, uobj->uo_npages, startoff, endoff - startoff);
+
+#ifdef DIAGNOSTIC
+	if ((origflags & PGO_JOURNALLOCKED) && vp->v_mount->mnt_wapbl)
+                WAPBL_JLOCK_ASSERT(vp->v_mount);
+#endif
 
 	trans_mp = NULL;
 	holds_wapbl = false;
@@ -1713,6 +1723,11 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 	int error;
 	bool need_wapbl = (vp->v_mount && vp->v_mount->mnt_wapbl &&
 	    (ioflag & IO_JOURNALLOCKED) == 0);
+
+#ifdef DIAGNOSTIC
+	if ((ioflag & IO_JOURNALLOCKED) && vp->v_mount->mnt_wapbl)
+                WAPBL_JLOCK_ASSERT(vp->v_mount);
+#endif
 
 	/*
 	 * We only support direct I/O to user space for now.
