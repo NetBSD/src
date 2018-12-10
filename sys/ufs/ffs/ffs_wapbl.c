@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.43 2018/12/10 19:29:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.43 2018/12/10 19:29:41 jdolecek Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -176,7 +176,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 	int error __diagused;
 	struct wapbl_dealloc *wd;
 
-	UFS_WAPBL_JLOCK_ASSERT(mp);
+	UFS_WAPBL_JLOCK_ASSERT(ump->um_mountp);
 
 #ifdef WAPBL_DEBUG_INODES
 	ufs_wapbl_verify_inodes(mp, __func__);
