@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.239 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.240 2018/12/10 19:29:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.239 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.240 2018/12/10 19:29:41 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -459,8 +459,6 @@ ufs_setattr(void *v)
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
 		return (EINVAL);
 	}
-
-	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
@@ -1780,8 +1778,6 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	struct direct	*newdir;
 	struct vnode	*tvp;
 	int		error;
-
-	UFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
 
 	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
 	if (error)
