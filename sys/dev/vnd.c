@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.259.6.4 2018/10/13 17:21:51 martin Exp $	*/
+/*	$NetBSD: vnd.c,v 1.259.6.5 2018/12/10 17:16:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.6.4 2018/10/13 17:21:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.6.5 2018/12/10 17:16:11 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -733,11 +733,16 @@ vndthread(void *arg)
 		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
 
+		/* Make sure the request succeeds while suspending this fs. */
+		fstrans_start_lazy(vnd->sc_vp->v_mount);
+
 		/* Handle the request using the appropriate operations. */
 		if ((vnd->sc_flags & VNF_USE_VN_RDWR) == 0)
 			handle_with_strategy(vnd, obp, bp);
 		else
 			handle_with_rdwr(vnd, obp, bp);
+
+		fstrans_done(vnd->sc_vp->v_mount);
 
 		s = splbio();
 		continue;
@@ -804,9 +809,6 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 		    bp->b_bcount);
 #endif
 
-	/* Make sure the request succeeds while suspending this fs. */
-	fstrans_start_lazy(vp->v_mount);
-
 	/* Issue the read or write operation. */
 	bp->b_error =
 	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
@@ -817,8 +819,6 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	mutex_enter(vp->v_interlock);
 	(void) VOP_PUTPAGES(vp, 0, 0,
 	    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
-
-	fstrans_done(vp->v_mount);
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
