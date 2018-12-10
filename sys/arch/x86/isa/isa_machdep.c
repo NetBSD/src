@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.41 2018/12/03 19:51:09 cherry Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.42 2018/12/10 15:08:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.41 2018/12/03 19:51:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.42 2018/12/10 15:08:23 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.41 2018/12/03 19:51:09 cherry Exp 
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/mbuf.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 
