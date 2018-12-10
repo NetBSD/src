@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.73 2018/12/10 08:52:20 bouyer Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.74 2018/12/10 17:17:08 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2035,4 +2035,10 @@ sys/compat/linux/common/linux_socket.c		(apply patch, see 1.140,
 
 	Fix linux emulation of sendto(2).
 	[tsutsui, ticket #1132]
+
+sys/dev/vnd.c					1.270
+
+	Operation handle_with_strategy() also needs the
+	fstrans_start_lazy() / fstrans_done() bracket.
+	[hannken, ticket #1133]
 
