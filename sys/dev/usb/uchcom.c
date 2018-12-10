@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.20 2018/12/10 00:29:47 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.21 2018/12/10 14:16:28 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.20 2018/12/10 00:29:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.21 2018/12/10 14:16:28 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -181,9 +181,9 @@ static const struct uchcom_divider_record dividers[] =
 #define NUM_DIVIDERS	(sizeof (dividers) / sizeof (dividers[0]))
 
 static const struct usb_devno uchcom_devs[] = {
-	{ USB_VENDOR_WINCHIPHEAD, USB_PRODUCT_WINCHIPHEAD_CH341SER },
-	{ USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341 },
-	{ USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341_2 },
+	{ USB_VENDOR_QINHENG2, USB_PRODUCT_QINHENG2_CH341SER },
+	{ USB_VENDOR_QINHENG, USB_PRODUCT_QINHENG_CH340 },
+	{ USB_VENDOR_QINHENG, USB_PRODUCT_QINHENG_CH341_ASP },
 };
 #define uchcom_lookup(v, p)	usb_lookup(uchcom_devs, v, p)
 
