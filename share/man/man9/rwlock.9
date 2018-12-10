@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwlock.9,v 1.18 2018/12/10 19:21:56 jdolecek Exp $
+.\"	$NetBSD: rwlock.9,v 1.19 2018/12/10 20:12:36 jdolecek Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,6 +188,10 @@ must never be used to make locking decisions at run time:
 they are provided only for diagnostic purposes.
 They are also not atomic, hence they should only be used to assert
 that lock is held.
+The only exception is
+.Fn rw_write_held ,
+which can be also used safely to assert that write lock is NOT currently
+held by current lwp.
 .El
 .Sh PERFORMANCE CONSIDERATIONS
 RW locks are subject to high cache contention on multiprocessor systems,
