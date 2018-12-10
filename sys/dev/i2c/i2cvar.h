@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.17 2018/06/26 06:34:55 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.18 2018/12/10 00:31:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -208,11 +208,8 @@ bool	iic_use_direct_match(const struct i2c_attach_args *, const cfdata_t,
  * Simplified API for clients of the i2c framework.  Definitions
  * in <dev/i2c/i2c_io.h>.
  */
-#define	iic_acquire_bus(ic, flags)					\
-	(*(ic)->ic_acquire_bus)((ic)->ic_cookie, (flags))
-#define	iic_release_bus(ic, flags)					\
-	(*(ic)->ic_release_bus)((ic)->ic_cookie, (flags))
-
+int	iic_acquire_bus(i2c_tag_t, int);
+void	iic_release_bus(i2c_tag_t, int);
 int	iic_exec(i2c_tag_t, i2c_op_t, i2c_addr_t, const void *,
 	    size_t, void *, size_t, int);
 
