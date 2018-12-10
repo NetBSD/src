@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.32 2015/10/03 08:27:55 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.33 2018/12/10 14:46:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.32 2015/10/03 08:27:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.33 2018/12/10 14:46:25 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.32 2015/10/03 08:27:55 dholland Exp $"
 #include <sys/kthread.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
