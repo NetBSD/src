@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.15 2018/12/10 19:29:41 jdolecek Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.16 2018/12/10 20:48:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -134,8 +134,11 @@ ufs_wapbl_end(struct mount *mp)
 #ifdef DIAGNOSTIC
 #define	UFS_WAPBL_JLOCK_ASSERT(mp)					\
 	if (mp->mnt_wapbl) wapbl_jlock_assert(mp->mnt_wapbl)
+#define	UFS_WAPBL_JUNLOCK_ASSERT(mp)					\
+	if (mp->mnt_wapbl) wapbl_junlock_assert(mp->mnt_wapbl)
 #else
 #define	UFS_WAPBL_JLOCK_ASSERT(mp)
+#define UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #endif
 
 #define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)				\
@@ -165,6 +168,7 @@ ufs_wapbl_end(struct mount *mp)
 #define	UFS_WAPBL_END(mp)	do { } while (0)
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
 #define	UFS_WAPBL_JLOCK_ASSERT(mp)
+#define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)		do { } while (0)
 #define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
 #define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len, cookiep)		0
