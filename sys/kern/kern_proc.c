@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.223 2018/12/06 13:51:43 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.224 2018/12/10 14:46:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.223 2018/12/06 13:51:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.224 2018/12/10 14:46:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.223 2018/12/06 13:51:43 christos Exp
 #include <sys/uio.h>
 #include <sys/pool.h>
 #include <sys/pset.h>
-#include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>

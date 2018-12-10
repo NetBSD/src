@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.358 2018/07/18 22:40:56 uwe Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.359 2018/12/10 14:46:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.358 2018/07/18 22:40:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.359 2018/12/10 14:46:24 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.358 2018/07/18 22:40:56 uwe Exp $")
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-#include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>

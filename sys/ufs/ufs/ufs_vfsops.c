@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.55 2017/04/17 08:32:02 hannken Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.56 2018/12/10 14:46:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.55 2017/04/17 08:32:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.56 2018/12/10 14:46:25 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.55 2017/04/17 08:32:02 hannken Exp 
 #endif
 
 #include <sys/param.h>
-#include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
