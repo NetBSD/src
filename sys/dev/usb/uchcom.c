@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.19 2018/12/10 00:22:13 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.20 2018/12/10 00:29:47 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.19 2018/12/10 00:22:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.20 2018/12/10 00:29:47 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,7 +74,6 @@ int	uchcomdebug = 0;
 #define	UCHCOM_IFACE_INDEX	0
 #define	UCHCOM_CONFIG_INDEX	0
 
-#define UCHCOM_REV_CH340	0x0250
 #define UCHCOM_INPUT_BUF_SIZE	8
 
 #define UCHCOM_REQ_GET_VERSION	0x5F
@@ -271,15 +270,6 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 
 	if (set_config(sc))
 		goto failed;
-
-	switch (uaa->uaa_release) {
-	case UCHCOM_REV_CH340:
-		aprint_normal_dev(self, "CH340 detected\n");
-		break;
-	default:
-		aprint_normal_dev(self, "CH341 detected\n");
-		break;
-	}
 
 	if (find_ifaces(sc, &sc->sc_iface))
 		goto failed;
