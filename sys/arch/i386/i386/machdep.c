@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.813 2018/11/27 14:09:53 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.814 2018/12/10 15:08:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.813 2018/11/27 14:09:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.814 2018/12/10 15:08:23 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.813 2018/11/27 14:09:53 maxv Exp $");
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
-#include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
