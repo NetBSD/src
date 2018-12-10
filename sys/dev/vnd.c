@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.269 2018/10/07 12:00:07 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.270 2018/12/10 15:22:35 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.269 2018/10/07 12:00:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.270 2018/12/10 15:22:35 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -733,11 +733,16 @@ vndthread(void *arg)
 		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
 
+		/* Make sure the request succeeds while suspending this fs. */
+		fstrans_start_lazy(vnd->sc_vp->v_mount);
+
 		/* Handle the request using the appropriate operations. */
 		if ((vnd->sc_flags & VNF_USE_VN_RDWR) == 0)
 			handle_with_strategy(vnd, obp, bp);
 		else
 			handle_with_rdwr(vnd, obp, bp);
+
+		fstrans_done(vnd->sc_vp->v_mount);
 
 		s = splbio();
 		continue;
@@ -804,9 +809,6 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 		    bp->b_bcount);
 #endif
 
-	/* Make sure the request succeeds while suspending this fs. */
-	fstrans_start_lazy(vp->v_mount);
-
 	/* Issue the read or write operation. */
 	bp->b_error =
 	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
@@ -827,8 +829,6 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 		    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE);
 	else
 		mutex_exit(vp->v_interlock);
-
-	fstrans_done(vp->v_mount);
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
