@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.21 2018/12/10 14:16:28 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.22 2018/12/10 14:32:04 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.21 2018/12/10 14:16:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.22 2018/12/10 14:32:04 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -565,7 +565,7 @@ update_version(struct uchcom_softc *sc)
 
 	err = get_version(sc, &sc->sc_version);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot get version: %s\n",
+		device_printf(sc->sc_dev, "cannot get version: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -592,7 +592,7 @@ update_status(struct uchcom_softc *sc)
 
 	err = get_status(sc, &cur);
 	if (err) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "cannot update status: %s\n", usbd_errstr(err));
 		return EIO;
 	}
@@ -617,7 +617,7 @@ set_dtrrts(struct uchcom_softc *sc, int dtr, int rts)
 		err = set_dtrrts_20(sc, ~val);
 
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot set DTR/RTS: %s\n",
+		device_printf(sc->sc_dev, "cannot set DTR/RTS: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -705,7 +705,7 @@ set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 	    (err = write_reg(sc,
 			     UCHCOM_REG_BPS_MOD, dv.dv_mod,
 			     UCHCOM_REG_BPS_PAD, 0))) {
-		aprint_error_dev(sc->sc_dev, "cannot set DTE rate: %s\n",
+		device_printf(sc->sc_dev, "cannot set DTE rate: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -722,7 +722,7 @@ set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 
 		err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
 		if (err) {
-			aprint_error_dev(sc->sc_dev, "cannot get LCR: %s\n",
+			device_printf(sc->sc_dev, "cannot get LCR: %s\n",
 			    usbd_errstr(err));
 			return EIO;
 		}
@@ -758,7 +758,7 @@ set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 
 		err = write_reg(sc, UCHCOM_REG_LCR1, lcr1val, UCHCOM_REG_LCR2, lcr2val);
 		if (err) {
-			aprint_error_dev(sc->sc_dev, "cannot set LCR: %s\n",
+			device_printf(sc->sc_dev, "cannot set LCR: %s\n",
 			    usbd_errstr(err));
 			return EIO;
 		}
@@ -775,7 +775,7 @@ clear_chip(struct uchcom_softc *sc)
 	DPRINTF(("%s: clear\n", device_xname(sc->sc_dev)));
 	err = generic_control_out(sc, UCHCOM_REQ_RESET, 0, 0);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot clear: %s\n",
+		device_printf(sc->sc_dev, "cannot clear: %s\n",
 		    usbd_errstr(err));
 		return EIO;
 	}
@@ -884,7 +884,7 @@ setup_intr_pipe(struct uchcom_softc *sc)
 					  sc->sc_intr_size,
 					  uchcom_intr, USBD_DEFAULT_INTERVAL);
 		if (err) {
-			aprint_error_dev(sc->sc_dev,
+			device_printf(sc->sc_dev,
 			    "cannot open interrupt pipe: %s\n",
 			    usbd_errstr(err));
 			return EIO;
@@ -904,12 +904,12 @@ close_intr_pipe(struct uchcom_softc *sc)
 	if (sc->sc_intr_pipe != NULL) {
 		err = usbd_abort_pipe(sc->sc_intr_pipe);
 		if (err)
-			aprint_error_dev(sc->sc_dev,
+			device_printf(sc->sc_dev,
 			    "abort interrupt pipe failed: %s\n",
 			    usbd_errstr(err));
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
-			aprint_error_dev(sc->sc_dev,
+			device_printf(sc->sc_dev,
 			    "close interrupt pipe failed: %s\n",
 			    usbd_errstr(err));
 		kmem_free(sc->sc_intr_buf, sc->sc_intr_size);
