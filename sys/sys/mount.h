@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.232 2018/12/10 21:03:48 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.233 2018/12/10 21:19:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -150,7 +150,7 @@ struct mount {
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 	kmutex_t	mnt_updating;		/* to serialize updates */
-	struct wapbl_ops
+	const struct wapbl_ops
 			*mnt_wapbl_op;		/* logging ops */
 	struct wapbl	*mnt_wapbl;		/* log info */
 	struct wapbl_replay
