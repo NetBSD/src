@@ -1,4 +1,4 @@
-.\"     $NetBSD: ztest.1,v 1.3 2018/12/08 14:55:53 sevan Exp $
+.\"     $NetBSD: ztest.1,v 1.4 2018/12/10 03:58:30 sevan Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd December 8, 2018
+.Dd December 10, 2018
 .Dt ZTEST 1
 .Os
 .Sh NAME
@@ -74,6 +74,15 @@ self-healing ability.
 To verify that the on-disk consistency is never lost after a crash, child
 processes are killed at random with a SIGKILL signal, after which the parent
 process invokes a new child to run the test again on the same storage pool.
+.Pp
+Many of the tests record the transaction group number as part of their data.
+When reading old data, tests verify that the transaction group number is less
+than the current, open state, transaction group to ensure the consistency of
+tests and detect unaccounted changes.
+It is advised that any new tests added to
+.Nm
+should also perform the same check with transaction group numbers, if
+applicable.
 .Pp
 The main
 .Nm
