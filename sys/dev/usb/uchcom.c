@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.17 2016/12/12 16:47:06 bouyer Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.18 2018/12/10 00:03:11 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.17 2016/12/12 16:47:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.18 2018/12/10 00:03:11 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -491,7 +491,8 @@ static __inline usbd_status
 write_reg(struct uchcom_softc *sc,
 	  uint8_t reg1, uint8_t val1, uint8_t reg2, uint8_t val2)
 {
-	DPRINTF(("uchcom: write reg 0x%02X<-0x%02X, 0x%02X<-0x%02X\n",
+	DPRINTF(("%s: write reg 0x%02X<-0x%02X, 0x%02X<-0x%02X\n",
+		 device_xname(sc->sc_dev),
 		 (unsigned)reg1, (unsigned)val1,
 		 (unsigned)reg2, (unsigned)val2));
 	return generic_control_out(
@@ -513,7 +514,8 @@ read_reg(struct uchcom_softc *sc,
 	if (err)
 		return err;
 
-	DPRINTF(("uchcom: read reg 0x%02X->0x%02X, 0x%02X->0x%02X\n",
+	DPRINTF(("%s: read reg 0x%02X->0x%02X, 0x%02X->0x%02X\n",
+		 device_xname(sc->sc_dev),
 		 (unsigned)reg1, (unsigned)buf[0],
 		 (unsigned)reg2, (unsigned)buf[1]));
 
