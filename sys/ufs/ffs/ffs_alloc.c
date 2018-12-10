@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.162 2018/12/10 19:29:41 jdolecek Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.163 2018/12/10 20:48:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.162 2018/12/10 19:29:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.163 2018/12/10 20:48:34 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -565,6 +565,8 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, ino_t *inop)
 	struct fs *fs;
 	ino_t ino, ipref;
 	int cg, error;
+
+	UFS_WAPBL_JUNLOCK_ASSERT(pvp->v_mount);
 
 	pip = VTOI(pvp);
 	fs = pip->i_fs;

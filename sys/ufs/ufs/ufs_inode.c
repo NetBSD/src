@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.104 2018/12/10 19:29:41 jdolecek Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.105 2018/12/10 20:48:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.104 2018/12/10 19:29:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.105 2018/12/10 20:48:34 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -85,6 +85,8 @@ ufs_inactive(void *v)
 	mode_t mode;
 	int allerror = 0, error;
 	bool wapbl_locked = false;
+
+	UFS_WAPBL_JUNLOCK_ASSERT(mp);
 
 	/*
 	 * Ignore inodes related to stale file handles.
@@ -295,6 +297,8 @@ ufs_truncate_retry(struct vnode *vp, uint64_t newsize, kauth_cred_t cred)
 	struct inode *ip = VTOI(vp);
 	struct mount *mp = vp->v_mount;
 	int error = 0;
+
+	UFS_WAPBL_JUNLOCK_ASSERT(mp);
 
 	/*
 	 * Truncate might temporarily fail, loop until done.
