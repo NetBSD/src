@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.18 2018/12/10 00:03:11 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.19 2018/12/10 00:22:13 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.18 2018/12/10 00:03:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.19 2018/12/10 00:22:13 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -98,6 +98,9 @@ int	uchcomdebug = 0;
 #define UCHCOM_VER_30		0x30
 
 #define UCHCOM_BASE_UNKNOWN	0
+
+#define UCHCOM_BPS_PRE_IMM	0x80	/* CH341: immediate RX forwarding */
+
 #define UCHCOM_BPS_MOD_BASE	20000000
 #define UCHCOM_BPS_MOD_BASE_OFS	1100
 
@@ -706,7 +709,8 @@ set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 		return EINVAL;
 
 	if ((err = write_reg(sc,
-			     UCHCOM_REG_BPS_PRE, dv.dv_prescaler,
+			     UCHCOM_REG_BPS_PRE,
+			     dv.dv_prescaler | UCHCOM_BPS_PRE_IMM,
 			     UCHCOM_REG_BPS_DIV, dv.dv_div)) ||
 	    (err = write_reg(sc,
 			     UCHCOM_REG_BPS_MOD, dv.dv_mod,
