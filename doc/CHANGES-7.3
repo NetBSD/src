@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.22 2018/12/04 19:17:00 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.23 2018/12/10 17:21:21 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -318,4 +318,9 @@ sys/arch/amd64/amd64/machdep.c			1.321
 
 	Fix stack info leak.
 	[maxv, ticket #1662]
+
+bin/sh/parser.c					1.152 (patch)
+
+	Avoid crash from redirect on null compound command.
+	[kre, ticket #1663]
 
