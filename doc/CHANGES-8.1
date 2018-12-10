@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.72 2018/12/08 12:27:57 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.73 2018/12/10 08:52:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2007,7 +2007,7 @@ sys/dev/pci/mfii.c				1.1,1.2 (adjusted)
 sys/dev/pci/mpii.c				1.13
 sys/dev/pci/mpiireg.h				1.1
 
-	Add mpii(4), a driver for LSI Megaraid Fusion controllers.
+	Add mfii(4), a driver for LSI Megaraid Fusion controllers.
 	Ported from OpenBSD.  Note that the earlier fusion controllers
 	(Megaraid 2208, codenamed Thunderbold) are also supported by mfi(4).
 	mpii(4) will take precedence if both drivers are enabled.
