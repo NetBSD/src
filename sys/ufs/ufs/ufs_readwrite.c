@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.121 2017/03/01 10:42:45 hannken Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.122 2018/12/10 19:29:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.121 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.122 2018/12/10 19:29:41 jdolecek Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -291,7 +291,6 @@ WRITE(void *v)
 	KASSERT(uio->uio_rw == UIO_WRITE);
 	KASSERT(vp->v_type == VREG);
 	KASSERT(!ISSET(ioflag, IO_JOURNALLOCKED));
-	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	if (ioflag & IO_APPEND)
 		uio->uio_offset = ip->i_size;
