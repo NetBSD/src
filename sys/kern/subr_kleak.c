@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kleak.c,v 1.1 2018/12/02 21:00:13 maxv Exp $	*/
+/*	$NetBSD: subr_kleak.c,v 1.2 2018/12/10 07:24:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kleak.c,v 1.1 2018/12/02 21:00:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kleak.c,v 1.2 2018/12/10 07:24:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -244,16 +244,22 @@ kleak_init(void)
 static int
 kleak_rotate(void)
 {
+	int error = 0;
+
 	mutex_enter(&kleak_mtx);
-	kleak_index++;
+	if (kleak_index + 1 >= kleak_nrounds) {
+		error = ENOENT;
+	} else {
+		kleak_index++;
+	}
 	mutex_exit(&kleak_mtx);
+
+	if (error) {
+		return error;
+	}
 
 	/* XXX: Should be atomic. */
 	kleak_pattern_byte = kleak_pattern_list[kleak_index];
-
-	if (kleak_index >= kleak_nrounds) {
-		return ENOENT;
-	}
 
 	return 0;
 }
