@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.231 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: mount.h,v 1.232 2018/12/10 21:03:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -283,6 +283,7 @@ struct wapbl_ops {
 	int (*wo_wapbl_begin)(struct wapbl *, const char *, int);
 	void (*wo_wapbl_end)(struct wapbl *);
 	void (*wo_wapbl_junlock_assert)(struct wapbl *);
+	void (*wo_wapbl_jlock_assert)(struct wapbl *);
 	void (*wo_wapbl_biodone)(struct buf *);
 };
 #define WAPBL_DISCARD(MP)						\
@@ -309,6 +310,8 @@ struct wapbl_ops {
     (*(MP)->mnt_wapbl_op->wo_wapbl_end)((MP)->mnt_wapbl)
 #define WAPBL_JUNLOCK_ASSERT(MP)					\
     (*(MP)->mnt_wapbl_op->wo_wapbl_junlock_assert)((MP)->mnt_wapbl)
+#define WAPBL_JLOCK_ASSERT(MP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_jlock_assert)((MP)->mnt_wapbl)
 
 struct vfs_hooks {
 	LIST_ENTRY(vfs_hooks) vfs_hooks_list;
