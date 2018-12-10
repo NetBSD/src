@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.59 2018/12/09 19:21:17 jdolecek Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.60 2018/12/10 06:23:54 jdolecek Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.59 2018/12/09 19:21:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.60 2018/12/10 06:23:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -194,10 +194,12 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 			    sc->sc_pihp[0], IPL_BIO, ichsmb_intr, sc,
 			    device_xname(sc->sc_dev));
 			if (sc->sc_ih != NULL) {
-				pci_intr_release(pa->pa_pc, sc->sc_pihp, 1);
 				aprint_normal_dev(self, "interrupting at %s\n",
 				    intrstr);
 				sc->sc_poll = 0;
+			} else {
+				pci_intr_release(pa->pa_pc, sc->sc_pihp, 1);
+				sc->sc_pihp = NULL;
 			}
 		}
 		if (sc->sc_poll)
