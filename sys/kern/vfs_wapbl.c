@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.101 2017/12/02 17:29:55 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.102 2018/12/10 21:03:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.101 2017/12/02 17:29:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.102 2018/12/10 21:03:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -312,6 +312,7 @@ struct wapbl_ops wapbl_ops = {
 	.wo_wapbl_begin		= wapbl_begin,
 	.wo_wapbl_end		= wapbl_end,
 	.wo_wapbl_junlock_assert= wapbl_junlock_assert,
+	.wo_wapbl_jlock_assert	= wapbl_jlock_assert,
 
 	/* XXX: the following is only used to say "this is a wapbl buf" */
 	.wo_wapbl_biodone	= wapbl_biodone,
