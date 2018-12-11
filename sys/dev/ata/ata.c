@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.146 2018/11/12 18:51:01 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.147 2018/12/11 23:06:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.146 2018/11/12 18:51:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.147 2018/12/11 23:06:30 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -630,15 +630,6 @@ atabus_detach(device_t self, int flags)
 	device_t dev = NULL;
 	int i, error = 0;
 
-	/* Shutdown the channel. */
-	ata_channel_lock(chp);
-	chp->ch_flags |= ATACH_SHUTDOWN;
-	while (chp->ch_thread != NULL) {
-		cv_signal(&chp->ch_thr_idle);
-		cv_wait(&chp->ch_thr_idle, &chp->ch_lock);
-	}
-	ata_channel_unlock(chp);
-
 	/*
 	 * Detach atapibus and its children.
 	 */
@@ -673,6 +664,16 @@ atabus_detach(device_t self, int flags)
 			KASSERT(chp->ch_drive[i].drive_type == 0);
 		}
 	}
+
+	/* Shutdown the channel. */
+	ata_channel_lock(chp);
+	chp->ch_flags |= ATACH_SHUTDOWN;
+	while (chp->ch_thread != NULL) {
+		cv_signal(&chp->ch_thr_idle);
+		cv_wait(&chp->ch_thr_idle, &chp->ch_lock);
+	}
+	ata_channel_unlock(chp);
+
 	atabus_free_drives(chp);
 
  out:
