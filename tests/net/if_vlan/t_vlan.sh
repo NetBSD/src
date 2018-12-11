@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.14 2018/12/07 09:29:01 ozaki-r Exp $
+#	$NetBSD: t_vlan.sh,v 1.15 2018/12/11 03:47:51 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -376,7 +376,7 @@ vlan_vlanid_body_common()
 
 	$atf_ifconfig vlan0 -vlanif
 	atf_check -s not-exit:0 -e match:"Invalid argument" \
-	    rump.ifconfig vlan0 $local0/$prefix
+	    rump.ifconfig vlan0 $af $local0/$prefix
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
