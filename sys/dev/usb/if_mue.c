@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.20 2018/12/11 08:16:57 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.21 2018/12/11 09:05:50 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.20 2018/12/11 08:16:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.21 2018/12/11 09:05:50 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -28,7 +28,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.20 2018/12/11 08:16:57 rin Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/cprng.h>
 #include <sys/bus.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
@@ -924,7 +923,6 @@ mue_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->mue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 	usb_init_task(&sc->mue_tick_task, mue_tick_task, sc, 0);
 	usb_init_task(&sc->mue_stop_task, (void (*)(void *))mue_stop, sc, 0);
 
@@ -987,10 +985,9 @@ mue_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "LAN7800\n");
 
 	if (mue_get_macaddr(sc, dict)) {
-		aprint_error_dev(self, "Ethernet address assigned randomly\n");
-		cprng_fast(sc->mue_enaddr, ETHER_ADDR_LEN);
-		sc->mue_enaddr[0] &= ~0x01;	/* unicast */
-		sc->mue_enaddr[0] |= 0x02;	/* locally administered */
+		aprint_error_dev(self, "failed to read MAC address\n");
+		splx(s);
+		return;
 	}
 
 	aprint_normal_dev(self, "Ethernet address %s\n",
@@ -1046,6 +1043,8 @@ mue_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->mue_stat_ch, 0);
 
 	splx(s);
+
+	mutex_init(&sc->mue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->mue_udev, sc->mue_dev);
 }
