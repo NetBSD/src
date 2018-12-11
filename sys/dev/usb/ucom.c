@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.120 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.121 2018/12/11 14:49:27 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.120 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.121 2018/12/11 14:49:27 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1250,7 +1250,7 @@ out:
 
 	mutex_exit(&sc->sc_lock);
 
-	return 0;
+	return error;
 }
 
 static int
