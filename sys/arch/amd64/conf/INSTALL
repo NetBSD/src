@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.92 2017/12/25 06:38:59 rin Exp $
+# $NetBSD: INSTALL,v 1.93 2018/12/11 14:04:15 maya Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -8,7 +8,7 @@
 include	"arch/amd64/conf/GENERIC"
 
 options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=115200
-#ident 		"INSTALL-$Revision: 1.92 $"
+#ident 		"INSTALL-$Revision: 1.93 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
@@ -19,4 +19,4 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 # DRMKMS driver
 no i915drmkms*     at pci?
 no radeon*         at pci?
-no nouveau*	   at pci?
+#no nouveau*	   at pci?
