@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.90 2018/12/08 21:14:37 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.91 2018/12/11 06:34:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -106,6 +106,8 @@ struct com_regs {
 
 void	com_init_regs(struct com_regs *, bus_space_tag_t, bus_space_handle_t,
 		      bus_addr_t);
+void	com_init_regs_stride(struct com_regs *, bus_space_tag_t,
+			     bus_space_handle_t, bus_addr_t, u_int);
 
 struct comcons_info {
 	struct com_regs regs;
