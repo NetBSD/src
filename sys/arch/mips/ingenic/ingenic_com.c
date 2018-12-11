@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_com.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $ */
+/*	$NetBSD: ingenic_com.c,v 1.9 2018/12/11 06:34:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.9 2018/12/11 06:34:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,11 +82,7 @@ ingenic_com_init_regs(struct com_regs *regs, bus_space_tag_t st,
 		      bus_space_handle_t sh, bus_addr_t addr)
 {
 
-	com_init_regs(regs, st, sh, addr);
-	for (size_t i = 0; i < __arraycount(regs->cr_map); i++) {
-		regs->cr_map[i] = regs->cr_map[i] << 2;
-	}
-	regs->cr_nports <<= 2;
+	com_init_regs_stride(regs, st, sh, addr, 2);
 }
 
 void
