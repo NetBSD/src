@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.29 2018/12/08 17:46:11 thorpej Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.30 2018/12/11 06:34:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.29 2018/12/08 17:46:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.30 2018/12/11 06:34:00 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -94,10 +94,7 @@ hd64461uart_init_regs(struct com_regs *regs, bus_space_tag_t tag,
 		      bus_space_handle_t hdl, bus_addr_t addr)
 {
 
-	com_init_regs(regs, tag, hdl, addr);
-	for (size_t i = 0; i < __arraycount(regs->cr_map); i++)
-		regs->cr_map[i] = regs->cr_map[i] << 1;
-	regs->cr_nports <<= 1;
+	com_init_regs_stride(regs, tag, hdl, addr, 1);
 }
 
 void

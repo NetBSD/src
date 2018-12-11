@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.7 2018/12/08 21:14:37 thorpej Exp $ */
+/* $Id: rmixl_com.c,v 1.8 2018/12/11 06:34:00 thorpej Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.7 2018/12/08 21:14:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.8 2018/12/11 06:34:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,15 +288,7 @@ rmixl_com_init_regs(struct com_regs *regsp, bus_space_tag_t st,
 		    bus_space_handle_t sh, bus_addr_t addr)
 {
 
-	com_init_regs(regsp, st, sh, addr);
-
-	/*
-	 * map the 4 byte register stride
-	 */
-	for (size_t i = 0; i < __arraycount(regsp->cr_map); i++)
-		regsp->cr_map[i] = regsp->cr_map[i] * 4;
-
-	regsp->cr_nports = RMIXL_IO_DEV_UART_SIZE;
+	com_init_regs_stride(regsp, st, sh, addr, 2);
 }
 
 void
