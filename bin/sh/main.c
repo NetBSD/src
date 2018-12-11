@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.78 2018/12/03 06:43:19 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.79 2018/12/11 13:31:20 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.78 2018/12/03 06:43:19 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.79 2018/12/11 13:31:20 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,20 +202,24 @@ main(int argc, char **argv)
 	if (argv[0] && argv[0][0] == '-') {
 		state = 1;
 		read_profile("/etc/profile");
-state1:
+ state1:
 		state = 2;
 		read_profile(".profile");
 	}
-state2:
+ state2:
 	state = 3;
 	if ((iflag || !posix) &&
 	    getuid() == geteuid() && getgid() == getegid()) {
+		struct stackmark env_smark;
+
+		setstackmark(&env_smark);
 		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0') {
 			state = 3;
-			read_profile(shinit);
+			read_profile(expandenv(shinit));
 		}
+		popstackmark(&env_smark);
 	}
-state3:
+ state3:
 	state = 4;
 	line_number = 1;	/* undo anything from profile files */
 
@@ -238,7 +242,7 @@ state3:
 		evalstring(minusc, sflag ? 0 : EV_EXIT);
 
 	if (sflag || minusc == NULL) {
-state4:	/* XXX ??? - why isn't this before the "if" statement */
+ state4:	/* XXX ??? - why isn't this before the "if" statement */
 		cmdloop(1);
 	}
 #if PROFILE
@@ -325,6 +329,9 @@ read_profile(const char *name)
 	int fd;
 	int xflag_set = 0;
 	int vflag_set = 0;
+
+	if (*name == '\0')
+		return;
 
 	INTOFF;
 	if ((fd = open(name, O_RDONLY)) >= 0)
