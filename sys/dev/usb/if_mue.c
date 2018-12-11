@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.19 2018/12/04 01:35:15 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.20 2018/12/11 08:16:57 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.19 2018/12/04 01:35:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.20 2018/12/11 08:16:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1009,7 +1009,12 @@ mue_attach(device_t parent, device_t self, void *aux)
 
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6;
+	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6 |
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |  
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
+	    IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx;
 
 	sc->mue_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
 
@@ -1208,10 +1213,14 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	usbd_status err;
 	struct mue_txbuf_hdr hdr;
 	uint32_t tx_cmd_a, tx_cmd_b;
-	int len;
-	bool tso;
+	int csum, len;
+	bool tso, ipe, tpe;
 
-	tso = m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6);
+	csum = m->m_pkthdr.csum_flags;
+	tso = csum & (M_CSUM_TSOv4 | M_CSUM_TSOv6);
+	ipe = csum & M_CSUM_IPv4;
+	tpe = csum & (M_CSUM_TCPv4 | M_CSUM_UDPv4 |
+		      M_CSUM_TCPv6 | M_CSUM_UDPv6);
 
 	len = m->m_pkthdr.len;
 	if (__predict_false((!tso && len > MUE_MAX_TX_LEN) ||
@@ -1234,8 +1243,13 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 		tx_cmd_b <<= MUE_TX_CMD_B_MSS_SHIFT;
 		KASSERT((tx_cmd_b & ~MUE_TX_CMD_B_MSS_MASK) == 0);
 		mue_tx_offload(sc, m);
-	} else
+	} else {
+		if (ipe)
+			tx_cmd_a |= MUE_TX_CMD_A_IPE;
+		if (tpe)
+			tx_cmd_a |= MUE_TX_CMD_A_TPE;
 		tx_cmd_b = 0;
+	}
 
 	hdr.tx_cmd_a = htole32(tx_cmd_a);
 	hdr.tx_cmd_b = htole32(tx_cmd_b);
@@ -1418,7 +1432,9 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	uint32_t rx_cmd_a, totlen;
 	uint16_t pktlen;
 	int s;
+	int csum;
 	char *buf = c->mue_buf;
+	bool v6;
 
 	if (__predict_false(sc->mue_dying)) {
 		DPRINTF(sc, "dying\n");
@@ -1457,14 +1473,16 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		hdrp = (struct mue_rxbuf_hdr *)buf;
 		rx_cmd_a = le32toh(hdrp->rx_cmd_a);
 
-		if (__predict_false(rx_cmd_a & MUE_RX_CMD_A_RED)) {
+		if (__predict_false(rx_cmd_a & MUE_RX_CMD_A_ERRORS)) {
+			/*
+			 * We cannot use MUE_RX_CMD_A_RED bit here;
+			 * it is turned on in the cases of L3/L4
+			 * checksum errors which we handle below.
+			 */
 			MUE_PRINTF(sc, "rx_cmd_a: 0x%x\n", rx_cmd_a);
 			ifp->if_ierrors++;
 			goto done;
 		}
-
-		/* XXX not yet */
-		KASSERT((rx_cmd_a & MUE_RX_CMD_A_ICSM) == 0);
 
 		pktlen = (uint16_t)(rx_cmd_a & MUE_RX_CMD_A_LEN_MASK);
 		if (sc->mue_flags & LAN7500)
@@ -1488,6 +1506,36 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = pktlen;
 		m->m_flags |= M_HASFCS;
+
+		if (__predict_false(rx_cmd_a & MUE_RX_CMD_A_ICSM)) {
+			csum = 0;
+		} else {
+			v6 = rx_cmd_a & MUE_RX_CMD_A_IPV;
+			switch (rx_cmd_a & MUE_RX_CMD_A_PID) {
+			case MUE_RX_CMD_A_PID_TCP:
+				csum = v6 ?
+				    M_CSUM_TCPv6 : M_CSUM_IPv4 | M_CSUM_TCPv4;
+				break;
+			case MUE_RX_CMD_A_PID_UDP:
+				csum = v6 ?
+				    M_CSUM_UDPv6 : M_CSUM_IPv4 | M_CSUM_UDPv4;
+				break;
+			case MUE_RX_CMD_A_PID_IP:
+				csum = v6 ? 0 : M_CSUM_IPv4;
+				break;
+			default:
+				csum = 0;
+				break;
+			}
+			csum &= ifp->if_csum_flags_rx;
+			if (__predict_false((csum & M_CSUM_IPv4) &&
+			    (rx_cmd_a & MUE_RX_CMD_A_ICE)))
+				csum |= M_CSUM_IPv4_BAD;
+			if (__predict_false((csum & ~M_CSUM_IPv4) &&
+			    (rx_cmd_a & MUE_RX_CMD_A_TCE)))
+				csum |= M_CSUM_TCP_UDP_BAD;
+		}
+		m->m_pkthdr.csum_flags = csum;
 		memcpy(mtod(m, char *), buf + sizeof(*hdrp), pktlen);
 
 		/* Attention: sizeof(hdr) = 10 */
@@ -1643,6 +1691,8 @@ mue_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
 		error = 0;
+		if (cmd == SIOCSIFCAP)
+			mue_sethwcsum(sc);
 		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)
 			mue_setmulti(sc);
 		break;
