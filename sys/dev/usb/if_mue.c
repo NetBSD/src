@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.21 2018/12/11 09:05:50 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.22 2018/12/11 13:35:02 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.21 2018/12/11 09:05:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.22 2018/12/11 13:35:02 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -150,6 +150,7 @@ static void	mue_tx_offload(struct mue_softc *, struct mbuf *);
 
 static void	mue_setmulti(struct mue_softc *);
 static void	mue_sethwcsum(struct mue_softc *);
+static void	mue_setmtu(struct mue_softc *);
 
 static void	mue_rxeof(struct usbd_xfer *, void *, usbd_status);
 static void	mue_txeof(struct usbd_xfer *, void *, usbd_status);
@@ -772,14 +773,6 @@ mue_chip_init(struct mue_softc *sc)
 	MUE_SETBIT(sc, (sc->mue_flags & LAN7500) ?
 	    MUE_7500_FCT_TX_CTL : MUE_7800_FCT_TX_CTL, MUE_FCT_TX_CTL_EN);
 
-	/* Set the maximum frame size. */
-	MUE_CLRBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
-	val = mue_csr_read(sc, MUE_MAC_RX);
-	val &= ~MUE_MAC_RX_MAX_SIZE_MASK;
-	val |= MUE_MAC_RX_MAX_LEN(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
-	mue_csr_write(sc, MUE_MAC_RX, val);
-	MUE_SETBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
-
 	MUE_SETBIT(sc, (sc->mue_flags & LAN7500) ?
 	    MUE_7500_FCT_RX_CTL : MUE_7800_FCT_RX_CTL, MUE_FCT_RX_CTL_EN);
 
@@ -1014,6 +1007,9 @@ mue_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx;
 
 	sc->mue_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
+#if 0 /* XXX not yet */
+	sc->mue_ec.ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
+#endif
 
 	/* Initialize MII/media info. */
 	mii = GET_MII(sc);
@@ -1222,8 +1218,8 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 		      M_CSUM_TCPv6 | M_CSUM_UDPv6);
 
 	len = m->m_pkthdr.len;
-	if (__predict_false((!tso && len > MUE_MAX_TX_LEN) ||
-			    ( tso && len > MUE_MAX_TSO_LEN))) {
+	if (__predict_false((!tso && len > MUE_FRAME_LEN(ifp->if_mtu)) ||
+			    ( tso && len > MUE_TSO_FRAME_LEN))) {
 		MUE_PRINTF(sc, "packet length %d\n too long", len);
 		return EINVAL;
 	}
@@ -1419,6 +1415,20 @@ mue_sethwcsum(struct mue_softc *sc)
 	mue_csr_write(sc, reg, val);
 }
 
+static void
+mue_setmtu(struct mue_softc *sc)
+{
+	struct ifnet *ifp = GET_IFP(sc);
+	uint32_t val;
+
+	/* Set the maximum frame size. */
+	MUE_CLRBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
+	val = mue_csr_read(sc, MUE_MAC_RX);
+	val &= ~MUE_MAC_RX_MAX_SIZE_MASK;
+	val |= MUE_MAC_RX_MAX_LEN(MUE_FRAME_LEN(ifp->if_mtu));
+	mue_csr_write(sc, MUE_MAC_RX, val);
+	MUE_SETBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
+}
 
 static void
 mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
@@ -1488,7 +1498,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			pktlen -= 2;
 
 		if (__predict_false(pktlen < ETHER_HDR_LEN + ETHER_CRC_LEN ||
-		    pktlen > MCLBYTES - ETHER_ALIGN ||
+		    pktlen > MCLBYTES - ETHER_ALIGN || /* XXX */
 		    pktlen + sizeof(*hdrp) > totlen)) {
 			MUE_PRINTF(sc, "invalid packet length %d\n", pktlen);
 			ifp->if_ierrors++;
@@ -1621,6 +1631,9 @@ mue_init(struct ifnet *ifp)
 	/* TCP/UDP checksum offload engines. */
 	mue_sethwcsum(sc);
 
+	/* Set MTU. */
+	mue_setmtu(sc);
+
 	if (mue_open_pipes(sc)) {
 		splx(s);
 		return EIO;
@@ -1661,7 +1674,7 @@ mue_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch(cmd) {
+	switch (cmd) {
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
@@ -1690,10 +1703,20 @@ mue_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
 		error = 0;
-		if (cmd == SIOCSIFCAP)
-			mue_sethwcsum(sc);
-		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)
+		switch (cmd) {
+		case SIOCADDMULTI:
+		case SIOCDELMULTI:
 			mue_setmulti(sc);
+			break;
+		case SIOCSIFCAP:
+			mue_sethwcsum(sc);
+			break;
+		case SIOCSIFMTU:
+			mue_setmtu(sc);
+			break;
+		default:
+			break;
+		}
 		break;
 	}
 	splx(s);
