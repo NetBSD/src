@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.17 2018/09/03 16:29:36 riastradh Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.18 2018/12/11 14:38:45 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.17 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.18 2018/12/11 14:38:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1763,7 +1763,7 @@ sctp_inpcb_bind(struct socket *so, struct sockaddr *addr, struct lwp *l)
 
 			/* unlock info */
 			SCTP_INP_INFO_WUNLOCK();
-			return (EADDRNOTAVAIL);
+			return EADDRINUSE;
 		}
 		SCTP_INP_WLOCK(inp);
 		if (bindall) {
@@ -1773,7 +1773,7 @@ sctp_inpcb_bind(struct socket *so, struct sockaddr *addr, struct lwp *l)
 				SCTP_INP_DECR_REF(inp);
 				SCTP_INP_WUNLOCK(inp);
 				SCTP_INP_INFO_WUNLOCK();
-				return (EADDRNOTAVAIL);
+				return EADDRINUSE;
 			}
 		}
 	} else {
