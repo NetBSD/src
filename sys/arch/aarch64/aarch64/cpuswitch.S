@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.7 2018/12/07 18:27:03 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.8 2018/12/11 18:11:33 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.7 2018/12/07 18:27:03 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.8 2018/12/11 18:11:33 ryo Exp $")
 
 /*
  * At IPL_SCHED:
@@ -145,9 +145,9 @@ ENTRY_NP(cpu_switchto_softint)
 
 #ifdef KASAN
 	/* clear the new stack */
-	stp	x0, xzr, [sp, #-16]!
+	stp	x0, x1, [sp, #-16]!
 	bl	_C_LABEL(kasan_softint)
-	ldp	x0, xzr, [sp], #16
+	ldp	x0, x1, [sp], #16
 #endif
 
 	/* onto new stack */
