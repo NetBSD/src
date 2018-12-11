@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.211 2018/12/04 14:03:30 kre Exp $
+.\"	$NetBSD: sh.1,v 1.212 2018/12/11 13:31:20 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd December 4, 2018
+.Dd December 11, 2018
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -133,6 +133,8 @@ from the files
 .Pa /etc/profile
 and
 .Pa .profile
+in the user's home directory
+.Pq \&$HOME ,
 if they exist.
 If the environment variable
 .Ev ENV
@@ -143,9 +145,19 @@ of a login shell,
 and either the shell is interactive, or the
 .Cm posix
 option is not set,
-the shell next reads
-commands from the file named in
-.Ev ENV .
+the shell then performs parameter and arithmetic
+expansion on the value of
+.Ev ENV ,
+(these are described later)
+and then reads commands from the file name that results.
+If
+.Ev ENV
+contains a command substitution, or one of the
+other expansions fails, or if there are no expansions
+to expand, the value of
+.Ev ENV
+is used as the file name.
+.Pp
 Therefore, a user should place commands that are to be executed only at
 login time in the
 .Pa .profile
@@ -267,7 +279,8 @@ built-in (described later).
 .\"
 .It Fl a Em allexport
 Automatically export any variable to which a value is assigned
-while this flag is set.
+while this flag is set, unless the variable has been marked as
+not for export.
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
@@ -642,7 +655,8 @@ and does not need to be escaped, but may be.
 A newline following the escape character is treated as a line continuation,
 like the same sequence in a double quoted string,
 or when not quoted \(en
-the two characters, escape and newline, are removed from the input string.
+the two characters, the backslash escape and the newline,
+are removed from the input string.
 .Pp
 The following characters, when escaped, are converted in a
 manner similar to the way they would be in a string in the C language:
