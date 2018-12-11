@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.9 2018/11/20 01:59:51 mrg Exp $
+# $NetBSD: genassym.cf,v 1.10 2018/12/11 05:46:14 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -138,6 +138,7 @@ define	TCR_TG1_64KB		TCR_TG1_64KB
 define	TCR_TG0_16KB		TCR_TG0_16KB
 define	TCR_TG0_4KB		TCR_TG0_4KB
 define	TCR_TG0_64KB		TCR_TG0_64KB
+define	TCR_SH1_NONE		TCR_SH1_NONE
 define	TCR_SH1_OUTER		TCR_SH1_OUTER
 define	TCR_SH1_INNER		TCR_SH1_INNER
 define	TCR_ORGN1_NC		TCR_ORGN1_NC
@@ -149,6 +150,7 @@ define	TCR_IRGN1_WB_WA		TCR_IRGN1_WB_WA
 define	TCR_IRGN1_WT		TCR_IRGN1_WT
 define	TCR_IRGN1_WB		TCR_IRGN1_WB
 define	TCR_T1SZ		TCR_T1SZ
+define	TCR_SH0_NONE		TCR_SH0_NONE
 define	TCR_SH0_OUTER		TCR_SH0_OUTER
 define	TCR_SH0_INNER		TCR_SH0_INNER
 define	TCR_ORGN0_NC		TCR_ORGN0_NC
