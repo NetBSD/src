@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.10 2018/12/11 06:34:00 thorpej Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.11 2018/12/11 19:40:54 martin Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.10 2018/12/11 06:34:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.11 2018/12/11 19:40:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,7 @@ CFATTACH_DECL_NEW(mvuart_mbus, sizeof(struct com_softc),
 
 static void
 mvuart_init_regs(struct com_regs *regs, bus_space_tag_t tag,
-		 bus_space_handle_t hdl, bus_addr_t addr);
+		 bus_space_handle_t hdl, bus_addr_t addr)
 {
 
 	com_init_regs_stride(regs, tag, hdl, addr, 2);
