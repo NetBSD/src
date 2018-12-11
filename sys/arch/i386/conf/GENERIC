@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1194 2018/11/24 18:23:29 bouyer Exp $
+# $NetBSD: GENERIC,v 1.1195 2018/12/11 11:00:18 maya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1194 $"
+#ident		"GENERIC-$Revision: 1.1195 $"
 
 maxusers	64		# estimated number of users
 
@@ -559,8 +559,8 @@ intelfb*	at intelfbbus?
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
-nouveau*	at pci? dev ? function ?
-nouveaufb*	at nouveaufbbus?
+#nouveau*	at pci? dev ? function ?
+#nouveaufb*	at nouveaufbbus?
 
 # DRMUMS drivers
 #viadrmums*	at drm?
