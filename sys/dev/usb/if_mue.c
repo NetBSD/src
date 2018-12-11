@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.22 2018/12/11 13:35:02 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.23 2018/12/11 16:45:49 martin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.22 2018/12/11 13:35:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.23 2018/12/11 16:45:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1218,7 +1218,8 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 		      M_CSUM_TCPv6 | M_CSUM_UDPv6);
 
 	len = m->m_pkthdr.len;
-	if (__predict_false((!tso && len > MUE_FRAME_LEN(ifp->if_mtu)) ||
+	if (__predict_false((!tso && 
+				(unsigned)len > MUE_FRAME_LEN(ifp->if_mtu)) ||
 			    ( tso && len > MUE_TSO_FRAME_LEN))) {
 		MUE_PRINTF(sc, "packet length %d\n too long", len);
 		return EINVAL;
