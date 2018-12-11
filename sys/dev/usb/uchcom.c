@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.22 2018/12/10 14:32:04 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.23 2018/12/11 01:07:29 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.22 2018/12/10 14:32:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.23 2018/12/11 01:07:29 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -86,8 +86,6 @@ int	uchcomdebug = 0;
 #define UCHCOM_REG_STAT2	0x07
 #define UCHCOM_REG_BPS_PRE	0x12
 #define UCHCOM_REG_BPS_DIV	0x13
-#define UCHCOM_REG_BPS_MOD	0x14
-#define UCHCOM_REG_BPS_PAD	0x0F
 #define UCHCOM_REG_BREAK1	0x05
 #define UCHCOM_REG_BREAK2	0x18
 #define UCHCOM_REG_LCR1		0x18
@@ -99,9 +97,6 @@ int	uchcomdebug = 0;
 #define UCHCOM_BASE_UNKNOWN	0
 
 #define UCHCOM_BPS_PRE_IMM	0x80	/* CH341: immediate RX forwarding */
-
-#define UCHCOM_BPS_MOD_BASE	20000000
-#define UCHCOM_BPS_MOD_BASE_OFS	1100
 
 #define UCHCOM_DTR_MASK		0x20
 #define UCHCOM_RTS_MASK		0x40
@@ -158,7 +153,6 @@ struct uchcom_divider
 {
 	uint8_t		dv_prescaler;
 	uint8_t		dv_div;
-	uint8_t		dv_mod;
 };
 
 struct uchcom_divider_record
@@ -171,12 +165,12 @@ struct uchcom_divider_record
 
 static const struct uchcom_divider_record dividers[] =
 {
-	{  307200, 307200, UCHCOM_BASE_UNKNOWN, { 7, 0xD9, 0 } },
-	{  921600, 921600, UCHCOM_BASE_UNKNOWN, { 7, 0xF3, 0 } },
-	{ 2999999,  23530,             6000000, { 3,    0, 0 } },
-	{   23529,   2942,              750000, { 2,    0, 0 } },
-	{    2941,    368,               93750, { 1,    0, 0 } },
-	{     367,      1,               11719, { 0,    0, 0 } },
+	{  307200, 307200, UCHCOM_BASE_UNKNOWN, { 7, 0xD9 } },
+	{  921600, 921600, UCHCOM_BASE_UNKNOWN, { 7, 0xF3 } },
+	{ 2999999,  23530,             6000000, { 3,    0 } },
+	{   23529,   2942,              750000, { 2,    0 } },
+	{    2941,    368,               93750, { 1,    0 } },
+	{     367,      1,               11719, { 0,    0 } },
 };
 #define NUM_DIVIDERS	(sizeof (dividers) / sizeof (dividers[0]))
 
@@ -655,7 +649,7 @@ calc_divider_settings(struct uchcom_divider *dp, uint32_t rate)
 {
 	int i;
 	const struct uchcom_divider_record *rp;
-	uint32_t div, rem, mod;
+	uint32_t div, rem;
 
 	/* find record */
 	for (i=0; i<NUM_DIVIDERS; i++) {
@@ -681,11 +675,6 @@ found:
 		dp->dv_div = (uint8_t)-div;
 	}
 
-	mod = UCHCOM_BPS_MOD_BASE/rate + UCHCOM_BPS_MOD_BASE_OFS;
-	mod = mod + mod/2;
-
-	dp->dv_mod = mod / 0x100;
-
 	return 0;
 }
 
@@ -701,10 +690,7 @@ set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 	if ((err = write_reg(sc,
 			     UCHCOM_REG_BPS_PRE,
 			     dv.dv_prescaler | UCHCOM_BPS_PRE_IMM,
-			     UCHCOM_REG_BPS_DIV, dv.dv_div)) ||
-	    (err = write_reg(sc,
-			     UCHCOM_REG_BPS_MOD, dv.dv_mod,
-			     UCHCOM_REG_BPS_PAD, 0))) {
+			     UCHCOM_REG_BPS_DIV, dv.dv_div))) {
 		device_printf(sc->sc_dev, "cannot set DTE rate: %s\n",
 		    usbd_errstr(err));
 		return EIO;
@@ -787,7 +773,7 @@ static int
 reset_chip(struct uchcom_softc *sc)
 {
 	usbd_status err;
-	uint8_t lcr1val, lcr2val, pre, div, mod;
+	uint8_t lcr1val, lcr2val, pre, div;
 	uint16_t val=0, idx=0;
 
 	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
@@ -795,10 +781,6 @@ reset_chip(struct uchcom_softc *sc)
 		goto failed;
 
 	err = read_reg(sc, UCHCOM_REG_BPS_PRE, &pre, UCHCOM_REG_BPS_DIV, &div);
-	if (err)
-		goto failed;
-
-	err = read_reg(sc, UCHCOM_REG_BPS_MOD, &mod, UCHCOM_REG_BPS_PAD, NULL);
 	if (err)
 		goto failed;
 
@@ -810,7 +792,6 @@ reset_chip(struct uchcom_softc *sc)
 	val |= 0x04;
 	idx |= (uint16_t)div << 8;
 	val |= 0x08;
-	idx |= mod & 0xF8;
 	val |= 0x10;
 
 	DPRINTF(("%s: reset v=0x%04X, i=0x%04X\n",
