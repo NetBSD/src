@@ -46,8 +46,6 @@
 
 #ifdef _KERNEL
 
-#if !defined(_RUMPKERNEL)
-
 #include <sys/types.h>
 
 #include <arm/armreg.h>
@@ -414,8 +412,6 @@ extern struct arm_cache_info arm_pcache;
 extern struct arm_cache_info arm_scache;
 
 extern uint32_t cpu_ttb;
-
-#endif	/* _GRRRRUMP */
 
 #endif	/* _KERNEL */
 
