@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.2 2018/11/10 10:57:06 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.3 2018/12/12 09:09:08 maxv Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 2018
+.Dd December 12, 2018
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -473,14 +473,18 @@ variable
 .Va errno
 is set to indicate the error.
 .Sh FILES
-Functional examples:
-.Pp
 .Bl -tag -width XXXX -compact
-.It Pa src/share/examples/nvmm/toyvirt/
-Example of virtualizer.
-Launches the binary given as argument in a virtual machine.
-.It Pa src/share/examples/nvmm/smallkern/
-Example of a kernel that can be executed by toyvirt.
+.It Lk https://www.netbsd.org/~maxv/nvmm/nvmm-demo.zip
+Functional example (demonstrator).
+Contains a virtualizer that uses the
+.Nm
+API, and a small kernel that exercises this virtualizer.
+.It Pa src/sys/dev/nvmm/
+Source code of the kernel NVMM driver.
+.It Pa src/lib/libnvmm/
+Source code of the
+.Nm
+library.
 .El
 .Sh ERRORS
 These functions will fail if:
@@ -508,6 +512,8 @@ uses the following error codes:
 .It Bq Er EAGAIN
 The VCPU cannot receive the event immediately.
 .El
+.Sh SEE ALSO
+.Xr nvmm 4 .
 .Sh AUTHORS
 NVMM was designed and implemented by
 .An Maxime Villard .
