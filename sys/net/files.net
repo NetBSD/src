@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.19 2018/09/23 09:21:03 maxv Exp $
+#	$NetBSD: files.net,v 1.20 2018/12/12 01:40:20 rin Exp $
 
 # XXX CLEANUP
 define	net
@@ -7,6 +7,7 @@ file	net/bpf_filter.c		bpf_filter
 file	net/bpf_stub.c			net
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/dl_print.c
+file	net/ether_sw_offload.c		bridge
 file	net/if.c			net
 file	net/if_arcsubr.c		arcnet			needs-flag
 file	net/if_bridge.c			bridge			needs-flag
