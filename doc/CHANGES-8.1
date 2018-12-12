@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.74 2018/12/10 17:17:08 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.75 2018/12/12 11:34:11 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2041,4 +2041,9 @@ sys/dev/vnd.c					1.270
 	Operation handle_with_strategy() also needs the
 	fstrans_start_lazy() / fstrans_done() bracket.
 	[hannken, ticket #1133]
+
+sys/kern/sys_sig.c				1.47
+
+	Fix kernel info leak, 4 bytes of padding in struct _ksiginfo.
+	[maxv, ticket #1134]
 
