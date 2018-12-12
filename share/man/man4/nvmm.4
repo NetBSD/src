@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvmm.4,v 1.1 2018/12/12 08:20:53 maxv Exp $
+.\"	$NetBSD: nvmm.4,v 1.2 2018/12/12 08:28:44 wiz Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,12 +51,6 @@ The following backends are supported:
 .It
 x86-SVM, for x86 AMD CPUs
 .El
-.Sh CAVEATS
-Currently,
-.Nm
-cannot be enabled in a kernel configuration, and must rather be modloaded
-dynamically from the filesystem.
-.El
 .Sh SEE ALSO
 .Xr libnvmm 3
 .Sh AUTHORS
@@ -64,3 +58,9 @@ The
 .Nm
 driver was written by
 .An Maxime Villard .
+.Sh CAVEATS
+Currently,
+.Nm
+cannot be enabled in a kernel configuration, and must rather be
+.Xr modload 8 Ns ed
+dynamically from the filesystem.
