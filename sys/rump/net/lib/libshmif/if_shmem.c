@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.75 2018/06/26 06:48:03 msaitoh Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.76 2018/12/12 01:51:32 rin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.75 2018/06/26 06:48:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.76 2018/12/12 01:51:32 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.75 2018/06/26 06:48:03 msaitoh Exp $"
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/ether_sw_offload.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -76,6 +77,7 @@ struct if_clone shmif_cloner =
 static int	shmif_init(struct ifnet *);
 static int	shmif_ioctl(struct ifnet *, u_long, void *);
 static void	shmif_start(struct ifnet *);
+static void	shmif_snd(struct ifnet *, struct mbuf *);
 static void	shmif_stop(struct ifnet *, int);
 
 #include "shmifvar.h"
@@ -183,6 +185,12 @@ allocif(int unit, struct shmif_sc **scp)
 	ifp->if_stop = shmif_stop;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_dlt = DLT_EN10MB;
+	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6 |
+	    IFCAP_CSUM_IPv4_Rx	| IFCAP_CSUM_IPv4_Tx |
+	    IFCAP_CSUM_TCPv4_Rx	| IFCAP_CSUM_TCPv4_Tx |
+	    IFCAP_CSUM_UDPv4_Rx	| IFCAP_CSUM_UDPv4_Tx |
+	    IFCAP_CSUM_TCPv6_Rx	| IFCAP_CSUM_TCPv6_Tx |
+	    IFCAP_CSUM_UDPv6_Rx	| IFCAP_CSUM_UDPv6_Tx;
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
@@ -197,6 +205,16 @@ allocif(int unit, struct shmif_sc **scp)
 
 		return error;
 	}
+#if 1
+	char buf[256];
+
+	if (rumpuser_getparam("RUMP_SHMIF_CAPENABLE", buf, sizeof(buf)) == 0) {
+		uint64_t capen = strtoul(buf, NULL, 0);
+
+		ifp->if_capenable = capen & ifp->if_capabilities;
+	}
+#endif
+
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 
@@ -527,70 +545,33 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return rv;
 }
 
-/* send everything in-context since it's just a matter of mem-to-mem copy */
 static void
 shmif_start(struct ifnet *ifp)
 {
 	struct shmif_sc *sc = ifp->if_softc;
-	struct shmif_mem *busmem = sc->sc_busmem;
-	struct mbuf *m, *m0;
-	uint32_t dataoff;
-	uint32_t pktsize, pktwrote;
+	struct mbuf *m, *n;
 	bool wrote = false;
-	bool wrap;
 
 	ifp->if_flags |= IFF_OACTIVE;
 
 	for (;;) {
-		struct shmif_pkthdr sp;
-		struct timeval tv;
+		IF_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
-		IF_DEQUEUE(&ifp->if_snd, m0);
-		if (m0 == NULL) {
+		m = ether_sw_offload_tx(ifp, m);
+		if (m == NULL) {
+			ifp->if_oerrors++;
 			break;
 		}
 
-		pktsize = 0;
-		for (m = m0; m != NULL; m = m->m_next) {
-			pktsize += m->m_len;
-		}
-		KASSERT(pktsize <= ETHERMTU + ETHER_HDR_LEN);
+		do {
+			n = m->m_nextpkt;
+			shmif_snd(ifp, m);
+			m = n;
+		} while (m != NULL);
 
-		getmicrouptime(&tv);
-		sp.sp_len = pktsize;
-		sp.sp_sec = tv.tv_sec;
-		sp.sp_usec = tv.tv_usec;
-		sp.sp_sender = sc->sc_uuid;
-
-		bpf_mtap(ifp, m0, BPF_D_OUT);
-
-		shmif_lockbus(busmem);
-		KASSERT(busmem->shm_magic == SHMIF_MAGIC);
-		busmem->shm_last = shmif_nextpktoff(busmem, busmem->shm_last);
-
-		wrap = false;
-		dataoff = shmif_buswrite(busmem,
-		    busmem->shm_last, &sp, sizeof(sp), &wrap);
-		pktwrote = 0;
-		for (m = m0; m != NULL; m = m->m_next) {
-			pktwrote += m->m_len;
-			dataoff = shmif_buswrite(busmem, dataoff,
-			    mtod(m, void *), m->m_len, &wrap);
-		}
-		KASSERT(pktwrote == pktsize);
-		if (wrap) {
-			busmem->shm_gen++;
-			DPRINTF(("bus generation now %" PRIu64 "\n",
-			    busmem->shm_gen));
-		}
-		shmif_unlockbus(busmem);
-
-		m_freem(m0);
 		wrote = true;
-		ifp->if_opackets++;
-
-		DPRINTF(("shmif_start: send %d bytes at off %d\n",
-		    pktsize, busmem->shm_last));
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -599,6 +580,60 @@ shmif_start(struct ifnet *ifp)
 	if (wrote) {
 		dowakeup(sc);
 	}
+}
+
+/* send everything in-context since it's just a matter of mem-to-mem copy */
+static void
+shmif_snd(struct ifnet *ifp, struct mbuf *m0)
+{
+	struct shmif_sc *sc = ifp->if_softc;
+	struct shmif_mem *busmem = sc->sc_busmem;
+	struct shmif_pkthdr sp;
+	struct timeval tv;
+	struct mbuf *m;
+	uint32_t dataoff;
+	uint32_t pktsize, pktwrote;
+	bool wrap;
+
+	pktsize = 0;
+	for (m = m0; m != NULL; m = m->m_next) {
+		pktsize += m->m_len;
+	}
+	KASSERT(pktsize <= ETHERMTU + ETHER_HDR_LEN);
+
+	getmicrouptime(&tv);
+	sp.sp_len = pktsize;
+	sp.sp_sec = tv.tv_sec;
+	sp.sp_usec = tv.tv_usec;
+	sp.sp_sender = sc->sc_uuid;
+
+	bpf_mtap(ifp, m0, BPF_D_OUT);
+
+	shmif_lockbus(busmem);
+	KASSERT(busmem->shm_magic == SHMIF_MAGIC);
+	busmem->shm_last = shmif_nextpktoff(busmem, busmem->shm_last);
+
+	wrap = false;
+	dataoff =
+	    shmif_buswrite(busmem, busmem->shm_last, &sp, sizeof(sp), &wrap);
+	pktwrote = 0;
+	for (m = m0; m != NULL; m = m->m_next) {
+		pktwrote += m->m_len;
+		dataoff = shmif_buswrite(busmem, dataoff, mtod(m, void *),
+		    m->m_len, &wrap);
+	}
+	KASSERT(pktwrote == pktsize);
+	if (wrap) {
+		busmem->shm_gen++;
+		DPRINTF(("bus generation now %" PRIu64 "\n", busmem->shm_gen));
+	}
+	shmif_unlockbus(busmem);
+
+	m_freem(m0);
+	ifp->if_opackets++;
+
+	DPRINTF(("shmif_start: send %d bytes at off %d\n", pktsize,
+	    busmem->shm_last));
 }
 
 static void
@@ -779,12 +814,16 @@ shmif_rcv(void *arg)
 
 		if (passup) {
 			int bound;
+
+			m = ether_sw_offload_rx(ifp, m);
+
 			KERNEL_LOCK(1, NULL);
 			/* Prevent LWP migrations between CPUs for psref(9) */
 			bound = curlwp_bind();
 			if_input(ifp, m);
 			curlwp_bindx(bound);
 			KERNEL_UNLOCK_ONE(NULL);
+
 			m = NULL;
 		}
 		/* else: reuse mbuf for a future packet */
