@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.8 2018/12/11 18:11:33 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.9 2018/12/12 11:14:51 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.8 2018/12/11 18:11:33 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.9 2018/12/12 11:14:51 ryo Exp $")
 
 /*
  * At IPL_SCHED:
@@ -123,6 +123,7 @@ ENTRY_NP(cpu_switchto_softint)
 	sub	sp, sp, #TF_SIZE	/* make switchframe */
 	adr	x2, softint_cleanup	/* return address for cpu_switchto() */
 	mov	x20, lr			/* x20 := original lr */
+	mrs	x19, daif		/* x19 := original interrupt mask */
 	stp	x19, x20, [sp, #TF_X19]
 	stp	x21, x22, [sp, #TF_X21]
 	stp	x23, x24, [sp, #TF_X23]
@@ -172,8 +173,11 @@ ENTRY_NP(cpu_switchto_softint)
 #endif
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */
-	ENABLE_INTERRUPT
+
+	ldp	x19, x20, [sp, #TF_X19]
+	msr	daif, x19		/* restore interrupt mask */
 	mov	lr, x20			/* restore pinned_lwp lr */
+
 	add	sp, sp, #TF_SIZE	/* unwind switchframe */
 	ldp	x19, x20, [sp], #16	/* restore */
 	ret
@@ -199,7 +203,8 @@ ENTRY_NP(softint_cleanup)
 	str	w2, [x3, #CI_MTX_COUNT]
 	str	wzr, [x0, #L_CTXSWTCH]	/* softlwp->l_ctxswtch = 0 */
 
-	ldp	x19, x20, [sp], #16
+	msr	daif, x19		/* restore interrupt mask */
+	ldp	x19, x20, [sp], #16	/* restore */
 	ret
 END(softint_cleanup)
 
