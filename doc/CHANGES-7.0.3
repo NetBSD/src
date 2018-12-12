@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.120 2018/12/04 19:18:44 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.121 2018/12/12 11:38:09 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5618,4 +5618,9 @@ sys/arch/amd64/amd64/machdep.c			1.321
 
 	Fix stack info leak.
 	[maxv, ticket #1662]
+
+sys/kern/sys_sig.c				1.47
+
+	Fix kernel info leak, 4 bytes of padding in struct _ksiginfo.
+	[maxv, ticket #1664]
 
