@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2464 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2465 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -262,3 +262,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Remove the lmc(4) driver, and its associated lmcconfig(8)
 		tool. [maxv 20181212]
 	sh(1): Many bug fixes and enhancements.  [kre 20181212]
+	amdtemp(4): Add support for AMD family 16h temperature sensors.
+		[is 20181213]
