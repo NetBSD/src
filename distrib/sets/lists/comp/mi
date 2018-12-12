@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2240 2018/12/01 02:43:43 kamil Exp $
+#	$NetBSD: mi,v 1.2241 2018/12/12 07:04:05 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -643,7 +643,7 @@
 ./usr/include/dev/pci/if_fxpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpvar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_levar.h		comp-obsolete		obsolete
-./usr/include/dev/pci/if_lmc.h			comp-c-include
+./usr/include/dev/pci/if_lmc.h			comp-obsolete		obsolete
 ./usr/include/dev/pci/if_lmc_types.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_lmcioctl.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_lmcvar.h		comp-obsolete		obsolete
