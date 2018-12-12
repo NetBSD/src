@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.99 2018/12/12 07:04:05 maxv Exp $
+.\"	$NetBSD: pci.4,v 1.100 2018/12/12 08:12:18 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -78,7 +78,7 @@ for additional information.
 Fixup PCI I/O and memory addresses.
 .Pp
 Some i386 and amd64 BIOS implementations don't allocate I/O space and
-memory space for some PCI devices -- primarily BIOS in PnP mode, or laptops
+memory space for some PCI devices \(em primarily BIOS in PnP mode, or laptops
 that expect devices to be configured via ACPI.
 Since necessary space isn't allocated, those devices
 will not work without special handling.
@@ -451,7 +451,6 @@ VGA graphics boards.
 .Xr eap 4 ,
 .Xr ehci 4 ,
 .Xr emuxki 4 ,
-.Xr en 4 ,
 .Xr ep 4 ,
 .Xr epic 4 ,
 .Xr esa 4 ,
@@ -506,9 +505,10 @@ VGA graphics boards.
 .Xr trm 4 ,
 .Xr twe 4 ,
 .Xr uhci 4 ,
+.Xr vax/en 4 ,
 .Xr vga 4 ,
 .Xr vge 4 ,
-.Xr viapm 4 ,
+.\" .Xr viapm 4 ,
 .Xr vr 4 ,
 .Xr wi 4 ,
 .Xr wm 4 ,
