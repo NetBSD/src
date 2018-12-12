@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.6 2018/04/27 08:51:26 maxv Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.7 2018/12/12 00:48:43 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -66,6 +66,9 @@
  * From sys/arch/powerpc/powerpc/bus_dma.c:
  *	NetBSD: bus_dma.c,v 1.46 2012/02/01 09:54:03 matt Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.7 2018/12/12 00:48:43 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
