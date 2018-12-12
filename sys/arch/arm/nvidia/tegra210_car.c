@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.21 2018/09/26 22:33:35 jmcneill Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.22 2018/12/12 09:55:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.21 2018/09/26 22:33:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.22 2018/12/12 09:55:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -554,17 +554,17 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_DIV("DIV_SDMMC4", "MUX_SDMMC4",
 		CAR_CLKSRC_SDMMC4_REG, CAR_CLKSRC_SDMMC_DIV),
 
-	CLK_DIV("DIV_I2C1", "MUX_I2C1", 
+	CLK_DIV("DIV_I2C1", "MUX_I2C1",
 		CAR_CLKSRC_I2C1_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("DIV_I2C2", "MUX_I2C2", 
+	CLK_DIV("DIV_I2C2", "MUX_I2C2",
 		CAR_CLKSRC_I2C2_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("DIV_I2C3", "MUX_I2C3", 
+	CLK_DIV("DIV_I2C3", "MUX_I2C3",
 		CAR_CLKSRC_I2C3_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("DIV_I2C4", "MUX_I2C4", 
+	CLK_DIV("DIV_I2C4", "MUX_I2C4",
 		CAR_CLKSRC_I2C4_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("DIV_I2C5", "MUX_I2C5", 
+	CLK_DIV("DIV_I2C5", "MUX_I2C5",
 		CAR_CLKSRC_I2C5_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("DIV_I2C6", "MUX_I2C6", 
+	CLK_DIV("DIV_I2C6", "MUX_I2C6",
 		CAR_CLKSRC_I2C6_REG, CAR_CLKSRC_I2C_DIV),
 
 	CLK_DIV("XUSB_HOST_SRC", "MUX_XUSB_HOST",

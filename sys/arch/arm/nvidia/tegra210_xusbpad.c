@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_xusbpad.c,v 1.9 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: tegra210_xusbpad.c,v 1.10 2018/12/12 09:55:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.9 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.10 2018/12/12 09:55:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -459,7 +459,7 @@ static const struct tegra210_xusbpad_port tegra210_xusbpad_usb3_ports[] = {
 	XUSBPAD_PORT("usb3-1", 1, 0x14, __BITS(8,5), __BIT(9)),
 	XUSBPAD_PORT("usb3-2", 2, 0x14, __BITS(13,10), __BIT(14)),
 	XUSBPAD_PORT("usb3-3", 3, 0x14, __BITS(18,15), __BIT(19)),
-}; 
+};
 
 static const struct tegra210_xusbpad_port tegra210_xusbpad_hsic_ports[] = {
 	XUSBPAD_PORT("hsic-0", 0, 0, 0, 0),
@@ -847,7 +847,7 @@ static int
 tegra210_xusbpad_phy_enable(device_t dev, void *priv, bool enable)
 {
 	struct tegra210_xusbpad_phy_softc * const sc = device_private(dev);
-	
+
 	if (enable == false)
 		return ENXIO;	/* not implemented */
 
