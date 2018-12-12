@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.23 2018/12/11 01:07:29 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.24 2018/12/12 23:21:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.23 2018/12/11 01:07:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.24 2018/12/12 23:21:36 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -54,12 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.23 2018/12/11 01:07:29 jakllsch Exp $")
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbcdc.h>
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ucomvar.h>
 
