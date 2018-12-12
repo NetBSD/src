@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.213 2018/11/29 10:02:52 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.214 2018/12/12 01:53:52 rin Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.213 2018/11/29 10:02:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.214 2018/12/12 01:53:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -843,12 +843,14 @@ ip6_output(
 		}
 
 		KASSERT(dst != NULL);
-		if (__predict_true(!tso ||
-		    (ifp->if_capenable & IFCAP_TSOv6) != 0)) {
-			error = ip6_if_output(ifp, origifp, m, dst, rt);
-		} else {
+		if (__predict_false(sw_csum & M_CSUM_TSOv6)) {
+			/*
+			 * TSO6 is required by a packet, but disabled for
+			 * the interface.
+			 */
 			error = ip6_tso_output(ifp, origifp, m, dst, rt);
-		}
+		} else
+			error = ip6_if_output(ifp, origifp, m, dst, rt);
 		goto done;
 	}
 
