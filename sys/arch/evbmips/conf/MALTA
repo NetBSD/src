@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.91 2018/09/06 05:36:50 maxv Exp $
+#	$NetBSD: MALTA,v 1.92 2018/12/12 06:29:37 maxv Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.91 $"
+#ident 		"MALTA-$Revision: 1.92 $"
 
 maxusers	32
 
@@ -226,7 +226,6 @@ options 	SIP_EVENT_COUNTERS
 #tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 #tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*		at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-#lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
