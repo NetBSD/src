@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.411 2018/12/07 09:36:26 msaitoh Exp $
+#	$NetBSD: files.pci,v 1.412 2018/12/12 07:04:05 maxv Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -425,11 +425,6 @@ file	dev/pci/if_tl.c			tl
 # device declaration in sys/conf/files
 attach	ntwoc at pci with ntwoc_pci
 file	dev/pci/if_ntwoc_pci.c		ntwoc_pci
-
-# Lan Media Corporation T1/HSSI/DS3 driver
-device	lmc: ifnet, sppp
-attach	lmc at pci
-file	dev/pci/if_lmc.c		lmc
 
 # Essential Communications HIPPI interface
 # device declaration in sys/conf/files

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1193 2018/11/09 21:33:50 abs Exp $
+# $NetBSD: mi,v 1.1194 2018/12/12 07:04:05 maxv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1762,7 +1762,7 @@
 ./usr/sbin/ldpd					base-router-bin
 ./usr/sbin/link					base-sysutil-bin
 ./usr/sbin/linkfarm				base-obsolete		obsolete
-./usr/sbin/lmcconfig				base-netutil-bin
+./usr/sbin/lmcconfig				base-obsolete		obsolete
 ./usr/sbin/lmtp					base-obsolete		obsolete
 ./usr/sbin/lockstat				base-sysutil-bin
 ./usr/sbin/lpc					base-lpr-bin
