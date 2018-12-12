@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.210 2018/11/02 19:57:32 macallan Exp $
+# $NetBSD: GENERIC,v 1.211 2018/12/12 06:29:37 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.210 $"
+#ident		"GENERIC-$Revision: 1.211 $"
 
 maxusers	64
 
@@ -512,7 +512,6 @@ ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 # XXX lacks bus_dmamap_sync()
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()
-#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT

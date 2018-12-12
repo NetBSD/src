@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.120 2018/10/23 19:58:53 jdolecek Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.121 2018/12/12 06:29:37 maxv Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.120 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.121 $"
 
 maxusers	32
 
@@ -207,7 +207,6 @@ fxp*    at pci? dev ? function ?        # Intel EtherExpress PRO 10+/100B
 gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
 #hme*   at pci? dev ? function ?        # Sun Microelectronics STP2002-STQ
 le*     at pci? dev ? function ?        # PCnet-PCI Ethernet
-lmc*    at pci? dev ? function ?        # Lan Media Corp SSI/HSSI/DS3
 mtd*    at pci? dev ? function ?        # Myson MTD803 3-in-1 Ethernet
 ne*     at pci? dev ? function ?        # NE2000-compatible Ethernet
 ntwoc*  at pci? dev ? function ?        # Riscom/N2 PCI Sync Serial

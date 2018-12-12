@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.8 2018/11/24 18:23:29 bouyer Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.9 2018/12/12 06:29:37 maxv Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -334,7 +334,6 @@ iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
