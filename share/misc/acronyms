@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.275 2018/09/19 18:50:39 ginsbach Exp $
+$NetBSD: acronyms,v 1.276 2018/12/12 22:27:03 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -125,6 +125,7 @@ DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
 DWIM	do what I mean
+DYAC	damn you autocorrect
 DYK	do you know?
 EA	early adopter
 ECR	electronic cash register
