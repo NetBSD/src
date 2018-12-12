@@ -1,4 +1,4 @@
-# $NetBSD: t_builtins.sh,v 1.2 2018/12/05 02:48:04 kre Exp $
+# $NetBSD: t_builtins.sh,v 1.3 2018/12/12 08:10:39 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,7 @@ have_builtin()
 	LC_ALL=C ${TEST_SH} -c \
 	    'case "$( (type '"$1"') 2>&1)" in
 		(*built*)	exit 0 ;;
+		(*reserved*)	exit 0 ;;   # zsh!! (reserved words are builtin)
 	     esac
 	     exit 1'					||
 	{
@@ -346,6 +347,32 @@ export_body() {
 		'unset VAR || exit 7; export VAR;
 		 VAR=ABC; printenv VAR; VAR=XYZ; printenv VAR'
 
+	# don't check VAR=value, some shells provide meaningless quoting...
+	atf_check -s exit:0 -e empty -o match:VAR= -o match:foobar \
+		${TEST_SH} -c \
+			'VAR=foobar ; export VAR ; export -p'
+	atf_check -s exit:0 -e empty -o match:VAR= -o match:foobar \
+		${TEST_SH} -c \
+			'export VAR=foobar ; export -p'
+	atf_check -s exit:0 -e empty -o match:VAR\$ ${TEST_SH} -c \
+			'unset VAR ; export VAR ; export -p'
+	atf_check -s exit:0 -e empty -o not-match:VAR ${TEST_SH} -c \
+			'export VAR ; unset VAR ; export -p'
+	atf_check -s exit:0 -e empty -o not-match:VAR -o not-match:foobar \
+		${TEST_SH} -c \
+			'VAR=foobar; export VAR ; unset VAR ; export -p'
+
+	atf_check -s exit:0 -e empty -o match:VAR= -o match:FOUND=foobar \
+		${TEST_SH} -c \
+			'export VAR=foobar; V=$(export -p);
+			 unset VAR; eval "$V"; export -p;
+			 printf %s\\n FOUND=${VAR-unset}'
+	atf_check -s exit:0 -e empty -o match:VAR -o match:FOUND=unset \
+		${TEST_SH} -c \
+			'export VAR; V=$(export -p);
+			 unset VAR; eval "$V"; export -p;
+			 printf %s\\n FOUND=${VAR-unset}'
+
 	atf_check -s exit:1 -e empty -o inline:ABC\\nXYZ\\n ${TEST_SH} -c \
 		'VAR=ABC; export VAR; printenv VAR; VAR=XYZ; printenv VAR;
 		unset VAR; printenv VAR; VAR=PQR; printenv VAR'
@@ -441,8 +468,41 @@ readonly_body() {
 		'unset VAR; readonly VAR; printf %s ${VAR-unset}'
 	atf_check -s exit:0 -e empty -o inline:set ${TEST_SH} -c \
 		'unset VAR; readonly VAR=set; printf %s ${VAR-unset}'
+	atf_check -s exit:0 -e empty -o inline:set ${TEST_SH} -c \
+		'VAR=initial; readonly VAR=set; printf %s ${VAR-unset}'
 	atf_check -s not-exit:0 -e not-empty -o empty ${TEST_SH} -c \
 		'readonly VAR=initial; VAR=new; printf %s "${VAR}"'
+
+	# don't check VAR=value, some shells provide meaningless quoting...
+	atf_check -s exit:0 -e empty -o match:VAR= -o match:foobar \
+		${TEST_SH} -c \
+			'VAR=foobar ; readonly VAR ; readonly -p'
+	atf_check -s exit:0 -e empty -o match:VAR= -o match:foobar \
+		${TEST_SH} -c \
+			'readonly VAR=foobar ; readonly -p'
+	atf_check -s exit:0 -e empty -o match:VAR= -o match:foobar \
+		-o not-match:badvalue ${TEST_SH} -c \
+			'VAR=badvalue; readonly VAR=foobar ; readonly -p'
+	atf_check -s exit:0 -e empty -o match:VAR\$ ${TEST_SH} -c \
+			'unset VAR ; readonly VAR ; readonly -p'
+
+	# checking that readonly -p works (to reset stuff) is a pain...
+	# particularly since not all shells say "readonly..." by default
+	atf_check -s exit:0 -e empty -o match:MYVAR= -o match:FOUND=foobar \
+		${TEST_SH} -c \
+			'V=$(readonly MYVAR=foobar; readonly -p | grep " MYVAR")
+			 unset MYVAR; eval "$V"; readonly -p;
+			 printf %s\\n FOUND=${MYVAR-unset}'
+	atf_check -s exit:0 -e empty -o match:MYVAR\$ -o match:FOUND=unset \
+		${TEST_SH} -c \
+			'V=$(readonly MYVAR; readonly -p | grep " MYVAR")
+			 unset MYVAR; eval "$V"; readonly -p;
+			 printf %s\\n "FOUND=${MYVAR-unset}"'
+	atf_check -s exit:0 -e empty -o match:MYVAR= -o match:FOUND=empty \
+		${TEST_SH} -c \
+			'V=$(readonly MYVAR=; readonly -p | grep " MYVAR")
+			 unset VAR; eval "$V"; readonly -p;
+			 printf %s\\n "FOUND=${MYVAR-unset&}${MYVAR:-empty}"'
 
 	# don't test stderr, some shells inist on generating a message for an
 	# unset of a readonly var (rather than simply having unset make $?=1)
