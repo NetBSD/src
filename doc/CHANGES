@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2461 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2462 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -257,3 +257,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	atactl(8): Add support to automatically detect Micron/Crucial devices
 		and their vendor-specific SMART status values.  [mrg 20181205]
 	OpenSSL: Imported 1.1.1a. [christos 20181208]
+	kernel: Remove the lmc(4) driver, and its associated lmcconfig(8)
+		tool. [maxv 20181212]
