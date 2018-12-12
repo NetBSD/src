@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.602 2018/11/28 08:19:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.603 2018/12/12 08:49:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.602 2018/11/28 08:19:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.603 2018/12/12 08:49:33 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -723,7 +723,7 @@ static void	wm_init_lcd_from_nvm(struct wm_softc *);
 static int	wm_oem_bits_config_ich8lan(struct wm_softc *, bool);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
-static void	wm_reset_phy(struct wm_softc *);
+static int	wm_reset_phy(struct wm_softc *);
 static void	wm_flush_desc_rings(struct wm_softc *);
 static void	wm_reset(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_rxqueue *, int);
@@ -949,7 +949,7 @@ static bool	wm_phy_resetisblocked(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
 static void	wm_release_hw_control(struct wm_softc *);
 static void	wm_gate_hw_phy_config_ich8lan(struct wm_softc *, bool);
-static void	wm_smbustopci(struct wm_softc *);
+static int	wm_init_phy_workarounds_pchlan(struct wm_softc *);
 static void	wm_init_manageability(struct wm_softc *);
 static void	wm_release_manageability(struct wm_softc *);
 static void	wm_get_wakeup(struct wm_softc *);
@@ -957,6 +957,7 @@ static int	wm_ulp_disable(struct wm_softc *);
 static void	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
 static void	wm_suspend_workarounds_ich8lan(struct wm_softc *);
+static int	wm_resume_workarounds_pchlan(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
 static void	wm_disable_aspm(struct wm_softc *);
 /* LPLU (Low Power Link Up) */
@@ -2099,9 +2100,6 @@ alloc_retry:
 		    (sc->sc_flags & WM_F_PCIX) ? "PCIX" : "PCI");
 	}
 
-	/* Disable ASPM L0s and/or L1 for workaround */
-	wm_disable_aspm(sc);
-
 	/* clear interesting stat counters */
 	CSR_READ(sc, WMREG_COLC);
 	CSR_READ(sc, WMREG_RXERRC);
@@ -2978,10 +2976,24 @@ static bool
 wm_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct wm_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	/* Disable ASPM L0s and/or L1 for workaround */
-	wm_disable_aspm(sc);
-	wm_init_manageability(sc);
+	if (sc->sc_type >= WM_T_PCH2)
+		wm_resume_workarounds_pchlan(sc);
+	if ((ifp->if_flags & IFF_UP) == 0) {
+		wm_reset(sc);
+		/* Non-AMT based hardware can now take control from firmware */
+		if ((sc->sc_flags & WM_F_HAS_AMT) == 0)
+			wm_get_hw_control(sc);
+		wm_init_manageability(sc);
+	} else {
+		/*
+		 * We called pmf_class_network_register(), so if_init() is
+		 * automatically called when IFF_UP. wm_reset(),
+		 * wm_get_hw_control() and wm_init_manageability() are called
+		 * via wm_init().
+		 */
+	}
 
 	return true;
 }
@@ -4365,7 +4377,7 @@ wm_rxpbs_adjust_82580(uint32_t val)
  *	generic PHY reset function.
  *	Same as e1000_phy_hw_reset_generic()
  */
-static void
+static int
 wm_reset_phy(struct wm_softc *sc)
 {
 	uint32_t reg;
@@ -4373,7 +4385,7 @@ wm_reset_phy(struct wm_softc *sc)
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	if (wm_phy_resetisblocked(sc))
-		return;
+		return -1;
 
 	sc->phy.acquire(sc);
 
@@ -4392,6 +4404,8 @@ wm_reset_phy(struct wm_softc *sc)
 
 	wm_get_cfg_done(sc);
 	wm_phy_post_reset(sc);
+
+	return 0;
 }
 
 /*
@@ -4892,6 +4906,9 @@ wm_reset(struct wm_softc *sc)
 
 	if (sc->sc_type >= WM_T_82544)
 		CSR_WRITE(sc, WMREG_WUC, 0);
+
+	if (sc->sc_type < WM_T_82575)
+		wm_disable_aspm(sc);
 
 	wm_reset_mdicnfg_82580(sc);
 
@@ -9907,7 +9924,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
 	    || (sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT)
 	    || (sc->sc_type == WM_T_PCH_CNP))
-		wm_smbustopci(sc);
+		wm_init_phy_workarounds_pchlan(sc);
 
 	wm_gmii_reset(sc);
 
@@ -13839,8 +13856,8 @@ wm_gate_hw_phy_config_ich8lan(struct wm_softc *sc, bool gate)
 	CSR_WRITE(sc, WMREG_EXTCNFCTR, reg);
 }
 
-static void
-wm_smbustopci(struct wm_softc *sc)
+static int
+wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 {
 	uint32_t fwsm, reg;
 	int rv = 0;
@@ -13855,8 +13872,17 @@ wm_smbustopci(struct wm_softc *sc)
 	wm_ulp_disable(sc);
 
 	/* Acquire PHY semaphore */
-	sc->phy.acquire(sc);
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
+		DPRINTF(WM_DEBUG_INIT, ("%s: %s: failed\n",
+		device_xname(sc->sc_dev), __func__));
+		return -1;
+	}
 
+	/* The MAC-PHY interconnect may be in SMBus mode.  If the PHY is
+	 * inaccessible and resetting the PHY is not blocked, toggle the
+	 * LANPHYPC Value bit to force the interconnect to PCIe mode.
+	 */
 	fwsm = CSR_READ(sc, WMREG_FWSM);
 	switch (sc->sc_type) {
 	case WM_T_PCH_LPT:
@@ -13865,6 +13891,9 @@ wm_smbustopci(struct wm_softc *sc)
 		if (wm_phy_is_accessible_pchlan(sc))
 			break;
 
+		/* Before toggling LANPHYPC, see if PHY is accessible by
+		 * forcing MAC to SMBus mode first.
+		 */
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg |= CTRL_EXT_FORCE_SMBUS;
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
@@ -13872,6 +13901,10 @@ wm_smbustopci(struct wm_softc *sc)
 		/* XXX Isn't this required??? */
 		CSR_WRITE_FLUSH(sc);
 #endif
+		/* Wait 50 milliseconds for MAC to finish any retries
+		 * that it might be trying to perform from previous
+		 * attempts to acknowledge any phy read requests.
+		 */
 		delay(50 * 1000);
 		/* FALLTHROUGH */
 	case WM_T_PCH2:
@@ -13888,12 +13921,16 @@ wm_smbustopci(struct wm_softc *sc)
 			break;
 		}
 
+		/* Toggle LANPHYPC Value bit */
 		wm_toggle_lanphypc_pch_lpt(sc);
 
 		if (sc->sc_type >= WM_T_PCH_LPT) {
 			if (wm_phy_is_accessible_pchlan(sc) == true)
 				break;
 
+			/* Toggling LANPHYPC brings the PHY out of SMBus mode
+			 * so ensure that the MAC is also out of SMBus mode
+			 */
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
 			reg &= ~CTRL_EXT_FORCE_SMBUS;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
@@ -13911,23 +13948,38 @@ wm_smbustopci(struct wm_softc *sc)
 	sc->phy.release(sc);
 
 	if (rv == 0) {
+		/* Check to see if able to reset PHY.  Print error if not */
 		if (wm_phy_resetisblocked(sc)) {
 			printf("XXX reset is blocked(4)\n");
 			goto out;
 		}
-		wm_reset_phy(sc);
+
+		/* Reset the PHY before any access to it.  Doing so, ensures
+		 * that the PHY is in a known good state before we read/write
+		 * PHY registers.  The generic reset is sufficient here,
+		 * because we haven't determined the PHY type yet.
+		 */
+		if (wm_reset_phy(sc) != 0)
+			goto out;
+
+		/* On a successful reset, possibly need to wait for the PHY
+		 * to quiesce to an accessible state before returning control
+		 * to the calling function.  If the PHY does not quiesce, then
+		 * return E1000E_BLK_PHY_RESET, as this is the condition that
+		 *  the PHY is in.
+		 */
 		if (wm_phy_resetisblocked(sc))
 			printf("XXX reset is blocked(4)\n");
 	}
 
 out:
-	/*
-	 * Ungate automatic PHY configuration by hardware on non-managed 82579
-	 */
+	/* Ungate automatic PHY configuration on non-managed 82579 */
 	if ((sc->sc_type == WM_T_PCH2) && ((fwsm & FWSM_FW_VALID) == 0)) {
 		delay(10*1000);
 		wm_gate_hw_phy_config_ich8lan(sc, false);
 	}
+
+	return 0;
 }
 
 static void
@@ -14066,7 +14118,12 @@ wm_ulp_disable(struct wm_softc *sc)
 	}
 
 	/* Acquire semaphore */
-	sc->phy.acquire(sc);
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
+		DPRINTF(WM_DEBUG_INIT, ("%s: %s: failed\n",
+		device_xname(sc->sc_dev), __func__));
+		goto release;
+	}
 
 	/* Toggle LANPHYPC */
 	wm_toggle_lanphypc_pch_lpt(sc);
@@ -14267,6 +14324,73 @@ out:
 		wm_write_smbus_addr(sc);
 		sc->phy.release(sc);
 	}
+}
+
+/*
+ *  wm_resume_workarounds_pchlan - workarounds needed during Sx->S0
+ *  @hw: pointer to the HW structure
+ *
+ *  During Sx to S0 transitions on non-managed devices or managed devices
+ *  on which PHY resets are not blocked, if the PHY registers cannot be
+ *  accessed properly by the s/w toggle the LANPHYPC value to power cycle
+ *  the PHY.
+ *  On i217, setup Intel Rapid Start Technology.
+ */
+static int
+wm_resume_workarounds_pchlan(struct wm_softc *sc)
+{
+	device_t dev = sc->sc_dev;
+	int rv;
+
+	if (sc->sc_type < WM_T_PCH2)
+		return 0;
+
+	rv = wm_init_phy_workarounds_pchlan(sc);
+	if (rv != 0)
+		return -1;
+
+	/* For i217 Intel Rapid Start Technology support when the system
+	 * is transitioning from Sx and no manageability engine is present
+	 * configure SMBus to restore on reset, disable proxy, and enable
+	 * the reset on MTA (Multicast table array).
+	 */
+	if (sc->sc_phytype == WMPHY_I217) {
+		uint16_t phy_reg;
+
+		if (sc->phy.acquire(sc) != 0)
+			goto release;
+
+		/* Clear Auto Enable LPI after link up */
+		sc->phy.readreg_locked(dev, 1, I217_LPI_GPIO_CTRL, &phy_reg);
+		phy_reg &= ~I217_LPI_GPIO_CTRL_AUTO_EN_LPI;
+		sc->phy.writereg_locked(dev, 1, I217_LPI_GPIO_CTRL, phy_reg);
+
+		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID) == 0) {
+			/* Restore clear on SMB if no manageability engine
+			 * is present
+			 */
+			sc->phy.readreg_locked(dev, 1, I217_MEMPWR, &phy_reg);
+			if (rv != 0)
+				goto release;
+			phy_reg |= I217_MEMPWR_DISABLE_SMB_RELEASE;
+			sc->phy.writereg_locked(dev, 1, I217_MEMPWR, phy_reg);
+
+			/* Disable Proxy */
+			sc->phy.writereg_locked(dev, 1, I217_PROXY_CTRL, 0);
+		}
+		/* Enable reset on MTA */
+		sc->phy.readreg_locked(dev, 1, I217_CFGREG, &phy_reg);
+		if (rv != 0)
+			goto release;
+		phy_reg &= ~I217_CGFREG_ENABLE_MTA_RESET;
+		sc->phy.writereg_locked(dev, 1, I217_CFGREG, phy_reg);
+
+release:
+		sc->phy.release(sc);
+		return rv;
+	}
+
+	return 0;
 }
 
 static void
