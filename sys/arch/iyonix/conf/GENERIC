@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.103 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.104 2018/12/12 06:29:37 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 maxusers	32		# estimated number of users
 
@@ -393,7 +393,6 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 #ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 #iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
-#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 #msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 #mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
