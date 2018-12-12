@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2018/12/05 22:25:38 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 2018/12/12 20:22:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.49 2018/12/05 22:25:38 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.50 2018/12/12 20:22:43 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,11 @@ __RCSID("$NetBSD: trap.c,v 1.49 2018/12/05 22:25:38 kre Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <termios.h>
 
+#undef	CEOF	/* from <termios.h> but concflicts with sh use */
+
+#include <sys/ioctl.h>
 #include <sys/resource.h>
 
 #include "shell.h"
@@ -135,7 +139,7 @@ trap_signame(int signo)
 	return nbuf;
 }
 
-#if 0		/* Share the version of this in src/bin/kill/kill.c */
+#ifdef SMALL
 /*
  * Print a list of valid signal names
  */
@@ -154,7 +158,62 @@ printsignals(struct output *out, int len)
 			outc(' ', out);
 	}
 }
-#endif
+#else /* !SMALL */
+/*
+ * Print the names of all the signals (neatly) to fp
+ * "len" gives the number of chars already printed to
+ * the current output line (in kill.c, always 0)
+ */
+void
+printsignals(struct output *out, int len)
+{
+	int sig;
+	int nl, pad;
+	const char *name;
+	int termwidth = 80;
+
+	if ((name = bltinlookup("COLUMNS", 1)) != NULL)
+		termwidth = (int)strtol(name, NULL, 10);
+	else if (isatty(1)) {
+		struct winsize win;
+
+		if (ioctl(1, TIOCGWINSZ, &win) == 0 && win.ws_col > 0)
+			termwidth = win.ws_col;
+	}
+
+	if (posix)
+		pad = 1;
+	else
+		pad = (len | 7) + 1 - len;
+
+	for (sig = 0; (sig = signalnext(sig)) != 0; ) {
+		name = signalname(sig);
+		if (name == NULL)
+			continue;
+
+		nl = strlen(name);
+
+		if (len > 0 && nl + len + pad >= termwidth) {
+			outc('\n', out);
+			len = 0;
+			pad = 0;
+		} else if (pad > 0 && len != 0)
+			outfmt(out, "%*s", pad, "");
+		else
+			pad = 0;
+
+		len += nl + pad;
+		if (!posix)
+			pad = (nl | 7) + 1 - nl;
+		else
+			pad = 1;
+
+		outstr(name, out);
+	}
+	if (len != 0)
+		outc('\n', out);
+}
+#endif /* SMALL */
 
 /*
  * The trap builtin.
