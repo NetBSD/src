@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1630 2018/12/08 01:47:21 sevan Exp $
+# $NetBSD: mi,v 1.1631 2018/12/12 07:04:05 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1386,7 +1386,7 @@
 ./usr/share/man/cat4/lii.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lkm.0			man-obsolete		obsolete
 ./usr/share/man/cat4/lm.0			man-sys-catman		.cat
-./usr/share/man/cat4/lmc.0			man-sys-catman		.cat
+./usr/share/man/cat4/lmc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/lmenv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lmtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lo.0			man-sys-catman		.cat
@@ -2671,7 +2671,7 @@
 ./usr/share/man/cat8/ldpd.0			man-router-catman	.cat
 ./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/link.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/lmcconfig.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/lmcconfig.0		man-obsolete		obsolete
 ./usr/share/man/cat8/lmcctl.0			man-obsolete		obsolete
 ./usr/share/man/cat8/lmtp.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/local.0			man-postfix-catman	postfix,.cat
@@ -4507,7 +4507,7 @@
 ./usr/share/man/html4/lii.html			man-sys-htmlman		html
 ./usr/share/man/html4/lkm.html			man-obsolete		obsolete
 ./usr/share/man/html4/lm.html			man-sys-htmlman		html
-./usr/share/man/html4/lmc.html			man-sys-htmlman		html
+./usr/share/man/html4/lmc.html			man-obsolete		obsolete
 ./usr/share/man/html4/lmenv.html		man-sys-htmlman		html
 ./usr/share/man/html4/lmtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lo.html			man-sys-htmlman		html
@@ -5636,7 +5636,7 @@
 ./usr/share/man/html8/ldpd.html			man-router-htmlman	html
 ./usr/share/man/html8/lfs_cleanerd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/link.html			man-sysutil-htmlman	html
-./usr/share/man/html8/lmcconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/lmcconfig.html		man-obsolete		obsolete
 ./usr/share/man/html8/lmtp.html			man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/local.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/locate.updatedb.html	man-sysutil-htmlman	html
@@ -7468,7 +7468,7 @@
 ./usr/share/man/man4/lii.4			man-sys-man		.man
 ./usr/share/man/man4/lkm.4			man-obsolete 		obsolete
 ./usr/share/man/man4/lm.4			man-sys-man		.man
-./usr/share/man/man4/lmc.4			man-sys-man		.man
+./usr/share/man/man4/lmc.4			man-obsolete 		obsolete
 ./usr/share/man/man4/lmenv.4			man-sys-man		.man
 ./usr/share/man/man4/lmtemp.4			man-sys-man		.man
 ./usr/share/man/man4/lo.4			man-sys-man		.man
@@ -8753,7 +8753,7 @@
 ./usr/share/man/man8/ldpd.8			man-router-man		.man
 ./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man		.man
 ./usr/share/man/man8/link.8			man-sysutil-man		.man
-./usr/share/man/man8/lmcconfig.8		man-sysutil-man		.man
+./usr/share/man/man8/lmcconfig.8		man-obsolete		obsolete
 ./usr/share/man/man8/lmcctl.8			man-obsolete		obsolete
 ./usr/share/man/man8/lmtp.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/local.8			man-postfix-man		postfix,.man
