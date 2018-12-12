@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.73 2018/12/12 07:56:57 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.74 2018/12/12 11:51:33 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.73 2018/12/12 07:56:57 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.74 2018/12/12 11:51:33 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,8 @@ struct var *vartab[VTABSIZE];
 
 STATIC int strequal(const char *, const char *);
 STATIC struct var *find_var(const char *, struct var ***, int *);
+STATIC void showvar(struct var *, const char *, const char *, int);
+static void export_usage(const char *) __dead;
 
 /*
  * Initialize the varable symbol tables and import the environment
@@ -756,12 +758,35 @@ sort_var(const void *v_v1, const void *v_v2)
  * For now just roll 'em through qsort for printing...
  */
 
+STATIC void
+showvar(struct var *vp, const char *cmd, const char *xtra, int show_value)
+{
+	const char *p;
+
+	if (cmd)
+		out1fmt("%s ", cmd);
+	if (xtra)
+		out1fmt("%s ", xtra);
+	p = vp->text;
+	if (vp->rfunc && (vp->flags & VFUNCREF) != 0) {
+		p = (*vp->rfunc)(vp);
+		if (p == NULL)
+			p = vp->text;
+	}
+	for ( ; *p != '=' ; p++)
+		out1c(*p);
+	if (!(vp->flags & VUNSET) && show_value) {
+		out1fmt("=");
+		print_quoted(++p);
+	}
+	out1c('\n');
+}
+
 int
-showvars(const char *name, int flag, int show_value, const char *xtra)
+showvars(const char *cmd, int flag, int show_value, const char *xtra)
 {
 	struct var **vpp;
 	struct var *vp;
-	const char *p;
 
 	static struct var **list;	/* static in case we are interrupted */
 	static int list_len;
@@ -789,26 +814,11 @@ showvars(const char *name, int flag, int show_value, const char *xtra)
 
 	qsort(list, count, sizeof *list, sort_var);
 
-	for (vpp = list; count--; vpp++) {
-		vp = *vpp;
-		if (name)
-			out1fmt("%s ", name);
-		if (xtra)
-			out1fmt("%s ", xtra);
-		p = vp->text;
-		if (vp->rfunc && (vp->flags & VFUNCREF) != 0) {
-			p = (*vp->rfunc)(vp);
-			if (p == NULL)
-				p = vp->text;
-		}
-		for ( ; *p != '=' ; p++)
-			out1c(*p);
-		if (!(vp->flags & VUNSET) && show_value) {
-			out1fmt("=");
-			print_quoted(++p);
-		}
-		out1c('\n');
-	}
+	for (vpp = list; count--; vpp++)
+		showvar(*vpp, cmd, xtra, show_value);
+
+	/* no free(list), will be used again next time ... */
+
 	return 0;
 }
 
@@ -818,53 +828,137 @@ showvars(const char *name, int flag, int show_value, const char *xtra)
  * The export and readonly commands.
  */
 
+static void __dead
+export_usage(const char *cmd)
+{
+#ifdef SMALL
+	if (*cmd == 'r')
+	    error("Usage: %s [ -p | var[=val]... ]", cmd);
+	else
+	    error("Usage: %s [ -p | [-n] var[=val]... ]", cmd);
+#else
+	if (*cmd == 'r')
+	    error("Usage: %s [-p [var...] | -q var... | var[=val]... ]", cmd);
+	else
+	    error(
+	     "Usage: %s [ -px [var...] | -q[x] var... | [-n|x] var[=val]... ]",
+		cmd);
+#endif
+}
+
 int
 exportcmd(int argc, char **argv)
 {
 	struct var *vp;
 	char *name;
-	const char *p;
-	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
+	const char *p = argv[0];
+	int flag = p[0] == 'r'? VREADONLY : VEXPORT;
 	int pflg = 0;
 	int nflg = 0;
+#ifndef SMALL
 	int xflg = 0;
+	int qflg = 0;
+#endif
 	int res;
 	int c;
 	int f;
 
-	while ((c = nextopt("npx")) != '\0') {
+#ifdef SMALL
+#define EXPORT_OPTS "np"
+#else
+#define	EXPORT_OPTS "npqx"
+#endif
+
+	while ((c = nextopt(EXPORT_OPTS)) != '\0') {
+
+#undef EXPORT_OPTS
+
 		switch (c) {
+		case 'n':
+			if (pflg || flag == VREADONLY
+#ifndef SMALL
+				|| qflg || xflg
+#endif
+						)
+				export_usage(p);
+			nflg = 1;
+			break;
 		case 'p':
-			if (nflg)
-				return 1;
+			if (nflg
+#ifndef SMALL
+				|| qflg
+#endif
+					)
+				export_usage(p);
 			pflg = 3;
 			break;
-		case 'n':
-			if (pflg || xflg || flag == VREADONLY)
-				return 1;
-			nflg = 1;
+#ifndef SMALL
+		case 'q':
+			if (nflg || pflg)
+				export_usage(p);
+			qflg = 1;
 			break;
 		case 'x':
 			if (nflg || flag == VREADONLY)
-				return 1;
+				export_usage(p);
 			flag = VNOEXPORT;
 			xflg = 1;
 			break;
-		default:
-			return 1;
+#endif
 		}
 	}
 
-	if (nflg && *argptr == NULL)
-		return 1;
+	if ((nflg
+#ifndef SMALL
+		|| qflg
+#endif
+		 ) && *argptr == NULL)
+		export_usage(p);
 
-	if (pflg || *argptr == NULL) {
-		showvars( pflg ? argv[0] : 0, flag, pflg,
-		    pflg && xflg ? "-x" : NULL );
+#ifndef SMALL
+	if (pflg && *argptr != NULL) {
+		while ((name = *argptr++) != NULL) {
+			int len;
+
+			vp = find_var(name, NULL, &len);
+			if (name[len] == '=')
+				export_usage(p);
+			if (!goodname(name))
+				error("%s: bad variable name", name);
+
+			if (vp && vp->flags & flag)
+				showvar(vp, p, xflg ? "-x" : NULL, 1);
+		}
 		return 0;
 	}
+#endif
+
+	if (pflg || *argptr == NULL)
+		return showvars( pflg ? p : 0, flag, pflg,
+#ifndef SMALL
+		    pflg && xflg ? "-x" :
+#endif
+					    NULL );
 
 	res = 0;
+#ifndef SMALL
+	if (qflg) {
+		while ((name = *argptr++) != NULL) {
+			int len;
+
+			vp = find_var(name, NULL, &len);
+			if (name[len] == '=')
+				export_usage(p);
+			if (!goodname(name))
+				error("%s: bad variable name", name);
+
+			if (vp == NULL || !(vp->flags & flag))
+				res = 1;
+		}
+		return res;
+	}
+#endif
+
 	while ((name = *argptr++) != NULL) {
 		int len;
 
@@ -893,7 +987,8 @@ exportcmd(int argc, char **argv)
 			}
 			if (p == NULL)
 				continue;
-		} 
+		} else if (nflg && p == NULL && !goodname(name))
+			error("%s: bad variable name", name);
 
 		if (!nflg || p != NULL)
 			setvar(name, p, f);
