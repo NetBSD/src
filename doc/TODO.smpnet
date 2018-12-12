@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.25 2018/09/23 13:48:16 maxv Exp $
+$NetBSD: TODO.smpnet,v 1.26 2018/12/12 07:07:30 maxv Exp $
 
 MP-safe components
 ==================
@@ -115,7 +115,6 @@ Unfortunately some bpf_mtap on Rx are still called in hardware interrupt context
 This is the list of the functions that have such bpf_mtap:
 
  - sca_frame_process() @ sys/dev/ic/hd64570.c
- - rxintr_cleanup() @ sys/dev/pci/if_lmc.c
 
 Ideally we should make the functions run in softint somehow, but we don't have
 actual devices, no time (or interest/love) to work on the task, so instead we
