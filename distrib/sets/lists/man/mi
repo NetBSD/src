@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1631 2018/12/12 07:04:05 maxv Exp $
+# $NetBSD: mi,v 1.1632 2018/12/12 08:20:53 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1505,6 +1505,7 @@
 ./usr/share/man/cat4/ntwoc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/null.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nvme.0			man-sys-catman		.cat
+./usr/share/man/cat4/nvmm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nxt2k.0			man-sys-catman		.cat
 ./usr/share/man/cat4/oak.0			man-sys-catman		.cat
 ./usr/share/man/cat4/oboe.0			man-sys-catman		.cat
@@ -4617,6 +4618,7 @@
 ./usr/share/man/html4/ntwoc.html		man-sys-htmlman		html
 ./usr/share/man/html4/null.html			man-sys-htmlman		html
 ./usr/share/man/html4/nvme.html			man-sys-htmlman		html
+./usr/share/man/html4/nvmm.html			man-sys-htmlman		html
 ./usr/share/man/html4/nxt2k.html		man-sys-htmlman		html
 ./usr/share/man/html4/oak.html			man-sys-htmlman		html
 ./usr/share/man/html4/oboe.html			man-sys-htmlman		html
@@ -7587,6 +7589,7 @@
 ./usr/share/man/man4/ntwoc.4			man-sys-man		.man
 ./usr/share/man/man4/null.4			man-sys-man		.man
 ./usr/share/man/man4/nvme.4			man-sys-man		.man
+./usr/share/man/man4/nvmm.4			man-sys-man		.man
 ./usr/share/man/man4/nxt2k.4			man-sys-man		.man
 ./usr/share/man/man4/oak.4			man-sys-man		.man
 ./usr/share/man/man4/oboe.4			man-sys-man		.man
