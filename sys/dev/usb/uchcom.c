@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.24 2018/12/12 23:21:36 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.25 2018/12/12 23:26:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.24 2018/12/12 23:21:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.25 2018/12/12 23:26:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -135,8 +135,6 @@ struct uchcom_softc
 	int			sc_rts;
 	u_char			sc_lsr;
 	u_char			sc_msr;
-	int			sc_lcr1;
-	int			sc_lcr2;
 };
 
 struct uchcom_endpoints
