@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.215 2018/12/12 12:56:17 kre Exp $
+.\"	$NetBSD: sh.1,v 1.216 2018/12/12 20:22:43 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -530,11 +530,16 @@ whether a colon (:) terminates the user name in tilde (~) expansions
 other than in assignment statements
 .Dq ( no
 in posix mode),
+the format of the output of the
+.Ic kill Fl l
+command, where posix mode causes the names of the signals
+be separated by either a single space or newline, and where otherwise
+sufficient spaces are inserted to generate nice looking columns,
 and whether the shell treats
 an empty brace-list compound statement as a syntax error
 (expected by POSIX) or permits it.
 Such statements
-.Dq "{ }"
+.Dq "{\ }"
 can be useful when defining dummy functions.
 Lastly, in posix mode, only one
 .Dq \&!
