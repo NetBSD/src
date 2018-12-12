@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.212 2018/12/11 13:31:20 kre Exp $
+.\"	$NetBSD: sh.1,v 1.213 2018/12/12 11:51:33 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd December 11, 2018
+.Dd December 12, 2018
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -2274,6 +2274,7 @@ etc).
 .It Ic \&: Op Ar arg ...
 A null command that returns a 0 (true) exit value.
 Any arguments or redirects are evaluated, then ignored.
+.\"
 .It Ic \&. Ar file
 The dot command reads and executes the commands from the specified
 .Ar file
@@ -2293,6 +2294,7 @@ and continue) behave across a dot command boundary.
 This implementation allows them to control loops surrounding the dot command,
 but obviously such behavior should not be relied on.
 It is now permitted by the standard, but not required.
+.\"
 .It Ic alias Op Ar name Ns Op Li = Ns Ar string ...
 If
 .Ar name Ns Li = Ns Ar string
@@ -2310,9 +2312,11 @@ With no arguments, the
 built-in prints the
 names and values of all defined aliases (see
 .Ic unalias ) .
+.\"
 .It Ic bg Op Ar job ...
 Continue the specified jobs (or the current job if no
 jobs are given) in the background.
+.\"
 .It Ic command Oo Fl pVv Oc Ar command Op Ar arg ...
 Execute the specified command but ignore shell functions when searching
 for it.
@@ -2335,6 +2339,7 @@ Do not execute the command but
 search for the command and print the absolute pathname
 of utilities, the name for built-ins or the expansion of aliases.
 .El
+.\"
 .It Ic cd Oo Fl P Oc Op Ar directory Op Ar replace
 Switch to the specified directory (default
 .Ev $HOME ) .
@@ -2402,9 +2407,11 @@ mechanism was used
 or if the
 .Ar replace
 argument was used.
+.\"
 .It Ic eval Ar string ...
 Concatenate all the arguments with spaces.
 Then re-parse and execute the command.
+.\"
 .It Ic exec Op Ar command Op Ar arg ...
 Unless
 .Ar command
@@ -2447,14 +2454,17 @@ Alternatively, see the
 .Ic fdflags
 command below, which can set, or clear, this, and other,
 file descriptor flags.
+.\"
 .It Ic exit Op Ar exitstatus
 Terminate the shell process.
 If
 .Ar exitstatus
 is given it is used as the exit status of the shell; otherwise the
 exit status of the preceding command (the current value of $?) is used.
-.It Ic export Oo Fl npx Oc Ar name ...
-.It Ic export Fl p Op Fl x
+.\"
+.It Ic export Oo Fl nx Oc Ar name Ns Oo =value Oc ...
+.It Ic export Oo Fl x Oc Oo Fl p Oo Ar name ... Oc Oc
+.It Ic export Fl q Oo Fl x Oc Ar name ...
 With no options,
 but one or more names,
 the specified names are exported so that they will appear in the
@@ -2477,6 +2487,7 @@ provided the variable is not also read-only.
 That is
 .Bd -literal -offset indent
 export -x FOO # FOO will now not be exported by default
+export FOO    # this command will fail (non-fatally)
 FOO=some_value my_command
 .Ed
 .Pp
@@ -2487,30 +2498,57 @@ to
 through the environment.
 .Pp
 The shell allows the value of a variable to be set at the
-same time it is exported by writing
+same time it is exported (or unexported, etc) by writing
 .Pp
-.Dl export name=value
+.Dl export [-nx] name=value
 .Pp
-With no arguments the export command lists the names of all exported variables,
+With no arguments the export command lists the names of all
+set exported variables,
 or if
 .Fl x
-was given, all variables marked not for export.
+was given, all set variables marked not for export.
 With the
 .Fl p
-option specified the output will be formatted suitably for non-interactive use.
+option specified, the output will be formatted suitably for
+non-interactive use, and unset variables are included.
+When
+.Fl p
+is given, variable names, but not values, may also be
+given, in which case output is limited to the variables named.
 .Pp
-The
+With
+.Fl q
+and a list of variable names, the
+.Ic export
+command will exit with status 0 if all the named
+variables have been marked for export, or 1 if
+any are not so marked.
+If
+.Fl x
+is also given,
+the test is instead for variables marked not to be exported.
+.Pp
+Other than with
+.Fl q ,
+the
 .Ic export
 built-in exits with status 0,
-unless an invalid option, or option combination, is given,
-or unless an attempt is made to export a variable which has
+unless an attempt is made to export a variable which has
 been marked as unavailable for export,
 in which cases it exits with status 1.
+In all cases if
+an invalid option, or option combination, is given,
+or an invalid variable name is present,
+.Ic export
+will write a message to the standard error output,
+and exit with a non-zero status.
+A non-interactive shell will terminate.
 .Pp
 Note that there is no restriction upon exporting,
 or un-exporting, read-only variables.
 The no-export flag can be reset by unsetting the variable
-and creating it again \(en provided it is not also read-only.
+and creating it again \(en provided the variable is not also read-only.
+.\"
 .It Ic fc Oo Fl e Ar editor Oc Op Ar first Op Ar last
 .It Ic fc Fl l Oo Fl nr Oc Op Ar first Op Ar last
 .It Ic fc Fl s Oo Ar old=new Oc Op Ar first
@@ -2602,10 +2640,12 @@ Name of the editor to use.
 .It Ev HISTSIZE
 The number of previous commands that are accessible.
 .El
+.\"
 .It Ic fg Op Ar job
 Move the specified job or the current job to the foreground.
 A foreground job can interact with the user via standard input,
 and receive signals from the terminal.
+.\"
 .It Ic fdflags Oo Fl v Oc Op Ar fd ...
 .It Ic fdflags Oo Fl v Oc Fl s Ar flags fd Op ...
 Get or set file descriptor flags.
@@ -2642,6 +2682,7 @@ See
 and
 .Xr open 2
 for more information.
+.\"
 .It Ic getopts Ar optstring var
 The POSIX
 .Ic getopts
@@ -2742,6 +2783,7 @@ cmd \-a \-c arg file file
 cmd \-carg -a file file
 cmd \-a \-carg \-\- file file
 .Ed
+.\"
 .It Ic hash Oo Fl rv Oc Op Ar command ...
 The shell maintains a hash table which remembers the
 locations of commands.
@@ -2765,11 +2807,13 @@ The
 .Fl r
 option causes the hash command to delete all the entries in the hash table
 except for functions.
+.\"
 .It Ic inputrc Ar file
 Read the
 .Ar file
 to set key bindings as defined by
 .Xr editrc 5 .
+.\"
 .It Ic jobid Oo Fl g Ns \&| Ns Fl j Ns \&| Ns Fl p Oc  Op Ar job
 With no flags, print the process identifiers of the processes in the job.
 If the
@@ -2815,6 +2859,7 @@ or with
 .Fl p
 there is no process group leader (should not happen),
 and otherwise exits with status 0.
+.\"
 .It Ic jobs Oo Fl l Ns \&| Ns Fl p Oc Op Ar job ...
 Without
 .Ar job
@@ -2856,6 +2901,7 @@ and cleans up the job table entry for that job.
 Non-interactive shells need to execute
 .Ic wait
 commands to clean up terminated background jobs.
+.\"
 .It Ic local Oo Fl INx Oc Oo Ar variable | \- Oc ...
 Define local variables for a function.
 Local variables have their attributes, and values,
@@ -3050,6 +3096,7 @@ See the section
 below for details of the effects of making the variable
 .Dv LINENO
 local.
+.\"
 .It Ic pwd Op Fl \&LP
 Print the current directory.
 If
@@ -3090,6 +3137,7 @@ The built-in command may differ from the program of the same name because
 the program will use
 .Ev PWD
 and the built-in uses a separately cached value.
+.\"
 .It Ic read Oo Fl p Ar prompt Oc Oo Fl r Oc Ar variable Op Ar ...
 The
 .Ar prompt
@@ -3120,9 +3168,12 @@ acts as an escape character, causing the following character to be treated
 literally.
 If a backslash is followed by a newline, the backslash and the
 newline will be deleted.
-.It Ic readonly Ar name ...
-.It Ic readonly Op Fl p
-The specified names are marked as read only, so that they cannot be
+.\"
+.It Ic readonly Ar name Ns Oo =value Oc Ns ...
+.It Ic readonly Oo Fl p Op name... Oc
+.It Ic readonly Oo Fl q Oc name...
+With no options,
+the specified names are marked as read only, so that they cannot be
 subsequently modified or unset.
 The shell allows the value of a variable
 to be set at the same time it is marked read only by writing
@@ -3131,10 +3182,38 @@ to be set at the same time it is marked read only by writing
 .Pp
 With no arguments the
 .Ic readonly
-command lists the names of all read only variables.
+command lists the names of all set read only variables.
 With the
 .Fl p
-option specified the output will be formatted suitably for non-interactive use.
+option specified,
+the output will be formatted suitably for non-interactive use,
+and unset variables are included.
+When the
+.Fl p
+option is given,
+a list of variable names (without values) may also be specified,
+in which case output is limited to the named variables.
+.Pp
+With the
+.Fl q
+option, the
+.Ic readonly
+command tests the read-only status of the variables listed
+and exits with status 0 if all named variables are read-only,
+or with status 1 if any are not read-only.
+.Pp
+Other than as specified for
+.Fl q
+the
+.Ic readonly
+command normally exits with status 0.
+In all cases, if an unknown option, or an invalid option combination,
+or an invalid variable name, is given;
+or a variable which was already read-only is attempted to be set;
+the exit status will not be zero, a diagnostic
+message will be written to the standard error output,
+and a non-interactive shell will terminate.
+.\"
 .It Ic return Op Ar n
 Stop executing the current function or a dot command with return value of
 .Ar n
@@ -3152,6 +3231,7 @@ Use the
 .Ic exit
 command instead, if you want to return from a script or exit
 your shell.
+.\"
 .It Ic set Oo { Fl options | Cm +options | Cm \-- } Oc Ar arg ...
 The
 .Ic set
@@ -3216,6 +3296,7 @@ Otherwise the following arguments become
 and
 .Li \&$#
 is set to the number of arguments present.
+.\"
 .It Ic setvar Ar variable Ar value
 Assigns
 .Ar value
@@ -3229,6 +3310,7 @@ rather than using
 is intended to be used in
 functions that assign values to variables whose names are passed as
 parameters.)
+.\"
 .It Ic shift Op Ar n
 Shift the positional parameters
 .Ar n
@@ -3254,6 +3336,7 @@ The shift count must be less than or equal to the number of
 positional parameters (
 .Dq Li $# )
 before the shift.
+.\"
 .It Ic times
 Prints two lines to standard output.
 Each line contains two accumulated time values, expressed
@@ -3272,6 +3355,7 @@ for more information.
 .Ic times
 has no parameters, and exits with an exit status of 0 unless
 an attempt is made to give it an option.
+.\"
 .It Ic trap Ar action signal ...
 .It Ic trap \-
 .It Ic trap Op Fl l
@@ -3389,6 +3473,7 @@ untrapped (in their default states)
 and which were altered during the intermediate code,
 would not be reset by the final
 .Ic eval .
+.\"
 .It Ic type Op Ar name ...
 Interpret each
 .Ar name
@@ -3399,6 +3484,7 @@ command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
+.\"
 .It Ic ulimit Oo Fl H Ns \*(Ba Ns Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
 Inquire about or set the hard or soft limits on processes or set new
 limits.
@@ -3521,6 +3607,7 @@ The exit status is 0, unless an attempt was made to unset
 a readonly variable, in which case the exit status is 1.
 It is not an error to unset (or undefine) a variable (or function)
 that is not currently set (or defined.)
+.\"
 .It Ic wait Oo Fl n Oc Oo Fl p Ar var Oc Op Ar job ...
 Wait for the specified jobs to complete
 and return the exit status of the last job in the parameter list,
