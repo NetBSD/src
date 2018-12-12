@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.269 2018/10/01 08:23:53 jmcneill Exp $
+# $NetBSD: mi,v 1.270 2018/12/12 07:04:05 maxv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1124,7 +1124,7 @@
 ./usr/libdata/debug/usr/sbin/lastlogin.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ldpd.debug		comp-router-debug	debug
 ./usr/libdata/debug/usr/sbin/link.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/lockstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lpc.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
