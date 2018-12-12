@@ -1,4 +1,7 @@
-/*	$NetBSD: sys_cygwin_component.c,v 1.3 2018/08/10 21:44:59 pgoyette Exp $	*/
+/*	$NetBSD: sys_cygwin_component.c,v 1.4 2018/12/12 00:48:44 alnsn Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_cygwin_component.c,v 1.4 2018/12/12 00:48:44 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
