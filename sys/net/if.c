@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.441 2018/11/15 10:23:56 maxv Exp $	*/
+/*	$NetBSD: if.c,v 1.442 2018/12/12 01:46:47 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.441 2018/11/15 10:23:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.442 2018/12/12 01:46:47 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -148,6 +148,11 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.441 2018/11/15 10:23:56 maxv Exp $");
 #include "ether.h"
 #include "fddi.h"
 #include "token.h"
+
+#include "bridge.h"
+#if NBRIDGE > 0
+#include <net/if_bridgevar.h>
+#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -2909,40 +2914,41 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		/* Pre-compute the checksum flags mask. */
 		ifp->if_csum_flags_tx = 0;
 		ifp->if_csum_flags_rx = 0;
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_IPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_IPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_TCPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_UDPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_TCPv6;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_TCPv6;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_UDPv6;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
-		}
+
+		if (ifp->if_capenable & IFCAP_TSOv4)
+			ifp->if_csum_flags_tx |= M_CSUM_TSOv4;
+		if (ifp->if_capenable & IFCAP_TSOv6)
+			ifp->if_csum_flags_tx |= M_CSUM_TSOv6;
+
+#if NBRIDGE > 0
+		if (ifp->if_bridge != NULL)
+			bridge_calc_csum_flags(ifp->if_bridge);
+#endif
+
 		if (ifp->if_flags & IFF_UP)
 			return ENETRESET;
 		return 0;
