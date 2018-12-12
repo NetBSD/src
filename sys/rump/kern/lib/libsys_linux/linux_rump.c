@@ -1,4 +1,7 @@
-/*	$NetBSD: linux_rump.c,v 1.2 2014/01/10 19:44:47 njoly Exp $	*/
+/*	$NetBSD: linux_rump.c,v 1.3 2018/12/12 00:48:44 alnsn Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_rump.c,v 1.3 2018/12/12 00:48:44 alnsn Exp $");
 
 #include <sys/param.h>
 

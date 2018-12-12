@@ -1,4 +1,4 @@
-/*	$NetBSD: virtif_user.c,v 1.3 2014/03/14 10:06:22 pooka Exp $	*/
+/*	$NetBSD: virtif_user.c,v 1.4 2018/12/12 00:48:44 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: virtif_user.c,v 1.4 2018/12/12 00:48:44 alnsn Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>

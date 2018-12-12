@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_sunos_compat.c,v 1.2 2017/07/28 15:34:07 riastradh Exp $	*/
+/*	$NetBSD: rump_sunos_compat.c,v 1.3 2018/12/12 00:48:44 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rump_sunos_compat.c,v 1.3 2018/12/12 00:48:44 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
