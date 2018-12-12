@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.46 2016/08/04 06:43:43 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.46.8.1 2018/12/12 11:33:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.46 2016/08/04 06:43:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.46.8.1 2018/12/12 11:33:29 martin Exp $");
 
 #include "opt_dtrace.h"
 
@@ -765,6 +765,8 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 	 * siglist check.
 	 */
 	sigminusset(&sigcantmask, &l->l_sigwaitset);
+
+	memset(&ksi.ksi_info, 0, sizeof(ksi.ksi_info));
 
 	mutex_enter(p->p_lock);
 
