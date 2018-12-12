@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.23 2018/12/10 17:21:21 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.24 2018/12/12 11:35:59 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -323,4 +323,9 @@ bin/sh/parser.c					1.152 (patch)
 
 	Avoid crash from redirect on null compound command.
 	[kre, ticket #1663]
+
+sys/kern/sys_sig.c				1.47
+
+	Fix kernel info leak, 4 bytes of padding in struct _ksiginfo.
+	[maxv, ticket #1664]
 
