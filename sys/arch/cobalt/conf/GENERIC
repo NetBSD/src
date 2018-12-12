@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160 2018/09/06 05:36:50 maxv Exp $
+# $NetBSD: GENERIC,v 1.161 2018/12/12 06:29:36 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.161 $"
 
 maxusers	32
 
@@ -249,7 +249,6 @@ ral*		at pci? dev ? function ?	# ralink wifi
 #tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*		at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-#lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
