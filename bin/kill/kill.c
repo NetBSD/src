@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.29 2018/10/28 18:26:52 kre Exp $ */
+/* $NetBSD: kill.c,v 1.30 2018/12/12 20:22:43 kre Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.29 2018/10/28 18:26:52 kre Exp $");
+__RCSID("$NetBSD: kill.c,v 1.30 2018/12/12 20:22:43 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,6 +254,7 @@ nosig(const char *name)
 	/* NOTREACHED */
 }
 
+#ifndef SHELL
 /*
  * Print the names of all the signals (neatly) to fp
  * "len" gives the number of chars already printed to
@@ -302,6 +303,7 @@ printsignals(FILE *fp, int len)
 	if (len != 0)
 		fprintf(fp, "\n");
 }
+#endif
 
 static void
 usage(void)
