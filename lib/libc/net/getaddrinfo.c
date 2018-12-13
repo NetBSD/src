@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.118 2018/12/13 04:30:55 dholland Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.119 2018/12/13 04:41:41 dholland Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.118 2018/12/13 04:30:55 dholland Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.119 2018/12/13 04:41:41 dholland Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -302,7 +302,7 @@ static const char * const ai_errlist[] = {
 	"ai_family not supported",			/* EAI_FAMILY	  */
 	"Memory allocation failure",			/* EAI_MEMORY	  */
 	"No address associated with hostname",		/* EAI_NODATA	  */
-	"hostname nor servname provided, or not known", /* EAI_NONAME	  */
+	"hostname or servname not provided or not known", /* EAI_NONAME	  */
 	"servname not supported for ai_socktype",	/* EAI_SERVICE	  */
 	"ai_socktype not supported",			/* EAI_SOCKTYPE	  */
 	"System error returned in errno",		/* EAI_SYSTEM	  */
