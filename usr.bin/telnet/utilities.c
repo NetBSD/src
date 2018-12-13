@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.25 2018/12/13 04:49:19 maya Exp $	*/
+/*	$NetBSD: utilities.c,v 1.26 2018/12/13 05:07:03 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.25 2018/12/13 04:49:19 maya Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.26 2018/12/13 05:07:03 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,8 @@ __RCSID("$NetBSD: utilities.c,v 1.25 2018/12/13 04:49:19 maya Exp $");
 #ifdef ENCRYPTION
 #include <libtelnet/encrypt.h>
 #endif
+
+static void SetForExit(void);
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
 int	prettydump;
@@ -879,7 +881,7 @@ EmptyTerminal(void)
     }
 }
 
-void
+static void
 SetForExit(void)
 {
     setconnmode(0);

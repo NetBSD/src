@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.39 2018/12/13 04:49:19 maya Exp $	*/
+/*	$NetBSD: externs.h,v 1.40 2018/12/13 05:07:03 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -328,7 +328,6 @@ void printoption(const char *, int, int );
 void optionstatus(void);
 void printsub(int, unsigned char *, int);
 void EmptyTerminal(void);
-void SetForExit(void);
 void Exit(int) __attribute__((__noreturn__));
 void ExitString(const char *, int) __attribute__((__noreturn__));
 
