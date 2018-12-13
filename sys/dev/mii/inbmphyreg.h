@@ -1,6 +1,6 @@
-/*	$NetBSD: inbmphyreg.h,v 1.13 2018/12/12 08:49:33 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.14 2018/12/13 05:22:44 msaitoh Exp $	*/
 /*******************************************************************************
-Copyright (c) 2001-2005, Intel Corporation 
+Copyright (c) 2001-2015, Intel Corporation 
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
@@ -39,12 +39,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	_DEV_MII_INBMPHYREG_H_
 
 /* Bits...
- * 15-5: page
- * 4-0: register offset
+ * 31-16: register offset (high)
+ * 15-5:  page
+ * 4-0:   register offset (low)
  */
-#define BME1000_PAGE_SHIFT        5
+#define BME1000_PAGE_SHIFT	5
+#define BM_PHY_UPPER_SHIFT	21
 #define BME1000_REG(page, reg)    \
-        (((page) << BME1000_PAGE_SHIFT) | ((reg) & MII_ADDRMASK))
+        (((reg) & MII_ADDRMASK) | 			\
+	    (((page) & 0xffff) << BME1000_PAGE_SHIFT) |	\
+	    (((reg) & ~MII_ADDRMASK) << (BM_PHY_UPPER_SHIFT - BME1000_PAGE_SHIFT)))
 
 #define BME1000_MAX_MULTI_PAGE_REG     0xf   /* Registers equal on all pages */
 
@@ -52,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	((uint16_t)(((offset) >> BME1000_PAGE_SHIFT) & 0xffff))
 #define	BM_PHY_REG_NUM(offset)				\
 	((uint16_t)((offset) & MII_ADDRMASK)		\
-	| (((offset) >> (21 - BME1000_PAGE_SHIFT)) & ~MII_ADDRMASK))
+	| (((offset) >> (BM_PHY_UPPER_SHIFT - BME1000_PAGE_SHIFT)) & ~MII_ADDRMASK))
 
 /* BME1000 Specific Registers */
 #define BME1000_PHY_SPEC_CTRL	BME1000_REG(0, 16) /* PHY Specific Control */
