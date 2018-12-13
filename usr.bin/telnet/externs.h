@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.38 2016/10/04 14:35:38 joerg Exp $	*/
+/*	$NetBSD: externs.h,v 1.39 2018/12/13 04:49:19 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -90,10 +90,6 @@ extern int
     crmod,
     netdata,		/* Print out network data flow */
     prettydump,		/* Print "netdata" output in user readable format */
-#ifdef TN3270
-    cursesdata,		/* Print out curses data flow */
-    apitrace,		/* Trace API transactions */
-#endif	/* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
     telnet_debug,	/* Debug level */
     doaddrlookup,	/* do a reverse address lookup? */
@@ -371,42 +367,3 @@ extern struct	termios new_tc;
 # define termForw1Charp		&termForw1Char
 # define termForw2Charp		&termForw2Char
 # define termAytCharp		&termAytChar
-
-
-/* Tn3270 section */
-#if	defined(TN3270)
-
-extern int
-    HaveInput,		/* Whether an asynchronous I/O indication came in */
-    noasynchtty,	/* Don't do signals on I/O (SIGURG, SIGIO) */
-    noasynchnet,	/* Don't do signals on I/O (SIGURG, SIGIO) */
-    sigiocount,		/* Count of SIGIO receptions */
-    shell_active;	/* Subshell is active */
-
-extern char
-    *Ibackp,		/* Oldest byte of 3270 data */
-    Ibuf[],		/* 3270 buffer */
-    *Ifrontp,		/* Where next 3270 byte goes */
-    tline[200],
-    *transcom;		/* Transparent command */
-
-/* tn3270.c */
-void init_3270(void);
-int DataToNetwork(char *, int, int);
-void inputAvailable(int);
-void outputPurge(void);
-int DataToTerminal(char *, int);
-int Push3270(void);
-void Finish3270(void);
-void StringToTerminal(char *);
-int _putchar(int);
-void SetIn3270(void);
-int tn3270_ttype(void);
-int settranscom(int, char *[]);
-int shell_continue(void);
-int DataFromTerminal(char *, int);
-int DataFromNetwork(char *, int, int);
-void ConnectScreen(void);
-int DoTerminalOutput(void);
-
-#endif	/* defined(TN3270) */
