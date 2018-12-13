@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.34 2018/02/04 09:01:12 mrg Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.35 2018/12/13 04:49:19 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.34 2018/02/04 09:01:12 mrg Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.35 2018/12/13 04:49:19 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -453,11 +453,6 @@ TerminalNewMode(int f)
 
     ioctl(tin, FIONBIO, (char *)&onoff);
     ioctl(tout, FIONBIO, (char *)&onoff);
-#if	defined(TN3270)
-    if (noasynchtty == 0) {
-	ioctl(tin, FIOASYNC, (char *)&onoff);
-    }
-#endif	/* defined(TN3270) */
 
 }
 
@@ -502,22 +497,6 @@ NetNonblockingIO(int fd, int onoff)
     ioctl(fd, FIONBIO, (char *)&onoff);
 }
 
-#ifdef TN3270
-void
-NetSigIO(int fd, int onoff)
-{
-    ioctl(fd, FIOASYNC, (char *)&onoff);	/* hear about input */
-}
-
-void
-NetSetPgrp(int fd)
-{
-    int myPid;
-
-    myPid = getpid();
-    fcntl(fd, F_SETOWN, myPid);
-}
-#endif	/*defined(TN3270)*/
 
 /*
  * Various signal handling routines.
@@ -594,12 +573,6 @@ sys_telnet_init(void)
 
     NetNonblockingIO(net, 1);
 
-#ifdef TN3270
-    if (noasynchnet == 0) {			/* DBX can't handle! */
-	NetSigIO(net, 1);
-	NetSetPgrp(net);
-    }
-#endif	/* defined(TN3270) */
 
     if (SetSockOpt(net, SOL_SOCKET, SO_OOBINLINE, 1) == -1) {
 	perror("SetSockOpt");
@@ -649,14 +622,6 @@ process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
 	    if (errno == EINTR) {
 		return 0;
 	    }
-#ifdef TN3270
-		    /*
-		     * we can get EBADF if we were in transparent
-		     * mode, and the transcom process died.
-		    */
-	    if (errno == EBADF)
-		return 0;
-#endif /* defined(TN3270) */
 		    /* I don't like this, does it ever happen? */
 	    printf("sleep(5) from telnet, after poll\r\n");
 	    sleep(5);

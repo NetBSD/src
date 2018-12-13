@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.8 2003/08/07 11:16:09 agc Exp $	*/
+/*	$NetBSD: defines.h,v 1.9 2018/12/13 04:49:19 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -32,12 +32,6 @@
  */
 
 #define	settimer(x)	clocks.x = clocks.system++
-
-#ifndef TN3270
-
-#define	SetIn3270()
-
-#endif	/* !defined(TN3270) */
 
 #define	NETADD(c)	{ *netoring.supply = (c); ring_supplied(&netoring, 1); }
 #define	NET2ADD(c1,c2)	{ NETADD((c1)); NETADD((c2)); }
