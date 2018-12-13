@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.25 2018/12/12 23:26:00 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.26 2018/12/13 00:36:30 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.25 2018/12/12 23:26:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.26 2018/12/13 00:36:30 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -84,9 +84,8 @@ int	uchcomdebug = 0;
 #define UCHCOM_REG_STAT2	0x07
 #define UCHCOM_REG_BPS_PRE	0x12
 #define UCHCOM_REG_BPS_DIV	0x13
-#define UCHCOM_REG_BREAK1	0x05
-#define UCHCOM_REG_BREAK2	0x18
-#define UCHCOM_REG_LCR1		0x18
+#define UCHCOM_REG_BREAK	0x05
+#define UCHCOM_REG_LCR		0x18
 #define UCHCOM_REG_LCR2		0x25
 
 #define UCHCOM_VER_20		0x20
@@ -99,16 +98,20 @@ int	uchcomdebug = 0;
 #define UCHCOM_DTR_MASK		0x20
 #define UCHCOM_RTS_MASK		0x40
 
-#define UCHCOM_BRK1_MASK	0x01
-#define UCHCOM_BRK2_MASK	0x40
+#define UCHCOM_BREAK_MASK	0x01
 
-#define UCHCOM_LCR1_MASK	0xAF
-#define UCHCOM_LCR2_MASK	0x07
-#define UCHCOM_LCR1_PARENB	0x80
-#define UCHCOM_LCR2_PAREVEN	0x07
-#define UCHCOM_LCR2_PARODD	0x06
-#define UCHCOM_LCR2_PARMARK	0x05
-#define UCHCOM_LCR2_PARSPACE	0x04
+#define UCHCOM_LCR_CS5		0x00
+#define UCHCOM_LCR_CS6		0x01
+#define UCHCOM_LCR_CS7		0x02
+#define UCHCOM_LCR_CS8		0x03
+#define UCHCOM_LCR_STOPB	0x04
+#define UCHCOM_LCR_PARENB	0x08
+#define UCHCOM_LCR_PARODD	0x00
+#define UCHCOM_LCR_PAREVEN	0x10
+#define UCHCOM_LCR_PARMARK	0x20
+#define UCHCOM_LCR_PARSPACE	0x30
+#define UCHCOM_LCR_TXE		0x40
+#define UCHCOM_LCR_RXE		0x80
 
 #define UCHCOM_INTR_STAT1	0x02
 #define UCHCOM_INTR_STAT2	0x03
@@ -619,21 +622,21 @@ static int
 set_break(struct uchcom_softc *sc, int onoff)
 {
 	usbd_status err;
-	uint8_t brk1, brk2;
+	uint8_t brk, lcr;
 
-	err = read_reg(sc, UCHCOM_REG_BREAK1, &brk1, UCHCOM_REG_BREAK2, &brk2);
+	err = read_reg(sc, UCHCOM_REG_BREAK, &brk, UCHCOM_REG_LCR, &lcr);
 	if (err)
 		return EIO;
 	if (onoff) {
 		/* on - clear bits */
-		brk1 &= ~UCHCOM_BRK1_MASK;
-		brk2 &= ~UCHCOM_BRK2_MASK;
+		brk &= ~UCHCOM_BREAK_MASK;
+		lcr &= ~UCHCOM_LCR_TXE;
 	} else {
 		/* off - set bits */
-		brk1 |= UCHCOM_BRK1_MASK;
-		brk2 |= UCHCOM_BRK2_MASK;
+		brk |= UCHCOM_BREAK_MASK;
+		lcr |= UCHCOM_LCR_TXE;
 	}
-	err = write_reg(sc, UCHCOM_REG_BREAK1, brk1, UCHCOM_REG_BREAK2, brk2);
+	err = write_reg(sc, UCHCOM_REG_BREAK, brk, UCHCOM_REG_LCR, lcr);
 	if (err)
 		return EIO;
 
@@ -698,52 +701,48 @@ set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 static int
 set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 {
-	if (sc->sc_version < UCHCOM_VER_30) {
-		usbd_status err;
-		uint8_t lcr1val = 0, lcr2val = 0;
+	usbd_status err;
+	uint8_t lcr = 0, lcr2 = 0;
 
-		err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
-		if (err) {
-			device_printf(sc->sc_dev, "cannot get LCR: %s\n",
-			    usbd_errstr(err));
-			return EIO;
-		}
+	err = read_reg(sc, UCHCOM_REG_LCR, &lcr, UCHCOM_REG_LCR2, &lcr2);
+	if (err) {
+		device_printf(sc->sc_dev, "cannot get LCR: %s\n",
+		    usbd_errstr(err));
+		return EIO;
+	}
 
-		lcr1val &= ~UCHCOM_LCR1_MASK;
-		lcr2val &= ~UCHCOM_LCR2_MASK;
+	lcr = UCHCOM_LCR_RXE | UCHCOM_LCR_TXE;
 
-		/*
-		 * XXX: it is difficult to handle the line control appropriately:
-		 *   - CS8, !CSTOPB and any parity mode seems ok, but
-		 *   - the chip doesn't have the function to calculate parity
-		 *     in !CS8 mode.
-		 *   - it is unclear that the chip supports CS5,6 mode.
-		 *   - it is unclear how to handle stop bits.
-		 */
+	switch (ISSET(cflag, CSIZE)) {
+	case CS5:
+		lcr |= UCHCOM_LCR_CS5;
+		break;
+	case CS6:
+		lcr |= UCHCOM_LCR_CS6;
+		break;
+	case CS7:
+		lcr |= UCHCOM_LCR_CS7;
+		break;
+	case CS8:
+		lcr |= UCHCOM_LCR_CS8;
+		break;
+	}
 
-		switch (ISSET(cflag, CSIZE)) {
-		case CS5:
-		case CS6:
-		case CS7:
-			return EINVAL;
-		case CS8:
-			break;
-		}
+	if (ISSET(cflag, PARENB)) {
+		lcr |= UCHCOM_LCR_PARENB;
+		if (!ISSET(cflag, PARODD))
+			lcr |= UCHCOM_LCR_PAREVEN;
+	}
 
-		if (ISSET(cflag, PARENB)) {
-			lcr1val |= UCHCOM_LCR1_PARENB;
-			if (ISSET(cflag, PARODD))
-				lcr2val |= UCHCOM_LCR2_PARODD;
-			else
-				lcr2val |= UCHCOM_LCR2_PAREVEN;
-		}
+	if (ISSET(cflag, CSTOPB)) {
+		lcr |= UCHCOM_LCR_STOPB;
+	}
 
-		err = write_reg(sc, UCHCOM_REG_LCR1, lcr1val, UCHCOM_REG_LCR2, lcr2val);
-		if (err) {
-			device_printf(sc->sc_dev, "cannot set LCR: %s\n",
-			    usbd_errstr(err));
-			return EIO;
-		}
+	err = write_reg(sc, UCHCOM_REG_LCR, lcr, UCHCOM_REG_LCR2, lcr2);
+	if (err) {
+		device_printf(sc->sc_dev, "cannot set LCR: %s\n",
+		    usbd_errstr(err));
+		return EIO;
 	}
 
 	return 0;
@@ -769,10 +768,10 @@ static int
 reset_chip(struct uchcom_softc *sc)
 {
 	usbd_status err;
-	uint8_t lcr1val, lcr2val, pre, div;
+	uint8_t lcr, lcr2, pre, div;
 	uint16_t val=0, idx=0;
 
-	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
+	err = read_reg(sc, UCHCOM_REG_LCR, &lcr, UCHCOM_REG_LCR2, &lcr2);
 	if (err)
 		goto failed;
 
@@ -780,15 +779,11 @@ reset_chip(struct uchcom_softc *sc)
 	if (err)
 		goto failed;
 
-	val |= (uint16_t)(lcr1val&0xF0) << 8;
-	val |= 0x01;
-	val |= (uint16_t)(lcr2val&0x0F) << 8;
-	val |= 0x02;
+	val |= (uint16_t)lcr << 8;
+	val |= 0x9c;	/* magic from vendor Linux and Android drivers */
 	idx |= pre & 0x07;
-	val |= 0x04;
 	idx |= (uint16_t)div << 8;
-	val |= 0x08;
-	val |= 0x10;
+	idx |= UCHCOM_BPS_PRE_IMM;
 
 	DPRINTF(("%s: reset v=0x%04X, i=0x%04X\n",
 		 device_xname(sc->sc_dev), val, idx));
