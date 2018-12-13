@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.21 2018/11/20 01:59:51 mrg Exp $ */
+/* $NetBSD: armreg.h,v 1.22 2018/12/13 10:44:25 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -596,6 +596,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	SPSR_A32_IT1 		__BIT(23)	// A32: IT[1]
 #define	SPSR_A32_IT0 		__BIT(22)	// A32: IT[0]
 #define	SPSR_SS	 		__BIT(21)	// Software Step
+#define	SPSR_SS_SHIFT		21
 #define	SPSR_IL	 		__BIT(20)	// Instruction Length
 #define	SPSR_GE	 		__BITS(19,16)	// A32: SIMD GE
 #define	SPSR_IT7 		__BIT(15)	// A32: IT[7]
@@ -804,6 +805,19 @@ AARCH64REG_WRITE_INLINE(dbgwvr15_el1)
 
 AARCH64REG_READ_INLINE(mdscr_el1) // Monitor Debug System Control Register
 AARCH64REG_WRITE_INLINE(mdscr_el1)
+
+#define	MDSCR_RXFULL		__BIT(30)	// for EDSCR.RXfull
+#define	MDSCR_TXFULL		__BIT(29)	// for EDSCR.TXfull
+#define	MDSCR_RXO		__BIT(27)	// for EDSCR.RXO
+#define	MDSCR_TXU		__BIT(26)	// for EDSCR.TXU
+#define	MDSCR_INTDIS		__BITS(32,22)	// for EDSCR.INTdis
+#define	MDSCR_TDA		__BIT(21)	// for EDSCR.TDA
+#define	MDSCR_MDE		__BIT(15)	// Monitor debug events
+#define	MDSCR_HDE		__BIT(14)	// for EDSCR.HDE
+#define	MDSCR_KDE		__BIT(13)	// Local debug enable
+#define	MDSCR_TDCC		__BIT(12)	// Trap Debug CommCh access
+#define	MDSCR_ERR		__BIT(6)	// for EDSCR.ERR
+#define	MDSCR_SS		__BIT(0)	// Software step
 
 AARCH64REG_WRITE_INLINE(oslar_el1)	// OS Lock Access Register
 

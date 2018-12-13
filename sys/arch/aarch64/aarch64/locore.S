@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31 2018/11/08 08:28:07 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 2018/12/13 10:44:25 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -39,7 +39,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.31 2018/11/08 08:28:07 maxv Exp $")
+RCSID("$NetBSD: locore.S,v 1.32 2018/12/13 10:44:25 ryo Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -218,8 +218,10 @@ ASEND(clear_bss)
 init_sysregs:
 	stp	x0, lr, [sp, #-16]!
 
-	/* Disable debug event */
-	msr	mdscr_el1, xzr
+	/* init debug event */
+	ldr	x0, mdscr_setting
+	msr	mdscr_el1, x0
+	msr	oslar_el1, xzr
 
 	/* Clear context id register */
 	msr	contextidr_el1, xzr
@@ -1006,6 +1008,11 @@ sctlr_clear:
 	    SCTLR_SA0 |     /* Enable EL0 stack alignment check */ \
 	    SCTLR_SA |      /* Enable SP alignment check */ \
 	    SCTLR_A |       /* Alignment check enable */ \
+	    0)
+
+mdscr_setting:
+	.quad ( \
+	    MDSCR_TDCC |    /* Trap Debug Communications Channel access */ \
 	    0)
 
 .L_devmap_addr:

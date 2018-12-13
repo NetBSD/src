@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.13 2018/12/12 18:11:00 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.14 2018/12/13 10:44:25 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13 2018/12/12 18:11:00 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.14 2018/12/13 10:44:25 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -232,6 +232,8 @@ trap_el0_sync(struct trapframe *tf)
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
 
+	/* disable trace */
+	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 
@@ -265,9 +267,14 @@ trap_el0_sync(struct trapframe *tf)
 
 	case ESR_EC_BKPT_INSN_A64:
 	case ESR_EC_BRKPNT_EL0:
-	case ESR_EC_SW_STEP_EL0:
 	case ESR_EC_WTCHPNT_EL0:
 		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, (void *)tf->tf_pc, esr);
+		userret(l);
+		break;
+	case ESR_EC_SW_STEP_EL0:
+		/* disable trace, and send trace trap */
+		tf->tf_spsr &= ~SPSR_SS;
+		do_trapsignal(l, SIGTRAP, TRAP_TRACE, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 
@@ -305,6 +312,9 @@ interrupt(struct trapframe *tf)
 	}
 #endif
 
+	/* disable trace */
+	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
+
 	/* enable traps */
 	daif_enable(DAIF_D|DAIF_A);
 
@@ -322,6 +332,8 @@ trap_el0_32sync(struct trapframe *tf)
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
 
+	/* disable trace */
+	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 
