@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.11 2018/11/28 19:13:15 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.12 2018/12/13 10:44:25 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.11 2018/11/28 19:13:15 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.12 2018/12/13 10:44:25 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -616,11 +616,9 @@ db_machdep_init(void)
 	}
 
 	mdscr = reg_mdscr_el1_read();
-	mdscr |= __BIT(15);
-	mdscr |= __BIT(13);
+	mdscr |= MDSCR_MDE;	/* enable watchpoint and breakpoint */
 	reg_mdscr_el1_write(mdscr);
 	reg_oslar_el1_write(0);
-	daif_enable(DAIF_D);
 }
 
 static void
