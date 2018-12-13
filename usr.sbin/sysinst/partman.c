@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.24 2018/11/27 17:13:41 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.25 2018/12/13 12:28:25 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -913,7 +913,7 @@ pm_vnd_commit(void)
 			for (ii = 0; ii < 6; ii++) {
 				strcpy(buf, pm_i->bsdlabel[ii].pi_mount);
 				if (buf[strlen(buf)-1] != '/')
-					sprintf(buf,"%s/", buf);
+					strcat(buf, "/");
 				printf("%s\n",buf);
 				if (strstr(vnds[i].filepath, buf) == vnds[i].filepath)
 					if (part_suit < 0 || pm_suit == NULL ||
