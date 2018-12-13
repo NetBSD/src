@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.26 2018/12/13 00:36:30 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.27 2018/12/13 01:40:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.26 2018/12/13 00:36:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.27 2018/12/13 01:40:02 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -90,8 +90,6 @@ int	uchcomdebug = 0;
 
 #define UCHCOM_VER_20		0x20
 #define UCHCOM_VER_30		0x30
-
-#define UCHCOM_BASE_UNKNOWN	0
 
 #define UCHCOM_BPS_PRE_IMM	0x80	/* CH341: immediate RX forwarding */
 
@@ -154,24 +152,13 @@ struct uchcom_divider
 	uint8_t		dv_div;
 };
 
-struct uchcom_divider_record
-{
-	uint32_t		dvr_high;
-	uint32_t		dvr_low;
-	uint32_t		dvr_base_clock;
-	struct uchcom_divider	dvr_divider;
+static const uint32_t rates4x[8] = {
+	[0] = 4 * 12000000 / 1024,
+	[1] = 4 * 12000000 / 128,
+	[2] = 4 * 12000000 / 16,
+	[3] = 4 * 12000000 / 2,
+	[7] = 4 * 12000000,
 };
-
-static const struct uchcom_divider_record dividers[] =
-{
-	{  307200, 307200, UCHCOM_BASE_UNKNOWN, { 7, 0xD9 } },
-	{  921600, 921600, UCHCOM_BASE_UNKNOWN, { 7, 0xF3 } },
-	{ 2999999,  23530,             6000000, { 3,    0 } },
-	{   23529,   2942,              750000, { 2,    0 } },
-	{    2941,    368,               93750, { 1,    0 } },
-	{     367,      1,               11719, { 0,    0 } },
-};
-#define NUM_DIVIDERS	(sizeof (dividers) / sizeof (dividers[0]))
 
 static const struct usb_devno uchcom_devs[] = {
 	{ USB_VENDOR_QINHENG2, USB_PRODUCT_QINHENG2_CH341SER },
@@ -646,33 +633,41 @@ set_break(struct uchcom_softc *sc, int onoff)
 static int
 calc_divider_settings(struct uchcom_divider *dp, uint32_t rate)
 {
-	int i;
-	const struct uchcom_divider_record *rp;
-	uint32_t div, rem;
+	size_t i;
+	uint32_t best, div, pre;
+	const uint32_t rate4x = rate * 4U;
 
-	/* find record */
-	for (i=0; i<NUM_DIVIDERS; i++) {
-		if (dividers[i].dvr_high >= rate &&
-		    dividers[i].dvr_low <= rate) {
-			rp = &dividers[i];
-			goto found;
+	if (rate == 0 || rate > 3000000)
+		return -1;
+
+	pre = __arraycount(rates4x);
+	best = UINT32_MAX;
+
+	for (i = 0; i < __arraycount(rates4x); i++) {
+		uint32_t score, try;
+		try = rates4x[i] * 2 / rate4x;
+		try = (try / 2) + (try & 1);
+		if (try < 2)
+			continue;
+		if (try > 255)
+			try = 255;
+		score = abs((int)rate4x - rates4x[i] / try);
+		if (score < best) {
+			best = score;
+			pre = i;
+			div = try;
 		}
 	}
-	return -1;
 
-found:
-	dp->dv_prescaler = rp->dvr_divider.dv_prescaler;
-	if (rp->dvr_base_clock == UCHCOM_BASE_UNKNOWN)
-		dp->dv_div = rp->dvr_divider.dv_div;
-	else {
-		div = rp->dvr_base_clock / rate;
-		rem = rp->dvr_base_clock % rate;
-		if (div==0 || div>=0xFF)
-			return -1;
-		if ((rem<<1) >= rate)
-			div += 1;
-		dp->dv_div = (uint8_t)-div;
-	}
+	if (pre >= __arraycount(rates4x))
+		return -1;
+	if ((rates4x[pre] / div / 4) < (rate * 99 / 100))
+		return -1;
+	if ((rates4x[pre] / div / 4) > (rate * 101 / 100))
+		return -1;
+
+	dp->dv_prescaler = pre;
+	dp->dv_div = (uint8_t)-div;
 
 	return 0;
 }
