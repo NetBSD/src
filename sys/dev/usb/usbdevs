@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.762 2018/12/10 14:14:20 jakllsch Exp $
+$NetBSD: usbdevs,v 1.763 2018/12/13 16:20:20 fox Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2152,6 +2152,8 @@ product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH MX700		0xc506	Cordless optical mouse
 product LOGITECH CBT44		0xc517	C-BT44 Receiver
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
+product LOGITECH GF310		0xc21d	Gamepad F310
+product LOGITECH DAG		0xc216	Dual Action Gamepad
 
 /* Longcheer products */
 product LONGCHEER WM66		0x6061	Longcheer WM66 HSDPA
