@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.117 2017/12/28 15:12:15 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.118 2018/12/13 04:30:55 dholland Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.117 2017/12/28 15:12:15 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.118 2018/12/13 04:30:55 dholland Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -1188,7 +1188,7 @@ explore_fqdn(const struct addrinfo *pai, const char *hostname,
 		error = EAI_FAIL;
 		goto free;
 	case NS_NOTFOUND:
-		error = EAI_NONAME;
+		error = EAI_NODATA;
 		goto free;
 	case NS_SUCCESS:
 		error = 0;
