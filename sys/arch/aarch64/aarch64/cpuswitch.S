@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.9 2018/12/12 11:14:51 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.10 2018/12/13 10:44:25 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.9 2018/12/12 11:14:51 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.10 2018/12/13 10:44:25 ryo Exp $")
 
 /*
  * At IPL_SCHED:
@@ -340,6 +340,13 @@ ENTRY_NP(el0_trap_exit)
 	msr	elr_el1, x0		/* exception pc */
 	msr	spsr_el1, x1		/* exception pstate */
 	msr	sp_el0, x2		/* restore EL0 stack */
+
+	/* if the process is traced, enable MDSCR_EL1.SS */
+	tbz	x1, #SPSR_SS_SHIFT, 1f
+	mrs	x0, mdscr_el1
+	orr	x0, x0, #MDSCR_SS
+	msr	mdscr_el1, x0
+1:
 
 	unwind_x0_x2
 
