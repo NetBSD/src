@@ -5968,6 +5968,7 @@ zfs_netbsd_putpages(void *v)
 	znode_t *zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	rl_t *rl = NULL;
+	uint64_t len;
 	int error;
 	bool cleaned = false;
 
@@ -5978,7 +5979,13 @@ zfs_netbsd_putpages(void *v)
 	ZFS_VERIFY_ZP(zp);
 
 	if (cleaning) {
-		rl = zfs_range_lock(zp, offlo, offhi, RL_WRITER);
+		ASSERT((offlo & PAGE_MASK) == 0 && (offhi & PAGE_MASK) == 0);
+		ASSERT(offlo < offhi || offhi == 0);
+		if (offhi == 0)
+			len = UINT64_MAX;
+		else
+			len = offhi - offlo;
+		rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
 		tsd_set(zfs_putpage_key, &cleaned);
 	}
 	error = genfs_putpages(v);
