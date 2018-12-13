@@ -5985,7 +5985,9 @@ zfs_netbsd_putpages(void *v)
 			len = UINT64_MAX;
 		else
 			len = offhi - offlo;
+		mutex_exit(vp->v_interlock);
 		rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
+		mutex_enter(vp->v_interlock);
 		tsd_set(zfs_putpage_key, &cleaned);
 	}
 	error = genfs_putpages(v);
