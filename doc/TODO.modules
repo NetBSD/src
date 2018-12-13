@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.15 2018/05/04 00:25:26 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.16 2018/12/13 11:28:00 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -192,3 +192,11 @@ christos and pgoyette.
     invocations of module_class_init(), and it might be useful to have a
     non-dependency mechanism to provide "IF module-A and module-B are
     BOTH present, module-A needs to be initialized before module-B".
+
+20. (Long-ago memory rises to the surface) Note that currently there is
+    nothing that requires a module's name to correspond in any way with
+    the name of file from which the module is loaded.  Thus, it is
+    possible to attempt to access device /dev/x, discover that there is
+    no such device so we autoload /stand/.../x/x.kmod and initialize
+    the module loaded, even if the loaded module is for some other
+    device entirely!
