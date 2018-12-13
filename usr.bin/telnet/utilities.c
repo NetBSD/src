@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.24 2018/12/12 19:05:32 maya Exp $	*/
+/*	$NetBSD: utilities.c,v 1.25 2018/12/13 04:49:19 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.24 2018/12/12 19:05:32 maya Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.25 2018/12/13 04:49:19 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,6 @@ __RCSID("$NetBSD: utilities.c,v 1.24 2018/12/12 19:05:32 maya Exp $");
 #include "defines.h"
 #include "externs.h"
 
-#ifdef TN3270
-#include "../sys_curses/telextrn.h"
-#endif
 
 #ifdef AUTHENTICATION
 #include <libtelnet/auth.h>
@@ -886,24 +883,13 @@ void
 SetForExit(void)
 {
     setconnmode(0);
-#ifdef TN3270
-    if (In3270) {
-	Finish3270();
-    }
-#else	/* defined(TN3270) */
     do {
 	(void)telrcv();			/* Process any incoming data */
 	EmptyTerminal();
     } while (ring_full_count(&netiring));	/* While there is any */
-#endif	/* defined(TN3270) */
     setcommandmode();
     fflush(stdout);
     fflush(stderr);
-#ifdef TN3270
-    if (In3270) {
-	StopScreen(1);
-    }
-#endif	/* defined(TN3270) */
     setconnmode(0);
     EmptyTerminal();			/* Flush the path to the tty */
     setcommandmode();
