@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sw_offload.c,v 1.1 2018/12/12 01:40:20 rin Exp $	*/
+/*	$NetBSD: ether_sw_offload.c,v 1.2 2018/12/13 12:13:33 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.1 2018/12/12 01:40:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.2 2018/12/13 12:13:33 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,12 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.1 2018/12/12 01:40:20 rin Exp
 #include <netinet/in.h>
 #include <netinet/in_offload.h>
 #include <netinet/ip.h>
-#include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
+#ifdef INET6
+#include <netinet/ip6.h>
 #include <netinet6/in6.h>
 #include <netinet6/in6_offload.h>
+#endif
 
 /*
  * Handle TX offload in software. For TSO, split the packet into
@@ -62,7 +68,7 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_header *ep;
 	int flags, ehlen;
-	bool v4;
+	bool v6;
 
 	KASSERT(m->m_flags & M_PKTHDR);
 	flags = m->m_pkthdr.csum_flags;
@@ -93,7 +99,10 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 	}
 	KASSERT(m->m_pkthdr.len >= ehlen);
 
-	v4 = flags & (M_CSUM_TSOv4 | M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4);
+	v6 = flags & (M_CSUM_TSOv6 | M_CSUM_TCPv6 | M_CSUM_UDPv6);
+#ifndef INET6
+	KASSERT(!v6);
+#endif
 
 	if (flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
 		/*
@@ -103,16 +112,20 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 		 *
 		 * XXX Do we need some KASSERT's?
 		 */
-		if (v4)
-			return tcp4_segment(m, ehlen);
-		else
+#ifdef INET6
+		if (v6)
 			return tcp6_segment(m, ehlen);
+		else
+#endif
+			return tcp4_segment(m, ehlen);
 	}
 
-	if (v4)
-		in_undefer_cksum(m, ehlen, flags);
-	else
+#ifdef INET6
+	if (v6)
 		in6_undefer_cksum(m, ehlen, flags);
+	else
+#endif
+		in_undefer_cksum(m, ehlen, flags);
 done:
 	m->m_pkthdr.csum_flags = 0;
 	m->m_nextpkt = NULL;
@@ -134,13 +147,12 @@ ether_sw_offload_rx(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_header *eh;
 	struct ip *ip;
-	struct ip6_hdr *ip6;
 	struct tcphdr *th;
 	struct udphdr *uh;
 	uint16_t sum, osum;
 	uint8_t proto;
 	int flags, enabled, len, ehlen, iphlen, l4offset;
-	bool v4;
+	bool v6;
 
 	flags = 0;
 
@@ -181,9 +193,46 @@ ether_sw_offload_rx(struct ifnet *ifp, struct mbuf *m)
 			return NULL;
 	}
 	ip = (void *)(mtod(m, char *) + ehlen);
-	v4 = (ip->ip_v == IPVERSION);
+	v6 = (ip->ip_v != IPVERSION);
 
-	if (v4) {
+	if (v6) {
+#ifdef INET6
+		struct ip6_hdr *ip6;
+
+		KASSERT(len >= sizeof(*ip6));
+		if (m->m_len < ehlen + sizeof(*ip6)) {
+			m = m_pullup(m, ehlen + sizeof(*ip6));
+			if (m == NULL)
+				return NULL;
+		}
+		ip6 = (void *)(mtod(m, char *) + ehlen);
+		KASSERT((ip6->ip6_vfc & IPV6_VERSION_MASK) == IPV6_VERSION);
+
+		iphlen = sizeof(*ip6);
+
+		len -= iphlen;
+
+		proto = ip6->ip6_nxt;
+		switch (proto) {
+		case IPPROTO_TCP:
+			if (!(enabled & M_CSUM_TCPv6))
+				goto done;
+			break;
+		case IPPROTO_UDP:
+			if (!(enabled & M_CSUM_UDPv6))
+				goto done;
+			break;
+		default:
+			/* XXX Extension headers are not supported. */
+			goto done;
+		}
+
+		sum = in6_cksum_phdr(&ip6->ip6_src, &ip6->ip6_dst, htonl(len),
+		    htonl(proto));
+#else
+		goto done;
+#endif
+	} else {
 		if (enabled & M_CSUM_IPv4)
 			flags |= M_CSUM_IPv4;
 
@@ -220,37 +269,6 @@ ether_sw_offload_rx(struct ifnet *ifp, struct mbuf *m)
 
 		sum = in_cksum_phdr(ip->ip_src.s_addr, ip->ip_dst.s_addr,
 		    htons((uint16_t)len + proto));
-	} else {
-		KASSERT(len >= sizeof(*ip6));
-		if (m->m_len < ehlen + sizeof(*ip6)) {
-			m = m_pullup(m, ehlen + sizeof(*ip6));
-			if (m == NULL)
-				return NULL;
-		}
-		ip6 = (void *)(mtod(m, char *) + ehlen);
-		KASSERT((ip6->ip6_vfc & IPV6_VERSION_MASK) == IPV6_VERSION);
-
-		iphlen = sizeof(*ip6);
-
-		len -= iphlen;
-
-		proto = ip6->ip6_nxt;
-		switch (proto) {
-		case IPPROTO_TCP:
-			if (!(enabled & M_CSUM_TCPv6))
-				goto done;
-			break;
-		case IPPROTO_UDP:
-			if (!(enabled & M_CSUM_UDPv6))
-				goto done;
-			break;
-		default:
-			/* XXX Extension headers are not supported. */
-			goto done;
-		}
-
-		sum = in6_cksum_phdr(&ip6->ip6_src, &ip6->ip6_dst, htonl(len),
-		    htonl(proto));
 	}
 
 	l4offset = ehlen + iphlen;
@@ -265,12 +283,15 @@ ether_sw_offload_rx(struct ifnet *ifp, struct mbuf *m)
 		th = (void *)(mtod(m, char *) + l4offset);
 		osum = th->th_sum;
 		th->th_sum = sum;
-		if (v4) {
-			flags |= M_CSUM_TCPv4;
-			sum = in4_cksum(m, 0, l4offset, len);
-		} else {
+#ifdef INET6
+		if (v6) {
 			flags |= M_CSUM_TCPv6;
 			sum = in6_cksum(m, 0, l4offset, len);
+		} else
+#endif
+		{
+			flags |= M_CSUM_TCPv4;
+			sum = in4_cksum(m, 0, l4offset, len);
 		}
 		if (sum != osum)
 			flags |= M_CSUM_TCP_UDP_BAD;
@@ -288,12 +309,15 @@ ether_sw_offload_rx(struct ifnet *ifp, struct mbuf *m)
 		if (osum == 0)
 			break;
 		uh->uh_sum = sum;
-		if (v4) {
-			flags |= M_CSUM_UDPv4;
-			sum = in4_cksum(m, 0, l4offset, len);
-		} else {
+#ifdef INET6
+		if (v6) {
 			flags |= M_CSUM_UDPv6;
 			sum = in6_cksum(m, 0, l4offset, len);
+		} else
+#endif
+		{
+			flags |= M_CSUM_UDPv4;
+			sum = in4_cksum(m, 0, l4offset, len);
 		}
 		if (sum == 0)
 			sum = 0xffff;
