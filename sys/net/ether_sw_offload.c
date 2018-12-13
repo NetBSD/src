@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sw_offload.c,v 1.2 2018/12/13 12:13:33 rin Exp $	*/
+/*	$NetBSD: ether_sw_offload.c,v 1.3 2018/12/13 20:44:33 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.2 2018/12/13 12:13:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.3 2018/12/13 20:44:33 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,7 +68,11 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_header *ep;
 	int flags, ehlen;
+#ifdef INET6
 	bool v6;
+#else
+	bool v6 __diagused;
+#endif
 
 	KASSERT(m->m_flags & M_PKTHDR);
 	flags = m->m_pkthdr.csum_flags;
