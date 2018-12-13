@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2003/08/07 11:16:12 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.7 2018/12/13 05:22:14 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -30,13 +30,6 @@
  *
  *	from: @(#)types.h	8.1 (Berkeley) 6/6/93
  */
-
-typedef struct {
-    char *modedescriptions;
-    char modetype;
-} Modelist;
-
-extern Modelist modelist[];
 
 typedef struct {
     int

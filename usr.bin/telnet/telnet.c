@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.38 2018/12/13 04:49:19 maya Exp $	*/
+/*	$NetBSD: telnet.c,v 1.39 2018/12/13 05:22:14 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.38 2018/12/13 04:49:19 maya Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.39 2018/12/13 05:22:14 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,18 +162,6 @@ static void doflush(void);
  */
 
 Clocks clocks;
-
-#ifdef	notdef
-Modelist modelist[] = {
-	{ "telnet command mode", COMMAND_LINE },
-	{ "character-at-a-time mode", 0 },
-	{ "character-at-a-time mode (local echo)", LOCAL_ECHO|LOCAL_CHARS },
-	{ "line-by-line mode (remote echo)", LINE | LOCAL_CHARS },
-	{ "line-by-line mode", LINE | LOCAL_ECHO | LOCAL_CHARS },
-	{ "line-by-line mode (local echoing suppressed)", LINE | LOCAL_CHARS },
-	{ "3270 mode", 0 },
-};
-#endif
 
 
 /*

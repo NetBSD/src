@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.35 2018/12/13 04:49:19 maya Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.36 2018/12/13 05:22:14 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.35 2018/12/13 04:49:19 maya Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.36 2018/12/13 05:22:14 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,13 +242,6 @@ TerminalDefaultChars(void)
 {
     memmove(new_tc.c_cc, old_tc.c_cc, sizeof(old_tc.c_cc));
 }
-
-#ifdef notdef
-void
-TerminalRestoreState(void)
-{
-}
-#endif
 
 /*
  * TerminalNewMode - set up terminal to a specific mode.
