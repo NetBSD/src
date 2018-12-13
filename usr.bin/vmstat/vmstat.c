@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.224 2017/12/04 03:05:57 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.225 2018/12/13 01:58:04 sevan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.224 2017/12/04 03:05:57 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.225 2018/12/13 01:58:04 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -1439,7 +1439,7 @@ dopool_sysctl(int verbose, int wide)
 
 	data = asysctlbyname("kern.pool", &len);
 	if (data == NULL)
-		err(1, "failed to reead kern.pool");
+		err(1, "failed to read kern.pool");
 
 	memset(&pool_totals, 0, sizeof pool_totals);
 	total = inuse = 0;
@@ -1725,7 +1725,7 @@ dopoolcache_sysctl(int verbose)
 
 	data = asysctlbyname("kern.pool", &len);
 	if (data == NULL)
-		err(1, "failed to reead kern.pool");
+		err(1, "failed to read kern.pool");
 	len /= sizeof(*data);
 
 	for (i = 0; i < len; ++i) {
