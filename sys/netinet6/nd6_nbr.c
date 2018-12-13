@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.162 2018/12/07 14:47:24 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.163 2018/12/13 10:27:51 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.162 2018/12/07 14:47:24 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.163 2018/12/13 10:27:51 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -653,9 +653,26 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 	}
 
-	if (ndopts.nd_opts_tgt_lladdr) {
+	if (ndopts.nd_opts_tgt_lladdr != NULL) {
+		struct ifnet *ifp_ll;
+		struct psref psref_ll;
+
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
+
+		if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
+			nd6log(LOG_INFO, "lladdrlen mismatch for %s "
+			    "(if %d, NA packet %d)\n", IN6_PRINT(ip6buf, &taddr6),
+			    ifp->if_addrlen, lladdrlen - 2);
+			goto bad;
+		}
+
+		ifp_ll = if_get_bylla(lladdr, ifp->if_addrlen, &psref_ll);
+		if (ifp_ll != NULL) {
+			/* it's from me, ignore it. */
+			if_put(ifp_ll, &psref_ll);
+			goto freeit;
+		}
 	}
 
 	ifa = (struct ifaddr *)in6ifa_ifpwithaddr_psref(ifp, &taddr6, &psref_ia);
@@ -688,13 +705,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (nd6_is_addr_neighbor(&ssin6, ifp) == 0) {
 		nd6log(LOG_INFO, "ND packet from non-neighbor %s on %s\n",
 		    IN6_PRINT(ip6buf, &saddr6), if_name(ifp));
-		goto bad;
-	}
-
-	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		nd6log(LOG_INFO, "lladdrlen mismatch for %s "
-		    "(if %d, NA packet %d)\n", IN6_PRINT(ip6buf, &taddr6),
-		    ifp->if_addrlen, lladdrlen - 2);
 		goto bad;
 	}
 
