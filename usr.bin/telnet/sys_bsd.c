@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.36 2018/12/13 05:22:14 maya Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.37 2018/12/13 09:20:05 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.36 2018/12/13 05:22:14 maya Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.37 2018/12/13 09:20:05 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,14 +60,12 @@ __RCSID("$NetBSD: sys_bsd.c,v 1.36 2018/12/13 05:22:14 maya Exp $");
 #include "externs.h"
 #include "types.h"
 
-#define	SIG_FUNC_RET	void
+void susp(int);
+void ayt(int);
 
-SIG_FUNC_RET susp(int);
-SIG_FUNC_RET ayt(int);
-
-SIG_FUNC_RET intr(int);
-SIG_FUNC_RET intr2(int);
-SIG_FUNC_RET sendwin(int);
+void intr(int);
+void intr2(int);
+void sendwin(int);
 
 
 int
@@ -496,7 +494,7 @@ NetNonblockingIO(int fd, int onoff)
  */
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 intr(int sig)
 {
     if (localchars) {
@@ -508,7 +506,7 @@ intr(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 intr2(int sig)
 {
     if (localchars) {
@@ -523,7 +521,7 @@ intr2(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 susp(int sig)
 {
     if ((rlogin != _POSIX_VDISABLE) && rlogin_susp())
@@ -533,7 +531,7 @@ susp(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 sendwin(int sig)
 {
     if (connected) {
@@ -542,7 +540,7 @@ sendwin(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 ayt(int sig)
 {
     if (connected)
