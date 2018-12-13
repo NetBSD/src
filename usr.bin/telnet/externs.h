@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.40 2018/12/13 05:07:03 maya Exp $	*/
+/*	$NetBSD: externs.h,v 1.41 2018/12/13 05:22:14 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -247,7 +247,6 @@ void TerminalFlushOutput(void);
 void TerminalSaveState(void);
 cc_t *tcval(int);
 void TerminalDefaultChars(void);
-void TerminalRestoreState(void);
 void TerminalNewMode(int);
 void TerminalSpeeds(long *, long *);
 int TerminalWindowSize(long *, long *);
