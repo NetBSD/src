@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sw_offload.c,v 1.3 2018/12/13 20:44:33 rin Exp $	*/
+/*	$NetBSD: ether_sw_offload.c,v 1.4 2018/12/13 20:54:50 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.3 2018/12/13 20:44:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.4 2018/12/13 20:54:50 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,7 +99,7 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 		ehlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 	default:
-		goto quit;
+		panic("%s: unexpected frame type", __func__);
 	}
 	KASSERT(m->m_pkthdr.len >= ehlen);
 
@@ -331,7 +331,6 @@ ether_sw_offload_rx(struct ifnet *ifp, struct mbuf *m)
 		break;
 	default:
 		panic("%s: impossible", __func__);
-		break;
 	}
 
 done:
