@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.7 2005/04/19 03:19:46 christos Exp $ */
+/*	$NetBSD: spx.c,v 1.8 2018/12/13 09:09:32 maya Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)spx.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: spx.c,v 1.7 2005/04/19 03:19:46 christos Exp $");
+__RCSID("$NetBSD: spx.c,v 1.8 2018/12/13 09:09:32 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,18 +577,4 @@ spx_printsub(data, cnt, buf, buflen)
 	}
 }
 
-#endif
-
-#ifdef notdef
-
-prkey(msg, key)
-	char *msg;
-	unsigned char *key;
-{
-	register int i;
-	printf("%s:", msg);
-	for (i = 0; i < 8; i++)
-		printf(" %3d", key[i]);
-	printf("\r\n");
-}
 #endif
