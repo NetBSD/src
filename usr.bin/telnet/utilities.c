@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.26 2018/12/13 05:07:03 maya Exp $	*/
+/*	$NetBSD: utilities.c,v 1.27 2018/12/13 05:15:11 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.26 2018/12/13 05:07:03 maya Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.27 2018/12/13 05:15:11 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -907,7 +907,6 @@ Exit(int returnCode)
 void
 ExitString(const char *string, int returnCode)
 {
-    SetForExit();
     fwrite(string, 1, strlen(string), stderr);
     exit(returnCode);
 }
