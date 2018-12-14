@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.37 2018/12/13 09:20:05 maya Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.38 2018/12/14 06:17:30 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.37 2018/12/13 09:20:05 maya Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.38 2018/12/14 06:17:30 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,14 +481,6 @@ NetClose(int fd)
     return close(fd);
 }
 
-
-void
-NetNonblockingIO(int fd, int onoff)
-{
-    ioctl(fd, FIONBIO, (char *)&onoff);
-}
-
-
 /*
  * Various signal handling routines.
  */
@@ -553,6 +545,8 @@ ayt(int sig)
 void
 sys_telnet_init(void)
 {
+    int one = 1;
+
     (void) signal(SIGINT, intr);
     (void) signal(SIGQUIT, intr2);
     (void) signal(SIGPIPE, SIG_IGN);
@@ -562,11 +556,9 @@ sys_telnet_init(void)
 
     setconnmode(0);
 
-    NetNonblockingIO(net, 1);
-
-
-    if (SetSockOpt(net, SOL_SOCKET, SO_OOBINLINE, 1) == -1) {
-	perror("SetSockOpt");
+    ioctl(net, FIONBIO, &one);
+    if (setsockopt(net, SOL_SOCKET, SO_OOBINLINE, &one, sizeof(one)) == -1) {
+	perror("setsockopt");
     }
 }
 
