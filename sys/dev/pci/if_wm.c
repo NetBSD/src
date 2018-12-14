@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.603 2018/12/12 08:49:33 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.604 2018/12/14 09:47:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.603 2018/12/12 08:49:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.604 2018/12/14 09:47:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2379,6 +2379,22 @@ alloc_retry:
 	 */
 	wm_gmii_setup_phytype(sc, 0, 0);
 
+	/* check for WM_F_WOL on some chips before wm_reset() */
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
+	case WM_T_PCH_SPT:
+	case WM_T_PCH_CNP:
+		apme_mask = WUC_APME;
+		eeprom_data = CSR_READ(sc, WMREG_WUC);
+		break;
+	default:
+		break;
+	}
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
@@ -2480,16 +2496,22 @@ alloc_retry:
 	case WM_T_82574:
 	case WM_T_82583:
 	case WM_T_80003:
-	default:
+	case WM_T_82575:
+	case WM_T_82576:
 		apme_mask = NVM_CFG3_APME;
 		wm_nvm_read(sc, (sc->sc_funcid == 1) ? NVM_OFF_CFG3_PORTB
 		    : NVM_OFF_CFG3_PORTA, 1, &eeprom_data);
 		break;
-	case WM_T_82575:
-	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_I350:
-	case WM_T_I354: /* XXX ok? */
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		apme_mask = NVM_CFG3_APME;
+		wm_nvm_read(sc,
+		    NVM_OFF_LAN_FUNC_82580(sc->sc_funcid) + NVM_OFF_CFG3_PORTA,
+		    1, &eeprom_data);
+		break;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
@@ -2498,15 +2520,54 @@ alloc_retry:
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
 	case WM_T_PCH_CNP:
-		/* XXX The funcid should be checked on some devices */
-		apme_mask = WUC_APME;
-		eeprom_data = CSR_READ(sc, WMREG_WUC);
+		/* Already checked before wm_reset () */
+		apme_mask = eeprom_data = 0;
+		break;
+	default: /* XXX 82540 */
+		apme_mask = NVM_CFG3_APME;
+		wm_nvm_read(sc, NVM_OFF_CFG3_PORTA, 1, &eeprom_data);
 		break;
 	}
 
 	/* Check for WM_F_WOL flag after the setting of the EEPROM stuff */
 	if ((eeprom_data & apme_mask) != 0)
 		sc->sc_flags |= WM_F_WOL;
+
+	/*
+	 * We have the eeprom settings, now apply the special cases
+	 * where the eeprom may be wrong or the board won't support
+	 * wake on lan on a particular port
+	 */
+	switch (sc->sc_pcidevid) {
+	case PCI_PRODUCT_INTEL_82546GB_PCIE:
+		sc->sc_flags &= ~WM_F_WOL;
+		break;
+	case PCI_PRODUCT_INTEL_82546EB_FIBER:
+	case PCI_PRODUCT_INTEL_82546GB_FIBER:
+		/* Wake events only supported on port A for dual fiber
+		 * regardless of eeprom setting */
+		if (sc->sc_funcid == 1)
+			sc->sc_flags &= ~WM_F_WOL;
+		break;
+	case PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3:
+		/* if quad port adapter, disable WoL on all but port A */
+		if (sc->sc_funcid != 0)
+			sc->sc_flags &= ~WM_F_WOL;
+		break;
+	case PCI_PRODUCT_INTEL_82571EB_FIBER:
+		/* Wake events only supported on port A for dual fiber
+		 * regardless of eeprom setting */
+		if (sc->sc_funcid == 1)
+			sc->sc_flags &= ~WM_F_WOL;
+		break;
+	case PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER:
+	case PCI_PRODUCT_INTEL_82571EB_QUAD_FIBER:
+	case PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER:
+		/* if quad port adapter, disable WoL on all but port A */
+		if (sc->sc_funcid != 0)
+			sc->sc_flags &= ~WM_F_WOL;
+		break;
+	}
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
 		/* Check NVM for autonegotiation */
@@ -2977,6 +3038,11 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct wm_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	char buf[256];
+
+	snprintb(buf, sizeof(buf), WUS_FLAGS, CSR_READ(sc, WMREG_WUS));
+	device_printf(sc->sc_dev, "wakeup status %s\n", buf);
+	CSR_WRITE(sc, WMREG_WUS, 0xffffffff); /* W1C */
 
 	if (sc->sc_type >= WM_T_PCH2)
 		wm_resume_workarounds_pchlan(sc);
