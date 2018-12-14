@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.42 2018/12/14 06:08:18 maya Exp $	*/
+/*	$NetBSD: externs.h,v 1.43 2018/12/14 06:17:30 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -250,7 +250,6 @@ void TerminalNewMode(int);
 void TerminalSpeeds(long *, long *);
 int TerminalWindowSize(long *, long *);
 int NetClose(int);
-void NetNonblockingIO(int, int);
 void NetSigIO(int, int);
 void NetSetPgrp(int);
 void sys_telnet_init(void);
