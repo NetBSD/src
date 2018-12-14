@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.22 2018/12/12 09:55:34 skrll Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.23 2018/12/14 12:29:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.22 2018/12/12 09:55:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.23 2018/12/14 12:29:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -457,6 +457,9 @@ static const char *mux_hda_p[] =
 	{ "PLL_P", "PLL_C2", "PLL_C", "PLL_C4_OUT0",
 	  NULL, "PLL_C4_OUT1", "CLK_M", "PLL_C4_OUT2" };
 
+static const char *mux_sata_p[] =
+	{ "PLL_P", NULL, "PLL_C", NULL, NULL, NULL, "CLK_M" };
+
 static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_FIXED("CLK_M", TEGRA210_REF_FREQ),
 
@@ -536,6 +539,13 @@ static struct tegra_clk tegra210_car_clocks[] = {
 		CAR_CLKSRC_HDA_REG, CAR_CLKSRC_HDA_SRC,
 		mux_hda_p),
 
+	CLK_MUX("MUX_SATA_OOB",
+		CAR_CLKSRC_SATA_OOB_REG	, CAR_CLKSRC_SATA_OOB_SRC,
+		mux_sata_p),
+	CLK_MUX("MUX_SATA",
+		CAR_CLKSRC_SATA_REG, CAR_CLKSRC_SATA_SRC,
+		mux_sata_p),
+
 	CLK_DIV("DIV_UARTA", "MUX_UARTA",
 		CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_DIV),
 	CLK_DIV("DIV_UARTB", "MUX_UARTB",
@@ -595,6 +605,11 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_DIV("DIV_HDA", "MUX_HDA",
 		CAR_CLKSRC_HDA_REG, CAR_CLKSRC_HDA_DIV),
 
+	CLK_DIV("DIV_SATA_OOB", "MUX_SATA_OOB",
+		CAR_CLKSRC_SATA_OOB_REG, CAR_CLKSRC_SATA_OOB_DIV),
+	CLK_DIV("DIV_SATA", "MUX_SATA",
+		CAR_CLKSRC_SATA_REG, CAR_CLKSRC_SATA_DIV),
+
 	CLK_GATE_SIMPLE("PLL_U_OUT1", "DIV_PLL_U_OUT1",
 		 CAR_PLLU_OUTA_REG, CAR_PLLU_OUTA_OUT1_CLKEN),
 	CLK_GATE_SIMPLE("PLL_U_OUT2", "DIV_PLL_U_OUT2",
@@ -636,6 +651,9 @@ static struct tegra_clk tegra210_car_clocks[] = {
 	CLK_GATE_W("HDA2HDMI", "CLK_M", CAR_DEV_W_HDA2HDMICODEC),
 	CLK_GATE_V("HDA2CODEC_2X", "DIV_HDA2CODEC_2X", CAR_DEV_V_HDA2CODEC_2X),
 	CLK_GATE_V("HDA", "DIV_HDA", CAR_DEV_V_HDA),
+
+	CLK_GATE_V("SATA_OOB", "DIV_SATA_OOB", CAR_DEV_V_SATA_OOB),
+	CLK_GATE_V("SATA", "DIV_SATA", CAR_DEV_V_SATA),
 };
 
 struct tegra210_init_parent {
@@ -661,6 +679,8 @@ struct tegra210_init_parent {
 	{ "CML1",		NULL, 0, 0 },
 	{ "AFI",		NULL, 0, 1 },
 	{ "PCIE",		NULL, 0, 1 },
+	{ "SATA",		"PLL_P", 104000000, 0 },
+	{ "SATA_OOB",		"PLL_P", 204000000, 0 },
 };
 
 struct tegra210_car_rst {
@@ -1681,3 +1701,35 @@ tegra210_car_xusbio_enable_hw_seq(void)
 	tegra_reg_set_clear(bst, bsh, CAR_XUSBIO_PLL_CFG0_REG,
 	    CAR_XUSBIO_PLL_CFG0_SEQ_ENABLE, 0);
 }
+
+void
+tegra210_car_sata_enable_hw_control(void)
+{
+	device_t dev = device_find_by_driver_unit("tegra210car", 0);
+	KASSERT(dev != NULL);
+	struct tegra210_car_softc * const sc = device_private(dev);
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+
+	tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
+	    0,
+	    CAR_SATA_PLL_CFG0_PADPLL_RESET_SWCTL);
+	tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
+	    CAR_SATA_PLL_CFG0_SEQ_PADPLL_SLEEP_IDDQ |
+	    CAR_SATA_PLL_CFG0_PADPLL_USE_LOCKDET,
+	    0);
+}
+
+void
+tegra210_car_sata_enable_hw_seq(void)
+{
+	device_t dev = device_find_by_driver_unit("tegra210car", 0);
+	KASSERT(dev != NULL);
+	struct tegra210_car_softc * const sc = device_private(dev);
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+
+	tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
+	    CAR_SATA_PLL_CFG0_SEQ_ENABLE, 0);
+}
+
