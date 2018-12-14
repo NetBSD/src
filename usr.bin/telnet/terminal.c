@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.15 2005/02/19 23:28:41 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.16 2018/12/14 06:08:18 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.15 2005/02/19 23:28:41 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.16 2018/12/14 06:08:18 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,9 +152,6 @@ getconnmode(void)
 #ifdef	KLUDGELINEMODE
     extern int kludgelinemode;
 #endif
-
-    if (In3270)
-	return(MODE_FLOW);
 
     if (my_want_state_is_dont(TELOPT_ECHO))
 	mode |= MODE_ECHO;
