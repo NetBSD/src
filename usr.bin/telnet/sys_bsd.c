@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.38 2018/12/14 06:17:30 maya Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.39 2018/12/14 06:27:40 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.38 2018/12/14 06:17:30 maya Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.39 2018/12/14 06:27:40 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,32 +75,6 @@ int
 
 struct	termios old_tc = { .c_iflag = 0 };
 extern struct termios new_tc;
-
-# ifndef	TCSANOW
-#  ifdef TCSETS
-#   define	TCSANOW		TCSETS
-#   define	TCSADRAIN	TCSETSW
-#   define	tcgetattr(f, t) ioctl(f, TCGETS, (char *)t)
-#  else
-#   ifdef TCSETA
-#    define	TCSANOW		TCSETA
-#    define	TCSADRAIN	TCSETAW
-#    define	tcgetattr(f, t) ioctl(f, TCGETA, (char *)t)
-#   else
-#    define	TCSANOW		TIOCSETA
-#    define	TCSADRAIN	TIOCSETAW
-#    define	tcgetattr(f, t) ioctl(f, TIOCGETA, (char *)t)
-#   endif
-#  endif
-#  define	tcsetattr(f, a, t) ioctl(f, a, (char *)t)
-#  define	cfgetospeed(ptr)	((ptr)->c_cflag&CBAUD)
-#  ifdef CIBAUD
-#   define	cfgetispeed(ptr)	(((ptr)->c_cflag&CIBAUD) >> IBSHIFT)
-#  else
-#   define	cfgetispeed(ptr)	cfgetospeed(ptr)
-#  endif
-# endif /* TCSANOW */
-
 
 void
 init_sys(void)
