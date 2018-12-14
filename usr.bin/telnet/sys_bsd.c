@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.39 2018/12/14 06:27:40 maya Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.40 2018/12/14 06:28:49 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.39 2018/12/14 06:27:40 maya Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.40 2018/12/14 06:28:49 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -416,8 +416,8 @@ TerminalNewMode(int f)
     if (tcsetattr(tin, TCSADRAIN, &tmp_tc) < 0)
 	tcsetattr(tin, TCSANOW, &tmp_tc);
 
-    ioctl(tin, FIONBIO, (char *)&onoff);
-    ioctl(tout, FIONBIO, (char *)&onoff);
+    ioctl(tin, FIONBIO, &onoff);
+    ioctl(tout, FIONBIO, &onoff);
 
 }
 
