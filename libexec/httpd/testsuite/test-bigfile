@@ -1,12 +1,11 @@
 #! /bin/sh
-# $NetBSD: test-bigfile,v 1.5 2018/11/21 09:37:02 mrg Exp $
+# $NetBSD: test-bigfile,v 1.6 2018/12/14 23:57:22 maya Exp $
 
 test="$1"; shift	# partial4000 or partial8000
 bozohttpd="$1"; shift
 wget="$1"; shift
 datadir="$1"; shift
 verbose="$1"; shift
-host="$1"; shift
 
 tmperr="tmp.$test.err"
 

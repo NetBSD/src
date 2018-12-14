@@ -1,12 +1,11 @@
 #! /bin/sh
-# $NetBSD: test-simple,v 1.5 2018/11/21 09:37:02 mrg Exp $
+# $NetBSD: test-simple,v 1.6 2018/12/14 23:57:22 maya Exp $
 
 test="$1"; shift
 bozohttpd="$1"; shift
 datadir="$1"; shift
 curdir="$1"; shift
 verbose="$1"; shift
-host="$1"; shift
 
 in="$curdir/$test.in"
 out="$curdir/$test.out"
@@ -21,7 +20,7 @@ fi
 
 bozotestport=11111
 
-${bozohttpd} "$@" "${datadir}" "${host}" < "$in" > "$tmpout"
+${bozohttpd} "$@" "${datadir}" < "$in" > "$tmpout"
 if "$curdir/html_cmp" cmp "$out" "$tmpout"; then
 	exit 0
 else
