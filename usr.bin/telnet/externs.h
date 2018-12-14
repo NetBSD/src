@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.41 2018/12/13 05:22:14 maya Exp $	*/
+/*	$NetBSD: externs.h,v 1.42 2018/12/14 06:08:18 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -71,7 +71,6 @@ extern int
     flushout,		/* flush output */
     connected,		/* Are we connected to the other side? */
     globalmode,		/* Mode tty should be in */
-    In3270,		/* Are we in 3270 mode? */
     telnetport,		/* Are we connected to the telnet port? */
     localflow,		/* Flow control handled locally */
     restartany,		/* If flow control, restart output on any character */
