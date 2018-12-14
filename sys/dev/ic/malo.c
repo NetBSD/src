@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.13 2018/09/03 16:29:31 riastradh Exp $ */
+/*	$NetBSD: malo.c,v 1.14 2018/12/14 20:44:36 jakllsch Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.13 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.14 2018/12/14 20:44:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1727,6 +1727,8 @@ malo_load_bootimg(struct malo_softc *sc)
 	bus_space_write_region_1(sc->sc_mem1_bt, sc->sc_mem1_bh, 0xbf00,
 	    ucode, size);
 
+	firmware_free(ucode, size);
+
 	/*
 	 * we loaded the firmware into card memory now tell the CPU
 	 * to fetch the code and execute it. The memory mapped via the
@@ -1743,10 +1745,8 @@ malo_load_bootimg(struct malo_softc *sc)
 	}
 	if (i == 10) {
 		aprint_error_dev(sc->sc_dev, "timeout at boot firmware load!\n");
-		free(ucode, M_DEVBUF);
 		return (ETIMEDOUT);
 	}
-	firmware_free(ucode, size);
 
 	/* tell the card we're done and... */
 	malo_mem_write2(sc, 0xbef8, 0x001);
