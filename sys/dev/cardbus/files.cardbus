@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.38 2013/03/30 02:38:59 christos Exp $
+#	$NetBSD: files.cardbus,v 1.39 2018/12/14 21:49:22 jakllsch Exp $
 #
 # files.cardbus
 #
@@ -155,3 +155,9 @@ file	dev/cardbus/siisata_cardbus.c	siisata_cardbus
 #
 attach	sdhc at cardbus with sdhc_cardbus
 file	dev/cardbus/sdhc_cardbus.c	sdhc_cardbus
+
+#
+# Marvel Libertas Open
+#
+attach	malo at cardbus with malo_cardbus
+file	dev/cardbus/if_malo_cardbus.c		malo_cardbus
