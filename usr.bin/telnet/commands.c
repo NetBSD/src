@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.71 2018/12/13 04:49:19 maya Exp $	*/
+/*	$NetBSD: commands.c,v 1.72 2018/12/14 06:08:18 maya Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.71 2018/12/13 04:49:19 maya Exp $");
+__RCSID("$NetBSD: commands.c,v 1.72 2018/12/14 06:08:18 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -1296,9 +1296,8 @@ setescape(int argc, char *argv[])
 	}
 	if (arg[0] != '\0')
 		escape = arg[0];
-	if (!In3270) {
-		printf("Escape character is '%s'.\n", control(escape));
-	}
+
+	printf("Escape character is '%s'.\n", control(escape));
 	(void) fflush(stdout);
 	return 1;
 }

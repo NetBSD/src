@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.39 2018/12/13 05:22:14 maya Exp $	*/
+/*	$NetBSD: telnet.c,v 1.40 2018/12/14 06:08:18 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.39 2018/12/13 05:22:14 maya Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.40 2018/12/14 06:08:18 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,6 @@ int
 	skiprc = 0,
 	connected,
 	showoptions,
-	In3270,		/* Are we in 3270 mode? */
 	ISend,		/* trying to send network data in */
 	telnet_debug = 0,
 	crmod,
@@ -176,7 +175,7 @@ init_telnet(void)
     SB_CLEAR();
     ClearArray(options);
 
-    connected = In3270 = ISend = localflow = donebinarytoggle = 0;
+    connected = ISend = localflow = donebinarytoggle = 0;
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
     auth_encrypt_connect(connected);
 #endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
