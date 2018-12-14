@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.40 2018/12/14 06:08:18 maya Exp $	*/
+/*	$NetBSD: telnet.c,v 1.41 2018/12/14 23:40:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.40 2018/12/14 06:08:18 maya Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.41 2018/12/14 23:40:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2315,7 +2315,7 @@ xmitEC(void)
 
 
 int
-dosynch(char *s)
+dosynch(const char *s)
 {
     netclear();			/* clear the path to the network */
     NETADD(IAC);
@@ -2328,7 +2328,7 @@ dosynch(char *s)
 int want_status_response = 0;
 
 int
-get_status(char *s)
+get_status(const char *s)
 {
     unsigned char tmp[16];
     unsigned char *cp;

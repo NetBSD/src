@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.27 2018/12/13 05:15:11 maya Exp $	*/
+/*	$NetBSD: utilities.c,v 1.28 2018/12/14 23:40:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.27 2018/12/13 05:15:11 maya Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.28 2018/12/14 23:40:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ int	prettydump;
 void
 upcase(char *argument)
 {
-    int c;
+    unsigned char c;
 
     while ((c = *argument) != 0) {
 	if (islower(c)) {
@@ -106,7 +106,7 @@ SetSockOpt(int fd, int level, int option, int yesno)
 char NetTraceFile[256] = "(standard output)";
 
 void
-SetNetTrace(char *file)
+SetNetTrace(const char *file)
 {
     if (NetTrace && NetTrace != stdout)
 	fclose(NetTrace);
