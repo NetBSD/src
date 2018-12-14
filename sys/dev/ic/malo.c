@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.14 2018/12/14 20:44:36 jakllsch Exp $ */
+/*	$NetBSD: malo.c,v 1.15 2018/12/14 21:23:43 jakllsch Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.14 2018/12/14 20:44:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.15 2018/12/14 21:23:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -470,10 +470,9 @@ malo_detach(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 
-	/* remove channel scanning timer */
-	callout_stop(&sc->sc_scan_to);
-
 	malo_stop(ifp, 1);
+	/* remove channel scanning timer */
+	callout_destroy(&sc->sc_scan_to);
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 	malo_free_cmd(sc);
