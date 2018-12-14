@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.75 2018/12/12 11:34:11 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.76 2018/12/14 12:15:17 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2046,4 +2046,9 @@ sys/kern/sys_sig.c				1.47
 
 	Fix kernel info leak, 4 bytes of padding in struct _ksiginfo.
 	[maxv, ticket #1134]
+
+external/bsd/file/lib/Makefile			1.11
+
+	Fix a parallel build race.
+	[msaitoh, ticket #1136]
 
