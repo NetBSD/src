@@ -1,4 +1,4 @@
-/*	$NetBSD: makebuf.c,v 1.18 2015/07/15 19:08:43 christos Exp $	*/
+/*	$NetBSD: makebuf.c,v 1.19 2018/12/14 03:29:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makebuf.c,v 1.18 2015/07/15 19:08:43 christos Exp $");
+__RCSID("$NetBSD: makebuf.c,v 1.19 2018/12/14 03:29:54 uwe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: makebuf.c,v 1.18 2015/07/15 19:08:43 christos Exp $");
 /*
  * Override the file buffering based on the environment setting STDBUF%d
  * (for the specific file descriptor) and STDBUF (for all descriptors).
- * the setting is ULB<num> standing for "Unbuffered", "Linebuffered",
+ * the setting is ULF<num> standing for "Unbuffered", "Linebuffered",
  * and Fullybuffered", and <num> is a value from 0 to 1M.
  */
 static int
