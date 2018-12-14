@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.15 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.16 2018/12/14 18:17:36 skrll Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.15 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.16 2018/12/14 18:17:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,9 +88,50 @@ enum xusb_type {
 	XUSB_T210
 };
 
+struct tegra_xhci_data {
+	enum xusb_type		txd_type;
+	const char * const *	txd_supplies;
+	size_t			txd_nsupplies;
+	bool			txd_scale_ss_clock;
+};
+
+const char *tegra124_xhci_supplies[] = {
+	"dvddio-pex-supply",
+	"hvddio-pex-supply",
+	"avdd-usb-supply",
+	"avdd-pll-utmip-supply",
+	"avdd-pll-uerefe-supply",
+	"dvdd-usb-ss-pll-supply",
+	"hvdd-usb-ss-pll-e-supply"
+};
+
+struct tegra_xhci_data tegra124_xhci_data = {
+	.txd_type = XUSB_T124,
+	.txd_supplies = tegra124_xhci_supplies,
+	.txd_nsupplies = __arraycount(tegra124_xhci_supplies),
+	.txd_scale_ss_clock = true,
+};
+
+const char *tegra210_xhci_supplies[] = {
+	"dvddio-pex",
+	"hvddio-pex",
+	"avdd-usb",
+	"avdd-pll-utmip",
+	"avdd-pll-uerefe",
+	"dvdd-pex-pll",
+	"hvdd-pex-pll-e",
+};
+
+struct tegra_xhci_data tegra210_xhci_data = {
+	.txd_type = XUSB_T210,
+	.txd_supplies = tegra210_xhci_supplies,
+	.txd_nsupplies = __arraycount(tegra210_xhci_supplies),
+	.txd_scale_ss_clock = false,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "nvidia,tegra124-xusb",		XUSB_T124 },
-	{ "nvidia,tegra210-xusb",		XUSB_T210 },
+	{ "nvidia,tegra124-xusb", (uintptr_t)&tegra124_xhci_data },
+	{ "nvidia,tegra210-xusb", (uintptr_t)&tegra210_xhci_data },
 	{ NULL }
 };
 
@@ -112,15 +153,14 @@ struct tegra_xusb_softc {
 	void			*sc_ih_mbox;
 	struct fw_dma		sc_fw_dma;
 	struct clk		*sc_clk_ss_src;
-	enum xusb_type		sc_type;
 
-	bool			sc_scale_ss_clock;
+	struct tegra_xhci_data	*sc_txd;
 };
 
 static uint32_t	csb_read_4(struct tegra_xusb_softc * const, bus_size_t);
 static void	csb_write_4(struct tegra_xusb_softc * const, bus_size_t,
     uint32_t);
-	
+
 static void	tegra_xusb_init(struct tegra_xusb_softc * const);
 static int	tegra_xusb_open_fw(struct tegra_xusb_softc * const);
 static int	tegra_xusb_load_fw(struct tegra_xusb_softc * const, void *,
@@ -173,16 +213,9 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.ub_dmatag = faa->faa_dmat;
 	sc->sc_quirks = XHCI_DEFERRED_START;
 	psc->sc_phandle = faa->faa_phandle;
-	psc->sc_type = of_search_compatible(faa->faa_phandle, compat_data)->data;
 
-	switch (psc->sc_type) {
-	case XUSB_T124:
-		psc->sc_scale_ss_clock = true;
-		break;
-	default:
-		psc->sc_scale_ss_clock = false;
-		break;
-	}
+	uintptr_t data = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	psc->sc_txd = (struct tegra_xhci_data *)data;
 
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "hcd", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -305,7 +338,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	tegra_xusb_attach_check(sc, psc->sc_clk_ss_src == NULL,
 		"failed to get xusb_ss_src clock");
 
-	if (psc->sc_scale_ss_clock) {
+	if (psc->sc_txd->txd_scale_ss_clock) {
 		rate = clk_get_rate(psc->sc_clk_ss_src);
 		DPRINTF(sc->sc_dev, "xusb_ss_src rate %u\n", rate);
 		error = clk_set_rate(psc->sc_clk_ss_src, 2000000);
@@ -357,11 +390,11 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	tegra_xusb_init(psc);
 
 #if defined(TEGRA124_XUSB_BIN_STATIC)
-	if (psc->sc_type == XUSB_T124)
+	if (psc->sc_txd->txd_type == XUSB_T124)
 		wait_for_root = false;
 #endif
 #if defined(TEGRA210_XUSB_BIN_STATIC)
-	if (psc->sc_type == XUSB_T210)
+	if (psc->sc_txd->txd_type == XUSB_T210)
 		wait_for_root = false;
 #endif
 
@@ -502,7 +535,7 @@ tegra_xusb_intr_mbox(void *v)
 		break;
 	case 4:
 	case 5:
-		if (psc->sc_scale_ss_clock) {
+		if (psc->sc_txd->txd_scale_ss_clock) {
 			DPRINTF(sc->sc_dev, "SSPI_CLOCK %u\n", data * 1000);
 			rate = clk_get_rate(psc->sc_clk_ss_src);
 			DPRINTF(sc->sc_dev, "rate of psc->sc_clk_ss_src %u\n",
@@ -517,7 +550,7 @@ tegra_xusb_intr_mbox(void *v)
 				msg = __SHIFTIN(128, MAILBOX_DATA_TYPE) |
 				      __SHIFTIN(rate / 1000, MAILBOX_DATA_DATA);
 			} else
-clk_fail:	
+clk_fail:
 				msg = __SHIFTIN(129, MAILBOX_DATA_TYPE) |
 				      __SHIFTIN(rate / 1000, MAILBOX_DATA_DATA);
 		} else {
@@ -551,33 +584,25 @@ clk_fail:
 static void
 tegra_xusb_init_regulators(struct tegra_xusb_softc * const psc)
 {
-	const char * supply_names[] = {
-		"dvddio-pex-supply",
-		"hvddio-pex-supply",
-		"avdd-usb-supply",
-		"avdd-pll-utmip-supply",
-		"avdd-pll-uerefe-supply",
-		"dvdd-usb-ss-pll-supply",
-		"hvdd-usb-ss-pll-e-supply"
-	};
+
 	device_t dev = psc->sc_xhci.sc_dev;
 	const int phandle = psc->sc_phandle;
 	struct fdtbus_regulator *reg;
 	int n, error;
 
-	for (n = 0; n < __arraycount(supply_names); n++) {
-		if (!of_hasprop(phandle, supply_names[n]))
+	for (n = 0; n < psc->sc_txd->txd_nsupplies; n++) {
+		if (!of_hasprop(phandle, psc->sc_txd->txd_supplies[n]))
 			continue;
-		reg = fdtbus_regulator_acquire(phandle, supply_names[n]);
+		reg = fdtbus_regulator_acquire(phandle, psc->sc_txd->txd_supplies[n]);
 		if (reg == NULL) {
 			aprint_error_dev(dev, "couldn't acquire supply '%s'\n",
-			    supply_names[n]);
+			    psc->sc_txd->txd_supplies[n]);
 			continue;
 		}
 		error = fdtbus_regulator_enable(reg);
 		if (error != 0)
 			aprint_error_dev(dev, "couldn't enable supply '%s': %d\n",
-			    supply_names[n], error);
+			    psc->sc_txd->txd_supplies[n], error);
 	}
 }
 
@@ -624,7 +649,7 @@ tegra_xusb_init(struct tegra_xusb_softc * const psc)
 	bus_space_write_4(bst, fpcih, PCI_BAR0, 0x10000000);
 	DPRINTF(sc->sc_dev, "%s fpci PCI_BAR0 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, fpcih, PCI_BAR0));
-	
+
 	DPRINTF(sc->sc_dev, "%s ipfs 0x188 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x188));
 	tegra_reg_set_clear(bst, ipfsh, 0x188, __BIT(16), 0);
@@ -706,7 +731,7 @@ tegra_xusb_open_fw(struct tegra_xusb_softc * const psc)
 	void *fw_static = NULL;
 	int error;
 
-	switch (psc->sc_type) {
+	switch (psc->sc_txd->txd_type) {
 	case XUSB_T124:
 #if defined(TEGRA124_XUSB_BIN_STATIC)
 		firmware_size = (uintptr_t)&_binary_tegra124_xusb_bin_size;
