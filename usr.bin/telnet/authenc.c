@@ -1,4 +1,4 @@
-/*	$NetBSD: authenc.c,v 1.13 2012/01/09 16:08:55 christos Exp $	*/
+/*	$NetBSD: authenc.c,v 1.14 2018/12/14 23:40:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: authenc.c,v 1.13 2012/01/09 16:08:55 christos Exp $");
+__RCSID("$NetBSD: authenc.c,v 1.14 2018/12/14 23:40:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,13 +54,15 @@ __RCSID("$NetBSD: authenc.c,v 1.13 2012/01/09 16:08:55 christos Exp $");
 int
 telnet_net_write(unsigned char *str, int len)
 {
-	if (NETROOM() > len) {
-		ring_supply_data(&netoring, str, len);
-		if (str[0] == IAC && str[1] == SE)
-			printsub('>', &str[2], len-2);
-		return(len);
+	if (NETROOM() <= len)
+		return 0;
+	ring_supply_data(&netoring, str, len);
+	if (str[0] == IAC && str[1] == SE) {
+		if (len < 2)
+			return 0;
+		printsub('>', &str[2], len - 2);
 	}
-	return(0);
+	return len;
 }
 
 void
@@ -77,13 +79,13 @@ net_encrypt(void)
 int
 telnet_spin(void)
 {
-	return(-1);
+	return -1;
 }
 
 char *
 telnet_getenv(char *val)
 {
-	return((char *)env_getvalue((unsigned char *)val));
+	return env_getvalue(val);
 }
 
 char *
@@ -93,15 +95,18 @@ telnet_gets(char *prmpt, char *result, int length, int echo)
 	int om = globalmode;
 	char *res;
 
+	if (length < 0)
+		abort();
+
 	TerminalNewMode(-1);
 	if (echo) {
 		printf("%s", prmpt);
 		res = fgets(result, length, stdin);
 	} else if ((res = getpass(prmpt)) != NULL) {
-		strlcpy(result, res, length);
+		strlcpy(result, res, (size_t)length);
 		res = result;
 	}
 	TerminalNewMode(om);
-	return(res);
+	return res;
 }
 #endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
