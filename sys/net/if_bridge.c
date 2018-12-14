@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.161 2018/12/12 01:46:47 rin Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.162 2018/12/14 12:27:22 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.161 2018/12/12 01:46:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.162 2018/12/14 12:27:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.161 2018/12/12 01:46:47 rin Exp $");
 
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>	/* XXX */
 #endif /* BRIDGE_IPF */
 
