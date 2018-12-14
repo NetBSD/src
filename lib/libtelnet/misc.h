@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.9 2012/01/09 15:25:34 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.10 2018/12/14 23:42:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,8 +38,8 @@ extern const char *RemoteHostName;
 extern int ConnectedCount;
 extern int ReservedPort;
 
-int isprefix(char *, const char *);
-char **genget(char *, char **, int);
+int isprefix(const char *, const char *);
+char **genget(const char *, char **, int);
 int Ambiguous(void *);
 __END_DECLS
 

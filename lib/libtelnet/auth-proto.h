@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-proto.h,v 1.15 2006/03/20 21:23:47 christos Exp $	*/
+/*	$NetBSD: auth-proto.h,v 1.16 2018/12/14 23:42:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,12 +68,12 @@ void auth_reply(unsigned char *, int);
 void auth_disable_name(char *);
 void auth_gen_printsub(unsigned char *, int, unsigned char *, int);
 
-int getauthmask(char *, int *);
-int auth_enable(char *);
-int auth_disable(char *);
-int auth_onoff(char *, int);
+int getauthmask(const char *, int *);
+int auth_enable(const char *);
+int auth_disable(const char *);
+int auth_onoff(const char *, int);
 int auth_togdebug(int);
-int auth_status(char *);
+int auth_status(const char *);
 void auth_name(unsigned char *, int);
 int auth_sendname(unsigned char *, int);
 void auth_finished(Authenticator *, int);
