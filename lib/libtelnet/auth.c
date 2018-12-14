@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.21 2012/03/21 05:33:27 matt Exp $	*/
+/*	$NetBSD: auth.c,v 1.22 2018/12/14 23:42:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.21 2012/03/21 05:33:27 matt Exp $");
+__RCSID("$NetBSD: auth.c,v 1.22 2018/12/14 23:42:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ auth_disable_name(char *name)
 }
 
 int
-getauthmask(char *type, int *maskp)
+getauthmask(const char *type, int *maskp)
 {
 	register int x;
 
@@ -235,19 +235,19 @@ getauthmask(char *type, int *maskp)
 }
 
 int
-auth_enable(char *type)
+auth_enable(const char *type)
 {
 	return(auth_onoff(type, 1));
 }
 
 int
-auth_disable(char *type)
+auth_disable(const char *type)
 {
 	return(auth_onoff(type, 0));
 }
 
 int
-auth_onoff(char *type, int on)
+auth_onoff(const char *type, int on)
 {
 	int i, mask = -1;
 	Authenticator *ap;
@@ -289,7 +289,7 @@ auth_togdebug(int on)
 }
 
 int
-auth_status(char *s)
+auth_status(const char *s)
 {
 	Authenticator *ap;
 	int i, mask;
