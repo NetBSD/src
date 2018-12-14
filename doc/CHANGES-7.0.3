@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.121 2018/12/12 11:38:09 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.122 2018/12/14 12:08:43 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5604,7 +5604,8 @@ libexec/httpd/main.c				1.22
 	Fix -X option parsing and miscelaneous cleanup.
 	[mrg, ticket #1659]
 
-sys/kern/kern_time.c				1.192
+sys/compat/linux/common/linux_misc_notalpha.c	1.110
+sys/kern/kern_time.c				1.192,1.193
 
 	Fix kernel info leak.
 	[maxv, ticket #1660]
