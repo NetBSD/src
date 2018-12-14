@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.43 2018/12/14 06:17:30 maya Exp $	*/
+/*	$NetBSD: externs.h,v 1.44 2018/12/14 23:40:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -196,7 +196,7 @@ char *telnet_getenv(char *);
 char *telnet_gets(char *, char *, int, int);
 
 /* commands.c */
-int send_tncmd(void (*)(int, int), const char *, char *);
+int send_tncmd(void (*)(int, int), const char *, const char *);
 void _setlist_init(void);
 void set_escape_char(char *);
 int set_mode(int);
@@ -207,17 +207,17 @@ int shell(int, char *[]);
 int quit(int, char *[]);
 int logout(int, char *[]);
 int env_cmd(int, char *[]);
-struct env_lst *env_find(const unsigned char *);
+struct env_lst *env_find(const char *);
 void env_init(void);
-struct env_lst *env_define(const unsigned char *, unsigned char *);
-struct env_lst *env_undefine(const unsigned char *, unsigned char *);
-struct env_lst *env_export(const unsigned char *, unsigned char *);
-struct env_lst *env_unexport(const unsigned char *, unsigned char *);
-struct env_lst *env_send(const unsigned char *, unsigned char *);
-struct env_lst *env_list(const unsigned char *, unsigned char *);
-unsigned char *env_default(int, int );
-unsigned char *env_getvalue(const unsigned char *);
-void env_varval(const unsigned char *);
+struct env_lst *env_define(const char *, char *);
+struct env_lst *env_undefine(const char *, char *);
+struct env_lst *env_export(const char *, char *);
+struct env_lst *env_unexport(const char *, char *);
+struct env_lst *env_send(const char *, char *);
+struct env_lst *env_list(const char *, char *);
+char *env_default(int, int );
+char *env_getvalue(const char *);
+void env_varval(const char *);
 int auth_cmd(int, char *[]);
 int ayt_status(void);
 int encrypt_cmd(int, char *[]);
@@ -297,8 +297,8 @@ void telnet(const char *);
 void xmitAO(void);
 void xmitEL(void);
 void xmitEC(void);
-int dosynch(char *);
-int get_status(char *);
+int dosynch(const char *);
+int get_status(const char *);
 void intp(void);
 void sendbrk(void);
 void sendabort(void);
@@ -319,7 +319,7 @@ void setcommandmode(void);
 /* utilities.c */
 void upcase(char *);
 int SetSockOpt(int, int, int, int);
-void SetNetTrace(char *);
+void SetNetTrace(const char *);
 void Dump(int, unsigned char *, int);
 void printoption(const char *, int, int );
 void optionstatus(void);

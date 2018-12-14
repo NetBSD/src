@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.17 2004/03/20 23:26:05 heas Exp $	*/
+/*	$NetBSD: network.c,v 1.18 2018/12/14 23:40:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.17 2004/03/20 23:26:05 heas Exp $");
+__RCSID("$NetBSD: network.c,v 1.18 2018/12/14 23:40:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ setneturg(void)
 int
 netflush(void)
 {
-    int n, n1;
+    ssize_t n, n1;
 
 #ifdef	ENCRYPTION
     if (encrypt_output)
@@ -136,7 +136,7 @@ netflush(void)
 #endif	/* ENCRYPTION */
     if ((n1 = n = ring_full_consecutive(&netoring)) > 0) {
 	if (!ring_at_mark(&netoring)) {
-	    n = send(net, (char *)netoring.consume, n, 0); /* normal write */
+	    n = send(net, netoring.consume, (size_t)n, 0); /* normal write */
 	} else {
 	    /*
 	     * In 4.2 (and 4.3) systems, there is some question about
@@ -146,7 +146,7 @@ netflush(void)
 	     * we really have more the TCP philosophy of urgent data
 	     * rather than the Unix philosophy of OOB data).
 	     */
-	    n = send(net, (char *)netoring.consume, 1, MSG_OOB);/* URGENT data */
+	    n = send(net, netoring.consume, 1, MSG_OOB);/* URGENT data */
 	}
     }
     if (n < 0) {
@@ -161,10 +161,10 @@ netflush(void)
 	n = 0;
     }
     if (netdata && n) {
-	Dump('>', netoring.consume, n);
+	Dump('>', netoring.consume, (int)n);
     }
     if (n) {
-	ring_consumed(&netoring, n);
+	ring_consumed(&netoring, (int)n);
 	/*
 	 * If we sent all, and more to send, then recurse to pick
 	 * up the other half.

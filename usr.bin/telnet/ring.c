@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.14 2018/12/13 09:07:53 maya Exp $	*/
+/*	$NetBSD: ring.c,v 1.15 2018/12/14 23:40:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: ring.c,v 1.14 2018/12/13 09:07:53 maya Exp $");
+__RCSID("$NetBSD: ring.c,v 1.15 2018/12/14 23:40:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static u_long ring_clock = 0;
 int
 ring_init(Ring *ring, unsigned char *buffer, int count)
 {
-    memset((char *)ring, 0, sizeof *ring);
+    memset(ring, 0, sizeof *ring);
 
     ring->size = count;
 

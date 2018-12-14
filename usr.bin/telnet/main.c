@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2018/12/13 04:49:19 maya Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2018/12/14 23:40:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2018/12/13 04:49:19 maya Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2018/12/14 23:40:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 
 		if (setjmp(toplevel) != 0)
 			Exit(0);
-		if (tn(argp - args, args) == 1)
+		if (tn((int)(argp - args), args) == 1)
 			return (0);
 		else
 			return (1);
