@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2017/02/10 18:11:18 christos Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2018/12/14 12:14:08 martin Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -20,6 +20,7 @@ CPPFLAGS+=-I.
 SRCS=		magic.c apprentice.c softmagic.c ascmagic.c compress.c	\
 		is_tar.c readelf.c print.c fsmagic.c apptype.c funcs.c \
 		cdf.c readcdf.c cdf_time.c encoding.c der.c
+DPSRCS=		magic.h
 MAN=		libmagic.3
 MLINKS+=	libmagic.3 magic_open.3 \
 		libmagic.3 magic_close.3 \
@@ -41,5 +42,3 @@ magic.h:        magic.h.in
 CLEANFILES+=	magic.h
 
 .include <bsd.lib.mk>
-
-${ALLOBJS}:	magic.h
