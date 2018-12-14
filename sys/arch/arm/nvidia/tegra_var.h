@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.44 2018/10/18 09:01:53 skrll Exp $ */
+/* $NetBSD: tegra_var.h,v 1.45 2018/12/14 12:29:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,6 +55,8 @@ void	tegra_pmc_hdmi_enable(void);
 
 void	tegra210_car_xusbio_enable_hw_control(void);
 void	tegra210_car_xusbio_enable_hw_seq(void);
+void	tegra210_car_sata_enable_hw_control(void);
+void	tegra210_car_sata_enable_hw_seq(void);
 
 uint32_t tegra_fuse_read(u_int);
 

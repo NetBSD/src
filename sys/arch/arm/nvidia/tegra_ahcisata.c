@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.11 2017/09/19 20:46:12 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.12 2018/12/14 12:29:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.11 2017/09/19 20:46:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.12 2018/12/14 12:29:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,8 @@ struct tegra_ahcisata_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
+
+	int			sc_phandle;
 	struct clk		*sc_clk_sata;
 	struct clk		*sc_clk_sata_oob;
 	struct clk		*sc_clk_cml1;
@@ -65,15 +67,47 @@ struct tegra_ahcisata_softc {
 	struct fdtbus_reset	*sc_rst_sata_cold;
 
 	struct tegra_gpio_pin	*sc_pin_power;
+
+	struct tegra_ahcisata_data
+				*sc_tad;
 };
 
-static const char * const tegra_ahcisata_supplies[] = {
+static const char * const tegra124_ahcisata_supplies[] = {
     "hvdd-supply",
     "vddio-supply",
     "avdd-supply",
     "target-5v-supply",
     "target-12v-supply"
 };
+
+enum tegra_ahcisata_type {
+	TEGRA124,
+	TEGRA210
+};
+
+struct tegra_ahcisata_data {
+	enum tegra_ahcisata_type	tad_type;
+	const char * const *		tad_supplies;
+	size_t				tad_nsupplies;
+};
+
+struct tegra_ahcisata_data tegra124_ahcisata_data = {
+	.tad_type = TEGRA124,
+	.tad_supplies = tegra124_ahcisata_supplies,
+	.tad_nsupplies = __arraycount(tegra124_ahcisata_supplies),
+};
+
+struct tegra_ahcisata_data tegra210_ahcisata_data = {
+	.tad_type = TEGRA210,
+};
+
+
+static const struct of_compat_data compat_data[] = {
+	{ "nvidia,tegra124-ahci", (uintptr_t)&tegra124_ahcisata_data },
+	{ "nvidia,tegra210-ahci", (uintptr_t)&tegra210_ahcisata_data },
+	{ NULL },
+};
+
 
 static void	tegra_ahcisata_init(struct tegra_ahcisata_softc *);
 static int	tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *);
@@ -84,10 +118,9 @@ CFATTACH_DECL_NEW(tegra_ahcisata, sizeof(struct tegra_ahcisata_softc),
 static int
 tegra_ahcisata_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-ahci", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -120,16 +153,6 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get clock sata-oob\n");
 		return;
 	}
-	sc->sc_clk_cml1 = fdtbus_clock_get(phandle, "cml1");
-	if (sc->sc_clk_cml1 == NULL) {
-		aprint_error(": couldn't get clock cml1\n");
-		return;
-	}
-	sc->sc_clk_pll_e = fdtbus_clock_get(phandle, "pll_e");
-	if (sc->sc_clk_pll_e == NULL) {
-		aprint_error(": couldn't get clock pll_e\n");
-		return;
-	}
 	sc->sc_rst_sata = fdtbus_reset_get(phandle, "sata");
 	if (sc->sc_rst_sata == NULL) {
 		aprint_error(": couldn't get reset sata\n");
@@ -146,6 +169,21 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	uintptr_t data = of_search_compatible(faa->faa_phandle, compat_data)->data;
+	sc->sc_tad = (struct tegra_ahcisata_data *)data;
+	if (sc->sc_tad->tad_type == TEGRA124) {
+		sc->sc_clk_cml1 = fdtbus_clock_get(phandle, "cml1");
+		if (sc->sc_clk_cml1 == NULL) {
+			aprint_error(": couldn't get clock cml1\n");
+			return;
+		}
+		sc->sc_clk_pll_e = fdtbus_clock_get(phandle, "pll_e");
+		if (sc->sc_clk_pll_e == NULL) {
+			aprint_error(": couldn't get clock pll_e\n");
+			return;
+		}
+	}
+
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, sata_addr, sata_size, 0, &sc->sc_bsh);
 	if (error) {
@@ -153,6 +191,7 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_phandle = faa->faa_phandle;
 	sc->sc.sc_atac.atac_dev = self;
 	sc->sc.sc_dmat = faa->faa_dmat;
 	sc->sc.sc_ahcit = faa->faa_bst;
@@ -168,8 +207,8 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SATA\n");
 
-	for (n = 0; n < __arraycount(tegra_ahcisata_supplies); n++) {
-		const char *supply = tegra_ahcisata_supplies[n];
+	for (n = 0; n < sc->sc_tad->tad_nsupplies; n++) {
+		const char *supply = sc->sc_tad->tad_supplies[n];
 		reg = fdtbus_regulator_acquire(phandle, supply);
 		if (reg == NULL) {
 			aprint_error_dev(self, "couldn't acquire %s\n", supply);
@@ -211,11 +250,6 @@ tegra_ahcisata_init(struct tegra_ahcisata_softc *sc)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 
-	const u_int gen1_tx_amp = 0x18;
-	const u_int gen1_tx_peak = 0x04;
-	const u_int gen2_tx_amp = 0x18;
-	const u_int gen2_tx_peak = 0x0a;
-
 	/* Set RX idle detection source and disable RX idle detection interrupt */
 	tegra_reg_set_clear(bst, bsh, TEGRA_SATA_AUX_MISC_CNTL_1_REG,
 	    TEGRA_SATA_AUX_MISC_CNTL_1_AUX_OR_CORE_IDLE_STATUS_SEL, 0);
@@ -234,33 +268,77 @@ tegra_ahcisata_init(struct tegra_ahcisata_softc *sc)
 	tegra_reg_set_clear(bst, bsh, TEGRA_SATA_CONFIGURATION_REG,
 	    TEGRA_SATA_CONFIGURATION_EN_FPCI, 0);
 
-	/* PHY config */
-	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_INDEX_REG,
-	    TEGRA_T_SATA0_INDEX_CH1);
-	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_REG,
-	    __SHIFTIN(gen1_tx_amp, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_AMP) |
-	    __SHIFTIN(gen1_tx_peak, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_PEAK),
-	    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_AMP |
-	    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_PEAK);
-	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_REG,
-	    __SHIFTIN(gen2_tx_amp, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_AMP) |
-	    __SHIFTIN(gen2_tx_peak, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_PEAK),
-	    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_AMP |
-	    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_PEAK);
-	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL11_REG,
-	    __SHIFTIN(0x2800, TEGRA_T_SATA0_CHX_PHY_CTRL11_GEN2_RX_EQ));
-	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL2_REG,
-	    __SHIFTIN(0x23, TEGRA_T_SATA0_CHX_PHY_CTRL2_CDR_CNTL_GEN1));
-	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_INDEX_REG, 0);
+	/* Electrical settings for better link stability */
+	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL17_REG, 0x55010000);
+	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL18_REG, 0x55010000);
+	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL20_REG, 1);
+	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL21_REG, 1);
+
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG_PHY_0_REG,
+	    TEGRA_T_SATA0_CFG_PHY_0_MASK_SQUELCH,
+	    TEGRA_T_SATA0_CFG_PHY_0_USE_7BIT_ALIGN_DET_FOR_SPD);
+
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_NVOOB_REG,
+	    __SHIFTIN(0x7, TEGRA_T_SATA0_NVOOB_COMMA_CNT) |
+	    __SHIFTIN(0x3, TEGRA_T_SATA0_NVOOB_SQUELCH_FILTER_LENGTH) |
+	    __SHIFTIN(0x1, TEGRA_T_SATA0_NVOOB_SQUELCH_FILTER_MODE),
+	    TEGRA_T_SATA0_NVOOB_COMMA_CNT |
+	    TEGRA_T_SATA0_NVOOB_SQUELCH_FILTER_LENGTH |
+	    TEGRA_T_SATA0_NVOOB_SQUELCH_FILTER_MODE);
+
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG_2NVOOB_2_REG,
+	    __SHIFTIN(0xc, TEGRA_T_SATA0_CFG_2NVOOB_2_COMWAKE_IDLE_CNT_LOW),
+	    TEGRA_T_SATA0_CFG_2NVOOB_2_COMWAKE_IDLE_CNT_LOW);
+
+	if (sc->sc_tad->tad_type == TEGRA124) {
+		const u_int gen1_tx_amp = 0x18;
+		const u_int gen1_tx_peak = 0x04;
+		const u_int gen2_tx_amp = 0x18;
+		const u_int gen2_tx_peak = 0x0a;
+
+		/* PHY config */
+		bus_space_write_4(bst, bsh, TEGRA_T_SATA0_INDEX_REG,
+		    TEGRA_T_SATA0_INDEX_CH1);
+		tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_REG,
+		    __SHIFTIN(gen1_tx_amp, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_AMP) |
+		    __SHIFTIN(gen1_tx_peak, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_PEAK),
+		    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_AMP |
+		    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN1_TX_PEAK);
+		tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_REG,
+		    __SHIFTIN(gen2_tx_amp, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_AMP) |
+		    __SHIFTIN(gen2_tx_peak, TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_PEAK),
+		    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_AMP |
+		    TEGRA_T_SATA0_CHX_PHY_CTRL1_GEN2_TX_PEAK);
+		bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL11_REG,
+		    __SHIFTIN(0x2800, TEGRA_T_SATA0_CHX_PHY_CTRL11_GEN2_RX_EQ));
+		bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CHX_PHY_CTRL2_REG,
+		    __SHIFTIN(0x23, TEGRA_T_SATA0_CHX_PHY_CTRL2_CDR_CNTL_GEN1));
+		bus_space_write_4(bst, bsh, TEGRA_T_SATA0_INDEX_REG, 0);
+	}
 
 	/* Backdoor update the programming interface field and class code */
 	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG_SATA_REG,
 	    TEGRA_T_SATA0_CFG_SATA_BACKDOOR_PROG_IF_EN, 0);
+
 	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_BKDOOR_CC_REG,
-	    __SHIFTIN(0x1016, TEGRA_T_SATA0_BKDOOR_CC_CLASS_CODE) |
+	    __SHIFTIN(0x0106, TEGRA_T_SATA0_BKDOOR_CC_CLASS_CODE) |
 	    __SHIFTIN(0x1, TEGRA_T_SATA0_BKDOOR_CC_PROG_IF));
 	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG_SATA_REG,
 	    0, TEGRA_T_SATA0_CFG_SATA_BACKDOOR_PROG_IF_EN);
+
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_AHCI_HBA_CAP_BKDR_REG,
+	    TEGRA_T_SATA0_AHCI_HBA_CAP_BKDR_SALP |
+	    TEGRA_T_SATA0_AHCI_HBA_CAP_BKDR_SUPP_PM |
+	    TEGRA_T_SATA0_AHCI_HBA_CAP_BKDR_SLUMBER_ST_CAP |
+	    TEGRA_T_SATA0_AHCI_HBA_CAP_BKDR_PARTIAL_ST_CAP, 0);
+
+	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG_PHY_1_REG,
+	    TEGRA_T_SATA0_CFG_PHY_1_PADS_IDDQ_EN |
+	    TEGRA_T_SATA0_CFG_PHY_1_PAD_PLL_IDDQ_EN, 0);
+
+	/* Enable IFPS device block */
+	tegra_reg_set_clear(bst, bsh, TEGRA_SATA_CONFIGURATION_REG,
+	    0, TEGRA_SATA_CONFIGURATION_CLKEN_OVERRIDE);
 
 	/* Enable access and bus mastering */
 	tegra_reg_set_clear(bst, bsh, TEGRA_T_SATA0_CFG1_REG,
@@ -272,7 +350,9 @@ tegra_ahcisata_init(struct tegra_ahcisata_softc *sc)
 
 	/* MMIO setup */
 	bus_space_write_4(bst, bsh, TEGRA_SATA_FPCI_BAR5_REG,
-	    __SHIFTIN(0x10000, TEGRA_SATA_FPCI_BAR_START));
+	    __SHIFTIN(0x10000, TEGRA_SATA_FPCI_BAR_START) |
+	    TEGRA_SATA_FPCI_BAR_ACCESS_TYPE);
+
 	bus_space_write_4(bst, bsh, TEGRA_T_SATA0_CFG9_REG,
 	    __SHIFTIN(0x8000, TEGRA_T_SATA0_CFG9_BASE_ADDRESS));
 
@@ -314,7 +394,7 @@ tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *sc)
 	tegra_pmc_remove_clamping(PMC_PARTID_SAX);
 	delay(20);
 
-	/* Un-gate clocks and enable CML clock for SATA */
+	/* Un-gate clocks for SATA */
 	error = clk_enable(sc->sc_clk_sata);
 	if (error) {
 		aprint_error_dev(self, "couldn't enable sata: %d\n", error);
@@ -325,11 +405,21 @@ tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *sc)
 		aprint_error_dev(self, "couldn't enable sata-oob: %d\n", error);
 		return error;
 	}
-	error = clk_enable(sc->sc_clk_cml1);
-	if (error) {
-		aprint_error_dev(self, "couldn't enable cml1: %d\n", error);
-		return error;
+
+	if (sc->sc_clk_cml1) {
+		/* Enable CML clock for SATA */
+		error = clk_enable(sc->sc_clk_cml1);
+		if (error) {
+			aprint_error_dev(self, "couldn't enable cml1: %d\n", error);
+			return error;
+		}
 	}
+
+	/* Enable PHYs */
+	struct fdtbus_phy *phy;
+	for (u_int n = 0; (phy = fdtbus_phy_get_index(sc->sc_phandle, n)) != NULL; n++)
+		if (fdtbus_phy_enable(phy, true) != 0)
+			aprint_error_dev(self, "failed to enable PHY #%d\n", n);
 
 	/* De-assert resets */
 	fdtbus_reset_deassert(sc->sc_rst_sata);

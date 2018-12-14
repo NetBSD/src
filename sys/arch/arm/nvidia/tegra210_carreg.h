@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_carreg.h,v 1.8 2017/09/25 08:55:07 jmcneill Exp $ */
+/* $NetBSD: tegra210_carreg.h,v 1.9 2018/12/14 12:29:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -552,6 +552,7 @@
 #define	CAR_SATA_PLL_CFG0_SEQ_STATE		__BITS(27,26)
 #define	CAR_SATA_PLL_CFG0_SEQ_START_STATE	__BIT(25)
 #define	CAR_SATA_PLL_CFG0_SEQ_ENABLE		__BIT(24)
+#define	CAR_SATA_PLL_CFG0_SEQ_PADPLL_SLEEP_IDDQ	__BIT(13)
 #define	CAR_SATA_PLL_CFG0_SEQ_PADPLL_PD_INPUT_VALUE __BIT(7)
 #define	CAR_SATA_PLL_CFG0_SEQ_LANE_PD_INPUT_VALUE __BIT(6)
 #define	CAR_SATA_PLL_CFG0_SEQ_RESET_INPUT_VALUE	__BIT(5)
