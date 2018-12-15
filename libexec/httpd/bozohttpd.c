@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.103 2018/12/15 02:03:24 maya Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.104 2018/12/15 09:28:27 leot Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2260,7 +2260,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	if (request && request->hr_allow)
 		bozo_printf(httpd, "Allow: %s\r\n", request->hr_allow);
 	/* RFC 7231 (HTTP/1.1) 6.5.7 */
-	if (code == 408 && request->hr_proto == httpd->consts.http_11)
+	if (code == 408 && request &&
+	    request->hr_proto == httpd->consts.http_11)
 		bozo_printf(httpd, "Connection: close\r\n");
 	bozo_printf(httpd, "\r\n");
 	/* According to the RFC 2616 sec. 9.4 HEAD method MUST NOT return a
