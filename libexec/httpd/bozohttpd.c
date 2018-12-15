@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.101 2018/12/04 02:52:42 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.102 2018/12/15 01:02:34 maya Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -585,12 +585,14 @@ process_method(bozo_httpreq_t *request, const char *method)
 static int
 bozo_got_header_length(bozo_httpreq_t *request, size_t len)
 {
-	request->hr_header_bytes += len;
-	if (request->hr_header_bytes < BOZO_HEADERS_MAX_SIZE)
-		return 0;
 
-	return bozo_http_error(request->hr_httpd, 413, request,
-		"too many headers");
+	if (len > BOZO_HEADERS_MAX_SIZE - request->hr_header_bytes)
+		return bozo_http_error(request->hr_httpd, 413, request,
+			"too many headers");
+
+	request->hr_header_bytes += len;
+
+	return 0;
 }
 
 /*
