@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.18 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.19 2018/12/15 13:17:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.18 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.19 2018/12/15 13:17:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,6 +126,10 @@ tegra210_platform_bootstrap(void)
 {
 
 	tegra_bootstrap();
+
+#if defined(MULTIPROCESSOR) && defined(__aarch64__)
+	arm_fdt_cpu_bootstrap();
+#endif
 }
 
 static void
@@ -133,7 +137,7 @@ tegra210_platform_mpstart(void)
 {
 
 #if defined(MULTIPROCESSOR) && defined(__aarch64__)
-	arm_fdt_cpu_bootstrap();
+	arm_fdt_cpu_mpstart();
 #endif
 }
 #endif
