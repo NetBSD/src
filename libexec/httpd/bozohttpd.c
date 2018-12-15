@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.104 2018/12/15 09:28:27 leot Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.105 2018/12/15 12:39:22 leot Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1467,7 +1467,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	} else if (basename == NULL) {
 		strcpy(path, ".");
 		strcpy(dir, "");
-		basename = dir;
+		basename = request->hr_file + 1;
 	} else {
 		*basename++ = '\0';
 		strcpy(path, dir);
