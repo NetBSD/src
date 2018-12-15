@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.162 2018/12/14 12:27:22 martin Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.163 2018/12/15 07:38:58 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.162 2018/12/14 12:27:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.163 2018/12/15 07:38:58 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1566,7 +1566,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 		/*
 		 * Handle TX offload in software. For TSO, a packet is
 		 * split into multiple chunks. Thus, the return value of
-		 * ether_sw_offload_tx() is mbuf chain consists of them.
+		 * ether_sw_offload_tx() is mbuf queue consists of them.
 		 */
 		m = ether_sw_offload_tx(ifp, m);
 		if (m == NULL)
