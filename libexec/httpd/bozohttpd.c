@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.102 2018/12/15 01:02:34 maya Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.103 2018/12/15 02:03:24 maya Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -141,6 +141,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <strings.h>
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
