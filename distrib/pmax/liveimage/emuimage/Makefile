@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2012/11/03 14:25:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2018/12/15 18:03:17 gson Exp $
 
-LIVEIMGBASE=	NetBSD-${DISTRIBVER}-pmax-live-sd0root	# gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-pmax-live	# gives ${IMGBASE}.img
 
 .include <bsd.own.mk>
 
 KERN_SET=		kern-GENERIC
-BOOTDISK=		sd0
 .if defined(EMUIMAGEMB)
 LIVEIMAGEMB=		${EMUIMAGEMB}
 .endif

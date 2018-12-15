@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2012/11/03 14:25:32 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2018/12/15 18:03:17 gson Exp $
 
-LIVEIMGBASE=	NetBSD-${DISTRIBVER}-amd64-live-wd0root	# gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-amd64-live	# gives ${IMGBASE}.img
 
-BOOTDISK=	wd0			# for QEMU etc.
-.if defined(EMUIMAGEMB)
+USBIMAGEMB?=	1536            	# 2GB USB flash memories aren't 2GiB
 LIVEIMAGEMB=	${EMUIMAGEMB}
-.endif
 
 .include "${.CURDIR}/../Makefile.liveimage"

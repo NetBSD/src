@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.19 2018/11/19 20:05:37 aymeric Exp $
+#	$NetBSD: Makefile.bootimage,v 1.20 2018/12/15 18:03:17 gson Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -34,9 +34,6 @@
 #		Basename of the image
 #
 # Optional variables:
-#	BOOTDISK
-#		device name of target bootable disk specified in /etc/fstab
-#		(default: sd0)
 #	USE_MBR
 #		set yes if target disk image requires MBR partition
 #		(default: no)
@@ -148,7 +145,6 @@ RM?=		rm
 #
 # common definitions for image
 #
-BOOTDISK?=	sd0
 USE_MBR?=	no
 USE_SUNLABEL?=	no
 INSTALLBOOT_AFTER_DISKLABEL?=	no
@@ -247,7 +243,7 @@ ${TARGETFS}: prepare_md_post
 	${INSTALL} ${COPY} -m 0644 ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
 .endif
 	@echo Preparing /etc/fstab ...
-	${TOOL_SED} "s/@@BOOTDISK@@/${BOOTDISK}/" < ${FSTAB_IN} > ${WORKFSTAB}
+	${TOOL_SED} < ${FSTAB_IN} > ${WORKFSTAB}
 	${INSTALL} ${COPY} -m 0644 ${WORKFSTAB} ${WORKDIR}/etc/fstab
 	@echo Setting rc_configured=YES in /etc/rc.conf ...
 	${TOOL_SED} "s/rc_configured=NO/rc_configured=YES/"		\

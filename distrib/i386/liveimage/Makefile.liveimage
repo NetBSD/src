@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.liveimage,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
+#	$NetBSD: Makefile.liveimage,v 1.2 2018/12/15 18:03:17 gson Exp $
 
 .include <bsd.own.mk>
 
 KERN_SET=		kern-GENERIC
-BOOTDISK?=		wd0		# for emulators
 PRIMARY_BOOT=		bootxx_ffsv1
 SECONDARY_BOOT=		boot
 SECONDARY_BOOT_ARG=	# unnecessary
