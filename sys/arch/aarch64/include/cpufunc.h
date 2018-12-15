@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.3 2018/08/26 18:15:49 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4 2018/12/15 16:54:30 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,6 +32,7 @@
 #ifdef _KERNEL
 
 #include <arm/armreg.h>
+#include <sys/device_if.h>
 
 static inline int
 set_cpufuncs(void)
