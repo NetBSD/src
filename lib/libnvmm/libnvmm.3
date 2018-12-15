@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.4 2018/12/12 11:40:08 wiz Exp $
+.\"	$NetBSD: libnvmm.3,v 1.5 2018/12/15 13:39:43 maxv Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 12, 2018
+.Dd December 14, 2018
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -62,6 +62,10 @@
 .Ft int
 .Fn nvmm_vcpu_run "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
     "struct nvmm_exit *exit"
+.Ft int
+.Fn nvmm_hva_map "struct nvmm_machine *mach" "uintptr_t hva" "size_t size"
+.Ft int
+.Fn nvmm_hva_unmap "struct nvmm_machine *mach" "uintptr_t hva" "size_t size"
 .Ft int
 .Fn nvmm_gpa_map "struct nvmm_machine *mach" "uintptr_t hva" "gpaddr_t gpa" \
     "size_t size" "int flags"
@@ -164,15 +168,33 @@ The
 structure is filled to indicate the exit reason, and the associated parameters
 if any.
 .Pp
-.Fn nvmm_gpa_map
-makes the guest physical memory area beginning on address
-.Fa gpa
-and of size
+.Fn nvmm_hva_map
+maps at address
+.Fa hva
+a buffer of size
 .Fa size
-available in the machine
-.Fa mach .
-The area is mapped in the calling process' virtual address space, at address
-.Fa hva .
+in the calling process' virtual address space.
+This buffer is allowed to be subsequently mapped in a virtual machine.
+.Pp
+.Fn nvmm_hva_unmap
+unmaps the buffer of size
+.Fa size
+at address
+.Fa hva
+from the calling process' virtual address space.
+.Pp
+.Fn nvmm_gpa_map
+maps into the guest physical memory beginning on address
+.Fa gpa
+the buffer of size
+.Fa size
+located at address
+.Fa hva
+of the calling process' virtual address space.
+The
+.Fa hva
+parameter must point to a buffer that was previously mapped with
+.Fn nvmm_hva_map .
 .Pp
 .Fn nvmm_gpa_unmap
 removes the guest physical memory area beginning on address
@@ -181,9 +203,6 @@ and of size
 .Fa size
 from the machine
 .Fa mach .
-It also unmaps the area beginning on
-.Fa hva
-from the calling process' virtual address space.
 .Pp
 .Fn nvmm_gva_to_gpa
 translates, on the CPU
