@@ -1,4 +1,12 @@
-$NetBSD: CHANGES,v 1.31 2018/12/04 02:52:42 mrg Exp $
+$NetBSD: CHANGES,v 1.32 2018/12/15 12:52:36 leot Exp $
+
+changes in bozohttpd 20181215:
+	o  avoid .htpasswd exposure to authenticated users.  reported by JP,
+	   from leot@netbsd.org
+	o  avoid possible null dereference when receiving a big request that
+	   timeout.  reported by maya@netbsd.org, from leot@netbsd.org
+	o  fix handling of -T option, from leot@netbsd.org
+	o  cleanups and portability improvements, from maya@netbsd.org
 
 changes in bozohttpd 20181204:
 	o  change directory indexing to use html tables.  from
