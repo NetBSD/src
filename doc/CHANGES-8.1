@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.76 2018/12/14 12:15:17 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.77 2018/12/15 13:40:15 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2051,4 +2051,10 @@ external/bsd/file/lib/Makefile			1.11
 
 	Fix a parallel build race.
 	[msaitoh, ticket #1136]
+
+sys/arch/x86/pci/amdnb_misc.c			1.3
+sys/arch/x86/pci/amdtemp.c			1.22
+
+	Add support for AMD family 16h cpu sensors.
+	[is, ticket #1137]
 
