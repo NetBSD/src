@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.22 2018/12/14 23:42:39 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.23 2018/12/15 23:22:51 maya Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.22 2018/12/14 23:42:39 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.23 2018/12/15 23:22:51 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,22 +106,6 @@ static void auth_intr(int);
  * in priority order, i.e. try the first one first.
  */
 Authenticator authenticators[] = {
-#ifdef	SPX
-	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				spx_init,
-				spx_send,
-				spx_is,
-				spx_reply,
-				spx_status,
-				spx_printsub },
-	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				spx_init,
-				spx_send,
-				spx_is,
-				spx_reply,
-				spx_status,
-				spx_printsub },
-#endif
 #ifdef	KRB5
 # ifdef	ENCRYPTION
 	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
