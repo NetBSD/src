@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sw_offload.c,v 1.4 2018/12/13 20:54:50 rin Exp $	*/
+/*	$NetBSD: ether_sw_offload.c,v 1.5 2018/12/15 07:29:44 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,11 +34,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.4 2018/12/13 20:54:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.5 2018/12/15 07:29:44 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mbuf.h>
+#include <sys/syslog.h>
+#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -57,6 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.4 2018/12/13 20:54:50 rin Exp
 #endif
 
 /*
+ * Limit error messages at most once per 10 seconds.
+ */
+static const struct timeval eso_err_interval = {
+	.tv_sec = 10,
+	.tv_usec = 0,
+};
+static struct timeval eso_err_lasttime;
+
+/*
  * Handle TX offload in software. For TSO, split the packet into
  * chanks with payloads of size MSS. For chekcsum offload, update
  * required checksum fields. The results are more than one packet
@@ -68,6 +79,7 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_header *ep;
 	int flags, ehlen;
+	uint16_t type;
 #ifdef INET6
 	bool v6;
 #else
@@ -90,7 +102,7 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 			return NULL;
 	}
 	ep = mtod(m, struct ether_header *);
-	switch (ntohs(ep->ether_type)) {
+	switch (type = ntohs(ep->ether_type)) {
 	case ETHERTYPE_IP:
 	case ETHERTYPE_IPV6:
 		ehlen = ETHER_HDR_LEN;
@@ -99,7 +111,11 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 		ehlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 	default:
-		panic("%s: unexpected frame type", __func__);
+		if (ratecheck(&eso_err_lasttime, &eso_err_interval))
+			log(LOG_ERR, "%s: %s: dropping invalid frame "
+			    "type 0x%04hx csum_flags 0x%08x\n",
+			    __func__, ifp->if_xname, type, flags);
+		goto quit;
 	}
 	KASSERT(m->m_pkthdr.len >= ehlen);
 
