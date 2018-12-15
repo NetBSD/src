@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.20.2.1 2018/12/15 13:38:59 martin Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.20.2.1 2018/12/15 13:38:59 martin Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -212,7 +212,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 
 
 	/* Not yet supported CPUs */
-	if (family > 0x15)
+	if (family > 0x16)
 		return 0;
 
 	return 1;
@@ -257,6 +257,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	case 0x12: /* AMD Lynx/Sabine (Llano) */
 	case 0x14: /* AMD Brazos (Ontario/Zacate/Desna) */
 	case 0x15:
+	case 0x16:
 		amdtemp_family10_init(sc);
 		break;
 
@@ -284,6 +285,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	case 0x12:
 	case 0x14:
 	case 0x15:
+	case 0x16:
 		amdtemp_family10_setup_sensors(sc, device_unit(self));
 		break;
 	}
@@ -312,6 +314,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	case 0x12:
 	case 0x14:
 	case 0x15:
+	case 0x16:
 		sc->sc_sme->sme_refresh = amdtemp_family10_refresh;
 		break;
 	}

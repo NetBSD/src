@@ -1,4 +1,4 @@
-/*	$NetBSD: amdnb_misc.c,v 1.2 2012/04/16 16:07:24 cegger Exp $ */
+/*	$NetBSD: amdnb_misc.c,v 1.2.36.1 2018/12/15 13:38:59 martin Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.2 2012/04/16 16:07:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.2.36.1 2018/12/15 13:38:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,6 +67,8 @@ amdnb_misc_match(device_t parent, cfdata_t match, void *aux)
 	case PCI_PRODUCT_AMD_AMD64_F11_MISC:
 	case PCI_PRODUCT_AMD_F14_NB:		/* Family 12h, too */
 	case PCI_PRODUCT_AMD_F15_MISC:
+	case PCI_PRODUCT_AMD_F16_NB:
+	case PCI_PRODUCT_AMD_F16_30_NB:
 		break;
 	default:
 		return 0;
