@@ -1,4 +1,4 @@
-.\"     $NetBSD: ath.4,v 1.32 2017/07/03 21:30:58 wiz Exp $
+.\"     $NetBSD: ath.4,v 1.33 2018/12/15 15:34:07 jakllsch Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd February 21, 2011
+.Dd December 15, 2018
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -210,7 +210,7 @@ The driver will reset the hardware and continue.
 The Atheros Hardware Access Layer was unable to reset the hardware
 as requested.
 The status code is explained in the HAL include file
-.Pa contrib/sys/dev/ic/athhal.h .
+.Pa sys/external/isc/atheros_hal/dist/ah.h .
 This should not happen.
 .It "ath%d: unable to start recv logic"
 The driver was unable to restart frame reception.
