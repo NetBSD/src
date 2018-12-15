@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.1 2018/11/07 07:43:08 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.2 2018/12/15 13:39:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #define NVMM_MAX_MACHINES	128
 #define NVMM_MAX_VCPUS		256
+#define NVMM_MAX_SEGS		32
 #define NVMM_MAX_RAM		(4UL * (1 << 30))
 
 struct nvmm_cpu {
@@ -49,6 +50,13 @@ struct nvmm_cpu {
 	void *cpudata;
 };
 
+struct nvmm_seg {
+	bool present;
+	uintptr_t hva;
+	size_t size;
+	struct uvm_object *uobj;
+};
+
 struct nvmm_machine {
 	bool present;
 	nvmm_machid_t machid;
@@ -57,9 +65,11 @@ struct nvmm_machine {
 
 	/* Kernel */
 	struct vmspace *vm;
-	struct uvm_object *uobj;
 	gpaddr_t gpa_begin;
 	gpaddr_t gpa_end;
+
+	/* Segments */
+	struct nvmm_seg segs[NVMM_MAX_SEGS];
 
 	/* CPU */
 	struct nvmm_cpu cpus[NVMM_MAX_VCPUS];

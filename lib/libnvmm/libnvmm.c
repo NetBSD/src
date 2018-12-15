@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.4 2018/12/12 10:42:34 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.5 2018/12/15 13:39:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,24 +65,12 @@ __area_isvalid(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 	area_t *ent;
 
 	LIST_FOREACH(ent, areas, list) {
-		/* Collision on HVA */
-		if (hva >= ent->hva && hva < ent->hva + ent->size) {
-			return false;
-		}
-		if (hva + size >= ent->hva &&
-		    hva + size < ent->hva + ent->size) {
-			return false;
-		}
-		if (hva <= ent->hva && hva + size >= ent->hva + ent->size) {
-			return false;
-		}
-
 		/* Collision on GPA */
 		if (gpa >= ent->gpa && gpa < ent->gpa + ent->size) {
 			return false;
 		}
-		if (gpa + size >= ent->gpa &&
-		    gpa + size < ent->gpa + ent->size) {
+		if (gpa + size > ent->gpa &&
+		    gpa + size <= ent->gpa + ent->size) {
 			return false;
 		}
 		if (gpa <= ent->gpa && gpa + size >= ent->gpa + ent->size) {
@@ -434,12 +422,54 @@ nvmm_gpa_unmap(struct nvmm_machine *mach, uintptr_t hva, gpaddr_t gpa,
 	args.size = size;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_GPA_UNMAP, &args);
+	if (ret == -1) {
+		/* Can't recover. */
+		abort();
+	}
+
+	return 0;
+}
+
+int
+nvmm_hva_map(struct nvmm_machine *mach, uintptr_t hva, size_t size)
+{
+	struct nvmm_ioc_hva_map args;
+	int ret;
+
+	if (nvmm_init() == -1) {
+		return -1;
+	}
+
+	args.machid = mach->machid;
+	args.hva = hva;
+	args.size = size;
+
+	ret = ioctl(nvmm_fd, NVMM_IOC_HVA_MAP, &args);
 	if (ret == -1)
 		return -1;
 
-	ret = munmap((void *)hva, size);
+	return 0;
+}
 
-	return ret;
+int
+nvmm_hva_unmap(struct nvmm_machine *mach, uintptr_t hva, size_t size)
+{
+	struct nvmm_ioc_hva_map args;
+	int ret;
+
+	if (nvmm_init() == -1) {
+		return -1;
+	}
+
+	args.machid = mach->machid;
+	args.hva = hva;
+	args.size = size;
+
+	ret = ioctl(nvmm_fd, NVMM_IOC_HVA_MAP, &args);
+	if (ret == -1)
+		return -1;
+
+	return 0;
 }
 
 /*
@@ -458,15 +488,10 @@ nvmm_gpa_to_hva(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t *hva)
 	}
 
 	LIST_FOREACH(ent, areas, list) {
-		if (gpa < ent->gpa) {
-			continue;
+		if (gpa >= ent->gpa && gpa < ent->gpa + ent->size) {
+			*hva = ent->hva + (gpa - ent->gpa);
+			return 0;
 		}
-		if (gpa >= ent->gpa + ent->size) {
-			continue;
-		}
-
-		*hva = ent->hva + (gpa - ent->gpa);
-		return 0;
 	}
 
 	errno = ENOENT;
