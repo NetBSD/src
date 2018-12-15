@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.604 2018/12/14 09:47:40 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.605 2018/12/15 05:40:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.604 2018/12/14 09:47:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.605 2018/12/15 05:40:10 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3038,11 +3038,15 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct wm_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	pcireg_t reg;
 	char buf[256];
 
-	snprintb(buf, sizeof(buf), WUS_FLAGS, CSR_READ(sc, WMREG_WUS));
-	device_printf(sc->sc_dev, "wakeup status %s\n", buf);
-	CSR_WRITE(sc, WMREG_WUS, 0xffffffff); /* W1C */
+	reg = CSR_READ(sc, WMREG_WUS);
+	if (reg != 0) {
+		snprintb(buf, sizeof(buf), WUS_FLAGS, reg);
+		device_printf(sc->sc_dev, "wakeup status %s\n", buf);
+		CSR_WRITE(sc, WMREG_WUS, 0xffffffff); /* W1C */
+	}
 
 	if (sc->sc_type >= WM_T_PCH2)
 		wm_resume_workarounds_pchlan(sc);
