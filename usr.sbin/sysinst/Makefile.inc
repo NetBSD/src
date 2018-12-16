@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2018/10/06 18:45:37 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2018/12/16 11:36:08 martin Exp $
 #
 # Makefile for sysinst
 
@@ -56,6 +56,13 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
 		${NODISKLABEL:D-DNO_DISKLABEL} \
 		${NOPARTMAN:D-DNO_PARTMAN}
+
+.if ${MACHINE} == "evbarm"
+    || ${MACHINE} == "evbmips"
+    || ${MACHINE} == "evbsh3"
+CPPFLAGS+=	-DARCH_SUBDIR="\"${MACHINE}-${MACHINE_ARCH}\""
+CPPFLAGS+=	-DPKG_ARCH_SUBDIR="\"${MACHINE_ARCH}\""
+.endif
 
 .if defined(NETBSD_OFFICIAL_RELEASE) && ${NETBSD_OFFICIAL_RELEASE} == "yes"
 CPPFLAGS+= -DSYSINST_FTP_HOST=\"ftp.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
