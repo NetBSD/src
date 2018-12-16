@@ -1,4 +1,4 @@
-.\" $NetBSD: md2.3,v 1.1 2005/09/24 20:51:14 elad Exp $
+.\" $NetBSD: md2.3,v 1.2 2018/12/16 14:08:48 abhinav Exp $
 .\"
 .\" ----------------------------------------------------------------------------
 .\" "THE BEER-WARE LICENSE" (Revision 42):
@@ -99,7 +99,11 @@ If the
 .Ar buf
 argument is non-null it must point to at least 33 characters of buffer space.
 .Sh SEE ALSO
-.Xr md2 3 ,
+.Xr md4 3 ,
+.Xr md5 3 ,
+.Xr openssl_MD2 3 ,
+.Xr openssl_MD4 3 ,
+.Xr openssl_MD5 3 ,
 .Rs
 .%A B. Kaliski
 .%T The MD2 Message-Digest Algorithm
