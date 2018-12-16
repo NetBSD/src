@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2018/12/16 11:36:08 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2018/12/16 11:40:09 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -88,7 +88,7 @@ struct f_arg {
 static const struct f_arg fflagopts[] = {
 	{"release", REL, rel, sizeof rel},
 	{"machine", MACH, machine, sizeof machine},
-	{"xfer dir", "/unsr/INSTALL", xfer_dir, sizeof xfer_dir},
+	{"xfer dir", "/usr/INSTALL", xfer_dir, sizeof xfer_dir},
 	{"ext dir", "", ext_dir_bin, sizeof ext_dir_bin},
 	{"ext src dir", "", ext_dir_src, sizeof ext_dir_src},
 	{"ftp host", SYSINST_FTP_HOST, ftp.xfer_host[XFER_FTP], sizeof ftp.xfer_host[XFER_FTP]},
