@@ -1,4 +1,4 @@
-/* $NetBSD: scu_reg.h,v 1.2 2016/10/04 15:15:27 kiyohara Exp $ */
+/* $NetBSD: scu_reg.h,v 1.3 2018/12/16 16:46:12 skrll Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,10 +42,13 @@
 #define	SCU_CFG			0x04	// SCU Configuration Register
 #define	SCU_CPU_PWR_STS		0x08	// SCU CPU Power Status
 #define	SCU_INV_ALL_REG		0x0c	// SCU Invalidate All Registers in Secure State
+#define	SCU_DIAG_CONTROL	0x30	// SCU Diag Control - undocumented
 #define	SCU_FILTER_START	0x40	// Filtering Start Address
 #define	SCU_FILTER_END		0x44	// Filtering End Address
 #define	SCU_ACCESS_CONTROL	0x50	// SCU Access Control
 #define	SCU_NS_ACCESS_CONTROL	0x54	// SCU Non-Secure Access Control
+
+
 
 #define	SCU_CTL_IC_STANDBY_ENA			__BIT(6)
 #define	SCU_CTL_SCU_STANDBY_ENA			__BIT(5)
@@ -69,5 +72,7 @@
 #define	SCU_CFG_CPU1_SMP		__BIT(5)
 #define	SCU_CFG_CPU0_SMP		__BIT(4)
 #define	SCU_CFG_CPUMAX			__BITS(0,1)	// # of CPU - 1
+
+#define SCU_DIAG_DISABLE_MIGBIT		__BIT(0)
 
 #endif /* _ARM_CORTEX_SCUREG_H_ */
