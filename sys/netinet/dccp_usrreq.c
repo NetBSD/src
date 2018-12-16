@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.20 2018/09/14 05:09:51 maxv Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.21 2018/12/16 17:46:58 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.20 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.21 2018/12/16 17:46:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2157,7 +2157,7 @@ dccp_send(struct socket *so, struct mbuf *m, struct sockaddr *addr,
 		}
 	}
 
-	if (sbspace(&so->so_snd) < -512) {
+	if (sbspace_oob(&so->so_snd) == 0) {
 		INP_UNLOCK(inp);
 		error = ENOBUFS;
 		goto release;
