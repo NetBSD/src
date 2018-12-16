@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.83 2018/11/19 22:21:32 jdolecek Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.84 2018/12/16 10:42:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.83 2018/11/19 22:21:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.84 2018/12/16 10:42:32 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -600,6 +600,12 @@ cpu_probe_c3(struct cpu_info *ci)
 		    }
 		}
 	}
+
+	/* Explicitly disable unsafe ALTINST mode. */
+	if (ci->ci_feat_val[4] & CPUID_VIA_DO_ACE) {
+		msr = rdmsr(MSR_VIA_ACE);
+		wrmsr(MSR_VIA_ACE, msr & ~VIA_ACE_ALTINST);
+	} 
 
 	/*
 	 * Determine L1 cache/TLB info.
