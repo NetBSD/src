@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.23 2018/12/15 23:22:51 maya Exp $	*/
+/*	$NetBSD: auth.c,v 1.24 2018/12/16 16:06:39 maya Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.23 2018/12/15 23:22:51 maya Exp $");
+__RCSID("$NetBSD: auth.c,v 1.24 2018/12/16 16:06:39 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,15 +80,6 @@ __RCSID("$NetBSD: auth.c,v 1.23 2018/12/15 23:22:51 maya Exp $");
 
 #define	typemask(x)		(1<<((x)-1))
 
-#ifdef	RSA_ENCPWD
-extern rsaencpwd_init();
-extern rsaencpwd_send();
-extern rsaencpwd_is();
-extern rsaencpwd_reply();
-extern rsaencpwd_status();
-extern rsaencpwd_printsub();
-#endif
-
 int auth_debug_mode = 0;
 static 	const char	*Name = "Noname";
 static	int	Server = 0;
@@ -123,15 +114,6 @@ Authenticator authenticators[] = {
 				kerberos5_reply,
 				kerberos5_status,
 				kerberos5_printsub },
-#endif
-#ifdef	RSA_ENCPWD
-	{ AUTHTYPE_RSA_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				rsaencpwd_init,
-				rsaencpwd_send,
-				rsaencpwd_is,
-				rsaencpwd_reply,
-				rsaencpwd_status,
-				rsaencpwd_printsub },
 #endif
 #ifdef SRA
 	{ AUTHTYPE_SRA, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
