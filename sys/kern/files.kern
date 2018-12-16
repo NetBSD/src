@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.27 2018/12/03 00:11:02 christos Exp $
+#	$NetBSD: files.kern,v 1.28 2018/12/16 14:06:56 rmind Exp $
 
 #
 # kernel sources
@@ -142,6 +142,7 @@ file	kern/subr_psref.c		kern
 file	kern/subr_specificdata.c	kern
 file	kern/subr_tftproot.c		tftproot
 file	kern/subr_time.c		kern
+file	kern/subr_thmap.c		kern
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c		kern
 file	kern/subr_workqueue.c		kern
