@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.68 2018/12/01 01:56:30 msaitoh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.69 2018/12/17 15:12:52 gson Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.68 2018/12/01 01:56:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.69 2018/12/17 15:12:52 gson Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1937,8 +1937,7 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	if (bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
 	    sc->sc_if->nregs * sc->sc_if_iospacing,
 	    0, &sc->sc_ioh)) {
-		aprint_error_dev(sc->sc_dev,
-		    "%s: bus_space_map(..., %x, %x, 0, %p) failed\n",
+		printf("%s: bus_space_map(..., %x, %x, 0, %p) failed\n",
 		    __func__, ia->iaa_if_iobase,
 		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh);
 		return -1;
