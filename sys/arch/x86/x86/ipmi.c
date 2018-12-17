@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.69 2018/12/17 15:12:52 gson Exp $ */
+/*	$NetBSD: ipmi.c,v 1.70 2018/12/17 16:26:03 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.69 2018/12/17 15:12:52 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.70 2018/12/17 16:26:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1923,6 +1923,8 @@ ipmi_refresh_sensors(struct ipmi_softc *sc)
 int
 ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
+	int error;
+
 	sc->sc_if = ipmi_get_if(ia->iaa_if_type);
 	if (sc->sc_if == NULL)
 		return -1;
@@ -1934,12 +1936,14 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 
 	sc->sc_if_rev = ia->iaa_if_rev;
 	sc->sc_if_iospacing = ia->iaa_if_iospacing;
-	if (bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
-	    sc->sc_if->nregs * sc->sc_if_iospacing,
-	    0, &sc->sc_ioh)) {
-		printf("%s: bus_space_map(..., %x, %x, 0, %p) failed\n",
-		    __func__, ia->iaa_if_iobase,
-		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh);
+	if ((error = bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
+	    sc->sc_if->nregs * sc->sc_if_iospacing, 0, &sc->sc_ioh)) != 0) {
+		const char *xname = sc->sc_dev ? device_xname(sc->sc_dev) :
+		    "ipmi0";
+		aprint_error("%s: %s:bus_space_map(..., %x, %x, 0, %p)"
+		    " type %c failed %d\n", xname, __func__, ia->iaa_if_iobase,
+		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh,
+		    ia->iaa_if_iotype, error);
 		return -1;
 	}
 #if 0
