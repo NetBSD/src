@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.313 2018/12/07 15:47:11 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.314 2018/12/17 06:58:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.313 2018/12/07 15:47:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314 2018/12/17 06:58:54 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2177,7 +2177,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 	return ptp;
 
 	/*
-	 * Allocation of a ptp failed, free any others that we just allocated.
+	 * Allocation of a PTP failed, free any others that we just allocated.
 	 */
 fail:
 	for (i = PTP_LEVELS; i > 1; i--) {
@@ -2386,7 +2386,11 @@ pmap_create(void)
 #endif
 	pmap->pm_flags = 0;
 	pmap->pm_gc_ptp = NULL;
+
+	pmap->pm_enter = NULL;
+	pmap->pm_remove = NULL;
 	pmap->pm_tlb_flush = NULL;
+	pmap->pm_data = NULL;
 
 	kcpuset_create(&pmap->pm_cpus, true);
 	kcpuset_create(&pmap->pm_kernel_cpus, true);
@@ -3486,6 +3490,11 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	struct vm_page *ptp;
 	struct pmap *pmap2;
 
+	if (__predict_false(pmap->pm_remove != NULL)) {
+		(*pmap->pm_remove)(pmap, sva, eva);
+		return;
+	}
+
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
 
@@ -3544,9 +3553,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 		lvl = pmap_pdes_invalid(va, pdes, &pde);
 		if (lvl != 0) {
-			/*
-			 * skip a range corresponding to an invalid pde.
-			 */
+			/* Skip a range corresponding to an invalid pde. */
 			blkendva = (va & ptp_frames[lvl - 1]) + nbpd[lvl - 1];
  			continue;
 		}
@@ -3567,7 +3574,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[pl1_i(va)], va,
 		    blkendva, &pv_tofree);
 
-		/* if PTP is no longer being used, free it! */
+		/* If PTP is no longer being used, free it. */
 		if (ptp && ptp->wire_count <= 1) {
 			pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 		}
@@ -4086,6 +4093,10 @@ int
 pmap_enter_default(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
     u_int flags)
 {
+	if (__predict_false(pmap->pm_enter != NULL)) {
+		return (*pmap->pm_enter)(pmap, va, pa, prot, flags);
+	}
+
 	return pmap_enter_ma(pmap, va, pa, pa, prot, flags, 0);
 }
 
@@ -4196,10 +4207,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	/*
 	 * Check if there is an existing mapping.  If we are now sure that
 	 * we need pves and we failed to allocate them earlier, handle that.
-	 * Caching the value of oldpa here is safe because only the mod/ref bits
-	 * can change while the pmap is locked.
+	 * Caching the value of oldpa here is safe because only the mod/ref
+	 * bits can change while the pmap is locked.
 	 */
-
 	ptep = &ptes[pl1_i(va)];
 	opte = *ptep;
 	bool have_oldpa = pmap_valid_entry(opte);
@@ -4216,9 +4226,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 	/*
-	 * update the pte.
+	 * Update the pte.
 	 */
-
 	do {
 		opte = *ptep;
 
@@ -4252,9 +4261,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	} while (pmap_pte_cas(ptep, opte, npte) != opte);
 
 	/*
-	 * update statistics and PTP's reference count.
+	 * Update statistics and PTP's reference count.
 	 */
-
 	pmap_stats_update_bypte(pmap, npte, opte);
 	if (ptp != NULL && !have_oldpa) {
 		ptp->wire_count++;
@@ -4262,18 +4270,16 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	KASSERT(ptp == NULL || ptp->wire_count > 1);
 
 	/*
-	 * if the same page, we can skip pv_entry handling.
+	 * If the same page, we can skip pv_entry handling.
 	 */
-
 	if (((opte ^ npte) & (PG_FRAME | PG_V)) == 0) {
 		KASSERT(((opte ^ npte) & PG_PVLIST) == 0);
 		goto same_pa;
 	}
 
 	/*
-	 * if old page is pv-tracked, remove pv_entry from its list.
+	 * If old page is pv-tracked, remove pv_entry from its list.
 	 */
-
 	if ((~opte & (PG_V | PG_PVLIST)) == 0) {
 		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
 			KASSERT(uvm_page_locked_p(old_pg));
@@ -4290,9 +4296,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 	/*
-	 * if new page is pv-tracked, insert pv_entry into its list.
+	 * If new page is pv-tracked, insert pv_entry into its list.
 	 */
-
 	if (new_pp) {
 		new_pve = pmap_enter_pv(new_pp, new_pve, &new_sparepve, ptp, va);
 	}

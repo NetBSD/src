@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.92 2018/12/06 17:26:18 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.93 2018/12/17 06:58:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -261,6 +261,8 @@ struct pmap {
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 
 	/* Used by NVMM. */
+	int (*pm_enter)(struct pmap *, vaddr_t, paddr_t, vm_prot_t, u_int);
+	void (*pm_remove)(struct pmap *, vaddr_t, vaddr_t);
 	void (*pm_tlb_flush)(struct pmap *);
 	void *pm_data;
 };
