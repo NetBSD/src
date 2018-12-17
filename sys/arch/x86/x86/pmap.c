@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.314 2018/12/17 06:58:54 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.315 2018/12/17 07:10:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314 2018/12/17 06:58:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.315 2018/12/17 07:10:07 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3484,7 +3484,6 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	pd_entry_t * const *pdes;
 	struct pv_entry *pv_tofree = NULL;
 	bool result;
-	int i;
 	paddr_t ptppa;
 	vaddr_t blkendva, va = sva;
 	struct vm_page *ptp;
@@ -3536,20 +3535,6 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		blkendva = x86_round_pdr(va+1);
 		if (blkendva > eva)
 			blkendva = eva;
-
-		/*
-		 * Our PTE mappings should never be removed with pmap_remove.
-		 *
-		 * XXXmaxv: still needed?
-		 *
-		 * A long term solution is to move the PTEs out of user address
-		 * space, and into kernel address space. Then we can set
-		 * VM_MAXUSER_ADDRESS to be VM_MAX_ADDRESS.
-		 */
-		for (i = 0; i < PDP_SIZE; i++) {
-			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
-				panic("PTE space accessed");
-		}
 
 		lvl = pmap_pdes_invalid(va, pdes, &pde);
 		if (lvl != 0) {
@@ -3983,25 +3968,10 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	for (va = sva ; va < eva; va = blockend) {
 		pt_entry_t *spte, *epte;
-		int i;
 
 		blockend = x86_round_pdr(va + 1);
 		if (blockend > eva)
 			blockend = eva;
-
-		/*
-		 * Our PTE mappings should never be write-protected.
-		 *
-		 * XXXmaxv: still needed?
-		 *
-		 * A long term solution is to move the PTEs out of user address
-		 * space, and into kernel address space. Then we can set
-		 * VM_MAXUSER_ADDRESS to be VM_MAX_ADDRESS.
-		 */
-		for (i = 0; i < PDP_SIZE; i++) {
-			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
-				panic("PTE space accessed");
-		}
 
 		/* Is it a valid block? */
 		if (!pmap_pdes_valid(va, pdes, NULL)) {
@@ -4142,8 +4112,6 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	        npte |= PG_W;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
-	else if (va < VM_MAX_ADDRESS)
-		panic("PTE space accessed");	/* XXXmaxv: no longer needed? */
 
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
