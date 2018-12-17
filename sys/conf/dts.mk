@@ -1,4 +1,4 @@
-# $NetBSD: dts.mk,v 1.9 2018/05/25 19:48:12 jakllsch Exp $
+# $NetBSD: dts.mk,v 1.10 2018/12/17 04:37:15 thorpej Exp $
 
 DTSARCH?=${MACHINE_CPU}
 DTSGNUARCH?=${DTSARCH}
@@ -25,9 +25,9 @@ DTSDIR+=$S/external/gpl2/dts/dist/arch/${_arch}/boot/dts/${_dir}
 .endfor
 .endfor
 
-DTSPATH=${DTSINC} ${DTSDIR} dts
+DTSPATH=${DTSINC} ${DTSDIR} ${DTS_OVERLAYDIR} dts
 
-.SUFFIXES: .dtd .dtb .dts
+.SUFFIXES: .dtd .dtdo .dtb .dtbo .dts
 
 .dts.dtd:
 	(${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
@@ -41,6 +41,17 @@ DTSPATH=${DTSINC} ${DTSDIR} dts
 	${TOOL_SED} -e 's@null.o@${.TARGET:.dtd=.dtb}@' \
 	    -e 's@/dev/null@@') > ${.TARGET}
 
+.dts.dtdo:
+	(${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
+	    -include ${.IMPSRC} /dev/null | \
+	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
+	    -@ -o /dev/null -d /dev/stdout | \
+	${TOOL_SED} -e 's@/dev/null@${.TARGET:.dtdo=.dtbo}@' \
+	    -e 's@<stdin>@${.IMPSRC}@' && \
+	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
+	    -include ${.IMPSRC} -M /dev/null | \
+	${TOOL_SED} -e 's@null.o@${.TARGET:.dtdo=.dtbo}@' \
+	    -e 's@/dev/null@@') > ${.TARGET}
 
 .dts.dtb:
 	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
@@ -48,9 +59,17 @@ DTSPATH=${DTSINC} ${DTSDIR} dts
 	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
 	    -p ${DTSPADDING} -b 0 -@ -o ${.TARGET}
 
-.PATH.dts: ${DTSDIR}
+.dts.dtbo:
+	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
+	    -include ${.IMPSRC} /dev/null | \
+	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
+	    -@ -o ${.TARGET}
+
+.PATH.dts: ${DTSDIR} ${DTS_OVERLAYDIR}
 
 DEPS+= ${DTS:.dts=.dtd}
-DTB= ${DTS:.dts=.dtb}
+DEPS+= ${DTS_OVERLAYS:.dts=.dtdo}
+DTB=  ${DTS:.dts=.dtb}
+DTBO= ${DTS_OVERLAYS:.dts=.dtbo}
 
-all: ${DTB}
+all: ${DTB} ${DTBO}
