@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2018/12/16 11:36:08 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2018/12/17 01:16:49 uwe Exp $
 #
 # Makefile for sysinst
 
@@ -57,8 +57,8 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		${NODISKLABEL:D-DNO_DISKLABEL} \
 		${NOPARTMAN:D-DNO_PARTMAN}
 
-.if ${MACHINE} == "evbarm"
-    || ${MACHINE} == "evbmips"
+.if ${MACHINE} == "evbarm" \
+    || ${MACHINE} == "evbmips" \
     || ${MACHINE} == "evbsh3"
 CPPFLAGS+=	-DARCH_SUBDIR="\"${MACHINE}-${MACHINE_ARCH}\""
 CPPFLAGS+=	-DPKG_ARCH_SUBDIR="\"${MACHINE_ARCH}\""
