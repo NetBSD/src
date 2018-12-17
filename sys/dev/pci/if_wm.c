@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.606 2018/12/17 04:14:40 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.607 2018/12/17 04:21:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.606 2018/12/17 04:14:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.607 2018/12/17 04:21:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14192,7 +14192,7 @@ wm_ulp_disable(struct wm_softc *sc)
 	if (rv != 0) {
 		DPRINTF(WM_DEBUG_INIT, ("%s: %s: failed\n",
 		device_xname(sc->sc_dev), __func__));
-		goto release;
+		return -1;
 	}
 
 	/* Toggle LANPHYPC */
@@ -14428,7 +14428,7 @@ wm_resume_workarounds_pchlan(struct wm_softc *sc)
 		uint16_t phy_reg;
 
 		if (sc->phy.acquire(sc) != 0)
-			goto release;
+			return -1;
 
 		/* Clear Auto Enable LPI after link up */
 		sc->phy.readreg_locked(dev, 1, I217_LPI_GPIO_CTRL, &phy_reg);
