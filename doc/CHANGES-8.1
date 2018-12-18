@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.77 2018/12/15 13:40:15 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.78 2018/12/18 18:33:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2057,4 +2057,28 @@ sys/arch/x86/pci/amdtemp.c			1.22
 
 	Add support for AMD family 16h cpu sensors.
 	[is, ticket #1137]
+
+usr.bin/telnet/telnet.c				1.37
+usr.bin/telnet/utilities.c			1.24
+
+	Switch some sprintf to snprintf.
+	[maya, ticket #1135]
+
+sys/dev/pci/if_wm.c				1.606
+
+	Fix txqueue assignment.
+	[knakahara, ticket #1138]
+
+sys/dev/pci/ahcisata_pci.c			1.47
+
+	Add AHCI_PCI_QUIRK_FORCE for APU2.
+	[is, ticket #1139]
+
+share/man/man4/urtwn.4				1.16
+sys/dev/usb/if_urtwn.c				1.66
+
+	- Increase timeout values to prevent "could not send firmware command"
+	  or "timeout waiting for firmware readiness" on some devices.
+	- Add IO-DATA WN-G150UMW to the supported list.
+	[msaitoh, ticket #1140]
 
