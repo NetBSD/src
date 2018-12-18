@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.138 2018/12/04 22:06:36 kamil Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.139 2018/12/18 16:23:20 skrll Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -586,7 +586,7 @@
     ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
 /* Macros for min/max. */
-#define	__MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define	__MIN(a,b)	((/*CONSTCOND*/(a)<=(b))?(a):(b))
 #define	__MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
 /* __BITS(m, n): bits m through n, m < n. */
