@@ -1,4 +1,4 @@
-$NetBSD: CHANGES,v 1.32 2018/12/15 12:52:36 leot Exp $
+$NetBSD: CHANGES,v 1.33 2018/12/18 23:11:40 mrg Exp $
 
 changes in bozohttpd 20181215:
 	o  avoid .htpasswd exposure to authenticated users.  reported by JP,
@@ -7,9 +7,7 @@ changes in bozohttpd 20181215:
 	   timeout.  reported by maya@netbsd.org, from leot@netbsd.org
 	o  fix handling of -T option, from leot@netbsd.org
 	o  cleanups and portability improvements, from maya@netbsd.org
-
-changes in bozohttpd 20181204:
-	o  change directory indexing to use html tables.  from
+	o  change directory indexing to use html tables, from
 	   rajeev_v_pillai@yahoo.com
 
 changes in bozohttpd 20181125:
@@ -305,7 +303,7 @@ changes in bozohttpd 5.07 (20010610):
 	- add many new content-types, now support most common ones
 
 changes in bozohttpd 5.06 (20000825):
-	- add IPv6 suppor from itojun@iijlab.net
+	- add IPv6 support from itojun@iijlab.net
 	- man page fixes from jlam@netbsd.org
 
 changes in bozohttpd 5.05 (20000815):
