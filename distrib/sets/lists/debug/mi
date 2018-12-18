@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.270 2018/12/12 07:04:05 maxv Exp $
+# $NetBSD: mi,v 1.271 2018/12/18 18:11:34 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -125,7 +125,6 @@
 ./usr/lib/libposix_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libppath_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libproc_g.a				comp-c-libdebug		debuglib,compatfile,dtrace
-./usr/lib/libproc_p.a				comp-c-debuglib		debuglib,compatfile,dtrace
 ./usr/lib/libprop_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpthread_dbg_g.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_g.a			comp-c-debuglib		debuglib,compatfile
