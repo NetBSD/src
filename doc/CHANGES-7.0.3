@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.122 2018/12/14 12:08:43 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.123 2018/12/18 18:37:50 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5624,4 +5624,10 @@ sys/kern/sys_sig.c				1.47
 
 	Fix kernel info leak, 4 bytes of padding in struct _ksiginfo.
 	[maxv, ticket #1664]
+
+usr.bin/telnet/telnet.c				1.37
+usr.bin/telnet/utilities.c			1.24
+
+	Switch some sprintf to snprintf.
+	[maya, ticket #1665]
 
