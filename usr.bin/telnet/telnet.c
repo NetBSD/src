@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.36 2012/01/10 13:49:32 christos Exp $	*/
+/*	$NetBSD: telnet.c,v 1.36.32.1 2018/12/18 18:21:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.36 2012/01/10 13:49:32 christos Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.36.32.1 2018/12/18 18:21:38 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -856,8 +856,8 @@ suboption(void)
 	    name = gettermname();
 	    len = strlen(name) + 4 + 2;
 	    if (len < NETROOM()) {
-		sprintf((char *)temp, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE,
-				TELQUAL_IS, name, IAC, SE);
+		snprintf((char *)temp, sizeof(temp), "%c%c%c%c%s%c%c", IAC, SB,
+				TELOPT_TTYPE, TELQUAL_IS, name, IAC, SE);
 		ring_supply_data(&netoring, temp, len);
 		printsub('>', &temp[2], len-2);
 	    } else {
@@ -878,8 +878,8 @@ suboption(void)
 
 	    TerminalSpeeds(&isp, &osp);
 
-	    sprintf((char *)temp, "%c%c%c%c%ld,%ld%c%c", IAC, SB, TELOPT_TSPEED,
-		    TELQUAL_IS, osp, isp, IAC, SE);
+	    snprintf((char *)temp, sizeof(temp), "%c%c%c%c%ld,%ld%c%c", IAC, SB,
+		    TELOPT_TSPEED, TELQUAL_IS, osp, isp, IAC, SE);
 	    len = strlen((char *)temp+4) + 4;	/* temp[3] is 0 ... */
 
 	    if (len < NETROOM()) {
@@ -983,8 +983,8 @@ suboption(void)
 		send_wont(TELOPT_XDISPLOC, 1);
 		break;
 	    }
-	    sprintf((char *)temp, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_XDISPLOC,
-		    TELQUAL_IS, dp, IAC, SE);
+	    snprintf((char *)temp, sizeof(temp), "%c%c%c%c%s%c%c", IAC, SB,
+		    TELOPT_XDISPLOC, TELQUAL_IS, dp, IAC, SE);
 	    len = strlen((char *)temp+4) + 4;	/* temp[3] is 0 ... */
 
 	    if (len < NETROOM()) {

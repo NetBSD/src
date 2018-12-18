@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.23 2012/01/09 16:08:55 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.23.32.1 2018/12/18 18:21:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.23 2012/01/09 16:08:55 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.23.32.1 2018/12/18 18:21:38 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -633,7 +633,7 @@ printsub(
 		}
 		{
 		    char tbuf[64];
-		    sprintf(tbuf, "%s%s%s%s%s",
+		    snprintf(tbuf, sizeof(tbuf), "%s%s%s%s%s",
 			pointer[2]&MODE_EDIT ? "|EDIT" : "",
 			pointer[2]&MODE_TRAPSIG ? "|TRAPSIG" : "",
 			pointer[2]&MODE_SOFT_TAB ? "|SOFT_TAB" : "",
