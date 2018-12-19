@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.492 2018/12/15 12:08:18 maxv Exp $
+.\"	$NetBSD: options.4,v 1.493 2018/12/19 13:57:45 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 15, 2018
+.Dd December 19, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -411,12 +411,6 @@ to find and use ptys named
 Eventually this option will become optional as ptyfs based pseudo-ttys become
 the default, see
 .Xr mount_ptyfs 8 .
-.It Cd options COMPAT_SVR4
-On those architectures that support it, this enables binary
-compatibility with
-.At V.4
-applications built for the same architecture.
-This currently includes the m68k and sparc ports.
 .It Cd options COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with Linux ELF and
@@ -472,11 +466,6 @@ On those architectures that support it, this enables binary
 compatibility with 32-bit applications built for the same architecture.
 This is currently limited to the amd64 and sparc64 ports, and only
 applicable for 64-bit kernels.
-.It Cd options COMPAT_SVR4_32
-On those architectures that support it, this enables binary
-compatibility with 32-bit SVR4 applications built for the same architecture.
-This is currently limited to the sparc64 port, and only applicable for
-64-bit kernels.
 .It Cd options COMPAT_AOUT_M68K
 On m68k architectures which have switched to ELF,
 this enables binary compatibility with
@@ -2629,11 +2618,6 @@ handling happens.
 .It Cd options DEBUG_EMUL
 Adds debugging messages calls for emulated floating point and
 alignment fixing operations.
-.It Cd options DEBUG_SVR4
-Prints registers messages calls for emulated SVR4 getcontext and
-setcontext operations.
-See
-.Em options COMPAT_SVR4 .
 .It Cd options EXTREME_DEBUG
 Adds debugging functions callable from
 .Xr ddb 4 .
