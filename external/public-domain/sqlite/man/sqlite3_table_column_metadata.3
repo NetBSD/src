@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_TABLE_COLUMN_METADATA 3
 .Os
 .Sh NAME
@@ -30,6 +30,8 @@ If the column-name parameter to sqlite3_table_column_metadata() is
 a NULL pointer, then this routine simply checks for the existence of
 the table and returns SQLITE_OK if the table exists and SQLITE_ERROR
 if it does not.
+If the table name parameter T in a call to sqlite3_table_column_metadata(X,D,T,C,...)
+is NULL then the result is undefined behavior.
 .Pp
 The column is identified by the second, third and fourth parameters
 to this function.

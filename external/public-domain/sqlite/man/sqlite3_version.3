@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_VERSION 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ matching library and header files.
 .Bd -ragged
 .Bd -literal
 assert( sqlite3_libversion_number()==SQLITE_VERSION_NUMBER ); assert(
-strcmp(sqlite3_sourceid(),SQLITE_SOURCE_ID)==0 ); assert( strcmp(sqlite3_libversion(),SQLITE_VERSION)==0
+strncmp(sqlite3_sourceid(),SQLITE_SOURCE_ID,80)==0 ); assert( strcmp(sqlite3_libversion(),SQLITE_VERSION)==0
 ); 
 .Ed
 .Pp
@@ -51,6 +51,8 @@ SQLITE_VERSION_NUMBER.
 The sqlite3_sourceid() function returns a pointer to a string constant
 whose value is the same as the SQLITE_SOURCE_ID C preprocessor
 macro.
+Except if SQLite is built using an edited copy of the amalgamation,
+then the last four characters of the hash might be different from SQLITE_SOURCE_ID.
 .Pp
 .Sh SEE ALSO
 .Xr SQLITE_VERSION 3
