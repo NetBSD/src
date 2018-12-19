@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_FILE_CONTROL 3
 .Os
 .Sh NAME
@@ -27,12 +27,19 @@ through to the second and third parameters of the xFileControl method.
 The return value of the xFileControl method becomes the return value
 of this routine.
 .Pp
-The SQLITE_FCNTL_FILE_POINTER value for the op parameter causes a pointer
-to the underlying sqlite3_file object to be written into
-the space pointed to by the 4th parameter.
-The SQLITE_FCNTL_FILE_POINTER case is a short-circuit path which does
-not actually invoke the underlying sqlite3_io_methods.xFileControl
+A few opcodes for sqlite3_file_control() are
+handled directly by the SQLite core and never invoke the sqlite3_io_methods.xFileControl
 method.
+The SQLITE_FCNTL_FILE_POINTER value for the
+op parameter causes a pointer to the underlying sqlite3_file
+object to be written into the space pointed to by the 4th parameter.
+The SQLITE_FCNTL_JOURNAL_POINTER works
+similarly except that it returns the sqlite3_file object
+associated with the journal file instead of the main database.
+The SQLITE_FCNTL_VFS_POINTER opcode returns
+a pointer to the underlying sqlite3_vfs object for the file.
+The SQLITE_FCNTL_DATA_VERSION returns the
+data version counter from the pager.
 .Pp
 If the second parameter (zDbName) does not match the name of any open
 database file, then SQLITE_ERROR is returned.
@@ -43,8 +50,10 @@ There is no way to distinguish between an incorrect zDbName and an
 SQLITE_ERROR return from the underlying xFileControl method.
 .Pp
 .Sh SEE ALSO
+.Xr SQLITE_FCNTL_LOCKSTATE 3 ,
 .Xr sqlite3_errcode 3 ,
 .Xr sqlite3_file 3 ,
 .Xr sqlite3_file_control 3 ,
 .Xr sqlite3_io_methods 3 ,
+.Xr sqlite3_vfs 3 ,
 .Xr SQLITE_FCNTL_LOCKSTATE 3
