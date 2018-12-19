@@ -1,15 +1,18 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3CHANGESET_APPLY_STRM 3
 .Os
 .Sh NAME
 .Nm sqlite3changeset_apply_strm ,
+.Nm sqlite3changeset_apply_v2_strm ,
 .Nm sqlite3changeset_concat_strm ,
 .Nm sqlite3changeset_invert_strm ,
 .Nm sqlite3changeset_start_strm ,
+.Nm sqlite3changeset_start_v2_strm ,
 .Nm sqlite3session_changeset_strm ,
 .Nm sqlite3session_patchset_strm ,
 .Nm sqlite3changegroup_add_strm ,
-.Nm sqlite3changegroup_output_strm
+.Nm sqlite3changegroup_output_strm ,
+.Nm sqlite3rebaser_rebase_strm
 .Nd Streaming Versions of API functions.
 .Sh SYNOPSIS
 .Ft int 
@@ -20,6 +23,18 @@
 .Fa "int(*xFilter)( void *pCtx,                   const char *zTab              )"
 .Fa "int(*xConflict)( void *pCtx,                   int eConflict,                sqlite3_changeset_iter *p     )"
 .Fa "void *pCtx                      "
+.Fc
+.Ft int 
+.Fo sqlite3changeset_apply_v2_strm
+.Fa "sqlite3 *db"
+.Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pIn"
+.Fa "int(*xFilter)( void *pCtx,                   const char *zTab              )"
+.Fa "int(*xConflict)( void *pCtx,                   int eConflict,                sqlite3_changeset_iter *p     )"
+.Fa "void *pCtx"
+.Fa "void **ppRebase"
+.Fa "int *pnRebase"
+.Fa "int flags "
 .Fc
 .Ft int 
 .Fo sqlite3changeset_concat_strm
@@ -42,6 +57,13 @@
 .Fa "sqlite3_changeset_iter **pp"
 .Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
 .Fa "void *pIn "
+.Fc
+.Ft int 
+.Fo sqlite3changeset_start_v2_strm
+.Fa "sqlite3_changeset_iter **pp"
+.Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pIn"
+.Fa "int flags "
 .Fc
 .Ft int 
 .Fo sqlite3session_changeset_strm
@@ -67,17 +89,26 @@
 .Fa "int (*xOutput)(void *pOut, const void *pData, int nData)"
 .Fa "void *pOut "
 .Fc
+.Ft int 
+.Fo sqlite3rebaser_rebase_strm
+.Fa "sqlite3_rebaser *pRebaser"
+.Fa "int (*xInput)(void *pIn, void *pData, int *pnData)"
+.Fa "void *pIn"
+.Fa "int (*xOutput)(void *pOut, const void *pData, int nData)"
+.Fa "void *pOut "
+.Fc
 .Sh DESCRIPTION
 The six streaming API xxx_strm() functions serve similar purposes to
 the corresponding non-streaming API functions: 
 .Pp
 <table border=1 style="margin-left:8ex;margin-right:8ex"> <tr><th>Streaming
-function<th>Non-streaming equivalent</th> <tr><td>sqlite3changeset_apply_str<td>sqlite3changeset_apply
-<tr><td>sqlite3changeset_concat_str<td>sqlite3changeset_concat
-<tr><td>sqlite3changeset_invert_str<td>sqlite3changeset_invert
-<tr><td>sqlite3changeset_start_str<td>sqlite3changeset_start
-<tr><td>sqlite3session_changeset_str<td>sqlite3session_changeset
-<tr><td>sqlite3session_patchset_str<td>sqlite3session_patchset
+function<th>Non-streaming equivalent</th> <tr><td>sqlite3changeset_apply_strm<td>sqlite3changeset_apply
+<tr><td>sqlite3changeset_apply_strm_v2<td>sqlite3changeset_apply_v2
+<tr><td>sqlite3changeset_concat_strm<td>sqlite3changeset_concat
+<tr><td>sqlite3changeset_invert_strm<td>sqlite3changeset_invert
+<tr><td>sqlite3changeset_start_strm<td>sqlite3changeset_start
+<tr><td>sqlite3session_changeset_strm<td>sqlite3session_changeset
+<tr><td>sqlite3session_patchset_strm<td>sqlite3session_patchset
 </table> 
 .Pp
 Non-streaming functions that accept changesets (or patchsets) as input

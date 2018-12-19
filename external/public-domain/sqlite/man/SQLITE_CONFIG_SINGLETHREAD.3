@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_CONFIG_SINGLETHREAD 3
 .Os
 .Sh NAME
@@ -26,7 +26,9 @@
 .Nm SQLITE_CONFIG_WIN32_HEAPSIZE ,
 .Nm SQLITE_CONFIG_PCACHE_HDRSZ ,
 .Nm SQLITE_CONFIG_PMASZ ,
-.Nm SQLITE_CONFIG_STMTJRNL_SPILL
+.Nm SQLITE_CONFIG_STMTJRNL_SPILL ,
+.Nm SQLITE_CONFIG_SMALL_MALLOC ,
+.Nm SQLITE_CONFIG_SORTERREF_SIZE
 .Nd Configuration Options
 .Sh SYNOPSIS
 .Fd #define SQLITE_CONFIG_SINGLETHREAD
@@ -54,6 +56,8 @@
 .Fd #define SQLITE_CONFIG_PCACHE_HDRSZ
 .Fd #define SQLITE_CONFIG_PMASZ
 .Fd #define SQLITE_CONFIG_STMTJRNL_SPILL
+.Fd #define SQLITE_CONFIG_SMALL_MALLOC
+.Fd #define SQLITE_CONFIG_SORTERREF_SIZE
 .Sh DESCRIPTION
 These constants are the available integer configuration options that
 can be passed as the first argument to the sqlite3_config()
@@ -125,6 +129,15 @@ the currently defined memory allocation routines.
 This option can be used to overload the default memory allocation routines
 with a wrapper that simulations memory allocation failure or tracks
 memory usage, for example.
+.It SQLITE_CONFIG_SMALL_MALLOC
+The SQLITE_CONFIG_SMALL_MALLOC option takes single argument of type
+int, interpreted as a boolean, which if true provides a hint to SQLite
+that it should avoid large memory allocations if possible.
+SQLite will run faster if it is free to make large memory allocations,
+but some application might prefer to run slower in exchange for guarantees
+about memory fragmentation that are possible if large allocations are
+avoided.
+This hint is normally off.
 .It SQLITE_CONFIG_MEMSTATUS
 The SQLITE_CONFIG_MEMSTATUS option takes single argument of type int,
 interpreted as a boolean, which enables or disables the collection
@@ -146,24 +159,7 @@ Memory allocation statistics are enabled by default unless SQLite is
 compiled with SQLITE_DEFAULT_MEMSTATUS=0 in
 which case memory allocation statistics are disabled by default.
 .It SQLITE_CONFIG_SCRATCH
-The SQLITE_CONFIG_SCRATCH option specifies a static memory buffer that
-SQLite can use for scratch memory.
-There are three arguments to SQLITE_CONFIG_SCRATCH:  A pointer an 8-byte
-aligned memory buffer from which the scratch allocations will be drawn,
-the size of each scratch allocation (sz), and the maximum number of
-scratch allocations (N).
-The first argument must be a pointer to an 8-byte aligned buffer of
-at least sz*N bytes of memory.
-SQLite will not use more than one scratch buffers per thread.
-SQLite will never request a scratch buffer that is more than 6 times
-the database page size.
-If SQLite needs needs additional scratch memory beyond what is provided
-by this configuration option, then sqlite3_malloc()
-will be used to obtain the memory needed.<p>  When the application
-provides any amount of scratch memory using SQLITE_CONFIG_SCRATCH,
-SQLite avoids unnecessary large heap allocations.
-This can help prevent memory allocation failures
-due to heap fragmentation in low-memory embedded systems.
+The SQLITE_CONFIG_SCRATCH option is no longer used.
 .It SQLITE_CONFIG_PAGECACHE
 The SQLITE_CONFIG_PAGECACHE option specifies a memory pool that SQLite
 can use for the database page cache with the default page cache implementation.
@@ -196,8 +192,7 @@ separately for each additional cache line.
 .It SQLITE_CONFIG_HEAP
 The SQLITE_CONFIG_HEAP option specifies a static memory buffer that
 SQLite will use for all of its dynamic memory allocation needs beyond
-those provided for by SQLITE_CONFIG_SCRATCH and
-SQLITE_CONFIG_PAGECACHE.
+those provided for by SQLITE_CONFIG_PAGECACHE.
 The SQLITE_CONFIG_HEAP option is only available if SQLite is compiled
 with either SQLITE_ENABLE_MEMSYS3 or SQLITE_ENABLE_MEMSYS5
 and returns SQLITE_ERROR if invoked otherwise.
@@ -372,6 +367,21 @@ Since many statement journals never become large, setting the spill
 threshold to a value such as 64KiB can greatly reduce the amount of
 I/O required to support statement rollback.
 The default value for this setting is controlled by the SQLITE_STMTJRNL_SPILL
+compile-time option.
+.It SQLITE_CONFIG_SORTERREF_SIZE The SQLITE_CONFIG_SORTERREF_SIZE option
+accepts a single parameter of type (int) - the new value of the sorter-reference
+size threshold.
+Usually, when SQLite uses an external sort to order records according
+to an ORDER BY clause, all fields required by the caller are present
+in the sorted records.
+However, if SQLite determines based on the declared type of a table
+column that its values are likely to be very large - larger than the
+configured sorter-reference size threshold - then a reference is stored
+in each sorted record and the required column values loaded from the
+database as records are returned in sorted order.
+The default value for this option is to never use this optimization.
+Specifying a negative value for this option restores the default behaviour.
+This option is only available if SQLite is compiled with the SQLITE_ENABLE_SORTER_REFERENCES
 compile-time option.
 .El
 .Pp

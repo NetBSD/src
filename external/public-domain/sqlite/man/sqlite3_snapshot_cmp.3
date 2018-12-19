@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_SNAPSHOT_CMP 3
 .Os
 .Sh NAME
@@ -28,3 +28,6 @@ deleted, the value returned by this function is undefined.
 Otherwise, this API returns a negative value if P1 refers to an older
 snapshot than P2, zero if the two handles refer to the same database
 snapshot, and a positive value if P1 is a newer snapshot than P2.
+.Pp
+This interface is only available if SQLite is compiled with the SQLITE_ENABLE_SNAPSHOT
+option.
