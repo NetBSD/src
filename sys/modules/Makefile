@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.213 2018/11/27 06:31:15 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.214 2018/12/19 13:57:52 maxv Exp $
 
 .include <bsd.own.mk>
 
@@ -321,7 +321,6 @@ SUBDIR+=	wbsio
 SUBDIR+=	compat_aoutm68k
 #SUBDIR+=	compat_linux
 #SUBDIR+=	compat_sunos
-#SUBDIR+=	compat_svr4
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
