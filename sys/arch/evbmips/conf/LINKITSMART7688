@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.8 2018/08/14 06:37:59 maxv Exp $
+#	$NetBSD: LINKITSMART7688,v 1.9 2018/12/19 13:57:47 maxv Exp $
 #
 # MediaTek MT7688
 #
@@ -64,7 +64,6 @@ include         "conf/compat_netbsd50.config"
 
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # File systems

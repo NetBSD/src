@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.132 2018/08/01 20:04:14 maxv Exp $
+# $NetBSD: GENERIC3X,v 1.133 2018/12/19 13:57:50 maxv Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.132 $"
+#ident		"GENERIC3X-$Revision: 1.133 $"
 
 makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
@@ -60,7 +60,6 @@ include 	"conf/compat_netbsd60.config"
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
 #options 	EXEC_AOUT	# support for a.out executables
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-#options 	COMPAT_SVR4	# can run SVR4 executables
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

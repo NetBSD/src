@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.90 2018/02/25 00:27:16 mrg Exp $
+#	$NetBSD: files.hp300,v 1.91 2018/12/19 13:57:47 maxv Exp $
 #
 # hp300-specific configuration info
 
@@ -232,9 +232,6 @@ include "arch/m68k/fpe/files.fpe"
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include	"compat/aoutm68k/files.aoutm68k"
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include	"compat/sunos/files.sunos"

@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2006/09/22 15:33:08 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2018/12/19 13:57:45 maxv Exp $
 
-SUBDIR=	linux svr4 ultrix
+SUBDIR=	linux ultrix
 
 .include <bsd.subdir.mk>

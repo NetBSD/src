@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.62 2015/09/03 13:07:46 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.63 2018/12/19 13:57:47 maxv Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -724,9 +724,6 @@ Laststkadj:
 #include <m68k/m68k/sigcode.s>
 #ifdef COMPAT_SUNOS
 #include <m68k/m68k/sunos_sigcode.s>
-#endif
-#ifdef COMPAT_SVR4
-#include <m68k/m68k/svr4_sigcode.s>
 #endif
 
 /*
