@@ -1,7 +1,7 @@
-/* $NetBSD: kvm_aarch64.c,v 1.6 2018/12/18 16:25:47 skrll Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.7 2018/12/19 11:00:09 mrg Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,7 +48,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.6 2018/12/18 16:25:47 skrll Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.7 2018/12/19 11:00:09 mrg Exp $");
 
 /*ARGSUSED*/
 void
@@ -127,7 +127,8 @@ lose:
 		pt_entry_t pte;
 
 		/* now index into the pte table */
-		const u_int idx_mask =  __BITS(addr_shift + pte_shift - 1, addr_shift);
+		const uint64_t idx_mask = __BITS(addr_shift + pte_shift - 1,
+						 addr_shift);
 		pte_addr += 8 * __SHIFTOUT(va, idx_mask);
 
 		/* Find and read the PTE. */
