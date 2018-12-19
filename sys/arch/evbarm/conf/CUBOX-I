@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.18 2018/08/25 07:48:56 maxv Exp $
+# $NetBSD: CUBOX-I,v 1.19 2018/12/19 16:56:17 skrll Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -154,7 +154,6 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Console options.    also need IMXUARTCONSOLE
 options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x02020000,CONSPEED=115200
-options 	CONS_OVERRIDE
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
