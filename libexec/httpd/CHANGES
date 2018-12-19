@@ -1,7 +1,7 @@
-$NetBSD: CHANGES,v 1.33 2018/12/18 23:11:40 mrg Exp $
+$NetBSD: CHANGES,v 1.34 2018/12/19 12:40:32 mrg Exp $
 
 changes in bozohttpd 20181215:
-	o  avoid .htpasswd exposure to authenticated users.  reported by JP,
+	o  fix .htpasswd bypass for authenticated users.  reported by JP,
 	   from leot@netbsd.org
 	o  avoid possible null dereference when receiving a big request that
 	   timeout.  reported by maya@netbsd.org, from leot@netbsd.org
