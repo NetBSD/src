@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.40 2011/06/12 03:35:45 rmind Exp $
+# $NetBSD: files.next68k,v 1.41 2018/12/19 13:57:49 maxv Exp $
 
 # next68k-specific configuration info
 
@@ -94,9 +94,6 @@ include "compat/aoutm68k/files.aoutm68k"
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

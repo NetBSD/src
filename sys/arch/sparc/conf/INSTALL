@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.101 2018/09/06 05:36:50 maxv Exp $
+#	$NetBSD: INSTALL,v 1.102 2018/12/19 13:57:49 maxv Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -133,13 +133,11 @@ options 	INSECURE
 #options 	SETUIDSCRIPTS
 
 ## Options for compatibility with previous releases foreign system binaries.
-## In the cases of COMPAT_SUNOS and COMPAT_SVR4, you may need to set up
-## additional user-level utilities or system configuration files. See
-## compat_sunos(8) and compat_svr4(8).
+## In the cases of COMPAT_SUNOS, you may need to set up additional user-level
+## utilities or system configuration files. See compat_sunos(8).
 
 #include 	"conf/compat_netbsd10.config"
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.

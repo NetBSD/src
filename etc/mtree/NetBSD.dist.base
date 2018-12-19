@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.180 2018/11/09 21:33:50 abs Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.181 2018/12/19 13:57:44 maxv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -365,8 +365,6 @@
 ./usr/share/examples/emul
 ./usr/share/examples/emul/linux
 ./usr/share/examples/emul/linux/etc
-./usr/share/examples/emul/svr4
-./usr/share/examples/emul/svr4/etc
 ./usr/share/examples/emul/ultrix
 ./usr/share/examples/emul/ultrix/etc
 ./usr/share/examples/fstab

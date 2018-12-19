@@ -73,7 +73,6 @@ struct devsw_conv devsw_conv0[] = {
 	{ "tun", -1, 40, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "vnd", 14, 41, DEVNODE_VECTOR, 0, { 2, 8 }},
 	{ "audio", -1, 42, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
-	{ "svr4_net", -1, 43, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "ipl", -1, 44, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "satlink", -1, 45, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "rnd", -1, 46, DEVNODE_DONTBOTHER, 0, { 0, 0 }},

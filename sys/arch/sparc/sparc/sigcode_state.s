@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode_state.s,v 1.1 2001/06/08 04:49:46 mrg Exp $	*/
+/*	$NetBSD: sigcode_state.s,v 1.2 2018/12/19 13:57:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -54,8 +54,8 @@
 #include <machine/frame.h>
 
 /*
- * These defines are here so that locore.s, sunos_sigcode.s and svr4_sigcode.s
- * can all access them.
+ * These defines are here so that locore.s and sunos_sigcode.s can all access
+ * them.
  */
 
 /*

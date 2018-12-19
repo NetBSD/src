@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.56 2018/08/01 20:04:14 maxv Exp $
+# $NetBSD: MRCOFFEE,v 1.57 2018/12/19 13:57:49 maxv Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.56 $"
+#ident 		"MRCOFFEE-$Revision: 1.57 $"
 
 maxusers	32
 
@@ -141,13 +141,11 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	SETUIDSCRIPTS
 
 ## Options for compatibility with previous releases foreign system binaries.
-## In the cases of COMPAT_SUNOS and COMPAT_SVR4, you may need to set up
-## additional user-level utilities or system configuration files. See
-## compat_sunos(8) and compat_svr4(8).
+## In the cases of COMPAT_SUNOS, you may need to set up additional user-level
+## utilities or system configuration files. See compat_sunos(8).
 
 include 	"conf/compat_netbsd10.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
