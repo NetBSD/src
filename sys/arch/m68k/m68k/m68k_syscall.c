@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.50 2015/03/07 18:54:57 christos Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.51 2018/12/19 13:57:48 maxv Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.50 2015/03/07 18:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.51 2018/12/19 13:57:48 maxv Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -261,7 +261,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	bad:
 		/*
 		 * XXX: SVR4 uses this code-path, so we may have
-		 * to translate errno.
+		 * to translate errno. XXX OBSOLETE
 		 */
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];

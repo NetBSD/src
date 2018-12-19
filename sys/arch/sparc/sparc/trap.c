@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.196 2016/12/30 17:54:43 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.197 2018/12/19 13:57:50 maxv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,10 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2016/12/30 17:54:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.197 2018/12/19 13:57:50 maxv Exp $");
 
 #include "opt_ddb.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -84,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2016/12/30 17:54:43 christos Exp $");
 #include <machine/db_machdep.h>
 #else
 #include <machine/frame.h>
-#endif
-#ifdef COMPAT_SVR4
-#include <machine/svr4_machdep.h>
 #endif
 #ifdef COMPAT_SUNOS
 extern struct emul emul_sunos;
@@ -347,9 +343,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 			ksi.ksi_addr = (void *)pc;
 			break;
 		}
-#if defined(COMPAT_SVR4)
-badtrap:
-#endif
+
 #ifdef DIAGNOSTIC
 		if (type < 0x90 || type > 0x9f) {
 			/* the following message is gratuitous */
@@ -364,19 +358,6 @@ badtrap:
 		ksi.ksi_code = ILL_ILLTRP;
 		ksi.ksi_addr = (void *)pc;
 		break;
-
-#ifdef COMPAT_SVR4
-	case T_SVR4_GETCC:
-	case T_SVR4_SETCC:
-	case T_SVR4_GETPSR:
-	case T_SVR4_SETPSR:
-	case T_SVR4_GETHRTIME:
-	case T_SVR4_GETHRVTIME:
-	case T_SVR4_GETHRESTIME:
-		if (!svr4_trap(type, l))
-			goto badtrap;
-		break;
-#endif
 
 	case T_AST:
 		break;	/* the work is all in userret() */

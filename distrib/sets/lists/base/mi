@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1194 2018/12/12 07:04:05 maxv Exp $
+# $NetBSD: mi,v 1.1195 2018/12/19 13:57:44 maxv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2217,8 +2217,8 @@
 ./usr/share/examples/emul			base-sys-examples
 ./usr/share/examples/emul/linux			base-sys-examples
 ./usr/share/examples/emul/linux/etc		base-sys-examples
-./usr/share/examples/emul/svr4			base-sys-examples
-./usr/share/examples/emul/svr4/etc		base-sys-examples
+./usr/share/examples/emul/svr4			base-obsolete	obsolete
+./usr/share/examples/emul/svr4/etc		base-obsolete	obsolete
 ./usr/share/examples/emul/ultrix		base-sys-examples
 ./usr/share/examples/emul/ultrix/etc		base-sys-examples
 ./usr/share/examples/fstab			base-fstab-examples

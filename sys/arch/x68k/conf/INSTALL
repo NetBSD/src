@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.116 2018/08/01 20:04:14 maxv Exp $
+#	$NetBSD: INSTALL,v 1.117 2018/12/19 13:57:51 maxv Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.116 $"
+#ident 		"INSTALL-$Revision: 1.117 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -134,7 +134,6 @@ include 	"conf/compat_netbsd30.config"
 #options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
-#options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 
 ## File systems.

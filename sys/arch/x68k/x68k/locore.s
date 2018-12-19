@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.119 2015/07/25 06:24:53 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.120 2018/12/19 13:57:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,6 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
@@ -775,9 +774,6 @@ Laststkadj:
 #include <m68k/m68k/sigcode.s>
 #ifdef COMPAT_SUNOS
 #include <m68k/m68k/sunos_sigcode.s>
-#endif
-#ifdef COMPAT_SVR4
-#include <m68k/m68k/svr4_sigcode.s>
 #endif
 
 /*
