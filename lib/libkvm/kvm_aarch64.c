@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.7 2018/12/19 11:00:09 mrg Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.8 2018/12/19 11:02:21 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.7 2018/12/19 11:00:09 mrg Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.8 2018/12/19 11:02:21 mrg Exp $");
 
 /*ARGSUSED*/
 void
@@ -146,7 +146,7 @@ lose:
 
 		if ((pte & LX_TYPE) == LX_TYPE_BLK) {
 			const size_t blk_size = 1 << addr_shift;
-			const paddr_t blk_mask = __BITS(addr_shift - 1, 0);
+			const uint64_t blk_mask = __BITS(addr_shift - 1, 0);
 
 			*pa = (pte & page_addr & ~blk_mask) | (va & blk_mask);
 			return blk_size - (va & blk_mask);
