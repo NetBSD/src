@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_DBSTATUS_LOOKASIDE_USED 3
 .Os
 .Sh NAME
@@ -14,6 +14,7 @@
 .Nm SQLITE_DBSTATUS_CACHE_WRITE ,
 .Nm SQLITE_DBSTATUS_DEFERRED_FKS ,
 .Nm SQLITE_DBSTATUS_CACHE_USED_SHARED ,
+.Nm SQLITE_DBSTATUS_CACHE_SPILL ,
 .Nm SQLITE_DBSTATUS_MAX
 .Nd Status Parameters for database connections
 .Sh SYNOPSIS
@@ -29,6 +30,7 @@
 .Fd #define SQLITE_DBSTATUS_CACHE_WRITE
 .Fd #define SQLITE_DBSTATUS_DEFERRED_FKS
 .Fd #define SQLITE_DBSTATUS_CACHE_USED_SHARED
+.Fd #define SQLITE_DBSTATUS_CACHE_SPILL
 .Fd #define SQLITE_DBSTATUS_MAX
 .Sh DESCRIPTION
 These constants are the available integer "verbs" that can be passed
@@ -113,6 +115,15 @@ If an IO or other error occurs while writing a page to disk, the effect
 on subsequent SQLITE_DBSTATUS_CACHE_WRITE requests is undefined.
 The highwater mark associated with SQLITE_DBSTATUS_CACHE_WRITE is always
 0.
+.It SQLITE_DBSTATUS_CACHE_SPILL
+This parameter returns the number of dirty cache entries that have
+been written to disk in the middle of a transaction due to the page
+cache overflowing.
+Transactions are more efficient if they are written to disk all at
+once.
+When pages spill mid-transaction, that introduces additional overhead.
+This parameter can be used help identify inefficiencies that can be
+resolve by increasing the cache size.
 .It SQLITE_DBSTATUS_DEFERRED_FKS
 This parameter returns zero for the current value if and only if all
 foreign key constraints (deferred or immediate) have been resolved.

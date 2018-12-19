@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_BIND_BLOB 3
 .Os
 .Sh NAME
@@ -12,6 +12,7 @@
 .Nm sqlite3_bind_text16 ,
 .Nm sqlite3_bind_text64 ,
 .Nm sqlite3_bind_value ,
+.Nm sqlite3_bind_pointer ,
 .Nm sqlite3_bind_zeroblob ,
 .Nm sqlite3_bind_zeroblob64
 .Nd Binding Values To Prepared Statements
@@ -85,6 +86,14 @@
 .Fa "sqlite3_stmt*"
 .Fa "int"
 .Fa "const sqlite3_value*"
+.Fc
+.Ft int 
+.Fo sqlite3_bind_pointer
+.Fa "sqlite3_stmt*"
+.Fa "int"
+.Fa "void*"
+.Fa "const char*"
+.Fa "void(*)(void*)"
 .Fc
 .Ft int 
 .Fo sqlite3_bind_zeroblob
@@ -185,6 +194,17 @@ size) while it is being processed.
 Zeroblobs are intended to serve as placeholders for BLOBs whose content
 is later written using  incremental BLOB I/O routines.
 A negative value for the zeroblob results in a zero-length BLOB.
+.Pp
+The sqlite3_bind_pointer(S,I,P,T,D) routine causes the I-th parameter
+in prepared statement S to have an SQL value of NULL,
+but to also be associated with the pointer P of type T.
+D is either a NULL pointer or a pointer to a destructor function for
+P.
+SQLite will invoke the destructor D with a single argument of P when
+it is finished using P.
+The T parameter should be a static string, preferably a string literal.
+The sqlite3_bind_pointer() routine is part of the pointer passing interface
+added for SQLite 3.20.0.
 .Pp
 If any of the sqlite3_bind_*() routines are called with a NULL pointer
 for the prepared statement or with a prepared statement

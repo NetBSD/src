@@ -1,31 +1,21 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_COLUMN_BLOB 3
 .Os
 .Sh NAME
 .Nm sqlite3_column_blob ,
-.Nm sqlite3_column_bytes ,
-.Nm sqlite3_column_bytes16 ,
 .Nm sqlite3_column_double ,
 .Nm sqlite3_column_int ,
 .Nm sqlite3_column_int64 ,
 .Nm sqlite3_column_text ,
 .Nm sqlite3_column_text16 ,
-.Nm sqlite3_column_type ,
-.Nm sqlite3_column_value
+.Nm sqlite3_column_value ,
+.Nm sqlite3_column_bytes ,
+.Nm sqlite3_column_bytes16 ,
+.Nm sqlite3_column_type
 .Nd Result Values From A Query
 .Sh SYNOPSIS
 .Ft const void *
 .Fo sqlite3_column_blob
-.Fa "sqlite3_stmt*"
-.Fa "int iCol"
-.Fc
-.Ft int 
-.Fo sqlite3_column_bytes
-.Fa "sqlite3_stmt*"
-.Fa "int iCol"
-.Fc
-.Ft int 
-.Fo sqlite3_column_bytes16
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
@@ -54,17 +44,43 @@
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft int 
-.Fo sqlite3_column_type
-.Fa "sqlite3_stmt*"
-.Fa "int iCol"
-.Fc
 .Ft sqlite3_value *
 .Fo sqlite3_column_value
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
+.Ft int 
+.Fo sqlite3_column_bytes
+.Fa "sqlite3_stmt*"
+.Fa "int iCol"
+.Fc
+.Ft int 
+.Fo sqlite3_column_bytes16
+.Fa "sqlite3_stmt*"
+.Fa "int iCol"
+.Fc
+.Ft int 
+.Fo sqlite3_column_type
+.Fa "sqlite3_stmt*"
+.Fa "int iCol"
+.Fc
 .Sh DESCRIPTION
+\fBSummary:\fP 
+.Bd -ragged
+<table border=0 cellpadding=0 cellspacing=0> <tr><td>\fBsqlite3_column_blob\fP<td>&rarr;<td>BLOB
+result <tr><td>\fBsqlite3_column_double\fP<td>&rarr;<td>REAL result <tr><td>\fBsqlite3_column_int\fP<td>&rarr;<td>32-bit
+INTEGER result <tr><td>\fBsqlite3_column_int64\fP<td>&rarr;<td>64-bit INTEGER
+result <tr><td>\fBsqlite3_column_text\fP<td>&rarr;<td>UTF-8 TEXT result <tr><td>\fBsqlite3_column_text16\fP<td>&rarr;<td>UTF-16
+TEXT result <tr><td>\fBsqlite3_column_value\fP<td>&rarr;<td>The result as
+an unprotected sqlite3_value object.
+<tr><td> <td> <td>  <tr><td>\fBsqlite3_column_bytes\fP<td>&rarr;<td>Size
+of a BLOB or a UTF-8 TEXT result in bytes <tr><td>\fBsqlite3_column_bytes16  \fP
+<td>&rarr;  <td>Size of UTF-16 TEXT in bytes <tr><td>\fBsqlite3_column_type\fP<td>&rarr;<td>Default
+datatype of the result </table>
+.Ed
+.Pp
+\fBDetails:\fP 
+.Pp
 These routines return information about a single column of the current
 result row of a query.
 In every case the first argument is a pointer to the prepared statement
@@ -88,16 +104,30 @@ If sqlite3_step() or sqlite3_reset() or
 sqlite3_finalize() are called from a different thread
 while any of these routines are pending, then the results are undefined.
 .Pp
+The first six interfaces (_blob, _double, _int, _int64, _text, and
+_text16) each return the value of a result column in a specific data
+format.
+If the result column is not initially in the requested format (for
+example, if the query returns an integer but the sqlite3_column_text()
+interface is used to extract the value) then an automatic type conversion
+is performed.
+.Pp
 The sqlite3_column_type() routine returns the  datatype code
 for the initial data type of the result column.
 The returned value is one of SQLITE_INTEGER, SQLITE_FLOAT,
 SQLITE_TEXT, SQLITE_BLOB, or SQLITE_NULL.
+The return value of sqlite3_column_type() can be used to decide which
+of the first six interface should be used to extract the column value.
 The value returned by sqlite3_column_type() is only meaningful if no
-type conversions have occurred as described below.
-After a type conversion, the value returned by sqlite3_column_type()
-is undefined.
+automatic type conversions have occurred for the value in question.
+After a type conversion, the result of calling sqlite3_column_type()
+is undefined, though harmless.
 Future versions of SQLite may change the behavior of sqlite3_column_type()
 following a type conversion.
+.Pp
+If the result is a BLOB or a TEXT string, then the sqlite3_column_bytes()
+or sqlite3_column_bytes16() interfaces can be used to determine the
+size of that BLOB or string.
 .Pp
 If the result is a BLOB or UTF-8 string then the sqlite3_column_bytes()
 routine returns the number of bytes in that BLOB or string.
@@ -139,8 +169,11 @@ by sqlite3_column_value() is used in any other
 way, including calls to routines like sqlite3_value_int(),
 sqlite3_value_text(), or sqlite3_value_bytes(),
 the behavior is not threadsafe.
+Hence, the sqlite3_column_value() interface is normally only useful
+within the implementation of application-defined SQL functions
+or virtual tables, not within top-level application code.
 .Pp
-These routines attempt to convert the value where appropriate.
+The these routines may attempt to convert the datatype of the result.
 For example, if the internal representation is FLOAT and a text result
 is requested, sqlite3_snprintf() is used internally
 to perform the conversion automatically.
@@ -215,17 +248,36 @@ The pointers returned are valid until a type conversion occurs as described
 above, or until sqlite3_step() or sqlite3_reset()
 or sqlite3_finalize() is called.
 The memory space used to hold strings and BLOBs is freed automatically.
-Do <em>not</em> pass the pointers returned from sqlite3_column_blob(),
+Do not pass the pointers returned from sqlite3_column_blob(),
 sqlite3_column_text(), etc.
 into sqlite3_free().
 .Pp
-If a memory allocation error occurs during the evaluation of any of
-these routines, a default value is returned.
-The default value is either the integer 0, the floating point number
-0.0, or a NULL pointer.
-Subsequent calls to sqlite3_errcode() will return
-SQLITE_NOMEM.
+As long as the input parameters are correct, these routines will only
+fail if an out-of-memory error occurs during a format conversion.
+Only the following subset of interfaces are subject to out-of-memory
+errors: 
+.Bl -bullet
+.It
+sqlite3_column_blob() 
+.It
+sqlite3_column_text() 
+.It
+sqlite3_column_text16() 
+.It
+sqlite3_column_bytes() 
+.It
+sqlite3_column_bytes16() 
+.El
+.Pp
+If an out-of-memory error occurs, then the return value from these
+routines is the same as if the column had contained an SQL NULL value.
+Valid SQL NULL returns can be distinguished from out-of-memory errors
+by invoking the sqlite3_errcode() immediately after
+the suspect return value is obtained and before any other SQLite interface
+is called on the same database connection.
 .Sh SEE ALSO
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3 3 ,
 .Xr sqlite3_stmt 3 ,
 .Xr sqlite3_bind_blob 3 ,
 .Xr sqlite3_column_blob 3 ,
@@ -239,9 +291,8 @@ SQLITE_NOMEM.
 .Xr sqlite3_result_blob 3 ,
 .Xr sqlite3_mprintf 3 ,
 .Xr sqlite3_step 3 ,
+.Xr sqlite3_value 3 ,
 .Xr sqlite3_value_blob 3 ,
-.Xr SQLITE_INTEGER 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr SQLITE_INTEGER 3 ,
 .Xr SQLITE_OK 3 ,
 .Xr SQLITE_INTEGER 3 ,

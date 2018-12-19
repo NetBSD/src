@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3CHANGESET_FINALIZE 3
 .Os
 .Sh NAME
@@ -26,11 +26,13 @@ then an error code corresponding to that error is returned by this
 function.
 Otherwise, SQLITE_OK is returned.
 This is to allow the following pattern (pseudo-code): 
-.Pp
+.Bd -literal
 sqlite3changeset_start(); while( SQLITE_ROW==sqlite3changeset_next()
 ){ // Do something with change.
 } rc = sqlite3changeset_finalize(); if( rc!=SQLITE_OK ){ // An error
-has occurred }
+has occurred } 
+.Ed
+.Pp
 .Sh SEE ALSO
 .Xr sqlite3changeset_apply 3 ,
 .Xr sqlite3changeset_new 3 ,

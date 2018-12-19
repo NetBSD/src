@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2017/03/11 16:29:52 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2018/12/19 22:21:13 christos Exp $
 
 .include <bsd.init.mk>
 
 MAN += \
 SQLITE_ACCESS_EXISTS.3 \
+SQLITE_CHANGESETAPPLY_NOSAVEPOINT.3 \
+SQLITE_CHANGESETSTART_INVERT.3 \
 SQLITE_CHANGESET_DATA.3 \
 SQLITE_CHANGESET_OMIT.3 \
 SQLITE_CHECKPOINT_PASSIVE.3 \
@@ -13,7 +15,9 @@ SQLITE_DBCONFIG_LOOKASIDE.3 \
 SQLITE_DBCONFIG_MAINDBNAME.3 \
 SQLITE_DBSTATUS_LOOKASIDE_USED.3 \
 SQLITE_DENY.3 \
+SQLITE_DESERIALIZE_FREEONCLOSE.3 \
 SQLITE_DETERMINISTIC.3 \
+SQLITE_ERROR_MISSING_COLLSEQ.3 \
 SQLITE_FCNTL_LOCKSTATE.3 \
 SQLITE_INDEX_CONSTRAINT_EQ.3 \
 SQLITE_INDEX_SCAN_UNIQUE.3 \
@@ -25,8 +29,11 @@ SQLITE_LOCK_NONE.3 \
 SQLITE_MUTEX_FAST.3 \
 SQLITE_OK.3 \
 SQLITE_OPEN_READONLY.3 \
+SQLITE_PREPARE_PERSISTENT.3 \
 SQLITE_ROLLBACK.3 \
 SQLITE_SCANSTAT_NLOOP.3 \
+SQLITE_SERIALIZE_NOCOPY.3 \
+SQLITE_SESSION_CONFIG_STRMSIZE.3 \
 SQLITE_SHM_NLOCK.3 \
 SQLITE_SHM_UNLOCK.3 \
 SQLITE_STATUS_MEMORY_USED.3 \
@@ -37,6 +44,7 @@ SQLITE_TRACE_STMT.3 \
 SQLITE_UTF8.3 \
 SQLITE_VERSION.3 \
 SQLITE_VTAB_CONSTRAINT_SUPPORT.3 \
+SQLITE_WIN32_DATA_DIRECTORY_TYPE.3 \
 sqlite3.3 \
 sqlite3_aggregate_context.3 \
 sqlite3_aggregate_count.3 \
@@ -89,6 +97,7 @@ sqlite3_db_readonly.3 \
 sqlite3_db_release_memory.3 \
 sqlite3_db_status.3 \
 sqlite3_declare_vtab.3 \
+sqlite3_deserialize.3 \
 sqlite3_destructor_type.3 \
 sqlite3_enable_load_extension.3 \
 sqlite3_enable_shared_cache.3 \
@@ -105,6 +114,7 @@ sqlite3_index_info.3 \
 sqlite3_initialize.3 \
 sqlite3_interrupt.3 \
 sqlite3_io_methods.3 \
+sqlite3_keyword_count.3 \
 sqlite3_last_insert_rowid.3 \
 sqlite3_limit.3 \
 sqlite3_load_extension.3 \
@@ -128,13 +138,16 @@ sqlite3_prepare.3 \
 sqlite3_preupdate_hook.3 \
 sqlite3_progress_handler.3 \
 sqlite3_randomness.3 \
+sqlite3_rebaser.3 \
 sqlite3_release_memory.3 \
 sqlite3_reset.3 \
 sqlite3_reset_auto_extension.3 \
 sqlite3_result_blob.3 \
 sqlite3_result_subtype.3 \
+sqlite3_serialize.3 \
 sqlite3_session.3 \
 sqlite3_set_authorizer.3 \
+sqlite3_set_last_insert_rowid.3 \
 sqlite3_sleep.3 \
 sqlite3_snapshot.3 \
 sqlite3_snapshot_cmp.3 \
@@ -153,6 +166,11 @@ sqlite3_stmt_readonly.3 \
 sqlite3_stmt_scanstatus.3 \
 sqlite3_stmt_scanstatus_reset.3 \
 sqlite3_stmt_status.3 \
+sqlite3_str.3 \
+sqlite3_str_appendf.3 \
+sqlite3_str_errcode.3 \
+sqlite3_str_finish.3 \
+sqlite3_str_new.3 \
 sqlite3_strglob.3 \
 sqlite3_stricmp.3 \
 sqlite3_strlike.3 \
@@ -176,13 +194,16 @@ sqlite3_version.3 \
 sqlite3_vfs.3 \
 sqlite3_vfs_find.3 \
 sqlite3_vtab.3 \
+sqlite3_vtab_collation.3 \
 sqlite3_vtab_config.3 \
 sqlite3_vtab_cursor.3 \
+sqlite3_vtab_nochange.3 \
 sqlite3_vtab_on_conflict.3 \
 sqlite3_wal_autocheckpoint.3 \
 sqlite3_wal_checkpoint.3 \
 sqlite3_wal_checkpoint_v2.3 \
 sqlite3_wal_hook.3 \
+sqlite3_win32_set_directory.3 \
 sqlite3changegroup_add.3 \
 sqlite3changegroup_delete.3 \
 sqlite3changegroup_new.3 \
@@ -200,8 +221,13 @@ sqlite3changeset_old.3 \
 sqlite3changeset_op.3 \
 sqlite3changeset_pk.3 \
 sqlite3changeset_start.3 \
+sqlite3rebaser_configure.3 \
+sqlite3rebaser_create.3 \
+sqlite3rebaser_delete.3 \
+sqlite3rebaser_rebase.3 \
 sqlite3session_attach.3 \
 sqlite3session_changeset.3 \
+sqlite3session_config.3 \
 sqlite3session_create.3 \
 sqlite3session_delete.3 \
 sqlite3session_diff.3 \

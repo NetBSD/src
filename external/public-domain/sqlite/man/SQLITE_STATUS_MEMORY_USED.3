@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_STATUS_MEMORY_USED 3
 .Os
 .Sh NAME
@@ -33,8 +33,7 @@ This parameter is the current amount of memory checked out using sqlite3_malloc(
 either directly or indirectly.
 The figure includes calls made to sqlite3_malloc()
 by the application and internal memory usage by the SQLite library.
-Scratch memory controlled by SQLITE_CONFIG_SCRATCH
-and auxiliary page-cache memory controlled by SQLITE_CONFIG_PAGECACHE
+Auxiliary page-cache memory controlled by SQLITE_CONFIG_PAGECACHE
 is not included in this parameter.
 The amount returned is the sum of the allocation sizes as reported
 by the xSize method in sqlite3_mem_methods.
@@ -67,26 +66,11 @@ Only the value returned in the *pHighwater parameter to sqlite3_status()
 is of interest.
 The value written into the *pCurrent parameter is undefined.
 .It SQLITE_STATUS_SCRATCH_USED
-This parameter returns the number of allocations used out of the scratch memory allocator
-configured using SQLITE_CONFIG_SCRATCH.
-The value returned is in allocations, not in bytes.
-Since a single thread may only have one scratch allocation outstanding
-at time, this parameter also reports the number of threads using scratch
-memory at the same time.
+No longer used.
 .It SQLITE_STATUS_SCRATCH_OVERFLOW
-This parameter returns the number of bytes of scratch memory allocation
-which could not be satisfied by the SQLITE_CONFIG_SCRATCH
-buffer and where forced to overflow to sqlite3_malloc().
-The values returned include overflows because the requested allocation
-was too larger (that is, because the requested allocation was larger
-than the "sz" parameter to SQLITE_CONFIG_SCRATCH)
-and because no scratch buffer slots were available.
+No longer used.
 .It SQLITE_STATUS_SCRATCH_SIZE
-This parameter records the largest memory allocation request handed
-to scratch memory allocator.
-Only the value returned in the *pHighwater parameter to sqlite3_status()
-is of interest.
-The value written into the *pCurrent parameter is undefined.
+No longer used.
 .It SQLITE_STATUS_PARSER_STACK
 The *pHighwater parameter records the deepest parser stack.
 The *pCurrent value is undefined.

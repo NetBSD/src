@@ -1,11 +1,11 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_VALUE 3
 .Os
 .Sh NAME
 .Nm sqlite3_value
 .Nd Dynamically Typed Value Object
 .Sh SYNOPSIS
-.Vt typedef struct Mem sqlite3_value;
+.Vt typedef struct sqlite3_value sqlite3_value;
 .Sh DESCRIPTION
 SQLite uses the sqlite3_value object to represent all values that can
 be stored in a database table.
@@ -40,8 +40,9 @@ of application-defined SQL functions
 are protected.
 The sqlite3_value object returned by sqlite3_column_value()
 is unprotected.
-Unprotected sqlite3_value objects may only be used with sqlite3_result_value()
-and sqlite3_bind_value().
+Unprotected sqlite3_value objects may only be used as arguments to
+sqlite3_result_value(), sqlite3_bind_value(),
+and sqlite3_value_dup().
 The  sqlite3_value_type() family of interfaces
 require protected sqlite3_value objects.
 .Sh SEE ALSO

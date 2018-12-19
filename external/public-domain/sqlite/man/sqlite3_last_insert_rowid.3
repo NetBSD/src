@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_LAST_INSERT_ROWID 3
 .Os
 .Sh NAME
@@ -18,20 +18,32 @@ declared columns.
 If the table has a column of type INTEGER PRIMARY KEY
 then that column is another alias for the rowid.
 .Pp
-The sqlite3_last_insert_rowid(D) interface returns the rowid of
-the most recent successful INSERT into a rowid table or virtual table
+The sqlite3_last_insert_rowid(D) interface usually returns the rowid
+of the most recent successful INSERT into a rowid table or virtual table
 on database connection D.
 Inserts into WITHOUT ROWID tables are not recorded.
 If no successful INSERTs into rowid tables have ever occurred
 on the database connection D, then sqlite3_last_insert_rowid(D) returns
 zero.
 .Pp
-If an INSERT occurs within a trigger or within a virtual table
-method, then this routine will return the rowid of the inserted
-row as long as the trigger or virtual table method is running.
-But once the trigger or virtual table method ends, the value returned
-by this routine reverts to what it was before the trigger or virtual
-table method began.
+As well as being set automatically as rows are inserted into database
+tables, the value returned by this function may be set explicitly by
+sqlite3_set_last_insert_rowid() 
+.Pp
+Some virtual table implementations may INSERT rows into rowid tables
+as part of committing a transaction (e.g.
+to flush data accumulated in memory to disk).
+In this case subsequent calls to this function return the rowid associated
+with these internal INSERT operations, which leads to unintuitive results.
+Virtual table implementations that do write to rowid tables in this
+way can avoid this problem by restoring the original rowid value using
+sqlite3_set_last_insert_rowid() before
+returning control to the user.
+.Pp
+If an INSERT occurs within a trigger then this routine will return
+the rowid of the inserted row as long as the trigger is running.
+Once the trigger program ends, the value returned by this routine reverts
+to what it was before the trigger was fired.
 .Pp
 An INSERT that fails due to a constraint violation is not a successful
 INSERT and does not change the value returned by this routine.
@@ -56,4 +68,5 @@ the value returned by sqlite3_last_insert_rowid()
 is unpredictable and might not equal either the old or the new last
 insert rowid.
 .Sh SEE ALSO
-.Xr sqlite3_last_insert_rowid 3
+.Xr sqlite3_last_insert_rowid 3 ,
+.Xr sqlite3_set_last_insert_rowid 3

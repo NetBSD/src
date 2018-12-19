@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_INTERRUPT 3
 .Os
 .Sh NAME
@@ -40,10 +40,6 @@ reaches zero are not effected by the sqlite3_interrupt().
 A call to sqlite3_interrupt(D) that occurs when there are no running
 SQL statements is a no-op and has no effect on SQL statements that
 are started after the sqlite3_interrupt() call returns.
-.Pp
-If the database connection closes while sqlite3_interrupt()
-is running then bad things will likely happen.
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr sqlite3_interrupt 3 ,
 .Xr SQLITE_OK 3
