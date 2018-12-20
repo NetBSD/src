@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.608 2018/12/20 02:38:28 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.609 2018/12/20 08:59:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.608 2018/12/20 02:38:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.609 2018/12/20 08:59:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2379,7 +2379,7 @@ alloc_retry:
 	 */
 	wm_gmii_setup_phytype(sc, 0, 0);
 
-	/* check for WM_F_WOL on some chips before wm_reset() */
+	/* Check for WM_F_WOL on some chips before wm_reset() */
 	switch (sc->sc_type) {
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -2395,6 +2395,9 @@ alloc_retry:
 	default:
 		break;
 	}
+	if ((eeprom_data & apme_mask) != 0)
+		sc->sc_flags |= WM_F_WOL;
+
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
@@ -2528,7 +2531,6 @@ alloc_retry:
 		wm_nvm_read(sc, NVM_OFF_CFG3_PORTA, 1, &eeprom_data);
 		break;
 	}
-
 	/* Check for WM_F_WOL flag after the setting of the EEPROM stuff */
 	if ((eeprom_data & apme_mask) != 0)
 		sc->sc_flags |= WM_F_WOL;
