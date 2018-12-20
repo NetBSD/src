@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.495 2018/12/20 09:17:04 cherry Exp $
+.\"	$NetBSD: options.4,v 1.496 2018/12/20 10:33:41 cherry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2688,6 +2688,11 @@ bolded
 .El
 .Ss x86-specific Options
 .Bl -ohang
+.It Cd options NO_PCI_MSI_MSIX
+Disable support for MSI/MSIX in the kernel.
+See
+.Xr pci_msi 9
+for details of MSI/MSIX support
 .It Cd options NO_PREEMPTION
 Disables
 .Xr kpreempt 9
