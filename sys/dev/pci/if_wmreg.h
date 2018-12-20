@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.110 2018/12/14 09:47:40 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.111 2018/12/20 09:32:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -773,7 +773,7 @@ struct livengood_tcpip_ctxdesc {
 #define RCTL_DTYP_ONEBUF RCTL_DTYP(0)	/* use one buffer(not split header). */
 #define RCTL_DTYP_SPH	RCTL_DTYP(1)	/* split header buffer. */
 					/* RCTL_DTYP(2) and RCTL_DTYP(3) are reserved. */
-#define	RCTL_MO(x)	((x) << 12)	/* multicast offset */
+#define	RCTL_MO		__BITS(13, 12)	/* multicast offset */
 #define	RCTL_BAM	(1U << 15)	/* broadcast accept mode */
 #define	RCTL_RDMTS_HEX	__BIT(16)
 #define	RCTL_2k		(0 << 16)	/* 2k Rx buffers */
