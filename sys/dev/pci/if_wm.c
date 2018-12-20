@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.609 2018/12/20 08:59:22 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.610 2018/12/20 09:32:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.609 2018/12/20 08:59:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.610 2018/12/20 09:32:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -710,6 +710,7 @@ static uint16_t	wm_check_alt_mac_addr(struct wm_softc *);
 static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_set_ral(struct wm_softc *, const uint8_t *, int);
 static uint32_t	wm_mchash(struct wm_softc *, const uint8_t *);
+static int	wm_rar_count(struct wm_softc *);
 static void	wm_set_filter(struct wm_softc *);
 /* Reset and init related */
 static void	wm_set_vlan(struct wm_softc *);
@@ -829,7 +830,10 @@ static int	wm_gmii_i80003_readreg(device_t, int, int);
 static void	wm_gmii_i80003_writereg(device_t, int, int, int);
 static int	wm_gmii_bm_readreg(device_t, int, int);
 static void	wm_gmii_bm_writereg(device_t, int, int, int);
-static void	wm_access_phy_wakeup_reg_bm(device_t, int, int16_t *, int);
+static int	wm_enable_phy_wakeup_reg_access_bm(device_t, uint16_t *);
+static int	wm_disable_phy_wakeup_reg_access_bm(device_t, uint16_t *);
+static int	wm_access_phy_wakeup_reg_bm(device_t, int, int16_t *, int,
+	bool);
 static int	wm_gmii_hv_readreg(device_t, int, int);
 static int	wm_gmii_hv_readreg_locked(device_t, int, int, uint16_t *);
 static void	wm_gmii_hv_writereg(device_t, int, int, int);
@@ -954,7 +958,7 @@ static void	wm_init_manageability(struct wm_softc *);
 static void	wm_release_manageability(struct wm_softc *);
 static void	wm_get_wakeup(struct wm_softc *);
 static int	wm_ulp_disable(struct wm_softc *);
-static void	wm_enable_phy_wakeup(struct wm_softc *);
+static int	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
 static void	wm_suspend_workarounds_ich8lan(struct wm_softc *);
 static int	wm_resume_workarounds_pchlan(struct wm_softc *);
@@ -972,6 +976,7 @@ static void	wm_set_eee_i350(struct wm_softc *);
 static void	wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *);
 static void	wm_gig_downshift_workaround_ich8lan(struct wm_softc *);
 static void	wm_hv_phy_workarounds_ich8lan(struct wm_softc *);
+static void	wm_copy_rx_addrs_to_phy_ich8lan(struct wm_softc *);
 static void	wm_lv_phy_workarounds_ich8lan(struct wm_softc *);
 static int	wm_k1_workaround_lpt_lp(struct wm_softc *, bool);
 static int	wm_k1_gig_workaround_hv(struct wm_softc *, int);
@@ -3566,6 +3571,50 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
 }
 
 /*
+ *
+ *
+ */
+static int
+wm_rar_count(struct wm_softc *sc)
+{
+	int size;
+
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+		size = WM_RAL_TABSIZE_ICH8 -1;
+		break;
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+		size = WM_RAL_TABSIZE_ICH8;
+		break;
+	case WM_T_PCH2:
+		size = WM_RAL_TABSIZE_PCH2;
+		break;
+	case WM_T_PCH_LPT:
+	case WM_T_PCH_SPT:
+	case WM_T_PCH_CNP:
+		size = WM_RAL_TABSIZE_PCH_LPT;
+		break;
+	case WM_T_82575:
+		size = WM_RAL_TABSIZE_82575;
+		break;
+	case WM_T_82576:
+	case WM_T_82580:
+		size = WM_RAL_TABSIZE_82576;
+		break;
+	case WM_T_I350:
+	case WM_T_I354:
+		size = WM_RAL_TABSIZE_I350;
+		break;
+	default:
+		size = WM_RAL_TABSIZE;    
+	}
+
+	return size;
+}
+
+/*
  * wm_set_filter:
  *
  *	Set up the receive filter.
@@ -3602,24 +3651,7 @@ wm_set_filter(struct wm_softc *sc)
 	 * Set the station address in the first RAL slot, and
 	 * clear the remaining slots.
 	 */
-	if (sc->sc_type == WM_T_ICH8)
-		size = WM_RAL_TABSIZE_ICH8 -1;
-	else if ((sc->sc_type == WM_T_ICH9) || (sc->sc_type == WM_T_ICH10)
-	    || (sc->sc_type == WM_T_PCH))
-		size = WM_RAL_TABSIZE_ICH8;
-	else if (sc->sc_type == WM_T_PCH2)
-		size = WM_RAL_TABSIZE_PCH2;
-	else if ((sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT)
-	    || (sc->sc_type == WM_T_PCH_CNP))
-		size = WM_RAL_TABSIZE_PCH_LPT;
-	else if (sc->sc_type == WM_T_82575)
-		size = WM_RAL_TABSIZE_82575;
-	else if ((sc->sc_type == WM_T_82576) || (sc->sc_type == WM_T_82580))
-		size = WM_RAL_TABSIZE_82576;
-	else if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
-		size = WM_RAL_TABSIZE_I350;
-	else
-		size = WM_RAL_TABSIZE;
+	size = wm_rar_count(sc);
 	wm_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
 
 	if ((sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT)
@@ -6050,7 +6082,7 @@ wm_init_locked(struct ifnet *ifp)
 	 */
 	sc->sc_mchash_type = 0;
 	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_DPF
-	    | RCTL_MO(sc->sc_mchash_type);
+	    | __SHIFTIN(sc->sc_mchash_type, RCTL_MO);
 
 	/*
 	 * 82574 use one buffer extended Rx descriptor.
@@ -10288,7 +10320,8 @@ wm_gmii_mdic_readreg(device_t dev, int phy, int reg)
 	uint32_t mdic = 0;
 	int i, rv;
 
-	if (reg > MII_ADDRMASK) {
+	if ((sc->sc_phytype != WMPHY_82579) && (sc->sc_phytype != WMPHY_I217)
+	    && (reg > MII_ADDRMASK)) {
 		device_printf(dev, "%s: PHYTYPE = %d, addr 0x%x > 0x1f\n",
 		    __func__, sc->sc_phytype, reg);
 		reg &= MII_ADDRMASK;
@@ -10342,7 +10375,8 @@ wm_gmii_mdic_writereg(device_t dev, int phy, int reg, int val)
 	uint32_t mdic = 0;
 	int i;
 
-	if (reg > MII_ADDRMASK) {
+	if ((sc->sc_phytype != WMPHY_82579) && (sc->sc_phytype != WMPHY_I217)
+	    && (reg > MII_ADDRMASK)) {
 		device_printf(dev, "%s: PHYTYPE = %d, addr 0x%x > 0x1f\n",
 		    __func__, sc->sc_phytype, reg);
 		reg &= MII_ADDRMASK;
@@ -10602,7 +10636,7 @@ wm_gmii_bm_readreg(device_t dev, int phy, int reg)
 		    || (reg == 31)) ? 1 : phy;
 	/* Page 800 works differently than the rest so it has its own func */
 	if (page == BM_WUC_PAGE) {
-		wm_access_phy_wakeup_reg_bm(dev, reg, &val, 1);
+		wm_access_phy_wakeup_reg_bm(dev, reg, &val, true, false);
 		rv = val;
 		goto release;
 	}
@@ -10650,7 +10684,7 @@ wm_gmii_bm_writereg(device_t dev, int phy, int reg, int val)
 		uint16_t tmp;
 
 		tmp = val;
-		wm_access_phy_wakeup_reg_bm(dev, reg, &tmp, 0);
+		wm_access_phy_wakeup_reg_bm(dev, reg, &tmp, false, false);
 		goto release;
 	}
 
@@ -10670,39 +10704,139 @@ release:
 	sc->phy.release(sc);
 }
 
-static void
-wm_access_phy_wakeup_reg_bm(device_t dev, int offset, int16_t *val, int rd)
+/*
+ *  wm_enable_phy_wakeup_reg_access_bm - enable access to BM wakeup registers
+ *  @dev: pointer to the HW structure
+ *  @phy_reg: pointer to store original contents of BM_WUC_ENABLE_REG
+ *
+ *  Assumes semaphore already acquired and phy_reg points to a valid memory
+ *  address to store contents of the BM_WUC_ENABLE_REG register.
+ */
+static int
+wm_enable_phy_wakeup_reg_access_bm(device_t dev, uint16_t *phy_regp)
+{
+	uint16_t temp;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(dev), __func__));
+
+	if (!phy_regp)
+		return -1;
+
+	/* All page select, port ctrl and wakeup registers use phy address 1 */
+
+	/* Select Port Control Registers page */
+	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
+	    BM_PORT_CTRL_PAGE << IGP3_PAGE_SHIFT);
+
+	/* Read WUCE and save it */
+	*phy_regp = wm_gmii_mdic_readreg(dev, 1, BM_WUC_ENABLE_REG);
+
+	/* Enable both PHY wakeup mode and Wakeup register page writes.
+	 * Prevent a power state change by disabling ME and Host PHY wakeup.
+	 */
+	temp = *phy_regp;
+	temp |= BM_WUC_ENABLE_BIT;
+	temp &= ~(BM_WUC_ME_WU_BIT | BM_WUC_HOST_WU_BIT);
+
+	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ENABLE_REG, temp);
+
+	/* Select Host Wakeup Registers page - caller now able to write
+	 * registers on the Wakeup registers page
+	 */
+	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
+	    BM_WUC_PAGE << IGP3_PAGE_SHIFT);
+
+	return 0;
+}
+
+/*
+ *  wm_disable_phy_wakeup_reg_access_bm - disable access to BM wakeup regs
+ *  @dev: pointer to the HW structure
+ *  @phy_reg: pointer to original contents of BM_WUC_ENABLE_REG
+ *
+ *  Restore BM_WUC_ENABLE_REG to its original value.
+ *
+ *  Assumes semaphore already acquired and *phy_reg is the contents of the
+ *  BM_WUC_ENABLE_REG before register(s) on BM_WUC_PAGE were accessed by
+ *  caller.
+ */
+static int
+wm_disable_phy_wakeup_reg_access_bm(device_t dev, uint16_t *phy_regp)
+{
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(dev), __func__));
+
+	if (!phy_regp)
+		return -1;
+
+	/* Select Port Control Registers page */
+	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
+	    BM_PORT_CTRL_PAGE << IGP3_PAGE_SHIFT);
+
+	/* Restore 769.17 to its original value */
+	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ENABLE_REG, *phy_regp);
+
+	return 0;
+}
+
+/*
+ *  wm_access_phy_wakeup_reg_bm - Read/write BM PHY wakeup register
+ *  @sc: pointer to the HW structure
+ *  @offset: register offset to be read or written
+ *  @val: pointer to the data to read or write
+ *  @rd: determines if operation is read or write
+ *  @page_set: BM_WUC_PAGE already set and access enabled
+ *
+ *  Read the PHY register at offset and store the retrieved information in
+ *  data, or write data to PHY register at offset.  Note the procedure to
+ *  access the PHY wakeup registers is different than reading the other PHY
+ *  registers. It works as such:
+ *  1) Set 769.17.2 (page 769, register 17, bit 2) = 1
+ *  2) Set page to 800 for host (801 if we were manageability)
+ *  3) Write the address using the address opcode (0x11)
+ *  4) Read or write the data using the data opcode (0x12)
+ *  5) Restore 769.17.2 to its original value
+ *
+ *  Steps 1 and 2 are done by wm_enable_phy_wakeup_reg_access_bm() and
+ *  step 5 is done by wm_disable_phy_wakeup_reg_access_bm().
+ *
+ *  Assumes semaphore is already acquired.  When page_set==TRUE, assumes
+ *  the PHY page is set to BM_WUC_PAGE (i.e. a function in the call stack
+ *  is responsible for calls to wm_[enable|disable]_phy_wakeup_reg_bm()).
+ */
+static int
+wm_access_phy_wakeup_reg_bm(device_t dev, int offset, int16_t *val, int rd,
+	bool page_set)
 {
 	struct wm_softc *sc = device_private(dev);
 	uint16_t regnum = BM_PHY_REG_NUM(offset);
-	uint16_t wuce, reg;
+	uint16_t page = BM_PHY_REG_PAGE(offset);
+	uint16_t wuce;
+	int rv = 0;
 
 	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(dev), __func__));
 	/* XXX Gig must be disabled for MDIO accesses to page 800 */
-	if (sc->sc_type == WM_T_PCH) {
-		/* XXX e1000 driver do nothing... why? */
+	if ((sc->sc_type == WM_T_PCH)
+	    && ((CSR_READ(sc, WMREG_PHY_CTRL) & PHY_CTRL_GBE_DIS) == 0)) {
+		device_printf(dev,
+		    "Attempting to access page %d while gig enabled.\n", page);
 	}
 
-	/*
-	 * 1) Enable PHY wakeup register first.
-	 * See e1000_enable_phy_wakeup_reg_access_bm().
-	 */
-
-	/* Set page 769 */
-	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
-	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
-
-	/* Read WUCE and save it */
-	wuce = wm_gmii_mdic_readreg(dev, 1, BM_WUC_ENABLE_REG);
-
-	reg = wuce | BM_WUC_ENABLE_BIT;
-	reg &= ~(BM_WUC_ME_WU_BIT | BM_WUC_HOST_WU_BIT);
-	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ENABLE_REG, reg);
-
-	/* Select page 800 */
-	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
-	    BM_WUC_PAGE << BME1000_PAGE_SHIFT);
+	if (!page_set) {
+		/* Enable access to PHY wakeup registers */
+		rv = wm_enable_phy_wakeup_reg_access_bm(dev, &wuce);
+		if (rv != 0) {
+			device_printf(dev,
+			    "%s: Could not enable PHY wakeup reg access\n",
+			    __func__);
+			return rv;
+		}
+	}
+	DPRINTF(WM_DEBUG_GMII, ("%s: %s: Accessing PHY page %d reg 0x%x\n",
+		device_xname(sc->sc_dev), __func__, page, regnum));
 
 	/*
 	 * 2) Access PHY wakeup register.
@@ -10720,15 +10854,10 @@ wm_access_phy_wakeup_reg_bm(device_t dev, int offset, int16_t *val, int rd)
 		wm_gmii_mdic_writereg(dev, 1, BM_WUC_DATA_OPCODE, *val);
 	}
 
-	/*
-	 * 3) Disable PHY wakeup register.
-	 * See wm_disable_phy_wakeup_reg_access_bm().
-	 */
-	/* Set page 769 */
-	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
-	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
+	if (!page_set)
+		rv = wm_disable_phy_wakeup_reg_access_bm(dev, &wuce);
 
-	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ENABLE_REG, wuce);
+	return rv;
 }
 
 /*
@@ -10765,10 +10894,8 @@ wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 	phy = (page >= HV_INTC_FC_PAGE_START) ? 1 : phy;
 
 	/* Page 800 works differently than the rest so it has its own func */
-	if (page == BM_WUC_PAGE) {
-		wm_access_phy_wakeup_reg_bm(dev, reg, val, 1);
-		return 0;
-	}
+	if (page == BM_WUC_PAGE)
+		return wm_access_phy_wakeup_reg_bm(dev, reg, val, true, false);
 
 	/*
 	 * Lower than page 768 works differently than the rest so it has its
@@ -10825,6 +10952,7 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 	struct wm_softc *sc = device_private(dev);
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
+	int rv;
 
 	phy = (page >= HV_INTC_FC_PAGE_START) ? 1 : phy;
 
@@ -10833,8 +10961,8 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 		uint16_t tmp;
 
 		tmp = val;
-		wm_access_phy_wakeup_reg_bm(dev, reg, &tmp, 0);
-		return 0;
+		rv = wm_access_phy_wakeup_reg_bm(dev, reg, &tmp, false, false);
+		return rv;
 	}
 
 	/*
@@ -14263,26 +14391,87 @@ release:
 }
 
 /* WOL in the newer chipset interfaces (pchlan) */
-static void
+static int
 wm_enable_phy_wakeup(struct wm_softc *sc)
 {
-#if 0
-	uint16_t preg;
+	device_t dev = sc->sc_dev;
+	uint32_t mreg, moff;
+	uint16_t wuce, wuc, wufc, preg;
+	int i, rv;
+
+	KASSERT(sc->sc_type >= WM_T_PCH);
 
 	/* Copy MAC RARs to PHY RARs */
-
-	/* Copy MAC MTA to PHY MTA */
-
-	/* Configure PHY Rx Control register */
-
-	/* Enable PHY wakeup in MAC register */
-
-	/* Configure and enable PHY wakeup in PHY registers */
+	wm_copy_rx_addrs_to_phy_ich8lan(sc);
 
 	/* Activate PHY wakeup */
+	rv = sc->phy.acquire(sc);
+	if (rv != 0) {
+		device_printf(dev, "%s: failed to acquire semaphore\n",
+		    __func__);
+		return rv;
+	}
 
-	/* XXX */
-#endif
+	/*
+	 * Enable access to PHY wakeup registers.
+	 * BM_MTA, BM_RCTL, BM_WUFC and BM_WUC are in BM_WUC_PAGE.
+	 */
+	rv = wm_enable_phy_wakeup_reg_access_bm(dev, &wuce);
+	if (rv != 0) {
+		device_printf(dev,
+		    "%s: Could not enable PHY wakeup reg access\n", __func__);
+		goto release;
+	}
+
+	/* Copy MAC MTA to PHY MTA */
+	for (i = 0; i < WM_ICH8_MC_TABSIZE; i++) {
+		uint16_t lo, hi;
+
+		mreg = CSR_READ(sc, WMREG_CORDOVA_MTA + (i * 4));
+		lo = (uint16_t)(mreg & 0xffff);
+		hi = (uint16_t)((mreg >> 16) & 0xffff);
+		wm_access_phy_wakeup_reg_bm(dev, BM_MTA(i), &lo, 0, true);
+		wm_access_phy_wakeup_reg_bm(dev, BM_MTA(i) + 1, &hi, 0, true);
+	}
+
+	/* Configure PHY Rx Control register */
+	wm_access_phy_wakeup_reg_bm(dev, BM_RCTL, &preg, 1, true);
+	mreg = CSR_READ(sc, WMREG_RCTL);
+	if (mreg & RCTL_UPE)
+		preg |= BM_RCTL_UPE;
+	if (mreg & RCTL_MPE)
+		preg |= BM_RCTL_MPE;
+	preg &= ~(BM_RCTL_MO_MASK);
+	moff = __SHIFTOUT(mreg, RCTL_MO);
+	if (moff != 0)
+		preg |= moff << BM_RCTL_MO_SHIFT;
+	if (mreg & RCTL_BAM)
+		preg |= BM_RCTL_BAM;
+	if (mreg & RCTL_PMCF)
+		preg |= BM_RCTL_PMCF;
+	mreg = CSR_READ(sc, WMREG_CTRL);
+	if (mreg & CTRL_RFCE)
+		preg |= BM_RCTL_RFCE;
+	wm_access_phy_wakeup_reg_bm(dev, BM_RCTL, &preg, 0, true);
+
+	wuc = WUC_APME | WUC_PME_EN;
+	wufc = WUFC_MAG;
+	/* Enable PHY wakeup in MAC register */
+	CSR_WRITE(sc, WMREG_WUC,
+	    WUC_PHY_WAKE | WUC_PME_STATUS | WUC_APMPME | wuc);
+	CSR_WRITE(sc, WMREG_WUFC, wufc);
+
+	/* Configure and enable PHY wakeup in PHY registers */
+	wm_access_phy_wakeup_reg_bm(dev, BM_WUC, &wuc, 0, true);
+	wm_access_phy_wakeup_reg_bm(dev, BM_WUFC, &wufc, 0, true);
+
+	wuce |= BM_WUC_ENABLE_BIT | BM_WUC_HOST_WU_BIT;
+	wm_disable_phy_wakeup_reg_access_bm(dev, &wuce);
+
+release:
+	sc->phy.release(sc);
+
+	return 0;
 }
 
 /* Power down workaround on D3 */
@@ -14473,18 +14662,21 @@ wm_enable_wakeup(struct wm_softc *sc)
 {
 	uint32_t reg, pmreg;
 	pcireg_t pmode;
+	int rv = 0;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PWRMGMT,
-		&pmreg, NULL) == 0)
+	    &pmreg, NULL) == 0)
 		return;
+
+	if ((sc->sc_flags & WM_F_WOL) == 0)
+		goto pme;
 
 	/* Advertise the wakeup capability */
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_SWDPIN(2)
 	    | CTRL_SWDPIN(3));
-	CSR_WRITE(sc, WMREG_WUC, WUC_APME);
 
 	/* Keep the laser running on fiber adapters */
 	if ((sc->sc_mediatype == WM_MEDIATYPE_FIBER)
@@ -14495,21 +14687,25 @@ wm_enable_wakeup(struct wm_softc *sc)
 	}
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9) ||
-	    (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH))
+	    (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH) ||
+	    (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT) ||
+	    (sc->sc_type == WM_T_PCH_SPT) || (sc->sc_type == WM_T_PCH_CNP))
 		wm_suspend_workarounds_ich8lan(sc);
 
-	reg = CSR_READ(sc, WMREG_WUFC) | WUFC_MAG;
 #if 0	/* for the multicast packet */
+	reg = CSR_READ(sc, WMREG_WUFC) | WUFC_MAG;
 	reg |= WUFC_MC;
 	CSR_WRITE(sc, WMREG_RCTL, CSR_READ(sc, WMREG_RCTL) | RCTL_MPE);
 #endif
 
-	if (sc->sc_type >= WM_T_PCH)
-		wm_enable_phy_wakeup(sc);
-	else {
+	if (sc->sc_type >= WM_T_PCH) {
+		rv = wm_enable_phy_wakeup(sc);
+		if (rv != 0)
+			goto pme;
+	} else {
 		/* Enable wakeup by the MAC */
-		CSR_WRITE(sc, WMREG_WUC, CSR_READ(sc, WMREG_WUC) | WUC_PME_EN);
-		CSR_WRITE(sc, WMREG_WUFC, reg);
+		CSR_WRITE(sc, WMREG_WUC, WUC_PME_EN);
+		CSR_WRITE(sc, WMREG_WUFC, WUFC_MAG);
 	}
 
 	if (((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
@@ -14518,15 +14714,16 @@ wm_enable_wakeup(struct wm_softc *sc)
 	    && (sc->sc_phytype == WMPHY_IGP_3))
 		wm_igp3_phy_powerdown_workaround_ich8lan(sc);
 
+pme:
 	/* Request PME */
 	pmode = pci_conf_read(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR);
-#if 0
-	/* Disable WOL */
-	pmode &= ~(PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN);
-#else
-	/* For WOL */
-	pmode |= PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN;
-#endif
+	if ((rv == 0) && (sc->sc_flags & WM_F_WOL) != 0) {
+		/* For WOL */
+		pmode |= PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN;
+	} else {
+		/* Disable WOL */
+		pmode &= ~(PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN);
+	}
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR, pmode);
 }
 
@@ -14800,6 +14997,49 @@ wm_hv_phy_workarounds_ich8lan(struct wm_softc *sc)
 	 * link so that it disables K1 if link is in 1Gbps.
 	 */
 	wm_k1_gig_workaround_hv(sc, 1);
+}
+
+/*
+ *  wm_copy_rx_addrs_to_phy_ich8lan - Copy Rx addresses from MAC to PHY
+ *  @sc:   pointer to the HW structure
+ */
+static void
+wm_copy_rx_addrs_to_phy_ich8lan(struct wm_softc *sc)
+{
+	device_t dev = sc->sc_dev;
+	uint32_t mac_reg;
+	uint16_t i, wuce;
+	int count;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	if (sc->phy.acquire(sc) != 0)
+		return;
+	if (wm_enable_phy_wakeup_reg_access_bm(dev, &wuce) != 0)
+		goto release;
+
+	/* Copy both RAL/H (rar_entry_count) and SHRAL/H to PHY */
+	count = wm_rar_count(sc);
+	for (i = 0; i < count; i++) {
+		uint16_t lo, hi;
+		mac_reg = CSR_READ(sc, WMREG_CORDOVA_RAL(i));
+		lo = (uint16_t)(mac_reg & 0xffff);
+		hi = (uint16_t)((mac_reg >> 16) & 0xffff);
+		wm_access_phy_wakeup_reg_bm(dev, BM_RAR_L(i), &lo, 0, true);
+		wm_access_phy_wakeup_reg_bm(dev, BM_RAR_M(i), &hi, 0, true);
+
+		mac_reg = CSR_READ(sc, WMREG_CORDOVA_RAH(i));
+		lo = (uint16_t)(mac_reg & 0xffff);
+		hi = (uint16_t)((mac_reg & RAL_AV) >> 16);
+		wm_access_phy_wakeup_reg_bm(dev, BM_RAR_H(i), &lo, 0, true);
+		wm_access_phy_wakeup_reg_bm(dev, BM_RAR_CTRL(i), &hi, 0, true);
+	}
+
+	wm_disable_phy_wakeup_reg_access_bm(dev, &wuce);
+
+release:
+	sc->phy.release(sc);
 }
 
 /*
