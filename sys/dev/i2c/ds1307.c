@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.30 2018/12/14 22:05:36 macallan Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.31 2018/12/20 21:36:53 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.30 2018/12/14 22:05:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.31 2018/12/20 21:36:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +297,8 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 	struct dsrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 	const struct dsrtc_model *dm;
+	prop_dictionary_t dict = device_properties(self);
+	bool base_2k = FALSE;
 
 	if ((dm = dsrtc_model_by_compat(ia)) == NULL)
 		dm = dsrtc_model_by_number(device_cfdata(self)->cf_flags);
@@ -330,6 +332,10 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 #ifdef DSRTC_YEAR_START_2K
 	sc->sc_model.dm_flags |= DSRTC_FLAG_YEAR_START_2K;
 #endif
+
+	prop_dictionary_get_bool(dict, "base_year_is_2000", &base_2k);
+	if (base_2k) sc->sc_model.dm_flags |= DSRTC_FLAG_YEAR_START_2K;
+
 
 	todr_attach(&sc->sc_todr);
 	if ((sc->sc_model.dm_flags & DSRTC_FLAG_TEMP) != 0) {
