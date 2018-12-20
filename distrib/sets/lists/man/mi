@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1634 2018/12/19 18:58:43 jakllsch Exp $
+# $NetBSD: mi,v 1.1635 2018/12/20 07:30:00 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2336,7 +2336,7 @@
 ./usr/share/man/cat8/acorn26/boot26.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn26/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn32/MAKEDEV.0		man-obsolete		obsolete
-./usr/share/man/cat8/acorn32/boot.0		man-sys-catman		obsolete
+./usr/share/man/cat8/acorn32/boot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn32/boot32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn32/nbfs.0		man-sys-catman		.cat
@@ -2446,14 +2446,14 @@
 ./usr/share/man/cat8/compat_netbsd32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_osf1.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_pecoff.0		man-obsolete		obsolete
-./usr/share/man/cat8/compat_sco.0		man-sys-catman		obsolete
-./usr/share/man/cat8/compat_solaris.0		man-sys-catman		obsolete
+./usr/share/man/cat8/compat_sco.0		man-obsolete		obsolete
+./usr/share/man/cat8/compat_solaris.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_sunos.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_svr4.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_svr4_32.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_ultrix.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_win32.0		man-obsolete		obsolete
-./usr/share/man/cat8/compat_xenix.0		man-sys-catman		obsolete
+./usr/share/man/cat8/compat_xenix.0		man-obsolete		obsolete
 ./usr/share/man/cat8/comsat.0			man-man-catman		.cat
 ./usr/share/man/cat8/cpuctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/crash.0			man-sysutil-catman	.cat
@@ -5461,14 +5461,14 @@
 ./usr/share/man/html8/compat_netbsd32.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_osf1.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_pecoff.html	man-obsolete		obsolete
-./usr/share/man/html8/compat_sco.html		man-sys-htmlman		obsolete
-./usr/share/man/html8/compat_solaris.html	man-sys-htmlman		obsolete
+./usr/share/man/html8/compat_sco.html		man-obsolete		obsolete
+./usr/share/man/html8/compat_solaris.html	man-obsolete		obsolete
 ./usr/share/man/html8/compat_sunos.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_svr4.html		man-obsolete		obsolete
 ./usr/share/man/html8/compat_svr4_32.html	man-obsolete		obsolete
 ./usr/share/man/html8/compat_ultrix.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_win32.html		man-obsolete		obsolete
-./usr/share/man/html8/compat_xenix.html		man-sys-htmlman		obsolete
+./usr/share/man/html8/compat_xenix.html		man-obsolete		obsolete
 ./usr/share/man/html8/comsat.html		man-man-htmlman		html
 ./usr/share/man/html8/cpuctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/crash.html		man-sysutil-htmlman	html
@@ -5560,7 +5560,7 @@
 ./usr/share/man/html8/hostapd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/hostapd_cli.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/hp300/boot.html		man-sys-htmlman		html
-./usr/share/man/html8/hp300/crash.html		man-obsolete 		obsolete
+./usr/share/man/html8/hp300/crash.html		man-obsolete		obsolete
 ./usr/share/man/html8/hp300/format.html		man-sys-htmlman		html
 ./usr/share/man/html8/hp700/boot.html		man-obsolete		obsolete
 ./usr/share/man/html8/hp700/mkboot.html		man-obsolete		obsolete
@@ -7468,9 +7468,9 @@
 ./usr/share/man/man4/le.4			man-sys-man		.man
 ./usr/share/man/man4/lg3303.4			man-sys-man		.man
 ./usr/share/man/man4/lii.4			man-sys-man		.man
-./usr/share/man/man4/lkm.4			man-obsolete 		obsolete
+./usr/share/man/man4/lkm.4			man-obsolete		obsolete
 ./usr/share/man/man4/lm.4			man-sys-man		.man
-./usr/share/man/man4/lmc.4			man-obsolete 		obsolete
+./usr/share/man/man4/lmc.4			man-obsolete		obsolete
 ./usr/share/man/man4/lmenv.4			man-sys-man		.man
 ./usr/share/man/man4/lmtemp.4			man-sys-man		.man
 ./usr/share/man/man4/lo.4			man-sys-man		.man
@@ -8529,14 +8529,14 @@
 ./usr/share/man/man8/compat_netbsd32.8		man-sys-man		.man
 ./usr/share/man/man8/compat_osf1.8		man-sys-man		.man
 ./usr/share/man/man8/compat_pecoff.8		man-obsolete		obsolete
-./usr/share/man/man8/compat_sco.8		man-sys-man		obsolete
-./usr/share/man/man8/compat_solaris.8		man-sys-man		obsolete
+./usr/share/man/man8/compat_sco.8		man-obsolete		obsolete
+./usr/share/man/man8/compat_solaris.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_sunos.8		man-sys-man		.man
 ./usr/share/man/man8/compat_svr4.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_svr4_32.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_ultrix.8		man-sys-man		.man
 ./usr/share/man/man8/compat_win32.8		man-obsolete		obsolete
-./usr/share/man/man8/compat_xenix.8		man-sys-man		obsolete
+./usr/share/man/man8/compat_xenix.8		man-obsolete		obsolete
 ./usr/share/man/man8/comsat.8			man-man-man		.man
 ./usr/share/man/man8/cpuctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/crash.8			man-crash-man		.man
@@ -8651,7 +8651,7 @@
 ./usr/share/man/man8/hostapd_cli.8		man-sysutil-man		.man
 ./usr/share/man/man8/hp300/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp300/boot.8		man-sys-man		.man
-./usr/share/man/man8/hp300/crash.8		man-obsolete 	obsolete
+./usr/share/man/man8/hp300/crash.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp300/format.8		man-sys-man		.man
 ./usr/share/man/man8/hp300/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp700/MAKEDEV.8		man-obsolete		obsolete
