@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.23 2018/12/11 16:45:49 martin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.24 2018/12/20 02:52:59 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.23 2018/12/11 16:45:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.24 2018/12/20 02:52:59 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1331,7 +1331,8 @@ mue_setmulti(struct mue_softc *sc)
 	rxfilt |= MUE_RFE_CTL_BROADCAST;
 
 	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
-allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
+allmulti:	ifp->if_flags |= IFF_ALLMULTI;
+		rxfilt |= MUE_RFE_CTL_MULTICAST;
 		if (ifp->if_flags & IFF_PROMISC) {
 			rxfilt |= MUE_RFE_CTL_UNICAST;
 			DPRINTF(sc, "promisc\n");
