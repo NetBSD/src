@@ -67,7 +67,10 @@ typedef enum {
 	GPT_TYPE_NETBSD_FFS,
 	GPT_TYPE_NETBSD_LFS,
 	GPT_TYPE_NETBSD_RAIDFRAME,
-	GPT_TYPE_NETBSD_SWAP
+	GPT_TYPE_NETBSD_SWAP,
+	GPT_TYPE_VMWARE_VMKCORE,
+	GPT_TYPE_VMWARE_VMFS,
+	GPT_TYPE_VMWARE_RESERVED
 } gpt_type_t;
 
 typedef uint8_t gpt_uuid_t[16];
@@ -97,6 +100,10 @@ int gpt_uuid_parse(const char *, gpt_uuid_t);
 
 struct gpt;
 int gpt_uuid_generate(struct gpt *, gpt_uuid_t);
+
+/* returns number of entries, callback func may be NULL */
+size_t gpt_uuid_query(
+    void (*func)(const char *uuid, const char *short_name, const char *desc));
 
 void gpt_uuid_help(const char *);
 
