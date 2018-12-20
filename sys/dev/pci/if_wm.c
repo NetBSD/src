@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.607 2018/12/17 04:21:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.608 2018/12/20 02:38:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.607 2018/12/17 04:21:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.608 2018/12/20 02:38:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -971,8 +971,8 @@ static void	wm_set_eee_i350(struct wm_softc *);
  */
 static void	wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *);
 static void	wm_gig_downshift_workaround_ich8lan(struct wm_softc *);
-static void	wm_hv_phy_workaround_ich8lan(struct wm_softc *);
-static void	wm_lv_phy_workaround_ich8lan(struct wm_softc *);
+static void	wm_hv_phy_workarounds_ich8lan(struct wm_softc *);
+static void	wm_lv_phy_workarounds_ich8lan(struct wm_softc *);
 static int	wm_k1_workaround_lpt_lp(struct wm_softc *, bool);
 static int	wm_k1_gig_workaround_hv(struct wm_softc *, int);
 static int	wm_k1_workaround_lv(struct wm_softc *);
@@ -2931,7 +2931,7 @@ alloc_retry:
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_flags |= WM_F_ATTACHED;
- out:
+out:
 	return;
 }
 
@@ -3948,9 +3948,9 @@ wm_phy_post_reset(struct wm_softc *sc)
 
 	/* Perform any necessary post-reset workarounds */
 	if (sc->sc_type == WM_T_PCH)
-		wm_hv_phy_workaround_ich8lan(sc);
+		wm_hv_phy_workarounds_ich8lan(sc);
 	else if (sc->sc_type == WM_T_PCH2)
-		wm_lv_phy_workaround_ich8lan(sc);
+		wm_lv_phy_workarounds_ich8lan(sc);
 
 	/* Clear the host wakeup bit after lcd reset */
 	if (sc->sc_type >= WM_T_PCH) {
@@ -4978,7 +4978,7 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_WUC, 0);
 
 	if (sc->sc_type < WM_T_82575)
-		wm_disable_aspm(sc);
+		wm_disable_aspm(sc); /* Workaround for some chips */
 
 	wm_reset_mdicnfg_82580(sc);
 
@@ -10704,20 +10704,23 @@ wm_access_phy_wakeup_reg_bm(device_t dev, int offset, int16_t *val, int rd)
 
 	/*
 	 * 2) Access PHY wakeup register.
-	 * See e1000_access_phy_wakeup_reg_bm.
+	 * See wm_access_phy_wakeup_reg_bm.
 	 */
 
-	/* Write page 800 */
+	/* Write the Wakeup register page offset value using opcode 0x11 */
 	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ADDRESS_OPCODE, regnum);
 
-	if (rd)
+	if (rd) {
+		/* Read the Wakeup register page value using opcode 0x12 */
 		*val = wm_gmii_mdic_readreg(dev, 1, BM_WUC_DATA_OPCODE);
-	else
+	} else {
+		/* Write the Wakeup register page value using opcode 0x12 */
 		wm_gmii_mdic_writereg(dev, 1, BM_WUC_DATA_OPCODE, *val);
+	}
 
 	/*
 	 * 3) Disable PHY wakeup register.
-	 * See e1000_disable_phy_wakeup_reg_access_bm().
+	 * See wm_disable_phy_wakeup_reg_access_bm().
 	 */
 	/* Set page 769 */
 	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
@@ -14318,7 +14321,7 @@ wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *sc)
 }
 
 /*
- *  e1000_suspend_workarounds_ich8lan - workarounds needed during S0->Sx
+ *  wm_suspend_workarounds_ich8lan - workarounds needed during S0->Sx
  *  @sc: pointer to the HW structure
  *
  *  During S0 to Sx transition, it is possible the link remains at gig
@@ -14398,7 +14401,7 @@ out:
 
 /*
  *  wm_resume_workarounds_pchlan - workarounds needed during Sx->S0
- *  @hw: pointer to the HW structure
+ *  @sc: pointer to the HW structure
  *
  *  During Sx to S0 transitions on non-managed devices or managed devices
  *  on which PHY resets are not blocked, if the PHY registers cannot be
@@ -14754,7 +14757,7 @@ wm_gig_downshift_workaround_ich8lan(struct wm_softc *sc)
  * XXX should be moved to new PHY driver?
  */
 static void
-wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
+wm_hv_phy_workarounds_ich8lan(struct wm_softc *sc)
 {
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
@@ -14802,7 +14805,7 @@ wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
  *  done after every PHY reset.
  */
 static void
-wm_lv_phy_workaround_ich8lan(struct wm_softc *sc)
+wm_lv_phy_workarounds_ich8lan(struct wm_softc *sc)
 {
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
@@ -14817,7 +14820,7 @@ wm_lv_phy_workaround_ich8lan(struct wm_softc *sc)
 }
 
 /**
- *  e1000_k1_workaround_lpt_lp - K1 workaround on Lynxpoint-LP
+ *  wm_k1_workaround_lpt_lp - K1 workaround on Lynxpoint-LP
  *  @link: link up bool flag
  *
  *  When K1 is enabled for 1Gbps, the MAC can miss 2 DMA completion indications
