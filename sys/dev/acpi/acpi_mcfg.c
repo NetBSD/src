@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.15 2018/12/08 15:02:06 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.16 2018/12/20 19:16:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.15 2018/12/08 15:02:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.16 2018/12/20 19:16:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -350,15 +350,6 @@ acpimcfg_init(bus_space_tag_t memt, const struct acpimcfg_ops *ops)
 		 * Some (broken?) BIOSen have an MCFG table for an empty
 		 * bus range.  Ignore those tables.
 		 */
-		if (ama->StartBusNumber == ama->EndBusNumber) {
-			aprint_debug_dev(acpi_sc->sc_dev,
-			    "MCFG: segment %d, bus %d-%d, address 0x%016" PRIx64
-			    ": ignore (bus %d == %d)\n", ama->PciSegment,
-			    ama->StartBusNumber, ama->EndBusNumber,
-			    ama->Address, ama->StartBusNumber,
-			    ama->EndBusNumber);
-			goto next;
-		}
 		if (ama->StartBusNumber > ama->EndBusNumber) {
 			aprint_debug_dev(acpi_sc->sc_dev,
 			    "MCFG: segment %d, bus %d-%d, address 0x%016" PRIx64
