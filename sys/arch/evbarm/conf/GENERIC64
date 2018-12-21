@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.69 2018/11/30 16:28:43 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.70 2018/12/21 14:52:12 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -264,6 +264,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # UART
 com*		at fdt?	pass 4			# UART
+com*		at acpi?
 plcom*		at fdt?	pass 4			# ARM PL011 UART
 plcom*		at acpi?
 puc*		at pci? dev ? function ?	# PCI "universal" comm. cards
