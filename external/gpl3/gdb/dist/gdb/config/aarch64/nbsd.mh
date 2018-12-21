@@ -1,4 +1,4 @@
-# Host: NetBSD/amd64
+# Host: NetBSD/arm64
 NATDEPFILES= fork-child.o inf-ptrace.o nbsd-nat.o aarch64-nbsd-nat.o \
 	bsd-kvm.o
 
