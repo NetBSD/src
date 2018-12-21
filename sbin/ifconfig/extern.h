@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2009/08/07 18:53:37 dyoung Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2018/12/21 08:58:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -87,6 +87,7 @@ int register_status(status_func_t *);
 int register_usage(usage_func_t *);
 int register_flag(int);
 bool get_flag(int);
+void do_setethercaps(prop_dictionary_t);
 
 extern bool lflag, Nflag, vflag, zflag;
 
