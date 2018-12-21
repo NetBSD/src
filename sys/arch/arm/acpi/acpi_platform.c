@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.10 2018/11/28 22:29:36 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.11 2018/12/21 14:50:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.10 2018/11/28 22:29:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.11 2018/12/21 14:50:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -232,16 +232,12 @@ acpi_platform_device_register(device_t self, void *aux)
 #if NCOM > 0
 	prop_dictionary_t prop = device_properties(self);
 
-	if (device_is_a(self, "com") && device_is_a(device_parent(self), "puc")) {
-		const struct puc_attach_args * const paa = aux;
+	if (device_is_a(self, "com")) {
 		ACPI_TABLE_SPCR *spcr;
-		int b, d, f;
-
-		const int s = pci_get_segment(paa->pc);
-		pci_decompose_tag(paa->pc, paa->tag, &b, &d, &f);
 
 		if (ACPI_FAILURE(acpi_table_find(ACPI_SIG_SPCR, (void **)&spcr)))
 			return;
+
 		if (spcr->SerialPort.SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY)
 			goto spcr_unmap;
 		if (spcr->SerialPort.Address == 0)
@@ -250,9 +246,37 @@ acpi_platform_device_register(device_t self, void *aux)
 		    spcr->InterfaceType != ACPI_DBG2_16550_SUBSET)
 			goto spcr_unmap;
 
-		if (spcr->PciSegment == s && spcr->PciBus == b &&
-		    spcr->PciDevice == d && spcr->PciFunction == f)
-			prop_dictionary_set_bool(prop, "force_console", true);
+		if (device_is_a(device_parent(self), "puc")) {
+			const struct puc_attach_args * const paa = aux;
+			int b, d, f;
+
+			const int s = pci_get_segment(paa->pc);
+			pci_decompose_tag(paa->pc, paa->tag, &b, &d, &f);
+
+			if (spcr->PciSegment == s && spcr->PciBus == b &&
+			    spcr->PciDevice == d && spcr->PciFunction == f)
+				prop_dictionary_set_bool(prop, "force_console", true);
+		}
+
+		if (device_is_a(device_parent(self), "acpi")) {
+			struct acpi_attach_args * const aa = aux;
+			struct acpi_resources res;
+			struct acpi_mem *mem;
+
+			if (ACPI_FAILURE(acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
+			    &res, &acpi_resource_parse_ops_quiet)))
+				goto spcr_unmap;
+
+			mem = acpi_res_mem(&res, 0);
+			if (mem == NULL)
+				goto crs_cleanup;
+
+			if (mem->ar_base == spcr->SerialPort.Address)
+				prop_dictionary_set_bool(prop, "force_console", true);
+
+crs_cleanup:
+			acpi_resource_cleanup(&res);
+		}
 
 spcr_unmap:
 		acpi_table_unmap((ACPI_TABLE_HEADER *)spcr);
