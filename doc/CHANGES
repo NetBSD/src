@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2468 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2469 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -267,3 +267,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	arm: Add support for NVIDIA Tegra X1 SoC SATA. [skrll 20181214]
 	kernel: Remove COMPAT_SVR4 and COMPAT_SVR4_32. [maxv 20181219]
 	sqlite3: Import 3.26.0. [christos 20181219]
+	network: Add SIOCSETHERCAP ioctl. [msaitoh 20181221]
