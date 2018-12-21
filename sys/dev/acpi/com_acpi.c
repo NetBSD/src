@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.36 2018/12/08 17:46:13 thorpej Exp $ */
+/* $NetBSD: com_acpi.c,v 1.37 2018/12/21 14:51:47 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.36 2018/12/08 17:46:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.37 2018/12/21 14:51:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -34,10 +34,9 @@ __KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.36 2018/12/08 17:46:13 thorpej Exp $"
 #include <sys/termios.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #include <dev/ic/comvar.h>
-
-#include <dev/isa/isadmavar.h>
 
 static int	com_acpi_match(device_t, cfdata_t , void *);
 static void	com_acpi_attach(device_t, device_t, void *);
@@ -63,6 +62,17 @@ static const char * const com_acpi_ids[] = {
 	"SMCF010",	/* SMC SuperIO IRDA device */
 	"NSC6001",	/* NSC IRDA device */
 	"FUJ02E6",	/* Fujitsu Serial Pen Tablet */
+	"HISI0031",	/* Hisilicon UART */
+	"8250dw",	/* Designware APB UART */
+	NULL
+};
+
+/*
+ * Subset of supported device IDs of type COM_TYPE_DW_APB
+ */
+static const char * const com_acpi_dw_ids[] = {
+	"HISI0031",	/* Hisilicon UART */
+	"8250dw",	/* Designware APB UART */
 	NULL
 };
 
@@ -98,6 +108,7 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t base;
 	bus_size_t size;
 	ACPI_STATUS rv;
+	ACPI_INTEGER clock_freq;
 
 	sc->sc_dev = self;
 
@@ -142,18 +153,27 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("%s", device_xname(self));
 
-	if (com_probe_subr(&sc->sc_regs) == 0) {
-		aprint_error(": com probe failed\n");
-		goto out;
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, com_acpi_dw_ids) != 0) {
+		sc->sc_type = COM_TYPE_DW_APB;
+		SET(sc->sc_hwflags, COM_HW_POLL);	/* XXX */
+	} else {
+		if (com_probe_subr(&sc->sc_regs) == 0) {
+			aprint_error(": com probe failed\n");
+			goto out;
+		}
 	}
 
-	sc->sc_frequency = 115200 * 16;
+	rv = acpi_dsd_integer(aa->aa_node->ad_handle, "clock-frequency", &clock_freq);
+	if (ACPI_SUCCESS(rv))
+		sc->sc_frequency = clock_freq;
+	else
+		sc->sc_frequency = 115200 * 16;
 
 	com_attach_subr(sc);
 
-	asc->sc_ih = isa_intr_establish_xname(aa->aa_ic, irq->ar_irq,
-	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
-	    IPL_SERIAL, comintr, sc, device_xname(sc->sc_dev));
+	if (!ISSET(sc->sc_hwflags, COM_HW_POLL))
+		asc->sc_ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+		    IPL_SERIAL, true, comintr, sc, device_xname(self));
 
 	if (!pmf_device_register(self, NULL, com_resume))
 		aprint_error_dev(self, "couldn't establish a power handler\n");
