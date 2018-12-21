@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_usif.c,v 1.5 2018/08/27 07:43:16 riastradh Exp $	*/
+/*	$NetBSD: nouveau_usif.c,v 1.6 2018/12/21 07:51:17 maya Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.5 2018/08/27 07:43:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.6 2018/12/21 07:51:17 maya Exp $");
 
 #include "nouveau_drm.h"
 #include "nouveau_usif.h"
@@ -305,11 +305,17 @@ usif_object_new(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
 }
 
 int
+#ifdef __NetBSD__
+usif_ioctl(struct drm_file *filp, void *data, u32 argc)
+#else
 usif_ioctl(struct drm_file *filp, void __user *user, u32 argc)
+#endif
 {
 	struct nouveau_cli *cli = nouveau_cli(filp);
 	struct nvif_client *client = &cli->base;
+#ifndef __NetBSD__
 	void *data = kmalloc(argc, GFP_KERNEL);
+#endif
 	u32   size = argc;
 	union {
 		struct nvif_ioctl_v0 v0;
@@ -318,10 +324,12 @@ usif_ioctl(struct drm_file *filp, void __user *user, u32 argc)
 	u8 owner;
 	int ret;
 
+#ifndef __NetBSD__
 	if (ret = -ENOMEM, !argv)
 		goto done;
 	if (ret = -EFAULT, copy_from_user(argv, user, size))
 		goto done;
+#endif
 
 	if (nvif_unpack(argv->v0, 0, 0, true)) {
 		/* block access to objects not created via this interface */
@@ -385,10 +393,14 @@ usif_ioctl(struct drm_file *filp, void __user *user, u32 argc)
 	argv->v0.owner = owner;
 	mutex_unlock(&cli->mutex);
 
+#ifndef __NetBSD__
 	if (copy_to_user(user, argv, argc))
 		ret = -EFAULT;
+#endif
 done:
+#ifndef __NetBSD__
 	kfree(argv);
+#endif
 	return ret;
 }
 
