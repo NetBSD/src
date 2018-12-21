@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.442 2018/12/12 01:46:47 rin Exp $	*/
+/*	$NetBSD: if.c,v 1.443 2018/12/21 08:58:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.442 2018/12/12 01:46:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.443 2018/12/21 08:58:08 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3230,6 +3230,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCSLIFPHYADDR:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCSETHERCAP:
 	case SIOCSIFMEDIA:
 	case SIOCSDRVSPEC:
 	case SIOCG80211:
