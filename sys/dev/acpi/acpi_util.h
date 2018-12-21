@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.h,v 1.6 2018/10/12 23:25:29 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.h,v 1.7 2018/12/21 14:51:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -87,5 +87,7 @@ int		 acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 int		 acpi_match_class(ACPI_HANDLE, uint8_t, uint8_t, uint8_t);
 ACPI_HANDLE	 acpi_match_cpu_info(struct cpu_info *);
 struct cpu_info *acpi_match_cpu_handle(ACPI_HANDLE);
+
+ACPI_STATUS	 acpi_dsd_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_UTIL_H */
