@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.9 2018/12/06 13:25:02 msaitoh Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.10 2018/12/21 07:13:30 msaitoh Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,6 @@
 #define	IXGBE_LEGACY_TX	1
 #endif
 
-#define	ETHERCAP_VLAN_HWFILTER	0
 #define	ETHERCAP_VLAN_HWCSUM	0
 #define	MJUM9BYTES	(9 * 1024)
 #define	MJUM16BYTES	(16 * 1024)
