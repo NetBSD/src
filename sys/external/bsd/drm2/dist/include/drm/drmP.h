@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.34 2018/08/28 03:41:39 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.35 2018/12/21 07:51:18 maya Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -709,6 +709,10 @@ struct drm_driver {
 	const struct drm_ioctl_desc *ioctls;
 	int num_ioctls;
 	const struct file_operations *fops;
+
+#ifdef __NetBSD__
+	int (*ioctl_override)(struct file *, unsigned long, void *);
+#endif
 
 	/* List of devices hanging off this driver with stealth attach. */
 	struct list_head legacy_dev_list;
