@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.14 2018/11/16 23:05:50 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.15 2018/12/21 14:51:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.14 2018/11/16 23:05:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.15 2018/12/21 14:51:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -606,4 +606,68 @@ acpi_intr_string(void *c, char *buf, size_t size)
 	intr_handle_t ih = aih->aih_irq;
 
 	return intr_string(ih, buf, size);
+}
+
+/*
+ * USB Device-Specific Data (_DSD) support
+ */
+
+static UINT8 acpi_dsd_uuid[ACPI_UUID_LENGTH] = {
+	0x14, 0xd8, 0xff, 0xda, 0xba, 0x6e, 0x8c, 0x4d,
+	0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01
+};
+
+ACPI_STATUS
+acpi_dsd_integer(ACPI_HANDLE handle, const char *prop, ACPI_INTEGER *val)
+{
+	ACPI_OBJECT *obj, *uuid, *props, *pobj, *propkey, *propval;
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+	int n;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	rv = AcpiEvaluateObjectTyped(handle, "_DSD", NULL, &buf, ACPI_TYPE_PACKAGE);
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	props = NULL;
+	obj = (ACPI_OBJECT *)buf.Pointer;
+	for (n = 0; (n + 1) < obj->Package.Count; n += 2) {
+		uuid = &obj->Package.Elements[n];
+		if (uuid->Buffer.Length == ACPI_UUID_LENGTH &&
+		    memcmp(uuid->Buffer.Pointer, acpi_dsd_uuid, ACPI_UUID_LENGTH) == 0) {
+			props = &obj->Package.Elements[n + 1];
+			break;
+		}
+	}
+	if (props == NULL) {
+		rv = AE_NOT_FOUND;
+		goto done;
+	}
+
+	for (n = 0; n < props->Package.Count; n++) {
+		pobj = &props->Package.Elements[n];
+		if (pobj->Type != ACPI_TYPE_PACKAGE || pobj->Package.Count != 2)
+			continue;
+		propkey = (ACPI_OBJECT *)&pobj->Package.Elements[0];
+		propval = (ACPI_OBJECT *)&pobj->Package.Elements[1];
+		if (propkey->Type != ACPI_TYPE_STRING)
+			continue;
+		if (strcmp(propkey->String.Pointer, prop) != 0)
+			continue;
+
+		if (propval->Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+		} else {
+			*val = propval->Integer.Value;
+			rv = AE_OK;
+		}
+		break;
+	}
+
+done:
+	ACPI_FREE(buf.Pointer);
+	return rv;
 }
