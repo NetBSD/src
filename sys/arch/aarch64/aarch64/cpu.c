@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.14 2018/11/28 09:16:19 ryo Exp $ */
+/* $NetBSD: cpu.c,v 1.15 2018/12/21 08:01:01 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.14 2018/11/28 09:16:19 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.15 2018/12/21 08:01:01 ryo Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -163,6 +163,7 @@ cpu_attach(device_t dv, cpuid_t id)
 	}
 #endif /* MULTIPROCESSOR */
 
+	set_cpufuncs();
 	fpu_attach(ci);
 
 	cpu_identify1(dv, ci);
@@ -522,6 +523,7 @@ cpu_hatch(struct cpu_info *ci)
 
 	mutex_enter(&cpu_hatch_lock);
 
+	set_cpufuncs();
 	fpu_attach(ci);
 
 	cpu_identify1(ci->ci_dev, ci);
