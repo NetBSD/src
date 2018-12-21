@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.610 2018/12/20 09:32:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.611 2018/12/21 08:29:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.610 2018/12/20 09:32:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.611 2018/12/21 08:29:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2396,12 +2396,12 @@ alloc_retry:
 	case WM_T_PCH_CNP:
 		apme_mask = WUC_APME;
 		eeprom_data = CSR_READ(sc, WMREG_WUC);
+		if ((eeprom_data & apme_mask) != 0)
+			sc->sc_flags |= WM_F_WOL;
 		break;
 	default:
 		break;
 	}
-	if ((eeprom_data & apme_mask) != 0)
-		sc->sc_flags |= WM_F_WOL;
 
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
