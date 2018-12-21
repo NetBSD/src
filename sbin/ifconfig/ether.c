@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.2 2012/11/01 13:43:23 pgoyette Exp $	*/
+/*	$NetBSD: ether.c,v 1.3 2018/12/21 08:58:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ether.c,v 1.2 2012/11/01 13:43:23 pgoyette Exp $");
+__RCSID("$NetBSD: ether.c,v 1.3 2018/12/21 08:58:08 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: ether.c,v 1.2 2012/11/01 13:43:23 pgoyette Exp $");
 #include <net/if.h> 
 #include <net/if_ether.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -55,10 +56,98 @@ __RCSID("$NetBSD: ether.c,v 1.2 2012/11/01 13:43:23 pgoyette Exp $");
 
 static void ether_status(prop_dictionary_t, prop_dictionary_t);
 static void ether_constructor(void) __attribute__((constructor));
+static int  setethercaps(prop_dictionary_t, prop_dictionary_t);
 
 static status_func_t status;
+static cmdloop_branch_t branch;
 
 #define MAX_PRINT_LEN 55
+
+static const struct kwinst ethercapskw[] = {
+#if 0 /* notyet */
+	  IFKW("vlan-hwfilter",	ETHERCAP_VLAN_HWFILTER)
+#endif
+	  IFKW("eee",		ETHERCAP_EEE)
+};
+
+struct pkw ethercaps = PKW_INITIALIZER(&ethercaps, "ethercaps", setethercaps,
+    "ethercap", ethercapskw, __arraycount(ethercapskw),
+    &command_root.pb_parser);
+
+void
+do_setethercaps(prop_dictionary_t env)
+{
+	struct eccapreq eccr;
+	prop_data_t d;
+
+	d = (prop_data_t )prop_dictionary_get(env, "ethercaps");
+	if (d == NULL)
+		return;
+
+	assert(sizeof(eccr) == prop_data_size(d));
+
+	memcpy(&eccr, prop_data_data_nocopy(d), sizeof(eccr));
+	if (direct_ioctl(env, SIOCSETHERCAP, &eccr) == -1)
+		err(EXIT_FAILURE, "SIOCSETHERCAP");
+}
+
+static int
+getethercaps(prop_dictionary_t env, prop_dictionary_t oenv,
+    struct eccapreq *oeccr)
+{
+	bool rc;
+	struct eccapreq eccr;
+	const struct eccapreq *tmpeccr;
+	prop_data_t capdata;
+
+	capdata = (prop_data_t)prop_dictionary_get(env, "ethercaps");
+
+	if (capdata != NULL) {
+		tmpeccr = prop_data_data_nocopy(capdata);
+		*oeccr = *tmpeccr;
+		return 0;
+	}
+
+	(void)direct_ioctl(env, SIOCGETHERCAP, &eccr);
+	*oeccr = eccr;
+
+	capdata = prop_data_create_data(&eccr, sizeof(eccr));
+
+	rc = prop_dictionary_set(oenv, "ethercaps", capdata);
+
+	prop_object_release((prop_object_t)capdata);
+
+	return rc ? 0 : -1;
+}
+
+static int
+setethercaps(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	int64_t ethercap;
+	bool rc;
+	prop_data_t capdata;
+	struct eccapreq eccr;
+
+	rc = prop_dictionary_get_int64(env, "ethercap", &ethercap);
+	assert(rc);
+
+	if (getethercaps(env, oenv, &eccr) == -1)
+		return -1;
+
+	if (ethercap < 0) {
+		ethercap = -ethercap;
+		eccr.eccr_capenable &= ~ethercap;
+	} else
+		eccr.eccr_capenable |= ethercap;
+
+	if ((capdata = prop_data_create_data(&eccr, sizeof(eccr))) == NULL)
+		return -1;
+
+	rc = prop_dictionary_set(oenv, "ethercaps", capdata);
+	prop_object_release((prop_object_t)capdata);
+
+	return rc ? 0 : -1;
+}
 
 void
 ether_status(prop_dictionary_t env, prop_dictionary_t oenv)
@@ -94,6 +183,8 @@ static void
 ether_constructor(void)
 {
 
+	cmdloop_branch_init(&branch, &ethercaps.pk_parser);
+	register_cmdloop_branch(&branch);
 	status_func_init(&status, ether_status);
 	register_status(&status);
 }
