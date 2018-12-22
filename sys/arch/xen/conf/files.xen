@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.171 2018/12/22 06:33:37 cherry Exp $
+#	$NetBSD: files.xen,v 1.172 2018/12/22 07:45:58 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -171,9 +171,10 @@ define ipmibus {}
 # System bus types
 #
 
-device mainbus: cpubus, ioapicbus, hypervisorbus, bios32, ipmibus
+device mainbus: cpubus, ioapicbus, hypervisorbus, bios32, ipmibus, acpibus
 attach	mainbus at root
 file	arch/xen/x86/xen_mainbus.c		mainbus
+file	arch/x86/x86/mainbus.c			mainbus
 
 # Xen hypervisor
 device	hypervisor { [apid = -1]}: isabus, pcibus, sysmon_power, xendevbus, acpibus
