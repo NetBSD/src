@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.33 2018/07/21 06:09:13 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.34 2018/12/22 21:27:22 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,18 +63,53 @@ ENTRY(x86_mfence)
 	ret
 END(x86_mfence)
 
+/*
+ * These functions below should always be accessed via the corresponding wrapper
+ * function names defined in x86/include/cpufunc.h and exported as WEAK_ALIAS()
+ *
+ * We use this rather roundabout method so that a runtime wrapper function may
+ * be made available for PVHVM, which could override both native and PV aliases
+ * and decide which to invoke at run time.
+ */
+
+WEAK_ALIAS(invlpg, amd64_invlpg)
+WEAK_ALIAS(lidt, amd64_lidt)
+WEAK_ALIAS(lldt, amd64_lldt)
+WEAK_ALIAS(ltr, amd64_ltr)
+WEAK_ALIAS(lcr0, amd64_lcr0)
+WEAK_ALIAS(rcr0, amd64_rcr0)
+WEAK_ALIAS(rcr2, amd64_rcr2)
+WEAK_ALIAS(lcr2, amd64_lcr2)
+WEAK_ALIAS(rcr3, amd64_rcr3)
+WEAK_ALIAS(lcr3, amd64_lcr3)
+WEAK_ALIAS(tlbflush, amd64_tlbflush)
+WEAK_ALIAS(tlbflushg, amd64_tlbflushg)
+WEAK_ALIAS(rdr0, amd64_rdr0)
+WEAK_ALIAS(ldr0, amd64_ldr0)
+WEAK_ALIAS(rdr1, amd64_rdr1)
+WEAK_ALIAS(ldr1, amd64_ldr1)
+WEAK_ALIAS(rdr2, amd64_rdr2)
+WEAK_ALIAS(ldr2, amd64_ldr2)
+WEAK_ALIAS(rdr3, amd64_rdr3)
+WEAK_ALIAS(ldr3, amd64_ldr3)
+WEAK_ALIAS(rdr6, amd64_rdr6)
+WEAK_ALIAS(ldr6, amd64_ldr6)
+WEAK_ALIAS(rdr7, amd64_rdr7)
+WEAK_ALIAS(ldr7, amd64_ldr7)
+WEAK_ALIAS(wbinvd, amd64_wbinvd)
+
 #ifndef XEN
-ENTRY(invlpg)
+ENTRY(amd64_invlpg)
 	invlpg	(%rdi)
 	ret
-END(invlpg)
+END(amd64_invlpg)
 
-ENTRY(lidt)
+ENTRY(amd64_lidt)
 	lidt	(%rdi)
 	ret
-END(lidt)
+END(amd64_lidt)
 
-ENTRY(lldt)
+ENTRY(amd64_lldt)
 	cmpl	%edi, CPUVAR(CURLDT)
 	jne	1f
 	ret
@@ -82,42 +117,42 @@ ENTRY(lldt)
 	movl	%edi, CPUVAR(CURLDT)
 	lldt	%di
 	ret
-END(lldt)
+END(amd64_lldt)
 
-ENTRY(ltr)
+ENTRY(amd64_ltr)
 	ltr	%di
 	ret
-END(ltr)
+END(amd64_ltr)
 
-ENTRY(lcr0)
+ENTRY(amd64_lcr0)
 	movq	%rdi, %cr0
 	ret
-END(lcr0)
+END(amd64_lcr0)
 
-ENTRY(rcr0)
+ENTRY(amd64_rcr0)
 	movq	%cr0, %rax
 	ret
-END(rcr0)
+END(amd64_rcr0)
 
-ENTRY(lcr2)
+ENTRY(amd64_lcr2)
 	movq	%rdi, %cr2
 	ret
-END(lcr2)
+END(amd64_lcr2)
 
-ENTRY(rcr2)
+ENTRY(amd64_rcr2)
 	movq	%cr2, %rax
 	ret
-END(rcr2)
+END(amd64_rcr2)
 
-ENTRY(lcr3)
+ENTRY(amd64_lcr3)
 	movq	%rdi, %cr3
 	ret
-END(lcr3)
+END(amd64_lcr3)
 
-ENTRY(rcr3)
+ENTRY(amd64_rcr3)
 	movq	%cr3, %rax
 	ret
-END(rcr3)
+END(amd64_rcr3)
 #endif
 
 ENTRY(lcr4)
@@ -159,7 +194,7 @@ END(rcr8)
  * If PGE is not in use, we reload CR3.
  */
 #ifndef XEN
-ENTRY(tlbflushg)
+ENTRY(amd64_tlbflushg)
 	movq	%cr4, %rax
 	testq	$CR4_PGE, %rax
 	jz	1f
@@ -168,74 +203,74 @@ ENTRY(tlbflushg)
 	movq	%rdx, %cr4
 	movq	%rax, %cr4
 	ret
-END(tlbflushg)
+END(amd64_tlbflushg)
 
-ENTRY(tlbflush)
+ENTRY(amd64_tlbflush)
 1:
 	movq	%cr3, %rax
 	movq	%rax, %cr3
 	ret
-END(tlbflush)
+END(amd64_tlbflush)
 
-ENTRY(ldr0)
+ENTRY(amd64_ldr0)
 	movq	%rdi, %dr0
 	ret
-END(ldr0)
+END(amd64_ldr0)
 
-ENTRY(rdr0)
+ENTRY(amd64_rdr0)
 	movq	%dr0, %rax
 	ret
-END(rdr0)
+END(amd64_rdr0)
 
-ENTRY(ldr1)
+ENTRY(amd64_ldr1)
 	movq	%rdi, %dr1
 	ret
-END(ldr1)
+END(amd64_ldr1)
 
-ENTRY(rdr1)
+ENTRY(amd64_rdr1)
 	movq	%dr1, %rax
 	ret
-END(rdr1)
+END(amd64_rdr1)
 
-ENTRY(ldr2)
+ENTRY(amd64_ldr2)
 	movq	%rdi, %dr2
 	ret
-END(ldr2)
+END(amd64_ldr2)
 
-ENTRY(rdr2)
+ENTRY(amd64_rdr2)
 	movq	%dr2, %rax
 	ret
-END(rdr2)
+END(amd64_rdr2)
 
-ENTRY(ldr3)
+ENTRY(amd64_ldr3)
 	movq	%rdi, %dr3
 	ret
-END(ldr3)
+END(amd64_ldr3)
 
-ENTRY(rdr3)
+ENTRY(amd64_rdr3)
 	movq	%dr3, %rax
 	ret
-END(rdr3)
+END(amd64_rdr3)
 
-ENTRY(ldr6)
+ENTRY(amd64_ldr6)
 	movq	%rdi, %dr6
 	ret
-END(ldr6)
+END(amd64_ldr6)
 
-ENTRY(rdr6)
+ENTRY(amd64_rdr6)
 	movq	%dr6, %rax
 	ret
-END(rdr6)
+END(amd64_rdr6)
 
-ENTRY(ldr7)
+ENTRY(amd64_ldr7)
 	movq	%rdi, %dr7
 	ret
-END(ldr7)
+END(amd64_ldr7)
 
-ENTRY(rdr7)
+ENTRY(amd64_rdr7)
 	movq	%dr7, %rax
 	ret
-END(rdr7)
+END(amd64_rdr7)
 
 ENTRY(x86_disable_intr)
 	cli
