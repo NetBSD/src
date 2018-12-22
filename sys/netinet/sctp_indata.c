@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.7 2018/09/03 16:29:36 riastradh Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.8 2018/12/22 13:11:38 maxv Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.7 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.8 2018/12/22 13:11:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2550,7 +2550,7 @@ sctp_process_data(struct mbuf **mm, int iphlen, int *offset, int length,
 #ifdef __APPLE__
 				M_COPY_PKTHDR(m, (*mm));
 #else
-				M_MOVE_PKTHDR(m, (*mm));
+				m_move_pkthdr(m, (*mm));
 #endif
 			}
 			/* get the pointers and copy */

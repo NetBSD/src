@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.63 2018/05/08 07:02:07 maxv Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.64 2018/12/22 13:11:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.63 2018/05/08 07:02:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.64 2018/12/22 13:11:37 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -444,7 +444,7 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 		 * required (the latter are added when the driver calls
 		 * back to ieee80211_crypto_encap to do crypto encapsulation).
 		 */
-		M_MOVE_PKTHDR(n, m);
+		m_move_pkthdr(n, m);
 		n->m_len = 0;
 		n->m_data += needed_space;
 
