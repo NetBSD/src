@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.277 2018/11/29 09:51:20 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.278 2018/12/22 14:28:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.277 2018/11/29 09:51:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.278 2018/12/22 14:28:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -660,7 +660,7 @@ arprequest(struct ifnet *ifp,
 		break;
 	}
 	m->m_pkthdr.len = m->m_len;
-	MH_ALIGN(m, m->m_len);
+	m_align(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
 	memset(ah, 0, m->m_len);
 	switch (ifp->if_type) {
@@ -1960,7 +1960,7 @@ revarprequest(struct ifnet *ifp)
 	m->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
 	    2*ifp->if_addrlen;
 	m->m_pkthdr.len = m->m_len;
-	MH_ALIGN(m, m->m_len);
+	m_align(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
 	memset(ah, 0, m->m_len);
 	ah->ar_pro = htons(ETHERTYPE_IP);

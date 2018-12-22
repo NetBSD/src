@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.257 2018/08/23 01:55:38 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.258 2018/12/22 14:28:57 maxv Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.257 2018/08/23 01:55:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.258 2018/12/22 14:28:57 maxv Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -6395,7 +6395,7 @@ key_getcomb_esp(int mflag)
 			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
 			MGET(m, mflag, MT_DATA);
 			if (m) {
-				M_ALIGN(m, l);
+				m_align(m, l);
 				m->m_len = l;
 				m->m_next = NULL;
 				memset(mtod(m, void *), 0, m->m_len);
@@ -6495,7 +6495,7 @@ key_getcomb_ah(int mflag)
 			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
 			MGET(m, mflag, MT_DATA);
 			if (m) {
-				M_ALIGN(m, l);
+				m_align(m, l);
 				m->m_len = l;
 				m->m_next = NULL;
 			}
@@ -6545,7 +6545,7 @@ key_getcomb_ipcomp(int mflag)
 			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
 			MGET(m, mflag, MT_DATA);
 			if (m) {
-				M_ALIGN(m, l);
+				m_align(m, l);
 				m->m_len = l;
 				m->m_next = NULL;
 			}

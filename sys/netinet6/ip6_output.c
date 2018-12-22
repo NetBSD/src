@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.215 2018/12/22 13:11:38 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.216 2018/12/22 14:28:57 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.215 2018/12/22 13:11:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.216 2018/12/22 14:28:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3261,7 +3261,7 @@ ip6_splithdr(struct mbuf *m, struct ip6_exthdrs *exthdrs)
 			return ENOBUFS;
 		}
 		m_move_pkthdr(mh, m);
-		MH_ALIGN(mh, sizeof(*ip6));
+		m_align(mh, sizeof(*ip6));
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);
 		mh->m_next = m;
