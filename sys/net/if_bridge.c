@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.163 2018/12/15 07:38:58 rin Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.164 2018/12/22 04:28:30 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.163 2018/12/15 07:38:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.164 2018/12/22 04:28:30 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -743,6 +743,25 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 	BRIDGE_PSZ_PERFORM(sc);
 	BRIDGE_UNLOCK(sc);
 
+	switch (ifs->if_type) {
+	case IFT_ETHER:
+	case IFT_L2TP:
+		/*
+		 * Take the interface out of promiscuous mode.
+		 * Don't call it with holding a spin lock.
+		 */
+		(void) ifpromisc(ifs, 0);
+		IFNET_LOCK(ifs);
+		(void) ether_disable_vlan_mtu(ifs);
+		IFNET_UNLOCK(ifs);
+		break;
+	default:
+#ifdef DIAGNOSTIC
+		panic("%s: impossible", __func__);
+#endif
+		break;
+	}
+
 	psref_target_destroy(&bif->bif_psref, bridge_psref_class);
 
 	PSLIST_ENTRY_DESTROY(bif, bif_next);
@@ -896,25 +915,6 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 	bridge_delete_member(sc, bif);
 
 	BRIDGE_UNLOCK(sc);
-
-	switch (ifs->if_type) {
-	case IFT_ETHER:
-	case IFT_L2TP:
-		/*
-		 * Take the interface out of promiscuous mode.
-		 * Don't call it with holding a spin lock.
-		 */
-		(void) ifpromisc(ifs, 0);
-		IFNET_LOCK(ifs);
-		(void) ether_disable_vlan_mtu(ifs);
-		IFNET_UNLOCK(ifs);
-		break;
-	default:
-#ifdef DIAGNOSTIC
-		panic("bridge_delete_member: impossible");
-#endif
-		break;
-	}
 
 	bridge_rtdelete(sc, ifs);
 	bridge_calc_csum_flags(sc);
