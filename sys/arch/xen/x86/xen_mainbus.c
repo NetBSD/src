@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $	*/
+/*	$NetBSD: xen_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $	*/
 /*	NetBSD: mainbus.c,v 1.19 2017/05/23 08:54:39 nonaka Exp 	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,6 @@ int mp_nintr;
 int mp_isa_bus = -1;	    /* XXX */
 int mp_eisa_bus = -1;	   /* XXX */
 
-bool acpi_present;
-bool mpacpi_active;
 #ifdef MPVERBOSE
 int mp_verbose = 1;
 #else /* MPVERBOSE */
@@ -98,16 +96,14 @@ int mp_verbose = 0;
 #endif /* defined(MPBIOS) || NACPICA > 0 */
 #endif /* NPCI > 0 */
 
+extern bool acpi_present;
+extern bool mpacpi_active;
 
-int	mainbus_match(device_t, cfdata_t, void *);
-void	mainbus_attach(device_t, device_t, void *);
+int	xen_mainbus_match(device_t, cfdata_t, void *);
+void	xen_mainbus_attach(device_t, device_t, void *);
+int	xen_mainbus_print(void *, const char *);
 
-CFATTACH_DECL_NEW(mainbus, 0,
-    mainbus_match, mainbus_attach, NULL, NULL);
-
-int	mainbus_print(void *, const char *);
-
-union mainbus_attach_args {
+union xen_mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct cpu_attach_args mba_caa;
 #if NHYPERVISOR > 0
@@ -122,7 +118,7 @@ union mainbus_attach_args {
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(device_t parent, cfdata_t match, void *aux)
+xen_mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -132,69 +128,9 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(device_t parent, device_t self, void *aux)
+xen_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	union mainbus_attach_args mba;
-#if defined(DOM0OPS)
-	int numcpus = 0;
-#ifdef MPBIOS
-	int mpbios_present = 0;
-#endif
-#ifdef PCI_BUS_FIXUP
-	int pci_maxbus = 0;
-#endif
-#endif /* defined(DOM0OPS) */
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-#ifdef DOM0OPS
-	if (xendomain_is_dom0()) {
-#ifdef MPBIOS
-		mpbios_present = mpbios_probe(self);
-#endif
-#if NPCI > 0
-		/* ACPI needs to be able to access PCI configuration space. */
-		pci_mode_detect();
-#ifdef PCI_BUS_FIXUP
-		if (pci_mode != 0) {
-			pci_maxbus = pci_bus_fixup(NULL, 0);
-			aprint_debug_dev(self, "PCI bus max, after "
-			    "pci_bus_fixup: %i\n", pci_maxbus);
-#ifdef PCI_ADDR_FIXUP
-			pciaddr.extent_port = NULL;
-			pciaddr.extent_mem = NULL;
-			pci_addr_fixup(NULL, pci_maxbus);
-#endif /* PCI_ADDR_FIXUP */
-		}
-#endif /* PCI_BUS_FIXUP */
-#if NACPICA > 0
-		acpi_present = acpi_probe() != 0;
-		if (acpi_present)
-			mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
-		if (!mpacpi_active)
-#endif
-		{
-#ifdef MPBIOS
-			if (mpbios_present)
-				mpbios_scan(self, &numcpus);       
-			else
-#endif
-			if (numcpus == 0) {
-				memset(&mba.mba_caa, 0, sizeof(mba.mba_caa));
-				mba.mba_caa.cpu_number = 0;
-				mba.mba_caa.cpu_role = CPU_ROLE_SP;
-				mba.mba_caa.cpu_func = 0;
-				config_found_ia(self, "cpubus",
-				    &mba.mba_caa, mainbus_print);
-			}
-		}
-#if NIOAPIC > 0
-	ioapic_enable();
-#endif
-#endif /* NPCI */
-	}
-#endif /* DOM0OPS */
+	union xen_mainbus_attach_args mba;
 
 #if NIPMI > 0
 	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
@@ -206,7 +142,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NHYPERVISOR > 0
 	mba.mba_haa.haa_busname = "hypervisor";
-	config_found_ia(self, "hypervisorbus", &mba.mba_haa, mainbus_print);
+	config_found_ia(self, "hypervisorbus", &mba.mba_haa, xen_mainbus_print);
 #endif
 
 	/* save/restore for Xen */
@@ -216,9 +152,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-mainbus_print(void *aux, const char *pnp)
+xen_mainbus_print(void *aux, const char *pnp)
 {
-	union mainbus_attach_args *mba = aux;
+	union xen_mainbus_attach_args *mba = aux;
 
 	if (pnp)
 		aprint_normal("%s at %s", mba->mba_busname, pnp);

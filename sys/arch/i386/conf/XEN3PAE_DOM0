@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.9 2018/12/12 06:29:37 maxv Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.10 2018/12/22 07:45:58 cherry Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -877,7 +877,9 @@ pci*	at ppb? bus ?
 # pciback.hide=(00:1a.0)(00:1a.1)(00:1a.7)
 pciback* at pci?			#pci backend device
 
-acpi0		at hypervisor?
+acpi0		at hypervisor?		# ACPI access in PV mode
+acpi0		at mainbus?		# ACPI access in PVH(VM) mode
+
 options 	MPBIOS
 #options 	MPDEBUG
 #options 	MPVERBOSE
