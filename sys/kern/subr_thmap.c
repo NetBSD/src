@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_thmap.c,v 1.2 2018/12/22 20:49:04 christos Exp $	*/
+
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
  * All rights reserved.
@@ -85,6 +87,7 @@
  *	https://www.csd.uoc.gr/~hy460/pdf/p650-lehman.pdf
  */
 
+
 #ifdef _KERNEL
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -94,6 +97,7 @@
 #include <sys/lock.h>
 #include <sys/atomic.h>
 #include <sys/hash.h>
+#define THMAP_RCSID(a) __KERNEL_RCSID(0, a)
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,17 +106,19 @@
 #include <inttypes.h>
 #include <string.h>
 #include <limits.h>
+#define THMAP_RCSID(a) __RCSID(a)
 
 #include "thmap.h"
 #include "utils.h"
 #endif
+
+THMAP_RCSID($NetBSD: subr_thmap.c,v 1.2 2018/12/22 20:49:04 christos Exp $);
 
 /*
  * NetBSD kernel wrappers
  */
 #ifdef _KERNEL
 #define	ASSERT KASSERT
-#define	DEBUG 1
 #define	atomic_thread_fence(x) x
 #define	memory_order_stores membar_producer()
 #define	memory_order_loads membar_consumer()
@@ -245,7 +251,7 @@ static const thmap_ops_t thmap_default_ops = {
  * NODE LOCKING.
  */
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 static inline bool
 node_locked_p(const thmap_inode_t *node)
 {
