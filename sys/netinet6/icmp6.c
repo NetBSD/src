@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.240 2018/10/25 02:40:45 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.241 2018/12/22 13:11:38 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.240 2018/10/25 02:40:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.241 2018/12/22 13:11:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1407,7 +1407,7 @@ ni6_input(struct mbuf *m, int off)
 	if (n == NULL) {
 		goto bad;
 	}
-	M_MOVE_PKTHDR(n, m);
+	m_move_pkthdr(n, m);
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*

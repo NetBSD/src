@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.114 2018/06/26 06:48:03 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.115 2018/12/22 13:11:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.114 2018/06/26 06:48:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.115 2018/12/22 13:11:37 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -996,7 +996,7 @@ ieee80211_decap(struct mbuf *m, int hdrlen)
 					m_freem(m);
 					return NULL;
 				}
-				M_MOVE_PKTHDR(n, m);
+				m_move_pkthdr(n, m);
 				n->m_len = MHLEN;
 			} else {
 				MGET(n, M_DONTWAIT, MT_DATA);
