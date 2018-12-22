@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.19 2018/05/28 20:18:58 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.20 2018/12/22 08:59:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.19 2018/05/28 20:18:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.20 2018/12/22 08:59:44 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -483,7 +483,8 @@ mitigation_v4_change_cpu(void *arg1, void *arg2)
 	mitigation_v4_apply_cpu(enabled);
 }
 
-static int mitigation_v4_change(bool enabled)
+static int
+mitigation_v4_change(bool enabled)
 {
 	struct cpu_info *ci = NULL;
 	CPU_INFO_ITERATOR cii;
@@ -609,6 +610,10 @@ cpu_speculation_init(struct cpu_info *ci)
 	 *
 	 * cpu0 is the one that detects the method and sets the global
 	 * variable.
+	 *
+	 * Disabled by default, as recommended by AMD, but can be enabled
+	 * dynamically. We only detect if the CPU is not vulnerable, to
+	 * mark it as 'mitigated' in the sysctl.
 	 */
 #if 0
 	if (ci == &cpu_info_primary) {
@@ -617,8 +622,17 @@ cpu_speculation_init(struct cpu_info *ci)
 		    (v4_mitigation_method != V4_MITIGATION_NONE);
 		v4_set_name();
 	}
-	if (v4_mitigation_method != V4_MITIGATION_NONE) {
+	if (v4_mitigation_method != V4_MITIGATION_NONE &&
+	    v4_mitigation_method != V4_MITIGATION_INTEL_SSB_NO) {
 		mitigation_v4_apply_cpu(ci, true);
+	}
+#else
+	if (ci == &cpu_info_primary) {
+		v4_detect_method();
+		if (v4_mitigation_method == V4_MITIGATION_INTEL_SSB_NO) {
+			v4_mitigation_enabled = true;
+			v4_set_name();
+		}
 	}
 #endif
 }
