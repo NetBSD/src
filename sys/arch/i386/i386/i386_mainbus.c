@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp 
 #include <dev/mca/mcavar.h>
 #endif
 
+#include <x86/autoconf.h>
+
 #if NIPMI > 0
 #include <x86/ipmivar.h>
 #endif
@@ -92,28 +94,12 @@ __KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp 
 #endif /* __HAVE_PCI_MSI_MSIX */
 #endif
 
-void	mainbus_childdetached(device_t, device_t);
-int	mainbus_match(device_t, cfdata_t, void *);
-void	mainbus_attach(device_t, device_t, void *);
+void	i386_mainbus_childdetached(device_t, device_t);
+int	i386_mainbus_match(device_t, cfdata_t, void *);
+void	i386_mainbus_attach(device_t, device_t, void *);
+int	i386_mainbus_rescan(device_t, const char *, const int *);
 
-static int	mainbus_rescan(device_t, const char *, const int *);
-
-struct mainbus_softc {
-	device_t	sc_acpi;
-	device_t	sc_dev;
-	device_t	sc_ipmi;
-	device_t	sc_pci;
-	device_t	sc_mca;
-	device_t	sc_pnpbios;
-};
-
-CFATTACH_DECL2_NEW(mainbus, sizeof(struct mainbus_softc),
-    mainbus_match, mainbus_attach, NULL, NULL, mainbus_rescan,
-    mainbus_childdetached);
-
-int	mainbus_print(void *, const char *);
-
-union mainbus_attach_args {
+union i386_mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
 	struct eisabus_attach_args mba_eba;
@@ -162,8 +148,8 @@ int mp_nintr;
 int mp_isa_bus = -1;            /* XXX */
 int mp_eisa_bus = -1;           /* XXX */
 
-bool acpi_present;
-bool mpacpi_active;
+extern bool acpi_present;
+extern bool mpacpi_active;
 
 # ifdef MPVERBOSE
 #  if MPVERBOSE > 0
@@ -177,7 +163,7 @@ int mp_verbose = 0;
 #endif
 
 void
-mainbus_childdetached(device_t self, device_t child)
+i386_mainbus_childdetached(device_t self, device_t child)
 {
 	struct mainbus_softc *sc = device_private(self);
 
@@ -201,7 +187,7 @@ mainbus_childdetached(device_t self, device_t child)
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(device_t parent, cfdata_t match, void *aux)
+i386_mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -211,82 +197,12 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(device_t parent, device_t self, void *aux)
+i386_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-#if NPCI > 0
-	int mode;
-#endif
 	struct mainbus_softc *sc = device_private(self);
-	union mainbus_attach_args mba;
-#ifdef MPBIOS
-	int mpbios_present = 0;
-#endif
-#if defined(PCI_BUS_FIXUP)
-	int pci_maxbus = 0;
-#endif
-	int numcpus = 0;
+	union i386_mainbus_attach_args mba;
 
 	sc->sc_dev = self;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-#ifdef MPBIOS
-	mpbios_present = mpbios_probe(self);
-#endif
-
-#if NPCI > 0
-	msipic_init();
-
-	/*
-	 * ACPI needs to be able to access PCI configuration space.
-	 */
-	mode = pci_mode_detect();
-#if defined(PCI_BUS_FIXUP)
-	if (mode != 0) {
-		pci_maxbus = pci_bus_fixup(NULL, 0);
-		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
-		    pci_maxbus);
-#if defined(PCI_ADDR_FIXUP)
-		pciaddr.extent_port = NULL;
-		pciaddr.extent_mem = NULL;
-		pci_addr_fixup(NULL, pci_maxbus);
-#endif
-	}
-#else
-	__USE(mode);
-#endif
-#endif
-
-#if NACPICA > 0
-	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
-		acpi_present = acpi_probe() != 0;
-	/*
-	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
-	 * Building the interrupt routing structures can only
-	 * be done later (via a callback).
-	 */
-	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
-#endif
-
-	if (!mpacpi_active) {
-#ifdef MPBIOS
-		if (mpbios_present)
-			mpbios_scan(self, &numcpus);
-		else
-#endif
-		if (numcpus == 0) {
-			struct cpu_attach_args caa;
-
-			memset(&caa, 0, sizeof(caa));
-			caa.cpu_number = 0;
-			caa.cpu_role = CPU_ROLE_SP;
-			caa.cpu_func = 0;
-
-			config_found_ia(self, "cpubus", &caa, mainbus_print);
-		}
-	}
 
 #if NISADMA > 0 && (NACPICA > 0 || NPNPBIOS > 0)
 	/*
@@ -296,15 +212,15 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	    self);
 #endif
 
-	mainbus_rescan(self, "acpibus", NULL);
+	i386_mainbus_rescan(self, "acpibus", NULL);
 
-	mainbus_rescan(self, "pnpbiosbus", NULL);
+	i386_mainbus_rescan(self, "pnpbiosbus", NULL);
 
-	mainbus_rescan(self, "ipmibus", NULL);
+	i386_mainbus_rescan(self, "ipmibus", NULL);
 
-	mainbus_rescan(self, "pcibus", NULL);
+	i386_mainbus_rescan(self, "pcibus", NULL);
 
-	mainbus_rescan(self, "mcabus", NULL);
+	i386_mainbus_rescan(self, "mcabus", NULL);
 
 	if (memcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
 	    eisa_has_been_seen == 0) {
@@ -330,12 +246,12 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 }
 
 /* scan for new children */
-static int
-mainbus_rescan(device_t self, const char *ifattr, const int *locators)
+int
+i386_mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct mainbus_softc *sc = device_private(self);
 #if NACPICA > 0 || NIPMI > 0 || NMCA > 0 || NPCI > 0 || NPNPBIOS > 0
-	union mainbus_attach_args mba;
+	union i386_mainbus_attach_args mba;
 #endif
 
 	if (ifattr_match(ifattr, "acpibus") && sc->sc_acpi == NULL &&
@@ -455,12 +371,3 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
-int
-mainbus_print(void *aux, const char *pnp)
-{
-	union mainbus_attach_args *mba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	return (UNCONF);
-}

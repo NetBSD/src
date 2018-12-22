@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2018/10/07 11:25:55 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2018/12/22 07:45:58 cherry Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2018/10/07 11:25:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2018/12/22 07:45:58 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -133,6 +133,9 @@ cpu_configure(void)
 	intr_printconfig();
 #endif
 
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
 	/* resync cr0 after FPU configuration */
 	pcb = lwp_getpcb(&lwp0);
 	pcb->pcb_cr0 = rcr0();
