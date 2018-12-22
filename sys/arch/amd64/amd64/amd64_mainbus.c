@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.1 2018/12/22 06:33:36 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.1 2018/12/22 06:33:36 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,17 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp $")
 #include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/eisa/eisavar.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/isa/isareg.h>		/* for ISA_HOLE_VADDR */
+#include <dev/isa/isareg.h>
 
 #include "pci.h"
-#include "eisa.h"
 #include "isa.h"
 #include "isadma.h"
-#include "mca.h"
-#include "pnpbios.h"
 #include "acpica.h"
 #include "ipmi.h"
 
@@ -63,16 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp $")
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
 
-#if NPNPBIOS > 0
-#include <arch/i386/pnpbios/pnpbiosvar.h>
-#endif
-
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#endif
-
-#if NMCA > 0
-#include <dev/mca/mcavar.h>
 #endif
 
 #if NIPMI > 0
@@ -91,43 +79,27 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp $")
 #endif /* __HAVE_PCI_MSI_MSIX */
 #endif
 
-void	mainbus_childdetached(device_t, device_t);
+/*
+ * XXXfvdl ACPI
+ */
+
 int	mainbus_match(device_t, cfdata_t, void *);
 void	mainbus_attach(device_t, device_t, void *);
 
-static int	mainbus_rescan(device_t, const char *, const int *);
-
-struct mainbus_softc {
-	device_t	sc_acpi;
-	device_t	sc_dev;
-	device_t	sc_ipmi;
-	device_t	sc_pci;
-	device_t	sc_mca;
-	device_t	sc_pnpbios;
-};
-
-CFATTACH_DECL2_NEW(mainbus, sizeof(struct mainbus_softc),
-    mainbus_match, mainbus_attach, NULL, NULL, mainbus_rescan,
-    mainbus_childdetached);
+CFATTACH_DECL_NEW(mainbus, 0,
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print(void *, const char *);
 
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
-	struct eisabus_attach_args mba_eba;
 	struct isabus_attach_args mba_iba;
-#if NMCA > 0
-	struct mcabus_attach_args mba_mba;
-#endif
-#if NPNPBIOS > 0
-	struct pnpbios_attach_args mba_paa;
-#endif
 	struct cpu_attach_args mba_caa;
-	struct apic_attach_args aaa_caa;
 #if NACPICA > 0
 	struct acpibus_attach_args mba_acpi;
 #endif
+	struct apic_attach_args aaa_caa;
 #if NIPMI > 0
 	struct ipmi_attach_args mba_ipmi;
 #endif
@@ -147,19 +119,14 @@ static const struct isabus_attach_args mba_iba = {
 };
 #endif
 
-/*
- * Same as above, but for EISA.
- */
-int	eisa_has_been_seen;
-
 #if defined(MPBIOS) || NACPICA > 0
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintr;
  
-int mp_isa_bus = -1;            /* XXX */
-int mp_eisa_bus = -1;           /* XXX */
+int mp_isa_bus = -1;
+int mp_eisa_bus = -1;
 
 bool acpi_present;
 bool mpacpi_active;
@@ -175,26 +142,6 @@ int mp_verbose = 0;
 # endif
 #endif
 
-void
-mainbus_childdetached(device_t self, device_t child)
-{
-	struct mainbus_softc *sc = device_private(self);
-
-	if (sc->sc_acpi == child)
-		sc->sc_acpi = NULL;
-	if (sc->sc_ipmi == child)
-		sc->sc_ipmi = NULL;
-	if (sc->sc_mca == child)
-		sc->sc_mca = NULL;
-	if (sc->sc_pnpbios == child)
-		sc->sc_pnpbios = NULL;
-	if (sc->sc_pci == child)
-		sc->sc_pci = NULL;
-
-#if NPCI > 0
-	mp_pci_childdetached(self, child);
-#endif
-}
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -212,20 +159,19 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
+#if NPCI > 0 || NACPICA > 0 || NIPMI > 0
+	union mainbus_attach_args mba;
+#endif
 #if NPCI > 0
 	int mode;
 #endif
-	struct mainbus_softc *sc = device_private(self);
-	union mainbus_attach_args mba;
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
+	int numcpus = 0;
 #if defined(PCI_BUS_FIXUP)
 	int pci_maxbus = 0;
 #endif
-	int numcpus = 0;
-
-	sc->sc_dev = self;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -235,7 +181,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
+#ifdef __HAVE_PCI_MSI_MSIX
 	msipic_init();
+#endif
 
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
@@ -252,8 +200,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		pci_addr_fixup(NULL, pci_maxbus);
 #endif
 	}
-#else
-	__USE(mode);
 #endif
 #endif
 
@@ -267,9 +213,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (acpi_present)
 		mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
-#endif
 
 	if (!mpacpi_active) {
+#endif		
 #ifdef MPBIOS
 		if (mpbios_present)
 			mpbios_scan(self, &numcpus);
@@ -277,43 +223,84 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 		if (numcpus == 0) {
 			struct cpu_attach_args caa;
-
+                        
 			memset(&caa, 0, sizeof(caa));
 			caa.cpu_number = 0;
 			caa.cpu_role = CPU_ROLE_SP;
 			caa.cpu_func = 0;
-
+                        
 			config_found_ia(self, "cpubus", &caa, mainbus_print);
 		}
+#if NACPICA > 0		
 	}
+#endif
 
-#if NISADMA > 0 && (NACPICA > 0 || NPNPBIOS > 0)
+#if NISADMA > 0 && NACPICA > 0
 	/*
-	 * ACPI and PNPBIOS need ISA DMA initialized before they start probing.
+	 * ACPI needs ISA DMA initialized before they start probing.
 	 */
 	isa_dmainit(&x86_isa_chipset, x86_bus_space_io, &isa_bus_dma_tag,
 	    self);
 #endif
 
-	mainbus_rescan(self, "acpibus", NULL);
-
-	mainbus_rescan(self, "pnpbiosbus", NULL);
-
-	mainbus_rescan(self, "ipmibus", NULL);
-
-	mainbus_rescan(self, "pcibus", NULL);
-
-	mainbus_rescan(self, "mcabus", NULL);
-
-	if (memcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
-	    eisa_has_been_seen == 0) {
-		mba.mba_eba.eba_iot = x86_bus_space_io;
-		mba.mba_eba.eba_memt = x86_bus_space_mem;
-#if NEISA > 0
-		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
-#endif
-		config_found_ia(self, "eisabus", &mba.mba_eba, eisabusprint);
+#if NACPICA > 0
+	if (acpi_present) {
+		mba.mba_acpi.aa_iot = x86_bus_space_io;
+		mba.mba_acpi.aa_memt = x86_bus_space_mem;
+		mba.mba_acpi.aa_pc = NULL;
+		mba.mba_acpi.aa_pciflags =
+		    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
+		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+		    PCI_FLAGS_MWI_OKAY;
+		mba.mba_acpi.aa_ic = &x86_isa_chipset;
+		mba.mba_acpi.aa_dmat = &pci_bus_dma_tag;
+		mba.mba_acpi.aa_dmat64 = &pci_bus_dma64_tag;
+		config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 	}
+#endif
+
+#if NIPMI > 0
+	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
+	mba.mba_ipmi.iaa_iot = x86_bus_space_io;
+	mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
+	if (ipmi_probe(&mba.mba_ipmi))
+		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
+#endif
+
+#if NPCI > 0
+	if (mode != 0) {
+		int npcibus = 0;
+
+		mba.mba_pba.pba_iot = x86_bus_space_io;
+		mba.mba_pba.pba_memt = x86_bus_space_mem;
+		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_dmat64 = &pci_bus_dma64_tag;
+		mba.mba_pba.pba_pc = NULL;
+		mba.mba_pba.pba_flags =
+		    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
+		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+		    PCI_FLAGS_MWI_OKAY;
+		mba.mba_pba.pba_bus = 0;
+		mba.mba_pba.pba_bridgetag = NULL;
+#if NACPICA > 0 && defined(ACPI_SCANPCI)
+		if (npcibus == 0 && mpacpi_active)
+			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
+#endif
+#if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
+		if (npcibus == 0 && mpbios_scanned != 0)
+			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
+#endif
+		if (npcibus == 0)
+			config_found_ia(self, "pcibus", &mba.mba_pba,
+			    pcibusprint);
+
+#if NACPICA > 0
+		if (mp_verbose)
+			acpi_pci_link_state();
+#endif
+
+	}
+#endif
 
 #if NISA > 0
 	if (isa_has_been_seen == 0) {
@@ -326,132 +313,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-/* scan for new children */
-static int
-mainbus_rescan(device_t self, const char *ifattr, const int *locators)
-{
-	struct mainbus_softc *sc = device_private(self);
-#if NACPICA > 0 || NIPMI > 0 || NMCA > 0 || NPCI > 0 || NPNPBIOS > 0
-	union mainbus_attach_args mba;
-#endif
-
-	if (ifattr_match(ifattr, "acpibus") && sc->sc_acpi == NULL &&
-	    acpi_present) {
-#if NACPICA > 0
-		mba.mba_acpi.aa_iot = x86_bus_space_io;
-		mba.mba_acpi.aa_memt = x86_bus_space_mem;
-		mba.mba_acpi.aa_pc = NULL;
-		mba.mba_acpi.aa_pciflags =
-		    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
-		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
-		    PCI_FLAGS_MWI_OKAY;
-		mba.mba_acpi.aa_ic = &x86_isa_chipset;
-		mba.mba_acpi.aa_dmat = &pci_bus_dma_tag;
-		mba.mba_acpi.aa_dmat64 = NULL;
-		sc->sc_acpi =
-		    config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
-#if 0 /* XXXJRT not yet */
-		if (acpi_active) {
-			/*
-			 * ACPI already did all the work for us, there
-			 * is nothing more for us to do.
-			 */
-			return;
-		}
-#endif
-#endif
-	}
-
-	if (ifattr_match(ifattr, "pnpbiosbus") && sc->sc_pnpbios == NULL) {
-#if NPNPBIOS > 0
-#if NACPICA > 0
-		if (acpi_active == 0)
-#endif
-		if (pnpbios_probe()) {
-			mba.mba_paa.paa_ic = &x86_isa_chipset;
-			sc->sc_pnpbios = config_found_ia(self, "pnpbiosbus",
-			    &mba.mba_paa, 0);
-		}
-#endif
-	}
-
-	if (ifattr_match(ifattr, "ipmibus") && sc->sc_ipmi == NULL) {
-#if NIPMI > 0
-		memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
-		mba.mba_ipmi.iaa_iot = x86_bus_space_io;
-		mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
-		if (ipmi_probe(&mba.mba_ipmi)) {
-			sc->sc_ipmi =
-			    config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
-		}
-#endif
-	}
-
-	/*
-	 * XXX Note also that the presence of a PCI bus should
-	 * XXX _always_ be checked, and if present the bus should be
-	 * XXX 'found'.  However, because of the structure of the code,
-	 * XXX that's not currently possible.
-	 */
-#if NPCI > 0
-	if (pci_mode_detect() != 0 && ifattr_match(ifattr, "pcibus")) {
-		int npcibus = 0;
-
-		mba.mba_pba.pba_iot = x86_bus_space_io;
-		mba.mba_pba.pba_memt = x86_bus_space_mem;
-		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
-		mba.mba_pba.pba_dmat64 = NULL;
-		mba.mba_pba.pba_pc = NULL;
-		mba.mba_pba.pba_flags =
-		    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
-		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
-		    PCI_FLAGS_MWI_OKAY;
-		mba.mba_pba.pba_bus = 0;
-		/* XXX On those machines with >1 Host-PCI bridge,
-		 * XXX not every bus > pba_bus is subordinate to pba_bus,
-		 * XXX but this works on many machines, and pba_sub is
-		 * XXX not used today by any critical code, so it is safe
-		 * XXX to be so inclusive at this time.
-		 */
-		mba.mba_pba.pba_sub = 255;
-		mba.mba_pba.pba_bridgetag = NULL;
-#if NACPICA > 0 && defined(ACPI_SCANPCI)
-		if (npcibus == 0 && mpacpi_active)
-			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
-#endif
-#if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
-		if (npcibus == 0 && mpbios_scanned != 0)
-			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
-#endif
-		if (npcibus == 0 && sc->sc_pci == NULL) {
-			sc->sc_pci = config_found_ia(self, "pcibus",
-			    &mba.mba_pba, pcibusprint);
-		}
-#if NACPICA > 0
-		if (mp_verbose)
-			acpi_pci_link_state();
-#endif
-	}
-#endif
-
-
-	if (ifattr_match(ifattr, "mcabus") && sc->sc_mca == NULL) {
-#if NMCA > 0
-	/* Note: MCA bus probe is done in i386/machdep.c */
-		if (MCA_system) {
-			mba.mba_mba.mba_iot = x86_bus_space_io;
-			mba.mba_mba.mba_memt = x86_bus_space_mem;
-			mba.mba_mba.mba_dmat = &mca_bus_dma_tag;
-			mba.mba_mba.mba_mc = NULL;
-			mba.mba_mba.mba_bus = 0;
-			sc->sc_mca = config_found_ia(self, "mcabus",
-			    &mba.mba_mba, mcabusprint);
-		}
-#endif
-	}
-	return 0;
 }
 
 int
