@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.32 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.33 2018/12/22 14:07:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1546,7 +1546,7 @@ bcmeth_copy_packet(struct mbuf *m)
 	if (m0 == NULL) {
 		return NULL;
 	}
-	M_COPY_PKTHDR(m0, m);
+	m_copy_pkthdr(m0, m);
 	MCLAIM(m0, m->m_owner);
 	if (m0->m_pkthdr.len > MHLEN) {
 		MCLGET(m0, M_DONTWAIT);

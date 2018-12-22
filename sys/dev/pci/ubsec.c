@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.45 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.46 2018/12/22 14:07:53 maxv Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.45 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.46 2018/12/22 14:07:53 maxv Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1589,7 +1589,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 				}
 				if (len == MHLEN)
 				  /*XXX was M_DUP_PKTHDR*/
-				  M_COPY_PKTHDR(m, q->q_src_m);
+				  m_copy_pkthdr(m, q->q_src_m);
 				if (totlen >= MINCLSIZE) {
 					MCLGET(m, M_DONTWAIT);
 					if ((m->m_flags & M_EXT) == 0) {

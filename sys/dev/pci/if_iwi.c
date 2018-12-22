@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.109 2018/12/09 11:14:02 jdolecek Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.110 2018/12/22 14:07:53 maxv Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.109 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.110 2018/12/22 14:07:53 maxv Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1691,7 +1691,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 			return ENOMEM;
 		}
 
-		M_COPY_PKTHDR(mnew, m0);
+		m_copy_pkthdr(mnew, m0);
 
 		/* If the data won't fit in the header, get a cluster */
 		if (m0->m_pkthdr.len > MHLEN) {
