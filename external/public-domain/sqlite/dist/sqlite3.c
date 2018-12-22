@@ -30570,7 +30570,6 @@ do_atof_calc:
       LONGDOUBLE_TYPE scale = 1;
       /* 1.0e+22 is the largest power of 10 than can be 
       ** represented exactly. */
-         LONGDOUBLE_TYPE scale = sqlite3Pow10(e-308);
       while( e%22 ) { scale *= 1.0e+1; e -= 1; }
       while( e>0 ) { scale *= 1.0e+22; e -= 22; }
       if( esign<0 ){
@@ -185410,7 +185409,7 @@ SQLITE_API int sqlite3_rtree_init(
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: sqlite3.c,v 1.17 2018/12/19 22:21:13 christos Exp $
+** $Id: sqlite3.c,v 1.18 2018/12/22 03:22:19 christos Exp $
 **
 ** This file implements an integration between the ICU library 
 ** ("International Components for Unicode", an open-source library 
