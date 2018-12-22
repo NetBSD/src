@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.21 2018/12/22 09:20:30 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.22 2018/12/22 10:00:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.21 2018/12/22 09:20:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.22 2018/12/22 10:00:39 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -142,8 +142,6 @@ v2_detect_method(void)
 		 */
 		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 		case 0x10:
-		case 0x12:
-		case 0x16:
 			v2_mitigation_method = V2_MITIGATION_AMD_DIS_IND;
 			break;
 		default:
