@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.17 2018/09/16 09:25:47 skrll Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.18 2018/12/22 14:28:57 maxv Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.17 2018/09/16 09:25:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.18 2018/12/22 14:28:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -5874,7 +5874,7 @@ sctp_med_chunk_output(struct sctp_inpcb *inp,
 				 * mbuf at the head due to the lack
 				 * of a MHDR at the beginning.
 				 */
-				MH_ALIGN(outchain, sizeof(struct sctphdr));
+				m_align(outchain, sizeof(struct sctphdr));
 				outchain->m_len = sizeof(struct sctphdr);
 			} else {
 				M_PREPEND(outchain, sizeof(struct sctphdr), M_DONTWAIT);
@@ -9248,11 +9248,7 @@ sctp_copy_one(struct mbuf *m, struct uio *uio, int cpsz, int resv_upfront, int *
 	while (left > 0) {
 		/* Align data to the end */
 		if ((m->m_flags & M_EXT) == 0) {
-			if (m->m_flags & M_PKTHDR) {
-				MH_ALIGN(m, willcpy);
-			} else {
-				M_ALIGN(m, willcpy);
-			}
+			m_align(m, willcpy);
 		} else {
 			MC_ALIGN(m, willcpy);
 		}

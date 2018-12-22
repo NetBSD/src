@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.18 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.19 2018/12/22 14:28:56 maxv Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.18 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.19 2018/12/22 14:28:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1089,7 +1089,7 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 		}
 		m->m_data += (MCLBYTES - len) &~ (sizeof(long) - 1);
 	} else
-		MH_ALIGN(m, len);
+		m_align(m, len);
 
 	m_reset_rcvif(m);
 	m->m_pkthdr.len = m->m_len = sizeof(struct pfsync_header);
