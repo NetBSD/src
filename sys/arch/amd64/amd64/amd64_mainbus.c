@@ -1,5 +1,6 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $	*/
 /*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
+
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +106,7 @@ union amd64_mainbus_attach_args {
  * This is set when the ISA bus is attached.  If it's not set by the
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
-int	isa_has_been_seen;
+int isa_has_been_seen;
 struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
 static const struct isabus_attach_args mba_iba = {
@@ -120,7 +121,7 @@ struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintr;
- 
+
 int mp_isa_bus = -1;
 int mp_eisa_bus = -1;
 
@@ -137,7 +138,6 @@ int mp_verbose = 1;
 int mp_verbose = 0;
 # endif
 #endif
-
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -222,7 +222,6 @@ amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 		if (mp_verbose)
 			acpi_pci_link_state();
 #endif
-
 	}
 #endif
 
@@ -246,5 +245,5 @@ amd64_mainbus_print(void *aux, const char *pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	return (UNCONF);
+	return UNCONF;
 }

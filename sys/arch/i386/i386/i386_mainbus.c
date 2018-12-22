@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ union i386_mainbus_attach_args {
  * This is set when the ISA bus is attached.  If it's not set by the
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
-int	isa_has_been_seen;
+int isa_has_been_seen;
 struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
 static const struct isabus_attach_args mba_iba = {
@@ -137,16 +137,16 @@ static const struct isabus_attach_args mba_iba = {
 /*
  * Same as above, but for EISA.
  */
-int	eisa_has_been_seen;
+int eisa_has_been_seen;
 
 #if defined(MPBIOS) || NACPICA > 0
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintr;
- 
-int mp_isa_bus = -1;            /* XXX */
-int mp_eisa_bus = -1;           /* XXX */
+
+int mp_isa_bus = -1;	/* XXX */
+int mp_eisa_bus = -1;	/* XXX */
 
 extern bool acpi_present;
 extern bool mpacpi_active;

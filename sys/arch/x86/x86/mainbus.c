@@ -1,6 +1,6 @@
-/* $NetBSD: mainbus.c,v 1.1 2018/12/22 07:45:59 cherry Exp $ */
+/* $NetBSD: mainbus.c,v 1.2 2018/12/22 08:35:04 maxv Exp $ */
 
-/*-
+/*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2018/12/22 07:45:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2018/12/22 08:35:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,7 @@ void i386_mainbus_attach(device_t, device_t, void *);
 #endif
 
 #if defined(__x86_64__) && !defined(XEN)
-void
-amd64_mainbus_attach(device_t, device_t, void *);
+void amd64_mainbus_attach(device_t, device_t, void *);
 #endif
 
 #if defined(XEN)
@@ -108,39 +107,39 @@ mainbus_cpu_print(void *aux, const char *busname)
 
 	if (busname)
 		aprint_normal("%s at %s", cpuname, busname);
-	return (UNCONF);
+	return UNCONF;
 }
 
 /*
- * On x86, cpus can be enumerated and attached to mainbus in mainly
- * two ways depending on the platform (configuration):
- * via MP BIOS tables, and via ACPI tables. 
+ * On x86, CPUs can be enumerated and attached to mainbus in mainly two ways
+ * depending on the platform (configuration): via MP BIOS tables, and via
+ * ACPI tables.
  *
- * Since cpus are not an optional part of computers, this attachment
- * is made common across all x86 architectures and modes, and thus
- * hard coded into the boot path, with the exception of XEN PV domU.
+ * Since CPUs are not an optional part of computers, this attachment is made
+ * common across all x86 architectures and modes, and thus hard-coded into
+ * the boot path, with the exception of XEN PV domU.
  *
- * Along with cpus, apics come in various shapes and forms, and to
- * accommodate for the configurable ioapic topology, the "ioapicbus"
- * is also enumerated here as part of the mpbios/mpacpi probe path.
+ * Along with CPUs, APICs come in various shapes and forms, and to accommodate
+ * for the configurable ioapic topology, the "ioapicbus" is also enumerated
+ * here as part of the mpbios/mpacpi probe path.
  *
- * All other busses are attached variously depending on the
- * platform architecture and config(5)
+ * All other busses are attached variously depending on the platform
+ * architecture and config(5).
  *
  * These configurations and attach orderings for various platforms are
  * currently respectively driven in the functions:
  *
- * i386_mainbus_attach();
- * amd64_mainbus_attach();
- * xen_mainbus_attach();
+ *     i386_mainbus_attach();
+ *     amd64_mainbus_attach();
+ *     xen_mainbus_attach();
  *
- * This arrangement gives us the flexibility to do things such as
- * dynamic attach path traversal at boot time, depending on the
- * "mode" of operation, ie; virtualition aware or native.
+ * This arrangement gives us the flexibility to do things such as dynamic
+ * attach path traversal at boot time, depending on the "mode" of operation,
+ * ie: virtualition aware or native.
  *
- * For (a contrived) eg: XEN PVHVM would allow us to attach pci(9)
- * either via hypervisorbus or mainbus depending on if the kernel is
- * running under the hypervisor or not.
+ * For (a contrived) eg: XEN PVHVM would allow us to attach pci(9) either via
+ * hypervisorbus or mainbus depending on if the kernel is running under the
+ * hypervisor or not.
  */
 
 static void
@@ -194,18 +193,17 @@ x86_cpubus_attach(device_t self)
 #endif
 		if (numcpus == 0) {
 			struct cpu_attach_args caa;
-                        
+
 			memset(&caa, 0, sizeof(caa));
 			caa.cpu_number = 0;
 			caa.cpu_role = CPU_ROLE_SP;
 			caa.cpu_func = 0;
-                        
+
 			config_found_ia(self, "cpubus", &caa, mainbus_cpu_print);
 		}
-#if NACPICA > 0		
+#if NACPICA > 0
 	}
 #endif
-
 }
 
 int
@@ -238,7 +236,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 }
 
-int	mainbus_rescan(device_t self, const char *ifattr, const int *locators)
+int
+mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 {
 #if defined(__i386__) && !defined(XEN)
 	return i386_mainbus_rescan(self, ifattr, locators);
@@ -246,7 +245,8 @@ int	mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 	return ENOTTY; /* Inappropriate ioctl for this device */
 }
 
-void	mainbus_childdetached(device_t self, device_t child)
+void
+mainbus_childdetached(device_t self, device_t child)
 {
 #if defined(__i386__) && !defined(XEN)
 	i386_mainbus_childdetached(self, child);

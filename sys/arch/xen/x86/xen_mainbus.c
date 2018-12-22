@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $	*/
+/*	$NetBSD: xen_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $	*/
 /*	NetBSD: mainbus.c,v 1.19 2017/05/23 08:54:39 nonaka Exp 	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,16 +67,16 @@ __KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $
 #include <dev/pci/pcivar.h>
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#include <xen/mpacpi.h>       
+#include <xen/mpacpi.h>
 #endif /* NACPICA > 0 */
 #ifdef MPBIOS
-#include <machine/mpbiosvar.h>       
+#include <machine/mpbiosvar.h>
 #endif /* MPBIOS */
 #ifdef PCI_BUS_FIXUP
 #include <arch/x86/pci/pci_bus_fixup.h>
 #ifdef PCI_ADDR_FIXUP
 #include <arch/x86/pci/pci_addr_fixup.h>
-#endif  
+#endif
 #endif
 
 #if defined(MPBIOS) || NACPICA > 0
@@ -84,9 +84,9 @@ struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintr;
- 
-int mp_isa_bus = -1;	    /* XXX */
-int mp_eisa_bus = -1;	   /* XXX */
+
+int mp_isa_bus = -1;	/* XXX */
+int mp_eisa_bus = -1;	/* XXX */
 
 #ifdef MPVERBOSE
 int mp_verbose = 1;
@@ -148,7 +148,6 @@ xen_mainbus_attach(device_t parent, device_t self, void *aux)
 	/* save/restore for Xen */
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
 }
 
 int
@@ -158,5 +157,5 @@ xen_mainbus_print(void *aux, const char *pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	return (UNCONF);
+	return UNCONF;
 }
