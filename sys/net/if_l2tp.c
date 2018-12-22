@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.30 2018/10/19 00:12:56 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.31 2018/12/22 13:11:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.30 2018/10/19 00:12:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.31 2018/12/22 13:11:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -506,7 +506,7 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 			m_freem(m);
 			return;
 		}
-		M_MOVE_PKTHDR(m_head, m);
+		m_move_pkthdr(m_head, m);
 
 		/*
 		 * m_head should be:
