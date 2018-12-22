@@ -1,5 +1,5 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.1 2018/12/22 06:33:36 cherry Exp $	*/
-
+/*	$NetBSD: amd64_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $	*/
+/*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.1 2018/12/22 06:33:36 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
