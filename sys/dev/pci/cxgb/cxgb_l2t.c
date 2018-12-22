@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.4 2016/10/11 12:53:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.5 2018/12/22 14:28:56 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ setup_l2e_send_pending(struct toedev *dev, struct mbuf *m,
             return (ENOMEM);
     }
     /*
-     * XXX MH_ALIGN
+     * XXX m_align
      */
     req = mtod(m, struct cpl_l2t_write_req *);
     req->wr.wr_hi = htonl(V_WR_OP(FW_WROPCODE_FORWARD));

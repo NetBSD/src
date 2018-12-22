@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.228 2018/12/22 14:07:53 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.229 2018/12/22 14:28:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.228 2018/12/22 14:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.229 2018/12/22 14:28:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -646,10 +646,10 @@ m_prepend(struct mbuf *m, int len, int how)
 
 	if (m->m_flags & M_PKTHDR) {
 		if (len < MHLEN)
-			MH_ALIGN(m, len);
+			m_align(m, len);
 	} else {
 		if (len < MLEN)
-			M_ALIGN(m, len);
+			m_align(m, len);
 	}
 
 	m->m_len = len;
@@ -1300,7 +1300,7 @@ m_split_internal(struct mbuf *m0, int len0, int wait, bool copyhdr)
 		if (n == NULL)
 			return NULL;
 		MCLAIM(n, m->m_owner);
-		M_ALIGN(n, remain);
+		m_align(n, remain);
 	}
 
 extpacket:

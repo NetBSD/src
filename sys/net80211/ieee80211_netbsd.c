@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.33 2018/12/22 13:55:56 maxv Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.34 2018/12/22 14:28:56 maxv Exp $ */
 
 /*
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.33 2018/12/22 13:55:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.34 2018/12/22 14:28:56 maxv Exp $");
 #endif
 
 /*
@@ -575,7 +575,7 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 		 * frames which all fit in MHLEN.
 		 */
 		if (m != NULL)
-			MH_ALIGN(m, len);
+			m_align(m, len);
 	} else {
 		m = m_getcl(M_NOWAIT, MT_HEADER, M_PKTHDR);
 	}

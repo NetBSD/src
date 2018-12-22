@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.267 2018/11/07 09:58:19 hannken Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.268 2018/12/22 14:28:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.267 2018/11/07 09:58:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.268 2018/12/22 14:28:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1042,7 +1042,7 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 					 * for protocol headers in first mbuf.
 					 */
 					if (atomic && top == 0 && len < mlen)
-						MH_ALIGN(m, len);
+						m_align(m, len);
 				}
 				error = uiomove(mtod(m, void *), (int)len, uio);
  have_data:

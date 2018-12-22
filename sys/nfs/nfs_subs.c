@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.234 2018/12/22 13:11:38 maxv Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.235 2018/12/22 14:28:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.234 2018/12/22 13:11:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.235 2018/12/22 14:28:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -614,9 +614,9 @@ nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
 	if ((authsiz + 10 * NFSX_UNSIGNED) >= MINCLSIZE) {
 		m_clget(mb, M_WAIT);
 	} else if ((authsiz + 10 * NFSX_UNSIGNED) < MHLEN) {
-		MH_ALIGN(mb, authsiz + 10 * NFSX_UNSIGNED);
+		m_align(mb, authsiz + 10 * NFSX_UNSIGNED);
 	} else {
-		MH_ALIGN(mb, 8 * NFSX_UNSIGNED);
+		m_align(mb, 8 * NFSX_UNSIGNED);
 	}
 	mb->m_len = 0;
 	mreq = mb;

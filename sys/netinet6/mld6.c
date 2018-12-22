@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.99 2018/05/29 04:39:26 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.100 2018/12/22 14:28:57 maxv Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.99 2018/05/29 04:39:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.100 2018/12/22 14:28:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -656,7 +656,7 @@ mld_allocbuf(struct mbuf **mh, struct in6_multi *in6m, int type)
 	m_reset_rcvif((*mh));
 	(*mh)->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld_hdr);
 	(*mh)->m_len = sizeof(struct ip6_hdr);
-	MH_ALIGN(*mh, sizeof(struct ip6_hdr));
+	m_align(*mh, sizeof(struct ip6_hdr));
 
 	/* fill in the ip6 header */
 	ip6 = mtod(*mh, struct ip6_hdr *);
