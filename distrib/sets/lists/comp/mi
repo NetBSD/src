@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2243 2018/12/19 22:19:25 christos Exp $
+#	$NetBSD: mi,v 1.2244 2018/12/22 14:39:47 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10452,11 +10452,11 @@
 ./usr/share/man/cat9/MFREE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MGET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MGETHDR.0			comp-sys-catman		.cat
-./usr/share/man/cat9/MH_ALIGN.0			comp-sys-catman		.cat
-./usr/share/man/cat9/M_ALIGN.0			comp-sys-catman		.cat
-./usr/share/man/cat9/M_COPY_PKTHDR.0		comp-sys-catman		.cat
+./usr/share/man/cat9/MH_ALIGN.0			comp-obsolete		obsolete
+./usr/share/man/cat9/M_ALIGN.0			comp-obsolete		obsolete
+./usr/share/man/cat9/M_COPY_PKTHDR.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/M_LEADINGSPACE.0		comp-sys-catman		.cat
-./usr/share/man/cat9/M_MOVE_PKTHDR.0		comp-sys-catman		.cat
+./usr/share/man/cat9/M_MOVE_PKTHDR.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/M_PREPEND.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/M_TRAILINGSPACE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/NDINIT.0			comp-sys-catman		.cat
@@ -18331,11 +18331,11 @@
 ./usr/share/man/html9/MFREE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/MGET.html			comp-sys-htmlman	html
 ./usr/share/man/html9/MGETHDR.html		comp-sys-htmlman	html
-./usr/share/man/html9/MH_ALIGN.html		comp-sys-htmlman	html
-./usr/share/man/html9/M_ALIGN.html		comp-sys-htmlman	html
-./usr/share/man/html9/M_COPY_PKTHDR.html	comp-sys-htmlman	html
+./usr/share/man/html9/MH_ALIGN.html		comp-obsolete	obsolete
+./usr/share/man/html9/M_ALIGN.html		comp-obsolete	obsolete
+./usr/share/man/html9/M_COPY_PKTHDR.html	comp-obsolete	obsolete
 ./usr/share/man/html9/M_LEADINGSPACE.html	comp-sys-htmlman	html
-./usr/share/man/html9/M_MOVE_PKTHDR.html	comp-sys-htmlman	html
+./usr/share/man/html9/M_MOVE_PKTHDR.html	comp-obsolete		obsolete
 ./usr/share/man/html9/M_PREPEND.html		comp-sys-htmlman	html
 ./usr/share/man/html9/M_TRAILINGSPACE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/NDINIT.html		comp-sys-htmlman	html
@@ -26292,11 +26292,11 @@
 ./usr/share/man/man9/MFREE.9			comp-sys-man		.man
 ./usr/share/man/man9/MGET.9			comp-sys-man		.man
 ./usr/share/man/man9/MGETHDR.9			comp-sys-man		.man
-./usr/share/man/man9/MH_ALIGN.9			comp-sys-man		.man
-./usr/share/man/man9/M_ALIGN.9			comp-sys-man		.man
-./usr/share/man/man9/M_COPY_PKTHDR.9		comp-sys-man		.man
+./usr/share/man/man9/MH_ALIGN.9			comp-obsolete		obsolete
+./usr/share/man/man9/M_ALIGN.9			comp-obsolete		obsolete
+./usr/share/man/man9/M_COPY_PKTHDR.9		comp-obsolete		obsolete
 ./usr/share/man/man9/M_LEADINGSPACE.9		comp-sys-man		.man
-./usr/share/man/man9/M_MOVE_PKTHDR.9		comp-sys-man		.man
+./usr/share/man/man9/M_MOVE_PKTHDR.9		comp-obsolete		obsolete
 ./usr/share/man/man9/M_PREPEND.9		comp-sys-man		.man
 ./usr/share/man/man9/M_TRAILINGSPACE.9		comp-sys-man		.man
 ./usr/share/man/man9/NDINIT.9			comp-sys-man		.man
