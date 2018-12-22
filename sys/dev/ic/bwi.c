@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.35 2018/07/25 07:55:44 msaitoh Exp $	*/
+/*	$NetBSD: bwi.c,v 1.36 2018/12/22 14:07:53 maxv Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.35 2018/07/25 07:55:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.36 2018/12/22 14:07:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -9192,7 +9192,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 			goto back;
 		}
 
-		M_COPY_PKTHDR(m_new, m);
+		m_copy_pkthdr(m_new, m);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {

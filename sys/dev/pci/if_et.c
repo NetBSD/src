@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_et.c,v 1.19 2018/12/22 14:07:53 maxv Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.19 2018/12/22 14:07:53 maxv Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1826,7 +1826,7 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 			goto back;
 		}
 
-		M_COPY_PKTHDR(m_new, m);
+		m_copy_pkthdr(m_new, m);
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
