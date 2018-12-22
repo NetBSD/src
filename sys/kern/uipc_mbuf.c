@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.227 2018/12/22 13:55:56 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.228 2018/12/22 14:07:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.227 2018/12/22 13:55:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.228 2018/12/22 14:07:53 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -714,7 +714,7 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 		MCLAIM(n, m->m_owner);
 
 		if (copyhdr) {
-			M_COPY_PKTHDR(n, m);
+			m_copy_pkthdr(n, m);
 			if (len == M_COPYALL)
 				n->m_pkthdr.len -= off0;
 			else
@@ -784,7 +784,7 @@ m_copypacket(struct mbuf *m, int how)
 		goto nospace;
 
 	MCLAIM(n, m->m_owner);
-	M_COPY_PKTHDR(n, m);
+	m_copy_pkthdr(n, m);
 	n->m_len = m->m_len;
 	if (m->m_flags & M_EXT) {
 		n->m_data = m->m_data;
