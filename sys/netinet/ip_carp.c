@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.100 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.101 2018/12/22 14:28:57 maxv Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.100 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.101 2018/12/22 14:28:57 maxv Exp $");
 
 /*
  * TODO:
@@ -1081,7 +1081,7 @@ carp_send_ad(void *v)
 		m->m_pkthdr.len = len;
 		m_reset_rcvif(m);
 		m->m_len = len;
-		MH_ALIGN(m, m->m_len);
+		m_align(m, m->m_len);
 		m->m_flags |= M_MCAST;
 		ip = mtod(m, struct ip *);
 		ip->ip_v = IPVERSION;
@@ -1165,7 +1165,7 @@ carp_send_ad(void *v)
 		m->m_pkthdr.len = len;
 		m_reset_rcvif(m);
 		m->m_len = len;
-		MH_ALIGN(m, m->m_len);
+		m_align(m, m->m_len);
 		m->m_flags |= M_MCAST;
 		ip6 = mtod(m, struct ip6_hdr *);
 		memset(ip6, 0, sizeof(*ip6));
