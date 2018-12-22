@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $	*/
 /*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.3 2018/12/22 07:45:58 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,15 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.2 2018/12/22 06:59:27 cherry Exp
  * XXXfvdl ACPI
  */
 
-int	mainbus_match(device_t, cfdata_t, void *);
-void	mainbus_attach(device_t, device_t, void *);
+int	amd64_mainbus_match(device_t, cfdata_t, void *);
+void	amd64_mainbus_attach(device_t, device_t, void *);
+int	amd64_mainbus_print(void *, const char *);
 
-CFATTACH_DECL_NEW(mainbus, 0,
-    mainbus_match, mainbus_attach, NULL, NULL);
-
-int	mainbus_print(void *, const char *);
-
-union mainbus_attach_args {
+union amd64_mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
 	struct isabus_attach_args mba_iba;
@@ -128,8 +124,8 @@ int mp_nintr;
 int mp_isa_bus = -1;
 int mp_eisa_bus = -1;
 
-bool acpi_present;
-bool mpacpi_active;
+extern bool acpi_present;
+extern bool mpacpi_active;
 
 # ifdef MPVERBOSE
 #  if MPVERBOSE > 0
@@ -147,7 +143,7 @@ int mp_verbose = 0;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(device_t parent, cfdata_t match, void *aux)
+amd64_mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -157,82 +153,10 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(device_t parent, device_t self, void *aux)
+amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 #if NPCI > 0 || NACPICA > 0 || NIPMI > 0
-	union mainbus_attach_args mba;
-#endif
-#if NPCI > 0
-	int mode;
-#endif
-#ifdef MPBIOS
-	int mpbios_present = 0;
-#endif
-	int numcpus = 0;
-#if defined(PCI_BUS_FIXUP)
-	int pci_maxbus = 0;
-#endif
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-#ifdef MPBIOS
-	mpbios_present = mpbios_probe(self);
-#endif
-
-#if NPCI > 0
-#ifdef __HAVE_PCI_MSI_MSIX
-	msipic_init();
-#endif
-
-	/*
-	 * ACPI needs to be able to access PCI configuration space.
-	 */
-	mode = pci_mode_detect();
-#if defined(PCI_BUS_FIXUP)
-	if (mode != 0) {
-		pci_maxbus = pci_bus_fixup(NULL, 0);
-		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
-		    pci_maxbus);
-#if defined(PCI_ADDR_FIXUP)
-		pciaddr.extent_port = NULL;
-		pciaddr.extent_mem = NULL;
-		pci_addr_fixup(NULL, pci_maxbus);
-#endif
-	}
-#endif
-#endif
-
-#if NACPICA > 0
-	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
-		acpi_present = acpi_probe() != 0;
-	/*
-	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
-	 * Building the interrupt routing structures can only
-	 * be done later (via a callback).
-	 */
-	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
-
-	if (!mpacpi_active) {
-#endif		
-#ifdef MPBIOS
-		if (mpbios_present)
-			mpbios_scan(self, &numcpus);
-		else
-#endif
-		if (numcpus == 0) {
-			struct cpu_attach_args caa;
-                        
-			memset(&caa, 0, sizeof(caa));
-			caa.cpu_number = 0;
-			caa.cpu_role = CPU_ROLE_SP;
-			caa.cpu_func = 0;
-                        
-			config_found_ia(self, "cpubus", &caa, mainbus_print);
-		}
-#if NACPICA > 0		
-	}
+	union amd64_mainbus_attach_args mba;
 #endif
 
 #if NISADMA > 0 && NACPICA > 0
@@ -268,7 +192,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
-	if (mode != 0) {
+	if (pci_mode_detect() != 0) {
 		int npcibus = 0;
 
 		mba.mba_pba.pba_iot = x86_bus_space_io;
@@ -316,9 +240,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-mainbus_print(void *aux, const char *pnp)
+amd64_mainbus_print(void *aux, const char *pnp)
 {
-	union mainbus_attach_args *mba = aux;
+	union amd64_mainbus_attach_args *mba = aux;
 
 	if (pnp)
 		aprint_normal("%s at %s", mba->mba_busname, pnp);

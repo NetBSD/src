@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.398 2018/12/22 06:33:36 cherry Exp $
+#	$NetBSD: files.i386,v 1.399 2018/12/22 07:45:58 cherry Exp $
 #
 # new style config file for i386 architecture
 #
@@ -130,6 +130,7 @@ device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
 	bioscall
 attach	mainbus at root
 file	arch/i386/i386/i386_mainbus.c	mainbus
+file	arch/x86/x86/mainbus.c		mainbus
 
 #
 # PCI-only drivers
