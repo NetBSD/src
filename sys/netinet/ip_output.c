@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.308 2018/12/12 01:53:52 rin Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.309 2018/12/22 13:11:38 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.308 2018/12/12 01:53:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.309 2018/12/22 13:11:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -999,7 +999,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		if (n == NULL)
 			return m;
 		MCLAIM(n, m->m_owner);
-		M_MOVE_PKTHDR(n, m);
+		m_move_pkthdr(n, m);
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;

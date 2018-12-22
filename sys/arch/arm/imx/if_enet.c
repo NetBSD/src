@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.15 2018/09/03 16:29:23 riastradh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.16 2018/12/22 13:11:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.15 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.16 2018/12/22 13:11:37 maxv Exp $");
 
 #include "vlan.h"
 
@@ -1505,7 +1505,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 					}
 					MCLAIM(x, m->m_owner);
 					if (m->m_flags & M_PKTHDR)
-						M_MOVE_PKTHDR(x, m);
+						m_move_pkthdr(x, m);
 					x->m_len = m->m_len;
 					x->m_data = ALIGN_PTR(x->m_data,
 					    ALIGNBYTE);
@@ -1630,7 +1630,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 				}
 				MCLAIM(x, m->m_owner);
 				if (m->m_flags & M_PKTHDR)
-					M_MOVE_PKTHDR(x, m);
+					m_move_pkthdr(x, m);
 				x->m_data = ALIGN_PTR(x->m_data, ALIGNBYTE);
 				memcpy(mtod(x, void *), mtod(m, void *),
 				    chiplen);

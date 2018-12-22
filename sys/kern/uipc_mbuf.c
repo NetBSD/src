@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.225 2018/11/15 10:56:30 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.226 2018/12/22 13:11:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.225 2018/11/15 10:56:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.226 2018/12/22 13:11:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -637,7 +637,7 @@ m_prepend(struct mbuf *m, int len, int how)
 	}
 
 	if (m->m_flags & M_PKTHDR) {
-		M_MOVE_PKTHDR(mn, m);
+		m_move_pkthdr(mn, m);
 	} else {
 		MCLAIM(mn, m->m_owner);
 	}
@@ -995,7 +995,7 @@ m_ensure_contig(struct mbuf **m0, int len)
 		}
 		MCLAIM(m, n->m_owner);
 		if (n->m_flags & M_PKTHDR) {
-			M_MOVE_PKTHDR(m, n);
+			m_move_pkthdr(m, n);
 		}
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -1216,7 +1216,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 		goto bad;
 	MCLAIM(m, n->m_owner);
 	if (n->m_flags & M_PKTHDR) {
-		M_MOVE_PKTHDR(m, n);
+		m_move_pkthdr(m, n);
 	}
 	m->m_data += dstoff;
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -1584,7 +1584,7 @@ extend:
 				goto enobufs;
 			MCLAIM(n, m->m_owner);
 			if (off == 0 && (m->m_flags & M_PKTHDR) != 0) {
-				M_MOVE_PKTHDR(n, m);
+				m_move_pkthdr(n, m);
 				n->m_len = MHLEN;
 			} else {
 				if (len >= MINCLSIZE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.110 2018/06/06 01:49:09 maya Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.111 2018/12/22 13:11:37 maxv Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.110 2018/06/06 01:49:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.111 2018/12/22 13:11:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1238,7 +1238,7 @@ stripintr(void *arg)
 			int pktlen;
 
 			pktlen = m->m_pkthdr.len;
-			M_MOVE_PKTHDR(n, m);
+			m_move_pkthdr(n, m);
 			memcpy(mtod(n, void *), mtod(m, void *), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);
