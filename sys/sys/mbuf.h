@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.215 2018/11/15 11:18:33 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.216 2018/12/22 13:55:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -517,28 +517,8 @@ do {									\
 #define	M_COPY_PKTHDR(to, from)	m_copy_pkthdr(to, from)
 #define	M_MOVE_PKTHDR(to, from)	m_move_pkthdr(to, from)
 
-/*
- * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
- * an object of the specified size at the end of the mbuf, longword aligned.
- */
-#define	M_ALIGN(m, len)							\
-do {									\
-	KASSERT(((m)->m_flags & (M_PKTHDR|M_EXT)) == 0);		\
-	KASSERT(M_LEADINGSPACE(m) == 0);				\
-	(m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1);		\
-} while (/* CONSTCOND */ 0)
-
-/*
- * As above, for mbufs allocated with m_gethdr/MGETHDR
- * or initialized by M_COPY_PKTHDR.
- */
-#define	MH_ALIGN(m, len)						\
-do {									\
-	KASSERT(((m)->m_flags & M_PKTHDR) != 0);			\
-	KASSERT(((m)->m_flags & M_EXT) == 0);				\
-	KASSERT(M_LEADINGSPACE(m) == 0);				\
-	(m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1);		\
-} while (/* CONSTCOND */ 0)
+#define M_ALIGN(m, len)		m_align(m, len)
+#define MH_ALIGN(m, len)	m_align(m, len)
 
 /*
  * Determine if an mbuf's data area is read-only.  This is true
@@ -801,6 +781,7 @@ void	mbinit(void);
 void	m_remove_pkthdr(struct mbuf *);
 void	m_copy_pkthdr(struct mbuf *, struct mbuf *);
 void	m_move_pkthdr(struct mbuf *, struct mbuf *);
+void	m_align(struct mbuf *, int);
 
 bool	m_ensure_contig(struct mbuf **, int);
 struct mbuf *m_add(struct mbuf *, struct mbuf *);

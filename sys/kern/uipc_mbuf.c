@@ -1,12 +1,12 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.226 2018/12/22 13:11:37 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.227 2018/12/22 13:55:56 maxv Exp $	*/
 
 /*
- * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.226 2018/12/22 13:11:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.227 2018/12/22 13:55:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1751,6 +1751,30 @@ m_move_pkthdr(struct mbuf *to, struct mbuf *from)
 	to->m_data = to->m_pktdat;
 
 	from->m_flags &= ~M_PKTHDR;
+}
+
+/*
+ * Set the m_data pointer of a newly-allocated mbuf to place an object of the
+ * specified size at the end of the mbuf, longword aligned.
+ */
+void
+m_align(struct mbuf *m, int len)
+{
+	int buflen, adjust;
+
+	KASSERT(len != M_COPYALL);
+	KASSERT(M_LEADINGSPACE(m) == 0);
+
+	if (m->m_flags & M_EXT)
+		buflen = m->m_ext.ext_size;
+	else if (m->m_flags & M_PKTHDR)
+		buflen = MHLEN;
+	else
+		buflen = MLEN;
+
+	KASSERT(len <= buflen);
+	adjust = buflen - len;
+	m->m_data += adjust &~ (sizeof(long)-1);
 }
 
 /*
