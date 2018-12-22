@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.24 2018/12/20 02:52:59 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.25 2018/12/22 16:58:51 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.24 2018/12/20 02:52:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.25 2018/12/22 16:58:51 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1330,11 +1330,11 @@ mue_setmulti(struct mue_softc *sc)
 	/* Always accept broadcast frames. */
 	rxfilt |= MUE_RFE_CTL_BROADCAST;
 
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
-allmulti:	ifp->if_flags |= IFF_ALLMULTI;
-		rxfilt |= MUE_RFE_CTL_MULTICAST;
+	if (ifp->if_flags & IFF_PROMISC) {
+		rxfilt |= MUE_RFE_CTL_UNICAST;
+allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
+		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC) {
-			rxfilt |= MUE_RFE_CTL_UNICAST;
 			DPRINTF(sc, "promisc\n");
 		} else {
 			DPRINTF(sc, "allmulti\n");
@@ -1369,6 +1369,7 @@ allmulti:	ifp->if_flags |= IFF_ALLMULTI;
 			ETHER_NEXT_MULTI(step, enm);
 		}
 		rxfilt |= MUE_RFE_CTL_PERFECT;
+		ifp->if_flags &= ~IFF_ALLMULTI;
 		if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH) {
 			DPRINTF(sc, "perfect filter and hash tables\n");
 		} else {
