@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.11 2018/11/30 14:07:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.12 2018/12/22 20:57:44 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1595,7 +1595,7 @@ ena_rx_checksum(struct ena_ring *rx_ring, struct ena_com_rx_ctx *ena_rx_ctx,
 {
 
 	/* IPv4 */
-	if ((ena_rx_ctx->l3_proto == ENA_ETH_IO_L3_PROTO_IPV4)) {
+	if (ena_rx_ctx->l3_proto == ENA_ETH_IO_L3_PROTO_IPV4) {
 		mbuf->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 		if (ena_rx_ctx->l3_csum_err) {
 			/* ipv4 checksum error */
@@ -1618,7 +1618,7 @@ ena_rx_checksum(struct ena_ring *rx_ring, struct ena_com_rx_ctx *ena_rx_ctx,
 		}
 	}
 	/* IPv6 */
-	else if ((ena_rx_ctx->l3_proto == ENA_ETH_IO_L3_PROTO_IPV6)) {
+	else if (ena_rx_ctx->l3_proto == ENA_ETH_IO_L3_PROTO_IPV6) {
 		/*  TCP/UDP */
 		if ((ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_TCP) ||
 		    (ena_rx_ctx->l4_proto == ENA_ETH_IO_L4_PROTO_UDP)) {
