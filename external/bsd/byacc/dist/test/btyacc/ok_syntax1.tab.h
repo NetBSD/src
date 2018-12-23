@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.tab.h,v 1.1.1.3 2016/01/09 21:59:47 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.tab.h,v 1.1.1.4 2018/12/23 15:26:13 christos Exp $	*/
 
 #ifndef _ok_syntax1__defines_h_
 #define _ok_syntax1__defines_h_
@@ -32,6 +32,5 @@ typedef union
     double	dval;
 } YYSTYPE;
 #endif /* !YYSTYPE_IS_DECLARED */
-extern YYSTYPE ok_syntax1_lval;
 
 #endif /* _ok_syntax1__defines_h_ */
