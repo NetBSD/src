@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.137 2018/12/04 19:27:22 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.138 2018/12/23 12:11:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.137 2018/12/04 19:27:22 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.138 2018/12/23 12:11:40 jdolecek Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -2127,7 +2127,7 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 
 	pin = isp->is_pin;
 	(*pic->pic_hwmask)(pic, pin); /* for ci_ipending check */
-	while(oldci->ci_ipending & (1 << oldslot))
+	while (oldci->ci_ipending & (1 << oldslot))
 		(void)kpause("intrdist", false, 1, &cpu_lock);
 
 	kpreempt_disable();
