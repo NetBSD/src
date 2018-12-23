@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.1 2018/10/31 06:26:26 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.2 2018/12/23 12:15:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.1 2018/10/31 06:26:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.2 2018/12/23 12:15:01 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -232,17 +232,20 @@ kasan_softint(struct lwp *l)
 	kasan_shadow_Nbyte_fill(stk, USPACE, 0);
 }
 
+/*
+ * In an area of size 'sz_with_redz', mark the 'size' first bytes as valid,
+ * and the rest as invalid. There are generally two use cases:
+ *
+ *  o kasan_mark(addr, origsize, size), with origsize < size. This marks the
+ *    redzone at the end of the buffer as invalid.
+ *
+ *  o kasan_mark(addr, size, size). This marks the entire buffer as valid.
+ */
 void
-kasan_alloc(const void *addr, size_t size, size_t sz_with_redz)
+kasan_mark(const void *addr, size_t size, size_t sz_with_redz)
 {
 	kasan_markmem(addr, sz_with_redz, false);
 	kasan_markmem(addr, size, true);
-}
-
-void
-kasan_free(const void *addr, size_t sz_with_redz)
-{
-	kasan_markmem(addr, sz_with_redz, true);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -446,7 +449,7 @@ __asan_register_globals(struct __asan_global *globals, size_t n)
 	size_t i;
 
 	for (i = 0; i < n; i++) {
-		kasan_alloc(globals[i].beg, globals[i].size,
+		kasan_mark(globals[i].beg, globals[i].size,
 		    globals[i].size_with_redzone);
 	}
 }

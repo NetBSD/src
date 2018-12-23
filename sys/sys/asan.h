@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.8 2018/10/31 06:26:26 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.9 2018/12/23 12:15:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -45,12 +45,10 @@ void kasan_init(void);
 void kasan_softint(struct lwp *);
 
 void kasan_add_redzone(size_t *);
-void kasan_alloc(const void *, size_t, size_t);
-void kasan_free(const void *, size_t);
+void kasan_mark(const void *, size_t, size_t);
 #else
 #define kasan_add_redzone(s)	__nothing
-#define kasan_alloc(p, s, l)	__nothing
-#define kasan_free(p, s)	__nothing
+#define kasan_mark(p, s, l)	__nothing
 #endif
 
 #endif /* !_SYS_ASAN_H_ */
