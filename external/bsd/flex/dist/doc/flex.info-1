@@ -50,8 +50,8 @@ This manual describes 'flex', a tool for generating programs that
 perform pattern-matching on text.  The manual includes both tutorial and
 reference sections.
 
-   This edition of 'The flex Manual' documents 'flex' version 2.6.3.  It
-was last updated on 22 October 2016.
+   This edition of 'The flex Manual' documents 'flex' version 2.6.4.  It
+was last updated on 6 May 2017.
 
    This manual was written by Vern Paxson, Will Estes and John Millaway.
 
@@ -1766,7 +1766,7 @@ letting flex do it).
                  }
 
          <<EOF>> {
-                 if ( --include_stack_ptr  0 )
+                 if ( --include_stack_ptr == 0 )
                      {
                      yyterminate();
                      }
@@ -5014,7 +5014,7 @@ Is there a way to make flex treat NULL like a regular character?
 ================================================================
 
 Yes, '\0' and '\x00' should both do the trick.  Perhaps you have an
-ancient version of 'flex'.  The latest release is version 2.6.3.
+ancient version of 'flex'.  The latest release is version 2.6.4.
 
 
 File: flex.info,  Node: Whenever flex can not match the input it says "flex scanner jammed".,  Next: Why doesn't flex have non-greedy operators like perl does?,  Prev: Is there a way to make flex treat NULL like a regular character?,  Up: FAQ

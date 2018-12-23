@@ -24,11 +24,11 @@
 
 # autoconf requirements and initialization
 
-AC_INIT([the fast lexical analyser generator],[2.6.3],[flex-help@lists.sourceforge.net],[flex])
+AC_INIT([the fast lexical analyser generator],[2.6.4],[flex-help@lists.sourceforge.net],[flex])
 AC_CONFIG_SRCDIR([src/scan.l])
 AC_CONFIG_AUX_DIR([build-aux])
 LT_INIT
-AM_INIT_AUTOMAKE([-Wno-portability foreign check-news std-options dist-lzip parallel-tests subdir-objects 1.14.1])
+AM_INIT_AUTOMAKE([1.11.3 -Wno-portability foreign check-news std-options dist-lzip parallel-tests subdir-objects])
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_MACRO_DIR([m4])
@@ -38,10 +38,16 @@ AC_SUBST(SHARED_VERSION_INFO)
 # checks for programs
 
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.19])
+AM_GNU_GETTEXT_VERSION([0.18])
 AC_PROG_YACC
+AS_IF([test "$YACC" != 'bison -y'], [
+	YACC="\${top_srcdir}/build-aux/missing bison -y"
+	AC_MSG_NOTICE(no bison program found: only required for maintainers)
+	])
+AM_CONDITIONAL([HAVE_BISON], [test "$YACC" = 'bison -y'])
 AM_PROG_LEX
 AC_PROG_CC
+AX_PROG_CC_FOR_BUILD
 AC_PROG_CXX
 AM_PROG_CC_C_O
 AC_PROG_LN_S
@@ -75,11 +81,7 @@ AC_ARG_ENABLE([bootstrap],
   [], [enable_bootstrap=yes])
 AM_CONDITIONAL([ENABLE_BOOTSTRAP], [test "x$enable_bootstrap" = xyes])
 
-AC_PATH_PROG([BISON], bison, no)
-AS_IF([test "$BISON" != no],[],
-	[ AC_SUBST([BISON], [\${top_srcdir}/build-aux/missing bison])
-	  AC_MSG_NOTICE(no bison program found: only required for maintainers)
-	])
+AM_CONDITIONAL([CROSS], [test "x$cross_compiling" = xyes])
 
 AC_PATH_PROG([HELP2MAN], help2man, [\${top_srcdir}/build-aux/missing help2man])
   AS_IF([test "$HELP2MAN" = "\${top_srcdir}/build-aux/missing help2man"],
@@ -102,23 +104,20 @@ AC_CACHE_CHECK([for m4 that supports -P], [ac_cv_path_M4],
 AC_SUBST([M4], [$ac_cv_path_M4])
 AC_DEFINE_UNQUOTED([M4], ["$M4"], [Define to the m4 executable name.])
 
-AC_PATH_PROG(INDENT, indent, indent)
-# if INDENT is set to 'indent' then we didn't find indent
-if test "$INDENT" != indent ; then
-   AC_MSG_CHECKING(if $INDENT is GNU indent)
-   if $INDENT --version 2>/dev/null | head -n 1|grep "GNU indent" > /dev/null ; then
-      AC_MSG_RESULT(yes)
-   else
-      AC_MSG_RESULT(no)
-      AC_MSG_WARN($INDENT does not appear to be GNU indent.)
-   fi
-else
-   AC_MSG_WARN(no indent program found: make indent target will not function)
-fi
+AC_PATH_PROG([INDENT], indent, [\${top_srcdir}/build-aux/missing indent])
+  AC_MSG_CHECKING(if $INDENT is GNU indent)
+  AS_IF([$INDENT --version 2>/dev/null | head -n 1 | grep "GNU indent" >/dev/null],
+    [AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)
+     AC_MSG_WARN($INDENT does not appear to be GNU indent; 'make indent' may not function properly)
+    ])
 
 # checks for headers
 
-AC_CHECK_HEADERS([inttypes.h libintl.h limits.h locale.h malloc.h netinet/in.h regex.h unistd.h])
+AC_CHECK_HEADERS([regex.h strings.h sys/stat.h sys/wait.h unistd.h], [],
+  [AC_MSG_ERROR(required header not found on your system)])
+
+AC_CHECK_HEADERS([inttypes.h libintl.h limits.h locale.h malloc.h netinet/in.h])
 
 # checks for libraries
 
@@ -126,12 +125,12 @@ AC_CHECK_HEADERS([inttypes.h libintl.h limits.h locale.h malloc.h netinet/in.h r
 # all we need is the preprocessor symbol defined since we don't need
 # LIBS to include libpthread for building flex.
 
+LIBPTHREAD=''
 AC_CHECK_LIB(pthread, pthread_mutex_lock,
-AC_DEFINE([HAVE_LIBPTHREAD], 1, [pthread library] ),
-AC_DEFINE([HAVE_LIBPTHREAD], 0, [pthread library] )
-)
-AC_CHECK_HEADERS([pthread.h])
-AM_CONDITIONAL([want_pthread], [test "x$ac_cv_lib_pthread_pthread_mutex_lock" = xyes])
+   [AC_CHECK_HEADERS([pthread.h], [LIBPTHREAD=-lpthread],
+      [AC_MSG_WARN([pthread tests will be skipped])])],
+   [AC_MSG_WARN([pthread tests will be skipped])])
+AC_SUBST([LIBPTHREAD])
 
 AC_CHECK_LIB(m, log10)
 
@@ -154,16 +153,21 @@ AC_FUNC_REALLOC
 AS_IF([test "$cross_compiling" = yes],
    AC_MSG_WARN([result $ac_cv_func_realloc_0_nonnull guessed because of cross compilation]))
 
-AC_CHECK_FUNCS(dup2 dnl
+AC_CHECK_FUNCS([dup2 dnl
 memset dnl
-pow dnl
 regcomp dnl
-setlocale dnl
+strcasecmp dnl
 strchr dnl
 strdup dnl
-strtol)
+strtol dnl
+], [], [AC_MSG_ERROR(required library function not found on your system)])
 
-AC_REPLACE_FUNCS(reallocarray)
+# Optional library functions
+AC_CHECK_FUNCS([dnl
+pow dnl           Used only by "examples/manual/expr"
+setlocale dnl     Needed only if NLS is enabled
+reallocarray dnl  OpenBSD function. We have replacement if not available.
+])
 
 AC_CONFIG_FILES(
 Makefile
@@ -171,7 +175,6 @@ doc/Makefile
 examples/Makefile
 examples/fastwc/Makefile
 examples/manual/Makefile
-lib/Makefile
 po/Makefile.in
 src/Makefile
 tools/Makefile

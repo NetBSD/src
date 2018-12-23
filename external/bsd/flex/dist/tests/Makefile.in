@@ -114,14 +114,15 @@ check_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_7) $(am__EXEEXT_8)
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
-	$(top_srcdir)/m4/iconv.m4 $(top_srcdir)/m4/intlmacosx.m4 \
-	$(top_srcdir)/m4/lib-ld.m4 $(top_srcdir)/m4/lib-link.m4 \
-	$(top_srcdir)/m4/lib-prefix.m4 $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/m4/nls.m4 $(top_srcdir)/m4/po.m4 \
-	$(top_srcdir)/m4/progtest.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_prog_cc_for_build.m4 \
+	$(top_srcdir)/m4/gettext.m4 $(top_srcdir)/m4/iconv.m4 \
+	$(top_srcdir)/m4/intlmacosx.m4 $(top_srcdir)/m4/lib-ld.m4 \
+	$(top_srcdir)/m4/lib-link.m4 $(top_srcdir)/m4/lib-prefix.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/nls.m4 \
+	$(top_srcdir)/m4/po.m4 $(top_srcdir)/m4/progtest.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(dist_check_SCRIPTS) \
@@ -149,7 +150,7 @@ am__EXEEXT_4 = include_by_buffer.direct$(EXEEXT) \
 	include_by_reentrant.direct$(EXEEXT) rescan_nr.direct$(EXEEXT) \
 	rescan_r.direct$(EXEEXT)
 am__EXEEXT_5 = cxx_yywrap.i3$(EXEEXT)
-@want_pthread_TRUE@am__EXEEXT_6 = pthread.pthread$(EXEEXT)
+am__EXEEXT_6 = pthread.pthread$(EXEEXT)
 am__EXEEXT_7 = lineno_nr.one$(EXEEXT) lineno_r.one$(EXEEXT) \
 	lineno_trailing.one$(EXEEXT)
 am__EXEEXT_8 = tableopts_opt_nr-Ca.opt$(EXEEXT) \
@@ -237,17 +238,36 @@ basic_nr_LDADD = $(LDADD)
 am_basic_r_OBJECTS = basic_r.$(OBJEXT)
 basic_r_OBJECTS = $(am_basic_r_OBJECTS)
 basic_r_LDADD = $(LDADD)
-am_bison_nr_OBJECTS = bison_nr_scanner.$(OBJEXT) \
-	bison_nr_parser.$(OBJEXT) bison_nr_main.$(OBJEXT)
-bison_nr_OBJECTS = $(am_bison_nr_OBJECTS)
+am__bison_nr_SOURCES_DIST = no_bison_stub.c bison_nr_scanner.l \
+	bison_nr_parser.y bison_nr_main.c
+@HAVE_BISON_FALSE@am_bison_nr_OBJECTS = no_bison_stub.$(OBJEXT)
+@HAVE_BISON_TRUE@am_bison_nr_OBJECTS = bison_nr_scanner.$(OBJEXT) \
+@HAVE_BISON_TRUE@	bison_nr_parser.$(OBJEXT) \
+@HAVE_BISON_TRUE@	bison_nr_main.$(OBJEXT)
+nodist_bison_nr_OBJECTS =
+bison_nr_OBJECTS = $(am_bison_nr_OBJECTS) $(nodist_bison_nr_OBJECTS)
 bison_nr_LDADD = $(LDADD)
-am_bison_yylloc_OBJECTS = bison_yylloc_scanner.$(OBJEXT) \
-	bison_yylloc_parser.$(OBJEXT) bison_yylloc_main.$(OBJEXT)
-bison_yylloc_OBJECTS = $(am_bison_yylloc_OBJECTS)
+am__bison_yylloc_SOURCES_DIST = no_bison_stub.c bison_yylloc_scanner.l \
+	bison_yylloc_parser.y bison_yylloc_main.c
+@HAVE_BISON_FALSE@am_bison_yylloc_OBJECTS = no_bison_stub.$(OBJEXT)
+@HAVE_BISON_TRUE@am_bison_yylloc_OBJECTS =  \
+@HAVE_BISON_TRUE@	bison_yylloc_scanner.$(OBJEXT) \
+@HAVE_BISON_TRUE@	bison_yylloc_parser.$(OBJEXT) \
+@HAVE_BISON_TRUE@	bison_yylloc_main.$(OBJEXT)
+nodist_bison_yylloc_OBJECTS =
+bison_yylloc_OBJECTS = $(am_bison_yylloc_OBJECTS) \
+	$(nodist_bison_yylloc_OBJECTS)
 bison_yylloc_LDADD = $(LDADD)
-am_bison_yylval_OBJECTS = bison_yylval_scanner.$(OBJEXT) \
-	bison_yylval_parser.$(OBJEXT) bison_yylval_main.$(OBJEXT)
-bison_yylval_OBJECTS = $(am_bison_yylval_OBJECTS)
+am__bison_yylval_SOURCES_DIST = no_bison_stub.c bison_yylval_scanner.l \
+	bison_yylval_parser.y bison_yylval_main.c
+@HAVE_BISON_FALSE@am_bison_yylval_OBJECTS = no_bison_stub.$(OBJEXT)
+@HAVE_BISON_TRUE@am_bison_yylval_OBJECTS =  \
+@HAVE_BISON_TRUE@	bison_yylval_scanner.$(OBJEXT) \
+@HAVE_BISON_TRUE@	bison_yylval_parser.$(OBJEXT) \
+@HAVE_BISON_TRUE@	bison_yylval_main.$(OBJEXT)
+nodist_bison_yylval_OBJECTS =
+bison_yylval_OBJECTS = $(am_bison_yylval_OBJECTS) \
+	$(nodist_bison_yylval_OBJECTS)
 bison_yylval_LDADD = $(LDADD)
 am_c_cxx_nr_OBJECTS = c_cxx_nr.$(OBJEXT)
 c_cxx_nr_OBJECTS = $(am_c_cxx_nr_OBJECTS)
@@ -284,11 +304,14 @@ extended_OBJECTS = $(am_extended_OBJECTS)
 extended_LDADD = $(LDADD)
 am_header_nr_OBJECTS = header_nr_scanner.$(OBJEXT) \
 	header_nr_main.$(OBJEXT)
-header_nr_OBJECTS = $(am_header_nr_OBJECTS)
+nodist_header_nr_OBJECTS =
+header_nr_OBJECTS = $(am_header_nr_OBJECTS) \
+	$(nodist_header_nr_OBJECTS)
 header_nr_LDADD = $(LDADD)
 am_header_r_OBJECTS = header_r_scanner.$(OBJEXT) \
 	header_r_main.$(OBJEXT)
-header_r_OBJECTS = $(am_header_r_OBJECTS)
+nodist_header_r_OBJECTS =
+header_r_OBJECTS = $(am_header_r_OBJECTS) $(nodist_header_r_OBJECTS)
 header_r_LDADD = $(LDADD)
 am_include_by_buffer_direct_OBJECTS =  \
 	include_by_buffer.direct.$(OBJEXT)
@@ -321,12 +344,16 @@ mem_r_LDADD = $(LDADD)
 am_multiple_scanners_nr_OBJECTS = multiple_scanners_nr_main.$(OBJEXT) \
 	multiple_scanners_nr_1.$(OBJEXT) \
 	multiple_scanners_nr_2.$(OBJEXT)
-multiple_scanners_nr_OBJECTS = $(am_multiple_scanners_nr_OBJECTS)
+nodist_multiple_scanners_nr_OBJECTS =
+multiple_scanners_nr_OBJECTS = $(am_multiple_scanners_nr_OBJECTS) \
+	$(nodist_multiple_scanners_nr_OBJECTS)
 multiple_scanners_nr_LDADD = $(LDADD)
 am_multiple_scanners_r_OBJECTS = multiple_scanners_r_main.$(OBJEXT) \
 	multiple_scanners_r_1.$(OBJEXT) \
 	multiple_scanners_r_2.$(OBJEXT)
-multiple_scanners_r_OBJECTS = $(am_multiple_scanners_r_OBJECTS)
+nodist_multiple_scanners_r_OBJECTS =
+multiple_scanners_r_OBJECTS = $(am_multiple_scanners_r_OBJECTS) \
+	$(nodist_multiple_scanners_r_OBJECTS)
 multiple_scanners_r_LDADD = $(LDADD)
 am_posix_OBJECTS = posix.$(OBJEXT)
 posix_OBJECTS = $(am_posix_OBJECTS)
@@ -623,7 +650,8 @@ am_tableopts_ver_r_Cm_ver_OBJECTS =
 tableopts_ver_r_Cm_ver_OBJECTS = $(am_tableopts_ver_r_Cm_ver_OBJECTS)
 tableopts_ver_r_Cm_ver_LDADD = $(LDADD)
 am_top_OBJECTS = top.$(OBJEXT) top_main.$(OBJEXT)
-top_OBJECTS = $(am_top_OBJECTS)
+nodist_top_OBJECTS =
+top_OBJECTS = $(am_top_OBJECTS) $(nodist_top_OBJECTS)
 top_LDADD = $(LDADD)
 am_yyextra_OBJECTS = yyextra.$(OBJEXT)
 yyextra_OBJECTS = $(am_yyextra_OBJECTS)
@@ -700,19 +728,24 @@ am__v_YACC_0 = @echo "  YACC    " $@;
 am__v_YACC_1 = 
 SOURCES = $(alloc_extra_SOURCES) $(array_nr_SOURCES) \
 	$(array_r_SOURCES) $(basic_nr_SOURCES) $(basic_r_SOURCES) \
-	$(bison_nr_SOURCES) $(bison_yylloc_SOURCES) \
-	$(bison_yylval_SOURCES) $(c_cxx_nr_SOURCES) $(c_cxx_r_SOURCES) \
-	$(ccl_SOURCES) $(cxx_basic_SOURCES) \
-	$(cxx_multiple_scanners_SOURCES) $(cxx_restart_SOURCES) \
-	$(cxx_yywrap_i3_SOURCES) $(debug_nr_SOURCES) \
-	$(debug_r_SOURCES) $(extended_SOURCES) $(header_nr_SOURCES) \
-	$(header_r_SOURCES) $(include_by_buffer_direct_SOURCES) \
+	$(bison_nr_SOURCES) $(nodist_bison_nr_SOURCES) \
+	$(bison_yylloc_SOURCES) $(nodist_bison_yylloc_SOURCES) \
+	$(bison_yylval_SOURCES) $(nodist_bison_yylval_SOURCES) \
+	$(c_cxx_nr_SOURCES) $(c_cxx_r_SOURCES) $(ccl_SOURCES) \
+	$(cxx_basic_SOURCES) $(cxx_multiple_scanners_SOURCES) \
+	$(cxx_restart_SOURCES) $(cxx_yywrap_i3_SOURCES) \
+	$(debug_nr_SOURCES) $(debug_r_SOURCES) $(extended_SOURCES) \
+	$(header_nr_SOURCES) $(nodist_header_nr_SOURCES) \
+	$(header_r_SOURCES) $(nodist_header_r_SOURCES) \
+	$(include_by_buffer_direct_SOURCES) \
 	$(include_by_push_direct_SOURCES) \
 	$(include_by_reentrant_direct_SOURCES) \
 	$(lineno_nr_one_SOURCES) $(lineno_r_one_SOURCES) \
 	$(lineno_trailing_one_SOURCES) $(mem_nr_SOURCES) \
 	$(mem_r_SOURCES) $(multiple_scanners_nr_SOURCES) \
-	$(multiple_scanners_r_SOURCES) $(posix_SOURCES) \
+	$(nodist_multiple_scanners_nr_SOURCES) \
+	$(multiple_scanners_r_SOURCES) \
+	$(nodist_multiple_scanners_r_SOURCES) $(posix_SOURCES) \
 	$(posixly_correct_SOURCES) $(prefix_nr_SOURCES) \
 	$(prefix_r_SOURCES) $(pthread_pthread_SOURCES) \
 	$(quote_in_comment_SOURCES) $(quotes_SOURCES) \
@@ -786,12 +819,12 @@ SOURCES = $(alloc_extra_SOURCES) $(array_nr_SOURCES) \
 	$(tableopts_ver_r_Cem_ver_SOURCES) \
 	$(tableopts_ver_r_Cf_ver_SOURCES) \
 	$(tableopts_ver_r_Cm_ver_SOURCES) $(top_SOURCES) \
-	$(yyextra_SOURCES)
+	$(nodist_top_SOURCES) $(yyextra_SOURCES)
 DIST_SOURCES = $(alloc_extra_SOURCES) $(array_nr_SOURCES) \
 	$(array_r_SOURCES) $(basic_nr_SOURCES) $(basic_r_SOURCES) \
-	$(bison_nr_SOURCES) $(bison_yylloc_SOURCES) \
-	$(bison_yylval_SOURCES) $(c_cxx_nr_SOURCES) $(c_cxx_r_SOURCES) \
-	$(ccl_SOURCES) $(cxx_basic_SOURCES) \
+	$(am__bison_nr_SOURCES_DIST) $(am__bison_yylloc_SOURCES_DIST) \
+	$(am__bison_yylval_SOURCES_DIST) $(c_cxx_nr_SOURCES) \
+	$(c_cxx_r_SOURCES) $(ccl_SOURCES) $(cxx_basic_SOURCES) \
 	$(cxx_multiple_scanners_SOURCES) $(cxx_restart_SOURCES) \
 	$(cxx_yywrap_i3_SOURCES) $(debug_nr_SOURCES) \
 	$(debug_r_SOURCES) $(extended_SOURCES) $(header_nr_SOURCES) \
@@ -1167,12 +1200,17 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BISON = @BISON@
+BUILD_EXEEXT = @BUILD_EXEEXT@
+BUILD_OBJEXT = @BUILD_OBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CC_FOR_BUILD = @CC_FOR_BUILD@
 CFLAGS = @CFLAGS@
+CFLAGS_FOR_BUILD = @CFLAGS_FOR_BUILD@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPPFLAGS_FOR_BUILD = @CPPFLAGS_FOR_BUILD@
+CPP_FOR_BUILD = @CPP_FOR_BUILD@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
@@ -1204,12 +1242,14 @@ INTLLIBS = @INTLLIBS@
 INTL_MACOSX_LIBS = @INTL_MACOSX_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBICONV = @LIBICONV@
 LIBINTL = @LIBINTL@
 LIBOBJS = @LIBOBJS@
+LIBPTHREAD = @LIBPTHREAD@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
@@ -1261,6 +1301,7 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CC_FOR_BUILD = @ac_ct_CC_FOR_BUILD@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -1318,21 +1359,21 @@ TESTS = $(check_PROGRAMS) options.cn
 # automake knows how to distinguish between the various kinds of tests
 # we have.
 TEST_EXTENSIONS = .reject .table .direct .cn .i3 .pthread .one .opt .ser .ver
-LOG_COMPILER = $(srcdir)/testwrapper.sh
+LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_LOG_FLAGS = -d $(srcdir) -r
-REJECT_LOG_COMPILER = $(srcdir)/testwrapper.sh
+REJECT_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_REJECT_LOG_FLAGS = -d $(srcdir) -i $(srcdir)/reject.txt -r
-TABLE_LOG_COMPILER = $(srcdir)/testwrapper.sh
+TABLE_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_TABLE_LOG_FLAGS = -d $(builddir) -i $(srcdir)/reject.txt -t
-DIRECT_LOG_COMPILER = $(srcdir)/testwrapper-direct.sh
+DIRECT_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper-direct.sh
 AM_DIRECT_LOG_FLAGS = -b $(abs_builddir) -s $(srcdir)
-CN_LOG_COMPILER = $(srcdir)/options.cn
+CN_LOG_COMPILER = $(SHELL) $(srcdir)/options.cn
 AM_CN_LOG_FLAGS = $(FLEX)
-I3_LOG_COMPILER = $(srcdir)/testwrapper.sh
+I3_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_I3_LOG_FLAGS = -i $(srcdir)/cxx_yywrap.txt -i $(srcdir)/cxx_yywrap.txt -i $(srcdir)/cxx_yywrap.txt
-PTHREAD_LOG_COMPILER = $(srcdir)/testwrapper.sh
+PTHREAD_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_PTHREAD_LOG_FLAGS = -i $(srcdir)/pthread_1.txt -i $(srcdir)/pthread_2.txt -i $(srcdir)/pthread_3.txt -i $(srcdir)/pthread_4.txt -i $(srcdir)/pthread_5.txt
-ONE_LOG_COMPILER = $(srcdir)/testwrapper.sh
+ONE_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_ONE_LOG_FLAGS = -1 -d $(srcdir)
 AM_YFLAGS = -d -p test
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_srcdir)/src
@@ -1389,8 +1430,8 @@ DIRECT_TESTS = \
 I3_TESTS = \
 	cxx_yywrap.i3
 
-@want_pthread_TRUE@PTHREAD_TESTS = \
-@want_pthread_TRUE@	pthread.pthread
+PTHREAD_TESTS = \
+	pthread.pthread
 
 ONE_TESTS = \
 	lineno_nr.one \
@@ -1403,9 +1444,15 @@ array_nr_SOURCES = array_nr.l
 array_r_SOURCES = array_r.l
 basic_nr_SOURCES = basic_nr.l
 basic_r_SOURCES = basic_r.l
-bison_nr_SOURCES = bison_nr_scanner.l bison_nr_parser.y bison_nr_main.c
-bison_yylloc_SOURCES = bison_yylloc_scanner.l bison_yylloc_parser.y bison_yylloc_main.c
-bison_yylval_SOURCES = bison_yylval_scanner.l bison_yylval_parser.y bison_yylval_main.c
+@HAVE_BISON_FALSE@bison_nr_SOURCES = no_bison_stub.c
+@HAVE_BISON_TRUE@bison_nr_SOURCES = bison_nr_scanner.l bison_nr_parser.y bison_nr_main.c
+@HAVE_BISON_TRUE@nodist_bison_nr_SOURCES = bison_nr_parser.h bison_nr_scanner.h
+@HAVE_BISON_FALSE@bison_yylloc_SOURCES = no_bison_stub.c
+@HAVE_BISON_TRUE@bison_yylloc_SOURCES = bison_yylloc_scanner.l bison_yylloc_parser.y bison_yylloc_main.c
+@HAVE_BISON_TRUE@nodist_bison_yylloc_SOURCES = bison_yylloc_parser.h bison_yylloc_scanner.h
+@HAVE_BISON_FALSE@bison_yylval_SOURCES = no_bison_stub.c
+@HAVE_BISON_TRUE@bison_yylval_SOURCES = bison_yylval_scanner.l bison_yylval_parser.y bison_yylval_main.c
+@HAVE_BISON_TRUE@nodist_bison_yylval_SOURCES = bison_yylval_parser.h bison_yylval_scanner.h
 c_cxx_nr_SOURCES = c_cxx_nr.lll
 c_cxx_r_SOURCES = c_cxx_r.lll
 ccl_SOURCES = ccl.l
@@ -1417,7 +1464,9 @@ debug_nr_SOURCES = debug_nr.l
 debug_r_SOURCES = debug_r.l
 extended_SOURCES = extended.l
 header_nr_SOURCES = header_nr_scanner.l header_nr_main.c
+nodist_header_nr_SOURCES = header_nr_scanner.h
 header_r_SOURCES = header_r_scanner.l header_r_main.c
+nodist_header_r_SOURCES = header_r_scanner.h
 include_by_buffer_direct_SOURCES = include_by_buffer.direct.l
 include_by_push_direct_SOURCES = include_by_push.direct.l
 include_by_reentrant_direct_SOURCES = include_by_reentrant.direct.l
@@ -1427,7 +1476,9 @@ lineno_trailing_one_SOURCES = lineno_trailing.l
 mem_nr_SOURCES = mem_nr.l
 mem_r_SOURCES = mem_r.l
 multiple_scanners_nr_SOURCES = multiple_scanners_nr_main.c multiple_scanners_nr_1.l multiple_scanners_nr_2.l
+nodist_multiple_scanners_nr_SOURCES = multiple_scanners_nr_1.h multiple_scanners_nr_2.h
 multiple_scanners_r_SOURCES = multiple_scanners_r_main.c multiple_scanners_r_1.l multiple_scanners_r_2.l
+nodist_multiple_scanners_r_SOURCES = multiple_scanners_nr_1.h multiple_scanners_nr_2.h
 posix_SOURCES = posix.l
 posixly_correct_SOURCES = posixly_correct.l
 prefix_nr_SOURCES = prefix_nr.l
@@ -1443,22 +1494,8 @@ rescan_r_direct_SOURCES = rescan_r.direct.l
 string_nr_SOURCES = string_nr.l
 string_r_SOURCES = string_r.l
 top_SOURCES = top.l top_main.c
+nodist_top_SOURCES = top.h
 yyextra_SOURCES = yyextra.l
-BUILT_SOURCES = \
-	bison_nr_parser.h \
-	bison_nr_scanner.h \
-	bison_yylloc_parser.h \
-	bison_yylloc_scanner.h \
-	bison_yylval_parser.h \
-	bison_yylval_scanner.h \
-	header_nr_scanner.h \
-	header_r_scanner.h \
-	multiple_scanners_nr_1.h \
-	multiple_scanners_nr_2.h \
-	multiple_scanners_r_1.h \
-	multiple_scanners_r_2.h \
-	top.h
-
 
 # Normally, automake would distribute files built by flex. Since the
 # point of the test suite is to test the files that flex builds, and
@@ -1469,6 +1506,7 @@ BUILT_SOURCES = \
 # automake doesn't know about the whacky ways in which we're abusing
 # it.
 CLEANFILES = \
+	alloc_extra.c \
 	array_nr.c \
 	array_r.c \
 	basic_nr.c \
@@ -1536,7 +1574,6 @@ CLEANFILES = \
 	top.c \
 	top.h  \
 	yyextra.c \
-alloc_extra.c \
 	$(tableopts_c) \
 	$(tableopts_tables)
 
@@ -1600,7 +1637,7 @@ dist_check_SCRIPTS = \
 	testwrapper-direct.sh \
 	testwrapper.sh
 
-pthread_pthread_LDADD = -lpthread
+pthread_pthread_LDADD = @LIBPTHREAD@
 
 # specify how to process .l files in order to test the flex built by make all
 FLEX = $(top_builddir)/src/flex
@@ -1738,14 +1775,13 @@ tableopts_sertests := $(foreach opt,$(tableopts), tableopts_ser_nr$(opt) tableop
 tableopts_vertests := $(foreach opt,$(tableopts), tableopts_ver_nr$(opt) tableopts_ver_r$(opt))
 tableopts_tests := $(tableopts_opttests) $(tableopts_vertests) $(tableopts_sertests)
 tableopts_c := $(addsuffix .c,$(tableopts_tests))
-OPT_LOG_COMPILER = $(srcdir)/testwrapper.sh
+OPT_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_OPT_LOG_FLAGS = -d $(srcdir) -i $(srcdir)/tableopts.txt -r
-SER_LOG_COMPILER = $(srcdir)/testwrapper.sh
+SER_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_SER_LOG_FLAGS = -d $(builddir) -i $(srcdir)/tableopts.txt -r -t
-VER_LOG_COMPILER = $(srcdir)/testwrapper.sh
+VER_LOG_COMPILER = $(SHELL) $(srcdir)/testwrapper.sh
 AM_VER_LOG_FLAGS = -d $(builddir) -i $(srcdir)/tableopts.txt -r -t
-all: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .cc .cn .cn$(EXEEXT) .direct .direct$(EXEEXT) .i3 .i3$(EXEEXT) .l .ll .lll .lo .log .o .obj .one .one$(EXEEXT) .opt .opt$(EXEEXT) .pthread .pthread$(EXEEXT) .reject .reject$(EXEEXT) .ser .ser$(EXEEXT) .table .table$(EXEEXT) .trs .ver .ver$(EXEEXT) .y
@@ -2020,6 +2056,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multiple_scanners_r_1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multiple_scanners_r_2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multiple_scanners_r_main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/no_bison_stub.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/posix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/posixly_correct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prefix_nr.Po@am__quote@
@@ -2694,12 +2731,10 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS) \
 	  $(dist_check_SCRIPTS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
-check: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) check-am
+check: check-am
 all-am: Makefile $(SCRIPTS)
 installdirs:
-install: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) install-am
+install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -2783,7 +2818,6 @@ maintainer-clean-generic:
 	-rm -f string_r.c
 	-rm -f top.c
 	-rm -f yyextra.c
-	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
@@ -2855,7 +2889,7 @@ ps-am:
 
 uninstall-am:
 
-.MAKE: all check check-am install install-am install-strip
+.MAKE: check-am install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-TESTS check-am clean \
 	clean-checkPROGRAMS clean-generic clean-libtool cscopelist-am \
@@ -2880,75 +2914,105 @@ dist-hook:
 	; done
 
 .l.c: $(FLEX)
-	$(FLEX) -o $@ $<
+	$(AM_V_LEX)$(FLEX) -o $@ $<
 
 .ll.cc: $(FLEX)
-	$(FLEX) -+ -o $@ $<
+	$(AM_V_LEX)$(FLEX) -+ -o $@ $<
 
-bison_nr_main.($OBJEXT): bison_nr_parser.h bison_nr_scanner.h
+bison_nr_main.$(OBJEXT): bison_nr_parser.h bison_nr_scanner.h
+bison_nr_scanner.$(OBJEXT): bison_nr_parser.h
+
 bison_nr_scanner.h: bison_nr_scanner.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
 
 bison_yylloc_main.$(OBJEXT): bison_yylloc_parser.h bison_yylloc_scanner.h
+bison_yylloc_scanner.$(OBJEXT): bison_yylloc_parser.h
+
 bison_yylloc_scanner.h: bison_yylloc_scanner.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
 
 bison_yylval_main.$(OBJEXT): bison_yylval_parser.h bison_yylval_scanner.h
+bison_yylval_scanner.$(OBJEXT): bison_yylval_parser.h
+
 bison_yylval_scanner.h: bison_yylval_scanner.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
 
 # automake does not support compiling flex scanners output in C as C++
 # so we explicitly sayhow, using the .lll suffix for the lex input file
 
 .lll.cc: $(FLEX)
-	$(FLEX) -o $@ $<
+	$(AM_V_LEX)$(FLEX) -o $@ $<
 
 header_nr_main.$(OBJEXT): header_nr_scanner.h
+
 header_nr_scanner.h: header_nr_scanner.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
 
 header_r_main.$(OBJEXT): header_r_scanner.h
+
 header_r_scanner.h: header_r_scanner.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
 
 multiple_scanners_nr_main.$(OBJEXT): multiple_scanners_nr_1.h multiple_scanners_nr_2.h
+
 multiple_scanners_nr_1.h: multiple_scanners_nr_1.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
+
 multiple_scanners_nr_2.h: multiple_scanners_nr_2.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
 
 multiple_scanners_r_main.$(OBJEXT): multiple_scanners_r_1.h multiple_scanners_r_2.h
+
 multiple_scanners_r_1.h: multiple_scanners_r_1.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
+
 multiple_scanners_r_2.h: multiple_scanners_r_2.c
+	@if test ! -f $@; then rm -f $<; else :; fi
+	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) $<; else :; fi
 
 posixly_correct.c: posixly_correct.l $(FLEX)
-	POSIXLY_CORRECT=1 $(FLEX) -o $@ $<
+	$(AM_V_LEX)POSIXLY_CORRECT=1 $(FLEX) -o $@ $<
 
 reject_nr.reject.c: reject.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -o $@ $<
 
 reject_nr.reject$(EXEEXT): reject_nr.reject.$(OBJEXT)
-	$(LINK) $^
+	$(AM_V_CCLD)$(LINK) $^
 
 reject_r.reject.c: reject.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape --reentrant -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape --reentrant -o $@ $<
 
 reject_r.reject.$(OBJEXT): reject_r.reject.c
-	$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
 
 reject_r.reject$(EXEEXT): reject_r.reject.$(OBJEXT)
-	$(LINK) $^
+	$(AM_V_CCLD)$(LINK) $^
 
 reject_ver.table.c: reject.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -o $@ --tables-verify --tables-file=$(basename $@).tables $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -o $@ --tables-verify --tables-file=$(basename $@).tables $<
 
 reject_ver.table.$(OBJEXT): reject_ver.table.c
-	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
 
 reject_ver.table$(EXEEXT): reject_ver.table.$(OBJEXT)
-	$(LINK) $^
+	$(AM_V_CCLD)$(LINK) $^
 
 reject_ser.table.c: reject.l4 $(FLEX)
-	$(FLEX) -o $@ --unsafe-no-m4-sect3-escape --tables-file=$(basename $@).tables $<
+	$(AM_V_LEX)$(FLEX) -o $@ --unsafe-no-m4-sect3-escape --tables-file=$(basename $@).tables $<
 
 reject_ser.table.$(OBJEXT): reject_ser.table.c
-	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
 
 reject_ser.table$(EXEEXT): reject_ser.table.$(OBJEXT)
-	$(LINK) $^
+	$(AM_V_CCLD)$(LINK) $^
 
 top_main.$(OBJEXT): top.h
 top.h: top.c
@@ -2960,244 +3024,244 @@ top.h: top.c
 # it can be / is generated by a shell script, tableopts.sh.
 
 tableopts.am: tableopts.sh
-	$(srcdir)/tableopts.sh > $(srcdir)/tableopts.am
+	$(SHELL) $(srcdir)/tableopts.sh > $(srcdir)/tableopts.am
 
 tableopts_opt_nr-Ca.opt$(EXEEXT): tableopts_opt_nr-Ca.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Ce.opt$(EXEEXT): tableopts_opt_nr-Ce.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Cf.opt$(EXEEXT): tableopts_opt_nr-Cf.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-CF.opt$(EXEEXT): tableopts_opt_nr-CF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Cm.opt$(EXEEXT): tableopts_opt_nr-Cm.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Cem.opt$(EXEEXT): tableopts_opt_nr-Cem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Cae.opt$(EXEEXT): tableopts_opt_nr-Cae.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Caef.opt$(EXEEXT): tableopts_opt_nr-Caef.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-CaeF.opt$(EXEEXT): tableopts_opt_nr-CaeF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Cam.opt$(EXEEXT): tableopts_opt_nr-Cam.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr-Caem.opt$(EXEEXT): tableopts_opt_nr-Caem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Ca.opt$(EXEEXT): tableopts_opt_r-Ca.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Ce.opt$(EXEEXT): tableopts_opt_r-Ce.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Cf.opt$(EXEEXT): tableopts_opt_r-Cf.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-CF.opt$(EXEEXT): tableopts_opt_r-CF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Cm.opt$(EXEEXT): tableopts_opt_r-Cm.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Cem.opt$(EXEEXT): tableopts_opt_r-Cem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Cae.opt$(EXEEXT): tableopts_opt_r-Cae.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Caef.opt$(EXEEXT): tableopts_opt_r-Caef.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-CaeF.opt$(EXEEXT): tableopts_opt_r-CaeF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Cam.opt$(EXEEXT): tableopts_opt_r-Cam.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_r-Caem.opt$(EXEEXT): tableopts_opt_r-Caem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Ca.ser$(EXEEXT): tableopts_ser_nr-Ca.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Ce.ser$(EXEEXT): tableopts_ser_nr-Ce.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Cf.ser$(EXEEXT): tableopts_ser_nr-Cf.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-CF.ser$(EXEEXT): tableopts_ser_nr-CF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Cm.ser$(EXEEXT): tableopts_ser_nr-Cm.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Cem.ser$(EXEEXT): tableopts_ser_nr-Cem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Cae.ser$(EXEEXT): tableopts_ser_nr-Cae.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Caef.ser$(EXEEXT): tableopts_ser_nr-Caef.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-CaeF.ser$(EXEEXT): tableopts_ser_nr-CaeF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Cam.ser$(EXEEXT): tableopts_ser_nr-Cam.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_nr-Caem.ser$(EXEEXT): tableopts_ser_nr-Caem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Ca.ser$(EXEEXT): tableopts_ser_r-Ca.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Ce.ser$(EXEEXT): tableopts_ser_r-Ce.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Cf.ser$(EXEEXT): tableopts_ser_r-Cf.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-CF.ser$(EXEEXT): tableopts_ser_r-CF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Cm.ser$(EXEEXT): tableopts_ser_r-Cm.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Cem.ser$(EXEEXT): tableopts_ser_r-Cem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Cae.ser$(EXEEXT): tableopts_ser_r-Cae.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Caef.ser$(EXEEXT): tableopts_ser_r-Caef.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-CaeF.ser$(EXEEXT): tableopts_ser_r-CaeF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Cam.ser$(EXEEXT): tableopts_ser_r-Cam.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ser_r-Caem.ser$(EXEEXT): tableopts_ser_r-Caem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Ca.ver$(EXEEXT): tableopts_ver_nr-Ca.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Ce.ver$(EXEEXT): tableopts_ver_nr-Ce.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Cf.ver$(EXEEXT): tableopts_ver_nr-Cf.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-CF.ver$(EXEEXT): tableopts_ver_nr-CF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Cm.ver$(EXEEXT): tableopts_ver_nr-Cm.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Cem.ver$(EXEEXT): tableopts_ver_nr-Cem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Cae.ver$(EXEEXT): tableopts_ver_nr-Cae.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Caef.ver$(EXEEXT): tableopts_ver_nr-Caef.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-CaeF.ver$(EXEEXT): tableopts_ver_nr-CaeF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Cam.ver$(EXEEXT): tableopts_ver_nr-Cam.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_nr-Caem.ver$(EXEEXT): tableopts_ver_nr-Caem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Ca.ver$(EXEEXT): tableopts_ver_r-Ca.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Ce.ver$(EXEEXT): tableopts_ver_r-Ce.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Cf.ver$(EXEEXT): tableopts_ver_r-Cf.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-CF.ver$(EXEEXT): tableopts_ver_r-CF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Cm.ver$(EXEEXT): tableopts_ver_r-Cm.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Cem.ver$(EXEEXT): tableopts_ver_r-Cem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Cae.ver$(EXEEXT): tableopts_ver_r-Cae.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Caef.ver$(EXEEXT): tableopts_ver_r-Caef.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-CaeF.ver$(EXEEXT): tableopts_ver_r-CaeF.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Cam.ver$(EXEEXT): tableopts_ver_r-Cam.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_ver_r-Caem.ver$(EXEEXT): tableopts_ver_r-Caem.$(OBJEXT)
-	$(LINK) -o $@ $<
+	$(AM_V_CCLD)$(LINK) -o $@ $<
 
 tableopts_opt_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) $* -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) $* -o $@ $<
 
 tableopts_opt_nr%.$(OBJEXT): tableopts_opt_nr%.c 
-	$(COMPILE) -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -c -o $@ $<
 
 tableopts_opt_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --reentrant $*  -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --reentrant $*  -o $@ $<
 
 tableopts_opt_r%.$(OBJEXT):  tableopts_opt_r%.c 
-	$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
 
 tableopts_ser_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ser_nr$*.ser.tables"  $* -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ser_nr$*.ser.tables"  $* -o $@ $<
 
 tableopts_ser_nr%.$(OBJEXT): tableopts_ser_nr%.c 
-	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
 
 tableopts_ser_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ser_r$*.ser.tables" $*  -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ser_r$*.ser.tables" $*  -o $@ $<
 
 tableopts_ser_r%.$(OBJEXT):  tableopts_ser_r%.c
-	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<
 
 tableopts_ver_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ver_nr$*.ver.tables" --tables-verify $* -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ver_nr$*.ver.tables" --tables-verify $* -o $@ $<
 
 tableopts_ver_nr%.$(OBJEXT): tableopts_ver_nr%.c 
-	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
 
 tableopts_ver_nr%.ver$(EXEEXT): tableopts_ver_nr%.$(OBJEXT)
-	$(LINK) -o $@ $^
+	$(AM_V_CCLD)$(LINK) -o $@ $^
 
 tableopts_ver_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ver_r$*.ver.tables" --tables-verify $*  -o $@ $<
+	$(AM_V_LEX)$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ver_r$*.ver.tables" --tables-verify $*  -o $@ $<
 
 tableopts_ver_r%.$(OBJEXT):  tableopts_ver_r%.c  
-	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<
+	$(AM_V_CC)$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
