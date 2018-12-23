@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2018/12/23 16:23:24 martin Exp $
+# $NetBSD: Makefile,v 1.3 2018/12/23 16:40:16 jakllsch Exp $
 
 NOMAN= # defined
 
@@ -9,6 +9,8 @@ TESTSDIR=	${TESTSBASE}/lib/libnvmm
 
 COPTS+=	-Wall
 LDADD+=	-lnvmm
+
+BINDIR=         ${TESTSDIR}
 
 # Mem Assist
 TESTS_SH=		t_mem_assist
