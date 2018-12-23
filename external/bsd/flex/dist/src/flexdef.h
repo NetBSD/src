@@ -57,23 +57,24 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
-#ifdef HAVE_UNISTD_H
+/* Required: dup() and dup2() in <unistd.h> */
 #include <unistd.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 #ifdef HAVE_SYS_PARAMS_H
 #include <sys/params.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
+/* Required: stat() in <sys/stat.h> */
 #include <sys/stat.h>
-#endif
+/* Required: wait() in <sys/wait.h> */
 #include <sys/wait.h>
 #include <stdbool.h>
-#ifdef HAVE_REGEX_H
+#include <stdarg.h>
+/* Required: regcomp(), regexec() and regerror() in <regex.h> */
 #include <regex.h>
-#endif
+/* Required: strcasecmp() in <strings.h> */
+#include <strings.h>
 #include "flexint.h"
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
@@ -108,6 +109,8 @@
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif
 
+/* Whether an integer is a power of two */
+#define is_power_of_2(n) ((n) > 0 && ((n) & ((n) - 1)) == 0)
 
 #define unspecified -1
 
@@ -842,9 +845,6 @@ extern void flexfatal(const char *);
     }while(0)
 #endif /* ! HAVE_DECL___func__ */
 
-/* Convert a hexadecimal digit string to an integer value. */
-extern unsigned int htoui(unsigned char[]);
-
 /* Report an error message formatted  */
 extern void lerr(const char *, ...)
 #if defined(__GNUC__) && __GNUC__ >= 3
@@ -880,9 +880,6 @@ extern int myctoi(const char *);
 
 /* Return character corresponding to escape sequence. */
 extern unsigned char myesc(unsigned char[]);
-
-/* Convert an octal digit string to an integer value. */
-extern unsigned int otoui(unsigned char[]);
 
 /* Output a (possibly-formatted) string to the generated scanner. */
 extern void out(const char *);
@@ -974,8 +971,9 @@ extern void line_pinpoint(const char *, int);
 extern void format_synerr(const char *, const char *);
 extern void synerr(const char *);	/* report a syntax error */
 extern void format_warn(const char *, const char *);
-extern void warn(const char *);	/* report a warning */
+extern void lwarn(const char *);	/* report a warning */
 extern void yyerror(const char *);	/* report a parse error */
+extern int yyparse(void);		/* the YACC parser */
 
 
 /* from file scan.l */

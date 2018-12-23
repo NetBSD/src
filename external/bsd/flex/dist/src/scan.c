@@ -1,5 +1,6 @@
+#line 1 "scan.c"
 
-#line 2 "scan.c"
+#line 3 "scan.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -8,7 +9,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 2
+#define YY_FLEX_SUBMINOR_VERSION 4
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -83,9 +84,15 @@ typedef unsigned int flex_uint32_t;
 #define UINT32_MAX             (4294967295U)
 #endif
 
+#ifndef SIZE_MAX
+#define SIZE_MAX               (~(size_t)0)
+#endif
+
 #endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
+
+/* begin standard C++ headers. */
 
 /* TODO: this is always defined, so inline it */
 #define yyconst const
@@ -118,7 +125,7 @@ typedef unsigned int flex_uint32_t;
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
 /* Special action meaning "start processing a new file". */
-#define YY_NEW_FILE yyrestart(yyin  )
+#define YY_NEW_FILE yyrestart( yyin  )
 #define YY_END_OF_BUFFER_CHAR 0
 
 /* Size of default input buffer. */
@@ -214,7 +221,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -284,7 +291,7 @@ void yypop_buffer_state ( void );
 static void yyensure_buffer_stack ( void );
 static void yy_load_buffer_state ( void );
 static void yy_init_buffer ( YY_BUFFER_STATE b, FILE *file  );
-#define YY_FLUSH_BUFFER yy_flush_buffer(YY_CURRENT_BUFFER )
+#define YY_FLUSH_BUFFER yy_flush_buffer( YY_CURRENT_BUFFER )
 
 YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string ( const char *yy_str  );
@@ -300,7 +307,7 @@ void yyfree ( void *  );
 	if ( ! YY_CURRENT_BUFFER ){ \
         yyensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            yy_create_buffer(yyin,YY_BUF_SIZE ); \
+            yy_create_buffer( yyin, YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
@@ -309,7 +316,7 @@ void yyfree ( void *  );
 	if ( ! YY_CURRENT_BUFFER ){\
         yyensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            yy_create_buffer(yyin,YY_BUF_SIZE ); \
+            yy_create_buffer( yyin, YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
@@ -1912,7 +1919,7 @@ extern const char *escaped_qstart, *escaped_qend;
 #define RETURNNAME \
 	if(yyleng < MAXLINE) \
          { \
-	strcpy( nmstr, yytext ); \
+	strncpy( nmstr, yytext, sizeof(nmstr) ); \
 	return NAME; \
 	 } \
 	else \
@@ -1956,9 +1963,9 @@ extern const char *escaped_qstart, *escaped_qend;
     if (!indented_code) line_directive_out(NULL, 0);\
 } while (0)
 
-#line 1959 "scan.c"
+#line 1966 "scan.c"
 
-#line 1961 "scan.c"
+#line 1968 "scan.c"
 
 #define INITIAL 0
 #define SECT2 1
@@ -2205,10 +2212,10 @@ YY_DECL
 		if ( ! YY_CURRENT_BUFFER ) {
 			yyensure_buffer_stack ();
 			YY_CURRENT_BUFFER_LVALUE =
-				yy_create_buffer(yyin,YY_BUF_SIZE );
+				yy_create_buffer( yyin, YY_BUF_SIZE );
 		}
 
-		yy_load_buffer_state( );
+		yy_load_buffer_state(  );
 		}
 
 	{
@@ -2224,7 +2231,7 @@ YY_DECL
 	char nmdef[MAXLINE];
 
 
-#line 2227 "scan.c"
+#line 2234 "scan.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2389,7 +2396,7 @@ YY_RULE_SETUP
 {
 			if(yyleng < MAXLINE)
         		 {
-			strcpy( nmstr, yytext );
+			strncpy( nmstr, yytext, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -2523,12 +2530,12 @@ YY_RULE_SETUP
 
 case 37:
 YY_RULE_SETUP
-#line 269 "scan.l"
+#line 268 "scan.l"
 ACTION_ECHO_QSTART;
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 270 "scan.l"
+#line 269 "scan.l"
 ACTION_ECHO_QEND;
 	YY_BREAK
 
@@ -2536,23 +2543,23 @@ ACTION_ECHO_QEND;
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 274 "scan.l"
+#line 273 "scan.l"
 ++linenum; END_CODEBLOCK;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 275 "scan.l"
+#line 274 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 276 "scan.l"
+#line 275 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 277 "scan.l"
+#line 276 "scan.l"
 {
 			++linenum;
 			ACTION_ECHO;
@@ -2563,7 +2570,7 @@ YY_RULE_SETUP
 
 case 43:
 YY_RULE_SETUP
-#line 285 "scan.l"
+#line 284 "scan.l"
 {
                 if( --brace_depth == 0){
                     /* TODO: Matched. */
@@ -2574,7 +2581,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 293 "scan.l"
+#line 292 "scan.l"
 {
                 brace_depth++;
                 buf_strnappend(&top_buf, yytext, yyleng);
@@ -2583,7 +2590,7 @@ YY_RULE_SETUP
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 298 "scan.l"
+#line 297 "scan.l"
 {
                 ++linenum;
                 buf_strnappend(&top_buf, yytext, yyleng);
@@ -2591,23 +2598,23 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 303 "scan.l"
+#line 302 "scan.l"
 buf_strnappend(&top_buf, escaped_qstart, (int) strlen(escaped_qstart));
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 304 "scan.l"
+#line 303 "scan.l"
 buf_strnappend(&top_buf, escaped_qend, (int) strlen(escaped_qend));
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 305 "scan.l"
+#line 304 "scan.l"
 {
        buf_strnappend(&top_buf, yytext, yyleng);
     }
 	YY_BREAK
 case YY_STATE_EOF(CODEBLOCK_MATCH_BRACE):
-#line 309 "scan.l"
+#line 308 "scan.l"
 {
                 linenum = brace_start_line;
                 synerr(_("Unmatched '{'"));
@@ -2618,16 +2625,16 @@ case YY_STATE_EOF(CODEBLOCK_MATCH_BRACE):
 
 case 49:
 YY_RULE_SETUP
-#line 318 "scan.l"
+#line 317 "scan.l"
 /* separates name and definition */
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 320 "scan.l"
+#line 319 "scan.l"
 {
  		        if(yyleng < MAXLINE)
  		         {
-			strcpy( nmdef, yytext );
+			strncpy( nmdef, yytext, sizeof(nmdef) );
  		         }
  		        else
  		         {
@@ -2649,7 +2656,7 @@ YY_RULE_SETUP
 case 51:
 /* rule 51 can match eol */
 YY_RULE_SETUP
-#line 342 "scan.l"
+#line 341 "scan.l"
 {
 			if ( ! didadef )
 				synerr( _( "incomplete name definition" ) );
@@ -2662,42 +2669,42 @@ YY_RULE_SETUP
 case 52:
 /* rule 52 can match eol */
 YY_RULE_SETUP
-#line 352 "scan.l"
+#line 351 "scan.l"
 ++linenum; BEGIN(INITIAL);
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 353 "scan.l"
+#line 352 "scan.l"
 option_sense = true;
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 355 "scan.l"
+#line 354 "scan.l"
 return '=';
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 357 "scan.l"
+#line 356 "scan.l"
 option_sense = ! option_sense;
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 359 "scan.l"
+#line 358 "scan.l"
 csize = option_sense ? 128 : 256;
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 360 "scan.l"
+#line 359 "scan.l"
 csize = option_sense ? 256 : 128;
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 362 "scan.l"
+#line 361 "scan.l"
 long_align = option_sense;
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 363 "scan.l"
+#line 362 "scan.l"
 {
 			ACTION_M4_IFDEF( "M4""_YY_ALWAYS_INTERACTIVE", option_sense );
             interactive = option_sense;
@@ -2705,64 +2712,64 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 367 "scan.l"
+#line 366 "scan.l"
 yytext_is_array = option_sense;
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 368 "scan.l"
+#line 367 "scan.l"
 backing_up_report = option_sense;
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 369 "scan.l"
+#line 368 "scan.l"
 interactive = ! option_sense;
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 370 "scan.l"
+#line 369 "scan.l"
 bison_bridge_lval = option_sense;
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 371 "scan.l"
+#line 370 "scan.l"
 { if((bison_bridge_lloc = option_sense))
                             bison_bridge_lval = true;
                      }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 374 "scan.l"
+#line 373 "scan.l"
 C_plus_plus = option_sense;
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 375 "scan.l"
+#line 374 "scan.l"
 sf_set_case_ins(!option_sense);
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 376 "scan.l"
+#line 375 "scan.l"
 sf_set_case_ins(option_sense);
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 377 "scan.l"
+#line 376 "scan.l"
 ddebug = option_sense;
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 378 "scan.l"
+#line 377 "scan.l"
 spprdflt = ! option_sense;
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 379 "scan.l"
+#line 378 "scan.l"
 useecs = option_sense;
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 380 "scan.l"
+#line 379 "scan.l"
 {
 			useecs = usemecs = false;
 			use_read = fullspd = true;
@@ -2770,7 +2777,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 384 "scan.l"
+#line 383 "scan.l"
 {
 			useecs = usemecs = false;
 			use_read = fulltbl = true;
@@ -2778,32 +2785,32 @@ YY_RULE_SETUP
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 388 "scan.l"
+#line 387 "scan.l"
 ACTION_IFDEF("YY_NO_INPUT", ! option_sense);
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 389 "scan.l"
+#line 388 "scan.l"
 interactive = option_sense;
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 390 "scan.l"
+#line 389 "scan.l"
 lex_compat = option_sense;
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 391 "scan.l"
+#line 390 "scan.l"
 posix_compat = option_sense;
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 392 "scan.l"
+#line 391 "scan.l"
 gen_line_dirs = option_sense;
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 393 "scan.l"
+#line 392 "scan.l"
 {
 			ACTION_M4_IFDEF( "M4""_YY_MAIN", option_sense);
             /* Override yywrap */
@@ -2813,12 +2820,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 399 "scan.l"
+#line 398 "scan.l"
 usemecs = option_sense;
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 400 "scan.l"
+#line 399 "scan.l"
 {
 			ACTION_M4_IFDEF( "M4""_YY_NEVER_INTERACTIVE", option_sense );
             interactive = !option_sense;
@@ -2826,237 +2833,237 @@ YY_RULE_SETUP
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 404 "scan.l"
+#line 403 "scan.l"
 performance_report += option_sense ? 1 : -1;
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 405 "scan.l"
+#line 404 "scan.l"
 yytext_is_array = ! option_sense;
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 406 "scan.l"
+#line 405 "scan.l"
 use_read = option_sense;
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 407 "scan.l"
+#line 406 "scan.l"
 reentrant = option_sense;
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 408 "scan.l"
+#line 407 "scan.l"
 reject_really_used = option_sense;
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 409 "scan.l"
+#line 408 "scan.l"
 ACTION_M4_IFDEF( "M4""_YY_STACK_USED", option_sense );
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 410 "scan.l"
+#line 409 "scan.l"
 do_stdinit = option_sense;
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 411 "scan.l"
+#line 410 "scan.l"
 use_stdout = option_sense;
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 412 "scan.l"
+#line 411 "scan.l"
 ACTION_IFDEF("YY_NO_UNISTD_H", ! option_sense);
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 413 "scan.l"
+#line 412 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_UNPUT", ! option_sense);
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 414 "scan.l"
+#line 413 "scan.l"
 printstats = option_sense;
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 415 "scan.l"
+#line 414 "scan.l"
 nowarn = ! option_sense;
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 416 "scan.l"
+#line 415 "scan.l"
 do_yylineno = option_sense; ACTION_M4_IFDEF("M4""_YY_USE_LINENO", option_sense);
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 417 "scan.l"
+#line 416 "scan.l"
 yymore_really_used = option_sense;
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 418 "scan.l"
+#line 417 "scan.l"
 do_yywrap = option_sense;
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 420 "scan.l"
+#line 419 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_PUSH_STATE", ! option_sense);
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 421 "scan.l"
+#line 420 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_POP_STATE", ! option_sense);
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 422 "scan.l"
+#line 421 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_TOP_STATE", ! option_sense);
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 424 "scan.l"
+#line 423 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SCAN_BUFFER", ! option_sense);
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 425 "scan.l"
+#line 424 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SCAN_BYTES", ! option_sense);
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 426 "scan.l"
+#line 425 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SCAN_STRING", ! option_sense);
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 428 "scan.l"
+#line 427 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_FLEX_ALLOC", ! option_sense);
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 429 "scan.l"
+#line 428 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_FLEX_REALLOC", ! option_sense);
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 430 "scan.l"
+#line 429 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_FLEX_FREE", ! option_sense);
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 432 "scan.l"
+#line 431 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_DEBUG", ! option_sense);
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 433 "scan.l"
+#line 432 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_DEBUG", ! option_sense);
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 434 "scan.l"
+#line 433 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_EXTRA", ! option_sense);
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 435 "scan.l"
+#line 434 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_EXTRA", ! option_sense);
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 436 "scan.l"
+#line 435 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LENG", ! option_sense);
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 437 "scan.l"
+#line 436 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_TEXT", ! option_sense);
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 438 "scan.l"
+#line 437 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LINENO", ! option_sense);
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 439 "scan.l"
+#line 438 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_LINENO", ! option_sense);
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 440 "scan.l"
+#line 439 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_IN", ! option_sense);
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 441 "scan.l"
+#line 440 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_IN", ! option_sense);
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 442 "scan.l"
+#line 441 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_OUT", ! option_sense);
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 443 "scan.l"
+#line 442 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_OUT", ! option_sense);
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 444 "scan.l"
+#line 443 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LVAL", ! option_sense);
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 445 "scan.l"
+#line 444 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_LVAL", ! option_sense);
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 446 "scan.l"
+#line 445 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LLOC", ! option_sense);
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 447 "scan.l"
+#line 446 "scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_LLOC", ! option_sense);
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 449 "scan.l"
+#line 448 "scan.l"
 return TOK_EXTRA_TYPE;
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 450 "scan.l"
+#line 449 "scan.l"
 return TOK_OUTFILE;
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 451 "scan.l"
+#line 450 "scan.l"
 return TOK_PREFIX;
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 452 "scan.l"
+#line 451 "scan.l"
 return TOK_YYCLASS;
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 453 "scan.l"
+#line 452 "scan.l"
 return TOK_HEADER_FILE;
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 454 "scan.l"
+#line 453 "scan.l"
 return TOK_TABLES_FILE;
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 455 "scan.l"
+#line 454 "scan.l"
 {
                     tablesverify = option_sense;
                     if(!tablesext && option_sense)
@@ -3065,11 +3072,11 @@ YY_RULE_SETUP
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 462 "scan.l"
+#line 461 "scan.l"
 {
 			if(yyleng-1 < MAXLINE)
         		 {
-			strcpy( nmstr, yytext + 1 );
+			strncpy( nmstr, yytext + 1, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -3082,7 +3089,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 476 "scan.l"
+#line 475 "scan.l"
 {
 			format_synerr( _( "unrecognized %%option: %s" ),
 				yytext );
@@ -3093,28 +3100,28 @@ YY_RULE_SETUP
 case 130:
 /* rule 130 can match eol */
 YY_RULE_SETUP
-#line 483 "scan.l"
+#line 482 "scan.l"
 ++linenum; BEGIN(INITIAL);
 	YY_BREAK
 
 case 131:
 YY_RULE_SETUP
-#line 487 "scan.l"
+#line 486 "scan.l"
 ++bracelevel; yyless( 2 );	/* eat only %{ */
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 488 "scan.l"
+#line 487 "scan.l"
 --bracelevel; yyless( 2 );	/* eat only %} */
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 490 "scan.l"
+#line 489 "scan.l"
 START_CODEBLOCK(true); /* indented code in prolog */
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 492 "scan.l"
+#line 491 "scan.l"
 {
         /* non-indented code */
 		if ( bracelevel <= 0 ) {
@@ -3130,17 +3137,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 505 "scan.l"
+#line 504 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 136:
 /* rule 136 can match eol */
 YY_RULE_SETUP
-#line 506 "scan.l"
+#line 505 "scan.l"
 ++linenum; ACTION_ECHO;
 	YY_BREAK
 case YY_STATE_EOF(SECT2PROLOG):
-#line 508 "scan.l"
+#line 507 "scan.l"
 {
 			mark_prolog();
 			sectnum = 0;
@@ -3152,12 +3159,12 @@ case YY_STATE_EOF(SECT2PROLOG):
 case 137:
 /* rule 137 can match eol */
 YY_RULE_SETUP
-#line 516 "scan.l"
+#line 515 "scan.l"
 ++linenum; /* allow blank lines in section 2 */
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 518 "scan.l"
+#line 517 "scan.l"
 {
 			indented_code = false;
 			doing_codeblock = true;
@@ -3167,7 +3174,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 525 "scan.l"
+#line 524 "scan.l"
 {
                         /* Allow "<" to appear in (?x) patterns. */
                         if (!sf_skip_ws())
@@ -3177,12 +3184,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 531 "scan.l"
+#line 530 "scan.l"
 return '^';
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 532 "scan.l"
+#line 531 "scan.l"
 BEGIN(QUOTE); return '"';
 	YY_BREAK
 case 142:
@@ -3190,7 +3197,7 @@ case 142:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 533 "scan.l"
+#line 532 "scan.l"
 {
 			BEGIN(NUM);
 			if ( lex_compat || posix_compat )
@@ -3206,12 +3213,12 @@ YY_LINENO_REWIND_TO(yy_bp + 1);
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 540 "scan.l"
+#line 539 "scan.l"
 return '$';
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 542 "scan.l"
+#line 541 "scan.l"
 {
 			bracelevel = 1;
 			BEGIN(PERCENT_BRACE_ACTION);
@@ -3227,7 +3234,7 @@ YY_RULE_SETUP
 case 145:
 /* rule 145 can match eol */
 YY_RULE_SETUP
-#line 553 "scan.l"
+#line 552 "scan.l"
 {
                         if (sf_skip_ws()){
                             /* We're in the middle of a (?x: ) pattern. */
@@ -3245,7 +3252,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 568 "scan.l"
+#line 567 "scan.l"
 {
 
                 if (sf_skip_ws()){
@@ -3262,12 +3269,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 582 "scan.l"
+#line 581 "scan.l"
 /* allow indented rules */ ;
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 584 "scan.l"
+#line 583 "scan.l"
 {
             if (sf_skip_ws()){
                 /* We're in the middle of a (?x: ) pattern. */
@@ -3293,7 +3300,7 @@ YY_RULE_SETUP
 case 149:
 /* rule 149 can match eol */
 YY_RULE_SETUP
-#line 606 "scan.l"
+#line 605 "scan.l"
 {
             if (sf_skip_ws()){
                 /* We're in the middle of a (?x: ) pattern. */
@@ -3315,15 +3322,15 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 case 150:
-#line 627 "scan.l"
+#line 626 "scan.l"
 case 151:
 YY_RULE_SETUP
-#line 627 "scan.l"
+#line 626 "scan.l"
 return EOF_OP;
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 629 "scan.l"
+#line 628 "scan.l"
 {
 			sectnum = 3;
 			BEGIN(no_section3_escape ? SECT3_NOESCAPE : SECT3);
@@ -3334,13 +3341,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 637 "scan.l"
+#line 636 "scan.l"
 {
 			int cclval;
 
 			if(yyleng < MAXLINE)
         		 {
-			strcpy( nmstr, yytext );
+			strncpy( nmstr, yytext, sizeof(nmstr) );
 			 }
 			else
 			 {
@@ -3384,12 +3391,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 683 "scan.l"
+#line 682 "scan.l"
 return CCL_OP_DIFF;
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 684 "scan.l"
+#line 683 "scan.l"
 return CCL_OP_UNION;
 	YY_BREAK
 /* Check for :space: at the end of the rule so we don't
@@ -3399,7 +3406,7 @@ return CCL_OP_UNION;
 case 156:
 /* rule 156 can match eol */
 YY_RULE_SETUP
-#line 691 "scan.l"
+#line 690 "scan.l"
 {
 			char *nmdefptr;
             int end_is_ws, end_ch;
@@ -3409,7 +3416,7 @@ YY_RULE_SETUP
 
  			if(yyleng-1 < MAXLINE)
          		 {
-			strcpy( nmstr, yytext + 1 );
+			strncpy( nmstr, yytext + 1, sizeof(nmstr) );
  			 }
  			else
  			 {
@@ -3450,7 +3457,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 739 "scan.l"
+#line 738 "scan.l"
 {
                     if (sf_skip_ws())
                         yy_push_state(COMMENT_DISCARD);
@@ -3463,7 +3470,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 749 "scan.l"
+#line 748 "scan.l"
 {
                     if (lex_compat || posix_compat){
                         /* Push back the "?#" and treat it like a normal parens. */
@@ -3477,7 +3484,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 759 "scan.l"
+#line 758 "scan.l"
 {
                     sf_push();
                     if (lex_compat || posix_compat)
@@ -3490,12 +3497,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 768 "scan.l"
+#line 767 "scan.l"
 sf_push(); return '(';
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 769 "scan.l"
+#line 768 "scan.l"
 {
                     if (_sf_top_ix > 0) {
                         sf_pop();
@@ -3506,12 +3513,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 777 "scan.l"
+#line 776 "scan.l"
 return (unsigned char) yytext[0];
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 778 "scan.l"
+#line 777 "scan.l"
 RETURNCHAR;
 	YY_BREAK
 
@@ -3519,17 +3526,17 @@ RETURNCHAR;
 case 164:
 /* rule 164 can match eol */
 YY_RULE_SETUP
-#line 783 "scan.l"
+#line 782 "scan.l"
 ++linenum;	/* Allow blank lines & continuations */
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 784 "scan.l"
+#line 783 "scan.l"
 return (unsigned char) yytext[0];
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 785 "scan.l"
+#line 784 "scan.l"
 BEGIN(SECT2); return '>';
 	YY_BREAK
 case 167:
@@ -3537,17 +3544,17 @@ case 167:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 786 "scan.l"
+#line 785 "scan.l"
 BEGIN(CARETISBOL); return '>';
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 787 "scan.l"
+#line 786 "scan.l"
 RETURNNAME;
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 788 "scan.l"
+#line 787 "scan.l"
 {
 			format_synerr( _( "bad <start condition>: %s" ),
 				yytext );
@@ -3556,24 +3563,24 @@ YY_RULE_SETUP
 
 case 170:
 YY_RULE_SETUP
-#line 794 "scan.l"
+#line 793 "scan.l"
 BEGIN(SECT2); return '^';
 	YY_BREAK
 
 case 171:
 YY_RULE_SETUP
-#line 798 "scan.l"
+#line 797 "scan.l"
 RETURNCHAR;
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 799 "scan.l"
+#line 798 "scan.l"
 BEGIN(SECT2); return '"';
 	YY_BREAK
 case 173:
 /* rule 173 can match eol */
 YY_RULE_SETUP
-#line 801 "scan.l"
+#line 800 "scan.l"
 {
 			synerr( _( "missing quote" ) );
 			BEGIN(SECT2);
@@ -3585,49 +3592,49 @@ YY_RULE_SETUP
 
 case 174:
 YY_RULE_SETUP
-#line 810 "scan.l"
+#line 809 "scan.l"
 BEGIN(SECT2);
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 811 "scan.l"
+#line 810 "scan.l"
 BEGIN(GROUP_MINUS_PARAMS);
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 812 "scan.l"
+#line 811 "scan.l"
 sf_set_case_ins(1);
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 813 "scan.l"
+#line 812 "scan.l"
 sf_set_dot_all(1);
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 814 "scan.l"
+#line 813 "scan.l"
 sf_set_skip_ws(1);
 	YY_BREAK
 
 
 case 179:
 YY_RULE_SETUP
-#line 817 "scan.l"
+#line 816 "scan.l"
 BEGIN(SECT2);
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 818 "scan.l"
+#line 817 "scan.l"
 sf_set_case_ins(0);
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 819 "scan.l"
+#line 818 "scan.l"
 sf_set_dot_all(0);
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 820 "scan.l"
+#line 819 "scan.l"
 sf_set_skip_ws(0);
 	YY_BREAK
 
@@ -3637,7 +3644,7 @@ case 183:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 824 "scan.l"
+#line 823 "scan.l"
 BEGIN(CCL); return '^';
 	YY_BREAK
 case 184:
@@ -3645,12 +3652,12 @@ case 184:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 825 "scan.l"
+#line 824 "scan.l"
 return '^';
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-#line 826 "scan.l"
+#line 825 "scan.l"
 BEGIN(CCL); RETURNCHAR;
 	YY_BREAK
 
@@ -3660,23 +3667,23 @@ case 186:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 830 "scan.l"
+#line 829 "scan.l"
 return '-';
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-#line 831 "scan.l"
+#line 830 "scan.l"
 RETURNCHAR;
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 832 "scan.l"
+#line 831 "scan.l"
 BEGIN(SECT2); return ']';
 	YY_BREAK
 case 189:
 /* rule 189 can match eol */
 YY_RULE_SETUP
-#line 833 "scan.l"
+#line 832 "scan.l"
 {
 			synerr( _( "bad character class" ) );
 			BEGIN(SECT2);
@@ -3687,127 +3694,127 @@ YY_RULE_SETUP
 
 case 190:
 YY_RULE_SETUP
-#line 841 "scan.l"
+#line 840 "scan.l"
 BEGIN(CCL); return CCE_ALNUM;
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-#line 842 "scan.l"
+#line 841 "scan.l"
 BEGIN(CCL); return CCE_ALPHA;
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 843 "scan.l"
+#line 842 "scan.l"
 BEGIN(CCL); return CCE_BLANK;
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 844 "scan.l"
+#line 843 "scan.l"
 BEGIN(CCL); return CCE_CNTRL;
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 845 "scan.l"
+#line 844 "scan.l"
 BEGIN(CCL); return CCE_DIGIT;
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 846 "scan.l"
+#line 845 "scan.l"
 BEGIN(CCL); return CCE_GRAPH;
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 847 "scan.l"
+#line 846 "scan.l"
 BEGIN(CCL); return CCE_LOWER;
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 848 "scan.l"
+#line 847 "scan.l"
 BEGIN(CCL); return CCE_PRINT;
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 849 "scan.l"
+#line 848 "scan.l"
 BEGIN(CCL); return CCE_PUNCT;
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 850 "scan.l"
+#line 849 "scan.l"
 BEGIN(CCL); return CCE_SPACE;
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 851 "scan.l"
+#line 850 "scan.l"
 BEGIN(CCL); return CCE_UPPER;
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 852 "scan.l"
+#line 851 "scan.l"
 BEGIN(CCL); return CCE_XDIGIT;
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 854 "scan.l"
+#line 853 "scan.l"
 BEGIN(CCL); return CCE_NEG_ALNUM;
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 855 "scan.l"
+#line 854 "scan.l"
 BEGIN(CCL); return CCE_NEG_ALPHA;
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 856 "scan.l"
+#line 855 "scan.l"
 BEGIN(CCL); return CCE_NEG_BLANK;
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 857 "scan.l"
+#line 856 "scan.l"
 BEGIN(CCL); return CCE_NEG_CNTRL;
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-#line 858 "scan.l"
+#line 857 "scan.l"
 BEGIN(CCL); return CCE_NEG_DIGIT;
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-#line 859 "scan.l"
+#line 858 "scan.l"
 BEGIN(CCL); return CCE_NEG_GRAPH;
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 860 "scan.l"
+#line 859 "scan.l"
 BEGIN(CCL); return CCE_NEG_LOWER;
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 861 "scan.l"
+#line 860 "scan.l"
 BEGIN(CCL); return CCE_NEG_PRINT;
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 862 "scan.l"
+#line 861 "scan.l"
 BEGIN(CCL); return CCE_NEG_PUNCT;
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 863 "scan.l"
+#line 862 "scan.l"
 BEGIN(CCL); return CCE_NEG_SPACE;
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 864 "scan.l"
+#line 863 "scan.l"
 BEGIN(CCL); return CCE_NEG_UPPER;
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 865 "scan.l"
+#line 864 "scan.l"
 BEGIN(CCL); return CCE_NEG_XDIGIT;
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 866 "scan.l"
+#line 865 "scan.l"
 {
 			format_synerr(
 				_( "bad character class expression: %s" ),
@@ -3819,7 +3826,7 @@ YY_RULE_SETUP
 
 case 215:
 YY_RULE_SETUP
-#line 875 "scan.l"
+#line 874 "scan.l"
 {
 			yylval = myctoi( yytext );
 			return NUMBER;
@@ -3827,12 +3834,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-#line 880 "scan.l"
+#line 879 "scan.l"
 return ',';
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 881 "scan.l"
+#line 880 "scan.l"
 {
 			BEGIN(SECT2);
 			if ( lex_compat || posix_compat )
@@ -3843,7 +3850,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 889 "scan.l"
+#line 888 "scan.l"
 {
 			synerr( _( "bad character inside {}'s" ) );
 			BEGIN(SECT2);
@@ -3853,7 +3860,7 @@ YY_RULE_SETUP
 case 219:
 /* rule 219 can match eol */
 YY_RULE_SETUP
-#line 895 "scan.l"
+#line 894 "scan.l"
 {
 			synerr( _( "missing }" ) );
 			BEGIN(SECT2);
@@ -3865,18 +3872,18 @@ YY_RULE_SETUP
 
 case 220:
 YY_RULE_SETUP
-#line 905 "scan.l"
+#line 904 "scan.l"
 bracelevel = 0;
 	YY_BREAK
 case 221:
 YY_RULE_SETUP
-#line 907 "scan.l"
+#line 906 "scan.l"
 ACTION_ECHO; yy_push_state( CODE_COMMENT );
 	YY_BREAK
 
 case 222:
 YY_RULE_SETUP
-#line 910 "scan.l"
+#line 909 "scan.l"
 {
             ACTION_ECHO;
             CHECK_REJECT(yytext);
@@ -3884,7 +3891,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-#line 914 "scan.l"
+#line 913 "scan.l"
 {
             ACTION_ECHO;
             CHECK_YYMORE(yytext);
@@ -3893,17 +3900,17 @@ YY_RULE_SETUP
 
 case 224:
 YY_RULE_SETUP
-#line 920 "scan.l"
+#line 919 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 225:
 /* rule 225 can match eol */
 YY_RULE_SETUP
-#line 921 "scan.l"
+#line 920 "scan.l"
 {
 		++linenum;
 		ACTION_ECHO;
-		if (bracelevel == 0 || (doing_codeblock && indented_code)) {
+		if (bracelevel <= 0 || (doing_codeblock && indented_code)) {
             if ( doing_rule_action )
                 add_action( "\tYY_BREAK]""]\n" );
 
@@ -3917,82 +3924,82 @@ YY_RULE_SETUP
 
 case 226:
 YY_RULE_SETUP
-#line 937 "scan.l"
+#line 936 "scan.l"
 ACTION_ECHO; ++bracelevel;
 	YY_BREAK
 case 227:
 YY_RULE_SETUP
-#line 938 "scan.l"
+#line 937 "scan.l"
 ACTION_ECHO; --bracelevel;
 	YY_BREAK
 case 228:
 YY_RULE_SETUP
-#line 939 "scan.l"
+#line 938 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 229:
 YY_RULE_SETUP
-#line 940 "scan.l"
+#line 939 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 230:
 YY_RULE_SETUP
-#line 941 "scan.l"
+#line 940 "scan.l"
 ACTION_ECHO; /* character constant */
 	YY_BREAK
 case 231:
 YY_RULE_SETUP
-#line 942 "scan.l"
+#line 941 "scan.l"
 ACTION_ECHO; BEGIN(CHARACTER_CONSTANT);
 	YY_BREAK
 case 232:
 YY_RULE_SETUP
-#line 943 "scan.l"
+#line 942 "scan.l"
 ACTION_ECHO; BEGIN(ACTION_STRING);
 	YY_BREAK
 case 233:
 /* rule 233 can match eol */
 YY_RULE_SETUP
-#line 944 "scan.l"
+#line 943 "scan.l"
 {
-			++linenum;
-			ACTION_ECHO;
-			if (bracelevel == 0) {
-				if ( doing_rule_action )
-                    add_action( "\tYY_BREAK]""]\n" );
+                ++linenum;
+                ACTION_ECHO;
+                if (bracelevel <= 0) {
+                   if ( doing_rule_action )
+                      add_action( "\tYY_BREAK]""]\n" );
 
-                doing_rule_action = false;
-                BEGIN(SECT2);
-            }
-        }
+                   doing_rule_action = false;
+                   BEGIN(SECT2);
+                }
+             }
 	YY_BREAK
 case 234:
 YY_RULE_SETUP
-#line 955 "scan.l"
+#line 954 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 
 
 case 235:
 YY_RULE_SETUP
-#line 959 "scan.l"
+#line 958 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 236:
 YY_RULE_SETUP
-#line 960 "scan.l"
+#line 959 "scan.l"
 ACTION_ECHO; BEGIN(ACTION);
 	YY_BREAK
 
 
 case 237:
 YY_RULE_SETUP
-#line 963 "scan.l"
+#line 962 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 238:
 YY_RULE_SETUP
-#line 964 "scan.l"
+#line 963 "scan.l"
 ACTION_ECHO; BEGIN(ACTION);
 	YY_BREAK
 
@@ -4000,24 +4007,24 @@ ACTION_ECHO; BEGIN(ACTION);
 case 239:
 /* rule 239 can match eol */
 YY_RULE_SETUP
-#line 967 "scan.l"
+#line 966 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 240:
 /* rule 240 can match eol */
 YY_RULE_SETUP
-#line 968 "scan.l"
+#line 967 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 241:
 /* rule 241 can match eol */
 YY_RULE_SETUP
-#line 969 "scan.l"
-++linenum; ACTION_ECHO; BEGIN(ACTION);
+#line 968 "scan.l"
+++linenum; ACTION_ECHO; if (bracelevel <= 0) { BEGIN(SECT2); } else { BEGIN(ACTION); }
 	YY_BREAK
 case 242:
 YY_RULE_SETUP
-#line 970 "scan.l"
+#line 969 "scan.l"
 ACTION_ECHO;
 	YY_BREAK
 
@@ -4027,7 +4034,7 @@ case YY_STATE_EOF(COMMENT_DISCARD):
 case YY_STATE_EOF(ACTION):
 case YY_STATE_EOF(ACTION_STRING):
 case YY_STATE_EOF(CHARACTER_CONSTANT):
-#line 973 "scan.l"
+#line 972 "scan.l"
 {
 			synerr( _( "EOF encountered inside an action" ) );
 			yyterminate();
@@ -4036,7 +4043,7 @@ case YY_STATE_EOF(CHARACTER_CONSTANT):
 case YY_STATE_EOF(EXTENDED_COMMENT):
 case YY_STATE_EOF(GROUP_WITH_PARAMS):
 case YY_STATE_EOF(GROUP_MINUS_PARAMS):
-#line 978 "scan.l"
+#line 977 "scan.l"
 {
 			synerr( _( "EOF encountered inside pattern" ) );
 			yyterminate();
@@ -4044,7 +4051,7 @@ case YY_STATE_EOF(GROUP_MINUS_PARAMS):
 	YY_BREAK
 case 243:
 YY_RULE_SETUP
-#line 983 "scan.l"
+#line 982 "scan.l"
 {
 			yylval = myesc( (unsigned char *) yytext );
 
@@ -4057,27 +4064,27 @@ YY_RULE_SETUP
 
 case 244:
 YY_RULE_SETUP
-#line 993 "scan.l"
+#line 992 "scan.l"
 fputs(escaped_qstart, yyout);
 	YY_BREAK
 case 245:
 YY_RULE_SETUP
-#line 994 "scan.l"
+#line 993 "scan.l"
 fputs(escaped_qend, yyout);
 	YY_BREAK
 case 246:
 /* rule 246 can match eol */
 YY_RULE_SETUP
-#line 995 "scan.l"
+#line 994 "scan.l"
 ECHO;
 	YY_BREAK
 case 247:
 YY_RULE_SETUP
-#line 996 "scan.l"
+#line 995 "scan.l"
 ECHO;
 	YY_BREAK
 case YY_STATE_EOF(SECT3):
-#line 997 "scan.l"
+#line 996 "scan.l"
 {
         sectnum = 0;
         yyterminate();
@@ -4087,27 +4094,27 @@ case YY_STATE_EOF(SECT3):
 
 case 248:
 YY_RULE_SETUP
-#line 1003 "scan.l"
+#line 1002 "scan.l"
 fprintf(yyout, "[""[%s]""]", escaped_qstart);
 	YY_BREAK
 case 249:
 YY_RULE_SETUP
-#line 1004 "scan.l"
+#line 1003 "scan.l"
 fprintf(yyout, "[""[%s]""]", escaped_qend);
 	YY_BREAK
 case 250:
 /* rule 250 can match eol */
 YY_RULE_SETUP
-#line 1005 "scan.l"
+#line 1004 "scan.l"
 ECHO;
 	YY_BREAK
 case 251:
 YY_RULE_SETUP
-#line 1006 "scan.l"
+#line 1005 "scan.l"
 ECHO;
 	YY_BREAK
 case YY_STATE_EOF(SECT3_NOESCAPE):
-#line 1007 "scan.l"
+#line 1006 "scan.l"
 {
        sectnum = 0;
        yyterminate();
@@ -4117,15 +4124,15 @@ case YY_STATE_EOF(SECT3_NOESCAPE):
 case 252:
 /* rule 252 can match eol */
 YY_RULE_SETUP
-#line 1012 "scan.l"
+#line 1011 "scan.l"
 format_synerr( _( "bad character: %s" ), yytext );
 	YY_BREAK
 case 253:
 YY_RULE_SETUP
-#line 1014 "scan.l"
+#line 1013 "scan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 4128 "scan.c"
+#line 4135 "scan.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(SECT2):
 case YY_STATE_EOF(CODEBLOCK):
@@ -4216,7 +4223,7 @@ case YY_STATE_EOF(LINEDIR):
 				{
 				(yy_did_buffer_switch_on_eof) = 0;
 
-				if ( yywrap( ) )
+				if ( yywrap(  ) )
 					{
 					/* Note: because we've taken care in
 					 * yy_get_next_buffer() to have set up
@@ -4348,7 +4355,8 @@ static int yy_get_next_buffer (void)
 
 				b->yy_ch_buf = (char *)
 					/* Include room in for 2 EOB chars. */
-					yyrealloc((void *) b->yy_ch_buf,(yy_size_t) (b->yy_buf_size + 2)  );
+					yyrealloc( (void *) b->yy_ch_buf,
+							 (yy_size_t) (b->yy_buf_size + 2)  );
 				}
 			else
 				/* Can't grow it, we don't own it. */
@@ -4380,7 +4388,7 @@ static int yy_get_next_buffer (void)
 		if ( number_to_move == YY_MORE_ADJ )
 			{
 			ret_val = EOB_ACT_END_OF_FILE;
-			yyrestart(yyin  );
+			yyrestart( yyin  );
 			}
 
 		else
@@ -4397,9 +4405,12 @@ static int yy_get_next_buffer (void)
 	if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
 		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,(yy_size_t) new_size  );
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
+			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
+		/* "- 2" to take care of EOB's */
+		YY_CURRENT_BUFFER_LVALUE->yy_buf_size = (int) (new_size - 2);
 	}
 
 	(yy_n_chars) += number_to_move;
@@ -4551,13 +4562,13 @@ static int yy_get_next_buffer (void)
 					 */
 
 					/* Reset buffer status. */
-					yyrestart(yyin );
+					yyrestart( yyin );
 
 					/*FALLTHROUGH*/
 
 				case EOB_ACT_END_OF_FILE:
 					{
-					if ( yywrap( ) )
+					if ( yywrap(  ) )
 						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
@@ -4597,11 +4608,11 @@ static int yy_get_next_buffer (void)
 	if ( ! YY_CURRENT_BUFFER ){
         yyensure_buffer_stack ();
 		YY_CURRENT_BUFFER_LVALUE =
-            yy_create_buffer(yyin,YY_BUF_SIZE );
+            yy_create_buffer( yyin, YY_BUF_SIZE );
 	}
 
-	yy_init_buffer(YY_CURRENT_BUFFER,input_file );
-	yy_load_buffer_state( );
+	yy_init_buffer( YY_CURRENT_BUFFER, input_file );
+	yy_load_buffer_state(  );
 }
 
 /** Switch to a different input buffer.
@@ -4629,7 +4640,7 @@ static int yy_get_next_buffer (void)
 		}
 
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
-	yy_load_buffer_state( );
+	yy_load_buffer_state(  );
 
 	/* We don't actually know whether we did this switch during
 	 * EOF (yywrap()) processing, but the only time this flag
@@ -4657,7 +4668,7 @@ static void yy_load_buffer_state  (void)
 {
 	YY_BUFFER_STATE b;
     
-	b = (YY_BUFFER_STATE) yyalloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state )  );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
@@ -4666,13 +4677,13 @@ static void yy_load_buffer_state  (void)
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) yyalloc((yy_size_t) (b->yy_buf_size + 2)  );
+	b->yy_ch_buf = (char *) yyalloc( (yy_size_t) (b->yy_buf_size + 2)  );
 	if ( ! b->yy_ch_buf )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
 	b->yy_is_our_buffer = 1;
 
-	yy_init_buffer(b,file );
+	yy_init_buffer( b, file );
 
 	return b;
 }
@@ -4691,9 +4702,9 @@ static void yy_load_buffer_state  (void)
 		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
 	if ( b->yy_is_our_buffer )
-		yyfree((void *) b->yy_ch_buf  );
+		yyfree( (void *) b->yy_ch_buf  );
 
-	yyfree((void *) b  );
+	yyfree( (void *) b  );
 }
 
 /* Initializes or reinitializes a buffer.
@@ -4705,7 +4716,7 @@ static void yy_load_buffer_state  (void)
 {
 	int oerrno = errno;
     
-	yy_flush_buffer(b );
+	yy_flush_buffer( b );
 
 	b->yy_input_file = file;
 	b->yy_fill_buffer = 1;
@@ -4748,7 +4759,7 @@ static void yy_load_buffer_state  (void)
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
 	if ( b == YY_CURRENT_BUFFER )
-		yy_load_buffer_state( );
+		yy_load_buffer_state(  );
 }
 
 /** Pushes the new state onto the stack. The new state becomes
@@ -4779,7 +4790,7 @@ void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
 	/* copied from yy_switch_to_buffer. */
-	yy_load_buffer_state( );
+	yy_load_buffer_state(  );
 	(yy_did_buffer_switch_on_eof) = 1;
 }
 
@@ -4798,7 +4809,7 @@ void yypop_buffer_state (void)
 		--(yy_buffer_stack_top);
 
 	if (YY_CURRENT_BUFFER) {
-		yy_load_buffer_state( );
+		yy_load_buffer_state(  );
 		(yy_did_buffer_switch_on_eof) = 1;
 	}
 }
@@ -4822,9 +4833,9 @@ static void yyensure_buffer_stack (void)
 								);
 		if ( ! (yy_buffer_stack) )
 			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
-								  
+
 		memset((yy_buffer_stack), 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-				
+
 		(yy_buffer_stack_max) = num_to_alloc;
 		(yy_buffer_stack_top) = 0;
 		return;
@@ -4853,7 +4864,7 @@ static void yyensure_buffer_stack (void)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * 
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 {
@@ -4865,7 +4876,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 		/* They forgot to leave room for the EOB's. */
 		return NULL;
 
-	b = (YY_BUFFER_STATE) yyalloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state )  );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_buffer()" );
 
@@ -4879,7 +4890,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 	b->yy_fill_buffer = 0;
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
-	yy_switch_to_buffer(b  );
+	yy_switch_to_buffer( b  );
 
 	return b;
 }
@@ -4895,7 +4906,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 YY_BUFFER_STATE yy_scan_string (const char * yystr )
 {
     
-	return yy_scan_bytes(yystr,(int) strlen(yystr) );
+	return yy_scan_bytes( yystr, (int) strlen(yystr) );
 }
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
@@ -4914,7 +4925,7 @@ YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = (yy_size_t) (_yybytes_len + 2);
-	buf = (char *) yyalloc(n  );
+	buf = (char *) yyalloc( n  );
 	if ( ! buf )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_bytes()" );
 
@@ -4923,7 +4934,7 @@ YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
 
 	buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
-	b = yy_scan_buffer(buf,n );
+	b = yy_scan_buffer( buf, n );
 	if ( ! b )
 		YY_FATAL_ERROR( "bad buffer in yy_scan_bytes()" );
 
@@ -4945,10 +4956,11 @@ YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
 		new_size = (yy_size_t) (yy_start_stack_depth) * sizeof( int );
 
 		if ( ! (yy_start_stack) )
-			(yy_start_stack) = (int *) yyalloc(new_size  );
+			(yy_start_stack) = (int *) yyalloc( new_size  );
 
 		else
-			(yy_start_stack) = (int *) yyrealloc((void *) (yy_start_stack),new_size  );
+			(yy_start_stack) = (int *) yyrealloc(
+					(void *) (yy_start_stack), new_size  );
 
 		if ( ! (yy_start_stack) )
 			YY_FATAL_ERROR( "out of memory expanding start-condition stack" );
@@ -4973,7 +4985,7 @@ YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
 
 static void yynoreturn yy_fatal_error (const char* msg )
 {
-			(void) fprintf( stderr, "%s\n", msg );
+			fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -5001,7 +5013,7 @@ static void yynoreturn yy_fatal_error (const char* msg )
  */
 int yyget_lineno  (void)
 {
-        
+    
     return yylineno;
 }
 
@@ -5112,7 +5124,7 @@ int yylex_destroy  (void)
     
     /* Pop the buffer stack, destroying each element. */
 	while(YY_CURRENT_BUFFER){
-		yy_delete_buffer(YY_CURRENT_BUFFER  );
+		yy_delete_buffer( YY_CURRENT_BUFFER  );
 		YY_CURRENT_BUFFER_LVALUE = NULL;
 		yypop_buffer_state();
 	}
@@ -5122,7 +5134,7 @@ int yylex_destroy  (void)
 	(yy_buffer_stack) = NULL;
 
     /* Destroy the start condition stack. */
-        yyfree((yy_start_stack)  );
+        yyfree( (yy_start_stack)  );
         (yy_start_stack) = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
@@ -5182,7 +5194,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 1014 "scan.l"
+#line 1013 "scan.l"
 
 
 

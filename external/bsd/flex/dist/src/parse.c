@@ -112,7 +112,7 @@ int previous_continued_action;	/* whether the previous rule's action was '|' */
 	do{ \
         char fw3_msg[MAXLINE];\
         snprintf( fw3_msg, MAXLINE,(fmt), (a1), (a2) );\
-        warn( fw3_msg );\
+        lwarn( fw3_msg );\
 	}while(0)
 
 /* Expand a POSIX character class expression. */
@@ -1717,7 +1717,7 @@ yyreduce:
 						scon_stk[++scon_stk_ptr] = i;
 
 				if ( scon_stk_ptr == 0 )
-					warn(
+					lwarn(
 			"all start conditions already have <<EOF>> rules" );
 
 				else
@@ -1827,7 +1827,7 @@ yyreduce:
 				 * erroneously.
 				 */
 				if ( ! varlength || headcnt != 0 )
-					warn(
+					lwarn(
 		"trailing context made variable due to preceding '|' action" );
 
 				/* Mark as variable. */
@@ -1888,7 +1888,7 @@ yyreduce:
 				/* See the comment in the rule for "re2 re"
 				 * above.
 				 */
-				warn(
+				lwarn(
 		"trailing context made variable due to preceding '|' action" );
 
 				varlength = true;
@@ -2537,7 +2537,7 @@ yyreduce:
 #line 916 "parse.y" /* yacc.c:1646  */
     { 
 				if ( sf_case_ins() )
-					warn(_("[:^lower:] is ambiguous in case insensitive scanner"));
+					lwarn(_("[:^lower:] is ambiguous in case insensitive scanner"));
 				else
 					CCL_NEG_EXPR(islower);
 				}
@@ -2548,7 +2548,7 @@ yyreduce:
 #line 922 "parse.y" /* yacc.c:1646  */
     {
 				if ( sf_case_ins() )
-					warn(_("[:^upper:] ambiguous in case insensitive scanner"));
+					lwarn(_("[:^upper:] ambiguous in case insensitive scanner"));
 				else
 					CCL_NEG_EXPR(isupper);
 				}
@@ -2881,13 +2881,13 @@ void format_warn( const char *msg, const char arg[] )
 	char warn_msg[MAXLINE];
 
 	snprintf( warn_msg, sizeof(warn_msg), msg, arg );
-	warn( warn_msg );
+	lwarn( warn_msg );
 	}
 
 
-/* warn - report a warning, unless -w was given */
+/* lwarn - report a warning, unless -w was given */
 
-void warn( const char *str )
+void lwarn( const char *str )
 	{
 	line_warning( str, linenum );
 	}
