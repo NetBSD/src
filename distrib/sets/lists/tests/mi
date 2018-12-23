@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.796 2018/12/05 02:45:05 kre Exp $
+# $NetBSD: mi,v 1.797 2018/12/23 16:40:15 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -124,6 +124,7 @@
 ./usr/libdata/debug/usr/tests/lib/libexecinfo				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/liblutok				tests-lutok-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libnvmm				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd				tests-lib-debug		compattestfile,atf
