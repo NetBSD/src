@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.263 2018/11/19 19:10:39 christos Exp $
+# $NetBSD: md.amd64,v 1.264 2018/12/23 19:17:26 christos Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -855,11 +855,11 @@
 ./usr/libdata/ldscripts/elf_x86_64.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.x		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xbn		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xn		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xr		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.x		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xbn		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xn		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xr		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xu		comp-util-bin		binutils=227
 ./usr/libdata/lint/llib-lnvmm.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib		lint
 ./usr/share/ldscripts/elf_i386.x		comp-obsolete		obsolete
