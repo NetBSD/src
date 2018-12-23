@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.oxout.tab.c,v 1.1.1.1 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: expr.oxout.tab.c,v 1.1.1.2 2018/12/23 15:26:14 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -289,13 +289,15 @@ static const char *const expr.oxout_rule[] = {
 };
 #endif
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 
 int      yyerrflag;
 int      yychar;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
+int      yynerrs;
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -1643,7 +1645,7 @@ void yyyUnsolvedInstSearchTrav(yyyGNT *pNode)
 
 
 
-#line 1645 "expr.oxout.tab.c"
+#line 1647 "expr.oxout.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -1900,7 +1902,7 @@ case 10:
 yyyGenIntNode(8,1,0,&yyval.yyyOxAttrbs,&yystack.l_mark[0].yyyOxAttrbs);
 yyyAdjustINRC(8,1,0,0,&yyval.yyyOxAttrbs,&yystack.l_mark[0].yyyOxAttrbs);}}
 break;
-#line 1902 "expr.oxout.tab.c"
+#line 1904 "expr.oxout.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

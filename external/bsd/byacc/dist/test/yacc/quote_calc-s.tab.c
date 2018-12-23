@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_calc-s.tab.c,v 1.1.1.4 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: quote_calc-s.tab.c,v 1.1.1.5 2018/12/23 15:26:14 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -293,13 +293,15 @@ static const char *const quote_calc_rule[] = {
 };
 #endif
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 
 int      yyerrflag;
 int      yychar;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
+int      yynerrs;
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -367,7 +369,7 @@ yylex(void) {
     }
     return( c );
 }
-#line 369 "quote_calc-s.tab.c"
+#line 371 "quote_calc-s.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -626,7 +628,7 @@ case 18:
 #line 70 "quote_calc.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 628 "quote_calc-s.tab.c"
+#line 630 "quote_calc-s.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

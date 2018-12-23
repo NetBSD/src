@@ -1,4 +1,4 @@
-/*	$NetBSD: calc2.tab.c,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: calc2.tab.c,v 1.1.1.5 2018/12/23 15:26:14 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -279,13 +279,15 @@ static const char *const calc2_rule[] = {
 };
 #endif
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 
 int      yyerrflag;
 int      yychar;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
+int      yynerrs;
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -365,7 +367,7 @@ YYLEX_DECL()
     }
     return( c );
 }
-#line 367 "calc2.tab.c"
+#line 369 "calc2.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -624,7 +626,7 @@ case 18:
 #line 70 "calc2.y"
 	{  yyval = (*base) * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 626 "calc2.tab.c"
+#line 628 "calc2.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

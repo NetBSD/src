@@ -1,6 +1,6 @@
-/*	$NetBSD: defs.h,v 1.1.1.10 2017/06/05 18:49:47 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.1.1.11 2018/12/23 15:26:13 christos Exp $	*/
 
-/* Id: defs.h,v 1.57 2017/04/30 23:29:11 tom Exp  */
+/* Id: defs.h,v 1.60 2017/12/04 17:50:02 erik.b.andersen Exp  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -148,7 +148,9 @@
 
 /*  character macros  */
 
-#define IS_IDENT(c)	(isalnum(c) || (c) == '_' || (c) == '.' || (c) == '$')
+#define IS_NAME1(c)	(isalpha(UCH(c)) || (c) == '_' || (c) == '$')
+#define IS_NAME2(c)	(isalnum(UCH(c)) || (c) == '_' || (c) == '$')
+#define IS_IDENT(c)	(isalnum(UCH(c)) || (c) == '_' || (c) == '.' || (c) == '$')
 #define	IS_OCTAL(c)	((c) >= '0' && (c) <= '7')
 #define	NUMERIC_VALUE(c)	((c) - '0')
 
@@ -413,6 +415,21 @@ extern param *parse_param;
 #endif
 #endif
 
+#ifdef __GNUC__
+#define ATTRIBUTE_NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define ATTRIBUTE_NORETURN __declspec(noreturn)
+#else
+#define ATTRIBUTE_NORETURN
+#endif
+
+#if defined(NDEBUG) && defined(_MSC_VER)
+#define NODEFAULT   __assume(0);
+#else
+#define NODEFAULT
+#endif
+#define NOTREACHED	NODEFAULT
+
 #ifndef GCC_UNUSED
 #if defined(__unused)
 #define GCC_UNUSED		__unused
@@ -440,20 +457,31 @@ struct ainfo
 
 extern void arg_number_disagree_warning(int a_lineno, char *a_name);
 extern void arg_type_disagree_warning(int a_lineno, int i, char *a_name);
+ATTRIBUTE_NORETURN 
 extern void at_error(int a_lineno, char *a_line, char *a_cptr) GCC_NORETURN;
 extern void at_warning(int a_lineno, int i);
+ATTRIBUTE_NORETURN
 extern void bad_formals(void) GCC_NORETURN;
 extern void default_action_warning(char *s);
 extern void destructor_redeclared_warning(const struct ainfo *);
+ATTRIBUTE_NORETURN
 extern void dollar_error(int a_lineno, char *a_line, char *a_cptr) GCC_NORETURN;
 extern void dollar_warning(int a_lineno, int i);
+ATTRIBUTE_NORETURN
 extern void fatal(const char *msg) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void illegal_character(char *c_cptr) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void illegal_tag(int t_lineno, char *t_line, char *t_cptr) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void missing_brace(void) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void no_grammar(void) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void no_space(void) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void open_error(const char *filename) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void over_unionized(char *u_cptr) GCC_NORETURN;
 extern void prec_redeclared(void);
 extern void reprec_warning(char *s);
@@ -461,25 +489,41 @@ extern void restarted_warning(void);
 extern void retyped_warning(char *s);
 extern void revalued_warning(char *s);
 extern void start_requires_args(char *a_name);
+ATTRIBUTE_NORETURN
 extern void syntax_error(int st_lineno, char *st_line, char *st_cptr) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void terminal_lhs(int s_lineno) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void terminal_start(char *s) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void tokenized_start(char *s) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void undefined_goal(char *s) GCC_NORETURN;
 extern void undefined_symbol_warning(char *s);
+ATTRIBUTE_NORETURN
 extern void unexpected_EOF(void) GCC_NORETURN;
 extern void unknown_arg_warning(int d_lineno, const char *dlr_opt, const char *d_arg, const char *d_line, const char *d_cptr);
+ATTRIBUTE_NORETURN
 extern void unknown_rhs(int i) GCC_NORETURN;
 extern void unsupported_flag_warning(const char *flag, const char *details);
+ATTRIBUTE_NORETURN
 extern void unterminated_action(const struct ainfo *) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void unterminated_comment(const struct ainfo *) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void unterminated_string(const struct ainfo *) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void unterminated_text(const struct ainfo *) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void unterminated_union(const struct ainfo *) GCC_NORETURN;
 extern void untyped_arg_warning(int a_lineno, const char *dlr_opt, const char *a_name);
+ATTRIBUTE_NORETURN
 extern void untyped_lhs(void) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void untyped_rhs(int i, char *s) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void used_reserved(char *s) GCC_NORETURN;
+ATTRIBUTE_NORETURN
 extern void unterminated_arglist(const struct ainfo *) GCC_NORETURN;
 extern void wrong_number_args_warning(const char *which, const char *a_name);
 extern void wrong_type_for_arg_warning(int i, char *a_name);
@@ -499,6 +543,7 @@ extern void show_shifts(void);
 
 /* main.c */
 extern void *allocate(size_t n);
+ATTRIBUTE_NORETURN
 extern void done(int k) GCC_NORETURN;
 
 /* mkpar.c */
