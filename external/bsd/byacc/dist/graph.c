@@ -1,10 +1,11 @@
-/*	$NetBSD: graph.c,v 1.6 2016/01/09 22:05:33 christos Exp $	*/
+/*	$NetBSD: graph.c,v 1.7 2018/12/23 15:38:53 christos Exp $	*/
 
-#include "defs.h"
 /* Id: graph.c,v 1.8 2014/02/19 00:46:57 Tom.Shields Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph.c,v 1.6 2016/01/09 22:05:33 christos Exp $");
+__RCSID("$NetBSD: graph.c,v 1.7 2018/12/23 15:38:53 christos Exp $");
+
+#include "defs.h"
 
 static void graph_state(int stateno);
 static void graph_LA(int ruleno);

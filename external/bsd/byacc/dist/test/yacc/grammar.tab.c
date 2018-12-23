@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.tab.c,v 1.2 2017/02/11 19:33:13 christos Exp $	*/
+/*	$NetBSD: grammar.tab.c,v 1.3 2018/12/23 15:38:54 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -126,6 +126,7 @@ static void yyerror(const char *s);
 
 /* #include "cproto.h" */
 #define MAX_TEXT_SIZE 1024
+#define TEXT_LEN (MAX_TEXT_SIZE / 2 - 3)
 
 /* Prototype styles */
 #if OPT_LINTLIBRARY
@@ -386,7 +387,7 @@ haveAnsiParam (void)
     }
     return FALSE;
 }
-#line 388 "grammar.tab.c"
+#line 389 "grammar.tab.c"
 
 /* compatibility with bison */
 #ifdef YYPARSE_PARAM
@@ -886,13 +887,15 @@ static const char *const grammar_rule[] = {
 };
 #endif
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 
 int      yyerrflag;
 int      yychar;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
+int      yynerrs;
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -919,7 +922,7 @@ typedef struct {
 } YYSTACKDATA;
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
-#line 1014 "grammar.y"
+#line 1015 "grammar.y"
 
 /* lex.yy.c */
 #define BEGIN yy_start = 1 + 2 *
@@ -1090,7 +1093,7 @@ free_parser(void)
 #endif
 }
 #endif
-#line 1092 "grammar.tab.c"
+#line 1095 "grammar.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -1290,19 +1293,19 @@ yyreduce:
     switch (yyn)
     {
 case 10:
-#line 377 "grammar.y"
+#line 378 "grammar.y"
 	{
 	    yyerrok;
 	}
 break;
 case 11:
-#line 381 "grammar.y"
+#line 382 "grammar.y"
 	{
 	    yyerrok;
 	}
 break;
 case 13:
-#line 392 "grammar.y"
+#line 393 "grammar.y"
 	{
 	    /* Provide an empty action here so bison will not complain about
 	     * incompatible types in the default action it normally would
@@ -1311,13 +1314,13 @@ case 13:
 	}
 break;
 case 14:
-#line 399 "grammar.y"
+#line 400 "grammar.y"
 	{
 	    /* empty */
 	}
 break;
 case 15:
-#line 406 "grammar.y"
+#line 407 "grammar.y"
 	{
 #if OPT_LINTLIBRARY
 	    if (types_out && want_typedef()) {
@@ -1330,7 +1333,7 @@ case 15:
 	}
 break;
 case 16:
-#line 417 "grammar.y"
+#line 418 "grammar.y"
 	{
 	    if (func_params != NULL) {
 		set_param_types(func_params, &yystack.l_mark[-2].decl_spec, &yystack.l_mark[-1].decl_list);
@@ -1346,32 +1349,32 @@ case 16:
 	}
 break;
 case 17:
-#line 431 "grammar.y"
+#line 432 "grammar.y"
 	{
 	    cur_decl_spec_flags = yystack.l_mark[0].decl_spec.flags;
 	    free_decl_spec(&yystack.l_mark[0].decl_spec);
 	}
 break;
 case 18:
-#line 436 "grammar.y"
+#line 437 "grammar.y"
 	{
 	    end_typedef();
 	}
 break;
 case 19:
-#line 443 "grammar.y"
+#line 444 "grammar.y"
 	{
 	    begin_typedef();
 	}
 break;
 case 20:
-#line 447 "grammar.y"
+#line 448 "grammar.y"
 	{
 	    begin_typedef();
 	}
 break;
 case 23:
-#line 459 "grammar.y"
+#line 460 "grammar.y"
 	{
 	    int flags = cur_decl_spec_flags;
 
@@ -1385,7 +1388,7 @@ case 23:
 	}
 break;
 case 24:
-#line 471 "grammar.y"
+#line 472 "grammar.y"
 	{
 	    int flags = cur_decl_spec_flags;
 
@@ -1396,7 +1399,7 @@ case 24:
 	}
 break;
 case 25:
-#line 483 "grammar.y"
+#line 484 "grammar.y"
 	{
 	    check_untagged(&yystack.l_mark[-1].decl_spec);
 	    if (yystack.l_mark[0].declarator->func_def == FUNC_NONE) {
@@ -1409,7 +1412,7 @@ case 25:
 	}
 break;
 case 26:
-#line 494 "grammar.y"
+#line 495 "grammar.y"
 	{
 	    /* If we're converting to K&R and we've got a nominally K&R
 	     * function which has a parameter which is ANSI (i.e., a prototyped
@@ -1435,7 +1438,7 @@ case 26:
 	}
 break;
 case 28:
-#line 519 "grammar.y"
+#line 520 "grammar.y"
 	{
 	    if (yystack.l_mark[0].declarator->func_def == FUNC_NONE) {
 		yyerror("syntax error");
@@ -1447,7 +1450,7 @@ case 28:
 	}
 break;
 case 29:
-#line 529 "grammar.y"
+#line 530 "grammar.y"
 	{
 	    DeclSpec decl_spec;
 
@@ -1465,7 +1468,7 @@ case 29:
 	}
 break;
 case 36:
-#line 560 "grammar.y"
+#line 561 "grammar.y"
 	{
 	    join_decl_specs(&yyval.decl_spec, &yystack.l_mark[-1].decl_spec, &yystack.l_mark[0].decl_spec);
 	    free(yystack.l_mark[-1].decl_spec.text);
@@ -1473,115 +1476,115 @@ case 36:
 	}
 break;
 case 40:
-#line 575 "grammar.y"
+#line 576 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 41:
-#line 579 "grammar.y"
+#line 580 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_EXTERN);
 	}
 break;
 case 42:
-#line 583 "grammar.y"
+#line 584 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 43:
-#line 587 "grammar.y"
+#line 588 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_STATIC);
 	}
 break;
 case 44:
-#line 591 "grammar.y"
+#line 592 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_INLINE);
 	}
 break;
 case 45:
-#line 595 "grammar.y"
+#line 596 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_JUNK);
 	}
 break;
 case 46:
-#line 602 "grammar.y"
+#line 603 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_CHAR);
 	}
 break;
 case 47:
-#line 606 "grammar.y"
+#line 607 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 48:
-#line 610 "grammar.y"
+#line 611 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_FLOAT);
 	}
 break;
 case 49:
-#line 614 "grammar.y"
+#line 615 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 50:
-#line 618 "grammar.y"
+#line 619 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 51:
-#line 622 "grammar.y"
+#line 623 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_SHORT);
 	}
 break;
 case 52:
-#line 626 "grammar.y"
+#line 627 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 53:
-#line 630 "grammar.y"
+#line 631 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 54:
-#line 634 "grammar.y"
+#line 635 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 55:
-#line 638 "grammar.y"
+#line 639 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_CHAR);
 	}
 break;
 case 56:
-#line 642 "grammar.y"
+#line 643 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 57:
-#line 646 "grammar.y"
+#line 647 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 58:
-#line 650 "grammar.y"
+#line 651 "grammar.y"
 	{
 	    Symbol *s;
 	    s = find_symbol(typedef_names, yystack.l_mark[0].text.text);
@@ -1590,13 +1593,13 @@ case 58:
 	}
 break;
 case 61:
-#line 662 "grammar.y"
+#line 663 "grammar.y"
 	{
 	    new_decl_spec(&yyval.decl_spec, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin, DS_NONE);
 	}
 break;
 case 62:
-#line 666 "grammar.y"
+#line 667 "grammar.y"
 	{
 	    /* This rule allows the <pointer> nonterminal to scan #define
 	     * names as if they were type modifiers.
@@ -1608,56 +1611,56 @@ case 62:
 	}
 break;
 case 63:
-#line 679 "grammar.y"
+#line 680 "grammar.y"
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-	        (void)sprintf(s = buf, "%s %s", yystack.l_mark[-2].text.text, yystack.l_mark[-1].text.text);
+	        (void)sprintf(s = buf, "%.*s %.*s", TEXT_LEN, yystack.l_mark[-2].text.text, TEXT_LEN, yystack.l_mark[-1].text.text);
 	    new_decl_spec(&yyval.decl_spec, s, yystack.l_mark[-2].text.begin, DS_NONE);
 	}
 break;
 case 64:
-#line 686 "grammar.y"
+#line 687 "grammar.y"
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-		(void)sprintf(s = buf, "%s {}", yystack.l_mark[-1].text.text);
+		(void)sprintf(s = buf, "%.*s {}", TEXT_LEN, yystack.l_mark[-1].text.text);
 	    new_decl_spec(&yyval.decl_spec, s, yystack.l_mark[-1].text.begin, DS_NONE);
 	}
 break;
 case 65:
-#line 693 "grammar.y"
+#line 694 "grammar.y"
 	{
-	    (void)sprintf(buf, "%s %s", yystack.l_mark[-1].text.text, yystack.l_mark[0].text.text);
+	    (void)sprintf(buf, "%.*s %.*s", TEXT_LEN, yystack.l_mark[-1].text.text, TEXT_LEN, yystack.l_mark[0].text.text);
 	    new_decl_spec(&yyval.decl_spec, buf, yystack.l_mark[-1].text.begin, DS_NONE);
 	}
 break;
 case 66:
-#line 701 "grammar.y"
+#line 702 "grammar.y"
 	{
 	    imply_typedef(yyval.text.text);
 	}
 break;
 case 67:
-#line 705 "grammar.y"
+#line 706 "grammar.y"
 	{
 	    imply_typedef(yyval.text.text);
 	}
 break;
 case 68:
-#line 712 "grammar.y"
+#line 713 "grammar.y"
 	{
 	    new_decl_list(&yyval.decl_list, yystack.l_mark[0].declarator);
 	}
 break;
 case 69:
-#line 716 "grammar.y"
+#line 717 "grammar.y"
 	{
 	    add_decl_list(&yyval.decl_list, &yystack.l_mark[-2].decl_list, yystack.l_mark[0].declarator);
 	}
 break;
 case 70:
-#line 723 "grammar.y"
+#line 724 "grammar.y"
 	{
 	    if (yystack.l_mark[0].declarator->func_def != FUNC_NONE && func_params == NULL &&
 		func_style == FUNC_TRADITIONAL && cur_file->convert) {
@@ -1668,7 +1671,7 @@ case 70:
 	}
 break;
 case 71:
-#line 732 "grammar.y"
+#line 733 "grammar.y"
 	{
 	    if (yystack.l_mark[-1].declarator->func_def != FUNC_NONE && func_params == NULL &&
 		func_style == FUNC_TRADITIONAL && cur_file->convert) {
@@ -1678,42 +1681,42 @@ case 71:
 	}
 break;
 case 73:
-#line 744 "grammar.y"
+#line 745 "grammar.y"
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-		(void)sprintf(s = buf, "enum %s", yystack.l_mark[-1].text.text);
+		(void)sprintf(s = buf, "enum %.*s", TEXT_LEN, yystack.l_mark[-1].text.text);
 	    new_decl_spec(&yyval.decl_spec, s, yystack.l_mark[-2].text.begin, DS_NONE);
 	}
 break;
 case 74:
-#line 751 "grammar.y"
+#line 752 "grammar.y"
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-		(void)sprintf(s = buf, "%s {}", yystack.l_mark[-1].text.text);
+		(void)sprintf(s = buf, "%.*s {}", TEXT_LEN, yystack.l_mark[-1].text.text);
 	    new_decl_spec(&yyval.decl_spec, s, yystack.l_mark[-1].text.begin, DS_NONE);
 	}
 break;
 case 75:
-#line 758 "grammar.y"
+#line 759 "grammar.y"
 	{
-	    (void)sprintf(buf, "enum %s", yystack.l_mark[0].text.text);
+	    (void)sprintf(buf, "enum %.*s", TEXT_LEN, yystack.l_mark[0].text.text);
 	    new_decl_spec(&yyval.decl_spec, buf, yystack.l_mark[-1].text.begin, DS_NONE);
 	}
 break;
 case 76:
-#line 766 "grammar.y"
+#line 767 "grammar.y"
 	{
 	    imply_typedef("enum");
 	    yyval.text = yystack.l_mark[0].text;
 	}
 break;
 case 79:
-#line 779 "grammar.y"
+#line 780 "grammar.y"
 	{
 	    yyval.declarator = yystack.l_mark[0].declarator;
-	    (void)sprintf(buf, "%s%s", yystack.l_mark[-1].text.text, yyval.declarator->text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, yystack.l_mark[-1].text.text, TEXT_LEN, yyval.declarator->text);
 	    free(yyval.declarator->text);
 	    yyval.declarator->text = xstrdup(buf);
 	    yyval.declarator->begin = yystack.l_mark[-1].text.begin;
@@ -1721,32 +1724,32 @@ case 79:
 	}
 break;
 case 81:
-#line 792 "grammar.y"
+#line 793 "grammar.y"
 	{
 	    yyval.declarator = new_declarator(yystack.l_mark[0].text.text, yystack.l_mark[0].text.text, yystack.l_mark[0].text.begin);
 	}
 break;
 case 82:
-#line 796 "grammar.y"
+#line 797 "grammar.y"
 	{
 	    yyval.declarator = yystack.l_mark[-1].declarator;
-	    (void)sprintf(buf, "(%s)", yyval.declarator->text);
+	    (void)sprintf(buf, "(%.*s)", TEXT_LEN, yyval.declarator->text);
 	    free(yyval.declarator->text);
 	    yyval.declarator->text = xstrdup(buf);
 	    yyval.declarator->begin = yystack.l_mark[-2].text.begin;
 	}
 break;
 case 83:
-#line 804 "grammar.y"
+#line 805 "grammar.y"
 	{
 	    yyval.declarator = yystack.l_mark[-1].declarator;
-	    (void)sprintf(buf, "%s%s", yyval.declarator->text, yystack.l_mark[0].text.text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, yyval.declarator->text, TEXT_LEN, yystack.l_mark[0].text.text);
 	    free(yyval.declarator->text);
 	    yyval.declarator->text = xstrdup(buf);
 	}
 break;
 case 84:
-#line 811 "grammar.y"
+#line 812 "grammar.y"
 	{
 	    yyval.declarator = new_declarator("%s()", yystack.l_mark[-3].declarator->name, yystack.l_mark[-3].declarator->begin);
 	    yyval.declarator->params = yystack.l_mark[-1].param_list;
@@ -1756,7 +1759,7 @@ case 84:
 	}
 break;
 case 85:
-#line 819 "grammar.y"
+#line 820 "grammar.y"
 	{
 	    yyval.declarator = new_declarator("%s()", yystack.l_mark[-3].declarator->name, yystack.l_mark[-3].declarator->begin);
 	    yyval.declarator->params = yystack.l_mark[-1].param_list;
@@ -1766,28 +1769,28 @@ case 85:
 	}
 break;
 case 86:
-#line 830 "grammar.y"
+#line 831 "grammar.y"
 	{
-	    (void)sprintf(yyval.text.text, "*%s", yystack.l_mark[0].text.text);
+	    (void)sprintf(yyval.text.text, "*%.*s", TEXT_LEN, yystack.l_mark[0].text.text);
 	    yyval.text.begin = yystack.l_mark[-1].text.begin;
 	}
 break;
 case 87:
-#line 835 "grammar.y"
+#line 836 "grammar.y"
 	{
-	    (void)sprintf(yyval.text.text, "*%s%s", yystack.l_mark[-1].text.text, yystack.l_mark[0].text.text);
+	    (void)sprintf(yyval.text.text, "*%.*s%.*s", TEXT_LEN, yystack.l_mark[-1].text.text, TEXT_LEN, yystack.l_mark[0].text.text);
 	    yyval.text.begin = yystack.l_mark[-2].text.begin;
 	}
 break;
 case 88:
-#line 843 "grammar.y"
+#line 844 "grammar.y"
 	{
 	    strcpy(yyval.text.text, "");
 	    yyval.text.begin = 0L;
 	}
 break;
 case 90:
-#line 852 "grammar.y"
+#line 853 "grammar.y"
 	{
 	    (void)sprintf(yyval.text.text, "%s ", yystack.l_mark[0].decl_spec.text);
 	    yyval.text.begin = yystack.l_mark[0].decl_spec.begin;
@@ -1795,132 +1798,132 @@ case 90:
 	}
 break;
 case 91:
-#line 858 "grammar.y"
+#line 859 "grammar.y"
 	{
-	    (void)sprintf(yyval.text.text, "%s%s ", yystack.l_mark[-1].text.text, yystack.l_mark[0].decl_spec.text);
+	    (void)sprintf(yyval.text.text, "%.*s%.*s ", TEXT_LEN, yystack.l_mark[-1].text.text, TEXT_LEN, yystack.l_mark[0].decl_spec.text);
 	    yyval.text.begin = yystack.l_mark[-1].text.begin;
 	    free(yystack.l_mark[0].decl_spec.text);
 	}
 break;
 case 93:
-#line 868 "grammar.y"
+#line 869 "grammar.y"
 	{
 	    add_ident_list(&yyval.param_list, &yystack.l_mark[-2].param_list, "...");
 	}
 break;
 case 94:
-#line 875 "grammar.y"
+#line 876 "grammar.y"
 	{
 	    new_param_list(&yyval.param_list, yystack.l_mark[0].parameter);
 	}
 break;
 case 95:
-#line 879 "grammar.y"
+#line 880 "grammar.y"
 	{
 	    add_param_list(&yyval.param_list, &yystack.l_mark[-2].param_list, yystack.l_mark[0].parameter);
 	}
 break;
 case 96:
-#line 886 "grammar.y"
+#line 887 "grammar.y"
 	{
 	    check_untagged(&yystack.l_mark[-1].decl_spec);
 	    yyval.parameter = new_parameter(&yystack.l_mark[-1].decl_spec, yystack.l_mark[0].declarator);
 	}
 break;
 case 97:
-#line 891 "grammar.y"
+#line 892 "grammar.y"
 	{
 	    check_untagged(&yystack.l_mark[-1].decl_spec);
 	    yyval.parameter = new_parameter(&yystack.l_mark[-1].decl_spec, yystack.l_mark[0].declarator);
 	}
 break;
 case 98:
-#line 896 "grammar.y"
+#line 897 "grammar.y"
 	{
 	    check_untagged(&yystack.l_mark[0].decl_spec);
 	    yyval.parameter = new_parameter(&yystack.l_mark[0].decl_spec, (Declarator *)0);
 	}
 break;
 case 99:
-#line 904 "grammar.y"
+#line 905 "grammar.y"
 	{
 	    new_ident_list(&yyval.param_list);
 	}
 break;
 case 101:
-#line 912 "grammar.y"
+#line 913 "grammar.y"
 	{
 	    new_ident_list(&yyval.param_list);
 	    add_ident_list(&yyval.param_list, &yyval.param_list, yystack.l_mark[0].text.text);
 	}
 break;
 case 102:
-#line 917 "grammar.y"
+#line 918 "grammar.y"
 	{
 	    add_ident_list(&yyval.param_list, &yystack.l_mark[-2].param_list, yystack.l_mark[0].text.text);
 	}
 break;
 case 103:
-#line 924 "grammar.y"
+#line 925 "grammar.y"
 	{
 	    yyval.text = yystack.l_mark[0].text;
 	}
 break;
 case 104:
-#line 928 "grammar.y"
+#line 929 "grammar.y"
 	{
 #if OPT_LINTLIBRARY
 	    if (lintLibrary()) { /* Lint doesn't grok C++ ref variables */
 		yyval.text = yystack.l_mark[0].text;
 	    } else
 #endif
-		(void)sprintf(yyval.text.text, "&%s", yystack.l_mark[0].text.text);
+		(void)sprintf(yyval.text.text, "&%.*s", TEXT_LEN, yystack.l_mark[0].text.text);
 	    yyval.text.begin = yystack.l_mark[-1].text.begin;
 	}
 break;
 case 105:
-#line 941 "grammar.y"
+#line 942 "grammar.y"
 	{
 	    yyval.declarator = new_declarator(yystack.l_mark[0].text.text, "", yystack.l_mark[0].text.begin);
 	}
 break;
 case 106:
-#line 945 "grammar.y"
+#line 946 "grammar.y"
 	{
 	    yyval.declarator = yystack.l_mark[0].declarator;
-	    (void)sprintf(buf, "%s%s", yystack.l_mark[-1].text.text, yyval.declarator->text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, yystack.l_mark[-1].text.text, TEXT_LEN, yyval.declarator->text);
 	    free(yyval.declarator->text);
 	    yyval.declarator->text = xstrdup(buf);
 	    yyval.declarator->begin = yystack.l_mark[-1].text.begin;
 	}
 break;
 case 108:
-#line 957 "grammar.y"
+#line 958 "grammar.y"
 	{
 	    yyval.declarator = yystack.l_mark[-1].declarator;
-	    (void)sprintf(buf, "(%s)", yyval.declarator->text);
+	    (void)sprintf(buf, "(%.*s)", TEXT_LEN, yyval.declarator->text);
 	    free(yyval.declarator->text);
 	    yyval.declarator->text = xstrdup(buf);
 	    yyval.declarator->begin = yystack.l_mark[-2].text.begin;
 	}
 break;
 case 109:
-#line 965 "grammar.y"
+#line 966 "grammar.y"
 	{
 	    yyval.declarator = yystack.l_mark[-1].declarator;
-	    (void)sprintf(buf, "%s%s", yyval.declarator->text, yystack.l_mark[0].text.text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, yyval.declarator->text, TEXT_LEN, yystack.l_mark[0].text.text);
 	    free(yyval.declarator->text);
 	    yyval.declarator->text = xstrdup(buf);
 	}
 break;
 case 110:
-#line 972 "grammar.y"
+#line 973 "grammar.y"
 	{
 	    yyval.declarator = new_declarator(yystack.l_mark[0].text.text, "", yystack.l_mark[0].text.begin);
 	}
 break;
 case 111:
-#line 976 "grammar.y"
+#line 977 "grammar.y"
 	{
 	    yyval.declarator = new_declarator("%s()", "", yystack.l_mark[-3].declarator->begin);
 	    yyval.declarator->params = yystack.l_mark[-1].param_list;
@@ -1930,7 +1933,7 @@ case 111:
 	}
 break;
 case 112:
-#line 984 "grammar.y"
+#line 985 "grammar.y"
 	{
 	    yyval.declarator = new_declarator("%s()", "", yystack.l_mark[-2].declarator->begin);
 	    yyval.declarator->func_stack = yystack.l_mark[-2].declarator;
@@ -1939,7 +1942,7 @@ case 112:
 	}
 break;
 case 113:
-#line 991 "grammar.y"
+#line 992 "grammar.y"
 	{
 	    Declarator *d;
 
@@ -1952,7 +1955,7 @@ case 113:
 	}
 break;
 case 114:
-#line 1002 "grammar.y"
+#line 1003 "grammar.y"
 	{
 	    Declarator *d;
 
@@ -1963,7 +1966,7 @@ case 114:
 	    yyval.declarator->func_def = FUNC_ANSI;
 	}
 break;
-#line 1965 "grammar.tab.c"
+#line 1968 "grammar.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

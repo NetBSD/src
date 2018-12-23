@@ -1,8 +1,10 @@
+/*	$NetBSD: yaccpar.c,v 1.7 2018/12/23 15:38:53 christos Exp $	*/
+
 /* This file generated automatically using
- * Id: skel2c,v 1.4 2016/06/07 00:26:09 tom Exp 
+ * @Id: skel2c,v 1.4 2016/06/07 00:26:09 tom Exp @
  */
 
-/* Id: yaccpar.skel,v 1.9 2017/04/30 23:28:17 tom Exp  */
+/* @Id: yaccpar.skel,v 1.10 2018/05/06 21:28:14 Guy.Harris Exp @ */
 
 #include "defs.h"
 
@@ -67,8 +69,9 @@ const char *const tables[] =
 const char *const global_vars[] =
 {
     "",
+    "#if YYDEBUG",
     "int      yydebug;",
-    "int      yynerrs;",
+    "#endif",
     0
 };
 
@@ -79,6 +82,7 @@ const char *const impure_vars[] =
     "int      yychar;",
     "YYSTYPE  yyval;",
     "YYSTYPE  yylval;",
+    "int      yynerrs;",
     0
 };
 
@@ -124,6 +128,7 @@ const char *const body_vars[] =
     "    int      yychar;",
     "    YYSTYPE  yyval;",
     "    YYSTYPE  yylval;",
+    "    int      yynerrs;",
     "",
     "    /* variables for the parser stack */",
     "    YYSTACKDATA yystack;",
