@@ -1,3 +1,170 @@
+2018-06-09  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* yacc.1: minor typographical fixes
+
+	* test/btyacc/err_syntax20.tab.c, test/btyacc/error.tab.c, test/btyacc/expr.oxout.tab.c, test/btyacc/grammar.tab.c, test/btyacc/inherit0.tab.c, test/btyacc/inherit1.tab.c, test/btyacc/inherit2.tab.c, test/btyacc/ok_syntax1.tab.c, test/btyacc/pure_calc.tab.c, test/btyacc/pure_error.tab.c, test/btyacc/quote_calc-s.tab.c, test/btyacc/quote_calc.tab.c, test/btyacc/quote_calc2-s.tab.c, test/btyacc/quote_calc2.tab.c, test/btyacc/quote_calc3-s.tab.c, test/btyacc/quote_calc3.tab.c, test/btyacc/quote_calc4-s.tab.c, test/btyacc/quote_calc4.tab.c, test/btyacc/varsyntax_calc1.tab.c, test/btyacc/btyacc_calc1.tab.c, test/btyacc/btyacc_demo.tab.c, test/btyacc/btyacc_destroy1.tab.c, test/btyacc/btyacc_destroy2.tab.c, test/btyacc/btyacc_destroy3.tab.c, test/btyacc/calc.tab.c, test/btyacc/calc1.tab.c, test/btyacc/calc2.tab.c, test/btyacc/calc3.tab.c, test/btyacc/code_calc.code.c, test/btyacc/code_error.code.c, test/btyacc/empty.tab.c, test/btyacc/err_inherit3.tab.c, test/btyacc/err_inherit4.tab.c, test/btyacc/err_syntax10.tab.c, test/btyacc/err_syntax11.tab.c, test/btyacc/err_syntax12.tab.c, test/btyacc/err_syntax18.tab.c, test/btyacc/rename_debug.c, btyaccpar.c:
+	regen
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2018-06-09  Tom.Shields
+
+	* btyaccpar.skel:
+	add casts to fix g++ (clang++) compile errors in the backtracking skeleton
+	due to assignment of ‘void *’ to another pointer type.
+
+2018-05-25  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/run_make.sh:
+	check if this is bison 3+ before adding options to suppress warnings
+
+	* package/byacc.spec: build-fix for Mageia 6
+
+	* package/byacc.spec: add btyacc package
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+	* package/debian/control: add a package for btyacc
+
+	* package/debian/rules: generate a package for btyacc
+
+2018-05-24  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/btyacc/pure_calc.tab.c, test/btyacc/pure_error.tab.c, test/btyacc/quote_calc-s.tab.c, test/btyacc/quote_calc.tab.c, test/btyacc/quote_calc2-s.tab.c, test/btyacc/quote_calc2.tab.c, test/btyacc/quote_calc3-s.tab.c, test/btyacc/quote_calc3.tab.c, test/btyacc/quote_calc4-s.tab.c, test/btyacc/quote_calc4.tab.c, test/btyacc/varsyntax_calc1.tab.c, test/btyacc/code_error.code.c, test/btyacc/empty.tab.c, test/btyacc/err_inherit3.tab.c, test/btyacc/err_inherit4.tab.c, test/btyacc/err_syntax10.tab.c, test/btyacc/err_syntax11.tab.c, test/btyacc/err_syntax12.tab.c, test/btyacc/err_syntax18.tab.c, test/btyacc/err_syntax20.tab.c, test/btyacc/error.tab.c, test/btyacc/expr.oxout.tab.c, test/btyacc/grammar.tab.c, test/btyacc/inherit0.tab.c, test/btyacc/inherit1.tab.c, test/btyacc/inherit2.tab.c, test/btyacc/ok_syntax1.tab.c, btyaccpar.c, test/btyacc/btyacc_calc1.tab.c, test/btyacc/btyacc_demo.tab.c, test/btyacc/btyacc_destroy1.tab.c, test/btyacc/btyacc_destroy2.tab.c, test/btyacc/btyacc_destroy3.tab.c, test/btyacc/calc.tab.c, test/btyacc/calc1.tab.c, test/btyacc/calc2.tab.c, test/btyacc/calc3.tab.c, test/btyacc/code_calc.code.c, test/btyacc/rename_debug.c:
+	regen
+
+	* btyaccpar.skel: fix typo
+
+2018-05-21  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/run_make.sh:
+	ignore case for "%" directives to skip with old-yacc, and add %token-table
+	to the list
+
+	* btyaccpar.c: regen
+
+2018-05-21  Christos.Zoulas
+
+	* btyaccpar.skel:
+	improve compatibility with bison by changing the YYLLOC_DEFAULT macro to use
+	YYRHSLOC() macro, and adjusting the array indices of yyerror_loc_range[] for
+	consistency.
+
+2018-05-10  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* output.c:
+	add a fallback definition for YYDEBUG to the -i externs file.
+
+	* test/btyacc/rename_debug.i, test/yacc/rename_debug.i: regen
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2018-05-09  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+	* test/btyacc/rename_debug.i, btyaccpar.c, test/btyacc/btyacc_calc1.tab.c, test/btyacc/btyacc_demo.tab.c, test/btyacc/btyacc_destroy1.tab.c, test/btyacc/btyacc_destroy2.tab.c, test/btyacc/btyacc_destroy3.tab.c, test/btyacc/calc.tab.c, test/btyacc/calc1.tab.c, test/btyacc/calc2.tab.c, test/btyacc/calc3.tab.c, test/btyacc/code_calc.code.c, test/btyacc/code_error.code.c, test/btyacc/empty.tab.c, test/btyacc/err_inherit3.tab.c, test/btyacc/err_inherit4.tab.c, test/btyacc/err_syntax10.tab.c, test/btyacc/err_syntax11.tab.c, test/btyacc/err_syntax12.tab.c, test/btyacc/err_syntax18.tab.c, test/btyacc/err_syntax20.tab.c, test/btyacc/error.tab.c, test/btyacc/expr.oxout.tab.c, test/btyacc/grammar.tab.c, test/btyacc/inherit0.tab.c, test/btyacc/inherit1.tab.c, test/btyacc/inherit2.tab.c, test/btyacc/ok_syntax1.tab.c, test/btyacc/pure_calc.tab.c, test/btyacc/pure_error.tab.c, test/btyacc/quote_calc-s.tab.c, test/btyacc/quote_calc.tab.c, test/btyacc/quote_calc2-s.tab.c, test/btyacc/quote_calc2.tab.c, test/btyacc/quote_calc3-s.tab.c, test/btyacc/quote_calc3.tab.c, test/btyacc/quote_calc4-s.tab.c, test/btyacc/quote_calc4.tab.c, test/btyacc/rename_debug.c, test/btyacc/varsyntax_calc1.tab.c:
+	regen
+
+	* btyaccpar.skel: apply Guy Harris' changes here as well
+
+	* test/btyacc/rename_debug.i, test/yacc/rename_debug.i: regen
+
+	* output.c: correct/improve fallback prototype for yylex()
+
+	* test/btyacc/rename_debug.i, test/yacc/rename_debug.i: regen
+
+2018-05-08  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/btyacc/grammar.tab.c, test/yacc/grammar.tab.c: regen
+
+	* test/grammar.y:
+	quiet some warnings from gcc 7 when doing "make check_make"
+
+	* package/debian/watch, package/pkgsrc/Makefile: update ftp-url
+
+	* test/btyacc/ok_syntax1.tab.h, test/btyacc/btyacc_calc1.tab.h: regen
+
+	* output.c:
+	provide yylex() declaration for simple case (request by "Mutiny")
+
+	* test/yacc/err_syntax20.tab.c, test/yacc/error.tab.c, test/yacc/expr.oxout.tab.c, test/yacc/grammar.tab.c, test/yacc/ok_syntax1.tab.c, test/yacc/ok_syntax1.tab.h, test/yacc/pure_calc.tab.c, test/yacc/pure_error.tab.c, test/yacc/quote_calc-s.tab.c, test/yacc/quote_calc.tab.c, test/yacc/quote_calc2-s.tab.c, test/yacc/quote_calc2.tab.c, test/yacc/quote_calc3-s.tab.c, test/yacc/quote_calc3.tab.c, test/yacc/quote_calc4-s.tab.c, test/yacc/quote_calc4.tab.c, test/yacc/varsyntax_calc1.tab.c, test/yacc/calc.tab.c, test/yacc/calc1.tab.c, test/yacc/calc2.tab.c, test/yacc/calc3.tab.c, test/yacc/code_calc.code.c, test/yacc/code_error.code.c, test/yacc/empty.tab.c, test/yacc/err_syntax10.tab.c, test/yacc/err_syntax11.tab.c, test/yacc/err_syntax12.tab.c, test/yacc/err_syntax18.tab.c, test/yacc/rename_debug.c, test/yacc/rename_debug.i, yaccpar.c:
+	regen
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/debian/copyright, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2018-05-06  Guy.Harris
+
+	* yaccpar.skel: two fixes:
+	1) define yydebug only if YYDEBUG is defined and
+	2) make yynerrs a parser-local variable if the parser is reentrant.
+
+2018-02-24  Guy.Harris
+
+	* output.c: do not emit "extern YYSTYPE yylval;" for pure parsers
+
+2018-02-05  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2018-01-15
+
+	* config.guess: 2018-01-26
+
+2017-12-04  erik.b.andersen
+
+	* main.c: A proper path for temporary files is needed by byacc under 
+	Windows commandline, otherwise there's a risk of empty files. 
+	The TEMP environment variable is always defined in Windows.
+
+	* defs.h: The noreturn attribute needs to be specified before function 
+	to be portable among compilers (gcc, clang, msvc).
+
+2017-12-04  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* reader.c: adapted fix by Erik B:
+	 a) increase the length of name[] to account for a trailing null
+	 b) note that calling syntax_error() from get_number() does not return
+
+2017-09-14  Tom.Shields
+
+	* yacc.1: fix typo
+
+2017-07-09  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/byacc.spec, package/mingw-byacc.spec:
+	use predefined "configure"
+
+	* reader.c: remove unused assignment
+
+	* package/debian/rules: use dpkg-buildflags
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* reader.c, output.c, defs.h:
+	add/use IS_NAME1() and IS_NAME2() to reduce clutter
+
+	* reader.c, output.c, defs.h:
+	guard against sign-extension in ctype-macros
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+	* reader.c: check for numeric overflow in get_number()
+
+	* reader.c:
+	correct limit-checks for input filename and line-number, in case no valid
+	filename and/or number was found.
+
 2017-04-30  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* test/btyacc/quote_calc-s.tab.c, test/btyacc/quote_calc2-s.tab.c, test/btyacc/quote_calc2.tab.c, test/btyacc/quote_calc3-s.tab.c, test/btyacc/quote_calc3.tab.c, test/btyacc/quote_calc4-s.tab.c, test/btyacc/quote_calc4.tab.c, test/btyacc/varsyntax_calc1.tab.c, test/btyacc/err_syntax18.tab.c, test/btyacc/err_syntax20.tab.c, test/btyacc/error.tab.c, test/btyacc/expr.oxout.tab.c, test/btyacc/grammar.tab.c, test/btyacc/inherit0.tab.c, test/btyacc/inherit1.tab.c, test/btyacc/inherit2.tab.c, test/btyacc/ok_syntax1.tab.c, test/btyacc/pure_calc.tab.c, test/btyacc/pure_error.tab.c, test/btyacc/quote_calc.tab.c, test/btyacc/btyacc_calc1.tab.c, test/btyacc/btyacc_demo.tab.c, test/btyacc/btyacc_destroy1.tab.c, test/btyacc/btyacc_destroy2.tab.c, test/btyacc/btyacc_destroy3.tab.c, test/btyacc/calc.tab.c, test/btyacc/calc1.tab.c, test/btyacc/calc2.tab.c, test/btyacc/calc3.tab.c, test/btyacc/code_calc.code.c, test/btyacc/code_error.code.c, test/btyacc/empty.tab.c, test/btyacc/err_inherit3.tab.c, test/btyacc/err_inherit4.tab.c, test/btyacc/err_syntax10.tab.c, test/btyacc/err_syntax11.tab.c, test/btyacc/err_syntax12.tab.c, test/btyacc/rename_debug.c, btyaccpar.c, btyaccpar.skel:
@@ -21,6 +188,10 @@
 
 	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
 	bump
+
+2017-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2017-04-02
 
 2017-03-18  Thomas E. Dickey  <dickey@invisible-island.net>
 
@@ -2558,7 +2729,7 @@
 
 	* vmsbuild.com: original version
 
-2000-02-23  dickey@clark.net
+2000-02-23  Thomas (CM)  <dickey@clark.net>
 
 	* test/RCS, RCS: PERMIT FILE
 
@@ -2597,7 +2768,7 @@
 
 	* test/ftp.output, test/ftp.tab.c, test/ftp.tab.h: RCS_BASE
 
-1993-02-22  Thomas E. Dickey  <dickey@software.org>
+1993-02-22  dickey@software.org
 
 	* test/yacc/error.output, test/yacc/error.tab.h:
 	reference output for testing
@@ -2637,7 +2808,7 @@
 
 	* symtab.c, lalr.c, error.c: original version
 
-1990-01-16  Thomas E. Dickey  <dickey@software.org>
+1990-01-16  dickey@software.org
 
 	* test/code_error.y, test/pure_error.y: RCS_BASE
 
