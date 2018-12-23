@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.230 2018/12/23 11:42:13 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.231 2018/12/23 12:15:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.230 2018/12/23 11:42:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.231 2018/12/23 12:15:01 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -999,7 +999,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 			 * Mark the pool_item as valid. The rest is already
 			 * invalid.
 			 */
-			kasan_alloc(pi, sizeof(*pi), sizeof(*pi));
+			kasan_mark(pi, sizeof(*pi), sizeof(*pi));
 		}
 
 		LIST_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
@@ -2024,7 +2024,7 @@ pool_cache_destruct_object1(pool_cache_t pc, void *object)
 		 * valid for the destructor. pool_put below will re-mark it
 		 * as invalid.
 		 */
-		kasan_alloc(object, pc->pc_pool.pr_reqsize,
+		kasan_mark(object, pc->pc_pool.pr_reqsize,
 		    pc->pc_pool.pr_reqsize_with_redzone);
 	}
 
@@ -2719,7 +2719,7 @@ pool_allocator_free(struct pool *pp, void *v)
 	struct pool_allocator *pa = pp->pr_alloc;
 
 	if (pp->pr_redzone) {
-		kasan_alloc(v, pa->pa_pagesz, pa->pa_pagesz);
+		kasan_mark(v, pa->pa_pagesz, pa->pa_pagesz);
 	}
 	(*pa->pa_free)(pp, v);
 }
@@ -2858,7 +2858,7 @@ pool_redzone_fill(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	kasan_alloc(p, pp->pr_reqsize, pp->pr_reqsize_with_redzone);
+	kasan_mark(p, pp->pr_reqsize, pp->pr_reqsize_with_redzone);
 #else
 	uint8_t *cp, pat;
 	const uint8_t *ep;
@@ -2887,7 +2887,7 @@ pool_redzone_check(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	kasan_alloc(p, 0, pp->pr_reqsize_with_redzone);
+	kasan_mark(p, 0, pp->pr_reqsize_with_redzone);
 #else
 	uint8_t *cp, pat, expected;
 	const uint8_t *ep;
