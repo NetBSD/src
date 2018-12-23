@@ -1,12 +1,14 @@
-/*	$NetBSD: error.c,v 1.12 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.13 2018/12/23 15:38:53 christos Exp $	*/
 
-#include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.12 2017/02/11 19:33:12 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.13 2018/12/23 15:38:53 christos Exp $");
+
 /* Id: error.c,v 1.14 2016/12/02 18:35:55 tom Exp  */
+#include "defs.h"
 
 /* routines for printing error messages  */
+
 
 __dead void
 fatal(const char *msg)

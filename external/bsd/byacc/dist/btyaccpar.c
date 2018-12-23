@@ -1,8 +1,10 @@
+/*	$NetBSD: btyaccpar.c,v 1.7 2018/12/23 15:38:53 christos Exp $	*/
+
 /* This file generated automatically using
  * Id: skel2c,v 1.4 2016/06/07 00:26:09 tom Exp 
  */
 
-/* Id: btyaccpar.skel,v 1.7 2017/05/01 00:13:19 tom Exp  */
+/* @Id: btyaccpar.skel,v 1.10 2018/05/25 01:03:46 tom Exp @ */
 
 #include "defs.h"
 
@@ -78,8 +80,9 @@ const char *const tables[] =
 const char *const global_vars[] =
 {
     "",
+    "#if YYDEBUG",
     "int      yydebug;",
-    "int      yynerrs;",
+    "#endif",
     0
 };
 
@@ -90,6 +93,8 @@ const char *const impure_vars[] =
     "int      yychar;",
     "YYSTYPE  yyval;",
     "YYSTYPE  yylval;",
+    "int      yynerrs;",
+    "",
     "#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)",
     "YYLTYPE  yyloc; /* position returned by actions */",
     "YYLTYPE  yylloc; /* position from the lexer */",
@@ -232,6 +237,8 @@ const char *const body_vars[] =
     "    int      yychar;",
     "    YYSTYPE  yyval;",
     "    YYSTYPE  yylval;",
+    "    int      yynerrs;",
+    "",
     "#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)",
     "    YYLTYPE  yyloc; /* position returned by actions */",
     "    YYLTYPE  yylloc; /* position from the lexer */",
@@ -436,7 +443,7 @@ const char *const body_2[] =
     "#endif /* YYBTYACC */",
 #endif			/* defined(YYBTYACC) */
     "#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)",
-    "    YYLTYPE  yyerror_loc_range[3]; /* position of error start&end (0 unused) */",
+    "    YYLTYPE  yyerror_loc_range[3]; /* position of error start/end (0 unused) */",
     "#endif",
     "#if YYDEBUG",
     "    const char *yys;",

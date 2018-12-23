@@ -1,4 +1,4 @@
-/*	$NetBSD: err_syntax20.tab.c,v 1.2 2017/02/11 19:33:13 christos Exp $	*/
+/*	$NetBSD: err_syntax20.tab.c,v 1.3 2018/12/23 15:38:54 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -190,13 +190,15 @@ static const char *const err_syntax20_rule[] = {
 };
 #endif
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 
 int      yyerrflag;
 int      yychar;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
+int      yynerrs;
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -245,7 +247,7 @@ yyerror(const char* s)
 {
     printf("%s\n", s);
 }
-#line 247 "err_syntax20.tab.c"
+#line 249 "err_syntax20.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -448,7 +450,7 @@ case 1:
 #line 12 "err_syntax20.y"
 	{ yystack.l_mark[-1].rechk = 3; }
 break;
-#line 450 "err_syntax20.tab.c"
+#line 452 "err_syntax20.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
