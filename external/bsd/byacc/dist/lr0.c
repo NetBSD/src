@@ -1,11 +1,11 @@
-/*	$NetBSD: lr0.c,v 1.11 2018/12/23 15:38:53 christos Exp $	*/
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: lr0.c,v 1.11 2018/12/23 15:38:53 christos Exp $");
+/*	$NetBSD: lr0.c,v 1.12 2018/12/23 20:27:23 jakllsch Exp $	*/
 
 /* Id: lr0.c,v 1.19 2016/06/07 00:21:53 tom Exp  */
 
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: lr0.c,v 1.12 2018/12/23 20:27:23 jakllsch Exp $");
 
 static core *new_state(int symbol);
 static Value_t get_state(int symbol);

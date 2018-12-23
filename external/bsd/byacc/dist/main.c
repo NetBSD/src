@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.15 2018/12/23 15:38:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2018/12/23 20:27:23 jakllsch Exp $	*/
+
+#include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.15 2018/12/23 15:38:53 christos Exp $");
-
+__RCSID("$NetBSD: main.c,v 1.16 2018/12/23 20:27:23 jakllsch Exp $");
 /* Id: main.c,v 1.61 2017/12/04 17:50:02 erik.b.andersen Exp  */
-#include "defs.h"
 
 #include <signal.h>
 #ifndef _WIN32
