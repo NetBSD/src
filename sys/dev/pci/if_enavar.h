@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enavar.h,v 1.6 2018/11/30 14:07:30 jmcneill Exp $	*/
+/*	$NetBSD: if_enavar.h,v 1.7 2018/12/23 12:32:33 jmcneill Exp $	*/
 
 /*-
  * BSD LICENSE
@@ -49,9 +49,9 @@
 
 #ifndef DRV_MODULE_VERSION
 #define DRV_MODULE_VERSION				\
-	__STRING(DRV_MODULE_VER_MAJOR) "."		\
-	__STRING(DRV_MODULE_VER_MINOR) "."		\
-	__STRING(DRV_MODULE_VER_SUBMINOR)
+	___STRING(DRV_MODULE_VER_MAJOR) "."		\
+	___STRING(DRV_MODULE_VER_MINOR) "."		\
+	___STRING(DRV_MODULE_VER_SUBMINOR)
 #endif
 #define DEVICE_NAME	"Elastic Network Adapter (ENA)"
 #define DEVICE_DESC	"ENA adapter"
