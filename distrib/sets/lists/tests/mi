@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.797 2018/12/23 16:40:15 jakllsch Exp $
+# $NetBSD: mi,v 1.798 2018/12/23 21:27:45 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3044,6 +3044,9 @@
 ./usr/tests/lib/libm/t_sqrt			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_tan			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_tanh			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libnvmm				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libnvmm/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libnvmm/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libobjc				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libobjc/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libobjc/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
