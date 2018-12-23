@@ -1,4 +1,4 @@
-/*	$NetBSD: flexint.h,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: flexint.h,v 1.3 2018/12/23 16:27:17 christos Exp $	*/
 
 /* flex integer type definitions */
 
@@ -58,6 +58,10 @@ typedef unsigned int flex_uint32_t;
 #endif
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
+#endif
+
+#ifndef SIZE_MAX
+#define SIZE_MAX               (~(size_t)0)
 #endif
 
 #endif /* ! C99 */

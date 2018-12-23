@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
+/*	$NetBSD: regex.c,v 1.4 2018/12/23 16:27:17 christos Exp $	*/
 
 /** regex - regular expression functions related to POSIX regex lib. */
 
@@ -23,7 +23,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: regex.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
+__RCSID("$NetBSD: regex.c,v 1.4 2018/12/23 16:27:17 christos Exp $");
 
 static const char* REGEXP_LINEDIR = "^#line ([[:digit:]]+) \"(.*)\"";
 static const char* REGEXP_BLANK_LINE = "^[[:space:]]*$";
@@ -55,21 +55,17 @@ void flex_regcomp(regex_t *preg, const char *regex, int cflags)
 	memset (preg, 0, sizeof (regex_t));
 
 	if ((err = regcomp (preg, regex, cflags)) != 0) {
-        const size_t errbuf_sz = 200;
-        char *errbuf, *rxerr;
+		const size_t errbuf_sz = 200;
+		char *errbuf;
+		int n;
 
 		errbuf = malloc(errbuf_sz * sizeof(char));
 		if (!errbuf)
 			flexfatal(_("Unable to allocate buffer to report regcomp"));
-		rxerr = malloc(errbuf_sz * sizeof(char));
-		if (!rxerr)
-			flexfatal(_("Unable to allocate buffer for regerror"));
-		regerror (err, preg, rxerr, errbuf_sz);
-		snprintf (errbuf, errbuf_sz, "regcomp for \"%s\" failed: %s", regex, rxerr);
+		n = snprintf(errbuf, errbuf_sz, "regcomp for \"%s\" failed: ", regex);
+		regerror(err, preg, errbuf+n, errbuf_sz-(size_t)n);
 
-		flexfatal (errbuf);
-        free(errbuf);
-        free(rxerr);
+		flexfatal (errbuf); /* never returns - no need to free(errbuf) */
 	}
 }
 
