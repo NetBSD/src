@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1577 2018/12/19 22:22:16 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1578 2018/12/23 01:24:54 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1704,7 +1704,7 @@ Notes:
 
 Package:	dtc,libfdt
 Version:	1.4.4
-Current Vers:	1.4.6
+Current Vers:	1.4.7
 Maintainer:	David Gibson <david@gibson.dropbear.id.au>, Jon Loeliger <jdl@jdl.com>
 Archive Site:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 Home Page:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
@@ -1717,7 +1717,7 @@ external/gpl2/dtc/dtc2netbsd should be used to create directories to import
 
 Package:	dts
 Version:	4.18-rc2
-Current Vers:	4.18
+Current Vers:	4.19
 Maintainer:	https://www.kernel.org/
 Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
 Home Page:	https://www.kernel.org/
