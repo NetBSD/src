@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.58 2010/11/19 06:44:34 dholland Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.59 2018/12/24 16:04:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -76,26 +76,6 @@ struct vm_page;
 #define	PAGE_FP_FAIL	2	/* mismatch in per-page fingerprints. */
 
 #if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
-
-#if NVERIEXEC > 0
-/* FUTURE: remove this macro entirely - dholland 20100215 */
-#define VERIEXEC_PATH_GET(from, cto, to) \
-	do { \
-			to = NULL; \
-			cto = from; \
-		} \
-	} while (/*CONSTCOND*/0)
-#define VERIEXEC_PATH_PUT(to) \
-	do { \
-		(void)(to); \
-	} while (/*CONSTCOND*/0)
-#else
-#define VERIEXEC_PATH_GET(from, cto, to) \
-	cto = from
-#define VERIEXEC_PATH_PUT(to) \
-	(void)to
-	
-#endif
 
 /*
  * Fingerprint operations vector for Veriexec.
