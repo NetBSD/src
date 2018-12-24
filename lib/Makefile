@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.265 2018/11/13 09:24:37 martin Exp $
+#	$NetBSD: Makefile,v 1.266 2018/12/24 22:02:32 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -54,6 +54,8 @@ SUBDIR+=	libskey
 SUBDIR+=	libnvmm
 .endif
 
+SUBDIR+=	../external/public-domain/sqlite/lib
+
 .if (${MKMDNS} != "no")
 SUBDIR+=	../external/apache2/mDNSResponder/lib
 .endif
@@ -81,8 +83,6 @@ SUBDIR+=        ../external/cddl/osnet/lib/libuutil
 .endif
 
 SUBDIR+=	../external/mit/expat/lib
-
-SUBDIR+=	../external/public-domain/sqlite/lib
 
 SUBDIR+=	../external/gpl2/libmalloc
 
