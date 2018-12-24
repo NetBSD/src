@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.220 2018/12/24 20:39:17 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.221 2018/12/24 20:44:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.220 2018/12/24 20:39:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.221 2018/12/24 20:44:39 mrg Exp $");
+
+/*
+ * below are all the standard NetBSD system calls, in the 32bit
+ * environment, with the necessary conversions to 64bit before calling
+ * the real syscall.  anything that needs special attention is handled
+ * elsewhere - this file should only contain structure assignment and
+ * calls to the original function.
+ */
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -1206,100 +1214,7 @@ netbsd32_rmdir(struct lwp *l, const struct netbsd32_rmdir_args *uap, register_t 
 	return sys_rmdir(l, &ua, retval);
 }
 
-int
-netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(netbsd32_voidp) args;
-	} */
-	struct netbsd32_quotactlargs args32;
-	struct quotactl_args args;
-	int error;
-
-	error = copyin(SCARG_P32(uap, args), &args32, sizeof(args32));
-	if (error) {
-		return error;
-	}
-
-	args.qc_op = args32.qc_op;
-	switch (args.qc_op) {
-	    case QUOTACTL_STAT:
-		args.u.stat.qc_info = NETBSD32PTR64(args32.u.stat.qc_info);
-		break;
-	    case QUOTACTL_IDTYPESTAT:
-		args.u.idtypestat.qc_idtype = args32.u.idtypestat.qc_idtype;
-		args.u.idtypestat.qc_info =
-			NETBSD32PTR64(args32.u.idtypestat.qc_info);
-		break;
-	    case QUOTACTL_OBJTYPESTAT:
-		args.u.objtypestat.qc_objtype =
-			args32.u.objtypestat.qc_objtype;
-		args.u.objtypestat.qc_info =
-			NETBSD32PTR64(args32.u.objtypestat.qc_info);
-		break;
-	    case QUOTACTL_GET:
-		args.u.get.qc_key = NETBSD32PTR64(args32.u.get.qc_key);
-		args.u.get.qc_val = NETBSD32PTR64(args32.u.get.qc_val);
-		break;
-	    case QUOTACTL_PUT:
-		args.u.put.qc_key = NETBSD32PTR64(args32.u.put.qc_key);
-		args.u.put.qc_val = NETBSD32PTR64(args32.u.put.qc_val);
-		break;
-	    case QUOTACTL_DEL:
-		args.u.del.qc_key = NETBSD32PTR64(args32.u.del.qc_key);
-		break;
-	    case QUOTACTL_CURSOROPEN:
-		args.u.cursoropen.qc_cursor =
-			NETBSD32PTR64(args32.u.cursoropen.qc_cursor);
-		break;
-	    case QUOTACTL_CURSORCLOSE:
-		args.u.cursorclose.qc_cursor =
-			NETBSD32PTR64(args32.u.cursorclose.qc_cursor);
-		break;
-	    case QUOTACTL_CURSORSKIPIDTYPE:
-		args.u.cursorskipidtype.qc_cursor =
-			NETBSD32PTR64(args32.u.cursorskipidtype.qc_cursor);
-		args.u.cursorskipidtype.qc_idtype =
-			args32.u.cursorskipidtype.qc_idtype;
-		break;
-	    case QUOTACTL_CURSORGET:
-		args.u.cursorget.qc_cursor =
-			NETBSD32PTR64(args32.u.cursorget.qc_cursor);
-		args.u.cursorget.qc_keys =
-			NETBSD32PTR64(args32.u.cursorget.qc_keys);
-		args.u.cursorget.qc_vals =
-			NETBSD32PTR64(args32.u.cursorget.qc_vals);
-		args.u.cursorget.qc_maxnum =
-			args32.u.cursorget.qc_maxnum;
-		args.u.cursorget.qc_ret =
-			NETBSD32PTR64(args32.u.cursorget.qc_ret);
-		break;
-	    case QUOTACTL_CURSORATEND:
-		args.u.cursoratend.qc_cursor =
-			NETBSD32PTR64(args32.u.cursoratend.qc_cursor);
-		args.u.cursoratend.qc_ret =
-			NETBSD32PTR64(args32.u.cursoratend.qc_ret);
-		break;
-	    case QUOTACTL_CURSORREWIND:
-		args.u.cursorrewind.qc_cursor =
-			NETBSD32PTR64(args32.u.cursorrewind.qc_cursor);
-		break;
-	    case QUOTACTL_QUOTAON:
-		args.u.quotaon.qc_idtype = args32.u.quotaon.qc_idtype;
-		args.u.quotaon.qc_quotafile =
-			NETBSD32PTR64(args32.u.quotaon.qc_quotafile);
-		break;
-	    case QUOTACTL_QUOTAOFF:
-		args.u.quotaoff.qc_idtype = args32.u.quotaoff.qc_idtype;
-		break;
-	    default:
-		return EINVAL;
-	}
-
-	return do_sys_quotactl(SCARG_P32(uap, path), &args);
-}
-
+// XXX new file
 int
 netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, register_t *retval)
 {
@@ -1471,75 +1386,11 @@ netbsd32_fpathconf(struct lwp *l, const struct netbsd32_fpathconf_args *uap, reg
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(name);
+
 	return sys_fpathconf(l, &ua, retval);
 }
 
-static void
-fixlimit(int which, struct rlimit *alim)
-{
-	switch (which) {
-	case RLIMIT_DATA:
-		if (LIMITCHECK(alim->rlim_cur, MAXDSIZ32))
-			alim->rlim_cur = MAXDSIZ32;
-		if (LIMITCHECK(alim->rlim_max, MAXDSIZ32))
-			alim->rlim_max = MAXDSIZ32;
-		return;
-	case RLIMIT_STACK:
-		if (LIMITCHECK(alim->rlim_cur, MAXSSIZ32))
-			alim->rlim_cur = MAXSSIZ32;
-		if (LIMITCHECK(alim->rlim_max, MAXSSIZ32))
-			alim->rlim_max = MAXSSIZ32;
-		return;
-	default:
-		return;
-	}
-}
-
-int
-netbsd32_getrlimit(struct lwp *l, const struct netbsd32_getrlimit_args *uap,
-    register_t *retval)
-{
-	/* {
-		syscallarg(int) which;
-		syscallarg(netbsd32_rlimitp_t) rlp;
-	} */
-	int which = SCARG(uap, which);
-	struct rlimit alim;
-
-	if ((u_int)which >= RLIM_NLIMITS)
-		return EINVAL;
-
-	alim = l->l_proc->p_rlimit[which];
-
-	fixlimit(which, &alim);
-
-	return copyout(&alim, SCARG_P32(uap, rlp), sizeof(alim));
-}
-
-int
-netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap,
-    register_t *retval)
-{
-	/* {
-		syscallarg(int) which;
-		syscallarg(const netbsd32_rlimitp_t) rlp;
-	} */
-		int which = SCARG(uap, which);
-	struct rlimit alim;
-	int error;
-
-	if ((u_int)which >= RLIM_NLIMITS)
-		return EINVAL;
-
-	error = copyin(SCARG_P32(uap, rlp), &alim, sizeof(struct rlimit));
-	if (error)
-		return error;
-
-	fixlimit(which, &alim);
-
-	return dosetrlimit(l, l->l_proc, which, &alim);
-}
-
+// XXX new file
 int
 netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *retval)
 {
@@ -2078,56 +1929,6 @@ netbsd32_ovadvise(struct lwp *l, const struct netbsd32_ovadvise_args *uap, regis
 	NETBSD32TO64_UAP(anom);
 
 	return sys_ovadvise(l, &ua, retval);
-}
-
-void
-netbsd32_adjust_limits(struct proc *p)
-{
-	static const struct {
-		int id;
-		rlim_t lim;
-	} lm[] = {
-		{ RLIMIT_DATA,	MAXDSIZ32 },
-		{ RLIMIT_STACK, MAXSSIZ32 },
-	};
-	size_t i;
-	struct plimit *lim;
-	struct rlimit *rlim;
-
-	/*
-	 * We can only reduce the current limits, we cannot stop external
-	 * processes from changing them (eg via sysctl) later on.
-	 * So there is no point trying to lock out such changes here.
-	 *
-	 * If we assume that rlim_cur/max are accessed using atomic
-	 * operations, we don't need to lock against any other updates
-	 * that might happen if the plimit structure is shared writable
-	 * between multiple processes.
-	 */
-
-	/* Scan to determine is any limits are out of range */
-	lim = p->p_limit;
-	for (i = 0; ; i++) {
-		if (i >= __arraycount(lm))
-			/* All in range */
-			return;
-		rlim = lim->pl_rlimit + lm[i].id;
-		if (LIMITCHECK(rlim->rlim_cur, lm[i].lim))
-			break;
-		if (LIMITCHECK(rlim->rlim_max, lm[i].lim))
-			break;
-	}
-
-	lim_privatise(p);
-
-	lim = p->p_limit;
-	for (i = 0; i < __arraycount(lm); i++) {
-		rlim = lim->pl_rlimit + lm[i].id;
-		if (LIMITCHECK(rlim->rlim_cur, lm[i].lim))
-			rlim->rlim_cur = lm[i].lim;
-		if (LIMITCHECK(rlim->rlim_max, lm[i].lim))
-			rlim->rlim_max = lm[i].lim;
-	}
 }
 
 int
