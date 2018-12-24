@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2017/09/29 12:42:37 maya Exp $
+# $NetBSD: Makefile,v 1.17 2018/12/24 21:42:05 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ TESTS_C+=	t_modcmd
 TESTS_C+=	t_modlinkset
 TESTS_C+=	t_signals
 TESTS_C+=	t_threads
+TESTS_C+=	t_threadpool
 TESTS_C+=	t_tsleep
 TESTS_C+=	t_workqueue
 TESTS_C+=	t_vm
