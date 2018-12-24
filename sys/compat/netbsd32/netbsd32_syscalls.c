@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.136 2018/08/10 21:47:15 pgoyette Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.137 2018/12/24 21:27:06 mrg Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.136 2018/08/10 21:47:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.137 2018/12/24 21:27:06 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -49,7 +49,7 @@ const char *const netbsd32_syscallnames[] = {
 	/*  18 */	"compat_20_netbsd32_getfsstat",
 	/*  19 */	"compat_43_netbsd32_olseek",
 	/*  20 */	"getpid",
-	/*  21 */	"netbsd32_mount",
+	/*  21 */	"compat_40_netbsd32_mount",
 	/*  22 */	"netbsd32_unmount",
 	/*  23 */	"netbsd32_setuid",
 	/*  24 */	"getuid",
@@ -579,7 +579,7 @@ const char *const altnetbsd32_syscallnames[] = {
 	/*  18 */	NULL, /* compat_20_netbsd32_getfsstat */
 	/*  19 */	NULL, /* compat_43_netbsd32_olseek */
 	/*  20 */	NULL, /* getpid */
-	/*  21 */	"mount",
+	/*  21 */	NULL, /* compat_40_netbsd32_mount */
 	/*  22 */	"unmount",
 	/*  23 */	"setuid",
 	/*  24 */	NULL, /* getuid */
