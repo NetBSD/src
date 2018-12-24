@@ -1,7 +1,14 @@
-/*	$NetBSD: ldscript,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: ldscript,v 1.2 2018/12/24 18:21:50 christos Exp $	*/
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 ENTRY(_start)
+
+PHDRS
+{
+  text PT_LOAD;
+  headers PT_PHDR FILEHDR PHDRS;
+}
+
 SECTIONS
 {
   . = 0;
@@ -13,7 +20,7 @@ SECTIONS
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
-  }
+  } :text
   . = ALIGN(4096);
   .sdata :
   {
