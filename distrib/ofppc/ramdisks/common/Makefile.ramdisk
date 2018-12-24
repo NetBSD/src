@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.8 2012/10/16 08:23:21 apb Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.9 2018/12/24 20:11:22 mrg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,6 +17,7 @@ CRUNCHBIN=	ramdiskbin
 LISTS?=		${.CURDIR}/list
 LISTS+=		${OFPPCCOMMON}/list.ramdisk
 MTREECONF=	${DISTRIBDIR}/common/mtree.common ${.CURDIR}/../common/mtree.ramdisk
+MAKEDEVTARGETS=	ramdisk
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		dot.profile \
