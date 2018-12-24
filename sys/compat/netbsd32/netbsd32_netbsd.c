@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.221 2018/12/24 20:44:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.222 2018/12/24 21:27:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,15 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.221 2018/12/24 20:44:39 mrg Exp $");
-
-/*
- * below are all the standard NetBSD system calls, in the 32bit
- * environment, with the necessary conversions to 64bit before calling
- * the real syscall.  anything that needs special attention is handled
- * elsewhere - this file should only contain structure assignment and
- * calls to the original function.
- */
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.222 2018/12/24 21:27:05 mrg Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -73,13 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.221 2018/12/24 20:44:39 mrg Ex
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
-#include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
 #include <sys/quotactl.h>
-#include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
 
 #include <uvm/uvm_extern.h>
@@ -363,30 +353,6 @@ netbsd32_break(struct lwp *l, const struct netbsd32_break_args *uap, register_t 
 	NETBSD32TOP_UAP(nsize, char);
 
 	return sys_obreak(l, &ua, retval);
-}
-
-// XXX move into compat_40
-int
-netbsd32_mount(struct lwp *l, const struct netbsd32_mount_args *uap, register_t *retval)
-{
-#ifdef COMPAT_40
-	/* {
-		syscallarg(const netbsd32_charp) type;
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) flags;
-		syscallarg(netbsd32_voidp) data;
-	} */
-	struct compat_40_sys_mount_args ua;
-
-	NETBSD32TOP_UAP(type, const char);
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(flags);
-	NETBSD32TOP_UAP(data, void);
-
-	return compat_40_sys_mount(l, &ua, retval);
-#else
-	return ENOSYS;
-#endif
 }
 
 int
@@ -1214,71 +1180,6 @@ netbsd32_rmdir(struct lwp *l, const struct netbsd32_rmdir_args *uap, register_t 
 	return sys_rmdir(l, &ua, retval);
 }
 
-// XXX new file
-int
-netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const netbsd32_charp) fname;
-		syscallarg(netbsd32_fhandlep_t) fhp;
-		syscallarg(netbsd32_size_tp) fh_size;
-	} */
-	struct vnode *vp;
-	fhandle_t *fh;
-	int error;
-	struct pathbuf *pb;
-	struct nameidata nd;
-	netbsd32_size_t usz32, sz32;
-	size_t sz;
-
-	/*
-	 * Must be super user
-	 */
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL);
-	if (error)
-		return error;
-
-	error = pathbuf_copyin(SCARG_P32(uap, fname), &pb);
-	if (error) {
-		return error;
-	}
-
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
-	error = namei(&nd);
-	if (error) {
-		pathbuf_destroy(pb);
-		return error;
-	}
-	vp = nd.ni_vp;
-	pathbuf_destroy(pb);
-
-	error = vfs_composefh_alloc(vp, &fh);
-	vput(vp);
-	if (error != 0) {
-		return error;
-	}
-	error = copyin(SCARG_P32(uap, fh_size), &usz32, sizeof(usz32));
-	if (error != 0) {
-		goto out;
-	}
-	sz = FHANDLE_SIZE(fh);
-	sz32 = sz;
-
-	error = copyout(&sz32, SCARG_P32(uap, fh_size), sizeof(sz32));
-	if (error != 0) {
-		goto out;
-	}
-	if (usz32 >= sz32) {
-		error = copyout(fh, SCARG_P32(uap, fhp), sz);
-	} else {
-		error = E2BIG;
-	}
-out:
-	vfs_composefh_free(fh);
-	return error;
-}
-
 int
 netbsd32_pread(struct lwp *l, const struct netbsd32_pread_args *uap, register_t *retval)
 {
@@ -1388,57 +1289,6 @@ netbsd32_fpathconf(struct lwp *l, const struct netbsd32_fpathconf_args *uap, reg
 	NETBSD32TO64_UAP(name);
 
 	return sys_fpathconf(l, &ua, retval);
-}
-
-// XXX new file
-int
-netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(netbsd32_voidp) addr;
-		syscallarg(netbsd32_size_t) len;
-		syscallarg(int) prot;
-		syscallarg(int) flags;
-		syscallarg(int) fd;
-		syscallarg(netbsd32_long) PAD;
-		syscallarg(netbsd32_off_t) pos;
-	} */
-	struct sys_mmap_args ua;
-	int error;
-
-	NETBSD32TOP_UAP(addr, void);
-	NETBSD32TOX_UAP(len, size_t);
-	NETBSD32TO64_UAP(prot);
-	NETBSD32TO64_UAP(flags);
-#ifdef __x86_64__
-	/*
-	 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
-	 * and ld.so did not turn it on!
-	 */
-	if (SCARG(&ua, flags) & COMPAT_MAP_COPY) {
-		SCARG(&ua, flags) = MAP_PRIVATE
-		    | (SCARG(&ua, flags) & ~COMPAT_MAP_COPY);
-		SCARG(&ua, prot) |= PROT_EXEC;
-	}
-#endif
-	NETBSD32TO64_UAP(fd);
-	NETBSD32TOX_UAP(PAD, long);
-	NETBSD32TOX_UAP(pos, off_t);
-#ifdef DEBUG_MMAP
-	printf("mmap(addr=0x%lx, len=0x%lx, prot=0x%lx, flags=0x%lx, "
-	    "fd=%ld, pos=0x%lx);\n",
-	    (long)SCARG(&ua, addr), (long)SCARG(&ua, len),
-	    (long)SCARG(&ua, prot), (long)SCARG(&ua, flags),
-	    (long)SCARG(&ua, fd), (long)SCARG(&ua, pos));
-#endif
-
-	error = sys_mmap(l, &ua, retval);
-	if ((u_long)*retval > (u_long)UINT_MAX) {
-		printf("netbsd32_mmap: retval out of range: 0x%lx\n",
-		    (u_long)*retval);
-		/* Should try to recover and return an error here. */
-	}
-	return error;
 }
 
 int
@@ -2594,29 +2444,6 @@ netbsd32__sched_protect(struct lwp *l,
 	NETBSD32TO64_UAP(priority);
 
 	return sys__sched_protect(l, &ua, retval);
-}
-
-// XXX new file
-int
-netbsd32_pipe2(struct lwp *l, const struct netbsd32_pipe2_args *uap,
-	       register_t *retval)
-{
-	/* {
-		syscallarg(netbsd32_intp) fildes;
-		syscallarg(int) flags;
-	} */
-	int fd[2], error;
-
-	error = pipe1(l, fd, SCARG(uap, flags));
-	if (error != 0)
-		return error;
-
-	error = copyout(fd, SCARG_P32(uap, fildes), sizeof(fd));
-	if (error != 0)
-		return error;
-
-	retval[0] = 0;
-	return 0;
 }
 
 int
