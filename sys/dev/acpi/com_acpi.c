@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.37 2018/12/21 14:51:47 jmcneill Exp $ */
+/* $NetBSD: com_acpi.c,v 1.38 2018/12/24 17:44:40 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.37 2018/12/21 14:51:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.38 2018/12/24 17:44:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,7 +163,8 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	rv = acpi_dsd_integer(aa->aa_node->ad_handle, "clock-frequency", &clock_freq);
+	rv = acpi_dsd_integer(aa->aa_node->ad_handle, "clock-frequency",
+	    &clock_freq);
 	if (ACPI_SUCCESS(rv))
 		sc->sc_frequency = clock_freq;
 	else
@@ -172,7 +173,8 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 
 	if (!ISSET(sc->sc_hwflags, COM_HW_POLL))
-		asc->sc_ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
+		asc->sc_ih = acpi_intr_establish(self,
+		    (intptr_t)aa->aa_node->ad_handle,
 		    IPL_SERIAL, true, comintr, sc, device_xname(self));
 
 	if (!pmf_device_register(self, NULL, com_resume))
