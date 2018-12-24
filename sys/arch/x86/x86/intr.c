@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.139 2018/12/24 14:55:41 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.140 2018/12/24 22:05:45 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.139 2018/12/24 14:55:41 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.140 2018/12/24 22:05:45 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -219,13 +219,6 @@ static SIMPLEQ_HEAD(, intrsource) io_interrupt_sources =
 	SIMPLEQ_HEAD_INITIALIZER(io_interrupt_sources);
 
 static kmutex_t intr_distribute_lock;
-
-#if NIOAPIC > 0 || NACPICA > 0
-static int intr_scan_bus(int, int, intr_handle_t *);
-#if NPCI > 0
-static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
-#endif
-#endif
 
 #if !defined(XEN)
 static int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *,
@@ -372,123 +365,6 @@ intr_calculatemasks(struct cpu_info *ci)
 	for (level = 0; level < NIPL; level++)
 		ci->ci_iunmask[level] = ~ci->ci_imask[level];
 }
-
-/*
- * List to keep track of PCI buses that are probed but not known
- * to the firmware. Used to
- *
- * XXX should maintain one list, not an array and a linked list.
- */
-#if (NPCI > 0) && ((NIOAPIC > 0) || NACPICA > 0)
-struct intr_extra_bus {
-	int bus;
-	pcitag_t *pci_bridge_tag;
-	pci_chipset_tag_t pci_chipset_tag;
-	LIST_ENTRY(intr_extra_bus) list;
-};
-
-LIST_HEAD(, intr_extra_bus) intr_extra_buses =
-    LIST_HEAD_INITIALIZER(intr_extra_buses);
-
-
-void
-intr_add_pcibus(struct pcibus_attach_args *pba)
-{
-	struct intr_extra_bus *iebp;
-
-	iebp = kmem_alloc(sizeof(*iebp), KM_SLEEP);
-	iebp->bus = pba->pba_bus;
-	iebp->pci_chipset_tag = pba->pba_pc;
-	iebp->pci_bridge_tag = pba->pba_bridgetag;
-	LIST_INSERT_HEAD(&intr_extra_buses, iebp, list);
-}
-
-static int
-intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
-		    pci_chipset_tag_t *pc)
-{
-	struct intr_extra_bus *iebp;
-	struct mp_bus *mpb;
-
-	if (bus < 0)
-		return ENOENT;
-
-	if (bus < mp_nbus) {
-		mpb = &mp_busses[bus];
-		if (mpb->mb_pci_bridge_tag == NULL)
-			return ENOENT;
-		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
-		*pc = mpb->mb_pci_chipset_tag;
-		return 0;
-	}
-
-	LIST_FOREACH(iebp, &intr_extra_buses, list) {
-		if (iebp->bus == bus) {
-			if (iebp->pci_bridge_tag == NULL)
-				return ENOENT;
-			*pci_bridge_tag = *iebp->pci_bridge_tag;
-			*pc = iebp->pci_chipset_tag;
-			return 0;
-		}
-	}
-	return ENOENT;
-}
-#endif
-
-#if NIOAPIC > 0 || NACPICA > 0
-/*
- * 'pin' argument pci bus_pin encoding of a device/pin combination.
- */
-int
-intr_find_mpmapping(int bus, int pin, intr_handle_t *handle)
-{
-
-#if NPCI > 0
-	while (intr_scan_bus(bus, pin, handle) != 0) {
-		int dev, func;
-		pcitag_t pci_bridge_tag;
-		pci_chipset_tag_t pc;
-
-		if (intr_find_pcibridge(bus, &pci_bridge_tag, &pc) != 0)
-			return ENOENT;
-		dev = pin >> 2;
-		pin = pin & 3;
-		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
-		pci_decompose_tag(pc, pci_bridge_tag, &bus, &dev, &func);
-		pin |= (dev << 2);
-	}
-	return 0;
-#else
-	return intr_scan_bus(bus, pin, handle);
-#endif
-}
-
-static int
-intr_scan_bus(int bus, int pin, intr_handle_t *handle)
-{
-	struct mp_intr_map *mip, *intrs;
-
-	if (bus < 0 || bus >= mp_nbus)
-		return ENOENT;
-
-	intrs = mp_busses[bus].mb_intrs;
-	if (intrs == NULL)
-		return ENOENT;
-
-	for (mip = intrs; mip != NULL; mip = mip->next) {
-		if (mip->bus_pin == pin) {
-#if NACPICA > 0
-			if (mip->linkdev != NULL)
-				if (mpacpi_findintr_linkdev(mip) != 0)
-					continue;
-#endif
-			*handle = mip->ioapic_ih;
-			return 0;
-		}
-	}
-	return ENOENT;
-}
-#endif
 
 /*
  * Create an interrupt id such as "ioapic0 pin 9". This interrupt id is used
@@ -852,23 +728,6 @@ intr_biglock_wrapper(void *vp)
 #endif /* MULTIPROCESSOR */
 #endif /* XEN */
 
-#if defined(DOM0OPS) || !defined(XEN)
-struct pic *
-intr_findpic(int num)
-{
-#if NIOAPIC > 0
-	struct ioapic_softc *pic;
-
-	pic = ioapic_find_bybase(num);
-	if (pic != NULL)
-		return &pic->sc_pic;
-#endif
-	if (num < NUM_LEGACY_IRQS)
-		return &i8259_pic;
-
-	return NULL;
-}
-#endif
 
 #if !defined(XEN)
 /*
