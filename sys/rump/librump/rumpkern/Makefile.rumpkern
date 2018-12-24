@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.172 2018/12/16 14:06:56 rmind Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.173 2018/12/24 16:58:54 thorpej Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -93,6 +93,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_syscall.c		\
 	kern_sysctl.c		\
 	kern_tc.c		\
+	kern_threadpool.c	\
 	kern_time.c		\
 	kern_timeout.c		\
 	kern_uidinfo.c		\

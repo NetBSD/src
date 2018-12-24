@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.798 2018/12/23 21:27:45 jakllsch Exp $
+# $NetBSD: mi,v 1.799 2018/12/24 16:58:54 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2205,6 +2205,7 @@
 ./usr/tests/kernel/t_subr_prf			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysctl			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysv			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_threadpool			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_time			tests-obsolete		obsolete
 ./usr/tests/kernel/t_timeleft			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_trapsignal			tests-kernel-tests	compattestfile,atf
