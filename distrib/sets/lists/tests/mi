@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.799 2018/12/24 16:58:54 thorpej Exp $
+# $NetBSD: mi,v 1.800 2018/12/24 21:42:05 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3468,6 +3468,7 @@
 ./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_signals		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_sp			tests-rump-tests	atf,rump
+./usr/tests/rump/rumpkern/t_threadpool		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_threads		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_tsleep		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_vm			tests-rump-tests	atf,rump
