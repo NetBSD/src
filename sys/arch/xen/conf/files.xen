@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.172 2018/12/22 07:45:58 cherry Exp $
+#	$NetBSD: files.xen,v 1.173 2018/12/24 21:15:59 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -381,8 +381,6 @@ file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
 file	arch/x86/pci/pci_intr_machdep.c	hypervisor & pci
-file	arch/x86/pci/pci_msi_machdep.c	hypervisor & pci
-file	arch/x86/pci/msipic.c		hypervisor & pci
 file	arch/x86/isa/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
