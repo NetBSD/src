@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.51 2018/10/24 03:59:33 cherry Exp $      */
+/*      $NetBSD: xenevt.c,v 1.52 2018/12/24 14:55:42 cherry Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.51 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.52 2018/12/24 14:55:42 cherry Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -178,12 +178,12 @@ xenevtattach(int n)
 	 * Allocate a loopback event port.
 	 * This helps us massage xenevt_processevt() into the
 	 * callchain at the appropriate level using only
-	 * intr_establish_xname().
+	 * xen_intr_establish_xname().
 	 */
 	evtchn_port_t evtchn = xenevt_alloc_event();
 
 	/* The real objective here is to wiggle into the ih callchain for IPL level */
-	ih = intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
+	ih = xen_intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
 	    xenevt_processevt, NULL, mpsafe, "xenevt");
 
 	KASSERT(ih != NULL);

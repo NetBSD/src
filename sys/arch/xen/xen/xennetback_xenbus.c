@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.72 2018/12/23 12:09:45 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.73 2018/12/24 14:55:42 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.72 2018/12/23 12:09:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.73 2018/12/24 14:55:42 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -385,7 +385,7 @@ xennetback_xenbus_destroy(void *arg)
 
 	if (xneti->xni_ih != NULL) {
 		hypervisor_mask_event(xneti->xni_evtchn);
-		intr_disestablish(xneti->xni_ih);
+		xen_intr_disestablish(xneti->xni_ih);
 		xneti->xni_ih = NULL;
 
 		if (xneti->xni_softintr) {
@@ -556,7 +556,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 	xneti->xni_status = CONNECTED;
 	xen_wmb();
 
-	xneti->xni_ih = intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
+	xneti->xni_ih = xen_intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
 	    IST_LEVEL, IPL_NET, xennetback_evthandler, xneti, false,
 	    xneti->xni_if.if_xname);
 	KASSERT(xneti->xni_ih != NULL);

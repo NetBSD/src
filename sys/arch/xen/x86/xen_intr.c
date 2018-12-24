@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.9 2009/01/16 20:16:47 jym Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.10 2018/12/24 14:55:42 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,9 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.9 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.10 2018/12/24 14:55:42 cherry Exp $");
 
 #include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+
+#include <xen/evtchn.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -112,3 +116,151 @@ x86_write_psl(u_long psl)
 	    	hypervisor_force_callback();
 	}
 }
+
+void *
+xen_intr_establish(int legacy_irq, struct pic *pic, int pin,
+    int type, int level, int (*handler)(void *), void *arg,
+    bool known_mpsafe)
+{
+
+	return xen_intr_establish_xname(legacy_irq, pic, pin, type, level,
+	    handler, arg, known_mpsafe, "XEN");
+}
+
+void *
+xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
+    int type, int level, int (*handler)(void *), void *arg,
+    bool known_mpsafe, const char *xname)
+{
+	const char *intrstr;
+	char intrstr_buf[INTRIDBUF];
+
+	if (pic->pic_type == PIC_XEN) {
+		struct intrhand *rih;
+
+		/*
+		 * event_set_handler interprets `level != IPL_VM' to
+		 * mean MP-safe, so we require the caller to match that
+		 * for the moment.
+		 */
+		KASSERT(known_mpsafe == (level != IPL_VM));
+
+		intrstr = intr_create_intrid(legacy_irq, pic, pin, intrstr_buf,
+		    sizeof(intrstr_buf));
+
+		event_set_handler(pin, handler, arg, level, intrstr, xname);
+
+		rih = kmem_zalloc(sizeof(*rih), cold ? KM_NOSLEEP : KM_SLEEP);
+		if (rih == NULL) {
+			printf("%s: can't allocate handler info\n", __func__);
+			return NULL;
+		}
+
+		/*
+		 * XXX:
+		 * This is just a copy for API conformance.
+		 * The real ih is lost in the innards of
+		 * event_set_handler(); where the details of
+		 * biglock_wrapper etc are taken care of.
+		 * All that goes away when we nuke event_set_handler()
+		 * et. al. and unify with x86/intr.c
+		 */
+		rih->ih_pin = pin; /* port */
+		rih->ih_fun = rih->ih_realfun = handler;
+		rih->ih_arg = rih->ih_realarg = arg;
+		rih->pic_type = pic->pic_type;
+		return rih;
+	} 	/* Else we assume pintr */
+
+#if NPCI > 0 || NISA > 0
+	struct pintrhand *pih;
+	int gsi;
+	int vector, evtchn;
+
+	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
+	    "bad legacy IRQ value: %d", legacy_irq);
+	KASSERTMSG(!(legacy_irq == -1 && pic == &i8259_pic),
+	    "non-legacy IRQon i8259 ");
+
+	gsi = xen_pic_to_gsi(pic, pin);
+
+	intrstr = intr_create_intrid(gsi, pic, pin, intrstr_buf,
+	    sizeof(intrstr_buf));
+
+	vector = xen_vec_alloc(gsi);
+
+	if (irq2port[gsi] == 0) {
+		extern struct cpu_info phycpu_info_primary; /* XXX */
+		struct cpu_info *ci = &phycpu_info_primary;
+
+		pic->pic_addroute(pic, ci, pin, vector, type);
+
+		evtchn = bind_pirq_to_evtch(gsi);
+		KASSERT(evtchn > 0);
+		KASSERT(evtchn < NR_EVENT_CHANNELS);
+		irq2port[gsi] = evtchn + 1;
+		xen_atomic_set_bit(&ci->ci_evtmask[0], evtchn);
+	} else {
+		/*
+		 * Shared interrupt - we can't rebind.
+		 * The port is shared instead.
+		 */
+		evtchn = irq2port[gsi] - 1;
+	}
+
+	pih = pirq_establish(gsi, evtchn, handler, arg, level,
+			     intrstr, xname);
+	pih->pic_type = pic->pic_type;
+	return pih;
+#endif /* NPCI > 0 || NISA > 0 */
+
+	/* FALLTHROUGH */
+	return NULL;
+}
+
+/*
+ * Deregister an interrupt handler.
+ */
+void
+xen_intr_disestablish(struct intrhand *ih)
+{
+
+	if (ih->pic_type == PIC_XEN) {
+		event_remove_handler(ih->ih_pin, ih->ih_realfun,
+		    ih->ih_realarg);
+		kmem_free(ih, sizeof(*ih));
+		return;
+	}
+#if defined(DOM0OPS)
+	/* 
+	 * Cache state, to prevent a use after free situation with
+	 * ih.
+	 */
+
+	struct pintrhand *pih = (struct pintrhand *)ih;
+
+	int pirq = pih->pirq;
+	int port = pih->evtch;
+	KASSERT(irq2port[pirq] != 0);
+
+	pirq_disestablish(pih);
+
+	if (evtsource[port] == NULL) {
+			/*
+			 * Last handler was removed by
+			 * event_remove_handler().
+			 *
+			 * We can safely unbind the pirq now.
+			 */
+
+			port = unbind_pirq_from_evtch(pirq);
+			KASSERT(port == pih->evtch);
+			irq2port[pirq] = 0;
+	}
+#endif
+	return;
+}
+
+__weak_alias(intr_establish, xen_intr_establish);
+__weak_alias(intr_establish_xname, xen_intr_establish_xname);
+__weak_alias(intr_disestablish, xen_intr_disestablish);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.49 2018/10/10 02:34:08 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.50 2018/12/24 14:55:42 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -82,6 +82,13 @@ void xen_broadcast_ipi(uint32_t);
 #define xen_send_ipi(_i1, _i2) (0) /* nothing */
 #define xen_broadcast_ipi(_i1) ((void) 0) /* nothing */
 #endif /* MULTIPROCESSOR */
+
+void *xen_intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *),
+    void *, bool, const char *);
+void *xen_intr_establish(int, struct pic *, int, int, int, int (*)(void *),
+    void *, bool);
+void xen_intr_disestablish(struct intrhand *);
+
 #endif /* !_LOCORE */
 
 #endif /* _XEN_INTR_H_ */
