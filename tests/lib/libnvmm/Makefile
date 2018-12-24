@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2018/12/23 16:40:16 jakllsch Exp $
+# $NetBSD: Makefile,v 1.4 2018/12/24 05:06:45 kre Exp $
 
 NOMAN= # defined
 
 .include <bsd.own.mk>
-.if ${MACHINE} == "amd64"
 
 TESTSDIR=	${TESTSBASE}/lib/libnvmm
 
@@ -12,6 +11,7 @@ LDADD+=	-lnvmm
 
 BINDIR=         ${TESTSDIR}
 
+.if ${MACHINE} == "amd64"
 # Mem Assist
 TESTS_SH=		t_mem_assist
 PROGS=			h_mem_assist
