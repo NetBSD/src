@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.21 2018/08/28 03:34:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.22 2018/12/24 08:26:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.21 2018/08/28 03:34:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.22 2018/12/24 08:26:04 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -97,13 +97,6 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 
 #define IS_BETWEEN(x,y) \
 	(PCI_PRODUCT(pa->pa_id) >= (x) && PCI_PRODUCT(pa->pa_id) <= (y))
-	/*
-	 * NetBSD drm2 needs missing-so-far firmware for Maxwell-based cards:
-	 *   0x1380-0x13bf 	GM107
-	 */
-	if (IS_BETWEEN(0x1380, 0x13bf))
-		return 0;
-
 	/*
 	 * NetBSD drm2 doesn't support Pascal-based cards:
 	 *   0x1580-0x15ff 	GP100
