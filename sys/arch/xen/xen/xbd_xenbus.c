@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.90 2018/10/26 05:33:21 cherry Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.91 2018/12/24 14:55:42 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.90 2018/10/26 05:33:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.91 2018/12/24 14:55:42 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -378,7 +378,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
-	intr_disestablish(sc->sc_ih);
+	xen_intr_disestablish(sc->sc_ih);
 
 	while (xengnt_status(sc->sc_ring_gntref)) {
 		/* XXXSMP */
@@ -413,7 +413,7 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	hypervisor_mask_event(sc->sc_evtchn);
 	sc->sc_backend_status = BLKIF_STATE_SUSPENDED;
-	intr_disestablish(sc->sc_ih);
+	xen_intr_disestablish(sc->sc_ih);
 
 	splx(s);
 
@@ -465,7 +465,7 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	sc->sc_ih = intr_establish_xname(-1, &xen_pic, sc->sc_evtchn, IST_LEVEL,
+	sc->sc_ih = xen_intr_establish_xname(-1, &xen_pic, sc->sc_evtchn, IST_LEVEL,
 	    IPL_BIO, &xbd_handler, sc, false, device_xname(dev));
 	KASSERT(sc->sc_ih != NULL);
 
