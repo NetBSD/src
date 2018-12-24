@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.74 2018/11/18 23:50:48 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.75 2018/12/24 14:55:42 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.74 2018/11/18 23:50:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.75 2018/12/24 14:55:42 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -728,7 +728,7 @@ xen_suspendclocks(struct cpu_info *ci)
 	KASSERT(evtch != -1);
 
 	hypervisor_mask_event(evtch);
-	intr_disestablish(ci->ci_xen_timer_intrhand);
+	xen_intr_disestablish(ci->ci_xen_timer_intrhand);
 	ci->ci_xen_timer_intrhand = NULL;
 
 	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
@@ -763,7 +763,7 @@ xen_resumeclocks(struct cpu_info *ci)
 	snprintf(intr_xname, sizeof(intr_xname), "%s clock",
 	    device_xname(ci->ci_dev));
 	/* XXX sketchy function pointer cast -- fix the API, please */
-	ci->ci_xen_timer_intrhand = intr_establish_xname(-1, &xen_pic, evtch,
+	ci->ci_xen_timer_intrhand = xen_intr_establish_xname(-1, &xen_pic, evtch,
 	    IST_LEVEL, IPL_CLOCK, (int (*)(void *))xen_timer_handler, ci, true,
 	    intr_xname);
 	if (ci->ci_xen_timer_intrhand == NULL)
