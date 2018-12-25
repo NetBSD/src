@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.c,v 1.1 2018/12/24 21:42:05 thorpej Exp $	*/
+/*	$NetBSD: threadpool.c,v 1.2 2018/12/25 21:26:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: threadpool.c,v 1.1 2018/12/24 21:42:05 thorpej Exp $");
+__RCSID("$NetBSD: threadpool.c,v 1.2 2018/12/25 21:26:31 thorpej Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -231,4 +231,9 @@ rumptest_threadpool_job_cancel(void)
 	/* Now wait for the job to finish. */
 	threadpool_cancel_job(pool, &data.job);
 	KASSERT(data.count == FINAL_COUNT);
+	mutex_exit(&data.mutex);
+
+	fini_test_job_data(&data);
+
+	threadpool_put(pool, PRI_NONE);
 }
