@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.44 2018/12/25 06:50:11 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.45 2018/12/25 09:00:26 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.44 2018/12/25 06:50:11 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.45 2018/12/25 09:00:26 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -290,12 +290,12 @@ IDTVEC(doreti)
 2:	/* Check for ASTs on exit to user mode. */
 #if	defined(XEN)
 	movl	%ebx,%eax
-	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax
+	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(XPENDING),%eax
 	jz	3f
 	bsrl	%eax,%eax		/* slow, but not worth optimizing */
-	btrl	%eax,CPUVAR(IPENDING)
-	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
+	btrl	%eax,CPUVAR(XPENDING)
+	movl	CPUVAR(XSOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
 #endif
 3:

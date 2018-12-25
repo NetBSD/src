@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.15 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.16 2018/12/25 09:00:26 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.15 2018/07/14 14:29:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.16 2018/12/25 09:00:26 cherry Exp $");
 #endif
 
 /*
@@ -447,12 +447,12 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 	movl	$.Lalltraps_resume,%esi /* address to resume loop at */
 .Lalltraps_resume:
 	movl	%ebx,%eax		/* get cpl */
-	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
+	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
 	jz	7f
 	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(IPENDING)
-	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
+	btrl	%eax,CPUVAR(XPENDING)
+	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
 7:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
 	jmp	_C_LABEL(trapreturn)
