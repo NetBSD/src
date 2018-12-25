@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.174.10.1 2017/11/02 21:29:53 snj Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.174.10.2 2018/12/25 11:19:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.174.10.1 2017/11/02 21:29:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.174.10.2 2018/12/25 11:19:52 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -525,7 +525,7 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		else
 #endif
 			len = sizeof(struct swapent) * misc;
-		sep = (struct swapent *)kmem_alloc(len, KM_SLEEP);
+		sep = (struct swapent *)kmem_zalloc(len, KM_SLEEP);
 
 		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
 		error = copyout(sep, SCARG(uap, arg), len);
