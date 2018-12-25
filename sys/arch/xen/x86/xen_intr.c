@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.11 2018/12/25 06:50:12 cherry Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.12 2018/12/25 09:00:26 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.11 2018/12/25 06:50:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.12 2018/12/25 09:00:26 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.11 2018/12/25 06:50:12 cherry Exp $")
 #include <sys/cpu.h>
 
 #include <xen/evtchn.h>
+
+#include <uvm/uvm.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -302,6 +304,24 @@ xen_cpu_intr_redistribute(void)
 }
 
 /* MD - called by x86/cpu.c */
+#if defined(INTRSTACKSIZE)
+static inline bool
+redzone_const_or_false(bool x)
+{
+#ifdef DIAGNOSTIC
+	return x;
+#else
+	return false;
+#endif /* !DIAGNOSTIC */
+}
+
+static inline int
+redzone_const_or_zero(int x)
+{
+	return redzone_const_or_false(true) ? x : 0;
+}
+#endif
+
 void
 cpu_intr_init(struct cpu_info *ci)
 {
