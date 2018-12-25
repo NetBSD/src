@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.79 2018/12/20 11:35:32 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.80 2018/12/25 11:26:48 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2086,4 +2086,21 @@ sys/dev/pci/ixgbe/ix_txrx.c			1.51
 
 	Fix TX queue assignment in some cases.
 	[knakahara, ticket #1141]
+
+sys/uvm/uvm_swap.c				1.178 (patch, adapted)
+sys/compat/netbsd32/netbsd32_netbsd.c		(patch)
+
+	Fix kernel info leak in swapctl(2).
+	[maxv, ticket #1142]
+
+sys/arch/mips/mips/fp.S				1.49
+
+	Fix fpu register saves in kernel emulated instructions.
+	[sevan, ticket #1143]
+
+
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.23
+
+	Do not attach too new "turing" based nouveau cards.
+	[maya, ticket #1145]
 
