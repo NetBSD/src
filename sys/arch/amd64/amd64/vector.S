@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.64 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.65 2018/12/25 06:50:11 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -656,7 +656,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 IDTVEC(resume_ ## name ## num)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
-	movq	CPUVAR(ISOURCES) + (num) * 8,%r14			;\
+	movq	CPUVAR(XSOURCES) + (num) * 8,%r14			;\
 1:									\
 	pushq	%r13							;\
 	movl	$num,CPUVAR(ILEVEL)					;\
