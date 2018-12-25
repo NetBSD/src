@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.8.10.1 2018/06/08 10:08:06 martin Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.8.10.2 2018/12/25 11:25:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.8.10.1 2018/06/08 10:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.8.10.2 2018/12/25 11:25:00 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -101,7 +101,7 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	/*
-	 * NetBSD drm2 doesn't support Pascal-based cards:
+	 * NetBSD drm2 doesn't support Pascal, Volta or Turing based cards:
 	 *   0x1580-0x15ff 	GP100
 	 *   0x1b00-0x1b7f 	GP102
 	 *   0x1b80-0x1bff 	GP104
@@ -109,6 +109,9 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 	 *   0x1c80-0x1cff 	GP107
 	 *   0x1d00-0x1d7f 	GP108
 	 *   0x1d80-0x1dff 	GV100
+	 *   0x1e00-0x1e7f 	TU102
+	 *   0x1e80-0x1eff 	TU104
+	 *   0x1f00-0x1f7f 	TU106
 	 */
 	
 	if (IS_BETWEEN(0x1580, 0x15ff) ||
@@ -117,7 +120,10 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 	    IS_BETWEEN(0x1c00, 0x1c7f) ||
 	    IS_BETWEEN(0x1c80, 0x1cff) ||
 	    IS_BETWEEN(0x1d00, 0x1d7f) ||
-	    IS_BETWEEN(0x1d80, 0x1dff))
+	    IS_BETWEEN(0x1d80, 0x1dff) ||
+	    IS_BETWEEN(0x1e00, 0x1e7f) ||
+	    IS_BETWEEN(0x1e80, 0x1eff) ||
+	    IS_BETWEEN(0x1f00, 0x1f7f))
 		return 0;
 #undef IS_BETWEEN
 
