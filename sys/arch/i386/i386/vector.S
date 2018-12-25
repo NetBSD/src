@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.78 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.79 2018/12/25 06:50:11 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.78 2018/07/14 14:29:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.79 2018/12/25 06:50:11 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -899,7 +899,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
-	movl	CPUVAR(ISOURCES) + (num) * 4,%ebp			;\
+	movl	CPUVAR(XSOURCES) + (num) * 4,%ebp			;\
 	movl	$num,CPUVAR(ILEVEL)					;\
 	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\

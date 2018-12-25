@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.33 2018/11/19 10:05:09 kre Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.34 2018/12/25 06:50:12 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.33 2018/11/19 10:05:09 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.34 2018/12/25 06:50:12 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,11 +201,11 @@ stipending(void)
 	}
 
 #if 0
-	if (ci->ci_ipending & 0x1)
+	if (ci->ci_xpending & 0x1)
 		printf("stipending events %08lx mask %08lx ilevel %d ipending %08x\n",
 		    HYPERVISOR_shared_info->events,
 		    HYPERVISOR_shared_info->events_mask, ci->ci_ilevel,
-		    ci->ci_ipending);
+		    ci->ci_xpending);
 #endif
 
 	return (ret);
@@ -287,7 +287,7 @@ do_hypervisor_callback(struct intrframe *regs)
 	if (level != ci->ci_ilevel)
 		printf("hypervisor done %08x level %d/%d ipending %08x\n",
 		    (uint)vci->evtchn_pending_sel,
-		    level, ci->ci_ilevel, ci->ci_ipending);
+		    level, ci->ci_ilevel, ci->ci_xpending);
 #endif
 }
 
@@ -391,8 +391,8 @@ hypervisor_enable_ipl(unsigned int ipl)
 	 * we know that all callback for this event have been processed.
 	 */
 
-	evt_iterate_bits(&ci->ci_isources[ipl]->ipl_evt_mask1,
-	    ci->ci_isources[ipl]->ipl_evt_mask2, NULL, 
+	evt_iterate_bits(&ci->ci_xsources[ipl]->ipl_evt_mask1,
+	    ci->ci_xsources[ipl]->ipl_evt_mask2, NULL,
 	    evt_enable_event, NULL);
 
 }
@@ -408,7 +408,7 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	struct cpu_info *ci = curcpu();
 
 	/* set pending bit for the appropriate IPLs */	
-	ci->ci_ipending |= iplmask;
+	ci->ci_xpending |= iplmask;
 
 	/*
 	 * And set event pending bit for the lowest IPL. As IPL are handled
@@ -419,9 +419,9 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	KASSERT(ipl > 0);
 	ipl--;
 	KASSERT(ipl < NIPL);
-	KASSERT(ci->ci_isources[ipl] != NULL);
-	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
-	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
+	KASSERT(ci->ci_xsources[ipl] != NULL);
+	ci->ci_xsources[ipl]->ipl_evt_mask1 |= 1UL << l1;
+	ci->ci_xsources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
 	if (__predict_false(ci != curcpu())) {
 		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
 			panic("hypervisor_set_ipending: "

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.36 2018/08/22 17:04:36 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.37 2018/12/25 06:50:11 cherry Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -240,7 +240,6 @@ ENTRY(spllower)
 	.align	16
 END(spllower)
 LABEL(spllower_end)
-#endif /* !XEN */
 
 /*
  * void	cx8_spllower(int s);
@@ -280,6 +279,7 @@ LABEL(cx8_spllower_patch)
 END(cx8_spllower_patch)
 END(cx8_spllower)
 LABEL(cx8_spllower_end)
+#endif /* !XEN */
 
 /*
  * void Xspllower(int s);
@@ -308,6 +308,7 @@ IDTVEC(spllower)
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		/* address to resume loop at */
 1:	movl	%ebx,%eax		/* get cpl */
+#if !defined(XEN)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
@@ -316,7 +317,19 @@ IDTVEC(spllower)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RECURSE(%rax)
+#endif
 2:
+#if defined(XEN)
+	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
+	CLI(si)
+	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
+	jz	3f
+	bsrl	%eax,%eax
+	btrl	%eax,CPUVAR(XPENDING)
+	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
+	jmp	*IS_RECURSE(%rax)
+#endif
+3:
 	movl	%ebx,CPUVAR(ILEVEL)
 	STI(si)
 	popq	%r12
@@ -339,6 +352,7 @@ IDTVEC(doreti)
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
+#if !defined(XEN)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax
@@ -347,7 +361,19 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RESUME(%rax)
-2:	/* Check for ASTs on exit to user mode. */
+#endif
+2:
+#if defined(XEN)
+	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
+	CLI(si)
+	andl	CPUVAR(XPENDING),%eax
+	jz	3f
+	bsrl	%eax,%eax		/* slow, but not worth optimizing */
+	btrl	%eax,CPUVAR(XPENDING)
+	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
+	jmp	*IS_RESUME(%rax)
+#endif
+3:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
 	testb	$SEL_RPL,TF_CS(%rsp)
