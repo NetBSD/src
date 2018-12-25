@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.174 2018/12/25 06:50:12 cherry Exp $
+#	$NetBSD: files.xen,v 1.175 2018/12/25 11:56:14 mlelstv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -164,7 +164,6 @@ define apmbus {}
 define pnpbiosbus {}
 define hypervisorbus {}
 define xendevbus {}
-define ipmibus {}
 
 #
 # System bus types
@@ -281,9 +280,7 @@ attach ioapic at ioapicbus
 file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 #IPMI device
-device ipmi : sysmon_envsys, sysmon_wdog
-attach ipmi at ipmibus
-file	arch/x86/x86/ipmi.c		ipmi needs-flag
+file	arch/x86/x86/x86_ipmi.c		ipmi needs-flag
 
 # CPUs
 #

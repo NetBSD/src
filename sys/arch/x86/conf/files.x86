@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.105 2018/12/20 10:33:41 cherry Exp $
+#	$NetBSD: files.x86,v 1.106 2018/12/25 11:56:14 mlelstv Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -25,7 +25,6 @@ defflag	SVS
 define  cpubus { [apid = -1] }
 define	cpufeaturebus {}
 define  ioapicbus { [apid = -1] }
-define  ipmibus {}
 
 # BIOS32 routines
 define	bios32
@@ -146,9 +145,7 @@ file	arch/x86/isa/rtc.c
 file	arch/x86/x86/x86_stub.c
 
 # IPMI device
-device	ipmi: sysmon_envsys, sysmon_wdog
-attach	ipmi at ipmibus
-file	arch/x86/x86/ipmi.c		ipmi needs-flag
+file	arch/x86/x86/x86_ipmi.c		ipmi needs-flag
 
 file	arch/x86/x86/vga_post.c		vga_post
 
