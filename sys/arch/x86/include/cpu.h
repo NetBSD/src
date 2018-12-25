@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.100 2018/11/18 23:50:48 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.101 2018/12/25 06:50:11 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,7 +137,13 @@ struct cpu_info {
 	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
-
+#if defined(XEN)
+	struct intrsource *ci_xsources[NIPL];
+	uint32_t	ci_xmask[NIPL];
+	uint32_t	ci_xunmask[NIPL];
+	uint32_t	ci_xpending; /* XEN doesn't use the cmpxchg8 path */
+#endif
+	
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 
@@ -148,7 +154,6 @@ struct cpu_info {
 	} ci_istate __aligned(8);
 #define ci_ipending	ci_istate.ipending
 #define	ci_ilevel	ci_istate.ilevel
-
 	int		ci_idepth;
 	void *		ci_intrstack;
 	uint32_t	ci_imask[NIPL];

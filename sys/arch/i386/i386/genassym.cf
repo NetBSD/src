@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.107 2018/01/04 14:02:23 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.108 2018/12/25 06:50:11 cherry Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -268,12 +268,14 @@ define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
+if !defined(XEN)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
+define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
+endif
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
-define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_INFO_INTRSTACK	offsetof(struct cpu_info, ci_intrstack)
@@ -372,6 +374,10 @@ define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
+define CPU_INFO_XPENDING	offsetof(struct cpu_info, ci_xpending)
+define CPU_INFO_XMASK		offsetof(struct cpu_info, ci_xmask)
+define CPU_INFO_XUNMASK		offsetof(struct cpu_info, ci_xunmask)
+define CPU_INFO_XSOURCES	offsetof(struct cpu_info, ci_xsources)
 define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
 define START_INFO_FLAGS		offsetof(struct start_info, flags)
 define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console.domU.mfn)

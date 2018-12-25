@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.75 2018/12/24 14:55:42 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.76 2018/12/25 06:50:12 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.75 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76 2018/12/25 06:50:12 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -162,7 +162,7 @@ void
 idle_block(void)
 {
 
-	KASSERT(curcpu()->ci_ipending == 0);
+	KASSERT(curcpu()->ci_xpending == 0);
 	HYPERVISOR_block();
 }
 
