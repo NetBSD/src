@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.206 2017/04/29 01:15:40 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.206.2.1 2018/12/25 11:19:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.206 2017/04/29 01:15:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.206.2.1 2018/12/25 11:19:52 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1770,7 +1770,7 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 	}
 
 	ksep_len = sizeof(*ksep) * count;
-	ksep = kmem_alloc(ksep_len, KM_SLEEP);
+	ksep = kmem_zalloc(ksep_len, KM_SLEEP);
 	usep32 = (struct netbsd32_swapent *)SCARG(uap, arg);
 
 	uvm_swap_stats(SWAP_STATS, ksep, count, retval);
