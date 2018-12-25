@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.2 2018/12/25 02:17:07 kre Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.3 2018/12/25 05:44:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.2 2018/12/25 02:17:07 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.3 2018/12/25 05:44:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,20 +102,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.2 2018/12/25 02:17:07 kre Exp 
 
 static ONCE_DECL(threadpool_init_once)
 
-#ifdef DIAGNOSTIC
 #define	THREADPOOL_INIT()					\
 do {								\
-	int threadpool_init_error =				\
+	int threadpool_init_error __diagused =			\
 	    RUN_ONCE(&threadpool_init_once, threadpools_init);	\
 	KASSERT(threadpool_init_error == 0);			\
 } while (/*CONSTCOND*/0)
-#else
-#define	THREADPOOL_INIT()					\
-do {								\
-	RUN_ONCE(&threadpool_init_once, threadpools_init);	\
-} while (/*CONSTCOND*/0)
-#endif
-
+	
 
 /* Data structures */
 
@@ -731,7 +724,7 @@ threadpool_job_hold(threadpool_job_impl_t *job)
 			return EBUSY;
 	} while (atomic_cas_uint(&job->job_refcnt, refcnt, (refcnt + 1))
 	    != refcnt);
-
+	
 	return 0;
 }
 
