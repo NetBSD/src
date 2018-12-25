@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.123 2018/12/18 18:37:50 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.124 2018/12/25 11:34:48 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5630,4 +5630,11 @@ usr.bin/telnet/utilities.c			1.24
 
 	Switch some sprintf to snprintf.
 	[maya, ticket #1665]
+
+sys/uvm/uvm_swap.c				1.178 (patch, adapted)
+sys/compat/netbsd32/netbsd32_netbsd.c		(patch)
+
+	Fix kernel info leak in swapctl(2).
+	[maxv, ticket #1666]
+
 
