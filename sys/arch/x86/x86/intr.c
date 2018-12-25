@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.140 2018/12/24 22:05:45 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.141 2018/12/25 06:50:12 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.140 2018/12/24 22:05:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.141 2018/12/25 06:50:12 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -188,13 +188,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.140 2018/12/24 22:05:45 cherry Exp $");
 #define msipic_is_msi_pic(PIC)	(false)
 #endif
 
-#if defined(XEN) /* XXX: Cleanup */
-#include <xen/xen.h>
-#include <xen/hypervisor.h>
-#include <xen/evtchn.h>
-#include <xen/xenfunc.h>
-#endif /* XEN */
-
 #ifdef DDB
 #include <ddb/db_output.h>
 #endif
@@ -220,7 +213,6 @@ static SIMPLEQ_HEAD(, intrsource) io_interrupt_sources =
 
 static kmutex_t intr_distribute_lock;
 
-#if !defined(XEN)
 static int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *,
 				  struct intrsource *);
 static int __noinline intr_allocate_slot(struct pic *, int, int,
@@ -231,13 +223,10 @@ static void intr_source_free(struct cpu_info *, int, struct pic *, int);
 
 static void intr_establish_xcall(void *, void *);
 static void intr_disestablish_xcall(void *, void *);
-#endif
 
 static const char *legacy_intr_string(int, char *, size_t, struct pic *);
 
-#if defined(XEN) /* XXX: nuke conditional after integration */
 static const char *xen_intr_string(int, char *, size_t, struct pic *);
-#endif /* XXX: XEN */
 
 #if defined(INTRSTACKSIZE)
 static inline bool redzone_const_or_false(bool);
@@ -248,18 +237,14 @@ static void intr_redistribute_xc_t(void *, void *);
 static void intr_redistribute_xc_s1(void *, void *);
 static void intr_redistribute_xc_s2(void *, void *);
 static bool intr_redistribute(struct cpu_info *);
-
 static struct intrsource *intr_get_io_intrsource(const char *);
 static void intr_free_io_intrsource_direct(struct intrsource *);
-#if !defined(XEN)
 static int intr_num_handlers(struct intrsource *);
-
 static int intr_find_unused_slot(struct cpu_info *, int *);
 static void intr_activate_xcall(void *, void *);
 static void intr_deactivate_xcall(void *, void *);
 static void intr_get_affinity(struct intrsource *, kcpuset_t *);
 static int intr_set_affinity(struct intrsource *, const kcpuset_t *);
-#endif /* XEN */
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -268,7 +253,6 @@ static int intr_set_affinity(struct intrsource *, const kcpuset_t *);
 void
 intr_default_setup(void)
 {
-#if !defined(XEN)
 	int i;
 
 	/* icu vectors */
@@ -282,9 +266,6 @@ intr_default_setup(void)
 	 */
 	i8259_default_setup();
 
-#else
-	events_default_setup();
-#endif /* !XEN */
 	mutex_init(&intr_distribute_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -396,14 +377,10 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t l
 #endif /* __HAVE_PCI_MSI_MSIX */	
 #endif
 
-#if defined(XEN)
-	evtchn_port_t port = pin; /* Port number */
-
 	if (pic->pic_type == PIC_XEN) {
-		ih = pin;
-		return xen_intr_string(port, buf, len, pic);
+		ih = pin;	/* Port == pin */
+		return xen_intr_string(pin, buf, len, pic);
 	}
-#endif
 
 	/*
 	 * If the device is pci, "legacy_irq" is alway -1. Least 8 bit of "ih"
@@ -523,7 +500,6 @@ intr_free_io_intrsource(const char *intrid)
 	intr_free_io_intrsource_direct(isp);
 }
 
-#if !defined(XEN)
 static int
 intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		       int *index, struct intrsource *chained)
@@ -726,10 +702,7 @@ intr_biglock_wrapper(void *vp)
 	return ret;
 }
 #endif /* MULTIPROCESSOR */
-#endif /* XEN */
 
-
-#if !defined(XEN)
 /*
  * Append device name to intrsource. If device A and device B share IRQ number,
  * the device name of the interrupt id is "device A, device B".
@@ -1099,22 +1072,17 @@ intr_disestablish(struct intrhand *ih)
 	kmem_free(ih, sizeof(*ih));
 }
 
-#endif /* !XEN */
-
-#if defined(XEN) /* nuke conditional post integration */
 static const char *
 xen_intr_string(int port, char *buf, size_t len, struct pic *pic)
 {
 	KASSERT(pic->pic_type == PIC_XEN);
 
 	KASSERT(port >= 0);
-	KASSERT(port < NR_EVENT_CHANNELS);
 
 	snprintf(buf, len, "%s channel %d", pic->pic_name, port);
 
 	return buf;
 }
-#endif /* XEN */
 
 static const char *
 legacy_intr_string(int ih, char *buf, size_t len, struct pic *pic)
@@ -1212,7 +1180,6 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-#if !defined(XEN)
 #if (NLAPIC > 0) || defined(MULTIPROCESSOR) || defined(__HAVE_PREEMPTION)
 	struct intrsource *isp;
 #endif
@@ -1262,13 +1229,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #endif
 	intr_calculatemasks(ci);
-
-#else /* XEN */
-	int i; /* XXX: duplicate */
-	ci->ci_iunmask[0] = 0xfffffffe;
-	for (i = 1; i < NIPL; i++)
-		ci->ci_iunmask[i] = ci->ci_iunmask[i - 1] & ~(1 << i);
-#endif /* XEN */
 
 #if defined(INTRSTACKSIZE)
 	vaddr_t istack;
@@ -1627,9 +1587,6 @@ cpu_intr_redistribute(void)
 	KASSERT(mutex_owned(&cpu_lock));
 	KASSERT(mp_online);
 
-#if defined(XEN) /* XXX: remove */
-	return;
-#endif
 	/* Direct interrupts away from shielded CPUs. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if ((ci->ci_schedstate.spc_flags & SPCF_NOINTR) == 0) {
@@ -1652,7 +1609,6 @@ cpu_intr_count(struct cpu_info *ci)
 	return ci->ci_nintrhand;
 }
 
-#if !defined(XEN)
 static int
 intr_find_unused_slot(struct cpu_info *ci, int *index)
 {
@@ -1993,8 +1949,6 @@ interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
 	mutex_exit(&cpu_lock);
 }
 
-#endif /* XEN */
-
 /*
  * MI interface for subr_interrupt.c
  */
@@ -2014,8 +1968,6 @@ interrupt_get_available(kcpuset_t *cpuset)
 	}
 	mutex_exit(&cpu_lock);
 }
-
-#if !defined(XEN)
 
 /*
  * MI interface for subr_interrupt.c
@@ -2162,7 +2114,6 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 
 	return ii_handler;
 }
-#endif /* !XEN */
 
 /*
  * MI interface for subr_interrupt.c

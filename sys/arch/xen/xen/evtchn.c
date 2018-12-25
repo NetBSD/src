@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.82 2018/10/26 05:33:21 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.83 2018/12/25 06:50:12 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.82 2018/10/26 05:33:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.83 2018/12/25 06:50:12 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -372,7 +372,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	while (ih != NULL) {
 		if (ih->ih_cpu != ci) {
 			hypervisor_send_event(ih->ih_cpu, evtch);
-			iplmask &= ~IUNMASK(ci, ih->ih_level);
+			iplmask &= ~XUNMASK(ci, ih->ih_level);
 			ih = ih->ih_evt_next;
 			continue;
 		}
@@ -388,7 +388,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			mutex_spin_exit(&evtlock[evtch]);
 			goto splx;
 		}
-		iplmask &= ~IUNMASK(ci, ih->ih_level);
+		iplmask &= ~XUNMASK(ci, ih->ih_level);
 		ci->ci_ilevel = ih->ih_level;
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
@@ -406,15 +406,15 @@ splx:
 	 * C version of spllower(). ASTs will be checked when
 	 * hypevisor_callback() exits, so no need to check here.
 	 */
-	iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
+	iplmask = (XUNMASK(ci, ilevel) & ci->ci_xpending);
 	while (iplmask != 0) {
 		iplbit = 1 << (NIPL - 1);
 		i = (NIPL - 1);
 		while (iplmask != 0 && i > ilevel) {
 			while (iplmask & iplbit) {
-				ci->ci_ipending &= ~iplbit;
+				ci->ci_xpending &= ~iplbit;
 				ci->ci_ilevel = i;
-				for (ih = ci->ci_isources[i]->is_handlers;
+				for (ih = ci->ci_xsources[i]->is_handlers;
 				    ih != NULL; ih = ih->ih_next) {
 					KASSERT(ih->ih_cpu == ci);
 					sti();
@@ -425,7 +425,7 @@ splx:
 				hypervisor_enable_ipl(i);
 				/* more pending IPLs may have been registered */
 				iplmask =
-				    (IUNMASK(ci, ilevel) & ci->ci_ipending);
+				    (XUNMASK(ci, ilevel) & ci->ci_xpending);
 			}
 			i--;
 			iplbit >>= 1;
@@ -938,7 +938,7 @@ event_set_iplhandler(struct cpu_info *ci,
 	struct intrsource *ipls;
 
 	KASSERT(ci == ih->ih_cpu);
-	if (ci->ci_isources[level] == NULL) {
+	if (ci->ci_xsources[level] == NULL) {
 		ipls = kmem_zalloc(sizeof (struct intrsource),
 		    KM_NOSLEEP);
 		if (ipls == NULL)
@@ -946,9 +946,9 @@ event_set_iplhandler(struct cpu_info *ci,
 		ipls->is_recurse = xenev_stubs[level].ist_recurse;
 		ipls->is_resume = xenev_stubs[level].ist_resume;
 		ipls->is_handlers = ih;
-		ci->ci_isources[level] = ipls;
+		ci->ci_xsources[level] = ipls;
 	} else {
-		ipls = ci->ci_isources[level];
+		ipls = ci->ci_xsources[level];
 		ih->ih_next = ipls->is_handlers;
 		ipls->is_handlers = ih;
 	}
@@ -981,7 +981,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	ci = ih->ih_cpu;
 	*ihp = ih->ih_evt_next;
 
-	ipls = ci->ci_isources[ih->ih_level];
+	ipls = ci->ci_xsources[ih->ih_level];
 	for (ihp = &ipls->is_handlers, ih = ipls->is_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_next, ih = ih->ih_next) {
@@ -1046,7 +1046,7 @@ xen_debug_handler(void *arg)
 	struct cpu_info *ci = curcpu();
 	int i;
 	int xci_ilevel = ci->ci_ilevel;
-	int xci_ipending = ci->ci_ipending;
+	int xci_xpending = ci->ci_xpending;
 	int xci_idepth = ci->ci_idepth;
 	u_long upcall_pending = ci->ci_vcpu->evtchn_upcall_pending;
 	u_long upcall_mask = ci->ci_vcpu->evtchn_upcall_mask;
@@ -1063,8 +1063,8 @@ xen_debug_handler(void *arg)
 
 	__insn_barrier();
 	printf("debug event\n");
-	printf("ci_ilevel 0x%x ci_ipending 0x%x ci_idepth %d\n",
-	    xci_ilevel, xci_ipending, xci_idepth);
+	printf("ci_ilevel 0x%x ci_xpending 0x%x ci_idepth %d\n",
+	    xci_ilevel, xci_xpending, xci_idepth);
 	printf("evtchn_upcall_pending %ld evtchn_upcall_mask %ld"
 	    " evtchn_pending_sel 0x%lx\n",
 		upcall_pending, upcall_mask, pending_sel);
