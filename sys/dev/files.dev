@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.4 2017/11/01 19:34:45 mlelstv Exp $
+#	$NetBSD: files.dev,v 1.5 2018/12/25 11:56:13 mlelstv Exp $
 
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
@@ -25,3 +25,4 @@ file	dev/rndpseudo.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
 file	dev/vnd.c			vnd
+file	dev/ipmi.c			ipmi			needs-flag

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1219 2018/12/19 13:57:52 maxv Exp $
+#	$NetBSD: files,v 1.1220 2018/12/25 11:56:14 mlelstv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -337,6 +337,7 @@ define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
+define	ipmibus		{ }
 
 # speaker devices, attaches to audio or pcppi drivers
 device	spkr: wsbelldev
@@ -1466,6 +1467,10 @@ include "dev/dm/files.dm"
 
 # LED framework
 file	dev/led.c			leds
+
+# IPMI
+device	ipmi: sysmon_envsys, sysmon_wdog
+attach	ipmi at ipmibus
 
 #
 # File systems
