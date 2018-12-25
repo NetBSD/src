@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.48 2017/02/27 06:57:45 chs Exp $	*/
+/*	$NetBSD: fp.S,v 1.48.6.1 2018/12/25 11:22:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2827,6 +2827,7 @@ fpe_trap:
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
 	 */
 	REG_S	a2, CALLFRAME_SIZ + 3*SZREG(sp)
+	move	a0, MIPS_CURLWP			# get current lwp
 	jal	_C_LABEL(fpu_save)		# on RM5231
 
 	REG_L	a2, CALLFRAME_SIZ + 3*SZREG(sp)
