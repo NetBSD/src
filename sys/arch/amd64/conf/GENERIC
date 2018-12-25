@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.513 2018/12/14 22:00:26 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.514 2018/12/25 11:56:14 mlelstv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.513 $"
+#ident		"GENERIC-$Revision: 1.514 $"
 
 maxusers	64		# estimated number of users
 
@@ -288,6 +288,8 @@ config		netbsd	root on ? type ?
 
 #IPMI support
 ipmi0		at mainbus?
+ipmi_acpi*	at acpi?
+ipmi0		at ipmi_acpi?
 
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0		at mainbus0
@@ -365,8 +367,8 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-#amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
-#hpet*	at amdpcib?
+amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+hpet*	at amdpcib?
 
 pwdog*	at pci? dev ? function ?	# QUANCOM PWDOG1
 

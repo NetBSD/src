@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.161 2018/12/22 07:45:58 cherry Exp $
+# $NetBSD: XEN3_DOM0,v 1.162 2018/12/25 11:56:14 mlelstv Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.161 $"
+#ident		"XEN3_DOM0-$Revision: 1.162 $"
 
 maxusers	32		# estimated number of users
 
@@ -192,6 +192,8 @@ cpu* at mainbus?
 
 # IPMI support
 ipmi0		at mainbus?
+ipmi_acpi*	at acpi?
+ipmi0		at ipmi_acpi? 
 
 hypervisor*	at mainbus?		# Xen hypervisor
 
