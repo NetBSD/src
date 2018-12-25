@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.271 2018/12/18 18:11:34 kamil Exp $
+# $NetBSD: mi,v 1.272 2018/12/25 07:52:53 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2334,6 +2334,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_signals.debug		tests-syscall-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_threadpool.debug		tests-sys-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_threads.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_tsleep.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_vm.debug			tests-syscall-debug	debug,atf,rump
@@ -2341,15 +2342,15 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_basic.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf,rump
-./usr/libdata/debug/usr/tests/sys					tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/net					tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/net/t_print.debug			tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netatalk				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netatalk/t_print.debug		tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet/t_print.debug		tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet6				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet6/t_print.debug		tests-syys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys					tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/net					tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/net/t_print.debug			tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netatalk				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netatalk/t_print.debug		tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet/t_print.debug		tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet6				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet6/t_print.debug		tests-sys-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-obsolete		obsolete,compattestfile
