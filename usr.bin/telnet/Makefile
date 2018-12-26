@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2018/02/25 00:16:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.53.2.1 2018/12/26 14:02:11 pgoyette Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -50,7 +50,7 @@ LDADD+= -lterminfo ${LIBTELNETDIR}/libtelnet.a
 DPADD+=	${LIBTERMINFO} ${LIBTELNETDIR}/libtelnet.a
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
-	terminal.c tn3270.c utilities.c
+	terminal.c utilities.c
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib
 CPPFLAGS+=-DIPSEC

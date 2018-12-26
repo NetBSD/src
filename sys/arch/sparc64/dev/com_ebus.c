@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.33 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.33.52.1 2018/12/26 14:01:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.33 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.33.52.1 2018/12/26 14:01:43 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,7 +137,7 @@ com_ebus_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map register space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	sc->sc_hwflags = 0;
 	sc->sc_frequency = BAUD_BASE;

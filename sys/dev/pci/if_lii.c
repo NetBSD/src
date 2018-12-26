@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.17.14.1 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.17.14.2 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.17.14.1 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.17.14.2 2018/12/26 14:01:50 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -293,7 +293,8 @@ lii_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, lii_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_NET, lii_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt");
 		if (intrstr != NULL)

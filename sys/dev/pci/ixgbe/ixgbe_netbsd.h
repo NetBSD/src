@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.7.12.1 2018/05/02 07:20:11 pgoyette Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.7.12.2 2018/12/26 14:02:01 pgoyette Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,6 @@
 #define	IXGBE_LEGACY_TX	1
 #endif
 
-#define	ETHERCAP_VLAN_HWFILTER	0
 #define	ETHERCAP_VLAN_HWCSUM	0
 #define	MJUM9BYTES	(9 * 1024)
 #define	MJUM16BYTES	(16 * 1024)
@@ -95,5 +94,7 @@ void ixgbe_dmamap_unload(ixgbe_dma_tag_t *, bus_dmamap_t);
 
 struct mbuf *ixgbe_getjcl(ixgbe_extmem_head_t *, int, int, int, size_t);
 void ixgbe_pci_enable_busmaster(pci_chipset_tag_t, pcitag_t);
+
+u_int atomic_load_acq_uint(volatile u_int *);
 
 #endif /* _IXGBE_NETBSD_H */

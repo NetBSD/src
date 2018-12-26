@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.59.2.2 2018/11/26 01:49:54 pgoyette Exp $	*/
+/*	$NetBSD: redir.c,v 1.59.2.3 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.59.2.2 2018/11/26 01:49:54 pgoyette Exp $");
+__RCSID("$NetBSD: redir.c,v 1.59.2.3 2018/12/26 14:01:03 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -721,7 +721,7 @@ static const struct flgnames {
 #ifdef O_RSYNC
 	{ "rsync",	2,	O_RSYNC		},
 #endif
-#ifdef O_ALTIO
+#ifdef O_ALT_IO
 	{ "altio",	2,	O_ALT_IO	},
 #endif
 #ifdef O_DIRECT

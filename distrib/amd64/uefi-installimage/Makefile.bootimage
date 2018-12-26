@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.6.14.2 2018/11/26 01:49:55 pgoyette Exp $
+#	$NetBSD: Makefile.bootimage,v 1.6.14.3 2018/12/26 14:01:10 pgoyette Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -34,9 +34,6 @@
 #		Basename of the image
 #
 # Optional variables:
-#	BOOTDISK
-#		device name of target bootable disk specified in /etc/fstab
-#		(default: sd0)
 #	USE_MBR
 #		set yes if target disk image requires MBR partition
 #		(default: no)
@@ -158,7 +155,6 @@ RM?=		rm
 #
 # common definitions for image
 #
-BOOTDISK?=	sd0
 USE_MBR?=	no
 USE_GPT?=	no
 USE_SUNLABEL?=	no
@@ -276,22 +272,21 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 .if ${USE_GPT} != "no"
 .if ${OMIT_SWAPIMG} == "no"
 	${TOOL_SED}							\
-	    -e "s/\/dev\/@@BOOTDISK@@a/NAME=${BOOTDISK_UUID}/"		\
-	    -e "s/\/dev\/@@BOOTDISK@@b/NAME=${SWAPDISK_UUID}/"		\
+	    -e "s/ROOT.a/NAME=${BOOTDISK_UUID}/"			\
+	    -e "s/ROOT.b/NAME=${SWAPDISK_UUID}/"			\
 	    < ${FSTAB_IN} > ${WORKFSTAB}
 .else
 	${TOOL_SED}							\
-	    -e "s/\/dev\/@@BOOTDISK@@a/NAME=${BOOTDISK_UUID}/"		\
-	    -e "/@@BOOTDISK@@b/d"					\
+	    -e "s/ROOT.a/NAME=${BOOTDISK_UUID}/"			\
+	    -e "/ROOT.b/d"						\
 	    < ${FSTAB_IN} > ${WORKFSTAB}
 .endif
 .else	# USE_GPT == "no"
 .if ${OMIT_SWAPIMG} == "no"
-	${TOOL_SED} "s/@@BOOTDISK@@/${BOOTDISK}/" < ${FSTAB_IN} > ${WORKFSTAB}
+	${TOOL_SED} < ${FSTAB_IN} > ${WORKFSTAB}
 .else
 	${TOOL_SED}							\
-	    -e "s/@@BOOTDISK@@/${BOOTDISK}/"				\
-	    -e "/@@BOOTDISK@@b/d"					\
+	    -e "/ROOT.b/d"						\
 	    < ${FSTAB_IN} > ${WORKFSTAB}
 .endif
 .endif	# USE_GPT != "no"

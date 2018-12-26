@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3duart.c,v 1.3.52.1 2018/09/06 06:55:39 pgoyette Exp $	*/
+/*	$NetBSD: pq3duart.c,v 1.3.52.2 2018/12/26 14:01:41 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3duart.c,v 1.3.52.1 2018/09/06 06:55:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3duart.c,v 1.3.52.2 2018/12/26 14:01:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -114,7 +114,7 @@ com_pq3duart_match(device_t parent, cfdata_t cfdata, void *aux)
 	if (bus_space_map(memt, addr, size, 0, &memh))
 		return 0;
 
-	COM_INIT_REGS(regs, memt, memh, addr);
+	com_init_regs(&regs, memt, memh, addr);
 
 	int rv = com_probe_subr(&regs);
 
@@ -212,7 +212,7 @@ com_pq3duart_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	COM_INIT_REGS(sc->sc_regs, memt, memh, addr);
+	com_init_regs(&sc->sc_regs, memt, memh, addr);
 	sc->sc_regs.cr_nports = size;
 
 	com_attach_subr(sc);

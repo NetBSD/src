@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.15.2.1 2018/10/15 11:57:05 pgoyette Exp $	*/
+/*	$NetBSD: socket.h,v 1.15.2.2 2018/12/26 14:01:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -38,7 +38,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_linux.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_ultrix.h"
 #include "opt_compat_43.h"
 #include "opt_modular.h"

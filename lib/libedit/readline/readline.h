@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.42.2.1 2018/06/25 07:25:35 pgoyette Exp $	*/
+/*	$NetBSD: readline.h,v 1.42.2.2 2018/12/26 14:01:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -211,6 +211,8 @@ char	       **rl_completion_matches(const char *, rl_compentry_func_t *);
 void		 rl_forced_update_display(void);
 int		 rl_set_prompt(const char *);
 int		 rl_on_new_line(void);
+void		 rl_reset_after_signal(void);
+void		 rl_echo_signal_char(int);
 
 /*
  * The following are not implemented

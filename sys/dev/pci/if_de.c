@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.150.14.4 2018/09/06 06:55:51 pgoyette Exp $	*/
+/*	$NetBSD: if_de.c,v 1.150.14.5 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.4 2018/09/06 06:55:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.5 2018/12/26 14:01:50 pgoyette Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5869,8 +5869,8 @@ tulip_pci_attach(
 		return;
 	    }
 	    intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
-	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-					      intr_rtn, sc);
+	    sc->tulip_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle,
+		IPL_NET, intr_rtn, sc, device_xname(self));
 	    if (sc->tulip_ih == NULL) {
 		aprint_error_dev(sc->tulip_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)

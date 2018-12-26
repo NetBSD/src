@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.26.14.2 2018/11/26 01:52:32 pgoyette Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.26.14.3 2018/12/26 14:01:50 pgoyette Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26.14.2 2018/11/26 01:52:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26.14.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -1819,8 +1819,8 @@ cas_estintr(struct cas_softc *sc, int what)
 	/* PCI interrupts */
 	if (what & CAS_INTR_PCI) {
 		intrstr = pci_intr_string(sc->sc_pc, sc->sc_handle, intrbuf, sizeof(intrbuf));
-		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_handle,
-		    IPL_NET, cas_intr, sc);
+		sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, sc->sc_handle,
+		    IPL_NET, cas_intr, sc, device_xname(sc->sc_dev));
 		if (sc->sc_ih == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to establish interrupt");

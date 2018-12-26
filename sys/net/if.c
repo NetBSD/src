@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.17 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.18 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.17 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.18 2018/12/26 14:02:04 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -149,6 +149,11 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.17 2018/11/26 01:52:50 pgoyette Exp $
 #include "ether.h"
 #include "fddi.h"
 #include "token.h"
+
+#include "bridge.h"
+#if NBRIDGE > 0
+#include <net/if_bridgevar.h>
+#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -2903,40 +2908,41 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		/* Pre-compute the checksum flags mask. */
 		ifp->if_csum_flags_tx = 0;
 		ifp->if_csum_flags_rx = 0;
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_IPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_IPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_TCPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_UDPv4;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_TCPv6;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_TCPv6;
-		}
 
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Tx)
 			ifp->if_csum_flags_tx |= M_CSUM_UDPv6;
-		}
-		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) {
+		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx)
 			ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
-		}
+
+		if (ifp->if_capenable & IFCAP_TSOv4)
+			ifp->if_csum_flags_tx |= M_CSUM_TSOv4;
+		if (ifp->if_capenable & IFCAP_TSOv6)
+			ifp->if_csum_flags_tx |= M_CSUM_TSOv6;
+
+#if NBRIDGE > 0
+		if (ifp->if_bridge != NULL)
+			bridge_calc_csum_flags(ifp->if_bridge);
+#endif
+
 		if (ifp->if_flags & IFF_UP)
 			return ENETRESET;
 		return 0;
@@ -3236,6 +3242,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCSLIFPHYADDR:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCSETHERCAP:
 	case SIOCSIFMEDIA:
 	case SIOCSDRVSPEC:
 	case SIOCG80211:

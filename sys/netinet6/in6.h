@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.90.2.2 2018/09/06 06:56:45 pgoyette Exp $	*/
+/*	$NetBSD: in6.h,v 1.90.2.3 2018/12/26 14:02:05 pgoyette Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #endif
 
 #include <sys/socket.h>
+#include <sys/endian.h>		/* ntohl */
 
 /*
  * Identification of the network protocol stack

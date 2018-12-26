@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.59 2016/07/07 06:55:41 msaitoh Exp $      */
+/*      $NetBSD: esm.c,v 1.59.16.1 2018/12/26 14:01:49 pgoyette Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.59 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.59.16.1 2018/12/26 14:01:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1629,7 +1629,8 @@ esm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	ess->ih = pci_intr_establish(pc, ih, IPL_AUDIO, esm_intr, self);
+	ess->ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, esm_intr, self,
+	    device_xname(self));
 	if (ess->ih == NULL) {
 		aprint_error_dev(ess->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)

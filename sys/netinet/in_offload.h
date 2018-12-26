@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.h,v 1.8.54.1 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.8.54.2 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -32,6 +32,7 @@
 /*
  * Subroutines to do software-only equivalent of h/w offloading.
  */
+struct mbuf *tcp4_segment(struct mbuf *, int);
 int ip_tso_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
     struct rtentry *);
 void in_undefer_cksum(struct mbuf *, size_t, int);

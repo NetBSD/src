@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.17.2.2 2018/11/26 01:52:29 pgoyette Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.17.2.3 2018/12/26 14:01:46 pgoyette Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.17.2.2 2018/11/26 01:52:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.17.2.3 2018/12/26 14:01:46 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -221,7 +221,7 @@ xb_init_comms(device_t dev)
 
 	evtchn = xen_start_info.store_evtchn;
 
-	ih = intr_establish_xname(-1, &xen_pic, evtchn, IST_LEVEL, IPL_TTY,
+	ih = xen_intr_establish_xname(-1, &xen_pic, evtchn, IST_LEVEL, IPL_TTY,
 	    wake_waiting, NULL, false, device_xname(dev));
 
 	hypervisor_unmask_event(evtchn);
@@ -238,7 +238,7 @@ xb_suspend_comms(device_t dev)
 	evtchn = xen_start_info.store_evtchn;
 
 	hypervisor_mask_event(evtchn);
-	intr_disestablish(ih);
+	xen_intr_disestablish(ih);
 	aprint_verbose_dev(dev, "removed event channel %d\n", evtchn);
 }
 

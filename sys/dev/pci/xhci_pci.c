@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.11.2.5 2018/11/26 13:16:46 pgoyette Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.11.2.6 2018/12/26 14:02:00 pgoyette Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.5 2018/11/26 13:16:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.6 2018/12/26 14:02:00 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -123,12 +123,13 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	const pci_chipset_tag_t pc = pa->pa_pc;
 	const pcitag_t tag = pa->pa_tag;
-	pci_intr_type_t intr_type;
 	char const *intrstr;
 	pcireg_t csr, memtype, usbrev;
-	int err;
 	uint32_t hccparams;
 	char intrbuf[PCI_INTRSTR_LEN];
+	bus_addr_t memaddr;
+	int flags, msixoff;
+	int err;
 
 	sc->sc_dev = self;
 
@@ -147,19 +148,38 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* map MMIO registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_CBMEM);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, PCI_CBMEM, memtype, 0,
-			   &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_ios)) {
-			sc->sc_ios = 0;
-			aprint_error_dev(self, "can't map mem space\n");
-			return;
-		}
-		break;
-	default:
+	if (PCI_MAPREG_TYPE(memtype) != PCI_MAPREG_TYPE_MEM) {
 		sc->sc_ios = 0;
 		aprint_error_dev(self, "BAR not 64 or 32-bit MMIO\n");
+		return;
+	}
+
+	sc->sc_iot = pa->pa_memt;
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_CBMEM, memtype,
+	    &memaddr, &sc->sc_ios, &flags) != 0) {
+		sc->sc_ios = 0;
+		aprint_error_dev(self, "can't get map info\n");
+		return;
+	}
+
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSIX, &msixoff,
+	    NULL)) {
+		pcireg_t msixtbl;
+		uint32_t table_offset;
+		int bir;
+
+		msixtbl = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    msixoff + PCI_MSIX_TBLOFFSET);
+		table_offset = msixtbl & PCI_MSIX_TBLOFFSET_MASK;
+		bir = msixtbl & PCI_MSIX_PBABIR_MASK;
+		/* Shrink map area for MSI-X table */
+		if (bir == PCI_MAPREG_NUM(PCI_CBMEM))
+			sc->sc_ios = table_offset;
+	}
+	if (bus_space_map(sc->sc_iot, memaddr, sc->sc_ios, flags,
+	    &sc->sc_ioh)) {
+		sc->sc_ios = 0;
+		aprint_error_dev(self, "can't map mem space\n");
 		return;
 	}
 
@@ -177,20 +197,8 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	/* Allocation settings */
-	int counts[PCI_INTR_TYPE_SIZE] = {
-		[PCI_INTR_TYPE_INTX] = 1,
-#ifndef XHCI_DISABLE_MSI
-		[PCI_INTR_TYPE_MSI] = 1,
-#endif
-#ifndef XHCI_DISABLE_MSIX
-		[PCI_INTR_TYPE_MSIX] = 1,
-#endif
-	};
-
-alloc_retry:
 	/* Allocate and establish the interrupt. */
-	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "can't allocate handler\n");
 		goto fail;
 	}
@@ -199,35 +207,13 @@ alloc_retry:
 	psc->sc_ih = pci_intr_establish_xname(pc, psc->sc_pihp[0], IPL_USB,
 	    xhci_intr, sc, device_xname(sc->sc_dev));
 	if (psc->sc_ih == NULL) {
-		intr_type = pci_intr_type(pc, psc->sc_pihp[0]);
 		pci_intr_release(pc, psc->sc_pihp, 1);
 		psc->sc_ih = NULL;
-		switch (intr_type) {
-#ifndef XHCI_DISABLE_MSIX
-		case PCI_INTR_TYPE_MSIX:
-			/* The next try is for MSI: Disable MSIX */
-			counts[PCI_INTR_TYPE_MSIX] = 0;
-#ifndef XHCI_DISABLE_MSI
-			counts[PCI_INTR_TYPE_MSI] = 1;
-#endif
-			counts[PCI_INTR_TYPE_INTX] = 1;
-			goto alloc_retry;
-#endif
-#ifndef XHCI_DISABLE_MSI
-		case PCI_INTR_TYPE_MSI:
-			/* The next try is for INTx: Disable MSI */
-			counts[PCI_INTR_TYPE_MSI] = 0;
-			counts[PCI_INTR_TYPE_INTX] = 1;
-			goto alloc_retry;
-#endif
-		case PCI_INTR_TYPE_INTX:
-		default:
-			aprint_error_dev(self, "couldn't establish interrupt");
-			if (intrstr != NULL)
-				aprint_error(" at %s", intrstr);
-			aprint_error("\n");
-			goto fail;
-		}
+		aprint_error_dev(self, "couldn't establish interrupt");
+		if (intrstr != NULL)
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 

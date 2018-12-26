@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.269.2.2 2018/06/25 07:25:45 pgoyette Exp $	*/
+/*	$NetBSD: locore.s,v 1.269.2.3 2018/12/26 14:01:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -53,7 +53,6 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"

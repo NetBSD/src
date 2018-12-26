@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.66.2.1 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.66.2.2 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.66.2.1 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.66.2.2 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -271,7 +271,7 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, requested_size);
 		p += SIZE_SIZE;
-		kasan_alloc(p, origsize, size);
+		kasan_mark(p, origsize, size);
 		return p;
 	}
 	return p;
@@ -331,7 +331,7 @@ kmem_intr_free(void *p, size_t requested_size)
 		return;
 	}
 
-	kasan_free(p, size);
+	kasan_mark(p, size, size);
 
 	p = (uint8_t *)p - SIZE_SIZE;
 	kmem_size_check(p, requested_size);

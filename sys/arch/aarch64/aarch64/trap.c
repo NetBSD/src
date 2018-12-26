@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.3.2.5 2018/10/20 06:58:23 pgoyette Exp $ */
+/* $NetBSD: trap.c,v 1.3.2.6 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.3.2.5 2018/10/20 06:58:23 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.3.2.6 2018/12/26 14:01:30 pgoyette Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -218,8 +218,8 @@ trap_el1h_sync(struct trapframe *tf)
 	case ESR_EC_SP_ALIGNMENT:
 	case ESR_EC_ILL_STATE:
 	default:
-		panic("Trap: fatal %s: pc=%016" PRIx64 "sp=%016" PRIx64
-		    "esr=%08x", eclass_trapname(eclass), tf->tf_pc, tf->tf_sp,
+		panic("Trap: fatal %s: pc=%016" PRIx64 " sp=%016" PRIx64
+		    " esr=%08x", eclass_trapname(eclass), tf->tf_pc, tf->tf_sp,
 		    esr);
 		break;
 	}
@@ -232,6 +232,8 @@ trap_el0_sync(struct trapframe *tf)
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
 
+	/* disable trace */
+	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 
@@ -265,9 +267,14 @@ trap_el0_sync(struct trapframe *tf)
 
 	case ESR_EC_BKPT_INSN_A64:
 	case ESR_EC_BRKPNT_EL0:
-	case ESR_EC_SW_STEP_EL0:
 	case ESR_EC_WTCHPNT_EL0:
 		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, (void *)tf->tf_pc, esr);
+		userret(l);
+		break;
+	case ESR_EC_SW_STEP_EL0:
+		/* disable trace, and send trace trap */
+		tf->tf_spsr &= ~SPSR_SS;
+		do_trapsignal(l, SIGTRAP, TRAP_TRACE, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 
@@ -296,6 +303,18 @@ interrupt(struct trapframe *tf)
 {
 	struct cpu_info * const ci = curcpu();
 
+#ifdef STACKCHECKS
+	struct lwp *l = curlwp;
+	void *sp = (void *)reg_sp_read();
+	if (l->l_addr >= sp) {
+		panic("lwp/interrupt stack overflow detected."
+		    " lwp=%p, sp=%p, l_addr=%p", l, sp, l->l_addr);
+	}
+#endif
+
+	/* disable trace */
+	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
+
 	/* enable traps */
 	daif_enable(DAIF_D|DAIF_A);
 
@@ -313,6 +332,8 @@ trap_el0_32sync(struct trapframe *tf)
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
 
+	/* disable trace */
+	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 

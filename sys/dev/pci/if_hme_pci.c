@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.37 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.37.28.1 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.37 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.37.28.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,8 @@ got_eaddr:
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	hsc->hsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, hme_intr, sc);
+	hsc->hsc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_NET, hme_intr,
+	    sc, device_xname(self));
 	if (hsc->hsc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)

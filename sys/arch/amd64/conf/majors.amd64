@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.27.14.1 2018/09/30 01:45:36 pgoyette Exp $
+#	$NetBSD: majors.amd64,v 1.27.14.2 2018/12/26 14:01:31 pgoyette Exp $
 #
 # Device majors for amd64
 #
@@ -34,7 +34,6 @@ device-major	mcd		char 39  block 7	mcd
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 device-major	audio		char 42			audio
-device-major	svr4_net	char 43			compat_svr4
 device-major	ipl		char 44			ipfilter
 device-major	satlink		char 45			satlink
 device-major	rnd		char 46			rnd

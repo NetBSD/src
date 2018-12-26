@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.14.4.3 2018/09/06 06:55:30 pgoyette Exp $
+# $NetBSD: NITROGEN6X,v 1.14.4.4 2018/12/26 14:01:35 pgoyette Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -154,7 +154,6 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Console options.    also need IMXUARTCONSOLE
 options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x021e8000,CONSPEED=115200
-options 	CONS_OVERRIDE
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

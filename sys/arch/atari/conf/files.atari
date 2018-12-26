@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.121 2018/02/25 00:27:16 mrg Exp $
+#	$NetBSD: files.atari,v 1.121.2.1 2018/12/26 14:01:34 pgoyette Exp $
 
 maxpartitions 16
 
@@ -238,9 +238,6 @@ include "compat/aoutm68k/files.aoutm68k"
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

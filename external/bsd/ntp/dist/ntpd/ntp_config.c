@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.17.10.2 2018/09/30 01:45:18 pgoyette Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.17.10.3 2018/12/26 14:01:17 pgoyette Exp $	*/
 
 /* ntp_config.c
  *
@@ -4750,7 +4750,7 @@ getconfig(
 
 
 	/*** BULK OF THE PARSER ***/
-#ifdef DEBUG
+#if defined(DEBUG) && defined(YYDEBUG)
 	yydebug = !!(debug >= 5);
 #endif
 	yyparse();

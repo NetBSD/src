@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.144.2.1 2018/11/26 01:52:52 pgoyette Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.144.2.2 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.144.2.1 2018/11/26 01:52:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.144.2.2 2018/12/26 14:02:08 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -700,6 +700,10 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	}
 
 	pmap_update(pmap_kernel());
+
+	if ((flags & UVM_KMF_ZERO) == 0) {
+		kleak_fill_area((void *)kva, size);
+	}
 
 	UVMHIST_LOG(maphist,"<- done (kva=0x%jx)", kva,0,0,0);
 	return(kva);

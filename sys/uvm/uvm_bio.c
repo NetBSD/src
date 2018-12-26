@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.92.2.5 2018/11/26 01:52:52 pgoyette Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.92.2.6 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.92.2.5 2018/11/26 01:52:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.92.2.6 2018/12/26 14:02:08 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -814,8 +814,7 @@ ubc_alloc_direct(struct uvm_object *uobj, voff_t offset, vsize_t *lenp,
 {
 	voff_t pgoff;
 	int error;
-	int gpflags = flags | PGO_NOTIMESTAMP | PGO_SYNCIO | PGO_ALLPAGES
-	    | PGO_NOBLOCKALLOC;
+	int gpflags = flags | PGO_NOTIMESTAMP | PGO_SYNCIO | PGO_ALLPAGES;
 	int access_type = VM_PROT_READ;
 	UVMHIST_FUNC("ubc_alloc_direct"); UVMHIST_CALLED(ubchist);
 
@@ -826,8 +825,15 @@ ubc_alloc_direct(struct uvm_object *uobj, voff_t offset, vsize_t *lenp,
 		KASSERT(!UVM_OBJ_NEEDS_WRITEFAULT(uobj));
 #endif
 
-		gpflags |= PGO_PASTEOF;
+		/*
+		 * Tell genfs_getpages() we already have the journal lock,
+		 * allow allocation past current EOF.
+		 */
+		gpflags |= PGO_JOURNALLOCKED | PGO_PASTEOF;
 		access_type |= VM_PROT_WRITE;
+	} else {
+		/* Don't need the empty blocks allocated, PG_RDONLY is okay */
+		gpflags |= PGO_NOBLOCKALLOC;
 	}
 
 	pgoff = (offset & PAGE_MASK);

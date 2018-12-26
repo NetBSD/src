@@ -1,4 +1,4 @@
-#	$NetBSD: t_zpool.sh,v 1.3 2011/12/06 18:18:59 njoly Exp $
+#	$NetBSD: t_zpool.sh,v 1.3.38.1 2018/12/26 14:02:09 pgoyette Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,7 +46,7 @@ create_body()
 	atf_check -s exit:0 -o ignore -e ignore ${server} ${RUMP_SERVER}
 
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	export RUMPHIJACK=blanket=/dev/zfs:/dk:/jippo
+	export RUMPHIJACK=blanket=/dev/zfs:/dk:/jippo,sysctl=yes,modctl=yes
 	atf_check -s exit:0 zpool create jippo /dk
 
 	export RUMPHIJACK=vfs=all

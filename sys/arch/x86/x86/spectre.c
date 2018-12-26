@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.5.2.4 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: spectre.c,v 1.5.2.5 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.5.2.4 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.5.2.5 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include "opt_spectre.h"
 
@@ -61,6 +61,7 @@ enum v4_mitigation {
 	V4_MITIGATION_NONE,
 	V4_MITIGATION_INTEL_SSBD,
 	V4_MITIGATION_INTEL_SSB_NO,
+	V4_MITIGATION_AMD_SSB_NO,
 	V4_MITIGATION_AMD_NONARCH_F15H,
 	V4_MITIGATION_AMD_NONARCH_F16H,
 	V4_MITIGATION_AMD_NONARCH_F17H
@@ -141,8 +142,6 @@ v2_detect_method(void)
 		 */
 		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 		case 0x10:
-		case 0x12:
-		case 0x16:
 			v2_mitigation_method = V2_MITIGATION_AMD_DIS_IND;
 			break;
 		default:
@@ -380,6 +379,9 @@ v4_set_name(void)
 		case V4_MITIGATION_INTEL_SSB_NO:
 			strlcat(name, "[Intel SSB_NO]", sizeof(name));
 			break;
+		case V4_MITIGATION_AMD_SSB_NO:
+			strlcat(name, "[AMD SSB_NO]", sizeof(name));
+			break;
 		case V4_MITIGATION_AMD_NONARCH_F15H:
 		case V4_MITIGATION_AMD_NONARCH_F16H:
 		case V4_MITIGATION_AMD_NONARCH_F17H:
@@ -403,11 +405,7 @@ v4_detect_method(void)
 		if (cpu_info_primary.ci_feat_val[7] & CPUID_SEF_ARCH_CAP) {
 			msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
 			if (msr & IA32_ARCH_SSB_NO) {
-				/*
-				 * The processor indicates it is not vulnerable
-				 * to the Speculative Store Bypass (SpectreV4)
-				 * flaw.
-				 */
+				/* Not vulnerable to SpectreV4. */
 				v4_mitigation_method = V4_MITIGATION_INTEL_SSB_NO;
 				return;
 			}
@@ -432,6 +430,16 @@ v4_detect_method(void)
 			v4_mitigation_method = V4_MITIGATION_AMD_NONARCH_F17H;
 			return;
 		default:
+			if (cpu_info_primary.ci_max_ext_cpuid < 0x80000008) {
+				break;
+			}
+	 		x86_cpuid(0x80000008, descs);
+			if (descs[1] & __BIT(26)) {
+				/* Not vulnerable to SpectreV4. */
+				v4_mitigation_method = V4_MITIGATION_AMD_SSB_NO;
+				return;
+			}
+
 			break;
 		}
 	}
@@ -447,6 +455,7 @@ mitigation_v4_apply_cpu(bool enabled)
 	switch (v4_mitigation_method) {
 	case V4_MITIGATION_NONE:
 	case V4_MITIGATION_INTEL_SSB_NO:
+	case V4_MITIGATION_AMD_SSB_NO:
 		panic("impossible");
 	case V4_MITIGATION_INTEL_SSBD:
 		msrval = MSR_IA32_SPEC_CTRL;
@@ -483,7 +492,8 @@ mitigation_v4_change_cpu(void *arg1, void *arg2)
 	mitigation_v4_apply_cpu(enabled);
 }
 
-static int mitigation_v4_change(bool enabled)
+static int
+mitigation_v4_change(bool enabled)
 {
 	struct cpu_info *ci = NULL;
 	CPU_INFO_ITERATOR cii;
@@ -526,6 +536,7 @@ static int mitigation_v4_change(bool enabled)
 		v4_set_name();
 		return 0;
 	case V4_MITIGATION_INTEL_SSB_NO:
+	case V4_MITIGATION_AMD_SSB_NO:
 		printf("[+] The CPU is not affected by SpectreV4\n");
 		mutex_exit(&cpu_lock);
 		return 0;
@@ -609,6 +620,10 @@ cpu_speculation_init(struct cpu_info *ci)
 	 *
 	 * cpu0 is the one that detects the method and sets the global
 	 * variable.
+	 *
+	 * Disabled by default, as recommended by AMD, but can be enabled
+	 * dynamically. We only detect if the CPU is not vulnerable, to
+	 * mark it as 'mitigated' in the sysctl.
 	 */
 #if 0
 	if (ci == &cpu_info_primary) {
@@ -617,8 +632,19 @@ cpu_speculation_init(struct cpu_info *ci)
 		    (v4_mitigation_method != V4_MITIGATION_NONE);
 		v4_set_name();
 	}
-	if (v4_mitigation_method != V4_MITIGATION_NONE) {
+	if (v4_mitigation_method != V4_MITIGATION_NONE &&
+	    v4_mitigation_method != V4_MITIGATION_INTEL_SSB_NO &&
+	    v4_mitigation_method != V4_MITIGATION_AMD_SSB_NO) {
 		mitigation_v4_apply_cpu(ci, true);
+	}
+#else
+	if (ci == &cpu_info_primary) {
+		v4_detect_method();
+		if (v4_mitigation_method == V4_MITIGATION_INTEL_SSB_NO ||
+		    v4_mitigation_method == V4_MITIGATION_AMD_SSB_NO) {
+			v4_mitigation_enabled = true;
+			v4_set_name();
+		}
 	}
 #endif
 }

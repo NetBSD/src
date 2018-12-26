@@ -1,8 +1,15 @@
-/*	$NetBSD: ldscript,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: ldscript,v 1.1.20.1 2018/12/26 14:01:38 pgoyette Exp $	*/
 /* Same as elf_x86_64_fbsd_efi.lds, except for OUTPUT_FORMAT below - KEEP IN SYNC */
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64", "elf64-x86-64")
 OUTPUT_ARCH(i386:x86-64)
 ENTRY(_start)
+
+PHDRS
+{
+  text PT_LOAD;
+  headers PT_PHDR FILEHDR PHDRS;
+}
+
 SECTIONS
 {
   . = 0;
@@ -19,7 +26,7 @@ SECTIONS
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
-  }
+  } :text
   . = ALIGN(4096);
   .reloc :
   {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.87.2.2 2018/11/26 01:52:13 pgoyette Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.87.2.3 2018/12/26 14:01:28 pgoyette Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20181125"
+#define SERVER_SOFTWARE		"bozohttpd/20181215"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -141,6 +141,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <strings.h>
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
@@ -397,7 +398,7 @@ int
 bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
 		 const char *target, const char *val)
 {
-	const char *cur, *timeouts[] = {
+	const char **cur, *timeouts[] = {
 		"initial timeout",
 		"header timeout",
 		"request timeout",
@@ -407,9 +408,9 @@ bozo_set_timeout(bozohttpd_t *httpd, bozoprefs_t *prefs,
 	const size_t minlen = 1;
 	size_t len = strlen(target);
 
-	for (cur = timeouts[0]; len >= minlen && *cur; cur++) {
-		if (strncmp(target, cur, len) == 0) {
-			bozo_set_pref(httpd, prefs, cur, val);
+	for (cur = timeouts; len >= minlen && *cur; cur++) {
+		if (strncmp(target, *cur, len) == 0) {
+			bozo_set_pref(httpd, prefs, *cur, val);
 			return 0;
 		}
 	}
@@ -585,12 +586,14 @@ process_method(bozo_httpreq_t *request, const char *method)
 static int
 bozo_got_header_length(bozo_httpreq_t *request, size_t len)
 {
-	request->hr_header_bytes += len;
-	if (request->hr_header_bytes < BOZO_HEADERS_MAX_SIZE)
-		return 0;
 
-	return bozo_http_error(request->hr_httpd, 413, request,
-		"too many headers");
+	if (len > BOZO_HEADERS_MAX_SIZE - request->hr_header_bytes)
+		return bozo_http_error(request->hr_httpd, 413, request,
+			"too many headers");
+
+	request->hr_header_bytes += len;
+
+	return 0;
 }
 
 /*
@@ -1023,7 +1026,7 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 		case '\r':
 		case ' ':
 		encode_it:
-			snprintf(d, 4, "%%%02X", *s++);
+			snprintf(d, 4, "%%%02X", (unsigned char)*s++);
 			d += 3;
 			len += 3;
 			break;
@@ -1441,7 +1444,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	bozohttpd_t *httpd = request->hr_httpd;
 	struct stat sb;
 	char dir[MAXPATHLEN], redir[MAXPATHLEN], redirpath[MAXPATHLEN + 1],
-	    path[MAXPATHLEN];
+	    path[MAXPATHLEN + 1];
 	char *basename, *finalredir;
 	int rv, absolute;
 
@@ -1464,7 +1467,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	} else if (basename == NULL) {
 		strcpy(path, ".");
 		strcpy(dir, "");
-		basename = dir;
+		basename = request->hr_file + 1;
 	} else {
 		*basename++ = '\0';
 		strcpy(path, dir);
@@ -2076,6 +2079,9 @@ bozo_escape_html(bozohttpd_t *httpd, const char *url)
 		case '&':
 			j += 5;
 			break;
+		case '"':
+			j += 6;
+			break;
 		}
 	}
 
@@ -2105,6 +2111,10 @@ bozo_escape_html(bozohttpd_t *httpd, const char *url)
 		case '&':
 			memcpy(tmp + j, "&amp;", 5);
 			j += 5;
+			break;
+		case '"':
+			memcpy(tmp + j, "&quot;", 6);
+			j += 6;
 			break;
 		default:
 			tmp[j++] = url[i];
@@ -2250,7 +2260,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	if (request && request->hr_allow)
 		bozo_printf(httpd, "Allow: %s\r\n", request->hr_allow);
 	/* RFC 7231 (HTTP/1.1) 6.5.7 */
-	if (code == 408 && request->hr_proto == httpd->consts.http_11)
+	if (code == 408 && request &&
+	    request->hr_proto == httpd->consts.http_11)
 		bozo_printf(httpd, "Connection: close\r\n");
 	bozo_printf(httpd, "\r\n");
 	/* According to the RFC 2616 sec. 9.4 HEAD method MUST NOT return a

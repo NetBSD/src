@@ -1,4 +1,4 @@
-#	$NetBSD: ZYXELKX,v 1.12.2.1 2018/09/06 06:55:33 pgoyette Exp $
+#	$NetBSD: ZYXELKX,v 1.12.2.2 2018/12/26 14:01:36 pgoyette Exp $
 
 include 	"arch/evbmips/conf/std.rasoc"
 
@@ -61,7 +61,6 @@ include         "conf/compat_netbsd50.config"
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # File systems

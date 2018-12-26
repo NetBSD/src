@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.361.2.1 2018/06/25 07:26:08 pgoyette Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.361.2.2 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361.2.1 2018/06/25 07:26:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361.2.2 2018/12/26 14:02:08 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361.2.1 2018/06/25 07:26:08 pgoyett
 #include <sys/kthread.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>

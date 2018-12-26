@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.1.2.4 2018/09/06 06:55:22 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.1.2.5 2018/12/26 14:01:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1.2.4 2018/09/06 06:55:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1.2.5 2018/12/26 14:01:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -403,4 +403,28 @@ aarch64_dcache_wb_all(void)
 		ln_dcache_wb_all(level, &cinfo[level].dcache);
 	}
 	__asm __volatile ("dsb ish");
+}
+
+int
+set_cpufuncs(void)
+{
+	struct cpu_info * const ci = curcpu();
+	const uint32_t midr __unused = reg_midr_el1_read();
+
+	/* install default functions */
+	ci->ci_cpufuncs.cf_set_ttbr0 = aarch64_set_ttbr0;
+
+
+	/* install core/cluster specific functions */
+#ifdef CPU_THUNDERX
+	/* Cavium erratum 27456 */
+	if ((midr == CPU_ID_THUNDERXP1d0) ||
+	    (midr == CPU_ID_THUNDERXP1d1) ||
+	    (midr == CPU_ID_THUNDERXP2d1) ||
+	    (midr == CPU_ID_THUNDERX81XXRX)) {
+		ci->ci_cpufuncs.cf_set_ttbr0 = aarch64_set_ttbr0_thunderx;
+	}
+#endif
+
+	return 0;
 }

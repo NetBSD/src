@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.3.4.1 2018/03/15 09:12:08 pgoyette Exp $
+#	$NetBSD: t_ipsec.sh,v 1.3.4.2 2018/12/26 14:02:10 pgoyette Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -105,7 +105,7 @@ setup_router()
 		atf_check -s exit:0 rump.ifconfig shmif0 inet ${lan} netmask 0xffffff00
 	fi
 	atf_check -s exit:0 rump.ifconfig shmif0 up
-	rump.ifconfig shmif0
+	$DEBUG && rump.ifconfig shmif0
 
 	if [ ${wan_mode} = "ipv6" ]; then
 		atf_check -s exit:0 rump.ifconfig shmif1 inet6 ${wan}
@@ -113,7 +113,7 @@ setup_router()
 		atf_check -s exit:0 rump.ifconfig shmif1 inet ${wan} netmask 0xff000000
 	fi
 	atf_check -s exit:0 rump.ifconfig shmif1 up
-	rump.ifconfig shmif1
+	$DEBUG && rump.ifconfig shmif1
 	unset RUMP_SERVER
 }
 
@@ -247,8 +247,8 @@ setup_if_ipsec()
 		atf_check -s exit:0 -o ignore rump.route add -inet ${peernet} ${addr}
 	fi
 
-	rump.ifconfig ipsec0
-	rump.route -nL show
+	$DEBUG && rump.ifconfig ipsec0
+	$DEBUG && rump.route -nL show
 }
 
 setup_if_ipsec_sa()
@@ -426,7 +426,7 @@ setup_dummy_if_ipsec()
 		atf_check -s exit:0 rump.ifconfig ipsec1 inet ${addr}/32 ${remote}
 	fi
 
-	rump.ifconfig ipsec1
+	$DEBUG && rump.ifconfig ipsec1
 	unset RUMP_SERVER
 }
 
@@ -569,7 +569,7 @@ setup_recursive_if_ipsec()
 	setup_if_ipsec_sa $sock ${src} ${dst} ${inner} ${proto} ${algo} ${dir}
 
 	export RUMP_SERVER=${sock}
-	rump.ifconfig ${ipsec}
+	$DEBUG && rump.ifconfig ${ipsec}
 	unset RUMP_SERVER
 }
 
@@ -680,7 +680,7 @@ test_ping_success()
 	mode=$1
 
 	export RUMP_SERVER=$SOCK1
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 	if [ ${mode} = "ipv6" ]; then
 		# XXX
 		# rump.ping6 rarely fails with the message that
@@ -694,10 +694,10 @@ test_ping_success()
 			rump.ping -n -w $TIMEOUT -c 1 -I $ROUTER1_LANIP \
 			$ROUTER2_LANIP
 	fi
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 
 	export RUMP_SERVER=$SOCK2
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 	if [ ${mode} = "ipv6" ]; then
 		atf_check -s exit:0 -o ignore \
 			rump.ping6 -n -X $TIMEOUT -c 1 -S $ROUTER2_LANIP6 \
@@ -707,7 +707,7 @@ test_ping_success()
 			rump.ping -n -w $TIMEOUT -c 1 -I $ROUTER2_LANIP \
 			$ROUTER1_LANIP
 	fi
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 
 	unset RUMP_SERVER
 }
@@ -726,12 +726,12 @@ test_change_tunnel_duplicate()
 		newdst=$ROUTER2_WANIP_DUMMY
 	fi
 	export RUMP_SERVER=$SOCK1
-	rump.ifconfig -v ipsec0
-	rump.ifconfig -v ipsec1
+	$DEBUG && rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec1
 	atf_check -s exit:0 -e match:SIOCSLIFPHYADDR \
 		rump.ifconfig ipsec0 tunnel ${newsrc} ${newdst}
-	rump.ifconfig -v ipsec0
-	rump.ifconfig -v ipsec1
+	$DEBUG && rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec1
 
 	if [ ${mode} = "ipv6" ]; then
 		newsrc=$ROUTER2_WANIP6_DUMMY
@@ -741,12 +741,12 @@ test_change_tunnel_duplicate()
 		newdst=$ROUTER1_WANIP_DUMMY
 	fi
 	export RUMP_SERVER=$SOCK2
-	rump.ifconfig -v ipsec0
-	rump.ifconfig -v ipsec1
+	$DEBUG && rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec1
 	atf_check -s exit:0 -e match:SIOCSLIFPHYADDR \
 		rump.ifconfig ipsec0 tunnel ${newsrc} ${newdst}
-	rump.ifconfig -v ipsec0
-	rump.ifconfig -v ipsec1
+	$DEBUG && rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec1
 
 	unset RUMP_SERVER
 }
@@ -765,10 +765,10 @@ test_change_tunnel_success()
 		newdst=$ROUTER2_WANIP_DUMMY
 	fi
 	export RUMP_SERVER=$SOCK1
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 	atf_check -s exit:0 \
 		rump.ifconfig ipsec0 tunnel ${newsrc} ${newdst}
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 
 	if [ ${mode} = "ipv6" ]; then
 		newsrc=$ROUTER2_WANIP6_DUMMY
@@ -778,10 +778,10 @@ test_change_tunnel_success()
 		newdst=$ROUTER1_WANIP_DUMMY
 	fi
 	export RUMP_SERVER=$SOCK2
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 	atf_check -s exit:0 \
 		rump.ifconfig ipsec0 tunnel ${newsrc} ${newdst}
-	rump.ifconfig -v ipsec0
+	$DEBUG && rump.ifconfig -v ipsec0
 
 	unset RUMP_SERVER
 }

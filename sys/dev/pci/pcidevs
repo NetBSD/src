@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1319.2.12 2018/11/26 01:52:32 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1319.2.13 2018/12/26 14:01:50 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -649,6 +649,7 @@ vendor QINHENG2		0x1c00	Nanjing QinHeng Electronics (PCIe)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor HGST		0x1c58	HGST, Inc.
 vendor BEIJING_MEMBLAZE	0x1c5f	Beijing Memblaze Technology Co. Ltd.
+vendor AMAZON		0x1d0f	Amazon.com, Inc.
 vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
@@ -953,6 +954,11 @@ product ALTIMA AC1000	0x03e8	AC1000 Gigabit Ethernet
 product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
 product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 product ALTIMA AC1003	0x03eb	AC1003 Gigabit Ethernet
+
+/* Amazon.com, Inc. products */
+product AMAZON UART	0x8250	16650-compatible UART
+product AMAZON NVME	0x8061	NVMe SSD
+product AMAZON ENA	0xec20	Elastic Network Adapter
 
 /* AMD products */
 product AMD AMD64_HT	0x1100	K8 AMD64 HyperTransport Configuration
@@ -5830,9 +5836,11 @@ product SYMBIOS SAS3108_3		0x0094	SAS3108
 product SYMBIOS SAS3108_4		0x0095	SAS3108
 product SYMBIOS SAS3004			0x0096	SAS3004
 product SYMBIOS SAS3008			0x0097	SAS3008
-product	SYMBIOS	SAS3516			0x00ab	SAS3516
+product SYMBIOS SAS3516			0x00aa  SAS3516
+product	SYMBIOS	SAS3516_1		0x00ab	SAS3516
 product	SYMBIOS	SAS3416			0x00ac	SAS3416
-product	SYMBIOS	SAS3508			0x00ae	SAS3508
+product	SYMBIOS	SAS3508			0x00ad	SAS3508
+product SYMBIOS SAS3508_1		0x00ae  SAS3508
 product	SYMBIOS	SAS3408			0x00af	SAS3408
 product	SYMBIOS	SAS3504			0x00be	SAS3504
 product	SYMBIOS	SAS3404			0x00bf	SAS3404

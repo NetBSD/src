@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ssio.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: com_ssio.c,v 1.1.34.1 2018/12/26 14:01:37 pgoyette Exp $	*/
 
 /*	$OpenBSD: com_ssio.c,v 1.2 2007/06/24 16:28:39 kettenis Exp $	*/
 
@@ -101,7 +101,7 @@ com_ssio_attach(device_t parent, device_t self, void *aux)
 	hppa_pagezero_unmap(pagezero_cookie);
 
 	sc->sc_frequency = COM_SSIO_FREQ;
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 	com_attach_subr(sc);
 
 	sc_ssio->sc_ih = ssio_intr_establish(IPL_TTY, saa->saa_irq,

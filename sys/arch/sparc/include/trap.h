@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.18 2011/03/27 18:47:08 martin Exp $ */
+/*	$NetBSD: trap.h,v 1.18.54.1 2018/12/26 14:01:43 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,6 @@
 #define	T_RANGECHECK	0x85	/* explicitly signal a range checking error */
 #define	T_FIXALIGN	0x86	/* fix up unaligned accesses */
 #define	T_INTOF		0x87	/* explicitly signal integer overflow */
-#define	T_SVR4_SYSCALL	0x88	/* SVR4 system call */
 
 /* 0x89..0x8f - reserved for the OS */
 #define	T_BSD_SYSCALL	0x89	/* BSD system call */
@@ -113,15 +112,7 @@
 
 /* 0x90..0x9f - reserved, will never be specified */
 
-/* 0xa0..0xff are currently unallocated, except the following */
-#define T_SVR4_GETCC		0xa0
-#define T_SVR4_SETCC		0xa1
-#define T_SVR4_GETPSR		0xa2
-#define T_SVR4_SETPSR		0xa3
-#define T_SVR4_GETHRTIME	0xa4
-#define T_SVR4_GETHRVTIME	0xa5
-#define T_SVR4_GETHRESTIME	0xa7
-
+/* 0xa0..0xff are currently unallocated */
 
 #ifdef _KERNEL			/* pseudo traps for locore.s */
 #define	T_RWRET		-1	/* need first user window for trap return */

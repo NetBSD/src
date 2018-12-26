@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.55.14.1 2018/09/06 06:56:02 pgoyette Exp $ */
+/*	$NetBSD: twa.c,v 1.55.14.2 2018/12/26 14:02:00 pgoyette Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55.14.1 2018/09/06 06:56:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55.14.2 2018/12/26 14:02:00 pgoyette Exp $");
 
 //#define TWA_DEBUG
 
@@ -1603,7 +1603,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
-	sc->twa_ih = pci_intr_establish(pc, ih, IPL_BIO, twa_intr, sc);
+	sc->twa_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, twa_intr, sc,
+	    device_xname(self));
 	if (sc->twa_ih == NULL) {
 		aprint_error_dev(sc->twa_dv, "can't establish interrupt%s%s\n",
 			(intrstr) ? " at " : "",

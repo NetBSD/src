@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.169.2.5 2018/11/26 01:49:59 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.169.2.6 2018/12/26 14:01:14 pgoyette Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -365,8 +365,6 @@
 ./usr/share/examples/emul
 ./usr/share/examples/emul/linux
 ./usr/share/examples/emul/linux/etc
-./usr/share/examples/emul/svr4
-./usr/share/examples/emul/svr4/etc
 ./usr/share/examples/emul/ultrix
 ./usr/share/examples/emul/ultrix/etc
 ./usr/share/examples/fstab
@@ -1268,7 +1266,6 @@
 ./var/chroot/named/usr/libexec
 ./var/chroot/named/var
 ./var/chroot/named/var/run	mode=0775 gname=named
-./var/chroot/named/var/run/lwresd	mode=0775 gname=named
 ./var/chroot/named/var/run/named	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
 ./var/chroot/nsd		mode=0755 uname=_nsd gname=_nsd
@@ -1320,7 +1317,6 @@
 ./var/preserve
 ./var/quotas			gname=operator mode=0750
 ./var/run
-./var/run/lwresd		mode=0775 gname=named
 ./var/run/named			mode=0775 gname=named
 ./var/rwho			uname=_rwhod gname=_rwhod
 ./var/shm			mode=01777

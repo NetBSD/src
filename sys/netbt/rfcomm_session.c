@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.23.26.1 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.23.26.2 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.23.26.1 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.23.26.2 2018/12/26 14:02:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1564,7 +1564,7 @@ rfcomm_session_send_uih(struct rfcomm_session *rs, struct rfcomm_dlc *dlc,
 	if (m0 == NULL)
 		goto nomem;
 
-	MH_ALIGN(m0, 5);	/* (max 5 header octets) */
+	m_align(m0, 5);	/* (max 5 header octets) */
 	hdr = mtod(m0, uint8_t *);
 
 	/* CR bit is set according to the initiator of the session */

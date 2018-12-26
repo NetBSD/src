@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.33.12.1 2018/07/28 04:37:29 pgoyette Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.33.12.2 2018/12/26 14:01:34 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.33.12.1 2018/07/28 04:37:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.33.12.2 2018/12/26 14:01:34 pgoyette Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1232,7 +1232,7 @@ npe_defrag(struct mbuf *m0)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
-	M_COPY_PKTHDR(m, m0);
+	m_copy_pkthdr(m, m0);
 
 	if ((m->m_len = m0->m_pkthdr.len) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);

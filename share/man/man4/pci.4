@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.97.4.1 2018/09/30 01:45:34 pgoyette Exp $
+.\"	$NetBSD: pci.4,v 1.97.4.2 2018/12/26 14:01:29 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 6, 2018
+.Dd December 12, 2018
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ for additional information.
 Fixup PCI I/O and memory addresses.
 .Pp
 Some i386 and amd64 BIOS implementations don't allocate I/O space and
-memory space for some PCI devices -- primarily BIOS in PnP mode, or laptops
+memory space for some PCI devices \(em primarily BIOS in PnP mode, or laptops
 that expect devices to be configured via ACPI.
 Since necessary space isn't allocated, those devices
 will not work without special handling.
@@ -264,8 +264,6 @@ interfaces.
 Note, the
 .Xr pcn 4
 driver supersedes this driver.
-.It lmc
-LAN Media Corp WAN interfaces.
 .It msk
 Marvell Yukon 2 based Gigabit
 .Tn Ethernet
@@ -453,7 +451,6 @@ VGA graphics boards.
 .Xr eap 4 ,
 .Xr ehci 4 ,
 .Xr emuxki 4 ,
-.Xr en 4 ,
 .Xr ep 4 ,
 .Xr epic 4 ,
 .Xr esa 4 ,
@@ -472,7 +469,6 @@ VGA graphics boards.
 .Xr iop 4 ,
 .Xr isp 4 ,
 .Xr le 4 ,
-.Xr lmc 4 ,
 .Xr mfi 4 ,
 .Xr mlx 4 ,
 .Xr mly 4 ,
@@ -509,9 +505,10 @@ VGA graphics boards.
 .Xr trm 4 ,
 .Xr twe 4 ,
 .Xr uhci 4 ,
+.Xr vax/en 4 ,
 .Xr vga 4 ,
 .Xr vge 4 ,
-.Xr viapm 4 ,
+.\" .Xr viapm 4 ,
 .Xr vr 4 ,
 .Xr wi 4 ,
 .Xr wm 4 ,

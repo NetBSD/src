@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.34.12.1 2018/09/30 01:45:47 pgoyette Exp $
+#	$NetBSD: majors.sparc64,v 1.34.12.2 2018/12/26 14:01:43 pgoyette Exp $
 #
 # Device majors for sparc64
 #
@@ -40,7 +40,6 @@ device-major	lpt		char 37			lpt
 # sparc: device-major	cgfour	char 39			cgfour
 
 # sparc: device-major	xd	char 42  block 10	xd
-device-major	svr4_net	char 43			compat_svr4
 
 device-major	vcoda		char 47			vcoda
 

@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.1.28.2 2018/10/20 06:58:23 pgoyette Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.1.28.3 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.1.28.2 2018/10/20 06:58:23 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.1.28.3 2018/12/26 14:01:30 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -73,6 +73,14 @@ aarch64_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 
 	/* OABI not support */
 	if (!elf_aapcs_p)
+		return ENOEXEC;
+
+	/*
+	 * require aarch32 feature.
+	 * XXX should consider some cluster may have no aarch32?
+	 */
+	if (__SHIFTOUT(l->l_cpu->ci_id.ac_aa64pfr0, ID_AA64PFR0_EL1_EL0) !=
+	    ID_AA64PFR0_EL1_EL0_64_32)
 		return ENOEXEC;
 
 	return 0;

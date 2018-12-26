@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.6.2.2 2018/11/26 01:52:32 pgoyette Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.6.2.3 2018/12/26 14:01:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.6.2.2 2018/11/26 01:52:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.6.2.3 2018/12/26 14:01:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -963,6 +963,7 @@ svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	state->crs[NVMM_X64_CR_XCR0] = val;
 
+	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
 	return;
 
 error:

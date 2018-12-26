@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.107.8.2 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.107.8.3 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.107.8.2 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.107.8.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -393,8 +393,8 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
 	    sizeof(intrbuf));
 	sc->tl_if.if_softc = sc;
-	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-	    tl_intr, sc);
+	sc->tl_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_NET,
+	    tl_intr, sc, device_xname(self));
 	if (sc->tl_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

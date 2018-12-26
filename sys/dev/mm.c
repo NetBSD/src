@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.22 2016/10/13 08:56:31 ryo Exp $	*/
+/*	$NetBSD: mm.c,v 1.22.14.1 2018/12/26 14:01:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.22 2016/10/13 08:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.22.14.1 2018/12/26 14:01:47 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -53,17 +53,14 @@ static void *		dev_zero_page	__read_mostly;
 static kmutex_t		dev_mem_lock	__cacheline_aligned;
 static vaddr_t		dev_mem_addr	__read_mostly;
 
+static dev_type_open(mm_open);
 static dev_type_read(mm_readwrite);
 static dev_type_ioctl(mm_ioctl);
 static dev_type_mmap(mm_mmap);
 static dev_type_ioctl(mm_ioctl);
 
 const struct cdevsw mem_cdevsw = {
-#ifdef __HAVE_MM_MD_OPEN
-	.d_open = mm_md_open,
-#else
-	.d_open = nullopen,
-#endif
+	.d_open = mm_open,
 	.d_close = nullclose,
 	.d_read = mm_readwrite,
 	.d_write = mm_readwrite,
@@ -93,6 +90,18 @@ const struct cdevsw mem_ultrix_cdevsw = {
 	.d_flag = D_MPSAFE
 };
 #endif
+
+static int
+mm_open(dev_t dev, int flag, int mode, struct lwp *l)
+{
+#ifdef __HAVE_MM_MD_OPEN
+	int error;
+	if ((error = mm_md_open(dev, flag, mode, l)) != 0)
+		return error;
+#endif
+	l->l_proc->p_flag |= PK_KMEM;
+	return 0;
+}
 
 /*
  * mm_init: initialize memory device driver.

@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.51 2016/07/11 11:31:51 msaitoh Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.51.16.1 2018/12/26 14:02:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.51 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.51.16.1 2018/12/26 14:02:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,8 +525,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr,
-	    sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_NET,
+	    voodoofb_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt");
 		if (intrstr != NULL)

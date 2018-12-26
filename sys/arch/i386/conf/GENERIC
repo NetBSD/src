@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1174.2.7 2018/11/26 01:52:25 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.1174.2.8 2018/12/26 14:01:38 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1174.2.7 $"
+#ident		"GENERIC-$Revision: 1.1174.2.8 $"
 
 maxusers	64		# estimated number of users
 
@@ -299,6 +299,8 @@ config		netbsd	root on ? type ?
 
 #IPMI support
 ipmi0		at mainbus?
+ipmi_acpi*	at acpi?
+ipmi0		at ipmi_acpi? 
 
 # Advanced Configuration and Power Interface
 
@@ -995,7 +997,6 @@ ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
@@ -1098,6 +1099,7 @@ atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 bwi*	at cardbus? function ?	# Broadcom BCM43xx wireless
 ex*	at cardbus? function ?	# 3Com 3c575TX
 fxp*	at cardbus? function ?	# Intel i8255x
+malo*	at cardbus? function ?	# Marvell Libertas Wireless
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? function ?	# Realtek 8129/8139

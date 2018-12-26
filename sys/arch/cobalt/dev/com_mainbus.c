@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.21 2018/01/20 13:56:09 skrll Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.21.2.1 2018/12/26 14:01:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.21 2018/01/20 13:56:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.21.2.1 2018/12/26 14:01:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, maa->ma_iot, ioh, maa->ma_addr);
+	com_init_regs(&sc->sc_regs, maa->ma_iot, ioh, maa->ma_addr);
 
 	sc->sc_frequency = COM_MAINBUS_FREQ;
 

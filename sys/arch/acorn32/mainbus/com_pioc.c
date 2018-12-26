@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.16 2011/07/19 15:59:53 dyoung Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.16.52.1 2018/12/26 14:01:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.16 2011/07/19 15:59:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.16.52.1 2018/12/26 14:01:30 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -167,7 +167,7 @@ com_pioc_attach(device_t parent, device_t self, void *aux)
 	if (!com_is_console(iot, iobase, &ioh)
 	    && bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		panic("comattach: io mapping failed");
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	sc->sc_frequency = COM_FREQ;
 

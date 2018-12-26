@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.69 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.69.16.1 2018/12/26 14:01:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.69 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.69.16.1 2018/12/26 14:01:49 pgoyette Exp $");
 
 #include "midi.h"
 
@@ -319,8 +319,8 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
-	    cs4280_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, sc->intrh, IPL_AUDIO,
+	    cs4280_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)

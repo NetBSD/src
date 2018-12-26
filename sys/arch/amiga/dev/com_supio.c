@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.30 2011/07/19 15:55:26 dyoung Exp $ */
+/*	$NetBSD: com_supio.c,v 1.30.52.1 2018/12/26 14:01:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.30 2011/07/19 15:55:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.30.52.1 2018/12/26 14:01:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ com_supio_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		panic("comattach: io mapping failed");
-	COM_INIT_REGS(csc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&csc->sc_regs, iot, ioh, iobase);
 
 	csc->sc_frequency = supa->supio_arg;
 	csc->sc_frequency /= 4;	/* XXX IOBlix firmware sets MCR_PRESCALE? */

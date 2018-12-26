@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.11 2011/07/01 20:46:39 dyoung Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.11.52.1 2018/12/26 14:01:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.11 2011/07/01 20:46:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.11.52.1 2018/12/26 14:01:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ com_obio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, oa->oa_memt, ioh, oa->oa_offset);
+	com_init_regs(&sc->sc_regs, oa->oa_memt, ioh, oa->oa_offset);
 	sc->sc_regs.cr_nports = oa->oa_size;
 	com_attach_subr(sc);
 

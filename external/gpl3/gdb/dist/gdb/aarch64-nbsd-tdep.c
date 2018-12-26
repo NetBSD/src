@@ -1,4 +1,4 @@
-/* Target-dependent code for FreeBSD/aarch64.
+/* Target-dependent code for NetBSD/aarch64.
 
    Copyright (C) 2017-2018 Free Software Foundation, Inc.
 

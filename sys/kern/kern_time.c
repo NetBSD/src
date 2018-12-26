@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.189.14.1 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.189.14.2 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.14.1 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.14.2 2018/12/26 14:02:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -603,6 +603,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 		pts = timers_alloc(p);
 
 	pt = pool_get(&ptimer_pool, PR_WAITOK);
+	memset(pt, 0, sizeof(*pt));
 	if (evp != NULL) {
 		if (((error =
 		    (*fetch_event)(evp, &pt->pt_ev, sizeof(pt->pt_ev))) != 0) ||
@@ -1165,6 +1166,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		if (spare == NULL) {
 			mutex_spin_exit(&timer_lock);
 			spare = pool_get(&ptimer_pool, PR_WAITOK);
+			memset(spare, 0, sizeof(*spare));
 			goto retry;
 		}
 		pt = spare;

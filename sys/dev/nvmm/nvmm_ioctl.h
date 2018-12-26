@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.1.2.2 2018/11/26 01:52:31 pgoyette Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.1.2.3 2018/12/26 14:01:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -90,6 +90,20 @@ struct nvmm_ioc_vcpu_run {
 	struct nvmm_exit exit;
 };
 
+struct nvmm_ioc_hva_map {
+	nvmm_machid_t machid;
+	uintptr_t hva;
+	size_t size;
+	int flags;
+};
+
+struct nvmm_ioc_hva_unmap {
+	nvmm_machid_t machid;
+	uintptr_t hva;
+	size_t size;
+	int flags;
+};
+
 struct nvmm_ioc_gpa_map {
 	nvmm_machid_t machid;
 	uintptr_t hva;
@@ -116,5 +130,7 @@ struct nvmm_ioc_gpa_unmap {
 #define NVMM_IOC_VCPU_RUN		_IOWR('N',  9, struct nvmm_ioc_vcpu_run)
 #define NVMM_IOC_GPA_MAP		_IOW ('N', 10, struct nvmm_ioc_gpa_map)
 #define NVMM_IOC_GPA_UNMAP		_IOW ('N', 11, struct nvmm_ioc_gpa_unmap)
+#define NVMM_IOC_HVA_MAP		_IOW ('N', 12, struct nvmm_ioc_hva_map)
+#define NVMM_IOC_HVA_UNMAP		_IOW ('N', 13, struct nvmm_ioc_hva_unmap)
 
 #endif /* _NVMM_IOCTL_H_ */

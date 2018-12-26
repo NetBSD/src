@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.61.2.5 2018/11/26 01:52:28 pgoyette Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.61.2.6 2018/12/26 14:01:46 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.61.2.5 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.61.2.6 2018/12/26 14:01:46 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -385,7 +385,7 @@ xennetback_xenbus_destroy(void *arg)
 
 	if (xneti->xni_ih != NULL) {
 		hypervisor_mask_event(xneti->xni_evtchn);
-		intr_disestablish(xneti->xni_ih);
+		xen_intr_disestablish(xneti->xni_ih);
 		xneti->xni_ih = NULL;
 
 		if (xneti->xni_softintr) {
@@ -556,7 +556,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 	xneti->xni_status = CONNECTED;
 	xen_wmb();
 
-	xneti->xni_ih = intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
+	xneti->xni_ih = xen_intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
 	    IST_LEVEL, IPL_NET, xennetback_evthandler, xneti, false,
 	    xneti->xni_if.if_xname);
 	KASSERT(xneti->xni_ih != NULL);
@@ -1215,6 +1215,64 @@ xennetback_ifsoftstart_transfer(void *arg)
 	splx(s);
 }
 
+/*
+ * sighly different from m_dup(); for some reason m_dup() can return
+ * a chain where the data area can cross a page boundary.
+ * This doesn't happens with the function below.
+ */
+static struct mbuf *
+xennetback_copymbuf(struct mbuf *m)
+{
+	struct mbuf *new_m;
+
+	MGETHDR(new_m, M_DONTWAIT, MT_DATA);
+	if (__predict_false(new_m == NULL)) {
+		return NULL;
+	}
+	if (m->m_pkthdr.len > MHLEN) {
+		MCLGET(new_m, M_DONTWAIT);
+		if (__predict_false(
+		    (new_m->m_flags & M_EXT) == 0)) {
+			m_freem(new_m);
+			return NULL;
+		}
+	}
+	m_copydata(m, 0, m->m_pkthdr.len,
+	    mtod(new_m, void *));
+	new_m->m_len = new_m->m_pkthdr.len =
+	    m->m_pkthdr.len;
+	return new_m;
+}
+
+/* return physical page address and offset of data area of an mbuf */
+static void
+xennetback_mbuf_addr(struct mbuf *m, paddr_t *xmit_pa, int *offset)
+{
+	switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
+	case M_EXT|M_EXT_CLUSTER:
+		KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
+		*xmit_pa = m->m_ext.ext_paddr;
+		*offset = m->m_data - m->m_ext.ext_buf;
+		break;
+	case 0:
+		KASSERT(m->m_paddr != M_PADDR_INVALID);
+		*xmit_pa = m->m_paddr;
+		*offset = M_BUFOFFSET(m) +
+		    (m->m_data - M_BUFADDR(m));
+		break;
+	default:
+		if (__predict_false(
+		    !pmap_extract(pmap_kernel(),
+		    (vaddr_t)m->m_data, xmit_pa))) {
+			panic("xennet_start: no pa");
+		}
+		*offset = 0;
+		break;
+	}
+	*offset += (*xmit_pa & ~PG_FRAME);
+	*xmit_pa = (*xmit_pa & PG_FRAME);
+}
+
 static void
 xennetback_ifsoftstart_copy(void *arg)
 {
@@ -1230,6 +1288,7 @@ xennetback_ifsoftstart_copy(void *arg)
 	int do_event = 0;
 	gnttab_copy_t *gop;
 	int id, offset;
+	bool abort;
 
 	XENPRINTF(("xennetback_ifsoftstart_copy "));
 	int s = splnet();
@@ -1246,6 +1305,7 @@ xennetback_ifsoftstart_copy(void *arg)
 		xen_rmb();
 
 		gop = xstart_gop_copy;
+		abort = false;
 		for (i = 0; !IFQ_IS_EMPTY(&ifp->if_snd);) {
 			XENPRINTF(("have a packet\n"));
 			IFQ_POLL(&ifp->if_snd, m);
@@ -1261,69 +1321,30 @@ xennetback_ifsoftstart_copy(void *arg)
 				    "0x%x\n",
 				    req_prod, xneti->xni_rxring.req_cons,
 				    resp_prod));
-				ifp->if_timer = 1;
+				abort = true;
 				break;
 			}
 			if (__predict_false(i == NB_XMIT_PAGES_BATCH))
 				break; /* we filled the array */
-			switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
-			case M_EXT|M_EXT_CLUSTER:
-				KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
-				xmit_pa = m->m_ext.ext_paddr;
-				offset = m->m_data - m->m_ext.ext_buf;
-				break;
-			case 0:
-				KASSERT(m->m_paddr != M_PADDR_INVALID);
-				xmit_pa = m->m_paddr;
-				offset = M_BUFOFFSET(m) +
-				    (m->m_data - M_BUFADDR(m));
-				break;
-			default:
-				if (__predict_false(
-				    !pmap_extract(pmap_kernel(),
-				    (vaddr_t)m->m_data, &xmit_pa))) {
-					panic("xennet_start: no pa");
-				}
-				offset = 0;
-				break;
-			}
-			offset += (xmit_pa & ~PG_FRAME);
-			xmit_pa = (xmit_pa & PG_FRAME);
+
+			xennetback_mbuf_addr(m, &xmit_pa, &offset);
 			if (m->m_pkthdr.len != m->m_len ||
 			    (offset + m->m_pkthdr.len) > PAGE_SIZE) {
-				MGETHDR(new_m, M_DONTWAIT, MT_DATA);
+				new_m = xennetback_copymbuf(m);
 				if (__predict_false(new_m == NULL)) {
-					printf("%s: cannot allocate new mbuf\n",
-					    ifp->if_xname);
+					static struct timeval lasttime;
+					if (ratecheck(&lasttime, &xni_pool_errintvl))
+						printf("%s: cannot allocate new mbuf\n",
+						    ifp->if_xname);
+					abort = 1;
 					break;
-				}
-				if (m->m_pkthdr.len > MHLEN) {
-					MCLGET(new_m, M_DONTWAIT);
-					if (__predict_false(
-					    (new_m->m_flags & M_EXT) == 0)) {
-						XENPRINTF((
-						    "%s: no mbuf cluster\n",
-						    ifp->if_xname));
-						m_freem(new_m);
-						break;
-					}
-					xmit_pa = new_m->m_ext.ext_paddr;
-					offset = new_m->m_data -
-					    new_m->m_ext.ext_buf;
 				} else {
-					xmit_pa = new_m->m_paddr;
-					offset = M_BUFOFFSET(new_m) +
-					    (new_m->m_data - M_BUFADDR(new_m));
+					IFQ_DEQUEUE(&ifp->if_snd, m);
+					m_freem(m);
+					m = new_m;
+					xennetback_mbuf_addr(m,
+					    &xmit_pa, &offset);
 				}
-				offset += (xmit_pa & ~PG_FRAME);
-				xmit_pa = (xmit_pa & PG_FRAME);
-				m_copydata(m, 0, m->m_pkthdr.len,
-				    mtod(new_m, void *));
-				new_m->m_len = new_m->m_pkthdr.len =
-				    m->m_pkthdr.len;
-				IFQ_DEQUEUE(&ifp->if_snd, m);
-				m_freem(m);
-				m = new_m;
 			} else {
 				IFQ_DEQUEUE(&ifp->if_snd, m);
 			}
@@ -1421,9 +1442,10 @@ xennetback_ifsoftstart_copy(void *arg)
 		 * here, as the frontend doesn't notify when adding
 		 * requests anyway
 		 */
-		if (__predict_false(
+		if (__predict_false(abort || 
 		    !RING_HAS_UNCONSUMED_REQUESTS(&xneti->xni_rxring))) {
 			/* ring full */
+			ifp->if_timer = 1;
 			break;
 		}
 	}

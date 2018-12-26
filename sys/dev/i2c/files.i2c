@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.84.2.6 2018/09/06 06:55:49 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.84.2.7 2018/12/26 14:01:48 pgoyette Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -123,6 +123,7 @@ file	dev/i2c/lm87.c				lmenv
 device	dsrtc: sysmon_envsys
 attach	dsrtc at iic
 file	dev/i2c/ds1307.c			dsrtc
+defflag opt_dsrtc.h				DSRTC_YEAR_START_2K
 
 # Xicor X1226 Real Time Clock
 device	xrtc

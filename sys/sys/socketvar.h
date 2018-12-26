@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.146.2.7 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.146.2.8 2018/12/26 14:02:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -410,6 +410,21 @@ sbspace(const struct sockbuf *sb)
 	if (sb->sb_hiwat <= sb->sb_cc || sb->sb_mbmax <= sb->sb_mbcnt)
 		return 0;
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
+}
+
+static __inline u_long
+sbspace_oob(const struct sockbuf *sb)
+{
+	u_long hiwat = sb->sb_hiwat;
+
+	if (hiwat < ULONG_MAX - 1024)
+		hiwat += 1024;
+
+	KASSERT(solocked(sb->sb_so));
+
+	if (hiwat <= sb->sb_cc || sb->sb_mbmax <= sb->sb_mbcnt)
+		return 0;
+	return lmin(hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }
 
 /* do we have to send all at once on a socket? */

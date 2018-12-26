@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.14.14.3 2018/07/28 04:37:22 pgoyette Exp $ */
+/* $NetBSD: crt0-common.c,v 1.14.14.4 2018/12/26 14:01:26 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,20 +36,21 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.14.14.3 2018/07/28 04:37:22 pgoyette Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.14.14.4 2018/12/26 14:01:26 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <sys/syscall.h>
 #include <machine/profile.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "rtld.h"
-
 extern int main(int, char **, char **);
 
-#ifndef HAVE_INITFINI_ARRAY
+#ifdef HAVE_INITFINI_ARRAY
+typedef void (*fptr_t)(void);
+#else
 extern void	_init(void);
 extern void	_fini(void);
 #endif
@@ -76,8 +77,7 @@ struct ps_strings *__ps_strings = 0;
 static char	 empty_string[] = "";
 char		*__progname = empty_string;
 
-__dead __dso_hidden void ___start(void (*)(void), const Obj_Entry *,
-			 struct ps_strings *);
+__dead __dso_hidden void ___start(void (*)(void), struct ps_strings *);
 
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))
 
@@ -290,7 +290,6 @@ relocate_self(struct ps_strings *ps_strings)
 
 void
 ___start(void (*cleanup)(void),			/* from shared loader */
-    const Obj_Entry *obj,			/* from shared loader */
     struct ps_strings *ps_strings)
 {
 #if defined(HAS_RELOCATE_SELF)
@@ -314,13 +313,8 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 		__progname = empty_string;
 	}
 
-	if (&rtld_DYNAMIC != NULL && obj != NULL) {
-		if (obj->magic != RTLD_MAGIC)
-			_FATAL("Corrupt Obj_Entry pointer in GOT\n");
-		if (obj->version != RTLD_VERSION)
-			_FATAL("Dynamic linker version mismatch\n");
+	if (cleanup != NULL)
 		atexit(cleanup);
-	}
 
 	_libc_init();
 

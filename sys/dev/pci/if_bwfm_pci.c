@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.1.2.5 2018/11/26 01:52:32 pgoyette Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.1.2.6 2018/12/26 14:01:50 pgoyette Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -400,8 +400,8 @@ bwfm_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, sc->sc_pihp[0], intrbuf, sizeof(intrbuf));
 
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->sc_pihp[0], IPL_NET,
-	    bwfm_pci_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, sc->sc_pihp[0], IPL_NET,
+	    bwfm_pci_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)

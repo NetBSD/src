@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.3.12.1 2018/12/26 14:01:17 pgoyette Exp $	*/
 
 /* filter - postprocessing of flex output through filters */
 
@@ -23,7 +23,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: filter.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.3.12.1 2018/12/26 14:01:17 pgoyette Exp $");
 
 static const char * check_4_gnu_m4 =
     "m4_dnl ifdef(`__gnu__', ,"
@@ -179,7 +179,7 @@ clearerr(stdin);
 
 			if ((r = chain->filter_func (chain)) == -1)
 				flexfatal (_("filter_func failed"));
-			exit (0);
+			FLEX_EXIT (0);
 		}
 		else {
 			execvp (chain->argv[0],
@@ -188,7 +188,7 @@ clearerr(stdin);
                     chain->argv[0]);
 		}
 
-		exit (1);
+		FLEX_EXIT (1);
 	}
 
 	/* Parent */
@@ -299,7 +299,8 @@ int filter_tee_header (struct filter *chain)
 		fprintf (to_h, "\n");
 
 		/* write a fake line number. It will get fixed by the linedir filter. */
-		fprintf (to_h, "#line 4000 \"M4_YY_OUTFILE_NAME\"\n");
+		if (gen_line_dirs)
+			fprintf (to_h, "#line 4000 \"M4_YY_OUTFILE_NAME\"\n");
 
 		fprintf (to_h, "#undef %sIN_HEADER\n", prefix);
 		fprintf (to_h, "#endif /* %sHEADER_H */\n", prefix);
@@ -326,7 +327,7 @@ int filter_tee_header (struct filter *chain)
 
 	while (wait (0) > 0) ;
 
-	exit (0);
+	FLEX_EXIT (0);
 	return 0;
 }
 

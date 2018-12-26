@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.43.2.2 2018/11/26 01:52:28 pgoyette Exp $	*/
+/*	$NetBSD: xencons.c,v 1.43.2.3 2018/12/26 14:01:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.43.2.2 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.43.2.3 2018/12/26 14:01:46 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -217,7 +217,7 @@ xencons_suspend(device_t dev, const pmf_qual_t *qual) {
 	if (!xendomain_is_dom0()) {
 		evtch = xen_start_info.console_evtchn;
 		hypervisor_mask_event(evtch);
-		intr_disestablish(ih);
+		xen_intr_disestablish(ih);
 		aprint_verbose_dev(dev, "removed event channel %d\n", ih->ih_pin);
 	}
 
@@ -233,7 +233,7 @@ xencons_resume(device_t dev, const pmf_qual_t *qual) {
 		/* dom0 console resume is required only during first start-up */
 		if (cold) {
 			evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
-			ih = intr_establish_xname(-1, &xen_pic, evtch,
+			ih = xen_intr_establish_xname(-1, &xen_pic, evtch,
 			    IST_LEVEL, IPL_TTY, xencons_intr,
 			    xencons_console_device, false,
 			    device_xname(dev));
@@ -241,7 +241,7 @@ xencons_resume(device_t dev, const pmf_qual_t *qual) {
 		}
 	} else {
 		evtch = xen_start_info.console_evtchn;
-		ih = intr_establish_xname(-1, &xen_pic, evtch,
+		ih = xen_intr_establish_xname(-1, &xen_pic, evtch,
 		    IST_LEVEL, IPL_TTY, xencons_handler,
 		    xencons_console_device, false, device_xname(dev));
 		KASSERT(ih != NULL);

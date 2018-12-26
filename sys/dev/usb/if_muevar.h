@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muevar.h,v 1.2.4.2 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: if_muevar.h,v 1.2.4.3 2018/12/26 14:02:01 pgoyette Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -45,7 +45,15 @@ struct mue_rxbuf_hdr {
 	uint32_t		rx_cmd_a;
 #define MUE_RX_CMD_A_LEN_MASK	0x00003fff
 #define MUE_RX_CMD_A_ICSM	0x00004000
+#define MUE_RX_CMD_A_ERRORS	__BITS(16, 21)	/* non-checksum errors */
 #define MUE_RX_CMD_A_RED	0x00400000
+#define MUE_RX_CMD_A_PID	__BITS(28, 27)
+#define MUE_RX_CMD_A_PID_TCP	__SHIFTIN(1, MUE_RX_CMD_A_PID)
+#define MUE_RX_CMD_A_PID_UDP	__SHIFTIN(2, MUE_RX_CMD_A_PID)
+#define MUE_RX_CMD_A_PID_IP	__SHIFTIN(3, MUE_RX_CMD_A_PID)
+#define MUE_RX_CMD_A_IPV	__BIT(29)
+#define MUE_RX_CMD_A_TCE	__BIT(30)
+#define MUE_RX_CMD_A_ICE	__BIT(31)
 
 	uint32_t		rx_cmd_b;
 	uint16_t		rx_cmd_c;

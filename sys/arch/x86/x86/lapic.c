@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.65.2.2 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: lapic.c,v 1.65.2.3 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.65.2.2 2018/09/30 01:45:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.65.2.3 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -535,7 +535,7 @@ lapic_get_timecount(struct timecounter *tc)
 		if (lapic_readreg(reg) & (1 << (LAPIC_TIMER_VECTOR % 32))) {
 			cur_timer -= lapic_tval;
 		}
-	} else if (ci->ci_istate.ipending & (1 << LIR_TIMER))
+	} else if (ci->ci_ipending & (1 << LIR_TIMER))
 		cur_timer = lapic_gettick() - lapic_tval;
 	cur_timer = ci->ci_lapic_counter - cur_timer;
 	splx(s);

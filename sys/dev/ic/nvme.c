@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.32.2.2 2018/04/22 07:20:20 pgoyette Exp $	*/
+/*	$NetBSD: nvme.c,v 1.32.2.3 2018/12/26 14:01:48 pgoyette Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.32.2.2 2018/04/22 07:20:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.32.2.3 2018/12/26 14:01:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -902,6 +902,7 @@ nvme_getcache_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 
 	sqe->opcode = NVM_ADMIN_GET_FEATURES;
 	htolem32(&sqe->cdw10, NVM_FEATURE_VOLATILE_WRITE_CACHE);
+	htolem32(&sqe->cdw11, NVM_VOLATILE_WRITE_CACHE_WCE);
 }
 
 static void
@@ -922,7 +923,7 @@ nvme_getcache_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 		 */ 
 		result = DKCACHE_FUA;
 
-		if (cdw0 & NVME_CQE_CDW0_VWC_WCE)
+		if (cdw0 & NVM_VOLATILE_WRITE_CACHE_WCE)
 			result |= DKCACHE_WRITE;
 
 		/*
@@ -930,6 +931,14 @@ nvme_getcache_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 		 * settable.
 		 */
 		result |= DKCACHE_WCHANGE;
+
+		/*
+		 * ONCS field indicates whether the optional SAVE is also
+		 * supported for Set Features. According to spec v1.3,
+		 * Volatile Write Cache however doesn't support persistency
+		 * across power cycle/reset.
+		 */
+
 	} else {
 		result = -1;
 	}
@@ -937,6 +946,95 @@ nvme_getcache_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 	*addr = result;
 
 	nvme_ccb_put(q, ccb);
+}
+
+struct nvme_setcache_state {
+	int dkcache;
+	int result;
+};
+
+static bool
+nvme_setcache_finished(void *xc)
+{
+	struct nvme_setcache_state *st = xc;
+
+	return (st->result != 0);
+}
+
+static void
+nvme_setcache_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
+{
+	struct nvme_sqe *sqe = slot;
+	struct nvme_setcache_state *st = ccb->ccb_cookie;
+
+	sqe->opcode = NVM_ADMIN_SET_FEATURES;
+	htolem32(&sqe->cdw10, NVM_FEATURE_VOLATILE_WRITE_CACHE);
+	if (st->dkcache & DKCACHE_WRITE)
+		htolem32(&sqe->cdw11, NVM_VOLATILE_WRITE_CACHE_WCE);
+}
+
+static void
+nvme_setcache_done(struct nvme_queue *q, struct nvme_ccb *ccb,
+    struct nvme_cqe *cqe)
+{
+	struct nvme_setcache_state *st = ccb->ccb_cookie;
+	uint16_t status = NVME_CQE_SC(lemtoh16(&cqe->flags));
+
+	if (status == NVME_CQE_SC_SUCCESS) {
+		st->result = 1;
+	} else {
+		st->result = -1;
+	}
+
+	nvme_ccb_put(q, ccb);
+}
+
+/*
+ * Set status of volatile write cache. Always asynchronous.
+ */
+int
+nvme_admin_setcache(struct nvme_softc *sc, int dkcache)
+{
+	struct nvme_ccb *ccb;
+	struct nvme_queue *q = sc->sc_admin_q;
+	int error;
+	struct nvme_setcache_state st;
+
+	if (!nvme_has_volatile_write_cache(sc)) {
+		/* cache simply not present */
+		return EOPNOTSUPP;
+	}
+
+	if (dkcache & ~(DKCACHE_WRITE)) {
+		/* unsupported parameters */
+		return EOPNOTSUPP;
+	}
+
+	ccb = nvme_ccb_get(q, true);
+	KASSERT(ccb != NULL);
+
+	memset(&st, 0, sizeof(st));
+	st.dkcache = dkcache;
+
+	ccb->ccb_done = nvme_setcache_done;
+	ccb->ccb_cookie = &st;
+
+	/* namespace context */
+	ccb->nnc_flags = 0;
+	ccb->nnc_done = NULL;
+
+	nvme_q_submit(sc, q, ccb, nvme_setcache_fill);
+
+	/* wait for completion */
+	nvme_q_wait_complete(sc, q, nvme_setcache_finished, &st);
+	KASSERT(st.result != 0);
+
+	if (st.result > 0)
+		error = 0;
+	else
+		error = EINVAL;
+
+	return error;
 }
 
 void
@@ -1409,7 +1507,13 @@ nvme_q_create(struct nvme_softc *sc, struct nvme_queue *q)
 	if (rv != 0)
 		goto fail;
 
+	nvme_ccb_put(sc->sc_admin_q, ccb);
+	return 0;
+
 fail:
+	if (sc->sc_use_mq)
+		sc->sc_intr_disestablish(sc, q->q_id);
+
 	nvme_ccb_put(sc->sc_admin_q, ccb);
 	return rv;
 }

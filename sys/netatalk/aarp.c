@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.41.2.1 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: aarp.c,v 1.41.2.2 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.41.2.1 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.41.2.2 2018/12/26 14:02:05 pgoyette Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -170,7 +170,7 @@ aarpwhohas(struct ifnet *ifp, const struct sockaddr_at *sat)
 	MCLAIM(m, &aarp_mowner);
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
-	MH_ALIGN(m, sizeof(*ea));
+	m_align(m, sizeof(*ea));
 
 	ea = mtod(m, struct ether_aarp *);
 	memset(ea, 0, sizeof(*ea));
@@ -618,7 +618,7 @@ aarpprobe(void *arp)
 	MCLAIM(m, &aarp_mowner);
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
-	MH_ALIGN(m, sizeof(*ea));
+	m_align(m, sizeof(*ea));
 
 	ea = mtod(m, struct ether_aarp *);
 	memset(ea, 0, sizeof(*ea));

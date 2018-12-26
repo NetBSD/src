@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.166.2.2 2018/09/30 01:45:39 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.166.2.3 2018/12/26 14:01:34 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -298,7 +298,6 @@ sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support

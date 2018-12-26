@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.56.2.1 2018/04/16 01:59:58 pgoyette Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.56.2.2 2018/12/26 14:01:50 pgoyette Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.56.2.1 2018/04/16 01:59:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.56.2.2 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +60,7 @@ struct ichsmb_softc {
 	pci_chipset_tag_t	sc_pc;
 	void *			sc_ih;
 	int			sc_poll;
+	pci_intr_handle_t	*sc_pihp;
 
 	struct i2c_controller	sc_i2c_tag;
 	kmutex_t 		sc_i2c_mutex;
@@ -90,7 +91,7 @@ static int	ichsmb_intr(void *);
 
 CFATTACH_DECL3_NEW(ichsmb, sizeof(struct ichsmb_softc),
     ichsmb_match, ichsmb_attach, ichsmb_detach, NULL, ichsmb_rescan,
-    ichsmb_chdet, 0);
+    ichsmb_chdet, DVF_DETACH_SHUTDOWN);
 
 
 static int
@@ -154,7 +155,6 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	struct ichsmb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pcireg_t conf;
-	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	char intrbuf[PCI_INTRSTR_LEN];
 	int flags;
@@ -187,15 +187,19 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "interrupting at SMI\n");
 	} else {
 		/* Install interrupt handler */
-		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf,
-			    sizeof(intrbuf));
-			sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih,
-			    IPL_BIO, ichsmb_intr, sc, device_xname(sc->sc_dev));
+		if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0) == 0) {
+			intrstr = pci_intr_string(pa->pa_pc, sc->sc_pihp[0],
+			    intrbuf, sizeof(intrbuf));
+			sc->sc_ih = pci_intr_establish_xname(pa->pa_pc,
+			    sc->sc_pihp[0], IPL_BIO, ichsmb_intr, sc,
+			    device_xname(sc->sc_dev));
 			if (sc->sc_ih != NULL) {
 				aprint_normal_dev(self, "interrupting at %s\n",
 				    intrstr);
 				sc->sc_poll = 0;
+			} else {
+				pci_intr_release(pa->pa_pc, sc->sc_pihp, 1);
+				sc->sc_pihp = NULL;
 			}
 		}
 		if (sc->sc_poll)
@@ -251,8 +255,15 @@ ichsmb_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_i2c_mutex);
 
-	if (sc->sc_ih)
+	if (sc->sc_ih) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	if (sc->sc_pihp) {
+		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
+		sc->sc_pihp = NULL;
+	}
 
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 

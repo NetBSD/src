@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.48 2017/07/03 21:34:21 wiz Exp $
+.\"	$NetBSD: systat.1,v 1.48.4.1 2018/12/26 14:02:11 pgoyette Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd November 16, 2016
+.Dd December 26, 2018
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -454,7 +454,22 @@ etc.
 The upper left quadrant of the screen shows the number
 of users logged in and the load average over the last one, five,
 and fifteen minute intervals.
-Below this is a list of the
+Below this are statistics on memory utilization.
+The first row of the table reports memory usage only among
+active processes, that is processes that have run in the previous
+twenty seconds.
+The second row reports on memory usage of all processes.
+The first column reports on the number of physical pages
+claimed by processes.
+The second column reports the number of physical pages that
+are devoted to read only text pages.
+The third and fourth columns report the same two figures for
+virtual pages, that is the number of pages that would be
+needed if all processes had all of their pages.
+Finally the last column shows the number of physical pages
+on the free list.
+.Pp
+Below the memory display is a list of the
 average number of processes (over the last refresh interval)
 that are runnable (`r'), in page wait (`p'),
 in disk wait other than paging (`d'), sleeping (`s').
@@ -465,9 +480,9 @@ nice (shown as `-'), and idle time (shown as ` ').
 .Pp
 To the right of the process statistics is a column that
 lists the average number of context switches (`Csw'),
-traps (`Trp'; includes page faults), system calls (`Sys'), interrupts (`Int'),
-network software interrupts (`Sof'),
-page faults (`Flt').
+traps (`Traps'; includes page faults), system calls (`SysCa'), interrupts (`Intr'),
+network software interrupts (`Soft'),
+page faults (`Fault').
 .Pp
 Below this are statistics on memory utilization.
 The first row of the table reports memory usage only among
@@ -509,16 +524,45 @@ the second row of the display shows the average
 number of pages transferred per second over the last refresh interval.
 .Pp
 Below the paging statistics is another columns of paging data.
-From top to bottom, these represent average numbers of copy on write faults
-(`cow'), object cache lookups (`objlk'), object cache hits (`objht'),
-pages zero filled on demand (`zfodw'), number zfod's created (`nzfod'),
-percentage of zfod's used (`%zfod'), number of kernel pages (`kern'),
-number of wired pages (`wire'), number of active pages (`act'), number
-of inactive pages (`inact'), number of free pages (`free'), pages freed
-by daemon (`daefr'), pages freed by exiting processes (`prcfr'), number
-of pages reactivated from freelist (`react'), scans in page out daemon
-(`scan'), revolutions of the hand (`hdrev'), and in-transit blocking page
-faults (`intrn'), per second over the refresh period.
+From top to bottom, these represent:
+.Pp
+.Bl -tag -width Fl -compact
+.It Ic Sq forks
+number of fork() calls
+.It Ic Sq fkppw
+number of fork() calls where parent waits
+.It Ic Sq fksvm
+number of fork() calls where vmspace is shared
+.It Ic Sq pwait
+number of times fault had to wait on a page
+.It Ic Sq relck
+number of times uvmfault_relock() is called
+.It Ic Sq rlkok
+number of times uvmfault_relock() is a success
+.It Ic Sq noram
+number of times fault was out of RAM
+.It Ic Sq ndcpy
+number of times fault clears ``needs copy''
+.It Ic Sq fltcp
+number of times fault promotes with copy (2b)
+.It Ic Sq zfod
+number of times fault promotes with zerofill (2b)
+.It Ic Sq cow
+number of times faulted for anonymous for Copy-On-Write (case 1b)
+.It Ic Sq fmin
+min number of free pages
+.It Ic Sq ftarg
+target number of free pages
+.It Ic Sq itarg
+target number of inactive pages
+.It Ic Sq flnan
+number of times fault was out of anonymous pages
+.It Ic Sq pdfre
+number of pages daemon freed since boot
+.It Ic Sq pdscn
+number of pages daemon scaned since boot
+.El
+.Pp
 Note that the `%zfod' percentage is usually less than 100%,
 however it may exceed 100% if a large number of requests
 are actually used long after they were set up during a

@@ -1,4 +1,4 @@
-/*	$NetBSD: netsmb_user.c,v 1.3 2014/11/16 15:31:12 nakayama Exp $	*/
+/*	$NetBSD: netsmb_user.c,v 1.3.22.1 2018/12/26 14:02:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 Takeshi Nakayama.
@@ -24,6 +24,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netsmb_user.c,v 1.3.22.1 2018/12/26 14:02:06 pgoyette Exp $");
+
 #ifndef _KERNEL
 #include <stddef.h>
 #include <errno.h>

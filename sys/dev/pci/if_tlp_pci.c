@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.124 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.124.16.1 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.124 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.124.16.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1011,9 +1011,9 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			goto fail;
 		}
 		intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-		psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET,
+		psc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET,
 		    (psc->sc_flags & TULIP_PCI_SHAREDINTR) ?
-		    tlp_pci_shared_intr : tlp_intr, sc);
+		    tlp_pci_shared_intr : tlp_intr, sc, device_xname(self));
 		if (psc->sc_ih == NULL) {
 			aprint_error_dev(self, "unable to establish interrupt");
 			if (intrstr != NULL)

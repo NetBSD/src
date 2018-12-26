@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.9.2.1 2018/11/26 01:49:54 pgoyette Exp $	*/
+/*	$NetBSD: syntax.h,v 1.9.2.2 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,6 +50,7 @@
 #define CSPCL 11		/* these terminate a word */
 #define CCTL 12			/* like CWORD, except it must be escaped */
 #define CSBACK 13		/* a backslash in a single quote syntax */
+#define CFAKE 14		/* a delimiter that does not exist */
 	/*
 	 * note CSBACK == (CCTL|1)
 	 * the code does not rely upon that, but keeping it allows a
@@ -64,8 +65,9 @@
 #define ISSPECL 020		/* the name of a special parameter */
 #define ISSPACE 040		/* a white space character */
 
-#define PEOF (CHAR_MIN - 1)
-#define SYNBASE (-PEOF)
+#define PEOF	(CHAR_MIN - 1)
+#define PFAKE	(CHAR_MIN - 2)
+#define SYNBASE	(-PFAKE)
 
 
 #define BASESYNTAX (basesyntax + SYNBASE)

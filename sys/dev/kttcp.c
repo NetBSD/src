@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.40.14.1 2018/09/06 06:55:48 pgoyette Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.40.14.2 2018/12/26 14:01:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.40.14.1 2018/09/06 06:55:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.40.14.2 2018/12/26 14:01:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -297,7 +297,7 @@ nopages:
 					 * for protocol headers in first mbuf.
 					 */
 					if (atomic && top == 0 && len < mlen)
-						MH_ALIGN(m, len);
+						m_align(m, len);
 				}
 				resid -= len;
 				m->m_len = len;

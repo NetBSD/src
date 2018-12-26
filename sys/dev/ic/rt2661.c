@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.36.2.3 2018/09/06 06:55:50 pgoyette Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.36.2.4 2018/12/26 14:01:48 pgoyette Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.36.2.3 2018/09/06 06:55:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.36.2.4 2018/12/26 14:01:48 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -1753,7 +1753,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 			return ENOMEM;
 		}
 
-		M_COPY_PKTHDR(mnew, m0);
+		m_copy_pkthdr(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
 			if (!(mnew->m_flags & M_EXT)) {

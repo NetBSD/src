@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.346.2.2 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: com.c,v 1.346.2.3 2018/12/26 14:01:48 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.346.2.2 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.346.2.3 2018/12/26 14:01:48 pgoyette Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -128,7 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.346.2.2 2018/06/25 07:25:50 pgoyette Exp $
 
 #include "ioconf.h"
 
-#ifdef	COM_REGMAP
 #define	CSR_WRITE_1(r, o, v)	\
 	bus_space_write_1((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o], v)
 #define	CSR_READ_1(r, o)	\
@@ -139,18 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.346.2.2 2018/06/25 07:25:50 pgoyette Exp $
 	bus_space_read_2((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o])
 #define	CSR_WRITE_MULTI(r, o, p, n)	\
 	bus_space_write_multi_1((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o], p, n)
-#else
-#define	CSR_WRITE_1(r, o, v)	\
-	bus_space_write_1((r)->cr_iot, (r)->cr_ioh, o, v)
-#define	CSR_READ_1(r, o)	\
-	bus_space_read_1((r)->cr_iot, (r)->cr_ioh, o)
-#define	CSR_WRITE_2(r, o, v)	\
-	bus_space_write_2((r)->cr_iot, (r)->cr_ioh, o, v)
-#define	CSR_READ_2(r, o)	\
-	bus_space_read_2((r)->cr_iot, (r)->cr_ioh, o)
-#define	CSR_WRITE_MULTI(r, o, p, n)	\
-	bus_space_write_multi_1((r)->cr_iot, (r)->cr_ioh, o, p, n)
-#endif
 
 
 static void com_enable_debugport(struct com_softc *);
@@ -248,7 +235,6 @@ int	com_kgdb_getc(void *);
 void	com_kgdb_putc(void *, int);
 #endif /* KGDB */
 
-#ifdef COM_REGMAP
 /* initializer for typical 16550-ish hardware */
 #define	COM_REG_STD { \
 	com_data, com_data, com_dlbl, com_dlbh, com_ier, com_iir, com_fifo, \
@@ -256,8 +242,7 @@ void	com_kgdb_putc(void *, int);
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, com_usr, com_tfl, com_rfl, \
 	0, 0, 0, 0, 0, 0, 0, com_halt }
 
-const bus_size_t com_std_map[42] = COM_REG_STD;
-#endif /* COM_REGMAP */
+static const bus_size_t com_std_map[42] = COM_REG_STD;
 
 #define	COMDIALOUT_MASK	TTDIALOUT_MASK
 
@@ -271,6 +256,42 @@ const bus_size_t com_std_map[42] = COM_REG_STD;
 #define	BW	BUS_SPACE_BARRIER_WRITE
 #define COM_BARRIER(r, f) \
 	bus_space_barrier((r)->cr_iot, (r)->cr_ioh, 0, (r)->cr_nports, (f))
+
+/*
+ * com_init_regs --
+ *	Driver front-ends use this to initialize our register map
+ *	in the standard fashion.  They may then tailor the map to
+ *	their own particular requirements.
+ */
+void
+com_init_regs(struct com_regs *regs, bus_space_tag_t st, bus_space_handle_t sh,
+	      bus_addr_t addr)
+{
+
+	memset(regs, 0, sizeof(*regs));
+	regs->cr_iot = st;
+	regs->cr_ioh = sh;
+	regs->cr_iobase = addr;
+	regs->cr_nports = COM_NPORTS;
+	memcpy(regs->cr_map, com_std_map, sizeof(regs->cr_map));
+}
+
+/*
+ * com_init_regs_stride --
+ *	Convenience function for front-ends that have a stride between
+ *	registers.
+ */
+void
+com_init_regs_stride(struct com_regs *regs, bus_space_tag_t st,
+		     bus_space_handle_t sh, bus_addr_t addr, u_int regshift)
+{
+
+	com_init_regs(regs, st, sh, addr);
+	for (size_t i = 0; i < __arraycount(regs->cr_map); i++) {
+		regs->cr_map[i] <<= regshift;
+	}
+	regs->cr_nports <<= regshift;
+}
 
 /*ARGSUSED*/
 int
@@ -350,11 +371,7 @@ comprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	struct com_regs	regs;
 
-	regs.cr_iot = iot;
-	regs.cr_ioh = ioh;
-#ifdef	COM_REGMAP
-	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));
-#endif
+	com_init_regs(&regs, iot, ioh, 0/*XXX*/);
 
 	return com_probe_subr(&regs);
 }
@@ -379,6 +396,16 @@ com_enable_debugport(struct com_softc *sc)
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_MCR, sc->sc_mcr);
 }
 
+static void
+com_intr_poll(void *arg)
+{
+	struct com_softc * const sc = arg;
+
+	comintr(sc);
+
+	callout_schedule(&sc->sc_poll_callout, 1);
+}
+
 void
 com_attach_subr(struct com_softc *sc)
 {
@@ -388,12 +415,16 @@ com_attach_subr(struct com_softc *sc)
 	const char *fifo_msg = NULL;
 	prop_dictionary_t	dict;
 	bool is_console = true;
+	bool force_console = false;
 
 	aprint_naive("\n");
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
+	prop_dictionary_get_bool(dict, "force_console", &force_console);
 	callout_init(&sc->sc_diag_callout, 0);
+	callout_init(&sc->sc_poll_callout, 0);
+	callout_setfunc(&sc->sc_poll_callout, com_intr_poll, sc);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 #if defined(COM_16650)
@@ -414,9 +445,12 @@ com_attach_subr(struct com_softc *sc)
 
 	CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 
-	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
-	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
+	if ((bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
+	    regsp->cr_iobase == comcons_info.regs.cr_iobase) || force_console) {
 		comconsattached = 1;
+
+		if (force_console)
+			memcpy(regsp, &comcons_info.regs, sizeof(*regsp));
 
 		if (cn_tab == NULL && comcnreattach() != 0) {
 			printf("can't re-init serial console @%lx\n",
@@ -671,6 +705,9 @@ fifodone:
 	com_config(sc);
 
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
+
+	if (ISSET(sc->sc_hwflags, COM_HW_POLL))
+		callout_schedule(&sc->sc_poll_callout, 1);
 }
 
 void
@@ -2488,13 +2525,16 @@ comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 {
 	struct com_regs	regs;
 
-	memset(&regs, 0, sizeof regs);
-	regs.cr_iot = iot;
-	regs.cr_iobase = iobase;
-	regs.cr_nports = COM_NPORTS;
-#ifdef	COM_REGMAP
-	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));
-#endif
+	/*XXX*/
+	bus_space_handle_t dummy_bsh;
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
+
+	/*
+	 * dummy_bsh required because com_init_regs() wants it.  A
+	 * real bus_space_handle will be filled in by cominit() later.
+	 * XXXJRT Detangle this mess eventually, plz.
+	 */
+	com_init_regs(&regs, iot, dummy_bsh/*XXX*/, iobase);
 
 	return comcnattach1(&regs, rate, frequency, type, cflag);
 }
@@ -2571,12 +2611,7 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 {
 	struct com_regs regs;
 
-	regs.cr_iot = iot;
-	regs.cr_nports = COM_NPORTS;
-	regs.cr_iobase = iobase;
-#ifdef COM_REGMAP
-	memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));
-#endif
+	com_init_regs(&regs, iot, (bus_space_handle_t)0/*XXX*/, iobase);
 
 	return com_kgdb_attach1(&regs, rate, frequency, type, cflag);
 }

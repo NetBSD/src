@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.36.1 2018/11/26 01:52:26 pgoyette Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.36.2 2018/12/26 14:01:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.36.1 2018/11/26 01:52:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.36.2 2018/12/26 14:01:39 pgoyette Exp $");
 
 #include "opt_md.h"
 
@@ -186,5 +186,9 @@ device_register(device_t dev, void *aux)
 		if (bootconfig.log2_bpp == 5)
 			prop_dictionary_set_bool(dict, "is_bgr", 1);
 		prop_dictionary_set_uint32(dict, "address", fbaddr);
+	}
+	if (device_is_a(dev, "dsrtc")) {
+		prop_dictionary_t dict = device_properties(dev);
+		prop_dictionary_set_bool(dict, "base_year_is_2000", 1);
 	}
 }

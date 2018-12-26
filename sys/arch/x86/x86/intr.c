@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.123.2.7 2018/11/26 01:52:28 pgoyette Exp $	*/
+/*	$NetBSD: intr.c,v 1.123.2.8 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.7 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.8 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -184,16 +184,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.7 2018/11/26 01:52:28 pgoyette Exp 
 #include <x86/pci/msipic.h>
 #include <x86/pci/pci_msi_machdep.h>
 
-#if NPCI == 0
+#if NPCI == 0 || !defined(__HAVE_PCI_MSI_MSIX)
 #define msipic_is_msi_pic(PIC)	(false)
 #endif
-
-#if defined(XEN) /* XXX: Cleanup */
-#include <xen/xen.h>
-#include <xen/hypervisor.h>
-#include <xen/evtchn.h>
-#include <xen/xenfunc.h>
-#endif /* XEN */
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -220,14 +213,6 @@ static SIMPLEQ_HEAD(, intrsource) io_interrupt_sources =
 
 static kmutex_t intr_distribute_lock;
 
-#if NIOAPIC > 0 || NACPICA > 0
-static int intr_scan_bus(int, int, intr_handle_t *);
-#if NPCI > 0
-static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
-#endif
-#endif
-
-#if !defined(XEN)
 static int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *,
 				  struct intrsource *);
 static int __noinline intr_allocate_slot(struct pic *, int, int,
@@ -238,13 +223,10 @@ static void intr_source_free(struct cpu_info *, int, struct pic *, int);
 
 static void intr_establish_xcall(void *, void *);
 static void intr_disestablish_xcall(void *, void *);
-#endif
 
 static const char *legacy_intr_string(int, char *, size_t, struct pic *);
 
-#if defined(XEN) /* XXX: nuke conditional after integration */
 static const char *xen_intr_string(int, char *, size_t, struct pic *);
-#endif /* XXX: XEN */
 
 #if defined(INTRSTACKSIZE)
 static inline bool redzone_const_or_false(bool);
@@ -255,18 +237,14 @@ static void intr_redistribute_xc_t(void *, void *);
 static void intr_redistribute_xc_s1(void *, void *);
 static void intr_redistribute_xc_s2(void *, void *);
 static bool intr_redistribute(struct cpu_info *);
-
 static struct intrsource *intr_get_io_intrsource(const char *);
 static void intr_free_io_intrsource_direct(struct intrsource *);
-#if !defined(XEN)
 static int intr_num_handlers(struct intrsource *);
-
 static int intr_find_unused_slot(struct cpu_info *, int *);
 static void intr_activate_xcall(void *, void *);
 static void intr_deactivate_xcall(void *, void *);
 static void intr_get_affinity(struct intrsource *, kcpuset_t *);
 static int intr_set_affinity(struct intrsource *, const kcpuset_t *);
-#endif /* XEN */
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -275,7 +253,6 @@ static int intr_set_affinity(struct intrsource *, const kcpuset_t *);
 void
 intr_default_setup(void)
 {
-#if !defined(XEN)
 	int i;
 
 	/* icu vectors */
@@ -289,9 +266,6 @@ intr_default_setup(void)
 	 */
 	i8259_default_setup();
 
-#else
-	events_default_setup();
-#endif /* !XEN */
 	mutex_init(&intr_distribute_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -374,123 +348,6 @@ intr_calculatemasks(struct cpu_info *ci)
 }
 
 /*
- * List to keep track of PCI buses that are probed but not known
- * to the firmware. Used to
- *
- * XXX should maintain one list, not an array and a linked list.
- */
-#if (NPCI > 0) && ((NIOAPIC > 0) || NACPICA > 0)
-struct intr_extra_bus {
-	int bus;
-	pcitag_t *pci_bridge_tag;
-	pci_chipset_tag_t pci_chipset_tag;
-	LIST_ENTRY(intr_extra_bus) list;
-};
-
-LIST_HEAD(, intr_extra_bus) intr_extra_buses =
-    LIST_HEAD_INITIALIZER(intr_extra_buses);
-
-
-void
-intr_add_pcibus(struct pcibus_attach_args *pba)
-{
-	struct intr_extra_bus *iebp;
-
-	iebp = kmem_alloc(sizeof(*iebp), KM_SLEEP);
-	iebp->bus = pba->pba_bus;
-	iebp->pci_chipset_tag = pba->pba_pc;
-	iebp->pci_bridge_tag = pba->pba_bridgetag;
-	LIST_INSERT_HEAD(&intr_extra_buses, iebp, list);
-}
-
-static int
-intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
-		    pci_chipset_tag_t *pc)
-{
-	struct intr_extra_bus *iebp;
-	struct mp_bus *mpb;
-
-	if (bus < 0)
-		return ENOENT;
-
-	if (bus < mp_nbus) {
-		mpb = &mp_busses[bus];
-		if (mpb->mb_pci_bridge_tag == NULL)
-			return ENOENT;
-		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
-		*pc = mpb->mb_pci_chipset_tag;
-		return 0;
-	}
-
-	LIST_FOREACH(iebp, &intr_extra_buses, list) {
-		if (iebp->bus == bus) {
-			if (iebp->pci_bridge_tag == NULL)
-				return ENOENT;
-			*pci_bridge_tag = *iebp->pci_bridge_tag;
-			*pc = iebp->pci_chipset_tag;
-			return 0;
-		}
-	}
-	return ENOENT;
-}
-#endif
-
-#if NIOAPIC > 0 || NACPICA > 0
-/*
- * 'pin' argument pci bus_pin encoding of a device/pin combination.
- */
-int
-intr_find_mpmapping(int bus, int pin, intr_handle_t *handle)
-{
-
-#if NPCI > 0
-	while (intr_scan_bus(bus, pin, handle) != 0) {
-		int dev, func;
-		pcitag_t pci_bridge_tag;
-		pci_chipset_tag_t pc;
-
-		if (intr_find_pcibridge(bus, &pci_bridge_tag, &pc) != 0)
-			return ENOENT;
-		dev = pin >> 2;
-		pin = pin & 3;
-		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
-		pci_decompose_tag(pc, pci_bridge_tag, &bus, &dev, &func);
-		pin |= (dev << 2);
-	}
-	return 0;
-#else
-	return intr_scan_bus(bus, pin, handle);
-#endif
-}
-
-static int
-intr_scan_bus(int bus, int pin, intr_handle_t *handle)
-{
-	struct mp_intr_map *mip, *intrs;
-
-	if (bus < 0 || bus >= mp_nbus)
-		return ENOENT;
-
-	intrs = mp_busses[bus].mb_intrs;
-	if (intrs == NULL)
-		return ENOENT;
-
-	for (mip = intrs; mip != NULL; mip = mip->next) {
-		if (mip->bus_pin == pin) {
-#if NACPICA > 0
-			if (mip->linkdev != NULL)
-				if (mpacpi_findintr_linkdev(mip) != 0)
-					continue;
-#endif
-			*handle = mip->ioapic_ih;
-			return 0;
-		}
-	}
-	return ENOENT;
-}
-#endif
-
-/*
  * Create an interrupt id such as "ioapic0 pin 9". This interrupt id is used
  * by MI code and intrctl(8).
  */
@@ -500,6 +357,7 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t l
 	int ih = 0;
 
 #if NPCI > 0
+#if defined(__HAVE_PCI_MSI_MSIX)	
 	if ((pic->pic_type == PIC_MSI) || (pic->pic_type == PIC_MSIX)) {
 		uint64_t pih;
 		int dev, vec;
@@ -516,16 +374,13 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t l
 
 		return x86_pci_msi_string(NULL, pih, buf, len);
 	}
+#endif /* __HAVE_PCI_MSI_MSIX */	
 #endif
-
-#if defined(XEN)
-	evtchn_port_t port = pin; /* Port number */
 
 	if (pic->pic_type == PIC_XEN) {
-		ih = pin;
-		return xen_intr_string(port, buf, len, pic);
+		ih = pin;	/* Port == pin */
+		return xen_intr_string(pin, buf, len, pic);
 	}
-#endif
 
 	/*
 	 * If the device is pci, "legacy_irq" is alway -1. Least 8 bit of "ih"
@@ -645,7 +500,6 @@ intr_free_io_intrsource(const char *intrid)
 	intr_free_io_intrsource_direct(isp);
 }
 
-#if !defined(XEN)
 static int
 intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		       int *index, struct intrsource *chained)
@@ -848,27 +702,7 @@ intr_biglock_wrapper(void *vp)
 	return ret;
 }
 #endif /* MULTIPROCESSOR */
-#endif /* XEN */
 
-#if defined(DOM0OPS) || !defined(XEN)
-struct pic *
-intr_findpic(int num)
-{
-#if NIOAPIC > 0
-	struct ioapic_softc *pic;
-
-	pic = ioapic_find_bybase(num);
-	if (pic != NULL)
-		return &pic->sc_pic;
-#endif
-	if (num < NUM_LEGACY_IRQS)
-		return &i8259_pic;
-
-	return NULL;
-}
-#endif
-
-#if !defined(XEN)
 /*
  * Append device name to intrsource. If device A and device B share IRQ number,
  * the device name of the interrupt id is "device A, device B".
@@ -1205,117 +1039,12 @@ intr_num_handlers(struct intrsource *isp)
 	return num;
 }
 
-#else /* XEN */
-void *
-intr_establish(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *), void *arg,
-    bool known_mpsafe)
-{
-
-	return intr_establish_xname(legacy_irq, pic, pin, type, level,
-	    handler, arg, known_mpsafe, "XEN");
-}
-
-void *
-intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *), void *arg,
-    bool known_mpsafe, const char *xname)
-{
-	const char *intrstr;
-	char intrstr_buf[INTRIDBUF];
-
-	if (pic->pic_type == PIC_XEN) {
-		struct intrhand *rih;
-
-		/*
-		 * event_set_handler interprets `level != IPL_VM' to
-		 * mean MP-safe, so we require the caller to match that
-		 * for the moment.
-		 */
-		KASSERT(known_mpsafe == (level != IPL_VM));
-
-		intrstr = intr_create_intrid(legacy_irq, pic, pin, intrstr_buf,
-		    sizeof(intrstr_buf));
-
-		event_set_handler(pin, handler, arg, level, intrstr, xname);
-
-		rih = kmem_zalloc(sizeof(*rih), cold ? KM_NOSLEEP : KM_SLEEP);
-		if (rih == NULL) {
-			printf("%s: can't allocate handler info\n", __func__);
-			return NULL;
-		}
-
-		/*
-		 * XXX:
-		 * This is just a copy for API conformance.
-		 * The real ih is lost in the innards of
-		 * event_set_handler(); where the details of
-		 * biglock_wrapper etc are taken care of.
-		 * All that goes away when we nuke event_set_handler()
-		 * et. al. and unify with x86/intr.c
-		 */
-		rih->ih_pin = pin; /* port */
-		rih->ih_fun = rih->ih_realfun = handler;
-		rih->ih_arg = rih->ih_realarg = arg;
-		rih->pic_type = pic->pic_type;
-		return rih;
-	} 	/* Else we assume pintr */
-
-#if NPCI > 0 || NISA > 0
-	struct pintrhand *pih;
-	int gsi;
-	int vector, evtchn;
-
-	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
-	    "bad legacy IRQ value: %d", legacy_irq);
-	KASSERTMSG(!(legacy_irq == -1 && pic == &i8259_pic),
-	    "non-legacy IRQon i8259 ");
-
-	gsi = xen_pic_to_gsi(pic, pin);
-
-	intrstr = intr_create_intrid(gsi, pic, pin, intrstr_buf,
-	    sizeof(intrstr_buf));
-
-	vector = xen_vec_alloc(gsi);
-
-	if (irq2port[gsi] == 0) {
-		extern struct cpu_info phycpu_info_primary; /* XXX */
-		struct cpu_info *ci = &phycpu_info_primary;
-
-		pic->pic_addroute(pic, ci, pin, vector, type);
-
-		evtchn = bind_pirq_to_evtch(gsi);
-		KASSERT(evtchn > 0);
-		KASSERT(evtchn < NR_EVENT_CHANNELS);
-		irq2port[gsi] = evtchn + 1;
-		xen_atomic_set_bit(&ci->ci_evtmask[0], evtchn);
-	} else {
-		/*
-		 * Shared interrupt - we can't rebind.
-		 * The port is shared instead.
-		 */
-		evtchn = irq2port[gsi] - 1;
-	}
-
-	pih = pirq_establish(gsi, evtchn, handler, arg, level,
-			     intrstr, xname);
-	pih->pic_type = pic->pic_type;
-	return pih;
-#endif /* NPCI > 0 || NISA > 0 */
-
-	/* FALLTHROUGH */
-	return NULL;
-}
-
-#endif /* XEN */
-
 /*
  * Deregister an interrupt handler.
  */
 void
 intr_disestablish(struct intrhand *ih)
 {
-#if !defined(XEN)
 	struct cpu_info *ci;
 	struct intrsource *isp;
 	uint64_t where;
@@ -1341,58 +1070,19 @@ intr_disestablish(struct intrhand *ih)
 	}
 	mutex_exit(&cpu_lock);
 	kmem_free(ih, sizeof(*ih));
-#else /* XEN */
-	if (ih->pic_type == PIC_XEN) {
-		event_remove_handler(ih->ih_pin, ih->ih_realfun,
-		    ih->ih_realarg);
-		kmem_free(ih, sizeof(*ih));
-		return;
-	}
-#if defined(DOM0OPS)
-	/* 
-	 * Cache state, to prevent a use after free situation with
-	 * ih.
-	 */
-
-	struct pintrhand *pih = (struct pintrhand *)ih;
-
-	int pirq = pih->pirq;
-	int port = pih->evtch;
-	KASSERT(irq2port[pirq] != 0);
-
-	pirq_disestablish(pih);
-
-	if (evtsource[port] == NULL) {
-			/*
-			 * Last handler was removed by
-			 * event_remove_handler().
-			 *
-			 * We can safely unbind the pirq now.
-			 */
-
-			port = unbind_pirq_from_evtch(pirq);
-			KASSERT(port == pih->evtch);
-			irq2port[pirq] = 0;
-	}
-#endif
-	return;
-#endif /* XEN */
 }
 
-#if defined(XEN) /* nuke conditional post integration */
 static const char *
 xen_intr_string(int port, char *buf, size_t len, struct pic *pic)
 {
 	KASSERT(pic->pic_type == PIC_XEN);
 
 	KASSERT(port >= 0);
-	KASSERT(port < NR_EVENT_CHANNELS);
 
 	snprintf(buf, len, "%s channel %d", pic->pic_name, port);
 
 	return buf;
 }
-#endif /* XEN */
 
 static const char *
 legacy_intr_string(int ih, char *buf, size_t len, struct pic *pic)
@@ -1490,8 +1180,9 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-#if !defined(XEN)
+#if (NLAPIC > 0) || defined(MULTIPROCESSOR) || defined(__HAVE_PREEMPTION)
 	struct intrsource *isp;
+#endif
 #if NLAPIC > 0
 	static int first = 1;
 #if defined(MULTIPROCESSOR)
@@ -1538,13 +1229,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #endif
 	intr_calculatemasks(ci);
-
-#else /* XEN */
-	int i; /* XXX: duplicate */
-	ci->ci_iunmask[0] = 0xfffffffe;
-	for (i = 1; i < NIPL; i++)
-		ci->ci_iunmask[i] = ci->ci_iunmask[i - 1] & ~(1 << i);
-#endif /* XEN */
 
 #if defined(INTRSTACKSIZE)
 	vaddr_t istack;
@@ -1903,9 +1587,6 @@ cpu_intr_redistribute(void)
 	KASSERT(mutex_owned(&cpu_lock));
 	KASSERT(mp_online);
 
-#if defined(XEN) /* XXX: remove */
-	return;
-#endif
 	/* Direct interrupts away from shielded CPUs. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if ((ci->ci_schedstate.spc_flags & SPCF_NOINTR) == 0) {
@@ -1928,7 +1609,6 @@ cpu_intr_count(struct cpu_info *ci)
 	return ci->ci_nintrhand;
 }
 
-#if !defined(XEN)
 static int
 intr_find_unused_slot(struct cpu_info *ci, int *index)
 {
@@ -2123,7 +1803,7 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 
 	pin = isp->is_pin;
 	(*pic->pic_hwmask)(pic, pin); /* for ci_ipending check */
-	while(oldci->ci_ipending & (1 << oldslot))
+	while (oldci->ci_ipending & (1 << oldslot))
 		(void)kpause("intrdist", false, 1, &cpu_lock);
 
 	kpreempt_disable();
@@ -2269,8 +1949,6 @@ interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
 	mutex_exit(&cpu_lock);
 }
 
-#endif /* XEN */
-
 /*
  * MI interface for subr_interrupt.c
  */
@@ -2290,8 +1968,6 @@ interrupt_get_available(kcpuset_t *cpuset)
 	}
 	mutex_exit(&cpu_lock);
 }
-
-#if !defined(XEN)
 
 /*
  * MI interface for subr_interrupt.c
@@ -2438,7 +2114,6 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 
 	return ii_handler;
 }
-#endif /* !XEN */
 
 /*
  * MI interface for subr_interrupt.c

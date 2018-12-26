@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.148.2.6 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.148.2.7 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148.2.6 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148.2.7 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148.2.6 2018/11/26 01:52:50 pgoyette
 
 #include <net/if_ether.h>
 #include <net/if_bridgevar.h>
+#include <net/ether_sw_offload.h>
 
 #if defined(BRIDGE_IPF)
 /* Used for bridge_ip[6]_checkbasic */
@@ -742,12 +743,55 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 	BRIDGE_PSZ_PERFORM(sc);
 	BRIDGE_UNLOCK(sc);
 
+	switch (ifs->if_type) {
+	case IFT_ETHER:
+	case IFT_L2TP:
+		/*
+		 * Take the interface out of promiscuous mode.
+		 * Don't call it with holding a spin lock.
+		 */
+		(void) ifpromisc(ifs, 0);
+		IFNET_LOCK(ifs);
+		(void) ether_disable_vlan_mtu(ifs);
+		IFNET_UNLOCK(ifs);
+		break;
+	default:
+#ifdef DIAGNOSTIC
+		panic("%s: impossible", __func__);
+#endif
+		break;
+	}
+
 	psref_target_destroy(&bif->bif_psref, bridge_psref_class);
 
 	PSLIST_ENTRY_DESTROY(bif, bif_next);
 	kmem_free(bif, sizeof(*bif));
 
 	BRIDGE_LOCK(sc);
+}
+
+/*
+ * bridge_calc_csum_flags:
+ *
+ *	Calculate logical and b/w csum flags each member interface supports.
+ */
+void
+bridge_calc_csum_flags(struct bridge_softc *sc)
+{
+	struct bridge_iflist *bif;
+	struct ifnet *ifs;
+	int flags = ~0;
+
+	BRIDGE_LOCK(sc);
+	BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
+		ifs = bif->bif_ifp;
+		flags &= ifs->if_csum_flags_tx;
+	}
+	sc->sc_csum_flags_tx = flags;
+	BRIDGE_UNLOCK(sc);
+#ifdef DEBUG
+	printf("%s: 0x%x\n", __func__, flags);
+#endif
 }
 
 static int
@@ -827,12 +871,14 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 
 	BRIDGE_UNLOCK(sc);
 
+	bridge_calc_csum_flags(sc);
+
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 	else
 		bstp_stop(sc);
 
- out:
+out:
 	if_put(ifs, &psref);
 	if (error) {
 		if (bif != NULL)
@@ -870,26 +916,8 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 
 	BRIDGE_UNLOCK(sc);
 
-	switch (ifs->if_type) {
-	case IFT_ETHER:
-	case IFT_L2TP:
-		/*
-		 * Take the interface out of promiscuous mode.
-		 * Don't call it with holding a spin lock.
-		 */
-		(void) ifpromisc(ifs, 0);
-		IFNET_LOCK(ifs);
-		(void) ether_disable_vlan_mtu(ifs);
-		IFNET_UNLOCK(ifs);
-		break;
-	default:
-#ifdef DIAGNOSTIC
-		panic("bridge_delete_member: impossible");
-#endif
-		break;
-	}
-
 	bridge_rtdelete(sc, ifs);
+	bridge_calc_csum_flags(sc);
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
@@ -1086,7 +1114,7 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 		count++;
 		len -= sizeof(bareq);
 	}
- out:
+out:
 	BRIDGE_RT_UNLOCK(sc);
 
 	bac->ifbac_len = sizeof(bareq) * count;
@@ -1460,6 +1488,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	struct ether_header *eh;
 	struct ifnet *dst_if;
 	struct bridge_softc *sc;
+	struct mbuf *n;
 	int s;
 
 	/*
@@ -1493,7 +1522,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	if (__predict_false(sc == NULL) ||
 	    (sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		dst_if = ifp;
-		goto sendunicast;
+		goto unicast_asis;
 	}
 
 	/*
@@ -1504,12 +1533,84 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 		dst_if = NULL;
 	else
 		dst_if = bridge_rtlookup(sc, eh->ether_dhost);
-	if (dst_if == NULL) {
+
+	/*
+	 * In general, we need to handle TX offload in software before
+	 * enqueueing a packet. However, we can send it as is in the
+	 * cases of unicast via (1) the source interface, or (2) an
+	 * interface which supports the specified offload options.
+	 * For multicast or broadcast, send it as is only if (3) all
+	 * the member interfaces support the specified options.
+	 */
+
+	/*
+	 * Unicast via the source interface.
+	 */
+	if (dst_if == ifp)
+		goto unicast_asis;
+
+	/*
+	 * Unicast via other interface.
+	 */
+	if (dst_if != NULL) {
+		KASSERT(m->m_flags & M_PKTHDR);
+		if (TX_OFFLOAD_SUPPORTED(dst_if->if_csum_flags_tx,
+		    m->m_pkthdr.csum_flags)) {
+			/*
+			 * Unicast via an interface which supports the
+			 * specified offload options.
+			 */
+			goto unicast_asis;
+		}
+
+		/*
+		 * Handle TX offload in software. For TSO, a packet is
+		 * split into multiple chunks. Thus, the return value of
+		 * ether_sw_offload_tx() is mbuf queue consists of them.
+		 */
+		m = ether_sw_offload_tx(ifp, m);
+		if (m == NULL)
+			return 0;
+
+		do {
+			n = m->m_nextpkt;
+			if ((dst_if->if_flags & IFF_RUNNING) == 0)
+				m_freem(m);
+			else
+				bridge_enqueue(sc, dst_if, m, 0);
+			m = n;
+		} while (m != NULL);
+
+		return 0;
+	}
+
+	/*
+	 * Multicast or broadcast.
+	 */
+	if (TX_OFFLOAD_SUPPORTED(sc->sc_csum_flags_tx,
+	    m->m_pkthdr.csum_flags)) {
+		/*
+		 * Specified TX offload options are supported by all
+		 * the member interfaces of this bridge.
+		 */
+		m->m_nextpkt = NULL;	/* XXX */
+	} else {
+		/*
+		 * Otherwise, handle TX offload in software.
+		 */
+		m = ether_sw_offload_tx(ifp, m);
+		if (m == NULL)
+			return 0;
+	}
+
+	do {
 		/* XXX Should call bridge_broadcast, but there are locking
 		 * issues which need resolving first. */
 		struct bridge_iflist *bif;
 		struct mbuf *mc;
 		bool used = false;
+
+		n = m->m_nextpkt;
 
 		BRIDGE_PSZ_RENTER(s);
 		BRIDGE_IFLIST_READER_FOREACH(bif, sc) {
@@ -1594,21 +1695,19 @@ next:
 
 		if (!used)
 			m_freem(m);
-		return 0;
-	}
 
- sendunicast:
+		m = n;
+	} while (m != NULL);
+	return 0;
+
+unicast_asis:
 	/*
 	 * XXX Spanning tree consideration here?
 	 */
-
-	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
+	if ((dst_if->if_flags & IFF_RUNNING) == 0)
 		m_freem(m);
-		return 0;
-	}
-
-	bridge_enqueue(sc, dst_if, m, 0);
-
+	else
+		bridge_enqueue(sc, dst_if, m, 0);
 	return 0;
 }
 

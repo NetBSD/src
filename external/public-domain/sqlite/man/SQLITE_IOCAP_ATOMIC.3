@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_IOCAP_ATOMIC 3
 .Os
 .Sh NAME
@@ -15,7 +15,8 @@
 .Nm SQLITE_IOCAP_SEQUENTIAL ,
 .Nm SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN ,
 .Nm SQLITE_IOCAP_POWERSAFE_OVERWRITE ,
-.Nm SQLITE_IOCAP_IMMUTABLE
+.Nm SQLITE_IOCAP_IMMUTABLE ,
+.Nm SQLITE_IOCAP_BATCH_ATOMIC
 .Nd Device Characteristics
 .Sh SYNOPSIS
 .Fd #define SQLITE_IOCAP_ATOMIC
@@ -32,6 +33,7 @@
 .Fd #define SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN
 .Fd #define SQLITE_IOCAP_POWERSAFE_OVERWRITE
 .Fd #define SQLITE_IOCAP_IMMUTABLE
+.Fd #define SQLITE_IOCAP_BATCH_ATOMIC
 .Sh DESCRIPTION
 The xDeviceCharacteristics method of the sqlite3_io_methods
 object returns an integer which is a vector of these bit values expressing
@@ -56,5 +58,11 @@ The SQLITE_IOCAP_UNDELETABLE_WHEN_OPEN flag indicates that a file cannot
 be deleted when open.
 The SQLITE_IOCAP_IMMUTABLE flag indicates that the file is on read-only
 media and cannot be changed even by processes with elevated privileges.
+.Pp
+The SQLITE_IOCAP_BATCH_ATOMIC property means that the underlying filesystem
+supports doing multiple write operations atomically when those write
+operations are bracketed by SQLITE_FCNTL_BEGIN_ATOMIC_WRITE
+and SQLITE_FCNTL_COMMIT_ATOMIC_WRITE.
 .Sh SEE ALSO
-.Xr sqlite3_io_methods 3
+.Xr sqlite3_io_methods 3 ,
+.Xr SQLITE_FCNTL_LOCKSTATE 3

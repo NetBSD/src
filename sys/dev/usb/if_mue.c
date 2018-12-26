@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.6.2.3 2018/09/30 01:45:51 pgoyette Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.6.2.4 2018/12/26 14:02:01 pgoyette Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.6.2.3 2018/09/30 01:45:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.6.2.4 2018/12/26 14:02:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -28,7 +28,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.6.2.3 2018/09/30 01:45:51 pgoyette Exp 
 #endif
 
 #include <sys/param.h>
-#include <sys/cprng.h>
 #include <sys/bus.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
@@ -151,6 +150,7 @@ static void	mue_tx_offload(struct mue_softc *, struct mbuf *);
 
 static void	mue_setmulti(struct mue_softc *);
 static void	mue_sethwcsum(struct mue_softc *);
+static void	mue_setmtu(struct mue_softc *);
 
 static void	mue_rxeof(struct usbd_xfer *, void *, usbd_status);
 static void	mue_txeof(struct usbd_xfer *, void *, usbd_status);
@@ -773,14 +773,6 @@ mue_chip_init(struct mue_softc *sc)
 	MUE_SETBIT(sc, (sc->mue_flags & LAN7500) ?
 	    MUE_7500_FCT_TX_CTL : MUE_7800_FCT_TX_CTL, MUE_FCT_TX_CTL_EN);
 
-	/* Set the maximum frame size. */
-	MUE_CLRBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
-	val = mue_csr_read(sc, MUE_MAC_RX);
-	val &= ~MUE_MAC_RX_MAX_SIZE_MASK;
-	val |= MUE_MAC_RX_MAX_LEN(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
-	mue_csr_write(sc, MUE_MAC_RX, val);
-	MUE_SETBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
-
 	MUE_SETBIT(sc, (sc->mue_flags & LAN7500) ?
 	    MUE_7500_FCT_RX_CTL : MUE_7800_FCT_RX_CTL, MUE_FCT_RX_CTL_EN);
 
@@ -924,7 +916,6 @@ mue_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->mue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 	usb_init_task(&sc->mue_tick_task, mue_tick_task, sc, 0);
 	usb_init_task(&sc->mue_stop_task, (void (*)(void *))mue_stop, sc, 0);
 
@@ -987,10 +978,9 @@ mue_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "LAN7800\n");
 
 	if (mue_get_macaddr(sc, dict)) {
-		aprint_error_dev(self, "Ethernet address assigned randomly\n");
-		cprng_fast(sc->mue_enaddr, ETHER_ADDR_LEN);
-		sc->mue_enaddr[0] &= ~0x01;	/* unicast */
-		sc->mue_enaddr[0] |= 0x02;	/* locally administered */
+		aprint_error_dev(self, "failed to read MAC address\n");
+		splx(s);
+		return;
 	}
 
 	aprint_normal_dev(self, "Ethernet address %s\n",
@@ -1009,9 +999,17 @@ mue_attach(device_t parent, device_t self, void *aux)
 
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6;
+	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6 |
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |  
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
+	    IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx;
 
 	sc->mue_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
+#if 0 /* XXX not yet */
+	sc->mue_ec.ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
+#endif
 
 	/* Initialize MII/media info. */
 	mii = GET_MII(sc);
@@ -1041,6 +1039,8 @@ mue_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->mue_stat_ch, 0);
 
 	splx(s);
+
+	mutex_init(&sc->mue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->mue_udev, sc->mue_dev);
 }
@@ -1208,14 +1208,19 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	usbd_status err;
 	struct mue_txbuf_hdr hdr;
 	uint32_t tx_cmd_a, tx_cmd_b;
-	int len;
-	bool tso;
+	int csum, len;
+	bool tso, ipe, tpe;
 
-	tso = m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6);
+	csum = m->m_pkthdr.csum_flags;
+	tso = csum & (M_CSUM_TSOv4 | M_CSUM_TSOv6);
+	ipe = csum & M_CSUM_IPv4;
+	tpe = csum & (M_CSUM_TCPv4 | M_CSUM_UDPv4 |
+		      M_CSUM_TCPv6 | M_CSUM_UDPv6);
 
 	len = m->m_pkthdr.len;
-	if (__predict_false((!tso && len > MUE_MAX_TX_LEN) ||
-			    ( tso && len > MUE_MAX_TSO_LEN))) {
+	if (__predict_false((!tso && 
+				(unsigned)len > MUE_FRAME_LEN(ifp->if_mtu)) ||
+			    ( tso && len > MUE_TSO_FRAME_LEN))) {
 		MUE_PRINTF(sc, "packet length %d\n too long", len);
 		return EINVAL;
 	}
@@ -1234,8 +1239,13 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 		tx_cmd_b <<= MUE_TX_CMD_B_MSS_SHIFT;
 		KASSERT((tx_cmd_b & ~MUE_TX_CMD_B_MSS_MASK) == 0);
 		mue_tx_offload(sc, m);
-	} else
+	} else {
+		if (ipe)
+			tx_cmd_a |= MUE_TX_CMD_A_IPE;
+		if (tpe)
+			tx_cmd_a |= MUE_TX_CMD_A_TPE;
 		tx_cmd_b = 0;
+	}
 
 	hdr.tx_cmd_a = htole32(tx_cmd_a);
 	hdr.tx_cmd_b = htole32(tx_cmd_b);
@@ -1320,10 +1330,11 @@ mue_setmulti(struct mue_softc *sc)
 	/* Always accept broadcast frames. */
 	rxfilt |= MUE_RFE_CTL_BROADCAST;
 
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
+	if (ifp->if_flags & IFF_PROMISC) {
+		rxfilt |= MUE_RFE_CTL_UNICAST;
 allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
+		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC) {
-			rxfilt |= MUE_RFE_CTL_UNICAST;
 			DPRINTF(sc, "promisc\n");
 		} else {
 			DPRINTF(sc, "allmulti\n");
@@ -1358,6 +1369,7 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 			ETHER_NEXT_MULTI(step, enm);
 		}
 		rxfilt |= MUE_RFE_CTL_PERFECT;
+		ifp->if_flags &= ~IFF_ALLMULTI;
 		if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH) {
 			DPRINTF(sc, "perfect filter and hash tables\n");
 		} else {
@@ -1390,11 +1402,11 @@ mue_sethwcsum(struct mue_softc *sc)
 	val = mue_csr_read(sc, reg);
 
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx)) {
-		DPRINTF(sc, "enabled\n");;
+		DPRINTF(sc, "enabled\n");
 		val |= MUE_RFE_CTL_IGMP_COE | MUE_RFE_CTL_ICMP_COE;
 		val |= MUE_RFE_CTL_TCPUDP_COE | MUE_RFE_CTL_IP_COE;
 	} else {
-		DPRINTF(sc, "disabled\n");;
+		DPRINTF(sc, "disabled\n");
 		val &=
 		    ~(MUE_RFE_CTL_IGMP_COE | MUE_RFE_CTL_ICMP_COE);
 		val &=
@@ -1406,6 +1418,20 @@ mue_sethwcsum(struct mue_softc *sc)
 	mue_csr_write(sc, reg, val);
 }
 
+static void
+mue_setmtu(struct mue_softc *sc)
+{
+	struct ifnet *ifp = GET_IFP(sc);
+	uint32_t val;
+
+	/* Set the maximum frame size. */
+	MUE_CLRBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
+	val = mue_csr_read(sc, MUE_MAC_RX);
+	val &= ~MUE_MAC_RX_MAX_SIZE_MASK;
+	val |= MUE_MAC_RX_MAX_LEN(MUE_FRAME_LEN(ifp->if_mtu));
+	mue_csr_write(sc, MUE_MAC_RX, val);
+	MUE_SETBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
+}
 
 static void
 mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
@@ -1418,7 +1444,9 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	uint32_t rx_cmd_a, totlen;
 	uint16_t pktlen;
 	int s;
+	int csum;
 	char *buf = c->mue_buf;
+	bool v6;
 
 	if (__predict_false(sc->mue_dying)) {
 		DPRINTF(sc, "dying\n");
@@ -1457,21 +1485,23 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		hdrp = (struct mue_rxbuf_hdr *)buf;
 		rx_cmd_a = le32toh(hdrp->rx_cmd_a);
 
-		if (__predict_false(rx_cmd_a & MUE_RX_CMD_A_RED)) {
+		if (__predict_false(rx_cmd_a & MUE_RX_CMD_A_ERRORS)) {
+			/*
+			 * We cannot use MUE_RX_CMD_A_RED bit here;
+			 * it is turned on in the cases of L3/L4
+			 * checksum errors which we handle below.
+			 */
 			MUE_PRINTF(sc, "rx_cmd_a: 0x%x\n", rx_cmd_a);
 			ifp->if_ierrors++;
 			goto done;
 		}
-
-		/* XXX not yet */
-		KASSERT((rx_cmd_a & MUE_RX_CMD_A_ICSM) == 0);
 
 		pktlen = (uint16_t)(rx_cmd_a & MUE_RX_CMD_A_LEN_MASK);
 		if (sc->mue_flags & LAN7500)
 			pktlen -= 2;
 
 		if (__predict_false(pktlen < ETHER_HDR_LEN + ETHER_CRC_LEN ||
-		    pktlen > MCLBYTES - ETHER_ALIGN ||
+		    pktlen > MCLBYTES - ETHER_ALIGN || /* XXX */
 		    pktlen + sizeof(*hdrp) > totlen)) {
 			MUE_PRINTF(sc, "invalid packet length %d\n", pktlen);
 			ifp->if_ierrors++;
@@ -1488,6 +1518,36 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = pktlen;
 		m->m_flags |= M_HASFCS;
+
+		if (__predict_false(rx_cmd_a & MUE_RX_CMD_A_ICSM)) {
+			csum = 0;
+		} else {
+			v6 = rx_cmd_a & MUE_RX_CMD_A_IPV;
+			switch (rx_cmd_a & MUE_RX_CMD_A_PID) {
+			case MUE_RX_CMD_A_PID_TCP:
+				csum = v6 ?
+				    M_CSUM_TCPv6 : M_CSUM_IPv4 | M_CSUM_TCPv4;
+				break;
+			case MUE_RX_CMD_A_PID_UDP:
+				csum = v6 ?
+				    M_CSUM_UDPv6 : M_CSUM_IPv4 | M_CSUM_UDPv4;
+				break;
+			case MUE_RX_CMD_A_PID_IP:
+				csum = v6 ? 0 : M_CSUM_IPv4;
+				break;
+			default:
+				csum = 0;
+				break;
+			}
+			csum &= ifp->if_csum_flags_rx;
+			if (__predict_false((csum & M_CSUM_IPv4) &&
+			    (rx_cmd_a & MUE_RX_CMD_A_ICE)))
+				csum |= M_CSUM_IPv4_BAD;
+			if (__predict_false((csum & ~M_CSUM_IPv4) &&
+			    (rx_cmd_a & MUE_RX_CMD_A_TCE)))
+				csum |= M_CSUM_TCP_UDP_BAD;
+		}
+		m->m_pkthdr.csum_flags = csum;
 		memcpy(mtod(m, char *), buf + sizeof(*hdrp), pktlen);
 
 		/* Attention: sizeof(hdr) = 10 */
@@ -1574,6 +1634,9 @@ mue_init(struct ifnet *ifp)
 	/* TCP/UDP checksum offload engines. */
 	mue_sethwcsum(sc);
 
+	/* Set MTU. */
+	mue_setmtu(sc);
+
 	if (mue_open_pipes(sc)) {
 		splx(s);
 		return EIO;
@@ -1614,7 +1677,7 @@ mue_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch(cmd) {
+	switch (cmd) {
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
@@ -1643,8 +1706,20 @@ mue_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
 		error = 0;
-		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)
+		switch (cmd) {
+		case SIOCADDMULTI:
+		case SIOCDELMULTI:
 			mue_setmulti(sc);
+			break;
+		case SIOCSIFCAP:
+			mue_sethwcsum(sc);
+			break;
+		case SIOCSIFMTU:
+			mue_setmtu(sc);
+			break;
+		default:
+			break;
+		}
 		break;
 	}
 	splx(s);

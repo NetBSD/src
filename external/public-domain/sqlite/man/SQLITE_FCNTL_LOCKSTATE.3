@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_FCNTL_LOCKSTATE 3
 .Os
 .Sh NAME
@@ -30,7 +30,12 @@
 .Nm SQLITE_FCNTL_VFS_POINTER ,
 .Nm SQLITE_FCNTL_JOURNAL_POINTER ,
 .Nm SQLITE_FCNTL_WIN32_GET_HANDLE ,
-.Nm SQLITE_FCNTL_PDB
+.Nm SQLITE_FCNTL_PDB ,
+.Nm SQLITE_FCNTL_BEGIN_ATOMIC_WRITE ,
+.Nm SQLITE_FCNTL_COMMIT_ATOMIC_WRITE ,
+.Nm SQLITE_FCNTL_ROLLBACK_ATOMIC_WRITE ,
+.Nm SQLITE_FCNTL_LOCK_TIMEOUT ,
+.Nm SQLITE_FCNTL_DATA_VERSION
 .Nd Standard File Control Opcodes
 .Sh SYNOPSIS
 .Fd #define SQLITE_FCNTL_LOCKSTATE
@@ -62,6 +67,11 @@
 .Fd #define SQLITE_FCNTL_JOURNAL_POINTER
 .Fd #define SQLITE_FCNTL_WIN32_GET_HANDLE
 .Fd #define SQLITE_FCNTL_PDB
+.Fd #define SQLITE_FCNTL_BEGIN_ATOMIC_WRITE
+.Fd #define SQLITE_FCNTL_COMMIT_ATOMIC_WRITE
+.Fd #define SQLITE_FCNTL_ROLLBACK_ATOMIC_WRITE
+.Fd #define SQLITE_FCNTL_LOCK_TIMEOUT
+.Fd #define SQLITE_FCNTL_DATA_VERSION
 .Sh DESCRIPTION
 These integer constants are opcodes for the xFileControl method of
 the sqlite3_io_methods object and for the sqlite3_file_control()
@@ -146,7 +156,7 @@ of delay) to be adjusted.
 The values are changed for all database connections within the same
 process.
 The argument is a pointer to an array of two integers where the first
-integer i the new retry count and the second integer is the delay.
+integer is the new retry count and the second integer is the delay.
 If either integer is negative, then the setting is not changed but
 instead the prior value of that setting is written into the array entry,
 allowing the current retry settings to be interrogated.
@@ -154,9 +164,9 @@ The zDbName parameter is ignored.
 .It
 The SQLITE_FCNTL_PERSIST_WAL opcode is used
 to set or query the persistent  Write Ahead Log setting.
-By default, the auxiliary write ahead log and shared memory files used
-for transaction control are automatically deleted when the latest connection
-to the database closes.
+By default, the auxiliary write ahead log (WAL file) and shared
+memory files used for transaction control are automatically deleted
+when the latest connection to the database closes.
 Setting persistent WAL mode causes those files to persist after close.
 Persisting the files is useful when other processes that do not have
 write permission on the directory containing the database file want
@@ -309,6 +319,68 @@ All other VFS should return SQLITE_NOTFOUND for this opcode.
 The SQLITE_FCNTL_RBU opcode is implemented by the special
 VFS used by the RBU extension only.
 All other VFS should return SQLITE_NOTFOUND for this opcode.
+.It
+If the SQLITE_FCNTL_BEGIN_ATOMIC_WRITE
+opcode returns SQLITE_OK, then the file descriptor is placed in "batch
+write mode", which means all subsequent write operations will be deferred
+and done atomically at the next SQLITE_FCNTL_COMMIT_ATOMIC_WRITE.
+Systems that do not support batch atomic writes will return SQLITE_NOTFOUND.
+Following a successful SQLITE_FCNTL_BEGIN_ATOMIC_WRITE and prior to
+the closing SQLITE_FCNTL_COMMIT_ATOMIC_WRITE
+or SQLITE_FCNTL_ROLLBACK_ATOMIC_WRITE,
+SQLite will make no VFS interface calls on the same sqlite3_file
+file descriptor except for calls to the xWrite method and the xFileControl
+method with SQLITE_FCNTL_SIZE_HINT.
+.It
+The SQLITE_FCNTL_COMMIT_ATOMIC_WRITE
+opcode causes all write operations since the previous successful call
+to SQLITE_FCNTL_BEGIN_ATOMIC_WRITE to
+be performed atomically.
+This file control returns SQLITE_OK if and only if the writes
+were all performed successfully and have been committed to persistent
+storage.
+Regardless of whether or not it is successful, this file control takes
+the file descriptor out of batch write mode so that all subsequent
+write operations are independent.
+SQLite will never invoke SQLITE_FCNTL_COMMIT_ATOMIC_WRITE without a
+prior successful call to SQLITE_FCNTL_BEGIN_ATOMIC_WRITE.
+.It
+The SQLITE_FCNTL_ROLLBACK_ATOMIC_WRITE
+opcode causes all write operations since the previous successful call
+to SQLITE_FCNTL_BEGIN_ATOMIC_WRITE to
+be rolled back.
+This file control takes the file descriptor out of batch write mode
+so that all subsequent write operations are independent.
+SQLite will never invoke SQLITE_FCNTL_ROLLBACK_ATOMIC_WRITE without
+a prior successful call to SQLITE_FCNTL_BEGIN_ATOMIC_WRITE.
+.It
+The SQLITE_FCNTL_LOCK_TIMEOUT opcode causes
+attempts to obtain a file lock using the xLock or xShmLock methods
+of the VFS to wait for up to M milliseconds before failing, where M
+is the single unsigned integer parameter.
+.It
+The SQLITE_FCNTL_DATA_VERSION opcode is used
+to detect changes to a database file.
+The argument is a pointer to a 32-bit unsigned integer.
+The "data version" for the pager is written into the pointer.
+The "data version" changes whenever any change occurs to the corresponding
+database file, either through SQL statements on the same database connection
+or through transactions committed by separate database connections
+possibly in other processes.
+The sqlite3_total_changes() interface can be
+used to find if any database on the connection has changed, but that
+interface responds to changes on TEMP as well as MAIN and does not
+provide a mechanism to detect changes to MAIN only.
+Also, the sqlite3_total_changes() interface
+responds to internal changes only and omits changes made by other database
+connections.
+The PRAGMA data_version command provide a mechanism
+to detect changes to a single attached database that occur due to other
+database connections, but omits changes implemented by the database
+connection on which it is called.
+This file control is the only mechanism to detect changes that happen
+either internally or externally and that are associated with a particular
+attached database.
 .El
 .Pp
 .Sh SEE ALSO
@@ -318,6 +390,7 @@ All other VFS should return SQLITE_NOTFOUND for this opcode.
 .Xr sqlite3_io_methods 3 ,
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_mprintf 3 ,
+.Xr sqlite3_total_changes 3 ,
 .Xr sqlite3_vfs 3 ,
 .Xr SQLITE_FCNTL_LOCKSTATE 3 ,
 .Xr SQLITE_IOCAP_ATOMIC 3 ,

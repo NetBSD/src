@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.54.2.2 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: intr.h,v 1.54.2.3 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
 
 #if !defined(XEN)
 #define	__HAVE_FAST_SOFTINTS
+#if !defined(NO_PREEMPTION)
 #define	__HAVE_PREEMPTION
+#endif /* !defined(NO_PREEMPTION) */
 #endif /*  !defined(XEN) */
 
 #ifdef _KERNEL

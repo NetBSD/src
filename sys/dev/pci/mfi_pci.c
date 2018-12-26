@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.19 2016/07/14 04:00:46 msaitoh Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.19.16.1 2018/12/26 14:01:50 pgoyette Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.19 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.19.16.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,11 +240,11 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	if (mpd->mpd_iop == MFI_IOP_TBOLT) {
-		sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-		    mfi_tbolt_intrh, sc);
+		sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO,
+		    mfi_tbolt_intrh, sc, device_xname(self));
 	} else {
-		sc->sc_ih =
-		    pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mfi_intr, sc);
+		sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO,
+		    mfi_intr, sc, device_xname(self));
 	}
 	if (!sc->sc_ih) {
 		aprint_error(": can't establish interrupt");

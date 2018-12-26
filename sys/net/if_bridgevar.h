@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.31.16.1 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.31.16.2 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -327,6 +327,7 @@ struct bridge_softc {
 	struct work		sc_rtage_wk;
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
+	int			sc_csum_flags_tx;
 };
 
 extern const uint8_t bstp_etheraddr[];
@@ -342,6 +343,8 @@ void	bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
+
+void	bridge_calc_csum_flags(struct bridge_softc *);
 
 #define BRIDGE_LOCK(_sc)	mutex_enter(&(_sc)->sc_iflist_psref.bip_lock)
 #define BRIDGE_UNLOCK(_sc)	mutex_exit(&(_sc)->sc_iflist_psref.bip_lock)

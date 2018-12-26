@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.170.2.2 2018/09/30 01:45:57 pgoyette Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.170.2.3 2018/12/26 14:02:07 pgoyette Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -94,6 +94,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_syscall.c		\
 	kern_sysctl.c		\
 	kern_tc.c		\
+	kern_threadpool.c	\
 	kern_time.c		\
 	kern_timeout.c		\
 	kern_uidinfo.c		\
@@ -123,6 +124,7 @@ SRCS+=	init_sysctl_base.c	\
 	subr_psref.c		\
 	subr_specificdata.c	\
 	subr_time.c		\
+	subr_thmap.c		\
 	subr_vmem.c		\
 	subr_workqueue.c	\
 	subr_xcall.c		\

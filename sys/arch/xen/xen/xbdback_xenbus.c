@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.65.2.2 2018/11/26 01:52:28 pgoyette Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.65.2.3 2018/12/26 14:01:46 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.65.2.2 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.65.2.3 2018/12/26 14:01:46 pgoyette Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -644,7 +644,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	XENPRINTF(("xbdback %s: connect evchannel %d\n", xbusd->xbusd_path, xbdi->xbdi_evtchn));
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
-	xbdi->xbdi_ih = intr_establish_xname(-1, &xen_pic, xbdi->xbdi_evtchn,
+	xbdi->xbdi_ih = xen_intr_establish_xname(-1, &xen_pic, xbdi->xbdi_evtchn,
 	    IST_LEVEL, IPL_BIO, xbdback_evthandler, xbdi, false,
 	    xbdi->xbdi_name);
 	KASSERT(xbdi->xbdi_ih != NULL);
@@ -691,7 +691,7 @@ xbdback_disconnect(struct xbdback_instance *xbdi)
 		return;
 	}
 	hypervisor_mask_event(xbdi->xbdi_evtchn);
-	intr_disestablish(xbdi->xbdi_ih);
+	xen_intr_disestablish(xbdi->xbdi_ih);
 
 	/* signal thread that we want to disconnect, then wait for it */
 	xbdi->xbdi_status = DISCONNECTING;

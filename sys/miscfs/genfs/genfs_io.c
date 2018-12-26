@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.71.2.1 2018/06/25 07:26:05 pgoyette Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.71.2.2 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.71.2.1 2018/06/25 07:26:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.71.2.2 2018/12/26 14:02:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ genfs_getpages(void *v)
 	const bool memwrite = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = memwrite && (flags & PGO_NOBLOCKALLOC) == 0;
+	const bool need_wapbl = (vp->v_mount->mnt_wapbl &&
+			(flags & PGO_JOURNALLOCKED) == 0);
 	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
 	bool holds_wapbl = false;
 	struct mount *trans_mount = NULL;
@@ -138,6 +140,11 @@ genfs_getpages(void *v)
 
 	KASSERT(vp->v_type == VREG || vp->v_type == VDIR ||
 	    vp->v_type == VLNK || vp->v_type == VBLK);
+
+#ifdef DIAGNOSTIC
+	if ((flags & PGO_JOURNALLOCKED) && vp->v_mount->mnt_wapbl)
+                WAPBL_JLOCK_ASSERT(vp->v_mount);
+#endif
 
 	error = vdead_check(vp, VDEAD_NOWAIT);
 	if (error) {
@@ -313,7 +320,7 @@ startover:
 		 * XXX: This assumes that we come here only via
 		 * the mmio path
 		 */
-		if (blockalloc && vp->v_mount->mnt_wapbl) {
+		if (blockalloc && need_wapbl) {
 			error = WAPBL_BEGIN(trans_mount);
 			if (error)
 				goto out_err_free;
@@ -866,6 +873,11 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 
 	UVMHIST_LOG(ubchist, "vp %#jx pages %jd off 0x%jx len 0x%jx",
 	    (uintptr_t)vp, uobj->uo_npages, startoff, endoff - startoff);
+
+#ifdef DIAGNOSTIC
+	if ((origflags & PGO_JOURNALLOCKED) && vp->v_mount->mnt_wapbl)
+                WAPBL_JLOCK_ASSERT(vp->v_mount);
+#endif
 
 	trans_mp = NULL;
 	holds_wapbl = false;
@@ -1711,6 +1723,11 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 	int error;
 	bool need_wapbl = (vp->v_mount && vp->v_mount->mnt_wapbl &&
 	    (ioflag & IO_JOURNALLOCKED) == 0);
+
+#ifdef DIAGNOSTIC
+	if ((ioflag & IO_JOURNALLOCKED) && vp->v_mount->mnt_wapbl)
+                WAPBL_JLOCK_ASSERT(vp->v_mount);
+#endif
 
 	/*
 	 * We only support direct I/O to user space for now.

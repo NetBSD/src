@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301.2.8 2018/11/26 01:52:16 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301.2.9 2018/12/26 14:01:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.8 2018/11/26 01:52:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.9 2018/12/26 14:01:31 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -139,7 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.8 2018/11/26 01:52:16 pgoyette E
 #include <sys/exec_aout.h>	/* for MID_* */
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
 #include <sys/core.h>

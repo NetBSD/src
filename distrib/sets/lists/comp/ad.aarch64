@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.16.2.5 2018/09/06 06:51:42 pgoyette Exp $
+# $NetBSD: ad.aarch64,v 1.16.2.6 2018/12/26 14:01:11 pgoyette Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -42,6 +42,7 @@
 ./usr/include/aarch64/rwlock.h			comp-c-include
 ./usr/include/aarch64/setjmp.h			comp-c-include
 ./usr/include/aarch64/signal.h			comp-c-include
+./usr/include/aarch64/sljit_machdep.h		comp-c-include
 ./usr/include/aarch64/sysarch.h			comp-c-include
 ./usr/include/aarch64/trap.h			comp-obsolete		obsolete
 ./usr/include/aarch64/types.h			comp-c-include
@@ -213,9 +214,6 @@
 ./usr/libdata/ldscripts/armelf.x		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xbn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xc		-unknown-		binutils
-./usr/libdata/ldscripts/armelf.xd		-unknown-		binutils=230
-./usr/libdata/ldscripts/armelf.xdc		-unknown-		binutils=230
-./usr/libdata/ldscripts/armelf.xdw		-unknown-		binutils=230
 ./usr/libdata/ldscripts/armelf.xn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xr		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xs		-unknown-		binutils
@@ -265,9 +263,6 @@
 ./usr/libdata/ldscripts/armelfb.x		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xbn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xc		-unknown-		binutils
-./usr/libdata/ldscripts/armelfb.xd		-unknown-		binutils=230
-./usr/libdata/ldscripts/armelfb.xdc		-unknown-		binutils=230
-./usr/libdata/ldscripts/armelfb.xdw		-unknown-		binutils=230
 ./usr/libdata/ldscripts/armelfb.xn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xr		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xs		-unknown-		binutils

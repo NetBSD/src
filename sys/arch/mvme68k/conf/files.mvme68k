@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.62 2011/06/12 03:35:44 rmind Exp $
+#	$NetBSD: files.mvme68k,v 1.62.52.1 2018/12/26 14:01:40 pgoyette Exp $
 
 # config file for mvme68k
 
@@ -113,9 +113,6 @@ include "compat/aoutm68k/files.aoutm68k"
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

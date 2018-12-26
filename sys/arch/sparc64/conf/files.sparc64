@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.154.2.3 2018/11/26 01:52:27 pgoyette Exp $
+#	$NetBSD: files.sparc64,v 1.154.2.4 2018/12/26 14:01:43 pgoyette Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -300,16 +300,6 @@ file	arch/sparc64/sparc64/netbsd32_machdep_13.c	compat_netbsd32 &
 file	arch/sparc64/sparc64/netbsd32_machdep_16.c	compat_netbsd32 &
 							compat_16
 file	arch/sparc64/sparc64/netbsd32_sigcode.s		compat_netbsd32
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
-file	arch/sparc64/sparc64/svr4_machdep.c	compat_svr4
-file	arch/sparc64/sparc64/svr4_sigcode64.s	compat_svr4 & exec_elf64
-
-# 32-bit SVR4 Binary Compatibility (COMPAT_SVR4_32)
-include "compat/svr4_32/files.svr4_32"
-file	arch/sparc64/sparc64/svr4_32_machdep.c	compat_svr4_32
-file	arch/sparc64/sparc64/svr4_32_sigcode.s	compat_svr4_32 | (compat_svr4 & !exec_elf64)
 
 # SunOS Binary Compatibility (COMPAT_SUNOS), 32-bit & 64-bit kernel
 # (64-bit also depends on COMPAT_NETBSD32)

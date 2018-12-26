@@ -1188,8 +1188,11 @@ zfs_zget_cleaner(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
 	znode_t *zp;
 	int err;
 
+	ZFS_OBJ_HOLD_ENTER(zfsvfs, obj_num);
+
 	err = sa_buf_hold(zfsvfs->z_os, obj_num, NULL, &db);
 	if (err) {
+		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
 		return (SET_ERROR(err));
 	}
 
@@ -1199,11 +1202,15 @@ zfs_zget_cleaner(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
 	    (doi.doi_bonus_type == DMU_OT_ZNODE &&
 	    doi.doi_bonus_size < sizeof (znode_phys_t)))) {
 		sa_buf_rele(db, NULL);
+		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
 		return (SET_ERROR(EINVAL));
 	}
 	hdl = dmu_buf_get_user(db);
-	KASSERT(hdl != NULL);
+	ASSERT3P(hdl, !=, NULL);
 	zp = sa_get_userdata(hdl);
+	ASSERT3U(zp->z_id, ==, obj_num);
+	sa_buf_rele(db, NULL);
+	ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
 	*zpp = zp;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.51 2017/11/04 01:52:09 christos Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.51.2.1 2018/12/26 14:02:02 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.51 2017/11/04 01:52:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.51.2.1 2018/12/26 14:02:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
@@ -101,7 +101,7 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	struct usl_syncdata *sd;
 	int res;
 
-	sd = kmem_alloc(sizeof(*sd), KM_SLEEP);
+	sd = kmem_intr_alloc(sizeof(*sd), KM_SLEEP);
 
 	sd->s_scr = scr;
 	sd->s_proc = p;
@@ -116,11 +116,11 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	callout_setfunc(&sd->s_detach_ch, usl_detachtimeout, sd);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
-		kmem_free(sd, sizeof(*sd));
-		return (res);
+		kmem_intr_free(sd, sizeof(*sd));
+		return res;
 	}
 	*sdp = sd;
-	return (0);
+	return 0;
 }
 
 static void
@@ -135,7 +135,7 @@ usl_sync_done(struct usl_syncdata *sd)
 		(*sd->s_callback)(sd->s_cbarg, ENXIO, 0);
 	}
 	wsscreen_detach_sync(sd->s_scr);
-	kmem_free(sd, sizeof(*sd));
+	kmem_intr_free(sd, sizeof(*sd));
 }
 
 static int
@@ -148,13 +148,13 @@ usl_sync_check_sig(struct usl_syncdata *sd, int sig, int flags)
 		if (sig)
 			psignal(sd->s_proc, sig);
 		mutex_exit(proc_lock);
-		return (1);
+		return 1;
 	}
 	mutex_exit(proc_lock);
 
-	printf("usl_sync_check: process %d died\n", sd->s_pid);
+	printf("%s: process %d died\n", __func__, sd->s_pid);
 	usl_sync_done(sd);
-	return (0);
+	return 0;
 }
 
 static int
@@ -171,8 +171,8 @@ usl_sync_get(struct wsscreen *scr)
 	void *sd;
 
 	if (wsscreen_lookup_sync(scr, &usl_syncops, &sd))
-		return (0);
-	return (struct usl_syncdata *)sd;
+		return 0;
+	return sd;
 }
 
 static int
@@ -183,7 +183,7 @@ usl_detachproc(void *cookie, int waitok,
 
 	/* we really need a callback */
 	if (!callback)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Normally, this is called from the controlling process.
@@ -194,19 +194,19 @@ usl_detachproc(void *cookie, int waitok,
 	sd->s_cbarg = cbarg;
 	if (waitok) {
 		if (!usl_sync_check_sig(sd, sd->s_relsig, SF_DETACHPENDING))	
-			return (0);
+			return 0;
 	}
 
 	callout_schedule(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
-	return (EAGAIN);
+	return EAGAIN;
 }
 
 static int
 usl_detachack(struct usl_syncdata *sd, int ack)
 {
 	if (!(sd->s_flags & SF_DETACHPENDING)) {
-		printf("usl_detachack: not detaching\n");
-		return (EINVAL);
+		printf("%s: not detaching\n", __func__);
+		return EINVAL;
 	}
 
 	callout_stop(&sd->s_detach_ch);
@@ -215,7 +215,7 @@ usl_detachack(struct usl_syncdata *sd, int ack)
 	if (sd->s_callback)
 		(*sd->s_callback)(sd->s_cbarg, (ack ? 0 : EIO), 1);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -223,10 +223,10 @@ usl_detachtimeout(void *arg)
 {
 	struct usl_syncdata *sd = arg;
 
-	printf("usl_detachtimeout\n");
+	printf("%s\n", __func__);
 
 	if (!(sd->s_flags & SF_DETACHPENDING)) {
-		printf("usl_detachtimeout: not detaching\n");
+		printf("%s: not detaching\n", __func__);
 		return;
 	}
 
@@ -246,23 +246,23 @@ usl_attachproc(void *cookie, int waitok,
 
 	/* we really need a callback */
 	if (!callback)
-		return (EINVAL);
+		return EINVAL;
 
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	if (!usl_sync_check_sig(sd, sd->s_acqsig, SF_ATTACHPENDING))
-		return (0);
+		return 0;
 
 	callout_schedule(&sd->s_attach_ch, wscompat_usl_synctimeout * hz);
-	return (EAGAIN);
+	return EAGAIN;
 }
 
 static int
 usl_attachack(struct usl_syncdata *sd, int ack)
 {
 	if (!(sd->s_flags & SF_ATTACHPENDING)) {
-		printf("usl_attachack: not attaching\n");
-		return (EINVAL);
+		printf("%s: not attaching\n", __func__);
+		return EINVAL;
 	}
 
 	callout_stop(&sd->s_attach_ch);
@@ -271,7 +271,7 @@ usl_attachack(struct usl_syncdata *sd, int ack)
 	if (sd->s_callback)
 		(*sd->s_callback)(sd->s_cbarg, (ack ? 0 : EIO), 1);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -279,10 +279,10 @@ usl_attachtimeout(void *arg)
 {
 	struct usl_syncdata *sd = arg;
 
-	printf("usl_attachtimeout\n");
+	printf("%s\n", __func__);
 
 	if (!(sd->s_flags & SF_ATTACHPENDING)) {
-		printf("usl_attachtimeout: not attaching\n");
+		printf("%s: not attaching\n", __func__);
 		return;
 	}
 
@@ -307,14 +307,14 @@ wsdisplay_usl_ioctl1(device_t dv, u_long cmd, void *data,
 		for (idx = 0; idx <= maxidx; idx++) {
 			if (wsdisplay_screenstate(sc, idx) == 0) {
 				*(int *)data = idx + 1;
-				return (0);
+				return 0;
 			}
 		}
-		return (ENXIO);
+		return ENXIO;
 	    case VT_GETACTIVE:
 		idx = wsdisplay_getactivescreen(sc);
 		*(int *)data = idx + 1;
-		return (0);
+		return 0;
 	    case VT_ACTIVATE:
 	    	/*
 	    	 * a gross and disgusting hack to make this abused up ioctl, 
@@ -326,13 +326,13 @@ wsdisplay_usl_ioctl1(device_t dv, u_long cmd, void *data,
 
 		idx = *(long *)data - 1;
 		if (idx < 0)
-			return (EINVAL);
-		return (wsdisplay_switch(dv, idx, 1));
+			return EINVAL;
+		return wsdisplay_switch(dv, idx, 1);
 	    case VT_WAITACTIVE:
 		idx = *(long *)data - 1;
 		if (idx < 0)
-			return (EINVAL);
-		return (wsscreen_switchwait(sc, idx));
+			return EINVAL;
+		return wsscreen_switchwait(sc, idx);
 	    case VT_GETSTATE:
 #define ss ((struct vt_stat *)data)
 		idx = wsdisplay_getactivescreen(sc);
@@ -343,7 +343,7 @@ wsdisplay_usl_ioctl1(device_t dv, u_long cmd, void *data,
 			if (wsdisplay_screenstate(sc, idx) == EBUSY)
 				ss->v_state |= (1 << (idx + 1));
 #undef ss
-		return (0);
+		return 0;
 
 #ifdef WSDISPLAY_COMPAT_PCVT
 	    case VGAPCVTID:
@@ -352,16 +352,16 @@ wsdisplay_usl_ioctl1(device_t dv, u_long cmd, void *data,
 		id->rmajor = 3;
 		id->rminor = 32;
 #undef id
-		return (0);
+		return 0;
 #endif
 #ifdef WSDISPLAY_COMPAT_SYSCONS
 	    case CONS_GETVERS:
 		*(int *)data = 0x200;    /* version 2.0 */
-		return (0);
+		return 0;
 #endif
 
 	    default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
 }
 
@@ -383,14 +383,14 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			res = usl_sync_init(scr, &sd, p, newmode->acqsig,
 					    newmode->relsig, newmode->frsig);
 			if (res)
-				return (res);
+				return res;
 		} else {
 			sd = usl_sync_get(scr);
 			if (sd)
 				usl_sync_done(sd);
 		}
 #undef newmode
-		return (0);
+		return 0;
 	    case VT_GETMODE:
 #define cmode ((struct vt_mode *)data)
 		sd = usl_sync_get(scr);
@@ -402,20 +402,20 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		} else
 			cmode->mode = VT_AUTO;
 #undef cmode
-		return (0);
+		return 0;
 	    case VT_RELDISP:
 #define d (*(long *)data)
 		sd = usl_sync_get(scr);
 		if (!sd)
-			return (EINVAL);
+			return EINVAL;
 		switch (d) {
 		    case VT_FALSE:
 		    case VT_TRUE:
-			return (usl_detachack(sd, (d == VT_TRUE)));
+			return usl_detachack(sd, (d == VT_TRUE));
 		    case VT_ACKACQ:
-			return (usl_attachack(sd, 1));
+			return usl_attachack(sd, 1);
 		    default:
-			return (EINVAL);
+			return EINVAL;
 		}
 #undef d
 
@@ -423,7 +423,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #if defined(__i386__) && (defined(COMPAT_11) || defined(COMPAT_FREEBSD))
 		if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
 		    NULL, NULL, NULL, NULL) != 0)
-			return (EPERM);
+			return EPERM;
 #endif
 		/* FALLTHRU */
 	    case KDDISABIO:
@@ -437,13 +437,13 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			fp->tf_eflags &= ~PSL_IOPL;
 		}
 #endif
-		return (0);
+		return 0;
 	    case KDSETRAD:
 		/* XXX ignore for now */
-		return (0);
+		return 0;
 
 	    default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 
 	    /*
 	     * the following are converted to wsdisplay ioctls
@@ -459,7 +459,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			intarg = WSDISPLAYIO_MODE_EMUL;
 			break;
 		    default:
-			return (EINVAL);
+			return EINVAL;
 		}
 #undef d
 		arg = &intarg;
@@ -512,7 +512,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			intarg = WSKBD_TRANSLATED;
 			break;
 		    default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		arg = &intarg;
 		break;
@@ -525,7 +525,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	res = wsdisplay_internal_ioctl(sc, scr, req, arg, flag, l);
 	if (res != EPASSTHROUGH)
-		return (res);
+		return res;
 
 	switch (cmd) {
 	    case KDGETLED:
@@ -546,5 +546,5 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #endif
 	}
 
-	return (0);
+	return 0;
 }

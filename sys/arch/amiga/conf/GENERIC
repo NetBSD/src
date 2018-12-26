@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.320.2.1 2018/09/06 06:55:24 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.320.2.2 2018/12/26 14:01:31 pgoyette Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.320.2.1 $"
+#ident 		"GENERIC-$Revision: 1.320.2.2 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -137,7 +137,6 @@ options 	UFS_EXTATTR	# Extended attribute support for UFS1
 include 	"conf/compat_netbsd09.config"
 
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
-#options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 

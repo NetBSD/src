@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.38 2016/10/04 14:35:38 joerg Exp $	*/
+/*	$NetBSD: externs.h,v 1.38.12.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -71,7 +71,6 @@ extern int
     flushout,		/* flush output */
     connected,		/* Are we connected to the other side? */
     globalmode,		/* Mode tty should be in */
-    In3270,		/* Are we in 3270 mode? */
     telnetport,		/* Are we connected to the telnet port? */
     localflow,		/* Flow control handled locally */
     restartany,		/* If flow control, restart output on any character */
@@ -90,10 +89,6 @@ extern int
     crmod,
     netdata,		/* Print out network data flow */
     prettydump,		/* Print "netdata" output in user readable format */
-#ifdef TN3270
-    cursesdata,		/* Print out curses data flow */
-    apitrace,		/* Trace API transactions */
-#endif	/* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
     telnet_debug,	/* Debug level */
     doaddrlookup,	/* do a reverse address lookup? */
@@ -201,7 +196,7 @@ char *telnet_getenv(char *);
 char *telnet_gets(char *, char *, int, int);
 
 /* commands.c */
-int send_tncmd(void (*)(int, int), const char *, char *);
+int send_tncmd(void (*)(int, int), const char *, const char *);
 void _setlist_init(void);
 void set_escape_char(char *);
 int set_mode(int);
@@ -212,17 +207,17 @@ int shell(int, char *[]);
 int quit(int, char *[]);
 int logout(int, char *[]);
 int env_cmd(int, char *[]);
-struct env_lst *env_find(const unsigned char *);
+struct env_lst *env_find(const char *);
 void env_init(void);
-struct env_lst *env_define(const unsigned char *, unsigned char *);
-struct env_lst *env_undefine(const unsigned char *, unsigned char *);
-struct env_lst *env_export(const unsigned char *, unsigned char *);
-struct env_lst *env_unexport(const unsigned char *, unsigned char *);
-struct env_lst *env_send(const unsigned char *, unsigned char *);
-struct env_lst *env_list(const unsigned char *, unsigned char *);
-unsigned char *env_default(int, int );
-unsigned char *env_getvalue(const unsigned char *);
-void env_varval(const unsigned char *);
+struct env_lst *env_define(const char *, char *);
+struct env_lst *env_undefine(const char *, char *);
+struct env_lst *env_export(const char *, char *);
+struct env_lst *env_unexport(const char *, char *);
+struct env_lst *env_send(const char *, char *);
+struct env_lst *env_list(const char *, char *);
+char *env_default(int, int );
+char *env_getvalue(const char *);
+void env_varval(const char *);
 int auth_cmd(int, char *[]);
 int ayt_status(void);
 int encrypt_cmd(int, char *[]);
@@ -251,12 +246,10 @@ void TerminalFlushOutput(void);
 void TerminalSaveState(void);
 cc_t *tcval(int);
 void TerminalDefaultChars(void);
-void TerminalRestoreState(void);
 void TerminalNewMode(int);
 void TerminalSpeeds(long *, long *);
 int TerminalWindowSize(long *, long *);
 int NetClose(int);
-void NetNonblockingIO(int, int);
 void NetSigIO(int, int);
 void NetSetPgrp(int);
 void sys_telnet_init(void);
@@ -304,8 +297,8 @@ void telnet(const char *);
 void xmitAO(void);
 void xmitEL(void);
 void xmitEC(void);
-int dosynch(char *);
-int get_status(char *);
+int dosynch(const char *);
+int get_status(const char *);
 void intp(void);
 void sendbrk(void);
 void sendabort(void);
@@ -326,13 +319,12 @@ void setcommandmode(void);
 /* utilities.c */
 void upcase(char *);
 int SetSockOpt(int, int, int, int);
-void SetNetTrace(char *);
+void SetNetTrace(const char *);
 void Dump(int, unsigned char *, int);
 void printoption(const char *, int, int );
 void optionstatus(void);
 void printsub(int, unsigned char *, int);
 void EmptyTerminal(void);
-void SetForExit(void);
 void Exit(int) __attribute__((__noreturn__));
 void ExitString(const char *, int) __attribute__((__noreturn__));
 
@@ -371,42 +363,3 @@ extern struct	termios new_tc;
 # define termForw1Charp		&termForw1Char
 # define termForw2Charp		&termForw2Char
 # define termAytCharp		&termAytChar
-
-
-/* Tn3270 section */
-#if	defined(TN3270)
-
-extern int
-    HaveInput,		/* Whether an asynchronous I/O indication came in */
-    noasynchtty,	/* Don't do signals on I/O (SIGURG, SIGIO) */
-    noasynchnet,	/* Don't do signals on I/O (SIGURG, SIGIO) */
-    sigiocount,		/* Count of SIGIO receptions */
-    shell_active;	/* Subshell is active */
-
-extern char
-    *Ibackp,		/* Oldest byte of 3270 data */
-    Ibuf[],		/* 3270 buffer */
-    *Ifrontp,		/* Where next 3270 byte goes */
-    tline[200],
-    *transcom;		/* Transparent command */
-
-/* tn3270.c */
-void init_3270(void);
-int DataToNetwork(char *, int, int);
-void inputAvailable(int);
-void outputPurge(void);
-int DataToTerminal(char *, int);
-int Push3270(void);
-void Finish3270(void);
-void StringToTerminal(char *);
-int _putchar(int);
-void SetIn3270(void);
-int tn3270_ttype(void);
-int settranscom(int, char *[]);
-int shell_continue(void);
-int DataFromTerminal(char *, int);
-int DataFromNetwork(char *, int, int);
-void ConnectScreen(void);
-int DoTerminalOutput(void);
-
-#endif	/* defined(TN3270) */

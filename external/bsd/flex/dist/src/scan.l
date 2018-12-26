@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.5 2017/01/02 17:45:27 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.5.12.1 2018/12/26 14:01:17 pgoyette Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -34,7 +34,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: scan.l,v 1.5 2017/01/02 17:45:27 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.5.12.1 2018/12/26 14:01:17 pgoyette Exp $");
 
 #include "parse.h"
 extern bool tablesverify, tablesext;
@@ -267,8 +267,7 @@ M4QEND      "]""]"
 			}
 	.		/* ignore spurious characters */
 }
-<ACTION,CODEBLOCK,ACTION_STRING,PERCENT_BRACE_ACTION,CHARACTER_CONSTANT,
-COMMENT,CODE_COMMENT>{
+<ACTION,CODEBLOCK,ACTION_STRING,PERCENT_BRACE_ACTION,CHARACTER_CONSTANT,COMMENT,CODE_COMMENT>{
    {M4QSTART}   ACTION_ECHO_QSTART;
    {M4QEND}     ACTION_ECHO_QEND;
 }
@@ -924,7 +923,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 	{NL}	{
 		++linenum;
 		ACTION_ECHO;
-		if (bracelevel == 0 || (doing_codeblock && indented_code)) {
+		if (bracelevel <= 0 || (doing_codeblock && indented_code)) {
             if ( doing_rule_action )
                 add_action( "\tYY_BREAK]""]\n" );
 
@@ -945,16 +944,16 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
         "'"             ACTION_ECHO; BEGIN(CHARACTER_CONSTANT);
 	\"		ACTION_ECHO; BEGIN(ACTION_STRING);
 	{NL} {
-			++linenum;
-			ACTION_ECHO;
-			if (bracelevel == 0) {
-				if ( doing_rule_action )
-                    add_action( "\tYY_BREAK]""]\n" );
+                ++linenum;
+                ACTION_ECHO;
+                if (bracelevel <= 0) {
+                   if ( doing_rule_action )
+                      add_action( "\tYY_BREAK]""]\n" );
 
-                doing_rule_action = false;
-                BEGIN(SECT2);
-            }
-        }
+                   doing_rule_action = false;
+                   BEGIN(SECT2);
+                }
+             }
         .      ACTION_ECHO;
 }
 
@@ -969,7 +968,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 <ACTION_STRING,CHARACTER_CONSTANT>{
         (\\\n)*         ACTION_ECHO;
 	\\(\\\n)*.	ACTION_ECHO;
-	{NL}	++linenum; ACTION_ECHO; BEGIN(ACTION);
+	{NL}	++linenum; ACTION_ECHO; if (bracelevel <= 0) { BEGIN(SECT2); } else { BEGIN(ACTION); }
         .	ACTION_ECHO;
 }
 

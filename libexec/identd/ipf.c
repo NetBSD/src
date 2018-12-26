@@ -1,4 +1,4 @@
-/* $NetBSD: ipf.c,v 1.3 2016/12/10 05:43:11 christos Exp $ */
+/* $NetBSD: ipf.c,v 1.3.12.1 2018/12/26 14:01:28 pgoyette Exp $ */
 
 /*
  * ipf.c - NAT lookup code for IP Filter.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipf.c,v 1.3 2016/12/10 05:43:11 christos Exp $");
+__RCSID("$NetBSD: ipf.c,v 1.3.12.1 2018/12/26 14:01:28 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -57,6 +57,7 @@ ipf_natlookup(const struct sockaddr_storage *ss,
 		nl.nl_realport = ntohs(csatosin(&ss[0])->sin_port);
 		nl.nl_outport = ntohs(csatosin(&ss[1])->sin_port);
 		nl.nl_flags = IPN_TCP | IPN_IN;
+		nl.nl_v = 4; /* IPv4 */
 		break;
 	case AF_INET6:
 		/* XXX IP Filter doesn't support IPv6 NAT yet. */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.10 2018/11/26 01:52:21 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.11 2018/12/26 14:01:35 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -226,6 +226,7 @@ pci*		at ppb?
 # Ethernet
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
+ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
@@ -262,9 +263,12 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 #athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
-com*		at fdt?	pass 4		# UART
-plcom*		at fdt?	pass 4		# ARM PL011 UART
+com*		at fdt?	pass 4			# UART
+com*		at acpi?
+plcom*		at fdt?	pass 4			# ARM PL011 UART
 plcom*		at acpi?
+puc*		at pci? dev ? function ?	# PCI "universal" comm. cards
+com*		at puc? port ?
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
@@ -321,6 +325,10 @@ atabus*		at ata?
 atapibus*	at atapi?
 wd*		at atabus? drive ?
 cd*		at atapibus? drive ?
+
+# NVMe
+nvme*		at pci? dev ? function ?
+ld*		at nvme? nsid ?
 
 # SPI controllers
 bcmspi*		at fdt?			# Broadcom BCM283x SPI

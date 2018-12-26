@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.1.34.1 2018/12/26 14:01:37 pgoyette Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.1.34.1 2018/12/26 14:01:37 pgoyette Exp $");
 
 #include "opt_kgdb.h"
 
@@ -135,7 +135,7 @@ com_gsc_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map I/O space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(sc);
 	gsc->sc_ih = hppa_intr_establish(IPL_TTY, comintr, sc, ga->ga_ir,

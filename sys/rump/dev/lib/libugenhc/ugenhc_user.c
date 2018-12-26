@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc_user.c,v 1.1 2014/03/13 01:38:11 pooka Exp $	*/
+/*	$NetBSD: ugenhc_user.c,v 1.1.34.1 2018/12/26 14:02:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ugenhc_user.c,v 1.1.34.1 2018/12/26 14:02:06 pgoyette Exp $");
+
 #ifndef _KERNEL
 #include <sys/types.h>
 #include <sys/ioctl.h>

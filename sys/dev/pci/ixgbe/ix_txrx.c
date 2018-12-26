@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.34.2.10 2018/09/30 01:45:51 pgoyette Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.34.2.11 2018/12/26 14:02:01 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -230,7 +230,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 			i = m->m_pkthdr.flowid % adapter->num_queues;
 	} else
 #endif /* 0 */
-		i = cpu_index(curcpu()) % adapter->num_queues;
+		i = (cpu_index(curcpu()) % ncpu) % adapter->num_queues;
 
 	/* Check for a hung queue and pick alternative */
 	if (((1 << i) & adapter->active_queues) == 0)

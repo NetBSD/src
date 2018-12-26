@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.63 2017/05/10 03:24:31 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.63.8.1 2018/12/26 14:02:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.63 2017/05/10 03:24:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.63.8.1 2018/12/26 14:02:00 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ppb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +280,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 
 		intrstr = pci_intr_string(pc, sc->sc_pihp[0], intrbuf,
 		    sizeof(intrbuf));
-		aprint_normal_dev(self, "%s\n", intrstr);
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 		/* Clear any pending events */
 		slcsr = pci_conf_read(pc, pa->pa_tag,

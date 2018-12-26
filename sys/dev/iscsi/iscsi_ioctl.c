@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.29 2017/12/06 04:29:58 ozaki-r Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.29.2.1 2018/12/26 14:01:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1783,7 +1783,7 @@ iscsi_cleanup_thread(void *par)
 
 			KASSERT(!conn->c_in_session);
 
-			callout_halt(&conn->c_timeout, &iscsi_cleanup_mtx);
+			callout_halt(&conn->c_timeout, NULL);
 			closef(conn->c_sock);
 			callout_destroy(&conn->c_timeout);
 			cv_destroy(&conn->c_idle_cv);

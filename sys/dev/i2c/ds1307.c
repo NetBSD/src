@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.25.2.2 2018/07/28 04:37:44 pgoyette Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.25.2.3 2018/12/26 14:01:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25.2.2 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25.2.3 2018/12/26 14:01:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25.2.2 2018/07/28 04:37:44 pgoyette Exp
 #include <dev/sysmon/sysmonvar.h>
 
 #include "ioconf.h"
+#include "opt_dsrtc.h"
 
 struct dsrtc_model {
 	const i2c_addr_t *dm_valid_addrs;
@@ -296,6 +297,8 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 	struct dsrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 	const struct dsrtc_model *dm;
+	prop_dictionary_t dict = device_properties(self);
+	bool base_2k = FALSE;
 
 	if ((dm = dsrtc_model_by_compat(ia)) == NULL)
 		dm = dsrtc_model_by_number(device_cfdata(self)->cf_flags);
@@ -316,6 +319,7 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
+	
 	if (dm->dm_flags & DSRTC_FLAG_BCD) {
 		sc->sc_todr.todr_gettime_ymdhms = dsrtc_gettime_ymdhms;
 		sc->sc_todr.todr_settime_ymdhms = dsrtc_settime_ymdhms;
@@ -324,6 +328,14 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 		sc->sc_todr.todr_settime = dsrtc_settime_timeval;
 	}
 	sc->sc_todr.todr_setwen = NULL;
+
+#ifdef DSRTC_YEAR_START_2K
+	sc->sc_model.dm_flags |= DSRTC_FLAG_YEAR_START_2K;
+#endif
+
+	prop_dictionary_get_bool(dict, "base_year_is_2000", &base_2k);
+	if (base_2k) sc->sc_model.dm_flags |= DSRTC_FLAG_YEAR_START_2K;
+
 
 	todr_attach(&sc->sc_todr);
 	if ((sc->sc_model.dm_flags & DSRTC_FLAG_TEMP) != 0) {
@@ -571,7 +583,7 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 {
 	struct dsrtc_model * const dm = &sc->sc_model;
 	uint8_t bcd[DSXXXX_RTC_SIZE], cmdbuf[2];
-	int error;
+	int error, offset;
 
 	KASSERT(DSXXXX_RTC_SIZE >= dm->dm_rtc_size);
 
@@ -585,8 +597,15 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[DSXXXX_DATE] = bintobcd(dt->dt_day);
 	bcd[DSXXXX_DAY] = bintobcd(dt->dt_wday);
 	bcd[DSXXXX_MONTH] = bintobcd(dt->dt_mon);
-	bcd[DSXXXX_YEAR] = bintobcd((dt->dt_year - POSIX_BASE_YEAR) % 100);
-	if (dt->dt_year - POSIX_BASE_YEAR >= 100)
+	
+	if (sc->sc_model.dm_flags & DSRTC_FLAG_YEAR_START_2K) {
+		offset = 2000;
+	} else {
+		offset = POSIX_BASE_YEAR;
+	}
+
+	bcd[DSXXXX_YEAR] = bintobcd((dt->dt_year - offset) % 100);
+	if (dt->dt_year - offset >= 100)
 		bcd[DSXXXX_MONTH] |= DSXXXX_MONTH_CENTURY;
 
 	if ((error = iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) != 0) {

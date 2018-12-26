@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.80 2018/02/14 05:29:39 maxv Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.80.2.1 2018/12/26 14:02:05 pgoyette Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -364,6 +364,13 @@ int	ip6_get_membership(const struct sockopt *, struct ifnet **,
 
 u_int32_t ip6_randomid(void);
 u_int32_t ip6_randomflowlabel(void);
+
+static inline bool
+ip6_dad_enabled(void)
+{
+
+	return ip6_dad_count > 0;
+}
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_VAR_H_ */

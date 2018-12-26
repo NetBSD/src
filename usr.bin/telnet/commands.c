@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.70 2016/10/04 14:36:11 joerg Exp $	*/
+/*	$NetBSD: commands.c,v 1.70.12.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.70 2016/10/04 14:36:11 joerg Exp $");
+__RCSID("$NetBSD: commands.c,v 1.70.12.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: commands.c,v 1.70 2016/10/04 14:36:11 joerg Exp $");
 #include <signal.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <err.h>
 
 #include <arpa/telnet.h>
 
@@ -122,15 +123,15 @@ static int margc;
 static char *margv[20];
 
 static void makeargv(void);
-static int special(char *);
+static int special(const char *);
 static const char *control(cc_t);
 static int sendcmd(int, char **);
-static int send_esc(char *);
-static int send_docmd(char *);
-static int send_dontcmd(char *);
-static int send_willcmd(char *);
-static int send_wontcmd(char *);
-static int send_help(char *);
+static int send_esc(const char *);
+static int send_docmd(const char *);
+static int send_dontcmd(const char *);
+static int send_willcmd(const char *);
+static int send_wontcmd(const char *);
+static int send_help(const char *);
 static int lclchars(int);
 static int togdebug(int);
 static int togcrlf(int);
@@ -140,7 +141,7 @@ static int togxbinary(int);
 static int togglehelp(int);
 static void settogglehelp(int);
 static int toggle(int, char *[]);
-static struct setlist *getset(char *);
+static struct setlist *getset(const char *);
 static int setcmd(int, char *[]);
 static int unsetcmd(int, char *[]);
 static int dokludgemode(int);
@@ -153,36 +154,45 @@ static int setescape(int, char *[]);
 static int togcrmod(int, char *[]);
 static int bye(int, char *[]);
 static void slc_help(int);
-static struct slclist *getslc(char *);
+static struct slclist *getslc(const char *);
 static int slccmd(int, char *[]);
-static struct env_lst *env_help(const unsigned char *, unsigned char *);
-static struct envlist *getenvcmd(char *);
+static struct env_lst *env_help(const char *, char *);
+static struct envlist *getenvcmd(const char *);
 #ifdef AUTHENTICATION
-static int auth_help(char *);
-#endif
-#ifdef TN3270
-static void filestuff(int);
+static int auth_help(const char *);
 #endif
 static int status(int, char *[]);
 static const char *sockaddr_ntop (struct sockaddr *);
 typedef int (*intrtn_t)(int, char **);
 static int call(intrtn_t, ...);
-static Command *getcmd(char *);
+static Command *getcmd(const char *);
 static int help(int, char *[]);
+
+static int
+addarg(char *str)
+{
+	if ((size_t)margc >= __arraycount(margv) - 1)
+		return 0;
+	margv[margc++] = str;
+	margv[margc] = NULL;
+	return 1;
+}
+
 
 static void
 makeargv(void)
 {
     char *cp, *cp2, c;
-    char **argp = margv;
     static char bang[] = "!";
 
     margc = 0;
+    margv[0] = NULL;
     cp = line;
     if (*cp == '!') {		/* Special case shell escape */
-	strlcpy(saveline, line, sizeof(saveline)); /* save for shell command */
-	*argp++ = bang;		/* No room in string to get this */
-	margc++;
+	/* save for shell command */
+	strlcpy(saveline, line, sizeof(saveline));
+	if (!addarg(bang))
+	    return;
 	cp++;
     }
     while ((c = *cp) != '\0') {
@@ -191,8 +201,8 @@ makeargv(void)
 	    c = *++cp;
 	if (c == '\0')
 	    break;
-	*argp++ = cp;
-	margc += 1;
+	if (!addarg(cp))
+	    return;
 	for (cp2 = cp; c != '\0'; c = *++cp) {
 	    if (inquote) {
 		if (c == inquote) {
@@ -203,11 +213,8 @@ makeargv(void)
 		if (c == '\\') {
 		    if ((c = *++cp) == '\0')
 			break;
-		} else if (c == '"') {
-		    inquote = '"';
-		    continue;
-		} else if (c == '\'') {
-		    inquote = '\'';
+		} else if (c == '"' || c == '\'') {
+		    inquote = c;
 		    continue;
 		} else if (isspace((unsigned char)c))
 		    break;
@@ -219,7 +226,6 @@ makeargv(void)
 	    break;
 	cp++;
     }
-    *argp++ = 0;
 }
 
 /*
@@ -229,7 +235,7 @@ makeargv(void)
  */
 
 static int
-special(char *s)
+special(const char *s)
 {
 	char c;
 	char b;
@@ -274,17 +280,17 @@ control(cc_t c)
 	}
 	if (uic >= 0x80) {
 		buf[0] = '\\';
-		buf[1] = ((c>>6)&07) + '0';
-		buf[2] = ((c>>3)&07) + '0';
-		buf[3] = (c&07) + '0';
-		buf[4] = 0;
+		buf[1] = (char)(((c >> 6) & 07) + '0');
+		buf[2] = (char)(((c >> 3) & 07) + '0');
+		buf[3] = (char)((c & 07) + '0');
+		buf[4] = '\0';
 	} else if (uic >= 0x20) {
-		buf[0] = c;
-		buf[1] = 0;
+		buf[0] = (char)c;
+		buf[1] = '\0';
 	} else {
 		buf[0] = '^';
-		buf[1] = '@'+c;
-		buf[2] = 0;
+		buf[1] = (char)('@' + c);
+		buf[2] = '\0';
 	}
 	return (buf);
 }
@@ -303,7 +309,7 @@ struct sendlist {
     int		needconnect;	/* Need to be connected */
     int		narg;		/* Number of arguments */
     int		(*handler)	/* Routine to perform (for special ops) */
-			(char *);
+			(const char *);
     int		nbyte;		/* Number of bytes to send this command */
     int		what;		/* Character to be sent (<0 ==> special) */
 };
@@ -414,7 +420,7 @@ sendcmd(int  argc, char **argv)
 	    success += (*s->handler)(argv[i+1]);
 	    i += s->narg;
 	} else {
-	    NET2ADD(IAC, s->what);
+	    NET2ADD(IAC, (unsigned char)s->what);
 	    printoption("SENT", IAC, s->what);
 	}
     }
@@ -422,42 +428,44 @@ sendcmd(int  argc, char **argv)
 }
 
 static int
-send_esc(char *s)
+send_esc(const char *s)
 {
     NETADD(escape);
     return 1;
 }
 
 static int
-send_docmd(char *name)
+send_docmd(const char *name)
 {
-    return(send_tncmd(send_do, "do", name));
+    return send_tncmd(send_do, "do", name);
 }
 
 static int
-send_dontcmd(char *name)
+send_dontcmd(const char *name)
 {
-    return(send_tncmd(send_dont, "dont", name));
+    return send_tncmd(send_dont, "dont", name);
 }
+
 static int
-send_willcmd(char *name)
+send_willcmd(const char *name)
 {
-    return(send_tncmd(send_will, "will", name));
+    return send_tncmd(send_will, "will", name);
 }
+
 static int
-send_wontcmd(char *name)
+send_wontcmd(const char *name)
 {
-    return(send_tncmd(send_wont, "wont", name));
+    return send_tncmd(send_wont, "wont", name);
 }
 
 int
-send_tncmd(void	(*func)(int, int), const char	*cmd, char *name)
+send_tncmd(void	(*func)(int, int), const char	*cmd, const char *name)
 {
     const char **cpp;
-    int val = 0;
+    ptrdiff_t val = 0;
 
     if (isprefix(name, "?")) {
-	int col, len;
+	size_t col, len;
 
 	printf("usage: send %s <value|option>\n", cmd);
 	printf("\"value\" must be from 0 to 255\n");
@@ -485,7 +493,7 @@ send_tncmd(void	(*func)(int, int), const char	*cmd, char *name)
     if (cpp) {
 	val = cpp - telopts;
     } else {
-	char *cp = name;
+	const char *cp = name;
 
 	while (*cp >= '0' && *cp <= '9') {
 	    val *= 10;
@@ -506,19 +514,19 @@ send_tncmd(void	(*func)(int, int), const char	*cmd, char *name)
 	printf("?Need to be connected first.\n");
 	return 0;
     }
-    (*func)(val, 1);
+    (*func)((int)val, 1);
     return 1;
 }
 
 static int
-send_help(char *n)
+send_help(const char *n)
 {
     struct sendlist *s;	/* pointer to current command */
     for (s = Sendlist; s->name; s++) {
 	if (s->help)
 	    printf("%-15s %s\n", s->name, s->help);
     }
-    return(0);
+    return 0;
 }
 
 /*
@@ -538,7 +546,7 @@ togdebug(int n)
 {
     if (net > 0 &&
 	(SetSockOpt(net, SOL_SOCKET, SO_DEBUG, telnet_debug)) < 0) {
-	    perror("setsockopt (SO_DEBUG)");
+	    warn("setsockopt (SO_DEBUG)");
     }
     return 1;
 }
@@ -743,18 +751,6 @@ static struct togglelist Togglelist[] = {
 		&localchars,
 		    "recognize certain control characters" },
     { " ", "", 0, NULL, NULL },		/* empty line */
-#ifdef TN3270
-    { "apitrace",
-	"(debugging) toggle tracing of API transactions",
-	    0,
-		&apitrace,
-		    "trace API transactions" },
-    { "cursesdata",
-	"(debugging) toggle printing of hexadecimal curses data",
-	    0,
-		&cursesdata,
-		    "print hexadecimal representation of curses data" },
-#endif	/* defined(TN3270) */
     { "debug",
 	"debugging",
 	    togdebug,
@@ -876,7 +872,7 @@ struct termios new_tc = { .c_iflag = 0 };
 struct setlist {
     const char *name;			/* name */
     const char *help;			/* help information */
-    void (*handler)(char *);
+    void (*handler)(const char *);
     cc_t *charp;			/* where it is located at */
 };
 
@@ -910,21 +906,27 @@ static struct setlist Setlist[] = {
 };
 
 static struct setlist *
-getset(char *name)
+getset(const char *name)
 {
     return (struct setlist *)
 		genget(name, (char **) Setlist, sizeof(struct setlist));
+}
+
+static cc_t
+getcc(const char *s)
+{
+	return (cc_t)((s && *s) ? special(s) : _POSIX_VDISABLE);
 }
 
 void
 set_escape_char(char *s)
 {
 	if (rlogin != _POSIX_VDISABLE) {
-		rlogin = (s && *s) ? special(s) : _POSIX_VDISABLE;
+		rlogin = getcc(s);
 		printf("Telnet rlogin escape character is '%s'.\n",
 					control(rlogin));
 	} else {
-		escape = (s && *s) ? special(s) : _POSIX_VDISABLE;
+		escape = getcc(s);
 		printf("Telnet escape character is '%s'.\n", control(escape));
 	}
 }
@@ -986,7 +988,7 @@ setcmd(int  argc, char *argv[])
 	return 0;
     } else if (ct->handler) {
 	(*ct->handler)(argv[2]);
-	printf("%s set to \"%s\".\n", ct->name, (char *)ct->charp);
+	printf("%s set to \"%s\".\n", ct->name, ct->charp);
     } else {
 	if (strcmp("off", argv[2])) {
 	    value = special(argv[2]);
@@ -1052,7 +1054,7 @@ unsetcmd(int  argc, char *argv[])
 	    return 0;
 	} else if (ct->handler) {
 	    (*ct->handler)(0);
-	    printf("%s reset to \"%s\".\n", ct->name, (char *)ct->charp);
+	    printf("%s reset to \"%s\".\n", ct->name, ct->charp);
 	} else {
 	    *(ct->charp) = _POSIX_VDISABLE;
 	    printf("%s character is '%s'.\n", ct->name, control(*(ct->charp)));
@@ -1117,9 +1119,9 @@ dolmmode(int bit, int on)
     }
 
     if (on)
-	c = (linemode | bit);
+	c = (unsigned char)(linemode | bit);
     else
-	c = (linemode & ~bit);
+	c = (unsigned char)(linemode & ~bit);
     lm_mode(&c, 1, 1);
     return 1;
 }
@@ -1243,7 +1245,7 @@ display(int  argc, char *argv[])
 			if (sl->handler == 0) \
 			    printf("%-15s [%s]\n", sl->name, control(*sl->charp)); \
 			else \
-			    printf("%-15s \"%s\"\n", sl->name, (char *)sl->charp); \
+			    printf("%-15s \"%s\"\n", sl->name, sl->charp); \
 		    }
 
     if (argc == 1) {
@@ -1310,10 +1312,9 @@ setescape(int argc, char *argv[])
 		arg = buf;
 	}
 	if (arg[0] != '\0')
-		escape = arg[0];
-	if (!In3270) {
-		printf("Escape character is '%s'.\n", control(escape));
-	}
+		escape = (cc_t)arg[0];
+
+	printf("Escape character is '%s'.\n", control(escape));
 	(void) fflush(stdout);
 	return 1;
 }
@@ -1355,7 +1356,6 @@ suspend(int argc, char *argv[])
     return 1;
 }
 
-#ifndef TN3270
 /*ARGSUSED*/
 int
 shell(int argc, char *argv[])
@@ -1368,7 +1368,7 @@ shell(int argc, char *argv[])
     err = (TerminalWindowSize(&oldrows, &oldcols) == 0) ? 1 : 0;
     switch(vfork()) {
     case -1:
-	perror("Fork failed");
+	warn("Fork failed");
 	break;
 
     case 0:
@@ -1389,7 +1389,7 @@ shell(int argc, char *argv[])
 		execl(shellp, shellname, "-c", &saveline[1], NULL);
 	    else
 		execl(shellp, shellname, NULL);
-	    perror("execl");
+	    warn("execl");
 	    _exit(1);
 	}
     default:
@@ -1403,7 +1403,6 @@ shell(int argc, char *argv[])
     }
     return 1;
 }
-#endif	/* !defined(TN3270) */
 
 /*VARARGS*/
 static int
@@ -1422,9 +1421,6 @@ bye(int  argc, char *argv[])
 #endif	/* defined(AUTHENTICATION) */
 	/* reset options */
 	tninit();
-#ifdef TN3270
-	SetIn3270();		/* Get out of 3270 mode */
-#endif	/* defined(TN3270) */
     }
     if ((argc != 2) || (strcmp(argv[1], "fromquit") != 0)) {
 	longjmp(toplevel, 1);
@@ -1491,7 +1487,7 @@ slc_help(int n)
 }
 
 static struct slclist *
-getslc(char *name)
+getslc(const char *name)
 {
     return (struct slclist *)
 		genget(name, (char **) SlcList, sizeof(struct slclist));
@@ -1530,7 +1526,7 @@ slccmd(int  argc, char *argv[])
 struct envlist {
 	const char	*name;
 	const char	*help;
-	struct env_lst *(*handler)(const unsigned char *, unsigned char *);
+	struct env_lst *(*handler)(const char *, char *);
 	int	narg;
 };
 
@@ -1556,7 +1552,7 @@ struct envlist EnvList[] = {
 };
 
 static struct env_lst *
-env_help(const unsigned char *us1, unsigned char *us2)
+env_help(const char *us1, char *us2)
 {
     struct envlist *c;
 
@@ -1572,7 +1568,7 @@ env_help(const unsigned char *us1, unsigned char *us2)
 }
 
 static struct envlist *
-getenvcmd(char *name)
+getenvcmd(const char *name)
 {
     return (struct envlist *)
 		genget(name, (char **) EnvList, sizeof(struct envlist));
@@ -1622,15 +1618,15 @@ struct env_lst {
 struct env_lst envlisthead;
 
 struct env_lst *
-env_find(const unsigned char *var)
+env_find(const char *var)
 {
 	struct env_lst *ep;
 
 	for (ep = envlisthead.next; ep; ep = ep->next) {
-		if (strcmp((const char *)ep->var, (const char *)var) == 0)
-			return(ep);
+		if (strcmp(ep->var, var) == 0)
+			return ep;
 	}
-	return(NULL);
+	return NULL;
 }
 
 void
@@ -1656,16 +1652,16 @@ env_init(void)
 	 */
 	if ((ep = env_find("DISPLAY"))
 	    && ((*ep->value == ':')
-		|| (strncmp((char *)ep->value, "unix:", 5) == 0))) {
+		|| (strncmp(ep->value, "unix:", 5) == 0))) {
 		char hbuf[MAXHOSTNAMELEN + 1];
-		char *cp2 = strchr((char *)ep->value, ':');
+		char *cp2 = strchr(ep->value, ':');
 
 		gethostname(hbuf, sizeof hbuf);
 		hbuf[sizeof(hbuf) - 1] = '\0';
-		cp = (char *)malloc(strlen(hbuf) + strlen(cp2) + 1);
-		sprintf((char *)cp, "%s%s", hbuf, cp2);
+		if (asprintf(&cp, "%s%s", hbuf, cp2) < 0)
+			err(1, "Out of memory");
 		free(ep->value);
-		ep->value = (unsigned char *)cp;
+		ep->value = cp;
 	}
 	/*
 	 * If USER is not defined, but LOGNAME is, then add
@@ -1673,15 +1669,15 @@ env_init(void)
 	 * don't export the USER variable.
 	 */
 	if ((env_find("USER") == NULL) && (ep = env_find("LOGNAME"))) {
-		env_define((const unsigned char *)"USER", ep->value);
-		env_unexport((const unsigned char *)"USER", NULL);
+		env_define("USER", ep->value);
+		env_unexport("USER", NULL);
 	}
-	env_export((const unsigned char *)"DISPLAY", NULL);
-	env_export((const unsigned char *)"PRINTER", NULL);
+	env_export("DISPLAY", NULL);
+	env_export("PRINTER", NULL);
 }
 
 struct env_lst *
-env_define(const unsigned char *var, unsigned char *value)
+env_define(const char *var, char *value)
 {
 	struct env_lst *ep;
 
@@ -1700,13 +1696,13 @@ env_define(const unsigned char *var, unsigned char *value)
 	}
 	ep->welldefined = opt_welldefined(var);
 	ep->export = 1;
-	ep->var = (unsigned char *)strdup((const char *)var);
-	ep->value = (unsigned char *)strdup((const char *)value);
-	return(ep);
+	ep->var = strdup(var);
+	ep->value = strdup(value);
+	return ep;
 }
 
 struct env_lst *
-env_undefine(const unsigned char *var, unsigned char *d)
+env_undefine(const char *var, char *d)
 {
 	struct env_lst *ep;
 
@@ -1724,7 +1720,7 @@ env_undefine(const unsigned char *var, unsigned char *d)
 }
 
 struct env_lst *
-env_export(const unsigned char *var, unsigned char *d)
+env_export(const char *var, char *d)
 {
 	struct env_lst *ep;
 
@@ -1734,7 +1730,7 @@ env_export(const unsigned char *var, unsigned char *d)
 }
 
 struct env_lst *
-env_unexport(const unsigned char *var, unsigned char *d)
+env_unexport(const char *var, char *d)
 {
 	struct env_lst *ep;
 
@@ -1744,7 +1740,7 @@ env_unexport(const unsigned char *var, unsigned char *d)
 }
 
 struct env_lst *
-env_send(const unsigned char *var, unsigned char *d)
+env_send(const char *var, char *d)
 {
 	struct env_lst *ep;
 
@@ -1771,7 +1767,7 @@ env_send(const unsigned char *var, unsigned char *d)
 }
 
 struct env_lst *
-env_list(const unsigned char *d1, unsigned char *d2)
+env_list(const char *d1, char *d2)
 {
 	struct env_lst *ep;
 
@@ -1782,7 +1778,7 @@ env_list(const unsigned char *d1, unsigned char *d2)
 	return NULL;
 }
 
-unsigned char *
+char *
 env_default(int init, int welldefined)
 {
 	static struct env_lst *nep = NULL;
@@ -1791,23 +1787,24 @@ env_default(int init, int welldefined)
 		nep = &envlisthead;
 		return NULL;
 	}
-	if (nep) {
-		while ((nep = nep->next) != NULL) {
-			if (nep->export && (nep->welldefined == welldefined))
-				return(nep->var);
-		}
+	if (!nep) {
+		return NULL;
 	}
-	return(NULL);
+	while ((nep = nep->next) != NULL) {
+		if (nep->export && (nep->welldefined == welldefined))
+			return nep->var;
+	}
+	return NULL;
 }
 
-unsigned char *
-env_getvalue(const unsigned char *var)
+char *
+env_getvalue(const char *var)
 {
 	struct env_lst *ep;
 
 	if ((ep = env_find(var)) != NULL)
-		return(ep->value);
-	return(NULL);
+		return ep->value;
+	return NULL;
 }
 
 #if defined(OLD_ENVIRON) && defined(ENV_HACK)
@@ -1815,12 +1812,12 @@ void
 env_varval(const unsigned char *what)
 {
 	extern int old_env_var, old_env_value, env_auto;
-	int len = strlen((char *)what);
+	int len = strlen(what);
 
 	if (len == 0)
 		goto unknown;
 
-	if (strncasecmp((char *)what, "status", len) == 0) {
+	if (strncasecmp(what, "status", len) == 0) {
 		if (env_auto)
 			printf("%s%s", "VAR and VALUE are/will be ",
 					"determined automatically\n");
@@ -1828,15 +1825,15 @@ env_varval(const unsigned char *what)
 			printf("VAR and VALUE set to correct definitions\n");
 		else
 			printf("VAR and VALUE definitions are reversed\n");
-	} else if (strncasecmp((char *)what, "auto", len) == 0) {
+	} else if (strncasecmp(what, "auto", len) == 0) {
 		env_auto = 1;
 		old_env_var = OLD_ENV_VALUE;
 		old_env_value = OLD_ENV_VAR;
-	} else if (strncasecmp((char *)what, "right", len) == 0) {
+	} else if (strncasecmp(what, "right", len) == 0) {
 		env_auto = 0;
 		old_env_var = OLD_ENV_VAR;
 		old_env_value = OLD_ENV_VALUE;
-	} else if (strncasecmp((char *)what, "wrong", len) == 0) {
+	} else if (strncasecmp(what, "wrong", len) == 0) {
 		env_auto = 0;
 		old_env_var = OLD_ENV_VALUE;
 		old_env_value = OLD_ENV_VAR;
@@ -1855,7 +1852,7 @@ unknown:
 struct authlist {
 	const char	*name;
 	const char	*help;
-	int	(*handler)(char *);
+	int	(*handler)(const char *);
 	int	narg;
 };
 
@@ -1872,7 +1869,7 @@ struct authlist AuthList[] = {
 };
 
 static int
-auth_help(char *s)
+auth_help(const char *s)
 {
     struct authlist *c;
 
@@ -1917,7 +1914,7 @@ auth_cmd(int  argc, char *argv[])
 		c->narg, c->narg == 1 ? "" : "s", c->name);
 	return 0;
     }
-    return((*c->handler)(argv[2]));
+    return (*c->handler)(argv[2]);
 }
 #endif
 
@@ -2035,35 +2032,6 @@ encrypt_cmd(int argc, char *argv[])
 }
 #endif	/* ENCRYPTION */
 
-#ifdef TN3270
-static void
-filestuff(int fd)
-{
-    int res;
-
-    setconnmode(0);
-    res = fcntl(fd, F_GETOWN, 0);
-    setcommandmode();
-
-    if (res == -1) {
-	perror("fcntl");
-	return;
-    }
-    printf("\tOwner is %d.\n", res);
-
-    setconnmode(0);
-    res = fcntl(fd, F_GETFL, 0);
-    setcommandmode();
-
-    if (res == -1) {
-	perror("fcntl");
-	return;
-    }
-#ifdef notdef
-    printf("\tFlags are 0x%x: %s\n", res, decodeflags(res));
-#endif
-}
-#endif /* defined(TN3270) */
 
 /*
  * Print status about the connection.
@@ -2102,35 +2070,8 @@ status(int argc, char *argv[])
     } else {
 	printf("No connection.\n");
     }
-#   ifndef TN3270
     printf("Escape character is '%s'.\n", control(escape));
     (void) fflush(stdout);
-#   else /* !defined(TN3270) */
-    if ((!In3270) && ((argc < 2) || strcmp(argv[1], "notmuch"))) {
-	printf("Escape character is '%s'.\n", control(escape));
-    }
-    if ((argc >= 2) && !strcmp(argv[1], "everything")) {
-	printf("SIGIO received %d time%s.\n",
-				sigiocount, (sigiocount == 1)? "":"s");
-	if (In3270) {
-	    printf("Process ID %d, process group %d.\n",
-					    getpid(), getpgrp());
-	    printf("Terminal input:\n");
-	    filestuff(tin);
-	    printf("Terminal output:\n");
-	    filestuff(tout);
-	    printf("Network socket:\n");
-	    filestuff(net);
-	}
-    }
-    if (In3270 && transcom) {
-	printf("Transparent mode command is '%s'.\n", transcom);
-    }
-    (void) fflush(stdout);
-    if (In3270) {
-	return 0;
-    }
-#   endif /* defined(TN3270) */
     return 1;
 }
 
@@ -2169,15 +2110,15 @@ setpolicy(int netw, struct addrinfo *res, char *policy)
 	if (policy == NULL)
 		return 0;
 
-	buf = ipsec_set_policy(policy, strlen(policy));
+	buf = ipsec_set_policy(policy, (int)strlen(policy));
 	if (buf == NULL) {
 		printf("%s\n", ipsec_strerror());
 		return -1;
 	}
 	level = res->ai_family == AF_INET ? IPPROTO_IP : IPPROTO_IPV6;
 	optname = res->ai_family == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY;
-	if (setsockopt(netw, level, optname, buf, ipsec_get_policylen(buf)) < 0){
-		perror("setsockopt");
+	if (setsockopt(netw, level, optname, buf, (socklen_t)ipsec_get_policylen(buf)) < 0){
+		warn("setsockopt");
 		return -1;
 	}
 
@@ -2203,7 +2144,8 @@ tn(int argc, char *argv[])
     if (argc < 2) {
 	(void) strlcpy(line, "open ", sizeof(line));
 	printf("(to) ");
-	(void) fgets(&line[strlen(line)], sizeof(line) - strlen(line), stdin);
+	(void) fgets(&line[strlen(line)], (int)(sizeof(line) - strlen(line)),
+	    stdin);
 	makeargv();
 	argc = margc;
 	argv = margv;
@@ -2302,7 +2244,7 @@ tn(int argc, char *argv[])
 	}
 
 	if (telnet_debug && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0) {
-	    perror("setsockopt (SO_DEBUG)");
+	    warn("setsockopt (SO_DEBUG)");
 	}
 
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
@@ -2320,14 +2262,9 @@ tn(int argc, char *argv[])
 
 	if (connect(net, res->ai_addr, res->ai_addrlen) < 0) {
 	    if (res->ai_next) {
-		int oerrno = errno;
-
-		fprintf(stderr, "telnet: connect to address %s: ",
-						sockaddr_ntop(res->ai_addr));
-		errno = oerrno;
-		perror((char *)0);
+		warn("Connect to address %s: ", sockaddr_ntop(res->ai_addr));
 	    }
-	    cause = "telnet: Unable to connect to remote host";
+	    cause = "Unable to connect to remote host";
 	    (void) NetClose(net);
 	    net = -1;
 	    continue;
@@ -2341,7 +2278,7 @@ tn(int argc, char *argv[])
     }
     freeaddrinfo(res0);
     if (net < 0 || connected == 0) {
-	perror(cause);
+	warnx("%s", cause);
 	return 0;
     }
 
@@ -2359,8 +2296,8 @@ tn(int argc, char *argv[])
 	}
     }
     if (user) {
-	env_define((const unsigned char *)"USER", __UNCONST(user));
-	env_export((const unsigned char *)"USER", NULL);
+	env_define("USER", __UNCONST(user));
+	env_export("USER", NULL);
     }
     (void) call(status, "status", "notmuch", 0);
     telnet(user); 
@@ -2384,9 +2321,6 @@ static char
 	togglestring[] ="toggle operating parameters ('toggle ?' for more)",
 	slchelp[] =	"change state of special characters ('slc ?' for more)",
 	displayhelp[] =	"display operating parameters",
-#ifdef TN3270
-	transcomhelp[] = "specify Unix command for transparent mode pipe",
-#endif	/* defined(TN3270) */
 #ifdef AUTHENTICATION
 	authhelp[] =	"turn on (off) authentication ('auth ?' for more)",
 #endif
@@ -2411,9 +2345,6 @@ static Command cmdtab[] = {
 	{ "status",	statushelp,	status,		0 },
 	{ "toggle",	togglestring,	toggle,		0 },
 	{ "slc",	slchelp,	slccmd,		0 },
-#ifdef TN3270
-	{ "transcom",	transcomhelp,	settranscom,	0 },
-#endif	/* defined(TN3270) */
 #ifdef AUTHENTICATION
 	{ "auth",	authhelp,	auth_cmd,	0 },
 #endif
@@ -2421,11 +2352,7 @@ static Command cmdtab[] = {
 	{ "encrypt",	encrypthelp,	encrypt_cmd,	0 },
 #endif
 	{ "z",		zhelp,		suspend,	0 },
-#ifdef TN3270
-	{ "!",		shellhelp,	shell,		1 },
-#else
 	{ "!",		shellhelp,	shell,		0 },
-#endif
 	{ "environ",	envhelp,	env_cmd,	0 },
 	{ "?",		helphelp,	help,		0 },
 	{ NULL,		NULL,		NULL,		0 }
@@ -2464,7 +2391,7 @@ call(intrtn_t routine, ...)
 
 
 static Command *
-getcmd(char *name)
+getcmd(const char *name)
 {
     Command *cm;
 
@@ -2503,9 +2430,6 @@ command(int top, const char *tbuf, int cnt)
 	getline:
 	    if (rlogin != _POSIX_VDISABLE)
 		printf("%s> ", prompt);
-#ifdef TN3270
-	    fflush(stdout);
-#endif
 	    if (fgets(line, sizeof(line), stdin) == NULL) {
 		if (feof(stdin) || ferror(stdin)) {
 		    (void) quit(0, NULL);
@@ -2542,13 +2466,7 @@ command(int top, const char *tbuf, int cnt)
 	    longjmp(toplevel, 1);
 	    /*NOTREACHED*/
 	}
-#ifdef TN3270
-	if (shell_active == 0) {
-	    setconnmode(0);
-	}
-#else	/* defined(TN3270) */
 	setconnmode(0);
-#endif	/* defined(TN3270) */
     }
 }
 
@@ -2592,8 +2510,8 @@ cmdrc(const char *m1, const char *m2)
     Command *c;
     FILE *rcfile;
     int gotmachine = 0;
-    int l1 = strlen(m1);
-    int l2 = strlen(m2);
+    size_t l1 = strlen(m1);
+    size_t l2 = strlen(m2);
     char m1save[MAXHOSTNAMELEN + 1];
 
     if (skiprc)

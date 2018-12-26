@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.108.2.5 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.108.2.6 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.108.2.5 2018/09/30 01:45:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.108.2.6 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -74,8 +74,15 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.108.2.5 2018/09/30 01:45:48 pgoyet
 #include "tsc.h"
 
 #include "acpica.h"
+#include "ioapic.h"
+#include "lapic.h"
+
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
+#endif
+
+#if NIOAPIC > 0 || NACPICA > 0
+#include <machine/i82093var.h>
 #endif
 
 #include "opt_md.h"
@@ -1298,3 +1305,23 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CPU_BIOSEXTMEM);
 #endif
 }
+
+/* Here for want of a better place */
+#if defined(DOM0OPS) || !defined(XEN)
+struct pic *
+intr_findpic(int num)
+{
+#if NIOAPIC > 0
+	struct ioapic_softc *pic;
+
+	pic = ioapic_find_bybase(num);
+	if (pic != NULL)
+		return &pic->sc_pic;
+#endif
+	if (num < NUM_LEGACY_IRQS)
+		return &i8259_pic;
+
+	return NULL;
+}
+#endif
+

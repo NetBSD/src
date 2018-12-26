@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.56 2016/07/14 04:00:46 msaitoh Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.56.16.1 2018/12/26 14:01:50 pgoyette Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.56 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.56.16.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,9 +133,9 @@ wi_pci_enable(device_t self, int onoff)
 	struct wi_softc *sc = &psc->psc_wi;
 
 	if (onoff) {
-		/* establish the interrupt. */
-		sc->sc_ih = pci_intr_establish(psc->psc_pc,
-		    psc->psc_ih, IPL_NET, wi_intr, sc);
+		/* XXX re-establishing interrupt shouldn't be needed */
+		sc->sc_ih = pci_intr_establish_xname(psc->psc_pc,
+		    psc->psc_ih, IPL_NET, wi_intr, sc, device_xname(self));
 		if (sc->sc_ih == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't establish interrupt\n");
@@ -320,7 +320,8 @@ wi_pci_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	psc->psc_ih = ih;
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wi_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, wi_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

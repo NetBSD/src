@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1.2.4 2018/09/06 06:55:23 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.1.2.5 2018/12/26 14:01:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,12 +32,7 @@
 #ifdef _KERNEL
 
 #include <arm/armreg.h>
-
-static inline int
-set_cpufuncs(void)
-{
-	return 0;
-}
+#include <sys/device_if.h>
 
 struct aarch64_cache_unit {
 	u_int cache_type;
@@ -74,6 +69,7 @@ extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
 
+int set_cpufuncs(void);
 void aarch64_getcacheinfo(void);
 void aarch64_printcacheinfo(device_t);
 
@@ -94,7 +90,9 @@ void aarch64_icache_inv_all(void);
 void aarch64_drain_writebuf(void);
 
 /* tlb op in cpufunc_asm_armv8.S */
+#define cpu_set_ttbr0(t)		curcpu()->ci_cpufuncs.cf_set_ttbr0((t))
 void aarch64_set_ttbr0(uint64_t);
+void aarch64_set_ttbr0_thunderx(uint64_t);
 void aarch64_tlbi_all(void);			/* all ASID, all VA */
 void aarch64_tlbi_by_asid(int);			/*  an ASID, all VA */
 void aarch64_tlbi_by_va(vaddr_t);		/* all ASID, a VA */

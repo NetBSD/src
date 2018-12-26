@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.2.2.2 2018/11/26 01:52:32 pgoyette Exp $ */
+/* $NetBSD: mfii.c,v 1.2.2.3 2018/12/26 14:01:50 pgoyette Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.2.2.2 2018/11/26 01:52:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.2.2.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include "bio.h"
 
@@ -1935,11 +1935,15 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	iiq->sense_buffer_address_high = htole32(
 	    MFII_DMA_DVA(sc->sc_sense) >> 32);
 
-	iiq->reply_descriptor_post_queue_address = htole64(
-	    MFII_DMA_DVA(sc->sc_reply_postq));
+	iiq->reply_descriptor_post_queue_address_lo =
+	    htole32(MFII_DMA_DVA(sc->sc_reply_postq));
+	iiq->reply_descriptor_post_queue_address_hi =
+	    htole32(MFII_DMA_DVA(sc->sc_reply_postq) >> 32);
 
-	iiq->system_request_frame_base_address =
-	    htole64(MFII_DMA_DVA(sc->sc_requests));
+	iiq->system_request_frame_base_address_lo = 
+	    htole32(MFII_DMA_DVA(sc->sc_requests));
+	iiq->system_request_frame_base_address_hi = 
+	    htole32(MFII_DMA_DVA(sc->sc_requests) >> 32);
 
 	iiq->timestamp = htole64(time_uptime);
 

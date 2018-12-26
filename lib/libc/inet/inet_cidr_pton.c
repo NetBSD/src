@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.8 2012/03/20 17:08:13 matt Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.8.30.1 2018/12/26 14:01:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.6 2005/04/27 04:56:19 sra Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_pton.c,v 1.8 2012/03/20 17:08:13 matt Exp $");
+__RCSID("$NetBSD: inet_cidr_pton.c,v 1.8.30.1 2018/12/26 14:01:26 pgoyette Exp $");
 #endif
 #endif
 
@@ -44,12 +44,6 @@ __RCSID("$NetBSD: inet_cidr_pton.c,v 1.8 2012/03/20 17:08:13 matt Exp $");
 #include <stdlib.h>
 
 #include "port_after.h"
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
-#endif
 
 #ifdef __weak_alias
 __weak_alias(inet_cidr_pton,_inet_cidr_pton)

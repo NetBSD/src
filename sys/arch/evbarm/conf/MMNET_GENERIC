@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.34.2.5 2018/11/26 01:52:21 pgoyette Exp $
+# $NetBSD: MMNET_GENERIC,v 1.34.2.6 2018/12/26 14:01:35 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.34.2.5 $"
+#ident 		"GENERIC-$Revision: 1.34.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -42,7 +42,6 @@ makeoptions	CPUFLAGS="-mtune=arm926ej-s -mcpu=arm926ej-s"
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
-#options 	CONS_OVERRIDE	# Always use above! independent of boot info
 
 # Standard system options
 

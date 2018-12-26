@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.354.2.2 2018/09/30 01:45:58 pgoyette Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.354.2.3 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354.2.2 2018/09/30 01:45:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354.2.3 2018/12/26 14:02:08 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4963,7 +4963,7 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 		return EINVAL;
 
 	if (oldp) {
-		if (*oldlenp > 1024 * 1024)
+		if (*oldlenp > 10UL * 1024UL * 1024UL)
 			return E2BIG;
 		count = *oldlenp / elem_size;
 		if (count == 0)

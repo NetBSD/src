@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.25 2016/08/02 15:56:09 scole Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.25.12.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.25 2016/08/02 15:56:09 scole Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.25.12.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -52,6 +52,7 @@ struct	command global_commands[] = {
 	{ "quit",	global_quit,		"exit systat"},
 	{ "start",	global_interval,	"restart updating display"},
 	{ "stop",	global_stop,		"stop updating display"},
+	{ "?",		global_help,		"show help"},
 	{ .c_name = NULL }
 };
 
@@ -114,7 +115,7 @@ struct command netstat_commands[] = {
 	{ "names",	netstat_names,	 "show names instead of addresses"},
 	{ "numbers",	netstat_numbers, "show addresses instead of names"},
 	{ "reset",	netstat_reset,	 "return to default display"},
-	{ "show",	netstat_show,	"show current display/ignore settings"},
+	{ "show",	netstat_show,	 "show current display/ignore settings"},
 	{ "tcp",	netstat_tcp,	 "show only tcp connections"},
 	{ "udp",	netstat_udp,	 "show only udp connections"},
 	{ .c_name = NULL }

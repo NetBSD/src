@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.18 2017/06/05 18:54:30 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.18.4.1 2018/12/26 14:01:14 pgoyette Exp $	*/
 
-/* Id: output.c,v 1.81 2017/04/30 23:23:32 tom Exp  */
+/* Id: output.c,v 1.87 2018/05/10 09:08:46 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.18 2017/06/05 18:54:30 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.18.4.1 2018/12/26 14:01:14 pgoyette Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -1167,21 +1167,21 @@ is_C_identifier(char *name)
     if (c == '"')
     {
 	c = *++s;
-	if (!isalpha(c) && c != '_' && c != '$')
+	if (!IS_NAME1(c))
 	    return (0);
 	while ((c = *++s) != '"')
 	{
-	    if (!isalnum(c) && c != '_' && c != '$')
+	    if (!IS_NAME2(c))
 		return (0);
 	}
 	return (1);
     }
 
-    if (!isalpha(c) && c != '_' && c != '$')
+    if (!IS_NAME1(c))
 	return (0);
     while ((c = *++s) != 0)
     {
-	if (!isalnum(c) && c != '_' && c != '$')
+	if (!IS_NAME2(c))
 	    return (0);
     }
     return (1);
@@ -1294,6 +1294,15 @@ output_stored_text(FILE * fp)
     write_code_lineno(fp);
 }
 
+static int
+output_yydebug(FILE * fp)
+{
+    fprintf(fp, "#ifndef YYDEBUG\n");
+    fprintf(fp, "#define YYDEBUG %d\n", tflag);
+    fprintf(fp, "#endif\n");
+    return 3;
+}
+
 static void
 output_debug(void)
 {
@@ -1304,16 +1313,11 @@ output_debug(void)
     ++outline;
     fprintf(code_file, "#define YYFINAL %d\n", final_state);
 
-    putl_code(code_file, "#ifndef YYDEBUG\n");
-    ++outline;
-    fprintf(code_file, "#define YYDEBUG %d\n", tflag);
-    putl_code(code_file, "#endif\n");
+    outline += output_yydebug(code_file);
 
     if (rflag)
     {
-	fprintf(output_file, "#ifndef YYDEBUG\n");
-	fprintf(output_file, "#define YYDEBUG %d\n", tflag);
-	fprintf(output_file, "#endif\n");
+	output_yydebug(output_file);
     }
 
     maxtok = 0;
@@ -1799,6 +1803,23 @@ output_lex_decl(FILE * fp)
 	putl_code(fp, "# define YYLEX yylex()\n");
     }
     putl_code(fp, "#endif\n");
+
+    /*
+     * Provide a prototype for yylex for the simplest case.  This is done for
+     * better compatibility with older yacc's, but can be a problem if someone
+     * uses "static int yylex(void);"
+     */
+    if (!pure_parser
+#if defined(YYBTYACC)
+	&& !backtrack
+#endif
+	&& !strcmp(symbol_prefix, "yy"))
+    {
+	putl_code(fp, "\n");
+	putl_code(fp, "#if !(defined(yylex) || defined(YYSTATE))\n");
+	putl_code(fp, "int YYLEX_DECL();\n");
+	putl_code(fp, "#endif\n");
+    }
 }
 
 static void
@@ -2027,6 +2048,8 @@ output(void)
 
     if (iflag)
     {
+	fprintf(externs_file, "\n");
+	output_yydebug(externs_file);
 	output_externs(externs_file, global_vars);
 	if (!pure_parser)
 	    output_externs(externs_file, impure_vars);

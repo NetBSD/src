@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.260.2.6 2018/11/26 01:52:51 pgoyette Exp $	*/
+/*	$NetBSD: in6.c,v 1.260.2.7 2018/12/26 14:02:05 pgoyette Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260.2.6 2018/11/26 01:52:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260.2.7 2018/12/26 14:02:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1269,7 +1269,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia6_flags |= IN6_IFF_DETACHED;
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	} else if ((hostIsNew || was_tentative) && if_do_dad(ifp) &&
-	           ip6_dad_count > 0) {
+	           ip6_dad_enabled()) {
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 	}
 
@@ -2204,7 +2204,7 @@ in6_if_link_up(struct ifnet *ifp)
 		/* If detached then mark as tentative */
 		if (ia->ia6_flags & IN6_IFF_DETACHED) {
 			ia->ia6_flags &= ~IN6_IFF_DETACHED;
-			if (if_do_dad(ifp)) {
+			if (ip6_dad_enabled() && if_do_dad(ifp)) {
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
 				nd6log(LOG_ERR, "%s marked tentative\n",
 				    IN6_PRINT(ip6buf,

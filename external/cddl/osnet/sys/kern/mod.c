@@ -1,4 +1,4 @@
-/*	$NetBSD: mod.c,v 1.2.44.1 2018/06/25 07:25:25 pgoyette Exp $	*/
+/*	$NetBSD: mod.c,v 1.2.44.2 2018/12/26 14:01:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mod.c,v 1.2.44.1 2018/06/25 07:25:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mod.c,v 1.2.44.2 2018/12/26 14:01:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,6 +49,9 @@ solaris_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		if (!mp_online)
+			return EAGAIN;
+
 		opensolaris_utsname_init();
 		callb_init(NULL);
 		taskq_init();

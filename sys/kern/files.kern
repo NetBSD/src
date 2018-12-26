@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.16.2.10 2018/11/26 01:52:50 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.16.2.11 2018/12/26 14:02:03 pgoyette Exp $
 
 #
 # kernel sources
@@ -6,6 +6,7 @@
 define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
 defflag	opt_script.h			SETUIDSCRIPTS FDSCRIPTS
+defflag					KASLR
 file	conf/debugsyms.c		kern
 file	conf/param.c			kern
 file	kern/bufq_disksort.c		bufq_disksort
@@ -85,6 +86,7 @@ file	kern/kern_synch.c		kern
 file	kern/kern_syscall.c		kern
 file	kern/kern_sysctl.c		kern
 file	kern/kern_tc.c			kern
+file	kern/kern_threadpool.c		kern
 file	kern/kern_time.c		kern
 file	kern/kern_timeout.c		kern
 file	kern/kern_turnstile.c		kern
@@ -117,6 +119,7 @@ file	kern/subr_interrupt.c		kern
 file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
+file	kern/subr_kleak.c		kleak
 defflag	opt_kmem.h			KMEM_GUARD
 					KMEM_SIZE
 defparam opt_kmem.h			KMEM_GUARD_DEPTH
@@ -140,6 +143,7 @@ file	kern/subr_psref.c		kern
 file	kern/subr_specificdata.c	kern
 file	kern/subr_tftproot.c		tftproot
 file	kern/subr_time.c		kern
+file	kern/subr_thmap.c		kern
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c		kern
 file	kern/subr_workqueue.c		kern

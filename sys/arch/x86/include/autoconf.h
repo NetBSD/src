@@ -1,8 +1,24 @@
-/* $NetBSD: autoconf.h,v 1.4 2016/09/21 00:00:07 jmcneill Exp $ */
+/* $NetBSD: autoconf.h,v 1.4.14.1 2018/12/26 14:01:45 pgoyette Exp $ */
 #ifndef _X86_AUTOCONF_H_
 #define _X86_AUTOCONF_H_
 
 #include <sys/device.h>
+
+/*
+ * device private data for mainbus.
+ * subr_autoconf.c uses sizeof() to allocate private memory for this
+ * data structure.
+ */
+struct mainbus_softc {
+#if defined(__i386__)	
+	device_t	sc_acpi;
+	device_t	sc_dev;
+	device_t	sc_ipmi;
+	device_t	sc_pci;
+	device_t	sc_mca;
+	device_t	sc_pnpbios;
+#endif
+};
 
 void device_pci_props_register(device_t, void *);
 device_t device_pci_register(device_t, void *);

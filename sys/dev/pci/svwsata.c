@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.20.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.20.2.2 2018/12/26 14:02:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.20.2.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.20.2.2 2018/12/26 14:02:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,8 +161,8 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
-	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
-	    svwsata_intr, sc);
+	sc->sc_pci_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_BIO,
+	    svwsata_intr, sc, device_xname(sc->sc_wdcdev.sc_atac.atac_dev));
 	if (sc->sc_pci_ih != NULL) {
 		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "using %s for native-PCI interrupt\n",

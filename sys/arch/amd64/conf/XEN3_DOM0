@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.149.2.5 2018/11/26 01:52:17 pgoyette Exp $
+# $NetBSD: XEN3_DOM0,v 1.149.2.6 2018/12/26 14:01:31 pgoyette Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.149.2.5 $"
+#ident		"XEN3_DOM0-$Revision: 1.149.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -192,6 +192,8 @@ cpu* at mainbus?
 
 # IPMI support
 ipmi0		at mainbus?
+ipmi_acpi*	at acpi?
+ipmi0		at ipmi_acpi? 
 
 hypervisor*	at mainbus?		# Xen hypervisor
 
@@ -202,7 +204,9 @@ xenbus* 	at hypervisor?		# Xen virtual bus
 xencons*	at hypervisor?		# Xen virtual console
 balloon*	at xenbus?		# Xen balloon device
 
-acpi0		at hypervisor?
+acpi0		at hypervisor?		# ACPI access in PV mode
+acpi0		at mainbus?		# ACPI access in PVH(VM) mode
+
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
@@ -371,7 +375,6 @@ ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet

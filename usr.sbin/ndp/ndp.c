@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.50.4.2 2018/07/28 04:38:15 pgoyette Exp $	*/
+/*	$NetBSD: ndp.c,v 1.50.4.3 2018/12/26 14:02:12 pgoyette Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -1400,13 +1400,14 @@ plist(void)
 static void
 pfx_flush(void)
 {
-	char dummyif[IFNAMSIZ+8];
 	int s;
+	struct in6_ifreq ifr;
 
 	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
-	(void)strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
-	if (prog_ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummyif) < 0)
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "lo0");
+	if (prog_ioctl(s, SIOCSPFXFLUSH_IN6, &ifr) < 0)
 		err(1, "ioctl(SIOCSPFXFLUSH_IN6)");
 	(void)prog_close(s);
 }
@@ -1414,15 +1415,15 @@ pfx_flush(void)
 static void
 rtr_flush(void)
 {
-	char dummyif[IFNAMSIZ+8];
 	int s;
+	struct in6_ifreq ifr;
 
 	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
-	(void)strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
-	if (prog_ioctl(s, SIOCSRTRFLUSH_IN6, (caddr_t)&dummyif) < 0)
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, "lo0");
+	if (prog_ioctl(s, SIOCSRTRFLUSH_IN6, &ifr) < 0)
 		err(1, "ioctl(SIOCSRTRFLUSH_IN6)");
-
 	(void)prog_close(s);
 }
 

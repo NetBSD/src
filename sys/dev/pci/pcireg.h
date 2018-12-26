@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.137.2.5 2018/11/26 01:52:46 pgoyette Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.137.2.6 2018/12/26 14:02:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -671,8 +671,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MSI_MDATA64		0xc	/* 64-bit Message Data Register
 					 * offset
 					 */
-#define	PCI_MSI_MASK		0x10	/* Vector Mask register */
-#define	PCI_MSI_PENDING		0x14	/* Vector Pending register */
+
+#define	PCI_MSI_MASK		0x0c	/* Vector Mask register */
+#define	PCI_MSI_MASK64		0x10	/* 64-bit Vector Mask register */
+
+#define	PCI_MSI_PENDING		0x10	/* Vector Pending register */
+#define	PCI_MSI_PENDING64	0x14	/* 64-bit Vector Pending register */
 
 #define	PCI_MSI_CTL_MASK	__BITS(31, 16)
 #define	PCI_MSI_CTL_EXTMDATA_EN	__SHIFTIN(__BIT(10), PCI_MSI_CTL_MASK)
@@ -1148,6 +1152,18 @@ typedef u_int8_t pci_revision_t;
 
 #define PCIE_SLCAP2	0x34	/* Slot Capabilities 2 Register */
 #define PCIE_SLCSR2	0x38	/* Slot Control & Status 2 Register */
+
+/*
+ * Other than Root Complex Integrated Endpoint and Root Complex Event Collector
+ * have link related registers.
+ */
+#define PCIE_HAS_LINKREGS(type) (((type) != PCIE_XCAP_TYPE_ROOT_INTEP) && \
+	    ((type) != PCIE_XCAP_TYPE_ROOT_EVNTC))
+
+/* Only root port and root complex event collector have PCIE_RCR & PCIE_RSR */
+#define PCIE_HAS_ROOTREGS(type) (((type) == PCIE_XCAP_TYPE_ROOT) || \
+	    ((type) == PCIE_XCAP_TYPE_ROOT_EVNTC))
+
 
 /*
  * Capability ID: 0x11

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.51.2.2 2018/07/28 04:37:46 pgoyette Exp $ */
+/*	$NetBSD: if_age.c,v 1.51.2.3 2018/12/26 14:01:50 pgoyette Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.51.2.2 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.51.2.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include "vlan.h"
 
@@ -185,8 +185,8 @@ age_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_irq_handle = pci_intr_establish(sc->sc_pct, ih, IPL_NET,
-	    age_intr, sc);
+	sc->sc_irq_handle = pci_intr_establish_xname(sc->sc_pct, ih, IPL_NET,
+	    age_intr, sc, device_xname(self));
 	if (sc->sc_irq_handle == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)

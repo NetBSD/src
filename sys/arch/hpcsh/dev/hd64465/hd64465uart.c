@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.19 2012/02/12 16:34:08 matt Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.19.46.1 2018/12/26 14:01:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.19 2012/02/12 16:34:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.19.46.1 2018/12/26 14:01:37 pgoyette Exp $");
 
 #include "opt_kgdb.h"
 
@@ -163,7 +163,7 @@ hd64465uart_attach(device_t parent, device_t self, void *aux)
 		hd64465uart_init();
 
 	bus_space_map(sc->sc_chip->io_tag, 0, 8, 0, &ioh);
-	COM_INIT_REGS(csc->sc_regs, sc->sc_chip->io_tag, ioh, 0);
+	com_init_regs(&csc->sc_regs, sc->sc_chip->io_tag, ioh, 0);
 	csc->sc_frequency = COM_FREQ;
 
 	/* supply clock XXX notyet */

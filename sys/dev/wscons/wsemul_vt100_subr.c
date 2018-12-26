@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.21.8.2 2018/09/06 06:56:06 pgoyette Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.21.8.3 2018/12/26 14:02:02 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.21.8.2 2018/09/06 06:56:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.21.8.3 2018/12/26 14:02:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.21.8.2 2018/09/06 06:56:06 p
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/vt100_base.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_wsemul.h"
+#endif
 
 static int vt100_selectattribute(struct vt100base_data *,
 				      int, int, int, long *, long *);

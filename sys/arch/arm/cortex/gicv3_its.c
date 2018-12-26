@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.8.2.2 2018/11/26 01:52:18 pgoyette Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.8.2.3 2018/12/26 14:01:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.8.2.2 2018/11/26 01:52:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.8.2.3 2018/12/26 14:01:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -282,33 +282,39 @@ gicv3_its_msi_free_lpi(struct gicv3_its *its, int lpi)
 static uint32_t
 gicv3_its_devid(pci_chipset_tag_t pc, pcitag_t tag)
 {
+	uint32_t devid;
 	int b, d, f;
 
 	pci_decompose_tag(pc, tag, &b, &d, &f);
 
-	return (b << 8) | (d << 3) | f;
+	devid = (b << 8) | (d << 3) | f;
+
+	return pci_get_devid(pc, devid);
 }
 
 static int
 gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 {
 	struct gicv3_its_device *dev;
+	u_int vectors;
 
-	LIST_FOREACH(dev, &its->its_devices, dev_list)
-		if (dev->dev_id == devid)
-			return EEXIST;
-
-	const u_int vectors = MAX(2, count);
-	if (!powerof2(vectors))
-		return EINVAL;
+	vectors = MAX(2, count);
+	while (!powerof2(vectors))
+		vectors++;
 
 	const uint64_t typer = gits_read_8(its, GITS_TYPER);
 	const u_int id_bits = __SHIFTOUT(typer, GITS_TYPER_ID_bits) + 1;
 	const u_int itt_entry_size = __SHIFTOUT(typer, GITS_TYPER_ITT_entry_size) + 1;
 	const u_int itt_size = roundup(vectors * itt_entry_size, GITS_ITT_ALIGN);
 
+	LIST_FOREACH(dev, &its->its_devices, dev_list)
+		if (dev->dev_id == devid) {
+			return itt_size <= dev->dev_size ? 0 : EEXIST;
+		}
+
 	dev = kmem_alloc(sizeof(*dev), KM_SLEEP);
 	dev->dev_id = devid;
+	dev->dev_size = itt_size;
 	gicv3_dma_alloc(its->its_gic, &dev->dev_itt, itt_size, GITS_ITT_ALIGN);
 	LIST_INSERT_HEAD(&its->its_devices, dev, dev_list);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_generic_directmap.c,v 1.1.2.2 2018/11/26 01:52:51 pgoyette Exp $	*/
+/*	$NetBSD: rump_generic_directmap.c,v 1.1.2.3 2018/12/26 14:02:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -25,6 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rump_generic_directmap.c,v 1.1.2.3 2018/12/26 14:02:07 pgoyette Exp $");
 
 #include <sys/types.h>
 

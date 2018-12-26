@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.100.2.2 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.100.2.3 2018/12/26 14:02:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.100.2.2 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.100.2.3 2018/12/26 14:02:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,17 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR4, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR4, 0x08, COM_FREQ },
 	    },
+	},
+
+	/*
+	 * Amazon.com EC2 virtual 16650-compatible PCI serial device.
+	 */
+	{   "Amazon.com EC2 Serial",
+	    {	PCI_VENDOR_AMAZON, PCI_PRODUCT_AMAZON_UART,	0, 0  },
+	    {	0xffff, 0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    }
 	},
 
 	/* Avlab Technology, Inc. PCI 2 Serial: 2S */

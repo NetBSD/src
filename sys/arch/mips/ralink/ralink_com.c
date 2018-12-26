@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_com.c,v 1.5 2016/10/05 15:54:58 ryo Exp $	*/
+/*	$NetBSD: ralink_com.c,v 1.5.14.1 2018/12/26 14:01:40 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -130,7 +130,7 @@
 /* ralink_com.c -- Ralink 3052 uart console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.5 2016/10/05 15:54:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.5.14.1 2018/12/26 14:01:40 pgoyette Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -151,8 +151,6 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.5 2016/10/05 15:54:58 ryo Exp $");
 #include <mips/ralink/ralink_reg.h>
 #include <mips/ralink/ralink_var.h>
 
-#include "opt_com.h"
-
 struct ralink_com_softc {
 	struct com_softc sc_com;
 	void *sc_ih;
@@ -162,17 +160,14 @@ struct ralink_com_softc {
 
 static int ralink_com_match(device_t, cfdata_t , void *);
 static void ralink_com_attach(device_t, device_t, void *);
-static void ralink_com_initmap(struct com_regs *regsp);
+static void ralink_com_init_regs(struct com_regs *regsp, bus_space_tag_t,
+				 bus_space_handle_t, bus_addr_t);
 
 CFATTACH_DECL_NEW(ralink_com, sizeof(struct ralink_com_softc),
 	ralink_com_match, ralink_com_attach, NULL, NULL);
 
 #define CONMODE	\
 	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-
-#ifndef COM_REGMAP
-#error  COM_REGMAP not defined!
-#endif
 
 #ifndef RALINK_CONADDR
 #define RALINK_CONADDR	RA_UART_LITE_BASE	/* default console is UART_LITE */
@@ -341,7 +336,6 @@ ralink_com_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_frequency = RA_UART_FREQ;
-	sc->sc_regs.cr_nports = 32;
 #if defined(MT7628)
 	sc->sc_type = COM_TYPE_NORMAL;
 #else
@@ -367,16 +361,19 @@ ralink_com_attach(device_t parent, device_t self, void *aux)
 		sysctl_write(RA_SYSCTL_GPIOMODE, r);
 	}
 
-	COM_INIT_REGS(sc->sc_regs, ma->ma_memt, ioh, rtsc->sc_addr);
-	ralink_com_initmap(&sc->sc_regs);
+	ralink_com_init_regs(&sc->sc_regs, ma->ma_memt, ioh, rtsc->sc_addr);
 
 	rtsc->sc_ih = ra_intr_establish(rtsc->sc_irq, comintr, sc, 1);
 	com_attach_subr(sc);
 }
 
 static void
-ralink_com_initmap(struct com_regs *regsp)
+ralink_com_init_regs(struct com_regs *regsp, bus_space_tag_t st,
+		     bus_space_handle_t sh, bus_addr_t addr)
 {
+
+	com_init_regs(regsp, st, sh, addr);
+
 	regsp->cr_map[COM_REG_RXDATA] = RA_UART_RBR;
 	regsp->cr_map[COM_REG_TXDATA] = RA_UART_TBR;
 	regsp->cr_map[COM_REG_DLBL]   = RA_UART_DLL;
@@ -390,12 +387,15 @@ ralink_com_initmap(struct com_regs *regsp)
 	regsp->cr_map[COM_REG_MCR]    = RA_UART_MCR;
 	regsp->cr_map[COM_REG_LSR]    = RA_UART_LSR;
 	regsp->cr_map[COM_REG_MSR]    = RA_UART_MSR;
+
+	regsp->cr_nports = 32;
 }
 
 void
 ralink_com_early(int silent)
 {
 	struct com_regs regs;
+	bus_space_handle_t bsh;
 	uint32_t r;
 	int error;
 
@@ -437,15 +437,11 @@ ralink_com_early(int silent)
 #endif
 	uart_write(RA_UART_LCR, UART_LCR_WLS0 | UART_LCR_WLS1);
 
-	regs.cr_iot = &ra_bus_memt;
-	regs.cr_iobase = RALINK_CONADDR;
-	regs.cr_nports = 32;
-	ralink_com_initmap(&regs);
-
-	if ((error = bus_space_map(regs.cr_iot, regs.cr_iobase, regs.cr_nports,
-	    0, &regs.cr_ioh)) != 0) {
+	if ((error = bus_space_map(&ra_bus_memt, RALINK_CONADDR,
+				   32, 0, &bsh)) != 0) {
 		return;
 	}
+	ralink_com_init_regs(&regs, &ra_bus_memt, bsh, RALINK_CONADDR);
 
 #if defined(MT7628)
 	comcnattach1(&regs, RA_BAUDRATE, RA_UART_FREQ,

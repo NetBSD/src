@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.15 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.15.8.1 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.15 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.15.8.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,8 +294,8 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_AUDIO,
-	    gcscaudio_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_AUDIO,
+	    gcscaudio_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)

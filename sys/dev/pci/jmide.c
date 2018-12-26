@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.21 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: jmide.c,v 1.21.16.1 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.21 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.21.16.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,8 @@ jmide_attach(device_t parent, device_t self, void *aux)
         }
         intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
 	    sizeof(intrbuf));
-        sc->sc_pciide.sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle,
-	    IPL_BIO, jmide_intr, sc);
+        sc->sc_pciide.sc_pci_ih = pci_intr_establish_xname(pa->pa_pc,
+	    intrhandle, IPL_BIO, jmide_intr, sc, device_xname(self));
         if (sc->sc_pciide.sc_pci_ih == NULL) {
                 aprint_error("%s: couldn't establish interrupt", JM_NAME(sc));
                 return;

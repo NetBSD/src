@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9.14.6 2018/11/26 01:52:55 pgoyette Exp $	*/
+/*	$NetBSD: defs.h,v 1.9.14.7 2018/12/26 14:02:12 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,8 @@ const char *getfslabelname(uint8_t);
 #define max(a,b)	((a) > (b) ? (a) : (b))
 
 /* constants */
-#define MEG (1024 * 1024)
+#define MEG (1024 * 1024UL)
+#define GIG (1024 * MEG)
 #define STRSIZE 255
 #define SSTRSIZE 30
 
@@ -359,6 +360,13 @@ int  clean_xfer_dir;
 #else
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
 #endif
+#endif
+
+#if !defined(ARCH_SUBDIR)
+#define	ARCH_SUBDIR	MACH
+#endif
+#if !defined(PKG_ARCH_SUBDIR)
+#define	PKG_ARCH_SUBDIR	MACH
 #endif
 
 #if !defined(SYSINST_PKG_HOST)

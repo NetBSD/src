@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.57.2.5 2018/11/26 01:52:47 pgoyette Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.57.2.6 2018/12/26 14:02:01 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.57.2.5 2018/11/26 01:52:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.57.2.6 2018/12/26 14:02:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -195,6 +195,7 @@ static const struct urtwn_dev {
 	URTWN_RTL8188E_DEV(TPLINK, RTL8188EU),
 
 	/* URTWN_RTL8192EU */
+	URTWN_RTL8192EU_DEV(DLINK,	DWA131E),
 	URTWN_RTL8192EU_DEV(REALTEK,	RTL8192EU),
 	URTWN_RTL8192EU_DEV(TPLINK,	RTL8192EU),
 };
@@ -1035,7 +1036,7 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (!(urtwn_read_1(sc, R92C_HMETFR) & (1 << fwcur)))
 			break;
-		DELAY(10);
+		DELAY(2000);
 	}
 	if (ntries == 100) {
 		aprint_error_dev(sc->sc_dev,
@@ -3469,12 +3470,12 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
 	    ISSET(sc->chip, URTWN_CHIP_92EU))
 		urtwn_r88e_fw_reset(sc);
-	for (ntries = 0; ntries < 1000; ntries++) {
+	for (ntries = 0; ntries < 6000; ntries++) {
 		if (urtwn_read_4(sc, R92C_MCUFWDL) & R92C_MCUFWDL_WINTINI_RDY)
 			break;
 		DELAY(5);
 	}
-	if (ntries == 1000) {
+	if (ntries == 6000) {
 		aprint_error_dev(sc->sc_dev,
 		    "timeout waiting for firmware readiness\n");
 		error = ETIMEDOUT;

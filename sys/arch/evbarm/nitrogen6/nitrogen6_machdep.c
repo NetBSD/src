@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.7.4.5 2018/11/26 01:52:23 pgoyette Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.7.4.6 2018/12/26 14:01:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.7.4.5 2018/11/26 01:52:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.7.4.6 2018/12/26 14:01:35 pgoyette Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -190,11 +190,6 @@ nitrogen6_platform_early_putchar(char c)
 			break;
 	}
 }
-
-
-#define	SCU_DIAG_CONTROL		0x30
-#define	  SCU_DIAG_DISABLE_MIGBIT	  __BIT(0)
-
 
 void
 nitrogen6_mpstart(void)

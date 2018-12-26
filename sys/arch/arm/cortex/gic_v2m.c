@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.4.2.2 2018/11/26 01:52:18 pgoyette Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.4.2.3 2018/12/26 14:01:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.4.2.2 2018/11/26 01:52:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.4.2.3 2018/12/26 14:01:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -128,7 +128,7 @@ gic_v2m_msi_disable(struct gic_v2m_frame *frame, int spi)
 	int off;
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL))
-		panic("gic_v2m_msi_enable: device is not MSI-capable");
+		panic("gic_v2m_msi_disable: device is not MSI-capable");
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
 	ctl &= ~PCI_MSI_CTL_MSI_ENABLE;

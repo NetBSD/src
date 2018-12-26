@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.82.2.4 2018/11/26 01:52:54 pgoyette Exp $	*/
+/*	$NetBSD: i386.c,v 1.82.2.5 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.82.2.4 2018/11/26 01:52:54 pgoyette Exp $");
+__RCSID("$NetBSD: i386.c,v 1.82.2.5 2018/12/26 14:02:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2217,12 +2217,18 @@ identifycpu(int fd, const char *cpuname)
 		int32_t bi_index;
 
 		for (bi_index = 1; bi_index <= ci->ci_cpuid_level; bi_index++) {
-#if 0
 			x86_cpuid(bi_index, descs);
 			switch (bi_index) {
-			case 0x0b:
+			case 0x0a:
+				print_bits(cpuname, "Perfmon-eax",
+				    CPUID_PERF_FLAGS0, descs[0]);
+				print_bits(cpuname, "Perfmon-ebx",
+				    CPUID_PERF_FLAGS1, descs[1]);
+				print_bits(cpuname, "Perfmon-edx",
+				    CPUID_PERF_FLAGS3, descs[3]);
 				break;
 			default:
+#if 0
 				aprint_verbose("%s: basic %08x-eax %08x\n",
 				    cpuname, bi_index, descs[0]);
 				aprint_verbose("%s: basic %08x-ebx %08x\n",
@@ -2231,9 +2237,9 @@ identifycpu(int fd, const char *cpuname)
 				    cpuname, bi_index, descs[2]);
 				aprint_verbose("%s: basic %08x-edx %08x\n",
 				    cpuname, bi_index, descs[3]);
+#endif
 				break;
 			}
-#endif
 		}
 	}
 

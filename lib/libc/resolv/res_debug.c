@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.14 2015/02/24 17:56:20 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.14.14.1 2018/12/26 14:01:27 pgoyette Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.14 2015/02/24 17:56:20 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.14.14.1 2018/12/26 14:01:27 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,12 +125,6 @@ __RCSID("$NetBSD: res_debug.c,v 1.14 2015/02/24 17:56:20 christos Exp $");
 #include <time.h>
 
 #include "port_after.h"
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) sprintf x
-#endif
 
 extern const char *_res_opcodes[];
 extern const char *_res_sectioncodes[];

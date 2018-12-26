@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.76.2.1 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.76.2.2 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.76.2.1 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.76.2.2 2018/12/26 14:02:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ const struct fileops socketops = {
 	.fo_read = soo_read,
 	.fo_write = soo_write,
 	.fo_ioctl = soo_ioctl,
-	.fo_fcntl = soo_fcntl,
+	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = soo_poll,
 	.fo_stat = soo_stat,
 	.fo_close = soo_close,
@@ -221,16 +221,6 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 
 
 	return error;
-}
-
-int
-soo_fcntl(file_t *fp, u_int cmd, void *data)
-{
-
-	if (cmd == F_SETFL)
-		return 0;
-	else
-		return EOPNOTSUPP;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: code_error.code.c,v 1.2 2017/02/11 19:33:13 christos Exp $	*/
+/*	$NetBSD: code_error.code.c,v 1.2.10.1 2018/12/26 14:01:15 pgoyette Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -172,13 +172,15 @@ extern char *yyname[];
 extern char *yyrule[];
 #endif
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 
 int      yyerrflag;
 int      yychar;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
+int      yynerrs;
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -231,7 +233,7 @@ yyerror(const char* s)
 {
     printf("%s\n", s);
 }
-#line 233 "code_error.code.c"
+#line 235 "code_error.code.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */

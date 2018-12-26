@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.62.2.1 2018/09/06 06:51:32 pgoyette Exp $	*/
+/*	$NetBSD: input.c,v 1.62.2.2 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.62.2.1 2018/09/06 06:51:32 pgoyette Exp $");
+__RCSID("$NetBSD: input.c,v 1.62.2.2 2018/12/26 14:01:03 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,12 @@ pfgets(char *line, int len)
 int
 pgetc(void)
 {
-	return pgetc_macro();
+	int c;
+
+	c = pgetc_macro();
+	if (c == PFAKE)
+		c = pgetc_macro();
+	return c;
 }
 
 
@@ -248,6 +253,8 @@ preadbuffer(void)
 	char savec;
 
 	while (parsefile->strpush) {
+		if (parsenleft == -1 && parsefile->strpush->ap != NULL)
+			return PFAKE;
 		popstring();
 		if (--parsenleft >= 0)
 			return (*parsenextc++);
@@ -421,6 +428,12 @@ popstring(void)
 	struct strpush *sp = parsefile->strpush;
 
 	INTOFF;
+	if (sp->ap) {
+		if (parsenextc != sp->ap->val &&
+		   (parsenextc[-1] == ' ' || parsenextc[-1] == '\t'))
+			checkkwd |= CHKALIAS;
+		sp->ap->flag &= ~ALIASINUSE;
+	}
 	parsenextc = sp->prevstring;
 	parsenleft = sp->prevnleft;
 	parselleft = sp->prevlleft;
@@ -429,8 +442,6 @@ popstring(void)
 	    sp->ap ? " from alias:'" : "", sp->ap ? sp->ap->name : "",
 	    sp->ap ? "'" : "", parsenleft, parselleft, parsenleft, parsenextc));
 
-	if (sp->ap)
-		sp->ap->flag &= ~ALIASINUSE;
 	parsefile->strpush = sp->prev;
 	if (sp != &(parsefile->basestrpush))
 		ckfree(sp);

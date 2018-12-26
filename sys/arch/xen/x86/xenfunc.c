@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.17.2.4 2018/10/20 06:58:30 pgoyette Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.17.2.5 2018/12/26 14:01:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17.2.4 2018/10/20 06:58:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17.2.5 2018/12/26 14:01:46 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -45,8 +45,74 @@ __KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17.2.4 2018/10/20 06:58:30 pgoyette Ex
 
 void xen_set_ldt(vaddr_t, uint32_t);
 
+/*
+ * We don't need to export these declarations, since they are used via
+ * linker aliasing. They should always be accessed via the
+ * corresponding wrapper function names defined in
+ * x86/include/cpufunc.h and exported as __weak_alias()
+ *
+ * We use this rather roundabout method so that a runtime wrapper
+ * function may be made available for PVHVM, which could override both
+ * native and PV aliases and decide which to invoke at run time.
+ */
+
+void xen_invlpg(vaddr_t);
+void xen_lidt(struct region_descriptor *);
+void xen_lldt(u_short);
+void xen_ltr(u_short);
+void xen_lcr0(u_long);
+u_long xen_rcr0(void);
+void xen_tlbflush(void);
+void xen_tlbflushg(void);
+register_t xen_rdr0(void);
+void xen_ldr0(register_t);
+register_t xen_rdr1(void);
+void xen_ldr1(register_t);
+register_t xen_rdr2(void);
+void xen_ldr2(register_t);
+register_t xen_rdr3(void);
+void xen_ldr3(register_t);
+register_t xen_rdr6(void);
+void xen_ldr6(register_t);
+register_t xen_rdr7(void);
+void xen_ldr7(register_t);
+void xen_wbinvd(void);
+vaddr_t xen_rcr2(void);
+
+__weak_alias(invlpg, xen_invlpg);
+__weak_alias(lidt, xen_lidt);
+__weak_alias(lldt, xen_lldt);
+__weak_alias(ltr, xen_ltr);
+__weak_alias(lcr0, xen_lcr0);
+__weak_alias(rcr0, xen_rcr0);
+__weak_alias(tlbflush, xen_tlbflush);
+__weak_alias(tlbflushg, xen_tlbflushg);
+__weak_alias(rdr0, xen_rdr0);
+__weak_alias(ldr0, xen_ldr0);
+__weak_alias(rdr1, xen_rdr1);
+__weak_alias(ldr1, xen_ldr1);
+__weak_alias(rdr2, xen_rdr2);
+__weak_alias(ldr2, xen_ldr2);
+__weak_alias(rdr3, xen_rdr3);
+__weak_alias(ldr3, xen_ldr3);
+__weak_alias(rdr6, xen_rdr6);
+__weak_alias(ldr6, xen_ldr6);
+__weak_alias(rdr7, xen_rdr7);
+__weak_alias(ldr7, xen_ldr7);
+__weak_alias(wbinvd, xen_wbinvd);
+__weak_alias(rcr2, xen_rcr2);
+
+#ifdef __x86_64__
+void xen_setusergs(int);
+__weak_alias(setusergs, xen_setusergs);
+#else
+void xen_lcr3(vaddr_t);
+__weak_alias(lcr3, xen_lcr3);
+
+#endif
+
 void 
-invlpg(vaddr_t addr)
+xen_invlpg(vaddr_t addr)
 {
 	int s = splvm(); /* XXXSMP */
 	xpq_queue_invlpg(addr);
@@ -54,7 +120,7 @@ invlpg(vaddr_t addr)
 }  
 
 void
-lidt(struct region_descriptor *rd)
+xen_lidt(struct region_descriptor *rd)
 {
 	/* 
 	 * We need to do this because we can't assume kmem_alloc(9)
@@ -99,7 +165,7 @@ lidt(struct region_descriptor *rd)
 }
 
 void
-lldt(u_short sel)
+xen_lldt(u_short sel)
 {
 #ifndef __x86_64__
 	struct cpu_info *ci;
@@ -118,19 +184,19 @@ lldt(u_short sel)
 }
 
 void
-ltr(u_short sel)
+xen_ltr(u_short sel)
 {
 	panic("XXX ltr not supported\n");
 }
 
 void
-lcr0(u_long val)
+xen_lcr0(u_long val)
 {
 	panic("XXX lcr0 not supported\n");
 }
 
 u_long
-rcr0(void)
+xen_rcr0(void)
 {
 	/* XXX: handle X86_CR0_TS ? */
 	return 0;
@@ -138,7 +204,7 @@ rcr0(void)
 
 #ifndef __x86_64__
 void
-lcr3(vaddr_t val)
+xen_lcr3(vaddr_t val)
 {
 	int s = splvm(); /* XXXSMP */
 	xpq_queue_pt_switch(xpmap_ptom_masked(val));
@@ -147,7 +213,7 @@ lcr3(vaddr_t val)
 #endif
 
 void
-tlbflush(void)
+xen_tlbflush(void)
 {
 	int s = splvm(); /* XXXSMP */
 	xpq_queue_tlb_flush();
@@ -155,110 +221,110 @@ tlbflush(void)
 }
 
 void
-tlbflushg(void)
+xen_tlbflushg(void)
 {
 	tlbflush();
 }
 
 register_t
-rdr0(void)
+xen_rdr0(void)
 {
 
 	return HYPERVISOR_get_debugreg(0);
 }
 
 void
-ldr0(register_t val)
+xen_ldr0(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(0, val);
 }
 
 register_t
-rdr1(void)
+xen_rdr1(void)
 {
 
 	return HYPERVISOR_get_debugreg(1);
 }
 
 void
-ldr1(register_t val)
+xen_ldr1(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(1, val);
 }
 
 register_t
-rdr2(void)
+xen_rdr2(void)
 {
 
 	return HYPERVISOR_get_debugreg(2);
 }
 
 void
-ldr2(register_t val)
+xen_ldr2(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(2, val);
 }
 
 register_t
-rdr3(void)
+xen_rdr3(void)
 {
 
 	return HYPERVISOR_get_debugreg(3);
 }
 
 void
-ldr3(register_t val)
+xen_ldr3(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(3, val);
 }
 register_t
-rdr6(void)
+xen_rdr6(void)
 {
 
 	return HYPERVISOR_get_debugreg(6);
 }
 
 void
-ldr6(register_t val)
+xen_ldr6(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(6, val);
 }
 
 register_t
-rdr7(void)
+xen_rdr7(void)
 {
 
 	return HYPERVISOR_get_debugreg(7);
 }
 
 void
-ldr7(register_t val)
+xen_ldr7(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(7, val);
 }
 
 void
-wbinvd(void)
+xen_wbinvd(void)
 {
 
 	xpq_flush_cache();
 }
 
 vaddr_t
-rcr2(void)
+xen_rcr2(void)
 {
 	return curcpu()->ci_vcpu->arch.cr2;
 }
 
 #ifdef __x86_64__
 void
-setusergs(int gssel)
+xen_setusergs(int gssel)
 {
 	HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, gssel);
 }

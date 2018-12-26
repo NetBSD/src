@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops4.c,v 1.11 2013/04/21 04:28:05 kiyohara Exp $	*/
+/* 	$NetBSD: rasops4.c,v 1.11.34.1 2018/12/26 14:02:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.11 2013/04/21 04:28:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops4.c,v 1.11.34.1 2018/12/26 14:02:01 pgoyette Exp $");
 
 #include "opt_rasops.h"
 
@@ -159,7 +159,7 @@ rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 
 		/* Do underline */
-		if (attr & 1) {
+		if (attr & WSATTR_UNDERLINE) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			*rp = (*rp & lmask) | (fg & rmask);
 		}
@@ -196,7 +196,7 @@ rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 
 		/* Do underline */
-		if (attr & 1) {
+		if (attr & WSATTR_UNDERLINE) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			rp[0] = (rp[0] & lmask) | (fg & ~lmask);
 			rp[1] = (rp[1] & rmask) | (fg & ~rmask);
@@ -311,7 +311,7 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp -= (rs << 1);
 		rp[0] = stamp[15];
 		rp[1] = stamp[15];
@@ -383,7 +383,7 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp -= (rs << 1);
 		rp[0] = stamp[15];
 		rp[1] = stamp[15];
@@ -458,7 +458,7 @@ rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		rp -= (rs << 1);
 		rp[0] = stamp[15];
 		rp[1] = stamp[15];

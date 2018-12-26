@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.257.2.3 2018/09/30 01:45:55 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.257.2.4 2018/12/26 14:02:04 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.257.2.3 2018/09/30 01:45:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.257.2.4 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -446,6 +446,10 @@ config_interrupts_thread(void *cookie)
 	while ((dc = TAILQ_FIRST(&interrupt_config_queue)) != NULL) {
 		TAILQ_REMOVE(&interrupt_config_queue, dc, dc_queue);
 		(*dc->dc_func)(dc->dc_dev);
+		dc->dc_dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
+		if (!device_pmf_is_registered(dc->dc_dev))
+			aprint_debug_dev(dc->dc_dev,
+			    "WARNING: power management not supported\n");
 		config_pending_decr(dc->dc_dev);
 		kmem_free(dc, sizeof(*dc));
 	}
@@ -1597,9 +1601,10 @@ config_attach_loc(device_t parent, cfdata_t cf,
 
 	(*dev->dv_cfattach->ca_attach)(parent, dev, aux);
 
-	if (!device_pmf_is_registered(dev))
-		aprint_debug_dev(dev, "WARNING: power management not "
-		    "supported\n");
+	if (((dev->dv_flags & DVF_ATTACH_INPROGRESS) == 0)
+	    && !device_pmf_is_registered(dev))
+		aprint_debug_dev(dev,
+		    "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
 
@@ -1996,6 +2001,7 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
 	config_pending_incr(dev);
+	dev->dv_flags |= DVF_ATTACH_INPROGRESS;
 }
 
 /*

@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.14 2017/06/05 18:54:30 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.14.4.1 2018/12/26 14:01:14 pgoyette Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.14 2017/06/05 18:54:30 christos Exp $");
-/* Id: main.c,v 1.60 2017/04/30 20:57:56 Julien.Ramseier Exp  */
+__RCSID("$NetBSD: main.c,v 1.14.4.1 2018/12/26 14:01:14 pgoyette Exp $");
+/* Id: main.c,v 1.61 2017/12/04 17:50:02 erik.b.andersen Exp  */
 
 #include <signal.h>
 #ifndef _WIN32
@@ -614,7 +614,8 @@ open_tmpfile(const char *label)
     char *name;
     const char *mark;
 
-    if ((tmpdir = getenv("TMPDIR")) == 0 || access(tmpdir, W_OK) != 0)
+    if (((tmpdir = getenv("TMPDIR")) == 0 || access(tmpdir, W_OK) != 0) ||
+	((tmpdir = getenv("TEMP")) == 0 || access(tmpdir, W_OK) != 0))
     {
 #ifdef P_tmpdir
 	tmpdir = P_tmpdir;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.34 2017/02/17 08:31:24 hannken Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.34.12.1 2018/12/26 14:02:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.34 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.34.12.1 2018/12/26 14:02:03 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.34 2017/02/17 08:31:24 hannken Exp 
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>

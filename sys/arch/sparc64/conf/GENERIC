@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204.2.4 2018/11/26 01:52:27 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.204.2.5 2018/12/26 14:01:43 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.204.2.4 $"
+#ident		"GENERIC-$Revision: 1.204.2.5 $"
 
 maxusers	64
 
@@ -129,14 +129,11 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	SETUIDSCRIPTS
 
 ## Options for compatibility with previous releases foreign system binaries.
-## In the cases of COMPAT_SUNOS and COMPAT_SVR4, you may need to set up
-## additional user-level utilities or system configuration files. See
-## compat_sunos(8) and compat_svr4(8).
+## In the cases of COMPAT_SUNOS, you may need to set up additional user-level
+## utilities or system configuration files. See compat_sunos(8).
 
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-#options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
@@ -511,8 +508,6 @@ gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 # XXX lacks bus_dmamap_sync()
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
-# XXX uses vtophys()
-#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT

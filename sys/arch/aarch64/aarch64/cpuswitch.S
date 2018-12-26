@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.1.2.5 2018/11/26 01:52:16 pgoyette Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.1.2.6 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.1.2.5 2018/11/26 01:52:16 pgoyette Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.1.2.6 2018/12/26 14:01:30 pgoyette Exp $")
 
 /*
  * At IPL_SCHED:
@@ -76,6 +76,7 @@ ENTRY_NP(cpu_switchto)
 	/* We are done with the old lwp */
 
 .Lrestore_lwp:
+	DISABLE_INTERRUPT
 #if L_MD_KTF + 8 == L_MD_CPACR
 	ldp	x4, x5, [x1, #L_MD_KTF]	/* get trapframe ptr and cpacr_el1 */
 #else
@@ -87,6 +88,7 @@ ENTRY_NP(cpu_switchto)
 
 	mrs	x3, tpidr_el1
 	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
+	ENABLE_INTERRUPT
 
 	/*
 	 * Restore callee save registers.
@@ -121,6 +123,7 @@ ENTRY_NP(cpu_switchto_softint)
 	sub	sp, sp, #TF_SIZE	/* make switchframe */
 	adr	x2, softint_cleanup	/* return address for cpu_switchto() */
 	mov	x20, lr			/* x20 := original lr */
+	mrs	x19, daif		/* x19 := original interrupt mask */
 	stp	x19, x20, [sp, #TF_X19]
 	stp	x21, x22, [sp, #TF_X21]
 	stp	x23, x24, [sp, #TF_X23]
@@ -143,9 +146,9 @@ ENTRY_NP(cpu_switchto_softint)
 
 #ifdef KASAN
 	/* clear the new stack */
-	stp	x0, xzr, [sp, #-16]!
+	stp	x0, x1, [sp, #-16]!
 	bl	_C_LABEL(kasan_softint)
-	ldp	x0, xzr, [sp], #16
+	ldp	x0, x1, [sp], #16
 #endif
 
 	/* onto new stack */
@@ -170,8 +173,11 @@ ENTRY_NP(cpu_switchto_softint)
 #endif
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */
-	ENABLE_INTERRUPT
+
+	ldp	x19, x20, [sp, #TF_X19]
+	msr	daif, x19		/* restore interrupt mask */
 	mov	lr, x20			/* restore pinned_lwp lr */
+
 	add	sp, sp, #TF_SIZE	/* unwind switchframe */
 	ldp	x19, x20, [sp], #16	/* restore */
 	ret
@@ -197,7 +203,8 @@ ENTRY_NP(softint_cleanup)
 	str	w2, [x3, #CI_MTX_COUNT]
 	str	wzr, [x0, #L_CTXSWTCH]	/* softlwp->l_ctxswtch = 0 */
 
-	ldp	x19, x20, [sp], #16
+	msr	daif, x19		/* restore interrupt mask */
+	ldp	x19, x20, [sp], #16	/* restore */
 	ret
 END(softint_cleanup)
 
@@ -333,6 +340,13 @@ ENTRY_NP(el0_trap_exit)
 	msr	elr_el1, x0		/* exception pc */
 	msr	spsr_el1, x1		/* exception pstate */
 	msr	sp_el0, x2		/* restore EL0 stack */
+
+	/* if the process is traced, enable MDSCR_EL1.SS */
+	tbz	x1, #SPSR_SS_SHIFT, 1f
+	mrs	x0, mdscr_el1
+	orr	x0, x0, #MDSCR_SS
+	msr	mdscr_el1, x0
+1:
 
 	unwind_x0_x2
 
