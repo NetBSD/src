@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.3 2018/12/25 05:44:13 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.4 2018/12/26 18:54:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -76,12 +76,12 @@
  * touching remote CPUs' memory when scheduling a job, but that still
  * requires interprocessor synchronization.  Perhaps we could get by
  * with a single overseer thread, at the expense of another pointer in
- * struct threadpool_job_impl to identify the CPU on which it must run
+ * struct threadpool_job to identify the CPU on which it must run
  * in order for the overseer to schedule it correctly.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.3 2018/12/25 05:44:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.4 2018/12/26 18:54:19 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,33 +108,16 @@ do {								\
 	    RUN_ONCE(&threadpool_init_once, threadpools_init);	\
 	KASSERT(threadpool_init_error == 0);			\
 } while (/*CONSTCOND*/0)
-	
 
 /* Data structures */
 
-TAILQ_HEAD(job_head, threadpool_job_impl);
+TAILQ_HEAD(job_head, threadpool_job);
 TAILQ_HEAD(thread_head, threadpool_thread);
-
-typedef struct threadpool_job_impl {
-	kmutex_t			*job_lock;		/* 1 */
-	struct threadpool_thread	*job_thread;		/* 1 */
-	TAILQ_ENTRY(threadpool_job_impl) job_entry;		/* 2 */
-	volatile unsigned int		job_refcnt;		/* 1 */
-				/* implicit pad on _LP64 */
-	kcondvar_t			job_cv;			/* 3 */
-	threadpool_job_fn_t		job_fn;			/* 1 */
-							    /* ILP32 / LP64 */
-	char				job_name[MAXCOMLEN];	/* 4 / 2 */
-} threadpool_job_impl_t;
-
-CTASSERT(sizeof(threadpool_job_impl_t) <= sizeof(threadpool_job_t));
-#define	THREADPOOL_JOB_TO_IMPL(j)	((threadpool_job_impl_t *)(j))
-#define	THREADPOOL_IMPL_TO_JOB(j)	((threadpool_job_t *)(j))
 
 struct threadpool_thread {
 	struct lwp			*tpt_lwp;
-	threadpool_t			*tpt_pool;
-	threadpool_job_impl_t		*tpt_job;
+	struct threadpool		*tpt_pool;
+	struct threadpool_job		*tpt_job;
 	kcondvar_t			tpt_cv;
 	TAILQ_ENTRY(threadpool_thread)	tpt_entry;
 };
@@ -151,16 +134,16 @@ struct threadpool {
 	pri_t				tp_pri;
 };
 
-static int	threadpool_hold(threadpool_t *);
-static void	threadpool_rele(threadpool_t *);
+static int	threadpool_hold(struct threadpool *);
+static void	threadpool_rele(struct threadpool *);
 
-static int	threadpool_percpu_create(threadpool_percpu_t **, pri_t);
-static void	threadpool_percpu_destroy(threadpool_percpu_t *);
+static int	threadpool_percpu_create(struct threadpool_percpu **, pri_t);
+static void	threadpool_percpu_destroy(struct threadpool_percpu *);
 
-static void	threadpool_job_dead(threadpool_job_t *);
+static void	threadpool_job_dead(struct threadpool_job *);
 
-static int	threadpool_job_hold(threadpool_job_impl_t *);
-static void	threadpool_job_rele(threadpool_job_impl_t *);
+static int	threadpool_job_hold(struct threadpool_job *);
+static void	threadpool_job_rele(struct threadpool_job *);
 
 static void	threadpool_overseer_thread(void *) __dead;
 static void	threadpool_thread(void *) __dead;
@@ -220,10 +203,10 @@ struct threadpool_percpu {
 
 static LIST_HEAD(, threadpool_percpu) percpu_threadpools;
 
-static threadpool_percpu_t *
+static struct threadpool_percpu *
 threadpool_lookup_percpu(pri_t pri)
 {
-	threadpool_percpu_t *tpp;
+	struct threadpool_percpu *tpp;
 
 	LIST_FOREACH(tpp, &percpu_threadpools, tpp_link) {
 		if (tpp->tpp_pri == pri)
@@ -233,14 +216,14 @@ threadpool_lookup_percpu(pri_t pri)
 }
 
 static void
-threadpool_insert_percpu(threadpool_percpu_t *tpp)
+threadpool_insert_percpu(struct threadpool_percpu *tpp)
 {
 	KASSERT(threadpool_lookup_percpu(tpp->tpp_pri) == NULL);
 	LIST_INSERT_HEAD(&percpu_threadpools, tpp, tpp_link);
 }
 
 static void
-threadpool_remove_percpu(threadpool_percpu_t *tpp)
+threadpool_remove_percpu(struct threadpool_percpu *tpp)
 {
 	KASSERT(threadpool_lookup_percpu(tpp->tpp_pri) == tpp);
 	LIST_REMOVE(tpp, tpp_link);
@@ -265,7 +248,7 @@ threadpools_init(void)
 	mutex_init(&threadpools_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	TP_LOG(("%s: sizeof(threadpool_job) = %zu\n",
-	    __func__, sizeof(threadpool_job_t)));
+	    __func__, sizeof(struct threadpool_job)));
 
 	return 0;
 }
@@ -279,10 +262,10 @@ threadpool_pri_is_valid(pri_t pri)
 }
 
 static int
-threadpool_create(threadpool_t **poolp, struct cpu_info *ci, pri_t pri,
+threadpool_create(struct threadpool **poolp, struct cpu_info *ci, pri_t pri,
     size_t size)
 {
-	threadpool_t *const pool = kmem_zalloc(size, KM_SLEEP);
+	struct threadpool *const pool = kmem_zalloc(size, KM_SLEEP);
 	struct lwp *lwp;
 	int ktflags;
 	int error;
@@ -340,7 +323,7 @@ fail0:	KASSERT(error);
 /* Thread pool destruction */
 
 static void
-threadpool_destroy(threadpool_t *pool, size_t size)
+threadpool_destroy(struct threadpool *pool, size_t size)
 {
 	struct threadpool_thread *thread;
 
@@ -371,7 +354,7 @@ threadpool_destroy(threadpool_t *pool, size_t size)
 }
 
 static int
-threadpool_hold(threadpool_t *pool)
+threadpool_hold(struct threadpool *pool)
 {
 	unsigned int refcnt;
 
@@ -386,7 +369,7 @@ threadpool_hold(threadpool_t *pool)
 }
 
 static void
-threadpool_rele(threadpool_t *pool)
+threadpool_rele(struct threadpool *pool)
 {
 	unsigned int refcnt;
 
@@ -409,7 +392,7 @@ threadpool_rele(threadpool_t *pool)
 /* Unbound thread pools */
 
 int
-threadpool_get(threadpool_t **poolp, pri_t pri)
+threadpool_get(struct threadpool **poolp, pri_t pri)
 {
 	struct threadpool_unbound *tpu, *tmp = NULL;
 	int error;
@@ -424,7 +407,7 @@ threadpool_get(threadpool_t **poolp, pri_t pri)
 	mutex_enter(&threadpools_lock);
 	tpu = threadpool_lookup_unbound(pri);
 	if (tpu == NULL) {
-		threadpool_t *new_pool;
+		struct threadpool *new_pool;
 		mutex_exit(&threadpools_lock);
 		TP_LOG(("%s: No pool for pri=%d, creating one.\n",
 			__func__, (int)pri));
@@ -455,14 +438,14 @@ threadpool_get(threadpool_t **poolp, pri_t pri)
 	mutex_exit(&threadpools_lock);
 
 	if (tmp != NULL)
-		threadpool_destroy((threadpool_t *)tmp, sizeof(*tpu));
+		threadpool_destroy((struct threadpool *)tmp, sizeof(*tpu));
 	KASSERT(tpu != NULL);
 	*poolp = &tpu->tpu_pool;
 	return 0;
 }
 
 void
-threadpool_put(threadpool_t *pool, pri_t pri)
+threadpool_put(struct threadpool *pool, pri_t pri)
 {
 	struct threadpool_unbound *tpu =
 	    container_of(pool, struct threadpool_unbound, tpu_pool);
@@ -491,9 +474,9 @@ threadpool_put(threadpool_t *pool, pri_t pri)
 /* Per-CPU thread pools */
 
 int
-threadpool_percpu_get(threadpool_percpu_t **pool_percpup, pri_t pri)
+threadpool_percpu_get(struct threadpool_percpu **pool_percpup, pri_t pri)
 {
-	threadpool_percpu_t *pool_percpu, *tmp = NULL;
+	struct threadpool_percpu *pool_percpu, *tmp = NULL;
 	int error;
 
 	THREADPOOL_INIT();
@@ -541,7 +524,7 @@ threadpool_percpu_get(threadpool_percpu_t **pool_percpup, pri_t pri)
 }
 
 void
-threadpool_percpu_put(threadpool_percpu_t *pool_percpu, pri_t pri)
+threadpool_percpu_put(struct threadpool_percpu *pool_percpu, pri_t pri)
 {
 
 	THREADPOOL_INIT();
@@ -565,10 +548,10 @@ threadpool_percpu_put(threadpool_percpu_t *pool_percpu, pri_t pri)
 		threadpool_percpu_destroy(pool_percpu);
 }
 
-threadpool_t *
-threadpool_percpu_ref(threadpool_percpu_t *pool_percpu)
+struct threadpool *
+threadpool_percpu_ref(struct threadpool_percpu *pool_percpu)
 {
-	threadpool_t **poolp, *pool;
+	struct threadpool **poolp, *pool;
 
 	poolp = percpu_getref(pool_percpu->tpp_percpu);
 	pool = *poolp;
@@ -577,11 +560,11 @@ threadpool_percpu_ref(threadpool_percpu_t *pool_percpu)
 	return pool;
 }
 
-threadpool_t *
-threadpool_percpu_ref_remote(threadpool_percpu_t *pool_percpu,
+struct threadpool *
+threadpool_percpu_ref_remote(struct threadpool_percpu *pool_percpu,
     struct cpu_info *ci)
 {
-	threadpool_t **poolp, *pool;
+	struct threadpool **poolp, *pool;
 
 	percpu_traverse_enter();
 	poolp = percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
@@ -592,9 +575,9 @@ threadpool_percpu_ref_remote(threadpool_percpu_t *pool_percpu,
 }
 
 static int
-threadpool_percpu_create(threadpool_percpu_t **pool_percpup, pri_t pri)
+threadpool_percpu_create(struct threadpool_percpu **pool_percpup, pri_t pri)
 {
-	threadpool_percpu_t *pool_percpu;
+	struct threadpool_percpu *pool_percpu;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	unsigned int i, j;
@@ -607,36 +590,36 @@ threadpool_percpu_create(threadpool_percpu_t **pool_percpup, pri_t pri)
 	}
 	pool_percpu->tpp_pri = pri;
 
-	pool_percpu->tpp_percpu = percpu_alloc(sizeof(threadpool_t *));
+	pool_percpu->tpp_percpu = percpu_alloc(sizeof(struct threadpool *));
 	if (pool_percpu->tpp_percpu == NULL) {
 		error = ENOMEM;
 		goto fail1;
 	}
 
 	for (i = 0, CPU_INFO_FOREACH(cii, ci), i++) {
-		threadpool_t *pool;
+		struct threadpool *pool;
 
 		error = threadpool_create(&pool, ci, pri, sizeof(*pool));
 		if (error)
 			goto fail2;
 		percpu_traverse_enter();
-		threadpool_t **const poolp =
+		struct threadpool **const poolp =
 		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
 		*poolp = pool;
 		percpu_traverse_exit();
 	}
 
 	/* Success!  */
-	*pool_percpup = (threadpool_percpu_t *)pool_percpu;
+	*pool_percpup = (struct threadpool_percpu *)pool_percpu;
 	return 0;
 
 fail2:	for (j = 0, CPU_INFO_FOREACH(cii, ci), j++) {
 		if (i <= j)
 			break;
 		percpu_traverse_enter();
-		threadpool_t **const poolp =
+		struct threadpool **const poolp =
 		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
-		threadpool_t *const pool = *poolp;
+		struct threadpool *const pool = *poolp;
 		percpu_traverse_exit();
 		threadpool_destroy(pool, sizeof(*pool));
 	}
@@ -646,31 +629,30 @@ fail0:	return error;
 }
 
 static void
-threadpool_percpu_destroy(threadpool_percpu_t *pool_percpu)
+threadpool_percpu_destroy(struct threadpool_percpu *pool_percpu)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		percpu_traverse_enter();
-		threadpool_t **const poolp =
+		struct threadpool **const poolp =
 		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
-		threadpool_t *const pool = *poolp;
+		struct threadpool *const pool = *poolp;
 		percpu_traverse_exit();
 		threadpool_destroy(pool, sizeof(*pool));
 	}
 
-	percpu_free(pool_percpu->tpp_percpu, sizeof(threadpool_t *));
+	percpu_free(pool_percpu->tpp_percpu, sizeof(struct threadpool *));
 	kmem_free(pool_percpu, sizeof(*pool_percpu));
 }
 
 /* Thread pool jobs */
 
 void __printflike(4,5)
-threadpool_job_init(threadpool_job_t *ext_job, threadpool_job_fn_t fn,
+threadpool_job_init(struct threadpool_job *job, threadpool_job_fn_t fn,
     kmutex_t *lock, const char *fmt, ...)
 {
-	threadpool_job_impl_t *job = THREADPOOL_JOB_TO_IMPL(ext_job);
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -685,16 +667,15 @@ threadpool_job_init(threadpool_job_t *ext_job, threadpool_job_fn_t fn,
 }
 
 static void
-threadpool_job_dead(threadpool_job_t *ext_job)
+threadpool_job_dead(struct threadpool_job *job)
 {
 
-	panic("threadpool job %p ran after destruction", ext_job);
+	panic("threadpool job %p ran after destruction", job);
 }
 
 void
-threadpool_job_destroy(threadpool_job_t *ext_job)
+threadpool_job_destroy(struct threadpool_job *job)
 {
-	threadpool_job_impl_t *job = THREADPOOL_JOB_TO_IMPL(ext_job);
 
 	ASSERT_SLEEPABLE();
 
@@ -715,7 +696,7 @@ threadpool_job_destroy(threadpool_job_t *ext_job)
 }
 
 static int
-threadpool_job_hold(threadpool_job_impl_t *job)
+threadpool_job_hold(struct threadpool_job *job)
 {
 	unsigned int refcnt;
 	do {
@@ -729,7 +710,7 @@ threadpool_job_hold(threadpool_job_impl_t *job)
 }
 
 static void
-threadpool_job_rele(threadpool_job_impl_t *job)
+threadpool_job_rele(struct threadpool_job *job)
 {
 	unsigned int refcnt;
 
@@ -750,9 +731,8 @@ threadpool_job_rele(threadpool_job_impl_t *job)
 }
 
 void
-threadpool_job_done(threadpool_job_t *ext_job)
+threadpool_job_done(struct threadpool_job *job)
 {
-	threadpool_job_impl_t *job = THREADPOOL_JOB_TO_IMPL(ext_job);
 
 	KASSERT(mutex_owned(job->job_lock));
 	KASSERT(job->job_thread != NULL);
@@ -763,9 +743,8 @@ threadpool_job_done(threadpool_job_t *ext_job)
 }
 
 void
-threadpool_schedule_job(threadpool_t *pool, threadpool_job_t *ext_job)
+threadpool_schedule_job(struct threadpool *pool, struct threadpool_job *job)
 {
-	threadpool_job_impl_t *job = THREADPOOL_JOB_TO_IMPL(ext_job);
 
 	KASSERT(mutex_owned(job->job_lock));
 
@@ -807,9 +786,8 @@ threadpool_schedule_job(threadpool_t *pool, threadpool_job_t *ext_job)
 }
 
 bool
-threadpool_cancel_job_async(threadpool_t *pool, threadpool_job_t *ext_job)
+threadpool_cancel_job_async(struct threadpool *pool, struct threadpool_job *job)
 {
-	threadpool_job_impl_t *job = THREADPOOL_JOB_TO_IMPL(ext_job);
 
 	KASSERT(mutex_owned(job->job_lock));
 
@@ -851,15 +829,14 @@ threadpool_cancel_job_async(threadpool_t *pool, threadpool_job_t *ext_job)
 }
 
 void
-threadpool_cancel_job(threadpool_t *pool, threadpool_job_t *ext_job)
+threadpool_cancel_job(struct threadpool *pool, struct threadpool_job *job)
 {
-	threadpool_job_impl_t *job = THREADPOOL_JOB_TO_IMPL(ext_job);
 
 	ASSERT_SLEEPABLE();
 
 	KASSERT(mutex_owned(job->job_lock));
 
-	if (threadpool_cancel_job_async(pool, ext_job))
+	if (threadpool_cancel_job_async(pool, job))
 		return;
 
 	/* Already running.  Wait for it to complete.  */
@@ -873,7 +850,7 @@ static void __dead
 threadpool_overseer_thread(void *arg)
 {
 	struct threadpool_thread *const overseer = arg;
-	threadpool_t *const pool = overseer->tpt_pool;
+	struct threadpool *const pool = overseer->tpt_pool;
 	struct lwp *lwp = NULL;
 	int ktflags;
 	int error;
@@ -949,7 +926,7 @@ threadpool_overseer_thread(void *arg)
 
 		/* There are idle threads, so try giving one a job.  */
 		bool rele_job = true;
-		threadpool_job_impl_t *const job = TAILQ_FIRST(&pool->tp_jobs);
+		struct threadpool_job *const job = TAILQ_FIRST(&pool->tp_jobs);
 		TAILQ_REMOVE(&pool->tp_jobs, job, job_entry);
 		error = threadpool_job_hold(job);
 		if (error) {
@@ -1014,7 +991,7 @@ static void __dead
 threadpool_thread(void *arg)
 {
 	struct threadpool_thread *const thread = arg;
-	threadpool_t *const pool = thread->tpt_pool;
+	struct threadpool *const pool = thread->tpt_pool;
 
 	KASSERT((pool->tp_cpu == NULL) || (pool->tp_cpu == curcpu()));
 
@@ -1044,7 +1021,7 @@ threadpool_thread(void *arg)
 			break;
 		}
 
-		threadpool_job_impl_t *const job = thread->tpt_job;
+		struct threadpool_job *const job = thread->tpt_job;
 		KASSERT(job != NULL);
 		mutex_spin_exit(&pool->tp_lock);
 
@@ -1058,7 +1035,7 @@ threadpool_thread(void *arg)
 		lwp_unlock(curlwp);
 
 		/* Run the job.  */
-		(*job->job_fn)(THREADPOOL_IMPL_TO_JOB(job));
+		(*job->job_fn)(job);
 
 		/* Restore our lwp name.  */
 		lwp_lock(curlwp);
