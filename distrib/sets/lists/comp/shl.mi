@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.313.2.6 2018/09/30 01:45:04 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.313.2.7 2018/12/26 14:01:12 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -118,8 +118,8 @@
 ./usr/lib/libobjc_pic.a				comp-objc-piclib	compatfile,picinstall,gcccmds
 ./usr/lib/libopcodes.so.8			comp-c-shlib		compatfile,binutils=227
 ./usr/lib/libopcodes.so.8.0			comp-c-shlib		compatfile,binutils=227
-./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=230
-./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=230
+./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
+./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete

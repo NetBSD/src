@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.25.14.2 2018/09/06 06:55:51 pgoyette Exp $ */
+/*      $NetBSD: if_xge.c,v 1.25.14.3 2018/12/26 14:01:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.25.14.2 2018/09/06 06:55:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.25.14.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -564,8 +564,9 @@ xge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	if ((sc->sc_ih =
-		pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc)) == NULL) {
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, xge_intr, sc,
+	    device_xname(self));
+	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to establish interrupt at %s\n",
 		    intrstr ? intrstr : "<unknown>");

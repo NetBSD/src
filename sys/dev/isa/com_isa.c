@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.40 2016/10/18 22:08:30 jdolecek Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.40.14.1 2018/12/26 14:01:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.40 2016/10/18 22:08:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.40.14.1 2018/12/26 14:01:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ com_isa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	sc->sc_frequency = COM_FREQ;
 	irq = ia->ia_irq[0].ir_irq;

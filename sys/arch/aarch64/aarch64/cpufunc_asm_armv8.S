@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.1.2.4 2018/12/26 14:01:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -32,6 +32,7 @@
  * $FreeBSD: head/sys/arm64/arm64/cpufunc_asm.S 313347 2017-02-06 17:50:09Z andrew $
  */
 
+#include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 #include <aarch64/asm.h>
 
@@ -162,6 +163,22 @@ ENTRY(aarch64_set_ttbr0)
 	isb
 	ret
 END(aarch64_set_ttbr0)
+
+#ifdef CPU_THUNDERX
+/*
+ * Cavium erratum 27456
+ * void aarch64_set_ttbr0_thunderx(uint64_t ttbr0)
+ */
+ENTRY(aarch64_set_ttbr0_thunderx)
+	dsb	ish
+	msr	ttbr0_el1, x0
+	isb
+	ic	iallu
+	dsb	nsh
+	isb
+	ret
+END(aarch64_set_ttbr0_thunderx)
+#endif /* CPU_THUNDERX */
 
 /* void aarch64_tlbi_all(void) */
 ENTRY(aarch64_tlbi_all)

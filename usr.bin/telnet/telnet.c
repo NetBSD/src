@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.36 2012/01/10 13:49:32 christos Exp $	*/
+/*	$NetBSD: telnet.c,v 1.36.38.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.36 2012/01/10 13:49:32 christos Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.36.38.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,17 +91,11 @@ int
 	skiprc = 0,
 	connected,
 	showoptions,
-	In3270,		/* Are we in 3270 mode? */
 	ISend,		/* trying to send network data in */
 	telnet_debug = 0,
 	crmod,
 	netdata,	/* Print out network data flow */
 	crlf,		/* Should '\r' be mapped to <CR><LF> (or <CR><NUL>)? */
-#ifdef TN3270
-	noasynchtty = 0,/* User specified "-noasynch" on command line */
-	noasynchnet = 0,/* User specified "-noasynch" on command line */
-	askedSGA = 0,	/* We have talked about suppress go ahead */
-#endif	/* defined(TN3270) */
 	telnetport,
 	SYNCHing,	/* we are in TELNET SYNCH mode */
 	flushout,	/* flush output */
@@ -167,18 +161,6 @@ static void doflush(void);
  */
 
 Clocks clocks;
-
-#ifdef	notdef
-Modelist modelist[] = {
-	{ "telnet command mode", COMMAND_LINE },
-	{ "character-at-a-time mode", 0 },
-	{ "character-at-a-time mode (local echo)", LOCAL_ECHO|LOCAL_CHARS },
-	{ "line-by-line mode (remote echo)", LINE | LOCAL_CHARS },
-	{ "line-by-line mode", LINE | LOCAL_ECHO | LOCAL_CHARS },
-	{ "line-by-line mode (local echoing suppressed)", LINE | LOCAL_CHARS },
-	{ "3270 mode", 0 },
-};
-#endif
 
 
 /*
@@ -193,7 +175,7 @@ init_telnet(void)
     SB_CLEAR();
     ClearArray(options);
 
-    connected = In3270 = ISend = localflow = donebinarytoggle = 0;
+    connected = ISend = localflow = donebinarytoggle = 0;
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
     auth_encrypt_connect(connected);
 #endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
@@ -346,30 +328,6 @@ willoption(int option)
 	    switch (option) {
 
 	    case TELOPT_ECHO:
-#	    if defined(TN3270)
-		/*
-		 * The following is a pain in the rear-end.
-		 * Various IBM servers (some versions of Wiscnet,
-		 * possibly Fibronics/Spartacus, and who knows who
-		 * else) will NOT allow us to send "DO SGA" too early
-		 * in the setup proceedings.  On the other hand,
-		 * 4.2 servers (telnetd) won't set SGA correctly.
-		 * So, we are stuck.  Empirically (but, based on
-		 * a VERY small sample), the IBM servers don't send
-		 * out anything about ECHO, so we postpone our sending
-		 * "DO SGA" until we see "WILL ECHO" (which 4.2 servers
-		 * DO send).
-		  */
-		{
-		    if (askedSGA == 0) {
-			askedSGA = 1;
-			if (my_want_state_is_dont(TELOPT_SGA))
-			    send_do(TELOPT_SGA, 1);
-		    }
-		}
-		    /* Fall through */
-	    case TELOPT_EOR:
-#endif	    /* defined(TN3270) */
 	    case TELOPT_BINARY:
 	    case TELOPT_SGA:
 		settimer(modenegotiated);
@@ -490,9 +448,6 @@ dooption(int option)
 		set_my_state_wont(TELOPT_TM);
 		return;
 
-#	if defined(TN3270)
-	    case TELOPT_EOR:		/* end of record */
-#	endif	/* defined(TN3270) */
 	    case TELOPT_BINARY:		/* binary mode */
 	    case TELOPT_NAWS:		/* window size */
 	    case TELOPT_TSPEED:		/* terminal speed */
@@ -848,16 +803,11 @@ suboption(void)
 	    unsigned char temp[50];
 	    int len;
 
-#ifdef TN3270
-	    if (tn3270_ttype()) {
-		return;
-	    }
-#endif	/* defined(TN3270) */
 	    name = gettermname();
 	    len = strlen(name) + 4 + 2;
 	    if (len < NETROOM()) {
-		sprintf((char *)temp, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE,
-				TELQUAL_IS, name, IAC, SE);
+		snprintf((char *)temp, sizeof(temp), "%c%c%c%c%s%c%c", IAC, SB,
+				TELOPT_TTYPE, TELQUAL_IS, name, IAC, SE);
 		ring_supply_data(&netoring, temp, len);
 		printsub('>', &temp[2], len-2);
 	    } else {
@@ -878,8 +828,8 @@ suboption(void)
 
 	    TerminalSpeeds(&isp, &osp);
 
-	    sprintf((char *)temp, "%c%c%c%c%ld,%ld%c%c", IAC, SB, TELOPT_TSPEED,
-		    TELQUAL_IS, osp, isp, IAC, SE);
+	    snprintf((char *)temp, sizeof(temp), "%c%c%c%c%ld,%ld%c%c", IAC, SB,
+		    TELOPT_TSPEED, TELQUAL_IS, osp, isp, IAC, SE);
 	    len = strlen((char *)temp+4) + 4;	/* temp[3] is 0 ... */
 
 	    if (len < NETROOM()) {
@@ -983,8 +933,8 @@ suboption(void)
 		send_wont(TELOPT_XDISPLOC, 1);
 		break;
 	    }
-	    sprintf((char *)temp, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_XDISPLOC,
-		    TELQUAL_IS, dp, IAC, SE);
+	    snprintf((char *)temp, sizeof(temp), "%c%c%c%c%s%c%c", IAC, SB,
+		    TELOPT_XDISPLOC, TELQUAL_IS, dp, IAC, SE);
 	    len = strlen((char *)temp+4) + 4;	/* temp[3] is 0 ... */
 
 	    if (len < NETROOM()) {
@@ -1772,23 +1722,6 @@ telrcv(void)
 		telrcv_state = TS_IAC;
 		break;
 	    }
-#	    if defined(TN3270)
-	    if (In3270) {
-		*Ifrontp++ = c;
-		while (scc > 0) {
-		    c = *sbp++ & 0377, scc--; count++;
-#ifdef	ENCRYPTION
-		    if (decrypt_input)
-			c = (*decrypt_input)(c);
-#endif	/* ENCRYPTION */
-		    if (c == IAC) {
-			telrcv_state = TS_IAC;
-			break;
-		    }
-		    *Ifrontp++ = c;
-		}
-	    } else
-#	    endif /* defined(TN3270) */
 		    /*
 		     * The 'crmod' hack (see following) is needed
 		     * since we can't * set CRMOD on output only.
@@ -1872,31 +1805,9 @@ process_iac:
 		telrcv_state = TS_SB;
 		continue;
 
-#	    if defined(TN3270)
-	    case EOR:
-		if (In3270) {
-		    if (Ibackp == Ifrontp) {
-			Ibackp = Ifrontp = Ibuf;
-			ISend = 0;	/* should have been! */
-		    } else {
-			Ibackp += DataFromNetwork(Ibackp, Ifrontp-Ibackp, 1);
-			ISend = 1;
-		    }
-		}
-		printoption("RCVD", IAC, EOR);
-		break;
-#	    endif /* defined(TN3270) */
 
 	    case IAC:
-#	    if !defined(TN3270)
 		TTYADD(IAC);
-#	    else /* !defined(TN3270) */
-		if (In3270) {
-		    *Ifrontp++ = IAC;
-		} else {
-		    TTYADD(IAC);
-		}
-#	    endif /* !defined(TN3270) */
 		break;
 
 	    case NOP:
@@ -1911,21 +1822,18 @@ process_iac:
 	case TS_WILL:
 	    printoption("RCVD", WILL, c);
 	    willoption(c);
-	    SetIn3270();
 	    telrcv_state = TS_DATA;
 	    continue;
 
 	case TS_WONT:
 	    printoption("RCVD", WONT, c);
 	    wontoption(c);
-	    SetIn3270();
 	    telrcv_state = TS_DATA;
 	    continue;
 
 	case TS_DO:
 	    printoption("RCVD", DO, c);
 	    dooption(c);
-	    SetIn3270();
 	    if (c == TELOPT_NAWS) {
 		sendnaws();
 	    } else if (c == TELOPT_LFLOW) {
@@ -1941,7 +1849,6 @@ process_iac:
 	    dontoption(c);
 	    flushline = 1;
 	    setconnmode(0);	/* set new tty mode (maybe) */
-	    SetIn3270();
 	    telrcv_state = TS_DATA;
 	    continue;
 
@@ -1975,7 +1882,6 @@ process_iac:
 
 		    printoption("In SUBOPTION processing, RCVD", IAC, c);
 		    suboption();	/* handle sub-option */
-		    SetIn3270();
 		    telrcv_state = TS_IAC;
 		    goto process_iac;
 		}
@@ -1987,7 +1893,6 @@ process_iac:
 		subpointer -= 2;
 		SB_TERM();
 		suboption();	/* handle sub-option */
-		SetIn3270();
 		telrcv_state = TS_DATA;
 	    }
 	}
@@ -2185,27 +2090,13 @@ Scheduler(int block)			/* should we block in the select ? */
 			my_want_state_is_will(TELOPT_BINARY));
     ttyout = ring_full_count(&ttyoring);
 
-#ifdef TN3270
-    ttyin = ring_empty_count(&ttyiring) && (clienteof == 0) && (shell_active == 0);
-#else	/* defined(TN3270) */
     ttyin = ring_empty_count(&ttyiring) && (clienteof == 0);
-#endif	/* defined(TN3270) */
 
-#ifdef TN3270
-    netin = ring_empty_count(&netiring);
-#   else /* !defined(TN3270) */
     netin = !ISend && ring_empty_count(&netiring);
-#   endif /* !defined(TN3270) */
 
     netex = !SYNCHing;
 
     /* If we have seen a signal recently, reset things */
-#   ifdef TN3270
-    if (HaveInput) {
-	HaveInput = 0;
-	(void) signal(SIGIO, inputAvailable);
-    }
-#endif	/* defined(TN3270) */
 
     /* Call to system code to process rings */
 
@@ -2214,30 +2105,11 @@ Scheduler(int block)			/* should we block in the select ? */
     /* Now, look at the input rings, looking for work to do. */
 
     if (ring_full_count(&ttyiring)) {
-#   if defined(TN3270)
-	if (In3270) {
-	    int c;
-
-	    c = DataFromTerminal(ttyiring.consume,
-					ring_full_consecutive(&ttyiring));
-	    if (c) {
-		returnValue = 1;
-		ring_consumed(&ttyiring, c);
-	    }
-	} else {
-#   endif /* defined(TN3270) */
 	    returnValue |= telsnd();
-#   if defined(TN3270)
-	}
-#   endif /* defined(TN3270) */
     }
 
     if (ring_full_count(&netiring)) {
-#	if !defined(TN3270)
 	returnValue |= telrcv();
-#	else /* !defined(TN3270) */
-	returnValue = Push3270();
-#	endif /* !defined(TN3270) */
     }
     return returnValue;
 }
@@ -2262,7 +2134,6 @@ telnet(const char *user)
 	auth_encrypt_user(user);
     }
 #endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
-#   if !defined(TN3270)
     if (telnetport) {
 #ifdef AUTHENTICATION
 	if (autologin)
@@ -2285,9 +2156,7 @@ telnet(const char *user)
 	if (eight)
 	    tel_enter_binary(eight);
     }
-#   endif /* !defined(TN3270) */
 
-#   if !defined(TN3270)
     for (;;) {
 	int schedValue;
 
@@ -2303,45 +2172,6 @@ telnet(const char *user)
 	    return;
 	}
     }
-#   else /* !defined(TN3270) */
-    for (;;) {
-	int schedValue;
-
-	while (!In3270 && !shell_active) {
-	    if (Scheduler(1) == -1) {
-		setcommandmode();
-		return;
-	    }
-	}
-
-	while ((schedValue = Scheduler(0)) != 0) {
-	    if (schedValue == -1) {
-		setcommandmode();
-		return;
-	    }
-	}
-		/* If there is data waiting to go out to terminal, don't
-		 * schedule any more data for the terminal.
-		 */
-	if (ring_full_count(&ttyoring)) {
-	    schedValue = 1;
-	} else {
-	    if (shell_active) {
-		if (shell_continue() == 0) {
-		    ConnectScreen();
-		}
-	    } else if (In3270) {
-		schedValue = DoTerminalOutput();
-	    }
-	}
-	if (schedValue && (shell_active == 0)) {
-	    if (Scheduler(1) == -1) {
-		setcommandmode();
-		return;
-	    }
-	}
-    }
-#   endif /* !defined(TN3270) */
 }
 
 #if	0	/* XXX - this not being in is a bug */
@@ -2485,7 +2315,7 @@ xmitEC(void)
 
 
 int
-dosynch(char *s)
+dosynch(const char *s)
 {
     netclear();			/* clear the path to the network */
     NETADD(IAC);
@@ -2498,7 +2328,7 @@ dosynch(char *s)
 int want_status_response = 0;
 
 int
-get_status(char *s)
+get_status(const char *s)
 {
     unsigned char tmp[16];
     unsigned char *cp;

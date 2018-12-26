@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 2014/03/15 12:06:54 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.65.28.1 2018/12/26 14:01:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -85,7 +85,6 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
@@ -899,9 +898,6 @@ Ldorte:
 #include <m68k/m68k/sigcode.s>
 #ifdef COMPAT_SUNOS
 #include <m68k/m68k/sunos_sigcode.s>
-#endif
-#ifdef COMPAT_SVR4
-#include <m68k/m68k/svr4_sigcode.s>
 #endif
 
 /*

@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.265.2.3 2018/09/30 01:45:35 pgoyette Exp $
+$NetBSD: acronyms,v 1.265.2.4 2018/12/26 14:01:30 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -125,6 +125,7 @@ DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
 DWIM	do what I mean
+DYAC	damn you autocorrect
 DYK	do you know?
 EA	early adopter
 ECR	electronic cash register

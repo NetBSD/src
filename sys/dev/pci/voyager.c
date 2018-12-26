@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.12 2016/11/16 22:05:19 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.12.14.1 2018/12/26 14:02:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.12 2016/11/16 22:05:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.12.14.1 2018/12/26 14:02:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,8 +199,9 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_VM,
-	    voyager_intr, NULL); /* so we get the clock frame instead */
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_VM,
+	    voyager_intr, NULL, /* so we get the clock frame instead */
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

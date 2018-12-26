@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.185.2.2 2018/10/20 06:58:46 pgoyette Exp $	*/
+/*	$NetBSD: emul.c,v 1.185.2.3 2018/12/26 14:02:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185.2.2 2018/10/20 06:58:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185.2.3 2018/12/26 14:02:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -401,10 +401,4 @@ cpu_getmodel(void)
 {
 
 	return "rumpcore (virtual)";
-}
-
-bool
-get_expose_address(struct proc *p)
-{
-	return 1;
 }

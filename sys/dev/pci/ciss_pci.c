@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.14 2018/02/12 23:11:00 joerg Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.14.2.1 2018/12/26 14:01:49 pgoyette Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.14 2018/02/12 23:11:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.14.2.1 2018/12/26 14:01:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,8 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ciss_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, ciss_intr,
+	    sc, device_xname(self));
 	if (!sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr)

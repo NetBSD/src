@@ -1,4 +1,4 @@
-/* $NetBSD: com_pnpbios.c,v 1.15 2011/07/01 18:14:15 dyoung Exp $ */
+/* $NetBSD: com_pnpbios.c,v 1.15.52.1 2018/12/26 14:01:38 pgoyette Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pnpbios.c,v 1.15 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pnpbios.c,v 1.15.52.1 2018/12/26 14:01:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ com_pnpbios_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);

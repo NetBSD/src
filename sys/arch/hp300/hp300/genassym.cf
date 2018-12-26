@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44 2011/01/14 02:06:25 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.44.58.1 2018/12/26 14:01:37 pgoyette Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -31,10 +31,6 @@
 #	@(#)genassym.c	8.3 (Berkeley) 1/4/94
 #
 
-if defined(_KERNEL_OPT)
-include "opt_compat_svr4.h"
-endif
-
 include <sys/param.h>
 include <sys/buf.h>
 include <sys/proc.h>
@@ -43,11 +39,6 @@ include <sys/msgbuf.h>
 include <sys/syscall.h>
 
 include <uvm/uvm.h>
-
-ifdef COMPAT_SVR4
-include <compat/svr4/svr4_syscall.h>
-include <compat/svr4/svr4_ucontext.h>
-endif
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
@@ -264,12 +255,3 @@ define	DIOII_BASE		DIOII_BASE
 define	DIO_IDOFF		DIO_IDOFF
 define	DIO_SECIDOFF		DIO_SECIDOFF
 define	DIO_DEVICE_ID_FRAMEBUFFER	DIO_DEVICE_ID_FRAMEBUFFER
-
-# SVR4 binary compatibility
-ifdef COMPAT_SVR4
-define	SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
-define	SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
-define	SVR4_SYS_context	SVR4_SYS_context
-define	SVR4_SYS_exit		SVR4_SYS_exit
-define	SVR4_SETCONTEXT		SVR4_SETCONTEXT
-endif

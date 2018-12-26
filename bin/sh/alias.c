@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.16.2.1 2018/10/20 06:58:15 pgoyette Exp $	*/
+/*	$NetBSD: alias.c,v 1.16.2.2 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.16.2.1 2018/10/20 06:58:15 pgoyette Exp $");
+__RCSID("$NetBSD: alias.c,v 1.16.2.2 2018/12/26 14:01:03 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,9 @@ STATIC void setalias(char *, char *);
 STATIC int by_name(const void *, const void *);
 STATIC void list_aliases(void);
 STATIC int unalias(char *);
+STATIC struct alias **freealias(struct alias **, int);
 STATIC struct alias **hashalias(const char *);
+STATIC size_t countaliases(void);
 
 STATIC
 void
@@ -69,52 +71,49 @@ setalias(char *name, char *val)
 {
 	struct alias *ap, **app;
 
+	(void) unalias(name);	/* old one (if any) is now gone */
 	app = hashalias(name);
-	for (ap = *app; ap; ap = ap->next) {
-		if (equal(name, ap->name)) {
-			INTOFF;
-			ckfree(ap->val);
-			ap->val	= savestr(val);
-			INTON;
-			return;
-		}
-	}
-	/* not found */
+
 	INTOFF;
 	ap = ckmalloc(sizeof (struct alias));
 	ap->name = savestr(name);
 	ap->flag = 0;
-	/*
-	 * XXX - HACK: in order that the parser will not finish reading the
-	 * alias value off the input before processing the next alias, we
-	 * dummy up an extra space at the end of the alias.  This is a crock
-	 * and should be re-thought.  The idea (if you feel inclined to help)
-	 * is to avoid alias recursions.  The mechanism used is: when
-	 * expanding an alias, the value of the alias is pushed back on the
-	 * input as a string and a pointer to the alias is stored with the
-	 * string.  The alias is marked as being in use.  When the input
-	 * routine finishes reading the string, it markes the alias not
-	 * in use.  The problem is synchronization with the parser.  Since
-	 * it reads ahead, the alias is marked not in use before the
-	 * resulting token(s) is next checked for further alias sub.  The
-	 * H A C K is that we add a little fluff after the alias value
-	 * so that the string will not be exhausted.  This is a good
-	 * idea ------- ***NOT***
-	 */
-#ifdef notyet
 	ap->val = savestr(val);
-#else /* hack */
-	{
-	int len = strlen(val);
-	ap->val = ckmalloc(len + 2);
-	memcpy(ap->val, val, len);
-	ap->val[len] = ' ';	/* fluff */
-	ap->val[len+1] = '\0';
-	}
-#endif
 	ap->next = *app;
 	*app = ap;
 	INTON;
+}
+
+STATIC struct alias **
+freealias(struct alias **app, int force)
+{
+	struct alias *ap = *app;
+
+	if (ap == NULL)
+		return app;
+
+	/*
+	 * if the alias is currently in use (i.e. its
+	 * buffer is being used by the input routine) we
+	 * just null out the name instead of discarding it.
+	 * If we encounter it later, when it is idle,
+	 * we will finish freeing it then.
+	 *
+	 * Unless we want to simply free everything (INIT)
+	 */
+	if (ap->flag & ALIASINUSE && !force) {
+		*ap->name = '\0';
+		return &ap->next;
+	}
+
+	INTOFF;
+	*app = ap->next;
+	ckfree(ap->name);
+	ckfree(ap->val);
+	ckfree(ap);
+	INTON;
+
+	return app;
 }
 
 STATIC int
@@ -123,58 +122,36 @@ unalias(char *name)
 	struct alias *ap, **app;
 
 	app = hashalias(name);
-
-	for (ap = *app; ap; app = &(ap->next), ap = ap->next) {
+	while ((ap = *app) != NULL) {
 		if (equal(name, ap->name)) {
-			/*
-			 * if the alias is currently in use (i.e. its
-			 * buffer is being used by the input routine) we
-			 * just null out the name instead of freeing it.
-			 * We could clear it out later, but this situation
-			 * is so rare that it hardly seems worth it.
-			 */
-			if (ap->flag & ALIASINUSE)
-				*ap->name = '\0';
-			else {
-				INTOFF;
-				*app = ap->next;
-				ckfree(ap->name);
-				ckfree(ap->val);
-				ckfree(ap);
-				INTON;
-			}
-			return (0);
+			(void) freealias(app, 0);
+			return 0;
 		}
+		app = &ap->next;
 	}
 
-	return (1);
+	return 1;
 }
 
 #ifdef mkinit
-MKINIT void rmaliases(void);
+MKINIT void rmaliases(int);
 
 SHELLPROC {
-	rmaliases();
+	rmaliases(1);
 }
 #endif
 
 void
-rmaliases(void)
+rmaliases(int force)
 {
-	struct alias *ap, *tmp;
+	struct alias **app;
 	int i;
 
 	INTOFF;
 	for (i = 0; i < ATABSIZE; i++) {
-		ap = atab[i];
-		atab[i] = NULL;
-		while (ap) {
-			ckfree(ap->name);
-			ckfree(ap->val);
-			tmp = ap;
-			ap = ap->next;
-			ckfree(tmp);
-		}
+		app = &atab[i];
+		while (*app)
+			app = freealias(app, force);
 	}
 	INTON;
 }
@@ -184,15 +161,16 @@ lookupalias(const char *name, int check)
 {
 	struct alias *ap = *hashalias(name);
 
-	for (; ap; ap = ap->next) {
+	while (ap != NULL) {
 		if (equal(name, ap->name)) {
 			if (check && (ap->flag & ALIASINUSE))
-				return (NULL);
-			return (ap);
+				return NULL;
+			return ap;
 		}
+		ap = ap->next;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 const char *
@@ -222,12 +200,8 @@ list_aliases(void)
 	const struct alias **aliases;
 	const struct alias *ap;
 
-	n = 0;
-	for (i = 0; i < ATABSIZE; i++)
-		for (ap = atab[i]; ap != NULL; ap = ap->next)
-			if (ap->name[0] != '\0')
-				n++;
-
+	INTOFF;
+	n = countaliases();
 	aliases = ckmalloc(n * sizeof aliases[0]);
 
 	j = 0;
@@ -235,6 +209,9 @@ list_aliases(void)
 		for (ap = atab[i]; ap != NULL; ap = ap->next)
 			if (ap->name[0] != '\0')
 				aliases[j++] = ap;
+	if (j != n)
+		error("Alias count botch");
+	INTON;
 
 	qsort(aliases, n, sizeof aliases[0], by_name);
 
@@ -247,6 +224,34 @@ list_aliases(void)
 	ckfree(aliases);
 }
 
+/*
+ * Count how many aliases are defined (skipping any
+ * that have been deleted, but don't know it yet).
+ * Use this opportunity to clean up any of those
+ * zombies that are no longer needed.
+ */
+STATIC size_t
+countaliases(void)
+{
+	struct alias *ap, **app;
+	size_t n;
+	int i;
+
+	n = 0;
+	for (i = 0; i < ATABSIZE; i++)
+		for (app = &atab[i]; (ap = *app) != NULL;) {
+			if (ap->name[0] != '\0')
+				n++;
+			else {
+				app = freealias(app, 0);
+				continue;
+			}
+			app = &ap->next;
+		}
+
+	return n;
+}
+
 int
 aliascmd(int argc, char **argv)
 {
@@ -256,7 +261,7 @@ aliascmd(int argc, char **argv)
 
 	if (argc == 1) {
 		list_aliases();
-		return (0);
+		return 0;
 	}
 
 	while ((n = *++argv) != NULL) {
@@ -275,7 +280,7 @@ aliascmd(int argc, char **argv)
 		}
 	}
 
-	return (ret);
+	return ret;
 }
 
 int
@@ -285,14 +290,16 @@ unaliascmd(int argc, char **argv)
 
 	while ((i = nextopt("a")) != '\0') {
 		if (i == 'a') {
-			rmaliases();
-			return (0);
+			rmaliases(0);
+			return 0;
 		}
 	}
-	for (i = 0; *argptr; argptr++)
-		i = unalias(*argptr);
 
-	return (i);
+	(void)countaliases();	/* delete any dead ones */
+	for (i = 0; *argptr; argptr++)
+		i |= unalias(*argptr);
+
+	return i;
 }
 
 STATIC struct alias **

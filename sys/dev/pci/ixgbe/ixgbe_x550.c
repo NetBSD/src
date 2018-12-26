@@ -87,6 +87,7 @@ s32 ixgbe_init_ops_X550(struct ixgbe_hw *hw)
 	mac->ops.enable_mdd = ixgbe_enable_mdd_X550;
 	mac->ops.mdd_event = ixgbe_mdd_event_X550;
 	mac->ops.restore_mdd_vf = ixgbe_restore_mdd_vf_X550;
+	mac->ops.fw_recovery_mode = ixgbe_fw_recovery_mode_X550;
 	mac->ops.disable_rx = ixgbe_disable_rx_x550;
 	/* Manageability interface */
 	mac->ops.set_fw_drv_ver = ixgbe_set_fw_drv_ver_x550;
@@ -446,7 +447,7 @@ static s32 ixgbe_identify_phy_x550em(struct ixgbe_hw *hw)
 
 	switch (hw->device_id) {
 	case IXGBE_DEV_ID_X550EM_A_SFP:
-		return ixgbe_identify_module_generic(hw);
+		return ixgbe_identify_sfp_module_X550em(hw);
 	case IXGBE_DEV_ID_X550EM_X_SFP:
 		/* set up for CS4227 usage */
 		ixgbe_setup_mux_ctl(hw);
@@ -454,7 +455,7 @@ static s32 ixgbe_identify_phy_x550em(struct ixgbe_hw *hw)
 		/* Fallthrough */
 
 	case IXGBE_DEV_ID_X550EM_A_SFP_N:
-		return ixgbe_identify_module_generic(hw);
+		return ixgbe_identify_sfp_module_X550em(hw);
 		break;
 	case IXGBE_DEV_ID_X550EM_X_KX4:
 		hw->phy.type = ixgbe_phy_x550em_kx4;
@@ -4817,3 +4818,19 @@ s32 ixgbe_set_fw_drv_ver_x550(struct ixgbe_hw *hw, u8 maj, u8 min,
 
 	return ret_val;
 }
+
+/**
+ * ixgbe_fw_recovery_mode_X550 - Check FW NVM recovery mode
+ * @hw: pointer t hardware structure
+ *
+ * Returns TRUE if in FW NVM recovery mode.
+ **/
+bool ixgbe_fw_recovery_mode_X550(struct ixgbe_hw *hw)
+{
+	u32 fwsm;
+
+	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM_BY_MAC(hw));
+
+	return !!(fwsm & IXGBE_FWSM_FW_NVM_RECOVERY_MODE);
+}
+

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.news68k,v 1.23 2011/11/20 15:38:00 tsutsui Exp $
+#	$NetBSD: majors.news68k,v 1.23.48.1 2018/12/26 14:01:41 pgoyette Exp $
 #
 # Device majors for news68k
 #
@@ -39,7 +39,6 @@ device-major	wsmux		char 63			wsmux
 
 device-major	scsibus		char 73			scsibus
 device-major	raid		char 74  block 32	raid
-device-major	svr4_net	char 75			compat_svr4
 device-major	clockctl	char 76			clockctl
 device-major	cgd		char 78  block 33	cgd
 device-major	ksyms		char 79			ksyms

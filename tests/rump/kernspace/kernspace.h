@@ -1,7 +1,7 @@
-/*	$NetBSD: kernspace.h,v 1.6 2017/12/28 07:10:25 ozaki-r Exp $	*/
+/*	$NetBSD: kernspace.h,v 1.6.2.1 2018/12/26 14:02:10 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,5 +45,11 @@ void rumptest_workqueue_wait(void);
 
 void rumptest_sendsig(char *);
 void rumptest_localsig(int);
+
+void rumptest_threadpool_unbound_lifecycle(void);
+void rumptest_threadpool_percpu_lifecycle(void);
+void rumptest_threadpool_unbound_schedule(void);
+void rumptest_threadpool_percpu_schedule(void);
+void rumptest_threadpool_job_cancel(void);
 
 #endif /* _TESTS_RUMP_KERNSPACE_KERNSPACE_H_ */

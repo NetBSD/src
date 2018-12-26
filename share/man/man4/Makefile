@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.651.2.6 2018/11/26 01:52:15 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.651.2.7 2018/12/26 14:01:29 pgoyette Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -21,7 +21,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	com.4 coram.4 crypto.4 cs80bus.4 cuda.4 cypide.4 cxdtv.4 \
 	ddb.4 ddc.4 de.4 dge.4 dk.4 dm.4 dmoverio.4 \
 	dmphy.4 dpt.4 dpti.4 drm.4 drum.4 drvctl.4 dtv.4 dtviic.4 dwctwo.4 \
-	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 envsys.4 ep.4 esh.4 \
+	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 ena.4 envsys.4 ep.4 esh.4 \
 	esa.4 esiop.4 esm.4 eso.4 et.4 etphy.4 exphy.4 \
 	fd.4 filemon.4 finsio.4 flash.4 fpa.4 fms.4 fss.4 \
 	fujbp.4 full.4 fxp.4 \
@@ -44,7 +44,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	mpu.4 mtd.4 mtio.4 msm6242b.4 multicast.4 mvsata.4 \
 	nadb.4 ne.4 neo.4 netintro.4 nfe.4 nfsmb.4 njata.4 njs.4 \
 	nsclpcsio.4 nside.4 nsphy.4 nsphyter.4 ntwoc.4 null.4 nsmb.4 \
-	nvme.4 \
+	nvme.4 nvmm.4 \
 	oak.4 oosiop.4 opl.4 options.4 optiide.4 osiop.4 otus.4 \
 	pad.4 pas.4 pcdisplay.4 pcf8563rtc.4 pciide.4 pckbc.4 pckbd.4 pcn.4 \
 	pcppi.4 pcscp.4 pcweasel.4 pdcide.4 pdcsata.4 piixide.4 piixpcib.4 \
@@ -105,7 +105,7 @@ MAN+=	eisa.4 gpioiic.4 isa.4 isapnp.4 ofisa.4 pci.4 pcmcia.4
 MAN+=	podulebus.4 ieee1394if.4 spi.4
 
 # machine-independent PCI devices
-MAN+=	cz.4 epic.4 lmc.4 viaenv.4
+MAN+=	cz.4 epic.4 viaenv.4
 
 # machine-independent ISA devices
 MAN+=	aha.4 ai.4 aic.4 ast.4 ate.4 boca.4 cs.4 cy.4 ec.4 ef.4 \

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.157 2017/07/21 20:56:10 nakayama Exp $
+#	$NetBSD: files.sparc,v 1.157.2.1 2018/12/26 14:01:42 pgoyette Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -329,11 +329,6 @@ include "dev/usb/files.usb"
 #
 # Compatibility modules
 #
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
-file	arch/sparc/sparc/svr4_sigcode.s	compat_svr4
-file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"

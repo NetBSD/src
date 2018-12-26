@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_CHANGES 3
 .Os
 .Sh NAME
@@ -51,12 +51,10 @@ If it is used by the second or subsequent such statement within a trigger
 program, the value returned reflects the number of rows modified by
 the previous INSERT, UPDATE or DELETE statement within the same trigger.
 .Pp
-See also the sqlite3_total_changes() interface,
-the count_changes pragma, and the changes() SQL function.
-.Pp
 If a separate thread makes changes on the same database connection
 while sqlite3_changes() is running then the value
 returned is unpredictable and not meaningful.
+.Pp
 .Sh SEE ALSO
 .Xr sqlite3_changes 3 ,
 .Xr sqlite3_total_changes 3

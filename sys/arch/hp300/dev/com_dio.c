@@ -1,4 +1,4 @@
-/*	$NetBSD: com_dio.c,v 1.8 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: com_dio.c,v 1.8.86.1 2018/12/26 14:01:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.8 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.8.86.1 2018/12/26 14:01:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ com_dio_attach(device_t parent, device_t self, void *aux)
 		DELAY(1000);
 	}
 
-	COM_INIT_REGS(sc->sc_regs, iot, iohcom,
+	com_init_regs(&sc->sc_regs, iot, iohcom,
 	    da->da_addr + DCA_COM_OFFSET);
 
 	sc->sc_frequency = COM_DIO_FREQ;

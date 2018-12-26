@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.7 2013/10/03 13:23:03 kiyohara Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.7.28.1 2018/12/26 14:01:48 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,9 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.7 2013/10/03 13:23:03 kiyohara Exp $");
-
-#include "opt_com.h"
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.7.28.1 2018/12/26 14:01:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,22 +53,13 @@ CFATTACH_DECL_NEW(mvuart_gt, sizeof(struct com_softc),
 CFATTACH_DECL_NEW(mvuart_mbus, sizeof(struct com_softc),
     mvuart_match, mvuart_attach, NULL, NULL);
 
-#ifdef COM_REGMAP
-#define MVUART_INIT_REGS(regs, tag, hdl, addr, size)		\
-	do {							\
-		int i;						\
-								\
-		regs.cr_iot = tag;				\
-		regs.cr_ioh = hdl;				\
-		regs.cr_iobase = addr;				\
-		regs.cr_nports = size;				\
-		for (i = 0; i < __arraycount(regs.cr_map); i++)	\
-			regs.cr_map[i] = com_std_map[i] << 2;	\
-	} while (0)
-#else
-#define MVUART_INIT_REGS(regs, tag, hdl, addr, size) \
-	COM_INIT_REGS(regs, tag, hdl, addr)
-#endif
+static void
+mvuart_init_regs(struct com_regs *regs, bus_space_tag_t tag,
+		 bus_space_handle_t hdl, bus_addr_t addr)
+{
+
+	com_init_regs_stride(regs, tag, hdl, addr, 2);
+}
 
 
 /* ARGSUSED */
@@ -93,7 +82,7 @@ mvuart_match(device_t parent, struct cfdata *match, void *aux)
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
 	    MVUART_SIZE, &ioh))
 		return 0;
-	MVUART_INIT_REGS(regs, mva->mva_iot, ioh, mva->mva_offset, MVUART_SIZE);
+	mvuart_init_regs(&regs, mva->mva_iot, ioh, mva->mva_offset);
 	if (!com_probe_subr(&regs))
 		return 0;
 
@@ -127,15 +116,14 @@ mvuart_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
-	MVUART_INIT_REGS(sc->sc_regs,
-	    iot, ioh, mva->mva_addr + mva->mva_offset, mva->mva_size);
+	mvuart_init_regs(&sc->sc_regs,
+	    iot, ioh, mva->mva_addr + mva->mva_offset);
 
 	com_attach_subr(sc);
 
 	marvell_intr_establish(mva->mva_irq, IPL_SERIAL, comintr, sc);
 }
 
-#ifdef COM_REGMAP
 int mvuart_cnattach(bus_space_tag_t, bus_addr_t, int, uint32_t, int);
 
 int
@@ -144,8 +132,7 @@ mvuart_cnattach(bus_space_tag_t iot, bus_addr_t addr, int baud,
 {
 	struct com_regs regs;
 
-	MVUART_INIT_REGS(regs, iot, 0x0, addr, MVUART_SIZE);
+	mvuart_init_regs(&regs, iot, 0x0, addr);
 
 	return comcnattach1(&regs, baud, sysfreq, COM_TYPE_16550_NOERS, mode);
 }
-#endif /* COM_REGMAP */

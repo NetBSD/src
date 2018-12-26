@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.10 2017/10/29 01:28:46 ginsbach Exp $");
+__RCSID("$NetBSD: seq.c,v 1.10.2.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	struct lconv *locale;
 	char *fmt = NULL;
 	const char *sep = "\n";
-	const char *term = NULL;
+	const char *term = "\n";
 	char pad = ZERO;
 
 	/* Determine the locale's decimal point. */
@@ -171,14 +171,16 @@ main(int argc, char *argv[])
 		fmt = generate_format(first, incr, last, equalize, pad);
 
 	if (incr > 0) {
-		for (; first <= last; first += incr) {
-			printf(fmt, first);
+		printf(fmt, first);
+		for (first += incr; first <= last; first += incr) {
 			fputs(sep, stdout);
+			printf(fmt, first);
 		}
 	} else {
-		for (; first >= last; first += incr) {
-			printf(fmt, first);
+		printf(fmt, first);
+		for (first += incr; first >= last; first += incr) {
 			fputs(sep, stdout);
+			printf(fmt, first);
 		}
 	}
 	if (term != NULL)

@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com.c,v 1.4 2017/12/10 21:38:26 skrll Exp $ */
+/* $NetBSD: bcm2835_com.c,v 1.4.2.1 2018/12/26 14:01:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.4 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.4.2.1 2018/12/26 14:01:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,7 +105,7 @@ bcm_com_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_frequency *= 2;
 
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
+	com_init_regs(&sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");

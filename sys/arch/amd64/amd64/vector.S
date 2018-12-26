@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.60.2.4 2018/07/28 04:37:26 pgoyette Exp $	*/
+/*	$NetBSD: vector.S,v 1.60.2.5 2018/12/26 14:01:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -656,7 +656,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 IDTVEC(resume_ ## name ## num)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
-	movq	CPUVAR(ISOURCES) + (num) * 8,%r14			;\
+	movq	CPUVAR(XSOURCES) + (num) * 8,%r14			;\
 1:									\
 	pushq	%r13							;\
 	movl	$num,CPUVAR(ILEVEL)					;\

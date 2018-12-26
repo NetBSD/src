@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_com.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_com.c,v 1.3.52.1 2018/12/26 14:01:33 pgoyette Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap_com.c,v 1.2 2008/03/14 15:09:09 cube Exp
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_com.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_com.c,v 1.3.52.1 2018/12/26 14:01:33 pgoyette Exp $");
 
 #include "opt_com.h"
 
@@ -119,7 +119,7 @@ gemini_com_attach(device_t parent, device_t self, void *aux)
 		panic(": can't map registers\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");

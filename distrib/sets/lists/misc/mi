@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.206.2.3 2018/11/26 01:49:58 pgoyette Exp $
+# $NetBSD: mi,v 1.206.2.4 2018/12/26 14:01:12 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1369,9 +1369,9 @@
 ./usr/share/examples/dhcpcd/hooks/50-ypbind	misc-dhcpcd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
-./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-sys-examples	share
-./usr/share/examples/emul/svr4/etc/netconfig	misc-sys-examples	share
-./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-sys-examples	share
+./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-obsolete		obsolete
+./usr/share/examples/emul/svr4/etc/netconfig	misc-obsolete		obsolete
+./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-obsolete		obsolete
 ./usr/share/examples/emul/ultrix/etc/svc.conf	misc-sys-examples	share
 ./usr/share/examples/fstab/fstab.cdrom		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.md		misc-obsolete		obsolete

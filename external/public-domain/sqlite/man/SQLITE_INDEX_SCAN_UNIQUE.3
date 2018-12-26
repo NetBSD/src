@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_INDEX_SCAN_UNIQUE 3
 .Os
 .Sh NAME
@@ -7,3 +7,7 @@
 .Sh SYNOPSIS
 .Fd #define SQLITE_INDEX_SCAN_UNIQUE
 .Sh DESCRIPTION
+Virtual table implementations are allowed to set the sqlite3_index_info.idxFlags
+field to some combination of these bits.
+.Sh SEE ALSO
+.Xr sqlite3_index_info 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.14 2016/11/11 22:59:26 jdolecek Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.14.14.1 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -131,14 +131,14 @@ ufs_wapbl_end(struct mount *mp)
 		UFS_UPDATE(vp, access, modify, flags);			\
 	}
 
-#ifdef UFS_WAPBL_DEBUG_JLOCK
+#ifdef DIAGNOSTIC
 #define	UFS_WAPBL_JLOCK_ASSERT(mp)					\
 	if (mp->mnt_wapbl) wapbl_jlock_assert(mp->mnt_wapbl)
 #define	UFS_WAPBL_JUNLOCK_ASSERT(mp)					\
 	if (mp->mnt_wapbl) wapbl_junlock_assert(mp->mnt_wapbl)
 #else
 #define	UFS_WAPBL_JLOCK_ASSERT(mp)
-#define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
+#define UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #endif
 
 #define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)				\

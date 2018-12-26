@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.42.2.2 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.42.2.3 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.42.2.2 2018/09/30 01:45:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.42.2.3 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.42.2.2 2018/09/30 01:45:48 pg
 #include <machine/mpbiosvar.h>
 #include <machine/pic.h>
 #include <x86/pci/pci_msi_machdep.h>
+#else
+#include <machine/i82093var.h>
 #endif
 
 #ifdef MPBIOS
@@ -232,8 +234,10 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 		    buf, len);
 	}
 
+#if defined(__HAVE_PCI_MSI_MSIX)	
 	if (INT_VIA_MSI(ih))
 		return x86_pci_msi_string(pc, ih, buf, len);
+#endif
 
 	return intr_string(ih & ~MPSAFE_MASK, buf, len);
 }
@@ -319,6 +323,8 @@ pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 		    pc, ih, level, func, arg);
 	}
 
+
+#ifdef __HAVE_PCI_MSI_MSIX
 	if (INT_VIA_MSI(ih)) {
 		if (MSI_INT_IS_MSIX(ih))
 			return x86_pci_msix_establish(pc, ih, level, func, arg,
@@ -327,7 +333,7 @@ pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 			return x86_pci_msi_establish(pc, ih, level, func, arg,
 			    xname);
 	}
-
+#endif
 	if (pci_intr_find_intx_irq(ih, &irq, &pic, &pin)) {
 		aprint_normal("%s: bad pic %d\n", __func__,
 		    APIC_IRQ_APIC(ih));
@@ -514,6 +520,7 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 	intx_count = msi_count = msix_count = 0;
 	if (counts == NULL) { /* simple pattern */
+		msix_count = 1;
 		msi_count = 1;
 		intx_count = 1;
 	} else {
@@ -542,9 +549,8 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 	if (msix_count > 0) {
 		error = pci_msix_alloc_exact(pa, ihps, msix_count);
 		if (error == 0) {
-			KASSERTMSG(counts != NULL,
-			    "If MSI-X is used, counts must not be NULL.");
-			counts[PCI_INTR_TYPE_MSIX] = msix_count;
+			if (counts != NULL)
+				counts[PCI_INTR_TYPE_MSIX] = msix_count;
 			goto out;
 		}
 	}

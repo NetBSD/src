@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.c,v 1.7.12.3 2018/09/30 01:45:57 pgoyette Exp $	*/
+/*	$NetBSD: in6_offload.c,v 1.7.12.4 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.7.12.3 2018/09/30 01:45:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.7.12.4 2018/12/26 14:02:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -45,11 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.7.12.3 2018/09/30 01:45:57 pgoyett
 
 /*
  * Handle M_CSUM_TSOv6 in software. Split the TCP payload in chunks of
- * size MSS, and send them.
+ * size MSS, and return mbuf chain consists of them.
  */
-static int
-tcp6_segment(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
-    const struct sockaddr_in6 *dst, struct rtentry *rt)
+struct mbuf *
+tcp6_segment(struct mbuf *m, int off)
 {
 	int mss;
 	int iphlen;
@@ -59,9 +58,12 @@ tcp6_segment(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	struct ip6_hdr *iph;
 	struct tcphdr *th;
 	uint32_t tcpseq;
+	uint16_t phsum;
 	struct mbuf *hdr = NULL;
-	struct mbuf *t;
-	int error = 0;
+	struct mbuf *m0 = NULL;
+	struct mbuf *prev = NULL;
+	struct mbuf *n, *t;
+	int nsegs;
 
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	KASSERT((m->m_pkthdr.csum_flags & M_CSUM_TSOv6) != 0);
@@ -69,101 +71,121 @@ tcp6_segment(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	m->m_pkthdr.csum_flags = 0;
 
 	len = m->m_pkthdr.len;
-	KASSERT(len >= sizeof(*iph) + sizeof(*th));
+	KASSERT(len >= off + sizeof(*iph) + sizeof(*th));
 
-	if (m->m_len < sizeof(*iph)) {
-		m = m_pullup(m, sizeof(*iph));
-		if (m == NULL) {
-			error = ENOMEM;
+	hlen = off + sizeof(*iph);
+	if (m->m_len < hlen) {
+		m = m_pullup(m, hlen);
+		if (m == NULL)
 			goto quit;
-		}
 	}
-	iph = mtod(m, struct ip6_hdr *);
+	iph = (void *)(mtod(m, char *) + off);
 	iphlen = sizeof(*iph);
 	KASSERT((iph->ip6_vfc & IPV6_VERSION_MASK) == IPV6_VERSION);
 	KASSERT(iph->ip6_nxt == IPPROTO_TCP);
 
-	hlen = iphlen + sizeof(*th);
+	hlen = off + iphlen + sizeof(*th);
 	if (m->m_len < hlen) {
 		m = m_pullup(m, hlen);
-		if (m == NULL) {
-			error = ENOMEM;
+		if (m == NULL)
 			goto quit;
-		}
 	}
-	th = (void *)(mtod(m, char *) + iphlen);
+	th = (void *)(mtod(m, char *) + off + iphlen);
 	tcpseq = ntohl(th->th_seq);
 	thlen = th->th_off * 4;
-	hlen = iphlen + thlen;
+	hlen = off + iphlen + thlen;
 
 	mss = m->m_pkthdr.segsz;
 	KASSERT(mss != 0);
 	KASSERT(len > hlen);
 
 	t = m_split(m, hlen, M_NOWAIT);
-	if (t == NULL) {
-		error = ENOMEM;
+	if (t == NULL)
 		goto quit;
-	}
 	hdr = m;
 	m = t;
+
 	len -= hlen;
 	KASSERT(len % mss == 0);
-	while (len > 0) {
-		struct mbuf *n;
 
-		n = m_dup(hdr, 0, hlen, M_NOWAIT);
-		if (n == NULL) {
-			error = ENOMEM;
-			goto quit;
-		}
+	iph = (void *)(mtod(hdr, char *) + off);
+	iph->ip6_plen = htons(thlen + mss);
+	phsum = in6_cksum_phdr(&iph->ip6_src, &iph->ip6_dst, htonl(thlen + mss),
+	    htonl(IPPROTO_TCP));
+
+	for (nsegs = len / mss; nsegs > 0; nsegs--) {
+		if (nsegs > 1) {
+			n = m_dup(hdr, 0, hlen, M_NOWAIT);
+			if (n == NULL)
+				goto quit;
+		} else
+			n = hdr;
 		KASSERT(n->m_len == hlen); /* XXX */
 
-		t = m_split(m, mss, M_NOWAIT);
-		if (t == NULL) {
-			m_freem(n);
-			error = ENOMEM;
-			goto quit;
-		}
+		if (nsegs > 1) {
+			t = m_split(m, mss, M_NOWAIT);
+			if (t == NULL) {
+				m_freem(n);
+				goto quit;
+			}
+		} else
+			t = m;
 		m_cat(n, m);
 		m = t;
 
 		KASSERT(n->m_len >= hlen); /* XXX */
 
-		n->m_pkthdr.len = hlen + mss;
-		iph = mtod(n, struct ip6_hdr *);
-		KASSERT((iph->ip6_vfc & IPV6_VERSION_MASK) == IPV6_VERSION);
-		iph->ip6_plen = htons(thlen + mss);
-		th = (void *)(mtod(n, char *) + iphlen);
-		th->th_seq = htonl(tcpseq);
-		th->th_sum = 0;
-		th->th_sum = in6_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
+		if (m0 == NULL)
+			m0 = n;
 
-		error = ip6_if_output(ifp, origifp, n, dst, rt);
-		if (error) {
-			goto quit;
-		}
+		if (prev != NULL)
+			prev->m_nextpkt = n;
+
+		n->m_pkthdr.len = hlen + mss;
+		n->m_nextpkt = NULL;	/* XXX */
+
+		th = (void *)(mtod(n, char *) + off + iphlen);
+		th->th_seq = htonl(tcpseq);
+		th->th_sum = phsum;
+		th->th_sum = in6_cksum(n, 0, off + iphlen, thlen + mss);
 
 		tcpseq += mss;
-		len -= mss;
+		prev = n;
 	}
+	return m0;
 
 quit:
-	if (hdr != NULL) {
+	if (hdr != NULL)
 		m_freem(hdr);
-	}
-	if (m != NULL) {
+	if (m != NULL)
+		m_freem(m);
+	for (m = m0; m != NULL; m = n) {
+		n = m->m_nextpkt;
 		m_freem(m);
 	}
 
-	return error;
+	return NULL;
 }
 
 int
 ip6_tso_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
     const struct sockaddr_in6 *dst, struct rtentry *rt)
 {
-	return tcp6_segment(ifp, origifp, m, dst, rt);
+	struct mbuf *n;
+	int error = 0;
+
+	m = tcp6_segment(m, 0);
+	if (m == NULL)
+		return ENOMEM;
+	do {
+		n = m->m_nextpkt;
+		if (error == 0)
+			error = ip6_if_output(ifp, origifp, m, dst, rt);
+		else
+			m_freem(m);
+		m = n;
+	} while (m != NULL);
+	return error;
 }
 
 /*

@@ -1,7 +1,9 @@
-# $NetBSD: module.mi,v 1.13 2018/01/08 14:17:15 martin Exp $
+# $NetBSD: module.mi,v 1.13.2.1 2018/12/26 14:01:12 pgoyette Exp $
 #
 # These are only made for ports doing modules.
 #
+./usr/tests/kernel/threadpool_tester		tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/threadpool_tester/threadpool_tester.kmod tests-kernel-tests compattestfile,atf
 ./usr/tests/modules/Atffile			tests-sys-tests		atf,rump
 ./usr/tests/modules/Kyuafile			tests-sys-tests		atf,rump,kyua
 ./usr/tests/modules/k_helper			tests-sys-tests		atf,rump

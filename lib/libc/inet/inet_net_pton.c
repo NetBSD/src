@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 1.4.2.1 2002/08/02 02:17:21 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.4 2012/03/20 17:08:13 matt Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.4.30.1 2018/12/26 14:01:26 pgoyette Exp $");
 #endif
 #endif
 
@@ -46,13 +46,6 @@ __RCSID("$NetBSD: inet_net_pton.c,v 1.4 2012/03/20 17:08:13 matt Exp $");
 #ifdef __weak_alias
 __weak_alias(inet_net_pton,_inet_net_pton)
 #endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
-#endif
-
 
 /*
  * static int

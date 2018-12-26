@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_SNAPSHOT_GET 3
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@ is called, SQLITE_ERROR is returned.
 The final value of *P is undefined in this case.
 .Bl -bullet
 .It
-The database handle must be in autocommit mode.
+The database handle must not be in autocommit mode.
 .It
 Schema S of database connection D must be a WAL mode
 database.
@@ -53,7 +53,8 @@ using sqlite3_snapshot_free() to avoid a memory
 leak.
 .Pp
 The sqlite3_snapshot_get() interface is only
-available when the SQLITE_ENABLE_SNAPSHOT compile-time option is used.
+available when the SQLITE_ENABLE_SNAPSHOT compile-time
+option is used.
 .Sh SEE ALSO
 .Xr sqlite3_get_autocommit 3 ,
 .Xr sqlite3 3 ,

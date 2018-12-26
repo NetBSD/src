@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243.2.8 2018/10/20 06:58:18 pgoyette Exp $
+# $NetBSD: mi,v 1.243.2.9 2018/12/26 14:01:12 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -125,7 +125,6 @@
 ./usr/lib/libposix_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libppath_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libproc_g.a				comp-c-libdebug		debuglib,compatfile,dtrace
-./usr/lib/libproc_p.a				comp-c-debuglib		debuglib,compatfile,dtrace
 ./usr/lib/libprop_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpthread_dbg_g.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1124,7 +1123,7 @@
 ./usr/libdata/debug/usr/sbin/lastlogin.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ldpd.debug		comp-router-debug	debug
 ./usr/libdata/debug/usr/sbin/link.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/lockstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lpc.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
@@ -2335,6 +2334,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_signals.debug		tests-syscall-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_threadpool.debug		tests-sys-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_threads.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_tsleep.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_vm.debug			tests-syscall-debug	debug,atf,rump
@@ -2342,15 +2342,15 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_basic.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf,rump
-./usr/libdata/debug/usr/tests/sys					tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/net					tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/net/t_print.debug			tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netatalk				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netatalk/t_print.debug		tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet/t_print.debug		tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet6				tests-syys-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/sys/netinet6/t_print.debug		tests-syys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys					tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/net					tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/net/t_print.debug			tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netatalk				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netatalk/t_print.debug		tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet/t_print.debug		tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet6				tests-sys-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/sys/netinet6/t_print.debug		tests-sys-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-obsolete		obsolete,compattestfile

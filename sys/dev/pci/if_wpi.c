@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.79.2.2 2018/09/06 06:55:51 pgoyette Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.79.2.3 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.79.2.2 2018/09/06 06:55:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.79.2.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -271,8 +271,8 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 
 	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
-	    wpi_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pct, sc->sc_pihp[0],
+	    IPL_NET, wpi_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
@@ -2037,7 +2037,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 			m_freem(m0);
 			return ENOMEM;
 		}
-		M_COPY_PKTHDR(mnew, m0);
+		m_copy_pkthdr(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
 			if (!(mnew->m_flags & M_EXT)) {

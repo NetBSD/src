@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.92.2.2 2018/07/28 04:32:59 pgoyette Exp $
+# $NetBSD: md.sparc,v 1.92.2.3 2018/12/26 14:01:11 pgoyette Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-4.8/visintrin.h		comp-c-include		obsolete
@@ -141,7 +141,7 @@
 ./usr/include/sparc64/sljit_machdep.h		comp-c-include
 ./usr/include/sparc64/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/sparc64/stdarg.h			comp-obsolete		obsolete
-./usr/include/sparc64/svr4_machdep.h		comp-c-include
+./usr/include/sparc64/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/sparc64/trap.h			comp-c-include
 ./usr/include/sparc64/types.h			comp-c-include
 ./usr/include/sparc64/varargs.h			comp-obsolete		obsolete

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.20.2.6 2018/10/20 06:58:46 pgoyette Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.20.2.7 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20.2.6 2018/10/20 06:58:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20.2.7 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -506,7 +506,7 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 			m_freem(m);
 			return;
 		}
-		M_MOVE_PKTHDR(m_head, m);
+		m_move_pkthdr(m_head, m);
 
 		/*
 		 * m_head should be:
@@ -518,7 +518,7 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 		 *                          ^              ^
 		 *                          m_data         4 byte aligned
 		 */
-		MH_ALIGN(m_head, L2TP_COPY_LENGTH + roundup(pad, 4));
+		m_align(m_head, L2TP_COPY_LENGTH + roundup(pad, 4));
 		m_head->m_data += pad;
 
 		memcpy(mtod(m_head, void *), mtod(m, void *), copy_length);

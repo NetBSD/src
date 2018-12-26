@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.15 2014/03/26 08:04:19 christos Exp $ */
+/* $NetBSD: platform.c,v 1.15.28.1 2018/12/26 14:01:45 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.15 2014/03/26 08:04:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.15.28.1 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,8 @@ static int platform_dminode = CTL_EOL;
 
 void		platform_init(void);	/* XXX */
 static void	platform_add(struct smbtable *, const char *, int);
+static void	platform_add_word(struct smbtable *, const char *, uint16_t,
+				const char *);
 static void	platform_add_date(struct smbtable *, const char *, int);
 static void	platform_add_uuid(struct smbtable *, const char *,
 				  const uint8_t *);
@@ -56,6 +58,7 @@ static void	platform_print(void);
 
 /* list of private DMI sysctl nodes */
 static const char *platform_private_nodes[] = {
+	"chassis-serial",
 	"board-serial",
 	"system-serial",
 	"system-uuid",
@@ -69,6 +72,8 @@ platform_init(void)
 	struct smbios_sys *psys;
 	struct smbios_struct_bios *pbios;
 	struct smbios_board *pboard;
+	struct smbios_chassis *pchassis;
+	struct smbios_processor *pproc;
 	struct smbios_slot *pslot;
 	int nisa, nother;
 
@@ -101,6 +106,27 @@ platform_init(void)
 		platform_add(&smbios, "board-version", pboard->version);
 		platform_add(&smbios, "board-serial", pboard->serial);
 		platform_add(&smbios, "board-asset-tag", pboard->asset);
+	}
+
+	smbios.cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_ENCLOSURE, &smbios)) {
+		pchassis = smbios.tblhdr;
+
+		platform_add(&smbios, "chassis-vendor", pchassis->vendor);
+		platform_add(&smbios, "chassis-type", pchassis->shape);
+		platform_add(&smbios, "chassis-version", pchassis->version);
+		platform_add(&smbios, "chassis-serial", pchassis->serial);
+		platform_add(&smbios, "chassis-asset-tag", pchassis->asset);
+	}
+
+	smbios.cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_PROCESSOR, &smbios)) {
+		pproc = smbios.tblhdr;
+
+		platform_add(&smbios, "processor-vendor", pproc->vendor);
+		platform_add(&smbios, "processor-version", pproc->version);
+		platform_add_word(&smbios, "processor-frequency",
+			pproc->curspeed, " MHz");
 	}
 
 	smbios.cookie = 0;
@@ -193,6 +219,21 @@ platform_add(struct smbtable *tbl, const char *key, int idx)
 	char tmpbuf[128]; /* XXX is this long enough? */
 
 	if (smbios_get_string(tbl, idx, tmpbuf, 128) != NULL) {
+		/* add to platform dictionary */
+		pmf_set_platform(key, tmpbuf);
+
+		/* create sysctl node */
+		platform_create_sysctl(key);
+	}
+}
+
+static void
+platform_add_word(struct smbtable *tbl, const char *key, uint16_t val,
+	const char *suf)
+{
+	char tmpbuf[128]; /* XXX is this long enough? */
+
+	if (snprintf(tmpbuf, sizeof(tmpbuf), "%u%s", val, suf)) {
 		/* add to platform dictionary */
 		pmf_set_platform(key, tmpbuf);
 

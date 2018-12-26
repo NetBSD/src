@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.131.2.3 2018/10/20 06:58:22 pgoyette Exp $	 */
+/*	$NetBSD: rtld.h,v 1.131.2.4 2018/12/26 14:01:28 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -138,15 +138,9 @@ typedef struct _rtld_library_xform_t {
  * when the structure is destroyed.
  */
 
-#define RTLD_MAGIC	0xd550b87a
-#define RTLD_VERSION	1
-
 typedef void (*fptr_t)(void);
 
 typedef struct Struct_Obj_Entry {
-	Elf32_Word      magic;		/* Magic number (sanity check) */
-	Elf32_Word      version;	/* Version number of struct format */
-
 	struct Struct_Obj_Entry *next;
 	char           *path;		/* Pathname of underlying file (%) */
 	int             refcount;

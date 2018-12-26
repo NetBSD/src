@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.2.2.2 2018/11/26 01:52:13 pgoyette Exp $
+.\"	$NetBSD: libnvmm.3,v 1.2.2.3 2018/12/26 14:01:27 pgoyette Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 2018
+.Dd December 14, 2018
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -62,6 +62,10 @@
 .Ft int
 .Fn nvmm_vcpu_run "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
     "struct nvmm_exit *exit"
+.Ft int
+.Fn nvmm_hva_map "struct nvmm_machine *mach" "uintptr_t hva" "size_t size"
+.Ft int
+.Fn nvmm_hva_unmap "struct nvmm_machine *mach" "uintptr_t hva" "size_t size"
 .Ft int
 .Fn nvmm_gpa_map "struct nvmm_machine *mach" "uintptr_t hva" "gpaddr_t gpa" \
     "size_t size" "int flags"
@@ -164,15 +168,33 @@ The
 structure is filled to indicate the exit reason, and the associated parameters
 if any.
 .Pp
-.Fn nvmm_gpa_map
-makes the guest physical memory area beginning on address
-.Fa gpa
-and of size
+.Fn nvmm_hva_map
+maps at address
+.Fa hva
+a buffer of size
 .Fa size
-available in the machine
-.Fa mach .
-The area is mapped in the calling process' virtual address space, at address
-.Fa hva .
+in the calling process' virtual address space.
+This buffer is allowed to be subsequently mapped in a virtual machine.
+.Pp
+.Fn nvmm_hva_unmap
+unmaps the buffer of size
+.Fa size
+at address
+.Fa hva
+from the calling process' virtual address space.
+.Pp
+.Fn nvmm_gpa_map
+maps into the guest physical memory beginning on address
+.Fa gpa
+the buffer of size
+.Fa size
+located at address
+.Fa hva
+of the calling process' virtual address space.
+The
+.Fa hva
+parameter must point to a buffer that was previously mapped with
+.Fn nvmm_hva_map .
 .Pp
 .Fn nvmm_gpa_unmap
 removes the guest physical memory area beginning on address
@@ -181,9 +203,6 @@ and of size
 .Fa size
 from the machine
 .Fa mach .
-It also unmaps the area beginning on
-.Fa hva
-from the calling process' virtual address space.
 .Pp
 .Fn nvmm_gva_to_gpa
 translates, on the CPU
@@ -473,14 +492,18 @@ variable
 .Va errno
 is set to indicate the error.
 .Sh FILES
-Functional examples:
-.Pp
 .Bl -tag -width XXXX -compact
-.It Pa src/share/examples/nvmm/toyvirt/
-Example of virtualizer.
-Launches the binary given as argument in a virtual machine.
-.It Pa src/share/examples/nvmm/smallkern/
-Example of a kernel that can be executed by toyvirt.
+.It Lk https://www.netbsd.org/~maxv/nvmm/nvmm-demo.zip
+Functional example (demonstrator).
+Contains a virtualizer that uses the
+.Nm
+API, and a small kernel that exercises this virtualizer.
+.It Pa src/sys/dev/nvmm/
+Source code of the kernel NVMM driver.
+.It Pa src/lib/libnvmm/
+Source code of the
+.Nm
+library.
 .El
 .Sh ERRORS
 These functions will fail if:
@@ -508,6 +531,8 @@ uses the following error codes:
 .It Bq Er EAGAIN
 The VCPU cannot receive the event immediately.
 .El
+.Sh SEE ALSO
+.Xr nvmm 4
 .Sh AUTHORS
 NVMM was designed and implemented by
 .An Maxime Villard .

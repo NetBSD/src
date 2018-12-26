@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.23.2.3 2018/11/26 01:52:28 pgoyette Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.23.2.4 2018/12/26 14:01:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23.2.3 2018/11/26 01:52:28 pgoyette Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23.2.4 2018/12/26 14:01:46 pgoyette Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23.2.3 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.23.2.4 2018/12/26 14:01:46 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -137,7 +137,7 @@ xen_ipi_init(void)
 	snprintf(intr_xname, sizeof(intr_xname), "%s ipi",
 	    device_xname(ci->ci_dev));
 
-	if (intr_establish_xname(-1, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
+	if (xen_intr_establish_xname(-1, &xen_pic, evtchn, IST_LEVEL, IPL_HIGH,
 		xen_ipi_handler, ci, true, intr_xname) == NULL) {
 		panic("%s: unable to register ipi handler\n", __func__);
 		/* NOTREACHED */

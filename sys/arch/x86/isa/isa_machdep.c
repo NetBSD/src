@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.38.2.2 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.38.2.3 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.38.2.2 2018/09/30 01:45:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.38.2.3 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.38.2.2 2018/09/30 01:45:48 pgoyett
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/mbuf.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 
@@ -143,7 +142,11 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
+#if !defined(XEN)
 		isp = ci->ci_isources[i];
+#else
+		isp = ci->ci_xsources[i];
+#endif
 		if (isp == NULL) {
 			/* if nothing's using the irq, just return it */
 			*irq = i;
@@ -210,8 +213,8 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 {
 	struct pic *pic;
 	int pin;
-	intr_handle_t mpih = 0;
 #if NIOAPIC > 0
+	intr_handle_t mpih = 0;
 	struct ioapic_softc *ioapic = NULL;
 #endif
 

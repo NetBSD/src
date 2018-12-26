@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.101.2.6 2018/11/26 01:52:17 pgoyette Exp $
+#	$NetBSD: files.amd64,v 1.101.2.7 2018/12/26 14:01:31 pgoyette Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -28,8 +28,7 @@ defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
 #
 
 defflag			USER_LDT
-defflag			KASLR
-defflag eisa.h EISA
+defflag eisa.h		EISA
 
 # Start code
 file	arch/amd64/amd64/locore.S		machdep
@@ -95,7 +94,8 @@ include	"dev/i2o/files.i2o"
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus, ipmibus
 attach	mainbus at root
-file	arch/amd64/amd64/mainbus.c		mainbus
+file	arch/amd64/amd64/amd64_mainbus.c	mainbus
+file	arch/x86/x86/mainbus.c			mainbus
 
 #
 # PCI-only drivers

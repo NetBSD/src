@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.33 2011/11/20 15:38:00 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.33.48.1 2018/12/26 14:01:41 pgoyette Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -118,9 +118,6 @@ file	dev/md_root.c				memory_disk_hooks
 
 # NetBSD m68k a.out binary compatibility (COMPAT_AOUT_M68K)
 include "compat/aoutm68k/files.aoutm68k"
-
-# SVR4 Binary Compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
 
 # SunOS binary compatibility (COMPAT_SUNOS)
 include	"compat/sunos/files.sunos"

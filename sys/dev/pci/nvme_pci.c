@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.19.10.2 2018/09/06 06:55:51 pgoyette Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.19.10.3 2018/12/26 14:01:50 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.19.10.2 2018/09/06 06:55:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.19.10.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_iot = pa->pa_memt;
-	error = pci_mapreg_info(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START,
+	error = pci_mapreg_info(pa->pa_pc, pa->pa_tag, NVME_PCI_BAR,
 	    memtype, &memaddr, &sc->sc_ios, &flags);
 	if (error) {
 		aprint_error_dev(self, "can't get map info\n");
@@ -190,7 +190,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		    msixoff + PCI_MSIX_TBLOFFSET);
 		table_offset = msixtbl & PCI_MSIX_TBLOFFSET_MASK;
 		bir = msixtbl & PCI_MSIX_PBABIR_MASK;
-		if (bir == 0) {
+		if (bir == PCI_MAPREG_NUM(NVME_PCI_BAR)) {
 			sc->sc_ios = table_offset;
 		}
 	}
@@ -386,40 +386,25 @@ nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 {
 	struct nvme_softc *sc = &psc->psc_nvme;
 	int error;
-	int counts[PCI_INTR_TYPE_SIZE], alloced_counts[PCI_INTR_TYPE_SIZE];
+	int counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_handle_t *ihps;
-	int max_type, intr_type;
+	int intr_type;
 
-	if (nvme_pci_force_intx) {
-		max_type = PCI_INTR_TYPE_INTX;
+	memset(counts, 0, sizeof(counts));
+
+	if (nvme_pci_force_intx)
 		goto force_intx;
-	}
 
 	/* MSI-X */
-	max_type = PCI_INTR_TYPE_MSIX;
 	counts[PCI_INTR_TYPE_MSIX] = uimin(pci_msix_count(pa->pa_pc, pa->pa_tag),
 	    ncpu + 1);
-	if (counts[PCI_INTR_TYPE_MSIX] > 0) {
-		memset(alloced_counts, 0, sizeof(alloced_counts));
-		alloced_counts[PCI_INTR_TYPE_MSIX] = counts[PCI_INTR_TYPE_MSIX];
-		if (pci_intr_alloc(pa, &ihps, alloced_counts,
-		    PCI_INTR_TYPE_MSIX)) {
-			counts[PCI_INTR_TYPE_MSIX] = 0;
-		} else {
-			counts[PCI_INTR_TYPE_MSIX] =
-			    alloced_counts[PCI_INTR_TYPE_MSIX];
-			pci_intr_release(pa->pa_pc, ihps,
-			    alloced_counts[PCI_INTR_TYPE_MSIX]);
-		}
-	}
-	if (counts[PCI_INTR_TYPE_MSIX] < 2) {
+	if (counts[PCI_INTR_TYPE_MSIX] < 1) {
 		counts[PCI_INTR_TYPE_MSIX] = 0;
-		max_type = PCI_INTR_TYPE_MSI;
 	} else if (!nvme_pci_mq || !nvme_pci_mpsafe) {
-		counts[PCI_INTR_TYPE_MSIX] = 2;	/* adminq + 1 ioq */
+		if (counts[PCI_INTR_TYPE_MSIX] > 2)
+			counts[PCI_INTR_TYPE_MSIX] = 2;	/* adminq + 1 ioq */
 	}
 
-retry_msi:
 	/* MSI */
 	counts[PCI_INTR_TYPE_MSI] = pci_msi_count(pa->pa_pc, pa->pa_tag);
 	if (counts[PCI_INTR_TYPE_MSI] > 0) {
@@ -428,22 +413,9 @@ retry_msi:
 				break;
 			counts[PCI_INTR_TYPE_MSI] /= 2;
 		}
-		memset(alloced_counts, 0, sizeof(alloced_counts));
-		alloced_counts[PCI_INTR_TYPE_MSI] = counts[PCI_INTR_TYPE_MSI];
-		if (pci_intr_alloc(pa, &ihps, alloced_counts,
-		    PCI_INTR_TYPE_MSI)) {
-			counts[PCI_INTR_TYPE_MSI] = 0;
-		} else {
-			counts[PCI_INTR_TYPE_MSI] =
-			    alloced_counts[PCI_INTR_TYPE_MSI];
-			pci_intr_release(pa->pa_pc, ihps,
-			    alloced_counts[PCI_INTR_TYPE_MSI]);
-		}
 	}
 	if (counts[PCI_INTR_TYPE_MSI] < 1) {
 		counts[PCI_INTR_TYPE_MSI] = 0;
-		if (max_type == PCI_INTR_TYPE_MSI)
-			max_type = PCI_INTR_TYPE_INTX;
 	} else if (!nvme_pci_mq || !nvme_pci_mpsafe) {
 		if (counts[PCI_INTR_TYPE_MSI] > 2)
 			counts[PCI_INTR_TYPE_MSI] = 2;	/* adminq + 1 ioq */
@@ -453,42 +425,20 @@ force_intx:
 	/* INTx */
 	counts[PCI_INTR_TYPE_INTX] = 1;
 
-	memcpy(alloced_counts, counts, sizeof(counts));
-	error = pci_intr_alloc(pa, &ihps, alloced_counts, max_type);
-	if (error) {
-		if (max_type != PCI_INTR_TYPE_INTX) {
-retry:
-			memset(counts, 0, sizeof(counts));
-			if (max_type == PCI_INTR_TYPE_MSIX) {
-				max_type = PCI_INTR_TYPE_MSI;
-				goto retry_msi;
-			} else {
-				max_type = PCI_INTR_TYPE_INTX;
-				goto force_intx;
-			}
-		}
+	error = pci_intr_alloc(pa, &ihps, counts, PCI_INTR_TYPE_MSIX);
+	if (error)
 		return error;
-	}
 
 	intr_type = pci_intr_type(pa->pa_pc, ihps[0]);
-	if (alloced_counts[intr_type] < counts[intr_type]) {
-		if (intr_type != PCI_INTR_TYPE_INTX) {
-			pci_intr_release(pa->pa_pc, ihps,
-			    alloced_counts[intr_type]);
-			max_type = intr_type;
-			goto retry;
-		}
-		return EBUSY;
-	}
 
 	psc->psc_intrs = ihps;
-	psc->psc_nintrs = alloced_counts[intr_type];
+	psc->psc_nintrs = counts[intr_type];
 	if (intr_type == PCI_INTR_TYPE_MSI) {
-		if (alloced_counts[intr_type] > ncpu + 1)
-			alloced_counts[intr_type] = ncpu + 1;
+		if (counts[intr_type] > ncpu + 1)
+			counts[intr_type] = ncpu + 1;
 	}
-	sc->sc_use_mq = alloced_counts[intr_type] > 1;
-	sc->sc_nq = sc->sc_use_mq ? alloced_counts[intr_type] - 1 : 1;
+	sc->sc_use_mq = counts[intr_type] > 1;
+	sc->sc_nq = sc->sc_use_mq ? counts[intr_type] - 1 : 1;
 
 	return 0;
 }

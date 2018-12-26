@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flex 2.5.2\n"
 "Report-Msgid-Bugs-To: flex-devel@lists.sourceforge.net\n"
-"POT-Creation-Date: 2016-12-30 12:48-0500\n"
+"POT-Creation-Date: 2017-05-06 10:49-0400\n"
 "PO-Revision-Date: 1997-02-05 20:30\n"
 "Last-Translator: Choi Jun Ho <junker@jazz.snu.ac.kr>\n"
 "Language-Team: Korean <ko@li.org>\n"
@@ -14,6 +14,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=EUC-KR\n"
 "Content-Transfer-Encoding: 8-bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 
 #: src/buf.c:79
 msgid "Allocation of buffer to print string failed"
@@ -75,20 +76,20 @@ msgstr ""
 "DFA 출력:\n"
 "\n"
 
-#: src/dfa.c:592
+#: src/dfa.c:587
 msgid "could not create unique end-of-buffer state"
 msgstr "유일한 버퍼의 끝(end-of-buffer)상태를 만들 수 없었습니다"
 
-#: src/dfa.c:613
+#: src/dfa.c:608
 #, c-format
 msgid "state # %d:\n"
 msgstr "상태번호 %d:\n"
 
-#: src/dfa.c:773
+#: src/dfa.c:768
 msgid "Could not write yynxt_tbl[][]"
 msgstr ""
 
-#: src/dfa.c:1033
+#: src/dfa.c:1028
 msgid "bad transition character detected in sympartition()"
 msgstr "sympartition()에서 잘못된 전이 문자를 찾았습니다"
 
@@ -104,30 +105,30 @@ msgstr ""
 "동치류:\n"
 "\n"
 
-#: src/gen.c:665 src/gen.c:694 src/gen.c:1214
+#: src/gen.c:669 src/gen.c:698 src/gen.c:1218
 #, c-format
 msgid "state # %d accepts: [%d]\n"
 msgstr "상태번호 %d는 [%d]를 받아들입니다\n"
 
-#: src/gen.c:1111
+#: src/gen.c:1115
 #, c-format
 msgid "state # %d accepts: "
 msgstr "상태번호 %d는 다음을 받아들입니다: "
 
-#: src/gen.c:1158
+#: src/gen.c:1162
 msgid "Could not write yyacclist_tbl"
 msgstr ""
 
-#: src/gen.c:1232
+#: src/gen.c:1236
 msgid "Could not write yyacc_tbl"
 msgstr ""
 
-#: src/gen.c:1247 src/gen.c:1619 src/gen.c:1642
+#: src/gen.c:1251 src/gen.c:1623 src/gen.c:1646
 #, fuzzy
 msgid "Could not write ecstbl"
 msgstr "%s를 만들 수 없습니다"
 
-#: src/gen.c:1267
+#: src/gen.c:1271
 msgid ""
 "\n"
 "\n"
@@ -137,43 +138,43 @@ msgstr ""
 "\n"
 "메타-동치류들:\n"
 
-#: src/gen.c:1289
+#: src/gen.c:1293
 msgid "Could not write yymeta_tbl"
 msgstr ""
 
-#: src/gen.c:1348
+#: src/gen.c:1352
 #, fuzzy
 msgid "Could not write yybase_tbl"
 msgstr "%s를 만들 수 없습니다"
 
-#: src/gen.c:1380
+#: src/gen.c:1384
 msgid "Could not write yydef_tbl"
 msgstr ""
 
-#: src/gen.c:1418
+#: src/gen.c:1422
 msgid "Could not write yynxt_tbl"
 msgstr ""
 
-#: src/gen.c:1452
+#: src/gen.c:1456
 msgid "Could not write yychk_tbl"
 msgstr ""
 
-#: src/gen.c:1604 src/gen.c:1633
+#: src/gen.c:1608 src/gen.c:1637
 #, fuzzy
 msgid "Could not write ftbl"
 msgstr "%s를 만들 수 없습니다"
 
-#: src/gen.c:1610
+#: src/gen.c:1614
 #, fuzzy
 msgid "Could not write ssltbl"
 msgstr "%s를 만들 수 없습니다"
 
-#: src/gen.c:1661
+#: src/gen.c:1665
 #, fuzzy
 msgid "Could not write eoltbl"
 msgstr "%s를 만들 수 없습니다"
 
-#: src/gen.c:1718
+#: src/gen.c:1722
 msgid "Could not write yynultrans_tbl"
 msgstr ""
 
@@ -232,311 +233,311 @@ msgstr "-Cf와 -CF는 같이 쓸 수 없습니다"
 msgid "bison bridge not supported for the C++ scanner."
 msgstr ""
 
-#: src/main.c:336 src/main.c:418
+#: src/main.c:336 src/main.c:419
 #, c-format
 msgid "could not create %s"
 msgstr "%s를 만들 수 없습니다"
 
-#: src/main.c:430
+#: src/main.c:431
 #, fuzzy
 msgid "could not write tables header"
 msgstr "%s를 만들 수 없습니다"
 
-#: src/main.c:434
+#: src/main.c:435
 #, c-format
 msgid "can't open skeleton file %s"
 msgstr "스켈레톤 파일 %s를 열 수 없습니다"
 
-#: src/main.c:449
+#: src/main.c:450
 msgid "Prefix cannot include '[' or ']'"
 msgstr ""
 
-#: src/main.c:473
+#: src/main.c:474
 msgid "allocation of macro definition failed"
 msgstr ""
 
-#: src/main.c:520
+#: src/main.c:521
 #, c-format
 msgid "input error reading skeleton file %s"
 msgstr "스켈레톤 파일 %s를 읽는 도중 오류가 발생했습니다"
 
-#: src/main.c:524
+#: src/main.c:525
 #, c-format
 msgid "error closing skeleton file %s"
 msgstr "스켈레톤 파일 %s를 닫는데 오류가 발생했습니다"
 
-#: src/main.c:708
+#: src/main.c:709
 #, fuzzy, c-format
 msgid "error creating header file %s"
 msgstr "백업 파일 %s를 쓰는데 오류가 발생했습니다"
 
-#: src/main.c:716
+#: src/main.c:717
 #, c-format
 msgid "error writing output file %s"
 msgstr "출력파일 %s를 쓰는 데 오류가 발생했습니다"
 
-#: src/main.c:720
+#: src/main.c:721
 #, c-format
 msgid "error closing output file %s"
 msgstr "출력파일 %s를 닫는데 오류가 발생했습니다"
 
-#: src/main.c:724
+#: src/main.c:725
 #, c-format
 msgid "error deleting output file %s"
 msgstr "출력파일 %s를 지우는 데 오류가 발생했습니다"
 
-#: src/main.c:731
+#: src/main.c:732
 #, c-format
 msgid "No backing up.\n"
 msgstr "되돌림이 없습니다.\n"
 
-#: src/main.c:735
+#: src/main.c:736
 #, c-format
 msgid "%d backing up (non-accepting) states.\n"
 msgstr "%d개의 되돌림(받아들이지 않는) 상태.\n"
 
-#: src/main.c:739
+#: src/main.c:740
 #, c-format
 msgid "Compressed tables always back up.\n"
 msgstr " 압축된 테이블은 항상 백업합니다.\n"
 
-#: src/main.c:742
+#: src/main.c:743
 #, c-format
 msgid "error writing backup file %s"
 msgstr "백업 파일 %s를 쓰는데 오류가 발생했습니다"
 
-#: src/main.c:746
+#: src/main.c:747
 #, c-format
 msgid "error closing backup file %s"
 msgstr "백업 파일 %s를 닫는데 오류가 발생했습니다"
 
-#: src/main.c:751
+#: src/main.c:752
 #, c-format
 msgid "%s version %s usage statistics:\n"
 msgstr "%s 버전 %s 사용 통계:\n"
 
-#: src/main.c:754
+#: src/main.c:755
 #, c-format
 msgid "  scanner options: -"
 msgstr "  스캐너 옵션: -"
 
-#: src/main.c:833
+#: src/main.c:834
 #, c-format
 msgid "  %d/%d NFA states\n"
 msgstr "  %d/%d개의 NFA 상태\n"
 
-#: src/main.c:835
+#: src/main.c:836
 #, c-format
 msgid "  %d/%d DFA states (%d words)\n"
 msgstr "  %d/%d개의 DFA 상태 (%d 단어)\n"
 
-#: src/main.c:837
+#: src/main.c:838
 #, c-format
 msgid "  %d rules\n"
 msgstr "  %d개의 규칙\n"
 
-#: src/main.c:842
+#: src/main.c:843
 #, c-format
 msgid "  No backing up\n"
 msgstr "  되돌림이 없습니다\n"
 
-#: src/main.c:846
+#: src/main.c:847
 #, c-format
 msgid "  %d backing-up (non-accepting) states\n"
 msgstr "  %d개의 되돌림(받아들이지 않는) 상태\n"
 
-#: src/main.c:851
+#: src/main.c:852
 #, c-format
 msgid "  Compressed tables always back-up\n"
 msgstr " 압축된 테이블은 항상 백업합니다\n"
 
-#: src/main.c:855
+#: src/main.c:856
 #, c-format
 msgid "  Beginning-of-line patterns used\n"
 msgstr "  행 시작(beginning-of-line) 유형을 사용하였습니다\n"
 
-#: src/main.c:857
+#: src/main.c:858
 #, c-format
 msgid "  %d/%d start conditions\n"
 msgstr "  %d/%d개의 시작조건\n"
 
-#: src/main.c:861
+#: src/main.c:862
 #, c-format
 msgid "  %d epsilon states, %d double epsilon states\n"
 msgstr "  %d개의 엡실론 상태, %d개의 이중 엡실론 상태\n"
 
-#: src/main.c:865
+#: src/main.c:866
 #, c-format
 msgid "  no character classes\n"
 msgstr "  문자류가 없습니다\n"
 
-#: src/main.c:869
+#: src/main.c:870
 #, c-format
 msgid "  %d/%d character classes needed %d/%d words of storage, %d reused\n"
 msgstr ""
 "  %d/%d 문자 집합에 %d/%d개의 저장용 문자가 필요했고, %d개는 재사용되었습니"
 "다.\n"
 
-#: src/main.c:874
+#: src/main.c:875
 #, c-format
 msgid "  %d state/nextstate pairs created\n"
 msgstr "  %d개의 상태/다음 상태 쌍이 만들어졌습니다\n"
 
-#: src/main.c:877
+#: src/main.c:878
 #, c-format
 msgid "  %d/%d unique/duplicate transitions\n"
 msgstr "  %d/%d개의 유일한/중복되는 전이\n"
 
-#: src/main.c:882
+#: src/main.c:883
 #, c-format
 msgid "  %d table entries\n"
 msgstr "  %d개의 테이블 엔트리\n"
 
-#: src/main.c:890
+#: src/main.c:891
 #, c-format
 msgid "  %d/%d base-def entries created\n"
 msgstr "  %d/%d base-def 엔트리가 만들어졌습니다\n"
 
-#: src/main.c:894
+#: src/main.c:895
 #, c-format
 msgid "  %d/%d (peak %d) nxt-chk entries created\n"
 msgstr "  %d/%d (최대 %d) nxt-chk 엔트리가 만들어졌습니다\n"
 
-#: src/main.c:898
+#: src/main.c:899
 #, c-format
 msgid "  %d/%d (peak %d) template nxt-chk entries created\n"
 msgstr "  %d/%d (최대 %d) 템플리트 nxt-chk 엔트리가 만들어졌습니다\n"
 
-#: src/main.c:902
+#: src/main.c:903
 #, c-format
 msgid "  %d empty table entries\n"
 msgstr "  %d개의 빈 테이블 엔트리\n"
 
-#: src/main.c:904
+#: src/main.c:905
 #, c-format
 msgid "  %d protos created\n"
 msgstr "  %d개의 원형이 만들어졌습니다\n"
 
-#: src/main.c:907
+#: src/main.c:908
 #, c-format
 msgid "  %d templates created, %d uses\n"
 msgstr "  %d개의 템플리트가 만들어지고, %d개를 씁니다\n"
 
-#: src/main.c:915
+#: src/main.c:916
 #, c-format
 msgid "  %d/%d equivalence classes created\n"
 msgstr "  %d/%d개의 동치류가 만들어졌습니다\n"
 
-#: src/main.c:923
+#: src/main.c:924
 #, c-format
 msgid "  %d/%d meta-equivalence classes created\n"
 msgstr "  %d/%d 메타 동치류가 만들어졌습니다\n"
 
-#: src/main.c:929
+#: src/main.c:930
 #, c-format
 msgid "  %d (%d saved) hash collisions, %d DFAs equal\n"
 msgstr "  %d(%d 저장됨)개의 해싱 충돌로 %d개의 DFA가 같게 처리됩니다\n"
 
-#: src/main.c:931
+#: src/main.c:932
 #, c-format
 msgid "  %d sets of reallocations needed\n"
 msgstr "  %d개의 재할당 집합이 필요합니다\n"
 
-#: src/main.c:933
+#: src/main.c:934
 #, c-format
 msgid "  %d total table entries needed\n"
 msgstr "  총 %d개의 테이블 엔트리가 필요합니다\n"
 
-#: src/main.c:1007
+#: src/main.c:1008
 #, c-format
 msgid "Internal error. flexopts are malformed.\n"
 msgstr ""
 
-#: src/main.c:1017
+#: src/main.c:1018
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr ""
 
-#: src/main.c:1074
+#: src/main.c:1075
 #, c-format
 msgid "unknown -C option '%c'"
 msgstr "알 수 없는 -C 옵션 '%c'"
 
-#: src/main.c:1203
+#: src/main.c:1204
 #, fuzzy, c-format
 msgid "%s %s\n"
 msgstr "%s 버전 %s\n"
 
-#: src/main.c:1475
+#: src/main.c:1476
 msgid "fatal parse error"
 msgstr "치명적인 파싱 에러"
 
-#: src/main.c:1507
+#: src/main.c:1508
 #, c-format
 msgid "could not create backing-up info file %s"
 msgstr "되돌림 정보 파일 %s를 만들 수 없었습니다"
 
-#: src/main.c:1528
+#: src/main.c:1529
 #, c-format
 msgid "-l AT&T lex compatibility option entails a large performance penalty\n"
 msgstr "-l AT&T lex 호환 옵션은 큰 성능 저하를 일으킵니다\n"
 
-#: src/main.c:1531
+#: src/main.c:1532
 #, c-format
 msgid " and may be the actual source of other reported performance penalties\n"
 msgstr " 그리고 아마도 다른 보고된 성능 저하의 실제 원인일 것입니다\n"
 
-#: src/main.c:1537
+#: src/main.c:1538
 #, fuzzy, c-format
 msgid ""
 "%%option yylineno entails a performance penalty ONLY on rules that can match "
 "newline characters\n"
 msgstr "%%option yylineno는 큰 성능저하를 일으킵니다\n"
 
-#: src/main.c:1544
+#: src/main.c:1545
 #, c-format
 msgid "-I (interactive) entails a minor performance penalty\n"
 msgstr "-I (대화형) 은 소규모의 성능저하를 일으킵니다\n"
 
-#: src/main.c:1549
+#: src/main.c:1550
 #, c-format
 msgid "yymore() entails a minor performance penalty\n"
 msgstr "yymore()는 소규모의 성능저하를 일으킵니다\n"
 
-#: src/main.c:1555
+#: src/main.c:1556
 #, c-format
 msgid "REJECT entails a large performance penalty\n"
 msgstr "REJECT는 큰 성능저하를 일으킵니다\n"
 
-#: src/main.c:1560
+#: src/main.c:1561
 #, c-format
 msgid "Variable trailing context rules entail a large performance penalty\n"
 msgstr "가변 추적 문맥 규칙은 큰 성능저하를 일으킵니다\n"
 
-#: src/main.c:1572
+#: src/main.c:1573
 msgid "REJECT cannot be used with -f or -F"
 msgstr "REJECT는 -f나 -F옵션과 같이 쓸 수 없습니다"
 
-#: src/main.c:1575
+#: src/main.c:1576
 #, fuzzy, c-format
 msgid "%option yylineno cannot be used with REJECT"
 msgstr "%option yylineno은 -f나 -F옵션과 같이 쓸 수 없습니다"
 
-#: src/main.c:1578
+#: src/main.c:1579
 msgid "variable trailing context rules cannot be used with -f or -F"
 msgstr "가변 추적 문맥 규칙은 -f나 -F옵션과 같이 쓸 수 없습니다"
 
-#: src/main.c:1703
+#: src/main.c:1704
 #, c-format
 msgid "%option yyclass only meaningful for C++ scanners"
 msgstr "%option yyclass는 C++스캐너에게만 의미가 있습니다"
 
-#: src/main.c:1790
+#: src/main.c:1791
 #, c-format
 msgid "Usage: %s [OPTIONS] [FILE]...\n"
 msgstr ""
 
-#: src/main.c:1793
+#: src/main.c:1794
 #, c-format
 msgid ""
 "Generates programs that perform pattern-matching on text.\n"
@@ -602,48 +603,48 @@ msgid ""
 "  -V, --version           report %s version\n"
 msgstr ""
 
-#: src/misc.c:65
+#: src/misc.c:64
 msgid "allocation of sko_stack failed"
 msgstr ""
 
-#: src/misc.c:101
+#: src/misc.c:100
 #, c-format
 msgid "name \"%s\" ridiculously long"
 msgstr "이름 \"%s\"는 비정상적으로 깁니다"
 
-#: src/misc.c:151
+#: src/misc.c:155
 msgid "memory allocation failed in allocate_array()"
 msgstr "allocate_array()에서 메모리 할당이 실패했습니다"
 
-#: src/misc.c:201
+#: src/misc.c:205
 #, c-format
 msgid "bad character '%s' detected in check_char()"
 msgstr "check_char()에서 잘못된 문자 '%s'를 찾았습니다"
 
-#: src/misc.c:206
+#: src/misc.c:210
 #, c-format
 msgid "scanner requires -8 flag to use the character %s"
 msgstr "스캐너에서 문자 %s를 쓰기 위해서는 -8옵션이 필요합니다"
 
-#: src/misc.c:225
+#: src/misc.c:229
 #, fuzzy
 msgid "memory allocation failure in xstrdup()"
 msgstr "allocate_array()에서 메모리 할당이 실패했습니다"
 
-#: src/misc.c:299
+#: src/misc.c:303
 #, c-format
 msgid "%s: fatal internal error, %s\n"
 msgstr "%s: 치명적인 내부 에러, %s\n"
 
-#: src/misc.c:689
+#: src/misc.c:671
 msgid "attempt to increase array size failed"
 msgstr "배열 크기를 늘리려는 시도가 실패했습니다"
 
-#: src/misc.c:816
+#: src/misc.c:795
 msgid "bad line in skeleton file"
 msgstr "스켈레톤 파일에 잘못된 행"
 
-#: src/misc.c:866
+#: src/misc.c:845
 msgid "memory allocation failed in yy_flex_xmalloc()"
 msgstr "yy_flex_xmalloc()에서 메모리 할당이 실패했습니다"
 
@@ -746,7 +747,7 @@ msgstr "\t-i  대소문자 구별없는 스캐너를 만듭니다\n"
 msgid "[:^upper:] ambiguous in case insensitive scanner"
 msgstr "\t-i  대소문자 구별없는 스캐너를 만듭니다\n"
 
-#: src/scan.l:82 src/scan.l:645 src/scan.l:703
+#: src/scan.l:82 src/scan.l:644 src/scan.l:702
 msgid "Input line too long\n"
 msgstr ""
 
@@ -764,78 +765,78 @@ msgstr "알 수 없는 '%' 지시자"
 msgid "Definition name too long\n"
 msgstr ""
 
-#: src/scan.l:310
+#: src/scan.l:309
 msgid "Unmatched '{'"
 msgstr ""
 
-#: src/scan.l:326
+#: src/scan.l:325
 #, c-format
 msgid "Definition value for {%s} too long\n"
 msgstr ""
 
-#: src/scan.l:343
+#: src/scan.l:342
 msgid "incomplete name definition"
 msgstr "불완전한 이름 정의"
 
-#: src/scan.l:468
+#: src/scan.l:467
 msgid "Option line too long\n"
 msgstr ""
 
-#: src/scan.l:476
+#: src/scan.l:475
 #, c-format
 msgid "unrecognized %%option: %s"
 msgstr "알 수 없는 %%option: %s"
 
-#: src/scan.l:660 src/scan.l:833
+#: src/scan.l:659 src/scan.l:832
 msgid "bad character class"
 msgstr "잘못된 문자류"
 
-#: src/scan.l:710
+#: src/scan.l:709
 #, c-format
 msgid "undefined definition {%s}"
 msgstr "정의되지 않은 정의 {%s}"
 
-#: src/scan.l:773
+#: src/scan.l:772
 msgid "unbalanced parenthesis"
 msgstr ""
 
-#: src/scan.l:788
+#: src/scan.l:787
 #, c-format
 msgid "bad <start condition>: %s"
 msgstr "잘못된 <시작 조건>: %s"
 
-#: src/scan.l:801
+#: src/scan.l:800
 msgid "missing quote"
 msgstr "인용기호 빠짐"
 
-#: src/scan.l:867
+#: src/scan.l:866
 #, c-format
 msgid "bad character class expression: %s"
 msgstr "잘못된 문자 집합 식: %s"
 
-#: src/scan.l:889
+#: src/scan.l:888
 msgid "bad character inside {}'s"
 msgstr "{}안의 잘못된 문자"
 
-#: src/scan.l:895
+#: src/scan.l:894
 msgid "missing }"
 msgstr "}이 빠졌습니다"
 
-#: src/scan.l:973
+#: src/scan.l:972
 msgid "EOF encountered inside an action"
 msgstr "동작 도중에 EOF를 만났습니다"
 
-#: src/scan.l:978
+#: src/scan.l:977
 #, fuzzy
 msgid "EOF encountered inside pattern"
 msgstr "동작 도중에 EOF를 만났습니다"
 
-#: src/scan.l:1011
+#: src/scan.l:1010
 #, c-format
 msgid "bad character: %s"
 msgstr "잘못된 문자: %s"
 
-#: src/scan.l:1039
+#: src/scan.l:1038
 #, c-format
 msgid "can't open %s"
 msgstr "%s를 열 수 없습니다"

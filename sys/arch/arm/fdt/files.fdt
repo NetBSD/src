@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.15.2.5 2018/10/20 06:58:25 pgoyette Exp $
+# $NetBSD: files.fdt,v 1.15.2.6 2018/12/26 14:01:33 pgoyette Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -58,11 +58,9 @@ device	pcihost: pcibus
 attach	pcihost at fdt with pcihost_fdt
 file	arch/arm/fdt/pcihost_fdt.c		pcihost_fdt
 
-device	armpmu
+device	armpmu: tprof
 attach	armpmu at fdt with pmu_fdt
 file	arch/arm/fdt/pmu_fdt.c			pmu_fdt
-file	dev/tprof/tprof_armv7.c			pmu_fdt & arm32
-file	dev/tprof/tprof_armv8.c			pmu_fdt & aarch64
 
 attach	genfb at fdt with plfb_fdt: fdt_display_timing
 file	arch/arm/fdt/plfb_fdt.c			plfb_fdt

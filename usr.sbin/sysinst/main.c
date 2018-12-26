@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7.8.3 2018/11/26 01:52:55 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.7.8.4 2018/12/26 14:02:12 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,7 +94,7 @@ static const struct f_arg fflagopts[] = {
 	{"ftp host", SYSINST_FTP_HOST, ftp.xfer_host[XFER_FTP], sizeof ftp.xfer_host[XFER_FTP]},
 	{"http host", SYSINST_HTTP_HOST, ftp.xfer_host[XFER_HTTP], sizeof ftp.xfer_host[XFER_HTTP]},
 	{"ftp dir", SYSINST_FTP_DIR, ftp.dir, sizeof ftp.dir},
-	{"ftp prefix", "/" MACH "/binary/sets", set_dir_bin, sizeof set_dir_bin},
+	{"ftp prefix", "/" ARCH_SUBDIR "/binary/sets", set_dir_bin, sizeof set_dir_bin},
 	{"ftp src prefix", "/source/sets", set_dir_src, sizeof set_dir_src},
 	{"ftp user", "ftp", ftp.user, sizeof ftp.user},
 	{"ftp pass", "", ftp.pass, sizeof ftp.pass},
@@ -113,7 +113,7 @@ static const struct f_arg fflagopts[] = {
 	{"pkg host", SYSINST_PKG_HOST, pkg.xfer_host[XFER_FTP], sizeof pkg.xfer_host[XFER_FTP]},
 	{"pkg http host", SYSINST_PKG_HTTP_HOST, pkg.xfer_host[XFER_HTTP], sizeof pkg.xfer_host[XFER_HTTP]},
 	{"pkg dir", SYSINST_PKG_DIR, pkg.dir, sizeof pkg.dir},
-	{"pkg prefix", "/" MACH "/" PKG_SUBDIR "/All", pkg_dir, sizeof pkg_dir},
+	{"pkg prefix", "/" PKG_ARCH_SUBDIR "/" PKG_SUBDIR "/All", pkg_dir, sizeof pkg_dir},
 	{"pkg user", "ftp", pkg.user, sizeof pkg.user},
 	{"pkg pass", "", pkg.pass, sizeof pkg.pass},
 	{"pkg proxy", "", pkg.proxy, sizeof pkg.proxy},

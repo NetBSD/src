@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.32.2.3 2018/09/06 06:55:39 pgoyette Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.32.2.4 2018/12/26 14:01:41 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.3 2018/09/06 06:55:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.4 2018/12/26 14:01:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2107,10 +2107,10 @@ pq3etsec_tx_offload(
 			return;
 		}
 
-		M_MOVE_PKTHDR(mn, m);
+		m_move_pkthdr(mn, m);
 		mn->m_next = m;
 		m = mn;
-		MH_ALIGN(m, sizeof(fcb));
+		m_align(m, sizeof(fcb));
 		m->m_len = sizeof(fcb);
 		*mp = m;
 	}

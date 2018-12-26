@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.14.8.1 2018/06/25 07:25:51 pgoyette Exp $ */
+/* $NetBSD: coram.c,v 1.14.8.2 2018/12/26 14:01:49 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.14.8.1 2018/06/25 07:25:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.14.8.2 2018/12/26 14:01:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,8 @@ coram_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_VM, coram_intr, self);
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_VM, coram_intr,
+	    self, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

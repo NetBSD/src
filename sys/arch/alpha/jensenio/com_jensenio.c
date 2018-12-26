@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.14 2014/03/21 16:39:29 christos Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.14.28.1 2018/12/26 14:01:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.14 2014/03/21 16:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.14.28.1 2018/12/26 14:01:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ com_jensenio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, ja->ja_iot, ioh, ja->ja_ioaddr);
+	com_init_regs(&sc->sc_regs, ja->ja_iot, ioh, ja->ja_ioaddr);
 
 	sc->sc_frequency = COM_FREQ;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.59.12.4 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.59.12.5 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.59.12.4 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.59.12.5 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -289,7 +289,7 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 		if (m == NULL)
 			goto bad;
 		m->m_flags |= m0->m_flags & (M_BCAST|M_MCAST);	/* copy bcast */
-		MH_ALIGN(m, sizeof(struct ieee1394_fraghdr));
+		m_align(m, sizeof(struct ieee1394_fraghdr));
 		m->m_len = sizeof(struct ieee1394_fraghdr);
 		ifh = mtod(m, struct ieee1394_fraghdr *);
 		ifh->ifh_ft_size =

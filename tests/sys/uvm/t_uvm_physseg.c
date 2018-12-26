@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.3 2018/02/08 09:05:20 dholland Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.3.2.1 2018/12/26 14:02:10 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.3 2018/02/08 09:05:20 dholland Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.3.2.1 2018/12/26 14:02:10 pgoyette Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -271,6 +271,11 @@ uvm_physseg_alloc(size_t sz)
 #endif
 
 /*
+ * This macro was added to convert uvmexp.npages from int to psize_t
+ */
+#define INT_TO_PSIZE_T(X) (psize_t)X
+
+/*
  * Test Fixture SetUp().
  */
 static void
@@ -498,7 +503,7 @@ ATF_TC_BODY(uvm_physseg_plug, tc)
 #if VM_PHYSSEG_MAX > 2
 	    + npages2
 #endif
-	    , uvmexp.npages);
+	    , INT_TO_PSIZE_T(uvmexp.npages));
 #if VM_PHYSSEG_MAX > 1
 	/* Scavenge plug - goes into the same slab */
 	ATF_REQUIRE_EQ(uvm_physseg_plug(VALID_START_PFN_3, npages3, &upm3), true);
@@ -706,7 +711,7 @@ ATF_TC_BODY(uvm_page_physload_postboot, tc)
 	/* Should return a valid handle */
 	ATF_REQUIRE(uvm_physseg_valid_p(upm));
 
-	ATF_REQUIRE_EQ(npages1 + npages2, uvmexp.npages);
+	ATF_REQUIRE_EQ(npages1 + npages2, INT_TO_PSIZE_T(uvmexp.npages));
 
 	/* After the second call two segments should exist */
 	ATF_CHECK_EQ(2, uvm_physseg_get_entries());
@@ -889,7 +894,7 @@ ATF_TC_BODY(uvm_physseg_init_seg, tc)
 
 	uvm_physseg_init_seg(PHYSSEG_NODE_TO_HANDLE(seg), pgs);
 
-	ATF_REQUIRE_EQ(npages, uvmexp.npages);
+	ATF_REQUIRE_EQ(npages, INT_TO_PSIZE_T(uvmexp.npages));
 }
 
 #if 0
@@ -2279,7 +2284,11 @@ ATF_TC_BODY(uvm_page_physunload_force, tc)
 	upm = uvm_physseg_find(VALID_AVAIL_END_PFN_1 - 1, NULL);
 
 	/* It should no longer exist */
+#if defined(UVM_HOTPLUG)
 	ATF_CHECK_EQ(NULL, upm);
+#else
+	ATF_CHECK_EQ(-1, upm);
+#endif
 
 	ATF_CHECK_EQ(1, uvm_physseg_get_entries());
 }

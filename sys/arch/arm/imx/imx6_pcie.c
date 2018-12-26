@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.5.4.1 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.5.4.2 2018/12/26 14:01:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.5.4.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.5.4.2 2018/12/26 14:01:33 pgoyette Exp $");
 
 #include "opt_pci.h"
 
@@ -136,7 +136,8 @@ static const char *imx6pcie_intr_string(void *, pci_intr_handle_t,
 					  char *, size_t);
 const struct evcnt *imx6pcie_intr_evcnt(void *, pci_intr_handle_t);
 static void * imx6pcie_intr_establish(void *, pci_intr_handle_t,
-					 int, int (*)(void *), void *);
+					 int, int (*)(void *), void *,
+				         const char *);
 static void imx6pcie_intr_disestablish(void *, void *);
 
 CFATTACH_DECL_NEW(imxpcie, sizeof(struct imx6pcie_softc),
@@ -921,7 +922,7 @@ imx6pcie_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 static void *
 imx6pcie_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*callback)(void *), void *arg)
+    int (*callback)(void *), void *arg, const char *xname)
 {
 	struct imx6pcie_softc *sc = v;
 	struct imx6pcie_ih *pcie_ih;

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.38 2017/02/02 21:50:23 rin Exp $
+#	$NetBSD: genassym.cf,v 1.38.12.1 2018/12/26 14:01:39 pgoyette Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -31,10 +31,6 @@
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
 #
 
-if defined(_KERNEL_OPT)
-include "opt_compat_svr4.h"
-endif
-
 include	<sys/param.h>
 include	<sys/buf.h>
 include	<sys/mbuf.h>
@@ -43,11 +39,6 @@ include	<sys/proc.h>
 include	<sys/syscall.h>
 
 include <uvm/uvm_extern.h>
-
-ifdef COMPAT_SVR4
-include <compat/svr4/svr4_syscall.h>
-include <compat/svr4/svr4_ucontext.h>
-endif
 
 include	<machine/cpu.h>
 include	<machine/psl.h>
@@ -173,12 +164,3 @@ define MACH_MACQ610		MACH_MACQ610
 define MACH_MACC650		MACH_MACC650
 define MACH_MACQ650		MACH_MACQ650
 define MACH_MACQ800		MACH_MACQ800
-
-# SVR4 binary compatibility
-ifdef COMPAT_SVR4
-define SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
-define SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
-define SVR4_SYS_context		SVR4_SYS_context
-define SVR4_SYS_exit		SVR4_SYS_exit
-define SVR4_SETCONTEXT		SVR4_SETCONTEXT
-endif

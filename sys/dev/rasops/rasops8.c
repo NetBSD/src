@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.34 2013/09/15 09:41:55 martin Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.34.28.1 2018/12/26 14:02:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.34 2013/09/15 09:41:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.34.28.1 2018/12/26 14:02:01 pgoyette Exp $");
 
 #include "opt_rasops.h"
 
@@ -175,7 +175,7 @@ rasops8_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		u_char c = clr[1];
 
 		rp -= (ri->ri_stride << 1);
@@ -278,7 +278,7 @@ rasops8_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 
 		rp -= (ri->ri_stride << 1);
 		if (ri->ri_hwbits)
@@ -406,7 +406,7 @@ rasops8_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 		rp[0] = rp[1] = stamp[15];
 		if (ri->ri_hwbits) {
@@ -500,7 +500,7 @@ rasops8_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 		rp[0] = rp[1] = rp[2] = stamp[15];
 		if (ri->ri_hwbits) {
@@ -595,7 +595,7 @@ rasops8_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 		rp[0] = rp[1] = rp[2] = rp[3] = stamp[15];
 		if (ri->ri_hwbits) {

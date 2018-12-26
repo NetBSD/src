@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.1.2.2 2018/11/26 01:52:13 pgoyette Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.1.2.3 2018/12/26 14:01:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -41,16 +41,9 @@
 #include <dev/nvmm/x86/nvmm_x86.h>
 #endif
 
-struct nvmm_area {
-	gpaddr_t gpa;
-	uintptr_t hva;
-	size_t size;
-};
-
 struct nvmm_machine {
 	nvmm_machid_t machid;
-	struct nvmm_area *areas;
-	size_t nareas;
+	void *areas; /* opaque */
 };
 
 struct nvmm_io {
@@ -90,6 +83,8 @@ int nvmm_vcpu_run(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
 
 int nvmm_gpa_map(struct nvmm_machine *, uintptr_t, gpaddr_t, size_t, int);
 int nvmm_gpa_unmap(struct nvmm_machine *, uintptr_t, gpaddr_t, size_t);
+int nvmm_hva_map(struct nvmm_machine *, uintptr_t, size_t);
+int nvmm_hva_unmap(struct nvmm_machine *, uintptr_t, size_t);
 
 int nvmm_gva_to_gpa(struct nvmm_machine *, nvmm_cpuid_t, gvaddr_t, gpaddr_t *,
     nvmm_prot_t *);

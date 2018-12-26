@@ -38,7 +38,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/contrib/ena-com/ena_plat.h 333453 2018-05-10 09:25:51Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.2.2.3 2018/06/25 07:26:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.2.2.4 2018/12/26 14:02:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,22 @@ static inline long PTR_ERR(const void *ptr)
 #define	ENA_COM_PERMISSION	EPERM
 #define ENA_COM_TIMER_EXPIRED	ETIMEDOUT
 
-#define ENA_MSLEEP(x) 		kpause("enaw", false, mstohz(x), NULL)
+static inline int
+ENA_MSLEEP(int x)
+{
+	if (cold) {
+		while (x >= 1000000) {
+			delay(1000000);
+			x -= 1000000;
+		}
+		if (x > 0)
+			delay(x);
+		return EWOULDBLOCK;
+	} else {
+		return kpause("enaw", false, mstohz(x), NULL);
+	}
+}
+
 #define ENA_UDELAY(x) 		DELAY(x)
 #define ENA_GET_SYSTEM_TIMEOUT(timeout_us) \
 	mstohz(timeout_us * (1000 / 100))	/* XXX assumes 100 ms sleep */

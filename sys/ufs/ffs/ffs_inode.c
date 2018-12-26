@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.124 2017/03/18 05:26:40 riastradh Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.124.12.1 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.124 2017/03/18 05:26:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.124.12.1 2018/12/26 14:02:08 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -220,7 +220,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	struct ufsmount *ump = oip->i_ump;
 	void *dcookie;
 
-	UFS_WAPBL_JLOCK_ASSERT(ip->i_ump->um_mountp);
+	UFS_WAPBL_JLOCK_ASSERT(ump->um_mountp);
 
 	if (ovp->v_type == VCHR || ovp->v_type == VBLK ||
 	    ovp->v_type == VFIFO || ovp->v_type == VSOCK) {

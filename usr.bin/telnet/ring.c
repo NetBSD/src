@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.13 2003/08/07 11:16:10 agc Exp $	*/
+/*	$NetBSD: ring.c,v 1.13.96.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: ring.c,v 1.13 2003/08/07 11:16:10 agc Exp $");
+__RCSID("$NetBSD: ring.c,v 1.13.96.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static u_long ring_clock = 0;
 int
 ring_init(Ring *ring, unsigned char *buffer, int count)
 {
-    memset((char *)ring, 0, sizeof *ring);
+    memset(ring, 0, sizeof *ring);
 
     ring->size = count;
 
@@ -283,26 +283,6 @@ ring_supply_data(Ring *ring, unsigned char *buffer, int count)
 	buffer += i;
     }
 }
-
-#ifdef notdef
-
-/*
- * Move data from the "consume" portion of the ring buffer
- */
-void
-ring_consume_data(Ring *ring, unsigned char *buffer, int count)
-{
-    int i;
-
-    while (count) {
-	i = MIN(count, ring_full_consecutive(ring));
-	memmove(buffer, ring->consume, i);
-	ring_consumed(ring, i);
-	count -= i;
-	buffer += i;
-    }
-}
-#endif
 
 #ifdef	ENCRYPTION
 void

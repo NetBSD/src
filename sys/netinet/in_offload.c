@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.7.16.2 2018/09/30 01:45:56 pgoyette Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.7.16.3 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.16.2 2018/09/30 01:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.16.3 2018/12/26 14:02:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -43,22 +43,23 @@ __KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.16.2 2018/09/30 01:45:56 pgoyette
 
 /*
  * Handle M_CSUM_TSOv4 in software. Split the TCP payload in chunks of
- * size MSS, and send them.
+ * size MSS, and return mbuf chain consists of them.
  */
-static int
-tcp4_segment(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
-    struct rtentry *rt)
+struct mbuf *
+tcp4_segment(struct mbuf *m, int off)
 {
 	int mss;
 	int iphlen, thlen;
 	int hlen, len;
 	struct ip *ip;
 	struct tcphdr *th;
-	uint16_t ipid;
+	uint16_t ipid, phsum;
 	uint32_t tcpseq;
 	struct mbuf *hdr = NULL;
-	struct mbuf *t;
-	int error = 0;
+	struct mbuf *m0 = NULL;
+	struct mbuf *prev = NULL;
+	struct mbuf *n, *t;
+	int nsegs;
 
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	KASSERT((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0);
@@ -66,107 +67,129 @@ tcp4_segment(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	m->m_pkthdr.csum_flags = 0;
 
 	len = m->m_pkthdr.len;
-	KASSERT(len >= sizeof(*ip) + sizeof(*th));
+	KASSERT(len >= off + sizeof(*ip) + sizeof(*th));
 
-	if (m->m_len < sizeof(*ip)) {
-		m = m_pullup(m, sizeof(*ip));
-		if (m == NULL) {
-			error = ENOMEM;
+	hlen = off + sizeof(*ip);
+	if (m->m_len < hlen) {
+		m = m_pullup(m, hlen);
+		if (m == NULL)
 			goto quit;
-		}
 	}
-	ip = mtod(m, struct ip *);
+	ip = (void *)(mtod(m, char *) + off);
 	iphlen = ip->ip_hl * 4;
 	KASSERT(ip->ip_v == IPVERSION);
 	KASSERT(iphlen >= sizeof(*ip));
 	KASSERT(ip->ip_p == IPPROTO_TCP);
 	ipid = ntohs(ip->ip_id);
 
-	hlen = iphlen + sizeof(*th);
+	hlen = off + iphlen + sizeof(*th);
 	if (m->m_len < hlen) {
 		m = m_pullup(m, hlen);
-		if (m == NULL) {
-			error = ENOMEM;
+		if (m == NULL)
 			goto quit;
-		}
 	}
-	th = (void *)(mtod(m, char *) + iphlen);
+	th = (void *)(mtod(m, char *) + off + iphlen);
 	tcpseq = ntohl(th->th_seq);
 	thlen = th->th_off * 4;
-	hlen = iphlen + thlen;
+	hlen = off + iphlen + thlen;
 
 	mss = m->m_pkthdr.segsz;
 	KASSERT(mss != 0);
 	KASSERT(len > hlen);
 
 	t = m_split(m, hlen, M_NOWAIT);
-	if (t == NULL) {
-		error = ENOMEM;
+	if (t == NULL)
 		goto quit;
-	}
 	hdr = m;
 	m = t;
+
 	len -= hlen;
 	KASSERT(len % mss == 0);
-	while (len > 0) {
-		struct mbuf *n;
 
-		n = m_dup(hdr, 0, hlen, M_NOWAIT);
-		if (n == NULL) {
-			error = ENOMEM;
-			goto quit;
-		}
+	ip = (void *)(mtod(hdr, char *) + off);
+	ip->ip_len = htons(iphlen + thlen + mss);
+	phsum = in_cksum_phdr(ip->ip_src.s_addr, ip->ip_dst.s_addr,
+	    htons((uint16_t)(thlen + mss) + IPPROTO_TCP));
+
+	for (nsegs = len / mss; nsegs > 0; nsegs--) {
+		if (nsegs > 1) {
+			n = m_dup(hdr, 0, hlen, M_NOWAIT);
+			if (n == NULL)
+				goto quit;
+		} else
+			n = hdr;
 		KASSERT(n->m_len == hlen); /* XXX */
 
-		t = m_split(m, mss, M_NOWAIT);
-		if (t == NULL) {
-			m_freem(n);
-			error = ENOMEM;
-			goto quit;
-		}
+		if (nsegs > 1) {
+			t = m_split(m, mss, M_NOWAIT);
+			if (t == NULL) {
+				m_freem(n);
+				goto quit;
+			}
+		} else
+			t = m;
 		m_cat(n, m);
 		m = t;
 
 		KASSERT(n->m_len >= hlen); /* XXX */
 
-		n->m_pkthdr.len = hlen + mss;
-		ip = mtod(n, struct ip *);
-		KASSERT(ip->ip_v == IPVERSION);
-		ip->ip_len = htons(n->m_pkthdr.len);
-		ip->ip_id = htons(ipid);
-		th = (void *)(mtod(n, char *) + iphlen);
-		th->th_seq = htonl(tcpseq);
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(n, iphlen);
-		th->th_sum = 0;
-		th->th_sum = in4_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
+		if (m0 == NULL)
+			m0 = n;
 
-		error = ip_if_output(ifp, n, sa, rt);
-		if (error) {
-			goto quit;
-		}
+		if (prev != NULL)
+			prev->m_nextpkt = n;
+
+		n->m_pkthdr.len = hlen + mss;
+		n->m_nextpkt = NULL;	/* XXX */
+
+		ip = (void *)(mtod(n, char *) + off);
+		ip->ip_id = htons(ipid);
+		ip->ip_sum = 0;
+		ip->ip_sum = in4_cksum(n, 0, off, iphlen);
+
+		th = (void *)(mtod(n, char *) + off + iphlen);
+		th->th_seq = htonl(tcpseq);
+		th->th_sum = phsum;
+		th->th_sum = in4_cksum(n, 0, off + iphlen, thlen + mss);
 
 		tcpseq += mss;
 		ipid++;
-		len -= mss;
+		prev = n;
 	}
+	return m0;
 
 quit:
-	if (hdr != NULL) {
+	if (hdr != NULL)
 		m_freem(hdr);
-	}
-	if (m != NULL) {
+	if (m != NULL)
+		m_freem(m);
+	for (m = m0; m != NULL; m = n) {
+		n = m->m_nextpkt;
 		m_freem(m);
 	}
 
-	return error;
+	return NULL;
 }
 
 int
 ip_tso_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
     struct rtentry *rt)
 {
-	return tcp4_segment(ifp, m, sa, rt);
+	struct mbuf *n;
+	int error = 0;
+
+	m = tcp4_segment(m, 0);
+	if (m == NULL)
+		return ENOMEM;
+	do {
+		n = m->m_nextpkt;
+		if (error == 0)
+			error = ip_if_output(ifp, m, sa, rt);
+		else
+			m_freem(m);
+		m = n;
+	} while (m != NULL);
+	return error;
 }
 
 /*

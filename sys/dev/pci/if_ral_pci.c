@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.24 2017/07/25 23:17:20 maya Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.24.2.1 2018/12/26 14:01:50 pgoyette Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.24 2015/11/24 17:11:39 mpi Exp $  */
 
 /*-
@@ -21,7 +21,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2860/RT3090 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.24 2017/07/25 23:17:20 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.24.2.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -217,8 +217,8 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(psc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET,
-	    psc->sc_opns->intr, sc);
+	psc->sc_ih = pci_intr_establish_xname(psc->sc_pc, ih, IPL_NET,
+	    psc->sc_opns->intr, sc, device_xname(self));
 
 	if (psc->sc_ih == NULL) {
 		aprint_error(": could not establish interrupt");

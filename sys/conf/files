@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.16 2018/11/26 01:52:29 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.17 2018/12/26 14:01:47 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -30,6 +30,7 @@ defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
 defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
 defflag				KASAN
+defflag				KLEAK
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
@@ -155,7 +156,6 @@ defflag				COMPAT_IBCS2
 defflag				COMPAT_LINUX: COMPAT_NETBSD
 defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS: COMPAT_30
-defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
 defflag				COMPAT_ULTRIX: COMPAT_50
 defflag				COMPAT_NETBSD32
 defflag				COMPAT_SYSV
@@ -346,6 +346,7 @@ define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
+define	ipmibus		{ }
 
 # speaker devices, attaches to audio or pcppi drivers
 device	spkr: wsbelldev
@@ -889,8 +890,7 @@ file	dev/ic/ne2000.c			ne
 defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_16750
-				COM_HAYESP COM_PXA2X0 COM_AU1X00
-				COM_REGMAP COM_FUNCMAP
+				COM_HAYESP COM_PXA2X0
 defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
@@ -1476,6 +1476,10 @@ include "dev/dm/files.dm"
 
 # LED framework
 file	dev/led.c			leds
+
+# IPMI
+device	ipmi: sysmon_envsys, sysmon_wdog
+attach	ipmi at ipmibus
 
 #
 # File systems

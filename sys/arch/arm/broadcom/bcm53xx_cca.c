@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.1 2012/09/01 00:04:44 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.1.44.1 2018/12/26 14:01:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -288,7 +288,7 @@ com_cca_attach(device_t parent, device_t self, void *aux)
 		panic(": can't map registers\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, ccaaa->ccaaa_bst, bsh, addr);
+	com_init_regs(&sc->sc_regs, ccaaa->ccaaa_bst, bsh, addr);
 
 	com_attach_subr(sc);
 }

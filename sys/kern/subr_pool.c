@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pool.c,v 1.221.2.3 2018/09/30 01:45:55 pgoyette Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.221.2.4 2018/12/26 14:02:04 pgoyette Exp $	*/
 
-/*-
- * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
+/*
+ * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.221.2.3 2018/09/30 01:45:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.221.2.4 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
+#include "opt_kleak.h"
 #endif
 
 #include <sys/param.h>
@@ -99,11 +100,26 @@ static struct pool psppool;
 static void pool_redzone_init(struct pool *, size_t);
 static void pool_redzone_fill(struct pool *, void *);
 static void pool_redzone_check(struct pool *, void *);
+static void pool_cache_redzone_check(pool_cache_t, void *);
 #else
-# define pool_redzone_init(pp, sz)	/* NOTHING */
-# define pool_redzone_fill(pp, ptr)	/* NOTHING */
-# define pool_redzone_check(pp, ptr)	/* NOTHING */
+# define pool_redzone_init(pp, sz)		__nothing
+# define pool_redzone_fill(pp, ptr)		__nothing
+# define pool_redzone_check(pp, ptr)		__nothing
+# define pool_cache_redzone_check(pc, ptr)	__nothing
 #endif
+
+#ifdef KLEAK
+static void pool_kleak_fill(struct pool *, void *);
+static void pool_cache_kleak_fill(pool_cache_t, void *);
+#else
+#define pool_kleak_fill(pp, ptr)	__nothing
+#define pool_cache_kleak_fill(pc, ptr)	__nothing
+#endif
+
+#define pc_has_ctor(pc) \
+	(pc->pc_ctor != (int (*)(void *, void *, int))nullop)
+#define pc_has_dtor(pc) \
+	(pc->pc_dtor != (void (*)(void *, void *))nullop)
 
 static void *pool_page_alloc_meta(struct pool *, int);
 static void pool_page_free_meta(struct pool *, void *);
@@ -161,8 +177,12 @@ struct pool_item_header {
 #define	ph_itemlist	ph_u.phu_normal.phu_itemlist
 #define	ph_bitmap	ph_u.phu_notouch.phu_bitmap
 
+#if defined(DIAGNOSTIC) && !defined(KASAN)
+#define POOL_CHECK_MAGIC
+#endif
+
 struct pool_item {
-#ifdef DIAGNOSTIC
+#ifdef POOL_CHECK_MAGIC
 	u_int pi_magic;
 #endif
 #define	PI_MAGIC 0xdeaddeadU
@@ -881,10 +901,12 @@ pool_get(struct pool *pp, int flags)
 		KASSERTMSG((pp->pr_nitems > 0),
 		    "%s: [%s] nitems %u inconsistent on itemlist",
 		    __func__, pp->pr_wchan, pp->pr_nitems);
+#ifdef POOL_CHECK_MAGIC
 		KASSERTMSG((pi->pi_magic == PI_MAGIC),
 		    "%s: [%s] free list modified: "
 		    "magic=%x; page %p; item addr %p", __func__,
 		    pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
+#endif
 
 		/*
 		 * Remove from item list.
@@ -937,6 +959,7 @@ pool_get(struct pool *pp, int flags)
 	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
 	FREECHECK_OUT(&pp->pr_freecheck, v);
 	pool_redzone_fill(pp, v);
+	pool_kleak_fill(pp, v);
 	return (v);
 }
 
@@ -967,18 +990,17 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	if (pp->pr_roflags & PR_NOTOUCH) {
 		pr_item_notouch_put(pp, ph, v);
 	} else {
-#ifdef DIAGNOSTIC
+#ifdef POOL_CHECK_MAGIC
 		pi->pi_magic = PI_MAGIC;
 #endif
-#ifdef DEBUG
-		{
-			int i, *ip = v;
 
-			for (i = 0; i < pp->pr_size / sizeof(int); i++) {
-				*ip++ = PI_MAGIC;
-			}
+		if (pp->pr_redzone) {
+			/*
+			 * Mark the pool_item as valid. The rest is already
+			 * invalid.
+			 */
+			kasan_mark(pi, sizeof(*pi), sizeof(*pi));
 		}
-#endif
 
 		LIST_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 	}
@@ -1227,7 +1249,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 
 			/* Insert on page list */
 			LIST_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
-#ifdef DIAGNOSTIC
+#ifdef POOL_CHECK_MAGIC
 			pi->pi_magic = PI_MAGIC;
 #endif
 			cp = (char *)cp + pp->pr_size;
@@ -1530,12 +1552,12 @@ pool_print_pagelist(struct pool *pp, struct pool_pagelist *pl,
     void (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
-	struct pool_item *pi __diagused;
 
 	LIST_FOREACH(ph, pl, ph_pagelist) {
 		(*pr)("\t\tpage %p, nmissing %d, time %" PRIu32 "\n",
 		    ph->ph_page, ph->ph_nmissing, ph->ph_time);
-#ifdef DIAGNOSTIC
+#ifdef POOL_CHECK_MAGIC
+		struct pool_item *pi;
 		if (!(pp->pr_roflags & PR_NOTOUCH)) {
 			LIST_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 				if (pi->pi_magic != PI_MAGIC) {
@@ -1690,7 +1712,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 	     pi != NULL;
 	     pi = LIST_NEXT(pi,pi_list), n++) {
 
-#ifdef DIAGNOSTIC
+#ifdef POOL_CHECK_MAGIC
 		if (pi->pi_magic != PI_MAGIC) {
 			if (label != NULL)
 				printf("%s: ", label);
@@ -1996,6 +2018,15 @@ pool_cache_reclaim(pool_cache_t pc)
 static void
 pool_cache_destruct_object1(pool_cache_t pc, void *object)
 {
+	if (pc->pc_pool.pr_redzone) {
+		/*
+		 * The object is marked as invalid. Temporarily mark it as
+		 * valid for the destructor. pool_put below will re-mark it
+		 * as invalid.
+		 */
+		kasan_mark(object, pc->pc_pool.pr_reqsize,
+		    pc->pc_pool.pr_reqsize_with_redzone);
+	}
 
 	(*pc->pc_dtor)(pc->pc_arg, object);
 	pool_put(&pc->pc_pool, object);
@@ -2256,6 +2287,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 
 	FREECHECK_OUT(&pc->pc_freecheck, object);
 	pool_redzone_fill(&pc->pc_pool, object);
+	pool_cache_kleak_fill(pc, object);
 	return false;
 }
 
@@ -2303,6 +2335,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			splx(s);
 			FREECHECK_OUT(&pc->pc_freecheck, object);
 			pool_redzone_fill(&pc->pc_pool, object);
+			pool_cache_kleak_fill(pc, object);
 			return object;
 		}
 
@@ -2451,7 +2484,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 	int s;
 
 	KASSERT(object != NULL);
-	pool_redzone_check(&pc->pc_pool, object);
+	pool_cache_redzone_check(pc, object);
 	FREECHECK_IN(&pc->pc_freecheck, object);
 
 	/* Lock out interrupts and disable preemption. */
@@ -2685,6 +2718,9 @@ pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
 
+	if (pp->pr_redzone) {
+		kasan_mark(v, pa->pa_pagesz, pa->pa_pagesz);
+	}
 	(*pa->pa_free)(pp, v);
 }
 
@@ -2727,6 +2763,26 @@ pool_page_free_meta(struct pool *pp, void *v)
 
 	vmem_free(kmem_meta_arena, (vmem_addr_t)v, pp->pr_alloc->pa_pagesz);
 }
+
+#ifdef KLEAK
+static void
+pool_kleak_fill(struct pool *pp, void *p)
+{
+	if (__predict_false(pp->pr_roflags & PR_NOTOUCH)) {
+		return;
+	}
+	kleak_fill_area(p, pp->pr_size);
+}
+
+static void
+pool_cache_kleak_fill(pool_cache_t pc, void *p)
+{
+	if (__predict_false(pc_has_ctor(pc) || pc_has_dtor(pc))) {
+		return;
+	}
+	pool_kleak_fill(&pc->pc_pool, p);
+}
+#endif
 
 #ifdef POOL_REDZONE
 #if defined(_LP64)
@@ -2772,6 +2828,7 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 	 */
 	if (pp->pr_size - requested_size >= redzsz) {
 		pp->pr_reqsize = requested_size;
+		pp->pr_reqsize_with_redzone = requested_size + redzsz;
 		pp->pr_redzone = true;
 		return;
 	}
@@ -2785,6 +2842,7 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 		/* Ok, we can */
 		pp->pr_size = nsz;
 		pp->pr_reqsize = requested_size;
+		pp->pr_reqsize_with_redzone = requested_size + redzsz;
 		pp->pr_redzone = true;
 	} else {
 		/* No space for a red zone... snif :'( */
@@ -2800,9 +2858,7 @@ pool_redzone_fill(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	size_t size_with_redzone = pp->pr_reqsize;
-	kasan_add_redzone(&size_with_redzone);
-	kasan_alloc(p, pp->pr_reqsize, size_with_redzone);
+	kasan_mark(p, pp->pr_reqsize, pp->pr_reqsize_with_redzone);
 #else
 	uint8_t *cp, pat;
 	const uint8_t *ep;
@@ -2831,9 +2887,7 @@ pool_redzone_check(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	size_t size_with_redzone = pp->pr_reqsize;
-	kasan_add_redzone(&size_with_redzone);
-	kasan_free(p, size_with_redzone);
+	kasan_mark(p, 0, pp->pr_reqsize_with_redzone);
 #else
 	uint8_t *cp, pat, expected;
 	const uint8_t *ep;
@@ -2858,6 +2912,18 @@ pool_redzone_check(struct pool *pp, void *p)
 		cp++;
 	}
 #endif
+}
+
+static void
+pool_cache_redzone_check(pool_cache_t pc, void *p)
+{
+#ifdef KASAN
+	/* If there is a ctor/dtor, leave the data as valid. */
+	if (__predict_false(pc_has_ctor(pc) || pc_has_dtor(pc))) {
+		return;
+	}
+#endif
+	pool_redzone_check(&pc->pc_pool, p);
 }
 
 #endif /* POOL_REDZONE */

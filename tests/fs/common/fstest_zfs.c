@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_zfs.c,v 1.1 2012/08/20 16:37:35 pooka Exp $	*/
+/*	$NetBSD: fstest_zfs.c,v 1.1.32.1 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011  The NetBSD Foundation, Inc.
@@ -104,8 +104,8 @@ zfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 
 	/* set up the hijack env for running zpool */
 	setenv("RUMP_SERVER", SRVURL, 1);
-	snprintf(tmpbuf, sizeof(tmpbuf)-1, "blanket=/dev/zfs:%s:%s",
-	    ZFSDEV, path);
+	snprintf(tmpbuf, sizeof(tmpbuf)-1,
+	    "blanket=/dev/zfs:%s:%s,sysctl=yes,modctl=yes", ZFSDEV, path);
 	setenv("RUMPHIJACK", tmpbuf, 1);
 	setenv("LD_PRELOAD", "/usr/lib/librumphijack.so", 1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.44 2017/01/13 04:43:16 christos Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.44.14.1 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -146,7 +146,7 @@ struct uvm_pagerops {
 /* if PGO_FREE is not set then the pages stay where they are. */
 
 #define PGO_ALLPAGES	0x010	/* flush whole object/get all pages */
-#define PGO_JOURNALLOCKED 0x020	/* journal is already locked [put] */
+#define PGO_JOURNALLOCKED 0x020	/* journal is already locked [get/put] */
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
 #define PGO_BUSYFAIL	0x080	/* fail if a page is busy [put] */
 #define PGO_OVERWRITE	0x200	/* pages will be overwritten before unlocked */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2013/12/11 01:24:08 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.3.24.1 2018/12/26 14:01:26 pgoyette Exp $
 
 # Constant database reader/writer
 
@@ -10,6 +10,7 @@ SRCS+=		cdbr.c cdbw.c
 MAN+=		cdbr.3 cdbw.3 cdb.5
 
 MLINKS+=	cdbr.3 cdbr_open.3
+MLINKS+=	cdbr.3 cdbr_open_mem.3
 MLINKS+=	cdbr.3 cdbr_entries.3
 MLINKS+=	cdbr.3 cdbr_get.3
 MLINKS+=	cdbr.3 cdbr_find.3

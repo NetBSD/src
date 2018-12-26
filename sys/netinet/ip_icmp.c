@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.168.2.6 2018/11/26 01:52:51 pgoyette Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.168.2.7 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.168.2.6 2018/11/26 01:52:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.168.2.7 2018/12/26 14:02:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -336,7 +336,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	ICMP_STATINC(ICMP_STAT_OUTHIST + type);
 
 	if ((m->m_flags & M_EXT) == 0)
-		MH_ALIGN(m, m->m_len);
+		m_align(m, m->m_len);
 
 	/*
 	 * Get pointers on the IP header and the ICMP header.

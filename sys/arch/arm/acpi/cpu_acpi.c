@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.4.2.2 2018/10/20 06:58:24 pgoyette Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.4.2.3 2018/12/26 14:01:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,13 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "tprof.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.4.2.2 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.4.2.3 2018/12/26 14:01:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/interrupt.h>
+#include <sys/kcpuset.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -47,10 +51,18 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.4.2.2 2018/10/20 06:58:24 pgoyette Ex
 
 #include <arm/arm/psci.h>
 
+#if NTPROF > 0
+#include <dev/tprof/tprof_armv8.h>
+#endif
+
 extern struct cpu_info cpu_info_store[];
 
 static int	cpu_acpi_match(device_t, cfdata_t, void *);
 static void	cpu_acpi_attach(device_t, device_t, void *);
+
+#if NTPROF > 0
+static void	cpu_acpi_tprof_init(device_t);
+#endif
 
 CFATTACH_DECL_NEW(cpu_acpi, 0, cpu_acpi_match, cpu_acpi_attach, NULL, NULL);
 
@@ -111,4 +123,100 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the CPU */
 	cpu_attach(self, mpidr);
+
+#if NTPROF > 0
+	if (cpu_mpidr_aff_read() == mpidr)
+		config_interrupts(self, cpu_acpi_tprof_init);
+#endif
 }
+
+#if NTPROF > 0
+static struct cpu_info *
+cpu_acpi_find_processor(UINT32 uid)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci->ci_acpiid == uid)
+			return ci;
+	}
+
+	return NULL;
+}
+
+static ACPI_STATUS
+cpu_acpi_tprof_intr_establish(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
+{
+	device_t dev = aux;
+	ACPI_MADT_GENERIC_INTERRUPT *gicc;
+	struct cpu_info *ci;
+	char xname[16];
+	kcpuset_t *set;
+	int error;
+	void *ih;
+
+	if (hdrp->Type != ACPI_MADT_TYPE_GENERIC_INTERRUPT)
+		return AE_OK;
+
+	gicc = (ACPI_MADT_GENERIC_INTERRUPT *)hdrp;
+	if ((gicc->Flags & ACPI_MADT_ENABLED) == 0)
+		return AE_OK;
+
+	const bool cpu_primary_p = cpu_mpidr_aff_read() == gicc->ArmMpidr;
+	const bool intr_ppi_p = gicc->PerformanceInterrupt < 32;
+	const int type = (gicc->Flags & ACPI_MADT_PERFORMANCE_IRQ_MODE) ? IST_EDGE : IST_LEVEL;
+
+	if (intr_ppi_p && !cpu_primary_p)
+		return AE_OK;
+
+	ci = cpu_acpi_find_processor(gicc->Uid);
+	if (ci == NULL) {
+		aprint_error_dev(dev, "couldn't find processor %#x\n", gicc->Uid);
+		return AE_OK;
+	}
+
+	if (intr_ppi_p) {
+		strlcpy(xname, "pmu", sizeof(xname));
+	} else {
+		snprintf(xname, sizeof(xname), "pmu %s", cpu_name(ci));
+	}
+
+	ih = intr_establish_xname(gicc->PerformanceInterrupt, IPL_HIGH, type | IST_MPSAFE,
+	    armv8_pmu_intr, NULL, xname);
+	if (ih == NULL) {
+		aprint_error_dev(dev, "couldn't establish %s interrupt\n", xname);
+		return AE_OK;
+	}
+
+	if (!intr_ppi_p) {
+		kcpuset_create(&set, true);
+		kcpuset_set(set, cpu_index(ci));
+		error = interrupt_distribute(ih, set, NULL);
+		kcpuset_destroy(set);
+
+		if (error) {
+			aprint_error_dev(dev, "failed to distribute %s interrupt: %d\n",
+			    xname, error);
+			return AE_OK;
+		}
+	}
+
+	aprint_normal("%s: PMU interrupting on irq %d\n", cpu_name(ci), gicc->PerformanceInterrupt);
+
+	return AE_OK;
+}
+
+static void
+cpu_acpi_tprof_init(device_t self)
+{
+	armv8_pmu_init();
+
+	if (acpi_madt_map() != AE_OK) {
+		aprint_error_dev(self, "failed to map MADT, performance counters not available\n");
+		return;
+	}
+	acpi_madt_walk(cpu_acpi_tprof_intr_establish, self);
+	acpi_madt_unmap();
+}
+#endif

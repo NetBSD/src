@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.14 2008/03/14 15:09:11 cube Exp $ */
+/* $NetBSD: acemidi.c,v 1.14.90.1 2018/12/26 14:02:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.14 2008/03/14 15:09:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.14.90.1 2018/12/26 14:02:01 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -102,7 +102,7 @@ com_acemidi_attach(device_t parent, device_t self, void *aux)
 	iobase = pa->pa_fast_base + ACEMIDI_16550_BASE;
 
 	bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh);
-	COM_INIT_REGS(csc->sc_regs, iot, ioh, iobase);
+	com_init_regs(&csc->sc_regs, iot, ioh, iobase);
 
 	csc->sc_frequency = ACEMIDI_16550_FREQ;
 

@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.25.2.2 2018/10/20 06:58:29 pgoyette Exp $ */
+ /* $NetBSD: TODO,v 1.25.2.3 2018/12/26 14:01:43 pgoyette Exp $ */
 
 Things to be done:
 
@@ -12,7 +12,13 @@ sun4u:
 
 sun4v:
  - current status: The kernel boots and starts the init process (pid 1) 
-   which spawns /sbin/sh (pid 2). This is forked as a new /sbin/sh (pid 3) which crashes, probably due to MMU DPROT issues.
+   which spawns /sbin/sh (pid 2). This is forked as a new /sbin/sh (pid 3)
+   which crashes, probably due to MMU DPROT issues.
+   Looks like the user process tries to write to the stack as part of a save
+   instruction since cansave is zero. This causes a DMMU PROT trap (0x6c) which
+   calls sun4v_tl0_dtsb_prot which calls sun4v_datatrap which calls TRAP_SETUP().
+   This macro has code that does a save instruction, again to the user stack,
+   which again causes a MMU DPROT trap...
 - 64-bit kernel support
 - 32-bit kernel support
 - libkvm

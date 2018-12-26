@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.230.2.1 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: mount.h,v 1.230.2.2 2018/12/26 14:02:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -150,7 +150,7 @@ struct mount {
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 	kmutex_t	mnt_updating;		/* to serialize updates */
-	struct wapbl_ops
+	const struct wapbl_ops
 			*mnt_wapbl_op;		/* logging ops */
 	struct wapbl	*mnt_wapbl;		/* log info */
 	struct wapbl_replay
@@ -283,6 +283,7 @@ struct wapbl_ops {
 	int (*wo_wapbl_begin)(struct wapbl *, const char *, int);
 	void (*wo_wapbl_end)(struct wapbl *);
 	void (*wo_wapbl_junlock_assert)(struct wapbl *);
+	void (*wo_wapbl_jlock_assert)(struct wapbl *);
 	void (*wo_wapbl_biodone)(struct buf *);
 };
 #define WAPBL_DISCARD(MP)						\
@@ -309,6 +310,8 @@ struct wapbl_ops {
     (*(MP)->mnt_wapbl_op->wo_wapbl_end)((MP)->mnt_wapbl)
 #define WAPBL_JUNLOCK_ASSERT(MP)					\
     (*(MP)->mnt_wapbl_op->wo_wapbl_junlock_assert)((MP)->mnt_wapbl)
+#define WAPBL_JLOCK_ASSERT(MP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_jlock_assert)((MP)->mnt_wapbl)
 
 struct vfs_hooks {
 	LIST_ENTRY(vfs_hooks) vfs_hooks_list;

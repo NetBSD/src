@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.1.72.4 2018/11/26 01:52:25 pgoyette Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.1.72.5 2018/12/26 14:01:38 pgoyette Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -194,6 +194,8 @@ cpu* at mainbus?
 
 # IPMI support
 ipmi0		at mainbus?
+ipmi_acpi*	at acpi?
+ipmi0		at ipmi_acpi? 
 
 hypervisor*	at mainbus?		# Xen hypervisor
 
@@ -334,7 +336,6 @@ iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -878,7 +879,9 @@ pci*	at ppb? bus ?
 # pciback.hide=(00:1a.0)(00:1a.1)(00:1a.7)
 pciback* at pci?			#pci backend device
 
-acpi0		at hypervisor?
+acpi0		at hypervisor?		# ACPI access in PV mode
+acpi0		at mainbus?		# ACPI access in PVH(VM) mode
+
 options 	MPBIOS
 #options 	MPDEBUG
 #options 	MPVERBOSE

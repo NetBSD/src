@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.48.2.1 2018/07/28 04:37:46 pgoyette Exp $ */
+/* $NetBSD: if_txp.c,v 1.48.2.2 2018/12/26 14:01:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.48.2.1 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.48.2.2 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -251,7 +251,8 @@ txp_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, txp_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, txp_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)

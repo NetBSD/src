@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.67.2.2 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.67.2.3 2018/12/26 14:01:50 pgoyette Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.67.2.2 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.67.2.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -221,7 +221,8 @@ ipw_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, ipw_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pct, ih, IPL_NET, ipw_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "could not establish interrupt");
 		if (intrstr != NULL)
@@ -1419,7 +1420,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 			return ENOMEM;
 		}
 
-		M_COPY_PKTHDR(mnew, m0);
+		m_copy_pkthdr(mnew, m0);
 
 		/* If the data won't fit in the header, get a cluster */
 		if (m0->m_pkthdr.len > MHLEN) {

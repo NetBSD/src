@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18.2.3 2018/11/26 01:52:24 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.18.2.4 2018/12/26 14:01:37 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.18.2.3 $"
+#ident 		"GENERIC-$Revision: 1.18.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -472,7 +472,6 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial

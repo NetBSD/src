@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.394.2.6 2018/11/26 01:52:32 pgoyette Exp $
+#	$NetBSD: files.pci,v 1.394.2.7 2018/12/26 14:01:50 pgoyette Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -378,6 +378,7 @@ file	dev/pci/toshide.c	toshide
 device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
+defflag opt_ppb.h	PPB_USEINTR
 
 # Cyclades Cyclom-8/16/32
 attach	cy at pci with cy_pci
@@ -424,11 +425,6 @@ file	dev/pci/if_tl.c			tl
 # device declaration in sys/conf/files
 attach	ntwoc at pci with ntwoc_pci
 file	dev/pci/if_ntwoc_pci.c		ntwoc_pci
-
-# Lan Media Corporation T1/HSSI/DS3 driver
-device	lmc: ifnet, sppp
-attach	lmc at pci
-file	dev/pci/if_lmc.c		lmc
 
 # Essential Communications HIPPI interface
 # device declaration in sys/conf/files

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.28.1 2018/04/07 04:12:11 pgoyette Exp $
+# $NetBSD: Makefile,v 1.1.28.2 2018/12/26 14:01:30 pgoyette Exp $
 
 INCSDIR= /usr/include/aarch64
 
@@ -16,7 +16,7 @@ INCS=	ansi.h aout_machdep.h armreg.h asm.h \
 	param.h pcb.h pmap.h \
 	proc.h profile.h pte.h ptrace.h \
 	reg.h rwlock.h \
-	setjmp.h signal.h sysarch.h \
+	setjmp.h signal.h sljit_machdep.h sysarch.h \
 	types.h \
 	vmparam.h \
 	wchar_limits.h

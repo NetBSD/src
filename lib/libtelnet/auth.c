@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.21 2012/03/21 05:33:27 matt Exp $	*/
+/*	$NetBSD: auth.c,v 1.21.30.1 2018/12/26 14:01:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.21 2012/03/21 05:33:27 matt Exp $");
+__RCSID("$NetBSD: auth.c,v 1.21.30.1 2018/12/26 14:01:28 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,15 +80,6 @@ __RCSID("$NetBSD: auth.c,v 1.21 2012/03/21 05:33:27 matt Exp $");
 
 #define	typemask(x)		(1<<((x)-1))
 
-#ifdef	RSA_ENCPWD
-extern rsaencpwd_init();
-extern rsaencpwd_send();
-extern rsaencpwd_is();
-extern rsaencpwd_reply();
-extern rsaencpwd_status();
-extern rsaencpwd_printsub();
-#endif
-
 int auth_debug_mode = 0;
 static 	const char	*Name = "Noname";
 static	int	Server = 0;
@@ -106,22 +97,6 @@ static void auth_intr(int);
  * in priority order, i.e. try the first one first.
  */
 Authenticator authenticators[] = {
-#ifdef	SPX
-	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				spx_init,
-				spx_send,
-				spx_is,
-				spx_reply,
-				spx_status,
-				spx_printsub },
-	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				spx_init,
-				spx_send,
-				spx_is,
-				spx_reply,
-				spx_status,
-				spx_printsub },
-#endif
 #ifdef	KRB5
 # ifdef	ENCRYPTION
 	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
@@ -139,15 +114,6 @@ Authenticator authenticators[] = {
 				kerberos5_reply,
 				kerberos5_status,
 				kerberos5_printsub },
-#endif
-#ifdef	RSA_ENCPWD
-	{ AUTHTYPE_RSA_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				rsaencpwd_init,
-				rsaencpwd_send,
-				rsaencpwd_is,
-				rsaencpwd_reply,
-				rsaencpwd_status,
-				rsaencpwd_printsub },
 #endif
 #ifdef SRA
 	{ AUTHTYPE_SRA, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
@@ -216,7 +182,7 @@ auth_disable_name(char *name)
 }
 
 int
-getauthmask(char *type, int *maskp)
+getauthmask(const char *type, int *maskp)
 {
 	register int x;
 
@@ -235,19 +201,19 @@ getauthmask(char *type, int *maskp)
 }
 
 int
-auth_enable(char *type)
+auth_enable(const char *type)
 {
 	return(auth_onoff(type, 1));
 }
 
 int
-auth_disable(char *type)
+auth_disable(const char *type)
 {
 	return(auth_onoff(type, 0));
 }
 
 int
-auth_onoff(char *type, int on)
+auth_onoff(const char *type, int on)
 {
 	int i, mask = -1;
 	Authenticator *ap;
@@ -289,7 +255,7 @@ auth_togdebug(int on)
 }
 
 int
-auth_status(char *s)
+auth_status(const char *s)
 {
 	Authenticator *ap;
 	int i, mask;

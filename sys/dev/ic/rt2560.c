@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.32.2.3 2018/09/06 06:55:50 pgoyette Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.32.2.4 2018/12/26 14:01:48 pgoyette Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.32.2.3 2018/09/06 06:55:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.32.2.4 2018/12/26 14:01:48 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -2016,7 +2016,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 			return ENOMEM;
 		}
 
-		M_COPY_PKTHDR(mnew, m0);
+		m_copy_pkthdr(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
 			if (!(mnew->m_flags & M_EXT)) {

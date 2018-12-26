@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.10.4.2 2018/09/06 06:55:30 pgoyette Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.10.4.3 2018/12/26 14:01:35 pgoyette Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -158,7 +158,6 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Console options.    also need IMXUARTCONSOLE
 options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x30a70000,CONSPEED=115200
-options 	CONS_OVERRIDE
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

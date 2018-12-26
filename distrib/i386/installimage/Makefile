@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2018/11/26 01:49:56 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2018/12/26 14:01:11 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-i386-install	# gives ${IMGBASE}.img
 
-BOOTDISK=	sd0			# for USB flash etc.
 INSTIMAGEMB?=	1450			# for all installation binaries
 
 PRIMARY_BOOT=		bootxx_ffsv1

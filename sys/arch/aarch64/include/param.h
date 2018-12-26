@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.1.28.4 2018/11/26 01:52:16 pgoyette Exp $ */
+/* $NetBSD: param.h,v 1.1.28.5 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -134,12 +134,10 @@
 #define MSGBUFSIZE		16384	/* default message buffer size */
 #endif
 
-#ifdef _KERNEL
+#define COHERENCY_UNIT		128
+#define CACHE_LINE_SIZE		128
 
-#if defined(CPU_THUNDERX)
-#define COHERENCY_UNIT	128
-#define CACHE_LINE_SIZE	128
-#endif
+#ifdef _KERNEL
 
 #ifndef __HIDE_DELAY
 void delay(unsigned int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.12 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.12.16.1 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.12 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.12.16.1 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,8 +192,9 @@ njs_pci_attach(device_t parent, device_t self, void *aux)
 		str_at = str_intr = "";
 
 	/* setup interrupt handler */
-	if ((sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, njsc32_intr, sc))
-	    == NULL) {
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, njsc32_intr, sc,
+	    device_xname(self));
+	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt%s%s\n",
 		    str_at, str_intr);
 		return;

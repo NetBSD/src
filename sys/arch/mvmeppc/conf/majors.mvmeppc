@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvmeppc,v 1.20.52.1 2018/09/30 01:45:45 pgoyette Exp $
+#	$NetBSD: majors.mvmeppc,v 1.20.52.2 2018/12/26 14:01:41 pgoyette Exp $
 #
 # Device majors for mvmeppc
 #
@@ -30,7 +30,6 @@ device-major	md		char 24  block 17	md
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 
-device-major	svr4_net	char 43			compat_svr4
 device-major	ipl		char 44			ipfilter
 device-major	satlink		char 45			satlink
 device-major	rnd		char 46			rnd

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.260.2.5 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.260.2.6 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.5 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.260.2.6 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1372,6 +1372,48 @@ ether_set_ifflags_cb(struct ethercom *ec, ether_cb_t cb)
 	ec->ec_ifflags_cb = cb;
 }
 
+static int
+ether_ioctl_reinit(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	int error;
+
+	switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+	case IFF_RUNNING:
+		/*
+		 * If interface is marked down and it is running,
+		 * then stop and disable it.
+		 */
+		(*ifp->if_stop)(ifp, 1);
+		break;
+	case IFF_UP:
+		/*
+		 * If interface is marked up and it is stopped, then
+		 * start it.
+		 */
+		return (*ifp->if_init)(ifp);
+	case IFF_UP | IFF_RUNNING:
+		error = 0;
+		if (ec->ec_ifflags_cb != NULL) {
+			error = (*ec->ec_ifflags_cb)(ec);
+			if (error == ENETRESET) {
+				/*
+				 * Reset the interface to pick up
+				 * changes in any other flags that
+				 * affect the hardware state.
+				 */
+				return (*ifp->if_init)(ifp);
+			}
+		} else
+			error = (*ifp->if_init)(ifp);
+		return error;
+	case 0:
+		break;
+	}
+
+	return 0;
+}
+
 /*
  * Common ioctls for Ethernet interfaces.  Note, we must be
  * called at splnet().
@@ -1379,7 +1421,7 @@ ether_set_ifflags_cb(struct ethercom *ec, ether_cb_t cb)
 int
 ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct ethercom *ec = (void *) ifp;
+	struct ethercom *ec = (void *)ifp;
 	struct eccapreq *eccr;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_laddrreq *iflr = data;
@@ -1428,44 +1470,25 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			return error;
-		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
-		case IFF_RUNNING:
-			/*
-			 * If interface is marked down and it is running,
-			 * then stop and disable it.
-			 */
-			(*ifp->if_stop)(ifp, 1);
-			break;
-		case IFF_UP:
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			return (*ifp->if_init)(ifp);
-		case IFF_UP | IFF_RUNNING:
-			error = 0;
-			if (ec->ec_ifflags_cb != NULL) {
-				error = (*ec->ec_ifflags_cb)(ec);
-				if (error == ENETRESET) {
-					/*
-					 * Reset the interface to pick up
-					 * changes in any other flags that
-					 * affect the hardware state.
-					 */
-					return (*ifp->if_init)(ifp);
-				}
-			} else
-				error = (*ifp->if_init)(ifp);
-			return error;
-		case 0:
-			break;
-		}
-		return 0;
+		return ether_ioctl_reinit(ec);
 	case SIOCGETHERCAP:
 		eccr = (struct eccapreq *)data;
 		eccr->eccr_capabilities = ec->ec_capabilities;
 		eccr->eccr_capenable = ec->ec_capenable;
 		return 0;
+	case SIOCSETHERCAP:
+		eccr = (struct eccapreq *)data;
+		if ((eccr->eccr_capenable & ~ec->ec_capabilities) != 0)
+			return EINVAL;
+		if (eccr->eccr_capenable == ec->ec_capenable)
+			return 0;
+#if 0 /* notyet */
+		ec->ec_capenable = (ec->ec_capenable & ETHERCAP_CANTCHANGE)
+		    | (eccr->eccr_capenable & ~ETHERCAP_CANTCHANGE);
+#else
+		ec->ec_capenable = eccr->eccr_capenable;
+#endif
+		return ether_ioctl_reinit(ec);
 	case SIOCADDMULTI:
 		return ether_addmulti(ifreq_getaddr(cmd, ifr), ec);
 	case SIOCDELMULTI:

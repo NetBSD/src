@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.5.2.1 2018/09/06 06:56:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.5.2.2 2018/12/26 14:02:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ get_imm_packet(adapter_t *sc, const struct rsp_desc *resp, struct t3_mbuf_hdr *m
     len = G_RSPD_LEN(ntohl(resp->len_cq));
 
     if (m) {
-        MH_ALIGN(m, IMMED_PKT_SIZE);
+        m_align(m, IMMED_PKT_SIZE);
         memcpy(m->m_data, resp->imm_data, IMMED_PKT_SIZE);
         m->m_len = len;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.124.2.1 2018/07/28 04:37:23 pgoyette Exp $	*/
+/*      $NetBSD: hijack.c,v 1.124.2.2 2018/12/26 14:01:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.124.2.1 2018/07/28 04:37:23 pgoyette Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.124.2.2 2018/12/26 14:01:28 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -138,6 +138,7 @@ enum dualcall {
 
 #ifdef __NetBSD__
 	DUALCALL___SYSCTL,
+	DUALCALL_MODCTL,
 #endif
 
 #ifdef __NetBSD__
@@ -351,6 +352,7 @@ struct sysnames {
 
 #ifdef __NetBSD__
 	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
+	{ DUALCALL_MODCTL,	"modctl",	RSYS_NAME(MODCTL)	},
 #endif
 
 #ifdef __NetBSD__
@@ -814,6 +816,30 @@ sysctlparser(char *buf)
 	errx(1, "sysctl value should be y(es)/n(o), gave: %s", buf);
 }
 
+static bool rumpmodctl = false;
+
+static void
+modctlparser(char *buf)
+{
+
+	if (buf == NULL) {
+		rumpmodctl = true;
+		return;
+	}
+
+	if (strcasecmp(buf, "y") == 0 || strcasecmp(buf, "yes") == 0 ||
+	    strcasecmp(buf, "yep") == 0 || strcasecmp(buf, "tottakai") == 0) {
+		rumpmodctl = true;
+		return;
+	}
+	if (strcasecmp(buf, "n") == 0 || strcasecmp(buf, "no") == 0) {
+		rumpmodctl = false;
+		return;
+	}
+
+	errx(1, "modctl value should be y(es)/n(o), gave: %s", buf);
+}
+
 static void
 fdoffparser(char *buf)
 {
@@ -841,6 +867,7 @@ static struct {
 	{ blanketparser, "blanket", true },
 	{ vfsparser, "vfs", true },
 	{ sysctlparser, "sysctl", false },
+	{ modctlparser, "modctl", false },
 	{ fdoffparser, "fdoff", true },
 	{ NULL, NULL, false },
 };
@@ -2333,6 +2360,20 @@ __sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
 	}
 
 	return op___sysctl(name, namelen, old, oldlenp, new, newlen);
+}
+int modctl(int, void *);
+int
+modctl(int operation, void *argp)
+{
+	int (*op_modctl)(int operation, void *argp);
+
+	if (rumpmodctl) {
+		op_modctl = GETSYSCALL(rump, MODCTL);
+	} else {
+		op_modctl = GETSYSCALL(host, MODCTL);
+	}
+
+	return op_modctl(operation, argp);
 }
 #endif
 

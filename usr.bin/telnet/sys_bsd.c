@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.34 2018/02/04 09:01:12 mrg Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.34.2.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.34 2018/02/04 09:01:12 mrg Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.34.2.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,14 +60,12 @@ __RCSID("$NetBSD: sys_bsd.c,v 1.34 2018/02/04 09:01:12 mrg Exp $");
 #include "externs.h"
 #include "types.h"
 
-#define	SIG_FUNC_RET	void
+void susp(int);
+void ayt(int);
 
-SIG_FUNC_RET susp(int);
-SIG_FUNC_RET ayt(int);
-
-SIG_FUNC_RET intr(int);
-SIG_FUNC_RET intr2(int);
-SIG_FUNC_RET sendwin(int);
+void intr(int);
+void intr2(int);
+void sendwin(int);
 
 
 int
@@ -77,32 +75,6 @@ int
 
 struct	termios old_tc = { .c_iflag = 0 };
 extern struct termios new_tc;
-
-# ifndef	TCSANOW
-#  ifdef TCSETS
-#   define	TCSANOW		TCSETS
-#   define	TCSADRAIN	TCSETSW
-#   define	tcgetattr(f, t) ioctl(f, TCGETS, (char *)t)
-#  else
-#   ifdef TCSETA
-#    define	TCSANOW		TCSETA
-#    define	TCSADRAIN	TCSETAW
-#    define	tcgetattr(f, t) ioctl(f, TCGETA, (char *)t)
-#   else
-#    define	TCSANOW		TIOCSETA
-#    define	TCSADRAIN	TIOCSETAW
-#    define	tcgetattr(f, t) ioctl(f, TIOCGETA, (char *)t)
-#   endif
-#  endif
-#  define	tcsetattr(f, a, t) ioctl(f, a, (char *)t)
-#  define	cfgetospeed(ptr)	((ptr)->c_cflag&CBAUD)
-#  ifdef CIBAUD
-#   define	cfgetispeed(ptr)	(((ptr)->c_cflag&CIBAUD) >> IBSHIFT)
-#  else
-#   define	cfgetispeed(ptr)	cfgetospeed(ptr)
-#  endif
-# endif /* TCSANOW */
-
 
 void
 init_sys(void)
@@ -242,13 +214,6 @@ TerminalDefaultChars(void)
 {
     memmove(new_tc.c_cc, old_tc.c_cc, sizeof(old_tc.c_cc));
 }
-
-#ifdef notdef
-void
-TerminalRestoreState(void)
-{
-}
-#endif
 
 /*
  * TerminalNewMode - set up terminal to a specific mode.
@@ -451,13 +416,8 @@ TerminalNewMode(int f)
     if (tcsetattr(tin, TCSADRAIN, &tmp_tc) < 0)
 	tcsetattr(tin, TCSANOW, &tmp_tc);
 
-    ioctl(tin, FIONBIO, (char *)&onoff);
-    ioctl(tout, FIONBIO, (char *)&onoff);
-#if	defined(TN3270)
-    if (noasynchtty == 0) {
-	ioctl(tin, FIOASYNC, (char *)&onoff);
-    }
-#endif	/* defined(TN3270) */
+    ioctl(tin, FIONBIO, &onoff);
+    ioctl(tout, FIONBIO, &onoff);
 
 }
 
@@ -495,36 +455,12 @@ NetClose(int fd)
     return close(fd);
 }
 
-
-void
-NetNonblockingIO(int fd, int onoff)
-{
-    ioctl(fd, FIONBIO, (char *)&onoff);
-}
-
-#ifdef TN3270
-void
-NetSigIO(int fd, int onoff)
-{
-    ioctl(fd, FIOASYNC, (char *)&onoff);	/* hear about input */
-}
-
-void
-NetSetPgrp(int fd)
-{
-    int myPid;
-
-    myPid = getpid();
-    fcntl(fd, F_SETOWN, myPid);
-}
-#endif	/*defined(TN3270)*/
-
 /*
  * Various signal handling routines.
  */
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 intr(int sig)
 {
     if (localchars) {
@@ -536,7 +472,7 @@ intr(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 intr2(int sig)
 {
     if (localchars) {
@@ -551,7 +487,7 @@ intr2(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 susp(int sig)
 {
     if ((rlogin != _POSIX_VDISABLE) && rlogin_susp())
@@ -561,7 +497,7 @@ susp(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 sendwin(int sig)
 {
     if (connected) {
@@ -570,7 +506,7 @@ sendwin(int sig)
 }
 
 /* ARGSUSED */
-SIG_FUNC_RET
+void
 ayt(int sig)
 {
     if (connected)
@@ -583,6 +519,8 @@ ayt(int sig)
 void
 sys_telnet_init(void)
 {
+    int one = 1;
+
     (void) signal(SIGINT, intr);
     (void) signal(SIGQUIT, intr2);
     (void) signal(SIGPIPE, SIG_IGN);
@@ -592,17 +530,9 @@ sys_telnet_init(void)
 
     setconnmode(0);
 
-    NetNonblockingIO(net, 1);
-
-#ifdef TN3270
-    if (noasynchnet == 0) {			/* DBX can't handle! */
-	NetSigIO(net, 1);
-	NetSetPgrp(net);
-    }
-#endif	/* defined(TN3270) */
-
-    if (SetSockOpt(net, SOL_SOCKET, SO_OOBINLINE, 1) == -1) {
-	perror("SetSockOpt");
+    ioctl(net, FIONBIO, &one);
+    if (setsockopt(net, SOL_SOCKET, SO_OOBINLINE, &one, sizeof(one)) == -1) {
+	perror("setsockopt");
     }
 }
 
@@ -649,14 +579,6 @@ process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
 	    if (errno == EINTR) {
 		return 0;
 	    }
-#ifdef TN3270
-		    /*
-		     * we can get EBADF if we were in transparent
-		     * mode, and the transcom process died.
-		    */
-	    if (errno == EBADF)
-		return 0;
-#endif /* defined(TN3270) */
 		    /* I don't like this, does it ever happen? */
 	    printf("sleep(5) from telnet, after poll\r\n");
 	    sleep(5);

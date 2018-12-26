@@ -1,6 +1,6 @@
-/*	$NetBSD: grammar.y,v 1.1.1.7 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: grammar.y,v 1.1.1.7.14.1 2018/12/26 14:01:14 pgoyette Exp $	*/
 
-/* Id: grammar.y,v 1.5 2012/01/15 20:00:59 tom Exp 
+/* Id: grammar.y,v 1.6 2018/05/09 00:59:02 tom Exp 
  *
  * yacc grammar for C function prototype generator
  * This was derived from the grammar in Appendix A of
@@ -96,6 +96,7 @@ static void yyerror(const char *s);
 
 /* #include "cproto.h" */
 #define MAX_TEXT_SIZE 1024
+#define TEXT_LEN (MAX_TEXT_SIZE / 2 - 3)
 
 /* Prototype styles */
 #if OPT_LINTLIBRARY
@@ -681,19 +682,19 @@ struct_or_union_specifier
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-	        (void)sprintf(s = buf, "%s %s", $1.text, $2.text);
+	        (void)sprintf(s = buf, "%.*s %.*s", TEXT_LEN, $1.text, TEXT_LEN, $2.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}
 	| struct_or_union braces
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-		(void)sprintf(s = buf, "%s {}", $1.text);
+		(void)sprintf(s = buf, "%.*s {}", TEXT_LEN, $1.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}
 	| struct_or_union any_id
 	{
-	    (void)sprintf(buf, "%s %s", $1.text, $2.text);
+	    (void)sprintf(buf, "%.*s %.*s", TEXT_LEN, $1.text, TEXT_LEN, $2.text);
 	    new_decl_spec(&$$, buf, $1.begin, DS_NONE);
 	}
 	;
@@ -746,19 +747,19 @@ enum_specifier
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-		(void)sprintf(s = buf, "enum %s", $2.text);
+		(void)sprintf(s = buf, "enum %.*s", TEXT_LEN, $2.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}
 	| enumeration braces
 	{
 	    char *s;
 	    if ((s = implied_typedef()) == 0)
-		(void)sprintf(s = buf, "%s {}", $1.text);
+		(void)sprintf(s = buf, "%.*s {}", TEXT_LEN, $1.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}
 	| enumeration any_id
 	{
-	    (void)sprintf(buf, "enum %s", $2.text);
+	    (void)sprintf(buf, "enum %.*s", TEXT_LEN, $2.text);
 	    new_decl_spec(&$$, buf, $1.begin, DS_NONE);
 	}
 	;
@@ -780,7 +781,7 @@ declarator
 	: pointer direct_declarator
 	{
 	    $$ = $2;
-	    (void)sprintf(buf, "%s%s", $1.text, $$->text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, $1.text, TEXT_LEN, $$->text);
 	    free($$->text);
 	    $$->text = xstrdup(buf);
 	    $$->begin = $1.begin;
@@ -797,7 +798,7 @@ direct_declarator
 	| '(' declarator ')'
 	{
 	    $$ = $2;
-	    (void)sprintf(buf, "(%s)", $$->text);
+	    (void)sprintf(buf, "(%.*s)", TEXT_LEN, $$->text);
 	    free($$->text);
 	    $$->text = xstrdup(buf);
 	    $$->begin = $1.begin;
@@ -805,7 +806,7 @@ direct_declarator
 	| direct_declarator T_BRACKETS
 	{
 	    $$ = $1;
-	    (void)sprintf(buf, "%s%s", $$->text, $2.text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, $$->text, TEXT_LEN, $2.text);
 	    free($$->text);
 	    $$->text = xstrdup(buf);
 	}
@@ -830,12 +831,12 @@ direct_declarator
 pointer
 	: '*' opt_type_qualifiers
 	{
-	    (void)sprintf($$.text, "*%s", $2.text);
+	    (void)sprintf($$.text, "*%.*s", TEXT_LEN, $2.text);
 	    $$.begin = $1.begin;
 	}
 	| '*' opt_type_qualifiers pointer
 	{
-	    (void)sprintf($$.text, "*%s%s", $2.text, $3.text);
+	    (void)sprintf($$.text, "*%.*s%.*s", TEXT_LEN, $2.text, TEXT_LEN, $3.text);
 	    $$.begin = $1.begin;
 	}
 	;
@@ -858,7 +859,7 @@ type_qualifier_list
 	}
 	| type_qualifier_list type_qualifier
 	{
-	    (void)sprintf($$.text, "%s%s ", $1.text, $2.text);
+	    (void)sprintf($$.text, "%.*s%.*s ", TEXT_LEN, $1.text, TEXT_LEN, $2.text);
 	    $$.begin = $1.begin;
 	    free($2.text);
 	}
@@ -933,7 +934,7 @@ identifier_or_ref
 		$$ = $2;
 	    } else
 #endif
-		(void)sprintf($$.text, "&%s", $2.text);
+		(void)sprintf($$.text, "&%.*s", TEXT_LEN, $2.text);
 	    $$.begin = $1.begin;
 	}
 	;
@@ -946,7 +947,7 @@ abs_declarator
 	| pointer direct_abs_declarator
 	{
 	    $$ = $2;
-	    (void)sprintf(buf, "%s%s", $1.text, $$->text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, $1.text, TEXT_LEN, $$->text);
 	    free($$->text);
 	    $$->text = xstrdup(buf);
 	    $$->begin = $1.begin;
@@ -958,7 +959,7 @@ direct_abs_declarator
 	: '(' abs_declarator ')'
 	{
 	    $$ = $2;
-	    (void)sprintf(buf, "(%s)", $$->text);
+	    (void)sprintf(buf, "(%.*s)", TEXT_LEN, $$->text);
 	    free($$->text);
 	    $$->text = xstrdup(buf);
 	    $$->begin = $1.begin;
@@ -966,7 +967,7 @@ direct_abs_declarator
 	| direct_abs_declarator T_BRACKETS
 	{
 	    $$ = $1;
-	    (void)sprintf(buf, "%s%s", $$->text, $2.text);
+	    (void)sprintf(buf, "%.*s%.*s", TEXT_LEN, $$->text, TEXT_LEN, $2.text);
 	    free($$->text);
 	    $$->text = xstrdup(buf);
 	}

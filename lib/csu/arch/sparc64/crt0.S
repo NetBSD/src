@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.1 2013/07/11 06:57:15 martin Exp $ */
+/* $NetBSD: crt0.S,v 1.1.30.1 2018/12/26 14:01:26 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2013/07/11 06:57:15 martin Exp $")
+RCSID("$NetBSD: crt0.S,v 1.1.30.1 2018/12/26 14:01:26 pgoyette Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -49,12 +49,11 @@ STRONG_ALIAS(_start,__start)
 	!  %g3 = cleanup
 	!  %g2 = obj
 	!  %g1 = ps_strings
-	! call: ___start(cleanup, obj, ps_strings)
+	! call: ___start(cleanup, ps_strings)
 _ENTRY(__start)
 	clr	%fp
 	clr	%g4			! data base for some memory models
 	mov	%g3, %o0
-	mov	%g2, %o1
 	ba,pt	%icc,___start
-	 mov	%g1, %o2
+	 mov	%g1, %o1
 

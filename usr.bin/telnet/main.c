@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2016/09/05 00:40:30 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.30.12.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2016/09/05 00:40:30 sevan Exp $");
+__RCSID("$NetBSD: main.c,v 1.30.12.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,9 +84,6 @@ tninit(void)
 
     init_sys();
 
-#ifdef TN3270
-    init_3270();
-#endif
 }
 
 	void
@@ -101,15 +98,7 @@ usage(void)
 	    "[-4] [-6] [-8] [-E] [-L] [-N] [-S tos] [-a] [-c] [-d] [-e char]",
 	    "\n\t[-l user] [-n tracefile] ",
 #endif
-#ifdef TN3270
-# ifdef AUTHENTICATION
-	    "[-noasynch] [-noasynctty]\n\t[-noasyncnet] [-r] [-t transcom] ",
-# else
-	    "[-noasynch] [-noasynctty] [-noasyncnet] [-r]\n\t[-t transcom]",
-# endif
-#else
 	    "[-r] ",
-#endif
 #ifdef	ENCRYPTION
 	    "[-x] "
 #endif
@@ -251,33 +240,15 @@ main(int argc, char *argv[])
 			user = optarg;
 			break;
 		case 'n':
-#ifdef TN3270
-			/* distinguish between "-n oasynch" and "-noasynch" */
-			if (argv[optind - 1][0] == '-' && argv[optind - 1][1]
-			    == 'n' && argv[optind - 1][2] == 'o') {
-				if (!strcmp(optarg, "oasynch")) {
-					noasynchtty = 1;
-					noasynchnet = 1;
-				} else if (!strcmp(optarg, "oasynchtty"))
-					noasynchtty = 1;
-				else if (!strcmp(optarg, "oasynchnet"))
-					noasynchnet = 1;
-			} else
-#endif	/* defined(TN3270) */
 				SetNetTrace(optarg);
 			break;
 		case 'r':
 			rlogin = '~';
 			break;
 		case 't':
-#ifdef TN3270
-			(void)strlcpy(tline, optarg, sizeof(tline));
-			transcom = tline;
-#else
 			fprintf(stderr,
 			   "%s: Warning: -t ignored, no TN3270 support.\n",
 								prompt);
-#endif
 			break;
 		case 'x':
 #ifdef	ENCRYPTION
@@ -342,18 +313,13 @@ main(int argc, char *argv[])
 
 		if (setjmp(toplevel) != 0)
 			Exit(0);
-		if (tn(argp - args, args) == 1)
+		if (tn((int)(argp - args), args) == 1)
 			return (0);
 		else
 			return (1);
 	}
 	(void)setjmp(toplevel);
 	for (;;) {
-#ifdef TN3270
-		if (shell_active)
-			shell_continue();
-		else
-#endif
 			command(1, 0, 0);
 	}
 }

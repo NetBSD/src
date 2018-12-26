@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.24 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.24.16.1 2018/12/26 14:01:48 pgoyette Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.24 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.24.16.1 2018/12/26 14:01:48 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -106,10 +106,10 @@ void	ral_cardbus_setup(struct ral_cardbus_softc *);
 int
 ral_cardbus_match(device_t parent, cfdata_t cfdata, void *aux)
 {
-        struct cardbus_attach_args *ca = aux;
+	struct cardbus_attach_args *ca = aux;
 
-        if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_RALINK) {
-                switch (PCI_PRODUCT(ca->ca_id)) {
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_RALINK) {
+		switch (PCI_PRODUCT(ca->ca_id)) {
 		case PCI_PRODUCT_RALINK_RT2560:
 		case PCI_PRODUCT_RALINK_RT2561:
 		case PCI_PRODUCT_RALINK_RT2561S:
@@ -117,10 +117,10 @@ ral_cardbus_match(device_t parent, cfdata_t cfdata, void *aux)
 			return 1;
 		default:
 			return 0;
-                }
-        }
+		}
+	}
 
-        return 0;
+	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_cygwin_compat.c,v 1.1 2013/04/10 16:44:54 pooka Exp $	*/
+/*	$NetBSD: rump_cygwin_compat.c,v 1.1.38.1 2018/12/26 14:02:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rump_cygwin_compat.c,v 1.1.38.1 2018/12/26 14:02:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>

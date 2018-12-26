@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.71.16.1 2018/06/25 07:25:51 pgoyette Exp $
+ * $Id: ahc_pci.c,v 1.71.16.2 2018/12/26 14:01:49 pgoyette Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.71.16.1 2018/06/25 07:25:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.71.16.2 2018/12/26 14:01:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,7 +956,8 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	ahc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
+	ahc->ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, ahc_intr,
+	    ahc, device_xname(self));
 	if (ahc->ih == NULL) {
 		aprint_error_dev(ahc->sc_dev,
 		    "couldn't establish interrupt\n");

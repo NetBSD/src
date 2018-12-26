@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.33.46.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: xirc.c,v 1.33.46.2 2018/12/26 14:02:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.33.46.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.33.46.2 2018/12/26 14:02:01 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -553,7 +553,7 @@ com_xirc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	COM_INIT_REGS(sc->sc_regs, 
+	com_init_regs(&sc->sc_regs, 
 	    msc->sc_modem_pcioh.iot,
 	    msc->sc_modem_pcioh.ioh,
 	    -1);

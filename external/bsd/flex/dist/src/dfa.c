@@ -29,7 +29,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: dfa.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
+__RCSID("$NetBSD: dfa.c,v 1.3.12.1 2018/12/26 14:01:17 pgoyette Exp $");
 
 #include "tables.h"
 
@@ -464,14 +464,9 @@ void ntod (void)
 			/* We still may want to use the table if numecs
 			 * is a power of 2.
 			 */
-			int     power_of_two;
-
-			for (power_of_two = 1; power_of_two <= csize;
-			     power_of_two *= 2)
-				if (numecs == power_of_two) {
-					use_NUL_table = true;
-					break;
-				}
+			if (numecs <= csize && is_power_of_2(numecs)) {
+				use_NUL_table = true;
+			}
 		}
 
 		if (use_NUL_table)

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.13.12.3 2018/11/26 01:52:55 pgoyette Exp $ */
+/*	$NetBSD: disks.c,v 1.13.12.4 2018/12/26 14:02:12 pgoyette Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,7 +137,7 @@ tmpfs_on_var_shm()
 	if (sysctlbyname("hw.usermem64", &ram, &len, NULL, 0))
 		return false;
 
-	return ram > 16UL*1024UL*1024UL;
+	return ram > 16 * MEG;
 }
 
 /* from src/sbin/atactl/atactl.c

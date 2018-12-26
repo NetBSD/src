@@ -30,7 +30,7 @@
 static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
-__RCSID("$NetBSD: tcpdump.c,v 1.16 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.16.2.1 2018/12/26 14:01:17 pgoyette Exp $");
 #endif
 
 /*
@@ -261,9 +261,10 @@ static void
 pcap_set_parser_debug(int value)
 {
 #ifdef HAVE_PCAP_DEBUG
-	extern int pcap_debug;
+	extern int pcap_debug __weak;
 
-	pcap_debug = value;
+	if (&pcap_debug)
+		pcap_debug = value;
 #else /* HAVE_PCAP_DEBUG */
 	extern int yydebug;
 

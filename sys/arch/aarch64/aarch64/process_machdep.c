@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $ */
+/* $NetBSD: process_machdep.c,v 1.1.28.3 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.1.28.3 2018/12/26 14:01:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -84,6 +84,17 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t len)
 	fpu_discard(l, true);		// set used flag
 
 	memcpy(&pcb->pcb_fpregs, fpregs, len);
+
+	return 0;
+}
+
+int
+process_sstep(struct lwp *l, int sstep)
+{
+	if (sstep)
+		l->l_md.md_utf->tf_spsr |= SPSR_SS;
+	else
+		l->l_md.md_utf->tf_spsr &= ~SPSR_SS;
 
 	return 0;
 }

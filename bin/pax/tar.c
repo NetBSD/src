@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.73 2015/12/19 18:28:54 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.73.14.1 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.73 2015/12/19 18:28:54 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.73.14.1 2018/12/26 14:01:03 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -486,6 +486,8 @@ tar_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_uid = (uid_t)asc_u32(hd->uid, sizeof(hd->uid), OCT);
 	arcn->sb.st_gid = (gid_t)asc_u32(hd->gid, sizeof(hd->gid), OCT);
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
+	if (arcn->sb.st_size == -1)
+		return -1;
 	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
@@ -860,6 +862,8 @@ ustar_rd(ARCHD *arcn, char *buf)
 	arcn->sb.st_mode = (mode_t)(asc_u32(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
+	if (arcn->sb.st_size == -1)
+		return -1;
 	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172.2.8 2018/11/26 01:49:57 pgoyette Exp $
+# $NetBSD: mi,v 1.1172.2.9 2018/12/26 14:01:11 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1762,7 +1762,7 @@
 ./usr/sbin/ldpd					base-router-bin
 ./usr/sbin/link					base-sysutil-bin
 ./usr/sbin/linkfarm				base-obsolete		obsolete
-./usr/sbin/lmcconfig				base-netutil-bin
+./usr/sbin/lmcconfig				base-obsolete		obsolete
 ./usr/sbin/lmtp					base-obsolete		obsolete
 ./usr/sbin/lockstat				base-sysutil-bin
 ./usr/sbin/lpc					base-lpr-bin
@@ -2217,8 +2217,8 @@
 ./usr/share/examples/emul			base-sys-examples
 ./usr/share/examples/emul/linux			base-sys-examples
 ./usr/share/examples/emul/linux/etc		base-sys-examples
-./usr/share/examples/emul/svr4			base-sys-examples
-./usr/share/examples/emul/svr4/etc		base-sys-examples
+./usr/share/examples/emul/svr4			base-obsolete	obsolete
+./usr/share/examples/emul/svr4/etc		base-obsolete	obsolete
 ./usr/share/examples/emul/ultrix		base-sys-examples
 ./usr/share/examples/emul/ultrix/etc		base-sys-examples
 ./usr/share/examples/fstab			base-fstab-examples

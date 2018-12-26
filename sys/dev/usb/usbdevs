@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.745.2.7 2018/11/26 01:52:47 pgoyette Exp $
+$NetBSD: usbdevs,v 1.745.2.8 2018/12/26 14:02:01 pgoyette Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -549,7 +549,7 @@ vendor BECEEM		0x198f	Beceem Communications
 vendor ZTE		0x19d2	ZTE
 vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
-vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
+vendor QINHENG		0x1a86	QinHeng Electronics
 vendor OVISLINK		0x1b75	OvisLink
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor MPMAN		0x1cae	MPMan
@@ -588,7 +588,7 @@ vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
-vendor WINCHIPHEAD	0x4348	WinChipHead
+vendor QINHENG2		0x4348	QinHeng Electronics
 vendor FEIXUN		0x4855	FeiXun Communication
 vendor AVERATEC		0x50c2	Averatec
 vendor SWEEX		0x5173	Sweex
@@ -1391,6 +1391,7 @@ product DLINK RTL8192CU_3	0x330a	RTL8192CU
 product DLINK RTL8192CU_4	0x330b	RTL8192CU
 product DLINK DWA131B		0x330d	DWA-131 rev B
 product	DLINK DWA125D1		0x330f  DWA-125 rev D1
+product DLINK DWA131E		0x3319	DWA-131 rev E
 product DLINK DWL122		0x3700	Wireless DWL122
 product DLINK DWLG120		0x3701	DWL-G120
 product DLINK DWL120F		0x3702	DWL-120 rev F
@@ -1417,6 +1418,12 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
+product DLINK DWM157_CD		0xa707	DWM-157 CD-ROM Mode
+product DLINK DWM157		0x7d02  DWM-157 LTE
+product DLINK DWM222_CD		0xab00	DWM-222 CD-ROM Mode
+product DLINK DWM222		0x7e35  DWM-222 LTE
+product DLINK DWR510_CD		0xa805	DWR-510 CD-ROM Mode
+product DLINK DWR510		0x7e12  DWR-510 LTE
 
 /* D-Link(2) products */
 product DLINK2 RTL8192SU_1	0x3300	RTL8192SU
@@ -2152,6 +2159,8 @@ product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH MX700		0xc506	Cordless optical mouse
 product LOGITECH CBT44		0xc517	C-BT44 Receiver
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
+product LOGITECH GF310		0xc21d	Gamepad F310
+product LOGITECH DAG		0xc216	Dual Action Gamepad
 
 /* Longcheer products */
 product LONGCHEER WM66		0x6061	Longcheer WM66 HSDPA
@@ -2747,6 +2756,13 @@ product QCOM RT2573		0x6196	RT2573
 product QCOM RT2573_2		0x6229	RT2573
 product QCOM RT2573_3		0x6238	RT2573
 product QCOM RT2870		0x6259	RT2870
+
+/* QinHeng Electronics / WinChipHead products */
+product QINHENG CH341_EPP	0x5512	CH341 USB-EPP/SSP Bridge
+product QINHENG CH341_ASP	0x5523	CH341 USB-Serial Bridge
+product QINHENG CH341_UPC	0x5584	CH341 USB-Printer Bridge
+product QINHENG CH340		0x7523	CH340 USB-Serial Bridge
+product QINHENG2 CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
@@ -3466,11 +3482,6 @@ product WMR RIGBLASTER		0x0003	RIGblaster
 
 /* Western Digital products */
 product WESTERN EXTHDD		0x0400	External HDD
-
-/* WinChipHead products */
-product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
-product WINCHIPHEAD2 CH341	0x7523	CH341 USB-Serial Bridge
-product WINCHIPHEAD2 CH341_2	0x5523	CH341 USB-Serial Bridge
 
 /* Wistron NeWeb products */
 product WISTRONNEWEB WNC0600	0x0326	WNC-0600USB

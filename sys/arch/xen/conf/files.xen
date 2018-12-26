@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.165.2.6 2018/09/14 08:38:37 pgoyette Exp $
+#	$NetBSD: files.xen,v 1.165.2.7 2018/12/26 14:01:45 pgoyette Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -139,7 +139,6 @@ file	arch/xen/x86/consinit.c		machdep
 file	arch/x86/x86/identcpu.c		machdep
 file	arch/xen/x86/pintr.c		machdep & dom0ops
 file	arch/xen/x86/xen_ipi.c		multiprocessor
-file	arch/x86/x86/intr.c		machdep
 file	arch/x86/x86/idt.c		machdep
 file	arch/x86/x86/pmap.c		machdep
 file	arch/x86/x86/x86_tlb.c		machdep
@@ -165,15 +164,15 @@ define apmbus {}
 define pnpbiosbus {}
 define hypervisorbus {}
 define xendevbus {}
-define ipmibus {}
 
 #
 # System bus types
 #
 
-device mainbus: cpubus, ioapicbus, hypervisorbus, bios32, ipmibus
+device mainbus: cpubus, ioapicbus, hypervisorbus, bios32, ipmibus, acpibus
 attach	mainbus at root
-file	arch/xen/x86/mainbus.c		mainbus
+file	arch/xen/x86/xen_mainbus.c		mainbus
+file	arch/x86/x86/mainbus.c			mainbus
 
 # Xen hypervisor
 device	hypervisor { [apid = -1]}: isabus, pcibus, sysmon_power, xendevbus, acpibus
@@ -281,9 +280,7 @@ attach ioapic at ioapicbus
 file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 #IPMI device
-device ipmi : sysmon_envsys, sysmon_wdog
-attach ipmi at ipmibus
-file	arch/x86/x86/ipmi.c		ipmi needs-flag
+file	arch/x86/x86/x86_ipmi.c		ipmi needs-flag
 
 # CPUs
 #
@@ -382,8 +379,6 @@ file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
 file	arch/x86/pci/pci_intr_machdep.c	hypervisor & pci
-file	arch/x86/pci/pci_msi_machdep.c	hypervisor & pci
-file	arch/x86/pci/msipic.c		hypervisor & pci
 file	arch/x86/isa/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif

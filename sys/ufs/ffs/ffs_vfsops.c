@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.356.2.2 2018/07/28 04:38:12 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.356.2.3 2018/12/26 14:02:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356.2.2 2018/07/28 04:38:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356.2.3 2018/12/26 14:02:08 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356.2.2 2018/07/28 04:38:12 pgoyett
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-#include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -2335,7 +2334,7 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 	void *space;
 	int i, size, error = 0, allerror = 0;
 
-	UFS_WAPBL_JLOCK_ASSERT(mp);
+	UFS_WAPBL_JLOCK_ASSERT(mp->um_mountp);
 
 	allerror = ffs_sbupdate(mp, waitfor);
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);

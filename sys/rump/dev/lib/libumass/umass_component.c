@@ -1,4 +1,7 @@
-/*	$NetBSD: umass_component.c,v 1.2 2016/01/26 23:12:16 pooka Exp $	*/
+/*	$NetBSD: umass_component.c,v 1.2.16.1 2018/12/26 14:02:06 pgoyette Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umass_component.c,v 1.2.16.1 2018/12/26 14:02:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

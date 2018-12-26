@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.832.2.9 2018/11/26 01:49:57 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.832.2.10 2018/12/26 14:01:11 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -199,8 +199,8 @@
 ./usr/lib/libavl.so.0.0          		base-zfs-shlib		compatfile,zfs
 ./usr/lib/libbfd.so.15				base-sys-shlib		compatfile,binutils=227
 ./usr/lib/libbfd.so.15.0			base-sys-shlib		compatfile,binutils=227
-./usr/lib/libbfd.so.16				base-sys-shlib		compatfile,binutils=230
-./usr/lib/libbfd.so.16.0			base-sys-shlib		compatfile,binutils=230
+./usr/lib/libbfd.so.16				base-sys-shlib		compatfile,binutils=231
+./usr/lib/libbfd.so.16.0			base-sys-shlib		compatfile,binutils=231
 ./usr/lib/libbind9.so				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.9				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.9.0			base-bind-shlib		compatfile
@@ -812,7 +812,7 @@
 ./usr/lib/libsl.so.6.0				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libsqlite3.so				base-sys-shlib		compatfile
 ./usr/lib/libsqlite3.so.1			base-sys-shlib		compatfile
-./usr/lib/libsqlite3.so.1.3			base-sys-shlib		compatfile
+./usr/lib/libsqlite3.so.1.4			base-sys-shlib		compatfile
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	compatfile
 ./usr/lib/libssh.so.33				base-secsh-shlib	compatfile

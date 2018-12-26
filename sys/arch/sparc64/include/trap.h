@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.11 2015/04/01 18:38:30 palle Exp $ */
+/*	$NetBSD: trap.h,v 1.11.16.1 2018/12/26 14:01:43 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -115,18 +115,10 @@
 #define	T_RANGECHECK	0x105	/* ? */
 #define	T_FIXALIGN	0x106	/* fix up unaligned accesses */
 #define	T_INTOF		0x107	/* integer overflow ? */
-#define	T_SVR4_SYSCALL	0x108	/* SVR4 system call */
 #define	T_BSD_SYSCALL	0x109	/* BSD system call */
 #define	T_KGDB_EXEC	0x10a	/* for kernel gdb */
 
 /* 0x10c..0x1ff are currently unallocated, except the following */
-#define T_SVR4_GETCC		0x120
-#define T_SVR4_SETCC		0x121
-#define T_SVR4_GETPSR		0x122
-#define T_SVR4_SETPSR		0x123
-#define T_SVR4_GETHRTIME	0x124
-#define T_SVR4_GETHRVTIME	0x125
-#define T_SVR4_GETHRESTIME	0x127
 #define T_GETCC			0x132
 #define T_SETCC			0x133
 #define T_SVID_SYSCALL		0x164

@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.77.12.1 2018/11/26 01:52:13 pgoyette Exp $	*/
+/*	$NetBSD: atactl.c,v 1.77.12.2 2018/12/26 14:01:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.77.12.1 2018/11/26 01:52:13 pgoyette Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.77.12.2 2018/12/26 14:01:28 pgoyette Exp $");
 #endif
 
 
@@ -114,7 +114,7 @@ static void	print_selftest_entry(int, const struct ata_smart_selftest *);
 static void	print_error(const void *);
 static void	print_selftest(const void *);
 
-static const struct ataparams *getataparams(void);
+static void	fillataparams(void);
 
 static int	is_smart(void);
 
@@ -122,6 +122,10 @@ static int	fd;				/* file descriptor for device */
 static const	char *dvname;			/* device name */
 static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 static const	char *cmdname;			/* command user issued */
+static const	struct ataparams *inqbuf;	/* inquiry buffer */
+static char	model[sizeof(inqbuf->atap_model)+1];
+static char	revision[sizeof(inqbuf->atap_revision)+1];
+static char	serial[sizeof(inqbuf->atap_serial)+1];
 
 static void	device_identify(int, char *[]);
 static void	device_setidle(int, char *[]);
@@ -355,7 +359,9 @@ static const struct attr_table {
 static const struct attr_table micron_smart_names[] = {
 	{   5,		"Reallocated NAND block count", NULL },
 	{ 173,          "Average block erase count", NULL },
+	{ 181,          "Non 4K aligned access count", NULL },
 	{ 184,          "Error correction count", NULL },
+	{ 189,          "Factory bad block count", NULL },
 	{ 197,		"Current pending ECC count", NULL },
 	{ 198,		"SMART offline scan uncorrectable error count", NULL },
 	{ 202,		"Percent lifetime remaining", NULL },
@@ -855,14 +861,19 @@ print_selftest(const void *buf)
 		print_selftest_entry(i, &stlog->log_entries[i]);
 }
 
-static const struct ataparams *
-getataparams(void)
+static void
+fillataparams(void)
 {
 	struct atareq req;
 	static union {
 		unsigned char inbuf[DEV_BSIZE];
 		struct ataparams inqbuf;
 	} inbuf;
+	static int first = 1;
+
+	if (!first)
+		return;
+	first = 0;
 
 	memset(&inbuf, 0, sizeof(inbuf));
 	memset(&req, 0, sizeof(req));
@@ -875,7 +886,7 @@ getataparams(void)
 
 	ata_command(&req);
 
-	return (&inbuf.inqbuf);
+	inqbuf = &inbuf.inqbuf;
 }
 
 /*
@@ -888,10 +899,9 @@ static int
 is_smart(void)
 {
 	int retval = 0;
-	const struct ataparams *inqbuf;
 	const char *status;
 
-	inqbuf = getataparams();
+	fillataparams();
 
 	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
 		if (!(inqbuf->atap_cmd_set1 & WDC_CMD1_SMART)) {
@@ -951,8 +961,7 @@ extract_string(char *buf, size_t bufmax,
 }
 
 static void
-compute_capacity(const struct ataparams *inqbuf, uint64_t *capacityp,
-    uint64_t *sectorsp, uint32_t *secsizep)
+compute_capacity(uint64_t *capacityp, uint64_t *sectorsp, uint32_t *secsizep)
 {
 	uint64_t capacity;
 	uint64_t sectors;
@@ -994,38 +1003,51 @@ compute_capacity(const struct ataparams *inqbuf, uint64_t *capacityp,
 }
 
 /*
- * DEVICE COMMANDS
+ * Inspect the inqbuf and guess what vendor to use.  This list is fairly
+ * basic, and probably should be converted into a regexp scheme.
  */
+static const char *
+guess_vendor(void)
+{
+	struct {
+		const char *model;
+		const char *vendor;
+	} model_to_vendor[] = {
+		{ "Crucial", "Micron" },
+		{ "Micron", "Micron" },
+		{ "C300-CT", "Micron" },
+		{ "C400-MT", "Micron" },
+		{ "M4-CT", "Micron" },
+		{ "M500", "Micron" },
+		{ "M510", "Micron" },
+		{ "M550", "Micron" },
+		{ "MTFDDA", "Micron" },
+		{ "EEFDDA", "Micron" },
+	};
+	unsigned i;
+
+	for (i = 0; i < __arraycount(model_to_vendor); i++)
+		if (strncasecmp(model, model_to_vendor[i].model,
+				strlen(model_to_vendor[i].model)) == 0)
+			return model_to_vendor[i].vendor;
+
+	return NULL;
+}
 
 /*
- * device_identify:
- *
- *	Display the identity of the device
+ * identify_fixup() - Given an obtained ataparams, fix up the endian and
+ * other issues before using them.
  */
 static void
-device_identify(int argc, char *argv[])
+identify_fixup(void)
 {
-	const struct ataparams *inqbuf;
-	char model[sizeof(inqbuf->atap_model)+1];
-	char revision[sizeof(inqbuf->atap_revision)+1];
-	char serial[sizeof(inqbuf->atap_serial)+1];
-	char hnum[12];
-	uint64_t capacity;
-	uint64_t sectors;
-	uint32_t secsize;
-	int lb_per_pb;
 	int needswap = 0;
-	int i;
-	uint8_t checksum;
-
-	/* No arguments. */
-	if (argc != 0)
-		usage();
-
-	inqbuf = getataparams();
 
 	if ((inqbuf->atap_integrity & WDC_INTEGRITY_MAGIC_MASK) ==
 	    WDC_INTEGRITY_MAGIC) {
+		int i;
+		uint8_t checksum;
+
 		for (i = checksum = 0; i < 512; i++)
 			checksum += ((const uint8_t *)inqbuf)[i];
 		if (checksum != 0)
@@ -1062,6 +1084,33 @@ device_identify(int argc, char *argv[])
 		inqbuf->atap_serial, sizeof(inqbuf->atap_serial),
 		needswap);
 
+}
+
+/*
+ * DEVICE COMMANDS
+ */
+
+/*
+ * device_identify:
+ *
+ *	Display the identity of the device
+ */
+static void
+device_identify(int argc, char *argv[])
+{
+	char hnum[12];
+	uint64_t capacity;
+	uint64_t sectors;
+	uint32_t secsize;
+	int lb_per_pb;
+
+	/* No arguments. */
+	if (argc != 0)
+		usage();
+
+	fillataparams();
+	identify_fixup();
+
 	printf("Model: %s, Rev: %s, Serial #: %s\n",
 		model, revision, serial);
 
@@ -1081,7 +1130,7 @@ device_identify(int argc, char *argv[])
 		 inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" : "removable");
 	printf("\n");
 
-	compute_capacity(inqbuf, &capacity, &sectors, &secsize);
+	compute_capacity(&capacity, &sectors, &secsize);
 
 	humanize_number(hnum, sizeof(hnum), capacity, "bytes",
 		HN_AUTOSCALE, HN_DIVISOR_1000);
@@ -1361,7 +1410,7 @@ device_smart(int argc, char *argv[])
 		is_smart();
 	} else if (strcmp(argv[0], "status") == 0) {
 		int rv;
-		char *vendor = argc > 1 ? argv[1] : NULL;
+		const char *vendor = argc > 1 ? argv[1] : NULL;
 
 		rv = is_smart();
 
@@ -1416,6 +1465,11 @@ device_smart(int argc, char *argv[])
 
 		ata_command(&req);
 
+		if (!vendor || strcmp(vendor, "noauto") == 0) {
+			fillataparams();
+			identify_fixup();
+			vendor = guess_vendor();
+		}
 		print_smart_status(inbuf, inbuf2, vendor);
 
 	} else if (strcmp(argv[0], "offline") == 0) {
@@ -1490,7 +1544,6 @@ static void
 device_security(int argc, char *argv[])
 {
 	struct atareq req;
-	const struct ataparams *inqbuf;
 	unsigned char data[DEV_BSIZE];
 	char *pass;
 
@@ -1500,7 +1553,7 @@ device_security(int argc, char *argv[])
 
 	memset(&req, 0, sizeof(req));
 	if (strcmp(argv[0], "status") == 0) {
-		inqbuf = getataparams();
+		fillataparams();
 		print_bitinfo("\t", "\n", inqbuf->atap_sec_st, ata_sec_st);
 	} else if (strcmp(argv[0], "freeze") == 0) {
 		req.command = WDCC_SECURITY_FREEZE;
@@ -1551,7 +1604,7 @@ device_security(int argc, char *argv[])
 		} else if (strcmp(argv[0], "erase") == 0) {
 			struct atareq prepare;
 
-			inqbuf = getataparams();
+			fillataparams();
 
 			/*
 			 * XXX Any way to lock the device to make sure
@@ -1589,7 +1642,7 @@ device_security(int argc, char *argv[])
 			 */
 			if (req.timeout == 30600000) {
 				uint64_t bytes, timeout;
-				compute_capacity(inqbuf, &bytes, NULL, NULL);
+				compute_capacity(&bytes, NULL, NULL);
 				timeout = (bytes / (16 * 1024 * 1024)) * 1000;
 				if (timeout > (uint64_t)INT_MAX)
 					req.timeout = INT_MAX;

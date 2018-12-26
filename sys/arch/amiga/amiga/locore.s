@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.155 2011/12/22 15:33:28 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.155.46.1 2018/12/26 14:01:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,6 @@
 #include "opt_bb060stupidrom.h"
 #include "opt_p5ppc68kboard.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_fpsp.h"
 #include "opt_kgdb.h"
@@ -1058,9 +1057,6 @@ Lnoflush:
 #include <m68k/m68k/sigcode.s>
 #ifdef COMPAT_SUNOS
 #include <m68k/m68k/sunos_sigcode.s>
-#endif
-#ifdef COMPAT_SVR4
-#include <m68k/m68k/svr4_sigcode.s>
 #endif
 
 /*

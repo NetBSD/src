@@ -1,4 +1,4 @@
-/* FreeBSD/aarch64 target support, prototypes.
+/* NetBSD/aarch64 target support, prototypes.
 
    Copyright (C) 2017-2018 Free Software Foundation, Inc.
 

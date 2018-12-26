@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.135.2.1 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.135.2.2 2018/12/26 14:02:07 pgoyette Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -414,18 +414,16 @@
 #endif
 
 /*
- * C99 defines __func__ predefined identifier, which was made available
- * in GCC 2.95.
+ * C99 and C++11 define __func__ predefined identifier, which was made
+ * available in GCC 2.95.
  */
-#if !(__STDC_VERSION__ >= 199901L)
-#if __GNUC_PREREQ__(2, 6)
-#define	__func__	__PRETTY_FUNCTION__
-#elif __GNUC_PREREQ__(2, 4)
+#if !(__STDC_VERSION__ >= 199901L) && !(__cplusplus - 0 >= 201103L)
+#if __GNUC_PREREQ__(2, 4)
 #define	__func__	__FUNCTION__
 #else
 #define	__func__	""
 #endif
-#endif /* !(__STDC_VERSION__ >= 199901L) */
+#endif /* !(__STDC_VERSION__ >= 199901L) && !(__cplusplus - 0 >= 201103L) */
 
 #if defined(_KERNEL)
 #if defined(NO_KERNEL_RCSIDS)
@@ -588,7 +586,7 @@
     ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
 /* Macros for min/max. */
-#define	__MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define	__MIN(a,b)	((/*CONSTCOND*/(a)<=(b))?(a):(b))
 #define	__MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
 /* __BITS(m, n): bits m through n, m < n. */

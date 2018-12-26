@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.19.14.2 2018/09/06 06:51:32 pgoyette Exp $	*/
+/*	$NetBSD: eval.h,v 1.19.14.3 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,14 @@ enum skipstate {
       SKIPFILE		/* return in a dot command */
 };
 
+struct skipsave {
+	enum skipstate state;	/* skipping or not */
+	int count;		/* when break or continue, how many */
+};
+
 enum skipstate current_skipstate(void);
+void save_skipstate(struct skipsave *);
+void restore_skipstate(const struct skipsave *);
 void stop_skipping(void);	/* reset internal skipping state to SKIPNONE */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.75.2.3 2018/07/28 04:37:34 pgoyette Exp $	*/
+/*	$NetBSD: vector.S,v 1.75.2.4 2018/12/26 14:01:38 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.75.2.3 2018/07/28 04:37:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.75.2.4 2018/12/26 14:01:38 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -899,7 +899,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
-	movl	CPUVAR(ISOURCES) + (num) * 4,%ebp			;\
+	movl	CPUVAR(XSOURCES) + (num) * 4,%ebp			;\
 	movl	$num,CPUVAR(ILEVEL)					;\
 	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\

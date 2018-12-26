@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_calc1.tab.h,v 1.1.1.3 2016/01/09 21:59:46 christos Exp $	*/
+/*	$NetBSD: btyacc_calc1.tab.h,v 1.1.1.3.14.1 2018/12/26 14:01:14 pgoyette Exp $	*/
 
 #ifndef _calc1__defines_h_
 #define _calc1__defines_h_
@@ -20,6 +20,5 @@ typedef union
 	INTERVAL vval;
 } YYSTYPE;
 #endif /* !YYSTYPE_IS_DECLARED */
-extern YYSTYPE calc1_lval;
 
 #endif /* _calc1__defines_h_ */

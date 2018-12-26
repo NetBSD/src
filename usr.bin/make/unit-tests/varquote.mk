@@ -1,4 +1,4 @@
-# $NetBSD: varquote.mk,v 1.2.4.2 2018/06/25 07:26:11 pgoyette Exp $
+# $NetBSD: varquote.mk,v 1.2.4.3 2018/12/26 14:02:10 pgoyette Exp $
 #
 # Test VAR:q modifier
 
@@ -10,5 +10,5 @@ all:
 	@${MAKE} -f ${MAKEFILE} REPROFLAGS=${REPROFLAGS:q}
 .else
 all:
-	@echo ${REPROFLAGS}
+	@printf "%s %s\n" ${REPROFLAGS}
 .endif

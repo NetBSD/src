@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_SET_AUTHORIZER 3
 .Os
 .Sh NAME
@@ -16,7 +16,8 @@ This routine registers an authorizer callback with a particular database connect
 supplied in the first argument.
 The authorizer callback is invoked as SQL statements are being compiled
 by sqlite3_prepare() or its variants sqlite3_prepare_v2(),
-sqlite3_prepare16() and sqlite3_prepare16_v2().
+sqlite3_prepare_v3(), sqlite3_prepare16(),
+sqlite3_prepare16_v2(), and sqlite3_prepare16_v3().
 At various points during the compilation process, as logic is being
 created to perform various actions, the authorizer callback is invoked
 to see if those actions are allowed.
@@ -39,8 +40,12 @@ The first parameter to the authorizer callback is a copy of the third
 parameter to the sqlite3_set_authorizer() interface.
 The second parameter to the callback is an integer  action code
 that specifies the particular action to be authorized.
-The third through sixth parameters to the callback are zero-terminated
-strings that contain additional details about the action to be authorized.
+The third through sixth parameters to the callback are either NULL
+pointers or zero-terminated strings that contain additional details
+about the action to be authorized.
+Applications must always be prepared to encounter a NULL pointer in
+any of the third through the sixth parameters of the authorization
+callback.
 .Pp
 If the action code is SQLITE_READ and the callback returns
 SQLITE_IGNORE then the prepared statement
@@ -49,6 +54,10 @@ table column that would have been read if SQLITE_OK had been
 returned.
 The SQLITE_IGNORE return can be used to deny an untrusted
 user access to individual columns of a table.
+When a table is referenced by a SELECT but no column values are
+extracted from that table (for example in a query like "SELECT count(*)
+FROM tab") then the SQLITE_READ authorizer callback is invoked
+once for that table with a column name that is an empty string.
 If the action code is SQLITE_DELETE and the callback returns
 SQLITE_IGNORE then the DELETE operation proceeds
 but the truncate optimization is disabled and

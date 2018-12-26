@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.39 2017/02/09 20:42:30 macallan Exp $	*/
+/*	$NetBSD: trm.c,v 1.39.12.1 2018/12/26 14:02:00 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.39 2017/02/09 20:42:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.39.12.1 2018/12/26 14:02:00 pgoyette Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -477,7 +477,8 @@ trm_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 
-	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, trm_intr, sc) == NULL) {
+	if (pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, trm_intr, sc,
+	    device_xname(self)) == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);

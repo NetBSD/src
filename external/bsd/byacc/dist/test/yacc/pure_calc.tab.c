@@ -1,4 +1,4 @@
-/*	$NetBSD: pure_calc.tab.c,v 1.3 2017/06/05 18:54:30 christos Exp $	*/
+/*	$NetBSD: pure_calc.tab.c,v 1.3.4.1 2018/12/26 14:01:15 pgoyette Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -287,8 +287,9 @@ static const char *const calc_rule[] = {
 };
 #endif
 
+#if YYDEBUG
 int      yydebug;
-int      yynerrs;
+#endif
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -359,7 +360,7 @@ YYLEX_DECL()
     }
     return( c );
 }
-#line 361 "pure_calc.tab.c"
+#line 362 "pure_calc.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -426,6 +427,7 @@ YYPARSE_DECL()
     int      yychar;
     YYSTYPE  yyval;
     YYSTYPE  yylval;
+    int      yynerrs;
 
     /* variables for the parser stack */
     YYSTACKDATA yystack;
@@ -628,7 +630,7 @@ case 18:
 #line 69 "pure_calc.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 630 "pure_calc.tab.c"
+#line 632 "pure_calc.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

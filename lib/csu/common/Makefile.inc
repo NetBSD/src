@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2016/06/01 21:24:55 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.32.14.1 2018/12/26 14:01:26 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ PICFLAGS ?= -fPIC
 COMMON_DIR:=	${.CURDIR}/common
 .PATH:		${COMMON_DIR}
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so -I${COMMON_DIR} -I.
+CPPFLAGS+=	-I${COMMON_DIR} -I.
 
 OBJS+=		crt0.o gcrt0.o crti.o crtn.o
 OBJS+=		crtbegin.o crtend.o

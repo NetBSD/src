@@ -1,4 +1,4 @@
-/*	$NetBSD: identify.c,v 1.2.14.2 2018/04/22 07:20:16 pgoyette Exp $	*/
+/*	$NetBSD: identify.c,v 1.2.14.3 2018/12/26 14:01:29 pgoyette Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: identify.c,v 1.2.14.2 2018/04/22 07:20:16 pgoyette Exp $");
+__RCSID("$NetBSD: identify.c,v 1.2.14.3 2018/12/26 14:01:29 pgoyette Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/identify.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -136,7 +136,7 @@ print_controller(struct nvm_identify_controller *cdata)
 	printf("Write Zeroes Command:        %s\n",
 		(cdata->oncs & NVME_ID_CTRLR_ONCS_WRITE_ZERO) ?
 		"Supported" : "Not Supported");
-	printf("Set Features Command:        %s\n",
+	printf("Features Save/Select Field:  %s\n",
 		(cdata->oncs & NVME_ID_CTRLR_ONCS_SET_FEATURES) ?
 		"Supported" : "Not Supported");
 	printf("Reservation:                 %s\n",

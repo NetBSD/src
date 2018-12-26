@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.40.8.3 2018/09/30 01:45:04 pgoyette Exp $
+# $NetBSD: rescue.mi,v 1.40.8.4 2018/12/26 14:01:11 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -67,7 +67,7 @@
 ./rescue/ldd					base-rescue-root
 ./rescue/less					base-rescue-root
 ./rescue/lfs_cleanerd				base-rescue-root
-./rescue/lmcconfig				base-rescue-root
+./rescue/lmcconfig				base-obsolete	obsolete
 ./rescue/lmcctl					base-obsolete	obsolete
 ./rescue/ln					base-rescue-root
 ./rescue/ls					base-rescue-root

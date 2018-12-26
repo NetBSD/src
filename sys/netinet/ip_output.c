@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.298.2.6 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.298.2.7 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.6 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.7 2018/12/26 14:02:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -715,13 +715,14 @@ sendit:
 		}
 
 		sa = (m->m_flags & M_MCAST) ? sintocsa(rdst) : sintocsa(dst);
-		if (__predict_true(
-		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
-		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
-			error = ip_if_output(ifp, m, sa, rt);
-		} else {
+		if (__predict_false(sw_csum & M_CSUM_TSOv4)) {
+			/*
+			 * TSO4 is required by a packet, but disabled for
+			 * the interface.
+			 */
 			error = ip_tso_output(ifp, m, sa, rt);
-		}
+		} else
+			error = ip_if_output(ifp, m, sa, rt);
 		goto done;
 	}
 
@@ -998,7 +999,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		if (n == NULL)
 			return m;
 		MCLAIM(n, m->m_owner);
-		M_MOVE_PKTHDR(n, m);
+		m_move_pkthdr(n, m);
 		m->m_len -= sizeof(struct ip);
 		m->m_data += sizeof(struct ip);
 		n->m_next = m;

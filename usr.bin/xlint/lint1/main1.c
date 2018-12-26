@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.26 2016/12/24 17:43:45 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.26.12.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.26 2016/12/24 17:43:45 christos Exp $");
+__RCSID("$NetBSD: main1.c,v 1.26.12.1 2018/12/26 14:02:11 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -241,8 +241,10 @@ main(int argc, char *argv[])
 	/* initialize output */
 	outopen(argv[1]);
 
+#ifdef YYDEBUG
 	if (yflag)
 		yydebug = 1;
+#endif
 
 	(void)signal(SIGFPE, sigfpe);
 	initmem();

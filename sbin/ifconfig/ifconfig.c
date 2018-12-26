@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.236.14.1 2018/11/26 01:52:14 pgoyette Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.236.14.2 2018/12/26 14:01:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.236.14.1 2018/11/26 01:52:14 pgoyette Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.236.14.2 2018/12/26 14:01:29 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -799,6 +799,7 @@ main(int argc, char **argv)
 
 	do_setifpreference(env);
 	do_setifcaps(env);
+	do_setethercaps(env);
 
 	exit(EXIT_SUCCESS);
 }

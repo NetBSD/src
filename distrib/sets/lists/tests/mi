@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775.2.9 2018/09/30 01:45:05 pgoyette Exp $
+# $NetBSD: mi,v 1.775.2.10 2018/12/26 14:01:12 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -124,6 +124,7 @@
 ./usr/libdata/debug/usr/tests/lib/libexecinfo				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/liblutok				tests-lutok-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libnvmm				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd				tests-lib-debug		compattestfile,atf
@@ -1270,6 +1271,7 @@
 ./usr/tests/bin/sh/dotcmd/while_return_until	tests-bin-tests	compattestfile,atf
 ./usr/tests/bin/sh/dotcmd/while_return_while	tests-bin-tests	compattestfile,atf
 ./usr/tests/bin/sh/t_arith			tests-bin-tests		compattestfile,atf
+./usr/tests/bin/sh/t_builtins			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_cmdsub			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_compexit			tests-obsolete		obsolete
 ./usr/tests/bin/sh/t_evaltested			tests-bin-tests		compattestfile,atf
@@ -2203,6 +2205,7 @@
 ./usr/tests/kernel/t_subr_prf			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysctl			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysv			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_threadpool			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_time			tests-obsolete		obsolete
 ./usr/tests/kernel/t_timeleft			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_trapsignal			tests-kernel-tests	compattestfile,atf
@@ -3042,6 +3045,9 @@
 ./usr/tests/lib/libm/t_sqrt			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_tan			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_tanh			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libnvmm				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libnvmm/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libnvmm/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libobjc				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libobjc/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libobjc/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
@@ -3330,6 +3336,7 @@
 ./usr/tests/net/if_ipsec/Atffile		tests-net-tests		atf,rump
 ./usr/tests/net/if_ipsec/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_ipsec/t_ipsec		tests-net-tests		atf,rump
+./usr/tests/net/if_ipsec/t_ipsec_natt		tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_l2tp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp/Kyuafile		tests-net-tests		atf,rump,kyua
@@ -3462,6 +3469,7 @@
 ./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_signals		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_sp			tests-rump-tests	atf,rump
+./usr/tests/rump/rumpkern/t_threadpool		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_threads		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_tsleep		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_vm			tests-rump-tests	atf,rump

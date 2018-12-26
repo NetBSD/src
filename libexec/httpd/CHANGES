@@ -1,7 +1,17 @@
-$NetBSD: CHANGES,v 1.25.10.1 2018/11/26 01:52:13 pgoyette Exp $
+$NetBSD: CHANGES,v 1.25.10.2 2018/12/26 14:01:28 pgoyette Exp $
+
+changes in bozohttpd 20181215:
+	o  fix .htpasswd bypass for authenticated users.  reported by JP,
+	   from leot@netbsd.org
+	o  avoid possible null dereference when receiving a big request that
+	   timeout.  reported by maya@netbsd.org, from leot@netbsd.org
+	o  fix handling of -T option, from leot@netbsd.org
+	o  cleanups and portability improvements, from maya@netbsd.org
+	o  change directory indexing to use html tables, from
+	   rajeev_v_pillai@yahoo.com
 
 changes in bozohttpd 20181125:
-	o  fixes for option parsing introduced in bozohttpd 20181123.
+	o  fixes for option parsing introduced in bozohttpd 20181123
 
 changes in bozohttpd 20181121:
 	o  add url remap support via .bzremap file, from martin@netbsd.org
@@ -12,7 +22,7 @@ changes in bozohttpd 20181121:
 	   initial line, each header, and the total time spent
 	o  add -T option to expose new timeout settings
 	o  minor RFC fixes related to timeout handling
-	o  fix special file (.htpasswd, .bz*) bypass.  reported by JP.
+	o  fix special file (.htpasswd, .bz*) bypass.  reported by JP
 
 changes in bozohttpd 20170201:
 	o  fix an infinite loop in cgi processing
@@ -97,7 +107,7 @@ changes in bozohttpd 20100617:
 
 changes in bozohttpd 20100509:
 	o  major rework and clean up of internal interfaces.  move the main
-	   program into main.c, the remaining parts are useable as library.
+	   program into main.c, the remaining parts are useable as library
 	   add bindings for lua.  by Alistair G. Crooks <agc@netbsd.org>
 	o  fix http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=566325
 
@@ -293,7 +303,7 @@ changes in bozohttpd 5.07 (20010610):
 	- add many new content-types, now support most common ones
 
 changes in bozohttpd 5.06 (20000825):
-	- add IPv6 suppor from itojun@iijlab.net
+	- add IPv6 support from itojun@iijlab.net
 	- man page fixes from jlam@netbsd.org
 
 changes in bozohttpd 5.05 (20000815):

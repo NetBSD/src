@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_x86_64.c,v 1.2.48.2 2018/06/25 07:25:46 pgoyette Exp $ */
+/* $NetBSD: cpu_x86_64.c,v 1.2.48.3 2018/12/26 14:01:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2.48.2 2018/06/25 07:25:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_x86_64.c,v 1.2.48.3 2018/12/26 14:01:44 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -132,6 +132,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp = (struct sigframe_siginfo *) (((unsigned long)sp & ~15) - 8);
 
 	/* set up stack frame */
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint64_t) ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_si._info = ksi->ksi_info;
 

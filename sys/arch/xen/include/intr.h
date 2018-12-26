@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.45.2.2 2018/10/20 06:58:30 pgoyette Exp $	*/
+/*	$NetBSD: intr.h,v 1.45.2.3 2018/12/26 14:01:45 pgoyette Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -61,6 +61,9 @@ struct evtsource {
 	char ev_xname[64];		/* handler device list */
 };
 
+#define XMASK(ci,level) (ci)->ci_xmask[(level)]
+#define XUNMASK(ci,level) (ci)->ci_xunmask[(level)]
+
 extern struct intrstub xenev_stubs[];
 extern int irq2port[NR_EVENT_CHANNELS]; /* actually port + 1, so that 0 is invaid */
 
@@ -82,6 +85,13 @@ void xen_broadcast_ipi(uint32_t);
 #define xen_send_ipi(_i1, _i2) (0) /* nothing */
 #define xen_broadcast_ipi(_i1) ((void) 0) /* nothing */
 #endif /* MULTIPROCESSOR */
+
+void *xen_intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *),
+    void *, bool, const char *);
+void *xen_intr_establish(int, struct pic *, int, int, int, int (*)(void *),
+    void *, bool);
+void xen_intr_disestablish(struct intrhand *);
+
 #endif /* !_LOCORE */
 
 #endif /* _XEN_INTR_H_ */

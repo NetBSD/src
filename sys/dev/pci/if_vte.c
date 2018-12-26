@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.18.4.2 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.18.4.3 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.18.4.2 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.18.4.3 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,8 +225,8 @@ vte_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
 	    sizeof(intrbuf));
-	sc->vte_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-	    vte_intr, sc);
+	sc->vte_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_NET,
+	    vte_intr, sc, device_xname(self));
 	if (sc->vte_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

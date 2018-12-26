@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE_LIMIT_LENGTH 3
 .Os
 .Sh NAME
@@ -49,8 +49,9 @@ The maximum number of terms in a compound SELECT statement.
 .It SQLITE_LIMIT_VDBE_OP
 The maximum number of instructions in a virtual machine program used
 to implement an SQL statement.
-This limit is not currently enforced, though that might be added in
-some future release of SQLite.
+If sqlite3_prepare_v2() or the equivalent tries
+to allocate space for more than this many opcodes in a single prepared
+statement, an SQLITE_NOMEM error is returned.
 .It SQLITE_LIMIT_FUNCTION_ARG
 The maximum number of arguments on a function.
 .It SQLITE_LIMIT_ATTACHED
@@ -69,4 +70,5 @@ may start.
 .Pp
 .Sh SEE ALSO
 .Xr sqlite3_stmt 3 ,
-.Xr sqlite3_limit 3
+.Xr sqlite3_limit 3 ,
+.Xr sqlite3_prepare 3

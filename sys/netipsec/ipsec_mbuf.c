@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.5 2018/09/06 06:56:45 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.6 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.5 2018/09/06 06:56:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.6 2018/12/26 14:02:05 pgoyette Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -116,7 +116,7 @@ m_clone(struct mbuf *m0)
 				m_freem(m0);
 				return NULL;
 			}
-			M_MOVE_PKTHDR(n, m);
+			m_move_pkthdr(n, m);
 			MCLGET(n, M_DONTWAIT);
 			if ((n->m_flags & M_EXT) == 0) {
 				m_free(n);

@@ -1,6 +1,6 @@
-.\"	$NetBSD: yacc.1,v 1.7 2016/01/09 22:05:33 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.7.14.1 2018/12/26 14:01:14 pgoyette Exp $
 .\"
-.\" Id: yacc.1,v 1.24 2014/10/06 00:03:48 tom Exp 
+.\" Id: yacc.1,v 1.26 2018/06/10 00:57:07 tom Exp 
 .\"
 .\" .TH YACC 1 "July\ 15,\ 1990"
 .\" .UC 6
@@ -23,9 +23,10 @@
 .el       .ds '' ''
 .\" Bulleted paragraph
 .de bP
-.IP \(bu 4
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
 ..
-.TH YACC 1 "October 5, 2014" "Berkeley Yacc" "User Commands"
+.TH YACC 1 "June 9, 2018" "Berkeley Yacc" "User Commands"
 .SH NAME
 Yacc \- an LALR(1) parser generator
 .SH SYNOPSIS
@@ -46,7 +47,7 @@ The parsers consist of a set of LALR(1) parsing tables and a driver routine
 written in the C programming language.
 .B Yacc
 normally writes the parse tables and the driver routine to the file
-.IR y.tab.c.
+.I y.tab.c.
 .PP
 The following options are available:
 .TP 5
@@ -55,16 +56,16 @@ The
 .B \-b
 option changes the prefix prepended to the output file names to
 the string denoted by
-.IR file_prefix.
+.I file_prefix.
 The default prefix is the character
-.IR y.
+.I y.
 .TP
 .B \-B
-create a backtracking parser (compile-type configuration for \fBbtyacc\fP).
+create a backtracking parser (compile-time configuration for \fBbtyacc\fP).
 .TP
 .B \-d
 The \fB-d\fR option causes the header file
-.BR y.tab.h
+.B y.tab.h
 to be written.
 It contains #define's for the token identifiers.
 .TP
@@ -73,12 +74,12 @@ The
 .B \-g
 option causes a graphical description of the generated LALR(1) parser to
 be written to the file
-.BR y.dot
+.B y.dot
 in graphviz format, ready to be processed by dot(1).
 .TP
 .B \-i
 The \fB-i\fR option causes a supplementary header file
-.BR y.tab.i
+.B y.tab.i
 to be written.
 It contains extern declarations
 and supplementary #define's as needed to map the conventional \fIyacc\fP
@@ -104,7 +105,8 @@ will not insert the \fI#line\fP directives.
 \&\fI#line\fP directives specified by the user will be retained.
 .TP
 .B \-L
-enable position processing, e.g., \*(``%locations\*('' (compile-type configuration for \fBbtyacc\fP).
+enable position processing,
+e.g., \*(``%locations\*('' (compile-time configuration for \fBbtyacc\fP).
 .TP
 \fB\-o \fP\fIoutput_file\fR
 specify the filename for the parser file.
@@ -117,9 +119,9 @@ The
 .B \-p
 option changes the prefix prepended to yacc-generated symbols to
 the string denoted by
-.IR symbol_prefix.
+.I symbol_prefix.
 The default prefix is the string
-.BR yy.
+.B yy.
 .TP
 .B \-P
 create a reentrant parser, e.g., \*(``%pure-parser\*(''.
@@ -131,9 +133,9 @@ option causes
 .B yacc
 to produce separate files for code and tables.
 The code file is named
-.IR y.code.c,
+.I y.code.c,
 and the tables file is named
-.IR y.tab.c.
+.I y.tab.c.
 The prefix \*(``\fIy.\fP\*('' can be overridden using the \fB\-b\fP option.
 .TP
 .B \-s
@@ -175,7 +177,7 @@ The
 .B \-v
 option causes a human-readable description of the generated parser to
 be written to the file
-.IR y.output.
+.I y.output.
 .TP
 .B \-V
 print the version number to the standard output.
@@ -342,8 +344,8 @@ relying on directives embedded in the grammar file.
 Bison's \*(``\fB\-y\fP\*('' option does not affect bison's lack of support for
 features of AT&T yacc which were deemed obsolescent.
 .bP
-\fBYacc\fP accepts multiple parameters with \fB%lex-param\fP and \fB%parse-param\fP
-in two forms
+\fBYacc\fP accepts multiple parameters
+with \fB%lex-param\fP and \fB%parse-param\fP in two forms
 .ES
 {type1 name1} {type2 name2} ...
 {type1 name1,  type2 name2 ...}

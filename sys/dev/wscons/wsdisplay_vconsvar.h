@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.26 2017/06/02 19:33:51 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.26.8.1 2018/12/26 14:02:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -57,7 +57,7 @@ struct vcons_screen {
 					 * drawing */
 #define VCONS_DONT_DRAW		8	/* don't draw on this screen at all */
 /*
- * the following flags are for drivers which either can't accelerate (all) copy 
+ * the following flags are for drivers which either can't accelerate (all) copy
  * operations or where drawing characters is faster than the blitter
  * for example, Sun's Creator boards can't accelerate copycols()
  */
@@ -97,13 +97,13 @@ struct vcons_screen {
 struct vcons_data {
 	/* usually the drivers softc */
 	void *cookie;
-	
+
 	/*
 	 * setup the rasops part of the passed vcons_screen, like
 	 * geometry, framebuffer address, font, characters, acceleration.
 	 * we pass the cookie as 1st parameter
 	 */
-	void (*init_screen)(void *, struct vcons_screen *, int, 
+	void (*init_screen)(void *, struct vcons_screen *, int,
 	    long *);
 
 	/* accessops */

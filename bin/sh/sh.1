@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.175.2.5 2018/11/26 01:49:54 pgoyette Exp $
+.\"	$NetBSD: sh.1,v 1.175.2.6 2018/12/26 14:01:03 pgoyette Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd May 3, 2018
+.Dd December 12, 2018
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -133,6 +133,8 @@ from the files
 .Pa /etc/profile
 and
 .Pa .profile
+in the user's home directory
+.Pq \&$HOME ,
 if they exist.
 If the environment variable
 .Ev ENV
@@ -143,9 +145,19 @@ of a login shell,
 and either the shell is interactive, or the
 .Cm posix
 option is not set,
-the shell next reads
-commands from the file named in
-.Ev ENV .
+the shell then performs parameter and arithmetic
+expansion on the value of
+.Ev ENV ,
+(these are described later)
+and then reads commands from the file name that results.
+If
+.Ev ENV
+contains a command substitution, or one of the
+other expansions fails, or if there are no expansions
+to expand, the value of
+.Ev ENV
+is used as the file name.
+.Pp
 Therefore, a user should place commands that are to be executed only at
 login time in the
 .Pa .profile
@@ -267,7 +279,8 @@ built-in (described later).
 .\"
 .It Fl a Em allexport
 Automatically export any variable to which a value is assigned
-while this flag is set.
+while this flag is set, unless the variable has been marked as
+not for export.
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
@@ -517,11 +530,16 @@ whether a colon (:) terminates the user name in tilde (~) expansions
 other than in assignment statements
 .Dq ( no
 in posix mode),
+the format of the output of the
+.Ic kill Fl l
+command, where posix mode causes the names of the signals
+be separated by either a single space or newline, and where otherwise
+sufficient spaces are inserted to generate nice looking columns,
 and whether the shell treats
 an empty brace-list compound statement as a syntax error
 (expected by POSIX) or permits it.
 Such statements
-.Dq "{ }"
+.Dq "{\ }"
 can be useful when defining dummy functions.
 Lastly, in posix mode, only one
 .Dq \&!
@@ -642,7 +660,8 @@ and does not need to be escaped, but may be.
 A newline following the escape character is treated as a line continuation,
 like the same sequence in a double quoted string,
 or when not quoted \(en
-the two characters, escape and newline, are removed from the input string.
+the two characters, the backslash escape and the newline,
+are removed from the input string.
 .Pp
 The following characters, when escaped, are converted in a
 manner similar to the way they would be in a string in the C language:
@@ -2260,6 +2279,7 @@ etc).
 .It Ic \&: Op Ar arg ...
 A null command that returns a 0 (true) exit value.
 Any arguments or redirects are evaluated, then ignored.
+.\"
 .It Ic \&. Ar file
 The dot command reads and executes the commands from the specified
 .Ar file
@@ -2279,6 +2299,7 @@ and continue) behave across a dot command boundary.
 This implementation allows them to control loops surrounding the dot command,
 but obviously such behavior should not be relied on.
 It is now permitted by the standard, but not required.
+.\"
 .It Ic alias Op Ar name Ns Op Li = Ns Ar string ...
 If
 .Ar name Ns Li = Ns Ar string
@@ -2296,9 +2317,11 @@ With no arguments, the
 built-in prints the
 names and values of all defined aliases (see
 .Ic unalias ) .
+.\"
 .It Ic bg Op Ar job ...
 Continue the specified jobs (or the current job if no
 jobs are given) in the background.
+.\"
 .It Ic command Oo Fl pVv Oc Ar command Op Ar arg ...
 Execute the specified command but ignore shell functions when searching
 for it.
@@ -2321,6 +2344,7 @@ Do not execute the command but
 search for the command and print the absolute pathname
 of utilities, the name for built-ins or the expansion of aliases.
 .El
+.\"
 .It Ic cd Oo Fl P Oc Op Ar directory Op Ar replace
 Switch to the specified directory (default
 .Ev $HOME ) .
@@ -2388,9 +2412,11 @@ mechanism was used
 or if the
 .Ar replace
 argument was used.
+.\"
 .It Ic eval Ar string ...
 Concatenate all the arguments with spaces.
 Then re-parse and execute the command.
+.\"
 .It Ic exec Op Ar command Op Ar arg ...
 Unless
 .Ar command
@@ -2433,14 +2459,17 @@ Alternatively, see the
 .Ic fdflags
 command below, which can set, or clear, this, and other,
 file descriptor flags.
+.\"
 .It Ic exit Op Ar exitstatus
 Terminate the shell process.
 If
 .Ar exitstatus
 is given it is used as the exit status of the shell; otherwise the
 exit status of the preceding command (the current value of $?) is used.
-.It Ic export Oo Fl npx Oc Ar name ...
-.It Ic export Fl p Op Fl x
+.\"
+.It Ic export Oo Fl nx Oc Ar name Ns Oo =value Oc ...
+.It Ic export Oo Fl x Oc Oo Fl p Oo Ar name ... Oc Oc
+.It Ic export Fl q Oo Fl x Oc Ar name ...
 With no options,
 but one or more names,
 the specified names are exported so that they will appear in the
@@ -2463,6 +2492,7 @@ provided the variable is not also read-only.
 That is
 .Bd -literal -offset indent
 export -x FOO # FOO will now not be exported by default
+export FOO    # this command will fail (non-fatally)
 FOO=some_value my_command
 .Ed
 .Pp
@@ -2473,30 +2503,57 @@ to
 through the environment.
 .Pp
 The shell allows the value of a variable to be set at the
-same time it is exported by writing
+same time it is exported (or unexported, etc) by writing
 .Pp
-.Dl export name=value
+.Dl export [-nx] name=value
 .Pp
-With no arguments the export command lists the names of all exported variables,
+With no arguments the export command lists the names of all
+set exported variables,
 or if
 .Fl x
-was given, all variables marked not for export.
+was given, all set variables marked not for export.
 With the
 .Fl p
-option specified the output will be formatted suitably for non-interactive use.
+option specified, the output will be formatted suitably for
+non-interactive use, and unset variables are included.
+When
+.Fl p
+is given, variable names, but not values, may also be
+given, in which case output is limited to the variables named.
 .Pp
-The
+With
+.Fl q
+and a list of variable names, the
+.Ic export
+command will exit with status 0 if all the named
+variables have been marked for export, or 1 if
+any are not so marked.
+If
+.Fl x
+is also given,
+the test is instead for variables marked not to be exported.
+.Pp
+Other than with
+.Fl q ,
+the
 .Ic export
 built-in exits with status 0,
-unless an invalid option, or option combination, is given,
-or unless an attempt is made to export a variable which has
+unless an attempt is made to export a variable which has
 been marked as unavailable for export,
 in which cases it exits with status 1.
+In all cases if
+an invalid option, or option combination, is given,
+or an invalid variable name is present,
+.Ic export
+will write a message to the standard error output,
+and exit with a non-zero status.
+A non-interactive shell will terminate.
 .Pp
 Note that there is no restriction upon exporting,
 or un-exporting, read-only variables.
 The no-export flag can be reset by unsetting the variable
-and creating it again \(en provided it is not also read-only.
+and creating it again \(en provided the variable is not also read-only.
+.\"
 .It Ic fc Oo Fl e Ar editor Oc Op Ar first Op Ar last
 .It Ic fc Fl l Oo Fl nr Oc Op Ar first Op Ar last
 .It Ic fc Fl s Oo Ar old=new Oc Op Ar first
@@ -2588,10 +2645,12 @@ Name of the editor to use.
 .It Ev HISTSIZE
 The number of previous commands that are accessible.
 .El
+.\"
 .It Ic fg Op Ar job
 Move the specified job or the current job to the foreground.
 A foreground job can interact with the user via standard input,
 and receive signals from the terminal.
+.\"
 .It Ic fdflags Oo Fl v Oc Op Ar fd ...
 .It Ic fdflags Oo Fl v Oc Fl s Ar flags fd Op ...
 Get or set file descriptor flags.
@@ -2628,6 +2687,7 @@ See
 and
 .Xr open 2
 for more information.
+.\"
 .It Ic getopts Ar optstring var
 The POSIX
 .Ic getopts
@@ -2728,6 +2788,7 @@ cmd \-a \-c arg file file
 cmd \-carg -a file file
 cmd \-a \-carg \-\- file file
 .Ed
+.\"
 .It Ic hash Oo Fl rv Oc Op Ar command ...
 The shell maintains a hash table which remembers the
 locations of commands.
@@ -2751,11 +2812,13 @@ The
 .Fl r
 option causes the hash command to delete all the entries in the hash table
 except for functions.
+.\"
 .It Ic inputrc Ar file
 Read the
 .Ar file
 to set key bindings as defined by
 .Xr editrc 5 .
+.\"
 .It Ic jobid Oo Fl g Ns \&| Ns Fl j Ns \&| Ns Fl p Oc  Op Ar job
 With no flags, print the process identifiers of the processes in the job.
 If the
@@ -2801,6 +2864,7 @@ or with
 .Fl p
 there is no process group leader (should not happen),
 and otherwise exits with status 0.
+.\"
 .It Ic jobs Oo Fl l Ns \&| Ns Fl p Oc Op Ar job ...
 Without
 .Ar job
@@ -2842,6 +2906,7 @@ and cleans up the job table entry for that job.
 Non-interactive shells need to execute
 .Ic wait
 commands to clean up terminated background jobs.
+.\"
 .It Ic local Oo Fl INx Oc Oo Ar variable | \- Oc ...
 Define local variables for a function.
 Local variables have their attributes, and values,
@@ -2995,6 +3060,21 @@ destination for
 output (as of the time of the
 .Ic local
 command) will also be restored.
+If any of the shell's magic variables
+(those which return a value which may vary without
+the variable being explicitly altered,
+e.g.:
+.Dv SECONDS
+or
+.Dv HOSTNAME )
+are made local in a function,
+they will lose their special properties when set
+within the function, including by the
+.Ic local
+command itself
+(if not to be set in the function, there is little point
+in making a variable local)
+but those properties will be restored when the function returns.
 .Pp
 It is an error to use
 .Ic local
@@ -3021,6 +3101,7 @@ See the section
 below for details of the effects of making the variable
 .Dv LINENO
 local.
+.\"
 .It Ic pwd Op Fl \&LP
 Print the current directory.
 If
@@ -3061,6 +3142,7 @@ The built-in command may differ from the program of the same name because
 the program will use
 .Ev PWD
 and the built-in uses a separately cached value.
+.\"
 .It Ic read Oo Fl p Ar prompt Oc Oo Fl r Oc Ar variable Op Ar ...
 The
 .Ar prompt
@@ -3091,9 +3173,12 @@ acts as an escape character, causing the following character to be treated
 literally.
 If a backslash is followed by a newline, the backslash and the
 newline will be deleted.
-.It Ic readonly Ar name ...
-.It Ic readonly Op Fl p
-The specified names are marked as read only, so that they cannot be
+.\"
+.It Ic readonly Ar name Ns Oo =value Oc ...
+.It Ic readonly Oo Fl p Oo Ar name ... Oc Oc
+.It Ic readonly Fl q Ar name ...
+With no options,
+the specified names are marked as read only, so that they cannot be
 subsequently modified or unset.
 The shell allows the value of a variable
 to be set at the same time it is marked read only by writing
@@ -3102,10 +3187,38 @@ to be set at the same time it is marked read only by writing
 .Pp
 With no arguments the
 .Ic readonly
-command lists the names of all read only variables.
+command lists the names of all set read only variables.
 With the
 .Fl p
-option specified the output will be formatted suitably for non-interactive use.
+option specified,
+the output will be formatted suitably for non-interactive use,
+and unset variables are included.
+When the
+.Fl p
+option is given,
+a list of variable names (without values) may also be specified,
+in which case output is limited to the named variables.
+.Pp
+With the
+.Fl q
+option, the
+.Ic readonly
+command tests the read-only status of the variables listed
+and exits with status 0 if all named variables are read-only,
+or with status 1 if any are not read-only.
+.Pp
+Other than as specified for
+.Fl q
+the
+.Ic readonly
+command normally exits with status 0.
+In all cases, if an unknown option, or an invalid option combination,
+or an invalid variable name, is given;
+or a variable which was already read-only is attempted to be set;
+the exit status will not be zero, a diagnostic
+message will be written to the standard error output,
+and a non-interactive shell will terminate.
+.\"
 .It Ic return Op Ar n
 Stop executing the current function or a dot command with return value of
 .Ar n
@@ -3123,6 +3236,7 @@ Use the
 .Ic exit
 command instead, if you want to return from a script or exit
 your shell.
+.\"
 .It Ic set Oo { Fl options | Cm +options | Cm \-- } Oc Ar arg ...
 The
 .Ic set
@@ -3187,6 +3301,7 @@ Otherwise the following arguments become
 and
 .Li \&$#
 is set to the number of arguments present.
+.\"
 .It Ic setvar Ar variable Ar value
 Assigns
 .Ar value
@@ -3200,6 +3315,7 @@ rather than using
 is intended to be used in
 functions that assign values to variables whose names are passed as
 parameters.)
+.\"
 .It Ic shift Op Ar n
 Shift the positional parameters
 .Ar n
@@ -3225,6 +3341,7 @@ The shift count must be less than or equal to the number of
 positional parameters (
 .Dq Li $# )
 before the shift.
+.\"
 .It Ic times
 Prints two lines to standard output.
 Each line contains two accumulated time values, expressed
@@ -3243,6 +3360,7 @@ for more information.
 .Ic times
 has no parameters, and exits with an exit status of 0 unless
 an attempt is made to give it an option.
+.\"
 .It Ic trap Ar action signal ...
 .It Ic trap \-
 .It Ic trap Op Fl l
@@ -3307,6 +3425,11 @@ With the
 flag, trap prints the same information for the signals specified,
 or if none are given, for all signals, including those where the
 action is the default.
+These variants of the trap command may be executed in a sub-shell
+.Pq "such as in a command substitution" ,
+provided they appear as the sole, or first, command in that sub-shell,
+in which case the state of traps from the parent of that
+sub-shell is reported.
 .Pp
 Examples:
 .Pp
@@ -3355,6 +3478,7 @@ untrapped (in their default states)
 and which were altered during the intermediate code,
 would not be reset by the final
 .Ic eval .
+.\"
 .It Ic type Op Ar name ...
 Interpret each
 .Ar name
@@ -3365,6 +3489,7 @@ command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
+.\"
 .It Ic ulimit Oo Fl H Ns \*(Ba Ns Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
 Inquire about or set the hard or soft limits on processes or set new
 limits.
@@ -3487,6 +3612,7 @@ The exit status is 0, unless an attempt was made to unset
 a readonly variable, in which case the exit status is 1.
 It is not an error to unset (or undefine) a variable (or function)
 that is not currently set (or defined.)
+.\"
 .It Ic wait Oo Fl n Oc Oo Fl p Ar var Oc Op Ar job ...
 Wait for the specified jobs to complete
 and return the exit status of the last job in the parameter list,
@@ -3929,6 +4055,30 @@ above, which are documented further above in
 If unset
 .Dq $HOME/.editrc
 is used.
+.It Ev ENV
+Names the file sourced at startup by the shell.
+Unused by this shell after initialization,
+but is usually passed through the environment to
+descendant shells.
+.It Ev EUSER
+Set to the login name of the effective user id running the shell,
+as returned by
+.Bd -compact -literal -offset indent
+getpwuid(geteuid())->pw_name
+.Ed
+.Po
+See
+.Xr getpwuid 3
+and
+.Xr geteuid 2
+for more details.
+.Pc
+This is obtained each time
+.Ev EUSER
+is expanded, so changes to the shell's execution identity
+cause updates without further action.
+If unset, it returns nothing.
+If set it loses its special properties, and is simply a variable.
 .It Ev HISTSIZE
 The number of lines in the history buffer for the shell.
 .It Ev HOME
@@ -3947,8 +4097,7 @@ This is obtained each time
 is expanded, so changes to the system's name are reflected
 without further action.
 If unset, it returns nothing.
-Setting it does nothing except reverse the effect of an earlier
-.Ic unset .
+If set it loses its special properties, and is simply a variable.
 .It Ev IFS
 Input Field Separators.
 This is normally set to
@@ -4000,6 +4149,22 @@ The default search path for executables.
 See the
 .Sx Path Search
 section above.
+.It Ev POSIXLY_CORRECT
+If set in the environment upon initialization of the shell,
+then the shell option
+.Ic posix
+will be set.
+.Po
+See the description of the
+.Ic set
+command in the
+.Sx Built-ins
+section.
+.Pc
+After initialization it is unused by the shell,
+but is usually passed through the environment to
+descendant processes, including other instances of the shell,
+which may interpret it in a similar way.
 .It Ev PPID
 The process identified of the parent process of the
 current shell.
@@ -4091,8 +4256,8 @@ assigned before
 is first accessed after shell initialization.
 .It Ev SECONDS
 Returns the number of seconds since the current shell was started.
-Attempts to set this variable are ignored.
 If unset, it remains unset, and returns nothing, unless set again.
+If set, it loses its special properties, and becomes a normal variable.
 .It Ev START_TIME
 Initialized by the shell to the number of seconds since the Epoch
 (see
@@ -4104,7 +4269,7 @@ represents the current time, if
 .Ev START_TIME
 has not been modified, and
 .Ev SECONDS
-is not unset.
+has not been set or unset.
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
@@ -4126,8 +4291,7 @@ if set, or current local time if not, and returns the result.
 If unset
 .Ev ToD
 returns nothing.
-Setting it has no effect, other than to reverse the effect of an earlier
-.Ic unset .
+If set, it loses its special properties, and becomes a normal variable.
 .It Ev ToD_FORMAT
 Can be set to the
 .Xr strftime 3
@@ -4370,21 +4534,6 @@ significant security risk.
 The characters generated by filename completion should probably be quoted
 to ensure that the filename is still valid after the input line has been
 processed.
-.Pp
-The
-.Ic trap
-command cannot usefully be used, yet, within a command substitution,
-to obtain the current trap values,
-as all command substitutions are currently executed within a
-sub-shell environment,
-and in sub-shells all non-ignored, non-default, traps are reset.
-As a workaround, it is possible to redirect output from
-.Dq trap
-or
-.Dq trap -p
-to a file, and then read the file later using the
-.Dq \&.
-command.
 .Pp
 Job control of compound statements (loops, etc) is a complete mess.
 .Pp

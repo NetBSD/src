@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.11.2.1 2018/09/30 01:44:52 pgoyette Exp $
+#	$NetBSD: engine.inc,v 1.11.2.2 2018/12/26 14:01:10 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -13,6 +13,7 @@ ENGINE_SRCS += \
 eng_all.c \
 eng_cnf.c \
 eng_ctrl.c \
+eng_devcrypto.c \
 eng_dyn.c \
 eng_err.c \
 eng_fat.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.h,v 1.10 2003/08/07 11:16:10 agc Exp $	*/
+/*	$NetBSD: ring.h,v 1.10.96.1 2018/12/26 14:02:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -75,10 +75,6 @@ extern int
 /* Data movement routines */
 extern void
 	ring_supply_data(Ring *ring, unsigned char *buffer, int count);
-#ifdef notdef
-extern void
-	ring_consume_data(Ring *ring, unsigned char *buffer, int count);
-#endif
 
 /* Buffer state transition routines */
 extern void

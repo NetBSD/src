@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73.2.1 2018/09/06 06:51:32 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.73.2.2 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73.2.1 2018/09/06 06:51:32 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.73.2.2 2018/12/26 14:01:03 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: main.c,v 1.73.2.1 2018/09/06 06:51:32 pgoyette Exp $");
 
 int rootpid;
 int rootshell;
+struct jmploc main_handler;
 int max_user_fd;
 #if PROFILE
 short profile_buf[16384];
@@ -102,7 +103,6 @@ STATIC void read_profile(const char *);
 int
 main(int argc, char **argv)
 {
-	struct jmploc jmploc;
 	struct stackmark smark;
 	volatile int state;
 	char *shinit;
@@ -123,7 +123,7 @@ main(int argc, char **argv)
 	monitor(4, etext, profile_buf, sizeof profile_buf, 50);
 #endif
 	state = 0;
-	if (setjmp(jmploc.loc)) {
+	if (setjmp(main_handler.loc)) {
 		/*
 		 * When a shell procedure is executed, we raise the
 		 * exception EXSHELLPROC to clean up before executing
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 		else
 			goto state4;
 	}
-	handler = &jmploc;
+	handler = &main_handler;
 #ifdef DEBUG
 #if DEBUG >= 2
 	debug = 1;	/* this may be reset by procargs() later */
@@ -202,20 +202,24 @@ main(int argc, char **argv)
 	if (argv[0] && argv[0][0] == '-') {
 		state = 1;
 		read_profile("/etc/profile");
-state1:
+ state1:
 		state = 2;
 		read_profile(".profile");
 	}
-state2:
+ state2:
 	state = 3;
 	if ((iflag || !posix) &&
 	    getuid() == geteuid() && getgid() == getegid()) {
+		struct stackmark env_smark;
+
+		setstackmark(&env_smark);
 		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0') {
 			state = 3;
-			read_profile(shinit);
+			read_profile(expandenv(shinit));
 		}
+		popstackmark(&env_smark);
 	}
-state3:
+ state3:
 	state = 4;
 	line_number = 1;	/* undo anything from profile files */
 
@@ -238,7 +242,7 @@ state3:
 		evalstring(minusc, sflag ? 0 : EV_EXIT);
 
 	if (sflag || minusc == NULL) {
-state4:	/* XXX ??? - why isn't this before the "if" statement */
+ state4:	/* XXX ??? - why isn't this before the "if" statement */
 		cmdloop(1);
 	}
 #if PROFILE
@@ -326,6 +330,9 @@ read_profile(const char *name)
 	int xflag_set = 0;
 	int vflag_set = 0;
 
+	if (*name == '\0')
+		return;
+
 	INTOFF;
 	if ((fd = open(name, O_RDONLY)) >= 0)
 		setinputfd(fd, 1);
@@ -378,7 +385,8 @@ exitcmd(int argc, char **argv)
 	if (stoppedjobs())
 		return 0;
 	if (argc > 1)
-		exitstatus = number(argv[1]);
-	exitshell(exitstatus);
+		exitshell(number(argv[1]));
+	else
+		exitshell_savedstatus();
 	/* NOTREACHED */
 }

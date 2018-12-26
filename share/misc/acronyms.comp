@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193.2.6 2018/11/26 01:52:15 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.193.2.7 2018/12/26 14:01:30 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -179,6 +179,7 @@ BTS	bit test [and] set
 BTS	bug tracking system
 BW	bandwidth
 BWM	block-write mode
+BUAG	big ugly ASCII graphic
 CA	certificate authority
 CAD	computer-aided design
 CAM	computer assisted manufacturing
@@ -253,10 +254,13 @@ COS	class of service
 COW	copy-on-write
 CP	continuous pilot
 CPB	core performance boost
+CPC	central processor complex
+CPC	cpu performance counters
 CPE	common phase error
 CPE	common platform enumeration
 CPER	common platform error record
 CPG	clock pulse generator
+CPI	cycles per instruction
 CPL	current privilege level
 CPLD	complex programmable logic device
 CPP	C preprocessor
@@ -316,6 +320,8 @@ DCC	direct cable connect
 DCD	data carrier detect
 DCE	data control equipment
 DCE	distributed computing environment
+DCIM	data center infrastructure management
+DCIM	digital camera images
 DCL	Digital Command Language
 DCOM	distributed component object model
 DCOP	Desktop COmmunication Protocol
@@ -361,6 +367,7 @@ DMA	direct memory access
 DMI	desktop management interface
 DMS	document management system
 DMT	discrete multitone modulation
+DMU	data management layer
 DNARD	Digital network appliance reference design
 DND	drag and drop
 DNS	Domain Name System
@@ -390,6 +397,7 @@ DSA	digital signature algorithm
 DSAP	destination service access point
 DSB	double-sideband modulation
 DSDT	differentiated system descriptor table
+DSL	dataset and snapshot layer
 DSL	digital subscriber line
 DSL	domain specific language
 DSLAM	digital subscriber line access multiplexer
@@ -659,6 +667,7 @@ IOMMU	input/output memory management unit
 IOT	Internet of Things
 IP	Internet Protocol
 IP	intellectual property
+IPC	instructions per cycle
 IPC	interprocess communication
 IPE	integrated programming environment
 IPI	interprocessor interrupt
@@ -761,6 +770,7 @@ LMM	link management mode
 LNO	loop nest optimization
 LOC	lines of code
 LOM	lights-out management
+LPE	Linux performance events
 LPC	low pin count
 LPS	local positioning system
 LRC	longitudinal redundancy check
@@ -1039,6 +1049,7 @@ PGE	page global enable
 PGP	Pretty Good Privacy
 PHB	PCI host bridge
 PHP	PHP: Hypertext Preprocessor
+PIC	performance instrumentation counters
 PIC	position independent code
 PIC	programmable interrupt controller
 PICNIC	problem in chair, not in computer
@@ -1062,10 +1073,13 @@ PLRU	pseudo LRU
 PLTM	package level thermal management
 PM	power management
 PM	{phase,pulse} modulation
+PMC	performance monitoring counters
 PME	power management event
+PMI	performance monitoring infrastructure
 PMI	platform management interrupt
 PMIO	port-mapped input/output
 PMT	photo-multiplier tube
+PMU	performance monitoring units
 PMU	power management unit
 PNG	portable network graphics
 PNP	plug and play
@@ -1254,6 +1268,7 @@ SDL	Simple Declarative Language
 SDL	Simple Direct-media Layer 
 SDLC	{software,system,systems} development life cycle
 SDN	software defined networking
+SDP	Session Description Protocol
 SDRAM	synchronous dynamic random access memory
 SDS	software defined storage
 SDT	syntax-directed translation
@@ -1317,6 +1332,7 @@ SOHO	small office/home office
 SOL	serial over LAN
 SP	service pack
 SP	stack pointer
+SPA	storage pool allocator
 SPARC	scalable processor architecture
 SPARQL	SPARQL Protocol and RDF Query Language
 SPD	security policy database
@@ -1438,6 +1454,7 @@ TTM	translation table maps
 TTY	teletype
 TUI	{terminal,text-based,textual} user interface
 TX	{transmit out,transmitter}
+TXG	transaction group
 TZ	time zone
 UAC	user {access,account} control
 UAF	use-after-free
@@ -1570,9 +1587,13 @@ YANG	yet another next generation
 YAWPFAPR	you are welcome; please file a problem report
 YP	Yellow Pages
 YTD	year to date
+ZAP	ZFS attribute processor
 ZBR	zone bit recording
 ZFOD	zero-filled on demand
-ZFS    zettabyte file system
+ZFS	zettabyte file system
 ZIF	zero insertion force
 ZIFS	zero insertion force socket
+ZIL	ZFS intent log
 ZMA	zone multicast address
+ZPL	ZFS Posix layer
+ZVOL	ZFS Volume

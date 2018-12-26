@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.110.2.2 2018/05/21 04:36:11 pgoyette Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.110.2.3 2018/12/26 14:02:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -224,6 +224,27 @@ struct pci_quirkdata {
 
 struct pci_conf_state {
 	pcireg_t reg[16];
+
+	/* For PCI-X */
+	pcireg_t x_csr;		/* Upper 16bits. Lower 16bits are read only */
+
+	/* For PCIe */
+	uint16_t e_dcr;
+	uint16_t e_lcr;
+	uint16_t e_slcr;
+	uint16_t e_rcr;
+	uint16_t e_dcr2;
+	uint16_t e_lcr2;
+
+	/* For MSI */
+	pcireg_t msi_ctl;	/* Upper 16bits. Lower 16bits are read only */
+	pcireg_t msi_maddr;
+	pcireg_t msi_maddr64_hi;
+	pcireg_t msi_mdata;
+	pcireg_t msi_mask;
+
+	/* For MSI-X */
+	pcireg_t msix_ctl;	/* Upper 16bits. Lower 16bits are read only */
 };
 
 struct pci_range {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.803.2.5 2018/10/20 06:58:28 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.803.2.6 2018/12/26 14:01:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.5 2018/10/20 06:58:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.6 2018/12/26 14:01:38 pgoyette Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.5 2018/10/20 06:58:28 pgoyette E
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
-#include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -689,6 +688,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	fp--;
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_signum = sig;
 	frame.sf_sip = &fp->sf_si;
@@ -699,7 +699,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 
 	sendsig_reset(l, sig);
 

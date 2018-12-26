@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ibcs2.8,v 1.10 2017/08/12 08:45:58 maxv Exp $
+.\"	$NetBSD: compat_ibcs2.8,v 1.10.2.1 2018/12/26 14:01:29 pgoyette Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -32,7 +32,7 @@
 .\"
 .\" Based on compat_linux.8
 .\"
-.Dd August 12, 2017
+.Dd December 19, 2018
 .Dt COMPAT_IBCS2 8
 .Os
 .Sh NAME
@@ -49,9 +49,6 @@ and other systems derived from
 .At V.3 .
 iBCS2 support is only well tested using SCO binaries.
 XENIX binaries are also supported although not as well tested.
-SVR4 binaries are supported by the
-.Dv COMPAT_SVR4
-option.
 .Pp
 iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats.
 Binaries from SCO OpenServer (version 5.x) are the only ELF binaries

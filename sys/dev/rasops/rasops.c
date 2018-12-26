@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.77 2017/06/01 02:45:11 chs Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.77.8.1 2018/12/26 14:02:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.77 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.77.8.1 2018/12/26 14:02:01 pgoyette Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -570,13 +570,13 @@ rasops_allocattr_color(void *cookie, int fg, int bg, int flg,
 	if ((flg & WSATTR_HILIT) != 0)
 		fg += 8;
 
-	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
+	flg = flg & WSATTR_USERMASK;
 
 	if (rasops_isgray[fg])
-		flg |= 2;
+		flg |= WSATTR_PRIVATE1;
 
 	if (rasops_isgray[bg])
-		flg |= 4;
+		flg |= WSATTR_PRIVATE2;
 
 	*attr = (bg << 16) | (fg << 24) | flg;
 	return (0);
@@ -903,7 +903,7 @@ rasops_unpack_attr(long attr, int *fg, int *bg, int *underline)
 	*fg = ((u_int)attr >> 24) & 0xf;
 	*bg = ((u_int)attr >> 16) & 0xf;
 	if (underline != NULL)
-		*underline = (u_int)attr & 1;
+		*underline = (u_int)attr & WSATTR_UNDERLINE;
 }
 
 /*
@@ -995,7 +995,7 @@ static void
 rasops_do_cursor(struct rasops_info *ri)
 {
 	int full1, height, cnt, slop1, slop2, row, col;
-	u_char *dp, *rp, *hrp, *hp, tmp = 0;
+	u_char *dp, *rp, *hrp, *hp;
 
 	hrp = hp = NULL;
 
@@ -1055,33 +1055,26 @@ rasops_do_cursor(struct rasops_info *ri)
 			}
 		}
 	} else {
-		uint16_t tmp16;
-		uint32_t tmp32;
-		/* XXX this is stupid.. use masks instead */
+		uint32_t tmp32, msk1, msk2;
+
+		msk1 = be32toh(0xffffffff >> (32 - (8 * slop1)));
+		msk2 = be32toh(0xffffffff << (32 - (8 * slop2)));
+
 		while (height--) {
-			dp = rp;
+			dp = (u_char *)((uintptr_t)rp & ~3);
 			rp += ri->ri_stride;
 			if (ri->ri_hwbits) {
-				hp = hrp;
+				hp = (u_char *)((uintptr_t)hrp & ~3);
 				hrp += ri->ri_stride;
 			}
 
-			if (slop1 & 1) {
-				tmp = *dp ^ ~0;
-				*dp = tmp;
-				dp++;
+			if (msk1 != 0) {
+				tmp32 = *(int32_t *)dp ^ msk1;
+				*(uint32_t *)dp = tmp32;
+				dp += 4;
 				if (ri->ri_hwbits) {
-					*hp++ = tmp;
-				}
-			}
-
-			if (slop1 & 2) {
-				tmp16 = *(int16_t *)dp ^ ~0;
-				*(uint16_t *)dp = tmp16;
-				dp += 2;
-				if (ri->ri_hwbits) {
-					*(int16_t *)hp = tmp16;
-					hp += 2;
+					*(int32_t *)hp = tmp32;
+					hp += 4;
 				}
 			}
 
@@ -1095,19 +1088,11 @@ rasops_do_cursor(struct rasops_info *ri)
 				}
 			}
 
-			if (slop2 & 1) {
-				tmp = *dp ^ ~0;
-				*dp = tmp;
-				dp++;
+			if (msk2 != 0) {
+				tmp32 = *(int32_t *)dp ^ msk2;
+				*(uint32_t *)dp = tmp32;
 				if (ri->ri_hwbits)
-					*hp++ = tmp;
-			}
-
-			if (slop2 & 2) {
-				tmp16 = *(int16_t *)dp ^ ~0;
-				*(uint16_t *)dp = tmp16;
-				if (ri->ri_hwbits)
-					*(int16_t *)hp = tmp16;
+					*(int32_t *)hp = tmp32;
 			}
 		}
 	}
@@ -1381,7 +1366,7 @@ rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do rotated char sans (side)underline */
 	ri->ri_real_ops.putchar(cookie, col, ri->ri_rows - row - 1, uc,
-	    attr & ~1);
+	    attr & ~WSATTR_UNDERLINE);
 
 	/* Do rotated underline */
 	rp = ri->ri_bits + col * ri->ri_yscale + (ri->ri_rows - row - 1) * 
@@ -1389,7 +1374,7 @@ rasops_putchar_rotated_cw(void *cookie, int row, int col, u_int uc, long attr)
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int16_t c = (int16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
 
 		while (height--) {
@@ -1508,7 +1493,7 @@ rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do rotated char sans (side)underline */
 	ri->ri_real_ops.putchar(cookie, ri->ri_cols - col - 1, row, uc,
-	    attr & ~1);
+	    attr & ~WSATTR_UNDERLINE);
 
 	/* Do rotated underline */
 	rp = ri->ri_bits + (ri->ri_cols - col - 1) * ri->ri_yscale +
@@ -1517,7 +1502,7 @@ rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int16_t c = (int16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
 
 		while (height--) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.24 2017/08/21 13:20:49 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.24.2.1 2018/12/26 14:01:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,16 +73,17 @@
 
 union node *parsecmd(int);
 void fixredir(union node *, const char *, int);
-int goodname(char *);
+int goodname(const char *);
+int isassignment(const char *);
 const char *getprompt(void *);
 const char *expandstr(char *, int);
+const char *expandenv(char *);
 
 struct HereDoc;
 union node;
 struct nodelist;
 
 struct parse_state {
-	int ps_noalias;			/* when set, don't handle aliases */
 	struct HereDoc *ps_heredoclist;	/* list of here documents to read */
 	int ps_parsebackquote;		/* nonzero inside backquotes */
 	int ps_doprompt;		/* if set, prompt the user */
@@ -90,7 +91,7 @@ struct parse_state {
 	int ps_lasttoken;		/* last token read */
 	int ps_tokpushback;		/* last token pushed back */
 	char *ps_wordtext;	/* text of last word returned by readtoken */
-	int ps_checkkwd;	/* 1 == check for kwds, 2 += eat newlines */
+	int ps_checkkwd;		/* word expansion flags, see below */
 	struct nodelist *ps_backquotelist; /* list of cmdsubs to process */
 	union node *ps_redirnode;	/* node for current redirect */
 	struct HereDoc *ps_heredoc;	/* current heredoc << beign parsed */
@@ -148,6 +149,13 @@ extern union parse_state_p psp;
 #define	startlinno	(current_parser->ps_startlinno)
 #define	funclinno	(current_parser->ps_funclinno)
 #define	elided_nl	(current_parser->ps_elided_nl)
+
+/*
+ * Values that can be set in checkkwd
+ */
+#define CHKKWD		0x01		/* turn word into keyword (if it is) */
+#define CHKNL		0x02		/* ignore leading \n's */
+#define CHKALIAS	0x04		/* lookup words as aliases and ... */
 
 /*
  * NEOF is returned by parsecmd when it encounters an end of file.  It

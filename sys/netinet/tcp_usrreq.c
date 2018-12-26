@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.216.2.4 2018/11/26 01:52:51 pgoyette Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.216.2.5 2018/12/26 14:02:05 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216.2.4 2018/11/26 01:52:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.216.2.5 2018/12/26 14:02:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1154,7 +1154,7 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	ostate = tcp_debug_capture(tp, PRU_SENDOOB);
 
 	s = splsoftnet();
-	if (sbspace(&so->so_snd) < -512) {
+	if (sbspace_oob(&so->so_snd) == 0) {
 		m_freem(m);
 		splx(s);
 		return ENOBUFS;

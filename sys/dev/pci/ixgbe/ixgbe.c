@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128.2.11 2018/09/30 01:45:51 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.12 2018/12/26 14:02:01 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -81,7 +81,7 @@
  * Driver version
  ************************************************************************/
 static const char ixgbe_driver_version[] = "4.0.1-k";
-
+/* XXX NetBSD: + 3.3.6 */
 
 /************************************************************************
  * PCI Device ID Table
@@ -184,6 +184,7 @@ static void	ixgbe_free_pciintr_resources(struct adapter *);
 static void	ixgbe_free_pci_resources(struct adapter *);
 static void	ixgbe_local_timer(void *);
 static void	ixgbe_local_timer1(void *);
+static void     ixgbe_recovery_mode_timer(void *);
 static int	ixgbe_setup_interface(device_t, struct adapter *);
 static void	ixgbe_config_gpie(struct adapter *);
 static void	ixgbe_config_dmac(struct adapter *);
@@ -971,6 +972,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	aprint_normal("%s:", device_xname(dev));
 	/* NVM Image Version */
+	high = low = 0;
 	switch (hw->mac.type) {
 	case ixgbe_mac_X540:
 	case ixgbe_mac_X550EM_a:
@@ -1000,6 +1002,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	default:
 		break;
 	}
+	hw->eeprom.nvm_image_ver_high = high;
+	hw->eeprom.nvm_image_ver_low = low;
 
 	/* PHY firmware revision */
 	switch (hw->mac.type) {
@@ -1072,6 +1076,21 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 			}
 		}
 	}
+	/* Recovery mode */
+	switch (adapter->hw.mac.type) {
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_X550EM_a:
+		/* >= 2.00 */
+		if (hw->eeprom.nvm_image_ver_high >= 2) {
+			adapter->feat_cap |= IXGBE_FEATURE_RECOVERY_MODE;
+			adapter->feat_en |= IXGBE_FEATURE_RECOVERY_MODE;
+		}
+		break;
+	default:
+		break;
+	}
+
 	if ((adapter->feat_en & IXGBE_FEATURE_MSIX) == 0)
 		error = ixgbe_allocate_legacy(adapter, pa);
 	if (error) 
@@ -1193,6 +1212,19 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		pmf_class_network_register(dev, adapter->ifp);
 	else
 		aprint_error_dev(dev, "couldn't establish power handler\n");
+
+	/* Init recovery mode timer and state variable */
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) {
+		adapter->recovery_mode = 0;
+
+		/* Set up the timer callout */
+		callout_init(&adapter->recovery_mode_timer,
+		    IXGBE_CALLOUT_FLAGS);
+
+		/* Start the task */
+		callout_reset(&adapter->recovery_mode_timer, hz,
+		    ixgbe_recovery_mode_timer, adapter);
+	}
 
 	INIT_DEBUGOUT("ixgbe_attach: end");
 	adapter->osdep.attached = true;
@@ -1537,6 +1569,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	u32                   missed_rx = 0, bprc, lxon, lxoff, total;
 	u64                   total_missed_rx = 0;
 	uint64_t              crcerrs, rlec;
+	int		      i, j;
 
 	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
 	stats->crcerrs.ev_count += crcerrs;
@@ -1547,8 +1580,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
 	/* 16 registers */
-	for (int i = 0; i < __arraycount(stats->qprc); i++) {
-		int j = i % adapter->num_queues;
+	for (i = 0; i < __arraycount(stats->qprc); i++) {
+		j = i % adapter->num_queues;
 
 		stats->qprc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
 		stats->qptc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
@@ -1559,36 +1592,35 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	}
 
 	/* 8 registers */
-	for (int i = 0; i < __arraycount(stats->mpc); i++) {
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
 		uint32_t mp;
-		int j = i % adapter->num_queues;
 
 		/* MPC */
 		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
 		/* global total per queue */
-		stats->mpc[j].ev_count += mp;
+		stats->mpc[i].ev_count += mp;
 		/* running comprehensive total for stats display */
 		total_missed_rx += mp;
 
 		if (hw->mac.type == ixgbe_mac_82598EB)
-			stats->rnbc[j].ev_count
+			stats->rnbc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
 
-		stats->pxontxc[j].ev_count
+		stats->pxontxc[i].ev_count
 		    += IXGBE_READ_REG(hw, IXGBE_PXONTXC(i));
-		stats->pxofftxc[j].ev_count
+		stats->pxofftxc[i].ev_count
 		    += IXGBE_READ_REG(hw, IXGBE_PXOFFTXC(i));
 		if (hw->mac.type >= ixgbe_mac_82599EB) {
-			stats->pxonrxc[j].ev_count
+			stats->pxonrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXONRXCNT(i));
-			stats->pxoffrxc[j].ev_count
+			stats->pxoffrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXCNT(i));
-			stats->pxon2offc[j].ev_count
+			stats->pxon2offc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXON2OFFCNT(i));
 		} else {
-			stats->pxonrxc[j].ev_count
+			stats->pxonrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXONRXC(i));
-			stats->pxoffrxc[j].ev_count
+			stats->pxoffrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXC(i));
 		}
 	}
@@ -1738,6 +1770,43 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	evcnt_attach_dynamic(&adapter->phy_sicount, EVCNT_TYPE_INTR,
 	    NULL, xname, "external PHY softint");
 
+	/* Max number of traffic class is 8 */
+	KASSERT(IXGBE_DCB_MAX_TRAFFIC_CLASS == 8);
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+		snprintf(adapter->tcs[i].evnamebuf,
+		    sizeof(adapter->tcs[i].evnamebuf), "%s tc%d",
+		    xname, i);
+		if (i < __arraycount(stats->mpc)) {
+			evcnt_attach_dynamic(&stats->mpc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "RX Missed Packet Count");
+			if (hw->mac.type == ixgbe_mac_82598EB)
+				evcnt_attach_dynamic(&stats->rnbc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->tcs[i].evnamebuf,
+				    "Receive No Buffers");
+		}
+		if (i < __arraycount(stats->pxontxc)) {
+			evcnt_attach_dynamic(&stats->pxontxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxontxc");
+			evcnt_attach_dynamic(&stats->pxonrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxonrxc");
+			evcnt_attach_dynamic(&stats->pxofftxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxofftxc");
+			evcnt_attach_dynamic(&stats->pxoffrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxoffrxc");
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_attach_dynamic(&stats->pxon2offc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->tcs[i].evnamebuf,
+			    "pxon2offc");
+		}
+	}
+
 	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 #ifdef LRO
 		struct lro_ctrl *lro = &rxr->lro;
@@ -1826,35 +1895,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-		if (i < __arraycount(stats->mpc)) {
-			evcnt_attach_dynamic(&stats->mpc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "RX Missed Packet Count");
-			if (hw->mac.type == ixgbe_mac_82598EB)
-				evcnt_attach_dynamic(&stats->rnbc[i],
-				    EVCNT_TYPE_MISC, NULL,
-				    adapter->queues[i].evnamebuf,
-				    "Receive No Buffers");
-		}
-		if (i < __arraycount(stats->pxontxc)) {
-			evcnt_attach_dynamic(&stats->pxontxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxontxc");
-			evcnt_attach_dynamic(&stats->pxonrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxonrxc");
-			evcnt_attach_dynamic(&stats->pxofftxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxofftxc");
-			evcnt_attach_dynamic(&stats->pxoffrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxoffrxc");
-			if (hw->mac.type >= ixgbe_mac_82599EB)
-				evcnt_attach_dynamic(&stats->pxon2offc[i],
-				    EVCNT_TYPE_MISC, NULL,
-				    adapter->queues[i].evnamebuf,
-			    "pxon2offc");
-		}
 		if (i < __arraycount(stats->qprc)) {
 			evcnt_attach_dynamic(&stats->qprc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
@@ -2014,6 +2054,7 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	struct rx_ring *rxr = adapter->rx_rings;
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
+	int i;
 
 	adapter->efbig_tx_dma_setup.ev_count = 0;
 	adapter->mbuf_defrag_failed.ev_count = 0;
@@ -2030,8 +2071,24 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	adapter->msf_sicount.ev_count = 0;
 	adapter->phy_sicount.ev_count = 0;
 
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+		if (i < __arraycount(stats->mpc)) {
+			stats->mpc[i].ev_count = 0;
+			if (hw->mac.type == ixgbe_mac_82598EB)
+				stats->rnbc[i].ev_count = 0;
+		}
+		if (i < __arraycount(stats->pxontxc)) {
+			stats->pxontxc[i].ev_count = 0;
+			stats->pxonrxc[i].ev_count = 0;
+			stats->pxofftxc[i].ev_count = 0;
+			stats->pxoffrxc[i].ev_count = 0;
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				stats->pxon2offc[i].ev_count = 0;
+		}
+	}
+
 	txr = adapter->tx_rings;
-	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		adapter->queues[i].irqs.ev_count = 0;
 		adapter->queues[i].handleq.ev_count = 0;
 		adapter->queues[i].req.ev_count = 0;
@@ -2050,19 +2107,6 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 		txr->q_enomem_tx_dma_setup = 0;
 		txr->q_tso_err = 0;
 
-		if (i < __arraycount(stats->mpc)) {
-			stats->mpc[i].ev_count = 0;
-			if (hw->mac.type == ixgbe_mac_82598EB)
-				stats->rnbc[i].ev_count = 0;
-		}
-		if (i < __arraycount(stats->pxontxc)) {
-			stats->pxontxc[i].ev_count = 0;
-			stats->pxonrxc[i].ev_count = 0;
-			stats->pxofftxc[i].ev_count = 0;
-			stats->pxoffrxc[i].ev_count = 0;
-			if (hw->mac.type >= ixgbe_mac_82599EB)
-				stats->pxon2offc[i].ev_count = 0;
-		}
 		if (i < __arraycount(stats->qprc)) {
 			stats->qprc[i].ev_count = 0;
 			stats->qptc[i].ev_count = 0;
@@ -2144,12 +2188,17 @@ ixgbe_sysctl_tdh_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct tx_ring *txr = (struct tx_ring *)node.sysctl_data;
+	struct adapter *adapter;
 	uint32_t val;
 
 	if (!txr)
 		return (0);
 
-	val = IXGBE_READ_REG(&txr->adapter->hw, IXGBE_TDH(txr->me));
+	adapter = txr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = IXGBE_READ_REG(&adapter->hw, IXGBE_TDH(txr->me));
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_tdh_handler */
@@ -2164,12 +2213,17 @@ ixgbe_sysctl_tdt_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct tx_ring *txr = (struct tx_ring *)node.sysctl_data;
+	struct adapter *adapter;
 	uint32_t val;
 
 	if (!txr)
 		return (0);
 
-	val = IXGBE_READ_REG(&txr->adapter->hw, IXGBE_TDT(txr->me));
+	adapter = txr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = IXGBE_READ_REG(&adapter->hw, IXGBE_TDT(txr->me));
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_tdt_handler */
@@ -2185,10 +2239,15 @@ ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
 	uint32_t val;
 
 	if (!rxr)
 		return (0);
+
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
 
 	val = rxr->next_to_check;
 	node.sysctl_data = &val;
@@ -2205,12 +2264,17 @@ ixgbe_sysctl_rdh_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
 	uint32_t val;
 
 	if (!rxr)
 		return (0);
 
-	val = IXGBE_READ_REG(&rxr->adapter->hw, IXGBE_RDH(rxr->me));
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = IXGBE_READ_REG(&adapter->hw, IXGBE_RDH(rxr->me));
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_rdh_handler */
@@ -2225,12 +2289,17 @@ ixgbe_sysctl_rdt_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
 	uint32_t val;
 
 	if (!rxr)
 		return (0);
 
-	val = IXGBE_READ_REG(&rxr->adapter->hw, IXGBE_RDT(rxr->me));
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = IXGBE_READ_REG(&adapter->hw, IXGBE_RDT(rxr->me));
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_rdt_handler */
@@ -3115,13 +3184,18 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct ix_queue *que = (struct ix_queue *)node.sysctl_data;
-	struct adapter  *adapter = que->adapter;
+	struct adapter  *adapter;
 	uint32_t reg, usec, rate;
 	int error;
 
 	if (que == NULL)
 		return 0;
-	reg = IXGBE_READ_REG(&que->adapter->hw, IXGBE_EITR(que->msix));
+
+	adapter = que->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	reg = IXGBE_READ_REG(&adapter->hw, IXGBE_EITR(que->msix));
 	usec = ((reg & 0x0FF8) >> 3);
 	if (usec > 0)
 		rate = 500000 / usec;
@@ -3451,6 +3525,7 @@ ixgbe_detach(device_t dev, int flags)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	u32	ctrl_ext;
+	int i;
 
 	INIT_DEBUGOUT("ixgbe_detach: begin");
 	if (adapter->osdep.attached == false)
@@ -3491,6 +3566,8 @@ ixgbe_detach(device_t dev, int flags)
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT, ctrl_ext);
 
 	callout_halt(&adapter->timer, NULL);
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE)
+		callout_halt(&adapter->recovery_mode_timer, NULL);
 
 	if (adapter->feat_en & IXGBE_FEATURE_NETMAP)
 		netmap_detach(adapter->ifp);
@@ -3518,18 +3595,7 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&adapter->msf_sicount);
 	evcnt_detach(&adapter->phy_sicount);
 
-	txr = adapter->tx_rings;
-	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
-		evcnt_detach(&adapter->queues[i].irqs);
-		evcnt_detach(&adapter->queues[i].handleq);
-		evcnt_detach(&adapter->queues[i].req);
-		evcnt_detach(&txr->no_desc_avail);
-		evcnt_detach(&txr->total_packets);
-		evcnt_detach(&txr->tso_tx);
-#ifndef IXGBE_LEGACY_TX
-		evcnt_detach(&txr->pcq_drops);
-#endif
-
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
 		if (i < __arraycount(stats->mpc)) {
 			evcnt_detach(&stats->mpc[i]);
 			if (hw->mac.type == ixgbe_mac_82598EB)
@@ -3543,6 +3609,20 @@ ixgbe_detach(device_t dev, int flags)
 			if (hw->mac.type >= ixgbe_mac_82599EB)
 				evcnt_detach(&stats->pxon2offc[i]);
 		}
+	}
+
+	txr = adapter->tx_rings;
+	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		evcnt_detach(&adapter->queues[i].irqs);
+		evcnt_detach(&adapter->queues[i].handleq);
+		evcnt_detach(&adapter->queues[i].req);
+		evcnt_detach(&txr->no_desc_avail);
+		evcnt_detach(&txr->total_packets);
+		evcnt_detach(&txr->tso_tx);
+#ifndef IXGBE_LEGACY_TX
+		evcnt_detach(&txr->pcq_drops);
+#endif
+
 		if (i < __arraycount(stats->qprc)) {
 			evcnt_detach(&stats->qprc[i]);
 			evcnt_detach(&stats->qptc[i]);
@@ -3616,7 +3696,7 @@ ixgbe_detach(device_t dev, int flags)
 
 	ixgbe_free_transmit_structures(adapter);
 	ixgbe_free_receive_structures(adapter);
-	for (int i = 0; i < adapter->num_queues; i++) {
+	for (i = 0; i < adapter->num_queues; i++) {
 		struct ix_queue * que = &adapter->queues[i];
 		mutex_destroy(&que->dc_mtx);
 	}
@@ -4432,6 +4512,32 @@ watchdog:
 } /* ixgbe_local_timer */
 
 /************************************************************************
+ * ixgbe_recovery_mode_timer - Recovery mode timer routine
+ ************************************************************************/
+static void
+ixgbe_recovery_mode_timer(void *arg)
+{
+	struct adapter *adapter = arg;
+	struct ixgbe_hw *hw = &adapter->hw;
+
+	IXGBE_CORE_LOCK(adapter);
+	if (ixgbe_fw_recovery_mode(hw)) {
+		if (atomic_cas_uint(&adapter->recovery_mode, 0, 1)) {
+			/* Firmware error detected, entering recovery mode */
+			device_printf(adapter->dev, "Firmware recovery mode detected. Limiting functionality. Refer to the Intel(R) Ethernet Adapters and Devices User Guide for details on firmware recovery mode.\n");
+
+			if (hw->adapter_stopped == FALSE)
+				ixgbe_stop(adapter);
+		}
+	} else
+		atomic_cas_uint(&adapter->recovery_mode, 1, 0);
+
+	callout_reset(&adapter->recovery_mode_timer, hz,
+	    ixgbe_recovery_mode_timer, adapter);
+	IXGBE_CORE_UNLOCK(adapter);
+} /* ixgbe_recovery_mode_timer */
+
+/************************************************************************
  * ixgbe_sfp_probe
  *
  *   Determine if a port had optics inserted.
@@ -4528,6 +4634,7 @@ ixgbe_handle_msf(void *context)
 	u32             autoneg;
 	bool            negotiate;
 
+	IXGBE_CORE_LOCK(adapter);
 	++adapter->msf_sicount.ev_count;
 	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
 	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
@@ -4544,6 +4651,7 @@ ixgbe_handle_msf(void *context)
 	ifmedia_removeall(&adapter->media);
 	ixgbe_add_media_types(adapter);
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
+	IXGBE_CORE_UNLOCK(adapter);
 } /* ixgbe_handle_msf */
 
 /************************************************************************
@@ -5020,6 +5128,11 @@ ixgbe_set_sysctl_value(struct adapter *adapter, const char *name,
 	struct sysctllog **log;
 	const struct sysctlnode *rnode, *cnode;
 
+	/*
+	 * It's not required to check recovery mode because this function never
+	 * touches hardware.
+	 */
+
 	log = &adapter->sysctllog;
 	if ((rnode = ixgbe_sysctl_instance(adapter)) == NULL) {
 		aprint_error_dev(dev, "could not create sysctl root\n");
@@ -5044,6 +5157,9 @@ ixgbe_sysctl_flowcntl(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct adapter *adapter = (struct adapter *)node.sysctl_data;
 	int error, fc;
+
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
 
 	fc = adapter->hw.fc.current_mode;
 	node.sysctl_data = &fc;
@@ -5162,6 +5278,9 @@ ixgbe_sysctl_advertise(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct adapter *adapter = (struct adapter *)node.sysctl_data;
 	int            error = 0, advertise;
+
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
 
 	advertise = adapter->advertise;
 	node.sysctl_data = &advertise;
@@ -5345,6 +5464,9 @@ ixgbe_sysctl_dmac(SYSCTLFN_ARGS)
 	int            error;
 	int            newval;
 
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
 	newval = adapter->dmac;
 	node.sysctl_data = &newval;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -5402,6 +5524,9 @@ ixgbe_sysctl_power_state(SYSCTLFN_ARGS)
 	device_t       dev =  adapter->dev;
 	int            curr_ps, new_ps, error = 0;
 
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
 	curr_ps = new_ps = pci_get_powerstate(dev);
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -5446,6 +5571,10 @@ ixgbe_sysctl_wol_enable(SYSCTLFN_ARGS)
 	bool            new_wol_enabled;
 	int             error = 0;
 
+	/*
+	 * It's not required to check recovery mode because this function never
+	 * touches hardware.
+	 */
 	new_wol_enabled = hw->wol_enabled;
 	node.sysctl_data = &new_wol_enabled;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -5487,6 +5616,10 @@ ixgbe_sysctl_wufc(SYSCTLFN_ARGS)
 	int error = 0;
 	u32 new_wufc;
 
+	/*
+	 * It's not required to check recovery mode because this function never
+	 * touches hardware.
+	 */
 	new_wufc = adapter->wufc;
 	node.sysctl_data = &new_wufc;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -5520,6 +5653,9 @@ ixgbe_sysctl_print_rss_config(SYSCTLFN_ARGS)
 	struct sbuf     *buf;
 	int             error = 0, reta_size;
 	u32             reg;
+
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
 
 	buf = sbuf_new_for_sysctl(NULL, NULL, 128, req);
 	if (!buf) {
@@ -5579,6 +5715,9 @@ ixgbe_sysctl_phy_temp(SYSCTLFN_ARGS)
 	u16 reg;
 	int		error;
 
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
 	if (hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) {
 		device_printf(adapter->dev,
 		    "Device has no supported external thermal sensor.\n");
@@ -5618,6 +5757,9 @@ ixgbe_sysctl_phy_overtemp_occurred(SYSCTLFN_ARGS)
 	struct ixgbe_hw *hw = &adapter->hw;
 	int val, error;
 	u16 reg;
+
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
 
 	if (hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) {
 		device_printf(adapter->dev,
@@ -5662,6 +5804,9 @@ ixgbe_sysctl_eee_state(SYSCTLFN_ARGS)
 	device_t       dev = adapter->dev;
 	int            curr_eee, new_eee, error = 0;
 	s32            retval;
+
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
 
 	curr_eee = new_eee = !!(adapter->feat_en & IXGBE_FEATURE_EEE);
 	node.sysctl_data = &new_eee;
@@ -5798,6 +5943,9 @@ ixgbe_sysctl_debug(SYSCTLFN_ARGS)
 	struct adapter *adapter = (struct adapter *)node.sysctl_data;
 	int            error, result = 0;
 
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
 	node.sysctl_data = &result;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
@@ -5837,17 +5985,29 @@ ixgbe_init_device_features(struct adapter *adapter)
 			adapter->feat_cap |= IXGBE_FEATURE_BYPASS;
 		break;
 	case ixgbe_mac_X550:
+		/*
+		 * IXGBE_FEATURE_RECOVERY_MODE will be set after reading
+		 * NVM Image version.
+		 */
 		adapter->feat_cap |= IXGBE_FEATURE_TEMP_SENSOR;
 		adapter->feat_cap |= IXGBE_FEATURE_SRIOV;
 		adapter->feat_cap |= IXGBE_FEATURE_FDIR;
 		break;
 	case ixgbe_mac_X550EM_x:
+		/*
+		 * IXGBE_FEATURE_RECOVERY_MODE will be set after reading
+		 * NVM Image version.
+		 */
 		adapter->feat_cap |= IXGBE_FEATURE_SRIOV;
 		adapter->feat_cap |= IXGBE_FEATURE_FDIR;
 		if (adapter->hw.device_id == IXGBE_DEV_ID_X550EM_X_KR)
 			adapter->feat_cap |= IXGBE_FEATURE_EEE;
 		break;
 	case ixgbe_mac_X550EM_a:
+		/*
+		 * IXGBE_FEATURE_RECOVERY_MODE will be set after reading
+		 * NVM Image version.
+		 */
 		adapter->feat_cap |= IXGBE_FEATURE_SRIOV;
 		adapter->feat_cap |= IXGBE_FEATURE_FDIR;
 		adapter->feat_cap &= ~IXGBE_FEATURE_LEGACY_IRQ;
@@ -5883,6 +6043,11 @@ ixgbe_init_device_features(struct adapter *adapter)
 	/* Thermal Sensor */
 	if (adapter->feat_cap & IXGBE_FEATURE_TEMP_SENSOR)
 		adapter->feat_en |= IXGBE_FEATURE_TEMP_SENSOR;
+	/*
+	 * Recovery mode:
+	 * NetBSD: IXGBE_FEATURE_RECOVERY_MODE will be controlled after reading
+	 * NVM Image version.
+	 */
 
 	/* Enabled via global sysctl... */
 	/* Flow Director */
@@ -6002,6 +6167,9 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 	int l4csum_en;
 	const int l4csum = IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx|
 	     IFCAP_CSUM_TCPv6_Rx|IFCAP_CSUM_UDPv6_Rx;
+
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
 
 	switch (command) {
 	case SIOCSIFFLAGS:

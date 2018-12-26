@@ -1,3 +1,400 @@
+2017-05-06  Will Estes <westes575@gmail.com>
+
+	* po/ca.po, po/da.po, po/de.po, po/eo.po, po/es.po, po/fi.po,
+	po/fr.po, po/ga.po, po/hr.po, po/ko.po, po/nl.po, po/pl.po,
+	po/pt_BR.po, po/ro.po, po/ru.po, po/sr.po, po/sv.po, po/tr.po,
+	po/vi.po, po/zh_CN.po, po/zh_TW.po: gettext: pulled latest
+	translations; recompiled against current sources
+
+2017-05-06  Will Estes <westes575@gmail.com>
+
+	* NEWS: version 2.6.4 * NEWS: Record release date.
+
+2017-05-06  Will Estes <westes575@gmail.com>
+
+	* .prev-version: note previous version
+
+2017-05-06  Will Estes <westes575@gmail.com>
+
+	* NEWS: doc: update NEWS for upcoming release
+
+2017-05-04  viktor.shepel <shepelvictor@bigmir.net>
+
+	* doc/flex.texi: doc: Correct typo in C code sample in manual
+
+2017-05-04  Explorer09 <explorer09@gmail.com>
+
+	* src/flex.skl: scanner: Mention %# comments are removed when
+	building skel.c
+
+2017-05-02  Demi Obenour <demiobenour@gmail.com>
+
+	* src/flex.skl: Honor user definitions of yy_* macros The user may have defined the yy_* macros themselves.  In that case,
+	don't clobber them.
+
+2017-05-02  Demi Obenour <demiobenour@gmail.com>
+
+	* src/flex.skl, src/main.c: Don't leak macro definitions into header
+	files This allowed unnamespaced definitions to leak into header files,
+	breaking client code.  Fixes #142
+
+2017-05-03  Demi Obenour <demiobenour@gmail.com>
+
+	* src/scan.l: scanner: Check for 0 bracecount when EOL ends quoted
+	literal.  This can happen in the case of // comments (which Flex doesn't
+	handle specially).
+
+2017-05-03  Demi Obenour <demiobenour@gmail.com>
+
+	* src/scan.l: scanner: when bracelevel is negative, treat as zero.  This really should never happen, but this at least fixes the
+	breakage on Verilator.
+
+2017-04-02  Jeff Smith <whydoubt@gmail.com>
+
+	* tests/Makefile.am, tests/tableopts.am, tests/tableopts.sh: test:
+	enable more silent building of tests.  When running 'make V=0 check', some compile and link steps are made
+	less verbose and some are not.  This cleans up most steps that are
+	not.  These have no effect if V=0 is not specified.
+
+2017-05-03  Demi Obenour <demiobenour@gmail.com>
+
+	* src/Makefile.am, src/misc.c, src/mkskel.sh: build: Delete comments
+	from skeleton file.  Since the comments in flex.skl are, by hypothesis, not needed in
+	skel.c, we remove them. THis reduces the size of the resulting
+	executable somewhat.
+
+2017-05-03  Explorer09 <explorer09@gmail.com>
+
+	* Makefile.am, configure.ac, lib/Makefile.am: build: do not generate
+	lib/Makefile.in.  Files in lib/ are picked up and built using makefile directives in
+	src/Makefile.am. Remove the need to generate lib/Makefile.in and the
+	stub lib/Makefile.am.
+
+2017-05-02  Will Estes <westes575@gmail.com>
+
+	* po/POTFILES.in: gettext: revert listing generated .c files
+
+2017-04-10  Jeff Smith <whydoubt@gmail.com>
+
+	* src/filter.c: FLEX_EXIT() is the preferred way to exit flex
+
+2017-04-11  Explorer09 <explorer09@gmail.com>
+
+	* src/misc.c: Fix myesc() 'sptr' conditionals * Don't call isascii() here. It's deprecated in POSIX and not needed   for myesc's case.  * The check of the character class and range here should match
+	  what's defined as {ESCSEQ} in scan.l, so for [[:xdigit:]] we use
+	  isxdigit(); for [0-7] we check '0' <= c <= '7' (not isdigit(c)
+	  because isdigit is locale-dependant in standard's sense) * Add missing length limit for "\x<hex>" (<hex> is at most 2 digits)
+
+2017-04-11  Explorer09 <explorer09@gmail.com>
+
+	* src/flexdef.h, src/misc.c: Obsolete htoui() and otoui(); use
+	strtoul().  No sense to keep these two function when libc's strtoul() can do the
+	same job, but better.
+
+2017-04-12  Todd C. Miller <Todd.Miller@courtesan.com>
+
+	* src/flex.skl: scanner: update yy_buf_size after yyrealloc()
+
+2017-05-02  Simon Sobisch <simonsobisch@web.de>
+
+	* configure.ac: build: use lowest versions for gettext, automake.
+
+2017-05-02  Simon Sobisch <simonsobisch@web.de>
+
+	* po/Makevars, po/Rules-getpo, po/update_linguas.sh: gettext: more
+	recent makevars; new script to update po files.  Previously, "make dist" and similar commands would cause the po
+	files to be updated, which is incorrect. The more recent version now
+	used should not do this.  Replaced Rules-getpo by extra script to manually update and rebuild
+	all po files.
+
+2017-05-02  Simon Sobisch <simonsobisch@web.de>
+
+	* po/POTFILES.in: gettext: list generated files instead of flex,
+	bison sources in POTFILES.in.  Listing the flex and bison sources -- as the gettext manual suggests
+	-- causes warnings. Listing the generated C files for the lexer and
+	parser removes the warnings. Since both files contain line
+	directives, any translator who needs to refer back to those files
+	should be able to find the context in which strings are needed.
+
+2017-05-02  Simon Sobisch <simonsobisch@web.de>
+
+	* autogen.sh: build: only touch ChangeLog if it does not exist
+
+2017-05-02  Simon Sobisch <simonsobisch@web.de>
+
+	* configure.ac, doc/Makefile.am: build: list earliest useable
+	versions for automake
+
+2017-05-02  Simon Sobisch <simonsobisch@web.de>
+
+	* autogen.sh: build: check for how to call libtoolize.  Previously, we would call libtoolize and if that failed, we would
+	call glibtoolize since some platforms have the libtoolize program
+	under that name.  Instead, we check to see if the environment variable LIBTOOLIZE is
+	set and use that if so. Otherwise, we try to find a program
+	"libtoolize" on the path and failing that glibtoolize. We alert the
+	user if no suitable program can be found.
+
+2017-01-06  Alastair Hughes <hobbitalastair@gmail.com>
+
+	* configure.ac, m4/ax_prog_cc_for_build.m4, src/Makefile.am: build:
+	support cross compiling.  Check for cross compiling. If cross compiling, build stage1flex
+	using a custom link command.  We also override LDADD since that adds
+	the replacement implementations that are cross compiled, and instead
+	always use the replacement library implementations.  We don't use BUILD_OBJEXT and BUILD_EXEEXT since it seems that
+	automake does not support these.  Fixes #78.
+
+2017-02-17  Explorer09 <explorer09@gmail.com>
+
+	* configure.ac, src/flexdef.h: build: Include <strings.h>; add
+	strcasecmp() check to configure.  strings.h (not string.h) is the standard-defined include header for
+	strcasecmp(). Include <strings.h> for portability (even though glibc
+	exposes strcasecmp() declaration also in <string.h> by default).
+
+2017-02-17  Explorer09 <explorer09@gmail.com>
+
+	* configure.ac, src/flexdef.h: build: Let configure error if missing
+	required functions, headers..  `configure` will now error if a required header or function is not
+	found on the system.  Also add comments on optional functions checks.  Add sys/stats.h and sys/wait.h to list of required headers in
+	configure.  This fixes issue #180.
+
+2017-02-12  Explorer09 <explorer09@gmail.com>
+
+	* src/dfa.c, src/flexdef.h: scanner: compute powers of two faster.  Replace the naive "for" loop in determining power of two with a
+	clever bitwise solution. This code is around the Internet already
+	and is in Public Domain.
+
+2017-02-07  Explorer09 <explorer09@gmail.com>
+
+	* configure.ac, tests/Makefile.am, tests/pthread.l: test: skip
+	pthread test when needed files missing.  "Unlisting" the pthread test when libpthread is not available is
+	never a good idea. Should let it compile into a stub program that
+	returns the "skip" status.  configure.ac and tests/Makefile.am are edited so that pthread test
+	can be built anyway, but only works (not as the stub) when both
+	pthread.h and libpthread are detected on the system.  Also fix a small typo in tests/pthread.l comments.
+
+2017-02-16  Will Estes <westes575@gmail.com>
+
+	* src/Makefile.am: build: mv scan.c when building dist.  Revert change to copy scan.c when building the distribution archive.
+	Move it instead. This satisfies automake's notions of what should be
+	clean and ensures that the distribution archive contains a
+	just-built copy of scan.c.  Fixes #186
+
+2017-02-06  Will Estes <westes575@gmail.com>
+
+	* src/Makefile.am: build: don't assume distdir/scan.c is writeable
+
+2017-01-02  Explorer09 <explorer09@gmail.com>
+
+	* src/Makefile.am: build: Add dist-hook to force remake scan.c.  This will ensure the flex scanner included in release tarball being
+	generated by exactly the flex version to be released.  Here's one catch after this change: You may not run "make dist" or
+	"make distdir" if you configure the flex source to be
+	cross-compiled.
+
+2017-01-02  Explorer09 <explorer09@gmail.com>
+
+	* src/Makefile.am: build: respect '--localedir' from configure.  Makefile shouldn't overwrite the 'localedir' variable, because
+	that's what '--localedir' option in 'configure' is for.
+
+2017-01-02  Explorer09 <explorer09@gmail.com>
+
+	* src/Makefile.am: build: Remove "-I$(top_srcdir)/intl" from
+	CPPFLAGS.  Revert commit e02c3d27eeb6b53ec82532ab080c23ce26813fd4 ("include the intl/ subdirectory when searching for include files") Flex doesn't come with libintl source code, so inclusion of
+	$(top_srcdir)/intl subdirectory during compiling is unnecessary.  This flag seems to be left after "remove intl from dist" (commit
+	8f45da06adbd7dbcdfdbdd5c20ff4c47fc504f35) without someone cleaning
+	this up.  Users who need to build with gettext functionality from libintl
+	would use the '--with-libintl-prefix' configure option.
+
+2017-02-03  Explorer09 <explorer09@gmail.com>
+
+	* src/regex.c: scanner: fix regcomp's error reporting, double
+	malloc.  Fix unneeded double malloc - let regerror(). Write its message after
+	our "regcomp for (regex) failed: " string.  Also, errbuf cannot be free()'d because of flexfatal containing a
+	longjmp.
+
+2017-01-03  Explorer09 <explorer09@gmail.com>
+
+	* tests/Makefile.am, tests/no_bison_stub.c: test: Skip bison tests
+	if bison is not available
+
+2017-01-03  Explorer09 <explorer09@gmail.com>
+
+	* configure.ac: build: remove repeated bison detection from
+	configure.  AC_PROG_YACC already detects the bison program. We can just use it,
+	and make notice if [ $YACC != 'bison -y' ] Remove unused AC_SUBST([BISON], ...).  Add AM_CONDITIONAL([HAVE_BISON], ...) so that we can skip bison
+	tests in testsuite when bison is absent.  We don't make any attempt to detect other yacc implementations since
+	flex is developed with bison. While it would be possible, the need
+	isn't there right now. It would be possible to add a --with-parser
+	option that defaulted to bison if such a need cropped up.
+
+2017-01-01  Explorer09 <explorer09@gmail.com>
+
+	* src/Makefile.am: build: fix Makefile parse.h dependency clauses.  The current clauses stating "main.c: parse.h" and "yylex.c: parse.h"
+	do not work as expected. Make did not try to build parse.h upon
+	building flex-main.o as it would think main.c exist already and
+	ignore the clause. Fix this by explicitly stating that the .o files
+	depend on parse.h instead.  This dependency bug only happens if user builds flex from a
+	checked-out repository.
+
+2017-01-03  Explorer09 <explorer09@gmail.com>
+
+	* tests/Makefile.am: test: Remake *_scanner.c if *_scanner.h is
+	missing.  If a ${foo}_scanner.c exists but the respective ${foo}_scanner.h is
+	missing, then 'make' can halt. Fix this by deleting the
+	${foo}_scanner.c file and then remake it. This rule is the same as
+	the automake-generated rule for .c files that require LEX or YACC
+	(except automake will use ylwrap).
+
+2016-12-31  Explorer09 <explorer09@gmail.com>
+
+	* tests/Makefile.am: test: remove BUILT_SOURCES; add missing
+	dependencies.  Without BUILT_SOURCES in Makefile, no test sources in tests/ will be
+	built when using the default "make all" target. This is desireable
+	for people who are just building flex but who do not want to run,
+	and therefore, build any part of the test suite.  Also fix missing sources dependencies:     bison_nr_scanner.$(OBJEXT): bison_nr_parser.h     bison_yylloc_scanner.$(OBJEXT): bison_yylloc_parser.h     bison_yylval_scanner.$(OBJEXT): bison_yylval_parser.h
+
+2017-01-19  Explorer09 <explorer09@gmail.com>
+
+	* configure.ac, lib/reallocarray.c, src/flexint.h, src/misc.c: 
+	build: detect overflow for [re]allocate_array.  Use reallocarray() when we have it (i.e. in OpenBSD system). When we
+	don't, use equivalent overflow detection for our allocate_array and
+	reallocate_array functions.  Remove lib/reallocarray.c from our LIBOBJS as we no longer need it.  Provide a fallback SIZE_MAX macro definition in flexint.h (not
+	preprocessor friendly, but enough for our reallocate_array use
+	case).
+
+2017-01-23  Will Estes <westes575@gmail.com>
+
+	* NEWS, configure.ac: doc: v2.6.4
+
+2017-01-23  Thomas Klausner <wiz@NetBSD.org>
+
+	* src/Makefile.am: build: more BSD make and vpath build fixes.  BSD make doesn't like $< with more than one source specified.
+	Additionally, make sure to specify srcdir when referring to source
+	files since vpath builds depend on this.
+
+2017-01-22  Thomas Klausner <wiz@NetBSD.org>
+
+	* src/Makefile.am: build: Fix skel.c generation with BSD make
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/flex.skl: Add more defines in the non-reentrant part.  Fix the reentrant part; don't "#define yyfoo yyfoo" because it
+	breaks code that does #ifndef yywrap ..
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/flexdef.h: scanner: Add yyparse prototype
+
+2017-01-22  Thomas Klausner <wiz@NetBSD.org>
+
+	* src/flex.skl: scanner: move comment for consistency
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/misc.c: scanner: Use array instead of pointer
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/main.c: scanner: manage path to m4 better.  Avoid alloca() for SSP; it is better anyway; since we don't need to
+	strdup the path.
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/gen.c: scanner: Avoid creating unused label
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/buf.c: Cast argument to avoid arithmetic on void *.
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/scan.l: scanner: Use strncpy
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/main.c: scanner: Use prefix when defining yywrap to avoid
+	redefinition.  Fixes regression introduced in v2.6.3.
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/flexdef.h, src/misc.c: scanner: Include stdarg.h for va_list
+
+2017-01-22  Christos Zoulas <christos@zoulas.com>
+
+	* src/flexdef.h, src/main.c, src/parse.y: scanner: Rename warn to
+	lwarn.  This avoids a naming conflict in NetBSD's  libc.
+
+2017-01-01  Explorer09 <explorer09@gmail.com>
+
+	* tests/README: test: document automake convention for skipped exit
+	status.
+
+2017-01-03  Explorer09 <explorer09@gmail.com>
+
+	* tests/Makefile.am: test: let testwrapper scripts be run by
+	${SHELL}.  This allows user to use a different shell if /bin/sh has problems.
+	The use of $SHELL (variable) to run scripts is already an Automake
+	convention. All shell scripts in build-aux are run by $SHELL.
+
+2017-01-02  Explorer09 <explorer09@gmail.com>
+
+	* tests/options.cn, tests/tableopts.sh,
+	tests/testwrapper-direct.sh, tests/testwrapper.sh: test: Remove test
+	scripts bashisms.  They now all work under a POSIX compliant sh. Specifically, 'dash'
+	can now be used for running "make check" tests.  Note that none of these scripts has ever been using a pipe, so `set
+	-o pipefail` is unnecessary and removed.
+
+2017-01-02  Explorer09 <explorer09@gmail.com>
+
+	* tests/testwrapper.sh: test: exit on '-1' test non-zero status.  If a '-1' test program returns a non-zero status, don't go further
+	and compare it's (numeric) output values. This allows a '-1' test to
+	indicate a "skip" status or an otherwise error. (Currently no such
+	'-1' test would skip like this, though.) Shell syntax note: `set -e` will not exit with the syntax like this
+	`test $(false) = $(false);`. The exit statuses of `false` in the
+	example will be ignored instead. But putting the output in a
+	variable, such as `VAR=$(false)`, DOES exit.
+
+2017-01-02  Explorer09 <explorer09@gmail.com>
+
+	* Makefile.am, src/Makefile.am: build: Fix 'make indent' target This 'make indent' target has not been working since the directories
+	reorganization in flex 2.6.0. Now make it work again.  Note that the current indent profile breaks many styles of existing
+	code. The indent target should not be used until the .indent.pro
+	options are reviewed for desireability.
+
+2017-01-01  Explorer09 <explorer09@gmail.com>
+
+	* configure.ac: build: Simplify indent program detection
+
+2017-01-12  Tobias Klauser <tklauser@distanz.ch>
+
+	* src/filter.c: filter: Don't emit #line if %option noline set One place emitting a #line directive to the generated header was
+	missed in commit 647a92b9f4 when resolving #55. Fix it to respect
+	gen_line_dirs as well.
+
+2017-01-12  Will Estes <westes575@gmail.com>
+
+	* po/ca.po, po/da.po, po/de.po, po/eo.po, po/es.po, po/fi.po,
+	po/fr.po, po/ga.po, po/hr.po, po/ko.po, po/nl.po, po/pl.po,
+	po/pt_BR.po, po/ro.po, po/ru.po, po/sr.po, po/sv.po, po/tr.po,
+	po/vi.po, po/zh_CN.po, po/zh_TW.po: translation: refresh po files
+	from translation project
+
+2017-01-10  Harald van Dijk <harald@gigawatt.nl>
+
+	* src/flex.skl: c++: Fix yyrestart(NULL) SEGV.  Binding a reference to a dereferenced null pointer is invalid and
+	compilers optimise away the &file == 0 check. We need a real stream.  yyin is available already, and yyrestart(NULL) is only supported
+	when yyin will not be used, so there is no harm in just passing in
+	that.  Since we now always have a valid stream, we can skip the null
+	check too.  Fixes #98.
+
+2017-01-09  luistung <dongliang1986@gmail.com>
+
+	* src/scan.l: scanner: join symbol list.  Removed a newline that caused a problem building the scanner in some
+	circumstances. Specifically: 'bad character' error  when executing /bin/sh ../build-aux/ylwrap scan.l lex.yy.c scan.c -- flex
+
+2017-01-11  Will Estes <westes575@gmail.com>
+
+	* src/flex.skl: scanner: remove void cast before fprintf
+
 2016-12-30  Will Estes <westes575@gmail.com>
 
 	* NEWS: doc: update NEWS for 2.6.3 release

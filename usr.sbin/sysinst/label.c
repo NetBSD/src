@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.3.14.1 2018/11/26 01:52:55 pgoyette Exp $	*/
+/*	$NetBSD: label.c,v 1.3.14.2 2018/12/26 14:02:12 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.3.14.1 2018/11/26 01:52:55 pgoyette Exp $");
+__RCSID("$NetBSD: label.c,v 1.3.14.2 2018/12/26 14:02:12 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -233,11 +233,11 @@ set_ptype(partinfo *p, int fstype, int flag)
 		 * >= 128 GB	4 KB
 		 */
 	 	/* note pi_size is uint32_t so we have to avoid overflow */
-		if (p->pi_size < (20 * 1024 * (1024 / 512)))
+		if (p->pi_size < (20 * MEG / 512))
 			p->pi_fsize = 512;
-		else if (p->pi_size < (1000 * 1024 * (1024 / 512)))
+		else if (p->pi_size < (1000 * MEG / 512))
 			p->pi_fsize = 1024;
-		else if (p->pi_size < (128 * 1024 * 1024 * (1024 / 512)))
+		else if (p->pi_size < (128 * (GIG / 512)))
 			p->pi_fsize = 2048;
 		else
 			p->pi_fsize = 4096;

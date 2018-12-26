@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.151.2.3 2018/09/30 01:45:58 pgoyette Exp $ */
+/* $NetBSD: device.h,v 1.151.2.4 2018/12/26 14:02:07 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -202,6 +202,7 @@ struct device {
 #define	DVF_CLASS_SUSPENDED	0x0008	/* device class suspend was called */
 #define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
+#define	DVF_ATTACH_INPROGRESS	0x0040	/* device attach is in progress */
 #define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
 
 #ifdef _KERNEL

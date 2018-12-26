@@ -1,4 +1,4 @@
-/* $NetBSD: idle_machdep.S,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: idle_machdep.S,v 1.1.28.2 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_intr_impl.h"
 #include "opt_ddb.h"
 
-RCSID("$NetBSD: idle_machdep.S,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+RCSID("$NetBSD: idle_machdep.S,v 1.1.28.2 2018/12/26 14:01:30 pgoyette Exp $");
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -89,20 +89,21 @@ ENTRY(cpu_idle)
 	mrs	x1, tpidr_el1			/* get curcpu() */
 	str	w28, [x1, #CI_INTR_DEPTH]	/* ci->ci_intr_depth = old */
 
-	ldr	x28, [sp, #TF_X28]		/* restore x28 */
-	ldp	x29, x30, [sp, #TF_X29]		/* restore x29,x30 */
-	add	sp, sp, #TF_SIZE		/* pop trapframe */
-
-	ENABLE_INTERRUPT
-
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
 	ldr	w3, [x1, #CI_SOFTINTS]		/* Get pending softint mask */
 	/* CPL should be 0 */
 	ldr	w2, [x1, #CI_CPL]		/* Get current priority level */
 	lsr	w3, w3, w2			/* shift mask by cpl */
-	cbnz	w3, _C_LABEL(dosoftints)	/* tailcall dosoftints() */
+	cbz	w3, 1f
+	bl	_C_LABEL(dosoftints)		/* dosoftints() */
+1:
 #endif /* __HAVE_FAST_SOFTINTS && !__HAVE_PIC_FAST_SOFTINTS */
 
+	ldr	x28, [sp, #TF_X28]		/* restore x28 */
+	ldp	x29, x30, [sp, #TF_X29]		/* restore x29,x30 */
+	add	sp, sp, #TF_SIZE		/* pop trapframe */
+
+	ENABLE_INTERRUPT
 #endif /* LAZY_CPUIDLE */
 
 	ret

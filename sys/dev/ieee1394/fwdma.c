@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.16 2010/05/23 18:56:58 christos Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.16.58.1 2018/12/26 14:01:48 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.16 2010/05/23 18:56:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.16.58.1 2018/12/26 14:01:48 pgoyette Exp $");
 #if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simokawa Exp $");
 #endif
@@ -47,6 +47,7 @@ __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simok
 #include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/select.h>
 
 #include <machine/vmparam.h>
@@ -108,11 +109,21 @@ fwdma_malloc(device_t dev, bus_dma_tag_t dmat, bus_dmamap_t *dmamap,
 void
 fwdma_free(bus_dma_tag_t dmat, bus_dmamap_t dmamap, void *vaddr)
 {
+	bus_dma_segment_t *segs;
 
+	/* XXX we shouldn't pass around the segs in the dmamap */
+	const bus_size_t mapsize = dmamap->dm_mapsize;
+	const int nsegs = dmamap->dm_nsegs;
+	const size_t segssz = sizeof(bus_dma_segment_t) * nsegs;
+	segs = kmem_alloc(segssz, KM_SLEEP);
+	memcpy(segs, dmamap->dm_segs, segssz);
+	
 	bus_dmamap_unload(dmat, dmamap);
-	bus_dmamem_unmap(dmat, vaddr, dmamap->dm_mapsize);
-	bus_dmamem_free(dmat, dmamap->dm_segs, dmamap->dm_nsegs);
+	bus_dmamem_unmap(dmat, vaddr, mapsize);
+	bus_dmamem_free(dmat, segs, nsegs);
 	bus_dmamap_destroy(dmat, dmamap);
+	
+	kmem_free(segs, segssz);
 }
 
 

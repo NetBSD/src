@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.314.2.3 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.314.2.4 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.314.2.3 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.314.2.4 2018/12/26 14:02:04 pgoyette Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -291,7 +291,7 @@ preempt(void)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
-	l->l_nivcsw++;
+	l->l_pflag |= LP_PREEMPTING;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -649,6 +649,9 @@ mi_switch(lwp_t *l)
 		KASSERT(l->l_ctxswtch == 0);
 		l->l_ctxswtch = 1;
 		l->l_ncsw++;
+		if ((l->l_pflag & LP_PREEMPTING) != 0)
+			l->l_nivcsw++;
+		l->l_pflag &= ~LP_PREEMPTING;
 		KASSERT((l->l_pflag & LP_RUNNING) != 0);
 		l->l_pflag &= ~LP_RUNNING;
 
@@ -752,6 +755,7 @@ mi_switch(lwp_t *l)
 		/* Nothing to do - just unlock and return. */
 		pserialize_switchpoint();
 		mutex_spin_exit(spc->spc_mutex);
+		l->l_pflag &= ~LP_PREEMPTING;
 		lwp_unlock(l);
 		retval = 0;
 	}

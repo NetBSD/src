@@ -1,8 +1,8 @@
-#	$NetBSD: NONPLUS64,v 1.54.2.1 2018/09/06 06:55:42 pgoyette Exp $
+#	$NetBSD: NONPLUS64,v 1.54.2.2 2018/12/26 14:01:43 pgoyette Exp $
 
 include 	"arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.54.2.1 $"
+#ident		"NONPLUS64-$Revision: 1.54.2.2 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -98,14 +98,11 @@ options 	SCSIVERBOSE
 #options 	SETUIDSCRIPTS
 
 ## Options for compatibility with previous releases foreign system binaries.
-## In the cases of COMPAT_SUNOS and COMPAT_SVR4, you may need to set up
-## additional user-level utilities or system configuration files. See
-## compat_sunos(8) and compat_svr4(8).
+## In the cases of COMPAT_SUNOS, you may need to set up additional user-level
+## utilities or system configuration files. See compat_sunos(8).
 
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-#options 	COMPAT_SVR4_32	# 32-bit SVR4 binaries
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	EXEC_ELF32	# Exec module for NetBSD/sparc 1.5 binaries.
 #options 	SYSCALL_DEBUG

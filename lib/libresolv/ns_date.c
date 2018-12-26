@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_date.c,v 1.1 2012/11/15 18:48:48 christos Exp $	*/
+/*	$NetBSD: ns_date.c,v 1.1.34.1 2018/12/26 14:01:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #if 0
 static const char rcsid[] = "Id: ns_date.c,v 1.6 2005/04/27 04:56:39 sra Exp ";
 #else
-__RCSID("$NetBSD: ns_date.c,v 1.1 2012/11/15 18:48:48 christos Exp $");
+__RCSID("$NetBSD: ns_date.c,v 1.1.34.1 2018/12/26 14:01:27 pgoyette Exp $");
 #endif
 
 /* Import. */
@@ -37,12 +37,6 @@ __RCSID("$NetBSD: ns_date.c,v 1.1 2012/11/15 18:48:48 christos Exp $");
 #include <time.h>
 
 #include "port_after.h"
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
-#endif
 
 /* Forward. */
 

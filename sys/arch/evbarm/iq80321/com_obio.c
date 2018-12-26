@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.13 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.13.52.1 2018/12/26 14:01:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.13 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.13.52.1 2018/12/26 14:01:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ com_obio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": failed to map registers: %d\n", error);
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, oba->oba_st, ioh, oba->oba_addr);
+	com_init_regs(&sc->sc_regs, oba->oba_st, ioh, oba->oba_addr);
 
 	com_attach_subr(sc);
 

@@ -9,7 +9,6 @@ BOZOHTTPD?=	../debug/bozohttpd-debug
 WGET?=		wget
 DATA?=		$(.CURDIR)/data 
 VERBOSE?=	yes
-HOST?=		test.eterna
 
 .if ${VERBOSE} != "yes"
 SILENT=		@
@@ -28,17 +27,17 @@ check: check-simple check-cgi check-bigfile
 
 check-simple:
 .for a in $(SIMPLETESTS)
-	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}" "${HOST}"
+	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}"
 .endfor
 
 check-cgi:
 .for a in $(CGITESTS)
-	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}" "${HOST}" -c "${.CURDIR}/cgi-bin"
+	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${.CURDIR}" "${VERBOSE}" -c "${.CURDIR}/cgi-bin"
 .endfor
 
 check-bigfile:
 .for a in $(BIGFILETESTS)
-	${SILENT}$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "${DATA}" "${VERBOSE}" "${HOST}"
+	${SILENT}$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "${DATA}" "${VERBOSE}"
 .endfor
 
 .include <bsd.obj.mk>

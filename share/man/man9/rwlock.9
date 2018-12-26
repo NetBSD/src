@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwlock.9,v 1.17 2017/11/12 21:14:33 riastradh Exp $
+.\"	$NetBSD: rwlock.9,v 1.17.2.1 2018/12/26 14:01:30 pgoyette Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 22, 2009
+.Dd December 10, 2018
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -168,15 +168,30 @@ Otherwise, returns zero.
 .Pp
 Downgrade a lock from a write hold to a read hold.
 .It Fn rw_write_held "rw"
+.Pp
+Return non-zero if write lock is held by current lwp.
+Otherwise, return zero.
 .It Fn rw_read_held "rw"
+Returns non-zero if read lock is held by any lwp.
+Otherwise, return zero.
 .It Fn rw_lock_held "rw"
 .Pp
-Test the lock's condition and return non-zero if the lock is held
-(potentially by the current LWP) and matches the specified condition.
+Returns non-zero if either read or write lock is held by any lwp.
 Otherwise, return zero.
 .Pp
-These functions must never be used to make locking decisions at run time:
+Functions
+.Fn rw_write_held ,
+.Fn rw_read_held ,
+and
+.Fn rw_lock_held
+must never be used to make locking decisions at run time:
 they are provided only for diagnostic purposes.
+They are also not atomic, hence they should only be used to assert
+that lock is held.
+The only exception is
+.Fn rw_write_held ,
+which can be also used safely to assert that write lock is NOT currently
+held by current lwp.
 .El
 .Sh PERFORMANCE CONSIDERATIONS
 RW locks are subject to high cache contention on multiprocessor systems,

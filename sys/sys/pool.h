@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.82 2017/12/16 03:13:29 mrg Exp $	*/
+/*	$NetBSD: pool.h,v 1.82.2.1 2018/12/26 14:02:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@ struct pool {
 	void		*pr_qcache;
 	bool		pr_redzone;
 	size_t		pr_reqsize;
+	size_t		pr_reqsize_with_redzone;
 };
 
 /*

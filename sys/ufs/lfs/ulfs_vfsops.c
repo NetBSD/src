@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.13 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.13.10.1 2018/12/26 14:02:08 pgoyette Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.54 2015/03/17 09:39:29 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.13 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.13.10.1 2018/12/26 14:02:08 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.13 2017/04/17 08:32:01 hannken Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/buf.h>

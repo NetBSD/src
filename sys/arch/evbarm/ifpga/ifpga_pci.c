@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.20.10.1 2018/11/26 01:52:22 pgoyette Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.20.10.2 2018/12/26 14:01:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.20.10.1 2018/11/26 01:52:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.20.10.2 2018/12/26 14:01:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,25 +102,18 @@ void		*ifpga_pci_intr_establish (void *, pci_intr_handle_t, int,
 void		ifpga_pci_intr_disestablish (void *, void *);
 
 struct arm32_pci_chipset ifpga_pci_chipset = {
-	NULL,	/* conf_v */
-	ifpga_pci_attach_hook,
-	ifpga_pci_bus_maxdevs,
-	ifpga_pci_make_tag,
-	ifpga_pci_decompose_tag,
-	NULL,
-	ifpga_pci_conf_read,
-	ifpga_pci_conf_write,
-	NULL,	/* intr_v */
-	ifpga_pci_intr_map,
-	ifpga_pci_intr_string,
-	ifpga_pci_intr_evcnt,
-	NULL,	/* intr_setattr */
-	ifpga_pci_intr_establish,
-	ifpga_pci_intr_disestablish,
-#ifdef __HAVE_PCI_CONF_HOOK
-	NULL,
-#endif
-	ifpga_pci_conf_interrupt,
+	.pc_attach_hook = ifpga_pci_attach_hook,
+	.pc_bus_maxdevs = ifpga_pci_bus_maxdevs,
+	.pc_make_tag = ifpga_pci_make_tag,
+	.pc_decompose_tag = ifpga_pci_decompose_tag,
+	.pc_conf_read = ifpga_pci_conf_read,
+	.pc_conf_write = ifpga_pci_conf_write,
+	.pc_intr_map = ifpga_pci_intr_map,
+	.pc_intr_string = ifpga_pci_intr_string,
+	.pc_intr_evcnt = ifpga_pci_intr_evcnt,
+	.pc_intr_establish = ifpga_pci_intr_establish,
+	.pc_intr_disestablish = ifpga_pci_intr_disestablish,
+	.pc_conf_interrupt = ifpga_pci_conf_interrupt,
 };
 
 /*

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.29 2011/07/25 18:02:47 njoly Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.29.52.1 2018/12/26 14:02:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.29 2011/07/25 18:02:47 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.29.52.1 2018/12/26 14:02:01 pgoyette Exp $");
 
 #include "opt_rasops.h"
 
@@ -178,7 +178,7 @@ rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		u_char c = clr[1];
 
 		rp -= ri->ri_stride << 1;
@@ -299,7 +299,7 @@ rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int32_t c = STAMP_READ(52);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
@@ -381,7 +381,7 @@ rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int32_t c = STAMP_READ(52);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
@@ -470,7 +470,7 @@ rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int32_t c = STAMP_READ(52);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
@@ -497,7 +497,7 @@ rasops24_eraserows(void *cookie, int row, int num, long attr)
 	 * If the color is gray, we can cheat and use the generic routines
 	 * (which are faster, hopefully) since the r,g,b values are the same.
 	 */
-	if ((attr & 4) != 0) {
+	if ((attr & WSATTR_PRIVATE2) != 0) {
 		rasops_eraserows(cookie, row, num, attr);
 		return;
 	}
@@ -599,7 +599,7 @@ rasops24_erasecols(void *cookie, int row, int col, int num, long attr)
 	 * If the color is gray, we can cheat and use the generic routines
 	 * (which are faster, hopefully) since the r,g,b values are the same.
 	 */
-	if ((attr & 4) != 0) {
+	if ((attr & WSATTR_PRIVATE2) != 0) {
 		rasops_erasecols(cookie, row, col, num, attr);
 		return;
 	}

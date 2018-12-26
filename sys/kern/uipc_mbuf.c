@@ -1,12 +1,12 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.10 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.11 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
- * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.10 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.11 2018/12/26 14:02:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -637,7 +637,7 @@ m_prepend(struct mbuf *m, int len, int how)
 	}
 
 	if (m->m_flags & M_PKTHDR) {
-		M_MOVE_PKTHDR(mn, m);
+		m_move_pkthdr(mn, m);
 	} else {
 		MCLAIM(mn, m->m_owner);
 	}
@@ -646,10 +646,10 @@ m_prepend(struct mbuf *m, int len, int how)
 
 	if (m->m_flags & M_PKTHDR) {
 		if (len < MHLEN)
-			MH_ALIGN(m, len);
+			m_align(m, len);
 	} else {
 		if (len < MLEN)
-			M_ALIGN(m, len);
+			m_align(m, len);
 	}
 
 	m->m_len = len;
@@ -714,7 +714,7 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 		MCLAIM(n, m->m_owner);
 
 		if (copyhdr) {
-			M_COPY_PKTHDR(n, m);
+			m_copy_pkthdr(n, m);
 			if (len == M_COPYALL)
 				n->m_pkthdr.len -= off0;
 			else
@@ -784,7 +784,7 @@ m_copypacket(struct mbuf *m, int how)
 		goto nospace;
 
 	MCLAIM(n, m->m_owner);
-	M_COPY_PKTHDR(n, m);
+	m_copy_pkthdr(n, m);
 	n->m_len = m->m_len;
 	if (m->m_flags & M_EXT) {
 		n->m_data = m->m_data;
@@ -995,7 +995,7 @@ m_ensure_contig(struct mbuf **m0, int len)
 		}
 		MCLAIM(m, n->m_owner);
 		if (n->m_flags & M_PKTHDR) {
-			M_MOVE_PKTHDR(m, n);
+			m_move_pkthdr(m, n);
 		}
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -1216,7 +1216,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 		goto bad;
 	MCLAIM(m, n->m_owner);
 	if (n->m_flags & M_PKTHDR) {
-		M_MOVE_PKTHDR(m, n);
+		m_move_pkthdr(m, n);
 	}
 	m->m_data += dstoff;
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -1300,7 +1300,7 @@ m_split_internal(struct mbuf *m0, int len0, int wait, bool copyhdr)
 		if (n == NULL)
 			return NULL;
 		MCLAIM(n, m->m_owner);
-		M_ALIGN(n, remain);
+		m_align(n, remain);
 	}
 
 extpacket:
@@ -1584,7 +1584,7 @@ extend:
 				goto enobufs;
 			MCLAIM(n, m->m_owner);
 			if (off == 0 && (m->m_flags & M_PKTHDR) != 0) {
-				M_MOVE_PKTHDR(n, m);
+				m_move_pkthdr(n, m);
 				n->m_len = MHLEN;
 			} else {
 				if (len >= MINCLSIZE)
@@ -1751,6 +1751,30 @@ m_move_pkthdr(struct mbuf *to, struct mbuf *from)
 	to->m_data = to->m_pktdat;
 
 	from->m_flags &= ~M_PKTHDR;
+}
+
+/*
+ * Set the m_data pointer of a newly-allocated mbuf to place an object of the
+ * specified size at the end of the mbuf, longword aligned.
+ */
+void
+m_align(struct mbuf *m, int len)
+{
+	int buflen, adjust;
+
+	KASSERT(len != M_COPYALL);
+	KASSERT(M_LEADINGSPACE(m) == 0);
+
+	if (m->m_flags & M_EXT)
+		buflen = m->m_ext.ext_size;
+	else if (m->m_flags & M_PKTHDR)
+		buflen = MHLEN;
+	else
+		buflen = MLEN;
+
+	KASSERT(len <= buflen);
+	adjust = buflen - len;
+	m->m_data += adjust &~ (sizeof(long)-1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.97 2017/11/28 15:31:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.97.2.1 2018/12/26 14:02:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.97 2017/11/28 15:31:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.97.2.1 2018/12/26 14:02:10 pgoyette Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -95,7 +95,7 @@ int	handling_cmdlineopts;		/* currently processing -D/-U options */
 
 int	yyparse(void);
 
-#ifndef MAKE_BOOTSTRAP
+#if !defined(MAKE_BOOTSTRAP) && defined(YYDEBUG)
 extern int yydebug;
 #endif
 int	dflag;
@@ -172,7 +172,7 @@ main(int argc, char **argv)
 		switch (ch) {
 
 		case 'd':
-#ifndef MAKE_BOOTSTRAP
+#if !defined(MAKE_BOOTSTRAP) && defined(YYDEBUG)
 			yydebug = 1;
 #endif
 			dflag++;

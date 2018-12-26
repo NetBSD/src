@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.16 2016/03/12 11:55:14 martin Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.16.14.1 2018/12/26 14:02:09 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -310,9 +310,6 @@ sigfpe(int s, siginfo_t *si, void *c)
 	{								\
 									\
 		FPU_PREREQ();						\
-									\
-		if (strcmp(MACHINE, "macppc") == 0)			\
-			atf_tc_expect_fail("PR port-macppc/46319");	\
 									\
 		if (isQEMU())						\
 			atf_tc_expect_fail("PR misc/44767");		\

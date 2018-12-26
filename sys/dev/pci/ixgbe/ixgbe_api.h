@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.h,v 1.11.2.2 2018/04/07 04:12:18 pgoyette Exp $ */
+/* $NetBSD: ixgbe_api.h,v 1.11.2.3 2018/12/26 14:02:01 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -219,6 +219,7 @@ void ixgbe_disable_mdd(struct ixgbe_hw *hw);
 void ixgbe_enable_mdd(struct ixgbe_hw *hw);
 void ixgbe_mdd_event(struct ixgbe_hw *hw, u32 *vf_bitmap);
 void ixgbe_restore_mdd_vf(struct ixgbe_hw *hw, u32 vf);
+bool ixgbe_fw_recovery_mode(struct ixgbe_hw *hw);
 s32 ixgbe_enter_lplu(struct ixgbe_hw *hw);
 s32 ixgbe_handle_lasi(struct ixgbe_hw *hw);
 void ixgbe_set_rate_select_speed(struct ixgbe_hw *hw, ixgbe_link_speed speed);

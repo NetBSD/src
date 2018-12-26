@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.14.2.2 2018/04/07 04:12:18 pgoyette Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.14.2.3 2018/12/26 14:02:01 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2612,7 +2612,6 @@ static bool ixgbe_get_i2c_data(struct ixgbe_hw *hw, u32 *i2cctl)
 {
 	u32 data_oe_bit = IXGBE_I2C_DATA_OE_N_EN_BY_MAC(hw);
 	bool data;
-	UNREFERENCED_1PARAMETER(hw);
 
 	DEBUGFUNC("ixgbe_get_i2c_data");
 

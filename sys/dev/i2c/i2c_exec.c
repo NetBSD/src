@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.10 2015/03/07 14:16:51 jmcneill Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.10.16.1 2018/12/26 14:01:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.10 2015/03/07 14:16:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.10.16.1 2018/12/26 14:01:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,30 @@ static uint8_t	iic_smbus_crc8(uint16_t);
 static uint8_t	iic_smbus_pec(int, uint8_t *, uint8_t *);
 
 static int	i2cexec_modcmd(modcmd_t, void *);
+
+/*
+ * iic_acquire_bus:
+ *
+ *	Acquire the I2C bus for use by a client.
+ */
+int
+iic_acquire_bus(i2c_tag_t tag, int flags)
+{
+
+	return (*tag->ic_acquire_bus)(tag->ic_cookie, flags);
+}
+
+/*
+ * iic_release_bus:
+ *
+ *	Relese the I2C bus, allowing another client to use it.
+ */
+void
+iic_release_bus(i2c_tag_t tag, int flags)
+{
+
+	(*tag->ic_release_bus)(tag->ic_cookie, flags);
+}
 
 /*
  * iic_exec:

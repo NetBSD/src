@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.S,v 1.3 2012/08/11 07:25:44 matt Exp $	*/
+/*	$NetBSD: crt0.S,v 1.3.30.1 2018/12/26 14:01:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,24 +31,23 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.3 2012/08/11 07:25:44 matt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.3.30.1 2018/12/26 14:01:25 pgoyette Exp $")
 
 STRONG_ALIAS(_start,__start)
 
 _ENTRY(__start)
 	/*
-	 * We need to swap ps_strings and cleanup
+	 * ps_strings is passed in r0 and cleanup in r2.
+	 * It should be ps_string in r1 and cleanup in r0.
  	 */
-	mov	ip, r0		/* ps_strings -> tmp */
-	mov	r0, r2		/* cleanup -> ps_strings */
-	mov	r2, ip		/* tmp -> ps_strings */
+	mov	r1, r0
+	mov	r0, r2
 
 	/* Ensure the stack is properly aligned before calling C code. */
 	bic	sp, sp, #7
 
 	/*
 	 * void ___start(void (*cleanup)(void),
-	 *    const Obj_Entry *obj,
 	 *    struct ps_strings *ps_strings);
 	 */
 

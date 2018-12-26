@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.14.4.2 2018/11/26 01:52:28 pgoyette Exp $	*/
+/*	$NetBSD: efi.c,v 1.14.4.3 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.14.4.2 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.14.4.3 2018/12/26 14:01:45 pgoyette Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -40,7 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.14.4.2 2018/11/26 01:52:28 pgoyette Exp $"
 #include <x86/efi.h>
 
 #include <dev/mm.h>
+#if NPCI > 0
 #include <dev/pci/pcivar.h> /* for pci_mapreg_map_enable_decode */
+#endif
 
 const struct uuid EFI_UUID_ACPI20 = EFI_TABLE_ACPI20;
 const struct uuid EFI_UUID_ACPI10 = EFI_TABLE_ACPI10;
@@ -419,7 +421,9 @@ efi_init(void)
 		return;
 	}
 	bootmethod_efi = true;
+#if NPCI > 0	
 	pci_mapreg_map_enable_decode = true; /* PR port-amd64/53286 */
+#endif
 }
 
 bool

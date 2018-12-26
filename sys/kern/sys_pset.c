@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.19.16.1 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.19.16.2 2018/12/26 14:02:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.19.16.1 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.19.16.2 2018/12/26 14:02:04 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -351,6 +351,12 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 		psid = curlwp->l_psid;
 		/* FALLTHROUGH */
 	default:
+		/*
+		 * Just finish if old and new processor-sets are
+		 * the same.
+		 */
+		if (spc->spc_psid == psid)
+			break;
 		/*
 		 * Ensure at least one CPU stays in the default set,
 		 * and that specified CPU is not offline.

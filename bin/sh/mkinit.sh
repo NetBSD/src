@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mkinit.sh,v 1.7.14.2 2018/10/20 06:58:15 pgoyette Exp $
+#	$NetBSD: mkinit.sh,v 1.7.14.3 2018/12/26 14:01:03 pgoyette Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,6 +29,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 srcs="$*"
+
+# use of echo in this script is broken
+
+# some echo versions will expand \n in the args, which breaks C
+# Note: this script is a HOST_PROG ... it must run in the
+# build host's environment, with its shell.
+
+# Fortunately, use of echo here is also trivially simplistic,
+# we can easily replace all uses with ...
+
+echo()
+{
+	printf '%s\n' "$1"
+}
+
+# CAUTION: for anyone modifying this script.... use printf
+# rather than echo to output anything at all... then
+# you will avoid being bitten by the simplicity of this function.
+# This was done this way rather than wholesale replacement
+# to avoid unnecessary code churn.
+
 
 nl='
 '

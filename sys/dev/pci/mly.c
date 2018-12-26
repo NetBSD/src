@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.50.16.1 2018/09/06 06:55:51 pgoyette Exp $	*/
+/*	$NetBSD: mly.c,v 1.50.16.2 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.50.16.1 2018/09/06 06:55:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.50.16.2 2018/12/26 14:01:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,8 @@ mly_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	mly->mly_ih = pci_intr_establish(pc, ih, IPL_BIO, mly_intr, mly);
+	mly->mly_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, mly_intr, mly,
+	    device_xname(self));
 	if (mly->mly_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)

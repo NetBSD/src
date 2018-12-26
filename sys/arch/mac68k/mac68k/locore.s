@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.170 2014/03/15 12:11:23 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.170.28.1 2018/12/26 14:01:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,7 +75,6 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -900,9 +899,6 @@ ASENTRY_NOPROFILE(rei)
 #include <m68k/m68k/sigcode.s>
 #ifdef COMPAT_SUNOS
 #include <m68k/m68k/sunos_sigcode.s>
-#endif
-#ifdef COMPAT_SVR4
-#include <m68k/m68k/svr4_sigcode.s>
 #endif
 
 /*

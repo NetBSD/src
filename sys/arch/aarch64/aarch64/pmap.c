@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.28.8 2018/11/26 01:52:16 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.28.9 2018/12/26 14:01:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.8 2018/11/26 01:52:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.9 2018/12/26 14:01:30 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1206,7 +1206,7 @@ pmap_activate(struct lwp *l)
 		pm->pm_asid = l->l_proc->p_pid;
 
 	ttbr0 = ((uint64_t)pm->pm_asid << 48) | pm->pm_l0table_pa;
-	aarch64_set_ttbr0(ttbr0);
+	cpu_set_ttbr0(ttbr0);
 
 	pm->pm_activated = true;
 

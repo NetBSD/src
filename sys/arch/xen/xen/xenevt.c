@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.48.2.2 2018/11/26 01:52:28 pgoyette Exp $      */
+/*      $NetBSD: xenevt.c,v 1.48.2.3 2018/12/26 14:01:46 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.48.2.2 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.48.2.3 2018/12/26 14:01:46 pgoyette Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -178,12 +178,12 @@ xenevtattach(int n)
 	 * Allocate a loopback event port.
 	 * This helps us massage xenevt_processevt() into the
 	 * callchain at the appropriate level using only
-	 * intr_establish_xname().
+	 * xen_intr_establish_xname().
 	 */
 	evtchn_port_t evtchn = xenevt_alloc_event();
 
 	/* The real objective here is to wiggle into the ih callchain for IPL level */
-	ih = intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
+	ih = xen_intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
 	    xenevt_processevt, NULL, mpsafe, "xenevt");
 
 	KASSERT(ih != NULL);
@@ -195,7 +195,7 @@ xenevt_setipending(int l1, int l2)
 {
 	atomic_or_ulong(&xenevt_ev1, 1UL << l1);
 	atomic_or_ulong(&xenevt_ev2[l1], 1UL << l2);
-	atomic_or_32(&cpu_info_primary.ci_ipending, 1 << IPL_HIGH);
+	atomic_or_32(&cpu_info_primary.ci_xpending, 1 << IPL_HIGH);
 }
 
 /* process pending events */

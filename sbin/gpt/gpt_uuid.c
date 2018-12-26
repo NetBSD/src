@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.15.10.1 2018/11/26 01:52:14 pgoyette Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.15.10.2 2018/12/26 14:01:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.15.10.1 2018/11/26 01:52:14 pgoyette Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.15.10.2 2018/12/26 14:01:28 pgoyette Exp $");
 #endif
 
 #include <err.h>
@@ -87,9 +87,9 @@ static const struct {
 	{ GPT_ENT_TYPE_NETBSD_RAIDFRAME, "raid",
 	    "NetBSD RAIDFrame component" },
 	{ GPT_ENT_TYPE_NETBSD_SWAP, "swap", "NetBSD swap" },
-	{ GPT_ENT_TYPE_VMWARE_VMKCORE, "swap", "VMware VMkernel core dump" },
-	{ GPT_ENT_TYPE_VMWARE_VMFS, "swap", "VMware VMFS" },
-	{ GPT_ENT_TYPE_VMWARE_RESERVED, "swap", "VMware reserved" },
+	{ GPT_ENT_TYPE_VMWARE_VMKCORE, "vmcore", "VMware VMkernel core dump" },
+	{ GPT_ENT_TYPE_VMWARE_VMFS, "vmfs", "VMware VMFS" },
+	{ GPT_ENT_TYPE_VMWARE_RESERVED, "vmresered", "VMware reserved" },
 };
 
 static void
@@ -234,6 +234,23 @@ gpt_uuid_parse(const char *s, gpt_uuid_t uuid)
 	return 0;
 }
 
+size_t
+gpt_uuid_query(
+    void (*func)(const char *uuid, const char *short_name, const char *desc))
+{
+	size_t i;
+	char buf[64];
+
+	if (func != NULL) {
+		for (i = 0; i < __arraycount(gpt_nv); i++) {
+			gpt_uuid_numeric(buf, sizeof(buf), &gpt_nv[i].u);
+			(*func)(buf, gpt_nv[i].n, gpt_nv[i].d);
+		}
+	}
+	return __arraycount(gpt_nv);
+}
+
+#ifndef GPT_UUID_QUERY_ONLY
 void
 gpt_uuid_help(const char *prefix)
 {
@@ -323,3 +340,4 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 	gpt_dce_to_uuid(&u, t);
 	return 0;
 }
+#endif

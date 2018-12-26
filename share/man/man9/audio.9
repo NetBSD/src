@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.45.4.2 2018/06/25 07:25:37 pgoyette Exp $
+.\"	$NetBSD: audio.9,v 1.45.4.3 2018/12/26 14:01:30 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,8 +75,8 @@ struct audio_hw_if {
 
 	int	(*query_devinfo)(void *, mixer_devinfo_t *);
 
-	void	*(*allocm)(void *, int, size_t, struct malloc_type *, int);
-	void	(*freem)(void *, void *, struct malloc_type *);
+	void	*(*allocm)(void *, int, size_t);
+	void	(*freem)(void *, void *, size_t);
 	size_t	(*round_buffersize)(void *, int, size_t);
 	paddr_t	(*mappage)(void *, void *, off_t, int);
 
@@ -409,8 +409,7 @@ It should fill the
 .Va mixer_devinfo_t
 struct.
 Return 0 on success, otherwise an error code.
-.It Dv "void *allocm(void *hdl, int direction, size_t size, struct malloc_type *type, int flags)"
-.Pp
+.It Dv "void *allocm(void *hdl, int direction, size_t size)"
 optional, is called to allocate the device buffers.
 If not present
 .Xr malloc 9
@@ -419,9 +418,9 @@ The reason for using a device dependent routine instead of
 .Xr malloc 9
 is that some buses need special allocation to do DMA.
 Returns the address of the buffer, or 0 on failure.
-.It Dv void freem(void *hdl, void *addr, struct malloc_type *type)
+.It Dv void freem(void *hdl, void *addr, size_t size)
 optional, is called to free memory allocated by
-.Va alloc .
+.Va allocm .
 If not supplied
 .Xr free 9
 is used.

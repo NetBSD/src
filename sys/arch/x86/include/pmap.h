@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.76.2.5 2018/11/26 01:52:28 pgoyette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.76.2.6 2018/12/26 14:01:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -156,16 +156,15 @@ struct bootspace {
 	vaddr_t emodule;
 };
 
-#define SLSPACE_NONE	0
-#define SLAREA_USER	1
-#define SLAREA_PTE	2
-#define SLAREA_MAIN	3
-#define SLAREA_PCPU	4
-#define SLAREA_DMAP	5
-#define SLAREA_HYPV	6
-#define SLAREA_ASAN	7
-#define SLAREA_KERN	8
-#define SLSPACE_NAREAS	9
+#define SLAREA_USER	0
+#define SLAREA_PTE	1
+#define SLAREA_MAIN	2
+#define SLAREA_PCPU	3
+#define SLAREA_DMAP	4
+#define SLAREA_HYPV	5
+#define SLAREA_ASAN	6
+#define SLAREA_KERN	7
+#define SLSPACE_NAREAS	8
 
 struct slotspace {
 	struct {
@@ -262,6 +261,8 @@ struct pmap {
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 
 	/* Used by NVMM. */
+	int (*pm_enter)(struct pmap *, vaddr_t, paddr_t, vm_prot_t, u_int);
+	void (*pm_remove)(struct pmap *, vaddr_t, vaddr_t);
 	void (*pm_tlb_flush)(struct pmap *);
 	void *pm_data;
 };

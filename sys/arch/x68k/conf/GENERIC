@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188.2.2 2018/11/26 01:52:28 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.188.2.3 2018/12/26 14:01:44 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.188.2.2 $"
+#ident 		"GENERIC-$Revision: 1.188.2.3 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -150,7 +150,6 @@ include 	"conf/compat_netbsd09.config"
 options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
-#options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 
 ## File systems.

@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3_TOTAL_CHANGES 3
 .Os
 .Sh NAME
@@ -23,12 +23,20 @@ resolution are not.
 Changes to a view that are intercepted by INSTEAD OF triggers are not
 counted.
 .Pp
-See also the sqlite3_changes() interface, the count_changes pragma,
-and the total_changes() SQL function.
+This the sqlite3_total_changes(D) interface
+only reports the number of rows that changed due to SQL statement run
+against database connection D.
+Any changes by other database connections are ignored.
+To detect changes against a database file from other database connections
+use the PRAGMA data_version command or the SQLITE_FCNTL_DATA_VERSION
+file control.
 .Pp
 If a separate thread makes changes on the same database connection
 while sqlite3_total_changes() is running then
 the value returned is unpredictable and not meaningful.
+.Pp
 .Sh SEE ALSO
+.Xr sqlite3_file_control 3 ,
 .Xr sqlite3_changes 3 ,
-.Xr sqlite3_total_changes 3
+.Xr sqlite3_total_changes 3 ,
+.Xr SQLITE_FCNTL_LOCKSTATE 3

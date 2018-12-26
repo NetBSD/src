@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.5.10.1 2018/07/28 04:37:26 pgoyette Exp $ */
+/* $NetBSD: ptrace.h,v 1.5.10.2 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,18 +36,23 @@
 
 /*
  * AARCH64-dependent ptrace definitions.
- * Note that PT_STEP is _not_ supported.
  */
-#define PT_GETREGS      (PT_FIRSTMACH + 0)
-#define PT_SETREGS      (PT_FIRSTMACH + 1)
-#define PT_GETFPREGS    (PT_FIRSTMACH + 2)
-#define PT_SETFPREGS    (PT_FIRSTMACH + 3)
+#define PT_GETREGS	(PT_FIRSTMACH + 0)
+#define PT_SETREGS	(PT_FIRSTMACH + 1)
+#define PT_GETFPREGS	(PT_FIRSTMACH + 2)
+#define PT_SETFPREGS	(PT_FIRSTMACH + 3)
+#define PT_STEP		(PT_FIRSTMACH + 4)
+#define PT_SETSTEP	(PT_FIRSTMACH + 5)
+#define PT_CLEARSTEP	(PT_FIRSTMACH + 6)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
-	"PT_SETFPREGS",
+	"PT_SETFPREGS", \
+	"PT_STEP", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 
 #include <machine/reg.h>

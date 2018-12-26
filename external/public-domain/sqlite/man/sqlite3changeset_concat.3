@@ -1,4 +1,4 @@
-.Dd March 11, 2017
+.Dd December 19, 2018
 .Dt SQLITE3CHANGESET_CONCAT 3
 .Os
 .Sh NAME
@@ -23,11 +23,12 @@ by changeset B.
 This function combines the two input changesets using an sqlite3_changegroup
 object.
 Calling it produces similar results as the following code fragment:
-.Pp
+.Bd -literal
 sqlite3_changegroup *pGrp; rc = sqlite3_changegroup_new(&pGrp); if(
 rc==SQLITE_OK ) rc = sqlite3changegroup_add(pGrp, nA, pA); if( rc==SQLITE_OK
 ) rc = sqlite3changegroup_add(pGrp, nB, pB); if( rc==SQLITE_OK ){ rc
 = sqlite3changegroup_output(pGrp, pnOut, ppOut); }else{ *ppOut = 0;
 *pnOut = 0; } 
+.Ed
 .Pp
 Refer to the sqlite3_changegroup documentation below for details.

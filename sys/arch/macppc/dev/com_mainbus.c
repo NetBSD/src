@@ -83,7 +83,7 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
 {
     struct com_mainbus_softc *msc = device_private(self);
     struct com_softc *sc = &msc->sc_com;
-    int serial, interrupt_length;
+    int serial;
     int interrupts[8];
     bus_space_tag_t iot;
     bus_space_handle_t ioh;
@@ -93,8 +93,7 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
 
     serial = OF_finddevice("/ht@0/isa@4/serial@0x3f8");
     if (serial != -1) {
-        interrupt_length =
-            OF_getprop(serial, "interrupts", interrupts, sizeof(interrupts));
+        (void)OF_getprop(serial, "interrupts", interrupts, sizeof(interrupts));
     }
 
 
@@ -102,7 +101,7 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
     iobase = 0x3f8;
     comcnattach(iot, iobase, 9600, 1843200, COM_TYPE_NORMAL, (CREAD | CS8));
     bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh);
-    COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+    com_init_regs(&sc->sc_regs, iot, ioh, iobase);
 
     sc->sc_frequency = 1843200;
 

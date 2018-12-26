@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.29 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.29.18.1 2018/12/26 14:01:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.29 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.29.18.1 2018/12/26 14:01:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,8 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Establish Interrupt handler
 	 */
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, adv_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, adv_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)

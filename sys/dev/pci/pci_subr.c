@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.200.2.5 2018/11/26 01:52:32 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.200.2.6 2018/12/26 14:01:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200.2.5 2018/11/26 01:52:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200.2.6 2018/12/26 14:01:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1756,9 +1756,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
 	pcireg_t reg; /* for each register */
 	pcireg_t val; /* for each bitfield */
-	bool check_link = true;
 	bool check_slot = false;
-	bool check_rootport = false;
+	unsigned int pcie_devtype;
 	bool check_upstreamport = false;
 	unsigned int pciever;
 	unsigned int i;
@@ -1770,7 +1769,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	pciever = (unsigned int)(PCIE_XCAP_VER(reg));
 	printf("      Capability version: %u\n", pciever);
 	printf("      Device type: ");
-	switch (PCIE_XCAP_TYPE(reg)) {
+	pcie_devtype = PCIE_XCAP_TYPE(reg);
+	switch (pcie_devtype) {
 	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
 		printf("PCI Express Endpoint device\n");
 		check_upstreamport = true;
@@ -1782,7 +1782,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case PCIE_XCAP_TYPE_ROOT:	/* 0x4 */
 		printf("Root Port of PCI Express Root Complex\n");
 		check_slot = true;
-		check_rootport = true;
 		break;
 	case PCIE_XCAP_TYPE_UP:		/* 0x5 */
 		printf("Upstream Port of PCI Express Switch\n");
@@ -1791,7 +1790,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case PCIE_XCAP_TYPE_DOWN:	/* 0x6 */
 		printf("Downstream Port of PCI Express Switch\n");
 		check_slot = true;
-		check_rootport = true;
 		break;
 	case PCIE_XCAP_TYPE_PCIE2PCI:	/* 0x7 */
 		printf("PCI Express to PCI/PCI-X Bridge\n");
@@ -1804,12 +1802,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
 		printf("Root Complex Integrated Endpoint\n");
-		check_link = false;
 		break;
 	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* 0xa */
 		printf("Root Complex Event Collector\n");
-		check_link = false;
-		check_rootport = true;
 		break;
 	default:
 		printf("unknown\n");
@@ -1886,7 +1881,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Transaction Pending", reg, PCIE_DCSR_TRANSACTION_PND);
 	onoff("Emergency Power Reduction Detected", reg, PCIE_DCSR_EMGPWRREDD);
 
-	if (check_link) {
+	if (PCIE_HAS_LINKREGS(pcie_devtype)) {
 		/* Link Capability Register */
 		reg = regs[o2i(capoff + PCIE_LCAP)];
 		printf("    Link Capabilities Register: 0x%08x\n", reg);
@@ -2082,7 +2077,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Data Link Layer State Changed", reg, PCIE_SLCSR_LACS);
 	}
 
-	if (check_rootport == true) {
+	if (PCIE_HAS_ROOTREGS(pcie_devtype)) {
 		/* Root Control Register */
 		reg = regs[o2i(capoff + PCIE_RCR)];
 		printf("    Root Control Register: 0x%04x\n", reg & 0xffff);
@@ -2237,7 +2232,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	}
 	onoff("End-End TLP Prefix Blocking on", reg, PCIE_DCSR2_EETLP);
 
-	if (check_link) {
+	if (PCIE_HAS_LINKREGS(pcie_devtype)) {
 		bool drs_supported = false;
 
 		/* Link Capability 2 */

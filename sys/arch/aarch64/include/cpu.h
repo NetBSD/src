@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1.28.6 2018/11/26 01:52:16 pgoyette Exp $ */
+/* $NetBSD: cpu.h,v 1.1.28.7 2018/12/26 14:01:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -64,6 +64,10 @@ struct clockframe {
 #include <sys/device_if.h>
 #include <sys/intr.h>
 
+struct aarch64_cpufuncs {
+	void (*cf_set_ttbr0)(uint64_t);
+};
+
 struct cpu_info {
 	struct cpu_data ci_data;
 	device_t ci_dev;
@@ -98,6 +102,7 @@ struct cpu_info {
 	struct aarch64_sysctl_cpu_id ci_id;
 
 	struct aarch64_cache_info *ci_cacheinfo;
+	struct aarch64_cpufuncs ci_cpufuncs;
 
 } __aligned(COHERENCY_UNIT);
 

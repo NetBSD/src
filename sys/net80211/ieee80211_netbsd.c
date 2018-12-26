@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.30.2.2 2018/09/06 06:56:44 pgoyette Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.30.2.3 2018/12/26 14:02:05 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.30.2.2 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.30.2.3 2018/12/26 14:02:05 pgoyette Exp $");
 #endif
 
 /*
@@ -575,7 +575,7 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 		 * frames which all fit in MHLEN.
 		 */
 		if (m != NULL)
-			MH_ALIGN(m, len);
+			m_align(m, len);
 	} else {
 		m = m_getcl(M_NOWAIT, MT_HEADER, M_PKTHDR);
 	}
@@ -722,27 +722,6 @@ ieee80211_load_module(const char *modname)
 }
 
 /* -------------------------------------------------------------------------- */
-
-/*
- * Set the m_data pointer of a newly-allocated mbuf
- * to place an object of the specified size at the
- * end of the mbuf, longword aligned.
- */
-void
-m_align(struct mbuf *m, int len)
-{
-	int adjust;
-
-	KASSERT(len != M_COPYALL);
-
-	if (m->m_flags & M_EXT)
-		adjust = m->m_ext.ext_size - len;
-	else if (m->m_flags & M_PKTHDR)
-		adjust = MHLEN - len;
-	else
-		adjust = MLEN - len;
-	m->m_data += adjust &~ (sizeof(long)-1);
-}
 
 /*
  * Append the specified data to the indicated mbuf chain,

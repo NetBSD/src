@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7.2.3 2018/09/30 01:46:02 pgoyette Exp $ */
+/*	$NetBSD: md.c,v 1.7.2.4 2018/12/26 14:02:12 pgoyette Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -540,7 +540,8 @@ nogeom:
 static int
 mbr_root_above_chs(void)
 {
-	return pm->ptstart + DEFROOTSIZE * (MEG / 512) >= bcyl * bhead * bsec;
+	return pm->ptstart + DEFROOTSIZE * (MEG / 512)
+	    >= (unsigned long)bcyl * bhead * bsec;
 }
 
 static void
