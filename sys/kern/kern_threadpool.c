@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.10 2018/12/26 21:43:39 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.11 2018/12/26 22:16:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.10 2018/12/26 21:43:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.11 2018/12/26 22:16:26 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,15 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.10 2018/12/26 21:43:39 thorpej
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/threadpool.h>
-
-static ONCE_DECL(threadpool_init_once)
-
-#define	THREADPOOL_INIT()					\
-do {								\
-	int threadpool_init_error __diagused =			\
-	    RUN_ONCE(&threadpool_init_once, threadpools_init);	\
-	KASSERT(threadpool_init_error == 0);			\
-} while (/*CONSTCOND*/0)
 
 /* Data structures */
 
@@ -234,7 +225,7 @@ threadpool_remove_percpu(struct threadpool_percpu *tpp)
 #define	TP_LOG(x)		/* nothing */
 #endif /* THREADPOOL_VERBOSE */
 
-static int
+void
 threadpools_init(void)
 {
 
@@ -245,11 +236,6 @@ threadpools_init(void)
 	LIST_INIT(&unbound_threadpools);
 	LIST_INIT(&percpu_threadpools);
 	mutex_init(&threadpools_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	TP_LOG(("%s: sizeof(threadpool_job) = %zu\n",
-	    __func__, sizeof(struct threadpool_job)));
-
-	return 0;
 }
 
 /* Thread pool creation */
@@ -373,8 +359,6 @@ threadpool_get(struct threadpool **poolp, pri_t pri)
 	struct threadpool_unbound *tpu, *tmp = NULL;
 	int error;
 
-	THREADPOOL_INIT();
-
 	ASSERT_SLEEPABLE();
 
 	if (! threadpool_pri_is_valid(pri))
@@ -422,8 +406,6 @@ threadpool_put(struct threadpool *pool, pri_t pri)
 	struct threadpool_unbound *tpu =
 	    container_of(pool, struct threadpool_unbound, tpu_pool);
 
-	THREADPOOL_INIT();
-
 	ASSERT_SLEEPABLE();
 
 	KASSERT(threadpool_pri_is_valid(pri));
@@ -453,8 +435,6 @@ threadpool_percpu_get(struct threadpool_percpu **pool_percpup, pri_t pri)
 {
 	struct threadpool_percpu *pool_percpu, *tmp = NULL;
 	int error;
-
-	THREADPOOL_INIT();
 
 	ASSERT_SLEEPABLE();
 
@@ -496,8 +476,6 @@ threadpool_percpu_get(struct threadpool_percpu **pool_percpup, pri_t pri)
 void
 threadpool_percpu_put(struct threadpool_percpu *pool_percpu, pri_t pri)
 {
-
-	THREADPOOL_INIT();
 
 	ASSERT_SLEEPABLE();
 
