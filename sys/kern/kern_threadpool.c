@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.9 2018/12/26 21:25:51 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.10 2018/12/26 21:43:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.9 2018/12/26 21:25:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.10 2018/12/26 21:43:39 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ static void	threadpool_rele(struct threadpool *);
 static int	threadpool_percpu_create(struct threadpool_percpu **, pri_t);
 static void	threadpool_percpu_destroy(struct threadpool_percpu *);
 
-static void	threadpool_job_dead(struct threadpool_job *);
+static threadpool_job_fn_t threadpool_job_dead;
 
 static int	threadpool_job_hold(struct threadpool_job *);
 static void	threadpool_job_rele(struct threadpool_job *);
