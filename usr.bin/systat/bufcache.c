@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.28 2017/06/09 00:13:29 chs Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.29 2018/12/26 01:47:37 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.28 2017/06/09 00:13:29 chs Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.29 2018/12/26 01:47:37 sevan Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -117,8 +117,8 @@ labelbufcache(void)
 		wmove(wnd, i, 0);
 		wclrtoeol(wnd);
 	}
-	mvwaddstr(wnd, PAGEINFO_ROWS + 1, 0, "File System          Bufs used"
-	    "   %   kB in use   %  Bufsize kB   %  Util %");
+	mvwaddstr(wnd, PAGEINFO_ROWS + 1, 0,
+"File System          Bufs used   %   kB in use   %  Bufsize kB   %  Util %");
 	wclrtoeol(wnd);
 }
 

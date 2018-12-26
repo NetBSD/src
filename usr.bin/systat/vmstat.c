@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.82 2017/07/15 08:22:23 mlelstv Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.83 2018/12/26 01:47:37 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.82 2017/07/15 08:22:23 mlelstv Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.83 2018/12/26 01:47:37 sevan Exp $");
 #endif /* not lint */
 
 /*
@@ -87,6 +87,7 @@ static	long *intrloc;
 static	char **intrname;
 static	int nextintsrow;
 static	int disk_horiz = 1;
+static	u_int nbuf;
 
 WINDOW *
 openvmstat(void)
@@ -124,7 +125,7 @@ static struct nlist namelist[] = {
  */
 #define STATROW		 0	/* uses 1 row and 68 cols */
 #define STATCOL		 2
-#define MEMROW		 9	/* uses 4 rows and 31 cols */
+#define MEMROW		 9	/* uses 5 rows and 31 cols */
 #define MEMCOL		 0
 #define PAGEROW		 2	/* uses 4 rows and 26 cols */
 #define PAGECOL		54
@@ -139,11 +140,11 @@ static struct nlist namelist[] = {
 #define VMSTATCOL	64
 #define GRAPHROW	 5	/* uses 3 rows and 51 cols */
 #define GRAPHCOL	 0
-#define NAMEIROW	14	/* uses 3 rows and 38 cols */
+#define NAMEIROW	15	/* uses 3 rows and 38 cols (must be MEMROW + 5 + 1) */
 #define NAMEICOL	 0
-#define DISKROW		18	/* uses 5 rows and 50 cols (for 9 drives) */
+#define DISKROW		19	/* uses 5 rows and 50 cols (for 9 drives) */
 #define DISKCOL		 0
-#define DISKCOLWIDTH	 6
+#define DISKCOLWIDTH	 8
 #define DISKCOLEND	INTSCOL
 
 typedef struct intr_evcnt intr_evcnt_t;
@@ -318,7 +319,7 @@ labelvmstat_top(void)
 
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
 
-	mvprintw(GENSTATROW, GENSTATCOL, "   Csw    Trp    Sys   Int    Sof    Flt");
+	mvprintw(GENSTATROW, GENSTATCOL, "   Csw  Traps SysCal  Intr   Soft  Fault");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
 		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
@@ -328,8 +329,8 @@ labelvmstat_top(void)
 
 	mvprintw(PAGEROW, PAGECOL + 8, "PAGING   SWAPPING ");
 	mvprintw(PAGEROW + 1, PAGECOL, "        in  out   in  out ");
-	mvprintw(PAGEROW + 2, PAGECOL + 2, "ops");
-	mvprintw(PAGEROW + 3, PAGECOL, "pages");
+	mvprintw(PAGEROW + 2, PAGECOL, "  ops                     ");
+	mvprintw(PAGEROW + 3, PAGECOL, "pages                     ");
 }
 
 void
@@ -343,26 +344,28 @@ labelvmstat(void)
 
 	/* Left hand column */
 
-	mvprintw(MEMROW, MEMCOL,     "              memory totals (in kB)");
-	mvprintw(MEMROW + 1, MEMCOL, "           real   virtual      free");
-	mvprintw(MEMROW + 2, MEMCOL, "Active");
-	mvprintw(MEMROW + 3, MEMCOL, "All");
+	mvprintw(MEMROW + 0, MEMCOL, "Anon                 %%   zero         ");
+	mvprintw(MEMROW + 1, MEMCOL, "Exec                 %%   wired        ");
+	mvprintw(MEMROW + 2, MEMCOL, "File                 %%   inact        ");
+	mvprintw(MEMROW + 3, MEMCOL, "Meta                 %%   bufs         ");
+	mvprintw(MEMROW + 4, MEMCOL, " (kB)        real   swaponly      free");
+	mvprintw(MEMROW + 5, MEMCOL, "Active                                ");
 
 	mvprintw(NAMEIROW, NAMEICOL, "Namei         Sys-cache     Proc-cache");
 	mvprintw(NAMEIROW + 1, NAMEICOL,
 		"    Calls     hits    %%     hits     %%");
 
-	mvprintw(DISKROW, DISKCOL, "Disks:");
+	mvprintw(DISKROW, DISKCOL, "%*s", DISKCOLWIDTH, "Disks:");
 	if (disk_horiz) {
 		mvprintw(DISKROW + 1, DISKCOL + 1, "seeks");
 		mvprintw(DISKROW + 2, DISKCOL + 1, "xfers");
 		mvprintw(DISKROW + 3, DISKCOL + 1, "bytes");
 		mvprintw(DISKROW + 4, DISKCOL + 1, "%%busy");
 	} else {
-		mvprintw(DISKROW, DISKCOL + 1 + 1 * DISKCOLWIDTH, "seeks");
-		mvprintw(DISKROW, DISKCOL + 1 + 2 * DISKCOLWIDTH, "xfers");
-		mvprintw(DISKROW, DISKCOL + 1 + 3 * DISKCOLWIDTH, "bytes");
-		mvprintw(DISKROW, DISKCOL + 1 + 4 * DISKCOLWIDTH, "%%busy");
+		mvprintw(DISKROW, DISKCOL + 1 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "seeks");
+		mvprintw(DISKROW, DISKCOL + 2 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "xfers");
+		mvprintw(DISKROW, DISKCOL + 3 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "bytes");
+		mvprintw(DISKROW, DISKCOL + 4 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "%%busy");
 	}
 
 	/* Middle column */
@@ -396,7 +399,7 @@ labelvmstat(void)
 	mvprintw(VMSTATROW + 11, VMSTATCOL + 10, "fmin");
 	mvprintw(VMSTATROW + 12, VMSTATCOL + 10, "ftarg");
 	mvprintw(VMSTATROW + 13, VMSTATCOL + 10, "itarg");
-	mvprintw(VMSTATROW + 14, VMSTATCOL + 10, "wired");
+	mvprintw(VMSTATROW + 14, VMSTATCOL + 10, "flnan");
 	mvprintw(VMSTATROW + 15, VMSTATCOL + 10, "pdfre");
 
 	if (LINES - 1 > VMSTATROW + 16)
@@ -447,6 +450,11 @@ show_vmstat_top(vmtotal_t *Total, uvmexp_sysctl_t *uvm, uvmexp_sysctl_t *uvm1)
 	PUTRATE(us, us1, uvmexp->softs, GENSTATROW + 1, GENSTATCOL + 27, 6);
 	PUTRATE(us, us1, uvmexp->faults, GENSTATROW + 1, GENSTATCOL + 34, 6);
 
+	/*
+	 * XXX it sure would be nice if this did what top(1) does and showed
+	 * the utilization of each CPU on a separate line, though perhaps IFF
+	 * the screen is tall enough
+	 */
 	/* Last CPU state not calculated yet. */
 	for (f2 = 0.0, psiz = 0, c = 0; c < CPUSTATES; c++) {
 		i = cpuorder[c];
@@ -476,6 +484,11 @@ showvmstat(void)
 	static int relabel = 0;
 	static int last_disks = 0;
 	static char pigs[] = "pigs";
+	static u_long bufmem;
+	struct buf_sysctl *buffers;
+	int mib[6];
+	size_t size;
+	int extraslop = 0;
 
 	if (relabel) {
 		labelvmstat();
@@ -507,16 +520,74 @@ showvmstat(void)
 
 	/* Memory totals */
 #define pgtokb(pg)	((pg) * (s.uvmexp.pagesize / 1024))
-	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 6, 9);
-	putint(pgtokb(s.uvmexp.active + s.uvmexp.swpginuse),	/* XXX */
-	    MEMROW + 2, MEMCOL + 16, 9);
-	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free),
-	    MEMROW + 3, MEMCOL + 6, 9);
-	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free + s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 16, 9);
-	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 26, 9);
-	putint(pgtokb(s.uvmexp.free + s.uvmexp.swpages - s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 26, 9);
+
+	putint(pgtokb(s.uvmexp.anonpages),				MEMROW + 0, MEMCOL + 7, 10);
+	putint((s.uvmexp.anonpages * 100 + 0.5) / s.uvmexp.npages,	MEMROW + 0, MEMCOL + 17, 4);
+
+	putint(pgtokb(s.uvmexp.zeropages),				MEMROW + 0, MEMCOL + 30, 8);
+
+	putint(pgtokb(s.uvmexp.execpages),				MEMROW + 1, MEMCOL + 7, 10);
+	putint((s.uvmexp.execpages * 100 + 0.5) / s.uvmexp.npages,	MEMROW + 1, MEMCOL + 17, 4);
+
+	putint(pgtokb(s.uvmexp.wired),					MEMROW + 1, MEMCOL + 30, 8);
+
+	putint(pgtokb(s.uvmexp.filepages),				MEMROW + 2, MEMCOL + 7, 10);
+	putint((s.uvmexp.filepages * 100 + 0.5) / s.uvmexp.npages,	MEMROW + 2, MEMCOL + 17, 4);
+
+	putint(pgtokb(s.uvmexp.inactive),				MEMROW + 2, MEMCOL + 30, 8);
+
+	/* Get total size of metadata buffers */
+	size = sizeof(bufmem);
+	if (sysctlbyname("vm.bufmem", &bufmem, &size, NULL, 0) < 0) {
+		error("can't get buffers size: %s\n", strerror(errno));
+		return;
+	}
+
+	/* Get number of metadata buffers */
+	size = 0;
+	buffers = NULL;
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_BUF;
+	mib[2] = KERN_BUF_ALL;
+	mib[3] = KERN_BUF_ALL;
+	mib[4] = (int)sizeof(struct buf_sysctl);
+	mib[5] = INT_MAX; /* we want them all */
+again:
+	if (sysctl(mib, 6, NULL, &size, NULL, 0) < 0) {
+		error("can't get buffers size: %s\n", strerror(errno));
+		return;
+	}
+	if (size == 0) {
+		error("buffers size is zero: %s\n", strerror(errno));
+		return;
+	}
+	size += extraslop * sizeof(struct buf_sysctl);
+	buffers = malloc(size);
+	if (buffers == NULL) {
+		error("can't allocate buffers: %s\n", strerror(errno));
+		return;
+	}
+	if (sysctl(mib, 6, buffers, &size, NULL, 0) < 0) {
+		free(buffers);
+		if (extraslop == 0) {
+			extraslop = 100;
+			goto again;
+		}
+		error("can't get buffers: %s\n", strerror(errno));
+		return;
+	}
+	free(buffers);			/* XXX there must be a better way! */
+	nbuf = size / sizeof(struct buf_sysctl);
+
+	putint((int) (bufmem / 1024),		MEMROW + 3, MEMCOL + 5, 12);
+	putint((int) ((bufmem * 100) + 0.5) / s.uvmexp.pagesize / s.uvmexp.npages,
+						MEMROW + 3, MEMCOL + 17, 4);
+	putint(nbuf,				MEMROW + 3, MEMCOL + 30, 8);
+
+	putint(pgtokb(s.uvmexp.active),		MEMROW + 5, MEMCOL + 7, 10);
+	putint(pgtokb(s.uvmexp.swpgonly),	MEMROW + 5, MEMCOL + 18, 10);
+	putint(pgtokb(s.uvmexp.free),		MEMROW + 5, MEMCOL + 28, 10);
+
 #undef pgtokb
 
 	/* Namei cache */
@@ -633,7 +704,7 @@ showvmstat(void)
 	putint(s.uvmexp.freemin, VMSTATROW + 11, VMSTATCOL, 9);
 	putint(s.uvmexp.freetarg, VMSTATROW + 12, VMSTATCOL, 9);
 	putint(s.uvmexp.inactarg, VMSTATROW + 13, VMSTATCOL, 9);
-	putint(s.uvmexp.wired, VMSTATROW + 14, VMSTATCOL, 9);
+	putint(s.uvmexp.fltnoanon, VMSTATROW + 14, VMSTATCOL, 9);
 	PUTRATE(s, s1, uvmexp.pdfreed, VMSTATROW + 15, VMSTATCOL, 9);
 	if (LINES - 1 > VMSTATROW + 16)
 		PUTRATE(s, s1, uvmexp.pdscans, VMSTATROW + 16, VMSTATCOL, 9);
@@ -776,7 +847,7 @@ getinfo(struct Info *stats)
 		memset(&stats->nchstats, 0, sizeof(stats->nchstats));
 	}
 	if (nintr)
-		NREAD(X_INTRCNT, stats->intrcnt, nintr * LONG);
+		NREAD(X_INTRCNT, stats->intrcnt, nintr * sizeof(long));
 	for (i = 0; i < nevcnt; i++)
 		KREAD(ie_head[i].ie_count, &stats->evcnt[i],
 		      sizeof stats->evcnt[i]);

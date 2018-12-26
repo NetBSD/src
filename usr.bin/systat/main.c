@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2017/11/22 02:52:42 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2018/12/26 01:47:37 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.53 2017/11/22 02:52:42 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2018/12/26 01:47:37 sevan Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ char	*nlistf = NULL;
 sig_t	sigtstpdfl;
 double avenrun[3];
 int     col;
-double	naptime = 5;
+double	naptime = 1;
 int     verbose = 1;                    /* to report kvm read errs */
 int     hz, stathz, maxslp;
 char    c;
@@ -173,10 +173,8 @@ main(int argc, char **argv)
 		(void)setegid(egid);
 
 	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
-	if (kd == NULL) {
-		error("%s", errbuf);
-		exit(1);
-	}
+	if (kd == NULL)
+		errx(1, "%s", errbuf);
 
 	/* Get rid of privs for now. */
 	if (nlistf == NULL && memf == NULL)
@@ -194,19 +192,24 @@ main(int argc, char **argv)
 	 * routines to minimize update work by curses.
 	 */
 	if (initscr() == NULL)
-	{
-		warnx("couldn't initialize screen");
-		exit(0);
-	}
+		errx(1, "couldn't initialize screen");
 
 	CMDLINE = LINES - 1;
 	wnd = (*curmode->c_open)();
 	if (wnd == NULL) {
+		move(CMDLINE, 0);
+		clrtoeol();
+		refresh();
+		endwin();
 		warnx("couldn't initialize display");
 		die(0);
 	}
 	wload = newwin(1, 0, 3, 20);
 	if (wload == NULL) {
+		move(CMDLINE, 0);
+		clrtoeol();
+		refresh();
+		endwin();
 		warnx("couldn't set up load average window");
 		die(0);
 	}
@@ -411,7 +414,6 @@ nlisterr(struct nlist name_list[])
 	move(CMDLINE, 0);
 	clrtoeol();
 	refresh();
-	sleep(5);
 	endwin();
 	exit(1);
 }
