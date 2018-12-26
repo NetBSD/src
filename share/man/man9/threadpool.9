@@ -1,4 +1,4 @@
-.\" $NetBSD: threadpool.9,v 1.1 2018/12/24 16:58:54 thorpej Exp $
+.\" $NetBSD: threadpool.9,v 1.2 2018/12/26 18:54:19 thorpej Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,40 +39,40 @@
 .In sys/threadpool.h
 .\""""""""""""""""""""""""""""""""""""
 .Ft int
-.Fn threadpool_get "threadpool_t **poolp" "pri_t pri"
+.Fn threadpool_get "struct threadpool **poolp" "pri_t pri"
 .\"
 .Ft void
-.Fn threadpool_put "threadpool_t *pool" "pri_t pri"
+.Fn threadpool_put "struct threadpool *pool" "pri_t pri"
 .\""""""""""""""""""""""""""""""""""""
 .Ft int
-.Fn threadpool_percpu_get "threadpool_percpu_t **pool_percpup" "pri_t pri"
+.Fn threadpool_percpu_get "struct threadpool_percpu **pool_percpup" "pri_t pri"
 .\"
 .Ft void
-.Fn threadpool_percpu_put "threadpool_percpu_t *pool_percpu" "pri_t pri"
+.Fn threadpool_percpu_put "struct threadpool_percpu *pool_percpu" "pri_t pri"
 .\"
-.Ft threadpool_t *
-.Fn threadpool_percpu_ref "threadpool_percpu_t *pool"
+.Ft struct threadpool *
+.Fn threadpool_percpu_ref "struct threadpool_percpu *pool"
 .\"
-.Ft threadpool_t *
-.Fn threadpool_percpu_ref_remote "threadpool_percpu_t *pool" "struct cpu_info *ci"
+.Ft struct threadpool *
+.Fn threadpool_percpu_ref_remote "struct threadpool_percpu *pool" "struct cpu_info *ci"
 .\""""""""""""""""""""""""""""""""""""
 .Ft void
-.Fn threadpool_job_init "threadpool_job_t *job" "void (*fn)(threadpool_job_t *)" "kmutex_t *interlock"
+.Fn threadpool_job_init "struct threadpool_job *job" "void (*fn)(struct threadpool_job *)" "kmutex_t *interlock"
 .\"
 .Ft void
-.Fn threadpool_job_destroy "threadpool_job_t *job"
+.Fn threadpool_job_destroy "struct threadpool_job *job"
 .\"
 .Ft void
-.Fn threadpool_job_done "threadpool_job_t *job"
+.Fn threadpool_job_done "struct threadpool_job *job"
 .\""""""""""""""""""""""""""""""""""""
 .Ft void
-.Fn threadpool_schedule_job "threadpool_t *pool" "threadpool_job_t *job"
+.Fn threadpool_schedule_job "struct threadpool *pool" "struct threadpool_job *job"
 .\"
 .Ft void
-.Fn threadpool_cancel_job "threadpool_t *pool" "threadpool_job_t *job"
+.Fn threadpool_cancel_job "struct threadpool *pool" "struct threadpool_job *job"
 .\"
 .Ft bool
-.Fn threadpool_cancel_job_async "threadpool_t *pool" "threadpool_job_t *job"
+.Fn threadpool_cancel_job_async "struct threadpool *pool" "struct threadpool_job *job"
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
@@ -94,18 +94,18 @@ and
 .Fn threadpool_percpu_put .
 .Pp
 Job state is stored in the
-.Vt threadpool_job_t
-object.
+.Vt threadpool_job
+structure.
 Callers of the
 .Nm
 abstraction
 must allocate memory for
-.Vt threadpool_job_t
-objects, but should consider them opaque, and should not inspect or
+.Vt threadpool_job
+structures, but should consider them opaque, and should not inspect or
 copy them.
 Each job represented by a
-.Vt threadpool_job_t
-object will be run only once at a time, until the action associated
+.Vt threadpool_job
+structure will be run only once at a time, until the action associated
 with it calls
 .Fn threadpool_job_done .
 .Pp

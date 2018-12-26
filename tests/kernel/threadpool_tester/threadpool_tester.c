@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool_tester.c,v 1.1 2018/12/24 16:58:54 thorpej Exp $	*/
+/*	$NetBSD: threadpool_tester.c,v 1.2 2018/12/26 18:54:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threadpool_tester.c,v 1.1 2018/12/24 16:58:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threadpool_tester.c,v 1.2 2018/12/26 18:54:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,10 +49,10 @@ MODULE(MODULE_CLASS_MISC, threadpool_tester, NULL);
 static struct tester_context {
 	kmutex_t ctx_mutex;
 	struct sysctllog *ctx_sysctllog;
-	threadpool_t *ctx_unbound[PRI_COUNT + 1];
-	threadpool_percpu_t *ctx_percpu[PRI_COUNT + 1];
+	struct threadpool *ctx_unbound[PRI_COUNT + 1];
+	struct threadpool_percpu *ctx_percpu[PRI_COUNT + 1];
 	unsigned int ctx_value;
-	threadpool_job_t ctx_job;
+	struct threadpool_job ctx_job;
 } tester_ctx;
 
 #define	pri_to_idx(pri)		((pri) == PRI_NONE ? PRI_COUNT : (pri))
@@ -67,7 +67,7 @@ static int
 threadpool_tester_get_unbound(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_t *pool, *opool = NULL;
+	struct threadpool *pool, *opool = NULL;
 	struct sysctlnode node;
 	int error, val;
 
@@ -116,7 +116,7 @@ static int
 threadpool_tester_put_unbound(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	struct sysctlnode node;
 	int error, val;
 
@@ -155,7 +155,7 @@ static int
 threadpool_tester_run_unbound(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	struct sysctlnode node;
 	int error, val;
 
@@ -192,7 +192,7 @@ static int
 threadpool_tester_get_percpu(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_percpu_t *pcpu, *opcpu = NULL;
+	struct threadpool_percpu *pcpu, *opcpu = NULL;
 	struct sysctlnode node;
 	int error, val;
 
@@ -241,7 +241,7 @@ static int
 threadpool_tester_put_percpu(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_percpu_t *pcpu;
+	struct threadpool_percpu *pcpu;
 	struct sysctlnode node;
 	int error, val;
 
@@ -280,8 +280,8 @@ static int
 threadpool_tester_run_percpu(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_percpu_t *pcpu;
-	threadpool_t *pool;
+	struct threadpool_percpu *pcpu;
+	struct threadpool *pool;
 	struct sysctlnode node;
 	int error, val;
 
@@ -343,7 +343,7 @@ threadpool_tester_test_value(SYSCTLFN_ARGS)
 }
 
 static void
-threadpool_tester_job(threadpool_job_t *job)
+threadpool_tester_job(struct threadpool_job *job)
 {
 	struct tester_context *ctx =
 	    container_of(job, struct tester_context, ctx_job);
@@ -447,9 +447,9 @@ threadpool_tester_fini(void)
 
 	mutex_enter(&tester_ctx.ctx_mutex);
 	for (pri = PRI_NONE/*-1*/; pri < PRI_COUNT; pri++) {
-		threadpool_t *pool =
+		struct threadpool *pool =
 		    tester_ctx.ctx_unbound[pri_to_idx(pri)];
-		threadpool_percpu_t *pcpu =
+		struct threadpool_percpu *pcpu =
 		    tester_ctx.ctx_percpu[pri_to_idx(pri)];
 
 		/*
