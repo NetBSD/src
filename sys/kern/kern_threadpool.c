@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.8 2018/12/26 21:18:51 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.9 2018/12/26 21:25:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.8 2018/12/26 21:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.9 2018/12/26 21:25:51 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -385,7 +385,7 @@ threadpool_get(struct threadpool **poolp, pri_t pri)
 	if (tpu == NULL) {
 		mutex_exit(&threadpools_lock);
 		TP_LOG(("%s: No pool for pri=%d, creating one.\n",
-			__func__, (int)pri));
+		    __func__, (int)pri));
 		tmp = kmem_zalloc(sizeof(*tmp), KM_SLEEP);
 		error = threadpool_create(&tmp->tpu_pool, NULL, pri);
 		if (error) {
@@ -396,7 +396,7 @@ threadpool_get(struct threadpool **poolp, pri_t pri)
 		tpu = threadpool_lookup_unbound(pri);
 		if (tpu == NULL) {
 			TP_LOG(("%s: Won the creation race for pri=%d.\n",
-				__func__, (int)pri));
+			    __func__, (int)pri));
 			tpu = tmp;
 			tmp = NULL;
 			threadpool_insert_unbound(tpu);
@@ -433,7 +433,7 @@ threadpool_put(struct threadpool *pool, pri_t pri)
 	KASSERT(0 < tpu->tpu_refcnt);
 	if (--tpu->tpu_refcnt == 0) {
 		TP_LOG(("%s: Last reference for pri=%d, destroying pool.\n",
-			__func__, (int)pri));
+		    __func__, (int)pri));
 		threadpool_remove_unbound(tpu);
 	} else {
 		tpu = NULL;
@@ -466,7 +466,7 @@ threadpool_percpu_get(struct threadpool_percpu **pool_percpup, pri_t pri)
 	if (pool_percpu == NULL) {
 		mutex_exit(&threadpools_lock);
 		TP_LOG(("%s: No pool for pri=%d, creating one.\n",
-			__func__, (int)pri));
+		    __func__, (int)pri));
 		error = threadpool_percpu_create(&tmp, pri);
 		if (error)
 			return error;
@@ -475,7 +475,7 @@ threadpool_percpu_get(struct threadpool_percpu **pool_percpup, pri_t pri)
 		pool_percpu = threadpool_lookup_percpu(pri);
 		if (pool_percpu == NULL) {
 			TP_LOG(("%s: Won the creation race for pri=%d.\n",
-				__func__, (int)pri));
+			    __func__, (int)pri));
 			pool_percpu = tmp;
 			tmp = NULL;
 			threadpool_insert_percpu(pool_percpu);
@@ -508,7 +508,7 @@ threadpool_percpu_put(struct threadpool_percpu *pool_percpu, pri_t pri)
 	KASSERT(0 < pool_percpu->tpp_refcnt);
 	if (--pool_percpu->tpp_refcnt == 0) {
 		TP_LOG(("%s: Last reference for pri=%d, destroying pool.\n",
-			__func__, (int)pri));
+		    __func__, (int)pri));
 		threadpool_remove_percpu(pool_percpu);
 	} else {
 		pool_percpu = NULL;
@@ -675,13 +675,14 @@ static int
 threadpool_job_hold(struct threadpool_job *job)
 {
 	unsigned int refcnt;
+
 	do {
 		refcnt = job->job_refcnt;
 		if (refcnt == UINT_MAX)
 			return EBUSY;
 	} while (atomic_cas_uint(&job->job_refcnt, refcnt, (refcnt + 1))
 	    != refcnt);
-	
+
 	return 0;
 }
 
@@ -732,7 +733,7 @@ threadpool_schedule_job(struct threadpool *pool, struct threadpool_job *job)
 	 */
 	if (__predict_true(job->job_thread != NULL)) {
 		TP_LOG(("%s: job '%s' already runnining.\n",
-			__func__, job->job_name));
+		    __func__, job->job_name));
 		return;
 	}
 
@@ -741,14 +742,14 @@ threadpool_schedule_job(struct threadpool *pool, struct threadpool_job *job)
 	if (__predict_false(TAILQ_EMPTY(&pool->tp_idle_threads))) {
 		/* Nobody's idle.  Give it to the overseer.  */
 		TP_LOG(("%s: giving job '%s' to overseer.\n",
-			__func__, job->job_name));
+		    __func__, job->job_name));
 		job->job_thread = &pool->tp_overseer;
 		TAILQ_INSERT_TAIL(&pool->tp_jobs, job, job_entry);
 	} else {
 		/* Assign it to the first idle thread.  */
 		job->job_thread = TAILQ_FIRST(&pool->tp_idle_threads);
 		TP_LOG(("%s: giving job '%s' to idle thread %p.\n",
-			__func__, job->job_name, job->job_thread));
+		    __func__, job->job_name, job->job_thread));
 		TAILQ_REMOVE(&pool->tp_idle_threads, job->job_thread,
 		    tpt_entry);
 		threadpool_job_hold(job);
@@ -845,7 +846,7 @@ threadpool_overseer_thread(void *arg)
 		while (TAILQ_EMPTY(&pool->tp_jobs)) {
 			if (ISSET(pool->tp_flags, THREADPOOL_DYING)) {
 				TP_LOG(("%s: THREADPOOL_DYING\n",
-					__func__));
+				    __func__));
 				break;
 			}
 			cv_wait(&overseer->tpt_cv, &pool->tp_lock);
@@ -856,7 +857,7 @@ threadpool_overseer_thread(void *arg)
 		/* If there are no threads, we'll have to try to start one.  */
 		if (TAILQ_EMPTY(&pool->tp_idle_threads)) {
 			TP_LOG(("%s: Got a job, need to create a thread.\n",
-				__func__));
+			    __func__));
 			threadpool_hold(pool);
 			mutex_spin_exit(&pool->tp_lock);
 
@@ -922,7 +923,7 @@ threadpool_overseer_thread(void *arg)
 				 * first.  We'll have to try again.
 				 */
 				TP_LOG(("%s: '%s' lost race to use idle thread.\n",
-					__func__, job->job_name));
+				    __func__, job->job_name));
 				TAILQ_INSERT_HEAD(&pool->tp_jobs, job,
 				    job_entry);
 			} else {
@@ -934,7 +935,7 @@ threadpool_overseer_thread(void *arg)
 				    TAILQ_FIRST(&pool->tp_idle_threads);
 
 				TP_LOG(("%s: '%s' gets thread %p\n",
-					__func__, job->job_name, thread));
+				    __func__, job->job_name, thread));
 				KASSERT(thread->tpt_job == NULL);
 				TAILQ_REMOVE(&pool->tp_idle_threads, thread,
 				    tpt_entry);
@@ -983,11 +984,11 @@ threadpool_thread(void *arg)
 		while (thread->tpt_job == NULL) {
 			if (ISSET(pool->tp_flags, THREADPOOL_DYING)) {
 				TP_LOG(("%s: THREADPOOL_DYING\n",
-					__func__));
+				    __func__));
 				break;
 			}
 			if (cv_timedwait(&thread->tpt_cv, &pool->tp_lock,
-					 THREADPOOL_IDLE_TICKS))
+				THREADPOOL_IDLE_TICKS))
 				break;
 		}
 		if (__predict_false(thread->tpt_job == NULL)) {
@@ -1001,7 +1002,7 @@ threadpool_thread(void *arg)
 		mutex_spin_exit(&pool->tp_lock);
 
 		TP_LOG(("%s: running job '%s' on thread %p.\n",
-			__func__, job->job_name, thread));
+		    __func__, job->job_name, thread));
 
 		/* Set our lwp name to reflect what job we're doing.  */
 		lwp_lock(curlwp);
