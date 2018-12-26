@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.6 2018/12/26 20:30:36 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.7 2018/12/26 21:15:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.6 2018/12/26 20:30:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.7 2018/12/26 21:15:50 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -127,14 +127,14 @@ struct threadpool {
 	struct threadpool_thread	tp_overseer;
 	struct job_head			tp_jobs;
 	struct thread_head		tp_idle_threads;
-	unsigned int			tp_refcnt;
+	uint64_t			tp_refcnt;
 	int				tp_flags;
 #define	THREADPOOL_DYING	0x01
 	struct cpu_info			*tp_cpu;
 	pri_t				tp_pri;
 };
 
-static int	threadpool_hold(struct threadpool *);
+static void	threadpool_hold(struct threadpool *);
 static void	threadpool_rele(struct threadpool *);
 
 static int	threadpool_percpu_create(struct threadpool_percpu **, pri_t);
@@ -274,13 +274,11 @@ threadpool_create(struct threadpool *const pool, struct cpu_info *ci,
 	/* XXX overseer */
 	TAILQ_INIT(&pool->tp_jobs);
 	TAILQ_INIT(&pool->tp_idle_threads);
-	pool->tp_refcnt = 0;
+	pool->tp_refcnt = 1;		/* overseer's reference */
 	pool->tp_flags = 0;
 	pool->tp_cpu = ci;
 	pool->tp_pri = pri;
 
-	error = threadpool_hold(pool);
-	KASSERT(error == 0);
 	pool->tp_overseer.tpt_lwp = NULL;
 	pool->tp_overseer.tpt_pool = pool;
 	pool->tp_overseer.tpt_job = NULL;
@@ -348,40 +346,24 @@ threadpool_destroy(struct threadpool *pool)
 	mutex_destroy(&pool->tp_lock);
 }
 
-static int
+static void
 threadpool_hold(struct threadpool *pool)
 {
-	unsigned int refcnt;
 
-	do {
-		refcnt = pool->tp_refcnt;
-		if (refcnt == UINT_MAX)
-			return EBUSY;
-	} while (atomic_cas_uint(&pool->tp_refcnt, refcnt, (refcnt + 1))
-	    != refcnt);
-
-	return 0;
+	KASSERT(mutex_owned(&pool->tp_lock));
+	pool->tp_refcnt++;
+	KASSERT(pool->tp_refcnt != 0);
 }
 
 static void
 threadpool_rele(struct threadpool *pool)
 {
-	unsigned int refcnt;
 
-	do {
-		refcnt = pool->tp_refcnt;
-		KASSERT(0 < refcnt);
-		if (refcnt == 1) {
-			mutex_spin_enter(&pool->tp_lock);
-			refcnt = atomic_dec_uint_nv(&pool->tp_refcnt);
-			KASSERT(refcnt != UINT_MAX);
-			if (refcnt == 0)
-				cv_broadcast(&pool->tp_overseer.tpt_cv);
-			mutex_spin_exit(&pool->tp_lock);
-			return;
-		}
-	} while (atomic_cas_uint(&pool->tp_refcnt, refcnt, (refcnt - 1))
-	    != refcnt);
+	KASSERT(mutex_owned(&pool->tp_lock));
+	KASSERT(0 < pool->tp_refcnt);
+	pool->tp_refcnt--;
+	if (pool->tp_refcnt == 0)
+		cv_broadcast(&pool->tp_overseer.tpt_cv);
 }
 
 /* Unbound thread pools */
@@ -876,12 +858,7 @@ threadpool_overseer_thread(void *arg)
 		if (TAILQ_EMPTY(&pool->tp_idle_threads)) {
 			TP_LOG(("%s: Got a job, need to create a thread.\n",
 				__func__));
-			error = threadpool_hold(pool);
-			if (error) {
-				(void)kpause("thrdplrf", false, hz,
-				    &pool->tp_lock);
-				continue;
-			}
+			threadpool_hold(pool);
 			mutex_spin_exit(&pool->tp_lock);
 
 			struct threadpool_thread *const thread =
@@ -910,6 +887,10 @@ threadpool_overseer_thread(void *arg)
 				    &pool->tp_lock);
 				continue;
 			}
+			/*
+			 * New kthread now owns the reference to the pool
+			 * taken above.
+			 */
 			KASSERT(lwp != NULL);
 			TAILQ_INSERT_TAIL(&pool->tp_idle_threads, thread,
 			    tpt_entry);
@@ -972,11 +953,11 @@ threadpool_overseer_thread(void *arg)
 
 		mutex_spin_enter(&pool->tp_lock);
 	}
+	threadpool_rele(pool);
 	mutex_spin_exit(&pool->tp_lock);
 
 	TP_LOG(("%s: exiting.\n", __func__));
 
-	threadpool_rele(pool);
 	kthread_exit(0);
 }
 
@@ -1045,6 +1026,7 @@ threadpool_thread(void *arg)
 		thread->tpt_job = NULL;
 		TAILQ_INSERT_TAIL(&pool->tp_idle_threads, thread, tpt_entry);
 	}
+	threadpool_rele(pool);
 	mutex_spin_exit(&pool->tp_lock);
 
 	TP_LOG(("%s: thread %p exiting.\n", __func__, thread));
@@ -1052,6 +1034,5 @@ threadpool_thread(void *arg)
 	KASSERT(!cv_has_waiters(&thread->tpt_cv));
 	cv_destroy(&thread->tpt_cv);
 	pool_cache_put(threadpool_thread_pc, thread);
-	threadpool_rele(pool);
 	kthread_exit(0);
 }
