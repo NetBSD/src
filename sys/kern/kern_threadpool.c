@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.7 2018/12/26 21:15:50 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.8 2018/12/26 21:18:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.7 2018/12/26 21:15:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.8 2018/12/26 21:18:51 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -361,8 +361,7 @@ threadpool_rele(struct threadpool *pool)
 
 	KASSERT(mutex_owned(&pool->tp_lock));
 	KASSERT(0 < pool->tp_refcnt);
-	pool->tp_refcnt--;
-	if (pool->tp_refcnt == 0)
+	if (--pool->tp_refcnt == 0)
 		cv_broadcast(&pool->tp_overseer.tpt_cv);
 }
 
