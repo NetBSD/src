@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.45 2018/12/25 09:00:26 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.46 2018/12/26 11:12:57 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.45 2018/12/25 09:00:26 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.46 2018/12/26 11:12:57 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.45 2018/12/25 09:00:26 cherry Exp $");
 
 	.text
 
-#ifndef XEN
 /*
  * int splraise(int s);
  */
@@ -67,6 +66,8 @@ ENTRY(splraise)
 #endif /* SPLDEBUG */
 	ret
 END(splraise)
+
+#ifndef XEN
 
 /*
  * void spllower(int s);
