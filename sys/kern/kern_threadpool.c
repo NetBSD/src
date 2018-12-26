@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.5 2018/12/26 20:08:22 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.6 2018/12/26 20:30:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.5 2018/12/26 20:08:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.6 2018/12/26 20:30:36 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,7 +156,6 @@ static kmutex_t		threadpools_lock __cacheline_aligned;
 #define	THREADPOOL_IDLE_TICKS	mstohz(30 * 1000)
 
 struct threadpool_unbound {
-	/* must be first; see threadpool_create() */
 	struct threadpool		tpu_pool;
 
 	/* protected by threadpools_lock */
@@ -262,10 +261,9 @@ threadpool_pri_is_valid(pri_t pri)
 }
 
 static int
-threadpool_create(struct threadpool **poolp, struct cpu_info *ci, pri_t pri,
-    size_t size)
+threadpool_create(struct threadpool *const pool, struct cpu_info *ci,
+    pri_t pri)
 {
-	struct threadpool *const pool = kmem_zalloc(size, KM_SLEEP);
 	struct lwp *lwp;
 	int ktflags;
 	int error;
@@ -303,7 +301,6 @@ threadpool_create(struct threadpool **poolp, struct cpu_info *ci, pri_t pri,
 	cv_broadcast(&pool->tp_overseer.tpt_cv);
 	mutex_spin_exit(&pool->tp_lock);
 
-	*poolp = pool;
 	return 0;
 
 fail0:	KASSERT(error);
@@ -316,14 +313,13 @@ fail0:	KASSERT(error);
 	KASSERT(!cv_has_waiters(&pool->tp_overseer.tpt_cv));
 	cv_destroy(&pool->tp_overseer.tpt_cv);
 	mutex_destroy(&pool->tp_lock);
-	kmem_free(pool, size);
 	return error;
 }
 
 /* Thread pool destruction */
 
 static void
-threadpool_destroy(struct threadpool *pool, size_t size)
+threadpool_destroy(struct threadpool *pool)
 {
 	struct threadpool_thread *thread;
 
@@ -350,7 +346,6 @@ threadpool_destroy(struct threadpool *pool, size_t size)
 	KASSERT(!cv_has_waiters(&pool->tp_overseer.tpt_cv));
 	cv_destroy(&pool->tp_overseer.tpt_cv);
 	mutex_destroy(&pool->tp_lock);
-	kmem_free(pool, size);
 }
 
 static int
@@ -407,16 +402,15 @@ threadpool_get(struct threadpool **poolp, pri_t pri)
 	mutex_enter(&threadpools_lock);
 	tpu = threadpool_lookup_unbound(pri);
 	if (tpu == NULL) {
-		struct threadpool *new_pool;
 		mutex_exit(&threadpools_lock);
 		TP_LOG(("%s: No pool for pri=%d, creating one.\n",
 			__func__, (int)pri));
-		error = threadpool_create(&new_pool, NULL, pri, sizeof(*tpu));
-		if (error)
+		tmp = kmem_zalloc(sizeof(*tmp), KM_SLEEP);
+		error = threadpool_create(&tmp->tpu_pool, NULL, pri);
+		if (error) {
+			kmem_free(tmp, sizeof(*tmp));
 			return error;
-		KASSERT(new_pool != NULL);
-		tmp = container_of(new_pool, struct threadpool_unbound,
-		    tpu_pool);
+		}
 		mutex_enter(&threadpools_lock);
 		tpu = threadpool_lookup_unbound(pri);
 		if (tpu == NULL) {
@@ -432,8 +426,10 @@ threadpool_get(struct threadpool **poolp, pri_t pri)
 	KASSERT(tpu->tpu_refcnt != 0);
 	mutex_exit(&threadpools_lock);
 
-	if (tmp != NULL)
-		threadpool_destroy((struct threadpool *)tmp, sizeof(*tpu));
+	if (tmp != NULL) {
+		threadpool_destroy(&tmp->tpu_pool);
+		kmem_free(tmp, sizeof(*tmp));
+	}
 	KASSERT(tpu != NULL);
 	*poolp = &tpu->tpu_pool;
 	return 0;
@@ -463,8 +459,10 @@ threadpool_put(struct threadpool *pool, pri_t pri)
 	}
 	mutex_exit(&threadpools_lock);
 
-	if (tpu)
-		threadpool_destroy(pool, sizeof(*tpu));
+	if (tpu) {
+		threadpool_destroy(&tpu->tpu_pool);
+		kmem_free(tpu, sizeof(*tpu));
+	}
 }
 
 /* Per-CPU thread pools */
@@ -591,9 +589,12 @@ threadpool_percpu_create(struct threadpool_percpu **pool_percpup, pri_t pri)
 	for (i = 0, CPU_INFO_FOREACH(cii, ci), i++) {
 		struct threadpool *pool;
 
-		error = threadpool_create(&pool, ci, pri, sizeof(*pool));
-		if (error)
+		pool = kmem_zalloc(sizeof(*pool), KM_SLEEP);
+		error = threadpool_create(pool, ci, pri);
+		if (error) {
+			kmem_free(pool, sizeof(*pool));
 			goto fail2;
+		}
 		percpu_traverse_enter();
 		struct threadpool **const poolp =
 		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
@@ -613,7 +614,8 @@ fail2:	for (j = 0, CPU_INFO_FOREACH(cii, ci), j++) {
 		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
 		struct threadpool *const pool = *poolp;
 		percpu_traverse_exit();
-		threadpool_destroy(pool, sizeof(*pool));
+		threadpool_destroy(pool);
+		kmem_free(pool, sizeof(*pool));
 	}
 	percpu_free(pool_percpu->tpp_percpu, sizeof(struct taskthread_pool *));
 fail1:	kmem_free(pool_percpu, sizeof(*pool_percpu));
@@ -632,7 +634,8 @@ threadpool_percpu_destroy(struct threadpool_percpu *pool_percpu)
 		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
 		struct threadpool *const pool = *poolp;
 		percpu_traverse_exit();
-		threadpool_destroy(pool, sizeof(*pool));
+		threadpool_destroy(pool);
+		kmem_free(pool, sizeof(*pool));
 	}
 
 	percpu_free(pool_percpu->tpp_percpu, sizeof(struct threadpool *));
