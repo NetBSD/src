@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13 2015/12/03 02:51:01 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.14 2018/12/26 08:01:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13 2015/12/03 02:51:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.14 2018/12/26 08:01:40 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -91,7 +91,7 @@ static struct execsw netbsd32_execsw[] = {
 		.es_copyargs = netbsd32_elf32_copyargs,
 		.es_setregs = NULL,
 		.es_coredump = coredump_elf32,
-		.es_setup_stack = exec_setup_stack,	/* XXX XXX XXX */
+		.es_setup_stack = exec_setup_stack,
 	},
 #endif
 };

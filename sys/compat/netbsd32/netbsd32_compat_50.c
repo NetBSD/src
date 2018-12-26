@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32 2015/12/03 10:38:21 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.33 2018/12/26 08:01:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32 2015/12/03 10:38:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.33 2018/12/26 08:01:40 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -504,7 +504,7 @@ compat_50_netbsd32___sigtimedwait(struct lwp *l,
 	    compat_50_netbsd32_sigtimedwait_fetch_timeout,
 	    compat_50_netbsd32_sigtimedwait_put_timeout);
 	if (!res)
-		*retval = 0; /* XXX NetBSD<=5 was not POSIX compliant */
+		*retval = 0; /* NetBSD<=5 was not POSIX compliant */
 	return res;
 }
 

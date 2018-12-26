@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.81 2018/08/11 03:41:06 mrg Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.82 2018/12/26 08:01:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.81 2018/08/11 03:41:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.82 2018/12/26 08:01:40 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -727,11 +727,6 @@ out:
  * Use vfs vnode-to-name reverse cache; if that fails, fall back
  * to reading directory contents.
  */
-/* XXX NH Why does this exist */
-int
-getcwd_common(struct vnode *, struct vnode *,
-		   char **, char *, int, int, struct lwp *);
-
 int
 netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, register_t *retval)
 {
@@ -1258,7 +1253,7 @@ netbsd32_utimensat(struct lwp *l, const struct netbsd32_utimensat_args *uap,
 		syscallarg(netbsd32_timespecp_t) tptr;
 		syscallarg(int) flag;
 	} */
-	struct timespec ts[2], *tsp = NULL /* XXXgcc */;
+	struct timespec ts[2], *tsp;
 	int follow;
 	int error;
 
@@ -1356,7 +1351,7 @@ netbsd32_futimens(struct lwp *l, const struct netbsd32_futimens_args *uap,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_timespecp_t) tptr;
 	} */
-	struct timespec ts[2], *tsp = NULL /* XXXgcc */;
+	struct timespec ts[2], *tsp;
 	file_t *fp;
 	int error;
 
