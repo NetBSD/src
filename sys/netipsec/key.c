@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.259 2018/12/26 08:55:14 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.260 2018/12/26 08:58:51 knakahara Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.259 2018/12/26 08:55:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.260 2018/12/26 08:58:51 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -4567,13 +4567,13 @@ key_saidx_match(
 		sa1dst = &saidx1->dst.sa;
 		/*
 		 * If NAT-T is enabled, check ports for tunnel mode.
-		 * Don't do it for transport mode, as there is no
-		 * port information available in the SP.
-		 * Also don't check ports if they are set to zero
+		 * For ipsecif(4), check ports for transport mode, too.
+		 * Don't check ports if they are set to zero
 		 * in the SPD: This means we have a non-generated
 		 * SPD which can't know UDP ports.
 		 */
-		if (saidx1->mode == IPSEC_MODE_TUNNEL)
+		if (saidx1->mode == IPSEC_MODE_TUNNEL ||
+		    saidx1->mode == IPSEC_MODE_TRANSPORT)
 			chkport = PORT_LOOSE;
 		else
 			chkport = PORT_NONE;
