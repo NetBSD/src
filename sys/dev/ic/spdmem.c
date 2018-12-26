@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.28 2017/10/24 08:02:06 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.29 2018/12/26 10:24:20 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.28 2017/10/24 08:02:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.29 2018/12/26 10:24:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -938,9 +938,9 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 			  TRUE, "PC4", 0);
 
 	aprint_verbose_dev(self,
-	    "%d rows, %d cols, %d banks, %d bank groups, "
+	    "%d rows, %d cols, %d banks/group, %d bank groups, "
 	    "%d.%03dns cycle time\n",
-	    s->sm_ddr4.ddr4_rows + 9, s->sm_ddr4.ddr4_cols + 12,
+	    s->sm_ddr4.ddr4_rows + 12, s->sm_ddr4.ddr4_cols + 9,
 	    1 << (2 + s->sm_ddr4.ddr4_logbanks),
 	    1 << s->sm_ddr4.ddr4_bankgroups,
 	    cycle_time / 1000, cycle_time % 1000);
