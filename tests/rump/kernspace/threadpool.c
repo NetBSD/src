@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.c,v 1.2 2018/12/25 21:26:31 thorpej Exp $	*/
+/*	$NetBSD: threadpool.c,v 1.3 2018/12/26 18:54:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: threadpool.c,v 1.2 2018/12/25 21:26:31 thorpej Exp $");
+__RCSID("$NetBSD: threadpool.c,v 1.3 2018/12/26 18:54:20 thorpej Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: threadpool.c,v 1.2 2018/12/25 21:26:31 thorpej Exp $");
 void
 rumptest_threadpool_unbound_lifecycle(void)
 {
-	threadpool_t *pool0, *pool1, *pool2;
+	struct threadpool *pool0, *pool1, *pool2;
 	int error;
 
 	error = threadpool_get(&pool0, PRI_NONE);
@@ -71,7 +71,7 @@ rumptest_threadpool_unbound_lifecycle(void)
 void
 rumptest_threadpool_percpu_lifecycle(void)
 {
-	threadpool_percpu_t *pcpu0, *pcpu1, *pcpu2;
+	struct threadpool_percpu *pcpu0, *pcpu1, *pcpu2;
 	int error;
 
 	error = threadpool_percpu_get(&pcpu0, PRI_NONE);
@@ -96,13 +96,13 @@ struct test_job_data {
 	kmutex_t mutex;
 	kcondvar_t cond;
 	unsigned int count;
-	threadpool_job_t job;
+	struct threadpool_job job;
 };
 
 #define	FINAL_COUNT	12345
 
 static void
-test_job_func_schedule(threadpool_job_t *job)
+test_job_func_schedule(struct threadpool_job *job)
 {
 	struct test_job_data *data =
 	    container_of(job, struct test_job_data, job);
@@ -116,7 +116,7 @@ test_job_func_schedule(threadpool_job_t *job)
 }
 
 static void
-test_job_func_cancel(threadpool_job_t *job)
+test_job_func_cancel(struct threadpool_job *job)
 {
 	struct test_job_data *data =
 	    container_of(job, struct test_job_data, job);
@@ -153,7 +153,7 @@ void
 rumptest_threadpool_unbound_schedule(void)
 {
 	struct test_job_data data;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	int error;
 
 	error = threadpool_get(&pool, PRI_NONE);
@@ -178,8 +178,8 @@ void
 rumptest_threadpool_percpu_schedule(void)
 {
 	struct test_job_data data;
-	threadpool_percpu_t *pcpu;
-	threadpool_t *pool;
+	struct threadpool_percpu *pcpu;
+	struct threadpool *pool;
 	int error;
 
 	error = threadpool_percpu_get(&pcpu, PRI_NONE);
@@ -206,7 +206,7 @@ void
 rumptest_threadpool_job_cancel(void)
 {
 	struct test_job_data data;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	int error;
 	bool rv;
 
