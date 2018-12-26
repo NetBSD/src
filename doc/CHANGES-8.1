@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.80 2018/12/25 11:26:48 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.81 2018/12/26 13:19:54 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2103,4 +2103,10 @@ sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.23
 
 	Do not attach too new "turing" based nouveau cards.
 	[maya, ticket #1145]
+
+sys/external/bsd/ipf/netinet/fil.c		1.22
+
+	Fix missing braces.
+	[sevan, ticket #1144]
+
 
