@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.h,v 1.5 2018/12/26 21:43:39 thorpej Exp $	*/
+/*	$NetBSD: threadpool.h,v 1.6 2018/12/26 22:16:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@ struct threadpool_job {
 	threadpool_job_fn_t		*job_fn;
 	char				job_name[MAXCOMLEN];
 };
+
+void	threadpools_init(void);
 
 int	threadpool_get(struct threadpool **, pri_t);
 void	threadpool_put(struct threadpool *, pri_t);
