@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.1 2018/12/25 03:54:44 knakahara Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.2 2018/12/26 08:59:41 knakahara Exp $
 #
 # Copyright (c) 2018 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,7 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-SOCK_LOCAL=unix://ipsec_natt_local
+SOCK_LOCAL_A=unix://ipsec_natt_local_a
+SOCK_LOCAL_B=unix://ipsec_natt_local_b
 SOCK_NAT=unix://ipsec_natt_nat
 SOCK_REMOTE=unix://ipsec_natt_remote
 BUS_LOCAL=./bus_ipsec_natt_local
@@ -37,10 +38,12 @@ HIJACKING_NPF="${HIJACKING},blanket=/dev/npf"
 setup_servers()
 {
 
-	rump_server_crypto_start $SOCK_LOCAL netipsec ipsec
+	rump_server_crypto_start $SOCK_LOCAL_A netipsec ipsec
+	rump_server_crypto_start $SOCK_LOCAL_B netipsec ipsec
 	rump_server_npf_start $SOCK_NAT
 	rump_server_crypto_start $SOCK_REMOTE netipsec ipsec
-	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS_LOCAL
+	rump_server_add_iface $SOCK_LOCAL_A shmif0 $BUS_LOCAL
+	rump_server_add_iface $SOCK_LOCAL_B shmif0 $BUS_LOCAL
 	rump_server_add_iface $SOCK_NAT shmif0 $BUS_LOCAL
 	rump_server_add_iface $SOCK_NAT shmif1 $BUS_NAT
 	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS_NAT
@@ -293,24 +296,33 @@ check_tcp_com_over_ipsecif()
 test_ipsecif_natt_transport()
 {
 	local algo=$1
-	local ip_local=192.168.0.2
+	local ip_local_a=192.168.0.2
+	local ip_local_b=192.168.0.3
 	local ip_nat_local=192.168.0.1
 	local ip_nat_remote=10.0.0.1
 	local ip_remote=10.0.0.2
 	local subnet_local=192.168.0.0
-	local ip_local_ipsecif=172.16.100.1
-	local ip_remote_ipsecif=172.16.10.1
+	local ip_local_ipsecif_a=172.16.100.1
+	local ip_local_ipsecif_b=172.16.110.1
+	local ip_remote_ipsecif_a=172.16.10.1
+	local ip_remote_ipsecif_b=172.16.11.1
 
 	local npffile=./npf.conf
 	local file_send=./file.send
 	local algo_args="$(generate_algo_args esp-udp $algo)"
-	local pid= port=
+	local pid= port_a=  port_b=
 
 	setup_servers
 
-	export RUMP_SERVER=$SOCK_LOCAL
+	export RUMP_SERVER=$SOCK_LOCAL_A
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
-	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local_a/24
+	atf_check -s exit:0 -o ignore \
+	    rump.route -n add default $ip_nat_local
+
+	export RUMP_SERVER=$SOCK_LOCAL_B
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local_b/24
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add default $ip_nat_local
 
@@ -327,7 +339,8 @@ test_ipsecif_natt_transport()
 	    rump.route -n add -net $subnet_local $ip_nat_remote
 
 	# There is no NAT/NAPT. ping should just work.
-	check_ping_packets $SOCK_LOCAL $BUS_NAT $ip_local $ip_remote
+	check_ping_packets $SOCK_LOCAL_A $BUS_NAT $ip_local_a $ip_remote
+	check_ping_packets $SOCK_LOCAL_B $BUS_NAT $ip_local_b $ip_remote
 
 	# Setup an NAPT with npf
 	build_npf_conf $npffile "$subnet_local/24"
@@ -338,29 +351,33 @@ test_ipsecif_natt_transport()
 	$DEBUG && ${HIJACKING},"blanket=/dev/npf" npfctl show
 
 	# There is an NAPT. ping works but source IP/port are translated
-	check_ping_packets $SOCK_LOCAL $BUS_NAT $ip_nat_remote $ip_remote
+	check_ping_packets $SOCK_LOCAL_A $BUS_NAT $ip_nat_remote $ip_remote
+	check_ping_packets $SOCK_LOCAL_B $BUS_NAT $ip_nat_remote $ip_remote
 
 	# Try TCP communications just in case
-	check_tcp_com_prepare $SOCK_REMOTE $SOCK_LOCAL $BUS_NAT \
+	check_tcp_com_prepare $SOCK_REMOTE $SOCK_LOCAL_A $BUS_NAT \
+			      $ip_remote $ip_nat_remote $ip_remote
+	check_tcp_com_prepare $SOCK_REMOTE $SOCK_LOCAL_B $BUS_NAT \
 			      $ip_remote $ip_nat_remote $ip_remote
 
 	# Launch a nc server as a terminator of NAT-T on outside the NAPT
 	start_natt_terminator $SOCK_REMOTE $ip_remote 4500
 	echo zzz > $file_send
 
+	#################### Test for primary ipsecif(4) NAT-T.
 
-	export RUMP_SERVER=$SOCK_LOCAL
+	export RUMP_SERVER=$SOCK_LOCAL_A
 	# Send a UDP packet to the remote server at port 4500 from the local
 	# host of port 4500. This makes a mapping on the NAPT between them
 	atf_check -s exit:0 $HIJACKING \
 	    nc -u -w 3 -p 4500 $ip_remote 4500 < $file_send
 	# Launch a nc server as a terminator of NAT-T on inside the NAPT,
 	# taking over port 4500 of the local host.
-	start_natt_terminator $SOCK_LOCAL $ip_local 4500
+	start_natt_terminator $SOCK_LOCAL_A $ip_local_a 4500
 
 	# We need to keep the servers for NAT-T
 
-	export RUMP_SERVER=$SOCK_LOCAL
+	export RUMP_SERVER=$SOCK_LOCAL_A
 	$DEBUG && rump.netstat -na -f inet
 	export RUMP_SERVER=$SOCK_REMOTE
 	$DEBUG && rump.netstat -na -f inet
@@ -369,34 +386,101 @@ test_ipsecif_natt_transport()
 	export RUMP_SERVER=$SOCK_NAT
 	$DEBUG && $HIJACKING_NPF npfctl list
 	#          192.168.0.2:4500 10.0.0.2:4500  via shmif1:65248
-	port=$($HIJACKING_NPF npfctl list | grep $ip_local | awk -F 'shmif1:' '/4500/ {print $2;}')
-	$DEBUG && echo port=$port
-	if [ -z "$port" ]; then
+	port_a=$($HIJACKING_NPF npfctl list | grep $ip_local_a | awk -F 'shmif1:' '/4500/ {print $2;}')
+	$DEBUG && echo port_a=$port_a
+	if [ -z "$port_a" ]; then
 		atf_fail "Failed to get a traslated port on NAPT"
 	fi
 
 	# Setup ESP-UDP ipsecif(4) for first client under NAPT
-	setup_ipsecif $SOCK_LOCAL 0 $ip_local 4500 $ip_remote 4500 \
-		      $ip_local_ipsecif $ip_remote_ipsecif
-	setup_ipsecif $SOCK_REMOTE 0 $ip_remote 4500 $ip_nat_remote $port \
-		      $ip_remote_ipsecif $ip_local_ipsecif
+	setup_ipsecif $SOCK_LOCAL_A 0 $ip_local_a 4500 $ip_remote 4500 \
+		      $ip_local_ipsecif_a $ip_remote_ipsecif_a
+	setup_ipsecif $SOCK_REMOTE 0 $ip_remote 4500 $ip_nat_remote $port_a \
+		      $ip_remote_ipsecif_a $ip_local_ipsecif_a
 
-	add_sa $SOCK_LOCAL "esp-udp" "$algo_args" \
-	       $ip_local 4500 $ip_remote 4500 10000 10001
+	add_sa $SOCK_LOCAL_A "esp-udp" "$algo_args" \
+	       $ip_local_a 4500 $ip_remote 4500 10000 10001
 	add_sa $SOCK_REMOTE "esp-udp" "$algo_args" \
-	       $ip_remote 4500 $ip_nat_remote $port 10001 10000
+	       $ip_remote 4500 $ip_nat_remote $port_a 10001 10000
 
-	export RUMP_SERVER=$SOCK_LOCAL
+	export RUMP_SERVER=$SOCK_LOCAL_A
 	# ping should still work
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
 
 	# Try ping over the ESP-UDP ipsecif(4)
-	check_ping_packets_over_ipsecif $SOCK_LOCAL $BUS_NAT \
-					 $ip_remote_ipsecif $ip_nat_remote $port $ip_remote 4500
+	check_ping_packets_over_ipsecif $SOCK_LOCAL_A $BUS_NAT \
+					 $ip_remote_ipsecif_a $ip_nat_remote $port_a $ip_remote 4500
 
 	# Try TCP communications over the ESP-UDP ipsecif(4)
-	check_tcp_com_over_ipsecif $SOCK_REMOTE $SOCK_LOCAL $BUS_NAT \
-				   $ip_remote_ipsecif $ip_nat_remote $port $ip_remote 4500
+	check_tcp_com_over_ipsecif $SOCK_REMOTE $SOCK_LOCAL_A $BUS_NAT \
+				   $ip_remote_ipsecif_a $ip_nat_remote $port_a $ip_remote 4500
+
+	#################### Test for secondary ipsecif(4) NAT-T.
+
+	export RUMP_SERVER=$SOCK_REMOTE
+	$HIJACKING setkey -D
+	$HIJACKING setkey -DP
+
+	export RUMP_SERVER=$SOCK_LOCAL_B
+	# Send a UDP packet to the remote server at port 4500 from the local
+	# host of port 4500. This makes a mapping on the NAPT between them
+	atf_check -s exit:0 $HIJACKING \
+	    nc -u -w 3 -p 4500 $ip_remote 4500 < $file_send
+	# Launch a nc server as a terminator of NAT-T on inside the NAPT,
+	# taking over port 4500 of the local host.
+	start_natt_terminator $SOCK_LOCAL_B $ip_local_b 4500
+
+	# We need to keep the servers for NAT-T
+
+	export RUMP_SERVER=$SOCK_LOCAL_B
+	$DEBUG && rump.netstat -na -f inet
+	export RUMP_SERVER=$SOCK_REMOTE
+	$DEBUG && rump.netstat -na -f inet
+
+	# Get a translated port number from 4500 on the NAPT
+	export RUMP_SERVER=$SOCK_NAT
+	$DEBUG && $HIJACKING_NPF npfctl list
+	#          192.168.0.2:4500 10.0.0.2:4500  via shmif1:65248
+	port_b=$($HIJACKING_NPF npfctl list | grep $ip_local_b | awk -F 'shmif1:' '/4500/ {print $2;}')
+	$DEBUG && echo port_b=$port_b
+	if [ -z "$port_b" ]; then
+		atf_fail "Failed to get a traslated port on NAPT"
+	fi
+
+	# Setup ESP-UDP ipsecif(4) for first client under NAPT
+	setup_ipsecif $SOCK_LOCAL_B 0 $ip_local_b 4500 $ip_remote 4500 \
+		      $ip_local_ipsecif_b $ip_remote_ipsecif_b
+	setup_ipsecif $SOCK_REMOTE 1 $ip_remote 4500 $ip_nat_remote $port_b \
+		      $ip_remote_ipsecif_b $ip_local_ipsecif_b
+
+	check_ping_packets_over_ipsecif $SOCK_LOCAL_A $BUS_NAT \
+					 $ip_remote_ipsecif_a $ip_nat_remote $port_a $ip_remote 4500
+
+	add_sa $SOCK_LOCAL_B "esp-udp" "$algo_args" \
+	       $ip_local_b 4500 $ip_remote 4500 11000 11001
+	add_sa $SOCK_REMOTE "esp-udp" "$algo_args" \
+	       $ip_remote 4500 $ip_nat_remote $port_b 11001 11000
+
+	export RUMP_SERVER=$SOCK_LOCAL_B
+	# ping should still work
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
+
+	# Try ping over the ESP-UDP ipsecif(4)
+	check_ping_packets_over_ipsecif $SOCK_LOCAL_B $BUS_NAT \
+					 $ip_remote_ipsecif_b $ip_nat_remote $port_b $ip_remote 4500
+
+
+	# Try TCP communications over the ESP-UDP ipsecif(4)
+	check_tcp_com_over_ipsecif $SOCK_REMOTE $SOCK_LOCAL_B $BUS_NAT \
+				   $ip_remote_ipsecif_b $ip_nat_remote $port_b $ip_remote 4500
+
+	# Try ping over the ESP-UDP ipsecif(4) for primary again
+	check_ping_packets_over_ipsecif $SOCK_LOCAL_A $BUS_NAT \
+					 $ip_remote_ipsecif_a $ip_nat_remote $port_a $ip_remote 4500
+
+	# Try TCP communications over the ESP-UDP ipsecif(4) for primary again
+	check_tcp_com_over_ipsecif $SOCK_REMOTE $SOCK_LOCAL_A $BUS_NAT \
+				   $ip_remote_ipsecif_a $ip_nat_remote $port_a $ip_remote 4500
 
 	# Kill the NAT-T terminator
 	stop_natt_terminators
