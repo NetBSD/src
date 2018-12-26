@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.500 2018/10/30 19:40:35 kre Exp $	*/
+/*	$NetBSD: init_main.c,v 1.501 2018/12/26 22:16:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.500 2018/10/30 19:40:35 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.501 2018/12/26 22:16:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -178,6 +178,7 @@ extern void *_binary_splash_image_end;
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
 #include <sys/bufq.h>
+#include <sys/threadpool.h>
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -404,6 +405,9 @@ main(void)
 
 	/* Disable preemption during boot. */
 	kpreempt_disable();
+
+	/* Initialize the threadpool system. */
+	threadpools_init();
 
 	/* Initialize the UID hash table. */
 	uid_init();
