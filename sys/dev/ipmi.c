@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.1 2018/12/25 11:56:13 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.2 2018/12/26 06:45:58 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.1 2018/12/25 11:56:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.2 2018/12/26 06:45:58 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1851,7 +1851,7 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 		    "ipmi0";
 		aprint_error("%s: %s:bus_space_map(..., %" PRIx64 ", %x"
 		    ", 0, %p) type %c failed %d\n",
-		    xname, __func__, ia->iaa_if_iobase,
+		    xname, __func__, (uint64_t)ia->iaa_if_iobase,
 		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh,
 		    ia->iaa_if_iotype, error);
 		return -1;
@@ -2000,7 +2000,8 @@ ipmi_thread(void *cookie)
 	aprint_verbose_dev(self, "version %d.%d interface %s %sbase "
 	    "0x%" PRIx64 "/%#x spacing %d\n",
 	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,
-	    ia->iaa_if_iotype == 'i' ? "io" : "mem", ia->iaa_if_iobase,
+	    ia->iaa_if_iotype == 'i' ? "io" : "mem",
+	    (uint64_t)ia->iaa_if_iobase,
 	    ia->iaa_if_iospacing * sc->sc_if->nregs, ia->iaa_if_iospacing);
 	if (ia->iaa_if_irq != -1)
 		aprint_verbose_dev(self, " irq %d\n", ia->iaa_if_irq);
