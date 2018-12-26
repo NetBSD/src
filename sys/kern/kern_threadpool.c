@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.4 2018/12/26 18:54:19 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.5 2018/12/26 20:08:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.4 2018/12/26 18:54:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.5 2018/12/26 20:08:22 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -161,7 +161,7 @@ struct threadpool_unbound {
 
 	/* protected by threadpools_lock */
 	LIST_ENTRY(threadpool_unbound)	tpu_link;
-	unsigned int			tpu_refcnt;
+	uint64_t			tpu_refcnt;
 };
 
 static LIST_HEAD(, threadpool_unbound) unbound_threadpools;
@@ -198,7 +198,7 @@ struct threadpool_percpu {
 
 	/* protected by threadpools_lock */
 	LIST_ENTRY(threadpool_percpu)	tpp_link;
-	unsigned int			tpp_refcnt;
+	uint64_t			tpp_refcnt;
 };
 
 static LIST_HEAD(, threadpool_percpu) percpu_threadpools;
@@ -428,13 +428,8 @@ threadpool_get(struct threadpool **poolp, pri_t pri)
 		}
 	}
 	KASSERT(tpu != NULL);
-	if (tpu->tpu_refcnt == UINT_MAX) {
-		mutex_exit(&threadpools_lock);
-		if (tmp != NULL)
-			threadpool_destroy(&tmp->tpu_pool, sizeof(*tpu));
-		return EBUSY;
-	}
 	tpu->tpu_refcnt++;
+	KASSERT(tpu->tpu_refcnt != 0);
 	mutex_exit(&threadpools_lock);
 
 	if (tmp != NULL)
@@ -463,8 +458,9 @@ threadpool_put(struct threadpool *pool, pri_t pri)
 		TP_LOG(("%s: Last reference for pri=%d, destroying pool.\n",
 			__func__, (int)pri));
 		threadpool_remove_unbound(tpu);
-	} else
+	} else {
 		tpu = NULL;
+	}
 	mutex_exit(&threadpools_lock);
 
 	if (tpu)
@@ -507,13 +503,8 @@ threadpool_percpu_get(struct threadpool_percpu **pool_percpup, pri_t pri)
 		}
 	}
 	KASSERT(pool_percpu != NULL);
-	if (pool_percpu->tpp_refcnt == UINT_MAX) {
-		mutex_exit(&threadpools_lock);
-		if (tmp != NULL)
-			threadpool_percpu_destroy(tmp);
-		return EBUSY;
-	}
 	pool_percpu->tpp_refcnt++;
+	KASSERT(pool_percpu->tpp_refcnt != 0);
 	mutex_exit(&threadpools_lock);
 
 	if (tmp != NULL)
@@ -540,8 +531,9 @@ threadpool_percpu_put(struct threadpool_percpu *pool_percpu, pri_t pri)
 		TP_LOG(("%s: Last reference for pri=%d, destroying pool.\n",
 			__func__, (int)pri));
 		threadpool_remove_percpu(pool_percpu);
-	} else
+	} else {
 		pool_percpu = NULL;
+	}
 	mutex_exit(&threadpools_lock);
 
 	if (pool_percpu)
