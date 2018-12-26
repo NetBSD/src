@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.258 2018/12/22 14:28:57 maxv Exp $	*/
+/*	$NetBSD: key.c,v 1.259 2018/12/26 08:55:14 knakahara Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.258 2018/12/22 14:28:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.259 2018/12/26 08:55:14 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -1972,6 +1972,20 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 		(*p_isr)->level = xisr->sadb_x_ipsecrequest_level;
 
 		/* set IP addresses if there */
+		/*
+		 * NOTE:
+		 * MOBIKE Extensions for PF_KEY draft says:
+		 *     If tunnel mode is specified, the sadb_x_ipsecrequest
+		 *     structure is followed by two sockaddr structures that
+		 *     define the tunnel endpoint addresses.  In the case that
+		 *     transport mode is used, no additional addresses are
+		 *     specified.
+		 * see: https://tools.ietf.org/html/draft-schilcher-mobike-pfkey-extension-01
+		 *
+		 * And then, the IP addresses will be set by
+		 * ipsec_fill_saidx_bymbuf() from packet in transport mode.
+		 * This behavior is used by NAT-T enabled ipsecif(4).
+		 */
 		if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
 			const struct sockaddr *paddr;
 
