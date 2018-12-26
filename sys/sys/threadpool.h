@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.h,v 1.4 2018/12/26 21:36:50 thorpej Exp $	*/
+/*	$NetBSD: threadpool.h,v 1.5 2018/12/26 21:43:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct threadpool_job;
 struct threadpool_percpu;
 struct threadpool_thread;
 
-typedef void (*threadpool_job_fn_t)(struct threadpool_job *);
+typedef void threadpool_job_fn_t(struct threadpool_job *);
 
 struct threadpool_job {
 	kmutex_t			*job_lock;
@@ -54,7 +54,7 @@ struct threadpool_job {
 	TAILQ_ENTRY(threadpool_job)	job_entry;
 	volatile unsigned int		job_refcnt;
 	kcondvar_t			job_cv;
-	threadpool_job_fn_t		job_fn;
+	threadpool_job_fn_t		*job_fn;
 	char				job_name[MAXCOMLEN];
 };
 
