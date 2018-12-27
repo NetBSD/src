@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.229 2018/12/22 14:28:56 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.230 2018/12/27 14:03:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.229 2018/12/22 14:28:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.230 2018/12/27 14:03:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1279,7 +1279,7 @@ m_split_internal(struct mbuf *m0, int len0, int wait, bool copyhdr)
 
 		if (remain > MHLEN) {
 			/* m can't be the lead packet */
-			MH_ALIGN(n, 0);
+			m_align(n, 0);
 			n->m_len = 0;
 			n->m_next = m_split(m, len, wait);
 			if (n->m_next == NULL) {
@@ -1289,7 +1289,7 @@ m_split_internal(struct mbuf *m0, int len0, int wait, bool copyhdr)
 			}
 			return n;
 		} else {
-			MH_ALIGN(n, remain);
+			m_align(n, remain);
 		}
 	} else if (remain == 0) {
 		n = m->m_next;
