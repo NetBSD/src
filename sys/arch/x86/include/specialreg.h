@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.8 2018/12/04 11:52:57 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.9 2018/12/27 12:17:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -871,7 +871,9 @@
 #define MSR_VIA_RNG_NOISE_B	0x00000100
 #define MSR_VIA_RNG_2NOISE	0x00000300
 #define MSR_VIA_ACE		0x00001107
-#define MSR_VIA_ACE_ENABLE	0x10000000
+#define 	VIA_ACE_ALTINST	0x00000001
+#define 	VIA_ACE_ECX8	0x00000002
+#define 	VIA_ACE_ENABLE	0x10000000
 
 /*
  * VIA "Eden" MSRs

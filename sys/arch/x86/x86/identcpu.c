@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.55.2.5 2018/07/13 15:51:28 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.55.2.6 2018/12/27 12:17:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.5 2018/07/13 15:51:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.6 2018/12/27 12:17:19 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -482,32 +482,13 @@ static void
 cpu_probe_winchip(struct cpu_info *ci)
 {
 
-	if (cpu_vendor != CPUVENDOR_IDT)
+	if (cpu_vendor != CPUVENDOR_IDT ||
+	    CPUID_TO_FAMILY(ci->ci_signature) != 5)
 	    	return;
 
-	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
-	case 5:
-		/* WinChip C6 */
-		if (CPUID_TO_MODEL(ci->ci_signature) == 4)
-			ci->ci_feat_val[0] &= ~CPUID_TSC;
-		break;
-	case 6:
-		/*
-		 * VIA Eden ESP 
-		 *
-		 * Quoting from page 3-4 of: "VIA Eden ESP Processor Datasheet"
-		 * http://www.via.com.tw/download/mainboards/6/14/Eden20v115.pdf
-		 * 
-		 * 1. The CMPXCHG8B instruction is provided and always enabled,
-		 *    however, it appears disabled in the corresponding CPUID
-		 *    function bit 0 to avoid a bug in an early version of
-		 *    Windows NT. However, this default can be changed via a
-		 *    bit in the FCR MSR.
-		 */
-		ci->ci_feat_val[0] |= CPUID_CX8;
-		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | 0x00000001);
-		break;
-	}
+	/* WinChip C6 */
+	if (CPUID_TO_MODEL(ci->ci_signature) == 4)
+		ci->ci_feat_val[0] &= ~CPUID_TSC;
 }
 
 static void
@@ -528,8 +509,25 @@ cpu_probe_c3(struct cpu_info *ci)
 	x86_cpuid(0x80000000, descs);
 	lfunc = descs[0];
 
+	if (family == 6) {
+		/*
+		 * VIA Eden ESP.
+		 *
+		 * Quoting from page 3-4 of: "VIA Eden ESP Processor Datasheet"
+		 * http://www.via.com.tw/download/mainboards/6/14/Eden20v115.pdf
+		 * 
+		 * 1. The CMPXCHG8B instruction is provided and always enabled,
+		 *    however, it appears disabled in the corresponding CPUID
+		 *    function bit 0 to avoid a bug in an early version of
+		 *    Windows NT. However, this default can be changed via a
+		 *    bit in the FCR MSR.
+		 */
+		ci->ci_feat_val[0] |= CPUID_CX8;
+		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | VIA_ACE_ECX8);
+	}
+
 	if (family > 6 || model > 0x9 || (model == 0x9 && stepping >= 3)) {
-		/* Nehemiah or Esther */
+		/* VIA Nehemiah or Esther. */
 		x86_cpuid(0xc0000000, descs);
 		lfunc = descs[0];
 		if (lfunc >= 0xc0000001) {	/* has ACE, RNG */
@@ -598,11 +596,16 @@ cpu_probe_c3(struct cpu_info *ci)
 
 		    if (ace_enable) {
 			msr = rdmsr(MSR_VIA_ACE);
-			wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
+			wrmsr(MSR_VIA_ACE, msr | VIA_ACE_ENABLE);
 		    }
-
 		}
 	}
+
+	/* Explicitly disable unsafe ALTINST mode. */
+	if (ci->ci_feat_val[4] & CPUID_VIA_DO_ACE) {
+		msr = rdmsr(MSR_VIA_ACE);
+		wrmsr(MSR_VIA_ACE, msr & ~VIA_ACE_ALTINST);
+	} 
 
 	/*
 	 * Determine L1 cache/TLB info.
