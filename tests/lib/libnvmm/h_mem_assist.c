@@ -200,12 +200,13 @@ mem_callback(struct nvmm_mem *mem)
 		memcpy(mem->data, mmiobuf + off, mem->size);
 	}
 }
+
 static int
 handle_memory(struct nvmm_machine *mach, struct nvmm_exit *exit)
 {
 	int ret;
 
-	ret = nvmm_assist_mem(mach, 0, exit, mem_callback);
+	ret = nvmm_assist_mem(mach, 0, exit);
 	if (ret == -1) {
 		err(errno, "nvmm_assist_mem");
 	}
@@ -255,7 +256,7 @@ struct test {
 };
 
 static void
-run_test(struct nvmm_machine *mach, struct test *test)
+run_test(struct nvmm_machine *mach, const struct test *test)
 {
 	uint64_t *res;
 	size_t size;
@@ -288,8 +289,9 @@ extern uint8_t test5_begin, test5_end;
 extern uint8_t test6_begin, test6_end;
 extern uint8_t test7_begin, test7_end;
 extern uint8_t test8_begin, test8_end;
+extern uint8_t test9_begin, test9_end;
 
-struct test tests[] = {
+static const struct test tests[] = {
 	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004 },
 	{ "test2 - OR",  &test2_begin, &test2_end, 0x14FF },
 	{ "test3 - AND", &test3_begin, &test3_end, 0x1FC0 },
@@ -298,7 +300,13 @@ struct test tests[] = {
 	{ "test6 - DMO", &test6_begin, &test6_end, 0xFFAB },
 	{ "test7 - STOS", &test7_begin, &test7_end, 0x00123456 },
 	{ "test8 - LODS", &test8_begin, &test8_end, 0x12345678 },
+	{ "test9 - MOVS", &test9_begin, &test9_end, 0x12345678 },
 	{ NULL, NULL, NULL, -1 }
+};
+
+static const struct nvmm_callbacks callbacks = {
+	.io = NULL,
+	.mem = mem_callback
 };
 
 /*
@@ -318,6 +326,7 @@ int main(int argc, char *argv[])
 		err(errno, "nvmm_machine_create");
 	if (nvmm_vcpu_create(&mach, 0) == -1)
 		err(errno, "nvmm_vcpu_create");
+	nvmm_callbacks_register(&callbacks);
 	map_pages(&mach);
 
 	for (i = 0; tests[i].name != NULL; i++) {
