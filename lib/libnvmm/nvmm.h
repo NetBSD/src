@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.3 2018/12/15 13:39:43 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.4 2018/12/27 07:22:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -61,6 +61,11 @@ struct nvmm_mem {
 	uint8_t data[8];
 };
 
+struct nvmm_callbacks {
+	void (*io)(struct nvmm_io *);
+	void (*mem)(struct nvmm_mem *);
+};
+
 #define NVMM_PROT_READ		0x01
 #define NVMM_PROT_WRITE		0x02
 #define NVMM_PROT_EXEC		0x04
@@ -90,9 +95,10 @@ int nvmm_gva_to_gpa(struct nvmm_machine *, nvmm_cpuid_t, gvaddr_t, gpaddr_t *,
     nvmm_prot_t *);
 int nvmm_gpa_to_hva(struct nvmm_machine *, gpaddr_t, uintptr_t *);
 
-int nvmm_assist_io(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *,
-    void (*)(struct nvmm_io *));
-int nvmm_assist_mem(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *,
-    void (*)(struct nvmm_mem *));
+int nvmm_assist_io(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
+int nvmm_assist_mem(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
+void nvmm_callbacks_register(const struct nvmm_callbacks *);
+
+int nvmm_vcpu_dump(struct nvmm_machine *, nvmm_cpuid_t);
 
 #endif /* _LIBNVMM_H_ */
