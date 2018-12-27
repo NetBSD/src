@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.206.2.1 2018/12/25 11:19:52 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.206.2.2 2018/12/27 12:04:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.206.2.1 2018/12/25 11:19:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.206.2.2 2018/12/27 12:04:09 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2837,8 +2837,11 @@ netbsd32_pset_create(struct lwp *l,
 	/* {
 		syscallarg(netbsd32_psetidp_t) psid;
 	}; */
+	struct sys_pset_create_args ua;
 
-	return sys_pset_create(l, (const void *)uap, retval);
+	NETBSD32TOP_UAP(psid, psetid_t);
+
+	return sys_pset_create(l, &ua, retval);
 }
 
 int
