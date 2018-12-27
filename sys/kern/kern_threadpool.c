@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.11 2018/12/26 22:16:26 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.12 2018/12/27 04:45:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.11 2018/12/26 22:16:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.12 2018/12/27 04:45:29 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,6 +107,7 @@ TAILQ_HEAD(thread_head, threadpool_thread);
 
 struct threadpool_thread {
 	struct lwp			*tpt_lwp;
+	char				*tpt_lwp_savedname;
 	struct threadpool		*tpt_pool;
 	struct threadpool_job		*tpt_job;
 	kcondvar_t			tpt_cv;
@@ -693,6 +694,15 @@ threadpool_job_done(struct threadpool_job *job)
 	KASSERT(job->job_thread != NULL);
 	KASSERT(job->job_thread->tpt_lwp == curlwp);
 
+	/*
+	 * We can safely read this field; it's only modified right before
+	 * we call the job work function, and we are only preserving it
+	 * to use here; no one cares if it contains junk afterward.
+	 */
+	lwp_lock(curlwp);
+	curlwp->l_name = job->job_thread->tpt_lwp_savedname;
+	lwp_unlock(curlwp);
+
 	cv_broadcast(&job->job_cv);
 	job->job_thread = NULL;
 }
@@ -977,24 +987,25 @@ threadpool_thread(void *arg)
 
 		struct threadpool_job *const job = thread->tpt_job;
 		KASSERT(job != NULL);
+
+		/* Set our lwp name to reflect what job we're doing.  */
+		lwp_lock(curlwp);
+		char *const lwp_name __diagused = curlwp->l_name;
+		thread->tpt_lwp_savedname = curlwp->l_name;
+		curlwp->l_name = job->job_name;
+		lwp_unlock(curlwp);
+
 		mutex_spin_exit(&pool->tp_lock);
 
 		TP_LOG(("%s: running job '%s' on thread %p.\n",
 		    __func__, job->job_name, thread));
 
-		/* Set our lwp name to reflect what job we're doing.  */
-		lwp_lock(curlwp);
-		char *const lwp_name = curlwp->l_name;
-		curlwp->l_name = job->job_name;
-		lwp_unlock(curlwp);
-
 		/* Run the job.  */
 		(*job->job_fn)(job);
 
-		/* Restore our lwp name.  */
-		lwp_lock(curlwp);
-		curlwp->l_name = lwp_name;
-		lwp_unlock(curlwp);
+		/* lwp name restored in threadpool_job_done(). */
+		KASSERTMSG((curlwp->l_name == lwp_name),
+		    "someone forgot to call threadpool_job_done()!");
 
 		/* Job is done and its name is unreferenced.  Release it.  */
 		threadpool_job_rele(job);
