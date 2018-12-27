@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.20 2018/11/26 17:37:46 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.21 2018/12/27 19:32:32 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.20 2018/11/26 17:37:46 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.21 2018/12/27 19:32:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -50,10 +50,9 @@ extern int main(int, char **, char **);
 
 #ifdef HAVE_INITFINI_ARRAY
 typedef void (*fptr_t)(void);
-#else
+#endif
 extern void	_init(void);
 extern void	_fini(void);
-#endif
 extern void	_libc_init(void);
 
 /*
@@ -111,7 +110,7 @@ _preinit(void)
 }
 
 static inline void
-_init(void)
+_initarray(void)
 {
 	for (const fptr_t *f = __init_array_start; f < __init_array_end; f++) {
 		(*f)();
@@ -119,7 +118,7 @@ _init(void)
 }
 
 static void
-_fini(void)
+_finiarray(void)
 {
 	for (const fptr_t *f = __fini_array_start; f < __fini_array_end; f++) {
 		(*f)();
@@ -337,6 +336,10 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 #endif
 
 	atexit(_fini);
+#ifdef HAVE_INITFINI_ARRAY
+	atexit(_finiarray);
+	_initarray();
+#endif
 	_init();
 
 	exit(main(ps_strings->ps_nargvstr, ps_strings->ps_argvstr, environ));
