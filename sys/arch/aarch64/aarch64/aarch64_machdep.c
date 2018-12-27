@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.25 2018/12/27 21:29:41 mrg Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.26 2018/12/27 21:48:01 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.25 2018/12/27 21:29:41 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.26 2018/12/27 21:48:01 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -573,7 +573,7 @@ cpu_dump(void)
 	 */
 	for (i = 0; i < bootconfig.dramblocks; i++) {
 		memsegp[i].start = bootconfig.dram[i].address;
-		memsegp[i].size = bootconfig.dram[i].pages * PAGE_SIZE;
+		memsegp[i].size = ptoa(bootconfig.dram[i].pages);
 	}
 
 	return (dump(dumpdev, dumplo, bf, dbtob(1)));
@@ -629,7 +629,7 @@ dumpsys(void)
 	for (block = 0; block < bootconfig.dramblocks && error == 0; ++block) {
 		addr = bootconfig.dram[block].address;
 		end = bootconfig.dram[block].address +
-		      ((uint64_t)bootconfig.dram[block].pages * PAGE_SIZE);
+		      ptoa(bootconfig.dram[block].pages);
 		for (; addr < end; addr += PAGE_SIZE) {
 		    	if (((len * PAGE_SIZE) % (1024*1024)) == 0)
 		    		printf("%lu ", (len * PAGE_SIZE) / (1024 * 1024));
