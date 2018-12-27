@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.4 2018/07/17 00:36:30 christos Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.5 2018/12/27 09:55:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2018/07/17 00:36:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2018/12/27 09:55:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	KASSERT(reg_daif_read() == 0);
 	ktf->tf_lr = (uintptr_t)lwp_trampoline;
 
-	l2->l_md.md_ktf = ktf;
+	pcb2->pcb_tf = ktf;
 }
 
 /*
