@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.189.8.2 2018/11/30 10:28:46 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.189.8.3 2018/12/27 12:19:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.8.2 2018/11/30 10:28:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.189.8.3 2018/12/27 12:19:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1068,6 +1068,7 @@ sys___getitimer50(struct lwp *l, const struct sys___getitimer50_args *uap,
 	struct itimerval aitv;
 	int error;
 
+	memset(&aitv, 0, sizeof(aitv));
 	error = dogetitimer(p, SCARG(uap, which), &aitv);
 	if (error)
 		return error;
