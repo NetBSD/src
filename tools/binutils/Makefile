@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2018/11/07 01:14:19 christos Exp $
+#	$NetBSD: Makefile,v 1.30 2018/12/27 16:26:52 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -13,7 +13,7 @@ BRANDING?=	\
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--disable-werror \
+		--disable-werror --disable-initfini-array \
 		${BRANDING}
 
 build/gas/m68k-parse.c: ${GNUHOSTDIST}/gas/m68k-parse.c
