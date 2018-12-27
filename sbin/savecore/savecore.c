@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.87 2018/11/06 04:07:22 mrg Exp $	*/
+/*	$NetBSD: savecore.c,v 1.88 2018/12/27 21:25:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.87 2018/11/06 04:07:22 mrg Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.88 2018/12/27 21:25:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,7 +446,7 @@ check_kmem(void)
 	}
 nomsguf:
 	KREAD_LOGWARN(kd_dump, dump_nl[X_PANICSTR].n_value, panicstr,
-	    goto nomsguf);
+	    return);
 	if (panicstr) {
 		cp = panic_mesg;
 		panicloc = panicstr;
