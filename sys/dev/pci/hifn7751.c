@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.62 2018/10/05 05:37:49 msaitoh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.63 2018/12/27 14:03:54 maxv Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.62 2018/10/05 05:37:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.63 2018/12/27 14:03:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.62 2018/10/05 05:37:49 msaitoh Exp $"
 #undef HIFN_DEBUG
 
 #ifdef __NetBSD__
-#define M_DUP_PKTHDR M_COPY_PKTHDR	/* XXX */
+#define M_DUP_PKTHDR m_copy_pkthdr	/* XXX */
 #endif
 
 #ifdef HIFN_DEBUG
