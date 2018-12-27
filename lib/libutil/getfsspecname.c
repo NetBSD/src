@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.7 2018/10/06 23:48:00 christos Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.8 2018/12/27 21:35:48 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.7 2018/10/06 23:48:00 christos Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.8 2018/12/27 21:35:48 alnsn Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -108,7 +108,7 @@ getfsspecname(char *buf, size_t bufsiz, const char *name)
 #ifdef COMPAT_DKWEDGE
 search:
 #endif
-	vname = malloc(strlen(name) * 4 + 1);
+	vname = malloc(strlen(name) + 1);
 	if (vname == NULL) {
 		savee = errno;
 		strlcpy(buf, "malloc failed", bufsiz);
