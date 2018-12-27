@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.20 2018/10/21 00:51:12 jmcneill Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.21 2018/12/27 08:13:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -198,7 +198,6 @@ struct sk_softc {
 	u_int8_t		sk_fibertype;
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
-	u_int32_t		sk_workaround;
 	u_int8_t		sk_macs;	/* # of MACs */
 	const char		*sk_name;
 	u_int32_t		sk_ramsize;	/* amount of RAM on NIC */
