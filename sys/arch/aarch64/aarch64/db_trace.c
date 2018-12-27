@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.6 2018/09/15 19:47:48 jakllsch Exp $ */
+/* $NetBSD: db_trace.c,v 1.7 2018/12/27 09:55:27 mrg Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2018/09/15 19:47:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.7 2018/12/27 09:55:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -207,7 +207,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		} else
 #endif
 		{
-			tf = l.l_md.md_ktf;
+			struct pcb *pcb = lwp_getpcb(&l);
+
+			tf = pcb->pcb_tf;
 			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
 			(*pr)("trace: pid %d lid %d at tf %p\n",
 			    p.p_pid, l.l_lid, tf);

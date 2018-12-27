@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.12 2018/12/13 10:44:25 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.13 2018/12/27 09:55:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.12 2018/12/13 10:44:25 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.13 2018/12/27 09:55:27 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -303,6 +303,7 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	lwp_t *l;
+	struct pcb *pcb;
 
 	if (!have_addr) {
 		db_printf("lwp: <address>\n");
@@ -319,9 +320,10 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("\tl->l_md.md_onfault=%p\n", l->l_md.md_onfault);
 	db_printf("\tl->l_md.md_utf    =%p\n", l->l_md.md_utf);
 	dump_trapframe(l->l_md.md_utf, db_printf);
-	db_printf("\tl->l_md.md_ktf    =%p\n", l->l_md.md_ktf);
-	if (l->l_md.md_ktf != l->l_md.md_utf)
-		dump_trapframe(l->l_md.md_ktf, db_printf);
+	pcb = l->l_addr;
+	db_printf("\tl->l_addr.pcb_tf    =%p\n", pcb->pcb_tf);
+	if (pcb->pcb_tf != l->l_md.md_utf)
+		dump_trapframe(pcb->pcb_tf, db_printf);
 	db_printf("\tl->l_md.md_cpacr  =%016" PRIx64 "\n", l->l_md.md_cpacr);
 	db_printf("\tl->l_md.md_flags  =%08x\n", l->l_md.md_flags);
 

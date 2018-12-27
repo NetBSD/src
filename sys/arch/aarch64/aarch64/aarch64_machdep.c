@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.23 2018/11/28 09:16:19 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.24 2018/12/27 09:55:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.23 2018/11/28 09:16:19 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.24 2018/12/27 09:55:27 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -199,6 +199,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	extern char _end[];
 	extern char lwp0uspace[];
 
+	struct pcb *pcb;
 	struct trapframe *tf;
 	psize_t memsize_total;
 	vaddr_t kernstart, kernend;
@@ -374,12 +375,13 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 */
 	uvm_lwp_setuarea(&lwp0, (vaddr_t)lwp0uspace);
 	memset(&lwp0.l_md, 0, sizeof(lwp0.l_md));
-	memset(lwp_getpcb(&lwp0), 0, sizeof(struct pcb));
+	pcb = lwp_getpcb(&lwp0);
+	memset(pcb, 0, sizeof(struct pcb));
 
 	tf = (struct trapframe *)(lwp0uspace + USPACE) - 1;
 	memset(tf, 0, sizeof(struct trapframe));
 	tf->tf_spsr = SPSR_M_EL0T;
-	lwp0.l_md.md_utf = lwp0.l_md.md_ktf = tf;
+	lwp0.l_md.md_utf = pcb->pcb_tf = tf;
 
 	return (vaddr_t)tf;
 }

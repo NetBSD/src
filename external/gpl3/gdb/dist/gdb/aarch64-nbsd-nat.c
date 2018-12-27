@@ -22,7 +22,9 @@
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <machine/reg.h>
+
+#include <machine/frame.h>
+#include <machine/pcb.h>
 
 #include "nbsd-nat.h"
 #include "aarch64-tdep.h"
@@ -124,6 +126,50 @@ aarch64_nbsd_store_inferior_registers (struct target_ops *ops,
     }
 }
 
+static int
+aarch64_nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct trapframe tf;
+  int i;
+
+  /* The following is true for NetBSD/arm64:
+
+     The pcb contains the frame pointer at the point of the context
+     switch in cpu_switchto().  At that point we have a stack frame as
+     described by `struct trapframe', which has the following layout:
+
+     x0..x30
+     sp
+     pc
+     spsr
+     tpidr
+
+     This accounts for all callee-saved registers specified by the psABI.
+     From this information we reconstruct the register state as it would
+     look when we just returned from cpu_switchto().
+
+     For kernel core dumps, dumpsys() builds a fake trapframe for us. */
+
+  /* The trapframe pointer shouldn't be zero.  */
+  if (pcb->pcb_tf == 0)
+    return 0;
+
+  /* Read the stack frame, and check its validity.  */
+  read_memory ((uintptr_t)pcb->pcb_tf, (gdb_byte *) &tf, sizeof tf);
+
+  for (i = 0; i <= 30; i++)
+    {
+      regcache_raw_supply (regcache, AARCH64_X0_REGNUM + i, &tf.tf_reg[i]);
+    }
+  regcache_raw_supply (regcache, AARCH64_SP_REGNUM, &tf.tf_sp);
+  regcache_raw_supply (regcache, AARCH64_PC_REGNUM, &tf.tf_pc);
+
+  regcache_raw_supply (regcache, AARCH64_FPCR_REGNUM, &pcb->pcb_fpregs.fpcr);
+  regcache_raw_supply (regcache, AARCH64_FPSR_REGNUM, &pcb->pcb_fpregs.fpsr);
+
+  return 1;
+}
+
 void
 _initialize_aarch64_nbsd_nat (void)
 {
@@ -133,4 +179,7 @@ _initialize_aarch64_nbsd_nat (void)
   t->to_fetch_registers = aarch64_nbsd_fetch_inferior_registers;
   t->to_store_registers = aarch64_nbsd_store_inferior_registers;
   nbsd_nat_add_target (t);
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (aarch64_nbsd_supply_pcb);
 }
