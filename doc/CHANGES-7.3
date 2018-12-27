@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.27 2018/12/25 11:33:02 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.28 2018/12/27 12:00:42 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -341,4 +341,9 @@ sys/compat/netbsd32/netbsd32_netbsd.c		(patch)
 
 	Fix kernel info leak in swapctl(2).
 	[maxv, ticket #1666]
+
+sys/kern/kern_time.c				1.191
+
+	Fix kernel info leak.
+	[maxv, ticket #1667]
 
