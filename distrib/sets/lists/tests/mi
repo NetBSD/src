@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.801 2018/12/25 03:54:44 knakahara Exp $
+# $NetBSD: mi,v 1.802 2018/12/27 19:35:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2421,6 +2421,7 @@
 ./usr/tests/lib/csu/h_initfini1			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini2			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini3			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/csu/h_initfini_array		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_crt0			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_ifunc_static		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libbluetooth			tests-lib-tests	compattestfile,atf
