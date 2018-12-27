@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.193 2018/10/17 23:36:58 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.194 2018/12/27 18:57:43 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.193 2018/10/17 23:36:58 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.194 2018/12/27 18:57:43 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -847,6 +847,10 @@ _rtld_initlist_tsort(Objlist* list, int rev)
 
 	Obj_Entry* obj;
 
+	/*
+	 * We don't include objmain here (starting from next)
+	 * because csu handles it
+	 */
 	for (obj = _rtld_objlist->next; obj; obj = obj->next) {
 		obj->init_done = 0;
 	}
