@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.216 2018/12/22 13:55:56 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.217 2018/12/27 14:03:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -513,12 +513,6 @@ do {									\
 	else								\
 		(m)->m_data = (m)->m_dat;				\
 } while (/* CONSTCOND */ 0)
-
-#define	M_COPY_PKTHDR(to, from)	m_copy_pkthdr(to, from)
-#define	M_MOVE_PKTHDR(to, from)	m_move_pkthdr(to, from)
-
-#define M_ALIGN(m, len)		m_align(m, len)
-#define MH_ALIGN(m, len)	m_align(m, len)
 
 /*
  * Determine if an mbuf's data area is read-only.  This is true
