@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.81 2018/12/26 13:19:54 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.82 2018/12/27 12:21:08 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2109,4 +2109,19 @@ sys/external/bsd/ipf/netinet/fil.c		1.22
 	Fix missing braces.
 	[sevan, ticket #1144]
 
+sys/compat/netbsd32/netbsd32_netbsd.c		1.219
+
+	pset_create() takes a pointer so it needs special handling.
+	[mrg, ticket #1146]
+
+sys/arch/x86/include/specialreg.h		1.131 (patch)
+sys/arch/x86/x86/identcpu.c			1.81,1.82,1.84 (patch)
+
+	Disable ALTINST on VIA CPUs, it is unsafe.
+	[maxv, ticket #1148]
+
+sys/kern/kern_time.c				1.191
+
+	Fix kernel info leak.
+	[maxv, ticket #1147]
 
