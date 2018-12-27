@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.24 2018/12/27 09:55:27 mrg Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.25 2018/12/27 21:29:41 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.24 2018/12/27 09:55:27 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.25 2018/12/27 21:29:41 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -586,7 +586,7 @@ dumpsys(void)
 	daddr_t blkno;
 	int psize;
 	int error;
-	paddr_t addr = 0;
+	paddr_t addr = 0, end;
 	int block;
 	psize_t len;
 	vaddr_t dumpspace;
@@ -624,15 +624,15 @@ dumpsys(void)
 
 	blkno = dumplo + cpu_dumpsize();
 	error = 0;
-	len = 0;
+	len = dumpsize;
 
 	for (block = 0; block < bootconfig.dramblocks && error == 0; ++block) {
 		addr = bootconfig.dram[block].address;
-		for (; addr < (bootconfig.dram[block].address
-			       + (bootconfig.dram[block].pages * PAGE_SIZE));
-		     addr += PAGE_SIZE) {
-		    	if ((len % (1024*1024)) == 0)
-		    		printf("%lu ", len / (1024*1024));
+		end = bootconfig.dram[block].address +
+		      ((uint64_t)bootconfig.dram[block].pages * PAGE_SIZE);
+		for (; addr < end; addr += PAGE_SIZE) {
+		    	if (((len * PAGE_SIZE) % (1024*1024)) == 0)
+		    		printf("%lu ", (len * PAGE_SIZE) / (1024 * 1024));
 
 			if (!mm_md_direct_mapped_phys(addr, &dumpspace)) {
 				error = ENOMEM;
@@ -644,7 +644,7 @@ dumpsys(void)
 			if (error)
 				goto err;
 			blkno += btodb(PAGE_SIZE);
-			len += PAGE_SIZE;
+			len--;
 		}
 	}
 err:
