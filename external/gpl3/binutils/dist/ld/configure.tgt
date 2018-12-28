@@ -416,14 +416,8 @@ m68hc11-*-*|m6811-*-*)	targ_emul=m68hc11elf
 			targ_extra_emuls="m68hc11elfb m68hc12elf m68hc12elfb" ;;
 m68hc12-*-*|m6812-*-*)	targ_emul=m68hc12elf
 			targ_extra_emuls="m68hc12elfb m68hc11elf m68hc11elfb" ;;
-m68*-*-netbsd*4k*)	targ_emul=m68k4knbsd
-			targ_extra_emuls="m68knbsd m68kelfnbsd" ;;
 m68*-*-netbsdelf* | m5407*-*-netbsdelf*)
-			targ_emul=m68kelfnbsd
-			targ_extra_emuls="m68knbsd m68k4knbsd" ;;
-m68*-*-netbsdaout* | m68*-*-netbsd*)
-			targ_emul=m68knbsd
-			targ_extra_emuls="m68kelfnbsd m68k4knbsd" ;;
+			targ_emul=m68kelfnbsd ;;
 m68*-*-*)		targ_emul=m68kelf ;;
 s12z-*-*)		targ_emul=m9s12zelf
 			;;

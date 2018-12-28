@@ -1266,7 +1266,7 @@ case "${targ}" in
     ;;
   sh-*-netbsdelf*)
     targ_defvec=sh_elf32_nbsd_vec
-    targ_selvecs="sh_elf32_nbsd_le_vec sh_coff_vec sh_coff_le_vec sh64_elf32_nbsd_le_vec sh64_elf32_nbsd_vec sh64_elf64_nbsd_le_vec sh64_elf64_nbsd_vec"
+    targ_selvecs="sh_elf32_nbsd_le_vec sh_coff_vec sh_coff_le_vec"
     want64=true
     ;;
 
