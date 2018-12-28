@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.12 2018/12/27 04:45:29 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.13 2018/12/28 00:15:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.12 2018/12/27 04:45:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.13 2018/12/28 00:15:57 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,7 @@ static void	threadpool_percpu_destroy(struct threadpool_percpu *);
 
 static threadpool_job_fn_t threadpool_job_dead;
 
-static int	threadpool_job_hold(struct threadpool_job *);
+static void	threadpool_job_hold(struct threadpool_job *);
 static void	threadpool_job_rele(struct threadpool_job *);
 
 static void	threadpool_overseer_thread(void *) __dead;
@@ -650,19 +650,16 @@ threadpool_job_destroy(struct threadpool_job *job)
 	(void)strlcpy(job->job_name, "deadjob", sizeof(job->job_name));
 }
 
-static int
+static void
 threadpool_job_hold(struct threadpool_job *job)
 {
 	unsigned int refcnt;
 
 	do {
 		refcnt = job->job_refcnt;
-		if (refcnt == UINT_MAX)
-			return EBUSY;
+		KASSERT(refcnt != UINT_MAX);
 	} while (atomic_cas_uint(&job->job_refcnt, refcnt, (refcnt + 1))
 	    != refcnt);
-
-	return 0;
 }
 
 static void
@@ -670,16 +667,16 @@ threadpool_job_rele(struct threadpool_job *job)
 {
 	unsigned int refcnt;
 
+	KASSERT(mutex_owned(job->job_lock));
+
 	do {
 		refcnt = job->job_refcnt;
 		KASSERT(0 < refcnt);
 		if (refcnt == 1) {
-			mutex_enter(job->job_lock);
 			refcnt = atomic_dec_uint_nv(&job->job_refcnt);
 			KASSERT(refcnt != UINT_MAX);
 			if (refcnt == 0)
 				cv_broadcast(&job->job_cv);
-			mutex_exit(job->job_lock);
 			return;
 		}
 	} while (atomic_cas_uint(&job->job_refcnt, refcnt, (refcnt - 1))
@@ -703,6 +700,16 @@ threadpool_job_done(struct threadpool_job *job)
 	curlwp->l_name = job->job_thread->tpt_lwp_savedname;
 	lwp_unlock(curlwp);
 
+	/*
+	 * Inline the work of threadpool_job_rele(); the job is already
+	 * locked, the most likely scenario (XXXJRT only scenario?) is
+	 * that we're dropping the last reference (the one taken in
+	 * threadpool_schedule_job()), and we always do the cv_broadcast()
+	 * anyway.
+	 */
+	KASSERT(0 < job->job_refcnt);
+	unsigned int refcnt __diagused = atomic_dec_uint_nv(&job->job_refcnt);
+	KASSERT(refcnt != UINT_MAX);
 	cv_broadcast(&job->job_cv);
 	job->job_thread = NULL;
 }
@@ -725,6 +732,8 @@ threadpool_schedule_job(struct threadpool *pool, struct threadpool_job *job)
 		return;
 	}
 
+	threadpool_job_hold(job);
+
 	/* Otherwise, try to assign a thread to the job.  */
 	mutex_spin_enter(&pool->tp_lock);
 	if (__predict_false(TAILQ_EMPTY(&pool->tp_idle_threads))) {
@@ -740,7 +749,6 @@ threadpool_schedule_job(struct threadpool *pool, struct threadpool_job *job)
 		    __func__, job->job_name, job->job_thread));
 		TAILQ_REMOVE(&pool->tp_idle_threads, job->job_thread,
 		    tpt_entry);
-		threadpool_job_hold(job);
 		job->job_thread->tpt_job = job;
 	}
 
@@ -786,6 +794,7 @@ threadpool_cancel_job_async(struct threadpool *pool, struct threadpool_job *job)
 		mutex_spin_enter(&pool->tp_lock);
 		TAILQ_REMOVE(&pool->tp_jobs, job, job_entry);
 		mutex_spin_exit(&pool->tp_lock);
+		threadpool_job_rele(job);
 		return true;
 	} else {
 		/* Too late -- already running.  */
@@ -889,15 +898,13 @@ threadpool_overseer_thread(void *arg)
 		}
 
 		/* There are idle threads, so try giving one a job.  */
-		bool rele_job = true;
 		struct threadpool_job *const job = TAILQ_FIRST(&pool->tp_jobs);
 		TAILQ_REMOVE(&pool->tp_jobs, job, job_entry);
-		error = threadpool_job_hold(job);
-		if (error) {
-			TAILQ_INSERT_HEAD(&pool->tp_jobs, job, job_entry);
-			(void)kpause("pooljob", false, hz, &pool->tp_lock);
-			continue;
-		}
+		/*
+		 * Take an extra reference on the job temporarily so that
+		 * it won't disappear on us while we have both locks dropped.
+		 */
+		threadpool_job_hold(job);
 		mutex_spin_exit(&pool->tp_lock);
 
 		mutex_enter(job->job_lock);
@@ -930,14 +937,11 @@ threadpool_overseer_thread(void *arg)
 				thread->tpt_job = job;
 				job->job_thread = thread;
 				cv_broadcast(&thread->tpt_cv);
-				/* Gave the thread our job reference.  */
-				rele_job = false;
 			}
 			mutex_spin_exit(&pool->tp_lock);
 		}
+		threadpool_job_rele(job);
 		mutex_exit(job->job_lock);
-		if (__predict_false(rele_job))
-			threadpool_job_rele(job);
 
 		mutex_spin_enter(&pool->tp_lock);
 	}
@@ -1007,8 +1011,11 @@ threadpool_thread(void *arg)
 		KASSERTMSG((curlwp->l_name == lwp_name),
 		    "someone forgot to call threadpool_job_done()!");
 
-		/* Job is done and its name is unreferenced.  Release it.  */
-		threadpool_job_rele(job);
+		/*
+		 * We can compare pointers, but we can no longer deference
+		 * job after this because threadpool_job_done() drops the
+		 * last reference on the job while the job is locked.
+		 */
 
 		mutex_spin_enter(&pool->tp_lock);
 		KASSERT(thread->tpt_job == job);
