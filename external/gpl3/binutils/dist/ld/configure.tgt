@@ -755,13 +755,12 @@ sparc*-*-linux-*)	targ_emul=elf32_sparc
 			targ_extra_libpath=elf64_sparc
 			tdir_elf64_sparc=`echo ${targ_alias} | sed -e 's/32//'` ;;
 sparc64-*-netbsd*)	targ_emul=elf64_sparc
-			targ_extra_emuls="elf32_sparc sparcnbsd"
+			targ_extra_emuls="elf32_sparc"
 			;;
 sparc64-*-openbsd*)	targ_emul=elf64_sparc
 			targ_extra_emuls="elf32_sparc"
 			;;
 sparc*-*-netbsd*elf*)	targ_emul=elf32_sparc
-			targ_extra_emuls=sparcnbsd
 			;;
 sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
 sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
