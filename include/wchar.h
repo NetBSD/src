@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.42 2016/10/15 14:22:00 kamil Exp $	*/
+/*	$NetBSD: wchar.h,v 1.43 2018/12/28 13:11:46 maya Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -133,12 +133,18 @@ wchar_t	*wmemcpy(wchar_t * __restrict, const wchar_t * __restrict, size_t);
 wchar_t	*wmemmove(wchar_t *, const wchar_t *, size_t);
 wchar_t	*wmemset(wchar_t *, wchar_t, size_t);
 
+#if defined(_NETBSD_SOURCE)
 size_t	wcslcat(wchar_t *, const wchar_t *, size_t);
 size_t	wcslcpy(wchar_t *, const wchar_t *, size_t);
-int	wcswidth(const wchar_t *, size_t);
-int	wctob(wint_t);
-int	wcwidth(wchar_t);
+#endif
 
+#if defined(_NETBSD_SOURCE) || \
+    (_POSIX_C_SOURCE - 0 >= 200112L) || (_XOPEN_SOURCE - 0) >= 600
+int	wcswidth(const wchar_t *, size_t);
+int	wcwidth(wchar_t);
+#endif
+
+int	wctob(wint_t);
 unsigned long int wcstoul(const wchar_t * __restrict,
 	wchar_t ** __restrict, int);
 long int wcstol(const wchar_t * __restrict,
