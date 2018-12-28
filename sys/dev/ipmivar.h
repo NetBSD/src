@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.1 2018/12/25 11:56:13 mlelstv Exp $ */
+/* $NetBSD: ipmivar.h,v 1.2 2018/12/28 12:44:15 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -110,6 +110,18 @@ struct ipmi_softc {
 	char		sc_buf[64];
 	bool		sc_buf_rsvd;
 };
+
+struct ipmi_device_id {
+	uint8_t		deviceid;
+	uint8_t		revision;
+	uint8_t		fwrev1;
+	uint8_t		fwrev2;
+	uint8_t		version;
+	uint8_t		additional;
+	uint8_t		manufacturer[3];
+	uint8_t		product[2];
+	uint8_t		vendor[4];
+} __packed;
 
 struct ipmi_thread {
 	struct ipmi_softc   *sc;
