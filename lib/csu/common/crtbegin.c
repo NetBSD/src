@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.16 2018/12/28 13:53:17 christos Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.17 2018/12/28 18:17:11 christos Exp $");
 
 #include "crtbegin.h"
 
