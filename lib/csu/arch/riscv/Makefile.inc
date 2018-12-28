@@ -1,4 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.2 2018/12/27 18:57:15 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2018/12/28 18:17:11 christos Exp $
 
 CPPFLAGS+=	-I${ARCHDIR}
+CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
 #CPPFLAGS+=	-DELF_NOTE_MARCH_DESC=\"${CSU_MACHINE_ARCH}\"
