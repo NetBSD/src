@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.70 2018/12/21 14:52:12 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.71 2018/12/28 06:45:53 mrg Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -77,6 +77,7 @@ options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+options 	INCLUDE_CONFIG_FILE
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
