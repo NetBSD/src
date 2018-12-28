@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.16 2018/12/13 11:28:00 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.17 2018/12/28 21:37:56 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -200,3 +200,11 @@ christos and pgoyette.
     no such device so we autoload /stand/.../x/x.kmod and initialize
     the module loaded, even if the loaded module is for some other
     device entirely!
+
+21. We currently do not support "weak" symbols in the in-kernel linker.
+    It would take some serious thought to get such support right.  For
+    example, consider module A with a weak reference to symbol S which
+    is defined in module B.  If module B is loaded first, and then
+    module A, the symbol gets resolved.  But if module A is loaded first,
+    the symbol won't be resolved.  If we subsequently load module B, we
+    would have to "go back" and re-run the linker for module A.
