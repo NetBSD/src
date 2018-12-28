@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.81 2018/03/05 08:56:49 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.82 2018/12/28 05:56:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.81 2018/03/05 08:56:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.82 2018/12/28 05:56:07 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -387,8 +387,8 @@ mii_phy_reset(struct mii_softc *sc)
 		reg = BMCR_RESET | BMCR_ISO;
 	PHY_WRITE(sc, MII_BMCR, reg);
 
-	/* Wait another 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
+	/* Wait another 500ms for it to complete. */
+	for (i = 0; i < 500; i++) {
 		reg = PHY_READ(sc, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
