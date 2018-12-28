@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.c,v 1.3 2018/12/26 18:54:20 thorpej Exp $	*/
+/*	$NetBSD: threadpool.c,v 1.4 2018/12/28 19:54:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: threadpool.c,v 1.3 2018/12/26 18:54:20 thorpej Exp $");
+__RCSID("$NetBSD: threadpool.c,v 1.4 2018/12/28 19:54:36 thorpej Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -231,6 +231,34 @@ rumptest_threadpool_job_cancel(void)
 	/* Now wait for the job to finish. */
 	threadpool_cancel_job(pool, &data.job);
 	KASSERT(data.count == FINAL_COUNT);
+	mutex_exit(&data.mutex);
+
+	fini_test_job_data(&data);
+
+	threadpool_put(pool, PRI_NONE);
+}
+
+void
+rumptest_threadpool_job_cancelthrash(void)
+{
+	struct test_job_data data;
+	struct threadpool *pool;
+	int i, error;
+
+	error = threadpool_get(&pool, PRI_NONE);
+	KASSERT(error == 0);
+
+	init_test_job_data(&data, test_job_func_cancel);
+
+	mutex_enter(&data.mutex);
+	for (i = 0; i < 10000; i++) {
+		threadpool_schedule_job(pool, &data.job);
+		if ((i % 3) == 0) {
+			mutex_exit(&data.mutex);
+			mutex_enter(&data.mutex);
+		}
+		threadpool_cancel_job(pool, &data.job);
+	}
 	mutex_exit(&data.mutex);
 
 	fini_test_job_data(&data);
