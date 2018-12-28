@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.2 2018/12/26 06:45:58 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.3 2018/12/28 12:44:15 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.2 2018/12/26 06:45:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.3 2018/12/28 12:44:15 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,6 +163,7 @@ static	int ipmi_sendcmd(struct ipmi_softc *, int, int, int, int, int, const void
 static	int ipmi_recvcmd(struct ipmi_softc *, int, int *, void *);
 static	void ipmi_delay(struct ipmi_softc *, int);
 
+static	int ipmi_get_device_id(struct ipmi_softc *, struct ipmi_device_id *);
 static	int ipmi_watchdog_setmode(struct sysmon_wdog *);
 static	int ipmi_watchdog_tickle(struct sysmon_wdog *);
 static	void ipmi_dotickle(struct ipmi_softc *);
@@ -1877,8 +1878,6 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ipmi_softc sc;
 	struct ipmi_attach_args *ia = aux;
-	uint8_t		cmd[32];
-	int			len;
 	int			rv = 0;
 
 	memset(&sc, 0, sizeof(sc));
@@ -1891,25 +1890,10 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 
 	mutex_init(&sc.sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sc.sc_cmd_sleep, "ipmimtch");
-	mutex_enter(&sc.sc_cmd_mtx);
-	/* Identify BMC device early to detect lying bios */
-	if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
-	    0, NULL)) {
-		mutex_exit(&sc.sc_cmd_mtx);
-		dbg_printf(1, ": unable to send get device id "
-		    "command\n");
-		goto unmap;
-	}
-	if (ipmi_recvcmd(&sc, sizeof(cmd), &len, cmd)) {
-		mutex_exit(&sc.sc_cmd_mtx);
-		dbg_printf(1, ": unable to retrieve device id\n");
-		goto unmap;
-	}
-	mutex_exit(&sc.sc_cmd_mtx);
 
-	dbg_dump(1, __func__, len, cmd);
-	rv = 1; /* GETID worked, we got IPMI */
-unmap:
+	if (ipmi_get_device_id(&sc, NULL) == 0)
+		rv = 1;
+
 	cv_destroy(&sc.sc_cmd_sleep);
 	mutex_destroy(&sc.sc_cmd_mtx);
 	ipmi_unmap_regs(&sc);
@@ -1925,6 +1909,7 @@ ipmi_thread(void *cookie)
 	struct ipmi_attach_args *ia = &sc->sc_ia;
 	uint16_t		rec;
 	struct ipmi_sensor *ipmi_s;
+	struct ipmi_device_id	id;
 	int i;
 
 	sc->sc_thread_running = true;
@@ -1934,6 +1919,10 @@ ipmi_thread(void *cookie)
 
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
+
+	memset(&id, 0, sizeof(id));
+	if (ipmi_get_device_id(sc, &id))
+		aprint_error_dev(self, "Failed to re-query device ID\n");
 
 	/* Scan SDRs, add sensors to list */
 	for (rec = 0; rec != 0xFFFF;)
@@ -2005,6 +1994,32 @@ ipmi_thread(void *cookie)
 	    ia->iaa_if_iospacing * sc->sc_if->nregs, ia->iaa_if_iospacing);
 	if (ia->iaa_if_irq != -1)
 		aprint_verbose_dev(self, " irq %d\n", ia->iaa_if_irq);
+
+	if (id.deviceid != 0) {
+		aprint_normal_dev(self, "ID %u.%u IPMI %x.%x%s%s\n",
+			id.deviceid, (id.revision & 0xf),
+			(id.version & 0xf), (id.version >> 4) & 0xf,
+			(id.fwrev1 & 0x80) ? " Initializing" : " Available",
+			(id.revision & 0x80) ? " +SDRs" : "");
+		if (id.additional != 0)
+			aprint_verbose_dev(self, "Additional%s%s%s%s%s%s%s%s\n",
+				(id.additional & 0x80) ? " Chassis" : "",
+				(id.additional & 0x40) ? " Bridge" : "",
+				(id.additional & 0x20) ? " IPMBGen" : "",
+				(id.additional & 0x10) ? " IPMBRcv" : "",
+				(id.additional & 0x08) ? " FRU" : "",
+				(id.additional & 0x04) ? " SEL" : "",
+				(id.additional & 0x02) ? " SDR" : "",
+				(id.additional & 0x01) ? " Sensor" : "");
+		aprint_verbose_dev(self, "Manufacturer %05x Product %04x\n",
+			(id.manufacturer[2] & 0xf) << 16
+			    | id.manufacturer[1] << 8
+			    | id.manufacturer[0],
+			id.product[1] << 8
+			    | id.manufacturer[0]);
+		aprint_verbose_dev(self, "Firmware %u.%x\n",
+			(id.fwrev1 & 0x7f), id.fwrev2);
+	}
 
 	/* setup flag to exclude iic */
 	ipmi_enabled = 1;
@@ -2113,6 +2128,34 @@ ipmi_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_cmd_mtx);
 
 	return 0;
+}
+
+static int
+ipmi_get_device_id(struct ipmi_softc *sc, struct ipmi_device_id *res)
+{
+	uint8_t		buf[32];
+	int		len;
+	int		rc;
+
+	mutex_enter(&sc->sc_cmd_mtx);
+	/* Identify BMC device early to detect lying bios */
+	rc = ipmi_sendcmd(sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID, 0, NULL);
+	if (rc) {
+		dbg_printf(1, ": unable to send get device id "
+		    "command\n");
+		goto done;
+	}
+	rc = ipmi_recvcmd(sc, sizeof(buf), &len, buf);
+	if (rc) {
+		dbg_printf(1, ": unable to retrieve device id\n");
+	}
+done:
+	mutex_exit(&sc->sc_cmd_mtx);
+
+	if (rc == 0 && res != NULL)
+		memcpy(res, buf, MIN(sizeof(*res), len));
+
+	return rc;
 }
 
 static int
