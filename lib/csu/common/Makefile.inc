@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2018/12/27 18:57:15 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2018/12/28 18:17:11 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,6 @@ COMMON_DIR:=	${.CURDIR}/common
 .PATH:		${COMMON_DIR}
 
 CPPFLAGS+=	-I${COMMON_DIR} -I.
-CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
 
 OBJS+=		crt0.o gcrt0.o crti.o crtn.o
 OBJS+=		crtbegin.o crtend.o
