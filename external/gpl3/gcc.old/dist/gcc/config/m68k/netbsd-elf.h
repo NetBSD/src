@@ -79,7 +79,7 @@ along with GCC; see the file COPYING3.  If not see
 #define LINK_SPEC NETBSD_LINK_SPEC_ELF
 
 /* NetBSD/sun2 does not support shlibs, avoid using libgcc_pic.  */
-#if TARGET_DEFAULT_CPU == 0
+#ifndef ENABLE_SHARED_LIBGCC
 #undef REAL_LIBGCC_SPEC
 #define REAL_LIBGCC_SPEC	"-lgcc"
 #endif
