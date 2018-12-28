@@ -1,4 +1,4 @@
-# $NetBSD: t_threadpool.sh,v 1.1 2018/12/24 16:58:54 thorpej Exp $
+# $NetBSD: t_threadpool.sh,v 1.2 2018/12/28 16:01:53 thorpej Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -133,37 +133,8 @@ percpu_cleanup() {
 	modunload threadpool_tester >/dev/null 2>&1
 }
 
-atf_test_case rapid cleanup
-rapid_head() {
-	atf_set "descr" "Test rapid get/schedule/put sequence"
-	atf_set "require.user" "root"
-}
-rapid_body() {
-	modload $(atf_get_srcdir)/threadpool_tester/threadpool_tester.kmod
-	if [ $? -ne 0 ]; then
-		atf_skip "cannot load threadpool_tester.kmod"
-	fi
-
-	# Ensure that the state is clean.
-	read_sysctl kern.threadpool_tester.test_value 0
-
-	# Create an unbound pool.  Immediatelty schedule a job on it
-	# and destroy it.
-	write_sysctl kern.threadpool_tester.get_unbound $tp_pri
-	write_sysctl kern.threadpool_tester.run_unbound $tp_pri
-	write_sysctl kern.threadpool_tester.put_unbound $tp_pri
-
-	# Now ensure the job successfully ran.
-	sleep $job_delay
-	read_sysctl kern.threadpool_tester.test_value 1
-}
-rapid_cleanup() {
-	modunload threadpool_tester >/dev/null 2>&1
-}
-
 atf_init_test_cases()
 {
 	atf_add_test_case unbound
 	atf_add_test_case percpu
-	atf_add_test_case rapid
 }
