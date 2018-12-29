@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.13 2018/12/28 00:15:57 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.14 2018/12/29 04:39:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.13 2018/12/28 00:15:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.14 2018/12/29 04:39:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.13 2018/12/28 00:15:57 thorpej
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/threadpool.h>
 
 /* Data structures */
@@ -144,8 +145,8 @@ static pool_cache_t	threadpool_thread_pc __read_mostly;
 
 static kmutex_t		threadpools_lock __cacheline_aligned;
 
-	/* Idle out threads after 30 seconds */
-#define	THREADPOOL_IDLE_TICKS	mstohz(30 * 1000)
+	/* Default to 30 second idle timeout for pool threads. */
+static int	threadpool_idle_time_ms = 30 * 1000;
 
 struct threadpool_unbound {
 	struct threadpool		tpu_pool;
@@ -225,6 +226,53 @@ threadpool_remove_percpu(struct threadpool_percpu *tpp)
 #else
 #define	TP_LOG(x)		/* nothing */
 #endif /* THREADPOOL_VERBOSE */
+
+static int
+sysctl_kern_threadpool_idle_ms(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int val, error;
+
+	node = *rnode;
+
+	val = threadpool_idle_time_ms;
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error == 0 && newp != NULL) {
+		/* Disallow negative values and 0 (forever). */
+		if (val < 1)
+			error = EINVAL;
+		else
+			threadpool_idle_time_ms = val;
+	}
+
+	return error;
+}
+
+SYSCTL_SETUP_PROTO(sysctl_threadpool_setup);
+
+SYSCTL_SETUP(sysctl_threadpool_setup,
+    "sysctl kern.threadpool subtree setup")
+{
+	const struct sysctlnode *rnode, *cnode;
+	int error __diagused;
+
+	error = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "threadpool",
+	    SYSCTL_DESCR("threadpool subsystem options"),
+	    NULL, 0, NULL, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
+	KASSERT(error == 0);
+
+	error = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "idle_ms",
+	    SYSCTL_DESCR("idle thread timeout in ms"),
+	    sysctl_kern_threadpool_idle_ms, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	KASSERT(error == 0);
+}
 
 void
 threadpools_init(void)
@@ -980,7 +1028,7 @@ threadpool_thread(void *arg)
 				break;
 			}
 			if (cv_timedwait(&thread->tpt_cv, &pool->tp_lock,
-				THREADPOOL_IDLE_TICKS))
+				mstohz(threadpool_idle_time_ms)))
 				break;
 		}
 		if (__predict_false(thread->tpt_job == NULL)) {
