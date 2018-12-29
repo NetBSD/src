@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.30 2018/12/19 16:27:26 martin Exp $	*/
+/*	$NetBSD: setemul.c,v 1.31 2018/12/29 18:09:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.30 2018/12/19 16:27:26 martin Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.31 2018/12/29 18:09:32 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,7 +83,6 @@ __RCSID("$NetBSD: setemul.c,v 1.30 2018/12/19 16:27:26 martin Exp $");
 
 #include "../../sys/compat/netbsd32/netbsd32_syscall.h"
 #include "../../sys/compat/freebsd/freebsd_syscall.h"
-#include "../../sys/compat/ibcs2/ibcs2_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
 #include "../../sys/compat/linux32/linux32_syscall.h"
 #include "../../sys/compat/osf1/osf1_syscall.h"
@@ -99,7 +98,6 @@ __RCSID("$NetBSD: setemul.c,v 1.30 2018/12/19 16:27:26 martin Exp $");
 
 #include "../../sys/compat/netbsd32/netbsd32_syscalls.c"
 #include "../../sys/compat/freebsd/freebsd_syscalls.c"
-#include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
 #include "../../sys/compat/linux32/linux32_syscalls.c"
 #include "../../sys/compat/osf1/osf1_syscalls.c"
@@ -110,13 +108,11 @@ __RCSID("$NetBSD: setemul.c,v 1.30 2018/12/19 16:27:26 martin Exp $");
 #include "../../sys/compat/aoutm68k/aoutm68k_syscalls.c"
 #endif
 
-#include "../../sys/compat/ibcs2/ibcs2_errno.c"
 #include "../../sys/compat/osf1/osf1_errno.c"
 #include "../../sys/compat/linux/common/linux_errno.c"
 #undef KTRACE
 
 #define SIGRTMIN	33	/* XXX */
-#include "../../sys/compat/ibcs2/ibcs2_signo.c"
 #include "../../sys/compat/osf1/osf1_signo.c"
 #include "../../sys/compat/linux/common/linux_signo.c"
 
@@ -135,10 +131,6 @@ const struct emulation emulations[] = {
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL,
 	  NULL,				0,
 	  NULL,				0,	0 },
-
-	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL,
-	  native_to_ibcs2_errno,	NELEM(native_to_ibcs2_errno),
-	  ibcs2_to_native_signo,	NSIG,	0 },
 
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL,
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),
