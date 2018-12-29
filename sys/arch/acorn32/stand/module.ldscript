@@ -1,4 +1,4 @@
-/* $NetBSD: module.ldscript,v 1.1 2006/03/28 20:45:46 bjh21 Exp $ */
+/* $NetBSD: module.ldscript,v 1.2 2018/12/29 00:35:21 christos Exp $ */
 
 /* linker script for generating RISC OS relocatable modules */
 /*
@@ -10,9 +10,15 @@
 
 OUTPUT_ARCH(arm)
 
+PHDRS
+{
+  text PT_LOAD;
+  headers PT_PHDR FILEHDR PHDRS;
+}
+
 SECTIONS
 {
-  .text		: { *(.text) *(.gnu.warning) }
+  .text		: { *(.text) *(.gnu.warning) } :text
   _etext = .;
   PROVIDE (etext = .);
   .rodata	: { *(.rodata) }
