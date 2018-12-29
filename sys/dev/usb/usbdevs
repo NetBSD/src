@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.766 2018/12/29 06:27:42 maya Exp $
+$NetBSD: usbdevs,v 1.767 2018/12/29 06:29:29 maya Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2292,12 +2292,12 @@ product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
 product MICROSOFT INETPRO	0x001c	Internet Keyboard Pro
-product MICROSOFT NATURAL_6000	0x001e	Wireless Laser Mouse 6000 Receiver
 product MICROSOFT TBEXPLORER	0x0024	Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO2	0x002b	Internet Keyboard Pro
 product MICROSOFT MN510		0x006e	MN510 Wireless
 product MICROSOFT MN110		0x007a	10/100 USB NIC
+product MICROSOFT NATURAL_6000	0x00e1	Wireless Laser Mouse 6000 Receiver
 product MICROSOFT XBOX_MEMORY_UNIT	0x0280	Xbox Memory Unit
 product MICROSOFT XBOX_DVD_PLAYBACK	0x0284	Xbox DVD Movie Playback Kit
 product MICROSOFT XBOX_CONTROLLER_S10	0x0285	Xbox Controller S (1.0)
