@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.202 2018/12/19 13:57:44 maxv Exp $
+# $NetBSD: md.sparc64,v 1.203 2018/12/29 06:23:50 christos Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -181,8 +181,8 @@
 ./usr/libdata/ldscripts/elf64_sparc.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf64_sparc.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf64_sparc.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/sparcnbsd.x		comp-util-bin		binutils
-./usr/libdata/ldscripts/sparcnbsd.xbn		comp-util-bin		binutils
-./usr/libdata/ldscripts/sparcnbsd.xn		comp-util-bin		binutils
-./usr/libdata/ldscripts/sparcnbsd.xr		comp-util-bin		binutils
-./usr/libdata/ldscripts/sparcnbsd.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/sparcnbsd.x		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/sparcnbsd.xbn		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/sparcnbsd.xn		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/sparcnbsd.xr		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/sparcnbsd.xu		comp-util-bin		binutils=227
