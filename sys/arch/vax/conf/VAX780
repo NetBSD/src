@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.27 2018/08/01 20:04:14 maxv Exp $
+# $NetBSD: VAX780,v 1.28 2018/12/29 11:30:12 maxv Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -118,7 +118,6 @@ options 	SYSVSHM
 include 	"conf/compat_netbsd09.config"
 options 	COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
 options 	COMPAT_ULTRIX	# DEC Ultrix binary compatibility.
-#options 	COMPAT_IBCS2	# DEC SVR.3 compatibility
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
 
 options 	LKM

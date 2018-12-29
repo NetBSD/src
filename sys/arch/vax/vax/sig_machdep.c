@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.23 2018/11/27 14:09:54 maxv Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.24 2018/12/29 11:30:12 maxv Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -79,14 +79,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23 2018/11/27 14:09:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24 2018/12/29 11:30:12 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_compat_ibcs2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +109,7 @@ static vaddr_t setupstack_siginfo3(const struct ksiginfo *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
 
 const static sig_setupstack_t sig_setupstacks[] = {
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
 	setupstack_oldsigcontext,	/* 0 */
 	setupstack_oldsigcontext,	/* 1 */
 #else
