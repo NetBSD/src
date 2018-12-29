@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipfstat.8,v 1.3 2012/07/22 14:27:51 darrenr Exp $
+.\"	$NetBSD: ipfstat.8,v 1.4 2018/12/29 23:06:42 gutteridge Exp $
 .\"
 .TH IPFSTAT 8
 .SH NAME
@@ -32,8 +32,8 @@ To run and work, it needs to be able to read both /dev/kmem and the
 kernel itself.  The kernel name defaults to \fB/netbsd\fP.
 .PP
 The default behaviour of \fBipfstat\fP
-is to retrieve and display the accumulated statistics which have been
-accumulated over time as the kernel has put packets through the filter.
+is to retrieve and display the statistics which have been
+accumulated as the kernel has put packets through the filter.
 .SH OPTIONS
 .TP
 .B \-6
@@ -71,14 +71,14 @@ Show groups currently configured (both active and inactive).
 .TP
 .B \-h
 Show per-rule the number of times each one scores a "hit".  For use in
-combination with \fB\-i\fP.
+combination with \fB\-i\fP or \fB\-o\fP.
 .TP
 .B \-i
 Display the filter list used for the input side of the kernel IP processing.
 .TP
 .B \-I
 Swap between retrieving "inactive"/"active" filter list details.  For use
-in combination with \fB\-i\fP.
+in combination with \fB\-i\fP or \fB\-o\fP.
 .TP
 .B \-n
 Show the "rule number" for each rule as it is printed.
