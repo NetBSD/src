@@ -1,4 +1,4 @@
-	$NetBSD: sdmmcdevs,v 1.3 2018/06/28 13:31:38 jmcneill Exp $
+	$NetBSD: sdmmcdevs,v 1.4 2018/12/29 04:58:52 thorpej Exp $
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ product SOCKETCOM BTCARD	0x00c5	Socket BT Card
 
 /* Realtek */
 product REALTEK RTL8703BS	0xb703	RTL8703BS Wireless LAN 802.11n SDIO
+product REALTEK RTL8189FTV	0xf179	RTL8189FTV Wireless LAN 802.11n SDIO
 
 /* Ricoh */
 product RICOH MMCREADER		0xe823  MMC card reader
