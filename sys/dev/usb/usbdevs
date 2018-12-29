@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.765 2018/12/20 15:09:46 tih Exp $
+$NetBSD: usbdevs,v 1.766 2018/12/29 06:27:42 maya Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2292,6 +2292,7 @@ product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
 product MICROSOFT INETPRO	0x001c	Internet Keyboard Pro
+product MICROSOFT NATURAL_6000	0x001e	Wireless Laser Mouse 6000 Receiver
 product MICROSOFT TBEXPLORER	0x0024	Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO2	0x002b	Internet Keyboard Pro
