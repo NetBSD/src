@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.2 2018/10/05 01:54:10 ryo Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.3 2018/12/29 19:53:38 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.2 2018/10/05 01:54:10 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3 2018/12/29 19:53:38 alnsn Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -139,6 +139,7 @@ pmapboot_protect(vaddr_t sva, vaddr_t eva, vm_prot_t clrprot)
  * it supports only maximum 7 argument, and only '%d', '%x', and '%s' formats.
  */
 
+#ifdef VERBOSE_INIT_ARM
 static void
 pmapboot_pte_print(pt_entry_t pte, int level,
     void (*pr)(const char *, ...) __printflike(1, 2))
@@ -152,6 +153,7 @@ pmapboot_pte_print(pt_entry_t pte, int level,
 	    l0pde_pa(pte));
 #endif
 }
+#endif /* VERBOSE_INIT_ARM */
 
 #ifdef OPTIMIZE_TLB_CONTIG
 static inline bool
