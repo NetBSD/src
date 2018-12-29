@@ -1,4 +1,4 @@
-#	$NetBSD: cgdroot.rc,v 1.2 2018/12/29 00:52:11 alnsn Exp $
+#	$NetBSD: cgdroot.rc,v 1.3 2018/12/29 01:04:38 alnsn Exp $
 #
 # Copyright (c) 2013 Pierre Pronchery <khorben@defora.org>
 # All rights reserved.
@@ -40,6 +40,7 @@ mounted=
 for dev in NAME=cgd.conf ROOT.a ; do
 	if mount -o ro $dev /etc/cgd 2>/dev/null ; then
 		mounted=$dev
+		break
 	fi
 done
 if [ -z "$mounted" ]; then
