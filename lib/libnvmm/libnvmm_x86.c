@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.6 2018/12/27 07:22:31 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.7 2018/12/29 17:54:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -472,7 +472,7 @@ segment_apply(struct nvmm_x64_state_seg *seg, gvaddr_t *gva, size_t size)
 		limit *= PAGE_SIZE;
 	}
 
-	if (__predict_false(*gva + seg->base + size > limit)) {
+	if (__predict_false(*gva + size > limit)) {
 		goto error;
 	}
 
