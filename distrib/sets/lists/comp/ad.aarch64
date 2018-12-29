@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.26 2018/12/23 19:17:26 christos Exp $
+# $NetBSD: ad.aarch64,v 1.27 2018/12/29 04:51:04 christos Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -214,6 +214,9 @@
 ./usr/libdata/ldscripts/armelf.x		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xbn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xc		-unknown-		binutils
+./usr/libdata/ldscripts/armelf.xd		-unknown-		binutils=231
+./usr/libdata/ldscripts/armelf.xdc		-unknown-		binutils=231
+./usr/libdata/ldscripts/armelf.xdw		-unknown-		binutils=231
 ./usr/libdata/ldscripts/armelf.xn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xr		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xs		-unknown-		binutils
@@ -263,6 +266,9 @@
 ./usr/libdata/ldscripts/armelfb.x		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xbn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xc		-unknown-		binutils
+./usr/libdata/ldscripts/armelfb.xd		-unknown-		binutils=231
+./usr/libdata/ldscripts/armelfb.xdc		-unknown-		binutils=231
+./usr/libdata/ldscripts/armelfb.xdw		-unknown-		binutils=231
 ./usr/libdata/ldscripts/armelfb.xn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xr		-unknown-		binutils
 ./usr/libdata/ldscripts/armelfb.xs		-unknown-		binutils
