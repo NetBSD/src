@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2018/07/12 10:46:47 maxv Exp $
+#	$NetBSD: Makefile,v 1.30 2018/12/29 11:30:12 maxv Exp $
 
 INCSDIR= /usr/include/vax
 
@@ -8,7 +8,6 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
-	ibcs2_machdep.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	ioa.h \
 	ka410.h ka420.h ka43.h ka630.h ka650.h ka750.h ka820.h \
