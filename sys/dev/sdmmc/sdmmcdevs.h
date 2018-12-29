@@ -1,10 +1,10 @@
-/*	$NetBSD: sdmmcdevs.h,v 1.3 2018/06/28 13:31:57 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcdevs.h,v 1.4 2018/12/29 04:59:33 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		NetBSD: sdmmcdevs,v 1.3 2018/06/28 13:31:38 jmcneill Exp 
+ *		NetBSD: sdmmcdevs,v 1.4 2018/12/29 04:58:52 thorpej Exp 
  */
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
@@ -98,6 +98,8 @@
 /* Realtek */
 #define	SDMMC_CIS_REALTEK_RTL8703BS	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_REALTEK_RTL8703BS	0xb703
+#define	SDMMC_CIS_REALTEK_RTL8189FTV	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_REALTEK_RTL8189FTV	0xf179
 
 /* Ricoh */
 #define	SDMMC_CIS_RICOH_MMCREADER	{ NULL, NULL, NULL, NULL }
