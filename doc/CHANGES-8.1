@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.82 2018/12/27 12:21:08 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.83 2018/12/30 12:51:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2124,4 +2124,9 @@ sys/kern/kern_time.c				1.191
 
 	Fix kernel info leak.
 	[maxv, ticket #1147]
+
+sys/dev/mii/mii_physubr.c			1.81,1.82
+
+	Fix default phy reset timeout.
+	[msaitoh, ticket #1149]
 
