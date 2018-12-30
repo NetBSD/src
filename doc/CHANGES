@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2475 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2476 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -277,3 +277,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Remove M_ALIGN, MH_ALIGN, M_COPY_PKTHDR and M_MOVE_PKTHDR.
 		[maxv 20181228]
 	kernel: Remove COMPAT_IBCS2. [maxv 20181229]
+	tzdata: Updated to 2018h. [kre 20181230]
