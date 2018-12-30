@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.80 2013/06/20 13:56:29 roy Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.80.26.1 2018/12/30 12:16:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.80 2013/06/20 13:56:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.80.26.1 2018/12/30 12:16:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -237,9 +237,9 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 			}
 
 			/*
-			 *for 1000-base-T, autonegotiation mus be enabled, but 
-			 *if we're not set to auto, only advertise
-			 *1000-base-T with the link partner.
+			 *  For 1000-base-T, autonegotiation must be enabled,
+			 * but if we're not set to auto, only advertise
+			 * 1000-base-T with the link partner.
 			 */
 			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
 				anar &= ~(ANAR_T4|ANAR_TX_FD|ANAR_TX|ANAR_10_FD|ANAR_10);
@@ -387,8 +387,8 @@ mii_phy_reset(struct mii_softc *sc)
 		reg = BMCR_RESET | BMCR_ISO;
 	PHY_WRITE(sc, MII_BMCR, reg);
 
-	/* Wait another 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
+	/* Wait another 500ms for it to complete. */
+	for (i = 0; i < 500; i++) {
 		reg = PHY_READ(sc, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
