@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.12 2018/11/15 10:34:21 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.13 2018/12/30 16:48:58 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -243,12 +243,12 @@ message fspart
 }
 
 message fspart_header	/* XXX abbreviations (or change fspart_row below) */
-{    Rozm %3s  Prze %3s Koniec %3s Typ SP     Ochrona Montowana Jako
-   --------- --------- ---------- ---------- ------- ----- ----------
+{   Start %3s Koniec %3s Rozmiar %3s Typ SP     Ochrona Montowana Jako
+   --------- ---------- ----------- ---------- ------- ----- ----------
 }
 
 message fspart_row
-{%9lu %9lu %10lu %-10s %-7s %-9s %s}
+{%9lu %10lu %11lu %-10s %-7s %-9s %s}
 
 message show_all_unused_partitions
 {Pokaz wszystkie nieuzywane partycje}
