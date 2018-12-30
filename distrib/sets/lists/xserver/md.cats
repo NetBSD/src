@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.57 2017/08/04 21:27:34 mrg Exp $
+# $NetBSD: md.cats,v 1.58 2018/12/30 07:26:02 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -50,7 +50,7 @@
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/mga_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/mga_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so		-unknown-	xorg
