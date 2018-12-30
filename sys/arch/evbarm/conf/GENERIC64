@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.71 2018/12/28 06:45:53 mrg Exp $
+#	$NetBSD: GENERIC64,v 1.72 2018/12/30 16:25:15 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -72,8 +72,8 @@ options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
