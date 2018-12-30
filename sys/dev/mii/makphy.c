@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.46 2018/12/28 06:20:32 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.47 2018/12/30 06:33:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.46 2018/12/28 06:20:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.47 2018/12/30 06:33:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,9 @@ static const struct mii_phydesc makphys[] = {
 	{ 0,				0,
 	  NULL },
 };
+
+#define MAKARG_PDOWN	true	/* Power DOWN */
+#define MAKARG_PUP	false	/* Power UP */
 
 static int
 makphymatch(device_t parent, cfdata_t match, void *aux)
@@ -267,6 +270,30 @@ makphy_reset(struct mii_softc *sc)
 	mii_phy_reset(sc);
 }
 
+static void
+makphy_pdown(struct mii_softc *sc, bool pdown)
+{
+	int bmcr, new;
+	bool need_reset = false;
+
+	/*
+	 * XXX
+	 * PSCR (register 16) should be modified on some chips.
+	 */
+
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (pdown)
+		new = bmcr | BMCR_PDOWN;
+	else
+		new = bmcr & ~BMCR_PDOWN;
+	if (bmcr != new)
+		need_reset = true;
+
+	if (need_reset)
+		new |= BMCR_RESET;
+	PHY_WRITE(sc, MII_BMCR, new);
+}
+
 static int
 makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
@@ -302,13 +329,19 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
+		/* Try to power up the PHY in case it's down */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_NONE)
+			makphy_pdown(sc, MAKARG_PUP);
+
 		mii_phy_setmedia(sc);
 
 		/*
 		 * If autonegitation is not enabled, we need a
 		 * software reset for the settings to take effect.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_NONE)
+			makphy_pdown(sc, MAKARG_PDOWN);
+		else if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
 			bmcr = PHY_READ(sc, MII_BMCR);
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET);
 		}
@@ -354,23 +387,30 @@ makphy_status(struct mii_softc *sc)
 	if (pssr & PSSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
+	if (bmcr & BMCR_LOOP)
+		mii->mii_media_active |= IFM_LOOP;
+
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
 		return;
 	}
 
-	if (bmcr & BMCR_LOOP)
-		mii->mii_media_active |= IFM_LOOP;
-
-	/*
-	 * Check Speed and Duplex Resolved bit.
-	 * XXX Note that this bit is always 1 when autonego is not enabled.
-	 */
-	if (!(pssr & PSSR_RESOLVED)) {
-		/* Erg, still trying, I guess... */
-		mii->mii_media_active |= IFM_NONE;
-		return;
+	if ((bmcr & BMCR_AUTOEN) != 0) {
+		/*
+		 * Check Speed and Duplex Resolved bit.
+		 * Note that this bit is always 1 when autonego is not enabled.
+		 */
+		if (!(pssr & PSSR_RESOLVED)) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+	} else {
+		if ((pssr & PSSR_LINK) == 0) {
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
 	}
 
 	/* XXX FIXME: Use different page for Fiber on newer chips */
@@ -387,7 +427,7 @@ makphy_status(struct mii_softc *sc)
 		case SPEED_10:
 			mii->mii_media_active |= IFM_10_T;
 			break;
-		default:
+		default: /* Undefined (reserved) value */
 			mii->mii_media_active |= IFM_NONE;
 			mii->mii_media_status = 0;
 			return;
