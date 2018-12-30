@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.113 2018/10/17 23:36:58 joerg Exp $	 */
+/*	$NetBSD: reloc.c,v 1.114 2018/12/30 01:48:37 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.113 2018/10/17 23:36:58 joerg Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.114 2018/12/30 01:48:37 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -102,10 +102,10 @@ _rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 		return (-1);
 	}
 	srcaddr = (const void *)(srcobj->relocbase + srcsym->st_value);
-	(void)memcpy(dstaddr, srcaddr, size);
 	rdbg(("COPY %s %s %s --> src=%p dst=%p size %ld",
 	    dstobj->path, srcobj->path, name, srcaddr,
 	    (void *)dstaddr, (long)size));
+	(void)memcpy(dstaddr, srcaddr, size);
 	return (0);
 }
 #endif /* RTLD_INHIBIT_COPY_RELOCS */
@@ -149,6 +149,10 @@ _rtld_do_copy_relocations(const Obj_Entry *dstobj)
 			}
 		}
 	}
+#ifdef GNU_RELRO
+	if (_rtld_relro(dstobj, true) == -1)
+		return -1;
+#endif
 #endif /* RTLD_INHIBIT_COPY_RELOCS */
 
 	return (0);
@@ -225,18 +229,10 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		if (obj->pltgot != NULL)
 			_rtld_setup_pltgot(obj);
 #ifdef GNU_RELRO
-		if (obj->relro_size > 0) {
-			if (mprotect(obj->relro_page, obj->relro_size,
-			    PROT_READ) == -1) {
-				_rtld_error("%s: Cannot enforce relro "
-				    "protection: %s", obj->path,
-				    xstrerror(errno));
-				return -1;
-			}
-		}
+		if (_rtld_relro(obj, false) == -1)
+			return -1;
 #endif
 	}
-
 	return 0;
 }
 
