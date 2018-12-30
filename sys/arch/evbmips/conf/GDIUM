@@ -1,6 +1,6 @@
-# $NetBSD: GDIUM,v 1.33 2018/09/19 23:22:17 rin Exp $
+# $NetBSD: GDIUM,v 1.34 2018/12/30 00:42:09 sevan Exp $
 #
-# GENERIC machine description file
+# GDIUM machine description file
 # 
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.33 $"
+#ident 		"GDIUM-$Revision: 1.34 $"
 
 maxusers	16
 
