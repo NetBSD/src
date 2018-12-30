@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/08/29 07:53:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2018/12/30 09:19:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ FILES=	af al altwin am apl ara at au az \
 	parens pc ph pk pl pt \
 	ro rs ru rupeesign \
 	se shift si sk sn srvr_ctrl sy \
-	terminate tg th tj tm tr tw typo tz \
+	terminate tg th tj tm tr trans tw typo tz \
 	ua us uz \
 	vn \
 	za

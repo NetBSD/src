@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.145 2018/01/24 09:51:26 wiz Exp $
+# $NetBSD: mi,v 1.146 2018/12/30 09:19:04 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1190,6 +1190,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/tml			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/tr			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tr_f			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/trans			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tw			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/typo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tz			-unknown-	xorg
