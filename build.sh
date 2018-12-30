@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.328 2018/08/09 08:30:29 christos Exp $
+#	$NetBSD: build.sh,v 1.329 2018/12/30 23:19:40 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -537,6 +537,7 @@ level of source directory"
 	do_rebuildmake=false
 	do_removedirs=false
 	do_tools=false
+	do_libs=false
 	do_cleandir=false
 	do_obj=false
 	do_build=false
@@ -1382,6 +1383,7 @@ parseoptions()
 		iso-image-source|\
 		iso-image|\
 		kernels|\
+		libs|\
 		live-image|\
 		makewrapper|\
 		modules|\
@@ -1934,7 +1936,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.328 2018/08/09 08:30:29 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.329 2018/12/30 23:19:40 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -1986,6 +1988,21 @@ buildtools()
 	fi
 	make_in_dir tools build_install
 	statusmsg "Tools built to ${TOOLDIR}"
+}
+
+buildlibs()
+{
+	if [ "${MKOBJDIRS}" != "no" ]; then
+		${runcmd} "${makewrapper}" ${parallel} obj ||
+		    bomb "Failed to make obj"
+	fi
+	if [ "${MKUPDATE}" = "no" ]; then
+		make_in_dir lib cleandir
+	fi
+	make_in_dir . do-distrib-dirs
+	make_in_dir . includes
+	make_in_dir . do-lib
+	statusmsg "libs built"
 }
 
 getkernelconf()
@@ -2292,6 +2309,9 @@ main()
 
 		tools)
 			buildtools
+			;;
+		libs)
+			buildlibs
 			;;
 
 		sets)
