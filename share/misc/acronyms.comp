@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.221 2018/12/07 17:58:29 sevan Exp $
+$NetBSD: acronyms.comp,v 1.222 2018/12/30 21:58:11 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -219,6 +219,7 @@ CHS	cylinder/head/sector
 CI	continuous integration
 CI	{common,component} interface
 CIDR	Classless Inter-Domain Routing
+CIF	common intermediate format
 CIFS	Common Internet File System
 CIL	common intermediate language
 CIR	carrier-to-interference ratio
@@ -488,6 +489,7 @@ EU	execution unit
 EULA	end user license agreement
 FAT	file allocation table
 FBRAM	frame buffer random access memory
+FCIF	full common intermediate format
 FCL	fiber channel loop
 FCS	frame check sequence
 FDC	floppy disk controller
@@ -1137,6 +1139,7 @@ QAM	quality assurance management
 QBE	query by example
 QC	quality control
 QDI	quasi delay insensitive
+QCIF	quarter common intermediate format
 QOS	quality of service
 QVL	qualified vendor list
 R/O	read only
@@ -1286,6 +1289,7 @@ SGRAM	synchronous graphics random access memory
 SHA	secure hash algorithm
 SIDH	supersingular isogeny Diffie-Hellman
 SIEM	security information and event management
+SIF	source input format
 SIFS	short inter-frame space
 SIMD	single instruction, multiple data
 SIMM	single inline memory module
@@ -1346,6 +1350,7 @@ SPMD	single process, multiple data
 SPR	special purpose register
 SPT	sectors per track
 SQA	software quality assurance
+SQCIF	sub quarter common intermediate format
 SQL	Structured Query Language
 SRAM	static random access memory
 SRC	sample rate conversion
