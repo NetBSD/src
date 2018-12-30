@@ -1,10 +1,10 @@
-#	$NetBSD: RB433UAH,v 1.17 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: RB433UAH,v 1.18 2018/12/30 14:51:36 sevan Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"RB433UAH-$Revision: 1.17 $"
+#ident 		"RB433UAH-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -80,6 +80,11 @@ options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

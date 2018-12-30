@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.40 2018/09/19 23:22:17 rin Exp $
+# $NetBSD: LOONGSON,v 1.41 2018/12/30 14:51:36 sevan Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.40 $"
+#ident 		"LOONGSON-$Revision: 1.41 $"
 
 maxusers	16
 
@@ -99,6 +99,11 @@ options 	WAPBL		# File system journaling support
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
