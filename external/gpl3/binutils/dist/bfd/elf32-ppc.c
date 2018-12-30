@@ -5966,7 +5966,7 @@ ppc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 		   && !UNDEFWEAK_NO_DYNAMIC_RELOC (info, h)))
 	      && !htab->is_vxworks
 	      && !ppc_elf_hash_entry (h)->has_sda_refs
-	      && !readonly_dynrelocs (h, info, FALSE))
+	      && !readonly_dynrelocs (h))
 	    {
 	      h->pointer_equality_needed = 0;
 	      /* If we haven't seen a branch reloc and the symbol
