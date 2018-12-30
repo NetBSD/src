@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.9 2017/08/05 19:41:03 mrg Exp $
+# $NetBSD: md.cats,v 1.10 2018/12/30 07:26:02 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
@@ -59,7 +59,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libi128_drv.so.1.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libi740_drv.so.1.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	obsolete		xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmga_drv.so.1.debug	obsolete		xorg,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmga_drv.so.2.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libneomagic_drv.so.1.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libnv_drv.so.2.debug	obsolete		xorg,obsolete
@@ -76,7 +76,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libvesa_drv.so.2.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libws_drv.so.1.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	obsolete		xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/neomagic_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/nv_drv.so.2.debug	-unknown-		xorg,debug

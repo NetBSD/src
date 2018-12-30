@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.36 2018/03/14 13:23:31 rin Exp $
+# $NetBSD: md.i386,v 1.37 2018/12/30 07:26:02 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -72,7 +72,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libunichrome_dri.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mach64_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/mga_dri.so.0.debug	-unknown-		obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/mga_dri.so.2.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r128_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r200_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	-unknown-		xorg,debug
@@ -158,7 +158,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libxgi_drv.so.1.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mach64_drv.so.6.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/modesetting_drv.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/neomagic_drv.so.1.debug	-unknown-		xorg,debug
