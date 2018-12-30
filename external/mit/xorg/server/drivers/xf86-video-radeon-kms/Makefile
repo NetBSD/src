@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/08/19 16:33:23 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2018/12/30 08:34:29 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -53,6 +53,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.${DRIVER}}/../include
+
+LIBDPLIBS+=	gbm ${.CURDIR}/../../../lib/libgbm
 
 # XXX
 COPTS+=	-Wno-error
