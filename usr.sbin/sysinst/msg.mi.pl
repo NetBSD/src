@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.13 2018/12/30 16:48:58 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.14 2018/12/30 16:52:26 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -882,7 +882,7 @@ message Re_install_sets_or_install_additional_sets {Przeinstaluj albo zainstaluj
 message Reboot_the_computer {Zrestartuj komputer}
 message Utility_menu {Menu Narzedziowe}
 message Config_menu {Menu konfiguracji}
-message exit_menu_generic {Nazad}
+message exit_menu_generic {Wstecz}
 message exit_utility_menu {Exit}
 message NetBSD_VERSION_Utilities {Narzedzia NetBSD-@@VERSION@@}
 message Run_bin_sh {Uruchom /bin/sh}
