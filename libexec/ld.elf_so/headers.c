@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.64 2018/07/24 13:48:48 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.65 2018/12/30 11:55:15 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.64 2018/07/24 13:48:48 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.65 2018/12/30 11:55:15 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -216,6 +216,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 
 		case DT_RPATH:
+		case DT_RUNPATH:
 			/*
 		         * We have to wait until later to process this, because
 			 * we might not have gotten the address of the string
