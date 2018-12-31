@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2018/12/31 12:13:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2018/12/31 13:05:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -210,3 +210,4 @@ COPTS.i965_video.c+=	-Wno-stack-protector
 
 COPTS.sna_display.c+=		-Wno-error	# XXX deprecated
 COPTS.intel_driver.c+=		-Wno-error	# XXX deprecated
+COPTS.intel_display.c+=		-Wno-error	# XXX deprecated
