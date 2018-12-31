@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2016/08/14 03:43:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2018/12/31 13:05:07 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -17,7 +17,9 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/miext/damage \
 		-I${X11SRCDIR.xorg-server}/render \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
+		-I${X11SRCDIR.xorg-server}/../include
 
 CWARNFLAGS.clang+=	-Wno-format
 
