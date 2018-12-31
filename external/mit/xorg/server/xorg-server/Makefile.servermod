@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.servermod,v 1.4 2016/01/25 18:00:26 christos Exp $
+#	$NetBSD: Makefile.servermod,v 1.5 2018/12/31 11:14:03 mrg Exp $
 
 .include <bsd.own.mk>	# For /etc/mk.conf processing
 
@@ -23,3 +23,5 @@ moduleinstall::
 .if defined(XMODULEDIR)
 CPPFLAGS+=	${X11FLAGS.LOADABLE}
 .endif
+
+CPPFLAGS+=	${X11FLAGS.DIX}

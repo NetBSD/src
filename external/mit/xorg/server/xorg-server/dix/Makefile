@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2016/11/17 07:58:24 snj Exp $
+#	$NetBSD: Makefile,v 1.18 2018/12/31 11:14:03 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -8,7 +8,7 @@ LIB=		dix
 
 .PATH:		${X11SRCDIR.xorg-server}/dix
 SRCS=		atom.c colormap.c cursor.c devices.c dispatch.c dixfonts.c \
-		dixutils.c events.c extension.c ffs.c gc.c getevents.c \
+		dixutils.c events.c extension.c gc.c getevents.c \
 		globals.c glyphcurs.c grabs.c initatoms.c main.c pixmap.c \
 		privates.c property.c resource.c swaprep.c swapreq.c \
 		tables.c window.c stubmain.c \

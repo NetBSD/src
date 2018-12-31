@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2017/05/21 15:28:40 riastradh Exp $
+#	$NetBSD: Makefile,v 1.18 2018/12/31 11:14:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ PROG=		Xvfb
 .PATH:		${X11SRCDIR.xorg-server}/Xext
 .PATH:		${X11SRCDIR.xorg-server}/Xi
 .PATH:		${X11SRCDIR.xorg-server}/mi
-SRCS=		InitInput.c InitOutput.c dpmsstubs.c miinitext.c stubs.c
+SRCS=		InitInput.c InitOutput.c miinitext.c stubs.c
 
 # XXX should not be needed now
 #.PATH:		${X11SRCDIR.xorg-server}/fb
@@ -45,8 +45,6 @@ CPPFLAGS.InitInput.c=	${X11FLAGS.EXTENSION} \
 			-UGLXEXT
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION} \
 			-UGLXEXT
-CPPFLAGS.dpmsstubs.c=	${X11FLAGS.EXTENSION} \
-			-UGLXEXT
 
 COPTS.InitInput.c=	-Wno-error
 COPTS.InitOutput.c=	-Wno-error
@@ -60,11 +58,11 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.dbe} \
 	${LDADD.record} \
 	${LDADD.randr} \
-	${LDADD.render} \
 	${LDADD.damageext} \
 	${LDADD.miext/damage} \
 	${LDADD.miext/shadow} \
 	${LDADD.miext/sync} \
+	${LDADD.render} \
 	${LDADD.Xi} \
 	${LDADD.xkb} \
 	${LDADD.xkbstubs} \
@@ -72,7 +70,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.os} \
 	${LDADD.glx} \
 	${LDADD.present} \
-	-lXfont \
+	-lXfont2 \
 	-lfreetype \
 	-lXau \
 	-lfontenc \
@@ -104,7 +102,7 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.os} \
 	${DPADD.glx} \
 	${DPADD.present} \
-	${LIBXFONT} \
+	${LIBXFONT2} \
 	${LIBFREETYPE} \
 	${LIBXAU} \
 	${LIBFONTENC} \
