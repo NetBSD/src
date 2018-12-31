@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/08/15 22:01:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2018/12/31 11:14:06 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -11,6 +11,7 @@ SRCS=  \
 		rrcrtc.c \
 		rrdispatch.c \
 		rrinfo.c \
+		rrlease.c \
 		rrmode.c \
 		rrmonitor.c \
 		rroutput.c \
