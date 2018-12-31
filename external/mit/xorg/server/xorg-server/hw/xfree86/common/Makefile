@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2018/02/02 01:02:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.33 2018/12/31 11:14:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -71,9 +71,8 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 		${X11FLAGS.DIX} \
 		-DWSCONS_SUPPORT -D__XKBDEFRULES__='"xorg"' \
 		-D__XSERVERNAME__='"Xorg"' -D__XCONFIGFILE__='"xorg.conf"' \
-		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
-		-DXVENDORNAME='"The X.Org Foundation"' \
-		-DHAVE_XORG_CONFIG_H
+		-D__VENDORDWEBSUPPORT__='"http://wiki.x.org"' \
+		-DXVENDORNAME='"The X.Org Foundation"'
 
 .if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
