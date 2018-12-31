@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.182 2018/12/24 08:31:08 plunky Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.183 2018/12/31 19:33:02 maya Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -196,6 +196,48 @@
 ./usr/include/isofs/cd9660
 ./usr/include/kadm5
 ./usr/include/krb5
+./usr/include/llvm
+./usr/include/llvm-c
+./usr/include/llvm-c/Transforms
+./usr/include/llvm/ADT
+./usr/include/llvm/Analysis
+./usr/include/llvm/AsmParser
+./usr/include/llvm/BinaryFormat
+./usr/include/llvm/BinaryFormat/ELFRelocs
+./usr/include/llvm/Bitcode
+./usr/include/llvm/CodeGen
+./usr/include/llvm/Config
+./usr/include/llvm/DebugInfo
+./usr/include/llvm/DebugInfo/CodeView
+./usr/include/llvm/Demangle
+./usr/include/llvm/ExecutionEngine
+./usr/include/llvm/FuzzMutate
+./usr/include/llvm/IR
+./usr/include/llvm/IRReader
+./usr/include/llvm/LTO
+./usr/include/llvm/LineEditor
+./usr/include/llvm/Linker
+./usr/include/llvm/MC
+./usr/include/llvm/Object
+./usr/include/llvm/ObjectYAML
+./usr/include/llvm/Option
+./usr/include/llvm/Passes
+./usr/include/llvm/ProfileData
+./usr/include/llvm/ProfileData/Coverage
+./usr/include/llvm/Support
+./usr/include/llvm/TableGen
+./usr/include/llvm/Target
+./usr/include/llvm/Transforms
+./usr/include/llvm/Transforms/AggressiveInstCombine
+./usr/include/llvm/Transforms/IPO
+./usr/include/llvm/Transforms/InstCombine
+./usr/include/llvm/Transforms/Instrumentation
+./usr/include/llvm/Transforms/Scalar
+./usr/include/llvm/Transforms/Utils
+./usr/include/llvm/Transforms/Vectorize
+./usr/include/llvm/WindowsManifest
+./usr/include/llvm/WindowsResource
+./usr/include/llvm/XRay
 ./usr/include/lutok
 ./usr/include/lzma
 ./usr/include/miscfs
