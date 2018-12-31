@@ -1,4 +1,5 @@
-# $NetBSD: ad.arm,v 1.90 2018/12/29 01:22:57 christos Exp $
+# $NetBSD: ad.arm,v 1.91 2018/12/31 13:53:12 christos Exp $
+./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -699,7 +700,6 @@
 ./usr/libdata/ldscripts/armelf.xu		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf.xw		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf_nbsd.x		-unknown-		binutils
-
 ./usr/libdata/ldscripts/armelf_nbsd.xbn		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf_nbsd.xc		-unknown-		binutils
 ./usr/libdata/ldscripts/armelf_nbsd.xd		-unknown-		binutils
