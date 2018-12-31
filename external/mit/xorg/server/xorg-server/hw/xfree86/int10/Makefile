@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2015/07/29 19:03:15 christos Exp $
+# $NetBSD: Makefile,v 1.10 2018/12/31 21:38:53 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -33,7 +33,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${DESTDIR}${X11INCDIR}/pixman-1
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/../include
 
 COPTS.xf86x86emu.c=	-Wno-error	# XXX?
 
