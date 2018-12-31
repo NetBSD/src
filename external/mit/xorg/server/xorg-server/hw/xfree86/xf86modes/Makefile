@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2016/08/11 08:32:43 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2018/12/31 11:14:05 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -35,8 +35,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${X11SRCDIR.xorg-server}/../include
 
-CPPFLAGS+=	${X11FLAGS.DIX} \
-		-DHAVE_XORG_CONFIG_H
+CPPFLAGS+=	${X11FLAGS.DIX}
 
 # XXX
 CPPFLAGS.xf86RandR12.c=	-Wno-error
