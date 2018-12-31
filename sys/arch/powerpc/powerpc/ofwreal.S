@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.13 2011/06/05 16:52:26 matt Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.14 2018/12/31 18:47:46 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -230,15 +230,15 @@ copy:
 	stw	%r8,20(%r4)
 	stw	%r9,24(%r4)
 	stw	%r10,28(%r4)
-	dcbst	%r0,%r4
-	icbi	%r0,%r4
+	dcbst	0,%r4
+	icbi	0,%r4
 	add	%r3,%r3,%r6
 	add	%r4,%r4,%r6
 	subf.	%r5,%r6,%r5
 	bgt	1b
 
-	dcbst	%r0,%r4
-	icbi	%r0,%r4
+	dcbst	0,%r4
+	icbi	0,%r4
 
 	sync
 	isync
