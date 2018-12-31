@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1089 2018/12/30 17:32:43 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1090 2018/12/31 12:45:19 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1426,7 +1426,7 @@ X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
-# During transition from xorg-server 1.10 to 1.18
+# During transition from xorg-server 1.10 to 1.20
 .if \
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amiga"	|| \
@@ -1442,10 +1442,10 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
     ${MACHINE} == "zaurus"
 HAVE_XORG_SERVER_VER?=110
 .else
-HAVE_XORG_SERVER_VER?=118
+HAVE_XORG_SERVER_VER?=120
 .endif
 
-.if ${HAVE_XORG_SERVER_VER} == "118"
+.if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
 . if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 HAVE_XORG_GLAMOR?=	yes
@@ -1496,7 +1496,7 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 
 # xf86-video-modesetting move into the server build.
 EXTRA_DRIVERS=
-.if ${HAVE_XORG_SERVER_VER} == "118"
+.if ${HAVE_XORG_SERVER_VER} == "120"
 X11SRCDIR.xf86-video-modesetting=${X11SRCDIR.xorg-server}/hw/xfree86/drivers/modesetting
 .else
 EXTRA_DRIVERS=	modesetting 
