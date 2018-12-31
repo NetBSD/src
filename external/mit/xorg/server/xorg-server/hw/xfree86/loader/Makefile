@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2016/08/14 03:43:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2018/12/31 11:14:04 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -10,7 +10,7 @@ LIB=	loader
 LOADERDIR=	${XFTOP}/${LIB}
 .PATH:	${LOADERDIR}
 
-SRCS=	loader.c loadmod.c os.c sdksyms.c
+SRCS=	loader.c loadmod.c sdksyms.c
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 #SRCS+=	SparcMulDiv.S
@@ -43,7 +43,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${DESTDIR}${X11INCDIR}/libdrm
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} -DDLOPEN_SUPPORT -DHAS_SHM \
-		-DHAVE_XORG_CONFIG_H -DHAVE_DIX_CONFIG_H \
 		-DIN_LOADER \
 		${x11FLAGS.DIX}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/08/30 08:19:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/12/31 11:14:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,9 +18,6 @@ WARNS?=	2
 .PATH:	${X11SRCDIR.xorg-server}/hw/netbsd/x68k
 SRCS=	x68kInit.c x68kConfig.c x68kIo.c x68kMouse.c x68kKbd.c x68kKeyMap.c \
 	x68kFb.c x68kGraph.c x68kText.c
-
-.PATH:	${X11SRCDIR.xorg-server}/Xext
-SRCS+=	dpmsstubs.c
 
 .PATH:	${X11SRCDIR.xorg-server}/Xi
 SRCS+=	stubs.c

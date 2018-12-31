@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/10/08 20:08:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2018/12/31 11:14:04 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -25,8 +25,7 @@ SUBDIR = \
 	fb \
 	glx \
 	shadow \
-	wfb \
-	xorgxkb
+	wfb
 
 COPTS.miinitext.c=	-Wno-error	# XXX xf86bigfstr.h
 
