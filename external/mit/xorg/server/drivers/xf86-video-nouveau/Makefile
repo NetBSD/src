@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2018/02/02 01:02:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2018/12/31 21:38:39 mrg Exp $
 
 DRIVER=		xf86-video-nouveau
 DRIVER_NAME=	nouveau_drv
@@ -53,6 +53,7 @@ COPTS.nouveau_xv.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer
 
 .if ${XORG_SERVER_SUBDIR} != "xorg-server.old"
 CPPFLAGS+=	-DHAVE_XORG_LIST
+COPTS.drmmode_display.c+=     -Wno-error      # XXX deprecated
 .endif
 
 # from pkgsrc/x11/xf86-video-nouveau/patches/patch-configure
