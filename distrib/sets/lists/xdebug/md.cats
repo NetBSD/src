@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.10 2018/12/30 07:26:02 mrg Exp $
+# $NetBSD: md.cats,v 1.11 2018/12/31 11:59:23 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
@@ -33,9 +33,9 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	-unknown-		xorg,debug
@@ -43,7 +43,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-		xorg,debug
@@ -94,14 +94,14 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libglx.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug		-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug		-unknown-		xorg,debug
@@ -110,5 +110,5 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug		-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug		-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug		-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug		-unknown-		xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug		-unknown-		xorg,debug,xorg_server_ver=120,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxf8_16bpp.so.0.debug	-unknown-		obsolete
