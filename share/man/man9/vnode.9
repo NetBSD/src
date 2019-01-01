@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.81 2017/07/03 21:28:48 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.82 2019/01/01 10:06:54 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 28, 2017
+.Dd January 1, 2019
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@
 .Ft int
 .Fn vcache_get "struct mount *mp" "const void *key" "size_t key_len" "struct vnode **vpp"
 .Ft int
-.Fn vcache_new "struct mount *mp" "struct vnode *dvp" "struct vattr *vap" "kauth_cred_t cred" "struct vnode **vpp"
+.Fn vcache_new "struct mount *mp" "struct vnode *dvp" "struct vattr *vap" "kauth_cred_t cred" "void *extra" "struct vnode **vpp"
 .Ft int
 .Fn vcache_rekey_enter "struct mount *mp" "struct vnode *vp" "const void *old_key" "size_t old_key_len" "const void *new_key" "size_t new_key_len"
 .Ft void
@@ -577,6 +577,10 @@ points to the attributes for the file to create.
 The argument
 .Fa cred
 holds the credentials for the file to create.
+.Pp
+The argument
+.Fa extra
+allows the caller to pass more information about the file to create.
 .Pp
 If a vnode is successfully created zero is returned, otherwise an
 appropriate error code is returned.
