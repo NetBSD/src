@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16.2.1 2018/12/26 14:02:10 pgoyette Exp $
+# $NetBSD: Makefile,v 1.16.2.2 2019/01/01 05:38:34 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ LDADD.t_modlinkset+=	-lrumpfs_cd9660 ${ADD_TO_LD}
 LDADD+=			${ADD_TO_LD}
 
 KERNSPACE != cd ${.CURDIR}/../kernspace && ${PRINTOBJDIR}
-LDADD+=	-L${KERNSPACE} -lkernspace
+LDADD+=	-L${KERNSPACE} -lkernspace -lrump
 
 WARNS=	4
 

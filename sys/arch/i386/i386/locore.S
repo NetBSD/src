@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.156.2.3 2018/09/06 06:55:35 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.156.2.4 2019/01/01 05:38:34 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156.2.3 2018/09/06 06:55:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156.2.4 2019/01/01 05:38:34 pgoyette Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1288,12 +1288,12 @@ IDTVEC(syscall)
 	movl	$.Lsyscall_resume, %esi /* address to resume loop at */
 .Lsyscall_resume:
 	movl	%ebx,%eax		/* get cpl */
-	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
+	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
 	jz	17f
 	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(IPENDING)
-	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
+	btrl	%eax,CPUVAR(XPENDING)
+	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
 17:	movl	%ebx, CPUVAR(ILEVEL)	/* restore cpl  */
 	jmp	.Lsyscall_checkast
