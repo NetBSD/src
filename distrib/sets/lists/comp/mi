@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2246 2018/12/31 19:33:02 maya Exp $
+#	$NetBSD: mi,v 1.2247 2019/01/01 06:28:42 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2211,8 +2211,6 @@
 ./usr/include/link.h				comp-c-include
 ./usr/include/link_aout.h			comp-c-include
 ./usr/include/link_elf.h			comp-c-include
-./usr/include/llvm						comp-c-include	llvm
-./usr/include/llvm-c						comp-c-include	llvm
 ./usr/include/llvm-c/Analysis.h					comp-c-include	llvm
 ./usr/include/llvm-c/BitReader.h				comp-c-include	llvm
 ./usr/include/llvm-c/BitWriter.h				comp-c-include	llvm
@@ -2233,7 +2231,6 @@
 ./usr/include/llvm-c/Support.h					comp-c-include	llvm
 ./usr/include/llvm-c/Target.h					comp-c-include	llvm
 ./usr/include/llvm-c/TargetMachine.h				comp-c-include	llvm
-./usr/include/llvm-c/Transforms					comp-c-include	llvm
 ./usr/include/llvm-c/Transforms/IPO.h				comp-c-include	llvm
 ./usr/include/llvm-c/Transforms/InstCombine.h			comp-c-include	llvm
 ./usr/include/llvm-c/Transforms/PassManagerBuilder.h		comp-c-include	llvm
@@ -2242,7 +2239,6 @@
 ./usr/include/llvm-c/Transforms/Vectorize.h			comp-c-include	llvm
 ./usr/include/llvm-c/Types.h					comp-c-include	llvm
 ./usr/include/llvm-c/lto.h					comp-c-include	llvm
-./usr/include/llvm/ADT						comp-c-include	llvm
 ./usr/include/llvm/ADT/APFloat.h				comp-c-include	llvm
 ./usr/include/llvm/ADT/APInt.h					comp-c-include	llvm
 ./usr/include/llvm/ADT/APSInt.h					comp-c-include	llvm
@@ -2318,7 +2314,6 @@
 ./usr/include/llvm/ADT/iterator.h				comp-c-include	llvm
 ./usr/include/llvm/ADT/iterator_range.h				comp-c-include	llvm
 ./usr/include/llvm/ADT/simple_ilist.h				comp-c-include	llvm
-./usr/include/llvm/Analysis					comp-c-include	llvm
 ./usr/include/llvm/Analysis/AliasAnalysis.h			comp-c-include	llvm
 ./usr/include/llvm/Analysis/AliasAnalysisEvaluator.h		comp-c-include	llvm
 ./usr/include/llvm/Analysis/AliasSetTracker.h			comp-c-include	llvm
@@ -2414,16 +2409,13 @@
 ./usr/include/llvm/Analysis/ValueLatticeUtils.h			comp-c-include	llvm
 ./usr/include/llvm/Analysis/ValueTracking.h			comp-c-include	llvm
 ./usr/include/llvm/Analysis/VectorUtils.h			comp-c-include	llvm
-./usr/include/llvm/AsmParser					comp-c-include	llvm
 ./usr/include/llvm/AsmParser/Parser.h				comp-c-include	llvm
 ./usr/include/llvm/AsmParser/SlotMapping.h			comp-c-include	llvm
-./usr/include/llvm/BinaryFormat					comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/COFF.h				comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/Dwarf.def			comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/Dwarf.h				comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/DynamicTags.def			comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/ELF.h				comp-c-include	llvm
-./usr/include/llvm/BinaryFormat/ELFRelocs			comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/ELFRelocs/AArch64.def		comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/ELFRelocs/AMDGPU.def		comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/ELFRelocs/ARC.def		comp-c-include	llvm
@@ -2445,7 +2437,6 @@
 ./usr/include/llvm/BinaryFormat/Magic.h				comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/Wasm.h				comp-c-include	llvm
 ./usr/include/llvm/BinaryFormat/WasmRelocs.def			comp-c-include	llvm
-./usr/include/llvm/Bitcode					comp-c-include	llvm
 ./usr/include/llvm/Bitcode/BitCodes.h				comp-c-include	llvm
 ./usr/include/llvm/Bitcode/BitcodeReader.h			comp-c-include	llvm
 ./usr/include/llvm/Bitcode/BitcodeWriter.h			comp-c-include	llvm
@@ -2453,7 +2444,6 @@
 ./usr/include/llvm/Bitcode/BitstreamReader.h			comp-c-include	llvm
 ./usr/include/llvm/Bitcode/BitstreamWriter.h			comp-c-include	llvm
 ./usr/include/llvm/Bitcode/LLVMBitCodes.h			comp-c-include	llvm
-./usr/include/llvm/CodeGen					comp-c-include	llvm
 ./usr/include/llvm/CodeGen/AccelTable.h				comp-c-include	llvm
 ./usr/include/llvm/CodeGen/Analysis.h				comp-c-include	llvm
 ./usr/include/llvm/CodeGen/AsmPrinter.h				comp-c-include	llvm
@@ -2573,21 +2563,16 @@
 ./usr/include/llvm/CodeGen/VirtRegMap.h				comp-c-include	llvm
 ./usr/include/llvm/CodeGen/WasmEHFuncInfo.h			comp-c-include	llvm
 ./usr/include/llvm/CodeGen/WinEHFuncInfo.h			comp-c-include	llvm
-./usr/include/llvm/Config					comp-c-include	llvm
 ./usr/include/llvm/Config/AsmParsers.def			comp-c-include	llvm
 ./usr/include/llvm/Config/AsmPrinters.def			comp-c-include	llvm
 ./usr/include/llvm/Config/Disassemblers.def			comp-c-include	llvm
 ./usr/include/llvm/Config/Targets.def				comp-c-include	llvm
 ./usr/include/llvm/Config/abi-breaking.h			comp-c-include	llvm
-./usr/include/llvm/DebugInfo					comp-c-include	llvm
-./usr/include/llvm/DebugInfo/CodeView				comp-c-include	llvm
 ./usr/include/llvm/DebugInfo/CodeView/CodeViewRegisters.def	comp-c-include	llvm
 ./usr/include/llvm/DebugInfo/CodeView/CodeViewSymbols.def	comp-c-include	llvm
 ./usr/include/llvm/DebugInfo/CodeView/CodeViewTypes.def		comp-c-include	llvm
 ./usr/include/llvm/DebugInfo/DIContext.h			comp-c-include	llvm
-./usr/include/llvm/Demangle					comp-c-include	llvm
 ./usr/include/llvm/Demangle/Demangle.h				comp-c-include	llvm
-./usr/include/llvm/ExecutionEngine				comp-c-include	llvm
 ./usr/include/llvm/ExecutionEngine/ExecutionEngine.h		comp-c-include	llvm
 ./usr/include/llvm/ExecutionEngine/GenericValue.h		comp-c-include	llvm
 ./usr/include/llvm/ExecutionEngine/Interpreter.h		comp-c-include	llvm
@@ -2601,14 +2586,12 @@
 ./usr/include/llvm/ExecutionEngine/RuntimeDyld.h		comp-c-include	llvm
 ./usr/include/llvm/ExecutionEngine/RuntimeDyldChecker.h		comp-c-include	llvm
 ./usr/include/llvm/ExecutionEngine/SectionMemoryManager.h	comp-c-include	llvm
-./usr/include/llvm/FuzzMutate					comp-c-include	llvm
 ./usr/include/llvm/FuzzMutate/FuzzerCLI.h			comp-c-include	llvm
 ./usr/include/llvm/FuzzMutate/IRMutator.h			comp-c-include	llvm
 ./usr/include/llvm/FuzzMutate/OpDescriptor.h			comp-c-include	llvm
 ./usr/include/llvm/FuzzMutate/Operations.h			comp-c-include	llvm
 ./usr/include/llvm/FuzzMutate/Random.h				comp-c-include	llvm
 ./usr/include/llvm/FuzzMutate/RandomIRBuilder.h			comp-c-include	llvm
-./usr/include/llvm/IR						comp-c-include	llvm
 ./usr/include/llvm/IR/Argument.h				comp-c-include	llvm
 ./usr/include/llvm/IR/AssemblyAnnotationWriter.h		comp-c-include	llvm
 ./usr/include/llvm/IR/Attributes.h				comp-c-include	llvm
@@ -2694,22 +2677,17 @@
 ./usr/include/llvm/IR/ValueMap.h				comp-c-include	llvm
 ./usr/include/llvm/IR/ValueSymbolTable.h			comp-c-include	llvm
 ./usr/include/llvm/IR/Verifier.h				comp-c-include	llvm
-./usr/include/llvm/IRReader					comp-c-include	llvm
 ./usr/include/llvm/IRReader/IRReader.h				comp-c-include	llvm
 ./usr/include/llvm/InitializePasses.h				comp-c-include	llvm
-./usr/include/llvm/LTO						comp-c-include	llvm
 ./usr/include/llvm/LTO/Caching.h				comp-c-include	llvm
 ./usr/include/llvm/LTO/Config.h					comp-c-include	llvm
 ./usr/include/llvm/LTO/LTO.h					comp-c-include	llvm
 ./usr/include/llvm/LTO/LTOBackend.h				comp-c-include	llvm
-./usr/include/llvm/LineEditor					comp-c-include	llvm
 ./usr/include/llvm/LineEditor/LineEditor.h			comp-c-include	llvm
 ./usr/include/llvm/LinkAllIR.h					comp-c-include	llvm
 ./usr/include/llvm/LinkAllPasses.h				comp-c-include	llvm
-./usr/include/llvm/Linker					comp-c-include	llvm
 ./usr/include/llvm/Linker/IRMover.h				comp-c-include	llvm
 ./usr/include/llvm/Linker/Linker.h				comp-c-include	llvm
-./usr/include/llvm/MC						comp-c-include	llvm
 ./usr/include/llvm/MC/ConstantPools.h				comp-c-include	llvm
 ./usr/include/llvm/MC/LaneBitmask.h				comp-c-include	llvm
 ./usr/include/llvm/MC/MCAsmBackend.h				comp-c-include	llvm
@@ -2774,7 +2752,6 @@
 ./usr/include/llvm/MC/SectionKind.h				comp-c-include	llvm
 ./usr/include/llvm/MC/StringTableBuilder.h			comp-c-include	llvm
 ./usr/include/llvm/MC/SubtargetFeature.h			comp-c-include	llvm
-./usr/include/llvm/Object					comp-c-include	llvm
 ./usr/include/llvm/Object/Archive.h				comp-c-include	llvm
 ./usr/include/llvm/Object/ArchiveWriter.h			comp-c-include	llvm
 ./usr/include/llvm/Object/Binary.h				comp-c-include	llvm
@@ -2800,7 +2777,6 @@
 ./usr/include/llvm/Object/Wasm.h				comp-c-include	llvm
 ./usr/include/llvm/Object/WasmTraits.h				comp-c-include	llvm
 ./usr/include/llvm/Object/WindowsResource.h			comp-c-include	llvm
-./usr/include/llvm/ObjectYAML					comp-c-include	llvm
 ./usr/include/llvm/ObjectYAML/COFFYAML.h			comp-c-include	llvm
 ./usr/include/llvm/ObjectYAML/CodeViewYAMLDebugSections.h	comp-c-include	llvm
 ./usr/include/llvm/ObjectYAML/CodeViewYAMLSymbols.h		comp-c-include	llvm
@@ -2813,7 +2789,6 @@
 ./usr/include/llvm/ObjectYAML/ObjectYAML.h			comp-c-include	llvm
 ./usr/include/llvm/ObjectYAML/WasmYAML.h			comp-c-include	llvm
 ./usr/include/llvm/ObjectYAML/YAML.h				comp-c-include	llvm
-./usr/include/llvm/Option					comp-c-include	llvm
 ./usr/include/llvm/Option/Arg.h					comp-c-include	llvm
 ./usr/include/llvm/Option/ArgList.h				comp-c-include	llvm
 ./usr/include/llvm/Option/OptSpecifier.h			comp-c-include	llvm
@@ -2824,11 +2799,8 @@
 ./usr/include/llvm/PassInfo.h					comp-c-include	llvm
 ./usr/include/llvm/PassRegistry.h				comp-c-include	llvm
 ./usr/include/llvm/PassSupport.h				comp-c-include	llvm
-./usr/include/llvm/Passes					comp-c-include	llvm
 ./usr/include/llvm/Passes/PassBuilder.h				comp-c-include	llvm
 ./usr/include/llvm/Passes/PassPlugin.h				comp-c-include	llvm
-./usr/include/llvm/ProfileData					comp-c-include	llvm
-./usr/include/llvm/ProfileData/Coverage				comp-c-include	llvm
 ./usr/include/llvm/ProfileData/Coverage/CoverageMapping.h	comp-c-include	llvm
 ./usr/include/llvm/ProfileData/Coverage/CoverageMappingReader.h	comp-c-include	llvm
 ./usr/include/llvm/ProfileData/Coverage/CoverageMappingWriter.h	comp-c-include	llvm
@@ -2841,7 +2813,6 @@
 ./usr/include/llvm/ProfileData/SampleProf.h			comp-c-include	llvm
 ./usr/include/llvm/ProfileData/SampleProfReader.h		comp-c-include	llvm
 ./usr/include/llvm/ProfileData/SampleProfWriter.h		comp-c-include	llvm
-./usr/include/llvm/Support					comp-c-include	llvm
 ./usr/include/llvm/Support/AArch64TargetParser.def		comp-c-include	llvm
 ./usr/include/llvm/Support/AMDGPUMetadata.h			comp-c-include	llvm
 ./usr/include/llvm/Support/AMDHSAKernelDescriptor.h		comp-c-include	llvm
@@ -2992,7 +2963,6 @@
 ./usr/include/llvm/Support/thread.h				comp-c-include	llvm
 ./usr/include/llvm/Support/type_traits.h			comp-c-include	llvm
 ./usr/include/llvm/Support/xxhash.h				comp-c-include	llvm
-./usr/include/llvm/TableGen					comp-c-include	llvm
 ./usr/include/llvm/TableGen/Error.h				comp-c-include	llvm
 ./usr/include/llvm/TableGen/Main.h				comp-c-include	llvm
 ./usr/include/llvm/TableGen/Record.h				comp-c-include	llvm
@@ -3000,16 +2970,13 @@
 ./usr/include/llvm/TableGen/StringMatcher.h			comp-c-include	llvm
 ./usr/include/llvm/TableGen/StringToOffsetTable.h		comp-c-include	llvm
 ./usr/include/llvm/TableGen/TableGenBackend.h			comp-c-include	llvm
-./usr/include/llvm/Target					comp-c-include	llvm
 ./usr/include/llvm/Target/CodeGenCWrappers.h			comp-c-include	llvm
 ./usr/include/llvm/Target/TargetIntrinsicInfo.h			comp-c-include	llvm
 ./usr/include/llvm/Target/TargetLoweringObjectFile.h		comp-c-include	llvm
 ./usr/include/llvm/Target/TargetMachine.h			comp-c-include	llvm
 ./usr/include/llvm/Target/TargetOptions.h			comp-c-include	llvm
-./usr/include/llvm/Transforms					comp-c-include	llvm
 ./usr/include/llvm/Transforms/AggressiveInstCombine		comp-c-include	llvm
 ./usr/include/llvm/Transforms/Coroutines.h			comp-c-include	llvm
-./usr/include/llvm/Transforms/IPO				comp-c-include	llvm
 ./usr/include/llvm/Transforms/IPO.h				comp-c-include	llvm
 ./usr/include/llvm/Transforms/IPO/AlwaysInliner.h		comp-c-include	llvm
 ./usr/include/llvm/Transforms/IPO/ArgumentPromotion.h		comp-c-include	llvm
@@ -3036,10 +3003,8 @@
 ./usr/include/llvm/Transforms/IPO/SyntheticCountsPropagation.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/IPO/ThinLTOBitcodeWriter.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/IPO/WholeProgramDevirt.h		comp-c-include	llvm
-./usr/include/llvm/Transforms/InstCombine			comp-c-include	llvm
 ./usr/include/llvm/Transforms/InstCombine/InstCombine.h		comp-c-include	llvm
 ./usr/include/llvm/Transforms/InstCombine/InstCombineWorklist.h	comp-c-include	llvm
-./usr/include/llvm/Transforms/Instrumentation			comp-c-include	llvm
 ./usr/include/llvm/Transforms/Instrumentation.h			comp-c-include	llvm
 ./usr/include/llvm/Transforms/Instrumentation/BoundsChecking.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/Instrumentation/CGProfile.h	comp-c-include	llvm
@@ -3047,7 +3012,6 @@
 ./usr/include/llvm/Transforms/Instrumentation/InstrProfiling.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/Instrumentation/PGOInstrumentation.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/ObjCARC.h				comp-c-include	llvm
-./usr/include/llvm/Transforms/Scalar				comp-c-include	llvm
 ./usr/include/llvm/Transforms/Scalar.h				comp-c-include	llvm
 ./usr/include/llvm/Transforms/Scalar/ADCE.h			comp-c-include	llvm
 ./usr/include/llvm/Transforms/Scalar/AlignmentFromAssumptions.h	comp-c-include	llvm
@@ -3102,7 +3066,6 @@
 ./usr/include/llvm/Transforms/Scalar/SpeculateAroundPHIs.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/Scalar/SpeculativeExecution.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/Scalar/TailRecursionElimination.h	comp-c-include	llvm
-./usr/include/llvm/Transforms/Utils				comp-c-include	llvm
 ./usr/include/llvm/Transforms/Utils.h				comp-c-include	llvm
 ./usr/include/llvm/Transforms/Utils/ASanStackFrameLayout.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/Utils/AddDiscriminators.h		comp-c-include	llvm
@@ -3149,18 +3112,14 @@
 ./usr/include/llvm/Transforms/Utils/UnrollLoop.h		comp-c-include	llvm
 ./usr/include/llvm/Transforms/Utils/VNCoercion.h		comp-c-include	llvm
 ./usr/include/llvm/Transforms/Utils/ValueMapper.h		comp-c-include	llvm
-./usr/include/llvm/Transforms/Vectorize				comp-c-include	llvm
 ./usr/include/llvm/Transforms/Vectorize.h			comp-c-include	llvm
 ./usr/include/llvm/Transforms/Vectorize/LoopVectorizationLegality.h	comp-c-include	llvm
 ./usr/include/llvm/Transforms/Vectorize/LoopVectorize.h		comp-c-include	llvm
 ./usr/include/llvm/Transforms/Vectorize/SLPVectorizer.h		comp-c-include	llvm
-./usr/include/llvm/WindowsManifest				comp-c-include	llvm
 ./usr/include/llvm/WindowsManifest/WindowsManifestMerger.h	comp-c-include	llvm
-./usr/include/llvm/WindowsResource				comp-c-include	llvm
 ./usr/include/llvm/WindowsResource/ResourceProcessor.h		comp-c-include	llvm
 ./usr/include/llvm/WindowsResource/ResourceScriptToken.h	comp-c-include	llvm
 ./usr/include/llvm/WindowsResource/ResourceScriptTokenList.h	comp-c-include	llvm
-./usr/include/llvm/XRay						comp-c-include	llvm
 ./usr/include/llvm/XRay/Graph.h					comp-c-include	llvm
 ./usr/include/llvm/XRay/InstrumentationMap.h			comp-c-include	llvm
 ./usr/include/llvm/XRay/Trace.h					comp-c-include	llvm

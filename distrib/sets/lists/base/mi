@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1196 2018/12/30 00:42:47 kre Exp $
+# $NetBSD: mi,v 1.1197 2019/01/01 06:28:42 maya Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1186,6 +1186,48 @@
 ./usr/include/kerberosIV			base-obsolete		obsolete
 ./usr/include/krb5				base-c-usr
 ./usr/include/libmilter				base-obsolete		obsolete
+./usr/include/llvm				base-c-usr
+./usr/include/llvm-c				base-c-usr
+./usr/include/llvm-c/Transforms			base-c-usr
+./usr/include/llvm/ADT				base-c-usr
+./usr/include/llvm/Analysis			base-c-usr
+./usr/include/llvm/AsmParser			base-c-usr
+./usr/include/llvm/BinaryFormat			base-c-usr
+./usr/include/llvm/BinaryFormat/ELFRelocs	base-c-usr
+./usr/include/llvm/Bitcode			base-c-usr
+./usr/include/llvm/CodeGen			base-c-usr
+./usr/include/llvm/Config			base-c-usr
+./usr/include/llvm/DebugInfo			base-c-usr
+./usr/include/llvm/DebugInfo/CodeView		base-c-usr
+./usr/include/llvm/Demangle			base-c-usr
+./usr/include/llvm/ExecutionEngine		base-c-usr
+./usr/include/llvm/FuzzMutate			base-c-usr
+./usr/include/llvm/IR				base-c-usr
+./usr/include/llvm/IRReader			base-c-usr
+./usr/include/llvm/LTO				base-c-usr
+./usr/include/llvm/LineEditor			base-c-usr
+./usr/include/llvm/Linker			base-c-usr
+./usr/include/llvm/MC				base-c-usr
+./usr/include/llvm/Object			base-c-usr
+./usr/include/llvm/ObjectYAML			base-c-usr
+./usr/include/llvm/Option			base-c-usr
+./usr/include/llvm/Passes			base-c-usr
+./usr/include/llvm/ProfileData			base-c-usr
+./usr/include/llvm/ProfileData/Coverage		base-c-usr
+./usr/include/llvm/Support			base-c-usr
+./usr/include/llvm/TableGen			base-c-usr
+./usr/include/llvm/Target			base-c-usr
+./usr/include/llvm/Transforms			base-c-usr
+./usr/include/llvm/Transforms/AggressiveInstCombine	base-c-usr
+./usr/include/llvm/Transforms/IPO		base-c-usr
+./usr/include/llvm/Transforms/InstCombine	base-c-usr
+./usr/include/llvm/Transforms/Instrumentation	base-c-usr
+./usr/include/llvm/Transforms/Scalar		base-c-usr
+./usr/include/llvm/Transforms/Utils		base-c-usr
+./usr/include/llvm/Transforms/Vectorize		base-c-usr
+./usr/include/llvm/WindowsManifest		base-c-usr
+./usr/include/llvm/WindowsResource		base-c-usr
+./usr/include/llvm/XRay				base-c-usr
 ./usr/include/lzma				base-c-usr
 ./usr/include/machine				base-c-usr
 ./usr/include/milter				base-obsolete		obsolete
