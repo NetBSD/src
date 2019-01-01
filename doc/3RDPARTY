@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1582 2018/12/31 02:45:55 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.1583 2019/01/01 03:06:39 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -185,7 +185,7 @@ Todo[4]: Re-entrant functions of net/*
 Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
-Version:	2.27
+Version:	2.31.1
 Current Vers:	2.31.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
@@ -1411,7 +1411,7 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2018g / tzdata2018i
+Version:	tzcode2018i / tzdata2018i
 Current Vers:	tzcode2018i / tzdata2018i
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
