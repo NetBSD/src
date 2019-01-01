@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2018/12/31 19:33:02 maya Exp $
+#	$NetBSD: Makefile,v 1.45 2019/01/01 18:46:04 maya Exp $
 
 .include <bsd.init.mk>
 
@@ -246,8 +246,6 @@ lld/Config/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 
 .ifndef HOST_BUILD
 
-SUBDIR+=	llvm llvm-c
-
 DPSRCS+=	llvm/Config/config.h llvm/Config/llvm-config.h
 CLEANFILES+=	llvm/Config/config.h llvm/Config/llvm-config.h
 
@@ -300,5 +298,4 @@ run-configure:
 
 depend dependall all: ${DPSRCS}
 
-.include <bsd.subdir.mk>
 .include <bsd.prog.mk>
