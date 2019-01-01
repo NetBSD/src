@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2018/12/31 21:38:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2019/01/01 00:37:06 mrg Exp $
 
 DRIVER=		xf86-video-openchrome
 DRIVER_NAME=	openchrome_drv
@@ -41,16 +41,13 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
+CPPFLAGS+=	-DHAVE_XF86_CURSOR_RESET_CURSOR
 
 .include "../Makefile.xf86-driver"
 
 # XXX
-COPTS.via_dri.c+= -Wno-error
 COPTS.via_display.c+= -Wno-error=stack-protector
 COPTS.via_driver.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.via_lvds.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
-
-COPTS.via_display.c+=	-Wno-error	# XXX deprecated
-COPTS.via_kms.c+=	-Wno-error	# XXX deprecated
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare

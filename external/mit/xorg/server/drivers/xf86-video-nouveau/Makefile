@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2018/12/31 21:38:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2019/01/01 00:37:06 mrg Exp $
 
 DRIVER=		xf86-video-nouveau
 DRIVER_NAME=	nouveau_drv
@@ -48,12 +48,11 @@ CPPFLAGS+=	-DNV_DRIVER_DATE=${DRIVER_DATE}
 .include "../Makefile.xf86-driver"
 
 # XXX
-COPTS.nouveau_xv.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.nouveau_xv.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
 
 .if ${XORG_SERVER_SUBDIR} != "xorg-server.old"
 CPPFLAGS+=	-DHAVE_XORG_LIST
-COPTS.drmmode_display.c+=     -Wno-error      # XXX deprecated
+CPPFLAGS+=	-DHAVE_XF86_CURSOR_RESET_CURSOR
 .endif
 
 # from pkgsrc/x11/xf86-video-nouveau/patches/patch-configure
