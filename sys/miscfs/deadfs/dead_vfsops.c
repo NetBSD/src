@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vfsops.c,v 1.8 2017/08/21 08:56:45 hannken Exp $	*/
+/*	$NetBSD: dead_vfsops.c,v 1.9 2019/01/01 10:06:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.8 2017/08/21 08:56:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.9 2019/01/01 10:06:54 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ dead_panic(void)
  */
 int
 dead_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
-    struct vattr *vap, kauth_cred_t cred,
+    struct vattr *vap, kauth_cred_t cred, void *extra,
     size_t *key_len, const void **new_key)
 {
 

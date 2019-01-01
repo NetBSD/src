@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.43 2018/12/10 19:29:41 jdolecek Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.44 2019/01/01 10:06:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.43 2018/12/10 19:29:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.44 2019/01/01 10:06:55 hannken Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -658,7 +658,7 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	va.va_type = VREG;
 	va.va_mode = 0;
 
-	error = vcache_new(mp, rvp, &va, NOCRED, &vp);
+	error = vcache_new(mp, rvp, &va, NOCRED, NULL, &vp);
 	vput(rvp);
 	if (error)
 		return error;
