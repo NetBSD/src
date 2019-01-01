@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.mipsco.inc,v 1.6 2002/11/15 10:12:40 wdk Exp $
+#	$NetBSD: Makefile.mipsco.inc,v 1.7 2019/01/01 19:41:04 christos Exp $
 
 SYSTEM_LD_TAIL_EXTRA=; \
-		echo ${ELF2ECOFF} $@ $@.ecoff; ${ELF2ECOFF} $@ $@.ecoff; \
+		echo ${MIPS_ELF2ECOFF} $@ $@.ecoff; \
+		${MIPS_ELF2ECOFF} $@ $@.ecoff; \
 		${SIZE} $@.ecoff; chmod 755 $@.ecoff
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ecoff@}
