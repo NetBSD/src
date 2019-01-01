@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.514 2018/12/25 11:56:14 mlelstv Exp $
+# $NetBSD: GENERIC,v 1.515 2019/01/01 08:09:30 maya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.514 $"
+#ident		"GENERIC-$Revision: 1.515 $"
 
 maxusers	64		# estimated number of users
 
@@ -435,6 +435,9 @@ intelfb*	at intelfbbus?
 
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
+
+#amdgpu*	at pci? dev ? function ?
+#amdgpufb*	at amdgpufbbus?
 
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
