@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2018/09/02 16:41:42 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.14 2019/01/01 19:09:13 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -30,7 +30,7 @@ MDSETTARGETS=	INSTALL${NX}_IP2x ${RAMDISK} netbsd-INSTALL${NX}_IP2x${SFX} \
 MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_SUFFIXES.netbsd-INSTALL${NX}_IP2x=ecoff create-ecoff
-create-ecoff=	${ELF2ECOFF} ${.TARGET:R} ${.TARGET}
+create-ecoff=	${MIPS_ELF2ECOFF} ${.TARGET:R} ${.TARGET}
 
 IMAGE_RELEASEDIR=	installation/diskimage
 
