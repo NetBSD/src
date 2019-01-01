@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.144 2018/10/14 17:37:40 jdolecek Exp $ */
+/* $NetBSD: udf_subr.c,v 1.145 2019/01/01 10:06:54 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.144 2018/10/14 17:37:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.145 2019/01/01 10:06:54 hannken Exp $");
 #endif /* not lint */
 
 
@@ -5779,7 +5779,7 @@ udf_dispose_node(struct udf_node *udf_node)
 
 int
 udf_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
-    struct vattr *vap, kauth_cred_t cred,
+    struct vattr *vap, kauth_cred_t cred, void *extra,
     size_t *key_len, const void **new_key)
 {
 	union dscrptr *dscr;
@@ -5938,7 +5938,7 @@ udf_create_node(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	struct udf_mount *ump = dir_node->ump;
 	int error;
 
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, vpp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL, vpp);
 	if (error)
 		return error;
 

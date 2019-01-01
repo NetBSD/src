@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.128 2017/05/28 16:38:55 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.129 2019/01/01 10:06:55 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.128 2017/05/28 16:38:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.129 2019/01/01 10:06:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1024,7 +1024,7 @@ ext2fs_makeinode(struct vattr *vap, struct vnode *dvp, struct vnode **vpp,
 
 	*vpp = NULL;
 
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL, &tvp);
 	if (error)
 		return error;
 	error = vn_lock(tvp, LK_EXCLUSIVE);

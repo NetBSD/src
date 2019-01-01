@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.322 2018/08/11 20:16:21 zafer Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.323 2019/01/01 10:06:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.322 2018/08/11 20:16:21 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.323 2019/01/01 10:06:55 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -366,7 +366,7 @@ lfs_makeinode(struct vattr *vap, struct vnode *dvp,
 	struct vnode	*tvp;
 	int		error;
 
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL, &tvp);
 	if (error)
 		return error;
 	error = vn_lock(tvp, LK_EXCLUSIVE);
@@ -977,7 +977,8 @@ lfs_mkdir(void *v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, ap->a_vpp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL,
+	    ap->a_vpp);
 	if (error)
 		goto out;
 
