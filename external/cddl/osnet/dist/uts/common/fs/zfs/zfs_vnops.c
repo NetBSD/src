@@ -5663,11 +5663,6 @@ zfs_netbsd_reclaim(void *v)
 	/*
 	 * Process a deferred atime update.
 	 */
-	/*
-	 * XXXNETBSD I don't think this actually works.
-	 * We are dirtying the znode again after the vcache layer cleaned it,
-	 * so we would need to zil_commit() again here.
-	 */
 	if (zp->z_atime_dirty && zp->z_unlinked == 0) {
 		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
 
@@ -5683,6 +5678,8 @@ zfs_netbsd_reclaim(void *v)
 			dmu_tx_commit(tx);
 		}
 	}
+
+	zil_commit(zfsvfs->z_log, zp->z_id);
 
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
