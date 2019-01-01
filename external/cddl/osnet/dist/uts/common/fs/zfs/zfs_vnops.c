@@ -84,6 +84,7 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 #include <uvm/uvm_extern.h>
+#include <sys/fstrans.h>
 
 uint_t zfs_putpage_key;
 #endif
@@ -5972,9 +5973,6 @@ zfs_netbsd_putpages(void *v)
 	bool async = (flags & PGO_SYNCIO) == 0;
 	bool cleaning = (flags & PGO_CLEANIT) != 0;
 
-	ZFS_ENTER(zfsvfs);
-	ZFS_VERIFY_ZP(zp);
-
 	if (cleaning) {
 		ASSERT((offlo & PAGE_MASK) == 0 && (offhi & PAGE_MASK) == 0);
 		ASSERT(offlo < offhi || offhi == 0);
@@ -5983,25 +5981,38 @@ zfs_netbsd_putpages(void *v)
 		else
 			len = offhi - offlo;
 		mutex_exit(vp->v_interlock);
+		if (curlwp == uvm.pagedaemon_lwp) {
+			error = fstrans_start_nowait(vp->v_mount);
+			if (error)
+				return error;
+		} else {
+			vfs_t *mp = vp->v_mount;
+			fstrans_start(mp);
+			if (vp->v_mount != mp) {
+				fstrans_done(mp);
+				ASSERT(!vn_has_cached_data(vp));
+				return 0;
+			}
+		}
 		rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
 		mutex_enter(vp->v_interlock);
 		tsd_set(zfs_putpage_key, &cleaned);
 	}
 	error = genfs_putpages(v);
-	if (rl) {
+	if (cleaning) {
 		tsd_set(zfs_putpage_key, NULL);
 		zfs_range_unlock(rl);
+
+		/*
+		 * Only zil_commit() if we cleaned something.  This avoids 
+		 * deadlock if we're called from zfs_netbsd_setsize().
+		 */
+
+		if (cleaned)
+		if (!async || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+			zil_commit(zfsvfs->z_log, zp->z_id);
+		fstrans_done(vp->v_mount);
 	}
-
-	/*
-	 * Only zil_commit() if we cleaned something.
-	 * This avoids deadlock if we're called from zfs_netbsd_setsize().
-	 */
-
-	if (cleaned)
-	if (!async || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
-		zil_commit(zfsvfs->z_log, zp->z_id);
-	ZFS_EXIT(zfsvfs);
 	return error;
 }
 
