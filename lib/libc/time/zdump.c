@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.50 2018/10/19 23:05:35 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.51 2019/01/01 03:04:56 christos Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.50 2018/10/19 23:05:35 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.51 2019/01/01 03:04:56 christos Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -810,8 +810,10 @@ my_snprintf(char *s, size_t size, char const *format, ...)
     arglen = strlen(arg);
   } else {
     n = vsprintf(buf, format, args);
-    if (n < 0)
+    if (n < 0) {
+      va_end(args);
       return n;
+    }
     arg = buf;
     arglen = n;
   }

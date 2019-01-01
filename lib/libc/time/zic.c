@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.72 2018/10/27 22:29:24 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.73 2019/01/01 03:04:56 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.72 2018/10/27 22:29:24 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.73 2019/01/01 03:04:56 christos Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -2780,7 +2780,7 @@ error(_("can't determine time zone abbreviation to use just after until time"));
 			if (attypes[i].at > lastat->at)
 				lastat = &attypes[i];
 		if (lastat->at < rpytime(&xr, max_year - 1)) {
-			addtt(rpytime(&xr, max_year + 1), typecnt-1);
+			addtt(rpytime(&xr, max_year + 1), lastat->type);
 			attypes[timecnt - 1].dontmerge = true;
 		}
 	}
@@ -2999,7 +2999,7 @@ lowerit(char a)
 }
 
 /* case-insensitive equality */
-static bool
+static ATTRIBUTE_PURE bool
 ciequal(const char *ap, const char *bp)
 {
 	while (lowerit(*ap) == lowerit(*bp++))
@@ -3008,7 +3008,7 @@ ciequal(const char *ap, const char *bp)
 	return false;
 }
 
-static bool
+static ATTRIBUTE_PURE bool
 itsabbr(const char *abbr, const char *word)
 {
 	if (lowerit(*abbr) != lowerit(*word))
@@ -3024,7 +3024,7 @@ itsabbr(const char *abbr, const char *word)
 
 /* Return true if ABBR is an initial prefix of WORD, ignoring ASCII case.  */
 
-static bool
+static ATTRIBUTE_PURE bool
 ciprefix(char const *abbr, char const *word)
 {
   do
