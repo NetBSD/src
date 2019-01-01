@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.241 2018/12/10 20:48:34 jdolecek Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.242 2019/01/01 10:06:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.241 2018/12/10 20:48:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.242 2019/01/01 10:06:55 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -935,7 +935,8 @@ ufs_mkdir(void *v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, ap->a_vpp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL,
+	    ap->a_vpp);
 	if (error)
 		goto out;
 	error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE);
@@ -1783,7 +1784,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 
 	UFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
 
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, NULL, &tvp);
 	if (error)
 		return error;
 	error = vn_lock(tvp, LK_EXCLUSIVE);

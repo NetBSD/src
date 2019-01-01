@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.470 2017/10/27 12:25:15 joerg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.471 2019/01/01 10:06:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.470 2017/10/27 12:25:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.471 2019/01/01 10:06:54 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -351,7 +351,7 @@ bdevvp(dev_t dev, vnode_t **vpp)
 	va.va_type = VBLK;
 	va.va_rdev = dev;
 
-	return vcache_new(dead_rootmount, NULL, &va, NOCRED, vpp);
+	return vcache_new(dead_rootmount, NULL, &va, NOCRED, NULL, vpp);
 }
 
 /*
@@ -367,7 +367,7 @@ cdevvp(dev_t dev, vnode_t **vpp)
 	va.va_type = VCHR;
 	va.va_rdev = dev;
 
-	return vcache_new(dead_rootmount, NULL, &va, NOCRED, vpp);
+	return vcache_new(dead_rootmount, NULL, &va, NOCRED, NULL, vpp);
 }
 
 /*

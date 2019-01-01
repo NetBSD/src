@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.233 2018/12/10 21:19:33 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.234 2019/01/01 10:06:54 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -189,7 +189,7 @@ struct vfsops {
 	int	(*vfs_loadvnode) (struct mount *, struct vnode *,
 				    const void *, size_t, const void **);
 	int	(*vfs_newvnode) (struct mount *, struct vnode *, struct vnode *,
-				    struct vattr *, kauth_cred_t,
+				    struct vattr *, kauth_cred_t, void *,
 				    size_t *, const void **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
 				    struct vnode **);
@@ -215,8 +215,9 @@ struct vfsops {
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_LOADVNODE(MP, VP, KEY, KEY_LEN, NEW_KEY) \
 	(*(MP)->mnt_op->vfs_loadvnode)(MP, VP, KEY, KEY_LEN, NEW_KEY)
-#define VFS_NEWVNODE(MP, DVP, VP, VAP, CRED, NEW_LEN, NEW_KEY) \
-	(*(MP)->mnt_op->vfs_newvnode)(MP, DVP, VP, VAP, CRED, NEW_LEN, NEW_KEY)
+#define VFS_NEWVNODE(MP, DVP, VP, VAP, CRED, EXTRA, NEW_LEN, NEW_KEY) \
+	(*(MP)->mnt_op->vfs_newvnode)(MP, DVP, VP, VAP, CRED, EXTRA, \
+	    NEW_LEN, NEW_KEY)
 
 #define VFS_RENAMELOCK_ENTER(MP)  (*(MP)->mnt_op->vfs_renamelock_enter)(MP)
 #define VFS_RENAMELOCK_EXIT(MP)   (*(MP)->mnt_op->vfs_renamelock_exit)(MP)
@@ -253,7 +254,7 @@ int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
 int	fsname##_loadvnode(struct mount *, struct vnode *,		\
 		const void *, size_t, const void **);			\
 int	fsname##_newvnode(struct mount *, struct vnode *,		\
-		struct vnode *, struct vattr *, kauth_cred_t,		\
+		struct vnode *, struct vattr *, kauth_cred_t, void *,	\
 		size_t *, const void **);				\
 int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
 int	fsname##_vptofh(struct vnode *, struct fid *, size_t *);	\
