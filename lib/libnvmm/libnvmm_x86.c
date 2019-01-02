@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.7 2018/12/29 17:54:54 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.8 2019/01/02 12:18:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -76,13 +76,14 @@ nvmm_vcpu_dump(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 	printf("| -> RBX=%p\n", (void *)state.gprs[NVMM_X64_GPR_RBX]);
 	printf("| -> RCX=%p\n", (void *)state.gprs[NVMM_X64_GPR_RCX]);
 	for (i = 0; i < NVMM_X64_NSEG; i++) {
-		printf("| -> %s: sel=0x%lx base=%p, limit=%p, P=%d\n",
+		printf("| -> %s: sel=0x%lx base=%p, limit=%p, P=%d, D=%d\n",
 		    segnames[i],
 		    state.segs[i].selector,
 		    (void *)state.segs[i].base,
 		    (void *)state.segs[i].limit,
-		    state.segs[i].attrib.p);
+		    state.segs[i].attrib.p, state.segs[i].attrib.def32);
 	}
+	printf("| -> CPL=%p\n", (void *)state.misc[NVMM_X64_MISC_CPL]);
 
 	return 0;
 }
@@ -619,6 +620,8 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 /* -------------------------------------------------------------------------- */
 
+static int fetch_segment(struct nvmm_machine *, struct nvmm_x64_state *);
+
 int
 nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
     struct nvmm_exit *exit)
@@ -628,7 +631,7 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	uint64_t cnt;
 	gvaddr_t gva;
 	int reg = 0; /* GCC */
-	int ret;
+	int ret, seg;
 
 	if (__predict_false(exit->reason != NVMM_EXIT_IO)) {
 		errno = EINVAL;
@@ -659,8 +662,19 @@ nvmm_assist_io(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		gva &= mask_from_adsize(exit->u.io.address_size);
 
 		if (!is_long_mode(&state)) {
-			ret = segment_apply(&state.segs[exit->u.io.seg], &gva,
-			    io.size);
+			if (exit->u.io.seg != -1) {
+				seg = exit->u.io.seg;
+			} else {
+				if (io.in) {
+					seg = NVMM_X64_SEG_ES;
+				} else {
+					seg = fetch_segment(mach, &state);
+					if (seg == -1)
+						return -1;
+				}
+			}
+
+			ret = segment_apply(&state.segs[seg], &gva, io.size);
 			if (ret == -1)
 				return -1;
 		}
@@ -2091,24 +2105,27 @@ node_rex_prefix(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	return 0;
 }
 
-static const uint8_t legpref_table[NLEG] = {
+static const struct {
+	uint8_t byte;
+	int seg;
+} legpref_table[NLEG] = {
 	/* Group 1 */
-	[LEG_LOCK] = 0xF0,
-	[LEG_REPN] = 0xF2,
-	[LEG_REP]  = 0xF3,
+	[LEG_LOCK] = { 0xF0, -1 },
+	[LEG_REPN] = { 0xF2, -1 },
+	[LEG_REP]  = { 0xF3, -1 },
 	/* Group 2 */
-	[LEG_OVR_CS] = 0x2E,
-	[LEG_OVR_SS] = 0x36,
-	[LEG_OVR_DS] = 0x3E,
-	[LEG_OVR_ES] = 0x26,
-	[LEG_OVR_FS] = 0x64,
-	[LEG_OVR_GS] = 0x65,
-	[LEG_BRN_TAKEN]  = 0x2E,
-	[LEG_BRN_NTAKEN] =  0x3E,
+	[LEG_OVR_CS] = { 0x2E, NVMM_X64_SEG_CS },
+	[LEG_OVR_SS] = { 0x36, NVMM_X64_SEG_SS },
+	[LEG_OVR_DS] = { 0x3E, NVMM_X64_SEG_DS },
+	[LEG_OVR_ES] = { 0x26, NVMM_X64_SEG_ES },
+	[LEG_OVR_FS] = { 0x64, NVMM_X64_SEG_FS },
+	[LEG_OVR_GS] = { 0x65, NVMM_X64_SEG_GS },
+	[LEG_BRN_TAKEN]  = { 0x2E, -1 },
+	[LEG_BRN_NTAKEN] = { 0x3E, -1 },
 	/* Group 3 */
-	[LEG_OPR_OVR] = 0x66,
+	[LEG_OPR_OVR] = { 0x66, -1 },
 	/* Group 4 */
-	[LEG_ADR_OVR] = 0x67
+	[LEG_ADR_OVR] = { 0x67, -1 },
 };
 
 static int
@@ -2122,7 +2139,7 @@ node_legacy_prefix(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	}
 
 	for (i = 0; i < NLEG; i++) {
-		if (byte == legpref_table[i])
+		if (byte == legpref_table[i].byte)
 			break;
 	}
 
@@ -2448,6 +2465,46 @@ store_to_mem(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		return -1;
 
 	return 0;
+}
+
+static int
+fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
+{
+	uint8_t inst_bytes[15], byte;
+	size_t i, n, fetchsize;
+	gvaddr_t gva;
+	int ret, seg;
+
+	fetchsize = sizeof(inst_bytes);
+
+	gva = state->gprs[NVMM_X64_GPR_RIP];
+	if (!is_long_mode(state)) {
+		ret = segment_apply(&state->segs[NVMM_X64_SEG_CS], &gva,
+		    fetchsize);
+		if (ret == -1)
+			return -1;
+	}
+
+	ret = read_guest_memory(mach, state, gva, inst_bytes, fetchsize);
+	if (ret == -1)
+		return -1;
+
+	seg = NVMM_X64_SEG_DS;
+	for (n = 0; n < fetchsize; n++) {
+		byte = inst_bytes[n];
+		for (i = 0; i < NLEG; i++) {
+			if (byte != legpref_table[i].byte)
+				continue;
+			if (i >= LEG_OVR_CS && i <= LEG_OVR_GS)
+				seg = legpref_table[i].seg;
+			break;
+		}
+		if (i == NLEG) {
+			break;
+		}
+	}
+
+	return seg;
 }
 
 static int
