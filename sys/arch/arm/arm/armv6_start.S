@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.3 2019/01/02 16:17:15 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.4 2019/01/02 16:27:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -480,6 +480,7 @@ generic_startv6:
 #else
 #define CPU_CONTROL_EX_BEND_SET		CPU_CONTROL_EX_BEND
 #endif
+
 #ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
 #define CPU_CONTROL_AFLT_ENABLE_CLR	CPU_CONTROL_AFLT_ENABLE
 #define CPU_CONTROL_AFLT_ENABLE_SET	0
@@ -487,6 +488,7 @@ generic_startv6:
 #define CPU_CONTROL_AFLT_ENABLE_CLR	0
 #define CPU_CONTROL_AFLT_ENABLE_SET	CPU_CONTROL_AFLT_ENABLE
 #endif
+
 #ifdef ARM_MMU_EXTENDED
 #define CPU_CONTROL_XP_ENABLE_CLR	0
 #define CPU_CONTROL_XP_ENABLE_SET	CPU_CONTROL_XP_ENABLE
@@ -759,7 +761,6 @@ ENTRY_NP(cpu_mpstart)
 
 	// disables and clears caches
 	bl	armv7_init
-
 
 	movw	r0, #:lower16:TEMP_L1_TABLE
 	movt	r0, #:upper16:TEMP_L1_TABLE
