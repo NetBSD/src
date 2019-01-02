@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2011/07/10 04:37:56 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.22 2019/01/02 17:32:25 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,7 +13,7 @@ MDSET_RELEASEDIR=	binary/kernel
 MDSET_NOSTRIP=		# defined
 
 MDSET_POST.netbsd-INSTALL.aout= \
-    ${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} ${.TARGET} ${.TARGET}.tmp ;\
+    ${ARM_ELF2AOUT} ${.TARGET} ${.TARGET}.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
