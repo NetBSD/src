@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.29 2019/01/02 17:28:18 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.30 2019/01/02 18:39:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.29 2019/01/02 17:28:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.30 2019/01/02 18:39:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -910,6 +910,10 @@ sunxi_mmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 	default:
 		return EINVAL;
 	}
+
+	error = fdtbus_regulator_supports_voltage(sc->sc_reg_vqmmc, uvol, uvol);
+	if (error != 0)
+		return 0;
 
 	error = fdtbus_regulator_set_voltage(sc->sc_reg_vqmmc, uvol, uvol);
 	if (error != 0)
