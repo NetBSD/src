@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.197 2018/12/31 13:35:15 christos Exp $
+#	$NetBSD: Makefile,v 1.198 2019/01/02 13:29:22 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -173,11 +173,11 @@ SUBDIR+=	macppc-fixcoff
 SUBDIR+=	powerpc-mkbootimage
 .endif
 
-.if ${MACHINE_ARCH} == "arm"
+.if ${MACHINE_CPU} == "arm"
 SUBDIR+=	arm-elf2aout
 .endif
 
-.if ${MACHINE_ARCH} == "m68k"
+.if ${MACHINE_CPU} == "m68k"
 SUBDIR+=	m68k-elf2aout
 .endif
 
