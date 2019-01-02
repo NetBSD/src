@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.16 2018/10/18 09:01:52 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.17 2019/01/02 16:13:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.16 2018/10/18 09:01:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.17 2019/01/02 16:13:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -286,7 +286,7 @@ arm_fdt_cpu_mpstart(void)
 	int child, ret;
 	const char *method;
 #if NPSCI_FDT > 0
-	bool nopsci = false;
+	bool psci_p = true;
 #endif
 
 	const int cpus = OF_finddevice("/cpus");
@@ -297,7 +297,7 @@ arm_fdt_cpu_mpstart(void)
 
 #if NPSCI_FDT > 0
 	if (psci_fdt_preinit() != 0)
-		nopsci = true;
+		psci_p = false;
 #endif
 
 	/* MPIDR affinity levels of boot processor. */
@@ -340,7 +340,7 @@ arm_fdt_cpu_mpstart(void)
 				continue;
 
 #if NPSCI_FDT > 0
-		} else if (!nopsci && (strcmp(method, "psci") == 0)) {
+		} else if (psci_p && (strcmp(method, "psci") == 0)) {
 			ret = psci_cpu_on(mpidr, cpu_fdt_mpstart_pa(), 0);
 			if (ret != PSCI_SUCCESS)
 				continue;
