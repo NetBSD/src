@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.16 2018/11/13 19:06:05 jakllsch Exp $ */
+/* $NetBSD: axppmic.c,v 1.17 2019/01/02 17:28:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.16 2018/11/13 19:06:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.17 2019/01/02 17:28:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
@@ -202,6 +203,47 @@ static const struct axppmic_ctrl axp805_ctrls[] = {
 		0x11, __BIT(6), 0x26, __BITS(4,0)),
 };
 
+static const struct axppmic_ctrl axp813_ctrls[] = {
+	AXP_CTRL("dldo1", 700, 3300, 100,
+		0x12, __BIT(3), 0x15, __BITS(4,0)),
+	AXP_CTRL2("dldo2", 700, 4200, 100, 28, 200, 4,
+		0x12, __BIT(4), 0x16, __BITS(4,0)),
+	AXP_CTRL("dldo3", 700, 3300, 100,
+	 	0x12, __BIT(5), 0x17, __BITS(4,0)),
+	AXP_CTRL("dldo4", 700, 3300, 100,
+		0x12, __BIT(6), 0x18, __BITS(4,0)),
+	AXP_CTRL("eldo1", 700, 1900, 50,
+		0x12, __BIT(0), 0x19, __BITS(4,0)),
+	AXP_CTRL("eldo2", 700, 1900, 50,
+		0x12, __BIT(1), 0x1a, __BITS(4,0)),
+	AXP_CTRL("eldo3", 700, 1900, 50,
+		0x12, __BIT(2), 0x1b, __BITS(4,0)),
+	AXP_CTRL("fldo1", 700, 1450, 50,
+		0x13, __BIT(2), 0x1c, __BITS(3,0)),
+	AXP_CTRL("fldo2", 700, 1450, 50,
+		0x13, __BIT(3), 0x1d, __BITS(3,0)),
+	AXP_CTRL("dcdc1", 1600, 3400, 100,
+		0x10, __BIT(0), 0x20, __BITS(4,0)),
+	AXP_CTRL2("dcdc2", 500, 1300, 10, 70, 20, 5,
+		0x10, __BIT(1), 0x21, __BITS(6,0)),
+	AXP_CTRL2("dcdc3", 500, 1300, 10, 70, 20, 5,
+		0x10, __BIT(2), 0x22, __BITS(6,0)),
+	AXP_CTRL2("dcdc4", 500, 1300, 10, 70, 20, 5,
+		0x10, __BIT(3), 0x23, __BITS(6,0)),
+	AXP_CTRL2("dcdc5", 800, 1840, 10, 33, 20, 36,
+		0x10, __BIT(4), 0x24, __BITS(6,0)),
+	AXP_CTRL2("dcdc6", 600, 1520, 10, 51, 20, 21,
+		0x10, __BIT(5), 0x25, __BITS(6,0)),
+	AXP_CTRL2("dcdc7", 600, 1520, 10, 51, 20, 21,
+		0x10, __BIT(6), 0x26, __BITS(6,0)),
+	AXP_CTRL("aldo1", 700, 3300, 100,
+		0x13, __BIT(5), 0x28, __BITS(4,0)),
+	AXP_CTRL("aldo2", 700, 3300, 100,
+		0x13, __BIT(6), 0x29, __BITS(4,0)),
+	AXP_CTRL("aldo3", 700, 3300, 100,
+		0x13, __BIT(7), 0x2a, __BITS(4,0)),
+};
+
 struct axppmic_irq {
 	u_int reg;
 	uint8_t mask;
@@ -268,6 +310,7 @@ struct axpreg_softc {
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 	const struct axppmic_ctrl *sc_ctrl;
+	u_int		sc_inuse;
 };
 
 struct axpreg_attach_args {
@@ -305,10 +348,31 @@ static const struct axppmic_config axp805_config = {
 	.poklirq = AXPPMIC_IRQ(2, __BIT(0)),
 };
 
+static const struct axppmic_config axp813_config = {
+	.name = "AXP813",
+	.controls = axp813_ctrls,
+	.ncontrols = __arraycount(axp813_ctrls),
+	.irq_regs = 6,
+	.has_battery = true,
+	.has_fuel_gauge = true,
+	.batsense_step = 1100,
+	.charge_step = 1000,
+	.discharge_step = 1000,
+	.maxcap_step = 1456,
+	.coulomb_step = 1456,
+	.poklirq = AXPPMIC_IRQ(5, __BIT(3)),
+	.acinirq = AXPPMIC_IRQ(1, __BITS(6,5)),
+	.vbusirq = AXPPMIC_IRQ(1, __BITS(3,2)),
+	.battirq = AXPPMIC_IRQ(2, __BITS(7,6)),
+	.chargeirq = AXPPMIC_IRQ(2, __BITS(3,2)),
+	.chargestirq = AXPPMIC_IRQ(4, __BITS(1,0)),	
+};
+
 static const struct device_compatible_entry compat_data[] = {
 	{ "x-powers,axp803",		(uintptr_t)&axp803_config },
 	{ "x-powers,axp805",		(uintptr_t)&axp805_config },
 	{ "x-powers,axp806",		(uintptr_t)&axp805_config },
+	{ "x-powers,axp813",		(uintptr_t)&axp813_config },
 	{ NULL,				0 }
 };
 
@@ -816,12 +880,20 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 static int
 axpreg_acquire(device_t dev)
 {
+	struct axpreg_softc *sc = device_private(dev);
+
+	if (atomic_cas_uint(&sc->sc_inuse, 0, 1) != 0)
+		return EBUSY;
+
 	return 0;
 }
 
 static void
 axpreg_release(device_t dev)
 {
+	struct axpreg_softc *sc = device_private(dev);
+
+	atomic_swap_uint(&sc->sc_inuse, 0);
 }
 
 static int
