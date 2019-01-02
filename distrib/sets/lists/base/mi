@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1158.2.5 2018/10/31 08:55:32 martin Exp $
+# $NetBSD: mi,v 1.1158.2.6 2019/01/02 15:48:00 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5558,6 +5558,7 @@
 ./usr/share/zoneinfo/Asia/Pontianak		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Pyongyang		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Qatar			base-sys-share		share
+./usr/share/zoneinfo/Asia/Qostanay		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Qyzylorda		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Rangoon		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Riyadh		base-sys-share		share
