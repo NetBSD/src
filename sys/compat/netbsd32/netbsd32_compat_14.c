@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.21 2007/12/20 23:03:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.21.74.1 2019/01/02 15:25:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.21 2007/12/20 23:03:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.21.74.1 2019/01/02 15:25:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -126,6 +126,7 @@ static inline void
 native_to_netbsd32_msqid_ds14(struct msqid_ds *msqbuf, struct netbsd32_msqid_ds14 *omsqbuf)
 {
 
+	memset(omsqbuf, 0, sizeof(*omsqbuf));
 	native_to_netbsd32_ipc_perm14(&msqbuf->msg_perm, &omsqbuf->msg_perm);
 
 #define	CVT(x)	omsqbuf->x = msqbuf->x
