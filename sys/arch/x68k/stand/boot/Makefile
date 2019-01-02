@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2018/12/31 19:25:46 christos Exp $
+#	$NetBSD: Makefile,v 1.30 2019/01/02 00:48:13 christos Exp $
 
 NOMAN=		# defined
 
@@ -55,7 +55,7 @@ ${PROG}:	${OBJS} ${LDLIBS}
 	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
 	${STRIP} ${PROG}.sym -o ${PROG}.strip
-	${ELF2AOUT} ${PROG}.strip ${PROG}
+	${M68K_ELF2AOUT} ${PROG}.strip ${PROG}
 
 CLEANFILES+=	${PROG}.sym ${PROG}.strip
 
