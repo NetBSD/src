@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.28 2018/11/09 14:39:51 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.29 2019/01/02 17:28:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.28 2018/11/09 14:39:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.29 2019/01/02 17:28:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -190,6 +190,7 @@ struct sunxi_mmc_softc {
 	struct fdtbus_gpio_pin *sc_gpio_wp;
 	int sc_gpio_wp_inverted;
 
+	struct fdtbus_regulator *sc_reg_vmmc;
 	struct fdtbus_regulator *sc_reg_vqmmc;
 
 	struct fdtbus_mmc_pwrseq *sc_pwrseq;
@@ -328,8 +329,6 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_rst_ahb = fdtbus_reset_get(phandle, "ahb");
 
-	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
-
 	sc->sc_pwrseq = fdtbus_mmc_pwrseq_get(phandle);
 
 	if (clk_enable(sc->sc_clk_ahb) != 0 ||
@@ -361,6 +360,9 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": SD/MMC controller\n");
+
+	sc->sc_reg_vmmc = fdtbus_regulator_acquire(phandle, "vmmc-supply");
+	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
 
 	sc->sc_gpio_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
