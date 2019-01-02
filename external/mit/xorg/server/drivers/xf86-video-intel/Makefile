@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2019/01/01 00:37:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2019/01/02 22:58:44 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -188,6 +188,7 @@ CPPFLAGS+=		-DHAVE_XF86_CURSOR_RESET_CURSOR
 # on ELF &c.
 CFLAGS+=	-fvisibility=hidden
 
+LIBDPLIBS+=	Xfont		${.CURDIR}/../../../lib/libXfont
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../../lib/libdrm_intel
 LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
 
