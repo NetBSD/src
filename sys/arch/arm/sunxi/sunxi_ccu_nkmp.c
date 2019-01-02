@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_nkmp.c,v 1.7 2017/10/06 21:09:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_nkmp.c,v 1.8 2019/01/02 19:33:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.7 2017/10/06 21:09:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.8 2019/01/02 19:33:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,6 +121,8 @@ sunxi_ccu_nkmp_get_rate(struct sunxi_ccu_softc *sc,
 
 	if ((nkmp->flags & SUNXI_CCU_NKMP_FACTOR_P_POW2) != 0)
 		p = 1 << p;
+	else if ((nkmp->flags & SUNXI_CCU_NKMP_FACTOR_P_X4) != 0)
+		p = p ? 4 : 1;
 	else
 		p++;
 
