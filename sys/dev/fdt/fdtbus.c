@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.24 2018/09/23 19:32:03 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.25 2019/01/02 14:54:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.24 2018/09/23 19:32:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.25 2019/01/02 14:54:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,27 +198,35 @@ void
 fdt_add_bus_match(device_t bus, const int phandle, struct fdt_attach_args *faa,
     bool (*fn)(void *, int), void *fnarg)
 {
-	struct fdt_node *node;
 	int child;
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
 		if (fn && !fn(fnarg, child))
 			continue;
 
-		/* Add the node to our device list */
-		node = kmem_alloc(sizeof(*node), KM_SLEEP);
-		node->n_bus = bus;
-		node->n_dev = NULL;
-		node->n_phandle = child;
-		node->n_name = fdtbus_get_string(child, "name");
-		node->n_order = fdt_get_order(child);
-		node->n_faa = *faa;
-		node->n_faa.faa_phandle = child;
-		node->n_faa.faa_name = node->n_name;
-
-		fdt_add_node(node);
-		fdt_need_rescan = true;
+		fdt_add_child(bus, child, faa, fdt_get_order(child));
 	}
+}
+
+void
+fdt_add_child(device_t bus, const int child, struct fdt_attach_args *faa,
+    u_int order)
+{
+	struct fdt_node *node;
+
+	/* Add the node to our device list */
+	node = kmem_alloc(sizeof(*node), KM_SLEEP);
+	node->n_bus = bus;
+	node->n_dev = NULL;
+	node->n_phandle = child;
+	node->n_name = fdtbus_get_string(child, "name");
+	node->n_order = order;
+	node->n_faa = *faa;
+	node->n_faa.faa_phandle = child;
+	node->n_faa.faa_name = node->n_name;
+
+	fdt_add_node(node);
+	fdt_need_rescan = true;
 }
 
 static int
