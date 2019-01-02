@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2011/07/10 04:37:56 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.24 2019/01/02 17:34:03 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,7 @@ MDSET_RELEASEDIR=	binary/kernel
 MDSET_SUFFIXES.-=	aout create-aout
 
 create-aout= \
-	${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} ${.TARGET:R} ${.TARGET}
+	${ARM_ELF2AOUT} ${.TARGET:R} ${.TARGET}
 
 release::	check_RELEASEDIR .WAIT netbsd-INSTALL.aout.gz
 	${RELEASE_INSTALL} netbsd-INSTALL.aout.gz \
