@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.1 2018/10/18 09:01:52 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.2 2019/01/02 14:31:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -1034,7 +1034,7 @@ ENTRY_NP(generic_vprint)
 	pop	{r4}
 	add	sp, sp, #4
 	mov	pc, lr
-ASEND(generic_prints)
+ASEND(generic_vprint)
 
 ENTRY_NP(generic_prints)
 	push	{r4, lr}
