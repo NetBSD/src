@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.123 2018/10/18 09:01:52 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.124 2019/01/02 09:04:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.123 2018/10/18 09:01:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.124 2019/01/02 09:04:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -113,7 +113,6 @@ cpu_attach(device_t dv, cpuid_t id)
 			ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF0;
 			ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF1;
 		}
-		ci->ci_data.cpu_core_id = id;
 		ci->ci_data.cpu_cc_freq = cpu_info_store.ci_data.cpu_cc_freq;
 		ci->ci_arm_cpuid = cpu_info_store.ci_arm_cpuid;
 		ci->ci_arm_cputype = cpu_info_store.ci_arm_cputype;
