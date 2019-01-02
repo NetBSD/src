@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_regulator.c,v 1.6 2018/06/30 20:34:43 jmcneill Exp $ */
+/* $NetBSD: fdt_regulator.c,v 1.7 2019/01/02 18:38:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.6 2018/06/30 20:34:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.7 2019/01/02 18:38:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,6 +130,9 @@ fdtbus_regulator_disable(struct fdtbus_regulator *reg)
 {
 	struct fdtbus_regulator_controller *rc = reg->reg_rc;
 
+	if (of_hasprop(rc->rc_phandle, "regulator-always-on"))
+		return EIO;
+
 	return rc->rc_funcs->enable(rc->rc_dev, false);
 }
 
@@ -154,4 +157,26 @@ fdtbus_regulator_get_voltage(struct fdtbus_regulator *reg, u_int *puvol)
 		return EINVAL;
 
 	return rc->rc_funcs->get_voltage(rc->rc_dev, puvol);
+}
+
+int
+fdtbus_regulator_supports_voltage(struct fdtbus_regulator *reg, u_int min_uvol,
+    u_int max_uvol)
+{
+	struct fdtbus_regulator_controller *rc = reg->reg_rc;
+	u_int uvol;
+
+	if (rc->rc_funcs->set_voltage == NULL)
+		return EINVAL;
+
+	if (of_getprop_uint32(rc->rc_phandle, "regulator-min-microvolt", &uvol) == 0) {
+		if (uvol < min_uvol)
+			return ERANGE;
+	}
+	if (of_getprop_uint32(rc->rc_phandle, "regulator-max-microvolt", &uvol) == 0) {
+		if (uvol > max_uvol)
+			return ERANGE;
+	}
+
+	return 0;
 }
