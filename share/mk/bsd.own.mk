@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1091 2018/12/31 13:31:25 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1092 2019/01/02 16:08:53 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -337,7 +337,7 @@ LDFLAGS+=	--sysroot=/
 
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ARM_ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}arm-elf2aout
-M86K_ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
+M68K_ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
 MIPS_ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
 INSTALL=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install
 LEX=		${TOOLDIR}/bin/${_TOOL_PREFIX}lex
