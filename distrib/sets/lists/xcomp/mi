@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.200 2018/12/31 11:59:23 mrg Exp $
+#	 $NetBSD: mi,v 1.201 2019/01/02 00:46:34 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -837,7 +837,7 @@
 ./usr/X11R7/include/xorg/glamor.h			-unknown-	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/globals.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/glx_extinit.h			-unknown-	xorg,xorg_server_ver=120
-./usr/X11R7/include/xorg/glxvndabi.h			-unknown-	xorg
+./usr/X11R7/include/xorg/glxvndabi.h			-unknown-	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/glyphstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/hotplug.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/i2c_def.h			-unknown-	xorg
@@ -928,7 +928,7 @@
 ./usr/X11R7/include/xorg/vbeModes.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/version-config.h		-unknown-	xorg
 ./usr/X11R7/include/xorg/vgaHW.h			-unknown-	xorg
-./usr/X11R7/include/xorg/vndserver.h			-unknown-	xorg
+./usr/X11R7/include/xorg/vndserver.h			-unknown-	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/window.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/windowstr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xaa.h				-unknown-	xorg,xorg_server_ver=110
@@ -944,7 +944,7 @@
 ./usr/X11R7/include/xorg/xf86Crtc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Cursor.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86DDC.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86MatchDrivers.h		-unknown-	xorg
+./usr/X11R7/include/xorg/xf86MatchDrivers.h		-unknown-	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/xf86Modes.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Module.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86OSmouse.h			-unknown-	obsolete
@@ -988,7 +988,7 @@
 ./usr/X11R7/include/xorg/xorg-server.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xorgVersion.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xserver-properties.h		-unknown-	xorg
-./usr/X11R7/include/xorg/xserver_poll.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xserver_poll.h			-unknown-	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/xsha1.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xvdix.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xvmcext.h			-unknown-	xorg
