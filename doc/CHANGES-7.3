@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.28 2018/12/27 12:00:42 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.29 2019/01/02 15:32:26 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -346,4 +346,16 @@ sys/kern/kern_time.c				1.191
 
 	Fix kernel info leak.
 	[maxv, ticket #1667]
+
+sys/compat/netbsd32/netbsd32_compat_14.c	1.27
+sys/compat/netbsd32/netbsd32_conv.h		1.37
+sys/compat/sys/msg.h				1.5
+
+	Fix kernel info leaks.
+	[maxv, ticket #1668]
+
+sys/conf/copyright				1.17
+
+	Welcome to 2019!
+	[jnemeth, ticket #1669]
 
