@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.2 2019/01/02 14:31:33 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.3 2019/01/02 16:17:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -667,16 +667,15 @@ armv7_mmuinit:
 
 
 #if 0
-//XXXNH FreeBSD
 
-288	/*
-289	 * Set TEX remap registers
-290	 *  - All is set to uncacheable memory
-291	 */
-292	ldr	r0, =0xAAAAA
-293	mcr	CP15_PRRR(r0)
-294	mov	r0, #0
-295	mcr	CP15_NMRR(r0)
+/*
+ * Set TEX remap registers
+ *  - All is set to uncacheable memory
+ */
+	ldr	r0, =0xAAAAA
+	mcr	CP15_PRRR(r0)
+	mov	r0, #0
+	mcr	CP15_NMRR(r0)
 #endif
 
 	XPUTC(#'I')
@@ -757,16 +756,6 @@ ENTRY_NP(cpu_mpstart)
 
 	XPUTC('\n')
 	XPUTC('\r')
-
-#if 0
-	// We haven't used anything from memory yet so we can invalidate the
-	// L1 cache without fear of losing valuable data.  Afterwards, we can
-	// flush icache without worrying about anything getting written back
-	// to memory.
-	bl	armv7_dcache_l1inv_all		// toss-dcache
-	bl	armv7_icache_inv_all		// toss i-cache after d-cache
-
-#endif
 
 	// disables and clears caches
 	bl	armv7_init
@@ -969,13 +958,6 @@ armv6_mmuinit:
 	nop
 	nop
 	nop
-
-#if 0
-	VPRINTF("MMU\n\r")
-
-	VPRINTX(r4)
-	VPRINTF("\n\r")
-#endif
 
 	mov	pc, r4
 
