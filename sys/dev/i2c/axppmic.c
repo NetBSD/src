@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.17 2019/01/02 17:28:55 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.18 2019/01/02 18:38:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.17 2019/01/02 17:28:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.18 2019/01/02 18:38:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
@@ -310,7 +309,6 @@ struct axpreg_softc {
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 	const struct axppmic_ctrl *sc_ctrl;
-	u_int		sc_inuse;
 };
 
 struct axpreg_attach_args {
@@ -880,20 +878,12 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 static int
 axpreg_acquire(device_t dev)
 {
-	struct axpreg_softc *sc = device_private(dev);
-
-	if (atomic_cas_uint(&sc->sc_inuse, 0, 1) != 0)
-		return EBUSY;
-
 	return 0;
 }
 
 static void
 axpreg_release(device_t dev)
 {
-	struct axpreg_softc *sc = device_private(dev);
-
-	atomic_swap_uint(&sc->sc_inuse, 0);
 }
 
 static int
