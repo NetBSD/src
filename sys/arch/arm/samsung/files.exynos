@@ -1,24 +1,22 @@
-#	$NetBSD: files.exynos,v 1.35 2018/11/21 08:48:23 skrll Exp $
+#	$NetBSD: files.exynos,v 1.36 2019/01/03 23:04:09 jmcneill Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
 
 defflag	opt_cpuoptions.h			ARM_TRUSTZONE_FIRMWARE
 
-file	arch/arm/samsung/exynos_soc.c
-file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
-
 # Memory size in megabytes
 defparam opt_exynos.h				MEMSIZE
 defparam opt_exynos.h				EXYNOS_WDT_DEFAULT_PERIOD
 
 #
-defflag opt_exynos.h				SOC_EXYNOS4: CPU_CORTEXA9
+defflag opt_exynos.h				SOC_EXYNOS
+defflag opt_exynos.h				SOC_EXYNOS4: SOC_EXYNOS, CPU_CORTEXA9
 defflag opt_exynos.h				SOC_EXYNOS4120: SOC_EXYNOS4
 defflag opt_exynos.h				SOC_EXYNOS4212: SOC_EXYNOS4
 defflag opt_exynos.h				SOC_EXYNOS4412: SOC_EXYNOS4
 defflag opt_exynos.h				SOC_EXYNOS4412P: SOC_EXYNOS4
-defflag opt_exynos.h				SOC_EXYNOS5: CPU_CORTEXA15
+defflag opt_exynos.h				SOC_EXYNOS5: SOC_EXYNOS, CPU_CORTEXA15
 defflag opt_exynos.h				SOC_EXYNOS5250: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5260: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5410: SOC_EXYNOS5
@@ -26,7 +24,10 @@ defflag opt_exynos.h				SOC_EXYNOS5420: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5440: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5422: SOC_EXYNOS5
 
-file	arch/arm/samsung/exynos_platform.c
+file	arch/arm/samsung/exynos_platform.c	soc_exynos
+file	arch/arm/samsung/exynos_smc.S		soc_exynos & arm_trustzone_firmware
+file	arch/arm/samsung/exynos_soc.c		soc_exynos
+
 
 # Interrupt combiner
 device  exyointr
