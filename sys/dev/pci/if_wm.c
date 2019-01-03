@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.612 2018/12/30 04:18:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.613 2019/01/03 08:46:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.612 2018/12/30 04:18:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.613 2019/01/03 08:46:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14636,7 +14636,8 @@ wm_resume_workarounds_pchlan(struct wm_softc *sc)
 			/* Restore clear on SMB if no manageability engine
 			 * is present
 			 */
-			sc->phy.readreg_locked(dev, 1, I217_MEMPWR, &phy_reg);
+			rv = sc->phy.readreg_locked(dev, 1, I217_MEMPWR,
+			    &phy_reg);
 			if (rv != 0)
 				goto release;
 			phy_reg |= I217_MEMPWR_DISABLE_SMB_RELEASE;
