@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.83 2018/12/30 12:51:53 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.84 2019/01/03 09:03:41 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2129,4 +2129,37 @@ sys/dev/mii/mii_physubr.c			1.81,1.82
 
 	Fix default phy reset timeout.
 	[msaitoh, ticket #1149]
+
+doc/3RDPARTY					1.1581 (patch)
+distrib/sets/lists/base/mi			1.1196 (patch)
+external/public-domain/tz/dist/Makefile         up to 1.1.1.23
+external/public-domain/tz/dist/NEWS             up to 1.1.1.26
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.16
+external/public-domain/tz/dist/africa           up to 1.1.1.19
+external/public-domain/tz/dist/asia             up to 1.1.1.22
+external/public-domain/tz/dist/australasia      up to 1.1.1.17
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.12
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.8
+external/public-domain/tz/dist/northamerica     up to 1.1.1.22
+external/public-domain/tz/dist/theory.html      up to 1.1.1.7
+external/public-domain/tz/dist/version          up to 1.1.1.13
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.4
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.16
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.18
+
+	tzdata updated to 2018i.
+	[kre, ticket #1150]
+
+sys/compat/netbsd32/netbsd32_compat_14.c	1.27
+sys/compat/netbsd32/netbsd32_conv.h		1.37
+sys/compat/sys/msg.h				1.5
+sys/compat/sys/time_types.h			1.3
+
+	Fix kernel info leaks.
+	[maxv, ticket #1151]
+
+sys/conf/copyright				1.17
+
+	Welcome to 2019!
+	[jnemeth, ticket #1152]
 
