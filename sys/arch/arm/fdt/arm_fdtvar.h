@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.13 2019/01/03 12:52:40 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.14 2019/01/03 12:54:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,8 +61,6 @@ static const struct arm_platform_info __CONCAT(_name,_platinfo) = {	\
 	.api_ops = (_ops)						\
 };									\
 _ARM_PLATFORM_REGISTER(_name)
-
-TAILQ_HEAD(arm_platlist, arm_platform_info);
 
 const struct arm_platform *	arm_fdt_platform(void);
 
