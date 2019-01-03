@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.124 2018/10/19 08:30:57 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.125 2019/01/03 10:26:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.124 2018/10/19 08:30:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.125 2019/01/03 10:26:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -704,7 +704,7 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 vaddr_t
 cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
 {
-	const vaddr_t va = idlestack.pv_va + ci->ci_cpuid * USPACE;
+	const vaddr_t va = idlestack.pv_va + cpu_index(ci) * USPACE;
 	// printf("%s: %s: va=%lx\n", __func__, ci->ci_data.cpu_name, va);
 	return va;
 }
@@ -723,13 +723,15 @@ cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
  *
  */
 void
-cpu_init_secondary_processor(int cpuno)
+cpu_init_secondary_processor(int cpuindex)
 {
 	// pmap_kernel has been sucessfully built and we can switch to it
 
 	cpu_domains(DOMAIN_DEFAULT);
 	cpu_idcache_wbinv_all();
 
+	VPRINTS("index: ");
+	VPRINTX(cpuindex);
 	VPRINTS(" ttb");
 
 	cpu_setup(boot_args);
@@ -763,9 +765,14 @@ cpu_init_secondary_processor(int cpuno)
 	VPRINTS(")");
 	VPRINTS(" (TTBCR=");
 	VPRINTX(armreg_ttbcr_read());
+	VPRINTS(")");
 #endif
 
-	atomic_or_uint(&arm_cpu_hatched, __BIT(cpuno));
+	atomic_or_uint(&arm_cpu_hatched, __BIT(cpuindex));
+
+	VPRINTS(" hatched=");
+	VPRINTX(arm_cpu_hatched);
+	VPRINTS("\n\r");
 
 	/* return to assembly to Wait for cpu_boot_secondary_processors */
 }
