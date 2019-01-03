@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.22 2018/10/30 16:41:52 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.23 2019/01/03 12:52:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.22 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.23 2019/01/03 12:52:40 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -724,60 +724,25 @@ bcm2836_bootparams(void)
 	bcm283x_bootparams(iot, ioh);
 }
 
-static void
-bcm2836_mpstart(void)
+#if defined(MULTIPROCESSOR)
+static int
+cpu_enable_bcm2836(int phandle)
 {
-#ifdef MULTIPROCESSOR
-#ifdef __arm__
-	/* implementation dependent string "brcm,bcm2836-smp" for ARM 32-bit */
-	const char *method;
+	bus_space_tag_t iot = &bcm2836_bs_tag;
+	bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
+	uint64_t mpidr;
 
-	const int cpus = OF_finddevice("/cpus");
-	if (cpus == -1) {
-		aprint_error("%s: no /cpus node found\n", __func__);
-		arm_cpu_max = 1;
-		return;
-	}
+	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
 
-	method = fdtbus_get_string(cpus, "enable-method");
-	if ((method != NULL) && (strcmp(method, "brcm,bcm2836-smp") == 0)) {
-		arm_cpu_max = RPI_CPU_MAX;
-		VPRINTF("%s: %d cpus present\n", __func__, arm_cpu_max);
+	const u_int cpuno = __SHIFTOUT(mpidr, MPIDR_AFF0);
 
-		extern void cpu_mpstart(void);
+	bus_space_write_4(iot, ioh, BCM2836_LOCAL_MAILBOX3_SETN(cpuno),
+	    KERN_VTOPHYS((vaddr_t)cpu_mpstart));
 
-		for (size_t i = 1; i < RPI_CPU_MAX; i++) {
-			bus_space_tag_t iot = &bcm2836_bs_tag;
-			bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
-
-			bus_space_write_4(iot, ioh,
-			    BCM2836_LOCAL_MAILBOX3_SETN(i),
-			    KERN_VTOPHYS((vaddr_t)cpu_mpstart));
-		}
-
-		/* Wake up AP in case firmware has placed it in WFE state */
-		__asm __volatile("sev" ::: "memory");
-
-		for (int loop = 0; loop < 16; loop++) {
-			if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
-				break;
-			gtmr_delay(10000);
-		}
-
-		for (size_t i = 1; i < arm_cpu_max; i++) {
-			if ((arm_cpu_hatched & __BIT(i)) == 0) {
-				printf("%s: warning: cpu%zu failed to hatch\n",
-				    __func__, i);
-			}
-		}
-		return;
-	}
-#endif /* __arm__ */
-
-	/* try enable-method each cpus */
-	arm_fdt_cpu_mpstart();
-#endif /* MULTIPROCESSOR */
+	return 0;
 }
+ARM_CPU_METHOD(bcm2836, "brcm,bcm2836-smp", cpu_enable_bcm2836);
+#endif
 
 #endif	/* SOC_BCM2836 */
 
@@ -1374,7 +1339,7 @@ static const struct arm_platform bcm2836_platform = {
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = gtmr_delay,
 	.ap_uart_freq = bcm283x_platform_uart_freq,
-	.ap_mpstart = bcm2836_mpstart,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 static const struct arm_platform bcm2837_platform = {
@@ -1385,7 +1350,7 @@ static const struct arm_platform bcm2837_platform = {
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = gtmr_delay,
 	.ap_uart_freq = bcm2837_platform_uart_freq,
-	.ap_mpstart = bcm2836_mpstart,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 ARM_PLATFORM(bcm2836, "brcm,bcm2836", &bcm2836_platform);
