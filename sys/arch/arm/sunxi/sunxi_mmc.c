@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.31 2019/01/03 14:49:05 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.32 2019/01/03 15:34:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.31 2019/01/03 14:49:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.32 2019/01/03 15:34:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -525,6 +525,15 @@ sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr)
 }
 
 static void
+sunxi_mmc_hw_reset(struct sunxi_mmc_softc *sc)
+{
+	MMC_WRITE(sc, SUNXI_MMC_HWRST, 0);
+	delay(1000);
+	MMC_WRITE(sc, SUNXI_MMC_HWRST, 1);
+	delay(1000);
+}
+
+static void
 sunxi_mmc_attach_i(device_t self)
 {
 	struct sunxi_mmc_softc *sc = device_private(self);
@@ -534,6 +543,9 @@ sunxi_mmc_attach_i(device_t self)
 
 	if (sc->sc_pwrseq)
 		fdtbus_mmc_pwrseq_pre_power_on(sc->sc_pwrseq);
+
+	if (of_hasprop(sc->sc_phandle, "cap-mmc-hw-reset"))
+		sunxi_mmc_hw_reset(sc);
 
 	sunxi_mmc_host_reset(sc);
 	sunxi_mmc_bus_width(sc, 1);
@@ -1144,7 +1156,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 	cmd->c_error = sunxi_mmc_wait_rint(sc,
-	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, hz * 10, poll);
+	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, hz * 3, poll);
 	if (cmd->c_error == 0 && (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 		if (sc->sc_intr_rint & SUNXI_MMC_INT_RESP_TIMEOUT) {
 			cmd->c_error = ETIMEDOUT;
@@ -1165,7 +1177,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		    SUNXI_MMC_INT_ERROR|
 		    SUNXI_MMC_INT_AUTO_CMD_DONE|
 		    SUNXI_MMC_INT_DATA_OVER,
-		    hz*10, poll);
+		    hz*3, poll);
 		if (cmd->c_error == 0 &&
 		    (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 			cmd->c_error = ETIMEDOUT;
