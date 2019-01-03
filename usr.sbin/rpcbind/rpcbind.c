@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.26 2019/01/03 19:04:21 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.27 2019/01/03 19:26:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, Sun Microsystems, Inc.
@@ -482,9 +482,8 @@ init_transport(struct netconfig *nconf)
 			taddr.addr.len = taddr.addr.maxlen = addrlen;
 			taddr.addr.buf = malloc(addrlen);
 			if (taddr.addr.buf == NULL) {
-				syslog(LOG_ERR,
-				    "cannot allocate memory for %s address",
-				    nconf->nc_netid);
+				syslog(LOG_ERR, "%s: Cannot allocate memory",
+				    __func__);
 				if (res != NULL)
 					freeaddrinfo(res);
 				return 1;
@@ -540,8 +539,7 @@ init_transport(struct netconfig *nconf)
 		taddr.addr.len = taddr.addr.maxlen = addrlen;
 		taddr.addr.buf = malloc(addrlen);
 		if (taddr.addr.buf == NULL) {
-			syslog(LOG_ERR, "cannot allocate memory for %s address",
-			    nconf->nc_netid);
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			if (res != NULL)
 			    freeaddrinfo(res);
 			return 1;
@@ -567,7 +565,7 @@ init_transport(struct netconfig *nconf)
 
 		my_xprt = (SVCXPRT *)svc_tli_create(fd, nconf, &taddr,
 		    RPC_MAXDATASIZE, RPC_MAXDATASIZE);
-		if (my_xprt == (SVCXPRT *)NULL) {
+		if (my_xprt == NULL) {
 			syslog(LOG_ERR, "%s: could not create service",
 			    nconf->nc_netid);
 			goto error;
@@ -592,7 +590,7 @@ init_transport(struct netconfig *nconf)
 		}
 		pml = malloc(sizeof(*pml));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "Cannot allocate memory");
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			goto error;
 		}
 
@@ -609,7 +607,8 @@ init_transport(struct netconfig *nconf)
 			tcptrans = strdup(nconf->nc_netid);
 			if (tcptrans == NULL) {
 				free(pml);
-				syslog(LOG_ERR, "Cannot allocate memory");
+				syslog(LOG_ERR, "%s: Cannot allocate memory",
+				    __func__);
 				goto error;
 			}
 			pml->pml_map.pm_prot = IPPROTO_TCP;
@@ -627,7 +626,8 @@ init_transport(struct netconfig *nconf)
 			udptrans = strdup(nconf->nc_netid);
 			if (udptrans == NULL) {
 				free(pml);
-				syslog(LOG_ERR, "Cannot allocate memory");
+				syslog(LOG_ERR, "%s: Cannot allocate memory",
+				    __func__);
 				goto error;
 			}
 			pml->pml_map.pm_prot = IPPROTO_UDP;
@@ -646,7 +646,7 @@ init_transport(struct netconfig *nconf)
 		/* Add version 3 information */
 		pml = malloc(sizeof(*pml));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "Cannot allocate memory");
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
@@ -657,7 +657,7 @@ init_transport(struct netconfig *nconf)
 		/* Add version 4 information */
 		pml = malloc(sizeof(*pml));
 		if (pml == NULL) {
-			syslog(LOG_ERR, "Cannot allocate memory");
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
@@ -812,9 +812,9 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 {
 	rpcblist_ptr rbl;
 
-	rbl = malloc(sizeof(*rbl));
+	rbl = calloc(1, sizeof(*rbl));
 	if (rbl == NULL) {
-		syslog(LOG_ERR, "Out of memory");
+		syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 		return;
 	}
 
@@ -823,6 +823,17 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 	rbl->rpcb_map.r_netid = strdup(nconf->nc_netid);
 	rbl->rpcb_map.r_addr = taddr2uaddr(nconf, addr);
 	rbl->rpcb_map.r_owner = strdup(rpcbind_superuser);
+	if (rbl->rpcb_map.r_netid == NULL ||
+	    rbl->rpcb_map.r_addr == NULL ||
+	    rbl->rpcb_map.r_owner == NULL)
+	{
+	    free(rbl->rpcb_map.r_netid);
+	    free(rbl->rpcb_map.r_addr);
+	    free(rbl->rpcb_map.r_owner);
+	    free(rbl);
+	    syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
+	    return;
+	}
 	rbl->rpcb_next = list_rbl;	/* Attach to global list */
 	list_rbl = rbl;
 }
