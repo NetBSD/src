@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.4 2018/11/24 15:44:13 skrll Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.5 2019/01/03 15:10:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -153,6 +153,7 @@
 #define CPU_ID_CORTEXA9R4	0x414fc090
 #define CPU_ID_CORTEXA15R2	0x412fc0f0
 #define CPU_ID_CORTEXA15R3	0x413fc0f0
+#define CPU_ID_CORTEXA15R4	0x414fc0f0
 #define CPU_ID_CORTEXA17R1	0x411fc0e0
 #define CPU_ID_CORTEXA35R0	0x410fd040
 #define CPU_ID_CORTEXA53R0	0x410fd030
