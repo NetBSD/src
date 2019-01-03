@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.27 2018/10/18 09:01:52 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.28 2019/01/03 10:26:41 skrll Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -57,7 +57,7 @@ extern u_long kern_vtopdiff;
 
 /* misc prototypes used by the many arm machdeps */
 void cortex_pmc_ccnt_init(void);
-void cpu_hatch(struct cpu_info *, cpuid_t, void (*)(struct cpu_info *));
+void cpu_hatch(struct cpu_info *, u_int, void (*)(struct cpu_info *));
 void halt(void);
 void parse_mi_bootargs(char *);
 void data_abort_handler(trapframe_t *);
