@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.32 2019/01/03 11:01:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.33 2019/01/03 12:52:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.32 2019/01/03 11:01:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.33 2019/01/03 12:52:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -235,55 +235,18 @@ sunxi_platform_bootstrap(void)
 	}
 }
 
-static void
-sunxi_mc_platform_mpstart(void)
+#if defined(SOC_SUNXI_MC)
+static int
+cpu_enable_sunxi_mc(int phandle)
 {
-	uint32_t started = 0;
+	uint64_t mpidr;
 
-#if defined(MULTIPROCESSOR) && defined(SOC_SUNXI_MC)
-	const char *method;
-	uint64_t mpidr, bp_mpidr;
-	u_int cpuindex;
-	int child;
+	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
 
-	const int cpus = OF_finddevice("/cpus");
-	if (cpus == -1)
-		return;
-
-	/* MPIDR affinity levels of boot processor. */
-	bp_mpidr = cpu_mpidr_aff_read();
-
-	cpuindex = 1;
-	for (child = OF_child(cpus); child; child = OF_peer(child)) {
-		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
-			continue;
-		if (mpidr == bp_mpidr)
-			continue;
-
-		method = fdtbus_get_string(child, "enable-method");
-		if (method == NULL)
-			method = fdtbus_get_string(cpus, "enable-method");
-		if (method == NULL)
-			continue;
-
-		if (sunxi_mc_smp_match(method) != 0) {
-			if (sunxi_mc_smp_enable(mpidr) != 0)
-				continue;
-
-			started |= __BIT(cpuindex);
-			cpuindex++;
-			for (u_int i = 0x100000; i > 0; i--) {
-				membar_consumer();
-				if (arm_cpu_hatched & __BIT(cpuindex))
-					break;
-			}
-		}
-	}
-#endif
-
-	if (started == 0)
-		arm_fdt_cpu_mpstart();
+	return sunxi_mc_smp_enable(mpidr);
 }
+ARM_CPU_METHOD(sun8i_a83t, "allwinner,sun8i-a83t-smp", cpu_enable_sunxi_mc);
+#endif
 
 static void
 sun4i_platform_reset(void)
@@ -442,7 +405,7 @@ static const struct arm_platform sun8i_a83t_platform = {
 	.ap_reset = sun6i_platform_reset,
 	.ap_delay = gtmr_delay,
 	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = sunxi_mc_platform_mpstart,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_a83t_platform);
