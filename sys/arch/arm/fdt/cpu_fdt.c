@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.19 2019/01/03 12:52:40 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.20 2019/01/03 14:14:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.19 2019/01/03 12:52:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.20 2019/01/03 14:14:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -368,17 +368,15 @@ ARM_CPU_METHOD(psci, "psci", cpu_enable_psci);
 static int
 cpu_enable_spin_table(int phandle)
 {
-	uint64_t mpidr, data;
-	paddr_t cpu_release_addr;
+	uint64_t mpidr, addr;
 	int ret;
 
 	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
 
-	if (of_getprop_uint64(phandle, "cpu-release-addr", &data) != 0)
+	if (of_getprop_uint64(phandle, "cpu-release-addr", &addr) != 0)
 		return ENXIO;
 
-	cpu_release_addr = (paddr_t)be64toh(data);
-	ret = spintable_cpu_on(mpidr, cpu_fdt_mpstart_pa(), cpu_release_addr);
+	ret = spintable_cpu_on(mpidr, cpu_fdt_mpstart_pa(), (paddr_t)addr);
 	if (ret != 0)
 		return EIO;
 
