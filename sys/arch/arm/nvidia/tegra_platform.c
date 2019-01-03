@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.19 2018/12/15 13:17:12 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.20 2019/01/03 12:52:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.19 2018/12/15 13:17:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.20 2019/01/03 12:52:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,15 +129,6 @@ tegra210_platform_bootstrap(void)
 
 #if defined(MULTIPROCESSOR) && defined(__aarch64__)
 	arm_fdt_cpu_bootstrap();
-#endif
-}
-
-static void
-tegra210_platform_mpstart(void)
-{
-
-#if defined(MULTIPROCESSOR) && defined(__aarch64__)
-	arm_fdt_cpu_mpstart();
 #endif
 }
 #endif
@@ -246,7 +237,7 @@ static const struct arm_platform tegra210_platform = {
 	.ap_reset = tegra_platform_reset,
 	.ap_delay = tegra_platform_delay,
 	.ap_uart_freq = tegra_platform_uart_freq,
-	.ap_mpstart = tegra210_platform_mpstart,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 ARM_PLATFORM(tegra210, "nvidia,tegra210", &tegra210_platform);
