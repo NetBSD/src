@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mc_smp.h,v 1.1 2019/01/03 11:01:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_mc_smp.h,v 1.2 2019/01/03 14:44:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #define _SUNXI_MC_SMP_H
 
 int	sunxi_mc_smp_match(const char *);
-int	sunxi_mc_smp_enable(u_int);
+int	sun8i_a83t_smp_enable(u_int);
+int	sun9i_a80_smp_enable(u_int);
 
 #endif /* !_SUNXI_MC_SMP_H */
