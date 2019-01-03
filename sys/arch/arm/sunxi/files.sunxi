@@ -1,10 +1,13 @@
-#	$NetBSD: files.sunxi,v 1.57 2018/06/01 22:11:54 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.58 2019/01/03 11:01:59 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
 #
 
 file	arch/arm/sunxi/sunxi_platform.c		soc_sunxi
+
+file	arch/arm/sunxi/sunxi_mc_smp.c		soc_sunxi_mc
+file	arch/arm/sunxi/sunxi_mc_mpstart.S	soc_sunxi_mc
 
 # CCU
 define	sunxi_ccu
@@ -293,8 +296,10 @@ file	arch/arm/sunxi/sunxi_can.c		sunxi_can
 device	sunxilradc
 attach	sunxilradc at fdt with sunxi_lradc
 file	arch/arm/sunxi/sunxi_lradc.c		sunxi_lradc
+
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
+defflag	opt_soc.h			SOC_SUNXI_MC
 defflag	opt_soc.h			SOC_SUN4I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN4I_A10: SOC_SUN4I
 defflag	opt_soc.h			SOC_SUN5I: SOC_SUNXI
@@ -304,7 +309,7 @@ defflag	opt_soc.h			SOC_SUN6I_A31: SOC_SUN6I
 defflag	opt_soc.h			SOC_SUN7I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN7I_A20: SOC_SUN7I
 defflag	opt_soc.h			SOC_SUN8I: SOC_SUNXI
-defflag	opt_soc.h			SOC_SUN8I_A83T: SOC_SUN8I
+defflag	opt_soc.h			SOC_SUN8I_A83T: SOC_SUN8I, SOC_SUNXI_MC
 defflag	opt_soc.h			SOC_SUN8I_H3: SOC_SUN8I
 defflag	opt_soc.h			SOC_SUN9I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN9I_A80: SOC_SUN9I
