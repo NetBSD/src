@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1583 2019/01/01 03:06:39 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1584 2019/01/03 17:33:20 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1457,8 +1457,8 @@ Imported to src/common/dist/zlib and shared by the kernel and userland.
 Remember to run cleantags
 
 Package:	services, protocols
-Version:	2015-11-13 (services), 2015-10-06 (protocols)
-Current Vers:	2018-08-01 (services), 2017-10-13 (protocols)
+Version:	2018-12-19 (services), 2017-10-13 (protocols)
+Current Vers:	2018-12-19 (services), 2017-10-13 (protocols)
 Maintainer:	IANA
 Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
@@ -1480,6 +1480,8 @@ Notes:
    - protocol 84 is defined for as ttp and iptm, merge the two entries since
      libc getprotoent() does not read the whole file and merge in the "files"
      implementation.
+   - add alias carp to vrrp
+   - put back 240 (pfsync), splitting the unassigned entries
 
 Package:	pigz
 Version:	2.3.1
