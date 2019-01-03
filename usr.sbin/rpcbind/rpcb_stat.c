@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_stat.c,v 1.6 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: rpcb_stat.c,v 1.7 2019/01/03 19:04:21 christos Exp $	*/
 /* $FreeBSD: head/usr.sbin/rpcbind/rpcb_stat.c 301605 2016-06-08 12:45:22Z ngie $ */
 
 /*-
@@ -125,7 +125,7 @@ rpcbs_getaddr(rpcvers_t rtype, rpcprog_t prog, rpcvers_t vers,
 	if (nconf == NULL) {
 		return;
 	}
-	al = (rpcbs_addrlist *) malloc(sizeof (rpcbs_addrlist));
+	al = malloc(sizeof(*al));
 	if (al == NULL) {
 		return;
 	}
@@ -174,7 +174,7 @@ rpcbs_rmtcall(rpcvers_t rtype, rpcproc_t rpcbproc, rpcprog_t prog,
 	if (nconf == NULL) {
 		return;
 	}
-	rl = (rpcbs_rmtcalllist *) malloc(sizeof (rpcbs_rmtcalllist));
+	rl = malloc(sizeof(*rl));
 	if (rl == NULL) {
 		return;
 	}
