@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.84 2019/01/03 09:03:41 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.85 2019/01/03 11:27:32 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2162,4 +2162,17 @@ sys/conf/copyright				1.17
 
 	Welcome to 2019!
 	[jnemeth, ticket #1152]
+
+sys/dev/ic/spdmem.c				1.29,1.30
+sys/dev/ic/spdmemvar.h				1.14
+
+	- Fix DDR4's rows and columns value.
+	- Print "banks/group" instead of "banks".
+	- Print rank on DDR4.
+	[msaitoh, ticket #1153]
+
+usr.sbin/acpitools/acpidump/acpi.c		1.43
+
+	Fix acpi_print_string(), handle NUL termination correctly.
+	[msaitoh, ticket #1154]
 
