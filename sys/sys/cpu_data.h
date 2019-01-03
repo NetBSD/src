@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.38 2014/09/05 05:45:34 matt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.39 2019/01/03 09:09:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ struct cpu_data {
 	kcpuset_t	*cpu_kcpuset;		/* kcpuset_t of this cpu only */
 };
 
-/* compat definitions */
 #define	ci_schedstate		ci_data.cpu_schedstate
 #define	ci_index		ci_data.cpu_index
 #define	ci_biglock_count	ci_data.cpu_biglock_count
