@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.125 2019/01/03 10:26:41 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.126 2019/01/03 15:12:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.125 2019/01/03 10:26:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2019/01/03 15:12:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -111,20 +111,7 @@ cpu_attach(device_t dv, cpuid_t id)
 		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
 		ci->ci_cpl = IPL_HIGH;
 		ci->ci_cpuid = id;
-		ci->ci_mpidr = armreg_mpidr_read();
-		if (ci->ci_mpidr & MPIDR_MT) {
-			ci->ci_smt_id = ci->ci_mpidr & MPIDR_AFF0;
-			ci->ci_core_id = ci->ci_mpidr & MPIDR_AFF1;
-			ci->ci_package_id = ci->ci_mpidr & MPIDR_AFF2;
-		} else {
-			ci->ci_core_id = ci->ci_mpidr & MPIDR_AFF0;
-			ci->ci_package_id = ci->ci_mpidr & MPIDR_AFF1;
-		}
 		ci->ci_data.cpu_cc_freq = cpu_info_store.ci_data.cpu_cc_freq;
-
-		ci->ci_arm_cpuid = cpu_idnum();
-		ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
-		ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 
 		ci->ci_undefsave[2] = cpu_info_store.ci_undefsave[2];
 
@@ -191,13 +178,8 @@ cpu_attach(device_t dv, cpuid_t id)
 	 * and we are done if this is a secondary processor.
 	 */
 	if (unit != 0) {
-#if 1
 		aprint_naive("\n");
 		aprint_normal("\n");
-#else
-		aprint_naive(": %s\n", cpu_getmodel());
-		aprint_normal(": %s\n", cpu_getmodel());
-#endif
 		mi_cpu_attach(ci);
 #ifdef ARM_MMU_EXTENDED
 		pmap_tlb_info_attach(&pmap_tlb0_info, ci);
@@ -525,6 +507,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA15R2,	CPU_CLASS_CORTEX,	"Cortex-A15 r2",
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R3,	CPU_CLASS_CORTEX,	"Cortex-A15 r3",
+	  pN_steppings, "7A" },
+	{ CPU_ID_CORTEXA15R4,	CPU_CLASS_CORTEX,	"Cortex-A15 r4",
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA17R1,	CPU_CLASS_CORTEX,	"Cortex-A17 r1",
 	  pN_steppings, "7A" },

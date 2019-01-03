@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.28 2019/01/03 10:26:41 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.29 2019/01/03 15:12:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.28 2019/01/03 10:26:41 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.29 2019/01/03 15:12:00 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -350,6 +350,7 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 	VPRINTF("%s(%s): ", __func__, cpu_name(ci));
 	ci->ci_ctrl = armreg_sctlr_read();
 	uint32_t mpidr = armreg_mpidr_read();
+	ci->ci_mpidr = armreg_mpidr_read();
 	if (mpidr & MPIDR_MT) {
 		ci->ci_smt_id = mpidr & MPIDR_AFF0;
 		ci->ci_core_id = mpidr & MPIDR_AFF1;
@@ -358,6 +359,10 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 		ci->ci_core_id = mpidr & MPIDR_AFF0;
 		ci->ci_package_id = mpidr & MPIDR_AFF1;
 	}
+
+	ci->ci_arm_cpuid = cpu_idnum();
+	ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
+	ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 
 	/*
 	 * Make sure we have the right vector page.
