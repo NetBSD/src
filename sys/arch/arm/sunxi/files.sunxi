@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.58 2019/01/03 11:01:59 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.59 2019/01/03 14:44:21 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -312,7 +312,7 @@ defflag	opt_soc.h			SOC_SUN8I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN8I_A83T: SOC_SUN8I, SOC_SUNXI_MC
 defflag	opt_soc.h			SOC_SUN8I_H3: SOC_SUN8I
 defflag	opt_soc.h			SOC_SUN9I: SOC_SUNXI
-defflag	opt_soc.h			SOC_SUN9I_A80: SOC_SUN9I
+defflag	opt_soc.h			SOC_SUN9I_A80: SOC_SUN9I, SOC_SUNXI_MC
 defflag	opt_soc.h			SOC_SUN50I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN50I_A64: SOC_SUN50I
 defflag	opt_soc.h			SOC_SUN50I_H5: SOC_SUN50I, SOC_SUN8I_H3
