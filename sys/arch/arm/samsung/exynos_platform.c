@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.20 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.21 2019/01/03 23:04:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.20 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.21 2019/01/03 23:04:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,60 +62,116 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.20 2018/10/30 16:41:52 skrll E
 
 void exynos_platform_early_putchar(char);
 
-#define	EXYNOS5_SWRESET_REG	0x10040400
-
-#define EXYNOS_IOPHYSTOVIRT(a) \
-    ((vaddr_t)(((a) - EXYNOS_CORE_PBASE) + EXYNOS_CORE_VBASE))
-
 #define	EXYNOS5800_PMU_BASE		0x10040000
 #define	EXYNOS5800_PMU_SIZE		0x20000
-#define	 EXYNOS5800_PMU_CORE_CONFIG(n)	(0x2000 + 0x80 * (n))
-#define	 EXYNOS5800_PMU_CORE_STATUS(n)	(0x2004 + 0x80 * (n))
-#define	 EXYNOS5800_PMU_CORE_POWER_EN	0x3
-#define	EXYNOS5800_SYSRAM_BASE		0x0207301c
-#define	EXYNOS5800_SYSRAM_SIZE		0x4
+#define	 EXYNOS5800_PMU_SWRESET			0x0400
+#define	  EXYNOS5800_PMU_KFC_ETM_RESET(n)	__BIT(20 + (n))
+#define	  EXYNOS5800_PMU_KFC_CORE_RESET(n)	__BIT(8 + (n))
+#define	 EXYNOS5800_PMU_SPARE2			0x0908
+#define	 EXYNOS5800_PMU_SPARE3			0x090c
+#define	  EXYNOS5800_PMU_SWRESET_KFC_SEL	0x3
+#define	 EXYNOS5800_PMU_CORE_CONFIG(n)		(0x2000 + 0x80 * (n))
+#define	 EXYNOS5800_PMU_CORE_STATUS(n)		(0x2004 + 0x80 * (n))
+#define	  EXYNOS5800_PMU_CORE_POWER_EN		0x3
+#define	 EXYNOS5800_PMU_COMMON_CONFIG(n)	(0x2500 + 0x80 * (n))
+#define	  EXYNOS5800_PMU_COMMON_POWER_EN	0x3
+#define	 EXYNOS5800_PMU_COMMON_OPTION(n)	(0x2508 + 0x80 * (n))
+#define	  EXYNOS5800_PMU_USE_L2_COMMON_UP_STATE		__BIT(30)
+#define	  EXYNOS5800_PMU_USE_ARM_CORE_DOWN_STATE	__BIT(29)
+#define	  EXYNOS5800_PMU_AUTO_CORE_DOWN			__BIT(9)
 
-static void
-exynos_platform_bootstrap(void)
-{
-
-#if defined(MULTIPROCESSOR)
-	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
-#endif
-}
+#define	EXYNOS5800_SYSRAM_BASE		0x02073000
+#define	EXYNOS5800_SYSRAM_SIZE		0x1000
+#define	 EXYNOS5800_SYSRAM_HOTPLUG		0x001c
 
 static void
 exynos5800_mpstart(void)
 {
 #if defined(MULTIPROCESSOR)
-	extern void cpu_mpstart(void);
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t pmu_bsh, sysram_bsh;
+	uint64_t mpidr, bp_mpidr;
 	uint32_t val, started = 0;
-	int n;
+	u_int cpuindex, n;
+	int child;
 
 	bus_space_map(bst, EXYNOS5800_PMU_BASE, EXYNOS5800_PMU_SIZE, 0, &pmu_bsh);
 	bus_space_map(bst, EXYNOS5800_SYSRAM_BASE, EXYNOS5800_SYSRAM_SIZE, 0, &sysram_bsh);
 
-	bus_space_write_4(bst, sysram_bsh, 0, KERN_VTOPHYS((vaddr_t)cpu_mpstart));
-	bus_space_barrier(bst, sysram_bsh, 0, 4, BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	const int cpus = OF_finddevice("/cpus");
+	if (cpus == -1) {
+		aprint_error("%s: no /cpus node found\n", __func__);
+		return;
+	}
 
-	for (n = 1; n < arm_cpu_max; n++) {
-		bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_CONFIG(n),
+	/* MPIDR affinity levels of boot processor. */
+	bp_mpidr = cpu_mpidr_aff_read();
+
+	/* Setup KFC reset */
+	bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_SPARE3, EXYNOS5800_PMU_SWRESET_KFC_SEL);
+
+	const uint32_t option = EXYNOS5800_PMU_USE_L2_COMMON_UP_STATE |
+	    EXYNOS5800_PMU_USE_ARM_CORE_DOWN_STATE |
+	    EXYNOS5800_PMU_AUTO_CORE_DOWN;
+	val = bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_OPTION(0));
+	bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_OPTION(0), val | option);
+	val = bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_OPTION(1));
+	bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_OPTION(1), val | option);
+
+	bus_space_write_4(bst, sysram_bsh, EXYNOS5800_SYSRAM_HOTPLUG, KERN_VTOPHYS((vaddr_t)cpu_mpstart));
+	arm_dsb();
+
+	/* Power on clusters */
+	bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_CONFIG(0),
+	    EXYNOS5800_PMU_COMMON_POWER_EN);
+	bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_COMMON_CONFIG(1),
+	    EXYNOS5800_PMU_COMMON_POWER_EN);
+
+	/* Boot APs */
+	cpuindex = 1;
+	for (child = OF_child(cpus); child; child = OF_peer(child)) {
+		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
+			continue;
+
+		if (mpidr == bp_mpidr)
+			continue;	/* BP already started */
+
+		const u_int cluster = __SHIFTOUT(mpidr, MPIDR_AFF1);
+		const u_int aff0 = __SHIFTOUT(mpidr, MPIDR_AFF0);
+		const u_int cpu = cluster * 4 + aff0;
+
+		val = bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_STATUS(cpu));
+		bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_CONFIG(cpu),
 		    EXYNOS5800_PMU_CORE_POWER_EN);
-		for (u_int i = 0x01000000; i > 0; i--) {
-			val = bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_STATUS(n));
+
+		for (n = 0x100000; n > 0; n--) {
+			val = bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_STATUS(cpu));
 			if ((val & EXYNOS5800_PMU_CORE_POWER_EN) == EXYNOS5800_PMU_CORE_POWER_EN) {
-				started |= __BIT(n);
+				started |= __BIT(cpuindex);
 				break;
 			}
 		}
-	}
+		if (n == 0)
+			aprint_error("cpu%d: WARNING: AP failed to power on\n", cpuindex);
 
-	for (u_int i = 0x10000000; i > 0; i--) {
-		arm_dmb();
-		if (arm_cpu_hatched == started)
-			break;
+		if (cluster == 1 && __SHIFTOUT(bp_mpidr, MPIDR_AFF1) == 1) {
+			while (bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_SPARE2) == 0)
+				;
+			bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_SWRESET,
+			    EXYNOS5800_PMU_KFC_CORE_RESET(aff0) |
+			    EXYNOS5800_PMU_KFC_ETM_RESET(aff0));
+		}
+
+		/* Wait for AP to start */
+		for (n = 0x100000; n > 0; n--) {
+			membar_consumer();
+			if (arm_cpu_hatched & __BIT(cpuindex))
+				break;
+		}
+		if (n == 0)
+			aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
+
+		cpuindex++;
 	}
 
 	bus_space_unmap(bst, sysram_bsh, EXYNOS5800_SYSRAM_SIZE);
@@ -133,8 +189,6 @@ exynos_platform_mpstart(void)
 {
 
 	void (*mp_start)(void) = NULL;
-
-//	exynos_bootstrap();
 
 	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
 	if (cd)
@@ -185,7 +239,7 @@ exynos5_platform_reset(void)
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 
-	bus_space_map(bst, EXYNOS5_SWRESET_REG, 4, 0, &bsh);
+	bus_space_map(bst, EXYNOS5800_PMU_BASE + EXYNOS5800_PMU_SWRESET, 4, 0, &bsh);
 	bus_space_write_4(bst, bsh, 0, 1);
 }
 
@@ -219,7 +273,9 @@ exynos4_platform_bootstrap(void)
 
 	exynos_bootstrap(4);
 
-	exynos_platform_bootstrap();
+#if defined(MULTIPROCESSOR)
+	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+#endif
 }
 
 static const struct arm_platform exynos4_platform = {
@@ -263,7 +319,7 @@ exynos5_platform_bootstrap(void)
 
 	exynos_bootstrap(5);
 
-	exynos_platform_bootstrap();
+	arm_fdt_cpu_bootstrap();
 }
 
 static const struct arm_platform exynos5_platform = {
