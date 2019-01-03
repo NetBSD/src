@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.8 2019/01/02 12:18:08 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.9 2019/01/03 08:02:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.8 2019/01/02 12:18:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.9 2019/01/03 08:02:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1820,7 +1820,7 @@ svm_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		memcpy(&cstate->fpu, cpudata->gfpu.xsh_fxsave,
 		    sizeof(cstate->fpu));
 
-		memcpy(&cstate->fpu, &nstate->fpu, sizeof(cstate->fpu));
+		memcpy(&nstate->fpu, &cstate->fpu, sizeof(cstate->fpu));
 	}
 }
 
