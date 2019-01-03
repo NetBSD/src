@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.30 2019/01/02 18:39:01 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.31 2019/01/03 14:49:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.30 2019/01/02 18:39:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.31 2019/01/03 14:49:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -761,7 +761,7 @@ sunxi_mmc_update_clock(struct sunxi_mmc_softc *sc)
 	      SUNXI_MMC_CMD_UPCLK_ONLY |
 	      SUNXI_MMC_CMD_WAIT_PRE_OVER;
 	MMC_WRITE(sc, SUNXI_MMC_CMD, cmd);
-	retry = 0xfffff;
+	retry = 100000;
 	while (--retry > 0) {
 		if (!(MMC_READ(sc, SUNXI_MMC_CMD) & SUNXI_MMC_CMD_START))
 			break;
