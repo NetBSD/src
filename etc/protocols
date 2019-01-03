@@ -1,8 +1,8 @@
-# $NetBSD: protocols,v 1.29 2017/01/16 09:39:26 hauke Exp $
-# See also: protocols(5)
+# $NetBSD: protocols,v 1.30 2019/01/03 17:30:06 christos Exp $
+# See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #    Last Updated
-#            2015-10-06
+#            2017-10-13
 # 
 #    Available Formats
 #            [IMG]
@@ -12,7 +12,7 @@
 # 
 #    Registry included below
 # 
-#      * Assigned Internet Protocol Numbers
+#      * Assigned Internet Protocol Numbers
 # 
 # Assigned Internet Protocol Numbers
 # 
@@ -27,13 +27,14 @@
 # 
 #  In the Internet Protocol version 4 (IPv4) [RFC791] there is a field
 #  called "Protocol" to identify the next level protocol.  This is an 8
-#  bit field.  In Internet Protocol version 6 (IPv6) [RFC2460], this field
-#  is called the "Next Header" field.
+#  bit field.  In Internet Protocol version 6 (IPv6)
+#  [RFC8200], this field is called the "Next Header" field.
 # 
 #    Note
 # 
 #  Values that are also IPv6 Extension Header Types should be listed in the
 #  IPv6 Extension Header Types registry at [IANA registry ipv6-parameters].
+# 
 # 
 #    Available Formats
 #            [IMG]
@@ -42,7 +43,7 @@
 #    Decimal      Keyword                 Protocol           IPv6 Extension                                 Reference
 #                                                                Header
 # protocol   num aliases      # comments
-hopopt         0 HOPOPT       # IPv6 Hop-by-Hop Option             Y        [RFC2460]
+hopopt         0 HOPOPT       # IPv6 Hop-by-Hop Option             Y        [RFC8200]
 icmp           1 ICMP         # Internet Control Message                    [RFC792]
 igmp           2 IGMP         # Internet Group Management                   [RFC1112]
 ggp            3 GGP          # Gateway-to-Gateway                          [RFC823]
@@ -130,9 +131,9 @@ mobile        55 MOBILE       # IP Mobility                                 [Cha
 tlsp          56 TLSP         # Protocol using Kryptonet key                [Christer_Oberg]
 #                               management
 skip          57 SKIP         # SKIP                                        [Tom_Markson]
-ipv6-icmp     58 IPv6-ICMP    # ICMP for IPv6                               [RFC2460]
-ipv6-nonxt    59 IPv6-NoNxt   # No Next Header for IPv6                     [RFC2460]
-ipv6-opts     60 IPv6-Opts    # Destination Options for IPv6       Y        [RFC2460]
+ipv6-icmp     58 IPv6-ICMP    # ICMP for IPv6                               [RFC8200]
+ipv6-nonxt    59 IPv6-NoNxt   # No Next Header for IPv6                     [RFC8200]
+ipv6-opts     60 IPv6-Opts    # Destination Options for IPv6       Y        [RFC8200]
 #      61                       any host internal protocol                  [Internet_Assigned_Numbers_Authority]
 cftp          62 CFTP         # CFTP                                        [Forsdick, H., "CFTP", Network Message, Bolt Beranek and Newman, January
 #                                                                           1982.][Harry_Forsdick]
@@ -160,7 +161,7 @@ iso-ip        80 ISO-IP       # ISO Internet Protocol                       [Mar
 vmtp          81 VMTP         # VMTP                                        [Dave_Cheriton]
 secure-vmtp   82 SECURE-VMTP  # SECURE-VMTP                                 [Dave_Cheriton]
 vines         83 VINES        # VINES                                       [Brian Horn]
-ttp           84 TTP iptm IPTM         # Transaction Transport                       [Jim_Stevens]
+ttp           84 TTP iptm IPTM # Transaction Transport                       [Jim_Stevens]
 #                               Protocol
 #iptm          84 IPTM         # Internet Protocol Traffic                   [Jim_Stevens]
 #                               Manager
@@ -168,8 +169,7 @@ nsfnet-igp    85 NSFNET-IGP   # NSFNET-IGP                                  [Han
 dgp           86 DGP          # Dissimilar Gateway Protocol                 [M/A-COM Government Systems, "Dissimilar Gateway Protocol Specification,
 #                                                                           Draft Version", Contract no. CS901145, November 16, 1987.][Mike_Little]
 tcf           87 TCF          # TCF                                         [Guillermo_A_Loyola]
-eigrp         88 EIGRP        # EIGRP                                       [Cisco Systems, "Gateway Server Reference Manual", Manual Revision B,
-#                                                                           January 10, 1988.][Guenther_Schreiner]
+eigrp         88 EIGRP        # EIGRP                                       [RFC7868]
 ospfigp       89 OSPFIGP      # OSPFIGP                                     [RFC1583][RFC2328][RFC5340][John_Moy]
 #                                                                           [Welch, B., "The Sprite Remote Procedure Call System", Technical Report,
 sprite-rpc    90 Sprite-RPC   # Sprite RPC Protocol                         UCB/Computer Science Dept., 86/302, University of California at Berkeley,
@@ -193,7 +193,7 @@ gmtp         100 GMTP         # GMTP                                        [[RX
 ifmp         101 IFMP         # Ipsilon Flow Management                     [Bob_Hinden][November 1995, 1997.]
 #                               Protocol
 pnni         102 PNNI         # PNNI over IP                                [Ross_Callon]
-pim          103 PIM          # Protocol Independent                        [RFC-ietf-pim-rfc4601bis-06][Dino_Farinacci]
+pim          103 PIM          # Protocol Independent                        [RFC7761][Dino_Farinacci]
 #                               Multicast
 aris         104 ARIS         # ARIS                                        [Nancy_Feldman]
 scps         105 SCPS         # SCPS                                        [Robert_Durst]
@@ -276,7 +276,6 @@ reserved     255 Reserved     # [Internet_Assigned_Numbers_Authority]
 #    [Dirk_Fromhein]                       Dirk Fromhein                       mailto:df&watershed.com
 #    [Gene_Tsudik]                         Gene Tsudik                         mailto:tsudik&usc.edu
 #    [Greg_Chesson]                        Greg Chesson                        mailto:Greg&sgi.com
-#    [Guenther_Schreiner]                  Guenther Schreiner                  mailto:snmp-admin&ira.uka.de
 #    [Guillermo_A_Loyola]                  Guillermo A. Loyola                 mailto:LOYOLA&ibm.com
 #    [Hans_Werner_Braun]                   Hans-Werner Braun                   mailto:HWB&mcr.umich.edu
 #    [Harry_Forsdick]                      Harry Forsdick                      mailto:Forsdick&bbn.com
