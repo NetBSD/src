@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.14 2018/11/22 21:08:19 aymeric Exp $
+#	$NetBSD: GENERIC,v 1.15 2019/01/03 10:44:04 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -418,7 +418,7 @@ exuart*		at fdt?			# SSCOM UART
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 exyoi2c*	at fdt?			# Samsung Exynos I2C
-sunxirsb*	at fdt?			# Allwinner RSB
+sunxirsb*	at fdt? pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
 iic*		at i2cbus?
