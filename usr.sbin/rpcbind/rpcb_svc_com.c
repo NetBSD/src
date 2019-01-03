@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.20 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.21 2019/01/03 19:04:21 christos Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_com.c 301770 2016-06-09 22:25:00Z pfg $ */
 
 /*-
@@ -179,7 +179,7 @@ map_set(RPCB *regp, char *owner)
 	/*
 	 * add to the end of the list
 	 */
-	rbl = malloc(sizeof(RPCBLIST));
+	rbl = malloc(sizeof(*rbl));
 	if (rbl == NULL)
 		return (FALSE);
 	a = &(rbl->rpcb_map);
@@ -1460,7 +1460,7 @@ add_pmaplist(RPCB *arg)
 	/*
 	 * add to END of list
 	 */
-	pml = malloc(sizeof(struct pmaplist));
+	pml = malloc(sizeof(*pml));
 	if (pml == NULL) {
 		(void) syslog(LOG_ERR, "rpcbind: no memory!\n");
 		return (1);
