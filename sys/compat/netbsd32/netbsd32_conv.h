@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.33.2.3 2018/11/26 01:52:29 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.33.2.4 2019/01/03 10:57:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -555,6 +555,7 @@ netbsd32_from_msqid_ds50(const struct msqid_ds *dsp,
     struct netbsd32_msqid_ds50 *ds32p)
 {
 
+	nemset(ds32p, 0, sizeof(*ds32p));
 	netbsd32_from_ipc_perm(&dsp->msg_perm, &ds32p->msg_perm);
 	ds32p->_msg_cbytes = (netbsd32_u_long)dsp->_msg_cbytes;
 	ds32p->msg_qnum = (netbsd32_u_long)dsp->msg_qnum;
@@ -571,6 +572,7 @@ netbsd32_from_msqid_ds(const struct msqid_ds *dsp,
     struct netbsd32_msqid_ds *ds32p)
 {
 
+	memset(ds32p, 0, sizeof(*ds32p));
 	netbsd32_from_ipc_perm(&dsp->msg_perm, &ds32p->msg_perm);
 	ds32p->_msg_cbytes = (netbsd32_u_long)dsp->_msg_cbytes;
 	ds32p->msg_qnum = (netbsd32_u_long)dsp->msg_qnum;
