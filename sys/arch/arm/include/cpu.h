@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2018/10/25 07:13:55 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.100 2019/01/03 10:26:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -175,6 +175,12 @@ struct cpu_info {
 	struct evcnt	ci_und_cp15_ev;
 	struct evcnt	ci_vfp_evs[3];
 
+	uint32_t	ci_midr;
+	uint32_t	ci_mpidr;
+
+	struct arm_cache_info *
+			ci_cacheinfo;
+
 #if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
 #endif
@@ -248,7 +254,7 @@ extern struct cpu_info *cpu_info[];
 #if defined(MULTIPROCESSOR)
 
 extern volatile u_int arm_cpu_hatched;
-extern uint64_t cpu_mpidr[];
+extern uint32_t cpu_mpidr[];
 
 void cpu_mpstart(void);
 void cpu_init_secondary_processor(int);
