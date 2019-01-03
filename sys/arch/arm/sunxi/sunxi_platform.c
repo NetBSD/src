@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.31 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.32 2019/01/03 11:01:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.31 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.32 2019/01/03 11:01:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.31 2018/10/30 16:41:52 skrll Ex
 #include <arm/fdt/psci_fdtvar.h>
 
 #include <arm/sunxi/sunxi_platform.h>
+
+#if defined(SOC_SUNXI_MC)
+#include <arm/sunxi/sunxi_mc_smp.h>
+#endif
 
 #include <libfdt.h>
 
@@ -117,6 +121,26 @@ sunxi_platform_devmap(void)
 		DEVMAP_ENTRY(SUNXI_CORE_VBASE,
 			     SUNXI_CORE_PBASE,
 			     SUNXI_CORE_SIZE),
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+
+#define	SUN8I_A83T_CPU_VBASE	(SUNXI_CORE_VBASE + SUNXI_CORE_SIZE)
+#define	SUN8I_A83T_CPU_PBASE	0x01700000
+#define	SUN8I_A83T_CPU_SIZE	0x00100000
+
+static const struct pmap_devmap *
+sun8i_a83t_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(SUNXI_CORE_VBASE,
+			     SUNXI_CORE_PBASE,
+			     SUNXI_CORE_SIZE),
+		DEVMAP_ENTRY(SUN8I_A83T_CPU_VBASE,
+			     SUN8I_A83T_CPU_PBASE,
+			     SUN8I_A83T_CPU_SIZE),
 		DEVMAP_ENTRY_END
 	};
 
@@ -211,6 +235,55 @@ sunxi_platform_bootstrap(void)
 	}
 }
 
+static void
+sunxi_mc_platform_mpstart(void)
+{
+	uint32_t started = 0;
+
+#if defined(MULTIPROCESSOR) && defined(SOC_SUNXI_MC)
+	const char *method;
+	uint64_t mpidr, bp_mpidr;
+	u_int cpuindex;
+	int child;
+
+	const int cpus = OF_finddevice("/cpus");
+	if (cpus == -1)
+		return;
+
+	/* MPIDR affinity levels of boot processor. */
+	bp_mpidr = cpu_mpidr_aff_read();
+
+	cpuindex = 1;
+	for (child = OF_child(cpus); child; child = OF_peer(child)) {
+		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
+			continue;
+		if (mpidr == bp_mpidr)
+			continue;
+
+		method = fdtbus_get_string(child, "enable-method");
+		if (method == NULL)
+			method = fdtbus_get_string(cpus, "enable-method");
+		if (method == NULL)
+			continue;
+
+		if (sunxi_mc_smp_match(method) != 0) {
+			if (sunxi_mc_smp_enable(mpidr) != 0)
+				continue;
+
+			started |= __BIT(cpuindex);
+			cpuindex++;
+			for (u_int i = 0x100000; i > 0; i--) {
+				membar_consumer();
+				if (arm_cpu_hatched & __BIT(cpuindex))
+					break;
+			}
+		}
+	}
+#endif
+
+	if (started == 0)
+		arm_fdt_cpu_mpstart();
+}
 
 static void
 sun4i_platform_reset(void)
@@ -360,7 +433,19 @@ static const struct arm_platform sun8i_platform = {
 
 ARM_PLATFORM(sun8i_h2plus, "allwinner,sun8i-h2-plus", &sun8i_platform);
 ARM_PLATFORM(sun8i_h3, "allwinner,sun8i-h3", &sun8i_platform);
-ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_platform);
+
+static const struct arm_platform sun8i_a83t_platform = {
+	.ap_devmap = sun8i_a83t_platform_devmap,
+	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_init_attach_args = sunxi_platform_init_attach_args,
+	.ap_device_register = sunxi_platform_device_register,
+	.ap_reset = sun6i_platform_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = sunxi_platform_uart_freq,
+	.ap_mpstart = sunxi_mc_platform_mpstart,
+};
+
+ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_a83t_platform);
 
 static const struct arm_platform sun9i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
