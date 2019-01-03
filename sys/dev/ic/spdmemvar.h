@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.13 2017/01/18 06:02:50 msaitoh Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.13.6.1 2019/01/03 11:23:54 martin Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -768,7 +768,8 @@ struct spdmem_ddr4 {				/* Dual Data Rate 4 SDRAM */
 		uint8_t	ddr4_device_width:3,	\
 		/* number of package ranks is field value plus 1 */ \
 		uint8_t	ddr4_package_ranks:3,	\
-		uint8_t	ddr4_unused9:2,		\
+		uint8_t	ddr4_rank_mix:1,	\
+		uint8_t	ddr4_unused9:1		\
 	);
 	SPD_BITFIELD(					\
 		/* primary width is offset by 3, extension is offset by 2 */ \
