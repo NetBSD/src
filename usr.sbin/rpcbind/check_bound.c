@@ -1,4 +1,4 @@
-/*	$NetBSD: check_bound.c,v 1.7 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: check_bound.c,v 1.8 2019/01/03 19:04:21 christos Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/check_bound.c 300942 2016-05-29 06:01:18Z ngie $ */
 
 /*-
@@ -125,7 +125,7 @@ add_bndlist(struct netconfig *nconf, struct netbuf *baddr __unused)
 	newnconf = getnetconfigent(nconf->nc_netid);
 	if (newnconf == NULL)
 		return (-1);
-	fdl = malloc(sizeof(struct fdlist));
+	fdl = malloc(sizeof(*fdl));
 	if (fdl == NULL) {
 		freenetconfigent(newnconf);
 		syslog(LOG_ERR, "no memory!");
