@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.24.6.1 2017/11/22 14:33:23 martin Exp $ */
+/* $NetBSD: spdmem.c,v 1.24.6.2 2019/01/03 11:23:54 martin Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.24.6.1 2017/11/22 14:33:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.24.6.2 2019/01/03 11:23:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -869,7 +869,7 @@ decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s)
 static void
 decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 {
-	int dimm_size, cycle_time;
+	int dimm_size, cycle_time, ranks;
 	int tAA_clocks, tRCD_clocks,tRP_clocks, tRAS_clocks;
 
 	aprint_naive("\n");
@@ -937,14 +937,17 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 			  1 << (s->sm_ddr4.ddr4_primary_bus_width + 3),
 			  TRUE, "PC4", 0);
 
+	ranks = s->sm_ddr4.ddr4_package_ranks + 1;
 	aprint_verbose_dev(self,
-	    "%d rows, %d cols, %d banks, %d bank groups, "
-	    "%d.%03dns cycle time\n",
-	    s->sm_ddr4.ddr4_rows + 9, s->sm_ddr4.ddr4_cols + 12,
+	    "%d rows, %d cols, %d ranks%s, %d banks/group, %d bank groups\n",
+	    s->sm_ddr4.ddr4_rows + 12, s->sm_ddr4.ddr4_cols + 9,
+	    ranks, (ranks > 1) ? ((s->sm_ddr4.ddr4_rank_mix == 1)
+		? " (asymmetric)" : " (symmetiric)") : "",
 	    1 << (2 + s->sm_ddr4.ddr4_logbanks),
-	    1 << s->sm_ddr4.ddr4_bankgroups,
-	    cycle_time / 1000, cycle_time % 1000);
+	    1 << s->sm_ddr4.ddr4_bankgroups);
 
+	aprint_verbose_dev(self, "%d.%03dns cycle time\n",
+	    cycle_time / 1000, cycle_time % 1000);
 
 	tAA_clocks =  __DDR4_VALUE(tAAmin)  * 1000 / cycle_time;
 	tRCD_clocks = __DDR4_VALUE(tRCDmin) * 1000 / cycle_time;
