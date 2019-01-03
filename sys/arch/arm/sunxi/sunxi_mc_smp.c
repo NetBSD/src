@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mc_smp.c,v 1.1 2019/01/03 11:01:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_mc_smp.c,v 1.2 2019/01/03 12:52:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mc_smp.c,v 1.1 2019/01/03 11:01:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mc_smp.c,v 1.2 2019/01/03 12:52:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -200,10 +200,4 @@ sunxi_mc_smp_enable(u_int mpidr)
 	bus_space_unmap(bst, prcm, PRCM_SIZE);
 
 	return error;
-}
-
-int
-sunxi_mc_smp_match(const char *enable_method)
-{
-	return strcmp(enable_method, A83T_SMP_ENABLE_METHOD) == 0;
 }
