@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.9 1995/03/21 09:04:33 cgd Exp $
+$NetBSD: README,v 1.10 2019/01/04 19:13:58 maya Exp $
 
 ed is an 8-bit-clean, POSIX-compliant line editor.  It should work with
 any regular expression package that conforms to the POSIX interface
@@ -10,7 +10,6 @@ should be redefined to disable interrupts.
 
 The following compiler directives are recognized:
 DES		- to add encryption support (requires crypt(3))
-NO_REALLOC_NULL	- if realloc(3) does not accept a NULL pointer
 BACKWARDS	- for backwards compatibility
 NEED_INSQUE	- if insque(3) is missing
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.37 2014/03/25 17:23:37 joerg Exp $	*/
+/*	$NetBSD: ed.h,v 1.38 2019/01/04 19:13:58 maya Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -121,33 +121,6 @@ if (--mutex == 0) { \
 	} \
 }
 
-#if defined(sun) || defined(NO_REALLOC_NULL)
-/* REALLOC: assure at least a minimum size for buffer b */
-#define REALLOC(b,n,i,err) \
-if ((i) > (n)) { \
-	int ti = (n); \
-	char *ts; \
-	SPL1(); \
-	if ((b) != NULL) { \
-		if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
-			fprintf(stderr, "%s\n", strerror(errno)); \
-			seterrmsg("out of memory"); \
-			SPL0(); \
-			return err; \
-		} \
-	} else { \
-		if ((ts = (char *) malloc(ti += max((i), MINBUFSZ))) == NULL) { \
-			fprintf(stderr, "%s\n", strerror(errno)); \
-			seterrmsg("out of memory"); \
-			SPL0(); \
-			return err; \
-		} \
-	} \
-	(n) = ti; \
-	(b) = ts; \
-	SPL0(); \
-}
-#else /* NO_REALLOC_NULL */
 /* REALLOC: assure at least a minimum size for buffer b */
 #define REALLOC(b,n,i,err) \
 if ((i) > (n)) { \
@@ -164,7 +137,6 @@ if ((i) > (n)) { \
 	(b) = ts; \
 	SPL0(); \
 }
-#endif /* NO_REALLOC_NULL */
 
 /* REQUE: link pred before succ */
 #define REQUE(pred, succ) (pred)->q_forw = (succ), (succ)->q_back = (pred)
