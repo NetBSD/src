@@ -1,4 +1,4 @@
-/*	$NetBSD: undo.c,v 1.6 2014/03/23 05:06:42 dholland Exp $	*/
+/*	$NetBSD: undo.c,v 1.7 2019/01/04 19:13:58 maya Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
 /*-
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-__RCSID("$NetBSD: undo.c,v 1.6 2014/03/23 05:06:42 dholland Exp $");
+__RCSID("$NetBSD: undo.c,v 1.7 2019/01/04 19:13:58 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,14 +50,6 @@ push_undo_stack(int type, long from, long to)
 {
 	undo_t *t;
 
-#if defined(sun) || defined(NO_REALLOC_NULL)
-	if (ustack == NULL &&
-	    (ustack = (undo_t *) malloc((usize = USIZE) * sizeof(undo_t))) == NULL) {
-		fprintf(stderr, "%s\n", strerror(errno));
-		seterrmsg("out of memory");
-		return NULL;
-	}
-#endif
 	t = ustack;
 	if (u_p < usize ||
 	    (t = (undo_t *) realloc(ustack, (usize += USIZE) * sizeof(undo_t))) != NULL) {
