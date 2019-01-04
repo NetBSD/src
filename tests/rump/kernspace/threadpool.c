@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.c,v 1.4 2018/12/28 19:54:36 thorpej Exp $	*/
+/*	$NetBSD: threadpool.c,v 1.5 2019/01/04 05:35:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: threadpool.c,v 1.4 2018/12/28 19:54:36 thorpej Exp $");
+__RCSID("$NetBSD: threadpool.c,v 1.5 2019/01/04 05:35:24 thorpej Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -120,10 +120,12 @@ test_job_func_cancel(struct threadpool_job *job)
 {
 	struct test_job_data *data =
 	    container_of(job, struct test_job_data, job);
-	
+
 	mutex_enter(&data->mutex);
-	data->count = 1;
-	cv_broadcast(&data->cond);
+	if (data->count == 0) {
+		data->count = 1;
+		cv_broadcast(&data->cond);
+	}
 	while (data->count != FINAL_COUNT - 1)
 		cv_wait(&data->cond, &data->mutex);
 	data->count = FINAL_COUNT;
@@ -257,7 +259,26 @@ rumptest_threadpool_job_cancelthrash(void)
 			mutex_exit(&data.mutex);
 			mutex_enter(&data.mutex);
 		}
+		/*
+		 * If the job managed to start, ensure that its exit
+		 * condition is met so that we don't wait forever
+		 * for the job to finish.
+		 */
+		data.count = FINAL_COUNT - 1;
+		cv_broadcast(&data.cond);
+
 		threadpool_cancel_job(pool, &data.job);
+
+		/*
+		 * After cancellation, either the job didn't start
+		 * (data.count == FINAL_COUNT - 1, per above) or
+		 * it finished (data.count == FINAL_COUNT).
+		 */
+		KASSERT(data.count == (FINAL_COUNT - 1) ||
+		    data.count == FINAL_COUNT);
+
+		/* Reset for the loop. */
+		data.count = 0;
 	}
 	mutex_exit(&data.mutex);
 
