@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1584 2019/01/03 17:33:20 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1585 2019/01/04 21:23:30 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1430,7 +1430,7 @@ is too much inertia to apply them. Check for .gitignore files.
 For the data files, do use external/public-domain/tz/tzdata2netbsd.
 
 Package:	wpa_supplicant/hostapd
-Version:	2.6
+Version:	2.7
 Current Vers:	2.7
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
