@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2481 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2482 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -285,4 +285,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	binutils: Updated to FSF binutils 2.31.1.  [christos 20181231]
 	services(5), protocols(5): Pull iana-generated services and protocols
 	    [christos 20190103]
-	wpa: Import wpa_supplicant and hostapd 2.7. [christos 20180104]
+	wpa: Import wpa_supplicant and hostapd 2.7. [christos 20190104]
