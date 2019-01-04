@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.47 2018/11/21 20:04:48 martin Exp $	*/
+/*	$NetBSD: mdb.c,v 1.48 2019/01/04 15:27:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.47 2018/11/21 20:04:48 martin Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.48 2019/01/04 15:27:19 martin Exp $");
 #endif
 
 
@@ -184,6 +184,7 @@ write_menu_file(char *initcode)
 		"#define OPT_ENDWIN	2\n"
 		"#define OPT_EXIT	4\n"
 		"#define OPT_IGNORE	8\n"
+		"#define OPT_NOSHORT	16\n"
 		"#define OPT_NOMENU	-1\n\n"
 		"struct menudesc {\n"
 		"	const char	*title;\n"
