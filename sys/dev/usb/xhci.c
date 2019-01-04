@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.72.2.9 2018/09/28 08:33:43 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.72.2.10 2019/01/04 14:55:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.9 2018/09/28 08:33:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.10 2019/01/04 14:55:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3711,7 +3711,7 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
-	const bool polling = sc->sc_bus.ub_usepolling;
+	const bool polling = xhci_polling_p(sc);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
@@ -3803,7 +3803,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	uint32_t status;
 	uint32_t control;
 	u_int i;
-	const bool polling = sc->sc_bus.ub_usepolling;
+	const bool polling = xhci_polling_p(sc);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(12, "req: %04jx %04jx %04jx %04jx",
@@ -3937,7 +3937,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	uint32_t status;
 	uint32_t control;
 	u_int i = 0;
-	const bool polling = sc->sc_bus.ub_usepolling;
+	const bool polling = xhci_polling_p(sc);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
