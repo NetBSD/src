@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.11 2018/01/14 03:05:06 christos Exp $
+# $NetBSD: Makefile,v 1.12 2019/01/04 21:22:20 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 
 PROG=	hostapd
+CPPFLAGS+= -Diphdr=ip
 
 # ap
 SRCS+= \
@@ -22,7 +23,6 @@ ieee802_11_auth.c \
 ieee802_11_shared.c \
 ieee802_1x.c \
 neighbor_db.c \
-peerkey_auth.c \
 pmksa_cache_auth.c \
 preauth_auth.c \
 rrm.c \
@@ -49,6 +49,7 @@ SRCS+= \
 driver_bsd.c \
 driver_none.c \
 driver_wired.c \
+driver_wired_common.c \
 driver_common.c \
 drivers.c
 
@@ -107,7 +108,8 @@ md5.c
 	${WPA_DISTDIR}/src/eap_server \
 	${WPA_DISTDIR}/src/eapol_auth \
 	${WPA_DISTDIR}/src/drivers \
-	${WPA_DISTDIR}/src/radius
+	${WPA_DISTDIR}/src/radius \
+	${COMMON_PATH}
 
 MAN=	hostapd.8 hostapd.conf.5
 
@@ -122,6 +124,7 @@ CPPFLAGS+= -DCONFIG_DRIVER_BSD
 CPPFLAGS+= -DCONFIG_DRIVER_NONE
 CPPFLAGS+= -DCONFIG_DRIVER_WIRED
 CPPFLAGS+= -DCONFIG_DRIVER_WPA
+
 .if ${MKINET6} != "no"
 CPPFLAGS+= -DCONFIG_IPV6
 .endif
