@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.213 2017/09/15 13:27:53 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.214 2019/01/04 16:25:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.213 2017/09/15 13:27:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.214 2019/01/04 16:25:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -877,13 +877,16 @@ has_child_node(int parent, int search)
 
 /*
  * The interposed pseudo-parent node in OpenBIOS has a
- * device_type = "ide" and no "vendor-id".
- * It is the secondary bus if the name is "ide1".
+ * device_type = "ide" and no "compatible" property.
+ * It is the secondary bus if the name is "ide1" or "ide"
+ * with newer OpenBIOS versions. In the latter case, read
+ * the first reg value to discriminate the two channels.
  */
 static bool
 openbios_secondary_ata_heuristic(int parent)
 {
 	char tmp[OFPATHLEN];
+	int regs[4];
 
 	if (OF_getprop(parent, "device_type", tmp, sizeof(tmp)) <= 0)
 		return false;
@@ -891,18 +894,29 @@ openbios_secondary_ata_heuristic(int parent)
 		return false;
 	DPRINTF(ACDB_BOOTDEV, ("parent device_type is ide\n"));
 
-	if (OF_getprop(parent, "vendor-id", tmp, sizeof(tmp)) > 0)
+	if (OF_getprop(parent, "compatible", tmp, sizeof(tmp)) > 0)
 		return false;
-	DPRINTF(ACDB_BOOTDEV, ("parent has no vendor-id\n"));
+	DPRINTF(ACDB_BOOTDEV, ("parent has no compatible property\n"));
 
 	if (OF_getprop(parent, "name", tmp, sizeof(tmp)) <= 0)
 		return false;
-	if (strcmp(tmp, "ide1") != 0)
-		return false;
-	DPRINTF(ACDB_BOOTDEV, ("parent seems to be an OpenBIOS"
-	   " secondary ATA bus, applying workaround target+2\n"));
+	if (strcmp(tmp, "ide1") == 0) {
+		DPRINTF(ACDB_BOOTDEV, ("parent seems to be an (old) OpenBIOS"
+		   " secondary ATA bus, applying workaround target+2\n"));
+		return true;
+	} else if (strcmp(tmp, "ide") == 0) {
+		regs[0] = 42;
+		if (OF_getprop(parent, "reg", &regs, sizeof(regs))
+		    >= sizeof(regs[0])) {
+			DPRINTF(ACDB_BOOTDEV, ("parent seems to be an OpenBIOS"
+			   " ATA bus #%u\n", regs[0]));
 
-	return true;
+			return regs[0] == 1;
+		}
+
+	}
+
+	return false;
 }
 
 /*
