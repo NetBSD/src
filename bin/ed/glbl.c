@@ -1,4 +1,4 @@
-/*	$NetBSD: glbl.c,v 1.9 2015/08/28 11:29:48 joerg Exp $	*/
+/*	$NetBSD: glbl.c,v 1.10 2019/01/04 19:13:58 maya Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
    editor */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-__RCSID("$NetBSD: glbl.c,v 1.9 2015/08/28 11:29:48 joerg Exp $");
+__RCSID("$NetBSD: glbl.c,v 1.10 2019/01/04 19:13:58 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,27 +158,13 @@ set_active_node(line_t *lp)
 		int ti = active_size;
 		line_t **ts;
 		SPL1();
-#if defined(sun) || defined(NO_REALLOC_NULL)
-		if (active_list != NULL) {
-#endif
-			if ((ts = (line_t **) realloc(active_list, 
-			    (ti += MINBUFSZ) * sizeof(line_t **))) == NULL) {
-				fprintf(stderr, "%s\n", strerror(errno));
-				seterrmsg("out of memory");
-				SPL0();
-				return ERR;
-			}
-#if defined(sun) || defined(NO_REALLOC_NULL)
-		} else {
-			if ((ts = (line_t **) malloc((ti += MINBUFSZ) * 
-			    sizeof(line_t **))) == NULL) {
-				fprintf(stderr, "%s\n", strerror(errno));
-				seterrmsg("out of memory");
-				SPL0();
-				return ERR;
-			}
+		if ((ts = (line_t **) realloc(active_list, 
+		    (ti += MINBUFSZ) * sizeof(line_t **))) == NULL) {
+			fprintf(stderr, "%s\n", strerror(errno));
+			seterrmsg("out of memory");
+			SPL0();
+			return ERR;
 		}
-#endif
 		active_size = ti;
 		active_list = ts;
 		SPL0();
