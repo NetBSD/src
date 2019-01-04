@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.25 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.26 2019/01/04 17:09:26 tih Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.25 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.26 2019/01/04 17:09:26 tih Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -230,7 +230,7 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
-			aprint_error_dev(self,
+			aprint_verbose_dev(self,
 			    "status change notification available\n");
 			sc->sc_ctl_notify = ed->bEndpointAddress;
 		}
