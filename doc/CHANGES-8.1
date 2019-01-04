@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.85 2019/01/03 11:27:32 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.86 2019/01/04 14:56:25 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2175,4 +2175,9 @@ usr.sbin/acpitools/acpidump/acpi.c		1.43
 
 	Fix acpi_print_string(), handle NUL termination correctly.
 	[msaitoh, ticket #1154]
+
+sys/dev/usb/xhci.c				1.100
+
+	Fix polled device access.
+	[mrg, ticket #1155]
 
