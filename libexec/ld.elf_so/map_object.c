@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.58 2017/06/19 11:57:01 joerg Exp $	 */
+/*	$NetBSD: map_object.c,v 1.59 2019/01/04 19:54:56 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.58 2017/06/19 11:57:01 joerg Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.59 2019/01/04 19:54:56 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -77,9 +77,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	size_t		 mapsize = 0;
 	int		 mapflags;
 	Elf_Off		 base_offset;
-#ifdef MAP_ALIGNED
 	Elf_Addr	 base_alignment;
-#endif
 	Elf_Addr	 base_vaddr;
 	Elf_Addr	 base_vlimit;
 	Elf_Addr	 text_vlimit;
@@ -262,9 +260,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	 * and unmap the gaps left by padding to alignment.
 	 */
 
-#ifdef MAP_ALIGNED
 	base_alignment = segs[0]->p_align;
-#endif
 	base_offset = round_down(segs[0]->p_offset);
 	base_vaddr = round_down(segs[0]->p_vaddr);
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
@@ -336,14 +332,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	 * Calculate log2 of the base section alignment.
 	 */
 	mapflags = 0;
-#ifdef MAP_ALIGNED
 	if (base_alignment > _rtld_pagesz) {
 		unsigned int log2 = 0;
 		for (; base_alignment > 1; base_alignment >>= 1)
 			log2++;
 		mapflags = MAP_ALIGNED(log2);
 	}
-#endif
 
 #ifdef RTLD_LOADER
 	base_addr = obj->isdynamic ? NULL : (caddr_t)base_vaddr;
