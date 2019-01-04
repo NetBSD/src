@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.61 2019/01/02 16:32:59 martin Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.62 2019/01/04 15:27:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -301,14 +301,18 @@ static void
 draw_menu_line(menudesc *m, int opt, int cury, void *arg, const char *text)
 {
 	int hasbox = m->mopt & MC_NOBOX ? 0 : 1;
+	int noshort = (opt < m->numopts)
+	    && (m->opts[opt].opt_flags & OPT_NOSHORT);
 
 	if (m->cursel == opt) {
 		mvwaddstr(m->mw, cury, hasbox, ">");
 		wstandout(m->mw);
 	} else
 		mvwaddstr(m->mw, cury, hasbox, " ");
-	if (!(m->mopt & MC_NOSHORTCUT))
+	if (!(m->mopt & MC_NOSHORTCUT) && !noshort)
 		wprintw(m->mw, "%c: ", opt_ch(m, opt));
+	else if (!(m->mopt & MC_NOSHORTCUT))
+		wprintw(m->mw, "   ");
 
 	if (!text && m->draw_line)
 		m->draw_line(m, opt, arg);
