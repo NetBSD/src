@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.8 2019/01/02 12:18:08 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.9 2019/01/04 10:25:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -1826,9 +1826,16 @@ has_sib(struct x86_instr *instr)
 }
 
 static inline bool
-is_rip_relative(struct x86_instr *instr)
+is_rip_relative(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
-	return (instr->strm->disp.type == DISP_0 &&
+	return (fsm->is64bit && instr->strm->disp.type == DISP_0 &&
+	    instr->regmodrm.rm == RM_RBP_DISP32);
+}
+
+static inline bool
+is_disp32_only(struct x86_decode_fsm *fsm, struct x86_instr *instr)
+{
+	return (!fsm->is64bit && instr->strm->disp.type == DISP_0 &&
 	    instr->regmodrm.rm == RM_RBP_DISP32);
 }
 
@@ -1905,10 +1912,19 @@ node_regmodrm(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	/* The displacement applies to RM. */
 	strm->disp.type = get_disp_type(instr);
 
-	if (is_rip_relative(instr)) {
+	if (is_rip_relative(fsm, instr)) {
 		/* Overwrites RM */
 		strm->type = STORE_REG;
 		strm->u.reg = &gpr_map__rip;
+		strm->disp.type = DISP_4;
+		fsm_advance(fsm, 1, node_disp);
+		return 0;
+	}
+
+	if (is_disp32_only(fsm, instr)) {
+		/* Overwrites RM */
+		strm->type = STORE_REG;
+		strm->u.reg = NULL;
 		strm->disp.type = DISP_4;
 		fsm_advance(fsm, 1, node_disp);
 		return 0;
@@ -2405,7 +2421,11 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 			gva += sib->scale * reg;
 		}
 	} else if (store->type == STORE_REG) {
-		gva = gpr_read_address(instr, state, store->u.reg->num);
+		if (store->u.reg == NULL) {
+			/* The base is null. Happens with disp32-only. */
+		} else {
+			gva = gpr_read_address(instr, state, store->u.reg->num);
+		}
 	} else {
 		gva = store->u.dmo;
 	}
