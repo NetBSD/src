@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.74 2019/01/05 06:30:05 maya Exp $	*/
+/*	$NetBSD: commands.c,v 1.75 2019/01/05 06:47:24 maya Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.74 2019/01/05 06:30:05 maya Exp $");
+__RCSID("$NetBSD: commands.c,v 1.75 2019/01/05 06:47:24 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -1542,10 +1542,6 @@ struct envlist EnvList[] = {
     { "send",	"Send an environment variable", env_send,	1 },
     { "list",	"List the current environment variables",
 						env_list,	0 },
-#if defined(OLD_ENVIRON) && defined(ENV_HACK)
-    { "varval", "Reverse VAR and VALUE (auto, right, wrong, status)",
-						env_varval,    1 },
-#endif
     { "help",	0,				env_help,		0 },
     { "?",	"Print help information",	env_help,		0 },
     { .name = 0 },
@@ -1745,9 +1741,6 @@ env_send(const char *var, char *d)
 	struct env_lst *ep;
 
 	if (my_state_is_wont(TELOPT_NEW_ENVIRON)
-#ifdef	OLD_ENVIRON
-	    && my_state_is_wont(TELOPT_OLD_ENVIRON)
-#endif
 		) {
 		fprintf(stderr,
 		    "Cannot send '%s': Telnet ENVIRON option not enabled\n",
@@ -1806,43 +1799,6 @@ env_getvalue(const char *var)
 		return ep->value;
 	return NULL;
 }
-
-#if defined(OLD_ENVIRON) && defined(ENV_HACK)
-void
-env_varval(const unsigned char *what)
-{
-	extern int old_env_var, old_env_value, env_auto;
-	int len = strlen(what);
-
-	if (len == 0)
-		goto unknown;
-
-	if (strncasecmp(what, "status", len) == 0) {
-		if (env_auto)
-			printf("%s%s", "VAR and VALUE are/will be ",
-					"determined automatically\n");
-		if (old_env_var == OLD_ENV_VAR)
-			printf("VAR and VALUE set to correct definitions\n");
-		else
-			printf("VAR and VALUE definitions are reversed\n");
-	} else if (strncasecmp(what, "auto", len) == 0) {
-		env_auto = 1;
-		old_env_var = OLD_ENV_VALUE;
-		old_env_value = OLD_ENV_VAR;
-	} else if (strncasecmp(what, "right", len) == 0) {
-		env_auto = 0;
-		old_env_var = OLD_ENV_VAR;
-		old_env_value = OLD_ENV_VALUE;
-	} else if (strncasecmp(what, "wrong", len) == 0) {
-		env_auto = 0;
-		old_env_var = OLD_ENV_VALUE;
-		old_env_value = OLD_ENV_VAR;
-	} else {
-unknown:
-		printf("Unknown \"varval\" command. (\"auto\", \"right\", \"wrong\", \"status\")\n");
-	}
-}
-#endif
 
 #ifdef AUTHENTICATION
 /*
