@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.13 2018/09/01 22:28:04 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.14 2019/01/05 22:24:24 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.13 2018/09/01 22:28:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.14 2019/01/05 22:24:24 tnn Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -58,7 +58,7 @@ int	linux_fence_trace = 0;
  *	True if fence has a positive reference count.  True after
  *	fence_init; after the last fence_put, this becomes false.
  */
-static inline bool
+static inline bool __diagused
 fence_referenced_p(struct fence *fence)
 {
 
