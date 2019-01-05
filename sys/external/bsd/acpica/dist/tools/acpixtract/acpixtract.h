@@ -168,13 +168,12 @@ BOOLEAN
 AxIsDataBlockHeader (
     void);
 
-long
+int
 AxConvertAndWrite (
     FILE                    *OutputFile,
-    char                    *ThisSignature,
-    unsigned int            ThisTableBytesWritten);
+    char                    *ThisSignature);
 
-size_t
+int
 AxConvertToBinary (
     char                    *InputLine,
     unsigned char           *OutputData);
