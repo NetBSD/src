@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.30 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: file.c,v 1.31 2019/01/05 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.30 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.31 2019/01/05 10:51:06 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -459,8 +459,8 @@ free_items(Char **items, size_t numitems)
     size_t i;
 
     for (i = 0; i < numitems; i++)
-	xfree((ptr_t) items[i]);
-    xfree((ptr_t) items);
+	free((ptr_t) items[i]);
+    free((ptr_t) items);
 }
 
 #define FREE_ITEMS(items, numitems) { \

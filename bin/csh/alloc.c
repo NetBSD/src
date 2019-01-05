@@ -1,4 +1,4 @@
-/* $NetBSD: alloc.c,v 1.13 2013/01/22 19:28:00 christos Exp $ */
+/* $NetBSD: alloc.c,v 1.14 2019/01/05 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: alloc.c,v 1.13 2013/01/22 19:28:00 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.14 2019/01/05 10:51:06 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,11 +81,4 @@ Calloc(size_t s, size_t n)
 	stderror(ERR_NOMEM);
     }
     return (ptr);
-}
-
-void
-Free(ptr_t p)
-{
-    if (p)
-	free(p);
 }

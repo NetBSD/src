@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.28 2017/04/27 18:50:34 christos Exp $ */
+/* $NetBSD: glob.c,v 1.29 2019/01/05 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.28 2017/04/27 18:50:34 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.29 2019/01/05 10:51:06 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ globtilde(Char **nv, Char *s)
 	*b++ = *s++;
     *b = EOS;
     --u;
-    xfree((ptr_t) u);
+    free((ptr_t) u);
     return (Strsave(gstart));
 }
 
@@ -234,13 +234,13 @@ expbrace(Char ***nvp, Char ***elp, size_t size)
 	    int len;
 
 	    if ((len = globbrace(s, b, &bl)) < 0) {
-		xfree((ptr_t)nv);
+		free((ptr_t)nv);
 		stderror(ERR_MISSING, -len);
 	    }
-	    xfree((ptr_t) s);
+	    free((ptr_t) s);
 	    if (len == 1) {
 		*vl-- = *bl;
-		xfree((ptr_t) bl);
+		free((ptr_t) bl);
 		continue;
 	    }
 	    len = blklen(bl);
@@ -265,7 +265,7 @@ expbrace(Char ***nvp, Char ***elp, size_t size)
 	    vp++;
 	    for (bp = bl + 1; *bp; *vp++ = *bp++)
 		continue;
-	    xfree((ptr_t)bl);
+	    free((ptr_t)bl);
 	}
 
     }
@@ -301,7 +301,7 @@ globexpand(Char **v)
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
-	    xfree((ptr_t)pargv);
+	    free((ptr_t)pargv);
 	    pargv = NULL;
 	}
 	else {
@@ -353,9 +353,9 @@ handleone(Char *str, Char **vl, int action)
 	str = Strsave(*vlp++);
 	do {
 	    cp = Strspl(str, STRspace);
-	    xfree((ptr_t)str);
+	    free((ptr_t)str);
 	    str = Strspl(cp, *vlp);
-	    xfree((ptr_t)cp);
+	    free((ptr_t)cp);
 	}
 	while (*++vlp);
 	blkfree(vl);
@@ -440,14 +440,14 @@ globone(Char *str, int action)
 	vo = globexpand(v);
 	if (noglob || (gflg & G_GLOB) == 0) {
 	    if (vo[0] == NULL) {
-		xfree((ptr_t)vo);
+		free((ptr_t)vo);
 		return (Strsave(STRNULL));
 	    }
 	    if (vo[1] != NULL)
 		return (handleone(str, vo, action));
 	    else {
 		str = strip(vo[0]);
-		xfree((ptr_t) vo);
+		free((ptr_t) vo);
 		return (str);
 	    }
 	}
@@ -465,14 +465,14 @@ globone(Char *str, int action)
 	stderror(ERR_NAME | ERR_NOMATCH);
     }
     if (vl[0] == NULL) {
-	xfree((ptr_t)vl);
+	free((ptr_t)vl);
 	return (Strsave(STRNULL));
     }
     if (vl[1] != NULL)
 	return (handleone(str, vl, action));
     else {
 	str = strip(*vl);
-	xfree((ptr_t)vl);
+	free((ptr_t)vl);
 	return (str);
     }
 }
@@ -709,7 +709,7 @@ backeval(Char *cp, int literal)
 	execute(t, -1, NULL, NULL);
 	exitstat();
     }
-    xfree((ptr_t)cp);
+    free((ptr_t)cp);
     (void)close(pvec[1]);
     c = 0;
     ip = NULL;

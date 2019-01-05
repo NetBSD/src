@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.31 2013/08/06 05:42:43 christos Exp $ */
+/* $NetBSD: lex.c,v 1.32 2019/01/05 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.31 2013/08/06 05:42:43 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.32 2019/01/05 10:51:06 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,8 +247,8 @@ freelex(struct wordent *vp)
     while (vp->next != vp) {
 	fp = vp->next;
 	vp->next = fp->next;
-	xfree((ptr_t) fp->word);
-	xfree((ptr_t) fp);
+	free((ptr_t) fp->word);
+	free((ptr_t) fp);
     }
     vp->prev = vp;
 }
@@ -897,11 +897,11 @@ dosub(int sc, struct wordent *en, int global)
 			otword = tword;
 			tword = subword(otword, sc, &didone);
 			if (Strcmp(tword, otword) == 0) {
-			    xfree((ptr_t) otword);
+			    free((ptr_t) otword);
 			    break;
 			}
 			else
-			    xfree((ptr_t)otword);
+			    free((ptr_t)otword);
 		    }
 		}
 	    }
@@ -1224,7 +1224,7 @@ gethent(int sc)
 	}
     np = putn(event);
     str = vis_str(np);
-    xfree((ptr_t) np);
+    free((ptr_t) np);
     seterror(ERR_NOEVENT, str);
     return (0);
 }
@@ -1456,7 +1456,7 @@ again:
 	nfbuf = (Char **)xcalloc((size_t) (fblocks + 2), sizeof(char **));
 	if (fbuf) {
 	    (void)blkcpy(nfbuf, fbuf);
-	    xfree((ptr_t) fbuf);
+	    free((ptr_t) fbuf);
 	}
 	fbuf = nfbuf;
 	fbuf[fblocks] = (Char *)xcalloc(BUFSIZE, sizeof(Char));
@@ -1550,7 +1550,7 @@ bfree(void)
     sb = (int)(fseekp - 1) / BUFSIZE;
     if (sb > 0) {
 	for (i = 0; i < sb; i++)
-	    xfree((ptr_t) fbuf[i]);
+	    free((ptr_t) fbuf[i]);
 	(void)blkcpy(fbuf, &fbuf[sb]);
 	fseekp -= BUFSIZE * sb;
 	feobp -= BUFSIZE * sb;

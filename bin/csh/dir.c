@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.30 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: dir.c,v 1.31 2019/01/05 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.30 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.31 2019/01/05 10:51:06 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,7 @@ dnormalize(Char *cp)
 	    cwd[dotdot = Strlen(cwd)] = '/';
 	    cwd[dotdot + 1] = '\0';
 	    dp = Strspl(cwd, cp);
-	    xfree((ptr_t) cwd);
+	    free((ptr_t) cwd);
 	    return dp;
 	}
 	else {
@@ -396,7 +396,7 @@ dgoto(Char *cp)
 	    p--;		/* don't add a / after root */
 	for (q = cp; (*p++ = *q++) != '\0';)
 	    continue;
-	xfree((ptr_t) cp);
+	free((ptr_t) cp);
 	cp = dp;
 	dp += cwdlen;
     }
@@ -424,11 +424,11 @@ dfollow(Char *cp)
      */
     dp = dnormalize(cp);
     if (chdir(short2str(dp)) >= 0) {
-	xfree((ptr_t) cp);
+	free((ptr_t) cp);
 	return dgoto(dp);
     }
     else {
-	xfree((ptr_t) dp);
+	free((ptr_t) dp);
 	if (chdir(short2str(cp)) >= 0)
 	    return dgoto(cp);
 	serrno = errno;
@@ -448,7 +448,7 @@ dfollow(Char *cp)
 		continue;
 	    if (chdir(short2str(buf)) >= 0) {
 		printd = 1;
-		xfree((ptr_t) cp);
+		free((ptr_t) cp);
 		cp = Strsave(buf);
 		return dgoto(cp);
 	    }
@@ -456,13 +456,13 @@ dfollow(Char *cp)
     }
     dp = value(cp);
     if ((dp[0] == '/' || dp[0] == '.') && chdir(short2str(dp)) >= 0) {
-	xfree((ptr_t) cp);
+	free((ptr_t) cp);
 	cp = Strsave(dp);
 	printd = 1;
 	return dgoto(cp);
     }
     (void)strcpy(ebuf, short2str(cp));
-    xfree((ptr_t) cp);
+    free((ptr_t) cp);
     stderror(ERR_SYSTEM, ebuf, strerror(serrno));
     /* NOTREACHED */
 }
@@ -596,8 +596,8 @@ dfree(struct directory *dp)
 	dp->di_next = dp->di_prev = 0;
     }
     else {
-	xfree((char *) dp->di_name);
-	xfree((ptr_t) dp);
+	free((char *) dp->di_name);
+	free((ptr_t) dp);
     }
 }
 
@@ -632,7 +632,7 @@ dcanon(Char *cp, Char *p)
 	(void)Strcpy(tmpdir, p1);
 	(void)Strcat(tmpdir, STRslash);
 	(void)Strcat(tmpdir, cp);
-	xfree((ptr_t) cp);
+	free((ptr_t) cp);
 	cp = p = Strsave(tmpdir);
     }
 
@@ -737,7 +737,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    p = newcp;
 		}
-		xfree((ptr_t) cp);
+		free((ptr_t) cp);
 		cp = newcp;
 		continue;	/* canonicalize the link */
 	    }
@@ -826,7 +826,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    p = newcp;
 		}
-		xfree((ptr_t) cp);
+		free((ptr_t) cp);
 		cp = newcp;
 		continue;	/* canonicalize the link */
 	    }
@@ -880,7 +880,7 @@ dcanon(Char *cp, Char *p)
 	     * Use STRhome to make '~' work
 	     */
 	    newcp = Strspl(p1, cp + Strlen(p2));
-	    xfree((ptr_t) cp);
+	    free((ptr_t) cp);
 	    cp = newcp;
 	}
     }

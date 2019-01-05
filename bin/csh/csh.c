@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.46 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: csh.c,v 1.47 2019/01/05 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.46 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.47 2019/01/05 10:51:06 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -641,7 +641,7 @@ srccat(Char *cp, Char *dp)
 
     ep = Strspl(cp, dp);
     ptr = short2str(ep);
-    xfree((ptr_t) ep);
+    free((ptr_t) ep);
     return srcfile(ptr, mflag ? 0 : 1, 0);
 }
 
@@ -757,10 +757,11 @@ srcunit(int unit, int onlyown, int hflg)
 	int i;
 
 	/* We made it to the new state... free up its storage */
-	/* This code could get run twice but xfree doesn't care */
+	/* This code could get run twice but free doesn't care */
+	/* XXX yes it does */
 	for (i = 0; i < fblocks; i++)
-	    xfree((ptr_t) fbuf[i]);
-	xfree((ptr_t) fbuf);
+	    free((ptr_t) fbuf[i]);
+	free((ptr_t) fbuf);
 
 	/* Reset input arena */
 	(void)memcpy(&B, &saveB, sizeof(B));
@@ -1061,7 +1062,7 @@ process(int catch)
 	    (void)fflush(cshout);
 	}
 	if (seterr) {
-	    xfree((ptr_t) seterr);
+	    free((ptr_t) seterr);
 	    seterr = NULL;
 	}
 
@@ -1145,7 +1146,7 @@ dosource(Char **v, struct command *t)
     (void)Strcpy(buf, *v);
     f = globone(buf, G_ERROR);
     (void)strcpy((char *)buf, short2str(f));
-    xfree((ptr_t) f);
+    free((ptr_t) f);
     if (!srcfile((char *)buf, 0, hflg) && !hflg)
 	stderror(ERR_SYSTEM, (char *)buf, strerror(errno));
 }

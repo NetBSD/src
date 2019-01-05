@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.26 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: csh.h,v 1.27 2019/01/05 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -89,7 +89,6 @@ typedef void *ptr_t;
 #define xmalloc(i) Malloc(i)
 #define xrealloc(p, i) Realloc(p, i)
 #define xcalloc(n, s) Calloc(n, s)
-#define xfree(p) Free(p)
 
 #include <stdio.h>
 FILE *cshin, *cshout, *csherr;
