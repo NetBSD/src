@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.73 2018/12/14 23:40:17 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.74 2019/01/05 06:30:05 maya Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.73 2018/12/14 23:40:17 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.74 2019/01/05 06:30:05 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,16 +280,16 @@ control(cc_t c)
 	}
 	if (uic >= 0x80) {
 		buf[0] = '\\';
-		buf[1] = (char)(((c >> 6) & 07) + '0');
-		buf[2] = (char)(((c >> 3) & 07) + '0');
-		buf[3] = (char)((c & 07) + '0');
+		buf[1] = ((c >> 6) & 07) + '0';
+		buf[2] = ((c >> 3) & 07) + '0';
+		buf[3] = (c & 07) + '0';
 		buf[4] = '\0';
 	} else if (uic >= 0x20) {
-		buf[0] = (char)c;
+		buf[0] = c;
 		buf[1] = '\0';
 	} else {
 		buf[0] = '^';
-		buf[1] = (char)('@' + c);
+		buf[1] = '@' + c;
 		buf[2] = '\0';
 	}
 	return (buf);
