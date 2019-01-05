@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 2016/11/21 20:15:16 christos Exp $
+# $NetBSD: Makefile,v 1.6 2019/01/05 05:40:00 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
-.PATH.c: ${WPA_SUPPLICANT_DISTDIR}
+.PATH.c: ${WPA_SUPPLICANT_DISTDIR} ${COMMON_PATH}
 
 PROG=	wpa_cli
 SRCS=	wpa_cli.c wpa_ctrl.c os_unix.c eloop.c edit.c wpa_debug.c common.c
