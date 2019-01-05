@@ -97,9 +97,24 @@ void
 layout_print_cell(struct layout_cell *lc, const char *hdr, u_int n)
 {
 	struct layout_cell	*lcchild;
+	const char		*type;
 
-	log_debug("%s:%*s%p type %u [parent %p] wp=%p [%u,%u %ux%u]", hdr, n,
-	    " ", lc, lc->type, lc->parent, lc->wp, lc->xoff, lc->yoff, lc->sx,
+	switch (lc->type) {
+	case LAYOUT_LEFTRIGHT:
+		type = "LEFTRIGHT";
+		break;
+	case LAYOUT_TOPBOTTOM:
+		type = "TOPBOTTOM";
+		break;
+	case LAYOUT_WINDOWPANE:
+		type = "WINDOWPANE";
+		break;
+	default:
+		type = "UNKNOWN";
+		break;
+	}
+	log_debug("%s:%*s%p type %s [parent %p] wp=%p [%u,%u %ux%u]", hdr, n,
+	    " ", lc, type, lc->parent, lc->wp, lc->xoff, lc->yoff, lc->sx,
 	    lc->sy);
 	switch (lc->type) {
 	case LAYOUT_LEFTRIGHT:
@@ -110,6 +125,42 @@ layout_print_cell(struct layout_cell *lc, const char *hdr, u_int n)
 	case LAYOUT_WINDOWPANE:
 		break;
 	}
+}
+
+struct layout_cell *
+layout_search_by_border(struct layout_cell *lc, u_int x, u_int y)
+{
+	struct layout_cell	*lcchild, *last = NULL;
+
+	TAILQ_FOREACH(lcchild, &lc->cells, entry) {
+		if (x >= lcchild->xoff && x < lcchild->xoff + lcchild->sx &&
+		    y >= lcchild->yoff && y < lcchild->yoff + lcchild->sy) {
+			/* Inside the cell - recurse. */
+			return (layout_search_by_border(lcchild, x, y));
+		}
+
+		if (last == NULL) {
+			last = lcchild;
+			continue;
+		}
+
+		switch (lc->type) {
+		case LAYOUT_LEFTRIGHT:
+			if (x < lcchild->xoff && x >= last->xoff + last->sx)
+				return (last);
+			break;
+		case LAYOUT_TOPBOTTOM:
+			if (y < lcchild->yoff && y >= last->yoff + last->sy)
+				return (last);
+			break;
+		case LAYOUT_WINDOWPANE:
+			break;
+		}
+
+		last = lcchild;
+	}
+
+	return (NULL);
 }
 
 void
@@ -535,29 +586,11 @@ layout_resize_pane_to(struct window_pane *wp, enum layout_type type,
 	layout_resize_pane(wp, type, change, 1);
 }
 
-/* Resize a single pane within the layout. */
 void
-layout_resize_pane(struct window_pane *wp, enum layout_type type, int change,
-    int opposite)
+layout_resize_layout(struct window *w, struct layout_cell *lc,
+    enum layout_type type, int change, int opposite)
 {
-	struct window		*w = wp->window;
-	struct layout_cell	*lc, *lcparent;
-	int			 needed, size;
-
-	lc = wp->layout_cell;
-
-	/* Find next parent of the same type. */
-	lcparent = lc->parent;
-	while (lcparent != NULL && lcparent->type != type) {
-		lc = lcparent;
-		lcparent = lc->parent;
-	}
-	if (lcparent == NULL)
-		return;
-
-	/* If this is the last cell, move back one. */
-	if (lc == TAILQ_LAST(&lcparent->cells, layout_cells))
-		lc = TAILQ_PREV(lc, layout_cells, entry);
+	int	needed, size;
 
 	/* Grow or shrink the cell. */
 	needed = change;
@@ -576,9 +609,34 @@ layout_resize_pane(struct window_pane *wp, enum layout_type type, int change,
 	}
 
 	/* Fix cell offsets. */
-	layout_fix_offsets(wp->window->layout_root);
-	layout_fix_panes(wp->window, wp->window->sx, wp->window->sy);
-	notify_window("window-layout-changed", wp->window);
+	layout_fix_offsets(w->layout_root);
+	layout_fix_panes(w, w->sx, w->sy);
+	notify_window("window-layout-changed", w);
+}
+
+/* Resize a single pane within the layout. */
+void
+layout_resize_pane(struct window_pane *wp, enum layout_type type, int change,
+    int opposite)
+{
+	struct layout_cell	*lc, *lcparent;
+
+	lc = wp->layout_cell;
+
+	/* Find next parent of the same type. */
+	lcparent = lc->parent;
+	while (lcparent != NULL && lcparent->type != type) {
+		lc = lcparent;
+		lcparent = lc->parent;
+	}
+	if (lcparent == NULL)
+		return;
+
+	/* If this is the last cell, move back one. */
+	if (lc == TAILQ_LAST(&lcparent->cells, layout_cells))
+		lc = TAILQ_PREV(lc, layout_cells, entry);
+
+	layout_resize_layout(wp->window, lc, type, change, opposite);
 }
 
 /* Helper function to grow pane. */
@@ -982,4 +1040,62 @@ layout_close_pane(struct window_pane *wp)
 		layout_fix_panes(w, w->sx, w->sy);
 	}
 	notify_window("window-layout-changed", w);
+}
+
+int
+layout_spread_cell(struct window *w, struct layout_cell *parent)
+{
+	struct layout_cell	*lc;
+	u_int			 number, each, size;
+	int			 change, changed;
+
+	number = 0;
+	TAILQ_FOREACH (lc, &parent->cells, entry)
+	    number++;
+	if (number <= 1)
+		return (0);
+
+	if (parent->type == LAYOUT_LEFTRIGHT)
+		size = parent->sx;
+	else if (parent->type == LAYOUT_TOPBOTTOM)
+		size = parent->sy;
+	else
+		return (0);
+	each = (size - (number - 1)) / number;
+
+	changed = 0;
+	TAILQ_FOREACH (lc, &parent->cells, entry) {
+		if (TAILQ_NEXT(lc, entry) == NULL)
+			each = size - ((each + 1) * (number - 1));
+		change = 0;
+		if (parent->type == LAYOUT_LEFTRIGHT) {
+			change = each - (int)lc->sx;
+			layout_resize_adjust(w, lc, LAYOUT_LEFTRIGHT, change);
+		} else if (parent->type == LAYOUT_TOPBOTTOM) {
+			change = each - (int)lc->sy;
+			layout_resize_adjust(w, lc, LAYOUT_TOPBOTTOM, change);
+		}
+		if (change != 0)
+			changed = 1;
+	}
+	return (changed);
+}
+
+void
+layout_spread_out(struct window_pane *wp)
+{
+	struct layout_cell	*parent;
+	struct window		*w = wp->window;
+
+	parent = wp->layout_cell->parent;
+	if (parent == NULL)
+		return;
+
+	do {
+		if (layout_spread_cell(w, parent)) {
+			layout_fix_offsets(parent);
+			layout_fix_panes(w, w->sx, w->sy);
+			break;
+		}
+	} while ((parent = parent->parent) != NULL);
 }
