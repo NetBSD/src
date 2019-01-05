@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.26 2018/12/28 22:55:20 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.27 2019/01/05 07:56:07 mlelstv Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.26 2018/12/28 22:55:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.27 2019/01/05 07:56:07 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1155,6 +1155,9 @@ mue_tx_list_init(struct mue_softc *sc)
 		}
 	}
 
+	cd->mue_tx_prod = 0;
+	cd->mue_tx_cnt = 0;
+
 	return 0;
 }
 
@@ -1257,8 +1260,6 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 		mue_stop(ifp, 0);
 		return EIO;
 	}
-
-	sc->mue_cdata.mue_tx_cnt++;
 
 	return 0;
 }
@@ -1566,6 +1567,7 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct mue_chain *c = priv;
 	struct mue_softc *sc = c->mue_sc;
+	struct mue_cdata *cd = &sc->mue_cdata;
 	struct ifnet *ifp = GET_IFP(sc);
 	int s;
 
@@ -1573,7 +1575,8 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 
 	s = splnet();
-
+	KASSERT(cd->mue_tx_cnt > 0);
+	cd->mue_tx_cnt--;
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			splx(s);
@@ -1757,6 +1760,8 @@ mue_start(struct ifnet *ifp)
 {
 	struct mue_softc *sc = ifp->if_softc;
 	struct mbuf *m;
+	struct mue_cdata *cd = &sc->mue_cdata;
+	int idx;
 
 	if (__predict_false(!sc->mue_link)) {
 		DPRINTF(sc, "no link\n");
@@ -1769,20 +1774,29 @@ mue_start(struct ifnet *ifp)
 		return;
 	}
 
-	IFQ_POLL(&ifp->if_snd, m);
-	if (m == NULL)
-		return;
+	idx = cd->mue_tx_prod;
+	while (cd->mue_tx_cnt < MUE_TX_LIST_CNT) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
-	if (__predict_false(mue_encap(sc, m, 0))) {
-		ifp->if_oerrors++;
-		return;
+		if (__predict_false(mue_encap(sc, m, idx))) {
+			ifp->if_oerrors++;
+			break;
+		}
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		bpf_mtap(ifp, m, BPF_D_OUT);
+		m_freem(m);
+
+		idx = (idx + 1) % MUE_TX_LIST_CNT;
+		cd->mue_tx_cnt++;
+
 	}
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+	cd->mue_tx_prod = idx;
 
-	bpf_mtap(ifp, m, BPF_D_OUT);
-	m_freem(m);
-
-	ifp->if_flags |= IFF_OACTIVE;
+	if (cd->mue_tx_cnt >= MUE_TX_LIST_CNT)
+		ifp->if_flags |= IFF_OACTIVE;
 
 	/* Set a timeout in case the chip goes out to lunch. */
 	ifp->if_timer = 5;
