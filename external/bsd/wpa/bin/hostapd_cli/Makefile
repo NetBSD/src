@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2016/11/21 20:15:16 christos Exp $
+# $NetBSD: Makefile,v 1.4 2019/01/05 05:40:00 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
-.PATH.c: ${HOSTAPD_DISTDIR}
+.PATH.c: ${HOSTAPD_DISTDIR} ${COMMON_PATH}
 
 PROG=	hostapd_cli
 SRCS=	hostapd_cli.c wpa_ctrl.c os_unix.c eloop.c edit.c wpa_debug.c
