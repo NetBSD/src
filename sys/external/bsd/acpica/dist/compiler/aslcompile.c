@@ -97,7 +97,7 @@ CmDoCompile (
     UtEndEvent (Event);
 
     Event = UtBeginEvent ("Preprocess input file");
-    if (Gbl_PreprocessFlag)
+    if (AslGbl_PreprocessFlag)
     {
         /* Enter compiler name as a #define */
 
@@ -106,10 +106,10 @@ CmDoCompile (
         /* Preprocessor */
 
         PrDoPreprocess ();
-        Gbl_CurrentLineNumber = 1;
-        Gbl_LogicalLineNumber = 1;
+        AslGbl_CurrentLineNumber = 1;
+        AslGbl_LogicalLineNumber = 1;
 
-        if (Gbl_PreprocessOnly)
+        if (AslGbl_PreprocessOnly)
         {
             UtEndEvent (Event);
             CmCleanupAndExit ();
@@ -127,7 +127,7 @@ CmDoCompile (
 
     /* Check for parser-detected syntax errors */
 
-    if (Gbl_SyntaxError)
+    if (AslGbl_SyntaxError)
     {
         fprintf (stderr,
             "Compiler aborting due to parser-detected syntax error(s)\n");
@@ -137,7 +137,7 @@ CmDoCompile (
 
     /* Did the parse tree get successfully constructed? */
 
-    if (!Gbl_ParseTreeRoot)
+    if (!AslGbl_ParseTreeRoot)
     {
         /*
          * If there are no errors, then we have some sort of
@@ -156,23 +156,23 @@ CmDoCompile (
 
     /* Prune the parse tree if requested (debug purposes only) */
 
-    if (Gbl_PruneParseTree)
+    if (AslGbl_PruneParseTree)
     {
-        AslPruneParseTree (Gbl_PruneDepth, Gbl_PruneType);
+        AslPruneParseTree (AslGbl_PruneDepth, AslGbl_PruneType);
     }
 
     /* Optional parse tree dump, compiler debug output only */
 
     LsDumpParseTree ();
 
-    OpcGetIntegerWidth (Gbl_ParseTreeRoot->Asl.Child);
+    OpcGetIntegerWidth (AslGbl_ParseTreeRoot->Asl.Child);
     UtEndEvent (Event);
 
     /* Pre-process parse tree for any operator transforms */
 
     Event = UtBeginEvent ("Parse tree transforms");
     DbgPrint (ASL_DEBUG_OUTPUT, "\nParse tree transforms\n\n");
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
         TrAmlTransformWalkBegin, TrAmlTransformWalkEnd, NULL);
     UtEndEvent (Event);
 
@@ -180,7 +180,7 @@ CmDoCompile (
 
     Event = UtBeginEvent ("Generate AML opcodes");
     DbgPrint (ASL_DEBUG_OUTPUT, "Generating AML opcodes\n\n");
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
         OpcAmlOpcodeWalk, NULL);
     UtEndEvent (Event);
 
@@ -190,7 +190,7 @@ CmDoCompile (
      * descriptor within the input file.
      */
     Event = UtBeginEvent ("Open AML output file");
-    Status = FlOpenAmlOutputFile (Gbl_OutputFilenamePrefix);
+    Status = FlOpenAmlOutputFile (AslGbl_OutputFilenamePrefix);
     UtEndEvent (Event);
     if (ACPI_FAILURE (Status))
     {
@@ -204,9 +204,9 @@ CmDoCompile (
     DbgPrint (ASL_DEBUG_OUTPUT,
         "Interpreting compile-time constant expressions\n\n");
 
-    if (Gbl_FoldConstants)
+    if (AslGbl_FoldConstants)
     {
-        TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
+        TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
             NULL, OpcAmlConstantWalk, NULL);
     }
     else
@@ -220,7 +220,7 @@ CmDoCompile (
     Event = UtBeginEvent ("Updating AML opcodes after constant folding");
     DbgPrint (ASL_DEBUG_OUTPUT,
         "Updating AML opcodes after constant folding\n\n");
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
         NULL, OpcAmlOpcodeUpdateWalk, NULL);
     UtEndEvent (Event);
 
@@ -228,15 +228,15 @@ CmDoCompile (
 
     Event = UtBeginEvent ("Generate AML package lengths");
     DbgPrint (ASL_DEBUG_OUTPUT, "Generating Package lengths\n\n");
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
         LnPackageLengthWalk, NULL);
     UtEndEvent (Event);
 
-    if (Gbl_ParseOnlyFlag)
+    if (AslGbl_ParseOnlyFlag)
     {
         AePrintErrorLog (ASL_FILE_STDERR);
         UtDisplaySummary (ASL_FILE_STDERR);
-        if (Gbl_DebugFlag)
+        if (AslGbl_DebugFlag)
         {
             /* Print error summary to the stdout also */
 
@@ -255,7 +255,7 @@ CmDoCompile (
 
     Event = UtBeginEvent ("Create ACPI Namespace");
     DbgPrint (ASL_DEBUG_OUTPUT, "Creating ACPI Namespace\n\n");
-    Status = LdLoadNamespace (Gbl_ParseTreeRoot);
+    Status = LdLoadNamespace (AslGbl_ParseTreeRoot);
     UtEndEvent (Event);
     if (ACPI_FAILURE (Status))
     {
@@ -280,23 +280,20 @@ CmDoCompile (
 
     /* Resolve External Declarations */
 
-    if (Gbl_DoExternals)
-    {
-        Event = UtBeginEvent ("Resolve all Externals");
-        DbgPrint (ASL_DEBUG_OUTPUT, "\nResolve Externals\n\n");
+    Event = UtBeginEvent ("Resolve all Externals");
+    DbgPrint (ASL_DEBUG_OUTPUT, "\nResolve Externals\n\n");
 
-        if (Gbl_DoExternalsInPlace)
-        {
-            TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
-                ExAmlExternalWalkBegin, NULL, NULL);
-        }
-        else
-        {
-            TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
-                ExAmlExternalWalkBegin, ExAmlExternalWalkEnd, NULL);
-        }
-        UtEndEvent (Event);
+    if (AslGbl_DoExternalsInPlace)
+    {
+        TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
+            ExAmlExternalWalkBegin, NULL, NULL);
     }
+    else
+    {
+        TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
+            ExAmlExternalWalkBegin, ExAmlExternalWalkEnd, NULL);
+    }
+    UtEndEvent (Event);
 
     /*
      * Semantic analysis. This can happen only after the
@@ -305,19 +302,19 @@ CmDoCompile (
      * part one - check control methods
      */
     Event = UtBeginEvent ("Analyze control method return types");
-    AnalysisWalkInfo.MethodStack = NULL;
+    AslGbl_AnalysisWalkInfo.MethodStack = NULL;
 
     DbgPrint (ASL_DEBUG_OUTPUT, "Semantic analysis - Method analysis\n\n");
 
-    if (Gbl_CrossReferenceOutput)
+    if (AslGbl_CrossReferenceOutput)
     {
         OtPrintHeaders ("Part 1: Object Reference Map "
             "(Object references from within each control method)");
     }
 
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
         MtMethodAnalysisWalkBegin,
-        MtMethodAnalysisWalkEnd, &AnalysisWalkInfo);
+        MtMethodAnalysisWalkEnd, &AslGbl_AnalysisWalkInfo);
     UtEndEvent (Event);
 
     /* Generate the object cross-reference file if requested */
@@ -330,7 +327,7 @@ CmDoCompile (
 
     Event = UtBeginEvent ("Determine object types returned by methods");
     DbgPrint (ASL_DEBUG_OUTPUT, "Semantic analysis - Method typing\n\n");
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
         NULL, AnMethodTypingWalkEnd, NULL);
     UtEndEvent (Event);
 
@@ -339,10 +336,10 @@ CmDoCompile (
     Event = UtBeginEvent ("Analyze AML operand types");
     DbgPrint (ASL_DEBUG_OUTPUT,
         "Semantic analysis - Operand type checking\n\n");
-    if (Gbl_DoTypechecking)
+    if (AslGbl_DoTypechecking)
     {
-        TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
-            NULL, AnOperandTypecheckWalkEnd, &AnalysisWalkInfo);
+        TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
+            NULL, AnOperandTypecheckWalkEnd, &AslGbl_AnalysisWalkInfo);
     }
     UtEndEvent (Event);
 
@@ -350,9 +347,9 @@ CmDoCompile (
 
     Event = UtBeginEvent ("Miscellaneous analysis");
     DbgPrint (ASL_DEBUG_OUTPUT, "Semantic analysis - miscellaneous\n\n");
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
         AnOtherSemanticAnalysisWalkBegin,
-        NULL, &AnalysisWalkInfo);
+        NULL, &AslGbl_AnalysisWalkInfo);
     UtEndEvent (Event);
 
     /*
@@ -363,17 +360,17 @@ CmDoCompile (
      */
     if (AcpiGbl_CaptureComments)
     {
-        AcpiGbl_LastListHead = Gbl_ParseTreeRoot->Asl.CommentList;
-        Gbl_ParseTreeRoot->Asl.CommentList = NULL;
+        AcpiGbl_LastListHead = AslGbl_ParseTreeRoot->Asl.CommentList;
+        AslGbl_ParseTreeRoot->Asl.CommentList = NULL;
     }
 
     /* Calculate all AML package lengths */
 
     Event = UtBeginEvent ("Finish AML package length generation");
     DbgPrint (ASL_DEBUG_OUTPUT, "Generating Package lengths\n\n");
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
         LnInitLengthsWalk, NULL);
-    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
         LnPackageLengthWalk, NULL);
     UtEndEvent (Event);
 
@@ -431,12 +428,12 @@ AslCompilerSignon (
 
     case ASL_FILE_HEX_OUTPUT:
 
-        if (Gbl_HexOutputFlag == HEX_OUTPUT_ASM)
+        if (AslGbl_HexOutputFlag == HEX_OUTPUT_ASM)
         {
             Prefix = "; ";
         }
-        else if ((Gbl_HexOutputFlag == HEX_OUTPUT_C) ||
-                 (Gbl_HexOutputFlag == HEX_OUTPUT_ASL))
+        else if ((AslGbl_HexOutputFlag == HEX_OUTPUT_C) ||
+                 (AslGbl_HexOutputFlag == HEX_OUTPUT_ASL))
         {
             FlPrintFile (ASL_FILE_HEX_OUTPUT, "/*\n");
             Prefix = " * ";
@@ -508,12 +505,12 @@ AslCompilerFileHeader (
 
     case ASL_FILE_HEX_OUTPUT:
 
-        if (Gbl_HexOutputFlag == HEX_OUTPUT_ASM)
+        if (AslGbl_HexOutputFlag == HEX_OUTPUT_ASM)
         {
             Prefix = "; ";
         }
-        else if ((Gbl_HexOutputFlag == HEX_OUTPUT_C) ||
-                 (Gbl_HexOutputFlag == HEX_OUTPUT_ASL))
+        else if ((AslGbl_HexOutputFlag == HEX_OUTPUT_C) ||
+                 (AslGbl_HexOutputFlag == HEX_OUTPUT_ASL))
         {
             Prefix = " * ";
         }
@@ -540,7 +537,7 @@ AslCompilerFileHeader (
 
     FlPrintFile (FileId,
         "%sCompilation of \"%s\" - %s%s\n",
-        Prefix, Gbl_Files[ASL_FILE_INPUT].Filename, asctime (NewTime),
+        Prefix, AslGbl_Files[ASL_FILE_INPUT].Filename, asctime (NewTime),
         Prefix);
 
     switch (FileId)
@@ -648,7 +645,7 @@ CmDumpAllEvents (
     Event = AslGbl_Events;
 
     DbgPrint (ASL_DEBUG_OUTPUT, "\n\nElapsed time for major events\n\n");
-    if (Gbl_CompileTimesFlag)
+    if (AslGbl_CompileTimesFlag)
     {
         printf ("\nElapsed time for major events\n\n");
     }
@@ -674,7 +671,7 @@ CmDumpAllEvents (
             DbgPrint (ASL_DEBUG_OUTPUT, "%8u usec %8u msec - %s\n",
                 MicroSeconds, MilliSeconds, Event->EventName);
 
-            if (Gbl_CompileTimesFlag)
+            if (AslGbl_CompileTimesFlag)
             {
                 printf ("%8u usec %8u msec - %s\n",
                     MicroSeconds, MilliSeconds, Event->EventName);
@@ -708,7 +705,7 @@ CmCleanupAndExit (
 
     AslCheckExpectedExceptions ();
     AePrintErrorLog (ASL_FILE_STDERR);
-    if (Gbl_DebugFlag)
+    if (AslGbl_DebugFlag)
     {
         /* Print error summary to stdout also */
 
@@ -719,38 +716,38 @@ CmCleanupAndExit (
 
     CmDumpAllEvents ();
 
-    if (Gbl_CompileTimesFlag)
+    if (AslGbl_CompileTimesFlag)
     {
         printf ("\nMiscellaneous compile statistics\n\n");
-        printf ("%11u : %s\n", TotalParseNodes, "Parse nodes");
-        printf ("%11u : %s\n", Gbl_NsLookupCount, "Namespace searches");
-        printf ("%11u : %s\n", TotalNamedObjects, "Named objects");
-        printf ("%11u : %s\n", TotalMethods, "Control methods");
-        printf ("%11u : %s\n", TotalAllocations, "Memory Allocations");
-        printf ("%11u : %s\n", TotalAllocated, "Total allocated memory");
-        printf ("%11u : %s\n", TotalFolds, "Constant subtrees folded");
+        printf ("%11u : %s\n", AslGbl_TotalParseNodes, "Parse nodes");
+        printf ("%11u : %s\n", AslGbl_NsLookupCount, "Namespace searches");
+        printf ("%11u : %s\n", AslGbl_TotalNamedObjects, "Named objects");
+        printf ("%11u : %s\n", AslGbl_TotalMethods, "Control methods");
+        printf ("%11u : %s\n", AslGbl_TotalAllocations, "Memory Allocations");
+        printf ("%11u : %s\n", AslGbl_TotalAllocated, "Total allocated memory");
+        printf ("%11u : %s\n", AslGbl_TotalFolds, "Constant subtrees folded");
         printf ("\n");
     }
 
-    if (Gbl_NsLookupCount)
+    if (AslGbl_NsLookupCount)
     {
         DbgPrint (ASL_DEBUG_OUTPUT,
             "\n\nMiscellaneous compile statistics\n\n");
 
         DbgPrint (ASL_DEBUG_OUTPUT,
             "%32s : %u\n", "Total Namespace searches",
-            Gbl_NsLookupCount);
+            AslGbl_NsLookupCount);
 
         DbgPrint (ASL_DEBUG_OUTPUT,
             "%32s : %u usec\n", "Time per search", ((UINT32)
             (AslGbl_Events[AslGbl_NamespaceEvent].EndTime -
                 AslGbl_Events[AslGbl_NamespaceEvent].StartTime) / 10) /
-                Gbl_NsLookupCount);
+                AslGbl_NsLookupCount);
     }
 
-    if (Gbl_ExceptionCount[ASL_ERROR] > ASL_MAX_ERROR_COUNT)
+    if (AslGbl_ExceptionCount[ASL_ERROR] > ASL_MAX_ERROR_COUNT)
     {
-        printf ("\nMaximum error count (%u) exceeded\n",
+        printf ("\nMaximum error count (%d) exceeded\n",
             ASL_MAX_ERROR_COUNT);
     }
 
@@ -760,9 +757,9 @@ CmCleanupAndExit (
      * We will delete the AML file if there are errors and the
      * force AML output option has not been used.
      */
-    if ((Gbl_ExceptionCount[ASL_ERROR] > 0) &&
-        (!Gbl_IgnoreErrors) &&
-        Gbl_Files[ASL_FILE_AML_OUTPUT].Handle)
+    if ((AslGbl_ExceptionCount[ASL_ERROR] > 0) &&
+        (!AslGbl_IgnoreErrors) &&
+        AslGbl_Files[ASL_FILE_AML_OUTPUT].Handle)
     {
         DeleteAmlFile = TRUE;
     }
@@ -775,10 +772,10 @@ CmCleanupAndExit (
      * or aborted. Prevent attempt to close the same file twice in
      * loop below.
      */
-    if (Gbl_Files[ASL_FILE_PREPROCESSOR].Handle ==
-        Gbl_Files[ASL_FILE_INPUT].Handle)
+    if (AslGbl_Files[ASL_FILE_PREPROCESSOR].Handle ==
+        AslGbl_Files[ASL_FILE_INPUT].Handle)
     {
-        Gbl_Files[ASL_FILE_PREPROCESSOR].Handle = NULL;
+        AslGbl_Files[ASL_FILE_PREPROCESSOR].Handle = NULL;
     }
 
     /* Close the standard I/O files */
@@ -797,7 +794,7 @@ CmCleanupAndExit (
 
     /* Delete the preprocessor temp file unless full debug was specified */
 
-    if (Gbl_PreprocessFlag && !Gbl_KeepPreprocessorTempFile)
+    if (AslGbl_PreprocessFlag && !AslGbl_KeepPreprocessorTempFile)
     {
         FlDeleteFile (ASL_FILE_PREPROCESSOR);
     }
@@ -814,16 +811,15 @@ CmCleanupAndExit (
      * filename instead, to determine if the .SRC file was actually
      * created.
      */
-    if (!Gbl_SourceOutputFlag)
+    if (!AslGbl_SourceOutputFlag)
     {
         FlDeleteFile (ASL_FILE_SOURCE_OUTPUT);
     }
 
     /* Final cleanup after compiling one file */
 
-    if (!Gbl_DoAslConversion)
+    if (!AslGbl_DoAslConversion)
     {
         UtDeleteLocalCaches ();
     }
-
 }
