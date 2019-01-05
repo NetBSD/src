@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.17 2012/03/21 05:33:27 matt Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.18 2019/01/05 08:55:58 maya Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.17 2012/03/21 05:33:27 matt Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.18 2019/01/05 08:55:58 maya Exp $");
 #endif /* not lint */
 
 /*
@@ -226,11 +226,11 @@ EncryptEnable(char *type, char *mode)
 	if (isprefix(type, "help") || isprefix(type, "?")) {
 		printf("Usage: encrypt enable <type> [input|output]\n");
 		encrypt_list_types();
-		return(0);
+		return 0;
 	}
 	if (EncryptType(type, mode))
-		return(EncryptStart(mode));
-	return(0);
+		return EncryptStart(mode, NULL);
+	return 0;
 }
 
 int
@@ -250,13 +250,13 @@ EncryptDisable(char *type, char *mode)
 	} else {
 		if ((mode == 0) || (isprefix(mode, "input") ? 1 : 0)) {
 			if (decrypt_mode == ep->type)
-				EncryptStopInput();
+				EncryptStopInput(NULL, NULL);
 			i_wont_support_decrypt |= typemask(ep->type);
 			ret = 1;
 		}
 		if ((mode == 0) || (isprefix(mode, "output"))) {
 			if (encrypt_mode == ep->type)
-				EncryptStopOutput();
+				EncryptStopOutput(NULL, NULL);
 			i_wont_support_encrypt |= typemask(ep->type);
 			ret = 1;
 		}
@@ -298,28 +298,28 @@ EncryptType(char *type, char *mode)
 }
 
 int
-EncryptStart(char *mode)
+EncryptStart(char *mode, char *unused __unused)
 {
 	register int ret = 0;
 	if (mode) {
 		if (isprefix(mode, "input"))
-			return(EncryptStartInput());
+			return EncryptStartInput(NULL, NULL);
 		if (isprefix(mode, "output"))
-			return(EncryptStartOutput());
+			return EncryptStartOutput(NULL, NULL);
 		if (isprefix(mode, "help") || isprefix(mode, "?")) {
 			printf("Usage: encrypt start [input|output]\n");
-			return(0);
+			return 0;
 		}
 		printf("%s: invalid encryption mode 'encrypt start ?' for help\n", mode);
-		return(0);
+		return 0;
 	}
-	ret += EncryptStartInput();
-	ret += EncryptStartOutput();
-	return(ret);
+	ret += EncryptStartInput(NULL, NULL);
+	ret += EncryptStartOutput(NULL, NULL);
+	return ret;
 }
 
 int
-EncryptStartInput(void)
+EncryptStartInput(char *unused1 __unused, char *unused2 __unused)
 {
 	if (decrypt_mode) {
 		encrypt_send_request_start();
@@ -330,7 +330,7 @@ EncryptStartInput(void)
 }
 
 int
-EncryptStartOutput(void)
+EncryptStartOutput(char *unused1 __unused, char *unused2 __unused)
 {
 	if (encrypt_mode) {
 		encrypt_start_output(encrypt_mode);
@@ -341,38 +341,38 @@ EncryptStartOutput(void)
 }
 
 int
-EncryptStop(char *mode)
+EncryptStop(char *mode, char *unused __unused)
 {
 	int ret = 0;
 	if (mode) {
 		if (isprefix(mode, "input"))
-			return(EncryptStopInput());
+			return EncryptStopInput(NULL, NULL);
 		if (isprefix(mode, "output"))
-			return(EncryptStopOutput());
+			return EncryptStopOutput(NULL, NULL);
 		if (isprefix(mode, "help") || isprefix(mode, "?")) {
 			printf("Usage: encrypt stop [input|output]\n");
-			return(0);
+			return 0;
 		}
 		printf("%s: invalid encryption mode 'encrypt stop ?' for help\n", mode);
-		return(0);
+		return 0;
 	}
-	ret += EncryptStopInput();
-	ret += EncryptStopOutput();
-	return(ret);
+	ret += EncryptStopInput(NULL, NULL);
+	ret += EncryptStopOutput(NULL, NULL);
+	return ret;
 }
 
 int
-EncryptStopInput(void)
+EncryptStopInput(char *unused1 __unused, char *unused2 __unused)
 {
 	encrypt_send_request_end();
-	return(1);
+	return 1;
 }
 
 int
-EncryptStopOutput(void)
+EncryptStopOutput(char *unused1 __unused, char *unused2 __unused)
 {
 	encrypt_send_end();
-	return(1);
+	return 1;
 }
 
 void
@@ -387,7 +387,7 @@ encrypt_display(void)
 }
 
 int
-EncryptStatus(void)
+EncryptStatus(char *unused1 __unused, char *unused2 __unused)
 {
 	if (encrypt_output)
 		printf("Currently encrypting output with %s\r\n",
