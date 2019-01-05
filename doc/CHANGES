@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2482 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2483 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -286,3 +286,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	services(5), protocols(5): Pull iana-generated services and protocols
 	    [christos 20190103]
 	wpa: Import wpa_supplicant and hostapd 2.7. [christos 20190104]
+	acpi(4): Updated ACPICA to 20181213. [christos 20180104]
