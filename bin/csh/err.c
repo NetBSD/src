@@ -1,4 +1,4 @@
-/* $NetBSD: err.c,v 1.22 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: err.c,v 1.23 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.22 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: err.c,v 1.23 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,7 +357,7 @@ stderror(int id, ...)
     }
 
     if (seterr) {
-	free((ptr_t) seterr);
+	free(seterr);
 	seterr = NULL;
     }
 

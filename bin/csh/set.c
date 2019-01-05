@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.34 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: set.c,v 1.35 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.34 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: set.c,v 1.35 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ update_vars(Char *vp)
 	Setenv(STRHOME, cp);
 	/* fix directory stack for new tilde home */
 	dtilde();
-	free((ptr_t)cp);
+	free(cp);
     }
 #ifdef FILEC
     else if (eq(vp, STRfilec))
@@ -215,7 +215,7 @@ asx(Char *vp, int subscr, Char *p)
     struct varent *v;
 
     v = getvx(vp, subscr);
-    free((ptr_t) v->vec[subscr - 1]);
+    free(v->vec[subscr - 1]);
     v->vec[subscr - 1] = globone(p, G_APPEND);
 }
 
@@ -315,9 +315,9 @@ dolet(Char **v, struct command *t)
 		dohash(NULL, NULL);
 	    }
 	}
-	free((ptr_t) vp);
+	free(vp);
 	if (c != '=')
-	    free((ptr_t) p);
+	    free(p);
     } while ((p = *v++) != NULL);
 }
 
@@ -329,7 +329,7 @@ xset(Char *cp, Char ***vp)
     if (*cp) {
 	dp = Strsave(cp);
 	--(*vp);
-	free((ptr_t) ** vp);
+	free(** vp);
 	**vp = dp;
     }
     return (putn(expr(vp)));
@@ -570,7 +570,7 @@ unsetv1(struct varent *p)
      * Free associated memory first to avoid complications.
      */
     blkfree(p->vec);
-    free((ptr_t) p->v_name);
+    free(p->v_name);
     /*
      * If p is missing one child, then we can move the other into where p is.
      * Otherwise, we find the predecessor of p, which is guaranteed to have no
@@ -598,7 +598,7 @@ unsetv1(struct varent *p)
     /*
      * Free the deleted node, and rebalance.
      */
-    free((ptr_t) p);
+    free(p);
     balance(pp, f, 1);
 }
 

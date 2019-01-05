@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.47 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: csh.c,v 1.48 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.47 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: csh.c,v 1.48 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -641,7 +641,7 @@ srccat(Char *cp, Char *dp)
 
     ep = Strspl(cp, dp);
     ptr = short2str(ep);
-    free((ptr_t) ep);
+    free(ep);
     return srcfile(ptr, mflag ? 0 : 1, 0);
 }
 
@@ -760,8 +760,8 @@ srcunit(int unit, int onlyown, int hflg)
 	/* This code could get run twice but free doesn't care */
 	/* XXX yes it does */
 	for (i = 0; i < fblocks; i++)
-	    free((ptr_t) fbuf[i]);
-	free((ptr_t) fbuf);
+	    free(fbuf[i]);
+	free(fbuf);
 
 	/* Reset input arena */
 	(void)memcpy(&B, &saveB, sizeof(B));
@@ -1062,7 +1062,7 @@ process(int catch)
 	    (void)fflush(cshout);
 	}
 	if (seterr) {
-	    free((ptr_t) seterr);
+	    free(seterr);
 	    seterr = NULL;
 	}
 
@@ -1146,7 +1146,7 @@ dosource(Char **v, struct command *t)
     (void)Strcpy(buf, *v);
     f = globone(buf, G_ERROR);
     (void)strcpy((char *)buf, short2str(f));
-    free((ptr_t) f);
+    free(f);
     if (!srcfile((char *)buf, 0, hflg) && !hflg)
 	stderror(ERR_SYSTEM, (char *)buf, strerror(errno));
 }

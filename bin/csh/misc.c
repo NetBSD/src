@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.21 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: misc.c,v 1.22 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.21 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: misc.c,v 1.22 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,8 +135,8 @@ blkfree(Char **av0)
     if (!av0)
 	return;
     for (; *av; av++)
-	free((ptr_t) * av);
-    free((ptr_t) av0);
+	free(* av);
+    free(av0);
 }
 
 Char **
@@ -316,7 +316,7 @@ lshift(Char **v, size_t c)
     Char **u;
 
     for (u = v; *u && c-- > 0; u++)
-	free((ptr_t) *u);
+	free(*u);
     (void)blkcpy(v, u);
 }
 
