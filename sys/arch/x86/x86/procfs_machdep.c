@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.25 2018/11/15 04:53:54 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.26 2019/01/05 20:32:02 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.25 2018/11/15 04:53:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.26 2019/01/05 20:32:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,7 +447,12 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 	    i386_fpu_fdivbug ? "yes" : "no",	/* an old pentium */
 #endif
 	    ci->ci_max_cpuid,
+#ifdef notyet
+	// XXX: Fixme Weak symbols are not supported in modules
 	    (rcr0() & CR0_WP) ? "yes" : "no",
+#else
+	    "no",
+#endif
 	    featurebuf,
 	    ci->ci_cflush_lsize
 	);
