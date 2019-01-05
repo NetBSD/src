@@ -24,17 +24,19 @@
 
 #include "tmux.h"
 
-RB_GENERATE(key_bindings, key_binding, entry, key_bindings_cmp);
-RB_GENERATE(key_tables, key_table, entry, key_table_cmp);
-struct key_tables key_tables = RB_INITIALIZER(&key_tables);
+static int key_bindings_cmp(struct key_binding *, struct key_binding *);
+RB_GENERATE_STATIC(key_bindings, key_binding, entry, key_bindings_cmp);
+static int key_table_cmp(struct key_table *, struct key_table *);
+RB_GENERATE_STATIC(key_tables, key_table, entry, key_table_cmp);
+static struct key_tables key_tables = RB_INITIALIZER(&key_tables);
 
-int
-key_table_cmp(struct key_table *e1, struct key_table *e2)
+static int
+key_table_cmp(struct key_table *table1, struct key_table *table2)
 {
-	return (strcmp(e1->name, e2->name));
+	return (strcmp(table1->name, table2->name));
 }
 
-int
+static int
 key_bindings_cmp(struct key_binding *bd1, struct key_binding *bd2)
 {
 	if (bd1->key < bd2->key)
@@ -64,6 +66,18 @@ key_bindings_get_table(const char *name, int create)
 	return (table);
 }
 
+struct key_table *
+key_bindings_first_table(void)
+{
+	return (RB_MIN(key_tables, &key_tables));
+}
+
+struct key_table *
+key_bindings_next_table(struct key_table *table)
+{
+	return (RB_NEXT(key_tables, &key_tables, table));
+}
+
 void
 key_bindings_unref_table(struct key_table *table)
 {
@@ -81,6 +95,27 @@ key_bindings_unref_table(struct key_table *table)
 
 	free((void *)table->name);
 	free(table);
+}
+
+struct key_binding *
+key_bindings_get(struct key_table *table, key_code key)
+{
+	struct key_binding	bd;
+
+	bd.key = key;
+	return (RB_FIND(key_bindings, &table->key_bindings, &bd));
+}
+
+struct key_binding *
+key_bindings_first(struct key_table *table)
+{
+	return (RB_MIN(key_bindings, &table->key_bindings));
+}
+
+struct key_binding *
+key_bindings_next(__unused struct key_table *table, struct key_binding *bd)
+{
+	return (RB_NEXT(key_bindings, &table->key_bindings, bd));
 }
 
 void
@@ -162,13 +197,13 @@ key_bindings_init(void)
 		"bind ! break-pane",
 		"bind '\"' split-window",
 		"bind '#' list-buffers",
-		"bind '$' command-prompt -I'#S' \"rename-session '%%'\"",
+		"bind '$' command-prompt -I'#S' \"rename-session -- '%%'\"",
 		"bind % split-window -h",
 		"bind & confirm-before -p\"kill-window #W? (y/n)\" kill-window",
 		"bind \"'\" command-prompt -pindex \"select-window -t ':%%'\"",
 		"bind ( switch-client -p",
 		"bind ) switch-client -n",
-		"bind , command-prompt -I'#W' \"rename-window '%%'\"",
+		"bind , command-prompt -I'#W' \"rename-window -- '%%'\"",
 		"bind - delete-buffer",
 		"bind . command-prompt \"move-window -t '%%'\"",
 		"bind 0 select-window -t:=0",
@@ -183,16 +218,17 @@ key_bindings_init(void)
 		"bind 9 select-window -t:=9",
 		"bind : command-prompt",
 		"bind \\; last-pane",
-		"bind = choose-buffer",
+		"bind = choose-buffer -Z",
 		"bind ? list-keys",
-		"bind D choose-client",
+		"bind D choose-client -Z",
+		"bind E select-layout -E",
 		"bind L switch-client -l",
 		"bind M select-pane -M",
 		"bind [ copy-mode",
 		"bind ] paste-buffer",
 		"bind c new-window",
 		"bind d detach-client",
-		"bind f command-prompt \"find-window '%%'\"",
+		"bind f command-prompt \"find-window -- '%%'\"",
 		"bind i display-message",
 		"bind l last-window",
 		"bind m select-pane -m",
@@ -201,9 +237,9 @@ key_bindings_init(void)
 		"bind p previous-window",
 		"bind q display-panes",
 		"bind r refresh-client",
-		"bind s choose-tree -s",
+		"bind s choose-tree -Zs",
 		"bind t clock-mode",
-		"bind w choose-tree -w",
+		"bind w choose-tree -Zw",
 		"bind x confirm-before -p\"kill-pane #P? (y/n)\" kill-pane",
 		"bind z resize-pane -Z",
 		"bind { swap-pane -U",
