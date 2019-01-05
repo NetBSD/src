@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.75 2019/01/05 06:47:24 maya Exp $	*/
+/*	$NetBSD: commands.c,v 1.76 2019/01/05 08:55:58 maya Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.75 2019/01/05 06:47:24 maya Exp $");
+__RCSID("$NetBSD: commands.c,v 1.76 2019/01/05 08:55:58 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -1280,7 +1280,7 @@ display(int  argc, char *argv[])
     }
 /*@*/optionstatus();
 #ifdef	ENCRYPTION
-    EncryptStatus();
+    EncryptStatus(NULL, NULL);
 #endif	/* ENCRYPTION */
     return 1;
 #undef	doset
@@ -1888,9 +1888,7 @@ struct encryptlist {
 	int	maxarg;
 };
 
-static int
-	EncryptHelp(char *, char *);
-typedef int (*encrypthandler)(char *, char *);
+static int EncryptHelp(char *, char *);
 
 struct encryptlist EncryptList[] = {
     { "enable", "Enable encryption. ('encrypt enable ?' for more)",
@@ -1900,22 +1898,22 @@ struct encryptlist EncryptList[] = {
     { "type", "Set encryption type. ('encrypt type ?' for more)",
 						EncryptType, 0, 1, 1 },
     { "start", "Start encryption. ('encrypt start ?' for more)",
-				(encrypthandler) EncryptStart, 1, 0, 1 },
+						EncryptStart, 1, 0, 1 },
     { "stop", "Stop encryption. ('encrypt stop ?' for more)",
-				(encrypthandler) EncryptStop, 1, 0, 1 },
+						EncryptStop, 1, 0, 1 },
     { "input", "Start encrypting the input stream",
-				(encrypthandler) EncryptStartInput, 1, 0, 0 },
+						EncryptStartInput, 1, 0, 0 },
     { "-input", "Stop encrypting the input stream",
-				(encrypthandler) EncryptStopInput, 1, 0, 0 },
+						EncryptStopInput, 1, 0, 0 },
     { "output", "Start encrypting the output stream",
-				(encrypthandler) EncryptStartOutput, 1, 0, 0 },
+						EncryptStartOutput, 1, 0, 0 },
     { "-output", "Stop encrypting the output stream",
-				(encrypthandler) EncryptStopOutput, 1, 0, 0 },
+						EncryptStopOutput, 1, 0, 0 },
 
     { "status",       "Display current status of authentication information",
-				(encrypthandler) EncryptStatus,	0, 0, 0 },
-    { "help", 0,				 EncryptHelp,	0, 0, 0 },
-    { "?",    "Print help information",		 EncryptHelp,	0, 0, 0 },
+						EncryptStatus,	0, 0, 0 },
+    { "help", 0,				EncryptHelp,	0, 0, 0 },
+    { "?",    "Print help information",		EncryptHelp,	0, 0, 0 },
     { .name = 0 },
 };
 
