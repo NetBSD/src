@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.221 2019/01/05 09:39:56 mlelstv Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.222 2019/01/05 18:03:41 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.221 2019/01/05 09:39:56 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.222 2019/01/05 18:03:41 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -112,6 +112,7 @@ static device_t parsedisk(char *, int, int, dev_t *);
 static const char *getwedgename(const char *, int);
 
 static void setroot_nfs(device_t);
+static void setroot_md(device_t *);
 static void setroot_ask(device_t, int);
 static void setroot_root(device_t, int);
 static void setroot_dump(device_t, device_t);
@@ -193,7 +194,7 @@ setroot(device_t bootdv, int bootpartition)
 	 * force boot device to md0
 	 */
 	if (md_is_root)
-		rootspec = "md0";
+		setroot_md(&bootdv);
 
 #ifdef TFTPROOT
 	/*
@@ -203,10 +204,10 @@ setroot(device_t bootdv, int bootpartition)
 	 * reuses NFS init code to set up network
 	 * fetch image into ram disk
 	 *
-	 * if successful, we change rootspec
+	 * if successful, we change boot device
 	 */
 	if (tftproot_dhcpboot(bootdv) == 0)
-		rootspec = "md0";
+		setroot_md(&bootdv);
 #endif
 	
 	/*
@@ -278,6 +279,25 @@ setroot_nfs(device_t dv)
 	}
 	if (vops != NULL)
 		vfs_delref(vops);
+}
+
+/*
+ * Change boot device to md0
+ *
+ * md0 only exists when it is opened once.
+ */
+static void
+setroot_md(device_t *dvp)
+{
+	int md_major;
+	dev_t md_dev;
+
+	md_major = devsw_name2blk("md", NULL, 0);
+	if (md_major >= 0) {
+		md_dev = MAKEDISKDEV(md_major, 0, RAW_PART);
+		if (bdev_open(md_dev, FREAD, S_IFBLK, curlwp) == 0)
+			*dvp = device_find_by_xname("md0");
+	}
 }
 
 static void
