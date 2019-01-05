@@ -60,7 +60,7 @@ DtLookupLabel (
 
 /* Global used for errors during parse and related functions */
 
-DT_FIELD                *Gbl_CurrentField;
+DT_FIELD                *AslGbl_CurrentField;
 
 
 /******************************************************************************
@@ -88,7 +88,7 @@ DtResolveIntegerExpression (
     DbgPrint (ASL_DEBUG_OUTPUT, "Full Integer expression: %s\n",
         Field->Value);
 
-    Gbl_CurrentField = Field;
+    AslGbl_CurrentField = Field;
 
     Result = DtEvaluateExpression (Field->Value);
     *ReturnValue = Result;
@@ -143,7 +143,7 @@ DtDoOperator (
         if (!RightValue)
         {
             DtError (ASL_ERROR, ASL_MSG_DIVIDE_BY_ZERO,
-                Gbl_CurrentField, NULL);
+                AslGbl_CurrentField, NULL);
             return (0);
         }
 
@@ -155,7 +155,7 @@ DtDoOperator (
         if (!RightValue)
         {
             DtError (ASL_ERROR, ASL_MSG_DIVIDE_BY_ZERO,
-                Gbl_CurrentField, NULL);
+                AslGbl_CurrentField, NULL);
             return (0);
         }
 
@@ -241,7 +241,7 @@ DtDoOperator (
         /* Unknown operator */
 
         DtFatal (ASL_MSG_INVALID_EXPRESSION,
-            Gbl_CurrentField, NULL);
+            AslGbl_CurrentField, NULL);
         return (0);
     }
 
@@ -288,7 +288,7 @@ DtResolveLabel (
     if (!LabelField)
     {
         DtError (ASL_ERROR, ASL_MSG_UNKNOWN_LABEL,
-            Gbl_CurrentField, LabelString);
+            AslGbl_CurrentField, LabelString);
         return (0);
     }
 
@@ -323,7 +323,7 @@ DtDetectAllLabels (
     UINT32                  TableOffset;
 
 
-    TableOffset = Gbl_CurrentTableOffset;
+    TableOffset = AslGbl_CurrentTableOffset;
     GenericField = FieldList;
 
     /*
@@ -377,8 +377,8 @@ DtInsertLabelField (
         "DtInsertLabelField: Found Label : %s at output table offset %X\n",
         Field->Value, Field->TableOffset);
 
-    Field->NextLabel = Gbl_LabelList;
-    Gbl_LabelList = Field;
+    Field->NextLabel = AslGbl_LabelList;
+    AslGbl_LabelList = Field;
 }
 
 
@@ -411,7 +411,7 @@ DtLookupLabel (
 
     /* Search global list */
 
-    LabelField = Gbl_LabelList;
+    LabelField = AslGbl_LabelList;
     while (LabelField)
     {
         if (!strcmp (Name, LabelField->Value))
