@@ -1,17 +1,17 @@
-;	$NetBSD: root.cache,v 1.23 2017/10/25 07:41:35 taca Exp $
+;	$NetBSD: root.cache,v 1.24 2019/01/05 21:47:40 christos Exp $
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
 ;       (e.g. reference this file in the "cache  .  <file>"
 ;       configuration file of BIND domain name servers).
 ;
-;       This file is made available by InterNIC 
+;       This file is made available by InterNIC
 ;       under anonymous FTP as
 ;           file                /domain/named.cache
 ;           on server           FTP.INTERNIC.NET
 ;       -OR-                    RS.INTERNIC.NET
 ;
-;       last update:    October 24, 2017
-;       related version of root zone:   2017102400
+;       last update:     November 14, 2018
+;       related version of root zone:     2018111402
 ;
 ; FORMERLY NS.INTERNIC.NET
 ;
