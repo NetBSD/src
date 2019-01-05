@@ -1,4 +1,4 @@
-/*	$NetBSD: enc-proto.h,v 1.9 2012/01/09 15:25:33 christos Exp $	*/
+/*	$NetBSD: enc-proto.h,v 1.10 2019/01/05 08:55:58 maya Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,13 +61,13 @@ void encrypt_list_types(void);
 int EncryptEnable(char *, char *);
 int EncryptDisable(char *, char *);
 int EncryptType(char *, char *);
-int EncryptStart(char *);
-int EncryptStartInput(void);
-int EncryptStartOutput(void);
-int EncryptStop(char *);
-int EncryptStopInput(void);
-int EncryptStopOutput(void);
-int EncryptStatus(void);
+int EncryptStart(char *, char *);
+int EncryptStartInput(char *, char *);
+int EncryptStartOutput(char *, char *);
+int EncryptStop(char *, char *);
+int EncryptStopInput(char *, char *);
+int EncryptStopOutput(char *, char *);
+int EncryptStatus(char *, char *);
 void encrypt_send_support(void);
 int EncryptDebug(int);
 int EncryptVerbose(int);
