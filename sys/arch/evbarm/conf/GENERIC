@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.15 2019/01/03 10:44:04 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.16 2019/01/05 13:55:46 aymeric Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -29,7 +29,7 @@ makeoptions	DTS="
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
 
-	socfpga_cyclone5_de0_sockit.dts
+	socfpga_cyclone5_de0_nano_soc.dts
 
 	sun4i-a10-a1000.dts
 	sun4i-a10-ba10-tvbox.dts
