@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.29 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: glob.c,v 1.30 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.29 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: glob.c,v 1.30 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ globtilde(Char **nv, Char *s)
 	*b++ = *s++;
     *b = EOS;
     --u;
-    free((ptr_t) u);
+    free(u);
     return (Strsave(gstart));
 }
 
@@ -197,8 +197,7 @@ globbrace(Char *s, Char *p, Char ***bl)
 		pl = pm + 1;
 		if (vl == &nv[size]) {
 		    size += GLOBSPACE;
-		    nv = (Char **)xrealloc((ptr_t) nv,
-		        (size_t)size * sizeof(Char *));
+		    nv = realloc(nv, (size_t)size * sizeof(Char *));
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
@@ -234,13 +233,13 @@ expbrace(Char ***nvp, Char ***elp, size_t size)
 	    int len;
 
 	    if ((len = globbrace(s, b, &bl)) < 0) {
-		free((ptr_t)nv);
+		free(nv);
 		stderror(ERR_MISSING, -len);
 	    }
-	    free((ptr_t) s);
+	    free(s);
 	    if (len == 1) {
 		*vl-- = *bl;
-		free((ptr_t) bl);
+		free(bl);
 		continue;
 	    }
 	    len = blklen(bl);
@@ -251,8 +250,7 @@ expbrace(Char ***nvp, Char ***elp, size_t size)
 		size += (size_t)(GLOBSPACE > l ? GLOBSPACE : l);
 		l = vl - nv;
 		e = ex - nv;
-		nv = (Char **)xrealloc((ptr_t)nv,
-		    (size_t)size * sizeof(Char *));
+		nv = xrealloc(nv, (size_t)size * sizeof(Char *));
 		vl = nv + l;
 		ex = nv + e;
 	    }
@@ -265,7 +263,7 @@ expbrace(Char ***nvp, Char ***elp, size_t size)
 	    vp++;
 	    for (bp = bl + 1; *bp; *vp++ = *bp++)
 		continue;
-	    free((ptr_t)bl);
+	    free(bl);
 	}
 
     }
@@ -296,20 +294,18 @@ globexpand(Char **v)
 		*vl++ = pargv[i];
 		if (vl == &nv[size]) {
 		    size += GLOBSPACE;
-		    nv = (Char **)xrealloc((ptr_t) nv,
-		        (size_t)size * sizeof(Char *));
+		    nv = xrealloc(nv, (size_t)size * sizeof(Char *));
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
-	    free((ptr_t)pargv);
+	    free(pargv);
 	    pargv = NULL;
 	}
 	else {
 	    *vl++ = Strsave(s);
 	    if (vl == &nv[size]) {
 		size += GLOBSPACE;
-		nv = (Char **)xrealloc((ptr_t)nv,
-		    size * sizeof(Char *));
+		nv = xrealloc(nv, size * sizeof(Char *));
 		vl = &nv[size - GLOBSPACE];
 	    }
 	}
@@ -353,9 +349,9 @@ handleone(Char *str, Char **vl, int action)
 	str = Strsave(*vlp++);
 	do {
 	    cp = Strspl(str, STRspace);
-	    free((ptr_t)str);
+	    free(str);
 	    str = Strspl(cp, *vlp);
-	    free((ptr_t)cp);
+	    free(cp);
 	}
 	while (*++vlp);
 	blkfree(vl);
@@ -440,14 +436,14 @@ globone(Char *str, int action)
 	vo = globexpand(v);
 	if (noglob || (gflg & G_GLOB) == 0) {
 	    if (vo[0] == NULL) {
-		free((ptr_t)vo);
+		free(vo);
 		return (Strsave(STRNULL));
 	    }
 	    if (vo[1] != NULL)
 		return (handleone(str, vo, action));
 	    else {
 		str = strip(vo[0]);
-		free((ptr_t) vo);
+		free(vo);
 		return (str);
 	    }
 	}
@@ -465,14 +461,14 @@ globone(Char *str, int action)
 	stderror(ERR_NAME | ERR_NOMATCH);
     }
     if (vl[0] == NULL) {
-	free((ptr_t)vl);
+	free(vl);
 	return (Strsave(STRNULL));
     }
     if (vl[1] != NULL)
 	return (handleone(str, vl, action));
     else {
 	str = strip(*vl);
-	free((ptr_t)vl);
+	free(vl);
 	return (str);
     }
 }
@@ -709,7 +705,7 @@ backeval(Char *cp, int literal)
 	execute(t, -1, NULL, NULL);
 	exitstat();
     }
-    free((ptr_t)cp);
+    free(cp);
     (void)close(pvec[1]);
     c = 0;
     ip = NULL;
@@ -781,8 +777,7 @@ pword(void)
     psave(0);
     if (pargc == pargsiz - 1) {
 	pargsiz += GLOBSPACE;
-	pargv = (Char **)xrealloc((ptr_t)pargv,
-	    (size_t)pargsiz * sizeof(Char *));
+	pargv = xrealloc(pargv, (size_t)pargsiz * sizeof(Char *));
     }
     pargv[pargc++] = Strsave(pargs);
     pargv[pargc] = NULL;
@@ -902,8 +897,7 @@ Gcat(Char *s1, Char *s2)
     n = (p - s1) + (q - s2) - 1;
     if (++gargc >= gargsiz) {
 	gargsiz += GLOBSPACE;
-	gargv = (Char **)xrealloc((ptr_t)gargv,
-	    (size_t)gargsiz * sizeof(Char *));
+	gargv = xrealloc(gargv, (size_t)gargsiz * sizeof(Char *));
     }
     gargv[gargc] = 0;
     p = gargv[gargc - 1] = xmalloc((size_t)n * sizeof(Char));
@@ -915,27 +909,29 @@ Gcat(Char *s1, Char *s2)
 
 #ifdef FILEC
 int
-sortscmp(const ptr_t a, const ptr_t b)
+sortscmp(const void *va, const void *vb)
 {
 #if defined(NLS) && !defined(NOSTRCOLL)
     char buf[2048];
 #endif
+    const Char * const *a = va;
+    const Char * const *b = vb;
 
     if (!a)			/* check for NULL */
 	return (b ? 1 : 0);
     if (!b)
-	return (-1);
+	return -1;
 
-    if (!*(Char **)a)			/* check for NULL */
-	return (*(Char **)b ? 1 : 0);
-    if (!*(Char **)b)
+    if (!*a)			/* check for NULL */
+	return *b ? 1 : 0;
+    if (!*b)
 	return (-1);
 
 #if defined(NLS) && !defined(NOSTRCOLL)
-    (void)strcpy(buf, short2str(*(Char **)a));
-    return ((int)strcoll(buf, short2str(*(Char **)b)));
+    (void)strcpy(buf, short2str(*a));
+    return (int)strcoll(buf, short2str(*b));
 #else
-    return ((int)Strcmp(*(Char **)a, *(Char **)b));
+    return (int)Strcmp(*a, *b);
 #endif
 }
 #endif /* FILEC */

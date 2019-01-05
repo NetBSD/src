@@ -1,4 +1,4 @@
-/* $NetBSD: exp.c,v 1.21 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: exp.c,v 1.22 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.21 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: exp.c,v 1.22 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,12 +237,12 @@ exp2c(Char ***vp, int ignore)
 		i = !Gmatch(p1, p2);
 		break;
 	    }
-	free((ptr_t) p1);
-	free((ptr_t) p2);
+	free(p1);
+	free(p2);
 	return (i);
     }
     i = egetn(p1);
-    free((ptr_t) p1);
+    free(p1);
     return (i);
 }
 
@@ -279,8 +279,8 @@ exp3(Char ***vp, int ignore)
 		i = egetn(p1) <= egetn(p2);
 		break;
 	    }
-	free((ptr_t) p1);
-	free((ptr_t) p2);
+	free(p1);
+	free(p2);
 	return (putn(i));
     }
     return (p1);
@@ -307,8 +307,8 @@ exp3a(Char ***vp, int ignore)
 	    i = egetn(p1) << egetn(p2);
 	else
 	    i = egetn(p1) >> egetn(p2);
-	free((ptr_t) p1);
-	free((ptr_t) p2);
+	free(p1);
+	free(p2);
 	return (putn(i));
     }
     return (p1);
@@ -342,8 +342,8 @@ exp4(Char ***vp, int ignore)
 		i = egetn(p1) - egetn(p2);
 		break;
 	    }
-	free((ptr_t) p1);
-	free((ptr_t) p2);
+	free(p1);
+	free(p2);
 	return (putn(i));
     }
     return (p1);
@@ -386,8 +386,8 @@ exp5(Char ***vp, int ignore)
 		i = egetn(p1) % i;
 		break;
 	    }
-	free((ptr_t) p1);
-	free((ptr_t) p2);
+	free(p1);
+	free(p2);
 	return (putn(i));
     }
     return (p1);
@@ -409,7 +409,7 @@ exp6(Char ***vp, int ignore)
 	etracc("exp6 ! cp", cp, vp);
 #endif
 	i = egetn(cp);
-	free((ptr_t) cp);
+	free(cp);
 	return (putn(!i));
     }
     if (eq(**vp, STRtilde)) {
@@ -419,7 +419,7 @@ exp6(Char ***vp, int ignore)
 	etracc("exp6 ~ cp", cp, vp);
 #endif
 	i = egetn(cp);
-	free((ptr_t) cp);
+	free(cp);
 	return (putn(~i));
     }
     if (eq(**vp, STRLparen)) {
@@ -502,7 +502,7 @@ exp6(Char ***vp, int ignore)
 	default:
 	    if (cp[1] == 'l' ?
 		lstat(short2str(ep), &stb) : stat(short2str(ep), &stb)) {
-		free((ptr_t) ep);
+		free(ep);
 		return (Strsave(STR0));
 	    }
 	    switch (cp[1]) {
@@ -547,7 +547,7 @@ exp6(Char ***vp, int ignore)
 #ifdef EDEBUG
 	etraci("exp6 -? i", i, vp);
 #endif
-	free((ptr_t) ep);
+	free(ep);
 	return (putn(i));
     }
 #ifdef EDEBUG

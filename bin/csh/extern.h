@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.30 2017/07/15 14:35:55 christos Exp $ */
+/* $NetBSD: extern.h,v 1.31 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -167,7 +167,7 @@ void rscan(Char **, void (*)(int));
 void tglob(Char **);
 void trim(Char **);
 #ifdef FILEC
-int sortscmp(const ptr_t, const ptr_t);
+int sortscmp(const void *, const void *);
 #endif /* FILEC */
 
 /*
@@ -308,10 +308,10 @@ void psecs(long);
 /*
  * alloc.c
  */
-void Free(ptr_t);
-ptr_t Malloc(size_t);
-ptr_t Realloc(ptr_t, size_t);
-ptr_t Calloc(size_t, size_t);
+void Free(void *);
+void * Malloc(size_t);
+void *Realloc(void *, size_t);
+void *Calloc(size_t, size_t);
 
 /*
  * str.c:

@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.30 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: sem.c,v 1.31 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.30 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: sem.c,v 1.31 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,13 +276,13 @@ execute(struct command *t, int wtty, int *pipein, int *pipeout)
 		    csigset = ocsigset;
 		    nosigchld = onosigchld;
 
-		    free((ptr_t) Vsav);
+		    free(Vsav);
 		    Vsav = 0;
-		    free((ptr_t) Vdp);
+		    free(Vdp);
 		    Vdp = 0;
-		    free((ptr_t) Vexpath);
+		    free(Vexpath);
 		    Vexpath = 0;
-		    blkfree((Char **) Vt);
+		    blkfree((Char **)Vt);
 		    Vt = 0;
 		    /* this is from pfork() */
 		    palloc(pid, t);
@@ -453,11 +453,11 @@ vffree(int i)
 
     if ((v = gargv) != NULL) {
 	gargv = 0;
-	free((ptr_t) v);
+	free(v);
     }
     if ((v = pargv) != NULL) {
 	pargv = 0;
-	free((ptr_t) v);
+	free(v);
     }
     _exit(i);
     /* NOTREACHED */
@@ -494,24 +494,24 @@ splicepipe(struct command *t, Char *cp /* word after < or > */)
 	    pv = globall(blk);
 	    if (pv == NULL) {
 		setname(vis_str(blk[0]));
-		free((ptr_t) blk[0]);
+		free(blk[0]);
 		stderror(ERR_NAME | ERR_NOMATCH);
 		/* NOTREACHED */
 	    }
 	    gargv = NULL;
 	    if (pv[1] != NULL) { /* we need to fix the command vector */
 		Char **av = blkspl(t->t_dcom, &pv[1]);
-		free((ptr_t) t->t_dcom);
+		free(t->t_dcom);
 		t->t_dcom = av;
 	    }
-	    free((ptr_t) blk[0]);
+	    free(blk[0]);
 	    blk[0] = pv[0];
-	    free((ptr_t) pv);
+	    free(pv);
 	}
     }
     else {
 	blk[0] = globone(blk[1] = Dfix1(cp), G_ERROR);
-	free((ptr_t) blk[1]);
+	free(blk[1]);
     }
     return(blk[0]);
 }
@@ -541,7 +541,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	    (void)dcopy(SHERR, 2);
 	    cp = splicepipe(t, t->t_dlef);
 	    (void)strlcpy(tmp, short2str(cp), sizeof(tmp));
-	    free((ptr_t) cp);
+	    free(cp);
 	    if ((fd = open(tmp, O_RDONLY)) < 0) {
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
 		/* NOTREACHED */
@@ -569,7 +569,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 
 	cp = splicepipe(t, t->t_drit);
 	(void)strlcpy(tmp, short2str(cp), sizeof(tmp));
-	free((ptr_t) cp);
+	free(cp);
 	/*
 	 * so > /dev/std{out,err} work
 	 */

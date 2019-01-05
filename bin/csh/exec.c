@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.32 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: exec.c,v 1.33 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.32 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: exec.c,v 1.33 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,8 +169,8 @@ doexec(Char **v, struct command *t)
 
     blkfree(t->t_dcom);
     t->t_dcom = blkspl(pv, av);
-    free((ptr_t) pv);
-    free((ptr_t) av);
+    free(pv);
+    free(av);
     av = t->t_dcom;
     trim(av);
 
@@ -226,7 +226,7 @@ doexec(Char **v, struct command *t)
 	    Vdp = dp;
 	    texec(dp, av);
 	    Vdp = 0;
-	    free((ptr_t)dp);
+	    free(dp);
 	}
 	misses++;
 cont:
@@ -235,7 +235,7 @@ cont:
     } while (*pv);
     hits--;
     Vsav = 0;
-    free((ptr_t)sav);
+    free(sav);
     pexerr();
     /* NOTREACHED */
 }
@@ -247,7 +247,7 @@ pexerr(void)
     if (expath) {
 	setname(vis_str(expath));
 	Vexpath = 0;
-	free((ptr_t)expath);
+	free(expath);
 	expath = 0;
     }
     else
@@ -330,11 +330,11 @@ texec(Char *sf, Char **st)
 	/* The order for the conversions is significant */
 	t = short2blk(st);
 	f = short2str(sf);
-	free((ptr_t) st);
+	free(st);
 	Vt = t;
 	(void)execve(f, t, environ);
 	Vt = 0;
-	blkfree((Char **) t);
+	blkfree((Char **)t);
 	/* FALLTHROUGH */
 
     case ENOMEM:
@@ -348,7 +348,7 @@ texec(Char *sf, Char **st)
 	if (exerr == 0) {
 	    exerr = strerror(errno);
 	    if (expath)
-		free((ptr_t) expath);
+		free(expath);
 	    expath = Strsave(sf);
 	    Vexpath = expath;
 	}
@@ -531,13 +531,13 @@ iscommand(Char *name)
 	}
 	if (pv[0][0] == 0 || eq(pv[0], STRdot)) {	/* don't make ./xxx */
 	    if (executable(NULL, name, 0)) {
-		free((ptr_t) sav);
+		free(sav);
 		return i + 1;
 	    }
 	}
 	else {
 	    if (executable(*pv, sav, 0)) {
-		free((ptr_t) sav);
+		free(sav);
 		return i + 1;
 	    }
 	}
@@ -545,7 +545,7 @@ cont:
 	pv++;
 	i++;
     } while (*pv);
-    free((ptr_t) sav);
+    free(sav);
     return 0;
 }
 
@@ -714,7 +714,7 @@ tellmewhat(struct wordent *lexp, Char *str)
 	    if (!slash) {
 		sp->word = Strspl(STRdotsl, sp->word);
 		prlex(cshout, lexp);
-		free((ptr_t) sp->word);
+		free(sp->word);
 	    }
 	    else
 		prlex(cshout, lexp);
@@ -722,12 +722,12 @@ tellmewhat(struct wordent *lexp, Char *str)
 	else {
 	    s1 = Strspl(*pv, STRslash);
 	    sp->word = Strspl(s1, sp->word);
-	    free((ptr_t) s1);
+	    free(s1);
 	    if (str == NULL)
 		prlex(cshout, lexp);
 	    else
 		(void)Strcpy(str, sp->word);
-	    free((ptr_t) sp->word);
+	    free(sp->word);
 	}
 	found = 1;
     }
@@ -743,6 +743,6 @@ tellmewhat(struct wordent *lexp, Char *str)
 	found = 0;
     }
     sp->word = s0;		/* we save and then restore this */
-    free((ptr_t) cmd);
+    free(cmd);
     return found;
 }

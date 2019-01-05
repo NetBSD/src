@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.31 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: dir.c,v 1.32 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.31 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: dir.c,v 1.32 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,7 @@ dnormalize(Char *cp)
 	    cwd[dotdot = Strlen(cwd)] = '/';
 	    cwd[dotdot + 1] = '\0';
 	    dp = Strspl(cwd, cp);
-	    free((ptr_t) cwd);
+	    free(cwd);
 	    return dp;
 	}
 	else {
@@ -396,7 +396,7 @@ dgoto(Char *cp)
 	    p--;		/* don't add a / after root */
 	for (q = cp; (*p++ = *q++) != '\0';)
 	    continue;
-	free((ptr_t) cp);
+	free(cp);
 	cp = dp;
 	dp += cwdlen;
     }
@@ -424,11 +424,11 @@ dfollow(Char *cp)
      */
     dp = dnormalize(cp);
     if (chdir(short2str(dp)) >= 0) {
-	free((ptr_t) cp);
+	free(cp);
 	return dgoto(dp);
     }
     else {
-	free((ptr_t) dp);
+	free(dp);
 	if (chdir(short2str(cp)) >= 0)
 	    return dgoto(cp);
 	serrno = errno;
@@ -448,7 +448,7 @@ dfollow(Char *cp)
 		continue;
 	    if (chdir(short2str(buf)) >= 0) {
 		printd = 1;
-		free((ptr_t) cp);
+		free(cp);
 		cp = Strsave(buf);
 		return dgoto(cp);
 	    }
@@ -456,13 +456,13 @@ dfollow(Char *cp)
     }
     dp = value(cp);
     if ((dp[0] == '/' || dp[0] == '.') && chdir(short2str(dp)) >= 0) {
-	free((ptr_t) cp);
+	free(cp);
 	cp = Strsave(dp);
 	printd = 1;
 	return dgoto(cp);
     }
     (void)strcpy(ebuf, short2str(cp));
-    free((ptr_t) cp);
+    free(cp);
     stderror(ERR_SYSTEM, ebuf, strerror(serrno));
     /* NOTREACHED */
 }
@@ -596,8 +596,8 @@ dfree(struct directory *dp)
 	dp->di_next = dp->di_prev = 0;
     }
     else {
-	free((char *) dp->di_name);
-	free((ptr_t) dp);
+	free(dp->di_name);
+	free(dp);
     }
 }
 
@@ -632,7 +632,7 @@ dcanon(Char *cp, Char *p)
 	(void)Strcpy(tmpdir, p1);
 	(void)Strcat(tmpdir, STRslash);
 	(void)Strcat(tmpdir, cp);
-	free((ptr_t) cp);
+	free(cp);
 	cp = p = Strsave(tmpdir);
     }
 
@@ -737,7 +737,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    p = newcp;
 		}
-		free((ptr_t) cp);
+		free(cp);
 		cp = newcp;
 		continue;	/* canonicalize the link */
 	    }
@@ -826,7 +826,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    p = newcp;
 		}
-		free((ptr_t) cp);
+		free(cp);
 		cp = newcp;
 		continue;	/* canonicalize the link */
 	    }
@@ -880,7 +880,7 @@ dcanon(Char *cp, Char *p)
 	     * Use STRhome to make '~' work
 	     */
 	    newcp = Strspl(p1, cp + Strlen(p2));
-	    free((ptr_t) cp);
+	    free(cp);
 	    cp = newcp;
 	}
     }

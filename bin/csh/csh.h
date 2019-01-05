@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.27 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: csh.h,v 1.28 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -79,8 +79,6 @@ typedef char Char;
 #define UNREGISTER(a)	(void) &a
 
 typedef void *ioctl_t;		/* Third arg of ioctl */
-
-typedef void *ptr_t;
 
 #include "const.h"
 #include "char.h"
