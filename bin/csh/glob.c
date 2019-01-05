@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.30 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: glob.c,v 1.31 2019/01/05 16:56:25 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.30 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.31 2019/01/05 16:56:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ globbrace(Char *s, Char *p, Char ***bl)
 		pl = pm + 1;
 		if (vl == &nv[size]) {
 		    size += GLOBSPACE;
-		    nv = realloc(nv, (size_t)size * sizeof(Char *));
+		    nv = xrealloc(nv, (size_t)size * sizeof(Char *));
 		    vl = &nv[size - GLOBSPACE];
 		}
 	    }
