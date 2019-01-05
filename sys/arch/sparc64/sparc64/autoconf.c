@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.214 2019/01/04 16:25:06 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.215 2019/01/05 15:46:02 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.214 2019/01/04 16:25:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.215 2019/01/05 15:46:02 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -905,7 +905,6 @@ openbios_secondary_ata_heuristic(int parent)
 		   " secondary ATA bus, applying workaround target+2\n"));
 		return true;
 	} else if (strcmp(tmp, "ide") == 0) {
-		regs[0] = 42;
 		if (OF_getprop(parent, "reg", &regs, sizeof(regs))
 		    >= sizeof(regs[0])) {
 			DPRINTF(ACDB_BOOTDEV, ("parent seems to be an OpenBIOS"
