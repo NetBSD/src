@@ -80,9 +80,9 @@ FlSetLineNumber (
 {
 
     DbgPrint (ASL_PARSE_OUTPUT, "\n#line: New line number %u (old %u)\n",
-         LineNumber, Gbl_LogicalLineNumber);
+         LineNumber, AslGbl_LogicalLineNumber);
 
-    Gbl_CurrentLineNumber = LineNumber;
+    AslGbl_CurrentLineNumber = LineNumber;
 }
 
 
@@ -104,11 +104,11 @@ FlSetFilename (
 {
 
     DbgPrint (ASL_PARSE_OUTPUT, "\n#line: New filename %s (old %s)\n",
-         Filename, Gbl_Files[ASL_FILE_INPUT].Filename);
+         Filename, AslGbl_Files[ASL_FILE_INPUT].Filename);
 
     /* No need to free any existing filename */
 
-    Gbl_Files[ASL_FILE_INPUT].Filename = Filename;
+    AslGbl_Files[ASL_FILE_INPUT].Filename = Filename;
 }
 
 
@@ -149,8 +149,9 @@ FlAddIncludeDirectory (
         NeedsSeparator = 1;
     }
 
-    NewDir = ACPI_ALLOCATE_ZEROED (sizeof (ASL_INCLUDE_DIR));
-    NewDir->Dir = ACPI_ALLOCATE (DirLength + 1 + NeedsSeparator);
+    NewDir = ACPI_CAST_PTR (ASL_INCLUDE_DIR,
+        UtLocalCacheCalloc (sizeof (ASL_INCLUDE_DIR)));
+    NewDir->Dir = UtLocalCacheCalloc (DirLength + 1 + NeedsSeparator);
     strcpy (NewDir->Dir, Dir);
     if (NeedsSeparator)
     {
@@ -161,7 +162,7 @@ FlAddIncludeDirectory (
      * Preserve command line ordering of -I options by adding new elements
      * at the end of the list
      */
-    NextDir = Gbl_IncludeDirList;
+    NextDir = AslGbl_IncludeDirList;
     while (NextDir)
     {
         PrevDir = NextDir;
@@ -174,7 +175,7 @@ FlAddIncludeDirectory (
     }
     else
     {
-        Gbl_IncludeDirList = NewDir;
+        AslGbl_IncludeDirList = NewDir;
     }
 }
 
@@ -333,19 +334,19 @@ FlOpenIncludeWithPrefix (
      * Note: DtGetNextLine strips/ignores comments.
      * Save current line number since DtGetNextLine modifies it.
      */
-    Gbl_CurrentLineNumber--;
-    OriginalLineNumber = Gbl_CurrentLineNumber;
+    AslGbl_CurrentLineNumber--;
+    OriginalLineNumber = AslGbl_CurrentLineNumber;
 
     while (DtGetNextLine (IncludeFile, DT_ALLOW_MULTILINE_QUOTES) != ASL_EOF)
     {
-        if (Gbl_CurrentLineBuffer[0] == '#')
+        if (AslGbl_CurrentLineBuffer[0] == '#')
         {
             AslError (ASL_ERROR, ASL_MSG_INCLUDE_FILE,
                 Op, "use #include instead");
         }
     }
 
-    Gbl_CurrentLineNumber = OriginalLineNumber;
+    AslGbl_CurrentLineNumber = OriginalLineNumber;
 
     /* Must seek back to the start of the file */
 
@@ -383,9 +384,9 @@ FlOpenIncludeFile (
     if (!Op)
     {
         AslCommonError (ASL_ERROR, ASL_MSG_INCLUDE_FILE_OPEN,
-            Gbl_CurrentLineNumber, Gbl_LogicalLineNumber,
-            Gbl_InputByteCount, Gbl_CurrentColumn,
-            Gbl_Files[ASL_FILE_INPUT].Filename, " - Null parse node");
+            AslGbl_CurrentLineNumber, AslGbl_LogicalLineNumber,
+            AslGbl_InputByteCount, AslGbl_CurrentColumn,
+            AslGbl_Files[ASL_FILE_INPUT].Filename, " - Null parse node");
 
         return;
     }
@@ -396,7 +397,7 @@ FlOpenIncludeFile (
      */
     AslResetCurrentLineBuffer ();
     FlPrintFile (ASL_FILE_SOURCE_OUTPUT, "\n");
-    Gbl_CurrentLineOffset++;
+    AslGbl_CurrentLineOffset++;
 
 
     /* Attempt to open the include file */
@@ -424,7 +425,7 @@ FlOpenIncludeFile (
      * Construct the file pathname from the global directory name.
      */
     IncludeFile = FlOpenIncludeWithPrefix (
-        Gbl_DirectoryPath, Op, Op->Asl.Value.String);
+        AslGbl_DirectoryPath, Op, Op->Asl.Value.String);
     if (IncludeFile)
     {
         return;
@@ -434,7 +435,7 @@ FlOpenIncludeFile (
      * Second, search for the file within the (possibly multiple) directories
      * specified by the -I option on the command line.
      */
-    NextDir = Gbl_IncludeDirList;
+    NextDir = AslGbl_IncludeDirList;
     while (NextDir)
     {
         IncludeFile = FlOpenIncludeWithPrefix (
@@ -450,8 +451,8 @@ FlOpenIncludeFile (
     /* We could not open the include file after trying very hard */
 
 ErrorExit:
-    sprintf (MsgBuffer, "%s, %s", Op->Asl.Value.String, strerror (errno));
-    AslError (ASL_ERROR, ASL_MSG_INCLUDE_FILE_OPEN, Op, MsgBuffer);
+    sprintf (AslGbl_MsgBuffer, "%s, %s", Op->Asl.Value.String, strerror (errno));
+    AslError (ASL_ERROR, ASL_MSG_INCLUDE_FILE_OPEN, Op, AslGbl_MsgBuffer);
 }
 
 
@@ -478,7 +479,7 @@ FlOpenInputFile (
     /* Open the input ASL file, text mode */
 
     FlOpenFile (ASL_FILE_INPUT, InputFilename, "rt");
-    AslCompilerin = Gbl_Files[ASL_FILE_INPUT].Handle;
+    AslCompilerin = AslGbl_Files[ASL_FILE_INPUT].Handle;
 
     return (AE_OK);
 }
@@ -506,7 +507,7 @@ FlOpenAmlOutputFile (
 
     /* Output filename usually comes from the ASL itself */
 
-    Filename = Gbl_Files[ASL_FILE_AML_OUTPUT].Filename;
+    Filename = AslGbl_Files[ASL_FILE_AML_OUTPUT].Filename;
     if (!Filename)
     {
         /* Create the output AML filename */
@@ -525,7 +526,7 @@ FlOpenAmlOutputFile (
             return (AE_ERROR);
         }
 
-        Gbl_Files[ASL_FILE_AML_OUTPUT].Filename = Filename;
+        AslGbl_Files[ASL_FILE_AML_OUTPUT].Filename = Filename;
     }
 
     /* Open the output AML file in binary mode */
@@ -557,7 +558,7 @@ FlOpenMiscOutputFiles (
 
      /* Create/Open a map file if requested */
 
-    if (Gbl_MapfileFlag)
+    if (AslGbl_MapfileFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_MAP);
         if (!Filename)
@@ -577,14 +578,14 @@ FlOpenMiscOutputFiles (
 
     /* All done for disassembler */
 
-    if (Gbl_FileType == ASL_INPUT_TYPE_BINARY_ACPI_TABLE)
+    if (AslGbl_FileType == ASL_INPUT_TYPE_BINARY_ACPI_TABLE)
     {
         return (AE_OK);
     }
 
     /* Create/Open a hex output file if asked */
 
-    if (Gbl_HexOutputFlag)
+    if (AslGbl_HexOutputFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_HEX_DUMP);
         if (!Filename)
@@ -604,7 +605,7 @@ FlOpenMiscOutputFiles (
 
     /* Create/Open a debug output file if asked */
 
-    if (Gbl_DebugFlag)
+    if (AslGbl_DebugFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_DEBUG);
         if (!Filename)
@@ -616,11 +617,11 @@ FlOpenMiscOutputFiles (
 
         /* Open the debug file as STDERR, text mode */
 
-        Gbl_Files[ASL_FILE_DEBUG_OUTPUT].Filename = Filename;
-        Gbl_Files[ASL_FILE_DEBUG_OUTPUT].Handle =
+        AslGbl_Files[ASL_FILE_DEBUG_OUTPUT].Filename = Filename;
+        AslGbl_Files[ASL_FILE_DEBUG_OUTPUT].Handle =
             freopen (Filename, "w+t", stderr);
 
-        if (!Gbl_Files[ASL_FILE_DEBUG_OUTPUT].Handle)
+        if (!AslGbl_Files[ASL_FILE_DEBUG_OUTPUT].Handle)
         {
             /*
              * A problem with freopen is that on error, we no longer
@@ -640,7 +641,7 @@ FlOpenMiscOutputFiles (
 
     /* Create/Open a cross-reference output file if asked */
 
-    if (Gbl_CrossReferenceOutput)
+    if (AslGbl_CrossReferenceOutput)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_XREF);
         if (!Filename)
@@ -658,7 +659,7 @@ FlOpenMiscOutputFiles (
 
     /* Create/Open a listing output file if asked */
 
-    if (Gbl_ListingFlag)
+    if (AslGbl_ListingFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_LISTING);
         if (!Filename)
@@ -678,7 +679,7 @@ FlOpenMiscOutputFiles (
 
     /* Create the preprocessor output temp file if preprocessor enabled */
 
-    if (Gbl_PreprocessFlag)
+    if (AslGbl_PreprocessFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_PREPROCESSOR);
         if (!Filename)
@@ -695,7 +696,7 @@ FlOpenMiscOutputFiles (
      * Create the "user" preprocessor output file if -li flag set.
      * Note, this file contains no embedded #line directives.
      */
-    if (Gbl_PreprocessorOutputFlag)
+    if (AslGbl_PreprocessorOutputFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_PREPROC_USER);
         if (!Filename)
@@ -710,7 +711,7 @@ FlOpenMiscOutputFiles (
 
     /* All done for data table compiler */
 
-    if (Gbl_FileType == ASL_INPUT_TYPE_ASCII_DATA)
+    if (AslGbl_FileType == ASL_INPUT_TYPE_ASCII_DATA)
     {
         return (AE_OK);
     }
@@ -734,11 +735,11 @@ FlOpenMiscOutputFiles (
 
 /*
 // TBD: TEMP
-//    AslCompilerin = Gbl_Files[ASL_FILE_SOURCE_OUTPUT].Handle;
+//    AslCompilerin = AslGbl_Files[ASL_FILE_SOURCE_OUTPUT].Handle;
 */
     /* Create/Open a assembly code source output file if asked */
 
-    if (Gbl_AsmOutputFlag)
+    if (AslGbl_AsmOutputFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_ASM_SOURCE);
         if (!Filename)
@@ -758,7 +759,7 @@ FlOpenMiscOutputFiles (
 
     /* Create/Open a C code source output file if asked */
 
-    if (Gbl_C_OutputFlag)
+    if (AslGbl_C_OutputFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_C_SOURCE);
         if (!Filename)
@@ -779,7 +780,7 @@ FlOpenMiscOutputFiles (
 
     /* Create/Open a C code source output file for the offset table if asked */
 
-    if (Gbl_C_OffsetTableFlag)
+    if (AslGbl_C_OffsetTableFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_C_OFFSET);
         if (!Filename)
@@ -800,7 +801,7 @@ FlOpenMiscOutputFiles (
 
     /* Create/Open a assembly include output file if asked */
 
-    if (Gbl_AsmIncludeOutputFlag)
+    if (AslGbl_AsmIncludeOutputFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_ASM_INCLUDE);
         if (!Filename)
@@ -820,7 +821,7 @@ FlOpenMiscOutputFiles (
 
     /* Create/Open a C include output file if asked */
 
-    if (Gbl_C_IncludeOutputFlag)
+    if (AslGbl_C_IncludeOutputFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_C_INCLUDE);
         if (!Filename)
@@ -841,7 +842,7 @@ FlOpenMiscOutputFiles (
 
     /* Create a namespace output file if asked */
 
-    if (Gbl_NsOutputFlag)
+    if (AslGbl_NsOutputFlag)
     {
         Filename = FlGenerateFilename (FilenamePrefix, FILE_SUFFIX_NAMESPACE);
         if (!Filename)
@@ -878,7 +879,7 @@ FlOpenMiscOutputFiles (
         AslCompilerSignon (ASL_FILE_CONV_DEBUG_OUTPUT);
         AslCompilerFileHeader (ASL_FILE_CONV_DEBUG_OUTPUT);
 
-        AcpiGbl_ConvDebugFile = Gbl_Files[ASL_FILE_CONV_DEBUG_OUTPUT].Handle;
+        AcpiGbl_ConvDebugFile = AslGbl_Files[ASL_FILE_CONV_DEBUG_OUTPUT].Handle;
     }
 
     return (AE_OK);
@@ -915,40 +916,40 @@ FlParseInputPathname (
 
     /* Get the path to the input filename's directory */
 
-    Gbl_DirectoryPath = strdup (InputFilename);
-    if (!Gbl_DirectoryPath)
+    AslGbl_DirectoryPath = strdup (InputFilename);
+    if (!AslGbl_DirectoryPath)
     {
         return (AE_NO_MEMORY);
     }
 
-    Substring = strrchr (Gbl_DirectoryPath, '\\');
+    Substring = strrchr (AslGbl_DirectoryPath, '\\');
     if (!Substring)
     {
-        Substring = strrchr (Gbl_DirectoryPath, '/');
+        Substring = strrchr (AslGbl_DirectoryPath, '/');
         if (!Substring)
         {
-            Substring = strrchr (Gbl_DirectoryPath, ':');
+            Substring = strrchr (AslGbl_DirectoryPath, ':');
         }
     }
 
     if (!Substring)
     {
-        Gbl_DirectoryPath[0] = 0;
-        if (Gbl_UseDefaultAmlFilename)
+        AslGbl_DirectoryPath[0] = 0;
+        if (AslGbl_UseDefaultAmlFilename)
         {
-            Gbl_OutputFilenamePrefix = strdup (InputFilename);
+            AslGbl_OutputFilenamePrefix = strdup (InputFilename);
         }
     }
     else
     {
-        if (Gbl_UseDefaultAmlFilename)
+        if (AslGbl_UseDefaultAmlFilename)
         {
-            Gbl_OutputFilenamePrefix = strdup (Substring + 1);
+            AslGbl_OutputFilenamePrefix = strdup (Substring + 1);
         }
         *(Substring+1) = 0;
     }
 
-    UtConvertBackslashes (Gbl_OutputFilenamePrefix);
+    UtConvertBackslashes (AslGbl_OutputFilenamePrefix);
     return (AE_OK);
 }
 #endif

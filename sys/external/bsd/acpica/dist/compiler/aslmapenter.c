@@ -96,7 +96,7 @@ MpSaveGpioInfo (
 
     /* Mapfile option enabled? */
 
-    if (!Gbl_MapfileFlag)
+    if (!AslGbl_MapfileFlag)
     {
         return;
     }
@@ -147,7 +147,7 @@ MpSaveSerialInfo (
 
     /* Mapfile option enabled? */
 
-    if (!Gbl_MapfileFlag)
+    if (!AslGbl_MapfileFlag)
     {
         return;
     }
@@ -227,11 +227,11 @@ MpCreateGpioInfo (
     Buffer = UtLocalCacheCalloc (sizeof (ACPI_GPIO_INFO));
     Info = ACPI_CAST_PTR (ACPI_GPIO_INFO, Buffer);
 
-    NextGpio = Gbl_GpioList;
+    NextGpio = AslGbl_GpioList;
     PrevGpio = NULL;
-    if (!Gbl_GpioList)
+    if (!AslGbl_GpioList)
     {
-        Gbl_GpioList = Info;
+        AslGbl_GpioList = Info;
         Info->Next = NULL;
         return (Info);
     }
@@ -263,7 +263,7 @@ MpCreateGpioInfo (
     }
     else
     {
-        Gbl_GpioList = Info;
+        AslGbl_GpioList = Info;
     }
 
     Info->Next = NextGpio;
@@ -304,11 +304,11 @@ MpCreateSerialInfo (
     Buffer = UtLocalCacheCalloc (sizeof (ACPI_SERIAL_INFO));
     Info = ACPI_CAST_PTR (ACPI_SERIAL_INFO, Buffer);
 
-    NextSerial = Gbl_SerialList;
+    NextSerial = AslGbl_SerialList;
     PrevSerial = NULL;
-    if (!Gbl_SerialList)
+    if (!AslGbl_SerialList)
     {
-        Gbl_SerialList = Info;
+        AslGbl_SerialList = Info;
         Info->Next = NULL;
         return (Info);
     }
@@ -340,7 +340,7 @@ MpCreateSerialInfo (
     }
     else
     {
-        Gbl_SerialList = Info;
+        AslGbl_SerialList = Info;
     }
 
     Info->Next = NextSerial;

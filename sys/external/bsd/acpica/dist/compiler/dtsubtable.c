@@ -153,8 +153,8 @@ DtPushSubtable (
     DT_SUBTABLE             *Subtable)
 {
 
-    Subtable->StackTop = Gbl_SubtableStack;
-    Gbl_SubtableStack = Subtable;
+    Subtable->StackTop = AslGbl_SubtableStack;
+    AslGbl_SubtableStack = Subtable;
 }
 
 
@@ -177,11 +177,11 @@ DtPopSubtable (
     DT_SUBTABLE             *Subtable;
 
 
-    Subtable = Gbl_SubtableStack;
+    Subtable = AslGbl_SubtableStack;
 
     if (Subtable)
     {
-        Gbl_SubtableStack = Subtable->StackTop;
+        AslGbl_SubtableStack = Subtable->StackTop;
     }
 }
 
@@ -203,7 +203,7 @@ DtPeekSubtable (
     void)
 {
 
-    return (Gbl_SubtableStack);
+    return (AslGbl_SubtableStack);
 }
 
 
@@ -347,9 +347,9 @@ DtGetSubtableLength (
 Error:
     if (!Field)
     {
-        sprintf (MsgBuffer, "Found NULL field - Field name \"%s\" needed",
+        sprintf (AslGbl_MsgBuffer, "Found NULL field - Field name \"%s\" needed",
             Info->Name);
-        DtFatal (ASL_MSG_COMPILER_INTERNAL, NULL, MsgBuffer);
+        DtFatal (ASL_MSG_COMPILER_INTERNAL, NULL, AslGbl_MsgBuffer);
     }
 
     return (ASL_EOF);
