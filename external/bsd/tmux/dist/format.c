@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fnmatch.h>
 #include <libgen.h>
@@ -191,10 +192,15 @@ static void
 format_job_update(struct job *job)
 {
 	struct format_job	*fj = job->data;
-	char			*line;
+	struct evbuffer		*evb = job->event->input;
+	char			*line = NULL, *next;
 	time_t			 t;
 
-	if ((line = evbuffer_readline(job->event->input)) == NULL)
+	while ((next = evbuffer_readline(evb)) != NULL) {
+		free(line);
+		line = next;
+	}
+	if (line == NULL)
 		return;
 	fj->updated = 1;
 
@@ -290,7 +296,7 @@ format_job_get(struct format_tree *ft, const char *cmd)
 	t = time(NULL);
 	if (fj->job == NULL && (force || fj->last != t)) {
 		fj->job = job_run(expanded, NULL, NULL, format_job_update,
-		    format_job_complete, NULL, fj);
+		    format_job_complete, NULL, fj, JOB_NOWAIT);
 		if (fj->job == NULL) {
 			free(fj->out);
 			xasprintf(&fj->out, "<'%s' didn't start>", fj->cmd);
@@ -557,11 +563,11 @@ format_cb_history_bytes(struct format_tree *ft, struct format_entry *fe)
 
 	size = 0;
 	for (i = 0; i < gd->hsize; i++) {
-		gl = &gd->linedata[i];
+		gl = grid_get_line(gd, i);
 		size += gl->cellsize * sizeof *gl->celldata;
 		size += gl->extdsize * sizeof *gl->extddata;
 	}
-	size += gd->hsize * sizeof *gd->linedata;
+	size += gd->hsize * sizeof *gl;
 
 	xasprintf(&fe->value, "%llu", size);
 }
@@ -587,8 +593,35 @@ format_cb_pane_tabs(struct format_tree *ft, struct format_entry *fe)
 			evbuffer_add(buffer, ",", 1);
 		evbuffer_add_printf(buffer, "%u", i);
 	}
-	size = EVBUFFER_LENGTH(buffer);
-	xasprintf(&fe->value, "%.*s", size, EVBUFFER_DATA(buffer));
+	if ((size = EVBUFFER_LENGTH(buffer)) != 0)
+		xasprintf(&fe->value, "%.*s", size, EVBUFFER_DATA(buffer));
+	evbuffer_free(buffer);
+}
+
+/* Callback for session_group_list. */
+static void
+format_cb_session_group_list(struct format_tree *ft, struct format_entry *fe)
+{
+	struct session		*s = ft->s;
+	struct session_group	*sg;
+	struct session		*loop;
+	struct evbuffer		*buffer;
+	int			 size;
+
+	if (s == NULL)
+		return;
+	sg = session_group_contains(s);
+	if (sg == NULL)
+		return;
+
+	buffer = evbuffer_new();
+	TAILQ_FOREACH(loop, &sg->sessions, gentry) {
+		if (EVBUFFER_LENGTH(buffer) > 0)
+			evbuffer_add(buffer, ",", 1);
+		evbuffer_add_printf(buffer, "%s", loop->name);
+	}
+	if ((size = EVBUFFER_LENGTH(buffer)) != 0)
+		xasprintf(&fe->value, "%.*s", size, EVBUFFER_DATA(buffer));
 	evbuffer_free(buffer);
 }
 
@@ -781,8 +814,11 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 			found = s;
 			goto found;
 		}
-		if (fe->value == NULL && fe->cb != NULL)
+		if (fe->value == NULL && fe->cb != NULL) {
 			fe->cb(ft, fe);
+			if (fe->value == NULL)
+				fe->value = xstrdup("");
+		}
 		found = fe->value;
 		goto found;
 	}
@@ -818,23 +854,27 @@ found:
 	return (copy);
 }
 
-/* Skip until comma. */
+/* Skip until end. */
 static char *
-format_skip(char *s)
+format_skip(const char *s, char end)
 {
 	int	brackets = 0;
 
 	for (; *s != '\0'; s++) {
-		if (*s == '{')
+		if (*s == '#' && s[1] == '{')
 			brackets++;
+		if (*s == '#' && strchr(",#{}", s[1]) != NULL) {
+			s++;
+			continue;
+		}
 		if (*s == '}')
 			brackets--;
-		if (*s == ',' && brackets == 0)
+		if (*s == end && brackets == 0)
 			break;
 	}
 	if (*s == '\0')
 		return (NULL);
-	return (s);
+	return __UNCONST(s);
 }
 
 /* Return left and right alternatives separated by commas. */
@@ -843,7 +883,7 @@ format_choose(char *s, char **left, char **right)
 {
 	char	*cp;
 
-	cp = format_skip(s);
+	cp = format_skip(s, ',');
 	if (cp == NULL)
 		return (-1);
 	*cp = '\0';
@@ -868,11 +908,12 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
     char **buf, size_t *len, size_t *off)
 {
 	struct window_pane	*wp = ft->wp;
-	char			*copy, *copy0, *endptr, *ptr, *found, *new;
+	char			*copy, *copy0, *endptr, *ptr, *found, *new, sep;
 	char			*value, *from = NULL, *to = NULL, *left, *right;
 	size_t			 valuelen, newlen, fromlen, tolen, used;
 	long			 limit = 0;
 	int			 modifiers = 0, compare = 0, search = 0;
+	int			 literal = 0;
 
 	/* Make a copy of the key. */
 	copy0 = copy = xmalloc(keylen + 1);
@@ -881,6 +922,12 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 
 	/* Is there a length limit or whatnot? */
 	switch (copy[0]) {
+	case 'l':
+		if (copy[1] != ':')
+			break;
+		literal = 1;
+		copy += 2;
+		break;
 	case 'm':
 		if (copy[1] != ':')
 			break;
@@ -945,20 +992,21 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 		copy += 2;
 		break;
 	case 's':
-		if (copy[1] != '/')
+		sep = copy[1];
+		if (sep == ':' || !ispunct((u_char)sep))
 			break;
 		from = copy + 2;
-		for (copy = from; *copy != '\0' && *copy != '/'; copy++)
+		for (copy = from; *copy != '\0' && *copy != sep; copy++)
 			/* nothing */;
-		if (copy[0] != '/' || copy == from) {
+		if (copy[0] != sep || copy == from) {
 			copy = copy0;
 			break;
 		}
 		copy[0] = '\0';
 		to = copy + 1;
-		for (copy = to; *copy != '\0' && *copy != '/'; copy++)
+		for (copy = to; *copy != '\0' && *copy != sep; copy++)
 			/* nothing */;
-		if (copy[0] != '/' || copy[1] != ':') {
+		if (copy[0] != sep || copy[1] != ':') {
 			copy = copy0;
 			break;
 		}
@@ -967,6 +1015,12 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 		modifiers |= FORMAT_SUBSTITUTE;
 		copy += 2;
 		break;
+	}
+
+	/* Is this a literal string? */
+	if (literal) {
+		value = xstrdup(copy);
+		goto done;
 	}
 
 	/* Is this a comparison or a conditional? */
@@ -1000,14 +1054,24 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 		free(left);
 	} else if (*copy == '?') {
 		/* Conditional: check first and choose second or third. */
-		ptr = format_skip(copy);
+		ptr = format_skip(copy, ',');
 		if (ptr == NULL)
 			goto fail;
 		*ptr = '\0';
 
 		found = format_find(ft, copy + 1, modifiers);
-		if (found == NULL)
+		if (found == NULL) {
+			/*
+			 * If the conditional not found, try to expand it. If
+			 * the expansion doesn't have any effect, then assume
+			 * false.
+			 */
 			found = format_expand(ft, copy + 1);
+			if (strcmp(found, copy + 1) == 0) {
+				free(found);
+				found = xstrdup("");
+			}
+		}
 		if (format_choose(ptr + 1, &left, &right) != 0)
 			goto fail;
 
@@ -1062,6 +1126,7 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 		value = new;
 	}
 
+done:
 	/* Expand the buffer and copy in the value. */
 	valuelen = strlen(value);
 	while (*len - *off < valuelen + 1) {
@@ -1102,7 +1167,7 @@ format_expand_time(struct format_tree *ft, const char *fmt, time_t t)
 char *
 format_expand(struct format_tree *ft, const char *fmt)
 {
-	char		*buf, *out;
+	char		*buf, *out, *name;
 	const char	*ptr, *s, *saved = fmt;
 	size_t		 off, len, n, outlen;
 	int     	 ch, brackets;
@@ -1141,8 +1206,11 @@ format_expand(struct format_tree *ft, const char *fmt)
 
 			if (ft->flags & FORMAT_NOJOBS)
 				out = xstrdup("");
-			else
-				out = format_job_get(ft, xstrndup(fmt, n));
+			else {
+				name = xstrndup(fmt, n);
+				out = format_job_get(ft, name);
+				free(name);
+			}
 			outlen = strlen(out);
 
 			while (len - off < outlen + 1) {
@@ -1157,14 +1225,8 @@ format_expand(struct format_tree *ft, const char *fmt)
 			fmt += n + 1;
 			continue;
 		case '{':
-			brackets = 1;
-			for (ptr = fmt; *ptr != '\0'; ptr++) {
-				if (*ptr == '{')
-					brackets++;
-				if (*ptr == '}' && --brackets == 0)
-					break;
-			}
-			if (*ptr != '}' || brackets != 0)
+			ptr = format_skip(fmt - 2, '}');
+			if (ptr == NULL)
 				break;
 			n = ptr - fmt;
 
@@ -1172,12 +1234,14 @@ format_expand(struct format_tree *ft, const char *fmt)
 				break;
 			fmt += n + 1;
 			continue;
+		case '}':
 		case '#':
+		case ',':
 			while (len - off < 2) {
 				buf = xreallocarray(buf, 2, len);
 				len *= 2;
 			}
-			buf[off++] = '#';
+			buf[off++] = ch;
 			continue;
 		default:
 			s = NULL;
@@ -1232,6 +1296,9 @@ void
 format_defaults(struct format_tree *ft, struct client *c, struct session *s,
     struct winlink *wl, struct window_pane *wp)
 {
+	if (c != NULL && s != NULL && c->session != s)
+		log_debug("%s: session does not match", __func__);
+
 	format_add(ft, "session_format", "%d", s != NULL);
 	format_add(ft, "window_format", "%d", wl != NULL);
 	format_add(ft, "pane_format", "%d", wp != NULL);
@@ -1269,8 +1336,13 @@ format_defaults_session(struct format_tree *ft, struct session *s)
 
 	sg = session_group_contains(s);
 	format_add(ft, "session_grouped", "%d", sg != NULL);
-	if (sg != NULL)
+	if (sg != NULL) {
 		format_add(ft, "session_group", "%s", sg->name);
+		format_add(ft, "session_group_size", "%u",
+		    session_group_count (sg));
+		format_add_cb(ft, "session_group_list",
+		    format_cb_session_group_list);
+	}
 
 	format_add_tv(ft, "session_created", &s->creation_time);
 	format_add_tv(ft, "session_last_attached", &s->last_attached_time);
@@ -1392,8 +1464,8 @@ void
 format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 {
 	struct grid	*gd = wp->base.grid;
+	int  		 status = wp->status;
 	u_int		 idx;
-	int  		 status;
 
 	if (ft->w == NULL)
 		ft->w = wp->window;
@@ -1415,8 +1487,7 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_input_off", "%d", !!(wp->flags & PANE_INPUTOFF));
 	format_add(ft, "pane_pipe", "%d", wp->pipe_fd != -1);
 
-	status = wp->status;
-	if (wp->fd == -1 && WIFEXITED(status))
+	if ((wp->flags & PANE_STATUSREADY) && WIFEXITED(status))
 		format_add(ft, "pane_dead_status", "%d", WEXITSTATUS(status));
 	format_add(ft, "pane_dead", "%d", wp->fd == -1);
 
@@ -1427,8 +1498,10 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 		format_add(ft, "pane_bottom", "%u", wp->yoff + wp->sy - 1);
 		format_add(ft, "pane_at_left", "%d", wp->xoff == 0);
 		format_add(ft, "pane_at_top", "%d", wp->yoff == 0);
-		format_add(ft, "pane_at_right", "%d", wp->xoff + wp->sx == wp->window->sx);
-		format_add(ft, "pane_at_bottom", "%d", wp->yoff + wp->sy == wp->window->sy);
+		format_add(ft, "pane_at_right", "%d",
+		    wp->xoff + wp->sx == wp->window->sx);
+		format_add(ft, "pane_at_bottom", "%d",
+		    wp->yoff + wp->sy == wp->window->sy);
 	}
 
 	format_add(ft, "pane_in_mode", "%d", wp->screen != &wp->base);
