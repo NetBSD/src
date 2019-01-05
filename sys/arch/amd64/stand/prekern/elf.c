@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.17 2017/11/21 07:56:05 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.18 2019/01/05 22:11:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -196,6 +196,7 @@ elf_apply_reloc(uintptr_t relocbase, const void *data, bool isrela)
 		break;
 
 	case R_X86_64_PC32:	/* S + A - P */
+	case R_X86_64_PLT32:
 		addr = elf_sym_lookup(symidx);
 		where32 = (Elf32_Addr *)where;
 		val32 = (Elf32_Addr)(addr + addend - (Elf64_Addr)where);
