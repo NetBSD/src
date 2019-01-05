@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1586 2019/01/05 20:42:09 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1587 2019/01/05 21:49:10 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -928,7 +928,7 @@ Package:	nawk
 Version:	2012-12-20
 Current Vers:	2012-12-20
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
-Archive Site:	http://www.cs.princeton.edu/~bwk/btl.mirror/
+Archive Site:	https://github.com/onetrueawk/awk
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
 Mailing List:
 Responsible:	jdolecek
@@ -1224,8 +1224,8 @@ Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
-Version:	2017102400 (October 24, 2017)
-Current Vers:	2018070901 (July 09, 2018)
+Version:	2018111402 (November 14, 2018)
+Current Vers:	2018070901 (November 14, 2018)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
@@ -1241,8 +1241,8 @@ Package:	routed
 Version:	2.32
 Current Vers:	2.32
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
-Archive Site:	ftp://ftp.rhyolite.com/src/
-Home Page:	http://www.rhyolite.com/src/
+Archive Site:	gone
+Home Page:	gone
 Mailing List:
 Responsible:	christos
 License:	BSD (4-clause)
@@ -1372,8 +1372,8 @@ perhaps this implementation should be kept anyway for historical
 purposes.
 
 Package:	tmux
-Version:	2.6
-Current Vers:	2.7
+Version:	2.8
+Current Vers:	2.8
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux
 Home page:	http://tmux.github.io
