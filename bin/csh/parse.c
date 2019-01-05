@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.18 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: parse.c,v 1.19 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.18 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: parse.c,v 1.19 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ asyn3(struct wordent *p1, struct wordent *p2)
 
 	cp = alout.next->word;
 	alout.next->word = Strspl(STRQNULL, cp);
-	free((ptr_t) cp);
+	free(cp);
     }
     p1 = freenod(p1, redid ? p2 : p1->next);
     if (alout.next != &alout) {
@@ -179,8 +179,8 @@ asyn3(struct wordent *p1, struct wordent *p2)
 	alout.prev->prev->next = p1->next;
 	alout.next->prev = p1;
 	p1->next = alout.next;
-	free((ptr_t)alout.prev->word);
-	free((ptr_t)(alout.prev));
+	free(alout.prev->word);
+	free(alout.prev);
     }
     reset();			/* throw! */
 }
@@ -192,9 +192,9 @@ freenod(struct wordent *p1, struct wordent *p2)
 
     retp = p1->prev;
     while (p1 != p2) {
-	free((ptr_t)p1->word);
+	free(p1->word);
 	p1 = p1->next;
-	free((ptr_t) (p1->prev));
+	free(p1->prev);
     }
     retp->next = p2;
     p2->prev = retp;
@@ -619,15 +619,15 @@ freesyn(struct command *t)
     switch (t->t_dtyp) {
     case NODE_COMMAND:
 	for (v = t->t_dcom; *v; v++)
-	    free((ptr_t) * v);
-	free((ptr_t)(t->t_dcom));
-	free((ptr_t)t->t_dlef);
-	free((ptr_t)t->t_drit);
+	    free(* v);
+	free(t->t_dcom);
+	free(t->t_dlef);
+	free(t->t_drit);
 	break;
     case NODE_PAREN:
 	freesyn(t->t_dspr);
-	free((ptr_t)t->t_dlef);
-	free((ptr_t)t->t_drit);
+	free(t->t_dlef);
+	free(t->t_drit);
 	break;
     case NODE_AND:
     case NODE_OR:
@@ -636,5 +636,5 @@ freesyn(struct command *t)
 	freesyn(t->t_dcar), freesyn(t->t_dcdr);
 	break;
     }
-    free((ptr_t)t);
+    free(t);
 }
