@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.30 2019/01/05 10:51:06 maya Exp $ */
+/* $NetBSD: dol.c,v 1.31 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.30 2019/01/05 10:51:06 maya Exp $");
+__RCSID("$NetBSD: dol.c,v 1.31 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -416,7 +416,7 @@ Dgetdol(void)
 	    stderror(ERR_SYNTAX);
 	if (backpid != 0) {
 	    if (dolbang) 
-		free((ptr_t)dolbang);
+		free(dolbang);
 	    setDolp(dolbang = putn(backpid));
 	}
 	goto eatbrac;
@@ -595,7 +595,7 @@ Dgetdol(void)
 	Char   *cp = putn(upb - lwb + 1);
 
 	addla(cp);
-	free((ptr_t) cp);
+	free(cp);
     }
     else {
 eatmod:
@@ -717,7 +717,7 @@ setDolp(Char *cp)
 		    (void)Strcpy(np + (dp - cp), rhsub);
 		    (void)Strcpy(np + (dp - cp) + rhlen, dp + lhlen);
 
-		    free((ptr_t) cp);
+		    free(cp);
 		    dp = cp = np;
 		    didmod = 1;
 		} else {
@@ -741,12 +741,12 @@ setDolp(Char *cp)
 		if ((dp = domod(cp, dolmod[i]))) {
 		    didmod = 1;
 		    if (Strcmp(cp, dp) == 0) {
-			free((ptr_t) cp);
+			free(cp);
 			cp = dp;
 			break;
 		    }
 		    else {
-			free((ptr_t) cp);
+			free(cp);
 			cp = dp;
 		    }
 		}
@@ -764,11 +764,11 @@ setDolp(Char *cp)
 
     if (dp) {
 	addla(dp);
-	free((ptr_t) dp);
+	free(dp);
     }
     else {
 	addla(cp);
-	free((ptr_t) cp);
+	free(cp);
     }
 
     dolp = STRNULL;
@@ -833,7 +833,7 @@ again:
 		mbp = putn((((int)tv.tv_sec) ^ 
 		    ((int)tv.tv_nsec) ^ ((int)getpid())) & 0x00ffffff);
 		shtemp = Strspl(STRtmpsh, mbp);
-		free((ptr_t)mbp);
+		free(mbp);
 	    }
 	    goto again;
 	}

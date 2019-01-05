@@ -1,4 +1,4 @@
-/* $NetBSD: str.c,v 1.15 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: str.c,v 1.16 2019/01/05 16:54:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: str.c,v 1.15 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.16 2019/01/05 16:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,8 +114,7 @@ str2short(const char *src)
 	*dst++ = (Char) ((unsigned char) *src++);
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = xrealloc((ptr_t)sdst,
-	        (size_t)dstsize * sizeof(*sdst));
+	    sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -144,8 +143,7 @@ short2str(const Char *src)
 	*dst++ = (char) *src++;
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = xrealloc((ptr_t)sdst,
-	        (size_t)dstsize * sizeof(*sdst));
+	    sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -390,8 +388,7 @@ short2qstr(const Char *src)
 	    *dst++ = '\\';
 	    if (dst == edst) {
 		dstsize += MALLOC_INCR;
-		sdst = xrealloc((ptr_t) sdst, 
-		    (size_t)dstsize * sizeof(*sdst));
+		sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
 		edst = &sdst[dstsize];
 		dst = &edst[-MALLOC_INCR];
 	    }
@@ -399,8 +396,7 @@ short2qstr(const Char *src)
 	*dst++ = (char) *src++;
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = xrealloc((ptr_t) sdst,
-	        (size_t)dstsize * sizeof(*sdst));
+	    sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
