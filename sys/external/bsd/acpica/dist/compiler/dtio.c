@@ -101,7 +101,7 @@ DtDumpSubtableTree (
 #define DT_MERGE_LINES              6
 #define DT_ESCAPE_SEQUENCE          7
 
-static UINT32               Gbl_NextLineOffset;
+static UINT32               AslGbl_NextLineOffset;
 
 
 /******************************************************************************
@@ -128,7 +128,7 @@ DtTrim (
 
     /* Skip lines that start with a space */
 
-    if (!strcmp (String, " "))
+    if (*String == 0 || !strcmp (String, " "))
     {
         ReturnString = UtLocalCacheCalloc (1);
         return (ReturnString);
@@ -150,7 +150,7 @@ DtTrim (
 
     while (End >= Start)
     {
-        if (*End == '\r' || *End == '\n')
+        if (*End == '\n')
         {
             End--;
             continue;
@@ -209,7 +209,7 @@ DtLinkField (
     DT_FIELD                *Next;
 
 
-    Prev = Next = Gbl_FieldList;
+    Prev = Next = AslGbl_FieldList;
 
     while (Next)
     {
@@ -223,7 +223,7 @@ DtLinkField (
     }
     else
     {
-        Gbl_FieldList = Field;
+        AslGbl_FieldList = Field;
     }
 }
 
@@ -399,8 +399,8 @@ DtParseLine (
  * Handles both slash-asterisk and slash-slash comments.
  * Also, quoted strings, but no escapes within.
  *
- * Line is returned in Gbl_CurrentLineBuffer.
- * Line number in original file is returned in Gbl_CurrentLineNumber.
+ * Line is returned in AslGbl_CurrentLineBuffer.
+ * Line number in original file is returned in AslGbl_CurrentLineNumber.
  *
  *****************************************************************************/
 
@@ -414,16 +414,17 @@ DtGetNextLine (
     UINT32                  CurrentLineOffset;
     UINT32                  i;
     int                     c;
+    int                     c1;
 
 
-    memset (Gbl_CurrentLineBuffer, 0, Gbl_LineBufferSize);
+    memset (AslGbl_CurrentLineBuffer, 0, AslGbl_LineBufferSize);
     for (i = 0; ;)
     {
         /*
          * If line is too long, expand the line buffers. Also increases
-         * Gbl_LineBufferSize.
+         * AslGbl_LineBufferSize.
          */
-        if (i >= Gbl_LineBufferSize)
+        if (i >= AslGbl_LineBufferSize)
         {
             UtExpandLineBuffers ();
         }
@@ -461,6 +462,29 @@ DtGetNextLine (
             c = '\n';
             State = DT_NORMAL_TEXT;
         }
+        else if (c == '\r')
+        {
+            c1 = getc (Handle);
+            if (c1 == '\n')
+            {
+                /*
+                 * Skip the carriage return as if it didn't exist. This is
+                 * onlt meant for input files in DOS format in unix. fopen in
+                 * unix may not support "text mode" and leaves CRLF intact.
+                 */
+                c = '\n';
+            }
+            else
+            {
+                /* This was not a CRLF. Only a CR */
+
+                ungetc(c1, Handle);
+
+                DtFatal (ASL_MSG_COMPILER_INTERNAL, NULL,
+                    "Carriage return without linefeed detected");
+                return (ASL_EOF);
+            }
+        }
 
         switch (State)
         {
@@ -468,7 +492,7 @@ DtGetNextLine (
 
             /* Normal text, insert char into line buffer */
 
-            Gbl_CurrentLineBuffer[i] = (char) c;
+            AslGbl_CurrentLineBuffer[i] = (char) c;
             switch (c)
             {
             case '/':
@@ -493,9 +517,9 @@ DtGetNextLine (
 
             case '\n':
 
-                CurrentLineOffset = Gbl_NextLineOffset;
-                Gbl_NextLineOffset = (UINT32) ftell (Handle);
-                Gbl_CurrentLineNumber++;
+                CurrentLineOffset = AslGbl_NextLineOffset;
+                AslGbl_NextLineOffset = (UINT32) ftell (Handle);
+                AslGbl_CurrentLineNumber++;
 
                 /*
                  * Exit if line is complete. Ignore empty lines (only \n)
@@ -503,12 +527,12 @@ DtGetNextLine (
                  */
                 if ((i != 0) && LineNotAllBlanks)
                 {
-                    if ((i + 1) >= Gbl_LineBufferSize)
+                    if ((i + 1) >= AslGbl_LineBufferSize)
                     {
                         UtExpandLineBuffers ();
                     }
 
-                    Gbl_CurrentLineBuffer[i+1] = 0; /* Terminate string */
+                    AslGbl_CurrentLineBuffer[i+1] = 0; /* Terminate string */
                     return (CurrentLineOffset);
                 }
 
@@ -534,7 +558,7 @@ DtGetNextLine (
 
             /* Insert raw chars until end of quoted string */
 
-            Gbl_CurrentLineBuffer[i] = (char) c;
+            AslGbl_CurrentLineBuffer[i] = (char) c;
             i++;
 
             switch (c)
@@ -555,7 +579,7 @@ DtGetNextLine (
                 {
                     AcpiOsPrintf (
                         "ERROR at line %u: Unterminated quoted string\n",
-                        Gbl_CurrentLineNumber++);
+                        AslGbl_CurrentLineNumber++);
                     State = DT_NORMAL_TEXT;
                 }
                 break;
@@ -570,7 +594,7 @@ DtGetNextLine (
 
             /* Just copy the escaped character. TBD: sufficient for table compiler? */
 
-            Gbl_CurrentLineBuffer[i] = (char) c;
+            AslGbl_CurrentLineBuffer[i] = (char) c;
             i++;
             State = DT_START_QUOTED_STRING;
             break;
@@ -594,12 +618,12 @@ DtGetNextLine (
             default:    /* Not a comment */
 
                 i++;    /* Save the preceding slash */
-                if (i >= Gbl_LineBufferSize)
+                if (i >= AslGbl_LineBufferSize)
                 {
                     UtExpandLineBuffers ();
                 }
 
-                Gbl_CurrentLineBuffer[i] = (char) c;
+                AslGbl_CurrentLineBuffer[i] = (char) c;
                 i++;
                 State = DT_NORMAL_TEXT;
                 break;
@@ -614,8 +638,8 @@ DtGetNextLine (
             {
             case '\n':
 
-                Gbl_NextLineOffset = (UINT32) ftell (Handle);
-                Gbl_CurrentLineNumber++;
+                AslGbl_NextLineOffset = (UINT32) ftell (Handle);
+                AslGbl_CurrentLineNumber++;
                 break;
 
             case '*':
@@ -655,9 +679,9 @@ DtGetNextLine (
 
             case '\n':
 
-                CurrentLineOffset = Gbl_NextLineOffset;
-                Gbl_NextLineOffset = (UINT32) ftell (Handle);
-                Gbl_CurrentLineNumber++;
+                CurrentLineOffset = AslGbl_NextLineOffset;
+                AslGbl_NextLineOffset = (UINT32) ftell (Handle);
+                AslGbl_CurrentLineNumber++;
                 break;
 
             case '*':
@@ -692,14 +716,14 @@ DtGetNextLine (
                  * immediately by a newline. Insert a space between the
                  * lines (overwrite the backslash)
                  */
-                Gbl_CurrentLineBuffer[i] = ' ';
+                AslGbl_CurrentLineBuffer[i] = ' ';
                 i++;
 
                 /* Ignore newline, this will merge the lines */
 
-                CurrentLineOffset = Gbl_NextLineOffset;
-                Gbl_NextLineOffset = (UINT32) ftell (Handle);
-                Gbl_CurrentLineNumber++;
+                CurrentLineOffset = AslGbl_NextLineOffset;
+                AslGbl_NextLineOffset = (UINT32) ftell (Handle);
+                AslGbl_CurrentLineNumber++;
                 State = DT_NORMAL_TEXT;
             }
             break;
@@ -722,7 +746,7 @@ DtGetNextLine (
  * RETURN:      Pointer to start of the constructed parse tree.
  *
  * DESCRIPTION: Scan source file, link all field names and values
- *              to the global parse tree: Gbl_FieldList
+ *              to the global parse tree: AslGbl_FieldList
  *
  *****************************************************************************/
 
@@ -739,25 +763,25 @@ DtScanFile (
 
     /* Get the file size */
 
-    Gbl_InputByteCount = CmGetFileSize (Handle);
-    if (Gbl_InputByteCount == ACPI_UINT32_MAX)
+    AslGbl_InputByteCount = CmGetFileSize (Handle);
+    if (AslGbl_InputByteCount == ACPI_UINT32_MAX)
     {
         AslAbort ();
     }
 
-    Gbl_CurrentLineNumber = 0;
-    Gbl_CurrentLineOffset = 0;
-    Gbl_NextLineOffset = 0;
+    AslGbl_CurrentLineNumber = 0;
+    AslGbl_CurrentLineOffset = 0;
+    AslGbl_NextLineOffset = 0;
 
     /* Scan line-by-line */
 
     while ((Offset = DtGetNextLine (Handle, 0)) != ASL_EOF)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "Line %2.2u/%4.4X - %s",
-            Gbl_CurrentLineNumber, Offset, Gbl_CurrentLineBuffer));
+            AslGbl_CurrentLineNumber, Offset, AslGbl_CurrentLineBuffer));
 
-        Status = DtParseLine (Gbl_CurrentLineBuffer,
-            Gbl_CurrentLineNumber, Offset);
+        Status = DtParseLine (AslGbl_CurrentLineBuffer,
+            AslGbl_CurrentLineNumber, Offset);
         if (Status == AE_NOT_FOUND)
         {
             break;
@@ -766,8 +790,8 @@ DtScanFile (
 
     /* Dump the parse tree if debug enabled */
 
-    DtDumpFieldList (Gbl_FieldList);
-    return (Gbl_FieldList);
+    DtDumpFieldList (AslGbl_FieldList);
+    return (AslGbl_FieldList);
 }
 
 
@@ -824,8 +848,8 @@ DtOutputBinary (
 
     DtWalkTableTree (RootTable, DtWriteBinary, NULL, NULL);
 
-    Gbl_TableLength = CmGetFileSize (Gbl_Files[ASL_FILE_AML_OUTPUT].Handle);
-    if (Gbl_TableLength == ACPI_UINT32_MAX)
+    AslGbl_TableLength = CmGetFileSize (AslGbl_Files[ASL_FILE_AML_OUTPUT].Handle);
+    if (AslGbl_TableLength == ACPI_UINT32_MAX)
     {
         AslAbort ();
     }
@@ -940,7 +964,7 @@ DtDumpFieldList (
     DT_FIELD                *Field)
 {
 
-    if (!Gbl_DebugFlag || !Field)
+    if (!AslGbl_DebugFlag || !Field)
     {
         return;
     }
@@ -1024,7 +1048,7 @@ DtDumpSubtableList (
     void)
 {
 
-    if (!Gbl_DebugFlag || !Gbl_RootTable)
+    if (!AslGbl_DebugFlag || !AslGbl_RootTable)
     {
         return;
     }
@@ -1033,11 +1057,11 @@ DtDumpSubtableList (
         "Subtable Info:\n"
         "Depth                      Name Length   TotalLen LenSize  Flags    "
         "This     Parent   Child    Peer\n\n");
-    DtWalkTableTree (Gbl_RootTable, DtDumpSubtableInfo, NULL, NULL);
+    DtWalkTableTree (AslGbl_RootTable, DtDumpSubtableInfo, NULL, NULL);
 
     DbgPrint (ASL_DEBUG_OUTPUT,
         "\nSubtable Tree: (Depth, Name, Subtable, Length, TotalLength)\n\n");
-    DtWalkTableTree (Gbl_RootTable, DtDumpSubtableTree, NULL, NULL);
+    DtWalkTableTree (AslGbl_RootTable, DtDumpSubtableTree, NULL, NULL);
 
     DbgPrint (ASL_DEBUG_OUTPUT, "\n");
 }
@@ -1066,7 +1090,7 @@ DtWriteFieldToListing (
     UINT8                   FileByte;
 
 
-    if (!Gbl_ListingFlag || !Field)
+    if (!AslGbl_ListingFlag || !Field)
     {
         return;
     }
@@ -1124,24 +1148,24 @@ DtWriteTableToListing (
     UINT8                   *Buffer;
 
 
-    if (!Gbl_ListingFlag)
+    if (!AslGbl_ListingFlag)
     {
         return;
     }
 
     /* Read the entire table from the output file */
 
-    Buffer = UtLocalCalloc (Gbl_TableLength);
+    Buffer = UtLocalCalloc (AslGbl_TableLength);
     FlSeekFile (ASL_FILE_AML_OUTPUT, 0);
-    FlReadFile (ASL_FILE_AML_OUTPUT, Buffer, Gbl_TableLength);
+    FlReadFile (ASL_FILE_AML_OUTPUT, Buffer, AslGbl_TableLength);
 
     /* Dump the raw table data */
 
-    AcpiOsRedirectOutput (Gbl_Files[ASL_FILE_LISTING_OUTPUT].Handle);
+    AcpiOsRedirectOutput (AslGbl_Files[ASL_FILE_LISTING_OUTPUT].Handle);
 
     AcpiOsPrintf ("\n%s: Length %d (0x%X)\n\n",
-        ACPI_RAW_TABLE_DATA_HEADER, Gbl_TableLength, Gbl_TableLength);
-    AcpiUtDumpBuffer (Buffer, Gbl_TableLength, DB_BYTE_DISPLAY, 0);
+        ACPI_RAW_TABLE_DATA_HEADER, AslGbl_TableLength, AslGbl_TableLength);
+    AcpiUtDumpBuffer (Buffer, AslGbl_TableLength, DB_BYTE_DISPLAY, 0);
 
     AcpiOsRedirectOutput (stdout);
     ACPI_FREE (Buffer);
