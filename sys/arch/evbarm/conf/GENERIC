@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.16 2019/01/05 13:55:46 aymeric Exp $
+#	$NetBSD: GENERIC,v 1.17 2019/01/05 16:50:22 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -209,7 +209,11 @@ pseudo-device 	openfirm	# /dev/openfirm
 # ODROID-XU lite
 #options 	EARLYCONS=exynos, CONSADDR=0x12c20000
 
+# RaspberryPIs
+#options 	EARLYCONS=bcm2835, CONSADDR=0x20201000
+#options 	EARLYCONS=bcm2836, CONSADDR=0x3f201000
 #options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
+
 #options 	EARLYCONS=cycv, CONSADDR=0xffc02000
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
@@ -217,9 +221,8 @@ pseudo-device 	openfirm	# /dev/openfirm
 # TEGRA TK1
 #options 	EARLYCONS=tegra, CONSADDR=0x70006300
 
-#
 #options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
-#options 	EARLYCONS=virt
+#options 	EARLYCONS=virt, CONSADDR=0x09000000
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
