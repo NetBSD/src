@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2019/01/05 06:56:03 maya Exp $
+#	$NetBSD: Makefile,v 1.56 2019/01/05 06:59:46 maya Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -30,8 +30,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
-WARNS?=	4	# XXX -Wshadow etc.  fix asap
-CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format-security
+WARNS?=	5
 
 .include <bsd.own.mk>
 
