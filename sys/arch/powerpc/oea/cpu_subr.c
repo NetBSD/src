@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.97 2018/06/15 23:11:39 uwe Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.98 2019/01/06 11:20:53 phx Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.97 2018/06/15 23:11:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.98 2019/01/06 11:20:53 phx Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -329,10 +329,12 @@ cpu_idlespin(void)
 	if (powersave <= 0)
 		return;
 
-	__asm volatile(
 #if defined(_ARCH_PPC64) || defined (PPC_OEA64_BRIDGE)
-		"dssall;"
+	if (cpu_altivec)
+		__asm volatile("dssall");
 #endif
+
+	__asm volatile(
 		"sync;"
 		"mfmsr	%0;"
 		"oris	%0,%0,%1@h;"	/* enter power saving mode */
