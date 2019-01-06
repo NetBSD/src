@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.90 2018/11/26 04:45:13 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.91 2019/01/06 16:13:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.90 2018/11/26 04:45:13 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.91 2019/01/06 16:13:51 maxv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1718,6 +1718,7 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 		 * Microsoft	"Microsoft Hv"
 		 * VMware	"VMwareVMware"
 		 * Xen		"XenVMMXenVMM"
+		 * NetBSD	"___ NVMM ___"
 		 */
 		if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
 			hv_name = "KVM";
@@ -1727,6 +1728,8 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 			hv_name = "VMware";
 		else if (strncmp(hv_sig, "XenVMMXenVMM", 12) == 0)
 			hv_name = "Xen";
+		else if (strncmp(hv_sig, "___ NVMM ___", 12) == 0)
+			hv_name = "NVMM";
 		else
 			hv_name = "unknown";
 
