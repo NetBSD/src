@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.102 2018/11/30 04:38:14 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.103 2019/01/06 03:46:11 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.102 2018/11/30 04:38:14 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.103 2019/01/06 03:46:11 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -498,8 +498,8 @@ prefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	if (retval == OK) {
 		retval = doupdate();
 		if (!(pad->flags & __LEAVEOK)) {
-			pad->cury = max(0, curscr->cury - pad->begy);
-			pad->curx = max(0, curscr->curx - pad->begx);
+			pad->cury = max(0, pbegy + (curscr->cury - sbegy));
+			pad->curx = max(0, pbegx + (curscr->curx - sbegx));
 		}
 	}
 	return retval;
