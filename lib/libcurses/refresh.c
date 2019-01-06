@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.104 2019/01/06 03:59:17 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.105 2019/01/06 04:27:53 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.104 2019/01/06 03:59:17 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.105 2019/01/06 04:27:53 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -165,6 +165,7 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 {
 	SCREEN *screen = win->screen;
 	short	sy, wy, wx, y_off, x_off, mx, dy_off, dx_off, endy;
+	int newy, newx;
 	__LINE	*wlp, *vlp, *dwlp;
 	WINDOW	*sub_win, *orig, *swin, *dwin;
 
@@ -217,12 +218,14 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 	}
 
 	/* Check that cursor position on "win" is valid for "__virtscr" */
-	if (dwin->cury + wbegy - begy < screen->__virtscr->maxy &&
-	    dwin->cury + wbegy - begy >= 0 && dwin->cury < maxy)
-		screen->__virtscr->cury = dwin->cury + wbegy - begy;
-	if (dwin->curx + wbegx - begx < screen->__virtscr->maxx &&
-	    dwin->curx + wbegx - begx >= 0 && dwin->curx < maxx)
-		screen->__virtscr->curx = dwin->curx + wbegx - begx;
+	newy = wbegy + dwin->cury - begy;
+	newx = wbegx + dwin->curx - begx;
+	if (begy <= dwin->cury && dwin->cury < maxy
+	    && 0 <= newy && newy < screen->__virtscr->maxy)
+		screen->__virtscr->cury = newy;
+	if (begx <= dwin->curx && dwin->curx < maxx
+	    && 0 <= newx && newx < screen->__virtscr->maxx)
+		screen->__virtscr->curx = newx;
 
 	/* Copy the window flags from "win" to "__virtscr" */
 	if (dwin->flags & __CLEAROK) {
