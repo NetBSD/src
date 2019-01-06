@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.10 2019/01/06 16:10:51 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.11 2019/01/06 18:32:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.10 2019/01/06 16:10:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.11 2019/01/06 18:32:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +368,18 @@ struct vmcb_ctrl {
 	uint64_t nrip;
 	uint8_t	inst_len;
 	uint8_t	inst_bytes[15];
-	uint8_t	pad[800];
+	uint64_t avic_abpp;
+	uint64_t rsvd3;
+	uint64_t avic_ltp;
+
+	uint64_t avic_phys;
+#define VMCB_CTRL_AVIC_PHYS_TABLE_PTR	__BITS(51,12)
+#define VMCB_CTRL_AVIC_PHYS_MAX_INDEX	__BITS(7,0)
+
+	uint64_t rsvd4;
+	uint64_t vmcb_ptr;
+
+	uint8_t	pad[752];
 } __packed;
 
 CTASSERT(sizeof(struct vmcb_ctrl) == 1024);
@@ -1236,10 +1247,6 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		default:
 			exit->reason = NVMM_EXIT_INVALID;
 			break;
-		}
-
-		if (vmcb->ctrl.exitintinfo & VMCB_CTRL_EXITINTINFO_V) {
-			printf("WAS PROCESSING!\n");
 		}
 
 		/* If no reason to return to userland, keep rolling. */
