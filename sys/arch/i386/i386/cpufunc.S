@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.26 2018/12/22 21:27:22 cherry Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.27 2019/01/06 14:35:31 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.26 2018/12/22 21:27:22 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.27 2019/01/06 14:35:31 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -46,18 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.26 2018/12/22 21:27:22 cherry Exp $");
 #include <machine/segments.h>
 
 #include "assym.h"
-
-/*
- * These functions below should always be accessed via the corresponding wrapper
- * function names defined in x86/include/cpufunc.h and exported as WEAK_ALIAS()
- *
- * We use this rather roundabout method so that a runtime wrapper function may
- * be made available for PVHVM, which could override both native and PV aliases
- * and decide which to invoke at run time.
- */
-
-WEAK_ALIAS(lidt, i386_lidt)
-WEAK_ALIAS(rcr3, i386_rcr3)
 
 ENTRY(x86_lfence)
 	lock
@@ -78,17 +66,17 @@ ENTRY(x86_mfence)
 END(x86_mfence)
 
 #ifndef XEN
-ENTRY(i386_lidt)
+ENTRY(lidt)
 	movl	4(%esp), %eax
 	lidt	(%eax)
 	ret
-END(i386_lidt)
+END(lidt)
 #endif /* XEN */
 
-ENTRY(i386_rcr3)
+ENTRY(rcr3)
 	movl	%cr3, %eax
 	ret
-END(i386_rcr3)
+END(rcr3)
 
 ENTRY(lcr4)
 	movl	4(%esp), %eax
