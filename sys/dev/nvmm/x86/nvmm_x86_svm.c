@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.9 2019/01/03 08:02:49 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.10 2019/01/06 16:10:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.9 2019/01/03 08:02:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.10 2019/01/06 16:10:51 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,8 +518,11 @@ struct svm_cpudata {
 	bool ts_set;
 	struct xsave_header hfpu __aligned(16);
 
+	/* Event state */
+	bool int_window_exit;
+	bool nmi_window_exit;
+
 	/* Guest state */
-	bool in_nmi;
 	uint64_t tsc_offset;
 	struct xsave_header gfpu __aligned(16);
 };
@@ -530,26 +533,34 @@ struct svm_cpudata {
 #define SVM_EVENT_TYPE_SW_INT	4
 
 static void
-svm_event_waitexit_enable(struct vmcb *vmcb, bool nmi)
+svm_event_waitexit_enable(struct nvmm_cpu *vcpu, bool nmi)
 {
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
+
 	if (nmi) {
 		vmcb->ctrl.intercept_misc1 |= VMCB_CTRL_INTERCEPT_IRET;
+		cpudata->nmi_window_exit = true;
 	} else {
 		vmcb->ctrl.intercept_misc1 |= VMCB_CTRL_INTERCEPT_VINTR;
-		vmcb->ctrl.v |= (VMCB_CTRL_V_IRQ |
-		    __SHIFTIN(0, VMCB_CTRL_V_INTR_VECTOR));
+		vmcb->ctrl.v |= (VMCB_CTRL_V_IRQ | VMCB_CTRL_V_IGN_TPR);
+		cpudata->int_window_exit = true;
 	}
 }
 
 static void
-svm_event_waitexit_disable(struct vmcb *vmcb, bool nmi)
+svm_event_waitexit_disable(struct nvmm_cpu *vcpu, bool nmi)
 {
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
+
 	if (nmi) {
 		vmcb->ctrl.intercept_misc1 &= ~VMCB_CTRL_INTERCEPT_IRET;
+		cpudata->nmi_window_exit = false;
 	} else {
 		vmcb->ctrl.intercept_misc1 &= ~VMCB_CTRL_INTERCEPT_VINTR;
-		vmcb->ctrl.v &= ~(VMCB_CTRL_V_IRQ |
-		    __SHIFTIN(0, VMCB_CTRL_V_INTR_VECTOR));
+		vmcb->ctrl.v &= ~(VMCB_CTRL_V_IRQ | VMCB_CTRL_V_IGN_TPR);
+		cpudata->int_window_exit = false;
 	}
 }
 
@@ -577,9 +588,7 @@ svm_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct vmcb *vmcb = cpudata->vmcb;
-	uint64_t rflags = vmcb->state.rflags;
 	int type = 0, err = 0;
-	uint64_t tpr;
 
 	if (event->vector >= 256) {
 		return EINVAL;
@@ -592,15 +601,14 @@ svm_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			type = SVM_EVENT_TYPE_NMI;
 		}
 		if (type == SVM_EVENT_TYPE_NMI) {
-			if (cpudata->in_nmi) {
-				svm_event_waitexit_enable(vmcb, true);
+			if (cpudata->nmi_window_exit) {
 				return EAGAIN;
 			}
-			cpudata->in_nmi = true;
+			svm_event_waitexit_enable(vcpu, true);
 		} else {
-			tpr = __SHIFTOUT(vmcb->ctrl.v, VMCB_CTRL_V_TPR);
-			if ((rflags & PSL_I) == 0 || event->u.prio <= tpr) {
-				svm_event_waitexit_enable(vmcb, false);
+			if (((vmcb->state.rflags & PSL_I) == 0) ||
+			    ((vmcb->ctrl.intr & VMCB_CTRL_INTR_SHADOW) != 0)) {
+				svm_event_waitexit_enable(vcpu, false);
 				return EAGAIN;
 			}
 		}
@@ -698,6 +706,14 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		state->gprs[NVMM_X64_GPR_RCX] = sizeof(struct fxsave);
 		state->gprs[NVMM_X64_GPR_RDX] = svm_xcr0_mask >> 32;
 		break;
+	case 0x40000000:
+		memcpy(&state->gprs[NVMM_X64_GPR_RBX], "___ ", 4);
+		memcpy(&state->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
+		memcpy(&state->gprs[NVMM_X64_GPR_RDX], " ___", 4);
+		break;
+	case 0x80000001: /* No SVM in ECX. The rest is tunable. */
+		state->gprs[NVMM_X64_GPR_RCX] &= ~CPUID_SVM;
+		break;
 	default:
 		break;
 	}
@@ -758,6 +774,16 @@ svm_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
 	exit->reason = NVMM_EXIT_NONE;
+}
+
+static void
+svm_exit_hlt(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    struct nvmm_exit *exit)
+{
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+
+	exit->reason = NVMM_EXIT_HLT;
+	exit->u.hlt.npc = cpudata->vmcb->ctrl.nrip;
 }
 
 #define SVM_EXIT_IO_PORT	__BITS(31,16)
@@ -827,20 +853,42 @@ svm_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->u.io.npc = nextpc;
 }
 
+static const uint64_t msr_ignore_list[] = {
+	0xc0010055, /* MSR_CMPHALT */
+	MSR_DE_CFG,
+	MSR_IC_CFG,
+	MSR_UCODE_AMD_PATCHLEVEL
+};
+
 static bool
 svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct nvmm_x64_state *state = &cpudata->state;
-	uint64_t pat;
+	uint64_t val;
+	size_t i;
 
 	switch (exit->u.msr.type) {
 	case NVMM_EXIT_MSR_RDMSR:
 		if (exit->u.msr.msr == MSR_CR_PAT) {
-			pat = cpudata->vmcb->state.g_pat;
-			cpudata->vmcb->state.rax = (pat & 0xFFFFFFFF);
-			state->gprs[NVMM_X64_GPR_RDX] = (pat >> 32);
+			val = cpudata->vmcb->state.g_pat;
+			cpudata->vmcb->state.rax = (val & 0xFFFFFFFF);
+			state->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
+			goto handled;
+		}
+		if (exit->u.msr.msr == MSR_NB_CFG) {
+			val = NB_CFG_INITAPICCPUIDLO;
+			cpudata->vmcb->state.rax = (val & 0xFFFFFFFF);
+			state->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
+			goto handled;
+		}
+		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
+			if (msr_ignore_list[i] != exit->u.msr.msr)
+				continue;
+			val = 0;
+			cpudata->vmcb->state.rax = (val & 0xFFFFFFFF);
+			state->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
 		break;
@@ -859,6 +907,11 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 		if (exit->u.msr.msr == MSR_CR_PAT) {
 			cpudata->vmcb->state.g_pat = exit->u.msr.val;
+			goto handled;
+		}
+		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
+			if (msr_ignore_list[i] != exit->u.msr.msr)
+				continue;
 			goto handled;
 		}
 		break;
@@ -1128,19 +1181,18 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			exit->reason = NVMM_EXIT_NONE;
 			break;
 		case VMCB_EXITCODE_VINTR:
-			svm_event_waitexit_disable(vmcb, false);
+			svm_event_waitexit_disable(vcpu, false);
 			exit->reason = NVMM_EXIT_INT_READY;
 			break;
 		case VMCB_EXITCODE_IRET:
-			svm_event_waitexit_disable(vmcb, true);
-			cpudata->in_nmi = false;
+			svm_event_waitexit_disable(vcpu, true);
 			exit->reason = NVMM_EXIT_NMI_READY;
 			break;
 		case VMCB_EXITCODE_CPUID:
 			svm_exit_cpuid(mach, vcpu, exit);
 			break;
 		case VMCB_EXITCODE_HLT:
-			exit->reason = NVMM_EXIT_HLT;
+			svm_exit_hlt(mach, vcpu, exit);
 			break;
 		case VMCB_EXITCODE_IOIO:
 			svm_exit_io(mach, vcpu, exit);
@@ -1186,8 +1238,18 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			break;
 		}
 
+		if (vmcb->ctrl.exitintinfo & VMCB_CTRL_EXITINTINFO_V) {
+			printf("WAS PROCESSING!\n");
+		}
+
 		/* If no reason to return to userland, keep rolling. */
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
+			break;
+		}
+		if (curcpu()->ci_data.cpu_softints != 0) {
+			break;
+		}
+		if (curlwp->l_flag & LW_USERRET) {
 			break;
 		}
 		if (exit->reason != NVMM_EXIT_NONE) {
@@ -1203,6 +1265,13 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->exitstate[NVMM_X64_EXITSTATE_CR8] = __SHIFTOUT(vmcb->ctrl.v,
 	    VMCB_CTRL_V_TPR);
 	exit->exitstate[NVMM_X64_EXITSTATE_RFLAGS] = vmcb->state.rflags;
+
+	exit->exitstate[NVMM_X64_EXITSTATE_INT_SHADOW] =
+	    ((vmcb->ctrl.intr & VMCB_CTRL_INTR_SHADOW) != 0);
+	exit->exitstate[NVMM_X64_EXITSTATE_INT_WINDOW_EXIT] =
+	    cpudata->int_window_exit;
+	exit->exitstate[NVMM_X64_EXITSTATE_NMI_WINDOW_EXIT] =
+	    cpudata->nmi_window_exit;
 
 	return 0;
 }
@@ -1437,6 +1506,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	 *  - SYSENTER_EIP [read, write]
 	 *  - FSBASE [read, write]
 	 *  - GSBASE [read, write]
+	 *  - TSC [read]
 	 *
 	 * Intercept the rest.
 	 */
@@ -1452,6 +1522,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_EIP, true, true);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_FSBASE, true, true);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_GSBASE, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_TSC, true, false);
 	vmcb->ctrl.msrpm_base_pa = cpudata->msrbm_pa;
 
 	/* Generate ASID. */
@@ -1712,6 +1783,24 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		memcpy(cstate->misc, nstate->misc, sizeof(nstate->misc));
 
 		vmcb->state.cpl = cstate->misc[NVMM_X64_MISC_CPL];
+
+		if (cstate->misc[NVMM_X64_MISC_INT_SHADOW]) {
+			vmcb->ctrl.intr |= VMCB_CTRL_INTR_SHADOW;
+		} else {
+			vmcb->ctrl.intr &= ~VMCB_CTRL_INTR_SHADOW;
+		}
+
+		if (cstate->misc[NVMM_X64_MISC_INT_WINDOW_EXIT]) {
+			svm_event_waitexit_enable(vcpu, false);
+		} else {
+			svm_event_waitexit_disable(vcpu, false);
+		}
+
+		if (cstate->misc[NVMM_X64_MISC_NMI_WINDOW_EXIT]) {
+			svm_event_waitexit_enable(vcpu, true);
+		} else {
+			svm_event_waitexit_disable(vcpu, true);
+		}
 	}
 
 	CTASSERT(sizeof(cpudata->gfpu.xsh_fxsave) == sizeof(cstate->fpu));
@@ -1811,6 +1900,13 @@ svm_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 
 	if (flags & NVMM_X64_STATE_MISC) {
 		cstate->misc[NVMM_X64_MISC_CPL] = vmcb->state.cpl;
+
+		cstate->misc[NVMM_X64_MISC_INT_SHADOW] =
+		    (vmcb->ctrl.intr & VMCB_CTRL_INTR_SHADOW) != 0;
+		cstate->misc[NVMM_X64_MISC_INT_WINDOW_EXIT] =
+		    cpudata->int_window_exit;
+		cstate->misc[NVMM_X64_MISC_NMI_WINDOW_EXIT] =
+		    cpudata->nmi_window_exit;
 
 		memcpy(nstate->misc, cstate->misc, sizeof(cstate->misc));
 	}
