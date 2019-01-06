@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.84 2018/12/16 10:42:32 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.85 2019/01/06 16:13:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.84 2018/12/16 10:42:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.85 2019/01/06 16:13:51 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -1118,6 +1118,7 @@ identify_hypervisor(void)
 				vm_guest = VM_GUEST_KVM;
 			/* FreeBSD bhyve: "bhyve bhyve " */
 			/* OpenBSD vmm:   "OpenBSDVMM58" */
+			/* NetBSD nvmm:   "___ NVMM ___" */
 		}
 		return;
 	}
