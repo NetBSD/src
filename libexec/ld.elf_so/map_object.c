@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.59 2019/01/04 19:54:56 joerg Exp $	 */
+/*	$NetBSD: map_object.c,v 1.60 2019/01/06 19:44:54 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.59 2019/01/04 19:54:56 joerg Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.60 2019/01/06 19:44:54 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -82,7 +82,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	Elf_Addr	 base_vlimit;
 	Elf_Addr	 text_vlimit;
 	int		 text_flags;
-	caddr_t		 base_addr;
+	void		*base_addr;
 	Elf_Off		 data_offset;
 	Elf_Addr	 data_vaddr;
 	Elf_Addr	 data_vlimit;
@@ -339,10 +339,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		mapflags = MAP_ALIGNED(log2);
 	}
 
-#ifdef RTLD_LOADER
-	base_addr = obj->isdynamic ? NULL : (caddr_t)base_vaddr;
-#else
 	base_addr = NULL;
+#ifdef RTLD_LOADER
+	if (!obj->isdynamic) {
+		mapflags |= MAP_TRYFIXED;
+		base_addr = (void *)(uintptr_t)base_vaddr;
+	}
 #endif
 	mapsize = base_vlimit - base_vaddr;
 	mapbase = mmap(base_addr, mapsize, text_flags,
@@ -352,6 +354,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		    xstrerror(errno));
 		goto bad;
 	}
+#ifdef RTLD_LOADER
+	if (!obj->isdynamic && mapbase != base_addr) {
+		_rtld_error("mmap of executable at correct address failed");
+		goto bad;
+	}
+#endif
 
 	/* Overlay the data segment onto the proper region. */
 	data_addr = mapbase + (data_vaddr - base_vaddr);
