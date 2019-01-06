@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.4 2018/12/27 07:22:31 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.5 2019/01/06 16:10:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct nvmm_io {
 	uint64_t port;
 	bool in;
 	size_t size;
-	uint8_t data[8];
+	uint8_t *data;
 };
 
 struct nvmm_mem {
@@ -58,7 +58,7 @@ struct nvmm_mem {
 	gpaddr_t gpa;
 	bool write;
 	size_t size;
-	uint8_t data[8];
+	uint8_t *data;
 };
 
 struct nvmm_callbacks {
