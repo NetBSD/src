@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.2 2018/11/25 14:09:57 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.3 2019/01/06 16:10:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -99,7 +99,10 @@
 
 /* Misc. */
 #define NVMM_X64_MISC_CPL		0
-#define NVMM_X64_NMISC			1
+#define NVMM_X64_MISC_INT_SHADOW	1
+#define NVMM_X64_MISC_INT_WINDOW_EXIT	2
+#define NVMM_X64_MISC_NMI_WINDOW_EXIT	3
+#define NVMM_X64_NMISC			4
 
 #ifndef ASM_NVMM
 
@@ -123,8 +126,11 @@ struct nvmm_x64_state_seg {
 };
 
 /* VM exit state indexes. */
-#define NVMM_X64_EXITSTATE_CR8		0
-#define NVMM_X64_EXITSTATE_RFLAGS	1
+#define NVMM_X64_EXITSTATE_CR8			0
+#define NVMM_X64_EXITSTATE_RFLAGS		1
+#define NVMM_X64_EXITSTATE_INT_SHADOW		2
+#define NVMM_X64_EXITSTATE_INT_WINDOW_EXIT	3
+#define NVMM_X64_EXITSTATE_NMI_WINDOW_EXIT	4
 
 /* Flags. */
 #define NVMM_X64_STATE_SEGS	0x01
