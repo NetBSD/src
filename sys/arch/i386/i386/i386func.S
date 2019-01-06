@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.19 2018/12/22 21:27:22 cherry Exp $	*/
+/*	$NetBSD: i386func.S,v 1.20 2019/01/06 14:35:31 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,53 +36,20 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.19 2018/12/22 21:27:22 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.20 2019/01/06 14:35:31 cherry Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
 #include "assym.h"
 
-/*
- * These functions below should always be accessed via the corresponding wrapper
- * function names defined in x86/include/cpufunc.h and exported as WEAK_ALIAS()
- *
- * We use this rather roundabout method so that a runtime wrapper function may
- * be made available for PVHVM, which could override both native and PV aliases
- * and decide which to invoke at run time.
- */
-
-WEAK_ALIAS(invlpg, i386_invlpg)
-WEAK_ALIAS(lldt, i386_lldt)
-WEAK_ALIAS(ltr, i386_ltr)
-WEAK_ALIAS(lcr0, i386_lcr0)
-WEAK_ALIAS(rcr0, i386_rcr0)
-WEAK_ALIAS(lcr3, i386_lcr3)
-WEAK_ALIAS(tlbflush, i386_tlbflush)
-WEAK_ALIAS(tlbflushg, i386_tlbflushg)
-WEAK_ALIAS(rdr0, i386_rdr0)
-WEAK_ALIAS(ldr0, i386_ldr0)
-WEAK_ALIAS(rdr1, i386_rdr1)
-WEAK_ALIAS(ldr1, i386_ldr1)
-WEAK_ALIAS(rdr2, i386_rdr2)
-WEAK_ALIAS(ldr2, i386_ldr2)
-WEAK_ALIAS(rdr3, i386_rdr3)
-WEAK_ALIAS(ldr3, i386_ldr3)
-WEAK_ALIAS(rdr6, i386_rdr6)
-WEAK_ALIAS(ldr6, i386_ldr6)
-WEAK_ALIAS(rdr7, i386_rdr7)
-WEAK_ALIAS(ldr7, i386_ldr7)
-WEAK_ALIAS(rcr2, i386_rcr2)
-WEAK_ALIAS(lcr2, i386_lcr2)
-WEAK_ALIAS(wbinvd, i386_wbinvd)
-
-ENTRY(i386_invlpg)
+ENTRY(invlpg)
 	movl	4(%esp), %eax
 	invlpg	(%eax)
 	ret
-END(i386_invlpg)
+END(invlpg)
 
-ENTRY(i386_lldt)
+ENTRY(lldt)
 	movl	4(%esp), %eax
 	cmpl	%eax, CPUVAR(CURLDT)
 	jne	1f
@@ -91,30 +58,30 @@ ENTRY(i386_lldt)
 	movl	%eax, CPUVAR(CURLDT)
 	lldt	%ax
 	ret
-END(i386_lldt)
+END(lldt)
 
-ENTRY(i386_ltr)
+ENTRY(ltr)
 	movl	4(%esp), %eax
 	ltr	%ax
 	ret
-END(i386_ltr)
+END(ltr)
 
-ENTRY(i386_lcr0)
+ENTRY(lcr0)
 	movl	4(%esp), %eax
 	movl	%eax, %cr0
 	ret
-END(i386_lcr0)
+END(lcr0)
 
-ENTRY(i386_rcr0)
+ENTRY(rcr0)
 	movl	%cr0, %eax
 	ret
-END(i386_rcr0)
+END(rcr0)
 
-ENTRY(i386_lcr3)
+ENTRY(lcr3)
 	movl	4(%esp), %eax
 	movl	%eax, %cr3
 	ret
-END(i386_lcr3)
+END(lcr3)
 
 /*
  * Big hammer: flush all TLB entries, including ones from PTE's
@@ -136,7 +103,7 @@ END(i386_lcr3)
  * first since i486 does not have CR4.  Note: the feature flag may
  * be present while the actual PGE functionality not yet enabled.
  */
-ENTRY(i386_tlbflushg)
+ENTRY(tlbflushg)
 	testl	$CPUID_PGE, _C_LABEL(cpu_feature)
 	jz	1f
 	movl	%cr4, %eax
@@ -147,96 +114,96 @@ ENTRY(i386_tlbflushg)
 	movl	%edx, %cr4
 	movl	%eax, %cr4
 	ret
-END(i386_tlbflushg)
+END(tlbflushg)
 
-ENTRY(i386_tlbflush)
+ENTRY(tlbflush)
 1:
 	movl	%cr3, %eax
 	movl	%eax, %cr3
 	ret
-END(i386_tlbflush)
+END(tlbflush)
 
-ENTRY(i386_ldr0)
+ENTRY(ldr0)
 	movl	4(%esp), %eax
 	movl	%eax, %dr0
 	ret
-END(i386_ldr0)
+END(ldr0)
 
-ENTRY(i386_rdr0)
+ENTRY(rdr0)
 	movl	%dr0, %eax
 	ret
-END(i386_rdr0)
+END(rdr0)
 
-ENTRY(i386_ldr1)
+ENTRY(ldr1)
 	movl	4(%esp), %eax
 	movl	%eax, %dr1
 	ret
-END(i386_ldr1)
+END(ldr1)
 
-ENTRY(i386_rdr1)
+ENTRY(rdr1)
 	movl	%dr1, %eax
 	ret
-END(i386_rdr1)
+END(rdr1)
 
-ENTRY(i386_ldr2)
+ENTRY(ldr2)
 	movl	4(%esp), %eax
 	movl	%eax, %dr2
 	ret
-END(i386_ldr2)
+END(ldr2)
 
-ENTRY(i386_rdr2)
+ENTRY(rdr2)
 	movl	%dr2, %eax
 	ret
-END(i386_rdr2)
+END(rdr2)
 
-ENTRY(i386_ldr3)
+ENTRY(ldr3)
 	movl	4(%esp), %eax
 	movl	%eax, %dr3
 	ret
-END(i386_ldr3)
+END(ldr3)
 
-ENTRY(i386_rdr3)
+ENTRY(rdr3)
 	movl	%dr3, %eax
 	ret
-END(i386_rdr3)
+END(rdr3)
 
-ENTRY(i386_ldr6)
+ENTRY(ldr6)
 	movl	4(%esp), %eax
 	movl	%eax, %dr6
 	ret
-END(i386_ldr6)
+END(ldr6)
 
-ENTRY(i386_rdr6)
+ENTRY(rdr6)
 	movl	%dr6, %eax
 	ret
-END(i386_rdr6)
+END(rdr6)
 
-ENTRY(i386_ldr7)
+ENTRY(ldr7)
 	movl	4(%esp), %eax
 	movl	%eax, %dr7
 	ret
-END(i386_ldr7)
+END(ldr7)
 
-ENTRY(i386_rdr7)
+ENTRY(rdr7)
 	movl	%dr7, %eax
 	ret
-END(i386_rdr7)
+END(rdr7)
 
-ENTRY(i386_rcr2)
+ENTRY(rcr2)
 	movl	%cr2, %eax
 	ret
-END(i386_rcr2)
+END(rcr2)
 
-ENTRY(i386_lcr2)
+ENTRY(lcr2)
 	movl	4(%esp), %eax
 	movl	%eax, %cr2
 	ret
-END(i386_lcr2)
+END(lcr2)
 
-ENTRY(i386_wbinvd)
+ENTRY(wbinvd)
 	wbinvd
 	ret
-END(i386_wbinvd)
+END(wbinvd)
 
 ENTRY(x86_disable_intr)
 	cli
