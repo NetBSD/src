@@ -119,7 +119,11 @@ along with GCC; see the file COPYING3.  If not see
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
      %{pg:-lposix_p}}		\
-   %{shared:-lc}		\
+   %{shared:			\
+     %{!p:			\
+       %{!pg:-lc}}		\
+     %{p:-lc_p}			\
+       %{pg:-lc_p}}		\
    %{!shared:			\
      %{!symbolic:		\
        %{!p:			\
@@ -133,7 +137,11 @@ along with GCC; see the file COPYING3.  If not see
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
      %{pg:-lposix_p}}		\
-   %{shared:-lc}		\
+   %{shared:			\
+     %{!p:			\
+       %{!pg:-lc}}		\
+     %{p:-lc_p}			\
+       %{pg:-lc_p}}		\
    %{!shared:			\
      %{!symbolic:		\
        %{!p:			\
