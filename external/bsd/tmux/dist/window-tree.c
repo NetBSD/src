@@ -454,9 +454,9 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 		break;
 	case WINDOW_TREE_PANE:
 		if (window_count_panes(data->fs.wl->window) == 1)
-			*tag = (uint64_t)data->fs.wl;
+			*tag = (uintptr_t)data->fs.wl;
 		else
-			*tag = (uint64_t)data->fs.wp;
+			*tag = (uintptr_t)data->fs.wp;
 		break;
 	}
 }
@@ -1100,7 +1100,7 @@ window_tree_mouse(struct window_tree_modedata *data, key_code key, u_int x,
 			loop++;
 		}
 		if (wl != NULL)
-			mode_tree_set_current(data->data, (uint64_t)wl);
+			mode_tree_set_current(data->data, (uintptr_t)wl);
 		return ('\r');
 	}
 	if (item->type == WINDOW_TREE_WINDOW) {
@@ -1114,7 +1114,7 @@ window_tree_mouse(struct window_tree_modedata *data, key_code key, u_int x,
 			loop++;
 		}
 		if (wp != NULL)
-			mode_tree_set_current(data->data, (uint64_t)wp);
+			mode_tree_set_current(data->data, (uintptr_t)wp);
 		return ('\r');
 	}
 	return (KEYC_NONE);
