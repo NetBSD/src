@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.62 2019/01/04 15:27:19 martin Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.63 2019/01/06 11:08:34 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -693,7 +693,7 @@ process_menu(int num, void *arg)
 	m->topline = 0;
 	if ((m->mopt & (MC_DFLTEXIT | MC_NOEXITOPT)) == MC_DFLTEXIT) {
 		m->cursel = -1;
-	} else {
+	} else if (m->opts != NULL) {
 		for (m->cursel = 0; m->cursel < m->numopts; m->cursel++)
 			if ((m->opts[m->cursel].opt_flags & OPT_IGNORE) == 0)
 				break;
