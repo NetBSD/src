@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_601,v 1.1 2018/11/12 20:07:47 scole Exp $
+#	$NetBSD: INSTALL_601,v 1.2 2019/01/07 01:44:59 scole Exp $
 #
 # config file for INSTALL
 #
@@ -19,7 +19,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=5120	# 2560 KiB
+options 	MEMORY_DISK_ROOT_SIZE=5760	# 2880 KiB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support
@@ -71,6 +71,9 @@ pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+
+# PCI SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 
 # Display devices
 #
@@ -171,3 +174,8 @@ pseudo-device	openfirm		# /dev/openfirm
 
 #pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+
+#rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+#ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
