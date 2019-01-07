@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.575 2019/01/01 10:06:54 hannken Exp $	*/
+/*	$NetBSD: param.h,v 1.576 2019/01/07 22:00:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -172,6 +172,17 @@
 /* Machine type dependent parameters. */
 #include <machine/param.h>
 #include <machine/limits.h>
+
+#define	DEV_BSHIFT	9			/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)	/* 512 */
+
+#ifndef BLKDEV_IOSIZE
+#define	BLKDEV_IOSIZE	2048
+#endif
+
+#ifndef MAXPHYS
+#define	MAXPHYS		(64 * 1024)     /* max raw I/O transfer size */
+#endif
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
