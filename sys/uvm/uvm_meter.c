@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.68 2018/09/03 16:29:37 riastradh Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.69 2019/01/07 22:48:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.68 2018/09/03 16:29:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.69 2019/01/07 22:48:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,14 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       SYSCTL_DESCR("Guard size of other threads"),
 		       NULL, 0, &user_thread_stack_guard_size, 0,
 		       CTL_VM, VM_THREAD_GUARD_SIZE, CTL_EOL);
+#ifdef PMAP_DIRECT
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "ubc_direct",
+		       SYSCTL_DESCR("Use direct map for UBC I/O"),
+		       NULL, 0, &ubc_direct, 0,
+		       CTL_VM, CTL_CREATE, CTL_EOL);
+#endif
 
 	uvmpdpol_sysctlsetup();
 }
