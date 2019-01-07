@@ -68,22 +68,22 @@ const char *displayKeyUsageMap(UINT32 a_uiData)
 {
 
 	switch (a_uiData) {
-	case TPM_KEY_SIGNING:
+	case TSS_KEYUSAGE_SIGN:
 		return usageSigning;
 
-	case TPM_KEY_STORAGE:
+	case TSS_KEYUSAGE_STORAGE:
 		return usageStorage;
 
-	case TPM_KEY_IDENTITY:
+	case TSS_KEYUSAGE_IDENTITY:
 		return usageIdentity;
 
-	case TPM_KEY_AUTHCHANGE:
+	case TSS_KEYUSAGE_AUTHCHANGE:
 		return usageAuthChange;
 
-	case TPM_KEY_BIND:
+	case TSS_KEYUSAGE_BIND:
 		return usageBind;
 
-	case TPM_KEY_LEGACY:
+	case TSS_KEYUSAGE_LEGACY:
 		return usageLegacy;
 	}
 
@@ -116,22 +116,22 @@ const char *displayAlgorithmMap(UINT32 a_uiData)
 {
 
 	switch (a_uiData) {
-	case TCPA_ALG_RSA:
+	case TSS_ALG_RSA:
 		return algRsa;
 
-	case TCPA_ALG_DES:
+	case TSS_ALG_DES:
 		return algDes;
 
-	case TCPA_ALG_3DES:
+	case TSS_ALG_3DES:
 		return alg3Des;
 
-	case TCPA_ALG_SHA:
+	case TSS_ALG_SHA:
 		return algSha;
 
-	case TCPA_ALG_HMAC:
+	case TSS_ALG_HMAC:
 		return algHmac;
 
-	case TCPA_ALG_AES:
+	case TSS_ALG_AES:
 		return algAes;
 	}
 
@@ -142,13 +142,13 @@ const char *displayEncSchemeMap(UINT32 a_uiData)
 {
 
 	switch (a_uiData) {
-	case TCPA_ES_NONE:
+	case TSS_ES_NONE:
 		return encNone;
 
-	case TCPA_ES_RSAESPKCSv15:
+	case TSS_ES_RSAESPKCSV15:
 		return encRsaPkcs15;
 
-	case TCPA_ES_RSAESOAEP_SHA1_MGF1:
+	case TSS_ES_RSAESOAEP_SHA1_MGF1:
 		return encRsaOaepSha1Mgf1;
 	}
 
@@ -159,13 +159,13 @@ const char *displaySigSchemeMap(UINT32 a_uiData)
 {
 
 	switch (a_uiData) {
-	case TCPA_SS_NONE:
+	case TSS_SS_NONE:
 		return sigNone;
 
-	case TCPA_SS_RSASSAPKCS1v15_SHA1:
+	case TSS_SS_RSASSAPKCS1V15_SHA1:
 		return sigRsaPkcs15Sha1;
 
-	case TCPA_SS_RSASSAPKCS1v15_DER:
+	case TSS_SS_RSASSAPKCS1V15_DER:
 		return sigRsaPkcs15Der;
 	}
 
@@ -231,7 +231,7 @@ TSS_RESULT displayKey(TSS_HKEY a_hKey)
 		return result;
 	logMsg(_("  Signature Scheme:  0x%08x (%s)\n"), uiAttr, displaySigSchemeMap(uiAttr));
 
-	if (uiAlg == TCPA_ALG_RSA) {
+	if (uiAlg == TSS_ALG_RSA) {
 		result =
 		    getAttribUint32(a_hKey, TSS_TSPATTRIB_RSAKEY_INFO,
 				    TSS_TSPATTRIB_KEYINFO_RSA_KEYSIZE,
