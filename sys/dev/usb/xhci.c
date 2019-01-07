@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.100 2018/10/28 21:36:34 mrg Exp $	*/
+/*	$NetBSD: xhci.c,v 1.101 2019/01/07 03:00:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.100 2018/10/28 21:36:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.101 2019/01/07 03:00:39 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -155,9 +155,9 @@ static void xhci_host_dequeue(struct xhci_ring * const);
 static usbd_status xhci_set_dequeue(struct usbd_pipe *);
 
 static usbd_status xhci_do_command(struct xhci_softc * const,
-    struct xhci_trb * const, int);
+    struct xhci_soft_trb * const, int);
 static usbd_status xhci_do_command_locked(struct xhci_softc * const,
-    struct xhci_trb * const, int);
+    struct xhci_soft_trb * const, int);
 static usbd_status xhci_init_slot(struct usbd_device *, uint32_t);
 static void xhci_free_slot(struct xhci_softc *, struct xhci_slot *, int, int);
 static usbd_status xhci_set_address(struct usbd_device *, uint32_t, bool);
@@ -502,6 +502,15 @@ static inline bus_addr_t
 xhci_ring_trbp(struct xhci_ring * const xr, u_int idx)
 {
 	return DMAADDR(&xr->xr_dma, XHCI_TRB_SIZE * idx);
+}
+
+static inline void
+xhci_soft_trb_put(struct xhci_soft_trb * const trb,
+    uint64_t parameter, uint32_t status, uint32_t control)
+{
+	trb->trb_0 = parameter;
+	trb->trb_2 = status;
+	trb->trb_3 = control;
 }
 
 static inline void
@@ -1385,7 +1394,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 #ifdef USB_DEBUG
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 #endif
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	usbd_status err;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
@@ -1441,7 +1450,7 @@ xhci_reset_endpoint_locked(struct usbd_pipe *pipe)
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	usbd_status err;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
@@ -1482,7 +1491,7 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	usbd_status err;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 
@@ -1517,7 +1526,7 @@ xhci_set_dequeue_locked(struct usbd_pipe *pipe)
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const xr = &xs->xs_ep[dci].xe_tr;
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	usbd_status err;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
@@ -1631,7 +1640,7 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
 	const u_int dci = xhci_ep_get_dci(ed);
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	uint32_t *cp;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
@@ -2532,7 +2541,7 @@ xhci_ring_free(struct xhci_softc * const sc, struct xhci_ring * const xr)
 
 static void
 xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
-    void *cookie, struct xhci_trb * const trbs, size_t ntrbs)
+    void *cookie, struct xhci_soft_trb * const trbs, size_t ntrbs)
 {
 	size_t i;
 	u_int ri;
@@ -2687,7 +2696,7 @@ xhci_abort_command(struct xhci_softc *sc)
  */
 static usbd_status
 xhci_do_command_locked(struct xhci_softc * const sc,
-    struct xhci_trb * const trb, int timeout)
+    struct xhci_soft_trb * const trb, int timeout)
 {
 	struct xhci_ring * const cr = &sc->sc_cr;
 	usbd_status err;
@@ -2757,7 +2766,7 @@ timedout:
 }
 
 static usbd_status
-xhci_do_command(struct xhci_softc * const sc, struct xhci_trb * const trb,
+xhci_do_command(struct xhci_softc * const sc, struct xhci_soft_trb * const trb,
     int timeout)
 {
 
@@ -2771,7 +2780,7 @@ xhci_do_command(struct xhci_softc * const sc, struct xhci_trb * const trb,
 static usbd_status
 xhci_enable_slot(struct xhci_softc * const sc, uint8_t * const slotp)
 {
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	usbd_status err;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
@@ -2799,7 +2808,7 @@ xhci_enable_slot(struct xhci_softc * const sc, uint8_t * const slotp)
 static usbd_status
 xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 {
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	struct xhci_slot *xs;
 	usbd_status err;
 
@@ -2810,9 +2819,8 @@ xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 
 	trb.trb_0 = 0;
 	trb.trb_2 = 0;
-	trb.trb_3 = htole32(
-		XHCI_TRB_3_SLOT_SET(slot) |
-		XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DISABLE_SLOT));
+	trb.trb_3 = XHCI_TRB_3_SLOT_SET(slot) |
+	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DISABLE_SLOT);
 
 	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 
@@ -2839,7 +2847,7 @@ static usbd_status
 xhci_address_device(struct xhci_softc * const sc,
     uint64_t icp, uint8_t slot_id, bool bsr)
 {
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	usbd_status err;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
@@ -2862,7 +2870,7 @@ static usbd_status
 xhci_update_ep0_mps(struct xhci_softc * const sc,
     struct xhci_slot * const xs, u_int mps)
 {
-	struct xhci_trb trb;
+	struct xhci_soft_trb trb;
 	usbd_status err;
 	uint32_t * cp;
 
@@ -3816,7 +3824,8 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	     (isread ? XHCI_TRB_3_TRT_IN : XHCI_TRB_3_TRT_OUT)) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_SETUP_STAGE) |
 	    XHCI_TRB_3_IDT_BIT;
-	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	/* we need parameter un-swapped on big endian, so pre-swap it here */
+	xhci_soft_trb_put(&xx->xx_trb[i++], htole64(parameter), status, control);
 
 	if (len != 0) {
 		/* data phase */
@@ -3829,7 +3838,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DATA_STAGE) |
 		    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
 		    XHCI_TRB_3_IOC_BIT;
-		xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+		xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	}
 
 	parameter = 0;
@@ -3838,7 +3847,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	control = ((isread && (len > 0)) ? 0 : XHCI_TRB_3_DIR_IN) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STATUS_STAGE) |
 	    XHCI_TRB_3_IOC_BIT;
-	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 	if (!polling)
@@ -3959,7 +3968,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
 	    XHCI_TRB_3_IOC_BIT;
-	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 	if (!polling)
@@ -4071,7 +4080,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
 	    XHCI_TRB_3_IOC_BIT;
-	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xhci_soft_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 	if (!polling)
