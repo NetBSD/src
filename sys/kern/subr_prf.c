@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.174 2018/07/15 07:24:11 martin Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.175 2019/01/07 13:09:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.174 2018/07/15 07:24:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.175 2019/01/07 13:09:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -232,8 +232,8 @@ twiddle(void)
 
 	kprintf_lock();
 
-	putchar(twiddle_chars[pos++ & 3], TOCONS, NULL);
-	putchar('\b', TOCONS, NULL);
+	putchar(twiddle_chars[pos++ & 3], TOCONS|NOTSTAMP, NULL);
+	putchar('\b', TOCONS|NOTSTAMP, NULL);
 
 	kprintf_unlock();
 }
@@ -526,7 +526,7 @@ putchar(int c, int flags, struct tty *tp)
 	}
 
 #ifndef KLOG_NOTIMESTAMP
-	if (c != '\0' && c != '\n' && needtstamp) {
+	if (c != '\0' && c != '\n' && needtstamp && (flags & NOTSTAMP) == 0) {
 		addtstamp(flags, tp);
 		needtstamp = 0;
 	}
@@ -1052,17 +1052,31 @@ aprint_debug_ifnet(struct ifnet *ifp, const char *fmt, ...)
 }
 
 void
+vprintf_flags(int flags, const char *fmt, va_list ap)
+{
+	kprintf_lock();
+	kprintf(fmt, flags, NULL, NULL, ap);
+	kprintf_unlock();
+}
+
+void
+printf_flags(int flags, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf_flags(flags, fmt, ap);
+	va_end(ap);
+}
+
+void
 printf_tolog(const char *fmt, ...)
 {
 	va_list ap;
 
-	kprintf_lock();
-
 	va_start(ap, fmt);
-	kprintf(fmt, TOLOG, NULL, NULL, ap);
+	vprintf_flags(TOLOG, fmt, ap);
 	va_end(ap);
-
-	kprintf_unlock();
 }
 
 /*
@@ -1074,13 +1088,9 @@ printf_nolog(const char *fmt, ...)
 {
 	va_list ap;
 
-	kprintf_lock();
-
 	va_start(ap, fmt);
-	kprintf(fmt, TOCONS, NULL, NULL, ap);
+	vprintf_flags(TOCONS, fmt, ap);
 	va_end(ap);
-
-	kprintf_unlock();
 }
 
 /*
@@ -1095,16 +1105,9 @@ printf(const char *fmt, ...)
 {
 	va_list ap;
 
-	kprintf_lock();
-
 	va_start(ap, fmt);
-	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+	vprintf_flags(TOCONS | TOLOG, fmt, ap);
 	va_end(ap);
-
-	kprintf_unlock();
-
-	if (!panicstr)
-		logwakeup();
 }
 
 /*
@@ -1115,11 +1118,7 @@ printf(const char *fmt, ...)
 void
 vprintf(const char *fmt, va_list ap)
 {
-	kprintf_lock();
-
-	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
-
-	kprintf_unlock();
+	vprintf_flags(TOCONS | TOLOG, fmt, ap);
 
 	if (!panicstr)
 		logwakeup();
