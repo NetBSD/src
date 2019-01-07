@@ -459,13 +459,13 @@ done:
 void
 obj_tpm_remove_policy_refs(TSS_HPOLICY hPolicy, TSS_HCONTEXT tspContext)
 {
-	struct tsp_object *obj, *prev = NULL;
+	struct tsp_object *obj;
 	struct obj_list *list = &tpm_list;
 	struct tr_tpm_obj *tpm;
 
 	pthread_mutex_lock(&list->lock);
 
-	for (obj = list->head; obj; prev = obj, obj = obj->next) {
+	for (obj = list->head; obj; obj = obj->next) {
 		if (obj->tspContext != tspContext)
 			continue;
 

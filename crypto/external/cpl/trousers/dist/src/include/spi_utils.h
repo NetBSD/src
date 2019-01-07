@@ -44,9 +44,16 @@ MUTEX_DECLARE_EXTERN(mem_cache_lock);
 #define TSS_PSFILE_INCREMENT_NUM_KEYS	1
 #define TSS_PSFILE_DECREMENT_NUM_KEYS	0
 
+#ifdef __GNUC__
+#define __no_optimize __attribute__((optimize("O0")))
+#else
+#define __no_optimize
+#endif
+
 void *calloc_tspi(TSS_HCONTEXT, UINT32);
 TSS_RESULT free_tspi(TSS_HCONTEXT, void *);
 TSS_RESULT __tspi_add_mem_entry(TSS_HCONTEXT, void *);
+void * __no_optimize __tspi_memset(void *, int, size_t);
 
 /* secrets.c */
 

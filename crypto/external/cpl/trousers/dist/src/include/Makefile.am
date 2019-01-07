@@ -39,5 +39,5 @@ noinst_HEADERS = auth_mgr.h authsess.h biosem.h capabilities.h \
 	tcslog.h tcsps.h tcs_tsp.h tcs_utils.h \
 	tddl.h threads.h trousers_types.h tsp_audit.h \
 	tsp_delegate.h tsplog.h tspps.h tsp_seal.h \
-	linux/tpm.h
+	linux/tpm.h tsp_tcsi_param.h
 

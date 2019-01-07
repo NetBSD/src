@@ -69,7 +69,7 @@ Trspi_UnloadBlob_DAA_PK(UINT64 *offset, BYTE *blob, TSS_DAA_PK *pk)
 {
 	UINT32 i = 0, j;
 
-	memset(pk, 0, sizeof(TSS_DAA_PK));
+	__tspi_memset(pk, 0, sizeof(TSS_DAA_PK));
 
 	Trspi_UnloadBlob_TSS_VERSION(offset, blob, &pk->versionInfo);
 
@@ -201,7 +201,7 @@ error:
 	}
 	free(pk->issuerBaseName);
 
-	memset(pk, 0, sizeof(TSS_DAA_PK));
+	__tspi_memset(pk, 0, sizeof(TSS_DAA_PK));
 
 	return TSPERR(TSS_E_OUTOFMEMORY);
 }

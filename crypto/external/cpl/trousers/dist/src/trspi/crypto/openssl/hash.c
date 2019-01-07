@@ -56,13 +56,15 @@ int MGF1(unsigned char *, long, const unsigned char *, long);
 TSS_RESULT
 Trspi_Hash(UINT32 HashType, UINT32 BufSize, BYTE* Buf, BYTE* Digest)
 {
-	EVP_MD_CTX md_ctx;
+	EVP_MD_CTX *md_ctx;
 	unsigned int result_size;
 	int rv;
 
+	md_ctx = EVP_MD_CTX_create();
+
 	switch (HashType) {
 		case TSS_HASH_SHA1:
-			rv = EVP_DigestInit(&md_ctx, EVP_sha1());
+			rv = EVP_DigestInit(md_ctx, EVP_sha1());
 			break;
 		default:
 			rv = TSPERR(TSS_E_BAD_PARAMETER);
@@ -75,14 +77,14 @@ Trspi_Hash(UINT32 HashType, UINT32 BufSize, BYTE* Buf, BYTE* Digest)
 		goto err;
 	}
 
-	rv = EVP_DigestUpdate(&md_ctx, Buf, BufSize);
+	rv = EVP_DigestUpdate(md_ctx, Buf, BufSize);
 	if (rv != EVP_SUCCESS) {
 		rv = TSPERR(TSS_E_INTERNAL_ERROR);
 		goto err;
 	}
 
-	result_size = EVP_MD_CTX_size(&md_ctx);
-	rv = EVP_DigestFinal(&md_ctx, Digest, &result_size);
+	result_size = EVP_MD_CTX_size(md_ctx);
+	rv = EVP_DigestFinal(md_ctx, Digest, &result_size);
 	if (rv != EVP_SUCCESS) {
 		rv = TSPERR(TSS_E_INTERNAL_ERROR);
 		goto err;
@@ -94,6 +96,7 @@ Trspi_Hash(UINT32 HashType, UINT32 BufSize, BYTE* Buf, BYTE* Digest)
 err:
 	DEBUG_print_openssl_errors();
 out:
+	EVP_MD_CTX_destroy(md_ctx);
         return rv;
 }
 
@@ -112,7 +115,7 @@ Trspi_HashInit(Trspi_HashCtx *ctx, UINT32 HashType)
 			break;
 	}
 
-	if ((ctx->ctx = malloc(sizeof(EVP_MD_CTX))) == NULL)
+	if ((ctx->ctx = EVP_MD_CTX_create()) == NULL)
 		return TSPERR(TSS_E_OUTOFMEMORY);
 
 	rv = EVP_DigestInit((EVP_MD_CTX *)ctx->ctx, (const EVP_MD *)md);
