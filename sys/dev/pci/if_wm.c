@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.613 2019/01/03 08:46:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.614 2019/01/07 01:43:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.613 2019/01/03 08:46:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.614 2019/01/07 01:43:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.613 2019/01/03 08:46:03 msaitoh Exp $");
 #include <machine/endian.h>
 
 #include <dev/mii/mii.h>
+#include <dev/mii/mdio.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 #include <dev/mii/mii_bitbang.h>
@@ -514,7 +515,9 @@ struct wm_softc {
 	int sc_funcid;			/* unit number of the chip (0 to 3) */
 	int sc_flags;			/* flags; see below */
 	int sc_if_flags;		/* last if_flags */
+	int sc_ec_capenable;		/* last ec_capenable */
 	int sc_flowflags;		/* 802.3x flow control flags */
+	uint16_t eee_lp_ability;	/* EEE link partner's ability */
 	int sc_align_tweak;
 
 	void *sc_ihs[WM_MAX_NINTR];	/*
@@ -852,10 +855,16 @@ static int	wm_kmrn_readreg(struct wm_softc *, int, uint16_t *);
 static int	wm_kmrn_readreg_locked(struct wm_softc *, int, uint16_t *);
 static int	wm_kmrn_writereg(struct wm_softc *, int, uint16_t);
 static int	wm_kmrn_writereg_locked(struct wm_softc *, int, uint16_t);
+/* EMI register related */
+static int	wm_access_emi_reg_locked(device_t, int, uint16_t *, bool);
+static int	wm_read_emi_reg_locked(device_t, int, uint16_t *);
+static int	wm_write_emi_reg_locked(device_t, int, uint16_t);
 /* SGMII */
 static bool	wm_sgmii_uses_mdio(struct wm_softc *);
 static int	wm_sgmii_readreg(device_t, int, int);
+static int	wm_sgmii_readreg_locked(device_t, int, int, uint16_t *);
 static void	wm_sgmii_writereg(device_t, int, int, int);
+static int	wm_sgmii_writereg_locked(device_t, int, int, uint16_t);
 /* TBI related */
 static bool	wm_tbi_havesignal(struct wm_softc *, uint32_t);
 static void	wm_tbi_mediainit(struct wm_softc *);
@@ -967,7 +976,9 @@ static void	wm_disable_aspm(struct wm_softc *);
 /* LPLU (Low Power Link Up) */
 static void	wm_lplu_d0_disable(struct wm_softc *);
 /* EEE */
-static void	wm_set_eee_i350(struct wm_softc *);
+static int	wm_set_eee_i350(struct wm_softc *);
+static int	wm_set_eee_pchlan(struct wm_softc *);
+static int	wm_set_eee(struct wm_softc *);
 
 /*
  * Workarounds (mainly PHY related).
@@ -2758,11 +2769,21 @@ alloc_retry:
 			sc->sc_mediatype = WM_MEDIATYPE_COPPER;
 		}
 	}
-	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
-	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
+
+	if (sc->sc_type >= WM_T_PCH2)
+		sc->sc_flags |= WM_F_EEE;
+	else if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211)
+	    && (sc->sc_mediatype == WM_MEDIATYPE_COPPER)) {
+		/* XXX: Need special handling for I354. (not yet) */
+		if (sc->sc_type != WM_T_I354)
+			sc->sc_flags |= WM_F_EEE;
+	}
 
 	/* Set device properties (macflags) */
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
+
+	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
+	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
 
 	/* Initialize the media structures accordingly. */
 	if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
@@ -2853,6 +2874,9 @@ alloc_retry:
 	if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+
+	if ((sc->sc_flags & WM_F_EEE) != 0)
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_EEE;
 
 	/*
 	 * We can perform TCPv4 and UDPv4 checkums in-bound.  Only
@@ -3256,6 +3280,8 @@ wm_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct wm_softc *sc = ifp->if_softc;
+	int iffchange, ecchange;
+	bool needreset = false;
 	int rc = 0;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
@@ -3263,20 +3289,38 @@ wm_ifflags_cb(struct ethercom *ec)
 
 	WM_CORE_LOCK(sc);
 
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	/*
+	 * Check for if_flags.
+	 * Main usage is to prevent linkdown when opening bpf.
+	 */
+	iffchange = ifp->if_flags ^ sc->sc_if_flags;
 	sc->sc_if_flags = ifp->if_flags;
-
-	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
-		rc = ENETRESET;
-		goto out;
+	if ((iffchange & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		needreset = true;
+		goto ec;
 	}
 
-	if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
+	/* iff related updates */
+	if ((iffchange & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
 		wm_set_filter(sc);
 
 	wm_set_vlan(sc);
 
+ec:
+	/* Check for ec_capenable. */
+	ecchange = ec->ec_capenable ^ sc->sc_ec_capenable;
+	sc->sc_ec_capenable = ec->ec_capenable;
+	if ((ecchange & ~ETHERCAP_EEE) != 0) {
+		needreset = true;
+		goto out;
+	}
+
+	/* ec related updates */
+	wm_set_eee(sc);
+	
 out:
+	if (needreset)
+		rc = ENETRESET;
 	WM_CORE_UNLOCK(sc);
 
 	return rc;
@@ -4992,13 +5036,7 @@ wm_reset(struct wm_softc *sc)
 	/* reload sc_ctrl */
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 
-	if (sc->sc_type == WM_T_I354) {
-#if 0
-		/* I354 uses an external PHY */
-		wm_set_eee_i354(sc);
-#endif
-	} else if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
-		wm_set_eee_i350(sc);
+	wm_set_eee(sc);
 
 	/*
 	 * For PCH, this write will make sure that any noise will be detected
@@ -5624,6 +5662,7 @@ static int
 wm_init_locked(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
+	struct ethercom *ec = &sc->sc_ethercom;
 	int i, j, trynum, error = 0;
 	uint32_t reg;
 
@@ -6098,7 +6137,7 @@ wm_init_locked(struct ifnet *ifp)
 	    || (sc->sc_type == WM_T_I210))
 		sc->sc_rctl |= RCTL_SECRC;
 
-	if (((sc->sc_ethercom.ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
+	if (((ec->ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
 	    && (ifp->if_mtu > ETHERMTU)) {
 		sc->sc_rctl |= RCTL_LPE;
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
@@ -6181,7 +6220,9 @@ wm_init_locked(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
+	/* Save last flags for the callback */
 	sc->sc_if_flags = ifp->if_flags;
+	sc->sc_ec_capenable = ec->ec_capenable;
 	if (error)
 		log(LOG_ERR, "%s: interface not running\n",
 		    device_xname(sc->sc_dev));
@@ -9002,6 +9043,9 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
 		}
 
+		/* Clear link partner's EEE ability */
+		sc->eee_lp_ability = 0;
+
 		/* FEXTNVM6 K1-off workaround */
 		if (sc->sc_type == WM_T_PCH_SPT) {
 			reg = CSR_READ(sc, WMREG_FEXTNVM6);
@@ -9027,6 +9071,11 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		default:
 			break;
 		}
+
+		/* Enable/Disable EEE after link up */
+		if (sc->sc_phytype > WMPHY_82579)
+			wm_set_eee_pchlan(sc);
+
 	} else if (icr & ICR_RXSEQ) {
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK Receive sequence error\n",
 			device_xname(sc->sc_dev)));
@@ -9932,6 +9981,9 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 	if (new_readreg == wm_gmii_hv_readreg) {
 		sc->phy.readreg_locked = wm_gmii_hv_readreg_locked;
 		sc->phy.writereg_locked = wm_gmii_hv_writereg_locked;
+	} else if (new_readreg == wm_sgmii_readreg) {
+		sc->phy.readreg_locked = wm_sgmii_readreg_locked;
+		sc->phy.writereg_locked = wm_sgmii_writereg_locked;
 	} else if (new_readreg == wm_gmii_i82544_readreg) {
 		sc->phy.readreg_locked = wm_gmii_i82544_readreg_locked;
 		sc->phy.writereg_locked = wm_gmii_i82544_writereg_locked;
@@ -11286,6 +11338,41 @@ wm_kmrn_writereg_locked(struct wm_softc *sc, int reg, uint16_t val)
 	return 0;
 }
 
+/*
+ * EMI register related (82579, WMPHY_I217(PCH2 and newer))
+ * This access method is different from IEEE MMD.
+ */
+static int
+wm_access_emi_reg_locked(device_t dev, int reg, uint16_t *val, bool rd)
+{
+	struct wm_softc *sc = device_private(dev);
+	int rv;
+
+	rv = sc->phy.writereg_locked(dev, 2, I82579_EMI_ADDR, reg);
+	if (rv != 0)
+		return rv;
+
+	if (rd)
+		rv = sc->phy.readreg_locked(dev, 2, I82579_EMI_DATA, val);
+	else
+		rv = sc->phy.writereg_locked(dev, 2, I82579_EMI_DATA, *val);
+	return rv;
+}
+
+static int
+wm_read_emi_reg_locked(device_t dev, int reg, uint16_t *val)
+{
+
+	return wm_access_emi_reg_locked(dev, reg, val, true);
+}
+
+static int
+wm_write_emi_reg_locked(device_t dev, int reg, uint16_t val)
+{
+
+	return wm_access_emi_reg_locked(dev, reg, &val, false);
+}
+
 /* SGMII related */
 
 /*
@@ -11332,13 +11419,25 @@ static int
 wm_sgmii_readreg(device_t dev, int phy, int reg)
 {
 	struct wm_softc *sc = device_private(dev);
-	uint32_t i2ccmd;
-	int i, rv;
+	uint16_t val;
 
 	if (sc->phy.acquire(sc)) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
+
+	wm_sgmii_readreg_locked(dev, phy, reg, &val);
+
+	sc->phy.release(sc);
+	return val;
+}
+
+static int
+wm_sgmii_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
+{
+	struct wm_softc *sc = device_private(dev);
+	uint32_t i2ccmd;
+	int i, rv;
 
 	i2ccmd = (reg << I2CCMD_REG_ADDR_SHIFT)
 	    | (phy << I2CCMD_PHY_ADDR_SHIFT) | I2CCMD_OPCODE_READ;
@@ -11351,14 +11450,17 @@ wm_sgmii_readreg(device_t dev, int phy, int reg)
 		if (i2ccmd & I2CCMD_READY)
 			break;
 	}
-	if ((i2ccmd & I2CCMD_READY) == 0)
+	if ((i2ccmd & I2CCMD_READY) == 0) {
 		device_printf(dev, "I2CCMD Read did not complete\n");
-	if ((i2ccmd & I2CCMD_ERROR) != 0)
+		rv = ETIMEDOUT;
+	}
+	if ((i2ccmd & I2CCMD_ERROR) != 0) {
 		device_printf(dev, "I2CCMD Error bit set\n");
+		rv = EIO;
+	}
 
-	rv = ((i2ccmd >> 8) & 0x00ff) | ((i2ccmd << 8) & 0xff00);
+	*val = (uint16_t)((i2ccmd >> 8) & 0x00ff) | ((i2ccmd << 8) & 0xff00);
 
-	sc->phy.release(sc);
 	return rv;
 }
 
@@ -11373,14 +11475,26 @@ static void
 wm_sgmii_writereg(device_t dev, int phy, int reg, int val)
 {
 	struct wm_softc *sc = device_private(dev);
-	uint32_t i2ccmd;
-	int i;
-	int swapdata;
 
 	if (sc->phy.acquire(sc) != 0) {
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
+
+	wm_sgmii_writereg_locked(dev, phy, reg, val);
+
+	sc->phy.release(sc);
+}
+
+static int
+wm_sgmii_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
+{
+	struct wm_softc *sc = device_private(dev);
+	uint32_t i2ccmd;
+	uint16_t swapdata;
+	int rv = 0;
+	int i;
+
 	/* Swap the data bytes for the I2C interface */
 	swapdata = ((val >> 8) & 0x00FF) | ((val << 8) & 0xFF00);
 	i2ccmd = (reg << I2CCMD_REG_ADDR_SHIFT)
@@ -11394,12 +11508,16 @@ wm_sgmii_writereg(device_t dev, int phy, int reg, int val)
 		if (i2ccmd & I2CCMD_READY)
 			break;
 	}
-	if ((i2ccmd & I2CCMD_READY) == 0)
+	if ((i2ccmd & I2CCMD_READY) == 0) {
 		device_printf(dev, "I2CCMD Write did not complete\n");
-	if ((i2ccmd & I2CCMD_ERROR) != 0)
+		rv = ETIMEDOUT;
+	}
+	if ((i2ccmd & I2CCMD_ERROR) != 0) {
 		device_printf(dev, "I2CCMD Error bit set\n");
+		rv = EIO;
+	}
 
-	sc->phy.release(sc);
+	return rv;
 }
 
 /* TBI related */
@@ -14850,29 +14968,139 @@ wm_lplu_d0_disable(struct wm_softc *sc)
 
 /* EEE */
 
-static void
+static int
 wm_set_eee_i350(struct wm_softc *sc)
 {
+	struct ethercom *ec = &sc->sc_ethercom;
 	uint32_t ipcnfg, eeer;
+	uint32_t ipcnfg_mask
+	    = IPCNFG_EEE_1G_AN | IPCNFG_EEE_100M_AN | IPCNFG_10BASE_TE;
+	uint32_t eeer_mask = EEER_TX_LPI_EN | EEER_RX_LPI_EN | EEER_LPI_FC;
 
 	ipcnfg = CSR_READ(sc, WMREG_IPCNFG);
 	eeer = CSR_READ(sc, WMREG_EEER);
 
-	if ((sc->sc_flags & WM_F_EEE) != 0) {
-		ipcnfg |= (IPCNFG_EEE_1G_AN | IPCNFG_EEE_100M_AN);
-		eeer |= (EEER_TX_LPI_EN | EEER_RX_LPI_EN
-		    | EEER_LPI_FC);
+	/* enable or disable per user setting */
+	if ((ec->ec_capenable & ETHERCAP_EEE) != 0) {
+		ipcnfg |= ipcnfg_mask;
+		eeer |= eeer_mask;
 	} else {
-		ipcnfg &= ~(IPCNFG_EEE_1G_AN | IPCNFG_EEE_100M_AN);
-		ipcnfg &= ~IPCNFG_10BASE_TE;
-		eeer &= ~(EEER_TX_LPI_EN | EEER_RX_LPI_EN
-		    | EEER_LPI_FC);
+		ipcnfg &= ~ipcnfg_mask;
+		eeer &= ~eeer_mask;
 	}
 
 	CSR_WRITE(sc, WMREG_IPCNFG, ipcnfg);
 	CSR_WRITE(sc, WMREG_EEER, eeer);
 	CSR_READ(sc, WMREG_IPCNFG); /* XXX flush? */
 	CSR_READ(sc, WMREG_EEER); /* XXX flush? */
+
+	return 0;
+}
+
+static int
+wm_set_eee_pchlan(struct wm_softc *sc)
+{
+	device_t dev = sc->sc_dev;
+	struct ethercom *ec = &sc->sc_ethercom;
+	uint16_t lpa, pcs_status, adv_addr, adv, lpi_ctrl, data;
+	int rv = 0;
+
+	switch (sc->sc_phytype) {
+	case WMPHY_82579:
+		lpa = I82579_EEE_LP_ABILITY;
+		pcs_status = I82579_EEE_PCS_STATUS;
+		adv_addr = I82579_EEE_ADVERTISEMENT;
+		break;
+	case WMPHY_I217:
+		lpa = I217_EEE_LP_ABILITY;
+		pcs_status = I217_EEE_PCS_STATUS;
+		adv_addr = I217_EEE_ADVERTISEMENT;
+		break;
+	default:
+		return 0;
+	}
+
+	if (sc->phy.acquire(sc)) {
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
+		return 0;
+	}
+
+	rv = sc->phy.readreg_locked(dev, 1, I82579_LPI_CTRL, &lpi_ctrl);
+	if (rv != 0)
+		goto release;
+
+	/* Clear bits that enable EEE in various speeds */
+	lpi_ctrl &= ~I82579_LPI_CTRL_ENABLE;
+
+	if ((ec->ec_capenable & ETHERCAP_EEE) != 0) {
+		/* Save off link partner's EEE ability */
+		rv = wm_read_emi_reg_locked(dev, lpa, &sc->eee_lp_ability);
+		if (rv != 0)
+			goto release;
+
+		/* Read EEE advertisement */
+		if ((rv = wm_read_emi_reg_locked(dev, adv_addr, &adv)) != 0)
+			goto release;
+
+		/*
+		 * Enable EEE only for speeds in which the link partner is
+		 * EEE capable and for which we advertise EEE.
+		 */
+		if (adv & sc->eee_lp_ability & AN_EEEADVERT_1000_T)
+			lpi_ctrl |= I82579_LPI_CTRL_EN_1000;
+		if (adv & sc->eee_lp_ability & AN_EEEADVERT_100_TX) {
+			sc->phy.readreg_locked(dev, 2, MII_ANLPAR, &data);
+			if ((data & ANLPAR_TX_FD) != 0)
+				lpi_ctrl |= I82579_LPI_CTRL_EN_100;
+			else {
+				/*
+				 * EEE is not supported in 100Half, so ignore
+				 * partner's EEE in 100 ability if full-duplex
+				 * is not advertised.
+				 */
+				sc->eee_lp_ability
+				    &= ~AN_EEEADVERT_100_TX;
+			}
+		}
+	}
+
+	if (sc->sc_phytype == WMPHY_82579) {
+		rv = wm_read_emi_reg_locked(dev, I82579_LPI_PLL_SHUT, &data);
+		if (rv != 0)
+			goto release;
+
+		data &= ~I82579_LPI_PLL_SHUT_100;
+		rv = wm_write_emi_reg_locked(dev, I82579_LPI_PLL_SHUT, data);
+	}
+
+	/* R/Clr IEEE MMD 3.1 bits 11:10 - Tx/Rx LPI Received */
+	if ((rv = wm_read_emi_reg_locked(dev, pcs_status, &data)) != 0)
+		goto release;
+
+	rv = wm_write_emi_reg_locked(dev, I82579_LPI_CTRL, lpi_ctrl);
+release:
+	sc->phy.release(sc);
+
+	return rv;
+}
+
+static int
+wm_set_eee(struct wm_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+
+	if ((ec->ec_capabilities & ETHERCAP_EEE) == 0)
+		return 0;
+
+	if (sc->sc_type == WM_T_I354) {
+		/* I354 uses an external PHY */
+		return 0; /* not yet */
+	} else if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
+		return wm_set_eee_i350(sc);
+	else if (sc->sc_type >= WM_T_PCH2)
+		return wm_set_eee_pchlan(sc);
+
+	return 0;
 }
 
 /*

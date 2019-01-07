@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.15 2018/12/20 09:32:12 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.16 2019/01/07 01:43:22 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2015, Intel Corporation 
 All rights reserved.
@@ -77,6 +77,19 @@ POSSIBILITY OF SUCH DAMAGE.
 #define BME1000_PSCR_DOWNSHIFT_ENABLE           0x0800 /* 1=Enable Downshift */
 #define BME1000_PSCR_DOWNSHIFT_COUNTER_MASK     0x7000
 #define BME1000_PSCR_DOWNSHIFT_COUNTER_SHIFT    12
+
+/* Extended Management Interface (EMI) Registers */
+#define I82579_EMI_ADDR	0x10
+#define I82579_EMI_DATA	0x11
+#define I82579_EEE_ADVERTISEMENT 0x040e  /* IEEE MMD Register 7.60 */
+#define I82579_EEE_LP_ABILITY	0x040f   /* IEEE MMD Register 7.61 */
+#define I82579_EEE_PCS_STATUS	0x182e
+#define I82579_LPI_PLL_SHUT	0x4412
+#define I82579_LPI_PLL_SHUT_100		__BIT(2) /* 100M LPI PLL Shut Enable */
+#define I217_EEE_PCS_STATUS	0x9401   /* IEEE MMD Register 3.1 */
+#define I217_EEE_CAPABILITY	0x8000   /* IEEE MMD Register 3.20 */
+#define I217_EEE_ADVERTISEMENT	0x8001   /* IEEE MMD Register 7.60 */
+#define I217_EEE_LP_ABILITY	0x8002   /* IEEE MMD Register 7.61 */
 
 /* BM PHY Copper Specific Status */
 #define BM_CS_STATUS		BME1000_REG(0, 17)
