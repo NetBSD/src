@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.12 2019/01/07 16:30:25 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.13 2019/01/07 18:13:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -824,26 +824,25 @@ static void x86_emul_stos(struct nvmm_mem *, void (*)(struct nvmm_mem *), uint64
 static void x86_emul_lods(struct nvmm_mem *, void (*)(struct nvmm_mem *), uint64_t *);
 static void x86_emul_movs(struct nvmm_mem *, void (*)(struct nvmm_mem *), uint64_t *);
 
-enum x86_legpref {
-	/* Group 1 */
-	LEG_LOCK = 0,
-	LEG_REPN,	/* REPNE/REPNZ */
-	LEG_REP,	/* REP/REPE/REPZ */
-	/* Group 2 */
-	LEG_OVR_CS,
-	LEG_OVR_SS,
-	LEG_OVR_DS,
-	LEG_OVR_ES,
-	LEG_OVR_FS,
-	LEG_OVR_GS,
-	LEG_BRN_TAKEN,
-	LEG_BRN_NTAKEN,
-	/* Group 3 */
-	LEG_OPR_OVR,
-	/* Group 4 */
-	LEG_ADR_OVR,
+/* Legacy prefixes. */
+#define LEG_LOCK	0xF0
+#define LEG_REPN	0xF2
+#define LEG_REP		0xF3
+#define LEG_OVR_CS	0x2E
+#define LEG_OVR_SS	0x36
+#define LEG_OVR_DS	0x3E
+#define LEG_OVR_ES	0x26
+#define LEG_OVR_FS	0x64
+#define LEG_OVR_GS	0x65
+#define LEG_OPR_OVR	0x66
+#define LEG_ADR_OVR	0x67
 
-	NLEG
+struct x86_legpref {
+	bool opr_ovr:1;
+	bool adr_ovr:1;
+	bool rep:1;
+	bool repn:1;
+	int seg;
 };
 
 struct x86_rexpref {
@@ -940,7 +939,7 @@ struct x86_store {
 
 struct x86_instr {
 	size_t len;
-	bool legpref[NLEG];
+	struct x86_legpref legpref;
 	struct x86_rexpref rexpref;
 	size_t operand_size;
 	size_t address_size;
@@ -2133,13 +2132,13 @@ get_operand_size(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		opsize = 8;
 	} else {
 		if (!fsm->is16bit) {
-			if (instr->legpref[LEG_OPR_OVR]) {
+			if (instr->legpref.opr_ovr) {
 				opsize = 2;
 			} else {
 				opsize = 4;
 			}
 		} else { /* 16bit */
-			if (instr->legpref[LEG_OPR_OVR]) {
+			if (instr->legpref.opr_ovr) {
 				opsize = 4;
 			} else {
 				opsize = 2;
@@ -2159,21 +2158,21 @@ static size_t
 get_address_size(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	if (fsm->is64bit) {
-		if (__predict_false(instr->legpref[LEG_ADR_OVR])) {
+		if (__predict_false(instr->legpref.adr_ovr)) {
 			return 4;
 		}
 		return 8;
 	}
 
 	if (fsm->is32bit) {
-		if (__predict_false(instr->legpref[LEG_ADR_OVR])) {
+		if (__predict_false(instr->legpref.adr_ovr)) {
 			return 2;
 		}
 		return 4;
 	}
 
 	/* 16bit. */
-	if (__predict_false(instr->legpref[LEG_ADR_OVR])) {
+	if (__predict_false(instr->legpref.adr_ovr)) {
 		return 4;
 	}
 	return 2;
@@ -2344,51 +2343,44 @@ node_rex_prefix(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	return 0;
 }
 
-static const struct {
-	uint8_t byte;
-	int seg;
-} legpref_table[NLEG] = {
-	/* Group 1 */
-	[LEG_LOCK] = { 0xF0, -1 },
-	[LEG_REPN] = { 0xF2, -1 },
-	[LEG_REP]  = { 0xF3, -1 },
-	/* Group 2 */
-	[LEG_OVR_CS] = { 0x2E, NVMM_X64_SEG_CS },
-	[LEG_OVR_SS] = { 0x36, NVMM_X64_SEG_SS },
-	[LEG_OVR_DS] = { 0x3E, NVMM_X64_SEG_DS },
-	[LEG_OVR_ES] = { 0x26, NVMM_X64_SEG_ES },
-	[LEG_OVR_FS] = { 0x64, NVMM_X64_SEG_FS },
-	[LEG_OVR_GS] = { 0x65, NVMM_X64_SEG_GS },
-	[LEG_BRN_TAKEN]  = { 0x2E, -1 },
-	[LEG_BRN_NTAKEN] = { 0x3E, -1 },
-	/* Group 3 */
-	[LEG_OPR_OVR] = { 0x66, -1 },
-	/* Group 4 */
-	[LEG_ADR_OVR] = { 0x67, -1 },
-};
-
 static int
 node_legacy_prefix(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	uint8_t byte;
-	size_t i;
 
 	if (fsm_read(fsm, &byte, sizeof(byte)) == -1) {
 		return -1;
 	}
 
-	for (i = 0; i < NLEG; i++) {
-		if (byte == legpref_table[i].byte)
-			break;
-	}
-
-	if (i == NLEG) {
-		fsm->fn = node_rex_prefix;
+	if (byte == LEG_OPR_OVR) {
+		instr->legpref.opr_ovr = 1;
+	} else if (byte == LEG_OVR_DS) {
+		instr->legpref.seg = NVMM_X64_SEG_DS;
+	} else if (byte == LEG_OVR_ES) {
+		instr->legpref.seg = NVMM_X64_SEG_ES;
+	} else if (byte == LEG_REP) {
+		instr->legpref.rep = 1;
+	} else if (byte == LEG_OVR_GS) {
+		instr->legpref.seg = NVMM_X64_SEG_GS;
+	} else if (byte == LEG_OVR_FS) {
+		instr->legpref.seg = NVMM_X64_SEG_FS;
+	} else if (byte == LEG_ADR_OVR) {
+		instr->legpref.adr_ovr = 1;
+	} else if (byte == LEG_OVR_CS) {
+		instr->legpref.seg = NVMM_X64_SEG_CS;
+	} else if (byte == LEG_OVR_SS) {
+		instr->legpref.seg = NVMM_X64_SEG_SS;
+	} else if (byte == LEG_REPN) {
+		instr->legpref.repn = 1;
+	} else if (byte == LEG_LOCK) {
+		/* ignore */
 	} else {
-		instr->legpref[i] = true;
-		fsm_advance(fsm, 1, node_legacy_prefix);
+		/* not a legacy prefix */
+		fsm_advance(fsm, 0, node_rex_prefix);
+		return 0;
 	}
 
+	fsm_advance(fsm, 1, node_legacy_prefix);
 	return 0;
 }
 
@@ -2400,6 +2392,7 @@ x86_decode(uint8_t *inst_bytes, size_t inst_len, struct x86_instr *instr,
 	int ret;
 
 	memset(instr, 0, sizeof(*instr));
+	instr->legpref.seg = -1;
 
 	fsm.is64bit = is_64bit(state);
 	fsm.is32bit = is_32bit(state);
@@ -2660,16 +2653,8 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 		if (store->hardseg != 0) {
 			seg = store->hardseg;
 		} else {
-			if (instr->legpref[LEG_OVR_CS]) {
-				seg = NVMM_X64_SEG_CS;
-			} else if (instr->legpref[LEG_OVR_SS]) {
-				seg = NVMM_X64_SEG_SS;
-			} else if (instr->legpref[LEG_OVR_ES]) {
-				seg = NVMM_X64_SEG_ES;
-			} else if (instr->legpref[LEG_OVR_FS]) {
-				seg = NVMM_X64_SEG_FS;
-			} else if (instr->legpref[LEG_OVR_GS]) {
-				seg = NVMM_X64_SEG_GS;
+			if (__predict_false(instr->legpref.seg != -1)) {
+				seg = instr->legpref.seg;
 			} else {
 				seg = NVMM_X64_SEG_DS;
 			}
@@ -2688,7 +2673,7 @@ static int
 fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
 {
 	uint8_t inst_bytes[15], byte;
-	size_t i, n, fetchsize;
+	size_t i, fetchsize;
 	gvaddr_t gva;
 	int ret, seg;
 
@@ -2707,17 +2692,33 @@ fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
 		return -1;
 
 	seg = NVMM_X64_SEG_DS;
-	for (n = 0; n < fetchsize; n++) {
-		byte = inst_bytes[n];
-		for (i = 0; i < NLEG; i++) {
-			if (byte != legpref_table[i].byte)
-				continue;
-			if (i >= LEG_OVR_CS && i <= LEG_OVR_GS)
-				seg = legpref_table[i].seg;
-			break;
-		}
-		if (i == NLEG) {
-			break;
+	for (i = 0; i < fetchsize; i++) {
+		byte = inst_bytes[i];
+
+		if (byte == LEG_OVR_DS) {
+			seg = NVMM_X64_SEG_DS;
+		} else if (byte == LEG_OVR_ES) {
+			seg = NVMM_X64_SEG_ES;
+		} else if (byte == LEG_OVR_GS) {
+			seg = NVMM_X64_SEG_GS;
+		} else if (byte == LEG_OVR_FS) {
+			seg = NVMM_X64_SEG_FS;
+		} else if (byte == LEG_OVR_CS) {
+			seg = NVMM_X64_SEG_CS;
+		} else if (byte == LEG_OVR_SS) {
+			seg = NVMM_X64_SEG_SS;
+		} else if (byte == LEG_OPR_OVR) {
+			/* nothing */
+		} else if (byte == LEG_ADR_OVR) {
+			/* nothing */
+		} else if (byte == LEG_REP) {
+			/* nothing */
+		} else if (byte == LEG_REPN) {
+			/* nothing */
+		} else if (byte == LEG_LOCK) {
+			/* nothing */
+		} else {
+			return seg;
 		}
 	}
 
@@ -2901,7 +2902,7 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		return -1;
 	}
 
-	if (__predict_false(instr.legpref[LEG_REPN])) {
+	if (__predict_false(instr.legpref.repn)) {
 		errno = ENODEV;
 		return -1;
 	}
@@ -2916,7 +2917,7 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		return -1;
 	}
 
-	if (instr.legpref[LEG_REP]) {
+	if (instr.legpref.rep) {
 		cnt = rep_dec_apply(&state, instr.address_size);
 		if (cnt == 0) {
 			state.gprs[NVMM_X64_GPR_RIP] += instr.len;
