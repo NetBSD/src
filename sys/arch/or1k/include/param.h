@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.1 2014/09/03 19:34:26 matt Exp $ */
+/* $NetBSD: param.h,v 1.2 2019/01/07 22:00:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -55,14 +55,6 @@
 /* OR1K-specific macro to align a stack pointer (downwards). */
 #define STACK_ALIGNBYTES	(__BIGGEST_ALIGNMENT__ - 1)
 #define	ALIGNBYTES32	__BIGGEST_ALIGNMENT__
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-
-#ifndef MAXPHYS
-#define	MAXPHYS		65536		/* max I/O transfer size */
-#endif
 
 #define NKMEMPAGES_MAX_DEFAULT	(2048UL * 1024 * 1024)
 #define NKMEMPAGES_MIN_DEFAULT	(128UL * 1024 * 1024)

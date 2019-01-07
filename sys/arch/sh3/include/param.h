@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 2012/02/10 17:35:48 para Exp $	*/
+/*	$NetBSD: param.h,v 1.24 2019/01/07 22:00:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -50,11 +50,6 @@
 #define	PGSHIFT			12
 #define	NBPG			(1 << PGSHIFT)
 #define	PGOFSET			(NBPG - 1)
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 /*
  * u-space.

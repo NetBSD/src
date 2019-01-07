@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.71 2017/02/13 09:46:30 skrll Exp $ */
+/*	$NetBSD: param.h,v 1.72 2019/01/07 22:00:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,11 +83,6 @@ extern int nbpg, pgofset, pgshift;
 #define KERNEND		0xfe000000	/* end of kernel virtual space */
 #define PROM_LOADADDR	0x00004000	/* where the prom loads us */
 #define	KERNTEXTOFF	(KERNBASE+PROM_LOADADDR)/* start of kernel text */
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)
 
 #define	SSIZE		1		/* initial stack size in pages */
 #define	USPACE		8192
