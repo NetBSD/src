@@ -163,11 +163,13 @@ Tspi_TPM_Quote2(TSS_HTPM        hTPM,            // in
 		offset = 0;
 		if ((result = Trspi_UnloadBlob_PCR_INFO_SHORT(&offset, pcrDataOut, &pcrInfo))) {
 			free(pcrDataOut);
+			free(pcrInfo.pcrSelection.pcrSelect);
 			if (*versionInfoSize > 0)
 				free(*versionInfo);
 			free(sig);
 			return result;
 		}
+		free(pcrInfo.pcrSelection.pcrSelect);
 
 		/* Set both digestAtRelease and localityAtRelease */
 		if ((result = obj_pcrs_set_locality(hPcrComposite, pcrInfo.localityAtRelease))) {
@@ -189,7 +191,7 @@ Tspi_TPM_Quote2(TSS_HTPM        hTPM,            // in
 	}
 
 	/* generate TPM_QUOTE_INFO2 struct */
-	memset(&quoteinfo, 0, sizeof(quoteinfo));
+	__tspi_memset(&quoteinfo, 0, sizeof(quoteinfo));
 	offset = 0;
 	/* 1. Add Structure TAG */
 	quoteinfo[offset++] = 0x00;
@@ -263,7 +265,7 @@ Tspi_TPM_Quote2(TSS_HTPM        hTPM,            // in
 
 
 	if(*versionInfoSize > 0) {
-		if(fAddVersion) {
+		if(fAddVersion && pValidationData) {
 			/* tag versionInfo so that it can be free'd by the app through Tspi_Context_FreeMemory */
 			if ((result = __tspi_add_mem_entry(tspContext, *versionInfo))) {
 				free_tspi(tspContext, pValidationData->rgbValidationData);

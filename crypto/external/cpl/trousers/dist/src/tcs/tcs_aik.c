@@ -114,6 +114,7 @@ get_credential(UINT32 type, UINT32 *size, BYTE **cred)
 
 	if ((rc = fstat(fd, &stat_buf)) == -1) {
 		LogError("Error stating credential: %s: %s", path, strerror(errno));
+		close(fd);
 		goto done;
 	}
 

@@ -49,6 +49,8 @@ tcs_wrap_OpenContext(struct tcsd_thread_data *data)
 		 * and the connection can't be closed cleanly, we'll still have a reference
 		 * to what resources need to be freed. */
 		data->context = hContext;
+
+		LogDebug("New context is 0x%x", hContext);
 	} else
 		initData(&data->comm, 0);
 

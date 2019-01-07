@@ -273,7 +273,7 @@ RPC_SetTempDeactivated2_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 1, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}
