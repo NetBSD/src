@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120,v 1.22 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: ADM5120,v 1.22.6.1 2019/01/07 13:46:57 martin Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.22.6.1 $"
 
 maxusers	32
 
@@ -78,6 +78,11 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 options 	GATEWAY		# IP packet forwarding

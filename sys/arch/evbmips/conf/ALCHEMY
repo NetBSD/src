@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.60 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: ALCHEMY,v 1.60.8.1 2019/01/07 13:46:57 martin Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.60 $"
+#ident 		"ALCHEMY-$Revision: 1.60.8.1 $"
 
 maxusers	32
 
@@ -93,6 +93,11 @@ options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.16 2015/08/07 14:12:04 maxv Exp $
+#	$NetBSD: DB120,v 1.16.10.1 2019/01/07 13:46:57 martin Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.16 $"
+#ident 		"DB120-$Revision: 1.16.10.1 $"
 
 maxusers	32
 
@@ -97,6 +97,11 @@ options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
