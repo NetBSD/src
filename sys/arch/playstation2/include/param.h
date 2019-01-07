@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2014/04/01 14:08:50 martin Exp $	*/
+/*	$NetBSD: param.h,v 1.11 2019/01/07 22:00:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,11 +75,6 @@
 #define	MACHINE		"playstation2"
 
 #include <mips/mips_param.h>
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* Maximum raw I/O transfer size */
 
 /*
  * Constants related to network buffer management.
