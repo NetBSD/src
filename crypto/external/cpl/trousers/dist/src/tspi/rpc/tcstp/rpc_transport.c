@@ -138,7 +138,7 @@ RPC_ExecuteTransport_TP(struct host_table_entry *hte,
 	TPM_AUTH null_auth;
 	UINT32 i = 0;
 
-	memset(&null_auth, 0, sizeof(TPM_AUTH));
+	__tspi_memset(&null_auth, 0, sizeof(TPM_AUTH));
 
 	initData(&hte->comm, 9);
 	hte->comm.hdr.u.ordinal = TCSD_ORD_EXECUTETRANSPORT;
@@ -283,7 +283,7 @@ RPC_ReleaseTransportSigned_TP(struct host_table_entry *hte,
 	TSS_RESULT result;
 	TPM_AUTH null_auth;
 
-	memset(&null_auth, 0, sizeof(TPM_AUTH));
+	__tspi_memset(&null_auth, 0, sizeof(TPM_AUTH));
 
 	initData(&hte->comm, 5);
 	hte->comm.hdr.u.ordinal = TCSD_ORD_RELEASETRANSPORTSIGNED;

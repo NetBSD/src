@@ -87,7 +87,7 @@ generateMessageDigest(BYTE *md_value,
 			bi_array_ptr *commitments,
 			const int commitments_size
 ) {
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	const EVP_MD *md;
 	int i, j;
 	int length = DAA_PARAM_SIZE_RSA_MODULUS / 8;
@@ -101,52 +101,52 @@ generateMessageDigest(BYTE *md_value,
 	}
 	OpenSSL_add_all_digests();
 	md = EVP_get_digestbyname( DAA_PARAM_MESSAGE_DIGEST_ALGORITHM);
-	EVP_MD_CTX_init(&mdctx);
-	EVP_DigestInit_ex(&mdctx, md, NULL);
+	EVP_MD_CTX_create(mdctx);
+	EVP_DigestInit_ex(mdctx, md, NULL);
 #ifdef DAA_DEBUG
 	fprintf(stderr, "modulus=%s\n", bi_2_hex_char( pk->modulus));
 #endif
 	toByteArray( array, length, pk->modulus,
 			"!! [generateMessageDigest modulus] current_size=%d  length=%d\n");
-	EVP_DigestUpdate(&mdctx, array , length);
+	EVP_DigestUpdate(mdctx, array , length);
 	toByteArray( array, length, pk->capitalS,
 			"!! [generateMessageDigest capitalS] current_size=%d  length=%d\n");
-	EVP_DigestUpdate(&mdctx, array , length);
+	EVP_DigestUpdate(mdctx, array , length);
 	// add capitalZ, capitalR0, capitalR1, capitalY
 	LogDebug("capitalZ capitalR0 capitalY");
 	toByteArray( array, length, pk->capitalZ,
 			"!! [generateMessageDigest capitalZ] current_size=%d  length=%d\n");
-	EVP_DigestUpdate(&mdctx, array , length);
+	EVP_DigestUpdate(mdctx, array , length);
 	toByteArray( array, length, pk->capitalR0,
 			"!! [generateMessageDigest capitalR0] current_size=%d  length=%d\n");
-	EVP_DigestUpdate(&mdctx, array , length);
+	EVP_DigestUpdate(mdctx, array , length);
 	toByteArray( array, length, pk->capitalR1,
 			"!! [generateMessageDigest capitalR1] current_size=%d  length=%d\n");
-	EVP_DigestUpdate(&mdctx, array , length);
+	EVP_DigestUpdate(mdctx, array , length);
 	// CAPITAL Y ( capitalRReceiver )
 	LogDebug("capitalRReceiver");
 	for( i=0; i<pk->capitalRReceiver->length; i++) {
 		toByteArray( array, length, pk->capitalRReceiver->array[i],
 			"!![generateMessageDigest capitalRReceiver] current_size=%d  length=%d\n");
-		EVP_DigestUpdate(&mdctx, array , length);
+		EVP_DigestUpdate(mdctx, array , length);
 	}
 	LogDebug("capitalRIssuer");
 	// CAPITAL Y ( capitalRIssuer)
 	for( i=0; i<pk->capitalRIssuer->length; i++) {
 		toByteArray( array, length, pk->capitalRIssuer->array[i],
 			"!![generateMessageDigest capitalRReceiver] current_size=%d  length=%d\n");
-		EVP_DigestUpdate(&mdctx, array , length);
+		EVP_DigestUpdate(mdctx, array , length);
 	}
 	LogDebug("commitments");
 	for( i=0; i<commitments_size; i++) {
 		for( j=0; j<commitments[i]->length; j++) {
 			toByteArray( array, length, commitments[i]->array[j],
 			"!! [generateMessageDigest commitments] current_size=%d  length=%d\n");
-			EVP_DigestUpdate(&mdctx, array , length);
+			EVP_DigestUpdate(mdctx, array , length);
 		}
 	}
-	EVP_DigestFinal_ex(&mdctx, md_value, md_len);
-	EVP_MD_CTX_cleanup(&mdctx);
+	EVP_DigestFinal_ex(mdctx, md_value, md_len);
+	EVP_MD_CTX_destroy(mdctx);
 	free( array);
 	return TSS_SUCCESS;
 }

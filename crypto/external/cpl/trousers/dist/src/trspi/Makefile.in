@@ -40,7 +40,7 @@ target_triplet = @target@
 subdir = src/trspi
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -51,11 +51,12 @@ libtrousers_la_LIBADD =
 am__libtrousers_la_SOURCES_DIST = trousers.c \
 	crypto/@CRYPTO_PACKAGE@/hash.c crypto/@CRYPTO_PACKAGE@/rsa.c \
 	crypto/@CRYPTO_PACKAGE@/symmetric.c
-@TSS_BUILD_ASYM_CRYPTO_TRUE@am__objects_1 = libtrousers_la-rsa.lo
-@TSS_BUILD_SYM_CRYPTO_TRUE@am__objects_2 =  \
-@TSS_BUILD_SYM_CRYPTO_TRUE@	libtrousers_la-symmetric.lo
+am__dirstamp = $(am__leading_dot)dirstamp
+@TSS_BUILD_ASYM_CRYPTO_TRUE@am__objects_1 = crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo
+@TSS_BUILD_SYM_CRYPTO_TRUE@am__objects_2 = crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo
 am_libtrousers_la_OBJECTS = libtrousers_la-trousers.lo \
-	libtrousers_la-hash.lo $(am__objects_1) $(am__objects_2)
+	crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo \
+	$(am__objects_1) $(am__objects_2)
 libtrousers_la_OBJECTS = $(am_libtrousers_la_OBJECTS)
 libtrousers_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libtrousers_la_CFLAGS) \
@@ -133,12 +134,9 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
-PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 RPC = @RPC@
 SED = @SED@
@@ -146,6 +144,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 TCSD_DEFAULT_PORT = @TCSD_DEFAULT_PORT@
+TCSD_LDFLAGS = @TCSD_LDFLAGS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -250,37 +249,61 @@ clean-noinstLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+crypto/@CRYPTO_PACKAGE@/$(am__dirstamp):
+	@$(MKDIR_P) crypto/@CRYPTO_PACKAGE@
+	@: > crypto/@CRYPTO_PACKAGE@/$(am__dirstamp)
+crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) crypto/@CRYPTO_PACKAGE@/$(DEPDIR)
+	@: > crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/$(am__dirstamp)
+crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo:  \
+	crypto/@CRYPTO_PACKAGE@/$(am__dirstamp) \
+	crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/$(am__dirstamp)
+crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo:  \
+	crypto/@CRYPTO_PACKAGE@/$(am__dirstamp) \
+	crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/$(am__dirstamp)
+crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo:  \
+	crypto/@CRYPTO_PACKAGE@/$(am__dirstamp) \
+	crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/$(am__dirstamp)
 libtrousers.la: $(libtrousers_la_OBJECTS) $(libtrousers_la_DEPENDENCIES) 
 	$(libtrousers_la_LINK)  $(libtrousers_la_OBJECTS) $(libtrousers_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.$(OBJEXT)
+	-rm -f crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo
+	-rm -f crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.$(OBJEXT)
+	-rm -f crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo
+	-rm -f crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.$(OBJEXT)
+	-rm -f crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtrousers_la-hash.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtrousers_la-rsa.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtrousers_la-symmetric.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtrousers_la-trousers.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-hash.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-rsa.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-symmetric.Plo@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
@@ -292,32 +315,33 @@ libtrousers_la-trousers.lo: trousers.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -c -o libtrousers_la-trousers.lo `test -f 'trousers.c' || echo '$(srcdir)/'`trousers.c
 
-libtrousers_la-hash.lo: crypto/@CRYPTO_PACKAGE@/hash.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -MT libtrousers_la-hash.lo -MD -MP -MF $(DEPDIR)/libtrousers_la-hash.Tpo -c -o libtrousers_la-hash.lo `test -f 'crypto/@CRYPTO_PACKAGE@/hash.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/hash.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtrousers_la-hash.Tpo $(DEPDIR)/libtrousers_la-hash.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='crypto/@CRYPTO_PACKAGE@/hash.c' object='libtrousers_la-hash.lo' libtool=yes @AMDEPBACKSLASH@
+crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo: crypto/@CRYPTO_PACKAGE@/hash.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -MT crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo -MD -MP -MF crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-hash.Tpo -c -o crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo `test -f 'crypto/@CRYPTO_PACKAGE@/hash.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/hash.c
+@am__fastdepCC_TRUE@	$(am__mv) crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-hash.Tpo crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-hash.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='crypto/@CRYPTO_PACKAGE@/hash.c' object='crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -c -o libtrousers_la-hash.lo `test -f 'crypto/@CRYPTO_PACKAGE@/hash.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/hash.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -c -o crypto/@CRYPTO_PACKAGE@/libtrousers_la-hash.lo `test -f 'crypto/@CRYPTO_PACKAGE@/hash.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/hash.c
 
-libtrousers_la-rsa.lo: crypto/@CRYPTO_PACKAGE@/rsa.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -MT libtrousers_la-rsa.lo -MD -MP -MF $(DEPDIR)/libtrousers_la-rsa.Tpo -c -o libtrousers_la-rsa.lo `test -f 'crypto/@CRYPTO_PACKAGE@/rsa.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/rsa.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtrousers_la-rsa.Tpo $(DEPDIR)/libtrousers_la-rsa.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='crypto/@CRYPTO_PACKAGE@/rsa.c' object='libtrousers_la-rsa.lo' libtool=yes @AMDEPBACKSLASH@
+crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo: crypto/@CRYPTO_PACKAGE@/rsa.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -MT crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo -MD -MP -MF crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-rsa.Tpo -c -o crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo `test -f 'crypto/@CRYPTO_PACKAGE@/rsa.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/rsa.c
+@am__fastdepCC_TRUE@	$(am__mv) crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-rsa.Tpo crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-rsa.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='crypto/@CRYPTO_PACKAGE@/rsa.c' object='crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -c -o libtrousers_la-rsa.lo `test -f 'crypto/@CRYPTO_PACKAGE@/rsa.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/rsa.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -c -o crypto/@CRYPTO_PACKAGE@/libtrousers_la-rsa.lo `test -f 'crypto/@CRYPTO_PACKAGE@/rsa.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/rsa.c
 
-libtrousers_la-symmetric.lo: crypto/@CRYPTO_PACKAGE@/symmetric.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -MT libtrousers_la-symmetric.lo -MD -MP -MF $(DEPDIR)/libtrousers_la-symmetric.Tpo -c -o libtrousers_la-symmetric.lo `test -f 'crypto/@CRYPTO_PACKAGE@/symmetric.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/symmetric.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtrousers_la-symmetric.Tpo $(DEPDIR)/libtrousers_la-symmetric.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='crypto/@CRYPTO_PACKAGE@/symmetric.c' object='libtrousers_la-symmetric.lo' libtool=yes @AMDEPBACKSLASH@
+crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo: crypto/@CRYPTO_PACKAGE@/symmetric.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -MT crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo -MD -MP -MF crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-symmetric.Tpo -c -o crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo `test -f 'crypto/@CRYPTO_PACKAGE@/symmetric.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/symmetric.c
+@am__fastdepCC_TRUE@	$(am__mv) crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-symmetric.Tpo crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/libtrousers_la-symmetric.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='crypto/@CRYPTO_PACKAGE@/symmetric.c' object='crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -c -o libtrousers_la-symmetric.lo `test -f 'crypto/@CRYPTO_PACKAGE@/symmetric.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/symmetric.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtrousers_la_CFLAGS) $(CFLAGS) -c -o crypto/@CRYPTO_PACKAGE@/libtrousers_la-symmetric.lo `test -f 'crypto/@CRYPTO_PACKAGE@/symmetric.c' || echo '$(srcdir)/'`crypto/@CRYPTO_PACKAGE@/symmetric.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf crypto/@CRYPTO_PACKAGE@/.libs crypto/@CRYPTO_PACKAGE@/_libs
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -426,6 +450,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f crypto/@CRYPTO_PACKAGE@/$(DEPDIR)/$(am__dirstamp)
+	-rm -f crypto/@CRYPTO_PACKAGE@/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -436,7 +462,7 @@ clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) crypto/@CRYPTO_PACKAGE@/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -482,7 +508,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) crypto/@CRYPTO_PACKAGE@/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
