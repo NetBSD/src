@@ -48,7 +48,7 @@ TSS_RESULT obj_pcrs_set_locality(TSS_HPCRS, UINT32);
 
 #define PCRS_LIST_DECLARE		struct obj_list pcrs_list
 #define PCRS_LIST_DECLARE_EXTERN	extern struct obj_list pcrs_list
-#define PCRS_LIST_INIT()		list_init(&pcrs_list)
+#define PCRS_LIST_INIT()		tspi_list_init(&pcrs_list)
 #define PCRS_LIST_CONNECT(a,b)		obj_connectContext_list(&pcrs_list, a, b)
 #define PCRS_LIST_CLOSE(a)		obj_list_close(&pcrs_list, &pcrs_free, a)
 

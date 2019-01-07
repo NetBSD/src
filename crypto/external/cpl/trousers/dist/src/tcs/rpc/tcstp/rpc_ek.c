@@ -42,6 +42,9 @@ tcs_wrap_CreateEndorsementKeyPair(struct tcsd_thread_data *data)
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
+
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
 	if (getData(TCSD_PACKET_TYPE_NONCE, 1, &antiReplay, 0, &data->comm))
@@ -84,7 +87,7 @@ tcs_wrap_CreateEndorsementKeyPair(struct tcsd_thread_data *data)
 			return TCSERR(TSS_E_INTERNAL_ERROR);
 		}
 	} else
-		initData(&data->comm, 0);
+done:		initData(&data->comm, 0);
 
 	data->comm.hdr.u.result = result;
 	return TSS_SUCCESS;
@@ -102,6 +105,9 @@ tcs_wrap_ReadPubek(struct tcsd_thread_data *data)
 
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
+
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
 
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
@@ -129,7 +135,7 @@ tcs_wrap_ReadPubek(struct tcsd_thread_data *data)
 			return TCSERR(TSS_E_INTERNAL_ERROR);
 		}
 	} else
-		initData(&data->comm, 0);
+done:		initData(&data->comm, 0);
 
 	data->comm.hdr.u.result = result;
 	return TSS_SUCCESS;
@@ -146,6 +152,9 @@ tcs_wrap_OwnerReadPubek(struct tcsd_thread_data *data)
 
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
+
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
 
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
@@ -174,7 +183,7 @@ tcs_wrap_OwnerReadPubek(struct tcsd_thread_data *data)
 		}
 		free(pubEK);
 	} else
-		initData(&data->comm, 0);
+done:		initData(&data->comm, 0);
 
 	data->comm.hdr.u.result = result;
 	return TSS_SUCCESS;
@@ -230,6 +239,9 @@ tcs_wrap_CreateRevocableEndorsementKeyPair(struct tcsd_thread_data *data)
 
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
+
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
 
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
@@ -287,7 +299,7 @@ tcs_wrap_CreateRevocableEndorsementKeyPair(struct tcsd_thread_data *data)
 			return TCSERR(TSS_E_INTERNAL_ERROR);
 		}
 	} else
-		initData(&data->comm, 0);
+done:		initData(&data->comm, 0);
 
 	data->comm.hdr.u.result = result;
 
@@ -304,6 +316,9 @@ tcs_wrap_RevokeEndorsementKeyPair(struct tcsd_thread_data *data)
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
+
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
 	if (getData(TCSD_PACKET_TYPE_DIGEST, 1, &eKResetAuth, 0, &data->comm))
@@ -314,7 +329,7 @@ tcs_wrap_RevokeEndorsementKeyPair(struct tcsd_thread_data *data)
 	result = TCSP_RevokeEndorsementKeyPair_Internal(hContext, eKResetAuth);
 
 	MUTEX_UNLOCK(tcsp_lock);
-
+done:
 	initData(&data->comm, 0);
 
 	data->comm.hdr.u.result = result;

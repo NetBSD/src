@@ -32,7 +32,7 @@ TSS_RESULT obj_daa_set_session_handle(TSS_HDAA, UINT32);
 
 #define DAA_LIST_DECLARE		struct obj_list daa_list
 #define DAA_LIST_DECLARE_EXTERN		extern struct obj_list daa_list
-#define DAA_LIST_INIT()			list_init(&daa_list)
+#define DAA_LIST_INIT()			tspi_list_init(&daa_list)
 #define DAA_LIST_CONNECT(a,b)		obj_connectContext_list(&daa_list, a, b)
 #define DAA_LIST_CLOSE(a)		obj_list_close(&daa_list, &daa_free, a)
 

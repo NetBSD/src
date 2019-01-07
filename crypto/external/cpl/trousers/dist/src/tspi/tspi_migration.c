@@ -83,7 +83,7 @@ Tspi_TPM_AuthorizeMigrationTicket(TSS_HTPM hTPM,			/* in */
 
 	/* First, turn the keyBlob into a TSS_KEY structure */
 	offset = 0;
-	memset(&tssKey, 0, sizeof(TSS_KEY));
+	__tspi_memset(&tssKey, 0, sizeof(TSS_KEY));
 	if ((result = UnloadBlob_TSS_KEY(&offset, migrationKeyBlob, &tssKey))) {
 		free_tspi(tspContext, migrationKeyBlob);
 		return result;
@@ -172,7 +172,7 @@ Tspi_Key_CreateMigrationBlob(TSS_HKEY hKeyToMigrate,		/* in */
 	TSS_HCONTEXT tspContext;
 	Trspi_HashCtx hashCtx;
 
-	memset(&tssKey, 0, sizeof(TSS_KEY));
+	__tspi_memset(&tssKey, 0, sizeof(TSS_KEY));
 
 	if (pulRandomLength == NULL || prgbRandom == NULL || rgbMigTicket == NULL ||
 	    pulMigrationBlobLength == NULL || prgbMigrationBlob == NULL)
@@ -196,7 +196,7 @@ Tspi_Key_CreateMigrationBlob(TSS_HKEY hKeyToMigrate,		/* in */
 		goto done;
 
 	/*  Parsing the migration scheme from the blob and key object */
-	memset(&migAuth, 0, sizeof(TCPA_MIGRATIONKEYAUTH));
+	__tspi_memset(&migAuth, 0, sizeof(TCPA_MIGRATIONKEYAUTH));
 
 	offset = 0;
 	if ((result = Trspi_UnloadBlob_MIGRATIONKEYAUTH(&offset, rgbMigTicket, &migAuth)))
@@ -324,7 +324,7 @@ Tspi_Key_ConvertMigrationBlob(TSS_HKEY hKeyToMigrate,		/* in */
 	Trspi_HashCtx hashCtx;
 	UINT64 offset;
 
-	memset(&tssKey, 0, sizeof(TSS_KEY));
+	__tspi_memset(&tssKey, 0, sizeof(TSS_KEY));
 
 	if ((result = obj_rsakey_get_tsp_context(hKeyToMigrate, &tspContext)))
 		return result;
