@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.105 2019/01/07 21:04:35 jdolecek Exp $ */
+/* $NetBSD: dksubr.c,v 1.106 2019/01/07 22:35:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.105 2019/01/07 21:04:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.106 2019/01/07 22:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -936,7 +936,7 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 	lpratio = dgratio = 1;
 	if (lp->d_secsize > DEV_BSIZE)
 		lpratio = lp->d_secsize / DEV_BSIZE;
-	else if (dg->dg_secsize > DEV_BSIZE)
+	if (dg->dg_secsize > DEV_BSIZE)
 		dgratio = dg->dg_secsize / DEV_BSIZE;
 
 	/* Sanity check */
