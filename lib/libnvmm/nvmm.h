@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.5 2019/01/06 16:10:51 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.6 2019/01/07 16:30:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@ struct nvmm_io {
 };
 
 struct nvmm_mem {
-	gvaddr_t gva;
 	gpaddr_t gpa;
 	bool write;
 	size_t size;
