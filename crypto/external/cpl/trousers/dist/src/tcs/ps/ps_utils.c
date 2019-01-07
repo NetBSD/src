@@ -13,14 +13,16 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if defined(HAVE_BYTEORDER_H)
+#if defined (HAVE_BYTEORDER_H)
 #include <sys/byteorder.h>
-#elif defined(HTOLE_DEFINED)
-#ifdef __NetBSD__
-#include <sys/endian.h>
-#else
+#elif defined (HTOLE_DEFINED)
+
+#ifndef __APPLE__
 #include <endian.h>
+#else
+#include "portable_endian.h"
 #endif
+
 #define LE_16 htole16
 #define LE_32 htole32
 #define LE_64 htole64
@@ -46,11 +48,7 @@
 struct key_disk_cache *key_disk_cache_head = NULL;
 
 
-#ifdef SOLARIS
 TSS_RESULT
-#else
-inline TSS_RESULT
-#endif
 read_data(int fd, void *data, UINT32 size)
 {
 	int rc;
@@ -68,11 +66,7 @@ read_data(int fd, void *data, UINT32 size)
 }
 
 
-#ifdef SOLARIS
 TSS_RESULT
-#else
-inline TSS_RESULT
-#endif
 write_data(int fd, void *data, UINT32 size)
 {
 	int rc;
