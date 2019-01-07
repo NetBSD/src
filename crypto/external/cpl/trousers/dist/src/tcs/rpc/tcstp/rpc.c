@@ -16,6 +16,7 @@
 #if (defined (__OpenBSD__) || defined (__FreeBSD__) || defined(__NetBSD__))
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #endif
 #include <errno.h>
 
@@ -181,7 +182,7 @@ loadData(UINT64 *offset, TCSD_PACKET_TYPE data_type, void *data, int data_size, 
 
 int
 setData(TCSD_PACKET_TYPE dataType,
-	int index,
+	unsigned int index,
 	void *theData,
 	int theDataSize,
 	struct tcsd_comm_data *comm)
@@ -194,11 +195,8 @@ setData(TCSD_PACKET_TYPE dataType,
 	offset = 0;
 	if ((result = loadData(&offset, dataType, theData, theDataSize, NULL)) != TSS_SUCCESS)
 		return result;
-	if (((int)comm->hdr.packet_size + (int)offset) < 0) {
-		LogError("Too much data to be transmitted!");
-		return TCSERR(TSS_E_INTERNAL_ERROR);
-	}
-	if (((int)comm->hdr.packet_size + (int)offset) > comm->buf_size) {
+
+	if ((comm->hdr.packet_size + offset) > comm->buf_size) {
 		/* reallocate the buffer */
 		BYTE *buffer;
 		int buffer_size = comm->hdr.packet_size + offset;
@@ -229,13 +227,18 @@ setData(TCSD_PACKET_TYPE dataType,
 
 UINT32
 getData(TCSD_PACKET_TYPE dataType,
-	int index,
+	unsigned int index,
 	void *theData,
 	int theDataSize,
 	struct tcsd_comm_data *comm)
 {
 	UINT64 old_offset, offset;
-	TCSD_PACKET_TYPE *type = (TCSD_PACKET_TYPE *)(comm->buf + comm->hdr.type_offset) + index;
+	TCSD_PACKET_TYPE *type;
+
+	if ((comm->hdr.type_offset + index) > comm->buf_size)
+		return TSS_TCP_RPC_BAD_PACKET_TYPE;
+
+	type = (comm->buf + comm->hdr.type_offset) + index;
 
 	if ((UINT32)index >= comm->hdr.num_parms || dataType != *type) {
 		LogDebug("Data type of TCS packet element %d doesn't match.", index);
@@ -517,37 +520,40 @@ int
 access_control(struct tcsd_thread_data *thread_data)
 {
 	int i = 0;
-	struct hostent *local_hostent = NULL;
-	static char *localhostname = NULL;
-	static int localhostname_len = 0;
+	int is_localhost;
+	struct sockaddr_storage sas;
+	struct sockaddr *sa;
+	socklen_t sas_len = sizeof(sas);
 
-	if (!localhostname) {
-		if ((local_hostent = gethostbyname("localhost")) == NULL) {
-			LogError("Error resolving localhost: %s", hstrerror(h_errno));
-			return 1;
-		}
+	if (getpeername(thread_data->sock, (struct sockaddr *)&sas,
+			&sas_len) == -1) {
+		LogError("Error retrieving local socket address: %s", strerror(errno));
+		return 1;
+	}
 
-		LogDebugFn("Cached local hostent:");
-		LogDebugFn("h_name: %s", local_hostent->h_name);
-		for (i = 0; local_hostent->h_aliases[i]; i++) {
-			LogDebugFn("h_aliases[%d]: %s", i, local_hostent->h_aliases[i]);
-		}
-		LogDebugFn("h_addrtype: %s",
-			   (local_hostent->h_addrtype == AF_INET6 ? "AF_INET6" : "AF_INET"));
+	sa = (struct sockaddr *)&sas;
 
-		localhostname_len = strlen(local_hostent->h_name);
-		if ((localhostname = strdup(local_hostent->h_name)) == NULL) {
-			LogError("malloc of %d bytes failed.", localhostname_len);
-			return TCSERR(TSS_E_OUTOFMEMORY);
-		}
+	is_localhost = 0;
+	// Check if it's localhost for both inet protocols
+	if (sa->sa_family == AF_INET) {
+		struct sockaddr_in *sa_in = (struct sockaddr_in *)sa;
+		in_addr_t nloopaddr = htonl(INADDR_LOOPBACK);
+		if (memcmp(&sa_in->sin_addr.s_addr, &nloopaddr,
+					sizeof(in_addr_t)) == 0)
+			is_localhost = 1;
+        }
+	else if (sa->sa_family == AF_INET6) {
+		struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)sa;
+		if (memcmp(&sa_in6->sin6_addr.s6_addr, &in6addr_loopback,
+					sizeof(struct in6_addr)) == 0)
+			is_localhost = 1;
 	}
 
 	/* if the request comes from localhost, or is in the accepted ops list,
 	 * approve it */
-	if (!strncmp(thread_data->hostname, localhostname,
-		     MIN((size_t)localhostname_len, strlen(thread_data->hostname)))) {
+	if (is_localhost)
 		return 0;
-	} else {
+	else {
 		while (tcsd_options.remote_ops[i]) {
 			if ((UINT32)tcsd_options.remote_ops[i] == thread_data->comm.hdr.u.ordinal) {
 				LogInfo("Accepted %s operation from %s",
@@ -574,7 +580,8 @@ dispatchCommand(struct tcsd_thread_data *data)
 		return TCSERR(TSS_E_FAIL);
 	}
 
-	LogDebug("Dispatching ordinal %u", data->comm.hdr.u.ordinal);
+	LogDebug("Dispatching ordinal %u (%s)", data->comm.hdr.u.ordinal,
+		 tcs_func_table[data->comm.hdr.u.ordinal].name);
 	/* We only need to check access_control if there are remote operations that are defined
 	 * in the config file, which means we allow remote connections */
 	if (tcsd_options.remote_ops[0] && access_control(data)) {
@@ -615,11 +622,11 @@ dispatchCommand(struct tcsd_thread_data *data)
 TSS_RESULT
 getTCSDPacket(struct tcsd_thread_data *data)
 {
-        /* make sure the all the data is present */
-	if (data->comm.hdr.num_parms > 0 &&
-	    data->comm.hdr.packet_size !=
-		(UINT32)(data->comm.hdr.parm_offset + data->comm.hdr.parm_size))
+	if (data->comm.hdr.packet_size !=
+	    (UINT32)(data->comm.hdr.parm_offset + data->comm.hdr.parm_size)) {
+		LogError("Invalid packet received by TCSD");
 		return TCSERR(TSS_E_INTERNAL_ERROR);
+	}
 
 	/* dispatch the command to the TCS */
 	return dispatchCommand(data);
