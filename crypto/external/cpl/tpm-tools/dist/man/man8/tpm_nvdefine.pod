@@ -1,0 +1,145 @@
+=head1 NAME
+
+tpm_nvdefine
+
+=head1 SYNOPSIS
+
+B<tpm_nvdefine [OPTIONS]>
+
+=head1 DESCRIPTION
+
+B<tpm_nvdefine> defines a new NVRAM area at the given index and of given
+size. The user has to provide the permissions that control access to
+the NVRAM area.
+
+Owner authentication is necessary once the NVRAM area 0xFFFFFFFF has been
+defined. The owner password may be provided on the command line using
+the owner password option.
+
+The following options are supported:
+
+=over 4
+
+=item B<-h, --help>
+
+Display command usage info.
+
+=item B<-v, --version>
+
+Display command version info.
+
+=item B<-l, --log [none|error|info|debug]>
+
+Set logging level.
+
+=item B<-u, --unicode>
+
+Use TSS UNICODE encoding for passwords to comply with applications
+using TSS popup boxes
+
+=item B<-y, --owner-well-known>
+
+Use a secret of all zeros (20 bytes of zeros) as the owner's secret.
+
+=item B<-z, --area-well-known>
+
+Use a secret of all zeros (20 bytes of zeros) as the NVRAM area's secret.
+
+=item B<-o, --pwdo> (optional parameter)
+
+The owner password.
+
+A password may be directly provided for example by using '--pwdo=password' or
+'-opassword'. If no password is provided with this option then the program will
+prompt the user for the password.
+
+=item B<-a, --pwda> (optional parameter)
+
+The NVRAM area password.
+
+A password may be directly provided for example by using '--pwda=password' or
+'-apassword'. If no password is provided with this option then the program will
+prompt the user for the password.
+
+=item B<-i, --index>
+
+The index of the NVRAM area.
+The parameter must either be a decimal number or a hexadecimal number starting with '0x'.
+
+To select the NVRAM area with index 0x100, the command line parameter should be '-i 0x100' or
+'--index 0x100'.
+
+=item B<-s, --size>
+
+The size of the NVRAM area.
+The parameter must either be a decimal number or a hexadecimal number starting with '0x'.
+
+=item B<-p, --permissions>
+
+The access permissions associated with the NVRAM area.
+The parameter must either be a decimal number or a hexadecimal number staring with '0x'. It is
+possible to logically 'or' numbers or strings. The following strings are supported:
+
+=over 4
+
+=item B<AUTHREAD>
+
+Reading requires NVRAM area authorization.
+
+=item B<AUTHWRITE>
+
+Writing requires NVRAM area authorization.
+
+=item B<PPREAD>
+
+Reading requires physical presence.
+
+=item B<PPWRITE>
+
+Writing requires physical presence.
+
+=item B<OWNERREAD>
+
+Reading requires owner authorization.
+
+=item B<OWNERWRITE>
+
+Writing requires owner authorization.
+
+=item B<GLOBALLOCK>
+
+A write to index 0 locks the NVRAM area until the next TPM_Startup(ST_CLEAR)
+
+=item B<READ_STCLEAR>
+
+A read with size 0 on the same index prevents further reading until the next TPM_Startup(ST_CLEAR)
+
+=item B<WRITE_STCLEAR>
+
+A write with size 0 to the same index prevents further writing until the next TPM_Startup(ST_CLEAR)
+
+=item B<WRITEDEFINE>
+
+A write with size 0 to the same index locks the NVRAM area permanently
+
+=item B<WRITEALL>
+
+The value must be written in a single operation
+
+=back
+
+An example of a permission parameter is:
+
+--permissions="OWNERREAD|OWNERWRITE"
+
+=item B<>
+
+=back
+
+=head1 SEE ALSO
+
+B<tpm_nvread>(8), B<tpm_nvwrite>(8), B<tpm_nvrelease>(8), B<tpm_nvinfo>(8)
+
+=head1 REPORTING BUGS
+
+Report bugs to <trousers-users@lists.sourceforge.net>

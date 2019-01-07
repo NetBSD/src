@@ -93,7 +93,7 @@ static int readData(UINT32 bytesToRead, BYTE **buffer)
 	int rc = 0;
 	BYTE eofile;
 
-	memset(*buffer, 0x00, bytesToRead);
+	__memset(*buffer, 0x00, bytesToRead);
 	infile = fopen(in_filename, "r");
 	if ( !infile ){
 		logError(_("Unable to open input file: %s\n"),

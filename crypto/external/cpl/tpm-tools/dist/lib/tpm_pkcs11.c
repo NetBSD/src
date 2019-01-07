@@ -84,8 +84,8 @@ pkcsSlotInfo(CK_SLOT_INFO *a_ptSlotInfo ) {
 	char szSlotDesc[ sizeof( a_ptSlotInfo->slotDescription ) + 1 ];
 	char szSlotMfr[ sizeof( a_ptSlotInfo->manufacturerID ) + 1 ];
 
-	memset( szSlotDesc, 0, sizeof( szSlotDesc ) );
-	memset( szSlotMfr, 0, sizeof( szSlotMfr ) );
+	__memset( szSlotDesc, 0, sizeof( szSlotDesc ) );
+	__memset( szSlotMfr, 0, sizeof( szSlotMfr ) );
 
 	strncpy( szSlotDesc, (char *)a_ptSlotInfo->slotDescription,
 			sizeof( a_ptSlotInfo->slotDescription ) );
@@ -111,9 +111,9 @@ pkcsTokenInfo(CK_TOKEN_INFO *a_ptTokenInfo ) {
 	char szTokenMfr[ sizeof( a_ptTokenInfo->manufacturerID ) + 1 ];
 	char szTokenModel[ sizeof( a_ptTokenInfo->model ) + 1 ];
 
-	memset( szTokenLabel, 0, sizeof( szTokenLabel ) );
-	memset( szTokenMfr, 0, sizeof( szTokenMfr ) );
-	memset( szTokenModel, 0, sizeof( szTokenModel ) );
+	__memset( szTokenLabel, 0, sizeof( szTokenLabel ) );
+	__memset( szTokenMfr, 0, sizeof( szTokenMfr ) );
+	__memset( szTokenModel, 0, sizeof( szTokenModel ) );
 
 	strncpy( szTokenLabel, (char *)a_ptTokenInfo->label,
 			sizeof( a_ptTokenInfo->label ) );
@@ -172,7 +172,7 @@ openToken( char *a_pszTokenLabel ) {
 		goto out;
 
 	// Set the name of the TPM token
-	memset( szTokenLabel, ' ', sizeof( szTokenLabel ) );
+	__memset( szTokenLabel, ' ', sizeof( szTokenLabel ) );
 	if ( a_pszTokenLabel ) {
 		if ( strlen( a_pszTokenLabel ) > sizeof( szTokenLabel ) ) {
 			logError( _("The token label cannot be greater than %ld characters\n"), sizeof( szTokenLabel ) );
