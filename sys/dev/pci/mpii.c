@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.8.10.3 2018/12/08 12:17:13 martin Exp $ */
+/* $NetBSD: mpii.c,v 1.8.10.4 2019/01/07 13:49:39 martin Exp $ */
 /*	OpenBSD: mpii.c,v 1.115 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.3 2018/12/08 12:17:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.8.10.4 2019/01/07 13:49:39 martin Exp $");
 
 #include "bio.h"
 
@@ -3035,7 +3035,7 @@ mpii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	io->sgl_offset0 = sizeof(struct mpii_msg_scsi_io) / 4;
 	io->io_flags = htole16(xs->cmdlen);
 	io->dev_handle = htole16(ccb->ccb_dev_handle);
-	io->lun[0] = htole16(periph->periph_lun);
+	io->lun[0] = htobe16(periph->periph_lun);
 
 	switch (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 	case XS_CTL_DATA_IN:
