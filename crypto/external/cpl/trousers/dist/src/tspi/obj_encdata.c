@@ -302,6 +302,11 @@ obj_encdata_get_pcr_selection(TSS_HENCDATA hEncData,
 			goto done;
 	}
 
+	if (selection == NULL) {
+		result = TSPERR(TSS_E_INVALID_OBJ_ACCESS);
+		goto done;
+	}
+
 	*size = sizeof(UINT16) + selection->sizeOfSelect;
 
 	if ((*data = calloc_tspi(obj->tspContext, *size)) == NULL) {
@@ -427,13 +432,13 @@ obj_encdata_remove(TSS_HOBJECT hObject, TSS_HCONTEXT tspContext)
 void
 obj_encdata_remove_policy_refs(TSS_HPOLICY hPolicy, TSS_HCONTEXT tspContext)
 {
-	struct tsp_object *obj, *prev = NULL;
+	struct tsp_object *obj;
 	struct obj_list *list = &encdata_list;
 	struct tr_encdata_obj *encdata;
 
 	pthread_mutex_lock(&list->lock);
 
-	for (obj = list->head; obj; prev = obj, obj = obj->next) {
+	for (obj = list->head; obj; obj = obj->next) {
 		if (obj->tspContext != tspContext)
 			continue;
 

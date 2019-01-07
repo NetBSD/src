@@ -256,3 +256,10 @@ free_tspi(TSS_HCONTEXT tspContext, void *memPointer)
 
 	return result;
 }
+
+/* definition for a memset that cannot be optimized away */
+void * __no_optimize
+__tspi_memset(void *s, int c, size_t n)
+{
+	return memset(s, c, n);
+}

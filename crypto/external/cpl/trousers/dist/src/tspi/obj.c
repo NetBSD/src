@@ -39,8 +39,8 @@ NVSTORE_LIST_DECLARE;
 DELFAMILY_LIST_DECLARE;
 MIGDATA_LIST_DECLARE;
 
-void
-list_init(struct obj_list *list)
+static void
+tspi_list_init(struct obj_list *list)
 {
 	list->head = NULL;
 	MUTEX_INIT(list->lock);

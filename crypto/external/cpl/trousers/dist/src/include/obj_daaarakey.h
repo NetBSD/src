@@ -32,7 +32,7 @@ TSS_RESULT obj_daaarakey_set_session_handle(TSS_HDAA_ISSUER_KEY, UINT32);
 
 #define DAAARAKEY_LIST_DECLARE		struct obj_list daaarakey_list
 #define DAAARAKEY_LIST_DECLARE_EXTERN	extern struct obj_list daaarakey_list
-#define DAAARAKEY_LIST_INIT()		list_init(&daaarakey_list)
+#define DAAARAKEY_LIST_INIT()		tspi_list_init(&daaarakey_list)
 #define DAAARAKEY_LIST_CONNECT(a,b)	obj_connectContext_list(&daaarakey_list, a, b)
 #define DAAARAKEY_LIST_CLOSE(a)		obj_list_close(&daaarakey_list, &daaarakey_free, a)
 

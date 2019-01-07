@@ -45,7 +45,7 @@ TSS_RESULT obj_delfamily_get_label(TSS_HDELFAMILY, BYTE *);
 
 #define DELFAMILY_LIST_DECLARE		struct obj_list delfamily_list
 #define DELFAMILY_LIST_DECLARE_EXTERN	extern struct obj_list delfamily_list
-#define DELFAMILY_LIST_INIT()		list_init(&delfamily_list)
+#define DELFAMILY_LIST_INIT()		tspi_list_init(&delfamily_list)
 #define DELFAMILY_LIST_CONNECT(a,b)	obj_connectContext_list(&delfamily_list, a, b)
 #define DELFAMILY_LIST_CLOSE(a)		obj_list_close(&delfamily_list, &delfamily_free, a)
 
