@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.11 2019/01/06 18:32:54 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.12 2019/01/07 14:08:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.11 2019/01/06 18:32:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.12 2019/01/07 14:08:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,6 @@ struct vmcb_ctrl {
 
 	uint64_t intr;
 #define VMCB_CTRL_INTR_SHADOW		__BIT(0)
-#define VMCB_CTRL_GUEST_INTR_MASK	__BIT(1)
 
 	uint64_t exitcode;
 	uint64_t exitinfo1;
@@ -538,6 +537,61 @@ struct svm_cpudata {
 	struct xsave_header gfpu __aligned(16);
 };
 
+static void
+svm_vmcb_cache_default(struct vmcb *vmcb)
+{
+	vmcb->ctrl.vmcb_clean =
+	    VMCB_CTRL_VMCB_CLEAN_I |
+	    VMCB_CTRL_VMCB_CLEAN_IOPM |
+	    VMCB_CTRL_VMCB_CLEAN_ASID |
+	    VMCB_CTRL_VMCB_CLEAN_TPR |
+	    VMCB_CTRL_VMCB_CLEAN_NP |
+	    VMCB_CTRL_VMCB_CLEAN_CR |
+	    VMCB_CTRL_VMCB_CLEAN_DR |
+	    VMCB_CTRL_VMCB_CLEAN_DT |
+	    VMCB_CTRL_VMCB_CLEAN_SEG |
+	    VMCB_CTRL_VMCB_CLEAN_CR2 |
+	    VMCB_CTRL_VMCB_CLEAN_LBR |
+	    VMCB_CTRL_VMCB_CLEAN_AVIC;
+}
+
+static void
+svm_vmcb_cache_update(struct vmcb *vmcb, uint64_t flags)
+{
+	if (flags & NVMM_X64_STATE_SEGS) {
+		vmcb->ctrl.vmcb_clean &=
+		    ~(VMCB_CTRL_VMCB_CLEAN_SEG | VMCB_CTRL_VMCB_CLEAN_DT);
+	}
+	if (flags & NVMM_X64_STATE_CRS) {
+		vmcb->ctrl.vmcb_clean &=
+		    ~(VMCB_CTRL_VMCB_CLEAN_CR | VMCB_CTRL_VMCB_CLEAN_CR2);
+	}
+	if (flags & NVMM_X64_STATE_DRS) {
+		vmcb->ctrl.vmcb_clean &= ~VMCB_CTRL_VMCB_CLEAN_DR;
+	}
+	if (flags & NVMM_X64_STATE_MSRS) {
+		/* CR for EFER, NP for PAT. */
+		vmcb->ctrl.vmcb_clean &=
+		    ~(VMCB_CTRL_VMCB_CLEAN_CR | VMCB_CTRL_VMCB_CLEAN_NP);
+	}
+	if (flags & NVMM_X64_STATE_MISC) {
+		/* SEG for CPL. */
+		vmcb->ctrl.vmcb_clean &= ~VMCB_CTRL_VMCB_CLEAN_SEG;
+	}
+}
+
+static inline void
+svm_vmcb_cache_flush(struct vmcb *vmcb, uint64_t flags)
+{
+	vmcb->ctrl.vmcb_clean &= ~flags;
+}
+
+static inline void
+svm_vmcb_cache_flush_all(struct vmcb *vmcb)
+{
+	vmcb->ctrl.vmcb_clean = 0;
+}
+
 #define SVM_EVENT_TYPE_HW_INT	0
 #define SVM_EVENT_TYPE_NMI	2
 #define SVM_EVENT_TYPE_EXC	3
@@ -555,8 +609,11 @@ svm_event_waitexit_enable(struct nvmm_cpu *vcpu, bool nmi)
 	} else {
 		vmcb->ctrl.intercept_misc1 |= VMCB_CTRL_INTERCEPT_VINTR;
 		vmcb->ctrl.v |= (VMCB_CTRL_V_IRQ | VMCB_CTRL_V_IGN_TPR);
+		svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_TPR);
 		cpudata->int_window_exit = true;
 	}
+
+	svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_I);
 }
 
 static void
@@ -571,8 +628,11 @@ svm_event_waitexit_disable(struct nvmm_cpu *vcpu, bool nmi)
 	} else {
 		vmcb->ctrl.intercept_misc1 &= ~VMCB_CTRL_INTERCEPT_VINTR;
 		vmcb->ctrl.v &= ~(VMCB_CTRL_V_IRQ | VMCB_CTRL_V_IGN_TPR);
+		svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_TPR);
 		cpudata->int_window_exit = false;
 	}
+
+	svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_I);
 }
 
 static inline int
@@ -1031,23 +1091,6 @@ error:
 }
 
 static void
-svm_vmcb_cache_default(struct vmcb *vmcb)
-{
-	vmcb->ctrl.vmcb_clean =
-	    VMCB_CTRL_VMCB_CLEAN_I |
-	    VMCB_CTRL_VMCB_CLEAN_IOPM |
-	    VMCB_CTRL_VMCB_CLEAN_ASID |
-	    VMCB_CTRL_VMCB_CLEAN_LBR |
-	    VMCB_CTRL_VMCB_CLEAN_AVIC;
-}
-
-static void
-svm_vmcb_cache_flush(struct vmcb *vmcb)
-{
-	vmcb->ctrl.vmcb_clean = 0;
-}
-
-static void
 svm_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
@@ -1164,7 +1207,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	if (vcpu->hcpu_last != hcpu) {
 		vmcb->ctrl.tsc_offset = cpudata->tsc_offset +
 		    curcpu()->ci_data.cpu_cc_skew;
-		svm_vmcb_cache_flush(vmcb);
+		svm_vmcb_cache_flush_all(vmcb);
 	}
 
 	svm_vcpu_guest_dbregs_enter(vcpu);
@@ -1821,6 +1864,8 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		fpustate->fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
 		fpustate->fx_mxcsr &= fpustate->fx_mxcsr_mask;
 	}
+
+	svm_vmcb_cache_update(vmcb, flags);
 }
 
 static void
