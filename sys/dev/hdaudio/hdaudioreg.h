@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.2 2017/10/28 06:24:24 riastradh Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.3 2019/01/07 01:03:05 mrg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -65,10 +65,10 @@
 #define	 HDAUDIO_STATESTS_SDIWAKE	0x7fff
 #define	HDAUDIO_MMIO_GSTS	0x010
 #define	HDAUDIO_MMIO_INTCTL	0x020
-#define	 HDAUDIO_INTCTL_GIE		(1 << 31)
+#define	 HDAUDIO_INTCTL_GIE		(1u << 31)
 #define	 HDAUDIO_INTCTL_CIE		(1 << 30)
 #define	HDAUDIO_MMIO_INTSTS	0x024
-#define	 HDAUDIO_INTSTS_GIS		(1 << 31)
+#define	 HDAUDIO_INTSTS_GIS		(1u << 31)
 #define	 HDAUDIO_INTSTS_CIS		(1 << 30)
 #define	 HDAUDIO_INTSTS_SIS_MASK	0x3fffffff
 #define	HDAUDIO_MMIO_WALCLK	0x030
@@ -225,7 +225,7 @@
 #define	  COP_GPIO_COUNT_NUM_GPIO(x)		  ((x) & 0xff)
 #define	 COP_VOLUME_KNOB_CAPABILITIES		 0x13
 #define	 COP_HDMI_LPCM_CAD			 0x20
-#define	  COP_LPCM_CAD_44_1_MS			  (1 << 31)
+#define	  COP_LPCM_CAD_44_1_MS			  (1u << 31)
 #define	  COP_LPCM_CAD_44_1			  (1 << 30)
 #define	  COP_LPCM_CAD_192K_24BIT		  (1 << 29)
 #define	  COP_LPCM_CAD_192K_20BIT		  (1 << 28)
@@ -292,7 +292,7 @@
 #define	CORB_SET_UNSOLICITED_RESPONSE		0x708
 #define	 COP_SET_UNSOLICITED_RESPONSE_ENABLE	 (1 << 7)
 #define	CORB_GET_PIN_SENSE			0xf09
-#define	 COP_GET_PIN_SENSE_PRESENSE_DETECT	 (1 << 31)
+#define	 COP_GET_PIN_SENSE_PRESENSE_DETECT	 (1u << 31)
 #define	 COP_GET_PIN_SENSE_ELD_VALID		 (1 << 30) /* digital */
 #define	 COP_GET_PIN_SENSE_IMPEDENCE_SENSE(x)	 ((x) & 0x7fffffff) /* analog */
 #define	CORB_SET_PIN_SENSE			0x709
@@ -390,7 +390,7 @@
 #define	 COP_DIP_PI_AUDIO_INFO			 COP_DIP_PI_GP(0)
 #define	 COP_DIP_BUFFER_SIZE(x)			 ((x) & 0xff)
 #define	CORB_GET_HDMI_ELD_DATA			0xf2f
-#define	 COP_ELD_VALID				 (1 << 31)
+#define	 COP_ELD_VALID				 (1u << 31)
 #define	 COP_ELD_DATA(x)			 (((x) >> 0) & 0xff)
 #define	CORB_GET_HDMI_DIP_INDEX			0xf30
 #define	CORB_SET_HDMI_DIP_INDEX			0x730
