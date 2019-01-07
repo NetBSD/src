@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.10 2018/08/09 06:26:47 mrg Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.11 2019/01/07 03:00:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -33,9 +33,15 @@
 
 #define XHCI_XFER_NTRB	20
 
+struct xhci_soft_trb {
+	uint64_t trb_0;
+	uint32_t trb_2;
+	uint32_t trb_3;
+};
+
 struct xhci_xfer {
 	struct usbd_xfer xx_xfer;
-	struct xhci_trb xx_trb[XHCI_XFER_NTRB];
+	struct xhci_soft_trb xx_trb[XHCI_XFER_NTRB];
 };
 
 #define XHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
@@ -119,7 +125,7 @@ struct xhci_softc {
 	kcondvar_t sc_cmdbusy_cv;
 	kcondvar_t sc_command_cv;
 	bus_addr_t sc_command_addr;
-	struct xhci_trb sc_result_trb;
+	struct xhci_soft_trb sc_result_trb;
 	bool sc_resultpending;
 
 	bool sc_ac64;
