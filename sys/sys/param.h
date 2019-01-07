@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.576 2019/01/07 22:00:33 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.577 2019/01/07 22:05:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -181,7 +181,7 @@
 #endif
 
 #ifndef MAXPHYS
-#define	MAXPHYS		(64 * 1024)     /* max raw I/O transfer size */
+#define	MAXPHYS		(64 * 1024)		/* max raw I/O transfer size */
 #endif
 
 /* pages ("clicks") to disk blocks */
