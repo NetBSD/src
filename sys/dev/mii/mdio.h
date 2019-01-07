@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.9 2018/07/06 01:58:12 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.10 2019/01/07 01:37:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -633,7 +633,22 @@
 #define MDIO_AN_BPETHSTAT	48  /* BP Ethernet status */
 	/* Values 49 to 59 are reserved */
 #define	MDIO_AN_EEEADVERT	60  /* EEE advertisement */
+#define	AN_EEEADVERT_100G_CR4	0x2000	/* 100GBASE-CR4 */
+#define	AN_EEEADVERT_100G_KR4	0x1000	/* 100GBASE-KR4 */
+#define	AN_EEEADVERT_100G_KP4	0x0800	/* 100GBASE-KP4 */
+#define	AN_EEEADVERT_100G_CR10	0x0400	/* 100GBASE-CR10 */
+#define	AN_EEEADVERT_40G_CR4	0x0100	/* 40GBASE-CR4 */
+#define	AN_EEEADVERT_40G_KR4	0x0080	/* 40GBASE-KR4 */
+#define	AN_EEEADVERT_10G_KR	0x0040	/* 10GBASE-KR */
+#define	AN_EEEADVERT_10G_KX4	0x0020	/* 10GBASE-KX4 */
+#define	AN_EEEADVERT_1000_KX	0x0010	/* 1000BASE-KX */
+#define	AN_EEEADVERT_10G_T	0x0008	/* 10GBASE-T */
+#define	AN_EEEADVERT_1000_T	0x0004	/* 1000BASE-T */
+#define	AN_EEEADVERT_100_TX	0x0002	/* 100BASE-TX */
+
 #define	MDIO_AN_EEELPABLTY	61  /* EEE LP ability */
+	/* bitmap is the same as MDIO_AN_EEEADVERT(7.60) */
+
 	/* Values 62 to 32767 are reserved */
 	/* Values 32768 to 65535 are vendor specific */
 
