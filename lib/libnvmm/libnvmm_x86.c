@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.11 2019/01/07 13:47:33 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.12 2019/01/07 16:30:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -576,7 +576,6 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 	if (is_mmio) {
 		mem.data = data;
-		mem.gva = gva;
 		mem.gpa = gpa;
 		mem.write = false;
 		mem.size = size;
@@ -627,7 +626,6 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 	if (is_mmio) {
 		mem.data = data;
-		mem.gva = gva;
 		mem.gpa = gpa;
 		mem.write = true;
 		mem.size = size;
@@ -2687,30 +2685,6 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 }
 
 static int
-store_to_mem(struct nvmm_machine *mach, struct nvmm_x64_state *state,
-    struct x86_instr *instr, struct x86_store *store, struct nvmm_mem *mem)
-{
-	nvmm_prot_t prot;
-	int ret;
-
-	ret = store_to_gva(state, instr, store, &mem->gva, mem->size);
-	if (ret == -1)
-		return -1;
-
-	if ((mem->gva & PAGE_MASK) + mem->size > PAGE_SIZE) {
-		/* Don't allow a cross-page MMIO. */
-		errno = EINVAL;
-		return -1;
-	}
-
-	ret = x86_gva_to_gpa(mach, state, mem->gva, &mem->gpa, &prot);
-	if (ret == -1)
-		return -1;
-
-	return 0;
-}
-
-static int
 fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
 {
 	uint8_t inst_bytes[15], byte;
@@ -2820,110 +2794,66 @@ assist_mem_double(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 static int
 assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
-    struct x86_instr *instr)
+    struct x86_instr *instr, struct nvmm_exit *exit)
 {
 	struct nvmm_mem mem;
 	uint8_t membuf[8];
 	uint64_t val;
-	int ret;
 
 	memset(membuf, 0, sizeof(membuf));
+
+	mem.gpa = exit->u.mem.gpa;
+	mem.size = instr->operand_size;
 	mem.data = membuf;
 
+	/* Determine the direction. */
 	switch (instr->src.type) {
 	case STORE_REG:
 		if (instr->src.disp.type != DISP_NONE) {
 			/* Indirect access. */
 			mem.write = false;
-			mem.size = instr->operand_size;
-			ret = store_to_mem(mach, state, instr, &instr->src,
-			    &mem);
-			if (ret == -1)
-				return -1;
 		} else {
 			/* Direct access. */
 			mem.write = true;
-			mem.size = instr->operand_size;
+		}
+		break;
+	case STORE_IMM:
+		mem.write = true;
+		break;
+	case STORE_SIB:
+		mem.write = false;
+		break;
+	case STORE_DMO:
+		mem.write = false;
+		break;
+	default:
+		DISASSEMBLER_BUG();
+	}
+
+	if (mem.write) {
+		switch (instr->src.type) {
+		case STORE_REG:
+			if (instr->src.disp.type != DISP_NONE) {
+				DISASSEMBLER_BUG();
+			}
 			val = state->gprs[instr->src.u.reg->num];
 			val = __SHIFTOUT(val, instr->src.u.reg->mask);
 			memcpy(mem.data, &val, mem.size);
-		}
-		break;
-
-	case STORE_IMM:
-		mem.write = true;
-		mem.size = instr->src.u.imm.size;
-		memcpy(mem.data, &instr->src.u.imm.data, mem.size);
-		break;
-
-	case STORE_SIB:
-		mem.write = false;
-		mem.size = instr->operand_size;
-		ret = store_to_mem(mach, state, instr, &instr->src, &mem);
-		if (ret == -1)
-			return -1;
-		break;
-
-	case STORE_DMO:
-		mem.write = false;
-		mem.size = instr->operand_size;
-		ret = store_to_mem(mach, state, instr, &instr->src, &mem);
-		if (ret == -1)
-			return -1;
-		break;
-
-	default:
-		return -1;
-	}
-
-	switch (instr->dst.type) {
-	case STORE_REG:
-		if (instr->dst.disp.type != DISP_NONE) {
-			if (__predict_false(!mem.write)) {
-				DISASSEMBLER_BUG();
-			}
-			mem.size = instr->operand_size;
-			ret = store_to_mem(mach, state, instr, &instr->dst,
-			    &mem);
-			if (ret == -1)
-				return -1;
-		} else {
-			/* nothing */
-		}
-		break;
-
-	case STORE_IMM:
-		/* The dst can't be an immediate. */
-		DISASSEMBLER_BUG();
-
-	case STORE_SIB:
-		if (__predict_false(!mem.write)) {
+			break;
+		case STORE_IMM:
+			memcpy(mem.data, &instr->src.u.imm.data, mem.size);
+			break;
+		default:
 			DISASSEMBLER_BUG();
 		}
-		mem.size = instr->operand_size;
-		ret = store_to_mem(mach, state, instr, &instr->dst, &mem);
-		if (ret == -1)
-			return -1;
-		break;
-
-	case STORE_DMO:
-		if (__predict_false(!mem.write)) {
-			DISASSEMBLER_BUG();
-		}
-		mem.size = instr->operand_size;
-		ret = store_to_mem(mach, state, instr, &instr->dst, &mem);
-		if (ret == -1)
-			return -1;
-		break;
-
-	default:
-		return -1;
 	}
 
 	(*instr->emul)(&mem, __callbacks.mem, state->gprs);
 
 	if (!mem.write) {
-		/* instr->dst.type == STORE_REG */
+		if (instr->dst.type != STORE_REG) {
+			DISASSEMBLER_BUG();
+		}
 		memcpy(&val, mem.data, sizeof(uint64_t));
 		val = __SHIFTIN(val, instr->dst.u.reg->mask);
 		state->gprs[instr->dst.u.reg->num] &= ~instr->dst.u.reg->mask;
@@ -2979,7 +2909,7 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	if (instr.opcode->movs) {
 		ret = assist_mem_double(mach, &state, &instr);
 	} else {
-		ret = assist_mem_single(mach, &state, &instr);
+		ret = assist_mem_single(mach, &state, &instr, exit);
 	}
 	if (ret == -1) {
 		errno = ENODEV;
