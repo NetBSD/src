@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.86 2019/01/04 14:56:25 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.87 2019/01/07 13:50:37 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2180,4 +2180,34 @@ sys/dev/usb/xhci.c				1.100
 
 	Fix polled device access.
 	[mrg, ticket #1155]
+
+sys/arch/evbmips/conf/ADM5120			1.27
+sys/arch/evbmips/conf/ADM5120-NB		1.25
+sys/arch/evbmips/conf/ADM5120-USB		1.27
+sys/arch/evbmips/conf/ALCHEMY			1.65
+sys/arch/evbmips/conf/AP30			1.38
+sys/arch/evbmips/conf/CI20			1.27
+sys/arch/evbmips/conf/CPMBR1400			1.30
+sys/arch/evbmips/conf/DB120			1.21
+sys/arch/evbmips/conf/ERLITE			1.21
+sys/arch/evbmips/conf/GDIUM			1.35
+sys/arch/evbmips/conf/LINKITSMART7688		1.10
+sys/arch/evbmips/conf/LOONGSON			1.41
+sys/arch/evbmips/conf/MALTA			1.94
+sys/arch/evbmips/conf/MERAKI			1.32
+sys/arch/evbmips/conf/RB153			1.22
+sys/arch/evbmips/conf/RB433UAH			1.18
+sys/arch/evbmips/conf/SBMIPS			1.8
+sys/arch/evbmips/conf/WGT624V3			1.29
+sys/arch/evbmips/conf/XLSATX			1.28
+sys/arch/evbmips/conf/ZYXELKX			1.15
+
+	Enable the per-priority cyclical scan buffer queue strategy on evbmips
+	kernels.
+	[sevan, ticket #1156]
+
+sys/dev/pci/mpii.c				1.19
+
+	Fix LUN handling (byte order issue).
+	[kardel, ticket #1157]
 
