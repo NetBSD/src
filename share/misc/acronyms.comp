@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.222 2018/12/30 21:58:11 sevan Exp $
+$NetBSD: acronyms.comp,v 1.223 2019/01/07 18:48:07 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -14,6 +14,7 @@ ACK	Amsterdam compiler kit
 ACK	acknowledgement
 ACL	access control list
 ACL	active current loop
+ACL	asynchronous connection less
 ACP	auxiliary control {process,program}
 ACPI	advanced configuration and power interface
 ACS	access control set
@@ -742,6 +743,7 @@ LDR	light-dependent resistor
 LDT	local descriptor table
 LE	logical extent
 LED	light emitting diode
+LELL	low energy link layer
 LER	label edge router
 LF	line feed
 LF	low frequency
@@ -769,6 +771,7 @@ LLMNR	link-local multicast name resolution
 LLVM	Low Level Virtual Machine
 LM	long mode
 LMM	link management mode
+LMP	link management protocol
 LNO	loop nest optimization
 LOC	lines of code
 LOM	lights-out management
@@ -1261,6 +1264,7 @@ SCI	system control interrupt
 SCM	software configuration management
 SCM	source code management
 SCM	storage-class memory
+SCO	synchronous connection orientated
 SCP	secure copy
 SCSI	Small Computer System Interface
 SCTP	Stream Control Transmission Protocol
