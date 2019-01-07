@@ -30,7 +30,7 @@ else
 AM_CPPFLAGS	=	-I$(top_srcdir)/include -D_LINUX
 endif
 
-LDADD		=	$(top_builddir)/lib/libtpm_tspi.la -ltspi $(top_builddir)/lib/libtpm_unseal.la -ltpm_unseal -lcrypto
+LDADD		=	$(top_builddir)/lib/libtpm_tspi.la -ltspi $(top_builddir)/lib/libtpm_unseal.la -ltpm_unseal -lcrypto @INTLLIBS@
 
 tpm_sealdata_SOURCES = tpm_sealdata.c
 tpm_unsealdata_SOURCES = tpm_unsealdata.c

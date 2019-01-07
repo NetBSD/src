@@ -23,6 +23,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "tpm_nvcommon.h"
 #include "tpm_tspi.h"

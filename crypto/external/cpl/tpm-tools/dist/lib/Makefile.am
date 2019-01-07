@@ -44,7 +44,7 @@ libtpm_utils_la_SOURCES	=	tpm_utils.c \
 #
 # TSPI interface library
 libtpm_tspi_la_SOURCES	=	tpm_tspi.c
-libtpm_tspi_la_LIBADD	=	libtpm_utils.la -ldl
+libtpm_tspi_la_LIBADD	=	libtpm_utils.la -ldl @INTLLIBS@
 
 #
 # PKCS#11 interface library
@@ -52,7 +52,7 @@ if P11_SUPPORT
 noinst_LTLIBRARIES	+=	libtpm_pkcs11.la
 
 libtpm_pkcs11_la_SOURCES=	tpm_pkcs11.c
-libtpm_pkcs11_la_LIBADD	=	libtpm_utils.la
+libtpm_pkcs11_la_LIBADD	=	libtpm_utils.la @INTLLIBS@
 endif
 
 #
@@ -80,4 +80,4 @@ endif
 # Unseal library - for addition to existing apps, counter part of seal cmd
 libtpm_unseal_la_SOURCES =	tpm_unseal.c
 libtpm_unseal_la_LDFLAGS =	-shared -version-info 1:0:0
-libtpm_unseal_la_LIBADD  =	-ltspi  libtpm_tspi.la
+libtpm_unseal_la_LIBADD  =	-ltspi  libtpm_tspi.la -lcrypto @INTLLIBS@

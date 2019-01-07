@@ -72,7 +72,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/nls.m4 \
 	$(top_srcdir)/m4/po.m4 $(top_srcdir)/m4/progtest.m4 \
-	$(top_srcdir)/configure.in
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -156,7 +156,6 @@ CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
-DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO = @ECHO@
@@ -189,7 +188,6 @@ LTLIBICONV = @LTLIBICONV@
 LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MSGFMT = @MSGFMT@
@@ -207,7 +205,6 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
-PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 POSUB = @POSUB@
@@ -225,7 +222,6 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
-ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -260,6 +256,7 @@ libexecdir = @libexecdir@
 # Gettext support
 localedir = $(datadir)/locale
 localstatedir = @localstatedir@
+lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -298,9 +295,9 @@ libtpm_utils_la_SOURCES = tpm_utils.c \
 #
 # TSPI interface library
 libtpm_tspi_la_SOURCES = tpm_tspi.c
-libtpm_tspi_la_LIBADD = libtpm_utils.la -ldl
+libtpm_tspi_la_LIBADD = libtpm_utils.la -ldl @INTLLIBS@
 @P11_SUPPORT_TRUE@libtpm_pkcs11_la_SOURCES = tpm_pkcs11.c
-@P11_SUPPORT_TRUE@libtpm_pkcs11_la_LIBADD = libtpm_utils.la
+@P11_SUPPORT_TRUE@libtpm_pkcs11_la_LIBADD = libtpm_utils.la @INTLLIBS@
 
 #
 # Installed Libraries
@@ -327,7 +324,7 @@ libtpm_tspi_la_LIBADD = libtpm_utils.la -ldl
 # Unseal library - for addition to existing apps, counter part of seal cmd
 libtpm_unseal_la_SOURCES = tpm_unseal.c
 libtpm_unseal_la_LDFLAGS = -shared -version-info 1:0:0
-libtpm_unseal_la_LIBADD = -ltspi  libtpm_tspi.la
+libtpm_unseal_la_LIBADD = -ltspi  libtpm_tspi.la -lcrypto @INTLLIBS@
 all: all-am
 
 .SUFFIXES:
