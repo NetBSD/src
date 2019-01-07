@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.280 2018/12/02 21:00:13 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.281 2019/01/07 13:09:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -239,6 +239,10 @@ int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 void	vprintf(const char *, va_list) __printflike(1, 0);
 
 int	vsnprintf(char *, size_t, const char *, va_list) __printflike(3, 0);
+
+void	vprintf_flags(int, const char *, va_list) __printflike(2, 0);
+
+void	printf_flags(int, const char *, ...) __printflike(2, 3);
 
 int	humanize_number(char *, size_t, uint64_t, const char *, int);
 
