@@ -1,4 +1,4 @@
-#	$NetBSD: CPMBR1400,v 1.22 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: CPMBR1400,v 1.22.6.1 2019/01/07 13:46:57 martin Exp $
 
 include		"arch/evbmips/conf/std.rasoc"
 
@@ -109,6 +109,11 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and immutable) behave as system flags.
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 options 	GATEWAY		# packet forwarding
