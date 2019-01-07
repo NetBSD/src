@@ -499,8 +499,7 @@ tpm_rsp_parse(TPM_COMMAND_CODE ordinal, BYTE *b, UINT32 len, ...)
 		} else if (auth2) {
 			offset1 = offset2 = len - TSS_TPM_RSP_BLOB_AUTH_LEN;
 			UnloadBlob_Auth(&offset1, b, auth2);
-		} else
-			offset2 = len;
+		}
 
 		offset1 = TSS_TPM_TXBLOB_HDR_LEN;
 		offset2 -= TSS_TPM_TXBLOB_HDR_LEN;
@@ -710,11 +709,14 @@ tpm_rsp_parse(TPM_COMMAND_CODE ordinal, BYTE *b, UINT32 len, ...)
 			return TCSERR(TSS_E_OUTOFMEMORY);
 		}
 
+		if ((offset1 + offset2) > TSS_TPM_TXBLOB_SIZE)
+			return TCSERR(TSS_E_INTERNAL_ERROR);
+
 		memcpy(*data, &b[offset1], offset2);
 		*data_len = offset2;
 		break;
 	}
-	/* TPM BLOB: BLOB, optional DIGEST */
+	/* TPM BLOB: TPM_PUBKEY, optional DIGEST */
 	case TPM_ORD_CreateEndorsementKeyPair:
 	case TPM_ORD_ReadPubek:
 	{
@@ -731,8 +733,15 @@ tpm_rsp_parse(TPM_COMMAND_CODE ordinal, BYTE *b, UINT32 len, ...)
 		if (digest1) {
 			offset1 = offset2 = len - TPM_DIGEST_SIZE;
 			memcpy(digest1, &b[offset2], TPM_DIGEST_SIZE);
-		} else
+
+			if ((offset2 + TPM_DIGEST_SIZE) > TSS_TPM_TXBLOB_SIZE)
+				return TCSERR(TSS_E_INTERNAL_ERROR);
+		} else {
 			offset2 = len;
+
+			if (offset2 > TSS_TPM_TXBLOB_SIZE)
+				return TCSERR(TSS_E_INTERNAL_ERROR);
+		}
 
 		offset1 = TSS_TPM_TXBLOB_HDR_LEN;
 		offset2 -= offset1;
@@ -760,6 +769,9 @@ tpm_rsp_parse(TPM_COMMAND_CODE ordinal, BYTE *b, UINT32 len, ...)
 			LogError("Internal error for ordinal 0x%x", ordinal);
 			return TCSERR(TSS_E_INTERNAL_ERROR);
 		}
+
+		if (len > TSS_TPM_TXBLOB_SIZE)
+			return TCSERR(TSS_E_INTERNAL_ERROR);
 
 		offset2 = len - TPM_DIGEST_SIZE;
 		memcpy(digest2, &b[offset2], TPM_DIGEST_SIZE);
@@ -905,6 +917,7 @@ tpm_rsp_parse(TPM_COMMAND_CODE ordinal, BYTE *b, UINT32 len, ...)
 	default:
 		LogError("Unknown ordinal: 0x%x", ordinal);
 		result = TCSERR(TSS_E_INTERNAL_ERROR);
+		va_end(ap);
 		break;
 	}
 
@@ -2184,6 +2197,7 @@ tpm_rqu_build(TPM_COMMAND_CODE ordinal, UINT64 *outOffset, BYTE *out_blob, ...)
 	}
 #endif
 	default:
+		va_end(ap);
 		LogError("Unknown ordinal: 0x%x", ordinal);
 		break;
 	}

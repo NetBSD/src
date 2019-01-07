@@ -25,7 +25,13 @@
 #if defined (HAVE_BYTEORDER_H)
 #include <sys/byteorder.h>
 #elif defined(HTOLE_DEFINED)
+
+#ifndef __APPLE__
 #include <endian.h>
+#else
+#include "portable_endian.h"
+#endif
+
 #define LE_16 htole16
 #define LE_32 htole32
 #define LE_64 htole64
@@ -651,7 +657,7 @@ psfile_remove_key(int fd, TSS_UUID *uuid)
 	/* head_offset now contains a pointer to where we want to truncate the
 	 * file. Zero out the old tail end of the file and truncate it. */
 
-	memset(buf, 0, sizeof(buf));
+	__tspi_memset(buf, 0, sizeof(buf));
 
 	/* Zero out the old tail end of the file */
 	if ((result = write_data(fd, (void *)buf, tail_offset - head_offset))) {
@@ -916,7 +922,7 @@ restart_search:
 					free(keyinfos);
 					return TSPERR(TSS_E_OUTOFMEMORY);
 				}
-				memset(&keyinfos[j], 0, sizeof(TSS_KM_KEYINFO));
+				__tspi_memset(&keyinfos[j], 0, sizeof(TSS_KM_KEYINFO));
 
 				if ((result = copy_key_info(fd, &keyinfos[j], &cache_entries[i]))) {
 					free(cache_entries);
@@ -1006,7 +1012,7 @@ psfile_get_registered_keys2(int fd,
 					}
 					/* Here the key UUID is found and needs to be copied for the array*/
 					/* Initializes the keyinfos with 0's*/
-					memset(&keyinfos[j], 0, sizeof(TSS_KM_KEYINFO2));
+					__tspi_memset(&keyinfos[j], 0, sizeof(TSS_KM_KEYINFO2));
 
 					if ((result = copy_key_info2(fd, &keyinfos[j], &cache_entries[i]))) {
 						free(cache_entries);

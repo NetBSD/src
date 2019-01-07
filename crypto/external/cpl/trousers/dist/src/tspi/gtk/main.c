@@ -65,7 +65,7 @@ DisplayPINWindow(BYTE *string, UINT32 *string_len, BYTE *popup)
 
   if (ud.string_len) {
 	  memcpy(string, ud.string, ud.string_len);
-	  memset(ud.string, 0, ud.string_len);
+	  __tspi_memset(ud.string, 0, ud.string_len);
 	  free(ud.string);
   }
   *string_len = ud.string_len;
@@ -107,7 +107,7 @@ DisplayNewPINWindow(BYTE *string, UINT32 *string_len, BYTE *popup)
 
   if (ud.string_len) {
 	  memcpy(string, ud.string, ud.string_len);
-	  memset(ud.string, 0, ud.string_len);
+	  __tspi_memset(ud.string, 0, ud.string_len);
 	  free(ud.string);
   }
   *string_len = ud.string_len;

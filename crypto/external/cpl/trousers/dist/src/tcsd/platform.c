@@ -9,7 +9,7 @@
  */
 
 
-#if (defined (__FreeBSD__) || defined (__OpenBSD__))
+#if (defined (__FreeBSD__) || defined (__OpenBSD__) || defined (__APPLE__))
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <err.h>
@@ -52,6 +52,7 @@ platform_get_runlevel()
 
 	ut.ut_type = RUN_LVL;
 
+	setutent();
 	next = getutid(&ut);
 
 	while (next != NULL) {
@@ -81,7 +82,7 @@ platform_get_runlevel()
 
 	return runlevel;
 }
-#elif (defined (__FreeBSD__) || defined (__OpenBSD__))
+#elif (defined (__FreeBSD__) || defined (__OpenBSD__) || defined (__APPLE__))
 
 char
 platform_get_runlevel()
@@ -112,7 +113,7 @@ MUTEX_DECLARE_INIT(utmp_lock);
 char
 platform_get_runlevel()
 {
-	char runlevel;
+	char runlevel = 'u';	/* unknown run level */
 	struct utmpx ut, *utp = NULL;
 
 	MUTEX_LOCK(utmp_lock);
