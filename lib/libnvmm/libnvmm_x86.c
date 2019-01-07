@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.10 2019/01/06 16:10:51 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.11 2019/01/07 13:47:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ x86_gva_64bit_canonical(gvaddr_t gva)
 
 static int
 x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
-    gvaddr_t gva, gpaddr_t *gpa, bool has_pse, nvmm_prot_t *prot)
+    gvaddr_t gva, gpaddr_t *gpa, nvmm_prot_t *prot)
 {
 	gpaddr_t L4gpa, L3gpa, L2gpa, L1gpa;
 	uintptr_t L4hva, L3hva, L2hva, L1hva;
@@ -325,8 +325,6 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 		*prot &= ~NVMM_PROT_WRITE;
 	if (pte & PG_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if ((pte & PG_PS) && !has_pse)
-		return -1;
 	if (pte & PG_PS) {
 		*gpa = (pte & PTE64_L3_FRAME);
 		*gpa = *gpa + (gva & (PTE64_L2_MASK|PTE64_L1_MASK));
@@ -347,8 +345,6 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 		*prot &= ~NVMM_PROT_WRITE;
 	if (pte & PG_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if ((pte & PG_PS) && !has_pse)
-		return -1;
 	if (pte & PG_PS) {
 		*gpa = (pte & PTE64_L2_FRAME);
 		*gpa = *gpa + (gva & PTE64_L1_MASK);
@@ -402,7 +398,7 @@ x86_gva_to_gpa(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 	if (is_pae && is_lng) {
 		/* 64bit */
-		ret = x86_gva_to_gpa_64bit(mach, cr3, gva, gpa, has_pse, prot);
+		ret = x86_gva_to_gpa_64bit(mach, cr3, gva, gpa, prot);
 	} else if (is_pae && !is_lng) {
 		/* 32bit PAE */
 		ret = x86_gva_to_gpa_32bit_pae(mach, cr3, gva, gpa, has_pse,
@@ -553,7 +549,6 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
     gvaddr_t gva, uint8_t *data, size_t size)
 {
 	struct nvmm_mem mem;
-	uint8_t membuf[8];
 	nvmm_prot_t prot;
 	gpaddr_t gpa;
 	uintptr_t hva;
@@ -580,13 +575,12 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	is_mmio = (ret == -1);
 
 	if (is_mmio) {
-		mem.data = membuf;
+		mem.data = data;
 		mem.gva = gva;
 		mem.gpa = gpa;
 		mem.write = false;
 		mem.size = size;
 		(*__callbacks.mem)(&mem);
-		memcpy(data, mem.data, size);
 	} else {
 		memcpy(data, (uint8_t *)hva, size);
 	}
@@ -606,7 +600,6 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
     gvaddr_t gva, uint8_t *data, size_t size)
 {
 	struct nvmm_mem mem;
-	uint8_t membuf[8];
 	nvmm_prot_t prot;
 	gpaddr_t gpa;
 	uintptr_t hva;
@@ -633,11 +626,10 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	is_mmio = (ret == -1);
 
 	if (is_mmio) {
-		mem.data = membuf;
+		mem.data = data;
 		mem.gva = gva;
 		mem.gpa = gpa;
 		mem.write = true;
-		memcpy(mem.data, data, size);
 		mem.size = size;
 		(*__callbacks.mem)(&mem);
 	} else {
@@ -878,7 +870,7 @@ enum x86_disp_type {
 
 struct x86_disp {
 	enum x86_disp_type type;
-	uint8_t data[4];
+	uint64_t data; /* 4 bytes, but can be sign-extended */
 };
 
 enum REGMODRM__Mod {
@@ -919,7 +911,7 @@ struct x86_regmodrm {
 
 struct x86_immediate {
 	size_t size;	/* 1/2/4/8 */
-	uint8_t data[8];
+	uint64_t data;
 };
 
 struct x86_sib {
@@ -992,9 +984,9 @@ struct x86_opcode {
 	bool szoverride;
 	int defsize;
 	int allsize;
+	bool group1;
 	bool group11;
 	bool immediate;
-	int immsize;
 	int flags;
 	void (*emul)(struct nvmm_mem *, void (*)(struct nvmm_mem *), uint64_t *);
 };
@@ -1008,8 +1000,15 @@ struct x86_group_entry {
 #define OPSIZE_DOUB 0x04 /* 4 bytes */
 #define OPSIZE_QUAD 0x08 /* 8 bytes */
 
-#define FLAG_z	0x02
-#define FLAG_e	0x10
+#define FLAG_imm8	0x01
+#define FLAG_immz	0x02
+#define FLAG_ze		0x04
+
+static const struct x86_group_entry group1[8] = {
+	[1] = { .emul = x86_emul_or },
+	[4] = { .emul = x86_emul_and },
+	[6] = { .emul = x86_emul_xor }
+};
 
 static const struct x86_group_entry group11[8] = {
 	[0] = { .emul = x86_emul_mov }
@@ -1017,9 +1016,27 @@ static const struct x86_group_entry group11[8] = {
 
 static const struct x86_opcode primary_opcode_table[] = {
 	/*
+	 * Group1
+	 */
+	{
+		/* Ev, Ib */
+		.byte = 0x83,
+		.regmodrm = true,
+		.regtorm = true,
+		.szoverride = true,
+		.defsize = -1,
+		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
+		.group1 = true,
+		.immediate = true,
+		.flags = FLAG_imm8,
+		.emul = NULL /* group1 */
+	},
+
+	/*
 	 * Group11
 	 */
 	{
+		/* Eb, Ib */
 		.byte = 0xC6,
 		.regmodrm = true,
 		.regtorm = true,
@@ -1028,10 +1045,10 @@ static const struct x86_opcode primary_opcode_table[] = {
 		.allsize = -1,
 		.group11 = true,
 		.immediate = true,
-		.immsize = OPSIZE_BYTE,
 		.emul = NULL /* group11 */
 	},
 	{
+		/* Ev, Iz */
 		.byte = 0xC7,
 		.regmodrm = true,
 		.regtorm = true,
@@ -1040,8 +1057,7 @@ static const struct x86_opcode primary_opcode_table[] = {
 		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
 		.group11 = true,
 		.immediate = true,
-		.immsize = -1, /* special, Z */
-		.flags = FLAG_z,
+		.flags = FLAG_immz,
 		.emul = NULL /* group11 */
 	},
 
@@ -1340,7 +1356,7 @@ static const struct x86_opcode secondary_opcode_table[] = {
 		.szoverride = true,
 		.defsize = OPSIZE_BYTE,
 		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
-		.flags = FLAG_e,
+		.flags = FLAG_ze,
 		.emul = x86_emul_mov
 	},
 	{
@@ -1351,7 +1367,7 @@ static const struct x86_opcode secondary_opcode_table[] = {
 		.szoverride = true,
 		.defsize = OPSIZE_WORD,
 		.allsize = OPSIZE_WORD|OPSIZE_DOUB|OPSIZE_QUAD,
-		.flags = FLAG_e,
+		.flags = FLAG_ze,
 		.emul = x86_emul_mov
 	},
 };
@@ -1756,33 +1772,53 @@ node_dmo(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	return 0;
 }
 
+static uint64_t
+sign_extend(uint64_t val, int size)
+{
+	if (size == 1) {
+		if (val & __BIT(7))
+			val |= 0xFFFFFFFFFFFFFF00;
+	} else if (size == 2) {
+		if (val & __BIT(15))
+			val |= 0xFFFFFFFFFFFF0000;
+	} else if (size == 4) {
+		if (val & __BIT(31))
+			val |= 0xFFFFFFFF00000000;
+	}
+	return val;
+}
+
 static int
 node_immediate(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	const struct x86_opcode *opcode = instr->opcode;
 	struct x86_store *store;
-	uint8_t flags;
 	uint8_t immsize;
+	size_t sesize = 0;
 
 	/* The immediate is the source */
 	store = &instr->src;
 	immsize = instr->operand_size;
 
-	/* Get the correct flags */
-	flags = opcode->flags;
-	if ((flags & FLAG_z) && (immsize == 8)) {
-		/* 'z' operates here */
+	if (opcode->flags & FLAG_imm8) {
+		sesize = immsize;
+		immsize = 1;
+	} else if ((opcode->flags & FLAG_immz) && (immsize == 8)) {
+		sesize = immsize;
 		immsize = 4;
 	}
 
 	store->type = STORE_IMM;
 	store->u.imm.size = immsize;
-
-	if (fsm_read(fsm, store->u.imm.data, store->u.imm.size) == -1) {
+	if (fsm_read(fsm, (uint8_t *)&store->u.imm.data, immsize) == -1) {
 		return -1;
 	}
-
 	fsm_advance(fsm, store->u.imm.size, NULL);
+
+	if (sesize != 0) {
+		store->u.imm.data = sign_extend(store->u.imm.data, sesize);
+		store->u.imm.size = sesize;
+	}
 
 	return 0;
 }
@@ -1791,6 +1827,7 @@ static int
 node_disp(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
 	const struct x86_opcode *opcode = instr->opcode;
+	uint64_t data = 0;
 	size_t n;
 
 	if (instr->strm->disp.type == DISP_1) {
@@ -1799,9 +1836,15 @@ node_disp(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		n = 4;
 	}
 
-	if (fsm_read(fsm, instr->strm->disp.data, n) == -1) {
+	if (fsm_read(fsm, (uint8_t *)&data, n) == -1) {
 		return -1;
 	}
+
+	if (__predict_true(fsm->is64bit)) {
+		data = sign_extend(data, n);
+	}
+
+	instr->strm->disp.data = data;
 
 	if (opcode->immediate) {
 		fsm_advance(fsm, n, node_immediate);
@@ -1903,12 +1946,7 @@ get_register_reg(struct x86_instr *instr, const struct x86_opcode *opcode)
 	const struct x86_reg *reg;
 	size_t regsize;
 
-	if ((opcode->flags & FLAG_z) && (instr->operand_size == 8)) {
-		/* 'z' operates here */
-		regsize = 4;
-	} else {
-		regsize = instr->operand_size;
-	}
+	regsize = instr->operand_size;
 
 	reg = &gpr_map[instr->rexpref.r][enc][regsize-1];
 	if (reg->num == -1) {
@@ -1926,12 +1964,7 @@ get_register_rm(struct x86_instr *instr, const struct x86_opcode *opcode)
 	size_t regsize;
 
 	if (instr->strm->disp.type == DISP_NONE) {
-		if ((opcode->flags & FLAG_z) && (instr->operand_size == 8)) {
-			/* 'z' operates here */
-			regsize = 4;
-		} else {
-			regsize = instr->operand_size;
-		}
+		regsize = instr->operand_size;
 	} else {
 		/* Indirect access, the size is that of the address. */
 		regsize = instr->address_size;
@@ -2015,7 +2048,12 @@ node_regmodrm(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	 * Special cases: Groups. The REG field of REGMODRM is the index in
 	 * the group. op1 gets overwritten in the Immediate node, if any.
 	 */
-	if (opcode->group11) {
+	if (opcode->group1) {
+		if (group1[instr->regmodrm.reg].emul == NULL) {
+			return -1;
+		}
+		instr->emul = group1[instr->regmodrm.reg].emul;
+	} else if (opcode->group11) {
 		if (group11[instr->regmodrm.reg].emul == NULL) {
 			return -1;
 		}
@@ -2227,7 +2265,7 @@ node_secondary_opcode(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	instr->operand_size = get_operand_size(fsm, instr);
 	instr->address_size = get_address_size(fsm, instr);
 
-	if (opcode->flags & FLAG_e) {
+	if (opcode->flags & FLAG_ze) {
 		/*
 		 * Compute the mask for zero-extend. Update the operand size,
 		 * we move fewer bytes.
@@ -2597,7 +2635,6 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 	gvaddr_t gva = 0;
 	uint64_t reg;
 	int ret, seg;
-	uint32_t *p;
 
 	if (store->type == STORE_SIB) {
 		sib = &store->u.sib;
@@ -2618,8 +2655,7 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 	}
 
 	if (store->disp.type != DISP_NONE) {
-		p = (uint32_t *)&store->disp.data[0];
-		gva += *p;
+		gva += store->disp.data;
 	}
 
 	if (!is_long_mode(state)) {
@@ -2791,7 +2827,7 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	uint64_t val;
 	int ret;
 
-	memset(&mem, 0, sizeof(mem));
+	memset(membuf, 0, sizeof(membuf));
 	mem.data = membuf;
 
 	switch (instr->src.type) {
@@ -2817,7 +2853,7 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	case STORE_IMM:
 		mem.write = true;
 		mem.size = instr->src.u.imm.size;
-		memcpy(mem.data, instr->src.u.imm.data, mem.size);
+		memcpy(mem.data, &instr->src.u.imm.data, mem.size);
 		break;
 
 	case STORE_SIB:
