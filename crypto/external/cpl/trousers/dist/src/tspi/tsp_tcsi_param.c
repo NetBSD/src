@@ -15,7 +15,8 @@
 
 #ifndef __APPLE__
 #include <limits.h>
-#else
+#endif
+#ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 64
 #endif
 
@@ -99,7 +100,7 @@ int
 get_hostname_from_env(char **host_str, unsigned *len)
 {
 	char *env_host, *tmp_str = NULL;
-	unsigned env_len;
+	size_t env_len;
 
 	// Tries to retrieve from env var first.
 	env_host = getenv(HOSTNAME_ENV_VAR);
