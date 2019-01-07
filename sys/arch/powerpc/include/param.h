@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 2017/01/14 21:33:09 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.31 2019/01/07 22:00:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,12 +75,7 @@
 #define	NBPG		(1 << PGSHIFT)	/* Page size */
 #define	PGOFSET		(NBPG - 1)
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	NBPG
-#ifndef MAXPHYS
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-#endif
 
 #define	USPACE		(UPAGES * NBPG)
 
