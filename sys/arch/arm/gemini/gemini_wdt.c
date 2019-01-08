@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_wdt.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_wdt.c,v 1.4 2019/01/08 19:41:10 jdolecek Exp $	*/
 
 /*
  * OMAP watchdog timers, common code
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/wdog.h>
 
-#include <machine/param.h>
 #include <sys/bus.h>
 #include <dev/sysmon/sysmonvar.h>
 
