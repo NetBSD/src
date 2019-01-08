@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.83 2018/12/26 01:47:37 sevan Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.84 2019/01/08 08:22:20 tih Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.83 2018/12/26 01:47:37 sevan Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.84 2019/01/08 08:22:20 tih Exp $");
 #endif /* not lint */
 
 /*
@@ -365,7 +365,7 @@ labelvmstat(void)
 		mvprintw(DISKROW, DISKCOL + 1 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "seeks");
 		mvprintw(DISKROW, DISKCOL + 2 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "xfers");
 		mvprintw(DISKROW, DISKCOL + 3 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "bytes");
-		mvprintw(DISKROW, DISKCOL + 4 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "%%busy");
+		mvprintw(DISKROW, DISKCOL + 4 * DISKCOLWIDTH, "%*s", DISKCOLWIDTH, "%busy");
 	}
 
 	/* Middle column */
