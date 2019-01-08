@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.13 2019/01/07 18:13:34 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.14 2019/01/08 07:34:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -2902,11 +2902,6 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		return -1;
 	}
 
-	if (__predict_false(instr.legpref.repn)) {
-		errno = ENODEV;
-		return -1;
-	}
-
 	if (instr.opcode->movs) {
 		ret = assist_mem_double(mach, &state, &instr);
 	} else {
@@ -2917,10 +2912,14 @@ nvmm_assist_mem(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 		return -1;
 	}
 
-	if (instr.legpref.rep) {
+	if (instr.legpref.rep || instr.legpref.repn) {
 		cnt = rep_dec_apply(&state, instr.address_size);
 		if (cnt == 0) {
 			state.gprs[NVMM_X64_GPR_RIP] += instr.len;
+		} else if (__predict_false(instr.legpref.repn)) {
+			if (state.gprs[NVMM_X64_GPR_RFLAGS] & PSL_Z) {
+				state.gprs[NVMM_X64_GPR_RIP] += instr.len;
+			}
 		}
 	} else {
 		state.gprs[NVMM_X64_GPR_RIP] += instr.len;
