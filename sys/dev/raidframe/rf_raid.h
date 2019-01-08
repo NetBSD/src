@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.45 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.46 2019/01/08 07:18:18 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -214,6 +214,7 @@ struct RF_Raid_s {
 	int     copyback_in_progress;
 	int     adding_hot_spare;
 
+	rf_declare_cond2(parity_rewrite_cv);
 	rf_declare_cond2(adding_hot_spare_cv);
 
 	/*
