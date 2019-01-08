@@ -19,36 +19,61 @@
 #include <link.h>
 
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_getauxval.h"
 #include "sanitizer_common/sanitizer_linux.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
 namespace __lsan {
 
 static const char kLinkerName[] = "ld";
-// We request 2 modules matching "ld", so we can print a warning if there's more
-// than one match. But only the first one is actually used.
-static char linker_placeholder[2 * sizeof(LoadedModule)] ALIGNED(64);
-static LoadedModule *linker = 0;
 
-static bool IsLinker(const char* full_name) {
-  return LibraryNameIs(full_name, kLinkerName);
+static char linker_placeholder[sizeof(LoadedModule)] ALIGNED(64);
+static LoadedModule *linker = nullptr;
+
+static bool IsLinker(const LoadedModule& module) {
+#if SANITIZER_USE_GETAUXVAL
+  return module.base_address() == getauxval(AT_BASE);
+#else
+  return LibraryNameIs(module.full_name(), kLinkerName);
+#endif  // SANITIZER_USE_GETAUXVAL
+}
+
+__attribute__((tls_model("initial-exec")))
+THREADLOCAL int disable_counter;
+bool DisabledInThisThread() { return disable_counter > 0; }
+void DisableInThisThread() { disable_counter++; }
+void EnableInThisThread() {
+  if (disable_counter == 0) {
+    DisableCounterUnderflow();
+  }
+  disable_counter--;
 }
 
 void InitializePlatformSpecificModules() {
-  internal_memset(linker_placeholder, 0, sizeof(linker_placeholder));
-  uptr num_matches = GetListOfModules(
-      reinterpret_cast<LoadedModule *>(linker_placeholder), 2, IsLinker);
-  if (num_matches == 1) {
-    linker = reinterpret_cast<LoadedModule *>(linker_placeholder);
-    return;
+  ListOfModules modules;
+  modules.init();
+  for (LoadedModule &module : modules) {
+    if (!IsLinker(module))
+      continue;
+    if (linker == nullptr) {
+      linker = reinterpret_cast<LoadedModule *>(linker_placeholder);
+      *linker = module;
+      module = LoadedModule();
+    } else {
+      VReport(1, "LeakSanitizer: Multiple modules match \"%s\". "
+              "TLS and other allocations originating from linker might be "
+              "falsely reported as leaks.\n", kLinkerName);
+      linker->clear();
+      linker = nullptr;
+      return;
+    }
   }
-  if (num_matches == 0)
-    Report("LeakSanitizer: Dynamic linker not found. "
-           "TLS will not be handled correctly.\n");
-  else if (num_matches > 1)
-    Report("LeakSanitizer: Multiple modules match \"%s\". "
-           "TLS will not be handled correctly.\n", kLinkerName);
-  linker = 0;
+  if (linker == nullptr) {
+    VReport(1, "LeakSanitizer: Dynamic linker not found. TLS and other "
+               "allocations originating from linker might be falsely reported "
+                "as leaks.\n");
+  }
 }
 
 static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
@@ -63,64 +88,53 @@ static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
       continue;
     uptr begin = info->dlpi_addr + phdr->p_vaddr;
     uptr end = begin + phdr->p_memsz;
-    uptr allocator_begin = 0, allocator_end = 0;
-    GetAllocatorGlobalRange(&allocator_begin, &allocator_end);
-    if (begin <= allocator_begin && allocator_begin < end) {
-      CHECK_LE(allocator_begin, allocator_end);
-      CHECK_LT(allocator_end, end);
-      if (begin < allocator_begin)
-        ScanRangeForPointers(begin, allocator_begin, frontier, "GLOBAL",
-                             kReachable);
-      if (allocator_end < end)
-        ScanRangeForPointers(allocator_end, end, frontier, "GLOBAL",
-                             kReachable);
-    } else {
-      ScanRangeForPointers(begin, end, frontier, "GLOBAL", kReachable);
-    }
+    ScanGlobalRange(begin, end, frontier);
   }
   return 0;
 }
 
 // Scans global variables for heap pointers.
 void ProcessGlobalRegions(Frontier *frontier) {
-  // FIXME: dl_iterate_phdr acquires a linker lock, so we run a risk of
-  // deadlocking by running this under StopTheWorld. However, the lock is
-  // reentrant, so we should be able to fix this by acquiring the lock before
-  // suspending threads.
+  if (!flags()->use_globals) return;
   dl_iterate_phdr(ProcessGlobalRegionsCallback, frontier);
 }
 
-static uptr GetCallerPC(u32 stack_id) {
-  CHECK(stack_id);
-  uptr size = 0;
-  const uptr *trace = StackDepotGet(stack_id, &size);
-  // The top frame is our malloc/calloc/etc. The next frame is the caller.
-  if (size >= 2)
-    return trace[1];
-  return 0;
+LoadedModule *GetLinker() { return linker; }
+
+void ProcessPlatformSpecificAllocations(Frontier *frontier) {}
+
+struct DoStopTheWorldParam {
+  StopTheWorldCallback callback;
+  void *argument;
+};
+
+// While calling Die() here is undefined behavior and can potentially
+// cause race conditions, it isn't possible to intercept exit on linux,
+// so we have no choice but to call Die() from the atexit handler.
+void HandleLeaks() {
+  if (common_flags()->exitcode) Die();
 }
 
-// ForEachChunk callback. Identifies unreachable chunks which must be treated as
-// reachable. Marks them as reachable and adds them to the frontier.
-static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
-  CHECK(arg);
-  chunk = GetUserBegin(chunk);
-  LsanMetadata m(chunk);
-  if (m.allocated() && m.tag() != kReachable) {
-    if (linker->containsAddress(GetCallerPC(m.stack_trace_id()))) {
-      m.set_tag(kReachable);
-      reinterpret_cast<Frontier *>(arg)->push_back(chunk);
-    }
-  }
+static int DoStopTheWorldCallback(struct dl_phdr_info *info, size_t size,
+                                  void *data) {
+  DoStopTheWorldParam *param = reinterpret_cast<DoStopTheWorldParam *>(data);
+  StopTheWorld(param->callback, param->argument);
+  return 1;
 }
 
-// Handles dynamically allocated TLS blocks by treating all chunks allocated
-// from ld-linux.so as reachable.
-void ProcessPlatformSpecificAllocations(Frontier *frontier) {
-  if (!flags()->use_tls) return;
-  if (!linker) return;
-  ForEachChunk(ProcessPlatformSpecificAllocationsCb, frontier);
+// LSan calls dl_iterate_phdr() from the tracer task. This may deadlock: if one
+// of the threads is frozen while holding the libdl lock, the tracer will hang
+// in dl_iterate_phdr() forever.
+// Luckily, (a) the lock is reentrant and (b) libc can't distinguish between the
+// tracer task and the thread that spawned it. Thus, if we run the tracer task
+// while holding the libdl lock in the parent thread, we can safely reenter it
+// in the tracer. The solution is to run stoptheworld from a dl_iterate_phdr()
+// callback in the parent thread.
+void DoStopTheWorld(StopTheWorldCallback callback, void *argument) {
+  DoStopTheWorldParam param = {callback, argument};
+  dl_iterate_phdr(DoStopTheWorldCallback, &param);
 }
 
-}  // namespace __lsan
-#endif  // CAN_SANITIZE_LEAKS && SANITIZER_LINUX
+} // namespace __lsan
+
+#endif // CAN_SANITIZE_LEAKS && SANITIZER_LINUX
