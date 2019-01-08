@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.3 2019/01/08 17:14:52 christos Exp $	*/
+/*	$NetBSD: pdc.c,v 1.4 2019/01/08 19:14:08 christos Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -71,7 +71,6 @@
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/nvm.h>
-#include <machine/param.h>
 #include <machine/cpufunc.h>
 
 #include "dev_hppa.h"
