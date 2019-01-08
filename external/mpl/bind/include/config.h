@@ -150,11 +150,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-#ifndef __NetBSD__
-/* defined by the build process */
 /* Use AES for Client Cookie generation */
 #define AES_CC 1
-#endif
 
 /* define if ATF unit tests are to be built. */
 /* #undef ATF_TEST */
