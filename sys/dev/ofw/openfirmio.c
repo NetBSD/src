@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.13 2014/07/25 08:10:37 dholland Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.14 2019/01/08 07:46:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.13 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.14 2019/01/08 07:46:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,11 @@ static int openfirmgetstr (int, char *, char **);
 
 void openfirmattach (int);
 
-dev_type_ioctl(openfirmioctl);
+static dev_type_open(openfirmopen);
+static dev_type_ioctl(openfirmioctl);
 
 const struct cdevsw openfirm_cdevsw = {
-	.d_open = nullopen,
+	.d_open = openfirmopen,
 	.d_close = nullclose,
 	.d_read = noread,
 	.d_write = nowrite,
@@ -117,7 +118,18 @@ openfirmgetstr(int len, char *user, char **cpp)
 	return (error);
 }
 
-int
+static int
+openfirmopen(dev_t dev, int flag, int mode, struct lwp *l)
+{
+
+#ifdef __OPENFIRMIO_OPEN_CHECK_BROKEN
+	return __openfirmio_open_check_broken();
+#else
+	return 0;
+#endif
+}
+
+static int
 openfirmioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct ofiocdesc *of;
