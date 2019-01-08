@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1589 2019/01/07 15:44:47 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1590 2019/01/08 18:40:53 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -184,18 +184,6 @@ Todo[3]: net/base64.c is imported from bind but should be moved from net
 Todo[4]: Re-entrant functions of net/*
 Todo[5]: Reconcile the doc directory.
 
-Package:	binutils
-Version:	2.31.1
-Current Vers:	2.31.1
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
-Home Page:	http://www.gnu.org/software/binutils/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	thorpej, mrg
-License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
-Location:	external/gpl3/binutils/dist
-Notes:
-
 Package:	bozohttpd
 Version:	20170201
 Current Vers:	20170201
@@ -373,31 +361,6 @@ I neglected to add RCSIDs in the last import (except for nouveau, for
 which nouveau2netbsd adds them).  For the next import, remember to add
 them!
 
-Package:	gmake
-Version:	3.81 (Last GPlv2+ version)
-Current Vers:	4.2
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/make/
-Home Page:	http://www.gnu.org/software/make/
-Mailing List:	bug-make@gnu.org
-Responsible:	
-License:	GPLv2+ (3.81), GPLv3+ (3.82 and later)
-Location:	external/gpl2/gmake
-Notes:
-
-Package:	diffutils
-Version:	2.8.1 (Last GPLv2+ version)
-Current Vers:	3.6
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
-Home Page:	http://www.gnu.org/software/diffutils/
-Mailing List:	bug-diffutils@gnu.org
-Responsible:	
-License:	GPLv2+ (2.8.1), GPLv3+ (2.9 and later)
-Location:	external/gpl2/diffutils
-Notes:
-Use external/gpl2/diffutils/diffutils2netbsd for preparing the source tree
-for the import.
 
 Package:	ekermit
 Version:	1.7
@@ -496,6 +459,32 @@ When updating GDB, it is imperative to test that:
 	- Support for our kernel's remote serial debugging protocol
 	  ("options KGDB") works correctly.
 
+Package:	binutils
+Version:	2.31.1
+Current Vers:	2.31.1
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
+Home Page:	http://www.gnu.org/software/binutils/
+Mailing List:	bug-gnu-utils@gnu.org
+Responsible:	thorpej, mrg
+License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
+Location:	external/gpl3/binutils/dist
+Notes:
+
+Package:	autoconf 
+Version:	2.69
+Current Vers:	2.69
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/autoconf/
+Home Page:	http://www.gnu.org/software/autoconf/
+Mailing List:	bug-autoconf@gnu.org
+Responsible:	christos
+License:	GPLv3+
+Location:	external/gpl3/autoconf
+Notes:
+This is only used to re-generate the configure files in tools/compat.
+It is not part of the regular build.
+
 Package:	gdtoa
 Version:	2016-02-19
 Current Vers:	$(date)
@@ -511,55 +500,6 @@ Test suite integrated at this time, but not built (and fails to run).
 No hexadecimal floating-point string conversion for VAX FP yet.
 Only double-precision addressed at this time.
 
-Package:	gettext
-Version:	0.16.1 (Last GPLv2+ version)
-Current Vers:	0.19.8
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
-Home Page:	http://www.gnu.org/software/gettext/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	christos
-License:	GPLv2+ (0.16.1), GPLv3+ (0.17 and later)
-Location:	external/gpl2/gettext
-Notes:
-GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
-we use BSD-licensed implementation from Citrus project (see entry for
-"Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
-
-Package:	grep
-Version:	2.5.1a (last GPLv2+ version)
-Current Vers:	3.1
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/grep/
-Home Page:	http://www.gnu.org/software/grep/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	simonb
-License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
-Location:	external/gpl2/grep
-Notes:
-Use external/gpl2/grep/grep2netbsd for preparing the source tree
-for the import.
-On 2 Jan 2004, a non-GNU grep (FreeGrep, https://github.com/howardjp/freegrep;
-see also http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
-was imported into src/usr.bin/grep;
-on 16 Feb 2011, the BSD grep implementation from FreeBSD was imported
-in src/usr.bin/grep, replacing FreeGrep
-(http://mail-index.NetBSD.org/source-changes/2011/02/16/msg018643.html).
-
-Package:	groff
-Version:	1.19.2 (last GPLv2+ version)
-Current Vers:	1.22.3
-Maintainer:	Werner Lemberg/FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/groff/
-Home Page:	http://www.gnu.org/software/groff/
-Mailing List:	bug-groff@gnu.org
-Responsible:	
-License:	GPLv2+ (1.19.2), GPLv3+ (1.20 and later)
-Location:	external/gpl2/groff
-Notes:
-Use groff2netbsd from external/gpl2/groff/groff2netbsd to prepare the
-distribution for import.
-Update MDATE in src/external/gpl2/groff/Makefile.inc.
 
 Package:	heimdal
 Version:	7.1.0 (HEAD-2017-01-28)
@@ -1210,19 +1150,6 @@ as an example.
 TDB code as found in 2.4.x, x>1 is under the GPL.  Therefore, we're
 using the version found in 2.4.1.
 
-Package:	rcs
-Version:	5.7 (Last GPLv2+ version)
-Current Vers:	5.9.4
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
-Mailing List:	bug-gnu-utils@gnu.org
-Home Page:	http://www.gnu.org/software/rcs/
-Responsible:	agc
-License:	GPLv2+ (5.7), GPLv3+ (5.8 and later)
-Location:	external/gpl2/rcs
-Notes:
-Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
-
 Package:	root.cache
 Version:	2018111402 (November 14, 2018)
 Current Vers:	2018111402 (November 14, 2018)
@@ -1320,33 +1247,6 @@ License:	BSD (4-clause)
 Location:	regress/lib/libc/ieeefp/testfloat
 Notes:
 
-Package:	texinfo
-Version:	4.8a (Last GPLv2+ version)
-Current Vers:	6.5
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
-Home Page:	http://www.gnu.org/software/texinfo/
-Mailing List:	bug-texinfo@gnu.org
-Responsible:	
-License:	GPLv2+ (4.8a), GPLv3+ (4.9 and later)
-Location:	external/gpl2/texinfo
-Notes:
-Use src/external/gpl2/texinfo/texinfo2netbsd for preparing the source tree
-for the import.
-
-Package:	autoconf 
-Version:	2.69
-Current Vers:	2.69
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/autoconf/
-Home Page:	http://www.gnu.org/software/autoconf/
-Mailing List:	bug-autoconf@gnu.org
-Responsible:	christos
-License:	GPLv3+
-Location:	external/gpl3/autoconf
-Notes:
-This is only used to re-generate the configure files in tools/compat.
-It is not part of the regular build.
 
 Package:	malloc 
 Version:	1995-01-15
@@ -2071,3 +1971,106 @@ Copied from FreeBSD:
 /usr/src/lib/libnv/
 /usr/src/contrib/lib/libnv/
 /usr/src/share/man/man9/{d,c,}nv.9
+
+Package:	gettext
+Version:	0.16.1 (Last GPLv2+ version)
+Current Vers:	0.19.8
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
+Home Page:	http://www.gnu.org/software/gettext/
+Mailing List:	bug-gnu-utils@gnu.org
+Responsible:	christos
+License:	GPLv2+ (0.16.1), GPLv3+ (0.17 and later)
+Location:	external/gpl2/gettext
+Notes:
+GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
+we use BSD-licensed implementation from Citrus project (see entry for
+"Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
+
+Package:	grep
+Version:	2.5.1a (last GPLv2+ version)
+Current Vers:	3.1
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/grep/
+Home Page:	http://www.gnu.org/software/grep/
+Mailing List:	bug-gnu-utils@gnu.org
+Responsible:	simonb
+License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
+Location:	external/gpl2/grep
+Notes:
+Use external/gpl2/grep/grep2netbsd for preparing the source tree
+for the import.
+On 2 Jan 2004, a non-GNU grep (FreeGrep, https://github.com/howardjp/freegrep;
+see also http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
+was imported into src/usr.bin/grep;
+on 16 Feb 2011, the BSD grep implementation from FreeBSD was imported
+in src/usr.bin/grep, replacing FreeGrep
+(http://mail-index.NetBSD.org/source-changes/2011/02/16/msg018643.html).
+
+Package:	groff
+Version:	1.19.2 (last GPLv2+ version)
+Current Vers:	1.22.3
+Maintainer:	Werner Lemberg/FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/groff/
+Home Page:	http://www.gnu.org/software/groff/
+Mailing List:	bug-groff@gnu.org
+Responsible:	
+License:	GPLv2+ (1.19.2), GPLv3+ (1.20 and later)
+Location:	external/gpl2/groff
+Notes:
+Use groff2netbsd from external/gpl2/groff/groff2netbsd to prepare the
+distribution for import.
+Update MDATE in src/external/gpl2/groff/Makefile.inc.
+Package:	gmake
+Version:	3.81 (Last GPlv2+ version)
+Current Vers:	4.2
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/make/
+Home Page:	http://www.gnu.org/software/make/
+Mailing List:	bug-make@gnu.org
+Responsible:	
+License:	GPLv2+ (3.81), GPLv3+ (3.82 and later)
+Location:	external/gpl2/gmake
+Notes:
+
+Package:	diffutils
+Version:	2.8.1 (Last GPLv2+ version)
+Current Vers:	3.6
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
+Home Page:	http://www.gnu.org/software/diffutils/
+Mailing List:	bug-diffutils@gnu.org
+Responsible:	
+License:	GPLv2+ (2.8.1), GPLv3+ (2.9 and later)
+Location:	external/gpl2/diffutils
+Notes:
+Use external/gpl2/diffutils/diffutils2netbsd for preparing the source tree
+for the import.
+
+Package:	rcs
+Version:	5.7 (Last GPLv2+ version)
+Current Vers:	5.9.4
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
+Mailing List:	bug-gnu-utils@gnu.org
+Home Page:	http://www.gnu.org/software/rcs/
+Responsible:	agc
+License:	GPLv2+ (5.7), GPLv3+ (5.8 and later)
+Location:	external/gpl2/rcs
+Notes:
+Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
+
+Package:	texinfo
+Version:	4.8a (Last GPLv2+ version)
+Current Vers:	6.5
+Maintainer:	FSF
+Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
+Home Page:	http://www.gnu.org/software/texinfo/
+Mailing List:	bug-texinfo@gnu.org
+Responsible:	
+License:	GPLv2+ (4.8a), GPLv3+ (4.9 and later)
+Location:	external/gpl2/texinfo
+Notes:
+Use src/external/gpl2/texinfo/texinfo2netbsd for preparing the source tree
+for the import.
+
