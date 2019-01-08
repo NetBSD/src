@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.66 2019/01/08 06:55:50 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.67 2019/01/08 08:10:10 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.66 2019/01/08 06:55:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.67 2019/01/08 08:10:10 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -1019,7 +1019,7 @@ int
 bnx_miibus_read_reg(device_t dev, int phy, int reg)
 {
 	struct bnx_softc	*sc = device_private(dev);
-	uint32_t		val;
+	uint32_t		val, data;
 	int			i;
 
 	/* Make sure we are accessing the correct PHY address. */
@@ -1040,35 +1040,35 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 	}
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
-		val = REG_RD(sc, BNX_EMAC_MDIO_MODE);
-		val &= ~BNX_EMAC_MDIO_MODE_AUTO_POLL;
+		data = REG_RD(sc, BNX_EMAC_MDIO_MODE);
+		data &= ~BNX_EMAC_MDIO_MODE_AUTO_POLL;
 
-		REG_WR(sc, BNX_EMAC_MDIO_MODE, val);
+		REG_WR(sc, BNX_EMAC_MDIO_MODE, data);
 		REG_RD(sc, BNX_EMAC_MDIO_MODE);
 
 		DELAY(40);
 	}
 
-	val = BNX_MIPHY(phy) | BNX_MIREG(reg) |
+	data = BNX_MIPHY(phy) | BNX_MIREG(reg) |
 	    BNX_EMAC_MDIO_COMM_COMMAND_READ | BNX_EMAC_MDIO_COMM_DISEXT |
 	    BNX_EMAC_MDIO_COMM_START_BUSY;
-	REG_WR(sc, BNX_EMAC_MDIO_COMM, val);
+	REG_WR(sc, BNX_EMAC_MDIO_COMM, data);
 
 	for (i = 0; i < BNX_PHY_TIMEOUT; i++) {
 		DELAY(10);
 
-		val = REG_RD(sc, BNX_EMAC_MDIO_COMM);
-		if (!(val & BNX_EMAC_MDIO_COMM_START_BUSY)) {
+		data = REG_RD(sc, BNX_EMAC_MDIO_COMM);
+		if (!(data & BNX_EMAC_MDIO_COMM_START_BUSY)) {
 			DELAY(5);
 
-			val = REG_RD(sc, BNX_EMAC_MDIO_COMM);
-			val &= BNX_EMAC_MDIO_COMM_DATA;
+			data = REG_RD(sc, BNX_EMAC_MDIO_COMM);
+			data &= BNX_EMAC_MDIO_COMM_DATA;
 
 			break;
 		}
 	}
 
-	if (val & BNX_EMAC_MDIO_COMM_START_BUSY) {
+	if (data & BNX_EMAC_MDIO_COMM_START_BUSY) {
 		BNX_PRINTF(sc, "%s(%d): Error: PHY read timeout! phy = %d, "
 		    "reg = 0x%04X\n", __FILE__, __LINE__, phy, reg);
 		val = 0x0;
@@ -1080,10 +1080,10 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 	    (uint16_t) reg & 0xffff, (uint16_t) val & 0xffff);
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
-		val = REG_RD(sc, BNX_EMAC_MDIO_MODE);
-		val |= BNX_EMAC_MDIO_MODE_AUTO_POLL;
+		data = REG_RD(sc, BNX_EMAC_MDIO_MODE);
+		data |= BNX_EMAC_MDIO_MODE_AUTO_POLL;
 
-		REG_WR(sc, BNX_EMAC_MDIO_MODE, val);
+		REG_WR(sc, BNX_EMAC_MDIO_MODE, data);
 		REG_RD(sc, BNX_EMAC_MDIO_MODE);
 
 		DELAY(40);
