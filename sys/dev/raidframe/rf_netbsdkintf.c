@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.357 2019/01/08 07:18:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.357 2019/01/08 07:18:18 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2683,7 +2683,9 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 
 	/* Anyone waiting for us to stop?  If so, inform them... */
 	if (raidPtr->waitShutdown) {
-		wakeup(&raidPtr->parity_rewrite_in_progress);
+		rf_lock_mutex2(raidPtr->rad_lock);
+		cv_broadcast(&raidPtr->parity_rewrite_cv);
+		rf_unlock_mutex2(raidPtr->rad_lock);
 	}
 
 	/* That's all... */
