@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.48 2018/12/30 06:40:52 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.49 2019/01/08 03:14:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.48 2018/12/30 06:40:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.49 2019/01/08 03:14:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ makphyattach(device_t parent, device_t self, void *aux)
 	case MII_MODEL_xxMARVELL_E1112:
 		if (PHY_READ(sc, MAKPHY_ESSR) & ESSR_FIBER_LINK)
 			sc->mii_flags |= MIIF_HAVEFIBER;
-                break;
+		break;
 	default:
 		break;
 	}
