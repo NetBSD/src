@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.56 2017/05/09 11:14:16 kre Exp $	*/
+/*	$NetBSD: signal.h,v 1.57 2019/01/08 17:35:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,6 +44,7 @@
 
 #include <sys/signal.h>
 
+__BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
 extern const char *const *sys_signame __RENAME(__sys_signame14);
 #ifndef __SYS_SIGLIST_DECLARED
@@ -54,7 +55,6 @@ extern const char *const *sys_siglist __RENAME(__sys_siglist14);
 extern const int sys_nsig __RENAME(__sys_nsig14);
 #endif
 
-__BEGIN_DECLS
 int	raise(int);
 
 #if defined(_NETBSD_SOURCE)
