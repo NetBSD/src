@@ -1,4 +1,4 @@
-#	$NetBSD: t_pthread_once.sh,v 1.1 2018/03/24 00:26:51 kamil Exp $
+#	$NetBSD: t_pthread_once.sh,v 1.2 2019/01/08 00:22:11 christos Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,6 @@ EOF
 }
 
 pthread_once_profile_body() {
-	atf_expect_fail "profiling option doesn't work now"
 	cat > test.cpp << EOF
 #include <cstdio>
 #include <thread>
@@ -115,7 +114,6 @@ EOF
 }
 
 pthread_once_profile_32_body() {
-	atf_expect_fail "profiling option doesn't work now"
 	# check whether this arch is 64bit
 	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
 		atf_skip "this is not a 64 bit architecture"
@@ -139,7 +137,6 @@ int main(void) {
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -m32 -pg -o pthread_once test.cpp -pthread
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./pthread_once
-	atf_expect_fail "The combination of 32-bit and profiling should be fail"
 }
 
 pthread_once_pic_body() {
@@ -205,7 +202,6 @@ EOF
 }
 
 pthread_once_pic_profile_body() {
-	atf_expect_fail "profiling option doesn't work now"
 	cat > test.cpp << EOF
 #include <stdlib.h>
 int callpic(void);
@@ -231,7 +227,6 @@ EOF
 }
 
 pthread_once_pic_profile_32_body() {
-	atf_expect_fail "profiling option doesn't work now"
 	# check whether this arch is 64bit
 	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
 		atf_skip "this is not a 64 bit architecture"
