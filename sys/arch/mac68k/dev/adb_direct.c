@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.67 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.68 2019/01/08 19:41:09 jdolecek Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.67 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.68 2019/01/08 19:41:09 jdolecek Exp $");
 
 #include "opt_adb.h"
 
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.67 2014/10/18 08:33:25 snj Exp $");
 #include <sys/intr.h>
 
 #include <machine/viareg.h>
-#include <machine/param.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
 #include <machine/iopreg.h>			/* required for IOP support */
 

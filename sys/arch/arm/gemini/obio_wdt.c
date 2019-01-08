@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdt.c,v 1.7 2012/10/27 17:17:38 chs Exp $	*/
+/*	$NetBSD: obio_wdt.c,v 1.8 2019/01/08 19:41:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.7 2012/10/27 17:17:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.8 2019/01/08 19:41:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.7 2012/10/27 17:17:38 chs Exp $");
 #include <sys/systm.h>
 #include <sys/wdog.h>
 
-#include <machine/param.h>
 #include <sys/bus.h>
 #include <dev/sysmon/sysmonvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiisc.c,v 1.33 2018/09/03 16:29:22 riastradh Exp $ */
+/*	$NetBSD: cbiisc.c,v 1.34 2019/01/08 19:41:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.33 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.34 2019/01/08 19:41:09 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.33 2018/09/03 16:29:22 riastradh Exp $"
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/cpu.h>
-#include <machine/param.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

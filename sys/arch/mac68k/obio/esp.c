@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.55 2012/02/18 23:51:27 rmind Exp $	*/
+/*	$NetBSD: esp.c,v 1.56 2019/01/08 19:41:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.55 2012/02/18 23:51:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.56 2019/01/08 19:41:09 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.55 2012/02/18 23:51:27 rmind Exp $");
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/param.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

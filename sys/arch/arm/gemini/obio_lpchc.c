@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_lpchc.c,v 1.4 2012/10/27 17:17:38 chs Exp $	*/
+/*	$NetBSD: obio_lpchc.c,v 1.5 2019/01/08 19:41:10 jdolecek Exp $	*/
 
 /*
  * obio attachment for GEMINI LPC Host Controller
@@ -7,7 +7,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.4 2012/10/27 17:17:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.5 2019/01/08 19:41:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -16,7 +16,6 @@ __KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.4 2012/10/27 17:17:38 chs Exp $");
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <machine/param.h>
 #include <sys/bus.h>
 
 #include <arm/gemini/gemini_obiovar.h>
