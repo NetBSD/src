@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.90 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.91 2019/01/08 08:47:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.90 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.91 2019/01/08 08:47:21 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -635,7 +635,7 @@ ray_detach(device_t self, int flags)
 	RAY_DPRINTF(("%s: detach\n", device_xname(sc->sc_dev)));
 
 	if (!sc->sc_attached)
-                return (0);
+		return (0);
 
 	pmf_device_deregister(self);
 
