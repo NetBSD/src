@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.76 2014/07/02 22:35:10 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.77 2019/01/08 03:14:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.76 2014/07/02 22:35:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.77 2019/01/08 03:14:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -901,7 +901,7 @@ brgphy_reset(struct mii_softc *sc)
 				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG,
 				    0x000a);
 
-				if (bsc->sc_phyflags 
+				if (bsc->sc_phyflags
 				    & BGEPHYF_ADJUST_TRIM) {
 					PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
 					    0x110b);
@@ -933,8 +933,8 @@ brgphy_reset(struct mii_softc *sc)
 #if 0
 			/* Enable Link LED on Dell boxes */
 			if (bsc->sc_phyflags & BGEPHYF_NO_3LED) {
-				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
-				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
+				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
+				    PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 					& ~BRGPHY_PHY_EXTCTL_3_LED);
 			}
 #endif
@@ -945,48 +945,48 @@ brgphy_reset(struct mii_softc *sc)
 		    && sc->mii_mpd_model == MII_MODEL_BROADCOM2_BCM5708S) {
 			/* Store autoneg capabilities/results in digital block (Page 0) */
 			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG3_PG2);
-			PHY_WRITE(sc, BRGPHY_5708S_PG2_DIGCTL_3_0, 
-				BRGPHY_5708S_PG2_DIGCTL_3_0_USE_IEEE);
+			PHY_WRITE(sc, BRGPHY_5708S_PG2_DIGCTL_3_0,
+			    BRGPHY_5708S_PG2_DIGCTL_3_0_USE_IEEE);
 			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG_PG0);
 
 			/* Enable fiber mode and autodetection */
-			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL1, 
-				PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL1) | 
-				BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN | 
-				BRGPHY_5708S_PG0_1000X_CTL1_FIBER_MODE);
+			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL1,
+			    PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL1) |
+			    BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN |
+			    BRGPHY_5708S_PG0_1000X_CTL1_FIBER_MODE);
 
 			/* Enable parallel detection */
-			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL2, 
-				PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL2) | 
-				BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN);
+			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL2,
+			    PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL2) |
+			    BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN);
 
 			/* Advertise 2.5G support through next page during autoneg */
 			if (bsc->sc_phyflags & BNX_PHY_2_5G_CAPABLE_FLAG)
-				PHY_WRITE(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1, 
-					PHY_READ(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1) | 
-					BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
+				PHY_WRITE(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1,
+				    PHY_READ(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1) |
+				    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
 
 			/* Increase TX signal amplitude */
 			if ((_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_A0) ||
 			    (_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_B0) ||
 			    (_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_B1)) {
-				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
-					BRGPHY_5708S_TX_MISC_PG5);
-				PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL1, 
-					PHY_READ(sc, BRGPHY_5708S_PG5_TXACTL1) &
+				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+				    BRGPHY_5708S_TX_MISC_PG5);
+				PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL1,
+				    PHY_READ(sc, BRGPHY_5708S_PG5_TXACTL1) &
 					~BRGPHY_5708S_PG5_TXACTL1_VCM);
-				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
-					BRGPHY_5708S_DIG_PG0);
+				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+				    BRGPHY_5708S_DIG_PG0);
 			}
 
 			/* Backplanes use special driver/pre-driver/pre-emphasis values. */
 			if ((bsc->sc_shared_hwcfg & BNX_SHARED_HW_CFG_PHY_BACKPLANE) &&
 			    (bsc->sc_port_hwcfg & BNX_PORT_HW_CFG_CFG_TXCTL3_MASK)) {
-					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
-						BRGPHY_5708S_TX_MISC_PG5);
-					PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL3, 
-						bsc->sc_port_hwcfg & 
-						BNX_PORT_HW_CFG_CFG_TXCTL3_MASK);
+					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+					    BRGPHY_5708S_TX_MISC_PG5);
+					PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL3,
+					    bsc->sc_port_hwcfg &
+					    BNX_PORT_HW_CFG_CFG_TXCTL3_MASK);
 					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 						BRGPHY_5708S_DIG_PG0);
 			}
@@ -1015,31 +1015,31 @@ brgphy_reset(struct mii_softc *sc)
 				    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
 			}
 
-                        /*
-                         * Select the Multi-Rate Backplane Ethernet block of
-                         * the AN MMD.
-                         */
-                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-                            BRGPHY_BLOCK_ADDR_MRBE);
+			/*
+			 * Select the Multi-Rate Backplane Ethernet block of
+			 * the AN MMD.
+			 */
+			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+			    BRGPHY_BLOCK_ADDR_MRBE);
 
-                        /* Enable MRBE speed autoneg. */
-                        PHY_WRITE(sc, BRGPHY_MRBE_MSG_PG5_NP,
-                            PHY_READ(sc, BRGPHY_MRBE_MSG_PG5_NP) |
-                            BRGPHY_MRBE_MSG_PG5_NP_MBRE |
-                            BRGPHY_MRBE_MSG_PG5_NP_T2);
+			/* Enable MRBE speed autoneg. */
+			PHY_WRITE(sc, BRGPHY_MRBE_MSG_PG5_NP,
+			    PHY_READ(sc, BRGPHY_MRBE_MSG_PG5_NP) |
+			    BRGPHY_MRBE_MSG_PG5_NP_MBRE |
+			    BRGPHY_MRBE_MSG_PG5_NP_T2);
 
-                        /* Select the Clause 73 User B0 block of the AN MMD. */
-                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-                            BRGPHY_BLOCK_ADDR_CL73_USER_B0);
+			/* Select the Clause 73 User B0 block of the AN MMD. */
+			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+			    BRGPHY_BLOCK_ADDR_CL73_USER_B0);
 
-                        /* Enable MRBE speed autoneg. */
-                        PHY_WRITE(sc, BRGPHY_CL73_USER_B0_MBRE_CTL1,
-                            BRGPHY_CL73_USER_B0_MBRE_CTL1_NP_AFT_BP |
-                            BRGPHY_CL73_USER_B0_MBRE_CTL1_STA_MGR |
-                            BRGPHY_CL73_USER_B0_MBRE_CTL1_ANEG);
+			/* Enable MRBE speed autoneg. */
+			PHY_WRITE(sc, BRGPHY_CL73_USER_B0_MBRE_CTL1,
+			    BRGPHY_CL73_USER_B0_MBRE_CTL1_NP_AFT_BP |
+			    BRGPHY_CL73_USER_B0_MBRE_CTL1_STA_MGR |
+			    BRGPHY_CL73_USER_B0_MBRE_CTL1_ANEG);
 
-                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-                            BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
+			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+			    BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
 
 		} else if (_BNX_CHIP_NUM(bsc->sc_chipid) == BNX_CHIP_NUM_5709) {
 			if (_BNX_CHIP_REV(bsc->sc_chipid) == BNX_CHIP_REV_Ax ||

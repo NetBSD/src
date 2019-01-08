@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.82 2018/12/28 05:56:07 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.83 2019/01/08 03:14:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.82 2018/12/28 05:56:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.83 2019/01/08 03:14:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,14 +66,14 @@ const char *mii_get_descr_stub(int oui, int model)
 		return NULL;
 }
 
-/*    
+/*
  * Routine to load the miiverbose kernel module as needed
  */
 void mii_load_verbose(void)
 {
 	if (mii_verbose_loaded == 0)
 		module_autoload("miiverbose", MODULE_CLASS_MISC);
-}  
+}
 
 static void mii_phy_statusmsg(struct mii_softc *);
 
@@ -244,7 +244,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
 				anar &= ~(ANAR_T4|ANAR_TX_FD|ANAR_TX|ANAR_10_FD|ANAR_10);
 			}
-				
+
 			PHY_WRITE(sc, MII_ANAR, anar);
 			if (sc->mii_flags & MIIF_HAVE_GTCR) {
 				uint16_t gtcr = 0;
