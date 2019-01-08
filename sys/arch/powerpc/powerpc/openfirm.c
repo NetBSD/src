@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.27 2019/01/08 07:46:11 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.27 2019/01/08 07:46:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.26 2018/09/03 16:29:26 riastradh Exp 
 #include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
+#include <machine/autoconf.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -757,3 +758,11 @@ ofbcopy(const void *src, void *dst, size_t len)
 	while (len-- > 0)
 		*dp++ = *sp++;
 }
+
+#ifdef __OPENFIRMIO_OPEN_CHECK_BROKEN
+int
+__openfirmio_open_check_broken(void)
+{
+	return strncmp(model_name, "Pegasos", 7) == 0 ? ENXIO : 0;
+}
+#endif
