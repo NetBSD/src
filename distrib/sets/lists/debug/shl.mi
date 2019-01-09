@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.212 2018/12/23 19:16:43 christos Exp $
+# $NetBSD: shl.mi,v 1.213 2019/01/09 16:59:34 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -65,7 +65,7 @@
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libbfd.so.15.0.debug		comp-sys-debug	debug,compatfile,binutils=227
 ./usr/libdata/debug/usr/lib/libbfd.so.16.0.debug		comp-sys-debug	debug,compatfile,binutils=231
-./usr/libdata/debug/usr/lib/libbind9.so.9.0.debug		comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libbind9.so.10.0.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbozohttpd.so.0.0.debug		comp-sys-debug	debug,compatfile
@@ -88,7 +88,7 @@
 ./usr/libdata/debug/usr/lib/libdes.so.14.0.debug			comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libdns.so.9.0.debug 		comp-bind-debug debug,compatfile
+./usr/libdata/debug/usr/lib/libdns.so.10.0.debug 		comp-bind-debug debug,compatfile
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug		comp-mdns-debug	debug,compatfile,mdns
 ./usr/libdata/debug/usr/lib/libdtrace.so.3.0.debug		comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libdwarf.so.2.0.debug		comp-sys-debug	debug,compatfile
@@ -114,13 +114,13 @@
 ./usr/libdata/debug/usr/lib/libhx509.so.6.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libintl.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug		comp-net-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libirs.so.9.0.debug			comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libirs.so.10.0.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libisc.so.6.0.debug			comp-obsolete	debug,compatfile,obsolete
-./usr/libdata/debug/usr/lib/libisc.so.9.0.debug			comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libisc.so.10.0.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libisccc.so.6.0.debug		comp-obsolete	debug,compatfile,obsolete
-./usr/libdata/debug/usr/lib/libisccc.so.9.0.debug		comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libisccc.so.10.0.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libisccfg.so.6.0.debug		comp-obsolete	debug,compatfile,obsolete
-./usr/libdata/debug/usr/lib/libisccfg.so.9.0.debug		comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libisccfg.so.10.0.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libiscsi.so.2.0.debug		comp-iscsi-debug	debug,compatfile,iscsi
 ./usr/libdata/debug/usr/lib/libisns.so.0.0.debug		comp-isns-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libkadm5clnt.so.14.0.debug		comp-krb5-debug	debug,compatfile,kerberos
@@ -149,7 +149,7 @@
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug		comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.5.0.debug	comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnpf.so.0.1.debug			comp-npf-debug	debug,compatfile,npf
-./usr/libdata/debug/usr/lib/libns.so.9.0.debug			comp-bind-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libns.so.10.0.debug			comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libopcodes.so.8.0.debug		comp-c-debug	debug,compatfile,binutils=227
