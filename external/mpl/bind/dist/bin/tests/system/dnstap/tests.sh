@@ -55,6 +55,14 @@ $RNDCCMD -s 10.53.0.4 dnstap -reopen | sed 's/^/ns4 /' | cat_i
 
 $DIG $DIGOPTS @10.53.0.3 a.example > dig.out
 
+# send an UPDATE to ns2
+$NSUPDATE <<- EOF
+server 10.53.0.2 ${PORT}
+zone example
+update add b.example 3600 in a 10.10.10.10
+send
+EOF
+
 # XXX: file output should be flushed once a second according
 # to the libfstrm source, but it doesn't seem to happen until
 # enough data has accumulated. to get all the output, we stop
@@ -75,6 +83,8 @@ cq1=`$DNSTAPREAD ns1/dnstap.out.save | grep "CQ " | wc -l`
 cr1=`$DNSTAPREAD ns1/dnstap.out.save | grep "CR " | wc -l`
 rq1=`$DNSTAPREAD ns1/dnstap.out.save | grep "RQ " | wc -l`
 rr1=`$DNSTAPREAD ns1/dnstap.out.save | grep "RR " | wc -l`
+uq1=`$DNSTAPREAD ns1/dnstap.out.save | grep "UQ " | wc -l`
+ur1=`$DNSTAPREAD ns1/dnstap.out.save | grep "UR " | wc -l`
 
 udp2=`$DNSTAPREAD ns2/dnstap.out.save | grep "UDP " | wc -l`
 tcp2=`$DNSTAPREAD ns2/dnstap.out.save | grep "TCP " | wc -l`
@@ -84,6 +94,8 @@ cq2=`$DNSTAPREAD ns2/dnstap.out.save | grep "CQ " | wc -l`
 cr2=`$DNSTAPREAD ns2/dnstap.out.save | grep "CR " | wc -l`
 rq2=`$DNSTAPREAD ns2/dnstap.out.save | grep "RQ " | wc -l`
 rr2=`$DNSTAPREAD ns2/dnstap.out.save | grep "RR " | wc -l`
+uq2=`$DNSTAPREAD ns2/dnstap.out.save | grep "UQ " | wc -l`
+ur2=`$DNSTAPREAD ns2/dnstap.out.save | grep "UR " | wc -l`
 
 mv ns3/dnstap.out.0 ns3/dnstap.out.save
 udp3=`$DNSTAPREAD ns3/dnstap.out.save | grep "UDP " | wc -l`
@@ -94,6 +106,8 @@ cq3=`$DNSTAPREAD ns3/dnstap.out.save | grep "CQ " | wc -l`
 cr3=`$DNSTAPREAD ns3/dnstap.out.save | grep "CR " | wc -l`
 rq3=`$DNSTAPREAD ns3/dnstap.out.save | grep "RQ " | wc -l`
 rr3=`$DNSTAPREAD ns3/dnstap.out.save | grep "RR " | wc -l`
+uq3=`$DNSTAPREAD ns3/dnstap.out.save | grep "UQ " | wc -l`
+ur3=`$DNSTAPREAD ns3/dnstap.out.save | grep "UR " | wc -l`
 
 echo_i "checking UDP message counts"
 ret=0
@@ -231,6 +245,40 @@ ret=0
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "checking UPDATE_QUERY message counts"
+ret=0
+[ $uq1 -eq 0 ] || {
+	echo_i "ns1 $uq1 expected 0"
+	ret=1
+}
+[ $uq2 -eq 0 ] || {
+	echo_i "ns2 $uq2 expected 0"
+	ret=1
+}
+[ $uq3 -eq 0 ] || {
+	echo_i "ns3 $uq3 expected 0"
+	ret=1
+}
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking UPDATE_RESPONSE message counts"
+ret=0
+[ $ur1 -eq 0 ] || {
+	echo_i "ns1 $ur1 expected 0"
+	ret=1
+}
+[ $ur2 -eq 0 ] || {
+	echo_i "ns2 $ur2 expected 0"
+	ret=1
+}
+[ $ur3 -eq 0 ] || {
+	echo_i "ns3 $ur3 expected 0"
+	ret=1
+}
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 echo_i "checking reopened message counts"
 
 udp1=`$DNSTAPREAD ns1/dnstap.out | grep "UDP " | wc -l`
@@ -241,6 +289,8 @@ cq1=`$DNSTAPREAD ns1/dnstap.out | grep "CQ " | wc -l`
 cr1=`$DNSTAPREAD ns1/dnstap.out | grep "CR " | wc -l`
 rq1=`$DNSTAPREAD ns1/dnstap.out | grep "RQ " | wc -l`
 rr1=`$DNSTAPREAD ns1/dnstap.out | grep "RR " | wc -l`
+uq1=`$DNSTAPREAD ns1/dnstap.out | grep "UQ " | wc -l`
+ur1=`$DNSTAPREAD ns1/dnstap.out | grep "UR " | wc -l`
 
 udp2=`$DNSTAPREAD ns2/dnstap.out | grep "UDP " | wc -l`
 tcp2=`$DNSTAPREAD ns2/dnstap.out | grep "TCP " | wc -l`
@@ -250,6 +300,8 @@ cq2=`$DNSTAPREAD ns2/dnstap.out | grep "CQ " | wc -l`
 cr2=`$DNSTAPREAD ns2/dnstap.out | grep "CR " | wc -l`
 rq2=`$DNSTAPREAD ns2/dnstap.out | grep "RQ " | wc -l`
 rr2=`$DNSTAPREAD ns2/dnstap.out | grep "RR " | wc -l`
+uq2=`$DNSTAPREAD ns2/dnstap.out | grep "UQ " | wc -l`
+ur2=`$DNSTAPREAD ns2/dnstap.out | grep "UR " | wc -l`
 
 udp3=`$DNSTAPREAD ns3/dnstap.out | grep "UDP " | wc -l`
 tcp3=`$DNSTAPREAD ns3/dnstap.out | grep "TCP " | wc -l`
@@ -259,6 +311,8 @@ cq3=`$DNSTAPREAD ns3/dnstap.out | grep "CQ " | wc -l`
 cr3=`$DNSTAPREAD ns3/dnstap.out | grep "CR " | wc -l`
 rq3=`$DNSTAPREAD ns3/dnstap.out | grep "RQ " | wc -l`
 rr3=`$DNSTAPREAD ns3/dnstap.out | grep "RR " | wc -l`
+uq3=`$DNSTAPREAD ns3/dnstap.out | grep "UQ " | wc -l`
+ur3=`$DNSTAPREAD ns3/dnstap.out | grep "UR " | wc -l`
 
 echo_i "checking UDP message counts"
 ret=0
@@ -266,8 +320,8 @@ ret=0
 	echo_i "ns1 $udp1 expected 0"
 	ret=1
 }
-[ $udp2 -eq 0 ] || {
-	echo_i "ns2 $udp2 expected 0"
+[ $udp2 -eq 2 ] || {
+	echo_i "ns2 $udp2 expected 2"
 	ret=1
 }
 [ $udp3 -eq 2 ] || {
@@ -396,6 +450,41 @@ ret=0
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "checking UPDATE_QUERY message counts"
+ret=0
+[ $uq1 -eq 0 ] || {
+	echo_i "ns1 $uq1 expected 0"
+	ret=1
+}
+[ $uq2 -eq 1 ] || {
+	echo_i "ns2 $uq2 expected 1"
+	ret=1
+}
+[ $uq3 -eq 0 ] || {
+	echo_i "ns3 $uq3 expected 0"
+	ret=1
+}
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking UPDATE_RESPONSE message counts"
+ret=0
+[ $ur1 -eq 0 ] || {
+	echo_i "ns1 $ur1 expected 0"
+	ret=1
+}
+[ $ur2 -eq 1 ] || {
+	echo_i "ns2 $ur2 expected 1"
+	ret=1
+}
+[ $ur3 -eq 0 ] || {
+	echo_i "ns3 $ur3 expected 0"
+	ret=1
+}
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+
 HAS_PYYAML=0
 if [ -n "$PYTHON" ] ; then
 	$PYTHON -c "import yaml" 2> /dev/null && HAS_PYYAML=1
@@ -423,6 +512,15 @@ status=`expr $status + $ret`
 if [ -n "$FSTRM_CAPTURE" ] ; then
 	$DIG $DIGOPTS @10.53.0.4 a.example > dig.out
 
+	# send an UPDATE to ns4
+	$NSUPDATE <<- EOF > nsupdate.out 2>&1
+	server 10.53.0.4 ${PORT}
+	zone example
+	update add b.example 3600 in a 10.10.10.10
+	send
+EOF
+	grep "update failed: NOTAUTH" nsupdate.out > /dev/null || ret=1
+
 	echo_i "checking unix socket message counts"
 	sleep 2
 	kill $fstrm_capture_pid
@@ -435,11 +533,13 @@ if [ -n "$FSTRM_CAPTURE" ] ; then
 	cr4=`$DNSTAPREAD dnstap.out | grep "CR " | wc -l`
 	rq4=`$DNSTAPREAD dnstap.out | grep "RQ " | wc -l`
 	rr4=`$DNSTAPREAD dnstap.out | grep "RR " | wc -l`
+	uq4=`$DNSTAPREAD dnstap.out | grep "UQ " | wc -l`
+	ur4=`$DNSTAPREAD dnstap.out | grep "UR " | wc -l`
 
 	echo_i "checking UDP message counts"
 	ret=0
-	[ $udp4 -eq 2 ] || {
-		echo_i "ns4 $udp4 expected 2"
+	[ $udp4 -eq 4 ] || {
+		echo_i "ns4 $udp4 expected 4"
 		ret=1
 	}
 	if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -505,7 +605,27 @@ if [ -n "$FSTRM_CAPTURE" ] ; then
 		echo_i "ns4 $rr4 expected 0"
 		ret=1
 	}
+
+	echo_i "checking UPDATE_QUERY message counts"
+	ret=0
+	[ $uq4 -eq 1 ] || {
+		echo_i "ns4 $uq4 expected 1"
+		ret=1
+	}
+	if [ $ret != 0 ]; then echo_i "failed"; fi
+	status=`expr $status + $ret`
+
+	echo_i "checking UPDATE_RESPONSE message counts"
+	ret=0
+	[ $ur4 -eq 1 ] || {
+		echo_i "ns4 $ur4 expected 1"
+		ret=1
+	}
+	if [ $ret != 0 ]; then echo_i "failed"; fi
+	status=`expr $status + $ret`
+
 	mv dnstap.out dnstap.out.save
+
 	$FSTRM_CAPTURE -t protobuf:dnstap.Dnstap -u ns4/dnstap.out \
 		-w dnstap.out > fstrm_capture.out 2>&1 &
 	fstrm_capture_pid=$!
@@ -524,6 +644,8 @@ if [ -n "$FSTRM_CAPTURE" ] ; then
 	cr4=`$DNSTAPREAD dnstap.out | grep "CR " | wc -l`
 	rq4=`$DNSTAPREAD dnstap.out | grep "RQ " | wc -l`
 	rr4=`$DNSTAPREAD dnstap.out | grep "RR " | wc -l`
+	uq4=`$DNSTAPREAD dnstap.out | grep "UQ " | wc -l`
+	ur4=`$DNSTAPREAD dnstap.out | grep "UR " | wc -l`
 
 	echo_i "checking UDP message counts"
 	ret=0
@@ -594,6 +716,24 @@ if [ -n "$FSTRM_CAPTURE" ] ; then
 		echo_i "ns4 $rr4 expected 0"
 		ret=1
 	}
+
+	echo_i "checking UPDATE_QUERY message counts"
+	ret=0
+	[ $uq4 -eq 0 ] || {
+		echo_i "ns4 $uq4 expected 0"
+		ret=1
+	}
+	if [ $ret != 0 ]; then echo_i "failed"; fi
+	status=`expr $status + $ret`
+
+	echo_i "checking UPDATE_RESPONSE message counts"
+	ret=0
+	[ $ur4 -eq 0 ] || {
+		echo_i "ns4 $ur4 expected 0"
+		ret=1
+	}
+	if [ $ret != 0 ]; then echo_i "failed"; fi
+	status=`expr $status + $ret`
 fi
 
 echo_i "exit status: $status"

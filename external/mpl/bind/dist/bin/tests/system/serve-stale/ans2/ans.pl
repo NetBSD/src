@@ -13,8 +13,9 @@ use strict;
 use warnings;
 
 use IO::File;
+use IO::Socket;
 use Getopt::Long;
-use Net::DNS::Nameserver;
+use Net::DNS;
 use Time::HiRes qw(usleep nanosleep);
 
 my $pidf = new IO::File "ans.pid", "w" or die "cannot open pid file: $!";
@@ -32,7 +33,8 @@ my $localaddr = "10.53.0.2";
 my $localport = int($ENV{'PORT'});
 if (!$localport) { $localport = 5300; }
 
-my $verbose = 0;
+my $udpsock = IO::Socket::INET->new(LocalAddr => "$localaddr",
+   LocalPort => $localport, Proto => "udp", Reuse => 1) or die "$!";
 
 #
 # Delegation
@@ -47,7 +49,7 @@ my $TXT = "data.example 1 IN TXT \"A text record with a 1 second ttl\"";
 my $negSOA = "example 1 IN SOA . . 0 0 0 0 300";
 
 sub reply_handler {
-    my ($qname, $qclass, $qtype, $peerhost, $query, $conn) = @_;
+    my ($qname, $qclass, $qtype) = @_;
     my ($rcode, @ans, @auth, @add);
 
     print ("request: $qname/$qtype\n");
@@ -129,16 +131,54 @@ sub reply_handler {
 
 GetOptions(
     'port=i' => \$localport,
-    'verbose!' => \$verbose,
 );
 
-$A = "ns.example 300 IN A $localaddr";
+my $rin;
+my $rout;
 
-my $ns = Net::DNS::Nameserver->new(
-    LocalAddr => $localaddr,
-    LocalPort => $localport,
-    ReplyHandler => \&reply_handler,
-    Verbose => $verbose,
-);
+for (;;) {
+	$rin = '';
+	vec($rin, fileno($udpsock), 1) = 1;
 
-$ns->main_loop;
+	select($rout = $rin, undef, undef, undef);
+
+	if (vec($rout, fileno($udpsock), 1)) {
+		my ($buf, $request, $err);
+		$udpsock->recv($buf, 512);
+
+		if ($Net::DNS::VERSION > 0.68) {
+			$request = new Net::DNS::Packet(\$buf, 0);
+			$@ and die $@;
+		} else {
+			my $err;
+			($request, $err) = new Net::DNS::Packet(\$buf, 0);
+			$err and die $err;
+		}
+
+		my @questions = $request->question;
+		my $qname = $questions[0]->qname;
+		my $qclass = $questions[0]->qclass;
+		my $qtype = $questions[0]->qtype;
+		my $id = $request->header->id;
+
+		my ($rcode, $ans, $auth, $add, $headermask) = reply_handler($qname, $qclass, $qtype);
+
+		if (!defined($rcode)) {
+			print "  Silently ignoring query\n";
+			next;
+		}
+
+		my $reply = Net::DNS::Packet->new();
+		$reply->header->qr(1);
+		$reply->header->aa(1) if $headermask->{'aa'};
+		$reply->header->id($id);
+		$reply->header->rcode($rcode);
+		$reply->push("question",   @questions);
+		$reply->push("answer",     @$ans)  if $ans;
+		$reply->push("authority",  @$auth) if $auth;
+		$reply->push("additional", @$add)  if $add;
+
+		my $num_chars = $udpsock->send($reply->data);
+		print "  Sent $num_chars bytes via UDP\n";
+	}
+}

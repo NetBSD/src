@@ -21,3 +21,4 @@ rm -f */named.run
 rm -f */named.conf
 rm -f ns2/named_dump.db.*
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

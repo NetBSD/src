@@ -12,8 +12,7 @@ SYSTEMTESTTOP=..
 
 status=0
 n=0
-# using dig insecure mode as not testing dnssec here
-DIGOPTS="-i -p ${PORT}"
+DIGOPTS="-p ${PORT}"
 SENDCMD="$PERL $SYSTEMTESTTOP/send.pl 10.53.0.4 ${EXTRAPORT1}"
 
 if [ -x ${DIG} ] ; then
@@ -140,11 +139,30 @@ if [ -x ${DIG} ] ; then
   if [ $ret != 0 ]; then echo_i "failed"; fi
   status=`expr $status + $ret`
 
+  n=`expr $n + 1`
   echo_i "checking dig +header-only works ($n)"
   ret=0
   $DIG $DIGOPTS +tcp @10.53.0.3 +header-only example > dig.out.test$n || ret=1
   grep "^;; flags: qr rd; QUERY: 0, ANSWER: 0," < dig.out.test$n > /dev/null || ret=1
   grep "^;; QUESTION SECTION:" < dig.out.test$n > /dev/null && ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=`expr $status + $ret`
+
+  n=`expr $n + 1`
+  echo_i "checking dig +raflag works ($n)"
+  ret=0
+  $DIG $DIGOPTS +tcp @10.53.0.3 +raflag +qr example > dig.out.test$n || ret=1
+  grep "^;; flags: rd ra ad; QUERY: 1, ANSWER: 0," < dig.out.test$n > /dev/null || ret=1
+  grep "^;; flags: qr rd ra; QUERY: 1, ANSWER: 0," < dig.out.test$n > /dev/null || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=`expr $status + $ret`
+
+  n=`expr $n + 1`
+  echo_i "checking dig +tcflag works ($n)"
+  ret=0
+  $DIG $DIGOPTS +tcp @10.53.0.3 +tcflag +qr example > dig.out.test$n || ret=1
+  grep "^;; flags: tc rd ad; QUERY: 1, ANSWER: 0" < dig.out.test$n > /dev/null || ret=1
+  grep "^;; flags: qr rd ra; QUERY: 1, ANSWER: 0," < dig.out.test$n > /dev/null || ret=1
   if [ $ret != 0 ]; then echo_i "failed"; fi
   status=`expr $status + $ret`
 
@@ -425,23 +443,6 @@ if [ -x ${DIG} ] ; then
   status=`expr $status + $ret`
 
   n=`expr $n + 1`
-  if $FEATURETEST --with-idn
-  then
-    echo_i "checking dig +idnout ($n)"
-    ret=0
-    $DIG $DIGOPTS @10.53.0.3 +noidnout xn--caf-dma.example. > dig.out.1.test$n 2>&1 || ret=1
-    $DIG $DIGOPTS @10.53.0.3 +idnout xn--caf-dma.example. > dig.out.2.test$n 2>&1 || ret=1
-    grep "^xn--caf-dma.example" dig.out.1.test$n > /dev/null || ret=1
-    grep "^xn--caf-dma.example" dig.out.2.test$n > /dev/null && ret=1
-    grep 10.1.2.3 dig.out.1.test$n > /dev/null || ret=1
-    grep 10.1.2.3 dig.out.2.test$n > /dev/null || ret=1
-    if [ $ret != 0 ]; then echo_i "failed"; fi
-    status=`expr $status + $ret`
-  else
-    echo_i "skipping 'dig +idnout' as IDN support is not enabled ($n)"
-  fi
-
-  n=`expr $n + 1`
   echo_i "checking that dig warns about .local queries ($n)"
   ret=0
   $DIG $DIGOPTS @10.53.0.3 local soa > dig.out.test$n 2>&1 || ret=1
@@ -475,6 +476,14 @@ if [ -x ${DIG} ] ; then
   status=`expr $status + $ret`
 
   n=`expr $n + 1`
+  echo_i "check that dig handles malformed option '+ednsopt=:' gracefully ($n)"
+  ret=0
+  $DIG $DIGOPTS @10.53.0.3 +ednsopt=: a.example > dig.out.test$n 2>&1 && ret=1
+  grep "ednsopt no code point specified" dig.out.test$n > /dev/null || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=`expr $status + $ret`
+
+  n=`expr $n + 1`
   echo_i "check that dig gracefully handles bad escape in domain name ($n)"
   ret=0
   $DIG $DIGOPTS @10.53.0.3 '\0.' > dig.out.test$n 2>&1
@@ -486,8 +495,29 @@ if [ -x ${DIG} ] ; then
   if [ $ret != 0 ]; then echo_i "failed"; fi
   status=`expr $status + $ret`
 
+  n=`expr $n + 1`
+  echo_i "check that dig -q -m works ($n)"
+  ret=0
+  $DIG $DIGOPTS @10.53.0.3 -q -m > dig.out.test$n 2>&1
+  grep '^;-m\..*IN.*A$' dig.out.test$n > /dev/null || ret=1
+  grep "Dump of all outstanding memory allocations" dig.out.test$n > /dev/null && ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=`expr $status + $ret`
 else
   echo_i "$DIG is needed, so skipping these dig tests"
+fi
+
+MDIGOPTS="-p ${PORT}"
+if [ -x ${MDIG} ] ; then
+  n=`expr $n + 1`
+  echo_i "check that mdig handles malformed option '+ednsopt=:' gracefully ($n)"
+  ret=0
+  $MDIG $MDIGOPTS @10.53.0.3 +ednsopt=: a.example > dig.out.test$n 2>&1 && ret=1
+  grep "ednsopt no code point specified" dig.out.test$n > /dev/null || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=`expr $status + $ret`
+else
+  echo_i "$MDIG is needed, so skipping these mdig tests"
 fi
 
 # using delv insecure mode as not testing dnssec here
@@ -670,6 +700,24 @@ if [ -x ${DELV} ] ; then
   ret=0
   $DELV $DELVOPTS @10.53.0.3 -c CH -t a a.example > delv.out.test$n || ret=1
   grep "a.example." < delv.out.test$n > /dev/null || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=`expr $status + $ret`
+
+  n=`expr $n + 1`
+  echo_i "checking delv H is ignored, and treated like IN ($n)"
+  ret=0
+  $DELV $DELVOPTS @10.53.0.3 -c CH -t a a.example > delv.out.test$n || ret=1
+  grep "a.example." < delv.out.test$n > /dev/null || ret=1
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=`expr $status + $ret`
+
+  n=`expr $n + 1`
+  echo_i "check that delv -q -m works ($n)"
+  ret=0
+  $DELV $DELVOPTS @10.53.0.3 -q -m > delv.out.test$n 2>&1
+  grep '^; -m\..*[0-9]*.*IN.*ANY.*;' delv.out.test$n > /dev/null || ret=1
+  grep "^add " delv.out.test$n > /dev/null && ret=1
+  grep "^del " delv.out.test$n > /dev/null && ret=1
   if [ $ret != 0 ]; then echo_i "failed"; fi
   status=`expr $status + $ret`
 else

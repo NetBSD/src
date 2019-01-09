@@ -165,6 +165,16 @@ message Message {
         // TOOL_RESPONSE is a DNS response message received by a DNS software
         // tool from a DNS server, from the perspective of the tool.
         TOOL_RESPONSE = 12;
+
+        // UPDATE_QUERY is a DNS update query message received from a resolver
+        // by an authoritative name server, from the perspective of the
+        // authoritative name server.
+	UPDATE_QUERY = 13;
+
+        // UPDATE_RESPONSE is a DNS update response message sent from an
+        // authoritative name server to a resolver, from the perspective of the
+        // authoritative name server.
+	UPDATE_RESPONSE = 14;
     }
 
     // One of the Type values described above.

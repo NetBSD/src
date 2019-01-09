@@ -12,13 +12,11 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
-
 if $BIGKEY > /dev/null 2>&1
 then
     rm -f Kexample.*
 else
-    echo_i "This test requires cryptography" >&2
-    echo_i "configure with --with-openssl, or --with-pkcs11 and --enable-native-pkcs11" >&2
+    echo_i "This test requires OpenSSL cryptography provider" >&2
+    echo_i "configure with --with-openssl, and make sure you disable --with-pkcs11 and --enable-native-pkcs11" >&2
     exit 255
 fi

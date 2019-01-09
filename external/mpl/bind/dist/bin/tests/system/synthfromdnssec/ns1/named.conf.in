@@ -35,4 +35,9 @@ zone "example" {
 	file "example.db.signed";
 };
 
+zone "dnamed" {
+	type master;
+	file "dnamed.db.signed";
+};
+
 include "trusted.conf";

@@ -131,9 +131,10 @@
 
     <para>
       It is possible to set per-user defaults for <command>dig</command> via
-      <filename>${HOME}/.digrc</filename>.  This file is read and
-      any options in it
-      are applied before the command line arguments.
+      <filename>${HOME}/.digrc</filename>. This file is read and any
+      options in it are applied before the command line arguments.
+      The <option>-r</option> option disables this feature, for
+      scripts that need predictable behaviour.
     </para>
 
     <para>
@@ -272,17 +273,6 @@
       </varlistentry>
 
       <varlistentry>
-	<term>-i</term>
-	<listitem>
-	  <para>
-	    Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT
-	    domain, which is no longer in use. Obsolete bit string
-	    label queries (RFC 2874) are not attempted.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term>-k <replaceable class="parameter">keyfile</replaceable></term>
 	<listitem>
 	  <para>
@@ -330,6 +320,16 @@
 	  <para>
 	    The domain name to query. This is useful to distinguish
 	    the <parameter>name</parameter> from other arguments.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-r</term>
+	<listitem>
+	  <para>
+	    Do not read options from <filename>${HOME}/.digrc</filename>.
+	    This is useful for scripts that need predictable behaviour.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -394,8 +394,7 @@
 	    <literal>94.2.0.192.in-addr.arpa</literal> and sets the
 	    query type and class to PTR and IN respectively. IPv6
 	    addresses are looked up using nibble format under the
-	    IP6.ARPA domain (but see also the <option>-i</option>
-	    option).
+	    IP6.ARPA domain.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -789,7 +788,13 @@
 	    <para>
 	      Process [do not process] IDN domain names on input.
 	      This requires IDN SUPPORT to have been enabled at
-	      compile time.  The default is to process IDN input.
+	      compile time.
+	    </para>
+	    <para>
+	      The default is to process IDN input when standard output
+	      is a tty.  The IDN processing on input is disabled when
+	      dig output is redirected to files, pipes, and other
+	      non-tty file descriptors.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -800,7 +805,13 @@
 	    <para>
 	      Convert [do not convert] puny code on output.
 	      This requires IDN SUPPORT to have been enabled at
-	      compile time.  The default is to convert output.
+	      compile time.
+	    </para>
+	    <para>
+	      The default is to process puny code on output when
+	      standard output is a tty.  The puny code processing on
+	      output is disabled when dig output is redirected to
+	      files, pipes, and other non-tty file descriptors.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -895,7 +906,8 @@
 	      attempts to find the authoritative name servers for
 	      the zone containing the name being looked up and
 	      display the SOA record that each name server has for
-	      the zone.
+	      the zone. Addresses of servers that that did not
+	      respond are also printed.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -955,6 +967,17 @@
 	      Print [do not print] the question section of a query
 	      when an answer is returned.  The default is to print
 	      the question section as a comment.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]raflag</option></term>
+	  <listitem>
+	    <para>
+	      Set [do not set] the RA (Recursion Available) bit in
+	      the query. The default is +noraflag. This bit should
+	      be ignored by the server for QUERY.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1098,6 +1121,17 @@
 	      the client's address information must
 	      <emphasis>not</emphasis> be used when resolving
 	      this query.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]tcflag</option></term>
+	  <listitem>
+	    <para>
+	      Set [do not set] the TC (TrunCation) bit in the query.
+	      The default is +notcflag.  This bit should be ignored
+	      by the server for QUERY.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1307,7 +1341,9 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       reply from the server.
       If you'd like to turn off the IDN support for some reason, use
       parameters <parameter>+noidnin</parameter> and
-      <parameter>+noidnout</parameter>.
+      <parameter>+noidnout</parameter> or define
+      the <envar>IDN_DISABLE</envar> environment variable.
+
     </para>
   </refsection>
 

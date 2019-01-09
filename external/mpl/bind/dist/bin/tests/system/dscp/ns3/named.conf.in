@@ -19,6 +19,8 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	notify yes;
+	recursion yes;
+	dnssec-validation yes;
 };
 
 zone "." {

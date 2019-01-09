@@ -35,7 +35,7 @@ controls {
 };
 
 zone "master.example" {
-	type slave;
+	type secondary;
 	masters { 10.53.0.1; };
 	file "slave.db";
 };

@@ -28,6 +28,7 @@ ntcp20=`grep "TCP requests received" ns2/named.stats | tail -1 | awk '{print $1}
 echo_i "check TCP transport"
 ret=0
 $DIG $DIGOPTS @10.53.0.3 txt.example. > dig.out.3
+sleep 1
 $RNDCCMD -s 10.53.0.1 stats > /dev/null 2>&1
 $RNDCCMD -s 10.53.0.2 stats > /dev/null 2>&1
 ntcp11=`grep "TCP requests received" ns1/named.stats | tail -1 | awk '{print $1}'`
@@ -42,6 +43,7 @@ status=`expr $status + $ret`
 echo_i "check TCP forwarder"
 ret=0
 $DIG $DIGOPTS @10.53.0.4 txt.example. > dig.out.4
+sleep 1
 $RNDCCMD -s 10.53.0.1 stats > /dev/null 2>&1
 $RNDCCMD -s 10.53.0.2 stats > /dev/null 2>&1
 ntcp12=`grep "TCP requests received" ns1/named.stats | tail -1 | awk '{print $1}'`

@@ -43,19 +43,19 @@
 #endif
 
 /*
- * Minimum version is Windows XP
+ * Minimum version is Windows Vista and Windows Server 2008
  */
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0600
 #endif
-#if _WIN32_WINNT < 0x0501
-#error Minimum Target environment is Windows XP and Windows Server 2003
+#if _WIN32_WINNT < 0x0600
+#error Minimum Target environment is Windows Vista and Windows Server 2008
 #endif
 #ifndef NTDDI_VERSION
-#define NTDDI_VERSION 0x05010100
+#define NTDDI_VERSION 0x06000100
 #endif
-#if NTDDI_VERSION < 0x05010100
-#error Minimum Target environment is Windows XP SP1 and Windows Server 2003
+#if NTDDI_VERSION < 0x06000100
+#error Minimum Target environment is Windows Vista and Windows Server 2008
 #endif
 
 /* Define if you have the ANSI C header files.  */
@@ -67,23 +67,14 @@
 /* define on DEC OSF to enable 4.4BSD style sa_len support */
 /* #undef _SOCKADDR_LEN */
 
-/* define if your system needs pthread_init() before using pthreads */
-/* #undef NEED_PTHREAD_INIT */
-
 /* define if your system has sigwait() */
 /* #undef HAVE_SIGWAIT */
 
 /* define on Solaris to get sigwait() to work using pthreads semantics */
 /* #undef _POSIX_PTHREAD_SEMANTICS */
 
-/* define if LinuxThreads is in use */
-/* #undef HAVE_LINUXTHREADS */
-
 /* define if catgets() is available */
 /* #undef HAVE_CATGETS */
-
-/* define if you have the NET_RT_IFLIST sysctl variable. */
-#define HAVE_IFLIST_SYSCTL 1
 
 /* define if you need to #define _XPG4_2 before including sys/socket.h */
 /* #undef NEED_XPG4_2_BEFORE_SOCKET_H */
@@ -120,15 +111,6 @@
 /* Define if you have h_errno */
 #define HAVE_H_ERRNO
 
-/* Define if you have RSA_generate_key(). */
-#define HAVE_RSA_GENERATE_KEY
-
-/* Define if you have DSA_generate_parameters(). */
-#define HAVE_DSA_GENERATE_PARAMETERS
-
-/* Define if you have DH_generate_parameters(). */
-#define HAVE_DH_GENERATE_PARAMETERS
-
 /* Define if you have getpassphrase in the C library. */
 #define HAVE_GETPASSPHRASE
 
@@ -140,8 +122,6 @@ char *getpassphrase(const char *);
  * LoadLibrary() instead of dlopen()).
  */
 #define ISC_DLZ_DLOPEN 1
-
-#define WANT_IPV6
 
 #define S_IFMT   _S_IFMT         /* file type mask */
 #define S_IFDIR  _S_IFDIR        /* directory */
@@ -179,6 +159,9 @@ char *getpassphrase(const char *);
 
 #if _MSC_VER < 1900
 #define snprintf _snprintf
+#endif
+#if _MSC_VER < 1800
+#error Use Visual Studio 2013 or later for %zu support.
 #endif
 #if _MSC_VER <= 1400
 #define vsnprintf _vsnprintf
@@ -235,9 +218,6 @@ typedef __int64 off_t;
  */
 #include <versions.h>
 
-/* We actually are using the CryptAPI and not a device */
-#define PATH_RANDOMDEV		"CryptAPI"
-
 #include <stddef.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -288,47 +268,8 @@ typedef __int64 off_t;
  */
 @HAVE_LIBXML2@
 
-/** define if struct addrinfo exists */
-#define HAVE_ADDRINFO
-
-/** define if getaddrinfo() exists */
-#define HAVE_GETADDRINFO
-
-/** define if gai_strerror() exists */
-#define HAVE_GAISTRERROR
-
-/* return type of gai_strerror */
-#define IRS_GAISTRERROR_RETURN_T char *
-
-/* Define to the buffer length type used by getnameinfo(3). */
-#define IRS_GETNAMEINFO_BUFLEN_T DWORD
-
-/* Define to the flags type used by getnameinfo(3). */
-#define IRS_GETNAMEINFO_FLAGS_T int
-
-/* Define to the sockaddr length type used by getnameinfo(3). */
-#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t
-
 /* Define to enable "rrset-order fixed" syntax. */
 @DNS_RDATASET_FIXED@
-
-/* Define to 1 if you have the `EVP_sha256' function. */
-@HAVE_EVP_SHA256@
-
-/* Define to 1 if you have the `EVP_sha384' function. */
-@HAVE_EVP_SHA384@
-
-/* Define to 1 if you have the `EVP_sha512' function. */
-@HAVE_EVP_SHA512@
-
-/* Define if OpenSSL provides FIPS_mode() */
-@HAVE_FIPS_MODE@
-
-/* Define if OpenSSL includes DSA support */
-@HAVE_OPENSSL_DSA@
-
-/* Define if OpenSSL includes ECDSA support */
-@HAVE_OPENSSL_ECDSA@
 
 /* Define if OpenSSL includes Ed25519 support */
 @HAVE_OPENSSL_ED25519@
@@ -336,29 +277,26 @@ typedef __int64 off_t;
 /* Define if OpenSSL includes Ed448 support */
 @HAVE_OPENSSL_ED448@
 
-/* Define if your OpenSSL version supports GOST. */
-@HAVE_OPENSSL_GOST@
+/* Define if your OpenSSL version supports DH functions. */
+@HAVE_DH_GET0_KEY@
 
-/* Define if your PKCS11 provider supports ECDSA. */
-@HAVE_PKCS11_ECDSA@
+/* Define if your OpenSSL version supports ECDSA functions. */
+@HAVE_ECDSA_SIG_GET0@
+
+/* Define if your OpenSSL version supports RSA functions. */
+@HAVE_RSA_SET0_KEY@
+
+/* define if OpenSSL is used for Public-Key Cryptography */
+@USE_OPENSSL@
+
+/* Define if native PKCS#11 is used as cryptographic library provider */
+@USE_PKCS11@
 
 /* Define if your PKCS11 provider supports Ed25519. */
 @HAVE_PKCS11_ED25519@
 
 /* Define if your PKCS11 provider supports Ed448. */
 @HAVE_PKCS11_ED448@
-
-/* Define if your PKCS11 provider supports GOST. */
-@HAVE_PKCS11_GOST@
-
-/* Define if GOST private keys are encoded in ASN.1. */
-@PREFER_GOSTASN1@
-
-/* Define if your OpenSSL version supports EVP AES */
-@HAVE_OPENSSL_EVP_AES@
-
-/* Define if your OpenSSL version supports AES */
-@HAVE_OPENSSL_AES@
 
 /* HMAC_*() return ints */
 @HMAC_RETURN_INT@
@@ -402,8 +340,44 @@ typedef __int64 off_t;
 /* Large system tuning */
 @TUNE_LARGE@
 
+/* define if we can use backtrace */
+@USE_BACKTRACE@
+
+/* the default value of dnssec-validation option */
+@VALIDATION_DEFAULT@
+
 /* Verbose query trace logging */
 @WANT_QUERYTRACE@
+
+/* Define to 1 if you have the `CRYPTO_zalloc' function. */
+@HAVE_CRYPTO_ZALLOC@
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_free' function. */
+@HAVE_EVP_CIPHER_CTX_FREE@
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
+@HAVE_EVP_CIPHER_CTX_NEW@
+
+/* Define to 1 if you have the `EVP_MD_CTX_free' function. */
+@HAVE_EVP_MD_CTX_FREE@
+
+/* Define to 1 if you have the `EVP_MD_CTX_new' function. */
+@HAVE_EVP_MD_CTX_NEW@
+
+/* Define to 1 if you have the `EVP_MD_CTX_reset' function. */
+@HAVE_EVP_MD_CTX_RESET@
+
+/* Define to 1 if you have the `HMAC_CTX_free' function. */
+@HAVE_HMAC_CTX_FREE@
+
+/* Define to 1 if you have the `HMAC_CTX_get_md' function. */
+@HAVE_HMAC_CTX_GET_MD@
+
+/* Define to 1 if you have the `HMAC_CTX_new' function. */
+@HAVE_HMAC_CTX_NEW@
+
+/* Define to 1 if you have the `HMAC_CTX_reset' function. */
+@HAVE_HMAC_CTX_RESET@
 
 /*
  * Define to nothing if C supports flexible array members, and to 1 if it does

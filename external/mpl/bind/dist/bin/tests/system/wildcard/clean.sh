@@ -23,3 +23,4 @@ rm -f ns1/signer.err
 rm -f */named.memstats
 rm -f dig.out.ns*.test*
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

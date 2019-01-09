@@ -31,12 +31,12 @@ do
 	$DIG $DIGOPTS @10.53.0.3 -f query.list > dig.out$i.5.test$n &
 	$DIG $DIGOPTS @10.53.0.3 -f query.list > dig.out$i.6.test$n &
 	wait
-	grep "status: SERVFAIL" dig.out$i.1.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.2.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.3.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.4.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.5.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.6.test$n && ret=1
+	grep "status: SERVFAIL" dig.out$i.1.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.2.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.3.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.4.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.5.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.6.test$n > /dev/null && ret=1
 	[ $ret = 1 ] && break
 	i=`expr $i + 1`
 	echo_i "successfully completed pass $i of $passes"
@@ -46,6 +46,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "check repeated recursive lookups of non recurring TTL=0 responses get new values ($n)"
+ret=0
 count=`(
 $DIG $DIGOPTS +short @10.53.0.3 foo.increment
 $DIG $DIGOPTS +short @10.53.0.3 foo.increment
@@ -71,12 +72,12 @@ do
 	$DIG $DIGOPTS @10.53.0.3 www.one.tld > dig.out$i.4.test$n
 	$DIG $DIGOPTS @10.53.0.3 www.one.tld > dig.out$i.5.test$n
 	$DIG $DIGOPTS @10.53.0.3 www.one.tld > dig.out$i.6.test$n
-	grep "status: SERVFAIL" dig.out$i.1.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.2.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.3.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.4.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.5.test$n && ret=1
-	grep "status: SERVFAIL" dig.out$i.6.test$n && ret=1
+	grep "status: SERVFAIL" dig.out$i.1.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.2.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.3.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.4.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.5.test$n > /dev/null && ret=1
+	grep "status: SERVFAIL" dig.out$i.6.test$n > /dev/null && ret=1
 	[ $ret = 1 ] && break
 	i=`expr $i + 1`
 	echo_i "successfully completed pass $i of $passes"

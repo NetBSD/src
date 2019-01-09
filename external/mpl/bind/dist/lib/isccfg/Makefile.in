@@ -22,7 +22,7 @@ CINCLUDES =	-I. ${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES}
 CDEFINES =
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 ISCCFGLIBS =	../../lib/cfg/libisccfg.@A@
 

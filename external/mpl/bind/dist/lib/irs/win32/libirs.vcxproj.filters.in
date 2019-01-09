@@ -39,7 +39,7 @@
     <ClCompile Include="..\getnameinfo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\resconf.c">
+    <ClCompile Include="resconf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

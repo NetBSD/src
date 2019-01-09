@@ -17,3 +17,4 @@ rm -f */*.db */*.db.signed */K*.key */K*.private */*.jnl */dsset-*
 rm -f */signer.err
 rm -f rndc.out.*
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

@@ -16,14 +16,14 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-key1=`$KEYGEN -q -r $RANDFILE -a ED25519 -n zone $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a ED25519 -n zone -f KSK $zone`
-#key2=`$KEYGEN -q -r $RANDFILE -a ED448 -n zone -f KSK $zone`
+key1=`$KEYGEN -q -a ED25519 -n zone $zone`
+key2=`$KEYGEN -q -a ED25519 -n zone -f KSK $zone`
+#key2=`$KEYGEN -q -a ED448 -n zone -f KSK $zone`
 $DSFROMKEY -a sha-256 $key2.key > dsset-256
 
 cat $infile $key1.key $key2.key > $zonefile
 
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -P -g -o $zone $zonefile > /dev/null 2> signer.err || cat signer.err
 
 # Configure the resolving server with a trusted key.
 keyfile_to_trusted_keys $key1 > trusted.conf

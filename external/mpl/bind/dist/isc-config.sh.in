@@ -146,7 +146,7 @@ if test x"$echo_libs" = x"true"; then
 		libs="$libs -lisccc"
 	fi
 	if test x"$libisc" = x"true" ; then
-		libs="$libs -lisc @ISC_OPENSSL_LIBS@"
+		libs="$libs -lisc @OPENSSL_LIBS@"
 		needothers=true
 	fi
 	if test x"$needothers" = x"true" ; then

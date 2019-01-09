@@ -12,7 +12,7 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-KEYGEN="$KEYGEN -qr $RANDFILE"
+KEYGEN="$KEYGEN -q"
 
 $SHELL clean.sh
 

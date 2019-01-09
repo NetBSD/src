@@ -29,8 +29,6 @@ rolling=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < rolling.key`
 standby=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < standby.key`
 zsk=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < zsk.key`
 
-$GENRANDOM 800 $RANDFILE
-
 echo_i "signing zones"
 $SIGNER -Sg -o $czone $cfile > /dev/null 2>&1
 $SIGNER -Sg -o $pzone $pfile > /dev/null 2>&1
@@ -175,7 +173,7 @@ status=`expr $status + $ret`
 echo_i "checking warning about delete date < inactive date with dnssec-keygen ($n)"
 ret=0
 # keygen should print a warning about delete < inactive
-$KEYGEN -q -a rsasha1 -r $RANDFILE -I now+15s -D now $czone > tmp.out 2>&1 || ret=1
+$KEYGEN -q -a rsasha1 -I now+15s -D now $czone > tmp.out 2>&1 || ret=1
 grep "warning" tmp.out > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -183,15 +181,15 @@ status=`expr $status + $ret`
 
 echo_i "checking correct behavior setting activation without publication date ($n)"
 ret=0
-key=`$KEYGEN -q -a rsasha1 -r $RANDFILE -A +1w $czone`
+key=`$KEYGEN -q -a rsasha1 -A +1w $czone`
 pub=`$SETTIME -upP $key | awk '{print $2}'`
 act=`$SETTIME -upA $key | awk '{print $2}'`
 [ $pub -eq $act ] || ret=1
-key=`$KEYGEN -q -a rsasha1 -r $RANDFILE -A +1w -i 1d $czone`
+key=`$KEYGEN -q -a rsasha1 -A +1w -i 1d $czone`
 pub=`$SETTIME -upP $key | awk '{print $2}'`
 act=`$SETTIME -upA $key | awk '{print $2}'`
 [ $pub -lt $act ] || ret=1
-key=`$KEYGEN -q -a rsasha1 -r $RANDFILE -A +1w -P never $czone`
+key=`$KEYGEN -q -a rsasha1 -A +1w -P never $czone`
 pub=`$SETTIME -upP $key | awk '{print $2}'`
 [ $pub = "UNSET" ] || ret=1
 n=`expr $n + 1`
@@ -200,8 +198,8 @@ status=`expr $status + $ret`
 
 echo_i "checking calculation of dates for a successor key ($n)"
 ret=0
-oldkey=`$KEYGEN -a RSASHA1 -q -r $RANDFILE $czone`
-newkey=`$KEYGEN -a RSASHA1 -q -r $RANDFILE $czone`
+oldkey=`$KEYGEN -a RSASHA1 -q $czone`
+newkey=`$KEYGEN -a RSASHA1 -q $czone`
 $SETTIME -A -2d -I +2d $oldkey > settime1.test$n 2>&1 || ret=1
 $SETTIME -i 1d -S $oldkey $newkey > settime2.test$n 2>&1 || ret=1
 $SETTIME -pA $newkey | grep "1970" > /dev/null && ret=1

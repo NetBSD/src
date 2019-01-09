@@ -132,18 +132,18 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "check new trust anchor can be added ($n)"
 ret=0
-standby1=`$KEYGEN -a rsasha256 -qfk -r $RANDFILE -K ns1 .`
+standby1=`$KEYGEN -a rsasha256 -qfk -K ns1 .`
 mkeys_loadkeys_on 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # there should be two keys listed now
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # one indicates current trust
-count=`grep -c "trusted since" rndc.out.$n` 
+count=`grep -c "trusted since" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # one indicates pending trust
 count=`grep -c "trust pending" rndc.out.$n`
@@ -157,10 +157,10 @@ ret=0
 mkeys_refresh_on 3
 mkeys_status_on 3 > rndc.out.$n 2>&1
 # there should be one key listed now
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # one line indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # ... and the key is not trusted
 count=`grep -c "no trust" rndc.out.$n`
@@ -205,10 +205,10 @@ mkeys_refresh_on 2
 mkeys_sync_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # two keys listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # trust is revoked
 count=`grep -c "trust revoked" rndc.out.$n`
@@ -239,10 +239,10 @@ mkeys_refresh_on 2
 mkeys_sync_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # two keys listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # trust is revoked
 count=`grep -c "trust revoked" rndc.out.$n`
@@ -277,10 +277,10 @@ mkeys_refresh_on 2
 mkeys_sync_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # two keys listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # trust is revoked
 count=`grep -c "trust revoked" rndc.out.$n`
@@ -299,11 +299,11 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "reinitialize trust anchors, add second key to bind.keys"
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns2
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mkeys ns2
 rm -f ns2/managed-keys.bind*
 keyfile_to_managed_keys ns1/$original ns1/$standby1 > ns2/managed.conf
 nextpart ns2/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns2
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns2
 
 n=`expr $n + 1`
 echo_i "check that no key from bind.keys is marked as an initializing key ($n)"
@@ -315,11 +315,11 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "reinitialize trust anchors, revert to one key in bind.keys"
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns2
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mkeys ns2
 rm -f ns2/managed-keys.bind*
 mv ns2/managed1.conf ns2/managed.conf
 nextpart ns2/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns2
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns2
 
 n=`expr $n + 1`
 echo_i "check that standby key is now trusted ($n)"
@@ -327,13 +327,13 @@ ret=0
 wait_for_log "Returned from key fetch in keyfetch_done()" ns2/named.run
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # two keys listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # both indicate current trust
-count=`grep -c "trusted since" rndc.out.$n` 
+count=`grep -c "trusted since" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -341,28 +341,28 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "revoke original key, add new standby ($n)"
 ret=0
-standby2=`$KEYGEN -a rsasha256 -qfk -r $RANDFILE -K ns1 .`
+standby2=`$KEYGEN -a rsasha256 -qfk -K ns1 .`
 $SETTIME -R now -K ns1 $original > /dev/null
 mkeys_loadkeys_on 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # three keys listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 3 ] || ret=1
 # one is revoked
-count=`grep -c "REVOKE" rndc.out.$n` 
+count=`grep -c "REVOKE" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # three lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 3 ] || ret=1
 # one indicates current trust
-count=`grep -c "trusted since" rndc.out.$n` 
+count=`grep -c "trusted since" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # one indicates revoked trust
-count=`grep -c "trust revoked" rndc.out.$n` 
+count=`grep -c "trust revoked" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # one indicates trust pending
-count=`grep -c "trust pending" rndc.out.$n` 
+count=`grep -c "trust pending" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # removal scheduled
 count=`grep -c "remove at" rndc.out.$n`
@@ -373,31 +373,31 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "revoke standby before it is trusted ($n)"
 ret=0
-standby3=`$KEYGEN -a rsasha256 -qfk -r $RANDFILE -K ns1 .`
+standby3=`$KEYGEN -a rsasha256 -qfk -K ns1 .`
 mkeys_loadkeys_on 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.a.$n 2>&1
 # four keys listed
-count=`grep -c "keyid: " rndc.out.a.$n` 
+count=`grep -c "keyid: " rndc.out.a.$n`
 [ "$count" -eq 4 ] || { echo "keyid: count ($count) != 4"; ret=1; }
 # one revoked
-count=`grep -c "trust revoked" rndc.out.a.$n` 
+count=`grep -c "trust revoked" rndc.out.a.$n`
 [ "$count" -eq 1 ] || { echo "trust revoked count ($count) != 1"; ret=1; }
 # two pending
-count=`grep -c "trust pending" rndc.out.a.$n` 
+count=`grep -c "trust pending" rndc.out.a.$n`
 [ "$count" -eq 2 ] || { echo "trust pending count ($count) != 2"; ret=1; }
 $SETTIME -R now -K ns1 $standby3 > /dev/null
 mkeys_loadkeys_on 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.b.$n 2>&1
 # now three keys listed
-count=`grep -c "keyid: " rndc.out.b.$n` 
+count=`grep -c "keyid: " rndc.out.b.$n`
 [ "$count" -eq 3 ] || { echo "keyid: count ($count) != 3"; ret=1; }
 # one revoked
-count=`grep -c "trust revoked" rndc.out.b.$n` 
+count=`grep -c "trust revoked" rndc.out.b.$n`
 [ "$count" -eq 1 ] || { echo "trust revoked count ($count) != 1"; ret=1; }
 # one pending
-count=`grep -c "trust pending" rndc.out.b.$n` 
+count=`grep -c "trust pending" rndc.out.b.$n`
 [ "$count" -eq 1 ] || { echo "trust pending count ($count) != 1"; ret=1; }
 $SETTIME -D now -K ns1 $standby3 > /dev/null
 mkeys_loadkeys_on 1
@@ -411,16 +411,16 @@ sleep 20
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # two keys listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # none revoked
-count=`grep -c "REVOKE" rndc.out.$n` 
+count=`grep -c "REVOKE" rndc.out.$n`
 [ "$count" -eq 0 ] || ret=1
 # two lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # both indicate current trust
-count=`grep -c "trusted since" rndc.out.$n` 
+count=`grep -c "trusted since" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -435,16 +435,16 @@ mkeys_loadkeys_on 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # two keys listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # both revoked
-count=`grep -c "REVOKE" rndc.out.$n` 
+count=`grep -c "REVOKE" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # both indicate trust revoked
-count=`grep -c "trust revoked" rndc.out.$n` 
+count=`grep -c "trust revoked" rndc.out.$n`
 [ "$count" -eq 2 ] || ret=1
 # both have removal scheduled
 count=`grep -c "remove at" rndc.out.$n`
@@ -467,16 +467,16 @@ echo_i "reset the root server"
 $SETTIME -D none -R none -K ns1 $original > /dev/null
 $SETTIME -D now -K ns1 $standby1 > /dev/null
 $SETTIME -D now -K ns1 $standby2 > /dev/null
-$SIGNER -Sg -K ns1 -N unixtime -r $RANDFILE -o . ns1/root.db > /dev/null 2>/dev/null
+$SIGNER -Sg -K ns1 -N unixtime -o . ns1/root.db > /dev/null 2>/dev/null
 copy_setports ns1/named2.conf.in ns1/named.conf
 rm -f ns1/root.db.signed.jnl
 mkeys_reconfig_on 1
 
 echo_i "reinitialize trust anchors"
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns2
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mkeys ns2
 rm -f ns2/managed-keys.bind*
 nextpart ns2/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns2
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns2
 
 n=`expr $n + 1`
 echo_i "check positive validation ($n)"
@@ -499,7 +499,7 @@ rm -f ns1/root.db.signed.jnl
 # but we actually do want post-sign verification to happen to ensure the zone
 # is correct before we break it on purpose.
 $SETTIME -R none -D none -K ns1 $standby1 > /dev/null
-$SIGNER -Sg -K ns1 -N unixtime -r $RANDFILE -O full -o . -f signer.out.$n ns1/root.db > /dev/null 2>/dev/null
+$SIGNER -Sg -K ns1 -N unixtime -O full -o . -f signer.out.$n ns1/root.db > /dev/null 2>/dev/null
 cp -f ns1/root.db.signed ns1/root.db.tmp
 BADSIG="SVn2tLDzpNX2rxR4xRceiCsiTqcWNKh7NQ0EQfCrVzp9WEmLw60sQ5kP xGk4FS/xSKfh89hO2O/H20Bzp0lMdtr2tKy8IMdU/mBZxQf2PXhUWRkg V2buVBKugTiOPTJSnaqYCN3rSfV1o7NtC1VNHKKK/D5g6bpDehdn5Gaq kpBhN+MSCCh9OZP2IT20luS1ARXxLlvuSVXJ3JYuuhTsQXUbX/SQpNoB Lo6ahCE55szJnmAxZEbb2KOVnSlZRA6ZBHDhdtO0S4OkvcmTutvcVV+7 w53CbKdaXhirvHIh0mZXmYk2PbPLDY7PU9wSH40UiWPOB9f00wwn6hUe uEQ1Qg=="
 # Less than a second may have passed since ns1 was started.  If we call
@@ -513,18 +513,18 @@ mkeys_reload_on 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # one key listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 1 ] || { echo "'keyid:' count ($count) != 1"; ret=1; }
 # it's the original key id
-count=`grep -c "keyid: $originalid" rndc.out.$n` 
+count=`grep -c "keyid: $originalid" rndc.out.$n`
 [ "$count" -eq 1 ] || { echo "'keyid: $originalid' count ($count) != 1"; ret=1; }
 # not revoked
-count=`grep -c "REVOKE" rndc.out.$n` 
+count=`grep -c "REVOKE" rndc.out.$n`
 [ "$count" -eq 0 ] || { echo "'REVOKE' count ($count) != 0"; ret=1; }
 # trust is still current
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 1 ] || { echo "'trust' count != 1"; ret=1; }
-count=`grep -c "trusted since" rndc.out.$n` 
+count=`grep -c "trusted since" rndc.out.$n`
 [ "$count" -eq 1 ] || { echo "'trusted since' count != 1"; ret=1; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -551,7 +551,7 @@ $SETTIME -D now -K ns1 $standby1 > /dev/null
 # "nanoseconds" field of isc_time_t, due to zone load time being seemingly
 # equal to master file modification time.
 sleep 1
-$SIGNER -Sg -K ns1 -N unixtime -r $RANDFILE -o . ns1/root.db > /dev/null 2>/dev/null
+$SIGNER -Sg -K ns1 -N unixtime -o . ns1/root.db > /dev/null 2>/dev/null
 mkeys_reload_on 1
 mkeys_flush_on 2
 $DIG $DIGOPTS +noauth example. @10.53.0.2 txt > dig.out.ns2.test$n || ret=1
@@ -572,27 +572,27 @@ ret=0
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 t1=`grep 'next refresh:' rndc.out.$n`
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns1
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mkeys ns1
 rm -f ns1/root.db.signed.jnl
 cp ns1/root.db ns1/root.db.signed
 nextpart ns1/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns1
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns1
 wait_for_log "loaded serial" ns1/named.run
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # one key listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # it's the original key id
-count=`grep -c "keyid: $originalid" rndc.out.$n` 
+count=`grep -c "keyid: $originalid" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # not revoked
-count=`grep -c "REVOKE" rndc.out.$n` 
+count=`grep -c "REVOKE" rndc.out.$n`
 [ "$count" -eq 0 ] || ret=1
 # trust is still current
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
-count=`grep -c "trusted since" rndc.out.$n` 
+count=`grep -c "trusted since" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 t2=`grep 'next refresh:' rndc.out.$n`
 [ "$t1" = "$t2" ] && ret=1
@@ -606,11 +606,11 @@ ret=0
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 t1=`grep 'next refresh:' rndc.out.$n`
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns1
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mkeys ns1
 rm -f ns1/root.db.signed.jnl
 cat ns1/K*.key >> ns1/root.db.signed
 nextpart ns1/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns1
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns1
 wait_for_log "loaded serial" ns1/named.run
 # Less than a second may have passed since the last time ns2 received a
 # ./DNSKEY response from ns1.  Ensure keys are refreshed at a different
@@ -619,18 +619,18 @@ sleep 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
 # one key listed
-count=`grep -c "keyid: " rndc.out.$n` 
+count=`grep -c "keyid: " rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # it's the original key id
-count=`grep -c "keyid: $originalid" rndc.out.$n` 
+count=`grep -c "keyid: $originalid" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 # not revoked
-count=`grep -c "REVOKE" rndc.out.$n` 
+count=`grep -c "REVOKE" rndc.out.$n`
 [ "$count" -eq 0 ] || ret=1
 # trust is still current
-count=`grep -c "trust" rndc.out.$n` 
+count=`grep -c "trust" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
-count=`grep -c "trusted since" rndc.out.$n` 
+count=`grep -c "trusted since" rndc.out.$n`
 [ "$count" -eq 1 ] || ret=1
 t2=`grep 'next refresh:' rndc.out.$n`
 [ "$t1" = "$t2" ] && ret=1
@@ -641,7 +641,7 @@ n=`expr $n + 1`
 echo_i "restore root server, check validation succeeds again ($n)"
 ret=0
 rm -f ns1/root.db.signed.jnl
-$SIGNER -Sg -K ns1 -N unixtime -r $RANDFILE -o . ns1/root.db > /dev/null 2>/dev/null
+$SIGNER -Sg -K ns1 -N unixtime -o . ns1/root.db > /dev/null 2>/dev/null
 mkeys_reload_on 1
 mkeys_refresh_on 2
 mkeys_status_on 2 > rndc.out.$n 2>&1
@@ -708,9 +708,9 @@ ret=0
 # ensure key refresh retry will be scheduled to one actual hour after the first
 # key refresh failure instead of just a few seconds, in order to prevent races
 # between the next scheduled key refresh time and startup time of restarted ns5.
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns5
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mkeys ns5
 nextpart ns5/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns5
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns5
 wait_for_log "Returned from key fetch in keyfetch_done()" ns5/named.run
 # ns5/named.run will contain logs from both the old instance and the new
 # instance.  In order for the test to pass, both must attempt a fetch.
@@ -722,14 +722,14 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo_i "check key refreshes are resumed after root servers become available ($n)"
 ret=0
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns5
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} mkeys ns5
 # Prevent previous check from affecting this one
 rm -f ns5/managed-keys.bind*
 # named2.args adds "-T mkeytimers=2/20/40" to named1.args as we need to wait for
 # an "hour" until keys are refreshed again after initial failure
 cp ns5/named2.args ns5/named.args
 nextpart ns5/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns5
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} mkeys ns5
 wait_for_log "Returned from key fetch in keyfetch_done() for '.': failure" ns5/named.run
 mkeys_secroots_on 5
 grep '; initializing managed' ns5/named.secroots > /dev/null 2>&1 || ret=1

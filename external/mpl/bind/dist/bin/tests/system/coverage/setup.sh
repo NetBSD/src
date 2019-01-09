@@ -12,8 +12,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-KEYGEN="$KEYGEN -qr $RANDFILE"
-
 $SHELL clean.sh
 
 ln -s $CHECKZONE named-compilezone
@@ -129,3 +127,8 @@ $SETTIME -K $dir -I +18mo -D +2y $zsk1 > /dev/null 2>&1
 zsk2=`$KEYGEN -K $dir -S $zsk1`
 $SETTIME -K $dir -I +16mo $zsk1 > /dev/null 2>&1
 ksk1=`$KEYGEN -K $dir -a rsasha1 -3fk example.com`
+
+# Test 12: Too early KSK deletion
+dir=12-ksk-deletion
+ksk1=`$KEYGEN -K $dir -f KSK -a 8 -b 2048 -I +40d -D +40d example.com`
+ksk2=`$KEYGEN -K $dir -S $ksk1.key example.com`

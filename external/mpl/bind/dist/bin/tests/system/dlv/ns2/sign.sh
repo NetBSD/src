@@ -24,12 +24,12 @@ zonefile=druz.db
 outfile=druz.pre
 dlvzone=utld.
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null` 
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -g -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -g -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 
 $CHECKZONE -q -D -i none druz druz.pre |
 sed '/IN DNSKEY/s/\([a-z0-9A-Z/]\{10\}\)[a-z0-9A-Z/]\{16\}/\1XXXXXXXXXXXXXXXX/'> druz.signed

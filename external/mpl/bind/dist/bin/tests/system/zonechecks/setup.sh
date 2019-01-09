@@ -14,8 +14,6 @@ SYSTEMTESTTOP=..
 
 $SHELL clean.sh
 
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
-
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 
@@ -25,8 +23,8 @@ cp bigserial.db ns1/
 cd ns1
 touch master.db.signed
 echo '$INCLUDE "master.db.signed"' >> master.db
-$KEYGEN -r $RANDFILE -a rsasha256 -q master.example > /dev/null 2>&1
-$KEYGEN -r $RANDFILE -a rsasha256 -qfk master.example > /dev/null 2>&1
+$KEYGEN -a rsasha256 -q master.example > /dev/null 2>&1
+$KEYGEN -a rsasha256 -qfk master.example > /dev/null 2>&1
 $SIGNER -SD -o master.example master.db > /dev/null \
     2> signer.err || cat signer.err
 echo '$INCLUDE "soa.db"' > reload.db

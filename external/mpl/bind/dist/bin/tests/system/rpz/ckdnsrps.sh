@@ -61,9 +61,11 @@ if ! $FEATURETEST --enable-dnsrps; then
 fi
 
 if [ -z "$TEST_DNSRPS" ]; then
-    add_conf "## DNSRPS testing is disabled"
+    add_conf "## testing with native RPZ"
     add_conf '#skip'
     exit 0
+else
+    add_conf "## testing with DNSRPS"
 fi
 
 if [ ! -x $DNSRPS_CMD ]; then

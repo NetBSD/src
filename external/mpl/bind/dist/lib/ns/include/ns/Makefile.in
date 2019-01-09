@@ -13,7 +13,7 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-HEADERS =	client.h interfacemgr.h lib.h listenlist.h log.h \
+HEADERS =	client.h hooks.h interfacemgr.h lib.h listenlist.h log.h \
 		notify.h query.h server.h sortlist.h stats.h \
 		types.h update.h version.h xfrout.h
 SUBDIRS =
@@ -26,10 +26,10 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/ns ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/ns || exit 1 ; \
 	done
 
 uninstall::
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/ns/$$i ; \
+		rm -f ${DESTDIR}${includedir}/ns/$$i || exit 1 ; \
 	done

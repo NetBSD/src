@@ -26,13 +26,13 @@ USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
 
 CINCLUDES =	-I. -I${top_srcdir}/lib/ns -Iinclude \
 		${NS_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
-		@DST_OPENSSL_INC@ @DST_GSSAPI_INC@
+		@OPENSSL_INCLUDES@ @DST_GSSAPI_INC@
 
 CDEFINES =
 
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 
@@ -43,18 +43,21 @@ DNSDEPLIBS =	../../lib/dns/libdns.@A@
 LIBS =		@LIBS@
 
 # Alphabetically
-OBJS =		client.@O@ interfacemgr.@O@ lib.@O@ \
+OBJS =		client.@O@ hooks.@O@ interfacemgr.@O@ lib.@O@ \
 		listenlist.@O@ log.@O@ notify.@O@ query.@O@ \
 		server.@O@ sortlist.@O@ stats.@O@ update.@O@ \
 		version.@O@ xfrout.@O@
 
-SRCS =		client.c interfacemgr.c lib.c listenlist.c \
+SRCS =		client.c hooks.c interfacemgr.c lib.c listenlist.c \
 		log.c notify.c query.c server.c sortlist.c stats.c \
 		update.c version.c xfrout.c
 
 SUBDIRS =	include
-TARGETS =	timestamp
 TESTDIRS =	@UNITTESTS@
+TARGETS =	timestamp
+
+SO_CFLAGS =	@CFLAGS@ @SO_CFLAGS@
+SO_LDFLAGS =	@LDFLAGS@ @SO_LDFLAGS@
 
 @BIND9_MAKE_RULES@
 

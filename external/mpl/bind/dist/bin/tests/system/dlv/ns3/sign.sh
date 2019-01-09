@@ -26,13 +26,13 @@ zonefile=child1.utld.db
 outfile=child1.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null` 
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -42,13 +42,13 @@ zonefile=child3.utld.db
 outfile=child3.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -58,12 +58,12 @@ zonefile=child4.utld.db
 outfile=child4.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -73,13 +73,13 @@ zonefile=child5.utld.db
 outfile=child5.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -88,13 +88,13 @@ infile=child.db.in
 zonefile=child7.utld.db
 outfile=child7.signed
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -103,12 +103,12 @@ infile=child.db.in
 zonefile=child8.utld.db
 outfile=child8.signed
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -118,12 +118,12 @@ zonefile=child9.utld.db
 outfile=child9.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 zone=child10.utld.
@@ -132,12 +132,12 @@ zonefile=child10.utld.db
 outfile=child10.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 zone=child1.druz.
@@ -147,13 +147,13 @@ outfile=child1.druz.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null` 
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -164,13 +164,13 @@ outfile=child3.druz.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -181,12 +181,12 @@ outfile=child4.druz.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -197,13 +197,13 @@ outfile=child5.druz.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -213,13 +213,13 @@ zonefile=child7.druz.db
 outfile=child7.druz.signed
 dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
 cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
-$SIGNER -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -228,12 +228,12 @@ infile=child.db.in
 zonefile=child8.druz.db
 outfile=child8.druz.signed
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -243,12 +243,12 @@ zonefile=child9.druz.db
 outfile=child9.druz.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 zone=child10.druz.
@@ -258,12 +258,12 @@ outfile=child10.druz.signed
 dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 
@@ -272,12 +272,12 @@ infile=dlv.db.in
 zonefile=dlv.utld.db
 outfile=dlv.signed
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
-keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
+keyname1=`$KEYGEN -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
+keyname2=`$KEYGEN -f KSK -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone 2> /dev/null`
 
 cat $infile $dlvsets $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo_i "signed $zone"
 
 keyfile_to_trusted_keys $keyname2 > trusted-dlv.conf

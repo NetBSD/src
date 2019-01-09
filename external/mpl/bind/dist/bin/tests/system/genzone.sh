@@ -186,14 +186,21 @@ loc02			LOC 	60 09 00.000 N 24 39 00.000 E 10.00m 20.00m (
 ;nxt03			NXT	. 1
 ;nxt04			NXT	. 127
 
-; type 31 (EID - not implemented by BIND)
-; type 32 (NIMLOC - not implemented by BIND)
+; type 31
+eid01			EID	12 89 AB
+
+; type 32
+nimloc01		NIMLOC	12 89 AB
 
 ; type 33
-srv01			SRV 0 0 0 .
-srv02			SRV 65535 65535 65535  old-slow-box
+srv01			SRV	0 0 0 .
+srv02			SRV	65535 65535 65535  old-slow-box
 
-; type 34 (ATMA - not implemented by BIND)
+; type 34
+atma01			ATMA	+61200000000
+atma02			ATMA	+61.2.0000.0000
+atma03			ATMA	1234567890abcdef
+atma04			ATMA	f.e.d.c.b.a.0.9.8.7.6.5.4.3.2.1
 
 ; type 35
 naptr01			NAPTR   0 0 "" "" "" . 
@@ -229,6 +236,7 @@ sink02			SINK	8 0 2 l4ik
 
 ; type 42
 apl01			APL	!1:10.0.0.1/32 1:10.0.0.0/24
+apl02			APL
 
 ; type 43
 ds01			DS	12892 5 2 26584835CA80C81C91999F31CFAF2A0E89D4FF1C8FAFD0DDB31A85C7 19277C13
@@ -366,9 +374,14 @@ csync02			CSYNC	0 0
 spf01			SPF	"v=spf1 -all"
 spf02			SPF	"v=spf1" " -all"
 
-; type 100 (UINFO - not implemented by BIND)
-; type 101 (UID - not implemented by BIND)
-; type 102 (GID - not implemented by BIND)
+; type 100 (UINFO - not implemented by BIND - unknown record format only)
+uinfo01			UINFO	\# 1 01
+
+; type 101 (UID - not implemented by BIND - unknown record format only)
+uid01			UID	\# 1 02
+
+; type 102 (GID - not implemented by BIND - unknown record format only)
+gid01			GID	\# 1 03
 
 ; type 103 (UNSPEC - XXXMUKS TODO - this has some weird encoding - see btoa_totext())
 

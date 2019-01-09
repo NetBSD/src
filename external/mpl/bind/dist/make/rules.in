@@ -174,7 +174,7 @@ MKDEP = ${SHELL} ${top_builddir}/make/mkdep
 ### necessary libraries explicitly in addition to (or instead of) ${LIBS},
 ### like this:
 ### binary@EXEEXT@: ${OBJS}
-###     cc -o $@ ${OBJS} ${OTHERLIB1} ${OTHERLIB2} ${lIBS}
+###     cc -o $@ ${OBJS} ${OTHERLIB1} ${OTHERLIB2} ${LIBS}
 ### in order to modify such a rule to use this compound command, a separate
 ### variable "LIBS0" should be deinfed for the explicitly listed libraries,
 ### while making sure ${LIBS} still includes libisc.  So the above rule would

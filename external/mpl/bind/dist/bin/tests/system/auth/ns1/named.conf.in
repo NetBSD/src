@@ -21,12 +21,21 @@ options {
 	notify yes;
 };
 
-zone example.net {
-	type master;
-	file "example.net.db";
+view main in {
+	zone example.net {
+		type master;
+		file "example.net.db";
+	};
+
+	zone example.com {
+		type master;
+		file "example.com.db";
+	};
 };
 
-zone example.com {
-	type master;
-	file "example.com.db";
+view alt chaos {
+	zone example.chaos chaos {
+		type master;
+		file "chaos.db";
+	};
 };

@@ -39,6 +39,19 @@ rm -f ns3/many.test.bk
 rm -f ns3/nsec3param.test.db
 rm -f ns3/too-big.test.db
 rm -f ns5/local.db
+rm -f ns6/in-addr.db
+rm -f ns7/in-addr.db
+rm -f ns7/example.com.db
+rm -f ns7/_default.tsigkeys
+rm -f ns8/in-addr.db
+rm -f ns8/example.com.db
+rm -f ns8/_default.tsigkeys
+rm -f ns9/in-addr.db
+rm -f ns9/example.com.db
+rm -f ns9/_default.tsigkeys
+rm -f ns10/example.com.db
+rm -f ns10/in-addr.db
+rm -f ns10/_default.tsigkeys
 rm -f nsupdate.out*
 rm -f typelist.out.*
 rm -f ns1/sample.db
@@ -46,3 +59,4 @@ rm -f ns2/sample.db
 rm -f update.out.*
 rm -f check.out.*
 rm -f update.out.*
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

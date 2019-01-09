@@ -32,3 +32,4 @@ rm -f ns1/named_ts
 rm -f ns1/named_ts.*
 rm -f ns1/named_unlimited
 rm -f ns1/named_unlimited.*
+rm -f ns*/managed-keys.bind*

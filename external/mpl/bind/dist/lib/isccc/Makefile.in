@@ -18,12 +18,12 @@ VERSION=@BIND9_VERSION@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. ${DNS_INCLUDES} ${ISC_INCLUDES} \
-		${ISCCC_INCLUDES} @ISC_OPENSSL_INC@
+		${ISCCC_INCLUDES} @OPENSSL_INCLUDES@
 
-CDEFINES =	@CRYPTO@
+CDEFINES =
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 ISCCCLIBS =	../../lib/isccc/libisccc.@A@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
@@ -45,6 +45,7 @@ SRCS =		alist.c base64.c cc.c ccmsg.c \
 
 
 TARGETS = 	timestamp
+TESTDIRS =	@UNITTESTS@
 
 @BIND9_MAKE_RULES@
 
@@ -68,6 +69,8 @@ libisccc.la: ${OBJS}
 
 timestamp: libisccc.@A@
 	touch timestamp
+
+testdirs: libisccc.@A@
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}

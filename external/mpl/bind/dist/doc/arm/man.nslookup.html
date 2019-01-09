@@ -380,14 +380,31 @@ nslookup -query=hinfo  -timeout=10
   </div>
 
   <div class="refsection">
-<a name="id-1.13.30.11"></a><h2>FILES</h2>
+<a name="id-1.13.30.11"></a><h2>IDN SUPPORT</h2>
+
+    <p>
+      If <span class="command"><strong>nslookup</strong></span> has been built with IDN (internationalized
+      domain name) support, it can accept and display non-ASCII domain names.
+      <span class="command"><strong>nslookup</strong></span> appropriately converts character encoding of
+      domain name before sending a request to DNS server or displaying a
+      reply from the server.
+      If you'd like to turn off the IDN support for some reason, define
+      the <code class="envar">IDN_DISABLE</code> environment variable.
+      The IDN support is disabled if the variable is set when
+      <span class="command"><strong>nslookup</strong></span> runs or when the standard output is not
+      a tty.
+    </p>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.30.12"></a><h2>FILES</h2>
 
     <p><code class="filename">/etc/resolv.conf</code>
     </p>
   </div>
 
   <div class="refsection">
-<a name="id-1.13.30.12"></a><h2>SEE ALSO</h2>
+<a name="id-1.13.30.13"></a><h2>SEE ALSO</h2>
 
     <p><span class="citerefentry">
         <span class="refentrytitle">dig</span>(1)
@@ -420,6 +437,6 @@ nslookup -query=hinfo  -timeout=10
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

@@ -25,3 +25,7 @@ rm -f ns4/dsset-*
 
 rm -f dig.out.*
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*
+
+rm -f ns*/trusted.conf
+rm -f ns*/keygen.out

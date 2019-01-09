@@ -37,7 +37,10 @@
 <p><b>Table of Contents</b></p>
 <dl class="toc">
 <dt><span class="section"><a href="Bv9ARM.ch07.html#common_problems">Common Problems</a></span></dt>
-<dd><dl><dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.2.2">It's not working; how can I figure out what's wrong?</a></span></dt></dl></dd>
+<dd><dl>
+<dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.2.2">It's not working; how can I figure out what's wrong?</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.2.3">EDNS compliance issues</a></span></dt>
+</dl></dd>
 <dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.3">Incrementing and Changing the Serial Number</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch07.html#more_help">Where Can I Get Help?</a></span></dt>
 </dl>
@@ -58,7 +61,59 @@
             source of hints and information that can be used to figure out
             what went wrong and how to fix the problem.
           </p>
+        </div>
 
+        <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="id-1.8.2.3"></a>EDNS compliance issues</h3></div></div></div>
+          <p>
+            EDNS (Extended DNS) is a standard that was first specified
+            in 1999. It is required for DNSSEC validation, DNS COOKIE
+            options, and other features. There are broken and outdated
+            DNS servers and firewalls still in use which misbehave when
+            queried with EDNS; for example, they may drop EDNS queries
+            rather than replying with FORMERR. BIND and other recursive
+            name servers have traditionally employed workarounds in this
+            situation, retrying queries in different ways and eventually
+            falling back to plain DNS queries without EDNS.
+          </p>
+          <p>
+            Such workarounds cause unnecessary resolution delays,
+            increase code complexity, and prevent deployment of new DNS
+            features. As of February 2019, all major DNS software vendors
+            have agreed to remove these workarounds; see
+            <a class="link" href="https://dnsflagday.net" target="_top">https://dnsflagday.net</a>
+            for further details. This change was implemented in BIND
+            as of release 9.14.0.
+          </p>
+          <p>
+            As a result, some domains may be non-resolvable without manual
+            intervention.  In these cases, resolution can be restored by
+            adding <span class="command"><strong>server</strong></span> clauses for the offending
+            servers, specifying <span class="command"><strong>edns no</strong></span> or
+            <span class="command"><strong>send-cookie no</strong></span>, depending on the specific
+            noncompliance.
+          </p>
+          <p>
+            To determine which <span class="command"><strong>server</strong></span> clause to use,
+            run the following commands to send queries to the authoritative
+            servers for the broken domain:
+          </p>
+  <div class="literallayout"><p><br>
+            dig soa &lt;zone&gt; @&lt;server&gt; +dnssec<br>
+            dig soa &lt;zone&gt; @&lt;server&gt; +dnssec +nocookie<br>
+            dig soa &lt;zone&gt; @&lt;server&gt; +noedns<br>
+  </p></div>
+          <p>
+            If the first command fails but the second succeeds, the
+            server most likely needs <span class="command"><strong>send-cookie no</strong></span>.
+            If the first two fail but the third succeeds, then the server
+            needs EDNS to be fully disabled with <span class="command"><strong>edns no</strong></span>.
+          </p>
+          <p>
+            Please contact the administrators of noncompliant domains
+            and encourage them to upgrade their broken DNS servers.
+          </p>
         </div>
       </div>
       <div class="section">
@@ -136,6 +191,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

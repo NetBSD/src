@@ -21,6 +21,7 @@ options {
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation no;
 };
 
 zone "child.example.tld" { type master; file "child.example.db"; };

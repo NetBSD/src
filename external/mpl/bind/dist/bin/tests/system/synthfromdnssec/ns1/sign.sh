@@ -16,20 +16,29 @@ zone=example
 infile=example.db.in
 zonefile=example.db
 
-keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 2048 -n zone $zone`
+keyname=`$KEYGEN -q -a RSASHA256 -b 2048 -n zone $zone`
 cat $infile $keyname.key > $zonefile
 
-$SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -o $zone $zonefile > /dev/null
+
+zone=dnamed
+infile=dnamed.db.in
+zonefile=dnamed.db
+
+keyname=`$KEYGEN -q -a RSASHA256 -b 2048 -n zone $zone`
+cat $infile $keyname.key > $zonefile
+
+$SIGNER -P -o $zone $zonefile > /dev/null
 
 zone=.
 infile=root.db.in
 zonefile=root.db
 
-keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -a RSAMD5 -b 1024 -n zone $zone`
 
 cat $infile $keyname.key > $zonefile
 
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 # Configure the resolving server with a trusted key.
 keyfile_to_trusted_keys $keyname > trusted.conf

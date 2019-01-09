@@ -30,10 +30,10 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/isccc ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/isccc || exit 1; \
 	done
 
 uninstall::
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/isccc/$$i ; \
+		rm -f ${DESTDIR}${includedir}/isccc/$$i || exit 1; \
 	done

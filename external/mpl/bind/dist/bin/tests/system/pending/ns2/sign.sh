@@ -17,12 +17,12 @@ for domain in example example.com; do
 	infile=${domain}.db.in
 	zonefile=${domain}.db
 
-	keyname1=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-	keyname2=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -f KSK -n zone $zone`
+	keyname1=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+	keyname2=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -f KSK -n zone $zone`
 
 	cat $infile $keyname1.key $keyname2.key > $zonefile
 
-	$SIGNER -3 bebe -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+	$SIGNER -3 bebe -o $zone $zonefile > /dev/null 2>&1
 done
 
 # remove "removed" record from example.com, causing the server to

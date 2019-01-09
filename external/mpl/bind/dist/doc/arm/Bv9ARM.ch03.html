@@ -47,6 +47,11 @@
 <dt><span class="section"><a href="Bv9ARM.ch03.html#tools">Tools for Use With the Name Server Daemon</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch03.html#signals">Signals</a></span></dt>
 </dl></dd>
+<dt><span class="section"><a href="Bv9ARM.ch03.html#module-info">Plugins</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="Bv9ARM.ch03.html#id-1.4.6.5">Configuring Plugins</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch03.html#id-1.4.6.6">Developing Plugins</a></span></dt>
+</dl></dd>
 </dl>
 </div>
 
@@ -741,6 +746,105 @@ controls {
         </div>
       </div>
     </div>
+
+    <div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="module-info"></a>Plugins</h2></div></div></div>
+
+  <p>
+    Plugins are a mechanism to extend the functionality of
+    <span class="command"><strong>named</strong></span> using dynamically loadable libraries.
+    By using plugins, core server functionality can be kept simple
+    for the majority of users; more complex code implementing optional
+    features need only be installed by users that need those features.
+  </p>
+  <p>
+    The plugin interface is a work in progress, and is expected to evolve
+    as more plugins are added. Currently, only "query plugins" are supported;
+    these modify the name server query logic. Other plugin types may be added
+    in the future.
+  </p>
+  <p>
+    The only plugin currently included in BIND is
+    <code class="filename">filter-aaaa.so</code>, which replaces the
+    <span class="command"><strong>filter-aaaa</strong></span> feature that previously existed natively
+    as part of <span class="command"><strong>named</strong></span>.
+    The code for this feature has been removed from <span class="command"><strong>named</strong></span>,
+    and can no longer be configured using standard
+    <code class="filename">named.conf</code> syntax, but linking in the
+    <code class="filename">filter-aaaa.so</code> plugin provides identical
+    functionality.
+  </p>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="id-1.4.6.5"></a>Configuring Plugins</h3></div></div></div>
+    <p>
+      A plugin is configured with the <span class="command"><strong>plugin</strong></span>
+      statement in <code class="filename">named.conf</code>:
+    </p>
+    <pre class="screen">
+    plugin query "library.so" {
+        <em class="replaceable"><code>parameters</code></em>
+    };
+    </pre>
+    <p>
+      In this example, file <code class="filename">library.so</code> is the plugin
+      library.  <code class="literal">query</code> indicates that this is a query
+      plugin.
+    </p>
+<p>
+    </p>
+<p>
+      Multiple <span class="command"><strong>plugin</strong></span> statements can be specified, to load
+      different plugins or multiple instances of the same plugin.
+    </p>
+    <p>
+      <em class="replaceable"><code>parameters</code></em> are passed as an opaque
+      string to the plugin's initialization routine. Configuration
+      syntax will differ depending on the module.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="id-1.4.6.6"></a>Developing Plugins</h3></div></div></div>
+    <p>
+      Each plugin implements four functions:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+<span class="command"><strong>plugin_register</strong></span> to allocate memory,
+        configure a plugin instance, and attach to hook points within
+        <span class="command"><strong>named</strong></span>,</li>
+<li class="listitem">
+<span class="command"><strong>plugin_destroy</strong></span> to tear down the plugin
+        instance and free memory,</li>
+<li class="listitem">
+<span class="command"><strong>plugin_version</strong></span> to check that the plugin
+        is compatible with the current version of the plugin API,</li>
+<li class="listitem">
+<span class="command"><strong>plugin_check</strong></span> to test syntactic
+        correctness of the plugin parameters.</li>
+</ul></div>
+<p>
+    </p>
+    <p>
+      At various locations within the <span class="command"><strong>named</strong></span> source code,
+      there are "hook points" at which a plugin may register itself.
+      When a hook point is reached while <span class="command"><strong>named</strong></span> is
+      running, it is checked to see whether any plugins have registered
+      themselves there; if so, the associated "hook action" is called -
+      this is a function within the plugin library. Hook actions may
+      examine the runtime state and make changes - for example, modifying
+      the answers to be sent back to a client or forcing a query to be
+      aborted. More details can be found in the file
+      <code class="filename">lib/ns/include/ns/hooks.h</code>.
+    </p>
+  </div>
+
+</div>
+
   </div>
 <div class="navfooter">
 <hr>
@@ -759,6 +863,6 @@ controls {
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

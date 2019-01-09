@@ -106,9 +106,10 @@
 
     <p>
       It is possible to set per-user defaults for <span class="command"><strong>dig</strong></span> via
-      <code class="filename">${HOME}/.digrc</code>.  This file is read and
-      any options in it
-      are applied before the command line arguments.
+      <code class="filename">${HOME}/.digrc</code>. This file is read and any
+      options in it are applied before the command line arguments.
+      The <code class="option">-r</code> option disables this feature, for
+      scripts that need predictable behaviour.
     </p>
 
     <p>
@@ -227,14 +228,6 @@
 	    <span class="command"><strong>dig</strong></span> using the command-line interface.
 	  </p>
 	</dd>
-<dt><span class="term">-i</span></dt>
-<dd>
-	  <p>
-	    Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT
-	    domain, which is no longer in use. Obsolete bit string
-	    label queries (RFC 2874) are not attempted.
-	  </p>
-	</dd>
 <dt><span class="term">-k <em class="replaceable"><code>keyfile</code></em></span></dt>
 <dd>
 	  <p>
@@ -272,6 +265,13 @@
 	  <p>
 	    The domain name to query. This is useful to distinguish
 	    the <em class="parameter"><code>name</code></em> from other arguments.
+	  </p>
+	</dd>
+<dt><span class="term">-r</span></dt>
+<dd>
+	  <p>
+	    Do not read options from <code class="filename">${HOME}/.digrc</code>.
+	    This is useful for scripts that need predictable behaviour.
 	  </p>
 	</dd>
 <dt><span class="term">-t <em class="replaceable"><code>type</code></em></span></dt>
@@ -324,8 +324,7 @@
 	    <code class="literal">94.2.0.192.in-addr.arpa</code> and sets the
 	    query type and class to PTR and IN respectively. IPv6
 	    addresses are looked up using nibble format under the
-	    IP6.ARPA domain (but see also the <code class="option">-i</code>
-	    option).
+	    IP6.ARPA domain.
 	  </p>
 	</dd>
 <dt><span class="term">-y <em class="replaceable"><code>[<span class="optional">hmac:</span>]keyname:secret</code></em></span></dt>
@@ -631,7 +630,13 @@
 	    <p>
 	      Process [do not process] IDN domain names on input.
 	      This requires IDN SUPPORT to have been enabled at
-	      compile time.  The default is to process IDN input.
+	      compile time.
+	    </p>
+	    <p>
+	      The default is to process IDN input when standard output
+	      is a tty.  The IDN processing on input is disabled when
+	      dig output is redirected to files, pipes, and other
+	      non-tty file descriptors.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]idnout</code></span></dt>
@@ -639,7 +644,13 @@
 	    <p>
 	      Convert [do not convert] puny code on output.
 	      This requires IDN SUPPORT to have been enabled at
-	      compile time.  The default is to convert output.
+	      compile time.
+	    </p>
+	    <p>
+	      The default is to process puny code on output when
+	      standard output is a tty.  The puny code processing on
+	      output is disabled when dig output is redirected to
+	      files, pipes, and other non-tty file descriptors.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]ignore</code></span></dt>
@@ -710,7 +721,8 @@
 	      attempts to find the authoritative name servers for
 	      the zone containing the name being looked up and
 	      display the SOA record that each name server has for
-	      the zone.
+	      the zone. Addresses of servers that that did not
+	      respond are also printed.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]onesoa</code></span></dt>
@@ -755,6 +767,14 @@
 	      Print [do not print] the question section of a query
 	      when an answer is returned.  The default is to print
 	      the question section as a comment.
+	    </p>
+	  </dd>
+<dt><span class="term"><code class="option">+[no]raflag</code></span></dt>
+<dd>
+	    <p>
+	      Set [do not set] the RA (Recursion Available) bit in
+	      the query. The default is +noraflag. This bit should
+	      be ignored by the server for QUERY.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]rdflag</code></span></dt>
@@ -865,6 +885,14 @@
 	      the client's address information must
 	      <span class="emphasis"><em>not</em></span> be used when resolving
 	      this query.
+	    </p>
+	  </dd>
+<dt><span class="term"><code class="option">+[no]tcflag</code></span></dt>
+<dd>
+	    <p>
+	      Set [do not set] the TC (TrunCation) bit in the query.
+	      The default is +notcflag.  This bit should be ignored
+	      by the server for QUERY.
 	    </p>
 	  </dd>
 <dt><span class="term"><code class="option">+[no]tcp</code></span></dt>
@@ -1044,7 +1072,9 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       reply from the server.
       If you'd like to turn off the IDN support for some reason, use
       parameters <em class="parameter"><code>+noidnin</code></em> and
-      <em class="parameter"><code>+noidnout</code></em>.
+      <em class="parameter"><code>+noidnout</code></em> or define
+      the <code class="envar">IDN_DISABLE</code> environment variable.
+
     </p>
   </div>
 

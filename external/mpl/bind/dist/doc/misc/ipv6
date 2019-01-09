@@ -17,11 +17,6 @@ socket API to be usable.  The systems which do not follow this will
 currently not get any warnings or errors, but ipv6 will simply not
 function on them.
 
-These systems currently include, but are not limited to:
-
-	AIX 3.4 (with ipv6 patches)
-
-
 RUN-TIME ISSUES
 ---------------
 
@@ -108,4 +103,3 @@ RELEVANT RFCs
 3493:  Basic Socket Interface Extensions for IPv6
 
 3542:  Advanced Sockets Application Program Interface (API) for IPv6
-

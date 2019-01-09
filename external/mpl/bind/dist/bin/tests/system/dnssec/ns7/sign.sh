@@ -16,12 +16,12 @@ zone=split-rrsig
 infile=split-rrsig.db.in
 zonefile=split-rrsig.db
 
-k1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
-k2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+k1=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
+k2=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
 
 cat $infile $k1.key $k2.key >$zonefile
 
-$SIGNER -P -3 - -A -r $RANDFILE -o $zone -O full -f $zonefile.unsplit -e now-3600 -s now-7200 $zonefile > /dev/null 2>&1
+$SIGNER -P -3 - -A -o $zone -O full -f $zonefile.unsplit -e now-3600 -s now-7200 $zonefile > /dev/null 2>&1
 awk 'BEGIN { r = ""; }
      $4 == "RRSIG" && $5 == "SOA" && r == "" { r = $0; next; }
      { print }

@@ -138,15 +138,6 @@
 	    Equivalent to the <code class="option">-v</code> verbose option.
 	  </p>
 	</dd>
-<dt><span class="term">-i</span></dt>
-<dd>
-	  <p>
-	    Obsolete.
-	    Use the IP6.INT domain for reverse lookups of IPv6
-	    addresses as defined in RFC1886 and deprecated in RFC4159.
-	    The default is to use IP6.ARPA as specified in RFC3596.
-	  </p>
-	</dd>
 <dt><span class="term">-l</span></dt>
 <dd>
 	  <p>
@@ -311,7 +302,7 @@
       <span class="command"><strong>host</strong></span> appropriately converts character encoding of
       domain name before sending a request to DNS server or displaying a
       reply from the server.
-      If you'd like to turn off the IDN support for some reason, defines
+      If you'd like to turn off the IDN support for some reason, define
       the <code class="envar">IDN_DISABLE</code> environment variable.
       The IDN support is disabled if the variable is set when
       <span class="command"><strong>host</strong></span> runs.

@@ -14,3 +14,4 @@ rm -f dig.out*
 rm -f ans4/norespond
 rm -f ns3/named.stats ns3/named_dump.db
 rm -f burst.input.*
+rm -f ns*/managed-keys.bind*

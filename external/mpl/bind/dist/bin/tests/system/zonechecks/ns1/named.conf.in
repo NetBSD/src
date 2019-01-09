@@ -47,7 +47,7 @@ view primary {
 	match-clients { any; };
 
 	zone "master.example" {
-		type master;
+		type primary;
 		file "master.db";
 		allow-update { any; };
 		allow-transfer { any; };

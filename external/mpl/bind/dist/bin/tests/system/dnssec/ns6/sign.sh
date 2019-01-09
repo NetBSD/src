@@ -16,8 +16,8 @@ zone=optout-tld
 infile=optout-tld.db.in
 zonefile=optout-tld.db
 
-keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
 
 cat $infile $keyname.key >$zonefile
 
-$SIGNER -P -3 - -A -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+$SIGNER -P -3 - -A -o $zone $zonefile > /dev/null 2>&1

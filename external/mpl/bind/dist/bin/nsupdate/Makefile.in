@@ -21,15 +21,15 @@ DST_GSSAPI_INC = @DST_GSSAPI_INC@
 
 CINCLUDES =	${DNS_INCLUDES} ${BIND9_INCLUDES} ${ISC_INCLUDES} \
 		${ISCCFG_INCLUDES} ${IRS_INCLUDES} ${DST_GSSAPI_INC} \
-		@DST_OPENSSL_INC@
+		@OPENSSL_INCLUDES@
 
-CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@ @USE_GSSAPI@
+CDEFINES =	-DVERSION=\"${VERSION}\" @USE_GSSAPI@
 CWARNINGS =
 
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 IRSLIBS =	../../lib/irs/libirs.@A@
 

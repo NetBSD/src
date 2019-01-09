@@ -16,3 +16,4 @@ rm -f dig.out.*
 rm -f rndc.out*
 rm -f ns*/*.nzf
 rm -f ns*/*.nzd ns*/*.nzd-lock
+rm -f ns*/managed-keys.bind*

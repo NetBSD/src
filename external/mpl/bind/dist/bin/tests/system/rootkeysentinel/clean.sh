@@ -21,3 +21,4 @@ rm -f ns1/root.db.signed
 rm -f ns2/Kexample.*
 rm -f ns2/example.db
 rm -f ns2/example.db.signed
+rm -f ns*/managed-keys.bind*

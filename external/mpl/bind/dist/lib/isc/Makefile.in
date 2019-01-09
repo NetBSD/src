@@ -17,30 +17,25 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-PROVIDER =	@PKCS11_PROVIDER@
-
 CINCLUDES =	-I${srcdir}/unix/include \
-		-I${srcdir}/@ISC_THREAD_DIR@/include \
-		-I${srcdir}/@ISC_ARCH_DIR@/include \
+		-I${srcdir}/pthreads/include \
 		-I./include \
-		-I${srcdir}/include ${DNS_INCLUDES} @ISC_OPENSSL_INC@
-CDEFINES =	@CRYPTO@ -DPK11_LIB_LOCATION=\"${PROVIDER}\"
+		-I${srcdir}/include ${DNS_INCLUDES} @OPENSSL_INCLUDES@
+CDEFINES =
 CWARNINGS =
 
 # Alphabetically
-UNIXOBJS =	@ISC_ISCIPV6_O@ @ISC_ISCPK11_API_O@ \
-		unix/app.@O@ unix/dir.@O@ unix/entropy.@O@ unix/errno.@O@ \
+UNIXOBJS =	unix/pk11_api.@O@ \
+		unix/app.@O@ unix/dir.@O@ unix/errno.@O@ \
 		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
-		unix/interfaceiter.@O@ unix/keyboard.@O@ unix/meminfo.@O@ \
+		unix/interfaceiter.@O@ unix/meminfo.@O@ \
 		unix/net.@O@ unix/os.@O@ unix/resource.@O@ unix/socket.@O@ \
-		unix/stdio.@O@ unix/stdtime.@O@ unix/strerror.@O@ \
+		unix/stdio.@O@ unix/stdtime.@O@ \
 		unix/syslog.@O@ unix/time.@O@
 
 NLSOBJS =	nls/msgcat.@O@
 
-THREADOPTOBJS = @ISC_THREAD_DIR@/condition.@O@ @ISC_THREAD_DIR@/mutex.@O@
-
-THREADOBJS =	@THREADOPTOBJS@ @ISC_THREAD_DIR@/thread.@O@
+THREADOBJS =	pthreads/condition.@O@ pthreads/mutex.@O@ pthreads/thread.@O@
 
 WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/errno.@O@ \
 		win32/file.@O@ win32/fsaccess.@O@ \
@@ -48,56 +43,50 @@ WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/errno.@O@ \
 		win32/stdtime.@O@ win32/thread.@O@ win32/time.@O@
 
 # Alphabetically
-OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
+OBJS =		pk11.@O@ pk11_result.@O@ \
 		aes.@O@ assertions.@O@ backtrace.@O@ base32.@O@ base64.@O@ \
 		bind9.@O@ buffer.@O@ bufferlist.@O@ \
-		commandline.@O@ counter.@O@ crc64.@O@ error.@O@ event.@O@ \
-		hash.@O@ ht.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ \
-		hmacsha.@O@ httpd.@O@ inet_aton.@O@ iterated_hash.@O@ \
+		commandline.@O@ counter.@O@ crc64.@O@ error.@O@ entropy.@O@ \
+		event.@O@ hash.@O@ ht.@O@ heap.@O@ hex.@O@ hmac.@O@ \
+		httpd.@O@ iterated_hash.@O@ \
 		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
-		md5.@O@ mem.@O@ mutexblock.@O@ \
-		netaddr.@O@ netscope.@O@ pool.@O@ ondestroy.@O@ \
+		md.@O@ mem.@O@ mutexblock.@O@ \
+		netaddr.@O@ netscope.@O@ nonce.@O@ openssl_shim.@O@ pool.@O@ \
 		parseint.@O@ portset.@O@ quota.@O@ radix.@O@ random.@O@ \
-		ratelimiter.@O@ refcount.@O@ region.@O@ regex.@O@ result.@O@ \
+		ratelimiter.@O@ region.@O@ regex.@O@ result.@O@ \
 		rwlock.@O@ \
-		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ stats.@O@ \
-		string.@O@ strtoul.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
+		serial.@O@ sockaddr.@O@ stats.@O@ \
+		string.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
 		tm.@O@ timer.@O@ version.@O@ \
 		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
 SYMTBLOBJS =	backtrace-emptytbl.@O@
 
-CHACHASRCS =	chacha_private.h
-
 # Alphabetically
-SRCS =		@ISC_EXTRA_SRCS@ @ISC_PK11_C@ @ISC_PK11_RESULT_C@ \
+SRCS =		pk11.c pk11_result.c \
 		aes.c assertions.c backtrace.c base32.c base64.c bind9.c \
 		buffer.c bufferlist.c commandline.c counter.c crc64.c \
-		error.c event.c hash.c ht.c heap.c hex.c hmacmd5.c \
-		hmacsha.c httpd.c inet_aton.c iterated_hash.c \
+		entropy.c error.c event.c hash.c ht.c heap.c hex.c hmac.c \
+		httpd.c iterated_hash.c \
 		lex.c lfsr.c lib.c log.c \
-		md5.c mem.c mutexblock.c \
-		netaddr.c netscope.c pool.c ondestroy.c \
-		parseint.c portset.c quota.c radix.c random.c ${CHACHASRCS} \
-		ratelimiter.c refcount.c region.c regex.c result.c rwlock.c \
-		safe.c serial.c sha1.c sha2.c sockaddr.c stats.c string.c \
-		strtoul.c symtab.c task.c taskpool.c timer.c \
+		md.c mem.c mutexblock.c \
+		netaddr.c netscope.c nonce.c openssl_shim.c pool.c \
+		parseint.c portset.c quota.c radix.c random.c \
+		ratelimiter.c region.c regex.c result.c rwlock.c \
+		serial.c sockaddr.c stats.c string.c \
+		symtab.c task.c taskpool.c timer.c \
 		tm.c version.c
 
-LIBS =		@ISC_OPENSSL_LIBS@ @LIBS@
+LIBS =		@OPENSSL_LIBS@ @LIBS@
 
 # Note: the order of SUBDIRS is important.
 # Attempt to disable parallel processing.
 .NOTPARALLEL:
 .NO_PARALLEL:
-SUBDIRS =	include unix nls @ISC_THREAD_DIR@ @ISC_ARCH_DIR@
+SUBDIRS =	include unix nls pthreads
 TARGETS =	timestamp
 TESTDIRS =	@UNITTESTS@
 
 @BIND9_MAKE_RULES@
-
-safe.@O@: safe.c
-	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} @CCNOOPT@ \
-		-c ${srcdir}/safe.c
 
 version.@O@: version.c
 	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \

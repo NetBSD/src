@@ -29,10 +29,10 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/pk11 ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/pk11 || exit 1; \
 	done
 
 uninstall::
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/pk11/$$i ; \
+		rm -f ${DESTDIR}${includedir}/pk11/$$i || exit 1; \
 	done
