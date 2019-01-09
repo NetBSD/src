@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 /*! \file */
 
 #include <pwd.h>
+#include <stdbool.h>
 
 #include <isc/types.h>
 
@@ -51,12 +52,12 @@ void
 named_os_minprivs(void);
 
 FILE *
-named_os_openfile(const char *filename, mode_t mode, isc_boolean_t switch_user);
+named_os_openfile(const char *filename, mode_t mode, bool switch_user);
 
 void
-named_os_writepidfile(const char *filename, isc_boolean_t first_time);
+named_os_writepidfile(const char *filename, bool first_time);
 
-isc_boolean_t
+bool
 named_os_issingleton(const char *filename);
 
 void

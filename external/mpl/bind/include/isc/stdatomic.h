@@ -1,5 +1,3 @@
-/*	$NetBSD: stdatomic.h,v 1.2 2019/01/09 16:55:15 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -35,7 +33,7 @@
 #define __CLANG_ATOMICS
 #elif __GNUC_PREREQ__(4, 7)
 #define __GNUC_ATOMICS
-#elif !defined(__GNUC__)
+#elif !defined(__GNUC__) && !defined(__lint__)
 #error "isc/stdatomic.h does not support your compiler"
 #endif
 #endif

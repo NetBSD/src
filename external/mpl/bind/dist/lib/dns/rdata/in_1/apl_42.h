@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: apl_42.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,10 +17,10 @@
 
 
 typedef struct dns_rdata_apl_ent {
-	isc_boolean_t	negative;
-	isc_uint16_t	family;
-	isc_uint8_t	prefix;
-	isc_uint8_t	length;
+	bool	negative;
+	uint16_t	family;
+	uint8_t	prefix;
+	uint8_t	length;
 	unsigned char	*data;
 } dns_rdata_apl_ent_t;
 
@@ -29,9 +29,9 @@ typedef struct dns_rdata_in_apl {
 	isc_mem_t		*mctx;
 	/* type & class specific elements */
 	unsigned char           *apl;
-	isc_uint16_t            apl_len;
+	uint16_t            apl_len;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_in_apl_t;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -92,6 +92,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -139,10 +140,10 @@ static struct afd {
 	} while (/*CONSTCOND*/0)
 
 int
-getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
-	    char *host, IRS_GETNAMEINFO_BUFLEN_T hostlen,
-	    char *serv, IRS_GETNAMEINFO_BUFLEN_T servlen,
-	    IRS_GETNAMEINFO_FLAGS_T flags)
+getnameinfo(const struct sockaddr *sa, socklen_t salen,
+	    char *host, socklen_t hostlen,
+	    char *serv, socklen_t servlen,
+	    int flags)
 {
 	struct afd *afd = NULL;
 	struct servent *sp;
@@ -197,8 +198,9 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
-	proto = (flags & NI_DGRAM) ? "udp" : "tcp";
+	proto = ((flags & NI_DGRAM) != 0) ? "udp" : "tcp";
 
 	if (serv == NULL || servlen == 0U) {
 		/*
@@ -277,7 +279,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 		dns_name_t *ptrname;
 		irs_context_t *irsctx = NULL;
 		dns_client_t *client;
-		isc_boolean_t found = ISC_FALSE;
+		bool found = false;
 		dns_namelist_t answerlist;
 		dns_rdataset_t *rdataset;
 		isc_region_t hostregion;
@@ -293,7 +295,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 		/* Make query name */
 		isc_netaddr_fromsockaddr(&netaddr, (const isc_sockaddr_t *)sa);
 		ptrname = dns_fixedname_initname(&ptrfname);
-		iresult = dns_byaddr_createptrname2(&netaddr, 0, ptrname);
+		iresult = dns_byaddr_createptrname(&netaddr, 0, ptrname);
 		if (iresult != ISC_R_SUCCESS)
 			ERR(EAI_FAIL);
 
@@ -361,7 +363,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 							sizeof(hoststr));
 					iresult =
 						dns_name_totext(&rdata_ptr.ptr,
-								ISC_TRUE, &b);
+								true, &b);
 					dns_rdata_freestruct(&rdata_ptr);
 					if (iresult == ISC_R_SUCCESS) {
 						/*
@@ -370,7 +372,7 @@ getnameinfo(const struct sockaddr *sa, IRS_GETNAMEINFO_SOCKLEN_T salen,
 						 * getnameinfo() can return
 						 * at most one hostname.
 						 */
-						found = ISC_TRUE;
+						found = true;
 						isc_buffer_usedregion(
 							&b, &hostregion);
 						goto ptrfound;

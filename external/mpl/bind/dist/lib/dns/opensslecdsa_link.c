@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,16 @@
  * information regarding copyright ownership.
  */
 
+/*! \file */
+
 #include <config.h>
 
-#if defined(OPENSSL) && defined(HAVE_OPENSSL_ECDSA)
+#if !USE_PKCS11
 
-#if !defined(HAVE_EVP_SHA256) || !defined(HAVE_EVP_SHA384)
-#error "ECDSA without EVP for SHA2?"
-#endif
+#include <stdbool.h>
 
-#include <isc/entropy.h>
 #include <isc/mem.h>
 #include <isc/safe.h>
-#include <isc/sha2.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -47,7 +45,7 @@
 
 #define DST_RET(a) {ret = a; goto err;}
 
-#if !defined(HAVE_ECDSA_SIG_GET0)
+#if !HAVE_ECDSA_SIG_GET0
 /* From OpenSSL 1.1 */
 static void
 ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps) {
@@ -72,7 +70,7 @@ ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s) {
 
 	return 1;
 }
-#endif
+#endif /* !HAVE_ECDSA_SIG_GET0 */
 
 static isc_result_t opensslecdsa_todns(const dst_key_t *key,
 				       isc_buffer_t *data);
@@ -262,9 +260,9 @@ opensslecdsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	return (ret);
 }
 
-static isc_boolean_t
+static bool
 opensslecdsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
-	isc_boolean_t ret;
+	bool ret;
 	int status;
 	EVP_PKEY *pkey1 = key1->keydata.pkey;
 	EVP_PKEY *pkey2 = key2->keydata.pkey;
@@ -273,30 +271,30 @@ opensslecdsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	const BIGNUM *priv1, *priv2;
 
 	if (pkey1 == NULL && pkey2 == NULL)
-		return (ISC_TRUE);
+		return (true);
 	else if (pkey1 == NULL || pkey2 == NULL)
-		return (ISC_FALSE);
+		return (false);
 
 	eckey1 = EVP_PKEY_get1_EC_KEY(pkey1);
 	eckey2 = EVP_PKEY_get1_EC_KEY(pkey2);
 	if (eckey1 == NULL && eckey2 == NULL) {
-		DST_RET (ISC_TRUE);
+		DST_RET (true);
 	} else if (eckey1 == NULL || eckey2 == NULL)
-		DST_RET (ISC_FALSE);
+		DST_RET (false);
 
 	status = EVP_PKEY_cmp(pkey1, pkey2);
 	if (status != 1)
-		DST_RET (ISC_FALSE);
+		DST_RET (false);
 
 	priv1 = EC_KEY_get0_private_key(eckey1);
 	priv2 = EC_KEY_get0_private_key(eckey2);
 	if (priv1 != NULL || priv2 != NULL) {
 		if (priv1 == NULL || priv2 == NULL)
-			DST_RET (ISC_FALSE);
+			DST_RET (false);
 		if (BN_cmp(priv1, priv2) != 0)
-			DST_RET (ISC_FALSE);
+			DST_RET (false);
 	}
-	ret = ISC_TRUE;
+	ret = true;
 
  err:
 	if (eckey1 != NULL)
@@ -351,13 +349,13 @@ opensslecdsa_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	return (ret);
 }
 
-static isc_boolean_t
+static bool
 opensslecdsa_isprivate(const dst_key_t *key) {
-	isc_boolean_t ret;
+	bool ret;
 	EVP_PKEY *pkey = key->keydata.pkey;
 	EC_KEY *eckey = EVP_PKEY_get1_EC_KEY(pkey);
 
-	ret = ISC_TF(eckey != NULL && EC_KEY_get0_private_key(eckey) != NULL);
+	ret = (eckey != NULL && EC_KEY_get0_private_key(eckey) != NULL);
 	if (eckey != NULL)
 		EC_KEY_free(eckey);
 	return (ret);
@@ -646,11 +644,4 @@ dst__opensslecdsa_init(dst_func_t **funcp) {
 	return (ISC_R_SUCCESS);
 }
 
-#else /* HAVE_OPENSSL_ECDSA */
-
-#include <isc/util.h>
-
-EMPTY_TRANSLATION_UNIT
-
-#endif /* HAVE_OPENSSL_ECDSA */
-/*! \file */
+#endif /* !USE_PKCS11 */

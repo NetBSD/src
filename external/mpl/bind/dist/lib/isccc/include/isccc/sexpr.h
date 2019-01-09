@@ -1,4 +1,4 @@
-/*	$NetBSD: sexpr.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: sexpr.h,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,7 @@
 
 /*! \file isccc/sexpr.h */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <isc/lang.h>
@@ -96,16 +97,16 @@ isccc_sexpr_setcdr(isccc_sexpr_t *pair, isccc_sexpr_t *cdr);
 isccc_sexpr_t *
 isccc_sexpr_addtolist(isccc_sexpr_t **l1p, isccc_sexpr_t *l2);
 
-isc_boolean_t
+bool
 isccc_sexpr_listp(isccc_sexpr_t *sexpr);
 
-isc_boolean_t
+bool
 isccc_sexpr_emptyp(isccc_sexpr_t *sexpr);
 
-isc_boolean_t
+bool
 isccc_sexpr_stringp(isccc_sexpr_t *sexpr);
 
-isc_boolean_t
+bool
 isccc_sexpr_binaryp(isccc_sexpr_t *sexpr);
 
 char *

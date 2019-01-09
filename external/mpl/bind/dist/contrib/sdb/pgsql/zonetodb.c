@@ -1,4 +1,4 @@
-/*	$NetBSD: zonetodb.c,v 1.2 2018/08/12 13:02:34 christos Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.3 2019/01/09 16:55:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,6 @@
 #include <string.h>
 
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
@@ -93,7 +92,7 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata) {
 	PGresult *res;
 
 	isc_buffer_init(&b, namearray, sizeof(namearray) - 1);
-	result = dns_name_totext(name, ISC_TRUE, &b);
+	result = dns_name_totext(name, true, &b);
 	check_result(result, "dns_name_totext");
 	namearray[isc_buffer_usedlength(&b)] = 0;
 	quotestring((const unsigned char *)namearray, canonnamearray);
@@ -137,7 +136,6 @@ main(int argc, char **argv) {
 	dns_rdataset_t rdataset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_mem_t *mctx = NULL;
-	isc_entropy_t *ectx = NULL;
 	isc_buffer_t b;
 	isc_result_t result;
 	PGresult *res;
@@ -159,12 +157,6 @@ main(int argc, char **argv) {
 	result = isc_mem_create(0, 0, &mctx);
 	check_result(result, "isc_mem_create");
 
-	result = isc_entropy_create(mctx, &ectx);
-	check_result(result, "isc_entropy_create");
-
-	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	check_result(result, "isc_hash_create");
-
 	isc_buffer_init(&b, porigin, strlen(porigin));
 	isc_buffer_add(&b, strlen(porigin));
 	origin = dns_fixedname_initname(&forigin);
@@ -176,7 +168,7 @@ main(int argc, char **argv) {
 			       dns_rdataclass_in, 0, NULL, &db);
 	check_result(result, "dns_db_create");
 
-	result = dns_db_load(db, zonefile);
+	result = dns_db_load(db, zonefile, dns_masterformat_text, 0);
 	if (result == DNS_R_SEENINCLUDE)
 		result = ISC_R_SUCCESS;
 	check_result(result, "dns_db_load");
@@ -277,8 +269,6 @@ main(int argc, char **argv) {
 	PQclear(res);
 	dns_dbiterator_destroy(&dbiter);
 	dns_db_detach(&db);
-	isc_hash_destroy();
-	isc_entropy_detach(&ectx);
 	isc_mem_destroy(&mctx);
 	closeandexit(0);
 	exit(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ecs.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: ecs.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,14 +14,16 @@
 #ifndef DNS_ECS_H
 #define DNS_ECS_H 1
 
+#include <inttypes.h>
+
 #include <isc/netaddr.h>
 #include <isc/types.h>
 #include <dns/types.h>
 
 struct dns_ecs {
 	isc_netaddr_t addr;
-	isc_uint8_t source;
-	isc_uint8_t scope;
+	uint8_t source;
+	uint8_t scope;
 };
 
 #define DNS_ECS_FORMATSIZE (ISC_NETADDR_FORMATSIZE + 8) /* <address>/NNN/NNN */

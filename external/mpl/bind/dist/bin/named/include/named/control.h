@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,8 @@
  * \brief
  * The name server command channel.
  */
+
+#include <stdbool.h>
 
 #include <isccc/types.h>
 
@@ -103,7 +105,7 @@ named_controls_shutdown(named_controls_t *controls);
  */
 
 isc_result_t
-named_control_docommand(isccc_sexpr_t *message, isc_boolean_t readonly,
+named_control_docommand(isccc_sexpr_t *message, bool readonly,
 			isc_buffer_t **text);
 
 #endif /* NAMED_CONTROL_H */

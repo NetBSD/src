@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/commandline.h>
@@ -94,9 +95,9 @@ print_name(dns_name_t *name) {
 	isc_buffer_init(&target, buffer, sizeof(buffer));
 
 	/*
-	 * ISC_FALSE means absolute names have the final dot added.
+	 * false means absolute names have the final dot added.
 	 */
-	dns_name_totext(name, ISC_FALSE, &target);
+	dns_name_totext(name, false, &target);
 
 	printf("%.*s", (int)target.used, (char *)target.base);
 }
@@ -108,7 +109,7 @@ detail(dns_rbt_t *rbt, dns_name_t *name) {
 	dns_rbtnode_t *node1, *node2;
 	dns_rbtnodechain_t chain;
 	isc_result_t result;
-	isc_boolean_t nodes_should_match = ISC_FALSE;
+	bool nodes_should_match = false;
 
 	dns_rbtnodechain_init(&chain, mctx);
 
@@ -128,7 +129,7 @@ detail(dns_rbt_t *rbt, dns_name_t *name) {
 	switch (result) {
 	case ISC_R_SUCCESS:
 		printf("  found exact.");
-		nodes_should_match = ISC_TRUE;
+		nodes_should_match = true;
 		break;
 	case DNS_R_PARTIALMATCH:
 		printf("  found parent.");
@@ -181,7 +182,7 @@ detail(dns_rbt_t *rbt, dns_name_t *name) {
 }
 
 static void
-iterate(dns_rbt_t *rbt, isc_boolean_t forward) {
+iterate(dns_rbt_t *rbt, bool forward) {
 	dns_name_t foundname, *origin;
 	dns_rbtnodechain_t chain;
 	dns_fixedname_t fixedorigin;
@@ -250,7 +251,7 @@ main(int argc, char **argv) {
 	dns_fixedname_t fixedname;
 	dns_rbt_t *rbt = NULL;
 	int length, ch;
-	isc_boolean_t show_final_mem = ISC_FALSE;
+	bool show_final_mem = false;
 	isc_result_t result;
 	void *data;
 
@@ -263,7 +264,7 @@ main(int argc, char **argv) {
 	while ((ch = isc_commandline_parse(argc, argv, "m")) != -1) {
 		switch (ch) {
 		case 'm':
-			show_final_mem = ISC_TRUE;
+			show_final_mem = true;
 			break;
 		}
 	}
@@ -338,7 +339,7 @@ main(int argc, char **argv) {
 				if (name != NULL) {
 					printf("deleting name %s\n", arg);
 					result = dns_rbt_deletename(rbt, name,
-								    ISC_FALSE);
+								    false);
 					PRINTERR(result);
 					delete_name(name, NULL);
 				}
@@ -349,7 +350,7 @@ main(int argc, char **argv) {
 					printf("nuking name %s "
 					       "and its descendants\n", arg);
 					result = dns_rbt_deletename(rbt, name,
-								    ISC_TRUE);
+								    true);
 					PRINTERR(result);
 					delete_name(name, NULL);
 				}
@@ -412,10 +413,10 @@ main(int argc, char **argv) {
 				}
 
 			} else if (CMDCHECK("forward")) {
-				iterate(rbt, ISC_TRUE);
+				iterate(rbt, true);
 
 			} else if (CMDCHECK("backward")) {
-				iterate(rbt, ISC_FALSE);
+				iterate(rbt, false);
 
 			} else if (CMDCHECK("print")) {
 				if (arg == NULL || *arg == '\0')

@@ -1,4 +1,4 @@
-/*	$NetBSD: name_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: name_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/commandline.h>
@@ -47,7 +48,7 @@ print_name(dns_name_t *name) {
 
 	isc_buffer_init(&source, s, sizeof(s));
 	if (dns_name_countlabels(name) > 0)
-		result = dns_name_totext(name, ISC_FALSE, &source);
+		result = dns_name_totext(name, false, &source);
 	else
 		result = ISC_R_SUCCESS;
 	if (result == ISC_R_SUCCESS) {
@@ -71,14 +72,14 @@ main(int argc, char *argv[]) {
 	const dns_name_t *origin;
 	unsigned int downcase = 0;
 	size_t len;
-	isc_boolean_t quiet = ISC_FALSE;
-	isc_boolean_t concatenate = ISC_FALSE;
-	isc_boolean_t got_name = ISC_FALSE;
-	isc_boolean_t check_absolute = ISC_FALSE;
-	isc_boolean_t check_wildcard = ISC_FALSE;
-	isc_boolean_t test_downcase = ISC_FALSE;
-	isc_boolean_t inplace = ISC_FALSE;
-	isc_boolean_t want_split = ISC_FALSE;
+	bool quiet = false;
+	bool concatenate = false;
+	bool got_name = false;
+	bool check_absolute = false;
+	bool check_wildcard = false;
+	bool test_downcase = false;
+	bool inplace = false;
+	bool want_split = false;
 	unsigned int labels, split_label = 0;
 	dns_fixedname_t fprefix, fsuffix;
 	dns_name_t *prefix, *suffix;
@@ -87,26 +88,26 @@ main(int argc, char *argv[]) {
 	while ((ch = isc_commandline_parse(argc, argv, "acdiqs:w")) != -1) {
 		switch (ch) {
 		case 'a':
-			check_absolute = ISC_TRUE;
+			check_absolute = true;
 			break;
 		case 'c':
-			concatenate = ISC_TRUE;
+			concatenate = true;
 			break;
 		case 'd':
-			test_downcase = ISC_TRUE;
+			test_downcase = true;
 			break;
 		case 'i':
-			inplace = ISC_TRUE;
+			inplace = true;
 			break;
 		case 'q':
-			quiet = ISC_TRUE;
+			quiet = true;
 			break;
 		case 's':
-			want_split = ISC_TRUE;
+			want_split = true;
 			split_label = atoi(isc_commandline_argument);
 			break;
 		case 'w':
-			check_wildcard = ISC_TRUE;
+			check_wildcard = true;
 			break;
 		}
 	}
@@ -244,13 +245,13 @@ main(int argc, char *argv[]) {
 				} else
 					printf("%s\n",
 					       dns_result_totext(result));
-				got_name = ISC_FALSE;
+				got_name = false;
 			} else
-				got_name = ISC_TRUE;
+				got_name = true;
 		}
 		isc_buffer_init(&source, s, sizeof(s));
 		if (dns_name_countlabels(name) > 0)
-			result = dns_name_totext(name, ISC_FALSE, &source);
+			result = dns_name_totext(name, false, &source);
 		else
 			result = ISC_R_SUCCESS;
 		if (result == ISC_R_SUCCESS) {

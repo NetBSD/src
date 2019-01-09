@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,8 +22,8 @@ fromtext_soa(ARGS_FROMTEXT) {
 	dns_name_t name;
 	isc_buffer_t buffer;
 	int i;
-	isc_uint32_t n;
-	isc_boolean_t ok;
+	uint32_t n;
+	bool ok;
 
 	REQUIRE(type == dns_rdatatype_soa);
 
@@ -37,17 +37,17 @@ fromtext_soa(ARGS_FROMTEXT) {
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string,
-					      ISC_FALSE));
+					      false));
 
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
 		RETTOK(dns_name_fromtext(&name, &buffer, origin,
 					 options, target));
-		ok = ISC_TRUE;
+		ok = true;
 		if ((options & DNS_RDATA_CHECKNAMES) != 0)
 			switch (i) {
 			case 0:
-				ok = dns_name_ishostname(&name, ISC_FALSE);
+				ok = dns_name_ishostname(&name, false);
 				break;
 			case 1:
 				ok = dns_name_ismailbox(&name);
@@ -61,13 +61,13 @@ fromtext_soa(ARGS_FROMTEXT) {
 	}
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	RETERR(uint32_tobuffer(token.value.as_ulong, target));
 
 	for (i = 0; i < 4; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string,
-					      ISC_FALSE));
+					      false));
 		RETTOK(dns_counter_fromtext(&token.value.as_textregion, &n));
 		RETERR(uint32_tobuffer(n, target));
 	}
@@ -85,19 +85,20 @@ totext_soa(ARGS_TOTEXT) {
 	dns_name_t mname;
 	dns_name_t rname;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	bool sub;
 	int i;
-	isc_boolean_t multiline;
-	isc_boolean_t comm;
+	bool multiline;
+	bool comm;
 
 	REQUIRE(rdata->type == dns_rdatatype_soa);
 	REQUIRE(rdata->length != 0);
 
-	multiline = ISC_TF((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0);
-	if (multiline)
-		comm = ISC_TF((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0);
-	else
-		comm = ISC_FALSE;
+	multiline = ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0);
+	if (multiline) {
+		comm = ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0);
+	} else {
+		comm = false;
+	}
 
 
 	dns_name_init(&mname, NULL);
@@ -136,7 +137,8 @@ totext_soa(ARGS_TOTEXT) {
 			/* Print times in week/day/hour/minute/second form */
 			if (i >= 1) {
 				RETERR(str_totext(" (", target));
-				RETERR(dns_ttl_totext(num, ISC_TRUE, target));
+				RETERR(dns_ttl_totext(num, true,
+						      true, target));
 				RETERR(str_totext(")", target));
 			}
 			RETERR(str_totext(tctx->linebreak, target));
@@ -394,7 +396,7 @@ digest_soa(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_soa(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_soa);
@@ -404,10 +406,10 @@ checkowner_soa(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_soa(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
@@ -419,19 +421,19 @@ checknames_soa(ARGS_CHECKNAMES) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
-	if (!dns_name_ishostname(&name, ISC_FALSE)) {
+	if (!dns_name_ishostname(&name, false)) {
 		if (bad != NULL)
 			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
+		return (false);
 	}
 	isc_region_consume(&region, name_length(&name));
 	dns_name_fromregion(&name, &region);
 	if (!dns_name_ismailbox(&name)) {
 		if (bad != NULL)
 			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
+		return (false);
 	}
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: mf_4.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,7 +29,7 @@ fromtext_mf(ARGS_FROMTEXT) {
 	UNUSED(callbacks);
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
@@ -44,7 +44,7 @@ totext_mf(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	bool sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_mf);
 	REQUIRE(rdata->length != 0);
@@ -200,7 +200,7 @@ digest_mf(ARGS_DIGEST) {
 	return (dns_name_digest(&name, digest, arg));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_mf(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_mf);
@@ -210,10 +210,10 @@ checkowner_mf(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_mf(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_mf);
@@ -222,7 +222,7 @@ checknames_mf(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

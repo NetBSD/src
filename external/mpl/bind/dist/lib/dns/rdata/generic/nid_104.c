@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: nid_104.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,13 +34,13 @@ fromtext_nid(ARGS_FROMTEXT) {
 	UNUSED(callbacks);
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 
 	if (locator_pton(DNS_AS_STR(token), locator) != 1)
 		RETTOK(DNS_R_SYNTAX);
@@ -191,7 +191,7 @@ digest_nid(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_nid(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_nid);
@@ -201,10 +201,10 @@ checkowner_nid(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_nid(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_nid);
@@ -214,7 +214,7 @@ checknames_nid(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

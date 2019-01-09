@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: dnstest.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,10 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -47,19 +49,18 @@ typedef struct {
 #define ZONECHANGE_SENTINEL { 0, NULL, 0, NULL, NULL }
 
 extern isc_mem_t *mctx;
-extern isc_entropy_t *ectx;
 extern isc_log_t *lctx;
 extern isc_taskmgr_t *taskmgr;
 extern isc_task_t *maintask;
 extern isc_timermgr_t *timermgr;
 extern isc_socketmgr_t *socketmgr;
 extern dns_zonemgr_t *zonemgr;
-extern isc_boolean_t app_running;
+extern bool app_running;
 extern int ncpus;
-extern isc_boolean_t debug_mem_record;
+extern bool debug_mem_record;
 
 isc_result_t
-dns_test_begin(FILE *logfile, isc_boolean_t create_managers);
+dns_test_begin(FILE *logfile, bool create_managers);
 
 void
 dns_test_end(void);
@@ -85,7 +86,7 @@ dns_test_makeview(const char *name, dns_view_t **viewp);
  */
 isc_result_t
 dns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
-		  isc_boolean_t createview);
+		  bool createview);
 
 isc_result_t
 dns_test_setupzonemgr(void);
@@ -100,7 +101,7 @@ void
 dns_test_closezonemgr(void);
 
 void
-dns_test_nap(isc_uint32_t usec);
+dns_test_nap(uint32_t usec);
 
 isc_result_t
 dns_test_loaddb(dns_db_t **db, dns_dbtype_t dbtype, const char *origin,
@@ -117,11 +118,12 @@ dns_test_tohex(const unsigned char *data, size_t len, char *buf, size_t buflen);
  * Try parsing text form RDATA in "src" (of class "rdclass" and type "rdtype")
  * into a structure representing that RDATA at "rdata", storing the
  * uncompressed wire form of that RDATA at "dst", which is "dstlen" bytes long.
+ * Set 'warnings' to true to print logged warnings from dns_rdata_fromtext().
  */
 isc_result_t
 dns_test_rdatafromstring(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 			 dns_rdatatype_t rdtype, unsigned char *dst,
-			 size_t dstlen, const char *src);
+			 size_t dstlen, const char *src, bool warnings);
 
 void
 dns_test_namefromstring(const char *namestr, dns_fixedname_t *fname);
@@ -129,6 +131,8 @@ dns_test_namefromstring(const char *namestr, dns_fixedname_t *fname);
 /*%
  * Given a pointer to an uninitialized dns_diff_t structure in 'diff', make it
  * contain diff tuples representing zone database changes listed in 'changes'.
+ * Set 'warnings' to true to print logged warnings from dns_rdata_fromtext().
  */
 isc_result_t
-dns_test_difffromchanges(dns_diff_t *diff, const zonechange_t *changes);
+dns_test_difffromchanges(dns_diff_t *diff, const zonechange_t *changes,
+			 bool warnings);

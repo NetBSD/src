@@ -1,4 +1,4 @@
-/*	$NetBSD: mempool_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: mempool_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,7 @@ main(int argc, char *argv[]) {
 
 	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 
-	RUNTIME_CHECK(isc_mutex_init(&lock) == ISC_R_SUCCESS);
+	isc_mutex_init(&lock);
 
 	mctx = NULL;
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
@@ -116,7 +116,7 @@ main(int argc, char *argv[]) {
 
 	isc_mem_destroy(&mctx);
 
-	DESTROYLOCK(&lock);
+	isc_mutex_destroy(&lock);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.2 2018/08/12 13:02:32 christos Exp $	*/
+/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.3 2019/01/09 16:55:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -48,6 +48,8 @@
  * This provides the externally loadable wildcard DLZ module.
  */
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -235,7 +237,7 @@ dlz_lookup(const char *zone, const char *name,
 	const char *p;
 	char *namebuf;
 	nrr_t *nrec;
-	isc_boolean_t origin = ISC_TRUE;
+	bool origin = true;
 
 #if DLZ_DLOPEN_VERSION >= 2
 	UNUSED(methods);
@@ -258,7 +260,7 @@ dlz_lookup(const char *zone, const char *name,
 		strncpy(namebuf, zone, len - 1);
 		namebuf[len - 1] = '\0';
 		cd->record = namebuf;
-		origin = ISC_FALSE;
+		origin = false;
 	} else if (p == zone)
 		cd->record = "@";
 
@@ -331,7 +333,7 @@ dlz_authority(const char *zone, void *dbdata, dns_sdlzlookup_t *lookup) {
 	result = ISC_R_NOTFOUND;
 	nrec = DLZ_LIST_HEAD(cd->rrs_list);
 	while (nrec != NULL) {
-		isc_boolean_t origin;
+		bool origin;
 		if (strcmp("@", nrec->name) == 0) {
 			isc_result_t presult;
 

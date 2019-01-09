@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -38,7 +40,6 @@
 #define NS_PER_S 	1000000000
 #define NS_INTERVAL	100
 #define INTERVALS_PER_S (NS_PER_S / NS_INTERVAL)
-#define UINT64_MAX	_UI64_MAX
 
 /***
  *** Absolute Times
@@ -68,13 +69,13 @@ isc_interval_set(isc_interval_t *i, unsigned int seconds,
 		+ (nanoseconds + NS_INTERVAL - 1) / NS_INTERVAL;
 }
 
-isc_boolean_t
+bool
 isc_interval_iszero(const isc_interval_t *i) {
 	REQUIRE(i != NULL);
 	if (i->interval == 0)
-		return (ISC_TRUE);
+		return (true);
 
-	return (ISC_FALSE);
+	return (false);
 }
 
 void
@@ -106,15 +107,15 @@ isc_time_settoepoch(isc_time_t *t) {
 	t->absolute.dwHighDateTime = 0;
 }
 
-isc_boolean_t
+bool
 isc_time_isepoch(const isc_time_t *t) {
 	REQUIRE(t != NULL);
 
 	if (t->absolute.dwLowDateTime == 0 &&
 	    t->absolute.dwHighDateTime == 0)
-		return (ISC_TRUE);
+		return (true);
 
-	return (ISC_FALSE);
+	return (false);
 }
 
 isc_result_t
@@ -198,7 +199,7 @@ isc_time_subtract(const isc_time_t *t, const isc_interval_t *i,
 	return (ISC_R_SUCCESS);
 }
 
-isc_uint64_t
+uint64_t
 isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2) {
 	ULARGE_INTEGER i1, i2;
 	LONGLONG i3;
@@ -221,7 +222,7 @@ isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2) {
 	return (i3);
 }
 
-isc_uint32_t
+uint32_t
 isc_time_seconds(const isc_time_t *t) {
 	SYSTEMTIME epoch1970 = { 1970, 1, 4, 1, 0, 0, 0, 0 };
 	FILETIME temp;
@@ -237,7 +238,7 @@ isc_time_seconds(const isc_time_t *t) {
 
 	i3 = (i1.QuadPart - i2.QuadPart) / 10000000;
 
-	return ((isc_uint32_t)i3);
+	return ((uint32_t)i3);
 }
 
 isc_result_t
@@ -248,8 +249,8 @@ isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
 
 	seconds = (time_t)isc_time_seconds(t);
 
-	INSIST(sizeof(unsigned int) == sizeof(isc_uint32_t));
-	INSIST(sizeof(time_t) >= sizeof(isc_uint32_t));
+	INSIST(sizeof(unsigned int) == sizeof(uint32_t));
+	INSIST(sizeof(time_t) >= sizeof(uint32_t));
 
 	if (isc_time_seconds(t) > (~0U>>1) && seconds <= (time_t)(~0U>>1))
 		return (ISC_R_RANGE);
@@ -260,13 +261,13 @@ isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
 }
 
 
-isc_uint32_t
+uint32_t
 isc_time_nanoseconds(const isc_time_t *t) {
 	ULARGE_INTEGER i;
 
 	i.LowPart  = t->absolute.dwLowDateTime;
 	i.HighPart = t->absolute.dwHighDateTime;
-	return ((isc_uint32_t)(i.QuadPart % 10000000) * 100);
+	return ((uint32_t)(i.QuadPart % 10000000) * 100);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: hinfo_13.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: hinfo_13.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,8 +20,8 @@ typedef struct dns_rdata_hinfo {
 	isc_mem_t		*mctx;
 	char			*cpu;
 	char			*os;
-	isc_uint8_t		cpu_len;
-	isc_uint8_t		os_len;
+	uint8_t		cpu_len;
+	uint8_t		os_len;
 } dns_rdata_hinfo_t;
 
 #endif /* GENERIC_HINFO_13_H */

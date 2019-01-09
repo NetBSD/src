@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,6 +44,7 @@ LIBNS_EXTERNAL_DATA extern isc_logmodule_t ns_modules[];
 #define NS_LOGMODULE_XFER_IN		(&ns_modules[4])
 #define NS_LOGMODULE_XFER_OUT		(&ns_modules[5])
 #define NS_LOGMODULE_NOTIFY		(&ns_modules[6])
+#define NS_LOGMODULE_HOOKS		(&ns_modules[7])
 
 void
 ns_log_init(isc_log_t *lctx);

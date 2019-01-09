@@ -1,4 +1,4 @@
-/*	$NetBSD: mutexblock.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: mutexblock.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,35 +19,20 @@
 #include <isc/mutexblock.h>
 #include <isc/util.h>
 
-isc_result_t
+void
 isc_mutexblock_init(isc_mutex_t *block, unsigned int count) {
-	isc_result_t result;
 	unsigned int i;
 
 	for (i = 0; i < count; i++) {
-		result = isc_mutex_init(&block[i]);
-		if (result != ISC_R_SUCCESS) {
-			while (i > 0U) {
-				i--;
-				DESTROYLOCK(&block[i]);
-			}
-			return (result);
-		}
+		isc_mutex_init(&block[i]);
 	}
-
-	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
+void
 isc_mutexblock_destroy(isc_mutex_t *block, unsigned int count) {
-	isc_result_t result;
 	unsigned int i;
 
 	for (i = 0; i < count; i++) {
-		result = isc_mutex_destroy(&block[i]);
-		if (result != ISC_R_SUCCESS)
-			return (result);
+		isc_mutex_destroy(&block[i]);
 	}
-
-	return (ISC_R_SUCCESS);
 }

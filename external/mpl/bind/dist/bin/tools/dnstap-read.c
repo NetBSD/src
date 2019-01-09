@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap-read.c,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: dnstap-read.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,8 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
@@ -49,10 +51,10 @@
 #include <dns/result.h>
 
 isc_mem_t *mctx = NULL;
-isc_boolean_t memrecord = ISC_FALSE;
-isc_boolean_t printmessage = ISC_FALSE;
-isc_boolean_t hexmessage = ISC_FALSE;
-isc_boolean_t yaml = ISC_FALSE;
+bool memrecord = false;
+bool printmessage = false;
+bool hexmessage = false;
+bool yaml = false;
 
 const char *program = "dnstap-read";
 
@@ -179,7 +181,7 @@ print_yaml(dns_dtdata_t *dt) {
 	Dnstap__Dnstap *frame = dt->frame;
 	Dnstap__Message *m = frame->message;
 	const ProtobufCEnumValue *ftype, *mtype;
-	static isc_boolean_t first = ISC_TRUE;
+	static bool first = true;
 
 	ftype = protobuf_c_enum_descriptor_get_value(
 				     &dnstap__dnstap__type__descriptor,
@@ -190,7 +192,7 @@ print_yaml(dns_dtdata_t *dt) {
 	if (!first)
 		printf("---\n");
 	else
-		first = ISC_FALSE;
+		first = false;
 
 	printf("type: %s\n", ftype->name);
 
@@ -315,16 +317,16 @@ main(int argc, char *argv[]) {
 		switch (ch) {
 			case 'm':
 				isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
-				memrecord = ISC_TRUE;
+				memrecord = true;
 				break;
 			case 'p':
-				printmessage = ISC_TRUE;
+				printmessage = true;
 				break;
 			case 'x':
-				hexmessage = ISC_TRUE;
+				hexmessage = true;
 				break;
 			case 'y':
-				yaml = ISC_TRUE;
+				yaml = true;
 				dns_master_indentstr = "  ";
 				dns_master_indent = 2;
 				break;
@@ -349,7 +351,7 @@ main(int argc, char *argv[]) {
 
 	for (;;) {
 		isc_region_t input;
-		isc_uint8_t *data;
+		uint8_t *data;
 		size_t datalen;
 
 		result = dns_dt_getframe(handle, &data, &datalen);

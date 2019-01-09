@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,20 +13,23 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <isc/app.h>
 #include <isc/base64.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/hex.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/net.h>
+#include <isc/nonce.h>
 #include <isc/parseint.h>
 #include <isc/print.h>
+#include <isc/random.h>
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
 #include <isc/string.h>
@@ -87,27 +90,27 @@ static isc_mem_t *mctx;
 static dns_requestmgr_t *requestmgr;
 static const char *batchname;
 static FILE *batchfp;
-static isc_boolean_t have_ipv4 = ISC_FALSE;
-static isc_boolean_t have_ipv6 = ISC_FALSE;
-static isc_boolean_t have_src = ISC_FALSE;
-static isc_boolean_t tcp_mode = ISC_FALSE;
-static isc_boolean_t besteffort = ISC_TRUE;
-static isc_boolean_t display_short_form = ISC_FALSE;
-static isc_boolean_t display_headers = ISC_TRUE;
-static isc_boolean_t display_comments = ISC_TRUE;
-static isc_boolean_t display_rrcomments = ISC_TRUE;
-static isc_boolean_t display_ttlunits = ISC_TRUE;
-static isc_boolean_t display_ttl = ISC_TRUE;
-static isc_boolean_t display_class = ISC_TRUE;
-static isc_boolean_t display_crypto = ISC_TRUE;
-static isc_boolean_t display_multiline = ISC_FALSE;
-static isc_boolean_t display_question = ISC_TRUE;
-static isc_boolean_t display_answer  = ISC_TRUE;
-static isc_boolean_t display_authority = ISC_TRUE;
-static isc_boolean_t display_additional = ISC_TRUE;
-static isc_boolean_t display_unknown_format = ISC_FALSE;
-static isc_boolean_t continue_on_error = ISC_FALSE;
-static isc_uint32_t display_splitwidth = 0xffffffff;
+static bool have_ipv4 = false;
+static bool have_ipv6 = false;
+static bool have_src = false;
+static bool tcp_mode = false;
+static bool besteffort = true;
+static bool display_short_form = false;
+static bool display_headers = true;
+static bool display_comments = true;
+static bool display_rrcomments = true;
+static bool display_ttlunits = true;
+static bool display_ttl = true;
+static bool display_class = true;
+static bool display_crypto = true;
+static bool display_multiline = false;
+static bool display_question = true;
+static bool display_answer  = true;
+static bool display_authority = true;
+static bool display_additional = true;
+static bool display_unknown_format = false;
+static bool continue_on_error = false;
+static uint32_t display_splitwidth = 0xffffffff;
 static isc_sockaddr_t srcaddr;
 static char *server;
 static isc_sockaddr_t dstaddr;
@@ -119,21 +122,20 @@ static char hexcookie[81];
 
 struct query {
 	char textname[MXNAME]; /*% Name we're going to be looking up */
-	isc_boolean_t ip6_int;
-	isc_boolean_t recurse;
-	isc_boolean_t have_aaonly;
-	isc_boolean_t have_adflag;
-	isc_boolean_t have_cdflag;
-	isc_boolean_t have_zflag;
-	isc_boolean_t dnssec;
-	isc_boolean_t expire;
-	isc_boolean_t send_cookie;
+	bool recurse;
+	bool have_aaonly;
+	bool have_adflag;
+	bool have_cdflag;
+	bool have_zflag;
+	bool dnssec;
+	bool expire;
+	bool send_cookie;
 	char *cookie;
-	isc_boolean_t nsid;
+	bool nsid;
 	dns_rdatatype_t rdtype;
 	dns_rdataclass_t rdclass;
-	isc_uint16_t udpsize;
-	isc_int16_t edns;
+	uint16_t udpsize;
+	int16_t edns;
 	dns_ednsopt_t *ednsopts;
 	unsigned int ednsoptscnt;
 	unsigned int ednsflags;
@@ -270,17 +272,17 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	}
 	if (display_multiline || (!display_ttl && !display_class))
-		result = dns_master_stylecreate2(&style, styleflags,
-						 24, 24, 24, 32, 80, 8,
-						 display_splitwidth, mctx);
+		result = dns_master_stylecreate(&style, styleflags,
+						24, 24, 24, 32, 80, 8,
+						display_splitwidth, mctx);
 	else if (!display_ttl || !display_class)
-		result = dns_master_stylecreate2(&style, styleflags,
-						 24, 24, 32, 40, 80, 8,
-						 display_splitwidth, mctx);
+		result = dns_master_stylecreate(&style, styleflags,
+						24, 24, 32, 40, 80, 8,
+						display_splitwidth, mctx);
 	else
-		result = dns_master_stylecreate2(&style, styleflags,
-						 24, 32, 40, 48, 80, 8,
-						 display_splitwidth, mctx);
+		result = dns_master_stylecreate(&style, styleflags,
+						24, 32, 40, 48, 80, 8,
+						display_splitwidth, mctx);
 	CHECK("dns_master_stylecreate2", result);
 
 	flags = 0;
@@ -493,7 +495,7 @@ cleanup:
  * (e.g., NSID, COOKIE, client-subnet)
  */
 static void
-add_opt(dns_message_t *msg, isc_uint16_t udpsize, isc_uint16_t edns,
+add_opt(dns_message_t *msg, uint16_t udpsize, uint16_t edns,
 	unsigned int flags, dns_ednsopt_t *opts, size_t count)
 {
 	dns_rdataset_t *rdataset = NULL;
@@ -590,8 +592,8 @@ sendquery(struct query *query, isc_task_t *task)
 		}
 
 		if (query->ecs_addr != NULL) {
-			isc_uint8_t addr[16], family;
-			isc_uint32_t plen;
+			uint8_t addr[16], family;
+			uint32_t plen;
 			struct sockaddr *sa;
 			struct sockaddr_in *sin;
 			struct sockaddr_in6 *sin6;
@@ -606,7 +608,7 @@ sendquery(struct query *query, isc_task_t *task)
 
 			INSIST(i < DNS_EDNSOPTIONS);
 			opts[i].code = DNS_OPT_CLIENT_SUBNET;
-			opts[i].length = (isc_uint16_t) addrl + 4;
+			opts[i].length = (uint16_t) addrl + 4;
 			CHECK("isc_buffer_allocate", result);
 			isc_buffer_init(&b, ecsbuf, sizeof(ecsbuf));
 			if (sa->sa_family == AF_INET) {
@@ -637,7 +639,7 @@ sendquery(struct query *query, isc_task_t *task)
 				isc_buffer_putmem(&b, addr,
 						  (unsigned)addrl);
 
-			opts[i].value = (isc_uint8_t *) ecsbuf;
+			opts[i].value = (uint8_t *) ecsbuf;
 			i++;
 		}
 
@@ -686,12 +688,12 @@ sendquery(struct query *query, isc_task_t *task)
 	if (tcp_mode)
 		options |= DNS_REQUESTOPT_TCP | DNS_REQUESTOPT_SHARE;
 	request = NULL;
-	result = dns_request_createvia4(requestmgr, message,
-					have_src ? &srcaddr : NULL, &dstaddr,
-					dscp, options, NULL,
-					query->timeout, query->udptimeout,
-					query->udpretries, task,
-					recvresponse, message, &request);
+	result = dns_request_createvia(requestmgr, message,
+				       have_src ? &srcaddr : NULL, &dstaddr,
+				       dscp, options, NULL,
+				       query->timeout, query->udptimeout,
+				       query->udpretries, task,
+				       recvresponse, message, &request);
 	CHECK("dns_request_createvia4", result);
 
 	return ISC_R_SUCCESS;
@@ -773,7 +775,6 @@ help(void) {
 " local opt       is one of:\n"
 "                 -c class            (specify query class)\n"
 "                 -t type             (specify query type)\n"
-"                 -i                  (use IP6.INT for IPv6 reverse lookups)\n"
 "                 -x dot-notation     (shortcut for reverse lookups)\n"
 "                 +timeout=###        (Set query timeout) [UDP=5,TCP=10]\n"
 "                 +udptimeout=###     (Set timeout before UDP retry)\n"
@@ -797,18 +798,6 @@ help(void) {
 	stdout);
 }
 
-static char *
-next_token(char **stringp, const char *delim) {
-	char *res;
-
-	do {
-		res = strsep(stringp, delim);
-		if (res == NULL)
-			break;
-	} while (*res == '\0');
-	return (res);
-}
-
 ISC_PLATFORM_NORETURN_PRE static void
 fatal(const char *format, ...)
 ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
@@ -827,9 +816,9 @@ fatal(const char *format, ...) {
 }
 
 static isc_result_t
-parse_uint_helper(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_uint_helper(uint32_t *uip, const char *value, uint32_t max,
 		  const char *desc, int base) {
-	isc_uint32_t n;
+	uint32_t n;
 	isc_result_t result = isc_parse_uint32(&n, value, base);
 	if (result == ISC_R_SUCCESS && n > max)
 		result = ISC_R_RANGE;
@@ -843,53 +832,72 @@ parse_uint_helper(isc_uint32_t *uip, const char *value, isc_uint32_t max,
 }
 
 static isc_result_t
-parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_uint(uint32_t *uip, const char *value, uint32_t max,
 	   const char *desc) {
 	return (parse_uint_helper(uip, value, max, desc, 10));
 }
 
 static isc_result_t
-parse_xint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_xint(uint32_t *uip, const char *value, uint32_t max,
 	   const char *desc) {
 	return (parse_uint_helper(uip, value, max, desc, 0));
 }
 
-static dns_ednsopt_t ednsopts[EDNSOPTS];
-static unsigned char ednsoptscnt = 0;
+static void
+newopts(struct query *query) {
+	size_t len = sizeof(query->ednsopts[0]) * EDNSOPTS;
+	size_t i;
+
+	query->ednsopts = isc_mem_allocate(mctx, len);
+	if (query->ednsopts == NULL)
+		fatal("out of memory");
+
+	for (i = 0; i < EDNSOPTS; i++) {
+		query->ednsopts[i].code = 0;
+		query->ednsopts[i].length = 0;
+		query->ednsopts[i].value = NULL;
+	}
+}
 
 static void
 save_opt(struct query *query, char *code, char *value) {
-	isc_uint32_t num;
+	uint32_t num;
 	isc_buffer_t b;
 	isc_result_t result;
 
-	if (ednsoptscnt == EDNSOPTS)
+	if (query->ednsopts == NULL) {
+		newopts(query);
+	}
+
+	if (query->ednsoptscnt == EDNSOPTS) {
 		fatal("too many ednsopts");
+	}
 
 	result = parse_uint(&num, code, 65535, "ednsopt");
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fatal("bad edns code point: %s", code);
+	}
 
-	ednsopts[ednsoptscnt].code = num;
-	ednsopts[ednsoptscnt].length = 0;
-	ednsopts[ednsoptscnt].value = NULL;
+	query->ednsopts[query->ednsoptscnt].code = num;
+	query->ednsopts[query->ednsoptscnt].length = 0;
+	query->ednsopts[query->ednsoptscnt].value = NULL;
 
 	if (value != NULL) {
 		char *buf;
 		buf = isc_mem_allocate(mctx, strlen(value)/2 + 1);
-		if (buf == NULL)
+		if (buf == NULL) {
 			fatal("out of memory");
+		}
 		isc_buffer_init(&b, buf, strlen(value)/2 + 1);
 		result = isc_hex_decodestring(value, &b);
 		CHECK("isc_hex_decodestring", result);
-		ednsopts[ednsoptscnt].value = isc_buffer_base(&b);
-		ednsopts[ednsoptscnt].length = isc_buffer_usedlength(&b);
+		query->ednsopts[query->ednsoptscnt].value =
+						isc_buffer_base(&b);
+		query->ednsopts[query->ednsoptscnt].length =
+						isc_buffer_usedlength(&b);
 	}
 
-	if (query->ednsoptscnt == 0)
-		query->ednsopts = &ednsopts[ednsoptscnt];
 	query->ednsoptscnt++;
-	ednsoptscnt++;
 }
 
 static isc_result_t
@@ -898,9 +906,9 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
-	isc_uint32_t netmask = 0xffffffff;
+	uint32_t netmask = 0xffffffff;
 	char *slash = NULL;
-	isc_boolean_t parsed = ISC_FALSE;
+	bool parsed = false;
 	char buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX/128")];
 
 	if (strlcpy(buf, value, sizeof(buf)) >= sizeof(buf))
@@ -922,12 +930,12 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	if (sa == NULL)
 		fatal("out of memory");
 	if (inet_pton(AF_INET6, buf, &in6) == 1) {
-		parsed = ISC_TRUE;
+		parsed = true;
 		isc_sockaddr_fromin6(sa, &in6, 0);
 		if (netmask > 128)
 			netmask = 128;
 	} else if (inet_pton(AF_INET, buf, &in4) == 1) {
-		parsed = ISC_TRUE;
+		parsed = true;
 		isc_sockaddr_fromin(sa, &in4, 0);
 		if (netmask > 32)
 			netmask = 32;
@@ -937,7 +945,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 		for (i = 0; i < 3 && strlen(buf) < sizeof(buf) - 2; i++) {
 			strlcat(buf, ".0", sizeof(buf));
 			if (inet_pton(AF_INET, buf, &in4) == 1) {
-				parsed = ISC_TRUE;
+				parsed = true;
 				isc_sockaddr_fromin(sa, &in4, 0);
 				break;
 			}
@@ -987,8 +995,7 @@ reverse_octets(const char *in, char **p, char *end) {
 }
 
 static void
-get_reverse(char *reverse, size_t len, const char *value,
-	    isc_boolean_t ip6_int)
+get_reverse(char *reverse, size_t len, const char *value)
 {
 	int r;
 	isc_result_t result;
@@ -1002,10 +1009,8 @@ get_reverse(char *reverse, size_t len, const char *value,
 		dns_name_t *name;
 		unsigned int options = 0;
 
-		if (ip6_int)
-			options |= DNS_BYADDROPT_IPV6INT;
 		name = dns_fixedname_initname(&fname);
-		result = dns_byaddr_createptrname2(&addr, options, name);
+		result = dns_byaddr_createptrname(&addr, options, name);
 		CHECK("dns_byaddr_createptrname2", result);
 		dns_name_format(name, reverse, (unsigned int)len);
 		return;
@@ -1036,27 +1041,26 @@ get_reverse(char *reverse, size_t len, const char *value,
  */
 
 static void
-plus_option(char *option, struct query *query, isc_boolean_t global)
+plus_option(char *option, struct query *query, bool global)
 {
 	isc_result_t result;
-	char option_store[256];
-	char *cmd, *value, *ptr, *code;
-	isc_uint32_t num;
-	isc_boolean_t state = ISC_TRUE;
+	char *cmd, *value, *last = NULL, *code;
+	uint32_t num;
+	bool state = true;
 	size_t n;
 
-	strlcpy(option_store, option, sizeof(option_store));
-	ptr = option_store;
-	cmd = next_token(&ptr, "=");
-	if (cmd == NULL) {
-		printf(";; Invalid option %s\n", option_store);
+	INSIST(option != NULL);
+
+	if ((cmd = strtok_r(option, "=", &last)) == NULL) {
+		printf(";; Invalid option %s\n", option);
 		return;
 	}
-	value = ptr;
 	if (strncasecmp(cmd, "no", 2) == 0) {
 		cmd += 2;
-		state = ISC_FALSE;
+		state = false;
 	}
+	/* parse the rest of the string */
+	value = strtok_r(NULL, "", &last);
 
 #define FULLCHECK(A) \
 	do { \
@@ -1277,11 +1281,19 @@ plus_option(char *option, struct query *query, isc_boolean_t global)
 							query->ednsoptscnt = 0;
 							break;
 						}
-						if (value == NULL)
+						code = NULL;
+						if (value != NULL) {
+							code = strtok_r(value,
+									":",
+									&last);
+						}
+						if (code == NULL) {
 							fatal("ednsopt no "
 							      "code point "
 							      "specified");
-						code = next_token(&value, ":");
+						}
+						value = strtok_r(NULL, "\0",
+								 &last);
 						save_opt(query, code, value);
 						break;
 					default:
@@ -1361,12 +1373,12 @@ plus_option(char *option, struct query *query, isc_boolean_t global)
 			GLOBAL();
 			display_short_form = state;
 			if (state) {
-				display_question = ISC_FALSE;
-				display_answer = ISC_TRUE;
-				display_authority = ISC_FALSE;
-				display_additional = ISC_FALSE;
-				display_comments = ISC_FALSE;
-				display_rrcomments = ISC_FALSE;
+				display_question = false;
+				display_answer = true;
+				display_authority = false;
+				display_additional = false;
+				display_comments = false;
+				display_rrcomments = false;
 			}
 			break;
 		case 'p': /* split */
@@ -1465,7 +1477,7 @@ plus_option(char *option, struct query *query, isc_boolean_t global)
 				case 'u': /* ttlunits */
 					FULLCHECK("ttlunits");
 					GLOBAL();
-					display_ttl = ISC_TRUE;
+					display_ttl = true;
 					display_ttlunits = state;
 					break;
 				default:
@@ -1522,18 +1534,18 @@ plus_option(char *option, struct query *query, isc_boolean_t global)
 }
 
 /*%
- * #ISC_TRUE returned if value was used
+ * #true returned if value was used
  */
 static const char *single_dash_opts = "46himv";
-/*static const char *dash_opts = "46bcfhiptvx";*/
-static isc_boolean_t
+static const char *dash_opts = "46bcfhiptvx";
+static bool
 dash_option(const char *option, char *next, struct query *query,
-	    isc_boolean_t global, isc_boolean_t *setname)
+	    bool global, bool *setname)
 {
 	char opt;
 	const char *value;
 	isc_result_t result;
-	isc_boolean_t value_from_next;
+	bool value_from_next;
 	isc_consttextregion_t tr;
 	dns_rdatatype_t rdtype;
 	dns_rdataclass_t rdclass;
@@ -1542,7 +1554,7 @@ dash_option(const char *option, char *next, struct query *query,
 	struct in6_addr in6;
 	in_port_t srcport;
 	char *hash;
-	isc_uint32_t num;
+	uint32_t num;
 
 	while (strpbrk(option, single_dash_opts) == &option[0]) {
 		/*
@@ -1556,22 +1568,22 @@ dash_option(const char *option, char *next, struct query *query,
 			GLOBAL();
 			if (have_ipv4) {
 				isc_net_disableipv6();
-				have_ipv6 = ISC_FALSE;
+				have_ipv6 = false;
 			} else {
 				fatal("can't find IPv4 networking");
 				/* NOTREACHED */
-				return (ISC_FALSE);
+				return (false);
 			}
 			break;
 		case '6':
 			GLOBAL();
 			if (have_ipv6) {
 				isc_net_disableipv4();
-				have_ipv4 = ISC_FALSE;
+				have_ipv4 = false;
 			} else {
 				fatal("can't find IPv6 networking");
 				/* NOTREACHED */
-				return (ISC_FALSE);
+				return (false);
 			}
 			break;
 		case 'h':
@@ -1579,7 +1591,7 @@ dash_option(const char *option, char *next, struct query *query,
 			exit(0);
 			break;
 		case 'i':
-			query->ip6_int = ISC_TRUE;
+			/* deprecated */
 			break;
 		case 'm':
 			/*
@@ -1594,14 +1606,14 @@ dash_option(const char *option, char *next, struct query *query,
 		if (strlen(option) > 1U)
 			option = &option[1];
 		else
-			return (ISC_FALSE);
+			return (false);
 	}
 	opt = option[0];
 	if (strlen(option) > 1U) {
-		value_from_next = ISC_FALSE;
+		value_from_next = false;
 		value = &option[1];
 	} else {
-		value_from_next = ISC_TRUE;
+		value_from_next = true;
 		value = next;
 	}
 	if (value == NULL)
@@ -1631,7 +1643,7 @@ dash_option(const char *option, char *next, struct query *query,
 		}
 		if (hash != NULL)
 			*hash = '#';
-		have_src = ISC_TRUE;
+		have_src = true;
 		return (value_from_next);
 	case 'c':
 		tr.base = value;
@@ -1659,11 +1671,11 @@ dash_option(const char *option, char *next, struct query *query,
 		query->rdtype = rdtype;
 		return (value_from_next);
 	case 'x':
-		get_reverse(textname, sizeof(textname), value, query->ip6_int);
+		get_reverse(textname, sizeof(textname), value);
 		strlcpy(query->textname, textname, sizeof(query->textname));
 		query->rdtype = dns_rdatatype_ptr;
 		query->rdclass = dns_rdataclass_in;
-		*setname = ISC_TRUE;
+		*setname = true;
 		return (value_from_next);
 	global_option:
 		fprintf(stderr, "Ignored late global option: -%s\n", option);
@@ -1674,7 +1686,7 @@ dash_option(const char *option, char *next, struct query *query,
 		usage();
 	}
 	/* NOTREACHED */
-	return (ISC_FALSE);
+	return (false);
 }
 
 static struct query *
@@ -1716,7 +1728,7 @@ preparse_args(int argc, char **argv) {
 	int rc;
 	char **rv;
 	char *option;
-	isc_boolean_t ipv4only = ISC_FALSE, ipv6only = ISC_FALSE;
+	bool ipv4only = false, ipv6only = false;
 
 	rc = argc;
 	rv = argv;
@@ -1734,22 +1746,36 @@ preparse_args(int argc, char **argv) {
 				if (ipv6only) {
 					fatal("only one of -4 and -6 allowed");
 				}
-				ipv4only = ISC_TRUE;
+				ipv4only = true;
 				break;
 			case '6':
 				if (ipv4only) {
 					fatal("only one of -4 and -6 allowed");
 				}
-				ipv6only = ISC_TRUE;
+				ipv6only = true;
 				break;
 			}
 			option = &option[1];
 		}
+		if (strlen(option) == 0U) {
+			continue;
+		}
+		/* Look for dash value option. */
+		if (strpbrk(option, dash_opts) != &option[0] ||
+		    strlen(option) > 1U) {
+			/* Error or value in option. */
+			continue;
+		}
+		/* Dash value is next argument so we need to skip it. */
+		rc--, rv++;
+		/* Handle missing argument */
+		if (rc == 0)
+			break;
 	}
 }
 
 static void
-parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
+parse_args(bool is_batchfile, int argc, char **argv)
 {
 	struct query *query = NULL;
 	char batchline[MXNAME];
@@ -1757,8 +1783,8 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 	char *bargv[64];
 	int rc;
 	char **rv;
-	char *input;
-	isc_boolean_t global = ISC_TRUE;
+	bool global = true;
+	char *last;
 
 	/*
 	 * The semantics for parsing the args is a bit complex; if
@@ -1773,17 +1799,16 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 
 	if (!is_batchfile) {
 		default_query.textname[0] = 0;
-		default_query.ip6_int = ISC_FALSE;
-		default_query.recurse = ISC_TRUE;
-		default_query.have_aaonly = ISC_FALSE;
-		default_query.have_adflag = ISC_TRUE; /*XXX*/
-		default_query.have_cdflag = ISC_FALSE;
-		default_query.have_zflag = ISC_FALSE;
-		default_query.dnssec = ISC_FALSE;
-		default_query.expire = ISC_FALSE;
-		default_query.send_cookie = ISC_FALSE;
+		default_query.recurse = true;
+		default_query.have_aaonly = false;
+		default_query.have_adflag = true; /*XXX*/
+		default_query.have_cdflag = false;
+		default_query.have_zflag = false;
+		default_query.dnssec = false;
+		default_query.expire = false;
+		default_query.send_cookie = false;
 		default_query.cookie = NULL;
-		default_query.nsid = ISC_FALSE;
+		default_query.nsid = false;
 		default_query.rdtype = dns_rdatatype_a;
 		default_query.rdclass = dns_rdataclass_in;
 		default_query.udpsize = 0;
@@ -1801,7 +1826,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 	if (is_batchfile) {
 		/* Processing '-f batchfile'. */
 		query = clone_default_query();
-		global = ISC_FALSE;
+		global = false;
 	} else
 		query = &default_query;
 
@@ -1817,7 +1842,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 		} else if (rv[0][0] == '+') {
 			plus_option(&rv[0][1], query, global);
 		} else if (rv[0][0] == '-') {
-			isc_boolean_t setname = ISC_FALSE;
+			bool setname = false;
 
 			if (rc <= 1) {
 				if (dash_option(&rv[0][1], NULL, query,
@@ -1839,7 +1864,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 
 				default_query.textname[0] = 0;
 				query = clone_default_query();
-				global = ISC_FALSE;
+				global = false;
 			}
 		} else {
 			/*
@@ -1852,7 +1877,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 			ISC_LIST_APPEND(queries, query, link);
 
 			query = clone_default_query();
-			global = ISC_FALSE;
+			global = false;
 			/* XXX Error message */
 		}
 	}
@@ -1870,19 +1895,18 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv)
 			fatal("couldn't open batch file '%s'", batchname);
 		}
 		while (fgets(batchline, sizeof(batchline), batchfp) != 0) {
-			bargc = 1;
 			if (batchline[0] == '\r' || batchline[0] == '\n'
 			    || batchline[0] == '#' || batchline[0] == ';')
 				continue;
-			input = batchline;
-			bargv[bargc] = next_token(&input, " \t\r\n");
-			while ((bargc < 14) && (bargv[bargc] != NULL)) {
-				bargc++;
-				bargv[bargc] = next_token(&input, " \t\r\n");
+			for (bargc = 1, bargv[bargc] = strtok_r(batchline, " \t\r\n", &last);
+			     (bargc < 14) && bargv[bargc];
+			     bargc++, bargv[bargc] = strtok_r(NULL, " \t\r\n", &last))
+			{
+				/* empty body */
 			}
 
 			bargv[0] = argv[0];
-			parse_args(ISC_TRUE, bargc, (char **)bargv);
+			parse_args(true, bargc, (char **)bargv);
 		}
 		if (batchfp != stdin)
 			fclose(batchfp);
@@ -1902,7 +1926,6 @@ main(int argc, char *argv[]) {
 	isc_sockaddr_t bind_any;
 	isc_log_t *lctx;
 	isc_logconfig_t *lcfg;
-	isc_entropy_t *ectx;
 	isc_taskmgr_t *taskmgr;
 	isc_task_t *task;
 	isc_timermgr_t *timermgr;
@@ -1912,15 +1935,16 @@ main(int argc, char *argv[]) {
 	dns_dispatch_t *dispatchvx;
 	dns_view_t *view;
 	int ns;
+	unsigned int i;
 
 	RUNCHECK(isc_app_start());
 
 	dns_result_register();
 
 	if (isc_net_probeipv4() == ISC_R_SUCCESS)
-		have_ipv4 = ISC_TRUE;
+		have_ipv4 = true;
 	if (isc_net_probeipv6() == ISC_R_SUCCESS)
-		have_ipv6 = ISC_TRUE;
+		have_ipv6 = true;
 	if (!have_ipv4 && !have_ipv6)
 		fatal("could not find either IPv4 or IPv6");
 
@@ -1933,15 +1957,11 @@ main(int argc, char *argv[]) {
 	lcfg = NULL;
 	RUNCHECK(isc_log_create(mctx, &lctx, &lcfg));
 
-	ectx = NULL;
-	RUNCHECK(isc_entropy_create(mctx, &ectx));
-	RUNCHECK(dst_lib_init(mctx, ectx, ISC_ENTROPY_GOODONLY));
-	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
-	RUNCHECK(isc_entropy_getdata(ectx, cookie_secret,
-				     sizeof(cookie_secret), NULL, 0));
+	RUNCHECK(dst_lib_init(mctx, NULL));
+	isc_nonce_buf(cookie_secret, sizeof(cookie_secret));
 
 	ISC_LIST_INIT(queries);
-	parse_args(ISC_FALSE, argc, argv);
+	parse_args(false, argc, argv);
 	if (server == NULL)
 		fatal("a server '@xxx' is required");
 
@@ -1954,10 +1974,10 @@ main(int argc, char *argv[]) {
 
 	if (isc_sockaddr_pf(&dstaddr) == PF_INET && have_ipv6) {
 		isc_net_disableipv6();
-		have_ipv6 = ISC_FALSE;
+		have_ipv6 = false;
 	} else if (isc_sockaddr_pf(&dstaddr) == PF_INET6 && have_ipv4) {
 		isc_net_disableipv4();
-		have_ipv4 = ISC_FALSE;
+		have_ipv4 = false;
 	}
 	if (have_ipv4 && have_ipv6)
 		fatal("can't choose between IPv4 and IPv6");
@@ -1972,7 +1992,7 @@ main(int argc, char *argv[]) {
 	socketmgr = NULL;
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
 	dispatchmgr = NULL;
-	RUNCHECK(dns_dispatchmgr_create(mctx, ectx, &dispatchmgr));
+	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 
 	attrs = DNS_DISPATCHATTR_UDP |
 		DNS_DISPATCHATTR_MAKEQUERY;
@@ -2011,6 +2031,15 @@ main(int argc, char *argv[]) {
 	while (query != NULL) {
 		struct query *next = ISC_LIST_NEXT(query, link);
 
+		if (query->ednsopts != NULL) {
+			for (i = 0; i < EDNSOPTS; i++) {
+				if (query->ednsopts[i].value != NULL) {
+					isc_mem_free(mctx,
+						     query->ednsopts[i].value);
+				}
+			}
+			isc_mem_free(mctx, query->ednsopts);
+		}
 		if (query->ecs_addr != NULL) {
 			isc_mem_free(mctx, query->ecs_addr);
 			query->ecs_addr = NULL;
@@ -2038,8 +2067,6 @@ main(int argc, char *argv[]) {
 	isc_taskmgr_destroy(&taskmgr);
 
 	dst_lib_destroy();
-	isc_hash_destroy();
-	isc_entropy_detach(&ectx);
 
 	isc_log_destroy(&lctx);
 

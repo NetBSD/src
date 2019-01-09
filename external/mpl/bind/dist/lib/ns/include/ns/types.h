@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,8 @@ typedef struct ns_altsecret		ns_altsecret_t;
 typedef ISC_LIST(ns_altsecret_t)	ns_altsecretlist_t;
 typedef struct ns_client		ns_client_t;
 typedef struct ns_clientmgr		ns_clientmgr_t;
+typedef struct ns_plugin		ns_plugin_t;
+typedef ISC_LIST(ns_plugin_t) 		ns_plugins_t;
 typedef struct ns_interface 		ns_interface_t;
 typedef struct ns_interfacemgr		ns_interfacemgr_t;
 typedef struct ns_query			ns_query_t;

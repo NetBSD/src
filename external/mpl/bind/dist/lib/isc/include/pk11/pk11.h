@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: pk11.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 #define PK11_PK11_H 1
 
 /*! \file pk11/pk11.h */
+
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -51,32 +53,23 @@ struct pk11_context {
 	CK_SESSION_HANDLE	session;
 	CK_BBOOL		ontoken;
 	CK_OBJECT_HANDLE	object;
-#if defined(PK11_MD5_HMAC_REPLACE) ||  defined(PK11_SHA_1_HMAC_REPLACE) || \
-    defined(PK11_SHA224_HMAC_REPLACE) || defined(PK11_SHA256_HMAC_REPLACE) || \
-    defined(PK11_SHA384_HMAC_REPLACE) || defined(PK11_SHA512_HMAC_REPLACE)
-	unsigned char		*key;
-#endif
 };
 
 typedef struct pk11_object pk11_object_t;
 
 typedef enum {
 	OP_ANY = 0,
-	OP_RAND = 1,
-	OP_RSA = 2,
-	OP_DSA = 3,
-	OP_DH = 4,
-	OP_DIGEST = 5,
-	OP_EC = 6,
-	OP_GOST = 7,
-	OP_AES = 8,
-	OP_MAX = 9
+	OP_RSA = 1,
+	OP_DH = 3,
+	OP_ECDSA = 4,
+	OP_EDDSA = 5,
+	OP_MAX = 6
 } pk11_optype_t;
 
 /*%
  * Global flag to make choose_slots() verbose
  */
-LIBISC_EXTERNAL_DATA extern isc_boolean_t pk11_verbose_init;
+LIBISC_EXTERNAL_DATA extern bool pk11_verbose_init;
 
 /*%
  * Function prototypes
@@ -105,22 +98,22 @@ isc_result_t pk11_initialize(isc_mem_t *mctx, const char *engine);
 
 isc_result_t pk11_get_session(pk11_context_t *ctx,
 			      pk11_optype_t optype,
-			      isc_boolean_t need_services,
-			      isc_boolean_t rw,
-			      isc_boolean_t logon,
+			      bool need_services,
+			      bool rw,
+			      bool logon,
 			      const char *pin,
 			      CK_SLOT_ID slot);
 /*%<
  * Initialize PKCS#11 device and acquire a session.
  *
  * need_services:
- * 	  if ISC_TRUE, this session requires full PKCS#11 API
+ * 	  if true, this session requires full PKCS#11 API
  * 	  support including random and digest services, and
  * 	  the lack of these services will cause the session not
- * 	  to be initialized.  If ISC_FALSE, the function will return
+ * 	  to be initialized.  If false, the function will return
  * 	  an error code indicating the missing service, but the
  * 	  session will be usable for other purposes.
- * rw:    if ISC_TRUE, session will be read/write (useful for
+ * rw:    if true, session will be read/write (useful for
  *        generating or destroying keys); otherwise read-only.
  * login: indicates whether to log in to the device
  * pin:   optional PIN, overriding any PIN currently associated
@@ -137,10 +130,6 @@ isc_result_t pk11_finalize(void);
 /*%<
  * Shut down PKCS#11 device and free all sessions.
  */
-
-isc_result_t pk11_rand_bytes(unsigned char *buf, int num);
-
-void pk11_rand_seed_fromfile(const char *randomfile);
 
 isc_result_t pk11_parse_uri(pk11_object_t *obj, const char *label,
 			    isc_mem_t *mctx, pk11_optype_t optype);

@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,6 +66,12 @@ void
 isc_thread_setname(isc_thread_t thread, const char *name) {
 	UNUSED(thread);
 	UNUSED(name);
+}
+
+isc_result_t
+isc_thread_setaffinity(int cpu) {
+	/* no-op on Windows for now */
+	return (ISC_R_SUCCESS);
 }
 
 void *

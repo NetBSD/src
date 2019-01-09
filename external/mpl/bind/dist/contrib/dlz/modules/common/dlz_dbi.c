@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.c,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.c,v 1.3 2019/01/09 16:55:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -43,10 +43,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -80,7 +80,7 @@ destroy_querylist(query_list_t **querylist) {
 		 * was really a query segment, and not a pointer to
 		 * %zone%, or %record%, or %client%
 		*/
-		if (tseg->cmd != NULL && tseg->direct == ISC_TRUE)
+		if (tseg->cmd != NULL && tseg->direct == true)
 			free(tseg->cmd);
 		/* get the next query segment, before we destroy this one. */
 		nseg = DLZ_LIST_NEXT(nseg, link);
@@ -98,9 +98,9 @@ build_querylist(const char *query_str, char **zone, char **record,
 		log_t log)
 {
 	isc_result_t result;
-	isc_boolean_t foundzone = ISC_FALSE;
-	isc_boolean_t foundrecord = ISC_FALSE;
-	isc_boolean_t foundclient = ISC_FALSE;
+	bool foundzone = false;
+	bool foundrecord = false;
+	bool foundclient = false;
 	char *temp_str = NULL;
 	char *right_str = NULL;
 	query_list_t *tql;
@@ -134,15 +134,17 @@ build_querylist(const char *query_str, char **zone, char **record,
 	}
 
 	/* loop through the string and chop it up */
-	while (right_str != NULL) {
+	for (token = strtok_r(right_str, "$", &temp_str);
+	     token;
+	     token = strtok_r(NULL, "$", &temp_str))
+	{
 		/* allocate memory for tseg */
 		tseg = calloc(1, sizeof(query_segment_t));
 		if (tseg  == NULL) {	/* no memory, clean everything up. */
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
 		}
-		tseg->cmd = NULL;
-		tseg->direct = ISC_FALSE;
+		tseg->direct = false;
 		/* initialize the query segment link */
 		DLZ_LINK_INIT(tseg, link);
 		/* append the query segment to the list */
@@ -152,14 +154,14 @@ build_querylist(const char *query_str, char **zone, char **record,
 		 * split string at the first "$". set query segment to
 		 * left portion
 		 */
-		tseg->cmd = strdup(strsep(&right_str, "$"));
+		tseg->cmd = strdup(token);
 		if (tseg->cmd == NULL) {
 			/* no memory, clean everything up. */
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
 		}
 		/* tseg->cmd points directly to a string. */
-		tseg->direct = ISC_TRUE;
+		tseg->direct = true;
 		tseg->strlen = strlen(tseg->cmd);
 
 		/* check if we encountered "$zone$" token */
@@ -173,8 +175,8 @@ build_querylist(const char *query_str, char **zone, char **record,
 			tseg->cmd = (char**) zone;
 			tseg->strlen = 0;
 			/* tseg->cmd points in-directly to a string */
-			tseg->direct = ISC_FALSE;
-			foundzone = ISC_TRUE;
+			tseg->direct = false;
+			foundzone = true;
 			/* check if we encountered "$record$" token */
 		} else if (strcasecmp(tseg->cmd, "record") == 0) {
 			/*
@@ -186,8 +188,8 @@ build_querylist(const char *query_str, char **zone, char **record,
 			tseg->cmd = (char**) record;
 			tseg->strlen = 0;
 			/* tseg->cmd points in-directly poinsts to a string */
-			tseg->direct = ISC_FALSE;
-			foundrecord = ISC_TRUE;
+			tseg->direct = false;
+			foundrecord = true;
 			/* check if we encountered "$client$" token */
 		} else if (strcasecmp(tseg->cmd, "client") == 0) {
 			/*
@@ -199,13 +201,14 @@ build_querylist(const char *query_str, char **zone, char **record,
 			tseg->cmd = (char**) client;
 			tseg->strlen = 0;
 			/* tseg->cmd points in-directly poinsts to a string */
-			tseg->direct = ISC_FALSE;
-			foundclient = ISC_TRUE;
+			tseg->direct = false;
+			foundclient = true;
 		}
 	}
 
 	/* we don't need temp_str any more */
-	free(temp_str);
+	free(right_str);
+	right_str = NULL;
 	/*
 	 * add checks later to verify zone and record are found if
 	 * necessary.
@@ -248,8 +251,9 @@ build_querylist(const char *query_str, char **zone, char **record,
 
  cleanup:
 	/* get rid of temp_str */
-	if (temp_str != NULL)
-		free(temp_str);
+	if (right_str != NULL) {
+		free(right_str);
+	}
 
  flag_fail:
 	/* get rid of what was build of the query list */
@@ -276,7 +280,7 @@ build_querystring(query_list_t *querylist) {
 		 * if this is a query segment, use the
 		 * precalculated string length
 		 */
-		if (tseg->direct == ISC_TRUE)
+		if (tseg->direct == true)
 			length += tseg->strlen;
 		else	/* calculate string length for dynamic segments. */
 			length += strlen(* (char**) tseg->cmd);
@@ -292,7 +296,7 @@ build_querystring(query_list_t *querylist) {
 	/* start at the top of the list again */
 	tseg = DLZ_LIST_HEAD(*querylist);
 	while (tseg != NULL) {
-		if (tseg->direct == ISC_TRUE)
+		if (tseg->direct == true)
 			/* query segments */
 			strcat(qs, tseg->cmd);
 		else

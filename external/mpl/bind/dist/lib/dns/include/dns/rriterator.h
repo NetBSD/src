@@ -1,4 +1,4 @@
-/*	$NetBSD: rriterator.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rriterator.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,8 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
-/* Id: rriterator.h,v 1.4 2011/11/01 23:47:00 tbox Exp  */
 
 #ifndef DNS_RRITERATOR_H
 #define DNS_RRITERATOR_H 1
@@ -29,9 +27,10 @@
  ***** Imports
  *****/
 
+#include <inttypes.h>
+
 #include <isc/lang.h>
 #include <isc/magic.h>
-#include <isc/ondestroy.h>
 #include <isc/stdtime.h>
 
 #include <dns/db.h>
@@ -133,7 +132,7 @@ dns_rriterator_next(dns_rriterator_t *it);
 
 void
 dns_rriterator_current(dns_rriterator_t *it, dns_name_t **name,
-			  isc_uint32_t *ttl, dns_rdataset_t **rdataset,
+			  uint32_t *ttl, dns_rdataset_t **rdataset,
 			  dns_rdata_t **rdata);
 /*%<
  * Make '*name' refer to the current name.  If 'rdataset' is not NULL,

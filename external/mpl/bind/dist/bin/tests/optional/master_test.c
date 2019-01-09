@@ -1,4 +1,4 @@
-/*	$NetBSD: master_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@ print_dataset(void *arg, const dns_name_t *owner, dns_rdataset_t *dataset) {
 	UNUSED(arg);
 
 	isc_buffer_init(&target, buf, 64*1024);
-	result = dns_rdataset_totext(dataset, owner, ISC_FALSE, ISC_FALSE,
+	result = dns_rdataset_totext(dataset, owner, false, false,
 				     &target);
 	if (result == ISC_R_SUCCESS)
 		fprintf(stdout, "%.*s\n", (int)target.used,
@@ -81,8 +81,9 @@ main(int argc, char *argv[]) {
 		callbacks.add = print_dataset;
 
 		result = dns_master_loadfile(argv[1], &origin, &origin,
-					     dns_rdataclass_in, 0,
-					     &callbacks, mctx);
+					     dns_rdataclass_in, 0, 0,
+					     &callbacks, NULL, NULL, mctx,
+					     dns_masterformat_text, 0);
 		fprintf(stdout, "dns_master_loadfile: %s\n",
 			dns_result_totext(result));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,10 +36,10 @@
 static isc_mutex_t wks_lock;
 
 static void init_lock(void) {
-	RUNTIME_CHECK(isc_mutex_init(&wks_lock) == ISC_R_SUCCESS);
+	isc_mutex_init(&wks_lock);
 }
 
-static isc_boolean_t
+static bool
 mygetprotobyname(const char *name, long *proto) {
 	struct protoent *pe;
 
@@ -48,10 +48,10 @@ mygetprotobyname(const char *name, long *proto) {
 	if (pe != NULL)
 		*proto = pe->p_proto;
 	UNLOCK(&wks_lock);
-	return (ISC_TF(pe != NULL));
+	return (pe != NULL);
 }
 
-static isc_boolean_t
+static bool
 mygetservbyname(const char *name, const char *proto, long *port) {
 	struct servent *se;
 
@@ -60,7 +60,7 @@ mygetservbyname(const char *name, const char *proto, long *port) {
 	if (se != NULL)
 		*port = ntohs(se->s_port);
 	UNLOCK(&wks_lock);
-	return (ISC_TF(se != NULL));
+	return (se != NULL);
 }
 
 #ifdef _WIN32
@@ -93,6 +93,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	UNUSED(origin);
 	UNUSED(options);
 	UNUSED(rdclass);
+	UNUSED(callbacks);
 
 	RUNTIME_CHECK(isc_once_do(&once, init_lock) == ISC_R_SUCCESS);
 
@@ -114,10 +115,10 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	 * IPv4 dotted quad.
 	 */
 	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 
 	isc_buffer_availableregion(target, &region);
-	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
+	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1)
 		CHECKTOK(DNS_R_BADDOTTEDQUAD);
 	if (region.length < 4)
 		return (ISC_R_NOSPACE);
@@ -128,7 +129,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	 * Protocol.
 	 */
 	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 
 	proto = strtol(DNS_AS_STR(token), &e, 10);
 	if (*e == 0)
@@ -149,7 +150,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	memset(bm, 0, sizeof(bm));
 	do {
 		CHECK(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string, ISC_TRUE));
+					      isc_tokentype_string, true));
 		if (token.type != isc_tokentype_string)
 			break;
 
@@ -157,8 +158,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 		 * Lowercase the service string as some getservbyname() are
 		 * case sensitive and the database is usually in lowercase.
 		 */
-		strncpy(service, DNS_AS_STR(token), sizeof(service));
-		service[sizeof(service)-1] = '\0';
+		strlcpy(service, DNS_AS_STR(token), sizeof(service));
 		for (i = strlen(service) - 1; i >= 0; i--)
 			if (isupper(service[i]&0xff))
 				service[i] = tolower(service[i]&0xff);
@@ -294,7 +294,7 @@ compare_in_wks(ARGS_COMPARE) {
 static inline isc_result_t
 fromstruct_in_wks(ARGS_FROMSTRUCT) {
 	dns_rdata_in_wks_t *wks = source;
-	isc_uint32_t a;
+	uint32_t a;
 
 	REQUIRE(type == dns_rdatatype_wks);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -316,7 +316,7 @@ fromstruct_in_wks(ARGS_FROMSTRUCT) {
 static inline isc_result_t
 tostruct_in_wks(ARGS_TOSTRUCT) {
 	dns_rdata_in_wks_t *wks = target;
-	isc_uint32_t n;
+	uint32_t n;
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_wks);
@@ -381,7 +381,7 @@ digest_in_wks(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_in_wks(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_wks);
@@ -393,7 +393,7 @@ checkowner_in_wks(ARGS_CHECKOWNER) {
 	return (dns_name_ishostname(name, wildcard));
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_in_wks(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_wks);
@@ -403,7 +403,7 @@ checknames_in_wks(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: hip_55.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,12 +23,12 @@ typedef struct dns_rdata_hip {
 	unsigned char *		hit;
 	unsigned char *		key;
 	unsigned char *		servers;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		hit_len;
-	isc_uint16_t		key_len;
-	isc_uint16_t		servers_len;
+	uint8_t		algorithm;
+	uint8_t		hit_len;
+	uint16_t		key_len;
+	uint16_t		servers_len;
 	/* Private */
-	isc_uint16_t		offset;
+	uint16_t		offset;
 } dns_rdata_hip_t;
 
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,9 @@
  * information regarding copyright ownership.
  */
 
-#include "config.h"
+#include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/result.h>
 #include <isc/util.h>
@@ -173,7 +175,7 @@ destroy_ecdb(dns_ecdb_t **ecdbp) {
 	if (dns_name_dynamic(&ecdb->common.origin))
 		dns_name_free(&ecdb->common.origin, mctx);
 
-	DESTROYLOCK(&ecdb->lock);
+	isc_mutex_destroy(&ecdb->lock);
 
 	ecdb->common.impmagic = 0;
 	ecdb->common.magic = 0;
@@ -186,7 +188,7 @@ destroy_ecdb(dns_ecdb_t **ecdbp) {
 static void
 detach(dns_db_t **dbp) {
 	dns_ecdb_t *ecdb;
-	isc_boolean_t need_destroy = ISC_FALSE;
+	bool need_destroy = false;
 
 	REQUIRE(dbp != NULL);
 	ecdb = (dns_ecdb_t *)*dbp;
@@ -195,7 +197,7 @@ detach(dns_db_t **dbp) {
 	LOCK(&ecdb->lock);
 	ecdb->references--;
 	if (ecdb->references == 0 && ISC_LIST_EMPTY(ecdb->nodes))
-		need_destroy = ISC_TRUE;
+		need_destroy = true;
 	UNLOCK(&ecdb->lock);
 
 	if (need_destroy)
@@ -226,7 +228,7 @@ static void
 destroynode(dns_ecdbnode_t *node) {
 	isc_mem_t *mctx;
 	dns_ecdb_t *ecdb = node->ecdb;
-	isc_boolean_t need_destroydb = ISC_FALSE;
+	bool need_destroydb = false;
 	rdatasetheader_t *header;
 
 	mctx = ecdb->common.mctx;
@@ -234,7 +236,7 @@ destroynode(dns_ecdbnode_t *node) {
 	LOCK(&ecdb->lock);
 	ISC_LIST_UNLINK(ecdb->nodes, node, link);
 	if (ecdb->references == 0 && ISC_LIST_EMPTY(ecdb->nodes))
-		need_destroydb = ISC_TRUE;
+		need_destroydb = true;
 	UNLOCK(&ecdb->lock);
 
 	dns_name_free(&node->name, mctx);
@@ -249,7 +251,7 @@ destroynode(dns_ecdbnode_t *node) {
 		isc_mem_put(mctx, header, headersize);
 	}
 
-	DESTROYLOCK(&node->lock);
+	isc_mutex_destroy(&node->lock);
 
 	node->magic = 0;
 	isc_mem_put(mctx, node, sizeof(*node));
@@ -262,7 +264,7 @@ static void
 detachnode(dns_db_t *db, dns_dbnode_t **nodep) {
 	dns_ecdb_t *ecdb = (dns_ecdb_t *)db;
 	dns_ecdbnode_t *node;
-	isc_boolean_t need_destroy = ISC_FALSE;
+	bool need_destroy = false;
 
 	REQUIRE(VALID_ECDB(ecdb));
 	REQUIRE(nodep != NULL);
@@ -275,7 +277,7 @@ detachnode(dns_db_t *db, dns_dbnode_t **nodep) {
 	INSIST(node->references > 0);
 	node->references--;
 	if (node->references == 0)
-		need_destroy = ISC_TRUE;
+		need_destroy = true;
 	UNLOCK(&node->lock);
 
 	if (need_destroy)
@@ -311,7 +313,8 @@ static isc_result_t
 findzonecut(dns_db_t *db, const dns_name_t *name,
 	    unsigned int options, isc_stdtime_t now,
 	    dns_dbnode_t **nodep, dns_name_t *foundname,
-	    dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset)
+	    dns_name_t *dcname, dns_rdataset_t *rdataset,
+	    dns_rdataset_t *sigrdataset)
 {
 	dns_ecdb_t *ecdb = (dns_ecdb_t *)db;
 
@@ -322,6 +325,7 @@ findzonecut(dns_db_t *db, const dns_name_t *name,
 	UNUSED(now);
 	UNUSED(nodep);
 	UNUSED(foundname);
+	UNUSED(dcname);
 	UNUSED(rdataset);
 	UNUSED(sigrdataset);
 
@@ -329,7 +333,7 @@ findzonecut(dns_db_t *db, const dns_name_t *name,
 }
 
 static isc_result_t
-findnode(dns_db_t *db, const dns_name_t *name, isc_boolean_t create,
+findnode(dns_db_t *db, const dns_name_t *name, bool create,
 	 dns_dbnode_t **nodep)
 {
 	dns_ecdb_t *ecdb = (dns_ecdb_t *)db;
@@ -342,7 +346,7 @@ findnode(dns_db_t *db, const dns_name_t *name, isc_boolean_t create,
 
 	UNUSED(name);
 
-	if (create != ISC_TRUE)	{
+	if (create != true)	{
 		/* an 'ephemeral' node is never reused. */
 		return (ISC_R_NOTFOUND);
 	}
@@ -352,19 +356,12 @@ findnode(dns_db_t *db, const dns_name_t *name, isc_boolean_t create,
 	if (node == NULL)
 		return (ISC_R_NOMEMORY);
 
-	result = isc_mutex_init(&node->lock);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_mutex_init() failed: %s",
-				 isc_result_totext(result));
-		isc_mem_put(mctx, node, sizeof(*node));
-		return (ISC_R_UNEXPECTED);
-	}
+	isc_mutex_init(&node->lock);
 
 	dns_name_init(&node->name, NULL);
 	result = dns_name_dup(name, mctx, &node->name);
 	if (result != ISC_R_SUCCESS) {
-		DESTROYLOCK(&node->lock);
+		isc_mutex_destroy(&node->lock);
 		isc_mem_put(mctx, node, sizeof(*node));
 		return (result);
 	}
@@ -623,16 +620,7 @@ dns_ecdb_create(isc_mem_t *mctx, const dns_name_t *origin, dns_dbtype_t type,
 		return (result);
 	}
 
-	result = isc_mutex_init(&ecdb->lock);
-	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_mutex_init() failed: %s",
-				 isc_result_totext(result));
-		if (dns_name_dynamic(&ecdb->common.origin))
-			dns_name_free(&ecdb->common.origin, mctx);
-		isc_mem_put(mctx, ecdb, sizeof(*ecdb));
-		return (ISC_R_UNEXPECTED);
-	}
+	isc_mutex_init(&ecdb->lock);
 
 	ecdb->references = 1;
 	ISC_LIST_INIT(ecdb->nodes);
@@ -725,7 +713,7 @@ rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
 	raw += 2;
 #endif
 	if (rdataset->type == dns_rdatatype_rrsig) {
-		if (*raw & DNS_RDATASLAB_OFFLINE)
+		if ((*raw & DNS_RDATASLAB_OFFLINE) != 0)
 			flags |= DNS_RDATA_OFFLINE;
 		length--;
 		raw++;

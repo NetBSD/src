@@ -1,4 +1,4 @@
-/*	$NetBSD: sortlist.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: sortlist.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,8 +66,8 @@ ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env,
 			try_elt = e;
 		}
 
-		if (dns_aclelement_match(clientaddr, NULL, try_elt, env,
-					 &matched_elt))
+		if (dns_aclelement_match(clientaddr, NULL, try_elt,
+					 env, &matched_elt))
 		{
 			if (order_elt != NULL) {
 				if (order_elt->type ==
@@ -118,12 +118,13 @@ ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg) {
 	int match;
 
 	(void)dns_acl_match(addr, NULL, sortacl, env, &match, NULL);
-	if (match > 0)
+	if (match > 0) {
 		return (match);
-	else if (match < 0)
+	} else if (match < 0) {
 		return (INT_MAX - (-match));
-	else
+	} else {
 		return (INT_MAX / 2);
+	}
 }
 
 int

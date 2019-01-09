@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: xfrin.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,31 +47,14 @@ typedef struct dns_xfrin_ctx dns_xfrin_ctx_t;
 
 ISC_LANG_BEGINDECLS
 
-/*% see dns_xfrin_create2() */
 isc_result_t
 dns_xfrin_create(dns_zone_t *zone, dns_rdatatype_t xfrtype,
-		 const isc_sockaddr_t *masteraddr, dns_tsigkey_t *tsigkey,
-		 isc_mem_t *mctx, isc_timermgr_t *timermgr,
-		 isc_socketmgr_t *socketmgr, isc_task_t *task,
-		 dns_xfrindone_t done, dns_xfrin_ctx_t **xfrp);
-
-isc_result_t
-dns_xfrin_create2(dns_zone_t *zone, dns_rdatatype_t xfrtype,
-		  const isc_sockaddr_t *masteraddr,
-		  const isc_sockaddr_t *sourceaddr,
-		  dns_tsigkey_t *tsigkey, isc_mem_t *mctx,
-		  isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
-		  isc_task_t *task, dns_xfrindone_t done,
-		  dns_xfrin_ctx_t **xfrp);
-
-isc_result_t
-dns_xfrin_create3(dns_zone_t *zone, dns_rdatatype_t xfrtype,
-		  const isc_sockaddr_t *masteraddr,
-		  const isc_sockaddr_t *sourceaddr,
-		  isc_dscp_t dscp, dns_tsigkey_t *tsigkey, isc_mem_t *mctx,
-		  isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
-		  isc_task_t *task, dns_xfrindone_t done,
-		  dns_xfrin_ctx_t **xfrp);
+		 const isc_sockaddr_t *masteraddr,
+		 const isc_sockaddr_t *sourceaddr,
+		 isc_dscp_t dscp, dns_tsigkey_t *tsigkey, isc_mem_t *mctx,
+		 isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
+		 isc_task_t *task, dns_xfrindone_t done,
+		 dns_xfrin_ctx_t **xfrp);
 /*%<
  * Attempt to start an incoming zone transfer of 'zone'
  * from 'masteraddr', creating a dns_xfrin_ctx_t object to

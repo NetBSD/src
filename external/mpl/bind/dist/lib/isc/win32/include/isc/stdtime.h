@@ -1,4 +1,4 @@
-/*	$NetBSD: stdtime.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: stdtime.h,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,24 +16,14 @@
 #define ISC_STDTIME_H 1
 
 #include <isc/lang.h>
-#include <isc/int.h>
+#include <inttypes.h>
 
 /*
  * It's public information that 'isc_stdtime_t' is an unsigned integral type.
  * Applications that want maximum portability should not assume anything
  * about its size.
  */
-typedef isc_uint32_t isc_stdtime_t;
-
-/* but this flag helps... */
-#define STDTIME_ON_32BITS	1
-
-/*
- * isc_stdtime32_t is a 32-bit version of isc_stdtime_t.  A variable of this
- * type should only be used as an opaque integer (e.g.,) to compare two
- * time values.
- */
-typedef isc_uint32_t isc_stdtime32_t;
+typedef uint32_t isc_stdtime_t;
 
 ISC_LANG_BEGINDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 #include <unistd.h>
 #endif
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +76,7 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner) {
 
 	isc_buffer_init(&target, t, sizeof(t));
 
-	result = dns_rdataset_totext(rdataset, owner, ISC_FALSE, ISC_FALSE,
+	result = dns_rdataset_totext(rdataset, owner, false, false,
 				     &target);
 	if (result != ISC_R_SUCCESS)
 		return (result);
@@ -100,7 +101,7 @@ usage(void) {
 
 static void
 set_key(dns_client_t *client, char *keynamestr, char *keystr,
-	isc_boolean_t is_sep, isc_mem_t **mctxp)
+	bool is_sep, isc_mem_t **mctxp)
 {
 	isc_result_t result;
 	dns_fixedname_t fkeyname;
@@ -252,7 +253,7 @@ main(int argc, char *argv[]) {
 	dns_namelist_t namelist;
 	isc_mem_t *keymctx = NULL;
 	unsigned int clientopt, resopt;
-	isc_boolean_t is_sep = ISC_FALSE;
+	bool is_sep = false;
 	const char *port = "53";
 	isc_mem_t *mctx = NULL;
 	isc_appctx_t *actx = NULL;
@@ -310,7 +311,7 @@ main(int argc, char *argv[]) {
 			}
 			break;
 		case 'e':
-			is_sep = ISC_TRUE;
+			is_sep = true;
 			break;
 		case 'S':
 			if (altserver != NULL) {
@@ -393,7 +394,7 @@ main(int argc, char *argv[]) {
 		goto cleanup;
 
 	clientopt = 0;
-	result = dns_client_createx2(mctx, actx, taskmgr, socketmgr, timermgr,
+	result = dns_client_createx(mctx, actx, taskmgr, socketmgr, timermgr,
 				    clientopt, &client, addr4, addr6);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_client_create failed: %u, %s\n", result,

@@ -1,4 +1,4 @@
-/*	$NetBSD: notify_test.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: notify_test.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,28 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <setjmp.h>
+
+#include <isc/util.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/event.h>
 #include <isc/print.h>
 #include <isc/task.h>
+#include <isc/util.h>
 
 #include <dns/acl.h>
 #include <dns/rcode.h>
@@ -33,6 +43,27 @@
 
 #include "nstest.h"
 
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = ns_test_begin(NULL, true);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	ns_test_end();
+
+	return (0);
+}
+
 static void
 check_response(isc_buffer_t *buf) {
 	isc_result_t result;
@@ -41,25 +72,23 @@ check_response(isc_buffer_t *buf) {
 	isc_buffer_t b;
 
 	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &message);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_message_parse(message, buf, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&b, rcodebuf, sizeof(rcodebuf));
 	result = dns_rcode_totext(message->rcode, &b);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_CHECK_EQ(message->rcode, dns_rcode_noerror);
+	assert_int_equal(message->rcode, dns_rcode_noerror);
 
 	dns_message_destroy(&message);
 }
 
-ATF_TC(notify_start);
-ATF_TC_HEAD(notify_start, tc) {
-	atf_tc_set_md_var(tc, "descr", "notify start");
-}
-ATF_TC_BODY(notify_start, tc) {
+/* test ns_notify_start() */
+static void
+notify_start(void **state) {
 	isc_result_t result;
 	ns_client_t *client = NULL;
 	dns_message_t *nmsg = NULL;
@@ -67,20 +96,17 @@ ATF_TC_BODY(notify_start, tc) {
 	isc_buffer_t nbuf;
 	size_t nsize;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = ns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = ns_test_getclient(NULL, false, &client);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = ns_test_getclient(NULL, ISC_FALSE, &client);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = ns_test_makeview("view", ISC_FALSE, &client->view);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = ns_test_makeview("view", false, &client->view);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = ns_test_serve_zone("example.com", "testdata/notify/zone1.db",
 				    client->view);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
 	 * Create a NOTIFY message by parsing a file in testdata.
@@ -89,15 +115,15 @@ ATF_TC_BODY(notify_start, tc) {
 
 	result = ns_test_getdata("testdata/notify/notify1.msg",
 				  ndata, sizeof(ndata), &nsize);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	isc_buffer_init(&nbuf, ndata, nsize);
 	isc_buffer_add(&nbuf, nsize);
 
 	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &nmsg);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_message_parse(nmsg, &nbuf, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
 	 * Set up client object with this message and test the NOTIFY
@@ -117,14 +143,25 @@ ATF_TC_BODY(notify_start, tc) {
 	ns_test_cleanup_zone();
 
 	ns_client_detach(&client);
-
-	ns_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, notify_start);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(notify_start,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

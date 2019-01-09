@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -58,7 +58,7 @@ tick(isc_task_t *task, isc_event_t *event) {
 		isc_interval_set(&interval, 4, 0);
 		printf("*** resetting ti3 ***\n");
 		RUNTIME_CHECK(isc_timer_reset(ti3, isc_timertype_once,
-					      &expires, &interval, ISC_TRUE) ==
+					      &expires, &interval, true) ==
 			      ISC_R_SUCCESS);
 	}
 

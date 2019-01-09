@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,7 +14,7 @@
 
 #ifndef ISC_LIST_H
 #define ISC_LIST_H 1
-#include <isc/boolean.h>
+
 #include <isc/assertions.h>
 
 #ifdef ISC_LIST_CHECKINIT
@@ -39,7 +39,7 @@
 
 #define ISC_LIST_HEAD(list) ((list).head)
 #define ISC_LIST_TAIL(list) ((list).tail)
-#define ISC_LIST_EMPTY(list) ISC_TF((list).head == NULL)
+#define ISC_LIST_EMPTY(list) ((list).head == NULL)
 
 #define __ISC_LIST_PREPENDUNSAFE(list, elt, link) \
 	do { \

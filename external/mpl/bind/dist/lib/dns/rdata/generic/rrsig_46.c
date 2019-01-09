@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,7 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	isc_result_t result;
 	dns_name_t name;
 	isc_buffer_t buffer;
-	isc_uint32_t time_signed, time_expire;
+	uint32_t time_signed, time_expire;
 
 	REQUIRE(type == dns_rdatatype_rrsig);
 
@@ -40,7 +40,7 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 * Type covered.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	result = dns_rdatatype_fromtext(&covered, &token.value.as_textregion);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOTIMPLEMENTED) {
 		i = strtol(DNS_AS_STR(token), &e, 10);
@@ -56,7 +56,7 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 * Algorithm.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_secalg_fromtext(&c, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &c, 1));
 
@@ -64,7 +64,7 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 * Labels.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffU)
 		RETTOK(ISC_R_RANGE);
 	c = (unsigned char)token.value.as_ulong;
@@ -74,19 +74,19 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 * Original ttl.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	RETERR(uint32_tobuffer(token.value.as_ulong, target));
 
 	/*
 	 * Signature expiration.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	if (strlen(DNS_AS_STR(token)) <= 10U &&
 	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
 		char *end;
 		unsigned long u;
-		isc_uint64_t u64;
+		uint64_t u64;
 
 		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
 		if (u == ULONG_MAX || *end != 0)
@@ -102,12 +102,12 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 * Time signed.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	if (strlen(DNS_AS_STR(token)) <= 10U &&
 	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
 		char *end;
 		unsigned long u;
-		isc_uint64_t u64;
+		uint64_t u64;
 
 		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
 		if (u == ULONG_MAX || *end != 0)
@@ -123,14 +123,14 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 * Key footprint.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
 	 * Signer.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	if (origin == NULL)
@@ -235,7 +235,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	RETERR(dns_name_totext(&name, ISC_FALSE, target));
+	RETERR(dns_name_totext(&name, false, target));
 
 	/*
 	 * Sig.
@@ -544,7 +544,7 @@ covers_rrsig(dns_rdata_t *rdata) {
 	return (type);
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_rrsig(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_rrsig);
@@ -554,10 +554,10 @@ checkowner_rrsig(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_rrsig(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
@@ -566,7 +566,7 @@ checknames_rrsig(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

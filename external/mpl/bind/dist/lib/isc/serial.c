@@ -1,4 +1,4 @@
-/*	$NetBSD: serial.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: serial.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,39 +16,42 @@
 
 #include <config.h>
 
+#include <stdbool.h>
+#include <inttypes.h>
+
 #include <isc/serial.h>
 
-isc_boolean_t
-isc_serial_lt(isc_uint32_t a, isc_uint32_t b) {
+bool
+isc_serial_lt(uint32_t a, uint32_t b) {
 	/*
-	 * Undefined => ISC_FALSE
+	 * Undefined => false
 	 */
 	if (a == (b ^ 0x80000000U))
-		return (ISC_FALSE);
-	return (((isc_int32_t)(a - b) < 0) ? ISC_TRUE : ISC_FALSE);
+		return (false);
+	return (((int32_t)(a - b) < 0) ? true : false);
 }
 
-isc_boolean_t
-isc_serial_gt(isc_uint32_t a, isc_uint32_t b) {
-	return (((isc_int32_t)(a - b) > 0) ? ISC_TRUE : ISC_FALSE);
+bool
+isc_serial_gt(uint32_t a, uint32_t b) {
+	return (((int32_t)(a - b) > 0) ? true : false);
 }
 
-isc_boolean_t
-isc_serial_le(isc_uint32_t a, isc_uint32_t b) {
-	return ((a == b) ? ISC_TRUE : isc_serial_lt(a, b));
+bool
+isc_serial_le(uint32_t a, uint32_t b) {
+	return ((a == b) ? true : isc_serial_lt(a, b));
 }
 
-isc_boolean_t
-isc_serial_ge(isc_uint32_t a, isc_uint32_t b) {
-	return ((a == b) ? ISC_TRUE : isc_serial_gt(a, b));
+bool
+isc_serial_ge(uint32_t a, uint32_t b) {
+	return ((a == b) ? true : isc_serial_gt(a, b));
 }
 
-isc_boolean_t
-isc_serial_eq(isc_uint32_t a, isc_uint32_t b) {
-	return ((a == b) ? ISC_TRUE : ISC_FALSE);
+bool
+isc_serial_eq(uint32_t a, uint32_t b) {
+	return ((a == b) ? true : false);
 }
 
-isc_boolean_t
-isc_serial_ne(isc_uint32_t a, isc_uint32_t b) {
-	return ((a != b) ? ISC_TRUE : ISC_FALSE);
+bool
+isc_serial_ne(uint32_t a, uint32_t b) {
+	return ((a != b) ? true : false);
 }

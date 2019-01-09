@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,13 +11,18 @@
  * information regarding copyright ownership.
  */
 
+#include <config.h>
 
 /*! \file
  * \brief
  * Obtain the list of network interfaces using the getifaddrs(3) library.
  */
 
+#include <stdbool.h>
+
 #include <ifaddrs.h>
+
+#include <isc/strerr.h>
 
 /*% Iterator Magic */
 #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'G')
@@ -25,7 +30,7 @@
 #define VALID_IFITER(t)		ISC_MAGIC_VALID(t, IFITER_MAGIC)
 
 #ifdef __linux
-static isc_boolean_t seenv6 = ISC_FALSE;
+static bool seenv6 = false;
 #endif
 
 /*% Iterator structure */
@@ -76,7 +81,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 #endif
 
 	if (getifaddrs(&iter->ifaddrs) < 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
+		strerror_r(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 isc_msgcat_get(isc_msgcat,
 						ISC_MSGSET_IFITERGETIFADDRS,
@@ -144,7 +149,7 @@ internal_current(isc_interfaceiter_t *iter) {
 
 #ifdef __linux
 	if (family == AF_INET6)
-		seenv6 = ISC_TRUE;
+		seenv6 = true;
 #endif
 
 	memset(&iter->current, 0, sizeof(iter->current));

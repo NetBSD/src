@@ -1,4 +1,4 @@
-/*	$NetBSD: parser_test.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: parser_test.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,12 +13,19 @@
 
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/buffer.h>
 #include <isc/lex.h>
@@ -54,10 +61,12 @@ static isc_logcategory_t categories[] = {
 
 static void
 cleanup() {
-	if (lctx != NULL)
+	if (lctx != NULL) {
 		isc_log_destroy(&lctx);
-	if (mctx != NULL)
+	}
+	if (mctx != NULL) {
 		isc_mem_destroy(&mctx);
+	}
 }
 
 static isc_result_t
@@ -91,18 +100,16 @@ setup() {
 	return (result);
 }
 
-ATF_TC(parse_buffer);
-ATF_TC_HEAD(parse_buffer, tc) {
-	atf_tc_set_md_var(tc, "descr", "cfg_parse_buffer");
-}
-ATF_TC_BODY(parse_buffer, tc) {
+/* test cfg_parse_buffer() */
+static void
+parse_buffer_test(void **state) {
 	isc_result_t result;
 	unsigned char text[] = "options\n{\nrecursion yes;\n};\n";
 	isc_buffer_t buf1, buf2;
 	cfg_parser_t *p1 = NULL, *p2 = NULL;
 	cfg_obj_t *c1 = NULL, *c2 = NULL;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	setup();
 
@@ -111,24 +118,24 @@ ATF_TC_BODY(parse_buffer, tc) {
 
 	/* Parse with default line numbering */
 	result = cfg_parser_create(mctx, lctx, &p1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = cfg_parse_buffer3(p1, &buf1, "text1", 0,
 				   &cfg_type_namedconf, &c1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(p1->line, 5);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(p1->line, 5);
 
 	isc_buffer_init(&buf2, &text[0], sizeof(text) - 1);
 	isc_buffer_add(&buf2, sizeof(text) - 1);
 
 	/* Parse with changed line number */
 	result = cfg_parser_create(mctx, lctx, &p2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = cfg_parse_buffer3(p2, &buf2, "text2", 100,
 				   &cfg_type_namedconf, &c2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(p2->line, 104);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(p2->line, 104);
 
 	cfg_obj_destroy(p1, &c1);
 	cfg_obj_destroy(p2, &c2);
@@ -139,56 +146,65 @@ ATF_TC_BODY(parse_buffer, tc) {
 	cleanup();
 }
 
-ATF_TC(cfg_map_firstclause);
-ATF_TC_HEAD(cfg_map_firstclause, tc) {
-	atf_tc_set_md_var(tc, "descr", "cfg_map_firstclause");
-}
-ATF_TC_BODY(cfg_map_firstclause, tc) {
+/* test cfg_map_firstclause() */
+static void
+cfg_map_firstclause_test(void **state) {
 	const char *name = NULL;
 	const void *clauses = NULL;
 	unsigned int idx;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	name = cfg_map_firstclause(&cfg_type_zoneopts, &clauses, &idx);
-	ATF_CHECK(name != NULL);
-	ATF_CHECK(clauses != NULL);
-	ATF_CHECK_EQ(idx, 0);
+	assert_non_null(name);
+	assert_non_null(clauses);
+	assert_int_equal(idx, 0);
 }
 
-ATF_TC(cfg_map_nextclause);
-ATF_TC_HEAD(cfg_map_nextclause, tc) {
-	atf_tc_set_md_var(tc, "descr", "cfg_map_firstclause");
-}
-ATF_TC_BODY(cfg_map_nextclause, tc) {
+/* test cfg_map_nextclause() */
+static void
+cfg_map_nextclause_test(void **state) {
 	const char *name = NULL;
 	const void *clauses = NULL;
 	unsigned int idx;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	name = cfg_map_firstclause(&cfg_type_zoneopts, &clauses, &idx);
-	ATF_REQUIRE(name != NULL);
-	ATF_REQUIRE(clauses != NULL);
-	ATF_REQUIRE_EQ(idx, ISC_R_SUCCESS);
+	assert_non_null(name);
+	assert_non_null(clauses);
+	assert_int_equal(idx, ISC_R_SUCCESS);
 
 	do {
 		name = cfg_map_nextclause(&cfg_type_zoneopts, &clauses, &idx);
 		if (name != NULL) {
-			ATF_CHECK(clauses != NULL);
+			assert_non_null(clauses);
 		} else {
-			ATF_CHECK_EQ(clauses, NULL);
-			ATF_CHECK_EQ(idx, 0);
+			assert_null(clauses);
+			assert_int_equal(idx, 0);
 		}
 	} while (name != NULL);
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, parse_buffer);
-	ATF_TP_ADD_TC(tp, cfg_map_firstclause);
-	ATF_TP_ADD_TC(tp, cfg_map_nextclause);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(parse_buffer_test),
+		cmocka_unit_test(cfg_map_firstclause_test),
+		cmocka_unit_test(cfg_map_nextclause_test),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

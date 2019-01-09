@@ -1,4 +1,4 @@
-/*	$NetBSD: feature-test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.3 2019/01/09 16:55:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -155,7 +155,7 @@ main(int argc, char **argv) {
 	}
 
 	if (strcmp(argv[1], "--with-idn") == 0) {
-#ifdef WITH_LIBIDN2
+#ifdef HAVE_LIBIDN2
 		return (0);
 #else
 		return (1);
@@ -177,7 +177,7 @@ main(int argc, char **argv) {
 		int s;
 		int n = -1;
 		int v6only = -1;
-		ISC_SOCKADDR_LEN_T len = sizeof(v6only);
+		socklen_t len = sizeof(v6only);
 
 		s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 		if (s >= 0) {

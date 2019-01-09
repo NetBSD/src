@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.h,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
+/*	$NetBSD: keygen.h,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,8 +21,8 @@
 
 ISC_LANG_BEGINDECLS
 
-void generate_key(isc_mem_t *mctx, const char *randomfile, dns_secalg_t alg,
-		  int keysize, isc_buffer_t *key_txtbuffer);
+void generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
+		  isc_buffer_t *key_txtbuffer);
 
 void write_key_file(const char *keyfile, const char *user,
 		    const char *keyname, isc_buffer_t *secret,

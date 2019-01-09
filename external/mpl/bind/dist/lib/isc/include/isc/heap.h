@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: heap.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,16 +17,18 @@
 
 /*! \file isc/heap.h */
 
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 
 /*%
- * The comparison function returns ISC_TRUE if the first argument has
- * higher priority than the second argument, and ISC_FALSE otherwise.
+ * The comparison function returns true if the first argument has
+ * higher priority than the second argument, and false otherwise.
  */
-typedef isc_boolean_t (*isc_heapcompare_t)(void *, void *);
+typedef bool (*isc_heapcompare_t)(void *, void *);
 
 /*%
  * The index function allows the client of the heap to receive a callback
@@ -60,8 +62,8 @@ isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
  * Requires:
  *\li	"mctx" is valid.
  *\li	"compare" is a function which takes two void * arguments and
- *	returns ISC_TRUE if the first argument has a higher priority than
- *	the second, and ISC_FALSE otherwise.
+ *	returns true if the first argument has a higher priority than
+ *	the second, and false otherwise.
  *\li	"index" is a function which takes a void *, and an unsigned int
  *	argument.  This function will be called whenever an element's
  *	index value changes, so it may continue to delete itself from the

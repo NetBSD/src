@@ -1,4 +1,4 @@
-/*	$NetBSD: fsaccess.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: fsaccess.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,11 +11,14 @@
  * information regarding copyright ownership.
  */
 
+#include <config.h>
 
 /*! \file
  * \brief
  * This file contains the OS-independent functionality of the API.
  */
+#include <stdbool.h>
+
 #include <isc/fsaccess.h>
 #include <isc/print.h>
 #include <isc/result.h>
@@ -62,7 +65,7 @@ isc_fsaccess_remove(int trustee, int permission, isc_fsaccess_t *access) {
 }
 
 static isc_result_t
-check_bad_bits(isc_fsaccess_t access, isc_boolean_t is_dir) {
+check_bad_bits(isc_fsaccess_t access, bool is_dir) {
 	isc_fsaccess_t bits;
 
 	/*

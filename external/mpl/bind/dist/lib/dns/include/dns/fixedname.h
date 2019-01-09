@@ -1,4 +1,4 @@
-/*	$NetBSD: fixedname.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: fixedname.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,6 +52,7 @@
  *****/
 
 #include <isc/buffer.h>
+#include <isc/lang.h>
 
 #include <dns/name.h>
 
@@ -66,6 +67,8 @@ struct dns_fixedname {
 	unsigned char			data[DNS_NAME_MAXWIRE];
 };
 
+ISC_LANG_BEGINDECLS
+
 void
 dns_fixedname_init(dns_fixedname_t *fixed);
 
@@ -77,5 +80,7 @@ dns_fixedname_name(dns_fixedname_t *fixed);
 
 dns_name_t *
 dns_fixedname_initname(dns_fixedname_t *fixed);
+
+ISC_LANG_ENDDECLS
 
 #endif /* DNS_FIXEDNAME_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego_asn1.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: spnego_asn1.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,6 +11,7 @@
  * information regarding copyright ownership.
  */
 
+#include <config.h>
 
 /*! \file
  * \brief Method routines generated from SPNEGO ASN.1 module.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_filesystem_dynamic.c,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_filesystem_dynamic.c,v 1.3 2019/01/09 16:55:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -48,10 +48,10 @@
  * update support
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include <sys/stat.h>
@@ -95,7 +95,7 @@ b9_add_helper(struct config_data *cd, const char *helper_name, void *ptr);
 /*
  * Private methods
  */
-static isc_boolean_t
+static bool
 is_safe(const char *input) {
 	unsigned int i;
 	unsigned int len = strlen(input);
@@ -106,13 +106,13 @@ is_safe(const char *input) {
 		if (input[i] == '.') {
 			/* '.' is not allowed as first char */
 			if (i == 0)
-				return (ISC_FALSE);
+				return (false);
 			/* '..', two dots together is not allowed. */
 			else if (input[i-1] == '.')
-				return (ISC_FALSE);
+				return (false);
 			/* '.' is not allowed as last char */
 			if (i == len)
-				return (ISC_FALSE);
+				return (false);
 			/* only 1 dot in ok location, continue at next char */
 			continue;
 		}
@@ -148,10 +148,10 @@ is_safe(const char *input) {
 		 * if we reach this point we have encountered a
 		 * disallowed char!
 		 */
-		return (ISC_FALSE);
+		return (false);
 	}
         /* everything ok. */
-	return (ISC_TRUE);
+	return (true);
 }
 
 static isc_result_t
@@ -223,11 +223,11 @@ create_path(const char *zone, const char *host, const char *client,
 	int pathsize;
 	int len;
 	isc_result_t result;
-	isc_boolean_t isroot = ISC_FALSE;
+	bool isroot = false;
 
 	/* special case for root zone */
 	if (strcmp(zone, ".") == 0)
-		isroot = ISC_TRUE;
+		isroot = true;
 
 	/* if the requested zone is "unsafe", return error */
 	if (!isroot && !is_safe(zone))
@@ -356,11 +356,11 @@ process_dir(dir_t *dir, void *passback, config_data_t *cd,
 	int i;
 	int len;
 	dir_entry_t *direntry;
-	isc_boolean_t foundHost;
+	bool foundHost;
 
 	tmp[0] = '\0'; /* set 1st byte to '\0' so strcpy works right. */
 	host[0] = '\0';
-	foundHost = ISC_FALSE;
+	foundHost = false;
 
 	/* copy base directory name to tmp. */
 	strcpy(tmp, dir->dirname);
@@ -400,7 +400,7 @@ process_dir(dir_t *dir, void *passback, config_data_t *cd,
 						strcat(host, tmpString);
 				}
 
-				foundHost = ISC_TRUE;
+				foundHost = true;
 				/* set tmp again for use later */
 				strcpy(tmp, dir->dirname);
 			}
@@ -425,7 +425,7 @@ process_dir(dir_t *dir, void *passback, config_data_t *cd,
 						   sizeof(host) - 1);
 						host[255] = '\0';
 					}
-					foundHost = ISC_TRUE;
+					foundHost = true;
 					break;
 				}
 			}
@@ -484,7 +484,7 @@ process_dir(dir_t *dir, void *passback, config_data_t *cd,
 				 */
 
 			} else if (dir_list != NULL &&
-				   foundHost == ISC_FALSE) {
+				   foundHost == false) {
 				continue;
 			}
 		} else /* if we cannot stat entry, skip it. */

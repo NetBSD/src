@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_test.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,23 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
+#define UNIT_TESTING
+#include <cmocka.h>
+
 #include <isc/condition.h>
+#include <isc/commandline.h>
 #include <isc/mem.h>
 #include <isc/platform.h>
 #include <isc/print.h>
@@ -27,30 +35,46 @@
 #include <isc/time.h>
 #include <isc/timer.h>
 #include <isc/util.h>
-#include <isc/util.h>
 
 #include "isctest.h"
 
-/*
- * This entire test requires threads.
- */
-#ifdef ISC_PLATFORM_USETHREADS
+/* Set to true (or use -v option) for verbose output */
+static bool verbose = false;
 
-/*
- * Helper functions
- */
 #define	FUDGE_SECONDS	0	     /* in absence of clock_getres() */
 #define	FUDGE_NANOSECONDS	500000000    /* in absence of clock_getres() */
 
-static	isc_timer_t *timer = NULL;
-static	isc_condition_t cv;
-static	isc_mutex_t mx;
-static	isc_time_t endtime;
-static	isc_time_t lasttime;
-static	int seconds;
-static	int nanoseconds;
-static	int eventcnt;
-static	int nevents;
+static isc_timer_t *timer = NULL;
+static isc_condition_t cv;
+static isc_mutex_t mx;
+static isc_time_t endtime;
+static isc_time_t lasttime;
+static int seconds;
+static int nanoseconds;
+static int eventcnt;
+static int nevents;
+
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	/* Timer tests require two worker threads */
+	result = isc_test_begin(NULL, true, 2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
 
 static void
 shutdown(isc_task_t *task, isc_event_t *event) {
@@ -62,13 +86,13 @@ shutdown(isc_task_t *task, isc_event_t *event) {
 	 * Signal shutdown processing complete.
 	 */
 	result = isc_mutex_lock(&mx);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_condition_signal(&cv);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_mutex_unlock(&mx);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_event_free(&event);
 }
@@ -83,40 +107,38 @@ setup_test(isc_timertype_t timertype, isc_time_t *expires,
 	isc_time_settoepoch(&endtime);
 	eventcnt = 0;
 
-	result = isc_mutex_init(&mx);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	isc_mutex_init(&mx);
 
-	result = isc_condition_init(&cv);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	isc_condition_init(&cv);
 
 	LOCK(&mx);
 
 	result = isc_task_create(taskmgr, 0, &task);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_task_onshutdown(task, shutdown, NULL);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_time_now(&lasttime);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_timer_create(timermgr, timertype, expires, interval,
 				  task, action, (void *)timertype,
 				  &timer);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
 	 * Wait for shutdown processing to complete.
 	 */
 	while (eventcnt != nevents) {
 		result = isc_condition_wait(&cv, &mx);
-		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 	}
 
 	UNLOCK(&mx);
 
 	isc_task_detach(&task);
-	DESTROYLOCK(&mx);
+	isc_mutex_destroy(&mx);
 	(void) isc_condition_destroy(&cv);
 }
 
@@ -132,7 +154,9 @@ ticktock(isc_task_t *task, isc_event_t *event) {
 
 	++eventcnt;
 
-	printf("tick %d\n", eventcnt);
+	if (verbose) {
+		print_message("# tick %d\n", eventcnt);
+	}
 
 	expected_event_type = ISC_TIMEREVENT_LIFE;
 	if ((isc_timertype_t) event->ev_arg == isc_timertype_ticker) {
@@ -140,31 +164,31 @@ ticktock(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (event->ev_type != expected_event_type) {
-		printf("expected event type %u, got %u\n",
-		       expected_event_type, event->ev_type);
+		print_error("# expected event type %u, got %u\n",
+			    expected_event_type, event->ev_type);
 	}
 
 	result = isc_time_now(&now);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, seconds, nanoseconds);
 	result = isc_time_add(&lasttime, &interval, &base);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, FUDGE_SECONDS, FUDGE_NANOSECONDS);
 	result = isc_time_add(&base, &interval, &ulim);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_time_subtract(&base, &interval, &llim);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_CHECK(isc_time_compare(&llim, &now) <= 0);
-	ATF_CHECK(isc_time_compare(&ulim, &now) >= 0);
+	assert_true(isc_time_compare(&llim, &now) <= 0);
+	assert_true(isc_time_compare(&ulim, &now) >= 0);
 	lasttime = now;
 
 	if (eventcnt == nevents) {
 		result = isc_time_now(&endtime);
-		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 		isc_timer_detach(&timer);
 		isc_task_shutdown(task);
 	}
@@ -176,61 +200,45 @@ ticktock(isc_task_t *task, isc_event_t *event) {
  * Individual unit tests
  */
 
-ATF_TC(ticker);
-ATF_TC_HEAD(ticker, tc) {
-	atf_tc_set_md_var(tc, "descr", "timer type ticker");
-}
-ATF_TC_BODY(ticker, tc) {
-	isc_result_t result;
+/* timer type ticker */
+static void
+ticker(void **state) {
 	isc_time_t expires;
 	isc_interval_t interval;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	nevents = 12;
 	seconds = 0;
 	nanoseconds = 500000000;
 
-	result = isc_test_begin(NULL, ISC_TRUE, 2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
 	isc_interval_set(&interval, seconds, nanoseconds);
 	isc_time_settoepoch(&expires);
 
 	setup_test(isc_timertype_ticker, &expires, &interval, ticktock);
-
-	isc_test_end();
 }
 
-ATF_TC(once_life);
-ATF_TC_HEAD(once_life, tc) {
-	atf_tc_set_md_var(tc, "descr", "timer type once reaches lifetime");
-}
-ATF_TC_BODY(once_life, tc) {
+/* timer type once reaches lifetime */
+static void
+once_life(void **state) {
 	isc_result_t result;
 	isc_time_t expires;
 	isc_interval_t interval;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	nevents = 1;
 	seconds = 1;
 	nanoseconds = 100000000;
 
-	result = isc_test_begin(NULL, ISC_TRUE, 2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
 	isc_interval_set(&interval, seconds, nanoseconds);
 	result = isc_time_nowplusinterval(&expires, &interval);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, 0, 0);
 
 	setup_test(isc_timertype_once, &expires, &interval, ticktock);
-
-	isc_test_end();
 }
-
 
 static void
 test_idle(isc_task_t *task, isc_event_t *event) {
@@ -243,62 +251,58 @@ test_idle(isc_task_t *task, isc_event_t *event) {
 
 	++eventcnt;
 
-	printf("tick %d\n", eventcnt);
+	if (verbose) {
+		print_message("# tick %d\n", eventcnt);
+	}
 
 	result = isc_time_now(&now);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, seconds, nanoseconds);
 	result = isc_time_add(&lasttime, &interval, &base);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, FUDGE_SECONDS, FUDGE_NANOSECONDS);
 	result = isc_time_add(&base, &interval, &ulim);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_time_subtract(&base, &interval, &llim);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_CHECK(isc_time_compare(&llim, &now) <= 0);
-	ATF_CHECK(isc_time_compare(&ulim, &now) >= 0);
+	assert_true(isc_time_compare(&llim, &now) <= 0);
+	assert_true(isc_time_compare(&ulim, &now) >= 0);
 	lasttime = now;
 
-	ATF_CHECK_EQ(event->ev_type, ISC_TIMEREVENT_IDLE);
+	assert_int_equal(event->ev_type, ISC_TIMEREVENT_IDLE);
 
 	isc_timer_detach(&timer);
 	isc_task_shutdown(task);
 	isc_event_free(&event);
 }
 
-ATF_TC(once_idle);
-ATF_TC_HEAD(once_idle, tc) {
-	atf_tc_set_md_var(tc, "descr", "timer type once idles out");
-}
-ATF_TC_BODY(once_idle, tc) {
+/* timer type once idles out */
+static void
+once_idle(void **state) {
 	isc_result_t result;
 	isc_time_t expires;
 	isc_interval_t interval;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	nevents = 1;
 	seconds = 1;
 	nanoseconds = 200000000;
 
-	result = isc_test_begin(NULL, ISC_TRUE, 2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
 	isc_interval_set(&interval, seconds + 1, nanoseconds);
 	result = isc_time_nowplusinterval(&expires, &interval);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, seconds, nanoseconds);
 
 	setup_test(isc_timertype_once, &expires, &interval, test_idle);
-
-	isc_test_end();
 }
 
+/* timer reset */
 static void
 test_reset(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
@@ -311,46 +315,48 @@ test_reset(isc_task_t *task, isc_event_t *event) {
 
 	++eventcnt;
 
-	printf("tick %d\n", eventcnt);
+	if (verbose) {
+		print_message("# tick %d\n", eventcnt);
+	}
 
 	/*
 	 * Check expired time.
 	 */
 
 	result = isc_time_now(&now);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, seconds, nanoseconds);
 	result = isc_time_add(&lasttime, &interval, &base);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, FUDGE_SECONDS, FUDGE_NANOSECONDS);
 	result = isc_time_add(&base, &interval, &ulim);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_time_subtract(&base, &interval, &llim);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_CHECK(isc_time_compare(&llim, &now) <= 0);
-	ATF_CHECK(isc_time_compare(&ulim, &now) >= 0);
+	assert_true(isc_time_compare(&llim, &now) <= 0);
+	assert_true(isc_time_compare(&ulim, &now) >= 0);
 	lasttime = now;
 
 	if (eventcnt < 3) {
-		ATF_CHECK_EQ(event->ev_type, ISC_TIMEREVENT_TICK);
+		assert_int_equal(event->ev_type, ISC_TIMEREVENT_TICK);
 
 		if (eventcnt == 2) {
 			isc_interval_set(&interval, seconds, nanoseconds);
 			result = isc_time_nowplusinterval(&expires, &interval);
-			ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+			assert_int_equal(result, ISC_R_SUCCESS);
 
 			isc_interval_set(&interval, 0, 0);
 			result = isc_timer_reset(timer, isc_timertype_once,
 						 &expires, &interval,
-						 ISC_FALSE);
-			ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+						 false);
+			assert_int_equal(result, ISC_R_SUCCESS);
 		}
 	} else {
-		ATF_CHECK_EQ(event->ev_type, ISC_TIMEREVENT_LIFE);
+		assert_int_equal(event->ev_type, ISC_TIMEREVENT_LIFE);
 
 		isc_timer_detach(&timer);
 		isc_task_shutdown(task);
@@ -359,19 +365,12 @@ test_reset(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&event);
 }
 
-ATF_TC(reset);
-ATF_TC_HEAD(reset, tc) {
-	atf_tc_set_md_var(tc, "descr", "timer reset");
-}
-ATF_TC_BODY(reset, tc) {
-	isc_result_t result;
+static void
+reset(void **state) {
 	isc_time_t expires;
 	isc_interval_t interval;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	nevents = 3;
 	seconds = 0;
@@ -381,8 +380,6 @@ ATF_TC_BODY(reset, tc) {
 	isc_time_settoepoch(&expires);
 
 	setup_test(isc_timertype_ticker, &expires, &interval, test_reset);
-
-	isc_test_end();
 }
 
 static int startflag;
@@ -401,7 +398,9 @@ static void
 start_event(isc_task_t *task, isc_event_t *event) {
 	UNUSED(task);
 
-	printf("start_event\n");
+	if (verbose) {
+		print_message("# start_event\n");
+	}
 
 	LOCK(&mx);
 	while (! startflag) {
@@ -421,7 +420,9 @@ tick_event(isc_task_t *task, isc_event_t *event) {
 	UNUSED(task);
 
 	++eventcnt;
-	printf("tick_event %d\n", eventcnt);
+	if (verbose) {
+		print_message("# tick_event %d\n", eventcnt);
+	}
 
 	/*
 	 * On the first tick, purge all remaining tick events
@@ -431,8 +432,8 @@ tick_event(isc_task_t *task, isc_event_t *event) {
 		isc_time_settoepoch(&expires);
 		isc_interval_set(&interval, seconds, 0);
 		result = isc_timer_reset(tickertimer, isc_timertype_ticker,
-					 &expires, &interval, ISC_TRUE);
-		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+					 &expires, &interval, true);
+		assert_int_equal(result, ISC_R_SUCCESS);
 
 		isc_task_shutdown(task);
 	}
@@ -444,7 +445,9 @@ static void
 once_event(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 
-	printf("once_event\n");
+	if (verbose) {
+		print_message("# once_event\n");
+	}
 
 	/*
 	 * Allow task1 to start processing events.
@@ -453,7 +456,7 @@ once_event(isc_task_t *task, isc_event_t *event) {
 	startflag = 1;
 
 	result = isc_condition_broadcast(&cv);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	UNLOCK(&mx);
 
 	isc_event_free(&event);
@@ -467,7 +470,9 @@ shutdown_purge(isc_task_t *task, isc_event_t *event) {
 	UNUSED(task);
 	UNUSED(event);
 
-	printf("shutdown_event\n");
+	if (verbose) {
+		print_message("# shutdown_event\n");
+	}
 
 	/*
 	 * Signal shutdown processing complete.
@@ -476,26 +481,21 @@ shutdown_purge(isc_task_t *task, isc_event_t *event) {
 	shutdownflag = 1;
 
 	result = isc_condition_signal(&cv);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	UNLOCK(&mx);
 
 	isc_event_free(&event);
 }
 
-ATF_TC(purge);
-ATF_TC_HEAD(purge, tc) {
-	atf_tc_set_md_var(tc, "descr", "timer events purged");
-}
-ATF_TC_BODY(purge, tc) {
+/* timer events purged */
+static void
+purge(void **state) {
 	isc_result_t result;
 	isc_event_t *event = NULL;
 	isc_time_t expires;
 	isc_interval_t interval;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	startflag = 0;
 	shutdownflag = 0;
@@ -503,26 +503,24 @@ ATF_TC_BODY(purge, tc) {
 	seconds = 1;
 	nanoseconds = 0;
 
-	result = isc_mutex_init(&mx);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	isc_mutex_init(&mx);
 
-	result = isc_condition_init(&cv);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	isc_condition_init(&cv);
 
 	result = isc_task_create(taskmgr, 0, &task1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_task_onshutdown(task1, shutdown_purge, NULL);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_task_create(taskmgr, 0, &task2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	LOCK(&mx);
 
 	event = isc_event_allocate(mctx, (void *)1 , (isc_eventtype_t)1,
 				   start_event, NULL, sizeof(*event));
-	ATF_REQUIRE(event != NULL);
+	assert_non_null(event);
 	isc_task_send(task1, &event);
 
 	isc_time_settoepoch(&expires);
@@ -532,64 +530,71 @@ ATF_TC_BODY(purge, tc) {
 	result = isc_timer_create(timermgr, isc_timertype_ticker,
 				  &expires, &interval, task1,
 				  tick_event, NULL, &tickertimer);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	oncetimer = NULL;
 
 	isc_interval_set(&interval, (seconds * 2) + 1, 0);
 	result = isc_time_nowplusinterval(&expires, &interval);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_interval_set(&interval, 0, 0);
 	result = isc_timer_create(timermgr, isc_timertype_once,
 				      &expires, &interval, task2,
 				      once_event, NULL, &oncetimer);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
 	 * Wait for shutdown processing to complete.
 	 */
 	while (! shutdownflag) {
 		result = isc_condition_wait(&cv, &mx);
-		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 	}
 
 	UNLOCK(&mx);
 
-	ATF_CHECK_EQ(eventcnt, 1);
+	assert_int_equal(eventcnt, 1);
 
 	isc_timer_detach(&tickertimer);
 	isc_timer_detach(&oncetimer);
 	isc_task_destroy(&task1);
 	isc_task_destroy(&task2);
-	DESTROYLOCK(&mx);
+	isc_mutex_destroy(&mx);
+}
 
-	isc_test_end();
+int
+main(int argc, char **argv) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(ticker, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(once_life, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(once_idle, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(reset, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(purge, _setup, _teardown),
+	};
+	int c;
+
+	while ((c = isc_commandline_parse(argc, argv, "v")) != -1) {
+		switch (c) {
+		case 'v':
+			verbose = true;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
-#else
-ATF_TC(untested);
-ATF_TC_HEAD(untested, tc) {
-	atf_tc_set_md_var(tc, "descr", "skipping nsec3 test");
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
 }
-ATF_TC_BODY(untested, tc) {
-	UNUSED(tc);
-	atf_tc_skip("DNSSEC not available");
-}
+
 #endif
-
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-#ifdef ISC_PLATFORM_USETHREADS
-	ATF_TP_ADD_TC(tp, ticker);
-	ATF_TP_ADD_TC(tp, once_life);
-	ATF_TP_ADD_TC(tp, once_idle);
-	ATF_TP_ADD_TC(tp, reset);
-	ATF_TP_ADD_TC(tp, purge);
-#else
-	ATF_TP_ADD_TC(tp, untested);
-#endif
-
-	return (atf_no_error());
-}

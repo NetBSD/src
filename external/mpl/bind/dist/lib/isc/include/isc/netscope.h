@@ -1,4 +1,4 @@
-/*	$NetBSD: netscope.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: netscope.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,8 @@
 
 /*! \file isc/netscope.h */
 
+#include <inttypes.h>
+
 ISC_LANG_BEGINDECLS
 
 /*%
@@ -31,7 +33,7 @@ ISC_LANG_BEGINDECLS
  * \li	ISC_R_FAILURE: conversion fails
  */
 isc_result_t
-isc_netscope_pton(int af, char *scopename, void *addr, isc_uint32_t *zoneid);
+isc_netscope_pton(int af, char *scopename, void *addr, uint32_t *zoneid);
 
 ISC_LANG_ENDDECLS
 

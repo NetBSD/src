@@ -1,4 +1,4 @@
-/*	$NetBSD: pool_test.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: pool_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,47 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/mem.h>
 #include <isc/pool.h>
+#include <isc/util.h>
 
 #include "isctest.h"
+
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
 
 static isc_result_t
 poolinit(void **target, void *arg) {
@@ -45,116 +74,90 @@ poolfree(void **target) {
 	*target = NULL;
 }
 
-/*
- * Individual unit tests
- */
-
 /* Create a pool */
-ATF_TC(create_pool);
-ATF_TC_HEAD(create_pool, tc) {
-	atf_tc_set_md_var(tc, "descr", "create a pool");
-}
-ATF_TC_BODY(create_pool, tc) {
+static void
+create_pool(void **state) {
 	isc_result_t result;
 	isc_pool_t *pool = NULL;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_pool_create(mctx, 8, poolfree, poolinit, taskmgr, &pool);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_pool_count(pool), 8);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_pool_count(pool), 8);
 
 	isc_pool_destroy(&pool);
-	ATF_REQUIRE_EQ(pool, NULL);
-
-	isc_test_end();
+	assert_null(pool);
 }
 
 /* Resize a pool */
-ATF_TC(expand_pool);
-ATF_TC_HEAD(expand_pool, tc) {
-	atf_tc_set_md_var(tc, "descr", "expand a pool");
-}
-ATF_TC_BODY(expand_pool, tc) {
+static void
+expand_pool(void **state) {
 	isc_result_t result;
 	isc_pool_t *pool1 = NULL, *pool2 = NULL, *hold = NULL;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_pool_create(mctx, 10, poolfree, poolinit, taskmgr, &pool1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_pool_count(pool1), 10);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_pool_count(pool1), 10);
 
 	/* resizing to a smaller size should have no effect */
 	hold = pool1;
 	result = isc_pool_expand(&pool1, 5, &pool2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_pool_count(pool2), 10);
-	ATF_REQUIRE_EQ(pool2, hold);
-	ATF_REQUIRE_EQ(pool1, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_pool_count(pool2), 10);
+	assert_ptr_equal(pool2, hold);
+	assert_null(pool1);
 	pool1 = pool2;
 	pool2 = NULL;
 
 	/* resizing to the same size should have no effect */
 	hold = pool1;
 	result = isc_pool_expand(&pool1, 10, &pool2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_pool_count(pool2), 10);
-	ATF_REQUIRE_EQ(pool2, hold);
-	ATF_REQUIRE_EQ(pool1, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_pool_count(pool2), 10);
+	assert_ptr_equal(pool2, hold);
+	assert_null(pool1);
 	pool1 = pool2;
 	pool2 = NULL;
 
 	/* resizing to larger size should make a new pool */
 	hold = pool1;
 	result = isc_pool_expand(&pool1, 20, &pool2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_pool_count(pool2), 20);
-	ATF_REQUIRE(pool2 != hold);
-	ATF_REQUIRE_EQ(pool1, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_pool_count(pool2), 20);
+	assert_ptr_not_equal(pool2, hold);
+	assert_null(pool1);
 
 	isc_pool_destroy(&pool2);
-	ATF_REQUIRE_EQ(pool2, NULL);
-
-	isc_test_end();
+	assert_null(pool2);
 }
 
 /* Get objects */
-ATF_TC(get_objects);
-ATF_TC_HEAD(get_objects, tc) {
-	atf_tc_set_md_var(tc, "descr", "get objects");
-}
-ATF_TC_BODY(get_objects, tc) {
+static void
+get_objects(void **state) {
 	isc_result_t result;
 	isc_pool_t *pool = NULL;
 	void *item;
 	isc_task_t *task1 = NULL, *task2 = NULL, *task3 = NULL;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_pool_create(mctx, 2, poolfree, poolinit, taskmgr, &pool);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_pool_count(pool), 2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_pool_count(pool), 2);
 
 	item = isc_pool_get(pool);
-	ATF_REQUIRE(item != NULL);
+	assert_non_null(item);
 	isc_task_attach((isc_task_t *) item, &task1);
 
 	item = isc_pool_get(pool);
-	ATF_REQUIRE(item != NULL);
+	assert_non_null(item);
 	isc_task_attach((isc_task_t *) item, &task2);
 
 	item = isc_pool_get(pool);
-	ATF_REQUIRE(item != NULL);
+	assert_non_null(item);
 	isc_task_attach((isc_task_t *) item, &task3);
 
 	isc_task_detach(&task1);
@@ -162,20 +165,31 @@ ATF_TC_BODY(get_objects, tc) {
 	isc_task_detach(&task3);
 
 	isc_pool_destroy(&pool);
-	ATF_REQUIRE_EQ(pool, NULL);
-
-	isc_test_end();
+	assert_null(pool);
 }
 
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(create_pool,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(expand_pool,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(get_objects,
+						_setup, _teardown),
+	};
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, create_pool);
-	ATF_TP_ADD_TC(tp, expand_pool);
-	ATF_TP_ADD_TC(tp, get_objects);
-
-	return (atf_no_error());
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

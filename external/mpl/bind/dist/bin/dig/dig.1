@@ -1,4 +1,4 @@
-.\"	$NetBSD: dig.1,v 1.2 2018/08/12 13:02:27 christos Exp $
+.\"	$NetBSD: dig.1,v 1.3 2019/01/09 16:54:59 christos Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -76,7 +76,9 @@ will perform an NS query for "\&." (the root)\&.
 It is possible to set per\-user defaults for
 \fBdig\fR
 via
-${HOME}/\&.digrc\&. This file is read and any options in it are applied before the command line arguments\&.
+${HOME}/\&.digrc\&. This file is read and any options in it are applied before the command line arguments\&. The
+\fB\-r\fR
+option disables this feature, for scripts that need predictable behaviour\&.
 .PP
 The IN and CH class names overlap with the IN and CH top level domain names\&. Either use the
 \fB\-t\fR
@@ -176,11 +178,6 @@ reads a list of lookup requests to process from the given
 using the command\-line interface\&.
 .RE
 .PP
-\-i
-.RS 4
-Do reverse IPv6 lookups using the obsolete RFC 1886 IP6\&.INT domain, which is no longer in use\&. Obsolete bit string label queries (RFC 2874) are not attempted\&.
-.RE
-.PP
 \-k \fIkeyfile\fR
 .RS 4
 Sign queries using TSIG using a key read from the given file\&. Key files can be generated using
@@ -208,6 +205,12 @@ Send the query to a non\-standard port on the server, instead of the default por
 The domain name to query\&. This is useful to distinguish the
 \fIname\fR
 from other arguments\&.
+.RE
+.PP
+\-r
+.RS 4
+Do not read options from
+${HOME}/\&.digrc\&. This is useful for scripts that need predictable behaviour\&.
 .RE
 .PP
 \-t \fItype\fR
@@ -248,9 +251,7 @@ arguments\&.
 \fBdig\fR
 automatically performs a lookup for a name like
 94\&.2\&.0\&.192\&.in\-addr\&.arpa
-and sets the query type and class to PTR and IN respectively\&. IPv6 addresses are looked up using nibble format under the IP6\&.ARPA domain (but see also the
-\fB\-i\fR
-option)\&.
+and sets the query type and class to PTR and IN respectively\&. IPv6 addresses are looked up using nibble format under the IP6\&.ARPA domain\&.
 .RE
 .PP
 \-y \fI[hmac:]\fR\fIkeyname:secret\fR
@@ -470,12 +471,16 @@ option is enabled\&. If short form answers are requested, the default is not to 
 .PP
 \fB+[no]idnin\fR
 .RS 4
-Process [do not process] IDN domain names on input\&. This requires IDN SUPPORT to have been enabled at compile time\&. The default is to process IDN input\&.
+Process [do not process] IDN domain names on input\&. This requires IDN SUPPORT to have been enabled at compile time\&.
+.sp
+The default is to process IDN input when standard output is a tty\&. The IDN processing on input is disabled when dig output is redirected to files, pipes, and other non\-tty file descriptors\&.
 .RE
 .PP
 \fB+[no]idnout\fR
 .RS 4
-Convert [do not convert] puny code on output\&. This requires IDN SUPPORT to have been enabled at compile time\&. The default is to convert output\&.
+Convert [do not convert] puny code on output\&. This requires IDN SUPPORT to have been enabled at compile time\&.
+.sp
+The default is to process puny code on output when standard output is a tty\&. The puny code processing on output is disabled when dig output is redirected to files, pipes, and other non\-tty file descriptors\&.
 .RE
 .PP
 \fB+[no]ignore\fR
@@ -534,7 +539,7 @@ Include an EDNS name server ID request when sending a query\&.
 .RS 4
 When this option is set,
 \fBdig\fR
-attempts to find the authoritative name servers for the zone containing the name being looked up and display the SOA record that each name server has for the zone\&.
+attempts to find the authoritative name servers for the zone containing the name being looked up and display the SOA record that each name server has for the zone\&. Addresses of servers that that did not respond are also printed\&.
 .RE
 .PP
 \fB+[no]onesoa\fR
@@ -564,6 +569,11 @@ Print [do not print] the query as it is sent\&. By default, the query is not pri
 \fB+[no]question\fR
 .RS 4
 Print [do not print] the question section of a query when an answer is returned\&. The default is to print the question section as a comment\&.
+.RE
+.PP
+\fB+[no]raflag\fR
+.RS 4
+Set [do not set] the RA (Recursion Available) bit in the query\&. The default is +noraflag\&. This bit should be ignored by the server for QUERY\&.
 .RE
 .PP
 \fB+[no]rdflag\fR
@@ -653,6 +663,11 @@ Send (don\*(Aqt send) an EDNS Client Subnet option with the specified IP address
 for short, sends an EDNS CLIENT\-SUBNET option with an empty address and a source prefix\-length of zero, which signals a resolver that the client\*(Aqs address information must
 \fInot\fR
 be used when resolving this query\&.
+.RE
+.PP
+\fB+[no]tcflag\fR
+.RS 4
+Set [do not set] the TC (TrunCation) bit in the query\&. The default is +notcflag\&. This bit should be ignored by the server for QUERY\&.
 .RE
 .PP
 \fB+[no]tcp\fR
@@ -787,7 +802,10 @@ has been built with IDN (internationalized domain name) support, it can accept a
 appropriately converts character encoding of domain name before sending a request to DNS server or displaying a reply from the server\&. If you\*(Aqd like to turn off the IDN support for some reason, use parameters
 \fI+noidnin\fR
 and
-\fI+noidnout\fR\&.
+\fI+noidnout\fR
+or define the
+\fBIDN_DISABLE\fR
+environment variable\&.
 .SH "FILES"
 .PP
 /etc/resolv\&.conf

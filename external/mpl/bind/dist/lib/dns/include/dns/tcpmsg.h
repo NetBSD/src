@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpmsg.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: tcpmsg.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,8 @@
 
 /*! \file dns/tcpmsg.h */
 
+#include <inttypes.h>
+
 #include <isc/buffer.h>
 #include <isc/lang.h>
 #include <isc/socket.h>
@@ -24,7 +26,7 @@
 typedef struct dns_tcpmsg {
 	/* private (don't touch!) */
 	unsigned int		magic;
-	isc_uint16_t		size;
+	uint16_t		size;
 	isc_buffer_t		buffer;
 	unsigned int		maxsize;
 	isc_mem_t	       *mctx;

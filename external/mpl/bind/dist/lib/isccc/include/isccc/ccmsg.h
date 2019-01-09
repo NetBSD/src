@@ -1,4 +1,4 @@
-/*	$NetBSD: ccmsg.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: ccmsg.h,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,8 @@
 
 /*! \file isccc/ccmsg.h */
 
+#include <inttypes.h>
+
 #include <isc/buffer.h>
 #include <isc/lang.h>
 #include <isc/socket.h>
@@ -39,7 +41,7 @@
 typedef struct isccc_ccmsg {
 	/* private (don't touch!) */
 	unsigned int		magic;
-	isc_uint32_t		size;
+	uint32_t		size;
 	isc_buffer_t		buffer;
 	unsigned int		maxsize;
 	isc_mem_t	       *mctx;

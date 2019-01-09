@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,8 @@
 
 #include <config.h>
 
+#include <stdbool.h>
+
 #include <isc/result.h>
 #include <isc/time.h>
 #include <isc/timer.h>
@@ -30,7 +32,7 @@
 
 isc_result_t
 dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,
-		  unsigned int idletime, isc_boolean_t purge)
+		  unsigned int idletime, bool purge)
 {
 	isc_result_t result;
 	isc_interval_t maxinterval, idleinterval;

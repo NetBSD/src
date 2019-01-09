@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,6 +51,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <isc/commandline.h>
@@ -69,9 +70,9 @@ LIBISC_EXTERNAL_DATA char *isc_commandline_argument;
 /*% For printing error messages. */
 LIBISC_EXTERNAL_DATA char *isc_commandline_progname;
 /*% Print error messages. */
-LIBISC_EXTERNAL_DATA isc_boolean_t isc_commandline_errprint = ISC_TRUE;
+LIBISC_EXTERNAL_DATA bool isc_commandline_errprint = true;
 /*% Reset processing. */
-LIBISC_EXTERNAL_DATA isc_boolean_t isc_commandline_reset = ISC_TRUE;
+LIBISC_EXTERNAL_DATA bool isc_commandline_reset = true;
 
 static char endopt = '\0';
 
@@ -97,7 +98,7 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 	if (isc_commandline_reset || *place == '\0') {
 		if (isc_commandline_reset) {
 			isc_commandline_index = 1;
-			isc_commandline_reset = ISC_FALSE;
+			isc_commandline_reset = false;
 		}
 
 		if (isc_commandline_progname == NULL)

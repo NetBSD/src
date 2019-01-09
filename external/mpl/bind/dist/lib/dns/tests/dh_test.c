@@ -1,4 +1,4 @@
-/*	$NetBSD: dh_test.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: dh_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,14 +11,20 @@
  * information regarding copyright ownership.
  */
 
-
-/* ! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/util.h>
 #include <isc/string.h>
@@ -32,63 +38,83 @@
 
 #include "dnstest.h"
 
-#if defined(OPENSSL) && !defined(PK11_DH_DISABLE)
+#if USE_OPENSSL
+static int
+_setup(void **state) {
+	isc_result_t result;
 
-ATF_TC(isc_dh_computesecret);
-ATF_TC_HEAD(isc_dh_computesecret, tc) {
-	atf_tc_set_md_var(tc, "descr", "OpenSSL DH_compute_key() failure");
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
 }
-ATF_TC_BODY(isc_dh_computesecret, tc) {
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
+
+/* OpenSSL DH_compute_key() failure */
+static void
+dh_computesecret(void **state) {
 	dst_key_t *key = NULL;
 	isc_buffer_t buf;
 	unsigned char array[1024];
-	isc_result_t ret;
+	isc_result_t result;
 	dns_fixedname_t fname;
 	dns_name_t *name;
 
-	UNUSED(tc);
-
-	ret = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	name = dns_fixedname_initname(&fname);
 	isc_buffer_constinit(&buf, "dh.", 3);
 	isc_buffer_add(&buf, 3);
-	ret = dns_name_fromtext(name, &buf, NULL, 0, NULL);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	result = dns_name_fromtext(name, &buf, NULL, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ret = dst_key_fromfile(name, 18602, DST_ALG_DH,
-			       DST_TYPE_PUBLIC | DST_TYPE_KEY,
-			       "./", mctx, &key);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	result = dst_key_fromfile(name, 18602, DST_ALG_DH,
+				  DST_TYPE_PUBLIC | DST_TYPE_KEY,
+				  "./", mctx, &key);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&buf, array, sizeof(array));
-	ret = dst_key_computesecret(key, key, &buf);
-	ATF_REQUIRE_EQ(ret, DST_R_NOTPRIVATEKEY);
-	ret = key->func->computesecret(key, key, &buf);
-	ATF_REQUIRE_EQ(ret, DST_R_COMPUTESECRETFAILURE);
+	result = dst_key_computesecret(key, key, &buf);
+	assert_int_equal(result, DST_R_NOTPRIVATEKEY);
+	result = key->func->computesecret(key, key, &buf);
+	assert_int_equal(result, DST_R_COMPUTESECRETFAILURE);
 
 	dst_key_free(&key);
-	dns_test_end();
 }
+#endif /* USE_OPENSSL */
+
+int
+main(void) {
+#if USE_OPENSSL
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(dh_computesecret,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 #else
-ATF_TC(untested);
-ATF_TC_HEAD(untested, tc) {
-	atf_tc_set_md_var(tc, "descr", "skipping OpenSSL DH test");
-}
-ATF_TC_BODY(untested, tc) {
-	UNUSED(tc);
-	atf_tc_skip("OpenSSL DH not compiled in");
-}
+	print_message("1..0 # Skipped: dh test broken with PKCS11");
 #endif
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-#if defined(OPENSSL) && !defined(PK11_DH_DISABLE)
-	ATF_TP_ADD_TC(tp, isc_dh_computesecret);
-#else
-	ATF_TP_ADD_TC(tp, untested);
-#endif
-	return (atf_no_error());
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

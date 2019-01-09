@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,14 +38,14 @@ fromtext_nsec(ARGS_FROMTEXT) {
 	 * Next domain.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	if (origin == NULL)
 		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
-	return (typemap_fromtext(lexer, target, ISC_FALSE));
+	return (typemap_fromtext(lexer, target, false));
 }
 
 static inline isc_result_t
@@ -62,7 +62,7 @@ totext_nsec(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &sr);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	RETERR(dns_name_totext(&name, ISC_FALSE, target));
+	RETERR(dns_name_totext(&name, false, target));
 	/*
 	 * Don't leave a trailing space when there's no typemap present.
 	 */
@@ -88,7 +88,7 @@ fromwire_nsec(ARGS_FROMWIRE) {
 	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 
 	isc_buffer_activeregion(source, &sr);
-	RETERR(typemap_test(&sr, ISC_FALSE));
+	RETERR(typemap_test(&sr, false));
 	RETERR(mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
 	return (ISC_R_SUCCESS);
@@ -148,7 +148,7 @@ fromstruct_nsec(ARGS_FROMSTRUCT) {
 
 	region.base = nsec->typebits;
 	region.length = nsec->len;
-	RETERR(typemap_test(&region, ISC_FALSE));
+	RETERR(typemap_test(&region, false));
 	return (mem_tobuffer(target, nsec->typebits, nsec->len));
 }
 
@@ -224,7 +224,7 @@ digest_nsec(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_nsec(ARGS_CHECKOWNER) {
 
        REQUIRE(type == dns_rdatatype_nsec);
@@ -234,10 +234,10 @@ checkowner_nsec(ARGS_CHECKOWNER) {
        UNUSED(rdclass);
        UNUSED(wildcard);
 
-       return (ISC_TRUE);
+       return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_nsec(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_nsec);
@@ -246,7 +246,7 @@ checknames_nsec(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int
