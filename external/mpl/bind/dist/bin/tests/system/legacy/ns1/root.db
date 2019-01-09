@@ -23,3 +23,9 @@ edns512.		NS	ns.edns512.
 ns.edns512.		A	10.53.0.6
 edns512-notcp.		NS	ns.edns512-notcp.
 ns.edns512-notcp.	A	10.53.0.7
+ednsformerr.		NS	ns.ednsformerr.
+ns.ednsformerr.		A	10.53.0.8
+ednsnotimp.		NS	ns.ednsnotimp.
+ns.ednsnotimp.		A	10.53.0.9
+ednsrefused.		NS	ns.ednsrefused.
+ns.ednsrefused.		A	10.53.0.10

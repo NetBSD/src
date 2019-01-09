@@ -12,12 +12,10 @@
 SYSTEMTESTTOP=${SYSTEMTESTTOP:=..}
 . $SYSTEMTESTTOP/conf.sh
 
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
-
 prog=$0
 
-args="-r $RANDFILE"
-alg="-a RSAMD5 -b 1024"
+args=""
+alg="-a $DEFAULT_ALGORITHM -b $DEFAULT_BITS"
 quiet=0
 
 msg1="cryptography"
@@ -31,11 +29,6 @@ while test "$#" -gt 0; do
         rsa|RSA)
                 alg="-a RSASHA1"
                 msg1="RSA cryptography"
-                ;;
-        gost|GOST)
-                alg="-a eccgost"
-                msg1="GOST cryptography"
-                msg2="--with-gost"
                 ;;
         ecdsa|ECDSA)
                 alg="-a ecdsap256sha256"

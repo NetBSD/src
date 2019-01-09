@@ -38,10 +38,10 @@ for dir in [0-9][0-9]-*; do
         [ -e "$dir/policy.conf" ] && policy="-c $dir/policy.conf"
         # run keymgr to update keys
 	if [ "$CYGWIN" ]; then
-            $KEYMGR $policy -K $dir -g `cygpath -w $KEYGEN` -r $RANDFILE \
+            $KEYMGR $policy -K $dir -g `cygpath -w $KEYGEN` \
 		-s `cygpath -w $SETTIME` $kargs > keymgr.$n 2>&1
 	else
-	    $KEYMGR $policy -K $dir -g $KEYGEN -r $RANDFILE \
+	    $KEYMGR $policy -K $dir -g $KEYGEN \
 		-s $SETTIME $kargs > keymgr.$n 2>&1
 	fi
         # check that return code matches expectations

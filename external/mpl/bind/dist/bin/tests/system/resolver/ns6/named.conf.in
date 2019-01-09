@@ -20,7 +20,7 @@ options {
 	listen-on { 10.53.0.6; };
 	listen-on-v6 { none; };
 	recursion no;
-	// minimal-responses yes;
+	dnssec-validation no;
 	querylog yes;
 	/*
 	 * test that named loads with root-delegation-only that

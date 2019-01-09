@@ -19,8 +19,11 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	servfail-ttl 0;
+	qname-minimization disabled;
 	max-recursion-depth 100;
 	max-recursion-queries 40;
+	recursion yes;
+	dnssec-validation yes;
 };
 
 key rndc_key {

@@ -198,6 +198,25 @@
       background-color: #99ddff;
      }
 
+     table.zones {
+      border: 1px solid grey;
+      width: 500px;
+     }
+     table.zones th {
+      text-align: center;
+      border: 1px solid grey;
+     }
+     table.zones td {
+      text-align: center;
+      font-family: monospace;
+     }
+     table.zones td:nth-child(1) {
+      text-align: right;
+     }
+     table.zones td:nth-child(4) {
+      text-align: right;
+     }
+
      .totals {
       background-color: rgb(1,169,206);
       color: #ffffff;
@@ -705,6 +724,35 @@
           </table>
           <br/>
         </xsl:if>
+        <xsl:for-each select="views/view">
+	  <xsl:if test="zones/zone">
+            <h3>Zones for View <xsl:value-of select="@name"/></h3>
+            <table class="zones">
+              <tr>
+                <th>Name</th>
+                <th>Class</th>
+                <th>Type</th>
+                <th>Serial</th>
+              </tr>
+              <xsl:for-each select="zones/zone">
+                <tr>
+                  <td>
+                    <xsl:value-of select="@name"/>
+                  </td>
+                  <td>
+                    <xsl:value-of select="@rdataclass"/>
+                  </td>
+                  <td>
+                    <xsl:value-of select="type"/>
+                  </td>
+                  <td>
+                    <xsl:value-of select="serial"/>
+                  </td>
+                </tr>
+              </xsl:for-each>
+            </table>
+	  </xsl:if>
+        </xsl:for-each>
         <xsl:if test="views/view[zones/zone/counters[@type=&quot;qtype&quot;]/counter &gt;0]">
           <h2>Received QTYPES per view/zone</h2>
           <xsl:for-each select="views/view[zones/zone/counters[@type=&quot;qtype&quot;]/counter &gt;0]">

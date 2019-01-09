@@ -33,3 +33,4 @@ rm -f ns5/x21.bk-c
 rm -f ns5/x21.bk-c.jnl
 rm -f ns5/x21.db.jnl
 rm -f tmp
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

@@ -1,21 +1,8 @@
-These unit tests for BIND 9 are based on the NetBSD Automated Test Framework 
-release 0.17.
+Unit tests for BIND 9 are based on the CMocka testing framework and
+the Kyua test execution engine.
 
-To build an external copy of ATF for use by BIND 9:
+If your distribution of choice doesn't include packages for kyua or cmocka, the
+sources can be found here:
 
-  $ cd atf-src
-  $ configure --prefix=<prefix> --enable-tools --disable-shared
-  $ make
-  $ make install
-
-Subsequently, specify the ATF prefix when building BIND 9:
-
-  $ configure --with-atf=<prefix>
-
-ATF can also be built automatically during the BIND 9 build,
-by specifying --with-atf without an argument:
-
-  $ configure --with-atf
-
-This causes BIND 9 to build ATF in the atf-src directory and
-link to it directly.
+ * Kyua 0.13 - https://github.com/jmmv/kyua/releases
+ * CMocka 1.0 - https://cmocka.org/files/

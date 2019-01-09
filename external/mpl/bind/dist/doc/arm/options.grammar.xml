@@ -45,13 +45,14 @@
 	    <replaceable>integer</replaceable> ] [ dscp <replaceable>integer</replaceable> ] { ( <replaceable>masters</replaceable> | <replaceable>ipv4_address</replaceable> [
 	    <command>port</command> <replaceable>integer</replaceable> ] | <replaceable>ipv6_address</replaceable> [ port <replaceable>integer</replaceable> ] ) [ key
 	    <replaceable>string</replaceable> ]; ... } ] [ zone-directory <replaceable>quoted_string</replaceable> ] [
-	    <command>in-memory</command> <replaceable>boolean</replaceable> ] [ min-update-interval <replaceable>integer</replaceable> ]; ... };
+	    <command>in-memory</command> <replaceable>boolean</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ]; ... };
 	<command>check-dup-records</command> ( fail | warn | ignore );
 	<command>check-integrity</command> <replaceable>boolean</replaceable>;
 	<command>check-mx</command> ( fail | warn | ignore );
 	<command>check-mx-cname</command> ( fail | warn | ignore );
-	<command>check-names</command> ( master | slave | response
-	    ) ( fail | warn | ignore );
+	<command>check-names</command> ( primary | master |
+	    <command>secondary</command> | slave | response ) (
+	    <command>fail</command> | warn | ignore );
 	<command>check-sibling</command> <replaceable>boolean</replaceable>;
 	<command>check-spf</command> ( warn | ignore );
 	<command>check-srv-cname</command> ( fail | warn | ignore );
@@ -63,9 +64,9 @@
 	<command>coresize</command> ( default | unlimited | <replaceable>sizeval</replaceable> );
 	<command>datasize</command> ( default | unlimited | <replaceable>sizeval</replaceable> );
 	<command>deny-answer-addresses</command> { <replaceable>address_match_element</replaceable>; ... } [
-	    <command>except-from</command> { <replaceable>quoted_string</replaceable>; ... } ];
-	<command>deny-answer-aliases</command> { <replaceable>quoted_string</replaceable>; ... } [ except-from {
-	    <replaceable>quoted_string</replaceable>; ... } ];
+	    <command>except-from</command> { <replaceable>string</replaceable>; ... } ];
+	<command>deny-answer-aliases</command> { <replaceable>string</replaceable>; ... } [ except-from { <replaceable>string</replaceable>; ...
+	    } ];
 	<command>dialup</command> ( notify | notify-passive | passive | refresh | <replaceable>boolean</replaceable> );
 	<command>directory</command> <replaceable>quoted_string</replaceable>;
 	<command>disable-algorithms</command> <replaceable>string</replaceable> { <replaceable>string</replaceable>;
@@ -83,6 +84,7 @@
 	};
 	<command>dns64-contact</command> <replaceable>string</replaceable>;
 	<command>dns64-server</command> <replaceable>string</replaceable>;
+	<command>dnskey-sig-validity</command> <replaceable>integer</replaceable>;
 	<command>dnsrps-enable</command> <replaceable>boolean</replaceable>;
 	<command>dnsrps-options</command> { <replaceable>unspecified-text</replaceable> };
 	<command>dnssec-accept-expired</command> <replaceable>boolean</replaceable>;
@@ -95,14 +97,12 @@
 	<command>dnssec-secure-to-insecure</command> <replaceable>boolean</replaceable>;
 	<command>dnssec-update-mode</command> ( maintain | no-resign );
 	<command>dnssec-validation</command> ( yes | no | auto );
-	<command>dnstap</command> { ( all | auth | client | forwarder |
-	    <command>resolver</command> ) [ ( query | response ) ]; ... };
-	<command>dnstap-identity</command> ( <replaceable>quoted_string</replaceable> | none |
-	    <command>hostname</command> );
-	<command>dnstap-output</command> ( file | unix ) <replaceable>quoted_string</replaceable> [
-	    <command>size</command> ( unlimited | <replaceable>size</replaceable> ) ] [ versions (
-	    <command>unlimited</command> | <replaceable>integer</replaceable> ) ] [ suffix ( increment
-	    | timestamp ) ];
+	<command>dnstap</command> { ( all | auth | client | forwarder | resolver | update ) [
+	    ( query | response ) ]; ... };
+	<command>dnstap-identity</command> ( <replaceable>quoted_string</replaceable> | none | hostname );
+	<command>dnstap-output</command> ( file | unix ) <replaceable>quoted_string</replaceable> [ size ( unlimited |
+	    <replaceable>size</replaceable> ) ] [ versions ( unlimited | <replaceable>integer</replaceable> ) ] [ suffix (
+	    <command>increment</command> | timestamp ) ];
 	<command>dnstap-version</command> ( <replaceable>quoted_string</replaceable> | none );
 	<command>dscp</command> <replaceable>integer</replaceable>;
 	<command>dual-stack-servers</command> [ port <replaceable>integer</replaceable> ] { ( <replaceable>quoted_string</replaceable> [ port
@@ -131,15 +131,15 @@
 	<command>fstrm-set-output-notify-threshold</command> <replaceable>integer</replaceable>;
 	<command>fstrm-set-output-queue-model</command> ( mpsc | spsc );
 	<command>fstrm-set-output-queue-size</command> <replaceable>integer</replaceable>;
-	<command>fstrm-set-reopen-interval</command> <replaceable>integer</replaceable>;
+	<command>fstrm-set-reopen-interval</command> <replaceable>ttlval</replaceable>;
 	<command>geoip-directory</command> ( <replaceable>quoted_string</replaceable> | none );
-	<command>geoip-use-ecs</command> <replaceable>boolean</replaceable>;
 	<command>glue-cache</command> <replaceable>boolean</replaceable>;
 	<command>heartbeat-interval</command> <replaceable>integer</replaceable>;
 	<command>hostname</command> ( <replaceable>quoted_string</replaceable> | none );
 	<command>inline-signing</command> <replaceable>boolean</replaceable>;
-	<command>interface-interval</command> <replaceable>integer</replaceable>;
-	<command>ixfr-from-differences</command> ( master | slave | <replaceable>boolean</replaceable> );
+	<command>interface-interval</command> <replaceable>ttlval</replaceable>;
+	<command>ixfr-from-differences</command> ( primary | master | secondary | slave |
+	    <replaceable>boolean</replaceable> );
 	<command>keep-response-order</command> { <replaceable>address_match_element</replaceable>; ... };
 	<command>key-directory</command> <replaceable>quoted_string</replaceable>;
 	<command>lame-ttl</command> <replaceable>ttlval</replaceable>;
@@ -156,10 +156,10 @@
 	<command>masterfile-style</command> ( full | relative );
 	<command>match-mapped-addresses</command> <replaceable>boolean</replaceable>;
 	<command>max-cache-size</command> ( default | unlimited | <replaceable>sizeval</replaceable> | <replaceable>percentage</replaceable> );
-	<command>max-cache-ttl</command> <replaceable>integer</replaceable>;
+	<command>max-cache-ttl</command> <replaceable>ttlval</replaceable>;
 	<command>max-clients-per-query</command> <replaceable>integer</replaceable>;
 	<command>max-journal-size</command> ( default | unlimited | <replaceable>sizeval</replaceable> );
-	<command>max-ncache-ttl</command> <replaceable>integer</replaceable>;
+	<command>max-ncache-ttl</command> <replaceable>ttlval</replaceable>;
 	<command>max-records</command> <replaceable>integer</replaceable>;
 	<command>max-recursion-depth</command> <replaceable>integer</replaceable>;
 	<command>max-recursion-queries</command> <replaceable>integer</replaceable>;
@@ -200,6 +200,7 @@
 	<command>preferred-glue</command> <replaceable>string</replaceable>;
 	<command>prefetch</command> <replaceable>integer</replaceable> [ <replaceable>integer</replaceable> ];
 	<command>provide-ixfr</command> <replaceable>boolean</replaceable>;
+	<command>qname-minimization</command> ( strict | relaxed | disabled | off );
 	<command>query-source</command> ( ( [ address ] ( <replaceable>ipv4_address</replaceable> | * ) [ port (
 	    <replaceable>integer</replaceable> | * ) ] ) | ( [ [ address ] ( <replaceable>ipv4_address</replaceable> | * ) ]
 	    <command>port</command> ( <replaceable>integer</replaceable> | * ) ) ) [ dscp <replaceable>integer</replaceable> ];
@@ -239,18 +240,18 @@
 	<command>response-padding</command> { <replaceable>address_match_element</replaceable>; ... } block-size
 	    <replaceable>integer</replaceable>;
 	<command>response-policy</command> { zone <replaceable>quoted_string</replaceable> [ log <replaceable>boolean</replaceable> ] [
-	    <command>max-policy-ttl</command> <replaceable>integer</replaceable> ] [ min-update-interval <replaceable>integer</replaceable> ] [
+	    <command>max-policy-ttl</command> <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [
 	    <command>policy</command> ( cname | disabled | drop | given | no-op | nodata |
 	    <command>nxdomain</command> | passthru | tcp-only <replaceable>quoted_string</replaceable> ) ] [
 	    <command>recursive-only</command> <replaceable>boolean</replaceable> ] [ nsip-enable <replaceable>boolean</replaceable> ] [
 	    <command>nsdname-enable</command> <replaceable>boolean</replaceable> ]; ... } [ break-dnssec <replaceable>boolean</replaceable> ] [
-	    <command>max-policy-ttl</command> <replaceable>integer</replaceable> ] [ min-update-interval <replaceable>integer</replaceable> ] [
+	    <command>max-policy-ttl</command> <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [
 	    <command>min-ns-dots</command> <replaceable>integer</replaceable> ] [ nsip-wait-recurse <replaceable>boolean</replaceable> ] [
 	    <command>qname-wait-recurse</command> <replaceable>boolean</replaceable> ] [ recursive-only <replaceable>boolean</replaceable> ] [
 	    <command>nsip-enable</command> <replaceable>boolean</replaceable> ] [ nsdname-enable <replaceable>boolean</replaceable> ] [
 	    <command>dnsrps-enable</command> <replaceable>boolean</replaceable> ] [ dnsrps-options { <replaceable>unspecified-text</replaceable>
 	    } ];
-	<command>root-delegation-only</command> [ exclude { <replaceable>quoted_string</replaceable>; ... } ];
+	<command>root-delegation-only</command> [ exclude { <replaceable>string</replaceable>; ... } ];
 	<command>root-key-sentinel</command> <replaceable>boolean</replaceable>;
 	<command>rrset-order</command> { [ class <replaceable>string</replaceable> ] [ type <replaceable>string</replaceable> ] [ name
 	    <replaceable>quoted_string</replaceable> ] <replaceable>string</replaceable> <replaceable>string</replaceable>; ... };
@@ -300,6 +301,7 @@
 	<command>use-v4-udp-ports</command> { <replaceable>portrange</replaceable>; ... };
 	<command>use-v6-udp-ports</command> { <replaceable>portrange</replaceable>; ... };
 	<command>v6-bias</command> <replaceable>integer</replaceable>;
+	<command>validate-except</command> { <replaceable>string</replaceable>; ... };
 	<command>version</command> ( <replaceable>quoted_string</replaceable> | none );
 	<command>zero-no-soa-ttl</command> <replaceable>boolean</replaceable>;
 	<command>zero-no-soa-ttl-cache</command> <replaceable>boolean</replaceable>;

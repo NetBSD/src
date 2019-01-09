@@ -14,6 +14,7 @@ cfg_create_obj
 cfg_create_tuple
 cfg_doc_bracketed_list
 cfg_doc_enum
+cfg_doc_enum_or_other
 cfg_doc_map
 cfg_doc_mapbody
 cfg_doc_obj
@@ -71,6 +72,7 @@ cfg_parse_buffer3
 cfg_parse_buffer4
 cfg_parse_dscp
 cfg_parse_enum
+cfg_parse_enum_or_other
 cfg_parse_file
 cfg_parse_fixedpoint
 cfg_parse_listelt
@@ -100,6 +102,7 @@ cfg_parser_reset
 cfg_parser_setcallback
 cfg_parser_warning
 cfg_peektoken
+cfg_pluginlist_foreach
 cfg_print
 cfg_print_boolean
 cfg_print_bracketed_list
@@ -151,6 +154,7 @@ cfg_ungettoken
 ;cfg_type_netaddr6
 ;cfg_type_netaddr6wild
 ;cfg_type_netprefix
+;cfg_type_optional_bracketed_text
 ;cfg_type_percentage
 ;cfg_type_qstring
 ;cfg_type_rndcconf

@@ -22,5 +22,5 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/irs ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/irs || exit 1; \
 	done

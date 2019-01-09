@@ -34,3 +34,4 @@ rm -f resolve.out.*.test*
 rm -f .digrc
 rm -f ns*/named.lock
 rm -f ns5/trusted.conf
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

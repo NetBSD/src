@@ -24,7 +24,6 @@ options {
 	tkey-domain "server";
 	tkey-dhkey "server" KEYID;
 	allow-query-cache { any; };
-	random-device "RANDFILE";
 };
 
 key rndc_key {

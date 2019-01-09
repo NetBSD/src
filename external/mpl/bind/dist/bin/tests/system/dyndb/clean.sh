@@ -20,3 +20,4 @@ rm -f added.a.out.*
 rm -f added.ptr.out.*
 rm -f deleted.a.out.*
 rm -f deleted.ptr.out.*
+rm -f ns*/managed-keys.bind*

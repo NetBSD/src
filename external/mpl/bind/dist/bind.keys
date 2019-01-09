@@ -4,15 +4,17 @@
 # be configured elsewhere; if they are configured here, they will not be
 # recognized or used by named.
 #
-# The built-in trust anchors are provided for convenience of configuration.
-# They are not activated within named.conf unless specifically switched on.
-# To use the built-in key, use "dnssec-validation auto;" in the
-# named.conf options.  Without this option being set, the keys in this
-# file are ignored.
+# To use the built-in root key, set "dnssec-validation auto;" in the
+# named.conf options or else leave "dnssec-validation" unset.  If
+# "dnssec-validation" is set to "yes", then the keys in this file are
+# ignored; keys will need to be explicitly configured in named.conf for
+# validation to work.  "auto" is the default setting, unless named is
+# built with "configure --disable-auto-validation", in which case the
+# default is "yes".
 #
 # This file is NOT expected to be user-configured.
 #
-# These keys are current as of October 2017.  If any key fails to
+# These keys are current as of May 2018.  If any key fails to
 # initialize correctly, it may have expired.  In that event you should
 # replace this file with a current version.  The latest version of
 # bind.keys can always be obtained from ISC at https://www.isc.org/bind-keys.

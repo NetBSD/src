@@ -9,6 +9,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
     if $PERL -e 'use Net::DNS; die if ($Net::DNS::VERSION >= 0.69 && $Net::DNS::VERSION <= 0.74);' 2>/dev/null
@@ -27,5 +30,12 @@ then
 	:
 else
 	echo "I:This test requires the Net::DNS::Nameserver library." >&2
+	exit 1
+fi
+if $PERL -e 'use Time::HiRes;' 2>/dev/null
+then
+	:
+else
+	echo "I:This test requires the Time::HiRes library." >&2
 	exit 1
 fi

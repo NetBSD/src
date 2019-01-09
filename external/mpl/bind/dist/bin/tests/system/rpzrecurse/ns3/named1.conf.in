@@ -25,6 +25,7 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation yes;
 	response-policy { zone "policy"; }
 		qname-wait-recurse yes
 		nsip-enable yes

@@ -18,14 +18,14 @@ SYSTEMTESTTOP=..
 
 QPERF=`$SHELL qperf.sh`
 
-USAGE="$0: [-Dx]"
+USAGE="$0: [-DNx]"
 DEBUG=
-while getopts "Dx" c; do
+while getopts "DNx" c; do
     case $c in
-	x) set -x; DEBUG=-x;;
-        D) TEST_DNSRPS="-D";;
-	N) NOCLEAN=set;;
-	*) echo "$USAGE" 1>&2; exit 1;;
+	x) set -x; DEBUG=-x ;;
+        D) TEST_DNSRPS="-D" ;;
+	N) PARTIAL=-P ;;
+	*) echo "$USAGE" 1>&2; exit 1 ;;
     esac
 done
 shift `expr $OPTIND - 1 || true`
@@ -34,7 +34,14 @@ if test "$#" -ne 0; then
     exit 1
 fi
 
-[ ${NOCLEAN:-unset} = unset ] && $SHELL clean.sh $DEBUG
+if [ ${NOCLEAN:-unset} = unset ]; then
+    $SHELL clean.sh $PARTIAL $DEBUG
+fi
+
+for dir in ns*; do
+    touch $dir/named.run
+    nextpart $dir/named.run > /dev/null
+done
 
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
@@ -62,14 +69,11 @@ for NM in '' -2 -given -disabled -passthru -no-op -nodata -nxdomain -cname -wild
     sed -e "/SOA/s/blx/bl$NM/g" ns3/base.db >ns3/bl$NM.db
 done
 
-# sign the root and a zone in ns2
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
-
 # $1=directory, $2=domain name, $3=input zone file, $4=output file
 signzone () {
-    KEYNAME=`$KEYGEN -q -a rsasha256 -r $RANDFILE -K $1 $2`
+    KEYNAME=`$KEYGEN -q -a rsasha256 -K $1 $2`
     cat $1/$3 $1/$KEYNAME.key > $1/tmp
-    $SIGNER -Pp -K $1 -o $2 -f $1/$4 $1/tmp >/dev/null
+    $SIGNER -P -K $1 -o $2 -f $1/$4 $1/tmp >/dev/null
     sed -n -e 's/\(.*\) IN DNSKEY \([0-9]\{1,\} [0-9]\{1,\} [0-9]\{1,\}\) \(.*\)/trusted-keys {"\1" \2 "\3";};/p' $1/$KEYNAME.key >>trusted.conf
     DSFILENAME=dsset-`echo $2 |sed -e "s/\.$//g"`$TP
     rm $DSFILENAME $1/tmp

@@ -33,7 +33,7 @@ testcase() {
 	check_stdout
 	check_stderr
 	if [ "$expect" -ne "$result" ]; then
-                echo "D:exit status does not match $expect"
+                echo_d "exit status does not match $expect"
 		fail
 	fi
         unset name err out
@@ -45,19 +45,19 @@ check_stderr() {
 	else
 		[ -s err.$n ] || return 0
 	fi
-	echo "D:stderr did not match '$err'"
-	sed 's/^/D:/' err.$n
+	echo_d "stderr did not match '$err'"
+	cat err.$n | cat_d
 	fail
 }
 
 check_stdout() {
 	cmp out.$n "${out:-empty}" >/dev/null && return
-	echo "D:stdout did not match '$out'"
+	echo_d "stdout did not match '$out'"
 	(	echo "wanted"
 		cat "$out"
 		echo "got"
 		cat out.$n
-	) | sed 's/^/D:/'
+	) | cat_d
 	fail
 }
 

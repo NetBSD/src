@@ -17,8 +17,7 @@ ISC_INCLUDES = @BIND9_ISC_BUILDINCLUDE@ \
 	-I${top_srcdir}/lib/isc \
 	-I${top_srcdir}/lib/isc/include \
 	-I${top_srcdir}/lib/isc/unix/include \
-	-I${top_srcdir}/lib/isc/@ISC_THREAD_DIR@/include \
-	-I${top_srcdir}/lib/isc/@ISC_ARCH_DIR@/include
+	-I${top_srcdir}/lib/isc/pthreads/include
 
 ISCCC_INCLUDES = @BIND9_ISCCC_BUILDINCLUDE@ \
        -I${top_srcdir}/lib/isccc/include

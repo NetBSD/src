@@ -14,7 +14,6 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
-	recursion no;
 };
 
 key rndc_key {
@@ -31,8 +30,17 @@ controls {
 	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
+view all {
+	match-clients { any; };
 
-zone "." {
-	type hint;
-	file "../../common/root.hint";
+	recursion no;
+
+	zone "." {
+		type hint;
+		file "../../common/root.hint";
+	};
+};
+
+view none {
+	match-clients { none; };
 };
