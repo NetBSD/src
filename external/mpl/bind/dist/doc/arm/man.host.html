@@ -13,7 +13,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
 <link rel="up" href="Bv9ARM.ch12.html" title="Manual pages">
-<link rel="prev" href="man.genrandom.html" title="genrandom">
+<link rel="prev" href="man.filter-aaaa.html" title="filter-aaaa.so">
 <link rel="next" href="man.mdig.html" title="mdig">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -22,7 +22,7 @@
 <tr><th colspan="3" align="center">host</th></tr>
 <tr>
 <td width="20%" align="left">
-<a accesskey="p" href="man.genrandom.html">Prev</a> </td>
+<a accesskey="p" href="man.filter-aaaa.html">Prev</a> </td>
 <th width="60%" align="center">Manual pages</th>
 <td width="20%" align="right"> <a accesskey="n" href="man.mdig.html">Next</a>
 </td>
@@ -154,15 +154,6 @@
 	  <p>
 	    Print debugging traces.
 	    Equivalent to the <code class="option">-v</code> verbose option.
-	  </p>
-	</dd>
-<dt><span class="term">-i</span></dt>
-<dd>
-	  <p>
-	    Obsolete.
-	    Use the IP6.INT domain for reverse lookups of IPv6
-	    addresses as defined in RFC1886 and deprecated in RFC4159.
-	    The default is to use IP6.ARPA as specified in RFC3596.
 	  </p>
 	</dd>
 <dt><span class="term">-l</span></dt>
@@ -329,7 +320,7 @@
       <span class="command"><strong>host</strong></span> appropriately converts character encoding of
       domain name before sending a request to DNS server or displaying a
       reply from the server.
-      If you'd like to turn off the IDN support for some reason, defines
+      If you'd like to turn off the IDN support for some reason, define
       the <code class="envar">IDN_DISABLE</code> environment variable.
       The IDN support is disabled if the variable is set when
       <span class="command"><strong>host</strong></span> runs.
@@ -361,20 +352,20 @@
 <table width="100%" summary="Navigation footer">
 <tr>
 <td width="40%" align="left">
-<a accesskey="p" href="man.genrandom.html">Prev</a> </td>
+<a accesskey="p" href="man.filter-aaaa.html">Prev</a> </td>
 <td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch12.html">Up</a></td>
 <td width="40%" align="right"> <a accesskey="n" href="man.mdig.html">Next</a>
 </td>
 </tr>
 <tr>
 <td width="40%" align="left" valign="top">
-<span class="application">genrandom</span> </td>
+<span class="application">filter-aaaa.so</span> </td>
 <td width="20%" align="center"><a accesskey="h" href="Bv9ARM.html">Home</a></td>
 <td width="40%" align="right" valign="top"> <span class="application">mdig</span>
 </td>
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

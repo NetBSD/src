@@ -13,9 +13,5 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 . ./clean.sh
 
-../../../tools/genrandom 800 random.data
-dd if=random.data of=random.data1 bs=1k count=400 2> /dev/null
-dd if=random.data of=random.data2 bs=1k skip=400 2> /dev/null
-
 cd ns1 && sh sign.sh
 

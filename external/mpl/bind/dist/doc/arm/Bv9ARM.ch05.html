@@ -1867,6 +1867,16 @@ category notify { null; };
 </tr>
 <tr>
 <td>
+	  <p><span class="command"><strong>nsid</strong></span></p>
+	</td>
+<td>
+	  <p>
+	    NSID options received from upstream servers.
+	  </p>
+	</td>
+</tr>
+<tr>
+<td>
 	  <p><span class="command"><strong>queries</strong></span></p>
 	</td>
 <td>
@@ -2387,13 +2397,14 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	    <em class="replaceable"><code>integer</code></em> ] [ dscp <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>masters</code></em> | <em class="replaceable"><code>ipv4_address</code></em> [
 	    <span class="command"><strong>port</strong></span> <em class="replaceable"><code>integer</code></em> ] | <em class="replaceable"><code>ipv6_address</code></em> [ port <em class="replaceable"><code>integer</code></em> ] ) [ key
 	    <em class="replaceable"><code>string</code></em> ]; ... } ] [ zone-directory <em class="replaceable"><code>quoted_string</code></em> ] [
-	    <span class="command"><strong>in-memory</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ min-update-interval <em class="replaceable"><code>integer</code></em> ]; ... };
+	    <span class="command"><strong>in-memory</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ]; ... };
 	<span class="command"><strong>check-dup-records</strong></span> ( fail | warn | ignore );
 	<span class="command"><strong>check-integrity</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>check-mx</strong></span> ( fail | warn | ignore );
 	<span class="command"><strong>check-mx-cname</strong></span> ( fail | warn | ignore );
-	<span class="command"><strong>check-names</strong></span> ( master | slave | response
-	    ) ( fail | warn | ignore );
+	<span class="command"><strong>check-names</strong></span> ( primary | master |
+	    <span class="command"><strong>secondary</strong></span> | slave | response ) (
+	    <span class="command"><strong>fail</strong></span> | warn | ignore );
 	<span class="command"><strong>check-sibling</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>check-spf</strong></span> ( warn | ignore );
 	<span class="command"><strong>check-srv-cname</strong></span> ( fail | warn | ignore );
@@ -2405,9 +2416,9 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>coresize</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );
 	<span class="command"><strong>datasize</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );
 	<span class="command"><strong>deny-answer-addresses</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... } [
-	    <span class="command"><strong>except-from</strong></span> { <em class="replaceable"><code>quoted_string</code></em>; ... } ];
-	<span class="command"><strong>deny-answer-aliases</strong></span> { <em class="replaceable"><code>quoted_string</code></em>; ... } [ except-from {
-	    <em class="replaceable"><code>quoted_string</code></em>; ... } ];
+	    <span class="command"><strong>except-from</strong></span> { <em class="replaceable"><code>string</code></em>; ... } ];
+	<span class="command"><strong>deny-answer-aliases</strong></span> { <em class="replaceable"><code>string</code></em>; ... } [ except-from { <em class="replaceable"><code>string</code></em>; ...
+	    } ];
 	<span class="command"><strong>dialup</strong></span> ( notify | notify-passive | passive | refresh | <em class="replaceable"><code>boolean</code></em> );
 	<span class="command"><strong>directory</strong></span> <em class="replaceable"><code>quoted_string</code></em>;
 	<span class="command"><strong>disable-algorithms</strong></span> <em class="replaceable"><code>string</code></em> { <em class="replaceable"><code>string</code></em>;
@@ -2425,6 +2436,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	};
 	<span class="command"><strong>dns64-contact</strong></span> <em class="replaceable"><code>string</code></em>;
 	<span class="command"><strong>dns64-server</strong></span> <em class="replaceable"><code>string</code></em>;
+	<span class="command"><strong>dnskey-sig-validity</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>dnsrps-enable</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>dnsrps-options</strong></span> { <em class="replaceable"><code>unspecified-text</code></em> };
 	<span class="command"><strong>dnssec-accept-expired</strong></span> <em class="replaceable"><code>boolean</code></em>;
@@ -2437,14 +2449,12 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>dnssec-secure-to-insecure</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>dnssec-update-mode</strong></span> ( maintain | no-resign );
 	<span class="command"><strong>dnssec-validation</strong></span> ( yes | no | auto );
-	<span class="command"><strong>dnstap</strong></span> { ( all | auth | client | forwarder |
-	    <span class="command"><strong>resolver</strong></span> ) [ ( query | response ) ]; ... };
-	<span class="command"><strong>dnstap-identity</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none |
-	    <span class="command"><strong>hostname</strong></span> );
-	<span class="command"><strong>dnstap-output</strong></span> ( file | unix ) <em class="replaceable"><code>quoted_string</code></em> [
-	    <span class="command"><strong>size</strong></span> ( unlimited | <em class="replaceable"><code>size</code></em> ) ] [ versions (
-	    <span class="command"><strong>unlimited</strong></span> | <em class="replaceable"><code>integer</code></em> ) ] [ suffix ( increment
-	    | timestamp ) ];
+	<span class="command"><strong>dnstap</strong></span> { ( all | auth | client | forwarder | resolver | update ) [
+	    ( query | response ) ]; ... };
+	<span class="command"><strong>dnstap-identity</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none | hostname );
+	<span class="command"><strong>dnstap-output</strong></span> ( file | unix ) <em class="replaceable"><code>quoted_string</code></em> [ size ( unlimited |
+	    <em class="replaceable"><code>size</code></em> ) ] [ versions ( unlimited | <em class="replaceable"><code>integer</code></em> ) ] [ suffix (
+	    <span class="command"><strong>increment</strong></span> | timestamp ) ];
 	<span class="command"><strong>dnstap-version</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none );
 	<span class="command"><strong>dscp</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>dual-stack-servers</strong></span> [ port <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>quoted_string</code></em> [ port
@@ -2473,15 +2483,15 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>fstrm-set-output-notify-threshold</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>fstrm-set-output-queue-model</strong></span> ( mpsc | spsc );
 	<span class="command"><strong>fstrm-set-output-queue-size</strong></span> <em class="replaceable"><code>integer</code></em>;
-	<span class="command"><strong>fstrm-set-reopen-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>fstrm-set-reopen-interval</strong></span> <em class="replaceable"><code>ttlval</code></em>;
 	<span class="command"><strong>geoip-directory</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none );
-	<span class="command"><strong>geoip-use-ecs</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>glue-cache</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>heartbeat-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>hostname</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none );
 	<span class="command"><strong>inline-signing</strong></span> <em class="replaceable"><code>boolean</code></em>;
-	<span class="command"><strong>interface-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
-	<span class="command"><strong>ixfr-from-differences</strong></span> ( master | slave | <em class="replaceable"><code>boolean</code></em> );
+	<span class="command"><strong>interface-interval</strong></span> <em class="replaceable"><code>ttlval</code></em>;
+	<span class="command"><strong>ixfr-from-differences</strong></span> ( primary | master | secondary | slave |
+	    <em class="replaceable"><code>boolean</code></em> );
 	<span class="command"><strong>keep-response-order</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
 	<span class="command"><strong>key-directory</strong></span> <em class="replaceable"><code>quoted_string</code></em>;
 	<span class="command"><strong>lame-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em>;
@@ -2498,10 +2508,10 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>masterfile-style</strong></span> ( full | relative );
 	<span class="command"><strong>match-mapped-addresses</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>max-cache-size</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> | <em class="replaceable"><code>percentage</code></em> );
-	<span class="command"><strong>max-cache-ttl</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-cache-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em>;
 	<span class="command"><strong>max-clients-per-query</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>max-journal-size</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );
-	<span class="command"><strong>max-ncache-ttl</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-ncache-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em>;
 	<span class="command"><strong>max-records</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>max-recursion-depth</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>max-recursion-queries</strong></span> <em class="replaceable"><code>integer</code></em>;
@@ -2542,6 +2552,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>preferred-glue</strong></span> <em class="replaceable"><code>string</code></em>;
 	<span class="command"><strong>prefetch</strong></span> <em class="replaceable"><code>integer</code></em> [ <em class="replaceable"><code>integer</code></em> ];
 	<span class="command"><strong>provide-ixfr</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>qname-minimization</strong></span> ( strict | relaxed | disabled | off );
 	<span class="command"><strong>query-source</strong></span> ( ( [ address ] ( <em class="replaceable"><code>ipv4_address</code></em> | * ) [ port (
 	    <em class="replaceable"><code>integer</code></em> | * ) ] ) | ( [ [ address ] ( <em class="replaceable"><code>ipv4_address</code></em> | * ) ]
 	    <span class="command"><strong>port</strong></span> ( <em class="replaceable"><code>integer</code></em> | * ) ) ) [ dscp <em class="replaceable"><code>integer</code></em> ];
@@ -2581,18 +2592,18 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>response-padding</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... } block-size
 	    <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>response-policy</strong></span> { zone <em class="replaceable"><code>quoted_string</code></em> [ log <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>max-policy-ttl</strong></span> <em class="replaceable"><code>integer</code></em> ] [ min-update-interval <em class="replaceable"><code>integer</code></em> ] [
+	    <span class="command"><strong>max-policy-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [
 	    <span class="command"><strong>policy</strong></span> ( cname | disabled | drop | given | no-op | nodata |
 	    <span class="command"><strong>nxdomain</strong></span> | passthru | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [
 	    <span class="command"><strong>recursive-only</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ nsip-enable <em class="replaceable"><code>boolean</code></em> ] [
 	    <span class="command"><strong>nsdname-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ]; ... } [ break-dnssec <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>max-policy-ttl</strong></span> <em class="replaceable"><code>integer</code></em> ] [ min-update-interval <em class="replaceable"><code>integer</code></em> ] [
+	    <span class="command"><strong>max-policy-ttl</strong></span> <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [
 	    <span class="command"><strong>min-ns-dots</strong></span> <em class="replaceable"><code>integer</code></em> ] [ nsip-wait-recurse <em class="replaceable"><code>boolean</code></em> ] [
 	    <span class="command"><strong>qname-wait-recurse</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ recursive-only <em class="replaceable"><code>boolean</code></em> ] [
 	    <span class="command"><strong>nsip-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ nsdname-enable <em class="replaceable"><code>boolean</code></em> ] [
 	    <span class="command"><strong>dnsrps-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ dnsrps-options { <em class="replaceable"><code>unspecified-text</code></em>
 	    } ];
-	<span class="command"><strong>root-delegation-only</strong></span> [ exclude { <em class="replaceable"><code>quoted_string</code></em>; ... } ];
+	<span class="command"><strong>root-delegation-only</strong></span> [ exclude { <em class="replaceable"><code>string</code></em>; ... } ];
 	<span class="command"><strong>root-key-sentinel</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>rrset-order</strong></span> { [ class <em class="replaceable"><code>string</code></em> ] [ type <em class="replaceable"><code>string</code></em> ] [ name
 	    <em class="replaceable"><code>quoted_string</code></em> ] <em class="replaceable"><code>string</code></em> <em class="replaceable"><code>string</code></em>; ... };
@@ -2642,6 +2653,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>use-v4-udp-ports</strong></span> { <em class="replaceable"><code>portrange</code></em>; ... };
 	<span class="command"><strong>use-v6-udp-ports</strong></span> { <em class="replaceable"><code>portrange</code></em>; ... };
 	<span class="command"><strong>v6-bias</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>validate-except</strong></span> { <em class="replaceable"><code>string</code></em>; ... };
 	<span class="command"><strong>version</strong></span> ( <em class="replaceable"><code>quoted_string</code></em> | none );
 	<span class="command"><strong>zero-no-soa-ttl</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>zero-no-soa-ttl-cache</strong></span> <em class="replaceable"><code>boolean</code></em>;
@@ -2743,6 +2755,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                   <span class="command"><strong>max-ncache-ttl</strong></span>,
                   <span class="command"><strong>max-stale-ttl</strong></span>,
                   <span class="command"><strong>max-cache-size</strong></span>, and
+                  <span class="command"><strong>min-cache-ttl</strong></span>,
+                  <span class="command"><strong>min-ncache-ttl</strong></span>,
                   <span class="command"><strong>zero-no-soa-ttl</strong></span>.
                 </p>
 
@@ -2802,10 +2816,11 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                 The <span class="command"><strong>dnstap</strong></span> option is a bracketed list
                 of message types to be logged. These may be set differently
                 for each view. Supported types are <code class="literal">client</code>,
-                <code class="literal">auth</code>, <code class="literal">resolver</code>, and
-                <code class="literal">forwarder</code>.  Specifying type
-                <code class="literal">all</code> will cause all <span class="command"><strong>dnstap</strong></span>
-                messages to be logged, regardless of type.
+                <code class="literal">auth</code>, <code class="literal">resolver</code>,
+                <code class="literal">forwarder</code>, and <code class="literal">update</code>.
+                Specifying type <code class="literal">all</code> will cause all
+                <span class="command"><strong>dnstap</strong></span> messages to be logged, regardless of
+                type.
               </p>
               <p>
                 Each type may take an additional argument to indicate whether
@@ -2901,6 +2916,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                     reopen a closed output stream. The minimum is 1 second,
                     the maximum is 600 seconds (10 minutes), and the default
                     is 5 seconds.
+                    For convenience, TTL-style time unit suffixes may be
+                    used to specify the value.
                   
                 </li>
 </ul></div>
@@ -3071,6 +3088,23 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                 program.  In <acronym class="acronym">BIND</acronym> 9, no separate
                 <span class="command"><strong>named-xfer</strong></span> program is needed;
                 its functionality is built into the name server.
+              </p>
+            </dd>
+<dt><span class="term"><span class="command"><strong>qname-minimization</strong></span></span></dt>
+<dd>
+              <p>
+                This option controls QNAME minimization behaviour
+                in the BIND resolver. When set to <span class="command"><strong>strict</strong></span>,
+                BIND will follow the QNAME minimization algorithm to
+                the letter, as specified in RFC 7816. Setting this
+                option to <span class="command"><strong>relaxed</strong></span> will cause BIND
+                to fall back to normal (non-minimized) query mode
+                when it receives either NXDOMAIN or other unexpected
+                responses (e.g. SERVFAIL, improper zone cut, REFUSED)
+                to a minimized query. <span class="command"><strong>disabled</strong></span> disables
+                QNAME minimization completely. The current default is
+                <span class="command"><strong>relaxed</strong></span>, but it might be changed to
+                <span class="command"><strong>strict</strong></span> in a future release.
               </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>tkey-gssapi-keytab</strong></span></span></dt>
@@ -3311,20 +3345,6 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                 The <span class="command"><strong>random-device</strong></span> option takes
                 effect during the initial configuration load at server
                 startup time and is ignored on subsequent reloads.
-              </p>
-              <p>
-                If BIND is built with
-                <span class="command"><strong>configure --disable-crypto-rand</strong></span>, then
-                entropy is <span class="emphasis"><em>not</em></span> sourced from the
-                cryptographic library. In this case, if
-                <span class="command"><strong>random-device</strong></span> is not specified, the
-                default value is the system random device,
-                <code class="filename">/dev/random</code> or the equivalent.
-                This default can be overridden with
-                <span class="command"><strong>configure --with-randomdev</strong></span>.
-                If no system random device exists, then no entropy source
-                will be configured, and <span class="command"><strong>named</strong></span> will only
-                be able to use pseudo-random numbers.
               </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>preferred-glue</strong></span></span></dt>
@@ -4080,7 +4100,7 @@ options {
 <dt><span class="term"><span class="command"><strong>fetch-glue</strong></span></span></dt>
 <dd>
                 <p>
-                  This option is obsolete.
+                  <span class="emphasis"><em>This option is obsolete</em></span>.
                   In BIND 8, <strong class="userinput"><code>fetch-glue yes</code></strong>
                   caused the server to attempt to fetch glue resource records
                   it
@@ -4102,12 +4122,9 @@ options {
 <dt><span class="term"><span class="command"><strong>geoip-use-ecs</strong></span></span></dt>
 <dd>
                 <p>
-                  When BIND is compiled with GeoIP support and configured
-                  with "geoip" ACL elements, this option indicates whether
-                  the EDNS Client Subnet option, if present in a request,
-                  should be used for matching against the GeoIP database.
-                  The default is
-                  <span class="command"><strong>geoip-use-ecs</strong></span> <strong class="userinput"><code>yes</code></strong>.
+                  This option was part of an experimental implementation
+                  of the EDNS CLIENT-SUBNET for authoritative servers,
+                  but is now obsolete.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>has-old-clients</strong></span></span></dt>
@@ -4315,7 +4332,7 @@ options {
                   queries to authoritative name servers during iterative
                   resolution. If the authoritative server returns an NSID
                   option in its response, then its contents are logged in
-                  the <span class="command"><strong>resolver</strong></span> category at level
+                  the <span class="command"><strong>nsid</strong></span> category at level
                   <span class="command"><strong>info</strong></span>.
                   The default is <strong class="userinput"><code>no</code></strong>.
                 </p>
@@ -4346,16 +4363,15 @@ options {
                   options level, not per-view.
                 </p>
                 <p>
-                  <span class="command"><strong>answer-cookie no</strong></span> is only intended as a
+                  <span class="command"><strong>answer-cookie no</strong></span> is intended as a
                   temporary measure, for use when <span class="command"><strong>named</strong></span>
                   shares an IP address with other servers that do not yet
-                  support DNS COOKIE.  A mismatch between servers on the
-                  same address is not expected to cause operational
-                  problems, but the option to disable COOKIE responses so
-                  that all servers have the same behavior is provided out
-                  of an abundance of caution. DNS COOKIE is an important
-                  security mechanism, and should not be disabled unless
-                  absolutely necessary.
+                  support DNS COOKIE.  A mismatch between servers on the same
+                  address is not expected to cause operational problems, but
+                  the option to disable COOKIE responses so that all servers
+                  have the same behavior is provided out of an abundance of
+                  caution. DNS COOKIE is an important security mechanism,
+                  and should not be disabled unless absolutely necessary.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>send-cookie</strong></span></span></dt>
@@ -4610,63 +4626,6 @@ options {
                   internally.  The use of this option is discouraged.
                 </p>
               </dd>
-<dt><span class="term"><span class="command"><strong>filter-aaaa-on-v4</strong></span></span></dt>
-<dd>
-                <p>
-                  This option is intended to help the
-                  transition from IPv4 to IPv6 by not giving IPv6 addresses
-                  to DNS clients unless they have connections to the IPv6
-                  Internet.  This is not recommended unless absolutely
-                  necessary.  The default is <strong class="userinput"><code>no</code></strong>.
-                  The <span class="command"><strong>filter-aaaa-on-v4</strong></span> option
-                  may also be specified in <span class="command"><strong>view</strong></span> statements
-                  to override the global <span class="command"><strong>filter-aaaa-on-v4</strong></span>
-                  option.
-                </p>
-                <p>
-                  If <strong class="userinput"><code>yes</code></strong>,
-                  the DNS client is at an IPv4 address, in <span class="command"><strong>filter-aaaa</strong></span>,
-                  and if the response does not include DNSSEC signatures,
-                  then all AAAA records are deleted from the response.
-                  This filtering applies to all responses and not only
-                  authoritative responses.
-                </p>
-                <p>
-                  If <strong class="userinput"><code>break-dnssec</code></strong>,
-                  then AAAA records are deleted even when DNSSEC is enabled.
-                  As suggested by the name, this makes the response not verify,
-                  because the DNSSEC protocol is designed detect deletions.
-                </p>
-                <p>
-                  This mechanism can erroneously cause other servers to
-                  not give AAAA records to their clients.
-                  A recursing server with both IPv6 and IPv4 network connections
-                  that queries an authoritative server using this mechanism
-                  via IPv4 will be denied AAAA records even if its client is
-                  using IPv6.
-                </p>
-                <p>
-                  This mechanism is applied to authoritative as well as
-                  non-authoritative records.
-                  A client using IPv4 that is not allowed recursion can
-                  erroneously be given AAAA records because the server is not
-                  allowed to check for A records.
-                </p>
-                <p>
-                  Some AAAA records are given to IPv4 clients in glue records.
-                  IPv4 clients that are servers can then erroneously
-                  answer requests for AAAA records received via IPv4.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>filter-aaaa-on-v6</strong></span></span></dt>
-<dd>
-                <p>
-                  Identical to <span class="command"><strong>filter-aaaa-on-v4</strong></span>,
-                  except it filters AAAA responses to queries from IPv6
-                  clients instead of IPv4 clients.  To filter all
-                  responses, set both options to <strong class="userinput"><code>yes</code></strong>.
-                </p>
-              </dd>
 <dt><span class="term"><span class="command"><strong>ixfr-from-differences</strong></span></span></dt>
 <dd>
                 <p>
@@ -4692,13 +4651,18 @@ options {
                   difference set.
                 </p>
                 <p><span class="command"><strong>ixfr-from-differences</strong></span>
-                  also accepts <span class="command"><strong>master</strong></span> and
-                  <span class="command"><strong>slave</strong></span> at the view and options
-                  levels which causes
+                  also accepts <span class="command"><strong>master</strong></span> (or
+                  <span class="command"><strong>primary</strong></span>) and
+                  <span class="command"><strong>slave</strong></span> (or <span class="command"><strong>secondary</strong></span>)
+                  at the view and options levels, which causes
                   <span class="command"><strong>ixfr-from-differences</strong></span> to be enabled for
-                  all <span class="command"><strong>master</strong></span> or
-                  <span class="command"><strong>slave</strong></span> zones respectively.
-                  It is off by default.
+                  all primary or secondary zones, respectively.
+                  It is off for all zones by default.
+                </p>
+                <p>
+                  Note: if inline signing is enabled for a zone, the
+                  user-provided <span class="command"><strong>ixfr-from-differences</strong></span>
+                  setting is ignored for that zone.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>multi-master</strong></span></span></dt>
@@ -4767,34 +4731,54 @@ options {
 <dt><span class="term"><span class="command"><strong>dnssec-validation</strong></span></span></dt>
 <dd>
                 <p>
-                  Enable DNSSEC validation in <span class="command"><strong>named</strong></span>.
-                  Note <span class="command"><strong>dnssec-enable</strong></span> also needs to be
-                  set to <strong class="userinput"><code>yes</code></strong> to be effective.
+                  This enables DNSSEC validation in <span class="command"><strong>named</strong></span>.
+                  Note that <span class="command"><strong>dnssec-enable</strong></span> also needs to
+                  be set to <strong class="userinput"><code>yes</code></strong> for signatures to be
+                  returned to the client along with validated answers.
+                </p>
+                <p>
+                  If set to <strong class="userinput"><code>auto</code></strong>,
+                  DNSSEC validation is enabled, and a default trust anchor
+                  for the DNS root zone is used.
+                </p>
+                <p>
+                  If set to <strong class="userinput"><code>yes</code></strong>, DNSSEC validation is
+                  enabled, but a trust anchor must be manually configured
+                  using a <span class="command"><strong>trusted-keys</strong></span>
+                  or <span class="command"><strong>managed-keys</strong></span> statement; if there
+                  is no configured trust anchor, validation will not take
+                  place.
+                </p>
+                <p>
                   If set to <strong class="userinput"><code>no</code></strong>, DNSSEC validation
                   is disabled.
                 </p>
                 <p>
-                  If set to <strong class="userinput"><code>auto</code></strong>, DNSSEC validation
-                  is enabled, and a default trust anchor for the DNS root
-                  zone is used.  If set to <strong class="userinput"><code>yes</code></strong>,
-                  DNSSEC validation is enabled, but a trust anchor must be
-                  manually configured using a <span class="command"><strong>trusted-keys</strong></span>
-                  or <span class="command"><strong>managed-keys</strong></span> statement.  The default
-                  is <strong class="userinput"><code>yes</code></strong>.
+                  The default is <strong class="userinput"><code>auto</code></strong>, unless
+                  BIND is built with
+                  <span class="command"><strong>configure --disable-auto-validation</strong></span>,
+                  in which case the default is <strong class="userinput"><code>yes</code></strong>.
+                  If <span class="command"><strong>dnssec-enable</strong></span> is set to
+                  <strong class="userinput"><code>no</code></strong>, then the default for
+                  <span class="command"><strong>dnssec-validation</strong></span> is also
+                  <strong class="userinput"><code>no</code></strong>. Validation can still be turned on
+                  if desired - this results in a server that performs DNSSEC
+                  validation but does not return signatures when queried -
+                  but it will not be turned on automatically.
                 </p>
                 <p>
                   The default root trust anchor is stored in the file
                   <code class="filename">bind.keys</code>.
                   <span class="command"><strong>named</strong></span> will load that key at
                   startup if <span class="command"><strong>dnssec-validation</strong></span> is
-                  set to <code class="constant">auto</code>.  A copy of the file is
+                  set to <strong class="userinput"><code>auto</code></strong>.  A copy of the file is
                   installed along with BIND 9, and is current as of the
                   release date.  If the root key expires, a new copy of
                   <code class="filename">bind.keys</code> can be downloaded
                   from <a class="link" href="https://www.isc.org/bind-keys" target="_top">https://www.isc.org/bind-keys</a>.
                 </p>
                 <p>
-                  To prevent problems if <code class="filename">bind.keys</code> is
+                  (To prevent problems if <code class="filename">bind.keys</code> is
                   not found, the current trust anchor is also compiled in
                   to <span class="command"><strong>named</strong></span>.  Relying on this is not
                   recommended, however, as it requires <span class="command"><strong>named</strong></span>
@@ -4803,8 +4787,8 @@ options {
                 <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
 <h3 class="title">Note</h3>
                   <p>
-                    <span class="command"><strong>named</strong></span> <span class="emphasis"><em>only</em></span>
-                    loads the root key from <code class="filename">bind.keys</code>.
+                    <span class="command"><strong>named</strong></span> loads <span class="emphasis"><em>only</em></span>
+                    the root key from <code class="filename">bind.keys</code>.
                     The file cannot be used to store keys for other zones.
                     The root key in <code class="filename">bind.keys</code> is ignored
                     if <span class="command"><strong>dnssec-validation auto</strong></span> is not in
@@ -4817,6 +4801,21 @@ options {
                     <span class="command"><strong>dnssec-validation</strong></span> is off.
                   </p>
                 </div>
+              </dd>
+<dt><span class="term"><span class="command"><strong>validate-except</strong></span></span></dt>
+<dd>
+                <p>
+                  Specifies a list of domain names at and beneath which DNSSEC
+                  validation should <span class="emphasis"><em>not</em></span> be performed,
+                  regardless of the presence of a trust anchor at or above
+                  those names.  This may be used, for example, when configuring
+                  a top-level domain intended only for local use, so that the
+                  lack of a secure delegation for that domain in the root zone
+                  will not cause validation failures.  (This is similar
+                  to setting a negative trust anchor, except that it is a
+                  permanent configuration, whereas negative trust anchors
+                  expire and are removed after a set period of time.)
+                </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>dnssec-accept-expired</strong></span></span></dt>
 <dd>
@@ -5257,11 +5256,16 @@ options {
 <dt><span class="term"><span class="command"><strong>allow-query-cache-on</strong></span></span></dt>
 <dd>
                 <p>
-                  Specifies which local addresses can give answers
-                  from the cache.  If not specified, the default is
-                  to allow cache queries on any address,
-                  <span class="command"><strong>localnets</strong></span> and
-                  <span class="command"><strong>localhost</strong></span>.
+                  Specifies which local addresses can send answers
+                  from the cache.  If <span class="command"><strong>allow-query-cache-on</strong></span>
+                  is not set, then <span class="command"><strong>allow-recursion-on</strong></span> is
+                  used if set.  Otherwise, the default is
+                  to allow cache responses to be sent from any address.
+                  Note: Both <span class="command"><strong>allow-query-cache</strong></span> and
+                  <span class="command"><strong>allow-query-cache-on</strong></span> must be
+                  satisfied before a cache response can be sent;
+                  a client that is blocked by one cannot be allowed
+                  by the other.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-recursion</strong></span></span></dt>
@@ -5281,8 +5285,17 @@ options {
 <dd>
                 <p>
                   Specifies which local addresses can accept recursive
-                  queries.  If not specified, the default is to allow
-                  recursive queries on all addresses.
+                  queries.  If <span class="command"><strong>allow-recursion-on</strong></span>
+                  is not set, then <span class="command"><strong>allow-query-cache-on</strong></span>
+                  is used if set; otherwise, the default is to allow
+                  recursive queries on all addresses: Any client permitted
+                  to send recursive queries can send them to any address
+                  on which <span class="command"><strong>named</strong></span> is listening.
+                  Note: Both <span class="command"><strong>allow-recursion</strong></span> and
+                  <span class="command"><strong>allow-recursion-on</strong></span> must be
+                  satisfied before recursion is allowed;
+                  a client that is blocked by one cannot be allowed
+                  by the other.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-update</strong></span></span></dt>
@@ -5336,7 +5349,9 @@ options {
                   It is now ignored with some warning messages.
                 </p>
               </dd>
-<dt><span class="term"><span class="command"><strong>allow-transfer</strong></span></span></dt>
+<dt>
+<a name="allow_transfer"></a><span class="term"><a name="allow_transfer_term"></a><span class="command"><strong>allow-transfer</strong></span></span>
+</dt>
 <dd>
                 <p>
                   Specifies which hosts are allowed to
@@ -5356,15 +5371,6 @@ options {
                   query. Queries
                   from these addresses will not be responded to. The default
                   is <strong class="userinput"><code>none</code></strong>.
-                </p>
-              </dd>
-<dt><span class="term"><span class="command"><strong>filter-aaaa</strong></span></span></dt>
-<dd>
-                <p>
-                  Specifies a list of addresses to which
-                  <span class="command"><strong>filter-aaaa-on-v4</strong></span>
-                  and <span class="command"><strong>filter-aaaa-on-v6</strong></span>
-                  apply.  The default is <strong class="userinput"><code>any</code></strong>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>keep-response-order</strong></span></span></dt>
@@ -6576,8 +6582,9 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   begin listening for queries on any newly discovered
                   interfaces (provided they are allowed by the
                   <span class="command"><strong>listen-on</strong></span> configuration), and
-                  will
-                  stop listening on interfaces that have gone away.
+                  will stop listening on interfaces that have gone away.
+                  For convenience, TTL-style time unit suffixes may be
+                  used to specify the value.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>statistics-interval</strong></span></span></dt>
@@ -6876,14 +6883,41 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   second.
                 </p>
               </dd>
+<dt><span class="term"><span class="command"><strong>min-ncache-ttl</strong></span></span></dt>
+<dd>
+                <p>
+                  To reduce network traffic and increase performance, the server
+                  stores negative answers. <span class="command"><strong>min-ncache-ttl</strong></span> is
+                  used to set a minimum retention time for these answers in the
+                  server in seconds.  For convenience, TTL-style time unit
+                  suffixes may be used to specify the value.  The default
+                  <span class="command"><strong>min-ncache-ttl</strong></span> is <code class="literal">0</code>
+                  seconds.  <span class="command"><strong>min-ncache-ttl</strong></span> cannot exceed 90
+                  seconds and will be truncated to 90 seconds if set to a
+                  greater value.
+                </p>
+              </dd>
+<dt><span class="term"><span class="command"><strong>min-cache-ttl</strong></span></span></dt>
+<dd>
+                <p>
+                  Sets the minimum time for which the server will cache ordinary
+                  (positive) answers in seconds. For convenience, TTL-style time
+                  unit suffixes may be used to specify the value. The default
+                  <span class="command"><strong>min-cache-ttl</strong></span> is <code class="literal">0</code>
+                  seconds. <span class="command"><strong>min-cache-ttl</strong></span> cannot exceed 90
+                  seconds and will be truncated to 90 seconds if set to a
+                  greater value.
+                </p>
+              </dd>
 <dt><span class="term"><span class="command"><strong>max-ncache-ttl</strong></span></span></dt>
 <dd>
                 <p>
                   To reduce network traffic and increase performance,
                   the server stores negative answers. <span class="command"><strong>max-ncache-ttl</strong></span> is
                   used to set a maximum retention time for these answers in
-                  the server
-                  in seconds. The default
+                  the server in seconds.
+                  For convenience, TTL-style time unit suffixes may be
+                  used to specify the value.  The default
                   <span class="command"><strong>max-ncache-ttl</strong></span> is <code class="literal">10800</code> seconds (3 hours).
                   <span class="command"><strong>max-ncache-ttl</strong></span> cannot exceed
                   7 days and will
@@ -6895,6 +6929,8 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                 <p>
                   Sets the maximum time for which the server will
                   cache ordinary (positive) answers in seconds.
+                  For convenience, TTL-style time unit suffixes may be
+                  used to specify the value.
                   The default is 604800 (one week).
                   A value of zero may cause all queries to return
                   SERVFAIL, because of lost caches of intermediate
@@ -6959,10 +6995,30 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   for a limited amount of clock skew.
                 </p>
                 <p>
+                  The <span class="command"><strong>sig-validity-interval</strong></span> can be
+                  overridden for DNSKEY records by setting
+                  <span class="command"><strong>dnskey-sig-validity</strong></span>.
+                </p>
+                <p>
                   The <span class="command"><strong>sig-validity-interval</strong></span>
                   should be, at least, several multiples of the SOA
                   expire interval to allow for reasonable interaction
                   between the various timer and expiry dates.
+                </p>
+              </dd>
+<dt><span class="term"><span class="command"><strong>dnskey-sig-validity</strong></span></span></dt>
+<dd>
+                <p>
+                  Specifies the number of days into the future when
+                  DNSSEC signatures that are automatically generated
+                  for DNSKEY RRsets as a result of dynamic updates
+                  (<a class="xref" href="Bv9ARM.ch04.html#dynamic_update" title="Dynamic Update">the section called &#8220;Dynamic Update&#8221;</a>) will expire.
+                  If set to a non-zero value, this overrides the
+                  value set by <span class="command"><strong>sig-validity-interval</strong></span>.
+                  The default is zero, meaning
+                  <span class="command"><strong>sig-validity-interval</strong></span> is used.
+                  The maximum value is 3660 days (10 years), and
+                  higher values will be rejected.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>sig-signing-nodes</strong></span></span></dt>
@@ -7709,7 +7765,7 @@ deny-answer-aliases { "example.net"; };
             multiple policy zones.  To maximize performance, a radix
             tree is used to quickly identify response policy zones
             containing triggers that match the current query.  This
-            imposes an upper limit of 32 on the number of policy zones
+            imposes an upper limit of 64 on the number of policy zones
             in a single <span class="command"><strong>response-policy</strong></span> option; more
             than that is a configuration error.
           </p>
@@ -8085,6 +8141,8 @@ deny-answer-aliases { "example.net"; };
             to a maximum value.
             The <span class="command"><strong>max-policy-ttl</strong></span> clause changes the
             maximum seconds from its default of 5.
+            For convenience, TTL-style time unit suffixes may be
+            used to specify the value.
           </p>
 
           <p>
@@ -8171,6 +8229,8 @@ example.com                 CNAME   rpz-tcp-only.
             than <code class="option">min-update-interval</code> seconds after the most
             recent update, then the changes will not be carried out until this
             interval has elapsed.  The default is <code class="literal">60</code> seconds.
+            For convenience, TTL-style time unit suffixes may be
+            used to specify the value.
           </p>
         </div>
 
@@ -8856,17 +8916,6 @@ example.com                 CNAME   rpz-tcp-only.
         </p>
 
         <p>
-          Applications that depend on a particular XML schema
-          can request
-          <a class="link" href="http://127.0.0.1:8888/xml/v2" target="_top">http://127.0.0.1:8888/xml/v2</a> for version 2
-          of the statistics XML schema or
-          <a class="link" href="http://127.0.0.1:8888/xml/v3" target="_top">http://127.0.0.1:8888/xml/v3</a> for version 3.
-          If the requested schema is supported by the server, then
-          it will respond; if not, it will return a "page not found"
-          error.
-        </p>
-
-        <p>
           Broken-out subsets of the statistics can be viewed at
           <a class="link" href="http://127.0.0.1:8888/xml/v3/status" target="_top">http://127.0.0.1:8888/xml/v3/status</a>
           (server uptime and last reconfiguration time),
@@ -9262,6 +9311,7 @@ view "external" {
 	<span class="command"><strong>database</strong></span> <em class="replaceable"><code>string</code></em>;
 	<span class="command"><strong>dialup</strong></span> ( notify | notify-passive | passive | refresh | <em class="replaceable"><code>boolean</code></em> );
 	<span class="command"><strong>dlz</strong></span> <em class="replaceable"><code>string</code></em>;
+	<span class="command"><strong>dnskey-sig-validity</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>dnssec-dnskey-kskonly</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>dnssec-loadkeys-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>dnssec-secure-to-insecure</strong></span> <em class="replaceable"><code>boolean</code></em>;
@@ -9291,7 +9341,7 @@ view "external" {
 	<span class="command"><strong>sig-signing-type</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>sig-validity-interval</strong></span> <em class="replaceable"><code>integer</code></em> [ <em class="replaceable"><code>integer</code></em> ];
 	<span class="command"><strong>update-check-ksk</strong></span> <em class="replaceable"><code>boolean</code></em>;
-	<span class="command"><strong>update-policy</strong></span> ( local | { ( deny | grant ) <em class="replaceable"><code>string</code></em> ( 6to4-self | external | krb5-self | krb5-subdomain | ms-self | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <em class="replaceable"><code>string</code></em> ] <em class="replaceable"><code>rrtypelist</code></em>; ... };
+	<span class="command"><strong>update-policy</strong></span> ( local | { ( deny | grant ) <em class="replaceable"><code>string</code></em> ( 6to4-self | external | krb5-self | krb5-selfsub | krb5-subdomain | ms-self | ms-selfsub | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <em class="replaceable"><code>string</code></em> ] <em class="replaceable"><code>rrtypelist</code></em>; ... };
 	<span class="command"><strong>zero-no-soa-ttl</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>zone-statistics</strong></span> ( full | terse | none | <em class="replaceable"><code>boolean</code></em> );
 };
@@ -9312,6 +9362,7 @@ view "external" {
 	<span class="command"><strong>database</strong></span> <em class="replaceable"><code>string</code></em>;
 	<span class="command"><strong>dialup</strong></span> ( notify | notify-passive | passive | refresh | <em class="replaceable"><code>boolean</code></em> );
 	<span class="command"><strong>dlz</strong></span> <em class="replaceable"><code>string</code></em>;
+	<span class="command"><strong>dnskey-sig-validity</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>dnssec-dnskey-kskonly</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>dnssec-loadkeys-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>dnssec-update-mode</strong></span> ( maintain | no-resign );
@@ -9351,6 +9402,50 @@ view "external" {
 	<span class="command"><strong>transfer-source-v6</strong></span> ( <em class="replaceable"><code>ipv6_address</code></em> | * ) [ port ( <em class="replaceable"><code>integer</code></em> | * ) ] [ dscp <em class="replaceable"><code>integer</code></em> ];
 	<span class="command"><strong>try-tcp-refresh</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>update-check-ksk</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>use-alt-transfer-source</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>zero-no-soa-ttl</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>zone-statistics</strong></span> ( full | terse | none | <em class="replaceable"><code>boolean</code></em> );
+};
+</pre>
+<pre class="programlisting">
+<span class="command"><strong>zone</strong></span> <em class="replaceable"><code>string</code></em> [ <em class="replaceable"><code>class</code></em> ] {
+	<span class="command"><strong>type</strong></span> mirror;
+	<span class="command"><strong>allow-notify</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
+	<span class="command"><strong>allow-query</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
+	<span class="command"><strong>allow-query-on</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
+	<span class="command"><strong>allow-transfer</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
+	<span class="command"><strong>allow-update-forwarding</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... };
+	<span class="command"><strong>also-notify</strong></span> [ port <em class="replaceable"><code>integer</code></em> ] [ dscp <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>masters</code></em> | <em class="replaceable"><code>ipv4_address</code></em> [ port <em class="replaceable"><code>integer</code></em> ] | <em class="replaceable"><code>ipv6_address</code></em> [ port <em class="replaceable"><code>integer</code></em> ] ) [ key <em class="replaceable"><code>string</code></em> ]; ... };
+	<span class="command"><strong>alt-transfer-source</strong></span> ( <em class="replaceable"><code>ipv4_address</code></em> | * ) [ port ( <em class="replaceable"><code>integer</code></em> | * ) ] [ dscp <em class="replaceable"><code>integer</code></em> ];
+	<span class="command"><strong>alt-transfer-source-v6</strong></span> ( <em class="replaceable"><code>ipv6_address</code></em> | * ) [ port ( <em class="replaceable"><code>integer</code></em> | * ) ] [ dscp <em class="replaceable"><code>integer</code></em> ];
+	<span class="command"><strong>check-names</strong></span> ( fail | warn | ignore );
+	<span class="command"><strong>database</strong></span> <em class="replaceable"><code>string</code></em>;
+	<span class="command"><strong>file</strong></span> <em class="replaceable"><code>quoted_string</code></em>;
+	<span class="command"><strong>ixfr-from-differences</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>journal</strong></span> <em class="replaceable"><code>quoted_string</code></em>;
+	<span class="command"><strong>masterfile-format</strong></span> ( map | raw | text );
+	<span class="command"><strong>masterfile-style</strong></span> ( full | relative );
+	<span class="command"><strong>masters</strong></span> [ port <em class="replaceable"><code>integer</code></em> ] [ dscp <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>masters</code></em> | <em class="replaceable"><code>ipv4_address</code></em> [ port <em class="replaceable"><code>integer</code></em> ] | <em class="replaceable"><code>ipv6_address</code></em> [ port <em class="replaceable"><code>integer</code></em> ] ) [ key <em class="replaceable"><code>string</code></em> ]; ... };
+	<span class="command"><strong>max-journal-size</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );
+	<span class="command"><strong>max-records</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-refresh-time</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-retry-time</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-transfer-idle-in</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-transfer-idle-out</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-transfer-time-in</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>max-transfer-time-out</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>min-refresh-time</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>min-retry-time</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>multi-master</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>notify</strong></span> ( explicit | master-only | <em class="replaceable"><code>boolean</code></em> );
+	<span class="command"><strong>notify-delay</strong></span> <em class="replaceable"><code>integer</code></em>;
+	<span class="command"><strong>notify-source</strong></span> ( <em class="replaceable"><code>ipv4_address</code></em> | * ) [ port ( <em class="replaceable"><code>integer</code></em> | * ) ] [ dscp <em class="replaceable"><code>integer</code></em> ];
+	<span class="command"><strong>notify-source-v6</strong></span> ( <em class="replaceable"><code>ipv6_address</code></em> | * ) [ port ( <em class="replaceable"><code>integer</code></em> | * ) ] [ dscp <em class="replaceable"><code>integer</code></em> ];
+	<span class="command"><strong>request-expire</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>request-ixfr</strong></span> <em class="replaceable"><code>boolean</code></em>;
+	<span class="command"><strong>transfer-source</strong></span> ( <em class="replaceable"><code>ipv4_address</code></em> | * ) [ port ( <em class="replaceable"><code>integer</code></em> | * ) ] [ dscp <em class="replaceable"><code>integer</code></em> ];
+	<span class="command"><strong>transfer-source-v6</strong></span> ( <em class="replaceable"><code>ipv6_address</code></em> | * ) [ port ( <em class="replaceable"><code>integer</code></em> | * ) ] [ dscp <em class="replaceable"><code>integer</code></em> ];
+	<span class="command"><strong>try-tcp-refresh</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>use-alt-transfer-source</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>zero-no-soa-ttl</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>zone-statistics</strong></span> ( full | terse | none | <em class="replaceable"><code>boolean</code></em> );
@@ -9401,8 +9496,8 @@ view "external" {
 	<span class="command"><strong>forward</strong></span> ( first | only );
 	<span class="command"><strong>forwarders</strong></span> [ port <em class="replaceable"><code>integer</code></em> ] [ dscp <em class="replaceable"><code>integer</code></em> ] { ( <em class="replaceable"><code>ipv4_address</code></em> | <em class="replaceable"><code>ipv6_address</code></em> ) [ port <em class="replaceable"><code>integer</code></em> ] [ dscp <em class="replaceable"><code>integer</code></em> ]; ... };
 	<span class="command"><strong>max-records</strong></span> <em class="replaceable"><code>integer</code></em>;
-	<span class="command"><strong>server-addresses</strong></span> { ( <em class="replaceable"><code>ipv4_address</code></em> | <em class="replaceable"><code>ipv6_address</code></em> ) [ port <em class="replaceable"><code>integer</code></em> ]; ... };
-	<span class="command"><strong>server-names</strong></span> { <em class="replaceable"><code>quoted_string</code></em>; ... };
+	<span class="command"><strong>server-addresses</strong></span> { ( <em class="replaceable"><code>ipv4_address</code></em> | <em class="replaceable"><code>ipv6_address</code></em> ); ... };
+	<span class="command"><strong>server-names</strong></span> { <em class="replaceable"><code>string</code></em>; ... };
 	<span class="command"><strong>zone-statistics</strong></span> ( full | terse | none | <em class="replaceable"><code>boolean</code></em> );
 };
 </pre>
@@ -9452,10 +9547,15 @@ view "external" {
               The <span class="command"><strong>type</strong></span> keyword is required
               for the <span class="command"><strong>zone</strong></span> configuration unless
               it is an <span class="command"><strong>in-view</strong></span> configuration. Its
-              acceptable values include: <code class="varname">delegation-only</code>,
-              <code class="varname">forward</code>, <code class="varname">hint</code>,
-              <code class="varname">master</code>, <code class="varname">redirect</code>,
-              <code class="varname">slave</code>, <code class="varname">static-stub</code>,
+              acceptable values include:
+              <code class="varname">master</code> (or <code class="varname">primary</code>),
+              <code class="varname">slave</code> (or <code class="varname">secondary</code>),
+              <code class="varname">mirror</code>,
+              <code class="varname">delegation-only</code>,
+              <code class="varname">forward</code>,
+              <code class="varname">hint</code>,
+              <code class="varname">redirect</code>,
+              <code class="varname">static-stub</code>,
               and <code class="varname">stub</code>.
             </p>
 
@@ -9476,8 +9576,8 @@ view "external" {
                       <p>
                         The server has a master copy of the data
                         for the zone and will be able to provide authoritative
-                        answers for
-                        it.
+                        answers for it. Type <code class="varname">primary</code> is
+                        a synonym for <code class="varname">master</code>.
                       </p>
                     </td>
 </tr>
@@ -9490,7 +9590,9 @@ view "external" {
 <td>
                       <p>
                         A slave zone is a replica of a master
-                        zone. The <span class="command"><strong>masters</strong></span> list
+                        zone. Type <code class="varname">secondary</code> is a
+                        synonym for <code class="varname">slave</code>.
+                        The <span class="command"><strong>masters</strong></span> list
                         specifies one or more IP addresses
                         of master servers that the slave contacts to update
                         its copy of the zone.
@@ -9582,6 +9684,97 @@ view "external" {
                         to use a set of internal name servers as the
                         authoritative
                         servers for that domain.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
+                        <code class="varname">mirror</code>
+                      </p>
+                    </td>
+<td>
+                      <p>
+                      </p>
+                      <p>
+                        A mirror zone acts like a zone of type
+                        <strong class="userinput"><code>secondary</code></strong> whose data is
+                        subject to DNSSEC validation before being used
+                        in answers.  Validation is performed during the
+                        zone transfer process, and again when the zone
+                        file is loaded from disk when
+                        <span class="command"><strong>named</strong></span> is restarted.  If
+                        validation fails, a retransfer of the zone is
+                        scheduled; if the mirror zone had not previously
+                        been loaded or if the previous version has
+                        expired, traditional DNS recursion will be used
+                        to look up the answers instead.
+                      </p>
+                      <p>
+                        For validation to succeed, a key-signing key
+                        (KSK) for the zone must be configured as a trust
+                        anchor in <code class="filename">named.conf</code>: that
+                        is, a key for the zone must either be specified
+                        in <span class="command"><strong>managed-keys</strong></span> or
+                        <span class="command"><strong>trusted-keys</strong></span>, or in the case
+                        of the root zone,
+                        <span class="command"><strong>dnssec-validation</strong></span> must be set
+                        to <strong class="userinput"><code>auto</code></strong>.  Answers coming
+                        from a mirror zone look almost exactly like
+                        answers from a zone of type
+                        <strong class="userinput"><code>secondary</code></strong>, with the
+                        notable exceptions that the AA bit
+                        ("authoritative answer") is not set, and the AD
+                        bit ("authenticated data") is.
+                      </p>
+                      <p>
+                        Since mirror zones are intended to be used by
+                        recursive resolvers, adding one to a view with
+                        recursion disabled is considered to be a
+                        configuration error.
+                      </p>
+                      <p>
+                        When configuring NOTIFY for a mirror zone, only
+                        <strong class="userinput"><code>notify no;</code></strong> and
+                        <strong class="userinput"><code>notify explicit;</code></strong> can be
+                        used.  Using any other
+                        <strong class="userinput"><code>notify</code></strong> setting at the
+                        zone level is a configuration error.  Using any
+                        other <strong class="userinput"><code>notify</code></strong> setting at
+                        the <strong class="userinput"><code>options</code></strong> or
+                        <strong class="userinput"><code>view</code></strong> level will cause
+                        that setting to be overridden with
+                        <strong class="userinput"><code>notify explicit;</code></strong> for the
+                        mirror zone in question.
+                      </p>
+                      <p>
+                        Outgoing transfers of mirror zones are disabled
+                        by default but may be enabled using
+                        <a class="xref" href="Bv9ARM.ch05.html#allow_transfer"><span class="command"><strong>allow-transfer</strong></span></a>.
+                      </p>
+                      <p>
+                        While any zone may be configured with this type,
+                        it is intended to be used to set up a fast local
+                        copy of the root zone, similar to the one
+                        described in RFC 7706.  Note, however, that
+                        mirror zones are not supposed to augment the
+                        example configuration provided by RFC 7706 but
+                        rather to replace it altogether.
+                      </p>
+                      <p>
+                        A default list of primary servers for the root
+                        zone is built into <span class="command"><strong>named</strong></span> and
+                        thus IANA root zone mirroring can be enabled
+                        using the following configuration:
+                      </p>
+<pre class="programlisting">zone "." {
+        type mirror;
+};</pre>
+                      <p>
+                        To make mirror zone contents persist between
+                        <span class="command"><strong>named</strong></span> restarts, use the
+                        <a class="xref" href="Bv9ARM.ch05.html#file_option"><span class="command"><strong>file</strong></span></a>
+                        option.
                       </p>
                     </td>
 </tr>
@@ -10023,18 +10216,21 @@ view "external" {
                     See caveats in <a class="xref" href="Bv9ARM.ch05.html#root_delegation_only"><span class="command"><strong>root-delegation-only</strong></span></a>.
                   </p>
                 </dd>
-<dt><span class="term"><span class="command"><strong>file</strong></span></span></dt>
+<dt>
+<a name="file_option"></a><span class="term"><a name="file_option_term"></a><span class="command"><strong>file</strong></span></span>
+</dt>
 <dd>
                   <p>
                     Set the zone's filename. In <span class="command"><strong>master</strong></span>,
                     <span class="command"><strong>hint</strong></span>, and <span class="command"><strong>redirect</strong></span>
                     zones which do not have <span class="command"><strong>masters</strong></span>
                     defined, zone data is loaded from this file. In
-                    <span class="command"><strong>slave</strong></span>, <span class="command"><strong>stub</strong></span>, and
-                    <span class="command"><strong>redirect</strong></span> zones which do have
-                    <span class="command"><strong>masters</strong></span> defined, zone data is
-                    retrieved from another server and saved in this file.
-                    This option is not applicable to other zone types.
+                    <span class="command"><strong>slave</strong></span>, <span class="command"><strong>mirror</strong></span>,
+                    <span class="command"><strong>stub</strong></span>, and <span class="command"><strong>redirect</strong></span>
+                    zones which do have <span class="command"><strong>masters</strong></span>
+                    defined, zone data is retrieved from another server
+                    and saved in this file.  This option is not
+                    applicable to other zone types.
                   </p>
                 </dd>
 <dt><span class="term"><span class="command"><strong>forward</strong></span></span></dt>
@@ -10524,7 +10720,7 @@ example.com. NS ns2.example.net.
               has been used to create a shared secret, the identity of
               the key used to authenticate the TKEY exchange will be
               used as the identity of the shared secret.  Some rule types
-              use indentities matching the client's Kerberos principal
+              use identities matching the client's Kerberos principal
               (e.g, <strong class="userinput"><code>"host/machine@REALM"</code></strong>) or
               Windows realm (<strong class="userinput"><code>machine$@REALM</code></strong>).
             </p>
@@ -10544,12 +10740,13 @@ example.com. NS ns2.example.net.
               the rules are checked for each existing record type.
             </p>
             <p>
-              The <em class="replaceable"><code>ruletype</code></em> field has 13
+              The <em class="replaceable"><code>ruletype</code></em> field has 16
               values:
               <code class="varname">name</code>, <code class="varname">subdomain</code>,
               <code class="varname">wildcard</code>, <code class="varname">self</code>,
               <code class="varname">selfsub</code>, <code class="varname">selfwild</code>,
               <code class="varname">krb5-self</code>, <code class="varname">ms-self</code>,
+              <code class="varname">krb5-selfsub</code>, <code class="varname">ms-selfsub</code>,
               <code class="varname">krb5-subdomain</code>,
               <code class="varname">ms-subdomain</code>,
               <code class="varname">tcp-self</code>, <code class="varname">6to4-self</code>,
@@ -10694,12 +10891,41 @@ example.com. NS ns2.example.net.
                     </td>
 <td>
                       <p>
-                        This rule takes a Windows machine principal
-                        (machine$@REALM) for machine in REALM and
-                        and converts it machine.realm allowing the machine
-                        to update machine.realm.  The REALM to be matched
-                        is specified in the <em class="replaceable"><code>identity</code></em>
-                        field.  The name field should be set to "."
+                        When a client sends an UPDATE using a Windows
+                        machine principal (for example, 'machine$@REALM'),
+                        this rule allows records with the absolute name
+                        of 'machine.REALM' to be updated.
+                      </p>
+                      <p>
+                        The realm to be matched is specified in the
+                        <em class="replaceable"><code>identity</code></em> field.
+                      </p>
+                      <p>
+                        The <em class="replaceable"><code>name</code></em> field has
+                        no effect on this rule; it should be set to "."
+                        as a placeholder.
+                      </p>
+                      <p>
+                        For example,
+                        <strong class="userinput"><code>grant EXAMPLE.COM ms-self . A AAAA</code></strong>
+                        allows any machine with a valid principal in
+                        the realm <strong class="userinput"><code>EXAMPLE.COM</code></strong> to update
+                        its own address records.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
+                        <code class="varname">ms-selfsub</code>
+                      </p>
+                    </td>
+<td>
+                      <p>
+                        This is similar to <span class="command"><strong>ms-self</strong></span>
+                        except it also allows updates to any subdomain of
+                        the name specified in the Windows machine
+                        principal, not just to the name itself.
                       </p>
                     </td>
 </tr>
@@ -10711,12 +10937,31 @@ example.com. NS ns2.example.net.
                     </td>
 <td>
                       <p>
-                        This rule takes a Windows machine principal
-                        (machine$@REALM) for machine in REALM and
-                        converts it to machine.realm allowing the machine
-                        to update subdomains of machine.realm.  The REALM
-                        to be matched is specified in the
+                        When a client sends an UPDATE using a Windows
+                        machine principal (for example, 'machine$@REALM'),
+                        this rule allows any machine in the specified
+                        realm to update any record in the zone or in a
+                        specified subdomain of the zone.
+                      </p>
+                      <p>
+                        The realm to be matched is specified in the
                         <em class="replaceable"><code>identity</code></em> field.
+                      </p>
+                      <p>
+                        The <em class="replaceable"><code>name</code></em> field
+                        specifies the subdomain that may be updated.
+                        If set to "." (or any other name at or above
+                        the zone apex), any name in the zone can be
+                        updated.
+                      </p>
+                      <p>
+                        For example, if <span class="command"><strong>update-policy</strong></span>
+                        for the zone "example.com" includes
+                        <strong class="userinput"><code>grant EXAMPLE.COM ms-subdomain hosts.example.com. A AAAA</code></strong>,
+                        any machine with a valid principal in
+                        the realm <strong class="userinput"><code>EXAMPLE.COM</code></strong> will
+                        be able to update address records at or below
+                        "hosts.example.com".
                       </p>
                     </td>
 </tr>
@@ -10728,12 +10973,47 @@ example.com. NS ns2.example.net.
                     </td>
 <td>
                       <p>
-                        This rule takes a Kerberos machine principal
-                        (host/machine@REALM) for machine in REALM and
-                        and converts it machine.realm allowing the machine
-                        to update machine.realm.  The REALM to be matched
-                        is specified in the <em class="replaceable"><code>identity</code></em>
-                        field. The name field should be set to "."
+                        When a client sends an UPDATE using a
+                        Kerberos machine principal (for example,
+                        'host/machine@REALM'), this rule allows
+                        records with the absolute name of 'machine'
+                        to be updated provided it has been authenticated
+                        by REALM.  This is similar but not identical
+                        to <span class="command"><strong>ms-self</strong></span> due to the
+                        'machine' part of the Kerberos principal
+                        being an absolute name instead of a unqualified
+                        name.
+                      </p>
+                      <p>
+                        The realm to be matched is specified in the
+                        <em class="replaceable"><code>identity</code></em> field.
+                      </p>
+                      <p>
+                        The <em class="replaceable"><code>name</code></em> field has
+                        no effect on this rule; it should be set to "."
+                        as a placeholder.
+                      </p>
+                      <p>
+                        For example,
+                        <strong class="userinput"><code>grant EXAMPLE.COM krb5-self . A AAAA</code></strong>
+                        allows any machine with a valid principal in
+                        the realm <strong class="userinput"><code>EXAMPLE.COM</code></strong> to update
+                        its own address records.
+                      </p>
+                    </td>
+</tr>
+<tr>
+<td>
+                      <p>
+                        <code class="varname">krb5-selfsub</code>
+                      </p>
+                    </td>
+<td>
+                      <p>
+                        This is similar to <span class="command"><strong>krb5-self</strong></span>
+                        except it also allows updates to any subdomain of
+                        the name specified in the 'machine' part of the
+                        Kerberos principal, not just to the name itself.
                       </p>
                     </td>
 </tr>
@@ -10745,13 +11025,11 @@ example.com. NS ns2.example.net.
                     </td>
 <td>
                       <p>
-                        This rule takes a Kerberos machine principal
-                        (host/machine@REALM) for machine in REALM and
-                        converts it to machine.realm allowing the machine
-                        to update subdomains of machine.realm.  The REALM
-                        to be matched is specified in the
-                        <em class="replaceable"><code>identity</code></em> field. The
-                        name field should be set to "."
+                        This rule is identical to
+                        <span class="command"><strong>ms-subdomain</strong></span>, except that it works
+                        with Kerberos machine principals (i.e.,
+                        'host/machine@REALM') rather than Windows machine
+                        principals.
                       </p>
                     </td>
 </tr>
@@ -14700,6 +14978,6 @@ HOST-127.EXAMPLE. MX 0 .
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

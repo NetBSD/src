@@ -24,6 +24,7 @@ options {
 	minimal-responses no;
 	recursion yes;
 	dnssec-validation yes;
+	qname-minimization disabled;
 
 	response-policy {
 	    zone "policy1" min-update-interval 0;

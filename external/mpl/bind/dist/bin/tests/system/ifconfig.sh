@@ -12,10 +12,10 @@
 #
 # Set up interface aliases for bind9 system tests.
 #
-# IPv4: 10.53.0.{1..8}				RFC 1918
+# IPv4: 10.53.0.{1..10}				RFC 1918
 #       10.53.1.{0..2}
 #       10.53.2.{0..2}
-# IPv6: fd92:7065:b8e:ffff::{1..8}		ULA
+# IPv6: fd92:7065:b8e:ffff::{1..10}		ULA
 #       fd92:7065:b8e:99ff::{1..2}
 #       fd92:7065:b8e:ff::{1..2}
 #
@@ -38,15 +38,7 @@ EOF
 	exit 1
 fi
 
-# If running on hp-ux, don't even try to run config.guess.
-# It will try to create a temporary file in the current directory,
-# which fails when running as root with the current directory
-# on a NFS mounted disk.
-
-case `uname -a` in
-	*HP-UX*) sys=hpux ;;
-	*) sys=`sh $config_guess` ;;
-esac
+sys=`sh $config_guess`
 
 use_ip=
 case "$sys" in
@@ -73,10 +65,10 @@ case "$1" in
 		  2) ipv6="00" ;;
 		  *) ipv6="" ;;
 		esac
-		for ns in 1 2 3 4 5 6 7 8
+		for ns in 1 2 3 4 5 6 7 8 9 10
 		do
 			[ $i -gt 0 -a $ns -gt 2 ] && break
-			int=`expr $i \* 10 + $ns - 1`
+			int=`expr $i \* 10 + $ns`
 			case "$sys" in
 			    *-pc-solaris2.5.1)
 				ifconfig lo0:$int 10.53.$i.$ns \
@@ -179,7 +171,7 @@ case "$1" in
 		  2) ipv6="00" ;;
 		  *) ipv6="" ;;
 		esac
-		for ns in 8 7 6 5 4 3 2 1
+		for ns in 10 9 8 7 6 5 4 3 2 1
 		do
 			[ $i -gt 0 -a $ns -gt 2 ] && continue
 			int=`expr $i \* 10 + $ns - 1`

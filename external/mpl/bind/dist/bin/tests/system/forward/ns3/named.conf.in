@@ -19,6 +19,7 @@ options {
 	listen-on-v6 { none; };
 	forwarders { 10.53.0.2; };
 	forward first;
+	dnssec-validation yes;
 };
 
 zone "." {

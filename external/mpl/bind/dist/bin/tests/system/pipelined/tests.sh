@@ -19,7 +19,7 @@ status=0
 
 echo_i "check pipelined TCP queries"
 ret=0
-$PIPEQUERIES -r $RANDFILE -p ${PORT} < input > raw || ret=1
+$PIPEQUERIES -p ${PORT} < input > raw || ret=1
 awk '{ print $1 " " $5 }' < raw > output
 sort < output > output-sorted
 diff ref output-sorted || { ret=1 ; echo_i "diff sorted failed"; }
@@ -43,7 +43,7 @@ status=`expr $status + $ret`
 
 echo_i "check keep-response-order"
 ret=0
-$PIPEQUERIES -r $RANDFILE -p ${PORT} ++ < inputb > rawb || ret=1
+$PIPEQUERIES -p ${PORT} ++ < inputb > rawb || ret=1
 awk '{ print $1 " " $5 }' < rawb > outputb
 diff refb outputb || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

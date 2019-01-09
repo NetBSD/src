@@ -12,8 +12,6 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-$SHELL ../testcrypto.sh || exit 255
-
 if test -n "$PYTHON"
 then
     if $PYTHON -c "import dns" 2> /dev/null

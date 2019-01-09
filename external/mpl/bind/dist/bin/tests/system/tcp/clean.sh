@@ -15,3 +15,4 @@ rm -f */named.conf
 rm -f */named.stats
 rm -f dig.out*
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

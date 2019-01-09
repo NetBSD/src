@@ -15,3 +15,4 @@ rm -f ns?/named.conf
 rm -f rndc.status.ns*
 rm -f dig.out.ns*
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

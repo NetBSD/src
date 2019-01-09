@@ -157,7 +157,7 @@ status=`expr $status + $ret`
 copy_setports ns3/named3.conf.in ns3/named.conf
 $RNDCCMD reconfig 2>&1 | sed 's/^/ns3 /' | cat_i
 
-echo_i "checking lame server clients are dropped at the soft limit"
+echo_i "checking lame server clients are dropped near the soft limit"
 ret=0
 fail=0
 exceeded=0
@@ -166,7 +166,7 @@ touch ans4/norespond
 for try in 1 2 3 4 5; do
     burst b $try 400
     $DIG @10.53.0.3 -p ${PORT}  a ${try}.example > dig.out.ns3.$try
-    stat 360 || exceeded=`expr $exceeded + 1`
+    stat 380 || exceeded=`expr $exceeded + 1`
     grep "status: NOERROR" dig.out.ns3.$try > /dev/null 2>&1 && \
             success=`expr $success + 1`
     grep "status: SERVFAIL" dig.out.ns3.$try > /dev/null 2>&1 && \
@@ -177,7 +177,7 @@ echo_i "$success successful valid queries (expected 5)"
 [ "$success" -eq 5 ] || { echo_i "failed"; ret=1; }
 echo_i "$fail SERVFAIL responses (expected 0)"
 [ "$fail" -eq 0 ] || { echo_i "failed"; ret=1; }
-echo_i "clients count exceeded 360 on $exceeded trials (expected 0)"
+echo_i "clients count exceeded 380 on $exceeded trials (expected 0)"
 [ "$exceeded" -eq 0 ] || { echo_i "failed"; ret=1; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

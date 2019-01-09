@@ -1,6 +1,5 @@
 ; These symbols are not needed by the WIN32 build, but build-tarballs
 ; will complain if they aren't present here.
-isc__hash_setvec
 isc_socket_accept
 isc_socket_attach
 isc_socket_bind

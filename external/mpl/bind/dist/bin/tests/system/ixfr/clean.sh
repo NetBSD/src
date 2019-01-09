@@ -19,3 +19,4 @@ rm -f */ans.run
 rm -f dig.out dig.out1 dig.out2 dig.out3
 rm -f ns3/large.db
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

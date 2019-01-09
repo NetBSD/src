@@ -134,13 +134,30 @@ algorithm policy RSASHA1:
 	zsk_standby None
 	keyttl None
 
-algorithm policy DSA:
+algorithm policy RSASHA256:
 	inherits None
 	directory None
-	algorithm DSA
+	algorithm RSASHA256
 	coverage None
-	ksk_keysize 1024
+	ksk_keysize 2048
 	zsk_keysize 2048
+	ksk_rollperiod None
+	zsk_rollperiod None
+	ksk_prepublish None
+	ksk_postpublish None
+	zsk_prepublish None
+	zsk_postpublish None
+	ksk_standby None
+	zsk_standby None
+	keyttl None
+
+algorithm policy ECDSAP256SHA256:
+	inherits None
+	directory None
+	algorithm ECDSAP256SHA256
+	coverage None
+	ksk_keysize None
+	zsk_keysize None
 	ksk_rollperiod None
 	zsk_rollperiod None
 	ksk_prepublish None
