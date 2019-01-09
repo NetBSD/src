@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.66 2019/01/09 11:08:09 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.67 2019/01/09 11:09:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.66 2019/01/09 11:08:09 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.67 2019/01/09 11:09:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ preadfd(void)
  * 1) If a string was pushed back on the input, pop it;
  * 2) If an EOF was pushed back (parsenleft == EOF_NLEFT) or we are reading
  *    from a string so we can't refill the buffer, return EOF.
- * 3) If the is more stuff in this buffer, use it else call read to fill it.
+ * 3) If there is more stuff in this buffer, use it else call read to fill it.
  * 4) Process input up to the next newline, deleting nul characters.
  */
 
