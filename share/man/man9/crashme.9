@@ -1,4 +1,4 @@
-.\" $NetBSD: crashme.9,v 1.1 2019/01/09 04:02:26 mrg Exp $
+.\" $NetBSD: crashme.9,v 1.2 2019/01/09 09:48:44 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -52,8 +52,9 @@ The crashme functionality is only available in kernels with the
 .Dv DEBUG
 option set.
 .Pp
-Each crashme node is maintained in a crashme_node structure which
-has the following public members:
+Each crashme node is maintained in a
+.Vt crashme_node
+structure which has the following public members:
 .Bd -literal
 typedef int (*crashme_fn)(int);
 
@@ -90,15 +91,17 @@ node to be executed.
 .It Ic debug.crashme.panic
 Basic panic node.
 .It Ic debug.crashme.null_deref
-Derefence NULL node.
+Dereference
+.Dv NULL
+node.
+.El
 .Sh SEE ALSO
 .Xr options 4 ,
 .Xr panic 9
 .Sh HISTORY
 The
 .Nm
-driver
-appeared in
+driver appeared in
 .Nx 9.0 .
 .Sh AUTHORS
-.An Matthew R. Green .
+.An Matthew R. Green
