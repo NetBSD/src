@@ -1,4 +1,4 @@
-/*	$NetBSD: zonekey.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: zonekey.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,13 +17,15 @@
 
 /*! \file dns/zonekey.h */
 
+#include <stdbool.h>
+
 #include <isc/lang.h>
 
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
 
-isc_boolean_t
+bool
 dns_zonekey_iszonekey(dns_rdata_t *keyrdata);
 /*%<
  *	Determines if the key record contained in the rdata is a zone key.

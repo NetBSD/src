@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: hex.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 #include <config.h>
 
 #include <ctype.h>
+#include <stdbool.h>
 
 #include <isc/buffer.h>
 #include <isc/hex.h>
@@ -125,7 +126,7 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 	hex_decode_ctx_t ctx;
 	isc_textregion_t *tr;
 	isc_token_t token;
-	isc_boolean_t eol;
+	bool eol;
 
 	hex_decode_init(&ctx, length, target);
 
@@ -133,9 +134,9 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 		unsigned int i;
 
 		if (length > 0)
-			eol = ISC_FALSE;
+			eol = false;
 		else
-			eol = ISC_TRUE;
+			eol = true;
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, eol));
 		if (token.type != isc_tokentype_string)

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 
 /*! \file isc/log.h */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <syslog.h> /* XXXDCL NT */
@@ -139,7 +140,7 @@ typedef struct isc_logfile {
 	 * to a size large enough for the largest possible file on a system.
 	 */
 	isc_offset_t maximum_size;
-	isc_boolean_t maximum_reached; /*%< Private. */
+	bool maximum_reached; /*%< Private. */
 } isc_logfile_t;
 
 /*%
@@ -723,13 +724,13 @@ isc_log_getdebuglevel(isc_log_t *lctx);
  *\li	The current logging debugging level is returned.
  */
 
-isc_boolean_t
+bool
 isc_log_wouldlog(isc_log_t *lctx, int level);
 /*%<
  * Determine whether logging something to 'lctx' at 'level' would
  * actually cause something to be logged somewhere.
  *
- * If #ISC_FALSE is returned, it is guaranteed that nothing would
+ * If #false is returned, it is guaranteed that nothing would
  * be logged, allowing the caller to omit unnecessary
  * isc_log_write() calls and possible message preformatting.
  */

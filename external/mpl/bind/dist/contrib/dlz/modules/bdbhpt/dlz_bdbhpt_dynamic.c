@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_dynamic.c,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_dynamic.c,v 1.3 2019/01/09 16:55:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -64,18 +64,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
 
 #include <db.h>
 
 #include "dlz_minimal.h"
 
 /* should the bdb driver use threads. */
-#ifdef ISC_PLATFORM_USETHREADS
 #define bdbhpt_threads DB_THREAD
-#else
-#define bdbhpt_threads 0
-#endif
 
 /* bdbhpt database names */
 #define dlz_data   "dns_data"

@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: a_1.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
 #ifndef CH_3_A_1_H
 #define CH_3_A_1_H 1
 
-typedef isc_uint16_t ch_addr_t;
+typedef uint16_t ch_addr_t;
 
 typedef struct dns_rdata_ch_a {
 	dns_rdatacommon_t	common;

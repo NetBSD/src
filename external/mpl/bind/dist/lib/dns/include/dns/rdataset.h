@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,6 +44,9 @@
  * Standards:
  *\li	None.
  */
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -91,7 +94,6 @@ typedef struct dns_rdatasetmethods {
 						dns_name_t *name);
 	isc_result_t		(*addglue)(dns_rdataset_t *rdataset,
 					   dns_dbversion_t *version,
-					   unsigned int options,
 					   dns_message_t *msg);
 } dns_rdatasetmethods_t;
 
@@ -124,11 +126,11 @@ struct dns_rdataset {
 	unsigned int			attributes;
 	/*%
 	 * the counter provides the starting point in the "cyclic" order.
-	 * The value ISC_UINT32_MAX has a special meaning of "picking up a
+	 * The value UINT32_MAX has a special meaning of "picking up a
 	 * random value." in order to take care of databases that do not
 	 * increment the counter.
 	 */
-	isc_uint32_t			count;
+	uint32_t			count;
 	/*
 	 * This RRSIG RRset should be re-generated around this time.
 	 * Only valid if DNS_RDATASETATTR_RESIGN is set in attributes.
@@ -196,13 +198,6 @@ struct dns_rdataset {
  */
 #define DNS_RDATASETTOWIRE_OMITDNSSEC	0x0001
 
-/*%
- * _FILTERAAAA
- * 	If A records are present, omit AAAA records when adding
- * 	glue
- */
-#define DNS_RDATASETADDGLUE_FILTERAAAA 0x0001
-
 void
 dns_rdataset_init(dns_rdataset_t *rdataset);
 /*%<
@@ -244,7 +239,7 @@ dns_rdataset_disassociate(dns_rdataset_t *rdataset);
  *\li	'rdataset' is a valid, disassociated rdataset.
  */
 
-isc_boolean_t
+bool
 dns_rdataset_isassociated(dns_rdataset_t *rdataset);
 /*%<
  * Is 'rdataset' associated?
@@ -253,8 +248,8 @@ dns_rdataset_isassociated(dns_rdataset_t *rdataset);
  *\li	'rdataset' is a valid rdataset.
  *
  * Returns:
- *\li	#ISC_TRUE			'rdataset' is associated.
- *\li	#ISC_FALSE			'rdataset' is not associated.
+ *\li	#true			'rdataset' is associated.
+ *\li	#false			'rdataset' is not associated.
  */
 
 void
@@ -351,8 +346,8 @@ dns_rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
 isc_result_t
 dns_rdataset_totext(dns_rdataset_t *rdataset,
 		    const dns_name_t *owner_name,
-		    isc_boolean_t omit_final_dot,
-		    isc_boolean_t question,
+		    bool omit_final_dot,
+		    bool question,
 		    isc_buffer_t *target);
 /*%<
  * Convert 'rdataset' to text format, storing the result in 'target'.
@@ -360,8 +355,8 @@ dns_rdataset_totext(dns_rdataset_t *rdataset,
  * Notes:
  *\li	The rdata cursor position will be changed.
  *
- *\li	The 'question' flag should normally be #ISC_FALSE.  If it is
- *	#ISC_TRUE, the TTL and rdata fields are not printed.  This is
+ *\li	The 'question' flag should normally be #false.  If it is
+ *	#true, the TTL and rdata fields are not printed.  This is
  *	for use when printing an rdata representing a question section.
  *
  *\li	This interface is deprecated; use dns_master_rdatasettottext()
@@ -579,14 +574,11 @@ dns_rdataset_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name);
  */
 
 isc_result_t
-dns_rdataset_addglue(dns_rdataset_t *rdataset,
-		     dns_dbversion_t *version,
-		     unsigned int options,
+dns_rdataset_addglue(dns_rdataset_t *rdataset, dns_dbversion_t *version,
 		     dns_message_t *msg);
 /*%<
  * Add glue records for rdataset to the additional section of message in
- * 'msg'. 'rdataset' must be of type NS. If DNS_RDATASETADDGLUE_FILTERAAAA
- * is set in 'options' there is type A glue, type AAAA glue is not added.
+ * 'msg'. 'rdataset' must be of type NS.
  *
  * In case a successful result is not returned, the caller should try to
  * add glue directly to the message by iterating for additional data.
@@ -594,7 +586,6 @@ dns_rdataset_addglue(dns_rdataset_t *rdataset,
  * Requires:
  * \li	'rdataset' is a valid NS rdataset.
  * \li	'version' is the DB version.
- * \li  'options' is options; currently only _FILTERAAAA is defined.
  * \li	'msg' is the DNS message to which the glue should be added.
  *
  * Returns:
@@ -607,7 +598,7 @@ dns_rdataset_addglue(dns_rdataset_t *rdataset,
 void
 dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 		     dns_rdata_rrsig_t *rrsig, isc_stdtime_t now,
-		     isc_boolean_t acceptexpired);
+		     bool acceptexpired);
 /*%<
  * Trim the ttl of 'rdataset' and 'sigrdataset' so that they will expire
  * at or before 'rrsig->expiretime'.  If 'acceptexpired' is true and the

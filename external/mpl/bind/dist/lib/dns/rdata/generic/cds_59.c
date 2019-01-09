@@ -1,4 +1,4 @@
-/*	$NetBSD: cds_59.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: cds_59.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,12 +18,7 @@
 
 #define RRTYPE_CDS_ATTRIBUTES 0
 
-#include <isc/sha1.h>
-#include <isc/sha2.h>
-
 #include <dns/ds.h>
-
-#include "dst_gost.h"
 
 static inline isc_result_t
 fromtext_cds(ARGS_FROMTEXT) {
@@ -143,7 +138,7 @@ digest_cds(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_cds(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_cds);
@@ -153,10 +148,10 @@ checkowner_cds(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_cds(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_cds);
@@ -165,7 +160,7 @@ checknames_cds(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

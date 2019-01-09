@@ -1,4 +1,4 @@
-/*	$NetBSD: log_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: log_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -40,7 +41,7 @@ int
 main(int argc, char **argv) {
 	const char *progname, *syslog_file, *message;
 	int ch, i, file_versions, stderr_line;
-	isc_boolean_t show_final_mem = ISC_FALSE;
+	bool show_final_mem = false;
 	isc_log_t *lctx;
 	isc_logconfig_t *lcfg;
 	isc_mem_t *mctx;
@@ -61,7 +62,7 @@ main(int argc, char **argv) {
 	while ((ch = isc_commandline_parse(argc, argv, "ms:r:")) != -1) {
 		switch (ch) {
 		case 'm':
-			show_final_mem = ISC_TRUE;
+			show_final_mem = true;
 			break;
 		case 's':
 			syslog_file = isc_commandline_argument;

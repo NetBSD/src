@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: tlsa_52.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,10 +21,10 @@
 typedef struct dns_rdata_tlsa {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint8_t		usage;
-	isc_uint8_t		selector;
-	isc_uint8_t		match;
-	isc_uint16_t		length;
+	uint8_t		usage;
+	uint8_t		selector;
+	uint8_t		match;
+	uint16_t		length;
 	unsigned char		*data;
 } dns_rdata_tlsa_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aes.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: aes.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,8 +26,6 @@
 #define ISC_AES256_KEYLENGTH 32U
 #define ISC_AES_BLOCK_LENGTH 16U
 
-#ifdef ISC_PLATFORM_WANTAES
-
 ISC_LANG_BEGINDECLS
 
 void
@@ -43,7 +41,5 @@ isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_PLATFORM_WANTAES */
 
 #endif /* ISC_AES_H */

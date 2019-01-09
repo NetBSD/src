@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,9 @@
  * information regarding copyright ownership.
  */
 
-#include "config.h"
+#include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/base64.h>
 #include <isc/print.h>
@@ -58,7 +60,7 @@
  * record and keep the param record in this case.
  */
 
-static isc_boolean_t
+static bool
 ignore(dns_rdata_t *param, dns_rdataset_t *privateset) {
 	isc_result_t result;
 
@@ -78,7 +80,7 @@ ignore(dns_rdata_t *param, dns_rdataset_t *privateset) {
 		 * doesn't matter if we are removing this one.
 		 */
 		if (CREATE(rdata.data[1]))
-			return (ISC_FALSE);
+			return (false);
 		if (rdata.data[0] != param->data[0] ||
 		    rdata.data[2] != param->data[2] ||
 		    rdata.data[3] != param->data[3] ||
@@ -91,21 +93,21 @@ ignore(dns_rdata_t *param, dns_rdataset_t *privateset) {
 		 * the caller that it will be removed.
 		 */
 		if (NONSEC(rdata.data[1]))
-			return (ISC_FALSE);
-		return (ISC_TRUE);
+			return (false);
+		return (true);
 	}
-	return (ISC_FALSE);
+	return (false);
 }
 
 isc_result_t
 dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 		   dns_rdatatype_t privatetype,
-		   isc_boolean_t *build_nsec, isc_boolean_t *build_nsec3)
+		   bool *build_nsec, bool *build_nsec3)
 {
 	dns_dbnode_t *node;
 	dns_rdataset_t nsecset, nsec3paramset, privateset;
-	isc_boolean_t nsec3chain;
-	isc_boolean_t signing;
+	bool nsec3chain;
+	bool signing;
 	isc_result_t result;
 	unsigned char buf[DNS_NSEC3PARAM_BUFFERSIZE];
 	unsigned int count;
@@ -132,9 +134,9 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 	if (dns_rdataset_isassociated(&nsecset) &&
 	    dns_rdataset_isassociated(&nsec3paramset)) {
 		if (build_nsec != NULL)
-			*build_nsec = ISC_TRUE;
+			*build_nsec = true;
 		if (build_nsec3 != NULL)
-			*build_nsec3 = ISC_TRUE;
+			*build_nsec3 = true;
 		goto success;
 	}
 
@@ -151,9 +153,9 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 	 */
 	if (dns_rdataset_isassociated(&nsecset)) {
 		if (build_nsec != NULL)
-			*build_nsec = ISC_TRUE;
+			*build_nsec = true;
 		if (build_nsec3 != NULL)
-			*build_nsec3 = ISC_FALSE;
+			*build_nsec3 = false;
 		if (!dns_rdataset_isassociated(&privateset))
 			goto success;
 		for (result = dns_rdataset_first(&privateset);
@@ -169,7 +171,7 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 			if (REMOVE(rdata.data[1]))
 				continue;
 			if (build_nsec3 != NULL)
-				*build_nsec3 = ISC_TRUE;
+				*build_nsec3 = true;
 			break;
 		}
 		goto success;
@@ -177,9 +179,9 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 
 	if (dns_rdataset_isassociated(&nsec3paramset)) {
 		if (build_nsec3 != NULL)
-			*build_nsec3 = ISC_TRUE;
+			*build_nsec3 = true;
 		if (build_nsec != NULL)
-			*build_nsec = ISC_FALSE;
+			*build_nsec = false;
 		if (!dns_rdataset_isassociated(&privateset))
 			goto success;
 		/*
@@ -231,19 +233,19 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 		 * have NONSEC set.
 		 */
 		if (build_nsec != NULL)
-			*build_nsec = ISC_TRUE;
+			*build_nsec = true;
 		goto success;
 	}
 
 	if (build_nsec != NULL)
-		*build_nsec = ISC_FALSE;
+		*build_nsec = false;
 	if (build_nsec3 != NULL)
-		*build_nsec3 = ISC_FALSE;
+		*build_nsec3 = false;
 	if (!dns_rdataset_isassociated(&privateset))
 		goto success;
 
-	signing = ISC_FALSE;
-	nsec3chain = ISC_FALSE;
+	signing = false;
+	nsec3chain = false;
 
 	for (result = dns_rdataset_first(&privateset);
 	     result == ISC_R_SUCCESS;
@@ -260,20 +262,20 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 			 */
 			if (private.length == 5 && private.data[0] != 0 &&
 			    private.data[3] == 0 && private.data[4] == 0)
-				signing = ISC_TRUE;
+				signing = true;
 		} else {
 			if (CREATE(rdata.data[1]))
-				nsec3chain = ISC_TRUE;
+				nsec3chain = true;
 		}
 	}
 
 	if (signing) {
 		if (nsec3chain) {
 			if (build_nsec3 != NULL)
-				*build_nsec3 = ISC_TRUE;
+				*build_nsec3 = true;
 		} else {
 			if (build_nsec != NULL)
-				*build_nsec = ISC_TRUE;
+				*build_nsec = true;
 		}
 	}
 
@@ -303,7 +305,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 		unsigned char newbuf[DNS_NSEC3PARAM_BUFFERSIZE];
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 		dns_rdata_nsec3param_t nsec3param;
-		isc_boolean_t del, init, nonsec;
+		bool del, init, nonsec;
 		isc_buffer_t b;
 
 		if (!dns_nsec3param_fromprivate(private, &rdata, nsec3buf,
@@ -312,9 +314,9 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		CHECK(dns_rdata_tostruct(&rdata, &nsec3param, NULL));
 
-		del = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_REMOVE) != 0);
-		init = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_INITIAL) != 0);
-		nonsec = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_NONSEC) != 0);
+		del = ((nsec3param.flags & DNS_NSEC3FLAG_REMOVE) != 0);
+		init = ((nsec3param.flags & DNS_NSEC3FLAG_INITIAL) != 0);
+		nonsec = ((nsec3param.flags & DNS_NSEC3FLAG_NONSEC) != 0);
 
 		nsec3param.flags &= ~(DNS_NSEC3FLAG_CREATE|
 				      DNS_NSEC3FLAG_REMOVE|
@@ -342,8 +344,8 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 		unsigned char alg = private->data[0];
 		dns_keytag_t keyid = (private->data[2] | private->data[1] << 8);
 		char keybuf[BUFSIZ], algbuf[DNS_SECALG_FORMATSIZE];
-		isc_boolean_t del = ISC_TF(private->data[3] != 0);
-		isc_boolean_t complete = ISC_TF(private->data[4] != 0);
+		bool del = private->data[3];
+		bool complete = private->data[4];
 
 		if (del && complete)
 			isc_buffer_putstr(buf, "Done removing signatures for ");
