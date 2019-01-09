@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndc.8,v 1.2 2018/08/12 13:02:28 christos Exp $
+.\"	$NetBSD: rndc.8,v 1.3 2019/01/09 16:55:00 christos Exp $
 .\"
 .\" Copyright (C) 2000, 2001, 2004, 2005, 2007, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -388,7 +388,7 @@ See also
 \fBrndc trace\fR\&.
 .RE
 .PP
-\fBnta \fR\fB[( \-d | \-f | \-r | \-l \fIduration\fR)]\fR\fB \fR\fB\fIdomain\fR\fR\fB \fR\fB[\fIview\fR]\fR\fB \fR
+\fBnta \fR\fB[( \-class \fIclass\fR | \-dump | \-force | \-remove | \-lifetime \fIduration\fR)]\fR\fB \fR\fB\fIdomain\fR\fR\fB \fR\fB[\fIview\fR]\fR\fB \fR
 .RS 4
 Sets a DNSSEC negative trust anchor (NTA) for
 \fBdomain\fR, with a lifetime of
@@ -420,7 +420,7 @@ option\&. TTL\-style suffixes can be used to specify the lifetime in seconds, mi
 to zero is equivalent to
 \fB\-remove\fR\&.
 .sp
-If
+If the
 \fB\-dump\fR
 is used, any other arguments are ignored, and a list of existing NTAs is printed (note that this may include NTAs that are expired but have not yet been cleaned up)\&.
 .sp
@@ -432,11 +432,18 @@ option in the Administrator Reference Manual for details)\&. If data can be vali
 \fB\-force\fR
 overrides this behavior and forces an NTA to persist for its entire lifetime, regardless of whether data could be validated if the NTA were not present\&.
 .sp
+The view class can be specified with
+\fB\-class\fR\&. The default is class
+\fBIN\fR, which is the only class for which DNSSEC is currently supported\&.
+.sp
 All of these options can be shortened, i\&.e\&., to
 \fB\-l\fR,
 \fB\-r\fR,
-\fB\-d\fR, and
-\fB\-f\fR\&.
+\fB\-d\fR,
+\fB\-f\fR, and
+\fB\-c\fR\&.
+.sp
+Unrecognized options are treated as errors\&. To reference a domain or view name that begins with a hyphen, use a double\-hyphen on the command line to indicate the end of options\&.
 .RE
 .PP
 \fBquerylog\fR [ on | off ]
@@ -697,13 +704,14 @@ in each view\&. The list both statically configured keys and dynamic TKEY\-negot
 .PP
 \fBvalidation ( on | off | status ) \fR\fB[\fIview \&.\&.\&.\fR]\fR\fB \fR
 .RS 4
-Enable, disable, or check the current status of DNSSEC validation\&. Note
+Enable, disable, or check the current status of DNSSEC validation\&. By default, validation is enabled\&. (Note that
 \fBdnssec\-enable\fR
-also needs to be set to
+must also be
 \fByes\fR
-or
-\fBauto\fR
-to be effective\&. It defaults to enabled\&.
+(the default value) for signatures to be returned along with validated data\&. If validation is enabled while
+\fBdnssec\-enable\fR
+is set to
+\fBno\fR, the server will validate internally, but will not supply clients with the necessary records to allow validity to be confirmed\&.)
 .RE
 .PP
 \fBzonestatus \fR\fB\fIzone\fR\fR\fB \fR\fB[\fIclass\fR [\fIview\fR]]\fR

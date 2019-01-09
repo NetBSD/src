@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.h,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.h,v 1.3 2019/01/09 16:55:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -35,6 +35,8 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdbool.h>
+
 #include <dlz_minimal.h>
 #include <dlz_list.h>
 #include <dlz_pthread.h>
@@ -63,7 +65,7 @@ typedef struct driverinstance driverinstance_t;
 struct query_segment {
 	void				*cmd;
 	unsigned int			strlen;
-	isc_boolean_t			direct;
+	bool			direct;
 	DLZ_LINK(query_segment_t)	link;
 };
 

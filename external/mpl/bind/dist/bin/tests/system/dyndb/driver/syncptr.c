@@ -1,4 +1,4 @@
-/*	$NetBSD: syncptr.c,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: syncptr.c,v 1.3 2019/01/09 16:55:02 christos Exp $	*/
 
 /*
  * Automatic A/AAAA/PTR record synchronization.
@@ -59,14 +59,35 @@ syncptr_write(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
-	CHECK(dns_zone_getdb(pevent->zone, &db));
-	CHECK(dns_db_newversion(db, &version));
-	CHECK(dns_diff_apply(&pevent->diff, db, version));
+	log_write(ISC_LOG_INFO, "ENTER: syncptr_write");
+
+	result = dns_zone_getdb(pevent->zone, &db);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr_write: dns_zone_getdb -> %s\n",
+			  isc_result_totext(result));
+		goto cleanup;
+	}
+
+	result = dns_db_newversion(db, &version);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr_write: dns_db_newversion -> %s\n",
+			  isc_result_totext(result));
+		goto cleanup;
+	}
+	result = dns_diff_apply(&pevent->diff, db, version);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr_write: dns_diff_apply -> %s\n",
+			  isc_result_totext(result));
+		goto cleanup;
+	}
 
 cleanup:
 	if (db != NULL) {
 		if (version != NULL)
-			dns_db_closeversion(db, &version, ISC_TRUE);
+			dns_db_closeversion(db, &version, true);
 		dns_db_detach(&db);
 	}
 	dns_zone_detach(&pevent->zone);
@@ -121,18 +142,30 @@ syncptr_find_zone(sample_instance_t *inst, dns_rdata_t *rdata,
 	 * @example
 	 * 192.168.0.1 -> 1.0.168.192.in-addr.arpa
 	 */
-	CHECK(dns_byaddr_createptrname2(&isc_ip, 0, name));
+	result = dns_byaddr_createptrname(&isc_ip, 0, name);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr_find_zone: dns_byaddr_createptrname -> %s\n",
+			  isc_result_totext(result));
+		goto cleanup;
+	}
 
 	/* Find a zone containing owner name of the PTR record. */
 	result = dns_zt_find(inst->view->zonetable, name, 0, NULL, zone);
 	if (result == DNS_R_PARTIALMATCH)
 		result = ISC_R_SUCCESS;
-	else if (result != ISC_R_SUCCESS)
+	else if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr_find_zone: dns_zt_find -> %s\n",
+			  isc_result_totext(result));
 		goto cleanup;
+	}
 
 	/* Make sure that the zone is managed by this driver. */
 	if (*zone != inst->zone1 && *zone != inst->zone2) {
 		dns_zone_detach(zone);
+		log_write(ISC_LOG_INFO,
+			  "syncptr_find_zone: zone not managed");
 		result = ISC_R_NOTFOUND;
 	}
 
@@ -204,17 +237,37 @@ syncptr(sample_instance_t *inst, dns_name_t *name,
 	/* Reverse zone is managed by this driver, prepare PTR record */
 	pevent->zone = NULL;
 	dns_zone_attach(ptr_zone, &pevent->zone);
-	CHECK(dns_name_copy(name, dns_fixedname_name(&pevent->ptr_target_name),
-			    NULL));
+	result = dns_name_copy(name,
+			       dns_fixedname_name(&pevent->ptr_target_name),
+			       NULL);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr: dns_name_copy -> %s\n",
+			  isc_result_totext(result));
+		goto cleanup;
+	}
 	dns_name_clone(dns_fixedname_name(&pevent->ptr_target_name),
 		       &ptr_struct.ptr);
 	dns_diff_init(inst->mctx, &pevent->diff);
-	CHECK(dns_rdata_fromstruct(&ptr_rdata, dns_rdataclass_in,
-				   dns_rdatatype_ptr, &ptr_struct, &pevent->b));
+	result = dns_rdata_fromstruct(&ptr_rdata, dns_rdataclass_in,
+				      dns_rdatatype_ptr, &ptr_struct,
+				      &pevent->b);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr: dns_rdata_fromstruct -> %s\n",
+			  isc_result_totext(result));
+		goto cleanup;
+	}
 
 	/* Create diff */
-	CHECK(dns_difftuple_create(mctx, op, dns_fixedname_name(&ptr_name),
-				   ttl, &ptr_rdata, &tp));
+	result = dns_difftuple_create(mctx, op, dns_fixedname_name(&ptr_name),
+				      ttl, &ptr_rdata, &tp);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			  "syncptr: dns_difftuple_create -> %s\n",
+			  isc_result_totext(result));
+		goto cleanup;
+	}
 	dns_diff_append(&pevent->diff, &tp);
 
 	/*

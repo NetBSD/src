@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: dns64.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,8 +11,9 @@
  * information regarding copyright ownership.
  */
 
-
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/list.h>
 #include <isc/mem.h>
@@ -25,6 +26,7 @@
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/result.h>
+#include <string.h>
 
 struct dns_dns64 {
 	unsigned char		bits[16];	/*
@@ -139,8 +141,8 @@ dns_dns64_aaaafroma(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 		return (DNS_R_DISALLOWED);
 
 	if (dns64->clients != NULL) {
-		result = dns_acl_match(reqaddr, reqsigner, dns64->clients, env,
-				       &match, NULL);
+		result = dns_acl_match(reqaddr, reqsigner, dns64->clients,
+				       env, &match, NULL);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		if (match <= 0)
@@ -153,8 +155,8 @@ dns_dns64_aaaafroma(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 
 		memmove(&ina.s_addr, a, 4);
 		isc_netaddr_fromin(&netaddr, &ina);
-		result = dns_acl_match(&netaddr, NULL, dns64->mapped, env,
-				       &match, NULL);
+		result = dns_acl_match(&netaddr, NULL, dns64->mapped,
+				       env, &match, NULL);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		if (match <= 0)
@@ -196,18 +198,18 @@ dns_dns64_unlink(dns_dns64list_t *list, dns_dns64_t *dns64) {
 	ISC_LIST_UNLINK(*list, dns64, link);
 }
 
-isc_boolean_t
+bool
 dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 		 const dns_name_t *reqsigner, const dns_aclenv_t *env,
 		 unsigned int flags, dns_rdataset_t *rdataset,
-		 isc_boolean_t *aaaaok, size_t aaaaoklen)
+		 bool *aaaaok, size_t aaaaoklen)
 {
 	struct in6_addr in6;
 	isc_netaddr_t netaddr;
 	isc_result_t result;
 	int match;
-	isc_boolean_t answer = ISC_FALSE;
-	isc_boolean_t found = ISC_FALSE;
+	bool answer = false;
+	bool found = false;
 	unsigned int i, ok;
 
 	REQUIRE(rdataset != NULL);
@@ -239,20 +241,20 @@ dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 
 		if (!found && aaaaok != NULL) {
 			for (i = 0; i < aaaaoklen; i++)
-				aaaaok[i] = ISC_FALSE;
+				aaaaok[i] = false;
 		}
-		found = ISC_TRUE;
+		found = true;
 
 		/*
 		 * If we are not excluding any addresses then any AAAA
 		 * will do.
 		 */
 		if (dns64->excluded == NULL) {
-			answer = ISC_TRUE;
+			answer = true;
 			if (aaaaok == NULL)
 				goto done;
 			for (i = 0; i < aaaaoklen; i++)
-				aaaaok[i] = ISC_TRUE;
+				aaaaok[i] = true;
 			goto done;
 		}
 
@@ -268,13 +270,13 @@ dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 				isc_netaddr_fromin6(&netaddr, &in6);
 
 				result = dns_acl_match(&netaddr, NULL,
-						       dns64->excluded,
-						       env, &match, NULL);
+						       dns64->excluded, env,
+						       &match, NULL);
 				if (result == ISC_R_SUCCESS && match <= 0) {
-					answer = ISC_TRUE;
+					answer = true;
 					if (aaaaok == NULL)
 						goto done;
-					aaaaok[i] = ISC_TRUE;
+					aaaaok[i] = true;
 					ok++;
 				}
 			} else
@@ -291,7 +293,7 @@ dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
  done:
 	if (!found && aaaaok != NULL) {
 		for (i = 0; i < aaaaoklen; i++)
-			aaaaok[i] = ISC_TRUE;
+			aaaaok[i] = true;
 	}
-	return (found ? answer : ISC_TRUE);
+	return (found ? answer : true);
 }

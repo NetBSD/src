@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: once.h,v 1.3 2019/01/09 16:55:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,17 +24,7 @@
 
 typedef pthread_once_t isc_once_t;
 
-#ifdef ISC_PLATFORM_BRACEPTHREADONCEINIT
-/*!
- * This accomodates systems that define PTHRAD_ONCE_INIT improperly.
- */
-#define ISC_ONCE_INIT { PTHREAD_ONCE_INIT }
-#else
-/*!
- * This is the usual case.
- */
 #define ISC_ONCE_INIT PTHREAD_ONCE_INIT
-#endif
 
 /* XXX We could do fancier error handling... */
 

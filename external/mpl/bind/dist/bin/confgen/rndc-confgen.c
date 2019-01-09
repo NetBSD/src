@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,16 +24,15 @@
 
 #include <config.h>
 
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 #include <isc/assertions.h>
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/file.h>
-#include <isc/keyboard.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/print.h>
@@ -60,7 +59,7 @@
 static char program[256];
 const char *progname;
 
-isc_boolean_t verbose = ISC_FALSE;
+bool verbose = false;
 
 const char *keyfile, *keydef;
 
@@ -72,7 +71,7 @@ usage(int status) {
 
 	fprintf(stderr, "\
 Usage:\n\
- %s [-a] [-b bits] [-c keyfile] [-k keyname] [-p port] [-r randomfile] \
+ %s [-a] [-b bits] [-c keyfile] [-k keyname] [-p port] \
 [-s addr] [-t chrootdir] [-u user]\n\
   -a:		 generate just the key clause and write it to keyfile (%s)\n\
   -A alg:	 algorithm (default hmac-sha256)\n\
@@ -80,7 +79,6 @@ Usage:\n\
   -c keyfile:	 specify an alternate key file (requires -a)\n\
   -k keyname:	 the name as it will be used  in named.conf and rndc.conf\n\
   -p port:	 the port named will listen on and rndc will connect to\n\
-  -r randomfile: source of random data (use \"keyboard\" for key timing)\n\
   -s addr:	 the address to which rndc should connect\n\
   -t chrootdir:	 write a keyfile in chrootdir as well (requires -a)\n\
   -u user:	 set the keyfile owner to \"user\" (requires -a)\n",
@@ -91,13 +89,12 @@ Usage:\n\
 
 int
 main(int argc, char **argv) {
-	isc_boolean_t show_final_mem = ISC_FALSE;
+	bool show_final_mem = false;
 	isc_buffer_t key_txtbuffer;
 	char key_txtsecret[256];
 	isc_mem_t *mctx = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 	const char *keyname = NULL;
-	const char *randomfile = NULL;
 	const char *serveraddr = NULL;
 	dns_secalg_t alg;
 	const char *algname;
@@ -109,7 +106,7 @@ main(int argc, char **argv) {
 	struct in6_addr addr6_dummy;
 	char *chrootdir = NULL;
 	char *user = NULL;
-	isc_boolean_t keyonly = ISC_FALSE;
+	bool keyonly = false;
 	int len;
 
 	keydef = keyfile = RNDC_KEYFILE;
@@ -124,14 +121,14 @@ main(int argc, char **argv) {
 	serveraddr = DEFAULT_SERVER;
 	port = DEFAULT_PORT;
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	while ((ch = isc_commandline_parse(argc, argv,
 					   "aA:b:c:hk:Mmp:r:s:t:u:Vy")) != -1)
 	{
 		switch (ch) {
 		case 'a':
-			keyonly = ISC_TRUE;
+			keyonly = true;
 			break;
 		case 'A':
 			algname = isc_commandline_argument;
@@ -158,7 +155,7 @@ main(int argc, char **argv) {
 			break;
 
 		case 'm':
-			show_final_mem = ISC_TRUE;
+			show_final_mem = true;
 			break;
 		case 'p':
 			port = strtol(isc_commandline_argument, &p, 10);
@@ -167,7 +164,7 @@ main(int argc, char **argv) {
 				      isc_commandline_argument);
 			break;
 		case 'r':
-			randomfile = isc_commandline_argument;
+			fatal("The -r option has been deprecated.");
 			break;
 		case 's':
 			serveraddr = isc_commandline_argument;
@@ -182,7 +179,7 @@ main(int argc, char **argv) {
 			user = isc_commandline_argument;
 			break;
 		case 'V':
-			verbose = ISC_TRUE;
+			verbose = true;
 			break;
 		case '?':
 			if (isc_commandline_option != '?') {
@@ -219,7 +216,7 @@ main(int argc, char **argv) {
 	DO("create memory context", isc_mem_create(0, 0, &mctx));
 	isc_buffer_init(&key_txtbuffer, &key_txtsecret, sizeof(key_txtsecret));
 
-	generate_key(mctx, randomfile, alg, keysize, &key_txtbuffer);
+	generate_key(mctx, alg, keysize, &key_txtbuffer);
 
 	if (keyonly) {
 		write_key_file(keyfile, chrootdir == NULL ? user : NULL,

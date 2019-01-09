@@ -1,4 +1,4 @@
-/*	$NetBSD: eid_31.h,v 1.1.1.1 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: eid_31.h,v 1.2 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

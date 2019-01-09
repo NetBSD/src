@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: nsec3_50.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,7 +29,7 @@ typedef struct dns_rdata_nsec3 {
 	dns_iterations_t	iterations;
 	unsigned char		salt_length;
 	unsigned char		next_length;
-	isc_uint16_t		len;
+	uint16_t		len;
 	unsigned char		*salt;
 	unsigned char		*next;
 	unsigned char		*typebits;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,9 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
@@ -38,14 +40,14 @@
 	} while (/*CONSTCOND*/0)
 
 
-static isc_result_t bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl);
+static isc_result_t bind_ttl(isc_textregion_t *source, uint32_t *ttl);
 
 /*
  * Helper for dns_ttl_totext().
  */
 static isc_result_t
-ttlfmt(unsigned int t, const char *s, isc_boolean_t verbose,
-       isc_boolean_t space, isc_buffer_t *target)
+ttlfmt(unsigned int t, const char *s, bool verbose,
+       bool space, isc_buffer_t *target)
 {
 	char tmp[60];
 	unsigned int len;
@@ -73,13 +75,8 @@ ttlfmt(unsigned int t, const char *s, isc_boolean_t verbose,
  * Derived from bind8 ns_format_ttl().
  */
 isc_result_t
-dns_ttl_totext(isc_uint32_t src, isc_boolean_t verbose, isc_buffer_t *target) {
-	return (dns_ttl_totext2(src, verbose, ISC_TRUE, target));
-}
-
-isc_result_t
-dns_ttl_totext2(isc_uint32_t src, isc_boolean_t verbose,
-		isc_boolean_t upcase, isc_buffer_t *target)
+dns_ttl_totext(uint32_t src, bool verbose,
+	       bool upcase, isc_buffer_t *target)
 {
 	unsigned secs, mins, hours, days, weeks, x;
 
@@ -92,24 +89,24 @@ dns_ttl_totext2(isc_uint32_t src, isc_boolean_t verbose,
 
 	x = 0;
 	if (weeks != 0) {
-		RETERR(ttlfmt(weeks, "week", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(weeks, "week", verbose, (x > 0), target));
 		x++;
 	}
 	if (days != 0) {
-		RETERR(ttlfmt(days, "day", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(days, "day", verbose, (x > 0), target));
 		x++;
 	}
 	if (hours != 0) {
-		RETERR(ttlfmt(hours, "hour", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(hours, "hour", verbose, (x > 0), target));
 		x++;
 	}
 	if (mins != 0) {
-		RETERR(ttlfmt(mins, "minute", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(mins, "minute", verbose, (x > 0), target));
 		x++;
 	}
 	if (secs != 0 ||
 	    (weeks == 0 && days == 0 && hours == 0 && mins == 0)) {
-		RETERR(ttlfmt(secs, "second", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(secs, "second", verbose, (x > 0), target));
 		x++;
 	}
 	INSIST (x > 0);
@@ -135,12 +132,12 @@ dns_ttl_totext2(isc_uint32_t src, isc_boolean_t verbose,
 }
 
 isc_result_t
-dns_counter_fromtext(isc_textregion_t *source, isc_uint32_t *ttl) {
+dns_counter_fromtext(isc_textregion_t *source, uint32_t *ttl) {
 	return (bind_ttl(source, ttl));
 }
 
 isc_result_t
-dns_ttl_fromtext(isc_textregion_t *source, isc_uint32_t *ttl) {
+dns_ttl_fromtext(isc_textregion_t *source, uint32_t *ttl) {
 	isc_result_t result;
 
 	result = bind_ttl(source, ttl);
@@ -150,9 +147,9 @@ dns_ttl_fromtext(isc_textregion_t *source, isc_uint32_t *ttl) {
 }
 
 static isc_result_t
-bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
-	isc_uint64_t tmp = 0ULL;
-	isc_uint32_t n;
+bind_ttl(isc_textregion_t *source, uint32_t *ttl) {
+	uint64_t tmp = 0ULL;
+	uint32_t n;
 	char *s;
 	char buf[64];
 	char nbuf[64]; /* Number buffer */
@@ -181,27 +178,27 @@ bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 		switch (*s) {
 		case 'w':
 		case 'W':
-			tmp += (isc_uint64_t) n * 7 * 24 * 3600;
+			tmp += (uint64_t) n * 7 * 24 * 3600;
 			s++;
 			break;
 		case 'd':
 		case 'D':
-			tmp += (isc_uint64_t) n * 24 * 3600;
+			tmp += (uint64_t) n * 24 * 3600;
 			s++;
 			break;
 		case 'h':
 		case 'H':
-			tmp += (isc_uint64_t) n * 3600;
+			tmp += (uint64_t) n * 3600;
 			s++;
 			break;
 		case 'm':
 		case 'M':
-			tmp += (isc_uint64_t) n * 60;
+			tmp += (uint64_t) n * 60;
 			s++;
 			break;
 		case 's':
 		case 'S':
-			tmp += (isc_uint64_t) n;
+			tmp += (uint64_t) n;
 			s++;
 			break;
 		case '\0':
@@ -218,6 +215,6 @@ bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 	if (tmp > 0xffffffffULL)
 		return (ISC_R_RANGE);
 
-	*ttl = (isc_uint32_t)(tmp & 0xffffffffUL);
+	*ttl = (uint32_t)(tmp & 0xffffffffUL);
 	return (ISC_R_SUCCESS);
 }

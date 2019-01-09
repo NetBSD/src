@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-destroy.c,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: pkcs11-destroy.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -67,10 +67,6 @@
 
 #ifdef WIN32
 #define sleep(x)	Sleep(x)
-#endif
-
-#if !(defined(HAVE_GETPASSPHRASE) || (defined (__SVR4) && defined (__sun)))
-#define getpassphrase(x)	getpass(x)
 #endif
 
 int
@@ -151,11 +147,12 @@ main(int argc, char *argv[]) {
 	if (lib_name != NULL)
 		pk11_set_lib_name(lib_name);
 
-	if (pin == NULL)
-		pin = getpassphrase("Enter Pin: ");
+	if (pin == NULL) {
+		pin = getpass("Enter Pin: ");
+	}
 
-	result = pk11_get_session(&pctx, OP_ANY, ISC_FALSE, ISC_TRUE,
-				  ISC_TRUE, (const char *) pin, slot);
+	result = pk11_get_session(&pctx, OP_ANY, false, true,
+				  true, (const char *) pin, slot);
 	if (result == PK11_R_NORANDOMSERVICE ||
 	    result == PK11_R_NODIGESTSERVICE ||
 	    result == PK11_R_NOAESSERVICE) {

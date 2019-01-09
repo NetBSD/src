@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,7 +75,11 @@ static const char *gai_messages[] = {
  * Returns an error message corresponding to an error code returned by
  * getaddrinfo() and getnameinfo()
  */
-IRS_GAISTRERROR_RETURN_T
+#if defined _WIN32
+char *
+#else
+const char *
+#endif
 gai_strerror(int ecode) {
 	union {
 		const char *const_ptr;

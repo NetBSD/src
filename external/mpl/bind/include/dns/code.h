@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2019  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@
 #ifndef DNS_CODE_H
 #define DNS_CODE_H 1
 
-#include <isc/boolean.h>
+#include <stdbool.h>
 #include <isc/result.h>
 
 #include <dns/name.h>
@@ -55,7 +55,10 @@
 #include "rdata/in_1/aaaa_28.c"
 #include "rdata/generic/loc_29.c"
 #include "rdata/generic/nxt_30.c"
+#include "rdata/in_1/eid_31.c"
+#include "rdata/in_1/nimloc_32.c"
 #include "rdata/in_1/srv_33.c"
+#include "rdata/in_1/atma_34.c"
 #include "rdata/generic/naptr_35.c"
 #include "rdata/in_1/kx_36.c"
 #include "rdata/generic/cert_37.c"
@@ -161,8 +164,23 @@
 		break; \
 	case 29: result = fromtext_loc(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 30: result = fromtext_nxt(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 31: switch (rdclass) { \
+		case 1: result = fromtext_in_eid(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
+	case 32: switch (rdclass) { \
+		case 1: result = fromtext_in_nimloc(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
 	case 33: switch (rdclass) { \
 		case 1: result = fromtext_in_srv(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
+	case 34: switch (rdclass) { \
+		case 1: result = fromtext_in_atma(rdclass, type, lexer, origin, options, target, callbacks); break; \
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
@@ -239,7 +257,7 @@
 		case 1: result = totext_in_a(rdata, tctx, target); break; \
 		case 3: result = totext_ch_a(rdata, tctx, target); break; \
 		case 4: result = totext_hs_a(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = totext_ns(rdata, tctx, target); break; \
@@ -253,7 +271,7 @@
 	case 10: result = totext_null(rdata, tctx, target); break; \
 	case 11: switch (rdata->rdclass) { \
 		case 1: result = totext_in_wks(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = totext_ptr(rdata, tctx, target); break; \
@@ -268,44 +286,59 @@
 	case 21: result = totext_rt(rdata, tctx, target); break; \
 	case 22: switch (rdata->rdclass) { \
 		case 1: result = totext_in_nsap(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata->rdclass) { \
 		case 1: result = totext_in_nsap_ptr(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = totext_sig(rdata, tctx, target); break; \
 	case 25: result = totext_key(rdata, tctx, target); break; \
 	case 26: switch (rdata->rdclass) { \
 		case 1: result = totext_in_px(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = totext_gpos(rdata, tctx, target); break; \
 	case 28: switch (rdata->rdclass) { \
 		case 1: result = totext_in_aaaa(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = totext_loc(rdata, tctx, target); break; \
 	case 30: result = totext_nxt(rdata, tctx, target); break; \
+	case 31: switch (rdata->rdclass) { \
+		case 1: result = totext_in_eid(rdata, tctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata->rdclass) { \
+		case 1: result = totext_in_nimloc(rdata, tctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata->rdclass) { \
 		case 1: result = totext_in_srv(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata->rdclass) { \
+		case 1: result = totext_in_atma(rdata, tctx, target); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = totext_naptr(rdata, tctx, target); break; \
 	case 36: switch (rdata->rdclass) { \
 		case 1: result = totext_in_kx(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = totext_cert(rdata, tctx, target); break; \
 	case 38: switch (rdata->rdclass) { \
 		case 1: result = totext_in_a6(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = totext_dname(rdata, tctx, target); break; \
@@ -313,7 +346,7 @@
 	case 41: result = totext_opt(rdata, tctx, target); break; \
 	case 42: switch (rdata->rdclass) { \
 		case 1: result = totext_in_apl(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = totext_ds(rdata, tctx, target); break; \
@@ -324,7 +357,7 @@
 	case 48: result = totext_dnskey(rdata, tctx, target); break; \
 	case 49: switch (rdata->rdclass) { \
 		case 1: result = totext_in_dhcid(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = totext_nsec3(rdata, tctx, target); break; \
@@ -350,7 +383,7 @@
 	case 249: result = totext_tkey(rdata, tctx, target); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = totext_any_tsig(rdata, tctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = totext_uri(rdata, tctx, target); break; \
@@ -360,7 +393,7 @@
 	case 32768: result = totext_ta(rdata, tctx, target); break; \
 	case 32769: result = totext_dlv(rdata, tctx, target); break; \
 	case 65533: result = totext_keydata(rdata, tctx, target); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define FROMWIRESWITCH \
@@ -369,7 +402,7 @@
 		case 1: result = fromwire_in_a(rdclass, type, source, dctx, options, target); break; \
 		case 3: result = fromwire_ch_a(rdclass, type, source, dctx, options, target); break; \
 		case 4: result = fromwire_hs_a(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = fromwire_ns(rdclass, type, source, dctx, options, target); break; \
@@ -383,7 +416,7 @@
 	case 10: result = fromwire_null(rdclass, type, source, dctx, options, target); break; \
 	case 11: switch (rdclass) { \
 		case 1: result = fromwire_in_wks(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = fromwire_ptr(rdclass, type, source, dctx, options, target); break; \
@@ -398,44 +431,59 @@
 	case 21: result = fromwire_rt(rdclass, type, source, dctx, options, target); break; \
 	case 22: switch (rdclass) { \
 		case 1: result = fromwire_in_nsap(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdclass) { \
 		case 1: result = fromwire_in_nsap_ptr(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = fromwire_sig(rdclass, type, source, dctx, options, target); break; \
 	case 25: result = fromwire_key(rdclass, type, source, dctx, options, target); break; \
 	case 26: switch (rdclass) { \
 		case 1: result = fromwire_in_px(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = fromwire_gpos(rdclass, type, source, dctx, options, target); break; \
 	case 28: switch (rdclass) { \
 		case 1: result = fromwire_in_aaaa(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = fromwire_loc(rdclass, type, source, dctx, options, target); break; \
 	case 30: result = fromwire_nxt(rdclass, type, source, dctx, options, target); break; \
+	case 31: switch (rdclass) { \
+		case 1: result = fromwire_in_eid(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdclass) { \
+		case 1: result = fromwire_in_nimloc(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdclass) { \
 		case 1: result = fromwire_in_srv(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdclass) { \
+		case 1: result = fromwire_in_atma(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = fromwire_naptr(rdclass, type, source, dctx, options, target); break; \
 	case 36: switch (rdclass) { \
 		case 1: result = fromwire_in_kx(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = fromwire_cert(rdclass, type, source, dctx, options, target); break; \
 	case 38: switch (rdclass) { \
 		case 1: result = fromwire_in_a6(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = fromwire_dname(rdclass, type, source, dctx, options, target); break; \
@@ -443,7 +491,7 @@
 	case 41: result = fromwire_opt(rdclass, type, source, dctx, options, target); break; \
 	case 42: switch (rdclass) { \
 		case 1: result = fromwire_in_apl(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = fromwire_ds(rdclass, type, source, dctx, options, target); break; \
@@ -454,7 +502,7 @@
 	case 48: result = fromwire_dnskey(rdclass, type, source, dctx, options, target); break; \
 	case 49: switch (rdclass) { \
 		case 1: result = fromwire_in_dhcid(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = fromwire_nsec3(rdclass, type, source, dctx, options, target); break; \
@@ -480,7 +528,7 @@
 	case 249: result = fromwire_tkey(rdclass, type, source, dctx, options, target); break; \
 	case 250: switch (rdclass) { \
 		case 255: result = fromwire_any_tsig(rdclass, type, source, dctx, options, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = fromwire_uri(rdclass, type, source, dctx, options, target); break; \
@@ -490,7 +538,7 @@
 	case 32768: result = fromwire_ta(rdclass, type, source, dctx, options, target); break; \
 	case 32769: result = fromwire_dlv(rdclass, type, source, dctx, options, target); break; \
 	case 65533: result = fromwire_keydata(rdclass, type, source, dctx, options, target); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define TOWIRESWITCH \
@@ -499,7 +547,7 @@
 		case 1: result = towire_in_a(rdata, cctx, target); break; \
 		case 3: result = towire_ch_a(rdata, cctx, target); break; \
 		case 4: result = towire_hs_a(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = towire_ns(rdata, cctx, target); break; \
@@ -513,7 +561,7 @@
 	case 10: result = towire_null(rdata, cctx, target); break; \
 	case 11: switch (rdata->rdclass) { \
 		case 1: result = towire_in_wks(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = towire_ptr(rdata, cctx, target); break; \
@@ -528,44 +576,59 @@
 	case 21: result = towire_rt(rdata, cctx, target); break; \
 	case 22: switch (rdata->rdclass) { \
 		case 1: result = towire_in_nsap(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata->rdclass) { \
 		case 1: result = towire_in_nsap_ptr(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = towire_sig(rdata, cctx, target); break; \
 	case 25: result = towire_key(rdata, cctx, target); break; \
 	case 26: switch (rdata->rdclass) { \
 		case 1: result = towire_in_px(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = towire_gpos(rdata, cctx, target); break; \
 	case 28: switch (rdata->rdclass) { \
 		case 1: result = towire_in_aaaa(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = towire_loc(rdata, cctx, target); break; \
 	case 30: result = towire_nxt(rdata, cctx, target); break; \
+	case 31: switch (rdata->rdclass) { \
+		case 1: result = towire_in_eid(rdata, cctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata->rdclass) { \
+		case 1: result = towire_in_nimloc(rdata, cctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata->rdclass) { \
 		case 1: result = towire_in_srv(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata->rdclass) { \
+		case 1: result = towire_in_atma(rdata, cctx, target); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = towire_naptr(rdata, cctx, target); break; \
 	case 36: switch (rdata->rdclass) { \
 		case 1: result = towire_in_kx(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = towire_cert(rdata, cctx, target); break; \
 	case 38: switch (rdata->rdclass) { \
 		case 1: result = towire_in_a6(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = towire_dname(rdata, cctx, target); break; \
@@ -573,7 +636,7 @@
 	case 41: result = towire_opt(rdata, cctx, target); break; \
 	case 42: switch (rdata->rdclass) { \
 		case 1: result = towire_in_apl(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = towire_ds(rdata, cctx, target); break; \
@@ -584,7 +647,7 @@
 	case 48: result = towire_dnskey(rdata, cctx, target); break; \
 	case 49: switch (rdata->rdclass) { \
 		case 1: result = towire_in_dhcid(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = towire_nsec3(rdata, cctx, target); break; \
@@ -610,7 +673,7 @@
 	case 249: result = towire_tkey(rdata, cctx, target); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = towire_any_tsig(rdata, cctx, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = towire_uri(rdata, cctx, target); break; \
@@ -620,7 +683,7 @@
 	case 32768: result = towire_ta(rdata, cctx, target); break; \
 	case 32769: result = towire_dlv(rdata, cctx, target); break; \
 	case 65533: result = towire_keydata(rdata, cctx, target); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define COMPARESWITCH \
@@ -629,7 +692,7 @@
 		case 1: result = compare_in_a(rdata1, rdata2); break; \
 		case 3: result = compare_ch_a(rdata1, rdata2); break; \
 		case 4: result = compare_hs_a(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = compare_ns(rdata1, rdata2); break; \
@@ -643,7 +706,7 @@
 	case 10: result = compare_null(rdata1, rdata2); break; \
 	case 11: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_wks(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = compare_ptr(rdata1, rdata2); break; \
@@ -658,44 +721,59 @@
 	case 21: result = compare_rt(rdata1, rdata2); break; \
 	case 22: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_nsap(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_nsap_ptr(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = compare_sig(rdata1, rdata2); break; \
 	case 25: result = compare_key(rdata1, rdata2); break; \
 	case 26: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_px(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = compare_gpos(rdata1, rdata2); break; \
 	case 28: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_aaaa(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = compare_loc(rdata1, rdata2); break; \
 	case 30: result = compare_nxt(rdata1, rdata2); break; \
+	case 31: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_eid(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_nimloc(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_srv(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_atma(rdata1, rdata2); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = compare_naptr(rdata1, rdata2); break; \
 	case 36: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_kx(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = compare_cert(rdata1, rdata2); break; \
 	case 38: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_a6(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = compare_dname(rdata1, rdata2); break; \
@@ -703,7 +781,7 @@
 	case 41: result = compare_opt(rdata1, rdata2); break; \
 	case 42: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_apl(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = compare_ds(rdata1, rdata2); break; \
@@ -714,7 +792,7 @@
 	case 48: result = compare_dnskey(rdata1, rdata2); break; \
 	case 49: switch (rdata1->rdclass) { \
 		case 1: result = compare_in_dhcid(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = compare_nsec3(rdata1, rdata2); break; \
@@ -740,7 +818,7 @@
 	case 249: result = compare_tkey(rdata1, rdata2); break; \
 	case 250: switch (rdata1->rdclass) { \
 		case 255: result = compare_any_tsig(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = compare_uri(rdata1, rdata2); break; \
@@ -750,7 +828,7 @@
 	case 32768: result = compare_ta(rdata1, rdata2); break; \
 	case 32769: result = compare_dlv(rdata1, rdata2); break; \
 	case 65533: result = compare_keydata(rdata1, rdata2); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define CASECOMPARESWITCH \
@@ -759,7 +837,7 @@
 		case 1: result = casecompare_in_a(rdata1, rdata2); break; \
 		case 3: result = casecompare_ch_a(rdata1, rdata2); break; \
 		case 4: result = casecompare_hs_a(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = casecompare_ns(rdata1, rdata2); break; \
@@ -773,7 +851,7 @@
 	case 10: result = casecompare_null(rdata1, rdata2); break; \
 	case 11: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_wks(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = casecompare_ptr(rdata1, rdata2); break; \
@@ -788,44 +866,59 @@
 	case 21: result = casecompare_rt(rdata1, rdata2); break; \
 	case 22: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_nsap(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_nsap_ptr(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = casecompare_sig(rdata1, rdata2); break; \
 	case 25: result = casecompare_key(rdata1, rdata2); break; \
 	case 26: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_px(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = casecompare_gpos(rdata1, rdata2); break; \
 	case 28: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_aaaa(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = casecompare_loc(rdata1, rdata2); break; \
 	case 30: result = casecompare_nxt(rdata1, rdata2); break; \
+	case 31: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_eid(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_nimloc(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_srv(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_atma(rdata1, rdata2); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = casecompare_naptr(rdata1, rdata2); break; \
 	case 36: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_kx(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = casecompare_cert(rdata1, rdata2); break; \
 	case 38: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_a6(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = casecompare_dname(rdata1, rdata2); break; \
@@ -833,7 +926,7 @@
 	case 41: result = casecompare_opt(rdata1, rdata2); break; \
 	case 42: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_apl(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = casecompare_ds(rdata1, rdata2); break; \
@@ -844,7 +937,7 @@
 	case 48: result = casecompare_dnskey(rdata1, rdata2); break; \
 	case 49: switch (rdata1->rdclass) { \
 		case 1: result = casecompare_in_dhcid(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = casecompare_nsec3(rdata1, rdata2); break; \
@@ -870,7 +963,7 @@
 	case 249: result = casecompare_tkey(rdata1, rdata2); break; \
 	case 250: switch (rdata1->rdclass) { \
 		case 255: result = casecompare_any_tsig(rdata1, rdata2); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = casecompare_uri(rdata1, rdata2); break; \
@@ -880,7 +973,7 @@
 	case 32768: result = casecompare_ta(rdata1, rdata2); break; \
 	case 32769: result = casecompare_dlv(rdata1, rdata2); break; \
 	case 65533: result = casecompare_keydata(rdata1, rdata2); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define FROMSTRUCTSWITCH \
@@ -889,7 +982,7 @@
 		case 1: result = fromstruct_in_a(rdclass, type, source, target); break; \
 		case 3: result = fromstruct_ch_a(rdclass, type, source, target); break; \
 		case 4: result = fromstruct_hs_a(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = fromstruct_ns(rdclass, type, source, target); break; \
@@ -903,7 +996,7 @@
 	case 10: result = fromstruct_null(rdclass, type, source, target); break; \
 	case 11: switch (rdclass) { \
 		case 1: result = fromstruct_in_wks(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = fromstruct_ptr(rdclass, type, source, target); break; \
@@ -918,44 +1011,59 @@
 	case 21: result = fromstruct_rt(rdclass, type, source, target); break; \
 	case 22: switch (rdclass) { \
 		case 1: result = fromstruct_in_nsap(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdclass) { \
 		case 1: result = fromstruct_in_nsap_ptr(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = fromstruct_sig(rdclass, type, source, target); break; \
 	case 25: result = fromstruct_key(rdclass, type, source, target); break; \
 	case 26: switch (rdclass) { \
 		case 1: result = fromstruct_in_px(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = fromstruct_gpos(rdclass, type, source, target); break; \
 	case 28: switch (rdclass) { \
 		case 1: result = fromstruct_in_aaaa(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = fromstruct_loc(rdclass, type, source, target); break; \
 	case 30: result = fromstruct_nxt(rdclass, type, source, target); break; \
+	case 31: switch (rdclass) { \
+		case 1: result = fromstruct_in_eid(rdclass, type, source, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdclass) { \
+		case 1: result = fromstruct_in_nimloc(rdclass, type, source, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdclass) { \
 		case 1: result = fromstruct_in_srv(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdclass) { \
+		case 1: result = fromstruct_in_atma(rdclass, type, source, target); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = fromstruct_naptr(rdclass, type, source, target); break; \
 	case 36: switch (rdclass) { \
 		case 1: result = fromstruct_in_kx(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = fromstruct_cert(rdclass, type, source, target); break; \
 	case 38: switch (rdclass) { \
 		case 1: result = fromstruct_in_a6(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = fromstruct_dname(rdclass, type, source, target); break; \
@@ -963,7 +1071,7 @@
 	case 41: result = fromstruct_opt(rdclass, type, source, target); break; \
 	case 42: switch (rdclass) { \
 		case 1: result = fromstruct_in_apl(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = fromstruct_ds(rdclass, type, source, target); break; \
@@ -974,7 +1082,7 @@
 	case 48: result = fromstruct_dnskey(rdclass, type, source, target); break; \
 	case 49: switch (rdclass) { \
 		case 1: result = fromstruct_in_dhcid(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = fromstruct_nsec3(rdclass, type, source, target); break; \
@@ -1000,7 +1108,7 @@
 	case 249: result = fromstruct_tkey(rdclass, type, source, target); break; \
 	case 250: switch (rdclass) { \
 		case 255: result = fromstruct_any_tsig(rdclass, type, source, target); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = fromstruct_uri(rdclass, type, source, target); break; \
@@ -1010,7 +1118,7 @@
 	case 32768: result = fromstruct_ta(rdclass, type, source, target); break; \
 	case 32769: result = fromstruct_dlv(rdclass, type, source, target); break; \
 	case 65533: result = fromstruct_keydata(rdclass, type, source, target); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define TOSTRUCTSWITCH \
@@ -1019,7 +1127,7 @@
 		case 1: result = tostruct_in_a(rdata, target, mctx); break; \
 		case 3: result = tostruct_ch_a(rdata, target, mctx); break; \
 		case 4: result = tostruct_hs_a(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = tostruct_ns(rdata, target, mctx); break; \
@@ -1033,7 +1141,7 @@
 	case 10: result = tostruct_null(rdata, target, mctx); break; \
 	case 11: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_wks(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = tostruct_ptr(rdata, target, mctx); break; \
@@ -1048,44 +1156,59 @@
 	case 21: result = tostruct_rt(rdata, target, mctx); break; \
 	case 22: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_nsap(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_nsap_ptr(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = tostruct_sig(rdata, target, mctx); break; \
 	case 25: result = tostruct_key(rdata, target, mctx); break; \
 	case 26: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_px(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = tostruct_gpos(rdata, target, mctx); break; \
 	case 28: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_aaaa(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = tostruct_loc(rdata, target, mctx); break; \
 	case 30: result = tostruct_nxt(rdata, target, mctx); break; \
+	case 31: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_eid(rdata, target, mctx); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_nimloc(rdata, target, mctx); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_srv(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_atma(rdata, target, mctx); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = tostruct_naptr(rdata, target, mctx); break; \
 	case 36: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_kx(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = tostruct_cert(rdata, target, mctx); break; \
 	case 38: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_a6(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = tostruct_dname(rdata, target, mctx); break; \
@@ -1093,7 +1216,7 @@
 	case 41: result = tostruct_opt(rdata, target, mctx); break; \
 	case 42: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_apl(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = tostruct_ds(rdata, target, mctx); break; \
@@ -1104,7 +1227,7 @@
 	case 48: result = tostruct_dnskey(rdata, target, mctx); break; \
 	case 49: switch (rdata->rdclass) { \
 		case 1: result = tostruct_in_dhcid(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = tostruct_nsec3(rdata, target, mctx); break; \
@@ -1130,7 +1253,7 @@
 	case 249: result = tostruct_tkey(rdata, target, mctx); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = tostruct_any_tsig(rdata, target, mctx); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = tostruct_uri(rdata, target, mctx); break; \
@@ -1140,7 +1263,7 @@
 	case 32768: result = tostruct_ta(rdata, target, mctx); break; \
 	case 32769: result = tostruct_dlv(rdata, target, mctx); break; \
 	case 65533: result = tostruct_keydata(rdata, target, mctx); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define FREESTRUCTSWITCH \
@@ -1201,8 +1324,23 @@
 		break; \
 	case 29: freestruct_loc(source); break; \
 	case 30: freestruct_nxt(source); break; \
+	case 31: switch (common->rdclass) { \
+		case 1: freestruct_in_eid(source); break; \
+		default: break; \
+		} \
+		break; \
+	case 32: switch (common->rdclass) { \
+		case 1: freestruct_in_nimloc(source); break; \
+		default: break; \
+		} \
+		break; \
 	case 33: switch (common->rdclass) { \
 		case 1: freestruct_in_srv(source); break; \
+		default: break; \
+		} \
+		break; \
+	case 34: switch (common->rdclass) { \
+		case 1: freestruct_in_atma(source); break; \
 		default: break; \
 		} \
 		break; \
@@ -1279,7 +1417,7 @@
 		case 1: result = additionaldata_in_a(rdata, add, arg); break; \
 		case 3: result = additionaldata_ch_a(rdata, add, arg); break; \
 		case 4: result = additionaldata_hs_a(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = additionaldata_ns(rdata, add, arg); break; \
@@ -1293,7 +1431,7 @@
 	case 10: result = additionaldata_null(rdata, add, arg); break; \
 	case 11: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_wks(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = additionaldata_ptr(rdata, add, arg); break; \
@@ -1308,44 +1446,59 @@
 	case 21: result = additionaldata_rt(rdata, add, arg); break; \
 	case 22: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_nsap(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_nsap_ptr(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = additionaldata_sig(rdata, add, arg); break; \
 	case 25: result = additionaldata_key(rdata, add, arg); break; \
 	case 26: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_px(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = additionaldata_gpos(rdata, add, arg); break; \
 	case 28: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_aaaa(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = additionaldata_loc(rdata, add, arg); break; \
 	case 30: result = additionaldata_nxt(rdata, add, arg); break; \
+	case 31: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_eid(rdata, add, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_nimloc(rdata, add, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_srv(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_atma(rdata, add, arg); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = additionaldata_naptr(rdata, add, arg); break; \
 	case 36: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_kx(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = additionaldata_cert(rdata, add, arg); break; \
 	case 38: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_a6(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = additionaldata_dname(rdata, add, arg); break; \
@@ -1353,7 +1506,7 @@
 	case 41: result = additionaldata_opt(rdata, add, arg); break; \
 	case 42: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_apl(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = additionaldata_ds(rdata, add, arg); break; \
@@ -1364,7 +1517,7 @@
 	case 48: result = additionaldata_dnskey(rdata, add, arg); break; \
 	case 49: switch (rdata->rdclass) { \
 		case 1: result = additionaldata_in_dhcid(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = additionaldata_nsec3(rdata, add, arg); break; \
@@ -1390,7 +1543,7 @@
 	case 249: result = additionaldata_tkey(rdata, add, arg); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = additionaldata_any_tsig(rdata, add, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = additionaldata_uri(rdata, add, arg); break; \
@@ -1400,7 +1553,7 @@
 	case 32768: result = additionaldata_ta(rdata, add, arg); break; \
 	case 32769: result = additionaldata_dlv(rdata, add, arg); break; \
 	case 65533: result = additionaldata_keydata(rdata, add, arg); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define DIGESTSWITCH \
@@ -1409,7 +1562,7 @@
 		case 1: result = digest_in_a(rdata, digest, arg); break; \
 		case 3: result = digest_ch_a(rdata, digest, arg); break; \
 		case 4: result = digest_hs_a(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 2: result = digest_ns(rdata, digest, arg); break; \
@@ -1423,7 +1576,7 @@
 	case 10: result = digest_null(rdata, digest, arg); break; \
 	case 11: switch (rdata->rdclass) { \
 		case 1: result = digest_in_wks(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 12: result = digest_ptr(rdata, digest, arg); break; \
@@ -1438,44 +1591,59 @@
 	case 21: result = digest_rt(rdata, digest, arg); break; \
 	case 22: switch (rdata->rdclass) { \
 		case 1: result = digest_in_nsap(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata->rdclass) { \
 		case 1: result = digest_in_nsap_ptr(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 24: result = digest_sig(rdata, digest, arg); break; \
 	case 25: result = digest_key(rdata, digest, arg); break; \
 	case 26: switch (rdata->rdclass) { \
 		case 1: result = digest_in_px(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 27: result = digest_gpos(rdata, digest, arg); break; \
 	case 28: switch (rdata->rdclass) { \
 		case 1: result = digest_in_aaaa(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 29: result = digest_loc(rdata, digest, arg); break; \
 	case 30: result = digest_nxt(rdata, digest, arg); break; \
+	case 31: switch (rdata->rdclass) { \
+		case 1: result = digest_in_eid(rdata, digest, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata->rdclass) { \
+		case 1: result = digest_in_nimloc(rdata, digest, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata->rdclass) { \
 		case 1: result = digest_in_srv(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata->rdclass) { \
+		case 1: result = digest_in_atma(rdata, digest, arg); break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 35: result = digest_naptr(rdata, digest, arg); break; \
 	case 36: switch (rdata->rdclass) { \
 		case 1: result = digest_in_kx(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 37: result = digest_cert(rdata, digest, arg); break; \
 	case 38: switch (rdata->rdclass) { \
 		case 1: result = digest_in_a6(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 39: result = digest_dname(rdata, digest, arg); break; \
@@ -1483,7 +1651,7 @@
 	case 41: result = digest_opt(rdata, digest, arg); break; \
 	case 42: switch (rdata->rdclass) { \
 		case 1: result = digest_in_apl(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 43: result = digest_ds(rdata, digest, arg); break; \
@@ -1494,7 +1662,7 @@
 	case 48: result = digest_dnskey(rdata, digest, arg); break; \
 	case 49: switch (rdata->rdclass) { \
 		case 1: result = digest_in_dhcid(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 50: result = digest_nsec3(rdata, digest, arg); break; \
@@ -1520,7 +1688,7 @@
 	case 249: result = digest_tkey(rdata, digest, arg); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = digest_any_tsig(rdata, digest, arg); break; \
-		default: use_default = ISC_TRUE; break; \
+		default: use_default = true; break; \
 		} \
 		break; \
 	case 256: result = digest_uri(rdata, digest, arg); break; \
@@ -1530,7 +1698,7 @@
 	case 32768: result = digest_ta(rdata, digest, arg); break; \
 	case 32769: result = digest_dlv(rdata, digest, arg); break; \
 	case 65533: result = digest_keydata(rdata, digest, arg); break; \
-	default: use_default = ISC_TRUE; break; \
+	default: use_default = true; break; \
 	}
 
 #define CHECKOWNERSWITCH \
@@ -1539,7 +1707,7 @@
 		case 1: result = checkowner_in_a(name, rdclass, type, wildcard); break; \
 		case 3: result = checkowner_ch_a(name, rdclass, type, wildcard); break; \
 		case 4: result = checkowner_hs_a(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 2: result = checkowner_ns(name, rdclass, type, wildcard); break; \
@@ -1553,7 +1721,7 @@
 	case 10: result = checkowner_null(name, rdclass, type, wildcard); break; \
 	case 11: switch (rdclass) { \
 		case 1: result = checkowner_in_wks(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 12: result = checkowner_ptr(name, rdclass, type, wildcard); break; \
@@ -1568,44 +1736,59 @@
 	case 21: result = checkowner_rt(name, rdclass, type, wildcard); break; \
 	case 22: switch (rdclass) { \
 		case 1: result = checkowner_in_nsap(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 23: switch (rdclass) { \
 		case 1: result = checkowner_in_nsap_ptr(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 24: result = checkowner_sig(name, rdclass, type, wildcard); break; \
 	case 25: result = checkowner_key(name, rdclass, type, wildcard); break; \
 	case 26: switch (rdclass) { \
 		case 1: result = checkowner_in_px(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 27: result = checkowner_gpos(name, rdclass, type, wildcard); break; \
 	case 28: switch (rdclass) { \
 		case 1: result = checkowner_in_aaaa(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 29: result = checkowner_loc(name, rdclass, type, wildcard); break; \
 	case 30: result = checkowner_nxt(name, rdclass, type, wildcard); break; \
+	case 31: switch (rdclass) { \
+		case 1: result = checkowner_in_eid(name, rdclass, type, wildcard); break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 32: switch (rdclass) { \
+		case 1: result = checkowner_in_nimloc(name, rdclass, type, wildcard); break; \
+		default: result = true; break; \
+		} \
+		break; \
 	case 33: switch (rdclass) { \
 		case 1: result = checkowner_in_srv(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 34: switch (rdclass) { \
+		case 1: result = checkowner_in_atma(name, rdclass, type, wildcard); break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 35: result = checkowner_naptr(name, rdclass, type, wildcard); break; \
 	case 36: switch (rdclass) { \
 		case 1: result = checkowner_in_kx(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 37: result = checkowner_cert(name, rdclass, type, wildcard); break; \
 	case 38: switch (rdclass) { \
 		case 1: result = checkowner_in_a6(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 39: result = checkowner_dname(name, rdclass, type, wildcard); break; \
@@ -1613,7 +1796,7 @@
 	case 41: result = checkowner_opt(name, rdclass, type, wildcard); break; \
 	case 42: switch (rdclass) { \
 		case 1: result = checkowner_in_apl(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 43: result = checkowner_ds(name, rdclass, type, wildcard); break; \
@@ -1624,7 +1807,7 @@
 	case 48: result = checkowner_dnskey(name, rdclass, type, wildcard); break; \
 	case 49: switch (rdclass) { \
 		case 1: result = checkowner_in_dhcid(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 50: result = checkowner_nsec3(name, rdclass, type, wildcard); break; \
@@ -1650,7 +1833,7 @@
 	case 249: result = checkowner_tkey(name, rdclass, type, wildcard); break; \
 	case 250: switch (rdclass) { \
 		case 255: result = checkowner_any_tsig(name, rdclass, type, wildcard); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 256: result = checkowner_uri(name, rdclass, type, wildcard); break; \
@@ -1660,7 +1843,7 @@
 	case 32768: result = checkowner_ta(name, rdclass, type, wildcard); break; \
 	case 32769: result = checkowner_dlv(name, rdclass, type, wildcard); break; \
 	case 65533: result = checkowner_keydata(name, rdclass, type, wildcard); break; \
-	default: result = ISC_TRUE; break; \
+	default: result = true; break; \
 	}
 
 #define CHECKNAMESSWITCH \
@@ -1669,7 +1852,7 @@
 		case 1: result = checknames_in_a(rdata, owner, bad); break; \
 		case 3: result = checknames_ch_a(rdata, owner, bad); break; \
 		case 4: result = checknames_hs_a(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 2: result = checknames_ns(rdata, owner, bad); break; \
@@ -1683,7 +1866,7 @@
 	case 10: result = checknames_null(rdata, owner, bad); break; \
 	case 11: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_wks(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 12: result = checknames_ptr(rdata, owner, bad); break; \
@@ -1698,44 +1881,59 @@
 	case 21: result = checknames_rt(rdata, owner, bad); break; \
 	case 22: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_nsap(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_nsap_ptr(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 24: result = checknames_sig(rdata, owner, bad); break; \
 	case 25: result = checknames_key(rdata, owner, bad); break; \
 	case 26: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_px(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 27: result = checknames_gpos(rdata, owner, bad); break; \
 	case 28: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_aaaa(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 29: result = checknames_loc(rdata, owner, bad); break; \
 	case 30: result = checknames_nxt(rdata, owner, bad); break; \
+	case 31: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_eid(rdata, owner, bad); break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 32: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_nimloc(rdata, owner, bad); break; \
+		default: result = true; break; \
+		} \
+		break; \
 	case 33: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_srv(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 34: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_atma(rdata, owner, bad); break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 35: result = checknames_naptr(rdata, owner, bad); break; \
 	case 36: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_kx(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 37: result = checknames_cert(rdata, owner, bad); break; \
 	case 38: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_a6(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 39: result = checknames_dname(rdata, owner, bad); break; \
@@ -1743,7 +1941,7 @@
 	case 41: result = checknames_opt(rdata, owner, bad); break; \
 	case 42: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_apl(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 43: result = checknames_ds(rdata, owner, bad); break; \
@@ -1754,7 +1952,7 @@
 	case 48: result = checknames_dnskey(rdata, owner, bad); break; \
 	case 49: switch (rdata->rdclass) { \
 		case 1: result = checknames_in_dhcid(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 50: result = checknames_nsec3(rdata, owner, bad); break; \
@@ -1780,7 +1978,7 @@
 	case 249: result = checknames_tkey(rdata, owner, bad); break; \
 	case 250: switch (rdata->rdclass) { \
 		case 255: result = checknames_any_tsig(rdata, owner, bad); break; \
-		default: result = ISC_TRUE; break; \
+		default: result = true; break; \
 		} \
 		break; \
 	case 256: result = checknames_uri(rdata, owner, bad); break; \
@@ -1790,7 +1988,7 @@
 	case 32768: result = checknames_ta(rdata, owner, bad); break; \
 	case 32769: result = checknames_dlv(rdata, owner, bad); break; \
 	case 65533: result = checknames_keydata(rdata, owner, bad); break; \
-	default: result = ISC_TRUE; break; \
+	default: result = true; break; \
 	}
 #define RDATATYPE_COMPARE(_s, _d, _tn, _n, _tp) \
 	do { \
@@ -1806,229 +2004,229 @@
 #define RDATATYPE_FROMTEXT_SW(_hash,_typename,_length,_typep) \
 	switch (_hash) { \
 		case 16: \
-			RDATATYPE_COMPARE("reserved0", 0, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("reserved0", 0, _typename,  _length, _typep); \
 			break; \
 		case 34: \
-			RDATATYPE_COMPARE("a", 1, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("a", 1, _typename,  _length, _typep); \
 			break; \
 		case 80: \
-			RDATATYPE_COMPARE("ns", 2, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("ns", 2, _typename,  _length, _typep); \
 			break; \
 		case 92: \
-			RDATATYPE_COMPARE("md", 3, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("md", 3, _typename,  _length, _typep); \
 			break; \
 		case 58: \
-			RDATATYPE_COMPARE("mf", 4, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("mf", 4, _typename,  _length, _typep); \
 			break; \
 		case 8: \
-			RDATATYPE_COMPARE("cname", 5, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("mx", 15, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("cname", 5, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("mx", 15, _typename,  _length, _typep); \
 			break; \
 		case 182: \
-			RDATATYPE_COMPARE("soa", 6, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("ta", 32768, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("soa", 6, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("ta", 32768, _typename,  _length, _typep); \
 			break; \
 		case 126: \
-			RDATATYPE_COMPARE("mb", 7, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("mb", 7, _typename,  _length, _typep); \
 			break; \
 		case 169: \
-			RDATATYPE_COMPARE("mg", 8, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("mg", 8, _typename,  _length, _typep); \
 			break; \
 		case 110: \
-			RDATATYPE_COMPARE("mr", 9, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("minfo", 14, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("mr", 9, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("minfo", 14, _typename,  _length, _typep); \
 			break; \
 		case 24: \
-			RDATATYPE_COMPARE("null", 10, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("kx", 36, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("nsec3param", 51, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("null", 10, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("kx", 36, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("nsec3param", 51, _typename,  _length, _typep); \
 			break; \
 		case 206: \
-			RDATATYPE_COMPARE("wks", 11, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("wks", 11, _typename,  _length, _typep); \
 			break; \
 		case 54: \
-			RDATATYPE_COMPARE("ptr", 12, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("naptr", 35, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("ptr", 12, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("naptr", 35, _typename,  _length, _typep); \
 			break; \
 		case 67: \
-			RDATATYPE_COMPARE("hinfo", 13, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("hinfo", 13, _typename,  _length, _typep); \
 			break; \
 		case 236: \
-			RDATATYPE_COMPARE("txt", 16, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("txt", 16, _typename,  _length, _typep); \
 			break; \
 		case 192: \
-			RDATATYPE_COMPARE("rp", 17, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("rp", 17, _typename,  _length, _typep); \
 			break; \
 		case 12: \
-			RDATATYPE_COMPARE("afsdb", 18, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("afsdb", 18, _typename,  _length, _typep); \
 			break; \
 		case 119: \
-			RDATATYPE_COMPARE("x25", 19, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("x25", 19, _typename,  _length, _typep); \
 			break; \
 		case 214: \
-			RDATATYPE_COMPARE("isdn", 20, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("isdn", 20, _typename,  _length, _typep); \
 			break; \
 		case 144: \
-			RDATATYPE_COMPARE("rt", 21, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("rt", 21, _typename,  _length, _typep); \
 			break; \
 		case 224: \
-			RDATATYPE_COMPARE("nsap", 22, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("uid", 101, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("nsap", 22, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("uid", 101, _typename,  _length, _typep); \
 			break; \
 		case 140: \
-			RDATATYPE_COMPARE("nsap-ptr", 23, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("l64", 106, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("nsap-ptr", 23, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("l64", 106, _typename,  _length, _typep); \
 			break; \
 		case 122: \
-			RDATATYPE_COMPARE("sig", 24, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("dlv", 32769, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("sig", 24, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("dlv", 32769, _typename,  _length, _typep); \
 			break; \
 		case 254: \
-			RDATATYPE_COMPARE("key", 25, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("talink", 58, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("key", 25, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("talink", 58, _typename,  _length, _typep); \
 			break; \
 		case 112: \
-			RDATATYPE_COMPARE("px", 26, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("px", 26, _typename,  _length, _typep); \
 			break; \
 		case 17: \
-			RDATATYPE_COMPARE("gpos", 27, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("gpos", 27, _typename,  _length, _typep); \
 			break; \
 		case 69: \
-			RDATATYPE_COMPARE("aaaa", 28, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("atma", 34, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("aaaa", 28, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("atma", 34, _typename,  _length, _typep); \
 			break; \
 		case 237: \
-			RDATATYPE_COMPARE("loc", 29, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("loc", 29, _typename,  _length, _typep); \
 			break; \
 		case 52: \
-			RDATATYPE_COMPARE("nxt", 30, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("nxt", 30, _typename,  _length, _typep); \
 			break; \
 		case 160: \
-			RDATATYPE_COMPARE("eid", 31, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("eid", 31, _typename,  _length, _typep); \
 			break; \
 		case 220: \
-			RDATATYPE_COMPARE("nimloc", 32, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("nimloc", 32, _typename,  _length, _typep); \
 			break; \
 		case 100: \
-			RDATATYPE_COMPARE("srv", 33, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("srv", 33, _typename,  _length, _typep); \
 			break; \
 		case 172: \
-			RDATATYPE_COMPARE("cert", 37, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("avc", 258, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("cert", 37, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("avc", 258, _typename,  _length, _typep); \
 			break; \
 		case 226: \
-			RDATATYPE_COMPARE("a6", 38, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("a6", 38, _typename,  _length, _typep); \
 			break; \
 		case 109: \
-			RDATATYPE_COMPARE("dname", 39, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("dname", 39, _typename,  _length, _typep); \
 			break; \
 		case 189: \
-			RDATATYPE_COMPARE("sink", 40, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("sink", 40, _typename,  _length, _typep); \
 			break; \
 		case 168: \
-			RDATATYPE_COMPARE("opt", 41, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("opt", 41, _typename,  _length, _typep); \
 			break; \
 		case 48: \
-			RDATATYPE_COMPARE("apl", 42, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("eui48", 108, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("apl", 42, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("eui48", 108, _typename,  _length, _typep); \
 			break; \
 		case 210: \
-			RDATATYPE_COMPARE("ds", 43, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("cds", 59, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("ds", 43, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("cds", 59, _typename,  _length, _typep); \
 			break; \
 		case 128: \
-			RDATATYPE_COMPARE("sshfp", 44, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("sshfp", 44, _typename,  _length, _typep); \
 			break; \
 		case 105: \
-			RDATATYPE_COMPARE("ipseckey", 45, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("ipseckey", 45, _typename,  _length, _typep); \
 			break; \
 		case 225: \
-			RDATATYPE_COMPARE("rrsig", 46, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("rrsig", 46, _typename,  _length, _typep); \
 			break; \
 		case 22: \
-			RDATATYPE_COMPARE("nsec", 47, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("nsec", 47, _typename,  _length, _typep); \
 			break; \
 		case 26: \
-			RDATATYPE_COMPARE("dnskey", 48, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("cdnskey", 60, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("dnskey", 48, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("cdnskey", 60, _typename,  _length, _typep); \
 			break; \
 		case 4: \
-			RDATATYPE_COMPARE("dhcid", 49, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("spf", 99, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("dhcid", 49, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("spf", 99, _typename,  _length, _typep); \
 			break; \
 		case 233: \
-			RDATATYPE_COMPARE("nsec3", 50, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("nsec3", 50, _typename,  _length, _typep); \
 			break; \
 		case 120: \
-			RDATATYPE_COMPARE("tlsa", 52, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("tlsa", 52, _typename,  _length, _typep); \
 			break; \
 		case 217: \
-			RDATATYPE_COMPARE("smimea", 53, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("smimea", 53, _typename,  _length, _typep); \
 			break; \
 		case 208: \
-			RDATATYPE_COMPARE("hip", 55, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("hip", 55, _typename,  _length, _typep); \
 			break; \
 		case 221: \
-			RDATATYPE_COMPARE("ninfo", 56, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("ninfo", 56, _typename,  _length, _typep); \
 			break; \
 		case 198: \
-			RDATATYPE_COMPARE("rkey", 57, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("rkey", 57, _typename,  _length, _typep); \
 			break; \
 		case 49: \
-			RDATATYPE_COMPARE("openpgpkey", 61, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("openpgpkey", 61, _typename,  _length, _typep); \
 			break; \
 		case 56: \
-			RDATATYPE_COMPARE("csync", 62, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("uri", 256, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("csync", 62, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("uri", 256, _typename,  _length, _typep); \
 			break; \
 		case 230: \
-			RDATATYPE_COMPARE("uinfo", 100, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("uinfo", 100, _typename,  _length, _typep); \
 			break; \
 		case 104: \
-			RDATATYPE_COMPARE("gid", 102, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("gid", 102, _typename,  _length, _typep); \
 			break; \
 		case 145: \
-			RDATATYPE_COMPARE("unspec", 103, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("unspec", 103, _typename,  _length, _typep); \
 			break; \
 		case 36: \
-			RDATATYPE_COMPARE("nid", 104, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("nid", 104, _typename,  _length, _typep); \
 			break; \
 		case 174: \
-			RDATATYPE_COMPARE("l32", 105, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("l32", 105, _typename,  _length, _typep); \
 			break; \
 		case 32: \
-			RDATATYPE_COMPARE("lp", 107, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("lp", 107, _typename,  _length, _typep); \
 			break; \
 		case 136: \
-			RDATATYPE_COMPARE("eui64", 109, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("eui64", 109, _typename,  _length, _typep); \
 			break; \
 		case 184: \
-			RDATATYPE_COMPARE("tkey", 249, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("tkey", 249, _typename,  _length, _typep); \
 			break; \
 		case 72: \
-			RDATATYPE_COMPARE("tsig", 250, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("tsig", 250, _typename,  _length, _typep); \
 			break; \
 		case 138: \
-			RDATATYPE_COMPARE("ixfr", 251, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("ixfr", 251, _typename,  _length, _typep); \
 			break; \
 		case 250: \
-			RDATATYPE_COMPARE("axfr", 252, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("axfr", 252, _typename,  _length, _typep); \
 			break; \
 		case 164: \
-			RDATATYPE_COMPARE("mailb", 253, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("mailb", 253, _typename,  _length, _typep); \
 			break; \
 		case 50: \
-			RDATATYPE_COMPARE("maila", 254, _typename, _length, _typep); \
-			RDATATYPE_COMPARE("keydata", 65533, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("maila", 254, _typename,  _length, _typep); \
+			RDATATYPE_COMPARE("keydata", 65533, _typename,  _length, _typep); \
 			break; \
 		case 68: \
-			RDATATYPE_COMPARE("any", 255, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("any", 255, _typename,  _length, _typep); \
 			break; \
 		case 166: \
-			RDATATYPE_COMPARE("caa", 257, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("caa", 257, _typename,  _length, _typep); \
 			break; \
 		case 7: \
-			RDATATYPE_COMPARE("doa", 259, _typename, _length, _typep); \
+			RDATATYPE_COMPARE("doa", 259, _typename,  _length, _typep); \
 			break; \
 	}
 #define RDATATYPE_ATTRIBUTE_SW \
@@ -2064,10 +2262,10 @@
 	case 28: return (RRTYPE_AAAA_ATTRIBUTES); \
 	case 29: return (RRTYPE_LOC_ATTRIBUTES); \
 	case 30: return (RRTYPE_NXT_ATTRIBUTES); \
-	case 31: return (DNS_RDATATYPEATTR_RESERVED); \
-	case 32: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 31: return (RRTYPE_EID_ATTRIBUTES); \
+	case 32: return (RRTYPE_NIMLOC_ATTRIBUTES); \
 	case 33: return (RRTYPE_SRV_ATTRIBUTES); \
-	case 34: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 34: return (RRTYPE_ATMA_ATTRIBUTES); \
 	case 35: return (RRTYPE_NAPTR_ATTRIBUTES); \
 	case 36: return (RRTYPE_KX_ATTRIBUTES); \
 	case 37: return (RRTYPE_CERT_ATTRIBUTES); \
@@ -2096,9 +2294,9 @@
 	case 61: return (RRTYPE_OPENPGPKEY_ATTRIBUTES); \
 	case 62: return (RRTYPE_CSYNC_ATTRIBUTES); \
 	case 99: return (RRTYPE_SPF_ATTRIBUTES); \
-	case 100: return (DNS_RDATATYPEATTR_RESERVED); \
-	case 101: return (DNS_RDATATYPEATTR_RESERVED); \
-	case 102: return (DNS_RDATATYPEATTR_RESERVED); \
+	case 100: return (0); \
+	case 101: return (0); \
+	case 102: return (0); \
 	case 103: return (RRTYPE_UNSPEC_ATTRIBUTES); \
 	case 104: return (RRTYPE_NID_ATTRIBUTES); \
 	case 105: return (RRTYPE_L32_ATTRIBUTES); \

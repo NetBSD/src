@@ -1,4 +1,4 @@
-/*	$NetBSD: app.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: app.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -79,6 +79,8 @@
  *	None.
  */
 
+#include <stdbool.h>
+
 #include <isc/eventclass.h>
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -95,29 +97,6 @@ typedef isc_event_t isc_appevent_t;
 #define ISC_APPEVENT_LASTEVENT		(ISC_EVENTCLASS_APP + 65535)
 
 /*%
- * app module methods.  Only app driver implementations use this structure.
- * Other clients should use the top-level interfaces (i.e., isc_app_xxx
- * functions).  magic must be ISCAPI_APPMETHODS_MAGIC.
- */
-typedef struct isc_appmethods {
-	void		(*ctxdestroy)(isc_appctx_t **ctxp);
-	isc_result_t	(*ctxstart)(isc_appctx_t *ctx);
-	isc_result_t	(*ctxrun)(isc_appctx_t *ctx);
-	isc_result_t	(*ctxsuspend)(isc_appctx_t *ctx);
-	isc_result_t	(*ctxshutdown)(isc_appctx_t *ctx);
-	void		(*ctxfinish)(isc_appctx_t *ctx);
-	void		(*settaskmgr)(isc_appctx_t *ctx,
-				      isc_taskmgr_t *timermgr);
-	void		(*setsocketmgr)(isc_appctx_t *ctx,
-					isc_socketmgr_t *timermgr);
-	void		(*settimermgr)(isc_appctx_t *ctx,
-				       isc_timermgr_t *timermgr);
-	isc_result_t 	(*ctxonrun)(isc_appctx_t *ctx, isc_mem_t *mctx,
-				    isc_task_t *task, isc_taskaction_t action,
-				    void *arg);
-} isc_appmethods_t;
-
-/*%
  * This structure is actually just the common prefix of an application context
  * implementation's version of an isc_appctx_t.
  * \brief
@@ -129,7 +108,6 @@ typedef struct isc_appmethods {
 struct isc_appctx {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_appmethods_t	*methods;
 };
 
 #define ISCAPI_APPCTX_MAGIC		ISC_MAGIC('A','a','p','c')
@@ -198,14 +176,14 @@ isc_app_run(void);
  *\li	ISC_R_RELOAD			Reload has been requested.
  */
 
-isc_boolean_t
+bool
 isc_app_isrunning(void);
 /*!<
  * \brief Return if the ISC library application is running.
  *
  * Returns:
- *\li	ISC_TRUE    App is running.
- *\li	ISC_FALSE   App is not running.
+ *\li	true    App is running.
+ *\li	false   App is not running.
  */
 
 isc_result_t
@@ -355,29 +333,6 @@ isc_appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
  * Requires:
  *\li	'ctx' is a valid application context.
  *\li	'timermgr' is a valid timer manager.
- */
-
-/*%<
- * See isc_appctx_create() above.
- */
-typedef isc_result_t
-(*isc_appctxcreatefunc_t)(isc_mem_t *mctx, isc_appctx_t **ctxp);
-
-isc_result_t
-isc_app_register(isc_appctxcreatefunc_t createfunc);
-/*%<
- * Register a new application implementation and add it to the list of
- * supported implementations.  This function must be called when a different
- * event library is used than the one contained in the ISC library.
- */
-
-isc_result_t
-isc__app_register(void);
-/*%<
- * A short cut function that specifies the application module in the ISC
- * library for isc_app_register().  An application that uses the ISC library
- * usually do not have to care about this function: it would call
- * isc_lib_register(), which internally calls this function.
  */
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: peer_test.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: peer_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,35 +11,58 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
+
+#include <isc/util.h>
 
 #include <dns/peer.h>
 
 #include "dnstest.h"
 
-/*
- * Individual unit tests
- */
-ATF_TC(dscp);
-ATF_TC_HEAD(dscp, tc) {
-	atf_tc_set_md_var(tc, "descr",
-			  "Test DSCP set/get functions");
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
 }
-ATF_TC_BODY(dscp, tc) {
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
+
+/* Test DSCP set/get functions */
+static void
+dscp(void **state) {
 	isc_result_t result;
 	isc_netaddr_t netaddr;
 	struct in_addr ina;
 	dns_peer_t *peer = NULL;
 	isc_dscp_t dscp;
 
-	result = dns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	/*
 	 * Create peer structure for the loopback address.
@@ -47,7 +70,7 @@ ATF_TC_BODY(dscp, tc) {
 	ina.s_addr = INADDR_LOOPBACK;
 	isc_netaddr_fromin(&netaddr, &ina);
 	result = dns_peer_new(mctx, &netaddr, &peer);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
 	 * All should be not set on creation.
@@ -55,16 +78,16 @@ ATF_TC_BODY(dscp, tc) {
 	 */
 	dscp = 100;
 	result = dns_peer_getquerydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dscp, 100);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+	assert_int_equal(dscp, 100);
 
 	result = dns_peer_getnotifydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dscp, 100);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+	assert_int_equal(dscp, 100);
 
 	result = dns_peer_gettransferdscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dscp, 100);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+	assert_int_equal(dscp, 100);
 
 	/*
 	 * Test that setting query dscp does not affect the other
@@ -73,19 +96,19 @@ ATF_TC_BODY(dscp, tc) {
 	 */
 	dscp = 100;
 	result = dns_peer_setquerydscp(peer, 1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_peer_getnotifydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dscp, 100);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+	assert_int_equal(dscp, 100);
 
 	result = dns_peer_gettransferdscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dscp, 100);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+	assert_int_equal(dscp, 100);
 
 	result = dns_peer_getquerydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dscp, 1);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(dscp, 1);
 
 	/*
 	 * Test that setting notify dscp does not affect the other
@@ -95,19 +118,19 @@ ATF_TC_BODY(dscp, tc) {
 	 */
 	dscp = 100;
 	result = dns_peer_setnotifydscp(peer, 2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_peer_gettransferdscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dscp, 100);
+	assert_int_equal(result, ISC_R_NOTFOUND);
+	assert_int_equal(dscp, 100);
 
 	result = dns_peer_getquerydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dscp, 1);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(dscp, 1);
 
 	result = dns_peer_getnotifydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dscp, 2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(dscp, 2);
 
 	/*
 	 * Test that setting notify dscp does not affect the other
@@ -115,28 +138,40 @@ ATF_TC_BODY(dscp, tc) {
 	 */
 	dscp = 100;
 	result = dns_peer_settransferdscp(peer, 3);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_peer_getquerydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dscp, 1);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(dscp, 1);
 
 	result = dns_peer_getnotifydscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dscp, 2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(dscp, 2);
 
 	result = dns_peer_gettransferdscp(peer, &dscp);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dscp, 3);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(dscp, 3);
 
 	dns_peer_detach(&peer);
-	dns_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, dscp);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(dscp, _setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa_test.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: rsa_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,14 +12,21 @@
  */
 
 
-/* ! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/util.h>
 #include <isc/print.h>
@@ -30,7 +37,26 @@
 
 #include "../dst_internal.h"
 
-#if defined(OPENSSL) || defined(PKCS11CRYPTO)
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
 
 static unsigned char d[10] = {
 	0xa, 0x10, 0xbb, 0, 0xfe, 0x15, 0x1, 0x88, 0xcc, 0x7d
@@ -71,7 +97,6 @@ static unsigned char sigsha1[256] = {
 	0x27, 0x7f, 0xb6, 0xe0, 0x04, 0x12, 0xd2, 0x81
 };
 
-#ifndef PK11_MD5_DISABLE
 static unsigned char sigmd5[256] = {
 	0xc0, 0x99, 0x90, 0xd6, 0xea, 0xc1, 0x5f, 0xc7,
 	0x23, 0x60, 0xfc, 0x13, 0x3d, 0xcc, 0xda, 0x93,
@@ -106,7 +131,6 @@ static unsigned char sigmd5[256] = {
 	0x0c, 0x15, 0xb8, 0x51, 0xd8, 0x66, 0x6a, 0x95,
 	0x56, 0x17, 0x0a, 0x45, 0x72, 0xb5, 0xb8, 0xc4
 };
-#endif
 
 static unsigned char sigsha256[256] = {
 	0x83, 0x53, 0x15, 0xfc, 0xca, 0xdb, 0xf6, 0x0d,
@@ -178,11 +202,9 @@ static unsigned char sigsha512[512] = {
 	0xff, 0x6a, 0x63, 0x8b, 0xe1, 0x2e, 0xa3, 0xa7
 };
 
-ATF_TC(isc_rsa_verify);
-ATF_TC_HEAD(isc_rsa_verify, tc) {
-	atf_tc_set_md_var(tc, "descr", "RSA verify");
-}
-ATF_TC_BODY(isc_rsa_verify, tc) {
+/* RSA verify */
+static void
+isc_rsa_verify_test(void **state) {
 	isc_result_t ret;
 	dns_fixedname_t fname;
 	isc_buffer_t buf;
@@ -191,78 +213,73 @@ ATF_TC_BODY(isc_rsa_verify, tc) {
 	dst_context_t *ctx = NULL;
 	isc_region_t r;
 
-	UNUSED(tc);
-
-	ret = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	name = dns_fixedname_initname(&fname);
 	isc_buffer_constinit(&buf, "rsa.", 4);
 	isc_buffer_add(&buf, 4);
 	ret = dns_name_fromtext(name, &buf, NULL, 0, NULL);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	ret = dst_key_fromfile(name, 29235, DST_ALG_RSASHA1,
 			       DST_TYPE_PUBLIC, "./", mctx, &key);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	/* RSASHA1 */
 
-	ret = dst_context_create3(key, mctx, DNS_LOGCATEGORY_DNSSEC,
-				  ISC_FALSE, &ctx);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	ret = dst_context_create(key, mctx, DNS_LOGCATEGORY_DNSSEC,
+				 false, 0, &ctx);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = d;
 	r.length = 10;
 	ret = dst_context_adddata(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = sigsha1;
 	r.length = 256;
 	ret = dst_context_verify(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	dst_context_destroy(&ctx);
 
 	/* RSAMD5 */
 
-#ifndef PK11_MD5_DISABLE
 	key->key_alg = DST_ALG_RSAMD5;
 
-	ret = dst_context_create3(key, mctx, DNS_LOGCATEGORY_DNSSEC,
-				  ISC_FALSE, &ctx);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	ret = dst_context_create(key, mctx, DNS_LOGCATEGORY_DNSSEC,
+				 false, 0, &ctx);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = d;
 	r.length = 10;
 	ret = dst_context_adddata(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = sigmd5;
 	r.length = 256;
 	ret = dst_context_verify(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	dst_context_destroy(&ctx);
-#endif
 
 	/* RSASHA256 */
 
 	key->key_alg = DST_ALG_RSASHA256;
 
-	ret = dst_context_create3(key, mctx, DNS_LOGCATEGORY_DNSSEC,
-				  ISC_FALSE, &ctx);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	ret = dst_context_create(key, mctx, DNS_LOGCATEGORY_DNSSEC,
+				 false, 0, &ctx);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = d;
 	r.length = 10;
 	ret = dst_context_adddata(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = sigsha256;
 	r.length = 256;
 	ret = dst_context_verify(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	dst_context_destroy(&ctx);
 
@@ -270,45 +287,44 @@ ATF_TC_BODY(isc_rsa_verify, tc) {
 
 	key->key_alg = DST_ALG_RSASHA512;
 
-	ret = dst_context_create3(key, mctx, DNS_LOGCATEGORY_DNSSEC,
-				  ISC_FALSE, &ctx);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	ret = dst_context_create(key, mctx, DNS_LOGCATEGORY_DNSSEC,
+				 false, 0, &ctx);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = d;
 	r.length = 10;
 	ret = dst_context_adddata(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	r.base = sigsha512;
 	r.length = 256;
 	ret = dst_context_verify(ctx, &r);
-	ATF_REQUIRE_EQ(ret, ISC_R_SUCCESS);
+	assert_int_equal(ret, ISC_R_SUCCESS);
 
 	dst_context_destroy(&ctx);
 
 
 	dst_key_free(&key);
-	dns_test_end();
-}
-#else
-ATF_TC(untested);
-ATF_TC_HEAD(untested, tc) {
-	atf_tc_set_md_var(tc, "descr", "skipping RSA test");
-}
-ATF_TC_BODY(untested, tc) {
-	UNUSED(tc);
-	atf_tc_skip("RSA not available");
-}
-#endif
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-#if defined(OPENSSL) || defined(PKCS11CRYPTO)
-	ATF_TP_ADD_TC(tp, isc_rsa_verify);
-#else
-	ATF_TP_ADD_TC(tp, untested);
-#endif
-	return (atf_no_error());
 }
 
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(isc_rsa_verify_test,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
+}
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: nsec3.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,8 @@
 
 #ifndef DNS_NSEC3_H
 #define DNS_NSEC3_H 1
+
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/iterated_hash.h>
@@ -64,7 +66,7 @@ dns_nsec3_buildrdata(dns_db_t *db, dns_dbversion_t *version,
  *		to 'buffer'.
  */
 
-isc_boolean_t
+bool
 dns_nsec3_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
 /*%<
  * Determine if a type is marked as present in an NSEC3 record.
@@ -92,7 +94,7 @@ dns_nsec3_hashlength(dns_hash_t hash);
  * or zero when unknown.
  */
 
-isc_boolean_t
+bool
 dns_nsec3_supportedhash(dns_hash_t hash);
 /*%<
  * Return whether we support this hash algorithm or not.
@@ -102,17 +104,17 @@ isc_result_t
 dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
 		   const dns_name_t *name,
 		   const dns_rdata_nsec3param_t *nsec3param,
-		   dns_ttl_t nsecttl, isc_boolean_t unsecure, dns_diff_t *diff);
+		   dns_ttl_t nsecttl, bool unsecure, dns_diff_t *diff);
 
 isc_result_t
 dns_nsec3_addnsec3s(dns_db_t *db, dns_dbversion_t *version,
 		    const dns_name_t *name, dns_ttl_t nsecttl,
-		    isc_boolean_t unsecure, dns_diff_t *diff);
+		    bool unsecure, dns_diff_t *diff);
 
 isc_result_t
 dns_nsec3_addnsec3sx(dns_db_t *db, dns_dbversion_t *version,
 		     const dns_name_t *name, dns_ttl_t nsecttl,
-		     isc_boolean_t unsecure, dns_rdatatype_t private,
+		     bool unsecure, dns_rdatatype_t private,
 		     dns_diff_t *diff);
 /*%<
  * Add NSEC3 records for 'name', recording the change in 'diff'.
@@ -184,15 +186,15 @@ dns_nsec3_delnsec3sx(dns_db_t *db, dns_dbversion_t *version,
 
 isc_result_t
 dns_nsec3_active(dns_db_t *db, dns_dbversion_t *version,
-		 isc_boolean_t complete, isc_boolean_t *answer);
+		 bool complete, bool *answer);
 
 isc_result_t
 dns_nsec3_activex(dns_db_t *db, dns_dbversion_t *version,
-		  isc_boolean_t complete, dns_rdatatype_t private,
-		  isc_boolean_t *answer);
+		  bool complete, dns_rdatatype_t private,
+		  bool *answer);
 /*%<
  * Check if there are any complete/to be built NSEC3 chains.
- * If 'complete' is ISC_TRUE only complete chains will be recognized.
+ * If 'complete' is true only complete chains will be recognized.
  *
  * dns_nsec3_activex() is similar to dns_nsec3_active() but 'private'
  * specifies the type of the private rdataset to be checked in addition to
@@ -218,13 +220,13 @@ dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version,
  *	'iterationsp' to be non NULL.
  */
 
-isc_boolean_t
+bool
 dns_nsec3param_fromprivate(dns_rdata_t *src, dns_rdata_t *target,
 			   unsigned char *buf, size_t buflen);
 /*%<
  * Convert a private rdata to a nsec3param rdata.
  *
- * Return ISC_TRUE if 'src' could be successfully converted.
+ * Return true if 'src' could be successfully converted.
  *
  * 'buf' should be at least DNS_NSEC3PARAM_BUFFERSIZE in size.
  */
@@ -254,7 +256,7 @@ dns_nsec3param_salttotext(dns_rdata_nsec3param_t *nsec3param, char *dst,
 
 isc_result_t
 dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
-			    dns_zone_t *zone, isc_boolean_t nonsec,
+			    dns_zone_t *zone, bool nonsec,
 			    dns_diff_t *diff);
 
 /*%<
@@ -264,10 +266,10 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 isc_result_t
 dns_nsec3_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 			const dns_name_t *nsec3name, dns_rdataset_t *nsec3set,
-			dns_name_t *zonename, isc_boolean_t *exists,
-			isc_boolean_t *data, isc_boolean_t *optout,
-			isc_boolean_t *unknown, isc_boolean_t *setclosest,
-			isc_boolean_t *setnearest, dns_name_t *closest,
+			dns_name_t *zonename, bool *exists,
+			bool *data, bool *optout,
+			bool *unknown, bool *setclosest,
+			bool *setnearest, dns_name_t *closest,
 			dns_name_t *nearest, dns_nseclog_t logit, void *arg);
 
 ISC_LANG_ENDDECLS

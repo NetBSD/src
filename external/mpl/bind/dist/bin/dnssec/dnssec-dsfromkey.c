@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,11 +15,12 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
@@ -44,14 +45,14 @@
 
 #include <dst/dst.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
 #include "dnssectool.h"
 
 #ifndef PATH_MAX
-#define PATH_MAX 1024   /* AIX, WIN32, and others don't define this. */
+#define PATH_MAX 1024   /* WIN32, and others don't define this. */
 #endif
 
 const char *program = "dnssec-dsfromkey";
@@ -61,8 +62,8 @@ static dns_rdataclass_t rdclass;
 static dns_fixedname_t	fixed;
 static dns_name_t	*name = NULL;
 static isc_mem_t	*mctx = NULL;
-static isc_uint32_t	ttl;
-static isc_boolean_t	emitttl = ISC_FALSE;
+static uint32_t	ttl;
+static bool	emitttl = false;
 
 static isc_result_t
 initname(char *setname) {
@@ -115,13 +116,13 @@ loadset(const char *filename, dns_rdataset_t *rdataset) {
 		db_load_from_stream(db, stdin);
 		filename = "input";
 	} else {
-		result = dns_db_load(db, filename);
+		result = dns_db_load(db, filename, dns_masterformat_text, 0);
 		if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE)
 			fatal("can't load %s: %s", filename,
 			      isc_result_totext(result));
 	}
 
-	result = dns_db_findnode(db, name, ISC_FALSE, &node);
+	result = dns_db_findnode(db, name, false, &node);
 	if (result != ISC_R_SUCCESS)
 		fatal("can't find %s node in %s", setname, filename);
 
@@ -162,7 +163,7 @@ loadkeyset(char *dirname, dns_rdataset_t *rdataset) {
 		return (ISC_R_NOSPACE);
 	isc_buffer_putstr(&buf, "keyset-");
 
-	result = dns_name_tofilenametext(name, ISC_FALSE, &buf);
+	result = dns_name_tofilenametext(name, false, &buf);
 	check_result(result, "dns_name_tofilenametext()");
 	if (isc_buffer_availablelength(&buf) == 0)
 		return (ISC_R_NOSPACE);
@@ -236,8 +237,8 @@ logkey(dns_rdata_t *rdata)
 }
 
 static void
-emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
-     isc_boolean_t cds, dns_rdata_t *rdata)
+emit(unsigned int dtype, bool showall, char *lookaside,
+     bool cds, dns_rdata_t *rdata)
 {
 	isc_result_t result;
 	unsigned char buf[DNS_DS_BUFFERSIZE];
@@ -266,7 +267,7 @@ emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
 	if (result != ISC_R_SUCCESS)
 		fatal("can't build record");
 
-	result = dns_name_totext(name, ISC_FALSE, &nameb);
+	result = dns_name_totext(name, false, &nameb);
 	if (result != ISC_R_SUCCESS)
 		fatal("can't print name");
 
@@ -331,7 +332,7 @@ usage(void) {
 	fprintf(stderr, "    -K <directory>: directory in which to find "
 			"key file or keyset file\n");
 	fprintf(stderr, "    -a algorithm: digest algorithm "
-			"(SHA-1, SHA-256, GOST or SHA-384)\n");
+			"(SHA-1, SHA-256 or SHA-384)\n");
 	fprintf(stderr, "    -1: use SHA-1\n");
 	fprintf(stderr, "    -2: use SHA-256\n");
 	fprintf(stderr, "    -C: print CDS record\n");
@@ -355,13 +356,12 @@ main(int argc, char **argv) {
 	char		*endp;
 	int		ch;
 	unsigned int	dtype = DNS_DSDIGEST_SHA1;
-	isc_boolean_t	cds = ISC_FALSE;
-	isc_boolean_t	both = ISC_TRUE;
-	isc_boolean_t	usekeyset = ISC_FALSE;
-	isc_boolean_t	showall = ISC_FALSE;
+	bool	cds = false;
+	bool	both = true;
+	bool	usekeyset = false;
+	bool	showall = false;
 	isc_result_t	result;
 	isc_log_t	*log = NULL;
-	isc_entropy_t	*ectx = NULL;
 	dns_rdataset_t	rdataset;
 	dns_rdata_t	rdata;
 
@@ -374,36 +374,36 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("out of memory");
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 #define OPTIONS "12Aa:Cc:d:Ff:K:l:sT:v:hV"
 	while ((ch = isc_commandline_parse(argc, argv, OPTIONS)) != -1) {
 		switch (ch) {
 		case '1':
 			dtype = DNS_DSDIGEST_SHA1;
-			both = ISC_FALSE;
+			both = false;
 			break;
 		case '2':
 			dtype = DNS_DSDIGEST_SHA256;
-			both = ISC_FALSE;
+			both = false;
 			break;
 		case 'A':
-			showall = ISC_TRUE;
+			showall = true;
 			break;
 		case 'a':
 			dtype = strtodsdigest(isc_commandline_argument);
-			both = ISC_FALSE;
+			both = false;
 			break;
 		case 'C':
 			if (lookaside != NULL)
 				fatal("lookaside and CDS are mutually"
 				      " exclusive");
-			cds = ISC_TRUE;
+			cds = true;
 			break;
 		case 'c':
 			classname = isc_commandline_argument;
@@ -429,10 +429,10 @@ main(int argc, char **argv) {
 				fatal("lookaside must be a non-empty string");
 			break;
 		case 's':
-			usekeyset = ISC_TRUE;
+			usekeyset = true;
 			break;
 		case 'T':
-			emitttl = ISC_TRUE;
+			emitttl = true;
 			ttl = strtottl(isc_commandline_argument);
 			break;
 		case 'v':
@@ -470,24 +470,17 @@ main(int argc, char **argv) {
 
 	/* When not using -f, -A is implicit */
 	if (filename == NULL)
-		showall = ISC_TRUE;
+		showall = true;
 
 	if (argc < isc_commandline_index + 1 && filename == NULL)
 		fatal("the key file name was not specified");
 	if (argc > isc_commandline_index + 1)
 		fatal("extraneous arguments");
 
-	if (ectx == NULL)
-		setup_entropy(mctx, NULL, &ectx);
-	result = dst_lib_init(mctx, ectx,
-			      ISC_ENTROPY_BLOCKING | ISC_ENTROPY_GOODONLY);
+	result = dst_lib_init(mctx, NULL);
 	if (result != ISC_R_SUCCESS)
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(result));
-	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	if (result != ISC_R_SUCCESS)
-		fatal("could not initialize hash");
-	isc_entropy_stopcallbacksources(ectx);
 
 	setup_logging(mctx, &log);
 
@@ -548,9 +541,7 @@ main(int argc, char **argv) {
 	if (dns_rdataset_isassociated(&rdataset))
 		dns_rdataset_disassociate(&rdataset);
 	cleanup_logging(&log);
-	isc_hash_destroy();
 	dst_lib_destroy();
-	cleanup_entropy(&ectx);
 	dns_name_destroy();
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);

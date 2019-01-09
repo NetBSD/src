@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_test.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,12 +13,11 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
-
-#include <unistd.h>		/* XXX */
+#include <unistd.h>
 
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/region.h>
@@ -54,8 +53,8 @@ use(dst_key_t *key, isc_mem_t *mctx) {
 	isc_buffer_add(&databuf, strlen(data));
 	isc_buffer_usedregion(&databuf, &datareg);
 
-	ret = dst_context_create3(key, mctx,
-				  DNS_LOGCATEGORY_GENERAL, ISC_TRUE, &ctx);
+	ret = dst_context_create(key, mctx,
+				 DNS_LOGCATEGORY_GENERAL, true, 0, &ctx);
 	if (ret != ISC_R_SUCCESS) {
 		printf("contextcreate(%u) returned: %s\n", dst_key_alg(key),
 		       isc_result_totext(ret));
@@ -75,8 +74,8 @@ use(dst_key_t *key, isc_mem_t *mctx) {
 
 	isc_buffer_forward(&sigbuf, 1);
 	isc_buffer_remainingregion(&sigbuf, &sigreg);
-	ret = dst_context_create3(key, mctx,
-				  DNS_LOGCATEGORY_GENERAL, ISC_FALSE, &ctx);
+	ret = dst_context_create(key, mctx,
+				 DNS_LOGCATEGORY_GENERAL, false, 0, &ctx);
 	if (ret != ISC_R_SUCCESS) {
 		printf("contextcreate(%u) returned: %s\n", dst_key_alg(key),
 		       isc_result_totext(ret));
@@ -103,7 +102,7 @@ dns(dst_key_t *key, isc_mem_t *mctx) {
 	isc_region_t r1, r2;
 	dst_key_t *newkey = NULL;
 	isc_result_t ret;
-	isc_boolean_t match;
+	bool match;
 
 	isc_buffer_init(&buf1, buffer1, sizeof(buffer1));
 	ret = dst_key_todns(key, &buf1);
@@ -125,8 +124,8 @@ dns(dst_key_t *key, isc_mem_t *mctx) {
 		return;
 	isc_buffer_usedregion(&buf1, &r1);
 	isc_buffer_usedregion(&buf2, &r2);
-	match = ISC_TF(r1.length == r2.length &&
-		       memcmp(r1.base, r2.base, r1.length) == 0);
+	match = (r1.length == r2.length &&
+		 memcmp(r1.base, r2.base, r1.length) == 0);
 	printf("compare(%u): %s\n", dst_key_alg(key),
 	       match ? "true" : "false");
 	dst_key_free(&newkey);
@@ -216,7 +215,7 @@ generate(int alg, isc_mem_t *mctx) {
 	dst_key_t *key = NULL;
 
 	ret = dst_key_generate(dns_rootname, alg, 512, 0, 0, 0,
-			       dns_rdataclass_in, mctx, &key);
+			       dns_rdataclass_in, mctx, &key, NULL);
 	printf("generate(%d) returned: %s\n", alg, isc_result_totext(ret));
 	if (ret != ISC_R_SUCCESS)
 		return;
@@ -230,7 +229,6 @@ generate(int alg, isc_mem_t *mctx) {
 int
 main(void) {
 	isc_mem_t *mctx = NULL;
-	isc_entropy_t *ectx = NULL;
 	isc_buffer_t b;
 	dns_fixedname_t fname;
 	dns_name_t *name;
@@ -250,13 +248,7 @@ main(void) {
 
 	dns_result_register();
 
-	result = isc_entropy_create(mctx, &ectx);
-	if (result != ISC_R_SUCCESS)
-		return (1);
-	result = isc_entropy_createfilesource(ectx, "randomfile");
-	if (result != ISC_R_SUCCESS)
-		return (1);
-	dst_lib_init(mctx, ectx, ISC_ENTROPY_BLOCKING|ISC_ENTROPY_GOODONLY);
+	dst_lib_init(mctx, NULL);
 
 	name = dns_fixedname_initname(&fname);
 	isc_buffer_constinit(&b, "test.", 5);
@@ -264,11 +256,9 @@ main(void) {
 	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (1);
-	io(name, 23616, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 	io(name, 54622, DST_ALG_RSAMD5, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC,
 	   mctx);
 
-	io(name, 49667, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 	io(name, 2, DST_ALG_RSAMD5, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 
 	isc_buffer_constinit(&b, "dh.", 3);
@@ -280,11 +270,9 @@ main(void) {
 
 	generate(DST_ALG_RSAMD5, mctx);
 	generate(DST_ALG_DH, mctx);
-	generate(DST_ALG_DSA, mctx);
 	generate(DST_ALG_HMACMD5, mctx);
 
 	dst_lib_destroy();
-	isc_entropy_detach(&ectx);
 
 	isc_mem_put(mctx, current, 256);
 /*	isc_mem_stats(mctx, stdout);*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: null_10.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,7 @@
 typedef struct dns_rdata_null {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		length;
+	uint16_t		length;
 	unsigned char		*data;
 } dns_rdata_null_t;
 

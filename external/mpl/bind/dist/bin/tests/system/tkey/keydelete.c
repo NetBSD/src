@@ -1,4 +1,4 @@
-/*	$NetBSD: keydelete.c,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.3 2019/01/09 16:55:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,11 +19,11 @@
 
 #include <isc/app.h>
 #include <isc/base64.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/random.h>
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
 #include <isc/task.h>
@@ -138,7 +138,6 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 int
 main(int argc, char **argv) {
 	char *keyname;
-	char *randomfile;
 	isc_taskmgr_t *taskmgr;
 	isc_timermgr_t *timermgr;
 	isc_socketmgr_t *socketmgr;
@@ -148,7 +147,6 @@ main(int argc, char **argv) {
 	dns_dispatchmgr_t *dispatchmgr;
 	dns_dispatch_t *dispatchv4;
 	dns_view_t *view;
-	isc_entropy_t *ectx;
 	dns_tkeyctx_t *tctx;
 	dst_key_t *dstkey;
 	isc_log_t *log;
@@ -159,21 +157,14 @@ main(int argc, char **argv) {
 
 	RUNCHECK(isc_app_start());
 
-	randomfile = NULL;
 
 	if (argc < 2) {
 		fprintf(stderr, "I:no key to delete\n");
 		exit(-1);
 	}
 	if (strcmp(argv[1], "-r") == 0) {
-		if (argc < 4) {
-			fprintf(stderr, "I:no DH key provided\n");
-			exit(-1);
-		}
-		randomfile = argv[2];
-		argv += 2;
-		argc -= 2;
-		POST(argc);
+		fprintf(stderr, "I:The -r options has been deprecated\n");
+		exit(-1);
 	}
 	keyname = argv[1];
 
@@ -182,22 +173,11 @@ main(int argc, char **argv) {
 	mctx = NULL;
 	RUNCHECK(isc_mem_create(0, 0, &mctx));
 
-	ectx = NULL;
-	RUNCHECK(isc_entropy_create(mctx, &ectx));
-#ifdef ISC_PLATFORM_CRYPTORANDOM
-	if (randomfile == NULL) {
-		isc_entropy_usehook(ectx, ISC_TRUE);
-	}
-#endif
-	if (randomfile != NULL)
-		RUNCHECK(isc_entropy_createfilesource(ectx, randomfile));
-
 	log = NULL;
 	logconfig = NULL;
 	RUNCHECK(isc_log_create(mctx, &log, &logconfig));
 
-	RUNCHECK(dst_lib_init(mctx, ectx, ISC_ENTROPY_GOODONLY));
-	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
+	RUNCHECK(dst_lib_init(mctx, NULL));
 
 	taskmgr = NULL;
 	RUNCHECK(isc_taskmgr_create(mctx, 1, 0, &taskmgr));
@@ -208,7 +188,7 @@ main(int argc, char **argv) {
 	socketmgr = NULL;
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
 	dispatchmgr = NULL;
-	RUNCHECK(dns_dispatchmgr_create(mctx, NULL, &dispatchmgr));
+	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 	isc_sockaddr_any(&bind_any);
 	attrs = DNS_DISPATCHATTR_UDP |
 		DNS_DISPATCHATTR_MAKEQUERY |
@@ -229,7 +209,7 @@ main(int argc, char **argv) {
 	ring = NULL;
 	RUNCHECK(dns_tsigkeyring_create(mctx, &ring));
 	tctx = NULL;
-	RUNCHECK(dns_tkeyctx_create(mctx, ectx, &tctx));
+	RUNCHECK(dns_tkeyctx_create(mctx, &tctx));
 
 	view = NULL;
 	RUNCHECK(dns_view_create(mctx, 0, "_test", &view));
@@ -245,17 +225,12 @@ main(int argc, char **argv) {
 	type = DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY;
 	result = dst_key_fromnamedfile(keyname, NULL, type, mctx, &dstkey);
 	CHECK("dst_key_fromnamedfile", result);
-#ifndef PK11_MD5_DISABLE
 	result = dns_tsigkey_createfromkey(dst_key_name(dstkey),
 					   DNS_TSIG_HMACMD5_NAME,
-					   dstkey, ISC_TRUE, NULL, 0, 0,
+					   dstkey, true, NULL, 0, 0,
 					   mctx, ring, &tsigkey);
 	dst_key_free(&dstkey);
 	CHECK("dns_tsigkey_createfromkey", result);
-#else
-	dst_key_free(&dstkey);
-	CHECK("MD5 was disabled", ISC_R_NOTIMPLEMENTED);
-#endif
 
 	(void)isc_app_run();
 
@@ -280,9 +255,7 @@ main(int argc, char **argv) {
 
 	isc_log_destroy(&log);
 
-	isc_hash_destroy();
 	dst_lib_destroy();
-	isc_entropy_detach(&ectx);
 
 	isc_mem_destroy(&mctx);
 

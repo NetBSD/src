@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
+/*	$NetBSD: sha1.c,v 1.3 2019/01/09 16:55:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,7 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -143,8 +144,8 @@ main(int argc, char *argv[]) {
 	if (lib_name != NULL)
 		pk11_set_lib_name(lib_name);
 
-	result = pk11_get_session(&pctx, op_type, ISC_FALSE, ISC_FALSE,
-				  ISC_FALSE, NULL, slot);
+	result = pk11_get_session(&pctx, op_type, false, false,
+				  false, NULL, slot);
 	if ((result != ISC_R_SUCCESS) &&
 	    (result != PK11_R_NORANDOMSERVICE) &&
 	    (result != PK11_R_NOAESSERVICE)) {

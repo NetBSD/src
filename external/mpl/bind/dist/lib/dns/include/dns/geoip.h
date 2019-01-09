@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: geoip.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,6 +26,8 @@
 /***
  *** Imports
  ***/
+
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -104,8 +106,8 @@ typedef struct dns_geoip_databases {
 
 ISC_LANG_BEGINDECLS
 
-isc_boolean_t
-dns_geoip_match(const isc_netaddr_t *reqaddr, isc_uint8_t *scope,
+bool
+dns_geoip_match(const isc_netaddr_t *reqaddr,
 		const dns_geoip_databases_t *geoip,
 		const dns_geoip_elem_t *elt);
 

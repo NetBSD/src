@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 
 #include <config.h>
 
+#include <stdbool.h>
+
 #include <isc/mem.h>
 #include <isc/stats.h>
 #include <isc/util.h>
@@ -22,6 +24,7 @@
 #include <dns/tkey.h>
 #include <dns/stats.h>
 
+#include <ns/query.h>
 #include <ns/server.h>
 #include <ns/stats.h>
 
@@ -34,8 +37,8 @@
 	} while (0)						\
 
 isc_result_t
-ns_server_create(isc_mem_t *mctx, isc_entropy_t *entropy,
-		 ns_matchview_t matchingview, ns_server_t **sctxp)
+ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
+		 ns_server_t **sctxp)
 {
 	ns_server_t *sctx;
 	isc_result_t result;
@@ -50,16 +53,13 @@ ns_server_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 
 	isc_mem_attach(mctx, &sctx->mctx);
 
-	result = isc_refcount_init(&sctx->references, 1);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
+	isc_refcount_init(&sctx->references, 1);
 
-	CHECKFATAL(isc_quota_init(&sctx->xfroutquota, 10));
-	CHECKFATAL(isc_quota_init(&sctx->tcpquota, 10));
-	CHECKFATAL(isc_quota_init(&sctx->recursionquota, 100));
+	isc_quota_init(&sctx->xfroutquota, 10);
+	isc_quota_init(&sctx->tcpquota, 10);
+	isc_quota_init(&sctx->recursionquota, 100);
 
-	CHECKFATAL(dns_tkeyctx_create(mctx, entropy, &sctx->tkeyctx));
-	CHECKFATAL(isc_rng_create(mctx, entropy, &sctx->rngctx));
+	CHECKFATAL(dns_tkeyctx_create(mctx, &sctx->tkeyctx));
 
 	CHECKFATAL(ns_stats_create(mctx, ns_statscounter_max, &sctx->nsstats));
 
@@ -106,7 +106,7 @@ ns_server_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	sctx->gethostname = NULL;
 
 	sctx->matchingview = matchingview;
-	sctx->answercookie = ISC_TRUE;
+	sctx->answercookie = true;
 
 	ISC_LIST_INIT(sctx->altsecrets);
 
@@ -114,11 +114,6 @@ ns_server_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	*sctxp = sctx;
 
 	return (ISC_R_SUCCESS);
-
- cleanup:
-	isc_mem_putanddetach(&sctx->mctx, sctx, sizeof(*sctx));
-
-	return (result);
 }
 
 void
@@ -126,7 +121,7 @@ ns_server_attach(ns_server_t *src, ns_server_t **dest) {
 	REQUIRE(SCTX_VALID(src));
 	REQUIRE(dest != NULL && *dest == NULL);
 
-	isc_refcount_increment(&src->references, NULL);
+	isc_refcount_increment(&src->references);
 
 	*dest = src;
 }
@@ -134,14 +129,12 @@ ns_server_attach(ns_server_t *src, ns_server_t **dest) {
 void
 ns_server_detach(ns_server_t **sctxp) {
 	ns_server_t *sctx;
-	unsigned int refs;
 
-	REQUIRE(sctxp != NULL);
+	REQUIRE(sctxp != NULL && SCTX_VALID(*sctxp));
 	sctx = *sctxp;
-	REQUIRE(SCTX_VALID(sctx));
+	*sctxp = NULL;
 
-	isc_refcount_decrement(&sctx->references, &refs);
-	if (refs == 0) {
+	if (isc_refcount_decrement(&sctx->references) == 1) {
 		ns_altsecret_t *altsecret;
 
 		sctx->magic = 0;
@@ -162,8 +155,6 @@ ns_server_detach(ns_server_t **sctxp) {
 			dns_acl_detach(&sctx->blackholeacl);
 		if (sctx->keepresporder != NULL)
 			dns_acl_detach(&sctx->keepresporder);
-		if (sctx->rngctx != NULL)
-			isc_rng_detach(&sctx->rngctx);
 		if (sctx->tkeyctx != NULL)
 			dns_tkeyctx_destroy(&sctx->tkeyctx);
 
@@ -197,8 +188,6 @@ ns_server_detach(ns_server_t **sctxp) {
 
 		isc_mem_putanddetach(&sctx->mctx, sctx, sizeof(*sctx));
 	}
-
-	*sctxp = NULL;
 }
 
 isc_result_t
@@ -249,7 +238,7 @@ ns_server_gettimeouts(ns_server_t *sctx, unsigned int *initial,
 
 void
 ns_server_setoption(ns_server_t *sctx, unsigned int option,
-		    isc_boolean_t value)
+		    bool value)
 {
 	REQUIRE(SCTX_VALID(sctx));
 	if (value) {
@@ -259,9 +248,9 @@ ns_server_setoption(ns_server_t *sctx, unsigned int option,
 	}
 }
 
-isc_boolean_t
+bool
 ns_server_getoption(ns_server_t *sctx, unsigned int option) {
 	REQUIRE(SCTX_VALID(sctx));
 
-	return (ISC_TF((sctx->options & option) != 0));
+	return ((sctx->options & option) != 0);
 }

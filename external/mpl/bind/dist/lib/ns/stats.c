@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@ ns_stats_detach(ns_stats_t **statsp) {
 
 	if (stats->references == 0) {
 		isc_stats_detach(&stats->counters);
-		DESTROYLOCK(&stats->lock);
+		isc_mutex_destroy(&stats->lock);
 		isc_mem_putanddetach(&stats->mctx, stats, sizeof(*stats));
 	}
 }
@@ -82,9 +82,7 @@ ns_stats_create(isc_mem_t *mctx, int ncounters, ns_stats_t **statsp) {
 	stats->counters = NULL;
 	stats->references = 1;
 
-	result = isc_mutex_init(&stats->lock);
-	if (result != ISC_R_SUCCESS)
-		goto clean_stats;
+	isc_mutex_init(&stats->lock);
 
 	result = isc_stats_create(mctx, &stats->counters, ncounters);
 	if (result != ISC_R_SUCCESS)
@@ -98,8 +96,7 @@ ns_stats_create(isc_mem_t *mctx, int ncounters, ns_stats_t **statsp) {
 	return (ISC_R_SUCCESS);
 
   clean_mutex:
-	DESTROYLOCK(&stats->lock);
-  clean_stats:
+	isc_mutex_destroy(&stats->lock);
 	isc_mem_put(mctx, stats, sizeof(*stats));
 
 	return (result);
