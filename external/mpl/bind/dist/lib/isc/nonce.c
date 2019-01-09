@@ -1,4 +1,4 @@
-/*	$NetBSD: nonce.c,v 1.1.1.1 2019/01/09 16:48:19 christos Exp $	*/
+/*	$NetBSD: nonce.c,v 1.2 2019/01/09 16:55:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

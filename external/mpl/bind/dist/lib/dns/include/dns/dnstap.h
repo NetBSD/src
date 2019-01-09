@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: dnstap.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,9 @@
  * Protocol Buffers.  The protobuf schema for Dnstap messages is in the
  * file dnstap.proto, which is compiled to dnstap.pb-c.c and dnstap.pb-c.h.
  */
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #ifdef HAVE_DNSTAP
 #include <fstrm.h>
@@ -72,13 +75,17 @@ struct fstrm_iothr_options;
 #define DNS_DTTYPE_FR 0x0200
 #define DNS_DTTYPE_TQ 0x0400
 #define DNS_DTTYPE_TR 0x0800
+#define DNS_DTTYPE_UQ 0x1000
+#define DNS_DTTYPE_UR 0x2000
 
 #define DNS_DTTYPE_QUERY \
 	(DNS_DTTYPE_SQ|DNS_DTTYPE_CQ|DNS_DTTYPE_AQ|\
-	 DNS_DTTYPE_RQ|DNS_DTTYPE_FQ|DNS_DTTYPE_TQ)
+	 DNS_DTTYPE_RQ|DNS_DTTYPE_FQ|DNS_DTTYPE_TQ|\
+	 DNS_DTTYPE_UQ)
 #define DNS_DTTYPE_RESPONSE \
 	(DNS_DTTYPE_SR|DNS_DTTYPE_CR|DNS_DTTYPE_AR|\
-	 DNS_DTTYPE_RR|DNS_DTTYPE_FR|DNS_DTTYPE_TR)
+	 DNS_DTTYPE_RR|DNS_DTTYPE_FR|DNS_DTTYPE_TR|\
+	 DNS_DTTYPE_UR)
 #define DNS_DTTYPE_ALL \
 	(DNS_DTTYPE_QUERY|DNS_DTTYPE_RESPONSE)
 
@@ -96,8 +103,8 @@ struct dns_dtdata {
 
 	Dnstap__Dnstap *frame;
 
-	isc_boolean_t query;
-	isc_boolean_t tcp;
+	bool query;
+	bool tcp;
 	dns_dtmsgtype_t type;
 
 	isc_time_t qtime;
@@ -106,8 +113,8 @@ struct dns_dtdata {
 	isc_region_t qaddr;
 	isc_region_t raddr;
 
-	isc_uint32_t qport;
-	isc_uint32_t rport;
+	uint32_t qport;
+	uint32_t rport;
 
 	isc_region_t msgdata;
 	dns_message_t *msg;
@@ -120,12 +127,8 @@ struct dns_dtdata {
 
 isc_result_t
 dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
-	      struct fstrm_iothr_options **foptp, dns_dtenv_t **envp);
-
-isc_result_t
-dns_dt_create2(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
-	       struct fstrm_iothr_options **foptp, isc_task_t *reopen_task,
-	       dns_dtenv_t **envp);
+	      struct fstrm_iothr_options **foptp, isc_task_t *reopen_task,
+	      dns_dtenv_t **envp);
 /*%<
  * Create and initialize the dnstap environment.
  *
@@ -169,7 +172,7 @@ dns_dt_create2(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
  */
 
 isc_result_t
-dns_dt_setupfile(dns_dtenv_t *env, isc_uint64_t max_size, int rolls,
+dns_dt_setupfile(dns_dtenv_t *env, uint64_t max_size, int rolls,
 		 isc_log_rollsuffix_t suffix);
 /*%<
  * Sets up the dnstap logfile limits.
@@ -277,7 +280,7 @@ dns_dt_shutdown(void);
 void
 dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype,
 	    isc_sockaddr_t *qaddr, isc_sockaddr_t *dstaddr,
-	    isc_boolean_t tcp, isc_region_t *zone, isc_time_t *qtime,
+	    bool tcp, isc_region_t *zone, isc_time_t *qtime,
 	    isc_time_t *rtime, isc_buffer_t *buf);
 /*%<
  * Sends a dnstap message to the log, if 'msgtype' is one of the message
@@ -376,7 +379,7 @@ dns_dt_open(const char *filename, dns_dtmode_t mode,
  */
 
 isc_result_t
-dns_dt_getframe(dns_dthandle_t *handle, isc_uint8_t **bufp, size_t *sizep);
+dns_dt_getframe(dns_dthandle_t *handle, uint8_t **bufp, size_t *sizep);
 /*%<
  * Read a dnstap frame from the framstream reader in 'handle', storing
  * a pointer to it in '*bufp' and its size in '*sizep'.

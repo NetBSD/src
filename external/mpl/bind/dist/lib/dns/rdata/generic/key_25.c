@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,19 +36,19 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 
 	/* flags */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_keyflags_fromtext(&flags, &token.value.as_textregion));
 	RETERR(uint16_tobuffer(flags, target));
 
 	/* protocol */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_secproto_fromtext(&proto, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &proto, 1));
 
 	/* algorithm */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_secalg_fromtext(&alg, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &alg, 1));
 
@@ -404,7 +404,7 @@ digest_key(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_key(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_key);
@@ -414,10 +414,10 @@ checkowner_key(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_key(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata != NULL);
@@ -427,7 +427,7 @@ checknames_key(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

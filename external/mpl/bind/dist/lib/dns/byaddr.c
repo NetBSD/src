@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/netaddr.h>
@@ -44,21 +46,8 @@ static char hex_digits[] = {
 };
 
 isc_result_t
-dns_byaddr_createptrname(const isc_netaddr_t *address, isc_boolean_t nibble,
+dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
 			 dns_name_t *name)
-{
-	/*
-	 * We dropped bitstring labels, so all lookups will use nibbles.
-	 */
-	UNUSED(nibble);
-
-	return (dns_byaddr_createptrname2(address,
-					  DNS_BYADDROPT_IPV6INT, name));
-}
-
-isc_result_t
-dns_byaddr_createptrname2(const isc_netaddr_t *address, unsigned int options,
-			  dns_name_t *name)
 {
 	char textname[128];
 	const unsigned char *bytes;
@@ -68,6 +57,7 @@ dns_byaddr_createptrname2(const isc_netaddr_t *address, unsigned int options,
 	unsigned int len;
 
 	REQUIRE(address != NULL);
+	UNUSED(options);
 
 	/*
 	 * We create the text representation and then convert to a
@@ -94,11 +84,7 @@ dns_byaddr_createptrname2(const isc_netaddr_t *address, unsigned int options,
 			*cp++ = '.';
 		}
 		remaining = sizeof(textname) - (cp - textname);
-		if ((options & DNS_BYADDROPT_IPV6INT) != 0) {
-			strlcpy(cp, "ip6.int.", remaining);
-		} else {
-			strlcpy(cp, "ip6.arpa.", remaining);
-		}
+		strlcpy(cp, "ip6.arpa.", remaining);
 	} else
 		return (ISC_R_NOTIMPLEMENTED);
 
@@ -119,7 +105,7 @@ struct dns_byaddr {
 	dns_lookup_t *		lookup;
 	isc_task_t *		task;
 	dns_byaddrevent_t *	event;
-	isc_boolean_t		canceled;
+	bool		canceled;
 };
 
 #define BYADDR_MAGIC			ISC_MAGIC('B', 'y', 'A', 'd')
@@ -240,14 +226,12 @@ dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 	byaddr->task = NULL;
 	isc_task_attach(task, &byaddr->task);
 
-	result = isc_mutex_init(&byaddr->lock);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_event;
+	isc_mutex_init(&byaddr->lock);
 
 	dns_fixedname_init(&byaddr->name);
 
-	result = dns_byaddr_createptrname2(address, options,
-					   dns_fixedname_name(&byaddr->name));
+	result = dns_byaddr_createptrname(address, options,
+					  dns_fixedname_name(&byaddr->name));
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_lock;
 
@@ -258,7 +242,7 @@ dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_lock;
 
-	byaddr->canceled = ISC_FALSE;
+	byaddr->canceled = false;
 	byaddr->magic = BYADDR_MAGIC;
 
 	*byaddrp = byaddr;
@@ -266,9 +250,8 @@ dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 	return (ISC_R_SUCCESS);
 
  cleanup_lock:
-	DESTROYLOCK(&byaddr->lock);
+	isc_mutex_destroy(&byaddr->lock);
 
- cleanup_event:
 	ievent = (isc_event_t *)byaddr->event;
 	isc_event_free(&ievent);
 	byaddr->event = NULL;
@@ -288,7 +271,7 @@ dns_byaddr_cancel(dns_byaddr_t *byaddr) {
 	LOCK(&byaddr->lock);
 
 	if (!byaddr->canceled) {
-		byaddr->canceled = ISC_TRUE;
+		byaddr->canceled = true;
 		if (byaddr->lookup != NULL)
 			dns_lookup_cancel(byaddr->lookup);
 	}
@@ -307,7 +290,7 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp) {
 	REQUIRE(byaddr->task == NULL);
 	dns_lookup_destroy(&byaddr->lookup);
 
-	DESTROYLOCK(&byaddr->lock);
+	isc_mutex_destroy(&byaddr->lock);
 	byaddr->magic = 0;
 	isc_mem_putanddetach(&byaddr->mctx, byaddr, sizeof(*byaddr));
 

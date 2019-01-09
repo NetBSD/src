@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: rt_21.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 typedef struct dns_rdata_rt {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		preference;
+	uint16_t		preference;
 	dns_name_t		host;
 } dns_rdata_rt_t;
 

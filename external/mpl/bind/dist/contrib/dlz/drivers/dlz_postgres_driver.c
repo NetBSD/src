@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
+/*	$NetBSD: dlz_postgres_driver.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -151,8 +151,6 @@ postgres_makesafe(char *to, const char *from, size_t length)
 	return target - to;
 }
 
-#ifdef ISC_PLATFORM_USETHREADS
-
 /*%
  * Properly cleans up a list of database instances.
  * This function is only used when the driver is compiled for
@@ -227,8 +225,6 @@ postgres_find_avail_conn(db_list_t *dblist)
 	return NULL;
 }
 
-#endif /* ISC_PLATFORM_USETHREADS */
-
 /*%
  * Allocates memory for a new string, and then constructs the new
  * string by "escaping" the input string.  The new string is
@@ -300,20 +296,9 @@ postgres_get_resultset(const char *zone, const char *record,
 #endif
 
 	/* get db instance / connection */
-#ifdef ISC_PLATFORM_USETHREADS
 
 	/* find an available DBI from the list */
 	dbi = postgres_find_avail_conn((db_list_t *) dbdata);
-
-#else /* ISC_PLATFORM_USETHREADS */
-
-	/*
-	 * only 1 DBI - no need to lock instance lock either
-	 * only 1 thread in the whole process, no possible contention.
-	 */
-	dbi =  (dbinstance_t *) dbdata;
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
 #if 0
 	/* temporary logging message */
@@ -601,8 +586,6 @@ postgres_get_resultset(const char *zone, const char *record,
 	if (dbi->client != NULL)
 		isc_mem_free(named_g_mctx, dbi->client);
 
-#ifdef ISC_PLATFORM_USETHREADS
-
 #if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
@@ -612,8 +595,6 @@ postgres_get_resultset(const char *zone, const char *record,
 
 	/* release the lock so another thread can use this dbi */
 	isc_mutex_unlock(&dbi->instance_lock);
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
 	/* release query string */
 	if (querystring  != NULL)
@@ -1060,14 +1041,11 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 	dbinstance_t *dbi = NULL;
 	unsigned int j;
 
-#ifdef ISC_PLATFORM_USETHREADS
 	/* if multi-threaded, we need a few extra variables. */
 	int dbcount;
 	db_list_t *dblist = NULL;
 	int i;
 	char *endp;
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
 	UNUSED(driverarg);
 	UNUSED(dlzname);
@@ -1076,17 +1054,10 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 	srand( (unsigned)time( NULL ) );
 
 
-#ifdef ISC_PLATFORM_USETHREADS
 	/* if debugging, let user know we are multithreaded. */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(1),
 		      "Postgres driver running multithreaded");
-#else /* ISC_PLATFORM_USETHREADS */
-	/* if debugging, let user know we are single threaded. */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(1),
-		      "Postgres driver running single threaded");
-#endif /* ISC_PLATFORM_USETHREADS */
 
 	/* verify we have at least 5 arg's passed to the driver */
 	if (argc < 5) {
@@ -1107,7 +1078,6 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 	}
 
 	/* multithreaded build can have multiple DB connections */
-#ifdef ISC_PLATFORM_USETHREADS
 
 	/* check how many db connections we should create */
 	dbcount = strtol(argv[1], &endp, 10);
@@ -1132,8 +1102,6 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 	 * append each new DBI to the end of the list
 	 */
 	for (i=0; i < dbcount; i++) {
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
 		/* how many queries were passed in from config file? */
 		switch(argc) {
@@ -1176,13 +1144,9 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 			goto cleanup;
 		}
 
-#ifdef ISC_PLATFORM_USETHREADS
-
 		/* when multithreaded, build a list of DBI's */
 		ISC_LINK_INIT(dbi, link);
 		ISC_LIST_APPEND(*dblist, dbi, link);
-
-#endif
 
 		/* create and set db connection */
 		dbi->dbconn = PQconnectdb(argv[2]);
@@ -1205,8 +1169,6 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 		     j++)
 			PQreset((PGconn *) dbi->dbconn);
 
-
-#ifdef ISC_PLATFORM_USETHREADS
 
 		/*
 		 * if multi threaded, let user know which connection
@@ -1231,30 +1193,11 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 		/* set dbdata to the list we created. */
 	*dbdata = dblist;
 
-#else /* ISC_PLATFORM_USETHREADS */
-	/* if single threaded, just let user know we couldn't connect. */
-	if (PQstatus((PGconn *) dbi->dbconn) != CONNECTION_OK) {
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-			      "Postgres driver failed to create database "
-			      "connection after 4 attempts");
-		goto cleanup;
-	}
-
-	/*
-	 * single threaded build can only use 1 db connection, return
-	 * it via dbdata
-	 */
-	*dbdata = dbi;
-
-#endif /* ISC_PLATFORM_USETHREADS */
-
 	/* hey, we got through all of that ok, return success. */
 	return(ISC_R_SUCCESS);
 
  cleanup:
 
-#ifdef ISC_PLATFORM_USETHREADS
 	/*
 	 * if multithreaded, we could fail because only 1 connection
 	 * couldn't be made.  We should cleanup the other successful
@@ -1262,11 +1205,6 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 	 */
 	postgres_destroy_dblist(dblist);
 
-#else /* ISC_PLATFORM_USETHREADS */
-	if (dbi != NULL)
-		destroy_sqldbinstance(dbi);
-
-#endif /* ISC_PLATFORM_USETHREADS */
 	return(ISC_R_FAILURE);
 }
 
@@ -1279,29 +1217,9 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 static void
 postgres_destroy(void *driverarg, void *dbdata)
 {
-
-#ifdef ISC_PLATFORM_USETHREADS
-
 	UNUSED(driverarg);
 	/* cleanup the list of DBI's */
 	postgres_destroy_dblist((db_list_t *) dbdata);
-
-#else /* ISC_PLATFORM_USETHREADS */
-
-	dbinstance_t *dbi;
-
-	UNUSED(driverarg);
-
-	dbi = (dbinstance_t *) dbdata;
-
-	/* release DB connection */
-	if (dbi->dbconn != NULL)
-		PQfinish((PGconn *) dbi->dbconn);
-
-	/* destroy single DB instance */
-	destroy_sqldbinstance(dbi);
-
-#endif /* ISC_PLATFORM_USETHREADS */
 }
 
 /* pointers to all our runtime methods. */

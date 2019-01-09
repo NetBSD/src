@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtable.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: dbtable.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,6 +12,8 @@
  */
 
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/rwlock.h>
@@ -67,9 +69,7 @@ dns_dbtable_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS)
 		goto clean1;
 
-	result = isc_mutex_init(&dbtable->lock);
-	if (result != ISC_R_SUCCESS)
-		goto clean2;
+	isc_mutex_init(&dbtable->lock);
 
 	result = isc_rwlock_init(&dbtable->tree_lock, 0, 0);
 	if (result != ISC_R_SUCCESS)
@@ -87,9 +87,8 @@ dns_dbtable_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	return (ISC_R_SUCCESS);
 
  clean3:
-	DESTROYLOCK(&dbtable->lock);
+	isc_mutex_destroy(&dbtable->lock);
 
- clean2:
 	dns_rbt_destroy(&dbtable->rbt);
 
  clean1:
@@ -139,7 +138,7 @@ dns_dbtable_attach(dns_dbtable_t *source, dns_dbtable_t **targetp) {
 void
 dns_dbtable_detach(dns_dbtable_t **dbtablep) {
 	dns_dbtable_t *dbtable;
-	isc_boolean_t free_dbtable = ISC_FALSE;
+	bool free_dbtable = false;
 
 	REQUIRE(dbtablep != NULL);
 	dbtable = *dbtablep;
@@ -150,7 +149,7 @@ dns_dbtable_detach(dns_dbtable_t **dbtablep) {
 	INSIST(dbtable->references > 0);
 	dbtable->references--;
 	if (dbtable->references == 0)
-		free_dbtable = ISC_TRUE;
+		free_dbtable = true;
 
 	UNLOCK(&dbtable->lock);
 
@@ -204,7 +203,7 @@ dns_dbtable_remove(dns_dbtable_t *dbtable, dns_db_t *db) {
 	if (result == ISC_R_SUCCESS) {
 		INSIST(stored_data == db);
 
-		(void)dns_rbt_deletename(dbtable->rbt, name, ISC_FALSE);
+		(void)dns_rbt_deletename(dbtable->rbt, name, false);
 	}
 
 	RWUNLOCK(&dbtable->tree_lock, isc_rwlocktype_write);

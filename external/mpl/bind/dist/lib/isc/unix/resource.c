@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: resource.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,9 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <sys/types.h>
 #include <sys/time.h>	/* Required on some systems for <sys/resource.h>. */
 #include <sys/resource.h>
@@ -25,10 +28,6 @@
 
 #ifdef __linux__
 #include <linux/fs.h>	/* To get the large NR_OPEN. */
-#endif
-
-#if defined(__hpux) && defined(HAVE_SYS_DYNTUNE_H)
-#include <sys/dyntune.h>
 #endif
 
 #include "errno2result.h"
@@ -99,7 +98,7 @@ resource2rlim(isc_resource_t resource, int *rlim_resource) {
 isc_result_t
 isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 	struct rlimit rl;
-	ISC_PLATFORM_RLIMITTYPE rlim_value;
+	rlim_t rlim_value;
 	int unixresult;
 	int unixresource;
 	isc_result_t result;
@@ -117,17 +116,17 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 		 * integer so that it could contain the maximum range of
 		 * reasonable values.  Unfortunately, this exceeds the typical
 		 * range on Unix systems.  Ensure the range of
-		 * ISC_PLATFORM_RLIMITTYPE is not overflowed.
+		 * rlim_t is not overflowed.
 		 */
 		isc_resourcevalue_t rlim_max;
-		isc_boolean_t rlim_t_is_signed =
-			ISC_TF(((double)(ISC_PLATFORM_RLIMITTYPE)-1) < 0);
+		bool rlim_t_is_signed =
+			(((double)(rlim_t)-1) < 0);
 
 		if (rlim_t_is_signed)
-			rlim_max = ~((ISC_PLATFORM_RLIMITTYPE)1 <<
-				     (sizeof(ISC_PLATFORM_RLIMITTYPE) * 8 - 1));
+			rlim_max = ~((rlim_t)1 <<
+				     (sizeof(rlim_t) * 8 - 1));
 		else
-			rlim_max = (ISC_PLATFORM_RLIMITTYPE)-1;
+			rlim_max = (rlim_t)-1;
 
 		if (value > rlim_max)
 			value = rlim_max;
@@ -169,16 +168,6 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 		if (unixresult == 0)
 			return (ISC_R_SUCCESS);
 	}
-#elif defined(__hpux) && defined(HAVE_SYS_DYNTUNE_H)
-	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
-		uint64_t maxfiles;
-		if (gettune("maxfiles_lim", &maxfiles) == 0) {
-			rl.rlim_cur = rl.rlim_max = maxfiles;
-			unixresult = setrlimit(unixresource, &rl);
-			if (unixresult == 0)
-				return (ISC_R_SUCCESS);
-		}
-	}
 #endif
 	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
 		if (getrlimit(unixresource, &rl) == 0) {
@@ -193,34 +182,38 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 
 isc_result_t
 isc_resource_getlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
-	int unixresult;
 	int unixresource;
 	struct rlimit rl;
 	isc_result_t result;
 
 	result = resource2rlim(resource, &unixresource);
-	if (result == ISC_R_SUCCESS) {
-		unixresult = getrlimit(unixresource, &rl);
-		INSIST(unixresult == 0);
-		*value = rl.rlim_max;
+	if (result != ISC_R_SUCCESS) {
+		return (result);
 	}
 
-	return (result);
+	if (getrlimit(unixresource, &rl) != 0) {
+		return (isc__errno2result(errno));
+	}
+
+	*value = rl.rlim_max;
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
 isc_resource_getcurlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
-	int unixresult;
 	int unixresource;
 	struct rlimit rl;
 	isc_result_t result;
 
 	result = resource2rlim(resource, &unixresource);
-	if (result == ISC_R_SUCCESS) {
-		unixresult = getrlimit(unixresource, &rl);
-		INSIST(unixresult == 0);
-		*value = rl.rlim_cur;
+	if (result != ISC_R_SUCCESS) {
+		return (result);
 	}
 
-	return (result);
+	if (getrlimit(unixresource, &rl) != 0) {
+		return (isc__errno2result(errno));
+	}
+
+	*value = rl.rlim_cur;
+	return (ISC_R_SUCCESS);
 }

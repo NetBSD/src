@@ -1,4 +1,4 @@
-/*	$NetBSD: taskpool_test.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: taskpool_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,196 +11,205 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/task.h>
 #include <isc/taskpool.h>
+#include <isc/util.h>
+
 
 #include "isctest.h"
 
-/*
- * Individual unit tests
- */
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
 
 /* Create a taskpool */
-ATF_TC(create_pool);
-ATF_TC_HEAD(create_pool, tc) {
-	atf_tc_set_md_var(tc, "descr", "create a taskpool");
-}
-ATF_TC_BODY(create_pool, tc) {
+static void
+create_pool(void **state) {
 	isc_result_t result;
 	isc_taskpool_t *pool = NULL;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_taskpool_create(taskmgr, mctx, 8, 2, &pool);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_taskpool_size(pool), 8);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_taskpool_size(pool), 8);
 
 	isc_taskpool_destroy(&pool);
-	ATF_REQUIRE_EQ(pool, NULL);
-
-	isc_test_end();
+	assert_null(pool);
 }
 
 /* Resize a taskpool */
-ATF_TC(expand_pool);
-ATF_TC_HEAD(expand_pool, tc) {
-	atf_tc_set_md_var(tc, "descr", "expand a taskpool");
-}
-ATF_TC_BODY(expand_pool, tc) {
+static void
+expand_pool(void **state) {
 	isc_result_t result;
 	isc_taskpool_t *pool1 = NULL, *pool2 = NULL, *hold = NULL;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_taskpool_create(taskmgr, mctx, 10, 2, &pool1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_taskpool_size(pool1), 10);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_taskpool_size(pool1), 10);
 
 	/* resizing to a smaller size should have no effect */
 	hold = pool1;
 	result = isc_taskpool_expand(&pool1, 5, &pool2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_taskpool_size(pool2), 10);
-	ATF_REQUIRE_EQ(pool2, hold);
-	ATF_REQUIRE_EQ(pool1, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_taskpool_size(pool2), 10);
+	assert_ptr_equal(pool2, hold);
+	assert_null(pool1);
 	pool1 = pool2;
 	pool2 = NULL;
 
 	/* resizing to the same size should have no effect */
 	hold = pool1;
 	result = isc_taskpool_expand(&pool1, 10, &pool2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_taskpool_size(pool2), 10);
-	ATF_REQUIRE_EQ(pool2, hold);
-	ATF_REQUIRE_EQ(pool1, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_taskpool_size(pool2), 10);
+	assert_ptr_equal(pool2, hold);
+	assert_null(pool1);
 	pool1 = pool2;
 	pool2 = NULL;
 
 	/* resizing to larger size should make a new pool */
 	hold = pool1;
 	result = isc_taskpool_expand(&pool1, 20, &pool2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_taskpool_size(pool2), 20);
-	ATF_REQUIRE(pool2 != hold);
-	ATF_REQUIRE_EQ(pool1, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_taskpool_size(pool2), 20);
+	assert_ptr_not_equal(pool2, hold);
+	assert_null(pool1);
 
 	isc_taskpool_destroy(&pool2);
-	ATF_REQUIRE_EQ(pool2, NULL);
-
-	isc_test_end();
+	assert_null(pool2);
 }
 
 /* Get tasks */
-ATF_TC(get_tasks);
-ATF_TC_HEAD(get_tasks, tc) {
-	atf_tc_set_md_var(tc, "descr", "create a taskpool");
-}
-ATF_TC_BODY(get_tasks, tc) {
+static void
+get_tasks(void **state) {
 	isc_result_t result;
 	isc_taskpool_t *pool = NULL;
 	isc_task_t *task1 = NULL, *task2 = NULL, *task3 = NULL;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_taskpool_create(taskmgr, mctx, 2, 2, &pool);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_taskpool_size(pool), 2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_taskpool_size(pool), 2);
 
 	/* two tasks in pool; make sure we can access them more than twice */
 	isc_taskpool_gettask(pool, &task1);
-	ATF_REQUIRE(ISCAPI_TASK_VALID(task1));
+	assert_true(ISCAPI_TASK_VALID(task1));
 
 	isc_taskpool_gettask(pool, &task2);
-	ATF_REQUIRE(ISCAPI_TASK_VALID(task2));
+	assert_true(ISCAPI_TASK_VALID(task2));
 
 	isc_taskpool_gettask(pool, &task3);
-	ATF_REQUIRE(ISCAPI_TASK_VALID(task3));
+	assert_true(ISCAPI_TASK_VALID(task3));
 
 	isc_task_destroy(&task1);
 	isc_task_destroy(&task2);
 	isc_task_destroy(&task3);
 
 	isc_taskpool_destroy(&pool);
-	ATF_REQUIRE_EQ(pool, NULL);
-
-	isc_test_end();
+	assert_null(pool);
 }
 
-/* Get tasks */
-ATF_TC(set_privilege);
-ATF_TC_HEAD(set_privilege, tc) {
-	atf_tc_set_md_var(tc, "descr", "create a taskpool");
-}
-ATF_TC_BODY(set_privilege, tc) {
+/* Set privileges */
+static void
+set_privilege(void **state) {
 	isc_result_t result;
 	isc_taskpool_t *pool = NULL;
 	isc_task_t *task1 = NULL, *task2 = NULL, *task3 = NULL;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_taskpool_create(taskmgr, mctx, 2, 2, &pool);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(isc_taskpool_size(pool), 2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(isc_taskpool_size(pool), 2);
 
-	isc_taskpool_setprivilege(pool, ISC_TRUE);
+	isc_taskpool_setprivilege(pool, true);
 
 	isc_taskpool_gettask(pool, &task1);
 	isc_taskpool_gettask(pool, &task2);
 	isc_taskpool_gettask(pool, &task3);
 
-	ATF_CHECK(ISCAPI_TASK_VALID(task1));
-	ATF_CHECK(ISCAPI_TASK_VALID(task2));
-	ATF_CHECK(ISCAPI_TASK_VALID(task3));
+	assert_true(ISCAPI_TASK_VALID(task1));
+	assert_true(ISCAPI_TASK_VALID(task2));
+	assert_true(ISCAPI_TASK_VALID(task3));
 
-	ATF_CHECK(isc_task_privilege(task1));
-	ATF_CHECK(isc_task_privilege(task2));
-	ATF_CHECK(isc_task_privilege(task3));
+	assert_true(isc_task_privilege(task1));
+	assert_true(isc_task_privilege(task2));
+	assert_true(isc_task_privilege(task3));
 
-	isc_taskpool_setprivilege(pool, ISC_FALSE);
+	isc_taskpool_setprivilege(pool, false);
 
-	ATF_CHECK(!isc_task_privilege(task1));
-	ATF_CHECK(!isc_task_privilege(task2));
-	ATF_CHECK(!isc_task_privilege(task3));
+	assert_false(isc_task_privilege(task1));
+	assert_false(isc_task_privilege(task2));
+	assert_false(isc_task_privilege(task3));
 
 	isc_task_destroy(&task1);
 	isc_task_destroy(&task2);
 	isc_task_destroy(&task3);
 
 	isc_taskpool_destroy(&pool);
-	ATF_REQUIRE_EQ(pool, NULL);
-
-	isc_test_end();
+	assert_null(pool);
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, create_pool);
-	ATF_TP_ADD_TC(tp, expand_pool);
-	ATF_TP_ADD_TC(tp, get_tasks);
-	ATF_TP_ADD_TC(tp, set_privilege);
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(create_pool,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(expand_pool,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(get_tasks,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(set_privilege,
+						_setup, _teardown),
+	};
 
-	return (atf_no_error());
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

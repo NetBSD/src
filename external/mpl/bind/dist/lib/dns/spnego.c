@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: spnego.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,6 +10,8 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
+
+#include <config.h>
 
 /*! \file
  * \brief
@@ -129,14 +131,13 @@
  * harmless in any case.
  */
 
-#include <config.h>
-
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <errno.h>
 
 #include <isc/buffer.h>
 #include <isc/dir.h>
-#include <isc/entropy.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/once.h>
@@ -317,11 +318,11 @@ fix_dce(size_t reallen, size_t * len);
 #include "spnego_asn1.c"
 
 /*
- * Force the oid arrays to be isc_uint64_t aligned to silence warnings
+ * Force the oid arrays to be uint64_t aligned to silence warnings
  * about the arrays not being properly aligned for (void *).
  */
-typedef union { unsigned char b[8]; isc_uint64_t _align; } aligned8;
-typedef union { unsigned char b[16]; isc_uint64_t _align[2]; } aligned16;
+typedef union { unsigned char b[8]; uint64_t _align; } aligned8;
+typedef union { unsigned char b[16]; uint64_t _align[2]; } aligned16;
 
 static aligned16 gss_krb5_mech_oid_bytes = {
 	{ 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02 }
@@ -371,7 +372,7 @@ gssapi_spnego_decapsulate(OM_uint32 *,
 
 /* mod_auth_kerb.c */
 
-static int
+static bool
 cmp_gss_type(gss_buffer_t token, gss_OID gssoid)
 {
 	unsigned char *p;
@@ -395,7 +396,7 @@ cmp_gss_type(gss_buffer_t token, gss_OID gssoid)
 	if (((OM_uint32) *p++) != gssoid->length)
 		return (GSS_S_DEFECTIVE_TOKEN);
 
-	return (isc_safe_memcompare(p, gssoid->elements, gssoid->length));
+	return (!isc_safe_memequal(p, gssoid->elements, gssoid->length));
 }
 
 /* accept_sec_context.c */

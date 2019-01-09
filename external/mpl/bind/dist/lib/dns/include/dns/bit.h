@@ -1,4 +1,4 @@
-/*	$NetBSD: bit.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: bit.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,18 +17,15 @@
 
 /*! \file dns/bit.h */
 
-#include <isc/int.h>
-#include <isc/boolean.h>
+#include <inttypes.h>
 
-typedef isc_uint64_t dns_bitset_t;
+typedef uint64_t dns_bitset_t;
 
 #define DNS_BIT_SET(bit, bitset) \
-     (*(bitset) |= ((dns_bitset_t)1 << (bit)))
+	(*(bitset) |= ((dns_bitset_t)1 << (bit)))
 #define DNS_BIT_CLEAR(bit, bitset) \
-     (*(bitset) &= ~((dns_bitset_t)1 << (bit)))
+	(*(bitset) &= ~((dns_bitset_t)1 << (bit)))
 #define DNS_BIT_CHECK(bit, bitset) \
-     ISC_TF((*(bitset) & ((dns_bitset_t)1 << (bit))) \
-	    == ((dns_bitset_t)1 << (bit)))
+	((*(bitset) & ((dns_bitset_t)1 << (bit))) == ((dns_bitset_t)1 << (bit)))
 
 #endif /* DNS_BIT_H */
-

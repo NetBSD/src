@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,6 +80,9 @@ isc_thread_setconcurrency(unsigned int level);
 
 void
 isc_thread_setname(isc_thread_t, const char *);
+
+isc_result_t
+isc_thread_setaffinity(int cpu);
 
 int
 isc_thread_key_create(isc_thread_key_t *key, void (*func)(void *));

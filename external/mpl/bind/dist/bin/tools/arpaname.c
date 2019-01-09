@@ -1,4 +1,4 @@
-/*	$NetBSD: arpaname.c,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: arpaname.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,7 +12,7 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <isc/net.h>
 #include <isc/print.h>

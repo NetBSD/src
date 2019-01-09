@@ -1,4 +1,4 @@
-/*	$NetBSD: afsdb_18.h,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: afsdb_18.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 typedef struct dns_rdata_afsdb {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		subtype;
+	uint16_t		subtype;
 	dns_name_t		server;
 } dns_rdata_afsdb_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.2 2018/08/12 13:02:32 christos Exp $	*/
+/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.3 2019/01/09 16:55:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2014 Maui Systems Ltd, Scotland, contact@maui-systems.co.uk.
@@ -42,11 +42,11 @@
  * See README for database schema and usage details.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -181,14 +181,6 @@
 	"DELETE FROM ZoneData WHERE zone_id = %s AND " \
 	"LOWER(name) = LOWER('%s') AND UPPER(type) = UPPER('%s')"
 
-#ifdef WIN32
-#define STRTOK_R(a, b, c)       strtok_s(a, b, c)
-#elif defined(_REENTRANT)
-#define STRTOK_R(a, b, c)       strtok_r(a, b, c)
-#else
-#define STRTOK_R(a, b, c)       strtok(a, b)
-#endif
-
 /*
  * Number of concurrent database connections we support
  * - equivalent to maxmium number of concurrent transactions
@@ -264,7 +256,7 @@ static const char *modname = "dlz_mysqldyn";
 /*
  * Local functions
  */
-static isc_boolean_t
+static bool
 db_connect(mysql_data_t *state, mysql_instance_t *dbi) {
 	MYSQL *conn;
 	/*
@@ -273,7 +265,7 @@ db_connect(mysql_data_t *state, mysql_instance_t *dbi) {
 	mysql_thread_init();
 
 	if (dbi->connected)
-		return (ISC_TRUE);
+		return (true);
 
 	if (state->log != NULL)
 		state->log(ISC_LOG_INFO, "%s: init connection %d ",
@@ -290,11 +282,11 @@ db_connect(mysql_data_t *state, mysql_instance_t *dbi) {
 				   modname, mysql_error(dbi->sock));
 
 		dlz_mutex_unlock(&dbi->mutex);
-		return (ISC_FALSE);
+		return (false);
 	}
 
 	dbi->connected = 1;
-	return (ISC_TRUE);
+	return (true);
 }
 
 static mysql_instance_t *
@@ -376,7 +368,7 @@ build_query(mysql_data_t *state, mysql_instance_t *dbi,
 	    const char *command, ...)
 {
 	isc_result_t result;
-	isc_boolean_t localdbi = ISC_FALSE;
+	bool localdbi = false;
 	mysql_arglist_t arglist;
 	mysql_arg_t *item;
 	char *p, *q, *tmp = NULL, *querystr = NULL;
@@ -389,7 +381,7 @@ build_query(mysql_data_t *state, mysql_instance_t *dbi,
 		dbi = get_dbi(state);
 		if (dbi == NULL)
 			return (NULL);
-		localdbi = ISC_TRUE;
+		localdbi = true;
 	}
 
 	/* Make sure this instance is connected */
@@ -477,11 +469,11 @@ build_query(mysql_data_t *state, mysql_instance_t *dbi,
 }
 
 /* Does this name end in a dot? */
-static isc_boolean_t
+static bool
 isrelative(const char *s) {
 	if (s == NULL || s[strlen(s) - 1] == '.')
-		return (ISC_FALSE);
-	return (ISC_TRUE);
+		return (false);
+	return (true);
 }
 
 /* Return a dot if 's' doesn't already end with one */
@@ -596,7 +588,7 @@ db_execute(mysql_data_t *state, mysql_instance_t *dbi, const char *query) {
 static MYSQL_RES *
 db_query(mysql_data_t *state, mysql_instance_t *dbi, const char *query) {
 	isc_result_t result;
-	isc_boolean_t localdbi = ISC_FALSE;
+	bool localdbi = false;
 	MYSQL_RES *res = NULL;
 
 	if (query == NULL)
@@ -607,7 +599,7 @@ db_query(mysql_data_t *state, mysql_instance_t *dbi, const char *query) {
 		dbi = get_dbi(state);
 		if (dbi == NULL)
 			return (NULL);
-		localdbi = ISC_TRUE;
+		localdbi = true;
 	}
 
 	/* Make sure this instance is connected */
@@ -752,7 +744,7 @@ notify(mysql_data_t *state, const char *zone, int sn) {
 
 	/* Tell each nameserver of the update */
 	while ((row = mysql_fetch_row(res)) != NULL) {
-		isc_boolean_t local = ISC_FALSE;
+		bool local = false;
 		struct hostent *h;
 		struct sockaddr_in addr, *sin;
 
@@ -783,7 +775,7 @@ notify(mysql_data_t *state, const char *zone, int sn) {
 
 			/* See if nameserver address matches this one */
 			if (strcmp(ifaddr, zaddr) == 0)
-				local = ISC_TRUE;
+				local = true;
 		}
 
 		if (!local) {
@@ -839,23 +831,23 @@ makerecord(mysql_data_t *state, const char *name, const char *rdatastr) {
 	 * The DATA field is space separated, and is in the data format
 	 * for the type used by dig
 	 */
-	real_name = STRTOK_R(buf, "\t", &saveptr);
+	real_name = strtok_r(buf, "\t", &saveptr);
 	if (real_name == NULL)
 		goto error;
 
-	ttlstr = STRTOK_R(NULL, "\t", &saveptr);
+	ttlstr = strtok_r(NULL, "\t", &saveptr);
 	if (ttlstr == NULL || sscanf(ttlstr, "%d", &ttlvalue) != 1)
 		goto error;
 
-	dclass = STRTOK_R(NULL, "\t", &saveptr);
+	dclass = strtok_r(NULL, "\t", &saveptr);
 	if (dclass == NULL)
 		goto error;
 
-	type = STRTOK_R(NULL, "\t", &saveptr);
+	type = strtok_r(NULL, "\t", &saveptr);
 	if (type == NULL)
 		goto error;
 
-	data = STRTOK_R(NULL, "\t", &saveptr);
+	data = strtok_r(NULL, "\t", &saveptr);
 	if (data == NULL)
 		goto error;
 
@@ -1068,7 +1060,7 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 {
 	isc_result_t result;
 	mysql_data_t *state = (mysql_data_t *)dbdata;
-	isc_boolean_t found = ISC_FALSE;
+	bool found = false;
 	char *real_name;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -1175,7 +1167,7 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 			return (result);
 		}
 
-		found = ISC_TRUE;
+		found = true;
 	}
 
 	if (state->debug && state->log != NULL)
@@ -1351,7 +1343,7 @@ dlz_newversion(const char *zone, void *dbdata, void **versionp) {
  * End a transaction
  */
 void
-dlz_closeversion(const char *zone, isc_boolean_t commit,
+dlz_closeversion(const char *zone, bool commit,
 		 void *dbdata, void **versionp)
 {
 	isc_result_t result;
@@ -1542,7 +1534,7 @@ dlz_configure(dns_view_t *view, dns_dlzdb_t *dlzdb, void *dbdata)
 /*
  * Authorize a zone update
  */
-isc_boolean_t
+bool
 dlz_ssumatch(const char *signer, const char *name, const char *tcpaddr,
 	     const char *type, const char *key, uint32_t keydatalen,
 	     unsigned char *keydata, void *dbdata)
@@ -1559,7 +1551,7 @@ dlz_ssumatch(const char *signer, const char *name, const char *tcpaddr,
 		state->log(ISC_LOG_INFO,
 			   "%s: allowing update of %s by key %s",
 			   modname, name, signer);
-	return (ISC_TRUE);
+	return (true);
 }
 
 isc_result_t
