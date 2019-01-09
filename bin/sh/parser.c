@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.159 2018/12/11 13:31:20 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.160 2019/01/09 10:59:20 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.159 2018/12/11 13:31:20 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.160 2019/01/09 10:59:20 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1347,11 +1347,13 @@ parsebackq(VSS *const stack, char * const in,
 	char *volatile sstr = str;
 	struct jmploc jmploc;
 	struct jmploc *const savehandler = handler;
+	struct parsefile *const savetopfile = getcurrentfile();
 	const int savelen = in - stackblock();
 	int saveprompt;
 	int lno;
 
 	if (setjmp(jmploc.loc)) {
+		popfilesupto(savetopfile);
 		if (sstr)
 			ckfree(__UNVOLATILE(sstr));
 		cleanup_state_stack(stack);
