@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.8 2014/03/26 17:56:18 christos Exp $	*/
+/*	$NetBSD: disk.c,v 1.9 2019/01/09 03:28:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-#include <machine/param.h>
+#include <sys/param.h>
 #include <machine/sbd.h>
 #include <machine/sector.h>
 

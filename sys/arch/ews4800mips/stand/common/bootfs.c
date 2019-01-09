@@ -1,4 +1,4 @@
-/*	$NetBSD: bootfs.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: bootfs.c,v 1.5 2019/01/09 03:28:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-#include <machine/param.h>
+#include <sys/param.h>
 #include <machine/bfs.h>
 #include <machine/sector.h>
 

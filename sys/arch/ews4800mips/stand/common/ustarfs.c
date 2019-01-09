@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.8 2009/02/04 15:22:13 tsutsui Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.9 2019/01/09 03:28:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-#include <machine/param.h>
+#include <sys/param.h>
 #include <machine/sbd.h>
 #include <machine/sector.h>
 
