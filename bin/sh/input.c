@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.64 2018/12/03 06:40:26 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.65 2019/01/09 11:04:54 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.64 2018/12/03 06:40:26 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.65 2019/01/09 11:04:54 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,6 +149,10 @@ pfgets(char *line, int len)
 			if (p == line)
 				return NULL;
 			break;
+		}
+		if (c == PFAKE) {
+			++nleft;
+			continue;
 		}
 		*p++ = c;
 		if (c == '\n')
