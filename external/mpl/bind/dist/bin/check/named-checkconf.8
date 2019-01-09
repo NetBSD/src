@@ -1,4 +1,4 @@
-.\"	$NetBSD: named-checkconf.8,v 1.2 2018/08/12 13:02:26 christos Exp $
+.\"	$NetBSD: named-checkconf.8,v 1.3 2019/01/09 16:54:58 christos Exp $
 .\"
 .\" Copyright (C) 2000-2002, 2004, 2005, 2007, 2009, 2014-2016, 2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -41,7 +41,7 @@
 named-checkconf \- named configuration file syntax checking tool
 .SH "SYNOPSIS"
 .HP \w'\fBnamed\-checkconf\fR\ 'u
-\fBnamed\-checkconf\fR [\fB\-hjlvz\fR] [\fB\-p\fR\ [\fB\-x\fR\ ]] [\fB\-t\ \fR\fB\fIdirectory\fR\fR] {filename}
+\fBnamed\-checkconf\fR [\fB\-chjlvz\fR] [\fB\-p\fR\ [\fB\-x\fR\ ]] [\fB\-t\ \fR\fB\fIdirectory\fR\fR] {filename}
 .SH "DESCRIPTION"
 .PP
 \fBnamed\-checkconf\fR
@@ -79,6 +79,13 @@ When loading a zonefile read the journal if it exists\&.
 \-l
 .RS 4
 List all the configured zones\&. Each line of output contains the zone name, class (e\&.g\&. IN), view, and type (e\&.g\&. master or slave)\&.
+.RE
+.PP
+\-c
+.RS 4
+Check "core" configuration only\&. This suppresses the loading of plugin modules, and causes all parameters to
+\fBplugin\fR
+statements to be ignored\&.
 .RE
 .PP
 \-p

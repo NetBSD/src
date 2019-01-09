@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 #define NAMED_GLOBALS_H 1
 
 /*! \file */
+
+#include <stdbool.h>
 
 #include <isc/rwlock.h>
 #include <isc/log.h>
@@ -50,12 +52,10 @@ EXTERN unsigned int		named_g_cpus		INIT(0);
 EXTERN unsigned int		named_g_udpdisp		INIT(0);
 EXTERN isc_taskmgr_t *		named_g_taskmgr		INIT(NULL);
 EXTERN dns_dispatchmgr_t *	named_g_dispatchmgr	INIT(NULL);
-EXTERN isc_entropy_t *		named_g_entropy		INIT(NULL);
-EXTERN isc_entropy_t *		named_g_fallbackentropy	INIT(NULL);
 EXTERN unsigned int		named_g_cpus_detected	INIT(1);
 
 #ifdef ENABLE_AFL
-EXTERN isc_boolean_t		named_g_run_done	INIT(ISC_FALSE);
+EXTERN bool		named_g_run_done	INIT(false);
 #endif
 /*
  * XXXRTH  We're going to want multiple timer managers eventually.  One
@@ -98,7 +98,7 @@ EXTERN const char *		named_g_keyfile		INIT(NAMED_SYSCONFDIR
 
 EXTERN dns_tsigkey_t *		named_g_sessionkey	INIT(NULL);
 EXTERN dns_name_t		named_g_sessionkeyname;
-EXTERN isc_boolean_t		named_g_conffileset	INIT(ISC_FALSE);
+EXTERN bool		named_g_conffileset	INIT(false);
 EXTERN cfg_aclconfctx_t *	named_g_aclconfctx	INIT(NULL);
 
 /*
@@ -112,11 +112,11 @@ EXTERN isc_resourcevalue_t	named_g_initopenfiles	INIT(0);
 /*
  * Misc.
  */
-EXTERN isc_boolean_t		named_g_coreok		INIT(ISC_TRUE);
+EXTERN bool		named_g_coreok		INIT(true);
 EXTERN const char *		named_g_chrootdir	INIT(NULL);
-EXTERN isc_boolean_t		named_g_foreground	INIT(ISC_FALSE);
-EXTERN isc_boolean_t		named_g_logstderr	INIT(ISC_FALSE);
-EXTERN isc_boolean_t		named_g_nosyslog	INIT(ISC_FALSE);
+EXTERN bool		named_g_foreground	INIT(false);
+EXTERN bool		named_g_logstderr	INIT(false);
+EXTERN bool		named_g_nosyslog	INIT(false);
 EXTERN const char *		named_g_logfile		INIT(NULL);
 
 EXTERN const char *		named_g_defaultsessionkeyfile
@@ -125,7 +125,7 @@ EXTERN const char *		named_g_defaultsessionkeyfile
 EXTERN const char *		named_g_defaultlockfile	INIT(NAMED_LOCALSTATEDIR
 							     "/run/named/"
 							     "named.lock");
-EXTERN isc_boolean_t		named_g_forcelock	INIT(ISC_FALSE);
+EXTERN bool		named_g_forcelock	INIT(false);
 
 #if NAMED_RUN_PID_DIR
 EXTERN const char *		named_g_defaultpidfile 	INIT(NAMED_LOCALSTATEDIR
@@ -146,16 +146,12 @@ EXTERN const char *		named_g_defaultdnstap	INIT(NULL);
 
 EXTERN const char *		named_g_username	INIT(NULL);
 
-#if defined(USE_PKCS11)
-EXTERN const char *		named_g_engine		INIT(PKCS11_ENGINE);
-#else
 EXTERN const char *		named_g_engine		INIT(NULL);
-#endif
 
 EXTERN isc_time_t		named_g_boottime;
 EXTERN isc_time_t		named_g_configtime;
-EXTERN isc_boolean_t		named_g_memstatistics	INIT(ISC_FALSE);
-EXTERN isc_boolean_t		named_g_keepstderr	INIT(ISC_FALSE);
+EXTERN bool		named_g_memstatistics	INIT(false);
+EXTERN bool		named_g_keepstderr	INIT(false);
 
 EXTERN unsigned int		named_g_tat_interval	INIT(24*3600);
 

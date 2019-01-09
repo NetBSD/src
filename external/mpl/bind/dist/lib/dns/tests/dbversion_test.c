@@ -1,4 +1,4 @@
-/*	$NetBSD: dbversion_test.c,v 1.2 2018/08/12 13:02:36 christos Exp $	*/
+/*	$NetBSD: dbversion_test.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,22 +11,28 @@
  * information regarding copyright ownership.
  */
 
-
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
 #include <stdlib.h>
-#include <time.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/file.h>
 #include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/stdtime.h>
 #include <isc/msgcat.h>
+#include <isc/string.h>
+#include <isc/util.h>
 
 #include <dns/db.h>
 #include <dns/rdatalist.h>
@@ -37,583 +43,378 @@
 #include "dnstest.h"
 
 static char tempname[11] = "dtXXXXXXXX";
+static dns_db_t *db1 = NULL, *db2 = NULL;
+static dns_dbversion_t *v1 = NULL, *v2 = NULL;
+
+#ifndef ISC_CHECK_NONE
+/*
+ * The code below enables us to trap assertion failures for testing
+ * purposes. local_callback() is set as the callback function for
+ * isc_assertion_failed(). It calls mock_assert() so that CMOCKA
+ * will be able to see it, then returns to the calling functon via
+ * longjmp() so that the abort() call in isc_assertion_failed() will
+ * never be reached. Use check_assertion() to check for assertions
+ * instead of expect_assert_failure().
+ */
+jmp_buf assertion;
+
+#define check_assertion(function_call)				\
+	do {							\
+		const int r = setjmp(assertion);		\
+		if (r == 0) {					\
+			expect_assert_failure(function_call);	\
+		}						\
+	} while(false);
 
 static void
 local_callback(const char *file, int line, isc_assertiontype_t type,
 	       const char *cond)
 {
-	UNUSED(file); UNUSED(line); UNUSED(type); UNUSED(cond);
-	if (strcmp(tempname, "dtXXXXXXXX"))
-		unlink(tempname);
-	atf_tc_pass();
-	exit(0);
+	UNUSED(type);
+
+	mock_assert(1, cond, file, line);
+	longjmp(assertion, 1);
 }
+#else
+#define check_assertion(function_call)
+#endif /* ISC_CHECK_NONE */
 
-static dns_db_t *db1 = NULL, *db2 = NULL;
-static dns_dbversion_t *v1 = NULL, *v2 = NULL;
+static int
+_setup(void **state) {
+	isc_result_t res;
 
-static void
-setup_db(void) {
-	isc_result_t result;
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
+	UNUSED(state);
+
+#ifndef ISC_CHECK_NONE
+	isc_assertion_setcallback(local_callback);
+#endif
+
+	res = dns_test_begin(NULL, false);
+	assert_int_equal(res, ISC_R_SUCCESS);
+
+	res = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
 			       dns_rdataclass_in, 0, NULL, &db1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(res, ISC_R_SUCCESS);
 	dns_db_newversion(db1, &v1);
+	assert_non_null(v1);
 
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
+	res = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
 			       dns_rdataclass_in, 0, NULL, &db2);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(res, ISC_R_SUCCESS);
 	dns_db_newversion(db2, &v2);
+	assert_non_null(v1);
+
+	return (0);
 }
 
-static void
-close_db(void) {
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	if (strcmp(tempname, "dtXXXXXXXX") != 0) {
+		unlink(tempname);
+	}
+
 	if (v1 != NULL) {
-		dns_db_closeversion(db1, &v1, ISC_FALSE);
-		ATF_REQUIRE_EQ(v1, NULL);
+		dns_db_closeversion(db1, &v1, false);
+		assert_null(v1);
 	}
 	if (db1 != NULL) {
 		dns_db_detach(&db1);
-		ATF_REQUIRE_EQ(db1, NULL);
+		assert_null(db1);
 	}
 
 	if (v2 != NULL) {
-		dns_db_closeversion(db2, &v2, ISC_FALSE);
-		ATF_REQUIRE_EQ(v2, NULL);
+		dns_db_closeversion(db2, &v2, false);
+		assert_null(v2);
 	}
 	if (db2 != NULL) {
 		dns_db_detach(&db2);
-		ATF_REQUIRE_EQ(db2, NULL);
+		assert_null(db2);
 	}
+
+	dns_test_end();
+
+	return (0);
 }
 
-#define VERSION(callback) ((callback == NULL) ? v1 : v2)
-#define VERSIONP(callback) ((callback == NULL) ? &v1 : &v2)
 /*
- * Individual unit tests
+ * Check dns_db_attachversion() passes with matching db and version, and
+ * asserts with mis-matching db and version.
  */
 static void
-attachversion(isc_assertioncallback_t callback) {
-	isc_result_t result;
+attachversion(void **state) {
 	dns_dbversion_t *v = NULL;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	setup_db();
+	dns_db_attachversion(db1, v1, &v);
+	assert_ptr_equal(v, v1);
+	dns_db_closeversion(db1, &v, false);
+	assert_null(v);
 
-	isc_assertion_setcallback(callback);
-	dns_db_attachversion(db1, VERSION(callback), &v);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_attachversion did not assert");
-
-	ATF_REQUIRE_EQ(v, v1);
-	dns_db_closeversion(db1, &v, ISC_FALSE);
-	ATF_REQUIRE_EQ(v, NULL);
-
-	close_db();
-	dns_test_end();
+	check_assertion(dns_db_attachversion(db1, v2, &v));
 }
 
-ATF_TC(attachversion);
-ATF_TC_HEAD(attachversion, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_attachversion passes with matching db/verison");
-}
-ATF_TC_BODY(attachversion, tc) {
-
-	UNUSED(tc);
-
-	attachversion(NULL);
-}
-
-ATF_TC(attachversion_bad);
-ATF_TC_HEAD(attachversion_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_attachversion aborts with mis-matching db/verison");
-}
-ATF_TC_BODY(attachversion_bad, tc) {
-
-	UNUSED(tc);
-
-	attachversion(local_callback);
-}
-
+/*
+ * Check dns_db_closeversion() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-closeversion(isc_assertioncallback_t callback) {
-	isc_result_t result;
+closeversion(void **state) {
+	UNUSED(state);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_non_null(v1);
+	dns_db_closeversion(db1, &v1, false);
+	assert_null(v1);
 
-	setup_db();
-
-	isc_assertion_setcallback(callback);
-	dns_db_closeversion(db1, VERSIONP(callback), ISC_FALSE);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_closeversion did not assert");
-	ATF_REQUIRE_EQ(v1, NULL);
-
-	close_db();
-	dns_test_end();
+	check_assertion(dns_db_closeversion(db1, &v2, false));
 }
 
-ATF_TC(closeversion);
-ATF_TC_HEAD(closeversion, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_closeversion passes with matching db/verison");
-}
-ATF_TC_BODY(closeversion, tc) {
-
-	UNUSED(tc);
-
-	closeversion(NULL);
-}
-
-ATF_TC(closeversion_bad);
-ATF_TC_HEAD(closeversion_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_closeversion asserts with mis-matching db/verison");
-}
-ATF_TC_BODY(closeversion_bad, tc) {
-
-	UNUSED(tc);
-
-	closeversion(local_callback);
-}
-
+/*
+ * Check dns_db_find() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-find(isc_assertioncallback_t callback) {
-	isc_result_t result;
+find(void **state) {
+	isc_result_t res;
 	dns_rdataset_t rdataset;
 	dns_fixedname_t fixed;
+	dns_name_t *name = NULL;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	setup_db();
+	name = dns_fixedname_initname(&fixed);
 
 	dns_rdataset_init(&rdataset);
-	dns_fixedname_init(&fixed);
+	res = dns_db_find(db1, dns_rootname, v1, dns_rdatatype_soa,
+			  0, 0, NULL, name, &rdataset, NULL);
+	assert_int_equal(res, DNS_R_NXDOMAIN);
 
-	isc_assertion_setcallback(callback);
-	result = dns_db_find(db1, dns_rootname, VERSION(callback),
-			     dns_rdatatype_soa, 0, 0, NULL,
-			     dns_fixedname_name(&fixed), &rdataset, NULL);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_find did not assert");
-	ATF_REQUIRE_EQ(result, DNS_R_NXDOMAIN);
+	if (dns_rdataset_isassociated(&rdataset)) {
+		dns_rdataset_disassociate(&rdataset);
+	}
 
-	close_db();
-
-	dns_test_end();
-}
-ATF_TC(find);
-ATF_TC_HEAD(find, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_find passes with matching db/version");
-}
-ATF_TC_BODY(find, tc) {
-
-	UNUSED(tc);
-
-	find(NULL);
+	dns_rdataset_init(&rdataset);
+	check_assertion(dns_db_find(db1, dns_rootname, v2,
+				    dns_rdatatype_soa, 0, 0, NULL,
+				    name, &rdataset, NULL));
 }
 
-ATF_TC(find_bad);
-ATF_TC_HEAD(find_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_find asserts with mis-matching db/version");
-}
-ATF_TC_BODY(find_bad, tc) {
-
-	UNUSED(tc);
-
-	find(local_callback);
-}
-
+/*
+ * Check dns_db_allrdatasets() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-allrdatasets(isc_assertioncallback_t callback) {
-	isc_result_t result;
+allrdatasets(void **state) {
+	isc_result_t res;
 	dns_dbnode_t *node = NULL;
 	dns_rdatasetiter_t *iterator = NULL;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	setup_db();
+	res = dns_db_findnode(db1, dns_rootname, false, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	result = dns_db_findnode(db1, dns_rootname, ISC_FALSE, &node);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_db_allrdatasets(db1, node, v1, 0, &iterator);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	isc_assertion_setcallback(callback);
-	result = dns_db_allrdatasets(db1, node, VERSION(callback), 0,
-				     &iterator);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_allrdatasets did not assert");
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	check_assertion(dns_db_allrdatasets(db1, node, v2, 0, &iterator));
 
 	dns_rdatasetiter_destroy(&iterator);
-	ATF_REQUIRE_EQ(iterator, NULL);
+	assert_null(iterator);
 
 	dns_db_detachnode(db1, &node);
-	ATF_REQUIRE_EQ(node, NULL);
+	assert_null(node);
 
-	close_db();
 
-	dns_test_end();
 }
 
-ATF_TC(allrdatasets);
-ATF_TC_HEAD(allrdatasets, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_allrdatasets passes with matching db/version");
-}
-ATF_TC_BODY(allrdatasets, tc) {
-
-	UNUSED(tc);
-
-	allrdatasets(NULL);
-}
-
-ATF_TC(allrdatasets_bad);
-ATF_TC_HEAD(allrdatasets_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_allrdatasets aborts with mis-matching db/version");
-}
-ATF_TC_BODY(allrdatasets_bad, tc) {
-
-	UNUSED(tc);
-
-	allrdatasets(local_callback);
-}
-
+/*
+ * Check dns_db_findrdataset() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-findrdataset(isc_assertioncallback_t callback) {
-	isc_result_t result;
+findrdataset(void **state) {
+	isc_result_t res;
 	dns_rdataset_t rdataset;
-	dns_fixedname_t fixed;
 	dns_dbnode_t *node = NULL;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	setup_db();
+	res = dns_db_findnode(db1, dns_rootname, false, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
 	dns_rdataset_init(&rdataset);
-	dns_fixedname_init(&fixed);
+	res = dns_db_findrdataset(db1, node, v1, dns_rdatatype_soa,
+				     0, 0, &rdataset, NULL);
+	assert_int_equal(res, ISC_R_NOTFOUND);
 
-	result = dns_db_findnode(db1, dns_rootname, ISC_FALSE, &node);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	isc_assertion_setcallback(callback);
-	result = dns_db_findrdataset(db1, node, VERSION(callback),
-				     dns_rdatatype_soa, 0, 0, &rdataset, NULL);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_findrdataset did not assert");
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
-
-	dns_db_detachnode(db1, &node);
-	ATF_REQUIRE_EQ(node, NULL);
-
-	close_db();
-
-	dns_test_end();
-}
-
-ATF_TC(findrdataset);
-ATF_TC_HEAD(findrdataset, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_findrdataset passes with matching db/version");
-}
-ATF_TC_BODY(findrdataset, tc) {
-
-	UNUSED(tc);
-
-	findrdataset(NULL);
-}
-
-ATF_TC(findrdataset_bad);
-ATF_TC_HEAD(findrdataset_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_findrdataset aborts with mis-matching db/version");
-}
-ATF_TC_BODY(findrdataset_bad, tc) {
-
-	UNUSED(tc);
-
-	findrdataset(local_callback);
-}
-
-static void
-deleterdataset(isc_assertioncallback_t callback) {
-	isc_result_t result;
-	dns_rdataset_t rdataset;
-	dns_fixedname_t fixed;
-	dns_dbnode_t *node = NULL;
-
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	setup_db();
+	if (dns_rdataset_isassociated(&rdataset)) {
+		dns_rdataset_disassociate(&rdataset);
+	}
 
 	dns_rdataset_init(&rdataset);
-	dns_fixedname_init(&fixed);
-
-	result = dns_db_findnode(db1, dns_rootname, ISC_FALSE, &node);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	isc_assertion_setcallback(callback);
-	result = dns_db_deleterdataset(db1, node, VERSION(callback),
-				       dns_rdatatype_soa, 0);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_deleterdataset did not assert");
-	ATF_REQUIRE_EQ(result, DNS_R_UNCHANGED);
+	check_assertion(dns_db_findrdataset(db1, node, v2,
+					    dns_rdatatype_soa, 0, 0,
+					    &rdataset, NULL));
 
 	dns_db_detachnode(db1, &node);
-	ATF_REQUIRE_EQ(node, NULL);
-
-	close_db();
-
-	dns_test_end();
+	assert_null(node);
 }
 
-ATF_TC(deleterdataset);
-ATF_TC_HEAD(deleterdataset, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_deleterdataset passes with matching db/version");
-}
-ATF_TC_BODY(deleterdataset, tc) {
-
-	UNUSED(tc);
-
-	deleterdataset(NULL);
-}
-
-ATF_TC(deleterdataset_bad);
-ATF_TC_HEAD(deleterdataset_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_deleterdataset aborts with mis-matching db/version");
-}
-ATF_TC_BODY(deleterdataset_bad, tc) {
-
-	UNUSED(tc);
-
-	deleterdataset(local_callback);
-}
-
+/*
+ * Check dns_db_deleterdataset() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-subtract(isc_assertioncallback_t callback) {
-	isc_result_t result;
-	dns_rdataset_t rdataset;
-	dns_fixedname_t fixed;
+deleterdataset(void **state) {
+	isc_result_t res;
 	dns_dbnode_t *node = NULL;
+
+	UNUSED(state);
+
+	res = dns_db_findnode(db1, dns_rootname, false, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
+
+	res = dns_db_deleterdataset(db1, node, v1, dns_rdatatype_soa, 0);
+	assert_int_equal(res, DNS_R_UNCHANGED);
+
+	check_assertion(dns_db_deleterdataset(db1, node, v2,
+					      dns_rdatatype_soa, 0));
+	dns_db_detachnode(db1, &node);
+	assert_null(node);
+}
+
+/*
+ * Check dns_db_subtractrdataset() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
+static void
+subtract(void **state) {
+	isc_result_t res;
+	dns_rdataset_t rdataset;
 	dns_rdatalist_t rdatalist;
+	dns_dbnode_t *node = NULL;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	setup_db();
+	UNUSED(state);
 
 	dns_rdataset_init(&rdataset);
 	dns_rdatalist_init(&rdatalist);
-	dns_fixedname_init(&fixed);
 
 	rdatalist.rdclass = dns_rdataclass_in;
 
-	result = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	result = dns_db_findnode(db1, dns_rootname, ISC_FALSE, &node);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_db_findnode(db1, dns_rootname, false, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	isc_assertion_setcallback(callback);
-	result = dns_db_subtractrdataset(db1, node, VERSION(callback),
-					 &rdataset, 0, NULL);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_subtractrdataset did not assert");
-	ATF_REQUIRE_EQ(result, DNS_R_UNCHANGED);
+	res = dns_db_subtractrdataset(db1, node, v1, &rdataset, 0, NULL);
+	assert_int_equal(res, DNS_R_UNCHANGED);
+
+	if (dns_rdataset_isassociated(&rdataset)) {
+		dns_rdataset_disassociate(&rdataset);
+	}
+
+	dns_rdataset_init(&rdataset);
+	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
+	assert_int_equal(res, ISC_R_SUCCESS);
+
+	check_assertion(dns_db_subtractrdataset(db1, node, v2,
+						&rdataset, 0, NULL));
 
 	dns_db_detachnode(db1, &node);
-	ATF_REQUIRE_EQ(node, NULL);
-
-	close_db();
-
-	dns_test_end();
+	assert_null(node);
 }
 
-ATF_TC(subtractrdataset);
-ATF_TC_HEAD(subtractrdataset, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_subtractrdataset passes with matching db/version");
-}
-ATF_TC_BODY(subtractrdataset, tc) {
-
-	UNUSED(tc);
-
-	subtract(NULL);
-}
-
-ATF_TC(subtractrdataset_bad);
-ATF_TC_HEAD(subtractrdataset_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_subtractrdataset aborts with mis-matching db/version");
-}
-ATF_TC_BODY(subtractrdataset_bad, tc) {
-
-	UNUSED(tc);
-
-	subtract(local_callback);
-}
-
+/*
+ * Check dns_db_dump() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-dump(isc_assertioncallback_t callback) {
-	isc_result_t result;
+dump(void **state) {
+	isc_result_t res;
 	FILE *f = NULL;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	setup_db();
-
-	result = isc_file_openunique(tempname, &f);
+	res = isc_file_openunique(tempname, &f);
 	fclose(f);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	isc_assertion_setcallback(callback);
-	result = dns_db_dump(db1, VERSION(callback), tempname);
-	(void)unlink(tempname);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_dump did not assert");
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_db_dump(db1, v1, tempname);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	close_db();
-
-	dns_test_end();
+	check_assertion(dns_db_dump(db1, v2, tempname));
 }
 
-ATF_TC(dump);
-ATF_TC_HEAD(dump, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_dump passes with matching db/version");
-}
-ATF_TC_BODY(dump, tc) {
-
-	UNUSED(tc);
-
-	dump(NULL);
-}
-
-ATF_TC(dump_bad);
-ATF_TC_HEAD(dump_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_dump aborts with mis-matching db/version");
-}
-ATF_TC_BODY(dump_bad, tc) {
-
-	UNUSED(tc);
-
-	dump(local_callback);
-}
-
+/*
+ * Check dns_db_addrdataset() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-addrdataset(isc_assertioncallback_t callback) {
-	isc_result_t result;
+addrdataset(void **state) {
+	isc_result_t res;
 	dns_rdataset_t rdataset;
-	dns_fixedname_t fixed;
 	dns_dbnode_t *node = NULL;
 	dns_rdatalist_t rdatalist;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	setup_db();
+	UNUSED(state);
 
 	dns_rdataset_init(&rdataset);
 	dns_rdatalist_init(&rdatalist);
-	dns_fixedname_init(&fixed);
 
 	rdatalist.rdclass = dns_rdataclass_in;
 
-	result = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	result = dns_db_findnode(db1, dns_rootname, ISC_FALSE, &node);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_db_findnode(db1, dns_rootname, false, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	isc_assertion_setcallback(callback);
-	result = dns_db_addrdataset(db1, node, VERSION(callback), 0, &rdataset,
-				    0, NULL);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_adddataset did not assert");
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_db_addrdataset(db1, node, v1, 0, &rdataset, 0, NULL);
+	assert_int_equal(res, ISC_R_SUCCESS);
+
+	check_assertion(dns_db_addrdataset(db1, node, v2,
+					   0, &rdataset, 0, NULL));
 
 	dns_db_detachnode(db1, &node);
-	ATF_REQUIRE_EQ(node, NULL);
-
-	close_db();
-
-	dns_test_end();
+	assert_null(node);
 }
 
-ATF_TC(addrdataset);
-ATF_TC_HEAD(addrdataset, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_addrdataset passes with matching db/version");
-}
-ATF_TC_BODY(addrdataset, tc) {
-
-	UNUSED(tc);
-
-	addrdataset(NULL);
-}
-
-ATF_TC(addrdataset_bad);
-ATF_TC_HEAD(addrdataset_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_addrdataset aborts with mis-matching db/version");
-}
-ATF_TC_BODY(addrdataset_bad, tc) {
-
-	UNUSED(tc);
-
-	addrdataset(local_callback);
-}
-
+/*
+ * Check dns_db_getnsec3parameters() passes with matching db and version,
+ * and asserts with mis-matching db and version.
+ */
 static void
-getnsec3parameters(isc_assertioncallback_t callback) {
-	isc_result_t result;
+getnsec3parameters(void **state) {
+	isc_result_t res;
 	dns_hash_t hash;
-	isc_uint8_t flags;
-	isc_uint16_t iterations;
+	uint8_t flags;
+	uint16_t iterations;
 	unsigned char salt[DNS_NSEC3_SALTSIZE];
 	size_t salt_length = sizeof(salt);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	setup_db();
-
-	isc_assertion_setcallback(callback);
-	result = dns_db_getnsec3parameters(db1, VERSION(callback), &hash,
-					   &flags, &iterations, salt,
+	res = dns_db_getnsec3parameters(db1, v1, &hash,
+					&flags, &iterations, salt,
 					   &salt_length);
-	if (callback != NULL)
-		atf_tc_fail("dns_db_dump did not assert");
-	ATF_REQUIRE_EQ(result, ISC_R_NOTFOUND);
+	assert_int_equal(res, ISC_R_NOTFOUND);
 
-	close_db();
-
-	dns_test_end();
+	check_assertion(dns_db_getnsec3parameters(db1, v2, &hash,
+						  &flags, &iterations,
+						  salt, &salt_length));
 }
 
-ATF_TC(getnsec3parameters);
-ATF_TC_HEAD(getnsec3parameters, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_getnsec3parameters passes with matching db/version");
-}
-ATF_TC_BODY(getnsec3parameters, tc) {
-
-	UNUSED(tc);
-
-	getnsec3parameters(NULL);
-}
-
-ATF_TC(getnsec3parameters_bad);
-ATF_TC_HEAD(getnsec3parameters_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_db_getnsec3parameters aborts with mis-matching db/version");
-}
-ATF_TC_BODY(getnsec3parameters_bad, tc) {
-
-	UNUSED(tc);
-
-	getnsec3parameters(local_callback);
-}
-
+/*
+ * Check dns_db_resigned() passes with matching db and version, and
+ * asserts with mis-matching db and version.
+ */
 static void
-resigned(isc_assertioncallback_t callback) {
-	isc_result_t result;
+resigned(void **state) {
+	isc_result_t res;
 	dns_rdataset_t rdataset, added;
 	dns_dbnode_t *node = NULL;
 	dns_rdatalist_t rdatalist;
@@ -622,10 +423,7 @@ resigned(isc_assertioncallback_t callback) {
 	isc_buffer_t b;
 	unsigned char buf[1024];
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	setup_db();
+	UNUSED(state);
 
 	/*
 	 * Create a dummy RRSIG record and set a resigning time.
@@ -648,89 +446,72 @@ resigned(isc_assertioncallback_t callback) {
 	rrsig.siglen = 0;
 	rrsig.signature = NULL;
 
-	result = dns_rdata_fromstruct(&rdata, dns_rdataclass_in,
-				      dns_rdatatype_rrsig, &rrsig, &b);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_rdata_fromstruct(&rdata, dns_rdataclass_in,
+				   dns_rdatatype_rrsig, &rrsig, &b);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
 	rdatalist.rdclass = dns_rdataclass_in;
 	rdatalist.type = dns_rdatatype_rrsig;
 	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
 
-	result = dns_rdatalist_tordataset(&rdatalist, &rdataset);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_rdatalist_tordataset(&rdatalist, &rdataset);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
 	rdataset.attributes |= DNS_RDATASETATTR_RESIGN;
 	rdataset.resign = 7200;
 
-	result = dns_db_findnode(db1, dns_rootname, ISC_FALSE, &node);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_db_findnode(db1, dns_rootname, false, &node);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
-	result = dns_db_addrdataset(db1, node, v1, 0, &rdataset, 0, &added);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	res = dns_db_addrdataset(db1, node, v1, 0, &rdataset, 0, &added);
+	assert_int_equal(res, ISC_R_SUCCESS);
 
 	dns_db_detachnode(db1, &node);
-	ATF_REQUIRE_EQ(node, NULL);
+	assert_null(node);
 
-	isc_assertion_setcallback(callback);
-	dns_db_resigned(db1, &added, VERSION(callback));
-	if (callback != NULL)
-		atf_tc_fail("dns_db_resigned did not assert");
+	check_assertion(dns_db_resigned(db1, &added, v2));
+
+	dns_db_resigned(db1, &added, v1);
 
 	dns_rdataset_disassociate(&added);
-
-	close_db();
-
-	dns_test_end();
 }
 
-ATF_TC(resigned);
-ATF_TC_HEAD(resigned, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_rdataset_resigned passes with matching db/version");
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(dump, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(find, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(allrdatasets,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(findrdataset,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(deleterdataset,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(subtract,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(addrdataset,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(getnsec3parameters,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(resigned,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(attachversion,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(closeversion,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
-ATF_TC_BODY(resigned, tc) {
 
-	UNUSED(tc);
+#else /* HAVE_CMOCKA */
 
-	resigned(NULL);
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
 }
 
-ATF_TC(resigned_bad);
-ATF_TC_HEAD(resigned_bad, tc) {
-  atf_tc_set_md_var(tc, "descr", "check dns_rdataset_resigned aborts with mis-matching db/version");
-}
-ATF_TC_BODY(resigned_bad, tc) {
-
-	UNUSED(tc);
-
-	resigned(local_callback);
-}
-
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, dump);
-	ATF_TP_ADD_TC(tp, dump_bad);
-	ATF_TP_ADD_TC(tp, find);
-	ATF_TP_ADD_TC(tp, find_bad);
-	ATF_TP_ADD_TC(tp, allrdatasets);
-	ATF_TP_ADD_TC(tp, allrdatasets_bad);
-	ATF_TP_ADD_TC(tp, findrdataset);
-	ATF_TP_ADD_TC(tp, findrdataset_bad);
-	ATF_TP_ADD_TC(tp, addrdataset);
-	ATF_TP_ADD_TC(tp, addrdataset_bad);
-	ATF_TP_ADD_TC(tp, deleterdataset);
-	ATF_TP_ADD_TC(tp, deleterdataset_bad);
-	ATF_TP_ADD_TC(tp, subtractrdataset);
-	ATF_TP_ADD_TC(tp, subtractrdataset_bad);
-	ATF_TP_ADD_TC(tp, attachversion);
-	ATF_TP_ADD_TC(tp, attachversion_bad);
-	ATF_TP_ADD_TC(tp, closeversion);
-	ATF_TP_ADD_TC(tp, closeversion_bad);
-	ATF_TP_ADD_TC(tp, getnsec3parameters);
-	ATF_TP_ADD_TC(tp, getnsec3parameters_bad);
-	ATF_TP_ADD_TC(tp, resigned);
-	ATF_TP_ADD_TC(tp, resigned_bad);
-
-	return (atf_no_error());
-}
+#endif

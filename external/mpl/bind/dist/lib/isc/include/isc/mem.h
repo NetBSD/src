@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,7 @@
 
 /*! \file isc/mem.h */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <isc/json.h>
@@ -126,7 +127,7 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_defaultflags;
 #endif
 
 /*
- * Flags for isc_mem_create2()calls.
+ * Flags for isc_mem_createx() calls.
  */
 #define ISC_MEMFLAG_NOLOCK	0x00000001	 /* no lock is necessary */
 #define ISC_MEMFLAG_INTERNAL	0x00000002	 /* use internal malloc */
@@ -137,21 +138,6 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_defaultflags;
 #else
 #define ISC_MEMFLAG_DEFAULT	ISC_MEMFLAG_INTERNAL|ISC_MEMFLAG_FILL
 #endif
-
-
-/*%<
- * We use either isc___mem (three underscores) or isc__mem (two) depending on
- * whether it's for BIND9's internal purpose (with -DBIND9) or generic export
- * library.
- */
-#define ISCMEMFUNC(sfx) isc__mem_ ## sfx
-#define ISCMEMPOOLFUNC(sfx) isc__mempool_ ## sfx
-
-#define isc_mem_get(c, s)	ISCMEMFUNC(get)((c), (s) _ISC_MEM_FILELINE)
-#define isc_mem_allocate(c, s)	ISCMEMFUNC(allocate)((c), (s) _ISC_MEM_FILELINE)
-#define isc_mem_reallocate(c, p, s) ISCMEMFUNC(reallocate)((c), (p), (s) _ISC_MEM_FILELINE)
-#define isc_mem_strdup(c, p)	ISCMEMFUNC(strdup)((c), (p) _ISC_MEM_FILELINE)
-#define isc_mempool_get(c)	ISCMEMPOOLFUNC(get)((c) _ISC_MEM_FILELINE)
 
 /*%
  * isc_mem_putanddetach() is a convenience function for use where you
@@ -184,9 +170,6 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_defaultflags;
 
 /*% memory and memory pool methods */
 typedef struct isc_memmethods {
-	void (*attach)(isc_mem_t *source, isc_mem_t **targetp);
-	void (*detach)(isc_mem_t **mctxp);
-	void (*destroy)(isc_mem_t **mctxp);
 	void *(*memget)(isc_mem_t *mctx, size_t size _ISC_MEM_FLARG);
 	void (*memput)(isc_mem_t *mctx, void *ptr, size_t size _ISC_MEM_FLARG);
 	void (*memputanddetach)(isc_mem_t **mctxp, void *ptr,
@@ -196,29 +179,7 @@ typedef struct isc_memmethods {
 			       size_t size _ISC_MEM_FLARG);
 	char *(*memstrdup)(isc_mem_t *mctx, const char *s _ISC_MEM_FLARG);
 	void (*memfree)(isc_mem_t *mctx, void *ptr _ISC_MEM_FLARG);
-	void (*setdestroycheck)(isc_mem_t *mctx, isc_boolean_t flag);
-	void (*setwater)(isc_mem_t *ctx, isc_mem_water_t water,
-			 void *water_arg, size_t hiwater, size_t lowater);
-	void (*waterack)(isc_mem_t *ctx, int flag);
-	size_t (*inuse)(isc_mem_t *mctx);
-	size_t (*maxinuse)(isc_mem_t *mctx);
-	size_t (*total)(isc_mem_t *mctx);
-	isc_boolean_t (*isovermem)(isc_mem_t *mctx);
-	isc_result_t (*mpcreate)(isc_mem_t *mctx, size_t size,
-				 isc_mempool_t **mpctxp);
 } isc_memmethods_t;
-
-typedef struct isc_mempoolmethods {
-	void (*destroy)(isc_mempool_t **mpctxp);
-	void *(*get)(isc_mempool_t *mpctx _ISC_MEM_FLARG);
-	void (*put)(isc_mempool_t *mpctx, void *mem _ISC_MEM_FLARG);
-	unsigned int (*getallocated)(isc_mempool_t *mpctx);
-	void (*setmaxalloc)(isc_mempool_t *mpctx, unsigned int limit);
-	void (*setfreemax)(isc_mempool_t *mpctx, unsigned int limit);
-	void (*setname)(isc_mempool_t *mpctx, const char *name);
-	void (*associatelock)(isc_mempool_t *mpctx, isc_mutex_t *lock);
-	void (*setfillcount)(isc_mempool_t *mpctx, unsigned int limit);
-} isc_mempoolmethods_t;
 
 /*%
  * This structure is actually just the common prefix of a memory context
@@ -246,12 +207,32 @@ struct isc_mem {
 struct isc_mempool {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_mempoolmethods_t	*methods;
 };
 
 #define ISCAPI_MPOOL_MAGIC	ISC_MAGIC('A','m','p','l')
 #define ISCAPI_MPOOL_VALID(mp)	((mp) != NULL && \
 				 (mp)->magic == ISCAPI_MPOOL_MAGIC)
+
+/*%
+ * These functions are actually implemented in isc__mem_<function>
+ * (two underscores). The single-underscore macros are used to pass
+ * __FILE__ and __LINE__, and in the case of the put functions, to
+ * set the pointer being freed to NULL in the calling function.
+ *
+ * Many of these functions have a further isc___mem_<function>
+ * (three underscores) implementation, which is called indirectly
+ * via the isc_memmethods structure in the mctx so that dynamically
+ * loaded modules can use them even if named is statically linked.
+ */
+
+#define ISCMEMFUNC(sfx) isc__mem_ ## sfx
+#define ISCMEMPOOLFUNC(sfx) isc__mempool_ ## sfx
+
+#define isc_mem_get(c, s)	ISCMEMFUNC(get)((c), (s) _ISC_MEM_FILELINE)
+#define isc_mem_allocate(c, s)	ISCMEMFUNC(allocate)((c), (s) _ISC_MEM_FILELINE)
+#define isc_mem_reallocate(c, p, s) ISCMEMFUNC(reallocate)((c), (p), (s) _ISC_MEM_FILELINE)
+#define isc_mem_strdup(c, p)	ISCMEMFUNC(strdup)((c), (p) _ISC_MEM_FILELINE)
+#define isc_mempool_get(c)	ISCMEMPOOLFUNC(get)((c) _ISC_MEM_FILELINE)
 
 #define isc_mem_put(c, p, s) \
 	do { \
@@ -280,18 +261,9 @@ isc_mem_create(size_t max_size, size_t target_size,
 	       isc_mem_t **mctxp);
 
 isc_result_t
-isc_mem_create2(size_t max_size, size_t target_size,
-		isc_mem_t **mctxp, unsigned int flags);
-
-isc_result_t
 isc_mem_createx(size_t max_size, size_t target_size,
 		isc_memalloc_t memalloc, isc_memfree_t memfree,
-		void *arg, isc_mem_t **mctxp);
-
-isc_result_t
-isc_mem_createx2(size_t max_size, size_t target_size,
-		 isc_memalloc_t memalloc, isc_memfree_t memfree,
-		 void *arg, isc_mem_t **mctxp, unsigned int flags);
+		void *arg, isc_mem_t **mctxp, unsigned int flags);
 
 /*!<
  * \brief Create a memory context.
@@ -349,15 +321,6 @@ isc_mem_destroy(isc_mem_t **);
  * Destroy a memory context.
  */
 
-isc_result_t
-isc_mem_ondestroy(isc_mem_t *ctx,
-		  isc_task_t *task,
-		  isc_event_t **event);
-/*%<
- * Request to be notified with an event when a memory context has
- * been successfully destroyed.
- */
-
 void
 isc_mem_stats(isc_mem_t *mctx, FILE *out);
 /*%<
@@ -366,23 +329,11 @@ isc_mem_stats(isc_mem_t *mctx, FILE *out);
 
 void
 isc_mem_setdestroycheck(isc_mem_t *mctx,
-			isc_boolean_t on);
+			bool on);
 /*%<
- * If 'on' is ISC_TRUE, 'mctx' will check for memory leaks when
+ * If 'on' is true, 'mctx' will check for memory leaks when
  * destroyed and abort the program if any are present.
  */
-
-/*@{*/
-void
-isc_mem_setquota(isc_mem_t *, size_t);
-size_t
-isc_mem_getquota(isc_mem_t *);
-/*%<
- * Set/get the memory quota of 'mctx'.  This is a hard limit
- * on the amount of memory that may be allocated from mctx;
- * if it is exceeded, allocations will fail.
- */
-/*@}*/
 
 size_t
 isc_mem_inuse(isc_mem_t *mctx);
@@ -406,7 +357,7 @@ isc_mem_total(isc_mem_t *mctx);
  * not yet used.
  */
 
-isc_boolean_t
+bool
 isc_mem_isovermem(isc_mem_t *mctx);
 /*%<
  * Return true iff the memory context is in "over memory" state, i.e.,
@@ -455,22 +406,6 @@ void
 isc_mem_waterack(isc_mem_t *ctx, int mark);
 /*%<
  * Called to acknowledge changes in signaled by calls to 'water'.
- */
-
-void
-isc_mem_printactive(isc_mem_t *mctx, FILE *file);
-/*%<
- * Print to 'file' all active memory in 'mctx'.
- *
- * Requires ISC_MEM_DEBUGRECORD to have been set.
- */
-
-void
-isc_mem_printallactive(FILE *file);
-/*%<
- * Print to 'file' all active memory in all contexts.
- *
- * Requires ISC_MEM_DEBUGRECORD to have been set.
  */
 
 void
@@ -711,38 +646,6 @@ void *
 ISCMEMPOOLFUNC(get)(isc_mempool_t * _ISC_MEM_FLARG);
 void
 ISCMEMPOOLFUNC(put)(isc_mempool_t *, void * _ISC_MEM_FLARG);
-
-/*%<
- * See isc_mem_create2() above.
- */
-typedef isc_result_t
-(*isc_memcreatefunc_t)(size_t init_max_size, size_t target_size,
-		       isc_mem_t **ctxp, unsigned int flags);
-
-isc_result_t
-isc_mem_register(isc_memcreatefunc_t createfunc);
-/*%<
- * Register a new memory management implementation and add it to the list of
- * supported implementations.  This function must be called when a different
- * memory management library is used than the one contained in the ISC library.
- */
-
-isc_result_t
-isc__mem_register(void);
-/*%<
- * A short cut function that specifies the memory management module in the ISC
- * library for isc_mem_register().  An application that uses the ISC library
- * usually do not have to care about this function: it would call
- * isc_lib_register(), which internally calls this function.
- */
-
-void
-isc__mem_printactive(isc_mem_t *mctx, FILE *file);
-/*%<
- * For internal use by the isc module and its unit tests, these functions
- * print lists of active memory blocks for a single memory context or for
- * all contexts.
- */
 
 ISC_LANG_ENDDECLS
 

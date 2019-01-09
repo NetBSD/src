@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,12 +31,12 @@
 
 /*! \file isccc/types.h */
 
-#include <isc/boolean.h>
-#include <isc/int.h>
+#include <inttypes.h>
+
 #include <isc/result.h>
 
 /*% isccc_time_t typedef */
-typedef isc_uint32_t isccc_time_t;
+typedef uint32_t isccc_time_t;
 
 /*% isccc_sexpr_t typedef */
 typedef struct isccc_sexpr isccc_sexpr_t;

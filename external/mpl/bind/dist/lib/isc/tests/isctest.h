@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
+/*	$NetBSD: isctest.h,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,10 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -35,7 +37,6 @@
 	} while (/*CONSTCOND*/0)
 
 extern isc_mem_t *mctx;
-extern isc_entropy_t *ectx;
 extern isc_log_t *lctx;
 extern isc_taskmgr_t *taskmgr;
 extern isc_timermgr_t *timermgr;
@@ -43,7 +44,7 @@ extern isc_socketmgr_t *socketmgr;
 extern int ncpus;
 
 isc_result_t
-isc_test_begin(FILE *logfile, isc_boolean_t start_managers,
+isc_test_begin(FILE *logfile, bool start_managers,
 	       unsigned int workers);
 /*%<
  * Begin test, logging to 'logfile' or default if not specified.
@@ -60,4 +61,4 @@ void
 isc_test_end(void);
 
 void
-isc_test_nap(isc_uint32_t usec);
+isc_test_nap(uint32_t usec);

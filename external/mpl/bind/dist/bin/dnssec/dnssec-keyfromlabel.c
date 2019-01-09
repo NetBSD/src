@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,11 +16,12 @@
 #include <config.h>
 
 #include <ctype.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/mem.h>
 #include <isc/region.h>
 #include <isc/print.h>
@@ -40,7 +41,7 @@
 
 #include <dst/dst.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
@@ -65,19 +66,16 @@ usage(void) {
 	fprintf(stderr, "    name: owner of the key\n");
 	fprintf(stderr, "Other options:\n");
 	fprintf(stderr, "    -a algorithm: \n"
-			"        RSA | RSAMD5 | DH | DSA | RSASHA1 |\n"
-			"        NSEC3DSA | NSEC3RSASHA1 |\n"
-			"        RSASHA256 | RSASHA512 | ECCGOST |\n"
+			"        RSA | RSAMD5 | DH | RSASHA1 |\n"
+			"        NSEC3RSASHA1 |\n"
+			"        RSASHA256 | RSASHA512 |\n"
 			"        ECDSAP256SHA256 | ECDSAP384SHA384\n");
 	fprintf(stderr, "    -3: use NSEC3-capable algorithm\n");
 	fprintf(stderr, "    -c class (default: IN)\n");
 	fprintf(stderr, "    -E <engine>:\n");
-#if defined(PKCS11CRYPTO)
+#if USE_PKCS11
 	fprintf(stderr, "        path to PKCS#11 provider library "
 				"(default is %s)\n", PK11_LIB_LOCATION);
-#elif defined(USE_PKCS11)
-	fprintf(stderr, "        name of an OpenSSL engine to use "
-				"(default is \"pkcs11\")\n");
 #else
 	fprintf(stderr, "        name of an OpenSSL engine to use\n");
 #endif
@@ -127,19 +125,15 @@ main(int argc, char **argv) {
 	const char	*directory = NULL;
 	const char	*predecessor = NULL;
 	dst_key_t	*prevkey = NULL;
-#ifdef USE_PKCS11
-	const char	*engine = PKCS11_ENGINE;
-#else
 	const char	*engine = NULL;
-#endif
 	char		*classname = NULL;
 	char		*endp;
 	dst_key_t	*key = NULL;
 	dns_fixedname_t	fname;
 	dns_name_t	*name;
-	isc_uint16_t	flags = 0, kskflag = 0, revflag = 0;
+	uint16_t	flags = 0, kskflag = 0, revflag = 0;
 	dns_secalg_t	alg;
-	isc_boolean_t	oldstyle = ISC_FALSE;
+	bool	oldstyle = false;
 	isc_mem_t	*mctx = NULL;
 	int		ch;
 	int		protocol = -1, signatory = 0;
@@ -148,7 +142,6 @@ main(int argc, char **argv) {
 	char		filename[255];
 	isc_buffer_t	buf;
 	isc_log_t	*log = NULL;
-	isc_entropy_t	*ectx = NULL;
 	dns_rdataclass_t rdclass;
 	int		options = DST_TYPE_PRIVATE | DST_TYPE_PUBLIC;
 	char		*label = NULL;
@@ -157,32 +150,32 @@ main(int argc, char **argv) {
 	isc_stdtime_t	inactive = 0, deltime = 0;
 	isc_stdtime_t	now;
 	int		prepub = -1;
-	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
-	isc_boolean_t	setrev = ISC_FALSE, setinact = ISC_FALSE;
-	isc_boolean_t	setdel = ISC_FALSE, setttl = ISC_FALSE;
-	isc_boolean_t	unsetpub = ISC_FALSE, unsetact = ISC_FALSE;
-	isc_boolean_t	unsetrev = ISC_FALSE, unsetinact = ISC_FALSE;
-	isc_boolean_t	unsetdel = ISC_FALSE;
-	isc_boolean_t	genonly = ISC_FALSE;
-	isc_boolean_t	use_nsec3 = ISC_FALSE;
-	isc_boolean_t   avoid_collisions = ISC_TRUE;
-	isc_boolean_t	exact;
+	bool	setpub = false, setact = false;
+	bool	setrev = false, setinact = false;
+	bool	setdel = false, setttl = false;
+	bool	unsetpub = false, unsetact = false;
+	bool	unsetrev = false, unsetinact = false;
+	bool	unsetdel = false;
+	bool	genonly = false;
+	bool	use_nsec3 = false;
+	bool   avoid_collisions = true;
+	bool	exact;
 	unsigned char	c;
 	isc_stdtime_t	syncadd = 0, syncdel = 0;
-	isc_boolean_t	unsetsyncadd = ISC_FALSE, setsyncadd = ISC_FALSE;
-	isc_boolean_t	unsetsyncdel = ISC_FALSE, setsyncdel = ISC_FALSE;
+	bool	unsetsyncadd = false, setsyncadd = false;
+	bool	unsetsyncdel = false, setsyncdel = false;
 
 	if (argc == 1)
 		usage();
 
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	isc_stdtime_get(&now);
 
@@ -190,13 +183,13 @@ main(int argc, char **argv) {
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 	    switch (ch) {
 		case '3':
-			use_nsec3 = ISC_TRUE;
+			use_nsec3 = true;
 			break;
 		case 'a':
 			algname = isc_commandline_argument;
 			break;
 		case 'C':
-			oldstyle = ISC_TRUE;
+			oldstyle = true;
 			break;
 		case 'c':
 			classname = isc_commandline_argument;
@@ -226,7 +219,7 @@ main(int argc, char **argv) {
 			break;
 		case 'L':
 			ttl = strtottl(isc_commandline_argument);
-			setttl = ISC_TRUE;
+			setttl = true;
 			break;
 		case 'l':
 			label = isc_mem_strdup(mctx, isc_commandline_argument);
@@ -249,10 +242,10 @@ main(int argc, char **argv) {
 				fatal("-v must be followed by a number");
 			break;
 		case 'y':
-			avoid_collisions = ISC_FALSE;
+			avoid_collisions = false;
 			break;
 		case 'G':
-			genonly = ISC_TRUE;
+			genonly = true;
 			break;
 		case 'P':
 			/* -Psync ? */
@@ -349,10 +342,7 @@ main(int argc, char **argv) {
 		}
 	}
 
-	if (ectx == NULL)
-		setup_entropy(mctx, NULL, &ectx);
-	ret = dst_lib_init2(mctx, ectx, engine,
-			    ISC_ENTROPY_BLOCKING | ISC_ENTROPY_GOODONLY);
+	ret = dst_lib_init(mctx, engine);
 	if (ret != ISC_R_SUCCESS)
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(ret));
@@ -395,20 +385,10 @@ main(int argc, char **argv) {
 		}
 
 		if (strcasecmp(algname, "RSA") == 0) {
-#ifndef PK11_MD5_DISABLE
 			fprintf(stderr, "The use of RSA (RSAMD5) is not "
 					"recommended.\nIf you still wish to "
 					"use RSA (RSAMD5) please specify "
 					"\"-a RSAMD5\"\n");
-#else
-			fprintf(stderr,
-				"The use of RSA (RSAMD5) was disabled\n");
-			if (freeit != NULL)
-				free(freeit);
-			return (1);
-		} else if (strcasecmp(algname, "RSAMD5") == 0) {
-			fprintf(stderr, "The use of RSAMD5 was disabled\n");
-#endif
 			if (freeit != NULL)
 				free(freeit);
 			return (1);
@@ -424,17 +404,12 @@ main(int argc, char **argv) {
 
 		if (use_nsec3) {
 			switch (alg) {
-			case DST_ALG_DSA:
-				alg = DST_ALG_NSEC3DSA;
-				break;
 			case DST_ALG_RSASHA1:
 				alg = DST_ALG_NSEC3RSASHA1;
 				break;
-			case DST_ALG_NSEC3DSA:
 			case DST_ALG_NSEC3RSASHA1:
 			case DST_ALG_RSASHA256:
 			case DST_ALG_RSASHA512:
-			case DST_ALG_ECCGOST:
 			case DST_ALG_ECDSA256:
 			case DST_ALG_ECDSA384:
 			case DST_ALG_ED25519:
@@ -467,14 +442,14 @@ main(int argc, char **argv) {
 				      "prepublication interval.");
 
 			if (!setpub && !setact) {
-				setpub = setact = ISC_TRUE;
+				setpub = setact = true;
 				publish = now;
 				activate = now + prepub;
 			} else if (setpub && !setact) {
-				setact = ISC_TRUE;
+				setact = true;
 				activate = publish + prepub;
 			} else if (setact && !setpub) {
-				setpub = ISC_TRUE;
+				setpub = true;
 				publish = activate - prepub;
 			}
 
@@ -520,11 +495,6 @@ main(int argc, char **argv) {
 		alg = dst_key_alg(prevkey);
 		flags = dst_key_flags(prevkey);
 
-#ifdef PK11_MD5_DISABLE
-		if (alg == DST_ALG_RSAMD5)
-			fatal("Key %s uses disabled RSAMD5", predecessor);
-#endif
-
 		dst_key_format(prevkey, keystr, sizeof(keystr));
 		dst_key_getprivateformat(prevkey, &major, &minor);
 		if (major != DST_MAJOR_VERSION || minor < DST_MINOR_VERSION)
@@ -562,7 +532,7 @@ main(int argc, char **argv) {
 					"You can use dnssec-settime -D to "
 					"change this.\n", program, keystr);
 
-		setpub = setact = ISC_TRUE;
+		setpub = setact = true;
 	}
 
 	if (nametype == NULL) {
@@ -614,13 +584,12 @@ main(int argc, char **argv) {
 
 	/* associate the key */
 	ret = dst_key_fromlabel(name, alg, flags, protocol, rdclass,
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 				"pkcs11",
 #else
 				engine,
 #endif
 				label, NULL, mctx, &key);
-	isc_entropy_stopcallbacksources(ectx);
 
 	if (ret != ISC_R_SUCCESS) {
 		char namestr[DNS_NAME_FORMATSIZE];
@@ -739,7 +708,6 @@ main(int argc, char **argv) {
 		dst_key_free(&prevkey);
 
 	cleanup_logging(&log);
-	cleanup_entropy(&ectx);
 	dst_lib_destroy();
 	dns_name_destroy();
 	if (verbose > 10)

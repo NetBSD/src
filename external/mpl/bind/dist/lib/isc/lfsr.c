@@ -1,4 +1,4 @@
-/*	$NetBSD: lfsr.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: lfsr.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 #include <config.h>
 
 #include <stddef.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include <isc/assertions.h>
@@ -26,8 +27,8 @@
 #define VALID_LFSR(x)	(x != NULL)
 
 void
-isc_lfsr_init(isc_lfsr_t *lfsr, isc_uint32_t state, unsigned int bits,
-	      isc_uint32_t tap, unsigned int count,
+isc_lfsr_init(isc_lfsr_t *lfsr, uint32_t state, unsigned int bits,
+	      uint32_t tap, unsigned int count,
 	      isc_lfsrreseed_t reseed, void *arg)
 {
 	REQUIRE(VALID_LFSR(lfsr));
@@ -50,7 +51,7 @@ isc_lfsr_init(isc_lfsr_t *lfsr, isc_uint32_t state, unsigned int bits,
 /*!
  * Return the next state of the lfsr.
  */
-static inline isc_uint32_t
+static inline uint32_t
 lfsr_generate(isc_lfsr_t *lfsr)
 {
 
@@ -109,7 +110,7 @@ isc_lfsr_generate(isc_lfsr_t *lfsr, void *data, unsigned int count)
 	}
 }
 
-static inline isc_uint32_t
+static inline uint32_t
 lfsr_skipgenerate(isc_lfsr_t *lfsr, unsigned int skip)
 {
 	while (skip--)
@@ -136,11 +137,11 @@ isc_lfsr_skip(isc_lfsr_t *lfsr, unsigned int skip)
  * Skip states in lfsr1 and lfsr2 using the other's current state.
  * Return the final state of lfsr1 ^ lfsr2.
  */
-isc_uint32_t
+uint32_t
 isc_lfsr_generate32(isc_lfsr_t *lfsr1, isc_lfsr_t *lfsr2)
 {
-	isc_uint32_t state1, state2;
-	isc_uint32_t skip1, skip2;
+	uint32_t state1, state2;
+	uint32_t skip1, skip2;
 
 	REQUIRE(VALID_LFSR(lfsr1));
 	REQUIRE(VALID_LFSR(lfsr2));

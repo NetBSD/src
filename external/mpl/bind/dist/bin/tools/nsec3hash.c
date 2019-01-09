@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
@@ -153,13 +154,13 @@ nsec3hash_rdata_print(unsigned algo, unsigned flags, unsigned iters,
 
 int
 main(int argc, char *argv[]) {
-	isc_boolean_t rdata_format = ISC_FALSE;
+	bool rdata_format = false;
 	int ch;
 
 	while ((ch = isc_commandline_parse(argc, argv, "-r")) != -1) {
 		switch (ch) {
 		case 'r':
-			rdata_format = ISC_TRUE;
+			rdata_format = true;
 			break;
 		case '-':
 			isc_commandline_index -= 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,14 +91,6 @@
 #define DNS_SIG_RSAMAXBASE64	(((DNS_SIG_RSAMAXBYTES+2)/3)*4)
 #define DNS_SIG_RSAMINSIZE	((DNS_SIG_RSAMINBITS+7)/8)
 #define DNS_SIG_RSAMAXSIZE	((DNS_SIG_RSAMAXBITS+7)/8)
-
-#define DNS_SIG_DSASIGSIZE	41
-#define DNS_SIG_DSAMINBITS	512
-#define DNS_SIG_DSAMAXBITS	1024
-#define DNS_SIG_DSAMINBYTES	213
-#define DNS_SIG_DSAMAXBYTES	405
-
-#define DNS_SIG_GOSTSIGSIZE	64
 
 #define DNS_SIG_ECDSA256SIZE	64
 #define DNS_SIG_ECDSA384SIZE	96
