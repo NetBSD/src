@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.48 2019/01/04 15:27:19 martin Exp $	*/
+/*	$NetBSD: mdb.c,v 1.49 2019/01/09 19:43:37 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.48 2019/01/04 15:27:19 martin Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.49 2019/01/09 19:43:37 martin Exp $");
 #endif
 
 
@@ -172,10 +172,11 @@ write_menu_file(char *initcode)
 		"typedef struct menudesc menudesc;\n"	
 		"typedef struct menu_ent menu_ent;\n"	
 		"struct menu_ent {\n"
-		"	const char	*opt_name;\n"
-		"#ifdef	MENU_EXPANDS\n"
-		"	const char	*opt_exp_name;\n"
-		"#endif\n"
+		"	const char	*opt_name;\n");
+	if (do_expands)
+		(void)fprintf(out_file,
+		"	const char	*opt_exp_name;\n");
+	(void)fprintf(out_file,
 		"	int		opt_menu;\n"
 		"	int		opt_flags;\n"
 		"	int		(*opt_action)(menudesc *, void *);\n"
@@ -187,7 +188,11 @@ write_menu_file(char *initcode)
 		"#define OPT_NOSHORT	16\n"
 		"#define OPT_NOMENU	-1\n\n"
 		"struct menudesc {\n"
-		"	const char	*title;\n"
+		"	const char	*title;\n");
+	if (do_expands)
+		(void)fprintf(out_file,
+		"	const char	*exp_title;\n");
+	(void)fprintf(out_file,
 		"	int		y, x;\n"
 		"	int		h, w;\n"
 		"	int		mopt;\n"
@@ -367,8 +372,13 @@ write_menu_file(char *initcode)
 	(void)fprintf(out_file, "static struct menudesc menu_def[] = {\n");
 	for (i = 0; i < menu_no; i++) {
 		(void)fprintf(out_file,
-			"\t{%s,%d,%d,%d,%d,%d,%d,0,0,optent%d,NULL,NULL,",
-			menus[i]->info->title, 	menus[i]->info->y,
+			"\t{%s,", menus[i]->info->title);
+		if (do_expands)
+			(void)fprintf(out_file,
+				"NULL,");
+		(void)fprintf(out_file,
+			"%d,%d,%d,%d,%d,%d,0,0,optent%d,NULL,NULL,",
+			menus[i]->info->y,
 			menus[i]->info->x, menus[i]->info->h,
 			menus[i]->info->w, menus[i]->info->mopt,
 			menus[i]->info->numopt, i);
@@ -422,7 +432,10 @@ write_menu_file(char *initcode)
 		(void)fprintf(out_file, "},\n");
 
 	}
-	(void)fprintf(out_file, "{NULL, 0, 0, 0, 0, 0, 0, 0, 0, "
+	(void)fprintf(out_file, "{NULL");
+	if (do_expands)
+		(void)fprintf(out_file, ", NULL");
+	(void)fprintf(out_file, ", 0, 0, 0, 0, 0, 0, 0, 0, "
 		"NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL");
 	if (do_expands)
 		(void)fprintf(out_file, ", NULL");
