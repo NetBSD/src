@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1093 2019/01/03 17:41:26 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1094 2019/01/09 23:52:29 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1514,7 +1514,7 @@ EXTRA_DRIVERS=	modesetting
 	r128 rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \
-	tdfx tga trident tseng vesa vga vmware wsfb xgi
+	tdfx tga trident tseng vboxvideo vesa vga vmware wsfb xgi
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
