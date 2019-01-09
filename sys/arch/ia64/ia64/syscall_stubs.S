@@ -1,6 +1,6 @@
-/*	$NetBSD: syscall_stubs.S,v 1.4 2017/04/08 17:46:30 scole Exp $	*/
+/*	$NetBSD: syscall_stubs.S,v 1.5 2019/01/09 18:03:34 scole Exp $	*/
 
-	/*-
+/*-
  * Copyright (c) 2002, 2003 Marcel Moolenaar
  * All rights reserved.
  *
