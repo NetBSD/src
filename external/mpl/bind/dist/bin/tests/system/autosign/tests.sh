@@ -78,7 +78,7 @@ do
 	done
 	for z in bar. example. inacksk2.example. inacksk3.example \
 		 inaczsk2.example. inaczsk3.example
-	do 
+	do
 		$DIG $DIGOPTS $z @10.53.0.3 nsec > dig.out.ns3.test$n || ret=1
 		grep "NS SOA" dig.out.ns3.test$n > /dev/null || ret=1
 	done
@@ -90,6 +90,23 @@ done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "done"; fi
 status=`expr $status + $ret`
+
+echo_i "Initial counts of RRSIG expiry fields values for auto signed zones"
+for z in .
+do
+	echo_i zone $z
+	$DIG $DIGOPTS $z @10.53.0.1 axfr | awk '$4 == "RRSIG" {print $9}' | sort | uniq -c | cat_i
+done
+for z in bar. example. private.secure.example.
+do
+	echo_i zone $z
+	$DIG $DIGOPTS $z @10.53.0.2 axfr | awk '$4 == "RRSIG" {print $9}' | sort | uniq -c | cat_i
+done
+for z in inacksk2.example. inacksk3.example inaczsk2.example. inaczsk3.example
+do
+	echo_i zone $z
+	$DIG $DIGOPTS $z @10.53.0.3 axfr | awk '$4 == "RRSIG" {print $9}' | sort | uniq -c | cat_i
+done
 
 #
 # Check that DNSKEY is initially signed with a KSK and not a ZSK.
@@ -219,7 +236,7 @@ status=`expr $status + $ret`
 
 echo_i "checking for nsec3param signing record ($n)"
 ret=0
-$RNDCCMD 10.53.0.3 signing -list autonsec3.example. > signing.out.test$n 2>&1 | sed 's/^/ns3 /' | cat_i
+$RNDCCMD 10.53.0.3 signing -list autonsec3.example. > signing.out.test$n 2>&1
 grep "Pending NSEC3 chain 1 0 20 DEAF" signing.out.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -926,7 +943,7 @@ ret=0
 oldserial=`$DIG $DIGOPTS +short soa prepub.example @10.53.0.3 | awk '$0 !~ /SOA/ {print $3}'`
 oldinception=`$DIG $DIGOPTS +short soa prepub.example @10.53.0.3 | awk '/SOA/ {print $6}' | sort -u`
 
-$KEYGEN -a rsasha1 -3 -q -r $RANDFILE -K ns3 -P 0 -A +6d -I +38d -D +45d prepub.example > /dev/null
+$KEYGEN -a rsasha1 -3 -q -K ns3 -P 0 -A +6d -I +38d -D +45d prepub.example > /dev/null
 
 $RNDCCMD 10.53.0.3 sign prepub.example 2>&1 | sed 's/^/ns1 /' | cat_i
 newserial=$oldserial
@@ -1147,7 +1164,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 # this confirms that key events are never scheduled more than
-# 'dnssec-loadkeys-interval' minutes in the future, and that the 
+# 'dnssec-loadkeys-interval' minutes in the future, and that the
 # event scheduled is within 10 seconds of expected interval.
 check_interval () {
         awk '/next key event/ {print $2 ":" $9}' $1/named.run |
@@ -1374,6 +1391,60 @@ count=`awk 'BEGIN { count = 0 }
        $4 == "DNSKEY" { count++ }
        END {print count}' dig.out.ns3.test$n`
 test $count -eq 2 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking for out-of-zone NSEC3 records after ZSK removal ($n)"
+ret=0
+# Switch the zone over to NSEC3 and wait until the transition is complete.
+$RNDCCMD 10.53.0.3 signing -nsec3param 1 1 10 12345678 delzsk.example. > signing.out.1.test$n 2>&1 || ret=1
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	_ret=1
+	$DIG $DIGOPTS delzsk.example NSEC3PARAM @10.53.0.3 > dig.out.ns3.1.test$n 2>&1 || ret=1
+	grep "NSEC3PARAM.*12345678" dig.out.ns3.1.test$n > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		_ret=0
+		break
+	fi
+	sleep 1
+done
+if [ $_ret -ne 0 ]; then
+	echo_i "timed out waiting for NSEC3 chain creation"
+	ret=1
+fi
+# Mark the inactive ZSK as pending removal.
+file="ns3/`cat delzsk.key`.key"
+$SETTIME -D now-1h $file > settime.out.test$n 2>&1 || ret=1
+# Trigger removal of the inactive ZSK and wait until its completion.
+$RNDCCMD 10.53.0.3 loadkeys delzsk.example 2>&1 | sed 's/^/ns3 /' | cat_i
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	_ret=1
+	$RNDCCMD 10.53.0.3 signing -list delzsk.example > signing.out.2.test$n 2>&1
+	grep "Signing " signing.out.2.test$n > /dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		if [ `cat signing.out.2.test$n | wc -l` -eq 2 ]; then
+			_ret=0
+			break
+		fi
+	fi
+	sleep 1
+done
+if [ $_ret -ne 0 ]; then
+	echo_i "timed out waiting for key removal"
+	ret=1
+fi
+# Check whether key removal caused NSEC3 records to be erroneously created for
+# glue records due to a secure delegation already being signed by the active key
+# (i.e. a key other than the one being removed but using the same algorithm).
+#
+# For reference:
+#
+#     $ nsec3hash 12345678 1 10 ns.sub.delzsk.example.
+#     589R358VSPJUFVAJU949JPVF74D9PTGH (salt=12345678, hash=1, iterations=10)
+#
+$DIG $DIGOPTS delzsk.example AXFR @10.53.0.3 > dig.out.ns3.3.test$n || ret=1
+grep "589R358VSPJUFVAJU949JPVF74D9PTGH" dig.out.ns3.3.test$n > /dev/null 2>&1 && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

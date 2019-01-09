@@ -14,9 +14,7 @@ SYSTEMTESTTOP=..
 
 $SHELL clean.sh
 
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
-
 copy_setports ns1/named.conf.in ns1/named.conf
 
-key=`$KEYGEN -Cq -K ns1 -a DSA -b 512 -r $RANDFILE -n HOST -T KEY key.example.nil.`
+key=`$KEYGEN -Cq -K ns1 -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n HOST -T KEY key.example.nil.`
 cat ns1/example.nil.db.in ns1/${key}.key > ns1/example.nil.db

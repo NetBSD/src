@@ -1,0 +1,95 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<section xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="module-info"><info><title>Plugins</title></info>
+
+  <para>
+    Plugins are a mechanism to extend the functionality of
+    <command>named</command> using dynamically loadable libraries.
+    By using plugins, core server functionality can be kept simple
+    for the majority of users; more complex code implementing optional
+    features need only be installed by users that need those features.
+  </para>
+  <para>
+    The plugin interface is a work in progress, and is expected to evolve
+    as more plugins are added. Currently, only "query plugins" are supported;
+    these modify the name server query logic. Other plugin types may be added
+    in the future.
+  </para>
+  <para>
+    The only plugin currently included in BIND is
+    <filename>filter-aaaa.so</filename>, which replaces the
+    <command>filter-aaaa</command> feature that previously existed natively
+    as part of <command>named</command>.
+    The code for this feature has been removed from <command>named</command>,
+    and can no longer be configured using standard
+    <filename>named.conf</filename> syntax, but linking in the
+    <filename>filter-aaaa.so</filename> plugin provides identical
+    functionality.
+  </para>
+
+  <section><info><title>Configuring Plugins</title></info>
+    <para>
+      A plugin is configured with the <command>plugin</command>
+      statement in <filename>named.conf</filename>:
+    </para>
+    <screen>
+    plugin query "library.so" {
+        <replaceable>parameters</replaceable>
+    };
+    </screen>
+    <para>
+      In this example, file <filename>library.so</filename> is the plugin
+      library.  <literal>query</literal> indicates that this is a query
+      plugin.
+    <para>
+    </para>
+      Multiple <command>plugin</command> statements can be specified, to load
+      different plugins or multiple instances of the same plugin.
+    </para>
+    <para>
+      <replaceable>parameters</replaceable> are passed as an opaque
+      string to the plugin's initialization routine. Configuration
+      syntax will differ depending on the module.
+    </para>
+  </section>
+
+  <section><info><title>Developing Plugins</title></info>
+    <para>
+      Each plugin implements four functions:
+      <itemizedlist>
+        <listitem><command>plugin_register</command> to allocate memory,
+        configure a plugin instance, and attach to hook points within
+        <command>named</command>,</listitem>
+        <listitem><command>plugin_destroy</command> to tear down the plugin
+        instance and free memory,</listitem>
+        <listitem><command>plugin_version</command> to check that the plugin
+        is compatible with the current version of the plugin API,</listitem>
+        <listitem><command>plugin_check</command> to test syntactic
+        correctness of the plugin parameters.</listitem>
+      </itemizedlist>
+    </para>
+    <para>
+      At various locations within the <command>named</command> source code,
+      there are "hook points" at which a plugin may register itself.
+      When a hook point is reached while <command>named</command> is
+      running, it is checked to see whether any plugins have registered
+      themselves there; if so, the associated "hook action" is called -
+      this is a function within the plugin library. Hook actions may
+      examine the runtime state and make changes - for example, modifying
+      the answers to be sent back to a client or forcing a query to be
+      aborted. More details can be found in the file
+      <filename>lib/ns/include/ns/hooks.h</filename>.
+    </para>
+  </section>
+
+</section>

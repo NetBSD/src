@@ -35,30 +35,6 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-n=`expr $n + 1`
-echo_i "checking GeoIP country database by code (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-n=`expr $n + 1`
-echo_i "checking response scope using client subnet ($n)"
-ret=0
-$DIG +tcp -p ${PORT} @10.53.0.2 txt example -b 127.0.0.1 +subnet="10.53.0.1/32" > dig.out.ns2.test$n.1 || ret=1
-grep 'CLIENT-SUBNET.*10.53.0.1/32/32' dig.out.ns2.test$n.1 > /dev/null || ret=1
-$DIG +tcp -p ${PORT} @10.53.0.2 txt example -b 127.0.0.1 +subnet="192.0.2.64/32" > dig.out.ns2.test$n.2 || ret=1
-grep 'CLIENT-SUBNET.*192.0.2.64/32/24' dig.out.ns2.test$n.2 > /dev/null || ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
 echo_i "reloading server"
 copy_setports ns2/named2.conf.in ns2/named.conf
 $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
@@ -137,20 +113,6 @@ done
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "checking GeoIP region database (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-
 echo_i "reloading server"
 copy_setports ns2/named6.conf.in ns2/named.conf
 $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
@@ -182,20 +144,6 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-n=`expr $n + 1`
-echo_i "checking GeoIP city database (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
 echo_i "reloading server"
 copy_setports ns2/named7.conf.in ns2/named.conf
 $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
@@ -207,20 +155,6 @@ ret=0
 lret=0
 for i in 1 2 3 4 5 6 7; do
     $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-n=`expr $n + 1`
-echo_i "checking GeoIP isp database (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
     j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
     [ "$i" = "$j" ] || lret=1
     [ $lret -eq 1 ] && break
@@ -248,20 +182,6 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-n=`expr $n + 1`
-echo_i "checking GeoIP org database (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
 echo_i "reloading server"
 copy_setports ns2/named9.conf.in ns2/named.conf
 $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
@@ -273,20 +193,6 @@ ret=0
 lret=0
 for i in 1 2 3 4 5 6 7; do
     $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-n=`expr $n + 1`
-echo_i "checking GeoIP asnum database (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
     j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
     [ "$i" = "$j" ] || lret=1
     [ $lret -eq 1 ] && break
@@ -314,20 +220,6 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-n=`expr $n + 1`
-echo_i "checking GeoIP asnum database - ASNNNN only (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
 echo_i "reloading server"
 copy_setports ns2/named11.conf.in ns2/named.conf
 $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
@@ -347,20 +239,6 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-n=`expr $n + 1`
-echo_i "checking GeoIP domain database (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
 echo_i "reloading server"
 copy_setports ns2/named12.conf.in ns2/named.conf
 $RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
@@ -372,20 +250,6 @@ ret=0
 lret=0
 for i in 1 2 3 4; do
     $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-n=`expr $n + 1`
-echo_i "checking GeoIP netspeed database (using client subnet) ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4; do
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.$i || lret=1
     j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
     [ "$i" = "$j" ] || lret=1
     [ $lret -eq 1 ] && break
@@ -420,30 +284,6 @@ for i in 1 2 3 4 5 6 7; do
     $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
     j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
     [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-done
-[ $lret -eq 1 ] && ret=1
-[ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
-
-echo_i "reloading server"
-copy_setports ns2/named14.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
-sleep 3
-
-n=`expr $n + 1`
-echo_i "checking geoip-use-ecs ($n)"
-ret=0
-lret=0
-for i in 1 2 3 4 5 6 7; do
-    $DIG $DIGOPTS txt example -b 10.53.0.$i > dig.out.ns2.test$n.$i || lret=1
-    j=`cat dig.out.ns2.test$n.$i | tr -d '"'`
-    [ "$i" = "$j" ] || lret=1
-    [ $lret -eq 1 ] && break
-
-    $DIG $DIGOPTS txt example -b 127.0.0.1 +subnet="10.53.0.$i/32" > dig.out.ns2.test$n.ecs.$i || lret=1
-    j=`cat dig.out.ns2.test$n.ecs.$i | tr -d '"'`
-    [ "$j" = "bogus" ] || lret=1
     [ $lret -eq 1 ] && break
 done
 [ $lret -eq 1 ] && ret=1

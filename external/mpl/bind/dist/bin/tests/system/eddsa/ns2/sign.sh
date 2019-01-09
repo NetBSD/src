@@ -23,4 +23,4 @@ do
 	cp $i `echo $i | sed s/X/K/`
 done
 
-$SIGNER -P -z -s $starttime -e $endtime -r $RANDFILE -o $zone $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -P -z -s $starttime -e $endtime -o $zone $zonefile > /dev/null 2> signer.err || cat signer.err

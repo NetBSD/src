@@ -33,7 +33,7 @@
 <h2>Synopsis</h2>
     <div class="cmdsynopsis"><p>
       <code class="command">named-checkconf</code> 
-       [<code class="option">-hjlvz</code>]
+       [<code class="option">-chjlvz</code>]
        [<code class="option">-p</code>
 	 [<code class="option">-x</code>
       ]]
@@ -86,6 +86,14 @@
             List all the configured zones. Each line of output
             contains the zone name, class (e.g. IN), view, and type
             (e.g. master or slave).
+          </p>
+        </dd>
+<dt><span class="term">-c</span></dt>
+<dd>
+          <p>
+	    Check "core" configuration only. This suppresses the loading
+	    of plugin modules, and causes all parameters to
+	    <span class="command"><strong>plugin</strong></span> statements to be ignored.
           </p>
         </dd>
 <dt><span class="term">-p</span></dt>

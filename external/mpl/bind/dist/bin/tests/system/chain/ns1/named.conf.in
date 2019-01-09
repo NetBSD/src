@@ -18,8 +18,8 @@ options {
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation yes;
 	notify yes;
-	dnssec-enable yes;
 };
 
 zone "." { type master; file "root.db"; };

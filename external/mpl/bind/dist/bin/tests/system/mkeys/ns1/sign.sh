@@ -15,10 +15,10 @@ SYSTEMTESTTOP=../..
 zone=.
 zonefile=root.db
 
-keyname=`$KEYGEN -a rsasha256 -qfk -r $RANDFILE $zone`
-zskkeyname=`$KEYGEN -a rsasha256 -q -r $RANDFILE $zone`
+keyname=`$KEYGEN -a rsasha256 -qfk $zone`
+zskkeyname=`$KEYGEN -a rsasha256 -q $zone`
 
-$SIGNER -Sg -r $RANDFILE -o $zone $zonefile > /dev/null 2>/dev/null
+$SIGNER -Sg -o $zone $zonefile > /dev/null 2>/dev/null
 
 # Configure the resolving server with a managed trusted key.
 keyfile_to_managed_keys $keyname > managed.conf

@@ -15,3 +15,4 @@ rm -f */named.memstats
 rm -f */named.run
 rm -f ns1/_default.tsigkeys
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

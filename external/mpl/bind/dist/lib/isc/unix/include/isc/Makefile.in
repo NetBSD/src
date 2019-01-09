@@ -13,8 +13,8 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-HEADERS =	dir.h int.h keyboard.h net.h netdb.h offset.h stat.h \
-		stdtime.h strerror.h syslog.h time.h
+HEADERS =	dir.h net.h netdb.h offset.h stat.h \
+		stdtime.h syslog.h time.h
 
 SUBDIRS =
 TARGETS =
@@ -26,10 +26,10 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} $(srcdir)/$$i ${DESTDIR}${includedir}/isc ; \
+		${INSTALL_DATA} $(srcdir)/$$i ${DESTDIR}${includedir}/isc || exit 1; \
 	done
 
 uninstall::
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/isc/$$i ; \
+		rm -f ${DESTDIR}${includedir}/isc/$$i || exit 1; \
 	done

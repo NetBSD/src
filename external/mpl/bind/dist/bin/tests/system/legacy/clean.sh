@@ -8,9 +8,9 @@
 # information regarding copyright ownership.
 
 rm -f dig.out.*
-rm -f ns?/named.conf
-rm -f ns?/named.memstats
-rm -f ns?/named.run
+rm -f ns*/named.conf
+rm -f ns*/named.memstats
+rm -f ns*/named.run
 rm -f ns*/named.lock
 
 # build.sh
@@ -23,3 +23,4 @@ rm -f ns7/dsset-*
 rm -f ns7/edns512-notcp.db
 rm -f ns7/signer.err
 rm -f ns7/trusted.conf
+rm -f ns*/managed-keys.bind*

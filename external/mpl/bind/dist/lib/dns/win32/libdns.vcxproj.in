@@ -53,8 +53,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>BIND9;WIN32;USE_MD5;@CRYPTO@@USE_GSSAPI@@USE_ISC_SPNEGO@_DEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BIND9;WIN32;@USE_GSSAPI@@USE_ISC_SPNEGO@_DEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
@@ -68,7 +68,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\isc\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;@LIBXML2_LIB@@OPENSSL_LIB@@GSSAPI_LIB@@KRB5_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIB@libisc.lib;@LIBXML2_LIB@@GSSAPI_LIB@@KRB5_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
     </Link>
@@ -81,8 +81,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
-      <PreprocessorDefinitions>BIND9;WIN32;USE_MD5;@CRYPTO@@USE_GSSAPI@@USE_ISC_SPNEGO@NDEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BIND9;WIN32;@USE_GSSAPI@@USE_ISC_SPNEGO@NDEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
@@ -99,7 +99,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\isc\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;@LIBXML2_LIB@@OPENSSL_LIB@@GSSAPI_LIB@@KRB5_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIB@libisc.lib;@LIBXML2_LIB@@GSSAPI_LIB@@KRB5_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -160,31 +160,23 @@
     <ClCompile Include="..\nsec.c" />
     <ClCompile Include="..\nsec3.c" />
     <ClCompile Include="..\nta.c" />
-@IF OPENSSL
     <ClCompile Include="..\openssldh_link.c" />
-    <ClCompile Include="..\openssldsa_link.c" />
     <ClCompile Include="..\opensslecdsa_link.c" />
     <ClCompile Include="..\openssleddsa_link.c" />
-    <ClCompile Include="..\opensslgost_link.c" />
     <ClCompile Include="..\opensslrsa_link.c" />
     <ClCompile Include="..\openssl_link.c" />
-@END OPENSSL
     <ClCompile Include="..\order.c" />
     <ClCompile Include="..\peer.c" />
 @IF PKCS11
     <ClCompile Include="..\pkcs11.c" />
-    <ClCompile Include="..\pkcs11dh_link.c" />
-    <ClCompile Include="..\pkcs11dsa_link.c" />
     <ClCompile Include="..\pkcs11ecdsa_link.c" />
     <ClCompile Include="..\pkcs11eddsa_link.c" />
-    <ClCompile Include="..\pkcs11gost_link.c" />
     <ClCompile Include="..\pkcs11rsa_link.c" />
 @END PKCS11
     <ClCompile Include="..\portlist.c" />
     <ClCompile Include="..\private.c" />
     <ClCompile Include="..\rbt.c" />
     <ClCompile Include="..\rbtdb.c" />
-    <ClCompile Include="..\rbtdb64.c" />
     <ClCompile Include="..\rcode.c" />
     <ClCompile Include="..\rdata.c" />
     <ClCompile Include="..\rdatalist.c" />
@@ -218,17 +210,15 @@
     <ClCompile Include="..\xfrin.c" />
     <ClCompile Include="..\zone.c" />
     <ClCompile Include="..\zonekey.c" />
+    <ClCompile Include="..\zoneverify.c" />
     <ClCompile Include="..\zt.c" />
     <ClCompile Include="DLLMain.c" />
     <ClCompile Include="version.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\code.h" />
-    <ClInclude Include="..\dst_gost.h" />
     <ClInclude Include="..\dst_internal.h" />
-@IF OPENSSL
     <ClInclude Include="..\dst_openssl.h" />
-@END OPENSSL
     <ClInclude Include="..\dst_parse.h" />
 @IF PKCS11
     <ClInclude Include="..\dst_pkcs11.h" />
@@ -330,13 +320,13 @@
     <ClInclude Include="..\include\dns\xfrin.h" />
     <ClInclude Include="..\include\dns\zone.h" />
     <ClInclude Include="..\include\dns\zonekey.h" />
+    <ClInclude Include="..\include\dns\zoneverify.h" />
     <ClInclude Include="..\include\dns\zt.h" />
     <ClInclude Include="..\include\dst\dst.h" />
     <ClInclude Include="..\include\dst\gssapi.h" />
     <ClInclude Include="..\include\dst\lib.h" />
     <ClInclude Include="..\include\dst\result.h" />
     <ClInclude Include="..\rbtdb.h" />
-    <ClInclude Include="..\rbtdb64.h" />
     <ClInclude Include="..\rdatalist_p.h" />
     <ClInclude Include="..\spnego.h" />
   </ItemGroup>

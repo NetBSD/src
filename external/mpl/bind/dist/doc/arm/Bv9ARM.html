@@ -32,7 +32,7 @@
 <div>
 <div><h1 class="title">
 <a name="id-1"></a>BIND 9 Administrator Reference Manual</h1></div>
-<div><p class="releaseinfo">BIND Version 9.12.2-P1</p></div>
+<div><p class="releaseinfo">BIND Version 9.13.5-W1</p></div>
 <div><p class="copyright">Copyright © 2000-2018 Internet Systems Consortium, Inc. ("ISC")</p></div>
 </div>
 <hr>
@@ -76,6 +76,11 @@
 <dt><span class="section"><a href="Bv9ARM.ch03.html#tools">Tools for Use With the Name Server Daemon</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch03.html#signals">Signals</a></span></dt>
 </dl></dd>
+<dt><span class="section"><a href="Bv9ARM.ch03.html#module-info">Plugins</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="Bv9ARM.ch03.html#id-1.4.6.5">Configuring Plugins</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch03.html#id-1.4.6.6">Developing Plugins</a></span></dt>
+</dl></dd>
 </dl></dd>
 <dt><span class="chapter"><a href="Bv9ARM.ch04.html">4. Advanced DNS Features</a></span></dt>
 <dd><dl>
@@ -99,7 +104,7 @@
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_keys">Generating Keys</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_signing">Signing the Zone</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_config">Configuring Servers</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_config">Configuring Servers for DNSSEC</a></span></dt>
 </dl></dd>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec.dynamic.zones">DNSSEC, Dynamic Zones, and Automatic Signing</a></span></dt>
 <dd><dl>
@@ -228,18 +233,24 @@
 <dt><span class="chapter"><a href="Bv9ARM.ch07.html">7. Troubleshooting</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch07.html#common_problems">Common Problems</a></span></dt>
-<dd><dl><dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.2.2">It's not working; how can I figure out what's wrong?</a></span></dt></dl></dd>
+<dd><dl>
+<dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.2.2">It's not working; how can I figure out what's wrong?</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.2.3">EDNS compliance issues</a></span></dt>
+</dl></dd>
 <dt><span class="section"><a href="Bv9ARM.ch07.html#id-1.8.3">Incrementing and Changing the Serial Number</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch07.html#more_help">Where Can I Get Help?</a></span></dt>
 </dl></dd>
 <dt><span class="appendix"><a href="Bv9ARM.ch08.html">A. Release Notes</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="Bv9ARM.ch08.html#id-1.9.2">Release Notes for BIND Version 9.12.2-P1</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch08.html#id-1.9.2">Release Notes for BIND Version 9.13.5-W1</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_intro">Introduction</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_versions">Note on Version Numbering</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_platforms">Supported Platforms</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_download">Download</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_security">Security Fixes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_features">New Features</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_removed">Removed Features</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_changes">Feature Changes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_bugs">Bug Fixes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch08.html#relnotes_license">License</a></span></dt>
@@ -323,7 +334,7 @@
 <span class="refentrytitle"><a href="man.dnstap-read.html"><span class="application">dnstap-read</span></a></span><span class="refpurpose"> &#8212; print dnstap data in human-readable form</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="man.genrandom.html"><span class="application">genrandom</span></a></span><span class="refpurpose"> &#8212; generate a file containing random data</span>
+<span class="refentrytitle"><a href="man.filter-aaaa.html"><span class="application">filter-aaaa.so</span></a></span><span class="refpurpose"> &#8212; filter AAAA in DNS responses when A is present</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="man.host.html">host</a></span><span class="refpurpose"> &#8212; DNS lookup utility</span>
@@ -429,6 +440,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

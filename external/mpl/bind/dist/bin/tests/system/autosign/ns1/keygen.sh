@@ -20,18 +20,18 @@ infile=root.db.in
 
 cat $infile ../ns2/dsset-example$TP > $zonefile
 
-zskact=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE $zone`
-zskvanish=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE $zone`
-zskdel=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE -D now $zone`
-zskinact=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE -I now $zone`
-zskunpub=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE -G $zone`
-zsksby=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE -A none $zone`
-zskactnowpub1d=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE -A now -P +1d $zone`
-zsknopriv=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE $zone`
+zskact=`$KEYGEN -3 -a RSASHA1 -q $zone`
+zskvanish=`$KEYGEN -3 -a RSASHA1 -q $zone`
+zskdel=`$KEYGEN -3 -a RSASHA1 -q -D now $zone`
+zskinact=`$KEYGEN -3 -a RSASHA1 -q -I now $zone`
+zskunpub=`$KEYGEN -3 -a RSASHA1 -q -G $zone`
+zsksby=`$KEYGEN -3 -a RSASHA1 -q -A none $zone`
+zskactnowpub1d=`$KEYGEN -3 -a RSASHA1 -q -A now -P +1d $zone`
+zsknopriv=`$KEYGEN -3 -a RSASHA1 -q $zone`
 rm $zsknopriv.private
 
-ksksby=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE -P now -A now+15s -fk $zone`
-kskrev=`$KEYGEN -3 -a RSASHA1 -q -r $RANDFILE -R now+15s -fk $zone`
+ksksby=`$KEYGEN -3 -a RSASHA1 -q -P now -A now+15s -fk $zone`
+kskrev=`$KEYGEN -3 -a RSASHA1 -q -R now+15s -fk $zone`
 
 keyfile_to_trusted_keys $ksksby > trusted.conf
 cp trusted.conf ../ns2/trusted.conf

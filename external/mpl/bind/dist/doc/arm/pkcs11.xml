@@ -114,7 +114,7 @@ $ <userinput>./configure --enable-native-pkcs11 \
       </para>
       <screen>
 $ <userinput> cd SoftHSMv2 </userinput>
-$ <userinput> configure --with-crypto-backend=openssl --prefix=/opt/pkcs11/usr --enable-gost </userinput>
+$ <userinput> configure --with-crypto-backend=openssl --prefix=/opt/pkcs11/usr </userinput>
 $ <userinput> make </userinput>
 $ <userinput> make install </userinput>
 $ <userinput> /opt/pkcs11/usr/bin/softhsm-util --init-token 0 --slot 0 --label softhsmv2 </userinput>
@@ -230,23 +230,13 @@ $ <userinput>patch -p1 -d openssl-0.9.8zc \
       <screen>
 $ <userinput>cp pkcs11.GCC4.0.2.so.4.05 /opt/pkcs11/usr/lib/libpkcs11.so</userinput>
 </screen>
-      <para>
-	The Keyper library requires threads, so we
-	must specify -pthread.
-      </para>
       <screen>
 $ <userinput>cd openssl-0.9.8zc</userinput>
-$ <userinput>./Configure linux-x86_64 -pthread \
+$ <userinput>./Configure linux-x86_64 \
 	    --pk11-libname=/opt/pkcs11/usr/lib/libpkcs11.so \
 	    --pk11-flavor=sign-only \
 	    --prefix=/opt/pkcs11/usr</userinput>
 </screen>
-      <para>
-	After configuring, run "<command>make</command>"
-	and "<command>make test</command>". If "<command>make
-	test</command>" fails with "pthread_atfork() not found", you forgot to
-	add the -pthread above.
-      </para>
     </section>
     <section><info><title>Building OpenSSL for the SCA 6000 on Solaris</title></info>
       <!-- Example 2 -->
@@ -316,7 +306,7 @@ $ <userinput> /opt/pkcs11/usr/bin/softhsm --init-token 0 --slot 0 --label sofths
       </para>
       <screen>
 $ <userinput>cd openssl-0.9.8zc</userinput>
-$ <userinput>./Configure linux-x86_64 -pthread \
+$ <userinput>./Configure linux-x86_64 \
 	    --pk11-libname=/opt/pkcs11/usr/lib/libsofthsm.so \
 	    --pk11-flavor=sign-only \
 	    --prefix=/opt/pkcs11/usr</userinput>
@@ -355,13 +345,9 @@ $ <userinput>./Configure linux-x86_64 -pthread \
     <section><info><title>Configuring BIND 9 for Linux with the AEP Keyper</title></info>
       <!-- Example 4 -->
 
-      <para>
-	To link with the PKCS#11 provider, threads must be
-	enabled in the BIND 9 build.
-      </para>
       <screen>
 $ <userinput>cd ../bind9</userinput>
-$ <userinput>./configure --enable-threads \
+$ <userinput>./configure \
 	   --with-openssl=/opt/pkcs11/usr \
 	   --with-pkcs11=/opt/pkcs11/usr/lib/libpkcs11.so</userinput>
 </screen>
@@ -369,13 +355,9 @@ $ <userinput>./configure --enable-threads \
     <section><info><title>Configuring BIND 9 for Solaris with the SCA 6000</title></info>
       <!-- Example 5 -->
 
-      <para>
-	To link with the PKCS#11 provider, threads must be
-	enabled in the BIND 9 build.
-      </para>
       <screen>
 $ <userinput>cd ../bind9</userinput>
-$ <userinput>./configure CC="cc -xarch=amd64" --enable-threads \
+$ <userinput>./configure CC="cc -xarch=amd64" \
 	    --with-openssl=/opt/pkcs11/usr \
 	    --with-pkcs11=/usr/lib/64/libpkcs11.so</userinput>
 </screen>
@@ -393,7 +375,7 @@ $ <userinput>./configure CC="cc -xarch=amd64" --enable-threads \
 
       <screen>
 $ <userinput>cd ../bind9</userinput>
-$ <userinput>./configure --enable-threads \
+$ <userinput>./configure \
 	   --with-openssl=/opt/pkcs11/usr \
 	   --with-pkcs11=/opt/pkcs11/usr/lib/libsofthsm.so</userinput>
 </screen>

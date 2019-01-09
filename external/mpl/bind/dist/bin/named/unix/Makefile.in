@@ -15,9 +15,9 @@ top_srcdir =	@top_srcdir@
 
 CINCLUDES =	-I${srcdir}/include -I${srcdir}/../include \
 		${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} \
-		${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@
+		${DNS_INCLUDES} ${ISC_INCLUDES} @OPENSSL_INCLUDES@
 
-CDEFINES =	@CRYPTO@
+CDEFINES =
 CWARNINGS =
 
 OBJS =		os.@O@ dlz_dlopen_driver.@O@

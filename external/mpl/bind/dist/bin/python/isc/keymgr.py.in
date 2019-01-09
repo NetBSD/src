@@ -76,7 +76,7 @@ def parse_args():
                         help='Path to \'dnssec-keygen\'',
                         metavar='path')
     parser.add_argument('-r', dest='randomdev', type=str, default=None,
-                        help='Path to a file containing random data to pass to \'dnssec-keygen\'',
+                        help='DEPRECATED',
                         metavar='path')
     parser.add_argument('-s', dest='settime', default=settime, type=str,
                         help='Path to \'dnssec-settime\'',
@@ -97,6 +97,9 @@ def parse_args():
 
     args = parser.parse_args()
 
+    if args.randomdev:
+        fatal("ERROR: -r option has been deprecated.")
+    
     if args.no_zsk and args.no_ksk:
         fatal("ERROR: -z and -k cannot be used together.")
 

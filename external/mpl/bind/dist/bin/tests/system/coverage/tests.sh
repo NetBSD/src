@@ -70,6 +70,12 @@ for dir in [0-9][0-9]-*; do
             ret=1
         fi
 
+        found=`grep Traceback coverage.$n | wc -l`
+        if [ $found -ne 0 ]; then
+            echo "python exception detected"
+            ret=1
+        fi
+
         n=`expr $n + 1`
         if [ $ret != 0 ]; then echo_i "failed"; fi
         status=`expr $status + $ret`

@@ -1,3 +1,5 @@
+#!/bin/sh
+#
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -7,26 +9,26 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+# shellcheck source=conf.sh
+. "$SYSTEMTESTTOP/conf.sh"
 
-../named-compilezone -D -F raw -o example.db.raw example \
+$CHECKZONE -D -F raw -o example.db.raw example \
         example.db > /dev/null 2>&1
-../named-compilezone -D -F map -o ../ns3/example.db.map example \
+$CHECKZONE -D -F map -o ../ns3/example.db.map example \
         example.db > /dev/null 2>&1
-../named-compilezone -D -F map -o ../ns3/dynamic.db.map dynamic \
+$CHECKZONE -D -F map -o ../ns3/dynamic.db.map dynamic \
         example.db > /dev/null 2>&1
-../named-compilezone -D -F raw=1 -o example.db.raw1 example-explicit \
+$CHECKZONE -D -F raw=1 -o example.db.raw1 example-explicit \
         example.db > /dev/null 2>&1
-../named-compilezone -D -F raw=0 -o example.db.compat example-compat \
+$CHECKZONE -D -F raw=0 -o example.db.compat example-compat \
         example.db > /dev/null 2>&1
-../named-compilezone -D -F raw -L 3333 -o example.db.serial.raw example \
+$CHECKZONE -D -F raw -L 3333 -o example.db.serial.raw example \
         example.db > /dev/null 2>&1
-../named-compilezone -D -F raw -o large.db.raw large large.db > /dev/null 2>&1
-../named-compilezone -D -F map -o example.db.map example-map \
+$CHECKZONE -D -F raw -o large.db.raw large large.db > /dev/null 2>&1
+$CHECKZONE -D -F map -o example.db.map example-map \
         example.db > /dev/null 2>&1
 
-$KEYGEN -q -a rsasha256 -r $RANDFILE signed > /dev/null 2>&1
-$KEYGEN -q -a rsasha256 -r $RANDFILE -fk signed > /dev/null 2>&1
+$KEYGEN -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK signed > /dev/null 2>&1
+$KEYGEN -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" signed > /dev/null 2>&1
 $SIGNER -S -f signed.db.signed -o signed signed.db > /dev/null 2>&1
-../named-compilezone -D -F map -o signed.db.map signed signed.db.signed > /dev/null 2>&1
+$CHECKZONE -D -F map -o signed.db.map signed signed.db.signed > /dev/null 2>&1

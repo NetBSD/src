@@ -28,7 +28,7 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/irs ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/irs || exit 1; \
 	done
 	${INSTALL_DATA} netdb.h ${DESTDIR}${includedir}/irs
 	${INSTALL_DATA} platform.h ${DESTDIR}${includedir}/irs
@@ -37,7 +37,7 @@ uninstall::
 	rm -f ${DESTDIR}${includedir}/irs/platform.h
 	rm -f ${DESTDIR}${includedir}/irs/netdb.h
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/irs/$$i ; \
+		rm -f ${DESTDIR}${includedir}/irs/$$i || exit 1; \
 	done
 
 distclean::
