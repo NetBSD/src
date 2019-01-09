@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.4 2019/01/09 20:39:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,11 @@
 #define ISC_STATS_MAGIC			ISC_MAGIC('S', 't', 'a', 't')
 #define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
 
+#ifndef _LP64
+typedef atomic_int_fast32_t isc_stat_t;
+#else
 typedef atomic_int_fast64_t isc_stat_t;
+#endif
 
 struct isc_stats {
 	/*% Unlocked */
