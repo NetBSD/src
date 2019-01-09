@@ -56,9 +56,9 @@ SYSTEMTESTTOP=..
 DIGOPTS="+tcp +nosea +nostat +nocmd +norec +noques +noauth +noadd +nostats +dnssec -p ${PORT}"
 
 rndc_reload() {
-    echo_i "`$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p ${CONTROLPORT} reload 2>&1 | sed 's/^/ns2 /'`"
+    echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reload 2>&1 | sed 's/^/'$1' /'`"
     for try in 0 1 2 3 4 5 6 7 8 9; do
-        nextpart ns2/named.run | grep "reloading configuration succeeded" > /dev/null && break
+        nextpart $1/named.run | grep "reloading configuration succeeded" > /dev/null && break
         sleep 1
     done
 }
@@ -81,7 +81,7 @@ status=`expr $status + $ret`
 # Test 2 - explicit any, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named02.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: explicit any - query allowed"
 ret=0
@@ -94,7 +94,7 @@ status=`expr $status + $ret`
 # Test 3 - none, query refused
 n=`expr $n + 1`
 copy_setports ns2/named03.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: none - query refused"
 ret=0
@@ -107,7 +107,7 @@ status=`expr $status + $ret`
 # Test 4 - address allowed, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named04.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: address allowed - query allowed"
 ret=0
@@ -120,7 +120,7 @@ status=`expr $status + $ret`
 # Test 5 - address not allowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named05.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: address not allowed - query refused"
 ret=0
@@ -133,7 +133,7 @@ status=`expr $status + $ret`
 # Test 6 - address disallowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named06.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: address disallowed - query refused"
 ret=0
@@ -146,7 +146,7 @@ status=`expr $status + $ret`
 # Test 7 - acl allowed, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named07.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: acl allowed - query allowed"
 ret=0
@@ -159,7 +159,7 @@ status=`expr $status + $ret`
 # Test 8 - acl not allowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named08.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: acl not allowed - query refused"
 ret=0
@@ -173,7 +173,7 @@ status=`expr $status + $ret`
 # Test 9 - acl disallowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named09.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: acl disallowed - query refused"
 ret=0
@@ -186,7 +186,7 @@ status=`expr $status + $ret`
 # Test 10 - key allowed, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named10.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: key allowed - query allowed"
 ret=0
@@ -199,7 +199,7 @@ status=`expr $status + $ret`
 # Test 11 - key not allowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named11.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: key not allowed - query refused"
 ret=0
@@ -212,7 +212,7 @@ status=`expr $status + $ret`
 # Test 12 - key disallowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named12.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: key disallowed - query refused"
 ret=0
@@ -228,7 +228,7 @@ n=20
 # Test 21 - views default, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named21.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views default - query allowed"
 ret=0
@@ -241,7 +241,7 @@ status=`expr $status + $ret`
 # Test 22 - views explicit any, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named22.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views explicit any - query allowed"
 ret=0
@@ -254,7 +254,7 @@ status=`expr $status + $ret`
 # Test 23 - views none, query refused
 n=`expr $n + 1`
 copy_setports ns2/named23.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views none - query refused"
 ret=0
@@ -267,7 +267,7 @@ status=`expr $status + $ret`
 # Test 24 - views address allowed, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named24.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views address allowed - query allowed"
 ret=0
@@ -280,7 +280,7 @@ status=`expr $status + $ret`
 # Test 25 - views address not allowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named25.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views address not allowed - query refused"
 ret=0
@@ -293,7 +293,7 @@ status=`expr $status + $ret`
 # Test 26 - views address disallowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named26.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views address disallowed - query refused"
 ret=0
@@ -306,7 +306,7 @@ status=`expr $status + $ret`
 # Test 27 - views acl allowed, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named27.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views acl allowed - query allowed"
 ret=0
@@ -319,7 +319,7 @@ status=`expr $status + $ret`
 # Test 28 - views acl not allowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named28.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views acl not allowed - query refused"
 ret=0
@@ -332,7 +332,7 @@ status=`expr $status + $ret`
 # Test 29 - views acl disallowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named29.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views acl disallowed - query refused"
 ret=0
@@ -345,7 +345,7 @@ status=`expr $status + $ret`
 # Test 30 - views key allowed, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named30.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views key allowed - query allowed"
 ret=0
@@ -358,7 +358,7 @@ status=`expr $status + $ret`
 # Test 31 - views key not allowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named31.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views key not allowed - query refused"
 ret=0
@@ -371,7 +371,7 @@ status=`expr $status + $ret`
 # Test 32 - views key disallowed, query refused
 n=`expr $n + 1`
 copy_setports ns2/named32.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views key disallowed - query refused"
 ret=0
@@ -384,7 +384,7 @@ status=`expr $status + $ret`
 # Test 33 - views over options, views allow, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named33.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views over options, views allow - query allowed"
 ret=0
@@ -397,7 +397,7 @@ status=`expr $status + $ret`
 # Test 34 - views over options, views disallow, query refused
 n=`expr $n + 1`
 copy_setports ns2/named34.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views over options, views disallow - query refused"
 ret=0
@@ -414,7 +414,7 @@ n=40
 # Test 41 - zone default, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named40.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: zone default - query allowed"
 ret=0
@@ -537,7 +537,7 @@ status=`expr $status + $ret`
 # Test 53 - zones over options, zones allow, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named53.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views over options, views allow - query allowed"
 ret=0
@@ -550,7 +550,7 @@ status=`expr $status + $ret`
 # Test 54 - zones over options, zones disallow, query refused
 n=`expr $n + 1`
 copy_setports ns2/named54.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: views over options, views disallow - query refused"
 ret=0
@@ -563,7 +563,7 @@ status=`expr $status + $ret`
 # Test 55 - zones over views, zones allow, query allowed
 n=`expr $n + 1`
 copy_setports ns2/named55.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: zones over views, views allow - query allowed"
 ret=0
@@ -576,7 +576,7 @@ status=`expr $status + $ret`
 # Test 56 - zones over views, zones disallow, query refused
 n=`expr $n + 1`
 copy_setports ns2/named56.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: zones over views, views disallow - query refused"
 ret=0
@@ -589,7 +589,7 @@ status=`expr $status + $ret`
 # Test 57 - zones over views, zones disallow, query refused (allow-query-on)
 n=`expr $n + 1`
 copy_setports ns2/named57.conf.in ns2/named.conf
-rndc_reload
+rndc_reload ns2 10.53.0.2
 
 echo_i "test $n: zones over views, allow-query-on"
 ret=0
@@ -602,14 +602,91 @@ grep '^a.aclnotallow.example' dig.out.ns2.2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-# Test 58 - allow-recursion inheritance
+# Test 58 - allow-recursion default
 n=`expr $n + 1`
-echo_i "test $n: default recursion configuration"
+echo_i "test $n: default allow-recursion configuration"
 ret=0
 $DIG -p ${PORT} @10.53.0.3 -b 127.0.0.1 a.normal.example a > dig.out.ns3.1.$n
 grep 'status: NOERROR' dig.out.ns3.1.$n > /dev/null || ret=1
 $DIG -p ${PORT} @10.53.0.3 -b 10.53.0.1 a.normal.example a > dig.out.ns3.2.$n
 grep 'status: REFUSED' dig.out.ns3.2.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+# Test 59 - allow-query-cache default
+n=`expr $n + 1`
+echo_i "test $n: default allow-query-cache configuration"
+ret=0
+$DIG -p ${PORT} @10.53.0.3 -b 127.0.0.1 ns . > dig.out.ns3.1.$n
+grep 'status: NOERROR' dig.out.ns3.1.$n > /dev/null || ret=1
+$DIG -p ${PORT} @10.53.0.3 -b 10.53.0.1 ns . > dig.out.ns3.2.$n
+grep 'status: REFUSED' dig.out.ns3.2.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+# Test 60 - block recursion-on, allow query-cache-on
+n=`expr $n + 1`
+copy_setports ns3/named2.conf.in ns3/named.conf
+rndc_reload ns3 10.53.0.3
+
+echo_i "test $n: block recursion-on, allow query-cache-on"
+ret=0
+# this should query the cache, and an answer should already be there
+$DIG -p ${PORT} @10.53.0.3 a.normal.example a > dig.out.ns3.1.$n
+grep 'recursion requested but not available' dig.out.ns3.1.$n > /dev/null || ret=1
+grep 'ANSWER: 1' dig.out.ns3.1.$n > /dev/null || ret=1
+# this should require recursion and therefore can't get an answer
+$DIG -p ${PORT} @10.53.0.3 b.normal.example a > dig.out.ns3.2.$n
+grep 'recursion requested but not available' dig.out.ns3.2.$n > /dev/null || ret=1
+grep 'ANSWER: 0' dig.out.ns3.2.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+# Test 61 - inheritance of allow-query-cache-on from allow-recursion-on
+n=`expr $n + 1`
+copy_setports ns3/named3.conf.in ns3/named.conf
+rndc_reload ns3 10.53.0.3
+
+echo_i "test $n: inheritance of allow-query-cache-on"
+ret=0
+# this should query the cache, an answer should already be there
+$DIG -p ${PORT} @10.53.0.3 a.normal.example a > dig.out.ns3.1.$n
+grep 'ANSWER: 1' dig.out.ns3.1.$n > /dev/null || ret=1
+# this should be refused due to allow-recursion-on/allow-query-cache-on
+$DIG -p ${PORT} @10.53.1.2 a.normal.example a > dig.out.ns3.2.$n
+grep 'recursion requested but not available' dig.out.ns3.2.$n > /dev/null || ret=1
+grep 'status: REFUSED' dig.out.ns3.2.$n > /dev/null || ret=1
+# this should require recursion and should be allowed
+$DIG -p ${PORT} @10.53.0.3 c.normal.example a > dig.out.ns3.3.$n
+grep 'ANSWER: 1' dig.out.ns3.3.$n > /dev/null || ret=1
+# this should require recursion and be refused
+$DIG -p ${PORT} @10.53.1.2 d.normal.example a > dig.out.ns3.4.$n
+grep 'recursion requested but not available' dig.out.ns3.4.$n > /dev/null || ret=1
+grep 'status: REFUSED' dig.out.ns3.4.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+# Test 62 - inheritance of allow-recursion-on from allow-query-cache-on
+n=`expr $n + 1`
+copy_setports ns3/named4.conf.in ns3/named.conf
+rndc_reload ns3 10.53.0.3
+
+echo_i "test $n: inheritance of allow-recursion-on"
+ret=0
+# this should query the cache, an answer should already be there
+$DIG -p ${PORT} @10.53.0.3 a.normal.example a > dig.out.ns3.1.$n
+grep 'ANSWER: 1' dig.out.ns3.1.$n > /dev/null || ret=1
+# this should be refused due to allow-recursion-on/allow-query-cache-on
+$DIG -p ${PORT} @10.53.1.2 a.normal.example a > dig.out.ns3.2.$n
+grep 'recursion requested but not available' dig.out.ns3.2.$n > /dev/null || ret=1
+grep 'status: REFUSED' dig.out.ns3.2.$n > /dev/null || ret=1
+# this should require recursion and should be allowed
+$DIG -p ${PORT} @10.53.0.3 e.normal.example a > dig.out.ns3.3.$n
+grep 'ANSWER: 1' dig.out.ns3.3.$n > /dev/null || ret=1
+# this should require recursion and be refused
+$DIG -p ${PORT} @10.53.1.2 f.normal.example a > dig.out.ns3.4.$n
+grep 'recursion requested but not available' dig.out.ns3.4.$n > /dev/null || ret=1
+grep 'status: REFUSED' dig.out.ns3.4.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

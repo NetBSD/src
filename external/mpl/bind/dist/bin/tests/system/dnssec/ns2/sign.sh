@@ -29,12 +29,12 @@ do
 	cp ../ns3/dsset-$subdomain.example$TP .
 done
 
-keyname1=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
-keyname2=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
+keyname1=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
+keyname2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -P -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -g -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 #
 # lower/uppercase the signature bits with the exception of the last characters
@@ -89,11 +89,11 @@ zone=in-addr.arpa.
 infile=in-addr.arpa.db.in
 zonefile=in-addr.arpa.db
 
-keyname1=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
-keyname2=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
+keyname1=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
+keyname2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
-$SIGNER -P -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -g -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 # Sign the privately secure file
 
@@ -101,11 +101,11 @@ privzone=private.secure.example.
 privinfile=private.secure.example.db.in
 privzonefile=private.secure.example.db
 
-privkeyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 1024 -n zone $privzone`
+privkeyname=`$KEYGEN -q -a RSAMD5 -b 1024 -n zone $privzone`
 
 cat $privinfile $privkeyname.key >$privzonefile
 
-$SIGNER -P -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
+$SIGNER -P -g -o $privzone -l dlv $privzonefile > /dev/null
 
 # Sign the DLV secure zone.
 
@@ -115,11 +115,11 @@ dlvinfile=dlv.db.in
 dlvzonefile=dlv.db
 dlvsetfile=dlvset-`echo $privzone |sed -e "s/\.$//g"`$TP
 
-dlvkeyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 1024 -n zone $dlvzone`
+dlvkeyname=`$KEYGEN -q -a RSAMD5 -b 1024 -n zone $dlvzone`
 
 cat $dlvinfile $dlvkeyname.key $dlvsetfile > $dlvzonefile
 
-$SIGNER -P -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
+$SIGNER -P -g -o $dlvzone $dlvzonefile > /dev/null
 
 # Sign the badparam secure file
 
@@ -127,12 +127,12 @@ zone=badparam.
 infile=badparam.db.in
 zonefile=badparam.db
 
-keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
-keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname1=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone -f KSK $zone`
+keyname2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -P -3 - -H 1 -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -3 - -H 1 -g -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 sed 's/IN NSEC3 1 0 1 /IN NSEC3 1 0 10 /' $zonefile.signed > $zonefile.bad
 
@@ -142,12 +142,12 @@ zone=single-nsec3.
 infile=single-nsec3.db.in
 zonefile=single-nsec3.db
 
-keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
-keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname1=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keyname2=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -P -3 - -A -H 1 -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -3 - -A -H 1 -g -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 #
 # algroll has just has the old DNSKEY records removed and is waiting
@@ -158,14 +158,14 @@ zone=algroll.
 infile=algroll.db.in
 zonefile=algroll.db
 
-keyold1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-keyold2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
-keynew1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -fk $zone`
-keynew2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyold1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+keyold2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
+keynew1=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone -fk $zone`
+keynew2=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
 
 cat $infile $keynew1.key $keynew2.key >$zonefile
 
-$SIGNER -P -r $RANDFILE -o $zone -k $keyold1 -k $keynew1 $zonefile $keyold1 $keyold2 $keynew1 $keynew2 > /dev/null
+$SIGNER -P -o $zone -k $keyold1 -k $keynew1 $zonefile $keyold1 $keyold2 $keynew1 $keynew2 > /dev/null
 
 #
 # Make a zone big enough that it takes several seconds to generate a new
@@ -183,93 +183,93 @@ ns3	10	A	10.53.0.3
 EOF
 awk 'END { for (i = 0; i < 300; i++)
 	print "host" i, 10, "NS", "ns.elsewhere"; }' < /dev/null >> $zonefile
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
 cat $key1.key $key2.key >> $zonefile
-$SIGNER -P -3 - -A -H 1 -g -r $RANDFILE -o $zone -k $key1 $zonefile $key2 > /dev/null
+$SIGNER -P -3 - -A -H 1 -g -o $zone -k $key1 $zonefile $key2 > /dev/null
 
 zone=cds.secure
 infile=cds.secure.db.in
 zonefile=cds.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 $DSFROMKEY -C $key1.key > $key1.cds
 cat $infile $key1.key $key2.key $key1.cds >$zonefile
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 zone=cds-x.secure
 infile=cds.secure.db.in
 zonefile=cds-x.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key3=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key3=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 $DSFROMKEY -C $key2.key > $key2.cds
 cat $infile $key1.key $key3.key $key2.cds >$zonefile
-$SIGNER -P -g -x -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -x -o $zone $zonefile > /dev/null
 
 zone=cds-update.secure
 infile=cds-update.secure.db.in
 zonefile=cds-update.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 cat $infile $key1.key $key2.key > $zonefile
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 zone=cds-kskonly.secure
 infile=cds-kskonly.secure.db.in
 zonefile=cds-kskonly.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 cat $infile $key1.key $key2.key > $zonefile
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 zone=cds-auto.secure
 infile=cds-auto.secure.db.in
 zonefile=cds-auto.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 $DSFROMKEY -C $key1.key > $key1.cds
 cat $infile $key1.cds > $zonefile.signed
 
 zone=cdnskey.secure
 infile=cdnskey.secure.db.in
 zonefile=cdnskey.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 sed 's/DNSKEY/CDNSKEY/' $key1.key > $key1.cds
 cat $infile $key1.key $key2.key $key1.cds >$zonefile
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 zone=cdnskey-x.secure
 infile=cdnskey.secure.db.in
 zonefile=cdnskey-x.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key3=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key3=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 sed 's/DNSKEY/CDNSKEY/' $key1.key > $key1.cds
 cat $infile $key2.key $key3.key $key1.cds >$zonefile
-$SIGNER -P -g -x -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -x -o $zone $zonefile > /dev/null
 
 zone=cdnskey-update.secure
 infile=cdnskey-update.secure.db.in
 zonefile=cdnskey-update.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 cat $infile $key1.key $key2.key > $zonefile
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 zone=cdnskey-kskonly.secure
 infile=cdnskey-kskonly.secure.db.in
 zonefile=cdnskey-kskonly.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 cat $infile $key1.key $key2.key > $zonefile
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 zone=cdnskey-auto.secure
 infile=cdnskey-auto.secure.db.in
 zonefile=cdnskey-auto.secure.db
-key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
-key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 sed 's/DNSKEY/CDNSKEY/' $key1.key > $key1.cds
 cat $infile $key1.cds > $zonefile.signed

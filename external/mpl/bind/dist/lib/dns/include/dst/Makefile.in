@@ -25,10 +25,10 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/dst ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/dst || exit 1; \
 	done
 
 uninstall::
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/dst/$$i ; \
+		rm -f ${DESTDIR}${includedir}/dst/$$i || exit 1; \
 	done

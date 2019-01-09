@@ -30,6 +30,9 @@
     <ClCompile Include="..\interfacemgr.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\hooks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\lib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\ns\interfacemgr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ns\hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\ns\lib.h">

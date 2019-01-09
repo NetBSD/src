@@ -52,7 +52,7 @@
   <refsynopsisdiv>
     <cmdsynopsis sepchar=" ">
       <command>named-checkconf</command>
-      <arg choice="opt" rep="norepeat"><option>-hjlvz</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-chjlvz</option></arg>
       <arg choice="opt" rep="norepeat"><option>-p</option>
 	<arg choice="opt" rep="norepeat"><option>-x</option>
       </arg></arg>
@@ -110,6 +110,17 @@
             List all the configured zones. Each line of output
             contains the zone name, class (e.g. IN), view, and type
             (e.g. master or slave).
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-c</term>
+        <listitem>
+          <para>
+	    Check "core" configuration only. This suppresses the loading
+	    of plugin modules, and causes all parameters to
+	    <command>plugin</command> statements to be ignored.
           </para>
         </listitem>
       </varlistentry>

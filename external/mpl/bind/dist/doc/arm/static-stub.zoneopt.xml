@@ -18,8 +18,8 @@
 	<command>forward</command> ( first | only );
 	<command>forwarders</command> [ port <replaceable>integer</replaceable> ] [ dscp <replaceable>integer</replaceable> ] { ( <replaceable>ipv4_address</replaceable> | <replaceable>ipv6_address</replaceable> ) [ port <replaceable>integer</replaceable> ] [ dscp <replaceable>integer</replaceable> ]; ... };
 	<command>max-records</command> <replaceable>integer</replaceable>;
-	<command>server-addresses</command> { ( <replaceable>ipv4_address</replaceable> | <replaceable>ipv6_address</replaceable> ) [ port <replaceable>integer</replaceable> ]; ... };
-	<command>server-names</command> { <replaceable>quoted_string</replaceable>; ... };
+	<command>server-addresses</command> { ( <replaceable>ipv4_address</replaceable> | <replaceable>ipv6_address</replaceable> ); ... };
+	<command>server-names</command> { <replaceable>string</replaceable>; ... };
 	<command>zone-statistics</command> ( full | terse | none | <replaceable>boolean</replaceable> );
 };
 </programlisting>

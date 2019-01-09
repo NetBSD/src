@@ -88,10 +88,10 @@ echo_i "checking for negative caching of forwarder response"
 ret=0
 $DIG $DIGOPTS nonexist. txt @10.53.0.5 > dig.out.f2 || ret=1
 grep "status: NXDOMAIN" dig.out.f2 > /dev/null || ret=1
-$PERL ../stop.pl . ns4 || ret=1
+$PERL ../stop.pl forward ns4 || ret=1
 $DIG $DIGOPTS nonexist. txt @10.53.0.5 > dig.out.f2 || ret=1
 grep "status: NXDOMAIN" dig.out.f2 > /dev/null || ret=1
-$PERL ../start.pl --restart --noclean --port ${PORT} . ns4 || ret=1
+$PERL ../start.pl --restart --noclean --port ${PORT} forward ns4 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

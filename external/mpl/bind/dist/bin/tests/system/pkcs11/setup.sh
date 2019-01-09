@@ -33,7 +33,7 @@ if [ "x$have_rsa" != "x" ]; then
             -l "object=robie-rsa-ksk;pin-source=$PWD/pin" rsa.example`
 
     cat $infile $rsazsk1.key $rsaksk.key > $zonefile
-    $SIGNER -a -P -g -r $RANDFILE -o $zone $zonefile \
+    $SIGNER -a -P -g -o $zone $zonefile \
             > /dev/null 2> signer.err || cat signer.err
     cp $rsazsk2.key ns1/rsa.key
     mv Krsa* ns1
@@ -58,7 +58,7 @@ if [ "x$have_ecc" != "x" ]; then
             -l "object=robie-ecc-ksk;pin-source=$PWD/pin" ecc.example`
 
     cat $infile $ecczsk1.key $eccksk.key > $zonefile
-    $SIGNER -a -P -g -r $RANDFILE -o $zone $zonefile \
+    $SIGNER -a -P -g -o $zone $zonefile \
         > /dev/null 2> signer.err || cat signer.err
     cp $ecczsk2.key ns1/ecc.key
     mv Kecc* ns1
@@ -86,7 +86,7 @@ if [ "x$have_ecx" != "x" ]; then
 #           -l "object=robie-ecx-ksk;pin-source=$PWD/pin" ecx.example`
 
     cat $infile $ecxzsk1.key $ecxksk.key > $zonefile
-    $SIGNER -a -P -g -r $RANDFILE -o $zone $zonefile \
+    $SIGNER -a -P -g -o $zone $zonefile \
         > /dev/null 2> signer.err || cat signer.err
     cp $ecxzsk2.key ns1/ecx.key
     mv Kecx* ns1

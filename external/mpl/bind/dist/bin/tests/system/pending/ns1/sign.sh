@@ -21,11 +21,11 @@ zonefile=root.db
 cp ../ns2/dsset-example$TP .
 cp ../ns2/dsset-example.com$TP .
 
-keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
-keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 2048 -f KSK -n zone $zone`
+keyname1=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
+keyname2=`$KEYGEN -q -a RSASHA256 -b 2048 -f KSK -n zone $zone`
 cat $infile $keyname1.key $keyname2.key > $zonefile
 
-$SIGNER -g -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+$SIGNER -g -o $zone $zonefile > /dev/null 2>&1
 
 # Configure the resolving server with a trusted key.
 keyfile_to_trusted_keys $keyname2 > trusted.conf

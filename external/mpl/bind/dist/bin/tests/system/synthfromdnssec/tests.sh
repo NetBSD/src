@@ -182,5 +182,15 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+
+echo_i "check DNAME handling (synth-from-dnssec yes;) ($n)"
+ret=0
+$DIG $DIGOPTS dnamed.example. ns @10.53.0.5 > dig.out.ns5.test$n || ret=1
+$DIG $DIGOPTS a.dnamed.example. a @10.53.0.5 > dig.out.ns5-1.test$n || ret=1
+grep "status: NOERROR," dig.out.ns5-1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

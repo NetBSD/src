@@ -35,6 +35,7 @@ options: FORCE
 		${CFG_TEST} --named --grammar > $@.raw ; \
 		${CFG_TEST} --zonegrammar master > master.zoneopt ; \
 		${CFG_TEST} --zonegrammar slave > slave.zoneopt ; \
+		${CFG_TEST} --zonegrammar mirror > mirror.zoneopt ; \
 		${CFG_TEST} --zonegrammar forward > forward.zoneopt ; \
 		${CFG_TEST} --zonegrammar hint > hint.zoneopt ; \
 		${CFG_TEST} --zonegrammar stub > stub.zoneopt ; \
@@ -54,6 +55,7 @@ docbook: options
 	${PERL} docbook-options.pl options > ${top_srcdir}/bin/named/named.conf.docbook
 	${PERL} docbook-zoneopt.pl master.zoneopt > ${top_srcdir}/doc/arm/master.zoneopt.xml
 	${PERL} docbook-zoneopt.pl slave.zoneopt > ${top_srcdir}/doc/arm/slave.zoneopt.xml
+	${PERL} docbook-zoneopt.pl mirror.zoneopt > ${top_srcdir}/doc/arm/mirror.zoneopt.xml
 	${PERL} docbook-zoneopt.pl forward.zoneopt > ${top_srcdir}/doc/arm/forward.zoneopt.xml
 	${PERL} docbook-zoneopt.pl hint.zoneopt > ${top_srcdir}/doc/arm/hint.zoneopt.xml
 	${PERL} docbook-zoneopt.pl stub.zoneopt > ${top_srcdir}/doc/arm/stub.zoneopt.xml

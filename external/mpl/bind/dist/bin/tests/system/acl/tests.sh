@@ -144,36 +144,6 @@ $DIG -p ${PORT} +tcp soa example. \
 	@10.53.0.2 -b 10.53.0.3 > dig.out.${t}
 grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
 
-echo_i "testing EDNS client-subnet ACL processing"
-copy_setports ns2/named6.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
-sleep 5
-
-# should fail
-t=`expr $t + 1`
-$DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.2 axfr > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
-
-# should succeed
-t=`expr $t + 1`
-$DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.2 +subnet="10.53.0/24" axfr > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
-
-echo_i "testing EDNS client-subnet response scope"
-copy_setports ns2/named7.conf.in ns2/named.conf
-$RNDCCMD 10.53.0.2 reload 2>&1 | sed 's/^/ns2 /' | cat_i
-sleep 5
-
-t=`expr $t + 1`
-$DIG -p ${PORT} example. soa @10.53.0.2 +subnet="10.53.0.1/32" > dig.out.${t}
-grep "CLIENT-SUBNET.*10.53.0.1/32/0" dig.out.${t} > /dev/null || { echo_i "test $t failed" ; status=1; }
-
-t=`expr $t + 1`
-$DIG -p ${PORT} example. soa @10.53.0.2 +subnet="192.0.2.128/32" > dig.out.${t}
-grep "CLIENT-SUBNET.*192.0.2.128/32/24" dig.out.${t} > /dev/null || { echo_i "test $t failed" ; status=1; }
-
 # AXFR tests against ns3
 
 echo_i "testing allow-transfer ACLs against ns3 (no existing zones)"

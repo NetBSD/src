@@ -14,6 +14,4 @@ SYSTEMTESTTOP=..
 
 $SHELL clean.sh 
 
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
-
 (cd zones && $SHELL genzones.sh)

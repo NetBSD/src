@@ -14,3 +14,4 @@ ns1		A	10.53.0.1
 nodata		TXT	nodata
 *.wild-a	A	1.2.3.4
 *.wild-cname 	CNAME	ns1
+dnamed		DNAME	dnamed.

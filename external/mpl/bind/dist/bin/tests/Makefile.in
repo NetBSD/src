@@ -14,15 +14,15 @@ top_srcdir =	@top_srcdir@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
-		@DST_OPENSSL_INC@
+		@OPENSSL_INCLUDES@
 
-CDEFINES =	@CRYPTO@
+CDEFINES =
 CWARNINGS =
 BACKTRACECFLAGS = @BACKTRACECFLAGS@
 
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
 ISCCFGLIBS = 	../../lib/isccfg/libisccfg.@A@
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
@@ -79,7 +79,7 @@ clean distclean::
 check: test
 
 test:
-	@for dir in $(SUBDIRS) ;\
+	@for dir in $(TESTDIRS) ;\
 	do \
 		( cd $$dir; $(MAKE) test ) ;\
 	done

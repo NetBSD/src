@@ -136,46 +136,6 @@ idna_fail() {
     status=`expr $status + $ret`
 }
 
-# Check if current version of libidn2 is >= a given version
-#
-# This requires that:
-# a) "pkg-config" exists on the system
-# b) The libidn2 installed has an associated ".pc" file
-# c) The system sort command supports "-V"
-#
-# $1 - Minimum version required
-#
-# Returns:
-# 0 - Version check is OK, libidn2 at required version or greater.
-# 1 - Version check was made, but libidn2 not at required version.
-# 2 - Could not carry out version check
-
-libidn_version_check() {
-    ret=2
-    if [ -n "`command -v pkg-config`" ]; then
-        version=`pkg-config --modversion --silence-errors libidn2`
-        if [ -n "$version" ]; then
-            # Does the sort command have a "-V" flag on this system?
-            sort -V 2>&1 > /dev/null << .
-.
-            if [ $? -eq 0 ]; then
-                # Sort -V exists.  Sort the IDN version and the minimum version
-                # required.  If the IDN version is greater than or equal to that
-                # version, it will appear last in the list.
-                last_version=`printf "%s\n" $version $1 | sort -V | tail -1`
-                if [ "$version" = "$last_version" ]; then
-                    ret=0
-                else
-                    ret=1
-                fi
-            fi
-        fi
-    fi
-
-    return $ret
-}
-
-
 # Function to check that case is preserved for an all-ASCII label.
 #
 # Without IDNA support, case-preservation is the expected behavior.
@@ -225,11 +185,11 @@ idna_enabled_test() {
     # Note that ASCII characters are converted to lower-case.
 
     text="Checking valid non-ASCII label"
-    idna_test "$text" ""                   "München" "münchen." 
+    idna_test "$text" ""                   "München" "M\195\188nchen."
     idna_test "$text" "+noidnin +noidnout" "München" "M\195\188nchen."
     idna_test "$text" "+noidnin +idnout"   "München" "M\195\188nchen."
     idna_test "$text" "+idnin   +noidnout" "München" "xn--mnchen-3ya."
-    idna_test "$text" "+idnin   +idnout"   "München" "münchen." 
+    idna_test "$text" "+idnin   +idnout"   "München" "münchen."
 
 
     # Tests of transitional processing of a valid U-label
@@ -250,7 +210,7 @@ idna_enabled_test() {
     # for the valid U-label.
 
     text="Checking that non-transitional IDNA processing is used"
-    idna_test "$text" ""                   "faß.de" "faß.de."
+    idna_test "$text" ""                   "faß.de" "fa\195\159.de."
     idna_test "$text" "+noidnin +noidnout" "faß.de" "fa\195\159.de."
     idna_test "$text" "+noidnin +idnout"   "faß.de" "fa\195\159.de."
     idna_test "$text" "+idnin   +noidnout" "faß.de" "xn--fa-hia.de."
@@ -260,11 +220,11 @@ idna_enabled_test() {
     # onto the Greek sigma character ("σ") in IDNA2003.
 
     text="Second check that non-transitional IDNA processing is used"
-    idna_test "$text" ""                   "βόλος.com" "βόλος.com." 
+    idna_test "$text" ""                   "βόλος.com" "\206\178\207\140\206\187\206\191\207\130.com."
     idna_test "$text" "+noidnin +noidnout" "βόλος.com" "\206\178\207\140\206\187\206\191\207\130.com."
     idna_test "$text" "+noidnin +idnout"   "βόλος.com" "\206\178\207\140\206\187\206\191\207\130.com."
     idna_test "$text" "+idnin   +noidnout" "βόλος.com" "xn--nxasmm1c.com."
-    idna_test "$text" "+idnin   +idnout"   "βόλος.com" "βόλος.com." 
+    idna_test "$text" "+idnin   +idnout"   "βόλος.com" "βόλος.com."
 
 
 
@@ -278,9 +238,9 @@ idna_enabled_test() {
     # The "+[no]idnin" flag has no effect in these cases.
 
     text="Checking valid A-label"
-    idna_test "$text" ""                   "xn--nxasmq6b.com" "βόλοσ.com." 
+    idna_test "$text" ""                   "xn--nxasmq6b.com" "xn--nxasmq6b.com."
     idna_test "$text" "+noidnin +noidnout" "xn--nxasmq6b.com" "xn--nxasmq6b.com."
-    idna_test "$text" "+noidnin +idnout"   "xn--nxasmq6b.com" "βόλοσ.com." 
+    idna_test "$text" "+noidnin +idnout"   "xn--nxasmq6b.com" "βόλοσ.com."
     idna_test "$text" "+idnin +noidnout"   "xn--nxasmq6b.com" "xn--nxasmq6b.com."
     idna_test "$text" "+idnin +idnout"     "xn--nxasmq6b.com" "βόλοσ.com."
 
@@ -299,7 +259,7 @@ idna_enabled_test() {
     # a shorter label is detected and rejected.
 
     text="Checking punycode label shorter than minimum valid length"
-    idna_fail "$text" ""                   "xn--xx"
+    idna_test "$text" ""                   "xn--xx" "xn--xx."
     idna_test "$text" "+noidnin +noidnout" "xn--xx" "xn--xx."
     idna_fail "$text" "+noidnin   +idnout" "xn--xx"
     idna_fail "$text" "+idnin   +noidnout" "xn--xx"
@@ -308,18 +268,9 @@ idna_enabled_test() {
     # Fake A-label - the string does not translate to anything.
 
     text="Checking fake A-label"
-    idna_fail "$text" ""                   "xn--ahahah"
+    idna_test "$text" ""                   "xn--ahahah" "xn--ahahah."
     idna_test "$text" "+noidnin +noidnout" "xn--ahahah" "xn--ahahah."
-
-    # Owing to issues with libdns, the next test will fail for versions of
-    # libidn earlier than 2.0.5.  For this reason, get the version (if
-    # available) and compare with 2.0.5.
-    libidn_version_check 2.0.5
-    if [ $? -ne 0 ]; then
-        echo_i "Skipping fake A-label +noidnin +idnout test (libidn2 version issues)"
-    else
-        idna_test "$text" "+noidnin   +idnout" "xn--ahahah" "xn--ahahah."
-    fi
+    idna_fail "$text" "+noidnin   +idnout" "xn--ahahah"
     idna_fail "$text" "+idnin   +noidnout" "xn--ahahah"
     idna_fail "$text" "+idnin     +idnout" "xn--ahahah"
 
@@ -327,19 +278,21 @@ idna_enabled_test() {
     # BIND rejects such labels: with +idnin
 
     label="xn--xflod18hstflod18hstflod18hstflod18hstflod18hstflod18-1iejjjj"
-    text="Checking punycode label shorter than minimum valid length"
+    text="Checking punycode label longer than maximum valid length"
     idna_fail "$text" ""                   "$label"
     idna_fail "$text" "+noidnin +noidnout" "$label"
     idna_fail "$text" "+noidnin   +idnout" "$label"
     idna_fail "$text" "+idnin   +noidnout" "$label"
     idna_fail "$text" "+idnin     +idnout" "$label"
 
-    
 
 
-    # Tests of a valid unicode string but an invalid U-label
+
+    # Tests of a valid unicode string but an invalid U-label (input)
     #
-    # Symbols are not valid IDNA names.
+    # Symbols are not valid IDNA2008 names.  Check whether dig rejects them
+    # when they are supplied on the command line to ensure no IDNA2003
+    # fallbacks are in place.
     #
     # +noidnin: "dig" should send unicode octets to the server and display the
     #           returned qname in the same form.
@@ -347,12 +300,34 @@ idna_enabled_test() {
     #
     # The +[no]idnout options should not have any effect on the test.
 
-    text="Checking invalid U-label"
-    idna_fail "$text" ""                   "🧦.com"
-    idna_test "$text" "+noidnin +noidnout" "🧦.com" "\240\159\167\166.com."
-    idna_test "$text" "+noidnin +idnout"   "🧦.com" "\240\159\167\166.com."
-    idna_fail "$text" "+idnin   +noidnout" "🧦.com"
-    idna_fail "$text" "+idnin   +idnout"   "🧦.com"
+    text="Checking invalid input U-label"
+    idna_test "$text" ""                   "√.com" "\226\136\154.com."
+    idna_test "$text" "+noidnin +noidnout" "√.com" "\226\136\154.com."
+    idna_test "$text" "+noidnin +idnout"   "√.com" "\226\136\154.com."
+    idna_fail "$text" "+idnin   +noidnout" "√.com"
+    idna_fail "$text" "+idnin   +idnout"   "√.com"
+
+    # Tests of a valid unicode string but an invalid U-label (output)
+    #
+    # Symbols are not valid IDNA2008 names.  Check whether dig rejects them
+    # when they are received in DNS responses to ensure no IDNA2003 fallbacks
+    # are in place.
+    #
+    # Note that an invalid U-label is accepted even when +idnin is in effect
+    # because "xn--19g" is valid Punycode.
+    #
+    # +noidnout: "dig" should send the ACE string to the server and display the
+    #            returned qname.
+    # +idnout:   "dig" should generate an error.
+    #
+    # The +[no]idnin options should not have any effect on the test.
+
+    text="Checking invalid output U-label"
+    idna_test "$text" ""                   "xn--19g" "xn--19g."
+    idna_test "$text" "+noidnin +noidnout" "xn--19g" "xn--19g."
+    idna_fail "$text" "+noidnin +idnout"   "xn--19g"
+    idna_test "$text" "+idnin   +noidnout" "xn--19g" "xn--19g."
+    idna_fail "$text" "+idnin   +idnout"   "xn--19g"
 }
 
 

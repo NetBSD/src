@@ -15,3 +15,4 @@ rm -f ns*/named.memstats
 rm -f ns*/named.run
 rm -f ns*/named.pid
 rm -f ns*/named.conf
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

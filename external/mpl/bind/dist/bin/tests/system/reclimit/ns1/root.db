@@ -15,3 +15,5 @@ example.org. 60 IN NS direct.example.org.
 direct.example.org. 60 IN A 10.53.0.2
 example.net. 60 IN NS direct.example.net.
 direct.example.net. 60 IN A 10.53.0.2
+example.com. 60 IN NS direct.example.com.
+direct.example.com. 60 IN A 10.53.0.4

@@ -23,3 +23,4 @@ rm -rf */*.signed
 rm -rf */K*
 rm -rf */dsset-*
 rm -rf */trusted.conf
+rm -f ns*/managed-keys.bind*

@@ -195,6 +195,16 @@
       </row>
       <row rowsep="0">
 	<entry colname="1">
+	  <para><command>nsid</command></para>
+	</entry>
+	<entry colname="2">
+	  <para>
+	    NSID options received from upstream servers.
+	  </para>
+	</entry>
+      </row>
+      <row rowsep="0">
+	<entry colname="1">
 	  <para><command>queries</command></para>
 	</entry>
 	<entry colname="2">

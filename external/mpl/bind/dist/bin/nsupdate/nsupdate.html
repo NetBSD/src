@@ -46,7 +46,6 @@
        [<code class="option">-t <em class="replaceable"><code>timeout</code></em></code>]
        [<code class="option">-u <em class="replaceable"><code>udptimeout</code></em></code>]
        [<code class="option">-r <em class="replaceable"><code>udpretries</code></em></code>]
-       [<code class="option">-R <em class="replaceable"><code>randomdev</code></em></code>]
        [<code class="option">-v</code>]
        [<code class="option">-T</code>]
        [<code class="option">-P</code>]
@@ -213,19 +212,6 @@
 	    The number of UDP retries. The default is 3. If zero, only
 	    one update request will be made.
 	  </p>
-	</dd>
-<dt><span class="term">-R <em class="replaceable"><code>randomdev</code></em></span></dt>
-<dd>
-	<p>
-	  Where to obtain randomness. If the operating system
-	  does not provide a <code class="filename">/dev/random</code> or
-	  equivalent device, the default source of randomness is keyboard
-	  input.  <code class="filename">randomdev</code> specifies the name of
-	  a character device or file containing random data to be used
-	  instead of the default.  The special value
-	  <code class="filename">keyboard</code> indicates that keyboard input
-	  should be used.  This option may be specified multiple times.
-	</p>
 	</dd>
 <dt><span class="term">-t <em class="replaceable"><code>timeout</code></em></span></dt>
 <dd>

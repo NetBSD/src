@@ -31,7 +31,7 @@ HEADERS =	acl.h adb.h badcache.h bit.h byaddr.h \
 		sdb.h sdlz.h secalg.h secproto.h soa.h ssu.h stats.h \
 		tcpmsg.h time.h timer.h tkey.h tsec.h tsig.h ttl.h types.h \
 		update.h validator.h version.h view.h xfrin.h \
-		zone.h zonekey.h zt.h
+		zone.h zonekey.h zoneverify.h zt.h
 
 GENHEADERS =	@DNSTAP_PB_C_H@ enumclass.h enumtype.h rdatastruct.h
 
@@ -45,16 +45,16 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/dns ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/dns || exit 1; \
 	done
 	for i in ${GENHEADERS}; do \
-		${INSTALL_DATA} $$i ${DESTDIR}${includedir}/dns ; \
+		${INSTALL_DATA} $$i ${DESTDIR}${includedir}/dns || exit 1; \
 	done
 
 uninstall::
 	for i in ${GENHEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/dns/$$i ; \
+		rm -f ${DESTDIR}${includedir}/dns/$$i || exit 1; \
 	done
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/dns/$$i ; \
+		rm -f ${DESTDIR}${includedir}/dns/$$i || exit 1; \
 	done

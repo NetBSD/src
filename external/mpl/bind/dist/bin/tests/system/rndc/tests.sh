@@ -486,6 +486,22 @@ grep "NTA lifetime cannot exceed one week" rndc.out.4.test$n > /dev/null || ret=
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo_i "testing rndc nta -class option ($n)"
+ret=0
+nextpart ns4/named.run > /dev/null
+$RNDCCMD4 nta -c in nta1.example > rndc.out.1.test$n 2>&1
+nextpart ns4/named.run | grep "added NTA 'nta1.example'" > /dev/null || ret=1
+$RNDCCMD4 nta -c any nta1.example > rndc.out.2.test$n 2>&1
+nextpart ns4/named.run | grep "added NTA 'nta1.example'" > /dev/null || ret=1
+$RNDCCMD4 nta -c ch nta1.example > rndc.out.3.test$n 2>&1
+nextpart ns4/named.run | grep "added NTA 'nta1.example'" > /dev/null && ret=1
+$RNDCCMD4 nta -c fake nta1.example > rndc.out.4.test$n 2>&1
+nextpart ns4/named.run | grep "added NTA 'nta1.example'" > /dev/null && ret=1
+grep 'unknown class' rndc.out.4.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 for i in 512 1024 2048 4096 8192 16384 32768 65536 131072 262144 524288
 do
 	n=`expr $n + 1`
@@ -653,6 +669,15 @@ echo_i "check rndc -4 with an IPv6 server address ($n)"
 ret=0
 $RNDCCMD fd92:7065:b8e:ffff::2 -4 status > rndc.out.1.test$n 2>&1 && ret=1
 grep "address family not supported" rndc.out.1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "check rndc nta reports adding to multiple views ($n)"
+ret=0
+$RNDCCMD 10.53.0.3 nta test.com > rndc.out.test$n 2>&1 || ret=1
+lines=`cat rndc.out.test$n | wc -l`
+[ ${lines:-0} -eq 2 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
