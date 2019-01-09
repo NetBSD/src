@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.29 2018/12/24 16:58:54 thorpej Exp $
+#	$NetBSD: files.kern,v 1.30 2019/01/09 04:01:20 mrg Exp $
 
 #
 # kernel sources
@@ -77,6 +77,7 @@ file	kern/kern_rwlock.c		kern
 file	kern/kern_rwlock_obj.c		kern
 file	kern/kern_scdebug.c		kern
 file	kern/kern_sdt.c			kdtrace_hooks
+file	kern/kern_crashme.c		debug
 file	kern/kern_sig.c			kern
 file	kern/kern_sleepq.c		kern
 file	kern/kern_softint.c		kern
