@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.614 2019/01/07 01:43:22 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.615 2019/01/09 08:28:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.614 2019/01/07 01:43:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.615 2019/01/09 08:28:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -15128,7 +15128,6 @@ wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 	if (__SHIFTOUT(status, STATUS_SPEED) != STATUS_SPEED_1000)
 		return;
 
-	reg = CSR_READ(sc, WMREG_PHY_CTRL);
 	for (i = 0; i < 10; i++) {
 		/* read twice */
 		reg = mii->mii_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
@@ -15837,6 +15836,11 @@ wm_pll_workaround_i210(struct wm_softc *sc)
 	bool wa_done = false;
 	int i;
 
+	/* Get Power Management cap offset */
+	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PWRMGMT,
+	    &pmreg, NULL) == 0)
+		return;
+
 	/* Save WUC and MDICNFG registers */
 	wuc = CSR_READ(sc, WMREG_WUC);
 	mdicnfg = CSR_READ(sc, WMREG_MDICNFG);
@@ -15848,10 +15852,6 @@ wm_pll_workaround_i210(struct wm_softc *sc)
 		nvmword = INVM_DEFAULT_AL;
 	tmp_nvmword = nvmword | INVM_PLL_WO_VAL;
 
-	/* Get Power Management cap offset */
-	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PWRMGMT,
-		&pmreg, NULL) == 0)
-		return;
 	for (i = 0; i < WM_MAX_PLL_TRIES; i++) {
 		phyval = wm_gmii_gs40g_readreg(sc->sc_dev, 1,
 		    GS40G_PHY_PLL_FREQ_PAGE | GS40G_PHY_PLL_FREQ_REG);
