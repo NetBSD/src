@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.h,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: nsec_47.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@ typedef struct dns_rdata_nsec {
 	isc_mem_t		*mctx;
 	dns_name_t		next;
 	unsigned char		*typebits;
-	isc_uint16_t		len;
+	uint16_t		len;
 } dns_rdata_nsec_t;
 
 #endif /* GENERIC_NSEC_47_H */

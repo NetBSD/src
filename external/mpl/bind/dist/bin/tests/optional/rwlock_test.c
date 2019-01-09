@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_test.c,v 1.1.1.1 2018/08/12 12:07:39 christos Exp $	*/
+/*	$NetBSD: rwlock_test.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,8 +26,6 @@
 #ifdef WIN32
 #define sleep(x)	Sleep(1000 * x)
 #endif
-
-#ifdef ISC_PLATFORM_USETHREADS
 
 isc_rwlock_t lock;
 
@@ -132,15 +130,3 @@ main(int argc, char *argv[]) {
 
 	return (0);
 }
-
-#else
-
-int
-main(int argc, char *argv[]) {
-	UNUSED(argc);
-	UNUSED(argv);
-	fprintf(stderr, "This test requires threads.\n");
-	return(1);
-}
-
-#endif

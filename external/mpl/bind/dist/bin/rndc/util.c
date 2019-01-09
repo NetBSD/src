@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.1 2018/08/12 12:07:41 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,15 +17,15 @@
 #include <config.h>
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <isc/boolean.h>
 #include <isc/print.h>
 
 #include "util.h"
 
-extern isc_boolean_t verbose;
+extern bool verbose;
 extern const char *progname;
 
 void

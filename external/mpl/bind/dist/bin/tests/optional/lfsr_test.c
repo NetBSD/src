@@ -1,4 +1,4 @@
-/*	$NetBSD: lfsr_test.c,v 1.1.1.1 2018/08/12 12:07:39 christos Exp $	*/
+/*	$NetBSD: lfsr_test.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,18 +15,19 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #include <isc/lfsr.h>
 #include <isc/print.h>
 #include <isc/util.h>
 
-isc_uint32_t state[1024 * 64];
+uint32_t state[1024 * 64];
 
 int
 main(int argc, char **argv) {
 	isc_lfsr_t lfsr1, lfsr2;
 	int i;
-	isc_uint32_t temp;
+	uint32_t temp;
 
 	UNUSED(argc);
 	UNUSED(argv);

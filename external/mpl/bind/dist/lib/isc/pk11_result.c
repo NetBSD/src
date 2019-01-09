@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11_result.c,v 1.1.1.1 2018/08/12 12:08:24 christos Exp $	*/
+/*	$NetBSD: pk11_result.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,9 +27,9 @@ static isc_once_t		msgcat_once = ISC_ONCE_INIT;
 static const char *text[PK11_R_NRESULTS] = {
 	"PKCS#11 initialization failed",		/*%< 0 */
 	"no PKCS#11 provider",				/*%< 1 */
-	"PKCS#11 provider has no random service",	/*%< 2 */
-	"PKCS#11 provider has no digest service",	/*%< 3 */
-	"PKCS#11 provider has no AES service",		/*%< 4 */
+	"PKCS#11 no random service",			/*%< 2 */
+	"PKCS#11 no digist service",			/*%< 3 */
+	"PKCS#11 no AES service",			/*%< 4 */
 };
 
 static const char *ids[PK11_R_NRESULTS] = {
@@ -66,16 +66,18 @@ initialize_action(void) {
 
 	result = isc_result_register(ISC_RESULTCLASS_PK11, PK11_R_NRESULTS,
 				     text, pk11_msgcat, PK11_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_result_register() failed: %u", result);
+	}
 
 	result = isc_result_registerids(ISC_RESULTCLASS_PK11, PK11_R_NRESULTS,
 					ids, pk11_msgcat,
 					PK11_RESULT_RESULTSET);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_result_registerids() failed: %u", result);
+	}
 }
 
 static void

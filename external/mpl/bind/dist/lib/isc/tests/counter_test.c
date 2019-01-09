@@ -1,4 +1,4 @@
-/*	$NetBSD: counter_test.c,v 1.1.1.1 2018/08/12 12:08:27 christos Exp $	*/
+/*	$NetBSD: counter_test.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,55 +12,96 @@
  */
 
 #include <config.h>
-#include <stdlib.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/counter.h>
 #include <isc/result.h>
+#include <isc/util.h>
 
 #include "isctest.h"
 
-ATF_TC(isc_counter);
-ATF_TC_HEAD(isc_counter, tc) {
-	atf_tc_set_md_var(tc, "descr", "isc counter object");
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
 }
-ATF_TC_BODY(isc_counter, tc) {
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
+
+/* test isc_counter object */
+static void
+isc_counter_test(void **state) {
 	isc_result_t result;
 	isc_counter_t *counter = NULL;
 	int i;
 
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_counter_create(mctx, 0, &counter);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	for (i = 0; i < 10; i++) {
 		result = isc_counter_increment(counter);
-		ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 	}
 
-	ATF_CHECK_EQ(isc_counter_used(counter), 10);
+	assert_int_equal(isc_counter_used(counter), 10);
 
 	isc_counter_setlimit(counter, 15);
 	for (i = 0; i < 10; i++) {
 		result = isc_counter_increment(counter);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			break;
+		}
 	}
 
-	ATF_CHECK_EQ(isc_counter_used(counter), 15);
+	assert_int_equal(isc_counter_used(counter), 15);
 
 	isc_counter_detach(&counter);
-	isc_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, isc_counter);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(isc_counter_test,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

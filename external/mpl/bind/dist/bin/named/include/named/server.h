@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,9 @@
 #define NAMED_SERVER_H 1
 
 /*! \file */
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/log.h>
 #include <isc/magic.h>
@@ -55,9 +58,9 @@ struct named_server {
 	char *			secrootsfile;	/*%< Secroots file name */
 	char *			bindkeysfile;	/*%< bind.keys file name */
 	char *			recfile;	/*%< Recursive file name */
-	isc_boolean_t		version_set;	/*%< User has set version */
+	bool		version_set;	/*%< User has set version */
 	char *			version;	/*%< User-specified version */
-	isc_boolean_t		hostname_set;	/*%< User has set hostname */
+	bool		hostname_set;	/*%< User has set hostname */
 	char *			hostname;	/*%< User-specified hostname */
 
 	/* Server data structures. */
@@ -72,13 +75,13 @@ struct named_server {
 	isc_timer_t *		pps_timer;
 	isc_timer_t *		tat_timer;
 
-	isc_uint32_t		interface_interval;
-	isc_uint32_t		heartbeat_interval;
+	uint32_t		interface_interval;
+	uint32_t		heartbeat_interval;
 
 	isc_mutex_t		reload_event_lock;
 	isc_event_t *		reload_event;
 
-	isc_boolean_t		flushonshutdown;
+	bool		flushonshutdown;
 
 	named_cachelist_t	cachelist;	/*%< Possibly shared caches */
 	isc_stats_t *		zonestats;	/*% Zone management stats */
@@ -95,8 +98,8 @@ struct named_server {
 	char			*session_keyfile;
 	dns_name_t		*session_keyname;
 	unsigned int		session_keyalg;
-	isc_uint16_t		session_keybits;
-	isc_boolean_t		interface_auto;
+	uint16_t		session_keybits;
+	bool		interface_auto;
 	unsigned char		secret[32];	/*%< Server Cookie Secret */
 	ns_cookiealg_t		cookiealg;
 
@@ -139,7 +142,7 @@ named_server_scan_interfaces(named_server_t *server);
  */
 
 void
-named_server_flushonshutdown(named_server_t *server, isc_boolean_t flush);
+named_server_flushonshutdown(named_server_t *server, bool flush);
 /*%<
  * Inform the server that the zones should be flushed to disk on shutdown.
  */
@@ -236,7 +239,7 @@ named_server_flushcache(named_server_t *server, isc_lex_t *lex);
  */
 isc_result_t
 named_server_flushnode(named_server_t *server, isc_lex_t *lex,
-		    isc_boolean_t tree);
+		    bool tree);
 
 /*%
  * Report the server's status.
@@ -261,7 +264,7 @@ named_server_tsigdelete(named_server_t *server, isc_lex_t *lex,
  * Enable or disable updates for a zone.
  */
 isc_result_t
-named_server_freeze(named_server_t *server, isc_boolean_t freeze,
+named_server_freeze(named_server_t *server, bool freeze,
 		 isc_lex_t *lex, isc_buffer_t **text);
 
 /*%
@@ -341,7 +344,7 @@ named_server_zonestatus(named_server_t *server, isc_lex_t *lex,
  */
 isc_result_t
 named_server_nta(named_server_t *server, isc_lex_t *lex,
-		 isc_boolean_t readonly, isc_buffer_t **text);
+		 bool readonly, isc_buffer_t **text);
 
 /*%
  * Generates a test sequence that is only for use in system tests. The

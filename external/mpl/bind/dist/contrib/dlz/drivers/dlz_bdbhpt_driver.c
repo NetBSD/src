@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.1.1.1 2018/08/12 12:07:50 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -68,11 +68,7 @@
 static dns_sdlzimplementation_t *dlz_bdbhpt = NULL;
 
 /* should the bdb driver use threads. */
-#ifdef ISC_PLATFORM_USETHREADS
 #define bdbhpt_threads DB_THREAD
-#else
-#define bdbhpt_threads 0
-#endif
 
 /* bdbhpt database names */
 #define dlz_data "dns_data"

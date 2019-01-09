@@ -1,4 +1,4 @@
-/*	$NetBSD: nsecify.c,v 1.1.1.1 2018/08/12 12:07:39 christos Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/mem.h>
@@ -44,10 +45,10 @@ check_result(isc_result_t result, const char *message) {
 	}
 }
 
-static inline isc_boolean_t
+static inline bool
 active_node(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node) {
 	dns_rdatasetiter_t *rdsiter;
-	isc_boolean_t active = ISC_FALSE;
+	bool active = false;
 	isc_result_t result;
 	dns_rdataset_t rdataset;
 
@@ -59,7 +60,7 @@ active_node(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node) {
 	while (result == ISC_R_SUCCESS) {
 		dns_rdatasetiter_current(rdsiter, &rdataset);
 		if (rdataset.type != dns_rdatatype_nsec)
-			active = ISC_TRUE;
+			active = true;
 		dns_rdataset_disassociate(&rdataset);
 		if (!active)
 			result = dns_rdatasetiter_next(rdsiter);
@@ -89,10 +90,10 @@ next_active(dns_db_t *db, dns_dbversion_t *version, dns_dbiterator_t *dbiter,
 	    dns_name_t *name, dns_dbnode_t **nodep)
 {
 	isc_result_t result;
-	isc_boolean_t active;
+	bool active;
 
 	do {
-		active = ISC_FALSE;
+		active = false;
 		result = dns_dbiterator_current(dbiter, nodep, name);
 		if (result == ISC_R_SUCCESS) {
 			active = active_node(db, version, *nodep);
@@ -138,7 +139,7 @@ nsecify(char *filename) {
 	result = dns_db_create(mctx, "rbt", name, dns_dbtype_zone,
 			       dns_rdataclass_in, 0, NULL, &db);
 	check_result(result, "dns_db_create()");
-	result = dns_db_load(db, filename);
+	result = dns_db_load(db, filename, dns_masterformat_text, 0);
 	if (result == DNS_R_SEENINCLUDE)
 		result = ISC_R_SUCCESS;
 	check_result(result, "dns_db_load()");
@@ -176,7 +177,7 @@ nsecify(char *filename) {
 	/*
 	 * XXXRTH  For now, we don't increment the SOA serial.
 	 */
-	dns_db_closeversion(db, &wversion, ISC_TRUE);
+	dns_db_closeversion(db, &wversion, true);
 	len = strlen(filename);
 	if (len + 4 + 1 > sizeof(newfilename))
 		fatal("filename too long");

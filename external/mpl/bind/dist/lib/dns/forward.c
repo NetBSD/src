@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.1.1.1 2018/08/12 12:08:13 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -183,7 +183,7 @@ dns_fwdtable_delete(dns_fwdtable_t *fwdtable, const dns_name_t *name) {
 	REQUIRE(VALID_FWDTABLE(fwdtable));
 
 	RWLOCK(&fwdtable->rwlock, isc_rwlocktype_write);
-	result = dns_rbt_deletename(fwdtable->table, name, ISC_FALSE);
+	result = dns_rbt_deletename(fwdtable->table, name, false);
 	RWUNLOCK(&fwdtable->rwlock, isc_rwlocktype_write);
 
 	if (result == DNS_R_PARTIALMATCH)
@@ -194,14 +194,7 @@ dns_fwdtable_delete(dns_fwdtable_t *fwdtable, const dns_name_t *name) {
 
 isc_result_t
 dns_fwdtable_find(dns_fwdtable_t *fwdtable, const dns_name_t *name,
-		  dns_forwarders_t **forwardersp)
-{
-	return (dns_fwdtable_find2(fwdtable, name, NULL, forwardersp));
-}
-
-isc_result_t
-dns_fwdtable_find2(dns_fwdtable_t *fwdtable, const dns_name_t *name,
-		   dns_name_t *foundname, dns_forwarders_t **forwardersp)
+		  dns_name_t *foundname, dns_forwarders_t **forwardersp)
 {
 	isc_result_t result;
 

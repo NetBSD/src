@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator.c,v 1.1.1.1 2018/08/12 12:08:12 christos Exp $	*/
+/*	$NetBSD: dbiterator.c,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/util.h>
 
@@ -131,7 +133,7 @@ dns_dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name) {
 }
 
 void
-dns_dbiterator_setcleanmode(dns_dbiterator_t *iterator, isc_boolean_t mode) {
+dns_dbiterator_setcleanmode(dns_dbiterator_t *iterator, bool mode) {
 	REQUIRE(DNS_DBITERATOR_VALID(iterator));
 
 	iterator->cleaning = mode;

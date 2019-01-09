@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/base64.h>
 #include <isc/buffer.h>
@@ -98,7 +100,7 @@ typedef struct {
 	int length;		/*%< Desired length of binary data or -1 */
 	isc_buffer_t *target;	/*%< Buffer for resulting binary data */
 	int digits;		/*%< Number of buffered base64 digits */
-	isc_boolean_t seen_end;	/*%< True if "=" end marker seen */
+	bool seen_end;	/*%< True if "=" end marker seen */
 	int val[4];
 } base64_decode_ctx_t;
 
@@ -106,7 +108,7 @@ static inline void
 base64_decode_init(base64_decode_ctx_t *ctx, int length, isc_buffer_t *target)
 {
 	ctx->digits = 0;
-	ctx->seen_end = ISC_FALSE;
+	ctx->seen_end = false;
 	ctx->length = length;
 	ctx->target = target;
 }
@@ -141,7 +143,7 @@ base64_decode_char(base64_decode_ctx_t *ctx, int c) {
 		n = (ctx->val[2] == 64) ? 1 :
 			(ctx->val[3] == 64) ? 2 : 3;
 		if (n != 3) {
-			ctx->seen_end = ISC_TRUE;
+			ctx->seen_end = true;
 			if (ctx->val[2] == 64)
 				ctx->val[2] = 0;
 			if (ctx->val[3] == 64)
@@ -176,7 +178,7 @@ isc_base64_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 	base64_decode_ctx_t ctx;
 	isc_textregion_t *tr;
 	isc_token_t token;
-	isc_boolean_t eol;
+	bool eol;
 
 	base64_decode_init(&ctx, length, target);
 
@@ -184,9 +186,9 @@ isc_base64_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 		unsigned int i;
 
 		if (length > 0)
-			eol = ISC_FALSE;
+			eol = false;
 		else
-			eol = ISC_TRUE;
+			eol = true;
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, eol));
 		if (token.type != isc_tokentype_string)

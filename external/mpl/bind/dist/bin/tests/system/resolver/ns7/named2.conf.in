@@ -20,6 +20,7 @@ options {
 	listen-on { 10.53.0.7; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation yes;
 	empty-zones-enable yes;
 	disable-empty-zone 20.172.in-addr.arpa;
 	/*

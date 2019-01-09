@@ -1,4 +1,4 @@
-/*	$NetBSD: unspec_103.h,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: unspec_103.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@ typedef struct dns_rdata_unspec_t {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*data;
-	isc_uint16_t		datalen;
+	uint16_t		datalen;
 } dns_rdata_unspec_t;
 
 #endif /* GENERIC_UNSPEC_103_H */

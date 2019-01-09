@@ -24,11 +24,11 @@ aaaa			AAAA	2001:db8::53
 cname			CNAME	cname-target
 dname			DNAME	dname-target
 $TTL 300	; 5 minutes
-dnskey			DNSKEY	256 3 1 (
-				AQPTpWyReB/e9Ii6mVGnakS8hX2zkh/iUYAg+Ge4noWR
-				OpTWOIBvm76zeJPWs4Zfqa1IsswDIx5Mqeg0zwclz59u
-				ecKsKyx5w9IhtZ8plc4Rb9VIE5x7KNHAYTvTO5d4S8M=
-				) ; ZSK; alg = RSAMD5; key id = 30795
+dnskey			DNSKEY	256 3 13 (
+				TEcpWeW1mJp+OujqyInMbjGRODJIYen/4kMR
+				wO6zW3RzrvmNIMgFag6G uXofiSwJ6YDeQ0O
+				3uhPJsJ7ivpbh+w==
+				)
 ds			DS	30795 1 1 (
 				310D27F4D82C1FC2400704EA9939FE6E1CEAA3B9 )
 $TTL 86400	; 1 day

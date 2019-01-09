@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.1.1.1 2018/08/12 12:07:21 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -22,7 +24,6 @@
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
@@ -36,7 +37,7 @@
 
 #include <dst/dst.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
@@ -56,7 +57,7 @@ usage(void) {
 	fprintf(stderr,	"    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "Version: %s\n", VERSION);
 	fprintf(stderr, "General options:\n");
-#if defined(PKCS11CRYPTO)
+#if USE_PKCS11
 	fprintf(stderr, "    -E engine:          specify PKCS#11 provider "
 					"(default: %s)\n", PK11_LIB_LOCATION);
 #elif defined(USE_PKCS11)
@@ -105,7 +106,7 @@ usage(void) {
 }
 
 static void
-printtime(dst_key_t *key, int type, const char *tag, isc_boolean_t epoch,
+printtime(dst_key_t *key, int type, const char *tag, bool epoch,
 	  FILE *stream)
 {
 	isc_result_t result;
@@ -130,18 +131,13 @@ printtime(dst_key_t *key, int type, const char *tag, isc_boolean_t epoch,
 int
 main(int argc, char **argv) {
 	isc_result_t	result;
-#ifdef USE_PKCS11
-	const char	*engine = PKCS11_ENGINE;
-#else
 	const char	*engine = NULL;
-#endif
 	const char 	*filename = NULL;
 	char		*directory = NULL;
 	char		newname[1024];
 	char		keystr[DST_KEY_FORMATSIZE];
 	char		*endp, *p;
 	int		ch;
-	isc_entropy_t	*ectx = NULL;
 	const char	*predecessor = NULL;
 	dst_key_t	*prevkey = NULL;
 	dst_key_t	*key = NULL;
@@ -149,29 +145,29 @@ main(int argc, char **argv) {
 	dns_name_t	*name = NULL;
 	dns_secalg_t 	alg = 0;
 	unsigned int 	size = 0;
-	isc_uint16_t	flags = 0;
+	uint16_t	flags = 0;
 	int		prepub = -1;
 	dns_ttl_t	ttl = 0;
 	isc_stdtime_t	now;
 	isc_stdtime_t	pub = 0, act = 0, rev = 0, inact = 0, del = 0;
 	isc_stdtime_t	prevact = 0, previnact = 0, prevdel = 0;
-	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
-	isc_boolean_t	setrev = ISC_FALSE, setinact = ISC_FALSE;
-	isc_boolean_t	setdel = ISC_FALSE, setttl = ISC_FALSE;
-	isc_boolean_t	unsetpub = ISC_FALSE, unsetact = ISC_FALSE;
-	isc_boolean_t	unsetrev = ISC_FALSE, unsetinact = ISC_FALSE;
-	isc_boolean_t	unsetdel = ISC_FALSE;
-	isc_boolean_t	printcreate = ISC_FALSE, printpub = ISC_FALSE;
-	isc_boolean_t	printact = ISC_FALSE,  printrev = ISC_FALSE;
-	isc_boolean_t	printinact = ISC_FALSE, printdel = ISC_FALSE;
-	isc_boolean_t	force = ISC_FALSE;
-	isc_boolean_t   epoch = ISC_FALSE;
-	isc_boolean_t   changed = ISC_FALSE;
+	bool	setpub = false, setact = false;
+	bool	setrev = false, setinact = false;
+	bool	setdel = false, setttl = false;
+	bool	unsetpub = false, unsetact = false;
+	bool	unsetrev = false, unsetinact = false;
+	bool	unsetdel = false;
+	bool	printcreate = false, printpub = false;
+	bool	printact = false,  printrev = false;
+	bool	printinact = false, printdel = false;
+	bool	force = false;
+	bool   epoch = false;
+	bool   changed = false;
 	isc_log_t       *log = NULL;
 	isc_stdtime_t	syncadd = 0, syncdel = 0;
-	isc_boolean_t	unsetsyncadd = ISC_FALSE, setsyncadd = ISC_FALSE;
-	isc_boolean_t	unsetsyncdel = ISC_FALSE, setsyncdel = ISC_FALSE;
-	isc_boolean_t	printsyncadd = ISC_FALSE, printsyncdel = ISC_FALSE;
+	bool	unsetsyncadd = false, setsyncadd = false;
+	bool	unsetsyncdel = false, setsyncdel = false;
+	bool	printsyncadd = false, printsyncdel = false;
 
 	if (argc == 1)
 		usage();
@@ -182,12 +178,12 @@ main(int argc, char **argv) {
 
 	setup_logging(mctx, &log);
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	isc_stdtime_get(&now);
 
@@ -198,51 +194,51 @@ main(int argc, char **argv) {
 			engine = isc_commandline_argument;
 			break;
 		case 'f':
-			force = ISC_TRUE;
+			force = true;
 			break;
 		case 'p':
 			p = isc_commandline_argument;
 			if (!strcasecmp(p, "all")) {
-				printcreate = ISC_TRUE;
-				printpub = ISC_TRUE;
-				printact = ISC_TRUE;
-				printrev = ISC_TRUE;
-				printinact = ISC_TRUE;
-				printdel = ISC_TRUE;
-				printsyncadd = ISC_TRUE;
-				printsyncdel = ISC_TRUE;
+				printcreate = true;
+				printpub = true;
+				printact = true;
+				printrev = true;
+				printinact = true;
+				printdel = true;
+				printsyncadd = true;
+				printsyncdel = true;
 				break;
 			}
 
 			do {
 				switch (*p++) {
 				case 'C':
-					printcreate = ISC_TRUE;
+					printcreate = true;
 					break;
 				case 'P':
 					if (!strncmp(p, "sync", 4)) {
 						p += 4;
-						printsyncadd = ISC_TRUE;
+						printsyncadd = true;
 						break;
 					}
-					printpub = ISC_TRUE;
+					printpub = true;
 					break;
 				case 'A':
-					printact = ISC_TRUE;
+					printact = true;
 					break;
 				case 'R':
-					printrev = ISC_TRUE;
+					printrev = true;
 					break;
 				case 'I':
-					printinact = ISC_TRUE;
+					printinact = true;
 					break;
 				case 'D':
 					if (!strncmp(p, "sync", 4)) {
 						p += 4;
-						printsyncdel = ISC_TRUE;
+						printsyncdel = true;
 						break;
 					}
-					printdel = ISC_TRUE;
+					printdel = true;
 					break;
 				case ' ':
 					break;
@@ -253,7 +249,7 @@ main(int argc, char **argv) {
 			} while (*p != '\0');
 			break;
 		case 'u':
-			epoch = ISC_TRUE;
+			epoch = true;
 			break;
 		case 'K':
 			/*
@@ -269,7 +265,7 @@ main(int argc, char **argv) {
 			break;
 		case 'L':
 			ttl = strtottl(isc_commandline_argument);
-			setttl = ISC_TRUE;
+			setttl = true;
 			break;
 		case 'v':
 			verbose = strtol(isc_commandline_argument, &endp, 0);
@@ -283,7 +279,7 @@ main(int argc, char **argv) {
 					fatal("-P sync specified more than "
 					      "once");
 
-				changed = ISC_TRUE;
+				changed = true;
 				syncadd = strtotime(isc_commandline_argument,
 						   now, now, &setsyncadd);
 				unsetsyncadd = !setsyncadd;
@@ -293,7 +289,7 @@ main(int argc, char **argv) {
 			if (setpub || unsetpub)
 				fatal("-P specified more than once");
 
-			changed = ISC_TRUE;
+			changed = true;
 			pub = strtotime(isc_commandline_argument,
 					now, now, &setpub);
 			unsetpub = !setpub;
@@ -302,7 +298,7 @@ main(int argc, char **argv) {
 			if (setact || unsetact)
 				fatal("-A specified more than once");
 
-			changed = ISC_TRUE;
+			changed = true;
 			act = strtotime(isc_commandline_argument,
 					now, now, &setact);
 			unsetact = !setact;
@@ -311,7 +307,7 @@ main(int argc, char **argv) {
 			if (setrev || unsetrev)
 				fatal("-R specified more than once");
 
-			changed = ISC_TRUE;
+			changed = true;
 			rev = strtotime(isc_commandline_argument,
 					now, now, &setrev);
 			unsetrev = !setrev;
@@ -320,7 +316,7 @@ main(int argc, char **argv) {
 			if (setinact || unsetinact)
 				fatal("-I specified more than once");
 
-			changed = ISC_TRUE;
+			changed = true;
 			inact = strtotime(isc_commandline_argument,
 					now, now, &setinact);
 			unsetinact = !setinact;
@@ -332,7 +328,7 @@ main(int argc, char **argv) {
 					fatal("-D sync specified more than "
 					      "once");
 
-				changed = ISC_TRUE;
+				changed = true;
 				syncdel = strtotime(isc_commandline_argument,
 						   now, now, &setsyncdel);
 				unsetsyncdel = !setsyncdel;
@@ -343,7 +339,7 @@ main(int argc, char **argv) {
 			if (setdel || unsetdel)
 				fatal("-D specified more than once");
 
-			changed = ISC_TRUE;
+			changed = true;
 			del = strtotime(isc_commandline_argument,
 					now, now, &setdel);
 			unsetdel = !setdel;
@@ -380,17 +376,10 @@ main(int argc, char **argv) {
 	if (argc > isc_commandline_index + 1)
 		fatal("Extraneous arguments");
 
-	if (ectx == NULL)
-		setup_entropy(mctx, NULL, &ectx);
-	result = dst_lib_init2(mctx, ectx, engine,
-			       ISC_ENTROPY_BLOCKING | ISC_ENTROPY_GOODONLY);
+	result = dst_lib_init(mctx, engine);
 	if (result != ISC_R_SUCCESS)
 		fatal("Could not initialize dst: %s",
 		      isc_result_totext(result));
-	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	if (result != ISC_R_SUCCESS)
-		fatal("Could not initialize hash");
-	isc_entropy_stopcallbacksources(ectx);
 
 	if (predecessor != NULL) {
 		int major, minor;
@@ -461,7 +450,7 @@ main(int argc, char **argv) {
 					"before it is scheduled to be "
 					"inactive.\n", program);
 
-		changed = setpub = setact = ISC_TRUE;
+		changed = setpub = setact = true;
 	} else {
 		if (prepub < 0)
 			prepub = 0;
@@ -473,10 +462,10 @@ main(int argc, char **argv) {
 				      "prepublication interval.");
 
 			if (setpub && !setact) {
-				setact = ISC_TRUE;
+				setact = true;
 				act = pub + prepub;
 			} else if (setact && !setpub) {
-				setpub = ISC_TRUE;
+				setpub = true;
 				pub = act - prepub;
 			}
 
@@ -607,11 +596,11 @@ main(int argc, char **argv) {
 	if (force && !changed) {
 		dst_key_settime(key, DST_TIME_PUBLISH, now);
 		dst_key_settime(key, DST_TIME_ACTIVATE, now);
-		changed = ISC_TRUE;
+		changed = true;
 	}
 
 	if (!changed && setttl)
-		changed = ISC_TRUE;
+		changed = true;
 
 	/*
 	 * Print out time values, if -p was used.
@@ -674,9 +663,7 @@ main(int argc, char **argv) {
 	if (prevkey != NULL)
 		dst_key_free(&prevkey);
 	dst_key_free(&key);
-	isc_hash_destroy();
 	dst_lib_destroy();
-	cleanup_entropy(&ectx);
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
 	cleanup_logging(&log);

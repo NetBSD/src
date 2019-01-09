@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -67,6 +67,8 @@
  *** Imports
  ***/
 
+#include <stdbool.h>
+
 #include <isc/types.h>
 #include <isc/event.h>
 #include <isc/eventclass.h>
@@ -99,29 +101,6 @@ typedef struct isc_timerevent {
 #define ISC_TIMEREVENT_LIFE		(ISC_EVENTCLASS_TIMER + 3)
 #define ISC_TIMEREVENT_LASTEVENT	(ISC_EVENTCLASS_TIMER + 65535)
 
-/*% Timer and timer manager methods */
-typedef struct {
-	void		(*destroy)(isc_timermgr_t **managerp);
-	isc_result_t	(*timercreate)(isc_timermgr_t *manager,
-				       isc_timertype_t type,
-				       const isc_time_t *expires,
-				       const isc_interval_t *interval,
-				       isc_task_t *task,
-				       isc_taskaction_t action,
-				       void *arg,
-				       isc_timer_t **timerp);
-} isc_timermgrmethods_t;
-
-typedef struct {
-	void		(*attach)(isc_timer_t *timer, isc_timer_t **timerp);
-	void		(*detach)(isc_timer_t **timerp);
-	isc_result_t	(*reset)(isc_timer_t *timer, isc_timertype_t type,
-				 const isc_time_t *expires,
-				 const isc_interval_t *interval,
-				 isc_boolean_t purge);
-	isc_result_t	(*touch)(isc_timer_t *timer);
-} isc_timermethods_t;
-
 /*%
  * This structure is actually just the common prefix of a timer manager
  * object implementation's version of an isc_timermgr_t.
@@ -134,7 +113,6 @@ typedef struct {
 struct isc_timermgr {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_timermgrmethods_t	*methods;
 };
 
 #define ISCAPI_TIMERMGR_MAGIC		ISC_MAGIC('A','t','m','g')
@@ -148,7 +126,6 @@ struct isc_timermgr {
 struct isc_timer {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_timermethods_t	*methods;
 };
 
 #define ISCAPI_TIMER_MAGIC	ISC_MAGIC('A','t','m','r')
@@ -231,7 +208,7 @@ isc_timer_reset(isc_timer_t *timer,
 		isc_timertype_t type,
 		const isc_time_t *expires,
 		const isc_interval_t *interval,
-		isc_boolean_t purge);
+		bool purge);
 /*%<
  * Change the timer's type, expires, and interval values to the given
  * values.  If 'purge' is TRUE, any pending events from this timer
@@ -397,29 +374,6 @@ isc_timermgr_destroy(isc_timermgr_t **managerp);
  */
 
 void isc_timermgr_poke(isc_timermgr_t *m);
-
-/*%<
- * See isc_timermgr_create() above.
- */
-typedef isc_result_t
-(*isc_timermgrcreatefunc_t)(isc_mem_t *mctx, isc_timermgr_t **managerp);
-
-isc_result_t
-isc__timer_register(void);
-/*%<
- * Register a new timer management implementation and add it to the list of
- * supported implementations.  This function must be called when a different
- * event library is used than the one contained in the ISC library.
- */
-
-isc_result_t
-isc_timer_register(isc_timermgrcreatefunc_t createfunc);
-/*%<
- * A short cut function that specifies the timer management module in the ISC
- * library for isc_timer_register().  An application that uses the ISC library
- * usually do not have to care about this function: it would call
- * isc_lib_register(), which internally calls this function.
- */
 
 ISC_LANG_ENDDECLS
 

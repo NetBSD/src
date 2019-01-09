@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: dlz.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,6 +78,8 @@
 /*****
  ***** Imports
  *****/
+
+#include <stdbool.h>
 
 #include <dns/clientinfo.h>
 #include <dns/name.h>
@@ -175,7 +177,7 @@ typedef isc_result_t
  */
 
 
-typedef isc_boolean_t (*dns_dlzssumatch_t)(const dns_name_t *signer,
+typedef bool (*dns_dlzssumatch_t)(const dns_name_t *signer,
 					   const dns_name_t *name,
 					   const isc_netaddr_t *tcpaddr,
 					   dns_rdatatype_t type,
@@ -216,7 +218,7 @@ struct dns_dlzdb {
 	dns_dlzimplementation_t	*implementation;
 	void			*dbdata;
 	dlzconfigure_callback_t configure_callback;
-	isc_boolean_t		search;
+	bool		search;
 	char			*dlzname;
 	ISC_LINK(dns_dlzdb_t)	link;
 	dns_ssutable_t 		*ssutable;
@@ -325,12 +327,12 @@ dns_dlzconfigure(dns_view_t *view, dns_dlzdb_t *dlzdb,
  * call a DLZ drivers configure method, if supplied
  */
 
-isc_boolean_t
+bool
 dns_dlz_ssumatch(dns_dlzdb_t *dlzdatabase, const dns_name_t *signer,
 		 const dns_name_t *name, const isc_netaddr_t *tcpaddr,
 		 dns_rdatatype_t type, const dst_key_t *key);
 /*%<
- * call a DLZ drivers ssumatch method, if supplied. Otherwise return ISC_FALSE
+ * call a DLZ drivers ssumatch method, if supplied. Otherwise return false
  */
 
 ISC_LANG_ENDDECLS

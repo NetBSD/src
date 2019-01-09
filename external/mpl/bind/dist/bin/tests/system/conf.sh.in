@@ -15,10 +15,17 @@
 #
 
 # Find the top of the BIND9 tree.
-TOP=${SYSTEMTESTTOP:=.}/../../..
+TOP=@abs_top_builddir@
 
-# Make it absolute so that it continues to work after we cd.
-TOP=`cd $TOP && pwd`
+# Default algorithm for testing
+DEFAULT_ALGORITHM=ECDSAP256SHA256
+DEFAULT_ALGORITHM_NUMBER=13
+DEFAULT_BITS=256
+
+# must be different from DEFAULT_ALGORITHM
+ALTERNATIVE_ALGORITHM=RSASHA256
+ALTERNATIVE_ALGORITHM_NUMBER=8
+ALTERNATIVE_BITS=1280
 
 ARPANAME=$TOP/bin/tools/arpaname
 CDS=$TOP/bin/dnssec/dnssec-cds
@@ -33,7 +40,6 @@ DNSTAPREAD=$TOP/bin/tools/dnstap-read
 DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
 FEATURETEST=$TOP/bin/tests/system/feature-test
 FSTRM_CAPTURE=@FSTRM_CAPTURE@
-GENRANDOM=$TOP/bin/tools/genrandom
 IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
 JOURNALPRINT=$TOP/bin/tools/named-journalprint
 KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
@@ -59,8 +65,6 @@ TSIGKEYGEN=$TOP/bin/confgen/tsig-keygen
 VERIFY=$TOP/bin/dnssec/dnssec-verify
 WIRETEST=$TOP/bin/tests/wire_test
 
-RANDFILE=$TOP/bin/tests/system/random.data
-
 BIGKEY=$TOP/bin/tests/system/rsabigexponent/bigkey
 GENCHECK=$TOP/bin/tests/system/rndc/gencheck
 KEYCREATE=$TOP/bin/tests/system/tkey/keycreate
@@ -79,7 +83,7 @@ KRB5_CONFIG=/dev/null
 #
 # List of tests hard-coded to use ports 5300 and 9953. For this
 # reason, these must be run sequentially.
-SEQUENTIALDIRS="ecdsa eddsa gost @PKCS11_TEST@ tkey"
+SEQUENTIALDIRS="ecdsa eddsa @PKCS11_TEST@ tkey"
 
 # List of tests that use ports assigned by caller (other than 5300
 # and 9953). Because separate blocks of ports can be used for teach
@@ -96,14 +100,14 @@ PARALLELDIRS="acl additional addzone allow-query auth autosign \
 	fetchlimit filter-aaaa formerr forward \
 	geoip glue idna inline integrity ixfr keepalive \
 	legacy limits logfileconfig \
-	masterfile masterformat metadata mkeys \
+	masterfile masterformat metadata mirror mkeys \
 	names notify nslookup nsupdate nzd2nzf \
-	padding pending pipelined \
+	padding pending pipelined qmin \
 	reclimit redirect resolver rndc rootkeysentinel rpz rpzrecurse \
 	rrchecker rrl rrsetorder rsabigexponent runtime \
 	serve-stale sfcache smartsign sortlist \
 	spf staticstub statistics statschannel stub synthfromdnssec \
-	tcp tools tsig tsiggss \
+	tcp tools tsig tsiggss ttl \
 	unknown upforwd verify views wildcard \
 	xfer xferquota zero zonechecks"
 
@@ -141,11 +145,7 @@ else
 	TESTSOCK6=false
 fi
 
-if grep "^#define WANT_IPV6 1" $TOP/config.h > /dev/null 2>&1 ; then
-        TESTSOCK6="$TESTSOCK6"
-else
-        TESTSOCK6=false
-fi
+TESTSOCK6="$TESTSOCK6"
 
 # Windows process management leave empty
 PSSUSPEND=
@@ -155,7 +155,6 @@ PYTHON=@PYTHON@
 #
 # Determine if we support various optional features.
 #
-CHECK_DSA=@CHECK_DSA@
 HAVEXMLSTATS=@XMLSTATS@
 HAVEJSONSTATS=@JSONSTATS@
 ZLIB=@ZLIB@
@@ -229,22 +228,35 @@ fi
 SYSTESTDIR="`basename $PWD`"
 
 echo_i() {
-    echo "$@" | while read LINE ; do
-       echoinfo "I:$SYSTESTDIR:$LINE"
+    echo "$@" | while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:$__LINE"
     done
 }
 
 echo_ic() {
-    echo "$@" | while read LINE ; do
-       echoinfo "I:$SYSTESTDIR:  $LINE"
+    echo "$@" | while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:  $__LINE"
     done
 }
 
 cat_i() {
-    while read LINE ; do
-       echoinfo "I:$SYSTESTDIR:$LINE"
+    while read __LINE ; do
+       echoinfo "I:$SYSTESTDIR:$__LINE"
     done
 }
+
+echo_d() {
+    echo "$@" | while read __LINE ; do
+       echoinfo "D:$SYSTESTDIR:$__LINE"
+    done
+}
+
+cat_d() {
+    while read __LINE ; do
+       echoinfo "D:$SYSTESTDIR:$__LINE"
+    done
+}
+
 
 digcomp() {
     output=`$PERL $SYSTEMTESTTOP/digcomp.pl "$@"`
@@ -292,13 +304,78 @@ keyfile_to_managed_keys() {
     keyfile_to_keys_section "managed-keys" "initial-key " $*
 }
 
-# nextpart: read everything that's been appended to a file since the
-# last time 'nextpart' was called.
-nextpart () {
-    [ -f $1.prev ] || echo "0" > $1.prev
+# nextpart*() - functions for reading files incrementally
+#
+# These functions aim to facilitate looking for (or waiting for)
+# messages which may be logged more than once throughout the lifetime of
+# a given named instance by outputting just the part of the file which
+# has been appended since the last time we read it.
+#
+# Calling some of these functions causes temporary *.prev files to be
+# created that need to be cleaned up manually (usually by a given system
+# test's clean.sh script).
+#
+# Note that unlike other nextpart*() functions, nextpartread() is not
+# meant to be directly used in system tests; its sole purpose is to
+# reduce code duplication below.
+#
+# A quick usage example:
+#
+#     $ echo line1 > named.log
+#     $ echo line2 >> named.log
+#     $ nextpart named.log
+#     line1
+#     line2
+#     $ echo line3 >> named.log
+#     $ nextpart named.log
+#     line3
+#     $ nextpart named.log
+#     $ echo line4 >> named.log
+#     $ nextpartpeek named.log
+#     line4
+#     $ nextpartpeek named.log
+#     line4
+#     $ nextpartreset named.log
+#     $ nextpartpeek named.log
+#     line1
+#     line2
+#     line3
+#     line4
+#     $ nextpart named.log
+#     line1
+#     line2
+#     line3
+#     line4
+#     $ nextpart named.log
+#     $
+
+# nextpartreset: reset the marker used by nextpart() and nextpartpeek()
+# so that it points to the start of the given file
+nextpartreset() {
+    echo "0" > $1.prev
+}
+
+# nextpartread: read everything that's been appended to a file since the
+# last time nextpart() was called and print it to stdout, print the
+# total number of lines read from that file so far to stderr
+nextpartread() {
+    [ -f $1.prev ] || nextpartreset $1
     prev=`cat $1.prev`
     awk "NR > $prev "'{ print }
-         END          { print NR > "/dev/stderr" }' $1 2> $1.prev
+         END          { print NR > "/dev/stderr" }' $1
+}
+
+# nextpart: read everything that's been appended to a file since the
+# last time nextpart() was called
+nextpart() {
+	nextpartread $1 2> $1.prev.tmp
+	mv $1.prev.tmp $1.prev
+}
+
+# nextpartpeek: read everything that's been appended to a file since the
+# last time nextpart() was called
+nextpartpeek() {
+	nextpartread $1 2> /dev/null
 }
 
 # copy_setports - Copy Configuration File and Replace Ports
@@ -321,7 +398,14 @@ copy_setports() {
         -e "s/@EXTRAPORT6@/${EXTRAPORT6}/g" \
         -e "s/@EXTRAPORT7@/${EXTRAPORT7}/g" \
         -e "s/@EXTRAPORT8@/${EXTRAPORT8}/g" \
-        -e "s/@CONTROLPORT@/${CONTROLPORT}/g" $1 > $2
+        -e "s/@CONTROLPORT@/${CONTROLPORT}/g" \
+	-e "s/@DEFAULT_ALGORITHM@/${DEFAULT_ALGORITHM}/g" \
+	-e "s/@DEFAULT_ALGORITHM_NUMBER@/${DEFAULT_ALGORITHM_NUMBER}/g" \
+	-e "s/@DEFAULT_BITS@/${DEFAULT_BITS}/g" \
+	-e "s/@ALTERNATIVE_ALGORITHM@/${ALTERNATIVE_ALGORITHM}/g" \
+	-e "s/@ALTERNATIVE_ALGORITHM_NUMBER@/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
+	-e "s/@ALTERNATIVE_BITS@/${ALTERNATIVE_BITS}/g" \
+	$1 > $2
 }
 
 #
@@ -358,7 +442,6 @@ export PK11GEN
 export PK11LIST
 export PSSUSPEND
 export PYTHON
-export RANDFILE
 export RESOLVE
 export RNDC
 export RRCHECKER
@@ -366,4 +449,5 @@ export SAMPLEUPDATE
 export SIGNER
 export SUBDIRS
 export TESTSOCK6
+export TSIGKEYGEN
 export WIRETEST

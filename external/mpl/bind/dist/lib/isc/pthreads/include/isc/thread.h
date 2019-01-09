@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,6 +45,9 @@ isc_thread_yield(void);
 
 void
 isc_thread_setname(isc_thread_t thread, const char *name);
+
+isc_result_t
+isc_thread_setaffinity(int cpu);
 
 /* XXX We could do fancier error handling... */
 

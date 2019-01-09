@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: tkey.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,9 @@
 #define DNS_TKEY_H 1
 
 /*! \file dns/tkey.h */
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/lang.h>
 
@@ -38,13 +41,11 @@ struct dns_tkeyctx {
 	dns_name_t *domain;
 	gss_cred_id_t gsscred;
 	isc_mem_t *mctx;
-	isc_entropy_t *ectx;
 	char *gssapi_keytab;
 };
 
 isc_result_t
-dns_tkeyctx_create(isc_mem_t *mctx, isc_entropy_t *ectx,
-		   dns_tkeyctx_t **tctxp);
+dns_tkeyctx_create(isc_mem_t *mctx, dns_tkeyctx_t **tctxp);
 /*%<
  *	Create an empty TKEY context.
  *
@@ -92,7 +93,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 isc_result_t
 dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key,
 		      const dns_name_t *name, const dns_name_t *algorithm,
-		      isc_buffer_t *nonce, isc_uint32_t lifetime);
+		      isc_buffer_t *nonce, uint32_t lifetime);
 /*%<
  *	Builds a query containing a TKEY that will generate a shared
  *	secret using a Diffie-Hellman key exchange.  The shared key
@@ -119,8 +120,8 @@ dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key,
 isc_result_t
 dns_tkey_buildgssquery(dns_message_t *msg, const dns_name_t *name,
 		       const dns_name_t *gname, isc_buffer_t *intoken,
-		       isc_uint32_t lifetime, gss_ctx_id_t *context,
-		       isc_boolean_t win2k, isc_mem_t *mctx,
+		       uint32_t lifetime, gss_ctx_id_t *context,
+		       bool win2k, isc_mem_t *mctx,
 		       char **err_message);
 /*%<
  *	Builds a query containing a TKEY that will generate a GSSAPI context.
@@ -214,7 +215,7 @@ isc_result_t
 dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 		      const dns_name_t *server, gss_ctx_id_t *context,
 		      dns_tsigkey_t **outkey, dns_tsig_keyring_t *ring,
-		      isc_boolean_t win2k, char **err_message);
+		      bool win2k, char **err_message);
 
 /*
  *	Client side negotiation of GSS-TSIG.  Process the response

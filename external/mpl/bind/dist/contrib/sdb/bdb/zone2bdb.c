@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2bdb.c,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: zone2bdb.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
@@ -71,14 +71,14 @@ bdb_putrdata(DB *db, dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata)
 
 	isc_buffer_init(&keybuf, nametext, DNS_NAME_MAXTEXT);
 
-	dns_name_totext(name, ISC_TRUE, &keybuf);
+	dns_name_totext(name, true, &keybuf);
 
 	key.data = isc_buffer_base(&keybuf);
 	key.size = isc_buffer_usedlength(&keybuf);
 
 	isc_buffer_init(&databuf, rdatatext, MAX_RDATATEXT);
 
-	dns_ttl_totext(ttl, ISC_FALSE, &databuf);
+	dns_ttl_totext(ttl, false, true, &databuf);
 	*(char *)isc_buffer_used(&databuf) = ' ';
 	isc_buffer_add(&databuf, 1);
 
@@ -143,7 +143,8 @@ main(int argc, char *argv[])
 			      dns_dbtype_zone, dns_rdataclass_in, 0, NULL,
 			      &db) == ISC_R_SUCCESS);
 
-	REQUIRE(dns_db_load(db, argv[2]) == ISC_R_SUCCESS);
+	REQUIRE(dns_db_load(db, argv[2], dns_masterformat_text, 0)
+		== ISC_R_SUCCESS);
 
 	REQUIRE(dns_db_createiterator(db, 0, &dbiter) == ISC_R_SUCCESS);
 

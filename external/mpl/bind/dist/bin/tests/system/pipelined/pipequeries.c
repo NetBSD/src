@@ -1,4 +1,4 @@
-/*	$NetBSD: pipequeries.c,v 1.1.1.1 2018/08/12 12:07:36 christos Exp $	*/
+/*	$NetBSD: pipequeries.c,v 1.1.1.2 2019/01/09 16:48:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,8 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -20,7 +22,6 @@
 #include <isc/app.h>
 #include <isc/base64.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -63,7 +64,7 @@
 
 static isc_mem_t *mctx;
 static dns_requestmgr_t *requestmgr;
-static isc_boolean_t have_src = ISC_FALSE;
+static bool have_src = false;
 static isc_sockaddr_t srcaddr;
 static isc_sockaddr_t dstaddr;
 static int onfly;
@@ -179,8 +180,10 @@ sendquery(isc_task_t *task) {
 	request = NULL;
 	result = dns_request_createvia(requestmgr, message,
 				       have_src ? &srcaddr : NULL, &dstaddr,
-				       DNS_REQUESTOPT_TCP|DNS_REQUESTOPT_SHARE,
-				       NULL, TIMEOUT, task, recvresponse,
+				       -1,
+				       DNS_REQUESTOPT_TCP |
+				       DNS_REQUESTOPT_SHARE,
+				       NULL, TIMEOUT, 0, 0, task, recvresponse,
 				       message, &request);
 	CHECK("dns_request_create", result);
 
@@ -204,13 +207,11 @@ sendqueries(isc_task_t *task, isc_event_t *event) {
 
 int
 main(int argc, char *argv[]) {
-	char *randomfile = NULL;
 	isc_sockaddr_t bind_any;
 	struct in_addr inaddr;
 	isc_result_t result;
 	isc_log_t *lctx;
 	isc_logconfig_t *lcfg;
-	isc_entropy_t *ectx;
 	isc_taskmgr_t *taskmgr;
 	isc_task_t *task;
 	isc_timermgr_t *timermgr;
@@ -219,12 +220,12 @@ main(int argc, char *argv[]) {
 	unsigned int attrs, attrmask;
 	dns_dispatch_t *dispatchv4;
 	dns_view_t *view;
-	isc_uint16_t port = PORT;
+	uint16_t port = PORT;
 	int c;
 
 	RUNCHECK(isc_app_start());
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 	while ((c = isc_commandline_parse(argc, argv, "p:r:")) != -1) {
 		switch (c) {
 		case 'p':
@@ -237,7 +238,7 @@ main(int argc, char *argv[]) {
 			}
 			break;
 		case 'r':
-			randomfile = isc_commandline_argument;
+			fprintf(stderr, "The -r option has been deprecated.\n");
 			break;
 		case '?':
 			fprintf(stderr, "%s: invalid argument '%c'",
@@ -250,9 +251,10 @@ main(int argc, char *argv[]) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
+	POST(argv);
 
 	if (argc > 0) {
-		have_src = ISC_TRUE;
+		have_src = true;
 	}
 
 	dns_result_register();
@@ -276,18 +278,7 @@ main(int argc, char *argv[]) {
 	lcfg = NULL;
 	RUNCHECK(isc_log_create(mctx, &lctx, &lcfg));
 
-	ectx = NULL;
-	RUNCHECK(isc_entropy_create(mctx, &ectx));
-#ifdef ISC_PLATFORM_CRYPTORANDOM
-	if (randomfile == NULL) {
-		isc_entropy_usehook(ectx, ISC_TRUE);
-	}
-#endif
-	if (randomfile != NULL)
-		RUNCHECK(isc_entropy_createfilesource(ectx, randomfile));
-
-	RUNCHECK(dst_lib_init(mctx, ectx, ISC_ENTROPY_GOODONLY));
-	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
+	RUNCHECK(dst_lib_init(mctx, NULL));
 
 	taskmgr = NULL;
 	RUNCHECK(isc_taskmgr_create(mctx, 1, 0, &taskmgr));
@@ -299,7 +290,7 @@ main(int argc, char *argv[]) {
 	socketmgr = NULL;
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
 	dispatchmgr = NULL;
-	RUNCHECK(dns_dispatchmgr_create(mctx, ectx, &dispatchmgr));
+	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 
 	attrs = DNS_DISPATCHATTR_UDP |
 		DNS_DISPATCHATTR_MAKEQUERY |
@@ -340,9 +331,7 @@ main(int argc, char *argv[]) {
 	isc_task_detach(&task);
 	isc_taskmgr_destroy(&taskmgr);
 
-	isc_hash_destroy();
 	dst_lib_destroy();
-	isc_entropy_detach(&ectx);
 
 	isc_log_destroy(&lctx);
 

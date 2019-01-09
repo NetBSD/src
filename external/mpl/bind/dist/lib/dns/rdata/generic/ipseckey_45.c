@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,7 +41,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 	 * Precedence.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
@@ -50,7 +50,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 	 * Gateway type.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0x3U)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
@@ -60,7 +60,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 	 * Algorithm.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
@@ -69,7 +69,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 	 * Gateway.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 
 	switch (gateway) {
 	case 0:
@@ -78,7 +78,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 		break;
 
 	case 1:
-		if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
+		if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1)
 			RETTOK(DNS_R_BADDOTTEDQUAD);
 		isc_buffer_availableregion(target, &region);
 		if (region.length < 4)
@@ -177,7 +177,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 
 	case 3:
 		dns_name_fromregion(&name, &region);
-		RETERR(dns_name_totext(&name, ISC_FALSE, target));
+		RETERR(dns_name_totext(&name, false, target));
 		isc_region_consume(&region, name_length(&name));
 		break;
 	}
@@ -281,7 +281,7 @@ static inline isc_result_t
 fromstruct_ipseckey(ARGS_FROMSTRUCT) {
 	dns_rdata_ipseckey_t *ipseckey = source;
 	isc_region_t region;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_ipseckey);
 	REQUIRE(source != NULL);
@@ -325,7 +325,7 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_ipseckey_t *ipseckey = target;
 	dns_name_t name;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
 	REQUIRE(target != NULL);
@@ -431,7 +431,7 @@ digest_ipseckey(ARGS_DIGEST) {
 	return ((digest)(arg, &region));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_ipseckey(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_ipseckey);
@@ -441,10 +441,10 @@ checkowner_ipseckey(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_ipseckey(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
@@ -453,7 +453,7 @@ checknames_ipseckey(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

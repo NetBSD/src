@@ -1,4 +1,4 @@
-.\"	$NetBSD: nslookup.1,v 1.1.1.1 2018/08/12 12:07:09 christos Exp $
+.\"	$NetBSD: nslookup.1,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $
 .\"
 .\" Copyright (C) 2004-2007, 2010, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -279,6 +279,17 @@ Try the next nameserver if a nameserver responds with SERVFAIL or a referral (no
 .PP
 \fBnslookup\fR
 returns with an exit status of 1 if any query failed, and 0 otherwise\&.
+.SH "IDN SUPPORT"
+.PP
+If
+\fBnslookup\fR
+has been built with IDN (internationalized domain name) support, it can accept and display non\-ASCII domain names\&.
+\fBnslookup\fR
+appropriately converts character encoding of domain name before sending a request to DNS server or displaying a reply from the server\&. If you\*(Aqd like to turn off the IDN support for some reason, define the
+\fBIDN_DISABLE\fR
+environment variable\&. The IDN support is disabled if the variable is set when
+\fBnslookup\fR
+runs or when the standard output is not a tty\&.
 .SH "FILES"
 .PP
 /etc/resolv\&.conf

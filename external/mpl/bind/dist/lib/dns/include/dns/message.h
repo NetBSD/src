@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,9 @@
 /***
  ***	Imports
  ***/
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -114,7 +117,7 @@
 #define DNS_MESSAGE_REPLYPRESERVE	(DNS_MESSAGEFLAG_RD|DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
 
-#define DNS_MESSAGE_HEADERLEN		12 /*%< 6 isc_uint16_t's */
+#define DNS_MESSAGE_HEADERLEN		12 /*%< 6 uint16_t's */
 
 #define DNS_MESSAGE_MAGIC		ISC_MAGIC('M','S','G','@')
 #define DNS_MESSAGE_VALID(msg)		ISC_MAGIC_VALID(msg, DNS_MESSAGE_MAGIC)
@@ -180,7 +183,7 @@ typedef int dns_messagetextflag_t;
 						      additional section. */
 #define DNS_MESSAGERENDER_PREFER_AAAA	0x0010	/*%< prefer AAAA records in
 						  additional section. */
-#define DNS_MESSAGERENDER_FILTER_AAAA	0x0020	/*%< filter AAAA records */
+/* Obsolete: DNS_MESSAGERENDER_FILTER_AAAA	0x0020	*/
 
 typedef struct dns_msgblock dns_msgblock_t;
 
@@ -228,7 +231,7 @@ struct dns_message {
 	unsigned int			sig_reserved;
 	unsigned int			reserved; /* reserved space (render) */
 
-	isc_uint16_t			padding;
+	uint16_t			padding;
 	unsigned int			padding_off;
 
 	isc_buffer_t		       *buffer;
@@ -268,8 +271,8 @@ struct dns_message {
 };
 
 struct dns_ednsopt {
-	isc_uint16_t			code;
-	isc_uint16_t			length;
+	uint16_t			code;
+	uint16_t			length;
 	unsigned char			*value;
 };
 
@@ -1007,7 +1010,7 @@ dns_message_peekheader(isc_buffer_t *source, dns_messageid_t *idp,
  */
 
 isc_result_t
-dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section);
+dns_message_reply(dns_message_t *msg, bool want_question_section);
 /*%<
  * Start formatting a reply to the query in 'msg'.
  *
@@ -1031,7 +1034,7 @@ dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section);
  *\li	#DNS_R_FORMERR		-- the header or question section of the
  *				   message is invalid, replying is impossible.
  *				   If DNS_R_FORMERR is returned when
- *				   want_question_section is ISC_FALSE, then
+ *				   want_question_section is false, then
  *				   it's the header section that's bad;
  *				   otherwise either of the header or question
  *				   sections may be bad.
@@ -1377,25 +1380,17 @@ dns_message_gettimeadjust(dns_message_t *msg);
  */
 
 void
-dns_message_logpacket(dns_message_t *message, const char *description,
+dns_message_logpacket(dns_message_t *message,
+		      const char *description, const isc_sockaddr_t *address,
 		      isc_logcategory_t *category, isc_logmodule_t *module,
 		      int level, isc_mem_t *mctx);
-void
-dns_message_logpacket2(dns_message_t *message,
-		       const char *description, const isc_sockaddr_t *address,
-		       isc_logcategory_t *category, isc_logmodule_t *module,
-		       int level, isc_mem_t *mctx);
+
 void
 dns_message_logfmtpacket(dns_message_t *message, const char *description,
+			 const isc_sockaddr_t *address,
 			 isc_logcategory_t *category, isc_logmodule_t *module,
 			 const dns_master_style_t *style, int level,
 			 isc_mem_t *mctx);
-void
-dns_message_logfmtpacket2(dns_message_t *message, const char *description,
-			  const isc_sockaddr_t *address,
-			  isc_logcategory_t *category, isc_logmodule_t *module,
-			  const dns_master_style_t *style, int level,
-			  isc_mem_t *mctx);
 /*%<
  * Log 'message' at the specified logging parameters.
  *
@@ -1418,7 +1413,7 @@ dns_message_logfmtpacket2(dns_message_t *message, const char *description,
 
 isc_result_t
 dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
-		     unsigned int version, isc_uint16_t udpsize,
+		     unsigned int version, uint16_t udpsize,
 		     unsigned int flags, dns_ednsopt_t *ednsopts, size_t count);
 /*%<
  * Built a opt record.
@@ -1444,7 +1439,7 @@ dns_message_setclass(dns_message_t *msg, dns_rdataclass_t rdclass);
  */
 
 void
-dns_message_setpadding(dns_message_t *msg, isc_uint16_t padding);
+dns_message_setpadding(dns_message_t *msg, uint16_t padding);
 /*%<
  * Set the padding block size in the response.
  * 0 means no padding (default).

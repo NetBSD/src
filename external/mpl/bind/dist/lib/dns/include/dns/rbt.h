@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.1.1.1 2018/08/12 12:08:20 christos Exp $	*/
+/*	$NetBSD: rbt.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,11 +11,13 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1
 
 /*! \file dns/rbt.h */
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/assertions.h>
 #include <isc/crc64.h>
@@ -27,8 +29,6 @@
 
 ISC_LANG_BEGINDECLS
 
-#define DNS_RBT_USEHASH 1
-
 /*@{*/
 /*%
  * Option values for dns_rbt_findnode() and dns_rbt_findname().
@@ -39,12 +39,6 @@ ISC_LANG_BEGINDECLS
 #define DNS_RBTFIND_NOEXACT                     0x02
 #define DNS_RBTFIND_NOPREDECESSOR               0x04
 /*@}*/
-
-#ifndef DNS_RBT_USEISCREFCOUNT
-#ifdef ISC_REFCOUNT_HAVEATOMIC
-#define DNS_RBT_USEISCREFCOUNT 1
-#endif
-#endif
 
 #define DNS_RBT_USEMAGIC 1
 
@@ -58,7 +52,7 @@ ISC_LANG_BEGINDECLS
 #if DNS_RBT_USEMAGIC
 #define DNS_RBTNODE_VALID(n)            ISC_MAGIC_VALID(n, DNS_RBTNODE_MAGIC)
 #else
-#define DNS_RBTNODE_VALID(n)            ISC_TRUE
+#define DNS_RBTNODE_VALID(n)            true
 #endif
 
 /*%
@@ -110,7 +104,7 @@ struct dns_rbtnode {
 	unsigned int oldnamelen : 8;    /*%< range is 1..255 */
 	/*@}*/
 
-	/* flags needed for serialization to file*/
+	/* flags needed for serialization to file */
 	unsigned int is_mmapped : 1;
 	unsigned int parent_is_relative : 1;
 	unsigned int left_is_relative : 1;
@@ -122,11 +116,15 @@ struct dns_rbtnode {
 	unsigned int rpz : 1;
 	unsigned int :0;                /* end of bitfields c/o tree lock */
 
-#ifdef DNS_RBT_USEHASH
+	/*%
+	 * These are needed for hashing. The 'uppernode' points to the
+	 * node's superdomain node in the parent subtree, so that it can
+	 * be reached from a child that was found by a hash lookup.
+	 */
 	unsigned int hashval;
 	dns_rbtnode_t *uppernode;
 	dns_rbtnode_t *hashnext;
-#endif
+
 	dns_rbtnode_t *parent;
 	dns_rbtnode_t *left;
 	dns_rbtnode_t *right;
@@ -162,13 +160,8 @@ struct dns_rbtnode {
 	unsigned int dirty:1;
 	unsigned int wild:1;
 	unsigned int locknum:DNS_RBT_LOCKLENGTH;
-#ifndef DNS_RBT_USEISCREFCOUNT
-	unsigned int references:DNS_RBT_REFLENGTH;
-#endif
 	unsigned int :0;                /* end of bitfields c/o node lock */
-#ifdef DNS_RBT_USEISCREFCOUNT
 	isc_refcount_t references; /* note that this is not in the bitfield */
-#endif
 	/*@}*/
 };
 
@@ -179,11 +172,11 @@ typedef isc_result_t (*dns_rbtfindcallback_t)(dns_rbtnode_t *node,
 typedef isc_result_t (*dns_rbtdatawriter_t)(FILE *file,
 					    unsigned char *data,
 					    void *arg,
-					    isc_uint64_t *crc);
+					    uint64_t *crc);
 
 typedef isc_result_t (*dns_rbtdatafixer_t)(dns_rbtnode_t *rbtnode,
 					   void *base, size_t offset,
-					   void *arg, isc_uint64_t *crc);
+					   void *arg, uint64_t *crc);
 
 typedef void (*dns_rbtdeleter_t)(void *, void *);
 
@@ -539,12 +532,12 @@ dns_rbt_findnode(dns_rbt_t *rbt, const dns_name_t *name, dns_name_t *foundname,
 
 isc_result_t
 dns_rbt_deletename(dns_rbt_t *rbt, const dns_name_t *name,
-		   isc_boolean_t recurse);
+		   bool recurse);
 /*%<
  * Delete 'name' from the tree of trees.
  *
  * Notes:
- *\li   When 'name' is removed, if recurse is ISC_TRUE then all of its
+ *\li   When 'name' is removed, if recurse is true then all of its
  *      subnames are removed too.
  *
  * Requires:
@@ -582,12 +575,12 @@ dns_rbt_deletename(dns_rbt_t *rbt, const dns_name_t *name,
  */
 
 isc_result_t
-dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, isc_boolean_t recurse);
+dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, bool recurse);
 /*%<
  * Delete 'node' from the tree of trees.
  *
  * Notes:
- *\li   When 'node' is removed, if recurse is ISC_TRUE then all nodes
+ *\li   When 'node' is removed, if recurse is true then all nodes
  *      in levels down from it are removed too.
  *
  * Requires:
@@ -776,7 +769,7 @@ dns_rbt_printtext(dns_rbt_t *rbt,
  */
 
 void
-dns_rbt_printdot(dns_rbt_t *rbt, isc_boolean_t show_pointers, FILE *f);
+dns_rbt_printdot(dns_rbt_t *rbt, bool show_pointers, FILE *f);
 /*%<
  * Print a GraphViz dot representation of the internal structure of the
  * red-black tree of trees to the passed stream.
@@ -821,7 +814,7 @@ dns__rbt_getheight(dns_rbt_t *rbt);
  * \li  rbt is a valid rbt manager.
  */
 
-isc_boolean_t
+bool
 dns__rbt_checkproperties(dns_rbt_t *rbt);
 /*%<
  * Check red-black properties of the forest.
@@ -1049,89 +1042,6 @@ dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name);
 /*%<
  * Find the next node at the current depth in DNSSEC order.
  */
-
-/*
- * Wrapper macros for manipulating the rbtnode reference counter:
- *   Since we selectively use isc_refcount_t for the reference counter of
- *   a rbtnode, operations on the counter depend on the actual type of it.
- *   The following macros provide a common interface to these operations,
- *   hiding the back-end.  The usage is the same as that of isc_refcount_xxx().
- */
-#ifdef DNS_RBT_USEISCREFCOUNT
-#define dns_rbtnode_refinit(node, n)                            \
-	do {                                                    \
-		isc_refcount_init(&(node)->references, (n));    \
-	} while (0)
-#define dns_rbtnode_refdestroy(node)                            \
-	do {                                                    \
-		isc_refcount_destroy(&(node)->references);      \
-	} while (0)
-#define dns_rbtnode_refcurrent(node)                            \
-	isc_refcount_current(&(node)->references)
-#define dns_rbtnode_refincrement0(node, refs)                   \
-	do {                                                    \
-		isc_refcount_increment0(&(node)->references, (refs)); \
-	} while (0)
-#define dns_rbtnode_refincrement(node, refs)                    \
-	do {                                                    \
-		isc_refcount_increment(&(node)->references, (refs)); \
-	} while (0)
-#define dns_rbtnode_refdecrement(node, refs)                    \
-	do {                                                    \
-		isc_refcount_decrement(&(node)->references, (refs)); \
-	} while (0)
-#else  /* DNS_RBT_USEISCREFCOUNT */
-#define dns_rbtnode_refinit(node, n)    ((node)->references = (n))
-#define dns_rbtnode_refdestroy(node)    ISC_REQUIRE((node)->references == 0)
-#define dns_rbtnode_refcurrent(node)    ((node)->references)
-
-#if (__STDC_VERSION__ + 0) >= 199901L || defined __GNUC__
-static inline void
-dns_rbtnode_refincrement0(dns_rbtnode_t *node, unsigned int *refs) {
-	node->references++;
-	if (refs != NULL)
-		*refs = node->references;
-}
-
-static inline void
-dns_rbtnode_refincrement(dns_rbtnode_t *node, unsigned int *refs) {
-	ISC_REQUIRE(node->references > 0);
-	node->references++;
-	if (refs != NULL)
-		*refs = node->references;
-}
-
-static inline void
-dns_rbtnode_refdecrement(dns_rbtnode_t *node, unsigned int *refs) {
-	ISC_REQUIRE(node->references > 0);
-	node->references--;
-	if (refs != NULL)
-		*refs = node->references;
-}
-#else
-#define dns_rbtnode_refincrement0(node, refs)                   \
-	do {                                                    \
-		unsigned int *_tmp = (unsigned int *)(refs);    \
-		(node)->references++;                           \
-		if ((_tmp) != NULL)                             \
-			(*_tmp) = (node)->references;           \
-	} while (0)
-#define dns_rbtnode_refincrement(node, refs)                    \
-	do {                                                    \
-		ISC_REQUIRE((node)->references > 0);                \
-		(node)->references++;                           \
-		if ((refs) != NULL)                             \
-			(*refs) = (node)->references;           \
-	} while (0)
-#define dns_rbtnode_refdecrement(node, refs)                    \
-	do {                                                    \
-		ISC_REQUIRE((node)->references > 0);                \
-		(node)->references--;                           \
-		if ((refs) != NULL)                             \
-			(*refs) = (node)->references;           \
-	} while (0)
-#endif
-#endif /* DNS_RBT_USEISCREFCOUNT */
 
 void
 dns_rbtnode_nodename(dns_rbtnode_t *node, dns_name_t *name);

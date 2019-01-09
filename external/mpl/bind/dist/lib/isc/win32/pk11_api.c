@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11_api.c,v 1.1.1.1 2018/08/12 12:08:27 christos Exp $	*/
+/*	$NetBSD: pk11_api.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,10 +32,8 @@
 #include <pk11/pk11.h>
 #include <pk11/internal.h>
 
-#define HAVE_GETPASSPHRASE
-
 char *
-getpassphrase(const char *prompt) {
+getpass(const char *prompt) {
 	static char buf[128];
 	HANDLE h;
 	DWORD cc, mode;

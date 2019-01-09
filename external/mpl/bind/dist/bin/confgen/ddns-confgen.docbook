@@ -46,7 +46,6 @@
       <command>tsig-keygen</command>
       <arg choice="opt" rep="norepeat"><option>-a <replaceable class="parameter">algorithm</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-h</option></arg>
-      <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">randomfile</replaceable></option></arg>
       <arg choice="opt" rep="norepeat">name</arg>
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
@@ -153,23 +152,6 @@
 	    (<command>ddns-confgen</command> only.) Quiet mode:  Print
             only the key, with no explanatory text or usage examples;
             This is essentially identical to <command>tsig-keygen</command>.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>-r <replaceable class="parameter">randomfile</replaceable></term>
-	<listitem>
-	  <para>
-            Specifies a source of random data for generating the
-            authorization.  If the operating system does not provide a
-            <filename>/dev/random</filename> or equivalent device, the
-            default source of randomness is keyboard input.
-            <filename>randomdev</filename> specifies the name of a
-            character device or file containing random data to be used
-            instead of the default.  The special value
-            <filename>keyboard</filename> indicates that keyboard input
-            should be used.
 	  </para>
 	</listitem>
       </varlistentry>

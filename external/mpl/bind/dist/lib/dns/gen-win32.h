@@ -1,4 +1,4 @@
-/*	$NetBSD: gen-win32.h,v 1.1.1.1 2018/08/12 12:08:14 christos Exp $	*/
+/*	$NetBSD: gen-win32.h,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -61,11 +61,11 @@
 #ifndef DNS_GEN_WIN32_H
 #define DNS_GEN_WIN32_H 1
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
 
-#include <isc/boolean.h>
 #include <isc/lang.h>
 
 int isc_commandline_index = 1;		/* Index into parent argv vector. */
@@ -74,8 +74,8 @@ int isc_commandline_option;		/* Character checked for validity. */
 char *isc_commandline_argument;		/* Argument associated with option. */
 char *isc_commandline_progname;		/* For printing error messages. */
 
-isc_boolean_t isc_commandline_errprint = ISC_TRUE; /* Print error messages. */
-isc_boolean_t isc_commandline_reset = ISC_TRUE; /* Reset processing. */
+bool isc_commandline_errprint = true; /* Print error messages. */
+bool isc_commandline_reset = true; /* Reset processing. */
 
 #define BADOPT	'?'
 #define BADARG	':'
@@ -97,7 +97,7 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 	 * the previous argv was finished.
 	 */
 	if (isc_commandline_reset || *place == '\0') {
-		isc_commandline_reset = ISC_FALSE;
+		isc_commandline_reset = false;
 
 		if (isc_commandline_progname == NULL)
 			isc_commandline_progname = argv[0];
@@ -206,11 +206,11 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 typedef struct {
 	HANDLE handle;
 	WIN32_FIND_DATA	find_data;
-	isc_boolean_t first_file;
+	bool first_file;
 	char *filename;
 } isc_dir_t;
 
-isc_boolean_t
+bool
 start_directory(const char *path, isc_dir_t *dir) {
 	char pattern[_MAX_PATH], *p;
 
@@ -218,7 +218,7 @@ start_directory(const char *path, isc_dir_t *dir) {
 	 * Need space for slash-splat and final NUL.
 	 */
 	if (strlen(path) + 3 > sizeof(pattern))
-		return (ISC_FALSE);
+		return (false);
 
 	strcpy(pattern, path);
 
@@ -231,23 +231,23 @@ start_directory(const char *path, isc_dir_t *dir) {
 	*p++ = '*';
 	*p++ = '\0';
 
-	dir->first_file = ISC_TRUE;
+	dir->first_file = true;
 
 	dir->handle = FindFirstFile(pattern, &dir->find_data);
 
 	if (dir->handle == INVALID_HANDLE_VALUE) {
 		dir->filename = NULL;
-		return (ISC_FALSE);
+		return (false);
 	} else {
 		dir->filename = dir->find_data.cFileName;
-		return (ISC_TRUE);
+		return (true);
 	}
 }
 
-isc_boolean_t
+bool
 next_file(isc_dir_t *dir) {
 	if (dir->first_file)
-		dir->first_file = ISC_FALSE;
+		dir->first_file = false;
 
 	else if (dir->handle != INVALID_HANDLE_VALUE) {
 		if (FindNextFile(dir->handle, &dir->find_data) == TRUE)
@@ -259,9 +259,9 @@ next_file(isc_dir_t *dir) {
 		dir->filename = NULL;
 
 	if (dir->filename != NULL)
-		return (ISC_TRUE);
+		return (true);
 	else
-		return (ISC_FALSE);
+		return (false);
 }
 
 void

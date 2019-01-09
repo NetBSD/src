@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.1.1.1 2018/08/12 12:08:29 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.1.1.2 2019/01/09 16:48:23 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,16 +29,16 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
 #include <errno.h>
 
 #include <isc/assertions.h>
-#include <isc/hmacmd5.h>
-#include <isc/hmacsha.h>
+#include <isc/hmac.h>
 #include <isc/print.h>
 #include <isc/safe.h>
-#include <isc/stdlib.h>
 
 #include <pk11/site.h>
 
@@ -56,7 +56,6 @@
 
 typedef isccc_sexpr_t *sexpr_ptr;
 
-#ifndef PK11_MD5_DISABLE
 static unsigned char auth_hmd5[] = {
 	0x05, 0x5f, 0x61, 0x75, 0x74, 0x68,		/*%< len + _auth */
 	ISCCC_CCMSGTYPE_TABLE,				/*%< message type */
@@ -75,7 +74,6 @@ static unsigned char auth_hmd5[] = {
 
 #define HMD5_OFFSET	21		/*%< 21 = 6 + 1 + 4 + 5 + 1 + 4 */
 #define HMD5_LENGTH	22
-#endif
 
 static unsigned char auth_hsha[] = {
 	0x05, 0x5f, 0x61, 0x75, 0x74, 0x68,		/*%< len + _auth */
@@ -221,7 +219,7 @@ table_towire(isccc_sexpr_t *alist, isc_buffer_t **buffer) {
 		result = isc_buffer_reserve(buffer, 1 + len);
 		if (result != ISC_R_SUCCESS)
 			return (ISC_R_NOSPACE);
-		isc_buffer_putuint8(*buffer, (isc_uint8_t)len);
+		isc_buffer_putuint8(*buffer, (uint8_t)len);
 		isc_buffer_putmem(*buffer, (const unsigned char *) ks, len);
 		/*
 		 * Emit the value.
@@ -250,84 +248,48 @@ list_towire(isccc_sexpr_t *list, isc_buffer_t **buffer) {
 
 static isc_result_t
 sign(unsigned char *data, unsigned int length, unsigned char *hmac,
-     isc_uint32_t algorithm, isccc_region_t *secret)
+     uint32_t algorithm, isccc_region_t *secret)
 {
-	union {
-#ifndef PK11_MD5_DISABLE
-		isc_hmacmd5_t hmd5;
-#endif
-		isc_hmacsha1_t hsha;
-		isc_hmacsha224_t h224;
-		isc_hmacsha256_t h256;
-		isc_hmacsha384_t h384;
-		isc_hmacsha512_t h512;
-	} ctx;
+	isc_md_type_t md_type;
 	isc_result_t result;
 	isccc_region_t source, target;
-	unsigned char digest[ISC_SHA512_DIGESTLENGTH];
+	unsigned char digest[ISC_MAX_MD_SIZE];
+	unsigned int digestlen;
 	unsigned char digestb64[HSHA_LENGTH + 4];
 
 	source.rstart = digest;
 
 	switch (algorithm) {
-#ifndef PK11_MD5_DISABLE
 	case ISCCC_ALG_HMACMD5:
-		isc_hmacmd5_init(&ctx.hmd5, secret->rstart,
-				 REGION_SIZE(*secret));
-		isc_hmacmd5_update(&ctx.hmd5, data, length);
-		isc_hmacmd5_sign(&ctx.hmd5, digest);
-		source.rend = digest + ISC_MD5_DIGESTLENGTH;
+		md_type = ISC_MD_MD5;
 		break;
-#endif
-
 	case ISCCC_ALG_HMACSHA1:
-		isc_hmacsha1_init(&ctx.hsha, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha1_update(&ctx.hsha, data, length);
-		isc_hmacsha1_sign(&ctx.hsha, digest,
-				    ISC_SHA1_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA1_DIGESTLENGTH;
+		md_type = ISC_MD_SHA1;
 		break;
-
 	case ISCCC_ALG_HMACSHA224:
-		isc_hmacsha224_init(&ctx.h224, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha224_update(&ctx.h224, data, length);
-		isc_hmacsha224_sign(&ctx.h224, digest,
-				    ISC_SHA224_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA224_DIGESTLENGTH;
+		md_type = ISC_MD_SHA224;
 		break;
-
 	case ISCCC_ALG_HMACSHA256:
-		isc_hmacsha256_init(&ctx.h256, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha256_update(&ctx.h256, data, length);
-		isc_hmacsha256_sign(&ctx.h256, digest,
-				    ISC_SHA256_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA256_DIGESTLENGTH;
+		md_type = ISC_MD_SHA256;
 		break;
-
 	case ISCCC_ALG_HMACSHA384:
-		isc_hmacsha384_init(&ctx.h384, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha384_update(&ctx.h384, data, length);
-		isc_hmacsha384_sign(&ctx.h384, digest,
-				    ISC_SHA384_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA384_DIGESTLENGTH;
+		md_type = ISC_MD_SHA384;
 		break;
-
 	case ISCCC_ALG_HMACSHA512:
-		isc_hmacsha512_init(&ctx.h512, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha512_update(&ctx.h512, data, length);
-		isc_hmacsha512_sign(&ctx.h512, digest,
-				    ISC_SHA512_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA512_DIGESTLENGTH;
+		md_type = ISC_MD_SHA512;
 		break;
-
 	default:
-		return (ISC_R_FAILURE);
+		return (ISC_R_NOTIMPLEMENTED);
 	}
+
+	result = isc_hmac(md_type,
+			  secret->rstart, REGION_SIZE(*secret),
+			  data, length,
+			  digest, &digestlen);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
+	source.rend = digest + digestlen;
 
 	memset(digestb64, 0, sizeof(digestb64));
 	target.rstart = digestb64;
@@ -335,32 +297,24 @@ sign(unsigned char *data, unsigned int length, unsigned char *hmac,
 	result = isccc_base64_encode(&source, 64, "", &target);
 	if (result != ISC_R_SUCCESS)
 		return (result);
-#ifndef PK11_MD5_DISABLE
 	if (algorithm == ISCCC_ALG_HMACMD5)
 		PUT_MEM(digestb64, HMD5_LENGTH, hmac);
 	else
-#endif
 		PUT_MEM(digestb64, HSHA_LENGTH, hmac);
 	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
 isccc_cc_towire(isccc_sexpr_t *alist, isc_buffer_t **buffer,
-		isc_uint32_t algorithm, isccc_region_t *secret)
+		uint32_t algorithm, isccc_region_t *secret)
 {
 	unsigned int hmac_base, signed_base;
 	isc_result_t result;
 
-#ifndef PK11_MD5_DISABLE
 	result = isc_buffer_reserve(buffer,
 				    4 + ((algorithm == ISCCC_ALG_HMACMD5) ?
 					 sizeof(auth_hmd5) :
 					 sizeof(auth_hsha)));
-#else
-	if (algorithm == ISCCC_ALG_HMACMD5)
-		return (ISC_R_NOTIMPLEMENTED);
-	result = isc_buffer_reserve(buffer, 4 + sizeof(auth_hsha));
-#endif
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_NOSPACE);
 
@@ -375,13 +329,11 @@ isccc_cc_towire(isccc_sexpr_t *alist, isc_buffer_t **buffer,
 		 * We'll replace the zeros with the real signature once
 		 * we know what it is.
 		 */
-#ifndef PK11_MD5_DISABLE
 		if (algorithm == ISCCC_ALG_HMACMD5) {
 			hmac_base = (*buffer)->used + HMD5_OFFSET;
 			isc_buffer_putmem(*buffer,
 					  auth_hmd5, sizeof(auth_hmd5));
 		} else
-#endif
 		{
 			unsigned char *hmac_alg;
 
@@ -416,23 +368,15 @@ isccc_cc_towire(isccc_sexpr_t *alist, isc_buffer_t **buffer,
 
 static isc_result_t
 verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
-       isc_uint32_t algorithm, isccc_region_t *secret)
+       uint32_t algorithm, isccc_region_t *secret)
 {
-	union {
-#ifndef PK11_MD5_DISABLE
-		isc_hmacmd5_t hmd5;
-#endif
-		isc_hmacsha1_t hsha;
-		isc_hmacsha224_t h224;
-		isc_hmacsha256_t h256;
-		isc_hmacsha384_t h384;
-		isc_hmacsha512_t h512;
-	} ctx;
+	isc_md_type_t md_type;
 	isccc_region_t source;
 	isccc_region_t target;
 	isc_result_t result;
 	isccc_sexpr_t *_auth, *hmac;
-	unsigned char digest[ISC_SHA512_DIGESTLENGTH];
+	unsigned char digest[ISC_MAX_MD_SIZE];
+	unsigned int digestlen;
 	unsigned char digestb64[HSHA_LENGTH * 4];
 
 	/*
@@ -441,11 +385,9 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 	_auth = isccc_alist_lookup(alist, "_auth");
 	if (!isccc_alist_alistp(_auth))
 		return (ISC_R_FAILURE);
-#ifndef PK11_MD5_DISABLE
 	if (algorithm == ISCCC_ALG_HMACMD5)
 		hmac = isccc_alist_lookup(_auth, "hmd5");
 	else
-#endif
 		hmac = isccc_alist_lookup(_auth, "hsha");
 	if (!isccc_sexpr_binaryp(hmac))
 		return (ISC_R_FAILURE);
@@ -453,66 +395,39 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 	 * Compute digest.
 	 */
 	source.rstart = digest;
-	target.rstart = digestb64;
+
 	switch (algorithm) {
-#ifndef PK11_MD5_DISABLE
 	case ISCCC_ALG_HMACMD5:
-		isc_hmacmd5_init(&ctx.hmd5, secret->rstart,
-				 REGION_SIZE(*secret));
-		isc_hmacmd5_update(&ctx.hmd5, data, length);
-		isc_hmacmd5_sign(&ctx.hmd5, digest);
-		source.rend = digest + ISC_MD5_DIGESTLENGTH;
+		md_type = ISC_MD_MD5;
 		break;
-#endif
-
 	case ISCCC_ALG_HMACSHA1:
-		isc_hmacsha1_init(&ctx.hsha, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha1_update(&ctx.hsha, data, length);
-		isc_hmacsha1_sign(&ctx.hsha, digest,
-				    ISC_SHA1_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA1_DIGESTLENGTH;
+		md_type = ISC_MD_SHA1;
 		break;
-
 	case ISCCC_ALG_HMACSHA224:
-		isc_hmacsha224_init(&ctx.h224, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha224_update(&ctx.h224, data, length);
-		isc_hmacsha224_sign(&ctx.h224, digest,
-				    ISC_SHA224_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA224_DIGESTLENGTH;
+		md_type = ISC_MD_SHA224;
 		break;
-
 	case ISCCC_ALG_HMACSHA256:
-		isc_hmacsha256_init(&ctx.h256, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha256_update(&ctx.h256, data, length);
-		isc_hmacsha256_sign(&ctx.h256, digest,
-				    ISC_SHA256_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA256_DIGESTLENGTH;
+		md_type = ISC_MD_SHA256;
 		break;
-
 	case ISCCC_ALG_HMACSHA384:
-		isc_hmacsha384_init(&ctx.h384, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha384_update(&ctx.h384, data, length);
-		isc_hmacsha384_sign(&ctx.h384, digest,
-				    ISC_SHA384_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA384_DIGESTLENGTH;
+		md_type = ISC_MD_SHA384;
 		break;
-
 	case ISCCC_ALG_HMACSHA512:
-		isc_hmacsha512_init(&ctx.h512, secret->rstart,
-				    REGION_SIZE(*secret));
-		isc_hmacsha512_update(&ctx.h512, data, length);
-		isc_hmacsha512_sign(&ctx.h512, digest,
-				    ISC_SHA512_DIGESTLENGTH);
-		source.rend = digest + ISC_SHA512_DIGESTLENGTH;
+		md_type = ISC_MD_SHA512;
 		break;
-
 	default:
-		return (ISC_R_FAILURE);
+		return (ISC_R_NOTIMPLEMENTED);
 	}
+
+	result = isc_hmac(md_type,
+			  secret->rstart, REGION_SIZE(*secret),
+			  data, length,
+			  digest, &digestlen);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
+	source.rend = digest + digestlen;
+
 	target.rstart = digestb64;
 	target.rend = digestb64 + sizeof(digestb64);
 	memset(digestb64, 0, sizeof(digestb64));
@@ -523,7 +438,6 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 	/*
 	 * Verify.
 	 */
-#ifndef PK11_MD5_DISABLE
 	if (algorithm == ISCCC_ALG_HMACMD5) {
 		isccc_region_t *region;
 		unsigned char *value;
@@ -534,12 +448,10 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 		value = region->rstart;
 		if (!isc_safe_memequal(value, digestb64, HMD5_LENGTH))
 			return (ISCCC_R_BADAUTH);
-	} else
-#endif
-	{
+	} else {
 		isccc_region_t *region;
 		unsigned char *value;
-		isc_uint32_t valalg;
+		uint32_t valalg;
 
 		region = isccc_sexpr_tobinary(hmac);
 
@@ -561,7 +473,7 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 
 static isc_result_t
 table_fromwire(isccc_region_t *source, isccc_region_t *secret,
-	       isc_uint32_t algorithm, isccc_sexpr_t **alistp);
+	       uint32_t algorithm, isccc_sexpr_t **alistp);
 
 static isc_result_t
 list_fromwire(isccc_region_t *source, isccc_sexpr_t **listp);
@@ -569,7 +481,7 @@ list_fromwire(isccc_region_t *source, isccc_sexpr_t **listp);
 static isc_result_t
 value_fromwire(isccc_region_t *source, isccc_sexpr_t **valuep) {
 	unsigned int msgtype;
-	isc_uint32_t len;
+	uint32_t len;
 	isccc_sexpr_t *value;
 	isccc_region_t active;
 	isc_result_t result;
@@ -602,19 +514,19 @@ value_fromwire(isccc_region_t *source, isccc_sexpr_t **valuep) {
 
 static isc_result_t
 table_fromwire(isccc_region_t *source, isccc_region_t *secret,
-	       isc_uint32_t algorithm, isccc_sexpr_t **alistp)
+	       uint32_t algorithm, isccc_sexpr_t **alistp)
 {
 	char key[256];
-	isc_uint32_t len;
+	uint32_t len;
 	isc_result_t result;
 	isccc_sexpr_t *alist, *value;
-	isc_boolean_t first_tag;
+	bool first_tag;
 	unsigned char *checksum_rstart;
 
 	REQUIRE(alistp != NULL && *alistp == NULL);
 
 	checksum_rstart = NULL;
-	first_tag = ISC_TRUE;
+	first_tag = true;
 	alist = isccc_alist_create();
 	if (alist == NULL)
 		return (ISC_R_NOMEMORY);
@@ -637,7 +549,7 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 		}
 		if (first_tag && secret != NULL && strcmp(key, "_auth") == 0)
 			checksum_rstart = source->rstart;
-		first_tag = ISC_FALSE;
+		first_tag = false;
 	}
 
 	if (secret != NULL) {
@@ -687,10 +599,10 @@ list_fromwire(isccc_region_t *source, isccc_sexpr_t **listp) {
 
 isc_result_t
 isccc_cc_fromwire(isccc_region_t *source, isccc_sexpr_t **alistp,
-		  isc_uint32_t algorithm, isccc_region_t *secret)
+		  uint32_t algorithm, isccc_region_t *secret)
 {
 	unsigned int size;
-	isc_uint32_t version;
+	uint32_t version;
 
 	size = REGION_SIZE(*source);
 	if (size < 4)
@@ -703,10 +615,10 @@ isccc_cc_fromwire(isccc_region_t *source, isccc_sexpr_t **alistp,
 }
 
 static isc_result_t
-createmessage(isc_uint32_t version, const char *from, const char *to,
-	      isc_uint32_t serial, isccc_time_t now,
+createmessage(uint32_t version, const char *from, const char *to,
+	      uint32_t serial, isccc_time_t now,
 	      isccc_time_t expires, isccc_sexpr_t **alistp,
-	      isc_boolean_t want_expires)
+	      bool want_expires)
 {
 	isccc_sexpr_t *alist, *_ctrl, *_data;
 	isc_result_t result;
@@ -761,20 +673,20 @@ createmessage(isc_uint32_t version, const char *from, const char *to,
 }
 
 isc_result_t
-isccc_cc_createmessage(isc_uint32_t version, const char *from, const char *to,
-		       isc_uint32_t serial, isccc_time_t now,
+isccc_cc_createmessage(uint32_t version, const char *from, const char *to,
+		       uint32_t serial, isccc_time_t now,
 		       isccc_time_t expires, isccc_sexpr_t **alistp)
 {
 	return (createmessage(version, from, to, serial, now, expires,
-			      alistp, ISC_TRUE));
+			      alistp, true));
 }
 
 isc_result_t
-isccc_cc_createack(isccc_sexpr_t *message, isc_boolean_t ok,
+isccc_cc_createack(isccc_sexpr_t *message, bool ok,
 		   isccc_sexpr_t **ackp)
 {
 	char *_frm, *_to;
-	isc_uint32_t serial;
+	uint32_t serial;
 	isccc_sexpr_t *ack, *_ctrl;
 	isc_result_t result;
 	isccc_time_t t;
@@ -797,7 +709,7 @@ isccc_cc_createack(isccc_sexpr_t *message, isc_boolean_t ok,
 	 * Create the ack.
 	 */
 	ack = NULL;
-	result = createmessage(1, _to, _frm, serial, t, 0, &ack, ISC_FALSE);
+	result = createmessage(1, _to, _frm, serial, t, 0, &ack, false);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -821,28 +733,28 @@ isccc_cc_createack(isccc_sexpr_t *message, isc_boolean_t ok,
 	return (result);
 }
 
-isc_boolean_t
+bool
 isccc_cc_isack(isccc_sexpr_t *message) {
 	isccc_sexpr_t *_ctrl;
 
 	_ctrl = isccc_alist_lookup(message, "_ctrl");
 	if (!isccc_alist_alistp(_ctrl))
-		return (ISC_FALSE);
+		return (false);
 	if (isccc_cc_lookupstring(_ctrl, "_ack", NULL) == ISC_R_SUCCESS)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
+		return (true);
+	return (false);
 }
 
-isc_boolean_t
+bool
 isccc_cc_isreply(isccc_sexpr_t *message) {
 	isccc_sexpr_t *_ctrl;
 
 	_ctrl = isccc_alist_lookup(message, "_ctrl");
 	if (!isccc_alist_alistp(_ctrl))
-		return (ISC_FALSE);
+		return (false);
 	if (isccc_cc_lookupstring(_ctrl, "_rpl", NULL) == ISC_R_SUCCESS)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
+		return (true);
+	return (false);
 }
 
 isc_result_t
@@ -850,7 +762,7 @@ isccc_cc_createresponse(isccc_sexpr_t *message, isccc_time_t now,
 			isccc_time_t expires, isccc_sexpr_t **alistp)
 {
 	char *_frm, *_to, *type = NULL;
-	isc_uint32_t serial;
+	uint32_t serial;
 	isccc_sexpr_t *alist, *_ctrl, *_data;
 	isc_result_t result;
 
@@ -919,7 +831,7 @@ isccc_cc_definestring(isccc_sexpr_t *alist, const char *key, const char *str) {
 }
 
 isccc_sexpr_t *
-isccc_cc_defineuint32(isccc_sexpr_t *alist, const char *key, isc_uint32_t i) {
+isccc_cc_defineuint32(isccc_sexpr_t *alist, const char *key, uint32_t i) {
 	char b[100];
 	size_t len;
 	isccc_region_t r;
@@ -954,7 +866,7 @@ isccc_cc_lookupstring(isccc_sexpr_t *alist, const char *key, char **strp) {
 
 isc_result_t
 isccc_cc_lookupuint32(isccc_sexpr_t *alist, const char *key,
-		      isc_uint32_t *uintp)
+		      uint32_t *uintp)
 {
 	isccc_sexpr_t *kv, *v;
 
@@ -963,7 +875,7 @@ isccc_cc_lookupuint32(isccc_sexpr_t *alist, const char *key,
 		v = ISCCC_SEXPR_CDR(kv);
 		if (isccc_sexpr_binaryp(v)) {
 			if (uintp != NULL)
-				*uintp = (isc_uint32_t)
+				*uintp = (uint32_t)
 					strtoul(isccc_sexpr_tostring(v),
 						NULL, 10);
 			return (ISC_R_SUCCESS);
@@ -985,7 +897,7 @@ symtab_undefine(char *key, unsigned int type, isccc_symvalue_t value,
 	free(key);
 }
 
-static isc_boolean_t
+static bool
 symtab_clean(char *key, unsigned int type, isccc_symvalue_t value, void *arg) {
 	isccc_time_t *now;
 
@@ -995,15 +907,15 @@ symtab_clean(char *key, unsigned int type, isccc_symvalue_t value, void *arg) {
 	now = arg;
 
 	if (*now < value.as_uinteger)
-		return (ISC_FALSE);
+		return (false);
 	if ((*now - value.as_uinteger) < DUP_LIFETIME)
-		return (ISC_FALSE);
-	return (ISC_TRUE);
+		return (false);
+	return (true);
 }
 
 isc_result_t
 isccc_cc_createsymtab(isccc_symtab_t **symtabp) {
-	return (isccc_symtab_create(11897, symtab_undefine, NULL, ISC_FALSE,
+	return (isccc_symtab_create(11897, symtab_undefine, NULL, false,
 				  symtabp));
 }
 
@@ -1012,17 +924,17 @@ isccc_cc_cleansymtab(isccc_symtab_t *symtab, isccc_time_t now) {
 	isccc_symtab_foreach(symtab, symtab_clean, &now);
 }
 
-static isc_boolean_t
+static bool
 has_whitespace(const char *str) {
 	char c;
 
 	if (str == NULL)
-		return (ISC_FALSE);
+		return (false);
 	while ((c = *str++) != '\0') {
 		if (c == ' ' || c == '\t' || c == '\n')
-			return (ISC_TRUE);
+			return (true);
 	}
-	return (ISC_FALSE);
+	return (false);
 }
 
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: win32os.c,v 1.1.1.1 2018/08/12 12:08:27 christos Exp $	*/
+/*	$NetBSD: win32os.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,6 +10,8 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
+
+#include <config.h>
 
 #include <windows.h>
 

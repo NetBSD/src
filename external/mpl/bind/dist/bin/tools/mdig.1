@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdig.1,v 1.1.1.1 2018/08/12 12:07:15 christos Exp $
+.\"	$NetBSD: mdig.1,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $
 .\"
 .\" Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -249,10 +249,6 @@ option sets the query type to
 \fB\-x\fR
 option is supplied to indicate a reverse lookup with the "PTR" query type\&.
 .PP
-The
-\fB\-i\fR
-option sets the reverse domain for IPv6 addresses to IP6\&.INT\&.
-.PP
 Reverse lookups \(em mapping addresses to names \(em are simplified by the
 \fB\-x\fR
 option\&.
@@ -261,9 +257,7 @@ is an IPv4 address in dotted\-decimal notation, or a colon\-delimited IPv6 addre
 \fBmdig\fR
 automatically performs a lookup for a query name like
 11\&.12\&.13\&.10\&.in\-addr\&.arpa
-and sets the query type and class to PTR and IN respectively\&. By default, IPv6 addresses are looked up using nibble format under the IP6\&.ARPA domain\&. To use the older RFC1886 method using the IP6\&.INT domain specify the
-\fB\-i\fR
-option\&.
+and sets the query type and class to PTR and IN respectively\&. By default, IPv6 addresses are looked up using nibble format under the IP6\&.ARPA domain\&.
 .PP
 The local query options are:
 .PP

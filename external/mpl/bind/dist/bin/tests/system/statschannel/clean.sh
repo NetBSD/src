@@ -19,3 +19,4 @@ rm -f ns*/named.stats
 rm -f xml.*stats json.*stats
 rm -f xml.*mem json.*mem
 rm -f compressed.headers regular.headers compressed.out regular.out
+rm -f ns*/managed-keys.bind*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: rdataslab.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,8 @@
  *** Imports
  ***/
 
+#include <stdbool.h>
+
 #include <isc/lang.h>
 
 #include <dns/types.h>
@@ -82,22 +84,6 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
  *\li	ISC_R_SUCCESS		- successful completion
  *\li	ISC_R_NOMEMORY		- no memory.
  *\li	XXX others
- */
-
-void
-dns_rdataslab_tordataset(unsigned char *slab, unsigned int reservelen,
-			 dns_rdataclass_t rdclass, dns_rdatatype_t rdtype,
-			 dns_rdatatype_t covers, dns_ttl_t ttl,
-			 dns_rdataset_t *rdataset);
-/*%<
- * Construct an rdataset from a slab.
- *
- * Requires:
- *\li	'slab' points to a slab.
- *\li	'rdataset' is disassociated.
- *
- * Ensures:
- *\li	'rdataset' is associated and points to a valid rdataest.
  */
 
 unsigned int
@@ -146,7 +132,7 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
  * valid flags are DNS_RDATASLAB_EXACT
  */
 
-isc_boolean_t
+bool
 dns_rdataslab_equal(unsigned char *slab1, unsigned char *slab2,
 		    unsigned int reservelen);
 /*%<
@@ -157,9 +143,9 @@ dns_rdataslab_equal(unsigned char *slab1, unsigned char *slab2,
  *\li	'slab1' and 'slab2' point to slabs.
  *
  * Returns:
- *\li	ISC_TRUE if the slabs are equal, ISC_FALSE otherwise.
+ *\li	true if the slabs are equal, false otherwise.
  */
-isc_boolean_t
+bool
 dns_rdataslab_equalx(unsigned char *slab1, unsigned char *slab2,
 		     unsigned int reservelen, dns_rdataclass_t rdclass,
 		     dns_rdatatype_t type);
@@ -170,7 +156,7 @@ dns_rdataslab_equalx(unsigned char *slab1, unsigned char *slab2,
  *\li	'slab1' and 'slab2' point to slabs.
  *
  * Returns:
- *\li	ISC_TRUE if the slabs are equal, #ISC_FALSE otherwise.
+ *\li	true if the slabs are equal, #false otherwise.
  */
 
 ISC_LANG_ENDDECLS

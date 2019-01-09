@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.h,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: a6_38.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@ typedef struct dns_rdata_in_a6 {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	dns_name_t		prefix;
-	isc_uint8_t		prefixlen;
+	uint8_t		prefixlen;
 	struct in6_addr		in6_addr;
 } dns_rdata_in_a6_t;
 

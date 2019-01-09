@@ -1,4 +1,4 @@
-/*	$NetBSD: tm.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: tm.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@
  */
 #define ALT_E			0x01
 #define ALT_O			0x02
-#define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return (0); }
+#define	LEGAL_ALT(x)		{ if ((alt_format & ~(x)) != 0) return (0); }
 
 #ifndef TM_YEAR_BASE
 #define TM_YEAR_BASE 1900

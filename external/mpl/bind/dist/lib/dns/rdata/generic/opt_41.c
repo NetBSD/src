@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,8 +43,8 @@ static inline isc_result_t
 totext_opt(ARGS_TOTEXT) {
 	isc_region_t r;
 	isc_region_t or;
-	isc_uint16_t option;
-	isc_uint16_t length;
+	uint16_t option;
+	uint16_t length;
 	char buf[sizeof("64000 64000")];
 
 	/*
@@ -89,8 +89,8 @@ static inline isc_result_t
 fromwire_opt(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 	isc_region_t tregion;
-	isc_uint16_t opt;
-	isc_uint16_t length;
+	uint16_t opt;
+	uint16_t length;
 	unsigned int total;
 
 	REQUIRE(type == dns_rdatatype_opt);
@@ -116,10 +116,10 @@ fromwire_opt(ARGS_FROMWIRE) {
 			return (ISC_R_UNEXPECTEDEND);
 		switch (opt) {
 		case DNS_OPT_CLIENT_SUBNET: {
-			isc_uint16_t family;
-			isc_uint8_t addrlen;
-			isc_uint8_t scope;
-			isc_uint8_t addrbytes;
+			uint16_t family;
+			uint8_t addrlen;
+			uint8_t scope;
+			uint8_t addrbytes;
 
 			if (length < 4)
 				return (DNS_R_OPTERR);
@@ -160,7 +160,7 @@ fromwire_opt(ARGS_FROMWIRE) {
 				return (DNS_R_OPTERR);
 
 			if (addrbytes != 0U && (addrlen % 8) != 0) {
-				isc_uint8_t bits = ~0U << (8 - (addrlen % 8));
+				uint8_t bits = ~0U << (8 - (addrlen % 8));
 				bits &= sregion.base[addrbytes - 1];
 				if (bits != sregion.base[addrbytes - 1])
 					return (DNS_R_OPTERR);
@@ -232,7 +232,7 @@ static inline isc_result_t
 fromstruct_opt(ARGS_FROMSTRUCT) {
 	dns_rdata_opt_t *opt = source;
 	isc_region_t region;
-	isc_uint16_t length;
+	uint16_t length;
 
 	REQUIRE(type == dns_rdatatype_opt);
 	REQUIRE(source != NULL);
@@ -324,7 +324,7 @@ digest_opt(ARGS_DIGEST) {
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_opt(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_opt);
@@ -336,7 +336,7 @@ checkowner_opt(ARGS_CHECKOWNER) {
 	return (dns_name_equal(name, dns_rootname));
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_opt(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_opt);
@@ -345,7 +345,7 @@ checknames_opt(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int
@@ -370,7 +370,7 @@ dns_rdata_opt_first(dns_rdata_opt_t *opt) {
 isc_result_t
 dns_rdata_opt_next(dns_rdata_opt_t *opt) {
 	isc_region_t r;
-	isc_uint16_t length;
+	uint16_t length;
 
 	REQUIRE(opt != NULL);
 	REQUIRE(opt->common.rdtype == dns_rdatatype_opt);

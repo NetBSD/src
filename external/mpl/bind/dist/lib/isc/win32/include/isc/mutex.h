@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,7 @@ TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 #endif /* _WIN32_WINNT < 0x0400 */
 
 #define isc_mutex_init(mp) \
-	(InitializeCriticalSection((mp)), ISC_R_SUCCESS)
+	InitializeCriticalSection((mp))
 #define isc_mutex_lock(mp) \
 	(EnterCriticalSection((mp)), ISC_R_SUCCESS)
 #define isc_mutex_unlock(mp) \
@@ -40,7 +40,7 @@ TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 #define isc_mutex_trylock(mp) \
 	(TryEnterCriticalSection((mp)) ? ISC_R_SUCCESS : ISC_R_LOCKBUSY)
 #define isc_mutex_destroy(mp) \
-	(DeleteCriticalSection((mp)), ISC_R_SUCCESS)
+	(DeleteCriticalSection((mp)))
 
 /*
  * This is a placeholder for now since we are not keeping any mutex stats

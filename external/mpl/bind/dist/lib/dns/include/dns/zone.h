@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,9 @@
  ***	Imports
  ***/
 
+#include <stdbool.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
@@ -38,6 +40,7 @@ typedef enum {
 	dns_zone_none,
 	dns_zone_master,
 	dns_zone_slave,
+	dns_zone_mirror,
 	dns_zone_stub,
 	dns_zone_staticstub,
 	dns_zone_key,
@@ -51,52 +54,38 @@ typedef enum {
 	dns_zonestat_full
 } dns_zonestat_level_t;
 
-#define DNS_ZONEOPT_SERVERS	  0x00000001U	/*%< perform server checks */
-#define DNS_ZONEOPT_PARENTS	  0x00000002U	/*%< perform parent checks */
-#define DNS_ZONEOPT_CHILDREN	  0x00000004U	/*%< perform child checks */
-#define DNS_ZONEOPT_NOTIFY	  0x00000008U	/*%< perform NOTIFY */
-#define DNS_ZONEOPT_MANYERRORS	  0x00000010U	/*%< return many errors on load */
-#define DNS_ZONEOPT_IXFRFROMDIFFS 0x00000020U	/*%< calculate differences */
-#define DNS_ZONEOPT_NOMERGE	  0x00000040U	/*%< don't merge journal */
-#define DNS_ZONEOPT_CHECKNS	  0x00000080U	/*%< check if NS's are addresses */
-#define DNS_ZONEOPT_FATALNS	  0x00000100U	/*%< DNS_ZONEOPT_CHECKNS is fatal */
-#define DNS_ZONEOPT_MULTIMASTER	  0x00000200U	/*%< this zone has multiple masters */
-#define DNS_ZONEOPT_USEALTXFRSRC  0x00000400U	/*%< use alternate transfer sources */
-#define DNS_ZONEOPT_CHECKNAMES	  0x00000800U	/*%< check-names */
-#define DNS_ZONEOPT_CHECKNAMESFAIL 0x00001000U	/*%< fatal check-name failures */
-#define DNS_ZONEOPT_CHECKWILDCARD 0x00002000U	/*%< check for internal wildcards */
-#define DNS_ZONEOPT_CHECKMX	  0x00004000U	/*%< check-mx */
-#define DNS_ZONEOPT_CHECKMXFAIL   0x00008000U	/*%< fatal check-mx failures */
-#define DNS_ZONEOPT_CHECKINTEGRITY 0x00010000U	/*%< perform integrity checks */
-#define DNS_ZONEOPT_CHECKSIBLING  0x00020000U	/*%< perform sibling glue checks */
-#define DNS_ZONEOPT_NOCHECKNS	  0x00040000U	/*%< disable IN NS address checks */
-#define DNS_ZONEOPT_WARNMXCNAME	  0x00080000U	/*%< warn on MX CNAME check */
-#define DNS_ZONEOPT_IGNOREMXCNAME 0x00100000U	/*%< ignore MX CNAME check */
-#define DNS_ZONEOPT_WARNSRVCNAME  0x00200000U	/*%< warn on SRV CNAME check */
-#define DNS_ZONEOPT_IGNORESRVCNAME 0x00400000U	/*%< ignore SRV CNAME check */
-#define DNS_ZONEOPT_UPDATECHECKKSK 0x00800000U	/*%< check dnskey KSK flag */
-#define DNS_ZONEOPT_TRYTCPREFRESH 0x01000000U	/*%< try tcp refresh on udp failure */
-#define DNS_ZONEOPT_NOTIFYTOSOA	  0x02000000U	/*%< Notify the SOA MNAME */
-#define DNS_ZONEOPT_NSEC3TESTZONE 0x04000000U	/*%< nsec3-test-zone */
-#define DNS_ZONEOPT_SECURETOINSECURE 0x08000000U /*%< dnssec-secure-to-insecure */
-#define DNS_ZONEOPT_DNSKEYKSKONLY 0x10000000U	/*%< dnssec-dnskey-kskonly */
-#define DNS_ZONEOPT_CHECKDUPRR	  0x20000000U   /*%< check-dup-records */
-#define DNS_ZONEOPT_CHECKDUPRRFAIL 0x40000000U	/*%< fatal check-dup-records failures */
-#define DNS_ZONEOPT_CHECKSPF	  0x80000000U	/*%< check SPF records */
-
-/*
- * The following zone options are shifted left into the
- * higher-order 32 bits of the options.
- */
-#define DNS_ZONEOPT2_CHECKTTL	  0x00000001U	/*%< check max-zone-ttl */
-#define DNS_ZONEOPT2_AUTOEMPTY	  0x00000002U	/*%< automatic empty zone */
-
-#ifndef NOMINUM_PUBLIC
-/*
- * Nominum specific options build down.
- */
-#define DNS_ZONEOPT_NOTIFYFORWARD 0x80000000U	/* forward notify to master */
-#endif /* NOMINUM_PUBLIC */
+typedef enum {
+	DNS_ZONEOPT_MANYERRORS       = 1<<0,  /*%< return many errors on load */
+	DNS_ZONEOPT_IXFRFROMDIFFS    = 1<<1,  /*%< calculate differences */
+	DNS_ZONEOPT_NOMERGE          = 1<<2,  /*%< don't merge journal */
+	DNS_ZONEOPT_CHECKNS          = 1<<3,  /*%< check if NS's are addresses */
+	DNS_ZONEOPT_FATALNS          = 1<<4,  /*%< DNS_ZONEOPT_CHECKNS is fatal */
+	DNS_ZONEOPT_MULTIMASTER      = 1<<5,  /*%< this zone has multiple masters */
+	DNS_ZONEOPT_USEALTXFRSRC     = 1<<6,  /*%< use alternate transfer sources */
+	DNS_ZONEOPT_CHECKNAMES       = 1<<7,  /*%< check-names */
+	DNS_ZONEOPT_CHECKNAMESFAIL   = 1<<8,  /*%< fatal check-name failures */
+	DNS_ZONEOPT_CHECKWILDCARD    = 1<<9,  /*%< check for internal wildcards */
+	DNS_ZONEOPT_CHECKMX          = 1<<10, /*%< check-mx */
+	DNS_ZONEOPT_CHECKMXFAIL      = 1<<11, /*%< fatal check-mx failures */
+	DNS_ZONEOPT_CHECKINTEGRITY   = 1<<12, /*%< perform integrity checks */
+	DNS_ZONEOPT_CHECKSIBLING     = 1<<13, /*%< perform sibling glue checks */
+	DNS_ZONEOPT_NOCHECKNS        = 1<<14, /*%< disable IN NS address checks */
+	DNS_ZONEOPT_WARNMXCNAME      = 1<<15, /*%< warn on MX CNAME check */
+	DNS_ZONEOPT_IGNOREMXCNAME    = 1<<16, /*%< ignore MX CNAME check */
+	DNS_ZONEOPT_WARNSRVCNAME     = 1<<17, /*%< warn on SRV CNAME check */
+	DNS_ZONEOPT_IGNORESRVCNAME   = 1<<18, /*%< ignore SRV CNAME check */
+	DNS_ZONEOPT_UPDATECHECKKSK   = 1<<19, /*%< check dnskey KSK flag */
+	DNS_ZONEOPT_TRYTCPREFRESH    = 1<<20, /*%< try tcp refresh on udp failure */
+	DNS_ZONEOPT_NOTIFYTOSOA      = 1<<21, /*%< Notify the SOA MNAME */
+	DNS_ZONEOPT_NSEC3TESTZONE    = 1<<22, /*%< nsec3-test-zone */
+	DNS_ZONEOPT_SECURETOINSECURE = 1<<23, /*%< dnssec-secure-to-insecure */
+	DNS_ZONEOPT_DNSKEYKSKONLY    = 1<<24, /*%< dnssec-dnskey-kskonly */
+	DNS_ZONEOPT_CHECKDUPRR       = 1<<25, /*%< check-dup-records */
+	DNS_ZONEOPT_CHECKDUPRRFAIL   = 1<<26, /*%< fatal check-dup-records failures */
+	DNS_ZONEOPT_CHECKSPF         = 1<<27, /*%< check SPF records */
+	DNS_ZONEOPT_CHECKTTL         = 1<<28, /*%< check max-zone-ttl */
+	DNS_ZONEOPT_AUTOEMPTY        = 1<<29, /*%< automatic empty zone */
+} dns_zoneopt_t;
 
 /*
  * Zone key maintenance options
@@ -180,15 +169,10 @@ dns_zone_getclass(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_getserial2(dns_zone_t *zone, isc_uint32_t *serialp);
-
-isc_uint32_t
-dns_zone_getserial(dns_zone_t *zone);
+dns_zone_getserial(dns_zone_t *zone, uint32_t *serialp);
 /*%<
  *	Returns the current serial number of the zone.  On success, the SOA
  *	serial of the zone will be copied into '*serialp'.
- *	dns_zone_getserial() cannot catch failure cases and is deprecated by
- *	dns_zone_getserial2().
  *
  * Requires:
  *\li	'zone' to be a valid zone.
@@ -274,14 +258,8 @@ dns_zone_getorigin(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_setfile(dns_zone_t *zone, const char *file);
-
-isc_result_t
-dns_zone_setfile2(dns_zone_t *zone, const char *file,
-		  dns_masterformat_t format);
-isc_result_t
-dns_zone_setfile3(dns_zone_t *zone, const char *file,
-		  dns_masterformat_t format, const dns_master_style_t *style);
+dns_zone_setfile(dns_zone_t *zone, const char *file,
+		 dns_masterformat_t format, const dns_master_style_t *style);
 /*%<
  *    Sets the name of the master file in the format of 'format' from which
  *    the zone loads its database to 'file'.
@@ -290,15 +268,6 @@ dns_zone_setfile3(dns_zone_t *zone, const char *file,
  *
  *	For zones with persistent databases, the file name
  *	setting is ignored.
- *
- *    dns_zone_setfile() is a backward-compatible form of
- *    dns_zone_setfile2(), which always specifies the
- *    dns_masterformat_text (RFC1035) format.
- *
- *    dns_zone_setfile2() is a backward-compatible form of
- *    dns_zone_setfile3(), which also specifies the style
- *    that should be used if a zone using the 'text'
- *    masterformat is ever dumped.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -321,7 +290,7 @@ dns_zone_getfile(dns_zone_t *zone);
  */
 
 void
-dns_zone_setmaxrecords(dns_zone_t *zone, isc_uint32_t records);
+dns_zone_setmaxrecords(dns_zone_t *zone, uint32_t records);
 /*%<
  * 	Sets the maximim number of records permitted in a zone.
  *	0 implies unlimited.
@@ -333,7 +302,7 @@ dns_zone_setmaxrecords(dns_zone_t *zone, isc_uint32_t records);
  *\li	void
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getmaxrecords(dns_zone_t *zone);
 /*%<
  * 	Gets the maximim number of records permitted in a zone.
@@ -343,11 +312,11 @@ dns_zone_getmaxrecords(dns_zone_t *zone);
  *\li	'zone' to be valid initialised zone.
  *
  * Returns:
- *\li	isc_uint32_t maxrecords.
+ *\li	uint32_t maxrecords.
  */
 
 void
-dns_zone_setmaxttl(dns_zone_t *zone, isc_uint32_t maxttl);
+dns_zone_setmaxttl(dns_zone_t *zone, uint32_t maxttl);
 /*%<
  * 	Sets the max ttl of the zone.
  *
@@ -371,10 +340,7 @@ dns_zone_getmaxttl(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_load(dns_zone_t *zone);
-
-isc_result_t
-dns_zone_loadnew(dns_zone_t *zone);
+dns_zone_load(dns_zone_t *zone, bool newonly);
 
 isc_result_t
 dns_zone_loadandthaw(dns_zone_t *zone);
@@ -384,9 +350,7 @@ dns_zone_loadandthaw(dns_zone_t *zone);
  *	Confirm that the minimum requirements for the zone type are
  *	met, otherwise DNS_R_BADZONE is returned.
  *
- *	dns_zone_loadnew() only loads zones that are not yet loaded.
- *	dns_zone_load() also loads zones that are already loaded and
- *	and whose master file has changed since the last load.
+ *	If newonly is set dns_zone_load() only loads new zones.
  *	dns_zone_loadandthaw() is similar to dns_zone_load() but will
  *	also re-enable DNS UPDATEs when the load completes.
  *
@@ -404,7 +368,8 @@ dns_zone_loadandthaw(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_asyncload(dns_zone_t *zone, dns_zt_zoneloaded_t done, void *arg);
+dns_zone_asyncload(dns_zone_t *zone, bool newonly,
+		   dns_zt_zoneloaded_t done, void *arg);
 /*%<
  * Cause the database to be loaded from its backing store asynchronously.
  * Other zone maintenance functions are suspended until this is complete.
@@ -423,7 +388,7 @@ dns_zone_asyncload(dns_zone_t *zone, dns_zt_zoneloaded_t done, void *arg);
  *\li	#ISC_R_NOMEMORY
  */
 
-isc_boolean_t
+bool
 dns__zone_loadpending(dns_zone_t *zone);
 /*%<
  * Indicates whether the zone is waiting to be loaded asynchronously.
@@ -480,9 +445,9 @@ dns_zone_idetach(dns_zone_t **zonep);
  */
 
 void
-dns_zone_setflag(dns_zone_t *zone, unsigned int flags, isc_boolean_t value);
+dns_zone_setflag(dns_zone_t *zone, unsigned int flags, bool value);
 /*%<
- *	Sets ('value' == 'ISC_TRUE') / clears ('value' == 'IS_FALSE')
+ *	Sets ('value' == 'true') / clears ('value' == 'IS_FALSE')
  *	zone flags.  Valid flag bits are DNS_ZONE_F_*.
  *
  * Requires
@@ -604,15 +569,9 @@ dns_zone_dump(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_dumptostream(dns_zone_t *zone, FILE *fd);
-
-isc_result_t
-dns_zone_dumptostream2(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
-		       const dns_master_style_t *style);
-isc_result_t
-dns_zone_dumptostream3(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
-		       const dns_master_style_t *style,
-		       const isc_uint32_t rawversion);
+dns_zone_dumptostream(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
+		      const dns_master_style_t *style,
+		      const uint32_t rawversion);
 /*%<
  *    Write the zone to stream 'fd' in the specified 'format'.
  *    If the 'format' is dns_masterformat_text (RFC1035), 'style' also
@@ -634,17 +593,6 @@ dns_zone_dumptostream3(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
  *\li	'fd' to be a stream open for writing.
  */
 
-isc_result_t
-dns_zone_fulldumptostream(dns_zone_t *zone, FILE *fd);
-/*%<
- *	The same as dns_zone_dumptostream, but dumps the zone with
- *	different dump settings (dns_master_style_full).
- *
- * Require:
- *\li	'zone' to be a valid zone.
- *\li	'fd' to be a stream open for writing.
- */
-
 void
 dns_zone_maintenance(dns_zone_t *zone);
 /*%<
@@ -657,12 +605,12 @@ dns_zone_maintenance(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_setmasters(dns_zone_t *zone, const isc_sockaddr_t *masters,
-		    isc_uint32_t count);
+		    uint32_t count);
 isc_result_t
 dns_zone_setmasterswithkeys(dns_zone_t *zone,
 			    const isc_sockaddr_t *masters,
 			    dns_name_t **keynames,
-			    isc_uint32_t count);
+			    uint32_t count);
 /*%<
  *	Set the list of master servers for the zone.
  *
@@ -685,14 +633,14 @@ dns_zone_setmasterswithkeys(dns_zone_t *zone,
 
 isc_result_t
 dns_zone_setalsonotify(dns_zone_t *zone, const isc_sockaddr_t *notify,
-		       isc_uint32_t count);
+		       uint32_t count);
 isc_result_t
 dns_zone_setalsonotifywithkeys(dns_zone_t *zone, const isc_sockaddr_t *notify,
-			       dns_name_t **keynames, isc_uint32_t count);
+			       dns_name_t **keynames, uint32_t count);
 isc_result_t
 dns_zone_setalsonotifydscpkeys(dns_zone_t *zone, const isc_sockaddr_t *notify,
 			       const isc_dscp_t *dscps, dns_name_t **keynames,
-			       isc_uint32_t count);
+			       uint32_t count);
 /*%<
  *	Set the list of additional servers to be notified when
  *	a zone changes.	 To clear the list use 'count = 0'.
@@ -720,46 +668,30 @@ dns_zone_unload(dns_zone_t *zone);
  */
 
 void
-dns_zone_setoption(dns_zone_t *zone, unsigned int option,
-		   isc_boolean_t value);
-void
-dns_zone_setoption2(dns_zone_t *zone, unsigned int option,
-		    isc_boolean_t value);
+dns_zone_setoption(dns_zone_t *zone, dns_zoneopt_t option,
+		   bool value);
 /*%<
- *	Set the given options on ('value' == ISC_TRUE) or off
- *	('value' == #ISC_FALSE).
- *
- *	dns_zone_setoption2() has been introduced because the number
- *	of options needed now exceeds the 32 bits in the zone->options
- *	field; it should be used set options with names beginning
- *	with DNS_ZONEOPT2_.
+ *	Set the given options on ('value' == true) or off
+ *	('value' == #false).
  *
  * Require:
  *\li	'zone' to be a valid zone.
  */
 
-unsigned int
+dns_zoneopt_t
 dns_zone_getoptions(dns_zone_t *zone);
-unsigned int
-dns_zone_getoptions2(dns_zone_t *zone);
 /*%<
  *	Returns the current zone options.
  *
- *	Callers should be aware there is now more than one set of zone
- *	options.  dns_zone_getoptions2() has been introduced because the
- *	number of options needed now exceeds the 32 bits in the
- *	zone->options field. It returns the options whose names begin
- *	with DNS_ZONEOPT2_.
- *
  * Require:
  *\li	'zone' to be a valid zone.
  */
 
 void
-dns_zone_setkeyopt(dns_zone_t *zone, unsigned int option, isc_boolean_t value);
+dns_zone_setkeyopt(dns_zone_t *zone, unsigned int option, bool value);
 /*%<
- *	Set key options on ('value' == ISC_TRUE) or off ('value' ==
- *	#ISC_FALSE).
+ *	Set key options on ('value' == true) or off ('value' ==
+ *	#false).
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -775,7 +707,7 @@ dns_zone_getkeyopts(dns_zone_t *zone);
  */
 
 void
-dns_zone_setminrefreshtime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setminrefreshtime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the minimum refresh time.
  *
@@ -785,7 +717,7 @@ dns_zone_setminrefreshtime(dns_zone_t *zone, isc_uint32_t val);
  */
 
 void
-dns_zone_setmaxrefreshtime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setmaxrefreshtime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the maximum refresh time.
  *
@@ -795,7 +727,7 @@ dns_zone_setmaxrefreshtime(dns_zone_t *zone, isc_uint32_t val);
  */
 
 void
-dns_zone_setminretrytime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setminretrytime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the minimum retry time.
  *
@@ -805,7 +737,7 @@ dns_zone_setminretrytime(dns_zone_t *zone, isc_uint32_t val);
  */
 
 void
-dns_zone_setmaxretrytime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setmaxretrytime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the maximum retry time.
  *
@@ -1201,7 +1133,7 @@ dns_zone_clearxfracl(dns_zone_t *zone);
  *\li	'zone' to be a valid zone.
  */
 
-isc_boolean_t
+bool
 dns_zone_getupdatedisabled(dns_zone_t *zone);
 /*%<
  * Return update disabled.
@@ -1209,7 +1141,7 @@ dns_zone_getupdatedisabled(dns_zone_t *zone);
  */
 
 void
-dns_zone_setupdatedisabled(dns_zone_t *zone, isc_boolean_t state);
+dns_zone_setupdatedisabled(dns_zone_t *zone, bool state);
 /*%<
  * Set update disabled.
  * Should only be called only when running in isc_task_exclusive() mode.
@@ -1217,14 +1149,14 @@ dns_zone_setupdatedisabled(dns_zone_t *zone, isc_boolean_t state);
  * call has been made.
  */
 
-isc_boolean_t
+bool
 dns_zone_getzeronosoattl(dns_zone_t *zone);
 /*%<
  * Return zero-no-soa-ttl status.
  */
 
 void
-dns_zone_setzeronosoattl(dns_zone_t *zone, isc_boolean_t state);
+dns_zone_setzeronosoattl(dns_zone_t *zone, bool state);
 /*%<
  * Set zero-no-soa-ttl status.
  */
@@ -1248,7 +1180,7 @@ dns_zone_getchecknames(dns_zone_t *zone);
  */
 
 void
-dns_zone_setjournalsize(dns_zone_t *zone, isc_int32_t size);
+dns_zone_setjournalsize(dns_zone_t *zone, int32_t size);
 /*%<
  *	Sets the journal size for the zone.
  *
@@ -1256,7 +1188,7 @@ dns_zone_setjournalsize(dns_zone_t *zone, isc_int32_t size);
  *\li	'zone' to be a valid zone.
  */
 
-isc_int32_t
+int32_t
 dns_zone_getjournalsize(dns_zone_t *zone);
 /*%<
  *	Return the journal size as set with a previous call to
@@ -1268,10 +1200,7 @@ dns_zone_getjournalsize(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_notifyreceive(dns_zone_t *zone, isc_sockaddr_t *from,
-		       dns_message_t *msg);
-isc_result_t
-dns_zone_notifyreceive2(dns_zone_t *zone, isc_sockaddr_t *from,
-			isc_sockaddr_t *to, dns_message_t *msg);
+		       isc_sockaddr_t *to, dns_message_t *msg);
 /*%<
  *	Tell the zone that it has received a NOTIFY message from another
  *	server.  This may cause some zone maintenance activity to occur.
@@ -1290,7 +1219,7 @@ dns_zone_notifyreceive2(dns_zone_t *zone, isc_sockaddr_t *from,
  */
 
 void
-dns_zone_setmaxxfrin(dns_zone_t *zone, isc_uint32_t maxxfrin);
+dns_zone_setmaxxfrin(dns_zone_t *zone, uint32_t maxxfrin);
 /*%<
  * Set the maximum time (in seconds) that a zone transfer in (AXFR/IXFR)
  * of this zone will use before being aborted.
@@ -1299,7 +1228,7 @@ dns_zone_setmaxxfrin(dns_zone_t *zone, isc_uint32_t maxxfrin);
  * \li	'zone' to be valid initialised zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getmaxxfrin(dns_zone_t *zone);
 /*%<
  * Returns the maximum transfer time for this zone.  This will be
@@ -1311,7 +1240,7 @@ dns_zone_getmaxxfrin(dns_zone_t *zone);
  */
 
 void
-dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout);
+dns_zone_setmaxxfrout(dns_zone_t *zone, uint32_t maxxfrout);
 /*%<
  * Set the maximum time (in seconds) that a zone transfer out (AXFR/IXFR)
  * of this zone will use before being aborted.
@@ -1320,7 +1249,7 @@ dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout);
  * \li	'zone' to be valid initialised zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getmaxxfrout(dns_zone_t *zone);
 /*%<
  * Returns the maximum transfer time for this zone.  This will be
@@ -1412,15 +1341,15 @@ dns_zone_notify(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump);
+dns_zone_replacedb(dns_zone_t *zone, dns_db_t *db, bool dump);
 /*%<
  * Replace the database of "zone" with a new database "db".
  *
- * If "dump" is ISC_TRUE, then the new zone contents are dumped
+ * If "dump" is true, then the new zone contents are dumped
  * into to the zone's master file for persistence.  When replacing
  * a zone database by one just loaded from a master file, set
- * "dump" to ISC_FALSE to avoid a redundant redump of the data just
- * loaded.  Otherwise, it should be set to ISC_TRUE.
+ * "dump" to false to avoid a redundant redump of the data just
+ * loaded.  Otherwise, it should be set to true.
  *
  * If the "diff-on-reload" option is enabled in the configuration file,
  * the differences between the old and the new database are added to the
@@ -1437,7 +1366,7 @@ dns_zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump);
  *	Others
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getidlein(dns_zone_t *zone);
 /*%<
  * Requires:
@@ -1448,7 +1377,7 @@ dns_zone_getidlein(dns_zone_t *zone);
  */
 
 void
-dns_zone_setidlein(dns_zone_t *zone, isc_uint32_t idlein);
+dns_zone_setidlein(dns_zone_t *zone, uint32_t idlein);
 /*%<
  * \li	Set the idle timeout for transfer the.
  * \li	Zero set the default value, 1 hour.
@@ -1457,7 +1386,7 @@ dns_zone_setidlein(dns_zone_t *zone, isc_uint32_t idlein);
  * \li	'zone' to be a valid zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getidleout(dns_zone_t *zone);
 /*%<
  *
@@ -1469,7 +1398,7 @@ dns_zone_getidleout(dns_zone_t *zone);
  */
 
 void
-dns_zone_setidleout(dns_zone_t *zone, isc_uint32_t idleout);
+dns_zone_setidleout(dns_zone_t *zone, uint32_t idleout);
 /*%<
  * \li	Set the idle timeout for transfers out.
  * \li	Zero set the default value, 1 hour.
@@ -1515,27 +1444,53 @@ dns_zone_getmgr(dns_zone_t *zone);
  */
 
 void
-dns_zone_setsigvalidityinterval(dns_zone_t *zone, isc_uint32_t interval);
+dns_zone_setsigvalidityinterval(dns_zone_t *zone, uint32_t interval);
 /*%<
- * Set the zone's RRSIG validity interval.  This is the length of time
- * for which DNSSEC signatures created as a result of dynamic updates
- * to secure zones will remain valid, in seconds.
+ * Set the zone's general signature validity interval.  This is the length
+ * of time for which DNSSEC signatures created as a result of dynamic
+ * updates to secure zones will remain valid, in seconds.
  *
  * Requires:
  * \li	'zone' to be a valid zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getsigvalidityinterval(dns_zone_t *zone);
 /*%<
- * Get the zone's RRSIG validity interval.
+ * Get the zone's general signature validity interval.
  *
  * Requires:
  * \li	'zone' to be a valid zone.
  */
 
 void
-dns_zone_setsigresigninginterval(dns_zone_t *zone, isc_uint32_t interval);
+dns_zone_setkeyvalidityinterval(dns_zone_t *zone, uint32_t interval);
+/*%<
+ * Set the zone's DNSKEY signature validity interval.  This is the length
+ * of time for which DNSSEC signatures created for DNSKEY records
+ * will remain valid, in seconds.
+ *
+ * If this value is set to zero, then the regular signature validity
+ * interval (see dns_zone_setsigvalidityinterval(), above) is used
+ * for all RRSIGs. However, if this value is nonzero, then it is used
+ * as the validity interval for RRSIGs covering DNSKEY and CDNSKEY
+ * RRsets.
+ *
+ * Requires:
+ * \li	'zone' to be a valid zone.
+ */
+
+uint32_t
+dns_zone_getkeyvalidityinterval(dns_zone_t *zone);
+/*%<
+ * Get the zone's DNSKEY signature validity interval.
+ *
+ * Requires:
+ * \li	'zone' to be a valid zone.
+ */
+
+void
+dns_zone_setsigresigninginterval(dns_zone_t *zone, uint32_t interval);
 /*%<
  * Set the zone's RRSIG re-signing interval.  A dynamic zone's RRSIG's
  * will be re-signed 'interval' amount of time before they expire.
@@ -1544,7 +1499,7 @@ dns_zone_setsigresigninginterval(dns_zone_t *zone, isc_uint32_t interval);
  * \li	'zone' to be a valid zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getsigresigninginterval(dns_zone_t *zone);
 /*%<
  * Get the zone's RRSIG re-signing interval.
@@ -1761,7 +1716,7 @@ dns_zonemgr_releasezone(dns_zonemgr_t *zmgr, dns_zone_t *zone);
  */
 
 void
-dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, isc_uint32_t value);
+dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, uint32_t value);
 /*%<
  *	Set the maximum number of simultaneous transfers in allowed by
  *	the zone manager.
@@ -1770,7 +1725,7 @@ dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, isc_uint32_t value);
  *\li	'zmgr' to be a valid zone manager.
  */
 
-isc_uint32_t
+uint32_t
 dns_zonemgr_getttransfersin(dns_zonemgr_t *zmgr);
 /*%<
  *	Return the maximum number of simultaneous transfers in allowed.
@@ -1780,7 +1735,7 @@ dns_zonemgr_getttransfersin(dns_zonemgr_t *zmgr);
  */
 
 void
-dns_zonemgr_settransfersperns(dns_zonemgr_t *zmgr, isc_uint32_t value);
+dns_zonemgr_settransfersperns(dns_zonemgr_t *zmgr, uint32_t value);
 /*%<
  *	Set the number of zone transfers allowed per nameserver.
  *
@@ -1788,7 +1743,7 @@ dns_zonemgr_settransfersperns(dns_zonemgr_t *zmgr, isc_uint32_t value);
  *\li	'zmgr' to be a valid zone manager
  */
 
-isc_uint32_t
+uint32_t
 dns_zonemgr_getttransfersperns(dns_zonemgr_t *zmgr);
 /*%<
  *	Return the number of transfers allowed per nameserver.
@@ -1798,7 +1753,7 @@ dns_zonemgr_getttransfersperns(dns_zonemgr_t *zmgr);
  */
 
 void
-dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, isc_uint32_t iolimit);
+dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, uint32_t iolimit);
 /*%<
  *	Set the number of simultaneous file descriptors available for
  *	reading and writing masterfiles.
@@ -1808,7 +1763,7 @@ dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, isc_uint32_t iolimit);
  *\li	'iolimit' to be positive.
  */
 
-isc_uint32_t
+uint32_t
 dns_zonemgr_getiolimit(dns_zonemgr_t *zmgr);
 /*%<
  *	Get the number of simultaneous file descriptors available for
@@ -1894,11 +1849,11 @@ dns_zonemgr_unreachableadd(dns_zonemgr_t *zmgr, isc_sockaddr_t *remote,
  *\li	'local' to be a valid sockaddr.
  */
 
-isc_boolean_t
+bool
 dns_zonemgr_unreachable(dns_zonemgr_t *zmgr, isc_sockaddr_t *remote,
 			isc_sockaddr_t *local, isc_time_t *now);
 /*%<
- *	Returns ISC_TRUE if the given local/remote address pair
+ *	Returns true if the given local/remote address pair
  *	is found in the zone maanger's unreachable cache.
  *
  * Requires:
@@ -1929,7 +1884,7 @@ dns_zone_forcereload(dns_zone_t *zone);
  *\li      'zone' to be a valid zone.
  */
 
-isc_boolean_t
+bool
 dns_zone_isforced(dns_zone_t *zone);
 /*%<
  *      Check if the zone is waiting a forced reload.
@@ -1939,12 +1894,12 @@ dns_zone_isforced(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_setstatistics(dns_zone_t *zone, isc_boolean_t on);
+dns_zone_setstatistics(dns_zone_t *zone, bool on);
 /*%<
  * This function is obsoleted by dns_zone_setrequeststats().
  */
 
-isc_uint64_t *
+uint64_t *
 dns_zone_getstatscounters(dns_zone_t *zone);
 /*%<
  * This function is obsoleted by dns_zone_getrequeststats().
@@ -2108,7 +2063,7 @@ dns_zone_setcheckns(dns_zone_t *zone, dns_checknsfunc_t checkns);
  */
 
 void
-dns_zone_setnotifydelay(dns_zone_t *zone, isc_uint32_t delay);
+dns_zone_setnotifydelay(dns_zone_t *zone, uint32_t delay);
 /*%<
  * Set the minimum delay between sets of notify messages.
  *
@@ -2116,7 +2071,7 @@ dns_zone_setnotifydelay(dns_zone_t *zone, isc_uint32_t delay);
  *	'zone' to be valid.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getnotifydelay(dns_zone_t *zone);
 /*%<
  * Get the minimum delay between sets of notify messages.
@@ -2130,29 +2085,29 @@ dns_zone_setisself(dns_zone_t *zone, dns_isselffunc_t isself, void *arg);
 /*%<
  * Set the isself callback function and argument.
  *
- * isc_boolean_t
+ * bool
  * isself(dns_view_t *myview, dns_tsigkey_t *mykey,
  *	  const isc_netaddr_t *srcaddr, const isc_netaddr_t *destaddr,
  *	  dns_rdataclass_t rdclass, void *arg);
  *
- * 'isself' returns ISC_TRUE if a non-recursive query from 'srcaddr' to
+ * 'isself' returns true if a non-recursive query from 'srcaddr' to
  * 'destaddr' with optional key 'mykey' for class 'rdclass' would be
  * delivered to 'myview'.
  */
 
 void
-dns_zone_setnodes(dns_zone_t *zone, isc_uint32_t nodes);
+dns_zone_setnodes(dns_zone_t *zone, uint32_t nodes);
 /*%<
  * Set the number of nodes that will be checked per quantum.
  */
 
 void
-dns_zone_setsignatures(dns_zone_t *zone, isc_uint32_t signatures);
+dns_zone_setsignatures(dns_zone_t *zone, uint32_t signatures);
 /*%<
  * Set the number of signatures that will be generated per quantum.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getsignatures(dns_zone_t *zone);
 /*%<
  * Get the number of signatures that will be generated per quantum.
@@ -2160,7 +2115,7 @@ dns_zone_getsignatures(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_signwithkey(dns_zone_t *zone, dns_secalg_t algorithm,
-		     isc_uint16_t keyid, isc_boolean_t deleteit);
+		     uint16_t keyid, bool deleteit);
 /*%<
  * Initiate/resume signing of the entire zone with the zone DNSKEY(s)
  * that match the given algorithm and keyid.
@@ -2182,7 +2137,7 @@ dns_zone_getprivatetype(dns_zone_t *zone);
  */
 
 void
-dns_zone_rekey(dns_zone_t *zone, isc_boolean_t fullsign);
+dns_zone_rekey(dns_zone_t *zone, bool fullsign);
 /*%<
  * Update the zone's DNSKEY set from the key repository.
  *
@@ -2228,19 +2183,19 @@ dns_zone_cdscheck(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version);
  */
 
 void
-dns_zone_setadded(dns_zone_t *zone, isc_boolean_t added);
+dns_zone_setadded(dns_zone_t *zone, bool added);
 /*%
- * Sets the value of zone->added, which should be ISC_TRUE for
+ * Sets the value of zone->added, which should be true for
  * zones that were originally added by "rndc addzone".
  *
  * Requires:
  * \li	'zone' to be valid.
  */
 
-isc_boolean_t
+bool
 dns_zone_getadded(dns_zone_t *zone);
 /*%
- * Returns ISC_TRUE if the zone was originally added at runtime
+ * Returns true if the zone was originally added at runtime
  * using "rndc addzone".
  *
  * Requires:
@@ -2248,19 +2203,19 @@ dns_zone_getadded(dns_zone_t *zone);
  */
 
 void
-dns_zone_setautomatic(dns_zone_t *zone, isc_boolean_t automatic);
+dns_zone_setautomatic(dns_zone_t *zone, bool automatic);
 /*%
- * Sets the value of zone->automatic, which should be ISC_TRUE for
+ * Sets the value of zone->automatic, which should be true for
  * zones that were automatically added by named.
  *
  * Requires:
  * \li	'zone' to be valid.
  */
 
-isc_boolean_t
+bool
 dns_zone_getautomatic(dns_zone_t *zone);
 /*%
- * Returns ISC_TRUE if the zone was added automatically by named.
+ * Returns true if the zone was added automatically by named.
  *
  * Requires:
  * \li	'zone' to be valid.
@@ -2272,8 +2227,8 @@ dns_zone_dlzpostload(dns_zone_t *zone, dns_db_t *db);
  * Load the origin names for a writeable DLZ database.
  */
 
-isc_boolean_t
-dns_zone_isdynamic(dns_zone_t *zone, isc_boolean_t ignore_freeze);
+bool
+dns_zone_isdynamic(dns_zone_t *zone, bool ignore_freeze);
 /*%
  * Return true iff the zone is "dynamic", in the sense that the zone's
  * master file (if any) is written by the server, rather than being
@@ -2291,7 +2246,7 @@ dns_zone_isdynamic(dns_zone_t *zone, isc_boolean_t ignore_freeze);
  */
 
 isc_result_t
-dns_zone_setrefreshkeyinterval(dns_zone_t *zone, isc_uint32_t interval);
+dns_zone_setrefreshkeyinterval(dns_zone_t *zone, uint32_t interval);
 /*%
  * Sets the frequency, in minutes, with which the key repository will be
  * checked to see if the keys for this zone have been updated.  Any value
@@ -2302,7 +2257,7 @@ dns_zone_setrefreshkeyinterval(dns_zone_t *zone, isc_uint32_t interval);
  * \li	'zone' to be valid.
  */
 
-isc_boolean_t
+bool
 dns_zone_getrequestexpire(dns_zone_t *zone);
 /*%
  * Returns the true/false value of the request-expire option in the zone.
@@ -2312,7 +2267,7 @@ dns_zone_getrequestexpire(dns_zone_t *zone);
  */
 
 void
-dns_zone_setrequestexpire(dns_zone_t *zone, isc_boolean_t flag);
+dns_zone_setrequestexpire(dns_zone_t *zone, bool flag);
 /*%
  * Sets the request-expire option for the zone. Either true or false. The
  * default value is determined by the setting of this option in the view.
@@ -2322,7 +2277,7 @@ dns_zone_setrequestexpire(dns_zone_t *zone, isc_boolean_t flag);
  */
 
 
-isc_boolean_t
+bool
 dns_zone_getrequestixfr(dns_zone_t *zone);
 /*%
  * Returns the true/false value of the request-ixfr option in the zone.
@@ -2332,7 +2287,7 @@ dns_zone_getrequestixfr(dns_zone_t *zone);
  */
 
 void
-dns_zone_setrequestixfr(dns_zone_t *zone, isc_boolean_t flag);
+dns_zone_setrequestixfr(dns_zone_t *zone, bool flag);
 /*%
  * Sets the request-ixfr option for the zone. Either true or false. The
  * default value is determined by the setting of this option in the view.
@@ -2372,13 +2327,13 @@ isc_result_t
 dns_zone_keydone(dns_zone_t *zone, const char *data);
 
 isc_result_t
-dns_zone_setnsec3param(dns_zone_t *zone, isc_uint8_t hash, isc_uint8_t flags,
-		       isc_uint16_t iter, isc_uint8_t saltlen,
-		       unsigned char *salt, isc_boolean_t replace);
+dns_zone_setnsec3param(dns_zone_t *zone, uint8_t hash, uint8_t flags,
+		       uint16_t iter, uint8_t saltlen,
+		       unsigned char *salt, bool replace);
 /*%
  * Set the NSEC3 parameters for the zone.
  *
- * If 'replace' is ISC_TRUE, then the existing NSEC3 chain, if any, will
+ * If 'replace' is true, then the existing NSEC3 chain, if any, will
  * be replaced with the new one.  If 'hash' is zero, then the replacement
  * chain will be NSEC rather than NSEC3.
  *
@@ -2506,7 +2461,7 @@ dns_zone_getstatlevel(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_setserial(dns_zone_t *zone, isc_uint32_t serial);
+dns_zone_setserial(dns_zone_t *zone, uint32_t serial);
 /*%
  * Set the zone's serial to 'serial'.
  */
@@ -2523,6 +2478,33 @@ dns_zone_getgluecachestats(dns_zone_t *zone);
  * Returns:
  * \li	if present, a pointer to the statistics set installed in zone;
  *	otherwise NULL.
+ */
+
+bool
+dns_zone_isloaded(const dns_zone_t *zone);
+/*%<
+ * Return true if 'zone' was loaded and has not expired yet, return
+ * false otherwise.
+ */
+
+isc_result_t
+dns_zone_verifydb(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver);
+/*%<
+ * If 'zone' is a mirror zone, perform DNSSEC validation of version 'ver' of
+ * its database, 'db'.  Ensure that the DNSKEY RRset at zone apex is signed by
+ * at least one trust anchor specified for the view that 'zone' is assigned to.
+ * If 'ver' is NULL, use the current version of 'db'.
+ *
+ * If 'zone' is not a mirror zone, return ISC_R_SUCCESS immediately.
+ *
+ * Returns:
+ *
+ * \li	#ISC_R_SUCCESS		either 'zone' is not a mirror zone or 'zone' is
+ *				a mirror zone and all DNSSEC checks succeeded
+ *				and the DNSKEY RRset at zone apex is signed by
+ *				a trusted key
+ *
+ * \li	#DNS_R_VERIFYFAILURE	any other case
  */
 
 #endif /* DNS_ZONE_H */

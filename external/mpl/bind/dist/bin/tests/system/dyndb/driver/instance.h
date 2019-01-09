@@ -1,4 +1,4 @@
-/*	$NetBSD: instance.h,v 1.1.1.1 2018/08/12 12:07:38 christos Exp $	*/
+/*	$NetBSD: instance.h,v 1.1.1.2 2019/01/09 16:48:16 christos Exp $	*/
 
 /**
  * Driver instance object.
@@ -8,6 +8,8 @@
 
 #ifndef _LD_INSTANCE_H_
 #define _LD_INSTANCE_H_
+
+#include <stdbool.h>
 
 #include <dns/fixedname.h>
 #include <dns/name.h>
@@ -22,7 +24,7 @@ struct sample_instance {
 	dns_view_t		*view;
 	dns_zonemgr_t		*zmgr;
 	isc_task_t		*task;
-	isc_boolean_t		exiting;
+	bool		exiting;
 
 	dns_zone_t		*zone1;
 	dns_fixedname_t		zone1_fn;

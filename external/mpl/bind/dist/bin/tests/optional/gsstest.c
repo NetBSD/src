@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstest.c,v 1.1.1.1 2018/08/12 12:07:39 christos Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,6 @@
 
 #include <isc/app.h>
 #include <isc/base64.h>
-#include <isc/entropy.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/print.h>
@@ -385,7 +384,7 @@ initctx1(isc_task_t *task, isc_event_t *event) {
 	gssctx = GSS_C_NO_CONTEXT;
 	result = dns_tkey_buildgssquery(query, dns_fixedname_name(&servername),
 					dns_fixedname_name(&gssname),
-					NULL, 36000, &gssctx, ISC_TRUE,
+					NULL, 36000, &gssctx, true,
 					mctx, NULL);
 	CHECK("dns_tkey_buildgssquery", result);
 
@@ -437,7 +436,6 @@ main(int argc, char *argv[]) {
 	dns_dispatchmgr_t *dispatchmgr;
 	dns_dispatch_t *dispatchv4;
 	dns_view_t *view;
-	isc_entropy_t *ectx;
 	isc_task_t *task;
 	isc_log_t *lctx = NULL;
 	isc_logconfig_t *lcfg = NULL;
@@ -473,11 +471,7 @@ main(int argc, char *argv[]) {
 
 	isc_log_setdebuglevel(lctx, 9);
 
-	ectx = NULL;
-	RUNCHECK(isc_entropy_create(mctx, &ectx));
-	RUNCHECK(isc_entropy_createfilesource(ectx, "/dev/urandom"));
-
-	RUNCHECK(dst_lib_init(mctx, ectx, ISC_ENTROPY_GOODONLY));
+	RUNCHECK(dst_lib_init(mctx, NULL));
 
 	taskmgr = NULL;
 	RUNCHECK(isc_taskmgr_create(mctx, 1, 0, &taskmgr));
@@ -488,7 +482,7 @@ main(int argc, char *argv[]) {
 	socketmgr = NULL;
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
 	dispatchmgr = NULL;
-	RUNCHECK(dns_dispatchmgr_create(mctx, ectx, &dispatchmgr));
+	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 	isc_sockaddr_any(&bind_any);
 	attrs = DNS_DISPATCHATTR_UDP |
 		DNS_DISPATCHATTR_MAKEQUERY |
@@ -545,7 +539,6 @@ main(int argc, char *argv[]) {
 	dns_view_detach(&view);
 
 	dst_lib_destroy();
-	isc_entropy_detach(&ectx);
 
 	isc_mem_stats(mctx, stdout);
 	isc_mem_destroy(&mctx);

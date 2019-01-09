@@ -1,4 +1,4 @@
-/*	$NetBSD: named-nzd2nzf.c,v 1.1.1.1 2018/08/12 12:07:15 christos Exp $	*/
+/*	$NetBSD: named-nzd2nzf.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-#include "config.h"
+#include <config.h>
 
 #ifndef HAVE_LMDB
 #error This program requires the LMDB library.

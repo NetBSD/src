@@ -1,4 +1,4 @@
-/*	$NetBSD: mutexblock.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: mutexblock.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@
 
 ISC_LANG_BEGINDECLS
 
-isc_result_t
+void
 isc_mutexblock_init(isc_mutex_t *block, unsigned int count);
 /*%<
  * Initialize a block of locks.  If an error occurs all initialized locks
@@ -35,13 +35,9 @@ isc_mutexblock_init(isc_mutex_t *block, unsigned int count);
  *
  *\li	count > 0
  *
- * Returns:
- *
- *\li	Any code isc_mutex_init() can return is a valid return for this
- *	function.
  */
 
-isc_result_t
+void
 isc_mutexblock_destroy(isc_mutex_t *block, unsigned int count);
 /*%<
  * Destroy a block of locks.
@@ -55,10 +51,6 @@ isc_mutexblock_destroy(isc_mutex_t *block, unsigned int count);
  *\li	Each lock in the block be initialized via isc_mutex_init() or
  * 	the whole block was initialized via isc_mutex_initblock().
  *
- * Returns:
- *
- *\li	Any code isc_mutex_init() can return is a valid return for this
- *	function.
  */
 
 ISC_LANG_ENDDECLS

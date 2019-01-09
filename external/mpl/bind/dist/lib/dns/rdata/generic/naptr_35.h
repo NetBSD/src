@@ -1,4 +1,4 @@
-/*	$NetBSD: naptr_35.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: naptr_35.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,14 +21,14 @@
 typedef struct dns_rdata_naptr {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		order;
-	isc_uint16_t		preference;
+	uint16_t		order;
+	uint16_t		preference;
 	char			*flags;
-	isc_uint8_t		flags_len;
+	uint8_t		flags_len;
 	char			*service;
-	isc_uint8_t		service_len;
+	uint8_t		service_len;
 	char			*regexp;
-	isc_uint8_t		regexp_len;
+	uint8_t		regexp_len;
 	dns_name_t		replacement;
 } dns_rdata_naptr_t;
 

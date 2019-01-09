@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown_test.c,v 1.1.1.1 2018/08/12 12:07:39 christos Exp $	*/
+/*	$NetBSD: shutdown_test.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,7 +32,7 @@ typedef struct {
 	isc_timer_t *	timer;
 	unsigned int	ticks;
 	char	        name[16];
-	isc_boolean_t	exiting;
+	bool	exiting;
 	isc_task_t *	peer;
 } t_info;
 
@@ -59,7 +60,7 @@ t2_shutdown(isc_task_t *task, isc_event_t *event) {
 	t_info *info = event->ev_arg;
 
 	printf("task %s (%p) t2_shutdown\n", info->name, task);
-	info->exiting = ISC_TRUE;
+	info->exiting = true;
 	isc_event_free(&event);
 }
 
@@ -77,7 +78,7 @@ shutdown_action(isc_task_t *task, isc_event_t *event) {
 					    t2_shutdown, &tasks[1],
 					    sizeof(*event));
 		RUNTIME_CHECK(nevent != NULL);
-		info->exiting = ISC_TRUE;
+		info->exiting = true;
 		isc_task_sendanddetach(&info->peer, &nevent);
 	}
 	isc_event_free(&event);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vtwrapper.c,v 1.1.1.1 2018/08/12 12:07:27 christos Exp $	*/
+/*	$NetBSD: vtwrapper.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,6 +11,7 @@
  * information regarding copyright ownership.
  */
 
+#include <config.h>
 
 #define _GNU_SOURCE
 #include <sys/syscall.h>

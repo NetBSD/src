@@ -1,4 +1,4 @@
-/*	$NetBSD: avc_258.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: avc_258.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@ typedef struct dns_rdata_avc {
 	dns_rdatacommon_t       common;
 	isc_mem_t               *mctx;
 	unsigned char           *data;
-	isc_uint16_t            length;
+	uint16_t            length;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_avc_t;
 
 /*

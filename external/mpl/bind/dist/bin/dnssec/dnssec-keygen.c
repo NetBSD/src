@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.1.1.1 2018/08/12 12:07:18 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,12 +30,13 @@
 #include <config.h>
 
 #include <ctype.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/region.h>
@@ -55,7 +56,7 @@
 
 #include <dst/dst.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
@@ -80,14 +81,11 @@ usage(void) {
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "    -K <directory>: write keys into directory\n");
 	fprintf(stderr, "    -a <algorithm>:\n");
-	fprintf(stderr, "        RSA | RSAMD5 | DSA | RSASHA1 | NSEC3RSASHA1"
-				" | NSEC3DSA |\n");
-	fprintf(stderr, "        RSASHA256 | RSASHA512 | ECCGOST |\n");
+	fprintf(stderr, "        RSA | RSAMD5 | RSASHA1 | NSEC3RSASHA1"
+				" |\n");
+	fprintf(stderr, "        RSASHA256 | RSASHA512 |\n");
 	fprintf(stderr, "        ECDSAP256SHA256 | ECDSAP384SHA384 |\n");
-	fprintf(stderr, "        ED25519 | ED448 | DH |\n");
-	fprintf(stderr, "        HMAC-MD5 | HMAC-SHA1 | HMAC-SHA224 | "
-				"HMAC-SHA256 | \n");
-	fprintf(stderr, "        HMAC-SHA384 | HMAC-SHA512\n");
+	fprintf(stderr, "        ED25519 | ED448 | DH\n");
 	fprintf(stderr, "    -3: use NSEC3-capable algorithm\n");
 	fprintf(stderr, "    -b <key size in bits>:\n");
 	fprintf(stderr, "        RSAMD5:\t[1024..%d]\n", MAX_RSA);
@@ -96,20 +94,10 @@ usage(void) {
 	fprintf(stderr, "        RSASHA256:\t[1024..%d]\n", MAX_RSA);
 	fprintf(stderr, "        RSASHA512:\t[1024..%d]\n", MAX_RSA);
 	fprintf(stderr, "        DH:\t\t[128..4096]\n");
-	fprintf(stderr, "        DSA:\t\t[512..1024] and divisible by 64\n");
-	fprintf(stderr, "        NSEC3DSA:\t[512..1024] and divisible "
-				"by 64\n");
-	fprintf(stderr, "        ECCGOST:\tignored\n");
 	fprintf(stderr, "        ECDSAP256SHA256:\tignored\n");
 	fprintf(stderr, "        ECDSAP384SHA384:\tignored\n");
 	fprintf(stderr, "        ED25519:\tignored\n");
 	fprintf(stderr, "        ED448:\tignored\n");
-	fprintf(stderr, "        HMAC-MD5:\t[1..512]\n");
-	fprintf(stderr, "        HMAC-SHA1:\t[1..160]\n");
-	fprintf(stderr, "        HMAC-SHA224:\t[1..224]\n");
-	fprintf(stderr, "        HMAC-SHA256:\t[1..256]\n");
-	fprintf(stderr, "        HMAC-SHA384:\t[1..384]\n");
-	fprintf(stderr, "        HMAC-SHA512:\t[1..512]\n");
 	fprintf(stderr, "        (key size defaults are set according to\n"
 			"        algorithm and usage (ZSK or KSK)\n");
 	fprintf(stderr, "    -n <nametype>: ZONE | HOST | ENTITY | "
@@ -118,12 +106,9 @@ usage(void) {
 	fprintf(stderr, "    -c <class>: (default: IN)\n");
 	fprintf(stderr, "    -d <digest bits> (0 => max, default)\n");
 	fprintf(stderr, "    -E <engine>:\n");
-#if defined(PKCS11CRYPTO)
+#if USE_PKCS11
 	fprintf(stderr, "        path to PKCS#11 provider library "
 				"(default is %s)\n", PK11_LIB_LOCATION);
-#elif defined(USE_PKCS11)
-	fprintf(stderr, "        name of an OpenSSL engine to use "
-				"(default is \"pkcs11\")\n");
 #else
 	fprintf(stderr, "        name of an OpenSSL engine to use\n");
 #endif
@@ -132,7 +117,6 @@ usage(void) {
 			"(DH only)\n");
 	fprintf(stderr, "    -L <ttl>: default key TTL\n");
 	fprintf(stderr, "    -p <protocol>: (default: 3 [dnssec])\n");
-	fprintf(stderr, "    -r <randomdev>: a file containing random data\n");
 	fprintf(stderr, "    -s <strength>: strength value this key signs DNS "
 			"records with (default: 0)\n");
 	fprintf(stderr, "    -T <rrtype>: DNSKEY | KEY (default: DNSKEY; "
@@ -175,11 +159,6 @@ usage(void) {
 	exit (-1);
 }
 
-static isc_boolean_t
-dsa_size_ok(int size) {
-	return (ISC_TF(size >= 512 && size <= 1024 && size % 64 == 0));
-}
-
 static void
 progress(int p)
 {
@@ -214,10 +193,10 @@ main(int argc, char **argv) {
 	dst_key_t	*key = NULL;
 	dns_fixedname_t	fname;
 	dns_name_t	*name;
-	isc_uint16_t	flags = 0, kskflag = 0, revflag = 0;
+	uint16_t	flags = 0, kskflag = 0, revflag = 0;
 	dns_secalg_t	alg;
-	isc_boolean_t	conflict = ISC_FALSE, null_key = ISC_FALSE;
-	isc_boolean_t	oldstyle = ISC_FALSE;
+	bool	conflict = false, null_key = false;
+	bool	oldstyle = false;
 	isc_mem_t	*mctx = NULL;
 	int		ch, generator = 0, param = 0;
 	int		protocol = -1, size = -1, signatory = 0;
@@ -229,44 +208,39 @@ main(int argc, char **argv) {
 	dst_key_t	*prevkey = NULL;
 	isc_buffer_t	buf;
 	isc_log_t	*log = NULL;
-	isc_entropy_t	*ectx = NULL;
-#ifdef USE_PKCS11
-	const char	*engine = PKCS11_ENGINE;
-#else
 	const char	*engine = NULL;
-#endif
 	dns_rdataclass_t rdclass;
 	int		options = DST_TYPE_PRIVATE | DST_TYPE_PUBLIC;
 	int		dbits = 0;
 	dns_ttl_t	ttl = 0;
-	isc_boolean_t	use_nsec3 = ISC_FALSE;
+	bool	use_nsec3 = false;
 	isc_stdtime_t	publish = 0, activate = 0, revokekey = 0;
 	isc_stdtime_t	inactive = 0, deltime = 0;
 	isc_stdtime_t	now;
 	int		prepub = -1;
-	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
-	isc_boolean_t	setrev = ISC_FALSE, setinact = ISC_FALSE;
-	isc_boolean_t	setdel = ISC_FALSE, setttl = ISC_FALSE;
-	isc_boolean_t	unsetpub = ISC_FALSE, unsetact = ISC_FALSE;
-	isc_boolean_t	unsetrev = ISC_FALSE, unsetinact = ISC_FALSE;
-	isc_boolean_t	unsetdel = ISC_FALSE;
-	isc_boolean_t	genonly = ISC_FALSE;
-	isc_boolean_t	quiet = ISC_FALSE;
-	isc_boolean_t	show_progress = ISC_FALSE;
+	bool	setpub = false, setact = false;
+	bool	setrev = false, setinact = false;
+	bool	setdel = false, setttl = false;
+	bool	unsetpub = false, unsetact = false;
+	bool	unsetrev = false, unsetinact = false;
+	bool	unsetdel = false;
+	bool	genonly = false;
+	bool	quiet = false;
+	bool	show_progress = false;
 	unsigned char	c;
 	isc_stdtime_t	syncadd = 0, syncdel = 0;
-	isc_boolean_t	setsyncadd = ISC_FALSE;
-	isc_boolean_t	setsyncdel = ISC_FALSE;
+	bool	setsyncadd = false;
+	bool	setsyncdel = false;
 
 	if (argc == 1)
 		usage();
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	/*
 	 * Process memory debugging argument first.
@@ -291,7 +265,7 @@ main(int argc, char **argv) {
 			break;
 		}
 	}
-	isc_commandline_reset = ISC_TRUE;
+	isc_commandline_reset = true;
 
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
@@ -300,7 +274,7 @@ main(int argc, char **argv) {
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 	    switch (ch) {
 		case '3':
-			use_nsec3 = ISC_TRUE;
+			use_nsec3 = true;
 			break;
 		case 'a':
 			algname = isc_commandline_argument;
@@ -311,7 +285,7 @@ main(int argc, char **argv) {
 				fatal("-b requires a non-negative number");
 			break;
 		case 'C':
-			oldstyle = ISC_TRUE;
+			oldstyle = true;
 			break;
 		case 'c':
 			classname = isc_commandline_argument;
@@ -327,7 +301,7 @@ main(int argc, char **argv) {
 		case 'e':
 			fprintf(stderr,
 				"phased-out option -e "
-				"(was 'use (RSA) large exponent)\n");
+				"(was 'use (RSA) large exponent')\n");
 			break;
 		case 'f':
 			c = (unsigned char)(isc_commandline_argument[0]);
@@ -359,7 +333,7 @@ main(int argc, char **argv) {
 			break;
 		case 'L':
 			ttl = strtottl(isc_commandline_argument);
-			setttl = ISC_TRUE;
+			setttl = true;
 			break;
 		case 'n':
 			nametype = isc_commandline_argument;
@@ -373,10 +347,11 @@ main(int argc, char **argv) {
 				      "[0..255]");
 			break;
 		case 'q':
-			quiet = ISC_TRUE;
+			quiet = true;
 			break;
 		case 'r':
-			setup_entropy(mctx, isc_commandline_argument, &ectx);
+			fatal("The -r option has been deprecated.\n"
+			      "System random data is always used.\n");
 			break;
 		case 's':
 			signatory = strtol(isc_commandline_argument,
@@ -409,7 +384,7 @@ main(int argc, char **argv) {
 			/* already the default */
 			break;
 		case 'G':
-			genonly = ISC_TRUE;
+			genonly = true;
 			break;
 		case 'P':
 			/* -Psync ? */
@@ -503,12 +478,9 @@ main(int argc, char **argv) {
 	}
 
 	if (!isatty(0))
-		quiet = ISC_TRUE;
+		quiet = true;
 
-	if (ectx == NULL)
-		setup_entropy(mctx, NULL, &ectx);
-	ret = dst_lib_init2(mctx, ectx, engine,
-			    ISC_ENTROPY_BLOCKING | ISC_ENTROPY_GOODONLY);
+	ret = dst_lib_init(mctx, engine);
 	if (ret != ISC_R_SUCCESS)
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(ret));
@@ -539,79 +511,36 @@ main(int argc, char **argv) {
 		}
 
 		if (strcasecmp(algname, "RSA") == 0) {
-#ifndef PK11_MD5_DISABLE
 			fprintf(stderr, "The use of RSA (RSAMD5) is not "
 					"recommended.\nIf you still wish to "
 					"use RSA (RSAMD5) please specify "
 					"\"-a RSAMD5\"\n");
 			INSIST(freeit == NULL);
 			return (1);
-		} else if (strcasecmp(algname, "HMAC-MD5") == 0) {
-			alg = DST_ALG_HMACMD5;
-#else
-			fprintf(stderr,
-				"The use of RSA (RSAMD5) was disabled\n");
-			INSIST(freeit == NULL);
-			return (1);
-		} else if (strcasecmp(algname, "RSAMD5") == 0) {
-			fprintf(stderr, "The use of RSAMD5 was disabled\n");
-			INSIST(freeit == NULL);
-			return (1);
-		} else if (strcasecmp(algname, "HMAC-MD5") == 0) {
-			fprintf(stderr,
-				"The use of HMAC-MD5 was disabled\n");
-			return (1);
-#endif
-		} else if (strcasecmp(algname, "HMAC-SHA1") == 0)
-			alg = DST_ALG_HMACSHA1;
-		else if (strcasecmp(algname, "HMAC-SHA224") == 0)
-			alg = DST_ALG_HMACSHA224;
-		else if (strcasecmp(algname, "HMAC-SHA256") == 0)
-			alg = DST_ALG_HMACSHA256;
-		else if (strcasecmp(algname, "HMAC-SHA384") == 0)
-			alg = DST_ALG_HMACSHA384;
-		else if (strcasecmp(algname, "HMAC-SHA512") == 0)
-			alg = DST_ALG_HMACSHA512;
-		else {
+		} else {
 			r.base = algname;
 			r.length = strlen(algname);
 			ret = dns_secalg_fromtext(&alg, &r);
-			if (ret != ISC_R_SUCCESS)
+			if (ret != ISC_R_SUCCESS) {
 				fatal("unknown algorithm %s", algname);
-			if (alg == DST_ALG_DH)
+			}
+			if (alg == DST_ALG_DH) {
 				options |= DST_TYPE_KEY;
+			}
 		}
 
-#ifdef PK11_MD5_DISABLE
-		INSIST((alg != DNS_KEYALG_RSAMD5) && (alg != DST_ALG_HMACMD5));
-#endif
-
-
-		if (alg == DST_ALG_HMACMD5 || alg == DST_ALG_HMACSHA1 ||
-		    alg == DST_ALG_HMACSHA224 || alg == DST_ALG_HMACSHA256 ||
-		    alg == DST_ALG_HMACSHA384 || alg == DST_ALG_HMACSHA512)
-		{
-			fprintf(stderr,
-				"Use of dnssec-keygen for HMAC keys is "
-				"deprecated: use tsig-keygen\n");
-		}
-
-		if (!dst_algorithm_supported(alg))
+		if (!dst_algorithm_supported(alg)) {
 			fatal("unsupported algorithm: %d", alg);
+		}
 
 		if (use_nsec3) {
 			switch (alg) {
-			case DST_ALG_DSA:
-				alg = DST_ALG_NSEC3DSA;
-				break;
 			case DST_ALG_RSASHA1:
 				alg = DST_ALG_NSEC3RSASHA1;
 				break;
-			case DST_ALG_NSEC3DSA:
 			case DST_ALG_NSEC3RSASHA1:
 			case DST_ALG_RSASHA256:
 			case DST_ALG_RSASHA512:
-			case DST_ALG_ECCGOST:
 			case DST_ALG_ECDSA256:
 			case DST_ALG_ECDSA384:
 			case DST_ALG_ED25519:
@@ -624,20 +553,20 @@ main(int argc, char **argv) {
 		}
 
 		if (type != NULL && (options & DST_TYPE_KEY) != 0) {
-			if (strcasecmp(type, "NOAUTH") == 0)
+			if (strcasecmp(type, "NOAUTH") == 0) {
 				flags |= DNS_KEYTYPE_NOAUTH;
-			else if (strcasecmp(type, "NOCONF") == 0)
+			} else if (strcasecmp(type, "NOCONF") == 0) {
 				flags |= DNS_KEYTYPE_NOCONF;
-			else if (strcasecmp(type, "NOAUTHCONF") == 0) {
+			} else if (strcasecmp(type, "NOAUTHCONF") == 0) {
 				flags |= (DNS_KEYTYPE_NOAUTH |
 					  DNS_KEYTYPE_NOCONF);
 				if (size < 0)
 					size = 0;
-			}
-			else if (strcasecmp(type, "AUTHCONF") == 0)
+			} else if (strcasecmp(type, "AUTHCONF") == 0) {
 				/* nothing */;
-			else
+			} else {
 				fatal("invalid type %s", type);
+			}
 		}
 
 		if (size < 0) {
@@ -657,7 +586,6 @@ main(int argc, char **argv) {
 							" to %d\n", size);
 				}
 				break;
-			case DST_ALG_ECCGOST:
 			case DST_ALG_ECDSA256:
 			case DST_ALG_ECDSA384:
 			case DST_ALG_ED25519:
@@ -675,14 +603,14 @@ main(int argc, char **argv) {
 				      "prepublication interval.");
 
 			if (!setpub && !setact) {
-				setpub = setact = ISC_TRUE;
+				setpub = setact = true;
 				publish = now;
 				activate = now + prepub;
 			} else if (setpub && !setact) {
-				setact = ISC_TRUE;
+				setact = true;
 				activate = publish + prepub;
 			} else if (setact && !setpub) {
-				setpub = ISC_TRUE;
+				setpub = true;
 				publish = activate - prepub;
 			}
 
@@ -768,7 +696,7 @@ main(int argc, char **argv) {
 					"You can use dnssec-settime -D to "
 					"change this.\n", program, keystr);
 
-		setpub = setact = ISC_TRUE;
+		setpub = setact = true;
 	}
 
 	switch (alg) {
@@ -787,14 +715,6 @@ main(int argc, char **argv) {
 		if (size != 0 && (size < 128 || size > 4096))
 			fatal("DH key size %d out of range", size);
 		break;
-	case DNS_KEYALG_DSA:
-	case DNS_KEYALG_NSEC3DSA:
-		if (size != 0 && !dsa_size_ok(size))
-			fatal("invalid DSS key size: %d", size);
-		break;
-	case DST_ALG_ECCGOST:
-		size = 256;
-		break;
 	case DST_ALG_ECDSA256:
 		size = 256;
 		break;
@@ -807,78 +727,18 @@ main(int argc, char **argv) {
 	case DST_ALG_ED448:
 		size = 456;
 		break;
-	case DST_ALG_HMACMD5:
-		options |= DST_TYPE_KEY;
-		if (size < 1 || size > 512)
-			fatal("HMAC-MD5 key size %d out of range", size);
-		if (dbits != 0 && (dbits < 80 || dbits > 128))
-			fatal("HMAC-MD5 digest bits %d out of range", dbits);
-		if ((dbits % 8) != 0)
-			fatal("HMAC-MD5 digest bits %d not divisible by 8",
-			      dbits);
-		break;
-	case DST_ALG_HMACSHA1:
-		options |= DST_TYPE_KEY;
-		if (size < 1 || size > 160)
-			fatal("HMAC-SHA1 key size %d out of range", size);
-		if (dbits != 0 && (dbits < 80 || dbits > 160))
-			fatal("HMAC-SHA1 digest bits %d out of range", dbits);
-		if ((dbits % 8) != 0)
-			fatal("HMAC-SHA1 digest bits %d not divisible by 8",
-			      dbits);
-		break;
-	case DST_ALG_HMACSHA224:
-		options |= DST_TYPE_KEY;
-		if (size < 1 || size > 224)
-			fatal("HMAC-SHA224 key size %d out of range", size);
-		if (dbits != 0 && (dbits < 112 || dbits > 224))
-			fatal("HMAC-SHA224 digest bits %d out of range", dbits);
-		if ((dbits % 8) != 0)
-			fatal("HMAC-SHA224 digest bits %d not divisible by 8",
-			      dbits);
-		break;
-	case DST_ALG_HMACSHA256:
-		options |= DST_TYPE_KEY;
-		if (size < 1 || size > 256)
-			fatal("HMAC-SHA256 key size %d out of range", size);
-		if (dbits != 0 && (dbits < 128 || dbits > 256))
-			fatal("HMAC-SHA256 digest bits %d out of range", dbits);
-		if ((dbits % 8) != 0)
-			fatal("HMAC-SHA256 digest bits %d not divisible by 8",
-			      dbits);
-		break;
-	case DST_ALG_HMACSHA384:
-		options |= DST_TYPE_KEY;
-		if (size < 1 || size > 384)
-			fatal("HMAC-384 key size %d out of range", size);
-		if (dbits != 0 && (dbits < 192 || dbits > 384))
-			fatal("HMAC-SHA384 digest bits %d out of range", dbits);
-		if ((dbits % 8) != 0)
-			fatal("HMAC-SHA384 digest bits %d not divisible by 8",
-			      dbits);
-		break;
-	case DST_ALG_HMACSHA512:
-		options |= DST_TYPE_KEY;
-		if (size < 1 || size > 512)
-			fatal("HMAC-SHA512 key size %d out of range", size);
-		if (dbits != 0 && (dbits < 256 || dbits > 512))
-			fatal("HMAC-SHA512 digest bits %d out of range", dbits);
-		if ((dbits % 8) != 0)
-			fatal("HMAC-SHA512 digest bits %d not divisible by 8",
-			      dbits);
-		break;
 	}
 
 	if (alg != DNS_KEYALG_DH && generator != 0)
 		fatal("specified DH generator for a non-DH key");
 
 	if (nametype == NULL) {
-		if ((options & DST_TYPE_KEY) != 0) /* KEY / HMAC */
+		if ((options & DST_TYPE_KEY) != 0) /* KEY */
 			fatal("no nametype specified");
 		flags |= DNS_KEYOWNER_ZONE;	/* DNSKEY */
 	} else if (strcasecmp(nametype, "zone") == 0)
 		flags |= DNS_KEYOWNER_ZONE;
-	else if ((options & DST_TYPE_KEY) != 0)	{ /* KEY / HMAC */
+	else if ((options & DST_TYPE_KEY) != 0)	{ /* KEY */
 		if (strcasecmp(nametype, "host") == 0 ||
 			 strcasecmp(nametype, "entity") == 0)
 			flags |= DNS_KEYOWNER_ENTITY;
@@ -894,7 +754,7 @@ main(int argc, char **argv) {
 	if (directory == NULL)
 		directory = ".";
 
-	if ((options & DST_TYPE_KEY) != 0)  /* KEY / HMAC */
+	if ((options & DST_TYPE_KEY) != 0)  /* KEY */
 		flags |= signatory;
 	else if ((flags & DNS_KEYOWNER_ZONE) != 0) { /* DNSKEY */
 		flags |= kskflag;
@@ -915,12 +775,11 @@ main(int argc, char **argv) {
 	}
 
 	if ((flags & DNS_KEYFLAG_OWNERMASK) == DNS_KEYOWNER_ZONE &&
-	    (alg == DNS_KEYALG_DH || alg == DST_ALG_HMACMD5 ||
-	     alg == DST_ALG_HMACSHA1 || alg == DST_ALG_HMACSHA224 ||
-	     alg == DST_ALG_HMACSHA256 || alg == DST_ALG_HMACSHA384 ||
-	     alg == DST_ALG_HMACSHA512))
+	    alg == DNS_KEYALG_DH)
+	{
 		fatal("a key with algorithm '%s' cannot be a zone key",
 		      algname);
+	}
 
 	switch(alg) {
 	case DNS_KEYALG_RSAMD5:
@@ -928,55 +787,41 @@ main(int argc, char **argv) {
 	case DNS_KEYALG_NSEC3RSASHA1:
 	case DNS_KEYALG_RSASHA256:
 	case DNS_KEYALG_RSASHA512:
-		show_progress = ISC_TRUE;
+		show_progress = true;
 		break;
 
 	case DNS_KEYALG_DH:
 		param = generator;
 		break;
 
-	case DNS_KEYALG_DSA:
-	case DNS_KEYALG_NSEC3DSA:
-	case DST_ALG_ECCGOST:
 	case DST_ALG_ECDSA256:
 	case DST_ALG_ECDSA384:
 	case DST_ALG_ED25519:
 	case DST_ALG_ED448:
-		show_progress = ISC_TRUE;
-		/* fall through */
-
-	case DST_ALG_HMACMD5:
-	case DST_ALG_HMACSHA1:
-	case DST_ALG_HMACSHA224:
-	case DST_ALG_HMACSHA256:
-	case DST_ALG_HMACSHA384:
-	case DST_ALG_HMACSHA512:
-		param = 0;
+		show_progress = true;
 		break;
 	}
 
 	if ((flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY)
-		null_key = ISC_TRUE;
+		null_key = true;
 
 	isc_buffer_init(&buf, filename, sizeof(filename) - 1);
 
 	do {
-		conflict = ISC_FALSE;
+		conflict = false;
 
 		if (!quiet && show_progress) {
 			fprintf(stderr, "Generating key pair.");
-			ret = dst_key_generate2(name, alg, size, param, flags,
-						protocol, rdclass, mctx, &key,
-						&progress);
+			ret = dst_key_generate(name, alg, size, param, flags,
+					       protocol, rdclass, mctx, &key,
+					       &progress);
 			putc('\n', stderr);
 			fflush(stderr);
 		} else {
-			ret = dst_key_generate2(name, alg, size, param, flags,
-						protocol, rdclass, mctx, &key,
-						NULL);
+			ret = dst_key_generate(name, alg, size, param, flags,
+					       protocol, rdclass, mctx, &key,
+					       NULL);
 		}
-
-		isc_entropy_stopcallbacksources(ectx);
 
 		if (ret != ISC_R_SUCCESS) {
 			char namestr[DNS_NAME_FORMATSIZE];
@@ -1084,7 +929,7 @@ main(int argc, char **argv) {
 		 * or another key being revoked.
 		 */
 		if (key_collision(key, name, directory, mctx, NULL)) {
-			conflict = ISC_TRUE;
+			conflict = true;
 			if (null_key) {
 				dst_key_free(&key);
 				break;
@@ -1105,7 +950,7 @@ main(int argc, char **argv) {
 
 			dst_key_free(&key);
 		}
-	} while (conflict == ISC_TRUE);
+	} while (conflict == true);
 
 	if (conflict)
 		fatal("cannot generate a null key due to possible key ID "
@@ -1130,7 +975,6 @@ main(int argc, char **argv) {
 		dst_key_free(&prevkey);
 
 	cleanup_logging(&log);
-	cleanup_entropy(&ectx);
 	dst_lib_destroy();
 	dns_name_destroy();
 	if (verbose > 10)

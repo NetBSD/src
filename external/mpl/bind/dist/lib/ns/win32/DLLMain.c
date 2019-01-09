@@ -1,4 +1,4 @@
-/*	$NetBSD: DLLMain.c,v 1.1.1.1 2018/08/12 12:08:08 christos Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.1.1.2 2019/01/09 16:48:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,6 +11,7 @@
  * information regarding copyright ownership.
  */
 
+#include <config.h>
 
 #include <windows.h>
 #include <signal.h>

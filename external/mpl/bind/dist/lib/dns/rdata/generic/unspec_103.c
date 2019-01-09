@@ -1,4 +1,4 @@
-/*	$NetBSD: unspec_103.c,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: unspec_103.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,7 +156,7 @@ digest_unspec(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_unspec(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_unspec);
@@ -166,10 +166,10 @@ checkowner_unspec(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_unspec(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_unspec);
@@ -178,7 +178,7 @@ checknames_unspec(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

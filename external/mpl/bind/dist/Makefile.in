@@ -14,7 +14,7 @@ top_builddir =  @top_builddir@
 
 VERSION=@BIND9_VERSION@
 
-SUBDIRS =	make unit lib bin doc
+SUBDIRS =	make lib fuzz bin doc
 TARGETS =
 PREREQS =	bind.keys.h
 
@@ -22,7 +22,8 @@ MANPAGES =	isc-config.sh.1
 
 HTMLPAGES =	isc-config.sh.html
 
-MANOBJS =	README HISTORY OPTIONS ${MANPAGES} ${HTMLPAGES}
+MANOBJS =	README HISTORY OPTIONS CONTRIBUTING PLATFORMS \
+		${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -89,6 +90,7 @@ force-test: test-force
 
 test-force:
 	status=0; \
+	(cd fuzz && ${MAKE} check) || status=1; \
 	(cd bin/tests && ${MAKE} ${MAKEDEFS} test) || status=1; \
 	(test -f ${top_builddir}/unit/unittest.sh && \
 		$(SHELL) ${top_builddir}/unit/unittest.sh) || status=1; \
@@ -111,6 +113,11 @@ OPTIONS: OPTIONS.md
 
 CONTRIBUTING: CONTRIBUTING.md
 	${PANDOC} --email-obfuscation=none -s -t html CONTRIBUTING.md | \
+		${W3M} -dump -cols 75 -O ascii -T text/html | \
+		sed -e '$${/^$$/d;}' > $@
+
+PLATFORMS: PLATFORMS.md
+	${PANDOC} --email-obfuscation=none -s -t html PLATFORMS.md | \
 		${W3M} -dump -cols 75 -O ascii -T text/html | \
 		sed -e '$${/^$$/d;}' > $@
 

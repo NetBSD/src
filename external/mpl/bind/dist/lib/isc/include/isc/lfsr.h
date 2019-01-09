@@ -1,4 +1,4 @@
-/*	$NetBSD: lfsr.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: lfsr.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,8 @@
 #define ISC_LFSR_H 1
 
 /*! \file isc/lfsr.h */
+
+#include <inttypes.h>
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -38,9 +40,9 @@ typedef void (*isc_lfsrreseed_t)(isc_lfsr_t *, void *);
  * needs to be taken to not change state once the lfsr is in operation.
  */
 struct isc_lfsr {
-	isc_uint32_t		state;	/*%< previous state */
+	uint32_t		state;	/*%< previous state */
 	unsigned int		bits;	/*%< length */
-	isc_uint32_t		tap;	/*%< bit taps */
+	uint32_t		tap;	/*%< bit taps */
 	unsigned int		count;	/*%< reseed count (in BITS!) */
 	isc_lfsrreseed_t	reseed;	/*%< reseed function */
 	void		       *arg;	/*%< reseed function argument */
@@ -50,8 +52,8 @@ ISC_LANG_BEGINDECLS
 
 
 void
-isc_lfsr_init(isc_lfsr_t *lfsr, isc_uint32_t state, unsigned int bits,
-		   isc_uint32_t tap, unsigned int count,
+isc_lfsr_init(isc_lfsr_t *lfsr, uint32_t state, unsigned int bits,
+		   uint32_t tap, unsigned int count,
 		   isc_lfsrreseed_t reseed, void *arg);
 /*%<
  * Initialize an LFSR.
@@ -94,7 +96,7 @@ isc_lfsr_skip(isc_lfsr_t *lfsr, unsigned int skip);
  *\li	lfsr be valid.
  */
 
-isc_uint32_t
+uint32_t
 isc_lfsr_generate32(isc_lfsr_t *lfsr1, isc_lfsr_t *lfsr2);
 /*%<
  * Given two LFSRs, use the current state from each to skip entries in the

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,8 +37,8 @@ fromtext_in_dhcid(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_in_dhcid(ARGS_TOTEXT) {
 	isc_region_t sr, sr2;
-	char buf[sizeof(" ; 64000 255 64000")];
-	size_t n;
+	/* " ; 64000 255 64000" */
+	char buf[5 + 3*11 + 1];
 
 	REQUIRE(rdata->type == dns_rdatatype_dhcid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -57,10 +57,9 @@ totext_in_dhcid(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(/* ( */ " )", target));
 		if (rdata->length > 2) {
-			n = snprintf(buf, sizeof(buf), " ; %u %u %u",
-				     sr2.base[0] * 256U + sr2.base[1],
-				     sr2.base[2], rdata->length - 3U);
-			INSIST(n < sizeof(buf));
+			snprintf(buf, sizeof(buf), " ; %u %u %u",
+				 sr2.base[0] * 256U + sr2.base[1],
+				 sr2.base[2], rdata->length - 3U);
 			RETERR(str_totext(buf, target));
 		}
 	}
@@ -199,7 +198,7 @@ digest_in_dhcid(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_in_dhcid(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_dhcid);
@@ -210,10 +209,10 @@ checkowner_in_dhcid(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_in_dhcid(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_dhcid);
@@ -223,7 +222,7 @@ checknames_in_dhcid(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

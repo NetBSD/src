@@ -1,4 +1,4 @@
-/*	$NetBSD: taskpool.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: taskpool.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/random.h>
@@ -97,9 +99,7 @@ isc_taskpool_create(isc_taskmgr_t *tmgr, isc_mem_t *mctx,
 
 void
 isc_taskpool_gettask(isc_taskpool_t *pool, isc_task_t **targetp) {
-	isc_uint32_t i;
-	isc_random_get(&i);
-	isc_task_attach(pool->tasks[i % pool->ntasks], targetp);
+	isc_task_attach(pool->tasks[isc_random_uniform(pool->ntasks)], targetp);
 }
 
 int
@@ -170,7 +170,7 @@ isc_taskpool_destroy(isc_taskpool_t **poolp) {
 }
 
 void
-isc_taskpool_setprivilege(isc_taskpool_t *pool, isc_boolean_t priv) {
+isc_taskpool_setprivilege(isc_taskpool_t *pool, bool priv) {
 	unsigned int i;
 
 	REQUIRE(pool != NULL);

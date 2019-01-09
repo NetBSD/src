@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable_test.c,v 1.1.1.1 2018/08/12 12:08:21 christos Exp $	*/
+/*	$NetBSD: keytable_test.c,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,22 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
-#include <unistd.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <inttypes.h>
+#include <unistd.h>
 
-#if defined(OPENSSL) || defined(PKCS11CRYPTO)
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/base64.h>
 #include <isc/buffer.h>
@@ -39,6 +45,27 @@
 
 #include "dnstest.h"
 
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, true);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
+
 dns_keytable_t *keytable = NULL;
 dns_ntatable_t *ntatable = NULL;
 
@@ -51,7 +78,7 @@ static dns_view_t *view = NULL;
 
 /*
  * Test utilities.  In general, these assume input parameters are valid
- * (checking with ATF_REQUIRE_EQ, thus aborting if not) and unlikely run time
+ * (checking with assert_int_equal, thus aborting if not) and unlikely run time
  * errors (such as memory allocation failure) won't happen.  This helps keep
  * the test code concise.
  */
@@ -71,14 +98,15 @@ str2name(const char *namestr) {
 	DE_CONST(namestr, deconst_namestr); /* OK, since we don't modify it */
 	isc_buffer_init(&namebuf, deconst_namestr, strlen(deconst_namestr));
 	isc_buffer_add(&namebuf, strlen(namestr));
-	ATF_REQUIRE_EQ(dns_name_fromtext(name, &namebuf, dns_rootname, 0,
-					 NULL), ISC_R_SUCCESS);
+	assert_int_equal(dns_name_fromtext(name, &namebuf, dns_rootname,
+					   0, NULL),
+			 ISC_R_SUCCESS);
 
 	return (name);
 }
 
 static void
-create_key(isc_uint16_t flags, isc_uint8_t proto, isc_uint8_t alg,
+create_key(uint16_t flags, uint8_t proto, uint8_t alg,
 	   const char *keynamestr, const char *keystr, dst_key_t **target)
 {
 	dns_rdata_dnskey_t keystruct;
@@ -99,19 +127,19 @@ create_key(isc_uint16_t flags, isc_uint8_t proto, isc_uint8_t alg,
 
 	isc_buffer_init(&keydatabuf, keydata, sizeof(keydata));
 	isc_buffer_init(&rrdatabuf, rrdata, sizeof(rrdata));
-	ATF_REQUIRE_EQ(isc_base64_decodestring(keystr, &keydatabuf),
-		       ISC_R_SUCCESS);
+	assert_int_equal(isc_base64_decodestring(keystr, &keydatabuf),
+			 ISC_R_SUCCESS);
 	isc_buffer_usedregion(&keydatabuf, &r);
 	keystruct.datalen = r.length;
 	keystruct.data = r.base;
-	ATF_REQUIRE_EQ(dns_rdata_fromstruct(NULL, keystruct.common.rdclass,
-					    keystruct.common.rdtype,
-					    &keystruct, &rrdatabuf),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_rdata_fromstruct(NULL, keystruct.common.rdclass,
+					      keystruct.common.rdtype,
+					      &keystruct, &rrdatabuf),
+			 ISC_R_SUCCESS);
 
-	ATF_REQUIRE_EQ(dst_key_fromdns(str2name(keynamestr), rdclass,
-				       &rrdatabuf, mctx, target),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dst_key_fromdns(str2name(keynamestr), rdclass,
+					 &rrdatabuf, mctx, target),
+			 ISC_R_SUCCESS);
 }
 
 /* Common setup: create a keytable and ntatable to test with a few keys */
@@ -122,92 +150,92 @@ create_tables() {
 	isc_stdtime_t now;
 
 	result = dns_test_makeview("view", &view);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_REQUIRE_EQ(dns_keytable_create(mctx, &keytable), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_ntatable_create(view, taskmgr, timermgr,
-					   &ntatable), ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_create(mctx, &keytable), ISC_R_SUCCESS);
+	assert_int_equal(dns_ntatable_create(view, taskmgr, timermgr,
+					     &ntatable), ISC_R_SUCCESS);
 
 	/* Add a normal key */
 	create_key(257, 3, 5, "example.com", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_FALSE, ISC_FALSE, &key),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_add(keytable, false, false, &key),
+			 ISC_R_SUCCESS);
 
 	/* Add an initializing managed key */
 	create_key(257, 3, 5, "managed.com", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_TRUE, ISC_TRUE, &key),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_add(keytable, true, true, &key),
+			 ISC_R_SUCCESS);
 
 	/* Add a null key */
-	ATF_REQUIRE_EQ(dns_keytable_marksecure(keytable,
-					       str2name("null.example")),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_marksecure(keytable,
+						 str2name("null.example")),
+			 ISC_R_SUCCESS);
 
 	/* Add a negative trust anchor, duration 1 hour */
 	isc_stdtime_get(&now);
-	ATF_REQUIRE_EQ(dns_ntatable_add(ntatable,
-					str2name("insecure.example"),
-					ISC_FALSE, now, 3600),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_ntatable_add(ntatable,
+					  str2name("insecure.example"),
+					  false, now, 3600),
+			 ISC_R_SUCCESS);
 }
 
 static void
 destroy_tables() {
-	if (ntatable != NULL)
+	if (ntatable != NULL) {
 		dns_ntatable_detach(&ntatable);
-	if (keytable != NULL)
+	}
+	if (keytable != NULL) {
 		dns_keytable_detach(&keytable);
+	}
 
 	dns_view_detach(&view);
 }
 
-/*
- * Individual unit tests
- */
-
-ATF_TC(add);
-ATF_TC_HEAD(add, tc) {
-	atf_tc_set_md_var(tc, "descr", "add keys to the keytable");
-}
-ATF_TC_BODY(add, tc) {
+/* add keys to the keytable */
+static void
+add_test(void **state) {
 	dst_key_t *key = NULL;
 	dns_keynode_t *keynode = NULL;
 	dns_keynode_t *next_keynode = NULL;
 	dns_keynode_t *null_keynode = NULL;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	ATF_REQUIRE_EQ(dns_test_begin(NULL, ISC_TRUE), ISC_R_SUCCESS);
 	create_tables();
 
 	/*
 	 * Get the keynode for the example.com key.  There's no other key for
 	 * the name, so nextkeynode() should return NOTFOUND.
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("example.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_find(keytable, str2name("example.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_NOTFOUND);
 
 	/*
 	 * Try to add the same key.  This should have no effect, so
 	 * nextkeynode() should still return NOTFOUND.
 	 */
 	create_key(257, 3, 5, "example.com", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_FALSE, ISC_FALSE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_add(keytable, false, false, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_NOTFOUND);
 
 	/* Add another key (different keydata) */
 	dns_keytable_detachkeynode(keytable, &keynode);
 	create_key(257, 3, 5, "example.com", keystr2, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_FALSE, ISC_FALSE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("example.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_add(keytable, false, false, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("example.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_SUCCESS);
 	dns_keytable_detachkeynode(keytable, &next_keynode);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
@@ -217,13 +245,15 @@ ATF_TC_BODY(add, tc) {
 	 * retrieved key is an initializing key, then mark it as trusted using
 	 * dns_keynode_trust() and ensure the latter works as expected.
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("managed.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_TRUE);
+	assert_int_equal(dns_keytable_find(keytable, str2name("managed.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keynode_initial(keynode), true);
 	dns_keynode_trust(keynode);
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_FALSE);
+	assert_int_equal(dns_keynode_initial(keynode), false);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
 	/*
@@ -232,13 +262,15 @@ ATF_TC_BODY(add, tc) {
 	 * ISC_R_NOTFOUND and that the added key is an initializing key.
 	 */
 	create_key(257, 3, 5, "managed.com", keystr2, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_TRUE, ISC_TRUE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("managed.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_TRUE);
+	assert_int_equal(dns_keytable_add(keytable, true, true, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("managed.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keynode_initial(keynode), true);
 	dns_keytable_detachkeynode(keytable, &next_keynode);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
@@ -249,19 +281,22 @@ ATF_TC_BODY(add, tc) {
 	 * nodes for managed.com, both containing non-initializing keys.
 	 */
 	create_key(257, 3, 5, "managed.com", keystr2, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_TRUE, ISC_FALSE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("managed.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_FALSE);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_add(keytable, true, false, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("managed.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keynode_initial(keynode), false);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_SUCCESS);
 	dns_keytable_detachkeynode(keytable, &keynode);
 	keynode = next_keynode;
 	next_keynode = NULL;
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_FALSE);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_NOTFOUND);
+	assert_int_equal(dns_keynode_initial(keynode), false);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_NOTFOUND);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
 	/*
@@ -270,13 +305,15 @@ ATF_TC_BODY(add, tc) {
 	 * that the added key is an initializing key.
 	 */
 	create_key(257, 3, 5, "two.com", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_TRUE, ISC_TRUE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("two.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_TRUE);
+	assert_int_equal(dns_keytable_add(keytable, true, true, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("two.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keynode_initial(keynode), true);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
 	/*
@@ -285,13 +322,14 @@ ATF_TC_BODY(add, tc) {
 	 * ISC_R_NOTFOUND and that the added key is not an initializing key.
 	 */
 	create_key(257, 3, 5, "two.com", keystr2, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_TRUE, ISC_FALSE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("two.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
+	assert_int_equal(dns_keytable_add(keytable, true, false, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("two.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
 						&next_keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_FALSE);
+	assert_int_equal(dns_keynode_initial(keynode), false);
 	dns_keytable_detachkeynode(keytable, &next_keynode);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
@@ -302,34 +340,39 @@ ATF_TC_BODY(add, tc) {
 	 * nodes for two.com, both containing non-initializing keys.
 	 */
 	create_key(257, 3, 5, "two.com", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_TRUE, ISC_FALSE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("two.com"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_FALSE);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_add(keytable, true, false, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("two.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keynode_initial(keynode), false);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_SUCCESS);
 	dns_keytable_detachkeynode(keytable, &keynode);
 	keynode = next_keynode;
 	next_keynode = NULL;
-	ATF_REQUIRE_EQ(dns_keynode_initial(keynode), ISC_FALSE);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_NOTFOUND);
+	assert_int_equal(dns_keynode_initial(keynode), false);
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_NOTFOUND);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
 	/*
 	 * Add a normal key to a name that has a null key.  The null key node
 	 * will be updated with the normal key.
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("null.example"),
-					 &null_keynode), ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("null.example"),
+					   &null_keynode),
+			 ISC_R_SUCCESS);
 	create_key(257, 3, 5, "null.example", keystr2, &key);
-	ATF_REQUIRE_EQ(dns_keytable_add2(keytable, ISC_FALSE, ISC_FALSE, &key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("null.example"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(keynode, null_keynode); /* should be the same node */
-	ATF_REQUIRE(dns_keynode_key(keynode) != NULL); /* now have a key */
+	assert_int_equal(dns_keytable_add(keytable, false, false, &key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("null.example"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(keynode, null_keynode); /* should be the same node */
+	assert_non_null(dns_keynode_key(keynode)); /* now have a key */
 	dns_keytable_detachkeynode(keytable, &null_keynode);
 
 	/*
@@ -339,81 +382,79 @@ ATF_TC_BODY(add, tc) {
 	 * (Note: this and above checks confirm that if a name has a null key
 	 * that's the only key for the name).
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_marksecure(keytable,
-					       str2name("null.example")),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("null.example"),
-					 &null_keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(keynode, null_keynode);
-	ATF_REQUIRE(dns_keynode_key(keynode) != NULL);
-	ATF_REQUIRE_EQ(dns_keytable_nextkeynode(keytable, keynode,
-						&next_keynode), ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_marksecure(keytable,
+						 str2name("null.example")),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("null.example"),
+					   &null_keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(keynode, null_keynode);
+	assert_non_null(dns_keynode_key(keynode));
+	assert_int_equal(dns_keytable_nextkeynode(keytable, keynode,
+						  &next_keynode),
+			 ISC_R_NOTFOUND);
 	dns_keytable_detachkeynode(keytable, &null_keynode);
 
 	dns_keytable_detachkeynode(keytable, &keynode);
 	destroy_tables();
-	dns_test_end();
 }
 
-ATF_TC(delete);
-ATF_TC_HEAD(delete, tc) {
-	atf_tc_set_md_var(tc, "descr", "delete keys from the keytable");
-}
-ATF_TC_BODY(delete, tc) {
-	UNUSED(tc);
+/* delete keys from the keytable */
+static void
+delete_test(void **state) {
+	UNUSED(state);
 
-	ATF_REQUIRE_EQ(dns_test_begin(NULL, ISC_TRUE), ISC_R_SUCCESS);
 	create_tables();
 
 	/* dns_keytable_delete requires exact match */
-	ATF_REQUIRE_EQ(dns_keytable_delete(keytable, str2name("example.org")),
-		       ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_delete(keytable, str2name("s.example.com")),
-		       ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_delete(keytable, str2name("example.com")),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_delete(keytable,
+					     str2name("example.org")),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_delete(keytable,
+					     str2name("s.example.com")),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_delete(keytable,
+					     str2name("example.com")),
+			 ISC_R_SUCCESS);
 
 	/* works also for nodes with a null key */
-	ATF_REQUIRE_EQ(dns_keytable_delete(keytable, str2name("null.example")),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_delete(keytable,
+					     str2name("null.example")),
+			 ISC_R_SUCCESS);
 
 	/* or a negative trust anchor */
-	ATF_REQUIRE_EQ(dns_ntatable_delete(ntatable,
-					   str2name("insecure.example")),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_ntatable_delete(ntatable,
+					     str2name("insecure.example")),
+			 ISC_R_SUCCESS);
 
 	destroy_tables();
-	dns_test_end();
 }
 
-ATF_TC(deletekeynode);
-ATF_TC_HEAD(deletekeynode, tc) {
-	atf_tc_set_md_var(tc, "descr", "delete key nodes from the keytable");
-}
-ATF_TC_BODY(deletekeynode, tc) {
+/* delete key nodes from the keytable */
+static void
+deletekeynode_test(void **state) {
 	dst_key_t *key = NULL;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	ATF_REQUIRE_EQ(dns_test_begin(NULL, ISC_TRUE), ISC_R_SUCCESS);
 	create_tables();
 
 	/* key name doesn't match */
 	create_key(257, 3, 5, "example.org", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_deletekeynode(keytable, key),
-		       ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_deletekeynode(keytable, key),
+			 ISC_R_NOTFOUND);
 	dst_key_free(&key);
 
 	/* subdomain match is the same as no match */
 	create_key(257, 3, 5, "sub.example.com", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_deletekeynode(keytable, key),
-		       ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_deletekeynode(keytable, key),
+			 ISC_R_NOTFOUND);
 	dst_key_free(&key);
 
 	/* name matches but key doesn't match (resulting in PARTIALMATCH) */
 	create_key(257, 3, 5, "example.com", keystr2, &key);
-	ATF_REQUIRE_EQ(dns_keytable_deletekeynode(keytable, key),
-		       DNS_R_PARTIALMATCH);
+	assert_int_equal(dns_keytable_deletekeynode(keytable, key),
+			 DNS_R_PARTIALMATCH);
 	dst_key_free(&key);
 
 	/*
@@ -422,12 +463,13 @@ ATF_TC_BODY(deletekeynode, tc) {
 	 * NOTFOUND.
 	 */
 	create_key(257, 3, 5, "example.com", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_deletekeynode(keytable, key),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keytable_deletekeynode(keytable, key),
-		       ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_delete(keytable, str2name("example.com")),
-		       ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_deletekeynode(keytable, key),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_deletekeynode(keytable, key),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_delete(keytable,
+					     str2name("example.com")),
+			 ISC_R_NOTFOUND);
 	dst_key_free(&key);
 
 	/*
@@ -435,44 +477,47 @@ ATF_TC_BODY(deletekeynode, tc) {
 	 * it must be deleted by dns_keytable_delete()
 	 */
 	create_key(257, 3, 5, "null.example", keystr1, &key);
-	ATF_REQUIRE_EQ(dns_keytable_deletekeynode(keytable, key),
-		       DNS_R_PARTIALMATCH);
-	ATF_REQUIRE_EQ(dns_keytable_delete(keytable, dst_key_name(key)),
-		       ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_deletekeynode(keytable, key),
+			 DNS_R_PARTIALMATCH);
+	assert_int_equal(dns_keytable_delete(keytable, dst_key_name(key)),
+			 ISC_R_SUCCESS);
 	dst_key_free(&key);
 
 	destroy_tables();
-	dns_test_end();
 }
 
-ATF_TC(find);
-ATF_TC_HEAD(find, tc) {
-	atf_tc_set_md_var(tc, "descr", "check find-variant operations");
-}
-ATF_TC_BODY(find, tc) {
+/* check find-variant operations */
+static void
+find_test(void **state) {
 	dns_keynode_t *keynode = NULL;
 	dns_fixedname_t fname;
 	dns_name_t *name;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	ATF_REQUIRE_EQ(dns_test_begin(NULL, ISC_TRUE), ISC_R_SUCCESS);
 	create_tables();
 
 	/*
 	 * dns_keytable_find() requires exact name match.  It matches node
 	 * that has a null key, too.
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("example.org"),
-					 &keynode), ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("sub.example.com"),
-					 &keynode), ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("example.com"),
-					 &keynode), ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_find(keytable, str2name("example.org"),
+					   &keynode),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_find(keytable,
+					   str2name("sub.example.com"),
+					   &keynode),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_find(keytable,
+					   str2name("example.com"),
+					   &keynode),
+			 ISC_R_SUCCESS);
 	dns_keytable_detachkeynode(keytable, &keynode);
-	ATF_REQUIRE_EQ(dns_keytable_find(keytable, str2name("null.example"),
-					 &keynode), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_keynode_key(keynode), NULL);
+	assert_int_equal(dns_keytable_find(keytable,
+					   str2name("null.example"),
+					   &keynode),
+			 ISC_R_SUCCESS);
+	assert_int_equal(dns_keynode_key(keynode), NULL);
 	dns_keytable_detachkeynode(keytable, &keynode);
 
 	/*
@@ -480,70 +525,69 @@ ATF_TC_BODY(find, tc) {
 	 * nodes with a null key.
 	 */
 	name = dns_fixedname_initname(&fname);
-	ATF_REQUIRE_EQ(dns_keytable_finddeepestmatch(keytable,
-						     str2name("example.com"),
-						     name), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_name_equal(name, str2name("example.com")), ISC_TRUE);
-	ATF_REQUIRE_EQ(dns_keytable_finddeepestmatch(keytable,
-						     str2name("s.example.com"),
-						     name), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_name_equal(name, str2name("example.com")), ISC_TRUE);
-	ATF_REQUIRE_EQ(dns_keytable_finddeepestmatch(keytable,
-						     str2name("example.org"),
-						     name), ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_finddeepestmatch(keytable,
-						     str2name("null.example"),
-						     name), ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(dns_name_equal(name, str2name("null.example")),
-		       ISC_TRUE);
+	assert_int_equal(dns_keytable_finddeepestmatch(keytable,
+						       str2name("example.com"),
+						       name),
+			 ISC_R_SUCCESS);
+	assert_true(dns_name_equal(name, str2name("example.com")));
+	assert_int_equal(dns_keytable_finddeepestmatch(keytable,
+					       str2name("s.example.com"),
+					       name),
+			 ISC_R_SUCCESS);
+	assert_true(dns_name_equal(name, str2name("example.com")));
+	assert_int_equal(dns_keytable_finddeepestmatch(keytable,
+						       str2name("example.org"),
+						       name),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_finddeepestmatch(keytable,
+						       str2name("null.example"),
+						       name),
+			 ISC_R_SUCCESS);
+	assert_true(dns_name_equal(name, str2name("null.example")));
 
 	/*
 	 * dns_keytable_findkeynode() requires exact name, algorithm, keytag
 	 * match.  If algorithm or keytag doesn't match, should result in
 	 * PARTIALMATCH.  Same for a node with a null key.
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_findkeynode(keytable,
-						str2name("example.org"),
-						5, keytag1, &keynode),
-		       ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_findkeynode(keytable,
-						str2name("sub.example.com"),
-						5, keytag1, &keynode),
-		       ISC_R_NOTFOUND);
-	ATF_REQUIRE_EQ(dns_keytable_findkeynode(keytable,
-						str2name("example.com"),
-						4, keytag1, &keynode),
-		       DNS_R_PARTIALMATCH); /* different algorithm */
-	ATF_REQUIRE_EQ(dns_keytable_findkeynode(keytable,
-						str2name("example.com"),
-						5, keytag1 + 1, &keynode),
-		       DNS_R_PARTIALMATCH); /* different keytag */
-	ATF_REQUIRE_EQ(dns_keytable_findkeynode(keytable,
-						str2name("null.example"),
-						5, 0, &keynode),
-		       DNS_R_PARTIALMATCH); /* null key */
-	ATF_REQUIRE_EQ(dns_keytable_findkeynode(keytable,
-						str2name("example.com"),
-						5, keytag1, &keynode),
-		       ISC_R_SUCCESS); /* complete match */
+	assert_int_equal(dns_keytable_findkeynode(keytable,
+						  str2name("example.org"),
+						  5, keytag1, &keynode),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_findkeynode(keytable,
+						  str2name("sub.example.com"),
+						  5, keytag1, &keynode),
+			 ISC_R_NOTFOUND);
+	assert_int_equal(dns_keytable_findkeynode(keytable,
+						  str2name("example.com"),
+						  4, keytag1, &keynode),
+			 DNS_R_PARTIALMATCH); /* different algorithm */
+	assert_int_equal(dns_keytable_findkeynode(keytable,
+						  str2name("example.com"),
+						  5, keytag1 + 1, &keynode),
+			 DNS_R_PARTIALMATCH); /* different keytag */
+	assert_int_equal(dns_keytable_findkeynode(keytable,
+						  str2name("null.example"),
+						  5, 0, &keynode),
+			 DNS_R_PARTIALMATCH); /* null key */
+	assert_int_equal(dns_keytable_findkeynode(keytable,
+						  str2name("example.com"),
+						  5, keytag1, &keynode),
+			 ISC_R_SUCCESS); /* complete match */
 	dns_keytable_detachkeynode(keytable, &keynode);
 
 	destroy_tables();
-	dns_test_end();
 }
 
-ATF_TC(issecuredomain);
-ATF_TC_HEAD(issecuredomain, tc) {
-	atf_tc_set_md_var(tc, "descr", "check issecuredomain()");
-}
-ATF_TC_BODY(issecuredomain, tc) {
-	isc_boolean_t issecure;
+/* check issecuredomain() */
+static void
+issecuredomain_test(void **state) {
+	bool issecure;
 	const char **n;
 	const char *names[] = {"example.com", "sub.example.com",
 			       "null.example", "sub.null.example", NULL};
 
-	UNUSED(tc);
-	ATF_REQUIRE_EQ(dns_test_begin(NULL, ISC_TRUE), ISC_R_SUCCESS);
+	UNUSED(state);
 	create_tables();
 
 	/*
@@ -553,181 +597,174 @@ ATF_TC_BODY(issecuredomain, tc) {
 	 * of installing a null key).
 	 */
 	for (n = names; *n != NULL; n++) {
-		ATF_REQUIRE_EQ(dns_keytable_issecuredomain(keytable,
-							   str2name(*n),
-							   NULL,
-							   &issecure),
-			       ISC_R_SUCCESS);
-		ATF_REQUIRE_EQ(issecure, ISC_TRUE);
+		assert_int_equal(dns_keytable_issecuredomain(keytable,
+							     str2name(*n),
+							     NULL,
+							     &issecure),
+				 ISC_R_SUCCESS);
+		assert_true(issecure);
 	}
 
 	/*
 	 * If the key table has no entry (not even a null one) for a domain or
 	 * any of its ancestors, that domain is considered insecure.
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_issecuredomain(keytable,
-						   str2name("example.org"),
-						   NULL,
-						   &issecure),
-		       ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(issecure, ISC_FALSE);
+	assert_int_equal(dns_keytable_issecuredomain(keytable,
+						     str2name("example.org"),
+						     NULL,
+						     &issecure),
+			 ISC_R_SUCCESS);
+	assert_false(issecure);
 
 	destroy_tables();
-	dns_test_end();
 }
 
-ATF_TC(dump);
-ATF_TC_HEAD(dump, tc) {
-	atf_tc_set_md_var(tc, "descr", "check dns_keytable_dump()");
-}
-ATF_TC_BODY(dump, tc) {
-	UNUSED(tc);
+/* check dns_keytable_dump() */
+static void
+dump_test(void **state) {
+	FILE *f = fopen("/dev/null", "w");
 
-	ATF_REQUIRE_EQ(dns_test_begin(NULL, ISC_TRUE), ISC_R_SUCCESS);
+	UNUSED(state);
+
 	create_tables();
 
 	/*
 	 * Right now, we only confirm the dump attempt doesn't cause disruption
 	 * (so we don't check the dump content).
 	 */
-	ATF_REQUIRE_EQ(dns_keytable_dump(keytable, stdout), ISC_R_SUCCESS);
+	assert_int_equal(dns_keytable_dump(keytable, f), ISC_R_SUCCESS);
+	fclose(f);
 
 	destroy_tables();
-	dns_test_end();
 }
 
-ATF_TC(nta);
-ATF_TC_HEAD(nta, tc) {
-	atf_tc_set_md_var(tc, "descr", "check negative trust anchors");
-}
-ATF_TC_BODY(nta, tc) {
+/* check negative trust anchors */
+static void
+nta_test(void **state) {
 	isc_result_t result;
 	dst_key_t *key = NULL;
-	isc_boolean_t issecure, covered;
+	bool issecure, covered;
 	dns_view_t *myview = NULL;
 	isc_stdtime_t now;
 
-	UNUSED(tc);
-
-	result = dns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = dns_test_makeview("view", &myview);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_task_create(taskmgr, 0, &myview->task);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_view_initsecroots(myview, mctx);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	result = dns_view_getsecroots(myview, &keytable);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_view_initntatable(myview, taskmgr, timermgr);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	result = dns_view_getntatable(myview, &ntatable);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	create_key(257, 3, 5, "example", keystr1, &key);
-	result = dns_keytable_add2(keytable, ISC_FALSE, ISC_FALSE, &key);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_keytable_add(keytable, false, false, &key);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_stdtime_get(&now);
 	result = dns_ntatable_add(ntatable,
 				  str2name("insecure.example"),
-				  ISC_FALSE, now, 1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+				  false, now, 1);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/* Should be secure */
 	result = dns_view_issecuredomain(myview,
 					 str2name("test.secure.example"),
-					 now, ISC_TRUE, &issecure);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(issecure);
+					 now, true, &issecure);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_true(issecure);
 
 	/* Should not be secure */
 	result = dns_view_issecuredomain(myview,
 					 str2name("test.insecure.example"),
-					 now, ISC_TRUE, &issecure);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(!issecure);
+					 now, true, &issecure);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_false(issecure);
 
 	/* NTA covered */
 	covered = dns_view_ntacovers(myview, now, str2name("insecure.example"),
 				     dns_rootname);
-	ATF_CHECK(covered);
+	assert_true(covered);
 
 	/* Not NTA covered */
 	covered = dns_view_ntacovers(myview, now, str2name("secure.example"),
 				     dns_rootname);
-	ATF_CHECK(!covered);
+	assert_false(covered);
 
 	/* As of now + 2, the NTA should be clear */
 	result = dns_view_issecuredomain(myview,
 					 str2name("test.insecure.example"),
-					 now + 2, ISC_TRUE, &issecure);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(issecure);
+					 now + 2, true, &issecure);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_true(issecure);
 
 	/* Now check deletion */
 	result = dns_view_issecuredomain(myview, str2name("test.new.example"),
-					 now, ISC_TRUE, &issecure);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(issecure);
+					 now, true, &issecure);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_true(issecure);
 
 	result = dns_ntatable_add(ntatable, str2name("new.example"),
-				  ISC_FALSE, now, 3600);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+				  false, now, 3600);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_view_issecuredomain(myview, str2name("test.new.example"),
-					 now, ISC_TRUE, &issecure);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(!issecure);
+					 now, true, &issecure);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_false(issecure);
 
 	result = dns_ntatable_delete(ntatable, str2name("new.example"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_view_issecuredomain(myview, str2name("test.new.example"),
-					 now, ISC_TRUE, &issecure);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(issecure);
+					 now, true, &issecure);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_true(issecure);
 
 	/* Clean up */
 	dns_ntatable_detach(&ntatable);
 	dns_keytable_detach(&keytable);
 	dns_view_detach(&myview);
-
-	dns_test_end();
 }
 
-#else
-#include <isc/util.h>
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(add_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(delete_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(deletekeynode_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(find_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(issecuredomain_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(dump_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(nta_test,
+						_setup, _teardown),
+	};
 
-ATF_TC(untested);
-ATF_TC_HEAD(untested, tc) {
-	atf_tc_set_md_var(tc, "descr", "skipping keytable test");
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
-ATF_TC_BODY(untested, tc) {
-	UNUSED(tc);
-	atf_tc_skip("DNSSEC not available");
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
 }
+
 #endif
-
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-#if defined(OPENSSL) || defined(PKCS11CRYPTO)
-	ATF_TP_ADD_TC(tp, add);
-	ATF_TP_ADD_TC(tp, delete);
-	ATF_TP_ADD_TC(tp, deletekeynode);
-	ATF_TP_ADD_TC(tp, find);
-	ATF_TP_ADD_TC(tp, issecuredomain);
-	ATF_TP_ADD_TC(tp, dump);
-	ATF_TP_ADD_TC(tp, nta);
-#else
-	ATF_TP_ADD_TC(tp, untested);
-#endif
-
-	return (atf_no_error());
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: dns64.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,8 @@
 
 #ifndef DNS_DNS64_H
 #define DNS_DNS64_H 1
+
+#include <stdbool.h>
 
 #include <isc/lang.h>
 
@@ -143,22 +145,22 @@ dns_dns64_unlink(dns_dns64list_t *list, dns_dns64_t *dns64);
  * Unlink the dns64 record from the list.
  */
 
-isc_boolean_t
+bool
 dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
 		 const dns_name_t *reqsigner, const dns_aclenv_t *env,
 		 unsigned int flags, dns_rdataset_t *rdataset,
-		 isc_boolean_t *aaaaok, size_t aaaaoklen);
+		 bool *aaaaok, size_t aaaaoklen);
 /*
  * Determine if there are any non-excluded AAAA records in from the
  * matching dns64 records in the list starting at 'dns64'.  If there
- * is a non-exluded address return ISC_TRUE.  If all addresses are
- * excluded in the matched records return ISC_FALSE.   If no records
- * match then return ISC_TRUE.
+ * is a non-exluded address return true.  If all addresses are
+ * excluded in the matched records return false.   If no records
+ * match then return true.
  *
  * If aaaaok is defined then dns_dns64_aaaaok() return a array of which
  * addresses in 'rdataset' were deemed to not be exclude by any matching
  * record.  If there are no matching records then all entries are set
- * to ISC_TRUE.
+ * to true.
  *
  * Requires
  * 	'rdataset'	to be valid and to be for type AAAA and class IN.

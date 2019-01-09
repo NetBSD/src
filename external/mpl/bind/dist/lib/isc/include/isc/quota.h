@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: quota.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,14 +50,10 @@ struct isc_quota {
 	int		soft;
 };
 
-isc_result_t
+void
 isc_quota_init(isc_quota_t *quota, int max);
 /*%<
  * Initialize a quota object.
- *
- * Returns:
- * 	ISC_R_SUCCESS
- *	Other error	Lock creation failed.
  */
 
 void

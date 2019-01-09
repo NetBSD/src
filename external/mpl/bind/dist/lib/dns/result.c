@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.1.1.1 2018/08/12 12:08:09 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -167,6 +167,7 @@ static const char *text[DNS_R_NRESULTS] = {
 	"TSIG in wrong location",	       /*%< 115 DNS_R_BADTSIG */
 	"SIG(0) in wrong location",	       /*%< 116 DNS_R_BADSIG0 */
 	"too many records",	               /*%< 117 DNS_R_TOOMANYRECORDS */
+	"verify failure",	               /*%< 118 DNS_R_VERIFYFAILURE */
 };
 
 static const char *ids[DNS_R_NRESULTS] = {
@@ -291,6 +292,8 @@ static const char *ids[DNS_R_NRESULTS] = {
 	"DNS_R_BADDNSTAP",
 	"DNS_R_BADTSIG",
 	"DNS_R_BADSIG0",
+	"DNS_R_TOOMANYRECORDS",
+	"DNS_R_VERIFYFAILURE",
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2ldap.c,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: zone2ldap.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2001 Jeff McNeil <jeff@snapcase.g-rock.net>
@@ -22,7 +22,6 @@
 #include <getopt.h>
 
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
@@ -122,7 +121,6 @@ int
 main (int argc, char **argv)
 {
   isc_mem_t *mctx = NULL;
-  isc_entropy_t *ectx = NULL;
   isc_result_t result;
   char *basedn;
   ldap_info *tmp;
@@ -216,12 +214,6 @@ main (int argc, char **argv)
   result = isc_mem_create (0, 0, &mctx);
   isc_result_check (result, "isc_mem_create");
 
-  result = isc_entropy_create(mctx, &ectx);
-  isc_result_check (result, "isc_entropy_create");
-
-  result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-  isc_result_check (result, "isc_hash_create");
-
   isc_buffer_init (&buff, argzone, strlen (argzone));
   isc_buffer_add (&buff, strlen (argzone));
   zone = dns_fixedname_initname(&fixedzone);
@@ -232,7 +224,7 @@ main (int argc, char **argv)
 			  dns_rdataclass_in, 0, NULL, &db);
   isc_result_check (result, "dns_db_create");
 
-  result = dns_db_load (db, zonefile);
+  result = dns_db_load(db, zonefile, dns_masterformat_text, 0);
   isc_result_check (result, "Check Zone Syntax: dns_db_load");
 
   result = dns_db_createiterator (db, 0, &dbit);
@@ -348,8 +340,6 @@ main (int argc, char **argv)
 	printf("Operation Complete.\n");
 
   /* Cleanup */
-  isc_hash_destroy();
-  isc_entropy_detach(&ectx);
   isc_mem_destroy(&mctx);
   if (zonefile)
 	free(zonefile);
@@ -388,7 +378,7 @@ generate_ldap (dns_name_t * dnsname, dns_rdata_t * rdata, unsigned int ttl)
   isc_result_t result;
 
   isc_buffer_init (&buff, name, sizeof (name));
-  result = dns_name_totext (dnsname, ISC_TRUE, &buff);
+  result = dns_name_totext (dnsname, true, &buff);
   isc_result_check (result, "dns_name_totext");
   name[isc_buffer_usedlength (&buff)] = 0;
 

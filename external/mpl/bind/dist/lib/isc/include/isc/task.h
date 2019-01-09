@@ -1,4 +1,4 @@
-/*	$NetBSD: task.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,6 +75,8 @@
  *** Imports.
  ***/
 
+#include <stdbool.h>
+
 #include <isc/eventclass.h>
 #include <isc/json.h>
 #include <isc/lang.h>
@@ -102,42 +104,6 @@ typedef enum {
 		isc_taskmgrmode_privileged
 } isc_taskmgrmode_t;
 
-/*% Task and task manager methods */
-typedef struct isc_taskmgrmethods {
-	void		(*destroy)(isc_taskmgr_t **managerp);
-	void		(*setmode)(isc_taskmgr_t *manager,
-				   isc_taskmgrmode_t mode);
-	isc_taskmgrmode_t (*mode)(isc_taskmgr_t *manager);
-	isc_result_t	(*taskcreate)(isc_taskmgr_t *manager,
-				      unsigned int quantum,
-				      isc_task_t **taskp);
-	void (*setexcltask)(isc_taskmgr_t *mgr, isc_task_t *task);
-	isc_result_t (*excltask)(isc_taskmgr_t *mgr, isc_task_t **taskp);
-} isc_taskmgrmethods_t;
-
-typedef struct isc_taskmethods {
-	void (*attach)(isc_task_t *source, isc_task_t **targetp);
-	void (*detach)(isc_task_t **taskp);
-	void (*destroy)(isc_task_t **taskp);
-	void (*send)(isc_task_t *task, isc_event_t **eventp);
-	void (*sendanddetach)(isc_task_t **taskp, isc_event_t **eventp);
-	unsigned int (*unsend)(isc_task_t *task, void *sender, isc_eventtype_t type,
-			       void *tag, isc_eventlist_t *events);
-	isc_result_t (*onshutdown)(isc_task_t *task, isc_taskaction_t action,
-				   void *arg);
-	void (*shutdown)(isc_task_t *task);
-	void (*setname)(isc_task_t *task, const char *name, void *tag);
-	unsigned int (*purgeevents)(isc_task_t *task, void *sender,
-				    isc_eventtype_t type, void *tag);
-	unsigned int (*purgerange)(isc_task_t *task, void *sender,
-				   isc_eventtype_t first, isc_eventtype_t last,
-				   void *tag);
-	isc_result_t (*beginexclusive)(isc_task_t *task);
-	void (*endexclusive)(isc_task_t *task);
-    void (*setprivilege)(isc_task_t *task, isc_boolean_t priv);
-    isc_boolean_t (*privilege)(isc_task_t *task);
-} isc_taskmethods_t;
-
 /*%
  * This structure is actually just the common prefix of a task manager
  * object implementation's version of an isc_taskmgr_t.
@@ -150,7 +116,6 @@ typedef struct isc_taskmethods {
 struct isc_taskmgr {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_taskmgrmethods_t	*methods;
 };
 
 #define ISCAPI_TASKMGR_MAGIC	ISC_MAGIC('A','t','m','g')
@@ -164,7 +129,6 @@ struct isc_taskmgr {
 struct isc_task {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_taskmethods_t	*methods;
 };
 
 #define ISCAPI_TASK_MAGIC	ISC_MAGIC('A','t','s','t')
@@ -174,6 +138,10 @@ struct isc_task {
 isc_result_t
 isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
 		isc_task_t **taskp);
+
+isc_result_t
+isc_task_create_bound(isc_taskmgr_t *manager, unsigned int quantum,
+		      isc_task_t **taskp, int threadid);
 /*%<
  * Create a task.
  *
@@ -246,8 +214,12 @@ isc_task_detach(isc_task_t **taskp);
 
 void
 isc_task_send(isc_task_t *task, isc_event_t **eventp);
+
+void
+isc_task_sendto(isc_task_t *task, isc_event_t **eventp, int c);
 /*%<
- * Send '*event' to 'task'.
+ * Send '*event' to 'task', if task is idle try starting it on cpu 'c'
+ * If 'c' is smaller than 0 then cpu is selected randomly.
  *
  * Requires:
  *
@@ -260,10 +232,14 @@ isc_task_send(isc_task_t *task, isc_event_t **eventp);
  */
 
 void
+isc_task_sendtoanddetach(isc_task_t **taskp, isc_event_t **eventp, int c);
+
+void
 isc_task_sendanddetach(isc_task_t **taskp, isc_event_t **eventp);
 /*%<
  * Send '*event' to '*taskp' and then detach '*taskp' from its
- * task.
+ * task. If task is idle try starting it on cpu 'c'
+ * If 'c' is smaller than 0 then cpu is selected randomly.
  *
  * Requires:
  *
@@ -344,7 +320,7 @@ isc_task_purge(isc_task_t *task, void *sender, isc_eventtype_t type,
  *\li	The number of events purged.
  */
 
-isc_boolean_t
+bool
 isc_task_purgeevent(isc_task_t *task, isc_event_t *event);
 /*%<
  * Purge 'event' from a task's event queue.
@@ -371,8 +347,8 @@ isc_task_purgeevent(isc_task_t *task, isc_event_t *event);
  *
  * Returns:
  *
- *\li	#ISC_TRUE			The event was purged.
- *\li	#ISC_FALSE			The event was not in the event queue,
+ *\li	#true			The event was purged.
+ *\li	#false			The event was not in the event queue,
  *					or was marked unpurgeable.
  */
 
@@ -615,18 +591,18 @@ isc_task_getcurrenttimex(isc_task_t *task, isc_time_t *t);
  *\li	'*t' has the "current time".
  */
 
-isc_boolean_t
+bool
 isc_task_exiting(isc_task_t *t);
 /*%<
- * Returns ISC_TRUE if the task is in the process of shutting down,
- * ISC_FALSE otherwise.
+ * Returns true if the task is in the process of shutting down,
+ * false otherwise.
  *
  * Requires:
  *\li	'task' is a valid task.
  */
 
 void
-isc_task_setprivilege(isc_task_t *task, isc_boolean_t priv);
+isc_task_setprivilege(isc_task_t *task, bool priv);
 /*%<
  * Set or unset the task's "privileged" flag depending on the value of
  * 'priv'.
@@ -642,7 +618,7 @@ isc_task_setprivilege(isc_task_t *task, isc_boolean_t priv);
  *\li	'task' is a valid task.
  */
 
-isc_boolean_t
+bool
 isc_task_privilege(isc_task_t *task);
 /*%<
  * Returns the current value of the task's privilege flag.
@@ -704,7 +680,7 @@ isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
  */
 
 void
-isc_taskmgr_setmode(isc_taskmgr_t *manager, isc_taskmgrmode_t mode);
+isc_taskmgr_setprivilegedmode(isc_taskmgr_t *manager);
 
 isc_taskmgrmode_t
 isc_taskmgr_mode(isc_taskmgr_t *manager);
@@ -796,49 +772,6 @@ isc_taskmgr_renderxml(isc_taskmgr_t *mgr, xmlTextWriterPtr writer);
 isc_result_t
 isc_taskmgr_renderjson(isc_taskmgr_t *mgr, json_object *tasksobj);
 #endif
-
-/*%<
- * See isc_taskmgr_create() above.
- */
-typedef isc_result_t
-(*isc_taskmgrcreatefunc_t)(isc_mem_t *mctx, unsigned int workers,
-			   unsigned int default_quantum,
-			   isc_taskmgr_t **managerp);
-
-isc_result_t
-isc_task_register(isc_taskmgrcreatefunc_t createfunc);
-/*%<
- * Register a new task management implementation and add it to the list of
- * supported implementations.  This function must be called when a different
- * event library is used than the one contained in the ISC library.
- */
-
-isc_result_t
-isc__task_register(void);
-/*%<
- * A short cut function that specifies the task management module in the ISC
- * library for isc_task_register().  An application that uses the ISC library
- * usually do not have to care about this function: it would call
- * isc_lib_register(), which internally calls this function.
- */
-
-/*%<
- * These functions allow unit tests to manipulate the processing
- * of the task queue. They are not intended as part of the public API.
- */
-#if defined(ISC_PLATFORM_USETHREADS)
-void
-isc__taskmgr_pause(isc_taskmgr_t *taskmgr);
-
-void
-isc__taskmgr_resume(isc_taskmgr_t *taskmgr);
-#else
-isc_boolean_t
-isc__taskmgr_ready(isc_taskmgr_t *taskmgr);
-
-isc_result_t
-isc__taskmgr_dispatch(isc_taskmgr_t *taskmgr);
-#endif /* !ISC_PLATFORM_USETHREADS */
 
 ISC_LANG_ENDDECLS
 

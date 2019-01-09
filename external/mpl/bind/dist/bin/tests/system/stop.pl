@@ -15,7 +15,10 @@
 # If a server is specified, stop it. Otherwise, stop all servers for test.
 
 use strict;
-use Cwd 'abs_path';
+use warnings;
+
+use Cwd ':DEFAULT', 'abs_path';
+use English '-no_match_vars';
 use Getopt::Long;
 
 # Usage:
@@ -31,64 +34,91 @@ use Getopt::Long;
 #
 #   server          Name of the server directory.
 
-my $usage = "usage: $0 [--use-rndc [--port port]] test-directory [server-directory]";
+my $usage = "usage: $0 [--use-rndc [--halt] [--port port]] test-directory [server-directory]";
 
 my $use_rndc = 0;
-my $port = 9953;
-GetOptions('use-rndc' => \$use_rndc, 'port=i' => \$port) or die "$usage\n";
-
+my $halt = 0;
+my $rndc_port = 9953;
 my $errors = 0;
 
-my $test = $ARGV[0];
-my $server = $ARGV[1];
-die "$usage\n" unless defined($test);
-die "No test directory: \"$test\"\n" unless (-d $test);
-die "No server directory: \"$server\"\n" if (defined($server) && !-d "$test/$server");
+GetOptions(
+	'use-rndc!' => \$use_rndc,
+	'halt!' => \$halt,
+	'port=i' => \$rndc_port
+    ) or die "$usage\n";
+
+my ( $test, $server_arg ) = @ARGV;
+
+if (!$test) {
+	die "$usage\n";
+}
 
 # Global variables
-my $testdir = abs_path($test);
-my @servers;
+my $topdir = abs_path($ENV{'SYSTEMTESTTOP'});
+my $testdir = abs_path($topdir . "/" . $test);
 
+if (! -d $testdir) {
+	die "No test directory: \"$testdir\"\n";
+}
 
-# Determine which servers need to be stopped.
-if (defined $server) {
-	@servers = ($server);
+if ($server_arg && ! -d "$testdir/$server_arg") {
+	die "No server directory: \"$testdir/$server_arg\"\n";
+}
+
+my $RNDC = $ENV{RNDC};
+
+my @ns;
+my @ans;
+
+if ($server_arg) {
+	if ($server_arg =~ /^ns/) {
+		push(@ns, $server_arg);
+	} elsif ($server_arg =~ /^ans/) {
+		push(@ans, $server_arg);
+	} else {
+		print "$0: ns or ans directory expected";
+		print "I:$test:failed";
+	}
 } else {
-	local *DIR;
-	opendir DIR, $testdir or die "$testdir: $!\n";
+	# Determine which servers need to be stopped for this test.
+	opendir DIR, $testdir or die "unable to read test directory: \"$test\" ($OS_ERROR)\n";
 	my @files = sort readdir DIR;
 	closedir DIR;
 
-	my @ns = grep /^ns[0-9]*$/, @files;
-	my @ans = grep /^ans[0-9]*$/, @files;
-	
-	push @servers, @ns, @ans;
+	@ns = grep /^ns[0-9]*$/, @files;
+	@ans = grep /^ans[0-9]*$/, @files;
 }
-
 
 # Stop the server(s), pass 1: rndc.
 if ($use_rndc) {
-	foreach my $server (grep /^ns/, @servers) {
-		stop_rndc($server);
+	foreach my $name(@ns) {
+		stop_rndc($name, $rndc_port);
 	}
 
-	wait_for_servers(30, grep /^ns/, @servers);
+	@ns = wait_for_servers(30, @ns);
 }
-
 
 # Pass 2: SIGTERM
-foreach my $server (@servers) {
-	stop_signal($server, "TERM");
+foreach my $name (@ns) {
+	stop_signal($name, "TERM");
 }
 
-wait_for_servers(60, @servers);
+@ns = wait_for_servers(60, @ns);
+
+foreach my $name(@ans) {
+	stop_signal($name, "TERM");
+}
+
+@ans = wait_for_servers(60, @ans);
 
 # Pass 3: SIGABRT
-foreach my $server (@servers) {
-	stop_signal($server, "ABRT");
+foreach my $name (@ns, @ans) {
+	print "I:$test:$name didn't die when sent a SIGTERM\n";
+	stop_signal($name, "ABRT");
+	$errors = 1;
 }
 
-exit($errors ? 1 : 0);
+exit($errors);
 
 # Subroutines
 
@@ -96,93 +126,119 @@ exit($errors ? 1 : 0);
 sub server_pid_file {
 	my($server) = @_;
 
-	my $pid_file;
-	if ($server =~ /^ns/) {
-		$pid_file = "named.pid";
-	} elsif ($server =~ /^ans/) {
-		$pid_file = "ans.pid";
-	} else {
-		print "I:Unknown server type $server\n";
-		exit 1;
-	}
-	$pid_file = "$testdir/$server/$pid_file";
+	return $testdir . "/" . $server . "/named.pid" if ($server =~ /^ns/);
+	return $testdir . "/" . $server . "/ans.pid" if ($server =~ /^ans/);
+
+	die "Unknown server type $server\n";
 }
 
 # Read a PID.
 sub read_pid {
-	my($pid_file) = @_;
+	my ( $pid_file ) = @_;
 
-	local *FH;
-	my $result = open FH, "< $pid_file";
-	if (!$result) {
-		print "I:$pid_file: $!\n";
+	return unless -f $pid_file;
+	# we don't really care about the race condition here
+	my $result = open(my $fh, "<", $pid_file);
+	if (!defined($result)) {
+		print "I:$test:$pid_file: $!\n";
 		unlink $pid_file;
 		return;
 	}
 
-	my $pid = <FH>;
+	my $pid = <$fh>;
+	return unless defined($pid);
+
 	chomp($pid);
 	return $pid;
 }
 
 # Stop a named process with rndc.
 sub stop_rndc {
-	my($server) = @_;
+	my ( $server, $port ) = @_;
+	my $n;
 
-	return unless ($server =~ /^ns(\d+)$/);
-	my $ip = "10.53.0.$1";
+	if ($server =~ /^ns(\d+)/) {
+		$n = $1;
+	} else {
+		die "unable to parse server number from name \"$server\"\n";
+	}
+
+	my $ip = "10.53.0.$n";
+	my $how = $halt ? "halt" : "stop";
 
 	# Ugly, but should work.
-	system("$ENV{RNDC} -c ../common/rndc.conf -s $ip -p $port stop | sed 's/^/I:$server /'");
+	system("$RNDC -c ../common/rndc.conf -s $ip -p $port $how | sed 's/^/I:$test:$server /'");
 	return;
+}
+
+sub server_died {
+	my ( $server, $signal ) = @_;
+	
+	print "I:$test:$server died before a SIG$signal was sent\n";
+	$errors = 1;
+
+	my $pid_file = server_pid_file($server);
+	unlink($pid_file);
+
+	return;
+}
+
+sub send_signal {
+	my ( $signal, $pid ) = @_;
+
+	my $result = 0;
+
+	if ($^O eq 'cygwin') {
+		my $killout = `/bin/kill -f -$signal $pid 2>&1`;
+		chomp($killout);
+		$result = 1 if ($killout eq '');
+	} else {
+		$result = kill $signal, $pid;
+	}
+	return $result;
 }
 
 # Stop a server by sending a signal to it.
 sub stop_signal {
-	my($server, $sig) = @_;
+	my ( $server, $signal ) = @_;
 
 	my $pid_file = server_pid_file($server);
-	return unless -f $pid_file;
-	
 	my $pid = read_pid($pid_file);
+
 	return unless defined($pid);
 
-	if ($sig eq 'ABRT') {
-		print "I:$server didn't die when sent a SIGTERM\n";
-		$errors++;
-	}
-
-	my $result;
-	if ($^O eq 'cygwin') {
-		$result = system("/bin/kill -f -$sig $pid");
-		unlink $pid_file;
-		if ($result != 0) {
-			print "I:$server died before a SIG$sig was sent\n";
-			$errors++;
-		}
-	} else {
-		$result = kill $sig, $pid;
-		if (!$result) {
-			print "I:$server died before a SIG$sig was sent\n";
-			unlink $pid_file;
-			$errors++;
-		}
+	# Send signal to the server, and bail out if signal can't be sent
+	if (send_signal($signal, $pid) != 1) {
+		server_died($server, $signal);
+		return;
 	}
 
 	return;
 }
 
+sub clean_pid_file {
+	my ( $server ) = @_;
+
+	my $pid_file = server_pid_file($server);
+	my $pid = read_pid($pid_file);
+
+	return unless defined($pid);
+
+	return if (send_signal(0, $pid) == 0);
+
+	return $server;
+}
+
 sub wait_for_servers {
-	my($timeout, @servers) = @_;
+	my ( $timeout, @servers ) = @_;
 
-	my @pid_files = grep { defined($_) }
-	                map  { server_pid_file($_) } @servers;
-
-	while ($timeout > 0 && @pid_files > 0) {
-		@pid_files = grep { -f $_ } @pid_files;
-		sleep 1 if (@pid_files > 0);
+	while ($timeout > 0 && @servers > 0) {
+		sleep 1 if (@servers > 0);
+		@servers =
+			grep { defined($_) }
+			map  { clean_pid_file($_) } @servers;
 		$timeout--;
 	}
 
-	return;
+	return @servers;
 }

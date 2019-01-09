@@ -1,4 +1,4 @@
-/*	$NetBSD: nta.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: nta.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,9 @@
  * DNSSEC validation.
  */
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/buffer.h>
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -50,7 +53,7 @@ struct dns_ntatable {
 	isc_timermgr_t		*timermgr;
 	isc_task_t		*task;
 	/* Locked by rwlock. */
-	isc_uint32_t		references;
+	uint32_t		references;
 	dns_rbt_t		*table;
 };
 
@@ -117,13 +120,16 @@ dns_ntatable_detach(dns_ntatable_t **ntatablep);
 
 isc_result_t
 dns_ntatable_add(dns_ntatable_t *ntatable, const dns_name_t *name,
-		 isc_boolean_t force, isc_stdtime_t now,
-		 isc_uint32_t lifetime);
+		 bool force, isc_stdtime_t now,
+		 uint32_t lifetime);
 /*%<
  * Add a negative trust anchor to 'ntatable' for name 'name',
- * which will expire at time 'now' + 'lifetime'.  If 'force' is ISC_FALSE,
- * then the name will be checked periodically to see if it's bogus;
- * if not, then the NTA will be allowed to expire early.
+ * which will expire at time 'now' + 'lifetime'.  If 'force' is true,
+ * then the NTA will persist for the entire specified lifetime.
+ * If it is false, then the name will be queried periodically and
+ * validation will be attempted to see whether it's still bogus;
+ * if validation is successful, the NTA will be allowed to expire
+ * early and validation below the NTA will resume.
  *
  * Notes:
  *
@@ -161,14 +167,14 @@ dns_ntatable_delete(dns_ntatable_t *ntatable, const dns_name_t *keyname);
  *\li	Any other result indicates failure.
  */
 
-isc_boolean_t
+bool
 dns_ntatable_covered(dns_ntatable_t *ntatable, isc_stdtime_t now,
 		     const dns_name_t *name, const dns_name_t *anchor);
 /*%<
- * Return ISC_TRUE if 'name' is below a non-expired negative trust
+ * Return true if 'name' is below a non-expired negative trust
  * anchor which in turn is at or below 'anchor'.
  *
- * If 'ntatable' has not been initialized, return ISC_FALSE.
+ * If 'ntatable' has not been initialized, return false.
  *
  * Requires:
  *
@@ -178,9 +184,10 @@ dns_ntatable_covered(dns_ntatable_t *ntatable, isc_stdtime_t now,
  */
 
 isc_result_t
-dns_ntatable_totext(dns_ntatable_t *ntatable, isc_buffer_t **buf);
+dns_ntatable_totext(dns_ntatable_t *ntatable, const char *view,
+		    isc_buffer_t **buf);
 /*%<
- * Dump the NTA table to buffer at 'buf'
+ * Dump the NTA table to buffer at 'buf', with view names
  *
  * Requires:
  * \li   "ntatable" is a valid table.

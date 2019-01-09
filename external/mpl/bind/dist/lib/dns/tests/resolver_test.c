@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver_test.c,v 1.1.1.1 2018/08/12 12:08:20 christos Exp $	*/
+/*	$NetBSD: resolver_test.c,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,16 +11,25 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
+
+#include <isc/util.h>
 
 #include <isc/app.h>
 #include <isc/buffer.h>
+#include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>
@@ -36,34 +45,41 @@ static dns_dispatchmgr_t *dispatchmgr = NULL;
 static dns_dispatch_t *dispatch = NULL;
 static dns_view_t *view = NULL;
 
-
-static void
-setup(void) {
+static int
+_setup(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t local;
 
-	result = dns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	result = dns_dispatchmgr_create(mctx, NULL, &dispatchmgr);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_begin(NULL, true);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = dns_dispatchmgr_create(mctx, &dispatchmgr);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_test_makeview("view", &view);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_sockaddr_any(&local);
 	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &local,
 				     4096, 100, 100, 100, 500, 0, 0,
 				     &dispatch);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
 }
 
-static void
-teardown(void) {
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
 	dns_dispatch_detach(&dispatch);
 	dns_view_detach(&view);
 	dns_dispatchmgr_destroy(&dispatchmgr);
 	dns_test_end();
+
+	return (0);
 }
 
 
@@ -72,9 +88,9 @@ mkres(dns_resolver_t **resolverp) {
 	isc_result_t result;
 
 	result = dns_resolver_create(view, taskmgr, 1, 1,
-			    socketmgr, timermgr, 0,
-			    dispatchmgr, dispatch, NULL, resolverp);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+				     socketmgr, timermgr, 0,
+				     dispatchmgr, dispatch, NULL, resolverp);
+	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
 static void
@@ -83,75 +99,60 @@ destroy_resolver(dns_resolver_t **resolverp) {
 	dns_resolver_detach(resolverp);
 }
 
-ATF_TC(create);
-ATF_TC_HEAD(create, tc) {
-	atf_tc_set_md_var(tc, "descr", "dns_resolver_create");
-}
-ATF_TC_BODY(create, tc) {
+/* dns_resolver_create */
+static void
+create_test(void **state) {
 	dns_resolver_t *resolver = NULL;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	setup();
 	mkres(&resolver);
 	destroy_resolver(&resolver);
-	teardown();
 }
 
-ATF_TC(gettimeout);
-ATF_TC_HEAD(gettimeout, tc) {
-	atf_tc_set_md_var(tc, "descr", "dns_resolver_gettimeout");
-}
-ATF_TC_BODY(gettimeout, tc) {
+/* dns_resolver_gettimeout */
+static void
+gettimeout_test(void **state) {
 	dns_resolver_t *resolver = NULL;
 	unsigned int timeout;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	setup();
 	mkres(&resolver);
 
 	timeout = dns_resolver_gettimeout(resolver);
-	ATF_CHECK(timeout > 0);
+	assert_true(timeout > 0);
 
 	destroy_resolver(&resolver);
-	teardown();
 }
 
-ATF_TC(settimeout);
-ATF_TC_HEAD(settimeout, tc) {
-	atf_tc_set_md_var(tc, "descr", "dns_resolver_settimeout");
-}
-ATF_TC_BODY(settimeout, tc) {
+/* dns_resolver_settimeout */
+static void
+settimeout_test(void **state) {
 	dns_resolver_t *resolver = NULL;
 	unsigned int default_timeout, timeout;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	setup();
 
 	mkres(&resolver);
 
 	default_timeout = dns_resolver_gettimeout(resolver);
 	dns_resolver_settimeout(resolver, default_timeout + 1);
 	timeout = dns_resolver_gettimeout(resolver);
-	ATF_CHECK(timeout == default_timeout + 1);
+	assert_true(timeout == default_timeout + 1);
 
 	destroy_resolver(&resolver);
-	teardown();
 }
 
-ATF_TC(settimeout_default);
-ATF_TC_HEAD(settimeout_default, tc) {
-	atf_tc_set_md_var(tc, "descr", "dns_resolver_settimeout to default");
-}
-ATF_TC_BODY(settimeout_default, tc) {
+/* dns_resolver_settimeout */
+static void
+settimeout_default_test(void **state) {
 	dns_resolver_t *resolver = NULL;
 	unsigned int default_timeout, timeout;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	setup();
 
 	mkres(&resolver);
 
@@ -159,28 +160,23 @@ ATF_TC_BODY(settimeout_default, tc) {
 	dns_resolver_settimeout(resolver, default_timeout + 100);
 
 	timeout = dns_resolver_gettimeout(resolver);
-	ATF_CHECK_EQ(timeout, default_timeout + 100);
+	assert_int_equal(timeout, default_timeout + 100);
 
 	dns_resolver_settimeout(resolver, 0);
 	timeout = dns_resolver_gettimeout(resolver);
-	ATF_CHECK_EQ(timeout, default_timeout);
+	assert_int_equal(timeout, default_timeout);
 
 	destroy_resolver(&resolver);
-	teardown();
 }
 
-ATF_TC(settimeout_belowmin);
-ATF_TC_HEAD(settimeout_belowmin, tc) {
-	atf_tc_set_md_var(tc, "descr",
-			  "dns_resolver_settimeout below minimum");
-}
-ATF_TC_BODY(settimeout_belowmin, tc) {
+/* dns_resolver_settimeout below minimum */
+static void
+settimeout_belowmin_test(void **state) {
 	dns_resolver_t *resolver = NULL;
 	unsigned int default_timeout, timeout;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	setup();
 
 	mkres(&resolver);
 
@@ -188,43 +184,56 @@ ATF_TC_BODY(settimeout_belowmin, tc) {
 	dns_resolver_settimeout(resolver, 9000);
 
 	timeout = dns_resolver_gettimeout(resolver);
-	ATF_CHECK_EQ(timeout, default_timeout);
+	assert_int_equal(timeout, default_timeout);
 
 	destroy_resolver(&resolver);
-	teardown();
 }
 
-ATF_TC(settimeout_overmax);
-ATF_TC_HEAD(settimeout_overmax, tc) {
-	atf_tc_set_md_var(tc, "descr", "dns_resolver_settimeout over maximum");
-}
-ATF_TC_BODY(settimeout_overmax, tc) {
+/* dns_resolver_settimeout over maximum */
+static void
+settimeout_overmax_test(void **state) {
 	dns_resolver_t *resolver = NULL;
 	unsigned int timeout;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	setup();
 
 	mkres(&resolver);
 
 	dns_resolver_settimeout(resolver, 4000000);
 	timeout = dns_resolver_gettimeout(resolver);
-	ATF_CHECK(timeout < 4000000 && timeout > 0);
-
+	assert_in_range(timeout, 0, 3999999);
 	destroy_resolver(&resolver);
-	teardown();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, create);
-	ATF_TP_ADD_TC(tp, gettimeout);
-	ATF_TP_ADD_TC(tp, settimeout);
-	ATF_TP_ADD_TC(tp, settimeout_default);
-	ATF_TP_ADD_TC(tp, settimeout_belowmin);
-	ATF_TP_ADD_TC(tp, settimeout_overmax);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(create_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(gettimeout_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(settimeout_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(settimeout_default_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(settimeout_belowmin_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(settimeout_overmax_test,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

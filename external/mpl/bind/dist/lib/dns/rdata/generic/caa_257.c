@@ -1,4 +1,4 @@
-/*	$NetBSD: caa_257.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: caa_257.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,7 @@ static inline isc_result_t
 fromtext_caa(ARGS_FROMTEXT) {
 	isc_token_t token;
 	isc_textregion_t tr;
-	isc_uint8_t flags;
+	uint8_t flags;
 	unsigned int i;
 
 	REQUIRE(type == dns_rdatatype_caa);
@@ -52,17 +52,17 @@ fromtext_caa(ARGS_FROMTEXT) {
 
 	/* Flags. */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 255U)
 		RETTOK(ISC_R_RANGE);
-	flags = (isc_uint8_t)(token.value.as_ulong & 255U);
+	flags = (uint8_t)(token.value.as_ulong & 255U);
 	RETERR(uint8_tobuffer(flags, target));
 
 	/*
 	 * Tag
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	tr = token.value.as_textregion;
 	for (i = 0; i < tr.length; i++)
 		if (!alphanumeric[(unsigned char) tr.base[i]])
@@ -74,7 +74,7 @@ fromtext_caa(ARGS_FROMTEXT) {
 	 * Value
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token,
-				      isc_tokentype_qstring, ISC_FALSE));
+				      isc_tokentype_qstring, false));
 	if (token.type != isc_tokentype_qstring &&
 	    token.type != isc_tokentype_string)
 		RETERR(DNS_R_SYNTAX);
@@ -85,7 +85,7 @@ fromtext_caa(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_caa(ARGS_TOTEXT) {
 	isc_region_t region;
-	isc_uint8_t flags;
+	uint8_t flags;
 	char buf[256];
 
 	UNUSED(tctx);
@@ -106,7 +106,7 @@ totext_caa(ARGS_TOTEXT) {
 	/*
 	 * Tag
 	 */
-	RETERR(txt_totext(&region, ISC_FALSE, target));
+	RETERR(txt_totext(&region, false, target));
 	RETERR(str_totext(" ", target));
 
 	/*
@@ -332,7 +332,7 @@ digest_caa(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_caa(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_caa);
@@ -342,10 +342,10 @@ checkowner_caa(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_caa(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_caa);
@@ -356,7 +356,7 @@ checknames_caa(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

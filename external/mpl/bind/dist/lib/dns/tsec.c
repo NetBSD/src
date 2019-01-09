@@ -1,4 +1,4 @@
-/*	$NetBSD: tsec.c,v 1.1.1.1 2018/08/12 12:08:15 christos Exp $	*/
+/*	$NetBSD: tsec.c,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,11 +63,9 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 	switch (type) {
 	case dns_tsectype_tsig:
 		switch (dst_key_alg(key)) {
-#ifndef PK11_MD5_DISABLE
 		case DST_ALG_HMACMD5:
 			algname = dns_tsig_hmacmd5_name;
 			break;
-#endif
 		case DST_ALG_HMACSHA1:
 			algname = dns_tsig_hmacsha1_name;
 			break;
@@ -88,7 +86,7 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 			return (DNS_R_BADALG);
 		}
 		result = dns_tsigkey_createfromkey(dst_key_name(key),
-						   algname, key, ISC_FALSE,
+						   algname, key, false,
 						   NULL, 0, 0, mctx, NULL,
 						   &tsigkey);
 		if (result != ISC_R_SUCCESS) {
@@ -102,6 +100,7 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	tsec->magic = DNS_TSEC_MAGIC;
@@ -127,6 +126,7 @@ dns_tsec_destroy(dns_tsec_t **tsecp) {
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	tsec->magic = 0;
@@ -156,5 +156,6 @@ dns_tsec_getkey(dns_tsec_t *tsec, void *keyp) {
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 }

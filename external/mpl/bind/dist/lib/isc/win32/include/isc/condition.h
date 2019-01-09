@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.h,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: condition.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,7 @@ typedef struct isc_condition {
 
 ISC_LANG_BEGINDECLS
 
-isc_result_t
+void
 isc_condition_init(isc_condition_t *);
 
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: uri_256.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@ fromtext_uri(ARGS_FROMTEXT) {
 	 * Priority
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -42,7 +42,7 @@ fromtext_uri(ARGS_FROMTEXT) {
 	 * Weight
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -51,7 +51,7 @@ fromtext_uri(ARGS_FROMTEXT) {
 	 * Target URI
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token,
-				      isc_tokentype_qstring, ISC_FALSE));
+				      isc_tokentype_qstring, false));
 	if (token.type != isc_tokentype_qstring)
 		RETTOK(DNS_R_SYNTAX);
 	RETTOK(multitxt_fromtext(&token.value.as_textregion, target));
@@ -277,7 +277,7 @@ digest_uri(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_uri(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_uri);
@@ -287,10 +287,10 @@ checkowner_uri(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_uri(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_uri);
@@ -299,7 +299,7 @@ checknames_uri(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

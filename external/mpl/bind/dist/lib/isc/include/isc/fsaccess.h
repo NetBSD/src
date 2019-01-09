@@ -1,4 +1,4 @@
-/*	$NetBSD: fsaccess.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: fsaccess.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -125,6 +125,8 @@
  * 	solve this problem.
  */
 
+#include <inttypes.h>
+
 #include <isc/lang.h>
 #include <isc/types.h>
 
@@ -149,7 +151,7 @@
 
 /*%
  * Adding any permission bits beyond 0x200 would mean typedef'ing
- * isc_fsaccess_t as isc_uint64_t, and redefining this value to
+ * isc_fsaccess_t as uint64_t, and redefining this value to
  * reflect the new range of permission types, Probably to 21 for
  * maximum flexibility.  The number of bits has to accommodate all of
  * the permission types, and three full sets of them have to fit

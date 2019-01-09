@@ -1,4 +1,4 @@
-/*	$NetBSD: fsaccess.c,v 1.1.1.1 2018/08/12 12:08:27 christos Exp $	*/
+/*	$NetBSD: fsaccess.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,8 @@
  */
 
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <aclapi.h>
 
@@ -60,6 +62,7 @@ is_ntfs(const char * file) {
 	char *machinename;
 	char *sharename;
 	char filename[1024];
+	char *last;
 
 	REQUIRE(filename != NULL);
 
@@ -79,8 +82,8 @@ is_ntfs(const char * file) {
 	} else if ((filename[0] == '\\') && (filename[1] == '\\')) {
 		/* Find the machine and share name and rebuild the UNC */
 		strlcpy(tmpbuf, filename, sizeof(tmpbuf));
-		machinename = strtok(tmpbuf, "\\");
-		sharename = strtok(NULL, "\\");
+		machinename = strtok_r(tmpbuf, "\\", &last);
+		sharename = strtok_r(NULL, "\\", &last);
 		strlcpy(drive, "\\\\", sizeof(drive));
 		strlcat(drive, machinename, sizeof(drive));
 		strlcat(drive, "\\", sizeof(drive));
@@ -145,7 +148,7 @@ FAT_fsaccess_set(const char *path, isc_fsaccess_t access) {
 
 isc_result_t
 NTFS_Access_Control(const char *filename, const char *user, int access,
-		    isc_boolean_t isdir) {
+		    bool isdir) {
 	SECURITY_DESCRIPTOR sd;
 	BYTE aclBuffer[1024];
 	PACL pacl=(PACL)&aclBuffer;
@@ -190,23 +193,30 @@ NTFS_Access_Control(const char *filename, const char *user, int access,
 	/* Owner check */
 
 	NTFSbits = 0;
-	if (caccess & ISC_FSACCESS_READ)
+	if ((caccess & ISC_FSACCESS_READ) != 0) {
 		NTFSbits |= FILE_GENERIC_READ;
-	if (caccess & ISC_FSACCESS_WRITE)
+	}
+	if ((caccess & ISC_FSACCESS_WRITE) != 0) {
 		NTFSbits |= FILE_GENERIC_WRITE;
-	if (caccess & ISC_FSACCESS_EXECUTE)
+	}
+	if ((caccess & ISC_FSACCESS_EXECUTE) != 0) {
 		NTFSbits |= FILE_GENERIC_EXECUTE;
+	}
 
 	/* For directories check the directory-specific bits */
-	if (isdir == ISC_TRUE) {
-		if (caccess & ISC_FSACCESS_CREATECHILD)
+	if (isdir == true) {
+		if ((caccess & ISC_FSACCESS_CREATECHILD) != 0) {
 			NTFSbits |= FILE_ADD_SUBDIRECTORY | FILE_ADD_FILE;
-		if (caccess & ISC_FSACCESS_DELETECHILD)
+		}
+		if ((caccess & ISC_FSACCESS_DELETECHILD) != 0) {
 			NTFSbits |= FILE_DELETE_CHILD;
-		if (caccess & ISC_FSACCESS_LISTDIRECTORY)
+		}
+		if ((caccess & ISC_FSACCESS_LISTDIRECTORY) != 0) {
 			NTFSbits |= FILE_LIST_DIRECTORY;
-		if (caccess & ISC_FSACCESS_ACCESSCHILD)
+		}
+		if ((caccess & ISC_FSACCESS_ACCESSCHILD) != 0) {
 			NTFSbits |= FILE_TRAVERSE;
+		}
 	}
 
 	if (NTFSbits == (FILE_GENERIC_READ | FILE_GENERIC_WRITE
@@ -239,23 +249,30 @@ NTFS_Access_Control(const char *filename, const char *user, int access,
 	caccess = caccess >> STEP;
 
 	NTFSbits = 0;
-	if (caccess & ISC_FSACCESS_READ)
+	if ((caccess & ISC_FSACCESS_READ) != 0) {
 		NTFSbits |= FILE_GENERIC_READ;
-	if (caccess & ISC_FSACCESS_WRITE)
+	}
+	if ((caccess & ISC_FSACCESS_WRITE) != 0) {
 		NTFSbits |= FILE_GENERIC_WRITE;
-	if (caccess & ISC_FSACCESS_EXECUTE)
+	}
+	if ((caccess & ISC_FSACCESS_EXECUTE) != 0) {
 		NTFSbits |= FILE_GENERIC_EXECUTE;
+	}
 
 	/* For directories check the directory-specific bits */
 	if (isdir == TRUE) {
-		if (caccess & ISC_FSACCESS_CREATECHILD)
+		if ((caccess & ISC_FSACCESS_CREATECHILD) != 0) {
 			NTFSbits |= FILE_ADD_SUBDIRECTORY | FILE_ADD_FILE;
-		if (caccess & ISC_FSACCESS_DELETECHILD)
+		}
+		if ((caccess & ISC_FSACCESS_DELETECHILD) != 0) {
 			NTFSbits |= FILE_DELETE_CHILD;
-		if (caccess & ISC_FSACCESS_LISTDIRECTORY)
+		}
+		if ((caccess & ISC_FSACCESS_LISTDIRECTORY) != 0) {
 			NTFSbits |= FILE_LIST_DIRECTORY;
-		if (caccess & ISC_FSACCESS_ACCESSCHILD)
+		}
+		if ((caccess & ISC_FSACCESS_ACCESSCHILD) != 0) {
 			NTFSbits |= FILE_TRAVERSE;
+		}
 	}
 	/* Add the ACE to the ACL */
 	if (!AddAccessAllowedAce(pacl, ACL_REVISION, NTFSbits,
@@ -273,7 +290,7 @@ NTFS_Access_Control(const char *filename, const char *user, int access,
 
 isc_result_t
 NTFS_fsaccess_set(const char *path, isc_fsaccess_t access,
-		  isc_boolean_t isdir){
+		  bool isdir){
 
 	/*
 	 * For NTFS we first need to get the name of the account under
@@ -290,14 +307,14 @@ NTFS_fsaccess_set(const char *path, isc_fsaccess_t access,
 isc_result_t
 isc_fsaccess_set(const char *path, isc_fsaccess_t access) {
 	struct stat statb;
-	isc_boolean_t is_dir = ISC_FALSE;
+	bool is_dir = false;
 	isc_result_t result;
 
 	if (stat(path, &statb) != 0)
 		return (isc__errno2result(errno));
 
 	if ((statb.st_mode & S_IFDIR) != 0)
-		is_dir = ISC_TRUE;
+		is_dir = true;
 	else if ((statb.st_mode & S_IFREG) == 0)
 		return (ISC_R_INVALIDFILE);
 
@@ -364,4 +381,3 @@ isc_fsaccess_changeowner(const char *filename, const char *user) {
 
 	return (ISC_R_SUCCESS);
 }
-

@@ -13,7 +13,7 @@ top_srcdir =	@top_srcdir@
 
 VERSION=@BIND9_VERSION@
 
-HEADERS =	dir.h int.h keyboard.h mutex.h net.h netdb.h once.h \
+HEADERS =	dir.h mutex.h net.h netdb.h once.h \
 		stat.h stdtime.h thread.h time.h
 
 SUBDIRS =
@@ -26,5 +26,5 @@ installdirs:
 
 install:: installdirs
 	for i in $(HEADERS); do \
-		$(INSTALL_DATA) $(srcdir)\$$i $(includedir)\isc ; \
+		$(INSTALL_DATA) $(srcdir)\$$i $(includedir)\isc || exit 1; \
 	done

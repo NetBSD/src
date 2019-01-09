@@ -1,4 +1,4 @@
-/*	$NetBSD: iptable.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: iptable.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,9 +11,11 @@
  * information regarding copyright ownership.
  */
 
-
 #ifndef DNS_IPTABLE_H
 #define DNS_IPTABLE_H 1
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -46,17 +48,13 @@ dns_iptable_create(isc_mem_t *mctx, dns_iptable_t **target);
 
 isc_result_t
 dns_iptable_addprefix(dns_iptable_t *tab, const isc_netaddr_t *addr,
-		      isc_uint16_t bitlen, isc_boolean_t pos);
-isc_result_t
-dns_iptable_addprefix2(dns_iptable_t *tab, const isc_netaddr_t *addr,
-		       isc_uint16_t bitlen, isc_boolean_t pos,
-		       isc_boolean_t is_ecs);
+		      uint16_t bitlen, bool pos);
 /*
  * Add an IP prefix to an existing IP table
  */
 
 isc_result_t
-dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, isc_boolean_t pos);
+dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, bool pos);
 /*
  * Merge one IP table into another one.
  */

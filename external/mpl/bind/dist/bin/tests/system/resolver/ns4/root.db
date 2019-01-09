@@ -24,3 +24,5 @@ example.net.		NS	ns.example.net.
 ns.example.net.		A	10.53.0.6
 no-questions.		NS	ns.no-questions.
 ns.no-questions.	A	10.53.0.8
+formerr-to-all.		NS	ns.formerr-to-all.
+ns.formerr-to-all.	A	10.53.0.8

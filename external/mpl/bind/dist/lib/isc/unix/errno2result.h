@@ -1,4 +1,4 @@
-/*	$NetBSD: errno2result.h,v 1.1.1.1 2018/08/12 12:08:25 christos Exp $	*/
+/*	$NetBSD: errno2result.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,16 +19,17 @@
 /* XXXDCL this should be moved to lib/isc/include/isc/errno2result.h. */
 
 #include <errno.h>		/* Provides errno. */
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 
-#define isc__errno2result(x) isc___errno2result(x, ISC_TRUE, __FILE__, __LINE__)
+#define isc__errno2result(x) isc___errno2result(x, true, __FILE__, __LINE__)
 
 isc_result_t
-isc___errno2result(int posixerrno, isc_boolean_t dolog,
+isc___errno2result(int posixerrno, bool dolog,
 		   const char *file, unsigned int line);
 
 ISC_LANG_ENDDECLS

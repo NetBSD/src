@@ -1,4 +1,4 @@
-/*	$NetBSD: mx_15.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: mx_15.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,22 +22,23 @@
 
 #define RRTYPE_MX_ATTRIBUTES (0)
 
-static isc_boolean_t
+static bool
 check_mx(isc_token_t *token) {
 	char tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:123.123.123.123.")];
 	struct in_addr addr;
 	struct in6_addr addr6;
 
 	if (strlcpy(tmp, DNS_AS_STR(*token), sizeof(tmp)) >= sizeof(tmp))
-		return (ISC_TRUE);
+		return (true);
 
 	if (tmp[strlen(tmp) - 1] == '.')
 		tmp[strlen(tmp) - 1] = '\0';
-	if (inet_aton(tmp, &addr) == 1 ||
-	    inet_pton(AF_INET6, tmp, &addr6) == 1)
-		return (ISC_FALSE);
+	if (inet_pton(AF_INET, tmp, &addr) == 1 ||
+	    inet_pton(AF_INET6, tmp, &addr6) == 1) {
+		return (false);
+	}
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline isc_result_t
@@ -45,7 +46,7 @@ fromtext_mx(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
 	isc_buffer_t buffer;
-	isc_boolean_t ok;
+	bool ok;
 
 	REQUIRE(type == dns_rdatatype_mx);
 
@@ -53,15 +54,15 @@ fromtext_mx(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 
-	ok = ISC_TRUE;
+	ok = true;
 	if ((options & DNS_RDATA_CHECKMX) != 0)
 		ok = check_mx(&token);
 	if (!ok && (options & DNS_RDATA_CHECKMXFAIL) != 0)
@@ -74,9 +75,9 @@ fromtext_mx(ARGS_FROMTEXT) {
 	if (origin == NULL)
 		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	ok = ISC_TRUE;
+	ok = true;
 	if ((options & DNS_RDATA_CHECKNAMES) != 0)
-		ok = dns_name_ishostname(&name, ISC_FALSE);
+		ok = dns_name_ishostname(&name, false);
 	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
 		RETTOK(DNS_R_BADNAME);
 	if (!ok && callbacks != NULL)
@@ -89,7 +90,7 @@ totext_mx(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	bool sub;
 	char buf[sizeof("64000")];
 	unsigned short num;
 
@@ -298,7 +299,7 @@ digest_mx(ARGS_DIGEST) {
 	return (dns_name_digest(&name, digest, arg));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_mx(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_mx);
@@ -309,7 +310,7 @@ checkowner_mx(ARGS_CHECKOWNER) {
 	return (dns_name_ishostname(name, wildcard));
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_mx(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
@@ -322,12 +323,12 @@ checknames_mx(ARGS_CHECKNAMES) {
 	isc_region_consume(&region, 2);
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
-	if (!dns_name_ishostname(&name, ISC_FALSE)) {
+	if (!dns_name_ishostname(&name, false)) {
 		if (bad != NULL)
 			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
+		return (false);
 	}
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

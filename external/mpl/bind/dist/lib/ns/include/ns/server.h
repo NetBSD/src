@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1.1.1 2018/08/12 12:08:07 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.2 2019/01/09 16:48:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,9 @@
 #define NS_SERVER_H 1
 
 /*! \file */
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/log.h>
 #include <isc/fuzz.h>
@@ -43,6 +46,9 @@
 #define NS_SERVER_DISABLE6	0x00000200U	/*%< -4 */
 #define NS_SERVER_FIXEDLOCAL	0x00000400U	/*%< -T fixedlocal */
 #define NS_SERVER_SIGVALINSECS	0x00000800U	/*%< -T sigvalinsecs */
+#define NS_SERVER_EDNSFORMERR	0x00001000U	/*%< -T ednsformerr (STD13) */
+#define NS_SERVER_EDNSNOTIMP	0x00002000U	/*%< -T ednsnotimp */
+#define NS_SERVER_EDNSREFUSED	0x00004000U	/*%< -T ednsrefused */
 
 /*%
  * Type for callback function to get hostname.
@@ -62,7 +68,7 @@ typedef void
  */
 typedef isc_result_t
 (*ns_matchview_t)(isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr,
-		  dns_message_t *message, dns_aclenv_t *env, dns_ecs_t *ecs,
+		  dns_message_t *message, dns_aclenv_t *env,
 		  isc_result_t *sigresultp, dns_view_t **viewp);
 
 /*%
@@ -78,7 +84,7 @@ struct ns_server {
 	unsigned char		secret[32];
 	ns_cookiealg_t		cookiealg;
 	ns_altsecretlist_t	altsecrets;
-	isc_boolean_t		answercookie;
+	bool			answercookie;
 
 	/*% Quotas */
 	isc_quota_t		recursionquota;
@@ -86,7 +92,7 @@ struct ns_server {
 	isc_quota_t		xfroutquota;
 
 	/*% Test options and other configurables */
-	isc_uint32_t		options;
+	uint32_t		options;
 	unsigned int		delay;
 
 	unsigned int		initialtimo;
@@ -96,11 +102,10 @@ struct ns_server {
 
 	dns_acl_t		*blackholeacl;
 	dns_acl_t		*keepresporder;
-	isc_uint16_t		udpsize;
-	isc_uint16_t		transfer_tcp_message_size;
-	isc_boolean_t		interface_auto;
+	uint16_t		udpsize;
+	uint16_t		transfer_tcp_message_size;
+	bool			interface_auto;
 	dns_tkeyctx_t *		tkeyctx;
-	isc_rng_t *		rngctx;
 
 	/*% Server id for NSID */
 	char *			server_id;
@@ -136,8 +141,8 @@ struct ns_altsecret {
 };
 
 isc_result_t
-ns_server_create(isc_mem_t *mctx, isc_entropy_t *entropy,
-		 ns_matchview_t matchingview, ns_server_t **sctxp);
+ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
+		 ns_server_t **sctxp);
 /*%<
  * Create a server context object with default settings.
  */
@@ -189,16 +194,16 @@ ns_server_gettimeouts(ns_server_t *sctx, unsigned int *initial,
 
 void
 ns_server_setoption(ns_server_t *sctx, unsigned int option,
-		    isc_boolean_t value);
+		    bool value);
 /*%<
- *	Set the given options on (if 'value' == #ISC_TRUE)
- *	or off (if 'value' == #ISC_FALSE).
+ *	Set the given options on (if 'value' == #true)
+ *	or off (if 'value' == #false).
  *
  * Requires:
  *\li	'sctx' is valid
  */
 
-isc_boolean_t
+bool
 ns_server_getoption(ns_server_t *sctx, unsigned int option);
 /*%<
  *	Returns the current value of the specified server option.

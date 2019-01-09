@@ -1,4 +1,4 @@
-/*	$NetBSD: instance.c,v 1.1.1.1 2018/08/12 12:07:38 christos Exp $	*/
+/*	$NetBSD: instance.c,v 1.1.1.2 2019/01/09 16:48:16 christos Exp $	*/
 
 /*
  * Driver instance object.
@@ -59,8 +59,20 @@ parse_params(isc_mem_t *mctx, int argc, char **argv,
 		result = ISC_R_FAILURE;
 		goto cleanup;
 	}
-	CHECK(dns_name_fromstring2(z1, argv[0], dns_rootname, 0, mctx));
-	CHECK(dns_name_fromstring2(z2, argv[1], dns_rootname, 0, mctx));
+	result = dns_name_fromstring2(z1, argv[0], dns_rootname, 0, mctx);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "parse_params: dns_name_fromstring2 -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
+	result = dns_name_fromstring2(z2, argv[1], dns_rootname, 0, mctx);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "parse_params: dns_name_fromstring2 -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
 
 	result = ISC_R_SUCCESS;
 
@@ -95,15 +107,27 @@ new_sample_instance(isc_mem_t *mctx, const char *db_name,
 	inst->zone1_name = dns_fixedname_initname(&inst->zone1_fn);
 	inst->zone2_name = dns_fixedname_initname(&inst->zone2_fn);
 
-	CHECK(parse_params(mctx, argc, argv,
-			   inst->zone1_name, inst->zone2_name));
+	result = parse_params(mctx, argc, argv,
+			      inst->zone1_name, inst->zone2_name);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "new_sample_instance: parse_params -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
 
 	dns_view_attach(dctx->view, &inst->view);
 	dns_zonemgr_attach(dctx->zmgr, &inst->zmgr);
 	isc_task_attach(dctx->task, &inst->task);
 
 	/* Register new DNS DB implementation. */
-	CHECK(dns_db_register(db_name, create_db, inst, mctx, &inst->db_imp));
+	result = dns_db_register(db_name, create_db, inst, mctx, &inst->db_imp);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "new_sample_instance: dns_db_register -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
 
 	*sample_instp = inst;
 	result = ISC_R_SUCCESS;
@@ -122,11 +146,35 @@ isc_result_t
 load_sample_instance_zones(sample_instance_t *inst) {
 	isc_result_t result;
 
-	CHECK(create_zone(inst, inst->zone1_name, &inst->zone1));
-	CHECK(activate_zone(inst, inst->zone1));
+	result = create_zone(inst, inst->zone1_name, &inst->zone1);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "load_sample_instance_zones: create_zone -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
+	result = activate_zone(inst, inst->zone1);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "load_sample_instance_zones: activate_zone -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
 
-	CHECK(create_zone(inst, inst->zone2_name, &inst->zone2));
-	CHECK(activate_zone(inst, inst->zone2));
+	result = create_zone(inst, inst->zone2_name, &inst->zone2);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "load_sample_instance_zones: create_zone -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
+	result = activate_zone(inst, inst->zone2);
+	if (result != ISC_R_SUCCESS) {
+		log_write(ISC_LOG_ERROR,
+			 "load_sample_instance_zones: activate_zone -> %s",
+			 isc_result_totext(result));
+		goto cleanup;
+	}
 
 cleanup:
 	return (result);

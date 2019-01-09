@@ -102,7 +102,7 @@ sub reply_handler {
 	    my ($ttl, $rdata) = (3600, $localaddr);
 	    my $rr = new Net::DNS::RR("$qname $ttl $qclass $qtype $rdata");
 	    push @ans, $rr;
-	} 
+	}
 	$rcode = "NOERROR";
     } elsif ($qname =~ /^ns1\.(\d+)\.example\.org$/) {
 	my $next = $1 + 1;
@@ -113,7 +113,7 @@ sub reply_handler {
 	} else {
 	    $send_response = 1;
 	    if ($qtype eq "A") {
-		my ($ttl, $rdata) = (3600, $localaddr);
+		my ($ttl, $rdata) = (3600, "10.53.0.4");
 		my $rr = new Net::DNS::RR("$qname $ttl $qclass $qtype $rdata");
 		print("\tresponse: $qname $ttl $qclass $qtype $rdata\n");
 		push @ans, $rr;
@@ -121,22 +121,22 @@ sub reply_handler {
 	}
 	$rcode = "NOERROR";
     } elsif ($qname eq "direct.example.net" ) {
-        if ($qtype eq "A") {
-            my ($ttl, $rdata) = (3600, $localaddr);
-            my $rr = new Net::DNS::RR("$qname $ttl $qclass $qtype $rdata");
-            push @ans, $rr;
-        }
-        $rcode = "NOERROR";
+	if ($qtype eq "A") {
+	    my ($ttl, $rdata) = (3600, $localaddr);
+	    my $rr = new Net::DNS::RR("$qname $ttl $qclass $qtype $rdata");
+	    push @ans, $rr;
+	}
+	$rcode = "NOERROR";
     } elsif( $qname =~ /^ns1\.(\d+)\.example\.net$/ ) {
-        my $next = ($1 + 1) * 16;
-        for (my $i = 1; $i < 16; $i++) {
-            my $s = $next + $i;
-            my $rr = new Net::DNS::RR("$1.example.net 86400 $qclass NS ns1.$s.example.net");
-            push @auth, $rr;
-            $rr = new Net::DNS::RR("ns1.$s.example.net 86400 $qclass A 10.53.0.7");
-            push @add, $rr;
-        }
-        $rcode = "NOERROR";
+	my $next = ($1 + 1) * 16;
+	for (my $i = 1; $i < 16; $i++) {
+	    my $s = $next + $i;
+	    my $rr = new Net::DNS::RR("$1.example.net 86400 $qclass NS ns1.$s.example.net");
+	    push @auth, $rr;
+	    $rr = new Net::DNS::RR("ns1.$s.example.net 86400 $qclass A 10.53.0.7");
+	    push @add, $rr;
+	}
+	$rcode = "NOERROR";
     } else {
 	$rcode = "NXDOMAIN";
     }

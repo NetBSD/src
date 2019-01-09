@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,6 +44,8 @@
  ***	Imports
  ***/
 
+#include <stdbool.h>
+
 #include <isc/json.h>
 #include <isc/lang.h>
 #include <isc/stats.h>
@@ -56,22 +58,11 @@ ISC_LANG_BEGINDECLS
 /***
  ***	Functions
  ***/
-
 isc_result_t
-dns_cache_create(isc_mem_t *cmctx, isc_taskmgr_t *taskmgr,
+dns_cache_create(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 		 isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
-		 const char *db_type, unsigned int db_argc, char **db_argv,
-		 dns_cache_t **cachep);
-isc_result_t
-dns_cache_create2(isc_mem_t *cmctx, isc_taskmgr_t *taskmgr,
-		  isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
-		  const char *cachename, const char *db_type,
-		  unsigned int db_argc, char **db_argv, dns_cache_t **cachep);
-isc_result_t
-dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
-		  isc_timermgr_t *timermgr, dns_rdataclass_t rdclass,
-		  const char *cachename, const char *db_type,
-		  unsigned int db_argc, char **db_argv, dns_cache_t **cachep);
+		 const char *cachename, const char *db_type,
+		 unsigned int db_argc, char **db_argv, dns_cache_t **cachep);
 /*%<
  * Create a new DNS cache.
  *
@@ -293,7 +284,7 @@ dns_cache_flush(dns_cache_t *cache);
 
 isc_result_t
 dns_cache_flushnode(dns_cache_t *cache, const dns_name_t *name,
-		    isc_boolean_t tree);
+		    bool tree);
 /*
  * Flush a given name from the cache.  If 'tree' is true, then
  * also flush all names under 'name'.
@@ -312,7 +303,7 @@ isc_result_t
 dns_cache_flushname(dns_cache_t *cache, const dns_name_t *name);
 /*
  * Flush a given name from the cache.  Equivalent to
- * dns_cache_flushpartial(cache, name, ISC_FALSE).
+ * dns_cache_flushpartial(cache, name, false).
  *
  * Requires:
  *\li	'cache' to be valid.

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,12 +21,12 @@
 #include <isc/quota.h>
 #include <isc/util.h>
 
-isc_result_t
+void
 isc_quota_init(isc_quota_t *quota, int max) {
 	quota->max = max;
 	quota->used = 0;
 	quota->soft = 0;
-	return (isc_mutex_init(&quota->lock));
+	isc_mutex_init(&quota->lock);
 }
 
 void
@@ -35,7 +35,7 @@ isc_quota_destroy(isc_quota_t *quota) {
 	quota->max = 0;
 	quota->used = 0;
 	quota->soft = 0;
-	DESTROYLOCK(&quota->lock);
+	isc_mutex_destroy(&quota->lock);
 }
 
 void

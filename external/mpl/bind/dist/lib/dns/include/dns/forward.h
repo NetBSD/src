@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: forward.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,24 +91,7 @@ dns_fwdtable_delete(dns_fwdtable_t *fwdtable, const dns_name_t *name);
 
 isc_result_t
 dns_fwdtable_find(dns_fwdtable_t *fwdtable, const dns_name_t *name,
-		  dns_forwarders_t **forwardersp);
-/*%<
- * Finds a domain in the forwarding table.  The closest matching parent
- * domain is returned.
- *
- * Requires:
- * \li	fwdtable is a valid forwarding table.
- * \li	name is a valid name
- * \li	forwardersp != NULL && *forwardersp == NULL
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_NOTFOUND
- */
-
-isc_result_t
-dns_fwdtable_find2(dns_fwdtable_t *fwdtable, const dns_name_t *name,
-		   dns_name_t *foundname, dns_forwarders_t **forwardersp);
+		  dns_name_t *foundname, dns_forwarders_t **forwardersp);
 /*%<
  * Finds a domain in the forwarding table.  The closest matching parent
  * domain is returned.

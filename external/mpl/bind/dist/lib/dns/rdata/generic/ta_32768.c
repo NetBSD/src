@@ -1,4 +1,4 @@
-/*	$NetBSD: ta_32768.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: ta_32768.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -134,7 +134,7 @@ digest_ta(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_ta(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_ta);
@@ -144,10 +144,10 @@ checkowner_ta(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_ta(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_ta);
@@ -156,7 +156,7 @@ checknames_ta(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

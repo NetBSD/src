@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,7 +36,7 @@
 #define NAMED_LOGMODULE_CONTROL		(&named_g_modules[2])
 
 isc_result_t
-named_log_init(isc_boolean_t safe);
+named_log_init(bool safe);
 /*%
  * Initialize the logging system and set up an initial default
  * logging default configuration that will be used until the

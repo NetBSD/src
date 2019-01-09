@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.c,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: condition.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,19 +11,23 @@
  * information regarding copyright ownership.
  */
 
-
 #include <config.h>
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/condition.h>
 #include <isc/assertions.h>
+#include <isc/error.h>
 #include <isc/util.h>
+#include <isc/strerr.h>
 #include <isc/thread.h>
 #include <isc/time.h>
 
 #define LSIGNAL		0
 #define LBROADCAST	1
 
-isc_result_t
+void
 isc_condition_init(isc_condition_t *cond) {
 	HANDLE h;
 
@@ -35,8 +39,11 @@ isc_condition_init(isc_condition_t *cond) {
 	 */
 	h = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (h == NULL) {
-		/* XXX */
-		return (ISC_R_UNEXPECTED);
+		char strbuf[ISC_STRERRORSIZE];
+		DWORD err = GetLastError();
+		strerror_r(err, strbuf, sizeof(strbuf));
+		isc_error_fatal(__FILE__, __LINE__,
+				"CreateEvent failed: %s", strbuf);
 	}
 	cond->events[LSIGNAL] = h;
 
@@ -45,8 +52,6 @@ isc_condition_init(isc_condition_t *cond) {
 	 * for the wait condition
 	 */
 	ISC_LIST_INIT(cond->threadlist);
-
-	return (ISC_R_SUCCESS);
 }
 
 /*
@@ -130,7 +135,6 @@ isc_condition_signal(isc_condition_t *cond) {
 		/* XXX */
 		return (ISC_R_UNEXPECTED);
 	}
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -138,7 +142,7 @@ isc_result_t
 isc_condition_broadcast(isc_condition_t *cond) {
 
 	isc_condition_thread_t *threadcond;
-	isc_boolean_t failed = ISC_FALSE;
+	bool failed = false;
 
 	/*
 	 * Unlike pthreads, the caller MUST hold the lock associated with
@@ -154,7 +158,7 @@ isc_condition_broadcast(isc_condition_t *cond) {
 	     threadcond = ISC_LIST_NEXT(threadcond, link)) {
 
 		if (!SetEvent(threadcond->handle[LBROADCAST]))
-			failed = ISC_TRUE;
+			failed = true;
 	}
 
 	if (failed)
@@ -236,7 +240,7 @@ isc_result_t
 isc_condition_waituntil(isc_condition_t *cond, isc_mutex_t *mutex,
 			isc_time_t *t) {
 	DWORD milliseconds;
-	isc_uint64_t microseconds;
+	uint64_t microseconds;
 	isc_time_t now;
 
 	if (isc_time_now(&now) != ISC_R_SUCCESS) {

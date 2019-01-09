@@ -1,4 +1,4 @@
-/*	$NetBSD: ccmsg.c,v 1.1.1.1 2018/08/12 12:08:29 christos Exp $	*/
+/*	$NetBSD: ccmsg.c,v 1.1.1.2 2019/01/09 16:48:23 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,6 +29,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <inttypes.h>
 
 #include <isc/mem.h>
 #include <isc/result.h>
@@ -184,7 +186,7 @@ isccc_ccmsg_readmessage(isccc_ccmsg_t *ccmsg,
 		       NULL, NULL);
 
 	region.base = (unsigned char *)&ccmsg->size;
-	region.length = 4;  /* isc_uint32_t */
+	region.length = 4;  /* uint32_t */
 	result = isc_socket_recv(ccmsg->sock, &region, 0,
 				 ccmsg->task, recv_length, ccmsg);
 

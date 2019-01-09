@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -71,7 +71,7 @@ typedef pthread_mutex_t	isc_mutex_t;
 #else
 #define isc_mutex_init(mp) \
 	isc__mutex_init((mp), __FILE__, __LINE__)
-isc_result_t isc__mutex_init(isc_mutex_t *mp, const char *file, unsigned int line);
+void isc__mutex_init(isc_mutex_t *mp, const char *file, unsigned int line);
 #endif
 #endif
 
@@ -105,12 +105,10 @@ isc_result_t isc__mutex_init(isc_mutex_t *mp, const char *file, unsigned int lin
 
 #if ISC_MUTEX_PROFILE
 #define isc_mutex_destroy(mp) \
-	((pthread_mutex_destroy((&(mp)->mutex)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+	(RUNTIME_CHECK(pthread_mutex_destroy((&(mp)->mutex)) == 0))
 #else
 #define isc_mutex_destroy(mp) \
-	((pthread_mutex_destroy((mp)) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+	(RUNTIME_CHECK(pthread_mutex_destroy((mp)) == 0))
 #endif
 
 #if ISC_MUTEX_PROFILE
@@ -121,7 +119,7 @@ isc_result_t isc__mutex_init(isc_mutex_t *mp, const char *file, unsigned int lin
 
 #if ISC_MUTEX_PROFILE
 
-isc_result_t
+void
 isc_mutex_init_profile(isc_mutex_t *mp, const char * _file, int _line);
 isc_result_t
 isc_mutex_lock_profile(isc_mutex_t *mp, const char * _file, int _line);
@@ -131,7 +129,7 @@ isc_mutex_unlock_profile(isc_mutex_t *mp, const char * _file, int _line);
 void
 isc_mutex_statsprofile(FILE *fp);
 
-isc_result_t
+void
 isc_mutex_init_errcheck(isc_mutex_t *mp);
 
 #endif /* ISC_MUTEX_PROFILE */

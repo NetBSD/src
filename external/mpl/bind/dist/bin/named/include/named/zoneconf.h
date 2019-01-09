@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.h,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: zoneconf.h,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 #define NAMED_ZONECONF_H 1
 
 /*! \file */
+
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/types.h>
@@ -43,13 +45,13 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
  * \li	'zone' to be initialized.
  */
 
-isc_boolean_t
+bool
 named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig);
 /*%<
  * If 'zone' can be safely reconfigured according to the configuration
- * data in 'zconfig', return ISC_TRUE.  If the configuration data is so
+ * data in 'zconfig', return true.  If the configuration data is so
  * different from the current zone state that the zone needs to be destroyed
- * and recreated, return ISC_FALSE.
+ * and recreated, return false.
  */
 
 isc_result_t

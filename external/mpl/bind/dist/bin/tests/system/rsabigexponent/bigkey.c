@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.1.1.1 2018/08/12 12:07:31 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.1.1.2 2019/01/09 16:48:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,13 +14,10 @@
 
 #include <config.h>
 
-#if defined(OPENSSL) || defined(PKCS11CRYPTO)
-
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/mem.h>
 #include <isc/platform.h>
 #include <isc/print.h>
@@ -43,81 +40,6 @@
 #include <dst/dst.h>
 #include <dst/result.h>
 
-#ifdef OPENSSL
-#include <openssl/opensslv.h>
-#if OPENSSL_VERSION_NUMBER <= 0x00908000L
-#define USE_FIX_KEY_FILES
-#endif
-#else
-#define USE_FIX_KEY_FILES
-#endif
-
-#ifdef USE_FIX_KEY_FILES
-
-/*
- * Use a fixed key file pair if OpenSSL doesn't support > 32 bit exponents.
- */
-
-int
-main(int argc, char **argv) {
-	FILE *fp;
-
-	UNUSED(argc);
-	UNUSED(argv);
-
-	fp = fopen("Kexample.+005+10264.private", "w");
-	if (fp == NULL) {
-		perror("fopen(Kexample.+005+10264.private)");
-		exit(1);
-	}
-
-	fputs("Private-key-format: v1.3\n", fp);
-	fputs("Algorithm: 5 (RSASHA1)\n", fp);
-	fputs("Modulus: yhNbLRPA7VpLCXcgMvBwsfe7taVaTvLPY3AI+YolKwqD6"
-	      "/3nLlCcz4kBOTOkQBf9bmO98WnKuOWoxuEOgudoDvQOzXNl9RJtt61"
-	      "IRMscAlsVtTIfAjPLhcGy32l2s5VYWWVXx/qkcf+i/JC38YXIuVdiA"
-	      "MtbgQV40ffM4lAbZ7M=\n", fp);
-	fputs("PublicExponent: AQAAAAAAAQ==\n", fp);
-	fputs("PrivateExponent: gfXvioazoFIJp3/H2kJncrRZaqjIf9+21CL1i"
-	      "XecBOof03er8ym5AKopZQM8ie+qxvhDkIJ8YDrB7UbDxmFpPceHWYM"
-	      "X0vDWQCIiEiKzRfCsBOjgJu6HS15G/oZDqDwKat+yegtzxhg48BCPq"
-	      "zfHLXXUvBTA/HK/u8L1LwggqHk=\n", fp);
-	fputs("Prime1: 7xAPHsNnS0w7CoEnIQiu+SrmHsy86HKJOEm9FiQybRVCwf"
-	      "h4ZRQl+Z9mUbb9skjPvkM6ZeuzXTFkOjdck2y1NQ==\n", fp);
-	fputs("Prime2: 2GRzzqyRR2gfITPug8Rddxt647/2DrAuKricX/AXyGcuHM"
-	      "vTZ+v+mfgJn6TFqSn4SBF2zHJ876lWbQ+12aNORw==\n", fp);
-	fputs("Exponent1: PnGTwxiT59N/Rq/FSAwcwoAudiF/X3iK0X09j9Dl8cY"
-	      "DYAJ0bhB9es1LIaSsgLSER2b1kHbCp+FQXGVHJeZ07Q==\n", fp);
-	fputs("Exponent2: Ui+zxA/zbnUSYnz+wdbrfBD2aTeKytZG4ASI3oPDZag"
-	      "V9YC0eZRPjI82KQcFXoj1b/fV/HzT9/9rhU4mvCGjLw==\n", fp);
-	fputs("Coefficient: sdCL6AdOaCr9c+RO8NCA492MOT9w7K9d/HauC+fif"
-	      "2iWN36dA+BCKaeldS/+6ZTnV2ZVyVFQTeLJM8hplxDBwQ==\n", fp);
-
-	if (fclose(fp) != 0) {
-		perror("fclose(Kexample.+005+10264.private)");
-		exit(1);
-	}
-
-	fp = fopen("Kexample.+005+10264.key", "w");
-	if (fp == NULL) {
-		perror("fopen(Kexample.+005+10264.key)");
-		exit(1);
-	}
-
-	fputs("; This is a zone-signing key, keyid 10264, for example.\n", fp);
-	fputs("example. IN DNSKEY 256 3 5 BwEAAAAAAAHKE1stE8DtWksJdyA"
-	      "y8HCx97u1pVpO8s9jcAj5iiUrCoPr /ecuUJzPiQE5M6RAF/1uY73x"
-	      "acq45ajG4Q6C52gO9A7Nc2X1Em23rUhE yxwCWxW1Mh8CM8uFwbLfaX"
-	      "azlVhZZVfH+qRx/6L8kLfxhci5V2IAy1uB BXjR98ziUBtnsw==\n", fp);
-
-	if (fclose(fp) != 0) {
-		perror("close(Kexample.+005+10264.key)");
-		exit(1);
-	}
-
-	return(0);
-}
-#else
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
@@ -128,8 +50,6 @@ dst_key_t *key;
 dns_fixedname_t fname;
 dns_name_t *name;
 unsigned int bits = 1024U;
-isc_entropy_t *ectx;
-isc_entropysource_t *source;
 isc_mem_t *mctx;
 isc_log_t *log_;
 isc_logconfig_t *logconfig;
@@ -156,6 +76,8 @@ int
 main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
+
+#if !USE_PKCS11
 
 	rsa = RSA_new();
 	e = BN_new();
@@ -185,15 +107,7 @@ main(int argc, char **argv) {
 	dns_result_register();
 
 	CHECK(isc_mem_create(0, 0, &mctx), "isc_mem_create()");
-	CHECK(isc_entropy_create(mctx, &ectx), "isc_entropy_create()");
-#ifdef ISC_PLATFORM_CRYPTORANDOM
-	isc_entropy_usehook(ectx, ISC_TRUE);
-#endif
-	CHECK(isc_entropy_usebestsource(ectx, &source,
-					"../random.data",
-					ISC_ENTROPY_KEYBOARDNO),
-	      "isc_entropy_usebestsource(\"../random.data\")");
-	CHECK(dst_lib_init2(mctx, ectx, NULL, 0), "dst_lib_init2()");
+	CHECK(dst_lib_init(mctx, NULL), "dst_lib_init()");
 	CHECK(isc_log_create(mctx, &log_, &logconfig), "isc_log_create()");
 	isc_log_setcontext(log_);
 	dns_log_init(log_);
@@ -235,30 +149,13 @@ main(int argc, char **argv) {
 	isc_log_destroy(&log_);
 	isc_log_setcontext(NULL);
 	dns_log_setcontext(NULL);
-	if (source != NULL)
-		isc_entropy_destroysource(&source);
-	isc_entropy_detach(&ectx);
 	dst_lib_destroy();
 	dns_name_destroy();
 	isc_mem_destroy(&mctx);
 	return (0);
-}
-#endif
-
-#else /* OPENSSL || PKCS11CRYPTO */
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <isc/util.h>
-
-int
-main(int argc, char **argv) {
-	UNUSED(argc);
-	UNUSED(argv);
-	fprintf(stderr, "Compiled without Crypto\n");
-	exit(1);
+#else /* !USE_PKCS11 */
+	return (1);
+#endif /* !USE_PKC11 */
 }
 
-#endif /* OPENSSL || PKCS11CRYPTO */
 /*! \file */

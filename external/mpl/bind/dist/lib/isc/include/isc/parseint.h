@@ -1,4 +1,4 @@
-/*	$NetBSD: parseint.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: parseint.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 #ifndef ISC_PARSEINT_H
 #define ISC_PARSEINT_H 1
 
+#include <inttypes.h>
+
 #include <isc/lang.h>
 #include <isc/types.h>
 
@@ -29,13 +31,13 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isc_parse_uint32(isc_uint32_t *uip, const char *string, int base);
+isc_parse_uint32(uint32_t *uip, const char *string, int base);
 
 isc_result_t
-isc_parse_uint16(isc_uint16_t *uip, const char *string, int base);
+isc_parse_uint16(uint16_t *uip, const char *string, int base);
 
 isc_result_t
-isc_parse_uint8(isc_uint8_t *uip, const char *string, int base);
+isc_parse_uint8(uint8_t *uip, const char *string, int base);
 /*%<
  * Parse the null-terminated string 'string' containing a base 'base'
  * integer, storing the result in '*uip'.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdnskey_60.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: cdnskey_60.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -134,7 +134,7 @@ digest_cdnskey(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_cdnskey(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_cdnskey);
@@ -144,10 +144,10 @@ checkowner_cdnskey(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_cdnskey(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata != NULL);
@@ -157,7 +157,7 @@ checknames_cdnskey(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

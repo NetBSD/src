@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: dnsrps.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,10 +14,11 @@
 #ifndef DNS_DNSRPS_H
 #define DNS_DNSRPS_H
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <dns/types.h>
-
-#include <config.h>
 
 #ifdef USE_DNSRPS
 
@@ -99,7 +100,7 @@ isc_result_t dns_dnsrps_connect(dns_rpz_zones_t *rpzs);
 isc_result_t dns_dnsrps_rewrite_init(librpz_emsg_t *emsg, dns_rpz_st_t *st,
 				      dns_rpz_zones_t *rpzs,
 				      const dns_name_t *qname, isc_mem_t *mctx,
-				      isc_boolean_t have_rd);
+				      bool have_rd);
 
 #endif /* USE_DNSRPS */
 

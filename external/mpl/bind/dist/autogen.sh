@@ -10,4 +10,4 @@
 # information regarding copyright ownership.
 
 # Run this script after modifying configure.in to generate configure
-autoreconf -i
+autoreconf -f -i

@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.1 2018/08/12 12:08:10 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,8 @@
 #include <config.h>
 
 #ifdef GSSAPI
+
+#include <stdbool.h>
 
 #include <isc/base64.h>
 #include <isc/buffer.h>
@@ -190,7 +192,7 @@ gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	gss_buffer_desc gmessage, gsig;
 	OM_uint32 minor, gret;
 	gss_ctx_id_t gssctx = dctx->key->keydata.gssctx;
-	unsigned char *buf;
+	unsigned char buf[sig->length];
 	char err[1024];
 
 	/*
@@ -200,15 +202,6 @@ gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	isc_buffer_usedregion(ctx->buffer, &message);
 	REGION_TO_GBUFFER(message, gmessage);
 
-	/*
-	 * XXXMLG
-	 * It seem that gss_verify_mic() modifies the signature buffer,
-	 * at least on Heimdal's implementation.  Copy it here to an allocated
-	 * buffer.
-	 */
-	buf = isc_mem_allocate(dst__memory_pool, sig->length);
-	if (buf == NULL)
-		return (ISC_R_FAILURE);
 	memmove(buf, sig->base, sig->length);
 	r.base = buf;
 	r.length = sig->length;
@@ -218,8 +211,6 @@ gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	 * Verify the data.
 	 */
 	gret = gss_verify_mic(&minor, gssctx, &gmessage, &gsig, NULL);
-
-	isc_mem_free(dst__memory_pool, buf);
 
 	/*
 	 * Convert return codes into something useful to us.
@@ -244,13 +235,13 @@ gssapi_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	return (ISC_R_SUCCESS);
 }
 
-static isc_boolean_t
+static bool
 gssapi_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	gss_ctx_id_t gsskey1 = key1->keydata.gssctx;
 	gss_ctx_id_t gsskey2 = key2->keydata.gssctx;
 
 	/* No idea */
-	return (ISC_TF(gsskey1 == gsskey2));
+	return (gsskey1 == gsskey2);
 }
 
 static isc_result_t
@@ -263,10 +254,10 @@ gssapi_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	return (ISC_R_FAILURE);
 }
 
-static isc_boolean_t
+static bool
 gssapi_isprivate(const dst_key_t *key) {
 	UNUSED(key);
-	return (ISC_TRUE);
+	return (true);
 }
 
 static void

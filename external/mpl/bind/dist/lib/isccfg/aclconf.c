@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,6 +12,9 @@
  */
 
 #include <config.h>
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/print.h>
@@ -35,7 +38,6 @@
 
 isc_result_t
 cfg_aclconfctx_create(isc_mem_t *mctx, cfg_aclconfctx_t **ret) {
-	isc_result_t result;
 	cfg_aclconfctx_t *actx;
 
 	REQUIRE(mctx != NULL);
@@ -45,9 +47,7 @@ cfg_aclconfctx_create(isc_mem_t *mctx, cfg_aclconfctx_t **ret) {
 	if (actx == NULL)
 		return (ISC_R_NOMEMORY);
 
-	result = isc_refcount_init(&actx->references, 1);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
+	isc_refcount_init(&actx->references, 1);
 
 	actx->mctx = NULL;
 	isc_mem_attach(mctx, &actx->mctx);
@@ -59,10 +59,6 @@ cfg_aclconfctx_create(isc_mem_t *mctx, cfg_aclconfctx_t **ret) {
 
 	*ret = actx;
 	return (ISC_R_SUCCESS);
-
- cleanup:
-	isc_mem_put(mctx, actx, sizeof(*actx));
-	return (result);
 }
 
 void
@@ -70,22 +66,19 @@ cfg_aclconfctx_attach(cfg_aclconfctx_t *src, cfg_aclconfctx_t **dest) {
 	REQUIRE(src != NULL);
 	REQUIRE(dest != NULL && *dest == NULL);
 
-	isc_refcount_increment(&src->references, NULL);
+	isc_refcount_increment(&src->references);
 	*dest = src;
 }
 
 void
 cfg_aclconfctx_detach(cfg_aclconfctx_t **actxp) {
-	cfg_aclconfctx_t *actx;
-	dns_acl_t *dacl, *next;
-	unsigned int refs;
-
 	REQUIRE(actxp != NULL && *actxp != NULL);
+	cfg_aclconfctx_t *actx = *actxp;
+	*actxp = NULL;
 
-	actx = *actxp;
-
-	isc_refcount_decrement(&actx->references, &refs);
-	if (refs == 0) {
+	if (isc_refcount_decrement(&actx->references) == 1) {
+		dns_acl_t *dacl, *next;
+		isc_refcount_destroy(&actx->references);
 		for (dacl = ISC_LIST_HEAD(actx->named_acl_cache);
 		     dacl != NULL;
 		     dacl = next)
@@ -97,8 +90,6 @@ cfg_aclconfctx_detach(cfg_aclconfctx_t **actxp) {
 		}
 		isc_mem_putanddetach(&actx->mctx, actx, sizeof(*actx));
 	}
-
-	*actxp = NULL;
 }
 
 /*
@@ -220,16 +211,16 @@ convert_keyname(const cfg_obj_t *keyobj, isc_log_t *lctx, isc_mem_t *mctx,
 static isc_result_t
 count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		   isc_log_t *lctx, cfg_aclconfctx_t *ctx, isc_mem_t *mctx,
-		   isc_uint32_t *count, isc_boolean_t *has_negative)
+		   uint32_t *count, bool *has_negative)
 {
 	const cfg_listelt_t *elt;
 	isc_result_t result;
-	isc_uint32_t n = 0;
+	uint32_t n = 0;
 
 	REQUIRE(count != NULL);
 
 	if (has_negative != NULL)
-		*has_negative = ISC_FALSE;
+		*has_negative = false;
 
 	for (elt = cfg_list_first(caml);
 	     elt != NULL;
@@ -243,15 +234,15 @@ count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 			if (! cfg_obj_isvoid(negated)) {
 				ce = negated;
 				if (has_negative != NULL)
-					*has_negative = ISC_TRUE;
+					*has_negative = true;
 			}
 		}
 
 		if (cfg_obj_istype(ce, &cfg_type_keyref)) {
 			n++;
 		} else if (cfg_obj_islist(ce)) {
-			isc_boolean_t negative;
-			isc_uint32_t sub;
+			bool negative;
+			uint32_t sub;
 			result = count_acl_elements(ce, cctx, lctx, ctx, mctx,
 						    &sub, &negative);
 			if (result != ISC_R_SUCCESS)
@@ -400,13 +391,14 @@ get_subtype(const cfg_obj_t *obj, isc_log_t *lctx,
 		return (subtype);
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 }
 
-static isc_boolean_t
+static bool
 geoip_can_answer(dns_aclelement_t *elt, cfg_aclconfctx_t *ctx) {
 	if (ctx->geoip == NULL)
-		return (ISC_TRUE);
+		return (true);
 
 	switch (elt->geoip_elem.subtype) {
 	case dns_geoip_countrycode:
@@ -417,27 +409,27 @@ geoip_can_answer(dns_aclelement_t *elt, cfg_aclconfctx_t *ctx) {
 		    ctx->geoip->country_v4 != NULL ||
 		    ctx->geoip->country_v6 != NULL ||
 		    ctx->geoip->region != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_region:
 	case dns_geoip_regionname:
 		if (ctx->geoip->city_v4 != NULL ||
 		    ctx->geoip->city_v6 != NULL ||
 		    ctx->geoip->region != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_country_code:
 	case dns_geoip_country_code3:
 	case dns_geoip_country_name:
 		if (ctx->geoip->country_v4 != NULL ||
 		    ctx->geoip->country_v6 != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_region_countrycode:
 	case dns_geoip_region_code:
 	case dns_geoip_region_name:
 		if (ctx->geoip->region != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_city_countrycode:
 	case dns_geoip_city_countrycode3:
@@ -452,30 +444,30 @@ geoip_can_answer(dns_aclelement_t *elt, cfg_aclconfctx_t *ctx) {
 	case dns_geoip_city_timezonecode:
 		if (ctx->geoip->city_v4 != NULL ||
 		    ctx->geoip->city_v6 != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_isp_name:
 		if (ctx->geoip->isp != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_org_name:
 		if (ctx->geoip->org != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_as_asnum:
 		if (ctx->geoip->as != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_domain_name:
 		if (ctx->geoip->domain != NULL)
-			return (ISC_TRUE);
+			return (true);
 		/* FALLTHROUGH */
 	case dns_geoip_netspeed_id:
 		if (ctx->geoip->netspeed != NULL)
-			return (ISC_TRUE);
+			return (true);
 	}
 
-	return (ISC_FALSE);
+	return (false);
 }
 
 static isc_result_t
@@ -594,8 +586,10 @@ parse_geoip_element(const cfg_obj_t *obj, isc_log_t *lctx,
 	} else if (strcasecmp(stype, "netspeed") == 0) {
 		subtype = dns_geoip_netspeed_id;
 		de.geoip_elem.as_int = atoi(search);
-	} else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
 	de.geoip_elem.subtype = get_subtype(obj, lctx, subtype, dbname);
 
@@ -626,7 +620,7 @@ isc_result_t
 cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
 		   isc_mem_t *mctx, unsigned int nest_level,
-		   isc_uint16_t family, dns_acl_t **target)
+		   uint16_t family, dns_acl_t **target)
 {
 	isc_result_t result;
 	dns_acl_t *dacl = NULL, *inneracl = NULL;
@@ -634,6 +628,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 	const cfg_listelt_t *elt;
 	dns_iptable_t *iptab;
 	int new_nest_level = 0;
+	bool setpos;
 
 	if (nest_level != 0)
 		new_nest_level = nest_level - 1;
@@ -657,7 +652,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		 * elements table.  (Note that if nest_level is nonzero,
 		 * *everything* goes in the elements table.)
 		 */
-		isc_uint32_t nelem;
+		uint32_t nelem;
 
 		if (nest_level == 0) {
 			result = count_acl_elements(caml, cctx, lctx, ctx,
@@ -665,7 +660,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 			if (result != ISC_R_SUCCESS)
 				return (result);
 		} else
-			nelem = cfg_list_length(caml, ISC_FALSE);
+			nelem = cfg_list_length(caml, false);
 
 		result = dns_acl_create(mctx, nelem, &dacl);
 		if (result != ISC_R_SUCCESS)
@@ -677,7 +672,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 	     elt != NULL;
 	     elt = cfg_list_next(elt)) {
 		const cfg_obj_t *ce = cfg_listelt_value(elt);
-		isc_boolean_t neg = ISC_FALSE;
+		bool neg = false;
 
 		INSIST(dacl->length <= dacl->alloc);
 
@@ -686,8 +681,8 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 			const cfg_obj_t *negated =
 				cfg_tuple_get(ce, "negated");
 			if (! cfg_obj_isvoid(negated)) {
-				neg = ISC_TRUE;
-				dacl->has_negatives = ISC_TRUE;
+				neg = true;
+				dacl->has_negatives = true;
 				ce = negated;
 			}
 		}
@@ -701,7 +696,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 
 		if (nest_level != 0) {
 			result = dns_acl_create(mctx,
-						cfg_list_length(ce, ISC_FALSE),
+						cfg_list_length(ce, false),
 						&de->nestedacl);
 			if (result != ISC_R_SUCCESS)
 				goto cleanup;
@@ -712,7 +707,6 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 			/* Network prefix */
 			isc_netaddr_t	addr;
 			unsigned int	bitlen;
-			isc_boolean_t	setpos, setecs;
 
 			cfg_obj_asnetprefix(ce, &addr, &bitlen);
 			if (family != 0 && family != addr.family) {
@@ -739,10 +733,9 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 			 * If nesting ACLs (nest_level != 0), we negate
 			 * the nestedacl element, not the iptable entry.
 			 */
-			setpos = ISC_TF(nest_level != 0 || !neg);
-			setecs = cfg_obj_istype(ce, &cfg_type_ecsprefix);
-			result = dns_iptable_addprefix2(iptab, &addr, bitlen,
-							setpos, setecs);
+			setpos = (nest_level != 0 || !neg);
+			result = dns_iptable_addprefix(iptab, &addr, bitlen,
+						       setpos);
 			if (result != ISC_R_SUCCESS)
 				goto cleanup;
 
@@ -782,7 +775,7 @@ nested_acl:
 				INSIST(dacl->length + inneracl->length
 				       <= dacl->alloc);
 				dns_acl_merge(dacl, inneracl,
-					      ISC_TF(!neg));
+					      !neg);
 				de += inneracl->length;  /* elements added */
 				dns_acl_detach(&inneracl);
 				INSIST(dacl->length <= dacl->alloc);
@@ -814,8 +807,9 @@ nested_acl:
 			const char *name = cfg_obj_asstring(ce);
 			if (strcasecmp(name, "any") == 0) {
 				/* Iptable entry with zero bit length. */
+				setpos = (nest_level != 0 || !neg);
 				result = dns_iptable_addprefix(iptab, NULL, 0,
-					      ISC_TF(nest_level != 0 || !neg));
+							       setpos);
 				if (result != ISC_R_SUCCESS)
 					goto cleanup;
 
@@ -833,8 +827,9 @@ nested_acl:
 				 * de->negative to true so we can handle
 				 * "!none;".
 				 */
+				setpos = (nest_level != 0 || neg);
 				result = dns_iptable_addprefix(iptab, NULL, 0,
-					      ISC_TF(nest_level != 0 || neg));
+							       setpos);
 				if (result != ISC_R_SUCCESS)
 					goto cleanup;
 

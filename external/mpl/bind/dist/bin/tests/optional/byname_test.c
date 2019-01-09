@@ -1,4 +1,4 @@
-/*	$NetBSD: byname_test.c,v 1.1.1.1 2018/08/12 12:07:39 christos Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,12 +16,12 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <isc/app.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
@@ -39,7 +39,6 @@
 #include <dns/result.h>
 
 static isc_mem_t *mctx = NULL;
-static isc_entropy_t *ectx = NULL;
 static isc_taskmgr_t *taskmgr;
 static dns_view_t *view = NULL;
 static dns_adbfind_t *find = NULL;
@@ -107,9 +106,9 @@ print_name(dns_name_t *name) {
 }
 
 static void
-do_find(isc_boolean_t want_event) {
+do_find(bool want_event) {
 	isc_result_t result;
-	isc_boolean_t done = ISC_FALSE;
+	bool done = false;
 	unsigned int options;
 
 	options = DNS_ADBFIND_INET | DNS_ADBFIND_INET6;
@@ -120,7 +119,7 @@ do_find(isc_boolean_t want_event) {
 				    dns_fixedname_name(&fixed),
 				    dns_rootname, 0, options, 0,
 				    dns_fixedname_name(&target), 0,
-				    &find);
+				    0, NULL, &find);
 	if (result == ISC_R_SUCCESS) {
 		if (!ISC_LIST_EMPTY(find->list)) {
 			/*
@@ -129,7 +128,7 @@ do_find(isc_boolean_t want_event) {
 			 */
 			INSIST((find->options & DNS_ADBFIND_WANTEVENT) == 0);
 			print_addresses(find);
-			done = ISC_TRUE;
+			done = true;
 		} else {
 			/*
 			 * We don't know any of the addresses for this
@@ -140,7 +139,7 @@ do_find(isc_boolean_t want_event) {
 				 * And ADB isn't going to send us any events
 				 * either.  This query loses.
 				 */
-				done = ISC_TRUE;
+				done = true;
 			}
 			/*
 			 * If the DNS_ADBFIND_WANTEVENT flag was set, we'll
@@ -149,11 +148,11 @@ do_find(isc_boolean_t want_event) {
 		}
 	} else if (result == DNS_R_ALIAS) {
 		print_name(dns_fixedname_name(&target));
-		done = ISC_TRUE;
+		done = true;
 	} else {
 		printf("dns_adb_createfind() returned %s\n",
 		       isc_result_totext(result));
-		done = ISC_TRUE;
+		done = true;
 	}
 
 	if (done) {
@@ -173,7 +172,7 @@ adb_callback(isc_task_t *etask, isc_event_t *event) {
 	dns_adb_destroyfind(&find);
 
 	if (type == DNS_EVENT_ADBMOREADDRESSES)
-		do_find(ISC_FALSE);
+		do_find(false);
 	else if (type == DNS_EVENT_ADBNOMOREADDRESSES) {
 		printf("no more addresses\n");
 		isc_app_shutdown();
@@ -186,13 +185,13 @@ adb_callback(isc_task_t *etask, isc_event_t *event) {
 static void
 run(isc_task_t *xtask, isc_event_t *event) {
 	UNUSED(xtask);
-	do_find(ISC_TRUE);
+	do_find(true);
 	isc_event_free(&event);
 }
 
 int
 main(int argc, char *argv[]) {
-	isc_boolean_t verbose = ISC_FALSE;
+	bool verbose = false;
 	unsigned int workers = 2;
 	isc_timermgr_t *timermgr;
 	int ch;
@@ -208,17 +207,13 @@ main(int argc, char *argv[]) {
 	mctx = NULL;
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
-	RUNTIME_CHECK(isc_entropy_create(mctx, &ectx) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE)
-		      == ISC_R_SUCCESS);
-
 	while ((ch = isc_commandline_parse(argc, argv, "d:vw:")) != -1) {
 		switch (ch) {
 		case 'd':
 			level = (unsigned int)atoi(isc_commandline_argument);
 			break;
 		case 'v':
-			verbose = ISC_TRUE;
+			verbose = true;
 			break;
 		case 'w':
 			workers = (unsigned int)atoi(isc_commandline_argument);
@@ -243,7 +238,7 @@ main(int argc, char *argv[]) {
 	isc_task_setname(task, "byname", NULL);
 
 	dispatchmgr = NULL;
-	RUNTIME_CHECK(dns_dispatchmgr_create(mctx, NULL, &dispatchmgr)
+	RUNTIME_CHECK(dns_dispatchmgr_create(mctx, &dispatchmgr)
 		      == ISC_R_SUCCESS);
 
 	timermgr = NULL;
@@ -252,8 +247,8 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
 
 	cache = NULL;
-	RUNTIME_CHECK(dns_cache_create(mctx, taskmgr, timermgr,
-				       dns_rdataclass_in, "rbt", 0, NULL,
+	RUNTIME_CHECK(dns_cache_create(mctx, mctx, taskmgr, timermgr,
+				       dns_rdataclass_in, "", "rbt", 0, NULL,
 				       &cache) == ISC_R_SUCCESS);
 
 	view = NULL;
@@ -324,7 +319,7 @@ main(int argc, char *argv[]) {
 			      == ISC_R_SUCCESS);
 	}
 
-	dns_view_setcache(view, cache);
+	dns_view_setcache(view, cache, false);
 	dns_view_freeze(view);
 
 	dns_cache_detach(&cache);
@@ -355,9 +350,6 @@ main(int argc, char *argv[]) {
 	isc_timermgr_destroy(&timermgr);
 
 	isc_log_destroy(&lctx);
-
-	isc_hash_destroy();
-	isc_entropy_detach(&ectx);
 
 	if (verbose)
 		isc_mem_stats(mctx, stdout);

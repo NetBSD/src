@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.c,v 1.1.1.1 2018/08/12 12:08:14 christos Exp $	*/
+/*	$NetBSD: dyndb.c,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -69,7 +69,7 @@ static isc_once_t once = ISC_ONCE_INIT;
 
 static void
 dyndb_initialize(void) {
-	RUNTIME_CHECK(isc_mutex_init(&dyndb_lock) == ISC_R_SUCCESS);
+	isc_mutex_init(&dyndb_lock);
 	INIT_LIST(dyndb_implementations);
 }
 
@@ -192,7 +192,8 @@ cleanup:
 			      "driver '%s': %s (%s)", instname, filename,
 			      dlerror(), isc_result_totext(result));
 	if (imp != NULL)
-		isc_mem_putanddetach(&imp->mctx, imp, sizeof(dyndb_implementation_t));
+		isc_mem_putanddetach(&imp->mctx, imp,
+				     sizeof(dyndb_implementation_t));
 	if (result != ISC_R_SUCCESS && handle != NULL)
 		dlclose(handle);
 
@@ -307,7 +308,8 @@ cleanup:
 			      "driver '%s': %d (%s)", instname, filename,
 			      GetLastError(), isc_result_totext(result));
 	if (imp != NULL)
-		isc_mem_putanddetach(&imp->mctx, imp, sizeof(dyndb_implementation_t));
+		isc_mem_putanddetach(&imp->mctx, imp,
+				     sizeof(dyndb_implementation_t));
 	if (result != ISC_R_SUCCESS && handle != NULL)
 		FreeLibrary(handle);
 
@@ -387,7 +389,7 @@ cleanup:
 }
 
 void
-dns_dyndb_cleanup(isc_boolean_t exiting) {
+dns_dyndb_cleanup(bool exiting) {
 	dyndb_implementation_t *elem;
 	dyndb_implementation_t *prev;
 
@@ -408,7 +410,7 @@ dns_dyndb_cleanup(isc_boolean_t exiting) {
 	}
 	UNLOCK(&dyndb_lock);
 
-	if (exiting == ISC_TRUE)
+	if (exiting == true)
 		isc_mutex_destroy(&dyndb_lock);
 }
 

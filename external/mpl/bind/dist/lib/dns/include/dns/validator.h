@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.1.1.1 2018/08/12 12:08:20 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,6 +50,8 @@
  *\li	RFCs:	1034, 1035, 2181, 4033, 4034, 4035.
  */
 
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/event.h>
 #include <isc/mutex.h>
@@ -98,11 +100,11 @@ typedef struct dns_validatorevent {
 	/*
 	 * Optout proof seen.
 	 */
-	isc_boolean_t			optout;
+	bool			optout;
 	/*
 	 * Answer is secure.
 	 */
-	isc_boolean_t			secure;
+	bool			secure;
 } dns_validatorevent_t;
 
 #define DNS_VALIDATOR_NOQNAMEPROOF 0
@@ -138,7 +140,7 @@ struct dns_validator {
 	void *				arg;
 	unsigned int			labels;
 	dns_rdataset_t *		currentset;
-	isc_boolean_t			seensig;
+	bool			seensig;
 	dns_rdataset_t *		keyset;
 	dns_rdataset_t *		dsset;
 	dns_rdataset_t *		soaset;
@@ -154,8 +156,8 @@ struct dns_validator {
 	ISC_LINK(dns_validator_t)	link;
 	dns_rdataset_t 			dlv;
 	dns_fixedname_t			dlvsep;
-	isc_boolean_t			havedlvsep;
-	isc_boolean_t			mustbesecure;
+	bool			havedlvsep;
+	bool			mustbesecure;
 	unsigned int			dlvlabels;
 	unsigned int			depth;
 	unsigned int			authcount;

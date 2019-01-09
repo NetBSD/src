@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.c,v 1.1.1.1 2018/08/12 12:08:18 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,12 +20,9 @@
 #define RRTYPE_DS_ATTRIBUTES \
 	(DNS_RDATATYPEATTR_DNSSEC|DNS_RDATATYPEATTR_ATPARENT)
 
-#include <isc/sha1.h>
-#include <isc/sha2.h>
+#include <isc/md.h>
 
 #include <dns/ds.h>
-
-#include "dst_gost.h"
 
 static inline isc_result_t
 generic_fromtext_ds(ARGS_FROMTEXT) {
@@ -43,7 +40,7 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	 * Key tag.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -52,7 +49,7 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	 * Algorithm.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_secalg_fromtext(&c, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &c, 1));
 
@@ -60,7 +57,7 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	 * Digest type.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_dsdigest_fromtext(&c, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &c, 1));
 
@@ -74,11 +71,6 @@ generic_fromtext_ds(ARGS_FROMTEXT) {
 	case DNS_DSDIGEST_SHA256:
 		length = ISC_SHA256_DIGESTLENGTH;
 		break;
-#ifdef ISC_GOST_DIGESTLENGTH
-	case DNS_DSDIGEST_GOST:
-		length = ISC_GOST_DIGESTLENGTH;
-		break;
-#endif
 	case DNS_DSDIGEST_SHA384:
 		length = ISC_SHA384_DIGESTLENGTH;
 		break;
@@ -180,10 +172,6 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 	     sr.length < 4 + ISC_SHA1_DIGESTLENGTH) ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA256 &&
 	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH) ||
-#ifdef ISC_GOST_DIGESTLENGTH
-	    (sr.base[3] == DNS_DSDIGEST_GOST &&
-	     sr.length < 4 + ISC_GOST_DIGESTLENGTH) ||
-#endif
 	    (sr.base[3] == DNS_DSDIGEST_SHA384 &&
 	     sr.length < 4 + ISC_SHA384_DIGESTLENGTH))
 		return (ISC_R_UNEXPECTEDEND);
@@ -197,10 +185,6 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 		sr.length = 4 + ISC_SHA1_DIGESTLENGTH;
 	else if (sr.base[3] == DNS_DSDIGEST_SHA256)
 		sr.length = 4 + ISC_SHA256_DIGESTLENGTH;
-#ifdef ISC_GOST_DIGESTLENGTH
-	else if (sr.base[3] == DNS_DSDIGEST_GOST)
-		sr.length = 4 + ISC_GOST_DIGESTLENGTH;
-#endif
 	else if (sr.base[3] == DNS_DSDIGEST_SHA384)
 		sr.length = 4 + ISC_SHA384_DIGESTLENGTH;
 
@@ -264,11 +248,6 @@ generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 	case DNS_DSDIGEST_SHA256:
 		REQUIRE(ds->length == ISC_SHA256_DIGESTLENGTH);
 		break;
-#ifdef ISC_GOST_DIGESTLENGTH
-	case DNS_DSDIGEST_GOST:
-		REQUIRE(ds->length == ISC_GOST_DIGESTLENGTH);
-		break;
-#endif
 	case DNS_DSDIGEST_SHA384:
 		REQUIRE(ds->length == ISC_SHA384_DIGESTLENGTH);
 		break;
@@ -369,7 +348,7 @@ digest_ds(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_ds(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_ds);
@@ -379,10 +358,10 @@ checkowner_ds(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_ds(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_ds);
@@ -391,7 +370,7 @@ checknames_ds(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

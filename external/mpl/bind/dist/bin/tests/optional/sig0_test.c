@@ -1,4 +1,4 @@
-/*	$NetBSD: sig0_test.c,v 1.1.1.1 2018/08/12 12:07:39 christos Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,15 +13,14 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <isc/app.h>
-#include <isc/boolean.h>
 #include <isc/assertions.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/error.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -61,7 +60,6 @@ isc_mem_t *mctx;
 unsigned char qdata[1024], rdata[1024];
 isc_buffer_t qbuffer, rbuffer;
 isc_taskmgr_t *taskmgr;
-isc_entropy_t *ent = NULL;
 isc_task_t *task1;
 isc_log_t *lctx = NULL;
 isc_logconfig_t *logconfig = NULL;
@@ -197,7 +195,7 @@ buildquery(void) {
 
 int
 main(int argc, char *argv[]) {
-	isc_boolean_t verbose = ISC_FALSE;
+	bool verbose = false;
 	isc_socketmgr_t *socketmgr;
 	isc_timermgr_t *timermgr;
 	struct in_addr inaddr;
@@ -210,7 +208,7 @@ main(int argc, char *argv[]) {
 
 	RUNTIME_CHECK(isc_app_start() == ISC_R_SUCCESS);
 
-	RUNTIME_CHECK(isc_mutex_init(&lock) == ISC_R_SUCCESS);
+	isc_mutex_init(&lock);
 
 	mctx = NULL;
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
@@ -218,7 +216,7 @@ main(int argc, char *argv[]) {
 	while ((ch = isc_commandline_parse(argc, argv, "vp:")) != -1) {
 		switch (ch) {
 		case 'v':
-			verbose = ISC_TRUE;
+			verbose = true;
 			break;
 		case 'p':
 			port = (unsigned int)atoi(isc_commandline_argument);
@@ -226,8 +224,7 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	RUNTIME_CHECK(isc_entropy_create(mctx, &ent) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dst_lib_init(mctx, ent, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(dst_lib_init(mctx, NULL) == ISC_R_SUCCESS);
 
 	dns_result_register();
 	dst_result_register();
@@ -260,7 +257,7 @@ main(int argc, char *argv[]) {
 	CHECK("dns_name_fromtext", result);
 
 	key = NULL;
-	result = dst_key_fromfile(name, 4017, DNS_KEYALG_DSA,
+	result = dst_key_fromfile(name, 33180, DNS_KEYALG_RSASHA1,
 				  DST_TYPE_PUBLIC | DST_TYPE_PRIVATE,
 				  NULL, mctx, &key);
 	CHECK("dst_key_fromfile", result);
@@ -281,15 +278,13 @@ main(int argc, char *argv[]) {
 
 	dst_lib_destroy();
 
-	isc_entropy_detach(&ent);
-
 	isc_log_destroy(&lctx);
 
 	if (verbose)
 		isc_mem_stats(mctx, stdout);
 	isc_mem_destroy(&mctx);
 
-	DESTROYLOCK(&lock);
+	isc_mutex_destroy(&lock);
 
 	isc_app_finish();
 

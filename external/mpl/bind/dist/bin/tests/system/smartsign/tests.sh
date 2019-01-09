@@ -22,52 +22,52 @@ cfile=child.db
 
 echo_i "generating child's keys"
 # active zsk
-czsk1=`$KEYGEN -q -a rsasha1 -r $RANDFILE -L 30 $czone`
+czsk1=`$KEYGEN -q -a rsasha1 -L 30 $czone`
 
 # not yet published or active
-czsk2=`$KEYGEN -q -a rsasha1 -r $RANDFILE -P none -A none $czone`
+czsk2=`$KEYGEN -q -a rsasha1 -P none -A none $czone`
 
 # published but not active
-czsk3=`$KEYGEN -q -a rsasha1 -r $RANDFILE -A none $czone`
+czsk3=`$KEYGEN -q -a rsasha1 -A none $czone`
 
 # inactive
-czsk4=`$KEYGEN -q -a rsasha1 -r $RANDFILE -P now-24h -A now-24h -I now $czone`
+czsk4=`$KEYGEN -q -a rsasha1 -P now-24h -A now-24h -I now $czone`
 
 # active in 12 hours, inactive 12 hours after that...
-czsk5=`$KEYGEN -q -a rsasha1 -r $RANDFILE -P now+12h -A now+12h -I now+24h $czone`
+czsk5=`$KEYGEN -q -a rsasha1 -P now+12h -A now+12h -I now+24h $czone`
 
 # explicit successor to czk5
 # (suppressing warning about lack of removal date)
-czsk6=`$KEYGEN -q -r $RANDFILE -S $czsk5 -i 6h 2>/dev/null` 
+czsk6=`$KEYGEN -q -S $czsk5 -i 6h 2>/dev/null` 
 
 # active ksk
-cksk1=`$KEYGEN -q -a rsasha1 -r $RANDFILE -fk -L 30 $czone`
+cksk1=`$KEYGEN -q -a rsasha1 -fk -L 30 $czone`
 
 # published but not YET active; will be active in 20 seconds
-cksk2=`$KEYGEN -q -a rsasha1 -r $RANDFILE -fk $czone`
+cksk2=`$KEYGEN -q -a rsasha1 -fk $czone`
 # $SETTIME moved after other $KEYGENs
 
 echo_i "revoking key"
 # revoking key changes its ID
-cksk3=`$KEYGEN -q -a rsasha1 -r $RANDFILE -fk $czone`
+cksk3=`$KEYGEN -q -a rsasha1 -fk $czone`
 cksk4=`$REVOKE $cksk3`
 
 echo_i "setting up sync key"
-cksk5=`$KEYGEN -q -a rsasha1 -r $RANDFILE -fk -P now+1mo -A now+1mo -Psync now $czone`
+cksk5=`$KEYGEN -q -a rsasha1 -fk -P now+1mo -A now+1mo -Psync now $czone`
 
 echo_i "generating parent keys"
-pzsk=`$KEYGEN -q -a rsasha1 -r $RANDFILE $pzone`
-pksk=`$KEYGEN -q -a rsasha1 -r $RANDFILE -fk $pzone`
+pzsk=`$KEYGEN -q -a rsasha1 $pzone`
+pksk=`$KEYGEN -q -a rsasha1 -fk $pzone`
 
 echo_i "setting child's activation time"
 # using now+30s to fix RT 24561
 $SETTIME -A now+30s $cksk2 > /dev/null
 
 echo_i "signing child zone"
-czoneout=`$SIGNER -Sg -e now+1d -X now+2d -r $RANDFILE -o $czone $cfile 2>&1`
+czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile 2>&1`
 
 echo_i "signing parent zone"
-pzoneout=`$SIGNER -Sg -r $RANDFILE -o $pzone $pfile 2>&1`
+pzoneout=`$SIGNER -Sg -o $pzone $pfile 2>&1`
 
 czactive=`echo $czsk1 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
 czgenerated=`echo $czsk2 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
@@ -99,8 +99,8 @@ status=`expr $status + $ret`
 echo_i "rechecking dnssec-signzone output with -x"
 ret=0
 # use an alternate output file so -x doesn't interfere with later checks
-pzoneout=`$SIGNER -Sxg -r $RANDFILE -o $pzone -f ${pfile}2.signed $pfile 2>&1`
-czoneout=`$SIGNER -Sxg -e now+1d -X now+2d -r $RANDFILE -o $czone -f ${cfile}2.signed $cfile 2>&1`
+pzoneout=`$SIGNER -Sxg -o $pzone -f ${pfile}2.signed $pfile 2>&1`
+czoneout=`$SIGNER -Sxg -e now+1d -X now+2d -o $czone -f ${cfile}2.signed $cfile 2>&1`
 echo "$pzoneout" | grep 'KSKs: 1 active, 0 stand-by, 0 revoked' > /dev/null || ret=1
 echo "$pzoneout" | grep 'ZSKs: 1 active, 0 present, 0 revoked' > /dev/null || ret=1
 echo "$czoneout" | grep 'KSKs: 1 active, 1 stand-by, 1 revoked' > /dev/null || ret=1
@@ -204,7 +204,7 @@ status=`expr $status + $ret`
 echo_i "re-signing and checking imported TTLs again"
 ret=0
 $SETTIME -L 15 ${czsk2} > /dev/null
-czoneout=`$SIGNER -Sg -e now+1d -X now+2d -r $RANDFILE -o $czone $cfile 2>&1`
+czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile 2>&1`
 awk 'BEGIN {r = 0} $2 == "DNSKEY" && $1 != 15 {r = 1} END {exit r}' \
         ${cfile}.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -325,7 +325,7 @@ status=`expr $status + $ret`
 echo_i "waiting 30 seconds for key activation"
 sleep 30
 echo_i "re-signing child zone"
-czoneout2=`$SIGNER -Sg -r $RANDFILE -o $czone -f $cfile.new $cfile.signed 2>&1`
+czoneout2=`$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed 2>&1`
 mv $cfile.new $cfile.signed
 
 echo_i "checking dnssec-signzone output matches expectations"
@@ -351,7 +351,7 @@ status=`expr $status + $ret`
 echo_i "checking sync record deletion"
 ret=0
 $SETTIME -P now -A now -Dsync now ${cksk5} > /dev/null
-$SIGNER -Sg -r $RANDFILE -o $czone -f $cfile.new $cfile.signed > /dev/null 2>&1
+$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed > /dev/null 2>&1
 mv $cfile.new $cfile.signed
 grep -w CDNSKEY $cfile.signed > /dev/null && ret=1
 grep -w CDS $cfile.signed > /dev/null && ret=1

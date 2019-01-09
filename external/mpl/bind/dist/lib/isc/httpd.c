@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,10 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <string.h>
+
 #include <isc/buffer.h>
 #include <isc/httpd.h>
 #include <isc/mem.h>
@@ -25,8 +29,6 @@
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/util.h>
-
-#include <string.h>
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
@@ -76,7 +78,7 @@ struct isc_httpd {
 	 * Received data state.
 	 */
 	char			recvbuf[HTTP_RECVLEN]; /*%< receive buffer */
-	isc_uint32_t		recvlen;	/*%< length recv'd */
+	uint32_t		recvlen;	/*%< length recv'd */
 	char		       *headers;	/*%< set in process_request() */
 	unsigned int		method;
 	char		       *url;
@@ -114,9 +116,9 @@ struct isc_httpd {
 	 * compressed HTTP data, if compression is used.
 	 *
 	 */
-	isc_bufferlist_t	bufflist;
 	isc_buffer_t		headerbuffer;
 	isc_buffer_t		compbuffer;
+	isc_buffer_t		*sendbuffer;
 
 	const char	       *mimetype;
 	unsigned int		retcode;
@@ -268,11 +270,7 @@ isc_httpdmgr_create(isc_mem_t *mctx, isc_socket_t *sock, isc_task_t *task,
 	if (httpdmgr == NULL)
 		return (ISC_R_NOMEMORY);
 
-	result = isc_mutex_init(&httpdmgr->lock);
-	if (result != ISC_R_SUCCESS) {
-		isc_mem_put(mctx, httpdmgr, sizeof(isc_httpdmgr_t));
-		return (result);
-	}
+	isc_mutex_init(&httpdmgr->lock);
 	httpdmgr->mctx = NULL;
 	isc_mem_attach(mctx, &httpdmgr->mctx);
 	httpdmgr->sock = NULL;
@@ -313,7 +311,7 @@ isc_httpdmgr_create(isc_mem_t *mctx, isc_socket_t *sock, isc_task_t *task,
 	isc_task_detach(&httpdmgr->task);
 	isc_socket_detach(&httpdmgr->sock);
 	isc_mem_detach(&httpdmgr->mctx);
-	(void)isc_mutex_destroy(&httpdmgr->lock);
+	isc_mutex_destroy(&httpdmgr->lock);
 	isc_mem_put(mctx, httpdmgr, sizeof(isc_httpdmgr_t));
 	return (result);
 }
@@ -361,7 +359,7 @@ httpdmgr_destroy(isc_httpdmgr_t *httpdmgr) {
 	}
 
 	UNLOCK(&httpdmgr->lock);
-	(void)isc_mutex_destroy(&httpdmgr->lock);
+	isc_mutex_destroy(&httpdmgr->lock);
 
 	if (httpdmgr->ondestroy != NULL)
 		(httpdmgr->ondestroy)(httpdmgr->cb_arg);
@@ -379,7 +377,7 @@ httpdmgr_destroy(isc_httpdmgr_t *httpdmgr) {
  * Look for the given header in headers.
  * If value is specified look for it terminated with a character in eov.
  */
-static isc_boolean_t
+static bool
 have_header(isc_httpd_t *httpd, const char *header, const char *value,
 	    const char *eov)
 {
@@ -408,13 +406,13 @@ have_header(isc_httpd_t *httpd, const char *header, const char *value,
 			if (h == NULL || (nl != NULL && nl < h))
 				h = nl;
 			if (h == NULL)
-				return (ISC_FALSE);
+				return (false);
 			h++;
 			continue;
 		}
 
 		if (value == NULL)
-			return (ISC_TRUE);
+			return (true);
 
 		/*
 		 * Skip optional leading white space.
@@ -428,7 +426,7 @@ have_header(isc_httpd_t *httpd, const char *header, const char *value,
 		while (*h != 0 && *h != '\r' && *h != '\n') {
 			if (strncasecmp(h, value, vlen) == 0)
 				if (strchr(eov, h[vlen]) != NULL)
-					return (ISC_TRUE);
+					return (true);
 			/*
 			 * Skip to next token.
 			 */
@@ -438,7 +436,7 @@ have_header(isc_httpd_t *httpd, const char *header, const char *value,
 			if (h[0] != 0)
 				h++;
 		}
-		return (ISC_FALSE);
+		return (false);
 	}
 }
 
@@ -667,10 +665,9 @@ isc_httpd_accept(isc_task_t *task, isc_event_t *ev) {
 	}
 	isc_buffer_init(&httpd->headerbuffer, headerdata, HTTP_SENDGROW);
 
-	ISC_LIST_INIT(httpd->bufflist);
-
 	isc_buffer_initnull(&httpd->compbuffer);
 	isc_buffer_initnull(&httpd->bodybuffer);
+	httpd->sendbuffer = NULL;
 	reset_client(httpd);
 
 	r.base = (unsigned char *)httpd->recvbuf;
@@ -840,13 +837,14 @@ isc_httpd_compress(isc_httpd_t *httpd) {
 
 static void
 isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev) {
-	isc_region_t r;
 	isc_result_t result;
 	isc_httpd_t *httpd = ev->ev_arg;
 	isc_socketevent_t *sev = (isc_socketevent_t *)ev;
+	isc_buffer_t *databuffer;
 	isc_httpdurl_t *url;
 	isc_time_t now;
-	isc_boolean_t is_compressed = ISC_FALSE;
+	isc_region_t r;
+	bool is_compressed = false;
 	char datebuf[ISC_FORMATHTTPTIMESTAMP_SIZE];
 
 	ENTER("recv");
@@ -923,10 +921,10 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev) {
 	}
 
 #ifdef HAVE_ZLIB
-	if (httpd->flags & HTTPD_ACCEPT_DEFLATE) {
+	if ((httpd->flags & HTTPD_ACCEPT_DEFLATE) != 0) {
 			result = isc_httpd_compress(httpd);
 			if (result == ISC_R_SUCCESS) {
-				is_compressed = ISC_TRUE;
+				is_compressed = true;
 			}
 	}
 #endif
@@ -952,7 +950,7 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev) {
 
 	isc_httpd_addheader(httpd, "Server: libisc", NULL);
 
-	if (is_compressed == ISC_TRUE) {
+	if (is_compressed == true) {
 		isc_httpd_addheader(httpd, "Content-Encoding", "deflate");
 		isc_httpd_addheaderuint(httpd, "Content-Length",
 					isc_buffer_usedlength(&httpd->compbuffer));
@@ -963,22 +961,24 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev) {
 
 	isc_httpd_endheaders(httpd);  /* done */
 
-	ISC_LIST_APPEND(httpd->bufflist, &httpd->headerbuffer, link);
 	/*
-	 * Link the data buffer into our send queue, should we have any data
-	 * rendered into it.  If no data is present, we won't do anything
-	 * with the buffer.
+	 * Append either the compressed or the non-compressed response body to
+	 * the response headers and store the result in httpd->sendbuffer.
 	 */
-	if (is_compressed == ISC_TRUE) {
-		ISC_LIST_APPEND(httpd->bufflist, &httpd->compbuffer, link);
-	} else {
-		if (isc_buffer_length(&httpd->bodybuffer) > 0) {
-				ISC_LIST_APPEND(httpd->bufflist, &httpd->bodybuffer, link);
-		}
-	}
+	isc_buffer_dup(httpd->mgr->mctx,
+		       &httpd->sendbuffer, &httpd->headerbuffer);
+	isc_buffer_setautorealloc(httpd->sendbuffer, true);
+	databuffer = (is_compressed ? &httpd->compbuffer : &httpd->bodybuffer);
+	isc_buffer_usedregion(databuffer, &r);
+	result = isc_buffer_copyregion(httpd->sendbuffer, &r);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	/*
+	 * Determine total response size.
+	 */
+	isc_buffer_usedregion(httpd->sendbuffer, &r);
 
 	/* check return code? */
-	(void)isc_socket_sendv(httpd->sock, &httpd->bufflist, task,
+	(void)isc_socket_send(httpd->sock, &r, task,
 			       isc_httpd_senddone, httpd);
 
  out:
@@ -1126,13 +1126,7 @@ isc_httpd_senddone(isc_task_t *task, isc_event_t *ev) {
 	ENTER("senddone");
 	INSIST(ISC_HTTPD_ISSEND(httpd));
 
-	/*
-	 * First, unlink our header buffer from the socket's bufflist.  This
-	 * is sort of an evil hack, since we know our buffer will be there,
-	 * and we know it's address, so we can just remove it directly.
-	 */
-	NOTICE("senddone unlinked header");
-	ISC_LIST_UNLINK(sev->bufferlist, &httpd->headerbuffer, link);
+	isc_buffer_free(&httpd->sendbuffer);
 
 	/*
 	 * We will always want to clean up our receive buffer, even if we
@@ -1148,13 +1142,6 @@ isc_httpd_senddone(isc_task_t *task, isc_event_t *ev) {
 			httpd->freecb(b, httpd->freecb_arg);
 		}
 		NOTICE("senddone free callback performed");
-	}
-	if (ISC_LINK_LINKED(&httpd->bodybuffer, link)) {
-		ISC_LIST_UNLINK(sev->bufferlist, &httpd->bodybuffer, link);
-		NOTICE("senddone body buffer unlinked");
-	} else if (ISC_LINK_LINKED(&httpd->compbuffer, link)) {
-		ISC_LIST_UNLINK(sev->bufferlist, &httpd->compbuffer, link);
-		NOTICE("senddone compressed data unlinked and freed");
 	}
 
 	if (sev->result != ISC_R_SUCCESS) {
@@ -1212,12 +1199,12 @@ isc_result_t
 isc_httpdmgr_addurl(isc_httpdmgr_t *httpdmgr, const char *url,
 		    isc_httpdaction_t *func, void *arg)
 {
-	return (isc_httpdmgr_addurl2(httpdmgr, url, ISC_FALSE, func, arg));
+	return (isc_httpdmgr_addurl2(httpdmgr, url, false, func, arg));
 }
 
 isc_result_t
 isc_httpdmgr_addurl2(isc_httpdmgr_t *httpdmgr, const char *url,
-		     isc_boolean_t isstatic,
+		     bool isstatic,
 		     isc_httpdaction_t *func, void *arg)
 {
 	isc_httpdurl_t *item;

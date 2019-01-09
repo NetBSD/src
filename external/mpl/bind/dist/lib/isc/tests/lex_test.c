@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_test.c,v 1.1.1.1 2018/08/12 12:08:27 christos Exp $	*/
+/*	$NetBSD: lex_test.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,23 +13,27 @@
 
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
-#include <stdio.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/buffer.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/util.h>
 
-ATF_TC(lex_0xff);
-ATF_TC_HEAD(lex_0xff, tc) {
-	atf_tc_set_md_var(tc, "descr", "check handling of 0xff");
-}
-ATF_TC_BODY(lex_0xff, tc) {
+/* check handling of 0xff */
+static void
+lex_0xff(void **state) {
 	isc_mem_t *mctx = NULL;
 	isc_result_t result;
 	isc_lex_t *lex = NULL;
@@ -38,29 +42,31 @@ ATF_TC_BODY(lex_0xff, tc) {
 
 	unsigned char death[] = { EOF, 'A' };
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	result = isc_mem_create(0, 0, &mctx);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_lex_create(mctx, 1024, &lex);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&death_buf, &death[0], sizeof(death));
 	isc_buffer_add(&death_buf, sizeof(death));
 
 	result = isc_lex_openbuffer(lex, &death_buf);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_lex_gettoken(lex, 0, &token);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	isc_lex_destroy(&lex);
+
+	isc_mem_destroy(&mctx);
 }
 
-ATF_TC(lex_setline);
-ATF_TC_HEAD(lex_setline, tc) {
-	atf_tc_set_md_var(tc, "descr", "check setting of source line");
-}
-ATF_TC_BODY(lex_setline, tc) {
+/* check setting of source line */
+static void
+lex_setline(void **state) {
 	isc_mem_t *mctx = NULL;
 	isc_result_t result;
 	isc_lex_t *lex = NULL;
@@ -70,44 +76,60 @@ ATF_TC_BODY(lex_setline, tc) {
 	unsigned long line;
 	int i;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	result = isc_mem_create(0, 0, &mctx);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_lex_create(mctx, 1024, &lex);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	isc_buffer_init(&buf, &text[0], sizeof(text));
 	isc_buffer_add(&buf, sizeof(text));
 
 	result = isc_lex_openbuffer(lex, &buf);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_lex_setsourceline(lex, 100);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	for (i = 0; i < 6; i++) {
 		result = isc_lex_gettoken(lex, 0, &token);
-		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 
 		line = isc_lex_getsourceline(lex);
-		ATF_REQUIRE_EQ(line, 100U + i);
+		assert_int_equal(line, 100U + i);
 	}
 
 	result = isc_lex_gettoken(lex, 0, &token);
-	ATF_REQUIRE_EQ(result, ISC_R_EOF);
+	assert_int_equal(result, ISC_R_EOF);
 
 	line = isc_lex_getsourceline(lex);
-	ATF_REQUIRE_EQ(line, 105U);
+	assert_int_equal(line, 105U);
+
+	isc_lex_destroy(&lex);
+
+	isc_mem_destroy(&mctx);
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, lex_0xff);
-	ATF_TP_ADD_TC(tp, lex_setline);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(lex_0xff),
+		cmocka_unit_test(lex_setline),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

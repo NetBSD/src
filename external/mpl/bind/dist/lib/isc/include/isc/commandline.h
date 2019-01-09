@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: commandline.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,8 @@
 
 /*! \file isc/commandline.h */
 
-#include <isc/boolean.h>
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/platform.h>
 #include <isc/result.h>
@@ -31,9 +32,9 @@ LIBISC_EXTERNAL_DATA extern char *isc_commandline_argument;
 /*% For printing error messages. */
 LIBISC_EXTERNAL_DATA extern char *isc_commandline_progname;
 /*% Print error message. */
-LIBISC_EXTERNAL_DATA extern isc_boolean_t isc_commandline_errprint;
+LIBISC_EXTERNAL_DATA extern bool isc_commandline_errprint;
 /*% Reset getopt. */
-LIBISC_EXTERNAL_DATA extern isc_boolean_t isc_commandline_reset;
+LIBISC_EXTERNAL_DATA extern bool isc_commandline_reset;
 
 ISC_LANG_BEGINDECLS
 

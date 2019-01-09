@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-#define ISC_RESOURCE_UNLIMITED ((isc_resourcevalue_t)ISC_UINT64_MAX)
+#define ISC_RESOURCE_UNLIMITED ((isc_resourcevalue_t)UINT64_MAX)
 
 ISC_LANG_BEGINDECLS
 
@@ -60,7 +60,7 @@ isc_resource_getlimit(isc_resource_t resource, isc_resourcevalue_t *value);
  *	behaves the same.
  *
  *\li	The current ISC libdns configuration file parser assigns a value
- *	of ISC_UINT32_MAX for a size_spec of "unlimited" and ISC_UNIT32_MAX - 1
+ *	of UINT32_MAX for a size_spec of "unlimited" and ISC_UNIT32_MAX - 1
  *	for "default", the latter of which is supposed to represent "the
  *	limit that was in force when the server started".  Since these are
  *	valid values in the middle of the range of isc_resourcevalue_t,

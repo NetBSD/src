@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,8 @@
 
 /*! \file dns/tsig.h */
 
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/refcount.h>
 #include <isc/rwlock.h>
@@ -33,10 +35,8 @@
 /*
  * Algorithms.
  */
-#ifndef PK11_MD5_DISABLE
 LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacmd5_name;
 #define DNS_TSIG_HMACMD5_NAME		dns_tsig_hmacmd5_name
-#endif
 LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_gssapi_name;
 #define DNS_TSIG_GSSAPI_NAME		dns_tsig_gssapi_name
 LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_gssapims_name;
@@ -80,7 +80,7 @@ struct dns_tsigkey {
 	dns_name_t		name;		/*%< Key name */
 	const dns_name_t	*algorithm;	/*%< Algorithm name */
 	dns_name_t		*creator;	/*%< name that created secret */
-	isc_boolean_t		generated;	/*%< was this generated? */
+	bool		generated;	/*%< was this generated? */
 	isc_stdtime_t		inception;	/*%< start of validity period */
 	isc_stdtime_t		expire;		/*%< end of validity period */
 	dns_tsig_keyring_t	*ring;		/*%< the enclosing keyring */
@@ -97,14 +97,14 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_tsigkey_create(const dns_name_t *name, const dns_name_t *algorithm,
-		   unsigned char *secret, int length, isc_boolean_t generated,
+		   unsigned char *secret, int length, bool generated,
 		   const dns_name_t *creator, isc_stdtime_t inception,
 		   isc_stdtime_t expire, isc_mem_t *mctx,
 		   dns_tsig_keyring_t *ring, dns_tsigkey_t **key);
 
 isc_result_t
 dns_tsigkey_createfromkey(const dns_name_t *name, const dns_name_t *algorithm,
-			  dst_key_t *dstkey, isc_boolean_t generated,
+			  dst_key_t *dstkey, bool generated,
 			  const dns_name_t *creator, isc_stdtime_t inception,
 			  isc_stdtime_t expire, isc_mem_t *mctx,
 			  dns_tsig_keyring_t *ring, dns_tsigkey_t **key);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-importkey.c,v 1.1.1.1 2018/08/12 12:07:18 christos Exp $	*/
+/*	$NetBSD: dnssec-importkey.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,11 +15,11 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
@@ -44,14 +44,14 @@
 
 #include <dst/dst.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
 #include "dnssectool.h"
 
 #ifndef PATH_MAX
-#define PATH_MAX 1024   /* AIX, WIN32, and others don't define this. */
+#define PATH_MAX 1024   /* WIN32, and others don't define this. */
 #endif
 
 const char *program = "dnssec-importkey";
@@ -61,13 +61,13 @@ static dns_rdataclass_t rdclass;
 static dns_fixedname_t	fixed;
 static dns_name_t	*name = NULL;
 static isc_mem_t	*mctx = NULL;
-static isc_boolean_t	setpub = ISC_FALSE, setdel = ISC_FALSE;
-static isc_boolean_t	setttl = ISC_FALSE;
+static bool	setpub = false, setdel = false;
+static bool	setttl = false;
 static isc_stdtime_t	pub = 0, del = 0;
 static dns_ttl_t	ttl = 0;
 static isc_stdtime_t	syncadd = 0, syncdel = 0;
-static isc_boolean_t	setsyncadd = ISC_FALSE;
-static isc_boolean_t	setsyncdel = ISC_FALSE;
+static bool	setsyncadd = false;
+static bool	setsyncdel = false;
 
 static isc_result_t
 initname(char *setname) {
@@ -120,14 +120,14 @@ loadset(const char *filename, dns_rdataset_t *rdataset) {
 		db_load_from_stream(db, stdin);
 		filename = "input";
 	} else {
-		result = dns_db_load3(db, filename, dns_masterformat_text,
-				      DNS_MASTER_NOTTL);
+		result = dns_db_load(db, filename, dns_masterformat_text,
+				     DNS_MASTER_NOTTL);
 		if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE)
 			fatal("can't load %s: %s", filename,
 			      isc_result_totext(result));
 	}
 
-	result = dns_db_findnode(db, name, ISC_FALSE, &node);
+	result = dns_db_findnode(db, name, false, &node);
 	if (result != ISC_R_SUCCESS)
 		fatal("can't find %s node in %s", setname, filename);
 
@@ -229,7 +229,7 @@ emit(const char *dir, dns_rdata_t *rdata) {
 		dst_key_free(&tmp);
 	}
 
-	dst_key_setexternal(key, ISC_TRUE);
+	dst_key_setexternal(key, true);
 	if (setpub)
 		dst_key_settime(key, DST_TIME_PUBLISH, pub);
 	if (setdel)
@@ -299,7 +299,6 @@ main(int argc, char **argv) {
 	int		ch;
 	isc_result_t	result;
 	isc_log_t	*log = NULL;
-	isc_entropy_t	*ectx = NULL;
 	dns_rdataset_t	rdataset;
 	dns_rdata_t	rdata;
 	isc_stdtime_t   now;
@@ -314,12 +313,12 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("out of memory");
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 #define CMDLINE_FLAGS "D:f:hK:L:P:v:V"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
@@ -350,7 +349,7 @@ main(int argc, char **argv) {
 			break;
 		case 'L':
 			ttl = strtottl(isc_commandline_argument);
-			setttl = ISC_TRUE;
+			setttl = true;
 			break;
 		case 'P':
 			/* -Psync ? */
@@ -406,17 +405,10 @@ main(int argc, char **argv) {
 	if (argc > isc_commandline_index + 1)
 		fatal("extraneous arguments");
 
-	if (ectx == NULL)
-		setup_entropy(mctx, NULL, &ectx);
-	result = dst_lib_init(mctx, ectx,
-			      ISC_ENTROPY_BLOCKING | ISC_ENTROPY_GOODONLY);
+	result = dst_lib_init(mctx, NULL);
 	if (result != ISC_R_SUCCESS)
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(result));
-	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	if (result != ISC_R_SUCCESS)
-		fatal("could not initialize hash");
-	isc_entropy_stopcallbacksources(ectx);
 
 	setup_logging(mctx, &log);
 
@@ -459,9 +451,7 @@ main(int argc, char **argv) {
 	if (dns_rdataset_isassociated(&rdataset))
 		dns_rdataset_disassociate(&rdataset);
 	cleanup_logging(&log);
-	isc_hash_destroy();
 	dst_lib_destroy();
-	cleanup_entropy(&ectx);
 	dns_name_destroy();
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);

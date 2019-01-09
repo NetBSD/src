@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.1 2018/08/12 12:07:43 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.1.1.2 2019/01/09 16:48:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <inttypes.h>
 
 #include <isc/buffer.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
@@ -47,19 +49,19 @@
 
 isc_result_t
 named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
-			 isc_entropy_t *ectx, dns_tkeyctx_t **tctxp)
+			 dns_tkeyctx_t **tctxp)
 {
 	isc_result_t result;
 	dns_tkeyctx_t *tctx = NULL;
 	const char *s;
-	isc_uint32_t n;
+	uint32_t n;
 	dns_fixedname_t fname;
 	dns_name_t *name;
 	isc_buffer_t b;
 	const cfg_obj_t *obj;
 	int type;
 
-	result = dns_tkeyctx_create(mctx, ectx, &tctx);
+	result = dns_tkeyctx_create(mctx, &tctx);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -103,7 +105,7 @@ named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		isc_buffer_add(&b, strlen(s));
 		name = dns_fixedname_initname(&fname);
 		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
-		RETERR(dst_gssapi_acquirecred(name, ISC_FALSE, &tctx->gsscred));
+		RETERR(dst_gssapi_acquirecred(name, false, &tctx->gsscred));
 	}
 
 	obj = NULL;

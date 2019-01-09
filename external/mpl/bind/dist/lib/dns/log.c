@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2018/08/12 12:08:10 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,6 +42,7 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "spill",	0 },
 	{ "dnstap",	0 },
 	{ "zoneload",	0 },
+	{ "nsid",	0 },
 	{ NULL, 	0 }
 };
 
@@ -52,7 +53,6 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
 	{ "dns/db",	 	0 },
 	{ "dns/rbtdb", 		0 },
-	{ "dns/rbtdb64", 	0 },
 	{ "dns/rbt", 		0 },
 	{ "dns/rdata", 		0 },
 	{ "dns/master", 	0 },

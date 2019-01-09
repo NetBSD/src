@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2018/08/12 12:07:42 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2019/01/09 16:48:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@ static isc_logmodule_t modules[] = {
 };
 
 isc_result_t
-named_log_init(isc_boolean_t safe) {
+named_log_init(bool safe) {
 	isc_result_t result;
 	isc_logconfig_t *lcfg = NULL;
 

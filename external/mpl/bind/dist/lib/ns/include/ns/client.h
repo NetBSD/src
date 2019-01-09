@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.1.1.1 2018/08/12 12:08:07 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.2 2019/01/09 16:48:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,6 +56,9 @@
  *** Imports
  ***/
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/buffer.h>
 #include <isc/magic.h>
 #include <isc/stdtime.h>
@@ -94,7 +97,7 @@ struct ns_client {
 	int			nupdates;
 	int			nctls;
 	int			references;
-	isc_boolean_t		needshutdown; 	/*
+	bool		needshutdown; 	/*
 						 * Used by clienttest to get
 						 * the client to go from
 						 * inactive to free state
@@ -110,18 +113,18 @@ struct ns_client {
 	isc_socket_t *		tcpsocket;
 	unsigned char *		tcpbuf;
 	dns_tcpmsg_t		tcpmsg;
-	isc_boolean_t		tcpmsg_valid;
+	bool		tcpmsg_valid;
 	isc_timer_t *		timer;
 	isc_timer_t *		delaytimer;
-	isc_boolean_t 		timerset;
+	bool 		timerset;
 	dns_message_t *		message;
 	isc_socketevent_t *	sendevent;
 	isc_socketevent_t *	recvevent;
 	unsigned char *		recvbuf;
 	dns_rdataset_t *	opt;
-	isc_uint16_t		udpsize;
-	isc_uint16_t		extflags;
-	isc_int16_t		ednsversion;	/* -1 noedns */
+	uint16_t		udpsize;
+	uint16_t		extflags;
+	int16_t		ednsversion;	/* -1 noedns */
 	void			(*next)(ns_client_t *);
 	void			(*shutdown)(void *arg, isc_result_t result);
 	void 			*shutdown_arg;
@@ -131,14 +134,14 @@ struct ns_client {
 	isc_time_t		tnow;
 	dns_name_t		signername;   /*%< [T]SIG key name */
 	dns_name_t *		signer;	      /*%< NULL if not valid sig */
-	isc_boolean_t		mortal;	      /*%< Die after handling request */
-	isc_boolean_t		pipelined;   /*%< TCP queries not in sequence */
+	bool		mortal;	      /*%< Die after handling request */
+	bool		pipelined;   /*%< TCP queries not in sequence */
 	isc_quota_t		*tcpquota;
 	isc_quota_t		*recursionquota;
 	ns_interface_t		*interface;
 
 	isc_sockaddr_t		peeraddr;
-	isc_boolean_t		peeraddr_valid;
+	bool		peeraddr_valid;
 	isc_netaddr_t		destaddr;
 	isc_sockaddr_t		destsockaddr;
 
@@ -147,7 +150,6 @@ struct ns_client {
 	struct in6_pktinfo	pktinfo;
 	isc_dscp_t		dscp;
 	isc_event_t		ctlevent;
-	dns_aaaa_t		filter_aaaa;
 	/*%
 	 * Information about recent FORMERR response(s), for
 	 * FORMERR loop avoidance.  This is separate for each
@@ -167,9 +169,9 @@ struct ns_client {
 	ISC_LINK(ns_client_t)	rlink;
 	ISC_QLINK(ns_client_t)	ilink;
 	unsigned char		cookie[8];
-	isc_uint32_t		expire;
+	uint32_t		expire;
 	unsigned char		*keytag;
-	isc_uint16_t		keytag_len;
+	uint16_t		keytag_len;
 };
 
 typedef ISC_QUEUE(ns_client_t) client_queue_t;
@@ -184,8 +186,8 @@ typedef ISC_LIST(ns_client_t) client_list_t;
 #define NS_CLIENTATTR_MULTICAST		0x00008 /*%< recv'd from multicast */
 #define NS_CLIENTATTR_WANTDNSSEC	0x00010 /*%< include dnssec records */
 #define NS_CLIENTATTR_WANTNSID		0x00020 /*%< include nameserver ID */
-#define NS_CLIENTATTR_FILTER_AAAA	0x00040 /*%< suppress AAAAs */
-#define NS_CLIENTATTR_FILTER_AAAA_RC	0x00080 /*%< recursing for A against AAAA */
+/* Obsolete: NS_CLIENTATTR_FILTER_AAAA	0x00040 */
+/* Obsolete: NS_CLIENTATTR_FILTER_AAAA_RC 0x00080 */
 #define NS_CLIENTATTR_WANTAD		0x00100 /*%< want AD in response if possible */
 #define NS_CLIENTATTR_WANTCOOKIE	0x00200 /*%< return a COOKIE */
 #define NS_CLIENTATTR_HAVECOOKIE	0x00400 /*%< has a valid COOKIE */
@@ -247,10 +249,10 @@ ns_client_next(ns_client_t *client, isc_result_t result);
  * return no response to the client.
  */
 
-isc_boolean_t
+bool
 ns_client_shuttingdown(ns_client_t *client);
 /*%<
- * Return ISC_TRUE iff the client is currently shutting down.
+ * Return true iff the client is currently shutting down.
  */
 
 void
@@ -295,10 +297,10 @@ ns_clientmgr_destroy(ns_clientmgr_t **managerp);
 
 isc_result_t
 ns_clientmgr_createclients(ns_clientmgr_t *manager, unsigned int n,
-			   ns_interface_t *ifp, isc_boolean_t tcp);
+			   ns_interface_t *ifp, bool tcp);
 /*%<
  * Create up to 'n' clients listening on interface 'ifp'.
- * If 'tcp' is ISC_TRUE, the clients will listen for TCP connections,
+ * If 'tcp' is true, the clients will listen for TCP connections,
  * otherwise for UDP requests.
  */
 
@@ -318,13 +320,13 @@ ns_client_getdestaddr(ns_client_t *client);
 
 isc_result_t
 ns_client_checkaclsilent(ns_client_t *client, isc_netaddr_t *netaddr,
-			 dns_acl_t *acl, isc_boolean_t default_allow);
+			 dns_acl_t *acl, bool default_allow);
 
 /*%<
  * Convenience function for client request ACL checking.
  *
  * Check the current client request against 'acl'.  If 'acl'
- * is NULL, allow the request iff 'default_allow' is ISC_TRUE.
+ * is NULL, allow the request iff 'default_allow' is true.
  * If netaddr is NULL, check the ACL against client->peeraddr;
  * otherwise check it against netaddr.
  *
@@ -350,7 +352,7 @@ isc_result_t
 ns_client_checkacl(ns_client_t  *client,
 		   isc_sockaddr_t *sockaddr,
 		   const char *opname, dns_acl_t *acl,
-		   isc_boolean_t default_allow,
+		   bool default_allow,
 		   int log_level);
 /*%<
  * Like ns_client_checkaclsilent, except the outcome of the check is
@@ -414,7 +416,7 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 
 isc_result_t
 ns__clientmgr_getclient(ns_clientmgr_t *manager, ns_interface_t *ifp,
-			isc_boolean_t tcp, ns_client_t **clientp);
+			bool tcp, ns_client_t **clientp);
 /*
  * Get a client object from the inactive queue, or create one, as needed.
  * (Not intended for use outside this module and associated tests.)
@@ -426,4 +428,71 @@ ns__client_request(isc_task_t *task, isc_event_t *event);
  * Handle client requests.
  * (Not intended for use outside this module and associated tests.)
  */
+
+dns_rdataset_t *
+ns_client_newrdataset(ns_client_t *client);
+
+void
+ns_client_putrdataset(ns_client_t *client, dns_rdataset_t **rdatasetp);
+/*%<
+ * Get and release temporary rdatasets in the client message;
+ * used in query.c and in plugins.
+ */
+
+isc_result_t
+ns_client_newnamebuf(ns_client_t *client);
+/*%<
+ * Allocate a name buffer for the client message.
+ */
+
+dns_name_t *
+ns_client_newname(ns_client_t *client, isc_buffer_t *dbuf, isc_buffer_t *nbuf);
+/*%<
+ * Get a temporary name for the client message.
+ */
+
+isc_buffer_t *
+ns_client_getnamebuf(ns_client_t *client);
+/*%<
+ * Get a name buffer from the pool, or allocate a new one if needed.
+ */
+
+void
+ns_client_keepname(ns_client_t *client, dns_name_t *name, isc_buffer_t *dbuf);
+/*%<
+ * Adjust buffer 'dbuf' to reflect that 'name' is using space in it,
+ * and set client attributes appropriately.
+ */
+
+void
+ns_client_releasename(ns_client_t *client, dns_name_t **namep);
+/*%<
+ * Release 'name' back to the pool of temporary names for the client
+ * message. If it is using a name buffer, relinquish its exclusive
+ * rights on the buffer.
+ */
+
+isc_result_t
+ns_client_newdbversion(ns_client_t *client, unsigned int n);
+/*%<
+ * Allocate 'n' new database versions for use by client queries.
+ */
+
+ns_dbversion_t *
+ns_client_getdbversion(ns_client_t *client);
+/*%<
+ * Get a free database version for use by a client query, allocating
+ * a new one if necessary.
+ */
+
+ns_dbversion_t *
+ns_client_findversion(ns_client_t *client, dns_db_t *db);
+/*%<
+ * Find the correct database version to use with a client query.
+ * If we have already done a query related to the database 'db',
+ * make sure subsequent queries are from the same version;
+ * otherwise, take a database version from the list of dbversions
+ * allocated by ns_client_newdbversion().
+ */
+
 #endif /* NS_CLIENT_H */

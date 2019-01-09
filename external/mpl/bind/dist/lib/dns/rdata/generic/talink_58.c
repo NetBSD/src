@@ -1,4 +1,4 @@
-/*	$NetBSD: talink_58.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: talink_58.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,7 @@ fromtext_talink(ARGS_FROMTEXT) {
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string,
-					      ISC_FALSE));
+					      false));
 
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
@@ -52,7 +52,7 @@ totext_talink(ARGS_TOTEXT) {
 	dns_name_t prev;
 	dns_name_t next;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	bool sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_talink);
 	REQUIRE(rdata->length != 0);
@@ -234,7 +234,7 @@ digest_talink(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_talink(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_talink);
@@ -244,10 +244,10 @@ checkowner_talink(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_talink(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_talink);
@@ -255,7 +255,7 @@ checknames_talink(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 	UNUSED(owner);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

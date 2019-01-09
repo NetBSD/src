@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2018/08/12 12:08:24 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 
 #include <unistd.h>
 
-#ifndef __hpux
 static inline long
 sysconf_ncpus(void) {
 #if defined(_SC_NPROCESSORS_ONLN)
@@ -32,24 +31,7 @@ sysconf_ncpus(void) {
 	return (0);
 #endif
 }
-#endif
 #endif /* HAVE_SYSCONF */
-
-
-#ifdef __hpux
-
-#include <sys/pstat.h>
-
-static inline int
-hpux_ncpus(void) {
-	struct pst_dynamic psd;
-	if (pstat_getdynamic(&psd, sizeof(psd), 1, 0) != -1)
-		return (psd.psd_proc_cnt);
-	else
-		return (0);
-}
-
-#endif /* __hpux */
 
 #if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTLBYNAME)
 #include <sys/types.h>  /* for FreeBSD */
@@ -73,9 +55,7 @@ unsigned int
 isc_os_ncpus(void) {
 	long ncpus = 0;
 
-#ifdef __hpux
-	ncpus = hpux_ncpus();
-#elif defined(HAVE_SYSCONF)
+#if defined(HAVE_SYSCONF)
 	ncpus = sysconf_ncpus();
 #endif
 #if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTLBYNAME)

@@ -1,4 +1,4 @@
-/*	$NetBSD: librpz.h,v 1.1.1.1 2018/08/12 12:08:19 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,6 +36,9 @@
 
 #ifndef LIBRPZ_H
 #define LIBRPZ_H
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <arpa/nameser.h>
 #include <netinet/in.h>

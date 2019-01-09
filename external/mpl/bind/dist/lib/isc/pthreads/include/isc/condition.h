@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.h,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: condition.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,22 +11,31 @@
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_CONDITION_H
-#define ISC_CONDITION_H 1
+#pragma once
 
 /*! \file */
 
+#include <errno.h>
+
+#include <isc/error.h>
 #include <isc/lang.h>
 #include <isc/mutex.h>
 #include <isc/result.h>
+#include <isc/strerr.h>
+#include <isc/string.h>
 #include <isc/types.h>
 
 typedef pthread_cond_t isc_condition_t;
 
-#define isc_condition_init(cp) \
-	((pthread_cond_init((cp), NULL) == 0) ? \
-	 ISC_R_SUCCESS : ISC_R_UNEXPECTED)
+#define isc_condition_init(cond)					\
+	if (pthread_cond_init(cond, NULL) != 0) {			\
+		char isc_condition_strbuf[ISC_STRERRORSIZE];		\
+		strerror_r(errno, isc_condition_strbuf,			\
+			   sizeof(isc_condition_strbuf));		\
+		isc_error_fatal(__FILE__, __LINE__,			\
+				"pthread_cond_init failed: %s",		\
+				isc_condition_strbuf);			\
+	}
 
 #if ISC_MUTEX_PROFILE
 #define isc_condition_wait(cp, mp) \
@@ -56,5 +65,3 @@ isc_result_t
 isc_condition_waituntil(isc_condition_t *, isc_mutex_t *, isc_time_t *);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_CONDITION_H */

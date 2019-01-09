@@ -1,153 +1,10 @@
-/* config.h.in.  Generated from configure.in by autoheader.  */
-/*
- * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
- * See the COPYRIGHT file distributed with this work for additional
- * information regarding copyright ownership.
- */
-
-/*! \file */
-
-/***
- *** This file is not to be included by any public header files, because
- *** it does not get installed.
- ***/
-
-/** define on DEC OSF to enable 4.4BSD style sa_len support */
-#undef _SOCKADDR_LEN
-
-/** define if your system needs pthread_init() before using pthreads */
-#undef NEED_PTHREAD_INIT
-
-/** define if your system has sigwait() */
-#undef HAVE_SIGWAIT
-
-/** define if sigwait() is the UnixWare flavor */
-#undef HAVE_UNIXWARE_SIGWAIT
-
-/** define on Solaris to get sigwait() to work using pthreads semantics */
-#undef _POSIX_PTHREAD_SEMANTICS
-
-/** define if LinuxThreads is in use */
-#undef HAVE_LINUXTHREADS
-
-/** define if sysconf() is available */
-#undef HAVE_SYSCONF
-
-/** define if sysctlbyname() is available */
-#undef HAVE_SYSCTLBYNAME
-
-/** define if catgets() is available */
-#undef HAVE_CATGETS
-
-/** define if getifaddrs() exists */
-#undef HAVE_GETIFADDRS
-
-/** define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
-#undef HAVE_IFLIST_SYSCTL
-
-/** define if tzset() is available */
-#undef HAVE_TZSET
-
-/** define if struct addrinfo exists */
-#undef HAVE_ADDRINFO
-
-/** define if getaddrinfo() exists */
-#undef HAVE_GETADDRINFO
-
-/** define if gai_strerror() exists */
-#undef HAVE_GAISTRERROR
-
-/**
- * define if pthread_setconcurrency() should be called to tell the
- * OS how many threads we might want to run.
- */
-#undef CALL_PTHREAD_SETCONCURRENCY
-
-/** define if IPv6 is not disabled */
-#undef WANT_IPV6
-
-/** define if flockfile() is available */
-#undef HAVE_FLOCKFILE
-
-/** define if getc_unlocked() is available */
-#undef HAVE_GETCUNLOCKED
-
-/** Shut up warnings about sputaux in stdio.h on BSD/OS pre-4.1 */
-#undef SHUTUP_SPUTAUX
-#ifdef SHUTUP_SPUTAUX
-struct __sFILE;
-extern __inline int __sputaux(int _c, struct __sFILE *_p);
-#endif
-
-/** Shut up warnings about missing sigwait prototype on BSD/OS 4.0* */
-#undef SHUTUP_SIGWAIT
-#ifdef SHUTUP_SIGWAIT
-int sigwait(const unsigned int *set, int *sig);
-#endif
-
-/** Shut up warnings from gcc -Wcast-qual on BSD/OS 4.1. */
-#undef SHUTUP_STDARG_CAST
-#if defined(SHUTUP_STDARG_CAST) && defined(__GNUC__)
-#include <stdarg.h>		/** Grr.  Must be included *every time*. */
-/**
- * The silly continuation line is to keep configure from
- * commenting out the #undef.
- */
-
-#undef \
-	va_start
-#define	va_start(ap, last) \
-	do { \
-		union { const void *konst; long *var; } _u; \
-		_u.konst = &(last); \
-		ap = (va_list)(_u.var + __va_words(__typeof(last))); \
-	} while (0)
-#endif /** SHUTUP_STDARG_CAST && __GNUC__ */
-
-/** define if the system has a random number generating device */
-#undef PATH_RANDOMDEV
-
-/** define if pthread_attr_getstacksize() is available */
-#undef HAVE_PTHREAD_ATTR_GETSTACKSIZE
-
-/** define if pthread_attr_setstacksize() is available */
-#undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
-
-/** define if you have strerror in the C library. */
-#undef HAVE_STRERROR
-
-/* Define if OpenSSL includes DSA support */
-#undef HAVE_OPENSSL_DSA
-
-/* Define if you have getpassphrase in the C library. */
-#undef HAVE_GETPASSPHRASE
-
-/* Define to the length type used by the socket API (socklen_t, size_t, int). */
-#undef ISC_SOCKADDR_LEN_T
-
-/* Define if threads need PTHREAD_SCOPE_SYSTEM */
-#undef NEED_PTHREAD_SCOPE_SYSTEM
-
-/* Define to 1 if you have the uname library function. */
-#undef HAVE_UNAME
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
 /* Use AES for Client Cookie generation */
 #undef AES_CC
-
-/* define if ATF unit tests are to be built. */
-#undef ATF_TEST
-
-/* Define if recvmsg() does not meet all of the BSD socket API specifications.
-   */
-#undef BROKEN_RECVMSG
 
 /* Define if you cannot bind() before connect() for TCP sockets. */
 #undef BROKEN_TCP_BIND_BEFORE_CONNECT
@@ -170,6 +27,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to enable rpz nsip rules. */
 #undef ENABLE_RPZ_NSIP
 
+/* define if you want TCP_FASTOPEN enabled if available */
+#undef ENABLE_TCP_FASTOPEN
+
 /* Solaris hack to get select_large_fdset. */
 #undef FD_SETSIZE
 
@@ -185,11 +45,11 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `arc4random' function. */
 #undef HAVE_ARC4RANDOM
 
-/* Define to 1 if you have the `arc4random_addrandom' function. */
-#undef HAVE_ARC4RANDOM_ADDRANDOM
+/* Define to 1 if you have the `arc4random_buf' function. */
+#undef HAVE_ARC4RANDOM_BUF
 
-/* Define to 1 if you have the `arc4random_stir' function. */
-#undef HAVE_ARC4RANDOM_STIR
+/* Define to 1 if you have the `arc4random_uniform' function. */
+#undef HAVE_ARC4RANDOM_UNIFORM
 
 /* Define to 1 if the compiler supports __builtin_clz. */
 #undef HAVE_BUILTIN_CLZ
@@ -197,11 +57,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if the compiler supports __builtin_expect. */
 #undef HAVE_BUILTIN_EXPECT
 
+/* define if the compiler supports __builtin_unreachable(). */
+#undef HAVE_BUILTIN_UNREACHABLE
+
+/* Define to 1 if you have the `catgets' function. */
+#undef HAVE_CATGETS
+
 /* Define to 1 if you have the `chroot' function. */
 #undef HAVE_CHROOT
 
 /* Define if clock_gettime is available. */
 #undef HAVE_CLOCK_GETTIME
+
+/* Use cmocka */
+#undef HAVE_CMOCKA
+
+/* Define to 1 if you have the <cmocka.h> header file. */
+#undef HAVE_CMOCKA_H
+
+/* Define to 1 if you have the `cpuset_setaffinity' function. */
+#undef HAVE_CPUSET_SETAFFINITY
+
+/* Define to 1 if you have the `CRYPTO_zalloc' function. */
+#undef HAVE_CRYPTO_ZALLOC
 
 /* Define to 1 if you have the <devpoll.h> header file. */
 #undef HAVE_DEVPOLL_H
@@ -224,11 +102,14 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 to enable dnstap support */
 #undef HAVE_DNSTAP
 
-/* Define to 1 if you have the `DSA_get0_pqg' function. */
-#undef HAVE_DSA_GET0_PQG
+/* Define to 1 if you have the `ECDSA_sign' function. */
+#undef HAVE_ECDSA_SIGN
 
 /* Define to 1 if you have the `ECDSA_SIG_get0' function. */
 #undef HAVE_ECDSA_SIG_GET0
+
+/* Define to 1 if you have the `ECDSA_verify' function. */
+#undef HAVE_ECDSA_VERIFY
 
 /* Define to 1 if you have the <editline/readline.h> header file. */
 #undef HAVE_EDITLINE_READLINE_H
@@ -238,6 +119,39 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <edit/readline/readline.h> header file. */
 #undef HAVE_EDIT_READLINE_READLINE_H
+
+/* Define to 1 if you have the `epoll_create1' function. */
+#undef HAVE_EPOLL_CREATE1
+
+/* Define to 1 if you have the `EVP_aes_128_ecb' function. */
+#undef HAVE_EVP_AES_128_ECB
+
+/* Define to 1 if you have the `EVP_aes_192_ecb' function. */
+#undef HAVE_EVP_AES_192_ECB
+
+/* Define to 1 if you have the `EVP_aes_256_ecb' function. */
+#undef HAVE_EVP_AES_256_ECB
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_free' function. */
+#undef HAVE_EVP_CIPHER_CTX_FREE
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
+#undef HAVE_EVP_CIPHER_CTX_NEW
+
+/* Define to 1 if you have the `EVP_MD_CTX_free' function. */
+#undef HAVE_EVP_MD_CTX_FREE
+
+/* Define to 1 if you have the `EVP_MD_CTX_new' function. */
+#undef HAVE_EVP_MD_CTX_NEW
+
+/* Define to 1 if you have the `EVP_MD_CTX_reset' function. */
+#undef HAVE_EVP_MD_CTX_RESET
+
+/* Define to 1 if you have the `EVP_sha1' function. */
+#undef HAVE_EVP_SHA1
+
+/* Define to 1 if you have the `EVP_sha224' function. */
+#undef HAVE_EVP_SHA224
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #undef HAVE_EVP_SHA256
@@ -254,14 +168,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define if OpenSSL provides FIPS_mode() */
+/* Define to 1 if you have the `FIPS_mode' function. */
 #undef HAVE_FIPS_MODE
-
-/* Define to 1 if you have the `fseeko' function. */
-#undef HAVE_FSEEKO
-
-/* Define to 1 if you have the `ftello' function. */
-#undef HAVE_FTELLO
 
 /* Build with GeoIP support */
 #undef HAVE_GEOIP
@@ -271,6 +179,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Build with GeoIP Country IPv6 support */
 #undef HAVE_GEOIP_V6
+
+/* Define to 1 if you have the `getpassphrase' function. */
+#undef HAVE_GETPASSPHRASE
 
 /* Define to 1 if you have the `getrandom' function. */
 #undef HAVE_GETRANDOM
@@ -290,7 +201,22 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 #undef HAVE_GSSAPI_KRB5_H
 
-/* Define to 1 if you have the if_nametoindex function. */
+/* Define to 1 if you have the `HMAC_CTX_free' function. */
+#undef HAVE_HMAC_CTX_FREE
+
+/* Define to 1 if you have the `HMAC_CTX_get_md' function. */
+#undef HAVE_HMAC_CTX_GET_MD
+
+/* Define to 1 if you have the `HMAC_CTX_new' function. */
+#undef HAVE_HMAC_CTX_NEW
+
+/* Define to 1 if you have the `HMAC_CTX_reset' function. */
+#undef HAVE_HMAC_CTX_RESET
+
+/* Define to 1 if you have the <idn2.h> header file. */
+#undef HAVE_IDN2_H
+
+/* Define to 1 if you have the `if_nametoindex' function. */
 #undef HAVE_IF_NAMETOINDEX
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -305,59 +231,38 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <kerberosv5/krb5.h> header file. */
 #undef HAVE_KERBEROSV5_KRB5_H
 
+/* Define to 1 if you have the `kqueue' function. */
+#undef HAVE_KQUEUE
+
 /* Define to 1 if you have the <krb5.h> header file. */
 #undef HAVE_KRB5_H
 
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #undef HAVE_KRB5_KRB5_H
 
-/* Define to 1 if you have the `c' library (-lc). */
-#undef HAVE_LIBC
-
-/* Define to 1 if you have the `cap' library (-lcap). */
-#undef HAVE_LIBCAP
-
-/* if system have backtrace function */
+/* define if system have backtrace function */
 #undef HAVE_LIBCTRACE
 
-/* Define to 1 if you have the `c_r' library (-lc_r). */
-#undef HAVE_LIBC_R
+/* Define if libidn2 was found */
+#undef HAVE_LIBIDN2
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 #undef HAVE_LIBNSL
 
-/* Define to 1 if you have the `pthread' library (-lpthread). */
-#undef HAVE_LIBPTHREAD
-
-/* Define to 1 if you have the `rt' library (-lrt). */
-#undef HAVE_LIBRT
-
 /* Define to 1 if you have the `scf' library (-lscf). */
 #undef HAVE_LIBSCF
-
-/* Define to use libseccomp system call filtering. */
-#undef HAVE_LIBSECCOMP
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 
-/* Define to 1 if you have the `thr' library (-lthr). */
-#undef HAVE_LIBTHR
-
 /* Define if libxml2 was found */
 #undef HAVE_LIBXML2
-
-/* Define to 1 if you have the <linux/capability.h> header file. */
-#undef HAVE_LINUX_CAPABILITY_H
 
 /* Define to 1 if you have the <linux/netlink.h> header file. */
 #undef HAVE_LINUX_NETLINK_H
 
 /* Define to 1 if you have the <linux/rtnetlink.h> header file. */
 #undef HAVE_LINUX_RTNETLINK_H
-
-/* Define to 1 if you have the <linux/types.h> header file. */
-#undef HAVE_LINUX_TYPES_H
 
 /* Define if lmdb was found */
 #undef HAVE_LMDB
@@ -380,41 +285,32 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
-/* Define if your OpenSSL version supports AES */
-#undef HAVE_OPENSSL_AES
-
-/* Define if your OpenSSL version supports ECDSA. */
-#undef HAVE_OPENSSL_ECDSA
-
-/* Define if your OpenSSL version supports Ed25519. */
+/* define if OpenSSL supports Ed25519 */
 #undef HAVE_OPENSSL_ED25519
 
-/* Define if your OpenSSL version supports Ed448. */
-#undef HAVE_OPENSSL_ED448
+/* Define to 1 if you have the `processor_bind' function. */
+#undef HAVE_PROCESSOR_BIND
 
-/* Define if your OpenSSL version supports EVP AES */
-#undef HAVE_OPENSSL_EVP_AES
+/* Define if you have POSIX threads libraries and header files. */
+#undef HAVE_PTHREAD
 
-/* Define if your OpenSSL version supports GOST. */
-#undef HAVE_OPENSSL_GOST
+/* Define to 1 if you have the `pthread_attr_getstacksize' function. */
+#undef HAVE_PTHREAD_ATTR_GETSTACKSIZE
 
-/* Define if your PKCS11 provider supports ECDSA. */
-#undef HAVE_PKCS11_ECDSA
-
-/* Define if your PKCS11 provider supports Ed25519. */
-#undef HAVE_PKCS11_ED25519
-
-/* Define if your PKCS11 provider supports Ed448. */
-#undef HAVE_PKCS11_ED448
-
-/* Define if your PKCS11 provider supports GOST. */
-#undef HAVE_PKCS11_GOST
+/* Define to 1 if you have the `pthread_attr_setstacksize' function. */
+#undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 
 /* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
 #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
 
 /* Define to 1 if you have the <pthread_np.h> header file. */
 #undef HAVE_PTHREAD_NP_H
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `pthread_setaffinity_np' function. */
+#undef HAVE_PTHREAD_SETAFFINITY_NP
 
 /* Define to 1 if you have the `pthread_setname_np' function. */
 #undef HAVE_PTHREAD_SETNAME_NP
@@ -446,6 +342,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 
+/* Define to 1 if you have the `sched_setaffinity' function. */
+#undef HAVE_SCHED_SETAFFINITY
+
 /* Define to 1 if you have the `sched_yield' function. */
 #undef HAVE_SCHED_YIELD
 
@@ -464,6 +363,15 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `setresuid' function. */
 #undef HAVE_SETRESUID
 
+/* Define to 1 if you have the `sigwait' function. */
+#undef HAVE_SIGWAIT
+
+/* define if struct stat has st_mtim.tv_nsec field */
+#undef HAVE_STAT_NSEC
+
+/* Define to 1 if you have the <stdatomic.h> header file. */
+#undef HAVE_STDATOMIC_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -476,14 +384,26 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the `sysctlbyname' function. */
+#undef HAVE_SYSCTLBYNAME
+
 /* Define to 1 if you have the <sys/capability.h> header file. */
 #undef HAVE_SYS_CAPABILITY_H
 
+/* Define to 1 if you have the <sys/cpuset.h> header file. */
+#undef HAVE_SYS_CPUSET_H
+
 /* Define to 1 if you have the <sys/devpoll.h> header file. */
 #undef HAVE_SYS_DEVPOLL_H
-
-/* Define to 1 if you have the <sys/dyntune.h> header file. */
-#undef HAVE_SYS_DYNTUNE_H
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
@@ -491,8 +411,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 
-/* Define to 1 if you have the <sys/prctl.h> header file. */
-#undef HAVE_SYS_PRCTL_H
+/* Define to 1 if you have the <sys/procset.h> header file. */
+#undef HAVE_SYS_PROCSET_H
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #undef HAVE_SYS_SELECT_H
@@ -518,8 +438,26 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <sys/un.h> header file. */
 #undef HAVE_SYS_UN_H
 
-/* Define if running under Compaq TruCluster */
-#undef HAVE_TRUCLUSTER
+/* Define to 1 if you have the <threads.h> header file. */
+#undef HAVE_THREADS_H
+
+/* Define if thread_local keyword is available */
+#undef HAVE_THREAD_LOCAL
+
+/* Define if Thread-Local Storage is available */
+#undef HAVE_TLS
+
+/* Define to 1 if you have the `tzset' function. */
+#undef HAVE_TZSET
+
+/* Define to 1 if you have the <uchar.h> header file. */
+#undef HAVE_UCHAR_H
+
+/* Define to 1 if the system has the type `uintptr_t'. */
+#undef HAVE_UINTPTR_T
+
+/* define if uname is available */
+#undef HAVE_UNAME
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
@@ -530,29 +468,26 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if zlib was found */
 #undef HAVE_ZLIB
 
+/* define if __atomic builtins are not available */
+#undef HAVE___ATOMIC
+
+/* Define if __thread keyword is available */
+#undef HAVE___THREAD
+
 /* Use HMAC-SHA1 for Client Cookie generation */
 #undef HMAC_SHA1_CC
 
 /* Use HMAC-SHA256 for Client Cookie generation */
 #undef HMAC_SHA256_CC
 
-/* return type of gai_strerror */
-#undef IRS_GAISTRERROR_RETURN_T
-
-/* Define to the buffer length type used by getnameinfo(3). */
-#undef IRS_GETNAMEINFO_BUFLEN_T
-
-/* Define to the flags type used by getnameinfo(3). */
-#undef IRS_GETNAMEINFO_FLAGS_T
-
-/* Define to the sockaddr length type used by getnameinfo(3). */
-#undef IRS_GETNAMEINFO_SOCKLEN_T
-
 /* Define if you want to use inline buffers */
 #undef ISC_BUFFER_USEINLINE
 
 /* Define to allow building of objects for dlopen(). */
 #undef ISC_DLZ_DLOPEN
+
+/* define if the linker supports --wrap option */
+#undef LD_WRAP
 
 /* have __attribute__s used in librpz.h */
 #undef LIBRPZ_HAVE_ATTR
@@ -585,15 +520,16 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* define the default PKCS11 library path */
+#undef PK11_LIB_LOCATION
+
 /* Sets which flag to pass to open/fcntl to make non-blocking
    (O_NDELAY/O_NONBLOCK). */
 #undef PORT_NONBLOCK
 
-/* Define if GOST private keys are encoded in ASN.1. */
-#undef PREFER_GOSTASN1
-
-/* The size of `void *', as computed by sizeof. */
-#undef SIZEOF_VOID_P
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
@@ -604,6 +540,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to use large-system tuning. */
 #undef TUNE_LARGE
 
+/* define if we can use backtrace */
+#undef USE_BACKTRACE
+
 /* Enable DNS Response Policy Service API */
 #undef USE_DNSRPS
 
@@ -611,20 +550,39 @@ int sigwait(const unsigned int *set, int *sig);
    non-blocking. */
 #undef USE_FIONBIO_IOCTL
 
+/* define if OpenSSL is used for Public-Key Cryptography */
+#undef USE_OPENSSL
+
+/* define if PKCS11 is used for Public-Key Cryptography */
+#undef USE_PKCS11
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
+/* the default value of dnssec-validation option */
+#undef VALIDATION_DEFAULT
+
 /* Define to enable very verbose query trace logging. */
 #undef WANT_QUERYTRACE
-
-/* define if idnkit support is to be included. */
-#undef WITH_IDNKIT
-
-/* define if IDN output support is to be included. */
-#undef WITH_IDN_OUT_SUPPORT
-
-/* define if IDN input support is to be included. */
-#undef WITH_IDN_SUPPORT
-
-/* define if libidn2 support is to be included. */
-#undef WITH_LIBIDN2
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -638,11 +596,27 @@ int sigwait(const unsigned int *set, int *sig);
 # endif
 #endif
 
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE
+
+/* Select RFC3542 IPv6 API on macOS */
+#undef __APPLE_USE_RFC_3542
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
-/* Define to empty if your compiler does not support "static inline". */
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
 #undef inline
+#endif
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
@@ -650,7 +624,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to `int' if <sys/types.h> does not define. */
 #undef ssize_t
 
-/* Define to `unsigned long' if <sys/types.h> does not define. */
+/* Define to the type of an unsigned integer type wide enough to hold a
+   pointer, if such a type exists, and if the system does not define it. */
 #undef uintptr_t
 
 /* Define to empty if the keyword `volatile' does not work. Warning: valid

@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: interfaceiter.h,v 1.1.1.2 2019/01/09 16:48:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,8 @@
  *** Imports
  ***/
 
+#include <inttypes.h>
+
 #include <isc/lang.h>
 #include <isc/netaddr.h>
 #include <isc/types.h>
@@ -49,7 +51,7 @@ struct isc_interface {
 	isc_netaddr_t address;		/*%< Local address. */
 	isc_netaddr_t netmask;		/*%< Network mask. */
 	isc_netaddr_t dstaddress; 	/*%< Destination address (point-to-point only). */
-	isc_uint32_t flags;		/*%< Flags; see INTERFACE flags. */
+	uint32_t flags;		/*%< Flags; see INTERFACE flags. */
 };
 
 /*@{*/

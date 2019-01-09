@@ -1,4 +1,4 @@
-/*	$NetBSD: taskpool.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: taskpool.h,v 1.1.1.2 2019/01/09 16:48:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,8 @@
 /***
  *** Imports.
  ***/
+
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/task.h>
@@ -135,7 +137,7 @@ isc_taskpool_destroy(isc_taskpool_t **poolp);
  */
 
 void
-isc_taskpool_setprivilege(isc_taskpool_t *pool, isc_boolean_t priv);
+isc_taskpool_setprivilege(isc_taskpool_t *pool, bool priv);
 /*%<
  * Set the privilege flag on all tasks in 'pool' to 'priv'.  If 'priv' is
  * true, then when the task manager is set into privileged mode, only
