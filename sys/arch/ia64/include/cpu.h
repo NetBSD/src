@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2017/04/08 18:01:22 scole Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2019/01/10 17:05:56 scole Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include <sys/cctr.h>
 #include <machine/frame.h>
 #include <machine/ia64_cpu.h>
+#include <machine/lock.h>
 #include <sys/device_if.h>
 
 struct cpu_info {
@@ -178,12 +179,7 @@ int cpu_maxproc(void); /*XXX: Fill in machdep.c */
 
 #define DELAY(x)	 __nothing	/* XXX: FIXME */
 
-static inline void cpu_idle(void);
-static inline
-void cpu_idle(void)
-{
-	asm ("hint @pause" ::: "memory");
-}
+#define cpu_idle()	ia64_pause()
 
 #endif /* _KERNEL_ */
 #endif /* _IA64_CPU_H */
