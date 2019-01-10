@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.10 2018/11/15 10:34:21 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.11 2019/01/10 19:00:17 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1079,7 +1079,7 @@ la contraseña es opcional.
 }
 message Pkgsrc_dir {Directorio de pkgsrc}
 message get_pkgsrc
-{Descargar y desempaquetar pkgsrc para compilar desde código fuente}
+{Descargar y desempaquetar pkgsrc}
 message retry_pkgsrc_network
 {La configuración de la red ha fallado.  ¿Reintentar?}
 message quit_pkgsrc {Salir sin instalar pkgsrc}
