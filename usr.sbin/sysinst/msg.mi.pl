@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.14 2018/12/30 16:52:26 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.15 2019/01/10 19:00:17 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1034,8 +1034,7 @@ nazwa uzytkownika to "ftp".
 
 }
 message Pkgsrc_dir {katalog pkgsrc}
-message get_pkgsrc {Pobierz i rozpakuj pkgsrc w celu tworzenia pakietow ze
-zrodel}
+message get_pkgsrc {Pobierz i rozpakuj pkgsrc}
 message retry_pkgsrc_network {Konfiguracja sieci nie powiodla sie. Sprobowac
 ponownie?}
 message quit_pkgsrc {Zakoncz bez zainstalowania pkgsrc}
