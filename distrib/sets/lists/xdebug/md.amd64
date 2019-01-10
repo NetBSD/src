@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.41 2018/12/31 11:59:23 mrg Exp $
+# $NetBSD: md.amd64,v 1.42 2019/01/10 23:10:23 uwe Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -169,6 +169,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tseng_drv.so.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vboxvideo_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vesa_drv.so.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vmmouse_drv.so.13.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vmware_drv.so.13.debug	-unknown-		xorg,debug

@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.120 2018/12/31 11:59:23 mrg Exp $
+# $NetBSD: md.i386,v 1.121 2019/01/10 23:10:23 uwe Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -168,6 +168,8 @@
 ./usr/X11R7/lib/modules/drivers/trident_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vboxvideo_drv.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vboxvideo_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vesa_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vesa_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vga_drv.so		-unknown-	obsolete
@@ -408,6 +410,7 @@
 ./usr/X11R7/man/html4/tdfx.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/trident.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/tseng.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/vboxvideo.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/vesa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/vga.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/via.html				-unknown-	obsolete
@@ -463,6 +466,7 @@
 ./usr/X11R7/man/man4/tdfx.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/trident.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/tseng.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/vboxvideo.4			-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vesa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vga.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/via.4				-unknown-	obsolete
