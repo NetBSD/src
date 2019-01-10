@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.11 2015/10/14 15:54:21 christos Exp $	*/
+/*	$NetBSD: diag.c,v 1.12 2019/01/10 13:53:26 christos Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.11 2015/10/14 15:54:21 christos Exp $");
+__RCSID("$NetBSD: diag.c,v 1.12 2019/01/10 13:53:26 christos Exp $");
 #endif
 #endif
 
@@ -45,26 +45,33 @@ static void tcpd_diag(int, const char *, const char *, va_list)
 static void
 tcpd_diag(int severity, const char *tag, const char *fmt, va_list ap)
 {
-    char *buf;
-    int     oerrno;
+    char *buf, *buf2, *ptr;
 
-    /* save errno in case we need it */
-    oerrno = errno;
-
-    if (vasprintf(&buf, fmt, ap) == -1)
+    if ((ptr = strstr(fmt, "%m")) != NULL) {
+	if (asprintf(&buf, "%.*s%s%s", (int)(ptr - fmt), fmt, strerror(errno),
+	    ptr + 2) == -1)
+	    buf = __UNCONST(fmt);
+    } else {
 	buf = __UNCONST(fmt);
+    }
+
+
+    if (vasprintf(&buf2, buf, ap) == -1)
+	buf2 = buf;
 
     errno = oerrno;
 
     /* contruct the tag for the log entry */
     if (tcpd_context.file)
 	syslog(severity, "%s: %s, line %d: %s",
-	    tag, tcpd_context.file, tcpd_context.line, buf);
+	    tag, tcpd_context.file, tcpd_context.line, buf2);
     else
-	syslog(severity, "%s: %s", tag, buf);
+	syslog(severity, "%s: %s", tag, buf2);
 
     if (buf != fmt)
         free(buf);
+    if (buf2 != buf)
+	free(buf2);
 }
 
 /* tcpd_warn - report problem of some sort and proceed */
