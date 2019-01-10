@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.5 2018/12/25 03:28:29 knakahara Exp $
+#	$NetBSD: t_ipsec.sh,v 1.6 2019/01/10 00:45:08 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -114,6 +114,9 @@ setup_router()
 	fi
 	atf_check -s exit:0 rump.ifconfig shmif1 up
 	$DEBUG && rump.ifconfig shmif1
+
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	unset RUMP_SERVER
 }
 
