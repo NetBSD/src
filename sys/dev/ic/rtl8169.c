@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.155 2018/11/13 10:51:49 mlelstv Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.156 2019/01/10 23:01:57 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.155 2018/11/13 10:51:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.156 2019/01/10 23:01:57 mlelstv Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1949,7 +1949,7 @@ re_init(struct ifnet *ifp)
 	 */
 	defer = 128000;
 
-	if ((sc->sc_quirk & RTKQ_IM_HW) == 0) {
+	if ((sc->sc_quirk & RTKQ_IM_HW) != 0) {
 		period = 1;
 		defer = 0;
 	} else if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
