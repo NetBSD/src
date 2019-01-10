@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.180 2018/11/16 00:34:50 manu Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.181 2019/01/10 22:13:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.180 2018/11/16 00:34:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.181 2019/01/10 22:13:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -258,13 +258,14 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	LIST_REMOVE(pipe, up_next);
 	pipe->up_endpoint->ue_refcnt--;
 
+	pipe->up_methods->upm_close(pipe);
+
 	if (pipe->up_intrxfer != NULL) {
 	    	usbd_unlock_pipe(pipe);
 		usbd_destroy_xfer(pipe->up_intrxfer);
 		usbd_lock_pipe(pipe);
 	}
 
-	pipe->up_methods->upm_close(pipe);
 	usbd_unlock_pipe(pipe);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 
