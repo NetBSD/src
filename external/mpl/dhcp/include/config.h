@@ -324,3 +324,16 @@
 /* Define to the type of an unsigned integer type of width exactly 8 bits if
    such a type exists and the standard includes do not define it. */
 /* #undef uint8_t */
+
+/*
+ * XXX: compat
+ */
+#include <stdbool.h>
+#include <limits.h>
+#define isc_boolean_t bool
+#define ISC_TRUE true
+#define ISC_FALSE false
+#define isc_uint64_t uint64_t
+#define isc_boolean_true true
+#define isc_boolean_false false
+#define ISC_UINT64_MAX UINT64_MAX

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
 
 /* dispatch.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -121,6 +121,7 @@ trigger_event(struct eventqueue **queue)
  * 1 is delete, 0 is leave in place
  */
 #define SOCKDELETE 1
+#ifdef ISC_SOCKFDWATCH_READ
 static int
 omapi_iscsock_cb(isc_task_t   *task,
 		 isc_socket_t *socket,
@@ -197,6 +198,7 @@ omapi_iscsock_cb(isc_task_t   *task,
 	 */
 	return (0);
 }
+#endif
 
 /* Register an I/O handle so that we can do asynchronous I/O on it. */
 
@@ -212,7 +214,9 @@ isc_result_t omapi_register_io_object (omapi_object_t *h,
 {
 	isc_result_t status;
 	omapi_io_object_t *obj, *p;
+#ifdef ISC_SOCKFDWATCH_READ
 	int fd_flags = 0, fd = 0;
+#endif
 
 	/* omapi_io_states is a static object.   If its reference count
 	   is zero, this is the first I/O handle to be registered, so
@@ -250,6 +254,7 @@ isc_result_t omapi_register_io_object (omapi_object_t *h,
 	 * a write socket we asssume they are the same socket.
 	 */
 
+#ifdef ISC_SOCKFDWATCH_READ
 	if (readfd) {
 		fd_flags |= ISC_SOCKFDWATCH_READ;
 		fd = readfd(h);
@@ -278,6 +283,7 @@ isc_result_t omapi_register_io_object (omapi_object_t *h,
 			return (status);
 		}
 	}
+#endif
 
 
 	/* Find the last I/O state, if there are any. */
@@ -318,7 +324,9 @@ isc_result_t omapi_reregister_io_object (omapi_object_t *h,
 					 	(omapi_object_t *))
 {
 	omapi_io_object_t *obj;
+#ifdef ISC_SOCKFDWATCH_READ
 	int fd_flags = 0;
+#endif
 
 	if ((!h -> outer) || (h -> outer -> type != omapi_type_io_object)) {
 		/*
@@ -344,6 +352,7 @@ isc_result_t omapi_reregister_io_object (omapi_object_t *h,
 	obj->writer = writer;
 	obj->reaper = reaper;
 
+#ifdef ISC_SOCKFDWATCH_READ
 	if (readfd) {
 		fd_flags |= ISC_SOCKFDWATCH_READ;
 	}
@@ -353,6 +362,7 @@ isc_result_t omapi_reregister_io_object (omapi_object_t *h,
 	}
 
 	isc_socket_fdwatchpoke(obj->fd, fd_flags);
+#endif
 	
 	return (ISC_R_SUCCESS);
 }

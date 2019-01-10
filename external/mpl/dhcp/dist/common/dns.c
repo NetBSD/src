@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
 
 /* dns.c
 
@@ -29,14 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dns.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
 
 /*! \file common/dns.c
  */
 #include "dhcpd.h"
 #include "arpa/nameser.h"
-#include <isc/md5.h>
-#include <isc/sha2.h>
+#include <isc/md.h>
 #include <dns/result.h>
 
 /*
@@ -1482,14 +1481,20 @@ static int get_std_dhcid(dhcp_ddns_cb_t *ddns_cb,
 		  unsigned id_len)
 {
 	struct data_string *id = &ddns_cb->dhcid;
-	isc_sha256_t sha256;
-	unsigned char buf[ISC_SHA256_DIGESTLENGTH];
+	isc_md_t *md;
+	isc_result_t result;
+	unsigned char buf[256];	// XXX: big enough > 32
 	unsigned char fwd_buf[256];
 	unsigned fwd_buflen = 0;
 
 	/* Types can only be 0..(2^16)-1. */
 	if (type < 0 || type > 65535)
 		return (0);
+
+	md = isc_md_new();
+	if (md == NULL) {
+		return (0);
+	}
 
 	/* We need to convert the fwd name to wire representation */
 	if (MRns_name_pton((char *)ddns_cb->fwd_name.data, fwd_buf, 256) == -1)
@@ -1511,17 +1516,41 @@ static int get_std_dhcid(dhcp_ddns_cb_t *ddns_cb,
 	/* The next is the digest type, SHA-256 is 1 */
 	putUChar(id->buffer->data + 2, 1u);
 
+
 	/* Computing the digest */
-	isc_sha256_init(&sha256);
-	isc_sha256_update(&sha256, identifier, id_len);
-	isc_sha256_update(&sha256, fwd_buf, fwd_buflen);
-	isc_sha256_final(buf, &sha256);
+	result = isc_md_init(md, ISC_MD_SHA256);
+	if (result != ISC_R_SUCCESS) {
+		goto end;
+	}
+
+	result = isc_md_update(md, identifier, id_len);
+	if (result != ISC_R_SUCCESS) {
+		goto end;
+	}
+
+	result = isc_md_update(md, fwd_buf, fwd_buflen);
+	if (result != ISC_R_SUCCESS) {
+		goto end;
+	}
+
+	result = isc_md_final(md, buf, &id_len);
+	if (result != ISC_R_SUCCESS) {
+		goto end;
+	}
+
+	isc_md_free(md);
+	md = NULL;
 
 	memcpy(id->buffer->data + 3, &buf, ISC_SHA256_DIGESTLENGTH);
 
 	id->len = ISC_SHA256_DIGESTLENGTH + 2 + 1;
 
 	return (1);
+end:
+	if (md != NULL) {
+		isc_md_free(md);
+	}
+	return (0);
 }
 
 /*!
@@ -1551,8 +1580,9 @@ static int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
 		   unsigned len)
 {
 	struct data_string *id = &ddns_cb->dhcid;
-	unsigned char buf[ISC_MD5_DIGESTLENGTH];
-	isc_md5_t md5;
+	unsigned char buf[256];	// XXX: big enough (> 16)
+	isc_md_t *md;
+	isc_result_t result;
 	int i;
 
 	/* Types can only be 0..(2^16)-1. */
@@ -1584,9 +1614,28 @@ static int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
 	id->buffer->data[2] = "0123456789abcdef"[type % 15];
 
 	/* Mash together an MD5 hash of the identifier. */
-	isc_md5_init(&md5);
-	isc_md5_update(&md5, data, len);
-	isc_md5_final(&md5, buf);
+	md = isc_md_new();
+	if (md == NULL) {
+		return (0);
+	}
+
+	result = isc_md_init(md, ISC_MD_MD5);
+	if (result != ISC_R_SUCCESS) {
+		goto end;
+	}
+
+	result = isc_md_update(md, data, len);
+	if (result != ISC_R_SUCCESS) {
+		goto end;
+	}
+
+	result = isc_md_final(md, buf, &len);
+	if (result != ISC_R_SUCCESS) {
+		goto end;
+	}
+
+	isc_md_free(md);
+	md = NULL;
 
 	/* Convert into ASCII. */
 	for (i = 0; i < ISC_MD5_DIGESTLENGTH; i++) {
@@ -1601,6 +1650,11 @@ static int get_int_dhcid (dhcp_ddns_cb_t *ddns_cb,
 	id->terminated = 1;
 
 	return (1);
+end:
+	if (md != NULL) {
+		isc_md_free(md);
+	}
+	return (0);
 }
 
 int get_dhcid(dhcp_ddns_cb_t *ddns_cb,
