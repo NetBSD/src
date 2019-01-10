@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.13 2019/01/08 14:43:18 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.14 2019/01/10 06:58:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.13 2019/01/08 14:43:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.14 2019/01/10 06:58:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,7 +521,8 @@ struct svm_cpudata {
 	uint64_t lstar;
 	uint64_t cstar;
 	uint64_t sfmask;
-	uint64_t cr2;
+	uint64_t fsbase;
+	uint64_t kernelgsbase;
 	bool ts_set;
 	struct xsave_header hfpu __aligned(16);
 
@@ -1151,14 +1152,12 @@ svm_vcpu_guest_misc_enter(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	/* Save the fixed Host MSRs. */
 	cpudata->star = rdmsr(MSR_STAR);
 	cpudata->lstar = rdmsr(MSR_LSTAR);
 	cpudata->cstar = rdmsr(MSR_CSTAR);
 	cpudata->sfmask = rdmsr(MSR_SFMASK);
-
-	/* Save the Host CR2. */
-	cpudata->cr2 = rcr2();
+	cpudata->fsbase = rdmsr(MSR_FSBASE);
+	cpudata->kernelgsbase = rdmsr(MSR_KERNELGSBASE);
 }
 
 static void
@@ -1166,14 +1165,12 @@ svm_vcpu_guest_misc_leave(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	/* Restore the fixed Host MSRs. */
 	wrmsr(MSR_STAR, cpudata->star);
 	wrmsr(MSR_LSTAR, cpudata->lstar);
 	wrmsr(MSR_CSTAR, cpudata->cstar);
 	wrmsr(MSR_SFMASK, cpudata->sfmask);
-
-	/* Restore the Host CR2. */
-	lcr2(cpudata->cr2);
+	wrmsr(MSR_FSBASE, cpudata->fsbase);
+	wrmsr(MSR_KERNELGSBASE, cpudata->kernelgsbase);
 }
 
 static int
