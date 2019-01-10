@@ -1,4 +1,4 @@
-#	$NetBSD: t_getaddrinfo.sh,v 1.2 2011/06/15 07:54:32 jmmv Exp $
+#	$NetBSD: t_getaddrinfo.sh,v 1.3 2019/01/10 11:13:50 pgoyette Exp $
 
 #
 # Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, and 2002 WIDE Project.
@@ -55,7 +55,7 @@ check_output()
 	fi
 
 	cmp  -s $(atf_get_srcdir)/data/${exp} out && return
-	diff -u $(atf_get_srcdir)/data/${exp} out && \
+	diff -u $(atf_get_srcdir)/data/${exp} out
 	atf_fail "Actual output does not match expected output"
 }
 
