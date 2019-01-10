@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpv6.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: dhcpv6.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
 
 /*
  * Copyright (C) 2006-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpv6.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: dhcpv6.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
 
 
 /*! \file server/dhcpv6.c */
@@ -1036,7 +1036,7 @@ static void check_pool6_threshold(struct reply_state *reply,
 			pond->low_threshold = 0;
 			pond->logged = 0;
 			log_error("Pool threshold reset - shared subnet: %s; "
-				  "address: %s; low threshold %llu/%llu.",
+				  "address: %s; low threshold %" PRIu64 "/%" PRIu64 ".",
 				  shared_name,
 				  inet_ntop(AF_INET6, &lease->addr,
 					    tmp_addr, sizeof(tmp_addr)),
@@ -1069,7 +1069,7 @@ static void check_pool6_threshold(struct reply_state *reply,
 
 	/* we've exceeded it, output a message */
 	log_error("Pool threshold exceeded - shared subnet: %s; "
-		  "address: %s; high threshold %d%% %llu/%llu.",
+		  "address: %s; high threshold %d%% %" PRIu64 "/%" PRIu64 ".",
 		  shared_name,
 		  inet_ntop(AF_INET6, &lease->addr, tmp_addr, sizeof(tmp_addr)),
 		  poolhigh, used, count);
@@ -1441,12 +1441,12 @@ pick_v6_address(struct reply_state *reply)
 	if (jumbo_range != 0) {
 		log_debug("Unable to pick client address: "
 			  "no addresses available  - shared network %s: "
-			  " 2^64-1 < total, %llu active,  %llu abandoned",
+			  " 2^64-1 < total, %" PRIu64 " active,  %" PRIu64 " abandoned",
 			  shared_name, active - abandoned, abandoned);
 	} else {
 		log_debug("Unable to pick client address: "
 			  "no addresses available  - shared network %s: "
-			  "%llu total, %llu active,  %llu abandoned",
+			  "%" PRIu64 " total, %" PRIu64 " active,  %" PRIu64 " abandoned",
 			  shared_name, total, active - abandoned, abandoned);
 	}
 
