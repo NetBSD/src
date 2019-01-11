@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2017/10/10 19:30:41 christos Exp $
+# $NetBSD: Makefile,v 1.22 2019/01/11 20:41:53 christos Exp $
 
 WARNS?=	4
 
@@ -13,6 +13,12 @@ MAN=		rtadvd.8 rtadvd.conf.5
 CPPFLAGS+=	-DINET6
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
+
+LIBWRAP=	${NETBSDSRCDIR}/lib/libwrap
+SRCS+=		expandm.c
+.PATH.c:	${LIBWRAP}
+CPPFLAGS+=	-I${LIBWRAP}
+
 
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/examples/rtadvd
