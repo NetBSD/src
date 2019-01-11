@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.14 2019/01/11 06:27:45 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.15 2019/01/11 07:55:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.14 2019/01/11 06:27:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.15 2019/01/11 07:55:53 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1839,8 +1839,13 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		info.rti_info[RTAX_IFP] = NULL;
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			switch (type) {
-			case NET_RT_IFLIST: /* current */
 			case NET_RT_OIFLIST: /* old _70 */
+				if (rtsock_70_hook.f1 == NULL) {
+					error = EINVAL;
+					break;
+				}
+				/* FALLTHROUGH */
+			case NET_RT_IFLIST: /* current */
 				error = sysctl_iflist_if(ifp, w, &info, len);
 				break;
 			case NET_RT_OOIFLIST: /* old _50 */
