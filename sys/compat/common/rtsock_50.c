@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.6.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.6.2.2 2019/01/11 06:27:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.1 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.2 2019/01/11 06:27:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.1 2018/05/21 04:36:03 pgoyette E
 #define	COMPAT_RTSOCK
 
 #include <net/rtsock.c>
+#include <compat/net/route_50.h>
 
 void
 compat_50_rt_oifmsg(struct ifnet *ifp)
@@ -155,4 +156,21 @@ compat_50_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 		return error;
 	w->w_where = (char *)w->w_where + len;
 	return 0;
+}
+
+MODULE_SET_HOOK(rtsock_50_hook, "rts_50", compat_50_iflist);
+MODULE_UNSET_HOOK(rtsock_50_hook); 
+ 
+void
+rtsock_50_init(void)
+{
+ 
+	rtsock_50_hook_set();
+}
+ 
+void
+rtsock_50_fini(void)
+{  
+
+	rtsock_50_hook_unset();
 }

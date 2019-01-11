@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.17 2018/10/12 22:30:54 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.18 2019/01/11 06:27:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.17 2018/10/12 22:30:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.18 2019/01/11 06:27:45 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -86,6 +86,7 @@ compat_50_init(void)
 	wsevent_50_init();
 	vnd_50_init();
 	rndpseudo_50_init();
+	rtsock_50_init();
 
 	return error;
 
@@ -106,6 +107,7 @@ compat_50_fini(void)
 {
 	int error = 0;
 
+	rtsock_50_fini();
 	rndpseudo_50_fini();
 	vnd_50_fini();
 	wsevent_50_fini();
@@ -149,6 +151,7 @@ compat_50_fini(void)
 	wsevent_50_init();
 	vnd_50_init();
 	rndpseudo_50_init();
+	rtsock_50_init();
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.13 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.14 2019/01/11 06:27:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.13 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.14 2019/01/11 06:27:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -168,11 +168,11 @@ static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
 static int rt_msg2(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
 static void _rt_setmetrics(int, const struct rt_xmsghdr *, struct rtentry *);
 static void rtm_setmetrics(const struct rtentry *, struct rt_xmsghdr *);
-static void sysctl_net_route_setup(struct sysctllog **);
-static int sysctl_dumpentry(struct rtentry *, void *);
-static int sysctl_iflist(int, struct rt_walkarg *, int);
-static int sysctl_rtable(SYSCTLFN_PROTO);
 static void rt_adjustcount(int, int);
+
+#ifndef COMPAT_RTSOCK
+static void sysctl_net_route_setup(struct sysctllog **);
+#endif
 
 static const struct protosw COMPATNAME(route_protosw)[];
 
@@ -192,9 +192,6 @@ static kcondvar_t rt_update_cv;
 #endif
 
 #ifndef COMPAT_RTSOCK
-static int
-sysctl_iflist_addr(struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *);
-
 /*
  * Compat linkage
  */
@@ -1391,7 +1388,23 @@ MODULE_CALL_HOOK(rtsock14_hook, f2,
 #endif
 
 /*
- * MODULE_HOOK glue for rtsock70_ifaddr_list and rtsock70_newaddrmsg1
+ * MODULE_HOOK glue for rtsock50_ifaddr_listif
+ */
+MODULE_CALL_HOOK_DECL(rtsock_50_hook, f,
+    (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info, 
+     size_t len));
+#ifndef COMPAT_RTSOCK 
+MODULE_CALL_HOOK(rtsock_50_hook, f, 
+    (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
+     size_t len),               
+    (ifp, w, info, len),
+    enosys());
+#endif
+
+
+/*
+ * MODULE_HOOK glue for rtsock70_newaddrmsg1, rtsock70_ifaddr_listaddr,
+ * and rtsock70_ifaddr_listif
  */
 MODULE_CALL_HOOK_DECL(rtsock_70_hook, f1, (int, struct ifaddr *));
 #ifndef COMPAT_RTSOCK
@@ -1405,7 +1418,7 @@ MODULE_CALL_HOOK_DECL(rtsock_70_hook, f2,
 MODULE_CALL_HOOK(rtsock_70_hook, f2,
     (struct rt_walkarg *w, struct ifaddr *ifa, struct rt_addrinfo *info),
     (w, ifa, info), 
-    sysctl_iflist_addr(w, ifa, info));
+    enosys());
 #endif
 
 /*
@@ -1684,7 +1697,6 @@ rt_clonedmsg(const struct sockaddr *dst, const struct ifnet *ifp,
 #undef RTF_LLINFO
 #undef RTF_CLONED
 }
-#endif /* COMPAT_RTSOCK */
 
 /*
  * This is used in dumping the kernel table via sysctl().
@@ -1752,7 +1764,6 @@ sysctl_iflist_if(struct ifnet *ifp, struct rt_walkarg *w,
 	return error;
 }
 
-#ifndef COMPAT_RTSOCK	/* XXX need to include the stuff in COMPAT_50 */
 static int
 sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
      struct rt_addrinfo *info)
@@ -1769,16 +1780,13 @@ sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
 		ifam->ifam_flags = ifa->ifa_flags;
 		ifam->ifam_metric = ifa->ifa_metric;
 		ifam->ifam_addrs = info->rti_addrs;
-#ifndef COMPAT_RTSOCK
 		ifam->ifam_pid = 0;
 		ifam->ifam_addrflags = if_addrflags(ifa);
-#endif
 		if ((error = copyout(w->w_tmem, w->w_where, len)) == 0)
 			w->w_where = (char *)w->w_where + len;
 	}
 	return error;
 }
-#endif /* XXX */
 
 static int
 sysctl_iflist(int af, struct rt_walkarg *w, int type)
@@ -1787,8 +1795,6 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	struct ifaddr *ifa;
 	struct	rt_addrinfo info;
 	int	cmd, len, error = 0;
-	int	(*iflist_if)(struct ifnet *, struct rt_walkarg *,
-			     struct rt_addrinfo *, size_t);
 	int s;
 	struct psref psref;
 	int bound;
@@ -1796,24 +1802,16 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	switch (type) {
 	case NET_RT_IFLIST:
 		cmd = RTM_IFINFO;
-		iflist_if = sysctl_iflist_if;
 		break;
 	case NET_RT_OOOIFLIST:
 		cmd = RTM_OOIFINFO;
-		iflist_if = rtsock14_hook_f2_call;
 		break;
-#ifdef COMPAT_50
 	case NET_RT_OOIFLIST:
 		cmd = RTM_OIFINFO;
-		iflist_if = compat_50_iflist;
 		break;
-#endif
-#ifdef COMPAT_70
 	case NET_RT_OIFLIST:
 		cmd = RTM_IFINFO;
-		iflist_if = sysctl_iflist_if;
 		break;
-#endif
 	default:
 #ifdef RTSOCK_DEBUG
 		printf("%s: unsupported IFLIST type %d\n", __func__, type);
@@ -1840,7 +1838,23 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			goto release_exit;
 		info.rti_info[RTAX_IFP] = NULL;
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-			if ((error = iflist_if(ifp, w, &info, len)) != 0) {
+			switch (type) {
+			case NET_RT_IFLIST: /* current */
+			case NET_RT_OIFLIST: /* old _70 */
+				error = sysctl_iflist_if(ifp, w, &info, len);
+				break;
+			case NET_RT_OOIFLIST: /* old _50 */
+				error = rtsock_50_hook_f_call(ifp, w, &info,
+				    len);
+				break;
+			case NET_RT_OOOIFLIST: /* old _14 */
+				error = rtsock14_hook_f2_call(ifp, w, &info,
+				    len);
+				break;
+			default:
+				error = EINVAL;
+			}
+			if (error != 0) {
 				if (error == ENOSYS)
 					error = EINVAL;
 				goto release_exit;
@@ -1857,7 +1871,18 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			error = rtsock_70_hook_f2_call(w, ifa, &info);
+			switch (type) {
+			case NET_RT_IFLIST:
+				error = sysctl_iflist_addr(w, ifa, &info);
+				break;
+			case NET_RT_OIFLIST:
+			case NET_RT_OOIFLIST:
+			case NET_RT_OOOIFLIST:
+				error = rtsock_70_hook_f2_call(w, ifa, &info);
+				break;
+			default:
+				error = EINVAL;
+			}
 
 			_s = pserialize_read_enter();
 			ifa_release(ifa, &_psref);
@@ -1955,22 +1980,10 @@ again:
 		}
 		break;
 
-#ifdef COMPAT_14
-	case NET_RT_OOOIFLIST:
-		error = sysctl_iflist(af, &w, w.w_op);
-		break;
-#endif
-#ifdef COMPAT_50
-	case NET_RT_OOIFLIST:
-		error = sysctl_iflist(af, &w, w.w_op);
-		break;
-#endif
-#ifdef COMPAT_70
-	case NET_RT_OIFLIST:
-		error = sysctl_iflist(af, &w, w.w_op);
-		break;
-#endif
-	case NET_RT_IFLIST:
+	case NET_RT_OOOIFLIST:		/* compat_14 */
+	case NET_RT_OOIFLIST:		/* compat_50 */
+	case NET_RT_OIFLIST:		/* compat_70 */
+	case NET_RT_IFLIST:		/* current */
 		error = sysctl_iflist(af, &w, w.w_op);
 		break;
 	}
@@ -1992,6 +2005,7 @@ again:
 	}
 	return error;
 }
+#endif /* COMPAT_RTSOCK */
 
 /*
  * Routing message software interrupt routine
@@ -2064,7 +2078,9 @@ COMPATNAME(route_init)(void)
 	cv_init(&rt_update_cv, "rtsock_cv");
 #endif
 
+#ifndef COMPAT_RTSOCK
 	sysctl_net_route_setup(NULL);
+#endif
 	ri->ri_intrq.ifq_maxlen = ri->ri_maxqlen;
 	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    COMPATNAME(route_intr), NULL);
@@ -2123,6 +2139,7 @@ struct domain COMPATNAME(routedomain) = {
 	    &COMPATNAME(route_protosw)[__arraycount(COMPATNAME(route_protosw))],
 };
 
+#ifndef COMPAT_RTSOCK
 static void
 sysctl_net_route_setup(struct sysctllog **clog)
 {
@@ -2149,3 +2166,4 @@ sysctl_net_route_setup(struct sysctllog **clog)
 		       NULL, 0, &rtstat, sizeof(rtstat),
 		       CTL_CREATE, CTL_EOL);
 }
+#endif
