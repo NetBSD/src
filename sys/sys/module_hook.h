@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.7 2018/10/12 10:28:29 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.8 2019/01/11 06:18:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * unloaded.
  */
 
-#define MODULE_HOOK(hook,args)					\
+#define MODULE_HOOK(hook, args)					\
 extern struct hook ## _t {					\
 	kmutex_t		mtx;				\
 	kcondvar_t		cv;				\
@@ -55,7 +55,7 @@ extern struct hook ## _t {					\
 	int			(*f)args;			\
 } hook __cacheline_aligned;
 
-#define MODULE_HOOK2(hook,args1,args2)				\
+#define MODULE_HOOK2(hook, args1, args2)			\
 extern struct hook ## _t {					\
 	kmutex_t		mtx;				\
 	kcondvar_t		cv;				\
