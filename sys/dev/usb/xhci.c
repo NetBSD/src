@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.101 2019/01/07 03:00:39 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.102 2019/01/11 15:39:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.101 2019/01/07 03:00:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.102 2019/01/11 15:39:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -912,7 +912,8 @@ xhci_start(struct xhci_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "current IMOD %u\n",
 	    xhci_rt_read_4(sc, XHCI_IMOD(0)));
 
-	xhci_op_write_4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS); /* Go! */
+	/* Go! */
+	xhci_op_write_4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS);
 	aprint_debug_dev(sc->sc_dev, "USBCMD %08"PRIx32"\n",
 	    xhci_op_read_4(sc, XHCI_USBCMD));
 }
