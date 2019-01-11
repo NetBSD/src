@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.13 2019/01/10 13:53:58 christos Exp $	*/
+/*	$NetBSD: diag.c,v 1.14 2019/01/11 13:05:57 christos Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.13 2019/01/10 13:53:58 christos Exp $");
+__RCSID("$NetBSD: diag.c,v 1.14 2019/01/11 13:05:57 christos Exp $");
 #endif
 #endif
 
@@ -46,10 +46,10 @@ static void
 tcpd_diag(int severity, const char *tag, const char *fmt, va_list ap)
 {
     char *buf, *buf2, *ptr;
+    int oerrno = errno;
 
     if ((ptr = strstr(fmt, "%m")) != NULL) {
-	if (asprintf(&buf, "%.*s%s%s", (int)(ptr - fmt), fmt, strerror(errno),
-	    ptr + 2) == -1)
+	if (asprintf(&buf, "%.*s%%%s", (int)(ptr - fmt), fmt, ptr) == -1)
 	    buf = __UNCONST(fmt);
     } else {
 	buf = __UNCONST(fmt);
@@ -58,6 +58,8 @@ tcpd_diag(int severity, const char *tag, const char *fmt, va_list ap)
 
     if (vasprintf(&buf2, buf, ap) == -1)
 	buf2 = buf;
+
+    errno = oerrno;
 
     /* contruct the tag for the log entry */
     if (tcpd_context.file)
