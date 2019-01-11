@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.44 2018/10/15 22:06:16 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.45 2019/01/11 06:27:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -201,12 +201,18 @@ MODULE_HOOK2(rtsock14_hook, (struct ifnet *),
     (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t));
 
 /*
+ * Hooks for rtsock_50
+ */
+
+MODULE_HOOK(rtsock_50_hook,
+    (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t len));
+
+/*
  * Hooks for rtsock_70
  */
 struct ifaddr;
 MODULE_HOOK2(rtsock_70_hook, (int, struct ifaddr *),
     (struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *));
-
 
 /*
  * modctl handler for old style OSTAT

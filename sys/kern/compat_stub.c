@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.32 2018/10/15 22:06:16 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.33 2019/01/11 06:27:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -155,6 +155,11 @@ struct uipc_syscalls_50_hook_t uipc_syscalls_50_hook;
  * rtsock 14 compatability
  */
 struct rtsock14_hook_t rtsock14_hook;
+
+/*
+ * rtsock 50 compatability
+ */
+struct rtsock_50_hook_t rtsock_50_hook;
 
 /*
  * rtsock 70 compatability
