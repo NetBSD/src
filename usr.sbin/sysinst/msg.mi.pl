@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.15 2019/01/10 19:00:17 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.16 2019/01/11 08:14:50 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -920,9 +920,9 @@ message hidden {** ukryte **}
 message Host {Host}
 message Base_dir {Katalog}
 message Set_dir_src {Katalog pakiet binary} /* fix XLAT */
-message Set_dir_bin {Katalog pakiet source} /* fix XLAT */
-message Xfer_dir {Transfer Katalog} /* fix XLAT */
-message transfer_method {Download via}
+message Set_dir_bin {Katalog pkgsrc}
+message Xfer_dir {Katalog z plikami pobranymi}
+message transfer_method {Sposob pobrania}
 message User {Uzytkownik}
 message Password {Haslo}
 message Proxy {Proxy}
@@ -1009,13 +1009,13 @@ message enable_sshd {Wlacz sshd}
 message enable_ntpd {Wlacz ntpd}
 message run_ntpdate {uruchom ntpdate podczas startu systemu}
 message enable_mdnsd {Wlacz mdnsd}
-message enable_xdm {Enable xdm}
-message enable_cgd {Enable cgd}
-message enable_lvm {Enable lvm}
-message enable_raid {Enable raidframe}
-message add_a_user {Add a user}
+message enable_xdm {Wlacz xdm}
+message enable_cgd {Wlacz cgd}
+message enable_lvm {Wlacz lvm}
+message enable_raid {Wlacz raidframe}
+message add_a_user {Dodaj uzytkownika}
 message configmenu {Skonfiguruj dodatkowe elementy w razie potrzeby.}
-message doneconfig {Konfiguracja zakonczona}
+message doneconfig {Zakoncz konfiguracje}
 message Install_pkgin {Zainstaluj pkgin i uaktualnij podsumowanie pakietow}
 message binpkg_installed 
 {Skonfigurowales system tak aby wykorzystywal pkgin do instalacji pakietow
