@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.6 2019/01/10 00:45:08 knakahara Exp $
+#	$NetBSD: t_ipsec.sh,v 1.7 2019/01/11 08:05:52 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -62,7 +62,7 @@ ROUTER2_IPSECIP6_RECURSIVE1=fc00:104::1
 ROUTER2_IPSECIP6_RECURSIVE2=fc00:204::1
 
 DEBUG=${DEBUG:-false}
-TIMEOUT=7
+TIMEOUT=15
 
 atf_test_case ipsecif_create_destroy cleanup
 ipsecif_create_destroy_head()
