@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.161 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.162 2019/01/11 02:55:41 knakahara Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.161 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.162 2019/01/11 02:55:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -301,6 +301,7 @@ ppp_create(const char *name, int unit)
 				break;
 			else if (unit == sci->sc_unit) {
 				free(sc, M_DEVBUF);
+				mutex_exit(&ppp_list_lock);
 				return NULL;
 			}
 		}
