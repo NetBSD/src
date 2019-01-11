@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.77 2019/01/08 03:14:51 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.78 2019/01/11 07:14:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.77 2019/01/08 03:14:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.78 2019/01/11 07:14:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,7 +820,6 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 		    && (sc->mii_mpd_model == MII_MODEL_BROADCOM_BCM5701))
 			ktcr |= GTCR_MAN_MS | GTCR_ADV_MS;
 		PHY_WRITE(sc, MII_100T2CR, ktcr);
-		ktcr = PHY_READ(sc, MII_100T2CR);
 	}
 	PHY_WRITE(sc, MII_ANAR, anar);
 
