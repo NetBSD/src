@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.354 2018/12/11 06:34:00 thorpej Exp $ */
+/* $NetBSD: com.c,v 1.355 2019/01/11 23:10:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.354 2018/12/11 06:34:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.355 2019/01/11 23:10:40 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -236,13 +236,27 @@ void	com_kgdb_putc(void *, int);
 #endif /* KGDB */
 
 /* initializer for typical 16550-ish hardware */
-#define	COM_REG_STD { \
-	com_data, com_data, com_dlbl, com_dlbh, com_ier, com_iir, com_fifo, \
-	com_efr, com_lcr, com_mcr, com_lsr, com_msr, 0, 0, 0, 0, 0, 0, 0, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, com_usr, com_tfl, com_rfl, \
-	0, 0, 0, 0, 0, 0, 0, com_halt }
-
-static const bus_size_t com_std_map[42] = COM_REG_STD;
+static const bus_size_t com_std_map[COM_REGMAP_NENTRIES] = {
+	[COM_REG_RXDATA]	=	com_data,
+	[COM_REG_TXDATA]	=	com_data,
+	[COM_REG_DLBL]		=	com_dlbl,
+	[COM_REG_DLBH]		=	com_dlbh,
+	[COM_REG_IER]		=	com_ier,
+	[COM_REG_IIR]		=	com_iir,
+	[COM_REG_FIFO]		=	com_fifo,
+	[COM_REG_TCR]		=	com_fifo,
+	[COM_REG_EFR]		=	com_efr,
+	[COM_REG_TLR]		=	com_efr,
+	[COM_REG_LCR]		=	com_lcr,
+	[COM_REG_MCR]		=	com_mcr,
+	[COM_REG_LSR]		=	com_lsr,
+	[COM_REG_MSR]		=	com_msr,
+	[COM_REG_USR]		=	com_usr,
+	[COM_REG_TFL]		=	com_tfl,
+	[COM_REG_RFL]		=	com_rfl,
+	[COM_REG_HALT]		=	com_halt,
+	[COM_REG_MDR1]		=	com_mdr1,
+};
 
 #define	COMDIALOUT_MASK	TTDIALOUT_MASK
 

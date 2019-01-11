@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $ */
+/* $NetBSD: com_aubus.c,v 1.9 2019/01/11 23:10:40 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.8 2018/12/08 21:14:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.9 2019/01/11 23:10:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,6 +172,21 @@ com_aubus_disable(struct com_softc *sc)
 	    AUCOM_MODCTL, 0);
 }
 
+static const bus_size_t com_aubus_regmap[COM_REGMAP_NENTRIES] = {
+	[COM_REG_RXDATA]	=	AUCOM_RXDATA,
+	[COM_REG_TXDATA]	=	AUCOM_TXDATA,
+	[COM_REG_DLBL]		=	AUCOM_DLB,
+	[COM_REG_DLBH]		=	AUCOM_DLB,
+	[COM_REG_IER]		=	AUCOM_IER,
+	[COM_REG_IIR]		=	AUCOM_IIR,
+	[COM_REG_FIFO]		=	AUCOM_FIFO,
+	[COM_REG_TCR]		=	AUCOM_FIFO,
+	[COM_REG_LCR]		=	AUCOM_LCTL,
+	[COM_REG_MCR]		=	AUCOM_MCR,
+	[COM_REG_LSR]		=	AUCOM_LSR,
+	[COM_REG_MSR]		=	AUCOM_MSR,
+};
+
 void
 com_aubus_init_regs(struct com_regs *regsp, bus_space_tag_t bst,
 		    bus_space_handle_t bsh, bus_addr_t addr)
@@ -179,19 +194,8 @@ com_aubus_init_regs(struct com_regs *regsp, bus_space_tag_t bst,
 
 	com_init_regs(regsp, bst, bsh, addr);
 
+	memcpy(regsp->cr_map, com_aubus_regmap, sizeof(regsp->cr_map));
 	regsp->cr_nports = AUCOM_NPORTS;
-	regsp->cr_map[COM_REG_RXDATA] = AUCOM_RXDATA;
-	regsp->cr_map[COM_REG_TXDATA] = AUCOM_TXDATA;
-	regsp->cr_map[COM_REG_DLBL] = AUCOM_DLB;
-	regsp->cr_map[COM_REG_DLBH] = AUCOM_DLB;
-	regsp->cr_map[COM_REG_IER] = AUCOM_IER;
-	regsp->cr_map[COM_REG_IIR] = AUCOM_IIR;
-	regsp->cr_map[COM_REG_FIFO] = AUCOM_FIFO;
-	regsp->cr_map[COM_REG_EFR] = 0;
-	regsp->cr_map[COM_REG_LCR] = AUCOM_LCTL;
-	regsp->cr_map[COM_REG_MCR] = AUCOM_MCR;
-	regsp->cr_map[COM_REG_LSR] = AUCOM_LSR;
-	regsp->cr_map[COM_REG_MSR] = AUCOM_MSR;
 }
 
 int
