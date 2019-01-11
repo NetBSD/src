@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.615 2019/01/09 08:28:22 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.616 2019/01/11 05:13:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.615 2019/01/09 08:28:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.616 2019/01/11 05:13:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -15077,7 +15077,7 @@ wm_set_eee_pchlan(struct wm_softc *sc)
 	if ((rv = wm_read_emi_reg_locked(dev, pcs_status, &data)) != 0)
 		goto release;
 
-	rv = wm_write_emi_reg_locked(dev, I82579_LPI_CTRL, lpi_ctrl);
+	rv = sc->phy.writereg_locked(dev, 1, I82579_LPI_CTRL, lpi_ctrl);
 release:
 	sc->phy.release(sc);
 
