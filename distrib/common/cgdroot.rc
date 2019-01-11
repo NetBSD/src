@@ -1,4 +1,4 @@
-#	$NetBSD: cgdroot.rc,v 1.1 2013/07/15 00:25:38 khorben Exp $
+#	$NetBSD: cgdroot.rc,v 1.1.24.1 2019/01/11 15:37:28 martin Exp $
 #
 # Copyright (c) 2013 Pierre Pronchery <khorben@defora.org>
 # All rights reserved.
@@ -36,8 +36,14 @@ export EDITOR
 
 umask 022
 
-mount -o ro /dev/wd0a /etc/cgd
-if [ $? -ne 0 ]; then
+mounted=
+for dev in NAME=cgd.conf /dev/wd0a /dev/ld0a ; do
+	if mount -o ro $dev /etc/cgd 2>/dev/null ; then
+		mounted=$dev
+		break
+	fi
+done
+if [ -z "$mounted" ]; then
 	echo "Could not mount the boot partition" 1>&2
 	exit 2
 fi
