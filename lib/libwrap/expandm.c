@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.1 2019/01/11 20:37:30 christos Exp $	*/
+/*	$NetBSD: expandm.c,v 1.2 2019/01/12 19:08:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.1 2019/01/11 20:37:30 christos Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.2 2019/01/12 19:08:24 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -39,13 +39,15 @@ __RCSID("$NetBSD: expandm.c,v 1.1 2019/01/11 20:37:30 christos Exp $");
 #include "expandm.h"
 
 char * __attribute__((__format_arg__(1)))
-expandm(const char *fmt, const char *sf)
+expandm(const char *fmt, const char *sf, char **rbuf)
 {
 	const char *e = strerror(errno);
 	char *buf, *m, *nbuf;
 	const char *ptr;
 
-	for (ptr = fmt, buf = NULL; (m = strstr(ptr, "%m")); ptr = m + 2) {
+	for (ptr = fmt, buf = NULL; (m = strstr(ptr, "%m")) != NULL;
+	    ptr = m + 2)
+	{
 		size_t cnt = 0;
 		for (char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
@@ -60,9 +62,13 @@ expandm(const char *fmt, const char *sf)
 		goto out;
 
 	free(buf);
+	if (rbuf)
+		*rbuf = buf;
 	return nbuf;
 out:
 	free(buf);
+	if (rbuf)
+		*rbuf = NULL;
 	return __UNCONST(fmt);
 }
 
@@ -71,7 +77,7 @@ int
 main(int argc, char *argv[])
 {
 	errno = ERANGE;
-	printf("%s\n", expandm(argv[1]));
+	printf("%s\n", expandm(argv[1], "", NULL));
 	return 0;
 }
 #endif
