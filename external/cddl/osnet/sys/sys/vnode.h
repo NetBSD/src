@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.14 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.15 2019/01/12 10:44:36 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -277,7 +277,7 @@ zfs_vn_rdwr(enum uio_rw rw, vnode_t *vp, caddr_t base, ssize_t len,
 	int error;
 	size_t resid;
 
-	ASSERT(rw == UIO_WRITE);
+	ASSERT(rw == UIO_READ || rw == UIO_WRITE);
 	ASSERT(ioflag == 0);
 	ASSERT(ulimit == RLIM64_INFINITY);
 
