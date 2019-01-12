@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.437 2018/10/01 09:47:34 martin Exp $
+#	$NetBSD: Makefile,v 1.438 2019/01/12 17:25:09 roy Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -132,7 +132,7 @@ BIN2+=	motd
 FILESBUILD_motd=	YES
 
 # -rw-------
-BIN3+=	hosts.equiv
+BIN3+=	hosts.equiv wpa_supplicant.conf
 
 SYSPKG=	etc
 ETC_PKG=-T etc_pkg
