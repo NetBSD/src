@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.3 2019/01/12 21:05:37 kre Exp $	*/
+/*	$NetBSD: expandm.c,v 1.4 2019/01/12 21:50:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.3 2019/01/12 21:05:37 kre Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.4 2019/01/12 21:50:29 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -52,7 +52,7 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 		for (char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
 		if (asprintf(&nbuf, "%s%.*s%s", buf ? buf : "",
-		    (int)(m - ptr), ptr, (cnt & 1) ? e : "%%m") == -1)
+		    (int)(m - ptr), ptr, (cnt & 1) ? e : "%m") == -1)
 			goto out;
 		free(buf);
 		buf = nbuf;
@@ -77,7 +77,10 @@ int
 main(int argc, char *argv[])
 {
 	errno = ERANGE;
-	printf("%s\n", expandm(argv[1], "", NULL));
+	printf(argv[1]);
+	printf("\n");
+	printf(expandm(argv[1], "\n", NULL));
+	printf("%s\n", expandm(argv[1], NULL, NULL));
 	return 0;
 }
 #endif
