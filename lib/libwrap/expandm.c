@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.2 2019/01/12 19:08:24 christos Exp $	*/
+/*	$NetBSD: expandm.c,v 1.3 2019/01/12 21:05:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.2 2019/01/12 19:08:24 christos Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.3 2019/01/12 21:05:37 kre Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -63,7 +63,7 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 
 	free(buf);
 	if (rbuf)
-		*rbuf = buf;
+		*rbuf = nbuf;
 	return nbuf;
 out:
 	free(buf);
