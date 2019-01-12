@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.67 2019/01/11 20:41:53 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.68 2019/01/12 19:09:25 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1856,8 +1856,7 @@ logit(int level, const char *fmt, ...)
 		return;
 	}
 
-	vfprintf(stderr, buf = expandm(fmt, "\n"), ap);
-	if (buf != fmt)
-		free(buf);
+	vfprintf(stderr, expandm(fmt, "\n", &buf), ap);
+	free(buf);
 	va_end(ap);
 }
