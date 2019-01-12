@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.4 2019/01/12 21:50:29 christos Exp $	*/
+/*	$NetBSD: expandm.c,v 1.5 2019/01/12 22:14:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.4 2019/01/12 21:50:29 christos Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.5 2019/01/12 22:14:08 kre Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: expandm.c,v 1.4 2019/01/12 21:50:29 christos Exp $");
 
 #include "expandm.h"
 
-char * __attribute__((__format_arg__(1)))
+const char * __attribute__((__format_arg__(1)))
 expandm(const char *fmt, const char *sf, char **rbuf)
 {
 	const char *e = strerror(errno);
@@ -69,7 +69,7 @@ out:
 	free(buf);
 	if (rbuf)
 		*rbuf = NULL;
-	return __UNCONST(fmt);
+	return fmt;
 }
 
 #ifdef TEST
@@ -77,10 +77,8 @@ int
 main(int argc, char *argv[])
 {
 	errno = ERANGE;
-	printf(argv[1]);
-	printf("\n");
-	printf(expandm(argv[1], "\n", NULL));
-	printf("%s\n", expandm(argv[1], NULL, NULL));
+	printf("%s\n", expandm(argc > 1 ? argv[1] : "Message %%m=%m: %%%m%%",
+	    "...", NULL));
 	return 0;
 }
 #endif
