@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.h,v 1.1 2019/01/11 20:37:30 christos Exp $	*/
+/*	$NetBSD: expandm.h,v 1.2 2019/01/12 19:08:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,5 +31,6 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-char * __attribute__((__format_arg__(1))) expandm(const char *, const char *);
+char * __attribute__((__format_arg__(1))) expandm(const char *, const char *,
+    char **);
 __END_DECLS
