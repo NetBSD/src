@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_com.c,v 1.8 2019/01/11 23:10:40 thorpej Exp $	*/
+/*	$NetBSD: ralink_com.c,v 1.9 2019/01/12 15:44:08 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -130,7 +130,7 @@
 /* ralink_com.c -- Ralink 3052 uart console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.8 2019/01/11 23:10:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.9 2019/01/12 15:44:08 thorpej Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -367,7 +367,7 @@ ralink_com_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 }
 
-static const bus_size_t ralink_com_regmap[] = {
+static const bus_size_t ralink_com_regmap[COM_REGMAP_NENTRIES] = {
 	[COM_REG_RXDATA]	=	RA_UART_RBR,
 	[COM_REG_TXDATA]	=	RA_UART_TBR,
 	[COM_REG_DLBL]		=	RA_UART_DLL,
