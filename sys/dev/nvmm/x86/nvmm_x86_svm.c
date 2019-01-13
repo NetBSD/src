@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.14 2019/01/10 06:58:36 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.15 2019/01/13 10:07:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.14 2019/01/10 06:58:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.15 2019/01/13 10:07:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1127,6 +1127,8 @@ svm_vcpu_guest_dbregs_enter(struct nvmm_cpu *vcpu)
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
 	x86_dbregs_save(curlwp);
+
+	ldr7(0);
 
 	ldr0(cpudata->drs[NVMM_X64_DR_DR0]);
 	ldr1(cpudata->drs[NVMM_X64_DR_DR1]);
