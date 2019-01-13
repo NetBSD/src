@@ -1,6 +1,6 @@
-.\"	$NetBSD: compat_netbsd32.8,v 1.10 2018/10/12 04:08:59 ryo Exp $
+.\"	$NetBSD: compat_netbsd32.8,v 1.11 2019/01/13 04:45:35 mrg Exp $
 .\"
-.\" Copyright (c) 2001 Matthew R. Green
+.\" Copyright (c) 2001, 2019 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 12, 2018
+.Dd January 13, 2019
 .Dt COMPAT_NETBSD32 8
 .Os
 .Sh NAME
@@ -41,11 +41,21 @@ executables,
 .Nx Ns Tn /aarch64
 to run
 .Nx Ns Tn /arm
+executables,
+.Nx Ns Tn /mips64
+to run
+.Nx Ns Tn /mips
 executables, and
 .Nx Ns Tn /amd64
 to run
 .Nx Ns Tn /i386
 executables.
+On
+.Nx Ns Tn /mips64
+the default userland is N32 which is a handled by
+.Nm
+framework, and 64-bit binaries are handled similarly to the setup
+for 32-bit compatibility.
 .Pp
 To use
 .Nm ,
@@ -53,36 +63,49 @@ one must either have
 .Dv COMPAT_NETBSD32
 and
 .Dv EXEC_ELF32
-in the kernel, or load the compat_netbsd32 and exec_netbsd32 kernel
+in the kernel, or load the compat_netbsd32 and exec_elf32 kernel
 modules.
 .Pp
 Static executables typically need no additional setup.
 Dynamic binaries require the dynamic linker plus shared libraries.
-Most of these files will need to be placed under
-.Pa /emul/netbsd32 .
 .Pp
-The easiest method of installing support for these is via the
-.Pa emulators/netbsd32_compat14 ,
-.Pa emulators/netbsd32_compat15 ,
-and
-.Pa emulators/netbsd32_compat16
-packages, provided in the
-.Nx
-packages collection.
-These install 32-bit a.out and ELF compatibility libraries,
-respectively.
-The details of what is actually necessary for correct operation
-are given below.
-This obviously is handled by the emulator packages.
+Since
+.Nx 5.0
+the base system has directly included support for 32-bit compatibility
+by installing 32-bit libraries and dynamic linker into
+.Pa /usr .
+This includes compiler support for compiling 32-bit applications
+on platforms where this is supported.
 .Pp
 For a.out compatibility,
 .Pa /usr/libexec/ld.so
-from a 32-bit distribution is required to exist as
-.Pa /emul/netbsd32/usr/libexec/ld.so .
-For 32-bit ELF compatibility,
+from a 32-bit distribution is required to exist, and the a.out
+shared libraries must be found in
+.P /emul/aout
+as normal for a.out compatibility.
+For 32-bit (64-bit on
+.Nx Ns Tn /mips64 )
+ELF compatibility, the relevant
 .Pa /usr/libexec/ld.elf_so
-needs to be in
-.Pa /emul/netbsd32/usr/libexec/ld.elf_so .
+needs to be found in
+.Bl -column -offset indent "powerpc64" "powerpc" ""
+.It Sy Port Ta Sy Target Ta Sy Path
+.It Li amd64 Ta i386 Ta /usr/libexec/ld.elf_so-i386
+.It Li sparc64 Ta sparc Ta /usr/libexec/ld.elf_so-sparc
+.It Li mips64 Ta O32 Ta /usr/libexec/ld.elf_so-o32
+.It Li mips64 Ta N64 Ta /usr/libexec/ld.elf_so-64
+.It Li powerpc64 Ta powerpc Ta /usr/libexec/ld.elf_so-powerpc
+.It Li arm64 Ta eabi Ta /usr/libexec/ld.elf_so-eabi
+.It Li arm64 Ta oabi Ta /usr/libexec/ld.elf_so-oabi
+.El
+.Pp
+Note that the kernel handles rewriting the builting ELF interpreter
+to the above path.
+.Pp
+Before
+.Nx 5.0 
+all of these files needed to be placed under
+.Pa /emul/netbsd32 .
 .Pp
 The shared libraries for a.out binaries do not live under the
 .Pa /emul/netbsd32
@@ -93,7 +116,10 @@ directory, where the a.out dynamic linker will find them.
 A list of things which fail to work in compatibility mode should
 be here.
 .Pp
-IPC is not well supported.
+.Xr aio 3
+is not supported.
 .Pp
-.Xr sysctl 3
-is not well supported.
+Some
+.Xr ioctl 2
+command are not supported, including
+.Xr drm 4 .
