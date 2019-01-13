@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.34 2019/01/13 10:49:50 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.35 2019/01/13 23:32:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -165,7 +165,13 @@ struct rtsock_14_iflist_hook_t rtsock_14_iflist_hook;
 /*
  * rtsock 50 compatability
  */
-struct rtsock_50_hook_t rtsock_50_hook;
+struct rtsock_50_iflist_hook_t rtsock_50_iflist_hook;
+struct rtsock_50_oifmsg_hook_t rtsock_50_oifmsg_hook;
+struct rtsock_50_rt_missmsg_hook_t rtsock_50_rt_missmsg_hook;
+struct rtsock_50_rt_ifmsg_hook_t rtsock_50_rt_ifmsg_hook;
+struct rtsock_50_rt_ifannouncemsg_hook_t rtsock_50_rt_ifannouncemsg_hook;
+struct rtsock_50_rt_newaddrmsg_hook_t rtsock_50_rt_newaddrmsg_hook;
+struct rtsock_50_rt_ieee80211msg_hook_t rtsock_50_rt_ieee80211msg_hook;
 
 /*
  * rtsock 70 compatability

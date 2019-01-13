@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.6.2.2 2019/01/11 06:27:45 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.6.2.3 2019/01/13 23:32:21 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.2 2019/01/11 06:27:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.3 2019/01/13 23:32:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.2 2019/01/11 06:27:45 pgoyette E
 #include <net/rtsock.c>
 #include <compat/net/route_50.h>
 
-void
+int
 compat_50_rt_oifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr50 oifm;
@@ -88,7 +88,7 @@ compat_50_rt_oifmsg(struct ifnet *ifp)
 	struct rt_addrinfo info;
 
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
-		return;
+		return 0;
 	(void)memset(&info, 0, sizeof(info));
 	(void)memset(&oifm, 0, sizeof(oifm));
 	oifm.ifm_index = ifp->if_index;
@@ -116,8 +116,10 @@ compat_50_rt_oifmsg(struct ifnet *ifp)
 	oifm.ifm_addrs = 0;
 	m = COMPATNAME(rt_msg1)(RTM_OIFINFO, &info, (void *)&oifm, sizeof(oifm));
 	if (m == NULL)
-		return;
+		return 0;
 	COMPATNAME(route_enqueue)(m, 0);
+
+	return 0;
 }
 
 int
@@ -158,19 +160,52 @@ compat_50_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 	return 0;
 }
 
-MODULE_SET_HOOK(rtsock_50_hook, "rts_50", compat_50_iflist);
-MODULE_UNSET_HOOK(rtsock_50_hook); 
- 
+MODULE_SET_HOOK(rtsock_50_iflist_hook, "rts_50", compat_50_iflist);
+MODULE_UNSET_HOOK(rtsock_50_iflist_hook); 
+
+MODULE_SET_HOOK(rtsock_50_oifmsg_hook, "rts_50", compat_50_rt_oifmsg);
+MODULE_UNSET_HOOK(rtsock_50_oifmsg_hook); 
+
+MODULE_SET_HOOK(rtsock_50_rt_missmsg_hook, "rts_50", compat_50_rt_missmsg);
+MODULE_UNSET_HOOK(rtsock_50_rt_missmsg_hook); 
+
+MODULE_SET_HOOK(rtsock_50_rt_ifmsg_hook, "rts_50", compat_50_rt_ifmsg);
+MODULE_UNSET_HOOK(rtsock_50_rt_ifmsg_hook); 
+
+MODULE_SET_HOOK(rtsock_50_rt_newaddrmsg_hook, "rts_50",
+    compat_50_rt_newaddrmsg);
+MODULE_UNSET_HOOK(rtsock_50_rt_newaddrmsg_hook); 
+
+MODULE_SET_HOOK(rtsock_50_rt_ifannouncemsg_hook, "rts_50",
+    compat_50_rt_ifannouncemsg);
+MODULE_UNSET_HOOK(rtsock_50_rt_ifannouncemsg_hook); 
+
+MODULE_SET_HOOK(rtsock_50_rt_ieee80211msg_hook, "rts_50",
+    compat_50_rt_ieee80211msg);
+MODULE_UNSET_HOOK(rtsock_50_rt_ieee80211msg_hook); 
+
 void
 rtsock_50_init(void)
 {
  
-	rtsock_50_hook_set();
+	rtsock_50_iflist_hook_set();
+	rtsock_50_oifmsg_hook_set();
+	rtsock_50_rt_missmsg_hook_set();
+	rtsock_50_rt_ifmsg_hook_set();
+	rtsock_50_rt_newaddrmsg_hook_set();
+	rtsock_50_rt_ifannouncemsg_hook_set();
+	rtsock_50_rt_ieee80211msg_hook_set();
 }
  
 void
 rtsock_50_fini(void)
 {  
 
-	rtsock_50_hook_unset();
+	rtsock_50_iflist_hook_unset();
+	rtsock_50_oifmsg_hook_unset();
+	rtsock_50_rt_missmsg_hook_unset();
+	rtsock_50_rt_ifmsg_hook_unset();
+	rtsock_50_rt_newaddrmsg_hook_unset();
+	rtsock_50_rt_ifannouncemsg_hook_unset();
+	rtsock_50_rt_ieee80211msg_hook_unset();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.17 2019/01/13 10:49:51 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.18 2019/01/13 23:32:22 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.17 2019/01/13 10:49:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.18 2019/01/13 23:32:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -120,7 +120,6 @@ extern void sctp_delete_ip_address(struct ifaddr *);
 #define	DOMAINNAME	"oroute"
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
-#undef COMPAT_70
 #else /* COMPAT_RTSOCK */
 #define	RTM_XVERSION	RTM_VERSION
 #define	RTM_XNEWADDR	RTM_NEWADDR
@@ -137,11 +136,10 @@ DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
 #define	DOMAINNAME	"route"
 CTASSERT(sizeof(struct ifa_xmsghdr) == 32);
 #ifdef COMPAT_50
-#define	COMPATCALL(name, args)	compat_50_ ## name args
+#define	COMPATCALL(name, args)	rtsock_50_ ## name ## _hook_call args
 #endif
 DOMAIN_DEFINE(routedomain); /* forward declare and add to link set */
 #undef COMPAT_50
-#undef COMPAT_14
 #endif /* COMPAT_RTSOCK */
 
 #ifndef COMPATCALL
@@ -1145,37 +1143,41 @@ rt_getlen(int type)
 	case RTM_ODELADDR:
 	case RTM_ONEWADDR:
 	case RTM_OCHGADDR:
-#ifdef COMPAT_70
-		return sizeof(struct ifa_msghdr70);
-#else
+		if (rtsock_70_iflist_hook.hooked)
+			return sizeof(struct ifa_msghdr70);
+		else {
 #ifdef RTSOCK_DEBUG
-		printf("%s: unsupported RTM type %d\n", __func__, type);
+			printf("%s: unsupported RTM type %d\n", __func__, type);
 #endif
-		return -1;
-#endif
+			return -1;
+		}
+
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
 	case RTM_CHGADDR:
 		return sizeof(struct ifa_xmsghdr);
 
 	case RTM_OOIFINFO:
-#ifdef COMPAT_14
-		return sizeof(struct if_msghdr14);
-#else
+		if (rtsock_14_iflist_hook.hooked)
+			return sizeof(struct if_msghdr14);
+		else {
 #ifdef RTSOCK_DEBUG
-		printf("%s: unsupported RTM type RTM_OOIFINFO\n", __func__);
+			printf("%s: unsupported RTM type RTM_OOIFINFO\n",
+			    __func__);
 #endif
-		return -1;
-#endif
+			return -1;
+		}
+
 	case RTM_OIFINFO:
-#ifdef COMPAT_50
-		return sizeof(struct if_msghdr50);
-#else
+		if (rtsock_50_iflist_hook.hooked)
+			return sizeof(struct if_msghdr50);
+		else {
 #ifdef RTSOCK_DEBUG
-		printf("%s: unsupported RTM type RTM_OIFINFO\n", __func__);
+			printf("%s: unsupported RTM type RTM_OIFINFO\n",
+			    __func__);
 #endif
-		return -1;
-#endif
+			return -1;
+		}
 
 	case RTM_IFINFO:
 		return sizeof(struct if_xmsghdr);
@@ -1340,35 +1342,6 @@ rt_msg3(int type, struct rt_addrinfo *rtinfo, void *cpv, struct rt_walkarg *w,
 #endif
 
 /*
- * This routine is called to generate a message from the routing
- * socket indicating that a redirect has occurred, a routing lookup
- * has failed, or that a protocol has detected timeouts to a particular
- * destination.
- */
-void
-COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
-    int error)
-{
-	struct rt_xmsghdr rtm;
-	struct mbuf *m;
-	const struct sockaddr *sa = rtinfo->rti_info[RTAX_DST];
-	struct rt_addrinfo info = *rtinfo;
-
-	COMPATCALL(rt_missmsg, (type, rtinfo, flags, error));
-	if (COMPATNAME(route_info).ri_cb.any_count == 0)
-		return;
-	memset(&rtm, 0, sizeof(rtm));
-	rtm.rtm_pid = curproc->p_pid;
-	rtm.rtm_flags = RTF_DONE | flags;
-	rtm.rtm_errno = error;
-	m = COMPATNAME(rt_msg1)(type, &info, &rtm, sizeof(rtm));
-	if (m == NULL)
-		return;
-	mtod(m, struct rt_xmsghdr *)->rtm_addrs = info.rti_addrs;
-	COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
-}
-
-/*
  * MODULE_HOOK glue for rtsock_14_oifmsg and rtsock_14_iflist
  */
 MODULE_CALL_HOOK_DECL(rtsock_14_oifmsg_hook, (struct ifnet *ifp));
@@ -1388,19 +1361,59 @@ MODULE_CALL_HOOK(rtsock_14_iflist_hook,
 #endif
 
 /*
- * MODULE_HOOK glue for rtsock50_ifaddr_listif
+ * MODULE_HOOK glue for rtsock_50 ifaddr_list and various message routines
  */
-MODULE_CALL_HOOK_DECL(rtsock_50_hook,
+MODULE_CALL_HOOK_DECL(rtsock_50_iflist_hook,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info, 
      size_t len));
 #ifndef COMPAT_RTSOCK 
-MODULE_CALL_HOOK(rtsock_50_hook, 
+MODULE_CALL_HOOK(rtsock_50_iflist_hook, 
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
      size_t len),               
     (ifp, w, info, len),
     enosys());
 #endif
 
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_missmsg_hook,
+    (int, const struct rt_addrinfo *, int, int));
+#ifndef COMPAT_RTSOCK 
+MODULE_CALL_HOOK(rtsock_50_rt_missmsg_hook, 
+    (int type, const struct rt_addrinfo *rtinfo, int flags, int error),
+    (type, rtinfo, flags, error), 0);
+#endif
+
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_ifmsg_hook, (struct ifnet *));
+#ifndef COMPAT_RTSOCK 
+MODULE_CALL_HOOK(rtsock_50_rt_ifmsg_hook, (struct ifnet *ifp), (ifp), 0);
+#endif
+
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_newaddrmsg_hook,
+    (int, struct ifaddr *, int, struct rtentry *));
+#ifndef COMPAT_RTSOCK 
+MODULE_CALL_HOOK(rtsock_50_rt_newaddrmsg_hook, 
+    (int cmd, struct ifaddr *ifa, int error, struct rtentry *rt),
+    (cmd, ifa, error, rt), 0);
+#endif
+
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_ifannouncemsg_hook,
+    (struct ifnet *, int what));
+#ifndef COMPAT_RTSOCK 
+MODULE_CALL_HOOK(rtsock_50_rt_ifannouncemsg_hook, 
+    (struct ifnet *ifp, int what), (ifp, what), 0);
+#endif
+
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_ieee80211msg_hook,
+    (struct ifnet *, int, void *, size_t));
+#ifndef COMPAT_RTSOCK 
+MODULE_CALL_HOOK(rtsock_50_rt_ieee80211msg_hook, 
+    (struct ifnet *ifp, int what, void *data, size_t data_len),
+    (ifp, what, data, data_len), 0);
+#endif
+
+MODULE_CALL_HOOK_DECL(rtsock_50_oifmsg_hook, (struct ifnet *ifp));
+#ifndef COMPAT_RTSOCK
+MODULE_CALL_HOOK(rtsock_50_oifmsg_hook, (struct ifnet *ifp), (ifp), 0);
+#endif
 
 /*
  * MODULE_HOOK glue for rtsock70_newaddrmsg1, rtsock70_ifaddr_listaddr,
@@ -1423,9 +1436,40 @@ MODULE_CALL_HOOK(rtsock_70_iflist_hook,
 
 /*
  * This routine is called to generate a message from the routing
+ * socket indicating that a redirect has occurred, a routing lookup
+ * has failed, or that a protocol has detected timeouts to a particular
+ * destination.
+ */
+int
+COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
+    int error)
+{
+	struct rt_xmsghdr rtm;
+	struct mbuf *m;
+	const struct sockaddr *sa = rtinfo->rti_info[RTAX_DST];
+	struct rt_addrinfo info = *rtinfo;
+
+	COMPATCALL(rt_missmsg, (type, rtinfo, flags, error));
+	if (COMPATNAME(route_info).ri_cb.any_count == 0)
+		return 0;
+	memset(&rtm, 0, sizeof(rtm));
+	rtm.rtm_pid = curproc->p_pid;
+	rtm.rtm_flags = RTF_DONE | flags;
+	rtm.rtm_errno = error;
+	m = COMPATNAME(rt_msg1)(type, &info, &rtm, sizeof(rtm));
+	if (m == NULL)
+		return 0;
+	mtod(m, struct rt_xmsghdr *)->rtm_addrs = info.rti_addrs;
+	COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
+
+	return 0;
+}
+
+/*
+ * This routine is called to generate a message from the routing
  * socket indicating that the status of a network interface has changed.
  */
-void
+int
 COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 {
 	struct if_xmsghdr ifm;
@@ -1434,7 +1478,7 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 
 	COMPATCALL(rt_ifmsg, (ifp));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
-		return;
+		return 0;
 	(void)memset(&info, 0, sizeof(info));
 	(void)memset(&ifm, 0, sizeof(ifm));
 	ifm.ifm_index = ifp->if_index;
@@ -1443,12 +1487,11 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 	ifm.ifm_addrs = 0;
 	m = COMPATNAME(rt_msg1)(RTM_IFINFO, &info, &ifm, sizeof(ifm));
 	if (m == NULL)
-		return;
+		return 0;
 	COMPATNAME(route_enqueue)(m, 0);
 	(void)rtsock_14_oifmsg_hook_call(ifp);
-#ifdef COMPAT_50
-	compat_50_rt_oifmsg(ifp);
-#endif
+	(void)rtsock_50_oifmsg_hook_call(ifp);
+	return 0;
 }
 
 #ifndef COMPAT_RTSOCK
@@ -1479,7 +1522,7 @@ if_addrflags(struct ifaddr *ifa)
  * be unnecessary as the routing socket will automatically generate
  * copies of it.
  */
-void
+int
 COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
     struct rtentry *rt)
 {
@@ -1506,7 +1549,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 
 	COMPATCALL(rt_newaddrmsg, (cmd, ifa, error, rt));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
-		return;
+		return 0;
 	for (pass = 1; pass < 3; pass++) {
 		memset(&info, 0, sizeof(info));
 		switch (cmdpass(cmd, pass)) {
@@ -1583,6 +1626,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
 	}
 #undef cmdpass
+	return 0;
 
 }
 
@@ -1604,7 +1648,7 @@ rt_makeifannouncemsg(struct ifnet *ifp, int type, int what,
  * This is called to generate routing socket messages indicating
  * network interface arrival and departure.
  */
-void
+int
 COMPATNAME(rt_ifannouncemsg)(struct ifnet *ifp, int what)
 {
 	struct mbuf *m;
@@ -1612,11 +1656,13 @@ COMPATNAME(rt_ifannouncemsg)(struct ifnet *ifp, int what)
 
 	COMPATCALL(rt_ifannouncemsg, (ifp, what));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
-		return;
+		return 0;
 	m = rt_makeifannouncemsg(ifp, RTM_IFANNOUNCE, what, &info);
 	if (m == NULL)
-		return;
+		return 0;
 	COMPATNAME(route_enqueue)(m, 0);
+
+	return 0;
 }
 
 /*
@@ -1624,7 +1670,7 @@ COMPATNAME(rt_ifannouncemsg)(struct ifnet *ifp, int what)
  * IEEE80211 wireless events.
  * XXX we piggyback on the RTM_IFANNOUNCE msg format in a clumsy way.
  */
-void
+int
 COMPATNAME(rt_ieee80211msg)(struct ifnet *ifp, int what, void *data,
 	size_t data_len)
 {
@@ -1633,10 +1679,10 @@ COMPATNAME(rt_ieee80211msg)(struct ifnet *ifp, int what, void *data,
 
 	COMPATCALL(rt_ieee80211msg, (ifp, what, data, data_len));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
-		return;
+		return 0;
 	m = rt_makeifannouncemsg(ifp, RTM_IEEE80211, what, &info);
 	if (m == NULL)
-		return;
+		return 0;
 	/*
 	 * Append the ieee80211 data.  Try to stick it in the
 	 * mbuf containing the ifannounce msg; otherwise allocate
@@ -1648,7 +1694,7 @@ COMPATNAME(rt_ieee80211msg)(struct ifnet *ifp, int what, void *data,
 		struct mbuf *n = m_get(M_NOWAIT, MT_DATA);
 		if (n == NULL) {
 			m_freem(m);
-			return;
+			return 0;
 		}
 		(void)memcpy(mtod(n, void *), data, data_len);
 		n->m_len = data_len;
@@ -1661,6 +1707,8 @@ COMPATNAME(rt_ieee80211msg)(struct ifnet *ifp, int what, void *data,
 		m->m_pkthdr.len += data_len;
 	mtod(m, struct if_xannouncemsghdr *)->ifan_msglen += data_len;
 	COMPATNAME(route_enqueue)(m, 0);
+
+	return 0;
 }
 
 #ifndef COMPAT_RTSOCK
@@ -1988,7 +2036,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 				error = sysctl_iflist_if(ifp, w, &info, len);
 				break;
 			case NET_RT_OOIFLIST: /* old _50 */
-				error = rtsock_50_hook_call(ifp, w, &info,
+				error = rtsock_50_iflist_hook_call(ifp, w, &info,
 				    len);
 				break;
 			case NET_RT_OOOIFLIST: /* old _14 */

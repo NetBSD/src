@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.4.14.1 2018/09/17 11:04:30 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.4.14.2 2019/01/13 23:32:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ struct if_msghdr50 {
 	struct	if_data50 ifm_data;/* statistics and other data about if */
 };
 
-void compat_50_rt_oifmsg(struct ifnet *);
+int compat_50_rt_oifmsg(struct ifnet *);
 int compat_50_iflist(struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *,
     size_t);
 

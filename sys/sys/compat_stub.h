@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.46 2019/01/13 10:49:51 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.47 2019/01/13 23:32:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -211,8 +211,19 @@ MODULE_HOOK(rtsock_14_iflist_hook,
  * Hooks for rtsock_50
  */
 
-MODULE_HOOK(rtsock_50_hook,
-    (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t len));
+struct rtentry;
+struct ifaddr;
+MODULE_HOOK(rtsock_50_iflist_hook,
+    (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t));
+MODULE_HOOK(rtsock_50_oifmsg_hook, (struct ifnet *));
+MODULE_HOOK(rtsock_50_rt_missmsg_hook,
+    (int, const struct rt_addrinfo *, int, int));
+MODULE_HOOK(rtsock_50_rt_ifmsg_hook, (struct ifnet *));
+MODULE_HOOK(rtsock_50_rt_newaddrmsg_hook,
+    (int, struct ifaddr *, int, struct rtentry *));
+MODULE_HOOK(rtsock_50_rt_ifannouncemsg_hook, (struct ifnet *, int));
+MODULE_HOOK(rtsock_50_rt_ieee80211msg_hook,
+    (struct ifnet *, int, void *, size_t));
 
 /*
  * Hooks for rtsock_70
