@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.6 2019/01/13 01:32:51 christos Exp $	*/
+/*	$NetBSD: expandm.c,v 1.7 2019/01/13 06:10:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.6 2019/01/13 01:32:51 christos Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.7 2019/01/13 06:10:34 kre Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -48,7 +48,8 @@ __RCSID("$NetBSD: expandm.c,v 1.6 2019/01/13 01:32:51 christos Exp $");
 const char * __attribute__((__format_arg__(1)))
 expandm(const char *fmt, const char *sf, char **rbuf)
 {
-	const char *e = strerror(errno);
+	const int err = errno;
+	const char *e = NULL;
 	char *buf, *m, *nbuf;
 	const char *ptr;
 
@@ -74,6 +75,8 @@ expandm(const char *fmt, const char *sf, char **rbuf)
                         buf = nbuf;
                 }
 
+		if (__predict_true(e == NULL && (cnt & 1) != 0))
+			e = strerror(err);
 		if (asprintf(&nbuf, "%s%.*s%s", buf ? buf : "",
 		    (int)(m - ptr), ptr, (cnt & 1) ? e : "%m") == -1)
 			goto out;
@@ -87,11 +90,13 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 	free(buf);
 	if (rbuf)
 		*rbuf = nbuf;
+	errno = err;
 	return nbuf;
 out:
 	free(buf);
 	if (rbuf)
 		*rbuf = NULL;
+	errno = err;
 	return fmt;
 }
 
