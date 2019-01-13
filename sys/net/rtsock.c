@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.15 2019/01/11 07:55:53 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.16 2019/01/13 07:05:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.15 2019/01/11 07:55:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.16 2019/01/13 07:05:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1697,7 +1697,146 @@ rt_clonedmsg(const struct sockaddr *dst, const struct ifnet *ifp,
 #undef RTF_LLINFO
 #undef RTF_CLONED
 }
+#endif	/* COMPAT_RTSOCK */
 
+/*
+ * Routing message software interrupt routine
+ */
+static void
+COMPATNAME(route_intr)(void *cookie)
+{
+	struct sockproto proto = { .sp_family = PF_XROUTE, };
+	struct route_info * const ri = &COMPATNAME(route_info);
+	struct mbuf *m;
+
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	for (;;) {
+		IFQ_LOCK(&ri->ri_intrq);
+		IF_DEQUEUE(&ri->ri_intrq, m);
+		IFQ_UNLOCK(&ri->ri_intrq);
+		if (m == NULL)
+			break;
+		proto.sp_protocol = M_GETCTX(m, uintptr_t);
+#ifdef NET_MPSAFE
+		mutex_enter(rt_so_mtx);
+#endif
+		raw_input(m, &proto, &ri->ri_src, &ri->ri_dst, &rt_rawcb);
+#ifdef NET_MPSAFE
+		mutex_exit(rt_so_mtx);
+#endif
+	}
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+}
+
+/*
+ * Enqueue a message to the software interrupt routine.
+ */
+void
+COMPATNAME(route_enqueue)(struct mbuf *m, int family)
+{
+	struct route_info * const ri = &COMPATNAME(route_info);
+	int wasempty;
+
+	IFQ_LOCK(&ri->ri_intrq);
+	if (IF_QFULL(&ri->ri_intrq)) {
+		printf("%s: queue full, dropped message\n", __func__);
+		IF_DROP(&ri->ri_intrq);
+		IFQ_UNLOCK(&ri->ri_intrq);
+		m_freem(m);
+	} else {
+		wasempty = IF_IS_EMPTY(&ri->ri_intrq);
+		M_SETCTX(m, (uintptr_t)family);
+		IF_ENQUEUE(&ri->ri_intrq, m);
+		IFQ_UNLOCK(&ri->ri_intrq);
+		if (wasempty) {
+			kpreempt_disable();
+			softint_schedule(ri->ri_sih);
+			kpreempt_enable();
+		}
+	}
+}
+
+static void
+COMPATNAME(route_init)(void)
+{
+	struct route_info * const ri = &COMPATNAME(route_info);
+
+#ifndef COMPAT_RTSOCK
+	rt_init();
+#endif
+#ifdef NET_MPSAFE
+	rt_so_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+
+	cv_init(&rt_update_cv, "rtsock_cv");
+#endif
+
+#ifndef COMPAT_RTSOCK
+	sysctl_net_route_setup(NULL);
+#endif
+	ri->ri_intrq.ifq_maxlen = ri->ri_maxqlen;
+	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    COMPATNAME(route_intr), NULL);
+	IFQ_LOCK_INIT(&ri->ri_intrq);
+}
+
+/*
+ * Definitions of protocols supported in the ROUTE domain.
+ */
+#ifndef COMPAT_RTSOCK
+PR_WRAP_USRREQS(route);
+#else
+PR_WRAP_USRREQS(compat_50_route);
+#endif
+
+static const struct pr_usrreqs route_usrreqs = {
+	.pr_attach	= COMPATNAME(route_attach_wrapper),
+	.pr_detach	= COMPATNAME(route_detach_wrapper),
+	.pr_accept	= COMPATNAME(route_accept_wrapper),
+	.pr_bind	= COMPATNAME(route_bind_wrapper),
+	.pr_listen	= COMPATNAME(route_listen_wrapper),
+	.pr_connect	= COMPATNAME(route_connect_wrapper),
+	.pr_connect2	= COMPATNAME(route_connect2_wrapper),
+	.pr_disconnect	= COMPATNAME(route_disconnect_wrapper),
+	.pr_shutdown	= COMPATNAME(route_shutdown_wrapper),
+	.pr_abort	= COMPATNAME(route_abort_wrapper),
+	.pr_ioctl	= COMPATNAME(route_ioctl_wrapper),
+	.pr_stat	= COMPATNAME(route_stat_wrapper),
+	.pr_peeraddr	= COMPATNAME(route_peeraddr_wrapper),
+	.pr_sockaddr	= COMPATNAME(route_sockaddr_wrapper),
+	.pr_rcvd	= COMPATNAME(route_rcvd_wrapper),
+	.pr_recvoob	= COMPATNAME(route_recvoob_wrapper),
+	.pr_send	= COMPATNAME(route_send_wrapper),
+	.pr_sendoob	= COMPATNAME(route_sendoob_wrapper),
+	.pr_purgeif	= COMPATNAME(route_purgeif_wrapper),
+};
+
+static const struct protosw COMPATNAME(route_protosw)[] = {
+	{
+		.pr_type = SOCK_RAW,
+		.pr_domain = &COMPATNAME(routedomain),
+		.pr_flags = PR_ATOMIC|PR_ADDR,
+		.pr_ctlinput = raw_ctlinput,
+		.pr_ctloutput = route_ctloutput,
+		.pr_usrreqs = &route_usrreqs,
+		.pr_init = rt_pr_init,
+	},
+};
+
+struct domain COMPATNAME(routedomain) = {
+	.dom_family = PF_XROUTE,
+	.dom_name = DOMAINNAME,
+	.dom_init = COMPATNAME(route_init),
+	.dom_protosw = COMPATNAME(route_protosw),
+	.dom_protoswNPROTOSW =
+	    &COMPATNAME(route_protosw)[__arraycount(COMPATNAME(route_protosw))],
+};
+
+/*
+ * The remaining code implements the routing-table sysctl node.  It is
+ * compiled only for the non-COMPAT case.
+ */
+
+#ifndef COMPAT_RTSOCK
 /*
  * This is used in dumping the kernel table via sysctl().
  */
@@ -2010,141 +2149,7 @@ again:
 	}
 	return error;
 }
-#endif /* COMPAT_RTSOCK */
 
-/*
- * Routing message software interrupt routine
- */
-static void
-COMPATNAME(route_intr)(void *cookie)
-{
-	struct sockproto proto = { .sp_family = PF_XROUTE, };
-	struct route_info * const ri = &COMPATNAME(route_info);
-	struct mbuf *m;
-
-	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
-	for (;;) {
-		IFQ_LOCK(&ri->ri_intrq);
-		IF_DEQUEUE(&ri->ri_intrq, m);
-		IFQ_UNLOCK(&ri->ri_intrq);
-		if (m == NULL)
-			break;
-		proto.sp_protocol = M_GETCTX(m, uintptr_t);
-#ifdef NET_MPSAFE
-		mutex_enter(rt_so_mtx);
-#endif
-		raw_input(m, &proto, &ri->ri_src, &ri->ri_dst, &rt_rawcb);
-#ifdef NET_MPSAFE
-		mutex_exit(rt_so_mtx);
-#endif
-	}
-	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
-}
-
-/*
- * Enqueue a message to the software interrupt routine.
- */
-void
-COMPATNAME(route_enqueue)(struct mbuf *m, int family)
-{
-	struct route_info * const ri = &COMPATNAME(route_info);
-	int wasempty;
-
-	IFQ_LOCK(&ri->ri_intrq);
-	if (IF_QFULL(&ri->ri_intrq)) {
-		printf("%s: queue full, dropped message\n", __func__);
-		IF_DROP(&ri->ri_intrq);
-		IFQ_UNLOCK(&ri->ri_intrq);
-		m_freem(m);
-	} else {
-		wasempty = IF_IS_EMPTY(&ri->ri_intrq);
-		M_SETCTX(m, (uintptr_t)family);
-		IF_ENQUEUE(&ri->ri_intrq, m);
-		IFQ_UNLOCK(&ri->ri_intrq);
-		if (wasempty) {
-			kpreempt_disable();
-			softint_schedule(ri->ri_sih);
-			kpreempt_enable();
-		}
-	}
-}
-
-static void
-COMPATNAME(route_init)(void)
-{
-	struct route_info * const ri = &COMPATNAME(route_info);
-
-#ifndef COMPAT_RTSOCK
-	rt_init();
-#endif
-#ifdef NET_MPSAFE
-	rt_so_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-
-	cv_init(&rt_update_cv, "rtsock_cv");
-#endif
-
-#ifndef COMPAT_RTSOCK
-	sysctl_net_route_setup(NULL);
-#endif
-	ri->ri_intrq.ifq_maxlen = ri->ri_maxqlen;
-	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
-	    COMPATNAME(route_intr), NULL);
-	IFQ_LOCK_INIT(&ri->ri_intrq);
-}
-
-/*
- * Definitions of protocols supported in the ROUTE domain.
- */
-#ifndef COMPAT_RTSOCK
-PR_WRAP_USRREQS(route);
-#else
-PR_WRAP_USRREQS(compat_50_route);
-#endif
-
-static const struct pr_usrreqs route_usrreqs = {
-	.pr_attach	= COMPATNAME(route_attach_wrapper),
-	.pr_detach	= COMPATNAME(route_detach_wrapper),
-	.pr_accept	= COMPATNAME(route_accept_wrapper),
-	.pr_bind	= COMPATNAME(route_bind_wrapper),
-	.pr_listen	= COMPATNAME(route_listen_wrapper),
-	.pr_connect	= COMPATNAME(route_connect_wrapper),
-	.pr_connect2	= COMPATNAME(route_connect2_wrapper),
-	.pr_disconnect	= COMPATNAME(route_disconnect_wrapper),
-	.pr_shutdown	= COMPATNAME(route_shutdown_wrapper),
-	.pr_abort	= COMPATNAME(route_abort_wrapper),
-	.pr_ioctl	= COMPATNAME(route_ioctl_wrapper),
-	.pr_stat	= COMPATNAME(route_stat_wrapper),
-	.pr_peeraddr	= COMPATNAME(route_peeraddr_wrapper),
-	.pr_sockaddr	= COMPATNAME(route_sockaddr_wrapper),
-	.pr_rcvd	= COMPATNAME(route_rcvd_wrapper),
-	.pr_recvoob	= COMPATNAME(route_recvoob_wrapper),
-	.pr_send	= COMPATNAME(route_send_wrapper),
-	.pr_sendoob	= COMPATNAME(route_sendoob_wrapper),
-	.pr_purgeif	= COMPATNAME(route_purgeif_wrapper),
-};
-
-static const struct protosw COMPATNAME(route_protosw)[] = {
-	{
-		.pr_type = SOCK_RAW,
-		.pr_domain = &COMPATNAME(routedomain),
-		.pr_flags = PR_ATOMIC|PR_ADDR,
-		.pr_ctlinput = raw_ctlinput,
-		.pr_ctloutput = route_ctloutput,
-		.pr_usrreqs = &route_usrreqs,
-		.pr_init = rt_pr_init,
-	},
-};
-
-struct domain COMPATNAME(routedomain) = {
-	.dom_family = PF_XROUTE,
-	.dom_name = DOMAINNAME,
-	.dom_init = COMPATNAME(route_init),
-	.dom_protosw = COMPATNAME(route_protosw),
-	.dom_protoswNPROTOSW =
-	    &COMPATNAME(route_protosw)[__arraycount(COMPATNAME(route_protosw))],
-};
-
-#ifndef COMPAT_RTSOCK
 static void
 sysctl_net_route_setup(struct sysctllog **clog)
 {
@@ -2171,4 +2176,4 @@ sysctl_net_route_setup(struct sysctllog **clog)
 		       NULL, 0, &rtstat, sizeof(rtstat),
 		       CTL_CREATE, CTL_EOL);
 }
-#endif
+#endif	/* COMPAT_RTSOCK */
