@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.136 2018/11/26 04:43:37 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.137 2019/01/13 12:19:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -970,6 +970,9 @@
 #define MSR_DE_CFG	0xc0011029
 #define 	DE_CFG_ERRATA_721	0x00000001
 #define 	DE_CFG_ERRATA_1021	__BIT(13)
+
+#define MSR_BU_CFG2	0xc001102a
+#define 	BU_CFG2_CWPLUS_DIS	__BIT(24)
 
 #define MSR_LS_CFG2	0xc001102d
 #define 	LS_CFG2_ERRATA_1091	__BIT(34)
