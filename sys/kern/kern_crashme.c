@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.1 2019/01/09 04:01:20 mrg Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.2 2019/01/13 00:11:29 tnn Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -231,6 +231,6 @@ static int
 crashme_null_deref(int flags)
 {
 
-	*(char *)0 = 0;
+	*(volatile char *)0 = 0;
 	return -1;
 }
