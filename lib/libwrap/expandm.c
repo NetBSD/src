@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.5 2019/01/12 22:14:08 kre Exp $	*/
+/*	$NetBSD: expandm.c,v 1.6 2019/01/13 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,14 +29,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.5 2019/01/12 22:14:08 kre Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.6 2019/01/13 01:32:51 christos Exp $");
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 
 #include "expandm.h"
+
+#ifdef TEST
+#undef INT_MAX
+#define INT_MAX 31
+#endif
+
 
 const char * __attribute__((__format_arg__(1)))
 expandm(const char *fmt, const char *sf, char **rbuf)
@@ -49,8 +56,24 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 	    ptr = m + 2)
 	{
 		size_t cnt = 0;
+
 		for (char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
+
+               if (__predict_false((m - ptr) >= INT_MAX)) {
+                        size_t blen = buf ? strlen(buf) : 0;
+                        size_t nlen = (size_t)(m - ptr);
+
+                        nbuf = realloc(buf, blen + nlen + 1);
+                        if (nbuf == NULL)
+                                goto out;
+
+                        memcpy(nbuf + blen, ptr, nlen);
+                        nbuf[blen + nlen] = '\0';
+                        ptr += nlen;
+                        buf = nbuf;
+                }
+
 		if (asprintf(&nbuf, "%s%.*s%s", buf ? buf : "",
 		    (int)(m - ptr), ptr, (cnt & 1) ? e : "%m") == -1)
 			goto out;
