@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.34 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.35 2019/01/13 14:35:00 gson Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -147,9 +147,10 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_SYSVBFS(tc))
 		atf_tc_skip("directories not supported by file system");
-
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
+	if (FSTYPE_UDF(tc))
+		atf_tc_expect_fail("PR kern/53865");
 
 	/* XXX: msdosfs also sometimes hangs */
 	if (FSTYPE_MSDOS(tc))
@@ -168,6 +169,9 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	pthread_join(pt1, NULL);
 	pthread_join(pt2, NULL);
 	RL(rump_sys_chdir("/"));
+
+	if (FSTYPE_UDF(tc))
+		atf_tc_fail("race did not trigger this time");
 
 	/*
 	 * Doesn't always trigger when run on a slow backend
