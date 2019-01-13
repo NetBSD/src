@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.44 2012/02/16 12:10:10 yamt Exp $
+.\"	$NetBSD: pmap.9,v 1.45 2019/01/13 06:59:15 mrg Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 2012
+.Dd January 13, 2019
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -764,6 +764,12 @@ may not always be called when
 is the current lwp.
 .Fn pmap_activate
 must be able to handle this scenario.
+.Pp
+The
+.Fn pmap_activate
+call, like
+.Fn pmap_deactivate ,
+must never block, as it is used for context switching.
 .It void Fn "pmap_deactivate" "struct lwp *l"
 Deactivate the physical map used by the process behind lwp
 .Fa l .
@@ -775,6 +781,10 @@ Like
 may not always be called when
 .Fa l
 is the current lwp.
+.Pp
+As above,
+.Fn pmap_deactivate
+must never block.
 .It void Fn "pmap_zero_page" "paddr_t pa"
 Zero the PAGE_SIZE sized region starting at physical address
 .Fa pa .
