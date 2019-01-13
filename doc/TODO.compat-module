@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.18 2018/10/12 04:12:06 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.19 2019/01/13 23:33:07 pgoyette Exp $ */
 
 DONE
 ----
@@ -55,21 +55,18 @@ DONE
     framework, and split version-specific code from baseline code as
     needed.
 
+16. While the rtsock_50 situation is still a disaster (rtsock_50.c
+    #include-s the main rtsock.c code with various COMPAT_50-dependant
+    macro definitions and redefinitions), the basic functionality
+    works, and the compat_14 references to rtsock_50 routines seems to
+    be correct.  The rtsock_50.c stuff should still be rewritten at
+    some future time, but it's not urgent.
+
 TODO - Not required for branch merge
 ------------------------------------
-16. Audit the entire code base for any remaining embedded #ifdef's for
+17. Audit the entire code base for any remaining embedded #ifdef's for
     COMPAT_xx.  When found, move the actual compat code into the compat
     hierarchy and replace originals with indirect (vectored) calls.
-
-17. The rtsock compat code is a disaster, with rtsock_50.c #include-ing
-    the main rtsock.c code with various manipulations of the COMPAT_50
-    macro.  Once rtsock is separated, compat_14 references to rtsock_50
-    routines needs to be verified.
-
-    Currently, this entire code is built for the monolithic COMPAT
-    module, but there's no way to reach the entry points, so none of
-    the compat code can be executed, neither on the branch nor on
-    HEAD.
 
 18. The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
