@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.45 2019/01/11 06:27:45 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.46 2019/01/13 10:49:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -48,7 +48,11 @@ extern void (*vec_ntp_gettime)(struct ntptimeval *);
 extern int (*vec_ntp_timestatus)(void);
 extern void (*vec_ntp_adjtime1)(struct timex *);
 
-MODULE_HOOK2(ntp_gettime_hooks, (struct ntptimeval *), (void))
+/*
+MODULE_HOOK(ntp_gettime_hook, (struct ntptimeval *));
+MODULE_HOOK(ntp_timestatus_hook, (void);
+MODULE_HOOK(ntp_adjtime1_hook, (struct timex *));
+*/
 
 /*
  * usb devinfo compatability
@@ -59,10 +63,11 @@ struct usb_device_info_old;
 struct usb_event;
 struct usb_event_old;
 struct uio;
-MODULE_HOOK2(usb_subr_30_hook,
+MODULE_HOOK(usb_subr_30_fill_hook,
     (struct usbd_device *, struct usb_device_info_old *, int,
       void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
-      int (*)(char *, size_t, int)),
+      int (*)(char *, size_t, int)));
+MODULE_HOOK(usb_subr_30_copy_hook,
     (struct usb_event *, struct usb_event_old *, struct uio *));
 
 /*
@@ -113,8 +118,9 @@ MODULE_HOOK(raidframe80_ioctl_hook, (int, int, struct RF_Raid_s *, int, void *,
  */
 
 struct puffs_req;
-MODULE_HOOK2(puffs50_compat_hook,
-    (struct puffs_req *, struct puffs_req **, ssize_t *),	/* outgoing */
+MODULE_HOOK(puffs_50_out_hook,
+    (struct puffs_req *, struct puffs_req **, ssize_t *));	/* outgoing */
+MODULE_HOOK(puffs_50_in_hook,
     (struct puffs_req *, struct puffs_req *));			/* incoming */
 
 /*
@@ -170,8 +176,8 @@ MODULE_HOOK(ieee80211_ostats_hook, (struct ieee80211_ostats *,
  */
 struct socket;
 
-MODULE_HOOK2(if_43_hook,
-    (u_long *, u_long),
+MODULE_HOOK(if_43_cvtcmd_hook, (u_long *, u_long));
+MODULE_HOOK(if_43_ifioctl_hook,
     (struct socket *, u_long, u_long, void *, struct lwp *));
 
 /*
@@ -197,7 +203,8 @@ MODULE_HOOK(uipc_syscalls_50_hook, (struct lwp *, u_long, void *));
 struct ifnet;
 struct rt_walkarg;
 struct rt_addrinfo;
-MODULE_HOOK2(rtsock14_hook, (struct ifnet *),
+MODULE_HOOK(rtsock_14_oifmsg_hook, (struct ifnet *));
+MODULE_HOOK(rtsock_14_iflist_hook,
     (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t));
 
 /*
@@ -211,7 +218,8 @@ MODULE_HOOK(rtsock_50_hook,
  * Hooks for rtsock_70
  */
 struct ifaddr;
-MODULE_HOOK2(rtsock_70_hook, (int, struct ifaddr *),
+MODULE_HOOK(rtsock_70_newaddr_hook, (int, struct ifaddr *));
+MODULE_HOOK(rtsock_70_iflist_hook,
     (struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *));
 
 /*
@@ -229,8 +237,8 @@ extern int kern_sig_43_pgid_mask;
  * Hooks for kern_proc.c for netbsd32 compat
  */
 struct ps_strings;
-MODULE_HOOK2(kern_proc_32_hook, (struct proc *, struct ps_strings *),
-    (char **, size_t, vaddr_t *));
+MODULE_HOOK(kern_proc_32_copyin_hook, (struct proc *, struct ps_strings *));
+MODULE_HOOK(kern_proc_32_base_hook, (char **, size_t, vaddr_t *));
 
 /*
  * Hook to allow sparc fpu code to see if a process is using sunos
@@ -248,8 +256,8 @@ MODULE_HOOK(rnd_ioctl_50_32_hook, (struct file *, u_long, void *));
 /*
  * Hooks for compat_60 ttioctl and ptmioctl
  */
-MODULE_HOOK2(compat_60_ioctl_hook, (dev_t, u_long, void *, int, struct lwp *),
-    (dev_t, u_long, void *, int, struct lwp *));
+MODULE_HOOK(compat_60_ttioctl_hook, (dev_t, u_long, void *, int, struct lwp *));
+MODULE_HOOK(compat_60_ptmioctl_hook, (dev_t, u_long, void *, int, struct lwp *));
 
 /*
  * Hook for compat_10 openat

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_kern_proc.c,v 1.1.2.4 2018/09/23 21:43:45 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_kern_proc.c,v 1.1.2.5 2019/01/13 10:49:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_kern_proc.c,v 1.1.2.4 2018/09/23 21:43:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_kern_proc.c,v 1.1.2.5 2019/01/13 10:49:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -137,9 +137,10 @@ get_base32(char **argv, size_t i, vaddr_t *base)
 }
 
 #if !defined(_RUMPSERVER)
-MODULE_SET_HOOK2(kern_proc_32_hook, "kern_proc_32",
-    copyin_psstrings_32, get_base32);
-MODULE_UNSET_HOOK2(kern_proc_32_hook);
+MODULE_SET_HOOK(kern_proc_32_copyin_hook, "kern_proc_32", copyin_psstrings_32);
+MODULE_SET_HOOK(kern_proc_32_base_hook, "kern_proc_32", get_base32);
+MODULE_UNSET_HOOK(kern_proc_32_copyin_hook);
+MODULE_UNSET_HOOK(kern_proc_32_base_hook);
 #endif
 
 void
@@ -147,7 +148,8 @@ netbsd32_kern_proc_32_init(void)
 {
 
 #if !defined(_RUMPSERVER)
-	kern_proc_32_hook_set();
+	kern_proc_32_copyin_hook_set();
+	kern_proc_32_base_hook_set();
 #endif
 }
 
@@ -156,6 +158,7 @@ netbsd32_kern_proc_32_fini(void)
 {
 
 #if !defined(_RUMPSERVER)
-	kern_proc_32_hook_unset();
+	kern_proc_32_copyin_hook_unset();
+	kern_proc_32_base_hook_unset();
 #endif
 }

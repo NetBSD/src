@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.518.2.2 2018/10/15 10:44:27 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.518.2.3 2019/01/13 10:49:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.2.2 2018/10/15 10:44:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.2.3 2019/01/13 10:49:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1635,8 +1635,8 @@ stub_sys_openat_10(struct pathbuf **pb)
 	return 0;
 }
 
-MODULE_CALL_HOOK_DECL(compat_10_openat_hook, f, (struct pathbuf **));
-MODULE_CALL_HOOK(compat_10_openat_hook, f, (struct pathbuf **pb), (pb),
+MODULE_CALL_HOOK_DECL(compat_10_openat_hook, (struct pathbuf **));
+MODULE_CALL_HOOK(compat_10_openat_hook, (struct pathbuf **pb), (pb),
     stub_sys_openat_10(pb));
 
 static int
@@ -1649,7 +1649,7 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	int error;
 
 	if (path == NULL) {
-		error = compat_10_openat_hook_f_call(&pb);
+		error = compat_10_openat_hook_call(&pb);
 		if (error)
 			return error;
 	} else {

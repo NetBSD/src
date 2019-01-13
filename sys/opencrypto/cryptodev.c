@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.98.2.7 2018/09/29 21:36:15 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.98.2.8 2019/01/13 10:49:51 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.7 2018/09/29 21:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.8 2019/01/13 10:49:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,9 +227,9 @@ cryptof_write(file_t *fp, off_t *poff,
  * kernel which doesn't contain the local stuff, so the compat
  * code cannot directly reference them as globals.
  */
-MODULE_CALL_HOOK_DECL(ocryptof_50_hook, f,
+MODULE_CALL_HOOK_DECL(ocryptof_50_hook,
     (struct file *fp, u_long cmd, void *data));
-MODULE_CALL_HOOK(ocryptof_50_hook, f,
+MODULE_CALL_HOOK(ocryptof_50_hook,
     (struct file *fp, u_long cmd, void *data), (fp, cmd, data), enosys());
 
 /* ARGSUSED */
@@ -453,7 +453,7 @@ reterr:
 		break;
 	default:
 		/* Check for backward compatible commands */
-		error = ocryptof_50_hook_f_call(fp, cmd, data);
+		error = ocryptof_50_hook_call(fp, cmd, data);
 		if (error == ENOSYS)
 			error = EINVAL;
 		return error;

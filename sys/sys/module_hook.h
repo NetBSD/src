@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.8 2019/01/11 06:18:17 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.9 2019/01/13 10:49:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -55,17 +55,6 @@ extern struct hook ## _t {					\
 	int			(*f)args;			\
 } hook __cacheline_aligned;
 
-#define MODULE_HOOK2(hook, args1, args2)			\
-extern struct hook ## _t {					\
-	kmutex_t		mtx;				\
-	kcondvar_t		cv;				\
-	struct localcount	lc;				\
-	pserialize_t		psz;				\
-        bool			hooked;				\
-	int			(*f1)args1;			\
-	int			(*f2)args2;			\
-} hook __cacheline_aligned;
-
 #define MODULE_SET_HOOK(hook, waitchan, func)			\
 static void hook ## _set(void);					\
 static void hook ## _set(void)					\
@@ -78,27 +67,6 @@ static void hook ## _set(void)					\
 	cv_init(&hook.cv, waitchan);				\
 	localcount_init(&hook.lc);				\
 	hook.f = func;						\
-								\
-	/* Make sure it's initialized before anyone uses it */	\
-	membar_producer();					\
-								\
-	/* Let them use it */					\
-	hook.hooked = true;					\
-}
-
-#define MODULE_SET_HOOK2(hook, waitchan, func1, func2)		\
-static void hook ## _set(void);					\
-static void hook ## _set(void)					\
-{								\
-								\
-	KASSERT(!hook.hooked);					\
-								\
-	hook.psz = pserialize_create();				\
-	mutex_init(&hook.mtx, MUTEX_DEFAULT, IPL_NONE);		\
-	cv_init(&hook.cv, waitchan);				\
-	localcount_init(&hook.lc);				\
-	hook.f1 = func1;					\
-	hook.f2 = func2;					\
 								\
 	/* Make sure it's initialized before anyone uses it */	\
 	membar_producer();					\
@@ -136,42 +104,13 @@ static void (hook ## _unset)(void)				\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define MODULE_UNSET_HOOK2(hook)				\
-static void (hook ## _unset)(void);				\
-static void (hook ## _unset)(void)				\
-{								\
-								\
-	KASSERT(kernconfig_is_held());				\
-	KASSERT(hook.hooked);					\
-	KASSERT(hook.f1);					\
-	KASSERT(hook.f2);					\
-								\
-	/* Grab the mutex */					\
-	mutex_enter(&hook.mtx);					\
-								\
-	/* Prevent new localcount_acquire calls.  */		\
-	hook.hooked = false;					\
-								\
-	/* Wait for existing localcount_acquire calls to drain.  */ \
-	pserialize_perform(hook.psz);				\
-								\
-	/* Wait for existing localcount references to drain.  */\
-	localcount_drain(&hook.lc, &hook.cv, &hook.mtx);	\
-								\
-	/* Release the mutex and clean up all resources */	\
-	mutex_exit(&hook.mtx);					\
-	localcount_fini(&hook.lc);				\
-	cv_destroy(&hook.cv);					\
-	mutex_destroy(&hook.mtx);				\
-	pserialize_destroy(hook.psz);				\
-}
+#define MODULE_CALL_HOOK_DECL(hook, decl)		\
+int								\
+hook ## _call decl;
 
-#define MODULE_CALL_HOOK_DECL(hook, which, decl)		\
+#define MODULE_CALL_HOOK(hook, decl, args, default)		\
 int								\
-hook ## _ ## which ## _call decl;
-#define MODULE_CALL_HOOK(hook, which, decl, args, default)	\
-int								\
-hook ## _ ## which ## _call decl				\
+hook ## _call decl						\
 {								\
 	bool __hooked;						\
 	int __hook_error, __hook_s;				\
@@ -185,7 +124,7 @@ hook ## _ ## which ## _call decl				\
 	pserialize_read_exit(__hook_s);				\
 								\
 	if (__hooked) {						\
-		__hook_error = (*hook.which)args;		\
+		__hook_error = (*hook.f)args;			\
 		localcount_release(&hook.lc, &hook.cv,		\
 		    &hook.mtx);					\
 	} else {						\

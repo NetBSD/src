@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14.2.10 2018/10/15 04:33:34 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.2.11 2019/01/13 10:49:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.10 2018/10/15 04:33:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.11 2019/01/13 10:49:49 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.10 2018/10/15 04:33:34 pgoyette Exp
  * XXX The if43_20 routine doesn't really have any effect, since its
  * XXX return value is ignored (see compat/common/if_43.c)!
  */
-MODULE_CALL_HOOK_DECL(if43_20_hook, f, (u_long ncmd));
-MODULE_CALL_HOOK(if43_20_hook, f, (u_long ncmd), (ncmd), enosys());
+MODULE_CALL_HOOK_DECL(if43_20_hook, (u_long ncmd));
+MODULE_CALL_HOOK(if43_20_hook, (u_long ncmd), (ncmd), enosys());
 
 /* 
  * Use a wrapper so that the compat_cvtcmd() can return a u_long
@@ -221,7 +221,7 @@ compat_cvtcmd(u_long cmd)
 		case TAPGIFNAME:
 			return ncmd;
 		default:
-			(void)if43_20_hook_f_call(ncmd);
+			(void)if43_20_hook_call(ncmd);
 			return ncmd;
 		}
 	}
@@ -298,14 +298,17 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	return error;
 }
 
-MODULE_SET_HOOK2(if_43_hook, "if_43", do_compat_cvtcmd, compat_ifioctl);
-MODULE_UNSET_HOOK2(if_43_hook);
+MODULE_SET_HOOK(if_43_cvtcmd_hook, "if_43", do_compat_cvtcmd);
+MODULE_SET_HOOK(if_43_ifioctl_hook, "if_43", compat_ifioctl);
+MODULE_UNSET_HOOK(if_43_cvtcmd_hook);
+MODULE_UNSET_HOOK(if_43_ifioctl_hook);
 
 int
 if_43_init(void)
 {
 
-	if_43_hook_set();
+	if_43_cvtcmd_hook_set();
+	if_43_ifioctl_hook_set();
 	return 0;
 }
 
@@ -313,7 +316,8 @@ int
 if_43_fini(void)
 {
 
-	if_43_hook_unset();
+	if_43_cvtcmd_hook_unset();
+	if_43_ifioctl_hook_unset();
 	return 0;
 }
 #endif /* defined(COMPAT_43) */

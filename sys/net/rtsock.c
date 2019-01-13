@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.16 2019/01/13 07:05:10 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.17 2019/01/13 10:49:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.16 2019/01/13 07:05:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.17 2019/01/13 10:49:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1369,18 +1369,18 @@ COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
 }
 
 /*
- * MODULE_HOOK glue for rtsock14_oifmsg and rtsock14_iflist
+ * MODULE_HOOK glue for rtsock_14_oifmsg and rtsock_14_iflist
  */
-MODULE_CALL_HOOK_DECL(rtsock14_hook, f1, (struct ifnet *ifp));
+MODULE_CALL_HOOK_DECL(rtsock_14_oifmsg_hook, (struct ifnet *ifp));
 #ifndef COMPAT_RTSOCK
-MODULE_CALL_HOOK(rtsock14_hook, f1, (struct ifnet *ifp), (ifp), enosys());
+MODULE_CALL_HOOK(rtsock_14_oifmsg_hook, (struct ifnet *ifp), (ifp), enosys());
 #endif
 
-MODULE_CALL_HOOK_DECL(rtsock14_hook, f2,
+MODULE_CALL_HOOK_DECL(rtsock_14_iflist_hook,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
      size_t len));
 #ifndef COMPAT_RTSOCK
-MODULE_CALL_HOOK(rtsock14_hook, f2,
+MODULE_CALL_HOOK(rtsock_14_iflist_hook,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
      size_t len),
     (ifp, w, info, len),
@@ -1390,11 +1390,11 @@ MODULE_CALL_HOOK(rtsock14_hook, f2,
 /*
  * MODULE_HOOK glue for rtsock50_ifaddr_listif
  */
-MODULE_CALL_HOOK_DECL(rtsock_50_hook, f,
+MODULE_CALL_HOOK_DECL(rtsock_50_hook,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info, 
      size_t len));
 #ifndef COMPAT_RTSOCK 
-MODULE_CALL_HOOK(rtsock_50_hook, f, 
+MODULE_CALL_HOOK(rtsock_50_hook, 
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
      size_t len),               
     (ifp, w, info, len),
@@ -1406,16 +1406,16 @@ MODULE_CALL_HOOK(rtsock_50_hook, f,
  * MODULE_HOOK glue for rtsock70_newaddrmsg1, rtsock70_ifaddr_listaddr,
  * and rtsock70_ifaddr_listif
  */
-MODULE_CALL_HOOK_DECL(rtsock_70_hook, f1, (int, struct ifaddr *));
+MODULE_CALL_HOOK_DECL(rtsock_70_newaddr_hook, (int, struct ifaddr *));
 #ifndef COMPAT_RTSOCK
-MODULE_CALL_HOOK(rtsock_70_hook, f1, (int cmd, struct ifaddr *ifa),
+MODULE_CALL_HOOK(rtsock_70_newaddr_hook, (int cmd, struct ifaddr *ifa),
     (cmd, ifa), stub_70_rt_newaddrmsg1(cmd, ifa));
 #endif
 
-MODULE_CALL_HOOK_DECL(rtsock_70_hook, f2,
+MODULE_CALL_HOOK_DECL(rtsock_70_iflist_hook,
     (struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *));
 #ifndef COMPAT_RTSOCK
-MODULE_CALL_HOOK(rtsock_70_hook, f2,
+MODULE_CALL_HOOK(rtsock_70_iflist_hook,
     (struct rt_walkarg *w, struct ifaddr *ifa, struct rt_addrinfo *info),
     (w, ifa, info), 
     enosys());
@@ -1445,7 +1445,7 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 	if (m == NULL)
 		return;
 	COMPATNAME(route_enqueue)(m, 0);
-	(void)rtsock14_hook_f1_call(ifp);
+	(void)rtsock_14_oifmsg_hook_call(ifp);
 #ifdef COMPAT_50
 	compat_50_rt_oifmsg(ifp);
 #endif
@@ -1538,7 +1538,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			default:
 				panic("%s: unknown command %d", __func__, cmd);
 			}
-			rtsock_70_hook_f1_call(ncmd, ifa);
+			rtsock_70_newaddr_hook_call(ncmd, ifa);
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -1979,7 +1979,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			switch (type) {
 			case NET_RT_OIFLIST: /* old _70 */
-				if (rtsock_70_hook.f1 == NULL) {
+				if (!rtsock_70_iflist_hook.hooked) {
 					error = EINVAL;
 					break;
 				}
@@ -1988,12 +1988,12 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 				error = sysctl_iflist_if(ifp, w, &info, len);
 				break;
 			case NET_RT_OOIFLIST: /* old _50 */
-				error = rtsock_50_hook_f_call(ifp, w, &info,
+				error = rtsock_50_hook_call(ifp, w, &info,
 				    len);
 				break;
 			case NET_RT_OOOIFLIST: /* old _14 */
-				error = rtsock14_hook_f2_call(ifp, w, &info,
-				    len);
+				error = rtsock_14_iflist_hook_call(ifp, w,
+				    &info, len);
 				break;
 			default:
 				error = EINVAL;
@@ -2022,7 +2022,8 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			case NET_RT_OIFLIST:
 			case NET_RT_OOIFLIST:
 			case NET_RT_OOOIFLIST:
-				error = rtsock_70_hook_f2_call(w, ifa, &info);
+				error = rtsock_70_iflist_hook_call(w, ifa,
+				    &info);
 				break;
 			default:
 				error = EINVAL;
