@@ -1,4 +1,4 @@
-/* $NetBSD: t_timeleft.c,v 1.2 2017/12/30 17:06:27 martin Exp $ */
+/* $NetBSD: t_timeleft.c,v 1.3 2019/01/13 15:36:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timeleft.c,v 1.2 2017/12/30 17:06:27 martin Exp $");
+__RCSID("$NetBSD: t_timeleft.c,v 1.3 2019/01/13 15:36:57 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/select.h>
@@ -84,7 +84,7 @@ static void
 tester(void (*fun)(struct timespec *))
 {
 	const struct timespec ts = { 5, 0 };
-	const struct timespec sts = { 0, 2000000 };
+	const struct timespec sts = { 1, 0 };
 	struct info i = { fun, ts };
 	pthread_t thr;
 
@@ -93,6 +93,7 @@ tester(void (*fun)(struct timespec *))
 
 	nanosleep(&sts, NULL);
 	pthread_kill(thr, SIGINT);
+	pthread_join(thr, NULL);
 	printf("Orig time %ju.%lu\n", (intmax_t)ts.tv_sec, ts.tv_nsec);
 	printf("Time left %ju.%lu\n", (intmax_t)i.ts.tv_sec, i.ts.tv_nsec);
 	ATF_REQUIRE(timespeccmp(&i.ts, &ts, <));
