@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.175.2.8 2018/09/29 21:36:14 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.175.2.9 2019/01/13 10:49:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.8 2018/09/29 21:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.9 2019/01/13 10:49:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1061,10 +1061,10 @@ ccdread(dev_t dev, struct uio *uio, int flags)
  * This looks ugly, since we pass the "real" ioctl function as an
  * argument to the compat_xxx function.
  */
-MODULE_CALL_HOOK_DECL(ccd_ioctl_60_hook, f, (dev_t dev, u_long cmd, void *data,
+MODULE_CALL_HOOK_DECL(ccd_ioctl_60_hook, (dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l, int (*ff)(dev_t, u_long, void *, int,
 					 struct lwp *)));
-MODULE_CALL_HOOK(ccd_ioctl_60_hook, f, (dev_t dev, u_long cmd, void *data,
+MODULE_CALL_HOOK(ccd_ioctl_60_hook, (dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l, int (*ff)(dev_t, u_long, void *, int,
 					 struct lwp *)),
     (dev, cmd, data, flag, l, ccdioctl), enosys());
@@ -1111,7 +1111,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		make = 1;
 		break;
 	default:
-		if (ccd_ioctl_60_hook_f_call(0, cmd, NULL, 0, NULL, NULL)
+		if (ccd_ioctl_60_hook_call(0, cmd, NULL, 0, NULL, NULL)
 		    == 0)
 			make = 1;
 		else
@@ -1123,7 +1123,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return ENOENT;
 	uc = kauth_cred_get();
 
-	error = ccd_ioctl_60_hook_f_call(dev, cmd, data, flag, l, ccdioctl);
+	error = ccd_ioctl_60_hook_call(dev, cmd, data, flag, l, ccdioctl);
 	if (error != ENOSYS)
 		return error;
 

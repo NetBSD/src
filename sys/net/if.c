@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.18 2018/12/26 14:02:04 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.19 2019/01/13 10:49:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.18 2018/12/26 14:02:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.19 2019/01/13 10:49:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3120,24 +3120,24 @@ out:
 /*
  * Interface for calling the compat routines
  */
-MODULE_CALL_HOOK_DECL(uipc_syscalls_40_hook, f,
+MODULE_CALL_HOOK_DECL(uipc_syscalls_40_hook,
     (struct lwp *l, int cmd, void *data));
-MODULE_CALL_HOOK(uipc_syscalls_40_hook, f,
+MODULE_CALL_HOOK(uipc_syscalls_40_hook,
     (struct lwp *l, int cmd, void *data), (cmd, data), enosys());
 
-MODULE_CALL_HOOK_DECL(uipc_syscalls_50_hook, f,
+MODULE_CALL_HOOK_DECL(uipc_syscalls_50_hook,
     (struct lwp *l, int cmd, void *data));
-MODULE_CALL_HOOK(uipc_syscalls_50_hook, f,
+MODULE_CALL_HOOK(uipc_syscalls_50_hook,
     (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
 
-MODULE_CALL_HOOK_DECL(if_43_hook, f1,
+MODULE_CALL_HOOK_DECL(if_43_cvtcmd_hook,
     (u_long *ncmd, u_long ocmd));
-MODULE_CALL_HOOK(if_43_hook, f1,
+MODULE_CALL_HOOK(if_43_cvtcmd_hook,
     (u_long *ncmd, u_long ocmd), (ncmd, ocmd), enosys());
 
-MODULE_CALL_HOOK_DECL(if_43_hook, f2,
+MODULE_CALL_HOOK_DECL(if_43_ifioctl_hook,
     (struct socket *so, u_long ocmd, u_long cmd, void *data, struct lwp *l));
-MODULE_CALL_HOOK(if_43_hook, f2,
+MODULE_CALL_HOOK(if_43_ifioctl_hook,
     (struct socket *so, u_long ocmd, u_long cmd, void *data, struct lwp *l),
     (so, ocmd, cmd, data, l), enosys());
 
@@ -3164,10 +3164,10 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCINITIFADDR:
 		return EPERM;
 	default:
-		error = uipc_syscalls_40_hook_f_call(l, cmd, data);
+		error = uipc_syscalls_40_hook_call(l, cmd, data);
 		if (error != ENOSYS)
 			return error;
-		error = uipc_syscalls_50_hook_f_call(l, cmd, data);
+		error = uipc_syscalls_50_hook_call(l, cmd, data);
 		if (error != ENOSYS)
 			return error;
 		error = 0;
@@ -3175,7 +3175,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 	ifr = data;
-	if (if_43_hook_f1_call(&cmd, ocmd) != ENOSYS) {
+	if (if_43_cvtcmd_hook_call(&cmd, ocmd) != ENOSYS) {
 		if (cmd != ocmd) {
 			oifr = data;
 			data = ifr = &ifrb;
@@ -3275,7 +3275,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = EOPNOTSUPP;
 	else {
 		KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
-		error = if_43_hook_f2_call(so, ocmd, cmd, data, l);
+		error = if_43_ifioctl_hook_call(so, ocmd, cmd, data, l);
 		if (error == ENOSYS)
 			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
 			    cmd, data, ifp);
@@ -3429,7 +3429,7 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 	struct oifreq *oifr = NULL;
 	u_long ocmd = cmd;
 
-	if (if_43_hook_f1_call(&cmd, ocmd) != ENOSYS) {
+	if (if_43_cvtcmd_hook_call(&cmd, ocmd) != ENOSYS) {
 		if (cmd != ocmd) {
 			oifr = (struct oifreq *)(void *)ifr;
 			ifr = &ifrb;
