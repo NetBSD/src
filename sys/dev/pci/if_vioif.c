@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.43 2019/01/14 14:35:52 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.44 2019/01/14 14:52:57 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.43 2019/01/14 14:35:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.44 2019/01/14 14:52:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -171,6 +171,11 @@ struct virtio_net_ctrl_vlan {
 	uint16_t id;
 } __packed;
 
+struct vioif_ctrl_cmdspec {
+	bus_dmamap_t	dmamap;
+	void		*buf;
+	bus_size_t	bufsize;
+};
 
 /*
  * if_vioifvar.h:
@@ -222,6 +227,7 @@ struct vioif_ctrlqueue {
 	}				ctrlq_inuse;
 	kcondvar_t			ctrlq_wait;
 	kmutex_t			ctrlq_wait_lock;
+	struct lwp			*ctrlq_owner;
 
 	struct virtio_net_ctrl_cmd	*ctrlq_cmd;
 	struct virtio_net_ctrl_status	*ctrlq_status;
@@ -1279,33 +1285,96 @@ vioif_tx_drain(struct vioif_softc *sc)
  * Control vq
  */
 /* issue a VIRTIO_NET_CTRL_RX class command and wait for completion */
-static int
-vioif_ctrl_rx(struct vioif_softc *sc, int cmd, bool onoff)
+static void
+vioif_ctrl_acquire(struct vioif_softc *sc)
 {
-	struct virtio_softc *vsc = sc->sc_virtio;
 	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
-	struct virtqueue *vq = ctrlq->ctrlq_vq;
-	int r, slot;
-
-	if (!sc->sc_has_ctrl)
-		return ENOTSUP;
 
 	mutex_enter(&ctrlq->ctrlq_wait_lock);
 	while (ctrlq->ctrlq_inuse != FREE)
 		cv_wait(&ctrlq->ctrlq_wait, &ctrlq->ctrlq_wait_lock);
 	ctrlq->ctrlq_inuse = INUSE;
+	ctrlq->ctrlq_owner = curlwp;
 	mutex_exit(&ctrlq->ctrlq_wait_lock);
+}
 
-	ctrlq->ctrlq_cmd->class = VIRTIO_NET_CTRL_RX;
+static void
+vioif_ctrl_release(struct vioif_softc *sc)
+{
+	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
+
+	KASSERT(ctrlq->ctrlq_inuse != FREE);
+	KASSERT(ctrlq->ctrlq_owner == curlwp);
+
+	mutex_enter(&ctrlq->ctrlq_wait_lock);
+	ctrlq->ctrlq_inuse = FREE;
+	cv_signal(&ctrlq->ctrlq_wait);
+	mutex_exit(&ctrlq->ctrlq_wait_lock);
+}
+
+static int
+vioif_ctrl_load_cmdspec(struct vioif_softc *sc,
+    struct vioif_ctrl_cmdspec *specs, int nspecs)
+{
+	struct virtio_softc *vsc = sc->sc_virtio;
+	int i, r, loaded;
+
+	loaded = 0;
+	for (i = 0; i < nspecs; i++) {
+		r = bus_dmamap_load(virtio_dmat(vsc),
+		    specs[i].dmamap, specs[i].buf, specs[i].bufsize,
+		    NULL, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		if (r) {
+			printf("%s: control command dmamap load failed, "
+			       "error code %d\n", device_xname(sc->sc_dev), r);
+			goto err;
+		}
+		loaded++;
+
+	}
+
+	return r;
+
+err:
+	for (i = 0; i < loaded; i++) {
+		bus_dmamap_unload(virtio_dmat(vsc), specs[i].dmamap);
+	}
+
+	return r;
+}
+
+static void
+vioif_ctrl_unload_cmdspec(struct vioif_softc *sc,
+    struct vioif_ctrl_cmdspec *specs, int nspecs)
+{
+	struct virtio_softc *vsc = sc->sc_virtio;
+	int i;
+
+	for (i = 0; i < nspecs; i++) {
+		bus_dmamap_unload(virtio_dmat(vsc), specs[i].dmamap);
+	}
+}
+
+static int
+vioif_ctrl_send_command(struct vioif_softc *sc, uint8_t class, uint8_t cmd,
+    struct vioif_ctrl_cmdspec *specs, int nspecs)
+{
+	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
+	struct virtqueue *vq = ctrlq->ctrlq_vq;
+	struct virtio_softc *vsc = sc->sc_virtio;
+	int i, r, slot;
+
+	ctrlq->ctrlq_cmd->class = class;
 	ctrlq->ctrlq_cmd->command = cmd;
-	ctrlq->ctrlq_rx->onoff = onoff;
 
 	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_cmd_dmamap,
 			0, sizeof(struct virtio_net_ctrl_cmd),
 			BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_rx_dmamap,
-			0, sizeof(struct virtio_net_ctrl_rx),
-			BUS_DMASYNC_PREWRITE);
+	for (i = 0; i < nspecs; i++) {
+		bus_dmamap_sync(virtio_dmat(vsc), specs[i].dmamap,
+				0, specs[i].bufsize,
+				BUS_DMASYNC_PREWRITE);
+	}
 	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_status_dmamap,
 			0, sizeof(struct virtio_net_ctrl_status),
 			BUS_DMASYNC_PREREAD);
@@ -1313,11 +1382,13 @@ vioif_ctrl_rx(struct vioif_softc *sc, int cmd, bool onoff)
 	r = virtio_enqueue_prep(vsc, vq, &slot);
 	if (r != 0)
 		panic("%s: control vq busy!?", device_xname(sc->sc_dev));
-	r = virtio_enqueue_reserve(vsc, vq, slot, 3);
+	r = virtio_enqueue_reserve(vsc, vq, slot, nspecs + 2);
 	if (r != 0)
 		panic("%s: control vq busy!?", device_xname(sc->sc_dev));
 	virtio_enqueue(vsc, vq, slot, ctrlq->ctrlq_cmd_dmamap, true);
-	virtio_enqueue(vsc, vq, slot, ctrlq->ctrlq_rx_dmamap, true);
+	for (i = 0; i < nspecs; i++) {
+		virtio_enqueue(vsc, vq, slot, specs[i].dmamap, true);
+	}
 	virtio_enqueue(vsc, vq, slot, ctrlq->ctrlq_status_dmamap, false);
 	virtio_enqueue_commit(vsc, vq, slot, true);
 
@@ -1331,9 +1402,11 @@ vioif_ctrl_rx(struct vioif_softc *sc, int cmd, bool onoff)
 	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_cmd_dmamap, 0,
 			sizeof(struct virtio_net_ctrl_cmd),
 			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_rx_dmamap, 0,
-			sizeof(struct virtio_net_ctrl_rx),
-			BUS_DMASYNC_POSTWRITE);
+	for (i = 0; i < nspecs; i++) {
+		bus_dmamap_sync(virtio_dmat(vsc), specs[i].dmamap, 0,
+				specs[i].bufsize,
+				BUS_DMASYNC_POSTWRITE);
+	}
 	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_status_dmamap, 0,
 			sizeof(struct virtio_net_ctrl_status),
 			BUS_DMASYNC_POSTREAD);
@@ -1346,11 +1419,30 @@ vioif_ctrl_rx(struct vioif_softc *sc, int cmd, bool onoff)
 		r = EIO;
 	}
 
-	mutex_enter(&ctrlq->ctrlq_wait_lock);
-	ctrlq->ctrlq_inuse = FREE;
-	cv_signal(&ctrlq->ctrlq_wait);
-	mutex_exit(&ctrlq->ctrlq_wait_lock);
+	return r;
+}
 
+static int
+vioif_ctrl_rx(struct vioif_softc *sc, int cmd, bool onoff)
+{
+	struct virtio_net_ctrl_rx *rx = sc->sc_ctrlq.ctrlq_rx;
+	struct vioif_ctrl_cmdspec specs[1];
+	int r;
+
+	if (!sc->sc_has_ctrl)
+		return ENOTSUP;
+
+	vioif_ctrl_acquire(sc);
+
+	rx->onoff = onoff;
+	specs[0].dmamap = sc->sc_ctrlq.ctrlq_rx_dmamap;
+	specs[0].buf = rx;
+	specs[0].bufsize = sizeof(*rx);
+
+	r = vioif_ctrl_send_command(sc, VIRTIO_NET_CTRL_RX, cmd,
+	    specs, __arraycount(specs));
+
+	vioif_ctrl_release(sc);
 	return r;
 }
 
@@ -1379,109 +1471,41 @@ static int
 vioif_set_rx_filter(struct vioif_softc *sc)
 {
 	/* filter already set in ctrlq->ctrlq_mac_tbl */
-	struct virtio_softc *vsc = sc->sc_virtio;
-	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
-	struct virtqueue *vq = ctrlq->ctrlq_vq;
-	int r, slot;
+	struct virtio_net_ctrl_mac_tbl *mac_tbl_uc, *mac_tbl_mc;
+	struct vioif_ctrl_cmdspec specs[2];
+	int nspecs = __arraycount(specs);
+	int r;
+
+	mac_tbl_uc = sc->sc_ctrlq.ctrlq_mac_tbl_uc;
+	mac_tbl_mc = sc->sc_ctrlq.ctrlq_mac_tbl_mc;
 
 	if (!sc->sc_has_ctrl)
 		return ENOTSUP;
 
-	mutex_enter(&ctrlq->ctrlq_wait_lock);
-	while (ctrlq->ctrlq_inuse != FREE)
-		cv_wait(&ctrlq->ctrlq_wait, &ctrlq->ctrlq_wait_lock);
-	ctrlq->ctrlq_inuse = INUSE;
-	mutex_exit(&ctrlq->ctrlq_wait_lock);
+	vioif_ctrl_acquire(sc);
 
-	ctrlq->ctrlq_cmd->class = VIRTIO_NET_CTRL_MAC;
-	ctrlq->ctrlq_cmd->command = VIRTIO_NET_CTRL_MAC_TABLE_SET;
+	specs[0].dmamap = sc->sc_ctrlq.ctrlq_tbl_uc_dmamap;
+	specs[0].buf = mac_tbl_uc;
+	specs[0].bufsize = sizeof(*mac_tbl_uc)
+	    + (ETHER_ADDR_LEN * mac_tbl_uc->nentries);
 
-	r = bus_dmamap_load(virtio_dmat(vsc), ctrlq->ctrlq_tbl_uc_dmamap,
-			    ctrlq->ctrlq_mac_tbl_uc,
-			    (sizeof(struct virtio_net_ctrl_mac_tbl)
-			  + ETHER_ADDR_LEN * ctrlq->ctrlq_mac_tbl_uc->nentries),
-			    NULL, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-	if (r) {
-		printf("%s: control command dmamap load failed, "
-		       "error code %d\n", device_xname(sc->sc_dev), r);
-		goto out;
-	}
-	r = bus_dmamap_load(virtio_dmat(vsc), ctrlq->ctrlq_tbl_mc_dmamap,
-			    ctrlq->ctrlq_mac_tbl_mc,
-			    (sizeof(struct virtio_net_ctrl_mac_tbl)
-			  + ETHER_ADDR_LEN * ctrlq->ctrlq_mac_tbl_mc->nentries),
-			    NULL, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-	if (r) {
-		printf("%s: control command dmamap load failed, "
-		       "error code %d\n", device_xname(sc->sc_dev), r);
-		bus_dmamap_unload(virtio_dmat(vsc), ctrlq->ctrlq_tbl_uc_dmamap);
-		goto out;
-	}
+	specs[1].dmamap = sc->sc_ctrlq.ctrlq_tbl_mc_dmamap;
+	specs[1].buf = mac_tbl_mc;
+	specs[1].bufsize = sizeof(*mac_tbl_mc)
+	    + (ETHER_ADDR_LEN * mac_tbl_mc->nentries);
 
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_cmd_dmamap,
-			0, sizeof(struct virtio_net_ctrl_cmd),
-			BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_tbl_uc_dmamap, 0,
-			(sizeof(struct virtio_net_ctrl_mac_tbl)
-			 + ETHER_ADDR_LEN * ctrlq->ctrlq_mac_tbl_uc->nentries),
-			BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_tbl_mc_dmamap, 0,
-			(sizeof(struct virtio_net_ctrl_mac_tbl)
-			 + ETHER_ADDR_LEN * ctrlq->ctrlq_mac_tbl_mc->nentries),
-			BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_status_dmamap,
-			0, sizeof(struct virtio_net_ctrl_status),
-			BUS_DMASYNC_PREREAD);
-
-	r = virtio_enqueue_prep(vsc, vq, &slot);
+	r = vioif_ctrl_load_cmdspec(sc, specs, nspecs);
 	if (r != 0)
-		panic("%s: control vq busy!?", device_xname(sc->sc_dev));
-	r = virtio_enqueue_reserve(vsc, vq, slot, 4);
-	if (r != 0)
-		panic("%s: control vq busy!?", device_xname(sc->sc_dev));
-	virtio_enqueue(vsc, vq, slot, ctrlq->ctrlq_cmd_dmamap, true);
-	virtio_enqueue(vsc, vq, slot, ctrlq->ctrlq_tbl_uc_dmamap, true);
-	virtio_enqueue(vsc, vq, slot, ctrlq->ctrlq_tbl_mc_dmamap, true);
-	virtio_enqueue(vsc, vq, slot, ctrlq->ctrlq_status_dmamap, false);
-	virtio_enqueue_commit(vsc, vq, slot, true);
+		goto out;
 
-	/* wait for done */
-	mutex_enter(&ctrlq->ctrlq_wait_lock);
-	while (ctrlq->ctrlq_inuse != DONE)
-		cv_wait(&ctrlq->ctrlq_wait, &ctrlq->ctrlq_wait_lock);
-	mutex_exit(&ctrlq->ctrlq_wait_lock);
-	/* already dequeueued */
+	r = vioif_ctrl_send_command(sc,
+	    VIRTIO_NET_CTRL_MAC, VIRTIO_NET_CTRL_MAC_TABLE_SET,
+	    specs, nspecs);
 
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_cmd_dmamap, 0,
-			sizeof(struct virtio_net_ctrl_cmd),
-			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_tbl_uc_dmamap, 0,
-			(sizeof(struct virtio_net_ctrl_mac_tbl)
-			 + ETHER_ADDR_LEN * ctrlq->ctrlq_mac_tbl_uc->nentries),
-			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_tbl_mc_dmamap, 0,
-			(sizeof(struct virtio_net_ctrl_mac_tbl)
-			 + ETHER_ADDR_LEN * ctrlq->ctrlq_mac_tbl_mc->nentries),
-			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(virtio_dmat(vsc), ctrlq->ctrlq_status_dmamap, 0,
-			sizeof(struct virtio_net_ctrl_status),
-			BUS_DMASYNC_POSTREAD);
-	bus_dmamap_unload(virtio_dmat(vsc), ctrlq->ctrlq_tbl_uc_dmamap);
-	bus_dmamap_unload(virtio_dmat(vsc), ctrlq->ctrlq_tbl_mc_dmamap);
-
-	if (ctrlq->ctrlq_status->ack == VIRTIO_NET_OK)
-		r = 0;
-	else {
-		printf("%s: failed setting rx filter\n",
-		       device_xname(sc->sc_dev));
-		r = EIO;
-	}
+	vioif_ctrl_unload_cmdspec(sc, specs, nspecs);
 
 out:
-	mutex_enter(&ctrlq->ctrlq_wait_lock);
-	ctrlq->ctrlq_inuse = FREE;
-	cv_signal(&ctrlq->ctrlq_wait);
-	mutex_exit(&ctrlq->ctrlq_wait_lock);
+	vioif_ctrl_release(sc);
 
 	return r;
 }
