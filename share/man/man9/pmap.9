@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.45 2019/01/13 06:59:15 mrg Exp $
+.\"	$NetBSD: pmap.9,v 1.46 2019/01/14 15:56:06 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -581,7 +581,6 @@ mappings immediately in
 or to use the knowledge of the upcoming
 .Fn pmap_remove
 calls to optimize the removals (or to just ignore this call).
-.Pp
 .It void Fn "pmap_protect" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva" \
     "vm_prot_t prot"
 Set the protection of the mappings in the virtual address range
@@ -1117,7 +1116,6 @@ The use of
 .Fn PMAP_PREFER
 is enabled by defining it as a C pre-processor macro in
 .In machine/pmap.h .
-.Pp
 .It void Fn "pmap_procwr" "struct proc *p" "vaddr_t va" "vsize_t size"
 Synchronize CPU instruction caches of the specified range.
 The address space is designated by
