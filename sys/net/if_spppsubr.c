@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.179.2.8 2019/01/13 10:49:51 pgoyette Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.179.2.9 2019/01/14 13:34:28 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.8 2019/01/13 10:49:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.9 2019/01/14 13:34:28 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5612,9 +5612,9 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 #endif /*INET6*/
 
 /* Hook the sppp_params50 compat code */
-MODULE_CALL_HOOK_DECL(sppp_params_50_hook,
+MODULE_CALL_INT_HOOK_DECL(sppp_params_50_hook,
     (struct sppp *sp, u_long cmd, void *data));
-MODULE_CALL_HOOK(sppp_params_50_hook,
+MODULE_CALL_INT_HOOK(sppp_params_50_hook,
     (struct sppp *sp, u_long cmd, void *data), (sp, cmd, data), enosys());
 
 /*

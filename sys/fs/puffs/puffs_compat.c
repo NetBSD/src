@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_compat.c,v 1.4.16.4 2019/01/13 10:49:50 pgoyette Exp $	*/
+/*	$NetBSD: puffs_compat.c,v 1.4.16.5 2019/01/14 13:34:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.4.16.4 2019/01/13 10:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.4.16.5 2019/01/14 13:34:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -343,7 +343,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 #define ASSIGN(field)							\
 	omsg->field = cmsg->field;
 
-int
+void
 puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 {
 
@@ -434,7 +434,6 @@ puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 			panic("puffs compat ops come in pairs");
 		}
 	}
-	return 0;
 }
 
 MODULE_SET_HOOK(puffs_50_out_hook, "pffs50", puffs_compat_outgoing);

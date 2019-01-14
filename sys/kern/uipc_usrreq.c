@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.183.2.7 2019/01/13 10:49:50 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.183.2.8 2019/01/14 13:34:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.183.2.7 2019/01/13 10:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.183.2.8 2019/01/14 13:34:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -198,15 +198,14 @@ static int unp_defer;
 
 /* Compat interface */
 
-int stub_compat_70_unp_addsockcred(struct mbuf **, lwp_t *, struct mbuf *);
+void stub_compat_70_unp_addsockcred(struct mbuf **, lwp_t *, struct mbuf *);
 
-int stub_compat_70_unp_addsockcred(struct mbuf** ret, struct lwp *lwp,
+void stub_compat_70_unp_addsockcred(struct mbuf** ret, struct lwp *lwp,
     struct mbuf *control)
 {
 
-	/* just return our initial argument */
+/* just copy our initial argument */
 	*ret = control;
-	return 0;
 }
 
 bool *compat70_ocreds_valid = false;
@@ -331,9 +330,9 @@ unp_free(struct unpcb *unp)
 	kmem_free(unp, sizeof(*unp));
 }
 
-MODULE_CALL_HOOK_DECL(compat_70_unp_hook,
+MODULE_CALL_VOID_HOOK_DECL(compat_70_unp_hook,
     (struct mbuf **, struct lwp *, struct mbuf *));
-MODULE_CALL_HOOK(compat_70_unp_hook,
+MODULE_CALL_VOID_HOOK(compat_70_unp_hook,
     (struct mbuf **ret, struct lwp *lwp, struct mbuf *control),
     (ret, lwp, control), stub_compat_70_unp_addsockcred(ret, lwp, control));
 

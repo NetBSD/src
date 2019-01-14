@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.37.16.3 2019/01/13 10:49:50 pgoyette Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.37.16.4 2019/01/14 13:34:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.16.3 2019/01/13 10:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.16.4 2019/01/14 13:34:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -385,9 +385,9 @@ stub_compat_ptmioctl_60(dev_t dev, u_long cmd, void *data, int flag,
         return EPASSTHROUGH;
 }
 
-MODULE_CALL_HOOK_DECL(compat_60_ptmioctl_hook,
+MODULE_CALL_INT_HOOK_DECL(compat_60_ptmioctl_hook,
     (dev_t, u_long, void *, int, struct lwp *));
-MODULE_CALL_HOOK(compat_60_ptmioctl_hook,
+MODULE_CALL_INT_HOOK(compat_60_ptmioctl_hook,
     (dev_t dev, u_long cmd, void *data, int flag, struct lwp *l),
     (dev, cmd, data, flag, l), enosys());
 

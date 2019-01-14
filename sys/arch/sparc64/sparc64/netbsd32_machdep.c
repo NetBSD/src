@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.110.14.2 2019/01/13 10:49:49 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.110.14.3 2019/01/14 13:34:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110.14.2 2019/01/13 10:49:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110.14.3 2019/01/14 13:34:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -262,9 +262,9 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
         
-MODULE_CALL_HOOK_DECL(netbsd32_sendsig_hook,
+MODULE_CALL_VOID_HOOK_DECL(netbsd32_sendsig_hook,
     (const ksiginfo_t *ksi, const sigset_t *mask));  
-MODULE_CALL_HOOK(netbsd32_sendsig_hook,
+MODULE_CALL_VOID_HOOK(netbsd32_sendsig_hook,
     (const ksiginfo_t *ksi, const sigset_t *mask), (ksi, mask),
     netbsd32_sendsig_siginfo(ksi, mask));
 

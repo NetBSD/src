@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.9 2019/01/13 10:49:51 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.10 2019/01/14 13:34:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -45,14 +45,14 @@
  * unloaded.
  */
 
-#define MODULE_HOOK(hook, args)					\
+#define MODULE_HOOK(hook, type, args)				\
 extern struct hook ## _t {					\
 	kmutex_t		mtx;				\
 	kcondvar_t		cv;				\
 	struct localcount	lc;				\
 	pserialize_t		psz;				\
         bool			hooked;				\
-	int			(*f)args;			\
+	type			(*f)args;			\
 } hook __cacheline_aligned;
 
 #define MODULE_SET_HOOK(hook, waitchan, func)			\
@@ -104,11 +104,15 @@ static void (hook ## _unset)(void)				\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define MODULE_CALL_HOOK_DECL(hook, decl)		\
+#define MODULE_CALL_INT_HOOK_DECL(hook, decl)			\
 int								\
 hook ## _call decl;
 
-#define MODULE_CALL_HOOK(hook, decl, args, default)		\
+#define MODULE_CALL_VOID_HOOK_DECL(hook, decl)			\
+void								\
+hook ## _call decl;
+
+#define MODULE_CALL_INT_HOOK(hook, decl, args, default)		\
 int								\
 hook ## _call decl						\
 {								\
@@ -131,6 +135,30 @@ hook ## _call decl						\
 		__hook_error = default;				\
 	}							\
 	return __hook_error;					\
+}
+
+#define MODULE_CALL_VOID_HOOK(hook, decl, args, default)	\
+void								\
+hook ## _call decl						\
+{								\
+	bool __hooked;						\
+	int __hook_s;						\
+								\
+	__hook_s = pserialize_read_enter();			\
+	__hooked = hook.hooked;					\
+	if (__hooked) {						\
+		membar_consumer();				\
+		localcount_acquire(&hook.lc);			\
+	}							\
+	pserialize_read_exit(__hook_s);				\
+								\
+	if (__hooked) {						\
+		(*hook.f)args;					\
+		localcount_release(&hook.lc, &hook.cv,		\
+		    &hook.mtx);					\
+	} else {						\
+		default;					\
+	}							\
 }
 
 #endif	/* _SYS_MODULE_HOOK_H */

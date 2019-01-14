@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_kern_proc.c,v 1.1.2.5 2019/01/13 10:49:50 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_kern_proc.c,v 1.1.2.6 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_kern_proc.c,v 1.1.2.5 2019/01/13 10:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_kern_proc.c,v 1.1.2.6 2019/01/14 13:34:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -124,7 +124,7 @@ copyin_psstrings_32(struct proc *p, struct ps_strings *arginfo)
 	return 0;
 }
 
-static int
+static void
 get_base32(char **argv, size_t i, vaddr_t *base)
 {
 
@@ -132,8 +132,6 @@ get_base32(char **argv, size_t i, vaddr_t *base)
 
 	argv32 = (netbsd32_charp *)argv;
 	*base = (vaddr_t)NETBSD32PTR64(argv32[i]);
-
-	return 0;
 }
 
 #if !defined(_RUMPSERVER)

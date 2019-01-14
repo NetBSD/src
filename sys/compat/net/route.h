@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.2.14.2 2019/01/13 23:32:21 pgoyette Exp $	*/
+/*	$NetBSD: route.h,v 1.2.14.3 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -81,14 +81,14 @@ struct rt_msghdr50 {
 #ifdef _KERNEL
 extern struct route_info compat_50_route_info;
 void	compat_50_route_enqueue(struct mbuf *, int);
-int	compat_50_rt_ifannouncemsg(struct ifnet *, int);
-int	compat_50_rt_ieee80211msg(struct ifnet *, int, void *, size_t);
-int	compat_50_rt_ifmsg(struct ifnet *);
-int	compat_50_rt_missmsg(int, const struct rt_addrinfo *, int, int);
+void	compat_50_rt_ifannouncemsg(struct ifnet *, int);
+void	compat_50_rt_ieee80211msg(struct ifnet *, int, void *, size_t);
+void	compat_50_rt_ifmsg(struct ifnet *);
+void	compat_50_rt_missmsg(int, const struct rt_addrinfo *, int, int);
 struct mbuf *
 	compat_50_rt_msg1(int, struct rt_addrinfo *, void *, int);
-int	compat_50_rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
-int	compat_70_rt_newaddrmsg1(int, struct ifaddr *);
+void	compat_50_rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+void	compat_70_rt_newaddrmsg1(int, struct ifaddr *);
 #endif
 
 #define RTM_OVERSION	3	/* Up the ante and ignore older versions */
