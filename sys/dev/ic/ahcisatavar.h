@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.21 2018/12/07 22:22:12 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.22 2019/01/14 21:29:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -58,7 +58,6 @@ struct ahci_softc {
 #define AHCI_PCI_QUIRK_FORCE	__BIT(0)  /* force attach */
 #define AHCI_PCI_QUIRK_BAD64	__BIT(1)  /* broken 64-bit DMA */
 #define AHCI_QUIRK_BADPMP	__BIT(2)  /* broken PMP support, ignore */
-#define AHCI_QUIRK_BADPMPRESET	__BIT(3)  /* broken PMP support for reset */
 #define AHCI_QUIRK_SKIP_RESET	__BIT(4)  /* skip drive reset sequence */
 
 	uint32_t sc_ahci_cap;	/* copy of AHCI_CAP */
