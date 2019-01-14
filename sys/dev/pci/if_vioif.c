@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.41 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.42 2019/01/14 14:32:13 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.41 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.42 2019/01/14 14:32:13 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -357,65 +357,56 @@ vioif_alloc_mems(struct vioif_softc *sc)
 				 "error code %d\n", r);
 		goto err_dmamem_alloc;
 	}
-	sc->sc_hdrs = vaddr;
+
+#define P(p, p0, p0size)	do { p0 = (void *) p;		\
+				     p += p0size; } while (0)
 	memset(vaddr, 0, allocsize);
 	p = (intptr_t) vaddr;
-	p += sizeof(struct virtio_net_hdr) * rxqsize;
-#define P(name,size)	do { sc->sc_ ##name = (void*) p;	\
-			     p += size; } while (0)
-	P(tx_hdrs, sizeof(struct virtio_net_hdr) * txqsize);
+
+	P(p, sc->sc_rx_hdrs, sizeof(sc->sc_rx_hdrs[0]) * rxqsize);
+	P(p, sc->sc_tx_hdrs, sizeof(sc->sc_tx_hdrs[0]) * txqsize);
 	if (sc->sc_has_ctrl) {
-		P(ctrl_cmd, sizeof(struct virtio_net_ctrl_cmd));
-		P(ctrl_status, sizeof(struct virtio_net_ctrl_status));
-		P(ctrl_rx, sizeof(struct virtio_net_ctrl_rx));
-		P(ctrl_mac_tbl_uc, sizeof(struct virtio_net_ctrl_mac_tbl));
-		P(ctrl_mac_tbl_mc,
-		  (sizeof(struct virtio_net_ctrl_mac_tbl)
-		   + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES));
+		P(p, sc->sc_ctrl_cmd, sizeof(*sc->sc_ctrl_cmd));
+		P(p, sc->sc_ctrl_status, sizeof(*sc->sc_ctrl_status));
+		P(p, sc->sc_ctrl_rx, sizeof(*sc->sc_ctrl_rx));
+		P(p, sc->sc_ctrl_mac_tbl_uc, sizeof(*sc->sc_ctrl_mac_tbl_uc) + 0);
+		P(p, sc->sc_ctrl_mac_tbl_mc,
+		    (sizeof(*sc->sc_ctrl_mac_tbl_mc)
+		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES));
 	}
-#undef P
 
 	allocsize2 = sizeof(bus_dmamap_t) * (rxqsize + txqsize);
 	allocsize2 += sizeof(bus_dmamap_t) * (rxqsize + txqsize);
 	allocsize2 += sizeof(struct mbuf*) * (rxqsize + txqsize);
-	sc->sc_arrays = kmem_zalloc(allocsize2, KM_SLEEP);
-	sc->sc_txhdr_dmamaps = sc->sc_arrays + rxqsize;
-	sc->sc_rx_dmamaps = sc->sc_txhdr_dmamaps + txqsize;
-	sc->sc_tx_dmamaps = sc->sc_rx_dmamaps + rxqsize;
-	sc->sc_rx_mbufs = (void*) (sc->sc_tx_dmamaps + txqsize);
-	sc->sc_tx_mbufs = sc->sc_rx_mbufs + rxqsize;
+	vaddr = kmem_zalloc(allocsize2, KM_SLEEP);
+	p = (intptr_t) vaddr;
 
-#define C(map, buf, size, nsegs, rw, usage)				\
-	do {								\
-		r = bus_dmamap_create(virtio_dmat(vsc), size, nsegs, size, 0, \
-				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,	\
-				      &sc->sc_ ##map);			\
-		if (r != 0) {						\
-			aprint_error_dev(sc->sc_dev,			\
-					 usage " dmamap creation failed, " \
-					 "error code %d\n", r);		\
-					 goto err_reqs;			\
-		}							\
+	P(p, sc->sc_rxhdr_dmamaps, sizeof(sc->sc_rxhdr_dmamaps[0]) * rxqsize);
+	P(p, sc->sc_txhdr_dmamaps, sizeof(sc->sc_txhdr_dmamaps[0]) * txqsize);
+	P(p, sc->sc_rx_dmamaps, sizeof(sc->sc_rx_dmamaps[0]) * rxqsize);
+	P(p, sc->sc_tx_dmamaps, sizeof(sc->sc_tx_dmamaps[0]) * txqsize);
+	P(p, sc->sc_rx_mbufs, sizeof(sc->sc_rx_mbufs[0]) * rxqsize);
+	P(p, sc->sc_tx_mbufs, sizeof(sc->sc_tx_mbufs[0]) * txqsize);
+#undef P
+
+#define C(map, size, nsegs, usage)						\
+	do {									\
+		r = bus_dmamap_create(virtio_dmat(vsc), size, nsegs, size, 0,	\
+				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,		\
+				      &map);					\
+		if (r != 0) {							\
+			aprint_error_dev(sc->sc_dev,				\
+			    "%s dmamap creation failed, "			\
+			    "error code %d\n", usage, r);			\
+			goto err_reqs;						\
+		}								\
 	} while (0)
-#define C_L1(map, buf, size, nsegs, rw, usage)				\
-	C(map, buf, size, nsegs, rw, usage);				\
+#define C_L(map, buf, size, nsegs, rw, usage)				\
+	C(map, size, nsegs, usage);					\
 	do {								\
-		r = bus_dmamap_load(virtio_dmat(vsc), sc->sc_ ##map,	\
-				    &sc->sc_ ##buf, size, NULL,		\
-				    BUS_DMA_ ##rw | BUS_DMA_NOWAIT);	\
-		if (r != 0) {						\
-			aprint_error_dev(sc->sc_dev,			\
-					 usage " dmamap load failed, "	\
-					 "error code %d\n", r);		\
-			goto err_reqs;					\
-		}							\
-	} while (0)
-#define C_L2(map, buf, size, nsegs, rw, usage)				\
-	C(map, buf, size, nsegs, rw, usage);				\
-	do {								\
-		r = bus_dmamap_load(virtio_dmat(vsc), sc->sc_ ##map,	\
-				    sc->sc_ ##buf, size, NULL,		\
-				    BUS_DMA_ ##rw | BUS_DMA_NOWAIT);	\
+		r = bus_dmamap_load(virtio_dmat(vsc), map,		\
+				    buf, size, NULL,			\
+				    rw | BUS_DMA_NOWAIT);		\
 		if (r != 0) {						\
 			aprint_error_dev(sc->sc_dev,			\
 					 usage " dmamap load failed, "	\
@@ -424,50 +415,40 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		}							\
 	} while (0)
 	for (i = 0; i < rxqsize; i++) {
-		C_L1(rxhdr_dmamaps[i], rx_hdrs[i],
-		    sizeof(struct virtio_net_hdr), 1,
-		    READ, "rx header");
-		C(rx_dmamaps[i], NULL, MCLBYTES, 1, 0, "rx payload");
+		C_L(sc->sc_rxhdr_dmamaps[i], &sc->sc_rx_hdrs[i], sizeof(sc->sc_rx_hdrs[0]), 1,
+		    BUS_DMA_READ, "rx header");
+		C(sc->sc_rx_dmamaps[i], MCLBYTES, 1, "rx payload");
 	}
 
 	for (i = 0; i < txqsize; i++) {
-		C_L1(txhdr_dmamaps[i], tx_hdrs[i],
-		    sizeof(struct virtio_net_hdr), 1,
-		    WRITE, "tx header");
-		C(tx_dmamaps[i], NULL, ETHER_MAX_LEN, VIRTIO_NET_TX_MAXNSEGS, 0,
-		  "tx payload");
+		C_L(sc->sc_txhdr_dmamaps[i], &sc->sc_tx_hdrs[i], sizeof(sc->sc_tx_hdrs[0]), 1,
+		    BUS_DMA_READ, "tx header");
+		C(sc->sc_tx_dmamaps[i], ETHER_MAX_LEN, VIRTIO_NET_TX_MAXNSEGS, "tx payload");
 	}
 
 	if (sc->sc_has_ctrl) {
 		/* control vq class & command */
-		C_L2(ctrl_cmd_dmamap, ctrl_cmd,
-		    sizeof(struct virtio_net_ctrl_cmd), 1, WRITE,
-		    "control command");
-	
-		/* control vq status */
-		C_L2(ctrl_status_dmamap, ctrl_status,
-		    sizeof(struct virtio_net_ctrl_status), 1, READ,
-		    "control status");
+		C_L(sc->sc_ctrl_cmd_dmamap,  sc->sc_ctrl_cmd, sizeof(*sc->sc_ctrl_cmd), 1,
+		    BUS_DMA_WRITE, "control command");
+		C_L(sc->sc_ctrl_status_dmamap, sc->sc_ctrl_status, sizeof(*sc->sc_ctrl_status), 1,
+		    BUS_DMA_READ, "control status");
 
 		/* control vq rx mode command parameter */
-		C_L2(ctrl_rx_dmamap, ctrl_rx,
-		    sizeof(struct virtio_net_ctrl_rx), 1, WRITE,
-		    "rx mode control command");
+		C_L(sc->sc_ctrl_rx_dmamap, sc->sc_ctrl_rx, sizeof(*sc->sc_ctrl_rx), 1,
+		    BUS_DMA_WRITE, "rx mode control command");
 
 		/* control vq MAC filter table for unicast */
 		/* do not load now since its length is variable */
-		C(ctrl_tbl_uc_dmamap, NULL,
-		  sizeof(struct virtio_net_ctrl_mac_tbl) + 0, 1, WRITE,
-		  "unicast MAC address filter command");
+		C(sc->sc_ctrl_tbl_uc_dmamap, sizeof(*sc->sc_ctrl_mac_tbl_uc) + 0, 1,
+		    "unicast MAC address filter command");
 
 		/* control vq MAC filter table for multicast */
-		C(ctrl_tbl_mc_dmamap, NULL,
-		  (sizeof(struct virtio_net_ctrl_mac_tbl)
-		   + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES),
-		  1, WRITE, "multicast MAC address filter command");
+		C(sc->sc_ctrl_tbl_mc_dmamap,
+		    sizeof(*sc->sc_ctrl_mac_tbl_mc)
+		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES, 1,
+		    "multicast MAC address filter command");
 	}
-#undef C_L2
-#undef C_L1
+#undef C_L
 #undef C
 
 	return 0;
@@ -475,23 +456,23 @@ vioif_alloc_mems(struct vioif_softc *sc)
 err_reqs:
 #define D(map)								\
 	do {								\
-		if (sc->sc_ ##map) {					\
-			bus_dmamap_destroy(virtio_dmat(vsc), sc->sc_ ##map); \
-			sc->sc_ ##map = NULL;				\
+		if (map) {						\
+			bus_dmamap_destroy(virtio_dmat(vsc), map);	\
+			map = NULL;					\
 		}							\
 	} while (0)
-	D(ctrl_tbl_mc_dmamap);
-	D(ctrl_tbl_uc_dmamap);
-	D(ctrl_rx_dmamap);
-	D(ctrl_status_dmamap);
-	D(ctrl_cmd_dmamap);
+	D(sc->sc_ctrl_tbl_mc_dmamap);
+	D(sc->sc_ctrl_tbl_uc_dmamap);
+	D(sc->sc_ctrl_rx_dmamap);
+	D(sc->sc_ctrl_status_dmamap);
+	D(sc->sc_ctrl_cmd_dmamap);
 	for (i = 0; i < txqsize; i++) {
-		D(tx_dmamaps[i]);
-		D(txhdr_dmamaps[i]);
+		D(sc->sc_tx_dmamaps[i]);
+		D(sc->sc_txhdr_dmamaps[i]);
 	}
 	for (i = 0; i < rxqsize; i++) {
-		D(rx_dmamaps[i]);
-		D(rxhdr_dmamaps[i]);
+		D(sc->sc_rx_dmamaps[i]);
+		D(sc->sc_rxhdr_dmamaps[i]);
 	}
 #undef D
 	if (sc->sc_arrays) {
