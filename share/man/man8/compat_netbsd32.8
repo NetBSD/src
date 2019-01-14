@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_netbsd32.8,v 1.11 2019/01/13 04:45:35 mrg Exp $
+.\"	$NetBSD: compat_netbsd32.8,v 1.12 2019/01/14 15:55:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2019 Matthew R. Green
 .\" All rights reserved.
@@ -81,7 +81,7 @@ For a.out compatibility,
 .Pa /usr/libexec/ld.so
 from a 32-bit distribution is required to exist, and the a.out
 shared libraries must be found in
-.P /emul/aout
+.Pa /emul/aout
 as normal for a.out compatibility.
 For 32-bit (64-bit on
 .Nx Ns Tn /mips64 )
@@ -103,7 +103,7 @@ Note that the kernel handles rewriting the builting ELF interpreter
 to the above path.
 .Pp
 Before
-.Nx 5.0 
+.Nx 5.0
 all of these files needed to be placed under
 .Pa /emul/netbsd32 .
 .Pp
@@ -121,5 +121,5 @@ is not supported.
 .Pp
 Some
 .Xr ioctl 2
-command are not supported, including
+commands are not supported, including
 .Xr drm 4 .
