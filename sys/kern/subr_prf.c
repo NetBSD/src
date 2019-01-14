@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.175 2019/01/07 13:09:48 martin Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.176 2019/01/14 19:21:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.175 2019/01/07 13:09:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.176 2019/01/14 19:21:54 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -808,6 +808,8 @@ aprint_normal_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_normal_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -817,6 +819,8 @@ void
 aprint_normal_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_normal_internal(ifp->if_xname, fmt, ap);
@@ -885,6 +889,8 @@ aprint_error_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_error_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -894,6 +900,8 @@ void
 aprint_error_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_error_internal(ifp->if_xname, fmt, ap);
@@ -934,6 +942,8 @@ aprint_naive_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_naive_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -943,6 +953,8 @@ void
 aprint_naive_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_naive_internal(ifp->if_xname, fmt, ap);
@@ -988,6 +1000,8 @@ aprint_verbose_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_verbose_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -997,6 +1011,8 @@ void
 aprint_verbose_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_verbose_internal(ifp->if_xname, fmt, ap);
@@ -1036,6 +1052,8 @@ aprint_debug_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_debug_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -1045,6 +1063,8 @@ void
 aprint_debug_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_debug_internal(ifp->if_xname, fmt, ap);
