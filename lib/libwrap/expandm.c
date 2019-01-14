@@ -1,7 +1,7 @@
-/*	$NetBSD: expandm.c,v 1.7 2019/01/13 06:10:34 kre Exp $	*/
+/*	$NetBSD: expandm.c,v 1.8 2019/01/14 03:30:25 kre Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.7 2019/01/13 06:10:34 kre Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.8 2019/01/14 03:30:25 kre Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -53,27 +53,26 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 	char *buf, *m, *nbuf;
 	const char *ptr;
 
-	for (ptr = fmt, buf = NULL; (m = strstr(ptr, "%m")) != NULL;
-	    ptr = m + 2)
-	{
+	buf = NULL;
+	for (ptr = fmt; (m = strstr(ptr, "%m")) != NULL; ptr = m + 2) {
 		size_t cnt = 0;
 
 		for (char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
 
-               if (__predict_false((m - ptr) >= INT_MAX)) {
-                        size_t blen = buf ? strlen(buf) : 0;
-                        size_t nlen = (size_t)(m - ptr);
+		if (__predict_false((m - ptr) >= INT_MAX)) {
+			size_t blen = buf ? strlen(buf) : 0;
+			size_t nlen = (size_t)(m - ptr);
 
-                        nbuf = realloc(buf, blen + nlen + 1);
-                        if (nbuf == NULL)
-                                goto out;
+			nbuf = realloc(buf, blen + nlen + 1);
+			if (nbuf == NULL)
+				goto out;
 
-                        memcpy(nbuf + blen, ptr, nlen);
-                        nbuf[blen + nlen] = '\0';
-                        ptr += nlen;
-                        buf = nbuf;
-                }
+			memcpy(nbuf + blen, ptr, nlen);
+			nbuf[blen + nlen] = '\0';
+			ptr += nlen;
+			buf = nbuf;
+		}
 
 		if (__predict_true(e == NULL && (cnt & 1) != 0))
 			e = strerror(err);
