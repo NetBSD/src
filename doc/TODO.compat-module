@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.20 2019/01/14 00:16:32 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.21 2019/01/14 13:35:53 pgoyette Exp $ */
 
 DONE
 ----
@@ -104,6 +104,3 @@ TODO - Not required for branch merge
     are included in every kernel via 'options COMPAT_UTILS' in file
     sys/conf/std
 
-22. Several hook callback routines have had their return type changed
-    from "void" to "int" in order to provide a common type in the
-    hook structure.  Ideally, I'd like to revert these back to "void".
