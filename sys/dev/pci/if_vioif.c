@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.44 2019/01/14 14:52:57 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.45 2019/01/14 14:57:25 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.44 2019/01/14 14:52:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.45 2019/01/14 14:57:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -702,6 +702,9 @@ skip:
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#ifdef VIOIF_MPSAFE
+	ifp->if_extflags = IFEF_MPSAFE;
+#endif
 	ifp->if_start = vioif_start;
 	ifp->if_ioctl = vioif_ioctl;
 	ifp->if_init = vioif_init;
