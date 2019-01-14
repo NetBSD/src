@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_70.c,v 1.2.2.3 2019/01/13 10:49:49 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_70.c,v 1.2.2.4 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.3 2019/01/13 10:49:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.4 2019/01/14 13:34:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.3 2019/01/13 10:49:49 pgoyette E
 #include <compat/net/route.h>
 #include <compat/net/route_70.h>
 
-int
+void
 compat_70_rt_newaddrmsg1(int cmd, struct ifaddr *ifa)
 {
 	struct rt_addrinfo info;
@@ -87,12 +87,10 @@ compat_70_rt_newaddrmsg1(int cmd, struct ifaddr *ifa)
 
 	m = rt_msg1(ncmd, &info, &ifam, sizeof(ifam));
 	if (m == NULL)
-		return 0;
+		return;
 
 	mtod(m, struct ifa_msghdr70 *)->ifam_addrs = info.rti_addrs;
 	route_enqueue(m, sa ? sa->sa_family : 0);
-
-	return 0;
 }
 
 int

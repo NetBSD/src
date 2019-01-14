@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.168.2.8 2019/01/13 10:49:50 pgoyette Exp $	*/
+/*	$NetBSD: usb.c,v 1.168.2.9 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.168.2.8 2019/01/13 10:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.168.2.9 2019/01/14 13:34:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -657,9 +657,9 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 /* Call the hook for usb30_copy_to_old() */
-MODULE_CALL_HOOK_DECL(usb_subr_30_copy_hook,
+MODULE_CALL_INT_HOOK_DECL(usb_subr_30_copy_hook,
     (struct usb_event *ue, struct usb_event_old *ueo, struct uio *uio));
-MODULE_CALL_HOOK(usb_subr_30_copy_hook,
+MODULE_CALL_INT_HOOK(usb_subr_30_copy_hook,
     (struct usb_event *ue, struct usb_event_old *ueo, struct uio *uio),
     (ue, ueo, uio), enosys());
 
@@ -736,14 +736,15 @@ usbclose(dev_t dev, int flag, int mode,
 }
 
 /* Call hook for usbd30_fill_device_info_old() */
-MODULE_CALL_HOOK_DECL(usb_subr_30_fill_hook,
+MODULE_CALL_INT_HOOK_DECL(usb_subr_30_fill_hook,
+    (struct usbd_device *, struct usb_device_info_old *, int,
+      void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
+      int (*)(char *, size_t, int)));
+MODULE_CALL_INT_HOOK(usb_subr_30_fill_hook,
     (struct usbd_device *udev, struct usb_device_info_old * addr, int usedev,
       void (*fill_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
-	size_t, int, int), int (*printBCD)(char *, size_t, int)));
-MODULE_CALL_HOOK(usb_subr_30_fill_hook,
-    (struct usbd_device *udev, struct usb_device_info_old * addr, int usedev,
-      void (*fill_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
-	size_t, int, int), int (*printBCD)(char *, size_t, int)),
+	size_t, int, int),
+      int (*printBCD)(char *, size_t, int)),
     (udev, addr, usedev, fill_devinfo_vp, printBCD),
     enosys());
 

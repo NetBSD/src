@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.4 2019/01/01 05:38:34 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.5 2019/01/14 13:34:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.4 2019/01/01 05:38:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.5 2019/01/14 13:34:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.4 2019/01/01 05:38:34 
 
 void netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
-int netbsd32_sendsig_16(const ksiginfo_t *, const sigset_t *);
+void netbsd32_sendsig_16(const ksiginfo_t *, const sigset_t *);
 
 /*
  * NB: since this is a 32-bit address world, sf_scp and sf_sc
@@ -245,15 +245,13 @@ struct sparc32_sigframe_siginfo {
 	ucontext32_t sf_uc;
 };
 
-int
+void
 netbsd32_sendsig_16(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
 		netbsd32_sendsig_sigcontext(ksi, mask);
 	else
 		netbsd32_sendsig_siginfo(ksi, mask);
-
-	return 0;
 }
 
 #undef DEBUG

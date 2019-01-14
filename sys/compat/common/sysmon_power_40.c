@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power_40.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power_40.c,v 1.1.2.5 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -62,7 +62,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.5 2019/01/14 13:34:27 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,20 +77,19 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.4 2018/09/22 04:56:28 pgoy
 
 #include <compat/common/compat_mod.h>
 
-static int
+static void
 compat_40_sysmon_power(power_event_t *pev, struct sysmon_pswitch *pswitch,
     int event)
 {
 
-		pev->pev_switch.psws_state = event;
-		pev->pev_switch.psws_type = pswitch->smpsw_type;
+	pev->pev_switch.psws_state = event;
+	pev->pev_switch.psws_type = pswitch->smpsw_type;
 
-		if (pswitch->smpsw_name) {
-			(void)strlcpy(pev->pev_switch.psws_name,
-			          pswitch->smpsw_name,
-			          sizeof(pev->pev_switch.psws_name));
-		}
-	return 0;
+	if (pswitch->smpsw_name) {
+		(void)strlcpy(pev->pev_switch.psws_name,
+		          pswitch->smpsw_name,
+		          sizeof(pev->pev_switch.psws_name));
+	}
 }
 
 MODULE_SET_HOOK(compat_sysmon_power_40_hook, "smon60", compat_40_sysmon_power);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.8 2018/09/29 10:18:29 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.9 2019/01/14 13:34:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.8 2018/09/29 10:18:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.9 2019/01/14 13:34:26 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.8 2018/09/29 10:18:29 
 
 #include <uvm/uvm_extern.h>
 
-int netbsd32_sendsig_16(const ksiginfo_t *, const sigset_t *);
+void netbsd32_sendsig_16(const ksiginfo_t *, const sigset_t *);
 
 void sendsig_context(const ksiginfo_t *, const sigset_t *);
 int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
@@ -86,15 +86,13 @@ compat_16_netbsd32___sigreturn14(struct lwp *l,
 	return compat_16_sys___sigreturn14(l, &ua, retval);
 }
 
-int
+void
 netbsd32_sendsig_16(const ksiginfo_t *ksi, const sigset_t *mask)
 {               
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
 		sendsig_sigcontext(ksi, mask);
 	else    
 		netbsd32_sendsig_siginfo(ksi, mask);
-
-	return 0;
 }       
 
 MODULE_SET_HOOK(netbsd32_sendsig_hook, "nb32_16", netbsd32_sendsig_16); 

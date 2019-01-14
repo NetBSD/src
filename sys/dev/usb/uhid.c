@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.101.2.6 2019/01/13 10:49:50 pgoyette Exp $	*/
+/*	$NetBSD: uhid.c,v 1.101.2.7 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.101.2.6 2019/01/13 10:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.101.2.7 2019/01/14 13:34:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -513,10 +513,10 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-MODULE_CALL_HOOK_DECL(usb_subr_30_fill_hook,
-    (struct usbd_device *udev, struct usb_device_info_old * addr, int usedev,
-      void (*fill_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
-	size_t, int, int), int (*printBCD)(char *, size_t, int)));
+MODULE_CALL_INT_HOOK_DECL(usb_subr_30_fill_hook,
+    (struct usbd_device *, struct usb_device_info_old *, int,
+      void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
+      int (*)(char *, size_t, int)));
 
 int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,

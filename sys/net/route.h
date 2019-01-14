@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.117.2.4 2019/01/13 23:32:22 pgoyette Exp $	*/
+/*	$NetBSD: route.h,v 1.117.2.5 2019/01/14 13:34:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -508,14 +508,14 @@ struct rtentry *
 void	rtcache_unref(struct rtentry *, struct route *);
 
 /* rtsock */
-int	rt_ieee80211msg(struct ifnet *, int, void *, size_t);
-int	rt_ifannouncemsg(struct ifnet *, int);
-int	rt_ifmsg(struct ifnet *);
-int	rt_missmsg(int, const struct rt_addrinfo *, int, int);
+void	rt_ieee80211msg(struct ifnet *, int, void *, size_t);
+void	rt_ifannouncemsg(struct ifnet *, int);
+void	rt_ifmsg(struct ifnet *);
+void	rt_missmsg(int, const struct rt_addrinfo *, int, int);
 struct mbuf *
 	rt_msg1(int, struct rt_addrinfo *, void *, int);
 int	rt_msg3(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
-int	rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+void	rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
 void	route_enqueue(struct mbuf *, int);
 
 struct llentry;

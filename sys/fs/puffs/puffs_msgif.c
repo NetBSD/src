@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.101.10.7 2019/01/13 10:49:50 pgoyette Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.101.10.8 2019/01/14 13:34:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.7 2019/01/13 10:49:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.8 2019/01/14 13:34:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -325,18 +325,18 @@ puffs_getmsgid(struct puffs_mount *pmp)
 
 /* Routines to call the compat hooks */
 	/* Out-going */
-MODULE_CALL_HOOK_DECL(puffs_50_out_hook,
+MODULE_CALL_INT_HOOK_DECL(puffs_50_out_hook,
      (struct puffs_req *oreq, struct puffs_req **creqp, ssize_t *deltap));
-MODULE_CALL_HOOK(puffs_50_out_hook,
+MODULE_CALL_INT_HOOK(puffs_50_out_hook,
      (struct puffs_req *oreq, struct puffs_req **creqp, ssize_t *deltap),
      (oreq, creqp, deltap), enosys());
 
 	/* Incoming */
-MODULE_CALL_HOOK_DECL(puffs_50_in_hook,
+MODULE_CALL_VOID_HOOK_DECL(puffs_50_in_hook,
      (struct puffs_req *oreq, struct puffs_req *creqp));
-MODULE_CALL_HOOK(puffs_50_in_hook,
+MODULE_CALL_VOID_HOOK(puffs_50_in_hook,
      (struct puffs_req *oreq, struct puffs_req *creqp),
-     (oreq, creqp), enosys());
+     (oreq, creqp), __nothing);
 
 /*
  * A word about reference counting of parks.  A reference must be taken
@@ -822,8 +822,7 @@ puffsop_msg(void *ctx, struct puffs_req *preq)
 			size_t csize;
 
 			KASSERT(pmp->pmp_docompat);
-			(void)puffs_50_in_hook_call(preq,
-			    park->park_creq);
+			puffs_50_in_hook_call(preq, park->park_creq);
 			creq = park->park_creq;
 			csize = park->park_creqlen;
 			park->park_creq = park->park_preq;

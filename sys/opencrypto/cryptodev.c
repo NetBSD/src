@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.98.2.8 2019/01/13 10:49:51 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.98.2.9 2019/01/14 13:34:28 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.8 2019/01/13 10:49:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.9 2019/01/14 13:34:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,9 +227,9 @@ cryptof_write(file_t *fp, off_t *poff,
  * kernel which doesn't contain the local stuff, so the compat
  * code cannot directly reference them as globals.
  */
-MODULE_CALL_HOOK_DECL(ocryptof_50_hook,
+MODULE_CALL_INT_HOOK_DECL(ocryptof_50_hook,
     (struct file *fp, u_long cmd, void *data));
-MODULE_CALL_HOOK(ocryptof_50_hook,
+MODULE_CALL_INT_HOOK(ocryptof_50_hook,
     (struct file *fp, u_long cmd, void *data), (fp, cmd, data), enosys());
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.27.46.2 2019/01/13 10:49:49 pgoyette Exp $ */
+/*	$NetBSD: fpu.c,v 1.27.46.3 2019/01/14 13:34:26 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27.46.2 2019/01/13 10:49:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27.46.3 2019/01/14 13:34:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -122,8 +122,8 @@ static u_char fpu_codes_sunos[] = {
 /*
  * HOOK for checking if the lwp's emul matches sunos
  */
-MODULE_CALL_HOOK_DECL(get_emul_sunos_hook, (const struct emul **emul));
-MODULE_CALL_HOOK(get_emul_sunos_hook, (const struct emul ** emul), (emul),
+MODULE_CALL_INT_HOOK_DECL(get_emul_sunos_hook, (const struct emul **emul));
+MODULE_CALL_INT_HOOK(get_emul_sunos_hook, (const struct emul ** emul), (emul),
     enosys());
 
 /*

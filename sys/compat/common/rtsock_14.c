@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_14.c,v 1.5.14.5 2019/01/13 10:49:49 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_14.c,v 1.5.14.6 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.14.5 2019/01/13 10:49:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.14.6 2019/01/14 13:34:27 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.14.5 2019/01/13 10:49:49 pgoyette 
 
 #include <compat/common/compat_mod.h>
 
-int
+void
 compat_14_rt_oifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr14 oifm;
@@ -104,7 +104,7 @@ compat_14_rt_oifmsg(struct ifnet *ifp)
 	struct timeval tv;
 
 	if (compat_50_route_info.ri_cb.any_count == 0)
-		return 0;
+		return;
 	(void)memset(&info, 0, sizeof(info));
 	(void)memset(&oifm, 0, sizeof(oifm));
 	oifm.ifm_index = ifp->if_index;
@@ -131,9 +131,8 @@ compat_14_rt_oifmsg(struct ifnet *ifp)
 	oifm.ifm_addrs = 0;
 	m = compat_50_rt_msg1(RTM_OOIFINFO, &info, (void *)&oifm, sizeof(oifm));
 	if (m == NULL)
-		return 0;
+		return;
 	compat_50_route_enqueue(m, 0);
-	return 0;
 }
 
 int

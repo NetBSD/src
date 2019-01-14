@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq_70.c,v 1.1.20.3 2018/10/15 11:57:05 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq_70.c,v 1.1.20.4 2019/01/14 13:34:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.3 2018/10/15 11:57:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.4 2019/01/14 13:34:27 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -47,8 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.3 2018/10/15 11:57:05 pgoy
 
 #include <compat/sys/socket.h>
 
-int
-compat_70_unp_addsockcred(struct mbuf **ret, struct lwp *l, struct mbuf *control)
+void
+compat_70_unp_addsockcred(struct mbuf **ret, struct lwp *l,
+    struct mbuf *control)
 {
 	struct sockcred70 *sc;
 	struct mbuf *m;
@@ -58,7 +59,7 @@ compat_70_unp_addsockcred(struct mbuf **ret, struct lwp *l, struct mbuf *control
 		SCM_OCREDS, SOL_SOCKET, M_WAITOK);
 	if (m == NULL) {
 		*ret = control;
-		return 0;
+		return;
 	}
 
 	sc = p;
@@ -72,7 +73,6 @@ compat_70_unp_addsockcred(struct mbuf **ret, struct lwp *l, struct mbuf *control
 		sc->sc_groups[i] = kauth_cred_group(l->l_cred, i);
 
 	*ret = m_add(control, m);
-	return 0;
 }
 
 MODULE_SET_HOOK(compat_70_unp_hook, "unp_70", compat_70_unp_addsockcred);
