@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.221 2018/12/05 18:16:51 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.222 2019/01/15 07:11:23 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.221 2018/12/05 18:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.222 2019/01/15 07:11:23 mrg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -108,9 +108,6 @@ dcopyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 	return error;
 }
 
-#ifdef DIAGNOSTIC
-static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
-#endif
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_messages(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
@@ -499,14 +496,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Perform a crash dump on system panic"),
 		       NULL, 0, &dumponpanic, 0,
 		       CTL_KERN, KERN_DUMP_ON_PANIC, CTL_EOL);
-#ifdef DIAGNOSTIC
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "panic_now",
-		       SYSCTL_DESCR("Trigger a panic"),
-		       sysctl_kern_trigger_panic, 0, NULL, 0,
-		       CTL_KERN, CTL_CREATE, CTL_EOL);
-#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "root_partition",
@@ -702,27 +691,6 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
  * section 2: private node-specific helper routines.
  * ********************************************************************
  */
-
-#ifdef DIAGNOSTIC
-static int
-sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
-{
-	int newtrig, error;
-	struct sysctlnode node;
-
-	newtrig = 0;
-	node = *rnode;
-	node.sysctl_data = &newtrig;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (newtrig != 0)
-		panic("Panic triggered");
-
-	return (error);
-}
-#endif
 
 /*
  * sysctl helper routine for kern.maxvnodes.  Drain vnodes if
