@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.37 2019/01/15 10:52:20 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.38 2019/01/15 21:37:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ void (*vec_ntp_adjtime1)(struct timex *) = NULL;
 #ifdef SCTP
 void (*vec_sctp_add_ip_address)(struct ifaddr *) = sctp_add_ip_address;
 void (*vec_sctp_delete_ip_address)(struct ifaddr *) = sctp_delete_ip_address;
-else
+#else
 void (*vec_sctp_add_ip_address)(struct ifaddr *) = NULL;
 void (*vec_sctp_delete_ip_address)(struct ifaddr *) = NULL;
 #endif 
