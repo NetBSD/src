@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.128 2019/01/07 14:05:34 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.129 2019/01/15 18:45:51 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5674,4 +5674,9 @@ doc/3RDPARTY					(patch)
 
 	Updated tzdata to 2018i.
 	[kre, ticket #1670]
+
+sys/arch/sparc/sparc/pmap.c			1.366
+
+	Fix deadlocks on machines with more than two cpus.
+	[mrg, ticket #1672]
 
