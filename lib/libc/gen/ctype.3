@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.23 2017/12/12 14:13:52 abhinav Exp $
+.\"	$NetBSD: ctype.3,v 1.24 2019/01/15 00:31:19 riastradh Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctype.3	6.5 (Berkeley) 4/19/91
 .\"
-.Dd December 8, 2017
+.Dd January 15, 2019
 .Dt CTYPE 3
 .Os
 .Sh NAME
@@ -136,3 +136,73 @@ which will be outside the range of allowed values
 (unless it happens to be equal to
 .Dv EOF ,
 but even that would not give the desired result).
+.Pp
+Because the bugs may manifest as silent misbehavior or as crashes only
+when fed input outside the US-ASCII range, the
+.Nx
+implementation of the
+.Nm
+functions is designed to elicit a compiler warning for code that passes
+inputs of type
+.Vt char
+in order to flag code that may pass negative values at runtime that
+would lead to undefined behavior:
+.Bd -literal offset indent
+#include <ctype.h>
+#include <locale.h>
+#include <stdio.h>
+
+int
+main(int argc, char **argv)
+{
+
+	if (argc < 2)
+		return 1;
+	setlocale(LC_ALL, "");
+	printf("%d %d\en", *argv[1], isprint(*argv[1]));
+	printf("%d %d\en", (int)(unsigned char)*argv[1],
+	    isprint((int)(unsigned char)*argv[1]));
+	return 0;
+}
+.Ed
+.Pp
+When compiling this program, GCC reports a warning for the line that
+passes
+.Vt char .
+At runtime, you may get nonsense answers for some inputs without the
+cast -- if you're lucky and it doesn't crash or make demons come flying
+out of your nose:
+.Bd -literal -offset indent
+% gcc -Wall -o test test.c
+test.c: In function 'main':
+test.c:12:2: warning: array subscript has type 'char'
+% LANG=C ./test "`printf '\e270'`"
+-72 5
+184 0
+% LC_CTYPE=C ./test "`printf '\e377'`"
+-1 0
+255 0
+% LC_CTYPE=fr_FR.ISO8859-1 ./test "`printf '\e377'`"
+-1 0
+255 2
+.Ed
+.Pp
+Some implementations of libc, such as glibc as of 2018, attempt to
+avoid the worst of the undefined behavior by defining the functions to
+work for all integer inputs representable by either
+.Vt unsigned char
+or
+.Vt char ,
+and suppress the warning.
+However, this is not an excuse for avoiding conversion to
+.Vt unsigned char :
+if
+.Dv EOF
+coincides with any such value, as it does when it is -1 on platforms
+with signed
+.Dv char ,
+programs that pass
+.Vt char
+will still necessarily confuse the classification and mapping of
+.Dv EOF
+with the classification and mapping of some non-EOF inputs.
