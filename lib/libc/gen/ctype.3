@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.28 2019/01/15 01:23:49 uwe Exp $
+.\"	$NetBSD: ctype.3,v 1.29 2019/01/15 03:30:58 riastradh Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -176,7 +176,7 @@ out of your nose:
 % gcc -Wall -o test test.c
 test.c: In function 'main':
 test.c:12:2: warning: array subscript has type 'char'
-% LANG=C ./test $(printf '\e270')
+% LC_CTYPE=C ./test $(printf '\e270')
 -72 5
 184 0
 % LC_CTYPE=C ./test $(printf '\e377')
