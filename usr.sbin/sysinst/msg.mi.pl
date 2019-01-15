@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.16 2019/01/11 08:14:50 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.17 2019/01/15 12:55:03 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1078,7 +1078,7 @@ message auto {auto}
 message removepartswarn {To usun±æ wszystkie partycje na dysku. Czy chcesz kontynuowaæ?}
 message saveprompt {Zapisz zmiany przed zakoñczeniem?}
 message cantsave {Zmiany nie mog± byæ zbawieni.}
-message noroot {No partycja zdefiniowana, nie mo¿e kontynuowaæ \n}
+message noroot {Brak zdefiniowania partycji root. Nie mo¿na kontynuowac.\n}
 message wannaunblock {Urz±dzenie jest zablokowane. Czy chcesz, aby zmusiæ go odblokowaæ i kontynuowaæ?}
 message wannatry {Czy chcesz spróbowaæ?}
 message create_cgd {Utwórz wolumen kryptograficznych (CGD)}
