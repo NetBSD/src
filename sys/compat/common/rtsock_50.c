@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.6.2.5 2019/01/15 03:40:35 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.6.2.6 2019/01/15 22:27:07 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,11 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.5 2019/01/15 03:40:35 pgoyette Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.6 2019/01/15 22:27:07 pgoyette Exp $");
 
 #define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
 			 * various other compat definitions - see

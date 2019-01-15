@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.21 2019/01/15 04:10:34 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.22 2019/01/15 22:27:07 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.21 2019/01/15 04:10:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.22 2019/01/15 22:27:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_mpls.h"
 #include "opt_compat_netbsd.h"
-#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
