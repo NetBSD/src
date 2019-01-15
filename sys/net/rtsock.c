@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.20 2019/01/15 03:40:35 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.21 2019/01/15 04:10:34 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.20 2019/01/15 03:40:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.21 2019/01/15 04:10:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mpls.h"
 #include "opt_compat_netbsd.h"
-#include "opt_sctp.h"
 #include "opt_net_mpsafe.h"
 #endif
 
@@ -95,11 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.20 2019/01/15 03:40:35 pgoyette E
 #include <netinet/if_inarp.h>
 
 #include <netmpls/mpls.h>
-
-#ifdef SCTP
-extern void sctp_add_ip_address(struct ifaddr *);
-extern void sctp_delete_ip_address(struct ifaddr *);
-#endif
 
 #include <compat/net/if.h>
 #include <compat/net/route.h>

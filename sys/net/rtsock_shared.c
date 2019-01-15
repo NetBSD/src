@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.1.2.2 2019/01/15 03:40:35 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.1.2.3 2019/01/15 04:10:34 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.2 2019/01/15 03:40:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.3 2019/01/15 04:10:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mpls.h"
 #include "opt_compat_netbsd.h"
-#include "opt_sctp.h"
 #include "opt_net_mpsafe.h"
 #endif
 
@@ -95,11 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.2 2019/01/15 03:40:35 pgoyet
 #include <netinet/if_inarp.h>
 
 #include <netmpls/mpls.h>
-
-#ifdef SCTP
-extern void sctp_add_ip_address(struct ifaddr *);
-extern void sctp_delete_ip_address(struct ifaddr *);
-#endif
 
 #include <compat/net/if.h>
 #include <compat/net/route.h>
@@ -1427,13 +1421,11 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 	KASSERT(ifa != NULL);
 	KASSERT(ifa->ifa_addr != NULL);
 	ifp = ifa->ifa_ifp;
-#ifdef SCTP
-	if (cmd == RTM_ADD) {
-		sctp_add_ip_address(ifa);
-	} else if (cmd == RTM_DELETE) {
-		sctp_delete_ip_address(ifa);
+	if (cmd == RTM_ADD && vec_sctp_add_ip_address != NULL) {
+		(*vec_sctp_add_ip_address)(ifa);
+	} else if (cmd == RTM_DELETE && vec_sctp_delete_ip_address != NULL) {
+		(*vec_sctp_delete_ip_address)(ifa);
 	}
-#endif
 
 	COMPATCALL(rt_newaddrmsg, (cmd, ifa, error, rt));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)

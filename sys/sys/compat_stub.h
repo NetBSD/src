@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.48 2019/01/14 13:34:28 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.49 2019/01/15 04:10:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -49,10 +49,25 @@ extern int (*vec_ntp_timestatus)(void);
 extern void (*vec_ntp_adjtime1)(struct timex *);
 
 /*
-MODULE_HOOK(ntp_gettime_hook, (struct ntptimeval *));
-MODULE_HOOK(ntp_timestatus_hook, (void);
-MODULE_HOOK(ntp_adjtime1_hook, (struct timex *));
+MODULE_HOOK(ntp_gettime_hook, int, (struct ntptimeval *));
+MODULE_HOOK(ntp_timestatus_hook, int, (void);
+MODULE_HOOK(ntp_adjtime1_hook, int, (struct timex *));
 */
+
+/*
+ * Routine hooks for SCTP code - used by rtsock
+ *
+ * MP-hooks not needed since the NTP code is not modular
+ */
+struct ifaddr;
+extern void (*vec_sctp_add_ip_address)(struct ifaddr *);
+extern void (*vec_sctp_delete_ip_address)(struct ifaddr *);
+
+/*
+MODULE_HOOK(sctp_add_ip_address, int, struct ifaddr *);
+MODULE_HOOK(sctp_delete_ip_address, int, struct ifaddr *);
+*/
+
 
 /*
  * usb devinfo compatability

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.35 2019/01/13 23:32:21 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.36 2019/01/15 04:10:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -58,6 +58,15 @@ void (*vec_ntp_gettime)(struct ntptimeval *) = NULL;
 int (*vec_ntp_timestatus)(void) = NULL;
 void (*vec_ntp_adjtime1)(struct timex *) = NULL;
 #endif
+
+#ifdef SCTP
+void (*vec_sctp_add_ip_address)(struct ifaddr *) = sctp_add_ip_address;
+void (*vec_sctp_delete_ip_address)(struct ifaddr *) = sctp_delete_ip_address;
+else
+void (*vec_sctp_add_ip_address)(struct ifaddr *) = NULL;
+void (*vec_sctp_delete_ip_address)(struct ifaddr *) = NULL;
+#endif 
+
 
 /*
  * usb device_info compatability
