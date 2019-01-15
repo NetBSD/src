@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.361 2016/12/22 14:47:59 cherry Exp $ */
+/*	$NetBSD: pmap.c,v 1.361.8.1 2019/01/15 18:40:15 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.361 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.361.8.1 2019/01/15 18:40:15 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -176,8 +176,8 @@ paddr_t	vm_first_phys = (paddr_t)-1;
 paddr_t	vm_last_phys = 0;
 psize_t vm_num_phys;
 
-#define	PMAP_LOCK()	KERNEL_LOCK(1, NULL)
-#define	PMAP_UNLOCK()	KERNEL_UNLOCK_ONE(NULL)
+#define	PMAP_LOCK()	mutex_enter(&pmap_lock)
+#define	PMAP_UNLOCK()	mutex_exit(&pmap_lock)
 
 /*
  * Flags in pvlist.pv_flags.  Note that PV_MOD must be 1 and PV_REF must be 2
@@ -347,6 +347,7 @@ mmuq_insert_tail(struct mmuentry *head, struct mmuentry *e)
 int	seginval;		/* [4/4c] the invalid segment number */
 int	reginval;		/* [4/3mmu] the invalid region number */
 
+static kmutex_t pmap_lock;
 static kmutex_t demap_lock;
 static bool	lock_available = false;	/* demap_lock has been initialized */
 
@@ -372,15 +373,15 @@ union ctxinfo {
 	struct	pmap *c_pmap;		/* pmap (if busy) */
 };
 
-static kmutex_t	ctx_lock;		/* lock for below */
+static kmutex_t	ctx_lock;		/* lock for below, and {,de}activate */
 union	ctxinfo *ctxinfo;		/* allocated at in pmap_bootstrap */
 union	ctxinfo *ctx_freelist;		/* context free list */
 int	ctx_kick;			/* allocation rover when none free */
 int	ctx_kickdir;			/* ctx_kick roves both directions */
 int	ncontext;			/* sizeof ctx_freelist */
 
-void	ctx_alloc(struct pmap *);
-void	ctx_free(struct pmap *);
+static void	ctx_alloc(struct pmap *);
+static void	ctx_free(struct pmap *);
 
 /*void *	vdumppages;	-* 32KB worth of reserved dump pages */
 
@@ -2121,7 +2122,7 @@ mmu_pagein(struct pmap *pm, vaddr_t va, int prot)
  * This routine is only ever called from locore.s just after it has
  * saved away the previous process, so there are no active user windows.
  */
-void
+static void
 ctx_alloc(struct pmap *pm)
 {
 	union ctxinfo *c;
@@ -2132,6 +2133,8 @@ ctx_alloc(struct pmap *pm)
 #if defined(SUN4M) || defined(SUN4D)
 	struct cpu_info *cpi;
 #endif
+
+	KASSERT(mutex_owned(&ctx_lock));
 
 /*XXX-GCC!*/gap_start=gap_end=0;
 #ifdef DEBUG
@@ -2145,7 +2148,6 @@ ctx_alloc(struct pmap *pm)
 		gap_end = pm->pm_gap_end;
 	}
 
-	mutex_spin_enter(&ctx_lock);
 	if ((c = ctx_freelist) != NULL) {
 		ctx_freelist = c->c_nextfree;
 		cnum = c - ctxinfo;
@@ -2288,13 +2290,12 @@ ctx_alloc(struct pmap *pm)
 		setcontext4m(cnum);
 #endif /* SUN4M || SUN4D */
 	}
-	mutex_spin_exit(&ctx_lock);
 }
 
 /*
  * Give away a context.
  */
-void
+static void
 ctx_free(struct pmap *pm)
 {
 	union ctxinfo *c;
@@ -2302,6 +2303,8 @@ ctx_free(struct pmap *pm)
 #if defined(SUN4M) || defined(SUN4D)
 	struct cpu_info *cpi;
 #endif
+
+	KASSERT(mutex_owned(&ctx_lock));
 
 	c = pm->pm_ctx;
 	ctx = pm->pm_ctxnum;
@@ -2315,8 +2318,6 @@ ctx_free(struct pmap *pm)
 		setcontext4(octx);
 	}
 #endif /* SUN4 || SUN4C */
-
-	mutex_spin_enter(&ctx_lock);
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU) {
@@ -2334,7 +2335,6 @@ ctx_free(struct pmap *pm)
 
 	c->c_nextfree = ctx_freelist;
 	ctx_freelist = c;
-	mutex_spin_exit(&ctx_lock);
 }
 
 
@@ -3070,6 +3070,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	}
 
 	pmap_page_upload();
+	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&demap_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&ctx_lock, MUTEX_DEFAULT, IPL_SCHED);
 	lock_available = true;
@@ -4386,7 +4387,9 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 #endif
 
 	if ((c = pm->pm_ctx) != NULL) {
+		mutex_spin_enter(&ctx_lock);
 		ctx_free(pm);
+		mutex_spin_exit(&ctx_lock);
 	}
 
 #if defined(SUN4M) || defined(SUN4D)
@@ -4656,7 +4659,7 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 	}
 
 	ctx = getcontext();
-	s = splvm();		/* XXX conservative */
+	s = splvm();
 	PMAP_LOCK();
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
@@ -6016,7 +6019,7 @@ pmap_kenter_pa4_4c(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	splx(s);
 }
 
-#if notyet
+#if notyet /* XXXMRG delete */
 void pmap_lockmmu(vaddr_t sva, size_t sz);
 
 void
@@ -6280,7 +6283,7 @@ pmap_enk4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 	sp = &rp->rg_segmap[vs];
 
 	kpreempt_disable();
-	s = splvm();		/* XXX way too conservative */
+	s = splvm();
 	PMAP_LOCK();
 
 	if (rp->rg_seg_ptps == NULL) /* enter new region */
@@ -6366,7 +6369,7 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
-	s = splvm();			/* XXX conservative */
+	s = splvm();
 	PMAP_LOCK();
 
 	if (rp->rg_segmap == NULL) {
@@ -7488,14 +7491,14 @@ pmap_activate(struct lwp *l)
 		return;
 	}
 
-	PMAP_LOCK();
+	mutex_spin_enter(&ctx_lock);
 	if (pm->pm_ctx == NULL) {
 		ctx_alloc(pm);	/* performs setcontext() */
 	} else {
 		setcontext(pm->pm_ctxnum);
 	}
 	PMAP_SET_CPUSET(pm, &cpuinfo);
-	PMAP_UNLOCK();
+	mutex_spin_exit(&ctx_lock);
 }
 
 /*
@@ -7512,7 +7515,7 @@ pmap_deactivate(struct lwp *l)
 	}
 
 	write_user_windows();
-	PMAP_LOCK();
+	mutex_spin_enter(&ctx_lock);
 	if (pm->pm_ctx) {
 		(*cpuinfo.pure_vcache_flush)();
 
@@ -7524,7 +7527,7 @@ pmap_deactivate(struct lwp *l)
 
 	/* we no longer need broadcast tlb flushes for this pmap. */
 	PMAP_CLR_CPUSET(pm, &cpuinfo);
-	PMAP_UNLOCK();
+	mutex_spin_exit(&ctx_lock);
 }
 
 #ifdef DEBUG
