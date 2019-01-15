@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.67 2019/01/09 11:09:16 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.68 2019/01/15 14:23:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.67 2019/01/09 11:09:16 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.68 2019/01/15 14:23:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -435,8 +435,7 @@ popstring(void)
 	if (sp->ap) {
 		int alen;
 
-		if (!quoteflag &&
-		    (alen = strlen(sp->ap->val)) > 0 &&
+		if ((alen = strlen(sp->ap->val)) > 0 &&
 		    (sp->ap->val[alen - 1] == ' ' ||
 		     sp->ap->val[alen - 1] == '\t'))
 			checkkwd |= CHKALIAS;
