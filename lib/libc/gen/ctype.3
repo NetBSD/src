@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.25 2019/01/15 00:43:32 uwe Exp $
+.\"	$NetBSD: ctype.3,v 1.26 2019/01/15 01:11:03 uwe Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	printf("%d %d\en", *argv[1], isprint(*argv[1]));
 	printf("%d %d\en", (int)(unsigned char)*argv[1],
-	    isprint((int)(unsigned char)*argv[1]));
+	    isprint((unsigned char)*argv[1]));
 	return 0;
 }
 .Ed
@@ -170,19 +170,19 @@ When compiling this program, GCC reports a warning for the line that
 passes
 .Vt char .
 At runtime, you may get nonsense answers for some inputs without the
-cast -- if you're lucky and it doesn't crash or make demons come flying
+cast \(em if you're lucky and it doesn't crash or make demons come flying
 out of your nose:
 .Bd -literal -offset indent
 % gcc -Wall -o test test.c
 test.c: In function 'main':
 test.c:12:2: warning: array subscript has type 'char'
-% LANG=C ./test "`printf '\e270'`"
+% LANG=C ./test $(printf '\e270')
 -72 5
 184 0
-% LC_CTYPE=C ./test "`printf '\e377'`"
+% LC_CTYPE=C ./test $(printf '\e377')
 -1 0
 255 0
-% LC_CTYPE=fr_FR.ISO8859-1 ./test "`printf '\e377'`"
+% LC_CTYPE=fr_FR.ISO8859-1 ./test $(printf '\e377')
 -1 0
 255 2
 .Ed
