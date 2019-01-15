@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.29 2019/01/15 03:30:58 riastradh Exp $
+.\"	$NetBSD: ctype.3,v 1.30 2019/01/15 03:43:15 uwe Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -170,8 +170,7 @@ When compiling this program, GCC reports a warning for the line that
 passes
 .Vt char .
 At runtime, you may get nonsense answers for some inputs without the
-cast \(em if you're lucky and it doesn't crash or make demons come flying
-out of your nose:
+cast \(em if you're lucky and it doesn't crash:
 .Bd -literal -offset indent
 % gcc -Wall -o test test.c
 test.c: In function 'main':
