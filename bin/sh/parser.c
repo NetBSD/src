@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.160 2019/01/09 10:59:20 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.161 2019/01/15 14:17:49 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.160 2019/01/09 10:59:20 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.161 2019/01/15 14:17:49 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2365,7 +2365,7 @@ pgetc_linecont(void)
 {
 	int c;
 
-	while ((c = pgetc_macro()) == '\\') {
+	while ((c = pgetc()) == '\\') {
 		c = pgetc();
 		if (c == '\n') {
 			plinno++;
