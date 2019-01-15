@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.88 2019/01/11 15:56:48 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.89 2019/01/15 18:41:22 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2227,4 +2227,9 @@ sys/net/if_ppp.c				1.162,1.163
 	Fix missing mutex_exit in ppp_create().
 	Fix missing splx in ppp_inproc().
 	[knakahara, ticket #1162]
+
+sys/arch/sparc/sparc/pmap.c			1.366
+
+	Fix deadlocks on machines with more than two cpus.
+	[mrg, ticket #1163]
 
