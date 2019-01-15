@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.6.2.4 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.6.2.5 2019/01/15 03:40:35 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,23 +61,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.4 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.5 2019/01/15 03:40:35 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #endif
 
-/*
- * COMPAT_50 and COMPAT_RTSOCK must be defined for rtsock.c regardless of
- * the currently enabled options.
- */
-#ifndef COMPAT_50
-#define COMPAT_50
-#endif
+#define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
+			 * various other compat definitions - see
+			 * sys/net/rtsock_shared.c for details
+			 */
 
-#define	COMPAT_RTSOCK
-
-#include <net/rtsock.c>
+#include <net/rtsock_shared.c>
 #include <compat/net/route_50.h>
 
 void

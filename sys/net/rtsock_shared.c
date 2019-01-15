@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.1.2.1 2019/01/15 01:16:42 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.1.2.2 2019/01/15 03:40:35 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.1 2019/01/15 01:16:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.2 2019/01/15 03:40:35 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -104,7 +104,10 @@ extern void sctp_delete_ip_address(struct ifaddr *);
 #include <compat/net/if.h>
 #include <compat/net/route.h>
 
-#ifdef COMPAT_RTSOCK		/* These belong in compat/common/rtsock_50.c */
+#ifdef COMPAT_RTSOCK
+/*
+ * These are used when #include-d from compat/common/rtsock_50.c
+ */
 #define	RTM_XVERSION	RTM_OVERSION
 #define	RTM_XNEWADDR	RTM_ONEWADDR
 #define	RTM_XDELADDR	RTM_ODELADDR
@@ -118,10 +121,14 @@ extern void sctp_delete_ip_address(struct ifaddr *);
 #define	if_xannouncemsghdr	if_announcemsghdr50
 #define	COMPATNAME(x)	compat_50_ ## x
 #define	DOMAINNAME	"oroute"
+#define	COMPATCALL(name, args)	rtsock_50_ ## name ## _hook_call args
 #define	RTS_CTASSERT(x)	__nothing
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
-#else /* COMPAT_RTSOCK */	/* These belong in net/rtsock.c */
+#else /* COMPAT_RTSOCK */
+/*
+ * These are used when #include-d from compat/common/rtsock_50.c
+ */
 #define	RTM_XVERSION	RTM_VERSION
 #define	RTM_XNEWADDR	RTM_NEWADDR
 #define	RTM_XDELADDR	RTM_DELADDR
@@ -135,18 +142,11 @@ DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
 #define	if_xannouncemsghdr	if_announcemsghdr
 #define	COMPATNAME(x)	x
 #define	DOMAINNAME	"route"
+#define	COMPATCALL(name, args)	__nothing;
 #define	RTS_CTASSERT(x)	CTASSERT(x)
 CTASSERT(sizeof(struct ifa_xmsghdr) == 32);
-#ifdef COMPAT_50
-#define	COMPATCALL(name, args)	rtsock_50_ ## name ## _hook_call args
-#endif
 DOMAIN_DEFINE(routedomain); /* forward declare and add to link set */
-#undef COMPAT_50
 #endif /* COMPAT_RTSOCK */
-
-#ifndef COMPATCALL
-#define	COMPATCALL(name, args)	do { } while (/*CONSTCOND*/ 0)
-#endif
 
 #ifdef RTSOCK_DEBUG
 #define RT_IN_PRINT(info, b, a) (in_print((b), sizeof(b), \
@@ -1650,7 +1650,6 @@ COMPATNAME(route_enqueue)(struct mbuf *m, int family)
 	}
 }
 
-/* XXX PRG XXX */
 static void
 COMPATNAME(route_init)(void)
 {
