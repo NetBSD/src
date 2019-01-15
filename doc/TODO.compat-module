@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.21 2019/01/14 13:35:53 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.22 2019/01/15 03:44:06 pgoyette Exp $ */
 
 DONE
 ----
@@ -55,12 +55,10 @@ DONE
     framework, and split version-specific code from baseline code as
     needed.
 
-16. While the rtsock_50 situation is still a disaster (rtsock_50.c
-    #include-s the main rtsock.c code with various COMPAT_50-dependant
-    macro definitions and redefinitions), the basic functionality
-    works, and the compat_14 references to rtsock_50 routines seems to
-    be correct.  The rtsock_50.c stuff should still be rewritten at
-    some future time, but it's not urgent.
+16. The rtsock.c code has been split into two separate source files,
+    one for use -current and one which is shared with COMPAT_50 (the
+    code is shared, but macros are used to define version-specific
+    routine names and variable types).
 
 TODO - Not required for branch merge
 ------------------------------------
