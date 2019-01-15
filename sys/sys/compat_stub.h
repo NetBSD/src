@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.49 2019/01/15 04:10:35 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.50 2019/01/15 12:42:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ MODULE_HOOK(ntp_adjtime1_hook, int, (struct timex *));
 /*
  * Routine hooks for SCTP code - used by rtsock
  *
- * MP-hooks not needed since the NTP code is not modular
+ * MP-hooks not needed since the SCTP code is not modular
  */
 struct ifaddr;
 extern void (*vec_sctp_add_ip_address)(struct ifaddr *);
