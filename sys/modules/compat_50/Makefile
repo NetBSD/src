@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.11 2018/10/03 22:50:50 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.12 2019/01/15 01:07:40 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -12,6 +12,9 @@ SRCS+=	compat_50_mod.c
 SRCS+=	kern_50.c kern_time_50.c kern_select_50.c
 SRCS+=	vfs_syscalls_50.c uipc_syscalls_50.c uvm_50.c
 SRCS+=	rndpseudo_50.c clockctl_50.c if_spppsubr50.c
+
+CPPFLAGS+=	-DINET -DINET6 -DSCTP -DNET_MPSAFE
+
 SRCS+=	rtsock_50.c
 
 .PATH:	${S}/fs/puffs
