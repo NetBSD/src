@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.8 2019/01/15 05:33:42 knakahara Exp $
+#	$NetBSD: t_ipsec.sh,v 1.9 2019/01/15 05:34:37 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -99,6 +99,10 @@ setup_router()
 	rump_server_add_iface $sock shmif1 bus1
 
 	export RUMP_SERVER=${sock}
+
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
+
 	if [ ${lan_mode} = "ipv6" ]; then
 		atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${lan}
 	else
@@ -113,10 +117,9 @@ setup_router()
 		atf_check -s exit:0 rump.ifconfig shmif1 inet ${wan} netmask 0xff000000
 	fi
 	atf_check -s exit:0 rump.ifconfig shmif1 up
+	atf_check -s exit:0 rump.ifconfig -w 10
 	$DEBUG && rump.ifconfig shmif1
 
-	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
-	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	unset RUMP_SERVER
 }
 
@@ -249,6 +252,8 @@ setup_if_ipsec()
 		atf_check -s exit:0 rump.ifconfig ipsec0 inet ${addr}/32 ${remote}
 		atf_check -s exit:0 -o ignore rump.route add -inet ${peernet} ${addr}
 	fi
+
+	atf_check -s exit:0 rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig ipsec0
 	$DEBUG && rump.route -nL show
@@ -428,6 +433,7 @@ setup_dummy_if_ipsec()
 	else
 		atf_check -s exit:0 rump.ifconfig ipsec1 inet ${addr}/32 ${remote}
 	fi
+	atf_check -s exit:0 rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig ipsec1
 	unset RUMP_SERVER
@@ -569,6 +575,7 @@ setup_recursive_if_ipsec()
 	else
 		atf_check -s exit:0 rump.ifconfig ${ipsec} inet ${addr}/32 ${remote}
 	fi
+	atf_check -s exit:0 rump.ifconfig -w 10
 	setup_if_ipsec_sa $sock ${src} ${dst} ${inner} ${proto} ${algo} ${dir}
 
 	export RUMP_SERVER=${sock}
