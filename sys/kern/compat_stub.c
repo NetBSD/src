@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.36 2019/01/15 04:10:34 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.37 2019/01/15 10:52:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
+#include "opt_sctp.h"
 #endif
 
 #include <sys/systm.h>
@@ -41,6 +42,10 @@
 #ifdef NTP
 #include <sys/timespec.h>
 #include <sys/timex.h>
+#endif
+
+#ifdef SCTP
+#include <netinet/sctp_asconf.h>
 #endif
 
 /*
