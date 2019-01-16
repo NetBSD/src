@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.4 2018/12/18 07:11:35 fox Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.5 2019/01/16 13:21:02 fox Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.4 2018/12/18 07:11:35 fox Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.5 2019/01/16 13:21:02 fox Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -512,7 +512,7 @@ ATF_TC_BODY(uvm_physseg_plug, tc)
 #if VM_PHYSSEG_MAX > 2
 	    + npages2
 #endif
-	    + npages3, uvmexp.npages);
+	    + npages3, INT_TO_PSIZE_T(uvmexp.npages));
 
 	/* Scavenge plug should fit right in the slab */
 	pgs = uvm_physseg_get_pg(upm3, 0);
