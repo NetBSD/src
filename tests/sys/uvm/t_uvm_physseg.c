@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.5 2019/01/16 13:21:02 fox Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.6 2019/01/16 13:35:51 fox Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.5 2019/01/16 13:21:02 fox Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.6 2019/01/16 13:35:51 fox Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -522,7 +522,7 @@ ATF_TC_BODY(uvm_physseg_plug, tc)
 	ATF_REQUIRE_EQ(uvm_physseg_plug(VALID_START_PFN_4, npages4, &upm4), true);
 	/* The hot plug slab should have nothing to do with the original slab */
 	pgs = uvm_physseg_get_pg(upm4, 0);
-	ATF_REQUIRE(pgs < slab || pgs > (slab + npages1
+	ATF_REQUIRE(pgs < slab || pgs >= (slab + npages1
 #if VM_PHYSSEG_MAX > 2
 		+ npages2
 #endif
