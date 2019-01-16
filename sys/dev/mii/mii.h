@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.24 2019/01/16 07:30:35 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.25 2019/01/16 08:32:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -228,6 +228,18 @@
 #define	GTCR_PORT_TYPE	0x0400	/* 1 = DCE, 0 = DTE (NIC) */
 #define	GTCR_ADV_1000TFDX 0x0200 /* adv. 1000baseT FDX */
 #define	GTCR_ADV_1000THDX 0x0100 /* adv. 1000baseT HDX */
+
+#define T2CR_TEST_NORMAL	(0 << 13) /* Normal Operation */
+#define T2CR_TEST_RX		(1 << 13) /* RX test */
+#define T2CR_TEST_TX_WAVEFORM	(1 << 14) /* Mode 1. TX waveform test */
+#define T2CR_TEST_TX_JITTER	(2 << 14) /* Mode 2. TX jitter test */
+#define T2CR_TEST_TX_IDLE	(3 << 14) /* Mode 3. TX idle test */
+
+#define GTCR_TEST_NORMAL	(0 << 13) /* Normal Operation */
+#define GTCR_TEST_TX_WAVEFORM	(1 << 13) /* Mode 1. TX waveform test */
+#define GTCR_TEST_TX_JITTER_M	(2 << 13) /* Mode 2. TX jitter test (Master) */
+#define GTCR_TEST_TX_JITTER_S	(3 << 13) /* Mode 3. TX jitter test (Slave) */
+#define GTCR_TEST_TX_DISTORTION	(4 << 13) /* Mode 4. TX distortion test */
 
 #define	MII_GTSR	0x0a	/*
 				 * Master-Slave status register for
