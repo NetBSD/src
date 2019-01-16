@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.27 2019/01/16 08:32:58 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.28 2019/01/16 08:40:24 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.27 2019/01/16 08:32:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.28 2019/01/16 08:40:24 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -183,7 +183,7 @@ ciphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (PHY_READ(sc, CIPHY_MII_BMCR) & CIPHY_BMCR_AUTOEN)
+			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
 #endif
 			(void) mii_phy_auto(sc, 0);
