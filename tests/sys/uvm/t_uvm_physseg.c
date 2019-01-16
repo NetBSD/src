@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.7 2019/01/16 13:45:29 fox Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.8 2019/01/16 13:54:17 fox Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.7 2019/01/16 13:45:29 fox Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.8 2019/01/16 13:54:17 fox Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -2155,7 +2155,7 @@ ATF_TC_BODY(uvm_page_physunload_delete_end, tc)
 	 */
 
 	upm = uvm_page_physload(VALID_START_PFN_1, VALID_START_PFN_1 + 2,
-	    VALID_AVAIL_START_PFN_1 + 1, VALID_AVAIL_START_PFN_1 + 2,
+	    VALID_AVAIL_START_PFN_1, VALID_AVAIL_START_PFN_1 + 2,
 	    VM_FREELIST_DEFAULT);
 
 	ATF_REQUIRE_EQ(1, uvm_physseg_get_entries());
@@ -2177,11 +2177,13 @@ ATF_TC_BODY(uvm_page_physunload_delete_end, tc)
 
 	ATF_CHECK_EQ(true, uvm_page_physunload(upm, VM_FREELIST_DEFAULT, &p));
 
+	ATF_CHECK_EQ(VALID_START_PFN_1, atop(p));
+
 	p = 0;
 
 	ATF_CHECK_EQ(true, uvm_page_physunload(upm, VM_FREELIST_DEFAULT, &p));
 
-	ATF_CHECK_EQ(VALID_START_PFN_1 + 2, atop(p));
+	ATF_CHECK_EQ(VALID_START_PFN_1 + 1, atop(p));
 
 	ATF_CHECK_EQ(1, uvm_physseg_get_entries());
 
