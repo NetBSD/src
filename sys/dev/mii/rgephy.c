@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.44 2018/06/27 07:51:36 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.45 2019/01/16 10:10:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.44 2018/06/27 07:51:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.45 2019/01/16 10:10:49 msaitoh Exp $");
 
 
 /*
@@ -134,7 +134,7 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_funcs = &rgephy_funcs;
