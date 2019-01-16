@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.49 2019/01/08 03:14:51 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.50 2019/01/16 05:11:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -54,8 +54,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Driver for the Marvell 88E1000 ``Alaska'' 10/100/1000 PHY.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.49 2019/01/08 03:14:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.50 2019/01/16 05:11:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
