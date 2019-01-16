@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.6 2019/01/16 13:35:51 fox Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.7 2019/01/16 13:45:29 fox Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.6 2019/01/16 13:35:51 fox Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.7 2019/01/16 13:45:29 fox Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -401,7 +401,7 @@ ATF_TC(uvm_physseg_atboot_free_leak);
 ATF_TC_HEAD(uvm_physseg_atboot_free_leak, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "does free() leak at boot ?\n"
+	    "does free() leak at boot ?"
 	    "This test needs VM_PHYSSEG_MAX > 1)");
 }
 
