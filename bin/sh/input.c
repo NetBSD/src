@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.68 2019/01/15 14:23:56 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.69 2019/01/16 07:14:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.68 2019/01/15 14:23:56 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.69 2019/01/16 07:14:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,18 +145,18 @@ pfgets(char *line, int len)
 
 	while (--nleft > 0) {
 		c = pgetc_macro();
+		if (c == PFAKE)		/* consecutive PFAKEs is impossible */
+			c = pgetc_macro();
 		if (c == PEOF) {
 			if (p == line)
 				return NULL;
 			break;
 		}
-		if (c == PFAKE) {
-			++nleft;
-			continue;
-		}
 		*p++ = c;
-		if (c == '\n')
+		if (c == '\n') {
+			plinno++;
 			break;
+		}
 	}
 	*p = '\0';
 	return line;
