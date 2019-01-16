@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.23 2018/06/18 09:11:03 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.24 2019/01/16 07:30:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -217,8 +217,11 @@
 #define ANLPRNP_TOGGLE	0x0800	/* Toggle */
 #define ANLPRNP_MSGUNF_MASK 0x07ff /* Message(Anx28C)/Unformatted Code Field */
 
-			/* This is also the 1000baseT control register */
-#define	MII_100T2CR	0x09	/* 100base-T2 control register */
+#define	MII_GTCR	0x09	/*
+				 * Master-Slave control register for
+				 * 100BASE-T2 and 1000BASE-T.
+				 */
+#define	MII_100T2CR	MII_GTCR /* alias */
 #define	GTCR_TEST_MASK	0xe000	/* see 802.3ab ss. 40.6.1.1.2 */
 #define	GTCR_MAN_MS	0x1000	/* enable manual master/slave control */
 #define	GTCR_ADV_MS	0x0800	/* 1 = adv. master, 0 = adv. slave */
@@ -226,8 +229,11 @@
 #define	GTCR_ADV_1000TFDX 0x0200 /* adv. 1000baseT FDX */
 #define	GTCR_ADV_1000THDX 0x0100 /* adv. 1000baseT HDX */
 
-			/* This is also the 1000baseT status register */
-#define	MII_100T2SR	0x0a	/* 100base-T2 status register */
+#define	MII_GTSR	0x0a	/*
+				 * Master-Slave status register for
+				 * 100BASE-T2 and 1000BASE-T.
+				 */
+#define	MII_100T2SR	MII_GTSR /* alias */
 #define	GTSR_MAN_MS_FLT	0x8000	/* master/slave config fault */
 #define	GTSR_MS_RES	0x4000	/* result: 1 = master, 0 = slave */
 #define	GTSR_LRS	0x2000	/* local rx status, 1 = ok */
