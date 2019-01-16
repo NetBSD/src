@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.50 2019/01/16 05:11:06 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.51 2019/01/16 05:19:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.50 2019/01/16 05:11:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.51 2019/01/16 05:19:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ makphyattach(device_t parent, device_t self, void *aux)
 static void
 makphy_reset(struct mii_softc *sc)
 {
-	int reg;
+	uint16_t reg;
 
 	mii_phy_reset(sc);
 
