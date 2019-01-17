@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_netbsd32.8,v 1.12 2019/01/14 15:55:35 wiz Exp $
+.\"	$NetBSD: compat_netbsd32.8,v 1.13 2019/01/17 07:05:24 gutteridge Exp $
 .\"
 .\" Copyright (c) 2001, 2019 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 13, 2019
+.Dd January 17, 2019
 .Dt COMPAT_NETBSD32 8
 .Os
 .Sh NAME
@@ -56,6 +56,9 @@ the default userland is N32 which is a handled by
 .Nm
 framework, and 64-bit binaries are handled similarly to the setup
 for 32-bit compatibility.
+It also provides compatibility between OABI and EABI binaries on 32-bit
+.Nx Ns Tn /arm
+ports.
 .Pp
 To use
 .Nm ,
@@ -96,7 +99,6 @@ needs to be found in
 .It Li mips64 Ta N64 Ta /usr/libexec/ld.elf_so-64
 .It Li powerpc64 Ta powerpc Ta /usr/libexec/ld.elf_so-powerpc
 .It Li arm64 Ta eabi Ta /usr/libexec/ld.elf_so-eabi
-.It Li arm64 Ta oabi Ta /usr/libexec/ld.elf_so-oabi
 .El
 .Pp
 Note that the kernel handles rewriting the builting ELF interpreter
