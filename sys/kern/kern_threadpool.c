@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.14 2018/12/29 04:39:14 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.15 2019/01/17 10:18:52 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.14 2018/12/29 04:39:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.15 2019/01/17 10:18:52 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -364,7 +364,7 @@ threadpool_destroy(struct threadpool *pool)
 	TAILQ_FOREACH(thread, &pool->tp_idle_threads, tpt_entry)
 		cv_broadcast(&thread->tpt_cv);
 	while (0 < pool->tp_refcnt) {
-		TP_LOG(("%s: draining %u references...\n", __func__,
+		TP_LOG(("%s: draining %" PRIu64 " references...\n", __func__,
 		    pool->tp_refcnt));
 		cv_wait(&pool->tp_overseer.tpt_cv, &pool->tp_lock);
 	}
