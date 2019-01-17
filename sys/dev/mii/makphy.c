@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.42 2016/11/08 08:48:35 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.42.8.1 2019/01/17 17:23:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.42 2016/11/08 08:48:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.42.8.1 2019/01/17 17:23:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,30 +92,38 @@ static const struct mii_phy_funcs makphy_funcs = {
 };
 
 static const struct mii_phydesc makphys[] = {
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_0,
+	  MII_STR_MARVELL_E1000_0 },
+
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_3,
+	  MII_STR_MARVELL_E1000_3 },
+
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_5,
+	  MII_STR_MARVELL_E1000_5 },
+
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_6,
+	  MII_STR_MARVELL_E1000_6 },
+
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000_3,
 	  MII_STR_xxMARVELL_E1000_3 },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000_5,
 	  MII_STR_xxMARVELL_E1000_5 },
 
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000S,
+	  MII_STR_xxMARVELL_E1000S },
+
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1011,
 	  MII_STR_xxMARVELL_E1011 },
-
-	/* XXX: reported not to work on eg. HP XW9400 */
-	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149,
-	  MII_STR_xxMARVELL_E1149 },
-
-	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149R,
-	  MII_STR_xxMARVELL_E1149R },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1111,
 	  MII_STR_xxMARVELL_E1111 },
 
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1112,
+	  MII_STR_xxMARVELL_E1112 },
+
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116,
 	  MII_STR_xxMARVELL_E1116 },
-
-	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1145,
-	  MII_STR_xxMARVELL_E1145 },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116R,
 	  MII_STR_xxMARVELL_E1116R },
@@ -123,12 +131,39 @@ static const struct mii_phydesc makphys[] = {
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116R_29,
 	  MII_STR_xxMARVELL_E1116R_29 },
 
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1118,
+	  MII_STR_xxMARVELL_E1118 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1145,
+	  MII_STR_xxMARVELL_E1145 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149,
+	  MII_STR_xxMARVELL_E1149 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149R,
+	  MII_STR_xxMARVELL_E1149R },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1512,
+	  MII_STR_xxMARVELL_E1512 },
+
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1543,
 	  MII_STR_xxMARVELL_E1543 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E3016,
+	  MII_STR_xxMARVELL_E3016 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E3082,
+	  MII_STR_xxMARVELL_E3082 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_PHYG65G,
+	  MII_STR_xxMARVELL_PHYG65G },
 
 	{ 0,				0,
 	  NULL },
 };
+
+#define MAKARG_PDOWN	true	/* Power DOWN */
+#define MAKARG_PUP	false	/* Power UP */
 
 static int
 makphymatch(device_t parent, cfdata_t match, void *aux)
@@ -164,26 +199,14 @@ makphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
 
+	/* Make sure page 0 is selected. */
+	PHY_WRITE(sc, MAKPHY_EADR, 0);
+
 	switch (sc->mii_mpd_model) {
 	case MII_MODEL_xxMARVELL_E1011:
 	case MII_MODEL_xxMARVELL_E1112:
-		if (PHY_READ(sc, MII_MAKPHY_ESSR) & ESSR_FIBER_LINK)
+		if (PHY_READ(sc, MAKPHY_ESSR) & ESSR_FIBER_LINK)
 			sc->mii_flags |= MIIF_HAVEFIBER;
-                break;
-	case MII_MODEL_xxMARVELL_E1149:
-	case MII_MODEL_xxMARVELL_E1149R:
-		/*
-		 * Some 88E1149 PHY's page select is initialized to
-		 * point to other bank instead of copper/fiber bank
-		 * which in turn resulted in wrong registers were
-		 * accessed during PHY operation. It is believed that
-		 * page 0 should be used for copper PHY so reinitialize
-		 * MII_MAKPHY_EADR to select default copper PHY. If parent
-		 * device know the type of PHY(either copper or fiber),
-		 * that information should be used to select default
-		 * type of PHY.
-		 */
-		PHY_WRITE(sc, MII_MAKPHY_EADR, 0);
 		break;
 	default:
 		break;
@@ -207,20 +230,85 @@ makphyattach(device_t parent, device_t self, void *aux)
 static void
 makphy_reset(struct mii_softc *sc)
 {
-	uint16_t pscr;
-
-	/* Assert CRS on transmit */
-	pscr = PHY_READ(sc, MII_MAKPHY_PSCR);
-	PHY_WRITE(sc, MII_MAKPHY_PSCR, pscr | PSCR_CRS_ON_TX);
+	uint16_t reg;
 
 	mii_phy_reset(sc);
+
+	/*
+	 * Initialize PHY Specific Control Register.
+	 */
+	reg = PHY_READ(sc, MAKPHY_PSCR);
+
+	/* Assert CRS on transmit. */
+	switch (sc->mii_mpd_model) {
+	case MII_MODEL_MARVELL_E1000_0:
+	case MII_MODEL_MARVELL_E1000_3:
+	case MII_MODEL_MARVELL_E1000_5:
+	case MII_MODEL_MARVELL_E1000_6:
+	case MII_MODEL_xxMARVELL_E1000S:
+	case MII_MODEL_xxMARVELL_E1011:
+	case MII_MODEL_xxMARVELL_E1111:
+		reg |= PSCR_CRS_ON_TX;
+		break;
+	default: /* No PSCR_CRS_ON_TX bit */
+		break;
+	}
+
+	/* Enable scrambler if necessary. */
+	if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E3016)
+		reg &= ~E3016_PSCR_SCRAMBLE_DIS;
+
+	/*
+	 * Store next page in the Link Partner Next Page register for
+	 * compatibility with 802.3ab.
+	 */
+	if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E3016)
+		reg |= E3016_PSCR_REG8NXTPG;
+
+	PHY_WRITE(sc, MAKPHY_PSCR, reg);
+
+	/* Configure LEDs if they were left unconfigured. */
+	if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E3016 &&
+	    PHY_READ(sc, 0x16) == 0) {
+		reg = (0x0b << 8) | (0x05 << 4) | 0x04;	/* XXX */
+		PHY_WRITE(sc, 0x16, reg);
+	}
+
+	mii_phy_reset(sc);
+}
+
+static void
+makphy_pdown(struct mii_softc *sc, bool pdown)
+{
+	int bmcr, new;
+	bool need_reset = false;
+
+	/*
+	 * XXX
+	 * PSCR (register 16) should be modified on some chips.
+	 */
+
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (pdown)
+		new = bmcr | BMCR_PDOWN;
+	else
+		new = bmcr & ~BMCR_PDOWN;
+	if (bmcr != new)
+		need_reset = true;
+
+	if (need_reset)
+		new |= BMCR_RESET;
+	PHY_WRITE(sc, MII_BMCR, new);
 }
 
 static int
 makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	int bmcr;
+
+	if (!device_is_active(sc->mii_dev))
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -237,8 +325,8 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
-			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
+			bmcr = PHY_READ(sc, MII_BMCR);
+			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_ISO);
 			return (0);
 		}
 
@@ -248,15 +336,21 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
+		/* Try to power up the PHY in case it's down */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_NONE)
+			makphy_pdown(sc, MAKARG_PUP);
+
 		mii_phy_setmedia(sc);
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
-			/*
-			 * when not in auto mode, we need to restart nego
-			 * anyway, or a switch from a fixed mode to another
-			 * fixed mode may not be seen by the switch.
-			 */
-			PHY_WRITE(sc, MII_BMCR,
-			    PHY_READ(sc, MII_BMCR) | BMCR_STARTNEG);
+
+		/*
+		 * If autonegitation is not enabled, we need a
+		 * software reset for the settings to take effect.
+		 */
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_NONE)
+			makphy_pdown(sc, MAKARG_PDOWN);
+		else if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+			bmcr = PHY_READ(sc, MII_BMCR);
+			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET);
 		}
 		break;
 
@@ -288,65 +382,73 @@ static void
 makphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, pssr, gtsr;
+	int bmcr, gsr, pssr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	pssr = PHY_READ(sc, MII_MAKPHY_PSSR);
+	bmcr = PHY_READ(sc, MII_BMCR);
+	/* XXX FIXME: Use different page for Fiber on newer chips */
+	pssr = PHY_READ(sc, MAKPHY_PSSR);
 
 	if (pssr & PSSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_LOOP)
+		mii->mii_media_active |= IFM_LOOP;
+
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
 		return;
 	}
 
-	if (bmcr & BMCR_LOOP)
-		mii->mii_media_active |= IFM_LOOP;
-
-	if (bmcr & BMCR_AUTOEN) {
+	if ((bmcr & BMCR_AUTOEN) != 0) {
 		/*
-		 * The media status bits are only valid of autonegotiation
-		 * has completed (or it's disabled).
+		 * Check Speed and Duplex Resolved bit.
+		 * Note that this bit is always 1 when autonego is not enabled.
 		 */
-		if ((pssr & PSSR_RESOLVED) == 0) {
+		if (!(pssr & PSSR_RESOLVED)) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+	} else {
+		if ((pssr & PSSR_LINK) == 0) {
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+	}
 
+	/* XXX FIXME: Use different page for Fiber on newer chips */
+	if (sc->mii_flags & MIIF_IS_1000X) {
+		mii->mii_media_active |= IFM_1000_SX;
+	} else {
 		switch (PSSR_SPEED_get(pssr)) {
 		case SPEED_1000:
 			mii->mii_media_active |= IFM_1000_T;
-			gtsr = PHY_READ(sc, MII_100T2SR);
-			if (gtsr & GTSR_MS_RES)
-				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
-
 		case SPEED_100:
 			mii->mii_media_active |= IFM_100_TX;
 			break;
-
 		case SPEED_10:
 			mii->mii_media_active |= IFM_10_T;
 			break;
-
-		default:
+		default: /* Undefined (reserved) value */
 			mii->mii_media_active |= IFM_NONE;
 			mii->mii_media_status = 0;
 			return;
 		}
+	}
 
-		if (pssr & PSSR_DUPLEX)
-			mii->mii_media_active |=
-			    IFM_FDX | mii_phy_flowstatus(sc);
-		else
-			mii->mii_media_active |= IFM_HDX;
-	} else
-		mii->mii_media_active = ife->ifm_media;
+	if (pssr & PSSR_DUPLEX)
+		mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
+	else
+		mii->mii_media_active |= IFM_HDX;
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+		gsr = PHY_READ(sc, MII_100T2SR);
+		if (gsr & GTSR_MS_RES)
+			mii->mii_media_active |= IFM_ETH_MASTER;
+	}
 }
