@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.89 2019/01/15 18:41:22 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.90 2019/01/17 17:25:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2232,4 +2232,29 @@ sys/arch/sparc/sparc/pmap.c			1.366
 
 	Fix deadlocks on machines with more than two cpus.
 	[mrg, ticket #1163]
+
+sys/dev/mii/miidevs			1.128, 1.132 (patch)
+sys/dev/mii/miidevs.h			regen
+sys/dev/mii/miidevs_data.h		regen
+sys/dev/mii/makphy.c			1.43-1.51 (patch)
+sys/dev/mii/makphyreg.h			1.7-1.9 (patch)
+
+	- miidevs: Add E1000 with model id 0x0006, it exists according to
+	  OpenBSD rename E1000 model 0x0000 to E1000_0 for consistency.
+	- Match 88E1112, 88E1118, 88E1512, 88E3082 and G65G.
+	- Match 88E3016 and add some 88E3016 specific code. Fixes part of
+	  PR kern/49270 and PR kern/53301.
+	- Make sure page 0 is selected when we initialize the PHY. Fixes
+	  problems with the eephy(4) that attaches to nfe(4) on machines like
+	  the Sun Ultra 40. (we had condition for this, now the page 0 is
+	  selected for any PHY type)
+	- If autonegotiation is not enabled, we need a software reset for the
+	  settings to take effect in makphy_service().
+	- Don't set PSCR_CRS_ON_TX on newer. Those chips have no this bit.
+	- Control BMCR_PDOWN for IFM_NONE. Some chips still don't work as
+	  expected. It would be required to modify PSCR and/or other register.
+	- Set mii_media_active correctly on non-autonego mode.
+	- Remove obsolete comment.
+	- Whitespace fix.
+	[msaitoh, ticket #1164]
 
