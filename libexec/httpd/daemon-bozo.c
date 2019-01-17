@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon-bozo.c,v 1.19 2018/11/22 08:54:08 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.20 2019/01/17 07:34:06 mrg Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -205,7 +205,7 @@ daemon_runchild(bozohttpd_t *httpd, int fd)
 }
 
 static int
-daemon_poll_err(bozohttpd_t *httpd, int fd, int idx)
+daemon_poll_err(bozohttpd_t *httpd, int idx)
 {
 	if ((httpd->fds[idx].revents & (POLLNVAL|POLLERR|POLLHUP)) == 0)
 		return 0;
@@ -284,7 +284,7 @@ again:
 		}
 
 		for (i = 0; i < httpd->nsock; i++) {
-			if (daemon_poll_err(httpd, fd, i))
+			if (daemon_poll_err(httpd, i))
 				break;
 			if (httpd->fds[i].revents == 0)
 				continue;
