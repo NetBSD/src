@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.86 2018/09/03 16:29:27 riastradh Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.87 2019/01/17 23:05:15 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -284,7 +284,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset,
 			 sa->sa_size,
-			 0 /*BUS_SPACE_MAP_LINEAR*/,
+			 BUS_SPACE_MAP_LINEAR,
 			 &bh) != 0) {
 		printf("%s: cannot map control registers\n",
 		    device_xname(self));
@@ -744,7 +744,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rectfill = cg14_rectfill_a;
 	sc->sc_gc.gc_rop = 0xc;
-	if (is_cons) {
+
 		vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
 		    &defattr);
 
@@ -770,21 +770,10 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
 			defattr);
+	if (is_cons) {
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
-	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		glyphcache_init(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
-			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) -
-			 sc->sc_fb.fb_type.fb_height - 5,
-			sc->sc_fb.fb_type.fb_width,
-			ri->ri_font->fontwidth,
-			ri->ri_font->fontheight,
-			DEFATTR);
 	}
 
 	cg14_init_cmap(sc);
