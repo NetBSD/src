@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.218 2018/12/27 14:24:11 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.219 2019/01/17 02:47:15 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -193,7 +193,8 @@ struct pkthdr {
 	uint32_t	csum_data;		/* checksum data */
 	u_int		segsz;			/* segment size */
 	uint16_t	ether_vtag;		/* ethernet 802.1p+q vlan tag */
-	uint16_t	pad0;			/* padding */
+	uint16_t	pkthdr_flags;		/* flags for pkthdr, see blow */
+#define PKTHDR_FLAG_IPSEC_SKIP_PFIL	0x0001	/* skip pfil_run_hooks() after ipsec decrypt */
 
 	/*
 	 * Following three fields are open-coded struct altq_pktattr

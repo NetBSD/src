@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.387 2018/11/15 10:23:56 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.388 2019/01/17 02:47:15 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.387 2018/11/15 10:23:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.388 2019/01/17 02:47:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -567,7 +567,7 @@ ip_input(struct mbuf *m)
 	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
-	if (!ipsec_used || !ipsec_indone(m))
+	if (!ipsec_used || !ipsec_skip_pfil(m))
 #else
 	if (1)
 #endif
