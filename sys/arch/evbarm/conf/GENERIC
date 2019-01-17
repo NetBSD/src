@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.17 2019/01/05 16:50:22 skrll Exp $
+#	$NetBSD: GENERIC,v 1.18 2019/01/17 13:51:25 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -25,6 +25,7 @@ makeoptions	DTS="
 	exynos4412-odroidx2.dts
 	exynos5410-odroidxu.dts
 	exynos5410-smdk5410.dts
+	exynos5422-odroidhc1.dts
 	exynos5422-odroidxu3-lite.dts
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
