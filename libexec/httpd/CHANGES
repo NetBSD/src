@@ -1,4 +1,8 @@
-$NetBSD: CHANGES,v 1.34 2018/12/19 12:40:32 mrg Exp $
+$NetBSD: CHANGES,v 1.35 2019/01/17 07:34:06 mrg Exp $
+
+changes in bozohttpd 20190116:
+	o  fix CGI '+' parameter handling, and a double free.  from
+	   rajeev_v_pillai@yahoo.com
 
 changes in bozohttpd 20181215:
 	o  fix .htpasswd bypass for authenticated users.  reported by JP,
