@@ -1,4 +1,4 @@
-.\" $NetBSD: btpand.8,v 1.7 2019/01/17 05:52:21 gutteridge Exp $
+.\" $NetBSD: btpand.8,v 1.8 2019/01/17 08:53:17 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Iain Hibbert
 .\" All rights reserved.
@@ -128,7 +128,7 @@ and 1 for a PANU server.
 Set L2CAP connection link mode.
 Supported modes are:
 .Pp
-.Bl -tag -compact
+.Bl -tag -compact -width secure
 .It auth
 require devices to be paired.
 .It encrypt
@@ -148,7 +148,7 @@ Name of
 .Ar service
 to provide or connect to, the following services are recognised:
 .Pp
-.Bl -tag -compact
+.Bl -tag -compact -width PANU
 .It GN
 Group ad-hoc Network.
 .It NAP
@@ -156,7 +156,6 @@ Network Access Point.
 .It PANU
 Personal Area Networking User.
 .El
-.Pp
 .It Fl S Ar service
 As per
 .Fl s
@@ -179,7 +178,7 @@ has set up the client or server connection and opened the
 .Xr tap 4
 interface, it will create a pid file and detach.
 .Sh FILES
-.Bl -tag -compact
+.Bl -tag -compact -width /etc/bluetooth/hosts
 .It Pa /dev/tap
 .It Pa /etc/bluetooth/hosts
 .It Pa /var/run/sdp
