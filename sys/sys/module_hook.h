@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.10 2019/01/14 13:34:28 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.11 2019/01/17 21:32:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ int								\
 hook ## _call decl						\
 {								\
 	bool __hooked;						\
-	int __hook_error, __hook_s;				\
+	int __hook_retval, __hook_s;				\
 								\
 	__hook_s = pserialize_read_enter();			\
 	__hooked = hook.hooked;					\
@@ -128,13 +128,13 @@ hook ## _call decl						\
 	pserialize_read_exit(__hook_s);				\
 								\
 	if (__hooked) {						\
-		__hook_error = (*hook.f)args;			\
+		__hook_retval = (*hook.f)args;			\
 		localcount_release(&hook.lc, &hook.cv,		\
 		    &hook.mtx);					\
 	} else {						\
-		__hook_error = default;				\
+		__hook_retval = default;			\
 	}							\
-	return __hook_error;					\
+	return __hook_retval;					\
 }
 
 #define MODULE_CALL_VOID_HOOK(hook, decl, args, default)	\
