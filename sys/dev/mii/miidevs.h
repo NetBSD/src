@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.128.6.3 2018/12/04 11:16:33 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.128.6.4 2019/01/17 17:23:36 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.125.6.3 2018/12/04 11:15:20 martin Exp
+ *	NetBSD: miidevs,v 1.125.6.4 2019/01/17 17:23:02 martin Exp
  */
 
 /*-
@@ -423,15 +423,17 @@
 #define	MII_MODEL_xxMARVELL_E1116R_29	0x0029
 #define	MII_STR_xxMARVELL_E1116R_29	"Marvell 88E1116R Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1543	0x002a
-#define	MII_STR_xxMARVELL_E1543	"Marvell 88E1543 Alaska Quad Port Gb PHY"
-#define	MII_MODEL_MARVELL_E1000	0x0000
-#define	MII_STR_MARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
+#define	MII_STR_xxMARVELL_E1543	"Marvell 88E154[358] Alaska Quad Port Gb PHY"
+#define	MII_MODEL_MARVELL_E1000_0	0x0000
+#define	MII_STR_MARVELL_E1000_0	"Marvell 88E1000 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1011	0x0002
 #define	MII_STR_MARVELL_E1011	"Marvell 88E1011 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1000_3	0x0003
 #define	MII_STR_MARVELL_E1000_3	"Marvell 88E1000 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1000_5	0x0005
 #define	MII_STR_MARVELL_E1000_5	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_MARVELL_E1000_6	0x0006
+#define	MII_STR_MARVELL_E1000_6	"Marvell 88E1000 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1111	0x000c
 #define	MII_STR_MARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
 
