@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.49 2018/10/29 19:43:16 maya Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.50 2019/01/17 19:26:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -159,7 +159,7 @@ extern vaddr_t vm_max_kernel_address;
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-#define VM_PHYSSEG_MAX		32	/* 1 "hole" + 31 free lists */
+#define VM_PHYSSEG_MAX		64	/* 1 "hole" + 63 free lists */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #define	VM_NFREELIST		6
