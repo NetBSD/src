@@ -373,7 +373,9 @@
 /* #undef HAVE_STAT_NSEC */
 
 /* Define to 1 if you have the <stdatomic.h> header file. */
-/* #undef HAVE_STDATOMIC_H */
+#ifndef __lint__
+#define HAVE_STDATOMIC_H 1
+#endif
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
