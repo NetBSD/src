@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.315 2018/12/17 07:10:07 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.316 2019/01/17 14:24:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.315 2018/12/17 07:10:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316 2019/01/17 14:24:51 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3579,8 +3579,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
  * => issues tlb shootdowns if necessary.
  */
 static int
-pmap_sync_pv(struct pv_pte *pvpte, pt_entry_t expect, int clearbits,
-    pt_entry_t *optep)
+pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, pt_entry_t *optep)
 {
 	struct pmap *pmap;
 	struct vm_page *ptp;
@@ -3588,16 +3587,16 @@ pmap_sync_pv(struct pv_pte *pvpte, pt_entry_t expect, int clearbits,
 	pt_entry_t *ptep;
 	pt_entry_t opte;
 	pt_entry_t npte;
+	pt_entry_t expect;
 	bool need_shootdown;
 
+	expect = pmap_pa2pte(pa) | PG_V;
 	ptp = pvpte->pte_ptp;
 	va = pvpte->pte_va;
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	pmap = ptp_to_pmap(ptp);
 
-	KASSERT((expect & ~(PG_FRAME | PG_V)) == 0);
-	KASSERT((expect & PG_V) != 0);
 	KASSERT(clearbits == ~0 || (clearbits & ~(PG_M | PG_U | PG_RW)) == 0);
 	KASSERT(kpreempt_disabled());
 
@@ -3608,16 +3607,14 @@ pmap_sync_pv(struct pv_pte *pvpte, pt_entry_t expect, int clearbits,
 		KASSERT((opte & (PG_U | PG_V)) != PG_U);
 		KASSERT(opte == 0 || (opte & PG_V) != 0);
 		if ((opte & (PG_FRAME | PG_V)) != expect) {
-
 			/*
-			 * we lost a race with a V->P operation like
-			 * pmap_remove().  wait for the competitor
+			 * We lost a race with a V->P operation like
+			 * pmap_remove().  Wait for the competitor
 			 * reflecting pte bits into mp_attrs.
 			 *
-			 * issue a redundant TLB shootdown so that
+			 * Issue a redundant TLB shootdown so that
 			 * we can wait for its completion.
 			 */
-
 			pmap_unmap_pte();
 			if (clearbits != 0) {
 				pmap_tlb_shootdown(pmap, va,
@@ -3628,30 +3625,26 @@ pmap_sync_pv(struct pv_pte *pvpte, pt_entry_t expect, int clearbits,
 		}
 
 		/*
-		 * check if there's anything to do on this pte.
+		 * Check if there's anything to do on this PTE.
 		 */
-
 		if ((opte & clearbits) == 0) {
 			need_shootdown = false;
 			break;
 		}
 
 		/*
-		 * we need a shootdown if the pte is cached. (PG_U)
-		 *
-		 * ...unless we are clearing only the PG_RW bit and
-		 * it isn't cached as RW. (PG_M)
+		 * We need a shootdown if the PTE is cached (PG_U) ...
+		 * ... Unless we are clearing only the PG_RW bit and
+		 * it isn't cached as RW (PG_M).
 		 */
-
 		need_shootdown = (opte & PG_U) != 0 &&
 		    !(clearbits == PG_RW && (opte & PG_M) == 0);
 
 		npte = opte & ~clearbits;
 
 		/*
-		 * if we need a shootdown anyway, clear PG_U and PG_M.
+		 * If we need a shootdown anyway, clear PG_U and PG_M.
 		 */
-
 		if (need_shootdown) {
 			npte &= ~(PG_U | PG_M);
 		}
@@ -3675,10 +3668,8 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 	struct pv_pte *pvpte;
 	struct pv_entry *killlist = NULL;
 	struct vm_page *ptp;
-	pt_entry_t expect;
 	int count;
 
-	expect = pmap_pa2pte(pa) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
 startover:
@@ -3690,17 +3681,16 @@ startover:
 		int error;
 
 		/*
-		 * add a reference to the pmap before clearing the pte.
-		 * otherwise the pmap can disappear behind us.
+		 * Add a reference to the pmap before clearing the pte.
+		 * Otherwise the pmap can disappear behind us.
 		 */
-
 		ptp = pvpte->pte_ptp;
 		pmap = ptp_to_pmap(ptp);
 		if (ptp != NULL) {
 			pmap_reference(pmap);
 		}
 
-		error = pmap_sync_pv(pvpte, expect, ~0, &opte);
+		error = pmap_sync_pv(pvpte, pa, ~0, &opte);
 		if (error == EAGAIN) {
 			int hold_count;
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
@@ -3716,7 +3706,7 @@ startover:
 		va = pvpte->pte_va;
 		pve = pmap_remove_pv(pp, ptp, va);
 
-		/* update the PTP reference count.  free if last reference. */
+		/* Update the PTP reference count. Free if last reference. */
 		if (ptp != NULL) {
 			struct pmap *pmap2;
 			pt_entry_t *ptes;
@@ -3798,8 +3788,8 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 {
 	struct pmap_page *pp;
 	struct pv_pte *pvpte;
-	pt_entry_t expect;
 	u_int result;
+	paddr_t pa;
 
 	KASSERT(uvm_page_locked_p(pg));
 
@@ -3807,7 +3797,7 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	if ((pp->pp_attrs & testbits) != 0) {
 		return true;
 	}
-	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
+	pa = VM_PAGE_TO_PHYS(pg);
 	kpreempt_disable();
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
 		pt_entry_t opte;
@@ -3816,7 +3806,7 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 		if ((pp->pp_attrs & testbits) != 0) {
 			break;
 		}
-		error = pmap_sync_pv(pvpte, expect, 0, &opte);
+		error = pmap_sync_pv(pvpte, pa, 0, &opte);
 		if (error == 0) {
 			pp->pp_attrs |= opte;
 		}
@@ -3837,10 +3827,8 @@ pmap_pp_clear_attrs(struct pmap_page *pp, paddr_t pa, unsigned clearbits)
 {
 	struct pv_pte *pvpte;
 	u_int result;
-	pt_entry_t expect;
 	int count;
 
-	expect = pmap_pa2pte(pa) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
 startover:
@@ -3848,7 +3836,7 @@ startover:
 		pt_entry_t opte;
 		int error;
 
-		error = pmap_sync_pv(pvpte, expect, clearbits, &opte);
+		error = pmap_sync_pv(pvpte, pa, clearbits, &opte);
 		if (error == EAGAIN) {
 			int hold_count;
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
