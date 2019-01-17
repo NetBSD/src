@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.26 2018/11/23 18:08:11 jmcneill Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.27 2019/01/17 10:20:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.26 2018/11/23 18:08:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.27 2019/01/17 10:20:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,7 +465,7 @@ ld_virtio_vq_done1(struct ld_virtio_softc *sc, struct virtio_softc *vsc,
 		mutex_enter(&sc->sc_sync_wait_lock);
 		sc->sc_sync_status = vr->vr_status;
 		sc->sc_sync_use = SYNC_DONE;
-		cv_signal(&sc->sc_sync_wait);
+		cv_broadcast(&sc->sc_sync_wait);
 		mutex_exit(&sc->sc_sync_wait_lock);
 		virtio_dequeue_commit(vsc, vq, slot);
 		return;
@@ -716,7 +716,7 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 		r = EIO;
 
 	sc->sc_sync_use = SYNC_FREE;
-	cv_signal(&sc->sc_sync_wait);
+	cv_broadcast(&sc->sc_sync_wait);
 	mutex_exit(&sc->sc_sync_wait_lock);
 
 	return r;
