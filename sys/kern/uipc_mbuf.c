@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.231 2019/01/16 01:50:25 knakahara Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.232 2019/01/17 02:47:15 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.231 2019/01/16 01:50:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.232 2019/01/17 02:47:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -567,6 +567,7 @@ m_gethdr(int how, int type)
 	m->m_pkthdr.csum_data = 0;
 	m->m_pkthdr.segsz = 0;
 	m->m_pkthdr.ether_vtag = 0;
+	m->m_pkthdr.pkthdr_flags = 0;
 	SLIST_INIT(&m->m_pkthdr.tags);
 
 	m->m_pkthdr.pattr_class = NULL;

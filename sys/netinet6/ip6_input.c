@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.206 2019/01/14 18:51:15 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.207 2019/01/17 02:47:15 knakahara Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.206 2019/01/14 18:51:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.207 2019/01/17 02:47:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -342,7 +342,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
-	if (!ipsec_used || !ipsec_indone(m))
+	if (!ipsec_used || !ipsec_skip_pfil(m))
 #else
 	if (1)
 #endif
