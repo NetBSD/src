@@ -1,8 +1,8 @@
-# $NetBSD: md.hppa,v 1.10 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.hppa,v 1.11 2019/01/18 17:49:55 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
 ./usr/include/hp700				comp-obsolete		obsolete
 ./usr/include/hp700/ansi.h			comp-obsolete		obsolete
 ./usr/include/hp700/aout_machdep.h		comp-obsolete		obsolete
