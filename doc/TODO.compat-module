@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.24 2019/01/18 05:42:34 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.25 2019/01/18 05:53:58 pgoyette Exp $ */
 
 DONE
 ----
@@ -20,17 +20,17 @@ DONE
     built-in dependencies get resolved.
 
 7.  Fixed limits on the number of module dependencies and maximum
-    recursion level have been removed.  Previous code for reporting
-    module status to userland has been versioned and moved to the
-    (new) compat_80 module.
+    recursion level (for auto-loading) have been removed.  Previous code
+    for reporting module status to userland has been versioned and moved
+    to the (new) compat_80 module.
 
 8.  The old monolithic compat module has been broken into multiple
-    modules, one for each old NetBSD version.  The monolithic module
-    is no longer available.
+    modules, one for each old NetBSD version.  The monolithic compat
+    module is no longer available.
 
-    Similarly, the compat_sysv module has also been split into several
-    version-specific modules, and the mini-monolithic compat_sysv module
-    is no longer provided.
+    Similarly, the compat_sysv and compat_netbsd32 modules have also
+    been split into several version-specific modules, and the mini-
+    monolithic versions of these modules are no longer provided.
 
 9.  syscalls.master has been updated to autoload the version-specific
     compat modules rather than the monolithic modules.
@@ -39,34 +39,33 @@ DONE
     built regardless.
 
 11. Implemented a MP-safe mechanism for installing and removing function
-    pointers.  Thanks to riastradh@ for the template code.
+    pointers, preventing them from being unloaded (via modunload) while
+    in use.  Thanks to riastradh@ for the template code.
 
-12. Replace version-specific parts of the compat_netbsd32 module (and
-    also the compat_netbsd32_sysv module) with individual modules.  Update
-    dependencies accordingly.  (Done, but see #19 below.)
-
-13. Finished splitting the vnd_30 and vnd_50 compat code into separate
+12. Finished splitting the vnd_30 and vnd_50 compat code into separate
     modules.
 
-14. Cleaned up some previous vectored routines (related to if_43.c) to
+13. Cleaned up some previous vectored routines (related to if_43.c) to
     use the MP-safe mechanism.
 
-15. Organized (some of) the netbsd32 machine-dependent code to fit a
+14. Organized (some of) the netbsd32 machine-dependent code to fit a
     common build framework, and split version-specific code from baseline
-    code as needed.
+    code as needed.  More work may be needed here (see #18 below).
 
-16. The rtsock.c code has been split into two separate source files,
+15. The rtsock.c code has been split into two separate source files,
     one for use in -current and one which is shared with COMPAT_50 (the
     code is shared with -current, but macros are used to define version-
-    specific routine names and variable types).
+    specific routine names and variable types).  Version-specific parts
+    of rtsock.c for compat_14 and compat_70 have also been split out and
+    included in the relevant version-specific compat modules.
 
 TODO - Not required for branch merge
 ------------------------------------
-17. Audit the entire code base for any remaining embedded #ifdef's for
+16. Audit the entire code base for any remaining embedded #ifdef's for
     COMPAT_xx.  When found, move the actual compat code into the compat
     hierarchy and replace originals with indirect (vectored) calls.
 
-18. The compat_60 module still needs some work for XEN systems.  We
+17. The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
     XEN (and, for i386, XEN-PAE) modules are build with the correct
     macros defined and with -I directories specified in the same order
@@ -74,7 +73,7 @@ TODO - Not required for branch merge
     prevents loading of micro-code updates for amd64 processors running
     XEN kernels.  This limitation also exists on HEAD.
 
-19. There seems to be quite a bit of MD compat_xx code, in the various
+18. There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
     seems to me that the MI compat build infrastructure should have some
     mechanism to "reach over" to the MD code, #include a Makefile.inc file,
@@ -92,12 +91,12 @@ TODO - Not required for branch merge
     into the monolithic COMPAT module on HEAD.  Thus, its absence from
     any of the version-specific modules is not a regression.
 
-20. For compat_50, there are some things in dev/gpio and dev/wscons/wsmux
+19. For compat_50, there are some things in dev/gpio and dev/wscons/wsmux
     that I haven't been able to cleanly separate.  These items are not
     currently included in the monolithic COMPAT module on HEAD, so lack of
     integration on the branch is not a regression.
 
-21. Find all the remaining dependencies on the compat_utils routines and
+20. Find all the remaining dependencies on the compat_utils routines and
     deal with them appropriately.  For now, we simply ensure that they
     are included in every kernel via 'options COMPAT_UTILS' in file
     sys/conf/std
