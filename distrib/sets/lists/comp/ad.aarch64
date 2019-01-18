@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.27 2018/12/29 04:51:04 christos Exp $
+# $NetBSD: ad.aarch64,v 1.28 2019/01/18 17:49:55 christos Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -128,16 +128,16 @@
 ./usr/include/evbarm64/disklabel.h		comp-obsolete		obsolete
 ./usr/include/evbarm64/intr.h			comp-obsolete		obsolete
 ./usr/include/g++/bits/aarch64			comp-c-include		compat
-./usr/include/g++/bits/aarch64/c++config.h	comp-c-include		gcccmds,gcc=6,compat
+./usr/include/g++/bits/aarch64/c++config.h	comp-c-include		gcc=6,compat
 ./usr/include/g++/bits/arm			comp-c-include		compat
-./usr/include/g++/bits/arm/c++config.h		comp-c-include		gcccmds,gcc=6,compat
-./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcccmds,gcc=48,eabi
-./usr/include/gcc-6/arm_acle.h			comp-c-include		gcccmds,gcc=6
-./usr/include/gcc-6/arm_neon.h			comp-c-include		gcccmds,gcc=6
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
+./usr/include/g++/bits/arm/c++config.h		comp-c-include		gcc=6,compat
+./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcc=48
+./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcc=48
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcc=48
+./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcc=48,eabi
+./usr/include/gcc-6/arm_acle.h			comp-c-include		gcc=6
+./usr/include/gcc-6/arm_neon.h			comp-c-include		gcc=6
+./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/eabi/libarm.a				comp-c-lib		compat,llvm
 ./usr/lib/eabi/libarm.so			base-sys-shlib		compat,pic,llvm
