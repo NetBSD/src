@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.108 2019/01/17 07:46:16 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.109 2019/01/18 05:48:31 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -245,10 +245,8 @@ bozo_set_pref(bozohttpd_t *httpd, bozoprefs_t *bozoprefs,
 		bozoprefs->name[i] = bozostrdup(httpd, NULL, name);
 	} else {
 		/* replace the element in the array */
-		if (bozoprefs->value[i]) {
+		if (bozoprefs->value[i])
 			free(bozoprefs->value[i]);
-			bozoprefs->value[i] = NULL;
-		}
 	}
 	bozoprefs->value[i] = bozostrdup(httpd, NULL, value);
 	return 1;
@@ -297,7 +295,7 @@ parse_request(bozohttpd_t *httpd, char *in, char **method, char **file,
 
 	len = (ssize_t)strlen(in);
 	val = bozostrnsep(&in, " \t\n\r", &len);
-	if (len < 1 || val == NULL)
+	if (len < 1 || val == NULL || in == NULL)
 		return;
 	*method = val;
 
@@ -996,7 +994,7 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 		buf = bozorealloc(httpd, buf, buflen);
 	}
 
-	for (len = 0, s = url, d = buf; *s;) {
+	for (s = url, d = buf; *s;) {
 		if (*s & 0x80)
 			goto encode_it;
 		switch (*s) {
@@ -1028,16 +1026,14 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
 		encode_it:
 			snprintf(d, 4, "%%%02X", (unsigned char)*s++);
 			d += 3;
-			len += 3;
 			break;
 		default:
 		leave_it:
 			*d++ = *s++;
-			len++;
 			break;
 		}
 	}
-	buf[len] = 0;
+	*d = 0;
 
 	return buf;
 }
@@ -1195,7 +1191,7 @@ check_remap(bozo_httpreq_t *request)
 	bozohttpd_t *httpd = request->hr_httpd;
 	char *file = request->hr_file, *newfile;
 	void *fmap;
-	const char *replace, *map_to, *p;
+	const char *replace = NULL, *map_to = NULL, *p;
 	struct stat st;
 	int mapfile;
 	size_t avail, len, rlen, reqlen, num_esc = 0;
@@ -1324,6 +1320,9 @@ check_virtual(bozo_httpreq_t *request)
 	debug((httpd, DEBUG_OBESE,
 	       "checking for http:// virtual host in '%s'", file));
 	if (strncasecmp(file, "http://", 7) == 0) {
+		/* bozostrdup() might access it. */
+		char *old_file = request->hr_file;
+
 		/* we would do virtual hosting here? */
 		file += 7;
 		/* RFC 2616 (HTTP/1.1), 5.2: URI takes precedence over Host: */
@@ -1332,8 +1331,8 @@ check_virtual(bozo_httpreq_t *request)
 		if ((s = strchr(request->hr_host, '/')) != NULL)
 			*s = '\0';
 		s = strchr(file, '/');
-		free(request->hr_file);
 		request->hr_file = bozostrdup(httpd, request, s ? s : "/");
+		free(old_file);
 		debug((httpd, DEBUG_OBESE, "got host '%s' file is now '%s'",
 		    request->hr_host, request->hr_file));
 	} else if (!request->hr_host)
@@ -1357,7 +1356,10 @@ check_virtual(bozo_httpreq_t *request)
 		if (request->hr_host) {
 			s = strrchr(request->hr_host, ':');
 			if (s != NULL)
-				/* truncate Host: as we want to copy it without port part */
+				/*
+				 * truncate Host: as we want to copy it
+				 * without port part
+				 */
 				*s = '\0';
 			request->hr_virthostname = bozostrdup(httpd, request,
 			  request->hr_host);
