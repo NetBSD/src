@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdiff_test.c,v 1.2.2.2 2018/09/06 06:55:03 pgoyette Exp $	*/
+/*	$NetBSD: dbdiff_test.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,22 @@
  * information regarding copyright ownership.
  */
 
-
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
-#include <unistd.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
+
+#include <isc/util.h>
 
 #include <dns/db.h>
 #include <dns/dbiterator.h>
@@ -28,141 +35,152 @@
 
 #include "dnstest.h"
 
-/*
- * Helper functions
- */
-
 #define	BUFLEN		255
 #define	BIGBUFLEN	(64 * 1024)
 #define TEST_ORIGIN	"test"
 
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
+
 static void
-test_create(const atf_tc_t *tc, dns_db_t **old, dns_db_t **newdb) {
+test_create(const char *oldfile, dns_db_t **old,
+	    const char *newfile, dns_db_t **newdb)
+{
 	isc_result_t result;
 
-	result = dns_test_loaddb(old, dns_dbtype_zone, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-old"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(old, dns_dbtype_zone, TEST_ORIGIN, oldfile);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_test_loaddb(newdb, dns_dbtype_zone, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-new"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(newdb, dns_dbtype_zone, TEST_ORIGIN, newfile);
+	assert_int_equal(result, ISC_R_SUCCESS);
 }
 
-/*
- * Individual unit tests
- */
-
-ATF_TC(diffx_same);
-ATF_TC_HEAD(diffx_same, tc) {
-	atf_tc_set_md_var(tc, "descr", "dns_db_diffx of identical content");
-	atf_tc_set_md_var(tc, "X-old", "testdata/diff/zone1.data");
-	atf_tc_set_md_var(tc, "X-new", "testdata/diff/zone1.data"); }
-ATF_TC_BODY(diffx_same, tc) {
+/* dns_db_diffx of identical content */
+static void
+diffx_same(void **state) {
 	dns_db_t *newdb = NULL, *olddb = NULL;
 	isc_result_t result;
 	dns_diff_t diff;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	test_create(tc, &olddb, &newdb);
+	test_create("testdata/diff/zone1.data", &olddb,
+		    "testdata/diff/zone1.data", &newdb);
 
 	dns_diff_init(mctx, &diff);
 
 	result = dns_db_diffx(&diff, newdb, NULL, olddb, NULL, NULL);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_REQUIRE_EQ(ISC_LIST_EMPTY(diff.tuples), ISC_TRUE);
+	assert_true(ISC_LIST_EMPTY(diff.tuples));
 
 	dns_diff_clear(&diff);
 	dns_db_detach(&newdb);
 	dns_db_detach(&olddb);
-	dns_test_end();
 }
 
-ATF_TC(diffx_add);
-ATF_TC_HEAD(diffx_add, tc) {
-	atf_tc_set_md_var(tc, "descr",
-			  "dns_db_diffx of zone with record added");
-	atf_tc_set_md_var(tc, "X-old", "testdata/diff/zone1.data");
-	atf_tc_set_md_var(tc, "X-new", "testdata/diff/zone2.data");
-}
-ATF_TC_BODY(diffx_add, tc) {
+/* dns_db_diffx of zone with record added */
+static void
+diffx_add(void **state) {
 	dns_db_t *newdb = NULL, *olddb = NULL;
 	dns_difftuple_t *tuple;
 	isc_result_t result;
 	dns_diff_t diff;
 	int count = 0;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	test_create(tc, &olddb, &newdb);
+	test_create("testdata/diff/zone1.data", &olddb,
+		    "testdata/diff/zone2.data", &newdb);
 
 	dns_diff_init(mctx, &diff);
 
 	result = dns_db_diffx(&diff, newdb, NULL, olddb, NULL, NULL);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_REQUIRE_EQ(ISC_LIST_EMPTY(diff.tuples), ISC_FALSE);
+	assert_false(ISC_LIST_EMPTY(diff.tuples));
 	for (tuple = ISC_LIST_HEAD(diff.tuples); tuple != NULL;
 	     tuple = ISC_LIST_NEXT(tuple, link)) {
-		ATF_REQUIRE_EQ(tuple->op, DNS_DIFFOP_ADD);
+		assert_int_equal(tuple->op, DNS_DIFFOP_ADD);
 		count++;
 	}
-	ATF_REQUIRE_EQ(count, 1);
+	assert_int_equal(count, 1);
 
 	dns_diff_clear(&diff);
 	dns_db_detach(&newdb);
 	dns_db_detach(&olddb);
-	dns_test_end();
 }
 
-ATF_TC(diffx_remove);
-ATF_TC_HEAD(diffx_remove, tc) {
-	atf_tc_set_md_var(tc, "descr",
-			  "dns_db_diffx of zone with record removed");
-	atf_tc_set_md_var(tc, "X-old", "testdata/diff/zone1.data");
-	atf_tc_set_md_var(tc, "X-new", "testdata/diff/zone3.data");
-}
-ATF_TC_BODY(diffx_remove, tc) {
+/* dns_db_diffx of zone with record removed */
+static void
+diffx_remove(void **state) {
 	dns_db_t *newdb = NULL, *olddb = NULL;
 	dns_difftuple_t *tuple;
 	isc_result_t result;
 	dns_diff_t diff;
 	int count = 0;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	test_create(tc, &olddb, &newdb);
+	test_create("testdata/diff/zone1.data", &olddb,
+		    "testdata/diff/zone3.data", &newdb);
 
 	dns_diff_init(mctx, &diff);
 
 	result = dns_db_diffx(&diff, newdb, NULL, olddb, NULL, NULL);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_REQUIRE_EQ(ISC_LIST_EMPTY(diff.tuples), ISC_FALSE);
+	assert_false(ISC_LIST_EMPTY(diff.tuples));
 	for (tuple = ISC_LIST_HEAD(diff.tuples); tuple != NULL;
 	     tuple = ISC_LIST_NEXT(tuple, link)) {
-		ATF_REQUIRE_EQ(tuple->op, DNS_DIFFOP_DEL);
+		assert_int_equal(tuple->op, DNS_DIFFOP_DEL);
 		count++;
 	}
-	ATF_REQUIRE_EQ(count, 1);
+	assert_int_equal(count, 1);
 
 	dns_diff_clear(&diff);
 	dns_db_detach(&newdb);
 	dns_db_detach(&olddb);
-	dns_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, diffx_same);
-	ATF_TP_ADD_TC(tp, diffx_add);
-	ATF_TP_ADD_TC(tp, diffx_remove);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(diffx_same, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(diffx_add, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(diffx_remove,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

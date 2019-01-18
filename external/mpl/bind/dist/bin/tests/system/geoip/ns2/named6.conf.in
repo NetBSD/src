@@ -20,6 +20,7 @@ options {
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { fd92:7065:b8e:ffff::1; };
 	recursion no;
+	dnssec-validation no;
 	geoip-directory "../data";
 };
 

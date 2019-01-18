@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,7 +36,7 @@ fromtext_cert(ARGS_FROMTEXT) {
 	 * Cert type.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_cert_fromtext(&cert, &token.value.as_textregion));
 	RETERR(uint16_tobuffer(cert, target));
 
@@ -44,7 +44,7 @@ fromtext_cert(ARGS_FROMTEXT) {
 	 * Key tag.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -53,7 +53,7 @@ fromtext_cert(ARGS_FROMTEXT) {
 	 * Algorithm.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	RETTOK(dns_secalg_fromtext(&secalg, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &secalg, 1));
 
@@ -246,7 +246,7 @@ digest_cert(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_cert(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_cert);
@@ -256,10 +256,10 @@ checkowner_cert(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_cert(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_cert);
@@ -268,7 +268,7 @@ checknames_cert(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 

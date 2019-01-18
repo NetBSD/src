@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.58 2017/06/19 11:57:01 joerg Exp $	 */
+/*	$NetBSD: map_object.c,v 1.58.4.1 2019/01/18 08:50:11 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.58 2017/06/19 11:57:01 joerg Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.58.4.1 2019/01/18 08:50:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -77,14 +77,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	size_t		 mapsize = 0;
 	int		 mapflags;
 	Elf_Off		 base_offset;
-#ifdef MAP_ALIGNED
 	Elf_Addr	 base_alignment;
-#endif
 	Elf_Addr	 base_vaddr;
 	Elf_Addr	 base_vlimit;
 	Elf_Addr	 text_vlimit;
 	int		 text_flags;
-	caddr_t		 base_addr;
+	void		*base_addr;
 	Elf_Off		 data_offset;
 	Elf_Addr	 data_vaddr;
 	Elf_Addr	 data_vlimit;
@@ -262,9 +260,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	 * and unmap the gaps left by padding to alignment.
 	 */
 
-#ifdef MAP_ALIGNED
 	base_alignment = segs[0]->p_align;
-#endif
 	base_offset = round_down(segs[0]->p_offset);
 	base_vaddr = round_down(segs[0]->p_vaddr);
 	base_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_memsz);
@@ -336,19 +332,19 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	 * Calculate log2 of the base section alignment.
 	 */
 	mapflags = 0;
-#ifdef MAP_ALIGNED
 	if (base_alignment > _rtld_pagesz) {
 		unsigned int log2 = 0;
 		for (; base_alignment > 1; base_alignment >>= 1)
 			log2++;
 		mapflags = MAP_ALIGNED(log2);
 	}
-#endif
 
-#ifdef RTLD_LOADER
-	base_addr = obj->isdynamic ? NULL : (caddr_t)base_vaddr;
-#else
 	base_addr = NULL;
+#ifdef RTLD_LOADER
+	if (!obj->isdynamic) {
+		mapflags |= MAP_TRYFIXED;
+		base_addr = (void *)(uintptr_t)base_vaddr;
+	}
 #endif
 	mapsize = base_vlimit - base_vaddr;
 	mapbase = mmap(base_addr, mapsize, text_flags,
@@ -358,6 +354,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		    xstrerror(errno));
 		goto bad;
 	}
+#ifdef RTLD_LOADER
+	if (!obj->isdynamic && mapbase != base_addr) {
+		_rtld_error("mmap of executable at correct address failed");
+		goto bad;
+	}
+#endif
 
 	/* Overlay the data segment onto the proper region. */
 	data_addr = mapbase + (data_vaddr - base_vaddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.2.2.2 2018/09/06 06:55:05 pgoyette Exp $	*/
+/*	$NetBSD: platform.h,v 1.2.2.3 2019/01/18 08:49:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,14 +20,10 @@
  ***** Platform-dependent defines.
  *****/
 
-#ifndef IRS_PLATFORM_USEDECLSPEC
-#define LIBIRS_EXTERNAL_DATA
-#else
 #ifdef LIBIRS_EXPORTS
 #define LIBIRS_EXTERNAL_DATA __declspec(dllexport)
 #else
 #define LIBIRS_EXTERNAL_DATA __declspec(dllimport)
-#endif
 #endif
 
 /*

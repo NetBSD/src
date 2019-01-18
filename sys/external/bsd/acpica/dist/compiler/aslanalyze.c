@@ -344,8 +344,8 @@ AnCheckMethodReturnValue (
     {
         /* Method returns a value, but the type is wrong */
 
-        AnFormatBtype (StringBuffer, ThisNodeBtype);
-        AnFormatBtype (StringBuffer2, RequiredBtypes);
+        AnFormatBtype (AslGbl_StringBuffer, ThisNodeBtype);
+        AnFormatBtype (AslGbl_StringBuffer2, RequiredBtypes);
 
         /*
          * The case where the method does not return any value at all
@@ -355,11 +355,11 @@ AnCheckMethodReturnValue (
          */
         if (ThisNodeBtype != 0)
         {
-            snprintf (MsgBuffer, sizeof(MsgBuffer),
+            snprintf (AslGbl_MsgBuffer, sizeof(AslGbl_MsgBuffer),
                 "Method returns [%s], %s operator requires [%s]",
-                StringBuffer, OpInfo->Name, StringBuffer2);
+                AslGbl_StringBuffer, OpInfo->Name, AslGbl_StringBuffer2);
 
-            AslError (ASL_ERROR, ASL_MSG_INVALID_TYPE, ArgOp, MsgBuffer);
+            AslError (ASL_ERROR, ASL_MSG_INVALID_TYPE, ArgOp, AslGbl_MsgBuffer);
         }
     }
 }

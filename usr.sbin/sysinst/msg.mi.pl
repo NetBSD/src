@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.8.14.3 2018/11/26 01:52:55 pgoyette Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.8.14.4 2019/01/18 08:51:03 pgoyette Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -243,12 +243,12 @@ message fspart
 }
 
 message fspart_header	/* XXX abbreviations (or change fspart_row below) */
-{    Rozm %3s  Prze %3s Koniec %3s Typ SP     Ochrona Montowana Jako
-   --------- --------- ---------- ---------- ------- ----- ----------
+{   Start %3s Koniec %3s Rozmiar %3s Typ SP     Ochrona Montowana Jako
+   --------- ---------- ----------- ---------- ------- ----- ----------
 }
 
 message fspart_row
-{%9lu %9lu %10lu %-10s %-7s %-9s %s}
+{%9lu %10lu %11lu %-10s %-7s %-9s %s}
 
 message show_all_unused_partitions
 {Pokaz wszystkie nieuzywane partycje}
@@ -882,7 +882,7 @@ message Re_install_sets_or_install_additional_sets {Przeinstaluj albo zainstaluj
 message Reboot_the_computer {Zrestartuj komputer}
 message Utility_menu {Menu Narzedziowe}
 message Config_menu {Menu konfiguracji}
-message exit_menu_generic {Nazad}
+message exit_menu_generic {Wstecz}
 message exit_utility_menu {Exit}
 message NetBSD_VERSION_Utilities {Narzedzia NetBSD-@@VERSION@@}
 message Run_bin_sh {Uruchom /bin/sh}
@@ -920,9 +920,9 @@ message hidden {** ukryte **}
 message Host {Host}
 message Base_dir {Katalog}
 message Set_dir_src {Katalog pakiet binary} /* fix XLAT */
-message Set_dir_bin {Katalog pakiet source} /* fix XLAT */
-message Xfer_dir {Transfer Katalog} /* fix XLAT */
-message transfer_method {Download via}
+message Set_dir_bin {Katalog pkgsrc}
+message Xfer_dir {Katalog z plikami pobranymi}
+message transfer_method {Sposob pobrania}
 message User {Uzytkownik}
 message Password {Haslo}
 message Proxy {Proxy}
@@ -1009,13 +1009,13 @@ message enable_sshd {Wlacz sshd}
 message enable_ntpd {Wlacz ntpd}
 message run_ntpdate {uruchom ntpdate podczas startu systemu}
 message enable_mdnsd {Wlacz mdnsd}
-message enable_xdm {Enable xdm}
-message enable_cgd {Enable cgd}
-message enable_lvm {Enable lvm}
-message enable_raid {Enable raidframe}
-message add_a_user {Add a user}
+message enable_xdm {Wlacz xdm}
+message enable_cgd {Wlacz cgd}
+message enable_lvm {Wlacz lvm}
+message enable_raid {Wlacz raidframe}
+message add_a_user {Dodaj uzytkownika}
 message configmenu {Skonfiguruj dodatkowe elementy w razie potrzeby.}
-message doneconfig {Konfiguracja zakonczona}
+message doneconfig {Zakoncz konfiguracje}
 message Install_pkgin {Zainstaluj pkgin i uaktualnij podsumowanie pakietow}
 message binpkg_installed 
 {Skonfigurowales system tak aby wykorzystywal pkgin do instalacji pakietow
@@ -1034,8 +1034,7 @@ nazwa uzytkownika to "ftp".
 
 }
 message Pkgsrc_dir {katalog pkgsrc}
-message get_pkgsrc {Pobierz i rozpakuj pkgsrc w celu tworzenia pakietow ze
-zrodel}
+message get_pkgsrc {Pobierz i rozpakuj pkgsrc}
 message retry_pkgsrc_network {Konfiguracja sieci nie powiodla sie. Sprobowac
 ponownie?}
 message quit_pkgsrc {Zakoncz bez zainstalowania pkgsrc}
@@ -1079,7 +1078,7 @@ message auto {auto}
 message removepartswarn {To usun±æ wszystkie partycje na dysku. Czy chcesz kontynuowaæ?}
 message saveprompt {Zapisz zmiany przed zakoñczeniem?}
 message cantsave {Zmiany nie mog± byæ zbawieni.}
-message noroot {No partycja zdefiniowana, nie mo¿e kontynuowaæ \n}
+message noroot {Brak zdefiniowania partycji root. Nie mo¿na kontynuowac.\n}
 message wannaunblock {Urz±dzenie jest zablokowane. Czy chcesz, aby zmusiæ go odblokowaæ i kontynuowaæ?}
 message wannatry {Czy chcesz spróbowaæ?}
 message create_cgd {Utwórz wolumen kryptograficznych (CGD)}

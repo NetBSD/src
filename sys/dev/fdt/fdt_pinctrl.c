@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.4.6.1 2018/07/28 04:37:44 pgoyette Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.4.6.2 2019/01/18 08:50:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.4.6.1 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.4.6.2 2019/01/18 08:50:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,7 +125,7 @@ fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
 	pinctrl_names = fdtbus_get_string(phandle, "pinctrl-names");
 
 	for (name = pinctrl_names, index = 0; len > 0;
-	     name += strlen(name) + 1, index++) {
+	     len -= strlen(name) + 1, name += strlen(name) + 1, index++) {
 		if (strcmp(name, cfgname) == 0)
 			return fdtbus_pinctrl_set_config_index(phandle, index);
 	}

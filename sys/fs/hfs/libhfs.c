@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.14 2015/06/21 13:40:25 maxv Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.14.16.1 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.14 2015/06/21 13:40:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.14.16.1 2019/01/18 08:50:57 pgoyette Exp $");
 
 #include "libhfs.h"
 
@@ -2384,37 +2384,42 @@ hfslib_compare_catalog_keys_cf (
 /* binary compare (i.e., not case folding) */
 int
 hfslib_compare_catalog_keys_bc (
-	const void *a,
-	const void *b)
+	const void *ap,
+	const void *bp)
 {
-	if (((const hfs_catalog_key_t*)a)->parent_cnid
-		== ((const hfs_catalog_key_t*)b)->parent_cnid)
+	int c;
+	const hfs_catalog_key_t *a, *b;
+
+	a = (const hfs_catalog_key_t *) ap;
+	b = (const hfs_catalog_key_t *) bp;
+
+	if (a->parent_cnid == b->parent_cnid)
 	{
-		if (((const hfs_catalog_key_t*)a)->name.length == 0 &&
-			((const hfs_catalog_key_t*)b)->name.length == 0)
+		if (a->name.length == 0 && b->name.length == 0)
 			return 0;
 
-		if (((const hfs_catalog_key_t*)a)->name.length == 0)
+		if (a->name.length == 0)
 			return -1;
-		if (((const hfs_catalog_key_t*)b)->name.length == 0)
+		if (b->name.length == 0)
 			return 1;
 
 		/* FIXME: This does a byte-per-byte comparison, whereas the HFS spec
 		 * mandates a uint16_t chunk comparison. */
-		return memcmp(((const hfs_catalog_key_t*)a)->name.unicode,
-			((const hfs_catalog_key_t*)b)->name.unicode,
-			min(((const hfs_catalog_key_t*)a)->name.length,
-				((const hfs_catalog_key_t*)b)->name.length));
+		c = memcmp(a->name.unicode, b->name.unicode,
+			sizeof(unichar_t)*min(a->name.length, b->name.length));
+		if (c != 0)
+			return c;
+		else
+			return (a->name.length - b->name.length);
 	} else {
-		return (((const hfs_catalog_key_t*)a)->parent_cnid - 
-				((const hfs_catalog_key_t*)b)->parent_cnid);
+		return (a->parent_cnid - b->parent_cnid);
 	}
 }
 
 int
 hfslib_compare_extent_keys (
-	const void *a,
-	const void *b)
+	const void *ap,
+	const void *bp)
 {
 	/*
 	 *	Comparison order, in descending importance:
@@ -2422,27 +2427,25 @@ hfslib_compare_extent_keys (
 	 *		CNID -> fork type -> start block
 	 */
 
-	if (((const hfs_extent_key_t*)a)->file_cnid
-		== ((const hfs_extent_key_t*)b)->file_cnid)
+	const hfs_extent_key_t *a, *b;
+	a = (const hfs_extent_key_t *) ap;
+	b = (const hfs_extent_key_t *) bp;
+
+	if (a->file_cnid == b->file_cnid)
 	{
-		if (((const hfs_extent_key_t*)a)->fork_type
-			== ((const hfs_extent_key_t*)b)->fork_type)
+		if (a->fork_type == b->fork_type)
 		{
-			if (((const hfs_extent_key_t*)a)->start_block
-				== ((const hfs_extent_key_t*)b)->start_block)
+			if (a->start_block == b->start_block)
 			{
 				return 0;
 			} else {
-				return (((const hfs_extent_key_t*)a)->start_block - 
-						((const hfs_extent_key_t*)b)->start_block);
+				return (a->start_block - b->start_block);
 			}
 		} else {
-			return (((const hfs_extent_key_t*)a)->fork_type - 
-					((const hfs_extent_key_t*)b)->fork_type);
+			return (a->fork_type - b->fork_type);
 		}
 	} else {
-		return (((const hfs_extent_key_t*)a)->file_cnid - 
-				((const hfs_extent_key_t*)b)->file_cnid);
+		return (a->file_cnid - b->file_cnid);
 	}
 }
 

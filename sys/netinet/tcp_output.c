@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.198.2.5 2018/09/06 06:56:45 pgoyette Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.198.2.6 2019/01/18 08:50:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.5 2018/09/06 06:56:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.6 2019/01/18 08:50:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1656,10 +1656,10 @@ out:
 		if (error == ENOBUFS) {
 			TCP_STATINC(TCP_STAT_SELFQUENCH);
 			if (tp->t_inpcb)
-				tcp_quench(tp->t_inpcb, 0);
+				tcp_quench(tp->t_inpcb);
 #ifdef INET6
 			if (tp->t_in6pcb)
-				tcp6_quench(tp->t_in6pcb, 0);
+				tcp6_quench(tp->t_in6pcb);
 #endif
 			error = 0;
 		} else if ((error == EHOSTUNREACH || error == ENETDOWN) &&

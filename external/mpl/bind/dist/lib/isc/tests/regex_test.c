@@ -1,4 +1,4 @@
-/*	$NetBSD: regex_test.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: regex_test.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,31 +13,41 @@
 
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
+
 #ifdef HAVE_REGEX_H
 #include <regex.h>
 #endif
 
+#include <isc/commandline.h>
 #include <isc/regex.h>
 #include <isc/print.h>
 #include <isc/util.h>
 
-ATF_TC(regex_validate);
-ATF_TC_HEAD(regex_validate, tc) {
-	atf_tc_set_md_var(tc, "descr", "check isc_regex_validate()");
-}
-ATF_TC_BODY(regex_validate, tc) {
+/* Set to true (or use -v option) for verbose output */
+static bool verbose = false;
+
+/* test isc_regex_validate() */
+static void
+regex_validate(void **state) {
 	/*
 	 *  test regex were generated using http://code.google.com/p/regfuzz/
 	 *  modified to use only printable characters
 	 */
 	struct {
-		const char * expression;
+		const char *expression;
 		int expect;
 		int exception;		/* regcomp accepts but is disallowed. */
 	} tests[] = {
@@ -1072,7 +1082,7 @@ ATF_TC_BODY(regex_validate, tc) {
 	unsigned int i;
 	int r;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 #ifdef HAVE_REGEX_H
 	/*
@@ -1085,19 +1095,29 @@ ATF_TC_BODY(regex_validate, tc) {
 		r = regcomp(&preg, tests[i].expression, REG_EXTENDED);
 		if (((r != 0 && tests[i].expect != -1) ||
 		     (r == 0 && tests[i].expect == -1)) && !tests[i].exception)
-			fprintf(stderr, "regcomp(%s) -> %s expected %s\n",
-				tests[i].expression, r != 0 ? "bad" : "good",
-				tests[i].expect == -1 ? "bad" : "good");
-		else if (r == 0 &&
-			 preg.re_nsub != (unsigned int)tests[i].expect &&
-			 !tests[i].exception) {
-			fprintf(stderr, "%s preg.re_nsub %lu expected %d\n",
-				tests[i].expression,
-				(unsigned long)preg.re_nsub, tests[i].expect);
-				tests[i].expect = preg.re_nsub;
+		{
+			if (verbose) {
+				print_error("regcomp(%s) -> %s expected %s\n",
+					    tests[i].expression,
+					    r != 0 ? "bad" : "good",
+					    tests[i].expect == -1
+					     ? "bad" : "good");
+			}
+		} else if (r == 0 &&
+			   preg.re_nsub != (unsigned int)tests[i].expect &&
+			   !tests[i].exception)
+		{
+			if (verbose) {
+				print_error("%s preg.re_nsub %lu expected %d\n",
+					    tests[i].expression,
+					    (unsigned long)preg.re_nsub,
+					    tests[i].expect);
+			}
+			tests[i].expect = preg.re_nsub;
 		}
-		if (r == 0)
+		if (r == 0) {
 			regfree(&preg);
+		}
 	}
 #endif
 
@@ -1106,18 +1126,42 @@ ATF_TC_BODY(regex_validate, tc) {
 	 */
 	for (i = 0; i < sizeof(tests)/sizeof(*tests); i++) {
 		r = isc_regex_validate(tests[i].expression);
-		if (r != tests[i].expect)
-			fprintf(stderr, "%s -> %d expected %d\n",
-				tests[i].expression, r, tests[i].expect);
-		ATF_CHECK_EQ(r, tests[i].expect);
+		if (r != tests[i].expect) {
+			print_error("# %s -> %d expected %d\n",
+				    tests[i].expression, r, tests[i].expect);
+		}
+		assert_int_equal(r, tests[i].expect);
 	}
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, regex_validate);
-	return (atf_no_error());
+int
+main(int argc, char **argv) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(regex_validate),
+	};
+	int c;
+
+	while ((c = isc_commandline_parse(argc, argv, "v")) != -1) {
+		switch (c) {
+		case 'v':
+			verbose = true;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

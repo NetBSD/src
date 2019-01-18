@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.137.4.2 2018/10/20 06:58:22 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.137.4.3 2019/01/18 08:50:11 pgoyette Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -97,6 +97,7 @@ CPPFLAGS+=	-I${.CURDIR} -I. -D_KERNTYPES
 CPPFLAGS+=	-DRTLD_LOADER
 CPPFLAGS+=	-DGNU_RELRO
 CPPFLAGS+=	-D_RTLD_SOURCE
+CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC

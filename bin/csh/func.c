@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.40 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: func.c,v 1.40.26.1 2019/01/18 08:48:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.40 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.40.26.1 2019/01/18 08:48:24 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ doonintr(Char **v, struct command *t)
 	stderror(ERR_NAME | ERR_TERMINAL);
     cp = gointr;
     gointr = 0;
-    xfree((ptr_t) cp);
+    free(cp);
     if (vv == 0) {
 	if (setintr) {
 	    sigemptyset(&nsigset);
@@ -316,7 +316,7 @@ dogoto(Char **v, struct command *t)
     Char *lp;
 
     gotolab(lp = globone(v[1], G_ERROR));
-    xfree((ptr_t) lp);
+    free(lp);
 }
 
 void
@@ -356,7 +356,7 @@ doswitch(Char **v, struct command *t)
     if (*v)
 	stderror(ERR_SYNTAX);
     search(T_SWITCH, 0, lp = globone(cp, G_ERROR));
-    xfree((ptr_t) lp);
+    free(lp);
 }
 
 void
@@ -621,7 +621,7 @@ search(int type, int level, Char *goal)
 	    cp = strip(Dfix1(aword));
 	    if (Gmatch(goal, cp))
 		level = -1;
-	    xfree((ptr_t) cp);
+	    free(cp);
 	    break;
 	case T_DEFAULT:
 	    if (type == T_SWITCH && level == 0)
@@ -695,8 +695,8 @@ wpfree(struct whyle *wp)
     if (wp->w_fe0)
 	blkfree(wp->w_fe0); 
     if (wp->w_fename)
-	xfree((ptr_t) wp->w_fename);
-    xfree((ptr_t) wp);
+	free(wp->w_fename);
+    free(wp);
 }
 
 static int
@@ -955,7 +955,7 @@ dosetenv(Char **v, struct command *t)
 	AsciiOnly = 0;
 #endif				/* NLS */
     }
-    xfree((ptr_t) lp);
+    free(lp);
 }
 
 void
@@ -967,7 +967,7 @@ dounsetenv(Char **v, struct command *t)
     int i, maxi;
 
     if (name)
-	xfree((ptr_t) name);
+	free(name);
     /*
      * Find the longest environment variable
      */
@@ -1008,7 +1008,7 @@ dounsetenv(Char **v, struct command *t)
 		Unsetenv(name);
 		break;
 	    }
-    xfree((ptr_t) name);
+    free(name);
     name = NULL;
 }
 
@@ -1026,21 +1026,21 @@ Setenv(Char *name, Char *val)
 	if (*cp != 0 || *dp != '=')
 	    continue;
 	cp = Strspl(STRequal, val);
-	xfree((ptr_t)* ep);
+	free(* ep);
 	*ep = strip(Strspl(name, cp));
-	xfree((ptr_t)cp);
+	free(cp);
 	blkfree((Char **)environ);
 	environ = short2blk(STR_environ);
 	return;
     }
     cp = Strspl(name, STRequal);
     blk[0] = strip(Strspl(cp, val));
-    xfree((ptr_t)cp);
+    free(cp);
     blk[1] = 0;
     STR_environ = blkspl(STR_environ, blk);
     blkfree((Char **)environ);
     environ = short2blk(STR_environ);
-    xfree((ptr_t) oep);
+    free(oep);
 }
 
 static void
@@ -1061,8 +1061,8 @@ Unsetenv(Char *name)
 	STR_environ = blkspl(STR_environ, ep + 1);
 	environ = short2blk(STR_environ);
 	*ep = cp;
-	xfree((ptr_t) cp);
-	xfree((ptr_t) oep);
+	free(cp);
+	free(oep);
 	return;
     }
 }
@@ -1450,7 +1450,7 @@ doprintf(Char **v, struct command *t)
     (void)fflush(cshout);
     (void)fflush(csherr);
 
-    blkfree((Char **) c);
+    blkfree((Char **)c);
     if (ret)
 	stderror(ERR_SILENT);
 }

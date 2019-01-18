@@ -1,4 +1,4 @@
-/*	$NetBSD: zmount.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*	$NetBSD: zmount.c,v 1.1.44.1 2019/01/18 08:48:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -69,5 +69,5 @@ int
 umount2(const char *spec, int mflag)
 {
 
-	return unmount(spec, 0);
+	return unmount(spec, mflag);
 }

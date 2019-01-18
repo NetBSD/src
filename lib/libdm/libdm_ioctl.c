@@ -165,8 +165,6 @@ libdm_task_run(libdm_task_t libdm_task)
 
 	error = rump_sys_ioctl(libdm_control_fd, NETBSD_DM_IOCTL, &prefp);
 	if (error < 0) {
-		libdm_task_destroy(libdm_task);
-		libdm_task = NULL;
 		libdm_control_close(libdm_control_fd);
 
 		return error;
@@ -177,8 +175,6 @@ libdm_task_run(libdm_task_t libdm_task)
 	error = prop_dictionary_sendrecv_ioctl(libdm_task->ldm_task,
 	    libdm_control_fd, NETBSD_DM_IOCTL, &dict);
 	if ( error != 0) {
-		libdm_task_destroy(libdm_task);
-		libdm_task = NULL;
 		libdm_control_close(libdm_control_fd);
 		return error;
 	}

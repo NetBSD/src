@@ -500,7 +500,7 @@
 	  </p>
 	</dd>
 <dt><span class="term"><strong class="userinput"><code>nta
-	[<span class="optional">( -d | -f | -r | -l <em class="replaceable"><code>duration</code></em>)</span>]
+	    [<span class="optional">( -class <em class="replaceable"><code>class</code></em> | -dump | -force | -remove | -lifetime <em class="replaceable"><code>duration</code></em>)</span>]
 	<em class="replaceable"><code>domain</code></em>
 	[<span class="optional"><em class="replaceable"><code>view</code></em></span>]
 	</code></strong></span></dt>
@@ -548,7 +548,7 @@
 	    is equivalent to <code class="option">-remove</code>.
 	  </p>
 	  <p>
-	    If <code class="option">-dump</code> is used, any other arguments
+	    If the <code class="option">-dump</code> is used, any other arguments
 	    are ignored, and a list of existing NTAs is printed
 	    (note that this may include NTAs that are expired but
 	    have not yet been cleaned up).
@@ -566,9 +566,20 @@
 	    validated if the NTA were not present.
 	  </p>
 	  <p>
+	    The view class can be specified with <code class="option">-class</code>.
+	    The default is class <strong class="userinput"><code>IN</code></strong>, which is
+	    the only class for which DNSSEC is currently supported.
+	  </p>
+	  <p>
 	    All of these options can be shortened, i.e., to
 	    <code class="option">-l</code>, <code class="option">-r</code>, <code class="option">-d</code>,
-	    and <code class="option">-f</code>.
+	    <code class="option">-f</code>, and <code class="option">-c</code>.
+	  </p>
+	  <p>
+	    Unrecognized options are treated as errors. To reference
+	    a domain or view name that begins with a hyphen,
+	    use a double-hyphen on the command line to indicate the
+	    end of options.
 	  </p>
 	</dd>
 <dt><span class="term"><strong class="userinput"><code>querylog</code></strong> [<span class="optional"> on | off </span>] </span></dt>
@@ -918,11 +929,14 @@
 <dd>
 	  <p>
 	    Enable, disable, or check the current status of
-	    DNSSEC validation.
-	    Note <span class="command"><strong>dnssec-enable</strong></span> also needs to be
-	    set to <strong class="userinput"><code>yes</code></strong> or
-	    <strong class="userinput"><code>auto</code></strong> to be effective.
-	    It defaults to enabled.
+	    DNSSEC validation.  By default, validation is enabled.
+	    (Note that <span class="command"><strong>dnssec-enable</strong></span> must also be
+	    <strong class="userinput"><code>yes</code></strong> (the default value) for signatures
+	    to be returned along with validated data. If validation is
+	    enabled while <span class="command"><strong>dnssec-enable</strong></span> is set to
+	    <strong class="userinput"><code>no</code></strong>, the server will validate internally,
+	    but will not supply clients with the necessary records to allow
+	    validity to be confirmed.)
 	  </p>
 	</dd>
 <dt><span class="term"><strong class="userinput"><code>zonestatus <em class="replaceable"><code>zone</code></em> [<span class="optional"><em class="replaceable"><code>class</code></em> [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]</code></strong></span></dt>
@@ -1010,6 +1024,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

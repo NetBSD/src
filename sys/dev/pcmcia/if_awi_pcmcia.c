@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.46 2016/07/14 04:19:27 msaitoh Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.46.16.1 2019/01/18 08:50:42 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.46 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.46.16.1 2019/01/18 08:50:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,8 @@ awi_pcmcia_attach(device_t parent, device_t self, void *aux)
 		am79c930_chip_init(&sc->sc_chip, 0);
 
 	error = awi_pcmcia_enable(sc);
-        if (error)
-                goto fail;
+	if (error)
+		goto fail;
 	sc->sc_enabled = 1;
 
 	awi_read_bytes(sc, AWI_BANNER, sc->sc_banner, AWI_BANNER_LEN);

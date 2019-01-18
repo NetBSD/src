@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.15 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.16 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -37,6 +37,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	bind: Import version 9.10.5-P2. [christos 20170630]
 	sunxiemac(4): Add support for Allwinner Gigabit Ethernet (EMAC).
 		[jmcneill 20170701]
+	fsdb(8): Add "saveblks" command. [mrg 20170804]
 	wbsio(4): Add support for Winbond W83627DHG-P, W83627SF, W83627UHG,
 		W83667HGB, W83687THF, W83697UG,	Nuvoton NCT5104D, NCT6775,
 		NCT6779, NCT6791, NCT6792 and NCT6793. [msaitoh 20170707]
@@ -47,6 +48,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	lm(4): Add support for NCT5174D, NCT6775F, NCT6779D and NCT679[1235]D.
 		[msaitoh 20170711]
 	arm: Add support for NVIDIA Tegra X1 SoC. [jmcneill 20170720]
+	gzip(1): Add SIGINFO support. [mrg 20170804]
 	i386: Remove vm86. [maxv 20170812]
 	itesio(4): Add support IT8628E. [hauke 20170814]
 	ichsmb(4): Add support for Intel C3000. [msaitoh 20170817]
@@ -91,6 +93,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	gdb(1): Updated to 8.0.1.  [christos 20171128]
 	dhcpcd(8): Import dhcpcd-7.0.0-rc4. [roy 20171206]
 	ihidev(4), ims(4): Added drivers for i2c HID mice. [bouyer 20171210]
+	sparc: Fix time goes backwards. [mrg 20180112]
 	lua: Applied 6th bugfix to Lua 5.3.4 from lua.org/bugs.html.
 		[mbalmer 20171213]
 	sstk: Remove the "stack section size change" syscall [kamil 20171219]
@@ -150,6 +153,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	netpgp(3lua): Add Lua binding for libnetpgp(3). [sevan 20180429]
 	arm: Add support for Allwinner H6 SoC. [jmcneill 20180501]
 	dhcpcd: Import 7.0.4. [roy 20180502]
+	midiplay: Add -s option to send all sounds off. [mrg 20180503]
 	libbozohttpd(3): Add the embeddable version of bozohttpd [sevan 20180503]
 	bozohttpd(3lua): Add Lua binding for libbozohttpd(3lua) [sevan 20180503]
 	tzdata: Updated to 2017e. [kre 20180504]
@@ -196,6 +200,9 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	lua: Import version 5.3.5. [alnsn 20180804]
 	arm: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
 	kernel: Remove the n8 driver. [maya 20180808]
+	usb(4): Many fixes to abort issues fixed for all USB controllers.
+		[mrg/skrll/riastradh 20180809]
+	nullfs(4): Add 32-bit support. [mrg 20180811]
 	bind: Import version 9.12.2-P1. [christos 20180812]
 	arm: Add support for Rockchip RK3399 SoC. [jmcneill 20180812]
 	amd64: Randomize by default all the randomizable VM areas in the kernel.
@@ -223,6 +230,8 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Remove en(4). [maxv 20180906]
 	kernel: Remove the NATM code. [maxv 20180906]
 	libnv: Imported from FreeBSD [christos 20180908]
+	i915(4): Pull in support for KabyLake CPUs. [mrg 20180913]
+	usb(4): Handle most cases of early boot USB keyboard. [mrg 20180916]
 	rkpmic(4): Add support for Rockchip RK805 Power Management IC.
 		[jmcneill 20180920]
 	kernel: Remove the ISDN code, including daic(4), iavc(4), isic(4),
@@ -265,9 +274,37 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	amdtemp(4): Add support for AMD family 16h temperature sensors.
 		[is 20181213]
 	arm: Add support for NVIDIA Tegra X1 SoC SATA. [skrll 20181214]
+	httpd(8): Update to bozohttpd-20181215. [mrg 20181215]
 	kernel: Remove COMPAT_SVR4 and COMPAT_SVR4_32. [maxv 20181219]
 	sqlite3: Import 3.26.0. [christos 20181219]
 	network: Add SIOCSETHERCAP ioctl. [msaitoh 20181221]
 	byacc: Update to 20180609. [christos 20181223]
-	flex(1): Import flex-2.6.4 [christos 20181223]
-	threadpool(9): Added threadpool(9) API [thorpej 20181224]
+	flex(1): Import flex-2.6.4. [christos 20181223]
+	threadpool(9): Added threadpool(9) API. [thorpej 20181224]
+	systat(1): Extend vmstat display for better insight about bufcache.
+		[sevan 20181226]
+	arm: Support kernel crash dumps on 64 bit platforms.  [mrg 20181227]
+	kernel: Remove M_ALIGN, MH_ALIGN, M_COPY_PKTHDR and M_MOVE_PKTHDR.
+		[maxv 20181228]
+	cgdroot: Support mounting boot partition from a wedge labelled cgd.conf.
+		[alnsn 20181229]
+	kernel: Remove COMPAT_IBCS2. [maxv 20181229]
+	tzdata: Updated to 2018h. [kre 20181230]
+	evbmips: Enable support for "per-priority cyclical scan" buffer queue
+		strategy. [sevan 20181230]
+	tzdata: Updated to 2018i. [kre 20181231]
+	tzcode: Updated to 2018i. [christos 20181231]
+	binutils: Updated to FSF binutils 2.31.1.  [christos 20181231]
+	services(5), protocols(5): Pull iana-generated services and protocols
+	    [christos 20190103]
+	wpa: Import wpa_supplicant and hostapd 2.7. [christos 20190104]
+	acpi(4): Updated ACPICA to 20181213. [christos 20190104]
+	tmux(1): Imported 2.8. [christos 20190104]
+	TrouSerS: Import trousers-0.3.14 [christos 20190107]
+	tpm-tools: Import tpm-tools-1.3.9.1 [christos 20190107]
+	compiler-rt: Import compiler-rt r350590 LLVM sanitizers [kamil 20190108]
+	bind: Import version 9.13.2-P1. [christos 20190109]
+	crashme(9): Add framework for testing kernel crash dumps. [mrg 20190109]
+	sgimips: Import irisboot, yet another bootloader for pre-ARC sgimips
+		machines. Submitted by Naruaki Etomi via PR port-sgimips/53539.
+		[tsutsui 20190112]

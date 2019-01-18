@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.2.2.2 2018/09/06 06:55:11 pgoyette Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.2.2.3 2019/01/18 08:50:02 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -50,14 +52,6 @@
  */
 
 static isc_result_t
-parse_enum_or_other(cfg_parser_t *pctx, const cfg_type_t *enumtype,
-		    const cfg_type_t *othertype, cfg_obj_t **ret);
-
-static void
-doc_enum_or_other(cfg_printer_t *pctx, const cfg_type_t *enumtype,
-		  const cfg_type_t *othertype);
-
-static isc_result_t
 parse_keyvalue(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 static isc_result_t
@@ -82,23 +76,10 @@ doc_keyvalue(cfg_printer_t *pctx, const cfg_type_t *type);
 static void
 doc_optional_keyvalue(cfg_printer_t *pctx, const cfg_type_t *type);
 
-#ifdef HAVE_GEOIP
-static isc_result_t
-parse_geoip(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
-
-static void
-print_geoip(cfg_printer_t *pctx, const cfg_obj_t *obj);
-
-static void
-doc_geoip(cfg_printer_t *pctx, const cfg_type_t *type);
-#endif /* HAVE_GEOIP */
-
 static cfg_type_t cfg_type_acl;
-static cfg_type_t cfg_type_addrmatchelt;
-static cfg_type_t cfg_type_bracketed_aml;
 static cfg_type_t cfg_type_bracketed_dscpsockaddrlist;
 static cfg_type_t cfg_type_bracketed_namesockaddrkeylist;
-static cfg_type_t cfg_type_bracketed_sockaddrlist;
+static cfg_type_t cfg_type_bracketed_netaddrlist;
 static cfg_type_t cfg_type_bracketed_sockaddrnameportlist;
 static cfg_type_t cfg_type_controls;
 static cfg_type_t cfg_type_controls_sockaddr;
@@ -108,7 +89,7 @@ static cfg_type_t cfg_type_dlz;
 static cfg_type_t cfg_type_dnstap;
 static cfg_type_t cfg_type_dnstapoutput;
 static cfg_type_t cfg_type_dyndb;
-static cfg_type_t cfg_type_filter_aaaa;
+static cfg_type_t cfg_type_plugin;
 static cfg_type_t cfg_type_ixfrdifftype;
 static cfg_type_t cfg_type_key;
 static cfg_type_t cfg_type_logfile;
@@ -120,7 +101,6 @@ static cfg_type_t cfg_type_masterselement;
 static cfg_type_t cfg_type_maxttl;
 static cfg_type_t cfg_type_minimal;
 static cfg_type_t cfg_type_nameportiplist;
-static cfg_type_t cfg_type_negated;
 static cfg_type_t cfg_type_notifytype;
 static cfg_type_t cfg_type_optional_allow;
 static cfg_type_t cfg_type_optional_class;
@@ -132,6 +112,7 @@ static cfg_type_t cfg_type_optional_uint32;
 static cfg_type_t cfg_type_options;
 static cfg_type_t cfg_type_portiplist;
 static cfg_type_t cfg_type_printtime;
+static cfg_type_t cfg_type_qminmethod;
 static cfg_type_t cfg_type_querysource4;
 static cfg_type_t cfg_type_querysource6;
 static cfg_type_t cfg_type_querysource;
@@ -322,9 +303,10 @@ doc_matchname(cfg_printer_t *pctx, const cfg_type_t *type) {
 }
 
 static const char *matchtype_enums[] = {
-	"6to4-self", "external", "krb5-self", "krb5-subdomain", "ms-self",
-	"ms-subdomain", "name", "self", "selfsub", "selfwild", "subdomain",
-	"tcp-self", "wildcard", "zonesub", NULL
+	"6to4-self", "external", "krb5-self", "krb5-selfsub",
+	"krb5-subdomain", "ms-self", "ms-selfsub", "ms-subdomain",
+	"name", "self", "selfsub", "selfwild", "subdomain", "tcp-self",
+	"wildcard", "zonesub", NULL
 };
 
 static cfg_type_t cfg_type_matchtype = {
@@ -527,7 +509,9 @@ static cfg_type_t cfg_type_rrsetorderingelement = {
  * "check-names" option has a different syntax.
  */
 
-static const char *checktype_enums[] = { "master", "slave", "response", NULL };
+static const char *checktype_enums[] = {
+	"primary", "master", "secondary", "slave", "response", NULL
+};
 static cfg_type_t cfg_type_checktype = {
 	"checktype", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
 	&cfg_rep_string, &checktype_enums
@@ -562,10 +546,10 @@ static cfg_type_t cfg_type_bracketed_dscpsockaddrlist = {
 	&cfg_type_sockaddrdscp
 };
 
-static cfg_type_t cfg_type_bracketed_sockaddrlist = {
-	"bracketed_sockaddrlist", cfg_parse_bracketed_list,
+static cfg_type_t cfg_type_bracketed_netaddrlist = {
+	"bracketed_netaddrlist", cfg_parse_bracketed_list,
 	cfg_print_bracketed_list, cfg_doc_bracketed_list, &cfg_rep_list,
-	&cfg_type_sockaddr
+	&cfg_type_netaddr
 };
 
 static const char *autodnssec_enums[] = {
@@ -602,11 +586,11 @@ static cfg_type_t cfg_type_updatemethod = {
 static const char *zonestat_enums[] = { "full", "terse", "none", NULL };
 static isc_result_t
 parse_zonestat(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
 static void
 doc_zonestat(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_boolean);
 }
 static cfg_type_t cfg_type_zonestat = {
 	"zonestat", parse_zonestat, cfg_print_ustring, doc_zonestat,
@@ -664,8 +648,9 @@ static cfg_type_t cfg_type_forwardtype = {
 };
 
 static const char *zonetype_enums[] = {
-	"delegation-only", "forward", "hint", "master", "redirect",
-	"slave", "static-stub", "stub", NULL
+	"primary", "master", "secondary", "slave", "mirror",
+	"delegation-only", "forward", "hint", "redirect",
+	"static-stub", "stub", NULL
 };
 static cfg_type_t cfg_type_zonetype = {
 	"zonetype", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
@@ -811,7 +796,7 @@ parse_serverid(cfg_parser_t *pctx, const cfg_type_t *type,
 	    strcasecmp(TOKEN_STRING(pctx), "hostname") == 0) {
 		result = cfg_create_obj(pctx, &cfg_type_hostname, ret);
 		if (result == ISC_R_SUCCESS)
-			(*ret)->value.boolean = ISC_TRUE;
+			(*ret)->value.boolean = true;
 		return (result);
 	}
 	cfg_ungettoken(pctx);
@@ -946,7 +931,7 @@ static isc_result_t
 parse_optional_enum(cfg_parser_t *pctx, const cfg_type_t *type,
 		    cfg_obj_t **ret)
 {
-	return (parse_enum_or_other(pctx, type, &cfg_type_void, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_void, ret));
 }
 
 static void
@@ -1002,6 +987,7 @@ namedconf_or_view_clauses[] = {
 	{ "dyndb", &cfg_type_dyndb, CFG_CLAUSEFLAG_MULTI },
 	{ "key", &cfg_type_key, CFG_CLAUSEFLAG_MULTI },
 	{ "managed-keys", &cfg_type_managedkeys, CFG_CLAUSEFLAG_MULTI },
+	{ "plugin", &cfg_type_plugin, CFG_CLAUSEFLAG_MULTI },
 	{ "server", &cfg_type_server, CFG_CLAUSEFLAG_MULTI },
 	{ "trusted-keys", &cfg_type_dnsseckeys, CFG_CLAUSEFLAG_MULTI },
 	{ "zone", &cfg_type_zone, CFG_CLAUSEFLAG_MULTI },
@@ -1065,7 +1051,7 @@ options_clauses[] = {
 	{ "fstrm-set-output-notify-threshold", &cfg_type_uint32, 0 },
 	{ "fstrm-set-output-queue-model", &cfg_type_fstrm_model, 0 },
 	{ "fstrm-set-output-queue-size", &cfg_type_uint32, 0 },
-	{ "fstrm-set-reopen-interval", &cfg_type_uint32, 0 },
+	{ "fstrm-set-reopen-interval", &cfg_type_ttlval, 0 },
 #else
 	{ "fstrm-set-buffer-hint", &cfg_type_uint32,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
@@ -1079,23 +1065,22 @@ options_clauses[] = {
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 	{ "fstrm-set-output-queue-size", &cfg_type_uint32,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
-	{ "fstrm-set-reopen-interval", &cfg_type_uint32,
+	{ "fstrm-set-reopen-interval", &cfg_type_ttlval,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif /* HAVE_DNSTAP */
 #ifdef HAVE_GEOIP
 	{ "geoip-directory", &cfg_type_qstringornone, 0 },
-	{ "geoip-use-ecs", &cfg_type_boolean, 0 },
 #else
 	{ "geoip-directory", &cfg_type_qstringornone,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
-	{ "geoip-use-ecs", &cfg_type_boolean, CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif /* HAVE_GEOIP */
+	{ "geoip-use-ecs", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "has-old-clients", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "heartbeat-interval", &cfg_type_uint32, 0 },
 	{ "host-statistics", &cfg_type_boolean, CFG_CLAUSEFLAG_NOTIMP },
 	{ "host-statistics-max", &cfg_type_uint32, CFG_CLAUSEFLAG_NOTIMP },
 	{ "hostname", &cfg_type_qstringornone, 0 },
-	{ "interface-interval", &cfg_type_uint32, 0 },
+	{ "interface-interval", &cfg_type_ttlval, 0 },
 	{ "keep-response-order", &cfg_type_bracketed_aml, 0 },
 	{ "listen-on", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
 	{ "listen-on-v6", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
@@ -1152,7 +1137,7 @@ options_clauses[] = {
 
 static cfg_type_t cfg_type_namelist = {
 	"namelist", cfg_parse_bracketed_list, cfg_print_bracketed_list,
-	cfg_doc_bracketed_list, &cfg_rep_list, &cfg_type_qstring
+	cfg_doc_bracketed_list, &cfg_rep_list, &cfg_type_astring
 };
 
 static keyword_type_t exclude_kw = { "exclude", &cfg_type_namelist };
@@ -1272,10 +1257,11 @@ static cfg_type_t cfg_type_resppadding = {
  *      ...
  *  }
  *
- *  ... where message type is one of: client, resolver, auth, forwarder, all
+ *  ... where message type is one of: client, resolver, auth, forwarder,
+ *                                    update, all
  */
 static const char *dnstap_types[] = {
-	"all", "auth", "client", "forwarder", "resolver", NULL
+	"all", "auth", "client", "forwarder", "resolver", "update", NULL
 };
 
 static const char *dnstap_modes[] = { "query", "response", NULL };
@@ -1585,7 +1571,7 @@ cfg_doc_kv_tuple(cfg_printer_t *pctx, const cfg_type_t *type) {
 	}
 }
 
-static keyword_type_t zone_kw = {"zone", &cfg_type_qstring};
+static keyword_type_t zone_kw = {"zone", &cfg_type_astring};
 static cfg_type_t cfg_type_rpz_zone = {
 	"zone", parse_keyvalue, print_keyvalue,
 	doc_keyvalue, &cfg_rep_string,
@@ -1621,8 +1607,8 @@ static cfg_type_t cfg_type_rpz_policy = {
 static cfg_tuplefielddef_t rpz_zone_fields[] = {
 	{ "zone name", &cfg_type_rpz_zone, 0 },
 	{ "log", &cfg_type_boolean, 0 },
-	{ "max-policy-ttl", &cfg_type_uint32, 0 },
-	{ "min-update-interval", &cfg_type_uint32, 0 },
+	{ "max-policy-ttl", &cfg_type_ttlval, 0 },
+	{ "min-update-interval", &cfg_type_ttlval, 0 },
 	{ "policy", &cfg_type_rpz_policy, 0 },
 	{ "recursive-only", &cfg_type_boolean, 0 },
 	{ "nsip-enable", &cfg_type_boolean, 0 },
@@ -1642,8 +1628,8 @@ static cfg_type_t cfg_type_rpz_list = {
 static cfg_tuplefielddef_t rpz_fields[] = {
 	{ "zone list", &cfg_type_rpz_list, 0 },
 	{ "break-dnssec", &cfg_type_boolean, 0 },
-	{ "max-policy-ttl", &cfg_type_uint32, 0 },
-	{ "min-update-interval", &cfg_type_uint32, 0 },
+	{ "max-policy-ttl", &cfg_type_ttlval, 0 },
+	{ "min-update-interval", &cfg_type_ttlval, 0 },
 	{ "min-ns-dots", &cfg_type_uint32, 0 },
 	{ "nsip-wait-recurse", &cfg_type_boolean, 0 },
 	{ "qname-wait-recurse", &cfg_type_boolean, 0 },
@@ -1680,7 +1666,7 @@ static cfg_tuplefielddef_t catz_zone_fields[] = {
 	{ "default-masters", &cfg_type_namesockaddrkeylist, 0 },
 	{ "zone-directory", &cfg_type_qstring, 0 },
 	{ "in-memory", &cfg_type_boolean, 0 },
-	{ "min-update-interval", &cfg_type_uint32, 0 },
+	{ "min-update-interval", &cfg_type_ttlval, 0 },
 	{ NULL, NULL, 0 }
 };
 static cfg_type_t cfg_type_catz_tuple = {
@@ -1902,9 +1888,9 @@ view_clauses[] = {
 	{ "fetch-quota-params", &cfg_type_fetchquota, 0 },
 	{ "fetches-per-server", &cfg_type_fetchesper, 0 },
 	{ "fetches-per-zone", &cfg_type_fetchesper, 0 },
-	{ "filter-aaaa", &cfg_type_bracketed_aml, 0 },
-	{ "filter-aaaa-on-v4", &cfg_type_filter_aaaa, 0 },
-	{ "filter-aaaa-on-v6", &cfg_type_filter_aaaa, 0 },
+	{ "filter-aaaa", &cfg_type_bracketed_aml, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "filter-aaaa-on-v4", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE  },
+	{ "filter-aaaa-on-v6", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE  },
 	{ "glue-cache", &cfg_type_boolean, 0 },
 	{ "ixfr-from-differences", &cfg_type_ixfrdifftype, 0 },
 	{ "lame-ttl", &cfg_type_ttlval, 0 },
@@ -1916,14 +1902,16 @@ view_clauses[] = {
 	{ "max-acache-size", &cfg_type_sizenodefault,
 	  CFG_CLAUSEFLAG_OBSOLETE },
 	{ "max-cache-size", &cfg_type_sizeorpercent, 0 },
-	{ "max-cache-ttl", &cfg_type_uint32, 0 },
+	{ "max-cache-ttl", &cfg_type_ttlval, 0 },
 	{ "max-clients-per-query", &cfg_type_uint32, 0 },
-	{ "max-ncache-ttl", &cfg_type_uint32, 0 },
+	{ "max-ncache-ttl", &cfg_type_ttlval, 0 },
 	{ "max-recursion-depth", &cfg_type_uint32, 0 },
 	{ "max-recursion-queries", &cfg_type_uint32, 0 },
 	{ "max-stale-ttl", &cfg_type_ttlval, 0 },
 	{ "max-udp-size", &cfg_type_uint32, 0 },
 	{ "message-compression", &cfg_type_boolean, 0 },
+	{ "min-cache-ttl", &cfg_type_ttlval, 0 },
+	{ "min-ncache-ttl", &cfg_type_ttlval, 0 },
 	{ "min-roots", &cfg_type_uint32, CFG_CLAUSEFLAG_NOTIMP },
 	{ "minimal-any", &cfg_type_boolean, 0 },
 	{ "minimal-responses", &cfg_type_minimal, 0 },
@@ -1937,6 +1925,7 @@ view_clauses[] = {
 	{ "preferred-glue", &cfg_type_astring, 0 },
 	{ "prefetch", &cfg_type_prefetch, 0 },
 	{ "provide-ixfr", &cfg_type_boolean, 0 },
+	{ "qname-minimization", &cfg_type_qminmethod, 0 },
 	/*
 	 * Note that the query-source option syntax is different
 	 * from the other -source options.
@@ -1972,6 +1961,7 @@ view_clauses[] = {
 	{ "trust-anchor-telemetry", &cfg_type_boolean,
 	  CFG_CLAUSEFLAG_EXPERIMENTAL },
 	{ "use-queryport-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "validate-except", &cfg_type_namelist, 0 },
 	{ "v6-bias", &cfg_type_uint32, 0 },
 	{ "zero-no-soa-ttl-cache", &cfg_type_boolean, 0 },
 	{ NULL, NULL, 0 }
@@ -2013,33 +2003,33 @@ static cfg_type_t cfg_type_validityinterval = {
 static cfg_clausedef_t
 zone_clauses[] = {
 	{ "allow-notify", &cfg_type_bracketed_aml,
-		CFG_ZONE_SLAVE
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "allow-query", &cfg_type_bracketed_aml,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
-		CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
+		CFG_ZONE_STUB | CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB
 	},
 	{ "allow-query-on", &cfg_type_bracketed_aml,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
-		CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
+		CFG_ZONE_STUB | CFG_ZONE_REDIRECT | CFG_ZONE_STATICSTUB
 	},
 	{ "allow-transfer", &cfg_type_bracketed_aml,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "allow-update", &cfg_type_bracketed_aml,
 		CFG_ZONE_MASTER
 	},
 	{ "allow-update-forwarding", &cfg_type_bracketed_aml,
-		CFG_ZONE_SLAVE
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "also-notify", &cfg_type_namesockaddrkeylist,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "alt-transfer-source", &cfg_type_sockaddr4wild,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "alt-transfer-source-v6", &cfg_type_sockaddr6wild,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "auto-dnssec", &cfg_type_autodnssec,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
@@ -2101,64 +2091,64 @@ zone_clauses[] = {
 		CFG_CLAUSEFLAG_OBSOLETE
 	},
 	{ "masterfile-format", &cfg_type_masterformat,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE |
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
 		CFG_ZONE_STUB | CFG_ZONE_REDIRECT
 	},
 	{ "masterfile-style", &cfg_type_masterstyle,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE |
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
 		CFG_ZONE_STUB | CFG_ZONE_REDIRECT
 	},
 	{ "max-ixfr-log-size", &cfg_type_size,
 		CFG_CLAUSEFLAG_OBSOLETE
 	},
 	{ "max-journal-size", &cfg_type_size,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "max-records", &cfg_type_uint32,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
-		CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
+		CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT
 	},
 	{ "max-refresh-time", &cfg_type_uint32,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "max-retry-time", &cfg_type_uint32,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "max-transfer-idle-in", &cfg_type_uint32,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "max-transfer-idle-out", &cfg_type_uint32,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_MIRROR | CFG_ZONE_SLAVE
 	},
 	{ "max-transfer-time-in", &cfg_type_uint32,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "max-transfer-time-out", &cfg_type_uint32,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_MIRROR | CFG_ZONE_SLAVE
 	},
 	{ "max-zone-ttl", &cfg_type_maxttl,
 		CFG_ZONE_MASTER | CFG_ZONE_REDIRECT
 	},
 	{ "min-refresh-time", &cfg_type_uint32,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "min-retry-time", &cfg_type_uint32,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "multi-master", &cfg_type_boolean,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "notify", &cfg_type_notifytype,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "notify-delay", &cfg_type_uint32,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "notify-source", &cfg_type_sockaddr4wild,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "notify-source-v6", &cfg_type_sockaddr6wild,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "notify-to-soa", &cfg_type_boolean,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
@@ -2168,10 +2158,10 @@ zone_clauses[] = {
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
 	},
 	{ "request-expire", &cfg_type_boolean,
-		CFG_ZONE_SLAVE
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "request-ixfr", &cfg_type_boolean,
-		CFG_ZONE_SLAVE
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "serial-update-method", &cfg_type_updatemethod,
 		CFG_ZONE_MASTER
@@ -2188,27 +2178,30 @@ zone_clauses[] = {
 	{ "sig-validity-interval", &cfg_type_validityinterval,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
 	},
+	{ "dnskey-sig-validity", &cfg_type_uint32,
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+	},
 	{ "transfer-source", &cfg_type_sockaddr4wild,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "transfer-source-v6", &cfg_type_sockaddr6wild,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "try-tcp-refresh", &cfg_type_boolean,
-		CFG_ZONE_SLAVE
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "update-check-ksk", &cfg_type_boolean,
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
 	},
 	{ "use-alt-transfer-source", &cfg_type_boolean,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB
 	},
 	{ "zero-no-soa-ttl", &cfg_type_boolean,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "zone-statistics", &cfg_type_zonestat,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
-		CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
+		CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_REDIRECT
 	},
 	{ NULL, NULL, 0 }
 };
@@ -2226,16 +2219,17 @@ zone_only_clauses[] = {
 	 * the zone options and the global/view options.  Ugh.
 	 */
 	{ "type", &cfg_type_zonetype,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
-		CFG_ZONE_STATICSTUB | CFG_ZONE_DELEGATION | CFG_ZONE_HINT |
-		CFG_ZONE_REDIRECT | CFG_ZONE_FORWARD
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
+		CFG_ZONE_STUB | CFG_ZONE_STATICSTUB | CFG_ZONE_DELEGATION |
+		CFG_ZONE_HINT | CFG_ZONE_REDIRECT | CFG_ZONE_FORWARD
 	},
 	{ "check-names", &cfg_type_checkmode,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE |
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
 		CFG_ZONE_HINT | CFG_ZONE_STUB
 	},
 	{ "database", &cfg_type_astring,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
+		CFG_ZONE_STUB
 	},
 	{ "delegation-only", &cfg_type_boolean,
 		CFG_ZONE_HINT | CFG_ZONE_STUB | CFG_ZONE_FORWARD
@@ -2244,8 +2238,8 @@ zone_only_clauses[] = {
 		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_REDIRECT
 	},
 	{ "file", &cfg_type_qstring,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_STUB |
-		CFG_ZONE_HINT | CFG_ZONE_REDIRECT
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR |
+		CFG_ZONE_STUB | CFG_ZONE_HINT | CFG_ZONE_REDIRECT
 	},
 	{ "in-view", &cfg_type_astring,
 		CFG_ZONE_INVIEW
@@ -2254,21 +2248,22 @@ zone_only_clauses[] = {
 		CFG_CLAUSEFLAG_OBSOLETE
 	},
 	{ "ixfr-from-differences", &cfg_type_boolean,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "ixfr-tmp-file", &cfg_type_qstring,
 		CFG_CLAUSEFLAG_OBSOLETE
 	},
 	{ "journal", &cfg_type_qstring,
-		CFG_ZONE_MASTER | CFG_ZONE_SLAVE
+		CFG_ZONE_MASTER | CFG_ZONE_SLAVE | CFG_ZONE_MIRROR
 	},
 	{ "masters", &cfg_type_namesockaddrkeylist,
-		CFG_ZONE_SLAVE | CFG_ZONE_STUB | CFG_ZONE_REDIRECT
+		CFG_ZONE_SLAVE | CFG_ZONE_MIRROR | CFG_ZONE_STUB |
+		CFG_ZONE_REDIRECT
 	},
 	{ "pubkey", &cfg_type_pubkey,
 		CFG_CLAUSEFLAG_MULTI | CFG_CLAUSEFLAG_OBSOLETE
 	},
-	{ "server-addresses", &cfg_type_bracketed_sockaddrlist,
+	{ "server-addresses", &cfg_type_bracketed_netaddrlist,
 		CFG_ZONE_STATICSTUB
 	},
 	{ "server-names", &cfg_type_namelist,
@@ -2381,6 +2376,29 @@ static cfg_type_t cfg_type_dyndb = {
 };
 
 /*%
+ * The "plugin" statement syntax.
+ * Currently only one plugin type is supported: query.
+ */
+
+static const char *plugin_enums[] = {
+	"query", NULL
+};
+static cfg_type_t cfg_type_plugintype = {
+	"plugintype", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
+	&cfg_rep_string, plugin_enums
+};
+static cfg_tuplefielddef_t plugin_fields[] = {
+	{ "type", &cfg_type_plugintype, 0 },
+	{ "library", &cfg_type_astring, 0 },
+	{ "parameters", &cfg_type_optional_bracketed_text, 0 },
+	{ NULL, NULL, 0 }
+};
+static cfg_type_t cfg_type_plugin = {
+	"plugin", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+	 &cfg_rep_tuple, plugin_fields
+};
+
+/*%
  * Clauses that can be found within the 'key' statement.
  */
 static cfg_clausedef_t
@@ -2456,11 +2474,11 @@ static const char *printtime_enums[] = {
 };
 static isc_result_t
 parse_printtime(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
 static void
 doc_printtime(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_boolean);
 }
 static cfg_type_t cfg_type_printtime = {
 	"printtime", parse_printtime, cfg_print_ustring, doc_printtime,
@@ -2550,10 +2568,10 @@ static isc_result_t
 parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
 	char *endp;
 	unsigned int len;
-	isc_uint64_t value;
-	isc_uint64_t unit;
+	uint64_t value;
+	uint64_t unit;
 
-	value = isc_string_touint64(str, &endp, 10);
+	value = strtoull(str, &endp, 10);
 	if (*endp == 0) {
 		*valuep = value;
 		return (ISC_R_SUCCESS);
@@ -2579,7 +2597,7 @@ parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
 	default:
 		return (ISC_R_FAILURE);
 	}
-	if (value > ISC_UINT64_MAX / unit)
+	if (value > UINT64_MAX / unit)
 		return (ISC_R_FAILURE);
 	*valuep = value * unit;
 	return (ISC_R_SUCCESS);
@@ -2589,7 +2607,7 @@ static isc_result_t
 parse_sizeval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
-	isc_uint64_t val;
+	uint64_t val;
 
 	UNUSED(type);
 
@@ -2618,8 +2636,8 @@ parse_sizeval_percent(cfg_parser_t *pctx, const cfg_type_t *type,
 	char *endp;
 	isc_result_t  result;
 	cfg_obj_t *obj = NULL;
-	isc_uint64_t val;
-	isc_uint64_t percent;
+	uint64_t val;
+	uint64_t percent;
 
 	UNUSED(type);
 
@@ -2629,11 +2647,11 @@ parse_sizeval_percent(cfg_parser_t *pctx, const cfg_type_t *type,
 		goto cleanup;
 	}
 
-	percent = isc_string_touint64(TOKEN_STRING(pctx), &endp, 10);
+	percent = strtoull(TOKEN_STRING(pctx), &endp, 10);
 
 	if (*endp == '%' && *(endp+1) == 0) {
 		CHECK(cfg_create_obj(pctx, &cfg_type_percentage, &obj));
-		obj->value.uint32 = (isc_uint32_t)percent;
+		obj->value.uint32 = (uint32_t)percent;
 		*ret = obj;
 		return (ISC_R_SUCCESS);
 	} else {
@@ -2676,12 +2694,12 @@ static cfg_type_t cfg_type_sizeval = {
 
 static isc_result_t
 parse_size(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_enum_or_other(pctx, type, &cfg_type_sizeval, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_sizeval, ret));
 }
 
 static void
 doc_size(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_sizeval);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_sizeval);
 }
 
 static const char *size_enums[] = { "default", "unlimited", NULL };
@@ -2715,13 +2733,18 @@ static isc_result_t
 parse_size_or_percent(cfg_parser_t *pctx, const cfg_type_t *type,
 		      cfg_obj_t **ret)
 {
-	return (parse_enum_or_other(pctx, type, &cfg_type_sizeval_percent,
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_sizeval_percent,
 				    ret));
 }
 
 static void
 doc_parse_size_or_percent(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_sizeval_percent);
+	UNUSED(type);
+	cfg_print_cstr(pctx, "( default | unlimited | ");
+	cfg_doc_terminal(pctx, &cfg_type_sizeval);
+	cfg_print_cstr(pctx, " | ");
+	cfg_doc_terminal(pctx, &cfg_type_percentage);
+	cfg_print_cstr(pctx, " )");
 }
 
 static const char *sizeorpercent_enums[] = { "default", "unlimited", NULL };
@@ -2735,7 +2758,7 @@ static cfg_type_t cfg_type_sizeorpercent = {
  */
 static isc_result_t
 parse_maybe_optional_keyvalue(cfg_parser_t *pctx, const cfg_type_t *type,
-			      isc_boolean_t optional, cfg_obj_t **ret)
+			      bool optional, cfg_obj_t **ret)
 {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
@@ -2763,68 +2786,15 @@ parse_maybe_optional_keyvalue(cfg_parser_t *pctx, const cfg_type_t *type,
 }
 
 static isc_result_t
-parse_enum_or_other(cfg_parser_t *pctx, const cfg_type_t *enumtype,
-		    const cfg_type_t *othertype, cfg_obj_t **ret)
-{
-	isc_result_t result;
-	CHECK(cfg_peektoken(pctx, 0));
-	if (pctx->token.type == isc_tokentype_string &&
-	    cfg_is_enum(TOKEN_STRING(pctx), enumtype->of)) {
-		CHECK(cfg_parse_enum(pctx, enumtype, ret));
-	} else {
-		CHECK(cfg_parse_obj(pctx, othertype, ret));
-	}
- cleanup:
-	return (result);
-}
-
-static void
-doc_enum_or_other(cfg_printer_t *pctx, const cfg_type_t *enumtype,
-		  const cfg_type_t *othertype)
-{
-	const char * const *p;
-	isc_boolean_t first = ISC_TRUE;
-
-	/*
-	 * If othertype is cfg_type_void, it means that enumtype is
-	 * optional.
-	 */
-
-	if (othertype == &cfg_type_void)
-		cfg_print_cstr(pctx, "[ ");
-	cfg_print_cstr(pctx, "( ");
-	for (p = enumtype->of; *p != NULL; p++) {
-		if (!first)
-			cfg_print_cstr(pctx, " | ");
-		first = ISC_FALSE;
-		cfg_print_cstr(pctx, *p);
-	}
-	if (othertype == &cfg_type_sizeval_percent) {
-		if (!first)
-			cfg_print_cstr(pctx, " | ");
-		cfg_doc_terminal(pctx, &cfg_type_sizeval);
-		cfg_print_cstr(pctx, " | ");
-		cfg_doc_terminal(pctx, &cfg_type_percentage);
-	} else if (othertype != &cfg_type_void) {
-		if (!first)
-			cfg_print_cstr(pctx, " | ");
-		cfg_doc_terminal(pctx, othertype);
-	}
-	cfg_print_cstr(pctx, " )");
-	if (othertype == &cfg_type_void)
-		cfg_print_cstr(pctx, " ]");
-}
-
-static isc_result_t
 parse_keyvalue(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_maybe_optional_keyvalue(pctx, type, ISC_FALSE, ret));
+	return (parse_maybe_optional_keyvalue(pctx, type, false, ret));
 }
 
 static isc_result_t
 parse_optional_keyvalue(cfg_parser_t *pctx, const cfg_type_t *type,
 			cfg_obj_t **ret)
 {
-	return (parse_maybe_optional_keyvalue(pctx, type, ISC_TRUE, ret));
+	return (parse_maybe_optional_keyvalue(pctx, type, true, ret));
 }
 
 static void
@@ -2860,11 +2830,11 @@ static isc_result_t
 parse_dialup_type(cfg_parser_t *pctx, const cfg_type_t *type,
 		  cfg_obj_t **ret)
 {
-	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
 static void
 doc_dialup_type(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_boolean);
 }
 static cfg_type_t cfg_type_dialuptype = {
 	"dialuptype", parse_dialup_type, cfg_print_ustring, doc_dialup_type,
@@ -2876,11 +2846,11 @@ static isc_result_t
 parse_notify_type(cfg_parser_t *pctx, const cfg_type_t *type,
 		  cfg_obj_t **ret)
 {
-	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
 static void
 doc_notify_type(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_boolean);
 }
 static cfg_type_t cfg_type_notifytype = {
 	"notifytype", parse_notify_type, cfg_print_ustring, doc_notify_type,
@@ -2890,46 +2860,33 @@ static cfg_type_t cfg_type_notifytype = {
 static const char *minimal_enums[] = { "no-auth", "no-auth-recursive", NULL };
 static isc_result_t
 parse_minimal(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
 static void
 doc_minimal(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_boolean);
 }
 static cfg_type_t cfg_type_minimal = {
 	"mimimal", parse_minimal, cfg_print_ustring, doc_minimal,
 	&cfg_rep_string, minimal_enums,
 };
 
-static const char *ixfrdiff_enums[] = { "master", "slave", NULL };
+static const char *ixfrdiff_enums[] = {
+	"primary", "master", "secondary", "slave", NULL
+};
 static isc_result_t
 parse_ixfrdiff_type(cfg_parser_t *pctx, const cfg_type_t *type,
 		    cfg_obj_t **ret)
 {
-	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
 static void
 doc_ixfrdiff_type(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_boolean);
 }
 static cfg_type_t cfg_type_ixfrdifftype = {
 	"ixfrdiff", parse_ixfrdiff_type, cfg_print_ustring, doc_ixfrdiff_type,
 	&cfg_rep_string, ixfrdiff_enums,
-};
-
-static const char *filter_aaaa_enums[] = { "break-dnssec", NULL };
-static isc_result_t
-parse_filter_aaaa(cfg_parser_t *pctx, const cfg_type_t *type,
-		     cfg_obj_t **ret) {
-	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
-}
-static void
-doc_filter_aaaa(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_boolean);
-}
-static cfg_type_t cfg_type_filter_aaaa = {
-	"filter_aaaa", parse_filter_aaaa, cfg_print_ustring,
-	doc_filter_aaaa, &cfg_rep_string, filter_aaaa_enums,
 };
 
 static keyword_type_t key_kw = { "key", &cfg_type_astring };
@@ -2944,110 +2901,13 @@ static cfg_type_t cfg_type_optional_keyref = {
 	doc_optional_keyvalue, &cfg_rep_string, &key_kw
 };
 
-#ifdef HAVE_GEOIP
-/*
- * "geoip" ACL element:
- * geoip [ db <database> ] search-type <string>
- */
-static const char *geoiptype_enums[] = {
-	"area", "areacode", "asnum", "city", "continent", "country",
-	"country3", "countryname", "domain", "isp", "metro", "metrocode",
-	"netspeed", "org", "postal", "postalcode", "region", "regionname",
-	"timezone", "tz", NULL
-};
-static cfg_type_t cfg_type_geoiptype = {
-	"geoiptype", cfg_parse_enum, cfg_print_ustring,
-	cfg_doc_enum, &cfg_rep_string, &geoiptype_enums
+static const char *qminmethod_enums[] = {
+	"strict", "relaxed", "disabled", "off", NULL
 };
 
-static const char *geoipdb_enums[] = {
-	"asnum", "city", "country", "domain", "isp", "netspeed",
-	"org", "region", NULL
-};
-static cfg_type_t cfg_type_geoipdb = {
-	"geoipdb", cfg_parse_enum, cfg_print_ustring,
-	cfg_doc_enum, &cfg_rep_string, &geoipdb_enums
-};
-
-static cfg_tuplefielddef_t geoip_fields[] = {
-	{ "negated", &cfg_type_void, 0 },
-	{ "db", &cfg_type_geoipdb, 0 },
-	{ "subtype", &cfg_type_geoiptype, 0 },
-	{ "search", &cfg_type_astring, 0 },
-	{ NULL, NULL, 0 }
-};
-
-static cfg_type_t cfg_type_geoip = {
-	"geoip", parse_geoip, print_geoip, doc_geoip,
-	&cfg_rep_tuple, geoip_fields
-};
-
-static isc_result_t
-parse_geoip(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
-	cfg_obj_t *obj = NULL;
-	const cfg_tuplefielddef_t *fields = type->of;
-
-	CHECK(cfg_create_tuple(pctx, type, &obj));
-	CHECK(cfg_parse_void(pctx, NULL, &obj->value.tuple[0]));
-
-	/* Parse the optional "db" field. */
-	CHECK(cfg_peektoken(pctx, 0));
-	if (pctx->token.type == isc_tokentype_string) {
-		CHECK(cfg_gettoken(pctx, 0));
-		if (strcasecmp(TOKEN_STRING(pctx), "db") == 0 &&
-		    obj->value.tuple[1] == NULL) {
-			CHECK(cfg_parse_obj(pctx, fields[1].type,
-				    &obj->value.tuple[1]));
-		} else {
-			CHECK(cfg_parse_void(pctx, NULL,
-					     &obj->value.tuple[1]));
-			cfg_ungettoken(pctx);
-		}
-	}
-
-	CHECK(cfg_parse_obj(pctx, fields[2].type, &obj->value.tuple[2]));
-	CHECK(cfg_parse_obj(pctx, fields[3].type, &obj->value.tuple[3]));
-
-	*ret = obj;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	CLEANUP_OBJ(obj);
-	return (result);
-}
-
-static void
-print_geoip(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	if (obj->value.tuple[1]->type->print != cfg_print_void) {
-		cfg_print_cstr(pctx, " db ");
-		cfg_print_obj(pctx, obj->value.tuple[1]);
-	}
-	cfg_print_obj(pctx, obj->value.tuple[2]);
-	cfg_print_obj(pctx, obj->value.tuple[3]);
-}
-
-static void
-doc_geoip(cfg_printer_t *pctx, const cfg_type_t *type) {
-	UNUSED(type);
-	cfg_print_cstr(pctx, "[ db ");
-	cfg_doc_enum(pctx, &cfg_type_geoipdb);
-	cfg_print_cstr(pctx, " ]");
-	cfg_print_cstr(pctx, " ");
-	cfg_doc_enum(pctx, &cfg_type_geoiptype);
-	cfg_print_cstr(pctx, " ");
-	cfg_print_cstr(pctx, "<quoted_string>");
-}
-#endif /* HAVE_GEOIP */
-
-/*%
- * An EDNS client subnet address
- */
-
-static keyword_type_t ecs_kw = { "ecs", &cfg_type_netprefix };
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_ecsprefix = {
-	"edns_client_subnet", parse_keyvalue, print_keyvalue, doc_keyvalue,
-	&cfg_rep_netprefix, &ecs_kw
+static cfg_type_t cfg_type_qminmethod = {
+	"qminmethod", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
+	&cfg_rep_string, qminmethod_enums
 };
 
 /*%
@@ -3249,12 +3109,14 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type,
 	unsigned int have_dscp = 0;
 	const unsigned int *flagp = type->of;
 
-	if ((*flagp & CFG_ADDR_V4OK) != 0)
+	if ((*flagp & CFG_ADDR_V4OK) != 0) {
 		isc_netaddr_any(&netaddr);
-	else if ((*flagp & CFG_ADDR_V6OK) != 0)
+	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		isc_netaddr_any6(&netaddr);
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
 	for (;;) {
 		CHECK(cfg_peektoken(pctx, 0));
@@ -3336,20 +3198,24 @@ doc_querysource(cfg_printer_t *pctx, const cfg_type_t *type) {
 	const unsigned int *flagp = type->of;
 
 	cfg_print_cstr(pctx, "( ( [ address ] ( ");
-	if (*flagp & CFG_ADDR_V4OK)
+	if ((*flagp & CFG_ADDR_V4OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv4_address>");
-	else if (*flagp & CFG_ADDR_V6OK)
+	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv6_address>");
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 	cfg_print_cstr(pctx, " | * ) [ port ( <integer> | * ) ] ) | "
 		       "( [ [ address ] ( ");
-	if (*flagp & CFG_ADDR_V4OK)
+	if ((*flagp & CFG_ADDR_V4OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv4_address>");
-	else if (*flagp & CFG_ADDR_V6OK)
+	} else if ((*flagp & CFG_ADDR_V6OK) != 0) {
 		cfg_print_cstr(pctx, "<ipv6_address>");
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 	cfg_print_cstr(pctx, " | * ) ] port ( <integer> | * ) ) )"
 		       " [ dscp <integer> ]");
 }
@@ -3373,102 +3239,6 @@ static cfg_type_t cfg_type_querysource = {
 	"querysource", NULL, print_querysource, NULL, &cfg_rep_sockaddr, NULL
 };
 
-/*% addrmatchelt */
-
-static isc_result_t
-parse_addrmatchelt(cfg_parser_t *pctx, const cfg_type_t *type,
-		   cfg_obj_t **ret)
-{
-	isc_result_t result;
-	UNUSED(type);
-
-	CHECK(cfg_peektoken(pctx, CFG_LEXOPT_QSTRING));
-
-	if (pctx->token.type == isc_tokentype_string ||
-	    pctx->token.type == isc_tokentype_qstring) {
-		if (pctx->token.type == isc_tokentype_string &&
-		    (strcasecmp(TOKEN_STRING(pctx), "key") == 0)) {
-			CHECK(cfg_parse_obj(pctx, &cfg_type_keyref, ret));
-		} else if (pctx->token.type == isc_tokentype_string &&
-			   (strcasecmp(TOKEN_STRING(pctx), "ecs") == 0)) {
-			CHECK(cfg_parse_obj(pctx, &cfg_type_ecsprefix, ret));
-		} else if (pctx->token.type == isc_tokentype_string &&
-			   (strcasecmp(TOKEN_STRING(pctx), "geoip") == 0)) {
-#ifdef HAVE_GEOIP
-			CHECK(cfg_gettoken(pctx, 0));
-			CHECK(cfg_parse_obj(pctx, &cfg_type_geoip, ret));
-#else
-			cfg_parser_error(pctx, CFG_LOG_NEAR, "'geoip' "
-					 "not supported in this build");
-			return (ISC_R_UNEXPECTEDTOKEN);
-#endif
-		} else {
-			if (cfg_lookingat_netaddr(pctx, CFG_ADDR_V4OK |
-						  CFG_ADDR_V4PREFIXOK |
-						  CFG_ADDR_V6OK))
-			{
-				CHECK(cfg_parse_netprefix(pctx, NULL, ret));
-			} else {
-				CHECK(cfg_parse_astring(pctx, NULL, ret));
-			}
-		}
-	} else if (pctx->token.type == isc_tokentype_special) {
-		if (pctx->token.value.as_char == '{') {
-			/* Nested match list. */
-			CHECK(cfg_parse_obj(pctx,
-					    &cfg_type_bracketed_aml, ret));
-		} else if (pctx->token.value.as_char == '!') {
-			CHECK(cfg_gettoken(pctx, 0)); /* read "!" */
-			CHECK(cfg_parse_obj(pctx, &cfg_type_negated, ret));
-		} else {
-			goto bad;
-		}
-	} else {
-	bad:
-		cfg_parser_error(pctx, CFG_LOG_NEAR,
-			     "expected IP match list element");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
- cleanup:
-	return (result);
-}
-
-/*%
- * A negated address match list element (like "! 10.0.0.1").
- * Somewhat sneakily, the caller is expected to parse the
- * "!", but not to print it.
- */
-
-static cfg_tuplefielddef_t negated_fields[] = {
-	{ "negated", &cfg_type_addrmatchelt, 0 },
-	{ NULL, NULL, 0 }
-};
-
-static void
-print_negated(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	cfg_print_cstr(pctx, "!");
-	cfg_print_tuple(pctx, obj);
-}
-
-static cfg_type_t cfg_type_negated = {
-	"negated", cfg_parse_tuple, print_negated, NULL, &cfg_rep_tuple,
-	&negated_fields
-};
-
-/*% An address match list element */
-
-static cfg_type_t cfg_type_addrmatchelt = {
-	"address_match_element", parse_addrmatchelt, NULL, cfg_doc_terminal,
-	NULL, NULL
-};
-
-/*% A bracketed address match list */
-
-static cfg_type_t cfg_type_bracketed_aml = {
-	"bracketed_aml", cfg_parse_bracketed_list, cfg_print_bracketed_list,
-	cfg_doc_bracketed_list, &cfg_rep_list, &cfg_type_addrmatchelt
-};
-
 /*%
  * The socket address syntax in the "controls" statement is silly.
  * It allows both socket address families, but also allows "*",
@@ -3490,7 +3260,7 @@ parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type,
 			cfg_obj_t **ret)
 {
 	isc_result_t result;
-	isc_boolean_t braces = ISC_FALSE;
+	bool braces = false;
 	UNUSED(type);
 
 	/* Allow opening brace. */
@@ -3498,7 +3268,7 @@ parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type,
 	if (pctx->token.type == isc_tokentype_special &&
 	    pctx->token.value.as_char == '{') {
 		CHECK(cfg_gettoken(pctx, 0));
-		braces = ISC_TRUE;
+		braces = true;
 	}
 
 	CHECK(cfg_parse_obj(pctx, &cfg_type_astring, ret));
@@ -3613,12 +3383,12 @@ static isc_result_t
 parse_logversions(cfg_parser_t *pctx, const cfg_type_t *type,
 		  cfg_obj_t **ret)
 {
-	return (parse_enum_or_other(pctx, type, &cfg_type_uint32, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_uint32, ret));
 }
 
 static void
 doc_logversions(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_uint32);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_uint32);
 }
 
 static cfg_type_t cfg_type_logversions = {
@@ -3989,7 +3759,7 @@ static isc_result_t
 parse_ttlval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
-	isc_uint32_t ttl;
+	uint32_t ttl;
 
 	UNUSED(type);
 
@@ -4027,12 +3797,12 @@ static cfg_type_t cfg_type_ttlval = {
 
 static isc_result_t
 parse_maxttl(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_enum_or_other(pctx, type, &cfg_type_ttlval, ret));
+	return (cfg_parse_enum_or_other(pctx, type, &cfg_type_ttlval, ret));
 }
 
 static void
 doc_maxttl(cfg_printer_t *pctx, const cfg_type_t *type) {
-	doc_enum_or_other(pctx, type, &cfg_type_ttlval);
+	cfg_doc_enum_or_other(pctx, type, &cfg_type_ttlval);
 }
 
 /*%
@@ -4050,10 +3820,10 @@ static int cmp_clause(const void *ap, const void *bp) {
 	return (strcmp(a->name, b->name));
 }
 
-isc_boolean_t
+bool
 cfg_clause_validforzone(const char *name, unsigned int ztype) {
 	const cfg_clausedef_t *clause;
-	isc_boolean_t valid = ISC_FALSE;
+	bool valid = false;
 
 	for (clause = zone_clauses; clause->name != NULL; clause++) {
 		if ((clause->flags & ztype) == 0 ||
@@ -4061,7 +3831,7 @@ cfg_clause_validforzone(const char *name, unsigned int ztype) {
 		{
 			continue;
 		}
-		valid = ISC_TRUE;
+		valid = true;
 	}
 	for (clause = zone_only_clauses; clause->name != NULL; clause++) {
 		if ((clause->flags & ztype) == 0 ||
@@ -4069,7 +3839,7 @@ cfg_clause_validforzone(const char *name, unsigned int ztype) {
 		{
 			continue;
 		}
-		valid = ISC_TRUE;
+		valid = true;
 	}
 
 	return (valid);
@@ -4110,6 +3880,10 @@ cfg_print_zonegrammar(const unsigned int zonetype,
 		cfg_print_indent(&pctx);
 		cfg_print_cstr(&pctx, "type ( slave | secondary );\n");
 		break;
+	case CFG_ZONE_MIRROR:
+		cfg_print_indent(&pctx);
+		cfg_print_cstr(&pctx, "type mirror;\n");
+		break;
 	case CFG_ZONE_STUB:
 		cfg_print_indent(&pctx);
 		cfg_print_cstr(&pctx, "type stub;\n");
@@ -4139,6 +3913,7 @@ cfg_print_zonegrammar(const unsigned int zonetype,
 		break;
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 
 	for (clause = clauses; clause->name != NULL; clause++) {

@@ -578,7 +578,7 @@ obj_migdata_set_ma_pubkey(TSS_HMIGDATA hMigData, UINT32 blobSize, BYTE *pubKeyBl
 done:
 	obj_list_put(&migdata_list);
 
-	return TSS_SUCCESS;
+	return result;
 }
 
 TSS_RESULT
@@ -656,7 +656,7 @@ obj_migdata_set_dest_pubkey(TSS_HMIGDATA hMigData, UINT32 blobSize, BYTE *pubKey
 done:
 	obj_list_put(&migdata_list);
 
-	return TSS_SUCCESS;
+	return result;
 }
 
 TSS_RESULT
@@ -734,7 +734,7 @@ obj_migdata_set_src_pubkey(TSS_HMIGDATA hMigData, UINT32 blobSize, BYTE *pubKeyB
 done:
 	obj_list_put(&migdata_list);
 
-	return TSS_SUCCESS;
+	return result;
 }
 
 TSS_RESULT

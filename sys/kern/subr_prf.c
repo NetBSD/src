@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.162.2.4 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.162.2.5 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162.2.4 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162.2.5 2019/01/18 08:50:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -232,8 +232,8 @@ twiddle(void)
 
 	kprintf_lock();
 
-	putchar(twiddle_chars[pos++ & 3], TOCONS, NULL);
-	putchar('\b', TOCONS, NULL);
+	putchar(twiddle_chars[pos++ & 3], TOCONS|NOTSTAMP, NULL);
+	putchar('\b', TOCONS|NOTSTAMP, NULL);
 
 	kprintf_unlock();
 }
@@ -526,7 +526,7 @@ putchar(int c, int flags, struct tty *tp)
 	}
 
 #ifndef KLOG_NOTIMESTAMP
-	if (c != '\0' && c != '\n' && needtstamp) {
+	if (c != '\0' && c != '\n' && needtstamp && (flags & NOTSTAMP) == 0) {
 		addtstamp(flags, tp);
 		needtstamp = 0;
 	}
@@ -808,6 +808,8 @@ aprint_normal_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_normal_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -817,6 +819,8 @@ void
 aprint_normal_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_normal_internal(ifp->if_xname, fmt, ap);
@@ -885,6 +889,8 @@ aprint_error_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_error_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -894,6 +900,8 @@ void
 aprint_error_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_error_internal(ifp->if_xname, fmt, ap);
@@ -934,6 +942,8 @@ aprint_naive_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_naive_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -943,6 +953,8 @@ void
 aprint_naive_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_naive_internal(ifp->if_xname, fmt, ap);
@@ -988,6 +1000,8 @@ aprint_verbose_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_verbose_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -997,6 +1011,8 @@ void
 aprint_verbose_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
+
+	KASSERT(ifp != NULL);
 
 	va_start(ap, fmt);
 	aprint_verbose_internal(ifp->if_xname, fmt, ap);
@@ -1036,6 +1052,8 @@ aprint_debug_dev(device_t dv, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(dv != NULL);
+
 	va_start(ap, fmt);
 	aprint_debug_internal(device_xname(dv), fmt, ap);
 	va_end(ap);
@@ -1046,8 +1064,28 @@ aprint_debug_ifnet(struct ifnet *ifp, const char *fmt, ...)
 {
 	va_list ap;
 
+	KASSERT(ifp != NULL);
+
 	va_start(ap, fmt);
 	aprint_debug_internal(ifp->if_xname, fmt, ap);
+	va_end(ap);
+}
+
+void
+vprintf_flags(int flags, const char *fmt, va_list ap)
+{
+	kprintf_lock();
+	kprintf(fmt, flags, NULL, NULL, ap);
+	kprintf_unlock();
+}
+
+void
+printf_flags(int flags, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf_flags(flags, fmt, ap);
 	va_end(ap);
 }
 
@@ -1056,13 +1094,9 @@ printf_tolog(const char *fmt, ...)
 {
 	va_list ap;
 
-	kprintf_lock();
-
 	va_start(ap, fmt);
-	kprintf(fmt, TOLOG, NULL, NULL, ap);
+	vprintf_flags(TOLOG, fmt, ap);
 	va_end(ap);
-
-	kprintf_unlock();
 }
 
 /*
@@ -1074,13 +1108,9 @@ printf_nolog(const char *fmt, ...)
 {
 	va_list ap;
 
-	kprintf_lock();
-
 	va_start(ap, fmt);
-	kprintf(fmt, TOCONS, NULL, NULL, ap);
+	vprintf_flags(TOCONS, fmt, ap);
 	va_end(ap);
-
-	kprintf_unlock();
 }
 
 /*
@@ -1095,16 +1125,9 @@ printf(const char *fmt, ...)
 {
 	va_list ap;
 
-	kprintf_lock();
-
 	va_start(ap, fmt);
-	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+	vprintf_flags(TOCONS | TOLOG, fmt, ap);
 	va_end(ap);
-
-	kprintf_unlock();
-
-	if (!panicstr)
-		logwakeup();
 }
 
 /*
@@ -1115,11 +1138,7 @@ printf(const char *fmt, ...)
 void
 vprintf(const char *fmt, va_list ap)
 {
-	kprintf_lock();
-
-	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
-
-	kprintf_unlock();
+	vprintf_flags(TOCONS | TOLOG, fmt, ap);
 
 	if (!panicstr)
 		logwakeup();

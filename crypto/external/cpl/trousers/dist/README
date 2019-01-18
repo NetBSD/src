@@ -1,7 +1,7 @@
 trousers README
 
   Trousers is an open-source TCG Software Stack (TSS), released under
-the Common Public License. Trousers aims to be compliant with the
+the BSD License. Trousers aims to be compliant with the
 1.1b and 1.2 TSS specifications available from the Trusted Computing
 Group website:
 
@@ -20,7 +20,7 @@ Discussion of the internals of the TrouSerS implementation:
   trousers-tech@lists.sf.net
 
 Possibly sensitive security related bugs:
-  Debora Velarde <dvelarde@us.ibm.com>
+  Hon Ching(Vicky) Lo <honclo@linux.vnet.ibm.com>
 
 Run-of-the-mill bug reports should use the TrouSerS bug tracker:
   http://sourceforge.net/tracker/?group_id=126012&atid=704358

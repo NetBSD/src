@@ -23,4 +23,4 @@
 unsealincludedir = $(includedir)/tpm_tools
 
 unsealinclude_HEADERS = tpm_unseal.h
-noinst_HEADERS = tpm_pkcs11.h tpm_seal.h tpm_tspi.h tpm_utils.h
+noinst_HEADERS = tpm_pkcs11.h tpm_seal.h tpm_tspi.h tpm_utils.h 

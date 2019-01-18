@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550reg.h,v 1.12 2017/10/29 14:06:08 jmcneill Exp $	*/
+/*	$NetBSD: ns16550reg.h,v 1.12.2.1 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,10 +43,16 @@
 #define	com_fifo	2	/* FIFO control (W) */
 #define	com_lctl	3	/* line control register (R/W) */
 #define	com_cfcr	3	/* line control register (R/W) */
+#define	com_lcr		com_cfcr
 #define	com_mcr		4	/* modem control register (R/W) */
 #define	com_lsr		5	/* line status register (R/W) */
 #define	com_msr		6	/* modem status register (R/W) */
 #define	com_scratch	7	/* scratch register (R/W) */
+
+/*
+ * Additional registers present on TI OMAP hardware
+ */
+#define	com_mdr1	8	/* mode definition register 1 (OMAP) */
 
 /*
  * Additional register present in NS16750 

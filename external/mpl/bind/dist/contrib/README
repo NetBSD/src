@@ -8,14 +8,6 @@ but reported bugs will be fixed as time permits.
       named and restarts it in the event of a crash, 'zone-edit'
       which enables editing of a dynamic zone, and others
 
-    - queryperf/
-
-      A DNS query performance testing tool
-
-    - perftcpdns/
-
-      A performance testing tool for DNS over TCP
-
     - dane/
 
       mkdane.sh generates TLSA records for use with DNS-based
@@ -44,19 +36,23 @@ but reported bugs will be fixed as time permits.
       sources. (These are no longer actively maintained and are
       expected to be deprecated eventually.)
 
-    - idn/
+External tools:
 
-      Contains source for 'idnkit', which provides support for
-      Internationalized Domain Name processing.
+    - https://gitlab.isc.org/isc-projects/queryperf
 
-    - dnsperf-2.1.0.0-1/
-    - dnsperf-patches/
+      A DNS query performance testing tool
+
+    - https://gitlab.isc.org/isc-projects/perftcpdns
+
+      A performance testing tool for DNS over TCP
+
+    - https://gitlab.isc.org/isc-projects/dnsperf
 
       DNS server performance testing tools, like 'queryperf' but more
       advanced: 'dnsperf' focuses on authoritative server performance
       and 'resperf' on recursive server performance.  The patch that
-      adds support for EDNS Client Subnet can be found in dnsperf-patches
-      directory.
+      adds support for EDNS Client Subnet has been applied to the
+      git repository.
 
 Formerly, there was more software included in this directory, but we
 have removed it in favour of using canonical upstream locations.  You

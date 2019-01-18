@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.h,v 1.7 2015/06/21 14:00:40 maxv Exp $	*/
+/*	$NetBSD: libhfs.h,v 1.7.16.1 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -57,15 +57,9 @@
 
 
 /* Macros to handle errors in this library. Not recommended outside libhfs.c */
-#ifdef __PCC__
-#define HFS_LIBERR(format, ...) \
-	do{ hfslib_error(format, __FILE__, __LINE__); \
-		goto error; } while(/*CONSTCOND*/ 0)
-#else
 #define HFS_LIBERR(format, ...) \
 	do{ hfslib_error(format, __FILE__, __LINE__, ##__VA_ARGS__); \
 		goto error; } while(/*CONSTCOND*/ 0)
-#endif
 
 #if 0
 #pragma mark Constants (on-disk)

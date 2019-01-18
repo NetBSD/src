@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.13.2.1 2018/12/26 14:01:48 pgoyette Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.13.2.2 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -208,7 +208,7 @@ struct ahci_r_fis {
 #define		AHCI_P_IX_PRCS	0x00400000 /* Phy Ready change */
 #define		AHCI_P_IX_DMPS	0x00000080 /* Device Mechanical Presence */
 #define		AHCI_P_IX_PCS	0x00000040 /* port Connect change */
-#define		AHCI_P_IX_DPS	0x00000020 /* dexcriptor processed */
+#define		AHCI_P_IX_DPS	0x00000020 /* descriptor processed */
 #define		AHCI_P_IX_UFS	0x00000010 /* Unknown FIS */
 #define		AHCI_P_IX_SDBS	0x00000008 /* Set device bit */
 #define		AHCI_P_IX_DSS	0x00000004 /* DMA setup FIS */

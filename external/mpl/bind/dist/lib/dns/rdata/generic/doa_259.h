@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: doa_259.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,11 +19,11 @@ typedef struct dns_rdata_doa {
 	isc_mem_t *		mctx;
 	unsigned char *		mediatype;
 	unsigned char *		data;
-	isc_uint32_t		enterprise;
-	isc_uint32_t		type;
-	isc_uint16_t		data_len;
-	isc_uint8_t		location;
-	isc_uint8_t		mediatype_len;
+	uint32_t		enterprise;
+	uint32_t		type;
+	uint16_t		data_len;
+	uint8_t		location;
+	uint8_t		mediatype_len;
 } dns_rdata_doa_t;
 
 #endif /* GENERIC_DOA_259_H */

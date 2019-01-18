@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.2.2.2 2018/09/06 06:53:55 pgoyette Exp $	*/
+/*	$NetBSD: dighost.c,v 1.2.2.3 2019/01/18 08:49:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,9 @@
  */
 
 #include <config.h>
+
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -32,18 +35,9 @@
 #include <locale.h>
 #endif
 
-#ifdef WITH_IDN_SUPPORT
-#ifdef WITH_IDNKIT
-#include <idn/result.h>
-#include <idn/log.h>
-#include <idn/resconf.h>
-#include <idn/api.h>
-#endif
-
-#ifdef WITH_LIBIDN2
+#ifdef HAVE_LIBIDN2
 #include <idn2.h>
-#endif
-#endif /* WITH_IDN_SUPPORT */
+#endif /* HAVE_LIBIDN2 */
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
@@ -65,13 +59,13 @@
 
 #include <isc/app.h>
 #include <isc/base64.h>
-#include <isc/entropy.h>
 #include <isc/file.h>
 #include <isc/hex.h>
 #include <isc/lang.h>
 #include <isc/log.h>
 #include <isc/netaddr.h>
 #include <isc/netdb.h>
+#include <isc/nonce.h>
 #include <isc/parseint.h>
 #include <isc/print.h>
 #include <isc/random.h>
@@ -95,7 +89,7 @@
 
 #include <dig/dig.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
@@ -111,18 +105,18 @@ dig_lookuplist_t lookup_list;
 dig_serverlist_t server_list;
 dig_searchlistlist_t search_list;
 
-isc_boolean_t
-	check_ra = ISC_FALSE,
-	have_ipv4 = ISC_FALSE,
-	have_ipv6 = ISC_FALSE,
-	specified_source = ISC_FALSE,
-	free_now = ISC_FALSE,
-	cancel_now = ISC_FALSE,
-	usesearch = ISC_FALSE,
-	showsearch = ISC_FALSE,
-	is_dst_up = ISC_FALSE,
-	keep_open = ISC_FALSE,
-	verbose = ISC_FALSE;
+bool
+	check_ra = false,
+	have_ipv4 = false,
+	have_ipv6 = false,
+	specified_source = false,
+	free_now = false,
+	cancel_now = false,
+	usesearch = false,
+	showsearch = false,
+	is_dst_up = false,
+	keep_open = false,
+	verbose = false;
 in_port_t port = 53;
 unsigned int timeout = 0;
 unsigned int extrabytes;
@@ -143,26 +137,12 @@ int lookup_counter = 0;
 
 static char servercookie[256];
 
-#ifdef WITH_IDN_SUPPORT
-static void idn_initialize(void);
-static isc_result_t idn_locale_to_ace(const char *from,
-		char *to,
-		size_t tolen);
-#endif /* WITH_IDN_SUPPORT */
-
-#ifdef WITH_IDN_OUT_SUPPORT
-static isc_result_t idn_ace_to_locale(const char *from,
-		char *to,
-		size_t tolen);
-static isc_result_t output_filter(isc_buffer_t *buffer,
-		unsigned int used_org,
-		isc_boolean_t absolute);
-#define MAXDLEN 256
-
-#ifdef WITH_IDNKIT
-int idnoptions = 0;
-#endif
-#endif /* WITH_IDN_OUT_SUPPORT */
+#ifdef HAVE_LIBIDN2
+static void idn_locale_to_ace(const char *src, char *dst, size_t dstlen);
+static void idn_ace_to_locale(const char *src, char **dst);
+static isc_result_t idn_output_filter(isc_buffer_t *buffer,
+				      unsigned int used_org);
+#endif /* HAVE_LIBIDN2 */
 
 isc_socket_t *keep = NULL;
 isc_sockaddr_t keepaddr;
@@ -188,12 +168,11 @@ const dns_name_t *hmacname = NULL;
 unsigned int digestbits = 0;
 isc_buffer_t *namebuf = NULL;
 dns_tsigkey_t *tsigkey = NULL;
-isc_boolean_t validated = ISC_TRUE;
-isc_entropy_t *entp = NULL;
+bool validated = true;
 isc_mempool_t *commctx = NULL;
-isc_boolean_t debugging = ISC_FALSE;
-isc_boolean_t debugtiming = ISC_FALSE;
-isc_boolean_t memdebugging = ISC_FALSE;
+bool debugging = false;
+bool debugtiming = false;
+bool memdebugging = false;
 const char *progname = NULL;
 isc_mutex_t lookup_lock;
 dig_lookup_t *current_lookup = NULL;
@@ -219,7 +198,7 @@ dig_lookup_t *current_lookup = NULL;
 
 isc_result_t
 (*dighost_printmessage)(dig_query_t *query, dns_message_t *msg,
-	isc_boolean_t headers);
+	bool headers);
 
 void
 (*dighost_received)(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query);
@@ -245,25 +224,13 @@ static void
 connect_timeout(isc_task_t *task, isc_event_t *event);
 
 static void
-launch_next_query(dig_query_t *query, isc_boolean_t include_question);
+launch_next_query(dig_query_t *query, bool include_question);
 
 static void
 check_next_lookup(dig_lookup_t *lookup);
 
-static isc_boolean_t
+static bool
 next_origin(dig_lookup_t *oldlookup);
-
-char *
-next_token(char **stringp, const char *delim) {
-	char *res;
-
-	do {
-		res = strsep(stringp, delim);
-		if (res == NULL)
-			break;
-	} while (*res == '\0');
-	return (res);
-}
 
 static int
 count_dots(char *string) {
@@ -347,8 +314,7 @@ reverse_octets(const char *in, char **p, char *end) {
 }
 
 isc_result_t
-get_reverse(char *reverse, size_t len, char *value, isc_boolean_t ip6_int,
-	    isc_boolean_t strict)
+get_reverse(char *reverse, size_t len, char *value, bool strict)
 {
 	int r;
 	isc_result_t result;
@@ -362,10 +328,8 @@ get_reverse(char *reverse, size_t len, char *value, isc_boolean_t ip6_int,
 		dns_name_t *name;
 		unsigned int options = 0;
 
-		if (ip6_int)
-			options |= DNS_BYADDROPT_IPV6INT;
 		name = dns_fixedname_initname(&fname);
-		result = dns_byaddr_createptrname2(&addr, options, name);
+		result = dns_byaddr_createptrname(&addr, options, name);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		dns_name_format(name, reverse, (unsigned int)len);
@@ -619,91 +583,89 @@ make_empty_lookup(void) {
 	if (looknew == NULL)
 		fatal("memory allocation failure in %s:%d",
 		       __FILE__, __LINE__);
-	looknew->pending = ISC_TRUE;
+	looknew->pending = true;
 	looknew->textname[0] = 0;
 	looknew->cmdline[0] = 0;
 	looknew->rdtype = dns_rdatatype_a;
 	looknew->qrdtype = dns_rdatatype_a;
 	looknew->rdclass = dns_rdataclass_in;
-	looknew->rdtypeset = ISC_FALSE;
-	looknew->rdclassset = ISC_FALSE;
+	looknew->rdtypeset = false;
+	looknew->rdclassset = false;
 	looknew->sendspace = NULL;
 	looknew->sendmsg = NULL;
 	looknew->name = NULL;
 	looknew->oname = NULL;
 	looknew->xfr_q = NULL;
 	looknew->current_query = NULL;
-	looknew->doing_xfr = ISC_FALSE;
+	looknew->doing_xfr = false;
 	looknew->ixfr_serial = 0;
-	looknew->trace = ISC_FALSE;
-	looknew->trace_root = ISC_FALSE;
-	looknew->identify = ISC_FALSE;
-	looknew->identify_previous_line = ISC_FALSE;
-	looknew->ignore = ISC_FALSE;
-	looknew->servfail_stops = ISC_TRUE;
-	looknew->besteffort = ISC_TRUE;
-	looknew->dnssec = ISC_FALSE;
+	looknew->trace = false;
+	looknew->trace_root = false;
+	looknew->identify = false;
+	looknew->identify_previous_line = false;
+	looknew->ignore = false;
+	looknew->servfail_stops = true;
+	looknew->besteffort = true;
+	looknew->dnssec = false;
 	looknew->ednsflags = 0;
 	looknew->opcode = dns_opcode_query;
-	looknew->expire = ISC_FALSE;
-	looknew->nsid = ISC_FALSE;
-	looknew->tcp_keepalive = ISC_FALSE;
+	looknew->expire = false;
+	looknew->nsid = false;
+	looknew->tcp_keepalive = false;
 	looknew->padding = 0;
-	looknew->header_only = ISC_FALSE;
-	looknew->sendcookie = ISC_FALSE;
-	looknew->seenbadcookie = ISC_FALSE;
-	looknew->badcookie = ISC_TRUE;
-	looknew->multiline = ISC_FALSE;
-	looknew->nottl = ISC_FALSE;
-	looknew->noclass = ISC_FALSE;
-	looknew->onesoa = ISC_FALSE;
-	looknew->use_usec = ISC_FALSE;
-	looknew->nocrypto = ISC_FALSE;
-	looknew->ttlunits = ISC_FALSE;
-	looknew->ttlunits = ISC_FALSE;
-	looknew->qr = ISC_FALSE;
-#ifdef WITH_IDN_SUPPORT
-	looknew->idnin = ISC_TRUE;
+	looknew->header_only = false;
+	looknew->sendcookie = false;
+	looknew->seenbadcookie = false;
+	looknew->badcookie = true;
+	looknew->multiline = false;
+	looknew->nottl = false;
+	looknew->noclass = false;
+	looknew->onesoa = false;
+	looknew->use_usec = false;
+	looknew->nocrypto = false;
+	looknew->ttlunits = false;
+	looknew->ttlunits = false;
+	looknew->qr = false;
+#ifdef HAVE_LIBIDN2
+	looknew->idnin = isatty(1)?(getenv("IDN_DISABLE") == NULL):false;
+	looknew->idnout = looknew->idnin;
 #else
-	looknew->idnin = ISC_FALSE;
-#endif
-#ifdef WITH_IDN_OUT_SUPPORT
-	looknew->idnout = ISC_TRUE;
-#else
-	looknew->idnout = ISC_FALSE;
-#endif
+	looknew->idnin = false;
+	looknew->idnout = false;
+#endif /* HAVE_LIBIDN2 */
 	looknew->udpsize = 0;
 	looknew->edns = -1;
-	looknew->recurse = ISC_TRUE;
-	looknew->aaonly = ISC_FALSE;
-	looknew->adflag = ISC_FALSE;
-	looknew->cdflag = ISC_FALSE;
-	looknew->print_unknown_format = ISC_FALSE;
-	looknew->zflag = ISC_FALSE;
-	looknew->ns_search_only = ISC_FALSE;
+	looknew->recurse = true;
+	looknew->aaonly = false;
+	looknew->adflag = false;
+	looknew->cdflag = false;
+	looknew->raflag = false;
+	looknew->tcflag = false;
+	looknew->print_unknown_format = false;
+	looknew->zflag = false;
+	looknew->ns_search_only = false;
 	looknew->origin = NULL;
 	looknew->tsigctx = NULL;
 	looknew->querysig = NULL;
 	looknew->retries = tries;
 	looknew->nsfound = 0;
-	looknew->tcp_mode = ISC_FALSE;
-	looknew->tcp_mode_set = ISC_FALSE;
-	looknew->ip6_int = ISC_FALSE;
-	looknew->comments = ISC_TRUE;
-	looknew->stats = ISC_TRUE;
-	looknew->section_question = ISC_TRUE;
-	looknew->section_answer = ISC_TRUE;
-	looknew->section_authority = ISC_TRUE;
-	looknew->section_additional = ISC_TRUE;
-	looknew->new_search = ISC_FALSE;
-	looknew->done_as_is = ISC_FALSE;
-	looknew->need_search = ISC_FALSE;
+	looknew->tcp_mode = false;
+	looknew->tcp_mode_set = false;
+	looknew->comments = true;
+	looknew->stats = true;
+	looknew->section_question = true;
+	looknew->section_answer = true;
+	looknew->section_authority = true;
+	looknew->section_additional = true;
+	looknew->new_search = false;
+	looknew->done_as_is = false;
+	looknew->need_search = false;
 	looknew->ecs_addr = NULL;
 	looknew->cookie = NULL;
 	looknew->ednsopts = NULL;
 	looknew->ednsoptscnt = 0;
-	looknew->ednsneg = ISC_TRUE;
-	looknew->mapped = ISC_TRUE;
+	looknew->ednsneg = true;
+	looknew->mapped = true;
 	looknew->dscp = -1;
 	looknew->rrcomments = 0;
 	looknew->eoferr = 0;
@@ -758,7 +720,7 @@ cloneopts(dig_lookup_t *looknew, dig_lookup_t *lookold) {
  * list separately from somewhere else, or construct it by hand.
  */
 dig_lookup_t *
-clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
+clone_lookup(dig_lookup_t *lookold, bool servers) {
 	dig_lookup_t *looknew;
 
 	debug("clone_lookup()");
@@ -820,6 +782,8 @@ clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
 	looknew->aaonly = lookold->aaonly;
 	looknew->adflag = lookold->adflag;
 	looknew->cdflag = lookold->cdflag;
+	looknew->raflag = lookold->raflag;
+	looknew->tcflag = lookold->tcflag;
 	looknew->print_unknown_format = lookold->print_unknown_format;
 	looknew->zflag = lookold->zflag;
 	looknew->ns_search_only = lookold->ns_search_only;
@@ -866,7 +830,7 @@ clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
  * queue getting run.
  */
 dig_lookup_t *
-requeue_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
+requeue_lookup(dig_lookup_t *lookold, bool servers) {
 	dig_lookup_t *looknew;
 
 	debug("requeue_lookup()");
@@ -923,7 +887,7 @@ setup_text_key(void) {
 		goto failure;
 
 	result = dns_tsigkey_create(&keyname, hmacname, secretstore,
-				    (int)secretsize, ISC_FALSE, NULL, 0, 0,
+				    (int)secretsize, false, NULL, 0, 0,
 				    mctx, NULL, &tsigkey);
  failure:
 	if (result != ISC_R_SUCCESS)
@@ -938,9 +902,9 @@ setup_text_key(void) {
 }
 
 static isc_result_t
-parse_uint_helper(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_uint_helper(uint32_t *uip, const char *value, uint32_t max,
 		  const char *desc, int base) {
-	isc_uint32_t n;
+	uint32_t n;
 	isc_result_t result = isc_parse_uint32(&n, value, base);
 	if (result == ISC_R_SUCCESS && n > max)
 		result = ISC_R_RANGE;
@@ -954,21 +918,21 @@ parse_uint_helper(isc_uint32_t *uip, const char *value, isc_uint32_t max,
 }
 
 isc_result_t
-parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_uint(uint32_t *uip, const char *value, uint32_t max,
 	   const char *desc) {
 	return (parse_uint_helper(uip, value, max, desc, 10));
 }
 
 isc_result_t
-parse_xint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_xint(uint32_t *uip, const char *value, uint32_t max,
 	   const char *desc) {
 	return (parse_uint_helper(uip, value, max, desc, 0));
 }
 
-static isc_uint32_t
-parse_bits(char *arg, const char *desc, isc_uint32_t max) {
+static uint32_t
+parse_bits(char *arg, const char *desc, uint32_t max) {
 	isc_result_t result;
-	isc_uint32_t tmp;
+	uint32_t tmp;
 
 	result = parse_uint(&tmp, arg, max, desc);
 	if (result != ISC_R_SUCCESS)
@@ -983,10 +947,10 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
-	isc_uint32_t prefix_length = 0xffffffff;
+	uint32_t prefix_length = 0xffffffff;
 	char *slash = NULL;
-	isc_boolean_t parsed = ISC_FALSE;
-	isc_boolean_t prefix_parsed = ISC_FALSE;
+	bool parsed = false;
+	bool prefix_parsed = false;
 	char buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX/128")];
 
 	REQUIRE(sap != NULL && *sap == NULL);
@@ -1013,16 +977,16 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 			fatal("invalid prefix length in '%s': %s\n",
 			      value, isc_result_totext(result));
 		}
-		prefix_parsed = ISC_TRUE;
+		prefix_parsed = true;
 	}
 
 	if (inet_pton(AF_INET6, buf, &in6) == 1) {
-		parsed = ISC_TRUE;
+		parsed = true;
 		isc_sockaddr_fromin6(sa, &in6, 0);
 		if (prefix_length > 128)
 			prefix_length = 128;
 	} else if (inet_pton(AF_INET, buf, &in4) == 1) {
-		parsed = ISC_TRUE;
+		parsed = true;
 		isc_sockaddr_fromin(sa, &in4, 0);
 		if (prefix_length > 32)
 			prefix_length = 32;
@@ -1032,7 +996,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 		for (i = 0; i < 3 && strlen(buf) < sizeof(buf) - 2; i++) {
 			strlcat(buf, ".0", sizeof(buf));
 			if (inet_pton(AF_INET, buf, &in4) == 1) {
-				parsed = ISC_TRUE;
+				parsed = true;
 				isc_sockaddr_fromin(sa, &in4, 0);
 				break;
 			}
@@ -1069,14 +1033,12 @@ parse_hmac(const char *hmac) {
 
 	digestbits = 0;
 
-#ifndef PK11_MD5_DISABLE
 	if (strcasecmp(buf, "hmac-md5") == 0) {
 		hmacname = DNS_TSIG_HMACMD5_NAME;
 	} else if (strncasecmp(buf, "hmac-md5-", 9) == 0) {
 		hmacname = DNS_TSIG_HMACMD5_NAME;
 		digestbits = parse_bits(&buf[9], "digest-bits [0..128]", 128);
 	} else
-#endif
 	if (strcasecmp(buf, "hmac-sha1") == 0) {
 		hmacname = DNS_TSIG_HMACSHA1_NAME;
 		digestbits = 0;
@@ -1190,11 +1152,9 @@ setup_file_key(void) {
 	}
 
 	switch (dst_key_alg(dstkey)) {
-#ifndef PK11_MD5_DISABLE
 	case DST_ALG_HMACMD5:
 		hmacname = DNS_TSIG_HMACMD5_NAME;
 		break;
-#endif
 	case DST_ALG_HMACSHA1:
 		hmacname = DNS_TSIG_HMACSHA1_NAME;
 		break;
@@ -1216,7 +1176,7 @@ setup_file_key(void) {
 		goto failure;
 	}
 	result = dns_tsigkey_createfromkey(dst_key_name(dstkey), hmacname,
-					   dstkey, ISC_FALSE, NULL, 0, 0,
+					   dstkey, false, NULL, 0, 0,
 					   mctx, NULL, &tsigkey);
 	if (result != ISC_R_SUCCESS) {
 		printf(";; Couldn't create key %s: %s\n",
@@ -1270,11 +1230,24 @@ create_search_list(irs_resconf_t *resconf) {
 }
 
 /*%
+ * Append 'addr' to the list of servers to be queried.  This function is only
+ * called when no server addresses are explicitly specified and either libirs
+ * returns an empty list of servers to use or none of the addresses returned by
+ * libirs are usable due to the specified address family restrictions.
+ */
+static void
+add_fallback_nameserver(const char *addr) {
+	dig_server_t *server = make_server(addr, addr);
+	ISC_LINK_INIT(server, link);
+	ISC_LIST_APPEND(server_list, server, link);
+}
+
+/*%
  * Setup the system as a whole, reading key information and resolv.conf
  * settings.
  */
 void
-setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
+setup_system(bool ipv4only, bool ipv6only) {
 	irs_resconf_t *resconf = NULL;
 	isc_result_t result;
 
@@ -1283,7 +1256,7 @@ setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
 	if (ipv4only) {
 		if (have_ipv4) {
 			isc_net_disableipv6();
-			have_ipv6 = ISC_FALSE;
+			have_ipv6 = false;
 		} else {
 			fatal("can't find IPv4 networking");
 		}
@@ -1292,7 +1265,7 @@ setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
 	if (ipv6only) {
 		if (have_ipv6) {
 			isc_net_disableipv4();
-			have_ipv4 = ISC_FALSE;
+			have_ipv4 = false;
 		} else {
 			fatal("can't find IPv6 networking");
 		}
@@ -1314,6 +1287,16 @@ setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
 		get_server_list(resconf);
 	}
 
+	/* If we don't find a nameserver fall back to localhost */
+	if (ISC_LIST_EMPTY(server_list)) {
+		if (have_ipv6) {
+			add_fallback_nameserver("::1");
+		}
+		if (have_ipv4) {
+			add_fallback_nameserver("127.0.0.1");
+		}
+	}
+
 	irs_resconf_destroy(&resconf);
 
 #ifdef HAVE_SETLOCALE
@@ -1321,24 +1304,12 @@ setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
 	(void)setlocale(LC_ALL, "");
 #endif
 
-#ifdef WITH_IDN_SUPPORT
-	idn_initialize();
-#endif
-
-#ifdef WITH_IDN_OUT_SUPPORT
-	/* Set domain name -> text post-conversion filter. */
-	result = dns_name_settotextfilter(output_filter);
-	check_result(result, "dns_name_settotextfilter");
-#endif
-
 	if (keyfile[0] != 0)
 		setup_file_key();
 	else if (keysecret[0] != 0)
 		setup_text_key();
-	result = isc_entropy_getdata(entp, cookie_secret,
-				     sizeof(cookie_secret), NULL, 0);
-	if (result != ISC_R_SUCCESS)
-		fatal("unable to generate cookie secret");
+
+	isc_nonce_buf(cookie_secret, sizeof(cookie_secret));
 }
 
 /*%
@@ -1363,18 +1334,18 @@ setup_libs(void) {
 
 	debug("setup_libs()");
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
 	result = isc_net_probeipv4();
 	if (result == ISC_R_SUCCESS)
-		have_ipv4 = ISC_TRUE;
+		have_ipv4 = true;
 
 	result = isc_net_probeipv6();
 	if (result == ISC_R_SUCCESS)
-		have_ipv6 = ISC_TRUE;
+		have_ipv6 = true;
 	if (!have_ipv6 && !have_ipv4)
 		fatal("can't find either v4 or v6 networking");
 
@@ -1407,12 +1378,9 @@ setup_libs(void) {
 	result = isc_socketmgr_create(mctx, &socketmgr);
 	check_result(result, "isc_socketmgr_create");
 
-	result = isc_entropy_create(mctx, &entp);
-	check_result(result, "isc_entropy_create");
-
-	result = dst_lib_init(mctx, entp, 0);
+	result = dst_lib_init(mctx, NULL);
 	check_result(result, "dst_lib_init");
-	is_dst_up = ISC_TRUE;
+	is_dst_up = true;
 
 	result = isc_mempool_create(mctx, COMMSIZE, &commctx);
 	check_result(result, "isc_mempool_create");
@@ -1424,12 +1392,11 @@ setup_libs(void) {
 	isc_mempool_setfreemax(commctx, 6);
 	isc_mempool_setfillcount(commctx, 2);
 
-	result = isc_mutex_init(&lookup_lock);
-	check_result(result, "isc_mutex_init");
+	isc_mutex_init(&lookup_lock);
 }
 
 typedef struct dig_ednsoptname {
-	isc_uint32_t code;
+	uint32_t code;
 	const char  *name;
 } dig_ednsoptname_t;
 
@@ -1454,9 +1421,9 @@ dig_ednsoptname_t optnames[] = {
 void
 save_opt(dig_lookup_t *lookup, char *code, char *value) {
 	isc_result_t result;
-	isc_uint32_t num = 0;
+	uint32_t num = 0;
 	isc_buffer_t b;
-	isc_boolean_t found = ISC_FALSE;
+	bool found = false;
 	unsigned int i;
 
 	if (lookup->ednsoptscnt >= EDNSOPT_OPTIONS)
@@ -1465,7 +1432,7 @@ save_opt(dig_lookup_t *lookup, char *code, char *value) {
 	for (i = 0; i < N_EDNS_OPTNAMES; i++) {
 		if (strcasecmp(code, optnames[i].name) == 0) {
 			num = optnames[i].code;
-			found = ISC_TRUE;
+			found = true;
 			break;
 		}
 	}
@@ -1510,7 +1477,7 @@ save_opt(dig_lookup_t *lookup, char *code, char *value) {
  * (e.g., NSID, COOKIE, client-subnet)
  */
 static void
-add_opt(dns_message_t *msg, isc_uint16_t udpsize, isc_uint16_t edns,
+add_opt(dns_message_t *msg, uint16_t udpsize, uint16_t edns,
 	unsigned int flags, dns_ednsopt_t *opts, size_t count)
 {
 	dns_rdataset_t *rdataset = NULL;
@@ -1576,23 +1543,21 @@ clear_query(dig_query_t *query) {
 
 	debug("clear_query(%p)", query);
 
-	if (query->timer != NULL)
+	if (query->timer != NULL) {
 		isc_timer_detach(&query->timer);
+	}
 	lookup = query->lookup;
 
-	if (lookup->current_query == query)
+	if (lookup->current_query == query) {
 		lookup->current_query = NULL;
+	}
 
-	if (ISC_LINK_LINKED(query, link))
+	if (ISC_LINK_LINKED(query, link)) {
 		ISC_LIST_UNLINK(lookup->q, query, link);
-	if (ISC_LINK_LINKED(query, clink))
+	}
+	if (ISC_LINK_LINKED(query, clink)) {
 		ISC_LIST_UNLINK(lookup->connecting, query, clink);
-	if (ISC_LINK_LINKED(&query->recvbuf, link))
-		ISC_LIST_DEQUEUE(query->recvlist, &query->recvbuf,
-				 link);
-	if (ISC_LINK_LINKED(&query->lengthbuf, link))
-		ISC_LIST_DEQUEUE(query->lengthlist, &query->lengthbuf,
-				 link);
+	}
 	INSIST(query->recvspace != NULL);
 
 	if (query->sock != NULL) {
@@ -1601,20 +1566,24 @@ clear_query(dig_query_t *query) {
 		debug("sockcount=%d", sockcount);
 	}
 	isc_mempool_put(commctx, query->recvspace);
+	isc_mempool_put(commctx, query->tmpsendspace);
 	isc_buffer_invalidate(&query->recvbuf);
 	isc_buffer_invalidate(&query->lengthbuf);
-	if (query->waiting_senddone)
-		query->pending_free = ISC_TRUE;
-	else
+
+	if (query->waiting_senddone) {
+		query->pending_free = true;
+	} else {
+		query->magic = 0;
 		isc_mem_free(mctx, query);
+	}
 }
 
 /*%
- * Try and clear out a lookup if we're done with it.  Return ISC_TRUE if
- * the lookup was successfully cleared.  If ISC_TRUE is returned, the
+ * Try and clear out a lookup if we're done with it.  Return true if
+ * the lookup was successfully cleared.  If true is returned, the
  * lookup pointer has been invalidated.
  */
-static isc_boolean_t
+static bool
 try_clear_lookup(dig_lookup_t *lookup) {
 	dig_query_t *q;
 
@@ -1639,7 +1608,7 @@ try_clear_lookup(dig_lookup_t *lookup) {
 				q = ISC_LIST_NEXT(q, clink);
 			}
 		}
-		return (ISC_FALSE);
+		return (false);
 	}
 
 	/*
@@ -1647,7 +1616,7 @@ try_clear_lookup(dig_lookup_t *lookup) {
 	 * so can make it go away also.
 	 */
 	destroy_lookup(lookup);
-	return (ISC_TRUE);
+	return (true);
 }
 
 void
@@ -1761,13 +1730,13 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_name_t *name = NULL;
 	isc_result_t result;
-	isc_boolean_t success = ISC_FALSE;
+	bool success = false;
 	int numLookups = 0;
 	int num;
 	isc_result_t lresult, addresses_result;
 	char bad_namestr[DNS_NAME_FORMATSIZE];
 	dns_name_t *domain;
-	isc_boolean_t horizontal = ISC_FALSE, bad = ISC_FALSE;
+	bool horizontal = false, bad = false;
 
 	INSIST(!free_now);
 
@@ -1807,11 +1776,11 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 			if (namereln == dns_namereln_equal) {
 				if (!horizontal)
 					printf(";; BAD (HORIZONTAL) REFERRAL\n");
-				horizontal = ISC_TRUE;
+				horizontal = true;
 			} else if (namereln != dns_namereln_subdomain) {
 				if (!bad)
 					printf(";; BAD REFERRAL\n");
-				bad = ISC_TRUE;
+				bad = true;
 				continue;
 			}
 		}
@@ -1837,22 +1806,22 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 			/* Initialize lookup if we've not yet */
 			debug("found NS %s", namestr);
 			if (!success) {
-				success = ISC_TRUE;
+				success = true;
 				lookup_counter++;
 				lookup = requeue_lookup(query->lookup,
-							ISC_FALSE);
+							false);
 				cancel_lookup(query->lookup);
-				lookup->doing_xfr = ISC_FALSE;
+				lookup->doing_xfr = false;
 				if (!lookup->trace_root &&
 				    section == DNS_SECTION_ANSWER)
-					lookup->trace = ISC_FALSE;
+					lookup->trace = false;
 				else
 					lookup->trace = query->lookup->trace;
 				lookup->ns_search_only =
 					query->lookup->ns_search_only;
-				lookup->trace_root = ISC_FALSE;
+				lookup->trace_root = false;
 				if (lookup->ns_search_only)
-					lookup->recurse = ISC_FALSE;
+					lookup->recurse = false;
 				domain = dns_fixedname_name(&lookup->fdomain);
 				dns_name_copy(name, domain, NULL);
 			}
@@ -1885,7 +1854,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 	 * Randomize the order the nameserver will be tried.
 	 */
 	if (numLookups > 1) {
-		isc_uint32_t i, j;
+		uint32_t i, j;
 		dig_serverlist_t my_server_list;
 		dig_server_t *next;
 
@@ -1896,8 +1865,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 		     srv != NULL;
 		     srv = ISC_LIST_HEAD(lookup->my_server_list)) {
 			INSIST(i > 0);
-			isc_random_get(&j);
-			j %= i;
+			j = isc_random_uniform(i);
 			next = ISC_LIST_NEXT(srv, link);
 			while (j-- > 0 && next != NULL) {
 				srv = next;
@@ -1918,9 +1886,9 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
  * Create and queue a new lookup using the next origin from the search
  * list, read in setup_system().
  *
- * Return ISC_TRUE iff there was another searchlist entry.
+ * Return true iff there was another searchlist entry.
  */
-static isc_boolean_t
+static bool
 next_origin(dig_lookup_t *oldlookup) {
 	dig_lookup_t *newlookup;
 	dig_searchlist_t *search;
@@ -1938,7 +1906,7 @@ next_origin(dig_lookup_t *oldlookup) {
 		 * We're not using a search list, so don't even think
 		 * about finding the next entry.
 		 */
-		return (ISC_FALSE);
+		return (false);
 
 	/*
 	 * Check for a absolute name or ndots being met.
@@ -1949,26 +1917,26 @@ next_origin(dig_lookup_t *oldlookup) {
 	if (result == ISC_R_SUCCESS &&
 	    (dns_name_isabsolute(name) ||
 	     (int)dns_name_countlabels(name) > ndots))
-		return (ISC_FALSE);
+		return (false);
 
 	if (oldlookup->origin == NULL && !oldlookup->need_search)
 		/*
 		 * Then we just did rootorg; there's nothing left.
 		 */
-		return (ISC_FALSE);
+		return (false);
 	if (oldlookup->origin == NULL && oldlookup->need_search) {
-		newlookup = requeue_lookup(oldlookup, ISC_TRUE);
+		newlookup = requeue_lookup(oldlookup, true);
 		newlookup->origin = ISC_LIST_HEAD(search_list);
-		newlookup->need_search = ISC_FALSE;
+		newlookup->need_search = false;
 	} else {
 		search = ISC_LIST_NEXT(oldlookup->origin, link);
 		if (search == NULL && oldlookup->done_as_is)
-			return (ISC_FALSE);
-		newlookup = requeue_lookup(oldlookup, ISC_TRUE);
+			return (false);
+		newlookup = requeue_lookup(oldlookup, true);
 		newlookup->origin = search;
 	}
 	cancel_lookup(oldlookup);
-	return (ISC_TRUE);
+	return (true);
 }
 
 /*%
@@ -2046,10 +2014,9 @@ compute_cookie(unsigned char *clientcookie, size_t len) {
  * well as the query structures and buffer space for the replies.  If the
  * server list is empty, clone it from the system default list.
  */
-isc_boolean_t
+bool
 setup_lookup(dig_lookup_t *lookup) {
 	isc_result_t result;
-	isc_uint32_t id;
 	unsigned int len;
 	dig_server_t *serv;
 	dig_query_t *query;
@@ -2060,15 +2027,13 @@ setup_lookup(dig_lookup_t *lookup) {
 	char cookiebuf[256];
 	char *origin = NULL;
 	char *textname = NULL;
-#ifdef WITH_IDN_SUPPORT
+#ifdef HAVE_LIBIDN2
 	char idn_origin[MXNAME], idn_textname[MXNAME];
-#endif
 
-#ifdef WITH_IDN_OUT_SUPPORT
 	result = dns_name_settotextfilter(lookup->idnout ?
-					  output_filter : NULL);
+					  idn_output_filter : NULL);
 	check_result(result, "dns_name_settotextfilter");
-#endif
+#endif /* HAVE_LIBIDN2 */
 
 	REQUIRE(lookup != NULL);
 	INSIST(!free_now);
@@ -2103,14 +2068,13 @@ setup_lookup(dig_lookup_t *lookup) {
 	 * TLD.
 	 */
 	textname = lookup->textname;
-#ifdef WITH_IDN_SUPPORT
+#ifdef HAVE_LIBIDN2
 	if (lookup->idnin) {
-		result = idn_locale_to_ace(textname, idn_textname, sizeof(idn_textname));
-		check_result(result, "convert textname to IDN encoding");
+		idn_locale_to_ace(textname, idn_textname, sizeof(idn_textname));
 		debug("idn_textname: %s", idn_textname);
 		textname = idn_textname;
 	}
-#endif
+#endif /* HAVE_LIBIDN2 */
 
 	/*
 	 * If the name has too many dots, force the origin to be NULL
@@ -2123,11 +2087,11 @@ setup_lookup(dig_lookup_t *lookup) {
 		if ((count_dots(textname) >= ndots) || !usesearch)
 		{
 			lookup->origin = NULL; /* Force abs lookup */
-			lookup->done_as_is = ISC_TRUE;
+			lookup->done_as_is = true;
 			lookup->need_search = usesearch;
 		} else if (lookup->origin == NULL && usesearch) {
 			lookup->origin = ISC_LIST_HEAD(search_list);
-			lookup->need_search = ISC_FALSE;
+			lookup->need_search = false;
 		}
 	}
 
@@ -2139,14 +2103,14 @@ setup_lookup(dig_lookup_t *lookup) {
 		dns_name_init(lookup->oname, NULL);
 		/* XXX Helper funct to conv char* to name? */
 		origin = lookup->origin->origin;
-#ifdef WITH_IDN_SUPPORT
+#ifdef HAVE_LIBIDN2
 		if (lookup->idnin) {
-			result = idn_locale_to_ace(origin, idn_origin, sizeof(idn_origin));
-			check_result(result, "convert origin to IDN encoding");
+			idn_locale_to_ace(origin, idn_origin,
+					  sizeof(idn_origin));
 			debug("trying idn origin %s", idn_origin);
 			origin = idn_origin;
 		}
-#endif
+#endif /* HAVE_LIBIDN2 */
 		len = (unsigned int) strlen(origin);
 		isc_buffer_init(&b, origin, len);
 		isc_buffer_add(&b, len);
@@ -2187,7 +2151,7 @@ setup_lookup(dig_lookup_t *lookup) {
 				dns_message_puttempname(lookup->sendmsg,
 							&lookup->oname);
 				if (result == DNS_R_NAMETOOLONG)
-					return (ISC_FALSE);
+					return (false);
 				fatal("'%s' is not in legal name syntax (%s)",
 				      lookup->textname,
 				      isc_result_totext(result));
@@ -2214,7 +2178,7 @@ setup_lookup(dig_lookup_t *lookup) {
 			      isc_result_totext(result));
 #if TARGET_OS_IPHONE
 			check_next_lookup(current_lookup);
-			return (ISC_FALSE);
+			return (false);
 #else
 			digexit();
 #endif
@@ -2224,8 +2188,7 @@ setup_lookup(dig_lookup_t *lookup) {
 	dighost_trying(store, lookup);
 	INSIST(dns_name_isabsolute(lookup->name));
 
-	isc_random_get(&id);
-	lookup->sendmsg->id = (unsigned short)id & 0xFFFF;
+	lookup->sendmsg->id = (dns_messageid_t)isc_random16();
 	lookup->sendmsg->opcode = lookup->opcode;
 	lookup->msgcounter = 0;
 	/*
@@ -2233,7 +2196,7 @@ setup_lookup(dig_lookup_t *lookup) {
 	 * it's meaningless for traces.
 	 */
 	if (lookup->trace || (lookup->ns_search_only && !lookup->trace_root))
-		lookup->recurse = ISC_FALSE;
+		lookup->recurse = false;
 
 	if (lookup->recurse &&
 	    lookup->rdtype != dns_rdatatype_axfr &&
@@ -2258,6 +2221,16 @@ setup_lookup(dig_lookup_t *lookup) {
 		lookup->sendmsg->flags |= DNS_MESSAGEFLAG_CD;
 	}
 
+	if (lookup->raflag) {
+		debug("RA query");
+		lookup->sendmsg->flags |= DNS_MESSAGEFLAG_RA;
+	}
+
+	if (lookup->tcflag) {
+		debug("TC query");
+		lookup->sendmsg->flags |= DNS_MESSAGEFLAG_TC;
+	}
+
 	if (lookup->zflag) {
 		debug("Z query");
 		lookup->sendmsg->flags |= 0x0040U;
@@ -2277,10 +2250,10 @@ setup_lookup(dig_lookup_t *lookup) {
 		 * Force TCP mode if we're doing an axfr.
 		 */
 		if (lookup->rdtype == dns_rdatatype_axfr) {
-			lookup->doing_xfr = ISC_TRUE;
-			lookup->tcp_mode = ISC_TRUE;
+			lookup->doing_xfr = true;
+			lookup->tcp_mode = true;
 		} else if (lookup->tcp_mode) {
-			lookup->doing_xfr = ISC_TRUE;
+			lookup->doing_xfr = true;
 		}
 	}
 
@@ -2341,9 +2314,9 @@ setup_lookup(dig_lookup_t *lookup) {
 		}
 
 		if (lookup->ecs_addr != NULL) {
-			isc_uint8_t addr[16];
-			isc_uint16_t family;
-			isc_uint32_t plen;
+			uint8_t addr[16];
+			uint16_t family = 0;
+			uint32_t plen;
 			struct sockaddr *sa;
 			struct sockaddr_in *sin;
 			struct sockaddr_in6 *sin6;
@@ -2357,7 +2330,7 @@ setup_lookup(dig_lookup_t *lookup) {
 
 			INSIST(i < MAXOPTS);
 			opts[i].code = DNS_OPT_CLIENT_SUBNET;
-			opts[i].length = (isc_uint16_t) addrl + 4;
+			opts[i].length = (uint16_t) addrl + 4;
 			check_result(result, "isc_buffer_allocate");
 
 			/*
@@ -2399,6 +2372,7 @@ setup_lookup(dig_lookup_t *lookup) {
 				break;
 			default:
 				INSIST(0);
+				ISC_UNREACHABLE();
 			}
 
 			isc_buffer_init(&b, ecsbuf, sizeof(ecsbuf));
@@ -2419,7 +2393,7 @@ setup_lookup(dig_lookup_t *lookup) {
 						  (unsigned)addrl);
 			}
 
-			opts[i].value = (isc_uint8_t *) ecsbuf;
+			opts[i].value = (uint8_t *) ecsbuf;
 			i++;
 		}
 
@@ -2504,31 +2478,32 @@ setup_lookup(dig_lookup_t *lookup) {
 	 * Force TCP mode if the request is larger than 512 bytes.
 	 */
 	if (isc_buffer_usedlength(&lookup->renderbuf) > 512)
-		lookup->tcp_mode = ISC_TRUE;
+		lookup->tcp_mode = true;
 
-	lookup->pending = ISC_FALSE;
+	lookup->pending = false;
 
 	for (serv = ISC_LIST_HEAD(lookup->my_server_list);
 	     serv != NULL;
-	     serv = ISC_LIST_NEXT(serv, link)) {
+	     serv = ISC_LIST_NEXT(serv, link))
+	{
 		query = isc_mem_allocate(mctx, sizeof(dig_query_t));
-		if (query == NULL)
+		if (query == NULL) {
 			fatal("memory allocation failure in %s:%d",
 			      __FILE__, __LINE__);
-		debug("create query %p linked to lookup %p",
-		       query, lookup);
+		}
+		debug("create query %p linked to lookup %p", query, lookup);
 		query->lookup = lookup;
 		query->timer = NULL;
-		query->waiting_connect = ISC_FALSE;
-		query->waiting_senddone = ISC_FALSE;
-		query->pending_free = ISC_FALSE;
-		query->recv_made = ISC_FALSE;
-		query->first_pass = ISC_TRUE;
-		query->first_soa_rcvd = ISC_FALSE;
-		query->second_rr_rcvd = ISC_FALSE;
-		query->first_repeat_rcvd = ISC_FALSE;
-		query->warn_id = ISC_TRUE;
-		query->timedout = ISC_FALSE;
+		query->waiting_connect = false;
+		query->waiting_senddone = false;
+		query->pending_free = false;
+		query->recv_made = false;
+		query->first_pass = true;
+		query->first_soa_rcvd = false;
+		query->second_rr_rcvd = false;
+		query->first_repeat_rcvd = false;
+		query->warn_id = true;
+		query->timedout = false;
 		query->first_rr_serial = 0;
 		query->second_rr_serial = 0;
 		query->servname = serv->servername;
@@ -2536,21 +2511,25 @@ setup_lookup(dig_lookup_t *lookup) {
 		query->rr_count = 0;
 		query->msg_count = 0;
 		query->byte_count = 0;
-		query->ixfr_axfr = ISC_FALSE;
-		ISC_LIST_INIT(query->recvlist);
-		ISC_LIST_INIT(query->lengthlist);
+		query->ixfr_axfr = false;
 		query->sock = NULL;
 		query->recvspace = isc_mempool_get(commctx);
-		if (query->recvspace == NULL)
+		query->tmpsendspace = isc_mempool_get(commctx);
+		if (query->recvspace == NULL) {
 			fatal("memory allocation failure");
+		}
 
 		isc_buffer_init(&query->recvbuf, query->recvspace, COMMSIZE);
 		isc_buffer_init(&query->lengthbuf, query->lengthspace, 2);
-		isc_buffer_init(&query->slbuf, query->slspace, 2);
+		isc_buffer_init(&query->tmpsendbuf, query->tmpsendspace,
+				COMMSIZE);
 		query->sendbuf = lookup->renderbuf;
 
 		ISC_LINK_INIT(query, clink);
 		ISC_LINK_INIT(query, link);
+
+		query->magic = DIG_QUERY_MAGIC;
+
 		ISC_LIST_ENQUEUE(lookup->q, query, link);
 	}
 
@@ -2558,12 +2537,13 @@ setup_lookup(dig_lookup_t *lookup) {
 	if (!ISC_LIST_EMPTY(lookup->q) && lookup->qr) {
 		extrabytes = 0;
 		dighost_printmessage(ISC_LIST_HEAD(lookup->q),
-				     lookup->sendmsg, ISC_TRUE);
-		if (lookup->stats)
+				     lookup->sendmsg, true);
+		if (lookup->stats) {
 			printf(";; QUERY SIZE: %u\n\n",
 			       isc_buffer_usedlength(&lookup->renderbuf));
+		}
 	}
-	return (ISC_TRUE);
+	return (true);
 }
 
 /*%
@@ -2572,8 +2552,6 @@ setup_lookup(dig_lookup_t *lookup) {
  */
 static void
 send_done(isc_task_t *_task, isc_event_t *event) {
-	isc_socketevent_t *sevent = (isc_socketevent_t *)event;
-	isc_buffer_t *b = NULL;
 	dig_query_t *query, *next;
 	dig_lookup_t *l;
 
@@ -2588,28 +2566,27 @@ send_done(isc_task_t *_task, isc_event_t *event) {
 	debug("sendcount=%d", sendcount);
 	INSIST(sendcount >= 0);
 
-	for  (b = ISC_LIST_HEAD(sevent->bufferlist);
-	      b != NULL;
-	      b = ISC_LIST_HEAD(sevent->bufferlist)) {
-		ISC_LIST_DEQUEUE(sevent->bufferlist, b, link);
-		isc_mem_free(mctx, b);
-	}
-
 	query = event->ev_arg;
-	query->waiting_senddone = ISC_FALSE;
+	REQUIRE(DIG_VALID_QUERY(query));
+	query->waiting_senddone = false;
 	l = query->lookup;
 
-	if (l->ns_search_only && !l->trace_root && !l->tcp_mode) {
+	if (!query->pending_free && l->ns_search_only &&
+	    !l->trace_root && !l->tcp_mode)
+	{
 		debug("sending next, since searching");
 		next = ISC_LIST_NEXT(query, link);
-		if (next != NULL)
+		if (next != NULL) {
 			send_udp(next);
+		}
 	}
 
 	isc_event_free(&event);
 
-	if (query->pending_free)
+	if (query->pending_free) {
+		query->magic = 0;
 		isc_mem_free(mctx, query);
+	}
 
 	check_if_done();
 	UNLOCK_LOOKUP;
@@ -2627,6 +2604,7 @@ cancel_lookup(dig_lookup_t *lookup) {
 	debug("cancel_lookup()");
 	query = ISC_LIST_HEAD(lookup->q);
 	while (query != NULL) {
+		REQUIRE(DIG_VALID_QUERY(query));
 		next = ISC_LIST_NEXT(query, link);
 		if (query->sock != NULL) {
 			isc_socket_cancel(query->sock, global_task,
@@ -2637,7 +2615,7 @@ cancel_lookup(dig_lookup_t *lookup) {
 		}
 		query = next;
 	}
-	lookup->pending = ISC_FALSE;
+	lookup->pending = false;
 	lookup->retries = 0;
 }
 
@@ -2646,6 +2624,7 @@ bringup_timer(dig_query_t *query, unsigned int default_timeout) {
 	dig_lookup_t *l;
 	unsigned int local_timeout;
 	isc_result_t result;
+	REQUIRE(DIG_VALID_QUERY(query));
 
 	debug("bringup_timer()");
 	/*
@@ -2710,11 +2689,12 @@ send_tcp_connect(dig_query_t *query) {
 	isc_result_t result;
 	dig_query_t *next;
 	dig_lookup_t *l;
+	REQUIRE(DIG_VALID_QUERY(query));
 
 	debug("send_tcp_connect(%p)", query);
 
 	l = query->lookup;
-	query->waiting_connect = ISC_TRUE;
+	query->waiting_connect = true;
 	query->lookup->current_query = query;
 	result = get_address(query->servname, port, &query->sockaddr);
 	if (result != ISC_R_SUCCESS) {
@@ -2736,7 +2716,7 @@ send_tcp_connect(dig_query_t *query) {
 		isc_netaddr_format(&netaddr, buf, sizeof(buf));
 		printf(";; Skipping mapped address '%s'\n", buf);
 
-		query->waiting_connect = ISC_FALSE;
+		query->waiting_connect = false;
 		if (ISC_LINK_LINKED(query, link))
 			next = ISC_LIST_NEXT(query, link);
 		else
@@ -2757,7 +2737,7 @@ send_tcp_connect(dig_query_t *query) {
 	     isc_sockaddr_pf(&bind_address))) {
 		printf(";; Skipping server %s, incompatible "
 		       "address family\n", query->servname);
-		query->waiting_connect = ISC_FALSE;
+		query->waiting_connect = false;
 		if (ISC_LINK_LINKED(query, link))
 			next = ISC_LIST_NEXT(query, link);
 		else
@@ -2778,8 +2758,8 @@ send_tcp_connect(dig_query_t *query) {
 	if (keep != NULL && isc_sockaddr_equal(&keepaddr, &query->sockaddr)) {
 		sockcount++;
 		isc_socket_attach(keep, &query->sock);
-		query->waiting_connect = ISC_FALSE;
-		launch_next_query(query, ISC_TRUE);
+		query->waiting_connect = false;
+		launch_next_query(query, true);
 		goto search;
 	}
 
@@ -2791,7 +2771,7 @@ send_tcp_connect(dig_query_t *query) {
 	debug("sockcount=%d", sockcount);
 	if (query->lookup->dscp != -1)
 		isc_socket_dscp(query->sock, query->lookup->dscp);
-	isc_socket_ipv6only(query->sock, ISC_TF(!query->lookup->mapped));
+	isc_socket_ipv6only(query->sock, !query->lookup->mapped);
 	if (specified_source)
 		result = isc_socket_bind(query->sock, &bind_address,
 					 ISC_SOCKET_REUSEADDRESS);
@@ -2826,17 +2806,6 @@ send_tcp_connect(dig_query_t *query) {
 	}
 }
 
-static isc_buffer_t *
-clone_buffer(isc_buffer_t *source) {
-	isc_buffer_t *buffer;
-	buffer = isc_mem_allocate(mctx, sizeof(*buffer));
-	if (buffer == NULL)
-		fatal("memory allocation failure in %s:%d",
-		      __FILE__, __LINE__);
-	*buffer = *source;
-	return (buffer);
-}
-
 /*%
  * Send a UDP packet to the remote nameserver, possible starting the
  * recv action as well.  Also make sure that the timer is running and
@@ -2846,8 +2815,10 @@ static void
 send_udp(dig_query_t *query) {
 	dig_lookup_t *l = NULL;
 	isc_result_t result;
-	isc_buffer_t *sendbuf;
 	dig_query_t *next;
+	isc_region_t r;
+	isc_socketevent_t *sevent;
+	REQUIRE(DIG_VALID_QUERY(query));
 
 	debug("send_udp(%p)", query);
 
@@ -2857,7 +2828,7 @@ send_udp(dig_query_t *query) {
 	debug("working on lookup %p, query %p", query->lookup, query);
 	if (!query->recv_made) {
 		/* XXX Check the sense of this, need assertion? */
-		query->waiting_connect = ISC_FALSE;
+		query->waiting_connect = false;
 		result = get_address(query->servname, port, &query->sockaddr);
 		if (result != ISC_R_SUCCESS) {
 			/* This servname doesn't have an address. */
@@ -2896,7 +2867,7 @@ send_udp(dig_query_t *query) {
 		if (query->lookup->dscp != -1)
 			isc_socket_dscp(query->sock, query->lookup->dscp);
 		isc_socket_ipv6only(query->sock,
-				    ISC_TF(!query->lookup->mapped));
+				    !query->lookup->mapped);
 		if (specified_source) {
 			result = isc_socket_bind(query->sock, &bind_address,
 						 ISC_SOCKET_REUSEADDRESS);
@@ -2907,30 +2878,28 @@ send_udp(dig_query_t *query) {
 		}
 		check_result(result, "isc_socket_bind");
 
-		query->recv_made = ISC_TRUE;
-		ISC_LINK_INIT(&query->recvbuf, link);
-		ISC_LIST_ENQUEUE(query->recvlist, &query->recvbuf,
-				 link);
+		query->recv_made = true;
+		isc_buffer_availableregion(&query->recvbuf, &r);
 		debug("recving with lookup=%p, query=%p, sock=%p",
 		      query->lookup, query, query->sock);
-		result = isc_socket_recvv(query->sock, &query->recvlist, 1,
-					  global_task, recv_done, query);
-		check_result(result, "isc_socket_recvv");
+		result = isc_socket_recv(query->sock, &r, 1,
+					 global_task, recv_done, query);
+		check_result(result, "isc_socket_recv");
 		recvcount++;
 		debug("recvcount=%d", recvcount);
 	}
-	ISC_LIST_INIT(query->sendlist);
-	sendbuf = clone_buffer(&query->sendbuf);
-	ISC_LIST_ENQUEUE(query->sendlist, sendbuf, link);
+	isc_buffer_usedregion(&query->sendbuf, &r);
 	debug("sending a request");
 	TIME_NOW(&query->time_sent);
 	INSIST(query->sock != NULL);
-	query->waiting_senddone = ISC_TRUE;
-	result = isc_socket_sendtov2(query->sock, &query->sendlist,
-				     global_task, send_done, query,
-				     &query->sockaddr, NULL,
-				     ISC_SOCKFLAG_NORETRY);
-	check_result(result, "isc_socket_sendtov");
+	query->waiting_senddone = true;
+	sevent = isc_socket_socketevent(mctx, query->sock,
+					ISC_SOCKEVENT_SENDDONE,
+					send_done, query);
+	result = isc_socket_sendto2(query->sock, &r,
+				    global_task, &query->sockaddr, NULL,
+				    sevent, ISC_SOCKFLAG_NORETRY);
+	check_result(result, "isc_socket_sendto2");
 	sendcount++;
 }
 
@@ -2951,10 +2920,16 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 
 	LOCK_LOOKUP;
 	query = event->ev_arg;
+	REQUIRE(DIG_VALID_QUERY(query));
 	l = query->lookup;
 	isc_event_free(&event);
 
 	INSIST(!free_now);
+
+	if (cancel_now) {
+		UNLOCK_LOOKUP;
+		return;
+	}
 
 	if ((query != NULL) && (query->lookup->current_query != NULL) &&
 	    ISC_LINK_LINKED(query->lookup->current_query, link) &&
@@ -2974,7 +2949,7 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (l->tcp_mode && query->sock != NULL) {
-		query->timedout = ISC_TRUE;
+		query->timedout = true;
 		isc_socket_cancel(query->sock, NULL, ISC_SOCKCANCEL_ALL);
 	}
 
@@ -2987,12 +2962,20 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 			debug("making new TCP request, %d tries left",
 			      l->retries);
 			l->retries--;
-			requeue_lookup(l, ISC_TRUE);
+			requeue_lookup(l, true);
 			cancel_lookup(l);
 			check_next_lookup(l);
 		}
 	} else {
-		if (!l->ns_search_only) {
+		if (l->ns_search_only) {
+			isc_netaddr_t netaddr;
+			char buf[ISC_NETADDR_FORMATSIZE];
+
+			isc_netaddr_fromsockaddr(&netaddr, &query->sockaddr);
+			isc_netaddr_format(&netaddr, buf, sizeof(buf));
+
+			printf(";; no response from %s\n", buf);
+		} else {
 			fputs(l->cmdline, stdout);
 			printf(";; connection timed out; no servers could be "
 			       "reached\n");
@@ -3012,11 +2995,12 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 static void
 tcp_length_done(isc_task_t *task, isc_event_t *event) {
 	isc_socketevent_t *sevent;
-	isc_buffer_t *b = NULL;
+	isc_buffer_t b;
+	isc_region_t r;
 	isc_result_t result;
 	dig_query_t *query = NULL;
 	dig_lookup_t *l, *n;
-	isc_uint16_t length;
+	uint16_t length;
 
 	REQUIRE(event->ev_type == ISC_SOCKEVENT_RECVDONE);
 	INSIST(!free_now);
@@ -3028,13 +3012,10 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 	LOCK_LOOKUP;
 	sevent = (isc_socketevent_t *)event;
 	query = event->ev_arg;
+	REQUIRE(DIG_VALID_QUERY(query));
 
 	recvcount--;
 	INSIST(recvcount >= 0);
-
-	b = ISC_LIST_HEAD(sevent->bufferlist);
-	INSIST(b ==  &query->lengthbuf);
-	ISC_LIST_DEQUEUE(sevent->bufferlist, b, link);
 
 	if (sevent->result == ISC_R_CANCELED) {
 		isc_event_free(&event);
@@ -3058,7 +3039,7 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 		debug("sockcount=%d", sockcount);
 		INSIST(sockcount >= 0);
 		if (sevent->result == ISC_R_EOF && l->eoferr == 0U) {
-			n = requeue_lookup(l, ISC_TRUE);
+			n = requeue_lookup(l, true);
 			n->eoferr++;
 		}
 		isc_event_free(&event);
@@ -3068,10 +3049,13 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 		UNLOCK_LOOKUP;
 		return;
 	}
-	length = isc_buffer_getuint16(b);
+	isc_buffer_init(&b, sevent->region.base, sevent->n);
+	isc_buffer_add(&b, sevent->n);
+	length = isc_buffer_getuint16(&b);
+
 	if (length == 0) {
 		isc_event_free(&event);
-		launch_next_query(query, ISC_FALSE);
+		launch_next_query(query, false);
 		UNLOCK_LOOKUP;
 		return;
 	}
@@ -3082,13 +3066,11 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 	 */
 	isc_buffer_invalidate(&query->recvbuf);
 	isc_buffer_init(&query->recvbuf, query->recvspace, length);
-	ENSURE(ISC_LIST_EMPTY(query->recvlist));
-	ISC_LINK_INIT(&query->recvbuf, link);
-	ISC_LIST_ENQUEUE(query->recvlist, &query->recvbuf, link);
+	isc_buffer_availableregion(&query->recvbuf, &r);
 	debug("recving with lookup=%p, query=%p", query->lookup, query);
-	result = isc_socket_recvv(query->sock, &query->recvlist, length, task,
-				  recv_done, query);
-	check_result(result, "isc_socket_recvv");
+	result = isc_socket_recv(query->sock, &r, length, task,
+				 recv_done, query);
+	check_result(result, "isc_socket_recv");
 	recvcount++;
 	debug("resubmitted recv request with length %d, recvcount=%d",
 	      length, recvcount);
@@ -3101,10 +3083,11 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
  * launch the next recv.
  */
 static void
-launch_next_query(dig_query_t *query, isc_boolean_t include_question) {
+launch_next_query(dig_query_t *query, bool include_question) {
 	isc_result_t result;
 	dig_lookup_t *l;
-	isc_buffer_t *buffer;
+	isc_region_t r;
+	REQUIRE(DIG_VALID_QUERY(query));
 
 	INSIST(!free_now);
 
@@ -3116,46 +3099,39 @@ launch_next_query(dig_query_t *query, isc_boolean_t include_question) {
 		sockcount--;
 		debug("sockcount=%d", sockcount);
 		INSIST(sockcount >= 0);
-		query->waiting_connect = ISC_FALSE;
+		query->waiting_connect = false;
 		l = query->lookup;
 		clear_query(query);
 		check_next_lookup(l);
 		return;
 	}
 
-	isc_buffer_clear(&query->slbuf);
 	isc_buffer_clear(&query->lengthbuf);
-	isc_buffer_putuint16(&query->slbuf, (isc_uint16_t) query->sendbuf.used);
-	ISC_LIST_INIT(query->sendlist);
-	ISC_LINK_INIT(&query->slbuf, link);
-	if (!query->first_soa_rcvd) {
-		buffer = clone_buffer(&query->slbuf);
-		ISC_LIST_ENQUEUE(query->sendlist, buffer, link);
-		if (include_question) {
-			buffer = clone_buffer(&query->sendbuf);
-			ISC_LIST_ENQUEUE(query->sendlist, buffer, link);
-		}
-	}
-
-	ISC_LINK_INIT(&query->lengthbuf, link);
-	ISC_LIST_ENQUEUE(query->lengthlist, &query->lengthbuf, link);
-
-	result = isc_socket_recvv(query->sock, &query->lengthlist, 0,
-				  global_task, tcp_length_done, query);
-	check_result(result, "isc_socket_recvv");
+	isc_buffer_availableregion(&query->lengthbuf, &r);
+	result = isc_socket_recv(query->sock, &r, 0,
+				 global_task, tcp_length_done, query);
+	check_result(result, "isc_socket_recv");
 	recvcount++;
 	debug("recvcount=%d", recvcount);
 	if (!query->first_soa_rcvd) {
 		debug("sending a request in launch_next_query");
 		TIME_NOW(&query->time_sent);
-		query->waiting_senddone = ISC_TRUE;
-		result = isc_socket_sendv(query->sock, &query->sendlist,
-					  global_task, send_done, query);
-		check_result(result, "isc_socket_sendv");
+		query->waiting_senddone = true;
+		isc_buffer_clear(&query->tmpsendbuf);
+		isc_buffer_putuint16(&query->tmpsendbuf,
+				     isc_buffer_usedlength(&query->sendbuf));
+		if (include_question) {
+			isc_buffer_usedregion(&query->sendbuf, &r);
+			isc_buffer_copyregion(&query->tmpsendbuf, &r);
+		}
+		isc_buffer_usedregion(&query->tmpsendbuf, &r);
+		result = isc_socket_send(query->sock, &r,
+					 global_task, send_done, query);
+		check_result(result, "isc_socket_send");
 		sendcount++;
 		debug("sendcount=%d", sendcount);
 	}
-	query->waiting_connect = ISC_FALSE;
+	query->waiting_connect = false;
 #if 0
 	check_next_lookup(query->lookup);
 #endif
@@ -3184,10 +3160,11 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 	LOCK_LOOKUP;
 	sevent = (isc_socketevent_t *)event;
 	query = sevent->ev_arg;
+	REQUIRE(DIG_VALID_QUERY(query));
 
 	INSIST(query->waiting_connect);
 
-	query->waiting_connect = ISC_FALSE;
+	query->waiting_connect = false;
 
 	if (sevent->result == ISC_R_CANCELED) {
 		debug("in cancel handler");
@@ -3201,7 +3178,7 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 		INSIST(sockcount > 0);
 		sockcount--;
 		debug("sockcount=%d", sockcount);
-		query->waiting_connect = ISC_FALSE;
+		query->waiting_connect = false;
 		isc_event_free(&event);
 		l = query->lookup;
 		clear_query(query);
@@ -3226,7 +3203,7 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 		if (exitcode < 9)
 			exitcode = 9;
 		debug("sockcount=%d", sockcount);
-		query->waiting_connect = ISC_FALSE;
+		query->waiting_connect = false;
 		isc_event_free(&event);
 		l = query->lookup;
 		if ((l->current_query != NULL) &&
@@ -3243,13 +3220,14 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 		UNLOCK_LOOKUP;
 		return;
 	}
+	exitcode = 0;
 	if (keep_open) {
 		if (keep != NULL)
 			isc_socket_detach(&keep);
 		isc_socket_attach(query->sock, &keep);
 		keepaddr = query->sockaddr;
 	}
-	launch_next_query(query, ISC_TRUE);
+	launch_next_query(query, true);
 	isc_event_free(&event);
 	UNLOCK_LOOKUP;
 }
@@ -3258,19 +3236,19 @@ connect_done(isc_task_t *task, isc_event_t *event) {
  * Check if the ongoing XFR needs more data before it's complete, using
  * the semantics of IXFR and AXFR protocols.  Much of the complexity of
  * this routine comes from determining when an IXFR is complete.
- * ISC_FALSE means more data is on the way, and the recv has been issued.
+ * false means more data is on the way, and the recv has been issued.
  */
-static isc_boolean_t
+static bool
 check_for_more_data(dig_query_t *query, dns_message_t *msg,
 		    isc_socketevent_t *sevent)
 {
 	dns_rdataset_t *rdataset = NULL;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_soa_t soa;
-	isc_uint32_t ixfr_serial = query->lookup->ixfr_serial, serial;
+	uint32_t ixfr_serial = query->lookup->ixfr_serial, serial;
 	isc_result_t result;
-	isc_boolean_t ixfr = query->lookup->rdtype == dns_rdatatype_ixfr;
-	isc_boolean_t axfr = query->lookup->rdtype == dns_rdatatype_axfr;
+	bool ixfr = query->lookup->rdtype == dns_rdatatype_ixfr;
+	bool axfr = query->lookup->rdtype == dns_rdatatype_axfr;
 
 	if (ixfr)
 		axfr = query->ixfr_axfr;
@@ -3291,7 +3269,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 	result = dns_message_firstname(msg, DNS_SECTION_ANSWER);
 	if (result != ISC_R_SUCCESS) {
 		puts("; Transfer failed.");
-		return (ISC_TRUE);
+		return (true);
 	}
 	do {
 		dns_name_t *name;
@@ -3316,14 +3294,14 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 				    (rdata.type != dns_rdatatype_soa)) {
 					puts("; Transfer failed.  "
 					     "Didn't start with SOA answer.");
-					return (ISC_TRUE);
+					return (true);
 				}
 				if ((!query->second_rr_rcvd) &&
 				    (rdata.type != dns_rdatatype_soa)) {
-					query->second_rr_rcvd = ISC_TRUE;
+					query->second_rr_rcvd = true;
 					query->second_rr_serial = 0;
 					debug("got the second rr as nonsoa");
-					axfr = query->ixfr_axfr = ISC_TRUE;
+					axfr = query->ixfr_axfr = true;
 					goto next_rdata;
 				}
 
@@ -3341,7 +3319,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 				serial = soa.serial;
 				dns_rdata_freestruct(&soa);
 				if (!query->first_soa_rcvd) {
-					query->first_soa_rcvd = ISC_TRUE;
+					query->first_soa_rcvd = true;
 					query->first_rr_serial = serial;
 					debug("this is the first serial %u",
 					      serial);
@@ -3365,7 +3343,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 					}
 					debug("this is the second serial %u",
 					      serial);
-					query->second_rr_rcvd = ISC_TRUE;
+					query->second_rr_rcvd = true;
 					query->second_rr_serial = serial;
 					goto next_rdata;
 				}
@@ -3378,7 +3356,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 					debug("got a match for ixfr");
 					if (!query->first_repeat_rcvd) {
 						query->first_repeat_rcvd =
-							ISC_TRUE;
+							true;
 						goto next_rdata;
 					}
 					debug("done with ixfr");
@@ -3391,11 +3369,11 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 		}
 		result = dns_message_nextname(msg, DNS_SECTION_ANSWER);
 	} while (result == ISC_R_SUCCESS);
-	launch_next_query(query, ISC_FALSE);
-	return (ISC_FALSE);
+	launch_next_query(query, false);
+	return (false);
  doexit:
 	dighost_received(sevent->n, &sevent->address, query);
-	return (ISC_TRUE);
+	return (true);
 }
 
 static void
@@ -3406,7 +3384,7 @@ process_cookie(dig_lookup_t *l, dns_message_t *msg,
 	isc_buffer_t hexbuf;
 	size_t len;
 	const unsigned char *sent;
-	isc_boolean_t copy = ISC_TRUE;
+	bool copy = true;
 	isc_result_t result;
 
 	if (l->cookie != NULL) {
@@ -3427,12 +3405,12 @@ process_cookie(dig_lookup_t *l, dns_message_t *msg,
 		} else {
 			printf(";; Warning: Client COOKIE mismatch\n");
 			msg->cc_bad = 1;
-			copy = ISC_FALSE;
+			copy = false;
 		}
 	} else {
 		printf(";; Warning: COOKIE bad token (too short)\n");
 		msg->cc_bad = 1;
-		copy = ISC_FALSE;
+		copy = false;
 	}
 	if (copy) {
 		isc_region_t r;
@@ -3455,9 +3433,9 @@ process_opt(dig_lookup_t *l, dns_message_t *msg) {
 	dns_rdata_t rdata;
 	isc_result_t result;
 	isc_buffer_t optbuf;
-	isc_uint16_t optcode, optlen;
+	uint16_t optcode, optlen;
 	dns_rdataset_t *opt = msg->opt;
-	isc_boolean_t seen_cookie = ISC_FALSE;
+	bool seen_cookie = false;
 
 	result = dns_rdataset_first(opt);
 	if (result == ISC_R_SUCCESS) {
@@ -3478,7 +3456,7 @@ process_opt(dig_lookup_t *l, dns_message_t *msg) {
 					break;
 				}
 				process_cookie(l, msg, &optbuf, optlen);
-				seen_cookie = ISC_TRUE;
+				seen_cookie = true;
 				break;
 			default:
 				isc_buffer_forward(&optbuf, optlen);
@@ -3500,13 +3478,14 @@ ednsvers(dns_rdataset_t *opt) {
 static void
 recv_done(isc_task_t *task, isc_event_t *event) {
 	isc_socketevent_t *sevent = NULL;
+	isc_region_t r;
 	dig_query_t *query = NULL;
-	isc_buffer_t *b = NULL;
+	isc_buffer_t b;
 	dns_message_t *msg = NULL;
 	isc_result_t result;
 	dig_lookup_t *n, *l;
-	isc_boolean_t docancel = ISC_FALSE;
-	isc_boolean_t match = ISC_TRUE;
+	bool docancel = false;
+	bool match = true;
 	unsigned int parseflags;
 	dns_messageid_t id;
 	unsigned int msgflags;
@@ -3531,16 +3510,15 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	REQUIRE(event->ev_type == ISC_SOCKEVENT_RECVDONE);
 	sevent = (isc_socketevent_t *)event;
 
-	b = ISC_LIST_HEAD(sevent->bufferlist);
-	INSIST(b == &query->recvbuf);
-	ISC_LIST_DEQUEUE(sevent->bufferlist, &query->recvbuf, link);
+	isc_buffer_init(&b, sevent->region.base, sevent->n);
+	isc_buffer_add(&b, sevent->n);
 
 	if ((l->tcp_mode) && (query->timer != NULL))
 		isc_timer_touch(query->timer);
 	if ((!l->pending && !l->ns_search_only) || cancel_now) {
 		debug("no longer pending.  Got %s",
 			isc_result_totext(sevent->result));
-		query->waiting_connect = ISC_FALSE;
+		query->waiting_connect = false;
 
 		isc_event_free(&event);
 		clear_query(query);
@@ -3552,7 +3530,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	if (sevent->result != ISC_R_SUCCESS) {
 		if (sevent->result == ISC_R_CANCELED) {
 			debug("in recv cancel handler");
-			query->waiting_connect = ISC_FALSE;
+			query->waiting_connect = false;
 		} else {
 			printf(";; communications error: %s\n",
 			       isc_result_totext(sevent->result));
@@ -3564,7 +3542,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			INSIST(sockcount >= 0);
 		}
 		if (sevent->result == ISC_R_EOF && l->eoferr == 0U) {
-			n = requeue_lookup(l, ISC_TRUE);
+			n = requeue_lookup(l, true);
 			n->eoferr++;
 		}
 		isc_event_free(&event);
@@ -3605,15 +3583,15 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			sizeof(buf2));
 			printf(";; reply from unexpected source: %s,"
 			" expected %s\n", buf1, buf2);
-			match = ISC_FALSE;
+			match = false;
 		}
 	}
 
-	result = dns_message_peekheader(b, &id, &msgflags);
+	result = dns_message_peekheader(&b, &id, &msgflags);
 	if (result != ISC_R_SUCCESS || l->sendmsg->id != id) {
-		match = ISC_FALSE;
+		match = false;
 		if (l->tcp_mode) {
-			isc_boolean_t fail = ISC_TRUE;
+			bool fail = true;
 			if (result == ISC_R_SUCCESS) {
 				if (!query->first_soa_rcvd ||
 				     query->warn_id)
@@ -3623,8 +3601,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 					       "WARNING" : "ERROR",
 					       l->sendmsg->id, id);
 				if (query->first_soa_rcvd)
-					fail = ISC_FALSE;
-				query->warn_id = ISC_FALSE;
+					fail = false;
+				query->warn_id = false;
 			} else
 				printf(";; ERROR: short "
 				       "(< header size) message\n");
@@ -3636,7 +3614,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				UNLOCK_LOOKUP;
 				return;
 			}
-			match = ISC_TRUE;
+			match = true;
 		} else if (result == ISC_R_SUCCESS)
 			printf(";; Warning: ID mismatch: "
 			       "expected ID %u, got %u\n", l->sendmsg->id, id);
@@ -3678,7 +3656,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		parseflags |= DNS_MESSAGEPARSE_BESTEFFORT;
 		parseflags |= DNS_MESSAGEPARSE_IGNORETRUNCATION;
 	}
-	result = dns_message_parse(msg, b, parseflags);
+	result = dns_message_parse(msg, &b, parseflags);
 	if (result == DNS_R_RECOVERABLE) {
 		printf(";; Warning: Message parser reports malformed "
 		       "message packet.\n");
@@ -3686,8 +3664,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 	if (result != ISC_R_SUCCESS) {
 		printf(";; Got bad packet: %s\n", isc_result_totext(result));
-		hex_dump(b);
-		query->waiting_connect = ISC_FALSE;
+		hex_dump(&b);
+		query->waiting_connect = false;
 		dns_message_destroy(&msg);
 		isc_event_free(&event);
 		clear_query(query);
@@ -3697,7 +3675,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		return;
 	}
 	if (msg->counts[DNS_SECTION_QUESTION] != 0) {
-		match = ISC_TRUE;
+		match = true;
 		for (result = dns_message_firstname(msg, DNS_SECTION_QUESTION);
 		     result == ISC_R_SUCCESS && match;
 		     result = dns_message_nextname(msg, DNS_SECTION_QUESTION)) {
@@ -3726,7 +3704,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 					printf(";; Question section mismatch: "
 					       "got %s/%s/%s\n",
 					       namestr, typebuf, classbuf);
-					match = ISC_FALSE;
+					match = false;
 				}
 			}
 		}
@@ -3752,7 +3730,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			printf(";; BADVERS, retrying with EDNS version %u.\n",
 			       (unsigned int)newedns);
 		l->edns = newedns;
-		n = requeue_lookup(l, ISC_TRUE);
+		n = requeue_lookup(l, true);
 		if (l->trace && l->trace_root)
 			n->rdtype = l->qrdtype;
 		dns_message_destroy(&msg);
@@ -3769,8 +3747,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			process_opt(l, msg);
 		if (l->comments)
 			printf(";; Truncated, retrying in TCP mode.\n");
-		n = requeue_lookup(l, ISC_TRUE);
-		n->tcp_mode = ISC_TRUE;
+		n = requeue_lookup(l, true);
+		n->tcp_mode = true;
 		if (l->trace && l->trace_root)
 			n->rdtype = l->qrdtype;
 		dns_message_destroy(&msg);
@@ -3788,10 +3766,10 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			if (l->comments)
 				printf(";; BADCOOKIE, retrying%s.\n",
 				       l->seenbadcookie ? " in TCP mode" : "");
-			n = requeue_lookup(l, ISC_TRUE);
+			n = requeue_lookup(l, true);
 			if (l->seenbadcookie)
-				n->tcp_mode = ISC_TRUE;
-			n->seenbadcookie = ISC_TRUE;
+				n->tcp_mode = true;
+			n->seenbadcookie = true;
 			if (l->trace && l->trace_root)
 				n->rdtype = l->qrdtype;
 			dns_message_destroy(&msg);
@@ -3840,11 +3818,11 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (tsigkey != NULL) {
-		result = dns_tsig_verify(&query->recvbuf, msg, NULL, NULL);
+		result = dns_tsig_verify(&b, msg, NULL, NULL);
 		if (result != ISC_R_SUCCESS) {
 			printf(";; Couldn't verify signature: %s\n",
 			       isc_result_totext(result));
-			validated = ISC_FALSE;
+			validated = false;
 		}
 		l->tsigctx = msg->tsigctx;
 		msg->tsigctx = NULL;
@@ -3856,7 +3834,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		check_result(result,"dns_message_getquerytsig");
 	}
 
-	extrabytes = isc_buffer_remaininglength(b);
+	extrabytes = isc_buffer_remaininglength(&b);
 
 	debug("after parse");
 	if (l->doing_xfr && l->xfr_q == NULL) {
@@ -3886,7 +3864,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 						 isc_timertype_once,
 						 NULL,
 						 &l->interval,
-						 ISC_FALSE);
+						 false);
 			check_result(result, "isc_timer_reset");
 		}
 	}
@@ -3902,19 +3880,19 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		if (msg->rcode == dns_rcode_nxdomain &&
 		    (l->origin != NULL || l->need_search)) {
 			if (!next_origin(query->lookup) || showsearch) {
-				dighost_printmessage(query, msg, ISC_TRUE);
-				dighost_received(b->used, &sevent->address,
-						 query);
+				dighost_printmessage(query, msg, true);
+				dighost_received(isc_buffer_usedlength(&b),
+						 &sevent->address, query);
 			}
 		} else if (!l->trace && !l->ns_search_only) {
-			dighost_printmessage(query, msg, ISC_TRUE);
+			dighost_printmessage(query, msg, true);
 		} else if (l->trace) {
 			int nl = 0;
 			int count = msg->counts[DNS_SECTION_ANSWER];
 
 			debug("in TRACE code");
 			if (!l->ns_search_only)
-				dighost_printmessage(query, msg, ISC_TRUE);
+				dighost_printmessage(query, msg, true);
 
 			l->rdtype = l->qrdtype;
 			if (l->trace_root || (l->ns_search_only && count > 0)) {
@@ -3922,12 +3900,12 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 					l->rdtype = dns_rdatatype_soa;
 				nl = followup_lookup(msg, query,
 						     DNS_SECTION_ANSWER);
-				l->trace_root = ISC_FALSE;
+				l->trace_root = false;
 			} else if (count == 0)
 				nl = followup_lookup(msg, query,
 						     DNS_SECTION_AUTHORITY);
 			if (nl == 0)
-				docancel = ISC_TRUE;
+				docancel = true;
 		} else {
 			debug("in NSSEARCH code");
 
@@ -3941,11 +3919,11 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				nl = followup_lookup(msg, query,
 						     DNS_SECTION_ANSWER);
 				if (nl == 0)
-					docancel = ISC_TRUE;
-				l->trace_root = ISC_FALSE;
-				usesearch = ISC_FALSE;
+					docancel = true;
+				l->trace_root = false;
+				usesearch = false;
 			} else {
-				dighost_printmessage(query, msg, ISC_TRUE);
+				dighost_printmessage(query, msg, true);
 			}
 		}
 	}
@@ -3956,7 +3934,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		if (query != l->xfr_q) {
 			dns_message_destroy(&msg);
 			isc_event_free(&event);
-			query->waiting_connect = ISC_FALSE;
+			query->waiting_connect = false;
 			UNLOCK_LOOKUP;
 			return;
 		}
@@ -3971,11 +3949,12 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	} else {
 
 		if (msg->rcode == dns_rcode_noerror || l->origin == NULL) {
-			dighost_received(b->used, &sevent->address, query);
+			dighost_received(isc_buffer_usedlength(&b),
+					 &sevent->address, query);
 		}
 
 		if (!query->lookup->ns_search_only)
-			query->lookup->pending = ISC_FALSE;
+			query->lookup->pending = false;
 		if (!query->lookup->ns_search_only ||
 		    query->lookup->trace_root || docancel)
 		{
@@ -3995,10 +3974,10 @@ recv_done(isc_task_t *task, isc_event_t *event) {
  udp_mismatch:
 	isc_buffer_invalidate(&query->recvbuf);
 	isc_buffer_init(&query->recvbuf, query->recvspace, COMMSIZE);
-	ISC_LIST_ENQUEUE(query->recvlist, &query->recvbuf, link);
-	result = isc_socket_recvv(query->sock, &query->recvlist, 1,
-				  global_task, recv_done, query);
-	check_result(result, "isc_socket_recvv");
+	isc_buffer_availableregion(&query->recvbuf, &r);
+	result = isc_socket_recv(query->sock, &r, 1,
+				 global_task, recv_done, query);
+	check_result(result, "isc_socket_recv");
 	recvcount++;
 	isc_event_free(&event);
 	UNLOCK_LOOKUP;
@@ -4014,7 +3993,7 @@ isc_result_t
 get_address(char *host, in_port_t myport, isc_sockaddr_t *sockaddr) {
 	int count;
 	isc_result_t result;
-	isc_boolean_t is_running;
+	bool is_running;
 
 	is_running = isc_app_isrunning();
 	if (is_running)
@@ -4070,9 +4049,10 @@ do_lookup(dig_lookup_t *lookup) {
 	REQUIRE(lookup != NULL);
 
 	debug("do_lookup()");
-	lookup->pending = ISC_TRUE;
+	lookup->pending = true;
 	query = ISC_LIST_HEAD(lookup->q);
 	if (query != NULL) {
+		REQUIRE(DIG_VALID_QUERY(query));
 		if (lookup->tcp_mode)
 			send_tcp_connect(query);
 		else
@@ -4109,7 +4089,7 @@ cancel_all(void) {
 		UNLOCK_LOOKUP;
 		return;
 	}
-	cancel_now = ISC_TRUE;
+	cancel_now = true;
 	if (current_lookup != NULL) {
 		for (q = ISC_LIST_HEAD(current_lookup->q);
 		     q != NULL;
@@ -4154,9 +4134,9 @@ cancel_all(void) {
  */
 void
 destroy_libs(void) {
-#ifdef WITH_IDN_SUPPORT
+#ifdef HAVE_LIBIDN2
 	isc_result_t result;
-#endif
+#endif /* HAVE_LIBIDN2 */
 
 	if (keep != NULL)
 		isc_socket_detach(&keep);
@@ -4182,16 +4162,16 @@ destroy_libs(void) {
 	INSIST(current_lookup == NULL);
 	INSIST(!free_now);
 
-	free_now = ISC_TRUE;
+	free_now = true;
 
 	flush_server_list();
 
 	clear_searchlist();
 
-#ifdef WITH_IDN_SUPPORT
+#ifdef HAVE_LIBIDN2
 	result = dns_name_settotextfilter(NULL);
 	check_result(result, "dns_name_settotextfilter");
-#endif
+#endif /* HAVE_LIBIDN2 */
 	dns_name_destroy();
 
 	if (commctx != NULL) {
@@ -4216,15 +4196,11 @@ destroy_libs(void) {
 	if (is_dst_up) {
 		debug("destroy DST lib");
 		dst_lib_destroy();
-		is_dst_up = ISC_FALSE;
-	}
-	if (entp != NULL) {
-		debug("detach from entropy");
-		isc_entropy_detach(&entp);
+		is_dst_up = false;
 	}
 
 	UNLOCK_LOOKUP;
-	DESTROYLOCK(&lookup_lock);
+	isc_mutex_destroy(&lookup_lock);
 	debug("Removing log context");
 	isc_log_destroy(&lctx);
 
@@ -4235,183 +4211,151 @@ destroy_libs(void) {
 		isc_mem_destroy(&mctx);
 }
 
-#ifdef WITH_IDN_OUT_SUPPORT
+#ifdef HAVE_LIBIDN2
 static isc_result_t
-output_filter(isc_buffer_t *buffer, unsigned int used_org,
-	      isc_boolean_t absolute)
-{
-	char tmp1[MAXDLEN], tmp2[MAXDLEN];
-	size_t fromlen, tolen;
-	isc_boolean_t end_with_dot;
-	isc_result_t result;
+idn_output_filter(isc_buffer_t *buffer, unsigned int used_org) {
+	char src[MXNAME], *dst;
+	size_t srclen, dstlen;
 
 	/*
-	 * Copy contents of 'buffer' to 'tmp1', supply trailing dot
-	 * if 'absolute' is true, and terminate with NUL.
+	 * Copy name from 'buffer' to 'src' and terminate it with NULL.
 	 */
-	fromlen = isc_buffer_usedlength(buffer) - used_org;
-	if (fromlen >= MAXDLEN)
-		return (ISC_R_SUCCESS);
-
-	memmove(tmp1, (char *)isc_buffer_base(buffer) + used_org, fromlen);
-	end_with_dot = (tmp1[fromlen - 1] == '.') ? ISC_TRUE : ISC_FALSE;
-	if (absolute && !end_with_dot) {
-		fromlen++;
-		if (fromlen >= MAXDLEN)
-			return (ISC_R_SUCCESS);
-		tmp1[fromlen - 1] = '.';
-	}
-
-	tmp1[fromlen] = '\0';
-
-	/*
-	 * Convert contents of 'tmp1' to local encoding.
-	 */
-	result = idn_ace_to_locale(tmp1, tmp2, sizeof(tmp2));
-	if (result != ISC_R_SUCCESS) {
+	srclen = isc_buffer_usedlength(buffer) - used_org;
+	if (srclen > sizeof(src)) {
+		warn("Input name too long to perform IDN conversion");
 		return (ISC_R_SUCCESS);
 	}
-	/*
-	 * Copy the converted contents in 'tmp1' back to 'buffer'.
-	 * If we have appended trailing dot, remove it.
-	 */
-	tolen = strlen(tmp2);
-	if (absolute && !end_with_dot && tmp2[tolen - 1] == '.')
-		tolen--;
+	memmove(src, (char *)isc_buffer_base(buffer) + used_org, srclen);
+	src[srclen] = '\0';
 
-	if (isc_buffer_length(buffer) < used_org + tolen)
+	/*
+	 * Convert 'src' to the current locale's character encoding.
+	 */
+	idn_ace_to_locale(src, &dst);
+
+	/*
+	 * Check whether the converted name will fit back into 'buffer'.
+	 */
+	dstlen = strlen(dst);
+	if (isc_buffer_length(buffer) < used_org + dstlen) {
+		idn2_free(dst);
 		return (ISC_R_NOSPACE);
-
-	isc_buffer_subtract(buffer, isc_buffer_usedlength(buffer) - used_org);
-	memmove(isc_buffer_used(buffer), tmp2, tolen);
-	isc_buffer_add(buffer, (unsigned int)tolen);
-
-	return (ISC_R_SUCCESS);
-}
-#endif
-
-#ifdef WITH_IDN_SUPPORT
-#ifdef WITH_IDNKIT
-static void
-idnkit_check_result(idn_result_t result, const char *msg) {
-	if (result != idn_success) {
-		fatal("%s: %s", msg, idn_result_tostring(result));
 	}
+
+	/*
+	 * Put the converted name back into 'buffer'.
+	 */
+	isc_buffer_subtract(buffer, srclen);
+	memmove(isc_buffer_used(buffer), dst, dstlen);
+	isc_buffer_add(buffer, dstlen);
+
+	/*
+	 * Clean up.
+	 */
+	idn2_free(dst);
+
+	return (ISC_R_SUCCESS);
 }
 
+/*%
+ * Convert 'src', which is a string using the current locale's character
+ * encoding, into an ACE string suitable for use in the DNS, storing the
+ * conversion result in 'dst', which is 'dstlen' bytes large.
+ *
+ * 'dst' MUST be large enough to hold any valid domain name.
+ */
 static void
-idn_initialize(void) {
-	idn_result_t result;
-
-	/* Create configuration context. */
-	result = idn_nameinit(1);
-	idnkit_check_result(result, "idnkit api initialization failed");
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-idn_locale_to_ace(const char *from, char *to, size_t tolen) {
-	char utf8_textname[MXNAME];
-	idn_result_t result;
-
-	result = idn_encodename(IDN_LOCALCONV | IDN_DELIMMAP, from,
-				utf8_textname, sizeof(utf8_textname));
-	idnkit_check_result(result, "idnkit idn_encodename to utf8 failed");
-
-	result = idn_encodename(idnoptions | IDN_LOCALMAP | IDN_NAMEPREP |
-				IDN_IDNCONV | IDN_LENCHECK,
-				utf8_textname, to, tolen);
-	idnkit_check_result(result, "idnkit idn_encodename to idn failed");
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-idn_ace_to_locale(const char *from, char *to, size_t tolen) {
-	idn_result_t result;
-
-	result = idn_decodename(IDN_DECODE_APP, from, to, tolen);
-	if (result != idn_success) {
-		debug("idnkit idn_decodename failed: %s",
-		      idn_result_tostring(result));
-		return (ISC_R_FAILURE);
-	}
-	return (ISC_R_SUCCESS);
-}
-#endif /* WITH_IDNKIT */
-
-#ifdef WITH_LIBIDN2
-static void
-idn_initialize(void) {
-}
-
-static isc_result_t
-idn_locale_to_ace(const char *from, char *to, size_t tolen) {
+idn_locale_to_ace(const char *src, char *dst, size_t dstlen) {
+	const char *final_src;
+	char *ascii_src;
 	int res;
-	char *tmp_str = NULL;
 
-	res = idn2_to_ascii_lz(from, &tmp_str, IDN2_NONTRANSITIONAL|IDN2_NFC_INPUT);
-	if (res == IDN2_DISALLOWED) {
-		res = idn2_to_ascii_lz(from, &tmp_str, IDN2_TRANSITIONAL|IDN2_NFC_INPUT);
+	/*
+	 * We trust libidn2 to return an error if 'src' is too large to be a
+	 * valid domain name.
+	 */
+	res = idn2_to_ascii_lz(src, &ascii_src, IDN2_NONTRANSITIONAL);
+	if (res != IDN2_OK) {
+		fatal("'%s' is not a legal IDNA2008 name (%s), use +noidnin",
+		      src, idn2_strerror(res));
 	}
 
-	if (res == IDN2_OK) {
-		/*
-		 * idn2_to_ascii_lz() normalizes all strings to lowerl case,
-		 * but we generally don't want to lowercase all input strings;
-		 * make sure to return the original case if the two strings
-		 * differ only in case
-		 */
-		if (!strcasecmp(from, tmp_str)) {
-			if (strlen(from) >= tolen) {
-				debug("from string is too long");
-				idn2_free(tmp_str);
-				return ISC_R_NOSPACE;
-			}
-			idn2_free(tmp_str);
-			(void) strlcpy(to, from, tolen);
-			return ISC_R_SUCCESS;
-		}
-		/* check the length */
-		if (strlen(tmp_str) >= tolen) {
-			debug("ACE string is too long");
-			idn2_free(tmp_str);
-			return ISC_R_NOSPACE;
-		}
+	/*
+	 * idn2_to_ascii_lz() normalizes all strings to lower case, but we
+	 * generally don't want to lowercase all input strings; make sure to
+	 * return the original case if the two strings differ only in case.
+	 */
+	final_src = (strcasecmp(src, ascii_src) == 0 ? src : ascii_src);
 
-		(void) strlcpy(to, tmp_str, tolen);
-		idn2_free(tmp_str);
-		return ISC_R_SUCCESS;
-	}
+	(void)strlcpy(dst, final_src, dstlen);
 
-	fatal("'%s' is not a legal IDN name (%s), use +noidnin", from, idn2_strerror(res));
-	return ISC_R_FAILURE;
+	idn2_free(ascii_src);
 }
 
-#ifdef WITH_IDN_OUT_SUPPORT
-static isc_result_t
-idn_ace_to_locale(const char *from, char *to, size_t tolen) {
+/*%
+ * Convert 'src', which is an ACE string suitable for use in the DNS, into a
+ * string using the current locale's character encoding, storing the conversion
+ * result in 'dst'.
+ *
+ * The caller MUST subsequently release 'dst' using idn2_free().
+ */
+static void
+idn_ace_to_locale(const char *src, char **dst) {
+	char *local_src, *utf8_src;
 	int res;
-	char *tmp_str = NULL;
 
-	res = idn2_to_unicode_8zlz(from, &tmp_str,
-				   IDN2_NONTRANSITIONAL|IDN2_NFC_INPUT);
-
-	if (res == IDN2_OK) {
-		/* check the length */
-		if (strlen(tmp_str) >= tolen) {
-			debug("encoded ASC string is too long");
-			idn2_free(tmp_str);
-			return ISC_R_FAILURE;
-		}
-
-		(void) strlcpy(to, tmp_str, tolen);
-		idn2_free(tmp_str);
-		return ISC_R_SUCCESS;
+	/*
+	 * We need to:
+	 *
+	 *  1) check whether 'src' is a valid IDNA2008 name,
+	 *  2) if it is, output it in the current locale's character encoding.
+	 *
+	 * Unlike idn2_to_ascii_*(), idn2_to_unicode_*() functions are unable
+	 * to perform IDNA2008 validity checks.  Thus, we need to decode any
+	 * Punycode in 'src', check if the resulting name is a valid IDNA2008
+	 * name, and only once we ensure it is, output that name in the current
+	 * locale's character encoding.
+	 *
+	 * We could just use idn2_to_unicode_8zlz() + idn2_to_ascii_lz(), but
+	 * then we would not be able to universally tell invalid names and
+	 * character encoding errors apart (if the current locale uses ASCII
+	 * for character encoding, the former function would fail even for a
+	 * valid IDNA2008 name, as long as it contained any non-ASCII
+	 * character).  Thus, we need to take a longer route.
+	 *
+	 * First, convert 'src' to UTF-8, ignoring the current locale.
+	 */
+	res = idn2_to_unicode_8z8z(src, &utf8_src, 0);
+	if (res != IDN2_OK) {
+		fatal("Bad ACE string '%s' (%s), use +noidnout",
+		      src, idn2_strerror(res));
 	}
 
-	fatal("'%s' is not a legal IDN name (%s), use +noidnout", from, idn2_strerror(res));
-	return ISC_R_FAILURE;
+	/*
+	 * Then, check whether decoded 'src' is a valid IDNA2008 name.
+	 */
+	res = idn2_to_ascii_8z(utf8_src, NULL, IDN2_NONTRANSITIONAL);
+	if (res != IDN2_OK) {
+		fatal("'%s' is not a legal IDNA2008 name (%s), use +noidnout",
+		      src, idn2_strerror(res));
+	}
+
+	/*
+	 * Finally, try converting the decoded 'src' into the current locale's
+	 * character encoding.
+	 */
+	res = idn2_to_unicode_8zlz(utf8_src, &local_src, 0);
+	if (res != IDN2_OK) {
+		fatal("Cannot represent '%s' in the current locale (%s), "
+		      "use +noidnout or a different locale",
+		      src, idn2_strerror(res));
+	}
+
+	/*
+	 * Free the interim conversion result.
+	 */
+	idn2_free(utf8_src);
+
+	*dst = local_src;
 }
-#endif /* WITH_IDN_OUT_SUPPORT */
-#endif /* WITH_LIBIDN2 */
-#endif /* WITH_IDN_SUPPORT */
+#endif /* HAVE_LIBIDN2 */

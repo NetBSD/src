@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/16 06:54:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.12.1 2019/01/18 08:49:04 pgoyette Exp $
 
 DRIVER=		xf86-video-geode
 DRIVER_NAME=	geode_drv
@@ -32,6 +32,7 @@ NOMAN=	# defined
 CPPFLAGS+=	-DHAVE_GX -DHAVE_LX -DAMD_V4L2_VIDEO -DOPT_ACCEL -DPNL_SUP
 # This enables multi-mmap support; no idea why it is Linux 2.6 specific
 CPPFLAGS+=	-DLINUX_2_6
+CPPFLAGS+=	-DHAVE_XF86_CURSOR_RESET_CURSOR
 
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/cim \
 		-I${X11SRCDIR.${DRIVER}}/src/gfx \

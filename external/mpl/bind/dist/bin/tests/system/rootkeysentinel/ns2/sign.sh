@@ -22,8 +22,8 @@ zone=example.
 infile=example.db.in
 zonefile=example.db
 
-keyname1=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
-keyname2=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
+keyname1=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
+keyname2=`$KEYGEN -q -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 echo root-key-sentinel-is-ta-$oldid A 10.53.0.1 >> $zonefile
@@ -37,4 +37,4 @@ echo new-not-ta CNAME root-key-sentinel-not-ta-$newid >> $zonefile
 echo bad-is-ta CNAME root-key-sentinel-is-ta-$badid >> $zonefile
 echo bad-not-ta CNAME root-key-sentinel-not-ta-$badid >> $zonefile
 
-$SIGNER -P -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -g -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.12 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.12.86.1 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.12 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.12.86.1 2019/01/18 08:50:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ static void
 mii_bitbang_sync(device_t sc, mii_bitbang_ops_t ops)
 {
 	int i;
-	u_int32_t v;
+	uint32_t v;
 
 	v = MDIRPHY | MDO;
 
@@ -87,7 +87,7 @@ mii_bitbang_sendbits(device_t sc, mii_bitbang_ops_t ops, uint32_t data,
     int nbits)
 {
 	int i;
-	u_int32_t v;
+	uint32_t v;
 
 	v = MDIRPHY;
 	WRITE(v);

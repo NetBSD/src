@@ -334,6 +334,8 @@ extern void	zfs_znode_fini(void);
 #ifdef __NetBSD__
 extern int	zfs_loadvnode(struct mount *, struct vnode *,
     const void *, size_t, const void **);
+extern int	zfs_newvnode(struct mount *, struct vnode *, struct vnode *,
+    struct vattr *, kauth_cred_t, void *, size_t *, const void **);
 extern int	zfs_zget_cleaner(zfsvfs_t *, uint64_t, znode_t **);
 #endif
 extern int	zfs_zget(zfsvfs_t *, uint64_t, znode_t **);

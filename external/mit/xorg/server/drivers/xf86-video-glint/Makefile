@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/12/10 01:58:36 macallan Exp $
+#	$NetBSD: Makefile,v 1.14.12.1 2019/01/18 08:49:04 pgoyette Exp $
 
 DRIVER=		xf86-video-glint
 DRIVER_NAME=	glint_drv
@@ -22,7 +22,7 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 
-COPTS.glint_driver.c=	-Wno-error	# XXX xf86dgastr.h
+COPTS.glint_driver.c=	-Wno-error	# XXX xf86dgastr.h, deprecated
 
 CWARNFLAGS.clang+=	-Wno-format
 

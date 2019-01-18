@@ -90,7 +90,7 @@
 	  <p>
 	    Selects the cryptographic algorithm.  The value of
 	    <code class="option">algorithm</code> must be one of RSAMD5, RSASHA1,
-	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512, ECCGOST,
+	    NSEC3RSASHA1, RSASHA256, RSASHA512,
 	    ECDSAP256SHA256, ECDSAP384SHA384, ED25519 or ED448.
 	  </p>
 	  <p>
@@ -103,9 +103,9 @@
 	  <p>
 	    These values are case insensitive. In some cases, abbreviations
 	    are supported, such as ECDSA256 for ECDSAP256SHA256 and
-	    ECDSA384 for ECDSAP384SHA384. If RSASHA1 or DSA is specified
+	    ECDSA384 for ECDSAP384SHA384. If RSASHA1 is specified
 	    along with the <code class="option">-3</code> option, then NSEC3RSASHA1
-	    or NSEC3DSA will be used instead.
+	    will be used instead.
 	  </p>
 	  <p>
 	    As of BIND 9.12.0, this option is mandatory except when using

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.2.2.2 2018/09/06 06:54:59 pgoyette Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,10 +15,13 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
 #ifdef USE_DNSRPS
 
 #include <isc/mem.h>
-#include <isc/stdlib.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -77,7 +80,7 @@ static void
 dnsrps_mutex_destroy(void *mutex0) {
 	isc_mutex_t *mutex = mutex0;
 
-	DESTROYLOCK(mutex);
+	isc_mutex_destroy(mutex);
 }
 
 static void
@@ -126,7 +129,6 @@ dnsrps_log_fnc(librpz_log_level_t level, void *ctxt, const char *buf) {
 isc_result_t
 dns_dnsrps_server_create(void) {
 	librpz_emsg_t emsg;
-	isc_result_t result;
 
 	INSIST(clist == NULL);
 	INSIST(librpz == NULL);
@@ -145,9 +147,7 @@ dns_dnsrps_server_create(void) {
 	if (librpz == NULL)
 		return (ISC_R_SUCCESS);
 
-	result = isc_mutex_init(&dnsrps_mutex);
-	if (result != ISC_R_SUCCESS)
-		return (result);
+	isc_mutex_init(&dnsrps_mutex);
 
 	librpz->set_log(&dnsrps_log_fnc, NULL);
 
@@ -196,16 +196,16 @@ dns_dnsrps_view_init(dns_rpz_zones_t *new, char *rps_cstr) {
 		      "dnsrps configuration \"%s\"", rps_cstr);
 
 	new->rps_client = librpz->client_create(&emsg, clist,
-						 rps_cstr, ISC_FALSE);
+						 rps_cstr, false);
 	if (new->rps_client == NULL) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ,
 			      DNS_LOGMODULE_RBTDB, DNS_RPZ_ERROR_LEVEL,
 			      "librpz->client_create(): %s", emsg.c);
-		new->p.dnsrps_enabled = ISC_FALSE;
+		new->p.dnsrps_enabled = false;
 		return (ISC_R_FAILURE);
 	}
 
-	new->p.dnsrps_enabled = ISC_TRUE;
+	new->p.dnsrps_enabled = true;
 	return (ISC_R_SUCCESS);
 }
 
@@ -249,7 +249,7 @@ dns_dnsrps_connect(dns_rpz_zones_t *rpzs) {
 isc_result_t
 dns_dnsrps_rewrite_init(librpz_emsg_t *emsg, dns_rpz_st_t *st,
 			dns_rpz_zones_t *rpzs, const dns_name_t *qname,
-			isc_mem_t *mctx, isc_boolean_t have_rd)
+			isc_mem_t *mctx, bool have_rd)
 {
 	rpsdb_t *rpsdb;
 
@@ -311,6 +311,7 @@ dns_dnsrps_2policy(librpz_policy_t rps_policy) {
 	case LIBRPZ_POLICY_DISABLED:
 	default:
 		INSIST(0);
+		ISC_UNREACHABLE();
 	}
 }
 
@@ -420,7 +421,7 @@ rpsdb_detachnode(dns_db_t *db, dns_dbnode_t **targetp) {
 }
 
 static isc_result_t
-rpsdb_findnode(dns_db_t *db, const dns_name_t *name, isc_boolean_t create,
+rpsdb_findnode(dns_db_t *db, const dns_name_t *name, bool create,
 	       dns_dbnode_t **nodep)
 {
 	rpsdb_t *rpsdb = (rpsdb_t *)db;
@@ -644,11 +645,11 @@ rpsdb_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	return (ISC_R_SUCCESS);
 }
 
-static isc_boolean_t
+static bool
 rpsdb_issecure(dns_db_t *db) {
 	UNUSED(db);
 
-	return (ISC_FALSE);
+	return (false);
 }
 
 static isc_result_t

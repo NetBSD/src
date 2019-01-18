@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.11 2018/12/26 14:02:04 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.12 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.11 2018/12/26 14:02:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.12 2019/01/18 08:50:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -565,6 +565,9 @@ m_gethdr(int how, int type)
 	m->m_pkthdr.len = 0;
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
+	m->m_pkthdr.segsz = 0;
+	m->m_pkthdr.ether_vtag = 0;
+	m->m_pkthdr.pkthdr_flags = 0;
 	SLIST_INIT(&m->m_pkthdr.tags);
 
 	m->m_pkthdr.pattr_class = NULL;
@@ -1279,7 +1282,7 @@ m_split_internal(struct mbuf *m0, int len0, int wait, bool copyhdr)
 
 		if (remain > MHLEN) {
 			/* m can't be the lead packet */
-			MH_ALIGN(n, 0);
+			m_align(n, 0);
 			n->m_len = 0;
 			n->m_next = m_split(m, len, wait);
 			if (n->m_next == NULL) {
@@ -1289,7 +1292,7 @@ m_split_internal(struct mbuf *m0, int len0, int wait, bool copyhdr)
 			}
 			return n;
 		} else {
-			MH_ALIGN(n, remain);
+			m_align(n, remain);
 		}
 	} else if (remain == 0) {
 		n = m->m_next;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iptable.c,v 1.2.2.2 2018/09/06 06:55:00 pgoyette Exp $	*/
+/*	$NetBSD: iptable.c,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,6 +12,9 @@
  */
 
 #include <config.h>
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/radix.h>
@@ -50,23 +53,15 @@ dns_iptable_create(isc_mem_t *mctx, dns_iptable_t **target) {
 	return (result);
 }
 
-static isc_boolean_t dns_iptable_neg = ISC_FALSE;
-static isc_boolean_t dns_iptable_pos = ISC_TRUE;
+static bool dns_iptable_neg = false;
+static bool dns_iptable_pos = true;
 
 /*
  * Add an IP prefix to an existing IP table
  */
 isc_result_t
 dns_iptable_addprefix(dns_iptable_t *tab, const isc_netaddr_t *addr,
-		      isc_uint16_t bitlen, isc_boolean_t pos)
-{
-	return(dns_iptable_addprefix2(tab, addr, bitlen, pos, ISC_FALSE));
-}
-
-isc_result_t
-dns_iptable_addprefix2(dns_iptable_t *tab, const isc_netaddr_t *addr,
-		       isc_uint16_t bitlen, isc_boolean_t pos,
-		       isc_boolean_t is_ecs)
+		      uint16_t bitlen, bool pos)
 {
 	isc_result_t result;
 	isc_prefix_t pfx;
@@ -74,9 +69,9 @@ dns_iptable_addprefix2(dns_iptable_t *tab, const isc_netaddr_t *addr,
 	int i;
 
 	INSIST(DNS_IPTABLE_VALID(tab));
-	INSIST(tab->radix);
+	INSIST(tab->radix != NULL);
 
-	NETADDR_TO_PREFIX_T(addr, pfx, bitlen, is_ecs);
+	NETADDR_TO_PREFIX_T(addr, pfx, bitlen);
 
 	result = isc_radix_insert(tab->radix, &node, NULL, &pfx);
 	if (result != ISC_R_SUCCESS) {
@@ -89,10 +84,9 @@ dns_iptable_addprefix2(dns_iptable_t *tab, const isc_netaddr_t *addr,
 		/* "any" or "none" */
 		INSIST(pfx.bitlen == 0);
 		for (i = 0; i < RADIX_FAMILIES; i++) {
-			if (node->data[i] == NULL) {
+			if (node->data[i] == NULL)
 				node->data[i] = pos ? &dns_iptable_pos
 						    : &dns_iptable_neg;
-			}
 		}
 	} else {
 		/* any other prefix */
@@ -111,7 +105,7 @@ dns_iptable_addprefix2(dns_iptable_t *tab, const isc_netaddr_t *addr,
  * Merge one IP table into another one.
  */
 isc_result_t
-dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, isc_boolean_t pos)
+dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, bool pos)
 {
 	isc_result_t result;
 	isc_radix_node_t *node, *new_node;
@@ -135,7 +129,7 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, isc_boolean_t pos)
 		for (i = 0; i < RADIX_FAMILIES; i++) {
 			if (!pos) {
 				if (node->data[i] &&
-				    *(isc_boolean_t *) node->data[i])
+				    *(bool *) node->data[i])
 					new_node->data[i] = &dns_iptable_neg;
 			}
 			if (node->node_num[i] > max_node)
@@ -150,19 +144,20 @@ dns_iptable_merge(dns_iptable_t *tab, dns_iptable_t *source, isc_boolean_t pos)
 void
 dns_iptable_attach(dns_iptable_t *source, dns_iptable_t **target) {
 	REQUIRE(DNS_IPTABLE_VALID(source));
-	isc_refcount_increment(&source->refcount, NULL);
+	isc_refcount_increment(&source->refcount);
 	*target = source;
 }
 
 void
 dns_iptable_detach(dns_iptable_t **tabp) {
+	REQUIRE(tabp != NULL && DNS_IPTABLE_VALID(*tabp));
 	dns_iptable_t *tab = *tabp;
-	unsigned int refs;
-	REQUIRE(DNS_IPTABLE_VALID(tab));
-	isc_refcount_decrement(&tab->refcount, &refs);
-	if (refs == 0)
-		destroy_iptable(tab);
 	*tabp = NULL;
+
+	if (isc_refcount_decrement(&tab->refcount) == 1) {
+		isc_refcount_destroy(&tab->refcount);
+		destroy_iptable(tab);
+	}
 }
 
 static void
@@ -175,7 +170,6 @@ destroy_iptable(dns_iptable_t *dtab) {
 		dtab->radix = NULL;
 	}
 
-	isc_refcount_destroy(&dtab->refcount);
 	dtab->magic = 0;
 	isc_mem_putanddetach(&dtab->mctx, dtab, sizeof(*dtab));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: pcb.h,v 1.1.28.1 2019/01/18 08:50:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 struct pcb {
 	struct fpreg pcb_fpregs;
+	struct trapframe *pcb_tf;
 };
 
 struct md_coredump {

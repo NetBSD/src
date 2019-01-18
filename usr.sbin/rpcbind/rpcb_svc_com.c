@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.20 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.20.2.1 2019/01/18 08:51:02 pgoyette Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_com.c 301770 2016-06-09 22:25:00Z pfg $ */
 
 /*-
@@ -179,7 +179,7 @@ map_set(RPCB *regp, char *owner)
 	/*
 	 * add to the end of the list
 	 */
-	rbl = malloc(sizeof(RPCBLIST));
+	rbl = malloc(sizeof(*rbl));
 	if (rbl == NULL)
 		return (FALSE);
 	a = &(rbl->rpcb_map);
@@ -306,8 +306,12 @@ delete_prog(rpcprog_t prog)
 		reg.r_prog = rbl->rpcb_map.r_prog;
 		reg.r_vers = rbl->rpcb_map.r_vers;
 		reg.r_netid = strdup(rbl->rpcb_map.r_netid);
-		(void)map_unset(&reg, rpcbind_superuser);
-		free(reg.r_netid);
+		if (reg.r_netid == NULL)
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
+		else {
+			(void)map_unset(&reg, rpcbind_superuser);
+			free(reg.r_netid);
+		}
 	}
 }
 
@@ -508,16 +512,16 @@ create_rmtcall_fd(struct netconfig *nconf)
 			nconf->nc_device, errno);
 		return (-1);
 	}
-	xprt = svc_tli_create(fd, 0, (struct t_bind *) 0, 0, 0);
+	xprt = svc_tli_create(fd, 0, NULL, 0, 0);
 	if (xprt == NULL) {
 		if (debugging)
 			fprintf(stderr,
-				"create_rmtcall_fd: svc_tli_create failed\n");
+				"%s: svc_tli_create failed\n", __func__);
 		return (-1);
 	}
-	rmt = malloc(sizeof(struct rmtcallfd_list));
+	rmt = malloc(sizeof(*rmt));
 	if (rmt == NULL) {
-		syslog(LOG_ERR, "create_rmtcall_fd: no memory!");
+		syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 		return (-1);
 	}
 	rmt->xprt = xprt;
@@ -813,9 +817,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		if (outbuf_alloc == NULL) {
 			if (reply_type == RPCBPROC_INDIRECT)
 				svcerr_systemerr(transp);
-			if (debugging)
-				fprintf(stderr,
-				"rpcbproc_callit_com:  No memory!\n");
+			syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 			goto error;
 		}
 		xdrmem_create(&outxdr, outbuf_alloc, sendsz, XDR_ENCODE);
@@ -1460,9 +1462,9 @@ add_pmaplist(RPCB *arg)
 	/*
 	 * add to END of list
 	 */
-	pml = malloc(sizeof(struct pmaplist));
+	pml = malloc(sizeof(*pml));
 	if (pml == NULL) {
-		(void) syslog(LOG_ERR, "rpcbind: no memory!\n");
+		syslog(LOG_ERR, "%s: Cannot allocate memory", __func__);
 		return (1);
 	}
 	pml->pml_map = pmap;
@@ -1474,7 +1476,7 @@ add_pmaplist(RPCB *arg)
 
 		/* Attach to the end of the list */
 		for (fnd = list_pml; fnd->pml_next; fnd = fnd->pml_next)
-			;
+			continue;
 		fnd->pml_next = pml;
 	}
 	return (0);

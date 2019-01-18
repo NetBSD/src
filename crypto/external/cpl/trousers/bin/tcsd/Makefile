@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/01/28 02:15:26 christos Exp $
+# $NetBSD: Makefile,v 1.1.42.1 2019/01/18 08:48:27 pgoyette Exp $
 .include "../Makefile.inc"
 
 .PATH.c: ${DIST}/src/tcsd
@@ -19,10 +19,17 @@ LIBTCSOBJDIR!=	cd ${.CURDIR}/../../lib/libtcs && ${PRINTOBJDIR}
 DPADD+=${LIBTDDL} ${LIBCRYPTO} ${LIBPTHREAD}
 LDADD+=-L${LIBTCSOBJDIR} -ltcs -ltddl -lcrypto -lpthread
 
-.SUFFIXES: .5 .8
-.PATH.5: ${DIST}/man/man5
-.PATH.8: ${DIST}/man/man8
+.SUFFIXES: .in
+.PATH.in: ${DIST}/man/man5 ${DIST}/man/man8
 
 MAN+=tcsd.conf.5 tcsd.8
+CLEANFILES+= tcsd.conf.5 tcsd.8
+
+__mansed: .USE
+	@${TOOL_SED} -e s/@PACKAGE_BUGREPORT@/gnats-bugs@NetBSD.org/g \
+		-e s/@TCSD_DEFAULT_PORT@/30003/g ${.ALLSRC} > ${.TARGET}
+
+tcsd.8: tcsd.8.in __mansed
+tcsd.conf.5: tcsd.conf.5.in __mansed
 
 .include <bsd.prog.mk>

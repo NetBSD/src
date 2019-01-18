@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.67.12.2 2018/09/30 01:45:45 pgoyette Exp $
+#	$NetBSD: Makefile.mips,v 1.67.12.3 2019/01/18 08:50:19 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -25,7 +25,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (0) toolchain settings for things that aren't part of the standard
 ## toolchain
 ##
-ELF2ECOFF?=	elf2ecoff
+MIPS_ELF2ECOFF?=	elf2ecoff
 
 ##
 ## (1) port identification

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.1.2.2 2018/11/26 01:52:28 pgoyette Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.1.2.3 2019/01/18 08:50:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.1.2.2 2018/11/26 01:52:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.1.2.3 2019/01/18 08:50:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -229,7 +229,6 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 
 	if (__predict_false(pm->pm_tlb_flush != NULL)) {
 		(*pm->pm_tlb_flush)(pm);
-		return;
 	}
 
 	/*

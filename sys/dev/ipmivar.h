@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.1.2.2 2018/12/26 14:01:47 pgoyette Exp $ */
+/* $NetBSD: ipmivar.h,v 1.1.2.3 2019/01/18 08:50:25 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -110,6 +110,18 @@ struct ipmi_softc {
 	char		sc_buf[64];
 	bool		sc_buf_rsvd;
 };
+
+struct ipmi_device_id {
+	uint8_t		deviceid;
+	uint8_t		revision;
+	uint8_t		fwrev1;
+	uint8_t		fwrev2;
+	uint8_t		version;
+	uint8_t		additional;
+	uint8_t		manufacturer[3];
+	uint8_t		product[2];
+	uint8_t		vendor[4];
+} __packed;
 
 struct ipmi_thread {
 	struct ipmi_softc   *sc;

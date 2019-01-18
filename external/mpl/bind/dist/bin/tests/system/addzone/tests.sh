@@ -467,7 +467,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "reconfiguring server with multiple views"
-rm -f ns2/named.conf 
+rm -f ns2/named.conf
 copy_setports ns2/named2.conf.in ns2/named.conf
 $RNDCCMD 10.53.0.2 reconfig 2>&1 | sed 's/^/I:ns2 /'
 sleep 5
@@ -695,8 +695,8 @@ echo_i "check that named restarts with multiple added zones ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 addzone "test4.baz" '{ type master; file "e.db"; };' > /dev/null 2>&1 || ret=1
 $RNDCCMD 10.53.0.3 addzone "test5.baz" '{ type master; file "e.db"; };' > /dev/null 2>&1 || ret=1
-$PERL $SYSTEMTESTTOP/stop.pl . ns3
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns3 || ret=1
+$PERL $SYSTEMTESTTOP/stop.pl addzone ns3
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} addzone ns3 || ret=1
 $DIG $DIGOPTS @10.53.0.3 version.bind txt ch > dig.out.test$n || ret=1
 grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
 n=`expr $n + 1`

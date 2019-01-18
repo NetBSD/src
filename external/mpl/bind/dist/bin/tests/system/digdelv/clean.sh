@@ -19,3 +19,4 @@ rm -f dig.out.mn.*
 rm -f dig.out.nm.*
 rm -f dig.out.nn.*
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

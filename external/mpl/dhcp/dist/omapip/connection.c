@@ -1,4 +1,4 @@
-/*	$NetBSD: connection.c,v 1.2.2.2 2018/04/16 01:59:48 pgoyette Exp $	*/
+/*	$NetBSD: connection.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $	*/
 
 /* connection.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.2.2.2 2018/04/16 01:59:48 pgoyette Exp $");
+__RCSID("$NetBSD: connection.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $");
 
 #include "dhcpd.h"
 #include <isc/util.h>
@@ -843,7 +843,8 @@ isc_result_t omapi_connection_sign_data (int mode,
 
 	/* Create the context for the dst module */
 	if (mode & SIG_MODE_INIT) {
-		status = dst_context_create(key, dhcp_gbl_ctx.mctx, dctx);
+		status = dst_context_create(key, dhcp_gbl_ctx.mctx,
+		    ISC_LOGCATEGORY_GENERAL, false, 0, dctx);
 		if (status != ISC_R_SUCCESS) {
 			return status;
 		}

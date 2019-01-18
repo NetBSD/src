@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2016/10/08 20:08:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.25.12.1 2019/01/18 08:49:05 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -182,11 +182,13 @@ CPPFLAGS+=	-DUSE_UXA=1
 # XXX This should not be hard-coded here...
 DRI_DRIVER_PATH=	/usr/X11R7/lib/modules/dri
 CPPFLAGS+=	-DDRI_DRIVER_PATH=\"${DRI_DRIVER_PATH:Q}\"
+CPPFLAGS+=		-DHAVE_XF86_CURSOR_RESET_CURSOR
 
 # XXX Probably better to set this in Makefile.xf86-driver, conditional
 # on ELF &c.
 CFLAGS+=	-fvisibility=hidden
 
+LIBDPLIBS+=	Xfont		${.CURDIR}/../../../lib/libXfont
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../../lib/libdrm_intel
 LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
 
@@ -207,3 +209,6 @@ COPTS.sna_trapezoids_imprecise.c+=	-Wno-stack-protector
 COPTS.sna_trapezoids_mono.c+=	-Wno-stack-protector
 COPTS.sna_trapezoids_precise.c+=	-Wno-stack-protector
 COPTS.i965_video.c+=	-Wno-stack-protector
+
+COPTS.sna_display.c+=		-Wno-error	# XXX deprecated
+COPTS.intel_driver.c+=		-Wno-error	# XXX deprecated

@@ -12,6 +12,4 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-test -r $RANDFILE || $GENRANDOM 800 $RANDFILE
-
 cd ns1 && $SHELL sign.sh

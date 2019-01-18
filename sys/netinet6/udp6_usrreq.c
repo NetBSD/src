@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.137.2.5 2018/11/26 01:52:51 pgoyette Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.137.2.6 2019/01/18 08:50:58 pgoyette Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.137.2.5 2018/11/26 01:52:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.137.2.6 2019/01/18 08:50:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -137,8 +137,7 @@ static int udp6_recvspace = 40 * (1024 + sizeof(struct sockaddr_in6));
 static void udp6_notify(struct in6pcb *, int);
 static void sysctl_net_inet6_udp6_setup(struct sysctllog **);
 #ifdef IPSEC
-static int udp6_espinudp(struct mbuf **, int, struct sockaddr *,
-	struct socket *);
+static int udp6_espinudp(struct mbuf **, int);
 #endif
 
 #ifdef UDP_CSUM_COUNTERS
@@ -527,9 +526,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 #ifdef IPSEC
 		/* Handle ESP over UDP */
 		if (in6p->in6p_flags & IN6P_ESPINUDP) {
-			struct sockaddr *sa = (struct sockaddr *)src;
-
-			switch (udp6_espinudp(mp, off, sa, in6p->in6p_socket)) {
+			switch (udp6_espinudp(mp, off)) {
 			case -1: /* Error, m was freed */
 				rcvcnt = -1;
 				goto bad;
@@ -1385,8 +1382,7 @@ udp6_statinc(u_int stat)
  *    -1 if an error occurred and m was freed
  */
 static int
-udp6_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
-    struct socket *so)
+udp6_espinudp(struct mbuf **mp, int off)
 {
 	const size_t skip = sizeof(struct udphdr);
 	size_t len;

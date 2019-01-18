@@ -501,12 +501,18 @@ TCSP_LoadKeyByUUID_Internal(TCS_CONTEXT_HANDLE hContext,	/* in */
 			    TCS_KEY_HANDLE * phKeyTCSI)		/* out */
 {
 	UINT32 keyslot = 0, keySize;
+	UINT32 ordinal;
 	TSS_RESULT result;
 	TSS_UUID parentUuid;
 	BYTE keyBlob[0x1000];
 	UINT16 blobSize = sizeof(keyBlob);
 	UINT64 offset;
 	TCS_KEY_HANDLE parentTCSKeyHandle;
+
+	if (TPM_VERSION_IS(1,2))
+		ordinal = TPM_ORD_LoadKey2;
+	else
+		ordinal = TPM_ORD_LoadKey;
 
 	LogDebugFn("Enter: uuid: 0x%lx auth? 0x%x ***********", (unsigned long)KeyUUID,
 		  pLoadKeyInfo == NULL ? 0xdeadbeef : pLoadKeyInfo->authData.AuthHandle);
@@ -525,10 +531,10 @@ TCSP_LoadKeyByUUID_Internal(TCS_CONTEXT_HANDLE hContext,	/* in */
 					   &keyslot))
 			return TCSERR(TCS_E_KM_LOADFAILED);
 
-		return TCSP_LoadKeyByBlob_Internal(hContext, parentTCSKeyHandle,
-						   blobSize, keyBlob,
-						   &pLoadKeyInfo->authData,
-						   phKeyTCSI, &keyslot);
+		return LoadKeyByBlob_Internal(ordinal, hContext, parentTCSKeyHandle,
+					      blobSize, keyBlob,
+					      &pLoadKeyInfo->authData,
+					      phKeyTCSI, &keyslot);
 	}
 
 	/* if KeyUUID is already loaded, increment the ref count and return */
@@ -561,16 +567,16 @@ TCSP_LoadKeyByUUID_Internal(TCS_CONTEXT_HANDLE hContext,	/* in */
 						  pLoadKeyInfo, &parentTCSKeyHandle)))
 		return result;
 
-	LogDebugFn("calling TCSP_LoadKeyByBlob_Internal");
+	LogDebugFn("calling LoadKeyByBlob_Internal");
 	/*******************************************************
 	 * If no errors have happend up till now, then the parent is loaded and ready for use.
 	 * The parent's TCS Handle should be in parentTCSKeyHandle.
 	 ******************************************************/
-	if ((result = TCSP_LoadKeyByBlob_Internal(hContext, parentTCSKeyHandle,
-						  keySize, keyBlob,
-						  NULL,
-						  phKeyTCSI, &keyslot))) {
-		LogDebugFn("TCSP_LoadKeyByBlob_Internal returned 0x%x", result);
+	if ((result = LoadKeyByBlob_Internal(ordinal, hContext, parentTCSKeyHandle,
+					     keySize, keyBlob,
+					     NULL,
+					     phKeyTCSI, &keyslot))) {
+		LogDebugFn("LoadKeyByBlob_Internal returned 0x%x", result);
 		if (result == TCPA_E_AUTHFAIL && pLoadKeyInfo) {
 			BYTE blob[1000];
 
@@ -580,7 +586,7 @@ TCSP_LoadKeyByUUID_Internal(TCS_CONTEXT_HANDLE hContext,	/* in */
 
 			/* calculate the paramDigest */
 			offset = 0;
-			LoadBlob_UINT32(&offset, TPM_ORD_LoadKey, blob);
+			LoadBlob_UINT32(&offset, ordinal, blob);
 			LoadBlob(&offset, keySize, blob, keyBlob);
 			if (Hash(TSS_HASH_SHA1, offset, blob,
 				 (BYTE *)&pLoadKeyInfo->paramDigest.digest))
@@ -603,6 +609,8 @@ TCSP_GetRegisteredKeyByPublicInfo_Internal(TCS_CONTEXT_HANDLE tcsContext,	/* in 
 {
 	TCPA_STORE_PUBKEY pubKey;
 	TSS_RESULT result = TCSERR(TSS_E_FAIL);
+
+	pubKey.key = NULL;
 
 	if ((result = ctx_verify_context(tcsContext)))
 		return result;

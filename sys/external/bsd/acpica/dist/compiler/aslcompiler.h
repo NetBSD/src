@@ -367,6 +367,10 @@ AslExpectException (
     char                    *MessageIdString);
 
 ACPI_STATUS
+AslElevateException (
+    char                    *MessageIdString);
+
+ACPI_STATUS
 AslDisableException (
     char                    *MessageIdString);
 

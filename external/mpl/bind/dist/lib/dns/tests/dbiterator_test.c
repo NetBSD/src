@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator_test.c,v 1.2.2.2 2018/09/06 06:55:03 pgoyette Exp $	*/
+/*	$NetBSD: dbiterator_test.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,22 @@
  * information regarding copyright ownership.
  */
 
-
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
-#include <unistd.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
+
+#include <isc/util.h>
 
 #include <dns/db.h>
 #include <dns/dbiterator.h>
@@ -27,13 +34,30 @@
 
 #include "dnstest.h"
 
-/*
- * Helper functions
- */
-
 #define	BUFLEN		255
 #define	BIGBUFLEN	(64 * 1024)
 #define TEST_ORIGIN	"test"
+
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
 
 static isc_result_t
 make_name(const char *src, dns_name_t *name) {
@@ -43,53 +67,40 @@ make_name(const char *src, dns_name_t *name) {
 	return (dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 }
 
-/*
- * Individual unit tests
- */
-
 /* create: make sure we can create a dbiterator */
 static void
-test_create(const atf_tc_t *tc) {
+test_create(const char *filename) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-filename"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
-	dns_test_end();
 }
 
-ATF_TC(create);
-ATF_TC_HEAD(create, tc) {
-	atf_tc_set_md_var(tc, "descr", "create a database iterator");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone1.data");
-}
-ATF_TC_BODY(create, tc) {
-	test_create(tc);
+static void
+create(void **state) {
+	UNUSED(state);
+
+	test_create("testdata/dbiterator/zone1.data");
 }
 
-ATF_TC(create_nsec3);
-ATF_TC_HEAD(create_nsec3, tc) {
-	atf_tc_set_md_var(tc, "descr", "create a database iterator (NSEC3)");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone2.data");
-}
-ATF_TC_BODY(create_nsec3, tc) {
-	test_create(tc);
+static void
+create_nsec3(void **state) {
+	UNUSED(state);
+
+	test_create("testdata/dbiterator/zone2.data");
 }
 
 /* walk: walk a database */
 static void
-test_walk(const atf_tc_t *tc) {
+test_walk(const char *filename, int nodes) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
@@ -98,19 +109,13 @@ test_walk(const atf_tc_t *tc) {
 	dns_fixedname_t f;
 	int i = 0;
 
-	UNUSED(tc);
-
 	name = dns_fixedname_initname(&f);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-filename"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	for (result = dns_dbiterator_first(iter);
 	     result == ISC_R_SUCCESS;
@@ -118,40 +123,34 @@ test_walk(const atf_tc_t *tc) {
 		result = dns_dbiterator_current(iter, &node, name);
 		if (result == DNS_R_NEWORIGIN)
 			result = ISC_R_SUCCESS;
-		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
 	}
 
-	ATF_CHECK_EQ(i, atoi(atf_tc_get_md_var(tc, "X-nodes")));
+	assert_int_equal(i, nodes);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
-	dns_test_end();
 }
 
-ATF_TC(walk);
-ATF_TC_HEAD(walk, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone1.data");
-	atf_tc_set_md_var(tc, "X-nodes", "12");
-}
-ATF_TC_BODY(walk, tc) {
-	test_walk(tc);
+static void
+walk(void **state) {
+	UNUSED(state);
+
+	test_walk("testdata/dbiterator/zone1.data", 12);
 }
 
-ATF_TC(walk_nsec3);
-ATF_TC_HEAD(walk_nsec3, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone2.data");
-	atf_tc_set_md_var(tc, "X-nodes", "33");
-}
-ATF_TC_BODY(walk_nsec3, tc) {
-	test_walk(tc);
+static void
+walk_nsec3(void **state) {
+	UNUSED(state);
+
+	test_walk("testdata/dbiterator/zone2.data", 33);
 }
 
 /* reverse: walk database backwards */
-static void test_reverse(const atf_tc_t *tc) {
+static void
+test_reverse(const char *filename) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
@@ -160,19 +159,13 @@ static void test_reverse(const atf_tc_t *tc) {
 	dns_fixedname_t f;
 	int i = 0;
 
-	UNUSED(tc);
-
 	name = dns_fixedname_initname(&f);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-filename"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	for (result = dns_dbiterator_last(iter);
 	     result == ISC_R_SUCCESS;
@@ -180,38 +173,34 @@ static void test_reverse(const atf_tc_t *tc) {
 		result = dns_dbiterator_current(iter, &node, name);
 		if (result == DNS_R_NEWORIGIN)
 			result = ISC_R_SUCCESS;
-		ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		i++;
 	}
 
-	ATF_CHECK_EQ(i, 12);
+	assert_int_equal(i, 12);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
-	dns_test_end();
 }
 
-ATF_TC(reverse);
-ATF_TC_HEAD(reverse, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database backwards");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone1.data");
-}
-ATF_TC_BODY(reverse, tc) {
-	test_reverse(tc);
+static void
+reverse(void **state) {
+	UNUSED(state);
+
+	test_reverse("testdata/dbiterator/zone1.data");
 }
 
-ATF_TC(reverse_nsec3);
-ATF_TC_HEAD(reverse_nsec3, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database backwards");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone2.data");
-}
-ATF_TC_BODY(reverse_nsec3, tc) {
-	test_reverse(tc);
+static void
+reverse_nsec3(void **state) {
+	UNUSED(state);
+
+	test_reverse("testdata/dbiterator/zone2.data");
 }
 
 /* seek: walk database starting at a particular node */
-static void test_seek(const atf_tc_t *tc) {
+static void
+test_seek_node(const char *filename, int nodes) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
@@ -220,201 +209,142 @@ static void test_seek(const atf_tc_t *tc) {
 	dns_fixedname_t f1, f2;
 	int i = 0;
 
-	UNUSED(tc);
-
 	name = dns_fixedname_initname(&f1);
 	seekname = dns_fixedname_initname(&f2);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-filename"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = make_name("c." TEST_ORIGIN, seekname);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_dbiterator_seek(iter, seekname);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	while (result == ISC_R_SUCCESS) {
 		result = dns_dbiterator_current(iter, &node, name);
 		if (result == DNS_R_NEWORIGIN)
 			result = ISC_R_SUCCESS;
-		ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 		dns_db_detachnode(db, &node);
 		result = dns_dbiterator_next(iter);
 		i++;
 	}
 
-	ATF_CHECK_EQ(i, atoi(atf_tc_get_md_var(tc, "X-nodes")));
+	assert_int_equal(i, nodes);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
-	dns_test_end();
 }
 
-ATF_TC(seek);
-ATF_TC_HEAD(seek, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database starting at "
-				       "a particular node");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone1.data");
-	atf_tc_set_md_var(tc, "X-nodes", "9");
-}
-ATF_TC_BODY(seek, tc) {
-	test_seek(tc);
+static void
+seek_node(void **state) {
+	UNUSED(state);
+
+	test_seek_node("testdata/dbiterator/zone1.data", 9);
 }
 
-ATF_TC(seek_nsec3);
-ATF_TC_HEAD(seek_nsec3, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database starting at "
-				       "a particular node");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone2.data");
-	atf_tc_set_md_var(tc, "X-nodes", "30");
-}
-ATF_TC_BODY(seek_nsec3, tc) {
-	test_seek(tc);
+static void
+seek_node_nsec3(void **state) {
+	UNUSED(state);
+
+	test_seek_node("testdata/dbiterator/zone2.data", 30);
 }
 
 /*
  * seek_emty: walk database starting at an empty nonterminal node
  * (should fail)
  */
-static void test_seek_empty(const atf_tc_t *tc) {
+static void
+test_seek_empty(const char *filename) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
 	dns_name_t *seekname;
 	dns_fixedname_t f1;
 
-	UNUSED(tc);
-
 	seekname = dns_fixedname_initname(&f1);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-filename"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = make_name("d." TEST_ORIGIN, seekname);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_dbiterator_seek(iter, seekname);
-	ATF_CHECK_EQ(result, DNS_R_PARTIALMATCH);
+	assert_int_equal(result, DNS_R_PARTIALMATCH);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
-	dns_test_end();
 }
 
-ATF_TC(seek_empty);
-ATF_TC_HEAD(seek_empty, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database starting at an "
-				       "empty nonterminal node");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone1.data");
-}
-ATF_TC_BODY(seek_empty, tc) {
-	test_seek_empty(tc);
+static void
+seek_empty(void **state) {
+	UNUSED(state);
+
+	test_seek_empty("testdata/dbiterator/zone1.data");
 }
 
-ATF_TC(seek_empty_nsec3);
-ATF_TC_HEAD(seek_empty_nsec3, tc) {
-	atf_tc_set_md_var(tc, "descr", "walk database starting at an "
-				       "empty nonterminal node");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone2.data");
-}
-ATF_TC_BODY(seek_empty_nsec3, tc) {
-	test_seek_empty(tc);
+static void
+seek_empty_nsec3(void **state) {
+	UNUSED(state);
+
+	test_seek_empty("testdata/dbiterator/zone2.data");
 }
 
 /*
- * seek_emty: walk database starting at an empty nonterminal node
- * (should fail)
+ * seek_nx: walk database starting at a nonexistent node
  */
-static void test_seek_nx(const atf_tc_t *tc) {
+static void
+test_seek_nx(const char *filename) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbiterator_t *iter = NULL;
 	dns_name_t *seekname;
 	dns_fixedname_t f1;
 
-	UNUSED(tc);
-
 	seekname = dns_fixedname_initname(&f1);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN,
-				 atf_tc_get_md_var(tc, "X-filename"));
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_test_loaddb(&db, dns_dbtype_cache, TEST_ORIGIN, filename);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_db_createiterator(db, 0, &iter);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = make_name("nonexistent." TEST_ORIGIN, seekname);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_dbiterator_seek(iter, seekname);
-	ATF_CHECK_EQ(result, DNS_R_PARTIALMATCH);
+	assert_int_equal(result, DNS_R_PARTIALMATCH);
 
 	result = make_name("nonexistent.", seekname);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = dns_dbiterator_seek(iter, seekname);
-	ATF_CHECK_EQ(result, ISC_R_NOTFOUND);
+	assert_int_equal(result, ISC_R_NOTFOUND);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
-	dns_test_end();
 }
 
-ATF_TC(seek_nx);
-ATF_TC_HEAD(seek_nx, tc) {
-	atf_tc_set_md_var(tc, "descr", "attempt to walk database starting "
-				       "at a nonexistent node");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone1.data");
-}
-ATF_TC_BODY(seek_nx, tc) {
-	test_seek_nx(tc);
+static void
+seek_nx(void **state) {
+	UNUSED(state);
+
+	test_seek_nx("testdata/dbiterator/zone1.data");
 }
 
-ATF_TC(seek_nx_nsec3);
-ATF_TC_HEAD(seek_nx_nsec3, tc) {
-	atf_tc_set_md_var(tc, "descr", "attempt to walk database starting "
-				       "at a nonexistent node");
-	atf_tc_set_md_var(tc, "X-filename", "testdata/dbiterator/zone2.data");
-}
-ATF_TC_BODY(seek_nx_nsec3, tc) {
-	test_seek_nx(tc);
-}
+static void
+seek_nx_nsec3(void **state) {
+	UNUSED(state);
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, create);
-	ATF_TP_ADD_TC(tp, create_nsec3);
-	ATF_TP_ADD_TC(tp, walk);
-	ATF_TP_ADD_TC(tp, walk_nsec3);
-	ATF_TP_ADD_TC(tp, reverse);
-	ATF_TP_ADD_TC(tp, reverse_nsec3);
-	ATF_TP_ADD_TC(tp, seek);
-	ATF_TP_ADD_TC(tp, seek_nsec3);
-	ATF_TP_ADD_TC(tp, seek_empty);
-	ATF_TP_ADD_TC(tp, seek_empty_nsec3);
-	ATF_TP_ADD_TC(tp, seek_nx);
-	ATF_TP_ADD_TC(tp, seek_nx_nsec3);
-	return (atf_no_error());
+	test_seek_nx("testdata/dbiterator/zone2.data");
 }
 
 /*
@@ -425,3 +355,39 @@ ATF_TP_ADD_TCS(tp) {
  * dns_dbiterator_origin
  * dns_dbiterator_setcleanmode
  */
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(create, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(create_nsec3,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(walk, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(walk_nsec3, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(reverse, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(reverse_nsec3,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_node, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_node_nsec3,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_empty, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_empty_nsec3,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_nx, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(seek_nx_nsec3,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
+}
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

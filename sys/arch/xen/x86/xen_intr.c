@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.9.64.1 2018/12/26 14:01:46 pgoyette Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.9.64.2 2019/01/18 08:50:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.9.64.1 2018/12/26 14:01:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.9.64.2 2019/01/18 08:50:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,22 +70,6 @@ void xen_disable_intr(void);
 void xen_enable_intr(void);
 u_long xen_read_psl(void);
 void xen_write_psl(u_long);
-
-/*
- * Add a mask to cpl, and return the old value of cpl.
- */
-int
-splraise(int nlevel)
-{
-	int olevel;
-	struct cpu_info *ci = curcpu();
-
-	olevel = ci->ci_ilevel;
-	if (nlevel > olevel)
-		ci->ci_ilevel = nlevel;
-	__insn_barrier();
-	return (olevel);
-}
 
 /*
  * Restore a value to cpl (unmasking interrupts).  If any unmasked

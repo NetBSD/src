@@ -35,6 +35,7 @@
 	.globl	test6_begin, test6_end
 	.globl	test7_begin, test7_end
 	.globl	test8_begin, test8_end
+	.globl	test9_begin, test9_end
 	.text
 	.code64
 
@@ -157,3 +158,22 @@ test8_begin:
 
 	TEST_END
 test8_end:
+
+	.align	64
+test9_begin:
+	movq	$0x1000,%rax
+
+	movq	$0x12345678,8(%rax)
+
+	movq	$0x1008,%rsi
+	movq	$0x1000,%rdi
+
+	movq	$4,%rcx
+	rep movsb
+
+	movq	$2,%rcx
+	rep movsw
+
+	TEST_END
+test9_end:
+

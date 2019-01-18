@@ -1,4 +1,4 @@
-/*	$NetBSD: listenlist.h,v 1.2.2.2 2018/09/06 06:55:12 pgoyette Exp $	*/
+/*	$NetBSD: listenlist.h,v 1.2.2.3 2019/01/18 08:50:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,6 +26,9 @@
 /***
  *** Imports
  ***/
+
+#include <stdbool.h>
+
 #include <isc/net.h>
 
 #include <dns/types.h>
@@ -88,11 +91,11 @@ ns_listenlist_detach(ns_listenlist_t **listp);
 
 isc_result_t
 ns_listenlist_default(isc_mem_t *mctx, in_port_t port, isc_dscp_t dscp,
-		      isc_boolean_t enabled, ns_listenlist_t **target);
+		      bool enabled, ns_listenlist_t **target);
 /*%<
  * Create a listen-on list with default contents, matching
- * all addresses with port 'port' (if 'enabled' is ISC_TRUE),
- * or no addresses (if 'enabled' is ISC_FALSE).
+ * all addresses with port 'port' (if 'enabled' is true),
+ * or no addresses (if 'enabled' is false).
  */
 
 #endif /* NS_LISTENLIST_H */

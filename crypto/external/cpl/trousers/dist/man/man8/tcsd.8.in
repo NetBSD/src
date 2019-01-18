@@ -28,12 +28,14 @@ tcsd \- daemon that manages Trusted Computing resources
 .hy 0
 .B tcsd
 .RB [ \-f ]
+.RB [ \-e ]
 .RB [ \-c\ <configfile>\ ]
+.RB [ \-h ]
 
 .SH "DESCRIPTION"
 .PP
-Trousers is an open-source TCG Software Stack (TSS), released under the Common 
-Public License. Trousers aims to be compliant with the current (1.1b) and 
+Trousers is an open-source TCG Software Stack (TSS), released under the BSD
+License. Trousers aims to be compliant with the current (1.1b) and 
 upcoming (1.2) TSS specifications available from the Trusted Computing Group 
 website: http://www.trustedcomputinggroup.org.
 
@@ -44,12 +46,20 @@ requests to the TPM should go through the TSS stack. The \fBtcsd\fR manages TPM
 resources and handles requests from TSP's both local and remote.
 
 .TP
-\fB\-f\fR
+\fB\-f,\ \-\-foreground\fR
 run the daemon in the foreground
 
 .TP
-\fB\-c <configfile>\fR
+\fB\-e\fR
+attempt to connect to software TPMs over TCP
+
+.TP
+\fB\-c,\ \-\-config <configfile>\fR
 use the provided configuration file rather than the default configuration file
+
+.TP
+\fB\-h,\ \-\-help\fR
+display help message
 
 .SH "ACCESS CONTROL"
 .PP
@@ -93,8 +103,9 @@ can be supressed by setting the TSS_DEBUG_OFF environment variable.
 .SH "DEVICE DRIVERS"
 .PP
 \fBtcsd\fR is compatible with the IBM Research TPM device driver available
-from http://www.research.ibm.com/gsal/tcpa and the TPM device driver available
-from http://sf.net/projects/tmpdd
+from http://ibmswtpm.sourceforge.net/ and the TPM device driver available
+from http://sf.net/projects/tpmdd, which is also available in the upstream
+Linux kernel and many Linux distros.
 
 .SH "CONFORMING TO"
 .PP

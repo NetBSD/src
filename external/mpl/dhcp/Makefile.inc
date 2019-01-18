@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1.2.4 2018/09/06 06:55:18 pgoyette Exp $
+# $NetBSD: Makefile.inc,v 1.1.2.5 2019/01/18 08:50:08 pgoyette Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -10,7 +10,7 @@ CWARNFLAGS.clang+=	-Wno-tautological-compare \
 			-Wno-format-security -Wno-error=unused-const-variable
 
 DIST:=	${.PARSEDIR}/dist
-BIND:=	${.PARSEDIR}/../../bsd/bind/dist
+BIND:=	${.PARSEDIR}/../../mpl/bind/dist
 .PATH:	${DIST}/${DHCPSRCDIR}
 
 COBJDIR!=cd ${.PARSEDIR}/lib/common && ${PRINTOBJDIR}

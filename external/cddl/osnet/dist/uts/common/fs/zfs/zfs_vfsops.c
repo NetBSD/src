@@ -163,6 +163,7 @@ struct vfsops zfs_vfsops = {
 	.vfs_sync = zfs_netbsd_sync,
 	.vfs_vget = zfs_vget,
 	.vfs_loadvnode = zfs_loadvnode,
+	.vfs_newvnode = zfs_newvnode,
 	.vfs_init = zfs_init,
 	.vfs_done = zfs_fini,
 	.vfs_start = (void *)nullop,

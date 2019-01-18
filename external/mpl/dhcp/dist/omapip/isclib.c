@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.c,v 1.2.2.2 2018/04/16 01:59:48 pgoyette Exp $	*/
+/*	$NetBSD: isclib.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $	*/
 
 /*
  * Copyright(c) 2009-2017 by Internet Systems Consortium, Inc.("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.2.2.2 2018/04/16 01:59:48 pgoyette Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the library but need the fdwatchcommand
@@ -159,9 +159,11 @@ dhcp_context_create(int flags,
 	
 		isc_lib_register();
 
+#if 0
 		/* get the current time for use as the random seed */
 		gettimeofday(&cur_tv, (struct timezone *)0);
 		isc_random_seed(cur_tv.tv_sec);
+#endif
 
 		/* we need to create the memory context before
 		 * the lib inits in case we aren't doing NSUPDATE
@@ -351,7 +353,7 @@ void dhcp_signal_handler(int signal) {
 	shutdown_signal = signal;
 
 	/* Use reload (aka suspend) for easier dispatch() reenter. */
-	if (ctx && ctx->methods && ctx->methods->ctxsuspend) {
+	if (ctx) {
 		(void) isc_app_ctxsuspend(ctx);
 	}
 }
@@ -359,7 +361,7 @@ void dhcp_signal_handler(int signal) {
 isc_result_t dns_client_init() {
 	isc_result_t result;
 	if (dhcp_gbl_ctx.dnsclient == NULL) {
-		result = dns_client_createx2(dhcp_gbl_ctx.mctx,
+		result = dns_client_createx(dhcp_gbl_ctx.mctx,
 					     dhcp_gbl_ctx.actx,
 					     dhcp_gbl_ctx.taskmgr,
 					     dhcp_gbl_ctx.socketmgr,

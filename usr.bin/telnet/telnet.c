@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.36.38.1 2018/12/26 14:02:11 pgoyette Exp $	*/
+/*	$NetBSD: telnet.c,v 1.36.38.2 2019/01/18 08:51:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.36.38.1 2018/12/26 14:02:11 pgoyette Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.36.38.2 2019/01/18 08:51:02 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,11 +133,7 @@ cc_t echoc;
 #define	TS_SE		8		/* looking for sub-option end */
 
 static int	telrcv_state;
-#ifdef	OLD_ENVIRON
-unsigned char telopt_environ = TELOPT_NEW_ENVIRON;
-#else
 # define telopt_environ TELOPT_NEW_ENVIRON
-#endif
 
 jmp_buf	toplevel = { 0 };
 
@@ -461,16 +457,6 @@ dooption(int option)
 		break;
 
 	    case TELOPT_NEW_ENVIRON:	/* New environment variable option */
-#ifdef	OLD_ENVIRON
-		if (my_state_is_will(TELOPT_OLD_ENVIRON))
-			send_wont(TELOPT_OLD_ENVIRON, 1); /* turn off the old */
-		goto env_common;
-	    case TELOPT_OLD_ENVIRON:	/* Old environment variable option */
-		if (my_state_is_will(TELOPT_NEW_ENVIRON))
-			break;		/* Don't enable if new one is in use! */
-	    env_common:
-		telopt_environ = option;
-#endif
 		new_state_ok = 1;
 		break;
 
@@ -546,16 +532,6 @@ dontoption(int option)
 	    case TELOPT_LINEMODE:
 		linemode = 0;	/* put us back to the default state */
 		break;
-#ifdef	OLD_ENVIRON
-	    case TELOPT_NEW_ENVIRON:
-		/*
-		 * The new environ option wasn't recognized, try
-		 * the old one.
-		 */
-		send_will(TELOPT_OLD_ENVIRON, 1);
-		telopt_environ = TELOPT_OLD_ENVIRON;
-		break;
-#endif
 	    }
 	    /* we always accept a DONT */
 	    set_my_want_state_wont(option);
@@ -893,9 +869,6 @@ suboption(void)
 	}
 	break;
 
-#ifdef	OLD_ENVIRON
-    case TELOPT_OLD_ENVIRON:
-#endif
     case TELOPT_NEW_ENVIRON:
 	if (SB_EOF())
 	    return;
@@ -1434,26 +1407,6 @@ slc_update(void)
 	return(need_update);
 }
 
-#ifdef	OLD_ENVIRON
-# ifdef	ENV_HACK
-/*
- * Earlier version of telnet/telnetd from the BSD code had
- * the definitions of VALUE and VAR reversed.  To ensure
- * maximum interoperability, we assume that the server is
- * an older BSD server, until proven otherwise.  The newer
- * BSD servers should be able to handle either definition,
- * so it is better to use the wrong values if we don't
- * know what type of server it is.
- */
-int env_auto = 1;
-int old_env_var = OLD_ENV_VAR;
-int old_env_value = OLD_ENV_VALUE;
-# else
-#  define old_env_var OLD_ENV_VAR
-#  define old_env_value OLD_ENV_VALUE
-# endif
-#endif
-
 void
 env_opt(unsigned char *buf, int len)
 {
@@ -1467,27 +1420,7 @@ env_opt(unsigned char *buf, int len)
 			env_opt_add(NULL);
 		} else for (i = 1; i < len; i++) {
 			switch (buf[i]&0xff) {
-#ifdef	OLD_ENVIRON
-			case OLD_ENV_VAR:
-# ifdef	ENV_HACK
-				if (telopt_environ == TELOPT_OLD_ENVIRON
-				    && env_auto) {
-					/* Server has the same definitions */
-					old_env_var = OLD_ENV_VAR;
-					old_env_value = OLD_ENV_VALUE;
-				}
-				/* FALL THROUGH */
-# endif
-			case OLD_ENV_VALUE:
-				/*
-				 * Although OLD_ENV_VALUE is not legal, we will
-				 * still recognize it, just in case it is an
-				 * old server that has VAR & VALUE mixed up...
-				 */
-				/* FALL THROUGH */
-#else
 			case NEW_ENV_VAR:
-#endif
 			case ENV_USERVAR:
 				if (ep) {
 					*epc = 0;
@@ -1601,11 +1534,6 @@ env_opt_add(unsigned char *ep)
 		opt_replyend = opt_reply + len;
 	}
 	if (opt_welldefined(ep))
-#ifdef	OLD_ENVIRON
-		if (telopt_environ == TELOPT_OLD_ENVIRON)
-			*opt_replyp++ = old_env_var;
-		else
-#endif
 			*opt_replyp++ = NEW_ENV_VAR;
 	else
 		*opt_replyp++ = ENV_USERVAR;
@@ -1625,11 +1553,6 @@ env_opt_add(unsigned char *ep)
 			*opt_replyp++ = c;
 		}
 		if ((ep = vp) != NULL) {
-#ifdef	OLD_ENVIRON
-			if (telopt_environ == TELOPT_OLD_ENVIRON)
-				*opt_replyp++ = old_env_value;
-			else
-#endif
 				*opt_replyp++ = NEW_ENV_VALUE;
 			vp = NULL;
 		} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.2.2.2 2018/09/06 06:55:06 pgoyette Exp $	*/
+/*	$NetBSD: assertions.h,v 1.2.2.3 2019/01/18 08:49:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,7 +82,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 					 isc_assertiontype_require, \
 					 #cond), 0)))
 #else
-#define ISC_REQUIRE(cond)	((void) 0)
+#define ISC_REQUIRE(cond)	((void) ISC_LIKELY(cond))
 #endif /* ISC_CHECK_REQUIRE */
 
 #if ISC_CHECK_ENSURE != 0
@@ -92,7 +92,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 					 isc_assertiontype_ensure, \
 					 #cond), 0)))
 #else
-#define ISC_ENSURE(cond)	((void) 0)
+#define ISC_ENSURE(cond)	((void) ISC_LIKELY(cond))
 #endif /* ISC_CHECK_ENSURE */
 
 #if ISC_CHECK_INSIST != 0
@@ -102,7 +102,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 					 isc_assertiontype_insist, \
 					 #cond), 0)))
 #else
-#define ISC_INSIST(cond)	((void) 0)
+#define ISC_INSIST(cond)	((void) ISC_LIKELY(cond))
 #endif /* ISC_CHECK_INSIST */
 
 #if ISC_CHECK_INVARIANT != 0
@@ -112,7 +112,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 					 isc_assertiontype_invariant, \
 					 #cond), 0)))
 #else
-#define ISC_INVARIANT(cond)	((void) 0)
+#define ISC_INVARIANT(cond)	((void) ISC_LIKELY(cond))
 #endif /* ISC_CHECK_INVARIANT */
 
 ISC_LANG_ENDDECLS

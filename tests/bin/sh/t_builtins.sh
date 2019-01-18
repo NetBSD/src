@@ -1,4 +1,4 @@
-# $NetBSD: t_builtins.sh,v 1.4.2.2 2018/12/26 14:02:08 pgoyette Exp $
+# $NetBSD: t_builtins.sh,v 1.4.2.3 2019/01/18 08:50:59 pgoyette Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,6 +71,21 @@ have_builtin()
 	}
 
 	return 0
+}
+
+# And another to test if the shell being tested is the NetBSD shell,
+# as we use these tests both to test standards conformance (correctness)
+# which should be possible for all shells, and to test NetBSD
+# extensions (which we mostly do by testing if the extension exists)
+# and NetBSD sh behaviour for what is unspecified by the standard
+# (so we will be notified via test failure should that unspecified
+# behaviour alter) for which we have to discover if that shell is the
+# one being tested.
+
+is_netbsd_sh()
+{
+	unset NETBSD_SHELL 2>/dev/null
+	test -n "$( ${TEST_SH} -c 'printf %s "${NETBSD_SHELL}"')"
 }
 
 ### Helper functions
@@ -222,8 +237,7 @@ echo_head() {
 echo_body() {
 	have_builtin echo || return 0
 
-	unset NETBSD_SHELL 2>/dev/null
-	if test -z "$( ${TEST_SH} -c 'printf %s "${NETBSD_SHELL}"')"; then
+	if ! is_netbsd_sh; then
 		atf_skip \
 	   "${TEST_SH%% *} is not the NetBSD shell, this test is for it alone"
 		return 0
@@ -290,6 +304,12 @@ eval_body() {
 	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c 'eval "exit 0"'
 	atf_check -s exit:1 -e empty -o empty ${TEST_SH} -c 'eval "exit 1"'
 	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c 'eval exit 0'
+	atf_check -s exit:1 -e empty -o empty ${TEST_SH} -c 'eval exit 1'
+
+	atf_check -s exit:0 -e empty -o inline:0 ${TEST_SH} -c \
+		'eval true; printf %d $?'
+	atf_check -s exit:0 -e empty -o inline:1 ${TEST_SH} -c \
+		'eval false; printf %d $?'
 
 	atf_check -s exit:0 -e empty -o inline:abc ${TEST_SH} -c \
 		'X=a Y=b Z=c; for V in X Y Z; do eval "printf %s \$$V"; done'
@@ -297,6 +317,54 @@ eval_body() {
 		'X=a Y=b Z=c; for V in X Y Z; do eval printf %s \$$V; done'
 	atf_check -s exit:0 -e empty -o inline:XYZ ${TEST_SH} -c \
 		'for V in X Y Z; do eval "${V}=${V}"; done; printf %s "$X$Y$Z"'
+
+	# make sure eval'd strings affect the shell environment
+
+	atf_check -s exit:0 -e empty -o inline:/b/ ${TEST_SH} -c \
+		'X=a; eval "X=b"; printf /%s/ "${X-unset}"'
+	atf_check -s exit:0 -e empty -o inline:/b/ ${TEST_SH} -c \
+		'X=a; Y=X; Z=b; eval "$Y=$Z"; printf /%s/ "${X-unset}"'
+	atf_check -s exit:0 -e empty -o inline:/unset/ ${TEST_SH} -c \
+		'X=a; eval "unset X"; printf /%s/ "${X-unset}"'
+	atf_check -s exit:0 -e empty -o inline:// ${TEST_SH} -c \
+		'unset X; eval "X="; printf /%s/ "${X-unset}"'
+	atf_check -s exit:0 -e empty -o inline:'2 y Z ' ${TEST_SH} -c \
+		'set -- X y Z; eval shift; printf "%s " "$#" "$@"'
+
+	# ensure an error in an eval'd string causes the shell to exit
+	# unless 'eval' is preceded by 'command' (in which case the
+	# string is not eval'd but execution continues)
+
+	atf_check -s not-exit:0 -e not-empty -o empty ${TEST_SH} -c \
+		'eval "if done"; printf %s status=$?'
+
+	atf_check -s exit:0 -e not-empty -o 'match:status=[1-9]' \
+	    ${TEST_SH} -c \
+		'command eval "if done"; printf %s status=$?'
+
+	atf_check -s not-exit:0 -e not-empty \
+	    -o 'match:status=[1-9]' -o 'not-match:[XY]' ${TEST_SH} -c \
+		 'command eval "printf X; if done; printf Y"
+		  S=$?; printf %s status=$S; exit $S'
+
+	# whether 'X' is output here is (or should be) unspecified.
+	atf_check -s not-exit:0 -e not-empty \
+	    -o 'match:status=[1-9]' -o 'not-match:Y' ${TEST_SH} -c \
+		 'command eval "printf X
+		 		if done
+				printf Y"
+		  S=$?; printf %s status=$S; exit $S'
+
+	if is_netbsd_sh
+	then
+		# but on NetBSD we expect that X to appear...
+		atf_check -s not-exit:0 -e not-empty  -o 'match:X' \
+		    -o 'match:status=[1-9]' -o 'not-match:Y' ${TEST_SH} -c \
+			 'command eval "printf X
+					if done
+					printf Y"
+			  S=$?; printf %s status=$S; exit $S'
+	fi
 }
 
 atf_test_case exec

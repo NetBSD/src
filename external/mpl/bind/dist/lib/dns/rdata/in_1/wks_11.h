@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: wks_11.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,9 @@ typedef	struct dns_rdata_in_wks {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	struct in_addr		in_addr;
-	isc_uint16_t		protocol;
+	uint16_t		protocol;
 	unsigned char		*map;
-	isc_uint16_t		map_len;
+	uint16_t		map_len;
 } dns_rdata_in_wks_t;
 
 #endif /* IN_1_WKS_11_H */

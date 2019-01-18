@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.2.2.2 2018/09/06 06:53:56 pgoyette Exp $	*/
+/*	$NetBSD: config.h,v 1.2.2.3 2019/01/18 08:49:11 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,10 +17,14 @@
 
 /*! \file */
 
+#include <inttypes.h>
+
 #include <isccfg/cfg.h>
 
 #include <dns/types.h>
 #include <dns/zone.h>
+
+#define DEFAULT_IANA_ROOT_ZONE_MASTERS "_default_iana_root_zone_masters"
 
 isc_result_t
 named_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf);
@@ -51,11 +55,15 @@ isc_result_t
 named_config_getiplist(const cfg_obj_t *config, const cfg_obj_t *list,
 		    in_port_t defport, isc_mem_t *mctx,
 		    isc_sockaddr_t **addrsp, isc_dscp_t **dscpsp,
-		    isc_uint32_t *countp);
+		    uint32_t *countp);
 
 void
 named_config_putiplist(isc_mem_t *mctx, isc_sockaddr_t **addrsp,
-		    isc_dscp_t **dscpsp, isc_uint32_t count);
+		    isc_dscp_t **dscpsp, uint32_t count);
+
+isc_result_t
+named_config_getmastersdef(const cfg_obj_t *cctx, const char *name,
+			   const cfg_obj_t **ret);
 
 isc_result_t
 named_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
@@ -66,10 +74,10 @@ named_config_getport(const cfg_obj_t *config, in_port_t *portp);
 
 isc_result_t
 named_config_getkeyalgorithm(const char *str, const dns_name_t **name,
-			  isc_uint16_t *digestbits);
+			  uint16_t *digestbits);
 isc_result_t
 named_config_getkeyalgorithm2(const char *str, const dns_name_t **name,
-			   unsigned int *typep, isc_uint16_t *digestbits);
+			   unsigned int *typep, uint16_t *digestbits);
 
 isc_result_t
 named_config_getdscp(const cfg_obj_t *config, isc_dscp_t *dscpp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdb_driver.c,v 1.2.2.2 2018/09/06 06:54:49 pgoyette Exp $	*/
+/*	$NetBSD: dlz_bdb_driver.c,v 1.2.2.3 2019/01/18 08:49:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -68,11 +68,7 @@
 static dns_sdlzimplementation_t *dlz_bdb = NULL;
 
 /* should the bdb driver use threads. */
-#ifdef ISC_PLATFORM_USETHREADS
 #define bdb_threads DB_THREAD
-#else
-#define bdb_threads 0
-#endif
 
 /* BDB database names */
 #define dlz_data "dns_data"

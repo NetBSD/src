@@ -1,4 +1,4 @@
-/*	$NetBSD: check.h,v 1.2.2.2 2018/09/06 06:54:59 pgoyette Exp $	*/
+/*	$NetBSD: check.h,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,14 +22,29 @@
 
 #include <isccfg/cfg.h>
 
+#ifndef MAX_MIN_CACHE_TTL
+#define MAX_MIN_CACHE_TTL 90
+#endif /* MAX_MIN_CACHE_TTL */
+
+#ifndef MAX_MIN_NCACHE_TTL
+#define MAX_MIN_NCACHE_TTL 90
+#endif /* MAX_MIN_NCACHE_TTL */
+
+#ifndef MAX_MAX_NCACHE_TTL
+#define MAX_MAX_NCACHE_TTL 7 * 24 * 3600
+#endif /* MAX_MAX_NCACHE_TTL */
+
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
-		      isc_mem_t *mctx);
+bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
+		      isc_log_t *logctx, isc_mem_t *mctx);
 /*%<
  * Check the syntactic validity of a configuration parse tree generated from
  * a named.conf file.
+ *
+ * If 'check_plugins' is true, load plugins and check the validity of their
+ * parameters as well.
  *
  * Requires:
  *\li	config is a valid parse tree

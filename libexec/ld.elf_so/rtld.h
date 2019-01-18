@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.131.2.4 2018/12/26 14:01:28 pgoyette Exp $	 */
+/*	$NetBSD: rtld.h,v 1.131.2.5 2019/01/18 08:50:11 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -371,6 +371,8 @@ void _rtld_shared_enter(void);
 void _rtld_shared_exit(void);
 void _rtld_exclusive_enter(sigset_t *);
 void _rtld_exclusive_exit(sigset_t *);
+
+int _rtld_relro(const Obj_Entry *, bool);
 
 /* expand.c */
 size_t _rtld_expand_path(char *, size_t, const char *, const char *,\

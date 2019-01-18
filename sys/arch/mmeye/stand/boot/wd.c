@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.4 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: wd.c,v 1.4.16.1 2019/01/18 08:50:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-
-#include <machine/param.h>
 
 #include "boot.h"
 #include "wdvar.h"

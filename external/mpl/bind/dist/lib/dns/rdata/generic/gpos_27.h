@@ -1,4 +1,4 @@
-/*	$NetBSD: gpos_27.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: gpos_27.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,9 +24,9 @@ typedef struct dns_rdata_gpos {
 	char			*longitude;
 	char			*latitude;
 	char			*altitude;
-	isc_uint8_t		long_len;
-	isc_uint8_t		lat_len;
-	isc_uint8_t		alt_len;
+	uint8_t		long_len;
+	uint8_t		lat_len;
+	uint8_t		alt_len;
 } dns_rdata_gpos_t;
 
 #endif /* GENERIC_GPOS_27_H */

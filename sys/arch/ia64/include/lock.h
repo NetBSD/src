@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6 2017/09/17 00:01:07 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.6.2.1 2019/01/18 08:50:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
 #ifdef _KERNEL
 
 #define	SPINLOCK_SPIN_HOOK	/* nothing */
-#define	SPINLOCK_BACKOFF_HOOK	/* XXX(kochi): hint@pause */
+#define	SPINLOCK_BACKOFF_HOOK	/* XXX ia64_pause() */
 
 #endif
 
@@ -116,26 +116,28 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
-/* XXX mf.a overkill for these? */
 static __inline void
 mb_read(void)
 {
-	__asm __volatile("mf.a	\n"
-			 "mf	\n" ::: "memory");
+	__asm __volatile("mf	\n" ::: "memory");
 }
 
 static __inline void
 mb_write(void)
 {
-	__asm __volatile("mf.a	\n"
-			 "mf	\n" ::: "memory");
+	__asm __volatile("mf	\n" ::: "memory");
 }
 
 static __inline void
 mb_memory(void)
 {
-	__asm __volatile("mf.a	\n"
-			 "mf	\n" ::: "memory");
+	__asm __volatile("mf	\n" ::: "memory");
+}
+
+static __inline void
+ia64_pause(void)
+{
+	__asm __volatile("hint @pause" ::: "memory");
 }
 
 #endif /* _IA64_LOCK_H_ */

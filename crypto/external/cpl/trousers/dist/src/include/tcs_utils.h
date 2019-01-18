@@ -92,11 +92,6 @@ TSS_RESULT owner_evict_init();
 #define EVENT_LOG_final()
 #endif
 
-#define TSS_TPM_TXBLOB_SIZE		(4096)
-#define TSS_TXBLOB_WRAPPEDCMD_OFFSET	(TSS_TPM_TXBLOB_HDR_LEN + sizeof(UINT32))
-#define TSS_MAX_AUTHS_CAP		(1024)
-#define TSS_REQ_MGR_MAX_RETRIES		(5)
-
 #define next( x ) x = x->next
 
 TSS_RESULT key_mgr_dec_ref_count(TCS_KEY_HANDLE);

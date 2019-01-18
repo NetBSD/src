@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.32.16.9 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32.16.10 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.9 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.10 2019/01/18 08:50:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -167,15 +167,12 @@ sysv_ipc_modcmd(modcmd_t cmd, void *arg)
 		/* Set up the kauth listener */
 		sysvipcinit();
 
-#ifdef _MODULE
-		/* Set up the common sysctl tree */
-		sysctl_ipc_setup(&sysctl_sysvipc_clog);
-#endif
-
 		/* Link the system calls */
 		error = syscall_establish(NULL, sysvipc_syscalls);
-		if (error)
+		if (error) {
 			sysvipcfini();
+			return error;
+		}
 
 		/*
 		 * Initialize each sub-component, including their
@@ -189,6 +186,11 @@ sysv_ipc_modcmd(modcmd_t cmd, void *arg)
 #endif
 #ifdef SYSVMSG
 		msginit(&sysctl_sysvipc_clog);
+#endif
+
+#ifdef _MODULE
+		/* Set up the common sysctl tree */
+		sysctl_ipc_setup(&sysctl_sysvipc_clog);
 #endif
 		break;
 	case MODULE_CMD_FINI:
@@ -225,15 +227,15 @@ sysv_ipc_modcmd(modcmd_t cmd, void *arg)
 		}
 #endif
 
-		/* Unlink the system calls. */
-		error = syscall_disestablish(NULL, sysvipc_syscalls);
-		if (error)
-			return error;
-
 #ifdef _MODULE
 		/* Remove the sysctl sub-trees */
 		sysctl_teardown(&sysctl_sysvipc_clog);
 #endif
+
+		/* Unlink the system calls. */
+		error = syscall_disestablish(NULL, sysvipc_syscalls);
+		if (error)
+			return error;
 
 		/* Remove the kauth listener */
 		sysvipcfini();

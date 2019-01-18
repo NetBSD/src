@@ -1,9 +1,11 @@
-/*	$NetBSD: autoconf.h,v 1.15 2011/07/01 21:02:15 dyoung Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.15.52.1 2019/01/18 08:50:20 pgoyette Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
 
 #include <sys/bus.h>
+
+#include <prop/proplib.h>
 
 struct confargs {
 	const char	*ca_name;

@@ -37,9 +37,12 @@ ns3_sends_aaaa_queries() {
 #   - if ns3 sends AAAA queries, the query count should equal $2,
 #   - if ns3 does not send AAAA queries, the query count should equal $3.
 check_query_count() {
-	count=`sed 's/[^0-9]//g;' $1`
-	expected_count_with_aaaa=$2
-	expected_count_without_aaaa=$3
+	count1=`sed 's/[^0-9]//g;' $1`
+	count2=`sed 's/[^0-9]//g;' $2`
+	count=`expr $count1 + $count2`
+	#echo_i "count1=$count1 count2=$count2 count=$count"
+	expected_count_with_aaaa=$3
+	expected_count_without_aaaa=$4
 
 	if ns3_sends_aaaa_queries; then
 		expected_count=$expected_count_with_aaaa
@@ -48,7 +51,7 @@ check_query_count() {
 	fi
 
 	if [ $count -ne $expected_count ]; then
-		echo_i "count ($count) != $expected_count"
+		echo_i "count $count (actual) != $expected_count (expected)"
 		ret=1
 	fi
 }
@@ -59,11 +62,14 @@ n=`expr $n + 1`
 echo_i "attempt excessive-depth lookup ($n)"
 ret=0
 echo "1000" > ans2/ans.limit
+echo "1000" > ans4/ans.limit
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
+$DIG $DIGOPTS @10.53.0.4 reset > /dev/null || ret=1
 $DIG $DIGOPTS @10.53.0.3 indirect1.example.org > dig.out.1.test$n || ret=1
 grep "status: SERVFAIL" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
-check_query_count dig.out.2.test$n 26 14
+$DIG $DIGOPTS +short @10.53.0.4 count txt > dig.out.4.test$n || ret=1
+check_query_count dig.out.2.test$n dig.out.4.test$n 27 14
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -71,12 +77,15 @@ n=`expr $n + 1`
 echo_i "attempt permissible lookup ($n)"
 ret=0
 echo "12" > ans2/ans.limit
+echo "12" > ans4/ans.limit
 ns3_reset ns3/named1.conf.in
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
+$DIG $DIGOPTS @10.53.0.4 reset > /dev/null || ret=1
 $DIG $DIGOPTS @10.53.0.3 indirect2.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
-check_query_count dig.out.2.test$n 49 26
+$DIG $DIGOPTS +short @10.53.0.4 count txt > dig.out.4.test$n || ret=1
+check_query_count dig.out.2.test$n dig.out.4.test$n 50 26
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -88,10 +97,12 @@ ret=0
 echo "12" > ans2/ans.limit
 ns3_reset ns3/named2.conf.in
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
+$DIG $DIGOPTS @10.53.0.4 reset > /dev/null || ret=1
 $DIG $DIGOPTS @10.53.0.3 indirect3.example.org > dig.out.1.test$n || ret=1
 grep "status: SERVFAIL" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
-check_query_count dig.out.2.test$n 12 7
+$DIG $DIGOPTS +short @10.53.0.4 count txt > dig.out.4.test$n || ret=1
+check_query_count dig.out.2.test$n dig.out.4.test$n 13 7
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -99,12 +110,15 @@ n=`expr $n + 1`
 echo_i "attempt permissible lookup ($n)"
 ret=0
 echo "5" > ans2/ans.limit
+echo "5" > ans4/ans.limit
 ns3_reset ns3/named2.conf.in
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
+$DIG $DIGOPTS @10.53.0.4 reset > /dev/null || ret=1
 $DIG $DIGOPTS @10.53.0.3 indirect4.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
-check_query_count dig.out.2.test$n 21 12
+$DIG $DIGOPTS +short @10.53.0.4 count txt > dig.out.4.test$n || ret=1
+check_query_count dig.out.2.test$n dig.out.4.test$n 22 12
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -114,13 +128,16 @@ n=`expr $n + 1`
 echo_i "attempt excessive-queries lookup ($n)"
 ret=0
 echo "13" > ans2/ans.limit
+echo "13" > ans4/ans.limit
 ns3_reset ns3/named3.conf.in
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
+$DIG $DIGOPTS @10.53.0.4 reset > /dev/null || ret=1
 $DIG $DIGOPTS @10.53.0.3 indirect5.example.org > dig.out.1.test$n || ret=1
 if ns3_sends_aaaa_queries; then
   grep "status: SERVFAIL" dig.out.1.test$n > /dev/null || ret=1
 fi
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
+$DIG $DIGOPTS +short @10.53.0.4 count txt > dig.out.4.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
 [ $count -le 50 ] || { ret=1; echo_i "count ($count) !<= 50"; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -145,7 +162,7 @@ echo_i "set max-recursion-depth=100, max-recursion-queries=40"
 n=`expr $n + 1`
 echo_i "attempt excessive-queries lookup ($n)"
 ret=0
-echo "10" > ans2/ans.limit
+echo "11" > ans2/ans.limit
 ns3_reset ns3/named4.conf.in
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
 $DIG $DIGOPTS @10.53.0.3 indirect7.example.org > dig.out.1.test$n || ret=1
@@ -187,5 +204,6 @@ eval count=`cat dig.out.3.test$n`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+#grep "duplicate query" ns3/named.run
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd.c,v 1.3.2.2 2018/09/06 06:56:10 pgoyette Exp $	*/
+/*	$NetBSD: amdgpu_uvd.c,v 1.3.2.3 2019/01/18 08:50:56 pgoyette Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.3.2.2 2018/09/06 06:56:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.3.2.3 2019/01/18 08:50:56 pgoyette Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -159,7 +159,7 @@ int amdgpu_uvd_sw_init(struct amdgpu_device *adev)
 	family_id = le32_to_cpu(hdr->ucode_version) & 0xff;
 	version_major = (le32_to_cpu(hdr->ucode_version) >> 24) & 0xff;
 	version_minor = (le32_to_cpu(hdr->ucode_version) >> 8) & 0xff;
-	DRM_INFO("Found UVD firmware Version: %hu.%hu Family ID: %hu\n",
+	DRM_INFO("Found UVD firmware Version: %x.%x Family ID: %x\n",
 		version_major, version_minor, family_id);
 
 	adev->uvd.fw_version = ((version_major << 24) | (version_minor << 16) |

@@ -248,6 +248,11 @@ TCS_GetPcrEventsByPcr_Internal(TCS_CONTEXT_HANDLE hContext,	/* in */
 	if (PcrIndex >= tpm_metrics.num_pcrs)
 		return TCSERR(TSS_E_BAD_PARAMETER);
 
+	if (*pEventCount == 0) {
+		*ppEvents = NULL;
+		return TSS_SUCCESS;
+	}
+
 	/* if this is a kernel or firmware controlled PCR, call an external routine */
         if ((tcsd_options.kernel_pcrs & (1 << PcrIndex)) ||
 	    (tcsd_options.firmware_pcrs & (1 << PcrIndex))) {
@@ -266,9 +271,11 @@ TCS_GetPcrEventsByPcr_Internal(TCS_CONTEXT_HANDLE hContext,	/* in */
 	MUTEX_UNLOCK(tcs_event_log->lock);
 
 	/* if pEventCount is larger than the number of events to return, just return less.
-	 * *pEventCount will be set to the number returned below.
+	 * *pEventCount will be set to the number returned below. First, check for overflow.
 	 */
-	lastEventNumber = MIN(lastEventNumber, FirstEvent + *pEventCount);
+	if ((FirstEvent + *pEventCount) >= FirstEvent &&
+	    (FirstEvent + *pEventCount) >= *pEventCount)
+		lastEventNumber = MIN(lastEventNumber, FirstEvent + *pEventCount);
 
 	if (FirstEvent > lastEventNumber)
 		return TCSERR(TSS_E_BAD_PARAMETER);

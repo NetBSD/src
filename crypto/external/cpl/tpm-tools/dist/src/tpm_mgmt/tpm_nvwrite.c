@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 			logError(_("Out of memory.\n"));
 			return -1;
 		}
-		memset(rgbDataToWrite, fillvalue, ulDataLength);
+		__memset(rgbDataToWrite, fillvalue, ulDataLength);
 	} else {
 		ulDataLength = 0;
 	}

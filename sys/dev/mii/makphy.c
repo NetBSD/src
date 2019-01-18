@@ -1,5 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.42.14.1 2018/06/25 07:25:51 pgoyette Exp $	*/
-/*	$OpenBSD: eephy.c,v 1.56 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$NetBSD: makphy.c,v 1.42.14.2 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -56,47 +55,11 @@
  */
 
 /*
- * Principal Author: Parag Patel
- * Copyright (c) 2001
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice unmodified, this list of conditions, and the following
- *    disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * Additonal Copyright (c) 2001 by Traakan Software under same licence.
- * Secondary Author: Matthew Jacob
- */
-/*
  * Driver for the Marvell 88E1000 ``Alaska'' 10/100/1000 PHY.
  */
 
-/*
- * Support added for the Marvell 88E1011 (Alaska) 1000/100/10baseTX and
- * 1000baseSX PHY.
- * Nathan Binkert <nate@openbsd.org>
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.42.14.1 2018/06/25 07:25:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.42.14.2 2019/01/18 08:50:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.42.14.1 2018/06/25 07:25:51 pgoyette Ex
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-#include <dev/mii/e1000phyreg.h>
+#include <dev/mii/makphyreg.h>
 
 static int	makphymatch(device_t, cfdata_t, void *);
 static void	makphyattach(device_t, device_t, void *);
@@ -124,11 +87,11 @@ static int	makphy_service(struct mii_softc *, struct mii_data *, int);
 static void	makphy_status(struct mii_softc *);
 static void	makphy_reset(struct mii_softc *);
 
-static const struct mii_phy_funcs eephy_funcs = {
+static const struct mii_phy_funcs makphy_funcs = {
 	makphy_service, makphy_status, makphy_reset,
 };
 
-static const struct mii_phydesc eephys[] = {
+static const struct mii_phydesc makphys[] = {
 	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1000_0,
 	  MII_STR_MARVELL_E1000_0 },
 
@@ -174,12 +137,14 @@ static const struct mii_phydesc eephys[] = {
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1145,
 	  MII_STR_xxMARVELL_E1145 },
 
-	/* XXX: reported not to work on eg. HP XW9400 */
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149,
 	  MII_STR_xxMARVELL_E1149 },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149R,
 	  MII_STR_xxMARVELL_E1149R },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1512,
+	  MII_STR_xxMARVELL_E1512 },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1543,
 	  MII_STR_xxMARVELL_E1543 },
@@ -192,16 +157,20 @@ static const struct mii_phydesc eephys[] = {
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_PHYG65G,
 	  MII_STR_xxMARVELL_PHYG65G },
+
 	{ 0,				0,
 	  NULL },
 };
+
+#define MAKARG_PDOWN	true	/* Power DOWN */
+#define MAKARG_PUP	false	/* Power UP */
 
 static int
 makphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (mii_phy_match(ma, eephys) != NULL)
+	if (mii_phy_match(ma, makphys) != NULL)
 		return (10);
 
 	return (0);
@@ -215,7 +184,7 @@ makphyattach(device_t parent, device_t self, void *aux)
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
 
-	mpd = mii_phy_match(ma, eephys);
+	mpd = mii_phy_match(ma, makphys);
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
@@ -225,45 +194,22 @@ makphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_funcs = &eephy_funcs;
+	sc->mii_funcs = &makphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
 
-	/* XXX No loopback support yet, although the hardware can do it. */
-	sc->mii_flags |= MIIF_NOLOOP;
-
 	/* Make sure page 0 is selected. */
-	PHY_WRITE(sc, E1000_EADR, 0);
+	PHY_WRITE(sc, MAKPHY_EADR, 0);
 
-	/* Switch to copper-only mode if necessary. */
-	if (sc->mii_mpd_model == MII_MODEL_MARVELL_E1111 &&
-	    (sc->mii_flags & MIIF_HAVEFIBER) == 0) {
-		/*
-		 * The onboard 88E1111 PHYs on the Sun X4100 M2 come
-		 * up with fiber/copper auto-selection enabled, even
-		 * though the machine only has copper ports.  This
-		 * makes the chip autoselect to 1000baseX, and makes
-		 * it impossible to select any other media.  So
-		 * disable fiber/copper autoselection.
-		 */
-		int reg = PHY_READ(sc, E1000_ESSR);
-		if ((reg & E1000_ESSR_HWCFG_MODE) == E1000_ESSR_RGMII_COPPER) {
-			reg |= E1000_ESSR_DIS_FC;
-			PHY_WRITE(sc, E1000_ESSR, reg);
-		}
-	}
-
-	/* Switch to fiber-only mode if necessary. */
-	if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1112 &&
-	    sc->mii_flags & MIIF_HAVEFIBER) {
-		int page = PHY_READ(sc, E1000_EADR);
-		PHY_WRITE(sc, E1000_EADR, 2);
-		int reg = PHY_READ(sc, E1000_SCR);
-		reg &= ~E1000_SCR_MODE_MASK;
-		reg |= E1000_SCR_MODE_1000BX;
-		PHY_WRITE(sc, E1000_SCR, reg);
-		PHY_WRITE(sc, E1000_EADR, page);
+	switch (sc->mii_mpd_model) {
+	case MII_MODEL_xxMARVELL_E1011:
+	case MII_MODEL_xxMARVELL_E1112:
+		if (PHY_READ(sc, MAKPHY_ESSR) & ESSR_FIBER_LINK)
+			sc->mii_flags |= MIIF_HAVEFIBER;
+		break;
+	default:
+		break;
 	}
 
 	PHY_RESET(sc);
@@ -284,72 +230,42 @@ makphyattach(device_t parent, device_t self, void *aux)
 static void
 makphy_reset(struct mii_softc *sc)
 {
-	int reg, i;
+	uint16_t reg;
 
-	reg = PHY_READ(sc, MII_BMCR);
-	reg |= BMCR_RESET;
-	PHY_WRITE(sc, MII_BMCR, reg);
-	
-	for (i = 0; i < 500; i++) {
-		DELAY(1);
-		reg = PHY_READ(sc, MII_BMCR);
-		if (!(reg & BMCR_RESET))
-			break;
-	}
+	mii_phy_reset(sc);
 
 	/*
 	 * Initialize PHY Specific Control Register.
 	 */
-	reg = PHY_READ(sc, E1000_SCR);
+	reg = PHY_READ(sc, MAKPHY_PSCR);
 
 	/* Assert CRS on transmit. */
-	reg |= E1000_SCR_ASSERT_CRS_ON_TX;
-
-	/* Enable auto crossover. */
 	switch (sc->mii_mpd_model) {
-	case MII_MODEL_xxMARVELL_E3016:
-	case MII_MODEL_xxMARVELL_E3082:
-		/* Bits are in a different position.  */
-		reg |= (E1000_SCR_AUTO_X_MODE >> 1);
+	case MII_MODEL_MARVELL_E1000_0:
+	case MII_MODEL_MARVELL_E1000_3:
+	case MII_MODEL_MARVELL_E1000_5:
+	case MII_MODEL_MARVELL_E1000_6:
+	case MII_MODEL_xxMARVELL_E1000S:
+	case MII_MODEL_xxMARVELL_E1011:
+	case MII_MODEL_xxMARVELL_E1111:
+		reg |= PSCR_CRS_ON_TX;
 		break;
-	default:
-		/* Automatic crossover causes problems for 1000baseX. */
-		if (sc->mii_flags & MIIF_IS_1000X)
-			reg &= ~E1000_SCR_AUTO_X_MODE;
-		else
-			reg |= E1000_SCR_AUTO_X_MODE;
-	}
-
-	/* Disable energy detect; only available on some models. */
-	switch(sc->mii_mpd_model) {
-	case MII_MODEL_xxMARVELL_E3016:
-		reg &= ~E3000_SCR_EN_DETECT_MASK;
-		break;
-	case MII_MODEL_MARVELL_E1011:
-	case MII_MODEL_MARVELL_E1111:
-	case MII_MODEL_xxMARVELL_E1112:
-	case MII_MODEL_xxMARVELL_PHYG65G:
-		reg &= ~E1000_SCR_EN_DETECT_MASK;
+	default: /* No PSCR_CRS_ON_TX bit */
 		break;
 	}
 
 	/* Enable scrambler if necessary. */
 	if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E3016)
-		reg &= ~E3000_SCR_SCRAMBLER_DISABLE;
+		reg &= ~E3016_PSCR_SCRAMBLE_DIS;
 
 	/*
 	 * Store next page in the Link Partner Next Page register for
 	 * compatibility with 802.3ab.
 	 */
 	if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E3016)
-		reg |= E3000_SCR_REG8_NEXT_PAGE;
+		reg |= E3016_PSCR_REG8NXTPG;
 
-	PHY_WRITE(sc, E1000_SCR, reg);
-
-	/* 25 MHz TX_CLK should always work. */
-	reg = PHY_READ(sc, E1000_ESCR);
-	reg |= E1000_ESCR_TX_CLK_25;
-	PHY_WRITE(sc, E1000_ESCR, reg);
+	PHY_WRITE(sc, MAKPHY_PSCR, reg);
 
 	/* Configure LEDs if they were left unconfigured. */
 	if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E3016 &&
@@ -358,14 +274,31 @@ makphy_reset(struct mii_softc *sc)
 		PHY_WRITE(sc, 0x16, reg);
 	}
 
+	mii_phy_reset(sc);
+}
+
+static void
+makphy_pdown(struct mii_softc *sc, bool pdown)
+{
+	int bmcr, new;
+	bool need_reset = false;
+
 	/*
-	 * Do a software reset for these settings to take effect.
-	 * Disable autonegotiation, such that all capabilities get
-	 * advertised when it is switched back on.
+	 * XXX
+	 * PSCR (register 16) should be modified on some chips.
 	 */
-	reg = PHY_READ(sc, MII_BMCR);
-	reg &= ~BMCR_AUTOEN;
-	PHY_WRITE(sc, MII_BMCR, reg | BMCR_RESET);
+
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (pdown)
+		new = bmcr | BMCR_PDOWN;
+	else
+		new = bmcr & ~BMCR_PDOWN;
+	if (bmcr != new)
+		need_reset = true;
+
+	if (need_reset)
+		new |= BMCR_RESET;
+	PHY_WRITE(sc, MII_BMCR, new);
 }
 
 static int
@@ -403,13 +336,19 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
+		/* Try to power up the PHY in case it's down */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_NONE)
+			makphy_pdown(sc, MAKARG_PUP);
+
 		mii_phy_setmedia(sc);
 
 		/*
 		 * If autonegitation is not enabled, we need a
 		 * software reset for the settings to take effect.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_NONE)
+			makphy_pdown(sc, MAKARG_PDOWN);
+		else if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
 			bmcr = PHY_READ(sc, MII_BMCR);
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET);
 		}
@@ -443,16 +382,20 @@ static void
 makphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmcr, gsr, ssr;
+	int bmcr, gsr, pssr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
 	bmcr = PHY_READ(sc, MII_BMCR);
-	ssr = PHY_READ(sc, E1000_SSR);
+	/* XXX FIXME: Use different page for Fiber on newer chips */
+	pssr = PHY_READ(sc, MAKPHY_PSSR);
 
-	if (ssr & E1000_SSR_LINK)
+	if (pssr & PSSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
+
+	if (bmcr & BMCR_LOOP)
+		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
@@ -460,33 +403,51 @@ makphy_status(struct mii_softc *sc)
 		return;
 	}
 
-	if (bmcr & BMCR_LOOP)
-		mii->mii_media_active |= IFM_LOOP;
-
-	if (!(ssr & E1000_SSR_SPD_DPLX_RESOLVED)) {
-		/* Erg, still trying, I guess... */
-		mii->mii_media_active |= IFM_NONE;
-		return;
+	if ((bmcr & BMCR_AUTOEN) != 0) {
+		/*
+		 * Check Speed and Duplex Resolved bit.
+		 * Note that this bit is always 1 when autonego is not enabled.
+		 */
+		if (!(pssr & PSSR_RESOLVED)) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+	} else {
+		if ((pssr & PSSR_LINK) == 0) {
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
 	}
 
+	/* XXX FIXME: Use different page for Fiber on newer chips */
 	if (sc->mii_flags & MIIF_IS_1000X) {
 		mii->mii_media_active |= IFM_1000_SX;
 	} else {
-		if (ssr & E1000_SSR_1000MBS)
+		switch (PSSR_SPEED_get(pssr)) {
+		case SPEED_1000:
 			mii->mii_media_active |= IFM_1000_T;
-		else if (ssr & E1000_SSR_100MBS)
+			break;
+		case SPEED_100:
 			mii->mii_media_active |= IFM_100_TX;
-		else
+			break;
+		case SPEED_10:
 			mii->mii_media_active |= IFM_10_T;
+			break;
+		default: /* Undefined (reserved) value */
+			mii->mii_media_active |= IFM_NONE;
+			mii->mii_media_status = 0;
+			return;
+		}
 	}
 
-	if (ssr & E1000_SSR_DUPLEX)
+	if (pssr & PSSR_DUPLEX)
 		mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
-		gsr = PHY_READ(sc, MII_100T2SR) | PHY_READ(sc, MII_100T2SR);
+		gsr = PHY_READ(sc, MII_100T2SR);
 		if (gsr & GTSR_MS_RES)
 			mii->mii_media_active |= IFM_ETH_MASTER;
 	}

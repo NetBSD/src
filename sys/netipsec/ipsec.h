@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.71.2.6 2018/11/26 01:52:51 pgoyette Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.71.2.7 2019/01/18 08:50:58 pgoyette Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -249,6 +249,22 @@ extern int crypto_support;
 	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
 #define ipsec_outdone(m) \
 	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE) != NULL)
+
+static __inline bool
+ipsec_skip_pfil(struct mbuf *m)
+{
+	bool rv;
+
+	if (ipsec_indone(m) &&
+	    ((m->m_pkthdr.pkthdr_flags & PKTHDR_FLAG_IPSEC_SKIP_PFIL) != 0)) {
+		m->m_pkthdr.pkthdr_flags &= ~PKTHDR_FLAG_IPSEC_SKIP_PFIL;
+		rv = true;
+	} else {
+		rv = false;
+	}
+
+	return rv;
+}
 
 void ipsec_pcbconn(struct inpcbpolicy *);
 void ipsec_pcbdisconn(struct inpcbpolicy *);

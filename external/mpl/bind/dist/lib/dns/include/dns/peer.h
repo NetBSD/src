@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.h,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: peer.h,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,9 @@
  *** Imports
  ***/
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/netaddr.h>
@@ -46,7 +49,7 @@
 
 struct dns_peerlist {
 	unsigned int		magic;
-	isc_uint32_t		refs;
+	uint32_t		refs;
 
 	isc_mem_t	       *mem;
 
@@ -55,24 +58,24 @@ struct dns_peerlist {
 
 struct dns_peer {
 	unsigned int		magic;
-	isc_uint32_t		refs;
+	uint32_t		refs;
 
 	isc_mem_t	       *mem;
 
 	isc_netaddr_t		address;
 	unsigned int		prefixlen;
-	isc_boolean_t		bogus;
+	bool		bogus;
 	dns_transfer_format_t	transfer_format;
-	isc_uint32_t		transfers;
-	isc_boolean_t		support_ixfr;
-	isc_boolean_t		provide_ixfr;
-	isc_boolean_t		request_ixfr;
-	isc_boolean_t		support_edns;
-	isc_boolean_t		request_nsid;
-	isc_boolean_t		send_cookie;
-	isc_boolean_t		request_expire;
-	isc_boolean_t		force_tcp;
-	isc_boolean_t		tcp_keepalive;
+	uint32_t		transfers;
+	bool		support_ixfr;
+	bool		provide_ixfr;
+	bool		request_ixfr;
+	bool		support_edns;
+	bool		request_nsid;
+	bool		send_cookie;
+	bool		request_expire;
+	bool		force_tcp;
+	bool		tcp_keepalive;
 	dns_name_t	       *key;
 	isc_sockaddr_t	       *transfer_source;
 	isc_dscp_t		transfer_dscp;
@@ -80,12 +83,12 @@ struct dns_peer {
 	isc_dscp_t		notify_dscp;
 	isc_sockaddr_t	       *query_source;
 	isc_dscp_t		query_dscp;
-	isc_uint16_t		udpsize;		/* receive size */
-	isc_uint16_t		maxudp;			/* transmit size */
-	isc_uint16_t		padding;		/* pad block size */
-	isc_uint8_t		ednsversion;		/* edns version */
+	uint16_t		udpsize;		/* receive size */
+	uint16_t		maxudp;			/* transmit size */
+	uint16_t		padding;		/* pad block size */
+	uint8_t		ednsversion;		/* edns version */
 
-	isc_uint32_t		bitflags;
+	uint32_t		bitflags;
 
 	ISC_LINK(dns_peer_t)	next;
 };
@@ -137,64 +140,64 @@ void
 dns_peer_detach(dns_peer_t **list);
 
 isc_result_t
-dns_peer_setbogus(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setbogus(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getbogus(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getbogus(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_setrequestixfr(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setrequestixfr(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getrequestixfr(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getrequestixfr(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_setprovideixfr(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setprovideixfr(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getprovideixfr(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getprovideixfr(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_setrequestnsid(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setrequestnsid(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getrequestnsid(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getrequestnsid(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_setsendcookie(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setsendcookie(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getsendcookie(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getsendcookie(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_setrequestexpire(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setrequestexpire(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getrequestexpire(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getrequestexpire(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_setsupportedns(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setsupportedns(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getforcetcp(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getforcetcp(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_setforcetcp(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_setforcetcp(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_gettcpkeepalive(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_gettcpkeepalive(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_settcpkeepalive(dns_peer_t *peer, isc_boolean_t newval);
+dns_peer_settcpkeepalive(dns_peer_t *peer, bool newval);
 
 isc_result_t
-dns_peer_getsupportedns(dns_peer_t *peer, isc_boolean_t *retval);
+dns_peer_getsupportedns(dns_peer_t *peer, bool *retval);
 
 isc_result_t
-dns_peer_settransfers(dns_peer_t *peer, isc_uint32_t newval);
+dns_peer_settransfers(dns_peer_t *peer, uint32_t newval);
 
 isc_result_t
-dns_peer_gettransfers(dns_peer_t *peer, isc_uint32_t *retval);
+dns_peer_gettransfers(dns_peer_t *peer, uint32_t *retval);
 
 isc_result_t
 dns_peer_settransferformat(dns_peer_t *peer, dns_transfer_format_t newval);
@@ -219,22 +222,22 @@ isc_result_t
 dns_peer_gettransfersource(dns_peer_t *peer, isc_sockaddr_t *transfer_source);
 
 isc_result_t
-dns_peer_setudpsize(dns_peer_t *peer, isc_uint16_t udpsize);
+dns_peer_setudpsize(dns_peer_t *peer, uint16_t udpsize);
 
 isc_result_t
-dns_peer_getudpsize(dns_peer_t *peer, isc_uint16_t *udpsize);
+dns_peer_getudpsize(dns_peer_t *peer, uint16_t *udpsize);
 
 isc_result_t
-dns_peer_setmaxudp(dns_peer_t *peer, isc_uint16_t maxudp);
+dns_peer_setmaxudp(dns_peer_t *peer, uint16_t maxudp);
 
 isc_result_t
-dns_peer_getmaxudp(dns_peer_t *peer, isc_uint16_t *maxudp);
+dns_peer_getmaxudp(dns_peer_t *peer, uint16_t *maxudp);
 
 isc_result_t
-dns_peer_setpadding(dns_peer_t *peer, isc_uint16_t padding);
+dns_peer_setpadding(dns_peer_t *peer, uint16_t padding);
 
 isc_result_t
-dns_peer_getpadding(dns_peer_t *peer, isc_uint16_t *padding);
+dns_peer_getpadding(dns_peer_t *peer, uint16_t *padding);
 
 isc_result_t
 dns_peer_setnotifysource(dns_peer_t *peer, const isc_sockaddr_t *notify_source);
@@ -267,10 +270,10 @@ isc_result_t
 dns_peer_getquerydscp(dns_peer_t *peer, isc_dscp_t *dscpp);
 
 isc_result_t
-dns_peer_setednsversion(dns_peer_t *peer, isc_uint8_t ednsversion);
+dns_peer_setednsversion(dns_peer_t *peer, uint8_t ednsversion);
 
 isc_result_t
-dns_peer_getednsversion(dns_peer_t *peer, isc_uint8_t *ednsversion);
+dns_peer_getednsversion(dns_peer_t *peer, uint8_t *ednsversion);
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_PEER_H */

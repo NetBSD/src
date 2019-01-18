@@ -1,0 +1,84 @@
+=head1 NAME
+
+tpm_nvread
+
+=head1 SYNOPSIS
+
+B<tpm_nvread [OPTIONS]>
+
+=head1 DESCRIPTION
+
+B<tpm_nvread> reads data from an NVRAM area and either displays them or writes
+them into a file. The user must provide the index of the NVRAM area. If the
+user provided the number of bytes to read then this will be the maximum
+number of bytes that will be read from the NVRAM area, otherwise the whole
+NVRAM area will be read. Some NVRAM areas only allow read sizes of zero,
+i.e., NVRAM area index 0. Optionally an offset into the NVRAM
+area can be given where the reading of the data is to start. If the NVRAM
+area has permission bits set that require owner or NVRAM area authentication,
+then the password must be provided via the password option.
+
+The following options are supported:
+
+=over 4
+
+=item B<-h, --help>
+
+Display command usage info.
+
+=item B<-v, --version>
+
+Display command version info.
+
+=item B<-l, --log [none|error|info|debug]>
+
+Set logging level.
+
+=item B<-u, --unicode>
+
+Use TSS UNICODE encoding for passwords to comply with applications
+using TSS popup boxes
+
+=item B<-z, --well-known>
+
+Use a secret of all zeros (20 bytes of zeros) as either the NVRAM area or owner secret.
+
+=item B<-p, --password>
+
+Depending on what type of authentication is required for the NVRAM area, this must either
+be the NVRAM area or owner password.
+
+A password may be directly provided for example by using '--password=password' or
+'-ppassword'. If no password is provided then the program will prompt the user for the
+password.
+
+=item B<-i, --index>
+
+The index of the NVRAM area.
+The parameter may either be a decimal number or a hexadecimal number starting with '0x'.
+
+=item B<-s, --size>
+
+The number of bytes to read from the NVRAM area.
+The parameter may either be a decimal number or a hexadecimal number starting with '0x'.
+
+=item B<-n, --offset> (optional parameter)
+
+The offset into the NVRAM area from where to start reading.
+The parameter may either be a decimal number or a hexadecimal number starting with '0x'.
+
+=item B<-f, --filename> (optional parameter)
+
+The name of a file the read data will be written into. If no filename is
+given the data will be printed to stdout.
+
+
+=back
+
+=head1 SEE ALSO
+
+B<tpm_nvdefine>(8), B<tpm_nvinfo>(8), B<tpm_nvrelease>(8), B<tpm_nvwrite>(8)
+
+=head1 REPORTING BUGS
+
+Report bugs to <trousers-users@lists.sourceforge.net>

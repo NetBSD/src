@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.11.10.1 2018/09/30 01:45:19 pgoyette Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.11.10.2 2019/01/18 08:48:36 pgoyette Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -433,6 +433,7 @@ ntpdatemain (
 	    }
 
 	if (errflg) {
+usage:
 		(void) fprintf(stderr,
 		    "usage: %s [-46bBdqsuv] [-a key#] [-e delay] [-k file] [-p samples] [-o version#] [-t timeo] server ...\n",
 		    progname);
@@ -509,7 +510,7 @@ ntpdatemain (
 
 	if (sys_numservers == 0) {
 		msyslog(LOG_ERR, "no servers can be used, exiting");
-		exit(1);
+		goto usage;
 	}
 
 	/*

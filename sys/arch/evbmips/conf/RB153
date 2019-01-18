@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.19.2.2 2018/11/26 01:52:24 pgoyette Exp $
+#	$NetBSD: RB153,v 1.19.2.3 2019/01/18 08:50:16 pgoyette Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.19.2.2 $"
+#ident 		"RB153-$Revision: 1.19.2.3 $"
 
 maxusers	32
 
@@ -63,6 +63,11 @@ file-system	NULLFS		# NULL layered filesystem
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 options 	GATEWAY		# IP packet forwarding

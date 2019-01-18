@@ -38,6 +38,25 @@
 #define DEBUG_print_openssl_errors()
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100001L
+static int
+RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
+{
+	if (n != NULL) {
+		BN_free(r->n);
+		r->n = n;
+	}
+	if (e != NULL) {
+		BN_free(r->e);
+		r->e = e;
+	}
+	if (d != NULL) {
+		BN_free(r->d);
+		r->d = d;
+	}
+	return 1;
+}
+#endif
 
 /*
  * Hopefully this will make the code clearer since
@@ -61,6 +80,7 @@ Trspi_RSA_Encrypt(unsigned char *dataToEncrypt, /* in */
 	RSA *rsa = RSA_new();
 	BYTE encodedData[256];
 	int encodedDataLen;
+	BIGNUM *rsa_n = NULL, *rsa_e = NULL;
 
 	if (rsa == NULL) {
 		rv = TSPERR(TSS_E_OUTOFMEMORY);
@@ -68,12 +88,20 @@ Trspi_RSA_Encrypt(unsigned char *dataToEncrypt, /* in */
 	}
 
 	/* set the public key value in the OpenSSL object */
-	rsa->n = BN_bin2bn(publicKey, keysize, rsa->n);
+	rsa_n = BN_bin2bn(publicKey, keysize, NULL);
 	/* set the public exponent */
-	rsa->e = BN_bin2bn(exp, sizeof(exp), rsa->e);
+	rsa_e = BN_bin2bn(exp, sizeof(exp), NULL);
 
-	if (rsa->n == NULL || rsa->e == NULL) {
+	if (rsa_n == NULL || rsa_e == NULL) {
 		rv = TSPERR(TSS_E_OUTOFMEMORY);
+		BN_free(rsa_n);
+		BN_free(rsa_e);
+		goto err;
+	}
+	if (!RSA_set0_key(rsa, rsa_n, rsa_e, NULL)) {
+		rv = TSPERR(TSS_E_FAIL);
+		BN_free(rsa_n);
+		BN_free(rsa_e);
 		goto err;
 	}
 
@@ -123,6 +151,7 @@ Trspi_Verify(UINT32 HashType, BYTE *pHash, UINT32 iHashLength,
 	unsigned char exp[] = { 0x01, 0x00, 0x01 }; /* The default public exponent for the TPM */
 	unsigned char buf[256];
 	RSA *rsa = RSA_new();
+	BIGNUM *rsa_n = NULL, *rsa_e = NULL;
 
 	if (rsa == NULL) {
 		rv = TSPERR(TSS_E_OUTOFMEMORY);
@@ -146,12 +175,20 @@ Trspi_Verify(UINT32 HashType, BYTE *pHash, UINT32 iHashLength,
 	}
 
 	/* set the public key value in the OpenSSL object */
-	rsa->n = BN_bin2bn(pModulus, iKeyLength, rsa->n);
+	rsa_n = BN_bin2bn(pModulus, iKeyLength, NULL);
 	/* set the public exponent */
-	rsa->e = BN_bin2bn(exp, sizeof(exp), rsa->e);
+	rsa_e = BN_bin2bn(exp, sizeof(exp), NULL);
 
-	if (rsa->n == NULL || rsa->e == NULL) {
+	if (rsa_n == NULL || rsa_e == NULL) {
 		rv = TSPERR(TSS_E_OUTOFMEMORY);
+		BN_free(rsa_n);
+		BN_free(rsa_e);
+		goto err;
+	}
+	if (!RSA_set0_key(rsa, rsa_n, rsa_e, NULL)) {
+		rv = TSPERR(TSS_E_FAIL);
+		BN_free(rsa_n);
+		BN_free(rsa_e);
 		goto err;
 	}
 
@@ -195,6 +232,7 @@ Trspi_RSA_Public_Encrypt(unsigned char *in, unsigned int inlen,
 	int rv, e_size = 3;
 	unsigned char exp[] = { 0x01, 0x00, 0x01 };
 	RSA *rsa = RSA_new();
+	BIGNUM *rsa_n = NULL, *rsa_e = NULL;
 
 	if (rsa == NULL) {
 		rv = TSPERR(TSS_E_OUTOFMEMORY);
@@ -237,12 +275,20 @@ Trspi_RSA_Public_Encrypt(unsigned char *in, unsigned int inlen,
 	}
 
 	/* set the public key value in the OpenSSL object */
-	rsa->n = BN_bin2bn(pubkey, pubsize, rsa->n);
+	rsa_n = BN_bin2bn(pubkey, pubsize, NULL);
 	/* set the public exponent */
-	rsa->e = BN_bin2bn(exp, e_size, rsa->e);
+	rsa_e = BN_bin2bn(exp, e_size, NULL);
 
-	if (rsa->n == NULL || rsa->e == NULL) {
+	if (rsa_n == NULL || rsa_e == NULL) {
 		rv = TSPERR(TSS_E_OUTOFMEMORY);
+                BN_free(rsa_n);
+                BN_free(rsa_e);
+                goto err;
+        }
+        if (!RSA_set0_key(rsa, rsa_n, rsa_e, NULL)) {
+                rv = TSPERR(TSS_E_FAIL);
+                BN_free(rsa_n);
+                BN_free(rsa_e);
 		goto err;
 	}
 

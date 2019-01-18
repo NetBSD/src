@@ -56,11 +56,31 @@ for (;;) {
 
 	my @questions = $packet->question;
 	my $qname = $questions[0]->qname;
+	my $qtype = $questions[0]->qtype;
 
-	if ($qname eq "badcname.example.net") {
+	if ($qname eq "example.net" && $qtype eq "NS") {
+		$packet->push("answer", new Net::DNS::RR($qname . " 300 NS ns.example.net"));
+		$packet->push("additional", new Net::DNS::RR("ns.example.net 300 A 10.53.0.3"));
+	} elsif ($qname eq "ns.example.net") {
+		$packet->push("answer", new Net::DNS::RR($qname . " 300 A 10.53.0.3"));
+	} elsif ($qname eq "nodata.example.net") {
+		# Do not add a SOA RRset.
+	} elsif ($qname eq "nxdomain.example.net") {
+		# Do not add a SOA RRset.
+		$packet->header->rcode(NXDOMAIN);
+	} elsif ($qname eq "www.example.net") {
+		# Data for address/alias filtering.
+		if ($qtype eq "A") {
+			$packet->push("answer", new Net::DNS::RR($qname . " 300 A 192.0.2.1"));
+		} elsif ($qtype eq "AAAA") {
+			$packet->push("answer", new Net::DNS::RR($qname . " 300 AAAA 2001:db8:beef::1"));
+		}
+	} elsif ($qname eq "badcname.example.net") {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .
 				       " 300 CNAME badcname.example.org"));
+	} elsif (($qname eq "baddname.example.net" || $qname eq "gooddname.example.net") && $qtype eq "NS") {
+		$packet->push("authority", new Net::DNS::RR("example.net IN SOA (1 2 3 4 5)"))
 	} elsif ($qname eq "foo.baddname.example.net") {
 		$packet->push("answer",
 			      new Net::DNS::RR("baddname.example.net" .
@@ -73,6 +93,11 @@ for (;;) {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .
 				       " 300 CNAME goodcname.example.org"));
+	} elsif ($qname =~ /^nodata\.example\.net$/i) {
+		$packet->header->aa(1);
+	} elsif ($qname =~ /^nxdomain\.example\.net$/i) {
+		$packet->header->aa(1);
+		$packet->header->rcode(NXDOMAIN);
 	} elsif ($qname eq "cname.sub.example.org") {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .
@@ -87,6 +112,12 @@ for (;;) {
 	} elsif ($qname eq "www.ok.sub.example.org") {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname . " 300 A 192.0.2.1"));
+	} elsif ($qname eq "foo.glue-in-answer.example.org") {
+		$packet->push("answer", new Net::DNS::RR($qname . " 300 A 192.0.2.1"));
+	} elsif ($qname eq "ns.example.net") {
+		$packet->push("answer",
+			      new Net::DNS::RR($qname .
+				       " 300 A 10.53.0.3"));
 	} else {
 		$packet->push("answer", new Net::DNS::RR("www.example.com 300 A 1.2.3.4"));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_test.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: parse_test.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,51 +15,84 @@
 
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <time.h>
 
+#define UNIT_TESTING
+#include <cmocka.h>
+
 #include <isc/parseint.h>
+#include <isc/util.h>
 
 #include "isctest.h"
 
-/*
- * Individual unit tests
- */
-
-/* Test for 32 bit overflow on 64 bit machines in isc_parse_uint32 */
-ATF_TC(parse_overflow);
-ATF_TC_HEAD(parse_overflow, tc) {
-	atf_tc_set_md_var(tc, "descr", "Check for 32 bit overflow");
-}
-ATF_TC_BODY(parse_overflow, tc) {
+static int
+_setup(void **state) {
 	isc_result_t result;
-	isc_uint32_t output;
-	UNUSED(tc);
 
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
-	result = isc_parse_uint32(&output, "1234567890", 10);
-	ATF_CHECK_EQ(ISC_R_SUCCESS, result);
-	ATF_CHECK_EQ(1234567890, output);
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = isc_parse_uint32(&output, "123456789012345", 10);
-	ATF_CHECK_EQ(ISC_R_RANGE, result);
+	return (0);
+}
 
-	result = isc_parse_uint32(&output, "12345678901234567890", 10);
-	ATF_CHECK_EQ(ISC_R_RANGE, result);
+static int
+_teardown(void **state) {
+	UNUSED(state);
 
 	isc_test_end();
+
+	return (0);
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, parse_overflow);
+/* Test for 32 bit overflow on 64 bit machines in isc_parse_uint32 */
+static void
+parse_overflow(void **state) {
+	isc_result_t result;
+	uint32_t output;
 
-	return (atf_no_error());
+	UNUSED(state);
+
+	result = isc_parse_uint32(&output, "1234567890", 10);
+	assert_int_equal(ISC_R_SUCCESS, result);
+	assert_int_equal(1234567890, output);
+
+	result = isc_parse_uint32(&output, "123456789012345", 10);
+	assert_int_equal(ISC_R_RANGE, result);
+
+	result = isc_parse_uint32(&output, "12345678901234567890", 10);
+	assert_int_equal(ISC_R_RANGE, result);
 }
 
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(parse_overflow,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
+}
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

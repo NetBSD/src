@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.11.2.6 2018/12/26 14:02:00 pgoyette Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.11.2.7 2019/01/18 08:50:42 pgoyette Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.6 2018/12/26 14:02:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.7 2019/01/18 08:50:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -227,9 +227,9 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	default:
 		if (usbrev < PCI_USBREV_3_0) {
-			aprint_error_dev(self, "Unknown revision (%02x)\n",
+			aprint_error_dev(self, "Unknown revision (%02x). Set to 3.0.\n",
 			    usbrev);
-			sc->sc_bus.ub_revision = USBREV_UNKNOWN;
+			sc->sc_bus.ub_revision = USBREV_3_0;
 		} else {
 			/* Default to the latest revision */
 			aprint_normal_dev(self,

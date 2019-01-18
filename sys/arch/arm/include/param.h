@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20.14.1 2018/10/20 06:58:25 pgoyette Exp $	*/
+/*	$NetBSD: param.h,v 1.20.14.2 2019/01/18 08:50:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -155,14 +155,6 @@
 #define	ALIGNBYTES32	3
 #else
 #define	ALIGNBYTES32	7
-#endif
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-
-#ifndef MAXPHYS
-#define	MAXPHYS		65536		/* max I/O transfer size */
 #endif
 
 /*

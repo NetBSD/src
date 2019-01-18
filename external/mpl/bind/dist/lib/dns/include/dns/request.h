@@ -1,4 +1,4 @@
-/*	$NetBSD: request.h,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: request.h,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,8 @@
  * Security:
  *\li	No anticipated impact.
  */
+
+#include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/event.h>
@@ -194,45 +196,15 @@ dns_request_create(dns_requestmgr_t *requestmgr, dns_message_t *message,
  *\li	requestp != NULL && *requestp == NULL
  */
 
-/*% See dns_request_createvia4() */
 isc_result_t
 dns_request_createvia(dns_requestmgr_t *requestmgr, dns_message_t *message,
 		      const isc_sockaddr_t *srcaddr,
-		      const isc_sockaddr_t *destaddr, unsigned int options,
+		      const isc_sockaddr_t *destaddr,
+		      isc_dscp_t dscp, unsigned int options,
 		      dns_tsigkey_t *key, unsigned int timeout,
+		      unsigned int udptimeout, unsigned int udpretries,
 		      isc_task_t *task, isc_taskaction_t action, void *arg,
 		      dns_request_t **requestp);
-
-/*% See dns_request_createvia4() */
-isc_result_t
-dns_request_createvia2(dns_requestmgr_t *requestmgr, dns_message_t *message,
-		       const isc_sockaddr_t *srcaddr,
-		       const isc_sockaddr_t *destaddr,
-		       unsigned int options, dns_tsigkey_t *key,
-		       unsigned int timeout, unsigned int udptimeout,
-		       isc_task_t *task, isc_taskaction_t action, void *arg,
-		       dns_request_t **requestp);
-
-/*% See dns_request_createvia4() */
-isc_result_t
-dns_request_createvia3(dns_requestmgr_t *requestmgr, dns_message_t *message,
-		       const isc_sockaddr_t *srcaddr,
-		       const isc_sockaddr_t *destaddr,
-		       unsigned int options, dns_tsigkey_t *key,
-		       unsigned int timeout, unsigned int udptimeout,
-		       unsigned int udpretries, isc_task_t *task,
-		       isc_taskaction_t action, void *arg,
-		       dns_request_t **requestp);
-
-isc_result_t
-dns_request_createvia4(dns_requestmgr_t *requestmgr, dns_message_t *message,
-		       const isc_sockaddr_t *srcaddr,
-		       const isc_sockaddr_t *destaddr,
-		       isc_dscp_t dscp, unsigned int options,
-		       dns_tsigkey_t *key, unsigned int timeout,
-		       unsigned int udptimeout, unsigned int udpretries,
-		       isc_task_t *task, isc_taskaction_t action, void *arg,
-		       dns_request_t **requestp);
 /*%<
  * Create and send a request.
  *
@@ -268,44 +240,15 @@ dns_request_createvia4(dns_requestmgr_t *requestmgr, dns_message_t *message,
  *\li	requestp != NULL && *requestp == NULL
  */
 
-/*% See dns_request_createraw4() */
 isc_result_t
 dns_request_createraw(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 		      const isc_sockaddr_t *srcaddr,
 		      const isc_sockaddr_t *destaddr,
-		      unsigned int options, unsigned int timeout,
-		      isc_task_t *task, isc_taskaction_t action, void *arg,
+		      isc_dscp_t dscp, unsigned int options,
+		      unsigned int timeout, unsigned int udptimeout,
+		      unsigned int udpretries, isc_task_t *task,
+		      isc_taskaction_t action, void *arg,
 		      dns_request_t **requestp);
-
-/*% See dns_request_createraw4() */
-isc_result_t
-dns_request_createraw2(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
-		       const isc_sockaddr_t *srcaddr,
-		       const isc_sockaddr_t *destaddr,
-		       unsigned int options, unsigned int timeout,
-		       unsigned int udptimeout, isc_task_t *task,
-		       isc_taskaction_t action, void *arg,
-		       dns_request_t **requestp);
-
-/*% See dns_request_createraw4() */
-isc_result_t
-dns_request_createraw3(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
-		       const isc_sockaddr_t *srcaddr,
-		       const isc_sockaddr_t *destaddr,
-		       unsigned int options, unsigned int timeout,
-		       unsigned int udptimeout, unsigned int udpretries,
-		       isc_task_t *task, isc_taskaction_t action, void *arg,
-		       dns_request_t **requestp);
-
-isc_result_t
-dns_request_createraw4(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
-		       const isc_sockaddr_t *srcaddr,
-		       const isc_sockaddr_t *destaddr,
-		       isc_dscp_t dscp, unsigned int options,
-		       unsigned int timeout, unsigned int udptimeout,
-		       unsigned int udpretries, isc_task_t *task,
-		       isc_taskaction_t action, void *arg,
-		       dns_request_t **requestp);
 /*!<
  * \brief Create and send a request.
  *
@@ -376,19 +319,19 @@ dns_request_getresponse(dns_request_t *request, dns_message_t *message,
  *\li	Any result that dns_message_parse() can return.
  */
 
-isc_boolean_t
+bool
 dns_request_usedtcp(dns_request_t *request);
 /*%<
  * Return whether this query used TCP or not.  Setting #DNS_REQUESTOPT_TCP
  * in the call to dns_request_create() will cause the function to return
- * #ISC_TRUE, otherwise the result is based on the query message size.
+ * #true, otherwise the result is based on the query message size.
  *
  * Requires:
  *\li	'request' is a valid request.
  *
  * Returns:
- *\li	ISC_TRUE	if TCP was used.
- *\li	ISC_FALSE	if UDP was used.
+ *\li	true	if TCP was used.
+ *\li	false	if UDP was used.
  */
 
 void

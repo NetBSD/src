@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_verbose.c,v 1.3 2010/07/25 14:44:34 pgoyette Exp $ */
+/*	$NetBSD: mii_verbose.c,v 1.3.62.1 2019/01/18 08:50:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.3 2010/07/25 14:44:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.3.62.1 2019/01/18 08:50:26 pgoyette Exp $");
 
 #include <sys/module.h>
 #include <dev/mii/mii_verbose.h>
@@ -90,7 +90,7 @@ miiverbose_modcmd(modcmd_t cmd, void *arg)
 	default:
 		return ENOTTY;
 	}
-} 
+}
 
 const char *
 mii_get_descr_real(int oui, int model) {

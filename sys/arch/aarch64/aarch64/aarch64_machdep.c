@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.1.28.8 2018/12/26 14:01:30 pgoyette Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.1.28.9 2019/01/18 08:50:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.8 2018/12/26 14:01:30 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.9 2019/01/18 08:50:12 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -41,15 +41,16 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.8 2018/12/26 14:01:30 pgo
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/asan.h>
 #include <sys/bus.h>
+#include <sys/core.h>
+#include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/kcore.h>
 #include <sys/module.h>
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
-#include <sys/kcore.h>
-#include <sys/core.h>
-#include <sys/conf.h>
-#include <sys/asan.h>
+#include <sys/sysctl.h>
 
 #include <dev/mm.h>
 
@@ -199,6 +200,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	extern char _end[];
 	extern char lwp0uspace[];
 
+	struct pcb *pcb;
 	struct trapframe *tf;
 	psize_t memsize_total;
 	vaddr_t kernstart, kernend;
@@ -374,12 +376,13 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 */
 	uvm_lwp_setuarea(&lwp0, (vaddr_t)lwp0uspace);
 	memset(&lwp0.l_md, 0, sizeof(lwp0.l_md));
-	memset(lwp_getpcb(&lwp0), 0, sizeof(struct pcb));
+	pcb = lwp_getpcb(&lwp0);
+	memset(pcb, 0, sizeof(struct pcb));
 
 	tf = (struct trapframe *)(lwp0uspace + USPACE) - 1;
 	memset(tf, 0, sizeof(struct trapframe));
 	tf->tf_spsr = SPSR_M_EL0T;
-	lwp0.l_md.md_utf = lwp0.l_md.md_ktf = tf;
+	lwp0.l_md.md_utf = pcb->pcb_tf = tf;
 
 	return (vaddr_t)tf;
 }
@@ -571,7 +574,7 @@ cpu_dump(void)
 	 */
 	for (i = 0; i < bootconfig.dramblocks; i++) {
 		memsegp[i].start = bootconfig.dram[i].address;
-		memsegp[i].size = bootconfig.dram[i].pages * PAGE_SIZE;
+		memsegp[i].size = ptoa(bootconfig.dram[i].pages);
 	}
 
 	return (dump(dumpdev, dumplo, bf, dbtob(1)));
@@ -584,7 +587,7 @@ dumpsys(void)
 	daddr_t blkno;
 	int psize;
 	int error;
-	paddr_t addr = 0;
+	paddr_t addr = 0, end;
 	int block;
 	psize_t len;
 	vaddr_t dumpspace;
@@ -622,15 +625,15 @@ dumpsys(void)
 
 	blkno = dumplo + cpu_dumpsize();
 	error = 0;
-	len = 0;
+	len = dumpsize;
 
 	for (block = 0; block < bootconfig.dramblocks && error == 0; ++block) {
 		addr = bootconfig.dram[block].address;
-		for (; addr < (bootconfig.dram[block].address
-			       + (bootconfig.dram[block].pages * PAGE_SIZE));
-		     addr += PAGE_SIZE) {
-		    	if ((len % (1024*1024)) == 0)
-		    		printf("%lu ", len / (1024*1024));
+		end = bootconfig.dram[block].address +
+		      ptoa(bootconfig.dram[block].pages);
+		for (; addr < end; addr += PAGE_SIZE) {
+		    	if (((len * PAGE_SIZE) % (1024*1024)) == 0)
+		    		printf("%lu ", (len * PAGE_SIZE) / (1024 * 1024));
 
 			if (!mm_md_direct_mapped_phys(addr, &dumpspace)) {
 				error = ENOMEM;
@@ -642,7 +645,7 @@ dumpsys(void)
 			if (error)
 				goto err;
 			blkno += btodb(PAGE_SIZE);
-			len += PAGE_SIZE;
+			len--;
 		}
 	}
 err:

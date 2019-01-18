@@ -223,7 +223,7 @@ Tspi_Key_CMKCreateBlob(TSS_HKEY     hKeyToMigrate,	/* in */
 	UINT64 offset;
 	TSS_RESULT result;
 
-	memset(&tssKey, 0, sizeof(tssKey));
+	__tspi_memset(&tssKey, 0, sizeof(tssKey));
 
 	if (!pulRandomLength || !prgbRandom)
 		return TSPERR(TSS_E_BAD_PARAMETER);

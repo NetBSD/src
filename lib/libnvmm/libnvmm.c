@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.2.2.3 2018/12/26 14:01:27 pgoyette Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.2.2.4 2019/01/18 08:50:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 
 #include "nvmm.h"
 
+struct nvmm_callbacks __callbacks;
+
 typedef struct __area {
 	LIST_ENTRY(__area) list;
 	gpaddr_t gpa;
@@ -53,7 +55,6 @@ typedef struct __area {
 typedef LIST_HEAD(, __area) area_list_t;
 
 static int nvmm_fd = -1;
-static size_t nvmm_page_size = 0;
 
 /* -------------------------------------------------------------------------- */
 
@@ -146,7 +147,6 @@ nvmm_init(void)
 	nvmm_fd = open("/dev/nvmm", O_RDWR);
 	if (nvmm_fd == -1)
 		return -1;
-	nvmm_page_size = sysconf(_SC_PAGESIZE);
 	return 0;
 }
 
@@ -454,7 +454,7 @@ nvmm_hva_map(struct nvmm_machine *mach, uintptr_t hva, size_t size)
 int
 nvmm_hva_unmap(struct nvmm_machine *mach, uintptr_t hva, size_t size)
 {
-	struct nvmm_ioc_hva_map args;
+	struct nvmm_ioc_hva_unmap args;
 	int ret;
 
 	if (nvmm_init() == -1) {
@@ -465,7 +465,7 @@ nvmm_hva_unmap(struct nvmm_machine *mach, uintptr_t hva, size_t size)
 	args.hva = hva;
 	args.size = size;
 
-	ret = ioctl(nvmm_fd, NVMM_IOC_HVA_MAP, &args);
+	ret = ioctl(nvmm_fd, NVMM_IOC_HVA_UNMAP, &args);
 	if (ret == -1)
 		return -1;
 
@@ -482,11 +482,6 @@ nvmm_gpa_to_hva(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t *hva)
 	area_list_t *areas = mach->areas;
 	area_t *ent;
 
-	if (gpa % nvmm_page_size != 0) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	LIST_FOREACH(ent, areas, list) {
 		if (gpa >= ent->gpa && gpa < ent->gpa + ent->size) {
 			*hva = ent->hva + (gpa - ent->gpa);
@@ -501,3 +496,13 @@ nvmm_gpa_to_hva(struct nvmm_machine *mach, gpaddr_t gpa, uintptr_t *hva)
 /*
  * nvmm_assist_io(): architecture-specific.
  */
+
+/*
+ * nvmm_assist_mem(): architecture-specific.
+ */
+
+void
+nvmm_callbacks_register(const struct nvmm_callbacks *cbs)
+{
+	memcpy(&__callbacks, cbs, sizeof(__callbacks));
+}

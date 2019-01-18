@@ -19,16 +19,16 @@ READLINE_LIB = @READLINE_LIB@
 
 CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} \
 		${BIND9_INCLUDES} ${ISC_INCLUDES} \
-		${IRS_INCLUDES} ${ISCCFG_INCLUDES} @LIBIDN2_CFLAGS@ @DST_OPENSSL_INC@
+		${IRS_INCLUDES} ${ISCCFG_INCLUDES} @LIBIDN2_CFLAGS@ @OPENSSL_INCLUDES@
 
-CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@
+CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
 
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
 IRSLIBS =	../../lib/irs/libirs.@A@
 
 ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
@@ -41,10 +41,10 @@ DEPLIBS =	${DNSDEPLIBS} ${IRSDEPLIBS} ${BIND9DEPLIBS} \
 		${ISCDEPLIBS} ${ISCCFGDEPLIBS}
 
 LIBS =		${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
-		${ISCLIBS} @IDNKIT_LIBS@ @LIBIDN2_LIBS@ @LIBS@
+		${ISCLIBS} @LIBIDN2_LIBS@ @LIBS@
 
 NOSYMLIBS =	${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
-		${ISCNOSYMLIBS} @IDNKIT_LIBS@ @LIBIDN2_LIBS@ @LIBS@
+		${ISCNOSYMLIBS} @LIBIDN2_LIBS@ @LIBS@
 
 SUBDIRS =
 
@@ -63,6 +63,8 @@ HTMLPAGES =	dig.html host.html nslookup.html
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
+
+LDFLAGS =	@LDFLAGS@ @LIBIDN2_LDFLAGS@
 
 dig@EXEEXT@: dig.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
 	export BASEOBJS="dig.@O@ dighost.@O@ ${UOBJS}"; \
@@ -99,12 +101,12 @@ install:: dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@ installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
 		nslookup@EXEEXT@ ${DESTDIR}${bindir}
 	for m in ${MANPAGES}; do \
-		${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man1; \
-		done
+		${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man1 || exit 1; \
+	done
 
 uninstall::
 	for m in ${MANPAGES}; do \
-		rm -f ${DESTDIR}${mandir}/man1/$$m ; \
+		rm -f ${DESTDIR}${mandir}/man1/$$m || exit 1; \
 	done
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/nslookup@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/host@EXEEXT@

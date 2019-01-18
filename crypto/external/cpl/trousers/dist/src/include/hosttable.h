@@ -33,7 +33,6 @@ struct host_table {
 	MUTEX_DECLARE(lock);
 };
 
-extern struct host_table *ht;
 struct host_table_entry *get_table_entry(TCS_CONTEXT_HANDLE);
 void put_table_entry(struct host_table_entry *);
 TSS_RESULT __tspi_add_table_entry(TSS_HCONTEXT, BYTE *, int, struct host_table_entry **);

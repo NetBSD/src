@@ -1,4 +1,4 @@
-/*	$NetBSD: arpaname.c,v 1.2.2.2 2018/09/06 06:54:48 pgoyette Exp $	*/
+/*	$NetBSD: arpaname.c,v 1.2.2.3 2019/01/18 08:49:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,7 +12,7 @@
  */
 
 
-#include "config.h"
+#include <config.h>
 
 #include <isc/net.h>
 #include <isc/print.h>

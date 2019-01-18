@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2018/02/22 07:21:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.40.2.1 2019/01/18 08:48:31 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -26,7 +26,7 @@ MDSET_RELEASEDIR=	binary/kernel
 
 .if ${MACHINE_ARCH} == "mipsel"
 MDSET_SUFFIXES.netbsd-INSTALL${SFX}=	ecoff create-ecoff
-create-ecoff=				${ELF2ECOFF} ${.TARGET:R} ${.TARGET}
+create-ecoff=			${MIPS_ELF2ECOFF} ${.TARGET:R} ${.TARGET}
 .endif
 
 IMAGE_RELEASEDIR=	installation/diskimage

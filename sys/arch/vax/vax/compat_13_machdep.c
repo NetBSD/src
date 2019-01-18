@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.5 2016/07/07 06:55:39 msaitoh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5.16.1 2019/01/18 08:50:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,14 +83,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.5.16.1 2019/01/18 08:50:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_compat_ibcs2.h"
 #endif
 
 #include <sys/param.h>

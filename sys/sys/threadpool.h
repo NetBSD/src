@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.h,v 1.2.2.2 2018/12/26 14:02:07 pgoyette Exp $	*/
+/*	$NetBSD: threadpool.h,v 1.2.2.3 2019/01/18 08:50:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,38 +39,46 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mutex.h>
+#include <sys/queue.h>
 
-typedef struct threadpool threadpool_t;
-typedef struct threadpool_percpu threadpool_percpu_t;
+struct threadpool;
+struct threadpool_job;
+struct threadpool_percpu;
+struct threadpool_thread;
 
-typedef struct threadpool_job {
-#ifdef _LP64
-	void	*opaque[11];
-#else
-	void	*opaque[13];
-#endif /* _LP64 */
-} threadpool_job_t;
+typedef void threadpool_job_fn_t(struct threadpool_job *);
 
-typedef void (*threadpool_job_fn_t)(threadpool_job_t *);
+struct threadpool_job {
+	kmutex_t			*job_lock;
+	struct threadpool_thread	*job_thread;
+	TAILQ_ENTRY(threadpool_job)	job_entry;
+	volatile unsigned int		job_refcnt;
+	kcondvar_t			job_cv;
+	threadpool_job_fn_t		*job_fn;
+	char				job_name[MAXCOMLEN];
+};
 
-int	threadpool_get(threadpool_t **, pri_t);
-void	threadpool_put(threadpool_t *, pri_t);
+void	threadpools_init(void);
 
-int	threadpool_percpu_get(threadpool_percpu_t **, pri_t);
-void	threadpool_percpu_put(threadpool_percpu_t *, pri_t);
-threadpool_t *
-	threadpool_percpu_ref(threadpool_percpu_t *);
-threadpool_t *
-	threadpool_percpu_ref_remote(threadpool_percpu_t *,
+int	threadpool_get(struct threadpool **, pri_t);
+void	threadpool_put(struct threadpool *, pri_t);
+
+int	threadpool_percpu_get(struct threadpool_percpu **, pri_t);
+void	threadpool_percpu_put(struct threadpool_percpu *, pri_t);
+struct threadpool *
+	threadpool_percpu_ref(struct threadpool_percpu *);
+struct threadpool *
+	threadpool_percpu_ref_remote(struct threadpool_percpu *,
 	    struct cpu_info *);
 
-void	threadpool_job_init(threadpool_job_t *, threadpool_job_fn_t,
+void	threadpool_job_init(struct threadpool_job *, threadpool_job_fn_t,
 	    kmutex_t *, const char *, ...) __printflike(4,5);
-void	threadpool_job_destroy(threadpool_job_t *);
-void	threadpool_job_done(threadpool_job_t *);
+void	threadpool_job_destroy(struct threadpool_job *);
+void	threadpool_job_done(struct threadpool_job *);
 
-void	threadpool_schedule_job(threadpool_t *, threadpool_job_t *);
-void	threadpool_cancel_job(threadpool_t *, threadpool_job_t *);
-bool	threadpool_cancel_job_async(threadpool_t *, threadpool_job_t *);
+void	threadpool_schedule_job(struct threadpool *, struct threadpool_job *);
+void	threadpool_cancel_job(struct threadpool *, struct threadpool_job *);
+bool	threadpool_cancel_job_async(struct threadpool *,
+	    struct threadpool_job *);
 
 #endif	/* _SYS_THREADPOOL_H_ */

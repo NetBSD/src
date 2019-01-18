@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.19.4.4 2018/11/26 01:52:17 pgoyette Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.19.4.5 2019/01/18 08:50:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19.4.4 2018/11/26 01:52:17 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19.4.5 2019/01/18 08:50:14 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -338,26 +338,31 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
  * of the idlelwp for this cpu.
  */
 void
-cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_info *))
+cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_info *))
 {
-	KASSERT(cpu_index(ci) == cpuid);
+	KASSERT(cpu_index(ci) == cpuindex);
 
 	/*
 	 * Raise our IPL to the max
 	 */
 	splhigh();
 
-	VPRINTF("%s(%s): ", __func__, ci->ci_data.cpu_name);
+	VPRINTF("%s(%s): ", __func__, cpu_name(ci));
 	ci->ci_ctrl = armreg_sctlr_read();
 	uint32_t mpidr = armreg_mpidr_read();
+	ci->ci_mpidr = mpidr;
 	if (mpidr & MPIDR_MT) {
-		ci->ci_data.cpu_smt_id = mpidr & MPIDR_AFF0;
-		ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF1;
-		ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF2;
+		ci->ci_smt_id = mpidr & MPIDR_AFF0;
+		ci->ci_core_id = mpidr & MPIDR_AFF1;
+		ci->ci_package_id = mpidr & MPIDR_AFF2;
 	} else {
-		ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF0;
-		ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF1;
+		ci->ci_core_id = mpidr & MPIDR_AFF0;
+		ci->ci_package_id = mpidr & MPIDR_AFF1;
 	}
+
+	ci->ci_arm_cpuid = cpu_idnum();
+	ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
+	ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
 
 	/*
 	 * Make sure we have the right vector page.
@@ -423,7 +428,7 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	VPRINTF(" done!\n");
 
 	/* Notify cpu_boot_secondary_processors that we're done */
-	atomic_and_32(&arm_cpu_mbox, ~__BIT(cpuid));
+	atomic_and_32(&arm_cpu_mbox, ~__BIT(cpuindex));
 	membar_producer();
 	__asm __volatile("sev; sev; sev");
 }

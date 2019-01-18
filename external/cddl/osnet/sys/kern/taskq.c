@@ -1,4 +1,4 @@
-/*	$NetBSD: taskq.c,v 1.6.12.1 2018/06/25 07:25:25 pgoyette Exp $	*/
+/*	$NetBSD: taskq.c,v 1.6.12.2 2019/01/18 08:48:44 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1001,7 +1001,9 @@ taskq_dispatch(taskq_t *tq, task_func_t func, void *arg, uint_t flags)
 		/*
 		 * TQ_NOQUEUE flag can't be used with non-dynamic task queues.
 		 */
+#ifdef notyet
 		ASSERT(!(flags & TQ_NOQUEUE));
+#endif
 		/*
 		 * Enqueue the task to the underlying queue.
 		 */

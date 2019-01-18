@@ -1,4 +1,4 @@
-.\" $NetBSD: amdtemp.4,v 1.11 2018/01/27 21:41:50 pgoyette Exp $
+.\" $NetBSD: amdtemp.4,v 1.11.2.1 2019/01/18 08:50:12 pgoyette Exp $
 .\"-
 .\" Copyright (c) 2008 Christoph Egger
 .\" All rights reserved.
@@ -38,7 +38,8 @@
 The
 .Nm
 driver provides support for the on-die digital thermal sensor present
-on AMD K8, AMD Barcelona, AMD Phenom, AMD Griffin, and AMD Fusion CPUs.
+on AMD K8, AMD Barcelona, AMD Phenom, AMD Griffin, AMD Fusion,
+AMD Bobcat, and AMD Puma CPUs.
 .Pp
 These sensors were officially introduced in AMD K8 Revision F processors,
 and provide 0.5\(deC accuracy.
@@ -47,7 +48,8 @@ which provide two more bits for 0.25\(deC steppings.
 Each core
 has two temperature sensors, and there are up to two cores per CPU socket.
 .Pp
-AMD Barcelona, AMD Phenom, AMD Griffin, and AMD Fusion provide 0.125\(deC
+AMD Barcelona, AMD Phenom, AMD Griffin, AMD Fusion,
+AMD Bobcat, and AMD Puma provide 0.125\(degC
 accuracy and provide one temperature sensor for each CPU socket.
 .Pp
 The

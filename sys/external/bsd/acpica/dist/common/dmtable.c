@@ -529,7 +529,7 @@ AcpiDmDumpDataTable (
 
     if (AcpiUtIsAmlTable (Table))
     {
-        if (Gbl_VerboseTemplates)
+        if (AslGbl_VerboseTemplates)
         {
             /* Dump the raw table data */
 
@@ -624,7 +624,7 @@ AcpiDmDumpDataTable (
         }
     }
 
-    if (!Gbl_DoTemplates || Gbl_VerboseTemplates)
+    if (!AslGbl_DoTemplates || AslGbl_VerboseTemplates)
     {
         /* Dump the raw table data */
 
@@ -666,7 +666,7 @@ AcpiDmLineHeader (
         Name = "";
     }
 
-    if (Gbl_DoTemplates && !Gbl_VerboseTemplates) /* Terse template */
+    if (AslGbl_DoTemplates && !AslGbl_VerboseTemplates) /* Terse template */
     {
         if (ByteLength)
         {
@@ -713,7 +713,7 @@ AcpiDmLineHeader2 (
     UINT32                  Value)
 {
 
-    if (Gbl_DoTemplates && !Gbl_VerboseTemplates) /* Terse template */
+    if (AslGbl_DoTemplates && !AslGbl_VerboseTemplates) /* Terse template */
     {
         if (ByteLength)
         {
@@ -1124,9 +1124,9 @@ AcpiDmDumpTable (
 
             /* Convert 16-byte UUID buffer to 36-byte formatted UUID string */
 
-            (void) AuConvertUuidToString ((char *) Target, MsgBuffer);
+            (void) AuConvertUuidToString ((char *) Target, AslGbl_MsgBuffer);
 
-            AcpiOsPrintf ("%s\n", MsgBuffer);
+            AcpiOsPrintf ("%s\n", AslGbl_MsgBuffer);
             break;
 
         case ACPI_DMT_STRING:

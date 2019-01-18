@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/08/19 16:33:23 christos Exp $
+#	$NetBSD: Makefile,v 1.6.12.1 2019/01/18 08:49:05 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -16,8 +16,7 @@ CPPFLAGS+= \
 		-DHAVE_XF86_CURSOR_RESET_CURSOR \
 		-DHAVE_DRI3_H \
 		-DHAVE_MISYNCSHM_H \
-		-DHAVE_PRESENT_H \
-		-DHAVE_XF86_CURSOR_RESET_CURSOR
+		-DHAVE_PRESENT_H
 .endif
 
 SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
@@ -54,7 +53,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.${DRIVER}}/../include
 
-# XXX
-COPTS+=	-Wno-error
+LIBDPLIBS+=	gbm ${.CURDIR}/../../../lib/libgbm
 
 .include "../Makefile.xf86-driver"

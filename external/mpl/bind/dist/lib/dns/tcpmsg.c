@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpmsg.c,v 1.2.2.2 2018/09/06 06:55:00 pgoyette Exp $	*/
+/*	$NetBSD: tcpmsg.c,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <inttypes.h>
 
 #include <isc/mem.h>
 #include <isc/print.h>
@@ -183,7 +185,7 @@ dns_tcpmsg_readmessage(dns_tcpmsg_t *tcpmsg,
 		       NULL, NULL);
 
 	region.base = (unsigned char *)&tcpmsg->size;
-	region.length = 2;  /* isc_uint16_t */
+	region.length = 2;  /* uint16_t */
 	result = isc_socket_recv(tcpmsg->sock, &region, 0,
 				 tcpmsg->task, recv_length, tcpmsg);
 

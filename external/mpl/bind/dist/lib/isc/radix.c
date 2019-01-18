@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.2.2.2 2018/09/06 06:55:05 pgoyette Exp $	*/
+/*	$NetBSD: radix.c,v 1.2.2.3 2019/01/18 08:49:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,6 @@
  * information regarding copyright ownership.
  */
 
-
 /*
  * This source was adapted from MRT's RCS Ids:
  * Id: radix.c,v 1.10.2.1 1999/11/29 05:16:24 masaki Exp
@@ -20,10 +19,14 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+
 #include <isc/mem.h>
 #include <isc/types.h>
 #include <isc/util.h>
 #include <isc/radix.h>
+
+#define BIT_TEST(f, b)  (((f) & (b)) != 0)
 
 static isc_result_t
 _new_prefix(isc_mem_t *mctx, isc_prefix_t **target, int family,
@@ -66,7 +69,6 @@ _new_prefix(isc_mem_t *mctx, isc_prefix_t **target, int family, void *dest,
 	}
 
 	prefix->family = family;
-	prefix->ecs = ISC_FALSE;
 	prefix->mctx = NULL;
 	isc_mem_attach(mctx, &prefix->mctx);
 
@@ -78,17 +80,12 @@ _new_prefix(isc_mem_t *mctx, isc_prefix_t **target, int family, void *dest,
 
 static void
 _deref_prefix(isc_prefix_t *prefix) {
-	int refs;
-
-	if (prefix == NULL)
-		return;
-
-	isc_refcount_decrement(&prefix->refcount, &refs);
-
-	if (refs <= 0) {
-		isc_refcount_destroy(&prefix->refcount);
-		isc_mem_putanddetach(&prefix->mctx, prefix,
-				     sizeof(isc_prefix_t));
+	if (prefix != NULL) {
+		if (isc_refcount_decrement(&prefix->refcount) == 1) {
+			isc_refcount_destroy(&prefix->refcount);
+			isc_mem_putanddetach(&prefix->mctx, prefix,
+					     sizeof(isc_prefix_t));
+		}
 	}
 }
 
@@ -112,7 +109,7 @@ _ref_prefix(isc_mem_t *mctx, isc_prefix_t **target, isc_prefix_t *prefix) {
 		return (ret);
 	}
 
-	isc_refcount_increment(&prefix->refcount, NULL);
+	isc_refcount_increment(&prefix->refcount);
 
 	*target = prefix;
 	return (ISC_R_SUCCESS);
@@ -165,6 +162,7 @@ isc_radix_create(isc_mem_t *mctx, isc_radix_tree_t **target, int maxbits) {
 
 static void
 _clear_radix(isc_radix_tree_t *radix, isc_radix_destroyfunc_t func) {
+
 	REQUIRE(radix != NULL);
 
 	if (radix->head != NULL) {
@@ -182,9 +180,7 @@ _clear_radix(isc_radix_tree_t *radix, isc_radix_destroyfunc_t func) {
 					func(Xrn->data);
 			} else {
 				INSIST(Xrn->data[RADIX_V4] == NULL &&
-				       Xrn->data[RADIX_V6] == NULL &&
-				       Xrn->data[RADIX_V4_ECS] == NULL &&
-				       Xrn->data[RADIX_V6_ECS] == NULL);
+				       Xrn->data[RADIX_V6] == NULL);
 			}
 
 			isc_mem_put(radix->mctx, Xrn, sizeof(*Xrn));
@@ -238,7 +234,7 @@ isc_radix_search(isc_radix_tree_t *radix, isc_radix_node_t **target,
 	isc_radix_node_t *node;
 	isc_radix_node_t *stack[RADIX_MAXBITS + 1];
 	u_char *addr;
-	isc_uint32_t bitlen;
+	uint32_t bitlen;
 	int tfam = -1, cnt = 0;
 
 	REQUIRE(radix != NULL);
@@ -306,8 +302,8 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 {
 	isc_radix_node_t *node, *new_node, *parent, *glue = NULL;
 	u_char *addr, *test_addr;
-	isc_uint32_t bitlen, fam, check_bit, differ_bit;
-	isc_uint32_t i, j, r;
+	uint32_t bitlen, fam, check_bit, differ_bit;
+	uint32_t i, j, r;
 	isc_result_t result;
 
 	REQUIRE(radix != NULL);
@@ -433,7 +429,8 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 				/* Merging nodes */
 				for (i = 0; i < RADIX_FAMILIES; i++) {
 					if (node->node_num[i] == -1 &&
-					    source->node_num[i] != -1) {
+					    source->node_num[i] != -1)
+					{
 						node->node_num[i] =
 							radix->num_added_node +
 							source->node_num[i];
@@ -444,7 +441,8 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 				if (fam == AF_UNSPEC) {
 					/* "any" or "none" */
 					int next = radix->num_added_node + 1;
-					for (i = 0; i < RADIX_FAMILIES; i++) {
+					for (i = 0; i < RADIX_FAMILIES; i++)
+					{
 						if (node->node_num[i] == -1) {
 							node->node_num[i] =
 								next;
@@ -468,17 +466,10 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 			if (result != ISC_R_SUCCESS)
 				return (result);
 		}
-
-		/* Check everything is null and empty before we proceed */
 		INSIST(node->data[RADIX_V4] == NULL &&
 		       node->node_num[RADIX_V4] == -1 &&
-		       node->data[RADIX_V6] == NULL &&
-		       node->node_num[RADIX_V6] == -1 &&
-		       node->data[RADIX_V4_ECS] == NULL &&
-		       node->node_num[RADIX_V4_ECS] == -1 &&
-		       node->data[RADIX_V6_ECS] == NULL &&
-		       node->node_num[RADIX_V6_ECS] == -1);
-
+		       node->data[RADIX_V4] == NULL &&
+		       node->node_num[RADIX_V4] == -1);
 		if (source != NULL) {
 			/* Merging node */
 			for (i = 0; i < RADIX_FAMILIES; i++) {
@@ -547,9 +538,8 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 		int next = ++radix->num_added_node;
 		if (fam == AF_UNSPEC) {
 			/* "any" or "none" */
-			for (i = 0; i < RADIX_FAMILIES; i++) {
+			for (i = 0; i < RADIX_FAMILIES; i++)
 				new_node->node_num[i] = next;
-			}
 		} else {
 			new_node->node_num[ISC_RADIX_FAMILY(prefix)] = next;
 		}
@@ -719,10 +709,3 @@ isc_radix_remove(isc_radix_tree_t *radix, isc_radix_node_t *node) {
 		parent->l = child;
 	}
 }
-
-/*
-Local Variables:
-c-basic-offset: 4
-indent-tabs-mode: t
-End:
-*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.62.2.6 2018/11/26 01:52:51 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.62.2.7 2019/01/18 08:50:58 pgoyette Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.62.2.6 2018/11/26 01:52:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.62.2.7 2019/01/18 08:50:58 pgoyette Exp $");
 
 /*
  * IPsec input processing.
@@ -386,6 +386,14 @@ cantpull:
 		error = EINVAL;
 		goto bad;
 	}
+
+	/*
+	 * There is no struct ifnet for tunnel mode IP-IP tunnel connecttion,
+	 * so we cannot write filtering rule to the inner packet.
+	 */
+	if (saidx->mode == IPSEC_MODE_TUNNEL)
+		m->m_pkthdr.pkthdr_flags |= PKTHDR_FLAG_IPSEC_SKIP_PFIL;
+
 	(*inetsw[ip_protox[prot]].pr_input)(m, skip, prot);
 	return 0;
 
@@ -533,6 +541,14 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 			error = EINVAL;
 			goto bad;
 		}
+
+		/*
+		 * There is no struct ifnet for tunnel mode IP-IP tunnel connecttion,
+		 * so we cannot write filtering rule to the inner packet.
+		 */
+		if (saidx->mode == IPSEC_MODE_TUNNEL)
+			m->m_pkthdr.pkthdr_flags |= PKTHDR_FLAG_IPSEC_SKIP_PFIL;
+
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &skip, nxt);
 	}
 	return 0;

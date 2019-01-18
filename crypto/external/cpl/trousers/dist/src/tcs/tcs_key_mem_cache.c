@@ -1027,8 +1027,17 @@ LoadKeyShim(TCS_CONTEXT_HANDLE hContext, TCPA_STORE_PUBKEY *pubKey,
 
 		offset = 0;
 		LoadBlob_TSS_KEY(&offset, keyBlob, myKey);
-		if ((result = TCSP_LoadKeyByBlob_Internal(hContext, parentHandle, offset, keyBlob,
-							  NULL, &tcsKeyHandle, slotOut)))
+		if (TPM_VERSION_IS(1,2))
+			result = TCSP_LoadKey2ByBlob_Internal(hContext,
+							      parentHandle, offset,
+							      keyBlob, NULL,
+							      &tcsKeyHandle);
+		else
+			result = TCSP_LoadKeyByBlob_Internal(hContext,
+							     parentHandle, offset,
+							     keyBlob, NULL,
+							     &tcsKeyHandle, slotOut);
+		if (result)
 			return result;
 
 		return ctx_mark_key_loaded(hContext, tcsKeyHandle);
@@ -1090,8 +1099,11 @@ owner_evict_init()
 							  sizeof(UINT32), (BYTE *)&keyHandle,
 							  &respDataSize, &respData);
 		/* special case, invalid keys are automatically evicted later */
-		if (result == TPM_E_INVALID_KEYHANDLE)
+		if (result == TPM_E_INVALID_KEYHANDLE) {
+			result = TSS_SUCCESS;
 			continue;
+		}
+
 		if (result != TSS_SUCCESS) {
 			free(keyList.handle);
 			return result;

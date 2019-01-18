@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41.4.4 2018/12/26 14:01:03 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.41.4.5 2019/01/18 08:48:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.41.4.4 2018/12/26 14:01:03 pgoyette Exp $");
+__RCSID("$NetBSD: trap.c,v 1.41.4.5 2019/01/18 08:48:24 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -452,7 +452,7 @@ setsignal(int signo, int vforked)
 	sig_t sigact = SIG_DFL, sig;
 	char *t, tsig;
 
-	if ((t = trap[signo]) == NULL)
+	if (traps_invalid || (t = trap[signo]) == NULL)
 		action = S_DFL;
 	else if (*t != '\0')
 		action = S_CATCH;
@@ -609,7 +609,7 @@ child_trap(void)
 
 	p = trap[SIGCHLD];
 
-	if (p != NULL && *p == '\0')
+	if (traps_invalid || (p != NULL && *p == '\0'))
 		p = NULL;
 
 	return p;
@@ -654,7 +654,7 @@ onsig(int signo)
 	signal(signo, onsig);
 	*/
 
-	if (signo == SIGINT && trap[SIGINT] == NULL) {
+	if (signo == SIGINT && (traps_invalid || trap[SIGINT] == NULL)) {
 		onint();
 		return;
 	}
@@ -662,7 +662,7 @@ onsig(int signo)
 	/*
 	 * if the signal will do nothing, no point reporting it
 	 */
-	if (trap[signo] != NULL && trap[signo][0] != '\0' &&
+	if (!traps_invalid && trap[signo] != NULL && trap[signo][0] != '\0' &&
 	    signo != SIGCHLD) {
 		gotsig[signo] = 1;
 		pendingsigs++;

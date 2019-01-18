@@ -46,7 +46,7 @@
 
 /* Current ACPICA subsystem version in YYYYMMDD format */
 
-#define ACPI_CA_VERSION                 0x20180810
+#define ACPI_CA_VERSION                 0x20181213
 
 #include "acconfig.h"
 #include "actypes.h"
@@ -193,13 +193,6 @@ ACPI_INIT_GLOBAL (UINT8,            AcpiGbl_CopyDsdtLocally, FALSE);
 ACPI_INIT_GLOBAL (UINT8,            AcpiGbl_DoNotUseXsdt, FALSE);
 
 /*
- * Optionally support group module level code.
- * NOTE, this is essentially obsolete and will be removed soon
- * (01/2018).
- */
-ACPI_INIT_GLOBAL (UINT8,            AcpiGbl_GroupModuleLevelCode, FALSE);
-
-/*
  * Optionally support module level code by parsing an entire table as
  * a method as it is loaded. Default is TRUE.
  * NOTE, this is essentially obsolete and will be removed soon
@@ -295,7 +288,7 @@ ACPI_INIT_GLOBAL (UINT32,           AcpiGbl_TraceDbgLayer, ACPI_TRACE_LAYER_DEFA
  * switches statically initialized so they are already set when the debugger
  * is entered.
  */
-#ifdef ACPI_DEBUG_OUTPUT
+#if defined(ACPI_DEBUG_OUTPUT) && defined(ACPI_DEBUG_TRACE)
 ACPI_INIT_GLOBAL (UINT32,           AcpiDbgLevel, ACPI_DEBUG_DEFAULT);
 #else
 ACPI_INIT_GLOBAL (UINT32,           AcpiDbgLevel, ACPI_NORMAL_DEFAULT);

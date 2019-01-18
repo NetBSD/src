@@ -139,6 +139,7 @@ internal_GetCap(TSS_HCONTEXT tspContext, TSS_FLAG capArea, UINT32 subCap,
 		default:
 			return TSPERR(TSS_E_BAD_PARAMETER);
 		}
+		break;
 	case TSS_TSPCAP_MANUFACTURER:
 		switch (subCap) {
 		case TSS_TSPCAP_PROP_MANUFACTURER_ID:
@@ -168,6 +169,7 @@ internal_GetCap(TSS_HCONTEXT tspContext, TSS_FLAG capArea, UINT32 subCap,
 		default:
 			return TSPERR(TSS_E_BAD_PARAMETER);
 		}
+		break;
 	default:
 		return TSPERR(TSS_E_BAD_PARAMETER);
 	}

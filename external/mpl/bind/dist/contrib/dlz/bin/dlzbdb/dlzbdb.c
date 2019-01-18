@@ -1,4 +1,4 @@
-/*	$NetBSD: dlzbdb.c,v 1.2.2.2 2018/09/06 06:54:49 pgoyette Exp $	*/
+/*	$NetBSD: dlzbdb.c,v 1.2.2.3 2019/01/18 08:49:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -56,6 +56,7 @@
  */
 
 #include <config.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -89,7 +90,7 @@ isc_result_t
 bdb_opendb(DBTYPE db_type, DB **db_out, const char *db_name, int flags);
 
 void
-put_data(isc_boolean_t dns_data, char *input_key, char *input_data);
+put_data(bool dns_data, char *input_key, char *input_data);
 
 void
 insert_data(void);
@@ -113,7 +114,7 @@ void
 operation_bulk(void);
 
 void
-operation_listOrDelete(isc_boolean_t dlt);
+operation_listOrDelete(bool dlt);
 
                                              
 /*%
@@ -216,11 +217,11 @@ typedef struct bdb_instance {
 
 int operation = 0;		/*%< operation to perform. */
 /*% allow new lock files or DB to be created. */
-isc_boolean_t create_allowed = isc_boolean_false;
+bool create_allowed = false;
 char *key = NULL;		/*%< key to use in list & del operations */
 
 /*% dump DB in DLZBDB bulk format */
-isc_boolean_t list_everything = isc_boolean_false;	
+bool list_everything = false;	
 unsigned int key_val; /*%< key as unsigned int used in list & del operations */
 char *zone = NULL;		/*%< zone to use in list operations */
 char *host = NULL;		/*%< host to use in list operations */
@@ -288,47 +289,24 @@ quit(1);
 
 int
 getzone(DB *dbp, const DBT *pkey, const DBT *pdata, DBT *skey) {
-	char *tmp;
-	char *left;
-	char *right;
-	int result=0;
+	char *token, *last;
 
 	UNUSED(dbp);
 	UNUSED(pkey);
 
-	/* Allocate memory to use in parsing the string */
-	tmp = right = malloc(pdata->size + 1);
-
-	/* verify memory was allocated */
-	if (right == NULL) {
-		result = BDBparseErr;
-		goto getzone_cleanup;
-	}		
-
-	/* copy data string into newly allocated memory */
-	strncpy(right, pdata->data, pdata->size);
-	right[pdata->size] = '\0';
-
-	/* split string at the first space */
-	left = isc_string_separate(&right, " ");
+	if ((token = strtok_r(pdata->data, " ", &last)) == NULL) {
+		return BDBparseErr;
+	}
 
 	/* copy string for "zone" secondary index */
-	skey->data = strdup(left);
-	if (skey->data == NULL) {
-		result = BDBparseErr;
-		goto getzone_cleanup;
+	if ((skey->data = strdup(token)) == NULL) {
+		return BDBparseErr;
 	}
 	/* set required values for BDB */
 	skey->size = strlen(skey->data);
 	skey->flags = DB_DBT_APPMALLOC;
 
- getzone_cleanup:
-
-	/* cleanup memory */
-	if (tmp != NULL)
-		free(tmp);
-	
-	return result;
+	return 0;
 }
 
 /*%
@@ -337,56 +315,30 @@ getzone(DB *dbp, const DBT *pkey, const DBT *pdata, DBT *skey) {
 
 int
 gethost(DB *dbp, const DBT *pkey, const DBT *pdata, DBT *skey) {
-	char *tmp;
-	char *left;
-	char *right;
-	int result=0;
+	char *token, *last;
 
 	UNUSED(dbp);
 	UNUSED(pkey);
 
-	/* allocate memory to use in parsing the string */
-	tmp = right = malloc(pdata->size + 1);
-
-	/* verify memory was allocated */
-	if (tmp == NULL) {
-		result = BDBparseErr;
-		goto gethost_cleanup;
-	}		
-
-	/* copy data string into newly allocated memory */
-	strncpy(right, pdata->data, pdata->size);
-	right[pdata->size] = '\0';
-
-	/* we don't care about left string. */
-	/* memory of left string will be freed when tmp is freed. */
-	isc_string_separate(&right, " ");
-
-	/* verify right still has some characters left */
-	if (right == NULL) {
-		result = BDBparseErr;
-		goto gethost_cleanup;
+	/* we don't care about first token. */
+	if ((token = strtok_r(right, " ", &last)) == NULL) {
+		return BDBparseErr;
 	}
 
 	/* get "host" from data string */
-	left = isc_string_separate(&right, " ");
+	if ((token = strtok_r(NULL, " ", &last)) == NULL) {
+		return BDBparseErr;
+	}
+		
 	/* copy string for "host" secondary index */
-	skey->data = strdup(left);
-	if (skey->data == NULL) {
-		result = BDBparseErr;
-		goto gethost_cleanup;
+	if ((skey->data = strdup(token)) == NULL) {
+		return BDBparseErr;
 	}
 	/* set required values for BDB */
 	skey->size = strlen(skey->data);
 	skey->flags = DB_DBT_APPMALLOC;
 
- gethost_cleanup:
-
-	/* cleanup memory */
-	if (tmp != NULL)
-		free(tmp);
-	
-	return result;
+	return 0;
 }
 
 /*%
@@ -466,7 +418,7 @@ bdb_opendb(DBTYPE db_type, DB **db_out, const char *db_name, int flags) {
 		return ISC_R_FAILURE;
 	}
 
-	if (create_allowed == isc_boolean_true) {
+	if (create_allowed == true) {
 		createFlag = DB_CREATE;
 	}
 	/* open the database. */
@@ -488,7 +440,7 @@ bdb_opendb(DBTYPE db_type, DB **db_out, const char *db_name, int flags) {
  */
 
 void
-put_data(isc_boolean_t dns_data, char *input_key, char *input_data) {
+put_data(bool dns_data, char *input_key, char *input_data) {
 
 	int bdbres;
 	DBT key, data;
@@ -533,8 +485,8 @@ insert_data(void) {
 
 	isc_result_t result;
 	isc_token_t token;	/* token from lexer */
-	isc_boolean_t loop = isc_boolean_true;
-	isc_boolean_t have_czone = isc_boolean_false;
+	bool loop = true;
+	bool have_czone = false;
 	char data_arr[max_data_len];
 	isc_buffer_t buf;
 	char data_arr2[max_data_len];
@@ -563,7 +515,7 @@ insert_data(void) {
 					data_type = 'b';
 				}
 			} else if (data_type == 'c' || data_type == 'C') {
-				if (have_czone == isc_boolean_true) {
+				if (have_czone == true) {
 					isc_buffer_putstr(&buf2, token.value.as_pointer);
 					/* add string terminator to buffer */
 					isc_buffer_putmem(&buf2, "\0", 1);
@@ -571,7 +523,7 @@ insert_data(void) {
 					isc_buffer_putstr(&buf, token.value.as_pointer);
 					/* add string terminator to buffer */
 					isc_buffer_putmem(&buf, "\0", 1);
-					have_czone = isc_boolean_true;
+					have_czone = true;
 				}
 			} else {
 				isc_buffer_putstr(&buf, token.value.as_pointer);
@@ -591,9 +543,9 @@ insert_data(void) {
 				if (data_type == 'd' || data_type == 'D') {
 					/* add string terminator to buffer */
 					isc_buffer_putmem(&buf, "\0", 1);
-					put_data(isc_boolean_true, NULL, (char *) &data_arr);
+					put_data(true, NULL, (char *) &data_arr);
 				} else if (data_type == 'c' || data_type == 'C') {
-					put_data(isc_boolean_false, (char *) &data_arr, 
+					put_data(false, (char *) &data_arr, 
 						 (char *) &data_arr2);
 				} else if (data_type == 'b') {
 					fprintf(stderr, "Bad / unknown token encountered on line %lu."\
@@ -605,13 +557,13 @@ insert_data(void) {
 			}
 
 			if (token.type == isc_tokentype_eof) {
-				loop = isc_boolean_false;
+				loop = false;
 			}	
 
 			/* reset buffer for next insert */
 			isc_buffer_clear(&buf);
 			isc_buffer_clear(&buf2);
-			have_czone = isc_boolean_false;
+			have_czone = false;
 			data_type ='u';
 			break;
 		default:
@@ -647,7 +599,7 @@ openBDB(void) {
 	}
 
 	/* open BDB environment */
-	if (create_allowed == isc_boolean_true) {
+	if (create_allowed == true) {
 		/* allowed to create new files */
 		bdbres = db.dbenv->open(db.dbenv, db_envdir, 
 					DB_INIT_CDB | DB_INIT_MPOOL | DB_CREATE, 0);
@@ -767,7 +719,7 @@ operation_add(void) {
 	checkInvalidParam(host, "h", "for add operation");
 	checkInvalidParam(c_zone, "c", "for add operation");
 	checkInvalidParam(c_ip, "i", "for add operation");
-	checkInvalidOption(list_everything, isc_boolean_true, "e",
+	checkInvalidOption(list_everything, true, "e",
 			   "for add operation");
 
 	/* if open lexer fails it alread prints error messages. */
@@ -798,7 +750,7 @@ operation_bulk(void) {
 	checkInvalidParam(host, "h", "for bulk load operation");
 	checkInvalidParam(c_zone, "c", "for bulk load operation");
 	checkInvalidParam(c_ip, "i", "for bulk load operation");
-	checkInvalidOption(list_everything, isc_boolean_true, "e",
+	checkInvalidOption(list_everything, true, "e",
 			   "for bulk load operation");
 
 	/* if open lexer fails it already prints error messages. */
@@ -898,7 +850,7 @@ bulk_write(char type, DB *database, DBC *dbcursor, DBT *bdbkey, DBT *bdbdata) {
  */
 
 void
-operation_listOrDelete(isc_boolean_t dlt) {
+operation_listOrDelete(bool dlt) {
 
 	int bdbres = 0;
 	DBC *curList[3];
@@ -908,24 +860,24 @@ operation_listOrDelete(isc_boolean_t dlt) {
 
 
 	/* verify that only allowed parameters were passed. */
-	if (dlt == isc_boolean_true) {
+	if (dlt == true) {
 		checkInvalidParam(zone, "z", "for delete operation");
 		checkInvalidParam(host, "h", "for delete operation");
-		checkInvalidOption(list_everything, isc_boolean_true, "e",
+		checkInvalidOption(list_everything, true, "e",
 				   "for delete operation");
-		checkInvalidOption(create_allowed, isc_boolean_true, "n",
+		checkInvalidOption(create_allowed, true, "n",
 				   "for delete operation");
 	} else if (key != NULL || zone != NULL || host != NULL) {
 		checkInvalidParam(c_zone, "c", "for list when k, z or h are specified");
 		checkInvalidParam(c_ip, "i", "for list when k, z, or h are specified");
-		checkInvalidOption(list_everything, isc_boolean_true, "e",
+		checkInvalidOption(list_everything, true, "e",
 				   "for list when k, z, or h are specified");
-		checkInvalidOption(create_allowed, isc_boolean_true, "n",
+		checkInvalidOption(create_allowed, true, "n",
 				   "for list operation");
 	} else if (c_ip != NULL || c_zone != NULL) {
-		checkInvalidOption(list_everything, isc_boolean_true, "e",
+		checkInvalidOption(list_everything, true, "e",
 				   "for list when c or i are specified");
-		checkInvalidOption(create_allowed, isc_boolean_true, "n",
+		checkInvalidOption(create_allowed, true, "n",
 				   "for list operation");
 	}
 
@@ -933,7 +885,7 @@ operation_listOrDelete(isc_boolean_t dlt) {
 	memset(&bdbdata, 0, sizeof(bdbdata));
 
 	/* Dump database in "dlzbdb" bulk format */
-	if (list_everything == isc_boolean_true) {
+	if (list_everything == true) {
 		if (bulk_write('c', db.client, db.cursor, &bdbkey, &bdbdata)
 		    != ISC_R_SUCCESS)
 			return;
@@ -957,7 +909,7 @@ operation_listOrDelete(isc_boolean_t dlt) {
 		bdbkey.data = &recno;
 		bdbkey.size = sizeof(recno);
 
-		if (dlt == isc_boolean_true) {
+		if (dlt == true) {
 			bdbres = db.data->del(db.data, NULL, &bdbkey, 0);
 		} else {
 			bdbdata.flags = DB_DBT_REALLOC;
@@ -968,7 +920,7 @@ operation_listOrDelete(isc_boolean_t dlt) {
 				printf("%lu | %.*s\n", *(u_long *) bdbkey.data,
 				       (int)bdbdata.size, (char *)bdbdata.data);
 			}
-		} /* closes else of if (dlt == isc_boolean_true) */
+		} /* closes else of if (dlt == true) */
 		if (bdbres == DB_NOTFOUND) {
 			printf("Key not found in database");
 		}
@@ -1067,7 +1019,7 @@ operation_listOrDelete(isc_boolean_t dlt) {
 	if (c_zone != NULL) {
 
 		/* create a cursor and make sure it worked. */
-		if (dlt == isc_boolean_true) {
+		if (dlt == true) {
 			/* open read-write cursor */
 			bdbres = db.client->cursor(db.client, NULL, &db.cursor,
 						   DB_WRITECURSOR);
@@ -1097,7 +1049,7 @@ operation_listOrDelete(isc_boolean_t dlt) {
 		}
 
 		while (bdbres == 0) {
-			if (dlt == isc_boolean_false) {
+			if (dlt == false) {
 				printf("%.*s | %.*s\n", (int)bdbkey.size, (char *) bdbkey.data,
 				       (int)bdbdata.size, (char *) bdbdata.data);
 			} else {
@@ -1148,7 +1100,7 @@ main(int argc, char **argv) {
 	while ((ch= isc_commandline_parse(argc, argv, "ldesna:f:k:z:h:c:i:")) != -1) {
 		switch (ch) {
 		case 'n':
-			create_allowed = isc_boolean_true;
+			create_allowed = true;
 			break;
 		case 'l':
 			checkOp(operation);
@@ -1199,7 +1151,7 @@ main(int argc, char **argv) {
 		case 'e':
 			checkOp(operation);
 			operation = list;
-			list_everything = isc_boolean_true;
+			list_everything = true;
 			break;
 		case '?':
 			show_usage();
@@ -1242,10 +1194,10 @@ main(int argc, char **argv) {
 
 	switch(operation) {
 	case list:
-		operation_listOrDelete(isc_boolean_false);
+		operation_listOrDelete(false);
 		break;
 	case dele:
-		operation_listOrDelete(isc_boolean_true);
+		operation_listOrDelete(true);
 		break;
 	case add:
 		operation_add();

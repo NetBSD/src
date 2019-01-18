@@ -198,7 +198,7 @@ done1:
 									&sig)))
 			return result;
 
-		memset(&signInfo, 0, sizeof(signInfo));
+		__tspi_memset(&signInfo, 0, sizeof(signInfo));
 		signInfo.tag = TPM_TAG_SIGNINFO;
 		memcpy(signInfo.fixed, "ADIG", strlen("ADIG"));
 		signInfo.replay = antiReplay;

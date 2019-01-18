@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.12.4.2 2018/12/26 14:01:33 pgoyette Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.12.4.3 2019/01/18 08:50:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.12.4.2 2018/12/26 14:01:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.12.4.3 2019/01/18 08:50:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -701,7 +701,6 @@ free:
 	return err;
 }
 
-#if !defined(TEGRA124_XUSB_BIN_STATIC)
 static void
 fw_dma_free(struct tegra_xusb_softc * const psc, struct fw_dma * const p)
 {
@@ -713,7 +712,6 @@ fw_dma_free(struct tegra_xusb_softc * const psc, struct fw_dma * const p)
 	bus_dmamem_unmap(dmat, p->addr, p->size);
 	bus_dmamem_free(dmat, p->segs, p->nsegs);
 }
-#endif
 
 #define FWHEADER_BOOT_CODETAG 8
 #define FWHEADER_BOOT_CODESIZE 12
@@ -735,7 +733,7 @@ tegra_xusb_open_fw(struct tegra_xusb_softc * const psc)
 	case XUSB_T124:
 #if defined(TEGRA124_XUSB_BIN_STATIC)
 		firmware_size = (uintptr_t)&_binary_tegra124_xusb_bin_size;
-		fw_static = _binary_tegra124_xusb_bin_start;
+		fw_static = __UNCONST(_binary_tegra124_xusb_bin_start);
 #else
 		fw_path = "nvidia/tegra124";
 #endif
@@ -743,7 +741,7 @@ tegra_xusb_open_fw(struct tegra_xusb_softc * const psc)
 	case XUSB_T210:
 #if defined(TEGRA210_XUSB_BIN_STATIC)
 		firmware_size = (uintptr_t)&_binary_tegra210_xusb_bin_size;
-		fw_static = _binary_tegra210_xusb_bin_start;
+		fw_static = __UNCONST(_binary_tegra210_xusb_bin_start);
 #else
 		fw_path = "nvidia/tegra210";
 #endif

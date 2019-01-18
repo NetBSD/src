@@ -1,4 +1,4 @@
-/*	$NetBSD: parseint.c,v 1.2.2.2 2018/09/06 06:55:05 pgoyette Exp $	*/
+/*	$NetBSD: parseint.c,v 1.2.2.3 2019/01/18 08:49:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,15 +19,16 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <inttypes.h>
+#include <stdlib.h>
 
 #include <isc/parseint.h>
 #include <isc/result.h>
-#include <isc/stdlib.h>
 
 isc_result_t
-isc_parse_uint32(isc_uint32_t *uip, const char *string, int base) {
+isc_parse_uint32(uint32_t *uip, const char *string, int base) {
 	unsigned long n;
-	isc_uint32_t r;
+	uint32_t r;
 	char *e;
 	if (! isalnum((unsigned char)(string[0])))
 		return (ISC_R_BADNUMBER);
@@ -40,7 +41,7 @@ isc_parse_uint32(isc_uint32_t *uip, const char *string, int base) {
 	 * equality.  This is a no-op on 32 bit machines and a good compiler
 	 * will optimise it away.
 	 */
-	r = (isc_uint32_t)n;
+	r = (uint32_t)n;
 	if ((n == ULONG_MAX && errno == ERANGE) || (n != (unsigned long)r))
 		return (ISC_R_RANGE);
 	*uip = r;
@@ -48,27 +49,27 @@ isc_parse_uint32(isc_uint32_t *uip, const char *string, int base) {
 }
 
 isc_result_t
-isc_parse_uint16(isc_uint16_t *uip, const char *string, int base) {
-	isc_uint32_t val;
+isc_parse_uint16(uint16_t *uip, const char *string, int base) {
+	uint32_t val;
 	isc_result_t result;
 	result = isc_parse_uint32(&val, string, base);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	if (val > 0xFFFF)
 		return (ISC_R_RANGE);
-	*uip = (isc_uint16_t) val;
+	*uip = (uint16_t) val;
 	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
-isc_parse_uint8(isc_uint8_t *uip, const char *string, int base) {
-	isc_uint32_t val;
+isc_parse_uint8(uint8_t *uip, const char *string, int base) {
+	uint32_t val;
 	isc_result_t result;
 	result = isc_parse_uint32(&val, string, base);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	if (val > 0xFF)
 		return (ISC_R_RANGE);
-	*uip = (isc_uint8_t) val;
+	*uip = (uint8_t) val;
 	return (ISC_R_SUCCESS);
 }

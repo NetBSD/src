@@ -140,8 +140,8 @@ int parseStringWithValues(const char *aArg,
 						 aArg);
 					return -1;
 				}
-				if (!aArg[offset+numbytes] == '|' &&
-				    !aArg[offset+numbytes] == 0) {
+				if (aArg[offset+numbytes] == '|' ||
+				    aArg[offset+numbytes] == 0) {
 					logError(_("Illegal character following "
                                                    "hexadecimal number in %s\n"),
 						 aArg + offset);

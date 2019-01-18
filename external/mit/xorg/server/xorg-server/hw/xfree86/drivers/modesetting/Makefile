@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/26 22:37:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2019/01/18 08:49:07 pgoyette Exp $
 
 DRIVER=		xf86-video-modesetting
 DRIVER_NAME=	modesetting_drv
@@ -7,8 +7,8 @@ SRCS=		dri2.c \
 		driver.c \
 		drmmode_display.c \
 		dumb_bo.c \
+		pageflip.c \
 		present.c \
-		sh3224.c \
 		vblank.c 
 MAN=		modesetting.4
 

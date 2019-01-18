@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.102.2.3 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.102.2.4 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.102.2.3 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.102.2.4 2019/01/18 08:50:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -534,7 +534,7 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 static int
 sysctl_unpcblist(SYSCTLFN_ARGS)
 {
-	struct file *fp, *dfp;
+	struct file *fp, *np, *dfp;
 	struct socket *so;
 	struct kinfo_pcb pcb;
 	char *dp;
@@ -583,7 +583,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 * to walk the file list looking for them.  :-/
 	 */
 	mutex_enter(&filelist_lock);
-	LIST_FOREACH(fp, &filehead, f_list) {
+	LIST_FOREACH_SAFE(fp, &filehead, f_list, np) {
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET ||
 		    fp->f_socket == NULL)
 			continue;
@@ -615,6 +615,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 			error = copyout(&pcb, dp, out_size);
 			closef(fp);
 			mutex_enter(&filelist_lock);
+			np = LIST_NEXT(dfp, f_list);
 			LIST_REMOVE(dfp, f_list);
 			if (error)
 				break;

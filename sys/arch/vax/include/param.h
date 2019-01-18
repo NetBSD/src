@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.61 2014/01/23 21:37:09 jklos Exp $    */
+/*      $NetBSD: param.h,v 1.61.28.1 2019/01/18 08:50:24 pgoyette Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -56,12 +56,6 @@
 #define	VAX_NPTEPG	(VAX_NBPG / 4)
 
 #define	KERNBASE	0x80000000		/* start of kernel virtual */
-
-#define	DEV_BSHIFT	9		               /* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	UPAGES		2		/* pages of u-area */
 #define USPACE		(NBPG*UPAGES)

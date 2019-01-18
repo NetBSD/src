@@ -118,7 +118,7 @@ TSS_RESULT obj_migdata_calc_sig_data_digest(struct tr_migdata_obj *);
 
 #define MIGDATA_LIST_DECLARE		struct obj_list migdata_list
 #define MIGDATA_LIST_DECLARE_EXTERN	extern struct obj_list migdata_list
-#define MIGDATA_LIST_INIT()		list_init(&migdata_list)
+#define MIGDATA_LIST_INIT()		tspi_list_init(&migdata_list)
 #define MIGDATA_LIST_CONNECT(a,b)	obj_connectContext_list(&migdata_list, a, b)
 #define MIGDATA_LIST_CLOSE(a)		obj_list_close(&migdata_list, &migdata_free, a)
 

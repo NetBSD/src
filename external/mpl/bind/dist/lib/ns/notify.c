@@ -1,4 +1,4 @@
-/*	$NetBSD: notify.c,v 1.2.2.2 2018/09/06 06:55:12 pgoyette Exp $	*/
+/*	$NetBSD: notify.c,v 1.2.2.3 2019/01/18 08:50:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,9 +52,9 @@ respond(ns_client_t *client, isc_result_t result) {
 	message = client->message;
 	rcode = dns_result_torcode(result);
 
-	msg_result = dns_message_reply(message, ISC_TRUE);
+	msg_result = dns_message_reply(message, true);
 	if (msg_result != ISC_R_SUCCESS)
-		msg_result = dns_message_reply(message, ISC_FALSE);
+		msg_result = dns_message_reply(message, false);
 	if (msg_result != ISC_R_SUCCESS) {
 		ns_client_next(client, msg_result);
 		return;
@@ -143,6 +143,7 @@ ns_notify_start(ns_client_t *client) {
 
 		if ((zonetype == dns_zone_master) ||
 		    (zonetype == dns_zone_slave) ||
+		    (zonetype == dns_zone_mirror) ||
 		    (zonetype == dns_zone_stub))
 		{
 			isc_sockaddr_t *from = ns_client_getsockaddr(client);
@@ -150,8 +151,8 @@ ns_notify_start(ns_client_t *client) {
 			notify_log(client, ISC_LOG_INFO,
 				   "received notify for zone '%s'%s",
 				   namebuf, tsigbuf);
-			result = dns_zone_notifyreceive2(zone, from, to,
-							 request);
+			result = dns_zone_notifyreceive(zone, from, to,
+							request);
 			goto done;
 		}
 	}

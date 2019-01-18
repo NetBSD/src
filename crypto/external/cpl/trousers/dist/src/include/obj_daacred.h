@@ -32,7 +32,7 @@ TSS_RESULT obj_daacred_set_session_handle(TSS_HDAA_CREDENTIAL, UINT32);
 
 #define DAACRED_LIST_DECLARE		struct obj_list daacred_list
 #define DAACRED_LIST_DECLARE_EXTERN	extern struct obj_list daacred_list
-#define DAACRED_LIST_INIT()		list_init(&daacred_list)
+#define DAACRED_LIST_INIT()		tspi_list_init(&daacred_list)
 #define DAACRED_LIST_CONNECT(a,b)	obj_connectContext_list(&daacred_list, a, b)
 #define DAACRED_LIST_CLOSE(a)		obj_list_close(&daacred_list, &daacred_free, a)
 

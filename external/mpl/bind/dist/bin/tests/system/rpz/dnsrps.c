@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.2.2.2 2018/09/06 06:54:33 pgoyette Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.2.2.3 2019/01/18 08:49:36 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,15 +24,18 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <isc/boolean.h>
 #include <isc/print.h>
 #include <isc/util.h>
 
@@ -46,7 +49,7 @@ typedef struct {char c[120];} librpz_emsg_t;
 #endif
 
 
-static isc_boolean_t link_dnsrps(librpz_emsg_t *emsg);
+static bool link_dnsrps(librpz_emsg_t *emsg);
 
 
 #define USAGE "usage: [-ap] [-n domain] [-w sec.onds]\n"
@@ -81,10 +84,11 @@ main(int argc, char **argv) {
 			}
 #ifdef USE_DNSRPS
 			printf("%s\n", librpz->dnsrpzd_path);
-			return (0);
 #else
 			INSIST(0);
+			ISC_UNREACHABLE();
 #endif
+			return (0);
 
 		case 'n':
 			if (!link_dnsrps(&emsg)) {
@@ -131,10 +135,11 @@ main(int argc, char **argv) {
 			librpz->rsp_detach(&rsp);
 			librpz->client_detach(&client);
 			printf("%u\n", serial);
-			return (0);
 #else
 			INSIST(0);
+			ISC_UNREACHABLE();
 #endif
+			return (0);
 
 		case 'w':
 			seconds = strtod(optarg, &p);
@@ -155,16 +160,16 @@ main(int argc, char **argv) {
 }
 
 
-static isc_boolean_t
+static bool
 link_dnsrps(librpz_emsg_t *emsg) {
 #ifdef USE_DNSRPS
 	librpz = librpz_lib_open(emsg, NULL, DNSRPS_LIBRPZ_PATH);
 	if (librpz == NULL)
-		return (ISC_FALSE);
+		return (false);
 
-	return (ISC_TRUE);
+	return (true);
 #else
 	snprintf(emsg->c, sizeof(emsg->c), "DNSRPS not configured");
-	return (ISC_FALSE);
+	return (false);
 #endif
 }

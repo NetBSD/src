@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_p.h,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: socket_p.h,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,7 @@
 
 /*! \file */
 
-#ifdef ISC_PLATFORM_NEEDSYSSELECTH
-#include <sys/select.h>
-#endif
+#include <sys/time.h>
 
 typedef struct isc_socketwait isc_socketwait_t;
 int isc__socketmgr_waitevents(isc_socketmgr_t *, struct timeval *,

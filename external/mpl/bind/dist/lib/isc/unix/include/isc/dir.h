@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: dir.h,v 1.2.2.3 2019/01/18 08:50:01 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,29 +22,24 @@
 #include <isc/lang.h>
 #include <isc/result.h>
 
-#define ISC_DIR_NAMEMAX 256
-#define ISC_DIR_PATHMAX 1024
+#ifndef NAME_MAX
+#define NAME_MAX 256
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
 
 /*% Directory Entry */
 typedef struct isc_direntry {
-	/*!
-	 * Ideally, this should be NAME_MAX, but AIX does not define it by
-	 * default and dynamically allocating the space based on pathconf()
-	 * complicates things undesirably, as does adding special conditionals
-	 * just for AIX.  So a comfortably sized buffer is chosen instead.
-	 */
-	char 		name[ISC_DIR_NAMEMAX];
+	char 		name[NAME_MAX];
 	unsigned int	length;
 } isc_direntry_t;
 
 /*% Directory */
 typedef struct isc_dir {
 	unsigned int	magic;
-	/*!
-	 * As with isc_direntry_t->name, making this "right" for all systems
-	 * is slightly problematic because AIX does not define PATH_MAX.
-	 */
-	char		dirname[ISC_DIR_PATHMAX];
+	char		dirname[PATH_MAX];
 	isc_direntry_t	entry;
 	DIR *		handle;
 } isc_dir_t;

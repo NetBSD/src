@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.9 2009/10/19 18:41:10 bouyer Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.9.62.1 2019/01/18 08:50:25 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,6 @@
  */
 
 #include "opt_xen.h"
-#include <machine/param.h>
 
 #define XENSHM_MAX_PAGES_PER_REQUEST (MAXPHYS >> PAGE_SHIFT)
 

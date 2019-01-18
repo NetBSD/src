@@ -1181,6 +1181,10 @@ typedef UINT32 TPM_NV_INDEX;
 #define TPM_NV_INDEX_LOCK              ((UINT32)0xffffffff)
 #define TPM_NV_INDEX0                  ((UINT32)0x00000000)
 #define TPM_NV_INDEX_DIR               ((UINT32)0x10000001)
+// The reserved index values MAY have their D bit set by the
+// TPM vendor to permanently reserve the index in the TPM.
+// e.g. the typical EK certificate would have the D bit set
+// so the actual address would be 1000f000
 #define TPM_NV_INDEX_EKCert            ((UINT32)0x0000f000)
 #define TPM_NV_INDEX_TPM_CC            ((UINT32)0x0000f001)
 #define TPM_NV_INDEX_PlatformCert      ((UINT32)0x0000f002)

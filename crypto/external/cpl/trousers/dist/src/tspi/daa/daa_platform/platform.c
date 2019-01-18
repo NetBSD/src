@@ -788,7 +788,7 @@ compute_join_challenge_host(TSS_HDAA hDAA,
 						BYTE* nonceIssuer,
 						UINT32 *resultLength,
 						BYTE **result) {
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	BYTE *encoded_pk = NULL, *buffer;
 	UINT32 encoded_pkLength;
 	int rv, length;
@@ -798,15 +798,16 @@ compute_join_challenge_host(TSS_HDAA hDAA,
 		LogError("malloc of %d bytes failed", 10000);
 		return TSPERR(TSS_E_OUTOFMEMORY);
 	}
-	// EVP_MD_CTX_init(&mdctx);
-	rv = EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
+
+	mdctx = EVP_MD_CTX_create();
+	rv = EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
 	if (rv != EVP_SUCCESS) goto err;
 	// allocation
 	encoded_pk = encoded_DAA_PK_internal( &encoded_pkLength, pk_internal);
 	LogDebug("encoded issuerPk[%d]: %s",
 		encoded_pkLength,
 		dump_byte_array( encoded_pkLength, encoded_pk));
-	rv = EVP_DigestUpdate(&mdctx,  encoded_pk, encoded_pkLength);
+	rv = EVP_DigestUpdate(mdctx,  encoded_pk, encoded_pkLength);
 	if (rv != EVP_SUCCESS) goto err;
 	// capitalU
 	length = DAA_PARAM_SIZE_RSA_MODULUS / 8;
@@ -814,28 +815,28 @@ compute_join_challenge_host(TSS_HDAA hDAA,
 	LogDebug("capitalU[%ld]: %s",
 		bi_nbin_size(capitalU) ,
 		dump_byte_array( length, buffer));
-	rv = EVP_DigestUpdate(&mdctx,  buffer, length);
+	rv = EVP_DigestUpdate(mdctx,  buffer, length);
 	if (rv != EVP_SUCCESS) goto err;
 	// capital UPrime
 	bi_2_byte_array( buffer, length, capital_Uprime);
 	LogDebug("capitalUPrime[%d]: %s",
 		length,
 		dump_byte_array( length, buffer));
-	rv = EVP_DigestUpdate(&mdctx,  buffer, length);
+	rv = EVP_DigestUpdate(mdctx,  buffer, length);
 	if (rv != EVP_SUCCESS) goto err;
 	// capital Utilde
 	bi_2_byte_array( buffer, length, capital_utilde);
 	LogDebug("capitalUTilde[%d]: %s",
 		length,
 		dump_byte_array( length, buffer));
-	rv = EVP_DigestUpdate(&mdctx,  buffer, length);
+	rv = EVP_DigestUpdate(mdctx,  buffer, length);
 	if (rv != EVP_SUCCESS) goto err;
 	// capital UtildePrime
 	bi_2_byte_array( buffer, length, capital_utilde_prime);
 	LogDebug("capital_utilde_prime[%d]: %s",
 		length,
 		dump_byte_array( length, buffer));
-	rv = EVP_DigestUpdate(&mdctx,  buffer, length);
+	rv = EVP_DigestUpdate(mdctx,  buffer, length);
 	if (rv != EVP_SUCCESS) goto err;
 	//capital_ni
 	length = DAA_PARAM_SIZE_MODULUS_GAMMA / 8;
@@ -843,22 +844,22 @@ compute_join_challenge_host(TSS_HDAA hDAA,
 	LogDebug("capital_ni[%d]: %s",
 		length,
 		dump_byte_array( length, buffer));
-	rv = EVP_DigestUpdate(&mdctx,  buffer, length);
+	rv = EVP_DigestUpdate(mdctx,  buffer, length);
 	if (rv != EVP_SUCCESS) goto err;
 	//capital_ni_tilde
 	bi_2_byte_array( buffer, length, capital_ni_tilde);
 	LogDebug("capital_ni_tilde[%d]: %s",
 		length,
 		dump_byte_array( length, buffer));
-	rv = EVP_DigestUpdate(&mdctx,  buffer, length);
+	rv = EVP_DigestUpdate(mdctx,  buffer, length);
 	if (rv != EVP_SUCCESS) goto err;
 	// TODO: commitments
 	LogDebug("nonceIssuer[%d]: %s",
 		nonceIssuerLength,
 		dump_byte_array( nonceIssuerLength, nonceIssuer));
-	rv = EVP_DigestUpdate(&mdctx,  nonceIssuer, nonceIssuerLength);
+	rv = EVP_DigestUpdate(mdctx,  nonceIssuer, nonceIssuerLength);
 	if (rv != EVP_SUCCESS) goto err;
-	*resultLength = EVP_MD_CTX_size(&mdctx);
+	*resultLength = EVP_MD_CTX_size(mdctx);
 	*result = (BYTE *)malloc( *resultLength);
 	if (*result == NULL) {
 		LogError("malloc of %d bytes failed", *resultLength);
@@ -866,12 +867,14 @@ compute_join_challenge_host(TSS_HDAA hDAA,
 		free( encoded_pk);
 		return TSPERR(TSS_E_OUTOFMEMORY);
 	}
-	rv = EVP_DigestFinal(&mdctx, *result, NULL);
+	rv = EVP_DigestFinal(mdctx, *result, NULL);
 	if (rv != EVP_SUCCESS) goto err;
+	EVP_MD_CTX_destroy(mdctx);
 	free( buffer);
 	free( encoded_pk);
 	return TSS_SUCCESS;
 err:
+	EVP_MD_CTX_destroy(mdctx);
 	free( buffer);
 	free( encoded_pk);
 	DEBUG_print_openssl_errors();
@@ -933,7 +936,7 @@ Tspi_TPM_DAA_JoinCreateDaaPubKey_internal(
 	BYTE *ch = NULL;
 	BYTE *c_byte, *noncePlatform, *nonce_tpm;
 	BYTE *internal_cbyte = NULL;
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 
 	if( tmp1 == NULL || tmp2 == NULL || capital_utilde == NULL ||
 		v_tilde_prime == NULL || rv_tilde_prime == NULL ||
@@ -1271,23 +1274,24 @@ Tspi_TPM_DAA_JoinCreateDaaPubKey_internal(
 	}
 
 	// verify computation of c by TPM
-	EVP_DigestInit(&mdctx, DAA_PARAM_get_message_digest());
-	EVP_DigestUpdate(&mdctx,  ch, chLength);
-	EVP_DigestUpdate(&mdctx,  nonce_tpm, nonce_tpmLength);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit(mdctx, DAA_PARAM_get_message_digest());
+	EVP_DigestUpdate(mdctx,  ch, chLength);
+	EVP_DigestUpdate(mdctx,  nonce_tpm, nonce_tpmLength);
 	nonce_tpm = convert_alloc( tcsContext, nonce_tpmLength, nonce_tpm); // allocation
 	if( nonce_tpm == NULL) {
 		LogError("malloc of %d bytes failed", nonce_tpmLength);
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	internal_cbyteLength = EVP_MD_CTX_size(&mdctx);
+	internal_cbyteLength = EVP_MD_CTX_size(mdctx);
 	internal_cbyte = (BYTE *)malloc( internal_cbyteLength);
 	if( internal_cbyte == NULL) {
 		LogError("malloc of %d bytes failed", internal_cbyteLength);
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	EVP_DigestFinal(&mdctx, internal_cbyte, NULL);
+	EVP_DigestFinal(mdctx, internal_cbyte, NULL);
 	if( c_byteLength != internal_cbyteLength ||
 		memcmp( c_byte, internal_cbyte, c_byteLength) != 0) {
 		LogError( "Computation of c in TPM DAA Join command is incorrect. Affected stages: 16,20\n");
@@ -1483,6 +1487,7 @@ Tspi_TPM_DAA_JoinCreateDaaPubKey_internal(
 	}
 	credentialRequest->sALength = sa->length;
 close:
+	EVP_MD_CTX_destroy(mdctx);
 	if( capitalSprime_byte_array!=NULL) free( capitalSprime_byte_array);
 	if( ch!=NULL) free( ch);
 	if( internal_cbyte != NULL) free( internal_cbyte);

@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.9 2014/06/17 21:37:20 msaitoh Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.9.26.1 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -40,14 +40,6 @@
 /*
  * Broadcom BCM5400 registers
  */
-
-#define BRGPHY_MII_1000CTL	0x09	/* 1000baseT control */
-#define	BRGPHY_1000CTL_TST	0xE000	/* Test modes */
-#define	BRGPHY_1000CTL_MSE	0x1000	/* Master/Slave enable */
-#define	BRGPHY_1000CTL_MSC	0x0800	/* Master/Slave configuration */
-#define	BRGPHY_1000CTL_RD	0x0400	/* Repeater/DTE */
-#define	BRGPHY_1000CTL_AFD	0x0200	/* Advertise full duplex */
-#define	BRGPHY_1000CTL_AHD	0x0100	/* Advertise half duplex */
 
 #define BRGPHY_MII_PHY_EXTCTL	0x10	/* PHY extended control */
 #define BRGPHY_PHY_EXTCTL_MAC_PHY	0x8000	/* 10BIT/GMI-interface */

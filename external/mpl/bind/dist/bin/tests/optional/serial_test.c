@@ -1,4 +1,4 @@
-/*	$NetBSD: serial_test.c,v 1.2.2.2 2018/09/06 06:53:59 pgoyette Exp $	*/
+/*	$NetBSD: serial_test.c,v 1.2.2.3 2019/01/18 08:49:13 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,14 +14,15 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
 
 #include <isc/print.h>
 #include <isc/serial.h>
-#include <isc/stdlib.h>
 
 int
 main() {
-	isc_uint32_t a, b;
+	uint32_t a, b;
 	char buf[1024];
 	char *s, *e;
 

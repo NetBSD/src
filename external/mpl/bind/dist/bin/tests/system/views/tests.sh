@@ -115,20 +115,17 @@ fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-if $SHELL ../testcrypto.sh
-then
-	echo_i "verifying inline zones work with views"
-	ret=0
-	$DIG -p ${PORT} @10.53.0.2 -b 10.53.0.2 +dnssec DNSKEY inline > dig.out.internal
-	$DIG -p ${PORT} @10.53.0.2 -b 10.53.0.5 +dnssec DNSKEY inline > dig.out.external
-	grep "ANSWER: 4," dig.out.internal > /dev/null || ret=1
-	grep "ANSWER: 4," dig.out.external > /dev/null || ret=1
-	int=`awk '$4 == "DNSKEY" { print $8 }' dig.out.internal | sort`
-	ext=`awk '$4 == "DNSKEY" { print $8 }' dig.out.external | sort`
-	test "$int" != "$ext" || ret=1
-	if [ $ret != 0 ]; then echo_i "failed"; fi
-	status=`expr $status + $ret`
-fi
+echo_i "verifying inline zones work with views"
+ret=0
+$DIG -p ${PORT} @10.53.0.2 -b 10.53.0.2 +dnssec DNSKEY inline > dig.out.internal
+$DIG -p ${PORT} @10.53.0.2 -b 10.53.0.5 +dnssec DNSKEY inline > dig.out.external
+grep "ANSWER: 4," dig.out.internal > /dev/null || ret=1
+grep "ANSWER: 4," dig.out.external > /dev/null || ret=1
+int=`awk '$4 == "DNSKEY" { print $8 }' dig.out.internal | sort`
+ext=`awk '$4 == "DNSKEY" { print $8 }' dig.out.external | sort`
+test "$int" != "$ext" || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

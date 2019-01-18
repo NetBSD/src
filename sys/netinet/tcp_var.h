@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.184.2.4 2018/09/30 01:45:56 pgoyette Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.184.2.5 2019/01/18 08:50:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -891,9 +891,9 @@ u_int	 tcp_optlen(struct tcpcb *);
 int	 tcp_output(struct tcpcb *);
 void	 tcp_pulloutofband(struct socket *,
 	    struct tcphdr *, struct mbuf *, int);
-void	 tcp_quench(struct inpcb *, int);
+void	 tcp_quench(struct inpcb *);
 #ifdef INET6
-void	 tcp6_quench(struct in6pcb *, int);
+void	 tcp6_quench(struct in6pcb *);
 #endif
 void	 tcp_mtudisc(struct inpcb *, int);
 #ifdef INET6

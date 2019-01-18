@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.12 2018/12/26 14:02:07 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.13 2019/01/18 08:50:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -144,13 +144,13 @@ struct mowner_user {
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
  */
-#define	mtod(m, t)	((t)((m)->m_data))
+#define mtod(m, t)	((t)((m)->m_data))
 
 /* header at beginning of each mbuf */
 struct m_hdr {
 	struct	mbuf *mh_next;		/* next buffer in chain */
 	struct	mbuf *mh_nextpkt;	/* next chain in queue/record */
-	char   *mh_data;		/* location of data */
+	char	*mh_data;		/* location of data */
 	struct	mowner *mh_owner;	/* mbuf owner */
 	int	mh_len;			/* amount of data in this mbuf */
 	int	mh_flags;		/* flags; see below */
@@ -193,7 +193,8 @@ struct pkthdr {
 	uint32_t	csum_data;		/* checksum data */
 	u_int		segsz;			/* segment size */
 	uint16_t	ether_vtag;		/* ethernet 802.1p+q vlan tag */
-	uint16_t	pad0;			/* padding */
+	uint16_t	pkthdr_flags;		/* flags for pkthdr, see blow */
+#define PKTHDR_FLAG_IPSEC_SKIP_PFIL	0x0001	/* skip pfil_run_hooks() after ipsec decrypt */
 
 	/*
 	 * Following three fields are open-coded struct altq_pktattr
@@ -205,19 +206,19 @@ struct pkthdr {
 };
 
 /* Checksumming flags (csum_flags). */
-#define	M_CSUM_TCPv4		0x00000001	/* TCP header/payload */
-#define	M_CSUM_UDPv4		0x00000002	/* UDP header/payload */
-#define	M_CSUM_TCP_UDP_BAD	0x00000004	/* TCP/UDP checksum bad */
-#define	M_CSUM_DATA		0x00000008	/* consult csum_data */
-#define	M_CSUM_TCPv6		0x00000010	/* IPv6 TCP header/payload */
-#define	M_CSUM_UDPv6		0x00000020	/* IPv6 UDP header/payload */
-#define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
-#define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
-#define	M_CSUM_TSOv4		0x00000100	/* TCPv4 segmentation offload */
-#define	M_CSUM_TSOv6		0x00000200	/* TCPv6 segmentation offload */
+#define M_CSUM_TCPv4		0x00000001	/* TCP header/payload */
+#define M_CSUM_UDPv4		0x00000002	/* UDP header/payload */
+#define M_CSUM_TCP_UDP_BAD	0x00000004	/* TCP/UDP checksum bad */
+#define M_CSUM_DATA		0x00000008	/* consult csum_data */
+#define M_CSUM_TCPv6		0x00000010	/* IPv6 TCP header/payload */
+#define M_CSUM_UDPv6		0x00000020	/* IPv6 UDP header/payload */
+#define M_CSUM_IPv4		0x00000040	/* IPv4 header */
+#define M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
+#define M_CSUM_TSOv4		0x00000100	/* TCPv4 segmentation offload */
+#define M_CSUM_TSOv6		0x00000200	/* TCPv6 segmentation offload */
 
 /* Checksum-assist quirks: keep separate from jump-table bits. */
-#define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx csum_data does not include
+#define M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx csum_data does not include
 						 * the UDP/TCP pseudo-hdr, and
 						 * is not yet 1s-complemented.
 						 */
@@ -234,18 +235,18 @@ struct pkthdr {
  *            words the offset of the UDP/TCP header in the packet.
  *   _OFFSET: Offset of the checksum field in the UDP/TCP header.
  */
-#define	M_CSUM_DATA_IPv4_IPHL(x)	((x) >> 16)
-#define	M_CSUM_DATA_IPv4_OFFSET(x)	((x) & 0xffff)
-#define	M_CSUM_DATA_IPv6_IPHL(x)	((x) >> 16)
-#define	M_CSUM_DATA_IPv6_OFFSET(x)	((x) & 0xffff)
-#define	M_CSUM_DATA_IPv6_SET(x, v)	(x) = ((x) & 0xffff) | ((v) << 16)
+#define M_CSUM_DATA_IPv4_IPHL(x)	((x) >> 16)
+#define M_CSUM_DATA_IPv4_OFFSET(x)	((x) & 0xffff)
+#define M_CSUM_DATA_IPv6_IPHL(x)	((x) >> 16)
+#define M_CSUM_DATA_IPv6_OFFSET(x)	((x) & 0xffff)
+#define M_CSUM_DATA_IPv6_SET(x, v)	(x) = ((x) & 0xffff) | ((v) << 16)
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
  * to be able to handle SOSEND_LOAN_CHUNK with our minimum sized page.
  */
 #ifdef MIN_PAGE_SIZE
-#define	M_EXT_MAXPAGES		((65536 / MIN_PAGE_SIZE) + 1)
+#define M_EXT_MAXPAGES		((65536 / MIN_PAGE_SIZE) + 1)
 #endif
 
 /*
@@ -267,8 +268,8 @@ struct _m_ext_storage {
 		struct vm_page *extun_pgs[M_EXT_MAXPAGES];
 #endif
 	} ext_un;
-#define	ext_paddr	ext_un.extun_paddr
-#define	ext_pgs		ext_un.extun_pgs
+#define ext_paddr	ext_un.extun_paddr
+#define ext_pgs		ext_un.extun_pgs
 };
 
 struct _m_ext {
@@ -276,13 +277,13 @@ struct _m_ext {
 	struct _m_ext_storage ext_storage;
 };
 
-#define	M_PADDR_INVALID		POOL_PADDR_INVALID
+#define M_PADDR_INVALID		POOL_PADDR_INVALID
 
 /*
  * Definition of "struct mbuf".
  * Don't change this without understanding how MHLEN/MLEN are defined.
  */
-#define	MBUF_DEFINE(name, mhlen, mlen)					\
+#define MBUF_DEFINE(name, mhlen, mlen)					\
 	struct name {							\
 		struct m_hdr m_hdr;					\
 		union {							\
@@ -296,20 +297,20 @@ struct _m_ext {
 			char M_databuf[(mlen)];				\
 		} M_dat;						\
 	}
-#define	m_next		m_hdr.mh_next
-#define	m_len		m_hdr.mh_len
-#define	m_data		m_hdr.mh_data
-#define	m_owner		m_hdr.mh_owner
-#define	m_type		m_hdr.mh_type
-#define	m_flags		m_hdr.mh_flags
-#define	m_nextpkt	m_hdr.mh_nextpkt
-#define	m_paddr		m_hdr.mh_paddr
-#define	m_pkthdr	M_dat.MH.MH_pkthdr
-#define	m_ext_storage	M_dat.MH.MH_dat.MH_ext.ext_storage
-#define	m_ext_ref	M_dat.MH.MH_dat.MH_ext.ext_ref
-#define	m_ext		m_ext_ref->m_ext_storage
-#define	m_pktdat	M_dat.MH.MH_dat.MH_databuf
-#define	m_dat		M_dat.M_databuf
+#define m_next		m_hdr.mh_next
+#define m_len		m_hdr.mh_len
+#define m_data		m_hdr.mh_data
+#define m_owner		m_hdr.mh_owner
+#define m_type		m_hdr.mh_type
+#define m_flags		m_hdr.mh_flags
+#define m_nextpkt	m_hdr.mh_nextpkt
+#define m_paddr		m_hdr.mh_paddr
+#define m_pkthdr	M_dat.MH.MH_pkthdr
+#define m_ext_storage	M_dat.MH.MH_dat.MH_ext.ext_storage
+#define m_ext_ref	M_dat.MH.MH_dat.MH_ext.ext_ref
+#define m_ext		m_ext_ref->m_ext_storage
+#define m_pktdat	M_dat.MH.MH_dat.MH_databuf
+#define m_dat		M_dat.M_databuf
 
 /*
  * Dummy mbuf structure to calculate the right values for MLEN/MHLEN, taking
@@ -318,11 +319,11 @@ struct _m_ext {
 MBUF_DEFINE(_mbuf_dummy, 1, 1);
 
 /* normal data len */
-#define	MLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_dat))
+#define MLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_dat))
 /* data len w/pkthdr */
-#define	MHLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat))
+#define MHLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat))
 
-#define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
+#define MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 
 /*
  * The *real* struct mbuf
@@ -330,40 +331,40 @@ MBUF_DEFINE(_mbuf_dummy, 1, 1);
 MBUF_DEFINE(mbuf, MHLEN, MLEN);
 
 /* mbuf flags */
-#define	M_EXT		0x00000001	/* has associated external storage */
-#define	M_PKTHDR	0x00000002	/* start of record */
-#define	M_EOR		0x00000004	/* end of record */
-#define	M_PROTO1	0x00000008	/* protocol-specific */
+#define M_EXT		0x00000001	/* has associated external storage */
+#define M_PKTHDR	0x00000002	/* start of record */
+#define M_EOR		0x00000004	/* end of record */
+#define M_PROTO1	0x00000008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
-#define	M_AUTHIPHDR	0x00000010	/* authenticated (IPsec) */
-#define	M_DECRYPTED	0x00000020	/* decrypted (IPsec) */
-#define	M_LOOP		0x00000040	/* received on loopback */
-#define	M_BCAST		0x00000100	/* send/received as L2 broadcast */
-#define	M_MCAST		0x00000200	/* send/received as L2 multicast */
-#define	M_CANFASTFWD	0x00000400	/* packet can be fast-forwarded */
-#define	M_ANYCAST6	0x00000800	/* received as IPv6 anycast */
+#define M_AUTHIPHDR	0x00000010	/* authenticated (IPsec) */
+#define M_DECRYPTED	0x00000020	/* decrypted (IPsec) */
+#define M_LOOP		0x00000040	/* received on loopback */
+#define M_BCAST		0x00000100	/* send/received as L2 broadcast */
+#define M_MCAST		0x00000200	/* send/received as L2 multicast */
+#define M_CANFASTFWD	0x00000400	/* packet can be fast-forwarded */
+#define M_ANYCAST6	0x00000800	/* received as IPv6 anycast */
 
-#define	M_LINK0		0x00001000	/* link layer specific flag */
-#define	M_LINK1		0x00002000	/* link layer specific flag */
-#define	M_LINK2		0x00004000	/* link layer specific flag */
-#define	M_LINK3		0x00008000	/* link layer specific flag */
-#define	M_LINK4		0x00010000	/* link layer specific flag */
-#define	M_LINK5		0x00020000	/* link layer specific flag */
-#define	M_LINK6		0x00040000	/* link layer specific flag */
-#define	M_LINK7		0x00080000	/* link layer specific flag */
+#define M_LINK0		0x00001000	/* link layer specific flag */
+#define M_LINK1		0x00002000	/* link layer specific flag */
+#define M_LINK2		0x00004000	/* link layer specific flag */
+#define M_LINK3		0x00008000	/* link layer specific flag */
+#define M_LINK4		0x00010000	/* link layer specific flag */
+#define M_LINK5		0x00020000	/* link layer specific flag */
+#define M_LINK6		0x00040000	/* link layer specific flag */
+#define M_LINK7		0x00080000	/* link layer specific flag */
 
-#define	M_VLANTAG	0x00100000	/* ether_vtag is valid */
+#define M_VLANTAG	0x00100000	/* ether_vtag is valid */
 
 /* additional flags for M_EXT mbufs */
-#define	M_EXT_FLAGS	0xff000000
-#define	M_EXT_CLUSTER	0x01000000	/* ext is a cluster */
-#define	M_EXT_PAGES	0x02000000	/* ext_pgs is valid */
-#define	M_EXT_ROMAP	0x04000000	/* ext mapping is r-o at MMU */
-#define	M_EXT_RW	0x08000000	/* ext storage is writable */
+#define M_EXT_FLAGS	0xff000000
+#define M_EXT_CLUSTER	0x01000000	/* ext is a cluster */
+#define M_EXT_PAGES	0x02000000	/* ext_pgs is valid */
+#define M_EXT_ROMAP	0x04000000	/* ext mapping is r-o at MMU */
+#define M_EXT_RW	0x08000000	/* ext storage is writable */
 
 /* for source-level compatibility */
-#define	M_NOTIFICATION	M_PROTO1
+#define M_NOTIFICATION	M_PROTO1
 
 #define M_FLAGS_BITS \
     "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10NONE" \
@@ -373,20 +374,20 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
     "\31EXT_CLUSTER\32EXT_PAGES\33EXT_ROMAP\34EXT_RW"
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD| \
+#define M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD| \
     M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP| \
     M_VLANTAG)
 
 /* flag copied when shallow-copying external storage */
-#define	M_EXTCOPYFLAGS	(M_EXT|M_EXT_FLAGS)
+#define M_EXTCOPYFLAGS	(M_EXT|M_EXT_FLAGS)
 
 /* mbuf types */
-#define	MT_FREE		0	/* should be on free list */
-#define	MT_DATA		1	/* dynamic (data) allocation */
-#define	MT_HEADER	2	/* packet header */
-#define	MT_SONAME	3	/* socket name */
-#define	MT_SOOPTS	4	/* socket options */
-#define	MT_FTABLE	5	/* fragment reassembly header */
+#define MT_FREE		0	/* should be on free list */
+#define MT_DATA		1	/* dynamic (data) allocation */
+#define MT_HEADER	2	/* packet header */
+#define MT_SONAME	3	/* socket name */
+#define MT_SOOPTS	4	/* socket options */
+#define MT_FTABLE	5	/* fragment reassembly header */
 #define MT_CONTROL	6	/* extra-data protocol message */
 #define MT_OOBDATA	7	/* expedited data  */
 
@@ -406,13 +407,11 @@ extern const char * const mbuftypes[];
 #endif
 
 /* flags to m_get/MGET */
-#define	M_DONTWAIT	M_NOWAIT
-#define	M_WAIT		M_WAITOK
+#define M_DONTWAIT	M_NOWAIT
+#define M_WAIT		M_WAITOK
 
 #ifdef MBUFTRACE
-/*
- * mbuf allocation tracing
- */
+/* Mbuf allocation tracing. */
 void mowner_init(struct mbuf *, int);
 void mowner_ref(struct mbuf *, int);
 void m_claim(struct mbuf *, struct mowner *);
@@ -421,18 +420,18 @@ void mowner_attach(struct mowner *);
 void mowner_detach(struct mowner *);
 void m_claimm(struct mbuf *, struct mowner *);
 #else
-#define mowner_init(m, type)		do { } while (/* CONSTCOND */ 0)
-#define	mowner_ref(m, flags)		do { } while (/* CONSTCOND */ 0)
-#define	mowner_revoke(m, all, flags)	do { } while (/* CONSTCOND */ 0)
-#define	m_claim(m, mowner) 		do { } while (/* CONSTCOND */ 0)
-#define	mowner_attach(mo)		do { } while (/* CONSTCOND */ 0)
-#define	mowner_detach(mo)		do { } while (/* CONSTCOND */ 0)
-#define	m_claimm(m, mo)			do { } while (/* CONSTCOND */ 0)
+#define mowner_init(m, type)		__nothing
+#define mowner_ref(m, flags)		__nothing
+#define mowner_revoke(m, all, flags)	__nothing
+#define m_claim(m, mowner)		__nothing
+#define mowner_attach(mo)		__nothing
+#define mowner_detach(mo)		__nothing
+#define m_claimm(m, mo)			__nothing
 #endif
 
-#define	MCLAIM(m, mo)		m_claim((m), (mo))
-#define	MOWNER_ATTACH(mo)	mowner_attach(mo)
-#define	MOWNER_DETACH(mo)	mowner_detach(mo)
+#define MCLAIM(m, mo)		m_claim((m), (mo))
+#define MOWNER_ATTACH(mo)	mowner_attach(mo)
+#define MOWNER_DETACH(mo)	mowner_detach(mo)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -447,13 +446,12 @@ void m_claimm(struct mbuf *, struct mowner *);
  * If 'how' is M_WAIT, these macros (and the corresponding functions)
  * are guaranteed to return successfully.
  */
-#define	MGET(m, how, type)	m = m_get((how), (type))
-#define	MGETHDR(m, how, type)	m = m_gethdr((how), (type))
+#define MGET(m, how, type)	m = m_get((how), (type))
+#define MGETHDR(m, how, type)	m = m_gethdr((how), (type))
 
 #if defined(_KERNEL)
-#define	_M_
 
-#define	MCLINITREFERENCE(m)						\
+#define MCLINITREFERENCE(m)						\
 do {									\
 	KASSERT(((m)->m_flags & M_EXT) == 0);				\
 	(m)->m_ext_ref = (m);						\
@@ -473,9 +471,9 @@ do {									\
  * a normal mbuf; the flag M_EXT is set upon success.
  */
 
-#define	MCLGET(m, how)	m_clget((m), (how))
+#define MCLGET(m, how)	m_clget((m), (how))
 
-#define	MEXTMALLOC(m, size, how)					\
+#define MEXTMALLOC(m, size, how)					\
 do {									\
 	(m)->m_ext_storage.ext_buf = malloc((size), 0, (how));		\
 	if ((m)->m_ext_storage.ext_buf != NULL) {			\
@@ -490,7 +488,7 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	MEXTADD(m, buf, size, type, free, arg)				\
+#define MEXTADD(m, buf, size, type, free, arg)				\
 do {									\
 	MCLINITREFERENCE(m);						\
 	(m)->m_data = (m)->m_ext.ext_buf = (char *)(buf);		\
@@ -504,7 +502,7 @@ do {									\
 /*
  * Reset the data pointer on an mbuf.
  */
-#define	MRESETDATA(m)							\
+#define MRESETDATA(m)							\
 do {									\
 	if ((m)->m_flags & M_EXT)					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
@@ -514,65 +512,60 @@ do {									\
 		(m)->m_data = (m)->m_dat;				\
 } while (/* CONSTCOND */ 0)
 
-#define	M_COPY_PKTHDR(to, from)	m_copy_pkthdr(to, from)
-#define	M_MOVE_PKTHDR(to, from)	m_move_pkthdr(to, from)
-
-#define M_ALIGN(m, len)		m_align(m, len)
-#define MH_ALIGN(m, len)	m_align(m, len)
-
 /*
  * Determine if an mbuf's data area is read-only.  This is true
  * if external storage is read-only mapped, or not marked as R/W,
  * or referenced by more than one mbuf.
  */
-#define	M_READONLY(m)							\
+#define M_READONLY(m)							\
 	(((m)->m_flags & M_EXT) != 0 &&					\
 	  (((m)->m_flags & (M_EXT_ROMAP|M_EXT_RW)) != M_EXT_RW ||	\
 	  (m)->m_ext.ext_refcnt > 1))
 
-#define	M_UNWRITABLE(__m, __len)					\
+#define M_UNWRITABLE(__m, __len)					\
 	((__m)->m_len < (__len) || M_READONLY((__m)))
+
 /*
  * Determine if an mbuf's data area is read-only at the MMU.
  */
-#define	M_ROMAP(m)							\
+#define M_ROMAP(m)							\
 	(((m)->m_flags & (M_EXT|M_EXT_ROMAP)) == (M_EXT|M_EXT_ROMAP))
 
 /*
  * Compute the amount of space available
  * before the current start of data in an mbuf.
  */
-#define	_M_LEADINGSPACE(m)						\
+#define _M_LEADINGSPACE(m)						\
 	((m)->m_flags & M_EXT ? (m)->m_data - (m)->m_ext.ext_buf :	\
 	 (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat :	\
 	 (m)->m_data - (m)->m_dat)
 
-#define	M_LEADINGSPACE(m)						\
+#define M_LEADINGSPACE(m)						\
 	(M_READONLY((m)) ? 0 : _M_LEADINGSPACE((m)))
 
 /*
  * Compute the amount of space available
  * after the end of data in an mbuf.
  */
-#define	_M_TRAILINGSPACE(m)						\
+#define _M_TRAILINGSPACE(m)						\
 	((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf + (m)->m_ext.ext_size - \
 	 ((m)->m_data + (m)->m_len) :					\
 	 &(m)->m_dat[MLEN] - ((m)->m_data + (m)->m_len))
 
-#define	M_TRAILINGSPACE(m)						\
+#define M_TRAILINGSPACE(m)						\
 	(M_READONLY((m)) ? 0 : _M_TRAILINGSPACE((m)))
 
 /*
  * Compute the address of an mbuf's data area.
  */
-#define	M_BUFADDR(m)							\
+#define M_BUFADDR(m)							\
 	(((m)->m_flags & M_PKTHDR) ? (m)->m_pktdat : (m)->m_dat)
 
 /*
  * Compute the offset of the beginning of the data buffer of a non-ext
  * mbuf.
  */
-#define	M_BUFOFFSET(m)							\
+#define M_BUFOFFSET(m)							\
 	(((m)->m_flags & M_PKTHDR) ?					\
 	 offsetof(struct mbuf, m_pktdat) : offsetof(struct mbuf, m_dat))
 
@@ -582,7 +575,7 @@ do {									\
  * If how is M_DONTWAIT and allocation fails, the original mbuf chain
  * is freed and m is set to NULL.
  */
-#define	M_PREPEND(m, plen, how)						\
+#define M_PREPEND(m, plen, how)						\
 do {									\
 	if (M_LEADINGSPACE(m) >= (plen)) {				\
 		(m)->m_data -= (plen);					\
@@ -605,18 +598,18 @@ do {									\
 #ifdef DIAGNOSTIC
 #define M_VERIFY_PACKET(m)	m_verify_packet(m)
 #else
-#define M_VERIFY_PACKET(m)	/* nothing */
+#define M_VERIFY_PACKET(m)	__nothing
 #endif
 
 /* The "copy all" special length. */
-#define	M_COPYALL	-1
+#define M_COPYALL	-1
 
 /*
  * Allow drivers and/or protocols to store private context information.
  */
-#define	M_GETCTX(m, t)		((t)(m)->m_pkthdr._rcvif.ctx)
-#define	M_SETCTX(m, c)		((void)((m)->m_pkthdr._rcvif.ctx = (void *)(c)))
-#define	M_CLEARCTX(m)		M_SETCTX((m), NULL)
+#define M_GETCTX(m, t)		((t)(m)->m_pkthdr._rcvif.ctx)
+#define M_SETCTX(m, c)		((void)((m)->m_pkthdr._rcvif.ctx = (void *)(c)))
+#define M_CLEARCTX(m)		M_SETCTX((m), NULL)
 
 /*
  * M_REGION_GET ensures that the "len"-sized region of type "typ" starting
@@ -677,7 +670,7 @@ struct name {							\
 } while (/*CONSTCOND*/0)
 
 #define MBUFQ_DEQUEUE(q, m)	do {				\
-	if (((m) = (q)->mq_first) != NULL) { 			\
+	if (((m) = (q)->mq_first) != NULL) {			\
 		if (((q)->mq_first = (m)->m_nextpkt) == NULL)	\
 			(q)->mq_last = &(q)->mq_first;		\
 		else						\
@@ -721,15 +714,15 @@ struct mbstat_cpu {
 /*
  * Mbuf sysctl variables.
  */
-#define	MBUF_MSIZE		1	/* int: mbuf base size */
-#define	MBUF_MCLBYTES		2	/* int: mbuf cluster size */
-#define	MBUF_NMBCLUSTERS	3	/* int: limit on the # of clusters */
-#define	MBUF_MBLOWAT		4	/* int: mbuf low water mark */
-#define	MBUF_MCLLOWAT		5	/* int: mbuf cluster low water mark */
-#define	MBUF_STATS		6	/* struct: mbstat */
-#define	MBUF_MOWNERS		7	/* struct: m_owner[] */
+#define MBUF_MSIZE		1	/* int: mbuf base size */
+#define MBUF_MCLBYTES		2	/* int: mbuf cluster size */
+#define MBUF_NMBCLUSTERS	3	/* int: limit on the # of clusters */
+#define MBUF_MBLOWAT		4	/* int: mbuf low water mark */
+#define MBUF_MCLLOWAT		5	/* int: mbuf cluster low water mark */
+#define MBUF_STATS		6	/* struct: mbstat */
+#define MBUF_MOWNERS		7	/* struct: m_owner[] */
 
-#ifdef	_KERNEL
+#ifdef _KERNEL
 extern struct mbstat mbstat;
 extern int nmbclusters;		/* limit on the # of clusters */
 extern int mblowat;		/* mbuf low water mark */

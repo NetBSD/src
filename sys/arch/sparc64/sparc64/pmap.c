@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.308.2.1 2018/12/26 14:01:43 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.308.2.2 2019/01/18 08:50:24 pgoyette Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.308.2.1 2018/12/26 14:01:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.308.2.2 2019/01/18 08:50:24 pgoyette Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -193,12 +193,6 @@ pmap_has_ctx(struct pmap *p)
 
 	return false;
 }
-
-#ifdef MULTIPROCESSOR
-#define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
-#else
-#define pmap_ctx(PM)	((PM)->pm_ctx[0])
-#endif
 
 /*
  * Check if this pmap has a live mapping on some MMU.

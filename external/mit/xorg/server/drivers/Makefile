@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95.2.1 2018/11/26 01:52:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.95.2.2 2019/01/18 08:49:04 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -61,6 +61,7 @@ SUBDIR+= \
 	xf86-video-tga \
 	xf86-video-trident \
 	xf86-video-tseng \
+	xf86-video-vboxvideo \
 	xf86-video-vmware \
 	xf86-video-vesa \
 	xf86-video-wsfb

@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.c,v 1.2.2.2 2018/09/06 06:55:10 pgoyette Exp $	*/
+/*	$NetBSD: errno.c,v 1.2.2.3 2019/01/18 08:50:01 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,5 +19,5 @@
 
 isc_result_t
 isc_errno_toresult(int err) {
-	return (isc__errno2resultx(err, ISC_FALSE, 0, 0));
+	return (isc__errno2resultx(err, false, 0, 0));
 }

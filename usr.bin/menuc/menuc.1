@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.31.4.1 2018/11/26 01:52:54 pgoyette Exp $
+.\"	$NetBSD: menuc.1,v 1.31.4.2 2019/01/18 08:51:01 pgoyette Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -424,9 +424,11 @@ struct menu_ent {
 #define OPT_NOMENU -1
 
 /* For opt_flags */
-#define OPT_SUB    1
-#define OPT_ENDWIN 2
-#define OPT_EXIT   4
+#define OPT_SUB     1
+#define OPT_ENDWIN  2
+#define OPT_EXIT    4
+#define OPT_IGNORE  8
+#define OPT_NOSHORT 16
 
 typedef
 struct menudesc {

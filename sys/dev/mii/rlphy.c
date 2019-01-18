@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.30 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.30.16.1 2019/01/18 08:50:26 pgoyette Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30.16.1 2019/01/18 08:50:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ rlphy_status(struct mii_softc *sc)
 	struct rlphy_softc *rsc = (void *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, anlpar;
+	int bmsr, bmcr, anar, anlpar, result;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -240,17 +240,19 @@ rlphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		if ((anlpar = PHY_READ(sc, MII_ANAR) &
-		    PHY_READ(sc, MII_ANLPAR))) {
-			if (anlpar & ANLPAR_TX_FD)
+		anar = PHY_READ(sc, MII_ANAR);
+		anlpar = PHY_READ(sc, MII_ANLPAR);
+		result = anar & anlpar;
+		if (result != 0) {
+			if (result & ANLPAR_TX_FD)
 				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-			else if (anlpar & ANLPAR_T4)
+			else if (result & ANLPAR_T4)
 				mii->mii_media_active |= IFM_100_T4|IFM_HDX;
-			else if (anlpar & ANLPAR_TX)
+			else if (result & ANLPAR_TX)
 				mii->mii_media_active |= IFM_100_TX|IFM_HDX;
-			else if (anlpar & ANLPAR_10_FD)
+			else if (result & ANLPAR_10_FD)
 				mii->mii_media_active |= IFM_10_T|IFM_FDX;
-			else if (anlpar & ANLPAR_10)
+			else if (result & ANLPAR_10)
 				mii->mii_media_active |= IFM_10_T|IFM_HDX;
 			else
 				mii->mii_media_active |= IFM_NONE;

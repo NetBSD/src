@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.c,v 1.2.2.2 2018/09/06 06:54:59 pgoyette Exp $	*/
+/*	$NetBSD: getaddresses.c,v 1.2.2.3 2019/01/18 08:49:52 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,9 @@
 /*! \file */
 
 #include <config.h>
+
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <isc/net.h>
@@ -27,43 +30,25 @@
 
 #include <bind9/getaddresses.h>
 
-#ifdef HAVE_ADDRINFO
-#ifdef HAVE_GETADDRINFO
-#ifdef HAVE_GAISTRERROR
-#define USE_GETADDRINFO
-#endif
-#endif
-#endif
-
-#ifndef USE_GETADDRINFO
-#ifndef ISC_PLATFORM_NONSTDHERRNO
-extern int h_errno;
-#endif
-#endif
-
 isc_result_t
 bind9_getaddresses(const char *hostname, in_port_t port,
 		   isc_sockaddr_t *addrs, int addrsize, int *addrcount)
 {
 	struct in_addr in4;
 	struct in6_addr in6;
-	isc_boolean_t have_ipv4, have_ipv6;
+	bool have_ipv4, have_ipv6;
 	int i;
 
-#ifdef USE_GETADDRINFO
 	struct addrinfo *ai = NULL, *tmpai, hints;
 	int result;
-#else
-	struct hostent *he;
-#endif
 
 	REQUIRE(hostname != NULL);
 	REQUIRE(addrs != NULL);
 	REQUIRE(addrcount != NULL);
 	REQUIRE(addrsize > 0);
 
-	have_ipv4 = ISC_TF((isc_net_probeipv4() == ISC_R_SUCCESS));
-	have_ipv6 = ISC_TF((isc_net_probeipv6() == ISC_R_SUCCESS));
+	have_ipv4 = (isc_net_probeipv4() == ISC_R_SUCCESS);
+	have_ipv6 = (isc_net_probeipv6() == ISC_R_SUCCESS);
 
 	/*
 	 * Try IPv4, then IPv6.  In order to handle the extended format
@@ -83,7 +68,7 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 		return (ISC_R_SUCCESS);
 	} else if (strlen(hostname) <= 127U) {
 		char tmpbuf[128], *d;
-		isc_uint32_t zone = 0;
+		uint32_t zone = 0;
 
 		strlcpy(tmpbuf, hostname, sizeof(tmpbuf));
 		d = strchr(tmpbuf, '%');
@@ -97,7 +82,6 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 				return (ISC_R_FAMILYNOSUPPORT);
 
 			if (d != NULL) {
-#ifdef ISC_PLATFORM_HAVESCOPEID
 				isc_result_t iresult;
 
 				iresult = isc_netscope_pton(AF_INET6, d + 1,
@@ -105,15 +89,6 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 
 				if (iresult != ISC_R_SUCCESS)
 					return (iresult);
-#else
-				/*
-				 * The extended format is specified while the
-				 * system does not provide the ability to use
-				 * it.	Throw an explicit error instead of
-				 * ignoring the specified value.
-				 */
-				return (ISC_R_BADADDRESSFORM);
-#endif
 			}
 
 			isc_netaddr_fromin6(&na, &in6);
@@ -126,7 +101,6 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 			return (ISC_R_SUCCESS);
 		}
 	}
-#ifdef USE_GETADDRINFO
 	memset(&hints, 0, sizeof(hints));
 	if (!have_ipv6)
 		hints.ai_family = PF_INET;
@@ -184,41 +158,6 @@ bind9_getaddresses(const char *hostname, in_port_t port,
 	}
 	freeaddrinfo(ai);
 	*addrcount = i;
-#else
-	he = gethostbyname(hostname);
-	if (he == NULL) {
-		switch (h_errno) {
-		case HOST_NOT_FOUND:
-#ifdef NO_DATA
-		case NO_DATA:
-#endif
-#if defined(NO_ADDRESS) && (!defined(NO_DATA) || (NO_DATA != NO_ADDRESS))
-		case NO_ADDRESS:
-#endif
-			return (ISC_R_NOTFOUND);
-		default:
-			return (ISC_R_FAILURE);
-		}
-	}
-	if (he->h_addrtype != AF_INET && he->h_addrtype != AF_INET6)
-		return (ISC_R_NOTFOUND);
-	for (i = 0; i < addrsize; i++) {
-		if (he->h_addrtype == AF_INET) {
-			struct in_addr *inp;
-			inp = (struct in_addr *)(he->h_addr_list[i]);
-			if (inp == NULL)
-				break;
-			isc_sockaddr_fromin(&addrs[i], inp, port);
-		} else {
-			struct in6_addr *in6p;
-			in6p = (struct in6_addr *)(he->h_addr_list[i]);
-			if (in6p == NULL)
-				break;
-			isc_sockaddr_fromin6(&addrs[i], in6p, port);
-		}
-	}
-	*addrcount = i;
-#endif
 	if (*addrcount == 0)
 		return (ISC_R_NOTFOUND);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.5 2015/01/02 19:42:05 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.5.16.1 2019/01/18 08:50:15 pgoyette Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -31,8 +31,6 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-
-#include <machine/param.h>
 
 #include "boot.h"
 #include "sdvar.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.2.2.2 2018/09/06 06:53:55 pgoyette Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.2.2.3 2019/01/18 08:49:11 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,12 +15,13 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
@@ -33,7 +34,7 @@
 
 #include <dst/dst.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
@@ -52,12 +53,9 @@ usage(void) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr,	"    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "Version: %s\n", VERSION);
-#if defined(PKCS11CRYPTO)
+#if USE_PKCS11
 	fprintf(stderr, "    -E engine:    specify PKCS#11 provider "
 					"(default: %s)\n", PK11_LIB_LOCATION);
-#elif defined(USE_PKCS11)
-	fprintf(stderr, "    -E engine:    specify OpenSSL engine "
-					   "(default \"pkcs11\")\n");
 #else
 	fprintf(stderr, "    -E engine:    specify OpenSSL engine\n");
 #endif
@@ -78,24 +76,19 @@ usage(void) {
 int
 main(int argc, char **argv) {
 	isc_result_t result;
-#ifdef USE_PKCS11
-	const char *engine = PKCS11_ENGINE;
-#else
 	const char *engine = NULL;
-#endif
 	char const *filename = NULL;
 	char *dir = NULL;
 	char newname[1024], oldname[1024];
 	char keystr[DST_KEY_FORMATSIZE];
 	char *endp;
 	int ch;
-	isc_entropy_t *ectx = NULL;
 	dst_key_t *key = NULL;
-	isc_uint32_t flags;
+	uint32_t flags;
 	isc_buffer_t buf;
-	isc_boolean_t force = ISC_FALSE;
-	isc_boolean_t removefile = ISC_FALSE;
-	isc_boolean_t id = ISC_FALSE;
+	bool force = false;
+	bool removefile = false;
+	bool id = false;
 
 	if (argc == 1)
 		usage();
@@ -104,12 +97,12 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("Out of memory");
 
-#ifdef PKCS11CRYPTO
+#if HAVE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	while ((ch = isc_commandline_parse(argc, argv, "E:fK:rRhv:V")) != -1) {
 		switch (ch) {
@@ -117,7 +110,7 @@ main(int argc, char **argv) {
 			engine = isc_commandline_argument;
 			break;
 		    case 'f':
-			force = ISC_TRUE;
+			force = true;
 			break;
 		    case 'K':
 			/*
@@ -131,10 +124,10 @@ main(int argc, char **argv) {
 			}
 			break;
 		    case 'r':
-			removefile = ISC_TRUE;
+			removefile = true;
 			break;
 		    case 'R':
-			id = ISC_TRUE;
+			id = true;
 			break;
 		    case 'v':
 			verbose = strtol(isc_commandline_argument, &endp, 0);
@@ -182,17 +175,10 @@ main(int argc, char **argv) {
 		}
 	}
 
-	if (ectx == NULL)
-		setup_entropy(mctx, NULL, &ectx);
-	result = dst_lib_init2(mctx, ectx, engine,
-			       ISC_ENTROPY_BLOCKING | ISC_ENTROPY_GOODONLY);
+	result = dst_lib_init(mctx, engine);
 	if (result != ISC_R_SUCCESS)
 		fatal("Could not initialize dst: %s",
 		      isc_result_totext(result));
-	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	if (result != ISC_R_SUCCESS)
-		fatal("Could not initialize hash");
-	isc_entropy_stopcallbacksources(ectx);
 
 	result = dst_key_fromnamedfile(filename, dir,
 				       DST_TYPE_PUBLIC|DST_TYPE_PRIVATE,
@@ -273,9 +259,7 @@ main(int argc, char **argv) {
 
 cleanup:
 	dst_key_free(&key);
-	isc_hash_destroy();
 	dst_lib_destroy();
-	cleanup_entropy(&ectx);
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
 	if (dir != NULL)

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.11 2018/12/26 14:01:35 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.12 2019/01/18 08:50:16 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -72,11 +72,12 @@ options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+options 	INCLUDE_CONFIG_FILE
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
@@ -275,7 +276,7 @@ bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 rkiic*		at fdt?			# Rockchip I2C
-sunxirsb*	at fdt?			# Allwinner RSB
+sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
 iic*		at i2cbus?

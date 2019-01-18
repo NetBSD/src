@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.c,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@ static inline isc_result_t
 fromtext_any_tsig(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_name_t name;
-	isc_uint64_t sigtime;
+	uint64_t sigtime;
 	isc_buffer_t buffer;
 	dns_rcode_t rcode;
 	long i;
@@ -38,7 +38,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	 * Algorithm Name.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	if (origin == NULL)
@@ -49,20 +49,20 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	 * Time Signed: 48 bits.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	sigtime = isc_string_touint64(DNS_AS_STR(token), &e, 10);
+				      false));
+	sigtime = strtoull(DNS_AS_STR(token), &e, 10);
 	if (*e != 0)
 		RETTOK(DNS_R_SYNTAX);
 	if ((sigtime >> 48) != 0)
 		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer((isc_uint16_t)(sigtime >> 32), target));
-	RETERR(uint32_tobuffer((isc_uint32_t)(sigtime & 0xffffffffU), target));
+	RETERR(uint16_tobuffer((uint16_t)(sigtime >> 32), target));
+	RETERR(uint32_tobuffer((uint32_t)(sigtime & 0xffffffffU), target));
 
 	/*
 	 * Fudge.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -71,7 +71,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	 * Signature Size.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -85,7 +85,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	 * Original ID.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -94,7 +94,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	 * Error.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	if (dns_tsigrcode_fromtext(&rcode, &token.value.as_textregion)
 				!= ISC_R_SUCCESS)
 	{
@@ -111,7 +111,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	 * Other Len.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
@@ -130,8 +130,8 @@ totext_any_tsig(ARGS_TOTEXT) {
 	char *bufp;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
-	isc_uint64_t sigtime;
+	bool sub;
+	uint64_t sigtime;
 	unsigned short n;
 
 	REQUIRE(rdata->type == dns_rdatatype_tsig);
@@ -153,12 +153,12 @@ totext_any_tsig(ARGS_TOTEXT) {
 	/*
 	 * Time Signed.
 	 */
-	sigtime = ((isc_uint64_t)sr.base[0] << 40) |
-		  ((isc_uint64_t)sr.base[1] << 32) |
-		  ((isc_uint64_t)sr.base[2] << 24) |
-		  ((isc_uint64_t)sr.base[3] << 16) |
-		  ((isc_uint64_t)sr.base[4] << 8) |
-		  (isc_uint64_t)sr.base[5];
+	sigtime = ((uint64_t)sr.base[0] << 40) |
+		  ((uint64_t)sr.base[1] << 32) |
+		  ((uint64_t)sr.base[2] << 24) |
+		  ((uint64_t)sr.base[3] << 16) |
+		  ((uint64_t)sr.base[4] << 8) |
+		  (uint64_t)sr.base[5];
 	isc_region_consume(&sr, 6);
 	bufp = &buf[sizeof(buf) - 1];
 	*bufp-- = 0;
@@ -189,22 +189,26 @@ totext_any_tsig(ARGS_TOTEXT) {
 	/*
 	 * Signature.
 	 */
-	REQUIRE(n <= sr.length);
-	sigr = sr;
-	sigr.length = n;
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0)   /* No splitting */
-		RETERR(isc_base64_totext(&sigr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sigr, tctx->width - 2,
-					 tctx->linebreak, target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" ) ", target));
-	else
+	if (n != 0U) {
+		REQUIRE(n <= sr.length);
+		sigr = sr;
+		sigr.length = n;
+		if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+			RETERR(str_totext(" (", target));
+		RETERR(str_totext(tctx->linebreak, target));
+		if (tctx->width == 0)   /* No splitting */
+			RETERR(isc_base64_totext(&sigr, 60, "", target));
+		else
+			RETERR(isc_base64_totext(&sigr, tctx->width - 2,
+						 tctx->linebreak, target));
+		if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+			RETERR(str_totext(" ) ", target));
+		else
+			RETERR(str_totext(" ", target));
+		isc_region_consume(&sr, n);
+	} else {
 		RETERR(str_totext(" ", target));
-	isc_region_consume(&sr, n);
+	}
 
 	/*
 	 * Original ID.
@@ -375,9 +379,9 @@ fromstruct_any_tsig(ARGS_FROMSTRUCT) {
 	/*
 	 * Time Signed: 48 bits.
 	 */
-	RETERR(uint16_tobuffer((isc_uint16_t)(tsig->timesigned >> 32),
+	RETERR(uint16_tobuffer((uint16_t)(tsig->timesigned >> 32),
 			       target));
-	RETERR(uint32_tobuffer((isc_uint32_t)(tsig->timesigned & 0xffffffffU),
+	RETERR(uint32_tobuffer((uint32_t)(tsig->timesigned & 0xffffffffU),
 			       target));
 
 	/*
@@ -451,12 +455,12 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	 * Time Signed.
 	 */
 	INSIST(sr.length >= 6);
-	tsig->timesigned = ((isc_uint64_t)sr.base[0] << 40) |
-			   ((isc_uint64_t)sr.base[1] << 32) |
-			   ((isc_uint64_t)sr.base[2] << 24) |
-			   ((isc_uint64_t)sr.base[3] << 16) |
-			   ((isc_uint64_t)sr.base[4] << 8) |
-			   (isc_uint64_t)sr.base[5];
+	tsig->timesigned = ((uint64_t)sr.base[0] << 40) |
+			   ((uint64_t)sr.base[1] << 32) |
+			   ((uint64_t)sr.base[2] << 24) |
+			   ((uint64_t)sr.base[3] << 16) |
+			   ((uint64_t)sr.base[4] << 8) |
+			   (uint64_t)sr.base[5];
 	isc_region_consume(&sr, 6);
 
 	/*
@@ -561,7 +565,7 @@ digest_any_tsig(ARGS_DIGEST) {
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_any_tsig(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_tsig);
@@ -572,10 +576,10 @@ checkowner_any_tsig(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_any_tsig(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_tsig);
@@ -585,7 +589,7 @@ checknames_any_tsig(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

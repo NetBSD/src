@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.2.2.2 2018/09/06 06:53:54 pgoyette Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.2.2.3 2019/01/18 08:49:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,12 @@
 #include <config.h>
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <isc/commandline.h>
 #include <isc/dir.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -47,6 +47,8 @@
 #include "check-tool.h"
 
 static const char *program = "named-checkconf";
+
+static bool loadplugins = true;
 
 isc_log_t *logc = NULL;
 
@@ -94,18 +96,18 @@ directory_callback(const char *clausename, const cfg_obj_t *obj, void *arg) {
 	return (ISC_R_SUCCESS);
 }
 
-static isc_boolean_t
+static bool
 get_maps(const cfg_obj_t **maps, const char *name, const cfg_obj_t **obj) {
 	int i;
 	for (i = 0;; i++) {
 		if (maps[i] == NULL)
-			return (ISC_FALSE);
+			return (false);
 		if (cfg_map_get(maps[i], name, obj) == ISC_R_SUCCESS)
-			return (ISC_TRUE);
+			return (true);
 	}
 }
 
-static isc_boolean_t
+static bool
 get_checknames(const cfg_obj_t **maps, const cfg_obj_t **obj) {
 	const cfg_listelt_t *element;
 	const cfg_obj_t *checknames;
@@ -116,24 +118,29 @@ get_checknames(const cfg_obj_t **maps, const cfg_obj_t **obj) {
 
 	for (i = 0;; i++) {
 		if (maps[i] == NULL)
-			return (ISC_FALSE);
+			return (false);
 		checknames = NULL;
 		result = cfg_map_get(maps[i], "check-names", &checknames);
 		if (result != ISC_R_SUCCESS)
 			continue;
 		if (checknames != NULL && !cfg_obj_islist(checknames)) {
 			*obj = checknames;
-			return (ISC_TRUE);
+			return (true);
 		}
 		for (element = cfg_list_first(checknames);
 		     element != NULL;
 		     element = cfg_list_next(element)) {
 			value = cfg_listelt_value(element);
 			type = cfg_tuple_get(value, "type");
-			if (strcasecmp(cfg_obj_asstring(type), "master") != 0)
+			if ((strcasecmp(cfg_obj_asstring(type),
+					"primary") != 0) &&
+			    (strcasecmp(cfg_obj_asstring(type),
+					"master") != 0))
+			{
 				continue;
+			}
 			*obj = cfg_tuple_get(value, "mode");
-			return (ISC_TRUE);
+			return (true);
 		}
 	}
 }
@@ -166,7 +173,7 @@ configure_hint(const char *zfile, const char *zclass, isc_mem_t *mctx) {
 static isc_result_t
 configure_zone(const char *vclass, const char *view,
 	       const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
-	       const cfg_obj_t *config, isc_mem_t *mctx, isc_boolean_t list)
+	       const cfg_obj_t *config, isc_mem_t *mctx, bool list)
 {
 	int i = 0;
 	isc_result_t result;
@@ -247,11 +254,14 @@ configure_zone(const char *vclass, const char *view,
 	 * Skip loading checks for any type other than
 	 * master and redirect
 	 */
-	if (strcasecmp(cfg_obj_asstring(typeobj), "hint") == 0)
+	if (strcasecmp(cfg_obj_asstring(typeobj), "hint") == 0) {
 		return (configure_hint(zfile, zclass, mctx));
-	else if ((strcasecmp(cfg_obj_asstring(typeobj), "master") != 0) &&
-		  (strcasecmp(cfg_obj_asstring(typeobj), "redirect") != 0))
+	} else if ((strcasecmp(cfg_obj_asstring(typeobj), "primary") != 0) &&
+		   (strcasecmp(cfg_obj_asstring(typeobj), "master") != 0) &&
+		   (strcasecmp(cfg_obj_asstring(typeobj), "redirect") != 0))
+	{
 		return (ISC_R_SUCCESS);
+	}
 
 	/*
 	 * Is the redirect zone configured as a slave?
@@ -276,8 +286,10 @@ configure_zone(const char *vclass, const char *view,
 		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
 			zone_options &= ~DNS_ZONEOPT_CHECKDUPRR;
 			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
-		} else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKDUPRR;
 		zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
@@ -294,8 +306,10 @@ configure_zone(const char *vclass, const char *view,
 		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
 			zone_options &= ~DNS_ZONEOPT_CHECKMX;
 			zone_options &= ~DNS_ZONEOPT_CHECKMXFAIL;
-		} else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKMX;
 		zone_options &= ~DNS_ZONEOPT_CHECKMXFAIL;
@@ -321,8 +335,10 @@ configure_zone(const char *vclass, const char *view,
 		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
 			zone_options |= DNS_ZONEOPT_WARNMXCNAME;
 			zone_options |= DNS_ZONEOPT_IGNOREMXCNAME;
-		} else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	} else {
 		zone_options |= DNS_ZONEOPT_WARNMXCNAME;
 		zone_options &= ~DNS_ZONEOPT_IGNOREMXCNAME;
@@ -339,8 +355,10 @@ configure_zone(const char *vclass, const char *view,
 		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
 			zone_options |= DNS_ZONEOPT_WARNSRVCNAME;
 			zone_options |= DNS_ZONEOPT_IGNORESRVCNAME;
-		} else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	} else {
 		zone_options |= DNS_ZONEOPT_WARNSRVCNAME;
 		zone_options &= ~DNS_ZONEOPT_IGNORESRVCNAME;
@@ -360,8 +378,10 @@ configure_zone(const char *vclass, const char *view,
 			zone_options |= DNS_ZONEOPT_CHECKSPF;
 		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
 			zone_options &= ~DNS_ZONEOPT_CHECKSPF;
-		} else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKSPF;
 	}
@@ -377,8 +397,10 @@ configure_zone(const char *vclass, const char *view,
 		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
 			zone_options &= ~DNS_ZONEOPT_CHECKNAMES;
 			zone_options &= ~DNS_ZONEOPT_CHECKNAMESFAIL;
-		} else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	} else {
 	       zone_options |= DNS_ZONEOPT_CHECKNAMES;
 	       zone_options |= DNS_ZONEOPT_CHECKNAMESFAIL;
@@ -388,20 +410,22 @@ configure_zone(const char *vclass, const char *view,
 	fmtobj = NULL;
 	if (get_maps(maps, "masterfile-format", &fmtobj)) {
 		const char *masterformatstr = cfg_obj_asstring(fmtobj);
-		if (strcasecmp(masterformatstr, "text") == 0)
+		if (strcasecmp(masterformatstr, "text") == 0) {
 			masterformat = dns_masterformat_text;
-		else if (strcasecmp(masterformatstr, "raw") == 0)
+		} else if (strcasecmp(masterformatstr, "raw") == 0) {
 			masterformat = dns_masterformat_raw;
-		else if (strcasecmp(masterformatstr, "map") == 0)
+		} else if (strcasecmp(masterformatstr, "map") == 0) {
 			masterformat = dns_masterformat_map;
-		else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	}
 
 	obj = NULL;
 	if (get_maps(maps, "max-zone-ttl", &obj)) {
 		maxttl = cfg_obj_asuint32(obj);
-		zone_options2 |= DNS_ZONEOPT2_CHECKTTL;
+		zone_options |= DNS_ZONEOPT_CHECKTTL;
 	}
 
 	result = load_zone(mctx, zname, zfile, masterformat,
@@ -415,7 +439,7 @@ configure_zone(const char *vclass, const char *view,
 /*% configure a view */
 static isc_result_t
 configure_view(const char *vclass, const char *view, const cfg_obj_t *config,
-	       const cfg_obj_t *vconfig, isc_mem_t *mctx, isc_boolean_t list)
+	       const cfg_obj_t *vconfig, isc_mem_t *mctx, bool list)
 {
 	const cfg_listelt_t *element;
 	const cfg_obj_t *voptions;
@@ -464,7 +488,7 @@ config_getclass(const cfg_obj_t *classobj, dns_rdataclass_t defclass,
 /*% load zones from the configuration */
 static isc_result_t
 load_zones_fromconfig(const cfg_obj_t *config, isc_mem_t *mctx,
-		      isc_boolean_t list_zones)
+		      bool list_zones)
 {
 	const cfg_listelt_t *element;
 	const cfg_obj_t *views;
@@ -532,19 +556,17 @@ main(int argc, char **argv) {
 	isc_mem_t *mctx = NULL;
 	isc_result_t result;
 	int exit_status = 0;
-	isc_entropy_t *ectx = NULL;
-	isc_boolean_t load_zones = ISC_FALSE;
-	isc_boolean_t list_zones = ISC_FALSE;
-	isc_boolean_t print = ISC_FALSE;
+	bool load_zones = false;
+	bool list_zones = false;
+	bool print = false;
 	unsigned int flags = 0;
 
-	isc__mem_register();
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	/*
 	 * Process memory debugging argument first.
 	 */
-#define CMDLINE_FLAGS "dhjlm:t:pvxz"
+#define CMDLINE_FLAGS "cdhjlm:t:pvxz"
 	while ((c = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (c) {
 		case 'm':
@@ -563,22 +585,26 @@ main(int argc, char **argv) {
 			break;
 		}
 	}
-	isc_commandline_reset = ISC_TRUE;
+	isc_commandline_reset = true;
 
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
 	while ((c = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != EOF) {
 		switch (c) {
+		case 'c':
+			loadplugins = false;
+			break;
+
 		case 'd':
 			debug++;
 			break;
 
 		case 'j':
-			nomerge = ISC_FALSE;
+			nomerge = false;
 			break;
 
 		case 'l':
-			list_zones = ISC_TRUE;
+			list_zones = true;
 			break;
 
 		case 'm':
@@ -594,7 +620,7 @@ main(int argc, char **argv) {
 			break;
 
 		case 'p':
-			print = ISC_TRUE;
+			print = true;
 			break;
 
 		case 'v':
@@ -606,10 +632,10 @@ main(int argc, char **argv) {
 			break;
 
 		case 'z':
-			load_zones = ISC_TRUE;
-			docheckmx = ISC_FALSE;
-			docheckns = ISC_FALSE;
-			dochecksrv = ISC_FALSE;
+			load_zones = true;
+			docheckmx = false;
+			docheckns = false;
+			dochecksrv = false;
 			break;
 
 		case '?':
@@ -649,10 +675,6 @@ main(int argc, char **argv) {
 
 	RUNTIME_CHECK(setup_logging(mctx, stdout, &logc) == ISC_R_SUCCESS);
 
-	RUNTIME_CHECK(isc_entropy_create(mctx, &ectx) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE)
-		      == ISC_R_SUCCESS);
-
 	dns_result_register();
 
 	RUNTIME_CHECK(cfg_parser_create(mctx, logc, &parser) == ISC_R_SUCCESS);
@@ -663,9 +685,10 @@ main(int argc, char **argv) {
 	    ISC_R_SUCCESS)
 		exit(1);
 
-	result = bind9_check_namedconf(config, logc, mctx);
-	if (result != ISC_R_SUCCESS)
+	result = bind9_check_namedconf(config, loadplugins, logc, mctx);
+	if (result != ISC_R_SUCCESS) {
 		exit_status = 1;
+	}
 
 	if (result == ISC_R_SUCCESS && (load_zones || list_zones)) {
 		result = load_zones_fromconfig(config, mctx, list_zones);
@@ -682,9 +705,6 @@ main(int argc, char **argv) {
 	dns_name_destroy();
 
 	isc_log_destroy(&logc);
-
-	isc_hash_destroy();
-	isc_entropy_detach(&ectx);
 
 	isc_mem_destroy(&mctx);
 

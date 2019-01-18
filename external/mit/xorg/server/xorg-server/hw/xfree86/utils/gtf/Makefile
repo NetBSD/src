@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/02 07:41:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.40.1 2019/01/18 08:49:07 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 PROG=	gtf
 MAN=	gtf.1
 
-CPPFLAGS+=	-DHAVE_XORG_CONFIG_H \
+CPPFLAGS+=	${X11FLAGS.DIX} \
 		-I${X11SRCDIR.xorg-server}/../include
 
 LDADD+=	-lm

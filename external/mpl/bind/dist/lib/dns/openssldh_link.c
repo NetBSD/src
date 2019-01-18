@@ -1,4 +1,4 @@
-/*	$NetBSD: openssldh_link.c,v 1.2.2.2 2018/09/06 06:55:00 pgoyette Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,15 +25,15 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef OPENSSL
+/*! \file */
 
 #include <config.h>
 
 #include <pk11/site.h>
 
-#ifndef PK11_DH_DISABLE
-
 #include <ctype.h>
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/safe.h>
@@ -73,7 +73,7 @@ static isc_result_t openssldh_todns(const dst_key_t *key, isc_buffer_t *data);
 
 static BIGNUM *bn2 = NULL, *bn768 = NULL, *bn1024 = NULL, *bn1536 = NULL;
 
-#if !defined(HAVE_DH_GET0_KEY)
+#if !HAVE_DH_GET0_KEY
 /*
  * DH_get0_key, DH_set0_key, DH_get0_pqg and DH_set0_pqg
  * are from OpenSSL 1.1.0.
@@ -152,7 +152,7 @@ DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 
 #define DH_clear_flags(d, f) (d)->flags &= ~(f)
 
-#endif
+#endif /* !HAVE_DH_GET0_KEY */
 
 static isc_result_t
 openssldh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
@@ -184,7 +184,7 @@ openssldh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 	return (ISC_R_SUCCESS);
 }
 
-static isc_boolean_t
+static bool
 openssldh_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	DH *dh1, *dh2;
 	const BIGNUM *pub_key1 = NULL, *pub_key2 = NULL;
@@ -195,9 +195,9 @@ openssldh_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	dh2 = key2->keydata.dh;
 
 	if (dh1 == NULL && dh2 == NULL)
-		return (ISC_TRUE);
+		return (true);
 	else if (dh1 == NULL || dh2 == NULL)
-		return (ISC_FALSE);
+		return (false);
 
 	DH_get0_key(dh1, &pub_key1, &priv_key1);
 	DH_get0_key(dh2, &pub_key2, &priv_key2);
@@ -206,18 +206,18 @@ openssldh_compare(const dst_key_t *key1, const dst_key_t *key2) {
 
 	if (BN_cmp(p1, p2) != 0 || BN_cmp(g1, g2) != 0 ||
 	    BN_cmp(pub_key1, pub_key2) != 0)
-		return (ISC_FALSE);
+		return (false);
 
 	if (priv_key1 != NULL || priv_key2 != NULL) {
 		if (priv_key1 == NULL || priv_key2 == NULL)
-			return (ISC_FALSE);
+			return (false);
 		if (BN_cmp(priv_key1, priv_key2) != 0)
-			return (ISC_FALSE);
+			return (false);
 	}
-	return (ISC_TRUE);
+	return (true);
 }
 
-static isc_boolean_t
+static bool
 openssldh_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 	DH *dh1, *dh2;
 	const BIGNUM *p1 = NULL, *g1 = NULL, *p2 = NULL, *g2 = NULL;
@@ -226,19 +226,18 @@ openssldh_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 	dh2 = key2->keydata.dh;
 
 	if (dh1 == NULL && dh2 == NULL)
-		return (ISC_TRUE);
+		return (true);
 	else if (dh1 == NULL || dh2 == NULL)
-		return (ISC_FALSE);
+		return (false);
 
 	DH_get0_pqg(dh1, &p1, NULL, &g1);
 	DH_get0_pqg(dh2, &p2, NULL, &g2);
 
 	if (BN_cmp(p1, p2) != 0 || BN_cmp(g1, g2) != 0)
-		return (ISC_FALSE);
-	return (ISC_TRUE);
+		return (false);
+	return (true);
 }
 
-#if OPENSSL_VERSION_NUMBER > 0x00908000L
 static int
 progress_cb(int p, int n, BN_GENCB *cb) {
 	union {
@@ -253,12 +252,10 @@ progress_cb(int p, int n, BN_GENCB *cb) {
 		u.fptr(p);
 	return (1);
 }
-#endif
 
 static isc_result_t
 openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 	DH *dh = NULL;
-#if OPENSSL_VERSION_NUMBER > 0x00908000L
 	BN_GENCB *cb;
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	BN_GENCB _cb;
@@ -267,10 +264,6 @@ openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 		void *dptr;
 		void (*fptr)(int);
 	} u;
-#else
-
-	UNUSED(callback);
-#endif
 
 	if (generator == 0) {
 		if (key->key_size == 768 ||
@@ -301,7 +294,6 @@ openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 	}
 
 	if (generator != 0) {
-#if OPENSSL_VERSION_NUMBER > 0x00908000L
 		dh = DH_new();
 		if (dh == NULL)
 			return (dst__openssl_toresult(ISC_R_NOMEMORY));
@@ -329,14 +321,6 @@ openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 		}
 		BN_GENCB_free(cb);
 		cb = NULL;
-#else
-		dh = DH_generate_parameters(key->key_size, generator,
-					    NULL, NULL);
-		if (dh == NULL)
-			return (dst__openssl_toresult2(
-					"DH_generate_parameters",
-					DST_R_OPENSSLFAILURE));
-#endif
 	}
 
 	if (DH_generate_key(dh) == 0) {
@@ -350,13 +334,13 @@ openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 	return (ISC_R_SUCCESS);
 }
 
-static isc_boolean_t
+static bool
 openssldh_isprivate(const dst_key_t *key) {
 	DH *dh = key->keydata.dh;
 	const BIGNUM *priv_key = NULL;
 
 	DH_get0_key(dh, NULL, &priv_key);
-	return (ISC_TF(dh != NULL && priv_key != NULL));
+	return (dh != NULL && priv_key != NULL);
 }
 
 static void
@@ -371,16 +355,16 @@ openssldh_destroy(dst_key_t *key) {
 }
 
 static void
-uint16_toregion(isc_uint16_t val, isc_region_t *region) {
+uint16_toregion(uint16_t val, isc_region_t *region) {
 	*region->base = (val & 0xff00) >> 8;
 	isc_region_consume(region, 1);
 	*region->base = (val & 0x00ff);
 	isc_region_consume(region, 1);
 }
 
-static isc_uint16_t
+static uint16_t
 uint16_fromregion(isc_region_t *region) {
-	isc_uint16_t val;
+	uint16_t val;
 	unsigned char *cp = region->base;
 
 	val = ((unsigned int)(cp[0])) << 8;
@@ -396,7 +380,7 @@ openssldh_todns(const dst_key_t *key, isc_buffer_t *data) {
 	DH *dh;
 	const BIGNUM *pub_key = NULL, *p = NULL, *g = NULL;
 	isc_region_t r;
-	isc_uint16_t dnslen, plen, glen, publen;
+	uint16_t dnslen, plen, glen, publen;
 
 	REQUIRE(key->keydata.dh != NULL);
 
@@ -453,7 +437,7 @@ openssldh_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	DH *dh;
 	BIGNUM *pub_key = NULL, *p = NULL, *g = NULL;
 	isc_region_t r;
-	isc_uint16_t plen, glen, publen;
+	uint16_t plen, glen, publen;
 	int special = 0;
 
 	isc_buffer_remainingregion(data, &r);
@@ -725,9 +709,16 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 static void
 openssldh_cleanup(void) {
 	BN_free(bn2);
+	bn2 = NULL;
+
 	BN_free(bn768);
+	bn768 = NULL;
+
 	BN_free(bn1024);
+	bn1024 = NULL;
+
 	BN_free(bn1536);
+	bn1536 = NULL;
 }
 
 static dst_func_t openssldh_functions = {
@@ -781,13 +772,3 @@ dst__openssldh_init(dst_func_t **funcp) {
 	if (bn1536 != NULL) BN_free(bn1536);
 	return (ISC_R_NOMEMORY);
 }
-#endif /* !PK11_DH_DISABLE */
-
-#else /* OPENSSL */
-
-#include <isc/util.h>
-
-EMPTY_TRANSLATION_UNIT
-
-#endif /* OPENSSL */
-/*! \file */

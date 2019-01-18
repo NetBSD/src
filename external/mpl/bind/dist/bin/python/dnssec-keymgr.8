@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-keymgr.8,v 1.2.2.2 2018/09/06 06:53:57 pgoyette Exp $
+.\"	$NetBSD: dnssec-keymgr.8,v 1.2.2.3 2019/01/18 08:49:13 pgoyette Exp $
 .\"
 .\" Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -41,7 +41,7 @@
 dnssec-keymgr \- Ensures correct DNSKEY coverage for a zone based on a defined policy
 .SH "SYNOPSIS"
 .HP \w'\fBdnssec\-keymgr\fR\ 'u
-\fBdnssec\-keymgr\fR [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-c\ \fR\fB\fIfile\fR\fR] [\fB\-f\fR] [\fB\-k\fR] [\fB\-q\fR] [\fB\-v\fR] [\fB\-z\fR] [\fB\-g\ \fR\fB\fIpath\fR\fR] [\fB\-r\ \fR\fB\fIpath\fR\fR] [\fB\-s\ \fR\fB\fIpath\fR\fR] [zone...]
+\fBdnssec\-keymgr\fR [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-c\ \fR\fB\fIfile\fR\fR] [\fB\-f\fR] [\fB\-k\fR] [\fB\-q\fR] [\fB\-v\fR] [\fB\-z\fR] [\fB\-g\ \fR\fB\fIpath\fR\fR] [\fB\-s\ \fR\fB\fIpath\fR\fR] [zone...]
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-keymgr\fR
@@ -123,15 +123,6 @@ Quiet: suppress printing of
 \fBdnssec\-keygen\fR
 and
 \fBdnssec\-settime\fR\&.
-.RE
-.PP
-\-r \fIrandomdev\fR
-.RS 4
-Specifies a path to a file containing random data\&. This is passed to the
-\fBdnssec\-keygen\fR
-binary using its
-\fB\-r\fR
-option\&.
 .RE
 .PP
 \-s \fIsettime\-path\fR
@@ -226,7 +217,7 @@ Specifies the directory in which keys should be stored\&.
 .PP
 \fBkey\-size\fR
 .RS 4
-Specifies the number of bits to use in creating keys\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and size\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is 1024 bits for DSA keys and 2048 for RSA\&.
+Specifies the number of bits to use in creating keys\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and size\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is 2048 bits for RSA keys\&.
 .RE
 .PP
 \fBkeyttl\fR

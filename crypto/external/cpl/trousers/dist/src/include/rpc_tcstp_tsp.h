@@ -22,7 +22,9 @@ void initData(struct tcsd_comm_data *, int);
 TSS_RESULT sendTCSDPacket(struct host_table_entry *);
 TSS_RESULT send_init(struct host_table_entry *);
 TSS_RESULT tcs_sendit(struct host_table_entry *);
-short get_port();
+
+/* Underlying socket-related calls */
+TSS_RESULT get_socket(struct host_table_entry *hte, int *sd);
 
 /* Context commands always included */
 TSS_RESULT RPC_OpenContext_TP(struct host_table_entry *, UINT32 *, TCS_CONTEXT_HANDLE *);

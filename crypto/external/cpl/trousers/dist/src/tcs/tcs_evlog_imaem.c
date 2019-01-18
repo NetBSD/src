@@ -50,6 +50,8 @@
 
 #ifdef EVLOG_SOURCE_IMA
 
+#define EVLOG_FILENAME_MAXSIZE 255
+
 struct ext_log_source ima_source = {
 	ima_open,
 	ima_get_entries_by_pcr,
@@ -80,27 +82,27 @@ ima_get_entries_by_pcr(FILE *handle, UINT32 pcr_index, UINT32 first,
 	char page[IMA_READ_SIZE];
 	int error_path = 1, ptr = 0;
 	UINT32 copied_events = 0, i;
-	struct event_wrapper *list = calloc(1, sizeof(struct event_wrapper));
-	struct event_wrapper *cur = list;
+	struct event_wrapper *list, *cur;
 	TSS_RESULT result = TCSERR(TSS_E_INTERNAL_ERROR);
 	FILE *fp = (FILE *) handle;
 	uint len;
-	char name[255];
+	char name[EVLOG_FILENAME_MAXSIZE];
 
+	if (!fp) {
+		LogError("File handle is NULL!\n");
+		return 1;
+	}
+
+	if (*count == 0)
+		return TSS_SUCCESS;
+
+	list = calloc(1, sizeof(struct event_wrapper));
 	if (list == NULL) {
 		LogError("malloc of %zd bytes failed.", sizeof(struct event_wrapper));
 		return TCSERR(TSS_E_OUTOFMEMORY);
 	}
+	cur = list;
 
-	if (*count == 0) {
-		result = TSS_SUCCESS;
-		goto free_list;
-	}
-
-	if (!fp) {
-		perror("unable to open file\n");
-		return 1;
-	}
 	rewind(fp);
 
         while (fread(page, 24, 1, fp)) {
@@ -132,8 +134,12 @@ ima_get_entries_by_pcr(FILE *handle, UINT32 pcr_index, UINT32 first,
 			result = TCSERR(TSS_E_INTERNAL_ERROR);
 			goto free_list;
 		}
-		
-		memset(name, 0, sizeof name);
+		if (len > EVLOG_FILENAME_MAXSIZE) {
+			LogError("Event log file name too big! Max size is %d", EVLOG_FILENAME_MAXSIZE);
+			result = TCSERR(TSS_E_INTERNAL_ERROR);
+			goto free_list;
+		}
+		memset(name, 0, EVLOG_FILENAME_MAXSIZE);
 		if (fread(name, 1, len, fp) != len) {
 			LogError("Failed to read event log file");
 			result = TCSERR(TSS_E_INTERNAL_ERROR);
@@ -168,9 +174,7 @@ ima_get_entries_by_pcr(FILE *handle, UINT32 pcr_index, UINT32 first,
 		}
 
 		copied_events++;
-printf("%d %s ", copied_events, name);
 
-printf("%s\n", cur->event.rgbEvent);
 		if (copied_events == *count)
 			goto copy_events;
 
@@ -188,7 +192,6 @@ copy_events:
 	/* we've copied all the events we need to from this PCR, now
 	 * copy them all into one contiguous memory block
 	 */
-printf("copied_events: %d\n", copied_events);
 	*events = calloc(copied_events, sizeof(TSS_PCR_EVENT));
 	if (*events == NULL) {
 		LogError("malloc of %zd bytes failed.", copied_events * sizeof(TSS_PCR_EVENT));
@@ -232,7 +235,7 @@ ima_get_entry(FILE *handle, UINT32 pcr_index, UINT32 *num, TSS_PCR_EVENT **ppEve
 	TSS_RESULT result = TCSERR(TSS_E_INTERNAL_ERROR);
 	TSS_PCR_EVENT *event = NULL;
 	FILE *fp = (FILE *) handle;
-	char name[255];
+	char name[EVLOG_FILENAME_MAXSIZE];
 
 	rewind(fp);
 	while (fread(page, 24, 1, fp)) {
@@ -241,14 +244,16 @@ ima_get_entry(FILE *handle, UINT32 pcr_index, UINT32 *num, TSS_PCR_EVENT **ppEve
 		memcpy(&pcr_value, &page[ptr], sizeof(int));
 
 		if (pcr_index == (UINT32)pcr_value) {
-			event = calloc(1, sizeof(TSS_PCR_EVENT));
-			event->ulPcrIndex = pcr_value;
 			ptr += sizeof(int);
 			/* This is the case where we're looking for a specific event number in a
 			 * specific PCR index. When we've reached the correct event, malloc
 			 * space for it, copy it in, then break out of the while loop */
 			if (ppEvent && seen_indices == *num) {
 				/* grab this entry */
+				event = calloc(1, sizeof(TSS_PCR_EVENT));
+				event->ulPcrIndex = pcr_value;
+				event->rgbPcrValue = NULL;
+				event->rgbEvent = NULL;
 				event->ulPcrValueLength = 20;
 				event->rgbPcrValue = malloc(event->ulPcrValueLength);
 				if (event->rgbPcrValue == NULL) {
@@ -267,20 +272,22 @@ ima_get_entry(FILE *handle, UINT32 pcr_index, UINT32 *num, TSS_PCR_EVENT **ppEve
 					char digest[20];
 
 					if (fread(&len, 1, sizeof(len), fp) != sizeof(len)) {
-						free(event);
 						LogError("Failed to read event log file");
 						result = TCSERR(TSS_E_INTERNAL_ERROR);
 						goto done;
 					}
-					memset(name, 0, sizeof name);
+					if (len > EVLOG_FILENAME_MAXSIZE) {
+						LogError("Event log file name too big! Max size is %d", EVLOG_FILENAME_MAXSIZE);
+						result = TCSERR(TSS_E_INTERNAL_ERROR);
+						goto done;
+					}
+					memset(name, 0, EVLOG_FILENAME_MAXSIZE);
 					if (fread(name, 1, len, fp) != len) {
-						free(event);
 						LogError("Failed to read event log file");
 						result = TCSERR(TSS_E_INTERNAL_ERROR);
 						goto done;
 					}
 					if (fread(digest, 1, sizeof(digest), fp) != sizeof(digest)) {
-						free(event);
 						LogError("Failed to read event log file");
 						result = TCSERR(TSS_E_INTERNAL_ERROR);
 						goto done;
@@ -288,24 +295,19 @@ ima_get_entry(FILE *handle, UINT32 pcr_index, UINT32 *num, TSS_PCR_EVENT **ppEve
 				}
 				/* Get the template data namelen and data */
 				if (fread(&event->ulEventLength, 1, sizeof(int), fp) != sizeof(int)) {
-					free(event);
 					LogError("Failed to read event log file");
 					result = TCSERR(TSS_E_INTERNAL_ERROR);
 					goto done;
 				}
 				event->rgbEvent = malloc(event->ulEventLength + 1);
 				if (event->rgbEvent == NULL) {
-					free(event->rgbPcrValue);
-					free(event);
 					LogError("malloc of %u bytes failed.",
 							event->ulEventLength);
 					result = TCSERR(TSS_E_OUTOFMEMORY);
 					goto done;
 				}
-				memset(event->rgbEvent, 0, event->ulEventLength);
+				memset(event->rgbEvent, 0, event->ulEventLength + 1);
 				if (fread(event->rgbEvent, 1, event->ulEventLength, fp) != event->ulEventLength ) {
-					free(event->rgbPcrValue);
-					free(event);
 					LogError("Failed to read event log file");
 					result = TCSERR(TSS_E_INTERNAL_ERROR);
 					goto done;
@@ -317,25 +319,29 @@ ima_get_entry(FILE *handle, UINT32 pcr_index, UINT32 *num, TSS_PCR_EVENT **ppEve
 			}
 		}
 		if (fread(&len, 1, sizeof(len), fp) != sizeof(len)) {
-			free(event->rgbPcrValue);
-			free(event);
 			LogError("Failed to read event log file");
 			result = TCSERR(TSS_E_INTERNAL_ERROR);
 			goto done;
 		}
 		fseek(fp, len + 20, SEEK_CUR);
 		if (fread(&len, 1, sizeof(len), fp) != sizeof(len)) {
-			free(event->rgbPcrValue);
-			free(event);
 			LogError("Failed to read event log file");
 			result = TCSERR(TSS_E_INTERNAL_ERROR);
 			goto done;
 		}
 		fseek(fp, len, SEEK_CUR);
 		seen_indices++;
-		printf("%d - index\n", seen_indices);
 	}
 done:
+	if (result != TSS_SUCCESS) {
+		if (event != NULL) {
+			free(event->rgbPcrValue);
+			free(event->rgbEvent);
+		}
+		free(event);
+		event = NULL;
+	}
+
 	if (ppEvent == NULL)
 		*num = seen_indices;
 

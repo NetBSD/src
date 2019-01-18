@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.h,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: byaddr.h,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,13 +62,6 @@ typedef struct dns_byaddrevent {
 	dns_namelist_t			names;
 } dns_byaddrevent_t;
 
-/*
- * This option is deprecated since we now only consider nibbles.
-#define DNS_BYADDROPT_IPV6NIBBLE	0x0001
- */
-/*% Note DNS_BYADDROPT_IPV6NIBBLE is now deprecated. */
-#define DNS_BYADDROPT_IPV6INT		0x0002
-
 isc_result_t
 dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
 		  dns_view_t *view, unsigned int options, isc_task_t *task,
@@ -85,8 +78,6 @@ dns_byaddr_create(isc_mem_t *mctx, const isc_netaddr_t *address,
  * \code
  *   1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.e.f.ip6.arpa.
  * \endcode
- *
- *\li	#DNS_BYADDROPT_IPV6INT can be used to get nibble lookups under ip6.int.
  *
  * Requires:
  *
@@ -142,12 +133,8 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp);
  */
 
 isc_result_t
-dns_byaddr_createptrname(const isc_netaddr_t *address, isc_boolean_t nibble,
+dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
 			 dns_name_t *name);
-
-isc_result_t
-dns_byaddr_createptrname2(const isc_netaddr_t *address, unsigned int options,
-			  dns_name_t *name);
 /*%<
  * Creates a name that would be used in a PTR query for this address.  The
  * nibble flag indicates that the 'nibble' format is to be used if an IPv6

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.6.14.4 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.6.14.5 2019/01/18 08:50:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -256,6 +256,14 @@ x86_dbregs_validate(const struct dbreg *regs)
 			return EINVAL;
 	}
 
+#ifndef i386
+	if (regs->dr[6] & X86_DR6_MBZ) {
+		return EINVAL;
+	}
+	if (regs->dr[7] & X86_DR7_MBZ) {
+		return EINVAL;
+	}
+#endif
 	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE) {
 		return EINVAL;
 	}

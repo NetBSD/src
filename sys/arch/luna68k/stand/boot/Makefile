@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.1 2018/09/30 01:45:45 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.14.2.2 2019/01/18 08:50:18 pgoyette Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -80,7 +80,7 @@ LIBS=	${SALIB} ${ZLIB} ${KERNLIB}
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
-	${ELF2AOUT} ${PROG}.elf ${PROG}.aout
+	${M68K_ELF2AOUT} ${PROG}.elf ${PROG}.aout
 	mv ${PROG}.aout ${PROG}
 
 CLEANFILES+=	${PROG}.aout ${PROG}.elf

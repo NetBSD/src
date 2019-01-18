@@ -19,8 +19,6 @@ case $host in
 	use_threads=false ;;
 *-solaris*)
 	use_threads=true ;;
-*-ibm-aix*)
-	use_threads=true ;;
 *-hp-hpux10*)
 	use_threads=false ;;
 *-hp-hpux11*)
@@ -50,13 +48,8 @@ case $host in
 	use_threads=false ;;
 *-freebsd*)
 	use_threads=true ;;
-[*-bsdi[234]*])
-	# Thread signals do not work reliably on some versions of BSD/OS.
-	use_threads=false ;;
-*-bsdi5*)
-	use_threads=true ;;
 *-linux*)
-	use_threads=true ;;	
+	use_threads=true ;;
 *-darwin[[123456789]].*)
 	use_threads=false ;;
 *-darwin*.*)
@@ -86,7 +79,7 @@ if $use_threads
 then
 	AC_MSG_RESULT(yes)
 else
-	AC_MSG_RESULT(no)	
+	AC_MSG_RESULT(no)
 fi
 
 if $use_threads
@@ -99,7 +92,7 @@ then
 			# We don't want to set -lpthread as that break
 			# the ability to choose threads library at final
 			# link time and is not valid for all architectures.
-			
+
 			PTHREAD=
 			if test "X$GCC" = "Xyes"; then
 				saved_cc="$CC"

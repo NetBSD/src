@@ -147,10 +147,10 @@ status=`expr $status + $ret`
 
 if [ -x ${DELV} ] ; then
    ret=0
-   echo_i "checking postive validation NSEC using dns_client ($n)"
+   echo_i "checking positive validation NSEC using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.example > delv.out$n || ret=1
    grep "a.example..*10.0.0.1" delv.out$n > /dev/null || ret=1
-   grep "a.example..*.RRSIG.A 3 2 300 .*" delv.out$n > /dev/null || ret=1
+   grep "a.example..*.RRSIG.A $DEFAULT_ALGORITHM_NUMBER 2 300 .*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -222,7 +222,7 @@ if [ -x ${DELV} ] ; then
    echo_i "checking positive wildcard validation NSEC using dns_client ($n)"
    $DELV $DELVOPTS @10.53.0.4 a a.wild.example > delv.out$n || ret=1
    grep "a.wild.example..*10.0.0.27" delv.out$n > /dev/null || ret=1
-   grep "a.wild.example..*RRSIG.A 3 2 300.*" delv.out$n > /dev/null || ret=1
+   grep -E "a.wild.example..*RRSIG.A [0-9]+ 2 300.*" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo_i "failed"; fi
    status=`expr $status + $ret`
@@ -1190,7 +1190,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
-echo_i "checking that lookups succeed after disabling a algorithm works ($n)"
+echo_i "checking that lookups succeed after disabling an algorithm ($n)"
 ret=0
 $DIG $DIGOPTS +noauth example. SOA @10.53.0.2 \
 	> dig.out.ns2.test$n || ret=1
@@ -1382,8 +1382,8 @@ status=`expr $status + $ret`
 echo_i "checking that we can sign a zone with out-of-zone records ($n)"
 ret=0
 zone=example
-key1=`$KEYGEN -K signer -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -K signer -q -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -K signer -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -K signer -q -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
 (
 cd signer
 cat example.db.in $key1.key $key2.key > example.db
@@ -1396,8 +1396,8 @@ status=`expr $status + $ret`
 echo_i "checking that we can sign a zone (NSEC3) with out-of-zone records ($n)"
 ret=0
 zone=example
-key1=`$KEYGEN -K signer -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -K signer -q -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -K signer -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -K signer -q -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
 (
 cd signer
 cat example.db.in $key1.key $key2.key > example.db
@@ -1421,8 +1421,8 @@ status=`expr $status + $ret`
 echo_i "checking NSEC3 signing with empty nonterminals above a delegation ($n)"
 ret=0
 zone=example
-key1=`$KEYGEN -K signer -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -K signer -q -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -K signer -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -K signer -q -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
 (
 cd signer
 cat example.db.in $key1.key $key2.key > example3.db
@@ -1447,8 +1447,8 @@ status=`expr $status + $ret`
 echo_i "checking that dnsssec-signzone updates originalttl on ttl changes ($n)"
 ret=0
 zone=example
-key1=`$KEYGEN -K signer -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -K signer -q -r $RANDFILE -f KSK -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -K signer -q -a RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -K signer -q -f KSK -a RSASHA1 -b 1024 -n zone $zone`
 (
 cd signer
 cat example.db.in $key1.key $key2.key > example.db
@@ -1464,10 +1464,10 @@ status=`expr $status + $ret`
 echo_i "checking dnssec-signzone keeps valid signatures from removed keys ($n)"
 ret=0
 zone=example
-key1=`$KEYGEN -K signer -q -r $RANDFILE -f KSK -a RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -K signer -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -K signer -q -f KSK -a RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -K signer -q -a RSASHA1 -b 1024 -n zone $zone`
 keyid2=`echo $key2 | sed 's/^Kexample.+005+0*\([0-9]\)/\1/'`
-key3=`$KEYGEN -K signer -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key3=`$KEYGEN -K signer -q -a RSASHA1 -b 1024 -n zone $zone`
 keyid3=`echo $key3 | sed 's/^Kexample.+005+0*\([0-9]\)/\1/'`
 (
 cd signer
@@ -1764,6 +1764,15 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "checking validate-except in an insecure local domain ($n)"
+ret=0
+$DIG $DIGOPTS ns www.corp @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:[^;]* ad[^;]*;" dig.out.ns4.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 echo_i "checking positive and negative validation with negative trust anchors ($n)"
 ret=0
 
@@ -1864,8 +1873,8 @@ $PERL -e 'my $delay = '$start' + 13 - time(); select(undef, undef, undef, $delay
 $RNDCCMD 10.53.0.4 nta -d > rndc.out.ns4.test$n._11
 lines=`grep " expiry " rndc.out.ns4.test$n._11 | wc -l`
 [ "$lines" -le 2 ] || ret=1
-grep "bogus.example: expiry" rndc.out.ns4.test$n._11 > /dev/null || ret=1
-grep "badds.example: expiry" rndc.out.ns4.test$n._11 > /dev/null && ret=1
+grep "bogus.example/_default: expiry" rndc.out.ns4.test$n._11 > /dev/null || ret=1
+grep "badds.example/_default: expiry" rndc.out.ns4.test$n._11 > /dev/null && ret=1
 $DIG $DIGOPTS b.bogus.example. a @10.53.0.4 > dig.out.ns4.test$n.11 || ret=1
 grep "status: SERVFAIL" dig.out.ns4.test$n.11 > /dev/null && ret=1
 $DIG $DIGOPTS a.badds.example. a @10.53.0.4 > dig.out.ns4.test$n.12 || ret=1
@@ -1901,14 +1910,14 @@ ret=0
 echo_i "testing NTA removals ($n)"
 $RNDCCMD 10.53.0.4 nta badds.example 2>&1 | sed 's/^/ns4 /' | cat_i
 $RNDCCMD 10.53.0.4 nta -d > rndc.out.ns4.test$n.1
-grep "badds.example: expiry" rndc.out.ns4.test$n.1 > /dev/null || ret=1
+grep "badds.example/_default: expiry" rndc.out.ns4.test$n.1 > /dev/null || ret=1
 $DIG $DIGOPTS a.badds.example. a @10.53.0.4 > dig.out.ns4.test$n.1 || ret=1
 grep "status: SERVFAIL" dig.out.ns4.test$n.1 > /dev/null && ret=1
 grep "^a.badds.example." dig.out.ns4.test$n.1 > /dev/null || ret=1
 $RNDCCMD 10.53.0.4 nta -remove badds.example > rndc.out.ns4.test$n.2
 grep "Negative trust anchor removed: badds.example/_default" rndc.out.ns4.test$n.2 > /dev/null || ret=1
 $RNDCCMD 10.53.0.4 nta -d > rndc.out.ns4.test$n.3
-grep "badds.example: expiry" rndc.out.ns4.test$n.3 > /dev/null && ret=1
+grep "badds.example/_default: expiry" rndc.out.ns4.test$n.3 > /dev/null && ret=1
 $DIG $DIGOPTS a.badds.example. a @10.53.0.4 > dig.out.ns4.test$n.2 || ret=1
 grep "status: SERVFAIL" dig.out.ns4.test$n.2 > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -1919,7 +1928,7 @@ echo_i "remove non-existent NTA three times"
 $RNDCCMD 10.53.0.4 nta -r foo > rndc.out.ns4.test$n.4 2>&1
 $RNDCCMD 10.53.0.4 nta -remove foo > rndc.out.ns4.test$n.5 2>&1
 $RNDCCMD 10.53.0.4 nta -r foo > rndc.out.ns4.test$n.6 2>&1
-grep "'nta' failed: not found" rndc.out.ns4.test$n.6 > /dev/null || ret=1
+grep "not found" rndc.out.ns4.test$n.6 > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 ret=0
@@ -1980,7 +1989,7 @@ echo_i "waiting till 14s have passed since NTAs were added before restarting ns4
 $PERL -e 'my $delay = '$start' + 14 - time(); select(undef, undef, undef, $delay) if ($delay > 0);'
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2000,7 +2009,7 @@ sleep 4
 $RNDCCMD 10.53.0.4 nta -d > rndc.out.ns4.test$n.3
 lines=`wc -l < rndc.out.ns4.test$n.3`
 [ "$lines" -eq 1 ] || ret=1
-grep "bogus.example: expiry" rndc.out.ns4.test$n.3 > /dev/null || ret=1
+grep "bogus.example/_default: expiry" rndc.out.ns4.test$n.3 > /dev/null || ret=1
 $DIG $DIGOPTS b.bogus.example. a @10.53.0.4 > dig.out.ns4.test$n.4 || ret=1
 grep "status: SERVFAIL" dig.out.ns4.test$n.4 > /dev/null && ret=1
 grep "flags:[^;]* ad[^;]*;" dig.out.ns4.test$n.4 > /dev/null && ret=1
@@ -2048,7 +2057,7 @@ echo "secure.example. regular $future" > ns4/_default.nta
 start=`$PERL -e 'print time()."\n";'`
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2105,7 +2114,7 @@ echo "secure.example. forced $future" > ns4/_default.nta
 start=`$PERL -e 'print time()."\n";'`
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2154,7 +2163,7 @@ echo "secure.example. forced $future" > ns4/_default.nta
 added=`$PERL -e 'print time()."\n";'`
 
 if
-        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns4
+        $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} dnssec ns4
 then
         echo_i "restarted server ns4"
 else
@@ -2165,10 +2174,14 @@ fi
 echo_i "sleeping for an additional 4 seconds for ns4 to fully startup"
 sleep 4
 
-# dump the NTA to a file
+# dump the NTA to a file (omit validate-except entries)
+echo_i "testing 'rndc nta'"
 $RNDCCMD 10.53.0.4 nta -d > rndc.out.ns4.test$n.1 2>/dev/null
+# "corp" is configured as a validate-except domain and thus should be
+# omitted. only "secure.example" should be in the dump at this point.
 lines=`wc -l < rndc.out.ns4.test$n.1`
 [ "$lines" -eq 1 ] || ret=1
+grep 'secure.example' rndc.out.ns4.test$n.1 > /dev/null || ret=1
 ts=`awk '{print $3" "$4}' < rndc.out.ns4.test$n.1`
 # rndc nta outputs localtime, so append the timezone
 ts_with_zone="$ts `date +%z`"
@@ -2321,7 +2334,7 @@ echo_i "checking that the NSEC3 record for the apex is properly signed when a DN
 ret=0
 (
 cd ns3
-kskname=`$KEYGEN -q -3 -a RSASHA1 -r $RANDFILE -fk update-nsec3.example`
+kskname=`$KEYGEN -q -3 -a RSASHA1 -fk update-nsec3.example`
 (
 echo zone update-nsec3.example
 echo server 10.53.0.3 ${PORT}
@@ -2662,7 +2675,7 @@ status=`expr $status + $ret`
 # includes it anyway to avoid confusion (RT #21731)
 echo_i "check dnssec-dsfromkey error message when keyfile is not found ($n)"
 ret=0
-key=`$KEYGEN -a RSASHA1 -q -r $RANDFILE example.` || ret=1
+key=`$KEYGEN -a RSASHA1 -q example.` || ret=1
 mv $key.key $key
 $DSFROMKEY $key > dsfromkey.out.$n 2>&1 && ret=1
 grep "$key.key: file not found" dsfromkey.out.$n > /dev/null || ret=1
@@ -2749,7 +2762,7 @@ cd ns3
 for file in K*.moved; do
   mv $file `basename $file .moved`
 done
-$SIGNER -S -r $RANDFILE -N increment -e now+1mi -o expiring.example expiring.example.db > /dev/null 2>&1
+$SIGNER -S -N increment -e now+1mi -o expiring.example expiring.example.db > /dev/null 2>&1
 ) || ret=1
 $RNDCCMD 10.53.0.3 reload expiring.example 2>&1 | sed 's/^/ns3 /' | cat_i
 
@@ -2984,11 +2997,11 @@ echo_i "check dig's +nocrypto flag ($n)"
 ret=0
 $DIG $DIGOPTS +norec +nocrypto DNSKEY . \
 	@10.53.0.1 > dig.out.dnskey.ns1.test$n || ret=1
-grep '256 3 1 \[key id = [1-9][0-9]*]' dig.out.dnskey.ns1.test$n > /dev/null || ret=1
-grep 'RRSIG.* \[omitted]' dig.out.dnskey.ns1.test$n > /dev/null || ret=1
+grep -E '256 [0-9]+ 1 \[key id = [1-9][0-9]*]' dig.out.dnskey.ns1.test$n > /dev/null || ret=1
+grep -E 'RRSIG.* \[omitted]' dig.out.dnskey.ns1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +norec +nocrypto DS example \
 	@10.53.0.1 > dig.out.ds.ns1.test$n || ret=1
-grep 'DS.* 3 [12] \[omitted]' dig.out.ds.ns1.test$n > /dev/null || ret=1
+grep -E 'DS.* [0-9]+ [12] \[omitted]' dig.out.ds.ns1.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -3027,6 +3040,34 @@ done
 n=`expr $n + 1`
 if test "$before" = "$after" ; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
+
+if [ -x "$PYTHON" ]; then
+    echo_i "check dnskey-sig-validity sets longer expiry for DNSKEY ($n)"
+    ret=0
+    $RNDCCMD 10.53.0.3 sign siginterval.example 2>&1 | sed 's/^/ns3 /' | cat_i
+    # convert expiry date to a comma-separated list of integers python can
+    # use as input to date(). strip leading 0s in months and days so
+    # python3 will recognize them as integers.
+    $DIG +dnssec +short -p ${PORT} @10.53.0.3 soa siginterval.example > dig.out.soa.test$n
+    soaexpire=`awk '$1 ~ /SOA/ { print $5 }' dig.out.soa.test$n |
+	       sed 's/\(....\)\(..\)\(..\).*/\1, \2, \3/' |
+	       sed 's/ 0/ /g'`
+    $DIG +dnssec +short -p ${PORT} @10.53.0.3 dnskey siginterval.example > dig.out.dnskey.test$n
+    dnskeyexpire=`awk '$1 ~ /DNSKEY/ { print $5; exit 0 }' dig.out.dnskey.test$n |
+		  sed 's/\(....\)\(..\)\(..\).*/\1, \2, \3/' |
+		  sed 's/ 0/ /g'`
+    $PYTHON > python.out.$n <<EOF
+from datetime import date;
+ke=date($dnskeyexpire)
+se=date($soaexpire)
+print((ke-se).days);
+EOF
+    diff=`cat python.out.$n`
+    [ "$diff" -ge 55 ] || ret=1
+    n=`expr $n + 1`
+    if [ $ret != 0 ]; then echo_i "failed"; fi
+    status=`expr $status + $ret`
+fi
 
 copy_setports ns4/named4.conf.in ns4/named.conf
 $RNDCCMD 10.53.0.4 reconfig 2>&1 | sed 's/^/ns4 /' | cat_i
@@ -3096,12 +3137,8 @@ do
 	2) # Diffie Helman
 	   alg=`expr $alg + 1`
 	   continue;;
-	3) # DSA/SHA1
-	   size="-b 512";;
 	5) # RSA/SHA-1
 	   size="-b 1024";;
-	6) # DSA-NSEC3-SHA1
-	   size="-b 512";;
 	7) # RSASHA1-NSEC3-SHA1
 	   size="-b 1024";;
 	8) # RSA/SHA-256
@@ -3112,7 +3149,7 @@ do
 	   alg=`expr $alg + 1`
 	   continue;;
 	esac
-	key1=`$KEYGEN -a $alg $size -n zone -r $RANDFILE example 2> keygen.err`
+	key1=`$KEYGEN -a $alg $size -n zone example 2> keygen.err`
 	if grep "unsupported algorithm" keygen.err > /dev/null
 	then
 		alg=`expr $alg + 1`
@@ -3127,7 +3164,7 @@ do
 		continue
 	fi
 	$SETTIME -I now+4d $key1.private > /dev/null
-	key2=`$KEYGEN -v 10 -r $RANDFILE -i 3d -S $key1.private 2> /dev/null`
+	key2=`$KEYGEN -v 10 -i 3d -S $key1.private 2> /dev/null`
 	test -f $key2.key -a -f $key2.private || {
 		ret=1
 		echo_i "'dnssec-keygen -S' failed for algorithm: $alg"
@@ -3444,8 +3481,8 @@ ret=0
 # generate signed zone with MX and AAAA records at apex.
 (
 cd signer
-$KEYGEN -q -r $RANDFILE -a RSASHA1 -3 -fK remove > /dev/null
-$KEYGEN -q -r $RANDFILE -a RSASHA1 -33 remove > /dev/null
+$KEYGEN -q -a RSASHA1 -3 -fK remove > /dev/null
+$KEYGEN -q -a RSASHA1 -33 remove > /dev/null
 echo > remove.db.signed
 $SIGNER -S -o remove -D -f remove.db.signed remove.db.in > signer.out.1.$n 2>&1
 )
@@ -3528,6 +3565,21 @@ status=`expr $status + $ret`
 echo_i "check that the view is logged in messages from the validator when using views ($n)"
 ret=0
 grep "view rec: *validat" ns4/named.run > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+# Note: after this check, ns4 will not be validating any more; do not add any
+# further validation tests employing ns4 below this check.
+echo_i "check that validation defaults to off when dnssec-enable is off ($n)"
+ret=0
+# Sanity check - validation should be enabled.
+$RNDCCMD 10.53.0.4 validation status | grep "enabled" > /dev/null || ret=1
+# Set "dnssec-enable" to "no" and reconfigure.
+copy_setports ns4/named5.conf.in ns4/named.conf
+$RNDCCMD 10.53.0.4 reconfig 2>&1 | sed 's/^/ns4 /' | cat_i
+# Check validation status again.
+$RNDCCMD 10.53.0.4 validation status | grep "disabled" > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

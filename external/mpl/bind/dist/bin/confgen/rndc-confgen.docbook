@@ -58,7 +58,6 @@
       <arg choice="opt" rep="norepeat"><option>-h</option></arg>
       <arg choice="opt" rep="norepeat"><option>-k <replaceable class="parameter">keyname</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port</replaceable></option></arg>
-      <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">randomfile</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">address</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">chrootdir</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-u <replaceable class="parameter">user</replaceable></option></arg>
@@ -187,24 +186,6 @@
             Specifies the command channel port where <command>named</command>
             listens for connections from <command>rndc</command>.
             The default is 953.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>-r <replaceable class="parameter">randomfile</replaceable></term>
-        <listitem>
-          <para>
-            Specifies a source of random data for generating the
-            authorization.  If the operating
-            system does not provide a <filename>/dev/random</filename>
-            or equivalent device, the default source of randomness
-            is keyboard input.  <filename>randomdev</filename>
-            specifies
-            the name of a character device or file containing random
-            data to be used instead of the default.  The special value
-            <filename>keyboard</filename> indicates that keyboard
-            input should be used.
           </para>
         </listitem>
       </varlistentry>

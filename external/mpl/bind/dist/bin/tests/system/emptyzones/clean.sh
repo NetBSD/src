@@ -12,3 +12,4 @@ rm -f ns*/named.lock
 rm -f ns*/named.run
 rm -f ns*/named.memstats
 rm -f dig.out.test*
+rm -f ns*/managed-keys.bind*

@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193.2.7 2018/12/26 14:01:30 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.193.2.8 2019/01/18 08:50:12 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -14,6 +14,7 @@ ACK	Amsterdam compiler kit
 ACK	acknowledgement
 ACL	access control list
 ACL	active current loop
+ACL	asynchronous connection less
 ACP	auxiliary control {process,program}
 ACPI	advanced configuration and power interface
 ACS	access control set
@@ -219,6 +220,7 @@ CHS	cylinder/head/sector
 CI	continuous integration
 CI	{common,component} interface
 CIDR	Classless Inter-Domain Routing
+CIF	common intermediate format
 CIFS	Common Internet File System
 CIL	common intermediate language
 CIR	carrier-to-interference ratio
@@ -478,7 +480,9 @@ ERE	extended regular expression
 ERST	error record serialization table
 ESAN	Efficiency Sanitizer
 ESB	enterprise service bus
+ESDI	enhanced small disk interface
 ESDRAM	enhanced synchronous dynamic random access memory
+ESI	enclosure services interface
 ESS	electronic switching system
 ESS	extended service set
 ESSID	extended service set identifier
@@ -488,6 +492,7 @@ EU	execution unit
 EULA	end user license agreement
 FAT	file allocation table
 FBRAM	frame buffer random access memory
+FCIF	full common intermediate format
 FCL	fiber channel loop
 FCS	frame check sequence
 FDC	floppy disk controller
@@ -670,6 +675,7 @@ IP	intellectual property
 IPC	instructions per cycle
 IPC	interprocess communication
 IPE	integrated programming environment
+IPI	intelligent peripheral interface
 IPI	interprocessor interrupt
 IPL	Initial Program Load
 IPL	Interrupt Priority Level
@@ -740,6 +746,7 @@ LDR	light-dependent resistor
 LDT	local descriptor table
 LE	logical extent
 LED	light emitting diode
+LELL	low energy link layer
 LER	label edge router
 LF	line feed
 LF	low frequency
@@ -767,6 +774,7 @@ LLMNR	link-local multicast name resolution
 LLVM	Low Level Virtual Machine
 LM	long mode
 LMM	link management mode
+LMP	link management protocol
 LNO	loop nest optimization
 LOC	lines of code
 LOM	lights-out management
@@ -1137,6 +1145,7 @@ QAM	quality assurance management
 QBE	query by example
 QC	quality control
 QDI	quasi delay insensitive
+QCIF	quarter common intermediate format
 QOS	quality of service
 QVL	qualified vendor list
 R/O	read only
@@ -1258,6 +1267,7 @@ SCI	system control interrupt
 SCM	software configuration management
 SCM	source code management
 SCM	storage-class memory
+SCO	synchronous connection orientated
 SCP	secure copy
 SCSI	Small Computer System Interface
 SCTP	Stream Control Transmission Protocol
@@ -1275,6 +1285,7 @@ SDT	syntax-directed translation
 SEA	synchronous external abort
 SEGV	segmentation violation
 SEO	search engine optimization
+SES	scsi enclosure services
 SFC	sequential function chart
 SFI	simple firmware interface
 SFI	software fault isolation
@@ -1286,6 +1297,7 @@ SGRAM	synchronous graphics random access memory
 SHA	secure hash algorithm
 SIDH	supersingular isogeny Diffie-Hellman
 SIEM	security information and event management
+SIF	source input format
 SIFS	short inter-frame space
 SIMD	single instruction, multiple data
 SIMM	single inline memory module
@@ -1310,6 +1322,7 @@ SMB	Server Message Block
 SMB	system management bus
 SMBIOS	System Management BIOS
 SMC	system management controller
+SMD	storage module device
 SMEP	supervisor mode execution protection
 SMF	single mode fiber
 SMI	structure of management information
@@ -1346,9 +1359,11 @@ SPMD	single process, multiple data
 SPR	special purpose register
 SPT	sectors per track
 SQA	software quality assurance
+SQCIF	sub quarter common intermediate format
 SQL	Structured Query Language
 SRAM	static random access memory
 SRC	sample rate conversion
+SRP	scsi rdma protocol
 SS	self-snoop
 SS	stack segment
 SSA	static single assignment

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.28.2.5 2018/09/30 01:45:49 pgoyette Exp $ */
+/* $NetBSD: fdtvar.h,v 1.28.2.6 2019/01/18 08:50:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -300,6 +300,8 @@ int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
 		    u_int, u_int);
 int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
 		    u_int *);
+int		fdtbus_regulator_supports_voltage(struct fdtbus_regulator *,
+		    u_int, u_int);
 struct syscon *	fdtbus_syscon_acquire(int, const char *);
 struct syscon *	fdtbus_syscon_lookup(int);
 
@@ -362,6 +364,7 @@ const char *	fdtbus_get_string_index(int, const char *, u_int);
 void		fdt_add_bus(device_t, int, struct fdt_attach_args *);
 void		fdt_add_bus_match(device_t, int, struct fdt_attach_args *,
 				  bool (*)(void *, int), void *);
+void		fdt_add_child(device_t, int, struct fdt_attach_args *, u_int);
 
 void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);

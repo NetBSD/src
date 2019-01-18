@@ -1,0 +1,49 @@
+=head1 NAME
+
+tpm_nvinfo
+
+=head1 SYNOPSIS
+
+B<tpm_nvinfo [OPTIONS]>
+
+=head1 DESCRIPTION
+
+B<tpm_nvinfo> displays information about defined NVRAM areas. The user may
+restrict it to display only a single NVRAM area by providing an index or may
+choose ton only list available NVRAM areas indices without displaying the
+NVRAM areas' detailed information.
+
+The following options are supported:
+
+=over 4
+
+=item B<-h, --help>
+
+Display command usage info.
+
+=item B<-v, --version>
+
+Display command version info.
+
+=item B<-l, --log [none|error|info|debug]>
+
+Set logging level.
+
+=item B<-i, --index> (optional parameter)
+
+Only display the NVRAM area with the given index. If this option is not
+provided all NVRAM areas will be displayed.
+
+=item B<-n, --list-only> (optional parameter)
+
+Only display the defined NVRAM areas' indices.
+
+=back
+
+=head1 SEE ALSO
+
+B<tpm_nvdefine>(8), B<tpm_nvread>(8), B<tpm_nvwrite>(8), B<tpm_nvrelease>(8)
+
+=head1 REPORTING BUGS
+
+Report bugs to <trousers-users@lists.sourceforge.net>

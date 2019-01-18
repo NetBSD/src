@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.153.2.6 2018/12/26 14:01:03 pgoyette Exp $	*/
+/*	$NetBSD: eval.c,v 1.153.2.7 2019/01/18 08:48:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.153.2.6 2018/12/26 14:01:03 pgoyette Exp $");
+__RCSID("$NetBSD: eval.c,v 1.153.2.7 2019/01/18 08:48:24 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -871,6 +871,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	const char *volatile savecmdname;
 	volatile struct shparam saveparam;
 	struct localvar *volatile savelocalvars;
+	struct parsefile *volatile savetopfile;
 	volatile int e;
 	char * volatile lastarg;
 	const char * volatile path = pathval();
@@ -1237,11 +1238,13 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			mode |= REDIR_BACKQ;
 		}
 		e = -1;
-		savehandler = handler;
 		savecmdname = commandname;
-		handler = &jmploc;
+		savetopfile = getcurrentfile();
+		savehandler = handler;
 		temp_path = 0;
 		if (!setjmp(jmploc.loc)) {
+			handler = &jmploc;
+
 			/*
 			 * We need to ensure the command hash table isn't
 			 * corrupted by temporary PATH assignments.
@@ -1307,6 +1310,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			if ((e != EXERROR && e != EXEXEC)
 			    || cmdentry.cmdtype == CMDSPLBLTIN)
 				exraise(e);
+			popfilesupto(savetopfile);
 			FORCEINTON;
 		}
 		if (cmdentry.u.bltin != execcmd)

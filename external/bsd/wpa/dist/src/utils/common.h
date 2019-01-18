@@ -57,6 +57,15 @@ static inline unsigned int bswap_32(unsigned int v)
 #include <net/if.h>
 #endif
 
+#ifdef __rtems__
+#include <rtems/endian.h>
+#define __BYTE_ORDER BYTE_ORDER
+#define __LITTLE_ENDIAN LITTLE_ENDIAN
+#define __BIG_ENDIAN BIG_ENDIAN
+#define bswap_16 CPU_swap_u16
+#define bswap_32 CPU_swap_u32
+#endif /* __rtems__ */
+
 #ifdef CONFIG_NATIVE_WINDOWS
 #include <winsock.h>
 
@@ -145,6 +154,7 @@ static inline unsigned int wpa_swap_32(unsigned int v)
 #define host_to_le32(n) (n)
 #define be_to_host32(n) wpa_swap_32(n)
 #define host_to_be32(n) wpa_swap_32(n)
+#define host_to_le64(n) (n)
 
 #define WPA_BYTE_SWAP_DEFINED
 
@@ -335,6 +345,9 @@ static inline void WPA_PUT_LE64(u8 *a, u64 val)
 #ifndef ETH_P_RRB
 #define ETH_P_RRB 0x890D
 #endif /* ETH_P_RRB */
+#ifndef ETH_P_OUI
+#define ETH_P_OUI 0x88B7
+#endif /* ETH_P_OUI */
 
 
 #ifdef __GNUC__
@@ -427,6 +440,7 @@ void perror(const char *s);
 #define __bitwise __attribute__((bitwise))
 #else
 #define __force
+#undef __bitwise
 #define __bitwise
 #endif
 
@@ -556,6 +570,7 @@ int is_ctrl_char(char c);
 
 int str_starts(const char *str, const char *start);
 
+u8 rssi_to_rcpi(int rssi);
 
 /*
  * gcc 4.4 ends up generating strict-aliasing warnings about some very common

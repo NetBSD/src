@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2.2.2 2018/09/06 06:55:10 pgoyette Exp $	*/
+/*	$NetBSD: net.c,v 1.2.2.3 2019/01/18 08:50:01 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #include <isc/msgs.h>
 #include <isc/net.h>
 #include <isc/once.h>
-#include <isc/strerror.h>
+#include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -41,10 +41,6 @@
 #ifndef ISC_NET_PORTRANGEHIGH
 #define ISC_NET_PORTRANGEHIGH 65535
 #endif	/* ISC_NET_PORTRANGEHIGH */
-
-#if defined(ISC_PLATFORM_HAVEIPV6) && defined(ISC_PLATFORM_NEEDIN6ADDRANY)
-const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
-#endif
 
 static isc_once_t 	once = ISC_ONCE_INIT;
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
@@ -71,7 +67,7 @@ try_proto(int domain) {
 		case WSAEINVAL:
 			return (ISC_R_NOTFOUND);
 		default:
-			isc__strerror(errval, strbuf, sizeof(strbuf));
+			strerror_r(errval, strbuf, sizeof(strbuf));
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "socket() %s: %s",
 					 isc_msgcat_get(isc_msgcat,
@@ -92,13 +88,7 @@ static void
 initialize_action(void) {
 	InitSockets();
 	ipv4_result = try_proto(PF_INET);
-#ifdef ISC_PLATFORM_HAVEIPV6
-#ifdef WANT_IPV6
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	ipv6_result = try_proto(PF_INET6);
-#endif
-#endif
-#endif
 }
 
 static void
@@ -123,8 +113,6 @@ isc_net_probeunix(void) {
 	return (ISC_R_NOTFOUND);
 }
 
-#ifdef ISC_PLATFORM_HAVEIPV6
-#ifdef WANT_IPV6
 static void
 try_ipv6only(void) {
 #ifdef IPV6_V6ONLY
@@ -147,7 +135,7 @@ try_ipv6only(void) {
 	/* check for TCP sockets */
 	s = socket(PF_INET6, SOCK_STREAM, 0);
 	if (s == INVALID_SOCKET) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
+		strerror_r(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "socket() %s: %s",
 				 isc_msgcat_get(isc_msgcat,
@@ -171,7 +159,7 @@ try_ipv6only(void) {
 	/* check for UDP sockets */
 	s = socket(PF_INET6, SOCK_DGRAM, 0);
 	if (s == INVALID_SOCKET) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
+		strerror_r(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "socket() %s: %s",
 				 isc_msgcat_get(isc_msgcat,
@@ -227,7 +215,7 @@ try_ipv6pktinfo(void) {
 	/* we only use this for UDP sockets */
 	s = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	if (s == INVALID_SOCKET) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
+		strerror_r(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "socket() %s: %s",
 				 isc_msgcat_get(isc_msgcat,
@@ -264,31 +252,17 @@ initialize_ipv6pktinfo(void) {
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
 #endif /* __notyet__ */
-#endif /* WANT_IPV6 */
-#endif /* ISC_PLATFORM_HAVEIPV6 */
 
 isc_result_t
 isc_net_probe_ipv6only(void) {
-#ifdef ISC_PLATFORM_HAVEIPV6
-#ifdef WANT_IPV6
 	initialize_ipv6only();
-#else
-	ipv6only_result = ISC_R_NOTFOUND;
-#endif
-#endif
 	return (ipv6only_result);
 }
 
 isc_result_t
 isc_net_probe_ipv6pktinfo(void) {
 #ifdef __notyet__
-#ifdef ISC_PLATFORM_HAVEIPV6
-#ifdef WANT_IPV6
 	initialize_ipv6pktinfo();
-#else
-	ipv6pktinfo_result = ISC_R_NOTFOUND;
-#endif
-#endif
 #endif /* __notyet__ */
 	return (ipv6pktinfo_result);
 }

@@ -84,6 +84,7 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 #include <uvm/uvm_extern.h>
+#include <sys/fstrans.h>
 
 uint_t zfs_putpage_key;
 #endif
@@ -5663,11 +5664,6 @@ zfs_netbsd_reclaim(void *v)
 	/*
 	 * Process a deferred atime update.
 	 */
-	/*
-	 * XXXNETBSD I don't think this actually works.
-	 * We are dirtying the znode again after the vcache layer cleaned it,
-	 * so we would need to zil_commit() again here.
-	 */
 	if (zp->z_atime_dirty && zp->z_unlinked == 0) {
 		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
 
@@ -5683,6 +5679,8 @@ zfs_netbsd_reclaim(void *v)
 			dmu_tx_commit(tx);
 		}
 	}
+
+	zil_commit(zfsvfs->z_log, zp->z_id);
 
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
@@ -5865,6 +5863,11 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	struct uvm_object *uobj = &vp->v_uobj;
 	kmutex_t *mtx = uobj->vmobjlock;
 
+	if (zp->z_sa_hdl == NULL) {
+		err = 0;
+		goto out_unbusy;
+	}
+
 	off = pp[0]->offset;
 	len = count * PAGESIZE;
 	KASSERT(off + len <= round_page(zp->z_size));
@@ -5916,6 +5919,7 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	}
 	dmu_tx_commit(tx);
 
+out_unbusy:
 	mutex_enter(mtx);
 	mutex_enter(&uvm_pageqlock);
 	uvm_page_unbusy(pp, count);
@@ -5975,9 +5979,6 @@ zfs_netbsd_putpages(void *v)
 	bool async = (flags & PGO_SYNCIO) == 0;
 	bool cleaning = (flags & PGO_CLEANIT) != 0;
 
-	ZFS_ENTER(zfsvfs);
-	ZFS_VERIFY_ZP(zp);
-
 	if (cleaning) {
 		ASSERT((offlo & PAGE_MASK) == 0 && (offhi & PAGE_MASK) == 0);
 		ASSERT(offlo < offhi || offhi == 0);
@@ -5986,25 +5987,45 @@ zfs_netbsd_putpages(void *v)
 		else
 			len = offhi - offlo;
 		mutex_exit(vp->v_interlock);
+		if (curlwp == uvm.pagedaemon_lwp) {
+			error = fstrans_start_nowait(vp->v_mount);
+			if (error)
+				return error;
+		} else {
+			vfs_t *mp = vp->v_mount;
+			fstrans_start(mp);
+			if (vp->v_mount != mp) {
+				fstrans_done(mp);
+				ASSERT(!vn_has_cached_data(vp));
+				return 0;
+			}
+		}
+		/*
+		 * Cannot use ZFS_ENTER() here as it returns with error
+		 * if z_unmounted.  The next statement is equivalent.
+		 */
+		rrm_enter(&zfsvfs->z_teardown_lock, RW_READER, FTAG);
+
 		rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
 		mutex_enter(vp->v_interlock);
 		tsd_set(zfs_putpage_key, &cleaned);
 	}
 	error = genfs_putpages(v);
-	if (rl) {
+	if (cleaning) {
 		tsd_set(zfs_putpage_key, NULL);
 		zfs_range_unlock(rl);
+
+		/*
+		 * Only zil_commit() if we cleaned something.  This avoids 
+		 * deadlock if we're called from zfs_netbsd_setsize().
+		 */
+
+		if (cleaned)
+		if (!async || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+			zil_commit(zfsvfs->z_log, zp->z_id);
+		ZFS_EXIT(zfsvfs);
+		fstrans_done(vp->v_mount);
 	}
-
-	/*
-	 * Only zil_commit() if we cleaned something.
-	 * This avoids deadlock if we're called from zfs_netbsd_setsize().
-	 */
-
-	if (cleaned)
-	if (!async || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
-		zil_commit(zfsvfs->z_log, zp->z_id);
-	ZFS_EXIT(zfsvfs);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_sqlite3_dynamic.c,v 1.2.2.2 2018/09/06 06:54:51 pgoyette Exp $	*/
+/*	$NetBSD: dlz_sqlite3_dynamic.c,v 1.2.2.3 2019/01/18 08:49:47 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -51,7 +51,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include <dlz_minimal.h>

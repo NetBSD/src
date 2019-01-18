@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.2.2.7 2018/12/26 14:02:05 pgoyette Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.2.2.8 2019/01/18 08:50:58 pgoyette Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.7 2018/12/26 14:02:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.8 2019/01/18 08:50:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.7 2018/12/26 14:02:05 pgoyette Exp
 
 #include <net/if_ipsec.h>
 
+static int ipsecif_set_natt_ports(struct ipsec_variant *, struct mbuf *);
 static void ipsecif4_input(struct mbuf *, int, int, void *);
 static int ipsecif4_output(struct ipsec_variant *, int, struct mbuf *);
 static int ipsecif4_filter4(const struct ip *, struct ipsec_variant *,
@@ -101,6 +102,32 @@ static const struct encapsw ipsecif4_encapsw = {
 #ifdef INET6
 static const struct encapsw ipsecif6_encapsw;
 #endif
+
+static int
+ipsecif_set_natt_ports(struct ipsec_variant *var, struct mbuf *m)
+{
+
+	KASSERT(if_ipsec_heldref_variant(var));
+
+	if (var->iv_sport || var->iv_dport) {
+		struct m_tag *mtag;
+
+		mtag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
+		    sizeof(uint16_t) + sizeof(uint16_t), M_DONTWAIT);
+		if (mtag) {
+			uint16_t *natt_port;
+
+			natt_port = (uint16_t *)(mtag + 1);
+			natt_port[0] = var->iv_dport;
+			natt_port[1] = var->iv_sport;
+			m_tag_prepend(m, mtag);
+		} else {
+			return ENOBUFS;
+		}
+	}
+
+	return 0;
+}
 
 static struct mbuf *
 ipsecif4_prepend_hdr(struct ipsec_variant *var, struct mbuf *m,
@@ -394,6 +421,13 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	if (mtu > 0)
 		return ipsecif4_fragout(var, family, m, mtu);
 
+	/* set NAT-T ports */
+	error = ipsecif_set_natt_ports(var, m);
+	if (error) {
+		m_freem(m);
+		goto done;
+	}
+
 	/* IPsec output */
 	IP_STATINC(IP_STAT_LOCALOUT);
 	error = ipsec4_process_packet(m, sp->req, &sa_mtu);
@@ -586,6 +620,13 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	}
 	rtcache_unref(rt, &iro->ir_ro);
 
+	/* set NAT-T ports */
+	error = ipsecif_set_natt_ports(var, m);
+	if (error) {
+		m_freem(m);
+		goto out;
+	}
+
 	/*
 	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
 	 * it is too painful to ask for resend of inner packet, to achieve
@@ -593,9 +634,10 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	 */
 	error = ip6_output(m, 0, &iro->ir_ro,
 	    ip6_ipsec_pmtu ? 0 : IPV6_MINMTU, 0, NULL, NULL);
+
+out:
 	if (error)
 		rtcache_free(&iro->ir_ro);
-
 	mutex_exit(iro->ir_lock);
 	percpu_putref(sc->ipsec_ro_percpu);
 

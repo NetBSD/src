@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.h,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: dyndb.h,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,8 @@
 #ifndef DNS_DYNDB_H
 #define DNS_DYNDB_H
 
+#include <stdbool.h>
+
 #include <isc/types.h>
 
 #include <dns/types.h>
@@ -22,7 +24,7 @@ ISC_LANG_BEGINDECLS
 
 /*!
  * \brief
- * Context for intializing a dyndb module.
+ * Context for initializing a dyndb module.
  *
  * This structure passes global server data to which a dyndb
  * module will need access -- the server memory context, hash
@@ -40,7 +42,7 @@ struct dns_dyndbctx {
 	dns_zonemgr_t	*zmgr;
 	isc_task_t	*task;
 	isc_timermgr_t	*timermgr;
-	isc_boolean_t	*refvar;
+	bool		*refvar;
 };
 
 #define DNS_DYNDBCTX_MAGIC	ISC_MAGIC('D', 'd', 'b', 'c')
@@ -71,7 +73,7 @@ typedef isc_result_t dns_dyndb_register_t(isc_mem_t *mctx,
  * 'parameters' contains the driver configuration text. 'dctx' is the
  * initialization context set up in dns_dyndb_createctx().
  *
- * '*instp' must be set to the driver instance handle if the functino
+ * '*instp' will be set to the driver instance handle if the function
  * is successful.
  *
  * Returns:
@@ -123,7 +125,7 @@ dns_dyndb_load(const char *libname, const char *name, const char *parameters,
  */
 
 void
-dns_dyndb_cleanup(isc_boolean_t exiting);
+dns_dyndb_cleanup(bool exiting);
 /*%
  * Shut down and destroy all running dyndb modules.
  *

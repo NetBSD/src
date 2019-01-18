@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.2.2.2 2018/09/06 06:54:59 pgoyette Exp $	*/
+/*	$NetBSD: diff.c,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,8 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
@@ -197,15 +199,13 @@ dns_diff_appendminimal(dns_diff_t *diff, dns_difftuple_t **tuplep)
 		ISC_LIST_APPEND(diff->tuples, *tuplep, link);
 		*tuplep = NULL;
 	}
-
-	ENSURE(*tuplep == NULL);
 }
 
 static isc_stdtime_t
 setresign(dns_rdataset_t *modified) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_rrsig_t sig;
-	isc_int64_t when;
+	int64_t when;
 	isc_result_t result;
 
 	result = dns_rdataset_first(modified);
@@ -249,7 +249,7 @@ setownercase(dns_rdataset_t *rdataset, const dns_name_t *name) {
 
 static isc_result_t
 diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
-	   isc_boolean_t warn)
+	   bool warn)
 {
 	dns_difftuple_t *t;
 	dns_dbnode_t *node = NULL;
@@ -312,10 +312,10 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 			node = NULL;
 			if (type != dns_rdatatype_nsec3 &&
 			    covers != dns_rdatatype_nsec3)
-				CHECK(dns_db_findnode(db, name, ISC_TRUE,
+				CHECK(dns_db_findnode(db, name, true,
 						      &node));
 			else
-				CHECK(dns_db_findnsec3node(db, name, ISC_TRUE,
+				CHECK(dns_db_findnsec3node(db, name, true,
 							   &node));
 
 			while (t != NULL &&
@@ -380,6 +380,7 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 				break;
 			default:
 				INSIST(0);
+				ISC_UNREACHABLE();
 			}
 
 			if (result == ISC_R_SUCCESS) {
@@ -454,12 +455,12 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 
 isc_result_t
 dns_diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver) {
-	return (diff_apply(diff, db, ver, ISC_TRUE));
+	return (diff_apply(diff, db, ver, true));
 }
 
 isc_result_t
 dns_diff_applysilently(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver) {
-	return (diff_apply(diff, db, ver, ISC_FALSE));
+	return (diff_apply(diff, db, ver, false));
 }
 
 /* XXX this duplicates lots of code in diff_apply(). */
@@ -478,7 +479,7 @@ dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,
 		dns_name_t *name;
 
 		name = &t->name;
-		while (t != NULL && dns_name_equal(&t->name, name)) {
+		while (t != NULL && dns_name_caseequal(&t->name, name)) {
 			dns_rdatatype_t type, covers;
 			dns_diffop_t op;
 			dns_rdatalist_t rdl;
@@ -494,7 +495,7 @@ dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,
 			rdl.rdclass = t->rdata.rdclass;
 			rdl.ttl = t->ttl;
 
-			while (t != NULL && dns_name_equal(&t->name, name) &&
+			while (t != NULL && dns_name_caseequal(&t->name, name) &&
 			       t->op == op && t->rdata.type == type &&
 			       rdata_covers(&t->rdata) == covers)
 			{
@@ -627,7 +628,7 @@ dns_diff_print(dns_diff_t *diff, FILE *file) {
  again:
 		isc_buffer_init(&buf, mem, size);
 		result = dns_rdataset_totext(&rds, &t->name,
-					     ISC_FALSE, ISC_FALSE, &buf);
+					     false, false, &buf);
 
 		if (result == ISC_R_NOSPACE) {
 			isc_mem_put(diff->mctx, mem, size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: listenlist_test.c,v 1.2.2.2 2018/09/06 06:55:13 pgoyette Exp $	*/
+/*	$NetBSD: listenlist_test.c,v 1.2.2.3 2019/01/18 08:50:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,17 +11,27 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <setjmp.h>
+
+#include <isc/util.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/list.h>
 #include <isc/print.h>
+#include <isc/util.h>
 
 #include <dns/acl.h>
 
@@ -29,30 +39,42 @@
 
 #include "nstest.h"
 
-/*
- * Helper functions
- */
+static int
+_setup(void **state) {
+	isc_result_t result;
 
-ATF_TC(ns_listenlist_default);
-ATF_TC_HEAD(ns_listenlist_default, tc) {
-	atf_tc_set_md_var(tc, "descr", "test that ns_listenlist_default works");
+	UNUSED(state);
+
+	result = ns_test_begin(NULL, true);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
 }
-ATF_TC_BODY(ns_listenlist_default, tc) {
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	ns_test_end();
+
+	return (0);
+}
+
+/* test that ns_listenlist_default() works */
+static void
+ns_listenlist_default_test(void **state) {
 	isc_result_t result;
 	ns_listenlist_t *list = NULL;
 	ns_listenelt_t *elt;
 	int count;
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = ns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = ns_listenlist_default(mctx, 5300, -1, false, &list);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_non_null(list);
 
-	result = ns_listenlist_default(mctx, 5300, -1, ISC_FALSE, &list);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE(list != NULL);
-
-	ATF_CHECK(!ISC_LIST_EMPTY(list->elts));
+	assert_false(ISC_LIST_EMPTY(list->elts));
 
 	count = 0;
 	elt = ISC_LIST_HEAD(list->elts);
@@ -65,42 +87,53 @@ ATF_TC_BODY(ns_listenlist_default, tc) {
 		ns_listenelt_destroy(elt);
 		elt = next;
 
-		ATF_CHECK(dns_acl_isnone(acl));
+		assert_true(dns_acl_isnone(acl));
 		dns_acl_detach(&acl);
 		count++;
 	}
 
-	ATF_CHECK(ISC_LIST_EMPTY(list->elts));
-	ATF_CHECK_EQ(count, 1);
+	assert_true(ISC_LIST_EMPTY(list->elts));
+	assert_int_equal(count, 1);
 
 	ns_listenlist_detach(&list);
 
-	result = ns_listenlist_default(mctx, 5300, -1, ISC_TRUE, &list);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+	result = ns_listenlist_default(mctx, 5300, -1, true, &list);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_CHECK(!ISC_LIST_EMPTY(list->elts));
+	assert_false(ISC_LIST_EMPTY(list->elts));
 
 	/* This time just use ns_listenlist_detach() to destroy elements */
 	count = 0;
 	elt = ISC_LIST_HEAD(list->elts);
 	while (elt != NULL) {
 		ns_listenelt_t *next = ISC_LIST_NEXT(elt, link);
-		ATF_CHECK(dns_acl_isany(elt->acl));
+		assert_true(dns_acl_isany(elt->acl));
 		elt = next;
 		count++;
 	}
 
-	ATF_CHECK_EQ(count, 1);
+	assert_int_equal(count, 1);
 
 	ns_listenlist_detach(&list);
-
-	ns_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, ns_listenlist_default);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(ns_listenlist_default_test,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif /* HAVE_CMOCKA */

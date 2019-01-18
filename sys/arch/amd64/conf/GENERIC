@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.485.2.12 2018/12/26 14:01:31 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.485.2.13 2019/01/18 08:50:13 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.485.2.12 $"
+#ident		"GENERIC-$Revision: 1.485.2.13 $"
 
 maxusers	64		# estimated number of users
 
@@ -436,6 +436,9 @@ intelfb*	at intelfbbus?
 
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
+
+#amdgpu*	at pci? dev ? function ?
+#amdgpufb*	at amdgpufbbus?
 
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?

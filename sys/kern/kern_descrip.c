@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.231.8.5 2018/11/26 01:52:50 pgoyette Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.231.8.6 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231.8.5 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231.8.6 2019/01/18 08:50:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1229,6 +1229,7 @@ file_dtor(void *arg, void *obj)
 	LIST_REMOVE(fp, f_list);
 	mutex_exit(&filelist_lock);
 
+	KASSERT(fp->f_count == 0);
 	kauth_cred_free(fp->f_cred);
 	mutex_destroy(&fp->f_lock);
 }

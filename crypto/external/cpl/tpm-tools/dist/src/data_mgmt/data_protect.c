@@ -380,8 +380,14 @@ writeData( CK_BYTE  *a_pbData,
 	}
 
 	// Write the previous buffer if there is one
-	if ( g_pbOutData && ( g_ulOutDataLen > 0 ) )
+	if ( g_pbOutData && ( g_ulOutDataLen > 0 ) ) {
 		tWriteCount = fwrite( g_pbOutData, 1, g_ulOutDataLen, g_pOutFile );
+
+		if ( tWriteCount != g_ulOutDataLen ) {
+			logError(TOKEN_FILE_WRITE_ERROR, g_pOutFile, "short write");
+			return -1;
+		}
+	}
 
 	if ( a_bMoreData ) {
 		// Allocate a (new) buffer if necessary
@@ -403,8 +409,14 @@ writeData( CK_BYTE  *a_pbData,
 	}
 	else {
 		// No more data so write the last piece of data
-		if ( a_ulDataLen > 0 )
+		if ( a_ulDataLen > 0 ) {
 			tWriteCount = fwrite( a_pbData, 1, a_ulDataLen, g_pOutFile );
+
+			if ( tWriteCount != a_ulDataLen ) {
+				logError(TOKEN_FILE_WRITE_ERROR, g_pOutFile, "short write");
+				return -1;
+			}
+		}
 
 		fclose( g_pOutFile );
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sink_40.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: sink_40.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,10 +17,10 @@
 typedef struct dns_rdata_sink_t {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint8_t		meaning;
-	isc_uint8_t		coding;
-	isc_uint8_t		subcoding;
-	isc_uint16_t		datalen;
+	uint8_t		meaning;
+	uint8_t		coding;
+	uint8_t		subcoding;
+	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_sink_t;
 

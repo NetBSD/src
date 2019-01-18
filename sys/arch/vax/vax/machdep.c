@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.191.16.1 2018/04/07 04:12:14 pgoyette Exp $	 */
+/* $NetBSD: machdep.c,v 1.191.16.2 2019/01/18 08:50:24 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191.16.1 2018/04/07 04:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191.16.2 2019/01/18 08:50:24 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191.16.1 2018/04/07 04:12:14 pgoyette 
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_compat_ibcs2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

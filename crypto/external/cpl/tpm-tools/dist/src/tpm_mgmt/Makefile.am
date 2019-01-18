@@ -55,7 +55,7 @@ else
 AM_CPPFLAGS	=	-I$(top_srcdir)/include -D_LINUX
 endif
 
-LDADD		=	$(top_builddir)/lib/libtpm_tspi.la -ltspi
+LDADD		=	$(top_builddir)/lib/libtpm_tspi.la -ltspi @INTLLIBS@
 
 tpm_startup_SOURCES =		tpm_startup.c
 tpm_reset_SOURCES =		tpm_reset.c

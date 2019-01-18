@@ -72,6 +72,12 @@ TSS_RESULT LogTCSERR(TSS_RESULT, char *, int);
 TSS_RESULT LogTDDLERR(TSS_RESULT, char *, int);
 void       LogTPMERR(TSS_RESULT, char *, int);
 
+#define LogDebugBacktrace()					\
+	do {							\
+		void *bt_data[10];				\
+		backtrace_symbols_fd(&bt_data, 10, stdout);	\
+	} while (0)
+
 #else
 #define LogDebug(fmt, ...)
 #define LogDebugFn(fmt, ...)
@@ -89,6 +95,7 @@ void       LogTPMERR(TSS_RESULT, char *, int);
 #define LogInfo(fmt, ...)	LogMessage(stdout, LOG_INFO, APPID, fmt, ##__VA_ARGS__)
 
 #define LogTPMERR(a,b,c)
+#define LogDebugBacktrace()
 #endif
 
 void LogBlobData(char *appid, unsigned long sizeOfBlob, unsigned char *blob);

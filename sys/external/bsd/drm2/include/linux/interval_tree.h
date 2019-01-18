@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.7.2.2 2018/09/06 06:56:36 pgoyette Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.7.2.3 2019/01/18 08:50:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -119,9 +119,9 @@ interval_tree_iter_first(struct rb_root *root, unsigned long start,
 	node = rb_tree_find_node_geq(&root->rbr_tree, &start);
 	if (node == NULL)
 		return NULL;
-	KASSERT(node->start <= start);
 	if (last < node->start)
 		return NULL;
+	KASSERT(node->start <= last && node->last >= start);
 
 	return node;
 }
@@ -141,9 +141,9 @@ interval_tree_iter_next(struct rb_root *root, struct interval_tree_node *node,
 	next = rb_tree_iterate(&root->rbr_tree, node, RB_DIR_RIGHT);
 	if (next == NULL)
 		return NULL;
-	KASSERT(node->start <= start);
-	if (last < node->start)
+	if (last < next->start)
 		return NULL;
+	KASSERT(next->start <= last && next->last >= start);
 
 	return next;
 }

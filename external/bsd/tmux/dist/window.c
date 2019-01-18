@@ -339,7 +339,7 @@ window_create_spawn(const char *name, int argc, char **argv, const char *path,
 	struct window_pane	*wp;
 
 	w = window_create(sx, sy);
-	wp = window_add_pane(w, NULL, 0, hlimit);
+	wp = window_add_pane(w, NULL, 0, 0, hlimit);
 	layout_init(w, wp);
 
 	if (window_pane_spawn(wp, argc, argv, path, shell, cwd,
@@ -608,7 +608,7 @@ window_unzoom(struct window *w)
 
 struct window_pane *
 window_add_pane(struct window *w, struct window_pane *other, int before,
-    u_int hlimit)
+    int full_size, u_int hlimit)
 {
 	struct window_pane	*wp;
 
@@ -621,10 +621,16 @@ window_add_pane(struct window *w, struct window_pane *other, int before,
 		TAILQ_INSERT_HEAD(&w->panes, wp, entry);
 	} else if (before) {
 		log_debug("%s: @%u before %%%u", __func__, w->id, wp->id);
-		TAILQ_INSERT_BEFORE(other, wp, entry);
+		if (full_size)
+			TAILQ_INSERT_HEAD(&w->panes, wp, entry);
+		else
+			TAILQ_INSERT_BEFORE(other, wp, entry);
 	} else {
 		log_debug("%s: @%u after %%%u", __func__, w->id, wp->id);
-		TAILQ_INSERT_AFTER(&w->panes, other, wp, entry);
+		if (full_size)
+			TAILQ_INSERT_TAIL(&w->panes, wp, entry);
+		else
+			TAILQ_INSERT_AFTER(&w->panes, other, wp, entry);
 	}
 	return (wp);
 }
@@ -892,7 +898,6 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 #ifdef HAVE_UTEMPTER
 	char		 s[32];
 #endif
-	int		 i;
 	sigset_t	 set, oldset;
 
 	if (wp->fd != -1) {
@@ -912,12 +917,14 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 		free(__UNCONST(wp->cwd));
 		wp->cwd = xstrdup(cwd);
 	}
+	wp->flags &= ~(PANE_STATUSREADY|PANE_STATUSDRAWN);
 
 	cmd = cmd_stringify_argv(wp->argc, wp->argv);
-	log_debug("spawn: %s -- %s", wp->shell, cmd);
-	for (i = 0; i < wp->argc; i++)
-		log_debug("spawn: argv[%d] = %s", i, wp->argv[i]);
-	environ_log(env, "spawn: ");
+	log_debug("%s: shell=%s", __func__, wp->shell);
+	log_debug("%s: cmd=%s", __func__, cmd);
+	log_debug("%s: cwd=%s", __func__, cwd);
+	cmd_log_argv(wp->argc, wp->argv, __func__);
+	environ_log(env, "%s: environment ", __func__);
 
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = screen_size_x(&wp->base);
@@ -938,10 +945,13 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 		proc_clear_signals(server_proc, 1);
 		sigprocmask(SIG_SETMASK, &oldset, NULL);
 
-		if (chdir(wp->cwd) != 0) {
-			if ((home = find_home()) == NULL || chdir(home) != 0)
-				chdir("/");
-		}
+		cwd = NULL;
+		if (chdir(wp->cwd) == 0)
+			cwd = wp->cwd;
+		else if ((home = find_home()) != NULL && chdir(home) == 0)
+			cwd = home;
+		else
+			chdir("/");
 
 		if (tcgetattr(STDIN_FILENO, &tio2) != 0)
 			fatal("tcgetattr failed");
@@ -959,6 +969,8 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 
 		if (path != NULL)
 			environ_set(env, "PATH", "%s", path);
+		if (cwd != NULL)
+			environ_set(env, "PWD", "%s", cwd);
 		environ_set(env, "TMUX_PANE", "%%%u", wp->id);
 		environ_push(env);
 
@@ -993,6 +1005,8 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 		execl(wp->shell, argv0, (char *)NULL);
 		fatal("execl failed");
 	}
+	log_debug("%s: master=%s", __func__, ttyname(wp->fd));
+	log_debug("%s: slave=%s", __func__, wp->tty);
 
 #ifdef HAVE_UTEMPTER
 	xsnprintf(s, sizeof s, "tmux(%lu).%%%u", (long) getpid(), wp->id);

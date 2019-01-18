@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muevar.h,v 1.2.4.3 2018/12/26 14:02:01 pgoyette Exp $	*/
+/*	$NetBSD: if_muevar.h,v 1.2.4.4 2019/01/18 08:50:43 pgoyette Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -31,9 +31,9 @@ struct mue_chain {
 };
 
 struct mue_cdata {
-#define MUE_TX_LIST_CNT	1
+#define MUE_TX_LIST_CNT	4
 	struct mue_chain	mue_tx_chain[MUE_TX_LIST_CNT];
-#define MUE_RX_LIST_CNT	1
+#define MUE_RX_LIST_CNT	4
 	struct mue_chain	mue_rx_chain[MUE_RX_LIST_CNT];
 	int			mue_tx_prod;
 	int			mue_tx_cons;

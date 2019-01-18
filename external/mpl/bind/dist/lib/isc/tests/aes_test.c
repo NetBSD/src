@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_test.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: aes_test.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,15 +11,19 @@
  * information regarding copyright ownership.
  */
 
-
-/* ! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
 
 #include <stdio.h>
 #include <string.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/aes.h>
 #include <isc/buffer.h>
@@ -28,8 +32,6 @@
 #include <isc/region.h>
 #include <isc/string.h>
 #include <isc/util.h>
-
-#ifdef ISC_PLATFORM_WANTAES
 
 /*
  * Test data from NIST KAT
@@ -59,15 +61,15 @@ tohexstr(unsigned char *d, char *out) {
 }
 
 size_t
-fromhexstr(const char *in, unsigned char *d)
-{
+fromhexstr(const char *in, unsigned char *d) {
 	isc_buffer_t b;
 	isc_result_t ret;
 
 	isc_buffer_init(&b, d, ISC_AES256_KEYLENGTH + 1);
 	ret = isc_hex_decodestring(in, &b);
-	if (ret != ISC_R_SUCCESS)
-		return 0;
+	if (ret != ISC_R_SUCCESS) {
+		return (0);
+	}
 	return isc_buffer_usedlength(&b);
 }
 
@@ -77,14 +79,9 @@ typedef struct aes_testcase {
 	const char *result;
 } aes_testcase_t;
 
-
-ATF_TC(isc_aes128);
-ATF_TC_HEAD(isc_aes128, tc) {
-	atf_tc_set_md_var(tc, "descr", "AES 128 test vectors");
-}
-ATF_TC_BODY(isc_aes128, tc) {
-	UNUSED(tc);
-
+/* AES 128 test vectors */
+static void
+isc_aes128_test(void **state) {
 	aes_testcase_t testcases[] = {
 		/* Test 1 (KAT ECBVarTxt128 #3) */
 		{
@@ -127,26 +124,24 @@ ATF_TC_BODY(isc_aes128, tc) {
 
 	aes_testcase_t *testcase = testcases;
 
+	UNUSED(state);
+
 	while (testcase->key != NULL) {
 		len = fromhexstr(testcase->key, key);
-		ATF_CHECK_EQ(len, ISC_AES128_KEYLENGTH);
+		assert_int_equal(len, ISC_AES128_KEYLENGTH);
 		len = fromhexstr(testcase->input, plaintext);
-		ATF_CHECK_EQ(len, ISC_AES_BLOCK_LENGTH);
+		assert_int_equal(len, ISC_AES_BLOCK_LENGTH);
 		isc_aes128_crypt(key, plaintext, ciphertext);
-		ATF_CHECK(tohexstr(ciphertext, str) == ISC_R_SUCCESS);
-		ATF_CHECK_STREQ(str, testcase->result);
+		assert_int_equal(tohexstr(ciphertext, str), ISC_R_SUCCESS);
+		assert_string_equal(str, testcase->result);
 
 		testcase++;
 	}
 }
 
-ATF_TC(isc_aes192);
-ATF_TC_HEAD(isc_aes192, tc) {
-	atf_tc_set_md_var(tc, "descr", "AES 192 test vectors");
-}
-ATF_TC_BODY(isc_aes192, tc) {
-	UNUSED(tc);
-
+/* AES 192 test vectors */
+static void
+isc_aes192_test(void **state) {
 	aes_testcase_t testcases[] = {
 		/* Test 1 (KAT ECBVarTxt192 #3) */
 		{
@@ -189,26 +184,24 @@ ATF_TC_BODY(isc_aes192, tc) {
 
 	aes_testcase_t *testcase = testcases;
 
+	UNUSED(state);
+
 	while (testcase->key != NULL) {
 		len = fromhexstr(testcase->key, key);
-		ATF_CHECK_EQ(len, ISC_AES192_KEYLENGTH);
+		assert_int_equal(len, ISC_AES192_KEYLENGTH);
 		len = fromhexstr(testcase->input, plaintext);
-		ATF_CHECK_EQ(len, ISC_AES_BLOCK_LENGTH);
+		assert_int_equal(len, ISC_AES_BLOCK_LENGTH);
 		isc_aes192_crypt(key, plaintext, ciphertext);
-		ATF_CHECK(tohexstr(ciphertext, str) == ISC_R_SUCCESS);
-		ATF_CHECK_STREQ(str, testcase->result);
+		assert_int_equal(tohexstr(ciphertext, str), ISC_R_SUCCESS);
+		assert_string_equal(str, testcase->result);
 
 		testcase++;
 	}
 }
 
-ATF_TC(isc_aes256);
-ATF_TC_HEAD(isc_aes256, tc) {
-	atf_tc_set_md_var(tc, "descr", "AES 256 test vectors");
-}
-ATF_TC_BODY(isc_aes256, tc) {
-	UNUSED(tc);
-
+/* AES 256 test vectors */
+static void
+isc_aes256_test(void **state) {
 	aes_testcase_t testcases[] = {
 		/* Test 1 (KAT ECBVarTxt256 #3) */
 		{
@@ -257,40 +250,40 @@ ATF_TC_BODY(isc_aes256, tc) {
 
 	aes_testcase_t *testcase = testcases;
 
+	UNUSED(state);
+
 	while (testcase->key != NULL) {
 		len = fromhexstr(testcase->key, key);
-		ATF_CHECK_EQ(len, ISC_AES256_KEYLENGTH);
+		assert_int_equal(len, ISC_AES256_KEYLENGTH);
 		len = fromhexstr(testcase->input, plaintext);
-		ATF_CHECK_EQ(len, ISC_AES_BLOCK_LENGTH);
+		assert_int_equal(len, ISC_AES_BLOCK_LENGTH);
 		isc_aes256_crypt(key, plaintext, ciphertext);
-		ATF_CHECK(tohexstr(ciphertext, str) == ISC_R_SUCCESS);
-		ATF_CHECK_STREQ(str, testcase->result);
+		assert_int_equal(tohexstr(ciphertext, str), ISC_R_SUCCESS);
+		assert_string_equal(str, testcase->result);
 
 		testcase++;
 	}
 }
-#else
-ATF_TC(untested);
-ATF_TC_HEAD(untested, tc) {
-	atf_tc_set_md_var(tc, "descr", "skipping aes test");
-}
-ATF_TC_BODY(untested, tc) {
-	UNUSED(tc);
-	atf_tc_skip("AES not available");
-}
-#endif
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-#ifdef ISC_PLATFORM_WANTAES
-	ATF_TP_ADD_TC(tp, isc_aes128);
-	ATF_TP_ADD_TC(tp, isc_aes192);
-	ATF_TP_ADD_TC(tp, isc_aes256);
-#else
-	ATF_TP_ADD_TC(tp, untested);
-#endif
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(isc_aes128_test),
+		cmocka_unit_test(isc_aes192_test),
+		cmocka_unit_test(isc_aes256_test),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

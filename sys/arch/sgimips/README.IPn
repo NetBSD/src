@@ -1,4 +1,4 @@
-$NetBSD: README.IPn,v 1.10 2009/02/10 06:12:27 rumble Exp $
+$NetBSD: README.IPn,v 1.10.62.1 2019/01/18 08:50:22 pgoyette Exp $
 
 Arch (kernel)	Models				Codename
 -------------	------				--------
@@ -30,6 +30,7 @@ IP35		SN1 (?)
 
 Architecture	ABI	Bootstrap Load Address	Kernel Load Address
 ------------	---	----------------------	-------------------
+IP12		32	0x80368000		0x80002000
 IP19 IP21 IP25	32	0x80004000		0x80100000
 IP19 IP21 IP25	64	0xa800000000004000	0xa800000000180000
 IP20 IP22 IP24	32	0x88002000		0x88069000

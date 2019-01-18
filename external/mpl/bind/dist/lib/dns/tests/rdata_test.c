@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.2.2.2 2018/09/06 06:55:03 pgoyette Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.2.2.3 2019/01/18 08:49:56 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,71 +11,101 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/hex.h>
 #include <isc/lex.h>
+#include <isc/stdio.h>
 #include <isc/types.h>
+#include <isc/util.h>
 
-#include <dns/callbacks.h>
 #include <dns/rdata.h>
 
 #include "dnstest.h"
 
-/*****
- ***** Commonly used structures
- *****/
+/*
+ * An array of these structures is passed to compare_ok().
+ */
+struct compare_ok {
+	const char *text1;		/* text passed to fromtext_*() */
+	const char *text2;		/* text passed to fromtext_*() */
+	int answer;			/* -1, 0, 1 */
+	int lineno;			/* source line defining this RDATA */
+};
+typedef struct compare_ok compare_ok_t;
+
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
 
 /*
  * An array of these structures is passed to check_text_ok().
  */
-struct text_ok {
+typedef struct text_ok {
 	const char *text_in;		/* text passed to fromtext_*() */
 	const char *text_out;		/* text expected from totext_*();
 					   NULL indicates text_in is invalid */
-	int lineno;			/* source line defining this RDATA */
-};
-typedef struct text_ok text_ok_t;
+} text_ok_t;
 
 /*
  * An array of these structures is passed to check_wire_ok().
  */
-struct wire_ok {
+typedef struct wire_ok {
 	unsigned char data[512];	/* RDATA in wire format */
 	size_t len;			/* octets of data to parse */
-	isc_boolean_t ok;		/* is this RDATA valid? */
-	int lineno;			/* source line defining this RDATA */
-};
-typedef struct wire_ok wire_ok_t;
+	bool ok;			/* is this RDATA valid? */
+} wire_ok_t;
 
-/*****
- ***** Convenience macros for creating the above structures
- *****/
+#define COMPARE(r1, r2, answer) \
+	{ r1, r2, answer, __LINE__ }
+#define COMPARE_SENTINEL() \
+	{ NULL, NULL, 0, __LINE__ }
 
 #define TEXT_VALID_CHANGED(data_in, data_out) \
-				{ data_in, data_out, __LINE__ }
-#define TEXT_VALID(data)	{ data, data, __LINE__ }
-#define TEXT_INVALID(data)	{ data, NULL, __LINE__ }
+				{ data_in, data_out }
+#define TEXT_VALID(data)	{ data, data }
+#define TEXT_INVALID(data)	{ data, NULL }
 #define TEXT_SENTINEL()		TEXT_INVALID(NULL)
 
 #define VARGC(...)		(sizeof((unsigned char[]){ __VA_ARGS__ }))
 #define WIRE_TEST(ok, ...)	{					      \
 					{ __VA_ARGS__ }, VARGC(__VA_ARGS__),  \
-					ok, __LINE__			      \
+					ok				      \
 				}
-#define WIRE_VALID(...)		WIRE_TEST(ISC_TRUE, __VA_ARGS__)
-#define WIRE_INVALID(...)	WIRE_TEST(ISC_FALSE, __VA_ARGS__)
-#define WIRE_SENTINEL()		WIRE_TEST(ISC_FALSE)
-
-/*****
- ***** Checking functions used by test cases
- *****/
+#define WIRE_VALID(...)		WIRE_TEST(true, __VA_ARGS__)
+#define WIRE_INVALID(...)	WIRE_TEST(false, __VA_ARGS__)
+#define WIRE_SENTINEL()		WIRE_TEST(false)
 
 /*
  * Test whether converting rdata to a type-specific struct and then back to
@@ -87,52 +117,37 @@ typedef struct wire_ok wire_ok_t;
  * check_text_ok_single() and check_wire_ok_single().
  */
 static void
-check_struct_conversions(dns_rdata_t *rdata, size_t structsize, int lineno) {
+check_struct_conversions(dns_rdata_t *rdata, size_t structsize) {
 	dns_rdataclass_t rdclass = rdata->rdclass;
 	dns_rdatatype_t type = rdata->type;
 	isc_result_t result;
 	isc_buffer_t target;
 	void *rdata_struct;
-	char buf[1024], hex[BUFSIZ];
+	char buf[1024];
 
 	rdata_struct = isc_mem_allocate(mctx, structsize);
-	ATF_REQUIRE(rdata_struct != NULL);
+	assert_non_null(rdata_struct);
 
 	/*
 	 * Convert from uncompressed wire form into type-specific struct.
 	 */
 	result = dns_rdata_tostruct(rdata, rdata_struct, NULL);
-	ATF_REQUIRE_EQ_MSG(result, ISC_R_SUCCESS,
-			   "%s (%u): dns_rdata_tostruct() failed",
-			   dns_test_tohex(rdata->data, rdata->length,
-					  hex, sizeof(hex)),
-			   rdata->length);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
 	/*
 	 * Convert from type-specific struct into uncompressed wire form.
 	 */
 	isc_buffer_init(&target, buf, sizeof(buf));
 	result = dns_rdata_fromstruct(NULL, rdclass, type, rdata_struct,
 				      &target);
-	ATF_REQUIRE_EQ_MSG(result, ISC_R_SUCCESS,
-			   "line %d: %s (%u): dns_rdata_fromstruct() failed",
-			   lineno, dns_test_tohex(rdata->data, rdata->length,
-						  hex, sizeof(hex)),
-			   rdata->length);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
 	/*
 	 * Ensure results are consistent.
 	 */
-	ATF_REQUIRE_EQ_MSG(isc_buffer_usedlength(&target), rdata->length,
-			   "line %d: %s (%u): wire form data length changed "
-			   "after converting to type-specific struct and back",
-			   lineno, dns_test_tohex(rdata->data, rdata->length,
-						  hex, sizeof(hex)),
-			   rdata->length);
-	ATF_REQUIRE_EQ_MSG(memcmp(buf, rdata->data, rdata->length), 0,
-			   "line %d: %s (%u): wire form data different after "
-			   "converting to type-specific struct and back",
-			   lineno, dns_test_tohex(rdata->data, rdata->length,
-						  hex, sizeof(hex)),
-			   rdata->length);
+	assert_int_equal(isc_buffer_usedlength(&target), rdata->length);
+
+	assert_memory_equal(buf, rdata->data, rdata->length);
 
 	isc_mem_free(mctx, rdata_struct);
 }
@@ -157,21 +172,16 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	 */
 	result = dns_test_rdatafromstring(&rdata, rdclass, type, buf_fromtext,
 					  sizeof(buf_fromtext),
-					  text_ok->text_in);
+					  text_ok->text_in, false);
 	/*
 	 * Check whether result is as expected.
 	 */
 	if (text_ok->text_out != NULL) {
-		ATF_REQUIRE_EQ_MSG(result, ISC_R_SUCCESS,
-				   "line %d: '%s': "
-				   "expected success, got failure",
-				   text_ok->lineno, text_ok->text_in);
+		assert_int_equal(result, ISC_R_SUCCESS);
 	} else {
-		ATF_REQUIRE_MSG(result != ISC_R_SUCCESS,
-				"line %d: '%s': "
-				"expected failure, got success",
-				text_ok->lineno, text_ok->text_in);
+		assert_int_not_equal(result, ISC_R_SUCCESS);
 	}
+
 	/*
 	 * If text form RDATA was not parsed correctly, performing any
 	 * additional checks is pointless.
@@ -185,20 +195,14 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	 */
 	isc_buffer_init(&target, buf_totext, sizeof(buf_totext));
 	result = dns_rdata_totext(&rdata, NULL, &target);
-	ATF_REQUIRE_EQ_MSG(result, ISC_R_SUCCESS,
-			   "line %d: '%s': "
-			   "failed to convert rdata back to text form",
-			   text_ok->lineno, text_ok->text_in);
-	ATF_REQUIRE_EQ_MSG(strcmp(buf_totext, text_ok->text_out), 0,
-			   "line %d: '%s': "
-			   "converts back to '%s', expected '%s'",
-			   text_ok->lineno, text_ok->text_in, buf_totext,
-			   text_ok->text_out);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf_totext, text_ok->text_out);
+
 	/*
 	 * Perform two-way conversion checks between uncompressed wire form and
 	 * type-specific struct.
 	 */
-	check_struct_conversions(&rdata, structsize, text_ok->lineno);
+	check_struct_conversions(&rdata, structsize);
 }
 
 /*
@@ -214,7 +218,6 @@ check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
 	dns_decompress_t dctx;
 	isc_result_t result;
 	dns_rdata_t rdata;
-	char hex[BUFSIZ];
 
 	/*
 	 * Set up len-octet buffer pointing at data.
@@ -238,28 +241,16 @@ check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
 	 * Check whether result is as expected.
 	 */
 	if (wire_ok->ok) {
-		ATF_REQUIRE_EQ_MSG(result, ISC_R_SUCCESS,
-				   "line %d: %s (%lu): "
-				   "expected success, got failure",
-				   wire_ok->lineno,
-				   dns_test_tohex(wire_ok->data, wire_ok->len,
-						  hex, sizeof(hex)),
-				   (unsigned long)wire_ok->len);
+		assert_int_equal(result, ISC_R_SUCCESS);
 	} else {
-		ATF_REQUIRE_MSG(result != ISC_R_SUCCESS,
-				"line %d: %s (%lu): "
-				"expected failure, got success",
-				wire_ok->lineno,
-				dns_test_tohex(wire_ok->data, wire_ok->len,
-					       hex, sizeof(hex)),
-				(unsigned long)wire_ok->len);
+		assert_int_not_equal(result, ISC_R_SUCCESS);
 	}
 	/*
 	 * If data was parsed correctly, perform two-way conversion checks
 	 * between uncompressed wire form and type-specific struct.
 	 */
 	if (result == ISC_R_SUCCESS) {
-		check_struct_conversions(&rdata, structsize, wire_ok->lineno);
+		check_struct_conversions(&rdata, structsize);
 	}
 }
 
@@ -291,7 +282,7 @@ check_text_ok(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
  * for given RR class and type behaves as expected.
  */
 static void
-check_wire_ok(const wire_ok_t *wire_ok, isc_boolean_t empty_ok,
+check_wire_ok(const wire_ok_t *wire_ok, bool empty_ok,
 	      dns_rdataclass_t rdclass, dns_rdatatype_t type,
 	      size_t structsize)
 {
@@ -312,10 +303,78 @@ check_wire_ok(const wire_ok_t *wire_ok, isc_boolean_t empty_ok,
 }
 
 /*
+ * Check that two records compare as expected with dns_rdata_compare().
+ */
+static void
+check_compare_ok_single(const compare_ok_t *compare_ok,
+			dns_rdataclass_t rdclass, dns_rdatatype_t type)
+{
+	dns_rdata_t rdata1 = DNS_RDATA_INIT, rdata2 = DNS_RDATA_INIT;
+	unsigned char buf1[1024], buf2[1024];
+	isc_result_t result;
+	int answer;
+
+	result = dns_test_rdatafromstring(&rdata1, rdclass, type,
+					  buf1, sizeof(buf1),
+					  compare_ok->text1, false);
+	if (result != ISC_R_SUCCESS) {
+		fail_msg("# line %d: '%s': expected success, got failure",
+			 compare_ok->lineno, compare_ok->text1);
+	}
+
+	result = dns_test_rdatafromstring(&rdata2, rdclass, type,
+					  buf2, sizeof(buf2),
+					  compare_ok->text2, false);
+
+	if (result != ISC_R_SUCCESS) {
+		fail_msg("# line %d: '%s': expected success, got failure",
+			 compare_ok->lineno, compare_ok->text2);
+	}
+
+	answer = dns_rdata_compare(&rdata1, &rdata2);
+	if (compare_ok->answer == 0 && answer != 0) {
+		fail_msg("# line %d: dns_rdata_compare('%s', '%s'): "
+			 "expected equal, got %s",
+			 compare_ok->lineno,
+			 compare_ok->text1, compare_ok->text2,
+			 (answer > 0) ? "greater than" : "less than");
+	}
+	if (compare_ok->answer < 0 && answer >= 0) {
+		fail_msg("# line %d: dns_rdata_compare('%s', '%s'): "
+			 "expected less than, got %s",
+			 compare_ok->lineno,
+			 compare_ok->text1, compare_ok->text2,
+			 (answer == 0) ? "equal" : "greater than");
+	}
+	if (compare_ok->answer > 0 && answer <= 0) {
+		fail_msg("line %d: dns_rdata_compare('%s', '%s'): "
+			 "expected greater than, got %s",
+			 compare_ok->lineno,
+			 compare_ok->text1, compare_ok->text2,
+			 (answer == 0) ? "equal" : "less than");
+	}
+}
+
+/*
+ * Check that all the records sets in compare_ok compare as expected
+ * with dns_rdata_compare().
+ */
+static void
+check_compare_ok(const compare_ok_t *compare_ok,
+		 dns_rdataclass_t rdclass, dns_rdatatype_t type)
+{
+	size_t i;
+	/*
+	 * Check all entries in the supplied array.
+	 */
+	for (i = 0; compare_ok[i].text1 != NULL; i++) {
+		check_compare_ok_single(&compare_ok[i], rdclass, type);
+	}
+}
+
+/*
  * Test whether supplied sets of text form and/or wire form RDATA are handled
- * as expected.  This is just a helper function which should be the only
- * function called for a test case using it, due to the use of dns_test_begin()
- * and dns_test_end().
+ * as expected.
  *
  * The empty_ok argument denotes whether an attempt to parse a zero-length wire
  * data buffer should succeed or not (it is valid for some RR types).  There is
@@ -325,27 +384,185 @@ check_wire_ok(const wire_ok_t *wire_ok, isc_boolean_t empty_ok,
  */
 static void
 check_rdata(const text_ok_t *text_ok, const wire_ok_t *wire_ok,
-	    isc_boolean_t empty_ok, dns_rdataclass_t rdclass,
+	    const compare_ok_t *compare_ok,
+	    bool empty_ok, dns_rdataclass_t rdclass,
 	    dns_rdatatype_t type, size_t structsize)
 {
-	isc_result_t result;
-
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
 	if (text_ok != NULL) {
 		check_text_ok(text_ok, rdclass, type, structsize);
 	}
 	if (wire_ok != NULL) {
 		check_wire_ok(wire_ok, empty_ok, rdclass, type, structsize);
 	}
-
-	dns_test_end();
+	if (compare_ok != NULL) {
+		check_compare_ok(compare_ok, rdclass, type);
+	}
 }
 
-/*****
- ***** Individual unit tests
- *****/
+/* APL RDATA manipulations */
+static void
+apl(void **state) {
+	text_ok_t text_ok[] = {
+		/* empty list */
+		TEXT_VALID(""),
+		/* min,max prefix IPv4 */
+		TEXT_VALID("1:0.0.0.0/0"),
+		TEXT_VALID("1:127.0.0.1/32"),
+		/* min,max prefix IPv6 */
+		TEXT_VALID("2:::/0"),
+		TEXT_VALID("2:::1/128"),
+		/* negated */
+		TEXT_VALID("!1:0.0.0.0/0"),
+		TEXT_VALID("!1:127.0.0.1/32"),
+		TEXT_VALID("!2:::/0"),
+		TEXT_VALID("!2:::1/128"),
+		/* bits set after prefix length - not disallowed */
+		TEXT_VALID("1:127.0.0.0/0"),
+		TEXT_VALID("2:8000::/0"),
+		/* multiple */
+		TEXT_VALID("1:0.0.0.0/0 1:127.0.0.1/32"),
+		TEXT_VALID("1:0.0.0.0/0 !1:127.0.0.1/32"),
+		/* family 0, prefix 0, positive */
+		TEXT_VALID("\\# 4 00000000"),
+		/* family 0, prefix 0, negative */
+		TEXT_VALID("\\# 4 00000080"),
+		/* prefix too long */
+		TEXT_INVALID("1:0.0.0.0/33"),
+		TEXT_INVALID("2:::/129"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+	wire_ok_t wire_ok[] = {
+		/* zero length */
+		WIRE_VALID(),
+		/* prefix too big IPv4 */
+		WIRE_INVALID(0x00, 0x01, 33U, 0x00),
+		/* prefix too big IPv6 */
+		WIRE_INVALID(0x00, 0x02, 129U, 0x00),
+		/* trailing zero octet in afdpart */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x01, 0x00),
+		/*
+		 * Sentinel.
+		 */
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, wire_ok, NULL, true, dns_rdataclass_in,
+		    dns_rdatatype_apl, sizeof(dns_rdata_in_apl_t));
+}
+
+/*
+ * http://broadband-forum.org/ftp/pub/approved-specs/af-saa-0069.000.pdf
+ *
+ * ATMA RR’s have the following RDATA format:
+ *
+ *                                           1  1  1  1  1  1
+ *             0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+ *          +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+ *          |          FORMAT       |                       |
+ *          +--+--+--+--+--+--+--+--+                       |
+ *          /                    ADDRESS                    /
+ *          |                                               |
+ *          +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+ *
+ * The fields have the following meaning:
+ *
+ * * FORMAT: One octet that indicates the format of ADDRESS. The two
+ *   possible values for FORMAT are value 0 indicating ATM End System Address
+ *   (AESA) format and value 1 indicating E.164 format.
+ *
+ * * ADDRESS: Variable length string of octets containing the ATM address of
+ *   the node to which this RR pertains.
+ *
+ * When the format value is 0, indicating that the address is in AESA format,
+ * the address is coded as described in ISO 8348/AD 2 using the preferred
+ * binary encoding of the ISO NSAP format. When the format value is 1,
+ * indicating that the address is in E.164 format, the Address/Number Digits
+ * appear in the order in which they would be entered on a numeric keypad.
+ * Digits are coded in IA5 characters with the leftmost bit of each digit set
+ * to 0.  This ATM address appears in ATM End System Address Octets field (AESA
+ * format) or the Address/Number Digits field (E.164 format) of the Called
+ * party number information element [ATMUNI3.1]. Subaddress information is
+ * intentionally not included because E.164 subaddress information is used for
+ * routing.
+ *
+ * ATMA RRs cause no additional section processing.
+ */
+static void
+atma(void **state) {
+	text_ok_t text_ok[] = {
+		TEXT_VALID("00"),
+		TEXT_VALID_CHANGED("0.0", "00"),
+		/*
+		 * multiple consecutive periods
+		 */
+		TEXT_INVALID("0..0"),
+		/*
+		 * trailing period
+		 */
+		TEXT_INVALID("00."),
+		/*
+		 * leading period
+		 */
+		TEXT_INVALID(".00"),
+		/*
+		 * Not full octets.
+		 */
+		TEXT_INVALID("000"),
+		/*
+		 * E.164
+		 */
+		TEXT_VALID("+61200000000"),
+		/*
+		 * E.164 with periods
+		 */
+		TEXT_VALID_CHANGED("+61.2.0000.0000", "+61200000000"),
+		/*
+		 * E.164 with period at end
+		 */
+		TEXT_INVALID("+61200000000."),
+		/*
+		 * E.164 with multiple consecutive periods
+		 */
+		TEXT_INVALID("+612..00000000"),
+		/*
+		 * E.164 with period before the leading digit.
+		 */
+		TEXT_INVALID("+.61200000000"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+	wire_ok_t wire_ok[] = {
+		/*
+		 * Too short.
+		 */
+		WIRE_INVALID(0x00),
+		WIRE_INVALID(0x01),
+		/*
+		 * all digits
+		 */
+		WIRE_VALID(0x01, '6', '1', '2', '0', '0', '0'),
+		/*
+		 * non digit
+		 */
+		WIRE_INVALID(0x01, '+', '6', '1', '2', '0', '0', '0'),
+		/*
+		 * Sentinel.
+		 */
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_atma, sizeof(dns_rdata_in_atma_t));
+}
 
 /*
  * CSYNC tests.
@@ -411,11 +628,8 @@ check_rdata(const text_ok_t *text_ok, const wire_ok_t *wire_ok,
  *    must understand the semantics associated with a bit in the Type Bit
  *    Map field that has been set to 1.
  */
-ATF_TC(csync);
-ATF_TC_HEAD(csync, tc) {
-	atf_tc_set_md_var(tc, "descr", "CSYNC RDATA manipulations");
-}
-ATF_TC_BODY(csync, tc) {
+static void
+csync(void **state) {
 	text_ok_t text_ok[] = {
 		TEXT_INVALID(""),
 		TEXT_INVALID("0"),
@@ -472,9 +686,9 @@ ATF_TC_BODY(csync, tc) {
 		WIRE_SENTINEL()
 	};
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	check_rdata(text_ok, wire_ok, ISC_FALSE, dns_rdataclass_in,
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_csync, sizeof(dns_rdata_csync_t));
 }
 
@@ -538,11 +752,8 @@ ATF_TC_BODY(csync, tc) {
  *    character ("-", ASCII 45).  White space is permitted within Base64
  *    data.
  */
-ATF_TC(doa);
-ATF_TC_HEAD(doa, tc) {
-	atf_tc_set_md_var(tc, "descr", "DOA RDATA manipulations");
-}
-ATF_TC_BODY(doa, tc) {
+static void
+doa(void **state) {
 	text_ok_t text_ok[] = {
 		/*
 		 * Valid, non-empty DOA-DATA.
@@ -690,9 +901,9 @@ ATF_TC_BODY(doa, tc) {
 		WIRE_SENTINEL()
 	};
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	check_rdata(text_ok, wire_ok, ISC_FALSE, dns_rdataclass_in,
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_doa, sizeof(dns_rdata_doa_t));
 }
 
@@ -756,12 +967,8 @@ ATF_TC_BODY(doa, tc) {
  *    All fields are in network byte order ("big-endian", per [RFC1700],
  *    Data Notation).
  */
-ATF_TC(edns_client_subnet);
-ATF_TC_HEAD(edns_client_subnet, tc) {
-	atf_tc_set_md_var(tc, "descr",
-			  "OPT RDATA with EDNS Client Subnet manipulations");
-}
-ATF_TC_BODY(edns_client_subnet, tc) {
+static void
+edns_client_subnet(void **state) {
 	wire_ok_t wire_ok[] = {
 		/*
 		 * Option code with no content.
@@ -856,21 +1063,55 @@ ATF_TC_BODY(edns_client_subnet, tc) {
 		WIRE_SENTINEL()
 	};
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	check_rdata(NULL, wire_ok, ISC_TRUE, dns_rdataclass_in,
+	check_rdata(NULL, wire_ok, NULL, true, dns_rdataclass_in,
 		    dns_rdatatype_opt, sizeof(dns_rdata_opt_t));
 }
 
 /*
- * Successful load test.
+ * http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
+ *
+ * The RDATA portion of both the NIMLOC and EID records contains
+ * uninterpreted binary data.  The representation in the text master file
+ * is an even number of hex characters (0 to 9, a to f), case is not
+ * significant.  For readability, whitespace may be included in the value
+ * field and should be ignored when reading a master file.
  */
-ATF_TC(hip);
-ATF_TC_HEAD(hip, tc) {
-	atf_tc_set_md_var(tc, "descr", "that a oversized HIP record will "
-				       "be rejected");
+static void
+eid(void **state) {
+	text_ok_t text_ok[] = {
+		TEXT_VALID("AABBCC"),
+		TEXT_VALID_CHANGED("AA bb cc", "AABBCC"),
+		TEXT_INVALID("aab"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+	wire_ok_t wire_ok[] = {
+		/*
+		 * Too short.
+		 */
+		WIRE_INVALID(),
+		WIRE_VALID(0x00),
+		/*
+		 * Sentinel.
+		 */
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_eid, sizeof(dns_rdata_in_eid_t));
 }
-ATF_TC_BODY(hip, tc) {
+
+/*
+ * test that an oversized HIP record will be rejected
+ */
+static void
+hip(void **state) {
 	unsigned char hipwire[DNS_RDATA_MAXLENGTH] = {
 				    0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
 				    0x04, 0x41, 0x42, 0x43, 0x44, 0x00 };
@@ -881,10 +1122,7 @@ ATF_TC_BODY(hip, tc) {
 	isc_result_t result;
 	size_t i;
 
-	UNUSED(tc);
-
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	/*
 	 * Fill the rest of input buffer with compression pointers.
@@ -904,9 +1142,7 @@ ATF_TC_BODY(hip, tc) {
 				    dns_rdatatype_hip, &source, &dctx,
 				    0, &target);
 	dns_decompress_invalidate(&dctx);
-	ATF_REQUIRE_EQ(result, DNS_R_FORMERR);
-
-	dns_test_end();
+	assert_int_equal(result, DNS_R_FORMERR);
 }
 
 /*
@@ -970,11 +1206,8 @@ ATF_TC_BODY(hip, tc) {
  *    as one or two <character-string>s, i.e., count followed by
  *    characters.
  */
-ATF_TC(isdn);
-ATF_TC_HEAD(isdn, tc) {
-	atf_tc_set_md_var(tc, "descr", "ISDN RDATA manipulations");
-}
-ATF_TC_BODY(isdn, tc) {
+static void
+isdn(void **state) {
 	wire_ok_t wire_ok[] = {
 		/*
 		 * "".
@@ -998,10 +1231,48 @@ ATF_TC_BODY(isdn, tc) {
 		WIRE_SENTINEL()
 	};
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	check_rdata(NULL, wire_ok, ISC_FALSE, dns_rdataclass_in,
+	check_rdata(NULL, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_isdn, sizeof(dns_rdata_isdn_t));
+}
+
+/*
+ * http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
+ *
+ * The RDATA portion of both the NIMLOC and EID records contains
+ * uninterpreted binary data.  The representation in the text master file
+ * is an even number of hex characters (0 to 9, a to f), case is not
+ * significant.  For readability, whitespace may be included in the value
+ * field and should be ignored when reading a master file.
+ */
+static void
+nimloc(void **state) {
+	text_ok_t text_ok[] = {
+		TEXT_VALID("AABBCC"),
+		TEXT_VALID_CHANGED("AA bb cc", "AABBCC"),
+		TEXT_INVALID("aab"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+	wire_ok_t wire_ok[] = {
+		/*
+		 * Too short.
+		 */
+		WIRE_INVALID(),
+		WIRE_VALID(0x00),
+		/*
+		 * Sentinel.
+		 */
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_nimloc, sizeof(dns_rdata_in_nimloc_t));
 }
 
 /*
@@ -1070,11 +1341,8 @@ ATF_TC_BODY(isdn, tc) {
  *    Bits representing pseudo-types MUST be clear, as they do not appear
  *    in zone data.  If encountered, they MUST be ignored upon being read.
  */
-ATF_TC(nsec);
-ATF_TC_HEAD(nsec, tc) {
-	atf_tc_set_md_var(tc, "descr", "NSEC RDATA manipulations");
-}
-ATF_TC_BODY(nsec, tc) {
+static void
+nsec(void **state) {
 	text_ok_t text_ok[] = {
 		TEXT_INVALID(""),
 		TEXT_INVALID("."),
@@ -1089,9 +1357,9 @@ ATF_TC_BODY(nsec, tc) {
 		WIRE_INVALID()
 	};
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	check_rdata(text_ok, wire_ok, ISC_FALSE, dns_rdataclass_in,
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_nsec, sizeof(dns_rdata_nsec_t));
 }
 
@@ -1100,11 +1368,8 @@ ATF_TC_BODY(nsec, tc) {
  *
  * RFC 5155.
  */
-ATF_TC(nsec3);
-ATF_TC_HEAD(nsec3, tc) {
-	atf_tc_set_md_var(tc, "descr", "NSEC3 RDATA manipulations");
-}
-ATF_TC_BODY(nsec3, tc) {
+static void
+nsec3(void **state) {
 	text_ok_t text_ok[] = {
 		TEXT_INVALID(""),
 		TEXT_INVALID("."),
@@ -1118,10 +1383,38 @@ ATF_TC_BODY(nsec3, tc) {
 		TEXT_SENTINEL()
 	};
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	check_rdata(text_ok, NULL, ISC_FALSE, dns_rdataclass_in,
+	check_rdata(text_ok, NULL, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_nsec3, sizeof(dns_rdata_nsec3_t));
+}
+
+/* NXT RDATA manipulations */
+static void
+nxt(void **state) {
+	compare_ok_t compare_ok[] = {
+		COMPARE("a. A SIG", "a. A SIG", 0),
+		/*
+		 * Records that differ only in the case of the next
+		 * name should be equal.
+		 */
+		COMPARE("A. A SIG", "a. A SIG", 0),
+		/*
+		 * Sorting on name field.
+		 */
+		COMPARE("A. A SIG", "b. A SIG", -1),
+		COMPARE("b. A SIG", "A. A SIG", 1),
+		/* bit map differs */
+		COMPARE("b. A SIG", "b. A AAAA SIG", -1),
+		/* order of bit map does not matter */
+		COMPARE("b. A SIG AAAA", "b. A AAAA SIG", 0),
+		COMPARE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(NULL, NULL, compare_ok, false, dns_rdataclass_in,
+		    dns_rdatatype_nxt, sizeof(dns_rdata_nxt_t));
 }
 
 /*
@@ -1163,11 +1456,22 @@ ATF_TC_BODY(nsec3, tc) {
  * port 25; if zero, SMTP service is not supported on the specified
  * address.
  */
-ATF_TC(wks);
-ATF_TC_HEAD(wks, tc) {
-	atf_tc_set_md_var(tc, "descr", "WKS RDATA manipulations");
-}
-ATF_TC_BODY(wks, tc) {
+static void
+wks(void **state) {
+	text_ok_t text_ok[] = {
+		/*
+		 * Valid, IPv4 address in dotted-quad form.
+		 */
+		TEXT_VALID("127.0.0.1 6"),
+		/*
+		 * Invalid, IPv4 address not in dotted-quad form.
+		 */
+		TEXT_INVALID("127.1 6"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
 	wire_ok_t wire_ok[] = {
 		/*
 		 * Too short.
@@ -1191,25 +1495,42 @@ ATF_TC_BODY(wks, tc) {
 		WIRE_SENTINEL()
 	};
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	check_rdata(NULL, wire_ok, ISC_FALSE, dns_rdataclass_in,
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_wks, sizeof(dns_rdata_in_wks_t));
 }
 
-/*****
- ***** Main
- *****/
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(apl, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(atma, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(csync, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(doa, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(eid, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(edns_client_subnet,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(hip, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(isdn, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(nimloc, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(nsec, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(nsec3, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(nxt, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(wks, _setup, _teardown),
+	};
 
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, csync);
-	ATF_TP_ADD_TC(tp, doa);
-	ATF_TP_ADD_TC(tp, edns_client_subnet);
-	ATF_TP_ADD_TC(tp, hip);
-	ATF_TP_ADD_TC(tp, isdn);
-	ATF_TP_ADD_TC(tp, nsec);
-	ATF_TP_ADD_TC(tp, nsec3);
-	ATF_TP_ADD_TC(tp, wks);
-
-	return (atf_no_error());
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

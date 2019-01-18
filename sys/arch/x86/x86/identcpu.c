@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.69.2.6 2018/12/26 14:01:45 pgoyette Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.69.2.7 2019/01/18 08:50:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.69.2.6 2018/12/26 14:01:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.69.2.7 2019/01/18 08:50:24 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -354,37 +354,47 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 }
 
 static void
-cpu_probe_k5(struct cpu_info *ci)
+cpu_probe_amd(struct cpu_info *ci)
 {
+	uint64_t val;
 	int flag;
 
-	if (cpu_vendor != CPUVENDOR_AMD ||
-	    CPUID_TO_FAMILY(ci->ci_signature) != 5)
+	if (cpu_vendor != CPUVENDOR_AMD)
+		return;
+	if (CPUID_TO_FAMILY(ci->ci_signature) < 5)
 		return;
 
-	if (CPUID_TO_MODEL(ci->ci_signature) == 0) {
+	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
+	case 0x05: /* K5 */
+		if (CPUID_TO_MODEL(ci->ci_signature) == 0) {
+			/*
+			 * According to the AMD Processor Recognition App Note,
+			 * the AMD-K5 Model 0 uses the wrong bit to indicate
+			 * support for global PTEs, instead using bit 9 (APIC)
+			 * rather than bit 13 (i.e. "0x200" vs. 0x2000").
+			 */
+			flag = ci->ci_feat_val[0];
+			if ((flag & CPUID_APIC) != 0)
+				flag = (flag & ~CPUID_APIC) | CPUID_PGE;
+			ci->ci_feat_val[0] = flag;
+		}
+		break;
+
+	case 0x10: /* Family 10h */
 		/*
-		 * According to the AMD Processor Recognition App Note,
-		 * the AMD-K5 Model 0 uses the wrong bit to indicate
-		 * support for global PTEs, instead using bit 9 (APIC)
-		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
+		 * On Family 10h, certain BIOSes do not enable WC+ support.
+		 * This causes WC+ to become CD, and degrades guest
+		 * performance at the NPT level.
+		 *
+		 * Explicitly enable WC+ if we're not a guest.
 		 */
-		flag = ci->ci_feat_val[0];
-		if ((flag & CPUID_APIC) != 0)
-			flag = (flag & ~CPUID_APIC) | CPUID_PGE;
-		ci->ci_feat_val[0] = flag;
+		if (!ISSET(ci->ci_feat_val[1], CPUID2_RAZ)) {
+			val = rdmsr(MSR_BU_CFG2);
+			val &= ~BU_CFG2_CWPLUS_DIS;
+			wrmsr(MSR_BU_CFG2, val);
+		}
+		break;
 	}
-
-	cpu_probe_amd_cache(ci);
-}
-
-static void
-cpu_probe_k678(struct cpu_info *ci)
-{
-
-	if (cpu_vendor != CPUVENDOR_AMD ||
-	    CPUID_TO_FAMILY(ci->ci_signature) < 6)
-		return;
 
 	cpu_probe_amd_cache(ci);
 }
@@ -956,8 +966,7 @@ cpu_probe(struct cpu_info *ci)
 	}
 
 	cpu_probe_intel(ci);
-	cpu_probe_k5(ci);
-	cpu_probe_k678(ci);
+	cpu_probe_amd(ci);
 	cpu_probe_cyrix(ci);
 	cpu_probe_winchip(ci);
 	cpu_probe_c3(ci);
@@ -1118,6 +1127,7 @@ identify_hypervisor(void)
 				vm_guest = VM_GUEST_KVM;
 			/* FreeBSD bhyve: "bhyve bhyve " */
 			/* OpenBSD vmm:   "OpenBSDVMM58" */
+			/* NetBSD nvmm:   "___ NVMM ___" */
 		}
 		return;
 	}

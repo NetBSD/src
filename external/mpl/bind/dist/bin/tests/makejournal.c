@@ -1,4 +1,4 @@
-/*	$NetBSD: makejournal.c,v 1.2.2.2 2018/09/06 06:53:58 pgoyette Exp $	*/
+/*	$NetBSD: makejournal.c,v 1.2.2.3 2019/01/18 08:49:13 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,7 +14,8 @@
 /*! \file */
 #include <config.h>
 
-#include <isc/entropy.h>
+#include <stdbool.h>
+
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -40,9 +41,8 @@
 
 isc_mem_t *mctx = NULL;
 isc_log_t *lctx = NULL;
-isc_entropy_t *ectx = NULL;
 
-static isc_boolean_t hash_active = ISC_FALSE, dst_active = ISC_FALSE;
+static bool dst_active = false;
 
 /*
  * Logging categories: this needs to match the list in bin/named/log.c.
@@ -76,7 +76,7 @@ loadzone(dns_db_t **db, const char *origin, const char *filename) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	result = dns_db_load(*db, filename);
+	result = dns_db_load(*db, filename, dns_masterformat_text, 0);
 	return (result);
 }
 
@@ -100,13 +100,9 @@ main(int argc, char **argv) {
 
 	isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
 	CHECK(isc_mem_create(0, 0, &mctx));
-	CHECK(isc_entropy_create(mctx, &ectx));
 
-	CHECK(dst_lib_init(mctx, ectx, ISC_ENTROPY_BLOCKING));
-	dst_active = ISC_TRUE;
-
-	CHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
-	hash_active = ISC_TRUE;
+	CHECK(dst_lib_init(mctx, NULL));
+	dst_active = true;
 
 	CHECK(isc_log_create(mctx, &lctx, &logconfig));
 	isc_log_registercategories(lctx, categories);
@@ -152,14 +148,8 @@ main(int argc, char **argv) {
 		isc_log_destroy(&lctx);
 	if (dst_active) {
 		dst_lib_destroy();
-		dst_active = ISC_FALSE;
+		dst_active = false;
 	}
-	if (hash_active) {
-		isc_hash_destroy();
-		hash_active = ISC_FALSE;
-	}
-	if (ectx != NULL)
-		isc_entropy_detach(&ectx);
 	if (mctx != NULL)
 		isc_mem_destroy(&mctx);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.c,v 1.2.2.2 2018/12/26 14:02:10 pgoyette Exp $	*/
+/*	$NetBSD: threadpool.c,v 1.2.2.3 2019/01/18 08:51:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: threadpool.c,v 1.2.2.2 2018/12/26 14:02:10 pgoyette Exp $");
+__RCSID("$NetBSD: threadpool.c,v 1.2.2.3 2019/01/18 08:51:00 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: threadpool.c,v 1.2.2.2 2018/12/26 14:02:10 pgoyette Exp $");
 void
 rumptest_threadpool_unbound_lifecycle(void)
 {
-	threadpool_t *pool0, *pool1, *pool2;
+	struct threadpool *pool0, *pool1, *pool2;
 	int error;
 
 	error = threadpool_get(&pool0, PRI_NONE);
@@ -71,7 +71,7 @@ rumptest_threadpool_unbound_lifecycle(void)
 void
 rumptest_threadpool_percpu_lifecycle(void)
 {
-	threadpool_percpu_t *pcpu0, *pcpu1, *pcpu2;
+	struct threadpool_percpu *pcpu0, *pcpu1, *pcpu2;
 	int error;
 
 	error = threadpool_percpu_get(&pcpu0, PRI_NONE);
@@ -96,13 +96,13 @@ struct test_job_data {
 	kmutex_t mutex;
 	kcondvar_t cond;
 	unsigned int count;
-	threadpool_job_t job;
+	struct threadpool_job job;
 };
 
 #define	FINAL_COUNT	12345
 
 static void
-test_job_func_schedule(threadpool_job_t *job)
+test_job_func_schedule(struct threadpool_job *job)
 {
 	struct test_job_data *data =
 	    container_of(job, struct test_job_data, job);
@@ -116,14 +116,16 @@ test_job_func_schedule(threadpool_job_t *job)
 }
 
 static void
-test_job_func_cancel(threadpool_job_t *job)
+test_job_func_cancel(struct threadpool_job *job)
 {
 	struct test_job_data *data =
 	    container_of(job, struct test_job_data, job);
-	
+
 	mutex_enter(&data->mutex);
-	data->count = 1;
-	cv_broadcast(&data->cond);
+	if (data->count == 0) {
+		data->count = 1;
+		cv_broadcast(&data->cond);
+	}
 	while (data->count != FINAL_COUNT - 1)
 		cv_wait(&data->cond, &data->mutex);
 	data->count = FINAL_COUNT;
@@ -153,7 +155,7 @@ void
 rumptest_threadpool_unbound_schedule(void)
 {
 	struct test_job_data data;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	int error;
 
 	error = threadpool_get(&pool, PRI_NONE);
@@ -178,8 +180,8 @@ void
 rumptest_threadpool_percpu_schedule(void)
 {
 	struct test_job_data data;
-	threadpool_percpu_t *pcpu;
-	threadpool_t *pool;
+	struct threadpool_percpu *pcpu;
+	struct threadpool *pool;
 	int error;
 
 	error = threadpool_percpu_get(&pcpu, PRI_NONE);
@@ -206,7 +208,7 @@ void
 rumptest_threadpool_job_cancel(void)
 {
 	struct test_job_data data;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	int error;
 	bool rv;
 
@@ -231,6 +233,53 @@ rumptest_threadpool_job_cancel(void)
 	/* Now wait for the job to finish. */
 	threadpool_cancel_job(pool, &data.job);
 	KASSERT(data.count == FINAL_COUNT);
+	mutex_exit(&data.mutex);
+
+	fini_test_job_data(&data);
+
+	threadpool_put(pool, PRI_NONE);
+}
+
+void
+rumptest_threadpool_job_cancelthrash(void)
+{
+	struct test_job_data data;
+	struct threadpool *pool;
+	int i, error;
+
+	error = threadpool_get(&pool, PRI_NONE);
+	KASSERT(error == 0);
+
+	init_test_job_data(&data, test_job_func_cancel);
+
+	mutex_enter(&data.mutex);
+	for (i = 0; i < 10000; i++) {
+		threadpool_schedule_job(pool, &data.job);
+		if ((i % 3) == 0) {
+			mutex_exit(&data.mutex);
+			mutex_enter(&data.mutex);
+		}
+		/*
+		 * If the job managed to start, ensure that its exit
+		 * condition is met so that we don't wait forever
+		 * for the job to finish.
+		 */
+		data.count = FINAL_COUNT - 1;
+		cv_broadcast(&data.cond);
+
+		threadpool_cancel_job(pool, &data.job);
+
+		/*
+		 * After cancellation, either the job didn't start
+		 * (data.count == FINAL_COUNT - 1, per above) or
+		 * it finished (data.count == FINAL_COUNT).
+		 */
+		KASSERT(data.count == (FINAL_COUNT - 1) ||
+		    data.count == FINAL_COUNT);
+
+		/* Reset for the loop. */
+		data.count = 0;
+	}
 	mutex_exit(&data.mutex);
 
 	fini_test_job_data(&data);

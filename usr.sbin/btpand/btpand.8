@@ -1,4 +1,4 @@
-.\" $NetBSD: btpand.8,v 1.6 2012/03/15 22:35:03 njoly Exp $
+.\" $NetBSD: btpand.8,v 1.6.30.1 2019/01/18 08:51:02 pgoyette Exp $
 .\"
 .\" Copyright (c) 2008 Iain Hibbert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 17, 2008
+.Dd January 17, 2019
 .Dt BTPAND 8
 .Os
 .Sh NAME
@@ -128,7 +128,7 @@ and 1 for a PANU server.
 Set L2CAP connection link mode.
 Supported modes are:
 .Pp
-.Bl -tag -compact
+.Bl -tag -compact -width secure
 .It auth
 require devices to be paired.
 .It encrypt
@@ -148,7 +148,7 @@ Name of
 .Ar service
 to provide or connect to, the following services are recognised:
 .Pp
-.Bl -tag -compact
+.Bl -tag -compact -width PANU
 .It GN
 Group ad-hoc Network.
 .It NAP
@@ -156,7 +156,6 @@ Network Access Point.
 .It PANU
 Personal Area Networking User.
 .El
-.Pp
 .It Fl S Ar service
 As per
 .Fl s
@@ -179,7 +178,7 @@ has set up the client or server connection and opened the
 .Xr tap 4
 interface, it will create a pid file and detach.
 .Sh FILES
-.Bl -tag -compact
+.Bl -tag -compact -width /etc/bluetooth/hosts
 .It Pa /dev/tap
 .It Pa /etc/bluetooth/hosts
 .It Pa /var/run/sdp
@@ -190,7 +189,7 @@ interface, it will create a pid file and detach.
 .Sh EXAMPLES
 .Dl ifconfig tap1 create
 .Dl btpand -a host -d ubt0 -s NAP -m encrypt -i tap1
-.Dl dhclient -q -o -w -nw tap1
+.Dl dhcpcd -q -b tap1
 .Pp
 Will create an encrypted connection to the NAP on
 .Ar host ,
@@ -209,7 +208,7 @@ the GN service with the local SDP server.
 .Xr tap 4 ,
 .Xr brconfig 8 ,
 .Xr btconfig 8 ,
-.Xr dhclient 8 ,
+.Xr dhcpcd 8 ,
 .Xr dhcpd 8 ,
 .Xr ifconfig 8 ,
 .Xr sdpd 8

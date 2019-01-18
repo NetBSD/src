@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.2.2.3 2018/12/26 14:01:27 pgoyette Exp $
+.\"	$NetBSD: libnvmm.3,v 1.2.2.4 2019/01/18 08:50:10 pgoyette Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 14, 2018
+.Dd January 7, 2019
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -78,12 +78,14 @@
 .Ft int
 .Fn nvmm_gpa_to_hva "struct nvmm_machine *mach" "gpaddr_t gpa" \
     "uintptr_t *hva"
+.Ft void
+.Fn nvmm_callbacks_register "const struct nvmm_callbacks *cbs"
 .Ft int
 .Fn nvmm_assist_io "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
-    "struct nvmm_exit *exit" "void (*cb)(struct nvmm_io *)"
+    "struct nvmm_exit *exit"
 .Ft int
 .Fn nvmm_assist_mem "struct nvmm_machine *mach" "nvmm_cpuid_t cpuid" \
-    "struct nvmm_exit *exit" "void (*cb)(struct nvmm_mem *)"
+    "struct nvmm_exit *exit"
 .Sh DESCRIPTION
 .Nm
 provides a library for VMM software to handle hardware-accelerated virtual
@@ -228,6 +230,11 @@ into a host virtual address returned in
 .Fa gpa
 must be page-aligned.
 .Pp
+.Fn nvmm_callbacks_register
+registers in
+.Nm
+the callbacks descriptor passed as argument.
+.Pp
 .Fn nvmm_assist_io
 emulates the I/O operation described in
 .Fa exit
@@ -235,8 +242,6 @@ on CPU
 .Fa cpuid
 from machine
 .Fa mach .
-.Fa cb
-will be called to handle the transaction.
 See
 .Sx I/O Assist
 below for details.
@@ -248,8 +253,6 @@ on CPU
 .Fa cpuid
 from machine
 .Fa mach .
-.Fa cb
-will be called to handle the transaction.
 See
 .Sx Mem Assist
 below for details.
@@ -397,8 +400,8 @@ it is necessary for VMM software to emulate the associated I/O operation.
 provides an easy way for VMM software to perform that.
 .Pp
 .Fn nvmm_assist_io
-will call the
-.Fa cb
+will call the registered
+.Fa io
 callback function and give it a
 .Cd nvmm_io
 structure as argument.
@@ -408,7 +411,7 @@ struct nvmm_io {
 	uint64_t port;
 	bool in;
 	size_t size;
-	uint8_t data[8];
+	uint8_t *data;
 };
 .Ed
 .Pp
@@ -444,19 +447,18 @@ provides an easy way for VMM software to perform that, similar to the I/O
 Assist.
 .Pp
 .Fn nvmm_assist_mem
-will call the
-.Fa cb
+will call the registered
+.Fa mem
 callback function and give it a
 .Cd nvmm_mem
 structure as argument.
 This structure describes a Mem transaction:
 .Bd -literal
 struct nvmm_mem {
-	gvaddr_t gva;
 	gpaddr_t gpa;
 	bool write;
 	size_t size;
-	uint8_t data[8];
+	uint8_t *data;
 };
 .Ed
 .Pp
@@ -477,8 +479,6 @@ to retrieve the desired value.
 .El
 .Pp
 In either case,
-.Va gva
-will indicate the guest virtual address,
 .Va gpa
 will indicate the guest physical address,
 .Va write

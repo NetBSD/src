@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.62.2.2 2018/12/26 14:01:03 pgoyette Exp $	*/
+/*	$NetBSD: input.c,v 1.62.2.3 2019/01/18 08:48:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.62.2.2 2018/12/26 14:01:03 pgoyette Exp $");
+__RCSID("$NetBSD: input.c,v 1.62.2.3 2019/01/18 08:48:24 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,14 +145,18 @@ pfgets(char *line, int len)
 
 	while (--nleft > 0) {
 		c = pgetc_macro();
+		if (c == PFAKE)		/* consecutive PFAKEs is impossible */
+			c = pgetc_macro();
 		if (c == PEOF) {
 			if (p == line)
 				return NULL;
 			break;
 		}
 		*p++ = c;
-		if (c == '\n')
+		if (c == '\n') {
+			plinno++;
 			break;
+		}
 	}
 	*p = '\0';
 	return line;
@@ -238,7 +242,7 @@ preadfd(void)
  * 1) If a string was pushed back on the input, pop it;
  * 2) If an EOF was pushed back (parsenleft == EOF_NLEFT) or we are reading
  *    from a string so we can't refill the buffer, return EOF.
- * 3) If the is more stuff in this buffer, use it else call read to fill it.
+ * 3) If there is more stuff in this buffer, use it else call read to fill it.
  * 4) Process input up to the next newline, deleting nul characters.
  */
 
@@ -429,8 +433,11 @@ popstring(void)
 
 	INTOFF;
 	if (sp->ap) {
-		if (parsenextc != sp->ap->val &&
-		   (parsenextc[-1] == ' ' || parsenextc[-1] == '\t'))
+		int alen;
+
+		if ((alen = strlen(sp->ap->val)) > 0 &&
+		    (sp->ap->val[alen - 1] == ' ' ||
+		     sp->ap->val[alen - 1] == '\t'))
 			checkkwd |= CHKALIAS;
 		sp->ap->flag &= ~ALIASINUSE;
 	}

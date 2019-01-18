@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.54.4.1 2018/11/26 01:52:12 pgoyette Exp $	*/
+/*	$NetBSD: refresh.c,v 1.54.4.2 2019/01/18 08:50:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.54.4.1 2018/11/26 01:52:12 pgoyette Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.54.4.2 2019/01/18 08:50:10 pgoyette Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1123,7 +1123,6 @@ re_fastputc(EditLine *el, wint_t c)
 			el->el_display[i - 1] = lastline;
 		} else {
 			el->el_cursor.v++;
-			el->el_refresh.r_oldcv++;
 			lastline = el->el_display[++el->el_refresh.r_oldcv];
 		}
 		re__copy_and_pad(lastline, L"", (size_t)el->el_terminal.t_size.h);

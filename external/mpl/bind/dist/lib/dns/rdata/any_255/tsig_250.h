@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.h,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: tsig_250.h,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,13 +20,13 @@ typedef struct dns_rdata_any_tsig {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
 	dns_name_t		algorithm;
-	isc_uint64_t		timesigned;
-	isc_uint16_t		fudge;
-	isc_uint16_t		siglen;
+	uint64_t		timesigned;
+	uint16_t		fudge;
+	uint16_t		siglen;
 	unsigned char *		signature;
-	isc_uint16_t		originalid;
-	isc_uint16_t		error;
-	isc_uint16_t		otherlen;
+	uint16_t		originalid;
+	uint16_t		error;
+	uint16_t		otherlen;
 	unsigned char *		other;
 } dns_rdata_any_tsig_t;
 

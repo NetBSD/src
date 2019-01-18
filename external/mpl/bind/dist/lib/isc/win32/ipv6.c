@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6.c,v 1.2.2.2 2018/09/06 06:55:10 pgoyette Exp $	*/
+/*	$NetBSD: ipv6.c,v 1.2.2.3 2019/01/18 08:50:01 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,12 +11,10 @@
  * information regarding copyright ownership.
  */
 
+#include <config.h>
 
 #include <isc/net.h>
 #include <isc/platform.h>
-
-LIBISC_EXTERNAL_DATA const struct in6_addr isc_in6addr_any =
-	IN6ADDR_ANY_INIT;
 
 LIBISC_EXTERNAL_DATA const struct in6_addr isc_in6addr_loopback =
 	IN6ADDR_LOOPBACK_INIT;

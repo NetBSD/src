@@ -132,6 +132,17 @@ $code.=<<___	if ($flavour =~ /64/);
 	mftb	r3
 ___
 $code.=<<___	if ($flavour !~ /64/);
+	mfspr	r0,287
+	srwi	r0,r0,0x10
+	cmplwi	r0,0x1
+	bgt	.Loop_rdtsc
+.Loop_rdtsc_601:	
+	mfrtcu	r5
+	mfrtcl	r3
+	mfrtcu	r4
+	cmplw	r4,r5
+	bne	.Loop_rdtsc_601
+	blr
 Loop_rdtsc:
 	mftbu	r5
 	mftb	r3

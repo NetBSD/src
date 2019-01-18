@@ -1,4 +1,4 @@
-/*	$NetBSD: named-rrchecker.c,v 1.2.2.2 2018/09/06 06:54:48 pgoyette Exp $	*/
+/*	$NetBSD: named-rrchecker.c,v 1.2.2.3 2019/01/18 08:49:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
@@ -80,10 +81,10 @@ main(int argc, char *argv[]) {
 	isc_buffer_t tbuf;
 	isc_buffer_t dbuf;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
-	isc_boolean_t doexit = ISC_FALSE;
-	isc_boolean_t once = ISC_FALSE;
-	isc_boolean_t print = ISC_FALSE;
-	isc_boolean_t unknown = ISC_FALSE;
+	bool doexit = false;
+	bool once = false;
+	bool print = false;
+	bool unknown = false;
 	unsigned int t;
 	char *origin = NULL;
 	dns_fixedname_t fixed;
@@ -96,11 +97,11 @@ main(int argc, char *argv[]) {
 			break;
 
 		case 'p':
-			print = ISC_TRUE;
+			print = true;
 			break;
 
 		case 'u':
-			unknown = ISC_TRUE;
+			unknown = true;
 			break;
 
 		case 'C':
@@ -121,7 +122,7 @@ main(int argc, char *argv[]) {
 				if (strncmp(text, "TYPE", 4) != 0)
 					fprintf(stdout, "%s\n", text);
 			}
-			doexit = ISC_TRUE;
+			doexit = true;
 			break;
 
 		case 'T':
@@ -132,7 +133,7 @@ main(int argc, char *argv[]) {
 				if (strncmp(text, "TYPE", 4) != 0)
 					fprintf(stdout, "%s\n", text);
 			}
-			doexit = ISC_TRUE;
+			doexit = true;
 			break;
 
 		case '?':
@@ -257,7 +258,7 @@ main(int argc, char *argv[]) {
 			fatal("dns_rdata_fromtext: %s",
 			      dns_result_totext(result));
 		}
-		once = ISC_TRUE;
+		once = true;
 	}
 	if (result != ISC_R_EOF) {
 		fatal("eof not found");

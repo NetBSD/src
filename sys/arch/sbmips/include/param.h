@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2011/03/18 16:32:07 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.10.54.1 2019/01/18 08:50:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,11 +45,6 @@
 #define	MACHINE		"sbmips"
 
 #include <mips/mips_param.h>
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #ifdef _KERNEL
 #ifndef _LOCORE

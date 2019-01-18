@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/05/21 15:28:40 riastradh Exp $
+#	$NetBSD: Makefile,v 1.15.8.1 2019/01/18 08:49:06 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -46,6 +46,7 @@ LDADD+=	${LDADD.hw/xfree86/xf86modes}
 LDADD+=	${LDADD.hw/xfree86/ramdac}
 LDADD+=	${LDADD.hw/xfree86/ddc}
 LDADD+=	${LDADD.hw/xfree86/i2c}
+LDADD+=	${LDADD.hw/xfree86/xkb}
 LDADD+=	${LDADD.composite}
 LDADD+=	${LDADD.mi}
 LDADD+=	${LDADD.xfixes}
@@ -68,8 +69,7 @@ LDADD+=	${LDADD.hw/xfree86/dri2}
 LDADD+=	${LDADD.dri3}
 .endif
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
-LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
-LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
+LDADD+=	-lpixman-1 -lXfont2 -lfreetype -lXau -lfontenc -lXdmcp
 LDADD+=	-lpciaccess -ldrm
 LDADD+=	-Wl,--no-whole-archive
 
@@ -128,8 +128,9 @@ DPADD+=	\
 	${DPADD.hw/xfree86/ramdac} \
 	${DPADD.hw/xfree86/ddc} \
 	${DPADD.hw/xfree86/i2c} \
+	${DPADD.hw/xfree86/xkb} \
 	${LIBCWRAPPER} \
-	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
+	${LIBXFONT2} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
 	${LIBGL} ${LIBXV} ${LIBXSHMFENCE}
 

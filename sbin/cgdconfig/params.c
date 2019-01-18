@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.29 2016/12/11 00:34:39 alnsn Exp $ */
+/* $NetBSD: params.c,v 1.29.12.1 2019/01/18 08:50:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.29 2016/12/11 00:34:39 alnsn Exp $");
+__RCSID("$NetBSD: params.c,v 1.29.12.1 2019/01/18 08:50:12 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -158,6 +158,8 @@ params_filldefaults(struct params *p)
 	if (!p->ivmeth)
 		p->ivmeth = string_fromcharstar("encblkno1");
 	if (p->keylen == (size_t)-1) {
+		if (p->algorithm == NULL)
+			return -1;
 		i = crypt_defaults_lookup(string_tocharstar(p->algorithm));
 		if (i != (size_t)-1) {
 			p->keylen = crypto_defaults[i].keylen;

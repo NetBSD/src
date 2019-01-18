@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.133 2016/05/01 20:12:54 palle Exp $ */
+/*	$NetBSD: db_interface.c,v 1.133.16.1 2019/01/18 08:50:24 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.133 2016/05/01 20:12:54 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.133.16.1 2019/01/18 08:50:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -89,15 +89,6 @@ extern struct traptrace {
 	u_int tpc;		/* pc */
 	u_int tfault;		/* MMU tag access */
 } trap_trace[], trap_trace_end[];
-
-/*
- * Helpers for ddb variables.
- */
-#ifdef MULTIPROCESSOR
-#define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
-#else
-#define pmap_ctx(PM)	((PM)->pm_ctx[0])
-#endif
 
 void fill_ddb_regs_from_tf(struct trapframe64 *tf);
 void ddb_restore_state(void);
@@ -428,7 +419,7 @@ db_prom_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 void
 db_dump_dtlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	extern void print_dtlb(size_t, int);
+	extern void print_dtlb(size_t /*tlbsize*/, int /*tlbmask*/);
 
 	if (CPU_IS_USIII_UP()) {
 		print_dtlb(TLB_SIZE_CHEETAH_D16, TLB_CHEETAH_D16);
@@ -443,7 +434,7 @@ db_dump_dtlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 void
 db_dump_itlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	extern void print_itlb(size_t, int);
+	extern void print_itlb(size_t /*tlbsize*/, int /*tlbmask*/);
 
 	if (CPU_IS_USIII_UP()) {
 		print_itlb(TLB_SIZE_CHEETAH_I16, TLB_CHEETAH_I16);
@@ -1056,10 +1047,10 @@ const struct db_command db_machine_command_table[] = {
 	  "switch to another cpu", "cpu-no", NULL) },
 #endif
 	{ DDB_ADD_CMD("dtlb",	db_dump_dtlb,	0,
-	  "Print data translation look-aside buffer context information.",
+	  "Display data translation look-aside buffer context information.",
 	  NULL,NULL) },
 	{ DDB_ADD_CMD("itlb",	db_dump_itlb,	0,
-	  "Display instruction translation storage buffer information.",
+	  "Display instruction translation look-aside buffer information.",
 	  NULL,NULL) },
 	{ DDB_ADD_CMD("dtsb",	db_dump_dtsb,	0,
 	  "Display data translation storage buffer information.", NULL,NULL) },

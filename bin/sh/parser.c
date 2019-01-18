@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.145.2.5 2018/12/26 14:01:03 pgoyette Exp $	*/
+/*	$NetBSD: parser.c,v 1.145.2.6 2019/01/18 08:48:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.145.2.5 2018/12/26 14:01:03 pgoyette Exp $");
+__RCSID("$NetBSD: parser.c,v 1.145.2.6 2019/01/18 08:48:24 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1347,11 +1347,13 @@ parsebackq(VSS *const stack, char * const in,
 	char *volatile sstr = str;
 	struct jmploc jmploc;
 	struct jmploc *const savehandler = handler;
+	struct parsefile *const savetopfile = getcurrentfile();
 	const int savelen = in - stackblock();
 	int saveprompt;
 	int lno;
 
 	if (setjmp(jmploc.loc)) {
+		popfilesupto(savetopfile);
 		if (sstr)
 			ckfree(__UNVOLATILE(sstr));
 		cleanup_state_stack(stack);
@@ -2363,7 +2365,7 @@ pgetc_linecont(void)
 {
 	int c;
 
-	while ((c = pgetc_macro()) == '\\') {
+	while ((c = pgetc()) == '\\') {
 		c = pgetc();
 		if (c == '\n') {
 			plinno++;

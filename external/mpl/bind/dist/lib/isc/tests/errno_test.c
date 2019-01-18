@@ -1,4 +1,4 @@
-/*	$NetBSD: errno_test.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: errno_test.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,13 +13,21 @@
 
 #include <config.h>
 
-#include <stdio.h>
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <string.h>
 #include <sys/errno.h>
 
-#include <atf-c.h>
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/errno.h>
 #include <isc/result.h>
+#include <isc/util.h>
 
 typedef struct {
 	int err;
@@ -82,26 +90,38 @@ testpair_t testpair[] = {
 	{ 0, ISC_R_UNEXPECTED }
 };
 
-ATF_TC(isc_errno_toresult);
-ATF_TC_HEAD(isc_errno_toresult, tc) {
-	atf_tc_set_md_var(tc, "descr", "convert errno to ISC result");
-}
-ATF_TC_BODY(isc_errno_toresult, tc) {
+/* convert errno to ISC result */
+static void
+isc_errno_toresult_test(void **state) {
 	isc_result_t result, expect;
 	size_t i;
+
+	UNUSED(state);
 
 	for (i = 0; i < sizeof(testpair)/sizeof(testpair[0]); i++) {
 		result = isc_errno_toresult(testpair[i].err);
 		expect = testpair[i].result;
-		ATF_CHECK(result == expect);
+		assert_int_equal(result, expect);
 	}
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, isc_errno_toresult);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(isc_errno_toresult_test),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

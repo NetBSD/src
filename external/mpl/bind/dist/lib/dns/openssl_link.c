@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.2.2.2 2018/09/06 06:55:00 pgoyette Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,11 +25,8 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef OPENSSL
-
 #include <config.h>
 
-#include <isc/entropy.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/mutexblock.h>
@@ -45,6 +42,8 @@
 #include "dst_internal.h"
 #include "dst_openssl.h"
 
+static isc_mem_t *dst__mctx = NULL;
+
 #if !defined(OPENSSL_NO_ENGINE)
 #include <openssl/engine.h>
 #endif
@@ -58,51 +57,24 @@ static int nlocks;
 static ENGINE *e = NULL;
 #endif
 
-#ifndef ISC_PLATFORM_CRYPTORANDOM
-static RAND_METHOD *rm = NULL;
+static void
+enable_fips_mode(void) {
+#ifdef HAVE_FIPS_MODE
+	if (FIPS_mode() != 0) {
+		/*
+		 * FIPS mode is already enabled.
+		 */
+		return;
+	}
 
-static int
-entropy_get(unsigned char *buf, int num) {
-	isc_result_t result;
-	if (num < 0)
-		return (-1);
-	result = dst__entropy_getdata(buf, (unsigned int) num, ISC_FALSE);
-	return (result == ISC_R_SUCCESS ? 1 : -1);
-}
-
-static int
-entropy_status(void) {
-	return (dst__entropy_status() > 32);
-}
-
-static int
-entropy_getpseudo(unsigned char *buf, int num) {
-	isc_result_t result;
-	if (num < 0)
-		return (-1);
-	result = dst__entropy_getdata(buf, (unsigned int) num, ISC_TRUE);
-	return (result == ISC_R_SUCCESS ? 1 : -1);
+	if (FIPS_mode_set(1) == 0) {
+		dst__openssl_toresult2("FIPS_mode_set", DST_R_OPENSSLFAILURE);
+		exit(1);
+	}
+#endif /* HAVE_FIPS_MODE */
 }
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-static void
-#else
-static int
-#endif
-entropy_add(const void *buf, int num, double entropy) {
-	/*
-	 * Do nothing.  The only call to this provides no useful data anyway.
-	 */
-	UNUSED(buf);
-	UNUSED(num);
-	UNUSED(entropy);
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-	return 1;
-#endif
-}
-#endif /* !ISC_PLATFORM_CRYPTORANDOM */
-
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 static void
 lock_callback(int mode, int type, const char *file, int line) {
 	UNUSED(file);
@@ -114,71 +86,14 @@ lock_callback(int mode, int type, const char *file, int line) {
 }
 #endif
 
-#if OPENSSL_VERSION_NUMBER < 0x10000000L || defined(LIBRESSL_VERSION_NUMBER)
+#if defined(LIBRESSL_VERSION_NUMBER)
 static unsigned long
 id_callback(void) {
 	return ((unsigned long)isc_thread_self());
 }
 #endif
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-
-#define FLARG
-#define FILELINE
-#if ISC_MEM_TRACKLINES
-#define FLARG_PASS      , __FILE__, __LINE__
-#else
-#define FLARG_PASS
-#endif
-
-#else
-
-#define FLARG           , const char *file, int line
-#define FILELINE	, __FILE__, __LINE__
-#if ISC_MEM_TRACKLINES
-#define FLARG_PASS      , file, line
-#else
-#define FLARG_PASS
-#endif
-
-#endif
-
-static void *
-mem_alloc(size_t size FLARG) {
-#ifdef OPENSSL_LEAKS
-	void *ptr;
-
-	INSIST(dst__memory_pool != NULL);
-	ptr = isc__mem_allocate(dst__memory_pool, size FLARG_PASS);
-	return (ptr);
-#else
-	INSIST(dst__memory_pool != NULL);
-	return (isc__mem_allocate(dst__memory_pool, size FLARG_PASS));
-#endif
-}
-
-static void
-mem_free(void *ptr FLARG) {
-	INSIST(dst__memory_pool != NULL);
-	if (ptr != NULL)
-		isc__mem_free(dst__memory_pool, ptr FLARG_PASS);
-}
-
-static void *
-mem_realloc(void *ptr, size_t size FLARG) {
-#ifdef OPENSSL_LEAKS
-	void *rptr;
-
-	INSIST(dst__memory_pool != NULL);
-	rptr = isc__mem_reallocate(dst__memory_pool, ptr, size FLARG_PASS);
-	return (rptr);
-#else
-	INSIST(dst__memory_pool != NULL);
-	return (isc__mem_reallocate(dst__memory_pool, ptr, size FLARG_PASS));
-#endif
-}
-
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 static void
 _set_thread_id(CRYPTO_THREADID *id)
 {
@@ -187,51 +102,31 @@ _set_thread_id(CRYPTO_THREADID *id)
 #endif
 
 isc_result_t
-dst__openssl_init(const char *engine) {
+dst__openssl_init(isc_mem_t *mctx, const char *engine) {
 	isc_result_t result;
-#if defined(USE_ENGINE) && !defined(ISC_PLATFORM_CRYPTORANDOM)
-	ENGINE *re;
-#else
 
+	REQUIRE(dst__mctx == NULL);
+	isc_mem_attach(mctx, &dst__mctx);
+
+#if defined(OPENSSL_NO_ENGINE)
 	UNUSED(engine);
 #endif
 
-#ifdef  DNS_CRYPTO_LEAKS
-	CRYPTO_malloc_debug_init();
-	CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-#endif
-	CRYPTO_set_mem_functions(mem_alloc, mem_realloc, mem_free);
+	enable_fips_mode();
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	nlocks = CRYPTO_num_locks();
-	locks = mem_alloc(sizeof(isc_mutex_t) * nlocks FILELINE);
+	locks = isc_mem_allocate(dst__mctx, sizeof(isc_mutex_t) * nlocks);
 	if (locks == NULL)
 		return (ISC_R_NOMEMORY);
-	result = isc_mutexblock_init(locks, nlocks);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_mutexalloc;
+	isc_mutexblock_init(locks, nlocks);
 	CRYPTO_set_locking_callback(lock_callback);
-# if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
-	CRYPTO_THREADID_set_callback(_set_thread_id);
-# else
+# if defined(LIBRESSL_VERSION_NUMBER)
 	CRYPTO_set_id_callback(id_callback);
+# elif OPENSSL_VERSION_NUMBER < 0x10100000L
+	CRYPTO_THREADID_set_callback(_set_thread_id);
 # endif
-
 	ERR_load_crypto_strings();
-#endif
-
-#ifndef ISC_PLATFORM_CRYPTORANDOM
-	rm = mem_alloc(sizeof(RAND_METHOD) FILELINE);
-	if (rm == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto cleanup_mutexinit;
-	}
-	rm->seed = NULL;
-	rm->bytes = entropy_get;
-	rm->cleanup = NULL;
-	rm->add = entropy_add;
-	rm->pseudorand = entropy_getpseudo;
-	rm->status = entropy_status;
 #endif
 
 #if !defined(OPENSSL_NO_ENGINE)
@@ -266,27 +161,8 @@ dst__openssl_init(const char *engine) {
 		}
 	}
 
-#ifndef ISC_PLATFORM_CRYPTORANDOM
-	re = ENGINE_get_default_RAND();
-	if (re == NULL) {
-		re = ENGINE_new();
-		if (re == NULL) {
-			result = ISC_R_NOMEMORY;
-			goto cleanup_rm;
-		}
-		ENGINE_set_RAND(re, rm);
-		ENGINE_set_default_RAND(re);
-		ENGINE_free(re);
-	} else
-		ENGINE_finish(re);
-#endif
-#else
-#ifndef ISC_PLATFORM_CRYPTORANDOM
-	RAND_set_rand_method(rm);
-#endif
 #endif /* !defined(OPENSSL_NO_ENGINE) */
 
-#ifdef ISC_PLATFORM_CRYPTORANDOM
 	/* Protect ourselves against unseeded PRNG */
 	if (RAND_status() != 1) {
 		FATAL_ERROR(__FILE__, __LINE__,
@@ -294,7 +170,6 @@ dst__openssl_init(const char *engine) {
 			    "cannot be initialized (see the `PRNG not "
 			    "seeded' message in the OpenSSL FAQ)");
 	}
-#endif
 
 	return (ISC_R_SUCCESS);
 
@@ -303,19 +178,11 @@ dst__openssl_init(const char *engine) {
 	if (e != NULL)
 		ENGINE_free(e);
 	e = NULL;
-#ifndef ISC_PLATFORM_CRYPTORANDOM
-	mem_free(rm FILELINE);
-	rm = NULL;
-#endif
-#endif
-#ifndef ISC_PLATFORM_CRYPTORANDOM
- cleanup_mutexinit:
 #endif
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	CRYPTO_set_locking_callback(NULL);
-	DESTROYMUTEXBLOCK(locks, nlocks);
- cleanup_mutexalloc:
-	mem_free(locks FILELINE);
+	isc_mutexblock_destroy(locks, nlocks);
+	isc_mem_free(dst__mctx, locks);
 	locks = NULL;
 #endif
 	return (result);
@@ -323,47 +190,24 @@ dst__openssl_init(const char *engine) {
 
 void
 dst__openssl_destroy(void) {
-#if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10100000L)
-	OPENSSL_cleanup();
-#ifndef ISC_PLATFORM_CRYPTORANDOM
-	if (rm != NULL) {
-		mem_free(rm FILELINE);
-		rm = NULL;
-	}
-#endif
-#else
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 	/*
 	 * Sequence taken from apps_shutdown() in <apps/apps.h>.
 	 */
-#ifndef ISC_PLATFORM_CRYPTORANDOM
-	if (rm != NULL) {
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
-		RAND_cleanup();
-#endif
-		mem_free(rm FILELINE);
-		rm = NULL;
-	}
-#endif
-#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
 	CONF_modules_free();
-#endif
 	OBJ_cleanup();
 	EVP_cleanup();
 #if !defined(OPENSSL_NO_ENGINE)
 	if (e != NULL)
 		ENGINE_free(e);
 	e = NULL;
-#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_VERSION_NUMBER >= 0x00907000L
 	ENGINE_cleanup();
 #endif
-#endif
-#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
 	CRYPTO_cleanup_all_ex_data();
-#endif
 	ERR_clear_error();
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	ERR_remove_thread_state(NULL);
-#elif OPENSSL_VERSION_NUMBER < 0x10000000L || defined(LIBRESSL_VERSION_NUMBER)
+#elif defined(LIBRESSL_VERSION_NUMBER)
 	ERR_remove_state(0);
 #endif
 	ERR_free_strings();
@@ -374,19 +218,19 @@ dst__openssl_destroy(void) {
 
 	if (locks != NULL) {
 		CRYPTO_set_locking_callback(NULL);
-		DESTROYMUTEXBLOCK(locks, nlocks);
-		mem_free(locks FILELINE);
+		isc_mutexblock_destroy(locks, nlocks);
+		isc_mem_free(dst__mctx, locks);
 		locks = NULL;
 	}
 #endif
+	isc_mem_detach(&dst__mctx);
 }
 
 static isc_result_t
 toresult(isc_result_t fallback) {
 	isc_result_t result = fallback;
-	unsigned long err = ERR_get_error();
-#if defined(HAVE_OPENSSL_ECDSA) && \
-    defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
+	unsigned long err = ERR_peek_error();
+#if defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
 	int lib = ERR_GET_LIB(err);
 #endif
 	int reason = ERR_GET_REASON(err);
@@ -400,8 +244,7 @@ toresult(isc_result_t fallback) {
 		result = ISC_R_NOMEMORY;
 		break;
 	default:
-#if defined(HAVE_OPENSSL_ECDSA) && \
-    defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
+#if defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
 		if (lib == ERR_R_ECDSA_LIB &&
 		    reason == ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED) {
 			result = ISC_R_NOENTROPY;
@@ -457,7 +300,7 @@ dst__openssl_toresult3(isc_logcategory_t *category,
 		isc_log_write(dns_lctx, category,
 			      DNS_LOGMODULE_CRYPTO, ISC_LOG_INFO,
 			      "%s:%s:%d:%s", buf, file, line,
-			      (flags & ERR_TXT_STRING) ? data : "");
+			      ((flags & ERR_TXT_STRING) != 0) ? data : "");
 	}
 
     done:
@@ -479,46 +322,4 @@ dst__openssl_getengine(const char *engine) {
 }
 #endif
 
-isc_result_t
-dst_random_getdata(void *data, unsigned int length,
-		   unsigned int *returned, unsigned int flags)
-{
-#ifdef ISC_PLATFORM_CRYPTORANDOM
-#ifndef DONT_REQUIRE_DST_LIB_INIT
-	INSIST(dst__memory_pool != NULL);
-#endif
-	REQUIRE(data != NULL);
-	REQUIRE(length > 0);
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-	if ((flags & ISC_ENTROPY_GOODONLY) == 0) {
-		if (RAND_pseudo_bytes((unsigned char *)data, (int)length) < 0)
-			return (dst__openssl_toresult2("RAND_pseudo_bytes",
-						       DST_R_OPENSSLFAILURE));
-	} else {
-		if (RAND_bytes((unsigned char *)data, (int)length) != 1)
-			return (dst__openssl_toresult2("RAND_bytes",
-						       DST_R_OPENSSLFAILURE));
-	}
-#else
-	UNUSED(flags);
-
-	if (RAND_bytes((unsigned char *)data, (int)length) != 1)
-		return (dst__openssl_toresult2("RAND_bytes",
-					       DST_R_OPENSSLFAILURE));
-#endif
-	if (returned != NULL)
-		*returned = length;
-	return (ISC_R_SUCCESS);
-#else
-	UNUSED(data);
-	UNUSED(length);
-	UNUSED(returned);
-	UNUSED(flags);
-
-	return (ISC_R_NOTIMPLEMENTED);
-#endif
-}
-
-#endif /* OPENSSL */
 /*! \file */

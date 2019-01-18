@@ -1,4 +1,4 @@
-/*	$NetBSD: clientinfo.c,v 1.2.2.2 2018/09/06 06:54:59 pgoyette Exp $	*/
+/*	$NetBSD: clientinfo.c,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,7 +13,7 @@
 
 /*! \file */
 
-#include "config.h"
+#include <config.h>
 
 #include <dns/clientinfo.h>
 

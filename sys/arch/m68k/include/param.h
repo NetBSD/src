@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2012/01/24 20:03:37 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.21.46.1 2019/01/18 08:50:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,13 +60,6 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define BLKDEV_IOSIZE	2048
-#ifndef MAXPHYS
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-#endif
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */

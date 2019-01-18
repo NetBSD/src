@@ -17,7 +17,7 @@
  * the modules database, if necessary.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tag.c,v 1.4 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: tag.c,v 1.4.14.1 2019/01/18 08:48:45 pgoyette Exp $");
 
 #include "cvs.h"
 #include <grp.h>
@@ -1189,7 +1189,7 @@ rtag_delete (RCSNode *rcsfile)
     if ((isbranch && !disturb_branch_tags) ||
 	(!isbranch && disturb_branch_tags))
     {
-	if (!quiet)
+	if (!really_quiet)
 	    error (0, 0,
                    "Not removing %s tag `%s' from `%s'%s.",
                    isbranch ? "branch" : "non-branch",
@@ -1200,7 +1200,7 @@ rtag_delete (RCSNode *rcsfile)
 
     if ((retcode = RCS_deltag(rcsfile, symtag)) != 0)
     {
-	if (!quiet)
+	if (!really_quiet)
 	    error (0, retcode == -1 ? errno : 0,
 		   "failed to remove tag `%s' from `%s'", symtag,
 		   rcsfile->path);
@@ -1275,7 +1275,7 @@ tag_fileproc (void *callerdat, struct file_info *finfo)
 	if ((isbranch && !disturb_branch_tags) ||
 	    (!isbranch && disturb_branch_tags))
 	{
-	    if (!quiet)
+	    if (!really_quiet)
 		error(0, 0,
 		       "Not removing %s tag `%s' from `%s'%s.",
 			isbranch ? "branch" : "non-branch",
@@ -1287,7 +1287,7 @@ tag_fileproc (void *callerdat, struct file_info *finfo)
 
 	if ((retcode = RCS_deltag (vers->srcfile, symtag)) != 0)
 	{
-	    if (!quiet)
+	    if (!really_quiet)
 		error (0, retcode == -1 ? errno : 0,
 		       "failed to remove tag %s from %s", symtag,
 		       vers->srcfile->path);

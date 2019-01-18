@@ -28,3 +28,4 @@ rm -f ns3/nsec3.db*
 rm -f ns3/signed.db*
 rm -f ns4/*.db
 rm -f rndc.out
+rm -f ns*/managed-keys.bind*

@@ -55,7 +55,7 @@ static int verifyNonce( BYTE *nonce_verifier, int length) {
 }
 
 BYTE *compute_bytes( int seedLength, BYTE *seed, int length, const EVP_MD *digest) {
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	int N;
 	BYTE *hash;
 	BYTE *result;
@@ -66,8 +66,8 @@ BYTE *compute_bytes( int seedLength, BYTE *seed, int length, const EVP_MD *diges
 		LogError("malloc of %d bytes failed", length);
 		return NULL;
 	}
-	EVP_MD_CTX_init(&mdctx);
-	EVP_DigestInit_ex(&mdctx, digest, NULL);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, digest, NULL);
 	len_hash = EVP_MD_size(digest);
 	N = length / len_hash;
 	hash = (BYTE *)malloc( len_hash);
@@ -76,20 +76,21 @@ BYTE *compute_bytes( int seedLength, BYTE *seed, int length, const EVP_MD *diges
 		return NULL;
 	}
 	for( i=0; i<N; i++) {
-		EVP_DigestUpdate(&mdctx,  seed, seedLength);
+		EVP_DigestUpdate(mdctx,  seed, seedLength);
 		big_indian_i = htonl( i);
-		EVP_DigestUpdate(&mdctx,  &big_indian_i, sizeof( int));
-		EVP_DigestFinal_ex(&mdctx, &result[ i * len_hash], NULL);
-		EVP_DigestInit_ex(&mdctx, digest, NULL);
+		EVP_DigestUpdate(mdctx,  &big_indian_i, sizeof( int));
+		EVP_DigestFinal_ex(mdctx, &result[ i * len_hash], NULL);
+		EVP_DigestInit_ex(mdctx, digest, NULL);
 	}
 	// fill up the rest of the array (i=N)
-	EVP_DigestUpdate(&mdctx,  seed, seedLength);
+	EVP_DigestUpdate(mdctx,  seed, seedLength);
 	big_indian_i = htonl( i);
-	EVP_DigestUpdate(&mdctx,  &big_indian_i, sizeof( int));
-	EVP_DigestFinal(&mdctx, hash, NULL);
+	EVP_DigestUpdate(mdctx,  &big_indian_i, sizeof( int));
+	EVP_DigestFinal(mdctx, hash, NULL);
 	// copy the rest:  base_nameLength % len_hash bytes
 	memcpy( &result[ i * len_hash], hash, length - N * len_hash);
 	free( hash);
+	EVP_MD_CTX_destroy(mdctx);
 	return result;
 }
 
@@ -238,7 +239,7 @@ BYTE *compute_sign_challenge_host(
 	CS_ENCRYPTION_RESULT *encryption_result_rand,
 	CS_ENCRYPTION_RESULT *encryption_result_proof
 ) {
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	int i, length;
 	unsigned int big_indian;
 	BYTE *buffer;
@@ -270,26 +271,26 @@ BYTE *compute_sign_challenge_host(
 	LogDebug("encryption_result_rand:%d", (int)encryption_result_rand);
 	LogDebug("encryption_result_proof:%d", (int)encryption_result_proof);
 
-	EVP_MD_CTX_init(&mdctx);
-	EVP_DigestInit_ex(&mdctx, digest, NULL);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, digest, NULL);
 	// update with encoded PK
 	buffer = encoded_DAA_PK_internal( &length, issuer_pk);
 	if( buffer == NULL) return NULL;
 	LogDebug("encoded issuer_pk[%d]:%s", length, dump_byte_array( length, buffer));
-	EVP_DigestUpdate(&mdctx, buffer , length);
+	EVP_DigestUpdate(mdctx, buffer , length);
 	free( buffer);
 	// nonce verifier
-	EVP_DigestUpdate(&mdctx, nonce_verifier , nonce_verifierLength);
+	EVP_DigestUpdate(mdctx, nonce_verifier , nonce_verifierLength);
 	// length Commitments
 	big_indian = attribute_commitmentsLength;
-	EVP_DigestUpdate(&mdctx, &big_indian, sizeof(int));
+	EVP_DigestUpdate(mdctx, &big_indian, sizeof(int));
 	// Anonymity enabled
 	big_indian = is_anonymity_revocation_enabled;
-	EVP_DigestUpdate(&mdctx, &big_indian, sizeof(int));
+	EVP_DigestUpdate(mdctx, &big_indian, sizeof(int));
 
-	update( &mdctx, "zeta", zeta, DAA_PARAM_SIZE_MODULUS_GAMMA);
-	update( &mdctx, "capitalT", capital_t, DAA_PARAM_SIZE_RSA_MODULUS);
-	update( &mdctx, "capitalTTilde", capital_tilde, DAA_PARAM_SIZE_RSA_MODULUS);
+	update( mdctx, "zeta", zeta, DAA_PARAM_SIZE_MODULUS_GAMMA);
+	update( mdctx, "capitalT", capital_t, DAA_PARAM_SIZE_RSA_MODULUS);
+	update( mdctx, "capitalTTilde", capital_tilde, DAA_PARAM_SIZE_RSA_MODULUS);
 
 	length_gamma_modulus = DAA_PARAM_SIZE_MODULUS_GAMMA / 8;
 	buffer = (BYTE *)malloc( length_gamma_modulus);// allocation
@@ -302,18 +303,18 @@ BYTE *compute_sign_challenge_host(
 			buffer1 = to_bytes_TSS_DAA_SELECTED_ATTRIB_internal(
 				&length,
 				selected_attributes2commit[i]);
-			EVP_DigestUpdate(&mdctx, buffer1, length);
+			EVP_DigestUpdate(mdctx, buffer1, length);
 			free( buffer1);
 			bi_2_byte_array( buffer,
 					length_gamma_modulus,
 					attribute_commitments[i]->beta);
-			EVP_DigestUpdate(&mdctx,
+			EVP_DigestUpdate(mdctx,
 					buffer,
 					length_gamma_modulus);
 			bi_2_byte_array( buffer,
 					length_gamma_modulus,
 					attribute_commitment_proofs[i]->beta);
-			EVP_DigestUpdate(&mdctx,
+			EVP_DigestUpdate(mdctx,
 					buffer,
 					length_gamma_modulus);
 		}
@@ -321,34 +322,34 @@ BYTE *compute_sign_challenge_host(
 	if( !is_anonymity_revocation_enabled) {
 		// Nv, N~v
 		bi_2_byte_array( buffer, length_gamma_modulus, capital_nv);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, capital_tilde_v);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 	} else {
 		bi_2_byte_array( buffer, length_gamma_modulus, anonymity_revocator_pk->eta);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, anonymity_revocator_pk->lambda1);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, anonymity_revocator_pk->lambda2);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, anonymity_revocator_pk->lambda3);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_rand->c1);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_rand->c2);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_rand->c3);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_rand->c4);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_proof->c1);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_proof->c2);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_proof->c3);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 		bi_2_byte_array( buffer, length_gamma_modulus, encryption_result_proof->c4);
-		EVP_DigestUpdate(&mdctx, buffer, length_gamma_modulus);
+		EVP_DigestUpdate(mdctx, buffer, length_gamma_modulus);
 	}
 	free(buffer);
 	buffer = (BYTE *)malloc(EVP_MD_size(digest)); // allocation
@@ -356,8 +357,8 @@ BYTE *compute_sign_challenge_host(
 		LogError("malloc of %d bytes failed", EVP_MD_size(digest));
 		return NULL;
 	}
-	EVP_DigestFinal_ex(&mdctx, buffer, result_length);
-	EVP_MD_CTX_cleanup(&mdctx);
+	EVP_DigestFinal_ex(mdctx, buffer, result_length);
+	EVP_MD_CTX_destroy(mdctx);
 	LogDebug("compute_sign_challenge_host[%d]:%s",
 		*result_length,
 		dump_byte_array( *result_length, buffer));
@@ -428,7 +429,7 @@ TSPICALL Tspi_DAA_VerifySignature_internal
 	TSS_DAA_ATTRIB_COMMIT_internal **commitment_proofs = NULL;
 	TCS_CONTEXT_HANDLE tcsContext;
 	TSS_RESULT result = TSS_SUCCESS;
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 	int length_ch, len_hash, bits;
 	BYTE *ch = NULL, *hash = NULL;
 	TSS_BOOL *indices;
@@ -751,10 +752,10 @@ and issuer_pk are not consistent (%d)\n",
 	LogDebug("calculation of c: signdata.payload[%d]%s",
 			sign_data.payloadLength,
 			dump_byte_array( sign_data.payloadLength, sign_data.payload));
-	EVP_MD_CTX_init(&mdctx);
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
-	EVP_DigestUpdate(&mdctx, ch, length_ch);
-	EVP_DigestUpdate(&mdctx, signature->nonce_tpm, signature->nonce_tpm_length);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestUpdate(mdctx, ch, length_ch);
+	EVP_DigestUpdate(mdctx, signature->nonce_tpm, signature->nonce_tpm_length);
 	len_hash = EVP_MD_size( DAA_PARAM_get_message_digest());
 	hash = (BYTE *)malloc( len_hash);// allocation
 	if (hash == NULL) {
@@ -762,11 +763,11 @@ and issuer_pk are not consistent (%d)\n",
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	EVP_DigestFinal_ex(&mdctx, hash, NULL);
-	EVP_DigestInit_ex(&mdctx, DAA_PARAM_get_message_digest(), NULL);
-	EVP_DigestUpdate(&mdctx, hash, EVP_MD_size( DAA_PARAM_get_message_digest()));
-	EVP_DigestUpdate(&mdctx, &sign_data.payloadFlag, 1);
-	EVP_DigestUpdate(&mdctx,  sign_data.payload, sign_data.payloadLength);
+	EVP_DigestFinal_ex(mdctx, hash, NULL);
+	EVP_DigestInit_ex(mdctx, DAA_PARAM_get_message_digest(), NULL);
+	EVP_DigestUpdate(mdctx, hash, EVP_MD_size( DAA_PARAM_get_message_digest()));
+	EVP_DigestUpdate(mdctx, &sign_data.payloadFlag, 1);
+	EVP_DigestUpdate(mdctx,  sign_data.payload, sign_data.payloadLength);
 	len_hash = EVP_MD_size( DAA_PARAM_get_message_digest());
 	free( hash);
 	hash = (BYTE *)malloc( len_hash);// allocation
@@ -775,7 +776,7 @@ and issuer_pk are not consistent (%d)\n",
 		result = TSPERR(TSS_E_OUTOFMEMORY);
 		goto close;
 	}
-	EVP_DigestFinal(&mdctx, hash, NULL);
+	EVP_DigestFinal(mdctx, hash, NULL);
 
 	if( signature->challenge_length != len_hash ||
 		memcmp( signature->challenge, hash, len_hash) != 0) {
@@ -845,6 +846,7 @@ and issuer_pk are not consistent (%d)\n",
 	// TODO: implement revocation list
 	*isCorrect = TRUE;
 close:
+	EVP_MD_CTX_destroy(mdctx);
 	bi_free_ptr( tmp1);
 	if( ch != NULL) free( ch);
 	if( hash != NULL) free( hash);

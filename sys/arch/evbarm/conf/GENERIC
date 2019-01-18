@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.1.2.6 2018/11/26 01:52:21 pgoyette Exp $
+#	$NetBSD: GENERIC,v 1.1.2.7 2019/01/18 08:50:16 pgoyette Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -25,11 +25,12 @@ makeoptions	DTS="
 	exynos4412-odroidx2.dts
 	exynos5410-odroidxu.dts
 	exynos5410-smdk5410.dts
+	exynos5422-odroidhc1.dts
 	exynos5422-odroidxu3-lite.dts
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
 
-	socfpga_cyclone5_de0_sockit.dts
+	socfpga_cyclone5_de0_nano_soc.dts
 
 	sun4i-a10-a1000.dts
 	sun4i-a10-ba10-tvbox.dts
@@ -209,7 +210,11 @@ pseudo-device 	openfirm	# /dev/openfirm
 # ODROID-XU lite
 #options 	EARLYCONS=exynos, CONSADDR=0x12c20000
 
+# RaspberryPIs
+#options 	EARLYCONS=bcm2835, CONSADDR=0x20201000
+#options 	EARLYCONS=bcm2836, CONSADDR=0x3f201000
 #options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
+
 #options 	EARLYCONS=cycv, CONSADDR=0xffc02000
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
@@ -217,9 +222,8 @@ pseudo-device 	openfirm	# /dev/openfirm
 # TEGRA TK1
 #options 	EARLYCONS=tegra, CONSADDR=0x70006300
 
-#
 #options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
-#options 	EARLYCONS=virt
+#options 	EARLYCONS=virt, CONSADDR=0x09000000
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -418,7 +422,7 @@ exuart*		at fdt?			# SSCOM UART
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 exyoi2c*	at fdt?			# Samsung Exynos I2C
-sunxirsb*	at fdt?			# Allwinner RSB
+sunxirsb*	at fdt? pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
 iic*		at i2cbus?

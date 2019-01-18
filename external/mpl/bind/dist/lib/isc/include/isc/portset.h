@@ -1,4 +1,4 @@
-/*	$NetBSD: portset.h,v 1.2.2.2 2018/09/06 06:55:06 pgoyette Exp $	*/
+/*	$NetBSD: portset.h,v 1.2.2.3 2019/01/18 08:49:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,6 +30,8 @@
 /***
  ***	Imports
  ***/
+
+#include <stdbool.h>
 
 #include <isc/net.h>
 
@@ -64,7 +66,7 @@ isc_portset_destroy(isc_mem_t *mctx, isc_portset_t **portsetp);
  *\li	'*portsetp' to be a valid set.
  */
 
-isc_boolean_t
+bool
 isc_portset_isset(isc_portset_t *portset, in_port_t port);
 /*%<
  * Test whether the given port is stored in the portset.
@@ -73,7 +75,7 @@ isc_portset_isset(isc_portset_t *portset, in_port_t port);
  *\li	'portset' to be a valid set.
  *
  * Returns
- * \li	#ISC_TRUE if the port is found, ISC_FALSE otherwise.
+ * \li	#true if the port is found, false otherwise.
  */
 
 unsigned int

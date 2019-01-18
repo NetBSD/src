@@ -1,4 +1,4 @@
-/*	$NetBSD: base32.c,v 1.2.2.2 2018/09/06 06:55:05 pgoyette Exp $	*/
+/*	$NetBSD: base32.c,v 1.2.2.3 2019/01/18 08:49:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 /*! \file */
 
 #include <config.h>
+
+#include <stdbool.h>
 
 #include <isc/base32.h>
 #include <isc/buffer.h>
@@ -144,19 +146,19 @@ typedef struct {
 	int length;		/*%< Desired length of binary data or -1 */
 	isc_buffer_t *target;	/*%< Buffer for resulting binary data */
 	int digits;		/*%< Number of buffered base32 digits */
-	isc_boolean_t seen_end;	/*%< True if "=" end marker seen */
+	bool seen_end;	/*%< True if "=" end marker seen */
 	int val[8];
 	const char *base;	/*%< Which encoding we are using */
 	int seen_32;		/*%< Number of significant bytes if non zero */
-	isc_boolean_t pad;	/*%< Expect padding */
+	bool pad;	/*%< Expect padding */
 } base32_decode_ctx_t;
 
 static inline void
 base32_decode_init(base32_decode_ctx_t *ctx, int length, const char base[],
-		   isc_boolean_t pad, isc_buffer_t *target)
+		   bool pad, isc_buffer_t *target)
 {
 	ctx->digits = 0;
-	ctx->seen_end = ISC_FALSE;
+	ctx->seen_end = false;
 	ctx->seen_32 = 0;
 	ctx->length = length;
 	ctx->target = target;
@@ -239,7 +241,7 @@ base32_decode_char(base32_decode_ctx_t *ctx, int c) {
 		unsigned char buf[5];
 
 		if (ctx->seen_32 != 0) {
-			ctx->seen_end = ISC_TRUE;
+			ctx->seen_end = true;
 			n = ctx->seen_32;
 		}
 		buf[0] = (ctx->val[0]<<3)|(ctx->val[1]>>2);
@@ -268,7 +270,7 @@ base32_decode_finish(base32_decode_ctx_t *ctx) {
 	 * Add missing padding if required.
 	 */
 	if (!ctx->pad && ctx->digits != 0) {
-		ctx->pad = ISC_TRUE;
+		ctx->pad = true;
 		do {
 			RETERR(base32_decode_char(ctx, '='));
 		} while (ctx->digits != 0);
@@ -279,13 +281,13 @@ base32_decode_finish(base32_decode_ctx_t *ctx) {
 }
 
 static isc_result_t
-base32_tobuffer(isc_lex_t *lexer, const char base[], isc_boolean_t pad,
+base32_tobuffer(isc_lex_t *lexer, const char base[], bool pad,
 		isc_buffer_t *target, int length)
 {
 	base32_decode_ctx_t ctx;
 	isc_textregion_t *tr;
 	isc_token_t token;
-	isc_boolean_t eol;
+	bool eol;
 
 	base32_decode_init(&ctx, length, base, pad, target);
 
@@ -293,9 +295,9 @@ base32_tobuffer(isc_lex_t *lexer, const char base[], isc_boolean_t pad,
 		unsigned int i;
 
 		if (length > 0)
-			eol = ISC_FALSE;
+			eol = false;
 		else
-			eol = ISC_TRUE;
+			eol = true;
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, eol));
 		if (token.type != isc_tokentype_string)
@@ -312,21 +314,21 @@ base32_tobuffer(isc_lex_t *lexer, const char base[], isc_boolean_t pad,
 
 isc_result_t
 isc_base32_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
-	return (base32_tobuffer(lexer, base32, ISC_TRUE, target, length));
+	return (base32_tobuffer(lexer, base32, true, target, length));
 }
 
 isc_result_t
 isc_base32hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
-	return (base32_tobuffer(lexer, base32hex, ISC_TRUE, target, length));
+	return (base32_tobuffer(lexer, base32hex, true, target, length));
 }
 
 isc_result_t
 isc_base32hexnp_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
-	return (base32_tobuffer(lexer, base32hex, ISC_FALSE, target, length));
+	return (base32_tobuffer(lexer, base32hex, false, target, length));
 }
 
 static isc_result_t
-base32_decodestring(const char *cstr, const char base[], isc_boolean_t pad,
+base32_decodestring(const char *cstr, const char base[], bool pad,
 		    isc_buffer_t *target)
 {
 	base32_decode_ctx_t ctx;
@@ -346,22 +348,22 @@ base32_decodestring(const char *cstr, const char base[], isc_boolean_t pad,
 
 isc_result_t
 isc_base32_decodestring(const char *cstr, isc_buffer_t *target) {
-	return (base32_decodestring(cstr, base32, ISC_TRUE, target));
+	return (base32_decodestring(cstr, base32, true, target));
 }
 
 isc_result_t
 isc_base32hex_decodestring(const char *cstr, isc_buffer_t *target) {
-	return (base32_decodestring(cstr, base32hex, ISC_TRUE, target));
+	return (base32_decodestring(cstr, base32hex, true, target));
 }
 
 isc_result_t
 isc_base32hexnp_decodestring(const char *cstr, isc_buffer_t *target) {
-	return (base32_decodestring(cstr, base32hex, ISC_FALSE, target));
+	return (base32_decodestring(cstr, base32hex, false, target));
 }
 
 static isc_result_t
 base32_decoderegion(isc_region_t *source, const char base[],
-		    isc_boolean_t pad, isc_buffer_t *target)
+		    bool pad, isc_buffer_t *target)
 {
 	base32_decode_ctx_t ctx;
 
@@ -377,17 +379,17 @@ base32_decoderegion(isc_region_t *source, const char base[],
 
 isc_result_t
 isc_base32_decoderegion(isc_region_t *source, isc_buffer_t *target) {
-	return (base32_decoderegion(source, base32, ISC_TRUE, target));
+	return (base32_decoderegion(source, base32, true, target));
 }
 
 isc_result_t
 isc_base32hex_decoderegion(isc_region_t *source, isc_buffer_t *target) {
-	return (base32_decoderegion(source, base32hex, ISC_TRUE, target));
+	return (base32_decoderegion(source, base32hex, true, target));
 }
 
 isc_result_t
 isc_base32hexnp_decoderegion(isc_region_t *source, isc_buffer_t *target) {
-	return (base32_decoderegion(source, base32hex, ISC_FALSE, target));
+	return (base32_decoderegion(source, base32hex, false, target));
 }
 
 static isc_result_t

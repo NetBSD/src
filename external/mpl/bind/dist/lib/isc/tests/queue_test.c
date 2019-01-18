@@ -1,4 +1,4 @@
-/*	$NetBSD: queue_test.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: queue_test.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,18 +11,47 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 
+#define UNIT_TESTING
+#include <cmocka.h>
+
 #include <isc/queue.h>
+#include <isc/util.h>
 
 #include "isctest.h"
+
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
 
 typedef struct item item_t;
 struct item {
@@ -38,22 +67,14 @@ item_init(item_t *item, int value) {
 	ISC_QLINK_INIT(item, qlink);
 }
 
-/*
- * Individual unit tests
- */
-
 /* Test UDP sendto/recv (IPv4) */
-ATF_TC(queue_valid);
-ATF_TC_HEAD(queue_valid, tc) {
-	atf_tc_set_md_var(tc, "descr", "Check queue validity");
-}
-ATF_TC_BODY(queue_valid, tc) {
-	isc_result_t result;
+static void
+queue_valid(void **state) {
 	item_queue_t queue;
 	item_t one, two, three, four, five;
 	item_t *p;
 
-	UNUSED(tc);
+	UNUSED(state);
 
 	ISC_QUEUE_INIT(queue, qlink);
 
@@ -63,77 +84,85 @@ ATF_TC_BODY(queue_valid, tc) {
 	item_init(&four, 4);
 	item_init(&five, 5);
 
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	ATF_CHECK(ISC_QUEUE_EMPTY(queue));
+	assert_true(ISC_QUEUE_EMPTY(queue));
 
 	ISC_QUEUE_POP(queue, qlink, p);
-	ATF_CHECK(p == NULL);
+	assert_null(p);
 
-	ATF_CHECK(! ISC_QLINK_LINKED(&one, qlink));
+	assert_false(ISC_QLINK_LINKED(&one, qlink));
 	ISC_QUEUE_PUSH(queue, &one, qlink);
-	ATF_CHECK(ISC_QLINK_LINKED(&one, qlink));
+	assert_true(ISC_QLINK_LINKED(&one, qlink));
 
-	ATF_CHECK(! ISC_QUEUE_EMPTY(queue));
+	assert_false(ISC_QUEUE_EMPTY(queue));
 
 	ISC_QUEUE_POP(queue, qlink, p);
-	ATF_REQUIRE(p != NULL);
-	ATF_CHECK_EQ(p->value, 1);
-	ATF_CHECK(ISC_QUEUE_EMPTY(queue));
-	ATF_CHECK(! ISC_QLINK_LINKED(p, qlink));
+	assert_non_null(p);
+	assert_int_equal(p->value, 1);
+	assert_true(ISC_QUEUE_EMPTY(queue));
+	assert_false(ISC_QLINK_LINKED(p, qlink));
 
 	ISC_QUEUE_PUSH(queue, p, qlink);
-	ATF_CHECK(! ISC_QUEUE_EMPTY(queue));
-	ATF_CHECK(ISC_QLINK_LINKED(p, qlink));
+	assert_false(ISC_QUEUE_EMPTY(queue));
+	assert_true(ISC_QLINK_LINKED(p, qlink));
 
-	ATF_CHECK(! ISC_QLINK_LINKED(&two, qlink));
+	assert_false(ISC_QLINK_LINKED(&two, qlink));
 	ISC_QUEUE_PUSH(queue, &two, qlink);
-	ATF_CHECK(ISC_QLINK_LINKED(&two, qlink));
+	assert_true(ISC_QLINK_LINKED(&two, qlink));
 
-	ATF_CHECK(! ISC_QLINK_LINKED(&three, qlink));
+	assert_false(ISC_QLINK_LINKED(&three, qlink));
 	ISC_QUEUE_PUSH(queue, &three, qlink);
-	ATF_CHECK(ISC_QLINK_LINKED(&three, qlink));
+	assert_true(ISC_QLINK_LINKED(&three, qlink));
 
-	ATF_CHECK(! ISC_QLINK_LINKED(&four, qlink));
+	assert_false(ISC_QLINK_LINKED(&four, qlink));
 	ISC_QUEUE_PUSH(queue, &four, qlink);
-	ATF_CHECK(ISC_QLINK_LINKED(&four, qlink));
+	assert_true(ISC_QLINK_LINKED(&four, qlink));
 
-	ATF_CHECK(! ISC_QLINK_LINKED(&five, qlink));
+	assert_false(ISC_QLINK_LINKED(&five, qlink));
 	ISC_QUEUE_PUSH(queue, &five, qlink);
-	ATF_CHECK(ISC_QLINK_LINKED(&five, qlink));
+	assert_true(ISC_QLINK_LINKED(&five, qlink));
 
 	/* Test unlink by removing one item from the middle */
 	ISC_QUEUE_UNLINK(queue, &three, qlink);
 
 	ISC_QUEUE_POP(queue, qlink, p);
-	ATF_REQUIRE(p != NULL);
-	ATF_CHECK_EQ(p->value, 1);
+	assert_non_null(p);
+	assert_int_equal(p->value, 1);
 
 	ISC_QUEUE_POP(queue, qlink, p);
-	ATF_REQUIRE(p != NULL);
-	ATF_CHECK_EQ(p->value, 2);
+	assert_non_null(p);
+	assert_int_equal(p->value, 2);
 
 	ISC_QUEUE_POP(queue, qlink, p);
-	ATF_REQUIRE(p != NULL);
-	ATF_CHECK_EQ(p->value, 4);
+	assert_non_null(p);
+	assert_int_equal(p->value, 4);
 
 	ISC_QUEUE_POP(queue, qlink, p);
-	ATF_REQUIRE(p != NULL);
-	ATF_CHECK_EQ(p->value, 5);
+	assert_non_null(p);
+	assert_int_equal(p->value, 5);
 
-	ATF_CHECK(ISC_QUEUE_EMPTY(queue));
+	assert_true(ISC_QUEUE_EMPTY(queue));
 
 	ISC_QUEUE_DESTROY(queue);
-	isc_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, queue_valid);
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(queue_valid,
+						_setup, _teardown),
+	};
 
-	return (atf_no_error());
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

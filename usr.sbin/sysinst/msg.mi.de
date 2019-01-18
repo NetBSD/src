@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.6.14.3 2018/11/26 01:52:55 pgoyette Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.6.14.4 2019/01/18 08:51:03 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1093,14 +1093,13 @@ pkgin install <packagename>
 Weitere Informationen finden sich in der pkgin(1)-Manpage.}
 message Install_pkgsrc {pkgsrc herunterladen und entpacken}
 message pkgsrc
-{Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort 
-sollen zum Herunterladen von pkgsrc verwendet werden? Wenn der User auf "ftp" 
-gesetzt wird, dann wird kein Passwort benötigt. 
+{Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort
+sollen zum Herunterladen von pkgsrc verwendet werden? Wenn der User auf "ftp"
+gesetzt wird, dann wird kein Passwort benötigt.
 
 }
 message Pkgsrc_dir {pkgsrc-Verzeichnis}
-message get_pkgsrc {pkgsrc zur Installation von Quellpaketen herunterladen und 
-installieren}
+message get_pkgsrc {pkgsrc herunterladen und extrahieren}
 message retry_pkgsrc_network {Netzwerkkonfiguration fehlgeschlagen. Noch einmal 
 versuchen?}
 message quit_pkgsrc {Ohne Installation von pkgsrc beenden.}

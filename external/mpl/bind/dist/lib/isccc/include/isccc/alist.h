@@ -1,4 +1,4 @@
-/*	$NetBSD: alist.h,v 1.2.2.2 2018/09/06 06:55:11 pgoyette Exp $	*/
+/*	$NetBSD: alist.h,v 1.2.2.3 2019/01/18 08:50:02 pgoyette Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,7 @@
 
 /*! \file isccc/alist.h */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <isc/lang.h>
@@ -41,10 +42,10 @@ ISC_LANG_BEGINDECLS
 isccc_sexpr_t *
 isccc_alist_create(void);
 
-isc_boolean_t
+bool
 isccc_alist_alistp(isccc_sexpr_t *alist);
 
-isc_boolean_t
+bool
 isccc_alist_emptyp(isccc_sexpr_t *alist);
 
 isccc_sexpr_t *

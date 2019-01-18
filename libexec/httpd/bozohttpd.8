@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.68.2.3 2018/12/26 14:01:28 pgoyette Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.68.2.4 2019/01/18 08:50:11 pgoyette Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 18, 2018
+.Dd January 7, 2019
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -477,9 +477,7 @@ if a
 .Pa .bzdirect
 file is found (contents are irrelevant)
 .Nm
-will allow direct access even with the
-.Fl r
-option.
+will allow direct access.
 If a
 .Pa .bzredirect
 symbolic link is found,
@@ -599,7 +597,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20181215.
+version 20190116.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -634,7 +632,7 @@ provided cgi-bin support fixes, and more
 .Aq Mt agc@NetBSD.org
 cleaned up many internal interfaces, made
 .Nm
-linkable as a library and provided the Lua binding.
+linkable as a library and provided the Lua binding
 .It
 .An DEGROOTE Arnaud
 .Aq Mt degroote@NetBSD.org
@@ -690,7 +688,7 @@ provided many fixes and enhancements for the man page
 fixed memory leaks, various issues with userdir support,
 information disclosure issues, added support for using CGI handlers
 with directory indexing, found several security issues and provided
-various other fixes.
+various other fixes
 .It
 .An Arnaud Lacombe
 .Aq Mt alc@NetBSD.org
@@ -708,7 +706,7 @@ provided a cgi-bin fix
 .Aq Mt jmmv@NetBSD.org
 Added the
 .Fl P
-option (pidfile support) and provided some man page fixes.
+option (pidfile support) and provided some man page fixes
 .It
 .An Luke Mewburn
 .Aq Mt lukem@NetBSD.org
@@ -717,7 +715,8 @@ HTTP basic authorization support and much code clean up
 .It
 .An Rajeev V. Pillai
 .Aq Mt rajeev_v_pillai@yahoo.com
-provided several fixes for virtual hosting and directory indexing
+provided several fixes for virtual hosting and directory indexing and
+fixes for CGI
 .It
 .An Jeremy C. Reed
 .Aq Mt reed@NetBSD.org
@@ -739,11 +738,11 @@ provided minor compile fixes and a CGI content map fix
 .Aq Mt rumble@ephemeral.org
 provided the
 .Fl V
-option.
+option
 .It
 .An Thor Lancelot Simon
 .Aq Mt tls@NetBSD.org
-enhanced cgi-bin support.
+enhanced cgi-bin support
 .It
 .An Joerg Sonnenberger
 .Aq Mt joerg@NetBSD.org
@@ -760,7 +759,7 @@ provided http authorization fixes
 .Aq Mt xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
 .It
-Coyote Point provided various CGI fixes.
+Coyote Point provided various CGI fixes
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)

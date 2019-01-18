@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threadpool.c,v 1.1.2.2 2018/12/26 14:02:10 pgoyette Exp $	*/
+/*	$NetBSD: t_threadpool.c,v 1.1.2.3 2019/01/18 08:51:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -126,6 +126,24 @@ ATF_TC_BODY(threadpool_job_cancel, tc)
 	rump_unschedule();
 }
 
+ATF_TC(threadpool_job_cancelthrash);
+ATF_TC_HEAD(threadpool_job_cancelthrash, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Tests thrashing job scheduling / cancellation");
+}
+
+ATF_TC_BODY(threadpool_job_cancelthrash, tc)
+{
+
+	rump_init();
+
+	rump_schedule();
+	rumptest_threadpool_job_cancelthrash(); /* panics if fails */
+	rump_unschedule();
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, threadpool_unbound_lifecycle);
@@ -133,6 +151,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, threadpool_unbound_schedule);
 	ATF_TP_ADD_TC(tp, threadpool_percpu_schedule);
 	ATF_TP_ADD_TC(tp, threadpool_job_cancel);
+	ATF_TP_ADD_TC(tp, threadpool_job_cancelthrash);
 
 	return atf_no_error();
 }

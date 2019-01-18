@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios_dp.c,v 1.1.2.2 2018/09/06 06:56:09 pgoyette Exp $	*/
+/*	$NetBSD: amdgpu_atombios_dp.c,v 1.1.2.3 2019/01/18 08:50:56 pgoyette Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_dp.c,v 1.1.2.2 2018/09/06 06:56:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_dp.c,v 1.1.2.3 2019/01/18 08:50:56 pgoyette Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -333,11 +333,11 @@ static void amdgpu_atombios_dp_probe_oui(struct amdgpu_connector *amdgpu_connect
 		return;
 
 	if (drm_dp_dpcd_read(&amdgpu_connector->ddc_bus->aux, DP_SINK_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Sink OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Sink OUI: %02hhx%02hhx%02hhx\n",
 			      buf[0], buf[1], buf[2]);
 
 	if (drm_dp_dpcd_read(&amdgpu_connector->ddc_bus->aux, DP_BRANCH_OUI, buf, 3) == 3)
-		DRM_DEBUG_KMS("Branch OUI: %02hx%02hx%02hx\n",
+		DRM_DEBUG_KMS("Branch OUI: %02hhx%02hhx%02hhx\n",
 			      buf[0], buf[1], buf[2]);
 }
 

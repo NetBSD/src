@@ -56,10 +56,14 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = self->args;
 	struct cmd_load_buffer_data	*cdata;
-	struct client			*c = item->client;
+	struct client			*c = cmd_find_client(item, NULL, 1);
+	struct session			*s = item->target.s;
+	struct winlink			*wl = item->target.wl;
+	struct window_pane		*wp = item->target.wp;
 	FILE				*f;
-	const char			*path, *bufname;
-	char				*pdata, *new_pdata, *cause, *file;
+	const char			*bufname;
+	char				*pdata = NULL, *new_pdata, *cause;
+	char				*path, *file;
 	size_t				 psize;
 	int				 ch, error;
 
@@ -67,8 +71,11 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'b'))
 		bufname = args_get(args, 'b');
 
-	path = args->argv[0];
+	path = format_single(item, args->argv[0], c, s, wl, wp);
 	if (strcmp(path, "-") == 0) {
+		free(path);
+		c = item->client;
+
 		cdata = xcalloc(1, sizeof *cdata);
 		cdata->item = item;
 
@@ -78,7 +85,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		error = server_set_stdin_callback(c, cmd_load_buffer_callback,
 		    cdata, &cause);
 		if (error != 0) {
-			cmdq_error(item, "%s: %s", path, cause);
+			cmdq_error(item, "-: %s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
 		}
@@ -86,11 +93,12 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	file = server_client_get_path(c, path);
+	free(path);
+
 	f = fopen(file, "rb");
 	if (f == NULL) {
 		cmdq_error(item, "%s: %s", file, strerror(errno));
-		free(file);
-		return (CMD_RETURN_ERROR);
+		goto error;
 	}
 
 	pdata = NULL;

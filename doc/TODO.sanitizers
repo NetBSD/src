@@ -4,32 +4,25 @@ Short term:
  - compiler-rt import and integration with base
  - merge TSan, MSan and libFuzzer ATF tests
  - prepare MKSANITIZER readme
- - upstream local patches, mostly to compiler-rt
 
 Long term:
  - handle fts_open(3) compar callback in sanitizers (use TLS to store
    the real callback and call a wrapper that will [un]poison appropriate
    memory regions)
- - investigate and address the libcxx failing tests on NetBSD
- - FILE and DIR sanitization (needed by at least: ESan, MSan)
- - add missing interceptors (mostly MSan-centric)
  - improve the framework for ioctl(2) database and handle special cases when a
    part of a struct can be uninitialized and passed to the kernel (MSan)
  - port or finish the port of:
    * ESan,
    * LSan,
-   * XRay,
    * shadowcallstack,
    * cfi,
    * scudo,
-   * profile,
    * DFSan.
  - finish the research of a new syscall for StopTheWorld() operation
    ptrace(2) style for self-introspection and debugging (LSan)
  - port HWASan -- aarch64 specific, needs hardware or emulator
  - make MKSANITIZER usable with any supported by a compiler combination of
    sanitizers
- - detect and fix more bugs in basesystem
  - pkgsrc integration with sanitizers and MKSANITIZER (PKGSANITIZER?)
  - port what possible to !amd64
  - fixes with the signal code
@@ -39,7 +32,6 @@ Long term:
  - lld port to NetBSD (GNU ld(1) is too slow for serious LLVM development)
  - merge of the libFuzzer integration with the basesystem
  - oom-killer ATF tests and fixes
- - uvm_map.c E2BIG workaround or limit raise (1MB -> 10MB?), needed by libFuzzer
  - utime(3) allow changing actime regardless of noatime mount property
  - NetBSD tar: handle character escaping in file names (\\ \), needed in
    check-lld (lld::reproduce-backslash.s)

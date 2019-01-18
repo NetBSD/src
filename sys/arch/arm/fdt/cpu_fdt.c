@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.4.2.6 2018/10/20 06:58:25 pgoyette Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.4.2.7 2019/01/18 08:50:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.6 2018/10/20 06:58:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.7 2019/01/18 08:50:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -110,16 +110,6 @@ cpu_fdt_match(device_t parent, cfdata_t cf, void *aux)
 	case ARM_CPU_ARMV8:
 		if (fdtbus_get_reg(phandle, 0, &mpidr, NULL) != 0)
 			return 0;
-
-#ifndef __aarch64__
-		/* XXX NetBSD/arm requires all CPUs to be in the same cluster */
-		const u_int bp_clid = cpu_clusterid();
-		const u_int clid = __SHIFTOUT(mpidr, MPIDR_AFF1);
-
-		if (bp_clid != clid)
-			return 0;
-#endif
-		break;
 	default:
 		break;
 	}
@@ -149,9 +139,6 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": missing 'reg' property\n");
 			return;
 		}
-#ifndef __aarch64__
-		mpidr = __SHIFTOUT(mpidr, MPIDR_AFF0);
-#endif
 		cpuid = mpidr;
 		break;
 	default:
@@ -261,12 +248,6 @@ arm_fdt_cpu_bootstrap(void)
 		if (mpidr == bp_mpidr)
 			continue; 	/* BP already started */
 
-#ifdef __arm__
-		/* XXX NetBSD/arm requires all CPUs to be in the same cluster */
-		if ((mpidr & ~MPIDR_AFF0) != (bp_mpidr & ~MPIDR_AFF0))
-			continue;
-#endif
-
 		KASSERT(cpuindex < MAXCPUS);
 		cpu_mpidr[cpuindex] = mpidr;
 		cpu_dcache_wb_range((vaddr_t)&cpu_mpidr[cpuindex],
@@ -277,17 +258,28 @@ arm_fdt_cpu_bootstrap(void)
 #endif
 }
 
+#ifdef MULTIPROCESSOR
+static int
+arm_fdt_cpu_enable(int phandle, const char *method)
+{
+	__link_set_decl(arm_cpu_methods, struct arm_cpu_method);
+	struct arm_cpu_method * const *acm;
+	__link_set_foreach(acm, arm_cpu_methods) {
+		if (strcmp(method, (*acm)->acm_compat) == 0)
+			return (*acm)->acm_enable(phandle);
+	}
+	return ENOSYS;
+}
+#endif
+
 void
 arm_fdt_cpu_mpstart(void)
 {
 #ifdef MULTIPROCESSOR
 	uint64_t mpidr, bp_mpidr;
-	u_int cpuindex;
-	int child, ret;
+	u_int cpuindex, i;
+	int child, error;
 	const char *method;
-#if NPSCI_FDT > 0
-	bool nopsci = false;
-#endif
 
 	const int cpus = OF_finddevice("/cpus");
 	if (cpus == -1) {
@@ -295,17 +287,10 @@ arm_fdt_cpu_mpstart(void)
 		return;
 	}
 
-#if NPSCI_FDT > 0
-	if (psci_fdt_preinit() != 0)
-		nopsci = true;
-#endif
-
 	/* MPIDR affinity levels of boot processor. */
 	bp_mpidr = cpu_mpidr_aff_read();
 
 	/* Boot APs */
-	uint32_t started = 0;
-
 	cpuindex = 1;
 	for (child = OF_child(cpus); child; child = OF_peer(child)) {
 		if (!arm_fdt_cpu_okay(child))
@@ -313,55 +298,89 @@ arm_fdt_cpu_mpstart(void)
 
 		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
 			continue;
+
 		if (mpidr == bp_mpidr)
 			continue; 	/* BP already started */
 
-#ifdef __arm__
-		/* XXX NetBSD/arm requires all CPUs to be in the same cluster */
-		if ((mpidr & ~MPIDR_AFF0) != (bp_mpidr & ~MPIDR_AFF0))
-			continue;
-#endif
-
 		method = fdtbus_get_string(child, "enable-method");
+		if (method == NULL)
+			method = fdtbus_get_string(cpus, "enable-method");
 		if (method == NULL)
 			continue;
 
-		if (strcmp(method, "spin-table") == 0) {
-			uint64_t data;
-			paddr_t cpu_release_addr;
-
-			if (OF_getprop(child, "cpu-release-addr", &data,
-			    sizeof(data)) != sizeof(data))
-				continue;
-
-			cpu_release_addr = (paddr_t)be64toh(data);
-			ret = spintable_cpu_on(mpidr, cpu_fdt_mpstart_pa(), cpu_release_addr);
-			if (ret != 0)
-				continue;
-
-#if NPSCI_FDT > 0
-		} else if (!nopsci && (strcmp(method, "psci") == 0)) {
-			ret = psci_cpu_on(mpidr, cpu_fdt_mpstart_pa(), 0);
-			if (ret != PSCI_SUCCESS)
-				continue;
-#endif
-		} else {
-			aprint_error("%s: %s: unsupported method\n", __func__, method);
+		error = arm_fdt_cpu_enable(child, method);
+		if (error != 0) {
+			aprint_error("%s: %s: unsupported enable-method\n", __func__, method);
 			continue;
 		}
 
-		started |= __BIT(cpuindex);
+		/* Wake up AP in case firmware has placed it in WFE state */
+		__asm __volatile("sev" ::: "memory");
+
+		/* Wait for AP to start */
+		for (i = 0x100000; i > 0; i--) {
+			membar_consumer();
+			if (arm_cpu_hatched & __BIT(cpuindex))
+				break;
+		}
+		if (i == 0)
+			aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
+
 		cpuindex++;
-	}
-
-	/* Wake up AP in case firmware has placed it in WFE state */
-	__asm __volatile("sev" ::: "memory");
-
-	/* Wait for APs to start */
-	for (u_int i = 0x10000000; i > 0; i--) {
-		membar_consumer();
-		if (arm_cpu_hatched == started)
-			break;
 	}
 #endif /* MULTIPROCESSOR */
 }
+
+static int
+cpu_enable_nullop(int phandle)
+{
+	return ENXIO;
+}
+ARM_CPU_METHOD(default, "", cpu_enable_nullop);
+
+#if defined(MULTIPROCESSOR) && NPSCI_FDT > 0
+static int
+cpu_enable_psci(int phandle)
+{
+	static bool psci_probed, psci_p;
+	uint64_t mpidr;
+	int ret;
+
+	if (!psci_probed) {
+		psci_probed = true;
+		psci_p = psci_fdt_preinit() == 0;
+	}
+	if (!psci_p)
+		return ENXIO;
+
+	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
+
+	ret = psci_cpu_on(mpidr, cpu_fdt_mpstart_pa(), 0);
+	if (ret != PSCI_SUCCESS)
+		return EIO;
+
+	return 0;
+}
+ARM_CPU_METHOD(psci, "psci", cpu_enable_psci);
+#endif
+
+#if defined(MULTIPROCESSOR)
+static int
+cpu_enable_spin_table(int phandle)
+{
+	uint64_t mpidr, addr;
+	int ret;
+
+	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
+
+	if (of_getprop_uint64(phandle, "cpu-release-addr", &addr) != 0)
+		return ENXIO;
+
+	ret = spintable_cpu_on(mpidr, cpu_fdt_mpstart_pa(), (paddr_t)addr);
+	if (ret != 0)
+		return EIO;
+
+	return 0;
+}
+ARM_CPU_METHOD(spin_table, "spin-table", cpu_enable_spin_table);
+#endif

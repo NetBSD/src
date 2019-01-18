@@ -1,4 +1,4 @@
-.\"	$NetBSD: host.1,v 1.2.2.2 2018/09/06 06:53:55 pgoyette Exp $
+.\"	$NetBSD: host.1,v 1.2.2.3 2019/01/18 08:49:10 pgoyette Exp $
 .\"
 .\" Copyright (C) 2000-2002, 2004, 2005, 2007-2009, 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -112,11 +112,6 @@ from all the listed authoritative name servers for that zone\&. The list of name
 Print debugging traces\&. Equivalent to the
 \fB\-v\fR
 verbose option\&.
-.RE
-.PP
-\-i
-.RS 4
-Obsolete\&. Use the IP6\&.INT domain for reverse lookups of IPv6 addresses as defined in RFC1886 and deprecated in RFC4159\&. The default is to use IP6\&.ARPA as specified in RFC3596\&.
 .RE
 .PP
 \-l
@@ -259,7 +254,7 @@ If
 \fBhost\fR
 has been built with IDN (internationalized domain name) support, it can accept and display non\-ASCII domain names\&.
 \fBhost\fR
-appropriately converts character encoding of domain name before sending a request to DNS server or displaying a reply from the server\&. If you\*(Aqd like to turn off the IDN support for some reason, defines the
+appropriately converts character encoding of domain name before sending a request to DNS server or displaying a reply from the server\&. If you\*(Aqd like to turn off the IDN support for some reason, define the
 \fBIDN_DISABLE\fR
 environment variable\&. The IDN support is disabled if the variable is set when
 \fBhost\fR

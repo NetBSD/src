@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.2.2.2 2018/04/16 01:59:49 pgoyette Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.2.2.2 2018/04/16 01:59:49 pgoyette Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $");
 
 
 /*!
@@ -181,7 +181,7 @@ __RCSID("$NetBSD: mdb6.c,v 1.2.2.2 2018/04/16 01:59:49 pgoyette Exp $");
 #include "dhcpd.h"
 #include "omapip/omapip.h"
 #include "omapip/hash.h"
-#include <isc/md5.h>
+#include <isc/md.h>
 
 HASH_FUNCTIONS(ia, unsigned char *, struct ia_xx, ia_hash_t,
 	       ia_reference, ia_dereference, do_string_hash)
@@ -819,20 +819,13 @@ static void
 build_address6(struct in6_addr *addr, 
 	       const struct in6_addr *net_start_addr, int net_bits, 
 	       const struct data_string *input) {
-	isc_md5_t ctx;
 	int net_bytes;
 	int i;
+	unsigned int len;
 	char *str;
 	const char *net_str;
 
-	/* 
-	 * Use MD5 to get a nice 128 bit hash of the input.
-	 * Yes, we know MD5 isn't cryptographically sound. 
-	 * No, we don't care.
-	 */
-	isc_md5_init(&ctx);
-	isc_md5_update(&ctx, input->data, input->len);
-	isc_md5_final(&ctx, (unsigned char *)addr);
+	isc_md(ISC_MD_MD5, input->data, input->len, (void *)addr, &len);
 
 	/*
 	 * Copy the [0..128] network bits over.
@@ -946,25 +939,22 @@ build_temporary6(struct in6_addr *addr,
 		 const struct data_string *input) {
 	static u_int32_t history[2];
 	static u_int32_t counter = 0;
-	isc_md5_t ctx;
 	unsigned char md[16];
+	unsigned int len;
 
 	/*
 	 * First time/time to reseed.
 	 * Please use a good pseudo-random generator here!
 	 */
 	if (counter == 0) {
-		isc_random_get(&history[0]);
-		isc_random_get(&history[1]);
+		history[0] = arc4random();
+		history[1] = arc4random();
 	}
 
 	/* 
 	 * Use MD5 as recommended by RFC 4941.
 	 */
-	isc_md5_init(&ctx);
-	isc_md5_update(&ctx, (unsigned char *)&history[0], 8UL);
-	isc_md5_update(&ctx, input->data, input->len);
-	isc_md5_final(&ctx, md);
+	isc_md(ISC_MD_MD5, input->data, input->len, (void *)&history[0], &len);
 
 	/*
 	 * Build the address.
@@ -1819,9 +1809,9 @@ build_prefix6(struct in6_addr *pref,
 	      const struct in6_addr *net_start_pref,
 	      int pool_bits, int pref_bits,
 	      const struct data_string *input) {
-	isc_md5_t ctx;
 	int net_bytes;
 	int i;
+	unsigned int len;
 	char *str;
 	const char *net_str;
 
@@ -1830,9 +1820,7 @@ build_prefix6(struct in6_addr *pref,
 	 * Yes, we know MD5 isn't cryptographically sound. 
 	 * No, we don't care.
 	 */
-	isc_md5_init(&ctx);
-	isc_md5_update(&ctx, input->data, input->len);
-	isc_md5_final(&ctx, (unsigned char *)pref);
+	isc_md(ISC_MD_MD5, input->data, input->len, (void *)&pref, &len);
 
 	/*
 	 * Copy the network bits over.

@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.146.2.2 2018/12/26 14:01:27 pgoyette Exp $	*/
+/*	$NetBSD: readline.c,v 1.146.2.3 2019/01/18 08:50:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.146.2.2 2018/12/26 14:01:27 pgoyette Exp $");
+__RCSID("$NetBSD: readline.c,v 1.146.2.3 2019/01/18 08:50:10 pgoyette Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -319,7 +319,7 @@ rl_initialize(void)
 		el_end(e);
 		return -1;
 	}
-	el_set(e, EL_PROMPT, _get_prompt, RL_PROMPT_START_IGNORE);
+	el_set(e, EL_PROMPT_ESC, _get_prompt, RL_PROMPT_START_IGNORE);
 	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */

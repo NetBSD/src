@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.2.2.2 2018/09/06 06:53:59 pgoyette Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.2.2.3 2019/01/18 08:49:13 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,7 @@
 #include <config.h>
 
 #include <sys/param.h>
+#include <sys/select.h>
 #include <sys/types.h>
 #include <sys/time.h>
 
@@ -36,10 +37,6 @@
 #include <dns/rdataset.h>
 #include <dns/result.h>
 #include <dns/zone.h>
-
-#ifdef ISC_PLATFORM_NEEDSYSSELECTH
-#include <sys/select.h>
-#endif
 
 static int debug = 0;
 static int quiet = 0;
@@ -109,7 +106,8 @@ setup(const char *zonename, const char *filename, const char *classname) {
 	result = dns_zone_setdbtype(zone, 1, &rbt);
 	ERRRET(result, "dns_zone_setdatabase");
 
-	result = dns_zone_setfile(zone, filename);
+	result = dns_zone_setfile(zone, filename, dns_masterformat_text,
+				  &dns_master_style_default);
 	ERRRET(result, "dns_zone_setfile");
 
 	region.base = classname;
@@ -123,7 +121,7 @@ setup(const char *zonename, const char *filename, const char *classname) {
 	if (zonetype == dns_zone_slave)
 		dns_zone_setmasters(zone, &addr, 1);
 
-	result = dns_zone_load(zone);
+	result = dns_zone_load(zone, false);
 	ERRRET(result, "dns_zone_load");
 
 	result = dns_zonemgr_managezone(zonemgr, zone);
@@ -138,7 +136,7 @@ print_rdataset(dns_name_t *name, dns_rdataset_t *rdataset) {
 	isc_region_t r;
 
 	isc_buffer_init(&text, t, sizeof(t));
-	result = dns_rdataset_totext(rdataset, name, ISC_FALSE, ISC_FALSE,
+	result = dns_rdataset_totext(rdataset, name, false, false,
 				     &text);
 	isc_buffer_usedregion(&text, &r);
 	if (result == ISC_R_SUCCESS)
@@ -192,7 +190,9 @@ query(void) {
 		if (s != NULL)
 			*s = '\0';
 		if (strcmp(buf, "dump") == 0) {
-			dns_zone_dumptostream(zone, stdout);
+			dns_zone_dumptostream(zone, stdout,
+					      dns_masterformat_text,
+					      &dns_master_style_default, 0);
 			continue;
 		}
 		if (strlen(buf) == 0U)

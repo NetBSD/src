@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.20.2.6 2018/11/26 01:52:20 pgoyette Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.20.2.7 2019/01/18 08:50:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20.2.6 2018/11/26 01:52:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20.2.7 2019/01/18 08:50:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -190,6 +190,7 @@ struct sunxi_mmc_softc {
 	struct fdtbus_gpio_pin *sc_gpio_wp;
 	int sc_gpio_wp_inverted;
 
+	struct fdtbus_regulator *sc_reg_vmmc;
 	struct fdtbus_regulator *sc_reg_vqmmc;
 
 	struct fdtbus_mmc_pwrseq *sc_pwrseq;
@@ -328,8 +329,6 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_rst_ahb = fdtbus_reset_get(phandle, "ahb");
 
-	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
-
 	sc->sc_pwrseq = fdtbus_mmc_pwrseq_get(phandle);
 
 	if (clk_enable(sc->sc_clk_ahb) != 0 ||
@@ -361,6 +360,9 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": SD/MMC controller\n");
+
+	sc->sc_reg_vmmc = fdtbus_regulator_acquire(phandle, "vmmc-supply");
+	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
 
 	sc->sc_gpio_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
@@ -523,6 +525,15 @@ sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr)
 }
 
 static void
+sunxi_mmc_hw_reset(struct sunxi_mmc_softc *sc)
+{
+	MMC_WRITE(sc, SUNXI_MMC_HWRST, 0);
+	delay(1000);
+	MMC_WRITE(sc, SUNXI_MMC_HWRST, 1);
+	delay(1000);
+}
+
+static void
 sunxi_mmc_attach_i(device_t self)
 {
 	struct sunxi_mmc_softc *sc = device_private(self);
@@ -532,6 +543,9 @@ sunxi_mmc_attach_i(device_t self)
 
 	if (sc->sc_pwrseq)
 		fdtbus_mmc_pwrseq_pre_power_on(sc->sc_pwrseq);
+
+	if (of_hasprop(sc->sc_phandle, "cap-mmc-hw-reset"))
+		sunxi_mmc_hw_reset(sc);
 
 	sunxi_mmc_host_reset(sc);
 	sunxi_mmc_bus_width(sc, 1);
@@ -759,7 +773,7 @@ sunxi_mmc_update_clock(struct sunxi_mmc_softc *sc)
 	      SUNXI_MMC_CMD_UPCLK_ONLY |
 	      SUNXI_MMC_CMD_WAIT_PRE_OVER;
 	MMC_WRITE(sc, SUNXI_MMC_CMD, cmd);
-	retry = 0xfffff;
+	retry = 100000;
 	while (--retry > 0) {
 		if (!(MMC_READ(sc, SUNXI_MMC_CMD) & SUNXI_MMC_CMD_START))
 			break;
@@ -908,6 +922,10 @@ sunxi_mmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 	default:
 		return EINVAL;
 	}
+
+	error = fdtbus_regulator_supports_voltage(sc->sc_reg_vqmmc, uvol, uvol);
+	if (error != 0)
+		return 0;
 
 	error = fdtbus_regulator_set_voltage(sc->sc_reg_vqmmc, uvol, uvol);
 	if (error != 0)
@@ -1138,7 +1156,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 	cmd->c_error = sunxi_mmc_wait_rint(sc,
-	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, hz * 10, poll);
+	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, hz * 3, poll);
 	if (cmd->c_error == 0 && (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 		if (sc->sc_intr_rint & SUNXI_MMC_INT_RESP_TIMEOUT) {
 			cmd->c_error = ETIMEDOUT;
@@ -1159,7 +1177,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		    SUNXI_MMC_INT_ERROR|
 		    SUNXI_MMC_INT_AUTO_CMD_DONE|
 		    SUNXI_MMC_INT_DATA_OVER,
-		    hz*10, poll);
+		    hz*3, poll);
 		if (cmd->c_error == 0 &&
 		    (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 			cmd->c_error = ETIMEDOUT;

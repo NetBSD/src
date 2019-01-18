@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: l32_105.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
 
 typedef struct dns_rdata_l32 {
 	dns_rdatacommon_t	common;
-	isc_uint16_t		pref;
+	uint16_t		pref;
 	struct in_addr		l32;
 } dns_rdata_l32_t;
 

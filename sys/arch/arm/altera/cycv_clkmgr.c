@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_clkmgr.c,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $ */
+/* $NetBSD: cycv_clkmgr.c,v 1.1.2.3 2019/01/18 08:50:14 pgoyette Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.1.2.3 2019/01/18 08:50:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -323,7 +323,8 @@ cycv_clkmgr_clocks_traverse(struct cycv_clkmgr_softc *sc, int clocks_handle,
 }
 
 static struct cycv_clk_mux_info *
-cycv_clkmgr_get_mux_info(const char *name) {
+cycv_clkmgr_get_mux_info(const char *name)
+{
 	size_t i;
 
 	for (i = 0; i < __arraycount(cycv_clk_mux_tree); i++) {
@@ -363,7 +364,8 @@ cycv_clkmgr_clock_lookup_by_name(struct cycv_clkmgr_softc *sc, const char *name)
 }
 
 static void
-cycv_clkmgr_clock_print(struct cycv_clkmgr_softc *sc, struct cycv_clk *clk) {
+cycv_clkmgr_clock_print(struct cycv_clkmgr_softc *sc, struct cycv_clk *clk)
+{
 	uint32_t numer;
 	uint32_t denom;
 	uint32_t tmp;
@@ -510,7 +512,8 @@ cycv_clkmgr_clock_set_rate(void *priv, struct clk *clk, u_int rate)
 }
 
 static int
-cycv_clkmgr_clock_set(void *priv, struct clk *base_clk, int val) {
+cycv_clkmgr_clock_set(void *priv, struct clk *base_clk, int val)
+{
 	struct cycv_clkmgr_softc *sc = priv;
 	struct cycv_clk *clk = (struct cycv_clk *) base_clk;
 
@@ -602,7 +605,8 @@ update:
  */
 
 uint32_t
-cycv_clkmgr_early_get_mpu_clk(void) {
+cycv_clkmgr_early_get_mpu_clk(void)
+{
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t tmp;
@@ -620,7 +624,8 @@ cycv_clkmgr_early_get_mpu_clk(void) {
 }
 
 uint32_t
-cycv_clkmgr_early_get_l4_sp_clk(void) {
+cycv_clkmgr_early_get_l4_sp_clk(void)
+{
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t tmp;
