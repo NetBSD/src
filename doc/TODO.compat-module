@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.23 2019/01/15 22:06:34 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.24 2019/01/18 05:42:34 pgoyette Exp $ */
 
 DONE
 ----
@@ -19,10 +19,10 @@ DONE
     defopt/defflag lines in the config files* as needed, to insure that
     built-in dependencies get resolved.
 
-7.  Fixed limits on the number of module depedencies and maximum
+7.  Fixed limits on the number of module dependencies and maximum
     recursion level have been removed.  Previous code for reporting
     module status to userland has been versioned and moved to the
-    compat_80 module.
+    (new) compat_80 module.
 
 8.  The old monolithic compat module has been broken into multiple
     modules, one for each old NetBSD version.  The monolithic module
@@ -43,7 +43,7 @@ DONE
 
 12. Replace version-specific parts of the compat_netbsd32 module (and
     also the compat_netbsd32_sysv module) with individual modules.  Update
-    dependencies accordingly.  (Done, but see #13 below.)
+    dependencies accordingly.  (Done, but see #19 below.)
 
 13. Finished splitting the vnd_30 and vnd_50 compat code into separate
     modules.
@@ -51,14 +51,14 @@ DONE
 14. Cleaned up some previous vectored routines (related to if_43.c) to
     use the MP-safe mechanism.
 
-15. Organized netbsd32 machine-dependent code to fit a common build
-    framework, and split version-specific code from baseline code as
-    needed.
+15. Organized (some of) the netbsd32 machine-dependent code to fit a
+    common build framework, and split version-specific code from baseline
+    code as needed.
 
 16. The rtsock.c code has been split into two separate source files,
-    one for use -current and one which is shared with COMPAT_50 (the
-    code is shared, but macros are used to define version-specific
-    routine names and variable types).
+    one for use in -current and one which is shared with COMPAT_50 (the
+    code is shared with -current, but macros are used to define version-
+    specific routine names and variable types).
 
 TODO - Not required for branch merge
 ------------------------------------
