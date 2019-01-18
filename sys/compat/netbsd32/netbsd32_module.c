@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6.2.11 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.6.2.12 2019/01/18 00:01:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.11 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.12 2019/01/18 00:01:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -201,10 +201,10 @@ compat32_80_modctl_compat_stub(struct lwp *lwp,
 }
 
 /* Module hook for netbsd32_80_modctl */
-MODULE_CALL_INT_HOOK_DECL(compat32_80_modctl_hook,
+MODULE_CALL_HOOK_DECL(compat32_80_modctl_hook, int,
     (struct lwp *lwp, const struct netbsd32_modctl_args *uap,
       register_t *result));
-MODULE_CALL_INT_HOOK(compat32_80_modctl_hook,
+MODULE_CALL_HOOK(compat32_80_modctl_hook, int,
     (struct lwp *lwp, const struct netbsd32_modctl_args *uap,
       register_t *result),
     (lwp, uap, result),

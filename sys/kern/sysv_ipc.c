@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.32.16.8 2019/01/14 13:34:28 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32.16.9 2019/01/18 00:01:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.8 2019/01/14 13:34:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.9 2019/01/18 00:01:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -347,8 +347,8 @@ stub_sysvipc50_sysctl(SYSCTLFN_ARGS)
 	return EPASSTHROUGH;
 }
 
-MODULE_CALL_INT_HOOK_DECL(sysvipc50_sysctl_hook, (SYSCTLFN_PROTO));
-MODULE_CALL_INT_HOOK(sysvipc50_sysctl_hook, (SYSCTLFN_ARGS),
+MODULE_CALL_HOOK_DECL(sysvipc50_sysctl_hook, int, (SYSCTLFN_PROTO));
+MODULE_CALL_HOOK(sysvipc50_sysctl_hook, int, (SYSCTLFN_ARGS),
     (SYSCTLFN_CALL(rnode)), stub_sysvipc50_sysctl(SYSCTLFN_CALL(rnode)));
 
 static int

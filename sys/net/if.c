@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.20 2019/01/14 13:34:28 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.21 2019/01/18 00:01:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.20 2019/01/14 13:34:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.21 2019/01/18 00:01:02 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3120,24 +3120,24 @@ out:
 /*
  * Interface for calling the compat routines
  */
-MODULE_CALL_INT_HOOK_DECL(uipc_syscalls_40_hook,
+MODULE_CALL_HOOK_DECL(uipc_syscalls_40_hook, int,
     (struct lwp *l, int cmd, void *data));
-MODULE_CALL_INT_HOOK(uipc_syscalls_40_hook,
+MODULE_CALL_HOOK(uipc_syscalls_40_hook, int,
     (struct lwp *l, int cmd, void *data), (cmd, data), enosys());
 
-MODULE_CALL_INT_HOOK_DECL(uipc_syscalls_50_hook,
+MODULE_CALL_HOOK_DECL(uipc_syscalls_50_hook, int,
     (struct lwp *l, int cmd, void *data));
-MODULE_CALL_INT_HOOK(uipc_syscalls_50_hook,
+MODULE_CALL_HOOK(uipc_syscalls_50_hook, int,
     (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
 
-MODULE_CALL_INT_HOOK_DECL(if_43_cvtcmd_hook,
+MODULE_CALL_HOOK_DECL(if_43_cvtcmd_hook, int,
     (u_long *ncmd, u_long ocmd));
-MODULE_CALL_INT_HOOK(if_43_cvtcmd_hook,
+MODULE_CALL_HOOK(if_43_cvtcmd_hook, int,
     (u_long *ncmd, u_long ocmd), (ncmd, ocmd), enosys());
 
-MODULE_CALL_INT_HOOK_DECL(if_43_ifioctl_hook,
+MODULE_CALL_HOOK_DECL(if_43_ifioctl_hook, int,
     (struct socket *so, u_long ocmd, u_long cmd, void *data, struct lwp *l));
-MODULE_CALL_INT_HOOK(if_43_ifioctl_hook,
+MODULE_CALL_HOOK(if_43_ifioctl_hook, int,
     (struct socket *so, u_long ocmd, u_long cmd, void *data, struct lwp *l),
     (so, ocmd, cmd, data, l), enosys());
 

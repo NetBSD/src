@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.6 2019/01/14 13:34:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.7 2019/01/18 00:01:02 pgoyette Exp $");
 #endif
 
 /*
@@ -2559,9 +2559,9 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 /*
  * Compatability glue
  */
-MODULE_CALL_INT_HOOK_DECL(ieee80211_ostats_hook,
+MODULE_CALL_HOOK_DECL(ieee80211_ostats_hook, int,
     (struct ieee80211_ostats *ostats, struct ieee80211_stats *stats));
-MODULE_CALL_INT_HOOK(ieee80211_ostats_hook,
+MODULE_CALL_HOOK(ieee80211_ostats_hook, int,
     (struct ieee80211_ostats *ostats, struct ieee80211_stats *stats),
     (ostats, stats), enosys());
 

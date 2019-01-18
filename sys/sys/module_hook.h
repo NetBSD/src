@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.11 2019/01/17 21:32:42 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.12 2019/01/18 00:01:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -104,20 +104,21 @@ static void (hook ## _unset)(void)				\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define MODULE_CALL_INT_HOOK_DECL(hook, decl)			\
-int								\
+#define MODULE_CALL_HOOK_DECL(hook, type, decl)			\
+type								\
 hook ## _call decl;
 
 #define MODULE_CALL_VOID_HOOK_DECL(hook, decl)			\
 void								\
 hook ## _call decl;
 
-#define MODULE_CALL_INT_HOOK(hook, decl, args, default)		\
-int								\
+#define MODULE_CALL_HOOK(hook, type, decl, args, default)	\
+type								\
 hook ## _call decl						\
 {								\
 	bool __hooked;						\
-	int __hook_retval, __hook_s;				\
+	type __hook_retval;					\
+	int __hook_s;						\
 								\
 	__hook_s = pserialize_read_enter();			\
 	__hooked = hook.hooked;					\

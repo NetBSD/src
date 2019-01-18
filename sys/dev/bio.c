@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.13.16.7 2019/01/14 13:34:27 pgoyette Exp $ */
+/*	$NetBSD: bio.c,v 1.13.16.8 2019/01/18 00:01:01 pgoyette Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.13.16.7 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.13.16.8 2019/01/18 00:01:01 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -115,9 +115,9 @@ bioclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /* Hook up the compat_bio_30 routine */
-MODULE_CALL_INT_HOOK_DECL(compat_bio_30_hook,
+MODULE_CALL_HOOK_DECL(compat_bio_30_hook, int,
     (void * cookie, u_long cmd, void *addr, int(*ff)(void *, u_long, void *)));
-MODULE_CALL_INT_HOOK(compat_bio_30_hook,
+MODULE_CALL_HOOK(compat_bio_30_hook, int,
     (void * cookie, u_long cmd, void *addr, int(*ff)(void *, u_long, void *)),
     (cookie, cmd, addr, ff), enosys());
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.356.2.8 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.356.2.9 2019/01/18 00:01:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.2.8 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.2.9 2019/01/18 00:01:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1038,19 +1038,19 @@ raid_detach_unlocked(struct raid_softc *rs)
 }
 
 /* Hooks to call the 5.0 and 8.0 ioctl compat code */
-MODULE_CALL_INT_HOOK_DECL(raidframe50_ioctl_hook,
+MODULE_CALL_HOOK_DECL(raidframe50_ioctl_hook, int,
     (int cmd, int initted, RF_Raid_t *raidPtr, int unit, void *data,
      RF_Config_t **k_cfg));
-MODULE_CALL_INT_HOOK(raidframe50_ioctl_hook,
+MODULE_CALL_HOOK(raidframe50_ioctl_hook, int,
     (int cmd, int initted, RF_Raid_t *raidPtr, int unit, void *data,
      RF_Config_t **k_cfg),
     (cmd, initted, raidPtr, unit, data, k_cfg),
     enosys());
 
-MODULE_CALL_INT_HOOK_DECL(raidframe80_ioctl_hook,
+MODULE_CALL_HOOK_DECL(raidframe80_ioctl_hook, int,
     (int cmd, int initted, RF_Raid_t *raidPtr, int unit, void *data,
      RF_Config_t **k_cfg));
-MODULE_CALL_INT_HOOK(raidframe80_ioctl_hook,
+MODULE_CALL_HOOK(raidframe80_ioctl_hook, int,
     (int cmd, int initted, RF_Raid_t *raidPtr, int unit, void *data,
      RF_Config_t **k_cfg),
     (cmd, initted, raidPtr, unit, data, k_cfg),
