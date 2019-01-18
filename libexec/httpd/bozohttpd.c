@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.109 2019/01/18 05:48:31 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.110 2019/01/18 06:04:10 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -190,33 +190,21 @@ volatile sig_atomic_t	timeout_hit;
  * check there's enough space in the prefs and names arrays.
  */
 static int
-size_arrays(bozoprefs_t *bozoprefs, size_t needed)
+size_arrays(bozohttpd_t *httpd, bozoprefs_t *bozoprefs, size_t needed)
 {
-	char	**temp;
+	size_t	len = sizeof(char *) * needed;
 
 	if (bozoprefs->size == 0) {
 		/* only get here first time around */
-		bozoprefs->name = calloc(sizeof(char *), needed);
-		if (bozoprefs->name == NULL)
-			return 0;
-		bozoprefs->value = calloc(sizeof(char *), needed);
-		if (bozoprefs->value == NULL) {
-			free(bozoprefs->name);
-			return 0;
-		}
-		bozoprefs->size = needed;
+		bozoprefs->name = bozomalloc(httpd, len);
+		bozoprefs->value = bozomalloc(httpd, len);
 	} else if (bozoprefs->count == bozoprefs->size) {
 		/* only uses 'needed' when filled array */
-		temp = realloc(bozoprefs->name, sizeof(char *) * needed);
-		if (temp == NULL)
-			return 0;
-		bozoprefs->name = temp;
-		temp = realloc(bozoprefs->value, sizeof(char *) * needed);
-		if (temp == NULL)
-			return 0;
-		bozoprefs->value = temp;
-		bozoprefs->size += needed;
+		bozoprefs->name = bozorealloc(httpd, bozoprefs->name, len);
+		bozoprefs->value = bozorealloc(httpd, bozoprefs->value, len);
 	}
+
+	bozoprefs->size = needed;
 	return 1;
 }
 
@@ -239,14 +227,13 @@ bozo_set_pref(bozohttpd_t *httpd, bozoprefs_t *bozoprefs,
 
 	if ((i = findvar(bozoprefs, name)) < 0) {
 		/* add the element to the array */
-		if (!size_arrays(bozoprefs, bozoprefs->size + 15))
+		if (!size_arrays(httpd, bozoprefs, bozoprefs->size + 15))
 			return 0;
 		i = bozoprefs->count++;
 		bozoprefs->name[i] = bozostrdup(httpd, NULL, name);
 	} else {
 		/* replace the element in the array */
-		if (bozoprefs->value[i])
-			free(bozoprefs->value[i]);
+		free(bozoprefs->value[i]);
 	}
 	bozoprefs->value[i] = bozostrdup(httpd, NULL, value);
 	return 1;
