@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89.16.6 2019/01/14 13:34:28 pgoyette Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.16.7 2019/01/18 00:01:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.6 2019/01/14 13:34:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.7 2019/01/18 00:01:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1446,13 +1446,13 @@ krs_setflags(krndsource_t *kr, uint32_t flags, uint32_t mask)
 	}
 }
 
-MODULE_CALL_INT_HOOK_DECL(rnd_ioctl_50_hook, (struct file *, u_long, void *));
-MODULE_CALL_INT_HOOK_DECL(rnd_ioctl_50_32_hook,
+MODULE_CALL_HOOK_DECL(rnd_ioctl_50_hook, int, (struct file *, u_long, void *));
+MODULE_CALL_HOOK_DECL(rnd_ioctl_50_32_hook, int,
     (struct file *, u_long, void *));
 
-MODULE_CALL_INT_HOOK(rnd_ioctl_50_hook,
+MODULE_CALL_HOOK(rnd_ioctl_50_hook, int,
     (struct file *fp, u_long cmd, void *addr), (fp, cmd, addr), enosys());
-MODULE_CALL_INT_HOOK(rnd_ioctl_50_32_hook,
+MODULE_CALL_HOOK(rnd_ioctl_50_32_hook, int,
     (struct file *fp, u_long cmd, void *addr), (fp, cmd, addr), enosys());
 
 int

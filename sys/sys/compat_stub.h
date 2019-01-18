@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.50 2019/01/15 12:42:12 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.51 2019/01/18 00:01:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -299,8 +299,8 @@ MODULE_HOOK(compat_10_openat_hook, int, (struct pathbuf **));
  * Hook for compat_70_unp_addsockcred
  */
 struct mbuf;
-MODULE_HOOK(compat_70_unp_hook, void,
-    (struct mbuf **, struct lwp *, struct mbuf *));
+MODULE_HOOK(compat_70_unp_hook, struct mbuf *,
+    (struct lwp *, struct mbuf *));
 
 /*
  * Hook for sysvipc50 sysctl

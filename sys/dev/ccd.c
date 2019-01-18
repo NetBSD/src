@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.175.2.10 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.175.2.11 2019/01/18 00:01:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.10 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.11 2019/01/18 00:01:01 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1061,12 +1061,12 @@ ccdread(dev_t dev, struct uio *uio, int flags)
  * This looks ugly, since we pass the "real" ioctl function as an
  * argument to the compat_xxx function.
  */
-MODULE_CALL_INT_HOOK_DECL(ccd_ioctl_60_hook, (dev_t dev, u_long cmd, void *data,
-    int flag, struct lwp *l, int (*ff)(dev_t, u_long, void *, int,
-					 struct lwp *)));
-MODULE_CALL_INT_HOOK(ccd_ioctl_60_hook, (dev_t dev, u_long cmd, void *data,
-    int flag, struct lwp *l, int (*ff)(dev_t, u_long, void *, int,
-					 struct lwp *)),
+MODULE_CALL_HOOK_DECL(ccd_ioctl_60_hook, int,
+    (dev_t dev, u_long cmd, void *data, int flag, struct lwp *l,
+       int (*ff)(dev_t, u_long, void *, int, struct lwp *)));
+MODULE_CALL_HOOK(ccd_ioctl_60_hook, int,
+    (dev_t dev, u_long cmd, void *data, int flag, struct lwp *l,
+       int (*ff)(dev_t, u_long, void *, int, struct lwp *)),
     (dev, cmd, data, flag, l, ccdioctl), enosys());
 
 /* ARGSUSED */

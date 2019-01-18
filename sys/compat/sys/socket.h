@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.15.2.3 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: socket.h,v 1.15.2.4 2019/01/18 00:01:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -104,7 +104,7 @@ u_long compat_cvtcmd(u_long cmd);
 int compat_ifioctl(struct socket *, u_long, u_long, void *, struct lwp *);
 int compat43_set_accrights(struct msghdr *, void *, int);
 
-void compat_70_unp_addsockcred(struct mbuf **, struct lwp *, struct mbuf *);
+struct mbuf * compat_70_unp_addsockcred(struct lwp *, struct mbuf *);
 
 void uipc_usrreq_70_init(void);
 void uipc_usrreq_70_fini(void);
