@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.11 2016/04/03 10:03:04 martin Exp $	*/
+/*	$NetBSD: emac3.c,v 1.11.16.1 2019/01/18 08:50:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.11 2016/04/03 10:03:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.11.16.1 2019/01/18 08:50:20 pgoyette Exp $");
 
 #include "debug_playstation2.h"
 
@@ -248,7 +248,7 @@ allmulti:
 		    ETHER_ADDR_LEN) != 0)
 			goto allmulti;
 
-		ETHER_NEXT_MULTI(step, enm)
+		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	/* XXX always multicast promiscuous mode. XXX use hash table.. */

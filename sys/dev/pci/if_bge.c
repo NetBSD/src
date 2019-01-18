@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.313.2.4 2018/12/26 14:01:50 pgoyette Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.313.2.5 2019/01/18 08:50:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.313.2.4 2018/12/26 14:01:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.313.2.5 2019/01/18 08:50:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1393,7 +1393,7 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 	int i;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 &&
-	    (reg == BRGPHY_MII_1000CTL || reg == BRGPHY_MII_AUXCTL))
+	    (reg == MII_GTCR || reg == BRGPHY_MII_AUXCTL))
 		return;
 
 	if (bge_ape_lock(sc, sc->bge_phy_ape_lock) != 0)

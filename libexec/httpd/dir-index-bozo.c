@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.25.14.2 2018/12/26 14:01:28 pgoyette Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.25.14.3 2019/01/18 08:50:11 pgoyette Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -56,8 +56,8 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 	struct dirent **de, **deo;
 	DIR *dp;
 	char buf[MAXPATHLEN];
-	char *file = NULL, *printname = NULL;
-	int k, j, i;
+	char *file = NULL, *printname = NULL, *p;
+	int k, j;
 
 	if (!isindex || !httpd->dir_indexing)
 		return 0;
@@ -106,20 +106,39 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 #else
 	printname = bozostrdup(httpd, request, request->hr_file);
 #endif /* !NO_USER_SUPPORT */
+	if ((p = strstr(printname, httpd->index_html)) != NULL) {
+		if (strcmp(printname, httpd->index_html) == 0)
+			strcpy(printname, "/");	/* is ``slashdir'' */
+		else
+			*p = '\0';		/* strip unwanted ``index_html'' */
+	}
+	if ((p = bozo_escape_html(httpd, printname)) != NULL) {
+		free(printname);
+		printname = p;
+	}
 
-	bozo_printf(httpd, "<!DOCTYPE html>\r\n");
-	bozo_printf(httpd, "<html><head><meta charset=\"utf-8\"/>\r\n");
-	bozo_printf(httpd, "<style type=\"text/css\">tr.o {background:#f4f4f4;}</style>\r\n");
+	bozo_printf(httpd,
+		"<!DOCTYPE html>\r\n"
+		"<html><head><meta charset=\"utf-8\"/>\r\n"
+		"<style type=\"text/css\">\r\n"
+		"table {\r\n"
+		"\tborder-top: 1px solid black;\r\n"
+		"\tborder-bottom: 1px solid black;\r\n"
+		"}\r\n"
+		"th { background: aquamarine; }\r\n"
+		"tr:nth-child(even) { background: lavender; }\r\n"
+		"</style>\r\n");
 	bozo_printf(httpd, "<title>Index of %s</title></head>\r\n",
 		printname);
 	bozo_printf(httpd, "<body><h1>Index of %s</h1>\r\n",
 		printname);
-	bozo_printf(httpd, "<table>\r\n<thead>\r\n");
-	bozo_printf(httpd, "<tr class=\"o\"><th>Name<th>Last modified<th align=right>Size\r\n");
-	bozo_printf(httpd, "<tbody>\r\n");
+	bozo_printf(httpd,
+		"<table cols=3>\r\n<thead>\r\n"
+		"<tr><th>Name<th>Last modified<th align=right>Size\r\n"
+		"<tbody>\r\n");
 
-	for (j = k = scandir(dirpath, &de, NULL, alphasort), deo = de, i = 1;
-	    j--; de++, i++) {
+	for (j = k = scandir(dirpath, &de, NULL, alphasort), deo = de;
+	    j--; de++) {
 		int nostat = 0;
 		char *name = (*de)->d_name;
 		char *urlname, *htmlname;
@@ -137,7 +156,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		htmlname = bozo_escape_html(httpd, name);
 		if (htmlname == NULL)
 			htmlname = name;
-		bozo_printf(httpd, "<tr class=\"%s\"><td>", (i & 1) ? "o" : "e");
+		bozo_printf(httpd, "<tr><td>");
 		if (strcmp(name, "..") == 0) {
 			bozo_printf(httpd, "<a href=\"../\">");
 			bozo_printf(httpd, "Parent Directory");

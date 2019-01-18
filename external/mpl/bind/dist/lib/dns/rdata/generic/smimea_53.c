@@ -1,4 +1,4 @@
-/*	$NetBSD: smimea_53.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: smimea_53.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,24 +81,24 @@ fromstruct_smimea(ARGS_FROMSTRUCT) {
 
 static inline isc_result_t
 tostruct_smimea(ARGS_TOSTRUCT) {
-	dns_rdata_txt_t *txt = target;
+	dns_rdata_smimea_t *smimea = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
 	REQUIRE(target != NULL);
 
-	txt->common.rdclass = rdata->rdclass;
-	txt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&txt->common, link);
+	smimea->common.rdclass = rdata->rdclass;
+	smimea->common.rdtype = rdata->type;
+	ISC_LINK_INIT(&smimea->common, link);
 
 	return (generic_tostruct_tlsa(rdata, target, mctx));
 }
 
 static inline void
 freestruct_smimea(ARGS_FREESTRUCT) {
-	dns_rdata_txt_t *txt = source;
+	dns_rdata_smimea_t *smimea = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == dns_rdatatype_smimea);
+	REQUIRE(smimea->common.rdtype == dns_rdatatype_smimea);
 
 	generic_freestruct_tlsa(source);
 }
@@ -125,7 +125,7 @@ digest_smimea(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_smimea(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_smimea);
@@ -135,10 +135,10 @@ checkowner_smimea(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_smimea(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
@@ -147,7 +147,7 @@ checknames_smimea(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

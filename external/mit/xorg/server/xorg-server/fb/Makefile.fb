@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.fb,v 1.10 2016/08/12 01:15:49 mrg Exp $
+#	$NetBSD: Makefile.fb,v 1.10.12.1 2019/01/18 08:49:06 pgoyette Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/fb
-SRCS.fb=	fb24_32.c       \
-		fballpriv.c     \
+SRCS.fb=	fballpriv.c     \
 		fbarc.c         \
 		fbbits.c        \
 		fbblt.c         \

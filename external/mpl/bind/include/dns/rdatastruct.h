@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2019  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -90,7 +90,7 @@ typedef struct dns_rdata_in_a {
 #ifndef CH_3_A_1_H
 #define CH_3_A_1_H 1
 
-typedef isc_uint16_t ch_addr_t;
+typedef uint16_t ch_addr_t;
 
 typedef struct dns_rdata_ch_a {
 	dns_rdatacommon_t	common;
@@ -236,11 +236,11 @@ typedef struct dns_rdata_soa {
 	isc_mem_t		*mctx;
 	dns_name_t		origin;
 	dns_name_t		contact;
-	isc_uint32_t		serial;		/*%< host order */
-	isc_uint32_t		refresh;	/*%< host order */
-	isc_uint32_t		retry;		/*%< host order */
-	isc_uint32_t		expire;		/*%< host order */
-	isc_uint32_t		minimum;	/*%< host order */
+	uint32_t		serial;		/*%< host order */
+	uint32_t		refresh;	/*%< host order */
+	uint32_t		retry;		/*%< host order */
+	uint32_t		expire;		/*%< host order */
+	uint32_t		minimum;	/*%< host order */
 } dns_rdata_soa_t;
 
 
@@ -333,7 +333,7 @@ typedef struct dns_rdata_mr {
 typedef struct dns_rdata_null {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		length;
+	uint16_t		length;
 	unsigned char		*data;
 } dns_rdata_null_t;
 
@@ -358,9 +358,9 @@ typedef	struct dns_rdata_in_wks {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	struct in_addr		in_addr;
-	isc_uint16_t		protocol;
+	uint16_t		protocol;
 	unsigned char		*map;
-	isc_uint16_t		map_len;
+	uint16_t		map_len;
 } dns_rdata_in_wks_t;
 
 #endif /* IN_1_WKS_11_H */
@@ -407,8 +407,8 @@ typedef struct dns_rdata_hinfo {
 	isc_mem_t		*mctx;
 	char			*cpu;
 	char			*os;
-	isc_uint8_t		cpu_len;
-	isc_uint8_t		os_len;
+	uint8_t		cpu_len;
+	uint8_t		os_len;
 } dns_rdata_hinfo_t;
 
 #endif /* GENERIC_HINFO_13_H */
@@ -455,7 +455,7 @@ typedef struct dns_rdata_minfo {
 typedef struct dns_rdata_mx {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		pref;
+	uint16_t		pref;
 	dns_name_t		mx;
 } dns_rdata_mx_t;
 
@@ -477,7 +477,7 @@ typedef struct dns_rdata_mx {
 
 
 typedef struct dns_rdata_txt_string {
-		isc_uint8_t    length;
+		uint8_t    length;
 		unsigned char   *data;
 } dns_rdata_txt_string_t;
 
@@ -485,9 +485,9 @@ typedef struct dns_rdata_txt {
 	dns_rdatacommon_t       common;
 	isc_mem_t               *mctx;
 	unsigned char           *txt;
-	isc_uint16_t            txt_len;
+	uint16_t            txt_len;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_txt_t;
 
 /*
@@ -553,7 +553,7 @@ typedef struct dns_rdata_rp {
 typedef struct dns_rdata_afsdb {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		subtype;
+	uint16_t		subtype;
 	dns_name_t		server;
 } dns_rdata_afsdb_t;
 
@@ -581,7 +581,7 @@ typedef struct dns_rdata_x25 {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*x25;
-	isc_uint8_t		x25_len;
+	uint8_t		x25_len;
 } dns_rdata_x25_t;
 
 #endif /* GENERIC_X25_19_H */
@@ -608,8 +608,8 @@ typedef struct dns_rdata_isdn {
 	isc_mem_t		*mctx;
 	char			*isdn;
 	char			*subaddress;
-	isc_uint8_t		isdn_len;
-	isc_uint8_t		subaddress_len;
+	uint8_t		isdn_len;
+	uint8_t		subaddress_len;
 } dns_rdata_isdn_t;
 
 #endif /* GENERIC_ISDN_20_H */
@@ -634,7 +634,7 @@ typedef struct dns_rdata_isdn {
 typedef struct dns_rdata_rt {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		preference;
+	uint16_t		preference;
 	dns_name_t		host;
 } dns_rdata_rt_t;
 
@@ -661,7 +661,7 @@ typedef struct dns_rdata_in_nsap {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*nsap;
-	isc_uint16_t		nsap_len;
+	uint16_t		nsap_len;
 } dns_rdata_in_nsap_t;
 
 #endif /* IN_1_NSAP_22_H */
@@ -713,13 +713,13 @@ typedef struct dns_rdata_sig_t {
 	isc_mem_t *		mctx;
 	dns_rdatatype_t		covered;
 	dns_secalg_t		algorithm;
-	isc_uint8_t		labels;
-	isc_uint32_t		originalttl;
-	isc_uint32_t		timeexpire;
-	isc_uint32_t		timesigned;
-	isc_uint16_t		keyid;
+	uint8_t		labels;
+	uint32_t		originalttl;
+	uint32_t		timeexpire;
+	uint32_t		timesigned;
+	uint16_t		keyid;
 	dns_name_t		signer;
-	isc_uint16_t		siglen;
+	uint16_t		siglen;
 	unsigned char *		signature;
 } dns_rdata_sig_t;
 
@@ -746,10 +746,10 @@ typedef struct dns_rdata_sig_t {
 typedef struct dns_rdata_key {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint16_t		flags;
-	isc_uint8_t		protocol;
-	isc_uint8_t		algorithm;
-	isc_uint16_t		datalen;
+	uint16_t		flags;
+	uint8_t		protocol;
+	uint8_t		algorithm;
+	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_key_t;
 
@@ -776,7 +776,7 @@ typedef struct dns_rdata_key {
 typedef struct dns_rdata_in_px {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		preference;
+	uint16_t		preference;
 	dns_name_t		map822;
 	dns_name_t		mapx400;
 } dns_rdata_in_px_t;
@@ -806,9 +806,9 @@ typedef struct dns_rdata_gpos {
 	char			*longitude;
 	char			*latitude;
 	char			*altitude;
-	isc_uint8_t		long_len;
-	isc_uint8_t		lat_len;
-	isc_uint8_t		alt_len;
+	uint8_t		long_len;
+	uint8_t		lat_len;
+	uint8_t		alt_len;
 } dns_rdata_gpos_t;
 
 #endif /* GENERIC_GPOS_27_H */
@@ -855,13 +855,13 @@ typedef struct dns_rdata_in_aaaa {
  * \brief Per RFC1876 */
 
 typedef struct dns_rdata_loc_0 {
-	isc_uint8_t	version;	/* must be first and zero */
-	isc_uint8_t	size;
-	isc_uint8_t	horizontal;
-	isc_uint8_t	vertical;
-	isc_uint32_t	latitude;
-	isc_uint32_t	longitude;
-	isc_uint32_t	altitude;
+	uint8_t	version;	/* must be first and zero */
+	uint8_t	size;
+	uint8_t	horizontal;
+	uint8_t	vertical;
+	uint32_t	latitude;
+	uint32_t	longitude;
+	uint32_t	altitude;
 } dns_rdata_loc_0_t;
 
 typedef struct dns_rdata_loc {
@@ -895,10 +895,64 @@ typedef struct dns_rdata_nxt {
 	isc_mem_t		*mctx;
 	dns_name_t		next;
 	unsigned char		*typebits;
-	isc_uint16_t		len;
+	uint16_t		len;
 } dns_rdata_nxt_t;
 
 #endif /* GENERIC_NXT_30_H */
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+#ifndef IN_1_EID_31_H
+#define IN_1_EID_31_H 1
+
+
+/*!
+ *  \brief http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
+ */
+
+typedef struct dns_rdata_in_eid {
+	dns_rdatacommon_t	common;
+	isc_mem_t		*mctx;
+	unsigned char		*eid;
+	uint16_t		eid_len;
+} dns_rdata_in_eid_t;
+
+#endif /* IN_1_EID_31_H */
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+#ifndef IN_1_NIMLOC_32_H
+#define IN_1_NIMLOC_32_H 1
+
+
+/*!
+ *  \brief http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
+ */
+
+typedef struct dns_rdata_in_nimloc {
+	dns_rdatacommon_t	common;
+	isc_mem_t		*mctx;
+	unsigned char		*nimloc;
+	uint16_t		nimloc_len;
+} dns_rdata_in_nimloc_t;
+
+#endif /* IN_1_NIMLOC_32_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -919,13 +973,40 @@ typedef struct dns_rdata_nxt {
 typedef struct dns_rdata_in_srv {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		priority;
-	isc_uint16_t		weight;
-	isc_uint16_t		port;
+	uint16_t		priority;
+	uint16_t		weight;
+	uint16_t		port;
 	dns_name_t		target;
 } dns_rdata_in_srv_t;
 
 #endif /* IN_1_SRV_33_H */
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+#ifndef IN_1_ATMA_22_H
+#define IN_1_ATMA_22_H 1
+
+
+/*!
+ *  \brief Per RFC1706 */
+
+typedef struct dns_rdata_in_atma {
+	dns_rdatacommon_t	common;
+	isc_mem_t		*mctx;
+	unsigned char		format;
+	unsigned char		*atma;
+	uint16_t		atma_len;
+} dns_rdata_in_atma_t;
+
+#endif /* IN_1_ATMA_22_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -947,14 +1028,14 @@ typedef struct dns_rdata_in_srv {
 typedef struct dns_rdata_naptr {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		order;
-	isc_uint16_t		preference;
+	uint16_t		order;
+	uint16_t		preference;
 	char			*flags;
-	isc_uint8_t		flags_len;
+	uint8_t		flags_len;
 	char			*service;
-	isc_uint8_t		service_len;
+	uint8_t		service_len;
 	char			*regexp;
-	isc_uint8_t		regexp_len;
+	uint8_t		regexp_len;
 	dns_name_t		replacement;
 } dns_rdata_naptr_t;
 
@@ -980,7 +1061,7 @@ typedef struct dns_rdata_naptr {
 typedef struct dns_rdata_in_kx {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		preference;
+	uint16_t		preference;
 	dns_name_t		exchange;
 } dns_rdata_in_kx_t;
 
@@ -1004,10 +1085,10 @@ typedef struct dns_rdata_in_kx {
 typedef struct dns_rdata_cert {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		type;
-	isc_uint16_t		key_tag;
-	isc_uint8_t		algorithm;
-	isc_uint16_t		length;
+	uint16_t		type;
+	uint16_t		key_tag;
+	uint8_t		algorithm;
+	uint16_t		length;
 	unsigned char		*certificate;
 } dns_rdata_cert_t;
 
@@ -1034,7 +1115,7 @@ typedef struct dns_rdata_in_a6 {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	dns_name_t		prefix;
-	isc_uint8_t		prefixlen;
+	uint8_t		prefixlen;
 	struct in6_addr		in6_addr;
 } dns_rdata_in_a6_t;
 
@@ -1081,10 +1162,10 @@ typedef struct dns_rdata_dname {
 typedef struct dns_rdata_sink_t {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint8_t		meaning;
-	isc_uint8_t		coding;
-	isc_uint8_t		subcoding;
-	isc_uint16_t		datalen;
+	uint8_t		meaning;
+	uint8_t		coding;
+	uint8_t		subcoding;
+	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_sink_t;
 
@@ -1108,8 +1189,8 @@ typedef struct dns_rdata_sink_t {
  *  \brief Per RFC2671 */
 
 typedef struct dns_rdata_opt_opcode {
-		isc_uint16_t	opcode;
-		isc_uint16_t	length;
+		uint16_t	opcode;
+		uint16_t	length;
 		unsigned char	*data;
 } dns_rdata_opt_opcode_t;
 
@@ -1117,9 +1198,9 @@ typedef struct dns_rdata_opt {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*options;
-	isc_uint16_t		length;
+	uint16_t		length;
 	/* private */
-	isc_uint16_t		offset;
+	uint16_t		offset;
 } dns_rdata_opt_t;
 
 /*
@@ -1154,10 +1235,10 @@ dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
 
 
 typedef struct dns_rdata_apl_ent {
-	isc_boolean_t	negative;
-	isc_uint16_t	family;
-	isc_uint8_t	prefix;
-	isc_uint8_t	length;
+	bool	negative;
+	uint16_t	family;
+	uint8_t	prefix;
+	uint8_t	length;
 	unsigned char	*data;
 } dns_rdata_apl_ent_t;
 
@@ -1166,9 +1247,9 @@ typedef struct dns_rdata_in_apl {
 	isc_mem_t		*mctx;
 	/* type & class specific elements */
 	unsigned char           *apl;
-	isc_uint16_t            apl_len;
+	uint16_t            apl_len;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_in_apl_t;
 
 /*
@@ -1209,10 +1290,10 @@ dns_rdata_apl_count(const dns_rdata_in_apl_t *apl);
 typedef struct dns_rdata_ds {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		key_tag;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		digest_type;
-	isc_uint16_t		length;
+	uint16_t		key_tag;
+	uint8_t		algorithm;
+	uint8_t		digest_type;
+	uint16_t		length;
 	unsigned char		*digest;
 } dns_rdata_ds_t;
 
@@ -1238,9 +1319,9 @@ typedef struct dns_rdata_ds {
 typedef struct dns_rdata_sshfp {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		digest_type;
-	isc_uint16_t		length;
+	uint8_t		algorithm;
+	uint8_t		digest_type;
+	uint16_t		length;
 	unsigned char		*digest;
 } dns_rdata_sshfp_t;
 
@@ -1263,14 +1344,14 @@ typedef struct dns_rdata_sshfp {
 typedef struct dns_rdata_ipseckey {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint8_t		precedence;
-	isc_uint8_t		gateway_type;
-	isc_uint8_t		algorithm;
+	uint8_t		precedence;
+	uint8_t		gateway_type;
+	uint8_t		algorithm;
 	struct in_addr		in_addr;	/* gateway type 1 */
 	struct in6_addr		in6_addr;	/* gateway type 2 */
 	dns_name_t		gateway;	/* gateway type 3 */
 	unsigned char		*key;
-	isc_uint16_t		keylength;
+	uint16_t		keylength;
 } dns_rdata_ipseckey_t;
 
 #endif /* GENERIC_IPSECKEY_45_H */
@@ -1296,13 +1377,13 @@ typedef struct dns_rdata_rrsig {
 	isc_mem_t *		mctx;
 	dns_rdatatype_t		covered;
 	dns_secalg_t		algorithm;
-	isc_uint8_t		labels;
-	isc_uint32_t		originalttl;
-	isc_uint32_t		timeexpire;
-	isc_uint32_t		timesigned;
-	isc_uint16_t		keyid;
+	uint8_t		labels;
+	uint32_t		originalttl;
+	uint32_t		timeexpire;
+	uint32_t		timesigned;
+	uint16_t		keyid;
 	dns_name_t		signer;
-	isc_uint16_t		siglen;
+	uint16_t		siglen;
 	unsigned char *		signature;
 } dns_rdata_rrsig_t;
 
@@ -1331,7 +1412,7 @@ typedef struct dns_rdata_nsec {
 	isc_mem_t		*mctx;
 	dns_name_t		next;
 	unsigned char		*typebits;
-	isc_uint16_t		len;
+	uint16_t		len;
 } dns_rdata_nsec_t;
 
 #endif /* GENERIC_NSEC_47_H */
@@ -1409,7 +1490,7 @@ typedef struct dns_rdata_nsec3 {
 	dns_iterations_t	iterations;
 	unsigned char		salt_length;
 	unsigned char		next_length;
-	isc_uint16_t		len;
+	uint16_t		len;
 	unsigned char		*salt;
 	unsigned char		*next;
 	unsigned char		*typebits;
@@ -1545,10 +1626,10 @@ typedef struct dns_rdata_nsec3param {
 typedef struct dns_rdata_tlsa {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint8_t		usage;
-	isc_uint8_t		selector;
-	isc_uint8_t		match;
-	isc_uint16_t		length;
+	uint8_t		usage;
+	uint8_t		selector;
+	uint8_t		match;
+	uint16_t		length;
 	unsigned char		*data;
 } dns_rdata_tlsa_t;
 
@@ -1593,12 +1674,12 @@ typedef struct dns_rdata_hip {
 	unsigned char *		hit;
 	unsigned char *		key;
 	unsigned char *		servers;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		hit_len;
-	isc_uint16_t		key_len;
-	isc_uint16_t		servers_len;
+	uint8_t		algorithm;
+	uint8_t		hit_len;
+	uint16_t		key_len;
+	uint16_t		servers_len;
 	/* Private */
-	isc_uint16_t		offset;
+	uint16_t		offset;
 } dns_rdata_hip_t;
 
 isc_result_t
@@ -1739,7 +1820,7 @@ typedef struct dns_rdata_key dns_rdata_cdnskey_t;
 typedef struct dns_rdata_openpgpkey {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint16_t		length;
+	uint16_t		length;
 	unsigned char *		keyring;
 } dns_rdata_openpgpkey_t;
 
@@ -1765,10 +1846,10 @@ typedef struct dns_rdata_openpgpkey {
 typedef struct dns_rdata_csync {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint32_t		serial;
-	isc_uint16_t		flags;
+	uint32_t		serial;
+	uint16_t		flags;
 	unsigned char		*typebits;
-	isc_uint16_t		len;
+	uint16_t		len;
 } dns_rdata_csync_t;
 
 #endif /* GENERIC_CSYNC_62_H */
@@ -1788,7 +1869,7 @@ typedef struct dns_rdata_csync {
 
 
 typedef struct dns_rdata_spf_string {
-		isc_uint8_t    length;
+		uint8_t    length;
 		unsigned char   *data;
 } dns_rdata_spf_string_t;
 
@@ -1796,9 +1877,9 @@ typedef struct dns_rdata_spf {
 	dns_rdatacommon_t       common;
 	isc_mem_t               *mctx;
 	unsigned char           *txt;
-	isc_uint16_t            txt_len;
+	uint16_t            txt_len;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_spf_t;
 
 /*
@@ -1826,7 +1907,7 @@ typedef struct dns_rdata_unspec_t {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*data;
-	isc_uint16_t		datalen;
+	uint16_t		datalen;
 } dns_rdata_unspec_t;
 
 #endif /* GENERIC_UNSPEC_103_H */
@@ -1847,7 +1928,7 @@ typedef struct dns_rdata_unspec_t {
 
 typedef struct dns_rdata_nid {
 	dns_rdatacommon_t	common;
-	isc_uint16_t		pref;
+	uint16_t		pref;
 	unsigned char		nid[8];
 } dns_rdata_nid_t;
 
@@ -1869,7 +1950,7 @@ typedef struct dns_rdata_nid {
 
 typedef struct dns_rdata_l32 {
 	dns_rdatacommon_t	common;
-	isc_uint16_t		pref;
+	uint16_t		pref;
 	struct in_addr		l32;
 } dns_rdata_l32_t;
 
@@ -1891,7 +1972,7 @@ typedef struct dns_rdata_l32 {
 
 typedef struct dns_rdata_l64 {
 	dns_rdatacommon_t	common;
-	isc_uint16_t		pref;
+	uint16_t		pref;
 	unsigned char		l64[8];
 } dns_rdata_l64_t;
 
@@ -1914,7 +1995,7 @@ typedef struct dns_rdata_l64 {
 typedef struct dns_rdata_lp {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		pref;
+	uint16_t		pref;
 	dns_name_t		lp;
 } dns_rdata_lp_t;
 
@@ -1983,13 +2064,13 @@ typedef struct dns_rdata_tkey {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
 	dns_name_t		algorithm;
-	isc_uint32_t		inception;
-	isc_uint32_t		expire;
-	isc_uint16_t		mode;
-	isc_uint16_t		error;
-	isc_uint16_t		keylen;
+	uint32_t		inception;
+	uint32_t		expire;
+	uint16_t		mode;
+	uint16_t		error;
+	uint16_t		keylen;
 	unsigned char *		key;
-	isc_uint16_t		otherlen;
+	uint16_t		otherlen;
 	unsigned char *		other;
 } dns_rdata_tkey_t;
 
@@ -2015,13 +2096,13 @@ typedef struct dns_rdata_any_tsig {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
 	dns_name_t		algorithm;
-	isc_uint64_t		timesigned;
-	isc_uint16_t		fudge;
-	isc_uint16_t		siglen;
+	uint64_t		timesigned;
+	uint16_t		fudge;
+	uint16_t		siglen;
 	unsigned char *		signature;
-	isc_uint16_t		originalid;
-	isc_uint16_t		error;
-	isc_uint16_t		otherlen;
+	uint16_t		originalid;
+	uint16_t		error;
+	uint16_t		otherlen;
 	unsigned char *		other;
 } dns_rdata_any_tsig_t;
 
@@ -2044,10 +2125,10 @@ typedef struct dns_rdata_any_tsig {
 typedef struct dns_rdata_uri {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint16_t		priority;
-	isc_uint16_t		weight;
+	uint16_t		priority;
+	uint16_t		weight;
 	unsigned char *		target;
-	isc_uint16_t		tgt_len;
+	uint16_t		tgt_len;
 } dns_rdata_uri_t;
 
 #endif /* GENERIC_URI_256_H */
@@ -2069,11 +2150,11 @@ typedef struct dns_rdata_uri {
 typedef struct dns_rdata_caa {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint8_t		flags;
+	uint8_t		flags;
 	unsigned char *		tag;
-	isc_uint8_t		tag_len;
+	uint8_t		tag_len;
 	unsigned char		*value;
-	isc_uint16_t		value_len;
+	uint16_t		value_len;
 } dns_rdata_caa_t;
 
 #endif /* GENERIC_CAA_257_H */
@@ -2097,9 +2178,9 @@ typedef struct dns_rdata_avc {
 	dns_rdatacommon_t       common;
 	isc_mem_t               *mctx;
 	unsigned char           *data;
-	isc_uint16_t            length;
+	uint16_t            length;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_avc_t;
 
 /*
@@ -2126,11 +2207,11 @@ typedef struct dns_rdata_doa {
 	isc_mem_t *		mctx;
 	unsigned char *		mediatype;
 	unsigned char *		data;
-	isc_uint32_t		enterprise;
-	isc_uint32_t		type;
-	isc_uint16_t		data_len;
-	isc_uint8_t		location;
-	isc_uint8_t		mediatype_len;
+	uint32_t		enterprise;
+	uint32_t		type;
+	uint16_t		data_len;
+	uint8_t		location;
+	uint8_t		mediatype_len;
 } dns_rdata_doa_t;
 
 #endif /* GENERIC_DOA_259_H */
@@ -2191,13 +2272,13 @@ typedef struct dns_rdata_ds dns_rdata_dlv_t;
 typedef struct dns_rdata_keydata {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint32_t		refresh;      /* Timer for refreshing data */
-	isc_uint32_t		addhd;	      /* Hold-down timer for adding */
-	isc_uint32_t		removehd;     /* Hold-down timer for removing */
-	isc_uint16_t		flags;	      /* Copy of DNSKEY_48 */
-	isc_uint8_t		protocol;
-	isc_uint8_t		algorithm;
-	isc_uint16_t		datalen;
+	uint32_t		refresh;      /* Timer for refreshing data */
+	uint32_t		addhd;	      /* Hold-down timer for adding */
+	uint32_t		removehd;     /* Hold-down timer for removing */
+	uint16_t		flags;	      /* Copy of DNSKEY_48 */
+	uint8_t		protocol;
+	uint8_t		algorithm;
+	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_keydata_t;
 

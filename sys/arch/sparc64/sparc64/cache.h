@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.28 2015/01/05 11:40:56 palle Exp $ */
+/*	$NetBSD: cache.h,v 1.28.16.1 2019/01/18 08:50:24 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -124,8 +124,8 @@ void cache_setup_funcs(void);
 extern	void	(*sp_dcache_flush_page)(paddr_t);
 
 void smp_tlb_flush_pte(vaddr_t, struct pmap *);
-void smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t);
-void smp_dcache_flush_page_allcpu(paddr_t pa);
+void smp_dcache_flush_page_cpuset(paddr_t, sparc64_cpuset_t);
+void smp_dcache_flush_page_allcpu(paddr_t);
 void smp_blast_dcache(void);
 #define	tlb_flush_pte(va,pm)		smp_tlb_flush_pte(va, pm)
 #define	dcache_flush_page_all(pa)	smp_dcache_flush_page_cpuset(pa, cpus_active)

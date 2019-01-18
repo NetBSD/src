@@ -74,13 +74,13 @@ DtCompileRsdp (
     /* Compile the "common" RSDP (ACPI 1.0) */
 
     Status = DtCompileTable (PFieldList, AcpiDmTableInfoRsdp1,
-        &Gbl_RootTable);
+        &AslGbl_RootTable);
     if (ACPI_FAILURE (Status))
     {
         return (Status);
     }
 
-    Rsdp = ACPI_CAST_PTR (ACPI_TABLE_RSDP, Gbl_RootTable->Buffer);
+    Rsdp = ACPI_CAST_PTR (ACPI_TABLE_RSDP, AslGbl_RootTable->Buffer);
     DtSetTableChecksum (&Rsdp->Checksum);
 
     if (Rsdp->Revision > 0)
@@ -94,12 +94,12 @@ DtCompileRsdp (
             return (Status);
         }
 
-        DtInsertSubtable (Gbl_RootTable, Subtable);
+        DtInsertSubtable (AslGbl_RootTable, Subtable);
 
         /* Set length and extended checksum for entire RSDP */
 
         RsdpExtension = ACPI_CAST_PTR (ACPI_RSDP_EXTENSION, Subtable->Buffer);
-        RsdpExtension->Length = Gbl_RootTable->Length + Subtable->Length;
+        RsdpExtension->Length = AslGbl_RootTable->Length + Subtable->Length;
         DtSetTableChecksum (&RsdpExtension->ExtendedChecksum);
     }
 
@@ -218,7 +218,7 @@ DtCompileFacs (
 
 
     Status = DtCompileTable (PFieldList, AcpiDmTableInfoFacs,
-        &Gbl_RootTable);
+        &AslGbl_RootTable);
     if (ACPI_FAILURE (Status))
     {
         return (Status);
@@ -232,6 +232,6 @@ DtCompileFacs (
     DtCreateSubtable (ReservedBuffer, ReservedSize, &Subtable);
 
     ACPI_FREE (ReservedBuffer);
-    DtInsertSubtable (Gbl_RootTable, Subtable);
+    DtInsertSubtable (AslGbl_RootTable, Subtable);
     return (AE_OK);
 }

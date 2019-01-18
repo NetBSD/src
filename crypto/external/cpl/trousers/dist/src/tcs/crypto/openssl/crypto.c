@@ -31,13 +31,15 @@
 TSS_RESULT
 Hash(UINT32 HashType, UINT32 BufSize, BYTE* Buf, BYTE* Digest)
 {
-	EVP_MD_CTX md_ctx;
+	EVP_MD_CTX *md_ctx;
 	unsigned int result_size;
 	int rv;
 
+	md_ctx = EVP_MD_CTX_create();
+
 	switch (HashType) {
 		case TSS_HASH_SHA1:
-			rv = EVP_DigestInit(&md_ctx, EVP_sha1());
+			rv = EVP_DigestInit(md_ctx, EVP_sha1());
 			break;
 		default:
 			rv = TCSERR(TSS_E_BAD_PARAMETER);
@@ -50,19 +52,20 @@ Hash(UINT32 HashType, UINT32 BufSize, BYTE* Buf, BYTE* Digest)
 		goto out;
 	}
 
-	rv = EVP_DigestUpdate(&md_ctx, Buf, BufSize);
+	rv = EVP_DigestUpdate(md_ctx, Buf, BufSize);
 	if (rv != EVP_SUCCESS) {
 		rv = TCSERR(TSS_E_INTERNAL_ERROR);
 		goto out;
 	}
 
-	result_size = EVP_MD_CTX_size(&md_ctx);
-	rv = EVP_DigestFinal(&md_ctx, Digest, &result_size);
+	result_size = EVP_MD_CTX_size(md_ctx);
+	rv = EVP_DigestFinal(md_ctx, Digest, &result_size);
 	if (rv != EVP_SUCCESS) {
 		rv = TCSERR(TSS_E_INTERNAL_ERROR);
 	} else
 		rv = TSS_SUCCESS;
 
 out:
+	EVP_MD_CTX_destroy(md_ctx);
 	return rv;
 }

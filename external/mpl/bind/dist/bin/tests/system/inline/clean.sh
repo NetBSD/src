@@ -73,6 +73,10 @@ rm -f ns3/nsec3.db
 rm -f ns3/nsec3.db.jnl
 rm -f ns3/nsec3.db.signed
 rm -f ns3/nsec3.db.signed.jnl
+rm -f ns3/delayedkeys.db
+rm -f ns3/delayedkeys.db.jnl
+rm -f ns3/delayedkeys.db.signed
+rm -f ns3/delayedkeys.db.signed.jnl
 rm -f ns3/removedkeys-primary.db
 rm -f ns3/removedkeys-primary.db.jnl
 rm -f ns3/removedkeys-primary.db.signed
@@ -114,10 +118,11 @@ rm -f ns3/test-?.bk
 rm -f ns3/test-?.bk.signed
 rm -f ns3/test-?.bk.signed.jnl
 rm -f import.key Kimport*
-rm -f checkgost checkdsa checkecdsa
+rm -f checkecdsa
 rm -f ns3/a-file
 rm -f ns*/named.lock
 rm -f dig.out.*
 rm -f ns3/nzf-*
 rm -f rndc.out.ns*
 rm -rf ns3/removedkeys
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

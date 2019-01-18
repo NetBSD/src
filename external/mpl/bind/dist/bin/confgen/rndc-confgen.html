@@ -40,7 +40,6 @@
        [<code class="option">-h</code>]
        [<code class="option">-k <em class="replaceable"><code>keyname</code></em></code>]
        [<code class="option">-p <em class="replaceable"><code>port</code></em></code>]
-       [<code class="option">-r <em class="replaceable"><code>randomfile</code></em></code>]
        [<code class="option">-s <em class="replaceable"><code>address</code></em></code>]
        [<code class="option">-t <em class="replaceable"><code>chrootdir</code></em></code>]
        [<code class="option">-u <em class="replaceable"><code>user</code></em></code>]
@@ -152,21 +151,6 @@
             Specifies the command channel port where <span class="command"><strong>named</strong></span>
             listens for connections from <span class="command"><strong>rndc</strong></span>.
             The default is 953.
-          </p>
-        </dd>
-<dt><span class="term">-r <em class="replaceable"><code>randomfile</code></em></span></dt>
-<dd>
-          <p>
-            Specifies a source of random data for generating the
-            authorization.  If the operating
-            system does not provide a <code class="filename">/dev/random</code>
-            or equivalent device, the default source of randomness
-            is keyboard input.  <code class="filename">randomdev</code>
-            specifies
-            the name of a character device or file containing random
-            data to be used instead of the default.  The special value
-            <code class="filename">keyboard</code> indicates that keyboard
-            input should be used.
           </p>
         </dd>
 <dt><span class="term">-s <em class="replaceable"><code>address</code></em></span></dt>

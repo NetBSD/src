@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.2.2.2 2018/04/16 01:59:48 pgoyette Exp $	*/
+/*	$NetBSD: buffer.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $	*/
 
 /* buffer.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.2.2.2 2018/04/16 01:59:48 pgoyette Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.2.2.3 2019/01/18 08:50:09 pgoyette Exp $");
 
 #include "dhcpd.h"
 
@@ -341,6 +341,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 	status = ISC_R_SUCCESS;
 
  leave:
+#if 0
 	/*
 	 * If we have any bytes to send and we have a proper io object
 	 * inform the socket code that we would like to know when we
@@ -354,6 +355,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 					       ISC_SOCKFDWATCH_WRITE);
 		}
 	}
+#endif
 
 	return (status);
 }

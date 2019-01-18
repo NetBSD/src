@@ -23,7 +23,7 @@ CDEFINES =	@USE_GSSAPI@
 CWARNINGS =
 
 DNSLIBS =
-ISCLIBS =	../../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 
 DNSDEPLIBS =
 ISCDEPLIBS =
@@ -49,7 +49,7 @@ feature-test@EXEEXT@: feature-test.@O@
 
 # Define the tests that can be run in parallel.  This should be identical to
 # the definition of PARALLELDIRS in conf.sh. Note: longer-running tests
-# such as serve-stale and rpzrecurse are scheduled first to get more
+# such as serve-stale and rpzrecurse stale are scheduled first to get more
 # benefit from parallelism.
 PARALLEL = rpzrecurse serve-stale dnssec \
 	   acl additional addzone allow-query auth autosign \
@@ -62,14 +62,14 @@ PARALLEL = rpzrecurse serve-stale dnssec \
 	   fetchlimit filter-aaaa formerr forward \
 	   geoip glue idna inline integrity ixfr keepalive \
 	   legacy limits logfileconfig \
-	   masterfile masterformat metadata mkeys \
+	   masterfile masterformat metadata mirror mkeys \
 	   names notify nslookup nsupdate nzd2nzf \
-	   padding pending pipelined \
+	   padding pending pipelined qmin \
 	   reclimit redirect resolver rndc rootkeysentinel rpz \
 	   rrchecker rrl rrsetorder rsabigexponent runtime \
 	   sfcache smartsign sortlist \
 	   spf staticstub statistics statschannel stub synthfromdnssec \
-	   tcp tools tsig tsiggss \
+	   tcp tools tsig tsiggss ttl \
 	   unknown upforwd verify views wildcard \
 	   xfer xferquota zero zonechecks
 

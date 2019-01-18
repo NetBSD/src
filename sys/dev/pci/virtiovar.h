@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.10.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.10.2.2 2019/01/18 08:50:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -116,6 +116,9 @@ struct virtqueue {
 
 	/* interrupt handler */
 	int			(*vq_done)(struct virtqueue*);
+	void			*vq_done_ctx;
+	void			*vq_soft_ih;
+	int			(*vq_intrhand)(struct virtqueue*);
 };
 
 struct virtio_attach_args {
@@ -161,6 +164,7 @@ struct virtio_softc {
 
 	int			sc_childdevid;
 	device_t		sc_child; 		/* set by child */
+	bool			sc_child_mq;
 	virtio_callback		sc_config_change; 	/* set by child */
 	virtio_callback		sc_intrhand;		/* set by child */
 };
@@ -196,6 +200,8 @@ void virtio_child_attach_start(struct virtio_softc *, device_t, int,
                     struct virtqueue *,
                     virtio_callback, virtio_callback, int,
 		    int, const char *);
+void virtio_child_attach_set_vqs(struct virtio_softc *,
+                    struct virtqueue *, int);
 int virtio_child_attach_finish(struct virtio_softc *);
 void virtio_child_attach_failed(struct virtio_softc *);
 void virtio_child_detach(struct virtio_softc *);

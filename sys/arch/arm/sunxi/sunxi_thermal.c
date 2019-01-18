@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.5.2.1 2018/09/06 06:55:27 pgoyette Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.5.2.2 2019/01/18 08:50:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.5.2.1 2018/09/06 06:55:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.5.2.2 2019/01/18 08:50:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,28 +513,28 @@ sunxi_thermal_init_clocks(struct sunxi_thermal_softc *sc)
 	int error;
 
 	clk = fdtbus_clock_get(sc->phandle, "ahb");
-	if (clk == NULL)
-		return ENXIO;
-	error = clk_enable(clk);
-	if (error != 0)
-		return error;
+	if (clk) {
+		error = clk_enable(clk);
+		if (error != 0)
+			return error;
+	}
 
 	clk = fdtbus_clock_get(sc->phandle, "ths");
-	if (clk == NULL)
-		return ENXIO;
-	error = clk_set_rate(clk, sc->conf->clk_rate);
-	if (error != 0)
-		return error;
-	error = clk_enable(clk);
-	if (error != 0)
-		return error;
+	if (clk) {
+		error = clk_set_rate(clk, sc->conf->clk_rate);
+		if (error != 0)
+			return error;
+		error = clk_enable(clk);
+		if (error != 0)
+			return error;
+	}
 
 	rst = fdtbus_reset_get_index(sc->phandle, 0);
-	if (rst == NULL)
-		return ENXIO;
-	error = fdtbus_reset_deassert(rst);
-	if (error != 0)
-		return error;
+	if (rst) {
+		error = fdtbus_reset_deassert(rst);
+		if (error != 0)
+			return error;
+	}
 
 	return 0;
 }

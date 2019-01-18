@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.2.2.2 2018/09/06 06:54:59 pgoyette Exp $	*/
+/*	$NetBSD: check.c,v 1.2.2.3 2019/01/18 08:49:52 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/aes.h>
@@ -23,6 +25,7 @@
 #include <isc/file.h>
 #include <isc/hex.h>
 #include <isc/log.h>
+#include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
 #include <isc/parseint.h>
@@ -30,8 +33,6 @@
 #include <isc/print.h>
 #include <isc/region.h>
 #include <isc/result.h>
-#include <isc/sha1.h>
-#include <isc/sha2.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/symtab.h>
@@ -55,6 +56,8 @@
 #include <isccfg/grammar.h>
 #include <isccfg/namedconf.h>
 
+#include <ns/hooks.h>
+
 #include <bind9/check.h>
 
 static unsigned char dlviscorg_ndata[] = "\003dlv\003isc\003org";
@@ -63,7 +66,7 @@ static dns_name_t const dlviscorg =
 	DNS_NAME_INITABSOLUTE(dlviscorg_ndata, dlviscorg_offsets);
 
 static isc_result_t
-fileexist(const cfg_obj_t *obj, isc_symtab_t *symtab, isc_boolean_t writeable,
+fileexist(const cfg_obj_t *obj, isc_symtab_t *symtab, bool writeable,
 	  isc_log_t *logctxlogc);
 
 static void
@@ -204,8 +207,8 @@ check_dual_stack(const cfg_obj_t *options, isc_log_t *logctx) {
 
 	obj = cfg_tuple_get(alternates, "port");
 	if (cfg_obj_isuint32(obj)) {
-		isc_uint32_t val = cfg_obj_asuint32(obj);
-		if (val > ISC_UINT16_MAX) {
+		uint32_t val = cfg_obj_asuint32(obj);
+		if (val > UINT16_MAX) {
 			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 				    "port '%u' out of range", val);
 			if (result == ISC_R_SUCCESS)
@@ -234,8 +237,8 @@ check_dual_stack(const cfg_obj_t *options, isc_log_t *logctx) {
 		}
 		obj = cfg_tuple_get(value, "port");
 		if (cfg_obj_isuint32(obj)) {
-			isc_uint32_t val = cfg_obj_asuint32(obj);
-			if (val > ISC_UINT16_MAX) {
+			uint32_t val = cfg_obj_asuint32(obj);
+			if (val > UINT16_MAX) {
 				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 					    "port '%u' out of range", val);
 				if (result == ISC_R_SUCCESS)
@@ -472,7 +475,7 @@ check_viewacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 	static const char *acls[] = { "allow-query", "allow-query-on",
 		"allow-query-cache", "allow-query-cache-on",
 		"blackhole", "keep-response-order", "match-clients",
-		"match-destinations", "sortlist", "filter-aaaa", NULL };
+		"match-destinations", "sortlist", NULL };
 
 	while (acls[i] != NULL) {
 		tresult = checkacl(acls[i++], actx, NULL, voptions, config,
@@ -564,7 +567,7 @@ check_dns64(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 				continue;
 			}
 			nbytes = prefixlen / 8 + 4;
-			if (prefixlen >= 32 && prefixlen <= 64)
+			if (prefixlen <= 64)
 				nbytes++;
 			if (memcmp(sa.type.in6.s6_addr, zeros, nbytes) != 0) {
 				char netaddrbuf[ISC_NETADDR_FORMATSIZE];
@@ -727,7 +730,7 @@ check_recursionacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 	const cfg_obj_t *options, *aclobj, *obj = NULL;
 	dns_acl_t *acl = NULL;
 	isc_result_t result = ISC_R_SUCCESS, tresult;
-	isc_boolean_t recursion;
+	bool recursion;
 	const char *forview = " for view ";
 	int i = 0;
 
@@ -743,7 +746,7 @@ check_recursionacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			cfg_map_get(options, "recursion", &obj);
 	}
 	if (obj == NULL)
-		recursion = ISC_TRUE;
+		recursion = true;
 	else
 		recursion = cfg_obj_asboolean(obj);
 
@@ -776,7 +779,7 @@ check_recursionacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 		if (acl == NULL)
 			continue;
 
-		if (recursion == ISC_FALSE && !dns_acl_isnone(acl)) {
+		if (recursion == false && !dns_acl_isnone(acl)) {
 			cfg_obj_log(aclobj, logctx, ISC_LOG_WARNING,
 				    "both \"recursion no;\" and "
 				    "\"%s\" active%s%s",
@@ -786,102 +789,6 @@ check_recursionacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 		if (acl != NULL)
 			dns_acl_detach(&acl);
 	}
-
-	return (result);
-}
-
-static isc_result_t
-check_filteraaaa(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
-		 const char *viewname, const cfg_obj_t *config,
-		 isc_log_t *logctx, isc_mem_t *mctx)
-{
-	const cfg_obj_t *options, *aclobj, *obj;
-	dns_acl_t *acl = NULL;
-	isc_result_t result = ISC_R_SUCCESS;
-	dns_aaaa_t filter4, filter6;
-	const char *forview = " for view ";
-
-	if (viewname == NULL) {
-		viewname = "";
-		forview = "";
-	}
-
-	aclobj = options = NULL;
-	acl = NULL;
-
-	if (voptions != NULL)
-		cfg_map_get(voptions, "filter-aaaa", &aclobj);
-	if (config != NULL && aclobj == NULL) {
-		options = NULL;
-		cfg_map_get(config, "options", &options);
-		if (options != NULL)
-			cfg_map_get(options, "filter-aaaa", &aclobj);
-	}
-	if (aclobj == NULL)
-		return (result);
-
-	result = cfg_acl_fromconfig(aclobj, config, logctx,
-				    actx, mctx, 0, &acl);
-	if (result != ISC_R_SUCCESS)
-		goto failure;
-
-	obj = NULL;
-	if (voptions != NULL)
-		cfg_map_get(voptions, "filter-aaaa-on-v4", &obj);
-	if (obj == NULL && config != NULL) {
-		options = NULL;
-		cfg_map_get(config, "options", &options);
-		if (options != NULL)
-			cfg_map_get(options, "filter-aaaa-on-v4", &obj);
-	}
-
-	if (obj == NULL)
-		filter4 = dns_aaaa_ok;		/* default */
-	else if (cfg_obj_isboolean(obj))
-		filter4 = cfg_obj_asboolean(obj) ? dns_aaaa_filter :
-						  dns_aaaa_ok;
-	else
-		filter4 = dns_aaaa_break_dnssec; 	/* break-dnssec */
-
-	obj = NULL;
-	if (voptions != NULL)
-		cfg_map_get(voptions, "filter-aaaa-on-v6", &obj);
-	if (obj == NULL && config != NULL) {
-		options = NULL;
-		cfg_map_get(config, "options", &options);
-		if (options != NULL)
-			cfg_map_get(options, "filter-aaaa-on-v6", &obj);
-	}
-
-	if (obj == NULL)
-		filter6 = dns_aaaa_ok;		/* default */
-	else if (cfg_obj_isboolean(obj))
-		filter6 = cfg_obj_asboolean(obj) ? dns_aaaa_filter :
-						  dns_aaaa_ok;
-	else
-		filter6 = dns_aaaa_break_dnssec; 	/* break-dnssec */
-
-	if ((filter4 != dns_aaaa_ok || filter6 != dns_aaaa_ok) &&
-	    dns_acl_isnone(acl))
-	{
-		cfg_obj_log(aclobj, logctx, ISC_LOG_WARNING,
-			    "\"filter-aaaa\" is 'none;' but "
-			    "either filter-aaaa-on-v4 or filter-aaaa-on-v6 "
-			    "is enabled%s%s", forview, viewname);
-		result = ISC_R_FAILURE;
-	} else if (filter4 == dns_aaaa_ok && filter6 == dns_aaaa_ok &&
-		   !dns_acl_isnone(acl))
-	{
-		cfg_obj_log(aclobj, logctx, ISC_LOG_WARNING,
-			    "\"filter-aaaa\" is set but "
-			    "neither filter-aaaa-on-v4 or filter-aaaa-on-v6 "
-			    "is enabled%s%s", forview, viewname);
-		result = ISC_R_FAILURE;
-	}
-
- failure:
-	if (acl != NULL)
-		dns_acl_detach(&acl);
 
 	return (result);
 }
@@ -918,7 +825,7 @@ check_dscp(const cfg_obj_t *options, isc_log_t *logctx) {
        obj = NULL;
        (void)cfg_map_get(options, "dscp", &obj);
        if (obj != NULL) {
-	       isc_uint32_t dscp = cfg_obj_asuint32(obj);
+	       uint32_t dscp = cfg_obj_asuint32(obj);
 	       if (dscp >= 64) {
 		       cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 				   "'dscp' out of range (0-63)");
@@ -952,22 +859,28 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	const char *str;
 	dns_name_t *name;
 	isc_buffer_t b;
-	isc_uint32_t lifetime = 3600;
-#if defined(HAVE_OPENSSL_AES) || defined(HAVE_OPENSSL_EVP_AES)
+	uint32_t lifetime = 3600;
 	const char *ccalg = "aes";
-#else
-	const char *ccalg = "sha256";
-#endif
 
+	/*
+	 * { "name", scale, value }
+	 * (scale * value) <= UINT32_MAX
+	 */
 	static intervaltable intervals[] = {
-	{ "cleaning-interval", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "heartbeat-interval", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "interface-interval", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "max-transfer-idle-in", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "max-transfer-idle-out", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "max-transfer-time-in", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "max-transfer-time-out", 60, 28 * 24 * 60 },	/* 28 days */
-	{ "statistics-interval", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "cleaning-interval", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "heartbeat-interval", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "interface-interval", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "max-transfer-idle-in", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "max-transfer-idle-out", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "max-transfer-time-in", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "max-transfer-time-out", 60, 28 * 24 * 60 },	/* 28 days */
+		{ "statistics-interval", 60, 28 * 24 * 60 },	/* 28 days */
+
+		/* minimum and maximum cache and negative cache TTLs */
+		{ "min-cache-ttl", 1, MAX_MIN_CACHE_TTL },	/* 90 secs */
+		{ "max-cache-ttl", 1, UINT32_MAX },		/* no limit */
+		{ "min-ncache-ttl", 1, MAX_MIN_NCACHE_TTL},	/* 90 secs */
+		{ "max-ncache-ttl", 1, MAX_MAX_NCACHE_TTL },	/*  7 days */
 	};
 
 	static const char *server_contact[] = {
@@ -1016,7 +929,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	 * have reasonable values.
 	 */
 	for (i = 0; i < sizeof(intervals) / sizeof(intervals[0]); i++) {
-		isc_uint32_t val;
+		uint32_t val;
 		obj = NULL;
 		(void)cfg_map_get(options, intervals[i].name, &obj);
 		if (obj == NULL)
@@ -1028,7 +941,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 				    intervals[i].name, val,
 				    intervals[i].max);
 			result = ISC_R_RANGE;
-		} else if (val > (ISC_UINT32_MAX / intervals[i].scale)) {
+		} else if (val > (UINT32_MAX / intervals[i].scale)) {
 			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 				    "%s '%d' is out of range",
 				    intervals[i].name, val);
@@ -1039,7 +952,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	obj = NULL;
 	cfg_map_get(options, "max-rsa-exponent-size", &obj);
 	if (obj != NULL) {
-		isc_uint32_t val;
+		uint32_t val;
 
 		val = cfg_obj_asuint32(obj);
 		if (val != 0 && (val < 35 || val > 4096)) {
@@ -1053,7 +966,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	obj = NULL;
 	cfg_map_get(options, "sig-validity-interval", &obj);
 	if (obj != NULL) {
-		isc_uint32_t validity, resign = 0;
+		uint32_t validity, resign = 0;
 
 		validity = cfg_obj_asuint32(cfg_tuple_get(obj, "validity"));
 		resignobj = cfg_tuple_get(obj, "re-sign");
@@ -1084,6 +997,22 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 				result = ISC_R_RANGE;
 			}
 		}
+	}
+
+	obj = NULL;
+	cfg_map_get(options, "dnskey-sig-validity", &obj);
+	if (obj != NULL) {
+		uint32_t keyvalidity;
+
+		keyvalidity = cfg_obj_asuint32(obj);
+		if (keyvalidity > 3660 || keyvalidity == 0) { /* 10 years */
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "%s '%u' is out of range (1..3660)",
+				    "dnskey-sig-validity",
+				    keyvalidity);
+			result = ISC_R_RANGE;
+		}
+
 	}
 
 	obj = NULL;
@@ -1163,7 +1092,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	(void)cfg_map_get(options, "dnssec-lookaside", &obj);
 	if (obj != NULL) {
 		tresult = isc_symtab_create(mctx, 100, freekey, mctx,
-					    ISC_FALSE, &symtab);
+					    false, &symtab);
 		if (tresult != ISC_R_SUCCESS)
 			result = tresult;
 		for (element = cfg_list_first(obj);
@@ -1278,7 +1207,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	(void)cfg_map_get(options, "dnssec-must-be-secure", &obj);
 	if (obj != NULL) {
 		tresult = isc_symtab_create(mctx, 100, freekey, mctx,
-					    ISC_FALSE, &symtab);
+					    false, &symtab);
 		if (tresult != ISC_R_SUCCESS)
 			result = tresult;
 		for (element = cfg_list_first(obj);
@@ -1370,7 +1299,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	obj = NULL;
 	(void)cfg_map_get(options, "nta-recheck", &obj);
 	if (obj != NULL) {
-		isc_uint32_t recheck = cfg_obj_asuint32(obj);
+		uint32_t recheck = cfg_obj_asuint32(obj);
 		if (recheck > 604800) {		/* 7 days */
 			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 				    "'nta-recheck' cannot exceed one week");
@@ -1387,16 +1316,9 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 
 	obj = NULL;
 	(void) cfg_map_get(options, "cookie-algorithm", &obj);
-	if (obj != NULL)
+	if (obj != NULL) {
 		ccalg = cfg_obj_asstring(obj);
-#if !defined(HAVE_OPENSSL_AES) && !defined(HAVE_OPENSSL_EVP_AES)
-	if (strcasecmp(ccalg, "aes") == 0) {
-		cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-			    "cookie-algorithm: '%s' not supported", ccalg);
-		if (result == ISC_R_SUCCESS)
-			result = ISC_R_NOTIMPLEMENTED;
 	}
-#endif
 
 	obj = NULL;
 	(void) cfg_map_get(options, "cookie-secret", &obj);
@@ -1458,7 +1380,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 
 #ifdef HAVE_DNSTAP
 	for (i = 0; i < sizeof(fstrm) / sizeof(fstrm[0]); i++) {
-		isc_uint32_t value;
+		uint32_t value;
 
 		obj = NULL;
 		(void) cfg_map_get(options, fstrm[i].name, &obj);
@@ -1556,13 +1478,13 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	obj = NULL;
 	(void)cfg_map_get(options, "lmdb-mapsize", &obj);
 	if (obj != NULL) {
-		isc_uint64_t mapsize = cfg_obj_asuint64(obj);
+		uint64_t mapsize = cfg_obj_asuint64(obj);
 
 		if (mapsize < (1ULL << 20)) { /* 1 megabyte */
 			cfg_obj_log(obj, logctx,
 				    ISC_LOG_ERROR,
 				    "'lmdb-mapsize "
-				    "%" ISC_PRINT_QUADFORMAT "d' "
+				    "%" PRId64 "' "
 				    "is too small",
 				    mapsize);
 			if (result == ISC_R_SUCCESS)
@@ -1571,7 +1493,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			cfg_obj_log(obj, logctx,
 				    ISC_LOG_ERROR,
 				    "'lmdb-mapsize "
-				    "%" ISC_PRINT_QUADFORMAT "d' "
+				    "%" PRId64 "' "
 				    "is too large",
 				    mapsize);
 			if (result == ISC_R_SUCCESS)
@@ -1586,6 +1508,17 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			    "'resolver-nonbackoff-tries' must be >= 1");
 		if (result == ISC_R_SUCCESS)
 			result = ISC_R_RANGE;
+	}
+
+	obj = NULL;
+	(void)cfg_map_get(options, "geoip-use-ecs", &obj);
+	if (obj != NULL && cfg_obj_asboolean(obj)) {
+		cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+			    "'geoip-use-ecs yes': "
+			    "ECS can no longer be used in geoip ACLs");
+		if (result == ISC_R_SUCCESS) {
+			result = ISC_R_FAILURE;
+		}
 	}
 
 	return (result);
@@ -1619,20 +1552,20 @@ get_masters_def(const cfg_obj_t *cctx, const char *name, const cfg_obj_t **ret) 
 
 static isc_result_t
 validate_masters(const cfg_obj_t *obj, const cfg_obj_t *config,
-		 isc_uint32_t *countp, isc_log_t *logctx, isc_mem_t *mctx)
+		 uint32_t *countp, isc_log_t *logctx, isc_mem_t *mctx)
 {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
-	isc_uint32_t count = 0;
+	uint32_t count = 0;
 	isc_symtab_t *symtab = NULL;
 	isc_symvalue_t symvalue;
 	const cfg_listelt_t *element;
 	const cfg_listelt_t **stack = NULL;
-	isc_uint32_t stackcount = 0, pushed = 0;
+	uint32_t stackcount = 0, pushed = 0;
 	const cfg_obj_t *list;
 
 	REQUIRE(countp != NULL);
-	result = isc_symtab_create(mctx, 100, NULL, NULL, ISC_FALSE, &symtab);
+	result = isc_symtab_create(mctx, 100, NULL, NULL, false, &symtab);
 	if (result != ISC_R_SUCCESS) {
 		*countp = count;
 		return (result);
@@ -1683,7 +1616,7 @@ validate_masters(const cfg_obj_t *obj, const cfg_obj_t *config,
 		/* Grow stack? */
 		if (stackcount == pushed) {
 			void * newstack;
-			isc_uint32_t newlen = stackcount + 16;
+			uint32_t newlen = stackcount + 16;
 			size_t newsize, oldsize;
 
 			newsize = newlen * sizeof(*stack);
@@ -1729,6 +1662,8 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 	dns_fixedname_t fixed_id, fixed_name;
 	dns_name_t *id, *name;
 	const char *str;
+	isc_textregion_t r;
+	dns_rdatatype_t type;
 
 	/* Check for "update-policy local;" */
 	if (cfg_obj_isstring(policy) &&
@@ -1766,12 +1701,16 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 		}
 
 		/*
-		 * There is no name field for subzone.
+		 * There is no name field for subzone and dname is void
 		 */
-		if (tresult == ISC_R_SUCCESS &&
-		    mtype != dns_ssumatchtype_subdomain)
+		if (mtype == dns_ssumatchtype_subdomain &&
+		    cfg_obj_isvoid(dname))
 		{
+			str = ".";	/* Use "." as a replacement. */
+		} else {
 			str = cfg_obj_asstring(dname);
+		}
+		if (tresult == ISC_R_SUCCESS) {
 			tresult = dns_name_fromstring(name, str, 0, NULL);
 			if (tresult != ISC_R_SUCCESS) {
 				cfg_obj_log(dname, logctx, ISC_LOG_ERROR,
@@ -1808,8 +1747,8 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 			break;
 		case dns_ssumatchtype_selfkrb5:
 		case dns_ssumatchtype_selfms:
-		case dns_ssumatchtype_subdomainms:
-		case dns_ssumatchtype_subdomainkrb5:
+		case dns_ssumatchtype_selfsubkrb5:
+		case dns_ssumatchtype_selfsubms:
 		case dns_ssumatchtype_tcpself:
 		case dns_ssumatchtype_6to4self:
 			if (tresult == ISC_R_SUCCESS &&
@@ -1821,13 +1760,28 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 			}
 			break;
 		case dns_ssumatchtype_name:
-		case dns_ssumatchtype_subdomain:
+		case dns_ssumatchtype_subdomain: /* also zonesub */
+		case dns_ssumatchtype_subdomainms:
+		case dns_ssumatchtype_subdomainkrb5:
 		case dns_ssumatchtype_wildcard:
 		case dns_ssumatchtype_external:
 		case dns_ssumatchtype_local:
+			if (tresult == ISC_R_SUCCESS) {
+				DE_CONST(str, r.base);
+				r.length = strlen(str);
+				tresult = dns_rdatatype_fromtext(&type, &r);
+			}
+			if (tresult == ISC_R_SUCCESS) {
+				cfg_obj_log(identity, logctx, ISC_LOG_ERROR,
+					    "missing name field type '%s' "
+					    "found", str);
+				result = ISC_R_FAILURE;
+				break;
+			}
 			break;
 		default:
 			INSIST(0);
+			ISC_UNREACHABLE();
 		}
 
 		for (element2 = cfg_list_first(typelist);
@@ -1835,8 +1789,6 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 		     element2 = cfg_list_next(element2))
 		{
 			const cfg_obj_t *typeobj;
-			isc_textregion_t r;
-			dns_rdatatype_t type;
 
 			typeobj = cfg_listelt_value(element2);
 			DE_CONST(cfg_obj_asstring(typeobj), r.base);
@@ -1855,7 +1807,7 @@ check_update_policy(const cfg_obj_t *policy, isc_log_t *logctx) {
 
 typedef struct {
 	const char *name;
-	int allowed;
+	unsigned int allowed;
 } optionstable;
 
 static isc_result_t
@@ -1881,6 +1833,114 @@ check_nonzero(const cfg_obj_t *options, isc_log_t *logctx) {
 	return (result);
 }
 
+/*%
+ * Check whether NOTIFY configuration at the zone level is acceptable for a
+ * mirror zone.  Return true if it is; return false otherwise.
+ */
+static bool
+check_mirror_zone_notify(const cfg_obj_t *zoptions, const char *znamestr,
+			 isc_log_t *logctx)
+{
+	bool notify_configuration_ok = true;
+	const cfg_obj_t *obj = NULL;
+
+	(void)cfg_map_get(zoptions, "notify", &obj);
+	if (obj == NULL) {
+		/*
+		 * "notify" not set at zone level.  This is fine.
+		 */
+		return (true);
+	}
+
+	if (cfg_obj_isboolean(obj)) {
+		if (cfg_obj_asboolean(obj)) {
+			/*
+			 * "notify yes;" set at zone level.  This is an error.
+			 */
+			notify_configuration_ok = false;
+		}
+	} else {
+		const char *notifystr = cfg_obj_asstring(obj);
+		if (strcasecmp(notifystr, "explicit") != 0) {
+			/*
+			 * Something else than "notify explicit;" set at zone
+			 * level.  This is an error.
+			 */
+			notify_configuration_ok = false;
+		}
+	}
+
+	if (!notify_configuration_ok) {
+		cfg_obj_log(zoptions, logctx, ISC_LOG_ERROR,
+			    "zone '%s': mirror zones can only be used with "
+			    "'notify no;' or 'notify explicit;'", znamestr);
+	}
+
+	return (notify_configuration_ok);
+}
+
+/*%
+ * Try to determine whether recursion is available in a view without resorting
+ * to extraordinary measures: just check the "recursion" and "allow-recursion"
+ * settings.  The point is to prevent accidental mirror zone misuse rather than
+ * to enforce some sort of policy.  Recursion is assumed to be allowed by
+ * default if it is not explicitly disabled.
+ */
+static bool
+check_recursion(const cfg_obj_t *config, const cfg_obj_t *voptions,
+		const cfg_obj_t *goptions, isc_log_t *logctx,
+		cfg_aclconfctx_t *actx, isc_mem_t *mctx)
+{
+	dns_acl_t *acl = NULL;
+	const cfg_obj_t *obj;
+	isc_result_t result;
+	bool retval = true;
+
+	/*
+	 * Check the "recursion" option first.
+	 */
+	obj = NULL;
+	result = ISC_R_NOTFOUND;
+	if (voptions != NULL) {
+		result = cfg_map_get(voptions, "recursion", &obj);
+	}
+	if (result != ISC_R_SUCCESS && goptions != NULL) {
+		result = cfg_map_get(goptions, "recursion", &obj);
+	}
+	if (result == ISC_R_SUCCESS && !cfg_obj_asboolean(obj)) {
+		retval = false;
+		goto cleanup;
+	}
+
+	/*
+	 * If recursion is not disabled by the "recursion" option, check
+	 * whether it is disabled by the "allow-recursion" ACL.
+	 */
+	obj = NULL;
+	result = ISC_R_NOTFOUND;
+	if (voptions != NULL) {
+		result = cfg_map_get(voptions, "allow-recursion", &obj);
+	}
+	if (result != ISC_R_SUCCESS && goptions != NULL) {
+		result = cfg_map_get(goptions, "allow-recursion", &obj);
+	}
+	if (result == ISC_R_SUCCESS) {
+		result = cfg_acl_fromconfig(obj, config, logctx, actx, mctx, 0,
+					    &acl);
+		if (result != ISC_R_SUCCESS) {
+			goto cleanup;
+		}
+		retval = !dns_acl_isnone(acl);
+	}
+
+ cleanup:
+	if (acl != NULL) {
+		dns_acl_detach(&acl);
+	}
+
+	return (retval);
+}
+
 static isc_result_t
 check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	       const cfg_obj_t *config, isc_symtab_t *symtab,
@@ -1902,13 +1962,13 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	dns_fixedname_t fixedname;
 	dns_name_t *zname = NULL;
 	isc_buffer_t b;
-	isc_boolean_t root = ISC_FALSE;
-	isc_boolean_t rfc1918 = ISC_FALSE;
-	isc_boolean_t ula = ISC_FALSE;
+	bool root = false;
+	bool rfc1918 = false;
+	bool ula = false;
 	const cfg_listelt_t *element;
-	isc_boolean_t dlz;
+	bool dlz;
 	dns_masterformat_t masterformat;
-	isc_boolean_t ddns = ISC_FALSE;
+	bool ddns = false;
 	const void *clauses = NULL;
 	const char *option = NULL;
 	static const char *acls[] = {
@@ -1947,10 +2007,16 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		}
 
 		typestr = cfg_obj_asstring(obj);
-		if (strcasecmp(typestr, "master") == 0) {
+		if (strcasecmp(typestr, "master") == 0 ||
+		    strcasecmp(typestr, "primary") == 0)
+		{
 			ztype = CFG_ZONE_MASTER;
-		} else if (strcasecmp(typestr, "slave") == 0) {
+		} else if (strcasecmp(typestr, "slave") == 0 ||
+			   strcasecmp(typestr, "secondary") == 0)
+		{
 			ztype = CFG_ZONE_SLAVE;
+		} else if (strcasecmp(typestr, "mirror") == 0) {
+			ztype = CFG_ZONE_MIRROR;
 		} else if (strcasecmp(typestr, "stub") == 0) {
 			ztype = CFG_ZONE_STUB;
 		} else if (strcasecmp(typestr, "static-stub") == 0) {
@@ -2030,11 +2096,11 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		if (tresult != ISC_R_SUCCESS)
 			result = tresult;
 		if (dns_name_equal(zname, dns_rootname))
-			root = ISC_TRUE;
+			root = true;
 		else if (dns_name_isrfc1918(zname))
-			rfc1918 = ISC_TRUE;
+			rfc1918 = true;
 		else if (dns_name_isula(zname))
-			ula = ISC_TRUE;
+			ula = true;
 		tmp += strlen(tmp);
 		len -= strlen(tmp);
 		(void)snprintf(tmp, len, "%u/%s", zclass,
@@ -2062,6 +2128,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 
 		case CFG_ZONE_MASTER:
 		case CFG_ZONE_SLAVE:
+		case CFG_ZONE_MIRROR:
 		case CFG_ZONE_HINT:
 		case CFG_ZONE_STUB:
 		case CFG_ZONE_STATICSTUB:
@@ -2085,6 +2152,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 
 		default:
 			INSIST(0);
+			ISC_UNREACHABLE();
 		}
 	}
 
@@ -2146,11 +2214,23 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	}
 
 	/*
-	 * Master & slave zones may have an "also-notify" field, but
+	 * Only a limited subset of all possible "notify" settings can be used
+	 * at the zone level for mirror zones.
+	 */
+	if (ztype == CFG_ZONE_MIRROR &&
+	    !check_mirror_zone_notify(zoptions, znamestr, logctx))
+	{
+		result = ISC_R_FAILURE;
+	}
+
+	/*
+	 * Master, slave, and mirror zones may have an "also-notify" field, but
 	 * shouldn't if notify is disabled.
 	 */
-	if (ztype == CFG_ZONE_MASTER || ztype == CFG_ZONE_SLAVE) {
-		isc_boolean_t donotify = ISC_TRUE;
+	if (ztype == CFG_ZONE_MASTER || ztype == CFG_ZONE_SLAVE ||
+	    ztype == CFG_ZONE_MIRROR)
+	{
+		bool donotify = true;
 
 		obj = NULL;
 		tresult = cfg_map_get(zoptions, "notify", &obj);
@@ -2165,7 +2245,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 				const char *notifystr = cfg_obj_asstring(obj);
 				if (ztype != CFG_ZONE_MASTER &&
 				    strcasecmp(notifystr, "master-only") == 0)
-					donotify = ISC_FALSE;
+					donotify = false;
 			}
 		}
 
@@ -2181,7 +2261,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		if (tresult != ISC_R_SUCCESS && goptions != NULL)
 			tresult = cfg_map_get(goptions, "also-notify", &obj);
 		if (tresult == ISC_R_SUCCESS && donotify) {
-			isc_uint32_t count;
+			uint32_t count;
 			tresult = validate_masters(obj, config, &count,
 						   logctx, mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
@@ -2190,9 +2270,13 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	}
 
 	/*
-	 * Slave & stub zones must have a "masters" field.
+	 * Slave, mirror, and stub zones must have a "masters" field, with one
+	 * exception: when mirroring the root zone, a default, built-in master
+	 * server list is used in the absence of one explicitly specified.
 	 */
-	if (ztype == CFG_ZONE_SLAVE || ztype == CFG_ZONE_STUB) {
+	if (ztype == CFG_ZONE_SLAVE || ztype == CFG_ZONE_STUB ||
+	    (ztype == CFG_ZONE_MIRROR && !dns_name_equal(zname, dns_rootname)))
+	{
 		obj = NULL;
 		if (cfg_map_get(zoptions, "masters", &obj) != ISC_R_SUCCESS) {
 			cfg_obj_log(zoptions, logctx, ISC_LOG_ERROR,
@@ -2200,7 +2284,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 				    znamestr);
 			result = ISC_R_FAILURE;
 		} else {
-			isc_uint32_t count;
+			uint32_t count;
 			tresult = validate_masters(obj, config, &count,
 						   logctx, mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
@@ -2215,10 +2299,23 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	}
 
 	/*
+	 * Configuring a mirror zone and disabling recursion at the same time
+	 * contradicts the purpose of the former.
+	 */
+	if (ztype == CFG_ZONE_MIRROR &&
+	    !check_recursion(config, voptions, goptions, logctx, actx, mctx))
+	{
+		cfg_obj_log(zoptions, logctx, ISC_LOG_ERROR,
+			    "zone '%s': mirror zones cannot be used if "
+			    "recursion is disabled", znamestr);
+		result = ISC_R_FAILURE;
+	}
+
+	/*
 	 * Master zones can't have both "allow-update" and "update-policy".
 	 */
 	if (ztype == CFG_ZONE_MASTER || ztype == CFG_ZONE_SLAVE) {
-		isc_boolean_t signing = ISC_FALSE;
+		bool signing = false;
 		isc_result_t res1, res2, res3;
 		const cfg_obj_t *au = NULL;
 		const char *arg;
@@ -2250,7 +2347,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			res1 = cfg_map_get(goptions, "allow-update", &au);
 
 		if (res2 == ISC_R_SUCCESS)
-			ddns = ISC_TRUE;
+			ddns = true;
 		else if (res1 == ISC_R_SUCCESS) {
 			dns_acl_t *acl = NULL;
 			res1 = cfg_acl_fromconfig(au, config, logctx,
@@ -2262,7 +2359,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 				result = ISC_R_FAILURE;
 			} else if (acl != NULL) {
 				if (!dns_acl_isnone(acl))
-					ddns = ISC_TRUE;
+					ddns = true;
 				dns_acl_detach(&acl);
 			}
 		}
@@ -2290,7 +2387,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		obj = NULL;
 		res1 = cfg_map_get(zoptions, "sig-signing-type", &obj);
 		if (res1 == ISC_R_SUCCESS) {
-			isc_uint32_t type = cfg_obj_asuint32(obj);
+			uint32_t type = cfg_obj_asuint32(obj);
 			if (type < 0xff00U || type > 0xffffU)
 				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 					    "sig-signing-type: %u out of "
@@ -2423,13 +2520,6 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			obj = cfg_listelt_value(element);
 			sa = *cfg_obj_assockaddr(obj);
 
-			if (isc_sockaddr_getport(&sa) != 0) {
-				result = ISC_R_FAILURE;
-				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-					    "port is not configurable for "
-					    "static stub server-addresses");
-			}
-
 			isc_netaddr_fromsockaddr(&na, &sa);
 			if (isc_netaddr_getzone(&na) != 0) {
 				result = ISC_R_FAILURE;
@@ -2488,14 +2578,16 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	(void)cfg_map_get(zoptions, "masterfile-format", &obj);
 	if (obj != NULL) {
 		const char *masterformatstr = cfg_obj_asstring(obj);
-		if (strcasecmp(masterformatstr, "text") == 0)
+		if (strcasecmp(masterformatstr, "text") == 0) {
 			masterformat = dns_masterformat_text;
-		else if (strcasecmp(masterformatstr, "raw") == 0)
+		} else if (strcasecmp(masterformatstr, "raw") == 0) {
 			masterformat = dns_masterformat_raw;
-		else if (strcasecmp(masterformatstr, "map") == 0)
+		} else if (strcasecmp(masterformatstr, "map") == 0) {
 			masterformat = dns_masterformat_map;
-		else
+		} else {
 			INSIST(0);
+			ISC_UNREACHABLE();
+		}
 	}
 
 	if (masterformat == dns_masterformat_map) {
@@ -2557,10 +2649,10 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	 * file clause as well
 	 */
 	obj = NULL;
-	dlz = ISC_FALSE;
+	dlz = false;
 	tresult = cfg_map_get(zoptions, "dlz", &obj);
 	if (tresult == ISC_R_SUCCESS)
-		dlz = ISC_TRUE;
+		dlz = true;
 
 	obj = NULL;
 	tresult = cfg_map_get(zoptions, "database", &obj);
@@ -2590,15 +2682,17 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			    znamestr);
 			result = tresult;
 		} else if (tresult == ISC_R_SUCCESS &&
-			   (ztype == CFG_ZONE_SLAVE || ddns)) {
-			tresult = fileexist(fileobj, files, ISC_TRUE, logctx);
+			   (ztype == CFG_ZONE_SLAVE ||
+			    ztype == CFG_ZONE_MIRROR || ddns))
+		{
+			tresult = fileexist(fileobj, files, true, logctx);
 			if (tresult != ISC_R_SUCCESS)
 				result = tresult;
 		} else if (tresult == ISC_R_SUCCESS &&
 			   (ztype == CFG_ZONE_MASTER ||
 			    ztype == CFG_ZONE_HINT))
 		{
-			tresult = fileexist(fileobj, files, ISC_FALSE, logctx);
+			tresult = fileexist(fileobj, files, false, logctx);
 			if (tresult != ISC_R_SUCCESS)
 				result = tresult;
 		}
@@ -2610,7 +2704,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 
 typedef struct keyalgorithms {
 	const char *name;
-	isc_uint16_t size;
+	uint16_t size;
 } algorithmtable;
 
 isc_result_t
@@ -2625,11 +2719,9 @@ bind9_check_key(const cfg_obj_t *key, isc_log_t *logctx) {
 	isc_buffer_t buf;
 	unsigned char secretbuf[1024];
 	static const algorithmtable algorithms[] = {
-#ifndef PK11_MD5_DISABLE
 		{ "hmac-md5", 128 },
 		{ "hmac-md5.sig-alg.reg.int", 0 },
 		{ "hmac-md5.sig-alg.reg.int.", 0 },
-#endif
 		{ "hmac-sha1", 160 },
 		{ "hmac-sha224", 224 },
 		{ "hmac-sha256", 256 },
@@ -2670,7 +2762,7 @@ bind9_check_key(const cfg_obj_t *key, isc_log_t *logctx) {
 		return (ISC_R_NOTFOUND);
 	}
 	if (algorithm[len] == '-') {
-		isc_uint16_t digestbits;
+		uint16_t digestbits;
 		result = isc_parse_uint16(&digestbits, algorithm + len + 1, 10);
 		if (result == ISC_R_SUCCESS || result == ISC_R_RANGE) {
 			if (result == ISC_R_RANGE ||
@@ -2708,7 +2800,7 @@ bind9_check_key(const cfg_obj_t *key, isc_log_t *logctx) {
 }
 
 static isc_result_t
-fileexist(const cfg_obj_t *obj, isc_symtab_t *symtab, isc_boolean_t writeable,
+fileexist(const cfg_obj_t *obj, isc_symtab_t *symtab, bool writeable,
 	  isc_log_t *logctx)
 {
 	isc_result_t result;
@@ -2837,14 +2929,14 @@ static struct {
  *
  * 	"foo." is different to "foo".
  */
-static isc_boolean_t
+static bool
 rndckey_exists(const cfg_obj_t *keylist, const char *keyname) {
 	const cfg_listelt_t *element;
 	const cfg_obj_t *obj;
 	const char *str;
 
 	if (keylist == NULL)
-		return (ISC_FALSE);
+		return (false);
 
 	for (element = cfg_list_first(keylist);
 	     element != NULL;
@@ -2853,9 +2945,9 @@ rndckey_exists(const cfg_obj_t *keylist, const char *keyname) {
 		obj = cfg_listelt_value(element);
 		str = cfg_obj_asstring(cfg_map_getname(obj));
 		if (!strcasecmp(str, keyname))
-			return (ISC_TRUE);
+			return (true);
 	}
-	return (ISC_FALSE);
+	return (false);
 }
 
 static isc_result_t
@@ -2972,7 +3064,7 @@ check_servers(const cfg_obj_t *config, const cfg_obj_t *voptions,
 #define DLV_KSK_KEY	0x4
 
 static isc_result_t
-check_trusted_key(const cfg_obj_t *key, isc_boolean_t managed,
+check_trusted_key(const cfg_obj_t *key, bool managed,
 		  unsigned int *keyflags, isc_log_t *logctx)
 {
 	const char *keystr, *keynamestr;
@@ -2982,7 +3074,7 @@ check_trusted_key(const cfg_obj_t *key, isc_boolean_t managed,
 	isc_region_t r;
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
-	isc_uint32_t flags, proto, alg;
+	uint32_t flags, proto, alg;
 	unsigned char keydata[4096];
 
 	flags = cfg_obj_asuint32(cfg_tuple_get(key, "flags"));
@@ -3175,9 +3267,15 @@ check_trusted_key(const cfg_obj_t *key, isc_boolean_t managed,
 	return (result);
 }
 
+typedef enum {
+	special_zonetype_rpz,
+	special_zonetype_catz
+} special_zonetype_t;
+
 static isc_result_t
 check_rpz_catz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
-	       const char *viewname, isc_symtab_t *symtab, isc_log_t *logctx)
+	       const char *viewname, isc_symtab_t *symtab, isc_log_t *logctx,
+	       special_zonetype_t specialzonetype)
 {
 	const cfg_listelt_t *element;
 	const cfg_obj_t *obj, *nameobj, *zoneobj;
@@ -3188,6 +3286,7 @@ check_rpz_catz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 	dns_fixedname_t fixed;
 	dns_name_t *name;
 	char namebuf[DNS_NAME_FORMATSIZE];
+	unsigned int num_zones = 0;
 
 	if (viewname == NULL) {
 		viewname = "";
@@ -3197,13 +3296,24 @@ check_rpz_catz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 
 	name = dns_fixedname_initname(&fixed);
 	obj = cfg_tuple_get(rpz_obj, "zone list");
+
 	for (element = cfg_list_first(obj);
 	     element != NULL;
-	     element = cfg_list_next(element)) {
+	     element = cfg_list_next(element))
+	{
 		obj = cfg_listelt_value(element);
 		nameobj = cfg_tuple_get(obj, "zone name");
 		zonename = cfg_obj_asstring(nameobj);
 		zonetype = "";
+
+		if (specialzonetype == special_zonetype_rpz) {
+			if (++num_zones > 64) {
+				cfg_obj_log(nameobj, logctx, ISC_LOG_ERROR,
+					    "more than 64 response policy "
+					    "zones in view '%s'", viewname);
+				return (ISC_R_FAILURE);
+			}
+		}
 
 		tresult = dns_name_fromstring(name, zonename, 0, NULL);
 		if (tresult != ISC_R_SUCCESS) {
@@ -3225,8 +3335,11 @@ check_rpz_catz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 			if (obj != NULL)
 				zonetype = cfg_obj_asstring(obj);
 		}
-		if (strcasecmp(zonetype, "master") != 0 &&
-		    strcasecmp(zonetype, "slave") != 0) {
+		if (strcasecmp(zonetype, "primary") != 0 &&
+		    strcasecmp(zonetype, "master") != 0 &&
+		    strcasecmp(zonetype, "secondary") != 0 &&
+		    strcasecmp(zonetype, "slave") != 0)
+		{
 			cfg_obj_log(nameobj, logctx, ISC_LOG_ERROR,
 				    "%s '%s'%s%s is not a master or slave zone",
 				    rpz_catz, zonename, forview, viewname);
@@ -3237,10 +3350,50 @@ check_rpz_catz(const char *rpz_catz, const cfg_obj_t *rpz_obj,
 	return (result);
 }
 
+#ifdef HAVE_DLOPEN
+/*%
+ * Data structure used for the 'callback_data' argument to check_one_plugin().
+ */
+struct check_one_plugin_data {
+	isc_mem_t *mctx;
+	isc_log_t *lctx;
+	cfg_aclconfctx_t *actx;
+	isc_result_t *check_result;
+};
+
+/*%
+ * A callback for the cfg_pluginlist_foreach() call in check_viewconf() below.
+ * Since the point is to check configuration of all plugins even when
+ * processing some of them fails, always return ISC_R_SUCCESS and indicate any
+ * check failures through the 'check_result' variable passed in via the
+ * 'callback_data' structure.
+ */
+static isc_result_t
+check_one_plugin(const cfg_obj_t *config, const cfg_obj_t *obj,
+		 const char *plugin_path, const char *parameters,
+		 void *callback_data)
+{
+	struct check_one_plugin_data *data = callback_data;
+	isc_result_t result;
+
+	result = ns_plugin_check(plugin_path, parameters, config,
+				 cfg_obj_file(obj), cfg_obj_line(obj),
+				 data->mctx, data->lctx, data->actx);
+	if (result != ISC_R_SUCCESS) {
+		cfg_obj_log(obj, data->lctx, ISC_LOG_ERROR,
+			    "%s: plugin check failed: %s",
+			    plugin_path, isc_result_totext(result));
+		*data->check_result = result;
+	}
+
+	return (ISC_R_SUCCESS);
+}
+#endif
+
 static isc_result_t
 check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	       const char *viewname, dns_rdataclass_t vclass,
-	       isc_symtab_t *files, isc_symtab_t *inview,
+	       isc_symtab_t *files, bool check_plugins, isc_symtab_t *inview,
 	       isc_log_t *logctx, isc_mem_t *mctx)
 {
 	const cfg_obj_t *zones = NULL;
@@ -3256,7 +3409,8 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	const cfg_obj_t *obj;
 	const cfg_obj_t *options = NULL;
 	const cfg_obj_t *opts = NULL;
-	isc_boolean_t enablednssec, enablevalidation;
+	const cfg_obj_t *plugin_list = NULL;
+	bool enablednssec, enablevalidation;
 	const char *valstr = "no";
 	unsigned int tflags, mflags;
 
@@ -3278,7 +3432,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	 * there are no duplicate zones.
 	 */
 	tresult = isc_symtab_create(mctx, 1000, freekey, mctx,
-				    ISC_FALSE, &symtab);
+				    false, &symtab);
 	if (tresult != ISC_R_SUCCESS)
 		return (ISC_R_NOMEMORY);
 
@@ -3322,15 +3476,24 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	 */
 	if (opts != NULL) {
 		obj = NULL;
-		if (cfg_map_get(opts, "response-policy", &obj) == ISC_R_SUCCESS
-		    && check_rpz_catz("response-policy zone", obj,
-				 viewname, symtab, logctx) != ISC_R_SUCCESS)
+		if ((cfg_map_get(opts, "response-policy",
+				 &obj) == ISC_R_SUCCESS) &&
+		    (check_rpz_catz("response-policy zone", obj,
+				    viewname, symtab, logctx,
+				    special_zonetype_rpz) != ISC_R_SUCCESS))
+		{
 			result = ISC_R_FAILURE;
+		}
+
 		obj = NULL;
-		if (cfg_map_get(opts, "catalog-zones", &obj) == ISC_R_SUCCESS
-		    && check_rpz_catz("catalog zone", obj,
-				  viewname, symtab, logctx) != ISC_R_SUCCESS)
+		if ((cfg_map_get(opts, "catalog-zones",
+				 &obj) == ISC_R_SUCCESS) &&
+		    (check_rpz_catz("catalog zone", obj,
+				    viewname, symtab, logctx,
+				    special_zonetype_catz) != ISC_R_SUCCESS))
+		{
 			result = ISC_R_FAILURE;
+		}
 	}
 
 	isc_symtab_destroy(&symtab);
@@ -3366,7 +3529,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	 * there are no duplicate keys.
 	 */
 	tresult = isc_symtab_create(mctx, 1000, freekey, mctx,
-				    ISC_FALSE, &symtab);
+				    false, &symtab);
 	if (tresult != ISC_R_SUCCESS)
 		goto cleanup;
 
@@ -3408,7 +3571,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	if (obj == NULL && options != NULL)
 		(void)cfg_map_get(options, "dnssec-enable", &obj);
 	if (obj == NULL)
-		enablednssec = ISC_TRUE;
+		enablednssec = true;
 	else
 		enablednssec = cfg_obj_asboolean(obj);
 
@@ -3424,7 +3587,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		enablevalidation = cfg_obj_asboolean(obj);
 		valstr = enablevalidation ? "yes" : "no";
 	} else {
-		enablevalidation = ISC_TRUE;
+		enablevalidation = true;
 		valstr = "auto";
 	}
 
@@ -3452,7 +3615,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		     element2 != NULL;
 		     element2 = cfg_list_next(element2)) {
 			obj = cfg_listelt_value(element2);
-			tresult = check_trusted_key(obj, ISC_FALSE, &tflags,
+			tresult = check_trusted_key(obj, false, &tflags,
 						    logctx);
 			if (tresult != ISC_R_SUCCESS)
 				result = tresult;
@@ -3488,7 +3651,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		     element2 != NULL;
 		     element2 = cfg_list_next(element2)) {
 			obj = cfg_listelt_value(element2);
-			tresult = check_trusted_key(obj, ISC_TRUE, &mflags,
+			tresult = check_trusted_key(obj, true, &mflags,
 						    logctx);
 			if (tresult != ISC_R_SUCCESS)
 				result = tresult;
@@ -3536,11 +3699,6 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
-	tresult = check_filteraaaa(actx, voptions, viewname, config,
-				   logctx, mctx);
-	if (tresult != ISC_R_SUCCESS)
-		result = tresult;
-
 	tresult = check_dns64(actx, voptions, config, logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
@@ -3548,6 +3706,35 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	tresult = check_ratelimit(actx, voptions, config, logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
+
+	/*
+	 * Load plugins.
+	 */
+	if (check_plugins) {
+		if (voptions != NULL) {
+			(void)cfg_map_get(voptions, "plugin", &plugin_list);
+		} else {
+			(void)cfg_map_get(config, "plugin", &plugin_list);
+		}
+	}
+
+#ifdef HAVE_DLOPEN
+	{
+		struct check_one_plugin_data check_one_plugin_data = {
+			.mctx = mctx,
+			.lctx = logctx,
+			.actx = actx,
+			.check_result = &tresult,
+		};
+
+		(void)cfg_pluginlist_foreach(config, plugin_list, logctx,
+					     check_one_plugin,
+					     &check_one_plugin_data);
+		if (tresult != ISC_R_SUCCESS) {
+			result = tresult;
+		}
+	}
+#endif /* HAVE_DLOPEN */
 
  cleanup:
 	if (symtab != NULL)
@@ -3594,7 +3781,7 @@ bind9_check_logging(const cfg_obj_t *config, isc_log_t *logctx,
 	if (logobj == NULL)
 		return (ISC_R_SUCCESS);
 
-	result = isc_symtab_create(mctx, 100, NULL, NULL, ISC_FALSE, &symtab);
+	result = isc_symtab_create(mctx, 100, NULL, NULL, false, &symtab);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -3720,7 +3907,7 @@ bind9_check_controls(const cfg_obj_t *config, isc_log_t *logctx,
 	const cfg_obj_t *unixcontrols;
 	const cfg_obj_t *keylist = NULL;
 	const char *path;
-	isc_uint32_t perm, mask;
+	uint32_t perm, mask;
 	dns_acl_t *acl = NULL;
 	isc_sockaddr_t addr;
 	int i;
@@ -3803,8 +3990,8 @@ bind9_check_controls(const cfg_obj_t *config, isc_log_t *logctx,
 }
 
 isc_result_t
-bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
-		      isc_mem_t *mctx)
+bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
+		      isc_log_t *logctx, isc_mem_t *mctx)
 {
 	const cfg_obj_t *options = NULL;
 	const cfg_obj_t *views = NULL;
@@ -3845,7 +4032,7 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 	 * case sensitive. This will prevent people using FOO.DB and foo.db
 	 * on case sensitive file systems but that shouldn't be a major issue.
 	 */
-	tresult = isc_symtab_create(mctx, 100, NULL, NULL, ISC_FALSE,
+	tresult = isc_symtab_create(mctx, 100, NULL, NULL, false,
 				    &files);
 	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
@@ -3853,20 +4040,22 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 	}
 
 	tresult = isc_symtab_create(mctx, 100, freekey, mctx,
-				    ISC_TRUE, &inview);
+				    true, &inview);
 	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
 		goto cleanup;
 	}
 
 	if (views == NULL) {
-		tresult = check_viewconf(config, NULL, NULL, dns_rdataclass_in,
-					 files, inview, logctx, mctx);
+		tresult = check_viewconf(config, NULL, NULL,
+					 dns_rdataclass_in, files,
+					 check_plugins, inview, logctx, mctx);
 		if (result == ISC_R_SUCCESS && tresult != ISC_R_SUCCESS) {
 			result = ISC_R_FAILURE;
 		}
 	} else {
 		const cfg_obj_t *zones = NULL;
+		const cfg_obj_t *plugins = NULL;
 
 		(void)cfg_map_get(config, "zone", &zones);
 		if (zones != NULL) {
@@ -3875,9 +4064,17 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 				    "all zones must be in views");
 			result = ISC_R_FAILURE;
 		}
+
+		(void)cfg_map_get(config, "plugin", &plugins);
+		if (plugins != NULL) {
+			cfg_obj_log(plugins, logctx, ISC_LOG_ERROR,
+				    "when using 'view' statements, "
+				    "all plugins must be defined in views");
+			result = ISC_R_FAILURE;
+		}
 	}
 
-	tresult = isc_symtab_create(mctx, 100, NULL, NULL, ISC_TRUE, &symtab);
+	tresult = isc_symtab_create(mctx, 100, NULL, NULL, true, &symtab);
 	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
 		goto cleanup;
@@ -3938,8 +4135,9 @@ bind9_check_namedconf(const cfg_obj_t *config, isc_log_t *logctx,
 			}
 		}
 		if (tresult == ISC_R_SUCCESS)
-			tresult = check_viewconf(config, voptions, key, vclass,
-						 files, inview, logctx, mctx);
+			tresult = check_viewconf(config, voptions, key,
+						 vclass, files, check_plugins,
+						 inview, logctx, mctx);
 		if (tresult != ISC_R_SUCCESS)
 			result = ISC_R_FAILURE;
 	}

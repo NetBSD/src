@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.116.2.2 2018/10/20 06:58:24 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.116.2.3 2019/01/18 08:50:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116.2.2 2018/10/20 06:58:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116.2.3 2019/01/18 08:50:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,7 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116.2.2 2018/10/20 06:58:24 pgoyette Exp $
 extern const char *cpu_arch;
 
 #ifdef MULTIPROCESSOR
-uint64_t cpu_mpidr[MAXCPUS];
+uint32_t cpu_mpidr[MAXCPUS] = {
+	[0 ... MAXCPUS - 1] = ~0,
+};
 
 volatile u_int arm_cpu_hatched __cacheline_aligned = 0;
 volatile uint32_t arm_cpu_mbox __cacheline_aligned = 0;
@@ -85,9 +87,10 @@ void
 cpu_attach(device_t dv, cpuid_t id)
 {
 	const char * const xname = device_xname(dv);
+	const int unit = device_unit(dv);
 	struct cpu_info *ci;
 
-	if (id == 0) {
+	if (unit == 0) {
 		ci = curcpu();
 
 		/* Read SCTLR from cpu */
@@ -95,32 +98,25 @@ cpu_attach(device_t dv, cpuid_t id)
 
 		/* Get the CPU ID from coprocessor 15 */
 
+		ci->ci_cpuid = id;
 		ci->ci_arm_cpuid = cpu_idnum();
 		ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
 		ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+#ifdef MULTIPROCESSOR
+		ci->ci_mpidr = armreg_mpidr_read();
+#endif
 	} else {
 #ifdef MULTIPROCESSOR
-		KASSERT(cpu_info[id] == NULL);
+		KASSERT(cpu_info[unit] == NULL);
 		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
 		ci->ci_cpl = IPL_HIGH;
 		ci->ci_cpuid = id;
-		uint32_t mpidr = armreg_mpidr_read();
-		if (mpidr & MPIDR_MT) {
-			ci->ci_data.cpu_smt_id = mpidr & MPIDR_AFF0;
-			ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF1;
-			ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF2;
-		} else {
-			ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF0;
-			ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF1;
-		}
-		ci->ci_data.cpu_core_id = id;
 		ci->ci_data.cpu_cc_freq = cpu_info_store.ci_data.cpu_cc_freq;
-		ci->ci_arm_cpuid = cpu_info_store.ci_arm_cpuid;
-		ci->ci_arm_cputype = cpu_info_store.ci_arm_cputype;
-		ci->ci_arm_cpurev = cpu_info_store.ci_arm_cpurev;
+
 		ci->ci_undefsave[2] = cpu_info_store.ci_undefsave[2];
-		cpu_info[ci->ci_cpuid] = ci;
-		if ((arm_cpu_hatched & __BIT(id)) == 0) {
+
+		cpu_info[unit] = ci;
+		if ((arm_cpu_hatched & __BIT(unit)) == 0) {
 			ci->ci_dev = dv;
 			dv->dv_private = ci;
 			aprint_naive(": disabled\n");
@@ -181,14 +177,9 @@ cpu_attach(device_t dv, cpuid_t id)
 	/*
 	 * and we are done if this is a secondary processor.
 	 */
-	if (id != 0) {
-#if 1
+	if (unit != 0) {
 		aprint_naive("\n");
 		aprint_normal("\n");
-#else
-		aprint_naive(": %s\n", cpu_getmodel());
-		aprint_normal(": %s\n", cpu_getmodel());
-#endif
 		mi_cpu_attach(ci);
 #ifdef ARM_MMU_EXTENDED
 		pmap_tlb_info_attach(&pmap_tlb0_info, ci);
@@ -516,6 +507,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA15R2,	CPU_CLASS_CORTEX,	"Cortex-A15 r2",
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R3,	CPU_CLASS_CORTEX,	"Cortex-A15 r3",
+	  pN_steppings, "7A" },
+	{ CPU_ID_CORTEXA15R4,	CPU_CLASS_CORTEX,	"Cortex-A15 r4",
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA17R1,	CPU_CLASS_CORTEX,	"Cortex-A17 r1",
 	  pN_steppings, "7A" },

@@ -1,4 +1,4 @@
-/*	$NetBSD: nstest.h,v 1.2.2.2 2018/09/06 06:55:13 pgoyette Exp $	*/
+/*	$NetBSD: nstest.h,v 1.2.2.3 2019/01/18 08:50:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,10 @@
 
 #include <config.h>
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/buffer.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
@@ -30,6 +32,7 @@
 
 #include <ns/interfacemgr.h>
 #include <ns/client.h>
+#include <ns/hooks.h>
 
 typedef struct ns_test_id {
 	const char *description;
@@ -46,7 +49,6 @@ typedef struct ns_test_id {
 	} while (0)
 
 extern isc_mem_t *mctx;
-extern isc_entropy_t *ectx;
 extern isc_log_t *lctx;
 extern isc_taskmgr_t *taskmgr;
 extern isc_task_t *maintask;
@@ -57,27 +59,27 @@ extern dns_dispatchmgr_t *dispatchmgr;
 extern ns_clientmgr_t *clientmgr;
 extern ns_interfacemgr_t *interfacemgr;
 extern ns_server_t *sctx;
-extern isc_boolean_t app_running;
+extern bool app_running;
 extern int ncpus;
-extern isc_boolean_t debug_mem_record;
+extern bool debug_mem_record;
 
 isc_result_t
-ns_test_begin(FILE *logfile, isc_boolean_t create_managers);
+ns_test_begin(FILE *logfile, bool create_managers);
 
 void
 ns_test_end(void);
 
 /*%
- * Create a view.  If "with_cache" is set to ISC_TRUE, a cache database will
+ * Create a view.  If "with_cache" is set to true, a cache database will
  * also be created and attached to the created view.
  */
 isc_result_t
-ns_test_makeview(const char *name, isc_boolean_t with_cache,
+ns_test_makeview(const char *name, bool with_cache,
 		 dns_view_t **viewp);
 
 isc_result_t
 ns_test_makezone(const char *name, dns_zone_t **zonep, dns_view_t *view,
-				  isc_boolean_t keepview);
+				  bool keepview);
 
 isc_result_t
 ns_test_setupzonemgr(void);
@@ -107,7 +109,7 @@ void
 ns_test_cleanup_zone(void);
 
 void
-ns_test_nap(isc_uint32_t usec);
+ns_test_nap(uint32_t usec);
 
 isc_result_t
 ns_test_loaddb(dns_db_t **db, dns_dbtype_t dbtype, const char *origin,
@@ -118,7 +120,7 @@ ns_test_getdata(const char *file, unsigned char *buf,
 		size_t bufsiz, size_t *sizep);
 
 isc_result_t
-ns_test_getclient(ns_interface_t *ifp0, isc_boolean_t tcp,
+ns_test_getclient(ns_interface_t *ifp0, bool tcp,
 		  ns_client_t **clientp);
 
 /*%
@@ -128,13 +130,13 @@ typedef struct ns_test_qctx_create_params {
 	const char *qname;
 	dns_rdatatype_t qtype;
 	unsigned int qflags;
-	isc_boolean_t with_cache;
+	bool with_cache;
 } ns_test_qctx_create_params_t;
 
 /*%
  * Prepare a query context identical with one that would be prepared if a query
  * with given QNAME, QTYPE and flags was received from a client.  Recursion is
- * assumed to be allowed for this client.  If "with_cache" is set to ISC_TRUE,
+ * assumed to be allowed for this client.  If "with_cache" is set to true,
  * a cache database will be created and associated with the view matching the
  * incoming query.
  */
@@ -151,6 +153,5 @@ ns_test_qctx_destroy(query_ctx_t **qctxp);
 /*%
  * A hook callback interrupting execution at given hook's insertion point.
  */
-isc_boolean_t
-ns_test_hook_catch_call(void *hook_data, void *callback_data,
-			isc_result_t *resultp);
+ns_hookresult_t
+ns_test_hook_catch_call(void *arg, void *data, isc_result_t *resultp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.8 2017/04/18 14:11:42 flxd Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.8.16.1 2019/01/18 08:50:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.8 2017/04/18 14:11:42 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.8.16.1 2019/01/18 08:50:23 pgoyette Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -78,7 +78,7 @@ static const char * vlpci_pc_intr_string(void *, pci_intr_handle_t, char *,
     size_t);
 static const struct evcnt * vlpci_pc_intr_evcnt(void *, pci_intr_handle_t);
 static void *	vlpci_pc_intr_establish(void *, pci_intr_handle_t, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 static void 	vlpci_pc_intr_disestablish(void *, void *);
 
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -433,7 +433,7 @@ vlpci_pc_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 
 	if (ih == PCI_INTERRUPT_PIN_NONE)
 		return NULL;
-	snprintf(buf, len, "irq %lu", ih);
+	snprintf(buf, len, "irq %llu", ih);
 	return buf;
 }
 
@@ -446,7 +446,7 @@ vlpci_pc_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 static void *
 vlpci_pc_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
-    int (*callback)(void *), void *arg)
+    int (*callback)(void *), void *arg, const char *foo)
 {
 
 	if (pih == 0)

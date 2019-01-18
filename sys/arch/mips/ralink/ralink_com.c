@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_com.c,v 1.5.14.1 2018/12/26 14:01:40 pgoyette Exp $	*/
+/*	$NetBSD: ralink_com.c,v 1.5.14.2 2019/01/18 08:50:19 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -130,7 +130,7 @@
 /* ralink_com.c -- Ralink 3052 uart console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.5.14.1 2018/12/26 14:01:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.5.14.2 2019/01/18 08:50:19 pgoyette Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -367,6 +367,23 @@ ralink_com_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 }
 
+static const bus_size_t ralink_com_regmap[COM_REGMAP_NENTRIES] = {
+	[COM_REG_RXDATA]	=	RA_UART_RBR,
+	[COM_REG_TXDATA]	=	RA_UART_TBR,
+	[COM_REG_DLBL]		=	RA_UART_DLL,
+#if defined(MT7628)
+	[COM_REG_DLBH]		=	RA_UART_DLM,
+#endif
+	[COM_REG_IER]		=	RA_UART_IER,
+	[COM_REG_IIR]		=	RA_UART_IIR,
+	[COM_REG_FIFO]		=	RA_UART_FCR,
+	[COM_REG_TCR]		=	RA_UART_FCR,
+	[COM_REG_LCR]		=	RA_UART_LCR,
+	[COM_REG_MCR]		=	RA_UART_MCR,
+	[COM_REG_LSR]		=	RA_UART_LSR,
+	[COM_REG_MSR]		=	RA_UART_MSR,
+};
+
 static void
 ralink_com_init_regs(struct com_regs *regsp, bus_space_tag_t st,
 		     bus_space_handle_t sh, bus_addr_t addr)
@@ -374,20 +391,7 @@ ralink_com_init_regs(struct com_regs *regsp, bus_space_tag_t st,
 
 	com_init_regs(regsp, st, sh, addr);
 
-	regsp->cr_map[COM_REG_RXDATA] = RA_UART_RBR;
-	regsp->cr_map[COM_REG_TXDATA] = RA_UART_TBR;
-	regsp->cr_map[COM_REG_DLBL]   = RA_UART_DLL;
-#if defined(MT7628)
-	regsp->cr_map[COM_REG_DLBH]   = RA_UART_DLM;
-#endif
-	regsp->cr_map[COM_REG_IER]    = RA_UART_IER;
-	regsp->cr_map[COM_REG_IIR]    = RA_UART_IIR;
-	regsp->cr_map[COM_REG_FIFO]   = RA_UART_FCR;
-	regsp->cr_map[COM_REG_LCR]    = RA_UART_LCR;
-	regsp->cr_map[COM_REG_MCR]    = RA_UART_MCR;
-	regsp->cr_map[COM_REG_LSR]    = RA_UART_LSR;
-	regsp->cr_map[COM_REG_MSR]    = RA_UART_MSR;
-
+	memcpy(regsp->cr_map, ralink_com_regmap, sizeof(regsp->cr_map));
 	regsp->cr_nports = 32;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6.58.2 2018/12/26 14:01:38 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.6.58.3 2019/01/18 08:50:17 pgoyette Exp $	*/
 
 #ifndef _IA64_PROC_H_
 #define _IA64_PROC_H_
@@ -41,8 +41,8 @@ struct mdproc {
 
 #define UAREA_PCB_OFFSET	(USPACE - sizeof(struct pcb))
 #define UAREA_TF_OFFSET		(UAREA_PCB_OFFSET - sizeof(struct trapframe))
-#define UAREA_SP_OFFSET		(UAREA_TF_OFFSET -16)
+#define UAREA_SP_OFFSET		(UAREA_TF_OFFSET - 16)
 #define UAREA_BSPSTORE_OFFSET	(0)
-#define UAREA_STACK_SIZE	(USPACE - UAREA_SP_OFFSET)
+#define UAREA_STACK_SIZE	(USPACE - 16 - sizeof(struct trapframe) - sizeof(struct pcb))
 
 #endif /* _IA64_PROC_H_ */

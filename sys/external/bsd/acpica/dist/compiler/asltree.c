@@ -148,7 +148,7 @@ TrSetOpIntegerValue (
     if (AcpiGbl_CaptureComments &&
         (ParseOpcode == PARSEOP_METHODCALL))
     {
-        Gbl_CommentState.CaptureComments = FALSE;
+        AslGbl_CommentState.CaptureComments = FALSE;
     }
 
     return (Op);
@@ -264,7 +264,7 @@ TrSetOpCurrentFilename (
     ACPI_PARSE_OBJECT       *Op)
 {
 
-    Op->Asl.Filename = Gbl_PreviousIncludeFilename;
+    Op->Asl.Filename = AslGbl_PreviousIncludeFilename;
 }
 
 
@@ -290,9 +290,9 @@ TrSetOpIntegerWidth (
 
     /* Handle command-line version override */
 
-    if (Gbl_RevisionOverride)
+    if (AslGbl_RevisionOverride)
     {
-        AcpiUtSetIntegerWidth (Gbl_RevisionOverride);
+        AcpiUtSetIntegerWidth (AslGbl_RevisionOverride);
     }
     else
     {
@@ -326,8 +326,8 @@ TrSetOpEndLineNumber (
         return;
     }
 
-    Op->Asl.EndLine = Gbl_CurrentLineNumber;
-    Op->Asl.EndLogicalLine = Gbl_LogicalLineNumber;
+    Op->Asl.EndLine = AslGbl_CurrentLineNumber;
+    Op->Asl.EndLogicalLine = AslGbl_LogicalLineNumber;
 }
 
 
@@ -372,7 +372,7 @@ TrLinkOpChildren (
     {
     case PARSEOP_ASL_CODE:
 
-        Gbl_ParseTreeRoot = Op;
+        AslGbl_ParseTreeRoot = Op;
         Op->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
         DbgPrint (ASL_PARSE_OUTPUT, "ASLCODE (Tree Completed)->");
         break;
@@ -408,13 +408,13 @@ TrLinkOpChildren (
          * then is an endBlk comment. Categorize it as so and distribute
          * all regular comments to this parse op.
          */
-        if (Gbl_CommentListHead)
+        if (AslGbl_CommentListHead)
         {
-            Op->Asl.EndBlkComment = Gbl_CommentListHead;
+            Op->Asl.EndBlkComment = AslGbl_CommentListHead;
             CvDbgPrint ("EndBlk Comment for %s: %s",
-                Op->Asl.ParseOpName, Gbl_CommentListHead->Comment);
-            Gbl_CommentListHead = NULL;
-            Gbl_CommentListTail = NULL;
+                Op->Asl.ParseOpName, AslGbl_CommentListHead->Comment);
+            AslGbl_CommentListHead = NULL;
+            AslGbl_CommentListTail = NULL;
         }
     }
 
@@ -484,7 +484,7 @@ TrLinkOpChildren (
 
     if (AcpiGbl_CaptureComments)
     {
-        Gbl_CommentState.LatestParseOp = Op;
+        AslGbl_CommentState.LatestParseOp = Op;
         CvDbgPrint ("TrLinkOpChildren=====Set latest parse op to this op.\n");
     }
 
@@ -664,9 +664,9 @@ TrLinkChildOp (
     {
         if (Op1->Asl.ParseOpcode == PARSEOP_METHODCALL)
         {
-            Gbl_CommentState.CaptureComments = TRUE;
+            AslGbl_CommentState.CaptureComments = TRUE;
         }
-        Gbl_CommentState.LatestParseOp = Op1;
+        AslGbl_CommentState.LatestParseOp = Op1;
     }
 
     if (!Op1 || !Op2)
@@ -719,7 +719,7 @@ TrWalkParseTree (
     ACPI_STATUS             Status;
 
 
-    if (!Gbl_ParseTreeRoot)
+    if (!AslGbl_ParseTreeRoot)
     {
         return (AE_OK);
     }

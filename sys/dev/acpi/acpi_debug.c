@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_debug.c,v 1.5 2014/02/25 18:30:09 pooka Exp $ */
+/* $NetBSD: acpi_debug.c,v 1.5.28.1 2019/01/18 08:50:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.5 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.5.28.1 2019/01/18 08:50:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -218,6 +218,8 @@ acpi_debug_create(void)
 	ACPI_DEBUG_ADD(acpi_debug_level_d, ACPI_LV_FULL_TABLES);
 	ACPI_DEBUG_ADD(acpi_debug_level_d, ACPI_LV_EVENTS);
 	ACPI_DEBUG_ADD(acpi_debug_level_d, ACPI_LV_VERBOSE);
+
+	ACPI_DEBUG_ADD(acpi_debug_level_d, ACPI_NORMAL_DEFAULT);
 
 	/*
 	 * The default debug level.

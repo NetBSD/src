@@ -169,6 +169,17 @@ if [ $linecount != 2 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo_i "checking require-server-cookie yes with rate-limit ($n)"
+ret=0
+$DIG $DIGOPTS +qr +cookie +nobadcookie soa example @10.53.0.8 > dig.out.test$n
+grep "flags: qr[^;]* ad[ ;]" dig.out.test$n > /dev/null && ret=1
+grep BADCOOKIE dig.out.test$n > /dev/null || ret=1
+linecount=`getcookie dig.out.test$n | wc -l`
+if [ $linecount != 2 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 #
 # Test shared cookie-secret support.
 #

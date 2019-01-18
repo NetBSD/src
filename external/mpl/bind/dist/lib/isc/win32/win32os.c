@@ -1,4 +1,4 @@
-/*	$NetBSD: win32os.c,v 1.2.2.2 2018/09/06 06:55:10 pgoyette Exp $	*/
+/*	$NetBSD: win32os.c,v 1.2.2.3 2019/01/18 08:50:01 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,6 +10,8 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
+
+#include <config.h>
 
 #include <windows.h>
 

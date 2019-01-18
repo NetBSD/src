@@ -33,6 +33,7 @@
 	<command>database</command> <replaceable>string</replaceable>;
 	<command>dialup</command> ( notify | notify-passive | passive | refresh | <replaceable>boolean</replaceable> );
 	<command>dlz</command> <replaceable>string</replaceable>;
+	<command>dnskey-sig-validity</command> <replaceable>integer</replaceable>;
 	<command>dnssec-dnskey-kskonly</command> <replaceable>boolean</replaceable>;
 	<command>dnssec-loadkeys-interval</command> <replaceable>integer</replaceable>;
 	<command>dnssec-secure-to-insecure</command> <replaceable>boolean</replaceable>;
@@ -62,7 +63,7 @@
 	<command>sig-signing-type</command> <replaceable>integer</replaceable>;
 	<command>sig-validity-interval</command> <replaceable>integer</replaceable> [ <replaceable>integer</replaceable> ];
 	<command>update-check-ksk</command> <replaceable>boolean</replaceable>;
-	<command>update-policy</command> ( local | { ( deny | grant ) <replaceable>string</replaceable> ( 6to4-self | external | krb5-self | krb5-subdomain | ms-self | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <replaceable>string</replaceable> ] <replaceable>rrtypelist</replaceable>; ... };
+	<command>update-policy</command> ( local | { ( deny | grant ) <replaceable>string</replaceable> ( 6to4-self | external | krb5-self | krb5-selfsub | krb5-subdomain | ms-self | ms-selfsub | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <replaceable>string</replaceable> ] <replaceable>rrtypelist</replaceable>; ... };
 	<command>zero-no-soa-ttl</command> <replaceable>boolean</replaceable>;
 	<command>zone-statistics</command> ( full | terse | none | <replaceable>boolean</replaceable> );
 };

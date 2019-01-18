@@ -28,7 +28,7 @@ dlzdir='${DLZ_DRIVER_DIR}'
 #   INCLUDES is any necessary include definitions
 #   LIBS is any necessary library definitions
 #
-AC_DEFUN(DLZ_ADD_DRIVER, [
+AC_DEFUN([DLZ_ADD_DRIVER], [
 	CONTRIB_DLZ="$CONTRIB_DLZ -DDLZ_$1"
 	for i in $2
 	do

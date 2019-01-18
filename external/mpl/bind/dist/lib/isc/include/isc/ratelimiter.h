@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.h,v 1.2.2.2 2018/09/06 06:55:06 pgoyette Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.2.2.3 2019/01/18 08:49:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,6 +29,9 @@
  *** Imports.
  ***/
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/types.h>
 
@@ -56,14 +59,14 @@ isc_ratelimiter_setinterval(isc_ratelimiter_t *rl, isc_interval_t *interval);
  */
 
 void
-isc_ratelimiter_setpertic(isc_ratelimiter_t *rl, isc_uint32_t perint);
+isc_ratelimiter_setpertic(isc_ratelimiter_t *rl, uint32_t perint);
 /*%<
  * Set the number of events processed per interval timer tick.
  * If 'perint' is zero it is treated as 1.
  */
 
 void
-isc_ratelimiter_setpushpop(isc_ratelimiter_t *rl, isc_boolean_t pushpop);
+isc_ratelimiter_setpushpop(isc_ratelimiter_t *rl, bool pushpop);
 /*%<
  * Set / clear the ratelimiter to from push pop mode rather
  * first in - first out mode (default).

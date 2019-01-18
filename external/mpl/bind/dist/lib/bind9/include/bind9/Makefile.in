@@ -30,10 +30,10 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/bind9 ; \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/bind9 || exit 1; \
 	done
 
 uninstall::
 	for i in ${HEADERS}; do \
-		rm -f ${DESTDIR}${includedir}/bind9/$$i ; \
+		rm -f ${DESTDIR}${includedir}/bind9/$$i || exit 1; \
 	done

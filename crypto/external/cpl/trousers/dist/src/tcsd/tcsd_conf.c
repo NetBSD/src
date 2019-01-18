@@ -51,6 +51,8 @@ struct tcsd_config_options options_list[] = {
 	{"enforce_exclusive_transport", opt_exclusive_transport},
 	{"host_platform_class", opt_host_platform_class},
 	{"all_platform_classes", opt_all_platform_classes},
+	{"disable_ipv4", opt_disable_ipv4},
+	{"disable_ipv6", opt_disable_ipv6},
 	{NULL, 0}
 };
 
@@ -83,6 +85,8 @@ init_tcsd_config(struct tcsd_config *conf)
 	conf->exclusive_transport = 0;
 	conf->host_platform_class = NULL;
 	conf->all_platform_classes = NULL;
+	conf->disable_ipv4 = 0;
+	conf->disable_ipv6 = 0;
 }
 
 TSS_RESULT
@@ -107,6 +111,7 @@ platform_class_list_append(struct tcsd_config *conf, char *specName, TSS_BOOL is
 			new_class->classURI = malloc(new_class->classURISize);
 			if (new_class->classURI == NULL) {
 				LogError("malloc of %u bytes failed", new_class->classURISize);
+				free(new_class);
 				return TCSERR(TSS_E_OUTOFMEMORY);
 			}
 			memcpy(new_class->classURI, tcg_platform_specs[i].specURI,
@@ -161,6 +166,12 @@ config_set_defaults(struct tcsd_config *conf)
 
 	if (conf->unset & TCSD_OPTION_HOST_PLATFORM_CLASS)
 		platform_class_list_append(conf, "PC_12", TRUE);
+
+	if (conf->unset & TCSD_OPTION_DISABLE_IPV4)
+		conf->disable_ipv4 = TCSD_DEFAULT_DISABLE_IPV4;
+
+	if (conf->unset & TCSD_OPTION_DISABLE_IPV6)
+		conf->disable_ipv6 = TCSD_DEFAULT_DISABLE_IPV6;
 }
 
 int
@@ -626,6 +637,29 @@ read_conf_line(char *buf, int line_num, struct tcsd_config *conf)
 			}
 		}
 		break;
+	case opt_disable_ipv4:
+		tmp_int = atoi(arg);
+		if (tmp_int < 0 || tmp_int > 1) {
+			LogError("Config option \"disable_ipv4\" out of range."
+				 " %s:%d: \"%d\"", tcsd_config_file, line_num, tmp_int);
+			return TCSERR(TSS_E_INTERNAL_ERROR);
+		} else {
+			conf->disable_ipv4 = tmp_int;
+			conf->unset &= ~TCSD_OPTION_DISABLE_IPV4;
+		}
+
+		break;
+	case opt_disable_ipv6:
+		tmp_int = atoi(arg);
+		if (tmp_int < 0 || tmp_int > 1) {
+			LogError("Config option \"disable_ipv6\" out of range."
+				 " %s:%d: \"%d\"", tcsd_config_file, line_num, tmp_int);
+			return TCSERR(TSS_E_INTERNAL_ERROR);
+		} else {
+			conf->disable_ipv6 = tmp_int;
+			conf->unset &= ~TCSD_OPTION_DISABLE_IPV6;
+		}
+		break;
 	default:
 		/* bail out on any unknown option */
 		LogError("Unknown config option %s:%d \"%s\"!", tcsd_config_file, line_num, arg);
@@ -736,6 +770,7 @@ conf_file_init(struct tcsd_config *conf)
 		}
 	}
 
+#ifndef NOUSERCHECK
 #ifndef SOLARIS
 	/* find the gid that owns the conf file */
 	errno = 0;
@@ -775,6 +810,7 @@ conf_file_init(struct tcsd_config *conf)
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 	}
 #endif /* SOLARIS */
+#endif /* NOUSERCHECK */
 
 	if ((f = fopen(tcsd_config_file, "r")) == NULL) {
 		LogError("fopen(%s): %s", tcsd_config_file, strerror(errno));

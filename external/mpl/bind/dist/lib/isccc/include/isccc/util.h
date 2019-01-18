@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.2.2.2 2018/09/06 06:55:11 pgoyette Exp $	*/
+/*	$NetBSD: util.h,v 1.2.2.3 2019/01/18 08:50:02 pgoyette Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,8 @@
 
 #ifndef ISCCC_UTIL_H
 #define ISCCC_UTIL_H 1
+
+#include <inttypes.h>
 
 #include <isc/util.h>
 
@@ -70,14 +72,14 @@
 
 #define GET64(v, w) \
 	do { \
-		v = (isc_uint64_t)w[0] << 56; \
-		v |= (isc_uint64_t)w[1] << 48; \
-		v |= (isc_uint64_t)w[2] << 40; \
-		v |= (isc_uint64_t)w[3] << 32; \
-		v |= (isc_uint64_t)w[4] << 24; \
-		v |= (isc_uint64_t)w[5] << 16; \
-		v |= (isc_uint64_t)w[6] << 8; \
-		v |= (isc_uint64_t)w[7]; \
+		v = (uint64_t)w[0] << 56; \
+		v |= (uint64_t)w[1] << 48; \
+		v |= (uint64_t)w[2] << 40; \
+		v |= (uint64_t)w[3] << 32; \
+		v |= (uint64_t)w[4] << 24; \
+		v |= (uint64_t)w[5] << 16; \
+		v |= (uint64_t)w[6] << 8; \
+		v |= (uint64_t)w[7]; \
 		w += 8; \
 	} while (/*CONSTCOND*/0)
 

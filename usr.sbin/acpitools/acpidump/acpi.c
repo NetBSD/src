@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.29.2.3 2018/12/26 14:02:11 pgoyette Exp $ */
+/* $NetBSD: acpi.c,v 1.29.2.4 2019/01/18 08:51:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.29.2.3 2018/12/26 14:02:11 pgoyette Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.29.2.4 2019/01/18 08:51:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -215,6 +215,8 @@ acpi_print_string(char *s, size_t length)
 
 	while (length--) {
 		c = *s++;
+		if (c == '\0')
+			return;
 		putchar(c);
 	}
 }

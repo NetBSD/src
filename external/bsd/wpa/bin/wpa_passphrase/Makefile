@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2016/06/29 19:16:23 christos Exp $
+# $NetBSD: Makefile,v 1.4.14.1 2019/01/18 08:48:37 pgoyette Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
-.PATH.c: ${WPA_SUPPLICANT_DISTDIR} ${.CURDIR}/../wpa_supplicant
+.PATH.c: ${WPA_SUPPLICANT_DISTDIR} ${.CURDIR}/../wpa_supplicant ${COMMON_PATH}
 
 PROG=	wpa_passphrase
 SRCS= \

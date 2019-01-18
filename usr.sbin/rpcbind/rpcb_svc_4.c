@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_4.c,v 1.8 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_4.c,v 1.8.2.1 2019/01/18 08:51:02 pgoyette Exp $	*/
 /* $FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_4.c 258564 2013-11-25 16:44:02Z hrs $ */
 
 /*-
@@ -387,7 +387,7 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp __unused,
 		/*
 		 * Add it to rlist.
 		 */
-		rp = malloc(sizeof(rpcb_entry_list));
+		rp = malloc(sizeof(*rp));
 		if (rp == NULL)
 			goto fail;
 		a = &rp->rpcb_entry_map;

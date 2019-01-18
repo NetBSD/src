@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.h,v 1.2.2.2 2018/09/06 06:55:06 pgoyette Exp $	*/
+/*	$NetBSD: httpd.h,v 1.2.2.3 2019/01/18 08:49:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,8 @@
 #define ISC_HTTPD_H 1
 
 /*! \file */
+
+#include <stdbool.h>
 
 #include <isc/event.h>
 #include <isc/eventclass.h>
@@ -35,7 +37,7 @@ struct isc_httpdurl {
 	char			       *url;
 	isc_httpdaction_t	       *action;
 	void			       *action_arg;
-	isc_boolean_t			isstatic;
+	bool			isstatic;
 	isc_time_t			loadtime;
 	ISC_LINK(isc_httpdurl_t)	link;
 };
@@ -64,7 +66,7 @@ isc_httpdmgr_addurl(isc_httpdmgr_t *httpdmgr, const char *url,
 
 isc_result_t
 isc_httpdmgr_addurl2(isc_httpdmgr_t *httpdmgr, const char *url,
-		     isc_boolean_t isstatic,
+		     bool isstatic,
 		     isc_httpdaction_t *func, void *arg);
 
 isc_result_t

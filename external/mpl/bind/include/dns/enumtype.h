@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2018  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2019  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,7 +50,10 @@ enum {
 	dns_rdatatype_aaaa = 28,
 	dns_rdatatype_loc = 29,
 	dns_rdatatype_nxt = 30,
+	dns_rdatatype_eid = 31,
+	dns_rdatatype_nimloc = 32,
 	dns_rdatatype_srv = 33,
+	dns_rdatatype_atma = 34,
 	dns_rdatatype_naptr = 35,
 	dns_rdatatype_kx = 36,
 	dns_rdatatype_cert = 37,
@@ -133,7 +136,10 @@ enum {
 #define dns_rdatatype_aaaa	((dns_rdatatype_t)dns_rdatatype_aaaa)
 #define dns_rdatatype_loc	((dns_rdatatype_t)dns_rdatatype_loc)
 #define dns_rdatatype_nxt	((dns_rdatatype_t)dns_rdatatype_nxt)
+#define dns_rdatatype_eid	((dns_rdatatype_t)dns_rdatatype_eid)
+#define dns_rdatatype_nimloc	((dns_rdatatype_t)dns_rdatatype_nimloc)
 #define dns_rdatatype_srv	((dns_rdatatype_t)dns_rdatatype_srv)
+#define dns_rdatatype_atma	((dns_rdatatype_t)dns_rdatatype_atma)
 #define dns_rdatatype_naptr	((dns_rdatatype_t)dns_rdatatype_naptr)
 #define dns_rdatatype_kx	((dns_rdatatype_t)dns_rdatatype_kx)
 #define dns_rdatatype_cert	((dns_rdatatype_t)dns_rdatatype_cert)

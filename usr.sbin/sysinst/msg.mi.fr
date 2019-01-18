@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.9.14.3 2018/11/26 01:52:55 pgoyette Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.9.14.4 2019/01/18 08:51:03 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1138,7 +1138,7 @@ n'est pas requis.
 }
 message Pkgsrc_dir {Répertoire pkgsrc}
 message get_pkgsrc
-{Obtenir et extraire pkgsrc afin de compiler des paquetages à partir des sources}
+{Obtenir et extraire pkgsrc}
 message retry_pkgsrc_network {La configuration du réseau a échoué. Réessayer ?}
 message quit_pkgsrc {Quitter sans installer pkgsrc}
 message quit_pkgs_install {Quitter sans installer bin pkg}

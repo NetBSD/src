@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.1.2.3 2018/12/26 14:01:27 pgoyette Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.1.2.4 2019/01/18 08:50:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,15 +50,19 @@ struct nvmm_io {
 	uint64_t port;
 	bool in;
 	size_t size;
-	uint8_t data[8];
+	uint8_t *data;
 };
 
 struct nvmm_mem {
-	gvaddr_t gva;
 	gpaddr_t gpa;
 	bool write;
 	size_t size;
-	uint8_t data[8];
+	uint8_t *data;
+};
+
+struct nvmm_callbacks {
+	void (*io)(struct nvmm_io *);
+	void (*mem)(struct nvmm_mem *);
 };
 
 #define NVMM_PROT_READ		0x01
@@ -90,9 +94,10 @@ int nvmm_gva_to_gpa(struct nvmm_machine *, nvmm_cpuid_t, gvaddr_t, gpaddr_t *,
     nvmm_prot_t *);
 int nvmm_gpa_to_hva(struct nvmm_machine *, gpaddr_t, uintptr_t *);
 
-int nvmm_assist_io(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *,
-    void (*)(struct nvmm_io *));
-int nvmm_assist_mem(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *,
-    void (*)(struct nvmm_mem *));
+int nvmm_assist_io(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
+int nvmm_assist_mem(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_exit *);
+void nvmm_callbacks_register(const struct nvmm_callbacks *);
+
+int nvmm_vcpu_dump(struct nvmm_machine *, nvmm_cpuid_t);
 
 #endif /* _LIBNVMM_H_ */

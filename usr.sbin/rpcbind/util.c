@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.21.2.1 2019/01/18 08:51:02 pgoyette Exp $	*/
 /* $FreeBSD: head/usr.sbin/rpcbind/util.c 300973 2016-05-29 20:28:01Z ngie $ */
 
 /*-
@@ -145,8 +145,11 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 			return strdup(serv_uaddr);
 		}
 	} else {
-		clnt_sa = (struct sockaddr *)
-		    malloc(sizeof (struct sockaddr_storage));
+		clnt_sa = malloc(sizeof(*clnt_sa));
+		if (clnt_sa == NULL) {
+			free(serv_nbp);
+			return NULL;
+		}
 		memcpy(clnt_sa, clnt, clnt->sa_len);
 	}
 
@@ -313,7 +316,7 @@ network_init()
 			fprintf(stderr, "can't get local ip4 address: %s\n",
 			    gai_strerror(ecode));
 	} else {
-		local_in4 = (struct sockaddr_in *)malloc(sizeof *local_in4);
+		local_in4 = malloc(sizeof(*local_in4));
 		if (local_in4 == NULL) {
 			if (debugging)
 				fprintf(stderr, "can't alloc local ip4 addr\n");
@@ -328,7 +331,7 @@ network_init()
 			fprintf(stderr, "can't get local ip6 address: %s\n",
 			    gai_strerror(ecode));
 	} else {
-		local_in6 = (struct sockaddr_in6 *)malloc(sizeof *local_in6);
+		local_in6 = malloc(sizeof(*local_in6));
 		if (local_in6 == NULL) {
 			if (debugging)
 				fprintf(stderr, "can't alloc local ip6 addr\n");

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/05/21 15:28:40 riastradh Exp $
+#	$NetBSD: Makefile,v 1.20.8.1 2019/01/18 08:49:08 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ PROG=	Xnest
 SRCS=		Args.c Color.c Cursor.c Display.c Events.c Font.c \
 		GC.c GCOps.c Handlers.c Init.c Keyboard.c \
 		Pixmap.c Pointer.c Screen.c Visual.c Window.c \
-		dpmsstubs.c stubs.c miinitext.c \
+		stubs.c miinitext.c \
 		fbcmap_mi.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \
@@ -59,11 +59,11 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.dbe} \
 	${LDADD.record} \
 	${LDADD.randr} \
-	${LDADD.render} \
 	${LDADD.damageext} \
 	${LDADD.miext/damage} \
 	${LDADD.miext/shadow} \
 	${LDADD.miext/sync} \
+	${LDADD.render} \
 	${LDADD.Xi} \
 	${LDADD.xkb} \
 	${LDADD.xkbstubs} \
@@ -71,7 +71,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.os} \
 	${LDADD.glx} \
 	${LDADD.present} \
-	-lXfont -lXext -lfontenc \
+	-lXfont2 -lXext -lfontenc \
 	-lpixman-1 -lX11 -lXau \
 	-lXdmcp -lfreetype -lm
 

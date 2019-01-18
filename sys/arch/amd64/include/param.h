@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24.2.3 2018/12/26 14:01:31 pgoyette Exp $	*/
+/*	$NetBSD: param.h,v 1.24.2.4 2019/01/18 08:50:13 pgoyette Exp $	*/
 
 #ifdef __x86_64__
 
@@ -51,13 +51,6 @@
 
 #define KERNBASE_HI	0xffffffff
 #define KERNBASE_LO	0x80000000
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-#ifndef	MAXPHYS
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-#endif
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */

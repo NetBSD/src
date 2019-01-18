@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.2.2.2 2018/09/06 06:55:08 pgoyette Exp $	*/
+/*	$NetBSD: thread.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,17 @@
 
 #if defined(HAVE_SCHED_H)
 #include <sched.h>
+#endif
+
+#if defined(HAVE_CPUSET_H)
+#include <sys/param.h>
+#include <sys/cpuset.h>
+#endif
+
+#if defined(HAVE_SYS_PROCSET_H)
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
 #endif
 
 #include <isc/thread.h>
@@ -53,12 +64,6 @@ isc_thread_create(isc_threadfunc_t func, isc_threadarg_t arg,
 	}
 #endif
 
-#if defined(PTHREAD_SCOPE_SYSTEM) && defined(NEED_PTHREAD_SCOPE_SYSTEM)
-	ret = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-	if (ret != 0)
-		return (ISC_R_UNEXPECTED);
-#endif
-
 	ret = pthread_create(thread, &attr, func, arg);
 	if (ret != 0)
 		return (ISC_R_UNEXPECTED);
@@ -68,23 +73,27 @@ isc_thread_create(isc_threadfunc_t func, isc_threadarg_t arg,
 	return (ISC_R_SUCCESS);
 }
 
+#ifdef __NetBSD__
+#define pthread_setconcurrency(a)	(void) a/* nothing */
+#endif
+
 void
 isc_thread_setconcurrency(unsigned int level) {
-#if defined(CALL_PTHREAD_SETCONCURRENCY)
 	(void)pthread_setconcurrency(level);
-#else
-	UNUSED(level);
-#endif
 }
 
 void
 isc_thread_setname(isc_thread_t thread, const char *name) {
-#if defined(HAVE_PTHREAD_SETNAME_NP) && defined(_GNU_SOURCE)
+#if defined(HAVE_PTHREAD_SETNAME_NP) && !defined(__APPLE__)
 	/*
 	 * macOS has pthread_setname_np but only works on the
 	 * current thread so it's not used here
 	*/
+#if defined(__NetBSD__)
+	(void)pthread_setname_np(thread, name, NULL);
+#else
 	(void)pthread_setname_np(thread, name);
+#endif
 #elif defined(HAVE_PTHREAD_SET_NAME_NP)
 	(void)pthread_set_name_np(thread, name);
 #else
@@ -102,4 +111,49 @@ isc_thread_yield(void) {
 #elif defined( HAVE_PTHREAD_YIELD_NP)
 	pthread_yield_np();
 #endif
+}
+
+isc_result_t
+isc_thread_setaffinity(int cpu) {
+#if defined(HAVE_CPUSET_SETAFFINITY)
+	cpuset_t cpuset;
+	CPU_ZERO(&cpuset);
+	CPU_SET(cpu, &cpuset);
+	if (cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1,
+			       sizeof(cpuset), &cpuset) != 0)
+	{
+		return (ISC_R_FAILURE);
+	}
+#elif defined(HAVE_PTHREAD_SETAFFINITY_NP)
+#if defined(__NetBSD__)
+	cpuset_t *cset;
+	cset = cpuset_create();
+	if (cset == NULL)
+		return (ISC_R_FAILURE);
+	cpuset_set(cpu, cset);
+	if (pthread_setaffinity_np(pthread_self(),
+		cpuset_size(cset), cset) != 0)
+	{
+		cpuset_destroy(cset);
+		return (ISC_R_FAILURE);
+	}
+	cpuset_destroy(cset);
+#else /* linux? */
+	cpu_set_t set;
+	CPU_ZERO(&set);
+	CPU_SET(cpu, &set);
+	if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t),
+				   &set) != 0)
+	{
+		return (ISC_R_FAILURE);
+	}
+#endif /* __NetBSD__ */
+#elif defined(HAVE_PROCESSOR_BIND)
+	if (processor_bind(P_LWPID, P_MYID, cpu, NULL) != 0) {
+		return (ISC_R_FAILURE);
+	}
+#else
+	UNUSED(cpu);
+#endif
+	return (ISC_R_SUCCESS);
 }

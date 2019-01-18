@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.h,v 1.4.14.2 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: dbregs.h,v 1.4.14.3 2019/01/18 08:50:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #define X86_DR6_DEBUG_REGISTER_ACCESS_DETECTED		__BIT(13)
 #define X86_DR6_SINGLE_STEP				__BIT(14)
 #define X86_DR6_TASK_SWITCH				__BIT(15)
+#define X86_DR6_MBZ					__BITS(32, 63)
 
 /*
  * CPU Debug Control Register (DR7)
@@ -67,7 +68,6 @@
 #define X86_DR7_GLOBAL_EXACT_BREAKPOINT		__BIT(9)
 #define X86_DR7_RESTRICTED_TRANSACTIONAL_MEMORY	__BIT(11)
 #define X86_DR7_GENERAL_DETECT_ENABLE		__BIT(13)
-
 #define X86_DR7_DR0_CONDITION_MASK		__BITS(16, 17)
 #define X86_DR7_DR0_LENGTH_MASK			__BITS(18, 19)
 #define X86_DR7_DR1_CONDITION_MASK		__BITS(20, 21)
@@ -76,6 +76,7 @@
 #define X86_DR7_DR2_LENGTH_MASK			__BITS(26, 27)
 #define X86_DR7_DR3_CONDITION_MASK		__BITS(28, 29)
 #define X86_DR7_DR3_LENGTH_MASK			__BITS(30, 31)
+#define X86_DR7_MBZ				__BITS(32, 63)
 
 /*
  * X86_DR7_CONDITION_IO_READWRITE is currently unused. It requires DE

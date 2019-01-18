@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-tokens.c,v 1.2.2.2 2018/09/06 06:53:57 pgoyette Exp $	*/
+/*	$NetBSD: pkcs11-tokens.c,v 1.2.2.3 2019/01/18 08:49:12 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,7 +48,7 @@ main(int argc, char *argv[]) {
 			lib_name = isc_commandline_argument;
 			break;
 		case 'v':
-			pk11_verbose_init = ISC_TRUE;
+			pk11_verbose_init = true;
 			break;
 		case ':':
 			fprintf(stderr, "Option -%c requires an operand\n",
@@ -80,8 +80,8 @@ main(int argc, char *argv[]) {
 	if (lib_name != NULL)
 		pk11_set_lib_name(lib_name);
 
-	result = pk11_get_session(&pctx, OP_ANY, ISC_TRUE, ISC_FALSE,
-				  ISC_FALSE, NULL, 0);
+	result = pk11_get_session(&pctx, OP_ANY, true, false,
+				  false, NULL, 0);
 	if (result == PK11_R_NORANDOMSERVICE ||
 	    result == PK11_R_NODIGESTSERVICE ||
 	    result == PK11_R_NOAESSERVICE) {

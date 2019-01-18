@@ -6205,6 +6205,8 @@ zfs_ctldev_init(dev_t *devp)
 
 #ifdef __FreeBSD__
 	devfs_set_cdevpriv((void *)(uintptr_t)minor, zfsdev_close);
+#else
+	*devp = makedev(major(*devp), minor);
 #endif
 
 	zs = ddi_get_soft_state(zfsdev_state, minor);
@@ -6973,11 +6975,52 @@ MODULE_DEPEND(zfsctrl, acl_nfs4, 1, 1, 1);
 
 MODULE(MODULE_CLASS_DRIVER, zfs, "solaris");
 
+static const struct fileops zfs_fileops;
+
+static int
+nb_zfsdev_fioctl(struct file *fp,  u_long cmd, void *argp)
+{
+	dev_t dev = (dev_t)(uintptr_t)fp->f_data;
+	int rval;
+
+	return zfsdev_ioctl(dev, cmd, (intptr_t)argp, fp->f_flag,
+	    kauth_cred_get(), &rval);
+}
+
+static int
+nb_zfsdev_fclose(struct file *fp)
+{
+	dev_t dev = (dev_t)(uintptr_t)fp->f_data;
+	int error;
+
+	return zfsdev_close(dev, fp->f_flag, OTYPCHR, fp->f_cred);
+}
+
 static int
 nb_zfsdev_copen(dev_t dev, int flag, int mode, lwp_t *l)
 {
+	const bool must_clone = (getminor(dev) == 0 && (flag & FEXCL) != 0);
+	struct file *fp;
+	int error, fd;
 
-	return zfsdev_open(&dev, flag, OTYPCHR, kauth_cred_get());
+	if (must_clone) {
+		error = fd_allocfile(&fp, &fd);
+		if (error)
+			return error;
+	}
+
+	error = zfsdev_open(&dev, flag, OTYPCHR, kauth_cred_get());
+
+	if (must_clone) {
+		if (error) {
+			fd_abort(curproc, fp, fd);
+			return error;
+		}
+		return fd_clone(fp, fd, flag, &zfs_fileops,
+		    (void *)(uintptr_t)dev);
+	}
+
+	return error;
 }
 
 static int
@@ -7030,6 +7073,19 @@ nb_zvol_strategy(struct buf *bp)
 
 	(void) zvol_strategy(bp);
 }
+
+static const struct fileops zfs_fileops = {
+	.fo_name = "zfs",
+	.fo_read = fbadop_read,
+	.fo_write = fbadop_write,
+	.fo_ioctl = nb_zfsdev_fioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = fnullop_poll,
+	.fo_stat = fbadop_stat,
+	.fo_close = nb_zfsdev_fclose,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_restart = fnullop_restart,
+};
 
 const struct bdevsw zfs_bdevsw = {
 	.d_open = nb_zfsdev_bopen,
@@ -7120,7 +7176,6 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 	uint64_t availrmem;
 
 	extern struct vfsops zfs_vfsops;
-	extern uint_t zfs_loadvnode_key;
 	extern uint_t zfs_putpage_key;
 
 	switch (cmd) {
@@ -7144,7 +7199,6 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		tsd_create(&zfs_fsyncer_key, NULL);
 		tsd_create(&rrw_tsd_key, rrw_tsd_destroy);
 		tsd_create(&zfs_allow_log_key, zfs_allow_log_destroy);
-		tsd_create(&zfs_loadvnode_key, zfs_loadvnode_destroy);
 		tsd_create(&zfs_putpage_key, NULL);
 
 		spa_init(FREAD | FWRITE);
@@ -7179,7 +7233,6 @@ attacherr:
 		spa_fini();
 
 		tsd_destroy(&zfs_putpage_key);
-		tsd_destroy(&zfs_loadvnode_key);
 		tsd_destroy(&zfs_fsyncer_key);
 		tsd_destroy(&rrw_tsd_key);
 		tsd_destroy(&zfs_allow_log_key);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddns-confgen.c,v 1.2.2.2 2018/09/06 06:53:54 pgoyette Exp $	*/
+/*	$NetBSD: ddns-confgen.c,v 1.2.2.3 2019/01/18 08:49:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,16 +21,15 @@
 
 #include <config.h>
 
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 #include <isc/assertions.h>
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/file.h>
-#include <isc/keyboard.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/print.h>
@@ -39,7 +38,7 @@
 #include <isc/time.h>
 #include <isc/util.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
@@ -59,7 +58,7 @@
 static char program[256];
 const char *progname;
 static enum { progmode_keygen, progmode_confgen} progmode;
-isc_boolean_t verbose = ISC_FALSE; /* needed by util.c but not used here */
+bool verbose = false; /* needed by util.c but not used here */
 
 ISC_PLATFORM_NORETURN_PRE static void
 usage(int status) ISC_PLATFORM_NORETURN_POST;
@@ -69,10 +68,9 @@ usage(int status) {
 	if (progmode == progmode_confgen) {
 		fprintf(stderr, "\
 Usage:\n\
- %s [-a alg] [-k keyname] [-r randomfile] [-q] [-s name | -z zone]\n\
+ %s [-a alg] [-k keyname] [-q] [-s name | -z zone]\n\
   -a alg:        algorithm (default hmac-sha256)\n\
   -k keyname:    name of the key as it will be used in named.conf\n\
-  -r randomfile: source of random data (use \"keyboard\" for key timing)\n\
   -s name:       domain name to be updated using the created key\n\
   -z zone:       name of the zone as it will be used in named.conf\n\
   -q:            quiet mode: print the key, with no explanatory text\n",
@@ -80,9 +78,8 @@ Usage:\n\
 	} else {
 		fprintf(stderr, "\
 Usage:\n\
- %s [-a alg] [-r randomfile] [keyname]\n\
-  -a alg:        algorithm (default hmac-sha256)\n\
-  -r randomfile: source of random data (use \"keyboard\" for key timing)\n",
+ %s [-a alg] [keyname]\n\
+  -a alg:        algorithm (default hmac-sha256)\n\n",
 			 progname);
 	}
 
@@ -92,12 +89,11 @@ Usage:\n\
 int
 main(int argc, char **argv) {
 	isc_result_t result = ISC_R_SUCCESS;
-	isc_boolean_t show_final_mem = ISC_FALSE;
-	isc_boolean_t quiet = ISC_FALSE;
+	bool show_final_mem = false;
+	bool quiet = false;
 	isc_buffer_t key_txtbuffer;
 	char key_txtsecret[256];
 	isc_mem_t *mctx = NULL;
-	const char *randomfile = NULL;
 	const char *keyname = NULL;
 	const char *zone = NULL;
 	const char *self_domain = NULL;
@@ -108,7 +104,7 @@ main(int argc, char **argv) {
 	int len = 0;
 	int ch;
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
@@ -130,13 +126,15 @@ main(int argc, char **argv) {
 
 	if (PROGCMP("tsig-keygen")) {
 		progmode = progmode_keygen;
-		quiet = ISC_TRUE;
-	} else if (PROGCMP("ddns-confgen"))
+		quiet = true;
+	} else if (PROGCMP("ddns-confgen")) {
 		progmode = progmode_confgen;
-	else
+	} else {
 		INSIST(0);
+		ISC_UNREACHABLE();
+	}
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	while ((ch = isc_commandline_parse(argc, argv,
 					   "a:hk:Mmr:qs:y:z:")) != -1) {
@@ -161,16 +159,16 @@ main(int argc, char **argv) {
 			isc_mem_debugging = ISC_MEM_DEBUGTRACE;
 			break;
 		case 'm':
-			show_final_mem = ISC_TRUE;
+			show_final_mem = true;
 			break;
 		case 'q':
 			if (progmode == progmode_confgen)
-				quiet = ISC_TRUE;
+				quiet = true;
 			else
 				usage(1);
 			break;
 		case 'r':
-			randomfile = isc_commandline_argument;
+			fatal("The -r option has been deprecated.");
 			break;
 		case 's':
 			if (progmode == progmode_confgen)
@@ -237,7 +235,7 @@ main(int argc, char **argv) {
 
 	isc_buffer_init(&key_txtbuffer, &key_txtsecret, sizeof(key_txtsecret));
 
-	generate_key(mctx, randomfile, alg, keysize, &key_txtbuffer);
+	generate_key(mctx, alg, keysize, &key_txtbuffer);
 
 
 	if (!quiet)

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.syscall,v 1.1.20.1 2018/12/26 14:01:46 pgoyette Exp $
+#	$NetBSD: Makefile.syscall,v 1.1.20.2 2019/01/18 08:50:25 pgoyette Exp $
 
-SUBDIR	=	aoutm68k freebsd ibcs2 linux linux32 netbsd32
+SUBDIR	=	aoutm68k freebsd linux linux32 netbsd32
 SUBDIR +=	osf1 sunos sunos32 ultrix
 
 .include <bsd.subdir.mk>

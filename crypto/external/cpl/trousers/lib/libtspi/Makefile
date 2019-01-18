@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2018/02/04 03:19:52 christos Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2019/01/18 08:48:31 pgoyette Exp $
 .include "../Makefile.inc"
 
 CPPFLAGS+=-DAPPID=\"TSPI\" -DVAR_PREFIX=\"/var\" -DETC_PREFIX=\"/etc\"
@@ -108,6 +108,7 @@ tsp_random.c \
 tsp_seal.c \
 tsp_selftest.c \
 tsp_sign.c \
+tsp_tcsi_param.c \
 tsp_tick.c \
 tspi_admin.c \
 tspi_aik.c \

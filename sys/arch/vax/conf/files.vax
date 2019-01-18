@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.123.4.1 2018/05/02 07:20:05 pgoyette Exp $
+#	$NetBSD: files.vax,v 1.123.4.2 2019/01/18 08:50:24 pgoyette Exp $
 #
 # new style config file for vax architecture
 #
@@ -388,12 +388,8 @@ file	arch/vax/vax/multicpu.c		multiprocessor
 file	arch/vax/vax/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/vax/vax/compat_13_machdep.c 	compat_13 | compat_ultrix |
-						compat_ibcs2
+file	arch/vax/vax/compat_13_machdep.c 	compat_13 | compat_ultrix
 file	arch/vax/vax/compat_16_machdep.c	compat_16 | compat_ultrix
-
-include "compat/ibcs2/files.ibcs2"
-file	arch/vax/vax/ibcs2_machdep.c	compat_ibcs2
 
 include "compat/ultrix/files.ultrix"
 

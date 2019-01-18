@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.26 2015/08/24 14:04:25 uebayasi Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.26.16.1 2019/01/18 08:50:23 pgoyette Exp $
 
 CPPFLAGS+=		-D${MACHINE}
 CFLAGS+=		-fno-unwind-tables
@@ -22,8 +22,14 @@ ldscript: \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 
+.if ${HAVE_BINUTILS} == 227
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout"; \
 	${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout
+.else
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo "${ARM_ELF2AOUT} $@ $@.aout"; \
+	${ARM_ELF2AOUT} $@ $@.aout
+.endif
 
 KERNIMAGES=	netbsd netbsd.aout

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.372.8.2 2018/07/28 04:37:25 pgoyette Exp $
+#	$NetBSD: bsd.lib.mk,v 1.372.8.3 2019/01/18 08:50:12 pgoyette Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -55,6 +55,11 @@ realinstall:	checkver libinstall
 .if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
+.endif
+
+PGFLAGS+=	-pg
+.if ${MKPIC} != "no"
+PGFLAGS+=	-fPIC
 .endif
 
 ##### Libraries that this may depend upon.
@@ -230,7 +235,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .c.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
@@ -258,7 +263,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .cc.po .cpp.po .cxx.po .C.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -286,7 +291,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .f.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${PROFFLAGS} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${PROFFLAGS} ${PGFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
@@ -321,7 +326,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .m.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${PROFFLAGS} -pg ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${PROFFLAGS} ${PGFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif

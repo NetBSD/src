@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_driver.c,v 1.2.2.2 2018/09/06 06:54:49 pgoyette Exp $	*/
+/*	$NetBSD: dlz_ldap_driver.c,v 1.2.2.3 2019/01/18 08:49:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -46,9 +46,10 @@
 #ifdef DLZ_LDAP
 
 #include <config.h>
+#include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <dns/log.h>
 #include <dns/sdlz.h>
@@ -95,11 +96,7 @@ static dns_sdlzimplementation_t *dlz_ldap = NULL;
  */
 
 typedef struct {
-#ifdef ISC_PLATFORM_USETHREADS
 	db_list_t    *db; /*%< handle to a list of DB */
-#else
-	dbinstance_t *db; /*%< handle to db */
-#endif
 	int method;	/*%< security authentication method */
 	char *user;	/*%< who is authenticating */
 	char *cred;	/*%< password for simple authentication method */
@@ -245,9 +242,6 @@ dlz_ldap_connect(ldap_instance_t *dbi, dbinstance_t *dbc) {
 	return (result);
 }
 
-#ifdef ISC_PLATFORM_USETHREADS
-
-
 /*%
  * Properly cleans up a list of database instances.
  * This function is only used when the driver is compiled for
@@ -317,11 +311,10 @@ ldap_find_avail_conn(db_list_t *dblist) {
 		      count);
 	return (NULL);
 }
-#endif /* ISC_PLATFORM_USETHREADS */
 
 static isc_result_t
 ldap_process_results(LDAP *dbc, LDAPMessage *msg, char ** attrs,
-		     void *ptr, isc_boolean_t allnodes)
+		     void *ptr, bool allnodes)
 {
 	isc_result_t result = ISC_R_SUCCESS;
 	int i = 0;
@@ -570,21 +563,9 @@ ldap_get_results(const char *zone, const char *record,
 	int entries;
 
 	/* get db instance / connection */
-#ifdef ISC_PLATFORM_USETHREADS
-
 	/* find an available DBI from the list */
 	dbi = ldap_find_avail_conn((db_list_t *)
 				   ((ldap_instance_t *)dbdata)->db);
-
-#else /* ISC_PLATFORM_USETHREADS */
-
-	/*
-	 * only 1 DBI - no need to lock instance lock either
-	 * only 1 thread in the whole process, no possible contention.
-	 */
-	dbi =  (dbinstance_t *) ((ldap_instance_t *)dbdata)->db;
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
 	/* if DBI is null, can't do anything else */
 	if (dbi == NULL)
@@ -791,13 +772,13 @@ ldap_get_results(const char *zone, const char *record,
 	case ALLNODES:
 		result = ldap_process_results((LDAP *) dbi->dbconn, ldap_msg,
 					      ldap_url->lud_attrs,
-					      ptr, isc_boolean_true);
+					      ptr, true);
 		break;
 	case AUTHORITY:
 	case LOOKUP:
 		result = ldap_process_results((LDAP *) dbi->dbconn, ldap_msg,
 					      ldap_url->lud_attrs,
-					      ptr, isc_boolean_false);
+					      ptr, false);
 		break;
 	case ALLOWXFR:
 		entries = ldap_count_entries((LDAP *) dbi->dbconn, ldap_msg);
@@ -846,12 +827,8 @@ ldap_get_results(const char *zone, const char *record,
 	if (dbi->client != NULL)
 		isc_mem_free(named_g_mctx, dbi->client);
 
-#ifdef ISC_PLATFORM_USETHREADS
-
 	/* release the lock so another thread can use this dbi */
 	isc_mutex_unlock(&dbi->instance_lock);
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
         /* release query string */
 	if (querystring  != NULL)
@@ -940,30 +917,19 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 	dbinstance_t *dbi = NULL;
 	int protocol;
 	int method;
-
-#ifdef ISC_PLATFORM_USETHREADS
-	/* if multi-threaded, we need a few extra variables. */
 	int dbcount;
 	char *endp;
 /* db_list_t *dblist = NULL; */
 	int i;
 
-#endif /* ISC_PLATFORM_USETHREADS */
 
 	UNUSED(dlzname);
 	UNUSED(driverarg);
 
-#ifdef ISC_PLATFORM_USETHREADS
 	/* if debugging, let user know we are multithreaded. */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(1),
 		      "LDAP driver running multithreaded");
-#else /* ISC_PLATFORM_USETHREADS */
-	/* if debugging, let user know we are single threaded. */
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-		      DNS_LOGMODULE_DLZ, ISC_LOG_DEBUG(1),
-		      "LDAP driver running single threaded");
-#endif /* ISC_PLATFORM_USETHREADS */
 
 	if (argc < 9) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
@@ -1011,9 +977,6 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 		return (ISC_R_FAILURE);
 	}
 
-	/* multithreaded build can have multiple DB connections */
-#ifdef ISC_PLATFORM_USETHREADS
-
 	/* check how many db connections we should create */
 	dbcount = strtol(argv[1], &endp, 10);
 	if (*endp != '\0' || dbcount < 0) {
@@ -1023,7 +986,6 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 			      "must be positive.");
 		return (ISC_R_FAILURE);
 	}
-#endif
 
 	/* check that LDAP URL parameters make sense */
 	switch(argc) {
@@ -1079,7 +1041,6 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 		goto cleanup;
 	}
 
-#ifdef ISC_PLATFORM_USETHREADS
 	/* allocate memory for database connection list */
 	ldap_inst->db = isc_mem_get(named_g_mctx, sizeof(db_list_t));
 	if (ldap_inst->db == NULL) {
@@ -1095,8 +1056,6 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 	 * append each new DBI to the end of the list
 	 */
 	for (i = 0; i < dbcount; i++) {
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
 		/* how many queries were passed in from config file? */
 		switch(argc) {
@@ -1139,18 +1098,9 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 			goto cleanup;
 		}
 
-#ifdef ISC_PLATFORM_USETHREADS
-		/* when multithreaded, build a list of DBI's */
 		ISC_LINK_INIT(dbi, link);
 		ISC_LIST_APPEND(*(ldap_inst->db), dbi, link);
-#else
-		/*
-		 * when single threaded, hold onto the one connection
-		 * instance.
-		 */
-		ldap_inst->db = dbi;
 
-#endif
 		/* attempt to connect */
 		result = dlz_ldap_connect(ldap_inst, dbi);
 
@@ -1167,18 +1117,11 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 			 * allocate memory
 			 */
 		case ISC_R_NOMEMORY:
-#ifdef ISC_PLATFORM_USETHREADS
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 				      "LDAP driver could not allocate memory "
 				      "for connection number %u",
 				      i+1);
-#else
-			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-				      "LDAP driver could not allocate memory "
-				      "for connection");
-#endif
 			goto cleanup;
 			break;
 			/*
@@ -1195,18 +1138,11 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 			break;
 			/* failure means couldn't connect to ldap server */
 		case ISC_R_FAILURE:
-#ifdef ISC_PLATFORM_USETHREADS
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 				      "LDAP driver could not "
 				      "bind connection number %u to server.",
 				      i+1);
-#else
-			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-				      "LDAP driver could not "
-				      "bind connection to server.");
-#endif
 			goto cleanup;
 			break;
 			/*
@@ -1222,14 +1158,9 @@ dlz_ldap_create(const char *dlzname, unsigned int argc, char *argv[],
 			break;
 		} /* end switch(result) */
 
-
-#ifdef ISC_PLATFORM_USETHREADS
-
 		/* set DBI = null for next loop through. */
 		dbi = NULL;
 	}	/* end for loop */
-
-#endif /* ISC_PLATFORM_USETHREADS */
 
 
 	/* set dbdata to the ldap_instance we created. */
@@ -1249,19 +1180,9 @@ dlz_ldap_destroy(void *driverarg, void *dbdata) {
 	UNUSED(driverarg);
 
 	if (dbdata != NULL) {
-#ifdef ISC_PLATFORM_USETHREADS
 		/* cleanup the list of DBI's */
 		ldap_destroy_dblist((db_list_t *)
 				    ((ldap_instance_t *)dbdata)->db);
-
-#else /* ISC_PLATFORM_USETHREADS */
-		if (((ldap_instance_t *)dbdata)->db->dbconn != NULL)
-			ldap_unbind_s((LDAP *)
-				      ((ldap_instance_t *)dbdata)->db->dbconn);
-
-		/* destroy single DB instance */
-		destroy_sqldbinstance(((ldap_instance_t *)dbdata)->db);
-#endif /* ISC_PLATFORM_USETHREADS */
 
 		if (((ldap_instance_t *)dbdata)->hosts != NULL)
 			isc_mem_free(named_g_mctx,

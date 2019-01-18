@@ -26,6 +26,7 @@
 	<command>database</command> <replaceable>string</replaceable>;
 	<command>dialup</command> ( notify | notify-passive | passive | refresh | <replaceable>boolean</replaceable> );
 	<command>dlz</command> <replaceable>string</replaceable>;
+	<command>dnskey-sig-validity</command> <replaceable>integer</replaceable>;
 	<command>dnssec-dnskey-kskonly</command> <replaceable>boolean</replaceable>;
 	<command>dnssec-loadkeys-interval</command> <replaceable>integer</replaceable>;
 	<command>dnssec-update-mode</command> ( maintain | no-resign );

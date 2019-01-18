@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.c,v 1.2.2.2 2018/09/06 06:55:04 pgoyette Exp $	*/
+/*	$NetBSD: resconf.c,v 1.2.2.3 2019/01/18 08:49:56 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,6 +45,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -99,7 +100,7 @@ struct irs_resconf {
 
 	char	       		*domainname;
 	char 	       		*search[RESCONFMAXSEARCH];
-	isc_uint8_t		searchnxt; /*%< index for next free slot */
+	uint8_t		searchnxt; /*%< index for next free slot */
 
 	irs_resconf_searchlist_t searchlist;
 
@@ -108,12 +109,12 @@ struct irs_resconf {
 		/*% mask has a non-zero 'family' if set */
 		isc_netaddr_t	mask;
 	} sortlist[RESCONFMAXSORTLIST];
-	isc_uint8_t		sortlistnxt;
+	uint8_t		sortlistnxt;
 
 	/*%< non-zero if 'options debug' set */
-	isc_uint8_t		resdebug;
+	uint8_t		resdebug;
 	/*%< set to n in 'options ndots:n' */
-	isc_uint8_t		ndots;
+	uint8_t		ndots;
 };
 
 static isc_result_t
@@ -126,6 +127,10 @@ static isc_result_t
 resconf_parsesortlist(irs_resconf_t *conf,  FILE *fp);
 static isc_result_t
 resconf_parseoption(irs_resconf_t *ctx,  FILE *fp);
+
+#if HAVE_GET_WIN32_NAMESERVERS
+static isc_result_t get_win32_nameservers(irs_resconf_t *conf);
+#endif
 
 /*!
  * Eat characters from FP until EOL or EOF. Returns EOF or '\n'
@@ -253,7 +258,7 @@ create_addr(const char *buffer, isc_netaddr_t *addr, int convert_zero) {
 	struct in_addr v4;
 	struct in6_addr v6;
 
-	if (inet_aton(buffer, &v4) == 1) {
+	if (inet_pton(AF_INET, buffer, &v4) == 1) {
 		if (convert_zero) {
 			unsigned char zeroaddress[] = {0, 0, 0, 0};
 			unsigned char loopaddress[] = {127, 0, 0, 1};
@@ -455,7 +460,7 @@ resconf_parseoption(irs_resconf_t *conf,  FILE *fp) {
 				return (ISC_R_UNEXPECTEDTOKEN);
 			if (ndots < 0 || ndots > 0xff) /* Out of range. */
 				return (ISC_R_RANGE);
-			conf->ndots = (isc_uint8_t)ndots;
+			conf->ndots = (uint8_t)ndots;
 		}
 
 		if (delim == EOF || delim == '\n')
@@ -563,15 +568,6 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 		goto error;
 	}
 
-	/* If we don't find a nameserver fall back to localhost */
-	if (conf->numns == 0U) {
-		INSIST(ISC_LIST_EMPTY(conf->nameservers));
-
-		/* XXX: should we catch errors? */
-		(void)add_server(conf->mctx, "::1", &conf->nameservers);
-		(void)add_server(conf->mctx, "127.0.0.1", &conf->nameservers);
-	}
-
 	/*
 	 * Construct unified search list from domain or configured
 	 * search list
@@ -584,6 +580,22 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 			if (ret != ISC_R_SUCCESS)
 				break;
 		}
+	}
+
+#if HAVE_GET_WIN32_NAMESERVERS
+	ret = get_win32_nameservers(conf);
+	if (ret != ISC_R_SUCCESS) {
+		goto error;
+	}
+#endif
+
+	/* If we don't find a nameserver fall back to localhost */
+	if (conf->numns == 0U) {
+		INSIST(ISC_LIST_EMPTY(conf->nameservers));
+
+		/* XXX: should we catch errors? */
+		(void)add_server(conf->mctx, "::1", &conf->nameservers);
+		(void)add_server(conf->mctx, "127.0.0.1", &conf->nameservers);
 	}
 
  error:

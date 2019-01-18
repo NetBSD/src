@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.61 2016/11/04 05:41:01 macallan Exp $	*/
+/*	$NetBSD: pmap.h,v 1.61.14.1 2019/01/18 08:50:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -268,6 +268,13 @@ do {									\
 	(pg)->mdpage.mdpg_pvh.pv_pmap = NULL;				\
 	(pg)->mdpage.mdpg_pvh.pv_va = 0;				\
 } while (/*CONSTCOND*/0)
+
+#ifdef MULTIPROCESSOR
+#define pmap_ctx_cpu(PM, C)	((PM)->pm_ctx[(C)])
+#define pmap_ctx(PM)		pmap_ctx_cpu((PM), cpu_number())
+#else
+#define pmap_ctx(PM)		((PM)->pm_ctx[0])
+#endif
 
 #endif	/* _KERNEL */
 

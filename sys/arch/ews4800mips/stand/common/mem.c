@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: mem.c,v 1.5.86.1 2019/01/18 08:50:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-#include <machine/param.h>
+#include <sys/param.h>
 #include <machine/bfs.h>
 
 #include "local.h"

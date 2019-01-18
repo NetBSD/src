@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: txt_16.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
 
 
 typedef struct dns_rdata_txt_string {
-		isc_uint8_t    length;
+		uint8_t    length;
 		unsigned char   *data;
 } dns_rdata_txt_string_t;
 
@@ -25,9 +25,9 @@ typedef struct dns_rdata_txt {
 	dns_rdatacommon_t       common;
 	isc_mem_t               *mctx;
 	unsigned char           *txt;
-	isc_uint16_t            txt_len;
+	uint16_t            txt_len;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_txt_t;
 
 /*

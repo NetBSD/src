@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.1.26.1 2019/01/18 08:51:03 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,3 +51,8 @@ message dobootblks
 message set_kernel_1
 {Núcleo (GENERIC)}
 
+message set_kernel_2
+{Núcleo (GENERIC.MP)}
+
+message set_kernel_3
+{Núcleo (GENERIC_601)}

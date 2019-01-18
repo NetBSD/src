@@ -18,10 +18,14 @@ options {
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { fd92:7065:b8e:ffff::1; };
 	recursion no;
+	dnssec-validation yes;
 	notify yes;
+	minimal-responses no;
+};
+
+plugin query "../../../../plugins/lib/filter-aaaa.so" {
 	filter-aaaa-on-v6 yes;
 	filter-aaaa { fd92:7065:b8e:ffff::1; };
-	minimal-responses no;
 };
 
 key rndc_key {

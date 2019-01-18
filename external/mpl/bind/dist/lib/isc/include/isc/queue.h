@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.2.2.2 2018/09/06 06:55:06 pgoyette Exp $	*/
+/*	$NetBSD: queue.h,v 1.2.2.3 2019/01/18 08:49:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,8 +23,10 @@
 
 #ifndef ISC_QUEUE_H
 #define ISC_QUEUE_H 1
+
+#include <stdbool.h>
+
 #include <isc/assertions.h>
-#include <isc/boolean.h>
 #include <isc/mutex.h>
 
 #ifdef ISC_QUEUE_CHECKINIT
@@ -49,18 +51,18 @@
 
 #define ISC_QUEUE_INIT(queue, link) \
 	do { \
-		(void) isc_mutex_init(&(queue).taillock); \
-		(void) isc_mutex_init(&(queue).headlock); \
+		isc_mutex_init(&(queue).taillock); \
+		isc_mutex_init(&(queue).headlock); \
 		(queue).tail = (queue).head = NULL; \
 	} while (/*CONSTCOND*/0)
 
-#define ISC_QUEUE_EMPTY(queue) ISC_TF((queue).head == NULL)
+#define ISC_QUEUE_EMPTY(queue) ((queue).head == NULL)
 
 #define ISC_QUEUE_DESTROY(queue) \
 	do { \
 		ISC_QLINK_INSIST(ISC_QUEUE_EMPTY(queue)); \
-		(void) isc_mutex_destroy(&(queue).taillock); \
-		(void) isc_mutex_destroy(&(queue).headlock); \
+		isc_mutex_destroy(&(queue).taillock); \
+		isc_mutex_destroy(&(queue).headlock); \
 	} while (/*CONSTCOND*/0)
 
 /*
@@ -91,18 +93,18 @@
  */
 #define ISC_QUEUE_PUSH(queue, elt, link) \
 	do { \
-		isc_boolean_t headlocked = ISC_FALSE; \
+		bool headlocked = false; \
 		ISC_QLINK_INSIST(!ISC_QLINK_LINKED(elt, link)); \
 		if ((queue).head == NULL) { \
 			LOCK(&(queue).headlock); \
-			headlocked = ISC_TRUE; \
+			headlocked = true; \
 		} \
 		LOCK(&(queue).taillock); \
 		if ((queue).tail == NULL && !headlocked) { \
 			UNLOCK(&(queue).taillock); \
 			LOCK(&(queue).headlock); \
 			LOCK(&(queue).taillock); \
-			headlocked = ISC_TRUE; \
+			headlocked = true; \
 		} \
 		(elt)->link.prev = (queue).tail; \
 		(elt)->link.next = NULL; \

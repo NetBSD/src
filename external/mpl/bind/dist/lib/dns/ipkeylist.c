@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkeylist.c,v 1.2.2.2 2018/09/06 06:55:00 pgoyette Exp $	*/
+/*	$NetBSD: ipkeylist.c,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 #include <config.h>
 
+#include <inttypes.h>
 #include <string.h>
 
 #include <isc/mem.h>
@@ -34,7 +35,7 @@ dns_ipkeylist_init(dns_ipkeylist_t *ipkl) {
 
 void
 dns_ipkeylist_clear(isc_mem_t *mctx, dns_ipkeylist_t *ipkl) {
-	isc_uint32_t i;
+	uint32_t i;
 
 	REQUIRE(ipkl != NULL);
 
@@ -81,7 +82,7 @@ dns_ipkeylist_copy(isc_mem_t *mctx, const dns_ipkeylist_t *src,
 		   dns_ipkeylist_t *dst)
 {
 	isc_result_t result = ISC_R_SUCCESS;
-	isc_uint32_t i;
+	uint32_t i;
 
 	REQUIRE(dst != NULL);
 	/* dst might be preallocated, we don't care, but it must be empty */

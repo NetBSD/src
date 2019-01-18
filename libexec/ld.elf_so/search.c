@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.24 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: search.c,v 1.24.26.1 2019/01/18 08:50:11 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.24 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: search.c,v 1.24.26.1 2019/01/18 08:50:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -117,6 +117,7 @@ _rtld_search_library_path(const char *name, size_t namelen,
 Obj_Entry *
 _rtld_load_library(const char *name, const Obj_Entry *refobj, int flags)
 {
+	extern char *__progname;
 	char tmperror[512], *tmperrorp;
 	Search_Path *sp;
 	const char *pathname;
@@ -159,7 +160,8 @@ _rtld_load_library(const char *name, const Obj_Entry *refobj, int flags)
 		    sp->sp_path, sp->sp_pathlen, flags)) != NULL)
 			goto pathfound;
 
-	_rtld_error("Shared object \"%s\" not found", name);
+	_rtld_error("%s: Shared object \"%s\" not found",
+	    refobj ? refobj->path : __progname, name);
 	return NULL;
 
 pathfound:

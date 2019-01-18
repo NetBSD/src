@@ -106,6 +106,17 @@ OPENSSL_atomic_add:
 .type	OPENSSL_rdtsc,@function
 .align	4
 OPENSSL_rdtsc:
+	mfspr	0,287
+	srwi	0,0,0x10
+	cmplwi	0,0x1
+	bgt	.Loop_rdtsc
+.Loop_rdtsc_601:
+	mfrtcu	5
+	mfrtcl	3
+	mfrtcu	4
+	.long	0x7c042840
+	bne	.Loop_rdtsc_601
+	blr	
 .Loop_rdtsc:
 	mftbu	5
 	mftb	3

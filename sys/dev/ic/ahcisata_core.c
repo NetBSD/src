@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.60.2.4 2018/12/26 14:01:48 pgoyette Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.60.2.5 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.2.4 2018/12/26 14:01:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.2.5 2019/01/18 08:50:26 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -850,6 +850,8 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	case TIMEOUT:
 		aprint_error("%s port %d: setting WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
+		if (sigp)
+			*sigp = 0xffffffff;
 		error = EBUSY;
 		goto end;
 	default:
@@ -875,6 +877,8 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	case TIMEOUT:
 		aprint_error("%s port %d: clearing WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
+		if (sigp)
+			*sigp = 0xffffffff;
 		error = EBUSY;
 		goto end;
 	default:
@@ -896,6 +900,8 @@ skip_reset:
 	if (i == AHCI_RST_WAIT) {
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
 		    AHCINAME(sc), sig);
+		if (sigp)
+			*sigp = 0xffffffff;
 		goto end;
 	}
 	AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
@@ -994,6 +1000,7 @@ ahci_probe_drive(struct ata_channel *chp)
 		return;
 	}
 
+again:
 	/* bring interface up, accept FISs, power up and spin up device */
 	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
 	    AHCI_P_CMD_ICC_AC | AHCI_P_CMD_FRE |
@@ -1003,9 +1010,6 @@ ahci_probe_drive(struct ata_channel *chp)
 	    achp->ahcic_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
 		ata_delay(chp, 500, "ahcidv", AT_WAIT);
-
-		/* Initial value, used in case the soft reset fails */
-		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
 
 		if (sc->sc_ahci_cap & AHCI_CAP_SPM) {
 			error = ahci_do_reset_drive(chp, PMP_PORT_CTL, AT_WAIT,
@@ -1019,7 +1023,7 @@ ahci_probe_drive(struct ata_channel *chp)
 				PMP_PORT_CTL);
 
 				sc->sc_ahci_cap &= ~AHCI_CAP_SPM;
-				ahci_reset_channel(chp, AT_WAIT);
+				goto again;
 			}
 		} else {
 			ahci_do_reset_drive(chp, 0, AT_WAIT, &sig, c_slot);

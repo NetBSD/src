@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2.2.2 2018/09/06 06:55:12 pgoyette Exp $	*/
+/*	$NetBSD: log.c,v 1.2.2.3 2019/01/18 08:50:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,16 +45,14 @@ LIBNS_EXTERNAL_DATA isc_logcategory_t ns_categories[] = {
  * \#define to <ns/log.h>.
  */
 LIBNS_EXTERNAL_DATA isc_logmodule_t ns_modules[] = {
-	{ "ns/main",	 		0 },
 	{ "ns/client",	 		0 },
-	{ "ns/server",		 	0 },
 	{ "ns/query",		 	0 },
 	{ "ns/interfacemgr",	 	0 },
 	{ "ns/update",	 		0 },
 	{ "ns/xfer-in",	 		0 },
 	{ "ns/xfer-out", 		0 },
 	{ "ns/notify",	 		0 },
-	{ "ns/control",	 		0 },
+	{ "ns/hooks",	 		0 },
 	{ NULL, 			0 }
 };
 

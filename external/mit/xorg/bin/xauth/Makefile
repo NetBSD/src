@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/03/04 23:23:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.10.1 2019/01/18 08:49:03 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,10 @@ CPPFLAGS+=		-DRETSIGTYPE=void -DPACKAGE_VERSION=\"1.0.8\"
 CPPFLAGS+= 		-DHAVE_STRLCPY
 CPPFLAGS.gethost.c=	${X11FLAGS.CONNECTION}
 CPPFLAGS.parsedpy.c=	${X11FLAGS.CONNECTION}
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=      	-DIPv6
+.endif
 
 CWARNFLAGS.clang=	-Wno-empty-body
 

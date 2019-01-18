@@ -248,6 +248,15 @@ if [ -x ${RESOLVE} ] ; then
 fi
 
 n=`expr $n + 1`
+echo_i "check that the resolver accepts a referral response with a non-empty ANSWER section ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 foo.glue-in-answer.example.org. A > dig.ns1.out.${n} || ret=1
+grep "status: NOERROR" dig.ns1.out.${n} > /dev/null || ret=1
+grep "foo.glue-in-answer.example.org.*192.0.2.1" dig.ns1.out.${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "RT21594 regression test check setup ($n)"
 ret=0
 # Check that "aa" is not being set by the authoritative server.
@@ -776,6 +785,14 @@ $DIG $DIGOPTS @10.53.0.5 not-truncated.no-questions. a > dig.ns5.out.${n} || ret
 grep "status: NOERROR" dig.ns5.out.${n} > /dev/null && ret=1
 grep "ANSWER: 1," dig.ns5.out.${n} > /dev/null && ret=1
 grep "1.2.3.4" dig.ns5.out.${n} > /dev/null && ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking SERVFAIL is returned when all authoritative servers return FORMERR ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.5 ns.formerr-to-all. a > dig.ns5.out.${n} || ret=1
+grep "status: SERVFAIL" dig.ns5.out.${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

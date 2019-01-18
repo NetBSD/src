@@ -36,7 +36,7 @@ Tspi_TPM_DirWrite(TSS_HTPM hTPM,		/* in */
 	TCPA_DIRVALUE dirValue = { { 0 } };
 	Trspi_HashCtx hashCtx;
 
-	if (rgbDirData == NULL && ulDirDataLength != 0)
+	if (rgbDirData == NULL || ulDirDataLength == 0)
 		return TSPERR(TSS_E_BAD_PARAMETER);
 
 	if (ulDirDataLength > (UINT32)sizeof(TCPA_DIRVALUE))

@@ -203,9 +203,6 @@ UnloadBlob_BOOL(UINT64 *offset, TSS_BOOL *dataOut, BYTE * blob)
 void
 LoadBlob(UINT64 *offset, UINT32 size, BYTE *container, BYTE *object)
 {
-	if (size == 0)
-		return;
-
 	if (container)
 		memcpy(&container[*offset], object, size);
 	(*offset) += (UINT64) size;
@@ -214,9 +211,6 @@ LoadBlob(UINT64 *offset, UINT32 size, BYTE *container, BYTE *object)
 void
 UnloadBlob(UINT64 *offset, UINT32 size, BYTE *container, BYTE *object)
 {
-	if (size == 0)
-		return;
-
 	if (object)
 		memcpy(object, &container[*offset], size);
 	(*offset) += (UINT64) size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: null_10.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -152,7 +152,7 @@ digest_null(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_null(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_null);
@@ -162,10 +162,10 @@ checkowner_null(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_null(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_null);
@@ -174,7 +174,7 @@ checknames_null(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

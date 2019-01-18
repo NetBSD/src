@@ -1,4 +1,4 @@
-/*	$NetBSD: time_test.c,v 1.2.2.2 2018/09/06 06:55:03 pgoyette Exp $	*/
+/*	$NetBSD: time_test.c,v 1.2.2.3 2019/01/18 08:49:56 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,13 +12,23 @@
  */
 
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <inttypes.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
+
+#include <isc/util.h>
 
 #include <dns/time.h>
 
@@ -26,189 +36,187 @@
 
 #define TEST_ORIGIN	"test"
 
-/*
- * Individual unit tests
- */
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
 
 /* value = 0xfffffffff <-> 19691231235959 */
-ATF_TC(epoch_minus_one);
-ATF_TC_HEAD(epoch_minus_one, tc) {
-  atf_tc_set_md_var(tc, "descr", "0xffffffff <-> 19691231235959");
-}
-ATF_TC_BODY(epoch_minus_one, tc) {
+static void
+epoch_minus_one_test(void **state) {
 	const char *test_text = "19691231235959";
-	const isc_uint32_t test_time = 0xffffffff;
+	const uint32_t test_time = 0xffffffff;
 	isc_result_t result;
 	isc_buffer_t target;
-	isc_uint32_t when;
+	uint32_t when;
 	char buf[128];
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
 	result = dns_time32_totext(test_time, &target);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_STREQ(buf, test_text);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, test_text);
 	result = dns_time32_fromtext(test_text, &when);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(when, test_time);
-	dns_test_end();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(when, test_time);
 }
 
 /* value = 0x000000000 <-> 19700101000000*/
-ATF_TC(epoch);
-ATF_TC_HEAD(epoch, tc) {
-  atf_tc_set_md_var(tc, "descr", "0x00000000 <-> 19700101000000");
-}
-ATF_TC_BODY(epoch, tc) {
+static void
+epoch_test(void **state) {
 	const char *test_text = "19700101000000";
-	const isc_uint32_t test_time = 0x00000000;
+	const uint32_t test_time = 0x00000000;
 	isc_result_t result;
 	isc_buffer_t target;
-	isc_uint32_t when;
+	uint32_t when;
 	char buf[128];
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
 	result = dns_time32_totext(test_time, &target);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_STREQ(buf, test_text);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, test_text);
 	result = dns_time32_fromtext(test_text, &when);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(when, test_time);
-	dns_test_end();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(when, test_time);
 }
 
 /* value = 0x7fffffff <-> 20380119031407 */
-ATF_TC(half_maxint);
-ATF_TC_HEAD(half_maxint, tc) {
-  atf_tc_set_md_var(tc, "descr", "0x7fffffff <-> 20380119031407");
-}
-ATF_TC_BODY(half_maxint, tc) {
+static void
+half_maxint_test(void **state) {
 	const char *test_text = "20380119031407";
-	const isc_uint32_t test_time = 0x7fffffff;
+	const uint32_t test_time = 0x7fffffff;
 	isc_result_t result;
 	isc_buffer_t target;
-	isc_uint32_t when;
+	uint32_t when;
 	char buf[128];
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
 	result = dns_time32_totext(test_time, &target);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_STREQ(buf, test_text);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, test_text);
 	result = dns_time32_fromtext(test_text, &when);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(when, test_time);
-	dns_test_end();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(when, test_time);
 }
 
 /* value = 0x80000000 <-> 20380119031408 */
-ATF_TC(half_plus_one);
-ATF_TC_HEAD(half_plus_one, tc) {
-  atf_tc_set_md_var(tc, "descr", "0x80000000 <-> 20380119031408");
-}
-ATF_TC_BODY(half_plus_one, tc) {
+static void
+half_plus_one_test(void **state) {
 	const char *test_text = "20380119031408";
-	const isc_uint32_t test_time = 0x80000000;
+	const uint32_t test_time = 0x80000000;
 	isc_result_t result;
 	isc_buffer_t target;
-	isc_uint32_t when;
+	uint32_t when;
 	char buf[128];
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
 	result = dns_time32_totext(test_time, &target);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_STREQ(buf, test_text);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, test_text);
 	result = dns_time32_fromtext(test_text, &when);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(when, test_time);
-	dns_test_end();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(when, test_time);
 }
 
 /* value = 0xef68f5d0 <-> 19610307130000 */
-ATF_TC(fifty_before);
-ATF_TC_HEAD(fifty_before, tc) {
-  atf_tc_set_md_var(tc, "descr", "0xef68f5d0 <-> 19610307130000");
-}
-ATF_TC_BODY(fifty_before, tc) {
+static void
+fifty_before_test(void **state) {
 	isc_result_t result;
 	const char *test_text = "19610307130000";
-	const isc_uint32_t test_time = 0xef68f5d0;
+	const uint32_t test_time = 0xef68f5d0;
 	isc_buffer_t target;
-	isc_uint32_t when;
+	uint32_t when;
 	char buf[128];
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
 	result = dns_time32_totext(test_time, &target);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_STREQ(buf, test_text);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, test_text);
 	result = dns_time32_fromtext(test_text, &when);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(when, test_time);
-	dns_test_end();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(when, test_time);
 }
 
 /* value = 0x4d74d6d0 <-> 20110307130000 */
-ATF_TC(some_ago);
-ATF_TC_HEAD(some_ago, tc) {
-  atf_tc_set_md_var(tc, "descr", "0x4d74d6d0 <-> 20110307130000");
-}
-ATF_TC_BODY(some_ago, tc) {
+static void
+some_ago_test(void **state) {
 	const char *test_text = "20110307130000";
-	const isc_uint32_t test_time = 0x4d74d6d0;
+	const uint32_t test_time = 0x4d74d6d0;
 	isc_result_t result;
 	isc_buffer_t target;
-	isc_uint32_t when;
+	uint32_t when;
 	char buf[128];
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = dns_test_begin(NULL, ISC_FALSE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 	memset(buf, 0, sizeof(buf));
 	isc_buffer_init(&target, buf, sizeof(buf));
 	result = dns_time32_totext(test_time, &target);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_STREQ(buf, test_text);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, test_text);
 	result = dns_time32_fromtext(test_text, &when);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(when, test_time);
-	dns_test_end();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(when, test_time);
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, epoch_minus_one);
-	ATF_TP_ADD_TC(tp, epoch);
-	ATF_TP_ADD_TC(tp, half_maxint);
-	ATF_TP_ADD_TC(tp, half_plus_one);
-	ATF_TP_ADD_TC(tp, fifty_before);
-	ATF_TP_ADD_TC(tp, some_ago);
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(epoch_minus_one_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(epoch_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(half_maxint_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(half_plus_one_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(fifty_before_test,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(some_ago_test,
+						_setup, _teardown),
+	};
 
-	return (atf_no_error());
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

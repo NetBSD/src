@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.c,v 1.2.12.2 2018/09/30 01:45:49 pgoyette Exp $ */
+/* $NetBSD: cpus.c,v 1.2.12.3 2019/01/18 08:50:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2.12.2 2018/09/30 01:45:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2.12.3 2019/01/18 08:50:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2.12.2 2018/09/30 01:45:49 pgoyette Exp $
 static int	cpus_match(device_t, cfdata_t, void *);
 static void	cpus_attach(device_t, device_t, void *);
 
-static bool	cpus_bus_match(void *, int);
+static bool	cpus_cpu_enabled(int);
 
 CFATTACH_DECL_NEW(cpus, 0, cpus_match, cpus_attach, NULL, NULL);
 
@@ -59,15 +59,20 @@ cpus_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	int child;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	fdt_add_bus_match(self, phandle, faa, cpus_bus_match, NULL);
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!cpus_cpu_enabled(child))
+			continue;
+		fdt_add_child(self, child, faa, 0);
+	}
 }
 
 static bool
-cpus_bus_match(void *priv, int child)
+cpus_cpu_enabled(int child)
 {
 	const char *s;
 

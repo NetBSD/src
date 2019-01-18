@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.7.2.1 2018/09/06 06:55:26 pgoyette Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.7.2.2 2019/01/18 08:50:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_arm_timer.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.7.2.1 2018/09/06 06:55:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.7.2.2 2019/01/18 08:50:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,6 @@ static void	arm_fdt_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(arm_fdt, 0,
     arm_fdt_match, arm_fdt_attach, NULL, NULL);
-
-static struct arm_platlist arm_platform_list =
-    TAILQ_HEAD_INITIALIZER(arm_platform_list);
 
 struct arm_fdt_cpu_hatch_cb {
 	TAILQ_ENTRY(arm_fdt_cpu_hatch_cb) next;

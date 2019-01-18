@@ -1,4 +1,4 @@
-/*	$NetBSD: ncache.h,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: ncache.h,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,8 @@
  *\li	RFC2308
  */
 
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/stdtime.h>
 
@@ -56,13 +58,15 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
-	       dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
+	       dns_rdatatype_t covers, isc_stdtime_t now,
+	       dns_ttl_t minttl, dns_ttl_t maxttl,
 	       dns_rdataset_t *addedrdataset);
 isc_result_t
 dns_ncache_addoptout(dns_message_t *message, dns_db_t *cache,
 		     dns_dbnode_t *node, dns_rdatatype_t covers,
-		     isc_stdtime_t now, dns_ttl_t maxttl,
-		     isc_boolean_t optout, dns_rdataset_t *addedrdataset);
+		     isc_stdtime_t now,
+		     dns_ttl_t minttl, dns_ttl_t maxttl,
+		     bool optout, dns_rdataset_t *addedrdataset);
 /*%<
  * Convert the authority data from 'message' into a negative cache
  * rdataset, and store it in 'cache' at 'node' with a TTL limited to

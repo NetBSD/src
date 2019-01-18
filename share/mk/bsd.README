@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.367.2.8 2018/11/26 01:52:15 pgoyette Exp $
+#	$NetBSD: bsd.README,v 1.367.2.9 2019/01/18 08:50:12 pgoyette Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -865,7 +865,9 @@ TOOL_AMIGAAOUT2BB	aout to Amiga bootblock converter.  [amiga-aout2bb]
 
 TOOL_AMIGAELF2BB	ELF to Amiga bootblock converter.  [amiga-elf2bb]
 
-TOOL_AMIGATXLT		Amige assembly language format translator.  [amiga-txlt]
+TOOL_AMIGATXLT		Amiga assembly language format translator.  [amiga-txlt]
+
+TOOL_ARMELF2AOUT	ELF to a.out executable converter [arm-elf2aout}
 
 TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
 
@@ -927,6 +929,8 @@ TOOL_INSTALL_INFO	Update info/dir entries.  [install-info]
 TOOL_JOIN		Relational database operator.  [join]
 
 TOOL_M4			M4 macro language processor.  [m4]
+
+TOOL_M68KELF2AOUT	ELF to a.out executable converter [m68k-elf2aout}
 
 TOOL_MACPPCFIXCOFF	Fix up xcoff headers for macppc.  [macppc-fixcoff]
 
@@ -1974,6 +1978,8 @@ AR		Create, modify, and extract from archives.  [ar]
 
 ARFLAGS		Options to ${AR}.  [rl]
 
+ARM_ELF2AOUT	Convert ELF-format executable to a.out.  [elf2aout]
+
 AS		Assembler.  [as]
 
 AFLAGS		Options to ${CC} when compiling or linking .s or .S
@@ -2000,7 +2006,9 @@ CXX		C++ compiler.  [c++]
 
 CXXFLAGS	Options to ${CXX}.  [${CFLAGS}]
 
-ELF2ECOFF	Convert ELF-format executable to ECOFF.  [elf2ecoff]
+M68K_ELF2AOUT	Convert ELF-format executable to a.out.  [elf2aout]
+
+MIPS_ELF2ECOFF	Convert ELF-format executable to ECOFF.  [elf2ecoff]
 
 FC		Fortran compiler.  [f77]
 

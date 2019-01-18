@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.2.2.1 2018/06/25 07:26:01 pgoyette Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.2.2.2 2019/01/18 08:50:42 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,12 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.2.2.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.2.2.2 2019/01/18 08:50:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/interrupt.h>
 
 #include <sys/device.h>
 
@@ -79,6 +80,7 @@ static void	virtio_pci_free_interrupts(struct virtio_softc *);
 
 static int	virtio_pci_intr(void *arg);
 static int	virtio_pci_msix_queue_intr(void *);
+static int	virtio_pci_msix_vq_intr(void *);
 static int	virtio_pci_msix_config_intr(void *);
 static int	virtio_pci_setup_msix_vectors(struct virtio_softc *);
 static int	virtio_pci_setup_msix_interrupts(struct virtio_softc *,
@@ -428,7 +430,7 @@ virtio_pci_setup_queue(struct virtio_softc *sc, uint16_t idx, uint32_t addr)
 
 	if (psc->sc_ihs_num > 1) {
 		int vec = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-		if (false) /* (for per-vq vectors) */
+		if (sc->sc_child_mq)
 			vec += idx;
 		bus_space_write_stream_2(psc->sc_iot, psc->sc_ioh,
 		    VIRTIO_CONFIG_MSI_QUEUE_VECTOR, vec);
@@ -488,6 +490,9 @@ virtio_pci_setup_msix_vectors(struct virtio_softc *sc)
 		offset = VIRTIO_CONFIG_MSI_QUEUE_VECTOR;
 		vector = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
 
+		if (sc->sc_child_mq)
+			vector += qid;
+
 		bus_space_write_stream_2(psc->sc_iot, psc->sc_ioh, offset, vector);
 		ret = bus_space_read_stream_2(psc->sc_iot, psc->sc_ioh, offset);
 		aprint_debug_dev(sc->sc_dev, "expected=%d, actual=%d\n",
@@ -507,29 +512,57 @@ virtio_pci_setup_msix_interrupts(struct virtio_softc *sc,
 	device_t self = sc->sc_dev;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char intrbuf[PCI_INTRSTR_LEN];
+	char intr_xname[INTRDEVNAMEBUF];
 	char const *intrstr;
-	int idx;
+	int idx, qid, n;
 
 	idx = VIRTIO_MSIX_CONFIG_VECTOR_INDEX;
 	if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
 		pci_intr_setattr(pc, &psc->sc_ihp[idx], PCI_INTR_MPSAFE, true);
 
+	snprintf(intr_xname, sizeof(intr_xname), "%s config",
+	    device_xname(sc->sc_dev));
+
 	psc->sc_ihs[idx] = pci_intr_establish_xname(pc, psc->sc_ihp[idx],
-	    sc->sc_ipl, virtio_pci_msix_config_intr, sc, device_xname(sc->sc_dev));
+	    sc->sc_ipl, virtio_pci_msix_config_intr, sc, intr_xname);
 	if (psc->sc_ihs[idx] == NULL) {
 		aprint_error_dev(self, "couldn't establish MSI-X for config\n");
 		goto error;
 	}
 
 	idx = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-	if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
-		pci_intr_setattr(pc, &psc->sc_ihp[idx], PCI_INTR_MPSAFE, true);
+	if (sc->sc_child_mq) {
+		for (qid = 0; qid < sc->sc_nvqs; qid++) {
+			n = idx + qid;
 
-	psc->sc_ihs[idx] = pci_intr_establish_xname(pc, psc->sc_ihp[idx],
-	    sc->sc_ipl, virtio_pci_msix_queue_intr, sc, device_xname(sc->sc_dev));
-	if (psc->sc_ihs[idx] == NULL) {
-		aprint_error_dev(self, "couldn't establish MSI-X for queues\n");
-		goto error;
+			snprintf(intr_xname, sizeof(intr_xname), "%s vq#%d",
+			    device_xname(sc->sc_dev), qid);
+
+			if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE) {
+				pci_intr_setattr(pc, &psc->sc_ihp[n],
+				    PCI_INTR_MPSAFE, true);
+			}
+
+			psc->sc_ihs[n] = pci_intr_establish_xname(pc, psc->sc_ihp[n],
+			    sc->sc_ipl, virtio_pci_msix_vq_intr, &sc->sc_vqs[qid],
+			    intr_xname);
+			if (psc->sc_ihs[n] == NULL) {
+				aprint_error_dev(self, "couldn't establish MSI-X for a vq\n");
+				goto error;
+			}
+		}
+	} else {
+		if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
+			pci_intr_setattr(pc, &psc->sc_ihp[idx], PCI_INTR_MPSAFE, true);
+
+		snprintf(intr_xname, sizeof(intr_xname), "%s queues",
+		    device_xname(sc->sc_dev));
+		psc->sc_ihs[idx] = pci_intr_establish_xname(pc, psc->sc_ihp[idx],
+		    sc->sc_ipl, virtio_pci_msix_queue_intr, sc, intr_xname);
+		if (psc->sc_ihs[idx] == NULL) {
+			aprint_error_dev(self, "couldn't establish MSI-X for queues\n");
+			goto error;
+		}
 	}
 
 	if (virtio_pci_setup_msix_vectors(sc) != 0) {
@@ -541,8 +574,38 @@ virtio_pci_setup_msix_interrupts(struct virtio_softc *sc,
 	intrstr = pci_intr_string(pc, psc->sc_ihp[idx], intrbuf, sizeof(intrbuf));
 	aprint_normal_dev(self, "config interrupting at %s\n", intrstr);
 	idx = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-	intrstr = pci_intr_string(pc, psc->sc_ihp[idx], intrbuf, sizeof(intrbuf));
-	aprint_normal_dev(self, "queues interrupting at %s\n", intrstr);
+	if (sc->sc_child_mq) {
+		kcpuset_t *affinity;
+		int affinity_to, r;
+
+		kcpuset_create(&affinity, false);
+
+		for (qid = 0; qid < sc->sc_nvqs; qid++) {
+			n = idx + qid;
+			affinity_to = (qid / 2) % ncpu;
+
+			intrstr = pci_intr_string(pc, psc->sc_ihp[n],
+			    intrbuf, sizeof(intrbuf));
+
+			kcpuset_zero(affinity);
+			kcpuset_set(affinity, affinity_to);
+			r = interrupt_distribute(psc->sc_ihs[n], affinity, NULL);
+			if (r == 0) {
+				aprint_normal_dev(self,
+				    "for vq #%d interrupting at %s affinity to %u\n",
+				    qid, intrstr, affinity_to);
+			} else {
+				aprint_normal_dev(self,
+				    "for vq #%d interrupting at %s\n",
+				    qid, intrstr);
+			}
+		}
+
+		kcpuset_destroy(affinity);
+	} else {
+		intrstr = pci_intr_string(pc, psc->sc_ihp[idx], intrbuf, sizeof(intrbuf));
+		aprint_normal_dev(self, "queues interrupting at %s\n", intrstr);
+	}
 
 	return 0;
 
@@ -551,8 +614,18 @@ error:
 	if (psc->sc_ihs[idx] != NULL)
 		pci_intr_disestablish(psc->sc_pa.pa_pc, psc->sc_ihs[idx]);
 	idx = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-	if (psc->sc_ihs[idx] != NULL)
-		pci_intr_disestablish(psc->sc_pa.pa_pc, psc->sc_ihs[idx]);
+	if (sc->sc_child_mq) {
+		for (qid = 0; qid < sc->sc_nvqs; qid++) {
+			n = idx + qid;
+			if (psc->sc_ihs[n] == NULL)
+				continue;
+			pci_intr_disestablish(psc->sc_pa.pa_pc, psc->sc_ihs[n]);
+		}
+
+	} else {
+		if (psc->sc_ihs[idx] != NULL)
+			pci_intr_disestablish(psc->sc_pa.pa_pc, psc->sc_ihs[idx]);
+	}
 
 	return -1;
 }
@@ -604,8 +677,14 @@ virtio_pci_setup_interrupts(struct virtio_softc *sc)
 		counts[PCI_INTR_TYPE_INTX] = 1;
 	} else {
 		/* Try MSI-X first and INTx second */
+		if (sc->sc_child_mq &&
+		    sc->sc_nvqs > (nmsix - VIRTIO_MSIX_QUEUE_VECTOR_INDEX)) {
+			nmsix = 2;
+			sc->sc_child_mq = false;
+		}
+
 		max_type = PCI_INTR_TYPE_MSIX;
-		counts[PCI_INTR_TYPE_MSIX] = 2;
+		counts[PCI_INTR_TYPE_MSIX] = nmsix;
 		counts[PCI_INTR_TYPE_MSI] = 0;
 		counts[PCI_INTR_TYPE_INTX] = 1;
 	}
@@ -618,13 +697,13 @@ retry:
 	}
 
 	if (pci_intr_type(pc, psc->sc_ihp[0]) == PCI_INTR_TYPE_MSIX) {
-		psc->sc_ihs = kmem_alloc(sizeof(*psc->sc_ihs) * 2,
+		psc->sc_ihs = kmem_alloc(sizeof(*psc->sc_ihs) * nmsix,
 		    KM_SLEEP);
 
 		error = virtio_pci_setup_msix_interrupts(sc, &psc->sc_pa);
 		if (error != 0) {
-			kmem_free(psc->sc_ihs, sizeof(*psc->sc_ihs) * 2);
-			pci_intr_release(pc, psc->sc_ihp, 2);
+			kmem_free(psc->sc_ihs, sizeof(*psc->sc_ihs) * nmsix);
+			pci_intr_release(pc, psc->sc_ihp, nmsix);
 
 			/* Retry INTx */
 			max_type = PCI_INTR_TYPE_INTX;
@@ -632,7 +711,7 @@ retry:
 			goto retry;
 		}
 
-		psc->sc_ihs_num = 2;
+		psc->sc_ihs_num = nmsix;
 		psc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
 	} else if (pci_intr_type(pc, psc->sc_ihp[0]) == PCI_INTR_TYPE_INTX) {
 		psc->sc_ihs = kmem_alloc(sizeof(*psc->sc_ihs) * 1,
@@ -713,6 +792,22 @@ virtio_pci_msix_queue_intr(void *arg)
 			softint_schedule(sc->sc_soft_ih);
 		else
 			r |= (sc->sc_intrhand)(sc);
+	}
+
+	return r;
+}
+
+static int
+virtio_pci_msix_vq_intr(void *arg)
+{
+	struct virtqueue *vq = arg;
+	int r = 0;
+
+	if (vq->vq_intrhand != NULL) {
+		if (vq->vq_soft_ih)
+			softint_schedule(vq->vq_soft_ih);
+		else
+			r |= vq->vq_intrhand(vq);
 	}
 
 	return r;

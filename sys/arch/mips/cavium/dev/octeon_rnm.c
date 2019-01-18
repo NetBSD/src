@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.1.20.1 2019/01/18 08:50:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.1.20.1 2019/01/18 08:50:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $"
 #include <mips/cavium/octeonvar.h>
 
 #include <sys/bus.h>
-#include <machine/param.h>
 
 #define RNG_DELAY_CLOCK 91
 #define RNG_DEF_BURST_COUNT 10

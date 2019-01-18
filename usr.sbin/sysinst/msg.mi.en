@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.10.14.3 2018/11/26 01:52:55 pgoyette Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.10.14.4 2019/01/18 08:51:03 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1026,7 +1026,7 @@ will be used.  If "user" is "ftp", then the password is not needed.
 
 }
 message Pkgsrc_dir {pkgsrc directory}
-message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
+message get_pkgsrc {Fetch and unpack pkgsrc}
 message retry_pkgsrc_network {Network configuration failed.  Retry?}
 message quit_pkgsrc {Quit without installing pkgsrc}
 message quit_pkgs_install {Quit installing binary pkgs}

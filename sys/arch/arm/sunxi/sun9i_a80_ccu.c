@@ -1,4 +1,4 @@
-/* $NetBSD: sun9i_a80_ccu.c,v 1.1 2017/10/08 18:00:36 jmcneill Exp $ */
+/* $NetBSD: sun9i_a80_ccu.c,v 1.1.4.1 2019/01/18 08:50:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun9i_a80_ccu.c,v 1.1 2017/10/08 18:00:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun9i_a80_ccu.c,v 1.1.4.1 2019/01/18 08:50:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,14 +41,19 @@ __KERNEL_RCSID(1, "$NetBSD: sun9i_a80_ccu.c,v 1.1 2017/10/08 18:00:36 jmcneill E
 #include <arm/sunxi/sun9i_a80_ccu.h>
 
 /* CCU */
+#define	PLL_C0CPUX_CTRL_REG	0x000
+#define	PLL_C1CPUX_CTRL_REG	0x004
 #define	PLL_PERIPH0_CTRL_REG	0x00c
 #define	PLL_PERIPH1_CTRL_REG	0x02c
+#define	CPU_CLK_SRC_REG		0x050
+#define	 CPU_CLK_SRC_SELECT(cluster)	__BIT((cluster) * 8)
 #define	GTBUS_CLK_CFG_REG	0x05c
 #define	AHB0_CLK_CFG_REG	0x060
 #define	AHB1_CLK_CFG_REG	0x064
 #define	AHB2_CLK_CFG_REG	0x068
 #define	APB0_CLK_CFG_REG	0x070
 #define	APB1_CLK_CFG_REG	0x074
+#define	PLL_STABLE_STATUS_REG	0x09c
 
 /* CCU_SCLK */
 #define	SDMMC0_CLK_REG		0x410
@@ -125,7 +130,91 @@ static const char *ahb2_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 static const char *apb_parents[] = { "hosc", "pll_periph0" };
 static const char *mmc_parents[] = { "hosc", "pll_periph0" };
 
+static kmutex_t cpux_axi_cfg_lock;
+
+static int
+sun9i_a80_ccu_cpux_set_rate(struct sunxi_ccu_softc *sc,
+    struct sunxi_ccu_clk *clk, u_int rate)
+{       
+	const int cluster = clk->u.nkmp.reg == PLL_C0CPUX_CTRL_REG ? 0 : 1;
+	struct sunxi_ccu_nkmp *nkmp = &clk->u.nkmp;
+	uint32_t val;
+	u_int n;
+
+	n = rate / 24000000;
+	if (n < 0x11 || n > 0xff)
+		return EINVAL;
+
+	/* Switch cluster to OSC24M clock */
+	mutex_enter(&cpux_axi_cfg_lock);
+	val = CCU_READ(sc, CPU_CLK_SRC_REG);
+	val &= ~CPU_CLK_SRC_SELECT(cluster);
+	CCU_WRITE(sc, CPU_CLK_SRC_REG, val);
+	mutex_exit(&cpux_axi_cfg_lock);
+
+	/* Set new PLL rate */
+	val = CCU_READ(sc, nkmp->reg);
+	val &= ~nkmp->n;
+	val |= __SHIFTIN(n, nkmp->n);
+	CCU_WRITE(sc, nkmp->reg, val);
+
+	/* Wait for PLL lock */
+	while ((CCU_READ(sc, PLL_STABLE_STATUS_REG) & nkmp->lock) == 0)
+		;
+
+	/* Switch cluster back to CPUX PLL */
+	mutex_enter(&cpux_axi_cfg_lock);
+	val = CCU_READ(sc, CPU_CLK_SRC_REG);
+	val |= CPU_CLK_SRC_SELECT(cluster);
+	CCU_WRITE(sc, CPU_CLK_SRC_SELECT(cluster), val);
+	mutex_exit(&cpux_axi_cfg_lock);
+
+	return 0;
+}
+
 static struct sunxi_ccu_clk sun9i_a80_ccu_clks[] = {
+	[A80_CLK_C0CPUX] = {
+		.type = SUNXI_CCU_NKMP,
+		.base.name = "pll_c0cpux",
+		.u.nkmp.reg = PLL_C0CPUX_CTRL_REG,
+		.u.nkmp.parent = "hosc",
+		.u.nkmp.n = __BITS(15,8),
+		.u.nkmp.k = 0,
+		.u.nkmp.m = __BITS(1,0),
+		.u.nkmp.p = __BIT(16),
+		.u.nkmp.enable = __BIT(31),
+		.u.nkmp.flags = SUNXI_CCU_NKMP_SCALE_CLOCK |
+			SUNXI_CCU_NKMP_FACTOR_N_EXACT |
+			SUNXI_CCU_NKMP_FACTOR_P_X4,
+		.u.nkmp.lock = __BIT(1),        /* PLL_STABLE_STATUS_REG */
+		.u.nkmp.table = NULL,
+		.enable = sunxi_ccu_nkmp_enable,
+		.get_rate = sunxi_ccu_nkmp_get_rate,
+		.set_rate = sun9i_a80_ccu_cpux_set_rate,
+		.get_parent = sunxi_ccu_nkmp_get_parent,
+	},
+
+	[A80_CLK_C1CPUX] = {
+		.type = SUNXI_CCU_NKMP,
+		.base.name = "pll_c1cpux",
+		.u.nkmp.reg = PLL_C1CPUX_CTRL_REG,
+		.u.nkmp.parent = "hosc",
+		.u.nkmp.n = __BITS(15,8),
+		.u.nkmp.k = 0,
+		.u.nkmp.m = __BITS(1,0),
+		.u.nkmp.p = __BIT(16),
+		.u.nkmp.enable = __BIT(31),
+		.u.nkmp.flags = SUNXI_CCU_NKMP_SCALE_CLOCK |
+			SUNXI_CCU_NKMP_FACTOR_N_EXACT |
+			SUNXI_CCU_NKMP_FACTOR_P_X4,
+		.u.nkmp.lock = __BIT(1),        /* PLL_STABLE_STATUS_REG */
+		.u.nkmp.table = NULL,
+		.enable = sunxi_ccu_nkmp_enable,
+		.get_rate = sunxi_ccu_nkmp_get_rate,
+		.set_rate = sun9i_a80_ccu_cpux_set_rate,
+		.get_parent = sunxi_ccu_nkmp_get_parent,
+	},
+
 	SUNXI_CCU_NKMP(A80_CLK_PLL_PERIPH0, "pll_periph0", "hosc",
 	    PLL_PERIPH0_CTRL_REG,	/* reg */
 	    __BITS(15,8),		/* n */
@@ -314,6 +403,8 @@ sun9i_a80_ccu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_clks = sun9i_a80_ccu_clks;
 	sc->sc_nclks = __arraycount(sun9i_a80_ccu_clks);
+
+	mutex_init(&cpux_axi_cfg_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	if (sunxi_ccu_attach(sc) != 0)
 		return;

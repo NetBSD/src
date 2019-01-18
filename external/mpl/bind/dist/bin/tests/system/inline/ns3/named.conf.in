@@ -58,6 +58,10 @@ zone "master" {
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "master.db";
+	notify explicit;
+	also-notify {
+		10.53.0.3;
+	};
 };
 
 zone "dynamic" {
@@ -139,6 +143,13 @@ zone "nokeys" {
 	inline-signing yes;
 	auto-dnssec maintain;
 	file "nokeys.bk";
+};
+
+zone "delayedkeys" {
+	type master;
+	inline-signing yes;
+	auto-dnssec maintain;
+	file "delayedkeys.db";
 };
 
 zone "removedkeys-primary" {

@@ -20,8 +20,8 @@ options {
 	listen-on { 127.0.0.1; 10.53.0.2; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation no;
 	geoip-directory "../data";
-	geoip-use-ecs no;
 };
 
 key rndc_key {

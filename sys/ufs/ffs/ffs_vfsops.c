@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.356.2.3 2018/12/26 14:02:08 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.356.2.4 2019/01/18 08:50:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356.2.3 2018/12/26 14:02:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356.2.4 2019/01/18 08:50:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2091,7 +2091,7 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
  */
 int
 ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
-    struct vattr *vap, kauth_cred_t cred,
+    struct vattr *vap, kauth_cred_t cred, void *extra,
     size_t *key_len, const void **new_key)
 {
 	ino_t ino;

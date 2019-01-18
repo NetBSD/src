@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.70.12.1 2018/12/26 14:02:11 pgoyette Exp $	*/
+/*	$NetBSD: commands.c,v 1.70.12.2 2019/01/18 08:51:02 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.70.12.1 2018/12/26 14:02:11 pgoyette Exp $");
+__RCSID("$NetBSD: commands.c,v 1.70.12.2 2019/01/18 08:51:02 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,16 +280,16 @@ control(cc_t c)
 	}
 	if (uic >= 0x80) {
 		buf[0] = '\\';
-		buf[1] = (char)(((c >> 6) & 07) + '0');
-		buf[2] = (char)(((c >> 3) & 07) + '0');
-		buf[3] = (char)((c & 07) + '0');
+		buf[1] = ((c >> 6) & 07) + '0';
+		buf[2] = ((c >> 3) & 07) + '0';
+		buf[3] = (c & 07) + '0';
 		buf[4] = '\0';
 	} else if (uic >= 0x20) {
-		buf[0] = (char)c;
+		buf[0] = c;
 		buf[1] = '\0';
 	} else {
 		buf[0] = '^';
-		buf[1] = (char)('@' + c);
+		buf[1] = '@' + c;
 		buf[2] = '\0';
 	}
 	return (buf);
@@ -1280,7 +1280,7 @@ display(int  argc, char *argv[])
     }
 /*@*/optionstatus();
 #ifdef	ENCRYPTION
-    EncryptStatus();
+    EncryptStatus(NULL, NULL);
 #endif	/* ENCRYPTION */
     return 1;
 #undef	doset
@@ -1542,10 +1542,6 @@ struct envlist EnvList[] = {
     { "send",	"Send an environment variable", env_send,	1 },
     { "list",	"List the current environment variables",
 						env_list,	0 },
-#if defined(OLD_ENVIRON) && defined(ENV_HACK)
-    { "varval", "Reverse VAR and VALUE (auto, right, wrong, status)",
-						env_varval,    1 },
-#endif
     { "help",	0,				env_help,		0 },
     { "?",	"Print help information",	env_help,		0 },
     { .name = 0 },
@@ -1745,9 +1741,6 @@ env_send(const char *var, char *d)
 	struct env_lst *ep;
 
 	if (my_state_is_wont(TELOPT_NEW_ENVIRON)
-#ifdef	OLD_ENVIRON
-	    && my_state_is_wont(TELOPT_OLD_ENVIRON)
-#endif
 		) {
 		fprintf(stderr,
 		    "Cannot send '%s': Telnet ENVIRON option not enabled\n",
@@ -1806,43 +1799,6 @@ env_getvalue(const char *var)
 		return ep->value;
 	return NULL;
 }
-
-#if defined(OLD_ENVIRON) && defined(ENV_HACK)
-void
-env_varval(const unsigned char *what)
-{
-	extern int old_env_var, old_env_value, env_auto;
-	int len = strlen(what);
-
-	if (len == 0)
-		goto unknown;
-
-	if (strncasecmp(what, "status", len) == 0) {
-		if (env_auto)
-			printf("%s%s", "VAR and VALUE are/will be ",
-					"determined automatically\n");
-		if (old_env_var == OLD_ENV_VAR)
-			printf("VAR and VALUE set to correct definitions\n");
-		else
-			printf("VAR and VALUE definitions are reversed\n");
-	} else if (strncasecmp(what, "auto", len) == 0) {
-		env_auto = 1;
-		old_env_var = OLD_ENV_VALUE;
-		old_env_value = OLD_ENV_VAR;
-	} else if (strncasecmp(what, "right", len) == 0) {
-		env_auto = 0;
-		old_env_var = OLD_ENV_VAR;
-		old_env_value = OLD_ENV_VALUE;
-	} else if (strncasecmp(what, "wrong", len) == 0) {
-		env_auto = 0;
-		old_env_var = OLD_ENV_VALUE;
-		old_env_value = OLD_ENV_VAR;
-	} else {
-unknown:
-		printf("Unknown \"varval\" command. (\"auto\", \"right\", \"wrong\", \"status\")\n");
-	}
-}
-#endif
 
 #ifdef AUTHENTICATION
 /*
@@ -1932,9 +1888,7 @@ struct encryptlist {
 	int	maxarg;
 };
 
-static int
-	EncryptHelp(char *, char *);
-typedef int (*encrypthandler)(char *, char *);
+static int EncryptHelp(char *, char *);
 
 struct encryptlist EncryptList[] = {
     { "enable", "Enable encryption. ('encrypt enable ?' for more)",
@@ -1944,22 +1898,22 @@ struct encryptlist EncryptList[] = {
     { "type", "Set encryption type. ('encrypt type ?' for more)",
 						EncryptType, 0, 1, 1 },
     { "start", "Start encryption. ('encrypt start ?' for more)",
-				(encrypthandler) EncryptStart, 1, 0, 1 },
+						EncryptStart, 1, 0, 1 },
     { "stop", "Stop encryption. ('encrypt stop ?' for more)",
-				(encrypthandler) EncryptStop, 1, 0, 1 },
+						EncryptStop, 1, 0, 1 },
     { "input", "Start encrypting the input stream",
-				(encrypthandler) EncryptStartInput, 1, 0, 0 },
+						EncryptStartInput, 1, 0, 0 },
     { "-input", "Stop encrypting the input stream",
-				(encrypthandler) EncryptStopInput, 1, 0, 0 },
+						EncryptStopInput, 1, 0, 0 },
     { "output", "Start encrypting the output stream",
-				(encrypthandler) EncryptStartOutput, 1, 0, 0 },
+						EncryptStartOutput, 1, 0, 0 },
     { "-output", "Stop encrypting the output stream",
-				(encrypthandler) EncryptStopOutput, 1, 0, 0 },
+						EncryptStopOutput, 1, 0, 0 },
 
     { "status",       "Display current status of authentication information",
-				(encrypthandler) EncryptStatus,	0, 0, 0 },
-    { "help", 0,				 EncryptHelp,	0, 0, 0 },
-    { "?",    "Print help information",		 EncryptHelp,	0, 0, 0 },
+						EncryptStatus,	0, 0, 0 },
+    { "help", 0,				EncryptHelp,	0, 0, 0 },
+    { "?",    "Print help information",		EncryptHelp,	0, 0, 0 },
     { .name = 0 },
 };
 

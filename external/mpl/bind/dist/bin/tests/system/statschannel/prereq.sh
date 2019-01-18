@@ -9,6 +9,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
 fail=0
 
 if $PERL -e 'use File::Fetch;' 2>/dev/null

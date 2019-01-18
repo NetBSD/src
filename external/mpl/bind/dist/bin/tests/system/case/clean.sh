@@ -19,3 +19,4 @@ rm -f ns1/dynamic.db.jnl
 rm -f ns2/dynamic.bk
 rm -f ns2/dynamic.bk.jnl
 rm -f ns2/example.bk
+rm -f ns*/managed-keys.bind*

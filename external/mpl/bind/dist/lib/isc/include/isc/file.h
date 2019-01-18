@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.2.2.2 2018/09/06 06:55:06 pgoyette Exp $	*/
+/*	$NetBSD: file.h,v 1.2.2.3 2019/01/18 08:49:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 
 /*! \file isc/file.h */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <isc/lang.h>
@@ -177,18 +178,18 @@ isc_file_rename(const char *oldname, const char *newname);
  * \brief Rename the file 'oldname' to 'newname'.
  */
 
-isc_boolean_t
+bool
 isc_file_exists(const char *pathname);
 /*!<
- * \brief Return #ISC_TRUE if the calling process can tell that the given file exists.
+ * \brief Return #true if the calling process can tell that the given file exists.
  * Will not return true if the calling process has insufficient privileges
  * to search the entire path.
  */
 
-isc_boolean_t
+bool
 isc_file_isabsolute(const char *filename);
 /*!<
- * \brief Return #ISC_TRUE if the given file name is absolute.
+ * \brief Return #true if the given file name is absolute.
  */
 
 isc_result_t
@@ -231,16 +232,16 @@ isc_file_isdirectory(const char *name);
  *		These occur when stat returns -1 and an errno.
  */
 
-isc_boolean_t
+bool
 isc_file_iscurrentdir(const char *filename);
 /*!<
- * \brief Return #ISC_TRUE if the given file name is the current directory (".").
+ * \brief Return #true if the given file name is the current directory (".").
  */
 
-isc_boolean_t
+bool
 isc_file_ischdiridempotent(const char *filename);
 /*%<
- * Return #ISC_TRUE if calling chdir(filename) multiple times will give
+ * Return #true if calling chdir(filename) multiple times will give
  * the same result as calling it once.
  */
 
@@ -388,7 +389,7 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
  * - ISC_R_NOSPACE if the resulting path would be longer than 'length'
  */
 
-isc_boolean_t
+bool
 isc_file_isdirwritable(const char *path);
 /*%<
  *	Return true if the path is a directory and is writable

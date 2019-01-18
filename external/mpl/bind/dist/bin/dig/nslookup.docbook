@@ -478,6 +478,22 @@ nslookup -query=hinfo  -timeout=10
     </para>
   </refsection>
 
+  <refsection><info><title>IDN SUPPORT</title></info>
+
+    <para>
+      If <command>nslookup</command> has been built with IDN (internationalized
+      domain name) support, it can accept and display non-ASCII domain names.
+      <command>nslookup</command> appropriately converts character encoding of
+      domain name before sending a request to DNS server or displaying a
+      reply from the server.
+      If you'd like to turn off the IDN support for some reason, define
+      the <envar>IDN_DISABLE</envar> environment variable.
+      The IDN support is disabled if the variable is set when
+      <command>nslookup</command> runs or when the standard output is not
+      a tty.
+    </para>
+  </refsection>
+
   <refsection><info><title>FILES</title></info>
 
     <para><filename>/etc/resolv.conf</filename>

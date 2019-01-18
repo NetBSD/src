@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.193.2.6 2018/11/26 01:52:51 pgoyette Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.193.2.7 2019/01/18 08:50:58 pgoyette Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.6 2018/11/26 01:52:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.7 2019/01/18 08:50:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -342,7 +342,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * IPsec (encapsulated, tunnel mode).
 	 */
 #if defined(IPSEC)
-	if (!ipsec_used || !ipsec_indone(m))
+	if (!ipsec_used || !ipsec_skip_pfil(m))
 #else
 	if (1)
 #endif
@@ -739,7 +739,7 @@ hbhcheck:
 			 * header. Note that we do not visit this with
 			 * protocols with pcb layer code - like udp/tcp/raw ip.
 			 */
-			if ((inet6sw[ip_protox[nxt]].pr_flags
+			if ((inet6sw[ip6_protox[nxt]].pr_flags
 			    & PR_LASTHDR) != 0) {
 				int error;
 

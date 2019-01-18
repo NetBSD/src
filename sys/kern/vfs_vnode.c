@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.100 2017/09/22 06:05:20 joerg Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.100.2.1 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.100 2017/09/22 06:05:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.100.2.1 2019/01/18 08:50:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1375,7 +1375,7 @@ again:
  */
 int
 vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
-    kauth_cred_t cred, struct vnode **vpp)
+    kauth_cred_t cred, void *extra, struct vnode **vpp)
 {
 	int error;
 	uint32_t hash;
@@ -1393,7 +1393,7 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	vp = VIMPL_TO_VNODE(vip);
 
 	/* Create and load the fs node. */
-	error = VFS_NEWVNODE(mp, dvp, vp, vap, cred,
+	error = VFS_NEWVNODE(mp, dvp, vp, vap, cred, extra,
 	    &vip->vi_key.vk_key_len, &vip->vi_key.vk_key);
 	if (error) {
 		mutex_enter(&vcache_lock);

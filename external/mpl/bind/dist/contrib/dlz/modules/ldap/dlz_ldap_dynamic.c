@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_dynamic.c,v 1.2.2.2 2018/09/06 06:54:50 pgoyette Exp $	*/
+/*	$NetBSD: dlz_ldap_dynamic.c,v 1.2.2.3 2019/01/18 08:49:47 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -48,10 +48,10 @@
  * update support
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include <dlz_minimal.h>
@@ -312,7 +312,7 @@ ldap_find_avail_conn(ldap_instance_t *ldap) {
 
 static isc_result_t
 ldap_process_results(ldap_instance_t *db, LDAP *dbc, LDAPMessage *msg,
-		     char **attrs, void *ptr, isc_boolean_t allnodes)
+		     char **attrs, void *ptr, bool allnodes)
 {
 	isc_result_t result = ISC_R_SUCCESS;
 	int i = 0;
@@ -738,13 +738,13 @@ ldap_get_results(const char *zone, const char *record,
 	case ALLNODES:
 		result = ldap_process_results(db, (LDAP *) dbi->dbconn,
 					      ldap_msg, ldap_url->lud_attrs,
-					      ptr, ISC_TRUE);
+					      ptr, true);
 		break;
 	case AUTHORITY:
 	case LOOKUP:
 		result = ldap_process_results(db, (LDAP *) dbi->dbconn,
 					      ldap_msg, ldap_url->lud_attrs,
-					      ptr, ISC_FALSE);
+					      ptr, false);
 		break;
 	case ALLOWXFR:
 		entries = ldap_count_entries((LDAP *) dbi->dbconn, ldap_msg);

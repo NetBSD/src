@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.101.2.3 2018/11/26 01:52:30 pgoyette Exp $ */
+/* $NetBSD: dksubr.c,v 1.101.2.4 2019/01/18 08:50:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.101.2.3 2018/11/26 01:52:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.101.2.4 2019/01/18 08:50:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,7 +915,7 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 	struct	 cpu_disklabel *clp = dksc->sc_dkdev.dk_cpulabel;
 	struct   disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 	struct	 partition *pp;
-	int	 i;
+	int	 i, lpratio, dgratio;
 	const char	*errstring;
 
 	memset(clp, 0x0, sizeof(*clp));
@@ -932,25 +932,37 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 	if ((dksc->sc_flags & DKF_LABELSANITY) == 0)
 		return;
 
+	/* Convert sector counts to multiple of DEV_BSIZE for comparison */
+	lpratio = dgratio = 1;
+	if (lp->d_secsize > DEV_BSIZE)
+		lpratio = lp->d_secsize / DEV_BSIZE;
+	if (dg->dg_secsize > DEV_BSIZE)
+		dgratio = dg->dg_secsize / DEV_BSIZE;
+
 	/* Sanity check */
-	if (lp->d_secperunit > dg->dg_secperunit)
-		printf("WARNING: %s: total sector size in disklabel (%ju) "
-		    "!= the size of %s (%ju)\n", dksc->sc_xname,
-		    (uintmax_t)lp->d_secperunit, dksc->sc_xname,
-		    (uintmax_t)dg->dg_secperunit);
+	if ((uint64_t)lp->d_secperunit * lpratio > dg->dg_secperunit * dgratio)
+		printf("WARNING: %s: "
+		    "total unit size in disklabel (%" PRIu64 ") "
+		    "!= the size of %s (%" PRIu64 ")\n", dksc->sc_xname,
+		    (uint64_t)lp->d_secperunit * lpratio, dksc->sc_xname,
+		    dg->dg_secperunit * dgratio);
 	else if (lp->d_secperunit < UINT32_MAX &&
-	         lp->d_secperunit < dg->dg_secperunit)
-		printf("%s: %ju trailing sectors not covered by disklabel\n",
-		    dksc->sc_xname,
-		    (uintmax_t)dg->dg_secperunit - lp->d_secperunit);
+	    (uint64_t)lp->d_secperunit * lpratio < dg->dg_secperunit * dgratio)
+		printf("%s: %" PRIu64 " trailing sectors not covered"
+		    " by disklabel\n", dksc->sc_xname,
+		    (dg->dg_secperunit * dgratio)
+		    - (lp->d_secperunit * lpratio));
 
 	for (i=0; i < lp->d_npartitions; i++) {
+		uint64_t pend;
+
 		pp = &lp->d_partitions[i];
-		if (pp->p_offset + pp->p_size > dg->dg_secperunit)
+		pend = pp->p_offset + pp->p_size;
+		if (pend * lpratio > dg->dg_secperunit * dgratio)
 			printf("WARNING: %s: end of partition `%c' exceeds "
-			    "the size of %s (%ju)\n", dksc->sc_xname,
+			    "the size of %s (%" PRIu64 ")\n", dksc->sc_xname,
 			    'a' + i, dksc->sc_xname,
-			    (uintmax_t)dg->dg_secperunit);
+			    dg->dg_secperunit * dgratio);
 	}
 }
 

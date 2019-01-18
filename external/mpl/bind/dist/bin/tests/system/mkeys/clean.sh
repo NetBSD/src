@@ -20,3 +20,4 @@ rm -f ns1/named.secroots ns1/root.db.signed* ns1/root.db.tmp
 rm -f */named.conf
 rm -rf ns4/nope
 rm -f ns5/named.args
+rm -f ns*/managed-keys.bind*

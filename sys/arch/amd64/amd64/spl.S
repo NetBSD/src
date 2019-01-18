@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.31.2.4 2018/12/26 14:01:31 pgoyette Exp $	*/
+/*	$NetBSD: spl.S,v 1.31.2.5 2019/01/18 08:50:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,6 +77,17 @@
 #include "assym.h"
 
 	.text
+
+/*
+ * int splraise(int s);
+ */
+ENTRY(splraise)
+	movl	CPUVAR(ILEVEL),%eax
+	cmpl	%edi,%eax
+	cmoval	%eax,%edi
+	movl	%edi,CPUVAR(ILEVEL)
+	ret
+END(splraise)
 
 #ifndef XEN
 /*
@@ -200,17 +211,6 @@ IDTVEC(resume_preempt)
 	cli
 	jmp	*%r13			/* back to Xdoreti */
 IDTVEC_END(resume_preempt)
-
-/*
- * int splraise(int s);
- */
-ENTRY(splraise)
-	movl	CPUVAR(ILEVEL),%eax
-	cmpl	%edi,%eax
-	cmoval	%eax,%edi
-	movl	%edi,CPUVAR(ILEVEL)
-	ret
-END(splraise)
 
 /*
  * void spllower(int s);

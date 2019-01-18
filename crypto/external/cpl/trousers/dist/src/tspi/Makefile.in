@@ -141,7 +141,7 @@ target_triplet = @target@
 subdir = src/tspi
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -174,8 +174,8 @@ libtspi_la_DEPENDENCIES = ${top_builddir}/src/trspi/libtrousers.la
 am__libtspi_la_SOURCES_DIST = log.c spi_utils.c obj.c obj_policy.c \
 	tsp_policy.c obj_tpm.c obj_context.c tsp_context_mem.c \
 	tspi_context.c rpc/@RPC@/rpc_context.c rpc/tcs_api.c \
-	rpc/hosttable.c rpc/@RPC@/rpc.c tsp_asym.c tspi_oper.c \
-	tsp_oper.c rpc/@RPC@/rpc_oper.c tspi_transport.c \
+	rpc/hosttable.c rpc/@RPC@/rpc.c tsp_tcsi_param.c tsp_asym.c \
+	tspi_oper.c tsp_oper.c rpc/@RPC@/rpc_oper.c tspi_transport.c \
 	rpc/@RPC@/rpc_transport.c tspi_tick.c tsp_tick.c \
 	rpc/@RPC@/rpc_tick.c tspi_counter.c tsp_counter.c \
 	rpc/@RPC@/rpc_counter.c tspi_pcr_comp12.c tsp_auth.c \
@@ -218,107 +218,112 @@ am__libtspi_la_SOURCES_DIST = log.c spi_utils.c obj.c obj_policy.c \
 	tsp_nv.c rpc/@RPC@/rpc_nv.c tspi_delegate.c tsp_delegate.c \
 	obj_delfamily.c rpc/@RPC@/rpc_delegate.c tspi_cmk.c \
 	obj_migdata.c rpc/@RPC@/rpc_cmk.c
+am__dirstamp = $(am__leading_dot)dirstamp
 @TSS_BUILD_ASYM_CRYPTO_TRUE@am__objects_1 = libtspi_la-tsp_asym.lo
 @TSS_BUILD_TSS12_TRUE@am__objects_2 = libtspi_la-tspi_oper.lo \
 @TSS_BUILD_TSS12_TRUE@	libtspi_la-tsp_oper.lo \
-@TSS_BUILD_TSS12_TRUE@	libtspi_la-rpc_oper.lo
+@TSS_BUILD_TSS12_TRUE@	rpc/@RPC@/libtspi_la-rpc_oper.lo
 @TSS_BUILD_TRANSPORT_TRUE@am__objects_3 =  \
 @TSS_BUILD_TRANSPORT_TRUE@	libtspi_la-tspi_transport.lo \
-@TSS_BUILD_TRANSPORT_TRUE@	libtspi_la-rpc_transport.lo
+@TSS_BUILD_TRANSPORT_TRUE@	rpc/@RPC@/libtspi_la-rpc_transport.lo
 @TSS_BUILD_TICK_TRUE@am__objects_4 = libtspi_la-tspi_tick.lo \
 @TSS_BUILD_TICK_TRUE@	libtspi_la-tsp_tick.lo \
-@TSS_BUILD_TICK_TRUE@	libtspi_la-rpc_tick.lo
+@TSS_BUILD_TICK_TRUE@	rpc/@RPC@/libtspi_la-rpc_tick.lo
 @TSS_BUILD_COUNTER_TRUE@am__objects_5 = libtspi_la-tspi_counter.lo \
 @TSS_BUILD_COUNTER_TRUE@	libtspi_la-tsp_counter.lo \
-@TSS_BUILD_COUNTER_TRUE@	libtspi_la-rpc_counter.lo
+@TSS_BUILD_COUNTER_TRUE@	rpc/@RPC@/libtspi_la-rpc_counter.lo
 @TSS_BUILD_PCR_COMP12_TRUE@am__objects_6 =  \
 @TSS_BUILD_PCR_COMP12_TRUE@	libtspi_la-tspi_pcr_comp12.lo
 @TSS_BUILD_AUTH_TRUE@am__objects_7 = libtspi_la-tsp_auth.lo \
-@TSS_BUILD_AUTH_TRUE@	libtspi_la-rpc_auth.lo
+@TSS_BUILD_AUTH_TRUE@	rpc/@RPC@/libtspi_la-rpc_auth.lo
 @TSS_BUILD_GETSET_TRUE@am__objects_8 = libtspi_la-tspi_getset.lo
 @TSS_BUILD_RANDOM_TRUE@am__objects_9 = libtspi_la-tspi_random.lo \
 @TSS_BUILD_RANDOM_TRUE@	libtspi_la-tsp_random.lo \
-@TSS_BUILD_RANDOM_TRUE@	libtspi_la-rpc_random.lo
+@TSS_BUILD_RANDOM_TRUE@	rpc/@RPC@/libtspi_la-rpc_random.lo
 @TSS_BUILD_CAPS_TRUE@am__objects_10 = libtspi_la-tspi_caps.lo \
 @TSS_BUILD_CAPS_TRUE@	libtspi_la-tsp_caps.lo \
-@TSS_BUILD_CAPS_TRUE@	libtspi_la-rpc_caps.lo
+@TSS_BUILD_CAPS_TRUE@	rpc/@RPC@/libtspi_la-rpc_caps.lo
 @TSS_BUILD_CAPS_TPM_TRUE@am__objects_11 = libtspi_la-tspi_caps_tpm.lo \
 @TSS_BUILD_CAPS_TPM_TRUE@	libtspi_la-tsp_caps_tpm.lo \
-@TSS_BUILD_CAPS_TPM_TRUE@	libtspi_la-rpc_caps_tpm.lo
+@TSS_BUILD_CAPS_TPM_TRUE@	rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo
 @TSS_BUILD_POLICY_TRUE@am__objects_12 = libtspi_la-tspi_policy.lo
 @TSS_BUILD_DIR_TRUE@am__objects_13 = libtspi_la-tspi_dir.lo \
 @TSS_BUILD_DIR_TRUE@	libtspi_la-tsp_dir.lo \
-@TSS_BUILD_DIR_TRUE@	libtspi_la-rpc_dir.lo
+@TSS_BUILD_DIR_TRUE@	rpc/@RPC@/libtspi_la-rpc_dir.lo
 @TSS_BUILD_PCR_EVENTS_TRUE@am__objects_14 =  \
 @TSS_BUILD_PCR_EVENTS_TRUE@	libtspi_la-tspi_pcr_events.lo \
-@TSS_BUILD_PCR_EVENTS_TRUE@	libtspi_la-rpc_evlog.lo
+@TSS_BUILD_PCR_EVENTS_TRUE@	rpc/@RPC@/libtspi_la-rpc_evlog.lo
 @TSS_BUILD_HASH_TRUE@am__objects_15 = libtspi_la-tspi_hash.lo
 @TSS_BUILD_SIGN_TRUE@am__objects_16 = libtspi_la-tspi_sign.lo \
 @TSS_BUILD_SIGN_TRUE@	libtspi_la-tsp_sign.lo \
-@TSS_BUILD_SIGN_TRUE@	libtspi_la-rpc_sign.lo
+@TSS_BUILD_SIGN_TRUE@	rpc/@RPC@/libtspi_la-rpc_sign.lo
 @TSS_BUILD_QUOTE_TRUE@am__objects_17 = libtspi_la-tspi_quote.lo \
 @TSS_BUILD_QUOTE_TRUE@	libtspi_la-tsp_quote.lo \
-@TSS_BUILD_QUOTE_TRUE@	libtspi_la-rpc_quote.lo
+@TSS_BUILD_QUOTE_TRUE@	rpc/@RPC@/libtspi_la-rpc_quote.lo
 @TSS_BUILD_PCR_COMP_TRUE@am__objects_18 = libtspi_la-tspi_pcr_comp.lo
 @TSS_BUILD_SEAL_TRUE@am__objects_19 = libtspi_la-tspi_seal.lo \
-@TSS_BUILD_SEAL_TRUE@	libtspi_la-rpc_seal.lo
+@TSS_BUILD_SEAL_TRUE@	rpc/@RPC@/libtspi_la-rpc_seal.lo
 @TSS_BUILD_CHANGEAUTH_TRUE@am__objects_20 =  \
 @TSS_BUILD_CHANGEAUTH_TRUE@	libtspi_la-tspi_changeauth.lo \
 @TSS_BUILD_CHANGEAUTH_TRUE@	libtspi_la-tsp_changeauth.lo \
-@TSS_BUILD_CHANGEAUTH_TRUE@	libtspi_la-rpc_changeauth.lo
+@TSS_BUILD_CHANGEAUTH_TRUE@	rpc/@RPC@/libtspi_la-rpc_changeauth.lo
 @TSS_BUILD_BIND_TRUE@am__objects_21 = libtspi_la-tspi_bind.lo \
 @TSS_BUILD_BIND_TRUE@	libtspi_la-tsp_bind.lo \
-@TSS_BUILD_BIND_TRUE@	libtspi_la-rpc_bind.lo
+@TSS_BUILD_BIND_TRUE@	rpc/@RPC@/libtspi_la-rpc_bind.lo
 @TSS_BUILD_OWN_TRUE@am__objects_22 = libtspi_la-tsp_own.lo \
 @TSS_BUILD_OWN_TRUE@	libtspi_la-tspi_own.lo \
-@TSS_BUILD_OWN_TRUE@	libtspi_la-rpc_own.lo
-@TSS_BUILD_PS_TRUE@am__objects_23 = libtspi_la-ps_utils.lo \
-@TSS_BUILD_PS_TRUE@	libtspi_la-tspps.lo libtspi_la-tspi_ps.lo \
-@TSS_BUILD_PS_TRUE@	libtspi_la-rpc_ps.lo libtspi_la-tsp_ps.lo
+@TSS_BUILD_OWN_TRUE@	rpc/@RPC@/libtspi_la-rpc_own.lo
+@TSS_BUILD_PS_TRUE@am__objects_23 = ps/libtspi_la-ps_utils.lo \
+@TSS_BUILD_PS_TRUE@	ps/libtspi_la-tspps.lo \
+@TSS_BUILD_PS_TRUE@	libtspi_la-tspi_ps.lo \
+@TSS_BUILD_PS_TRUE@	rpc/@RPC@/libtspi_la-rpc_ps.lo \
+@TSS_BUILD_PS_TRUE@	libtspi_la-tsp_ps.lo
 @TSS_BUILD_ADMIN_TRUE@am__objects_24 = libtspi_la-tspi_admin.lo \
 @TSS_BUILD_ADMIN_TRUE@	libtspi_la-tsp_admin.lo \
-@TSS_BUILD_ADMIN_TRUE@	libtspi_la-rpc_admin.lo
+@TSS_BUILD_ADMIN_TRUE@	rpc/@RPC@/libtspi_la-rpc_admin.lo
 @TSS_BUILD_AIK_TRUE@am__objects_25 = libtspi_la-tspi_aik.lo \
 @TSS_BUILD_AIK_TRUE@	libtspi_la-tsp_aik.lo \
-@TSS_BUILD_AIK_TRUE@	libtspi_la-rpc_aik.lo
+@TSS_BUILD_AIK_TRUE@	rpc/@RPC@/libtspi_la-rpc_aik.lo
 @TSS_BUILD_EK_TRUE@am__objects_26 = libtspi_la-tspi_ek.lo \
-@TSS_BUILD_EK_TRUE@	libtspi_la-tsp_ek.lo libtspi_la-rpc_ek.lo
+@TSS_BUILD_EK_TRUE@	libtspi_la-tsp_ek.lo \
+@TSS_BUILD_EK_TRUE@	rpc/@RPC@/libtspi_la-rpc_ek.lo
 @TSS_BUILD_CERTIFY_TRUE@am__objects_27 = libtspi_la-tspi_certify.lo \
 @TSS_BUILD_CERTIFY_TRUE@	libtspi_la-tsp_certify.lo \
-@TSS_BUILD_CERTIFY_TRUE@	libtspi_la-rpc_certify.lo
+@TSS_BUILD_CERTIFY_TRUE@	rpc/@RPC@/libtspi_la-rpc_certify.lo
 @TSS_BUILD_KEY_TRUE@am__objects_28 = libtspi_la-tspi_key.lo \
-@TSS_BUILD_KEY_TRUE@	libtspi_la-rpc_key.lo
+@TSS_BUILD_KEY_TRUE@	rpc/@RPC@/libtspi_la-rpc_key.lo
 @TSS_BUILD_MAINT_TRUE@am__objects_29 = libtspi_la-tspi_maint.lo \
 @TSS_BUILD_MAINT_TRUE@	libtspi_la-tsp_maint.lo \
-@TSS_BUILD_MAINT_TRUE@	libtspi_la-rpc_maint.lo
+@TSS_BUILD_MAINT_TRUE@	rpc/@RPC@/libtspi_la-rpc_maint.lo
 @TSS_BUILD_MIGRATION_TRUE@am__objects_30 =  \
 @TSS_BUILD_MIGRATION_TRUE@	libtspi_la-tspi_migration.lo \
 @TSS_BUILD_MIGRATION_TRUE@	libtspi_la-tsp_migration.lo \
-@TSS_BUILD_MIGRATION_TRUE@	libtspi_la-rpc_migration.lo
+@TSS_BUILD_MIGRATION_TRUE@	rpc/@RPC@/libtspi_la-rpc_migration.lo
 @TSS_BUILD_PCR_EXTEND_TRUE@am__objects_31 =  \
 @TSS_BUILD_PCR_EXTEND_TRUE@	libtspi_la-tspi_pcr_extend.lo \
 @TSS_BUILD_PCR_EXTEND_TRUE@	libtspi_la-tsp_pcr_extend.lo \
-@TSS_BUILD_PCR_EXTEND_TRUE@	libtspi_la-rpc_pcr_extend.lo
+@TSS_BUILD_PCR_EXTEND_TRUE@	rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo
 @TSS_BUILD_SELFTEST_TRUE@am__objects_32 = libtspi_la-tspi_selftest.lo \
 @TSS_BUILD_SELFTEST_TRUE@	libtspi_la-tsp_selftest.lo \
-@TSS_BUILD_SELFTEST_TRUE@	libtspi_la-rpc_selftest.lo
+@TSS_BUILD_SELFTEST_TRUE@	rpc/@RPC@/libtspi_la-rpc_selftest.lo
 @TSS_BUILD_DAA_TRUE@am__objects_33 = libtspi_la-tspi_daa.lo \
 @TSS_BUILD_DAA_TRUE@	libtspi_la-tsp_daa.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-rpc_daa.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-keypair_generator.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-prime_gen.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-key_correctness_proof.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-platform.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-issuer_init.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-issue_credential.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-verifier_transaction.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-verifier.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-daa_structs.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-daa_parameter.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-bi_gmp.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-bi_openssl.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-csencryption_result.lo \
-@TSS_BUILD_DAA_TRUE@	libtspi_la-bi.lo libtspi_la-list.lo
+@TSS_BUILD_DAA_TRUE@	rpc/@RPC@/libtspi_la-rpc_daa.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_issuer/libtspi_la-keypair_generator.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_issuer/libtspi_la-prime_gen.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_issuer/libtspi_la-key_correctness_proof.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_platform/libtspi_la-platform.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_issuer/libtspi_la-issuer_init.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_issuer/libtspi_la-issue_credential.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_verifier/libtspi_la-verifier_transaction.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_verifier/libtspi_la-verifier.lo \
+@TSS_BUILD_DAA_TRUE@	daa/libtspi_la-daa_structs.lo \
+@TSS_BUILD_DAA_TRUE@	daa/libtspi_la-daa_parameter.lo \
+@TSS_BUILD_DAA_TRUE@	daa/big_integer/libtspi_la-bi_gmp.lo \
+@TSS_BUILD_DAA_TRUE@	daa/big_integer/libtspi_la-bi_openssl.lo \
+@TSS_BUILD_DAA_TRUE@	daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo \
+@TSS_BUILD_DAA_TRUE@	daa/big_integer/libtspi_la-bi.lo \
+@TSS_BUILD_DAA_TRUE@	daa/utils/libtspi_la-list.lo
 @TSS_BUILD_GET_FLAGS_TRUE@am__objects_34 =  \
 @TSS_BUILD_GET_FLAGS_TRUE@	libtspi_la-tsp_get_flags.lo
 @TSS_BUILD_PCRS_LIST_TRUE@am__objects_35 = libtspi_la-obj_pcrs.lo \
@@ -331,48 +336,50 @@ am__libtspi_la_SOURCES_DIST = log.c spi_utils.c obj.c obj_policy.c \
 @TSS_BUILD_ASN1_TRUE@am__objects_39 = libtspi_la-tspi_asn1.lo
 @TSS_BUILD_AUDIT_TRUE@am__objects_40 = libtspi_la-tspi_audit.lo \
 @TSS_BUILD_AUDIT_TRUE@	libtspi_la-tsp_audit.lo \
-@TSS_BUILD_AUDIT_TRUE@	libtspi_la-rpc_audit.lo
+@TSS_BUILD_AUDIT_TRUE@	rpc/@RPC@/libtspi_la-rpc_audit.lo
 @TSS_BUILD_SEALX_TRUE@am__objects_41 = libtspi_la-tsp_seal.lo
 @TSS_BUILD_QUOTE2_TRUE@am__objects_42 = libtspi_la-tspi_quote2.lo \
 @TSS_BUILD_QUOTE2_TRUE@	libtspi_la-tsp_quote2.lo \
-@TSS_BUILD_QUOTE2_TRUE@	libtspi_la-rpc_quote2.lo
-@HAVE_GTK_TRUE@am__objects_43 = libtspi_la-main.lo \
-@HAVE_GTK_TRUE@	libtspi_la-support.lo libtspi_la-interface.lo \
-@HAVE_GTK_TRUE@	libtspi_la-callbacks.lo
+@TSS_BUILD_QUOTE2_TRUE@	rpc/@RPC@/libtspi_la-rpc_quote2.lo
+@HAVE_GTK_TRUE@am__objects_43 = gtk/libtspi_la-main.lo \
+@HAVE_GTK_TRUE@	gtk/libtspi_la-support.lo \
+@HAVE_GTK_TRUE@	gtk/libtspi_la-interface.lo \
+@HAVE_GTK_TRUE@	gtk/libtspi_la-callbacks.lo
 @OPENSSL_UI_TRUE@am__objects_44 = libtspi_la-ssl_ui.lo
 @TSS_BUILD_NV_TRUE@am__objects_45 = libtspi_la-tspi_nv.lo \
 @TSS_BUILD_NV_TRUE@	libtspi_la-obj_nv.lo libtspi_la-tsp_nv.lo \
-@TSS_BUILD_NV_TRUE@	libtspi_la-rpc_nv.lo
+@TSS_BUILD_NV_TRUE@	rpc/@RPC@/libtspi_la-rpc_nv.lo
 @TSS_BUILD_DELEGATION_TRUE@am__objects_46 =  \
 @TSS_BUILD_DELEGATION_TRUE@	libtspi_la-tspi_delegate.lo \
 @TSS_BUILD_DELEGATION_TRUE@	libtspi_la-tsp_delegate.lo \
 @TSS_BUILD_DELEGATION_TRUE@	libtspi_la-obj_delfamily.lo \
-@TSS_BUILD_DELEGATION_TRUE@	libtspi_la-rpc_delegate.lo
+@TSS_BUILD_DELEGATION_TRUE@	rpc/@RPC@/libtspi_la-rpc_delegate.lo
 @TSS_BUILD_CMK_TRUE@am__objects_47 = libtspi_la-tspi_cmk.lo \
 @TSS_BUILD_CMK_TRUE@	libtspi_la-obj_migdata.lo \
-@TSS_BUILD_CMK_TRUE@	libtspi_la-rpc_cmk.lo
+@TSS_BUILD_CMK_TRUE@	rpc/@RPC@/libtspi_la-rpc_cmk.lo
 am_libtspi_la_OBJECTS = libtspi_la-log.lo libtspi_la-spi_utils.lo \
 	libtspi_la-obj.lo libtspi_la-obj_policy.lo \
 	libtspi_la-tsp_policy.lo libtspi_la-obj_tpm.lo \
 	libtspi_la-obj_context.lo libtspi_la-tsp_context_mem.lo \
-	libtspi_la-tspi_context.lo libtspi_la-rpc_context.lo \
-	libtspi_la-tcs_api.lo libtspi_la-hosttable.lo \
-	libtspi_la-rpc.lo $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
-	$(am__objects_12) $(am__objects_13) $(am__objects_14) \
-	$(am__objects_15) $(am__objects_16) $(am__objects_17) \
-	$(am__objects_18) $(am__objects_19) $(am__objects_20) \
-	$(am__objects_21) $(am__objects_22) $(am__objects_23) \
-	$(am__objects_24) $(am__objects_25) $(am__objects_26) \
-	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
-	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
-	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
-	$(am__objects_36) $(am__objects_37) $(am__objects_38) \
-	$(am__objects_39) $(am__objects_40) $(am__objects_41) \
-	$(am__objects_42) $(am__objects_43) $(am__objects_44) \
-	$(am__objects_45) $(am__objects_46) $(am__objects_47)
+	libtspi_la-tspi_context.lo rpc/@RPC@/libtspi_la-rpc_context.lo \
+	rpc/libtspi_la-tcs_api.lo rpc/libtspi_la-hosttable.lo \
+	rpc/@RPC@/libtspi_la-rpc.lo libtspi_la-tsp_tcsi_param.lo \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
+	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
+	$(am__objects_13) $(am__objects_14) $(am__objects_15) \
+	$(am__objects_16) $(am__objects_17) $(am__objects_18) \
+	$(am__objects_19) $(am__objects_20) $(am__objects_21) \
+	$(am__objects_22) $(am__objects_23) $(am__objects_24) \
+	$(am__objects_25) $(am__objects_26) $(am__objects_27) \
+	$(am__objects_28) $(am__objects_29) $(am__objects_30) \
+	$(am__objects_31) $(am__objects_32) $(am__objects_33) \
+	$(am__objects_34) $(am__objects_35) $(am__objects_36) \
+	$(am__objects_37) $(am__objects_38) $(am__objects_39) \
+	$(am__objects_40) $(am__objects_41) $(am__objects_42) \
+	$(am__objects_43) $(am__objects_44) $(am__objects_45) \
+	$(am__objects_46) $(am__objects_47)
 libtspi_la_OBJECTS = $(am_libtspi_la_OBJECTS)
 libtspi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libtspi_la_CFLAGS) \
@@ -450,12 +457,9 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
-PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 RPC = @RPC@
 SED = @SED@
@@ -463,6 +467,7 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 TCSD_DEFAULT_PORT = @TCSD_DEFAULT_PORT@
+TCSD_LDFLAGS = @TCSD_LDFLAGS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -559,22 +564,23 @@ libtspi_la_CFLAGS = -I$(top_srcdir)/src/include -DAPPID=\"TSPI\" \
 libtspi_la_SOURCES = log.c spi_utils.c obj.c obj_policy.c tsp_policy.c \
 	obj_tpm.c obj_context.c tsp_context_mem.c tspi_context.c \
 	rpc/@RPC@/rpc_context.c rpc/tcs_api.c rpc/hosttable.c \
-	rpc/@RPC@/rpc.c $(am__append_1) $(am__append_2) \
-	$(am__append_4) $(am__append_6) $(am__append_8) \
-	$(am__append_10) $(am__append_11) $(am__append_13) \
-	$(am__append_15) $(am__append_17) $(am__append_19) \
-	$(am__append_21) $(am__append_23) $(am__append_25) \
-	$(am__append_27) $(am__append_29) $(am__append_31) \
-	$(am__append_33) $(am__append_35) $(am__append_37) \
-	$(am__append_39) $(am__append_41) $(am__append_43) \
-	$(am__append_45) $(am__append_47) $(am__append_49) \
-	$(am__append_51) $(am__append_53) $(am__append_55) \
-	$(am__append_57) $(am__append_59) $(am__append_61) \
-	$(am__append_63) $(am__append_65) $(am__append_66) \
-	$(am__append_68) $(am__append_70) $(am__append_72) \
-	$(am__append_74) $(am__append_76) $(am__append_78) \
-	$(am__append_80) $(am__append_84) $(am__append_86) \
-	$(am__append_87) $(am__append_89) $(am__append_91)
+	rpc/@RPC@/rpc.c tsp_tcsi_param.c $(am__append_1) \
+	$(am__append_2) $(am__append_4) $(am__append_6) \
+	$(am__append_8) $(am__append_10) $(am__append_11) \
+	$(am__append_13) $(am__append_15) $(am__append_17) \
+	$(am__append_19) $(am__append_21) $(am__append_23) \
+	$(am__append_25) $(am__append_27) $(am__append_29) \
+	$(am__append_31) $(am__append_33) $(am__append_35) \
+	$(am__append_37) $(am__append_39) $(am__append_41) \
+	$(am__append_43) $(am__append_45) $(am__append_47) \
+	$(am__append_49) $(am__append_51) $(am__append_53) \
+	$(am__append_55) $(am__append_57) $(am__append_59) \
+	$(am__append_61) $(am__append_63) $(am__append_65) \
+	$(am__append_66) $(am__append_68) $(am__append_70) \
+	$(am__append_72) $(am__append_74) $(am__append_76) \
+	$(am__append_78) $(am__append_80) $(am__append_84) \
+	$(am__append_86) $(am__append_87) $(am__append_89) \
+	$(am__append_91)
 all: all-am
 
 .SUFFIXES:
@@ -640,31 +646,320 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+rpc/@RPC@/$(am__dirstamp):
+	@$(MKDIR_P) rpc/@RPC@
+	@: > rpc/@RPC@/$(am__dirstamp)
+rpc/@RPC@/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) rpc/@RPC@/$(DEPDIR)
+	@: > rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_context.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/$(am__dirstamp):
+	@$(MKDIR_P) rpc
+	@: > rpc/$(am__dirstamp)
+rpc/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) rpc/$(DEPDIR)
+	@: > rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libtspi_la-tcs_api.lo: rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/libtspi_la-hosttable.lo: rpc/$(am__dirstamp) \
+	rpc/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_oper.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_transport.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_tick.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_counter.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_auth.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_random.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_caps.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_dir.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_evlog.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_sign.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_quote.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_seal.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_changeauth.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_bind.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_own.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+ps/$(am__dirstamp):
+	@$(MKDIR_P) ps
+	@: > ps/$(am__dirstamp)
+ps/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ps/$(DEPDIR)
+	@: > ps/$(DEPDIR)/$(am__dirstamp)
+ps/libtspi_la-ps_utils.lo: ps/$(am__dirstamp) \
+	ps/$(DEPDIR)/$(am__dirstamp)
+ps/libtspi_la-tspps.lo: ps/$(am__dirstamp) \
+	ps/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_ps.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_admin.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_aik.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_ek.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_certify.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_key.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_maint.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_migration.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_selftest.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_daa.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+daa/daa_issuer/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_issuer
+	@: > daa/daa_issuer/$(am__dirstamp)
+daa/daa_issuer/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_issuer/$(DEPDIR)
+	@: > daa/daa_issuer/$(DEPDIR)/$(am__dirstamp)
+daa/daa_issuer/libtspi_la-keypair_generator.lo:  \
+	daa/daa_issuer/$(am__dirstamp) \
+	daa/daa_issuer/$(DEPDIR)/$(am__dirstamp)
+daa/daa_issuer/libtspi_la-prime_gen.lo:  \
+	daa/daa_issuer/$(am__dirstamp) \
+	daa/daa_issuer/$(DEPDIR)/$(am__dirstamp)
+daa/daa_issuer/libtspi_la-key_correctness_proof.lo:  \
+	daa/daa_issuer/$(am__dirstamp) \
+	daa/daa_issuer/$(DEPDIR)/$(am__dirstamp)
+daa/daa_platform/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_platform
+	@: > daa/daa_platform/$(am__dirstamp)
+daa/daa_platform/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_platform/$(DEPDIR)
+	@: > daa/daa_platform/$(DEPDIR)/$(am__dirstamp)
+daa/daa_platform/libtspi_la-platform.lo:  \
+	daa/daa_platform/$(am__dirstamp) \
+	daa/daa_platform/$(DEPDIR)/$(am__dirstamp)
+daa/daa_issuer/libtspi_la-issuer_init.lo:  \
+	daa/daa_issuer/$(am__dirstamp) \
+	daa/daa_issuer/$(DEPDIR)/$(am__dirstamp)
+daa/daa_issuer/libtspi_la-issue_credential.lo:  \
+	daa/daa_issuer/$(am__dirstamp) \
+	daa/daa_issuer/$(DEPDIR)/$(am__dirstamp)
+daa/daa_verifier/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_verifier
+	@: > daa/daa_verifier/$(am__dirstamp)
+daa/daa_verifier/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_verifier/$(DEPDIR)
+	@: > daa/daa_verifier/$(DEPDIR)/$(am__dirstamp)
+daa/daa_verifier/libtspi_la-verifier_transaction.lo:  \
+	daa/daa_verifier/$(am__dirstamp) \
+	daa/daa_verifier/$(DEPDIR)/$(am__dirstamp)
+daa/daa_verifier/libtspi_la-verifier.lo:  \
+	daa/daa_verifier/$(am__dirstamp) \
+	daa/daa_verifier/$(DEPDIR)/$(am__dirstamp)
+daa/$(am__dirstamp):
+	@$(MKDIR_P) daa
+	@: > daa/$(am__dirstamp)
+daa/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) daa/$(DEPDIR)
+	@: > daa/$(DEPDIR)/$(am__dirstamp)
+daa/libtspi_la-daa_structs.lo: daa/$(am__dirstamp) \
+	daa/$(DEPDIR)/$(am__dirstamp)
+daa/libtspi_la-daa_parameter.lo: daa/$(am__dirstamp) \
+	daa/$(DEPDIR)/$(am__dirstamp)
+daa/big_integer/$(am__dirstamp):
+	@$(MKDIR_P) daa/big_integer
+	@: > daa/big_integer/$(am__dirstamp)
+daa/big_integer/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) daa/big_integer/$(DEPDIR)
+	@: > daa/big_integer/$(DEPDIR)/$(am__dirstamp)
+daa/big_integer/libtspi_la-bi_gmp.lo: daa/big_integer/$(am__dirstamp) \
+	daa/big_integer/$(DEPDIR)/$(am__dirstamp)
+daa/big_integer/libtspi_la-bi_openssl.lo:  \
+	daa/big_integer/$(am__dirstamp) \
+	daa/big_integer/$(DEPDIR)/$(am__dirstamp)
+daa/daa_anonymityrevocation/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_anonymityrevocation
+	@: > daa/daa_anonymityrevocation/$(am__dirstamp)
+daa/daa_anonymityrevocation/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) daa/daa_anonymityrevocation/$(DEPDIR)
+	@: > daa/daa_anonymityrevocation/$(DEPDIR)/$(am__dirstamp)
+daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo:  \
+	daa/daa_anonymityrevocation/$(am__dirstamp) \
+	daa/daa_anonymityrevocation/$(DEPDIR)/$(am__dirstamp)
+daa/big_integer/libtspi_la-bi.lo: daa/big_integer/$(am__dirstamp) \
+	daa/big_integer/$(DEPDIR)/$(am__dirstamp)
+daa/utils/$(am__dirstamp):
+	@$(MKDIR_P) daa/utils
+	@: > daa/utils/$(am__dirstamp)
+daa/utils/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) daa/utils/$(DEPDIR)
+	@: > daa/utils/$(DEPDIR)/$(am__dirstamp)
+daa/utils/libtspi_la-list.lo: daa/utils/$(am__dirstamp) \
+	daa/utils/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_audit.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_quote2.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+gtk/$(am__dirstamp):
+	@$(MKDIR_P) gtk
+	@: > gtk/$(am__dirstamp)
+gtk/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) gtk/$(DEPDIR)
+	@: > gtk/$(DEPDIR)/$(am__dirstamp)
+gtk/libtspi_la-main.lo: gtk/$(am__dirstamp) \
+	gtk/$(DEPDIR)/$(am__dirstamp)
+gtk/libtspi_la-support.lo: gtk/$(am__dirstamp) \
+	gtk/$(DEPDIR)/$(am__dirstamp)
+gtk/libtspi_la-interface.lo: gtk/$(am__dirstamp) \
+	gtk/$(DEPDIR)/$(am__dirstamp)
+gtk/libtspi_la-callbacks.lo: gtk/$(am__dirstamp) \
+	gtk/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_nv.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_delegate.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+rpc/@RPC@/libtspi_la-rpc_cmk.lo: rpc/@RPC@/$(am__dirstamp) \
+	rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
 libtspi.la: $(libtspi_la_OBJECTS) $(libtspi_la_DEPENDENCIES) 
 	$(libtspi_la_LINK) -rpath $(libdir) $(libtspi_la_OBJECTS) $(libtspi_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f daa/big_integer/libtspi_la-bi.$(OBJEXT)
+	-rm -f daa/big_integer/libtspi_la-bi.lo
+	-rm -f daa/big_integer/libtspi_la-bi_gmp.$(OBJEXT)
+	-rm -f daa/big_integer/libtspi_la-bi_gmp.lo
+	-rm -f daa/big_integer/libtspi_la-bi_openssl.$(OBJEXT)
+	-rm -f daa/big_integer/libtspi_la-bi_openssl.lo
+	-rm -f daa/daa_anonymityrevocation/libtspi_la-csencryption_result.$(OBJEXT)
+	-rm -f daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo
+	-rm -f daa/daa_issuer/libtspi_la-issue_credential.$(OBJEXT)
+	-rm -f daa/daa_issuer/libtspi_la-issue_credential.lo
+	-rm -f daa/daa_issuer/libtspi_la-issuer_init.$(OBJEXT)
+	-rm -f daa/daa_issuer/libtspi_la-issuer_init.lo
+	-rm -f daa/daa_issuer/libtspi_la-key_correctness_proof.$(OBJEXT)
+	-rm -f daa/daa_issuer/libtspi_la-key_correctness_proof.lo
+	-rm -f daa/daa_issuer/libtspi_la-keypair_generator.$(OBJEXT)
+	-rm -f daa/daa_issuer/libtspi_la-keypair_generator.lo
+	-rm -f daa/daa_issuer/libtspi_la-prime_gen.$(OBJEXT)
+	-rm -f daa/daa_issuer/libtspi_la-prime_gen.lo
+	-rm -f daa/daa_platform/libtspi_la-platform.$(OBJEXT)
+	-rm -f daa/daa_platform/libtspi_la-platform.lo
+	-rm -f daa/daa_verifier/libtspi_la-verifier.$(OBJEXT)
+	-rm -f daa/daa_verifier/libtspi_la-verifier.lo
+	-rm -f daa/daa_verifier/libtspi_la-verifier_transaction.$(OBJEXT)
+	-rm -f daa/daa_verifier/libtspi_la-verifier_transaction.lo
+	-rm -f daa/libtspi_la-daa_parameter.$(OBJEXT)
+	-rm -f daa/libtspi_la-daa_parameter.lo
+	-rm -f daa/libtspi_la-daa_structs.$(OBJEXT)
+	-rm -f daa/libtspi_la-daa_structs.lo
+	-rm -f daa/utils/libtspi_la-list.$(OBJEXT)
+	-rm -f daa/utils/libtspi_la-list.lo
+	-rm -f gtk/libtspi_la-callbacks.$(OBJEXT)
+	-rm -f gtk/libtspi_la-callbacks.lo
+	-rm -f gtk/libtspi_la-interface.$(OBJEXT)
+	-rm -f gtk/libtspi_la-interface.lo
+	-rm -f gtk/libtspi_la-main.$(OBJEXT)
+	-rm -f gtk/libtspi_la-main.lo
+	-rm -f gtk/libtspi_la-support.$(OBJEXT)
+	-rm -f gtk/libtspi_la-support.lo
+	-rm -f ps/libtspi_la-ps_utils.$(OBJEXT)
+	-rm -f ps/libtspi_la-ps_utils.lo
+	-rm -f ps/libtspi_la-tspps.$(OBJEXT)
+	-rm -f ps/libtspi_la-tspps.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_admin.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_admin.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_aik.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_aik.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_audit.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_audit.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_auth.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_auth.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_bind.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_bind.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_caps.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_caps.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_caps_tpm.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_certify.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_certify.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_changeauth.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_changeauth.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_cmk.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_cmk.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_context.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_context.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_counter.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_counter.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_daa.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_daa.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_delegate.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_delegate.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_dir.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_dir.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_ek.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_ek.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_evlog.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_evlog.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_key.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_key.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_maint.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_maint.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_migration.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_migration.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_nv.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_nv.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_oper.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_oper.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_own.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_own.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_pcr_extend.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_ps.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_ps.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_quote.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_quote.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_quote2.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_quote2.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_random.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_random.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_seal.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_seal.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_selftest.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_selftest.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_sign.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_sign.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_tick.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_tick.lo
+	-rm -f rpc/@RPC@/libtspi_la-rpc_transport.$(OBJEXT)
+	-rm -f rpc/@RPC@/libtspi_la-rpc_transport.lo
+	-rm -f rpc/libtspi_la-hosttable.$(OBJEXT)
+	-rm -f rpc/libtspi_la-hosttable.lo
+	-rm -f rpc/libtspi_la-tcs_api.$(OBJEXT)
+	-rm -f rpc/libtspi_la-tcs_api.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-bi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-bi_gmp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-bi_openssl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-callbacks.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-csencryption_result.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-daa_parameter.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-daa_structs.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-hosttable.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-interface.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-issue_credential.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-issuer_init.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-key_correctness_proof.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-keypair_generator.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-list.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-log.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-obj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-obj_context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-obj_delfamily.Plo@am__quote@
@@ -676,47 +971,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-obj_policy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-obj_rsakey.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-obj_tpm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-platform.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-prime_gen.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-ps_utils.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_admin.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_aik.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_audit.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_auth.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_bind.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_caps.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_caps_tpm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_certify.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_changeauth.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_cmk.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_context.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_counter.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_daa.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_delegate.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_dir.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_ek.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_evlog.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_key.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_maint.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_migration.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_nv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_oper.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_own.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_pcr_extend.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_ps.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_quote.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_quote2.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_random.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_seal.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_selftest.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_sign.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_tick.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-rpc_transport.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-spi_utils.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-ssl_ui.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-support.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tcs_api.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_admin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_aik.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_asym.Plo@am__quote@
@@ -750,6 +1006,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_seal.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_selftest.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_sign.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_tcsi_param.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tsp_tick.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tspi_admin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tspi_aik.Plo@am__quote@
@@ -789,27 +1046,84 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tspi_sign.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tspi_tick.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tspi_transport.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-tspps.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-verifier.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtspi_la-verifier_transaction.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/$(DEPDIR)/libtspi_la-daa_parameter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/$(DEPDIR)/libtspi_la-daa_structs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/big_integer/$(DEPDIR)/libtspi_la-bi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/big_integer/$(DEPDIR)/libtspi_la-bi_gmp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/big_integer/$(DEPDIR)/libtspi_la-bi_openssl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_anonymityrevocation/$(DEPDIR)/libtspi_la-csencryption_result.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_issuer/$(DEPDIR)/libtspi_la-issue_credential.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_issuer/$(DEPDIR)/libtspi_la-issuer_init.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_issuer/$(DEPDIR)/libtspi_la-key_correctness_proof.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_issuer/$(DEPDIR)/libtspi_la-keypair_generator.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_issuer/$(DEPDIR)/libtspi_la-prime_gen.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_platform/$(DEPDIR)/libtspi_la-platform.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier_transaction.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@daa/utils/$(DEPDIR)/libtspi_la-list.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gtk/$(DEPDIR)/libtspi_la-callbacks.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gtk/$(DEPDIR)/libtspi_la-interface.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gtk/$(DEPDIR)/libtspi_la-main.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@gtk/$(DEPDIR)/libtspi_la-support.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ps/$(DEPDIR)/libtspi_la-ps_utils.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ps/$(DEPDIR)/libtspi_la-tspps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libtspi_la-hosttable.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/$(DEPDIR)/libtspi_la-tcs_api.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_admin.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_aik.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_audit.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_auth.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_bind.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps_tpm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_certify.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_changeauth.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_cmk.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_context.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_counter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_daa.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_delegate.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_dir.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ek.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_evlog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_key.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_maint.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_migration.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_nv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_oper.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_own.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_pcr_extend.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_random.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_seal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_selftest.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_sign.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_tick.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_transport.Plo@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+@am__fastdepCC_FALSE@	$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
@@ -877,33 +1191,40 @@ libtspi_la-tspi_context.lo: tspi_context.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspi_context.lo `test -f 'tspi_context.c' || echo '$(srcdir)/'`tspi_context.c
 
-libtspi_la-rpc_context.lo: rpc/@RPC@/rpc_context.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_context.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_context.Tpo -c -o libtspi_la-rpc_context.lo `test -f 'rpc/@RPC@/rpc_context.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_context.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_context.Tpo $(DEPDIR)/libtspi_la-rpc_context.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_context.c' object='libtspi_la-rpc_context.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_context.lo: rpc/@RPC@/rpc_context.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_context.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_context.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_context.lo `test -f 'rpc/@RPC@/rpc_context.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_context.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_context.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_context.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_context.c' object='rpc/@RPC@/libtspi_la-rpc_context.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_context.lo `test -f 'rpc/@RPC@/rpc_context.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_context.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_context.lo `test -f 'rpc/@RPC@/rpc_context.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_context.c
 
-libtspi_la-tcs_api.lo: rpc/tcs_api.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tcs_api.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tcs_api.Tpo -c -o libtspi_la-tcs_api.lo `test -f 'rpc/tcs_api.c' || echo '$(srcdir)/'`rpc/tcs_api.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-tcs_api.Tpo $(DEPDIR)/libtspi_la-tcs_api.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/tcs_api.c' object='libtspi_la-tcs_api.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/libtspi_la-tcs_api.lo: rpc/tcs_api.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/libtspi_la-tcs_api.lo -MD -MP -MF rpc/$(DEPDIR)/libtspi_la-tcs_api.Tpo -c -o rpc/libtspi_la-tcs_api.lo `test -f 'rpc/tcs_api.c' || echo '$(srcdir)/'`rpc/tcs_api.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/$(DEPDIR)/libtspi_la-tcs_api.Tpo rpc/$(DEPDIR)/libtspi_la-tcs_api.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/tcs_api.c' object='rpc/libtspi_la-tcs_api.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tcs_api.lo `test -f 'rpc/tcs_api.c' || echo '$(srcdir)/'`rpc/tcs_api.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/libtspi_la-tcs_api.lo `test -f 'rpc/tcs_api.c' || echo '$(srcdir)/'`rpc/tcs_api.c
 
-libtspi_la-hosttable.lo: rpc/hosttable.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-hosttable.lo -MD -MP -MF $(DEPDIR)/libtspi_la-hosttable.Tpo -c -o libtspi_la-hosttable.lo `test -f 'rpc/hosttable.c' || echo '$(srcdir)/'`rpc/hosttable.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-hosttable.Tpo $(DEPDIR)/libtspi_la-hosttable.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/hosttable.c' object='libtspi_la-hosttable.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/libtspi_la-hosttable.lo: rpc/hosttable.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/libtspi_la-hosttable.lo -MD -MP -MF rpc/$(DEPDIR)/libtspi_la-hosttable.Tpo -c -o rpc/libtspi_la-hosttable.lo `test -f 'rpc/hosttable.c' || echo '$(srcdir)/'`rpc/hosttable.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/$(DEPDIR)/libtspi_la-hosttable.Tpo rpc/$(DEPDIR)/libtspi_la-hosttable.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/hosttable.c' object='rpc/libtspi_la-hosttable.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-hosttable.lo `test -f 'rpc/hosttable.c' || echo '$(srcdir)/'`rpc/hosttable.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/libtspi_la-hosttable.lo `test -f 'rpc/hosttable.c' || echo '$(srcdir)/'`rpc/hosttable.c
 
-libtspi_la-rpc.lo: rpc/@RPC@/rpc.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc.Tpo -c -o libtspi_la-rpc.lo `test -f 'rpc/@RPC@/rpc.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc.Tpo $(DEPDIR)/libtspi_la-rpc.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc.c' object='libtspi_la-rpc.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc.lo: rpc/@RPC@/rpc.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc.Tpo -c -o rpc/@RPC@/libtspi_la-rpc.lo `test -f 'rpc/@RPC@/rpc.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc.c' object='rpc/@RPC@/libtspi_la-rpc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc.lo `test -f 'rpc/@RPC@/rpc.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc.lo `test -f 'rpc/@RPC@/rpc.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc.c
+
+libtspi_la-tsp_tcsi_param.lo: tsp_tcsi_param.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tsp_tcsi_param.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tsp_tcsi_param.Tpo -c -o libtspi_la-tsp_tcsi_param.lo `test -f 'tsp_tcsi_param.c' || echo '$(srcdir)/'`tsp_tcsi_param.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-tsp_tcsi_param.Tpo $(DEPDIR)/libtspi_la-tsp_tcsi_param.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tsp_tcsi_param.c' object='libtspi_la-tsp_tcsi_param.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_tcsi_param.lo `test -f 'tsp_tcsi_param.c' || echo '$(srcdir)/'`tsp_tcsi_param.c
 
 libtspi_la-tsp_asym.lo: tsp_asym.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tsp_asym.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tsp_asym.Tpo -c -o libtspi_la-tsp_asym.lo `test -f 'tsp_asym.c' || echo '$(srcdir)/'`tsp_asym.c
@@ -926,12 +1247,12 @@ libtspi_la-tsp_oper.lo: tsp_oper.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_oper.lo `test -f 'tsp_oper.c' || echo '$(srcdir)/'`tsp_oper.c
 
-libtspi_la-rpc_oper.lo: rpc/@RPC@/rpc_oper.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_oper.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_oper.Tpo -c -o libtspi_la-rpc_oper.lo `test -f 'rpc/@RPC@/rpc_oper.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_oper.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_oper.Tpo $(DEPDIR)/libtspi_la-rpc_oper.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_oper.c' object='libtspi_la-rpc_oper.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_oper.lo: rpc/@RPC@/rpc_oper.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_oper.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_oper.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_oper.lo `test -f 'rpc/@RPC@/rpc_oper.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_oper.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_oper.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_oper.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_oper.c' object='rpc/@RPC@/libtspi_la-rpc_oper.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_oper.lo `test -f 'rpc/@RPC@/rpc_oper.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_oper.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_oper.lo `test -f 'rpc/@RPC@/rpc_oper.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_oper.c
 
 libtspi_la-tspi_transport.lo: tspi_transport.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_transport.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_transport.Tpo -c -o libtspi_la-tspi_transport.lo `test -f 'tspi_transport.c' || echo '$(srcdir)/'`tspi_transport.c
@@ -940,12 +1261,12 @@ libtspi_la-tspi_transport.lo: tspi_transport.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspi_transport.lo `test -f 'tspi_transport.c' || echo '$(srcdir)/'`tspi_transport.c
 
-libtspi_la-rpc_transport.lo: rpc/@RPC@/rpc_transport.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_transport.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_transport.Tpo -c -o libtspi_la-rpc_transport.lo `test -f 'rpc/@RPC@/rpc_transport.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_transport.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_transport.Tpo $(DEPDIR)/libtspi_la-rpc_transport.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_transport.c' object='libtspi_la-rpc_transport.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_transport.lo: rpc/@RPC@/rpc_transport.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_transport.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_transport.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_transport.lo `test -f 'rpc/@RPC@/rpc_transport.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_transport.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_transport.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_transport.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_transport.c' object='rpc/@RPC@/libtspi_la-rpc_transport.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_transport.lo `test -f 'rpc/@RPC@/rpc_transport.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_transport.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_transport.lo `test -f 'rpc/@RPC@/rpc_transport.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_transport.c
 
 libtspi_la-tspi_tick.lo: tspi_tick.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_tick.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_tick.Tpo -c -o libtspi_la-tspi_tick.lo `test -f 'tspi_tick.c' || echo '$(srcdir)/'`tspi_tick.c
@@ -961,12 +1282,12 @@ libtspi_la-tsp_tick.lo: tsp_tick.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_tick.lo `test -f 'tsp_tick.c' || echo '$(srcdir)/'`tsp_tick.c
 
-libtspi_la-rpc_tick.lo: rpc/@RPC@/rpc_tick.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_tick.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_tick.Tpo -c -o libtspi_la-rpc_tick.lo `test -f 'rpc/@RPC@/rpc_tick.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_tick.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_tick.Tpo $(DEPDIR)/libtspi_la-rpc_tick.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_tick.c' object='libtspi_la-rpc_tick.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_tick.lo: rpc/@RPC@/rpc_tick.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_tick.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_tick.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_tick.lo `test -f 'rpc/@RPC@/rpc_tick.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_tick.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_tick.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_tick.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_tick.c' object='rpc/@RPC@/libtspi_la-rpc_tick.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_tick.lo `test -f 'rpc/@RPC@/rpc_tick.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_tick.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_tick.lo `test -f 'rpc/@RPC@/rpc_tick.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_tick.c
 
 libtspi_la-tspi_counter.lo: tspi_counter.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_counter.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_counter.Tpo -c -o libtspi_la-tspi_counter.lo `test -f 'tspi_counter.c' || echo '$(srcdir)/'`tspi_counter.c
@@ -982,12 +1303,12 @@ libtspi_la-tsp_counter.lo: tsp_counter.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_counter.lo `test -f 'tsp_counter.c' || echo '$(srcdir)/'`tsp_counter.c
 
-libtspi_la-rpc_counter.lo: rpc/@RPC@/rpc_counter.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_counter.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_counter.Tpo -c -o libtspi_la-rpc_counter.lo `test -f 'rpc/@RPC@/rpc_counter.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_counter.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_counter.Tpo $(DEPDIR)/libtspi_la-rpc_counter.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_counter.c' object='libtspi_la-rpc_counter.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_counter.lo: rpc/@RPC@/rpc_counter.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_counter.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_counter.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_counter.lo `test -f 'rpc/@RPC@/rpc_counter.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_counter.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_counter.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_counter.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_counter.c' object='rpc/@RPC@/libtspi_la-rpc_counter.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_counter.lo `test -f 'rpc/@RPC@/rpc_counter.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_counter.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_counter.lo `test -f 'rpc/@RPC@/rpc_counter.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_counter.c
 
 libtspi_la-tspi_pcr_comp12.lo: tspi_pcr_comp12.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_pcr_comp12.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_pcr_comp12.Tpo -c -o libtspi_la-tspi_pcr_comp12.lo `test -f 'tspi_pcr_comp12.c' || echo '$(srcdir)/'`tspi_pcr_comp12.c
@@ -1003,12 +1324,12 @@ libtspi_la-tsp_auth.lo: tsp_auth.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_auth.lo `test -f 'tsp_auth.c' || echo '$(srcdir)/'`tsp_auth.c
 
-libtspi_la-rpc_auth.lo: rpc/@RPC@/rpc_auth.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_auth.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_auth.Tpo -c -o libtspi_la-rpc_auth.lo `test -f 'rpc/@RPC@/rpc_auth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_auth.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_auth.Tpo $(DEPDIR)/libtspi_la-rpc_auth.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_auth.c' object='libtspi_la-rpc_auth.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_auth.lo: rpc/@RPC@/rpc_auth.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_auth.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_auth.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_auth.lo `test -f 'rpc/@RPC@/rpc_auth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_auth.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_auth.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_auth.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_auth.c' object='rpc/@RPC@/libtspi_la-rpc_auth.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_auth.lo `test -f 'rpc/@RPC@/rpc_auth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_auth.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_auth.lo `test -f 'rpc/@RPC@/rpc_auth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_auth.c
 
 libtspi_la-tspi_getset.lo: tspi_getset.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_getset.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_getset.Tpo -c -o libtspi_la-tspi_getset.lo `test -f 'tspi_getset.c' || echo '$(srcdir)/'`tspi_getset.c
@@ -1031,12 +1352,12 @@ libtspi_la-tsp_random.lo: tsp_random.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_random.lo `test -f 'tsp_random.c' || echo '$(srcdir)/'`tsp_random.c
 
-libtspi_la-rpc_random.lo: rpc/@RPC@/rpc_random.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_random.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_random.Tpo -c -o libtspi_la-rpc_random.lo `test -f 'rpc/@RPC@/rpc_random.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_random.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_random.Tpo $(DEPDIR)/libtspi_la-rpc_random.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_random.c' object='libtspi_la-rpc_random.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_random.lo: rpc/@RPC@/rpc_random.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_random.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_random.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_random.lo `test -f 'rpc/@RPC@/rpc_random.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_random.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_random.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_random.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_random.c' object='rpc/@RPC@/libtspi_la-rpc_random.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_random.lo `test -f 'rpc/@RPC@/rpc_random.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_random.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_random.lo `test -f 'rpc/@RPC@/rpc_random.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_random.c
 
 libtspi_la-tspi_caps.lo: tspi_caps.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_caps.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_caps.Tpo -c -o libtspi_la-tspi_caps.lo `test -f 'tspi_caps.c' || echo '$(srcdir)/'`tspi_caps.c
@@ -1052,12 +1373,12 @@ libtspi_la-tsp_caps.lo: tsp_caps.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_caps.lo `test -f 'tsp_caps.c' || echo '$(srcdir)/'`tsp_caps.c
 
-libtspi_la-rpc_caps.lo: rpc/@RPC@/rpc_caps.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_caps.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_caps.Tpo -c -o libtspi_la-rpc_caps.lo `test -f 'rpc/@RPC@/rpc_caps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_caps.Tpo $(DEPDIR)/libtspi_la-rpc_caps.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_caps.c' object='libtspi_la-rpc_caps.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_caps.lo: rpc/@RPC@/rpc_caps.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_caps.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_caps.lo `test -f 'rpc/@RPC@/rpc_caps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_caps.c' object='rpc/@RPC@/libtspi_la-rpc_caps.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_caps.lo `test -f 'rpc/@RPC@/rpc_caps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_caps.lo `test -f 'rpc/@RPC@/rpc_caps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps.c
 
 libtspi_la-tspi_caps_tpm.lo: tspi_caps_tpm.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_caps_tpm.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_caps_tpm.Tpo -c -o libtspi_la-tspi_caps_tpm.lo `test -f 'tspi_caps_tpm.c' || echo '$(srcdir)/'`tspi_caps_tpm.c
@@ -1073,12 +1394,12 @@ libtspi_la-tsp_caps_tpm.lo: tsp_caps_tpm.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_caps_tpm.lo `test -f 'tsp_caps_tpm.c' || echo '$(srcdir)/'`tsp_caps_tpm.c
 
-libtspi_la-rpc_caps_tpm.lo: rpc/@RPC@/rpc_caps_tpm.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_caps_tpm.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_caps_tpm.Tpo -c -o libtspi_la-rpc_caps_tpm.lo `test -f 'rpc/@RPC@/rpc_caps_tpm.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps_tpm.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_caps_tpm.Tpo $(DEPDIR)/libtspi_la-rpc_caps_tpm.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_caps_tpm.c' object='libtspi_la-rpc_caps_tpm.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo: rpc/@RPC@/rpc_caps_tpm.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps_tpm.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo `test -f 'rpc/@RPC@/rpc_caps_tpm.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps_tpm.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps_tpm.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_caps_tpm.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_caps_tpm.c' object='rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_caps_tpm.lo `test -f 'rpc/@RPC@/rpc_caps_tpm.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps_tpm.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_caps_tpm.lo `test -f 'rpc/@RPC@/rpc_caps_tpm.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_caps_tpm.c
 
 libtspi_la-tspi_policy.lo: tspi_policy.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_policy.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_policy.Tpo -c -o libtspi_la-tspi_policy.lo `test -f 'tspi_policy.c' || echo '$(srcdir)/'`tspi_policy.c
@@ -1101,12 +1422,12 @@ libtspi_la-tsp_dir.lo: tsp_dir.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_dir.lo `test -f 'tsp_dir.c' || echo '$(srcdir)/'`tsp_dir.c
 
-libtspi_la-rpc_dir.lo: rpc/@RPC@/rpc_dir.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_dir.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_dir.Tpo -c -o libtspi_la-rpc_dir.lo `test -f 'rpc/@RPC@/rpc_dir.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_dir.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_dir.Tpo $(DEPDIR)/libtspi_la-rpc_dir.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_dir.c' object='libtspi_la-rpc_dir.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_dir.lo: rpc/@RPC@/rpc_dir.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_dir.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_dir.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_dir.lo `test -f 'rpc/@RPC@/rpc_dir.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_dir.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_dir.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_dir.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_dir.c' object='rpc/@RPC@/libtspi_la-rpc_dir.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_dir.lo `test -f 'rpc/@RPC@/rpc_dir.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_dir.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_dir.lo `test -f 'rpc/@RPC@/rpc_dir.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_dir.c
 
 libtspi_la-tspi_pcr_events.lo: tspi_pcr_events.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_pcr_events.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_pcr_events.Tpo -c -o libtspi_la-tspi_pcr_events.lo `test -f 'tspi_pcr_events.c' || echo '$(srcdir)/'`tspi_pcr_events.c
@@ -1115,12 +1436,12 @@ libtspi_la-tspi_pcr_events.lo: tspi_pcr_events.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspi_pcr_events.lo `test -f 'tspi_pcr_events.c' || echo '$(srcdir)/'`tspi_pcr_events.c
 
-libtspi_la-rpc_evlog.lo: rpc/@RPC@/rpc_evlog.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_evlog.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_evlog.Tpo -c -o libtspi_la-rpc_evlog.lo `test -f 'rpc/@RPC@/rpc_evlog.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_evlog.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_evlog.Tpo $(DEPDIR)/libtspi_la-rpc_evlog.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_evlog.c' object='libtspi_la-rpc_evlog.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_evlog.lo: rpc/@RPC@/rpc_evlog.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_evlog.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_evlog.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_evlog.lo `test -f 'rpc/@RPC@/rpc_evlog.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_evlog.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_evlog.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_evlog.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_evlog.c' object='rpc/@RPC@/libtspi_la-rpc_evlog.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_evlog.lo `test -f 'rpc/@RPC@/rpc_evlog.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_evlog.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_evlog.lo `test -f 'rpc/@RPC@/rpc_evlog.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_evlog.c
 
 libtspi_la-tspi_hash.lo: tspi_hash.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_hash.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_hash.Tpo -c -o libtspi_la-tspi_hash.lo `test -f 'tspi_hash.c' || echo '$(srcdir)/'`tspi_hash.c
@@ -1143,12 +1464,12 @@ libtspi_la-tsp_sign.lo: tsp_sign.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_sign.lo `test -f 'tsp_sign.c' || echo '$(srcdir)/'`tsp_sign.c
 
-libtspi_la-rpc_sign.lo: rpc/@RPC@/rpc_sign.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_sign.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_sign.Tpo -c -o libtspi_la-rpc_sign.lo `test -f 'rpc/@RPC@/rpc_sign.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_sign.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_sign.Tpo $(DEPDIR)/libtspi_la-rpc_sign.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_sign.c' object='libtspi_la-rpc_sign.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_sign.lo: rpc/@RPC@/rpc_sign.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_sign.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_sign.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_sign.lo `test -f 'rpc/@RPC@/rpc_sign.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_sign.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_sign.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_sign.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_sign.c' object='rpc/@RPC@/libtspi_la-rpc_sign.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_sign.lo `test -f 'rpc/@RPC@/rpc_sign.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_sign.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_sign.lo `test -f 'rpc/@RPC@/rpc_sign.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_sign.c
 
 libtspi_la-tspi_quote.lo: tspi_quote.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_quote.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_quote.Tpo -c -o libtspi_la-tspi_quote.lo `test -f 'tspi_quote.c' || echo '$(srcdir)/'`tspi_quote.c
@@ -1164,12 +1485,12 @@ libtspi_la-tsp_quote.lo: tsp_quote.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_quote.lo `test -f 'tsp_quote.c' || echo '$(srcdir)/'`tsp_quote.c
 
-libtspi_la-rpc_quote.lo: rpc/@RPC@/rpc_quote.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_quote.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_quote.Tpo -c -o libtspi_la-rpc_quote.lo `test -f 'rpc/@RPC@/rpc_quote.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_quote.Tpo $(DEPDIR)/libtspi_la-rpc_quote.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_quote.c' object='libtspi_la-rpc_quote.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_quote.lo: rpc/@RPC@/rpc_quote.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_quote.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_quote.lo `test -f 'rpc/@RPC@/rpc_quote.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_quote.c' object='rpc/@RPC@/libtspi_la-rpc_quote.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_quote.lo `test -f 'rpc/@RPC@/rpc_quote.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_quote.lo `test -f 'rpc/@RPC@/rpc_quote.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote.c
 
 libtspi_la-tspi_pcr_comp.lo: tspi_pcr_comp.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_pcr_comp.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_pcr_comp.Tpo -c -o libtspi_la-tspi_pcr_comp.lo `test -f 'tspi_pcr_comp.c' || echo '$(srcdir)/'`tspi_pcr_comp.c
@@ -1185,12 +1506,12 @@ libtspi_la-tspi_seal.lo: tspi_seal.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspi_seal.lo `test -f 'tspi_seal.c' || echo '$(srcdir)/'`tspi_seal.c
 
-libtspi_la-rpc_seal.lo: rpc/@RPC@/rpc_seal.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_seal.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_seal.Tpo -c -o libtspi_la-rpc_seal.lo `test -f 'rpc/@RPC@/rpc_seal.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_seal.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_seal.Tpo $(DEPDIR)/libtspi_la-rpc_seal.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_seal.c' object='libtspi_la-rpc_seal.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_seal.lo: rpc/@RPC@/rpc_seal.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_seal.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_seal.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_seal.lo `test -f 'rpc/@RPC@/rpc_seal.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_seal.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_seal.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_seal.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_seal.c' object='rpc/@RPC@/libtspi_la-rpc_seal.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_seal.lo `test -f 'rpc/@RPC@/rpc_seal.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_seal.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_seal.lo `test -f 'rpc/@RPC@/rpc_seal.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_seal.c
 
 libtspi_la-tspi_changeauth.lo: tspi_changeauth.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_changeauth.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_changeauth.Tpo -c -o libtspi_la-tspi_changeauth.lo `test -f 'tspi_changeauth.c' || echo '$(srcdir)/'`tspi_changeauth.c
@@ -1206,12 +1527,12 @@ libtspi_la-tsp_changeauth.lo: tsp_changeauth.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_changeauth.lo `test -f 'tsp_changeauth.c' || echo '$(srcdir)/'`tsp_changeauth.c
 
-libtspi_la-rpc_changeauth.lo: rpc/@RPC@/rpc_changeauth.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_changeauth.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_changeauth.Tpo -c -o libtspi_la-rpc_changeauth.lo `test -f 'rpc/@RPC@/rpc_changeauth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_changeauth.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_changeauth.Tpo $(DEPDIR)/libtspi_la-rpc_changeauth.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_changeauth.c' object='libtspi_la-rpc_changeauth.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_changeauth.lo: rpc/@RPC@/rpc_changeauth.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_changeauth.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_changeauth.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_changeauth.lo `test -f 'rpc/@RPC@/rpc_changeauth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_changeauth.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_changeauth.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_changeauth.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_changeauth.c' object='rpc/@RPC@/libtspi_la-rpc_changeauth.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_changeauth.lo `test -f 'rpc/@RPC@/rpc_changeauth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_changeauth.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_changeauth.lo `test -f 'rpc/@RPC@/rpc_changeauth.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_changeauth.c
 
 libtspi_la-tspi_bind.lo: tspi_bind.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_bind.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_bind.Tpo -c -o libtspi_la-tspi_bind.lo `test -f 'tspi_bind.c' || echo '$(srcdir)/'`tspi_bind.c
@@ -1227,12 +1548,12 @@ libtspi_la-tsp_bind.lo: tsp_bind.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_bind.lo `test -f 'tsp_bind.c' || echo '$(srcdir)/'`tsp_bind.c
 
-libtspi_la-rpc_bind.lo: rpc/@RPC@/rpc_bind.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_bind.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_bind.Tpo -c -o libtspi_la-rpc_bind.lo `test -f 'rpc/@RPC@/rpc_bind.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_bind.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_bind.Tpo $(DEPDIR)/libtspi_la-rpc_bind.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_bind.c' object='libtspi_la-rpc_bind.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_bind.lo: rpc/@RPC@/rpc_bind.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_bind.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_bind.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_bind.lo `test -f 'rpc/@RPC@/rpc_bind.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_bind.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_bind.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_bind.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_bind.c' object='rpc/@RPC@/libtspi_la-rpc_bind.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_bind.lo `test -f 'rpc/@RPC@/rpc_bind.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_bind.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_bind.lo `test -f 'rpc/@RPC@/rpc_bind.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_bind.c
 
 libtspi_la-tsp_own.lo: tsp_own.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tsp_own.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tsp_own.Tpo -c -o libtspi_la-tsp_own.lo `test -f 'tsp_own.c' || echo '$(srcdir)/'`tsp_own.c
@@ -1248,26 +1569,26 @@ libtspi_la-tspi_own.lo: tspi_own.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspi_own.lo `test -f 'tspi_own.c' || echo '$(srcdir)/'`tspi_own.c
 
-libtspi_la-rpc_own.lo: rpc/@RPC@/rpc_own.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_own.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_own.Tpo -c -o libtspi_la-rpc_own.lo `test -f 'rpc/@RPC@/rpc_own.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_own.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_own.Tpo $(DEPDIR)/libtspi_la-rpc_own.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_own.c' object='libtspi_la-rpc_own.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_own.lo: rpc/@RPC@/rpc_own.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_own.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_own.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_own.lo `test -f 'rpc/@RPC@/rpc_own.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_own.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_own.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_own.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_own.c' object='rpc/@RPC@/libtspi_la-rpc_own.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_own.lo `test -f 'rpc/@RPC@/rpc_own.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_own.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_own.lo `test -f 'rpc/@RPC@/rpc_own.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_own.c
 
-libtspi_la-ps_utils.lo: ps/ps_utils.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-ps_utils.lo -MD -MP -MF $(DEPDIR)/libtspi_la-ps_utils.Tpo -c -o libtspi_la-ps_utils.lo `test -f 'ps/ps_utils.c' || echo '$(srcdir)/'`ps/ps_utils.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-ps_utils.Tpo $(DEPDIR)/libtspi_la-ps_utils.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ps/ps_utils.c' object='libtspi_la-ps_utils.lo' libtool=yes @AMDEPBACKSLASH@
+ps/libtspi_la-ps_utils.lo: ps/ps_utils.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT ps/libtspi_la-ps_utils.lo -MD -MP -MF ps/$(DEPDIR)/libtspi_la-ps_utils.Tpo -c -o ps/libtspi_la-ps_utils.lo `test -f 'ps/ps_utils.c' || echo '$(srcdir)/'`ps/ps_utils.c
+@am__fastdepCC_TRUE@	$(am__mv) ps/$(DEPDIR)/libtspi_la-ps_utils.Tpo ps/$(DEPDIR)/libtspi_la-ps_utils.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ps/ps_utils.c' object='ps/libtspi_la-ps_utils.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-ps_utils.lo `test -f 'ps/ps_utils.c' || echo '$(srcdir)/'`ps/ps_utils.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o ps/libtspi_la-ps_utils.lo `test -f 'ps/ps_utils.c' || echo '$(srcdir)/'`ps/ps_utils.c
 
-libtspi_la-tspps.lo: ps/tspps.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspps.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspps.Tpo -c -o libtspi_la-tspps.lo `test -f 'ps/tspps.c' || echo '$(srcdir)/'`ps/tspps.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-tspps.Tpo $(DEPDIR)/libtspi_la-tspps.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ps/tspps.c' object='libtspi_la-tspps.lo' libtool=yes @AMDEPBACKSLASH@
+ps/libtspi_la-tspps.lo: ps/tspps.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT ps/libtspi_la-tspps.lo -MD -MP -MF ps/$(DEPDIR)/libtspi_la-tspps.Tpo -c -o ps/libtspi_la-tspps.lo `test -f 'ps/tspps.c' || echo '$(srcdir)/'`ps/tspps.c
+@am__fastdepCC_TRUE@	$(am__mv) ps/$(DEPDIR)/libtspi_la-tspps.Tpo ps/$(DEPDIR)/libtspi_la-tspps.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ps/tspps.c' object='ps/libtspi_la-tspps.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspps.lo `test -f 'ps/tspps.c' || echo '$(srcdir)/'`ps/tspps.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o ps/libtspi_la-tspps.lo `test -f 'ps/tspps.c' || echo '$(srcdir)/'`ps/tspps.c
 
 libtspi_la-tspi_ps.lo: tspi_ps.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_ps.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_ps.Tpo -c -o libtspi_la-tspi_ps.lo `test -f 'tspi_ps.c' || echo '$(srcdir)/'`tspi_ps.c
@@ -1276,12 +1597,12 @@ libtspi_la-tspi_ps.lo: tspi_ps.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspi_ps.lo `test -f 'tspi_ps.c' || echo '$(srcdir)/'`tspi_ps.c
 
-libtspi_la-rpc_ps.lo: rpc/@RPC@/rpc_ps.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_ps.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_ps.Tpo -c -o libtspi_la-rpc_ps.lo `test -f 'rpc/@RPC@/rpc_ps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ps.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_ps.Tpo $(DEPDIR)/libtspi_la-rpc_ps.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_ps.c' object='libtspi_la-rpc_ps.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_ps.lo: rpc/@RPC@/rpc_ps.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_ps.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ps.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_ps.lo `test -f 'rpc/@RPC@/rpc_ps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ps.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ps.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ps.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_ps.c' object='rpc/@RPC@/libtspi_la-rpc_ps.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_ps.lo `test -f 'rpc/@RPC@/rpc_ps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ps.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_ps.lo `test -f 'rpc/@RPC@/rpc_ps.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ps.c
 
 libtspi_la-tsp_ps.lo: tsp_ps.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tsp_ps.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tsp_ps.Tpo -c -o libtspi_la-tsp_ps.lo `test -f 'tsp_ps.c' || echo '$(srcdir)/'`tsp_ps.c
@@ -1304,12 +1625,12 @@ libtspi_la-tsp_admin.lo: tsp_admin.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_admin.lo `test -f 'tsp_admin.c' || echo '$(srcdir)/'`tsp_admin.c
 
-libtspi_la-rpc_admin.lo: rpc/@RPC@/rpc_admin.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_admin.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_admin.Tpo -c -o libtspi_la-rpc_admin.lo `test -f 'rpc/@RPC@/rpc_admin.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_admin.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_admin.Tpo $(DEPDIR)/libtspi_la-rpc_admin.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_admin.c' object='libtspi_la-rpc_admin.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_admin.lo: rpc/@RPC@/rpc_admin.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_admin.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_admin.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_admin.lo `test -f 'rpc/@RPC@/rpc_admin.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_admin.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_admin.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_admin.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_admin.c' object='rpc/@RPC@/libtspi_la-rpc_admin.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_admin.lo `test -f 'rpc/@RPC@/rpc_admin.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_admin.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_admin.lo `test -f 'rpc/@RPC@/rpc_admin.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_admin.c
 
 libtspi_la-tspi_aik.lo: tspi_aik.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_aik.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_aik.Tpo -c -o libtspi_la-tspi_aik.lo `test -f 'tspi_aik.c' || echo '$(srcdir)/'`tspi_aik.c
@@ -1325,12 +1646,12 @@ libtspi_la-tsp_aik.lo: tsp_aik.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_aik.lo `test -f 'tsp_aik.c' || echo '$(srcdir)/'`tsp_aik.c
 
-libtspi_la-rpc_aik.lo: rpc/@RPC@/rpc_aik.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_aik.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_aik.Tpo -c -o libtspi_la-rpc_aik.lo `test -f 'rpc/@RPC@/rpc_aik.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_aik.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_aik.Tpo $(DEPDIR)/libtspi_la-rpc_aik.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_aik.c' object='libtspi_la-rpc_aik.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_aik.lo: rpc/@RPC@/rpc_aik.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_aik.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_aik.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_aik.lo `test -f 'rpc/@RPC@/rpc_aik.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_aik.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_aik.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_aik.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_aik.c' object='rpc/@RPC@/libtspi_la-rpc_aik.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_aik.lo `test -f 'rpc/@RPC@/rpc_aik.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_aik.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_aik.lo `test -f 'rpc/@RPC@/rpc_aik.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_aik.c
 
 libtspi_la-tspi_ek.lo: tspi_ek.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_ek.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_ek.Tpo -c -o libtspi_la-tspi_ek.lo `test -f 'tspi_ek.c' || echo '$(srcdir)/'`tspi_ek.c
@@ -1346,12 +1667,12 @@ libtspi_la-tsp_ek.lo: tsp_ek.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_ek.lo `test -f 'tsp_ek.c' || echo '$(srcdir)/'`tsp_ek.c
 
-libtspi_la-rpc_ek.lo: rpc/@RPC@/rpc_ek.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_ek.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_ek.Tpo -c -o libtspi_la-rpc_ek.lo `test -f 'rpc/@RPC@/rpc_ek.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ek.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_ek.Tpo $(DEPDIR)/libtspi_la-rpc_ek.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_ek.c' object='libtspi_la-rpc_ek.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_ek.lo: rpc/@RPC@/rpc_ek.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_ek.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ek.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_ek.lo `test -f 'rpc/@RPC@/rpc_ek.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ek.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ek.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_ek.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_ek.c' object='rpc/@RPC@/libtspi_la-rpc_ek.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_ek.lo `test -f 'rpc/@RPC@/rpc_ek.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ek.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_ek.lo `test -f 'rpc/@RPC@/rpc_ek.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_ek.c
 
 libtspi_la-tspi_certify.lo: tspi_certify.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_certify.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_certify.Tpo -c -o libtspi_la-tspi_certify.lo `test -f 'tspi_certify.c' || echo '$(srcdir)/'`tspi_certify.c
@@ -1367,12 +1688,12 @@ libtspi_la-tsp_certify.lo: tsp_certify.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_certify.lo `test -f 'tsp_certify.c' || echo '$(srcdir)/'`tsp_certify.c
 
-libtspi_la-rpc_certify.lo: rpc/@RPC@/rpc_certify.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_certify.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_certify.Tpo -c -o libtspi_la-rpc_certify.lo `test -f 'rpc/@RPC@/rpc_certify.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_certify.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_certify.Tpo $(DEPDIR)/libtspi_la-rpc_certify.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_certify.c' object='libtspi_la-rpc_certify.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_certify.lo: rpc/@RPC@/rpc_certify.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_certify.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_certify.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_certify.lo `test -f 'rpc/@RPC@/rpc_certify.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_certify.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_certify.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_certify.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_certify.c' object='rpc/@RPC@/libtspi_la-rpc_certify.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_certify.lo `test -f 'rpc/@RPC@/rpc_certify.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_certify.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_certify.lo `test -f 'rpc/@RPC@/rpc_certify.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_certify.c
 
 libtspi_la-tspi_key.lo: tspi_key.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_key.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_key.Tpo -c -o libtspi_la-tspi_key.lo `test -f 'tspi_key.c' || echo '$(srcdir)/'`tspi_key.c
@@ -1381,12 +1702,12 @@ libtspi_la-tspi_key.lo: tspi_key.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tspi_key.lo `test -f 'tspi_key.c' || echo '$(srcdir)/'`tspi_key.c
 
-libtspi_la-rpc_key.lo: rpc/@RPC@/rpc_key.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_key.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_key.Tpo -c -o libtspi_la-rpc_key.lo `test -f 'rpc/@RPC@/rpc_key.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_key.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_key.Tpo $(DEPDIR)/libtspi_la-rpc_key.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_key.c' object='libtspi_la-rpc_key.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_key.lo: rpc/@RPC@/rpc_key.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_key.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_key.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_key.lo `test -f 'rpc/@RPC@/rpc_key.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_key.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_key.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_key.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_key.c' object='rpc/@RPC@/libtspi_la-rpc_key.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_key.lo `test -f 'rpc/@RPC@/rpc_key.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_key.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_key.lo `test -f 'rpc/@RPC@/rpc_key.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_key.c
 
 libtspi_la-tspi_maint.lo: tspi_maint.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_maint.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_maint.Tpo -c -o libtspi_la-tspi_maint.lo `test -f 'tspi_maint.c' || echo '$(srcdir)/'`tspi_maint.c
@@ -1402,12 +1723,12 @@ libtspi_la-tsp_maint.lo: tsp_maint.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_maint.lo `test -f 'tsp_maint.c' || echo '$(srcdir)/'`tsp_maint.c
 
-libtspi_la-rpc_maint.lo: rpc/@RPC@/rpc_maint.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_maint.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_maint.Tpo -c -o libtspi_la-rpc_maint.lo `test -f 'rpc/@RPC@/rpc_maint.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_maint.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_maint.Tpo $(DEPDIR)/libtspi_la-rpc_maint.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_maint.c' object='libtspi_la-rpc_maint.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_maint.lo: rpc/@RPC@/rpc_maint.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_maint.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_maint.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_maint.lo `test -f 'rpc/@RPC@/rpc_maint.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_maint.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_maint.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_maint.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_maint.c' object='rpc/@RPC@/libtspi_la-rpc_maint.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_maint.lo `test -f 'rpc/@RPC@/rpc_maint.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_maint.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_maint.lo `test -f 'rpc/@RPC@/rpc_maint.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_maint.c
 
 libtspi_la-tspi_migration.lo: tspi_migration.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_migration.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_migration.Tpo -c -o libtspi_la-tspi_migration.lo `test -f 'tspi_migration.c' || echo '$(srcdir)/'`tspi_migration.c
@@ -1423,12 +1744,12 @@ libtspi_la-tsp_migration.lo: tsp_migration.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_migration.lo `test -f 'tsp_migration.c' || echo '$(srcdir)/'`tsp_migration.c
 
-libtspi_la-rpc_migration.lo: rpc/@RPC@/rpc_migration.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_migration.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_migration.Tpo -c -o libtspi_la-rpc_migration.lo `test -f 'rpc/@RPC@/rpc_migration.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_migration.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_migration.Tpo $(DEPDIR)/libtspi_la-rpc_migration.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_migration.c' object='libtspi_la-rpc_migration.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_migration.lo: rpc/@RPC@/rpc_migration.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_migration.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_migration.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_migration.lo `test -f 'rpc/@RPC@/rpc_migration.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_migration.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_migration.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_migration.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_migration.c' object='rpc/@RPC@/libtspi_la-rpc_migration.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_migration.lo `test -f 'rpc/@RPC@/rpc_migration.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_migration.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_migration.lo `test -f 'rpc/@RPC@/rpc_migration.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_migration.c
 
 libtspi_la-tspi_pcr_extend.lo: tspi_pcr_extend.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_pcr_extend.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_pcr_extend.Tpo -c -o libtspi_la-tspi_pcr_extend.lo `test -f 'tspi_pcr_extend.c' || echo '$(srcdir)/'`tspi_pcr_extend.c
@@ -1444,12 +1765,12 @@ libtspi_la-tsp_pcr_extend.lo: tsp_pcr_extend.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_pcr_extend.lo `test -f 'tsp_pcr_extend.c' || echo '$(srcdir)/'`tsp_pcr_extend.c
 
-libtspi_la-rpc_pcr_extend.lo: rpc/@RPC@/rpc_pcr_extend.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_pcr_extend.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_pcr_extend.Tpo -c -o libtspi_la-rpc_pcr_extend.lo `test -f 'rpc/@RPC@/rpc_pcr_extend.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_pcr_extend.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_pcr_extend.Tpo $(DEPDIR)/libtspi_la-rpc_pcr_extend.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_pcr_extend.c' object='libtspi_la-rpc_pcr_extend.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo: rpc/@RPC@/rpc_pcr_extend.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_pcr_extend.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo `test -f 'rpc/@RPC@/rpc_pcr_extend.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_pcr_extend.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_pcr_extend.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_pcr_extend.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_pcr_extend.c' object='rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_pcr_extend.lo `test -f 'rpc/@RPC@/rpc_pcr_extend.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_pcr_extend.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_pcr_extend.lo `test -f 'rpc/@RPC@/rpc_pcr_extend.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_pcr_extend.c
 
 libtspi_la-tspi_selftest.lo: tspi_selftest.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_selftest.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_selftest.Tpo -c -o libtspi_la-tspi_selftest.lo `test -f 'tspi_selftest.c' || echo '$(srcdir)/'`tspi_selftest.c
@@ -1465,12 +1786,12 @@ libtspi_la-tsp_selftest.lo: tsp_selftest.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_selftest.lo `test -f 'tsp_selftest.c' || echo '$(srcdir)/'`tsp_selftest.c
 
-libtspi_la-rpc_selftest.lo: rpc/@RPC@/rpc_selftest.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_selftest.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_selftest.Tpo -c -o libtspi_la-rpc_selftest.lo `test -f 'rpc/@RPC@/rpc_selftest.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_selftest.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_selftest.Tpo $(DEPDIR)/libtspi_la-rpc_selftest.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_selftest.c' object='libtspi_la-rpc_selftest.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_selftest.lo: rpc/@RPC@/rpc_selftest.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_selftest.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_selftest.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_selftest.lo `test -f 'rpc/@RPC@/rpc_selftest.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_selftest.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_selftest.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_selftest.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_selftest.c' object='rpc/@RPC@/libtspi_la-rpc_selftest.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_selftest.lo `test -f 'rpc/@RPC@/rpc_selftest.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_selftest.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_selftest.lo `test -f 'rpc/@RPC@/rpc_selftest.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_selftest.c
 
 libtspi_la-tspi_daa.lo: tspi_daa.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_daa.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_daa.Tpo -c -o libtspi_la-tspi_daa.lo `test -f 'tspi_daa.c' || echo '$(srcdir)/'`tspi_daa.c
@@ -1486,117 +1807,117 @@ libtspi_la-tsp_daa.lo: tsp_daa.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_daa.lo `test -f 'tsp_daa.c' || echo '$(srcdir)/'`tsp_daa.c
 
-libtspi_la-rpc_daa.lo: rpc/@RPC@/rpc_daa.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_daa.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_daa.Tpo -c -o libtspi_la-rpc_daa.lo `test -f 'rpc/@RPC@/rpc_daa.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_daa.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_daa.Tpo $(DEPDIR)/libtspi_la-rpc_daa.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_daa.c' object='libtspi_la-rpc_daa.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_daa.lo: rpc/@RPC@/rpc_daa.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_daa.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_daa.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_daa.lo `test -f 'rpc/@RPC@/rpc_daa.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_daa.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_daa.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_daa.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_daa.c' object='rpc/@RPC@/libtspi_la-rpc_daa.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_daa.lo `test -f 'rpc/@RPC@/rpc_daa.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_daa.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_daa.lo `test -f 'rpc/@RPC@/rpc_daa.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_daa.c
 
-libtspi_la-keypair_generator.lo: daa/daa_issuer/keypair_generator.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-keypair_generator.lo -MD -MP -MF $(DEPDIR)/libtspi_la-keypair_generator.Tpo -c -o libtspi_la-keypair_generator.lo `test -f 'daa/daa_issuer/keypair_generator.c' || echo '$(srcdir)/'`daa/daa_issuer/keypair_generator.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-keypair_generator.Tpo $(DEPDIR)/libtspi_la-keypair_generator.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/keypair_generator.c' object='libtspi_la-keypair_generator.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_issuer/libtspi_la-keypair_generator.lo: daa/daa_issuer/keypair_generator.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_issuer/libtspi_la-keypair_generator.lo -MD -MP -MF daa/daa_issuer/$(DEPDIR)/libtspi_la-keypair_generator.Tpo -c -o daa/daa_issuer/libtspi_la-keypair_generator.lo `test -f 'daa/daa_issuer/keypair_generator.c' || echo '$(srcdir)/'`daa/daa_issuer/keypair_generator.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_issuer/$(DEPDIR)/libtspi_la-keypair_generator.Tpo daa/daa_issuer/$(DEPDIR)/libtspi_la-keypair_generator.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/keypair_generator.c' object='daa/daa_issuer/libtspi_la-keypair_generator.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-keypair_generator.lo `test -f 'daa/daa_issuer/keypair_generator.c' || echo '$(srcdir)/'`daa/daa_issuer/keypair_generator.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_issuer/libtspi_la-keypair_generator.lo `test -f 'daa/daa_issuer/keypair_generator.c' || echo '$(srcdir)/'`daa/daa_issuer/keypair_generator.c
 
-libtspi_la-prime_gen.lo: daa/daa_issuer/prime_gen.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-prime_gen.lo -MD -MP -MF $(DEPDIR)/libtspi_la-prime_gen.Tpo -c -o libtspi_la-prime_gen.lo `test -f 'daa/daa_issuer/prime_gen.c' || echo '$(srcdir)/'`daa/daa_issuer/prime_gen.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-prime_gen.Tpo $(DEPDIR)/libtspi_la-prime_gen.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/prime_gen.c' object='libtspi_la-prime_gen.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_issuer/libtspi_la-prime_gen.lo: daa/daa_issuer/prime_gen.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_issuer/libtspi_la-prime_gen.lo -MD -MP -MF daa/daa_issuer/$(DEPDIR)/libtspi_la-prime_gen.Tpo -c -o daa/daa_issuer/libtspi_la-prime_gen.lo `test -f 'daa/daa_issuer/prime_gen.c' || echo '$(srcdir)/'`daa/daa_issuer/prime_gen.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_issuer/$(DEPDIR)/libtspi_la-prime_gen.Tpo daa/daa_issuer/$(DEPDIR)/libtspi_la-prime_gen.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/prime_gen.c' object='daa/daa_issuer/libtspi_la-prime_gen.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-prime_gen.lo `test -f 'daa/daa_issuer/prime_gen.c' || echo '$(srcdir)/'`daa/daa_issuer/prime_gen.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_issuer/libtspi_la-prime_gen.lo `test -f 'daa/daa_issuer/prime_gen.c' || echo '$(srcdir)/'`daa/daa_issuer/prime_gen.c
 
-libtspi_la-key_correctness_proof.lo: daa/daa_issuer/key_correctness_proof.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-key_correctness_proof.lo -MD -MP -MF $(DEPDIR)/libtspi_la-key_correctness_proof.Tpo -c -o libtspi_la-key_correctness_proof.lo `test -f 'daa/daa_issuer/key_correctness_proof.c' || echo '$(srcdir)/'`daa/daa_issuer/key_correctness_proof.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-key_correctness_proof.Tpo $(DEPDIR)/libtspi_la-key_correctness_proof.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/key_correctness_proof.c' object='libtspi_la-key_correctness_proof.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_issuer/libtspi_la-key_correctness_proof.lo: daa/daa_issuer/key_correctness_proof.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_issuer/libtspi_la-key_correctness_proof.lo -MD -MP -MF daa/daa_issuer/$(DEPDIR)/libtspi_la-key_correctness_proof.Tpo -c -o daa/daa_issuer/libtspi_la-key_correctness_proof.lo `test -f 'daa/daa_issuer/key_correctness_proof.c' || echo '$(srcdir)/'`daa/daa_issuer/key_correctness_proof.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_issuer/$(DEPDIR)/libtspi_la-key_correctness_proof.Tpo daa/daa_issuer/$(DEPDIR)/libtspi_la-key_correctness_proof.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/key_correctness_proof.c' object='daa/daa_issuer/libtspi_la-key_correctness_proof.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-key_correctness_proof.lo `test -f 'daa/daa_issuer/key_correctness_proof.c' || echo '$(srcdir)/'`daa/daa_issuer/key_correctness_proof.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_issuer/libtspi_la-key_correctness_proof.lo `test -f 'daa/daa_issuer/key_correctness_proof.c' || echo '$(srcdir)/'`daa/daa_issuer/key_correctness_proof.c
 
-libtspi_la-platform.lo: daa/daa_platform/platform.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-platform.lo -MD -MP -MF $(DEPDIR)/libtspi_la-platform.Tpo -c -o libtspi_la-platform.lo `test -f 'daa/daa_platform/platform.c' || echo '$(srcdir)/'`daa/daa_platform/platform.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-platform.Tpo $(DEPDIR)/libtspi_la-platform.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_platform/platform.c' object='libtspi_la-platform.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_platform/libtspi_la-platform.lo: daa/daa_platform/platform.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_platform/libtspi_la-platform.lo -MD -MP -MF daa/daa_platform/$(DEPDIR)/libtspi_la-platform.Tpo -c -o daa/daa_platform/libtspi_la-platform.lo `test -f 'daa/daa_platform/platform.c' || echo '$(srcdir)/'`daa/daa_platform/platform.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_platform/$(DEPDIR)/libtspi_la-platform.Tpo daa/daa_platform/$(DEPDIR)/libtspi_la-platform.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_platform/platform.c' object='daa/daa_platform/libtspi_la-platform.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-platform.lo `test -f 'daa/daa_platform/platform.c' || echo '$(srcdir)/'`daa/daa_platform/platform.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_platform/libtspi_la-platform.lo `test -f 'daa/daa_platform/platform.c' || echo '$(srcdir)/'`daa/daa_platform/platform.c
 
-libtspi_la-issuer_init.lo: daa/daa_issuer/issuer_init.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-issuer_init.lo -MD -MP -MF $(DEPDIR)/libtspi_la-issuer_init.Tpo -c -o libtspi_la-issuer_init.lo `test -f 'daa/daa_issuer/issuer_init.c' || echo '$(srcdir)/'`daa/daa_issuer/issuer_init.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-issuer_init.Tpo $(DEPDIR)/libtspi_la-issuer_init.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/issuer_init.c' object='libtspi_la-issuer_init.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_issuer/libtspi_la-issuer_init.lo: daa/daa_issuer/issuer_init.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_issuer/libtspi_la-issuer_init.lo -MD -MP -MF daa/daa_issuer/$(DEPDIR)/libtspi_la-issuer_init.Tpo -c -o daa/daa_issuer/libtspi_la-issuer_init.lo `test -f 'daa/daa_issuer/issuer_init.c' || echo '$(srcdir)/'`daa/daa_issuer/issuer_init.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_issuer/$(DEPDIR)/libtspi_la-issuer_init.Tpo daa/daa_issuer/$(DEPDIR)/libtspi_la-issuer_init.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/issuer_init.c' object='daa/daa_issuer/libtspi_la-issuer_init.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-issuer_init.lo `test -f 'daa/daa_issuer/issuer_init.c' || echo '$(srcdir)/'`daa/daa_issuer/issuer_init.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_issuer/libtspi_la-issuer_init.lo `test -f 'daa/daa_issuer/issuer_init.c' || echo '$(srcdir)/'`daa/daa_issuer/issuer_init.c
 
-libtspi_la-issue_credential.lo: daa/daa_issuer/issue_credential.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-issue_credential.lo -MD -MP -MF $(DEPDIR)/libtspi_la-issue_credential.Tpo -c -o libtspi_la-issue_credential.lo `test -f 'daa/daa_issuer/issue_credential.c' || echo '$(srcdir)/'`daa/daa_issuer/issue_credential.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-issue_credential.Tpo $(DEPDIR)/libtspi_la-issue_credential.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/issue_credential.c' object='libtspi_la-issue_credential.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_issuer/libtspi_la-issue_credential.lo: daa/daa_issuer/issue_credential.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_issuer/libtspi_la-issue_credential.lo -MD -MP -MF daa/daa_issuer/$(DEPDIR)/libtspi_la-issue_credential.Tpo -c -o daa/daa_issuer/libtspi_la-issue_credential.lo `test -f 'daa/daa_issuer/issue_credential.c' || echo '$(srcdir)/'`daa/daa_issuer/issue_credential.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_issuer/$(DEPDIR)/libtspi_la-issue_credential.Tpo daa/daa_issuer/$(DEPDIR)/libtspi_la-issue_credential.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_issuer/issue_credential.c' object='daa/daa_issuer/libtspi_la-issue_credential.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-issue_credential.lo `test -f 'daa/daa_issuer/issue_credential.c' || echo '$(srcdir)/'`daa/daa_issuer/issue_credential.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_issuer/libtspi_la-issue_credential.lo `test -f 'daa/daa_issuer/issue_credential.c' || echo '$(srcdir)/'`daa/daa_issuer/issue_credential.c
 
-libtspi_la-verifier_transaction.lo: daa/daa_verifier/verifier_transaction.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-verifier_transaction.lo -MD -MP -MF $(DEPDIR)/libtspi_la-verifier_transaction.Tpo -c -o libtspi_la-verifier_transaction.lo `test -f 'daa/daa_verifier/verifier_transaction.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier_transaction.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-verifier_transaction.Tpo $(DEPDIR)/libtspi_la-verifier_transaction.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_verifier/verifier_transaction.c' object='libtspi_la-verifier_transaction.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_verifier/libtspi_la-verifier_transaction.lo: daa/daa_verifier/verifier_transaction.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_verifier/libtspi_la-verifier_transaction.lo -MD -MP -MF daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier_transaction.Tpo -c -o daa/daa_verifier/libtspi_la-verifier_transaction.lo `test -f 'daa/daa_verifier/verifier_transaction.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier_transaction.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier_transaction.Tpo daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier_transaction.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_verifier/verifier_transaction.c' object='daa/daa_verifier/libtspi_la-verifier_transaction.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-verifier_transaction.lo `test -f 'daa/daa_verifier/verifier_transaction.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier_transaction.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_verifier/libtspi_la-verifier_transaction.lo `test -f 'daa/daa_verifier/verifier_transaction.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier_transaction.c
 
-libtspi_la-verifier.lo: daa/daa_verifier/verifier.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-verifier.lo -MD -MP -MF $(DEPDIR)/libtspi_la-verifier.Tpo -c -o libtspi_la-verifier.lo `test -f 'daa/daa_verifier/verifier.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-verifier.Tpo $(DEPDIR)/libtspi_la-verifier.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_verifier/verifier.c' object='libtspi_la-verifier.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_verifier/libtspi_la-verifier.lo: daa/daa_verifier/verifier.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_verifier/libtspi_la-verifier.lo -MD -MP -MF daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier.Tpo -c -o daa/daa_verifier/libtspi_la-verifier.lo `test -f 'daa/daa_verifier/verifier.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier.Tpo daa/daa_verifier/$(DEPDIR)/libtspi_la-verifier.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_verifier/verifier.c' object='daa/daa_verifier/libtspi_la-verifier.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-verifier.lo `test -f 'daa/daa_verifier/verifier.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_verifier/libtspi_la-verifier.lo `test -f 'daa/daa_verifier/verifier.c' || echo '$(srcdir)/'`daa/daa_verifier/verifier.c
 
-libtspi_la-daa_structs.lo: daa/daa_structs.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-daa_structs.lo -MD -MP -MF $(DEPDIR)/libtspi_la-daa_structs.Tpo -c -o libtspi_la-daa_structs.lo `test -f 'daa/daa_structs.c' || echo '$(srcdir)/'`daa/daa_structs.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-daa_structs.Tpo $(DEPDIR)/libtspi_la-daa_structs.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_structs.c' object='libtspi_la-daa_structs.lo' libtool=yes @AMDEPBACKSLASH@
+daa/libtspi_la-daa_structs.lo: daa/daa_structs.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/libtspi_la-daa_structs.lo -MD -MP -MF daa/$(DEPDIR)/libtspi_la-daa_structs.Tpo -c -o daa/libtspi_la-daa_structs.lo `test -f 'daa/daa_structs.c' || echo '$(srcdir)/'`daa/daa_structs.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/$(DEPDIR)/libtspi_la-daa_structs.Tpo daa/$(DEPDIR)/libtspi_la-daa_structs.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_structs.c' object='daa/libtspi_la-daa_structs.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-daa_structs.lo `test -f 'daa/daa_structs.c' || echo '$(srcdir)/'`daa/daa_structs.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/libtspi_la-daa_structs.lo `test -f 'daa/daa_structs.c' || echo '$(srcdir)/'`daa/daa_structs.c
 
-libtspi_la-daa_parameter.lo: daa/daa_parameter.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-daa_parameter.lo -MD -MP -MF $(DEPDIR)/libtspi_la-daa_parameter.Tpo -c -o libtspi_la-daa_parameter.lo `test -f 'daa/daa_parameter.c' || echo '$(srcdir)/'`daa/daa_parameter.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-daa_parameter.Tpo $(DEPDIR)/libtspi_la-daa_parameter.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_parameter.c' object='libtspi_la-daa_parameter.lo' libtool=yes @AMDEPBACKSLASH@
+daa/libtspi_la-daa_parameter.lo: daa/daa_parameter.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/libtspi_la-daa_parameter.lo -MD -MP -MF daa/$(DEPDIR)/libtspi_la-daa_parameter.Tpo -c -o daa/libtspi_la-daa_parameter.lo `test -f 'daa/daa_parameter.c' || echo '$(srcdir)/'`daa/daa_parameter.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/$(DEPDIR)/libtspi_la-daa_parameter.Tpo daa/$(DEPDIR)/libtspi_la-daa_parameter.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_parameter.c' object='daa/libtspi_la-daa_parameter.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-daa_parameter.lo `test -f 'daa/daa_parameter.c' || echo '$(srcdir)/'`daa/daa_parameter.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/libtspi_la-daa_parameter.lo `test -f 'daa/daa_parameter.c' || echo '$(srcdir)/'`daa/daa_parameter.c
 
-libtspi_la-bi_gmp.lo: daa/big_integer/bi_gmp.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-bi_gmp.lo -MD -MP -MF $(DEPDIR)/libtspi_la-bi_gmp.Tpo -c -o libtspi_la-bi_gmp.lo `test -f 'daa/big_integer/bi_gmp.c' || echo '$(srcdir)/'`daa/big_integer/bi_gmp.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-bi_gmp.Tpo $(DEPDIR)/libtspi_la-bi_gmp.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/big_integer/bi_gmp.c' object='libtspi_la-bi_gmp.lo' libtool=yes @AMDEPBACKSLASH@
+daa/big_integer/libtspi_la-bi_gmp.lo: daa/big_integer/bi_gmp.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/big_integer/libtspi_la-bi_gmp.lo -MD -MP -MF daa/big_integer/$(DEPDIR)/libtspi_la-bi_gmp.Tpo -c -o daa/big_integer/libtspi_la-bi_gmp.lo `test -f 'daa/big_integer/bi_gmp.c' || echo '$(srcdir)/'`daa/big_integer/bi_gmp.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/big_integer/$(DEPDIR)/libtspi_la-bi_gmp.Tpo daa/big_integer/$(DEPDIR)/libtspi_la-bi_gmp.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/big_integer/bi_gmp.c' object='daa/big_integer/libtspi_la-bi_gmp.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-bi_gmp.lo `test -f 'daa/big_integer/bi_gmp.c' || echo '$(srcdir)/'`daa/big_integer/bi_gmp.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/big_integer/libtspi_la-bi_gmp.lo `test -f 'daa/big_integer/bi_gmp.c' || echo '$(srcdir)/'`daa/big_integer/bi_gmp.c
 
-libtspi_la-bi_openssl.lo: daa/big_integer/bi_openssl.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-bi_openssl.lo -MD -MP -MF $(DEPDIR)/libtspi_la-bi_openssl.Tpo -c -o libtspi_la-bi_openssl.lo `test -f 'daa/big_integer/bi_openssl.c' || echo '$(srcdir)/'`daa/big_integer/bi_openssl.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-bi_openssl.Tpo $(DEPDIR)/libtspi_la-bi_openssl.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/big_integer/bi_openssl.c' object='libtspi_la-bi_openssl.lo' libtool=yes @AMDEPBACKSLASH@
+daa/big_integer/libtspi_la-bi_openssl.lo: daa/big_integer/bi_openssl.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/big_integer/libtspi_la-bi_openssl.lo -MD -MP -MF daa/big_integer/$(DEPDIR)/libtspi_la-bi_openssl.Tpo -c -o daa/big_integer/libtspi_la-bi_openssl.lo `test -f 'daa/big_integer/bi_openssl.c' || echo '$(srcdir)/'`daa/big_integer/bi_openssl.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/big_integer/$(DEPDIR)/libtspi_la-bi_openssl.Tpo daa/big_integer/$(DEPDIR)/libtspi_la-bi_openssl.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/big_integer/bi_openssl.c' object='daa/big_integer/libtspi_la-bi_openssl.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-bi_openssl.lo `test -f 'daa/big_integer/bi_openssl.c' || echo '$(srcdir)/'`daa/big_integer/bi_openssl.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/big_integer/libtspi_la-bi_openssl.lo `test -f 'daa/big_integer/bi_openssl.c' || echo '$(srcdir)/'`daa/big_integer/bi_openssl.c
 
-libtspi_la-csencryption_result.lo: daa/daa_anonymityrevocation/csencryption_result.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-csencryption_result.lo -MD -MP -MF $(DEPDIR)/libtspi_la-csencryption_result.Tpo -c -o libtspi_la-csencryption_result.lo `test -f 'daa/daa_anonymityrevocation/csencryption_result.c' || echo '$(srcdir)/'`daa/daa_anonymityrevocation/csencryption_result.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-csencryption_result.Tpo $(DEPDIR)/libtspi_la-csencryption_result.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_anonymityrevocation/csencryption_result.c' object='libtspi_la-csencryption_result.lo' libtool=yes @AMDEPBACKSLASH@
+daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo: daa/daa_anonymityrevocation/csencryption_result.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo -MD -MP -MF daa/daa_anonymityrevocation/$(DEPDIR)/libtspi_la-csencryption_result.Tpo -c -o daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo `test -f 'daa/daa_anonymityrevocation/csencryption_result.c' || echo '$(srcdir)/'`daa/daa_anonymityrevocation/csencryption_result.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/daa_anonymityrevocation/$(DEPDIR)/libtspi_la-csencryption_result.Tpo daa/daa_anonymityrevocation/$(DEPDIR)/libtspi_la-csencryption_result.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/daa_anonymityrevocation/csencryption_result.c' object='daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-csencryption_result.lo `test -f 'daa/daa_anonymityrevocation/csencryption_result.c' || echo '$(srcdir)/'`daa/daa_anonymityrevocation/csencryption_result.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/daa_anonymityrevocation/libtspi_la-csencryption_result.lo `test -f 'daa/daa_anonymityrevocation/csencryption_result.c' || echo '$(srcdir)/'`daa/daa_anonymityrevocation/csencryption_result.c
 
-libtspi_la-bi.lo: daa/big_integer/bi.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-bi.lo -MD -MP -MF $(DEPDIR)/libtspi_la-bi.Tpo -c -o libtspi_la-bi.lo `test -f 'daa/big_integer/bi.c' || echo '$(srcdir)/'`daa/big_integer/bi.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-bi.Tpo $(DEPDIR)/libtspi_la-bi.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/big_integer/bi.c' object='libtspi_la-bi.lo' libtool=yes @AMDEPBACKSLASH@
+daa/big_integer/libtspi_la-bi.lo: daa/big_integer/bi.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/big_integer/libtspi_la-bi.lo -MD -MP -MF daa/big_integer/$(DEPDIR)/libtspi_la-bi.Tpo -c -o daa/big_integer/libtspi_la-bi.lo `test -f 'daa/big_integer/bi.c' || echo '$(srcdir)/'`daa/big_integer/bi.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/big_integer/$(DEPDIR)/libtspi_la-bi.Tpo daa/big_integer/$(DEPDIR)/libtspi_la-bi.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/big_integer/bi.c' object='daa/big_integer/libtspi_la-bi.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-bi.lo `test -f 'daa/big_integer/bi.c' || echo '$(srcdir)/'`daa/big_integer/bi.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/big_integer/libtspi_la-bi.lo `test -f 'daa/big_integer/bi.c' || echo '$(srcdir)/'`daa/big_integer/bi.c
 
-libtspi_la-list.lo: daa/utils/list.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-list.lo -MD -MP -MF $(DEPDIR)/libtspi_la-list.Tpo -c -o libtspi_la-list.lo `test -f 'daa/utils/list.c' || echo '$(srcdir)/'`daa/utils/list.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-list.Tpo $(DEPDIR)/libtspi_la-list.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/utils/list.c' object='libtspi_la-list.lo' libtool=yes @AMDEPBACKSLASH@
+daa/utils/libtspi_la-list.lo: daa/utils/list.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT daa/utils/libtspi_la-list.lo -MD -MP -MF daa/utils/$(DEPDIR)/libtspi_la-list.Tpo -c -o daa/utils/libtspi_la-list.lo `test -f 'daa/utils/list.c' || echo '$(srcdir)/'`daa/utils/list.c
+@am__fastdepCC_TRUE@	$(am__mv) daa/utils/$(DEPDIR)/libtspi_la-list.Tpo daa/utils/$(DEPDIR)/libtspi_la-list.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='daa/utils/list.c' object='daa/utils/libtspi_la-list.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-list.lo `test -f 'daa/utils/list.c' || echo '$(srcdir)/'`daa/utils/list.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o daa/utils/libtspi_la-list.lo `test -f 'daa/utils/list.c' || echo '$(srcdir)/'`daa/utils/list.c
 
 libtspi_la-tsp_get_flags.lo: tsp_get_flags.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tsp_get_flags.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tsp_get_flags.Tpo -c -o libtspi_la-tsp_get_flags.lo `test -f 'tsp_get_flags.c' || echo '$(srcdir)/'`tsp_get_flags.c
@@ -1668,12 +1989,12 @@ libtspi_la-tsp_audit.lo: tsp_audit.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_audit.lo `test -f 'tsp_audit.c' || echo '$(srcdir)/'`tsp_audit.c
 
-libtspi_la-rpc_audit.lo: rpc/@RPC@/rpc_audit.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_audit.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_audit.Tpo -c -o libtspi_la-rpc_audit.lo `test -f 'rpc/@RPC@/rpc_audit.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_audit.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_audit.Tpo $(DEPDIR)/libtspi_la-rpc_audit.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_audit.c' object='libtspi_la-rpc_audit.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_audit.lo: rpc/@RPC@/rpc_audit.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_audit.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_audit.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_audit.lo `test -f 'rpc/@RPC@/rpc_audit.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_audit.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_audit.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_audit.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_audit.c' object='rpc/@RPC@/libtspi_la-rpc_audit.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_audit.lo `test -f 'rpc/@RPC@/rpc_audit.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_audit.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_audit.lo `test -f 'rpc/@RPC@/rpc_audit.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_audit.c
 
 libtspi_la-tsp_seal.lo: tsp_seal.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tsp_seal.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tsp_seal.Tpo -c -o libtspi_la-tsp_seal.lo `test -f 'tsp_seal.c' || echo '$(srcdir)/'`tsp_seal.c
@@ -1696,40 +2017,40 @@ libtspi_la-tsp_quote2.lo: tsp_quote2.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_quote2.lo `test -f 'tsp_quote2.c' || echo '$(srcdir)/'`tsp_quote2.c
 
-libtspi_la-rpc_quote2.lo: rpc/@RPC@/rpc_quote2.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_quote2.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_quote2.Tpo -c -o libtspi_la-rpc_quote2.lo `test -f 'rpc/@RPC@/rpc_quote2.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote2.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_quote2.Tpo $(DEPDIR)/libtspi_la-rpc_quote2.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_quote2.c' object='libtspi_la-rpc_quote2.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_quote2.lo: rpc/@RPC@/rpc_quote2.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_quote2.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote2.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_quote2.lo `test -f 'rpc/@RPC@/rpc_quote2.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote2.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote2.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_quote2.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_quote2.c' object='rpc/@RPC@/libtspi_la-rpc_quote2.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_quote2.lo `test -f 'rpc/@RPC@/rpc_quote2.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote2.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_quote2.lo `test -f 'rpc/@RPC@/rpc_quote2.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_quote2.c
 
-libtspi_la-main.lo: gtk/main.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-main.lo -MD -MP -MF $(DEPDIR)/libtspi_la-main.Tpo -c -o libtspi_la-main.lo `test -f 'gtk/main.c' || echo '$(srcdir)/'`gtk/main.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-main.Tpo $(DEPDIR)/libtspi_la-main.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/main.c' object='libtspi_la-main.lo' libtool=yes @AMDEPBACKSLASH@
+gtk/libtspi_la-main.lo: gtk/main.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT gtk/libtspi_la-main.lo -MD -MP -MF gtk/$(DEPDIR)/libtspi_la-main.Tpo -c -o gtk/libtspi_la-main.lo `test -f 'gtk/main.c' || echo '$(srcdir)/'`gtk/main.c
+@am__fastdepCC_TRUE@	$(am__mv) gtk/$(DEPDIR)/libtspi_la-main.Tpo gtk/$(DEPDIR)/libtspi_la-main.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/main.c' object='gtk/libtspi_la-main.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-main.lo `test -f 'gtk/main.c' || echo '$(srcdir)/'`gtk/main.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o gtk/libtspi_la-main.lo `test -f 'gtk/main.c' || echo '$(srcdir)/'`gtk/main.c
 
-libtspi_la-support.lo: gtk/support.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-support.lo -MD -MP -MF $(DEPDIR)/libtspi_la-support.Tpo -c -o libtspi_la-support.lo `test -f 'gtk/support.c' || echo '$(srcdir)/'`gtk/support.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-support.Tpo $(DEPDIR)/libtspi_la-support.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/support.c' object='libtspi_la-support.lo' libtool=yes @AMDEPBACKSLASH@
+gtk/libtspi_la-support.lo: gtk/support.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT gtk/libtspi_la-support.lo -MD -MP -MF gtk/$(DEPDIR)/libtspi_la-support.Tpo -c -o gtk/libtspi_la-support.lo `test -f 'gtk/support.c' || echo '$(srcdir)/'`gtk/support.c
+@am__fastdepCC_TRUE@	$(am__mv) gtk/$(DEPDIR)/libtspi_la-support.Tpo gtk/$(DEPDIR)/libtspi_la-support.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/support.c' object='gtk/libtspi_la-support.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-support.lo `test -f 'gtk/support.c' || echo '$(srcdir)/'`gtk/support.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o gtk/libtspi_la-support.lo `test -f 'gtk/support.c' || echo '$(srcdir)/'`gtk/support.c
 
-libtspi_la-interface.lo: gtk/interface.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-interface.lo -MD -MP -MF $(DEPDIR)/libtspi_la-interface.Tpo -c -o libtspi_la-interface.lo `test -f 'gtk/interface.c' || echo '$(srcdir)/'`gtk/interface.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-interface.Tpo $(DEPDIR)/libtspi_la-interface.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/interface.c' object='libtspi_la-interface.lo' libtool=yes @AMDEPBACKSLASH@
+gtk/libtspi_la-interface.lo: gtk/interface.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT gtk/libtspi_la-interface.lo -MD -MP -MF gtk/$(DEPDIR)/libtspi_la-interface.Tpo -c -o gtk/libtspi_la-interface.lo `test -f 'gtk/interface.c' || echo '$(srcdir)/'`gtk/interface.c
+@am__fastdepCC_TRUE@	$(am__mv) gtk/$(DEPDIR)/libtspi_la-interface.Tpo gtk/$(DEPDIR)/libtspi_la-interface.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/interface.c' object='gtk/libtspi_la-interface.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-interface.lo `test -f 'gtk/interface.c' || echo '$(srcdir)/'`gtk/interface.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o gtk/libtspi_la-interface.lo `test -f 'gtk/interface.c' || echo '$(srcdir)/'`gtk/interface.c
 
-libtspi_la-callbacks.lo: gtk/callbacks.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-callbacks.lo -MD -MP -MF $(DEPDIR)/libtspi_la-callbacks.Tpo -c -o libtspi_la-callbacks.lo `test -f 'gtk/callbacks.c' || echo '$(srcdir)/'`gtk/callbacks.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-callbacks.Tpo $(DEPDIR)/libtspi_la-callbacks.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/callbacks.c' object='libtspi_la-callbacks.lo' libtool=yes @AMDEPBACKSLASH@
+gtk/libtspi_la-callbacks.lo: gtk/callbacks.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT gtk/libtspi_la-callbacks.lo -MD -MP -MF gtk/$(DEPDIR)/libtspi_la-callbacks.Tpo -c -o gtk/libtspi_la-callbacks.lo `test -f 'gtk/callbacks.c' || echo '$(srcdir)/'`gtk/callbacks.c
+@am__fastdepCC_TRUE@	$(am__mv) gtk/$(DEPDIR)/libtspi_la-callbacks.Tpo gtk/$(DEPDIR)/libtspi_la-callbacks.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gtk/callbacks.c' object='gtk/libtspi_la-callbacks.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-callbacks.lo `test -f 'gtk/callbacks.c' || echo '$(srcdir)/'`gtk/callbacks.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o gtk/libtspi_la-callbacks.lo `test -f 'gtk/callbacks.c' || echo '$(srcdir)/'`gtk/callbacks.c
 
 libtspi_la-ssl_ui.lo: ssl_ui.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-ssl_ui.lo -MD -MP -MF $(DEPDIR)/libtspi_la-ssl_ui.Tpo -c -o libtspi_la-ssl_ui.lo `test -f 'ssl_ui.c' || echo '$(srcdir)/'`ssl_ui.c
@@ -1759,12 +2080,12 @@ libtspi_la-tsp_nv.lo: tsp_nv.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-tsp_nv.lo `test -f 'tsp_nv.c' || echo '$(srcdir)/'`tsp_nv.c
 
-libtspi_la-rpc_nv.lo: rpc/@RPC@/rpc_nv.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_nv.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_nv.Tpo -c -o libtspi_la-rpc_nv.lo `test -f 'rpc/@RPC@/rpc_nv.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_nv.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_nv.Tpo $(DEPDIR)/libtspi_la-rpc_nv.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_nv.c' object='libtspi_la-rpc_nv.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_nv.lo: rpc/@RPC@/rpc_nv.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_nv.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_nv.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_nv.lo `test -f 'rpc/@RPC@/rpc_nv.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_nv.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_nv.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_nv.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_nv.c' object='rpc/@RPC@/libtspi_la-rpc_nv.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_nv.lo `test -f 'rpc/@RPC@/rpc_nv.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_nv.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_nv.lo `test -f 'rpc/@RPC@/rpc_nv.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_nv.c
 
 libtspi_la-tspi_delegate.lo: tspi_delegate.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_delegate.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_delegate.Tpo -c -o libtspi_la-tspi_delegate.lo `test -f 'tspi_delegate.c' || echo '$(srcdir)/'`tspi_delegate.c
@@ -1787,12 +2108,12 @@ libtspi_la-obj_delfamily.lo: obj_delfamily.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-obj_delfamily.lo `test -f 'obj_delfamily.c' || echo '$(srcdir)/'`obj_delfamily.c
 
-libtspi_la-rpc_delegate.lo: rpc/@RPC@/rpc_delegate.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_delegate.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_delegate.Tpo -c -o libtspi_la-rpc_delegate.lo `test -f 'rpc/@RPC@/rpc_delegate.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_delegate.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_delegate.Tpo $(DEPDIR)/libtspi_la-rpc_delegate.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_delegate.c' object='libtspi_la-rpc_delegate.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_delegate.lo: rpc/@RPC@/rpc_delegate.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_delegate.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_delegate.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_delegate.lo `test -f 'rpc/@RPC@/rpc_delegate.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_delegate.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_delegate.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_delegate.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_delegate.c' object='rpc/@RPC@/libtspi_la-rpc_delegate.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_delegate.lo `test -f 'rpc/@RPC@/rpc_delegate.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_delegate.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_delegate.lo `test -f 'rpc/@RPC@/rpc_delegate.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_delegate.c
 
 libtspi_la-tspi_cmk.lo: tspi_cmk.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-tspi_cmk.lo -MD -MP -MF $(DEPDIR)/libtspi_la-tspi_cmk.Tpo -c -o libtspi_la-tspi_cmk.lo `test -f 'tspi_cmk.c' || echo '$(srcdir)/'`tspi_cmk.c
@@ -1808,18 +2129,29 @@ libtspi_la-obj_migdata.lo: obj_migdata.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-obj_migdata.lo `test -f 'obj_migdata.c' || echo '$(srcdir)/'`obj_migdata.c
 
-libtspi_la-rpc_cmk.lo: rpc/@RPC@/rpc_cmk.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT libtspi_la-rpc_cmk.lo -MD -MP -MF $(DEPDIR)/libtspi_la-rpc_cmk.Tpo -c -o libtspi_la-rpc_cmk.lo `test -f 'rpc/@RPC@/rpc_cmk.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_cmk.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libtspi_la-rpc_cmk.Tpo $(DEPDIR)/libtspi_la-rpc_cmk.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_cmk.c' object='libtspi_la-rpc_cmk.lo' libtool=yes @AMDEPBACKSLASH@
+rpc/@RPC@/libtspi_la-rpc_cmk.lo: rpc/@RPC@/rpc_cmk.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -MT rpc/@RPC@/libtspi_la-rpc_cmk.lo -MD -MP -MF rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_cmk.Tpo -c -o rpc/@RPC@/libtspi_la-rpc_cmk.lo `test -f 'rpc/@RPC@/rpc_cmk.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_cmk.c
+@am__fastdepCC_TRUE@	$(am__mv) rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_cmk.Tpo rpc/@RPC@/$(DEPDIR)/libtspi_la-rpc_cmk.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rpc/@RPC@/rpc_cmk.c' object='rpc/@RPC@/libtspi_la-rpc_cmk.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o libtspi_la-rpc_cmk.lo `test -f 'rpc/@RPC@/rpc_cmk.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_cmk.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libtspi_la_CFLAGS) $(CFLAGS) -c -o rpc/@RPC@/libtspi_la-rpc_cmk.lo `test -f 'rpc/@RPC@/rpc_cmk.c' || echo '$(srcdir)/'`rpc/@RPC@/rpc_cmk.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf daa/.libs daa/_libs
+	-rm -rf daa/big_integer/.libs daa/big_integer/_libs
+	-rm -rf daa/daa_anonymityrevocation/.libs daa/daa_anonymityrevocation/_libs
+	-rm -rf daa/daa_issuer/.libs daa/daa_issuer/_libs
+	-rm -rf daa/daa_platform/.libs daa/daa_platform/_libs
+	-rm -rf daa/daa_verifier/.libs daa/daa_verifier/_libs
+	-rm -rf daa/utils/.libs daa/utils/_libs
+	-rm -rf gtk/.libs gtk/_libs
+	-rm -rf ps/.libs ps/_libs
+	-rm -rf rpc/.libs rpc/_libs
+	-rm -rf rpc/@RPC@/.libs rpc/@RPC@/_libs
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -1931,6 +2263,28 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f daa/$(DEPDIR)/$(am__dirstamp)
+	-rm -f daa/$(am__dirstamp)
+	-rm -f daa/big_integer/$(DEPDIR)/$(am__dirstamp)
+	-rm -f daa/big_integer/$(am__dirstamp)
+	-rm -f daa/daa_anonymityrevocation/$(DEPDIR)/$(am__dirstamp)
+	-rm -f daa/daa_anonymityrevocation/$(am__dirstamp)
+	-rm -f daa/daa_issuer/$(DEPDIR)/$(am__dirstamp)
+	-rm -f daa/daa_issuer/$(am__dirstamp)
+	-rm -f daa/daa_platform/$(DEPDIR)/$(am__dirstamp)
+	-rm -f daa/daa_platform/$(am__dirstamp)
+	-rm -f daa/daa_verifier/$(DEPDIR)/$(am__dirstamp)
+	-rm -f daa/daa_verifier/$(am__dirstamp)
+	-rm -f daa/utils/$(DEPDIR)/$(am__dirstamp)
+	-rm -f daa/utils/$(am__dirstamp)
+	-rm -f gtk/$(DEPDIR)/$(am__dirstamp)
+	-rm -f gtk/$(am__dirstamp)
+	-rm -f ps/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ps/$(am__dirstamp)
+	-rm -f rpc/$(DEPDIR)/$(am__dirstamp)
+	-rm -f rpc/$(am__dirstamp)
+	-rm -f rpc/@RPC@/$(DEPDIR)/$(am__dirstamp)
+	-rm -f rpc/@RPC@/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1941,7 +2295,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) daa/$(DEPDIR) daa/big_integer/$(DEPDIR) daa/daa_anonymityrevocation/$(DEPDIR) daa/daa_issuer/$(DEPDIR) daa/daa_platform/$(DEPDIR) daa/daa_verifier/$(DEPDIR) daa/utils/$(DEPDIR) gtk/$(DEPDIR) ps/$(DEPDIR) rpc/$(DEPDIR) rpc/@RPC@/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1987,7 +2341,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR)
+	-rm -rf ./$(DEPDIR) daa/$(DEPDIR) daa/big_integer/$(DEPDIR) daa/daa_anonymityrevocation/$(DEPDIR) daa/daa_issuer/$(DEPDIR) daa/daa_platform/$(DEPDIR) daa/daa_verifier/$(DEPDIR) daa/utils/$(DEPDIR) gtk/$(DEPDIR) ps/$(DEPDIR) rpc/$(DEPDIR) rpc/@RPC@/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

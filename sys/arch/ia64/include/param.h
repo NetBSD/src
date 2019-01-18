@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2017/04/08 18:03:33 scole Exp $	*/
+/*	$NetBSD: param.h,v 1.9.12.1 2019/01/18 08:50:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,14 +55,6 @@
 #define	MAXCPU		16
 #else
 #define MAXCPU		1
-#endif
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1<<DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-
-#ifndef MAXPHYS
-#define MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 #endif
 
 #define UPAGES		4

@@ -1,4 +1,4 @@
-/*	$NetBSD: npwr_fc_pci.c,v 1.4 2014/03/29 19:28:28 christos Exp $	*/
+/*	$NetBSD: npwr_fc_pci.c,v 1.4.28.1 2019/01/18 08:50:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npwr_fc_pci.c,v 1.4 2014/03/29 19:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npwr_fc_pci.c,v 1.4.28.1 2019/01/18 08:50:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ int	iq80321_pci_intr_map(const struct pci_attach_args *,
 const char *iq80321_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *iq80321_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*iq80321_pci_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *);
+    int, int (*func)(void *), void *, const char *);
 void	iq80321_pci_intr_disestablish(void *, void *);
 
 void
@@ -162,7 +162,7 @@ iq80321_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 void *
 iq80321_pci_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
-    int (*func)(void *), void *arg)
+    int (*func)(void *), void *arg, const char *xname)
 {
 
 	return (i80321_intr_establish(ih, ipl, func, arg));

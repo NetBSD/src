@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.2.2.2 2018/09/06 06:55:05 pgoyette Exp $	*/
+/*	$NetBSD: result.c,v 1.2.2.3 2019/01/18 08:49:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -102,6 +102,7 @@ static const char *description[ISC_R_NRESULTS] = {
 	"multiple",				/*%< 62 */
 	"would block",				/*%< 63 */
 	"complete",				/*%< 64 */
+	"crypto failure",			/*%< 65 */
 };
 
 static const char *identifier[ISC_R_NRESULTS] = {
@@ -170,6 +171,7 @@ static const char *identifier[ISC_R_NRESULTS] = {
 	"ISC_R_MULTIPLE",
 	"ISC_R_WOULDBLOCK",
 	"ISC_R_COMPLETE",
+	"ISC_R_CRYPTOFAILURE",
 };
 
 #define ISC_RESULT_RESULTSET			2
@@ -218,7 +220,7 @@ static void
 initialize_action(void) {
 	isc_result_t result;
 
-	RUNTIME_CHECK(isc_mutex_init(&lock) == ISC_R_SUCCESS);
+	isc_mutex_init(&lock);
 	ISC_LIST_INIT(description_tables);
 	ISC_LIST_INIT(identifier_tables);
 

@@ -16,7 +16,7 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
 keyid=`expr ${keyname} : 'K.+008+\(.*\)'`
 
 (cd ../ns2 && $SHELL sign.sh ${keyid:-00000} )
@@ -25,7 +25,7 @@ cp ../ns2/dsset-example$TP .
 
 cat $infile $keyname.key > $zonefile
 
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 # Configure the resolving server with a trusted key.
 keyfile_to_trusted_keys $keyname > trusted.conf

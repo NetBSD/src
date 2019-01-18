@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.1.28.1 2018/04/07 04:12:11 pgoyette Exp $ */
+/* $NetBSD: proc.h,v 1.1.28.2 2019/01/18 08:50:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 struct mdlwp {
 	void *md_onfault;
 	struct trapframe *md_utf;
-	struct trapframe *md_ktf;
 	uint64_t md_cpacr;
 	uint32_t md_flags;
 };

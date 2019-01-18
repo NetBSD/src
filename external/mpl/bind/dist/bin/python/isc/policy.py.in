@@ -71,7 +71,7 @@ class PolicyLex:
         return t
 
     def t_ALGNAME(self, t):
-        r'(?i)\b(RSAMD5|DH|DSA|NSEC3DSA|ECC|RSASHA1|NSEC3RSASHA1|RSASHA256|RSASHA512|ECCGOST|ECDSAP256SHA256|ECDSAP384SHA384|ED25519|ED448)\b'
+        r'(?i)\b(RSAMD5|DH|ECC|RSASHA1|NSEC3RSASHA1|RSASHA256|RSASHA512|ECDSAP256SHA256|ECDSAP384SHA384|ED25519|ED448)\b'
         t.value = t.value.upper()
         return t
 
@@ -132,14 +132,11 @@ class Policy:
     keyttl = None
     coverage = None
     directory = None
-    valid_key_sz_per_algo = {'DSA': [512, 1024],
-                             'NSEC3DSA': [512, 1024],
-                             'RSAMD5': [1024, 4096],
+    valid_key_sz_per_algo = {'RSAMD5': [1024, 4096],
                              'RSASHA1': [1024, 4096],
                              'NSEC3RSASHA1': [512, 4096],
                              'RSASHA256': [1024, 4096],
                              'RSASHA512': [1024, 4096],
-                             'ECCGOST': None,
                              'ECDSAP256SHA256': None,
                              'ECDSAP384SHA384': None,
                              'ED25519': None,
@@ -265,21 +262,7 @@ class Policy:
                     return False, 'ZSK key size %d outside valid range %s' \
                             % (self.zsk_keysize, key_sz_range)
 
-            # Specific check for DSA keys
-            if self.algorithm in ['DSA', 'NSEC3DSA'] and \
-               self.ksk_keysize % 64 != 0:
-                return False, \
-                        ('KSK key size %d not divisible by 64 ' +
-                         'as required for DSA') % self.ksk_keysize
-
-            if self.algorithm in ['DSA', 'NSEC3DSA'] and \
-               self.zsk_keysize % 64 != 0:
-                return False, \
-                        ('ZSK key size %d not divisible by 64 ' +
-                         'as required for DSA') % self.zsk_keysize
-
-            if self.algorithm in ['ECCGOST', \
-                                  'ECDSAP256SHA256', \
+            if self.algorithm in ['ECDSAP256SHA256', \
                                   'ECDSAP384SHA384', \
                                   'ED25519', \
                                   'ED448']:
@@ -337,16 +320,6 @@ class dnssec_policy:
         p.zsk_keysize = 2048;
 
         # set default algorithm policies
-        # these need a lower default key size:
-        self.alg_policy['DSA'] = copy(p)
-        self.alg_policy['DSA'].algorithm = "DSA"
-        self.alg_policy['DSA'].name = "DSA"
-        self.alg_policy['DSA'].ksk_keysize = 1024;
-
-        self.alg_policy['NSEC3DSA'] = copy(p)
-        self.alg_policy['NSEC3DSA'].algorithm = "NSEC3DSA"
-        self.alg_policy['NSEC3DSA'].name = "NSEC3DSA"
-        self.alg_policy['NSEC3DSA'].ksk_keysize = 1024;
 
         # these can use default settings
         self.alg_policy['RSAMD5'] = copy(p)
@@ -368,10 +341,6 @@ class dnssec_policy:
         self.alg_policy['RSASHA512'] = copy(p)
         self.alg_policy['RSASHA512'].algorithm = "RSASHA512"
         self.alg_policy['RSASHA512'].name = "RSASHA512"
-
-        self.alg_policy['ECCGOST'] = copy(p)
-        self.alg_policy['ECCGOST'].algorithm = "ECCGOST"
-        self.alg_policy['ECCGOST'].name = "ECCGOST"
 
         self.alg_policy['ECDSAP256SHA256'] = copy(p)
         self.alg_policy['ECDSAP256SHA256'].algorithm = "ECDSAP256SHA256"

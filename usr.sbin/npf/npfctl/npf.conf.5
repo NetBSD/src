@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.51.2.2 2018/09/30 01:46:01 pgoyette Exp $
+.\"    $NetBSD: npf.conf.5,v 1.51.2.3 2019/01/18 08:51:02 pgoyette Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 21, 2018
+.Dd January 8, 2019
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ The following is an example of table definition:
 .Dl table <black> type hash dynamic
 .Pp
 Currently, tables support three data storage types:
-.Cm hash,
+.Cm hash ,
 .Cm tree ,
 or
 .Cm cdb .
@@ -102,7 +102,7 @@ Tables of type
 .Dq hash
 and
 .Dq cdb
-can only contain IP addresses.
+can only contain IP addresses, without masks.
 Only static data can be used with a storage type of
 .Dq cdb .
 .Pp
@@ -133,11 +133,14 @@ Three functions exist, to extract addresses from an interface with a chosen
 list type and IP address type:
 .Bl -tag -width "Fn ifaddrs interface" -offset indent
 .It Fn inet4 interface
-Static list.  IPv4 addresses.
+Static list.
+IPv4 addresses.
 .It Fn inet6 interface
-Static list.  IPv6 addresses.
+Static list.
+IPv6 addresses.
 .It Fn ifaddrs interface
-Dynamic list.  Both IPv4 and IPv6.
+Dynamic list.
+Both IPv4 and IPv6.
 The
 .Cm family
 keyword of a filtering rule can be used in combination to explicitly select
@@ -164,7 +167,7 @@ on wm0, and
 .Li $var2
 is the dynamic list of all the IPv4 and IPv6 addresses configured on wm0.
 The first three rules are equivalent, because with the
-.Li Ic block Ar "..." Cm on Li < Ns Ar interface Ns Li >
+.Ic block Ar "..." Cm on Li < Ns Ar interface Ns Li >
 syntax, NPF expects a direct reference to an interface, and therefore does
 not consider the extraction functions.
 The fourth and fifth rules are equivalent, for the same reason.
@@ -220,7 +223,7 @@ The
 keyword can be used to match the packets against specific TCP flags,
 according to the following syntax:
 .Pp
-.Dl Ic proto Cm tcp flags Ar match Ns Li [/ Ns Ar mask Ns Li ]
+.D1 Ic proto Cm tcp flags Ar match Ns Op Li / Ns Ar mask
 .Pp
 Where
 .Ar match

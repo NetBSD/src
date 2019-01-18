@@ -15,6 +15,21 @@ SYSTEMTESTTOP=..
 DIGOPTS="-p ${PORT}"
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
 
+#
+# Uncomment when creating credential cache files.
+#
+# KRB5_CONFIG=`pwd`/krb/krb5.conf
+#
+# Cd krb and run krb/setup.sh to create new keys.
+# Run nsupdate system test.
+# Kill the krb5kdc server started by krb/setup.sh.
+# Check the expiry date on the cached machine.ccache with klist is in 2038.
+# Comment out KRB5_CONFIG.
+# Re-run nsupdate system test to confirm everything still works.
+# git add and commit the resulting ns*/machine.ccache and ns*/dns.keytab files.
+# Clean up krb.
+#
+
 status=0
 n=0
 
@@ -196,7 +211,7 @@ grep "mx03.update.nil/MX:.*MX is an address" ns1/named.run > /dev/null 2>&1 || r
 
 ret=0
 echo_i "check SIG(0) key is accepted"
-key=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -T KEY -n ENTITY xxx`
+key=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -T KEY -n ENTITY xxx`
 echo "" | $NSUPDATE -k ${key}.private > /dev/null 2>&1 || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
@@ -266,7 +281,9 @@ END
 n=`expr $n + 1`
 ret=0
 echo_i "check that unixtime serial number is correctly generated ($n)"
-oldserial=`$DIG $DIGOPTS +short unixtime.nil. soa @10.53.0.1 | awk '{print $3}'` || ret=1
+$DIG $DIGOPTS +short unixtime.nil. soa @10.53.0.1 > dig.out.old.test$n || ret=1
+oldserial=`awk '{print $3}' dig.out.old.test$n` || ret=1
+start=`$PERL -e 'print time()."\n";'`
 $NSUPDATE <<END > /dev/null 2>&1 || ret=1
     server 10.53.0.1 ${PORT}
     ttl 600
@@ -275,11 +292,14 @@ $NSUPDATE <<END > /dev/null 2>&1 || ret=1
 END
 now=`$PERL -e 'print time()."\n";'`
 sleep 1
-serial=`$DIG $DIGOPTS +short unixtime.nil. soa @10.53.0.1 | awk '{print $3}'` || ret=1
-[ "$oldserial" -ne "$serial" ] || ret=1
-# allow up to 2 seconds difference between the serial
-# number and the unix epoch date but no more
-$PERL -e 'exit 1 if abs($ARGV[1] - $ARGV[0]) > 2;' $now $serial || ret=1
+$DIG $DIGOPTS +short unixtime.nil. soa @10.53.0.1 > dig.out.new.test$n || ret=1
+serial=`awk '{print $3}' dig.out.new.test$n` || ret=1
+[ "$oldserial" = "$serial" ] && { echo_i "oldserial == serial"; ret=1; }
+if [ "$serial" -lt "$start" ]; then
+    echo_i "out-of-range serial=$serial < start=$start"; ret=1;
+elif [ "$serial" -gt "$now" ]; then
+    echo_i "out-of-range serial=$serial > now=$now"; ret=1;
+fi
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
 ret=0
@@ -317,8 +337,8 @@ $KILL -KILL `cat named.pid`
 rm named.pid
 cd ..
 sleep 10
-if 
-	$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns1
+if
+	$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} nsupdate ns1
 then
 	echo_i "restarted server ns1"
 else
@@ -486,12 +506,12 @@ server 10.53.0.1 ${PORT}
 update add updated4.example.nil. 600 A 10.10.10.3
 send
 END
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} . ns1
+$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} nsupdate ns1
 # Removing the journal file and restarting the server means
 # that the data served by the new server process are exactly
 # those dumped to the master file by "rndc stop".
 rm -f ns1/*jnl
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns1
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} nsupdate ns1
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd updated4.example.nil.\
 	@10.53.0.1 a > dig.out.ns1 || status=1
 digcomp knowngood.ns1.afterstop dig.out.ns1 || ret=1
@@ -548,12 +568,69 @@ fi
 
 n=`expr $n + 1`
 ret=0
+echo_i "check that 'update-policy tcp-self' refuses update of records via UDP ($n)"
+$NSUPDATE > nsupdate.out.$n 2>&1 << END
+server 10.53.0.6 ${PORT}
+local 127.0.0.1
+update add 1.0.0.127.in-addr.arpa. 600 PTR localhost.
+send
+END
+grep REFUSED nsupdate.out.$n > /dev/null 2>&1 || ret=1
+$DIG $DIGOPTS @10.53.0.6 \
+        +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
+        -x 127.0.0.1 > dig.out.ns6.$n
+grep localhost. dig.out.ns6.$n > /dev/null 2>&1 && ret=1
+if test $ret -ne 0
+then
+echo_i "failed"; status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo_i "check that 'update-policy tcp-self' permits update of records for the client's own address via TCP ($n)"
+$NSUPDATE -v > nsupdate.out.$n 2>&1 << END || ret=1
+server 10.53.0.6 ${PORT}
+local 127.0.0.1
+update add 1.0.0.127.in-addr.arpa. 600 PTR localhost.
+send
+END
+grep REFUSED nsupdate.out.$n > /dev/null 2>&1 && ret=1
+$DIG $DIGOPTS @10.53.0.6 \
+        +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
+        -x 127.0.0.1 > dig.out.ns6.$n || ret=1
+grep localhost. dig.out.ns6.$n > /dev/null 2>&1 || ret=1
+if test $ret -ne 0
+then
+echo_i "failed"; status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo_i "check that 'update-policy tcp-self' refuses update of records for a different address from the client's own address via TCP ($n)"
+$NSUPDATE -v > nsupdate.out.$n 2>&1 << END
+server 10.53.0.6 ${PORT}
+local 127.0.0.1
+update add 1.0.168.192.in-addr.arpa. 600 PTR localhost.
+send
+END
+grep REFUSED nsupdate.out.$n > /dev/null 2>&1 || ret=1
+$DIG $DIGOPTS @10.53.0.6 \
+        +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
+        -x 192.168.0.1 > dig.out.ns6.$n
+grep localhost. dig.out.ns6.$n > /dev/null 2>&1 && ret=1
+if test $ret -ne 0
+then
+echo_i "failed"; status=1
+fi
+
+n=`expr $n + 1`
+ret=0
 echo_i "check that changes to the DNSKEY RRset TTL do not have side effects ($n)"
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
         @10.53.0.3 dnskey | \
 	sed -n 's/\(.*\)10.IN/update add \1600 IN/p' |
 	(echo server 10.53.0.3 ${PORT}; cat - ; echo send ) |
-$NSUPDATE 
+$NSUPDATE
 
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
 	@10.53.0.3 any > dig.out.ns3.$n
@@ -601,7 +678,7 @@ n=`expr $n + 1`
 ret=0
 echo_i "check command list ($n)"
 (
-while read cmd 
+while read cmd
 do
     echo "$cmd" | $NSUPDATE  > /dev/null 2>&1
     if test $? -gt 1 ; then
@@ -940,6 +1017,225 @@ grep "UPDATE, status: NOERROR" nsupdate.out-$n > /dev/null 2>&1 || ret=1
 grep "UPDATE, status: FORMERR" nsupdate.out-$n > /dev/null 2>&1 || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
+if $FEATURETEST --gssapi ; then
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check krb5-self match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns7/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 || ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.7 ${PORT}
+  zone example.com
+  update add machine.example.com 3600 IN A 10.53.0.7
+  send
+EOF
+  $DIG $DIGOPTS +tcp @10.53.0.7 machine.example.com A > dig.out.ns7.test$n
+  grep "status: NOERROR" dig.out.ns7.test$n > /dev/null || ret=1
+  grep "machine.example.com..*A.*10.53.0.7" dig.out.ns7.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check krb5-self no-match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns7/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.7 ${PORT}
+  zone example.com
+  update add foo.example.com 3600 IN A 10.53.0.7
+  send
+EOF
+  grep "update failed: REFUSED" nsupdate.out-$n > /dev/null || ret=1
+  $DIG $DIGOPTS +tcp @10.53.0.7 foo.example.com A > dig.out.ns7.test$n
+  grep "status: NXDOMAIN" dig.out.ns7.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check krb5-subdomain match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns7/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE -d << EOF > nsupdate.out-$n 2>&1 || ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.7 ${PORT}
+  zone example.com
+  update add _xxx._tcp.example.com 3600 IN SRV 0 0 0 machine.example.com
+  send
+EOF
+  $DIG $DIGOPTS +tcp @10.53.0.7 _xxx._tcp.example.com SRV > dig.out.ns7.test$n
+  grep "status: NOERROR" dig.out.ns7.test$n > /dev/null || ret=1
+  grep "_xxx._tcp.example.com.*SRV.*0 0 0 machine.example.com" dig.out.ns7.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check krb5-subdomain no-match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns7/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.7 ${PORT}
+  zone example.com
+  update add _xxx._udp.example.com 3600 IN SRV 0 0 0 machine.example.com
+  send
+EOF
+  grep "update failed: REFUSED" nsupdate.out-$n > /dev/null || ret=1
+  $DIG $DIGOPTS +tcp @10.53.0.7 _xxx._udp.example.com SRV > dig.out.ns7.test$n
+  grep "status: NXDOMAIN" dig.out.ns7.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check krb5-selfsub match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns8/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE -d << EOF > nsupdate.out-$n 2>&1 || ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.8 ${PORT}
+  zone example.com
+  update add xxx.machine.example.com 3600 IN A 10.53.0.8
+  send
+EOF
+  $DIG $DIGOPTS +tcp @10.53.0.8 xxx.machine.example.com A > dig.out.ns8.test$n
+  grep "status: NOERROR" dig.out.ns8.test$n > /dev/null || ret=1
+  grep "xxx.machine.example.com..*A.*10.53.0.8" dig.out.ns8.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check krb5-selfsub no-match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns8/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.8 ${PORT}
+  zone example.com
+  update add foo.example.com 3600 IN A 10.53.0.8
+  send
+EOF
+  grep "update failed: REFUSED" nsupdate.out-$n > /dev/null || ret=1
+  $DIG $DIGOPTS +tcp @10.53.0.8 foo.example.com A > dig.out.ns8.test$n
+  grep "status: NXDOMAIN" dig.out.ns8.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+
+  echo_i "check ms-self match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns9/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 || ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.9 ${PORT}
+  zone example.com
+  update add machine.example.com 3600 IN A 10.53.0.9
+  send
+EOF
+  $DIG $DIGOPTS +tcp @10.53.0.9 machine.example.com A > dig.out.ns9.test$n
+  grep "status: NOERROR" dig.out.ns9.test$n > /dev/null || ret=1
+  grep "machine.example.com..*A.*10.53.0.9" dig.out.ns9.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check ms-self no-match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns9/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.9 ${PORT}
+  zone example.com
+  update add foo.example.com 3600 IN A 10.53.0.9
+  send
+EOF
+  grep "update failed: REFUSED" nsupdate.out-$n > /dev/null || ret=1
+  $DIG $DIGOPTS +tcp @10.53.0.9 foo.example.com A > dig.out.ns9.test$n
+  grep "status: NXDOMAIN" dig.out.ns9.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check ms-subdomain match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns9/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE -d << EOF > nsupdate.out-$n 2>&1 || ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.9 ${PORT}
+  zone example.com
+  update add _xxx._tcp.example.com 3600 IN SRV 0 0 0 machine.example.com
+  send
+EOF
+  $DIG $DIGOPTS +tcp @10.53.0.9 _xxx._tcp.example.com SRV > dig.out.ns9.test$n
+  grep "status: NOERROR" dig.out.ns9.test$n > /dev/null || ret=1
+  grep "_xxx._tcp.example.com.*SRV.*0 0 0 machine.example.com" dig.out.ns9.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check ms-subdomain no-match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns9/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.9 ${PORT}
+  zone example.com
+  update add _xxx._udp.example.com 3600 IN SRV 0 0 0 machine.example.com
+  send
+EOF
+  grep "update failed: REFUSED" nsupdate.out-$n > /dev/null || ret=1
+  $DIG $DIGOPTS +tcp @10.53.0.9 _xxx._udp.example.com SRV > dig.out.ns9.test$n
+  grep "status: NXDOMAIN" dig.out.ns9.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check ms-selfsub match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns10/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE -d << EOF > nsupdate.out-$n 2>&1 || ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.10 ${PORT}
+  zone example.com
+  update add xxx.machine.example.com 3600 IN A 10.53.0.10
+  send
+EOF
+  $DIG $DIGOPTS +tcp @10.53.0.10 xxx.machine.example.com A > dig.out.ns10.test$n
+  grep "status: NOERROR" dig.out.ns10.test$n > /dev/null || ret=1
+  grep "xxx.machine.example.com..*A.*10.53.0.10" dig.out.ns10.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+  n=`expr $n + 1`
+  ret=0
+  echo_i "check ms-selfsub no-match ($n)"
+  KRB5CCNAME="FILE:"`pwd`/ns10/machine.ccache
+  export KRB5CCNAME
+  $NSUPDATE << EOF > nsupdate.out-$n 2>&1 && ret=1
+  gsstsig
+  realm EXAMPLE.COM
+  server 10.53.0.10 ${PORT}
+  zone example.com
+  update add foo.example.com 3600 IN A 10.53.0.10
+  send
+EOF
+  grep "update failed: REFUSED" nsupdate.out-$n > /dev/null || ret=1
+  $DIG $DIGOPTS +tcp @10.53.0.10 foo.example.com A > dig.out.ns10.test$n
+  grep "status: NXDOMAIN" dig.out.ns10.test$n > /dev/null || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+fi
 #
 #  Add client library tests here
 #

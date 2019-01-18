@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.36 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: proc.c,v 1.36.26.1 2019/01/18 08:48:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.36 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: proc.c,v 1.36.26.1 2019/01/18 08:48:24 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,11 +231,11 @@ pwait(void)
     for (pp = (fp = &proclist)->p_next; pp != NULL; pp = (fp = pp)->p_next)
 	if (pp->p_pid == 0) {
 	    fp->p_next = pp->p_next;
-	    xfree((ptr_t) pp->p_command);
+	    free(pp->p_command);
 	    if (pp->p_cwd && --pp->p_cwd->di_count == 0)
 		if (pp->p_cwd->di_next == 0)
 		    dfree(pp->p_cwd);
-	    xfree((ptr_t) pp);
+	    free(pp);
 	    pp = fp;
 	}
     (void)sigprocmask(SIG_SETMASK, &osigset, NULL);

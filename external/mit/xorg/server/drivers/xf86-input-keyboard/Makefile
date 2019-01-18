@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/01/12 18:32:12 macallan Exp $
+#	$NetBSD: Makefile,v 1.15.28.1 2019/01/18 08:49:04 pgoyette Exp $
 
 DRIVER=		xf86-input-keyboard
 DRIVER_NAME=	kbd_drv
@@ -26,6 +26,7 @@ CPPFLAGS.kbd.c=	-D__XKBDEFRULES__=${__XKBDEFRULES__}
 
 X11EXTRAMANDEFS+=	-e 's,__xkb_path__,${X11LIBDIR}/xkb,g'
 
-COPTS.kbd.c=      -Wno-error	# XXX deprecated
+COPTS.kbd.c=		-Wno-error	# XXX deprecated
+COPTS.bsd_kbd.c=	-Wno-error	# XXX deprecated
 
 .include "../Makefile.xf86-driver"

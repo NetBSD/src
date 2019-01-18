@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.4.12.3 2018/06/25 07:26:05 pgoyette Exp $
+	$NetBSD: README,v 1.4.12.4 2019/01/18 08:50:57 pgoyette Exp $
 
                            Kernel Developer's Manual
 
@@ -10,6 +10,7 @@ DESCRIPTION
      * hello           - the simplest `hello world' module
      * luahello        - the simplest `hello world' Lua module
      * luareadhappy    - demonstrates calling Lua code from C
+     * mapper          - basic implementation of mmap
      * panic_string    - shows how panic is being called through a device
      * ping            - basic ioctl(9)
      * properties      - handle incoming properties during the module load
@@ -65,6 +66,9 @@ HISTORY
 
      The panic_string module first appeared in NetBSD 9.0 and was authored by
      Harry Pantazis.
+
+     The mapper module first appeared in NetBSD 9.0 and was authored by
+     Akul Pillai.
 
 AUTHORS
      This document was written by Kamil Rytarowski.

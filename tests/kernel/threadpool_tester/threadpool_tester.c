@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool_tester.c,v 1.1.2.2 2018/12/26 14:02:09 pgoyette Exp $	*/
+/*	$NetBSD: threadpool_tester.c,v 1.1.2.3 2019/01/18 08:51:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threadpool_tester.c,v 1.1.2.2 2018/12/26 14:02:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threadpool_tester.c,v 1.1.2.3 2019/01/18 08:51:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,10 +49,10 @@ MODULE(MODULE_CLASS_MISC, threadpool_tester, NULL);
 static struct tester_context {
 	kmutex_t ctx_mutex;
 	struct sysctllog *ctx_sysctllog;
-	threadpool_t *ctx_unbound[PRI_COUNT + 1];
-	threadpool_percpu_t *ctx_percpu[PRI_COUNT + 1];
+	struct threadpool *ctx_unbound[PRI_COUNT + 1];
+	struct threadpool_percpu *ctx_percpu[PRI_COUNT + 1];
 	unsigned int ctx_value;
-	threadpool_job_t ctx_job;
+	struct threadpool_job ctx_job;
 } tester_ctx;
 
 #define	pri_to_idx(pri)		((pri) == PRI_NONE ? PRI_COUNT : (pri))
@@ -67,7 +67,7 @@ static int
 threadpool_tester_get_unbound(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_t *pool, *opool = NULL;
+	struct threadpool *pool, *opool = NULL;
 	struct sysctlnode node;
 	int error, val;
 
@@ -79,17 +79,17 @@ threadpool_tester_get_unbound(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	
+
 	if (! pri_is_valid(val))
 		return EINVAL;
-	
+
 	error = threadpool_get(&pool, val);
 	if (error) {
 		TP_LOG(("%s: threadpool_get(..., %d) failed -> %d\n",
 		    __func__, val, error));
 		return error;
 	}
-	
+
 	mutex_enter(&ctx->ctx_mutex);
 	if (ctx->ctx_unbound[pri_to_idx(val)] == NULL)
 		ctx->ctx_unbound[pri_to_idx(val)] = pool;
@@ -116,7 +116,7 @@ static int
 threadpool_tester_put_unbound(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	struct sysctlnode node;
 	int error, val;
 
@@ -128,10 +128,10 @@ threadpool_tester_put_unbound(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	
+
 	if (! pri_is_valid(val))
 		return EINVAL;
-	
+
 	mutex_enter(&ctx->ctx_mutex);
 	/* We only ever maintain a single reference. */
 	pool = ctx->ctx_unbound[pri_to_idx(val)];
@@ -155,7 +155,7 @@ static int
 threadpool_tester_run_unbound(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_t *pool;
+	struct threadpool *pool;
 	struct sysctlnode node;
 	int error, val;
 
@@ -167,7 +167,7 @@ threadpool_tester_run_unbound(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	
+
 	if (! pri_is_valid(val))
 		return EINVAL;
 
@@ -192,7 +192,7 @@ static int
 threadpool_tester_get_percpu(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_percpu_t *pcpu, *opcpu = NULL;
+	struct threadpool_percpu *pcpu, *opcpu = NULL;
 	struct sysctlnode node;
 	int error, val;
 
@@ -204,17 +204,17 @@ threadpool_tester_get_percpu(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	
+
 	if (! pri_is_valid(val))
 		return EINVAL;
-	
+
 	error = threadpool_percpu_get(&pcpu, val);
 	if (error) {
 		TP_LOG(("%s: threadpool_percpu_get(..., %d) failed -> %d\n",
 		    __func__, val, error));
 		return error;
 	}
-	
+
 	mutex_enter(&ctx->ctx_mutex);
 	if (ctx->ctx_percpu[pri_to_idx(val)] == NULL)
 		ctx->ctx_percpu[pri_to_idx(val)] = pcpu;
@@ -241,7 +241,7 @@ static int
 threadpool_tester_put_percpu(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_percpu_t *pcpu;
+	struct threadpool_percpu *pcpu;
 	struct sysctlnode node;
 	int error, val;
 
@@ -253,10 +253,10 @@ threadpool_tester_put_percpu(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	
+
 	if (! pri_is_valid(val))
 		return EINVAL;
-	
+
 	mutex_enter(&ctx->ctx_mutex);
 	/* We only ever maintain a single reference. */
 	pcpu = ctx->ctx_percpu[pri_to_idx(val)];
@@ -280,8 +280,8 @@ static int
 threadpool_tester_run_percpu(SYSCTLFN_ARGS)
 {
 	struct tester_context *ctx;
-	threadpool_percpu_t *pcpu;
-	threadpool_t *pool;
+	struct threadpool_percpu *pcpu;
+	struct threadpool *pool;
 	struct sysctlnode node;
 	int error, val;
 
@@ -293,7 +293,7 @@ threadpool_tester_run_percpu(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-	
+
 	if (! pri_is_valid(val))
 		return EINVAL;
 
@@ -343,7 +343,7 @@ threadpool_tester_test_value(SYSCTLFN_ARGS)
 }
 
 static void
-threadpool_tester_job(threadpool_job_t *job)
+threadpool_tester_job(struct threadpool_job *job)
 {
 	struct tester_context *ctx =
 	    container_of(job, struct tester_context, ctx_job);
@@ -447,9 +447,9 @@ threadpool_tester_fini(void)
 
 	mutex_enter(&tester_ctx.ctx_mutex);
 	for (pri = PRI_NONE/*-1*/; pri < PRI_COUNT; pri++) {
-		threadpool_t *pool =
+		struct threadpool *pool =
 		    tester_ctx.ctx_unbound[pri_to_idx(pri)];
-		threadpool_percpu_t *pcpu =
+		struct threadpool_percpu *pcpu =
 		    tester_ctx.ctx_percpu[pri_to_idx(pri)];
 
 		/*
@@ -475,7 +475,7 @@ threadpool_tester_fini(void)
 	mutex_destroy(&tester_ctx.ctx_mutex);
 
 	sysctl_teardown(&tester_ctx.ctx_sysctllog);
-	
+
 	return 0;
 }
 
@@ -488,11 +488,11 @@ threadpool_tester_modcmd(modcmd_t cmd, void *arg __unused)
 	case MODULE_CMD_INIT:
 		error = threadpool_tester_init();
 		break;
-	
+
 	case MODULE_CMD_FINI:
 		error = threadpool_tester_fini();
 		break;
-	
+
 	case MODULE_CMD_STAT:
 	default:
 		error = ENOTTY;

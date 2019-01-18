@@ -1,4 +1,4 @@
-/* $NetBSD: alloc.c,v 1.13 2013/01/22 19:28:00 christos Exp $ */
+/* $NetBSD: alloc.c,v 1.13.30.1 2019/01/18 08:48:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: alloc.c,v 1.13 2013/01/22 19:28:00 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.13.30.1 2019/01/18 08:48:24 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,45 +47,38 @@ __RCSID("$NetBSD: alloc.c,v 1.13 2013/01/22 19:28:00 christos Exp $");
 #include "csh.h"
 #include "extern.h"
 
-ptr_t
+void *
 Malloc(size_t n)
 {
-    ptr_t ptr;
+    void *ptr;
 
-    if ((ptr = malloc(n)) == (ptr_t) 0) {
+    if ((ptr = malloc(n)) == NULL) {
 	child++;
 	stderror(ERR_NOMEM);
     }
     return (ptr);
 }
 
-ptr_t
-Realloc(ptr_t p, size_t n)
+void *
+Realloc(void *p, size_t n)
 {
-    ptr_t ptr;
+    void *ptr;
 
-    if ((ptr = realloc(p, n)) == (ptr_t) 0) {
+    if ((ptr = realloc(p, n)) == NULL) {
 	child++;
 	stderror(ERR_NOMEM);
     }
     return (ptr);
 }
 
-ptr_t
+void *
 Calloc(size_t s, size_t n)
 {
-    ptr_t ptr;
+    void *ptr;
 
-    if ((ptr = calloc(s, n)) == (ptr_t) 0) {
+    if ((ptr = calloc(s, n)) == NULL) {
 	child++;
 	stderror(ERR_NOMEM);
     }
     return (ptr);
-}
-
-void
-Free(ptr_t p)
-{
-    if (p)
-	free(p);
 }

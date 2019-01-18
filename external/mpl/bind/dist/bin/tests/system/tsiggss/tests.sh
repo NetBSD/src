@@ -69,7 +69,7 @@ test_update testcname.example.nil. TXT "86400 A 10.53.0.13" "10.53.0.13" > /dev/
 
 echo "I:testing external policy with SIG(0) key"
 ret=0
-$NSUPDATE -R $RANDFILE -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
+$NSUPDATE -k ns1/Kkey.example.nil.*.private <<END > /dev/null 2>&1 || ret=1
 server 10.53.0.1 ${PORT}
 zone example.nil
 update add fred.example.nil 120 cname foo.bar.

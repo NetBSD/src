@@ -22,3 +22,5 @@ rm -f ns*/dnstap.out.save
 rm -f ns*/dnstap.out.save.?
 rm -f ns*/named.lock
 rm -f ydump.out
+rm -f ns*/managed-keys.bind*
+rm -f ns2/example.db ns2/example.db.jnl

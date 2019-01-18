@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.361.2.2 2018/12/26 14:02:08 pgoyette Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.361.2.3 2019/01/18 08:50:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361.2.2 2018/12/26 14:02:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.361.2.3 2019/01/18 08:50:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1755,7 +1755,7 @@ out:
  */
 int
 lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
-    struct vattr *vap, kauth_cred_t cred,
+    struct vattr *vap, kauth_cred_t cred, void *extra,
     size_t *key_len, const void **new_key)
 {
 	ino_t ino;

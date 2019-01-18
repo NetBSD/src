@@ -1,4 +1,4 @@
-/* $NetBSD: isp_library.c,v 1.7 2011/02/28 17:17:55 mjacob Exp $ */
+/* $NetBSD: isp_library.c,v 1.7.54.1 2019/01/18 08:50:26 pgoyette Exp $ */
 /*
  * Copyright (c) 2006-2007 by Matthew Jacob
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_library.c,v 1.7 2011/02/28 17:17:55 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_library.c,v 1.7.54.1 2019/01/18 08:50:26 pgoyette Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -294,7 +294,12 @@ uint32_t
 isp_handle_index(ispsoftc_t *isp, uint32_t handle)
 {
 	if (!ISP_VALID_HANDLE(isp, handle)) {
-		isp_prt(isp, ISP_LOGERR, "%s: bad handle 0x%x", __func__, handle);
+		int cmd = handle & ISP_HANDLE_CMD_MASK;
+		if (cmd > isp->isp_maxcmds)
+			cmd = 0;
+		isp_prt(isp, ISP_LOGERR, "%s: bad handle 0x%x (isp_seqno: %d,"
+		    " isp_xflist[%d].handle = 0x%x)", __func__,
+		    handle, isp->isp_seqno, cmd, isp->isp_xflist[cmd].handle);
 		return (ISP_BAD_HANDLE_INDEX);
 	} else {
 		return (handle & ISP_HANDLE_CMD_MASK);

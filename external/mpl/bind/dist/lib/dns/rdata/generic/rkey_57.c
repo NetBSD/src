@@ -1,4 +1,4 @@
-/*	$NetBSD: rkey_57.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: rkey_57.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -132,7 +132,7 @@ digest_rkey(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_rkey(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_rkey);
@@ -142,10 +142,10 @@ checkowner_rkey(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_rkey(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata != NULL);
@@ -155,7 +155,7 @@ checknames_rkey(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

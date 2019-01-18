@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.45.58.1 2018/09/06 06:55:24 pgoyette Exp $ */
+/*	$NetBSD: flsc.c,v 1.45.58.2 2019/01/18 08:50:13 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -47,7 +47,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.45.58.1 2018/09/06 06:55:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.45.58.2 2019/01/18 08:50:13 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.45.58.1 2018/09/06 06:55:24 pgoyette Exp 
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/cpu.h>
-#include <machine/param.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

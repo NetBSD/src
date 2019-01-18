@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.16 2017/11/29 17:54:55 christos Exp $   */
+/*      $NetBSD: signal.h,v 1.16.2.1 2019/01/18 08:50:24 pgoyette Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -83,7 +83,7 @@ void sendsig_context(int, const sigset_t *, u_long);
 /* Avoid a cyclic dependency and don't use ksiginfo_t here. */
 struct ksiginfo;
 
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
 struct otrampframe {
 	unsigned sig;	/* Signal number */
 	unsigned code;	/* Info code */
@@ -95,7 +95,7 @@ struct otrampframe {
 
 vaddr_t setupstack_oldsigcontext(const struct ksiginfo *, const sigset_t *,
 	int, struct lwp *, struct trapframe *, vaddr_t, int, vaddr_t);
-#endif /* COMPAT_13 || COMPAT_ULTRIX || COMPAT_IBCS2 */
+#endif /* COMPAT_13 || COMPAT_ULTRIX */
 
 #if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
 struct trampoline2 {

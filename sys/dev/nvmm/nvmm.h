@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.1.2.2 2018/11/26 01:52:31 pgoyette Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.1.2.3 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -106,12 +106,17 @@ struct nvmm_exit_msr {
 	uint64_t npc;
 };
 
+struct nvmm_exit_hlt {
+	uint64_t npc;
+};
+
 struct nvmm_exit {
 	enum nvmm_exit_reason reason;
 	union {
 		struct nvmm_exit_memory mem;
 		struct nvmm_exit_io io;
 		struct nvmm_exit_msr msr;
+		struct nvmm_exit_hlt hlt;
 	} u;
 	uint64_t exitstate[8];
 };

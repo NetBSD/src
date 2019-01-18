@@ -18,6 +18,7 @@ options {
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation yes;
 	check-names master ignore;
 	notify yes;
 };

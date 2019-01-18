@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.59.30.1 2018/11/26 01:52:54 pgoyette Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.59.30.2 2019/01/18 08:51:01 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,7 +146,14 @@ init_menu(menudesc *m)
 	if (!(m->mopt & MC_NOSHORTCUT))
 		wadd += 3;
 
-	if (m->title && *(title = MSG_XLAT(m->title)) != 0) {
+	title = m->title;
+#ifdef MENU_EXPANDS
+	if (m->exp_title)
+		title = m->exp_title;
+#endif
+	if (title)
+		title = MSG_XLAT(title);
+	if (title && title[0] != 0) {
 		/* Allow multiple line titles */
 		for (tp = title; (ep = strchr(tp, '\n')); tp = ep + 1) {
 			i = ep - tp;
@@ -301,14 +308,18 @@ static void
 draw_menu_line(menudesc *m, int opt, int cury, void *arg, const char *text)
 {
 	int hasbox = m->mopt & MC_NOBOX ? 0 : 1;
+	int noshort = (opt < m->numopts)
+	    && (m->opts[opt].opt_flags & OPT_NOSHORT);
 
 	if (m->cursel == opt) {
 		mvwaddstr(m->mw, cury, hasbox, ">");
 		wstandout(m->mw);
 	} else
 		mvwaddstr(m->mw, cury, hasbox, " ");
-	if (!(m->mopt & MC_NOSHORTCUT))
+	if (!(m->mopt & MC_NOSHORTCUT) && !noshort)
 		wprintw(m->mw, "%c: ", opt_ch(m, opt));
+	else if (!(m->mopt & MC_NOSHORTCUT))
+		wprintw(m->mw, "   ");
 
 	if (!text && m->draw_line)
 		m->draw_line(m, opt, arg);
@@ -326,6 +337,7 @@ draw_menu(menudesc *m, void *arg)
 	int tadd;
 	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1);
 	const char *tp, *ep;
+	const char *title;
 	
 	hasbox = (m->mopt & MC_NOBOX ? 0 : 1);
 
@@ -333,8 +345,13 @@ draw_menu(menudesc *m, void *arg)
 	wclear(m->mw);
 
 	tadd = hasbox;
-	if (m->title) {
-		for (tp = MSG_XLAT(m->title); ; tp = ep + 1) {
+	title = m->title;
+#ifdef MENU_EXPANDS
+	if (m->exp_title)
+		title = m->exp_title;
+#endif
+	if (title) {
+		for (tp = MSG_XLAT(title); ; tp = ep + 1) {
 			ep = strchr(tp , '\n');
 			mvwaddnstr(m->mw, tadd++, hasbox + 1, tp,
 			    ep ? ep - tp : -1);
@@ -501,6 +518,10 @@ free_exp_menu_items(menudesc *m)
 {
 	int i;
 
+	if (m->exp_title != NULL) {
+		free(__UNCONST(m->exp_title));
+		m->exp_title = NULL;
+	}
 	for (i = 0; i < m->numopts; i++) {
 		if (m->opts[i].opt_exp_name != NULL) {
 			free(__UNCONST(m->opts[i].opt_exp_name));
@@ -684,12 +705,16 @@ process_menu(int num, void *arg)
 	if (m == NULL)
 		return;
 
-	/* Default to select option 0 and display from 0 */
+	/* Default to select option 0 and display from 0, skip any
+	 * disabled options at the top of the menu. */
 	m->topline = 0;
-	if ((m->mopt & (MC_DFLTEXIT | MC_NOEXITOPT)) == MC_DFLTEXIT)
+	if ((m->mopt & (MC_DFLTEXIT | MC_NOEXITOPT)) == MC_DFLTEXIT) {
 		m->cursel = -1;
-	else
-		m->cursel = 0;
+	} else if (m->opts != NULL) {
+		for (m->cursel = 0; m->cursel < m->numopts; m->cursel++)
+			if ((m->opts[m->cursel].opt_flags & OPT_IGNORE) == 0)
+				break;
+	}
 
 	for (;;) {
 		if (isendwin())
@@ -833,6 +858,9 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 
 	/* Set Entries */
 	m->title = title;
+#ifdef MENU_EXPANDS
+	m->exp_title = NULL;
+#endif
 	m->opts = opts;
 	m->numopts = numopts;
 	m->x = x;

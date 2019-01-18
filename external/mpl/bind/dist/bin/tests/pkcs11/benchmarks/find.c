@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.2.2.2 2018/09/06 06:53:59 pgoyette Exp $	*/
+/*	$NetBSD: find.c,v 1.2.2.3 2019/01/18 08:49:14 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,6 +42,7 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -55,10 +56,6 @@
 
 #include <pk11/pk11.h>
 #include <pk11/result.h>
-
-#if !(defined(HAVE_GETPASSPHRASE) || (defined (__SVR4) && defined (__sun)))
-#define getpassphrase(x)	getpass(x)
-#endif
 
 #ifndef HAVE_CLOCK_GETTIME
 
@@ -154,11 +151,12 @@ main(int argc, char *argv[]) {
 	if (lib_name != NULL)
 		pk11_set_lib_name(lib_name);
 
-	if (pin == NULL)
-		pin = getpassphrase("Enter Pin: ");
+	if (pin == NULL) {
+		pin = getpass("Enter Pin: ");
+	}
 
-	result = pk11_get_session(&pctx, op_type, ISC_FALSE, ISC_FALSE,
-				  ISC_TRUE, (const char *) pin, slot);
+	result = pk11_get_session(&pctx, op_type, false, false,
+				  true, (const char *) pin, slot);
 	if ((result != ISC_R_SUCCESS) &&
 	    (result != PK11_R_NORANDOMSERVICE) &&
 	    (result != PK11_R_NODIGESTSERVICE) &&

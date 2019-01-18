@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_test.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: radix_test.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,24 +13,50 @@
 
 #include <config.h>
 
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <stdlib.h>
+#include <string.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
+
 #include <isc/mem.h>
 #include <isc/netaddr.h>
 #include <isc/radix.h>
 #include <isc/result.h>
 #include <isc/util.h>
 
-#include <atf-c.h>
-
-#include <stdlib.h>
-#include <stdint.h>
-
 #include "isctest.h"
 
-ATF_TC(isc_radix_search);
-ATF_TC_HEAD(isc_radix_search, tc) {
-	atf_tc_set_md_var(tc, "descr", "test radix seaching");
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = isc_test_begin(NULL, true, 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
 }
-ATF_TC_BODY(isc_radix_search, tc) {
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	isc_test_end();
+
+	return (0);
+}
+
+/* test radix searching */
+static void
+isc_radix_search_test(void **state) {
 	isc_radix_tree_t *radix = NULL;
 	isc_radix_node_t *node;
 	isc_prefix_t prefix;
@@ -38,55 +64,63 @@ ATF_TC_BODY(isc_radix_search, tc) {
 	struct in_addr in_addr;
 	isc_netaddr_t netaddr;
 
-	UNUSED(tc);
-
-	result = isc_test_begin(NULL, ISC_TRUE, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = isc_radix_create(mctx, &radix, 32);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	in_addr.s_addr = inet_addr("3.3.3.0");
 	isc_netaddr_fromin(&netaddr, &in_addr);
-	NETADDR_TO_PREFIX_T(&netaddr, prefix, 24, ISC_FALSE);
+	NETADDR_TO_PREFIX_T(&netaddr, prefix, 24);
 
 	node = NULL;
 	result = isc_radix_insert(radix, &node, NULL, &prefix);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	node->data[0] = (void *)1;
 	isc_refcount_destroy(&prefix.refcount);
 
 	in_addr.s_addr = inet_addr("3.3.0.0");
 	isc_netaddr_fromin(&netaddr, &in_addr);
-	NETADDR_TO_PREFIX_T(&netaddr, prefix, 16, ISC_FALSE);
+	NETADDR_TO_PREFIX_T(&netaddr, prefix, 16);
 
 	node = NULL;
 	result = isc_radix_insert(radix, &node, NULL, &prefix);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	node->data[0] = (void *)2;
 	isc_refcount_destroy(&prefix.refcount);
 
 	in_addr.s_addr = inet_addr("3.3.3.3");
 	isc_netaddr_fromin(&netaddr, &in_addr);
-	NETADDR_TO_PREFIX_T(&netaddr, prefix, 22, ISC_FALSE);
+	NETADDR_TO_PREFIX_T(&netaddr, prefix, 22);
 
 	node = NULL;
 	result = isc_radix_search(radix, &node, &prefix);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	ATF_REQUIRE_EQ(node->data[0], (void *)2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(node->data[0], (void *)2);
 
 	isc_refcount_destroy(&prefix.refcount);
 
 	isc_radix_destroy(radix, NULL);
-
-	isc_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, isc_radix_search);
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(isc_radix_search_test,
+						_setup, _teardown),
+	};
 
-	return (atf_no_error());
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

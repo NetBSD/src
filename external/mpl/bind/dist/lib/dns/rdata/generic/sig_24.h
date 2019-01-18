@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_24.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: sig_24.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,13 +23,13 @@ typedef struct dns_rdata_sig_t {
 	isc_mem_t *		mctx;
 	dns_rdatatype_t		covered;
 	dns_secalg_t		algorithm;
-	isc_uint8_t		labels;
-	isc_uint32_t		originalttl;
-	isc_uint32_t		timeexpire;
-	isc_uint32_t		timesigned;
-	isc_uint16_t		keyid;
+	uint8_t		labels;
+	uint32_t		originalttl;
+	uint32_t		timeexpire;
+	uint32_t		timesigned;
+	uint16_t		keyid;
 	dns_name_t		signer;
-	isc_uint16_t		siglen;
+	uint16_t		siglen;
 	unsigned char *		signature;
 } dns_rdata_sig_t;
 

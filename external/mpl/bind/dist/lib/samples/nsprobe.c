@@ -1,4 +1,4 @@
-/*	$NetBSD: nsprobe.c,v 1.2.2.2 2018/09/06 06:55:13 pgoyette Exp $	*/
+/*	$NetBSD: nsprobe.c,v 1.2.2.3 2019/01/18 08:50:04 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <netdb.h>
 #endif
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,12 +93,12 @@ struct probe_ns {
 };
 
 struct probe_trans {
-	isc_boolean_t inuse;
+	bool inuse;
 	char *domain;
 	dns_fixedname_t fixedname;
 	dns_name_t *qname;
 	const char **qlabel;
-	isc_boolean_t qname_found;
+	bool qname_found;
 	dns_clientrestrans_t *resid;
 	dns_message_t *qmessage;
 	dns_message_t *rmessage;
@@ -123,7 +124,7 @@ struct lcl_stat {
 static unsigned long number_of_domains = 0;
 static unsigned long number_of_servers = 0;
 static unsigned long multiple_error_domains = 0;
-static isc_boolean_t debug_mode = ISC_FALSE;
+static bool debug_mode = false;
 static int verbose_level = 0;
 static const char *qlabels[] = {"www.", "ftp.", NULL};
 static struct probe_trans probes[MAX_PROBES];
@@ -149,7 +150,7 @@ print_rdataset(dns_rdataset_t *rdataset, dns_name_t *owner) {
 
 	if (!dns_rdataset_isassociated(rdataset))
 		return (ISC_R_SUCCESS);
-	result = dns_rdataset_totext(rdataset, owner, ISC_FALSE, ISC_FALSE,
+	result = dns_rdataset_totext(rdataset, owner, false, false,
 				     &target);
 	if (result != ISC_R_SUCCESS)
 		return (result);
@@ -167,7 +168,7 @@ print_name(dns_name_t *name) {
 	char t[4096];
 
 	isc_buffer_init(&target, t, sizeof(t));
-	result = dns_name_totext(name, ISC_TRUE, &target);
+	result = dns_name_totext(name, true, &target);
 	if (result == ISC_R_SUCCESS) {
 		isc_buffer_usedregion(&target, &r);
 		printf("%.*s", (int)r.length, (char *)r.base);
@@ -468,17 +469,18 @@ set_nextqname(struct probe_trans *trans) {
 	isc_buffer_t b;
 	char buf[4096];	/* XXX ad-hoc constant, but should be enough */
 
-	if (*trans->qlabel == NULL)
+	if (*trans->qlabel == NULL) {
 		return (ISC_R_NOMORE);
+	}
 
-	result = isc_string_copy(buf, sizeof(buf), *trans->qlabel);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	result = isc_string_append(buf, sizeof(buf), trans->domain);
-	if (result != ISC_R_SUCCESS)
-		return (result);
+	if (strlcpy(buf, *trans->qlabel, sizeof(buf)) >= sizeof(buf)) {
+		return ISC_R_NOSPACE;
+	}
 
-	domainlen = strlen(buf);
+	if ((domainlen = strlcat(buf, trans->domain, sizeof(buf))) >= sizeof(buf)) {
+		return ISC_R_NOSPACE;
+	}
+
 	isc_buffer_init(&b, buf, domainlen);
 	isc_buffer_add(&b, domainlen);
 	trans->qname = dns_fixedname_initname(&trans->fixedname);
@@ -504,7 +506,7 @@ request_done(isc_task_t *task, isc_event_t *event) {
 	dns_rdatatype_t type;
 
 	REQUIRE(task == probe_task);
-	REQUIRE(trans != NULL && trans->inuse == ISC_TRUE);
+	REQUIRE(trans != NULL && trans->inuse == true);
 	rmessage = rev->rmessage;
 	REQUIRE(rmessage == trans->rmessage);
 	INSIST(outstanding_probes > 0);
@@ -640,7 +642,7 @@ request_done(isc_task_t *task, isc_event_t *event) {
  found:
 	INSIST(*resultp != none);
 	if (type == dns_rdatatype_a && *resultp == exist)
-		trans->qname_found = ISC_TRUE;
+		trans->qname_found = true;
 
 	dns_client_destroyreqtrans(&trans->reqid);
 	isc_event_free(&event);
@@ -753,7 +755,7 @@ resolve_nsaddress(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 
 	REQUIRE(task == probe_task);
-	REQUIRE(trans->inuse == ISC_TRUE);
+	REQUIRE(trans->inuse == true);
 	REQUIRE(pns != NULL);
 	INSIST(outstanding_probes > 0);
 
@@ -852,7 +854,7 @@ reset_probe(struct probe_trans *trans) {
 	dns_message_reset(trans->qmessage, DNS_MESSAGE_INTENTRENDER);
 	dns_message_reset(trans->rmessage, DNS_MESSAGE_INTENTPARSE);
 
-	trans->inuse = ISC_FALSE;
+	trans->inuse = false;
 	if (trans->domain != NULL)
 		isc_mem_free(mctx, trans->domain);
 	trans->domain = NULL;
@@ -860,7 +862,7 @@ reset_probe(struct probe_trans *trans) {
 		dns_fixedname_invalidate(&trans->fixedname);
 	trans->qname = NULL;
 	trans->qlabel = qlabels;
-	trans->qname_found = ISC_FALSE;
+	trans->qname_found = false;
 	trans->current_ns = NULL;
 
 	while ((pns = ISC_LIST_HEAD(trans->nslist)) != NULL) {
@@ -890,7 +892,7 @@ resolve_ns(isc_task_t *task, isc_event_t *event) {
 	struct probe_ns *pns;
 
 	REQUIRE(task == probe_task);
-	REQUIRE(trans->inuse == ISC_TRUE);
+	REQUIRE(trans->inuse == true);
 	INSIST(outstanding_probes > 0);
 
 	for (name = ISC_LIST_HEAD(rev->answerlist); name != NULL;
@@ -969,7 +971,7 @@ probe_domain(struct probe_trans *trans) {
 	char *cp;
 
 	REQUIRE(trans != NULL);
-	REQUIRE(trans->inuse == ISC_FALSE);
+	REQUIRE(trans->inuse == false);
 	REQUIRE(outstanding_probes < MAX_PROBES);
 
 	/* Construct domain */
@@ -1000,7 +1002,7 @@ probe_domain(struct probe_trans *trans) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
-	trans->inuse = ISC_TRUE;
+	trans->inuse = true;
 	outstanding_probes++;
 
 	return (ISC_R_SUCCESS);
@@ -1040,7 +1042,7 @@ main(int argc, char *argv[]) {
 			cacheserver = isc_commandline_argument;
 			break;
 		case 'd':
-			debug_mode = ISC_TRUE;
+			debug_mode = true;
 			break;
 		case 'h':
 			usage();
@@ -1075,7 +1077,7 @@ main(int argc, char *argv[]) {
 	isc_app_ctxstart(actx);
 
 	result = dns_client_createx(mctx, actx, taskmgr, socketmgr,
-				    timermgr, 0, &client);
+				    timermgr, 0, &client, NULL, NULL);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_client_createx failed: %u\n", result);
 		exit(1);
@@ -1133,12 +1135,12 @@ main(int argc, char *argv[]) {
 
 	/* Set up and start probe */
 	for (i = 0; i < MAX_PROBES; i++) {
-		probes[i].inuse = ISC_FALSE;
+		probes[i].inuse = false;
 		probes[i].domain = NULL;
 		dns_fixedname_init(&probes[i].fixedname);
 		probes[i].qname = NULL;
 		probes[i].qlabel = qlabels;
-		probes[i].qname_found = ISC_FALSE;
+		probes[i].qname_found = false;
 		probes[i].resid = NULL;
 		ISC_LIST_INIT(probes[i].nslist);
 		probes[i].reqid = NULL;

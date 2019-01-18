@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2002/04/12 05:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.5.200.1 2019/01/18 08:50:21 pgoyette Exp $
 
 PROG=	setnetimage
 NOMAN=	# defined
@@ -27,7 +27,7 @@ smallnet.elf: ${SNDIR}/smallnet
 
 kernel: smallnet.elf
 	./${PROG} ${KERNEL} ${.ALLSRC}
-	${ELF2ECOFF} smallnet.elf smallnet
+	${MIPS_ELF2ECOFF} smallnet.elf smallnet
 .endif
 
 .include <bsd.prog.mk>

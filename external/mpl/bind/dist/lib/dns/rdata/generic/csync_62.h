@@ -1,4 +1,4 @@
-/*	$NetBSD: csync_62.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: csync_62.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,10 +21,10 @@
 typedef struct dns_rdata_csync {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint32_t		serial;
-	isc_uint16_t		flags;
+	uint32_t		serial;
+	uint16_t		flags;
 	unsigned char		*typebits;
-	isc_uint16_t		len;
+	uint16_t		len;
 } dns_rdata_csync_t;
 
 #endif /* GENERIC_CSYNC_62_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_test.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: file_test.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,20 +13,23 @@
 
 #include <config.h>
 
+#if HAVE_CMOCKA
+
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <atf-c.h>
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/file.h>
 #include <isc/result.h>
-
-ATF_TC(isc_file_sanitize);
-ATF_TC_HEAD(isc_file_sanitize, tc) {
-	atf_tc_set_md_var(tc, "descr", "sanitized filenames");
-}
+#include <isc/util.h>
 
 #define NAME "internal"
 #define SHA "3bed2cb3a3acf7b6a8ef408420cc682d5520e26976d354254f528c965612054f"
@@ -46,93 +49,109 @@ touch(const char *filename) {
 
 	unlink(filename);
 	fd = creat(filename, 0644);
-	if (fd != -1)
+	if (fd != -1) {
 		close(fd);
+	}
 }
 
-ATF_TC_BODY(isc_file_sanitize, tc) {
+/* test sanitized filenames */
+static void
+isc_file_sanitize_test(void **state) {
 	isc_result_t result;
 	char buf[1024];
 
-	ATF_CHECK(chdir(TESTS) != -1);
+	UNUSED(state);
+
+	assert_return_code(chdir(TESTS), 0);
 
 	result = isc_file_sanitize("testdata/file", NAME, "test", buf, 1024);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(strcmp(buf, F(NAME)) == 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(strcmp(buf, F(NAME)), 0);
 
 	touch(F(TRUNC_SHA));
 	result = isc_file_sanitize("testdata/file", NAME, "test", buf, 1024);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(strcmp(buf, F(TRUNC_SHA)) == 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(strcmp(buf, F(TRUNC_SHA)), 0);
 
 	touch(F(SHA));
 	result = isc_file_sanitize("testdata/file", NAME, "test", buf, 1024);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(strcmp(buf, F(SHA)) == 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(strcmp(buf, F(SHA)), 0);
 
 	result = isc_file_sanitize("testdata/file", BAD1, "test", buf, 1024);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(strcmp(buf, F(BADHASH1)) == 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(strcmp(buf, F(BADHASH1)), 0);
 
 	result = isc_file_sanitize("testdata/file", BAD2, "test", buf, 1024);
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK(strcmp(buf, F(BADHASH2)) == 0);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(strcmp(buf, F(BADHASH2)), 0);
 
 	unlink(F(TRUNC_SHA));
 	unlink(F(SHA));
 }
 
-ATF_TC(isc_file_template);
-ATF_TC_HEAD(isc_file_template, tc) {
-	atf_tc_set_md_var(tc, "descr", "file template");
-}
-
-ATF_TC_BODY(isc_file_template, tc) {
+/* test filename templates */
+static void
+isc_file_template_test(void **state) {
 	isc_result_t result;
 	char buf[1024];
 
-	ATF_CHECK(chdir(TESTS) != -1);
+	UNUSED(state);
+
+	assert_return_code(chdir(TESTS), 0);
 
 	result = isc_file_template("/absolute/path", "file-XXXXXXXX",
 				   buf, sizeof(buf));
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK_STREQ(buf, "/absolute/file-XXXXXXXX");
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, "/absolute/file-XXXXXXXX");
 
 	result = isc_file_template("relative/path", "file-XXXXXXXX",
 				   buf, sizeof(buf));
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK_STREQ(buf, "relative/file-XXXXXXXX");
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, "relative/file-XXXXXXXX");
 
 	result = isc_file_template("/trailing/slash/", "file-XXXXXXXX",
 				   buf, sizeof(buf));
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK_STREQ(buf, "/trailing/slash/file-XXXXXXXX");
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, "/trailing/slash/file-XXXXXXXX");
 
 	result = isc_file_template("relative/trailing/slash/", "file-XXXXXXXX",
 				   buf, sizeof(buf));
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK_STREQ(buf, "relative/trailing/slash/file-XXXXXXXX");
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, "relative/trailing/slash/file-XXXXXXXX");
 
 	result = isc_file_template("/", "file-XXXXXXXX", buf, sizeof(buf));
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK_STREQ(buf, "/file-XXXXXXXX");
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, "/file-XXXXXXXX");
 
 	result = isc_file_template("noslash", "file-XXXXXXXX",
 				   buf, sizeof(buf));
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK_STREQ(buf, "file-XXXXXXXX");
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, "file-XXXXXXXX");
 
 	result = isc_file_template(NULL, "file-XXXXXXXX", buf, sizeof(buf));
-	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-	ATF_CHECK_STREQ(buf, "file-XXXXXXXX");
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_string_equal(buf, "file-XXXXXXXX");
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, isc_file_sanitize);
-	ATF_TP_ADD_TC(tp, isc_file_template);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test(isc_file_sanitize_test),
+		cmocka_unit_test(isc_file_template_test),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

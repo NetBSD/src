@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.2.2.2 2018/09/06 06:55:05 pgoyette Exp $	*/
+/*	$NetBSD: version.c,v 1.2.2.3 2019/01/18 08:49:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 
 /*! \file */
+#include <config.h>
 
 #include <isc/version.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.92 2016/07/07 06:55:42 msaitoh Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.92.16.1 2019/01/18 08:50:42 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.92 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.92.16.1 2019/01/18 08:50:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,12 +457,12 @@ wi_pcmcia_load_firm(struct wi_softc *sc, const void *primsym, int primlen,
 	CSR_WRITE_2(sc, WI_PARAM1, 0);
 	CSR_WRITE_2(sc, WI_PARAM2, 0);
 	CSR_WRITE_2(sc, WI_COMMAND, WI_CMD_READEE);
-        for (i = 0; i < WI_TIMEOUT; i++) {
-                if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_CMD)
-                        break;
-                DELAY(1);
-        }
-        CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
+	for (i = 0; i < WI_TIMEOUT; i++) {
+		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_CMD)
+			break;
+		DELAY(1);
+	}
+	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
 
 	CSR_WRITE_2(sc, WI_AUX_PAGE, WI_SBCF_PDIADDR / WI_AUX_PGSZ);
 	CSR_WRITE_2(sc, WI_AUX_OFFSET, WI_SBCF_PDIADDR % WI_AUX_PGSZ);

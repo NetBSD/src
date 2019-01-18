@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.39.2.1 2018/11/26 01:52:13 pgoyette Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.39.2.2 2019/01/18 08:50:11 pgoyette Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2018 Matthew R. Green
+ * Copyright (c) 1997-2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -241,10 +241,10 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
  
 	args[0] = str;
 	args[*args_len] = NULL;
-	for (s = str, i = 0; (s = strchr(s, '+')) != NULL;) {
+	for (s = str, i = 1; (s = strchr(s, '+')) != NULL; i++) {
 		*s = '\0';
 		s++;
-		args[i++] = s;
+		args[i] = s;
 	}
 
 	/*
@@ -333,8 +333,7 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 
 parse_err:
 
-	free (str);
-	free (*args);
+	free(str);
 	free(args);
 	*args_len = 0;
 
@@ -610,9 +609,12 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		closelog();
 		bozo_daemon_closefds(httpd);
 
-		if (-1 == execve(path, argv, envp))
+		if (-1 == execve(path, argv, envp)) {
+			bozo_http_error(httpd, 404, request,
+				"Cannot execute CGI");
 			bozoerr(httpd, 1, "child exec failed: %s: %s",
 			      path, strerror(errno));
+		}
 		/* NOT REACHED */
 		bozoerr(httpd, 1, "child execve returned?!");
 	}

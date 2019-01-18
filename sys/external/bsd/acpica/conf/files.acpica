@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.16 2017/09/15 17:10:30 christos Exp $
+# $NetBSD: files.acpica,v 1.16.2.1 2019/01/18 08:50:45 pgoyette Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -93,6 +93,7 @@ file	executer/exregion.c		acpica
 file	executer/exresnte.c		acpica
 file	executer/exresolv.c		acpica
 file	executer/exresop.c		acpica
+file	executer/exserial.c		acpica
 file	executer/exstore.c		acpica
 file	executer/exstoren.c		acpica
 file	executer/exstorob.c		acpica

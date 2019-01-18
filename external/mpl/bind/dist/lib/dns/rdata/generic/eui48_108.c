@@ -1,4 +1,4 @@
-/*	$NetBSD: eui48_108.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: eui48_108.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,7 @@ fromtext_eui48(ARGS_FROMTEXT) {
 	UNUSED(callbacks);
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	n = sscanf(DNS_AS_STR(token), "%2x-%2x-%2x-%2x-%2x-%2x",
 		   &l0, &l1, &l2, &l3, &l4, &l5);
 	if (n != 6 || l0 > 255U || l1 > 255U || l2 > 255U || l3 > 255U ||
@@ -178,7 +178,7 @@ digest_eui48(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_eui48(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_eui48);
@@ -188,10 +188,10 @@ checkowner_eui48(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_eui48(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_eui48);
@@ -201,7 +201,7 @@ checknames_eui48(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

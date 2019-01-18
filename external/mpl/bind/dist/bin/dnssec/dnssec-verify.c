@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-verify.c,v 1.2.2.2 2018/09/06 06:53:55 pgoyette Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.2.2.3 2019/01/18 08:49:11 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,13 +15,13 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
 
 #include <isc/app.h>
 #include <isc/base32.h>
 #include <isc/commandline.h>
-#include <isc/entropy.h>
 #include <isc/event.h>
 #include <isc/file.h>
 #include <isc/hash.h>
@@ -34,7 +34,6 @@
 #include <isc/rwlock.h>
 #include <isc/serial.h>
 #include <isc/stdio.h>
-#include <isc/stdlib.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -61,10 +60,11 @@
 #include <dns/result.h>
 #include <dns/soa.h>
 #include <dns/time.h>
+#include <dns/zoneverify.h>
 
 #include <dst/dst.h>
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 #include <pk11/result.h>
 #endif
 
@@ -75,14 +75,13 @@ int verbose;
 
 static isc_stdtime_t now;
 static isc_mem_t *mctx = NULL;
-static isc_entropy_t *ectx = NULL;
 static dns_masterformat_t inputformat = dns_masterformat_text;
 static dns_db_t *gdb;			/* The database */
 static dns_dbversion_t *gversion;	/* The database version */
 static dns_rdataclass_t gclass;		/* The class */
 static dns_name_t *gorigin;		/* The database origin */
-static isc_boolean_t ignore_kskflag = ISC_FALSE;
-static isc_boolean_t keyset_kskonly = ISC_FALSE;
+static bool ignore_kskflag = false;
+static bool keyset_kskonly = false;
 
 /*%
  * Load the zone file from disk
@@ -109,7 +108,7 @@ loadzone(char *file, char *origin, dns_rdataclass_t rdclass, dns_db_t **db) {
 			       rdclass, 0, NULL, db);
 	check_result(result, "dns_db_create()");
 
-	result = dns_db_load2(*db, file, inputformat);
+	result = dns_db_load(*db, file, inputformat, 0);
 	switch (result) {
 	case DNS_R_SEENINCLUDE:
 	case ISC_R_SUCCESS:
@@ -153,12 +152,9 @@ usage(void) {
 	fprintf(stderr, "\t\tfile format of input zonefile (text)\n");
 	fprintf(stderr, "\t-c class (IN)\n");
 	fprintf(stderr, "\t-E engine:\n");
-#if defined(PKCS11CRYPTO)
+#if USE_PKCS11
 	fprintf(stderr, "\t\tpath to PKCS#11 provider library "
 		"(default is %s)\n", PK11_LIB_LOCATION);
-#elif defined(USE_PKCS11)
-	fprintf(stderr, "\t\tname of an OpenSSL engine to use "
-				"(default is \"pkcs11\")\n");
 #else
 	fprintf(stderr, "\t\tname of an OpenSSL engine to use\n");
 #endif
@@ -174,11 +170,7 @@ main(int argc, char *argv[]) {
 	char *inputformatstr = NULL;
 	isc_result_t result;
 	isc_log_t *log = NULL;
-#ifdef USE_PKCS11
-	const char *engine = PKCS11_ENGINE;
-#else
 	const char *engine = NULL;
-#endif
 	char *classname = NULL;
 	dns_rdataclass_t rdclass;
 	char *endp;
@@ -208,19 +200,19 @@ main(int argc, char *argv[]) {
 			break;
 		}
 	}
-	isc_commandline_reset = ISC_TRUE;
+	isc_commandline_reset = true;
 	check_result(isc_app_start(), "isc_app_start");
 
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
 		fatal("out of memory");
 
-#ifdef PKCS11CRYPTO
+#if USE_PKCS11
 	pk11_result_register();
 #endif
 	dns_result_register();
 
-	isc_commandline_errprint = ISC_FALSE;
+	isc_commandline_errprint = false;
 
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
@@ -251,11 +243,11 @@ main(int argc, char *argv[]) {
 			break;
 
 		case 'x':
-			keyset_kskonly = ISC_TRUE;
+			keyset_kskonly = true;
 			break;
 
 		case 'z':
-			ignore_kskflag = ISC_TRUE;
+			ignore_kskflag = true;
 			break;
 
 		case '?':
@@ -279,17 +271,10 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	if (ectx == NULL)
-		setup_entropy(mctx, NULL, &ectx);
-
-	result = dst_lib_init2(mctx, ectx, engine, ISC_ENTROPY_BLOCKING);
+	result = dst_lib_init(mctx, engine);
 	if (result != ISC_R_SUCCESS)
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(result));
-
-	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
-	if (result != ISC_R_SUCCESS)
-		fatal("could not create hash context");
 
 	isc_stdtime_get(&now);
 
@@ -333,16 +318,14 @@ main(int argc, char *argv[]) {
 	result = dns_db_newversion(gdb, &gversion);
 	check_result(result, "dns_db_newversion()");
 
-	verifyzone(gdb, gversion, gorigin, mctx,
-		   ignore_kskflag, keyset_kskonly);
+	result = dns_zoneverify_dnssec(NULL, gdb, gversion, gorigin, NULL,
+				       mctx, ignore_kskflag, keyset_kskonly);
 
-	dns_db_closeversion(gdb, &gversion, ISC_FALSE);
+	dns_db_closeversion(gdb, &gversion, false);
 	dns_db_detach(&gdb);
 
 	cleanup_logging(&log);
 	dst_lib_destroy();
-	isc_hash_destroy();
-	cleanup_entropy(&ectx);
 	dns_name_destroy();
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
@@ -350,5 +333,5 @@ main(int argc, char *argv[]) {
 
 	(void) isc_app_finish();
 
-	return (0);
+	return (result == ISC_R_SUCCESS ? 0 : 1);
 }

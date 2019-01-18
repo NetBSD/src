@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,7 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	 * Algorithm.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
@@ -44,7 +44,7 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	 * Digest type.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
@@ -232,7 +232,7 @@ digest_sshfp(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_sshfp(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_sshfp);
@@ -242,10 +242,10 @@ checkowner_sshfp(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_sshfp(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
@@ -254,7 +254,7 @@ checknames_sshfp(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

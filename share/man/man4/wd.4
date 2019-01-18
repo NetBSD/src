@@ -1,4 +1,4 @@
-.\"	$NetBSD: wd.4,v 1.18 2017/04/24 10:04:38 wiz Exp $
+.\"	$NetBSD: wd.4,v 1.18.10.1 2019/01/18 08:50:12 pgoyette Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 24, 2017
+.Dd January 9, 2019
 .Dt WD 4
 .Os
 .Sh NAME
@@ -61,8 +61,8 @@ A user interface is provided by
 Unlike the (historical) mechanisms provided by
 .Xr bad144 8
 and
-.Xr badsect 8
-the software list does neither support sector replacement nor is it saved
+.Xr badsect 8 ,
+the software list supports neither sector replacement nor retention
 across reboots.
 .Sh NOTES
 Certain

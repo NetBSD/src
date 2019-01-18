@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: doa_259.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,21 +31,21 @@ fromtext_doa(ARGS_FROMTEXT) {
 	 * DOA-ENTERPRISE
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	RETERR(uint32_tobuffer(token.value.as_ulong, target));
 
 	/*
 	 * DOA-TYPE
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	RETERR(uint32_tobuffer(token.value.as_ulong, target));
 
 	/*
 	 * DOA-LOCATION
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
+				      false));
 	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
 	}
@@ -55,14 +55,14 @@ fromtext_doa(ARGS_FROMTEXT) {
 	 * DOA-MEDIA-TYPE
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
-				      ISC_FALSE));
+				      false));
 	RETTOK(txt_fromtext(&token.value.as_textregion, target));
 
 	/*
 	 * DOA-DATA
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 	if (strcmp(DNS_AS_STR(token), "-") == 0) {
 		return (ISC_R_SUCCESS);
 	} else {
@@ -75,7 +75,7 @@ static inline isc_result_t
 totext_doa(ARGS_TOTEXT) {
 	char buf[sizeof("4294967295 ")];
 	isc_region_t region;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_doa);
@@ -112,7 +112,7 @@ totext_doa(ARGS_TOTEXT) {
 	/*
 	 * DOA-MEDIA-TYPE
 	 */
-	RETERR(txt_totext(&region, ISC_TRUE, target));
+	RETERR(txt_totext(&region, true, target));
 	RETERR(str_totext(" ", target));
 
 	/*
@@ -329,7 +329,7 @@ digest_doa(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_doa(ARGS_CHECKOWNER) {
 	UNUSED(name);
 	UNUSED(type);
@@ -338,10 +338,10 @@ checkowner_doa(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_doa);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_doa(ARGS_CHECKNAMES) {
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -349,7 +349,7 @@ checknames_doa(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_doa);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

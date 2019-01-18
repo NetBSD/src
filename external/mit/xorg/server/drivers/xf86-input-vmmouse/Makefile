@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/10/19 23:07:34 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.5.40.1 2019/01/18 08:49:04 pgoyette Exp $
 
 DRIVER=		xf86-input-vmmouse
 DRIVER_NAME=	vmmouse_drv
@@ -9,7 +9,7 @@ CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/shared
 CPPFLAGS+=	-DXINPUT -DHAVE_XORG_SERVER_1_5_0
 CPPFLAGS+=	-DABS_VALUATOR_AXES -DNO_MOUSE_MODULE
 
-COPTS.vmmouse.c=      -Wno-error	# XXX deprecated
+COPTS.vmmouse.c+=      -Wno-error	# XXX deprecated
 
 .include "../Makefile.xf86-driver"
 .PATH:  ${X11SRCDIR.${DRIVER}}/shared

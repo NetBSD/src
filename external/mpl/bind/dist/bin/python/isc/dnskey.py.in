@@ -30,7 +30,7 @@ class dnskey:
               'Revoke', 'DSPublish', 'SyncPublish', 'SyncDelete')
     _OPTS = (None, '-P', '-A', '-I', '-D', '-R', None, '-Psync', '-Dsync')
 
-    _ALGNAMES = (None, 'RSAMD5', 'DH', 'DSA', 'ECC', 'RSASHA1',
+    _ALGNAMES = (None, 'RSAMD5', 'DH', 'DSA', None, 'RSASHA1',
                  'NSEC3DSA', 'NSEC3RSASHA1', 'RSASHA256', None,
                  'RSASHA512', None, 'ECCGOST', 'ECDSAP256SHA256',
                  'ECDSAP384SHA384', 'ED25519', 'ED448')
@@ -451,6 +451,10 @@ class dnskey:
 
         if timespan is None:
             timespan = self.ttl
+
+        if timespan is None:
+            output("WARNING: Key %s using default TTL." % repr(self))
+            timespan = (60*60*24)
 
         now = time.time()
         d = self.delete()

@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile.defines,v 1.2.10.1 2018/03/15 09:12:00 pgoyette Exp $
+#	$NetBSD: Makefile.defines,v 1.2.10.2 2019/01/18 08:49:03 pgoyette Exp $
 
 # common defiles for libdrm components
 
-CPPFLAGS+=	-DHAVE_INTTYPES_H \
+CPPFLAGS+= \
+		-DHAVE_INTTYPES_H \
+		-DHAVE_OPEN_MEMSTREAM \
+		-DHAVE_VISIBILITY \
+		-DHAVE_SETENV \
 		-DHAVE_STDINT_H \
 		-DHAVE_STRINGS_H \
 		-DHAVE_STRING_H  \
@@ -10,10 +14,12 @@ CPPFLAGS+=	-DHAVE_INTTYPES_H \
 		-DHAVE_SYS_SYSCTL_H \
 		-DHAVE_SYS_TYPES_H \
 		-DHAVE_UNISTD_H
-CPPFLAGS+=	-DHAVE_SETENV
 
 # NetBSD has __sync_*().
 CPPFLAGS+=	-DHAVE_LIBDRM_ATOMIC_PRIMITIVES \
 
 CPPFLAGS+=	-DHAVE_NOUVEAU \
+		-DHAVE_AMDGPU \
 		-DHAVE_RADEON
+
+COPTS+=		-fvisibility=hidden

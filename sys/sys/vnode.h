@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.279.2.1 2018/04/22 07:20:29 pgoyette Exp $	*/
+/*	$NetBSD: vnode.h,v 1.279.2.2 2019/01/18 08:50:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -519,7 +519,7 @@ void	vrevoke(struct vnode *);
 void	vremfree(struct vnode *);
 int	vcache_get(struct mount *, const void *, size_t, struct vnode **);
 int	vcache_new(struct mount *, struct vnode *,
-	    struct vattr *, kauth_cred_t, struct vnode **);
+	    struct vattr *, kauth_cred_t, void *, struct vnode **);
 int	vcache_rekey_enter(struct mount *, struct vnode *,
 	    const void *, size_t, const void *, size_t);
 void	vcache_rekey_exit(struct mount *, struct vnode *,

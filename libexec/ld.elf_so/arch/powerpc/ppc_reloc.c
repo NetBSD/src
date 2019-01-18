@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.55.2.2 2018/04/07 04:12:09 pgoyette Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.55.2.3 2019/01/18 08:50:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.55.2.2 2018/04/07 04:12:09 pgoyette Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.55.2.3 2019/01/18 08:50:11 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -188,6 +188,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+		symnum = ELF_R_SYM(rela->r_info);
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 #ifdef _LP64
@@ -199,7 +200,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(DTPMOD):
 		case R_TYPE(DTPREL):
 		case R_TYPE(TPREL):
-			symnum = ELF_R_SYM(rela->r_info);
 			if (last_symnum != symnum) {
 				last_symnum = symnum;
 				def = _rtld_find_symdef(symnum, obj, &defobj,
@@ -327,7 +327,7 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 		size_t reloff = rela - obj->pltrela;
 		Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT) ||
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT) ||
 		       ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE));
 
 		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.34 2017/05/22 16:53:05 ragge Exp $	   */
+/*	$NetBSD: subr.S,v 1.34.8.1 2019/01/18 08:50:24 pgoyette Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,10 +32,6 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_ibcs2.h"
-#ifdef COMPAT_IBCS2
-#include <compat/ibcs2/ibcs2_syscall.h>
-#endif
 #include "opt_compat_ultrix.h"
 #ifdef COMPAT_ULTRIX
 #include <compat/ultrix/ultrix_syscall.h>
@@ -175,21 +171,6 @@ _C_LABEL(sigcode):
 	chmk	$SYS_exit
 	halt	
 _C_LABEL(esigcode):
-
-#ifdef COMPAT_IBCS2
-	.align	2
-	.globl	_C_LABEL(ibcs2_sigcode),_C_LABEL(ibcs2_esigcode)
-_C_LABEL(ibcs2_sigcode):
-	pushr	$0x3f
-	subl2	$0xc,%sp
-	movl	0x24(%sp),%r0
-	calls	$3,(%r0)
-	popr	$0x3f
-	chmk	$SYS_compat_16___sigreturn14
-	chmk	$SYS_exit
-	halt	
-_C_LABEL(ibcs2_esigcode):
-#endif /* COMPAT_IBCS2 */
 
 #ifdef COMPAT_ULTRIX
 	.align	2

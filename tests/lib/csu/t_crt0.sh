@@ -1,4 +1,4 @@
-# $NetBSD: t_crt0.sh,v 1.4 2011/12/11 14:57:07 joerg Exp $
+# $NetBSD: t_crt0.sh,v 1.4.38.1 2019/01/18 08:51:00 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -95,10 +95,21 @@ EOF
 	atf_check -o file:expout -x "env LD_PRELOAD=$(atf_get_srcdir)/h_initfini3_dso.so $(atf_get_srcdir)/h_initfini1"
 }
 
+atf_test_case initfini_array
+initfini_array_head()
+{
+	atf_set "descr" "Checks support for init_array/fini_array sections"
+}
+initfini_array_body()
+{
+	atf_check -x "$(atf_get_srcdir)/h_initfini_array"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case initfini1
 	atf_add_test_case initfini2
 	atf_add_test_case initfini3
 	atf_add_test_case initfini4
+	atf_add_test_case initfini_array
 }

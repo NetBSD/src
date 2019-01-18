@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.72.8.1 2018/09/06 06:56:41 pgoyette Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.72.8.2 2019/01/18 08:50:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72.8.1 2018/09/06 06:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72.8.2 2019/01/18 08:50:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -205,7 +205,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	va.va_mode = args->ta_root_mode & ALLPERMS;
 	va.va_uid = args->ta_root_uid;
 	va.va_gid = args->ta_root_gid;
-	error = vcache_new(mp, NULL, &va, NOCRED, &vp);
+	error = vcache_new(mp, NULL, &va, NOCRED, NULL, &vp);
 	if (error) {
 		mp->mnt_data = NULL;
 		tmpfs_mntmem_destroy(tmp);

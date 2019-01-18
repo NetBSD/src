@@ -12,6 +12,11 @@ aaaa02.example.		3600	IN	AAAA	fd92:7065:b8e:ffff::5
 afsdb01.example.	3600	IN	AFSDB	0 hostname.example.
 afsdb02.example.	3600	IN	AFSDB	65535 .
 apl01.example.		3600	IN	APL	!1:10.0.0.1/32 1:10.0.0.0/24
+apl02.example.		3600	IN	APL
+atma01.example.		3600	IN	ATMA	+61200000000
+atma02.example.		3600	IN	ATMA	+61200000000
+atma03.example.		3600	IN	ATMA	1234567890abcdef
+atma04.example.		3600	IN	ATMA	fedcba0987654321
 avc.example.		3600	IN	AVC	"foo:bar"
 caa01.example.		3600	IN	CAA	0 issue "ca.example.net; policy=ev"
 caa02.example.		3600	IN	CAA	128 tbs "Unknown"
@@ -37,8 +42,10 @@ ds01.example.		3600	IN	NS	ns42.example.
 ds01.example.		3600	IN	DS	12892 5 2 26584835CA80C81C91999F31CFAF2A0E89D4FF1C8FAFD0DDB31A85C7 19277C13
 ds02.example.		3600	IN	NS	ns43.example.
 ds02.example.		3600	IN	DS	12892 5 1 7AA4A3F416C2F2391FB7AB0D434F762CD62D1390
+eid01.example.		3600	IN	EID	1289AB
 eui48.example.		3600	IN	EUI48	01-23-45-67-89-ab
 eui64.example.		3600	IN	EUI64	01-23-45-67-89-ab-cd-ef
+gid01.example.		3600	IN	GID	\# 1 03
 gpos01.example.		3600	IN	GPOS	"-22.6882" "116.8652" "250.0"
 gpos02.example.		3600	IN	GPOS	"" "" ""
 hinfo01.example.	3600	IN	HINFO	"Generic PC clone" "NetBSD-1.4"
@@ -78,6 +85,7 @@ mx01.example.		3600	IN	MX	10 mail.example.
 mx02.example.		3600	IN	MX	10 .
 naptr01.example.	3600	IN	NAPTR	0 0 "" "" "" .
 naptr02.example.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blllbb" foo.
+nimloc01.example.	3600	IN	NIMLOC	1289AB
 ninfo01.example.	3600	IN	NINFO	"foo"
 ninfo02.example.	3600	IN	NINFO	"foo" "bar"
 ninfo03.example.	3600	IN	NINFO	"foo"
@@ -142,6 +150,8 @@ txt12.example.		3600	IN	TXT	"\"foo\""
 txt13.example.		3600	IN	TXT	"foo;"
 txt14.example.		3600	IN	TXT	"foo;"
 txt15.example.		3600	IN	TXT	"bar\\;"
+uid01.example.		3600	IN	UID	\# 1 02
+uinfo01.example.	3600	IN	UINFO	\# 1 01
 uri01.example.		3600	IN	URI	10 20 "https://www.isc.org/"
 uri02.example.		3600	IN	URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
 uri03.example.		3600	IN	URI	30 40 ""

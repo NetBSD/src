@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.c,v 1.2.2.2 2018/09/06 06:53:56 pgoyette Exp $	*/
+/*	$NetBSD: logconf.c,v 1.2.2.3 2019/01/18 08:49:11 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,9 @@
 /*! \file */
 
 #include <config.h>
+
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include <isc/file.h>
 #include <isc/offset.h>
@@ -138,10 +141,10 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *logconfig) {
 				 cfg_tuple_get(fileobj, "versions");
 		const cfg_obj_t *suffixobj =
 				 cfg_tuple_get(fileobj, "suffix");
-		isc_int32_t versions = ISC_LOG_ROLLNEVER;
+		int32_t versions = ISC_LOG_ROLLNEVER;
 		isc_log_rollsuffix_t suffix = isc_log_rollsuffix_increment;
 		isc_offset_t size = 0;
-		isc_uint64_t maxoffset;
+		uint64_t maxoffset;
 
 		/*
 		 * isc_offset_t is a signed integer type, so the maximum
@@ -156,6 +159,7 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *logconfig) {
 			break;
 		default:
 			INSIST(0);
+			ISC_UNREACHABLE();
 		}
 
 		type = ISC_LOG_TOFILE;
@@ -304,8 +308,8 @@ named_logconfig(isc_logconfig_t *logconfig, const cfg_obj_t *logstmt) {
 	const cfg_obj_t *channels = NULL;
 	const cfg_obj_t *categories = NULL;
 	const cfg_listelt_t *element;
-	isc_boolean_t default_set = ISC_FALSE;
-	isc_boolean_t unmatched_set = ISC_FALSE;
+	bool default_set = false;
+	bool unmatched_set = false;
 	const cfg_obj_t *catname;
 
 	if (logconfig != NULL)
@@ -330,12 +334,12 @@ named_logconfig(isc_logconfig_t *logconfig, const cfg_obj_t *logstmt) {
 		if (!default_set) {
 			catname = cfg_tuple_get(category, "name");
 			if (strcmp(cfg_obj_asstring(catname), "default") == 0)
-				default_set = ISC_TRUE;
+				default_set = true;
 		}
 		if (!unmatched_set) {
 			catname = cfg_tuple_get(category, "name");
 			if (strcmp(cfg_obj_asstring(catname), "unmatched") == 0)
-				unmatched_set = ISC_TRUE;
+				unmatched_set = true;
 		}
 	}
 

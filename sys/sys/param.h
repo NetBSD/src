@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.557.2.9 2018/12/26 14:02:07 pgoyette Exp $	*/
+/*	$NetBSD: param.h,v 1.557.2.10 2019/01/18 08:50:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	899002900	/* NetBSD 8.99.29 */
+#define	__NetBSD_Version__	899003000	/* NetBSD 8.99.30 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -172,6 +172,17 @@
 /* Machine type dependent parameters. */
 #include <machine/param.h>
 #include <machine/limits.h>
+
+#define	DEV_BSHIFT	9			/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)	/* 512 */
+
+#ifndef BLKDEV_IOSIZE
+#define	BLKDEV_IOSIZE	2048
+#endif
+
+#ifndef MAXPHYS
+#define	MAXPHYS		(64 * 1024)		/* max raw I/O transfer size */
+#endif
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))

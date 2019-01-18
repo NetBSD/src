@@ -26,3 +26,4 @@ rm -f ns3/named2.conf
 
 rm -f dnsrps*.conf dnsrpzd*
 rm -f ns*/session.key
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

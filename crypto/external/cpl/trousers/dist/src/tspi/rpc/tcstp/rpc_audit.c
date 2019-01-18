@@ -16,6 +16,7 @@
 #include "trousers/tss.h"
 #include "trousers/trousers.h"
 #include "trousers_types.h"
+#include "spi_utils.h"
 #include "tsplog.h"
 #include "hosttable.h"
 #include "tcsd_wrap.h"
@@ -158,7 +159,7 @@ RPC_GetAuditDigestSigned_TP(struct host_table_entry *hte,
 	hte->comm.hdr.u.ordinal = TCSD_ORD_GETAUDITDIGESTSIGNED;
 	LogDebugFn("TCS Context: 0x%x", hte->tcsContext);
 
-	memset(&null_auth, 0, sizeof(TPM_AUTH));
+	__tspi_memset(&null_auth, 0, sizeof(TPM_AUTH));
 
 	if (setData(TCSD_PACKET_TYPE_UINT32, 0, &hte->tcsContext, 0, &hte->comm))
 		return TSPERR(TSS_E_INTERNAL_ERROR);

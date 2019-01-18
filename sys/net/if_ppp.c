@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.159.2.2 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.159.2.3 2019/01/18 08:50:58 pgoyette Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.159.2.2 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.159.2.3 2019/01/18 08:50:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -301,6 +301,7 @@ ppp_create(const char *name, int unit)
 				break;
 			else if (unit == sci->sc_unit) {
 				free(sc, M_DEVBUF);
+				mutex_exit(&ppp_list_lock);
 				return NULL;
 			}
 		}
@@ -1724,6 +1725,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	/* pktq: inet or inet6 cases */
 	if (__predict_true(pktq)) {
 		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			splx(s);
 			ifp->if_iqdrops++;
 			goto bad;
 		}
@@ -1735,6 +1737,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 
 	/* ifq: other protocol cases */
 	if (!inq) {
+		splx(s);
 		goto bad;
 	}
 	if (IF_QFULL(inq)) {

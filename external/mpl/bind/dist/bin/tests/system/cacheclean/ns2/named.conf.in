@@ -20,6 +20,8 @@ options {
 	notify yes;
 	max-cache-size 80%;
 	disable-empty-zone 127.IN-ADDR.ARPA;
+	recursion yes;
+	dnssec-validation yes;
 };
 
 key rndc_key {

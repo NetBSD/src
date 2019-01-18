@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr_test.c,v 1.2.2.2 2018/09/06 06:53:59 pgoyette Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.2.2.3 2019/01/18 08:49:13 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/app.h>
@@ -70,7 +71,7 @@ done(isc_task_t *task, isc_event_t *event) {
 int
 main(int argc, char *argv[]) {
 	isc_mem_t *mctx;
-	isc_boolean_t verbose = ISC_FALSE;
+	bool verbose = false;
 	unsigned int workers = 2;
 	isc_taskmgr_t *taskmgr;
 	isc_task_t *task;
@@ -100,7 +101,7 @@ main(int argc, char *argv[]) {
 			 */
 			break;
 		case 'v':
-			verbose = ISC_TRUE;
+			verbose = true;
 			break;
 		case 'w':
 			workers = (unsigned int)atoi(isc_commandline_argument);
@@ -123,7 +124,7 @@ main(int argc, char *argv[]) {
 	isc_task_setname(task, "byaddr", NULL);
 
 	dispatchmgr = NULL;
-	RUNTIME_CHECK(dns_dispatchmgr_create(mctx, NULL, &dispatchmgr)
+	RUNTIME_CHECK(dns_dispatchmgr_create(mctx, &dispatchmgr)
 		      == ISC_R_SUCCESS);
 
 	timermgr = NULL;
@@ -132,8 +133,8 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
 
 	cache = NULL;
-	RUNTIME_CHECK(dns_cache_create(mctx, taskmgr, timermgr,
-				       dns_rdataclass_in, "rbt", 0, NULL,
+	RUNTIME_CHECK(dns_cache_create(mctx, mctx, taskmgr, timermgr,
+				       dns_rdataclass_in, "", "rbt", 0, NULL,
 				       &cache) == ISC_R_SUCCESS);
 
 	view = NULL;
@@ -205,7 +206,7 @@ main(int argc, char *argv[]) {
 			      == ISC_R_SUCCESS);
 	}
 
-	dns_view_setcache(view, cache);
+	dns_view_setcache(view, cache, false);
 	dns_view_freeze(view);
 
 	dns_cache_detach(&cache);

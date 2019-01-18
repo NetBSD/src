@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.22.4.1 2018/06/25 07:25:51 pgoyette Exp $	*/
+/*	$NetBSD: mii.h,v 1.22.4.2 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -217,8 +217,11 @@
 #define ANLPRNP_TOGGLE	0x0800	/* Toggle */
 #define ANLPRNP_MSGUNF_MASK 0x07ff /* Message(Anx28C)/Unformatted Code Field */
 
-			/* This is also the 1000baseT control register */
-#define	MII_100T2CR	0x09	/* 100base-T2 control register */
+#define	MII_GTCR	0x09	/*
+				 * Master-Slave control register for
+				 * 100BASE-T2 and 1000BASE-T.
+				 */
+#define	MII_100T2CR	MII_GTCR /* alias */
 #define	GTCR_TEST_MASK	0xe000	/* see 802.3ab ss. 40.6.1.1.2 */
 #define	GTCR_MAN_MS	0x1000	/* enable manual master/slave control */
 #define	GTCR_ADV_MS	0x0800	/* 1 = adv. master, 0 = adv. slave */
@@ -226,8 +229,23 @@
 #define	GTCR_ADV_1000TFDX 0x0200 /* adv. 1000baseT FDX */
 #define	GTCR_ADV_1000THDX 0x0100 /* adv. 1000baseT HDX */
 
-			/* This is also the 1000baseT status register */
-#define	MII_100T2SR	0x0a	/* 100base-T2 status register */
+#define T2CR_TEST_NORMAL	(0 << 13) /* Normal Operation */
+#define T2CR_TEST_RX		(1 << 13) /* RX test */
+#define T2CR_TEST_TX_WAVEFORM	(1 << 14) /* Mode 1. TX waveform test */
+#define T2CR_TEST_TX_JITTER	(2 << 14) /* Mode 2. TX jitter test */
+#define T2CR_TEST_TX_IDLE	(3 << 14) /* Mode 3. TX idle test */
+
+#define GTCR_TEST_NORMAL	(0 << 13) /* Normal Operation */
+#define GTCR_TEST_TX_WAVEFORM	(1 << 13) /* Mode 1. TX waveform test */
+#define GTCR_TEST_TX_JITTER_M	(2 << 13) /* Mode 2. TX jitter test (Master) */
+#define GTCR_TEST_TX_JITTER_S	(3 << 13) /* Mode 3. TX jitter test (Slave) */
+#define GTCR_TEST_TX_DISTORTION	(4 << 13) /* Mode 4. TX distortion test */
+
+#define	MII_GTSR	0x0a	/*
+				 * Master-Slave status register for
+				 * 100BASE-T2 and 1000BASE-T.
+				 */
+#define	MII_100T2SR	MII_GTSR /* alias */
 #define	GTSR_MAN_MS_FLT	0x8000	/* master/slave config fault */
 #define	GTSR_MS_RES	0x4000	/* result: 1 = master, 0 = slave */
 #define	GTSR_LRS	0x2000	/* local rx status, 1 = ok */

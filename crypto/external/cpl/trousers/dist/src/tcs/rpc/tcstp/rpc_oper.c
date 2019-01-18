@@ -37,6 +37,9 @@ tcs_wrap_SetOperatorAuth(struct tcsd_thread_data *data)
 	if (getData(TCSD_PACKET_TYPE_UINT32, 0, &hContext, 0, &data->comm))
 		return TCSERR(TSS_E_INTERNAL_ERROR);
 
+	if ((result = ctx_verify_context(hContext)))
+		goto done;
+
 	LogDebugFn("thread %ld context %x", THREAD_ID, hContext);
 
 	if (getData(TCSD_PACKET_TYPE_SECRET, 1, &operatorAuth, 0, &data->comm))
@@ -47,7 +50,7 @@ tcs_wrap_SetOperatorAuth(struct tcsd_thread_data *data)
 	result = TCSP_SetOperatorAuth_Internal(hContext, &operatorAuth);
 
 	MUTEX_UNLOCK(tcsp_lock);
-
+done:
 	initData(&data->comm, 0);
 
 	data->comm.hdr.u.result = result;

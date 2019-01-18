@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2018/02/05 22:12:37 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.13.2.1 2019/01/18 08:50:10 pgoyette Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
@@ -26,8 +26,9 @@ COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wno-error=frame-address :}
 
 
 # mcount and gmon cannot be compiled with profiling
-mcount.po: mcount.o
-	cp mcount.o mcount.po
+GMONOBJEXT=${${MKPIC} != "no":?pico:o}
+mcount.po: mcount.${GMONOBJEXT}
+	cp mcount.${GMONOBJEXT} mcount.po
 
-gmon.po: gmon.o
-	cp gmon.o gmon.po
+gmon.po: gmon.${GMONOBJEXT}
+	cp gmon.${GMONOBJEXT} gmon.po

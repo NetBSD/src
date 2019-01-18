@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.46.10.2 2018/12/26 14:01:50 pgoyette Exp $	 */
+/* $NetBSD: if_bce.c,v 1.46.10.3 2019/01/18 08:50:27 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.46.10.2 2018/12/26 14:01:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.46.10.3 2019/01/18 08:50:27 pgoyette Exp $");
 
 #include "vlan.h"
 
@@ -1425,7 +1425,6 @@ bce_mii_write(device_t self, int phy, int reg, int val)
 			break;
 		delay(10);
 	}
-	rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
 		aprint_error_dev(sc->bce_dev,
 		    "PHY timed out writing phy %d, reg %d, val = 0x%08x\n", phy,

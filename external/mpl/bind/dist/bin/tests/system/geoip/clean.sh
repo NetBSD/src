@@ -17,3 +17,4 @@ rm -f data2/*dat
 rm -f ns?/named.run
 rm -f ns?/named.memstats
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

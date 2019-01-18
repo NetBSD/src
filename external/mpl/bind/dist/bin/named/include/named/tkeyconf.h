@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.h,v 1.2.2.2 2018/09/06 06:53:56 pgoyette Exp $	*/
+/*	$NetBSD: tkeyconf.h,v 1.2.2.3 2019/01/18 08:49:11 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,7 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
-			 isc_entropy_t *ectx, dns_tkeyctx_t **tctxp);
+			 dns_tkeyctx_t **tctxp);
 /*%<
  * 	Create a TKEY context and configure it, including the default DH key
  *	and default domain, according to 'options'.
@@ -33,7 +33,6 @@ named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
  *	Requires:
  *\li		'cfg' is a valid configuration options object.
  *\li		'mctx' is not NULL
- *\li		'ectx' is not NULL
  *\li		'tctx' is not NULL
  *\li		'*tctx' is NULL
  *

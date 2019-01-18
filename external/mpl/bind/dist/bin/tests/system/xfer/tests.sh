@@ -429,8 +429,8 @@ echo_i "test mapped zone with out of zone data ($n)"
 tmp=0
 $DIG -p ${PORT} txt mapped @10.53.0.3 > dig.out.1.$n
 grep "status: NOERROR," dig.out.1.$n > /dev/null || tmp=1
-$PERL $SYSTEMTESTTOP/stop.pl . ns3
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns3
+$PERL $SYSTEMTESTTOP/stop.pl xfer ns3
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} xfer ns3
 $DIG -p ${PORT} txt mapped @10.53.0.3 > dig.out.2.$n
 grep "status: NOERROR," dig.out.2.$n > /dev/null || tmp=1
 $DIG -p ${PORT} axfr mapped @10.53.0.3 > dig.out.3.$n

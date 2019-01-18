@@ -56,7 +56,7 @@
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_keys">Generating Keys</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_signing">Signing the Zone</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_config">Configuring Servers</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec_config">Configuring Servers for DNSSEC</a></span></dt>
 </dl></dd>
 <dt><span class="section"><a href="Bv9ARM.ch04.html#dnssec.dynamic.zones">DNSSEC, Dynamic Zones, and Automatic Signing</a></span></dt>
 <dd><dl>
@@ -1028,34 +1028,53 @@ allow-update { !{ !localnets; any; }; key host1-host2. ;};
 
       <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="dnssec_config"></a>Configuring Servers</h3></div></div></div>
-
+<a name="dnssec_config"></a>Configuring Servers for DNSSEC</h3></div></div></div>
         <p>
           To enable <span class="command"><strong>named</strong></span> to respond appropriately
-          to DNS requests from DNSSEC aware clients,
-          <span class="command"><strong>dnssec-enable</strong></span> must be set to yes.
-          (This is the default setting.)
+          to DNS requests from DNSSEC-aware clients,
+          <span class="command"><strong>dnssec-enable</strong></span> must be set to
+          <strong class="userinput"><code>yes</code></strong>. This is the default setting.
         </p>
-
         <p>
-          To enable <span class="command"><strong>named</strong></span> to validate answers from
-          other servers, the <span class="command"><strong>dnssec-enable</strong></span> option
-          must be set to <strong class="userinput"><code>yes</code></strong>, and the
-          <span class="command"><strong>dnssec-validation</strong></span> options must be set to
-          <strong class="userinput"><code>yes</code></strong> or <strong class="userinput"><code>auto</code></strong>.
+          To enable <span class="command"><strong>named</strong></span> to validate answers
+          received from other servers, the
+          <span class="command"><strong>dnssec-validation</strong></span> option must be set to
+          either <strong class="userinput"><code>yes</code></strong> or <strong class="userinput"><code>auto</code></strong>.
         </p>
-
         <p>
-          If <span class="command"><strong>dnssec-validation</strong></span> is set to
-          <strong class="userinput"><code>auto</code></strong>, then a default
-          trust anchor for the DNS root zone will be used.
-          If it is set to <strong class="userinput"><code>yes</code></strong>, however,
-          then at least one trust anchor must be configured
-          with a <span class="command"><strong>trusted-keys</strong></span> or
-          <span class="command"><strong>managed-keys</strong></span> statement in
-          <code class="filename">named.conf</code>, or DNSSEC validation
-          will not occur.  The default setting is
-          <strong class="userinput"><code>yes</code></strong>.
+          When <span class="command"><strong>dnssec-validation</strong></span> is set to
+          <strong class="userinput"><code>auto</code></strong>, a trust anchor for the DNS
+          root zone will automatically be used. This trust anchor is
+          provided as part of BIND and is kept up to date using RFC 5011
+          key management.
+        </p>
+        <p>
+          When <span class="command"><strong>dnssec-validation</strong></span> is set to
+          <strong class="userinput"><code>yes</code></strong>, DNSSEC validation will only occur
+          if at least one trust anchor has been explicitly configured
+          in <code class="filename">named.conf</code>
+          using a <span class="command"><strong>trusted-keys</strong></span> or
+          <span class="command"><strong>managed-keys</strong></span> statement.
+        </p>
+        <p>
+          When <span class="command"><strong>dnssec-validation</strong></span> is set to
+          <strong class="userinput"><code>no</code></strong>, DNSSEC validation will not occur.
+        </p>
+        <p>
+          The default is <strong class="userinput"><code>auto</code></strong> unless BIND is
+          built with <span class="command"><strong>configure --disable-auto-validation</strong></span>,
+          in which case the default is <strong class="userinput"><code>yes</code></strong>.
+        </p>
+        <p>
+          If <span class="command"><strong>dnssec-enable</strong></span> is set to
+          <strong class="userinput"><code>no</code></strong>, then the default for
+          <span class="command"><strong>dnssec-validation</strong></span> is also changed to
+          <strong class="userinput"><code>no</code></strong>. If
+          <span class="command"><strong>dnssec-validation</strong></span> is set to
+          <strong class="userinput"><code>yes</code></strong>, the server will
+          perform DNSSEC validation internally, but will not return
+          signatures when queried - but it will not be turned on
+          automatically.
         </p>
 
         <p>
@@ -1702,7 +1721,7 @@ $ <strong class="userinput"><code>./configure --enable-native-pkcs11 \
       </p>
       <pre class="screen">
 $ <strong class="userinput"><code> cd SoftHSMv2 </code></strong>
-$ <strong class="userinput"><code> configure --with-crypto-backend=openssl --prefix=/opt/pkcs11/usr --enable-gost </code></strong>
+$ <strong class="userinput"><code> configure --with-crypto-backend=openssl --prefix=/opt/pkcs11/usr </code></strong>
 $ <strong class="userinput"><code> make </code></strong>
 $ <strong class="userinput"><code> make install </code></strong>
 $ <strong class="userinput"><code> /opt/pkcs11/usr/bin/softhsm-util --init-token 0 --slot 0 --label softhsmv2 </code></strong>
@@ -1830,23 +1849,13 @@ $ <strong class="userinput"><code>patch -p1 -d openssl-0.9.8zc \
       <pre class="screen">
 $ <strong class="userinput"><code>cp pkcs11.GCC4.0.2.so.4.05 /opt/pkcs11/usr/lib/libpkcs11.so</code></strong>
 </pre>
-      <p>
-	The Keyper library requires threads, so we
-	must specify -pthread.
-      </p>
       <pre class="screen">
 $ <strong class="userinput"><code>cd openssl-0.9.8zc</code></strong>
-$ <strong class="userinput"><code>./Configure linux-x86_64 -pthread \
+$ <strong class="userinput"><code>./Configure linux-x86_64 \
 	    --pk11-libname=/opt/pkcs11/usr/lib/libpkcs11.so \
 	    --pk11-flavor=sign-only \
 	    --prefix=/opt/pkcs11/usr</code></strong>
 </pre>
-      <p>
-	After configuring, run "<span class="command"><strong>make</strong></span>"
-	and "<span class="command"><strong>make test</strong></span>". If "<span class="command"><strong>make
-	test</strong></span>" fails with "pthread_atfork() not found", you forgot to
-	add the -pthread above.
-      </p>
     </div>
     <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
@@ -1920,7 +1929,7 @@ $ <strong class="userinput"><code> /opt/pkcs11/usr/bin/softhsm --init-token 0 --
       </p>
       <pre class="screen">
 $ <strong class="userinput"><code>cd openssl-0.9.8zc</code></strong>
-$ <strong class="userinput"><code>./Configure linux-x86_64 -pthread \
+$ <strong class="userinput"><code>./Configure linux-x86_64 \
 	    --pk11-libname=/opt/pkcs11/usr/lib/libsofthsm.so \
 	    --pk11-flavor=sign-only \
 	    --prefix=/opt/pkcs11/usr</code></strong>
@@ -1961,13 +1970,9 @@ $ <strong class="userinput"><code>./Configure linux-x86_64 -pthread \
 <a name="id-1.5.12.8.18"></a>Configuring BIND 9 for Linux with the AEP Keyper</h4></div></div></div>
       
 
-      <p>
-	To link with the PKCS#11 provider, threads must be
-	enabled in the BIND 9 build.
-      </p>
       <pre class="screen">
 $ <strong class="userinput"><code>cd ../bind9</code></strong>
-$ <strong class="userinput"><code>./configure --enable-threads \
+$ <strong class="userinput"><code>./configure \
 	   --with-openssl=/opt/pkcs11/usr \
 	   --with-pkcs11=/opt/pkcs11/usr/lib/libpkcs11.so</code></strong>
 </pre>
@@ -1977,13 +1982,9 @@ $ <strong class="userinput"><code>./configure --enable-threads \
 <a name="id-1.5.12.8.19"></a>Configuring BIND 9 for Solaris with the SCA 6000</h4></div></div></div>
       
 
-      <p>
-	To link with the PKCS#11 provider, threads must be
-	enabled in the BIND 9 build.
-      </p>
       <pre class="screen">
 $ <strong class="userinput"><code>cd ../bind9</code></strong>
-$ <strong class="userinput"><code>./configure CC="cc -xarch=amd64" --enable-threads \
+$ <strong class="userinput"><code>./configure CC="cc -xarch=amd64" \
 	    --with-openssl=/opt/pkcs11/usr \
 	    --with-pkcs11=/usr/lib/64/libpkcs11.so</code></strong>
 </pre>
@@ -2003,7 +2004,7 @@ $ <strong class="userinput"><code>./configure CC="cc -xarch=amd64" --enable-thre
 
       <pre class="screen">
 $ <strong class="userinput"><code>cd ../bind9</code></strong>
-$ <strong class="userinput"><code>./configure --enable-threads \
+$ <strong class="userinput"><code>./configure \
 	   --with-openssl=/opt/pkcs11/usr \
 	   --with-pkcs11=/opt/pkcs11/usr/lib/libsofthsm.so</code></strong>
 </pre>
@@ -2867,6 +2868,6 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.13.5-W1 (Development Release)</p>
 </body>
 </html>

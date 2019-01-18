@@ -1,6 +1,6 @@
-# $NetBSD: GDIUM,v 1.29.2.4 2018/09/30 01:45:43 pgoyette Exp $
+# $NetBSD: GDIUM,v 1.29.2.5 2019/01/18 08:50:16 pgoyette Exp $
 #
-# GENERIC machine description file
+# GDIUM machine description file
 # 
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.29.2.4 $"
+#ident 		"GDIUM-$Revision: 1.29.2.5 $"
 
 maxusers	16
 
@@ -90,6 +90,11 @@ options 	WAPBL		# File system journaling support
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch_test.c,v 1.2.2.2 2018/09/06 06:55:03 pgoyette Exp $	*/
+/*	$NetBSD: dispatch_test.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,19 +11,29 @@
  * information regarding copyright ownership.
  */
 
-/*! \file */
-
 #include <config.h>
 
-#include <atf-c.h>
+#if HAVE_CMOCKA
 
+#include <stdarg.h>
+#include <stddef.h>
+#include <setjmp.h>
+
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#define UNIT_TESTING
+#include <cmocka.h>
 
 #include <isc/app.h>
 #include <isc/buffer.h>
 #include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>
+#include <isc/util.h>
 
 #include <dns/dispatch.h>
 #include <dns/name.h>
@@ -34,6 +44,27 @@
 dns_dispatchmgr_t *dispatchmgr = NULL;
 dns_dispatchset_t *dset = NULL;
 
+static int
+_setup(void **state) {
+	isc_result_t result;
+
+	UNUSED(state);
+
+	result = dns_test_begin(NULL, true);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	return (0);
+}
+
+static int
+_teardown(void **state) {
+	UNUSED(state);
+
+	dns_test_end();
+
+	return (0);
+}
+
 static isc_result_t
 make_dispatchset(unsigned int ndisps) {
 	isc_result_t result;
@@ -41,7 +72,7 @@ make_dispatchset(unsigned int ndisps) {
 	unsigned int attrs;
 	dns_dispatch_t *disp = NULL;
 
-	result = dns_dispatchmgr_create(mctx, NULL, &dispatchmgr);
+	result = dns_dispatchmgr_create(mctx, &dispatchmgr);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -61,54 +92,41 @@ make_dispatchset(unsigned int ndisps) {
 }
 
 static void
-teardown(void) {
-	if (dset != NULL)
+reset(void) {
+	if (dset != NULL) {
 		dns_dispatchset_destroy(&dset);
-	if (dispatchmgr != NULL)
+	}
+	if (dispatchmgr != NULL) {
 		dns_dispatchmgr_destroy(&dispatchmgr);
+	}
 }
 
-/*
- * Individual unit tests
- */
-ATF_TC(dispatchset_create);
-ATF_TC_HEAD(dispatchset_create, tc) {
-	atf_tc_set_md_var(tc, "descr", "create dispatch set");
-}
-ATF_TC_BODY(dispatchset_create, tc) {
+/* create dispatch set */
+static void
+dispatchset_create(void **state) {
 	isc_result_t result;
 
-	UNUSED(tc);
-
-	result = dns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = make_dispatchset(1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	teardown();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	reset();
 
 	result = make_dispatchset(10);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-	teardown();
-
-	dns_test_end();
+	assert_int_equal(result, ISC_R_SUCCESS);
+	reset();
 }
 
-ATF_TC(dispatchset_get);
-ATF_TC_HEAD(dispatchset_get, tc) {
-	atf_tc_set_md_var(tc, "descr", "test dispatch set round-robin");
-}
-ATF_TC_BODY(dispatchset_get, tc) {
+/* test dispatch set round-robin */
+static void
+dispatchset_get(void **state) {
 	isc_result_t result;
 	dns_dispatch_t *d1, *d2, *d3, *d4, *d5;
 
-	UNUSED(tc);
-
-	result = dns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	UNUSED(state);
 
 	result = make_dispatchset(1);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	d1 = dns_dispatchset_get(dset);
 	d2 = dns_dispatchset_get(dset);
@@ -116,15 +134,15 @@ ATF_TC_BODY(dispatchset_get, tc) {
 	d4 = dns_dispatchset_get(dset);
 	d5 = dns_dispatchset_get(dset);
 
-	ATF_CHECK_EQ(d1, d2);
-	ATF_CHECK_EQ(d2, d3);
-	ATF_CHECK_EQ(d3, d4);
-	ATF_CHECK_EQ(d4, d5);
+	assert_int_equal(d1, d2);
+	assert_int_equal(d2, d3);
+	assert_int_equal(d3, d4);
+	assert_int_equal(d4, d5);
 
-	teardown();
+	reset();
 
 	result = make_dispatchset(4);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	d1 = dns_dispatchset_get(dset);
 	d2 = dns_dispatchset_get(dset);
@@ -132,14 +150,13 @@ ATF_TC_BODY(dispatchset_get, tc) {
 	d4 = dns_dispatchset_get(dset);
 	d5 = dns_dispatchset_get(dset);
 
-	ATF_CHECK_EQ(d1, d5);
-	ATF_CHECK(d1 != d2);
-	ATF_CHECK(d2 != d3);
-	ATF_CHECK(d3 != d4);
-	ATF_CHECK(d4 != d5);
+	assert_int_equal(d1, d5);
+	assert_true(d1 != d2);
+	assert_true(d2 != d3);
+	assert_true(d3 != d4);
+	assert_true(d4 != d5);
 
-	teardown();
-	dns_test_end();
+	reset();
 }
 
 static void
@@ -198,7 +215,7 @@ nameserver(isc_task_t *task, isc_event_t *event) {
 
 static dns_dispatch_t *dispatch = NULL;
 static dns_dispentry_t *dispentry = NULL;
-static isc_boolean_t first = ISC_TRUE;
+static bool first = true;
 static isc_mutex_t lock;
 static isc_sockaddr_t local;
 static unsigned int responses = 0;
@@ -207,19 +224,19 @@ static void
 response(isc_task_t *task, isc_event_t *event) {
 	dns_dispatchevent_t *devent = (dns_dispatchevent_t *)event;
 	isc_result_t result;
-	isc_boolean_t wasfirst;
+	bool wasfirst;
 
 	UNUSED(task);
 
 	LOCK(&lock);
 	wasfirst = first;
-	first = ISC_FALSE;
+	first = false;
 	responses++;
 	UNLOCK(&lock);
 
 	if (wasfirst) {
 		result = dns_dispatch_getnext(dispentry, &devent);
-		ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+		assert_int_equal(result, ISC_R_SUCCESS);
 	} else {
 		dns_dispatch_removeresponse(&dispentry, &devent);
 		isc_app_shutdown();
@@ -234,38 +251,32 @@ startit(isc_task_t *task, isc_event_t *event) {
 	isc_socket_attach(dns_dispatch_getsocket(dispatch), &sock);
 	result = isc_socket_sendto(sock, event->ev_arg, task, senddone, sock,
 				   &local, NULL);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	isc_event_free(&event);
 }
 
-ATF_TC(dispatch_getnext);
-ATF_TC_HEAD(dispatch_getnext, tc) {
-	atf_tc_set_md_var(tc, "descr", "test dispatch getnext");
-}
-ATF_TC_BODY(dispatch_getnext, tc) {
+/* test dispatch getnext */
+static void
+dispatch_getnext(void **state) {
 	isc_region_t region;
 	isc_result_t result;
 	isc_socket_t *sock = NULL;
 	isc_task_t *task = NULL;
-	isc_uint16_t id;
+	uint16_t id;
 	struct in_addr ina;
 	unsigned char message[12];
 	unsigned int attrs;
 	unsigned char rbuf[12];
 
-	UNUSED(tc);
+	UNUSED(state);
 
-	result = isc_mutex_init(&lock);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	result = dns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	isc_mutex_init(&lock);
 
 	result = isc_task_create(taskmgr, 0, &task);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_dispatchmgr_create(mctx, NULL, &dispatchmgr);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_dispatchmgr_create(mctx, &dispatchmgr);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	ina.s_addr = htonl(INADDR_LOOPBACK);
 	isc_sockaddr_fromin(&local, &ina, 0);
@@ -273,32 +284,32 @@ ATF_TC_BODY(dispatch_getnext, tc) {
 	result = dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr,
 				     &local, 512, 6, 1024, 17, 19, attrs,
 				     attrs, &dispatch);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
 	 * Create a local udp nameserver on the loopback.
 	 */
 	result = isc_socket_create(socketmgr, AF_INET, isc_sockettype_udp,
 				   &sock);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	ina.s_addr = htonl(INADDR_LOOPBACK);
 	isc_sockaddr_fromin(&local, &ina, 0);
 	result = isc_socket_bind(sock, &local, 0);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_socket_getsockname(sock, &local);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	first = ISC_TRUE;
+	first = true;
 	region.base = rbuf;
 	region.length = sizeof(rbuf);
 	result = isc_socket_recv(sock, &region, 1, task, nameserver, sock);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_dispatch_addresponse(dispatch, &local, task, response,
-					  NULL, &id, &dispentry);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	result = dns_dispatch_addresponse(dispatch, 0, &local, task, response,
+					  NULL, &id, &dispentry, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	memset(message, 0, sizeof(message));
 	message[0] = (id >> 8) & 0xff;
@@ -307,12 +318,12 @@ ATF_TC_BODY(dispatch_getnext, tc) {
 	region.base = message;
 	region.length = sizeof(message);
 	result = isc_app_onrun(mctx, task, startit, &region);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
 	result = isc_app_run();
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	assert_int_equal(result, ISC_R_SUCCESS);
 
-	ATF_CHECK_EQ(responses, 2);
+	assert_int_equal(responses, 2);
 
 	/*
 	 * Shutdown nameserver.
@@ -326,16 +337,30 @@ ATF_TC_BODY(dispatch_getnext, tc) {
 	 */
 	dns_dispatch_detach(&dispatch);
 	dns_dispatchmgr_destroy(&dispatchmgr);
-
-	dns_test_end();
 }
 
-/*
- * Main
- */
-ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, dispatchset_create);
-	ATF_TP_ADD_TC(tp, dispatchset_get);
-	ATF_TP_ADD_TC(tp, dispatch_getnext);
-	return (atf_no_error());
+int
+main(void) {
+	const struct CMUnitTest tests[] = {
+		cmocka_unit_test_setup_teardown(dispatchset_create,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(dispatchset_get,
+						_setup, _teardown),
+		cmocka_unit_test_setup_teardown(dispatch_getnext,
+						_setup, _teardown),
+	};
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
+
+#else /* HAVE_CMOCKA */
+
+#include <stdio.h>
+
+int
+main(void) {
+	printf("1..0 # Skipped: cmocka not available\n");
+	return (0);
+}
+
+#endif

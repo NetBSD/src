@@ -21,12 +21,12 @@ CWARNINGS =
 # Alphabetically
 OBJS =		condition.@O@ dir.@O@ errno.@O@ file.@O@ \
 		meminfo.@O@ fsaccess.@O@ \
-		once.@O@ stdtime.@O@ thread.@O@ time.@O@ @ISC_PK11_API_O@
+		once.@O@ stdtime.@O@ thread.@O@ time.@O@ pk11_api.@O@
 
 # Alphabetically
 SRCS =		condition.c dir.c errno.c file.c \
 		meminfo.c once.c fsaccess.c \
-		stdtime.c thread.c time.c @ISC_PK11_API_C@
+		stdtime.c thread.c time.c pk11_api.c
 
 SUBDIRS =	include
 TARGETS =	${OBJS}

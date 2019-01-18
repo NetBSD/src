@@ -44,6 +44,7 @@ Tspi_Context_LoadKeyByUUID(TSS_HCONTEXT tspContext,		/* in */
 	TCS_LOADKEY_INFO info;
 	UINT32		ulPubKeyLength;
 	BYTE		*rgbPubKey;
+	TPM_COMMAND_CODE ordinal;
 
 	if (phKey == NULL)
 		return TSPERR(TSS_E_BAD_PARAMETER);
@@ -51,10 +52,13 @@ Tspi_Context_LoadKeyByUUID(TSS_HCONTEXT tspContext,		/* in */
 	if ((!obj_is_context(tspContext)))
 		return TSPERR(TSS_E_INVALID_HANDLE);
 
+	if ((result = obj_context_get_loadkey_ordinal(tspContext, &ordinal)))
+		return result;
+
 	/* This key is in the System Persistant storage */
 	if (persistentStorageType == TSS_PS_TYPE_SYSTEM) {
 #if 1
-		memset(&info, 0, sizeof(TCS_LOADKEY_INFO));
+		__tspi_memset(&info, 0, sizeof(TCS_LOADKEY_INFO));
 
 		result = RPC_LoadKeyByUUID(tspContext, uuidData, &info, &tcsKeyHandle);
 
@@ -78,7 +82,7 @@ Tspi_Context_LoadKeyByUUID(TSS_HCONTEXT tspContext,		/* in */
 						  &hPolicy, NULL))
 				return result;
 
-			if (secret_PerformAuth_OIAP(keyHandle, TPM_ORD_LoadKey, hPolicy, FALSE,
+			if (secret_PerformAuth_OIAP(keyHandle, ordinal, hPolicy, FALSE,
 						    &info.paramDigest, &info.authData))
 				return result;
 
@@ -103,7 +107,7 @@ Tspi_Context_LoadKeyByUUID(TSS_HCONTEXT tspContext,		/* in */
 
 			result = obj_rsakey_set_pubkey(*phKey, FALSE, rgbPubKey);
 
-			free(rgbPubKey);		
+			free_tspi(tspContext,rgbPubKey);		
 			if (result != TSS_SUCCESS)
 				return result;
 		} else {

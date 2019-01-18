@@ -15,15 +15,14 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@
+CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @OPENSSL_INCLUDES@
 
-CDEFINES =	-DVERSION=\"${VERSION}\" @USE_PKCS11@ @PKCS11_ENGINE@ \
-		@CRYPTO@ -DPK11_LIB_LOCATION=\"@PKCS11_PROVIDER@\"
+CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
 
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @OPENSSL_LIBS@
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
@@ -116,12 +115,12 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
-	for t in ${TARGETS}; do ${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} $$t ${DESTDIR}${sbindir}; done
-	for m in ${MANPAGES}; do ${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man8; done
+	for t in ${TARGETS}; do ${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} $$t ${DESTDIR}${sbindir} || exit 1; done
+	for m in ${MANPAGES}; do ${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man8 || exit 1; done
 
 uninstall::
-	for m in ${MANPAGES}; do rm -f ${DESTDIR}${mandir}/man8/$$m ; done
-	for t in ${TARGETS}; do ${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/$$t ; done
+	for m in ${MANPAGES}; do rm -f ${DESTDIR}${mandir}/man8/$$m || exit 1; done
+	for t in ${TARGETS}; do ${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/$$t || exit 1; done
 
 clean distclean::
 	rm -f ${TARGETS}

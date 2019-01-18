@@ -61,19 +61,36 @@ sub handleUDP {
 	my $qclass = $questions[0]->qclass;
 	my $id = $request->header->id;
 
-	my $packet = new Net::DNS::Packet();
+	my $response = new Net::DNS::Packet($qname, $qtype, $qclass);
+	$response->header->qr(1);
+	$response->header->aa(1);
+	$response->header->tc(0);
+	$response->header->id($id);
 
-	$packet->header->qr(1);
-	$packet->header->aa(0);
-	$packet->header->id($id);
-
-	if ($qname eq "truncated.no-questions") {
-		$packet->header->tc(1);
-	} else {
-		$packet->header->tc(0);
+	# Responses to queries for no-questions/NS and ns.no-questions/A are
+	# _not_ malformed or truncated.
+	if ($qname eq "no-questions" && $qtype eq "NS") {
+		$response->push("answer", new Net::DNS::RR($qname . " 300 NS ns.no-questions"));
+		$response->push("additional", new Net::DNS::RR("ns.no-questions. 300 A 10.53.0.8"));
+		return $response->data;
+	} elsif ($qname eq "ns.no-questions") {
+		$response->push("answer", new Net::DNS::RR($qname . " 300 A 10.53.0.8"))
+			if ($qtype eq "A");
+		return $response->data;
+	} elsif ($qname =~ /\.formerr-to-all$/) {
+		$response->header->rcode("FORMERR");
+		return $response->data;
 	}
 
-	return $packet->data;
+	# don't use Net::DNS to construct the header only reply as early
+	# versions just get it completely wrong.
+
+	if ($qname eq "truncated.no-questions") {
+		# QR, AA, TC
+		return (pack("nnnnnn", $id, 0x8600, 0, 0, 0, 0));
+	}
+	# QR, AA
+	return (pack("nnnnnn", $id, 0x8400, 0, 0, 0, 0));
 }
 
 sub handleTCP {
@@ -96,14 +113,14 @@ sub handleTCP {
 	my $id = $request->header->id;
 
 	my @results = ();
-	my $packet = new Net::DNS::Packet($qname, $qtype, $qclass);
+	my $response = new Net::DNS::Packet($qname, $qtype, $qclass);
 
-	$packet->header->qr(1);
-	$packet->header->aa(1);
-	$packet->header->id($id);
+	$response->header->qr(1);
+	$response->header->aa(1);
+	$response->header->id($id);
 
-	$packet->push("answer", new Net::DNS::RR("$qname 300 A 1.2.3.4"));
-	push(@results, $packet->data);
+	$response->push("answer", new Net::DNS::RR("$qname 300 A 1.2.3.4"));
+	push(@results, $response->data);
 
 	return \@results;
 }

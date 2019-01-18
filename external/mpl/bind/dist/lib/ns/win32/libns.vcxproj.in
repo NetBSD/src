@@ -52,7 +52,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;@CRYPTO@@USE_GSSAPI@_DEBUG;_USRDLL;LIBNS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;@USE_GSSAPI@_DEBUG;_USRDLL;LIBNS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\..\lib\dns\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
@@ -67,7 +67,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;libdns.lib;@LIBXML2_LIB@@OPENSSL_LIB@@GSSAPI_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIB@libisc.lib;libdns.lib;@LIBXML2_LIB@@GSSAPI_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
     </Link>
@@ -80,7 +80,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>@INTRINSIC@</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;@CRYPTO@@USE_GSSAPI@NDEBUG;_USRDLL;LIBNS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;@USE_GSSAPI@NDEBUG;_USRDLL;LIBNS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\..\lib\dns\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
@@ -98,7 +98,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libisc.lib;libdns.lib;@LIBXML2_LIB@@OPENSSL_LIB@@GSSAPI_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>@OPENSSL_LIB@libisc.lib;libdns.lib;@LIBXML2_LIB@@GSSAPI_LIB@@GEOIP_LIB@ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
       <ImportLibrary>.\$(Configuration)\$(ProjectName).lib</ImportLibrary>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -110,6 +110,7 @@
   <ItemGroup>
     <ClCompile Include="..\client.c" />
     <ClCompile Include="..\interfacemgr.c" />
+    <ClCompile Include="..\hooks.c" />
     <ClCompile Include="..\lib.c" />
     <ClCompile Include="..\listenlist.c" />
     <ClCompile Include="..\log.c" />
@@ -126,6 +127,7 @@
   <ItemGroup>
     <ClInclude Include="..\include\ns\client.h" />
     <ClInclude Include="..\include\ns\interfacemgr.h" />
+    <ClInclude Include="..\include\ns\hooks.h" />
     <ClInclude Include="..\include\ns\lib.h" />
     <ClInclude Include="..\include\ns\listenlist.h" />
     <ClInclude Include="..\include\ns\log.h" />

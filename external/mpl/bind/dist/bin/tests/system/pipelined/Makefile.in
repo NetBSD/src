@@ -15,13 +15,13 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@
+CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @OPENSSL_INCLUDES@
 
-CDEFINES =	@CRYPTO@
+CDEFINES =
 CWARNINGS =
 
 DNSLIBS =	../../../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 
 DNSDEPLIBS =	../../../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../../../lib/isc/libisc.@A@

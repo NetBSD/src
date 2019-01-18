@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.32.16.1 2018/12/26 14:02:08 pgoyette Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.32.16.2 2019/01/18 08:50:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.32.16.1 2018/12/26 14:02:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.32.16.2 2019/01/18 08:50:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -142,7 +142,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 	va.va_mode = 0;
 	va.va_fileid = ino;
 	va.va_gen = vers;
-	error = vcache_new(fs->lfs_ivnode->v_mount, NULL, &va, NOCRED, &vp);
+	error = vcache_new(fs->lfs_ivnode->v_mount, NULL, &va, NOCRED, NULL,
+	    &vp);
 	if (error)
 		return error;
 	error = vn_lock(vp, LK_EXCLUSIVE);

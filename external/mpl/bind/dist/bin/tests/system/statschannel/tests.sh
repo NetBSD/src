@@ -197,20 +197,28 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
-ret=0
 echo_i "checking consistency between regular and compressed output ($n)"
-if [ "$HAVEXMLSTATS" ];
-then
-	URL=http://10.53.0.2:${EXTRAPORT1}/xml/v3/server
-else
-	URL=http://10.53.0.2:${EXTRAPORT1}/json/v1/server
-fi
-$CURL -D regular.headers $URL 2>/dev/null | \
-	sed -e "s#<current-time>.*</current-time>##g" > regular.out
-$CURL -D compressed.headers --compressed $URL 2>/dev/null | \
-	sed -e "s#<current-time>.*</current-time>##g" > compressed.out
-diff regular.out compressed.out >/dev/null || ret=1
-if [ $ret != 0 ]; then echo_i "failed"; fi
+for i in 1 2 3 4 5; do
+	ret=0
+	if [ "$HAVEXMLSTATS" ];
+	then
+		URL=http://10.53.0.2:${EXTRAPORT1}/xml/v3/server
+	else
+		URL=http://10.53.0.2:${EXTRAPORT1}/json/v1/server
+	fi
+	$CURL -D regular.headers $URL 2>/dev/null | \
+		sed -e "s#<current-time>.*</current-time>##g" > regular.out
+	$CURL -D compressed.headers --compressed $URL 2>/dev/null | \
+		sed -e "s#<current-time>.*</current-time>##g" > compressed.out
+	diff regular.out compressed.out >/dev/null || ret=1
+	if [ $ret != 0 ]; then
+		echo_i "failed on try $i, probably a timing issue, trying again"
+		sleep 1
+	else
+		break
+	fi
+done
+
 status=`expr $status + $ret`
 n=`expr $n + 1`
 

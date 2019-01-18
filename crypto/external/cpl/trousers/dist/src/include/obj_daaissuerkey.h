@@ -32,7 +32,7 @@ TSS_RESULT obj_daaissuerkey_set_session_handle(TSS_HDAA_ISSUER_KEY, UINT32);
 
 #define DAAISSUERKEY_LIST_DECLARE		struct obj_list daaissuerkey_list
 #define DAAISSUERKEY_LIST_DECLARE_EXTERN	extern struct obj_list daaissuerkey_list
-#define DAAISSUERKEY_LIST_INIT()		list_init(&daaissuerkey_list)
+#define DAAISSUERKEY_LIST_INIT()		tspi_list_init(&daaissuerkey_list)
 #define DAAISSUERKEY_LIST_CONNECT(a,b)		obj_connectContext_list(&daaissuerkey_list, a, b)
 #define DAAISSUERKEY_LIST_CLOSE(a)		obj_list_close(&daaissuerkey_list, \
 							       &daaissuerkey_free, a)

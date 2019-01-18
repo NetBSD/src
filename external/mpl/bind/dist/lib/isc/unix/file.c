@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: file.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,6 +48,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>		/* Required for utimes on some platforms. */
 #include <unistd.h>		/* Required for mkstemp on NetBSD. */
@@ -63,10 +65,10 @@
 #include <isc/dir.h>
 #include <isc/file.h>
 #include <isc/log.h>
+#include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/random.h>
-#include <isc/sha2.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -146,7 +148,7 @@ isc_file_getmodtime(const char *file, isc_time_t *modtime) {
 	result = file_stats(file, &stats);
 
 	if (result == ISC_R_SUCCESS)
-#ifdef ISC_PLATFORM_HAVESTATNSEC
+#if defined(HAVE_STAT_NSEC)
 		isc_time_set(modtime, stats.st_mtime, stats.st_mtim.tv_nsec);
 #else
 		isc_time_set(modtime, stats.st_mtime, 0);
@@ -198,12 +200,10 @@ isc_file_settime(const char *file, isc_time_t *when) {
 
 	/*
 	 * isc_time_nanoseconds guarantees a value that divided by 1000 will
-	 * fit into the minimum possible size tv_usec field.  Unfortunately,
-	 * we don't know what that type is so can't cast directly ... but
-	 * we can at least cast to signed so the IRIX compiler shuts up.
+	 * fit into the minimum possible size tv_usec field.
 	 */
 	times[0].tv_usec = times[1].tv_usec =
-		(isc_int32_t)(isc_time_nanoseconds(when) / 1000);
+		(int32_t)(isc_time_nanoseconds(when) / 1000);
 
 	if (utimes(file, times) < 0)
 		return (isc__errno2result(errno));
@@ -274,10 +274,7 @@ isc_file_renameunique(const char *file, char *templet) {
 
 	x = cp--;
 	while (cp >= templet && *cp == 'X') {
-		isc_uint32_t which;
-
-		isc_random_get(&which);
-		*cp = alphnum[which % (sizeof(alphnum) - 1)];
+		*cp = alphnum[isc_random_uniform(sizeof(alphnum) - 1)];
 		x = cp--;
 	}
 	while (link(file, templet) == -1) {
@@ -333,10 +330,7 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 
 	x = cp--;
 	while (cp >= templet && *cp == 'X') {
-		isc_uint32_t which;
-
-		isc_random_get(&which);
-		*cp = alphnum[which % (sizeof(alphnum) - 1)];
+		*cp = alphnum[isc_random_uniform(sizeof(alphnum) - 1)];
 		x = cp--;
 	}
 
@@ -416,13 +410,13 @@ isc_file_rename(const char *oldname, const char *newname) {
 		return (isc__errno2result(errno));
 }
 
-isc_boolean_t
+bool
 isc_file_exists(const char *pathname) {
 	struct stat stats;
 
 	REQUIRE(pathname != NULL);
 
-	return (ISC_TF(file_stats(pathname, &stats) == ISC_R_SUCCESS));
+	return (file_stats(pathname, &stats) == ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -478,26 +472,26 @@ isc_file_isdirectory(const char *filename) {
 }
 
 
-isc_boolean_t
+bool
 isc_file_isabsolute(const char *filename) {
 	REQUIRE(filename != NULL);
-	return (ISC_TF(filename[0] == '/'));
+	return (filename[0] == '/');
 }
 
-isc_boolean_t
+bool
 isc_file_iscurrentdir(const char *filename) {
 	REQUIRE(filename != NULL);
-	return (ISC_TF(filename[0] == '.' && filename[1] == '\0'));
+	return (filename[0] == '.' && filename[1] == '\0');
 }
 
-isc_boolean_t
+bool
 isc_file_ischdiridempotent(const char *filename) {
 	REQUIRE(filename != NULL);
 	if (isc_file_isabsolute(filename))
-		return (ISC_TRUE);
+		return (true);
 	if (isc_file_iscurrentdir(filename))
-		return (ISC_TRUE);
-	return (ISC_FALSE);
+		return (true);
+	return (false);
 }
 
 const char *
@@ -711,12 +705,32 @@ isc_file_munmap(void *addr, size_t len) {
 #define PATH_MAX 1024
 #endif
 
+static isc_result_t
+digest2hex(unsigned char *digest, unsigned int digestlen,
+	   char *hash, size_t hashlen)
+{
+	unsigned int i;
+	int ret;
+	for (i = 0; i < digestlen; i++) {
+		size_t left = hashlen - i * 2;
+		ret = snprintf(hash + i * 2, left, "%02x", digest[i]);
+		if (ret < 0 || (size_t)ret >= left) {
+			return (ISC_R_NOSPACE);
+		}
+	}
+	return (ISC_R_SUCCESS);
+}
+
 isc_result_t
 isc_file_sanitize(const char *dir, const char *base, const char *ext,
 		  char *path, size_t length)
 {
-	char buf[PATH_MAX], hash[ISC_SHA256_DIGESTSTRINGLENGTH];
+	char buf[PATH_MAX];
+	unsigned char digest[ISC_MAX_MD_SIZE];
+	unsigned int digestlen;
+	char hash[ISC_MAX_MD_SIZE * 2 + 1];
 	size_t l = 0;
+	isc_result_t err;
 
 	REQUIRE(base != NULL);
 	REQUIRE(path != NULL);
@@ -739,7 +753,17 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
 		return (ISC_R_NOSPACE);
 
 	/* Check whether the full-length SHA256 hash filename exists */
-	isc_sha256_data((const void *) base, strlen(base), hash);
+	err = isc_md(ISC_MD_SHA256, (const unsigned char *)base,
+		     strlen(base), digest, &digestlen);
+	if (err != ISC_R_SUCCESS) {
+		return (err);
+	}
+
+	err = digest2hex(digest, digestlen, hash, sizeof(hash));
+	if (err != ISC_R_SUCCESS) {
+		return (err);
+	}
+
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
 		dir != NULL ? dir : "", dir != NULL ? "/" : "",
 		hash, ext != NULL ? "." : "", ext != NULL ? ext : "");
@@ -775,7 +799,7 @@ isc_file_sanitize(const char *dir, const char *base, const char *ext,
 	return (ISC_R_SUCCESS);
 }
 
-isc_boolean_t
+bool
 isc_file_isdirwritable(const char *path) {
-	return (ISC_TF(access(path, W_OK|X_OK) == 0));
+	return (access(path, W_OK|X_OK) == 0);
 }

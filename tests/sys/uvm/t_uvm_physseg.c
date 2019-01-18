@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.3.2.1 2018/12/26 14:02:10 pgoyette Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.3.2.2 2019/01/18 08:51:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.3.2.1 2018/12/26 14:02:10 pgoyette Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.3.2.2 2019/01/18 08:51:00 pgoyette Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -401,7 +401,7 @@ ATF_TC(uvm_physseg_atboot_free_leak);
 ATF_TC_HEAD(uvm_physseg_atboot_free_leak, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "does free() leak at boot ?\n"
+	    "does free() leak at boot ?"
 	    "This test needs VM_PHYSSEG_MAX > 1)");
 }
 
@@ -512,7 +512,7 @@ ATF_TC_BODY(uvm_physseg_plug, tc)
 #if VM_PHYSSEG_MAX > 2
 	    + npages2
 #endif
-	    + npages3, uvmexp.npages);
+	    + npages3, INT_TO_PSIZE_T(uvmexp.npages));
 
 	/* Scavenge plug should fit right in the slab */
 	pgs = uvm_physseg_get_pg(upm3, 0);
@@ -522,7 +522,7 @@ ATF_TC_BODY(uvm_physseg_plug, tc)
 	ATF_REQUIRE_EQ(uvm_physseg_plug(VALID_START_PFN_4, npages4, &upm4), true);
 	/* The hot plug slab should have nothing to do with the original slab */
 	pgs = uvm_physseg_get_pg(upm4, 0);
-	ATF_REQUIRE(pgs < slab || pgs > (slab + npages1
+	ATF_REQUIRE(pgs < slab || pgs >= (slab + npages1
 #if VM_PHYSSEG_MAX > 2
 		+ npages2
 #endif
@@ -2155,7 +2155,7 @@ ATF_TC_BODY(uvm_page_physunload_delete_end, tc)
 	 */
 
 	upm = uvm_page_physload(VALID_START_PFN_1, VALID_START_PFN_1 + 2,
-	    VALID_AVAIL_START_PFN_1 + 1, VALID_AVAIL_START_PFN_1 + 2,
+	    VALID_AVAIL_START_PFN_1, VALID_AVAIL_START_PFN_1 + 2,
 	    VM_FREELIST_DEFAULT);
 
 	ATF_REQUIRE_EQ(1, uvm_physseg_get_entries());
@@ -2177,11 +2177,13 @@ ATF_TC_BODY(uvm_page_physunload_delete_end, tc)
 
 	ATF_CHECK_EQ(true, uvm_page_physunload(upm, VM_FREELIST_DEFAULT, &p));
 
+	ATF_CHECK_EQ(VALID_START_PFN_1, atop(p));
+
 	p = 0;
 
 	ATF_CHECK_EQ(true, uvm_page_physunload(upm, VM_FREELIST_DEFAULT, &p));
 
-	ATF_CHECK_EQ(VALID_START_PFN_1 + 2, atop(p));
+	ATF_CHECK_EQ(VALID_START_PFN_1 + 1, atop(p));
 
 	ATF_CHECK_EQ(1, uvm_physseg_get_entries());
 

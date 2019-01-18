@@ -22,5 +22,5 @@ installdirs:
 
 install:: installdirs
 	for i in ${HEADERS}; do \
-		${INSTALL_DATA} $(srcdir)/$$i ${DESTDIR}${includedir}/pkcs11 ; \
+		${INSTALL_DATA} $(srcdir)/$$i ${DESTDIR}${includedir}/pkcs11 || exit 1; \
 	done

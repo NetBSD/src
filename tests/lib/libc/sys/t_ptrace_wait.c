@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.7 2018/09/06 06:56:48 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.8 2019/01/18 08:51:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.7 2018/09/06 06:56:48 pgoyette Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.8 2019/01/18 08:51:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -870,7 +870,9 @@ traceme_vfork_crash(int sig)
 #endif
 
 	if (sig == SIGBUS) {
+#ifndef TWAIT_WAITID
 		atf_tc_expect_fail("lib/53343");
+#endif
 	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());

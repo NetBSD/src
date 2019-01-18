@@ -16,6 +16,7 @@
 #include "trousers/tss.h"
 #include "trousers/trousers.h"
 #include "trousers_types.h"
+#include "spi_utils.h"
 #include "tsplog.h"
 #include "hosttable.h"
 #include "tcsd_wrap.h"
@@ -55,7 +56,7 @@ RPC_Delegate_Manage_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 5, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}
@@ -120,7 +121,7 @@ RPC_Delegate_CreateKeyDelegation_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 5, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}
@@ -185,7 +186,7 @@ RPC_Delegate_CreateOwnerDelegation_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 5, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}
@@ -244,7 +245,7 @@ RPC_Delegate_LoadOwnerDelegation_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 4, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}
@@ -345,7 +346,7 @@ RPC_Delegate_UpdateVerificationCount_TP(struct host_table_entry *hte,
 	} else {
 		TPM_AUTH nullAuth;
 
-		memset(&nullAuth, 0, sizeof(TPM_AUTH));
+		__tspi_memset(&nullAuth, 0, sizeof(TPM_AUTH));
 		if (setData(TCSD_PACKET_TYPE_AUTH, 3, &nullAuth, 0, &hte->comm))
 			return TSPERR(TSS_E_INTERNAL_ERROR);
 	}

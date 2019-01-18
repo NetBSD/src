@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.3.2.1 2018/03/15 09:12:00 pgoyette Exp $
+#      $NetBSD: Makefile,v 1.3.2.2 2019/01/18 08:49:03 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -14,8 +14,7 @@ SRCS= \
 	amdgpu_gpu_info.c \
 	amdgpu_vamgr.c \
 	amdgpu_vm.c \
-	util_hash.c \
-	util_hash_table.c
+	handle_table.c
 
 LIBDRMDATADIR=	${X11ROOTDIR}/share/libdrm
 # XXX goes away in new libdrm.

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.2 2015/07/11 10:32:46 kamil Exp $	*/
+/*	$NetBSD: wdc.c,v 1.2.16.1 2019/01/18 08:50:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -29,13 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
-#include <machine/param.h>
 
 #include "boot.h"
 #include "wdvar.h"

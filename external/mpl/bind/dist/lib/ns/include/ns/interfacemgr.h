@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.h,v 1.2.2.2 2018/09/06 06:55:12 pgoyette Exp $	*/
+/*	$NetBSD: interfacemgr.h,v 1.2.2.3 2019/01/18 08:50:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,8 @@
 /***
  *** Imports
  ***/
+
+#include <stdbool.h>
 
 #include <isc/magic.h>
 #include <isc/mem.h>
@@ -122,7 +124,7 @@ ns_interfacemgr_setbacklog(ns_interfacemgr_t *mgr, int backlog);
  * Set the size of the listen() backlog queue.
  */
 
-isc_boolean_t
+bool
 ns_interfacemgr_islistening(ns_interfacemgr_t *mgr);
 /*%<
  * Return if the manager is listening on any interface. It can be called
@@ -130,7 +132,7 @@ ns_interfacemgr_islistening(ns_interfacemgr_t *mgr);
  */
 
 isc_result_t
-ns_interfacemgr_scan(ns_interfacemgr_t *mgr, isc_boolean_t verbose);
+ns_interfacemgr_scan(ns_interfacemgr_t *mgr, bool verbose);
 /*%<
  * Scan the operatings system's list of network interfaces
  * and create listeners when new interfaces are discovered.
@@ -143,7 +145,7 @@ ns_interfacemgr_scan(ns_interfacemgr_t *mgr, isc_boolean_t verbose);
 
 isc_result_t
 ns_interfacemgr_adjust(ns_interfacemgr_t *mgr, ns_listenlist_t *list,
-		       isc_boolean_t verbose);
+		       bool verbose);
 /*%<
  * Similar to ns_interfacemgr_scan(), but this function also tries to see the
  * need for an explicit listen-on when a list element in 'list' is going to
@@ -188,7 +190,7 @@ ns_interface_shutdown(ns_interface_t *ifp);
 void
 ns_interfacemgr_dumprecursing(FILE *f, ns_interfacemgr_t *mgr);
 
-isc_boolean_t
+bool
 ns_interfacemgr_listeningon(ns_interfacemgr_t *mgr, const isc_sockaddr_t *addr);
 
 ns_interface_t *

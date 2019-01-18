@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.23.38.1 2018/12/26 14:02:11 pgoyette Exp $	*/
+/*	$NetBSD: utilities.c,v 1.23.38.2 2019/01/18 08:51:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.23.38.1 2018/12/26 14:02:11 pgoyette Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.23.38.2 2019/01/18 08:51:02 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -750,12 +750,6 @@ printsub(
 
 	case TELOPT_NEW_ENVIRON:
 	    fprintf(NetTrace, "NEW-ENVIRON ");
-#ifdef	OLD_ENVIRON
-	    goto env_common1;
-	case TELOPT_OLD_ENVIRON:
-	    fprintf(NetTrace, "OLD-ENVIRON");
-	env_common1:
-#endif
 	    switch (pointer[1]) {
 	    case TELQUAL_IS:
 		fprintf(NetTrace, "IS ");
@@ -769,40 +763,15 @@ printsub(
 		{
 		    static const char NQ[] = "\" ";
 		    const char *noquote = NQ;
-#if defined(ENV_HACK) && defined(OLD_ENVIRON)
-		    extern int old_env_var, old_env_value;
-#endif
 		    for (i = 2; i < length; i++ ) {
 			switch (pointer[i]) {
 			case NEW_ENV_VALUE:
-#ifdef OLD_ENVIRON
-		     /*	case NEW_ENV_OVAR: */
-			    if (pointer[0] == TELOPT_OLD_ENVIRON) {
-# ifdef	ENV_HACK
-				if (old_env_var == OLD_ENV_VALUE)
-				    fprintf(NetTrace, "%s(VALUE) ", noquote);
-				else
-# endif
-				    fprintf(NetTrace, "%sVAR ", noquote);
-			    } else
-#endif /* OLD_ENVIRON */
-				fprintf(NetTrace, "%sVALUE ", noquote);
+			    fprintf(NetTrace, "%sVALUE ", noquote);
 			    noquote = NQ;
 			    break;
 
 			case NEW_ENV_VAR:
-#ifdef OLD_ENVIRON
-		     /* case OLD_ENV_VALUE: */
-			    if (pointer[0] == TELOPT_OLD_ENVIRON) {
-# ifdef	ENV_HACK
-				if (old_env_value == OLD_ENV_VAR)
-				    fprintf(NetTrace, "%s(VAR) ", noquote);
-				else
-# endif
-				    fprintf(NetTrace, "%sVALUE ", noquote);
-			    } else
-#endif /* OLD_ENVIRON */
-				fprintf(NetTrace, "%sVAR ", noquote);
+			    fprintf(NetTrace, "%sVAR ", noquote);
 			    noquote = NQ;
 			    break;
 

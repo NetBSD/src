@@ -147,7 +147,8 @@ usage (
     ACPI_OPTION ("-df",                 "Disable Local fault handler");
     ACPI_OPTION ("-di",                 "Disable execution of STA/INI methods during init");
     ACPI_OPTION ("-do",                 "Disable Operation Region address simulation");
-    ACPI_OPTION ("-dp",                 "Disable TermList parsing for scope objects");
+    ACPI_OPTION ("-dp",                 "Disable loading DSDT/SSDT as a control method\n"
+                  "                      (enable legacy grouping of module-level code)");
     ACPI_OPTION ("-dr",                 "Disable repair of method return values");
     ACPI_OPTION ("-ds",                 "Disable method auto-serialization");
     ACPI_OPTION ("-dt",                 "Disable allocation tracking (performance)");
@@ -157,7 +158,7 @@ usage (
     ACPI_OPTION ("-ef",                 "Enable display of final memory statistics");
     ACPI_OPTION ("-ei",                 "Enable additional tests for ACPICA interfaces");
     ACPI_OPTION ("-el",                 "Enable loading of additional test tables");
-    ACPI_OPTION ("-em",                 "Enable (legacy) grouping of module-level code");
+    ACPI_OPTION ("-eo",                 "Enable object evaluation log");
     ACPI_OPTION ("-es",                 "Enable Interpreter Slack Mode");
     ACPI_OPTION ("-et",                 "Enable debug semaphore timeout");
     printf ("\n");
@@ -211,7 +212,7 @@ AeDoOptions (
 
         if (strlen (AcpiGbl_Optarg) > (AE_BUFFER_SIZE -1))
         {
-            printf ("**** The length of command line (%u) exceeded maximum (%u)\n",
+            printf ("**** The length of command line (%u) exceeded maximum (%d)\n",
                 (UINT32) strlen (AcpiGbl_Optarg), (AE_BUFFER_SIZE -1));
             return (-1);
         }
@@ -298,9 +299,10 @@ AeDoOptions (
             AcpiGbl_LoadTestTables = TRUE;
             break;
 
-        case 'm':
+        case 'o':
 
-            AcpiGbl_GroupModuleLevelCode = TRUE;
+            AcpiDbgLevel |= ACPI_LV_EVALUATION;
+            AcpiGbl_DbConsoleDebugLevel |= ACPI_LV_EVALUATION;
             break;
 
         case 's':
@@ -517,7 +519,6 @@ main (
     /* Module-level code. Use new architecture */
 
     AcpiGbl_ExecuteTablesAsMethods = TRUE;
-    AcpiGbl_GroupModuleLevelCode = FALSE;
 
     /*
      * Initialize ACPICA and start debugger thread.

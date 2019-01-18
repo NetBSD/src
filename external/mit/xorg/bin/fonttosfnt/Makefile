@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.40.1 2018/05/21 04:35:53 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2.40.2 2019/01/18 08:49:03 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
 LDADD+=	-lfreetype -lfontenc -lz -lm
 DPADD+=	 ${LIBFREETYPE} ${LIBFONTENC} ${LIBZ} ${LIBM}
 
-.PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 
 CWARNFLAGS.clang+=	-Wno-format
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.h,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: nsap_22.h,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@ typedef struct dns_rdata_in_nsap {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*nsap;
-	isc_uint16_t		nsap_len;
+	uint16_t		nsap_len;
 } dns_rdata_in_nsap_t;
 
 #endif /* IN_1_NSAP_22_H */

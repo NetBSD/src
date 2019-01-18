@@ -205,7 +205,7 @@ are mandatory, others optional).
     updates.  This function starts a transaction in the database.
 
 
-  - void dlz_closeversion(const char *zone, isc_boolean_t commit,
+  - void dlz_closeversion(const char *zone, bool commit,
                           void *dbdata, void **versionp);
 
     Optional, but must be supplied if dlz_newversion() is.  This function
@@ -216,7 +216,7 @@ are mandatory, others optional).
 
     Optional, but must be supplied in order to support DDNS updates.
 
-  - isc_boolean_t dlz_ssumatch(const char *signer, const char *name,
+  - bool dlz_ssumatch(const char *signer, const char *name,
                                const char *tcpaddr, const char *type,
                                const char *key, uint32_t keydatalen,
                                uint8_t *keydata, void *dbdata);

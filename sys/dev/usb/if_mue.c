@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.6.2.4 2018/12/26 14:02:01 pgoyette Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.6.2.5 2019/01/18 08:50:43 pgoyette Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.6.2.4 2018/12/26 14:02:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.6.2.5 2019/01/18 08:50:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -76,7 +76,7 @@ int muedebug = 0;
 			MUE_PRINTF(sc, fmt, ##args);			\
 	} while (0 /* CONSTCOND */)
 #else
-#define DPRINTF(sc, fmt, args...)	/* nothing */
+#define DPRINTF(sc, fmt, args...)	__nothing
 #endif
 
 /*
@@ -657,12 +657,10 @@ mue_init_ltm(struct mue_softc *sc)
 				goto done;
 			}
 			DPRINTF(sc, "success\n");
-		} else {
+		} else
 			DPRINTF(sc, "nothing to do\n");
-		}
-	} else {
+	} else
 		DPRINTF(sc, "nothing to do\n");
-	}
 done:
 	for (i = 0; i < __arraycount(idx); i++)
 		mue_csr_write(sc, MUE_LTM_INDEX(i), idx[i]);
@@ -823,30 +821,27 @@ mue_get_macaddr(struct mue_softc *sc, prop_dictionary_t dict)
 		sc->mue_enaddr[0] = (uint8_t)((low) & 0xff);
 		if (ETHER_IS_VALID(sc->mue_enaddr))
 			return 0;
-		else {
+		else
 			DPRINTF(sc, "registers: %s\n",
 			    ether_sprintf(sc->mue_enaddr));
-		}
 	}
 
 	if (mue_eeprom_present(sc) && !mue_read_eeprom(sc, sc->mue_enaddr,
 	    MUE_E2P_MAC_OFFSET, ETHER_ADDR_LEN)) {
 		if (ETHER_IS_VALID(sc->mue_enaddr))
 			return 0;
-		else {
+		else
 			DPRINTF(sc, "EEPROM: %s\n",
 			    ether_sprintf(sc->mue_enaddr));
-		}
 	}
 
 	if (mue_read_otp(sc, sc->mue_enaddr, MUE_OTP_MAC_OFFSET,
 	    ETHER_ADDR_LEN) == 0) {
 		if (ETHER_IS_VALID(sc->mue_enaddr))
 			return 0;
-		else {
+		else
 			DPRINTF(sc, "OTP: %s\n",
 			    ether_sprintf(sc->mue_enaddr));
-		}
 	}
 
 	/*
@@ -862,10 +857,9 @@ mue_get_macaddr(struct mue_softc *sc, prop_dictionary_t dict)
 		    ETHER_ADDR_LEN);
 		if (ETHER_IS_VALID(sc->mue_enaddr))
 			return 0;
-		else {
+		else
 			DPRINTF(sc, "prop_dictionary_get: %s\n",
 			    ether_sprintf(sc->mue_enaddr));
-		}
 	}
 
 	return 1;
@@ -1161,6 +1155,9 @@ mue_tx_list_init(struct mue_softc *sc)
 		}
 	}
 
+	cd->mue_tx_prod = 0;
+	cd->mue_tx_cnt = 0;
+
 	return 0;
 }
 
@@ -1264,8 +1261,6 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 		return EIO;
 	}
 
-	sc->mue_cdata.mue_tx_cnt++;
-
 	return 0;
 }
 
@@ -1334,11 +1329,10 @@ mue_setmulti(struct mue_softc *sc)
 		rxfilt |= MUE_RFE_CTL_UNICAST;
 allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC) {
+		if (ifp->if_flags & IFF_PROMISC)
 			DPRINTF(sc, "promisc\n");
-		} else {
+		else
 			DPRINTF(sc, "allmulti\n");
-		}
 	} else {
 		/* Now program new ones. */
 		pfiltbl[0][0] = MUE_ENADDR_HI(enaddr) | MUE_ADDR_FILTX_VALID;
@@ -1370,11 +1364,10 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 		}
 		rxfilt |= MUE_RFE_CTL_PERFECT;
 		ifp->if_flags &= ~IFF_ALLMULTI;
-		if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH) {
+		if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH)
 			DPRINTF(sc, "perfect filter and hash tables\n");
-		} else {
+		else
 			DPRINTF(sc, "perfect filter\n");
-		}
 	}
 
 	for (i = 0; i < MUE_NUM_ADDR_FILTX; i++) {
@@ -1574,6 +1567,7 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct mue_chain *c = priv;
 	struct mue_softc *sc = c->mue_sc;
+	struct mue_cdata *cd = &sc->mue_cdata;
 	struct ifnet *ifp = GET_IFP(sc);
 	int s;
 
@@ -1581,7 +1575,8 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 
 	s = splnet();
-
+	KASSERT(cd->mue_tx_cnt > 0);
+	cd->mue_tx_cnt--;
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			splx(s);
@@ -1765,6 +1760,8 @@ mue_start(struct ifnet *ifp)
 {
 	struct mue_softc *sc = ifp->if_softc;
 	struct mbuf *m;
+	struct mue_cdata *cd = &sc->mue_cdata;
+	int idx;
 
 	if (__predict_false(!sc->mue_link)) {
 		DPRINTF(sc, "no link\n");
@@ -1777,20 +1774,29 @@ mue_start(struct ifnet *ifp)
 		return;
 	}
 
-	IFQ_POLL(&ifp->if_snd, m);
-	if (m == NULL)
-		return;
+	idx = cd->mue_tx_prod;
+	while (cd->mue_tx_cnt < MUE_TX_LIST_CNT) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
-	if (__predict_false(mue_encap(sc, m, 0))) {
-		ifp->if_oerrors++;
-		return;
+		if (__predict_false(mue_encap(sc, m, idx))) {
+			ifp->if_oerrors++;
+			break;
+		}
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		bpf_mtap(ifp, m, BPF_D_OUT);
+		m_freem(m);
+
+		idx = (idx + 1) % MUE_TX_LIST_CNT;
+		cd->mue_tx_cnt++;
+
 	}
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+	cd->mue_tx_prod = idx;
 
-	bpf_mtap(ifp, m, BPF_D_OUT);
-	m_freem(m);
-
-	ifp->if_flags |= IFF_OACTIVE;
+	if (cd->mue_tx_cnt >= MUE_TX_LIST_CNT)
+		ifp->if_flags |= IFF_OACTIVE;
 
 	/* Set a timeout in case the chip goes out to lunch. */
 	ifp->if_timer = 5;

@@ -180,18 +180,6 @@
       </varlistentry>
 
       <varlistentry>
-	<term>-i</term>
-	<listitem>
-	  <para>
-	    Obsolete.
-	    Use the IP6.INT domain for reverse lookups of IPv6
-	    addresses as defined in RFC1886 and deprecated in RFC4159.
-	    The default is to use IP6.ARPA as specified in RFC3596.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term>-l</term>
 	<listitem>
 	  <para>
@@ -389,7 +377,7 @@
       <command>host</command> appropriately converts character encoding of
       domain name before sending a request to DNS server or displaying a
       reply from the server.
-      If you'd like to turn off the IDN support for some reason, defines
+      If you'd like to turn off the IDN support for some reason, define
       the <envar>IDN_DISABLE</envar> environment variable.
       The IDN support is disabled if the variable is set when
       <command>host</command> runs.

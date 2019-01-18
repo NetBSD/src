@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.h,v 1.2.2.2 2018/09/06 06:55:12 pgoyette Exp $	*/
+/*	$NetBSD: namedconf.h,v 1.2.2.3 2019/01/18 08:50:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10,7 +10,6 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef ISCCFG_NAMEDCONF_H
 #define ISCCFG_NAMEDCONF_H 1
@@ -48,9 +47,6 @@ LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sessionkey;
 
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
 /*%< A key reference, used as an ACL element */
-
-/*%< An EDNS client subnet address, used as an ACL element */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_ecsprefix;
 
 /*%< Zone options */
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_zoneopts;

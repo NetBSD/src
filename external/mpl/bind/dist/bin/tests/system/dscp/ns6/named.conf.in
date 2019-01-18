@@ -19,6 +19,8 @@ options {
 	listen-on dscp 46 { 10.53.0.6; };
 	listen-on-v6 { none; };
 	notify yes;
+	recursion yes;
+	dnssec-validation yes;
 };
 
 zone "." {

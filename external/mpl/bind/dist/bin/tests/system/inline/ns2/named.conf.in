@@ -48,6 +48,7 @@ zone "retransfer3" {
 	type master;
 	file "retransfer3.db";
 	allow-update { any; };
+	allow-transfer { none; };	// changed dynamically by tests.sh
 	notify no;
 };
 

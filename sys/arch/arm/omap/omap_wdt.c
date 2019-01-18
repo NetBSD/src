@@ -39,7 +39,6 @@
 #include <sys/systm.h>
 #include <sys/wdog.h>
 
-#include <machine/param.h>
 #include <sys/bus.h>
 #include <dev/sysmon/sysmonvar.h>
 

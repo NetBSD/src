@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.111.2.2 2018/10/20 06:58:22 pgoyette Exp $	*/
+/*	$NetBSD: localtime.c,v 1.111.2.3 2019/01/18 08:50:10 pgoyette Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.111.2.2 2018/10/20 06:58:22 pgoyette Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.111.2.3 2019/01/18 08:50:10 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -461,6 +461,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 	doaccess = name[0] == '/';
 #endif
 	if (!doaccess) {
+		char const *dot;
 		size_t namelen = strlen(name);
 		if (sizeof lsp->fullname - sizeof tzdirslash <= namelen)
 			return ENAMETOOLONG;
@@ -471,9 +472,16 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 		memcpy(lsp->fullname, tzdirslash, sizeof tzdirslash);
 		strcpy(lsp->fullname + sizeof tzdirslash, name);
 
-		/* Set doaccess if '.' (as in "../") shows up in name.  */
-		if (strchr(name, '.'))
-			doaccess = true;
+		/* Set doaccess if NAME contains a ".." file name
+		   component, as such a name could read a file outside
+		   the TZDIR virtual subtree.  */
+		for (dot = name; (dot = strchr(dot, '.')); dot++)
+		  if ((dot == name || dot[-1] == '/') && dot[1] == '.'
+		      && (dot[2] == '/' || !dot[2])) {
+		    doaccess = true;
+		    break;
+		  }
+
 		name = lsp->fullname;
 	}
 	if (doaccess && access(name, R_OK) != 0)
@@ -829,7 +837,7 @@ static const int	year_lengths[2] = {
 ** Return a pointer to that character.
 */
 
-static const char *
+static ATTRIBUTE_PURE const char *
 getzname(const char *strp)
 {
 	char	c;
@@ -850,7 +858,7 @@ getzname(const char *strp)
 ** We don't do any checking here; checking is done later in common-case code.
 */
 
-static const char *
+static ATTRIBUTE_PURE const char *
 getqzname(const char *strp, const int delim)
 {
 	int	c;

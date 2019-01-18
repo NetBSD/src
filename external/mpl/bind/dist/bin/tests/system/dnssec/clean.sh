@@ -96,3 +96,5 @@ rm -f signer/general/signed.zone
 rm -f signer/general/signer.out.*
 rm -f signer/general/dsset*
 rm -f signing.out*
+rm -f python.out.*
+rm -f ns*/managed-keys.bind* ns*/*.mkeys*

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.58 2017/02/13 09:46:30 skrll Exp $ */
+/*	$NetBSD: param.h,v 1.58.12.1 2019/01/18 08:50:23 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,11 +101,6 @@
 #if (defined(_KERNEL) || defined(_STANDALONE)) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)
 
 #ifdef __arch64__
 

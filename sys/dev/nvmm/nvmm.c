@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.3.2.3 2018/12/26 14:01:49 pgoyette Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.3.2.4 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.3.2.3 2018/12/26 14:01:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.3.2.4 2019/01/18 08:50:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,9 +643,6 @@ nvmm_hva_map(struct nvmm_ioc_hva_map *args)
 	seg->size = args->size;
 	seg->uobj = uao_create(seg->size, 0);
 	uva = seg->hva;
-
-	/* Take a reference for the kernel. */
-	uao_reference(seg->uobj);
 
 	/* Take a reference for the user. */
 	uao_reference(seg->uobj);

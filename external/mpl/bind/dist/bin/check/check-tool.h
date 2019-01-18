@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.h,v 1.2.2.2 2018/09/06 06:53:54 pgoyette Exp $	*/
+/*	$NetBSD: check-tool.h,v 1.2.2.3 2019/01/18 08:49:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,16 @@
 
 /*! \file */
 
+#include <inttypes.h>
+#include <stdbool.h>
+
 #include <isc/lang.h>
 #include <isc/stdio.h>
 #include <isc/types.h>
 
 #include <dns/masterdump.h>
 #include <dns/types.h>
+#include <dns/zone.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -37,7 +41,7 @@ load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
 isc_result_t
 dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 	  dns_masterformat_t fileformat, const dns_master_style_t *style,
-	  const isc_uint32_t rawversion);
+	  const uint32_t rawversion);
 
 #ifdef _WIN32
 void InitSockets(void);
@@ -46,12 +50,11 @@ void DestroySockets(void);
 
 extern int debug;
 extern const char *journal;
-extern isc_boolean_t nomerge;
-extern isc_boolean_t docheckmx;
-extern isc_boolean_t docheckns;
-extern isc_boolean_t dochecksrv;
-extern unsigned int zone_options;
-extern unsigned int zone_options2;
+extern bool nomerge;
+extern bool docheckmx;
+extern bool docheckns;
+extern bool dochecksrv;
+extern dns_zoneopt_t zone_options;
 
 ISC_LANG_ENDDECLS
 

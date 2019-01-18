@@ -19,6 +19,8 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	notify no;
+	recursion yes;
+	dnssec-validation yes;
 
 	// check that all of the options are parsed without limiting anything
 	rate-limit {

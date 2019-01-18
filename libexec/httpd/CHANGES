@@ -1,4 +1,9 @@
-$NetBSD: CHANGES,v 1.25.10.2 2018/12/26 14:01:28 pgoyette Exp $
+$NetBSD: CHANGES,v 1.25.10.3 2019/01/18 08:50:11 pgoyette Exp $
+
+changes in bozohttpd 20190116:
+	o  fix CGI '+' parameter handling, some error checking, and a double
+	   free.  from rajeev_v_pillai@yahoo.com
+	o  more directory indexing clean up.  from rajeev_v_pillai@yahoo.com
 
 changes in bozohttpd 20181215:
 	o  fix .htpasswd bypass for authenticated users.  reported by JP,

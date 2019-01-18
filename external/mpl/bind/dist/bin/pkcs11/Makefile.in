@@ -17,7 +17,7 @@ CINCLUDES =	${ISC_INCLUDES}
 
 CDEFINES =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 

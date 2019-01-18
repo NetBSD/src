@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.7.6.4 2018/11/26 01:52:18 pgoyette Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.7.6.5 2019/01/18 08:50:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,11 +29,11 @@
 #ifndef _ARM_ARM_FDTVAR_H
 #define _ARM_ARM_FDTVAR_H
 
+struct fdt_attach_args;
+
 /*
  * Platform-specific data
  */
-
-struct fdt_attach_args;
 
 struct arm_platform {
 	const struct pmap_devmap * (*ap_devmap)(void);
@@ -62,9 +62,26 @@ static const struct arm_platform_info __CONCAT(_name,_platinfo) = {	\
 };									\
 _ARM_PLATFORM_REGISTER(_name)
 
-TAILQ_HEAD(arm_platlist, arm_platform_info);
-
 const struct arm_platform *	arm_fdt_platform(void);
+
+/*
+ * CPU enable methods
+ */
+
+struct arm_cpu_method {
+	const char *		acm_compat;
+	int			(*acm_enable)(int);
+};
+
+#define	_ARM_CPU_METHOD_REGISTER(_name)	\
+	__link_set_add_rodata(arm_cpu_methods, __CONCAT(_name,_cpu_method));
+
+#define	ARM_CPU_METHOD(_name, _compat, _enable)				\
+static const struct arm_cpu_method __CONCAT(_name,_cpu_method) = {	\
+	.acm_compat = (_compat),					\
+	.acm_enable = (_enable)						\
+};									\
+_ARM_CPU_METHOD_REGISTER(_name)
 
 void	arm_fdt_cpu_bootstrap(void);
 void	arm_fdt_cpu_mpstart(void);

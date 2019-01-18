@@ -17,7 +17,7 @@ rm -f */named.run
 rm -f */named.conf
 rm -f */trusted.conf */private.conf
 rm -f activate-now-publish-1day.key
-rm -f active.key inact.key del.key unpub.key standby.key rev.key
+rm -f active.key inact.key del.key delzsk.key unpub.key standby.key rev.key
 rm -f delayksk.key delayzsk.key autoksk.key autozsk.key
 rm -f dig.out.*
 rm -f digcomp.out.test*
@@ -36,6 +36,7 @@ rm -f ns3/inacksk2.example.db
 rm -f ns3/inacksk3.example.db
 rm -f ns3/inaczsk2.example.db
 rm -f ns3/inaczsk3.example.db
+rm -f ns3/delzsk.example.db
 rm -f ns3/kg.out ns3/s.out ns3/st.out
 rm -f ns3/kskonly.example.db
 rm -f ns3/nozsk.example.db ns3/inaczsk.example.db
@@ -63,3 +64,4 @@ rm -f nsupdate.out
 rm -f settime.out.*
 rm -f signing.out.*
 rm -f sync.key
+rm -f ns*/managed-keys.bind*

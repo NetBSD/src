@@ -18,5 +18,4 @@ $FEATURETEST --gssapi ||  {
         exit 255
 }
 
-# ... and crypto
-exec $SHELL ../testcrypto.sh
+exit 0

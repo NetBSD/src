@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.2.2.2 2018/09/06 06:55:09 pgoyette Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.2.2.3 2019/01/18 08:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #endif
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -35,7 +36,7 @@
 #include <isc/net.h>
 #include <isc/print.h>
 #include <isc/result.h>
-#include <isc/strerror.h>
+#include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
@@ -63,8 +64,7 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 {
 	struct sockaddr_in6 *sa6;
 
-#if !defined(ISC_PLATFORM_HAVEIFNAMETOINDEX) || \
-    !defined(ISC_PLATFORM_HAVESCOPEID)
+#if !defined(HAVE_IF_NAMETOINDEX)
 	UNUSED(ifname);
 #endif
 
@@ -82,7 +82,6 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 		sa6 = (struct sockaddr_in6 *)src;
 		memmove(&dst->type.in6, &sa6->sin6_addr,
 			sizeof(struct in6_addr));
-#ifdef ISC_PLATFORM_HAVESCOPEID
 		if (sa6->sin6_scope_id != 0)
 			isc_netaddr_setzone(dst, sa6->sin6_scope_id);
 		else {
@@ -98,7 +97,7 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 			 * we only consider unicast link-local addresses.
 			 */
 			if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
-				isc_uint16_t zone16;
+				uint16_t zone16;
 
 				memmove(&zone16, &sa6->sin6_addr.s6_addr[2],
 					sizeof(zone16));
@@ -106,10 +105,10 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 				if (zone16 != 0) {
 					/* the zone ID is embedded */
 					isc_netaddr_setzone(dst,
-							    (isc_uint32_t)zone16);
+							    (uint32_t)zone16);
 					dst->type.in6.s6_addr[2] = 0;
 					dst->type.in6.s6_addr[3] = 0;
-#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
+#ifdef HAVE_IF_NAMETOINDEX
 				} else if (ifname != NULL) {
 					unsigned int zone;
 
@@ -122,17 +121,16 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 					zone = if_nametoindex(ifname);
 					if (zone != 0) {
 						isc_netaddr_setzone(dst,
-								    (isc_uint32_t)zone);
+								    (uint32_t)zone);
 					}
 #endif
 				}
 			}
 		}
-#endif
 		break;
 	default:
 		INSIST(0);
-		break;
+		ISC_UNREACHABLE();
 	}
 }
 
@@ -148,13 +146,7 @@ static isc_result_t linux_if_inet6_current(isc_interfaceiter_t *);
 static void linux_if_inet6_first(isc_interfaceiter_t *iter);
 #endif
 
-#if HAVE_GETIFADDRS
 #include "ifiter_getifaddrs.c"
-#elif HAVE_IFLIST_SYSCTL
-#include "ifiter_sysctl.c"
-#else
-#include "ifiter_ioctl.c"
-#endif
 
 #ifdef __linux
 static void
@@ -221,7 +213,7 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
 	isc_netaddr_fromin6(&iter->current.address, &addr6);
 	if (isc_netaddr_islinklocal(&iter->current.address)) {
 		isc_netaddr_setzone(&iter->current.address,
-				    (isc_uint32_t)ifindex);
+				    (uint32_t)ifindex);
 	}
 	for (i = 0; i < 16; i++) {
 		if (prefix > 8) {

@@ -33,15 +33,13 @@ t=0
 
 DEBUG=
 SAVE_RESULTS=
-DNSRPS_TEST_MODE=       # "" to test with and then without DNSRPS
 ARGS=
 
-USAGE="$0: [-xS] [-D {1,2}]"
-while getopts "xSD:" c; do
+USAGE="$0: [-xS]"
+while getopts "xS:" c; do
     case $c in
 	x) set -x; DEBUG=-x; ARGS="$ARGS -x";;
 	S) SAVE_RESULTS=-S; ARGS="$ARGS -S";;
-	D) DNSRPS_TEST_MODE="$OPTARG";;  # with or without DNSRPZ
 	*) echo "$USAGE" 1>&2; exit 1;;
     esac
 done
@@ -130,7 +128,7 @@ get_sn_fast () {
 # $1=domain  $2=DNS server IP address
 FZONES=`sed -n -e 's/^zone "\(.*\)".*\(10.53.0..\).*/Z=\1;M=\2/p' dnsrpzd.conf`
 dnsrps_loaded() {
-    test "$DNSRPS_TEST_MODE" = dnsrps || return
+    test "$mode" = dnsrps || return
     n=0
     for V in $FZONES; do
 	eval "$V"
@@ -157,7 +155,7 @@ dnsrps_loaded() {
 ck_soa() {
     n=0
     while true; do
-	if test "$DNSRPS_TEST_MODE" = dnsrps; then
+	if test "$mode" = dnsrps; then
 	    get_sn_fast "$2"
 	    test "$RSN" -eq "$1" && return
 	else
@@ -208,7 +206,7 @@ restart () {
 	    cp -f ns$1/base.db $NM
 	done
     fi
-    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} . ns$1
+    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpz ns$1
     load_db
     dnsrps_loaded
 }
@@ -226,6 +224,11 @@ ckalive () {
     # restart the server to avoid stalling waiting for it to stop
     restart $CKALIVE_NS
     return 1
+}
+
+resetstats () {
+        NSDIR=$1
+        eval "${NSDIR}_CNT=''"
 }
 
 ckstats () {
@@ -410,43 +413,46 @@ EOF
   sleep 2
 }
 
-# make prototype files to check against rewritten results
-digcmd nonexistent @$ns2 >proto.nxdomain
-digcmd txt-only.tld2 @$ns2 >proto.nodata
-
-case "$DNSRPS_TEST_MODE" in
-''|native|dnsrps);;
-*)
-  echo "bad test mode'${DNSRPS_TEST_MODE}' should be 'native' or 'dnsrps'"
-  exit 1
-  ;;
-esac
-
-for mode in ${DNSRPS_TEST_MODE:-native dnsrps}
-do
+for mode in native dnsrps; do
   status=0
   case ${mode} in
   native)
-    if [ ${DNSRPS_TEST_MODE:-unset} = unset -a -e dnsrps-only ] ; then
-    echo_i "'dnsrps-only' found: skipping native RPZ sub-test"
-    continue
+    if [ -e dnsrps-only ] ; then
+      echo_i "'dnsrps-only' found: skipping native RPZ sub-test"
+      continue
+    else
+      echo_i "running native RPZ sub-test"
     fi
     ;;
   dnsrps)
-    if [ ${DNSRPS_TEST_MODE:-unset} = unset -a -e dnsrps-off ] ; then
+    if [ -e dnsrps-off ] ; then
       echo_i "'dnsrps-off' found: skipping DNSRPS sub-test"
       continue
     fi
-    if grep '^#skip' dnsrps.conf > /dev/null ; then
+    echo_i "attempting to configure servers with DNSRPS..."
+    $PERL $SYSTEMTESTTOP/stop.pl rpz
+    $SHELL ./setup.sh -N -D $DEBUG
+    for server in ns*; do
+      resetstats $server
+    done
+    sed -n 's/^## //p' dnsrps.conf | cat_i
+    if grep '^#fail' dnsrps.conf >/dev/null; then
+      echo_i "exit status: 1"
+      exit 1
+    fi
+    if grep '^#skip' dnsrps.conf > /dev/null; then
       echo_i "DNSRPS sub-test skipped"
       continue
+    else
+      echo_i "running DNSRPS sub-test"
+      $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpz
     fi
-    $PERL $SYSTEMTESTTOP/stop.pl .
-    $SHELL ./setup.sh -N -D $DEBUG
-    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} .
     ;;
   esac
-  sed -n 's/^## //p' dnsrps.conf | cat_i
+
+  # make prototype files to check against rewritten results
+  digcmd nonexistent @$ns2 >proto.nxdomain
+  digcmd txt-only.tld2 @$ns2 >proto.nodata
 
   start_group "QNAME rewrites" test1
   nochange .				# 1 do not crash or rewrite root
@@ -735,19 +741,21 @@ EOF
 
   # restart the main test RPZ server to see if that creates a core file
   if test -z "$HAVE_CORE"; then
-    $PERL $SYSTEMTESTTOP/stop.pl . ns3
+    $PERL $SYSTEMTESTTOP/stop.pl rpz ns3
     restart 3
     HAVE_CORE=`find ns* -name '*core*' -print`
     test -z "$HAVE_CORE" || setret "found $HAVE_CORE; memory leak?"
   fi
 
   # look for complaints from lib/dns/rpz.c and bin/name/query.c
-  EMSGS=`egrep -l 'invalid rpz|rpz.*failed' ns*/named.run`
-  if test -n "$EMSGS"; then
-    setret "error messages in $EMSGS starting with:"
-    egrep 'invalid rpz|rpz.*failed' ns*/named.run | \
-            sed -e '10,$d' -e 's/^//' | cat_i
-  fi
+  for runfile in ns*/named.run; do
+    EMSGS=`nextpart $runfile | egrep -l 'invalid rpz|rpz.*failed'`
+    if test -n "$EMSGS"; then
+      setret "error messages in $runfile starting with:"
+      egrep 'invalid rpz|rpz.*failed' ns*/named.run | \
+              sed -e '10,$d' -e 's/^//' | cat_i
+    fi
+  done
 
   t=`expr $t + 1`
   echo_i "checking that ttl values are not zeroed when qtype is '*' (${t})"
@@ -756,23 +764,17 @@ EOF
   if test ${ttl:=0} -eq 0; then setret "failed"; fi
 
   t=`expr $t + 1`
-  echo_i "checking rpz updates/transfers with parent nodes added after children" \
-    | tr -d '\n'
+  echo_i "checking rpz updates/transfers with parent nodes added after children (${t})"
   # regression test for RT #36272: the success condition
   # is the slave server not crashing.
   for i in 1 2 3 4 5; do
     nsd $ns5 add example.com.policy1. '*.example.com.policy1.'
-    echo . | tr -d '\n'
     nsd $ns5 delete example.com.policy1. '*.example.com.policy1.'
-    echo . | tr -d '\n'
   done
   for i in 1 2 3 4 5; do
     nsd $ns5 add '*.example.com.policy1.' example.com.policy1.
-    echo . | tr -d '\n'
     nsd $ns5 delete '*.example.com.policy1.' example.com.policy1.
-    echo . | tr -d '\n'
   done
-  echo " (${t})"
 
   t=`expr $t + 1`
   echo_i "checking that going from an empty policy zone works (${t})"

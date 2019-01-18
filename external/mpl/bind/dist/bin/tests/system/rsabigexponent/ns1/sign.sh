@@ -18,11 +18,11 @@ zonefile=root.db
 
 cp ../ns2/dsset-example.in dsset-example$TP
 
-keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
 
 cat $infile $keyname.key > $zonefile
 
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 # Configure the resolving server with a trusted key.
 keyfile_to_trusted_keys $keyname > trusted.conf

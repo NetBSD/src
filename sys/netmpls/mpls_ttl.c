@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.11.2.3 2018/09/06 06:56:45 pgoyette Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.11.2.4 2019/01/18 08:50:58 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.11.2.3 2018/09/06 06:56:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.11.2.4 2019/01/18 08:50:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -250,7 +250,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	MCLAIM(m, n->m_owner);
 	m->m_len = packetlen;
 	if ((m->m_flags & M_EXT) == 0)
-		MH_ALIGN(m, m->m_len);
+		m_align(m, m->m_len);
 	m->m_data += sizeof(struct ip);
 	m->m_len -= sizeof(struct ip);
 

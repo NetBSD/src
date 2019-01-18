@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.287.14.2 2018/12/26 14:01:43 pgoyette Exp $ */
+/*	$NetBSD: machdep.c,v 1.287.14.3 2019/01/18 08:50:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287.14.2 2018/12/26 14:01:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287.14.3 2019/01/18 08:50:24 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287.14.2 2018/12/26 14:01:43 pgoyette 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <sys/bus.h>
+#include <sys/kprintf.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/pcb.h>
@@ -755,7 +756,8 @@ dumpsys(void)
 
 			/* print out how many MBs we still have to dump */
 			if ((todo % (1024*1024)) == 0)
-				printf_nolog("\r%6" PRIu64 " M ",
+				printf_flags(TOCONS|NOTSTAMP, 
+				    "\r%6" PRIu64 " M ",
 				    todo / (1024*1024));
 			for (off = 0; off < n; off += PAGE_SIZE)
 				pmap_kenter_pa(dumpspace+off, maddr+off,
@@ -790,7 +792,8 @@ dumpsys(void)
 		break;
 
 	case 0:
-		printf("\rdump succeeded\n");
+		printf_flags(TOCONS|NOTSTAMP, "\r           ");
+		printf("\ndump succeeded\n");
 		break;
 
 	default:

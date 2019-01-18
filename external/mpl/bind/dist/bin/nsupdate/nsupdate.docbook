@@ -70,7 +70,6 @@
       <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">timeout</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-u <replaceable class="parameter">udptimeout</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">udpretries</replaceable></option></arg>
-      <arg choice="opt" rep="norepeat"><option>-R <replaceable class="parameter">randomdev</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-v</option></arg>
       <arg choice="opt" rep="norepeat"><option>-T</option></arg>
       <arg choice="opt" rep="norepeat"><option>-P</option></arg>
@@ -266,22 +265,6 @@
 	    The number of UDP retries. The default is 3. If zero, only
 	    one update request will be made.
 	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>-R <replaceable class="parameter">randomdev</replaceable></term>
-	<listitem>
-	<para>
-	  Where to obtain randomness. If the operating system
-	  does not provide a <filename>/dev/random</filename> or
-	  equivalent device, the default source of randomness is keyboard
-	  input.  <filename>randomdev</filename> specifies the name of
-	  a character device or file containing random data to be used
-	  instead of the default.  The special value
-	  <filename>keyboard</filename> indicates that keyboard input
-	  should be used.  This option may be specified multiple times.
-	</para>
 	</listitem>
       </varlistentry>
 

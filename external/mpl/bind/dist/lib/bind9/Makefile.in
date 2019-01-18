@@ -18,14 +18,15 @@ VERSION=@BIND9_VERSION@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. ${BIND9_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
-		${ISCCFG_INCLUDES} @ISC_OPENSSL_INC@
+		${ISCCFG_INCLUDES} ${NS_INCLUDES} @OPENSSL_INCLUDES@
 
-CDEFINES =	@CRYPTO@
+CDEFINES =
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 ISCCFGLIBS =    ../../lib/isccfg/libisccfg.@A@
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+NSLIBS =	../../lib/ns/libns.@A@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
@@ -61,8 +62,8 @@ libbind9.la: ${OBJS} ${ISCCFGDEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libbind9.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${DNSLIBS} ${ISCCFGLIBS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ \
-		${LIBS}
+		${OBJS} ${NSLIBS} ${DNSLIBS} ${ISCCFGLIBS} ${ISCLIBS} \
+		@DNS_CRYPTO_LIBS@ ${LIBS}
 
 timestamp: libbind9.@A@
 	touch timestamp

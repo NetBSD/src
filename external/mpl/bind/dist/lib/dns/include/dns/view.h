@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.2.2.2 2018/09/06 06:55:01 pgoyette Exp $	*/
+/*	$NetBSD: view.h,v 1.2.2.3 2019/01/18 08:49:54 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,9 @@
  *\li	None.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include <isc/lang.h>
 #include <isc/magic.h>
@@ -100,7 +102,7 @@ struct dns_view {
 	dns_ntatable_t *		ntatable_priv;
 
 	isc_mutex_t			lock;
-	isc_boolean_t			frozen;
+	bool			frozen;
 	isc_task_t *			task;
 	isc_event_t			resevent;
 	isc_event_t			adbevent;
@@ -108,7 +110,7 @@ struct dns_view {
 	isc_stats_t *			adbstats;
 	isc_stats_t *			resstats;
 	dns_stats_t *			resquerystats;
-	isc_boolean_t			cacheshared;
+	bool			cacheshared;
 
 	/* Configurable data. */
 	dns_tsig_keyring_t *		statickeys;
@@ -116,18 +118,20 @@ struct dns_view {
 	dns_peerlist_t *		peers;
 	dns_order_t *			order;
 	dns_fwdtable_t *		fwdtable;
-	isc_boolean_t			recursion;
-	isc_boolean_t			auth_nxdomain;
-	isc_boolean_t			use_glue_cache;
-	isc_boolean_t			minimal_any;
+	bool				recursion;
+	bool				qminimization;
+	bool				qmin_strict;
+	bool				auth_nxdomain;
+	bool				use_glue_cache;
+	bool				minimal_any;
 	dns_minimaltype_t		minimalresponses;
-	isc_boolean_t			enablednssec;
-	isc_boolean_t			enablevalidation;
-	isc_boolean_t			acceptexpired;
-	isc_boolean_t			requireservercookie;
-	isc_boolean_t			synthfromdnssec;
-	isc_boolean_t			trust_anchor_telemetry;
-	isc_boolean_t			root_key_sentinel;
+	bool				enablednssec;
+	bool				enablevalidation;
+	bool				acceptexpired;
+	bool				requireservercookie;
+	bool				synthfromdnssec;
+	bool				trust_anchor_telemetry;
+	bool				root_key_sentinel;
 	dns_transfer_format_t		transfer_format;
 	dns_acl_t *			cacheacl;
 	dns_acl_t *			cacheonacl;
@@ -142,49 +146,48 @@ struct dns_view {
 	dns_acl_t *			upfwdacl;
 	dns_acl_t *			denyansweracl;
 	dns_acl_t *			nocasecompress;
-	isc_boolean_t			msgcompression;
+	bool			msgcompression;
 	dns_rbt_t *			answeracl_exclude;
 	dns_rbt_t *			denyanswernames;
 	dns_rbt_t *			answernames_exclude;
 	dns_rrl_t *			rrl;
-	isc_boolean_t			provideixfr;
-	isc_boolean_t			requestnsid;
-	isc_boolean_t			sendcookie;
+	bool			provideixfr;
+	bool			requestnsid;
+	bool			sendcookie;
 	dns_ttl_t			maxcachettl;
 	dns_ttl_t			maxncachettl;
-	isc_uint32_t			nta_lifetime;
-	isc_uint32_t			nta_recheck;
+	dns_ttl_t			mincachettl;
+	dns_ttl_t			minncachettl;
+	uint32_t			nta_lifetime;
+	uint32_t			nta_recheck;
 	char				*nta_file;
 	dns_ttl_t			prefetch_trigger;
 	dns_ttl_t			prefetch_eligible;
 	in_port_t			dstport;
 	dns_aclenv_t			aclenv;
 	dns_rdatatype_t			preferred_glue;
-	isc_boolean_t			flush;
+	bool			flush;
 	dns_namelist_t *		delonly;
-	isc_boolean_t			rootdelonly;
+	bool			rootdelonly;
 	dns_namelist_t *		rootexclude;
-	isc_boolean_t			checknames;
+	bool			checknames;
 	dns_name_t *			dlv;
 	dns_fixedname_t			dlv_fixed;
-	isc_uint16_t			maxudp;
+	uint16_t			maxudp;
 	dns_ttl_t			staleanswerttl;
 	dns_stale_answer_t		staleanswersok;		/* rndc setting */
-	isc_boolean_t			staleanswersenable;	/* named.conf setting */
-	isc_uint16_t			nocookieudp;
-	isc_uint16_t			padding;
+	bool			staleanswersenable;	/* named.conf setting */
+	uint16_t			nocookieudp;
+	uint16_t			padding;
 	dns_acl_t *			pad_acl;
 	unsigned int			maxbits;
-	dns_aaaa_t			v4_aaaa;
-	dns_aaaa_t			v6_aaaa;
-	dns_acl_t *			aaaa_acl;
 	dns_dns64list_t 		dns64;
 	unsigned int 			dns64cnt;
 	dns_rpz_zones_t			*rpzs;
 	dns_catz_zones_t		*catzs;
 	dns_dlzdblist_t 		dlz_searched;
 	dns_dlzdblist_t 		dlz_unsearched;
-	isc_uint32_t			fail_ttl;
+	uint32_t			fail_ttl;
 	dns_badcache_t			*failcache;
 
 	/*
@@ -193,7 +196,7 @@ struct dns_view {
 	 */
 	dns_acl_t *			matchclients;
 	dns_acl_t *			matchdestinations;
-	isc_boolean_t			matchrecursiveonly;
+	bool			matchrecursiveonly;
 
 	/* Locked by themselves. */
 	isc_refcount_t			references;
@@ -223,7 +226,7 @@ struct dns_view {
 	char *				new_zone_file;
 	char *				new_zone_db;
 	void *				new_zone_dbenv;
-	isc_uint64_t			new_zone_mapsize;
+	uint64_t			new_zone_mapsize;
 	void *				new_zone_config;
 	void				(*cfg_destroy)(void **);
 	isc_mutex_t			new_zone_lock;
@@ -234,6 +237,15 @@ struct dns_view {
 	dns_dtenv_t			*dtenv;		/* Dnstap environment */
 	dns_dtmsgtype_t			dttypes;	/* Dnstap message types
 							   to log */
+
+	/* Registered module instances */
+	void				*plugins;
+	void				(*plugins_free)(isc_mem_t *, void **);
+
+	/* Hook table */
+	void				*hooktable;	/* ns_hooktable */
+	void				(*hooktable_free)(isc_mem_t *, void **);
+
 };
 
 #define DNS_VIEW_MAGIC			ISC_MAGIC('V','i','e','w')
@@ -419,13 +431,11 @@ dns_view_createresolver(dns_view_t *view,
  */
 
 void
-dns_view_setcache(dns_view_t *view, dns_cache_t *cache);
-void
-dns_view_setcache2(dns_view_t *view, dns_cache_t *cache, isc_boolean_t shared);
+dns_view_setcache(dns_view_t *view, dns_cache_t *cache, bool shared);
 /*%<
  * Set the view's cache database.  If 'shared' is true, this means the cache
  * is created by another view and is shared with that view.  dns_view_setcache()
- * is a backward compatible version equivalent to setcache2(..., ISC_FALSE).
+ * is a backward compatible version equivalent to setcache2(..., false).
  *
  * Requires:
  *
@@ -549,29 +559,25 @@ dns_view_thaw(dns_view_t *view);
  *
  *\li	'view' is no longer frozen.
  */
+
 isc_result_t
 dns_view_find(dns_view_t *view, const dns_name_t *name, dns_rdatatype_t type,
-	      isc_stdtime_t now, unsigned int options, isc_boolean_t use_hints,
+	      isc_stdtime_t now, unsigned int options,
+	      bool use_hints, bool use_static_stub,
 	      dns_db_t **dbp, dns_dbnode_t **nodep, dns_name_t *foundname,
 	      dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
-isc_result_t
-dns_view_find2(dns_view_t *view, const dns_name_t *name, dns_rdatatype_t type,
-	       isc_stdtime_t now, unsigned int options,
-	       isc_boolean_t use_hints, isc_boolean_t use_static_stub,
-	       dns_db_t **dbp, dns_dbnode_t **nodep, dns_name_t *foundname,
-	       dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
 /*%<
  * Find an rdataset whose owner name is 'name', and whose type is
  * 'type'.
  * In general, this function first searches view's zone and cache DBs for the
  * best match data against 'name'.  If nothing found there, and if 'use_hints'
- * is ISC_TRUE, the view's hint DB (if configured) is searched.
+ * is true, the view's hint DB (if configured) is searched.
  * If the view is configured with a static-stub zone which gives the longest
  * match for 'name' among the zones, however, the cache DB is not consulted
- * unless 'use_static_stub' is ISC_FALSE (see below about this argument).
+ * unless 'use_static_stub' is false (see below about this argument).
  *
  * dns_view_find() is a backward compatible version equivalent to
- * dns_view_find2() with use_static_stub argument being ISC_FALSE.
+ * dns_view_find2() with use_static_stub argument being false.
  *
  * Notes:
  *
@@ -581,16 +587,16 @@ dns_view_find2(dns_view_t *view, const dns_name_t *name, dns_rdatatype_t type,
  *
  *\li	If 'now' is zero, then the current time will be used.
  *
- *\li	If 'use_hints' is ISC_TRUE, and the view has a hints database, then
+ *\li	If 'use_hints' is true, and the view has a hints database, then
  *	it will be searched last.  If the answer is found in the hints
  *	database, the result code will be DNS_R_HINT.  If the name is found
  *	in the hints database but not the type, the result code will be
  *	#DNS_R_HINTNXRRSET.
  *
- *\li	If 'use_static_stub' is ISC_FALSE and the longest match zone for 'name'
+ *\li	If 'use_static_stub' is false and the longest match zone for 'name'
  *	is a static-stub zone, it's ignored and the cache and/or hints will be
  *	searched.  In the majority of the cases this argument should be
- *	ISC_FALSE.  The only known usage of this argument being ISC_TRUE is
+ *	false.  The only known usage of this argument being true is
  *	if this search is for a "bailiwick" glue A or AAAA RRset that may
  *	best match a static-stub zone.  Consider the following example:
  *	this view is configured with a static-stub zone "example.com",
@@ -648,7 +654,7 @@ dns_view_find2(dns_view_t *view, const dns_name_t *name, dns_rdatatype_t type,
 isc_result_t
 dns_view_simplefind(dns_view_t *view, const dns_name_t *name,
 		    dns_rdatatype_t type, isc_stdtime_t now,
-		    unsigned int options, isc_boolean_t use_hints,
+		    unsigned int options, bool use_hints,
 		    dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
 /*%<
  * Find an rdataset whose owner name is 'name', and whose type is
@@ -666,7 +672,7 @@ dns_view_simplefind(dns_view_t *view, const dns_name_t *name,
  *
  *\li	If 'now' is zero, then the current time will be used.
  *
- *\li	If 'use_hints' is ISC_TRUE, and the view has a hints database, then
+ *\li	If 'use_hints' is true, and the view has a hints database, then
  *	it will be searched last.  If the answer is found in the hints
  *	database, the result code will be DNS_R_HINT.  If the name is found
  *	in the hints database but not the type, the result code will be
@@ -706,19 +712,12 @@ dns_view_simplefind(dns_view_t *view, const dns_name_t *name,
  *					or an error occurred.
  */
 
-/*% See dns_view_findzonecut2() */
 isc_result_t
 dns_view_findzonecut(dns_view_t *view, const dns_name_t *name,
-		     dns_name_t *fname, isc_stdtime_t now,
-		     unsigned int options, isc_boolean_t use_hints,
+		     dns_name_t *fname, dns_name_t *dcname, isc_stdtime_t now,
+		     unsigned int options,
+		     bool use_hints, bool use_cache,
 		     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
-
-isc_result_t
-dns_view_findzonecut2(dns_view_t *view, const dns_name_t *name,
-		      dns_name_t *fname, isc_stdtime_t now,
-		      unsigned int options,
-		      isc_boolean_t use_hints, isc_boolean_t use_cache,
-		      dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
 /*%<
  * Find the best known zonecut containing 'name'.
  *
@@ -729,10 +728,10 @@ dns_view_findzonecut2(dns_view_t *view, const dns_name_t *name,
  *
  *\li	If 'now' is zero, then the current time will be used.
  *
- *\li	If 'use_hints' is ISC_TRUE, and the view has a hints database, then
+ *\li	If 'use_hints' is true, and the view has a hints database, then
  *	it will be searched last.
  *
- *\li	If 'use_cache' is ISC_TRUE, and the view has a cache, then it will be
+ *\li	If 'use_cache' is true, and the view has a cache, then it will be
  *	searched.
  *
  *\li	If 'sigrdataset' is not NULL, and there is a SIG rdataset which
@@ -740,6 +739,8 @@ dns_view_findzonecut2(dns_view_t *view, const dns_name_t *name,
  *
  *\li	If the DNS_DBFIND_NOEXACT option is set, then the zonecut returned
  *	(if any) will be the deepest known ancestor of 'name'.
+ *
+ *\li	If dcname is not NULL the deepest cached name is copied to it.
  *
  * Requires:
  *
@@ -777,7 +778,7 @@ dns_viewlist_find(dns_viewlist_t *list, const char *name,
 
 isc_result_t
 dns_viewlist_findzone(dns_viewlist_t *list, const dns_name_t *name,
-		      isc_boolean_t allclasses, dns_rdataclass_t rdclass,
+		      bool allclasses, dns_rdataclass_t rdclass,
 		      dns_zone_t **zonep);
 
 /*%<
@@ -809,25 +810,24 @@ dns_view_findzone(dns_view_t *view, const dns_name_t *name,
  */
 
 isc_result_t
-dns_view_load(dns_view_t *view, isc_boolean_t stop);
+dns_view_load(dns_view_t *view, bool stop, bool newonly);
 
 isc_result_t
-dns_view_loadnew(dns_view_t *view, isc_boolean_t stop);
-
-isc_result_t
-dns_view_asyncload(dns_view_t *view, dns_zt_allloaded_t callback, void *arg);
+dns_view_asyncload(dns_view_t *view, bool newonly, dns_zt_allloaded_t callback,
+		   void *arg);
 /*%<
  * Load zones attached to this view.  dns_view_load() loads
  * all zones whose master file has changed since the last
- * load; dns_view_loadnew() loads only zones that have never
- * been loaded.
+ * load
  *
  * dns_view_asyncload() loads zones asynchronously.  When all zones
  * in the view have finished loading, 'callback' is called with argument
  * 'arg' to inform the caller.
  *
- * If 'stop' is ISC_TRUE, stop on the first error and return it.
- * If 'stop' is ISC_FALSE (or we are loading asynchronously), ignore errors.
+ * If 'stop' is true, stop on the first error and return it.
+ * If 'stop' is false (or we are loading asynchronously), ignore errors.
+ *
+ * If 'newonly' is true load only zones that were never loaded.
  *
  * Requires:
  *
@@ -910,9 +910,7 @@ dns_view_dumpdbtostream(dns_view_t *view, FILE *fp);
  */
 
 isc_result_t
-dns_view_flushcache(dns_view_t *view);
-isc_result_t
-dns_view_flushcache2(dns_view_t *view, isc_boolean_t fixuponly);
+dns_view_flushcache(dns_view_t *view, bool fixuponly);
 /*%<
  * Flush the view's cache (and ADB).  If 'fixuponly' is true, it only updates
  * the internal reference to the cache DB with omitting actual flush operation.
@@ -932,7 +930,7 @@ dns_view_flushcache2(dns_view_t *view, isc_boolean_t fixuponly);
 
 isc_result_t
 dns_view_flushnode(dns_view_t *view, const dns_name_t *name,
-		   isc_boolean_t tree);
+		   bool tree);
 /*%<
  * Flush the given name from the view's cache (and optionally ADB/badcache).
  *
@@ -952,7 +950,7 @@ isc_result_t
 dns_view_flushname(dns_view_t *view, const dns_name_t *name);
 /*%<
  * Flush the given name from the view's cache, ADB and badcache.
- * Equivalent to dns_view_flushnode(view, name, ISC_FALSE).
+ * Equivalent to dns_view_flushnode(view, name, false).
  *
  *
  * Requires:
@@ -993,7 +991,7 @@ dns_view_excludedelegationonly(dns_view_t *view, const dns_name_t *name);
  *\li	#ISC_R_NOMEMORY
  */
 
-isc_boolean_t
+bool
 dns_view_isdelegationonly(dns_view_t *view, const dns_name_t *name);
 /*%<
  * Check if 'name' is in the delegation only table or if
@@ -1004,12 +1002,12 @@ dns_view_isdelegationonly(dns_view_t *view, const dns_name_t *name);
  *\li	'name' is valid.
  *
  * Returns:
- *\li	#ISC_TRUE if the name is the table.
- *\li	#ISC_FALSE otherwise.
+ *\li	#true if the name is the table.
+ *\li	#false otherwise.
  */
 
 void
-dns_view_setrootdelonly(dns_view_t *view, isc_boolean_t value);
+dns_view_setrootdelonly(dns_view_t *view, bool value);
 /*%<
  * Set the root delegation only flag.
  *
@@ -1017,7 +1015,7 @@ dns_view_setrootdelonly(dns_view_t *view, isc_boolean_t value);
  *\li	'view' is valid.
  */
 
-isc_boolean_t
+bool
 dns_view_getrootdelonly(dns_view_t *view);
 /*%<
  * Get the root delegation only flag.
@@ -1027,7 +1025,7 @@ dns_view_getrootdelonly(dns_view_t *view);
  */
 
 isc_result_t
-dns_view_freezezones(dns_view_t *view, isc_boolean_t freeze);
+dns_view_freezezones(dns_view_t *view, bool freeze);
 /*%<
  * Freeze/thaw updates to master zones.
  *
@@ -1111,7 +1109,7 @@ dns_view_getresquerystats(dns_view_t *view, dns_stats_t **statsp);
  *\li	'statsp' != NULL && '*statsp' != NULL
  */
 
-isc_boolean_t
+bool
 dns_view_iscacheshared(dns_view_t *view);
 /*%<
  * Check if the view shares the cache created by another view.
@@ -1120,8 +1118,8 @@ dns_view_iscacheshared(dns_view_t *view);
  * \li	'view' is valid.
  *
  * Returns:
- *\li	#ISC_TRUE if the cache is shared.
- *\li	#ISC_FALSE otherwise.
+ *\li	#true if the cache is shared.
+ *\li	#false otherwise.
  */
 
 isc_result_t
@@ -1194,13 +1192,13 @@ dns_view_getsecroots(dns_view_t *view, dns_keytable_t **ktp);
 
 isc_result_t
 dns_view_issecuredomain(dns_view_t *view, const dns_name_t *name,
-			isc_stdtime_t now, isc_boolean_t checknta,
-			isc_boolean_t *secure_domain);
+			isc_stdtime_t now, bool checknta,
+			bool *secure_domain);
 /*%<
  * Is 'name' at or beneath a trusted key, and not covered by a valid
  * negative trust anchor?  Put answer in '*secure_domain'.
  *
- * If 'checknta' is ISC_FALSE, ignore the NTA table in determining
+ * If 'checknta' is false, ignore the NTA table in determining
  * whether this is a secure domain.
  *
  * Requires:
@@ -1211,7 +1209,7 @@ dns_view_issecuredomain(dns_view_t *view, const dns_name_t *name,
  *\li	Any other value indicates failure
  */
 
-isc_boolean_t
+bool
 dns_view_ntacovers(dns_view_t *view, isc_stdtime_t now,
 		   const dns_name_t *name, const dns_name_t *anchor);
 /*%<
@@ -1246,12 +1244,12 @@ dns_view_untrust(dns_view_t *view, const dns_name_t *keyname,
  */
 
 isc_result_t
-dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
-		     void (*cfg_destroy)(void **), isc_uint64_t mapsize);
+dns_view_setnewzones(dns_view_t *view, bool allow, void *cfgctx,
+		     void (*cfg_destroy)(void **), uint64_t mapsize);
 /*%<
  * Set whether or not to allow zones to be created or deleted at runtime.
  *
- * If 'allow' is ISC_TRUE, determines the filename into which new zone
+ * If 'allow' is true, determines the filename into which new zone
  * configuration will be written.  Preserves the configuration context
  * (a pointer to which is passed in 'cfgctx') for use when parsing new
  * zone configuration.  'cfg_destroy' points to a callback routine to
@@ -1259,7 +1257,7 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
  * roundabout method is used in order to avoid libdns having a dependency
  * on libisccfg and libbind9.)
  *
- * If 'allow' is ISC_FALSE, removes any existing references to
+ * If 'allow' is false, removes any existing references to
  * configuration context and frees any memory.
  *
  * Requires:
@@ -1309,7 +1307,7 @@ dns_view_searchdlz(dns_view_t *view, const dns_name_t *name,
  * \li 'dbp' is not NULL and *dbp is NULL.
  */
 
-isc_uint32_t
+uint32_t
 dns_view_getfailttl(dns_view_t *view);
 /*%<
  * Get the view's servfail-ttl.  zero => no servfail caching.
@@ -1319,7 +1317,7 @@ dns_view_getfailttl(dns_view_t *view);
  */
 
 void
-dns_view_setfailttl(dns_view_t *view, isc_uint32_t failttl);
+dns_view_setfailttl(dns_view_t *view, uint32_t failttl);
 /*%<
  * Set the view's servfail-ttl.  zero => no servfail caching.
  *

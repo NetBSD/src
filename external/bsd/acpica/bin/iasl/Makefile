@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17.2.4 2018/10/20 06:58:19 pgoyette Exp $
+# $NetBSD: Makefile,v 1.17.2.5 2019/01/18 08:48:35 pgoyette Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "aarch64")
 PROG=	iasl
@@ -277,7 +277,8 @@ aslparser.y: asltokens.y asltypes.y aslrules.y aslsupport.y
 
 YPREFIX.aslcompilerparse.y=AslCompiler
 aslcompilerparse.y: aslparser.y
-	${TOOL_M4} -P -I${TOPDIR} ${.ALLSRC} > ${.TARGET}
+	${TOOL_M4} -P -I${TOPDIR} ${.ALLSRC} > ${.TARGET}.tmp.${.MAKE.PID} \
+	&& mv ${.TARGET}.tmp.${.MAKE.PID} ${.TARGET}
 
 aslcompiler.y.h: aslcompilerparse.h
 	ln -sf ${.ALLSRC} ${.TARGET}

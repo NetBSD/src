@@ -1,4 +1,4 @@
-/*       $NetBSD: bootinfo.h,v 1.8 2017/09/15 13:25:34 martin Exp $        */
+/*       $NetBSD: bootinfo.h,v 1.8.2.1 2019/01/18 08:50:23 pgoyette Exp $        */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
 #ifndef _BOOTINFO_H_
 #define _BOOTINFO_H_
 
-#include <machine/param.h>
 #include <sparc/bootinfo.h>
 
 /*

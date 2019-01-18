@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.44 2016/01/20 12:49:21 jklos Exp $ */
+/* $NetBSD: param.h,v 1.44.16.1 2019/01/18 08:50:13 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,13 +59,6 @@
 
 #define	KERNBASE	0xfffffc0000a00000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	BLKDEV_IOSIZE	2048
-#ifndef	MAXPHYS
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-#endif
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */

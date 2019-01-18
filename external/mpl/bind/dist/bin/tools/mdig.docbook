@@ -421,11 +421,6 @@
     </para>
 
     <para>
-      The <option>-i</option> option sets the reverse domain for
-      IPv6 addresses to IP6.INT.
-    </para>
-
-    <para>
       Reverse lookups &mdash; mapping addresses to names &mdash; are
       simplified by the <option>-x</option> option.
       <parameter>addr</parameter> is an IPv4
@@ -434,8 +429,7 @@
       query name like <literal>11.12.13.10.in-addr.arpa</literal> and
       sets the query type and class to PTR and IN respectively.
       By default, IPv6 addresses are looked up using nibble format
-      under the IP6.ARPA domain.  To use the older RFC1886 method
-      using the IP6.INT domain specify the <option>-i</option> option.
+      under the IP6.ARPA domain.
     </para>
 
     <para>

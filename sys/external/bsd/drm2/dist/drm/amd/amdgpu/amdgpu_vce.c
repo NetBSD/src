@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vce.c,v 1.3.2.2 2018/09/06 06:56:10 pgoyette Exp $	*/
+/*	$NetBSD: amdgpu_vce.c,v 1.3.2.3 2019/01/18 08:50:56 pgoyette Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vce.c,v 1.3.2.2 2018/09/06 06:56:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vce.c,v 1.3.2.3 2019/01/18 08:50:56 pgoyette Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -144,7 +144,7 @@ int amdgpu_vce_sw_init(struct amdgpu_device *adev, unsigned long size)
 	version_major = (ucode_version >> 20) & 0xfff;
 	version_minor = (ucode_version >> 8) & 0xfff;
 	binary_id = ucode_version & 0xff;
-	DRM_INFO("Found VCE firmware Version: %hhd.%hhd Binary ID: %hhd\n",
+	DRM_INFO("Found VCE firmware Version: %x.%x Binary ID: %x\n",
 		version_major, version_minor, binary_id);
 	adev->vce.fw_version = ((version_major << 24) | (version_minor << 16) |
 				(binary_id << 8));

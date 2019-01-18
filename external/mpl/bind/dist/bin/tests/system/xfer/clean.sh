@@ -33,3 +33,4 @@ rm -f ns*/named.lock
 rm -f ns2/mapped.db
 rm -f ns3/mapped.bk
 rm -f ns1/ixfr-too-big.db ns1/ixfr-too-big.db.jnl
+rm -f ns*/managed-keys.bind*

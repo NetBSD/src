@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svmfunc.S,v 1.1.2.2 2018/11/26 01:52:32 pgoyette Exp $	*/
+/*	$NetBSD: nvmm_x86_svmfunc.S,v 1.1.2.3 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -73,14 +73,6 @@
 	movq	$msr,%rcx	;\
 	wrmsr
 
-#define HOST_SAVE_SEGREG(sreg)	\
-	movw	sreg,%ax	;\
-	pushw	%ax
-
-#define HOST_RESTORE_SEGREG(sreg)\
-	popw	%ax		;\
-	movw	%ax,sreg
-
 #define HOST_SAVE_TR		\
 	strw	%ax		;\
 	pushw	%ax
@@ -150,22 +142,13 @@ ENTRY(svm_vmrun)
 	/* Save the Host TR. */
 	HOST_SAVE_TR
 
-	/* Save the variable Host MSRs. */
-	HOST_SAVE_MSR(MSR_KERNELGSBASE)
+	/* Save the Host GSBASE. */
 	HOST_SAVE_MSR(MSR_GSBASE)
-	HOST_SAVE_MSR(MSR_FSBASE)
 
-	/* Reset the Host Segregs. */
+	/* Reset DS and ES. */
 	movq	$GSEL(GUDATA_SEL, SEL_UPL),%rax
 	movw	%ax,%ds
 	movw	%ax,%es
-	xorq	%rax,%rax
-	movw	%ax,%fs
-	movw	%ax,%gs
-
-	/* Save some Host Segregs. */
-	HOST_SAVE_SEGREG(%fs)
-	HOST_SAVE_SEGREG(%gs)
 
 	/* Save the Host LDT. */
 	HOST_SAVE_LDT
@@ -195,14 +178,13 @@ ENTRY(svm_vmrun)
 	/* Restore the Host LDT. */
 	HOST_RESTORE_LDT
 
-	/* Restore the Host Segregs. */
-	HOST_RESTORE_SEGREG(%gs)
-	HOST_RESTORE_SEGREG(%fs)
+	/* Reset FS and GS. */
+	xorq	%rax,%rax
+	movw	%ax,%fs
+	movw	%ax,%gs
 
-	/* Restore the variable Host MSRs. */
-	HOST_RESTORE_MSR(MSR_FSBASE)
+	/* Restore the Host GSBASE. */
 	HOST_RESTORE_MSR(MSR_GSBASE)
-	HOST_RESTORE_MSR(MSR_KERNELGSBASE)
 
 	/* Restore the Host TR. */
 	HOST_RESTORE_TR

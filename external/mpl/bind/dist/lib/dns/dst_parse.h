@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.h,v 1.2.2.2 2018/09/06 06:55:00 pgoyette Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.2.2.3 2019/01/18 08:49:53 pgoyette Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -64,17 +64,6 @@
 #define TAG_DH_GENERATOR	((DST_ALG_DH << TAG_SHIFT) + 1)
 #define TAG_DH_PRIVATE		((DST_ALG_DH << TAG_SHIFT) + 2)
 #define TAG_DH_PUBLIC		((DST_ALG_DH << TAG_SHIFT) + 3)
-
-#define DSA_NTAGS		5
-#define TAG_DSA_PRIME		((DST_ALG_DSA << TAG_SHIFT) + 0)
-#define TAG_DSA_SUBPRIME	((DST_ALG_DSA << TAG_SHIFT) + 1)
-#define TAG_DSA_BASE		((DST_ALG_DSA << TAG_SHIFT) + 2)
-#define TAG_DSA_PRIVATE		((DST_ALG_DSA << TAG_SHIFT) + 3)
-#define TAG_DSA_PUBLIC		((DST_ALG_DSA << TAG_SHIFT) + 4)
-
-#define GOST_NTAGS		1
-#define TAG_GOST_PRIVASN1	((DST_ALG_ECCGOST << TAG_SHIFT) + 0)
-#define TAG_GOST_PRIVRAW	((DST_ALG_ECCGOST << TAG_SHIFT) + 1)
 
 #define ECDSA_NTAGS		4
 #define TAG_ECDSA_PRIVATEKEY	((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb_7.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: mb_7.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,7 +29,7 @@ fromtext_mb(ARGS_FROMTEXT) {
 	UNUSED(callbacks);
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
+				      false));
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
@@ -44,7 +44,7 @@ totext_mb(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	bool sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_mb);
 	REQUIRE(rdata->length != 0);
@@ -200,7 +200,7 @@ digest_mb(ARGS_DIGEST) {
 	return (dns_name_digest(&name, digest, arg));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_mb(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_mb);
@@ -212,7 +212,7 @@ checkowner_mb(ARGS_CHECKOWNER) {
 	return (dns_name_ismailbox(name));
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_mb(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_mb);
@@ -221,7 +221,7 @@ checknames_mb(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int

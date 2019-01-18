@@ -14,3 +14,4 @@ rm -f */named.memstats
 rm -f */named.run
 rm -f */named.conf
 rm -f ns*/named.lock
+rm -f ns*/managed-keys.bind*

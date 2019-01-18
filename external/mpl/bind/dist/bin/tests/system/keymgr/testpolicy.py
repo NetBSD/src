@@ -31,7 +31,8 @@ if len(sys.argv) > 0:
 
         # print algorithm policies
         print(pp.alg_policy['RSASHA1'])
-        print(pp.alg_policy['DSA'])
+        print(pp.alg_policy['RSASHA256'])
+        print(pp.alg_policy['ECDSAP256SHA256'])
 
         # print another named policy
         print(pp.named_policy['extra'])

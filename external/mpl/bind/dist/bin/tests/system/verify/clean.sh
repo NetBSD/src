@@ -7,12 +7,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f zones/*.good
-rm -f zones/*.good.tmp
-rm -f zones/*.bad
-rm -f zones/*.bad.tmp
-rm -f zones/*.out*
-rm -f zones/dsset-*
-rm -f zones/K*
-rm -f verify.out*
 rm -f ns*/named.lock
+rm -f verify.out*
+rm -f zones/*.bad
+rm -f zones/*.good
+rm -f zones/*.out*
+rm -f zones/*.tmp
+rm -f zones/K*
+rm -f zones/dsset-*

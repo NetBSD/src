@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.2.2.2 2018/09/06 06:53:59 pgoyette Exp $	*/
+/*	$NetBSD: session.c,v 1.2.2.3 2019/01/18 08:49:14 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,7 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

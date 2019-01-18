@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.91 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: ums.c,v 1.91.2.1 2019/01/18 08:50:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.91.2.1 2019/01/18 08:50:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -171,6 +171,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 		switch (uha->uiaa->uiaa_product) {
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR10:
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR20:
+		case USB_PRODUCT_MICROSOFT_NATURAL_6000:
 			fixpos = 24;
 			break;
 		case USB_PRODUCT_MICROSOFT_CM6000:

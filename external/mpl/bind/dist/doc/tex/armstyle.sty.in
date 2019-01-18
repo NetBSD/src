@@ -86,10 +86,10 @@
     % Not sure exactly how much to trim logo, but given that
     % this is a centered environment, we need not be too precise
     % so long as the image is centered in the input PDF, we
-    % trim enough for it to fit on page, and we do not trim
+    % trim enough for it to fit on the page, and we do not trim
     % so much that we clip out part of the graphic itself.
     % This seems to work, anyway.
-    \includegraphics[trim=400 400 400 400,scale=2.5]{isc-logo}
+    \includegraphics[trim=400 150 400 0,clip,scale=2.5]{isc-logo.pdf}
   \end{center}\par
   \newpage
   \thispagestyle{empty}

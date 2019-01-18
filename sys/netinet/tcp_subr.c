@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.273.2.5 2018/09/06 06:56:45 pgoyette Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.273.2.6 2019/01/18 08:50:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273.2.5 2018/09/06 06:56:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273.2.6 2019/01/18 08:50:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1631,7 +1631,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
  * We will gradually open it again as we proceed.
  */
 void
-tcp_quench(struct inpcb *inp, int errno)
+tcp_quench(struct inpcb *inp)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 
@@ -1643,7 +1643,7 @@ tcp_quench(struct inpcb *inp, int errno)
 
 #ifdef INET6
 void
-tcp6_quench(struct in6pcb *in6p, int errno)
+tcp6_quench(struct in6pcb *in6p)
 {
 	struct tcpcb *tp = in6totcpcb(in6p);
 

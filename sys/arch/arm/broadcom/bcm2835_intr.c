@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.15 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.15.2.1 2019/01/18 08:50:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.15 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.15.2.1 2019/01/18 08:50:14 pgoyette Exp $");
 
 #define _INTR_PRIVATE
 
@@ -288,7 +288,7 @@ bcm2835_irq_handler(void *frame)
 {
 	struct cpu_info * const ci = curcpu();
 	const int oldipl = ci->ci_cpl;
-	const cpuid_t cpuid = ci->ci_cpuid;
+	const cpuid_t cpuid = ci->ci_core_id;
 	const uint32_t oldipl_mask = __BIT(oldipl);
 	int ipl_mask = 0;
 
@@ -458,7 +458,7 @@ bcm2836mp_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
     uint32_t irq_mask)
 {
 	struct cpu_info * const ci = curcpu();
-	const cpuid_t cpuid = ci->ci_cpuid;
+	const cpuid_t cpuid = ci->ci_core_id;
 	const bus_space_tag_t iot = bcml1icu_sc->sc_iot;
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
 
@@ -500,7 +500,7 @@ bcm2836mp_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
     uint32_t irq_mask)
 {
 	struct cpu_info * const ci = curcpu();
-	const cpuid_t cpuid = ci->ci_cpuid;
+	const cpuid_t cpuid = ci->ci_core_id;
 	const bus_space_tag_t iot = bcml1icu_sc->sc_iot;
 	const bus_space_handle_t ioh = bcml1icu_sc->sc_ioh;
 
@@ -534,7 +534,7 @@ static int
 bcm2836mp_pic_find_pending_irqs(struct pic_softc *pic)
 {
 	struct cpu_info * const ci = curcpu();
-	const cpuid_t cpuid = ci->ci_cpuid;
+	const cpuid_t cpuid = ci->ci_core_id;
 	uint32_t lpending;
 	int ipl = 0;
 
@@ -577,7 +577,7 @@ static void bcm2836mp_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 
 	/* Enable IRQ and not FIQ */
 	bus_space_write_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
-	    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(ci->ci_cpuid), 1);
+	    BCM2836_LOCAL_MAILBOX_IRQ_CONTROLN(ci->ci_core_id), 1);
 }
 
 static void
@@ -597,7 +597,7 @@ int
 bcm2836mp_ipi_handler(void *priv)
 {
 	const struct cpu_info *ci = curcpu();
-	const cpuid_t cpuid = ci->ci_cpuid;
+	const cpuid_t cpuid = ci->ci_core_id;
 	uint32_t ipimask, bit;
 
 	ipimask = bus_space_read_4(bcml1icu_sc->sc_iot, bcml1icu_sc->sc_ioh,
@@ -644,7 +644,7 @@ bcm2836mp_ipi_handler(void *priv)
 static void
 bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 {
-	const cpuid_t cpuid = ci->ci_cpuid;
+	const cpuid_t cpuid = ci->ci_core_id;
 	struct pic_softc * const pic = &bcm2836mp_pic[cpuid];
 
 #if defined(MULTIPROCESSOR)

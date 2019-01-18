@@ -73,8 +73,7 @@ Step 1: Download and build OpenSSL
       nmake /f ms\ntdll.mak
 
   The "enable-static-engine" option is needed when an OpenSSL engine
-  will be used -- for example, when using the GOST signing algorithm or
-  OpenSSL-based PKCS#11 support.
+  will be used -- for example, when using OpenSSL-based PKCS#11 support.
 
   If you wish to use OpenSSL-based PKCS#11 to control a cryptographic
   hardware service module, please see "PKCS#11 (Cryptoki) support" in

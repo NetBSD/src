@@ -9,16 +9,42 @@
 
 # Clean up after rpz tests.
 
-rm -f proto.* dsset-* trusted.conf dig.out* nsupdate.tmp ns*/*tmp
-rm -f ns*/*.key ns*/*.private ns2/tld2s.db ns2/bl.tld2.db
-rm -f ns3/bl*.db ns*/*switch ns*/empty.db ns*/empty.db.jnl
-rm -f ns5/requests ns5/example.db ns5/bl.db ns5/*.perf
-rm -f */named.memstats */*.run */named.stats */session.key
-rm -f */*.log */*.jnl */*core */*.pid
+USAGE="$0: [-Px]"
+DEBUG=
+while getopts "Px" c; do
+    case $c in
+	x) set -x ;;
+	P) PARTIAL=set ;;
+	*) echo "$USAGE" 1>&2; exit 1;;
+    esac
+done
+shift `expr $OPTIND - 1 || true`
+if test "$#" -ne 0; then
+    echo "$USAGE" 1>&2
+    exit 1
+fi
+
+# this might be called from setup.sh to partially clean up the files
+# from the first test pass so the second pass can be set up correctly.
+# remove those files first, then decide whether to remove the others.
+rm -f ns*/*.key ns*/*.private
+rm -f ns2/tld2s.db ns2/bl.tld2.db
+rm -f ns3/bl*.db ns*/empty.db
+rm -f ns5/example.db ns5/bl.db
 rm -f */policy2.db
-rm -f ns*/named.lock
-rm -f ns*/named.conf
-rm -f dnsrps*.conf
-rm -f dnsrpzd.conf
-rm -f dnsrpzd-license-cur.conf dnsrpzd.rpzf dnsrpzd.sock dnsrpzd.pid
-rm -f tmp
+rm -f */*.jnl
+
+if [ ${PARTIAL:-unset} = unset ]; then
+    rm -f proto.* dsset-* trusted.conf dig.out* nsupdate.tmp ns*/*tmp
+    rm -f ns5/requests ns5/*.perf
+    rm -f */named.memstats */*.run */*.run.prev */named.stats */session.key
+    rm -f */*.log */*core */*.pid
+    rm -f ns*/named.lock
+    rm -f ns*/named.conf
+    rm -f ns*/*switch
+    rm -f dnsrps*.conf
+    rm -f dnsrpzd.conf
+    rm -f dnsrpzd-license-cur.conf dnsrpzd.rpzf dnsrpzd.sock dnsrpzd.pid
+    rm -f ns*/managed-keys.bind*
+    rm -f tmp
+fi

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/12 01:15:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.12.1 2019/01/18 08:49:08 pgoyette Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -23,6 +23,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 
 CPPFLAGS+=	${X11FLAGS.DIX}
 CPPFLAGS+=	-DPROJECTROOT='"${X11ROOTDIR}"'
+CPPFLAGS+=	-DDATADIR='"${X11ROOTDIR}/share"'
+
 
 CWARNFLAGS.clang+=	-Wno-format
 

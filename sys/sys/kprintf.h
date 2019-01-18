@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.12 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.12.26.1 2019/01/18 08:50:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -55,6 +55,7 @@
 #define	TOBUFONLY	0x0008	/* to the buffer (only) [for snprintf] */
 #define	TODDB		0x0010	/* to ddb console */
 #define	NOLOCK		0x1000	/* don't acquire a tty lock */
+#define	NOTSTAMP	0x2000	/* no time stamp on console */
 
 void	kprintf_init(void);
 void	kprintf_init_callout(void);

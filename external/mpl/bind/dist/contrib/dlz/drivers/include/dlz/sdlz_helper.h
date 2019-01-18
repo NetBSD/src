@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz_helper.h,v 1.2.2.2 2018/09/06 06:54:50 pgoyette Exp $	*/
+/*	$NetBSD: sdlz_helper.h,v 1.2.2.3 2019/01/18 08:49:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -38,6 +38,8 @@
 #ifndef SDLZHELPER_H
 #define SDLZHELPER_H
 
+#include <stdbool.h>
+
 /*
  * Types
  */
@@ -59,7 +61,7 @@ typedef struct driverinstance driverinstance_t;
 struct query_segment {
 	void				*sql;
 	unsigned int			strlen;
-	isc_boolean_t			direct;
+	bool			direct;
 	ISC_LINK(query_segment_t)	link;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.c,v 1.2.2.2 2018/09/06 06:55:02 pgoyette Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.2.2.3 2019/01/18 08:49:55 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@ generic_fromtext_txt(ARGS_FROMTEXT) {
 	for (;;) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_qstring,
-					      ISC_TRUE));
+					      true));
 		if (token.type != isc_tokentype_qstring &&
 		    token.type != isc_tokentype_string)
 			break;
@@ -59,7 +59,7 @@ generic_totext_txt(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 
 	while (region.length > 0) {
-		RETERR(txt_totext(&region, ISC_TRUE, target));
+		RETERR(txt_totext(&region, true, target));
 		if (region.length > 0)
 			RETERR(str_totext(" ", target));
 	}
@@ -138,7 +138,7 @@ static inline isc_result_t
 generic_fromstruct_txt(ARGS_FROMSTRUCT) {
 	dns_rdata_txt_t *txt = source;
 	isc_region_t region;
-	isc_uint8_t length;
+	uint8_t length;
 
 	REQUIRE(source != NULL);
 	REQUIRE(txt->common.rdtype == type);
@@ -250,7 +250,7 @@ digest_txt(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline isc_boolean_t
+static inline bool
 checkowner_txt(ARGS_CHECKOWNER) {
 
 	REQUIRE(type == dns_rdatatype_txt);
@@ -260,10 +260,10 @@ checkowner_txt(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
-static inline isc_boolean_t
+static inline bool
 checknames_txt(ARGS_CHECKNAMES) {
 
 	REQUIRE(rdata->type == dns_rdatatype_txt);
@@ -272,7 +272,7 @@ checknames_txt(ARGS_CHECKNAMES) {
 	UNUSED(owner);
 	UNUSED(bad);
 
-	return (ISC_TRUE);
+	return (true);
 }
 
 static inline int
@@ -296,7 +296,7 @@ generic_txt_first(dns_rdata_txt_t *txt) {
 static isc_result_t
 generic_txt_next(dns_rdata_txt_t *txt) {
 	isc_region_t r;
-	isc_uint8_t length;
+	uint8_t length;
 
 	REQUIRE(txt != NULL);
 	REQUIRE(txt->txt != NULL && txt->txt_len != 0);

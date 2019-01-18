@@ -27,11 +27,11 @@ cp ../ns2/dsset-in-addr.arpa$TP .
 grep "8 [12] " ../ns2/dsset-algroll$TP > dsset-algroll$TP
 cp ../ns6/dsset-optout-tld$TP .
 
-keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 1024 -n zone $zone`
+keyname=`$KEYGEN -q -a RSAMD5 -b 1024 -n zone $zone`
 
 cat $infile $keyname.key > $zonefile
 
-$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile > /dev/null
 
 # Configure the resolving server with a trusted key.
 keyfile_to_trusted_keys $keyname > trusted.conf

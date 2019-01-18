@@ -1,4 +1,4 @@
-/*	$NetBSD: kernspace.h,v 1.6.2.1 2018/12/26 14:02:10 pgoyette Exp $	*/
+/*	$NetBSD: kernspace.h,v 1.6.2.2 2019/01/18 08:51:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2018 The NetBSD Foundation, Inc.
@@ -51,5 +51,6 @@ void rumptest_threadpool_percpu_lifecycle(void);
 void rumptest_threadpool_unbound_schedule(void);
 void rumptest_threadpool_percpu_schedule(void);
 void rumptest_threadpool_job_cancel(void);
+void rumptest_threadpool_job_cancelthrash(void);
 
 #endif /* _TESTS_RUMP_KERNSPACE_KERNSPACE_H_ */

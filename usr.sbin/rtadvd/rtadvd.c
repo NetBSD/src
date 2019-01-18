@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.59.2.2 2018/05/02 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.59.2.3 2019/01/18 08:51:02 pgoyette Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 #include "dump.h"
 #include "logit.h"
 #include "prog_ops.h"
+#include "expandm.h"
 
 struct msghdr rcvmhdr;
 static unsigned char *rcvcmsgbuf;
@@ -1842,36 +1843,11 @@ ra_timer_update(void *data, struct timespec *tm)
 	       (intmax_t)tm->tv_sec, (intmax_t)tm->tv_nsec);
 }
 
- __format_arg(3)
-static const char *
-expandm(char *buf, size_t len, const char *fmt)
-{
-	char *ptr;
-	const char *e = strerror(errno);
-	size_t cur = 0, elen = strlen(e);
-
-	*buf = '\0';
-	while ((ptr = strstr(fmt, "%m")) != NULL) {
-		size_t l = (size_t)(ptr - fmt);
-		if (cur + elen + l + 1 >= len)
-			return buf;
-		memcpy(buf + cur, fmt, l);
-		cur += l;
-		memcpy(buf + cur, e, elen);
-		cur += elen;
-		fmt += l + 2;
-		buf[cur] = '\0';
-	}
-	strlcat(buf, fmt, len);
-	strlcat(buf, "\n", len); /* syslog does not need \n, printf does */
-	return buf;
-}
-
 void
 logit(int level, const char *fmt, ...)
 {
 	va_list ap;
-	char buf[1024];
+	char *buf;
 
 	va_start(ap, fmt);
 	if (!Dflag) {
@@ -1880,6 +1856,7 @@ logit(int level, const char *fmt, ...)
 		return;
 	}
 
-	vfprintf(stderr, expandm(buf, sizeof(buf), fmt), ap);
+	vfprintf(stderr, expandm(fmt, "\n", &buf), ap);
+	free(buf);
 	va_end(ap);
 }

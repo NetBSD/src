@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.1.2.6 2018/12/26 14:01:30 pgoyette Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.1.2.7 2019/01/18 08:50:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.1.2.6 2018/12/26 14:01:30 pgoyette Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.1.2.7 2019/01/18 08:50:12 pgoyette Exp $")
 
 /*
  * At IPL_SCHED:
@@ -66,23 +66,17 @@ ENTRY_NP(cpu_switchto)
 	 */
 	mov	x4, sp 
 	mrs	x5, cpacr_el1
-#if L_MD_KTF + 8 == L_MD_CPACR
-	stp	x4, x5, [x0, #L_MD_KTF]
-#else
-	str	x4, [x0, #L_MD_KTF]
 	str	x5, [x0, #L_MD_CPACR]
-#endif
+	ldr	x6, [x0, #L_PCB]	/* x6 = lwp_getpcb(oldlwp) */
+	str	x4, [x6, #PCB_TF]
 
 	/* We are done with the old lwp */
 
 .Lrestore_lwp:
 	DISABLE_INTERRUPT
-#if L_MD_KTF + 8 == L_MD_CPACR
-	ldp	x4, x5, [x1, #L_MD_KTF]	/* get trapframe ptr and cpacr_el1 */
-#else
-	ldr	x4, [x1, #L_MD_KTF]	/* get trapframe ptr (aka SP) */
+	ldr	x6, [x1, #L_PCB]	/* x6 = lwp_getpcb(newlwp) */
+	ldr	x4, [x6, #PCB_TF]	/* get trapframe ptr (aka SP) */
 	ldr	x5, [x1, #L_MD_CPACR]	/* get cpacr_el1 */
-#endif
 	mov	sp, x4			/* restore stack pointer */
 	msr	cpacr_el1, x5		/* restore cpacr_el1 */
 
@@ -136,12 +130,9 @@ ENTRY_NP(cpu_switchto_softint)
 	ldr	x19, [x3, #CI_CURLWP]	/* x19 := curcpu()->ci_curlwp */
 	mov	x4, sp
 	mrs	x5, cpacr_el1
-#if L_MD_KTF + 8 == L_MD_CPACR
-	stp	x4, x5, [x19, #L_MD_KTF]
-#else
-	str	x4, [x19, #L_MD_KTF]
+	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
+	str	x4, [x6, #PCB_TF]
 	str	x5, [x19, #L_MD_CPACR]
-#endif
 	str	x0, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp = softlwp; */
 
 #ifdef KASAN
@@ -165,12 +156,9 @@ ENTRY_NP(cpu_switchto_softint)
 	mrs	x3, tpidr_el1
 	DISABLE_INTERRUPT
 	str	x19, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp := x19 */
-#if L_MD_KTF + 8 == L_MD_CPACR
-	ldp	x4, x5, [x19, #L_MD_KTF]
-#else
-	ldr	x4, [x19, #L_MD_KTF]	/* x4 := pinned_lwp->l_md_ktf */
+	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
+	ldr	x4, [x6, #PCB_TF]	/* x4 := pinned_lwp->l_addr->pcb_tf */
 	ldr	x5, [x19, #L_MD_CPACR]	/* x5 := pinned_lwp->l_md_cpacr */
-#endif
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */
 

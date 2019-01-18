@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-a83t.dtsi,v 1.1.4.1 2018/07/28 04:37:28 pgoyette Exp $ */
+/* $NetBSD: sun8i-a83t.dtsi,v 1.1.4.2 2019/01/18 08:50:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,15 @@
 				     "simple-framebuffer";
 			allwinner,pipeline = "mixer0-lcd0-hdmi";
 			status = "disabled";
+		};
+	};
+
+	soc {
+		rtp: rtp@1f04000 {
+			compatible = "allwinner,sun8i-a83t-ts";
+			reg = <0x01f04000 0x400>;
+			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
+			#thermal-sensor-cells = <0>;
 		};
 	};
 };

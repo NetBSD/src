@@ -1,3 +1,31 @@
+* TROUSERS_0_3_14
+- Changes to support OpenSSL 1.1.0
+- Removed some warnings for proper builds
+- Changes to allow building on OS X
+- Fixed memory leaks
+- Fixed failure to recognize connections from localhost over IPv6
+- Fixed for an exploitable local denial of service in tcsd
+
+* TROUSERS_0_3_13
+- Changed exported functions which had a name too common, to avoid collision
+- Assessed daemon security using manual techniques and coverit
+- Fixed major security bugs and memory leaks
+- Added debug support to run tcsd with a different user/group
+- Daemon now properly closes sockets before shutting down
+
+* TROUSERS_0_3_12
+- Added new network code for RPC, which supports IPv6
+- Users of client applications can configure the hostname of the tcsd server
+they want to connect through the TSS_TCSD_HOSTNAME env var (only works if
+application didn't set a hostname in the context)
+- Added disable_ipv4 and disable_ipv6 config options for server
+
+* TROUSERS_0_3_11
+- Fix build process for distros
+- License was changed from GPL to BSD
+- Many bugfixes
+- updated man pages
+
 * TROUSERS_0_3_8
 
 - Fix ssl_ui.c overflow

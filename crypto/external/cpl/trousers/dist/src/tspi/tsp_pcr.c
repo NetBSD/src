@@ -116,8 +116,8 @@ pcrs_sanity_check_selection(TSS_HCONTEXT tspContext,
 			return TSPERR(TSS_E_OUTOFMEMORY);
 		}
 		/* set the newly allocated bytes to 0 */
-		memset(&select->pcrSelect[select->sizeOfSelect], 0,
-				bytes_to_hold - select->sizeOfSelect);
+		__tspi_memset(&select->pcrSelect[select->sizeOfSelect], 0,
+			      bytes_to_hold - select->sizeOfSelect);
 		select->sizeOfSelect = bytes_to_hold;
 
 		/* realloc the pcr array as well */

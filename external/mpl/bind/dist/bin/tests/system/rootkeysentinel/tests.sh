@@ -95,6 +95,7 @@ newtest "check root-key-sentinel-not-ta with new ta and" " 'root-key-sentinel ye
 $DIG $DIGOPTS @10.53.0.3 root-key-sentinel-not-ta-${newid}.example A > dig.out.ns3.test$n || ret=1
 grep "status: NOERROR" dig.out.ns3.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-is-ta with bad ta and" " 'root-key-sentinel yes;' (expect SERVFAIL)"
 $DIG $DIGOPTS @10.53.0.3 root-key-sentinel-is-ta-${badid}.example A > dig.out.ns3.test$n || ret=1
@@ -110,9 +111,10 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-not-ta with bad ta and" " 'root-key-sentinel yes;' (expect NXDOMAIN)"
-$DIG $DIGOPTS @10.53.0.3 root-key-sentinel-not-ta-${bad}.example A > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 root-key-sentinel-not-ta-${badid}.example A > dig.out.ns3.test$n || ret=1
 grep "status: NXDOMAIN" dig.out.ns3.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-is-ta with out-of-range ta and" " 'root-key-sentinel yes;' (expect NXDOMAIN)"
 $DIG $DIGOPTS @10.53.0.3 root-key-sentinel-is-ta-72345.example A > dig.out.ns3.test$n || ret=1
@@ -124,6 +126,7 @@ newtest "check root-key-sentinel-not-ta with out-of-range ta and" " 'root-key-se
 $DIG $DIGOPTS @10.53.0.3 root-key-sentinel-not-ta-72345.example A > dig.out.ns3.test$n || ret=1
 grep "status: NXDOMAIN" dig.out.ns3.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-is-ta with no-zero-pad ta and" " 'root-key-sentinel yes;' (expect NXDOMAIN)"
 $DIG $DIGOPTS @10.53.0.3 root-key-sentinel-is-ta-1234.example A > dig.out.ns3.test$n || ret=1
@@ -135,6 +138,7 @@ newtest "check root-key-sentinel-not-ta with no-zero-pad ta and" " 'root-key-sen
 $DIG $DIGOPTS @10.53.0.3 root-key-sentinel-not-ta-1234.example A > dig.out.ns3.test$n || ret=1
 grep "status: NXDOMAIN" dig.out.ns3.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check CNAME to root-key-sentinel-is-ta with old ta and" " 'root-key-sentinel yes;' (expect NOERROR)"
 $DIG $DIGOPTS @10.53.0.3 old-is-ta.example A > dig.out.ns3.test$n || ret=1
@@ -206,6 +210,7 @@ newtest "check root-key-sentinel-not-ta with new ta and" " 'root-key-sentinel no
 $DIG $DIGOPTS @10.53.0.4 root-key-sentinel-not-ta-${newid}.example A > dig.out.ns4.test$n || ret=1
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-is-ta with bad ta and" " 'root-key-sentinel no;' (expect NXDOMAIN)"
 $DIG $DIGOPTS @10.53.0.4 root-key-sentinel-is-ta-${badid}.example A > dig.out.ns4.test$n || ret=1
@@ -214,9 +219,10 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-not-ta with bad ta and" " 'root-key-sentinel no;' (expect NXDOMAIN)"
-$DIG $DIGOPTS @10.53.0.4 root-key-sentinel-not-ta-${bad}.example A > dig.out.ns4.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.4 root-key-sentinel-not-ta-${badid}.example A > dig.out.ns4.test$n || ret=1
 grep "status: NXDOMAIN" dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-is-ta with out-of-range ta and" " 'root-key-sentinel no;' (expect NXDOMAIN)"
 $DIG $DIGOPTS @10.53.0.4 root-key-sentinel-is-ta-72345.example A > dig.out.ns4.test$n || ret=1
@@ -228,6 +234,7 @@ newtest "check root-key-sentinel-not-ta with out-of-range ta and" " 'root-key-se
 $DIG $DIGOPTS @10.53.0.4 root-key-sentinel-not-ta-72345.example A > dig.out.ns4.test$n || ret=1
 grep "status: NXDOMAIN" dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check root-key-sentinel-is-ta with no-zero-pad ta and" " 'root-key-sentinel no;' (expect NXDOMAIN)"
 $DIG $DIGOPTS @10.53.0.4 root-key-sentinel-is-ta-1234.example A > dig.out.ns4.test$n || ret=1
@@ -239,6 +246,7 @@ newtest "check root-key-sentinel-not-ta with no-zero-pad ta and" " 'root-key-sen
 $DIG $DIGOPTS @10.53.0.4 root-key-sentinel-not-ta-1234.example A > dig.out.ns4.test$n || ret=1
 grep "status: NXDOMAIN" dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
 
 newtest "check CNAME to root-key-sentinel-is-ta with old ta and" " 'root-key-sentinel no;' (expect NOERROR)"
 $DIG $DIGOPTS @10.53.0.4 old-is-ta.example A > dig.out.ns4.test$n || ret=1

@@ -173,9 +173,6 @@
     <ClCompile Include="..\rbtdb.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\rbtdb64.c">
-      <Filter>Library Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\rcode.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -272,6 +269,9 @@
     <ClCompile Include="..\zonekey.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\zoneverify.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\zt.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -299,14 +299,10 @@
     <ClCompile Include="..\key.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
-@IF OPENSSL
     <ClCompile Include="..\openssl_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\openssldh_link.c">
-      <Filter>Dst Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\openssldsa_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\opensslecdsa_link.c">
@@ -315,30 +311,17 @@
     <ClCompile Include="..\openssleddsa_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\opensslgost_link.c">
-      <Filter>Dst Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\opensslrsa_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
-@END OPENSSL
 @IF PKCS11
     <ClCompile Include="..\pkcs11.c">
-      <Filter>Dst Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\pkcs11dh_link.c">
-      <Filter>Dst Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\pkcs11dsa_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\pkcs11ecdsa_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\pkcs11eddsa_link.c">
-      <Filter>Dst Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\pkcs11gost_link.c">
       <Filter>Dst Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\pkcs11rsa_link.c">
@@ -354,9 +337,6 @@
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\rbtdb.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rbtdb64.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\rdatalist_p.h">
@@ -649,6 +629,9 @@
     <ClInclude Include="..\include\dns\zonekey.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\dns\zoneverify.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\dns\zt.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -664,17 +647,12 @@
     <ClInclude Include="..\include\dst\result.h">
       <Filter>Dst Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\dst_gost.h">
-      <Filter>Dst Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\dst_internal.h">
       <Filter>Dst Header Files</Filter>
     </ClInclude>
-@IF OPENSSL
     <ClInclude Include="..\dst_openssl.h">
       <Filter>Dst Header Files</Filter>
     </ClInclude>
-@END OPENSSL
     <ClInclude Include="..\dst_parse.h">
       <Filter>Dst Header Files</Filter>
     </ClInclude>

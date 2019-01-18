@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1577.2.9 2018/12/26 14:01:12 pgoyette Exp $
+# $NetBSD: mi,v 1.1577.2.10 2019/01/18 08:48:32 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2441,7 +2441,7 @@
 ./usr/share/man/cat8/compat_darwin.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_hpux.0		man-obsolete		obsolete
-./usr/share/man/cat8/compat_ibcs2.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_ibcs2.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_linux.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_netbsd32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_osf1.0		man-sys-catman		.cat
@@ -5456,7 +5456,7 @@
 ./usr/share/man/html8/compat_30.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_darwin.html	man-obsolete		obsolete
 ./usr/share/man/html8/compat_freebsd.html	man-sys-htmlman		html
-./usr/share/man/html8/compat_ibcs2.html		man-sys-htmlman		html
+./usr/share/man/html8/compat_ibcs2.html		man-obsolete		obsolete
 ./usr/share/man/html8/compat_linux.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_netbsd32.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_osf1.html		man-sys-htmlman		html
@@ -8524,7 +8524,7 @@
 ./usr/share/man/man8/compat_darwin.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man		.man
 ./usr/share/man/man8/compat_hpux.8		man-obsolete		obsolete
-./usr/share/man/man8/compat_ibcs2.8		man-sys-man		.man
+./usr/share/man/man8/compat_ibcs2.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_linux.8		man-sys-man		.man
 ./usr/share/man/man8/compat_netbsd32.8		man-sys-man		.man
 ./usr/share/man/man8/compat_osf1.8		man-sys-man		.man

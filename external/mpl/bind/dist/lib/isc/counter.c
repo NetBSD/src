@@ -1,4 +1,4 @@
-/*	$NetBSD: counter.c,v 1.2.2.2 2018/09/06 06:55:05 pgoyette Exp $	*/
+/*	$NetBSD: counter.c,v 1.2.2.3 2019/01/18 08:49:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include <isc/counter.h>
@@ -36,7 +37,6 @@ struct isc_counter {
 
 isc_result_t
 isc_counter_create(isc_mem_t *mctx, int limit, isc_counter_t **counterp) {
-	isc_result_t result;
 	isc_counter_t *counter;
 
 	REQUIRE(counterp != NULL && *counterp == NULL);
@@ -45,11 +45,7 @@ isc_counter_create(isc_mem_t *mctx, int limit, isc_counter_t **counterp) {
 	if (counter == NULL)
 		return (ISC_R_NOMEMORY);
 
-	result = isc_mutex_init(&counter->lock);
-	if (result != ISC_R_SUCCESS) {
-		isc_mem_put(mctx, counter, sizeof(*counter));
-		return (result);
-	}
+	isc_mutex_init(&counter->lock);
 
 	counter->mctx = NULL;
 	isc_mem_attach(mctx, &counter->mctx);
@@ -115,7 +111,7 @@ destroy(isc_counter_t *counter) {
 void
 isc_counter_detach(isc_counter_t **counterp) {
 	isc_counter_t *counter;
-	isc_boolean_t want_destroy = ISC_FALSE;
+	bool want_destroy = false;
 
 	REQUIRE(counterp != NULL && *counterp != NULL);
 	counter = *counterp;
@@ -127,7 +123,7 @@ isc_counter_detach(isc_counter_t **counterp) {
 	INSIST(counter->references > 0);
 	counter->references--;
 	if (counter->references == 0)
-		want_destroy = ISC_TRUE;
+		want_destroy = true;
 	UNLOCK(&counter->lock);
 
 	if (want_destroy)

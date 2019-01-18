@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.81 2018/03/05 08:56:49 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.81.2.1 2019/01/18 08:50:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.81 2018/03/05 08:56:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.81.2.1 2019/01/18 08:50:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,14 +66,14 @@ const char *mii_get_descr_stub(int oui, int model)
 		return NULL;
 }
 
-/*    
+/*
  * Routine to load the miiverbose kernel module as needed
  */
 void mii_load_verbose(void)
 {
 	if (mii_verbose_loaded == 0)
 		module_autoload("miiverbose", MODULE_CLASS_MISC);
-}  
+}
 
 static void mii_phy_statusmsg(struct mii_softc *);
 
@@ -244,7 +244,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
 				anar &= ~(ANAR_T4|ANAR_TX_FD|ANAR_TX|ANAR_10_FD|ANAR_10);
 			}
-				
+
 			PHY_WRITE(sc, MII_ANAR, anar);
 			if (sc->mii_flags & MIIF_HAVE_GTCR) {
 				uint16_t gtcr = 0;
@@ -387,8 +387,8 @@ mii_phy_reset(struct mii_softc *sc)
 		reg = BMCR_RESET | BMCR_ISO;
 	PHY_WRITE(sc, MII_BMCR, reg);
 
-	/* Wait another 100ms for it to complete. */
-	for (i = 0; i < 100; i++) {
+	/* Wait another 500ms for it to complete. */
+	for (i = 0; i < 500; i++) {
 		reg = PHY_READ(sc, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;

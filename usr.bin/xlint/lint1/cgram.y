@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.95.2.3 2018/11/26 01:52:54 pgoyette Exp $ */
+/* $NetBSD: cgram.y,v 1.95.2.4 2019/01/18 08:51:02 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.95.2.3 2018/11/26 01:52:54 pgoyette Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.95.2.4 2019/01/18 08:51:02 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -208,6 +208,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_COLD
 %token <y_type>		T_AT_CONSTRUCTOR
 %token <y_type>		T_AT_DEPRECATED
+%token <y_type>		T_AT_DESTRUCTOR
 %token <y_type>		T_AT_FORMAT
 %token <y_type>		T_AT_FORMAT_ARG
 %token <y_type>		T_AT_FORMAT_PRINTF
@@ -541,6 +542,7 @@ type_attribute_spec:
 	| T_AT_SECTION T_LPARN string T_RPARN
 	| T_AT_ALIGNED 
 	| T_AT_CONSTRUCTOR 
+	| T_AT_DESTRUCTOR 
 	| T_AT_MAY_ALIAS
 	| T_AT_NO_INSTRUMENT_FUNCTION
 	| T_AT_NOINLINE

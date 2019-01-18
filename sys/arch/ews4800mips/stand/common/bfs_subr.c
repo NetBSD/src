@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_subr.c,v 1.3 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: bfs_subr.c,v 1.3.86.1 2019/01/18 08:50:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,17 +31,17 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_subr.c,v 1.3 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_subr.c,v 1.3.86.1 2019/01/18 08:50:17 pgoyette Exp $");
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 #include "local.h"
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <machine/param.h>
 #include <machine/sector.h>
 #include <machine/bfs.h>
 

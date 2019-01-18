@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.112.2.7 2018/12/26 14:01:45 pgoyette Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.112.2.8 2019/01/18 08:50:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -970,6 +970,9 @@
 #define MSR_DE_CFG	0xc0011029
 #define 	DE_CFG_ERRATA_721	0x00000001
 #define 	DE_CFG_ERRATA_1021	__BIT(13)
+
+#define MSR_BU_CFG2	0xc001102a
+#define 	BU_CFG2_CWPLUS_DIS	__BIT(24)
 
 #define MSR_LS_CFG2	0xc001102d
 #define 	LS_CFG2_ERRATA_1091	__BIT(34)
