@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 2018/11/14 21:10:59 scole Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 2019/01/18 18:03:06 scole Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -91,8 +91,9 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 		KASSERT(oldlwp == l);
 		swapctx(oldpcb, newpcb);
 	}
-	
-	return (oldlwp);
+
+	/* return oldlwp for the original thread that called cpu_switchto */
+	return ((lwp_t *)reg9);
 }
 
 /*
@@ -189,13 +190,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_scratch.gr10 = 0;
 	}
 
-	tf->tf_scratch.gr2 = (unsigned long)FDESC_FUNC(func);
-	tf->tf_scratch.gr3 = (unsigned long)arg;
-
-	pcb2->pcb_special.sp = ua2 + UAREA_SP_OFFSET;
-	pcb2->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
 	pcb2->pcb_special.bspstore = ua2 + UAREA_BSPSTORE_OFFSET + ndirty;
 	pcb2->pcb_special.pfs = 0;
+	pcb2->pcb_special.sp = ua2 + UAREA_SP_OFFSET;
+	pcb2->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
+	tf->tf_scratch.gr2 = (unsigned long)FDESC_FUNC(func);
+	tf->tf_scratch.gr3 = (unsigned long)arg;
 
 	return;
 }
