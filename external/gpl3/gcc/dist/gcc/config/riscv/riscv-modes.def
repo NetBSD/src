@@ -1,6 +1,6 @@
 /* Extra machine modes for RISC-V target.
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
-   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target for GNU compiler.
 
 This file is part of GCC.
@@ -20,7 +20,3 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 FLOAT_MODE (TF, 16, ieee_quad_format);
-
-/* Vector modes.  */
-VECTOR_MODES (INT, 4);        /*       V8QI V4HI V2SI */
-VECTOR_MODES (FLOAT, 4);      /*            V4HF V2SF */

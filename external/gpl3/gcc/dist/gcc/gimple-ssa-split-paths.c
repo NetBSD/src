@@ -1,5 +1,5 @@
 /* Support routines for Splitting Paths to loop backedges
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    Contributed by Ajit Kumar Agarwal <ajitkum@xilinx.com>.
 
  This file is part of GCC.
@@ -32,6 +32,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "tracer.h"
 #include "predict.h"
 #include "params.h"
+#include "gimple-ssa.h"
+#include "tree-phinodes.h"
+#include "ssa-iterators.h"
 
 /* Given LATCH, the latch block in a loop, see if the shape of the
    path reaching LATCH is suitable for being split by duplication.
@@ -76,14 +79,19 @@ find_block_to_duplicate_for_splitting_paths (basic_block latch)
 	    return NULL;
 
 	  /* And that BB's immediate dominator's successors are the
-	     predecessors of BB.  */
-	  if (!find_edge (bb_idom, EDGE_PRED (bb, 0)->src)
-	      || !find_edge (bb_idom, EDGE_PRED (bb, 1)->src))
+	     predecessors of BB or BB itself.  */
+	  if (!(EDGE_PRED (bb, 0)->src == bb_idom
+		|| find_edge (bb_idom, EDGE_PRED (bb, 0)->src))
+	      || !(EDGE_PRED (bb, 1)->src == bb_idom
+		   || find_edge (bb_idom, EDGE_PRED (bb, 1)->src)))
 	    return NULL;
 
-	  /* And that the predecessors of BB each have a single successor.  */
-	  if (!single_succ_p (EDGE_PRED (bb, 0)->src)
-	      || !single_succ_p (EDGE_PRED (bb, 1)->src))
+	  /* And that the predecessors of BB each have a single successor
+	     or are BB's immediate domiator itself.  */
+	  if (!(EDGE_PRED (bb, 0)->src == bb_idom
+		|| single_succ_p (EDGE_PRED (bb, 0)->src))
+	      || !(EDGE_PRED (bb, 1)->src == bb_idom
+		   || single_succ_p (EDGE_PRED (bb, 1)->src)))
 	    return NULL;
 
 	  /* So at this point we have a simple diamond for an IF-THEN-ELSE
@@ -148,8 +156,10 @@ is_feasible_trace (basic_block bb)
   basic_block pred1 = EDGE_PRED (bb, 0)->src;
   basic_block pred2 = EDGE_PRED (bb, 1)->src;
   int num_stmts_in_join = count_stmts_in_block (bb);
-  int num_stmts_in_pred1 = count_stmts_in_block (pred1);
-  int num_stmts_in_pred2 = count_stmts_in_block (pred2);
+  int num_stmts_in_pred1
+    = EDGE_COUNT (pred1->succs) == 1 ? count_stmts_in_block (pred1) : 0;
+  int num_stmts_in_pred2
+    = EDGE_COUNT (pred2->succs) == 1 ? count_stmts_in_block (pred2) : 0;
 
   /* This is meant to catch cases that are likely opportunities for
      if-conversion.  Essentially we look for the case where
@@ -191,6 +201,113 @@ is_feasible_trace (basic_block bb)
 		}
 	    }
 	}
+    }
+
+  /* If the joiner has no PHIs with useful uses there is zero chance
+     of CSE/DCE/jump-threading possibilities exposed by duplicating it.  */
+  bool found_useful_phi = false;
+  for (gphi_iterator si = gsi_start_phis (bb); ! gsi_end_p (si);
+       gsi_next (&si))
+    {
+      gphi *phi = si.phi ();
+      use_operand_p use_p;
+      imm_use_iterator iter;
+      FOR_EACH_IMM_USE_FAST (use_p, iter, gimple_phi_result (phi))
+	{
+	  gimple *stmt = USE_STMT (use_p);
+	  if (is_gimple_debug (stmt))
+	    continue;
+	  /* If there's a use in the joiner this might be a CSE/DCE
+	     opportunity.  */
+	  if (gimple_bb (stmt) == bb)
+	    {
+	      found_useful_phi = true;
+	      break;
+	    }
+	  /* If the use is on a loop header PHI and on one path the
+	     value is unchanged this might expose a jump threading
+	     opportunity.  */
+	  if (gimple_code (stmt) == GIMPLE_PHI
+	      && gimple_bb (stmt) == bb->loop_father->header
+	      /* But for memory the PHI alone isn't good enough.  */
+	      && ! virtual_operand_p (gimple_phi_result (stmt)))
+	    {
+	      bool found_unchanged_path = false;
+	      for (unsigned i = 0; i < gimple_phi_num_args (phi); ++i)
+		if (gimple_phi_arg_def (phi, i) == gimple_phi_result (stmt))
+		  {
+		    found_unchanged_path = true;
+		    break;
+		  }
+	      /* If we found an unchanged path this can only be a threading
+	         opportunity if we have uses of the loop header PHI result
+		 in a stmt dominating the merge block.  Otherwise the
+		 splitting may prevent if-conversion.  */
+	      if (found_unchanged_path)
+		{
+		  use_operand_p use2_p;
+		  imm_use_iterator iter2;
+		  FOR_EACH_IMM_USE_FAST (use2_p, iter2, gimple_phi_result (stmt))
+		    {
+		      gimple *use_stmt = USE_STMT (use2_p);
+		      if (is_gimple_debug (use_stmt))
+			continue;
+		      basic_block use_bb = gimple_bb (use_stmt);
+		      if (use_bb != bb
+			  && dominated_by_p (CDI_DOMINATORS, bb, use_bb))
+			{
+			  if (gcond *cond = dyn_cast <gcond *> (use_stmt))
+			    if (gimple_cond_code (cond) == EQ_EXPR
+				|| gimple_cond_code (cond) == NE_EXPR)
+			      found_useful_phi = true;
+			  break;
+			}
+		    }
+		}
+	      if (found_useful_phi)
+		break;
+	    }
+	}
+      if (found_useful_phi)
+	break;
+    }
+  /* There is one exception namely a controlling condition we can propagate
+     an equivalence from to the joiner.  */
+  bool found_cprop_opportunity = false;
+  basic_block dom = get_immediate_dominator (CDI_DOMINATORS, bb);
+  gcond *cond = as_a <gcond *> (last_stmt (dom));
+  if (gimple_cond_code (cond) == EQ_EXPR
+      || gimple_cond_code (cond) == NE_EXPR)
+    for (unsigned i = 0; i < 2; ++i)
+      {
+	tree op = gimple_op (cond, i);
+	if (TREE_CODE (op) == SSA_NAME)
+	  {
+	    use_operand_p use_p;
+	    imm_use_iterator iter;
+	    FOR_EACH_IMM_USE_FAST (use_p, iter, op)
+	      {
+		if (is_gimple_debug (USE_STMT (use_p)))
+		  continue;
+		if (gimple_bb (USE_STMT (use_p)) == bb)
+		  {
+		    found_cprop_opportunity = true;
+		    break;
+		  }
+	      }
+	  }
+	if (found_cprop_opportunity)
+	  break;
+      }
+
+  if (! found_useful_phi && ! found_cprop_opportunity)
+    {
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	fprintf (dump_file,
+		 "Block %d is a join that does not expose CSE/DCE/jump-thread "
+		 "opportunities when duplicated.\n",
+		 bb->index);
+      return false;
     }
 
   /* We may want something here which looks at dataflow and tries
@@ -292,6 +409,8 @@ split_paths ()
 		     "Duplicating join block %d into predecessor paths\n",
 		     bb->index);
 	  basic_block pred0 = EDGE_PRED (bb, 0)->src;
+	  if (EDGE_COUNT (pred0->succs) != 1)
+	    pred0 = EDGE_PRED (bb, 1)->src;
 	  transform_duplicate (pred0, bb);
 	  changed = true;
 

@@ -1,5 +1,5 @@
 /* Functions for generic Darwin as target machine for GNU C compiler.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -28,6 +28,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
 #include "insn-config.h"
@@ -880,7 +881,6 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 				? reg
 				: gen_reg_rtx (Pmode));
 	      rtx mem;
-	      rtx insn;
 	      rtx sum;
 
 	      sum = gen_rtx_HIGH (Pmode, offset);
@@ -893,7 +893,7 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 				  gen_rtx_LO_SUM (Pmode,
 						  hi_sum_reg,
 						  copy_rtx (offset)));
-	      insn = emit_insn (gen_rtx_SET (reg, mem));
+	      rtx_insn *insn = emit_insn (gen_rtx_SET (reg, mem));
 	      set_unique_reg_note (insn, REG_EQUAL, pic_ref);
 
 	      pic_ref = reg;
@@ -2835,7 +2835,8 @@ static int darwin_dwarf_label_counter;
 
 void
 darwin_asm_output_dwarf_delta (FILE *file, int size,
-			       const char *lab1, const char *lab2)
+			       const char *lab1, const char *lab2,
+			       HOST_WIDE_INT offset)
 {
   int islocaldiff = (lab1[0] == '*' && lab1[1] == 'L'
 		     && lab2[0] == '*' && lab2[1] == 'L');
@@ -2849,6 +2850,8 @@ darwin_asm_output_dwarf_delta (FILE *file, int size,
   assemble_name_raw (file, lab1);
   fprintf (file, "-");
   assemble_name_raw (file, lab2);
+  if (offset != 0)
+    fprintf (file, "+" HOST_WIDE_INT_PRINT_DEC, offset);
   if (islocaldiff)
     fprintf (file, "\n\t%s L$set$%d", directive, darwin_dwarf_label_counter++);
 }
@@ -2860,7 +2863,7 @@ darwin_asm_output_dwarf_delta (FILE *file, int size,
 
 void
 darwin_asm_output_dwarf_offset (FILE *file, int size, const char * lab,
-				section *base)
+				HOST_WIDE_INT offset, section *base)
 {
   char sname[64];
   int namelen;
@@ -2871,7 +2874,7 @@ darwin_asm_output_dwarf_offset (FILE *file, int size, const char * lab,
 
   namelen = strchr (base->named.name + 8, ',') - (base->named.name + 8);
   sprintf (sname, "*Lsection%.*s", namelen, base->named.name + 8);
-  darwin_asm_output_dwarf_delta (file, size, lab, sname);
+  darwin_asm_output_dwarf_delta (file, size, lab, sname, offset);
 }
 
 /* Called from the within the TARGET_ASM_FILE_START for each target.  */
@@ -3669,23 +3672,6 @@ darwin_function_section (tree decl, enum node_frequency freq,
 default_function_sections:
   return (use_coal) ? darwin_sections[text_coal_section]
 		    : text_section;
-}
-
-/* When a function is partitioned between sections, we need to insert a label
-   at the start of each new chunk - so that it may become a valid 'atom' for
-   eh and debug purposes.  Without this the linker will emit warnings if one 
-   tries to add line location information (since the switched fragment will 
-   be anonymous).  */
-
-void
-darwin_function_switched_text_sections (FILE *fp, tree decl, bool new_is_cold)
-{
-  char buf[128];
-  snprintf (buf, 128, "%s%s",new_is_cold?"__cold_sect_of_":"__hot_sect_of_",
-	    IDENTIFIER_POINTER (DECL_NAME (decl)));
-  /* Make sure we pick up all the relevant quotes etc.  */
-  assemble_name_raw (fp, (const char *) buf);
-  fputs (":\n", fp);
 }
 
 #include "gt-darwin.h"

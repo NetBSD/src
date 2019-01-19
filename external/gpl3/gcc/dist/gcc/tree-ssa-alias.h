@@ -1,5 +1,5 @@
 /* Tree based alias analysis and alias oracle.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Contributed by Richard Guenther  <rguenther@suse.de>
 
    This file is part of GCC.
@@ -47,7 +47,6 @@ struct GTY(()) pt_solution
      includes memory at address NULL.  */
   unsigned int null : 1;
 
-
   /* Nonzero if the vars bitmap includes a variable included in 'nonlocal'.  */
   unsigned int vars_contains_nonlocal : 1;
   /* Nonzero if the vars bitmap includes a variable included in 'escaped'.  */
@@ -55,6 +54,11 @@ struct GTY(()) pt_solution
   /* Nonzero if the vars bitmap includes a anonymous heap variable that
      escaped the function and thus became global.  */
   unsigned int vars_contains_escaped_heap : 1;
+  /* Nonzero if the vars bitmap includes a anonymous variable used to
+     represent storage pointed to by a restrict qualified pointer.  */
+  unsigned int vars_contains_restrict : 1;
+  /* Nonzero if the vars bitmap includes an interposable variable.  */
+  unsigned int vars_contains_interposable : 1;
 
   /* Set of variables that this pointer may point to.  */
   bitmap vars;
@@ -101,6 +105,7 @@ extern alias_set_type ao_ref_alias_set (ao_ref *);
 extern alias_set_type ao_ref_base_alias_set (ao_ref *);
 extern bool ptr_deref_may_alias_global_p (tree);
 extern bool ptr_derefs_may_alias_p (tree, tree);
+extern bool ptrs_compare_unequal (tree, tree);
 extern bool ref_may_alias_global_p (tree);
 extern bool ref_may_alias_global_p (ao_ref *);
 extern bool refs_may_alias_p (tree, tree);
@@ -126,10 +131,11 @@ extern void *walk_non_aliased_vuses (ao_ref *, tree,
 				     void *(*)(ao_ref *, tree, void *, bool *),
 				     tree (*)(tree),
 				     void *);
-extern unsigned int walk_aliased_vdefs (ao_ref *, tree,
-					bool (*)(ao_ref *, tree, void *),
-					void *, bitmap *,
-					bool *function_entry_reached = NULL);
+extern int walk_aliased_vdefs (ao_ref *, tree,
+			       bool (*)(ao_ref *, tree, void *),
+			       void *, bitmap *,
+			       bool *function_entry_reached = NULL,
+			       unsigned int limit = 0);
 extern void dump_alias_info (FILE *);
 extern void debug_alias_info (void);
 extern void dump_points_to_solution (FILE *, struct pt_solution *);
@@ -143,7 +149,7 @@ extern void dump_alias_stats (FILE *);
 /* In tree-ssa-structalias.c  */
 extern unsigned int compute_may_aliases (void);
 extern bool pt_solution_empty_p (struct pt_solution *);
-extern bool pt_solution_singleton_p (struct pt_solution *, unsigned *);
+extern bool pt_solution_singleton_or_null_p (struct pt_solution *, unsigned *);
 extern bool pt_solution_includes_global (struct pt_solution *);
 extern bool pt_solution_includes (struct pt_solution *, const_tree);
 extern bool pt_solutions_intersect (struct pt_solution *, struct pt_solution *);

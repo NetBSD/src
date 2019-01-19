@@ -1,28 +1,51 @@
-2018-10-26  Release Manager
+2018-12-06  Release Manager
 
-	* GCC 6.5.0 released.
+	* GCC 7.4.0 released.
 
-2017-07-04  Release Manager
+2018-01-25  Release Manager
 
-	* GCC 6.4.0 released.
+	* GCC 7.3.0 released.
 
-2016-12-21  Release Manager
+2017-10-10  Paolo Carlini  <paolo.carlini@oracle.com>
 
-	* GCC 6.3.0 released.
+	* elf.c: Fix typo in the last commit, SFH_COMPRESSED vs SHF_COMPRESSED.
 
-2016-08-22  Release Manager
+2017-10-10  Ian Lance Taylor  <iant@golang.org>
 
-	* GCC 6.2.0 released.
+	PR go/80914
+	* elf.c (SHF_COMPRESSED): Define.
+	(elf_add): Ignore debug sections with SHF_COMPRESSED set.
+
+2017-08-14  Release Manager
+
+	* GCC 7.2.0 released.
+
+2017-05-02  Release Manager
+
+	* GCC 7.1.0 released.
+
+2017-03-08  Sam Thursfield  <sam.thursfield@codethink.co.uk>
+
+	* btest.c (test5): Replace #ifdef guard with 'unused' attribute
+	to fix compile warning when BACKTRACE_SUPPORTED isn't defined.
+
+2017-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2016-11-15  Matthias Klose  <doko@ubuntu.com>
+
+	* configure: Regenerate.
+
+2016-09-11  Carlos Liam  <carlos@aarzee.me>
+
+	* all: Remove meaningless trailing whitespace.
 
 2016-05-18  Uros Bizjak  <ubizjak@gmail.com>
 
 	PR target/71161
 	* elf.c (phdr_callback) [__i386__]: Add
 	__attribute__((__force_align_arg_pointer__)).
-
-2016-04-27  Release Manager
-
-	* GCC 6.1.0 released.
 
 2016-03-02  Maxim Ostapenko  <m.ostapenko@partner.samsung.com>
 
@@ -603,7 +626,7 @@
 
 	* Initial implementation.
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

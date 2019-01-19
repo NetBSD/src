@@ -1,5 +1,5 @@
 /* Subroutine for function pointer canonicalization on PA-RISC with ELF32.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by John David Anglin (dave.anglin@nrc.ca).
 
 This file is part of GCC.
@@ -133,7 +133,7 @@ __canonicalize_funcptr_for_compare (fptr_t fptr)
   /* Build a plabel for an indirect call to _dl_fixup.  */
   fixup_plabel[0] = (unsigned int) iptr + 8;	/* address of fixup */
   fixup_plabel[1] = got[-1];			/* ltp for fixup */
-  fixup = (fixup_t) ((int) fixup_plabel | 3);
+  fixup = (fixup_t) ((int) fixup_plabel | 2);
 
   /* Call fixup to resolve the function address.  got[1] contains the
      link_map pointer and plabel[1] the relocation offset.  */

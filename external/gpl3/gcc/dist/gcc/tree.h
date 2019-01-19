@@ -1,5 +1,5 @@
 /* Definitions for the ubiquitous 'tree' type for GNU compilers.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -234,6 +234,9 @@ as_internal_fn (combined_fn code)
 /* Helper macros for math builtins.  */
 
 #define CASE_FLT_FN(FN) case FN: case FN##F: case FN##L
+#define CASE_FLT_FN_FLOATN_NX(FN)			   \
+  case FN##F16: case FN##F32: case FN##F64: case FN##F128: \
+  case FN##F32X: case FN##F64X: case FN##F128X
 #define CASE_FLT_FN_REENT(FN) case FN##_R: case FN##F_R: case FN##L_R
 #define CASE_INT_FN(FN) case FN: case FN##L: case FN##LL: case FN##IMAX
 
@@ -661,6 +664,11 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
 #define CALL_EXPR_TAILCALL(NODE) \
   (CALL_EXPR_CHECK (NODE)->base.addressable_flag)
 
+/* Set on a CALL_EXPR if the call has been marked as requiring tail call
+   optimization for correctness.  */
+#define CALL_EXPR_MUST_TAIL_CALL(NODE) \
+  (CALL_EXPR_CHECK (NODE)->base.static_flag)
+
 /* Used as a temporary field on a CASE_LABEL_EXPR to indicate that the
    CASE_LOW operand has been processed.  */
 #define CASE_LOW_SEEN(NODE) \
@@ -765,6 +773,11 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
    and therefore can never be deleted and is a jump target for
    computed gotos.  */
 #define FORCED_LABEL(NODE) (LABEL_DECL_CHECK (NODE)->base.side_effects_flag)
+
+/* Whether a case or a user-defined label is allowed to fall through to.
+   This is used to implement -Wimplicit-fallthrough.  */
+#define FALLTHROUGH_LABEL_P(NODE) \
+  (LABEL_DECL_CHECK (NODE)->base.private_flag)
 
 /* Nonzero means this expression is volatile in the C sense:
    its address should be of type `volatile WHATEVER *'.
@@ -911,17 +924,6 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
 /* In a CALL_EXPR, means call was instrumented by Pointer Bounds Checker.  */
 #define CALL_WITH_BOUNDS_P(NODE) (CALL_EXPR_CHECK (NODE)->base.deprecated_flag)
 
-/* In a type, nonzero means that all objects of the type are guaranteed by the
-   language or front-end to be properly aligned, so we can indicate that a MEM
-   of this type is aligned at least to the alignment of the type, even if it
-   doesn't appear that it is.  We see this, for example, in object-oriented
-   languages where a tag field may show this is an object of a more-aligned
-   variant of the more generic type.
-
-   In an SSA_NAME node, nonzero if the SSA_NAME node is on the SSA_NAME
-   freelist.  */
-#define TYPE_ALIGN_OK(NODE) (TYPE_CHECK (NODE)->base.nothrow_flag)
-
 /* Used in classes in C++.  */
 #define TREE_PRIVATE(NODE) ((NODE)->base.private_flag)
 /* Used in classes in C++. */
@@ -964,6 +966,16 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
    themselves are rewritten or transformed.  */
 #define REF_REVERSE_STORAGE_ORDER(NODE) \
   (TREE_CHECK2 (NODE, BIT_FIELD_REF, MEM_REF)->base.default_def_flag)
+
+  /* In an ADDR_EXPR, indicates that this is a pointer to nested function
+   represented by a descriptor instead of a trampoline.  */
+#define FUNC_ADDR_BY_DESCRIPTOR(NODE) \
+  (TREE_CHECK (NODE, ADDR_EXPR)->base.default_def_flag)
+
+/* In a CALL_EXPR, indicates that this is an indirect call for which
+   pointers to nested function are descriptors instead of trampolines.  */
+#define CALL_EXPR_BY_DESCRIPTOR(NODE) \
+  (TREE_CHECK (NODE, CALL_EXPR)->base.default_def_flag)
 
 /* These flags are available for each language front end to use internally.  */
 #define TREE_LANG_FLAG_0(NODE) \
@@ -1642,6 +1654,10 @@ extern void protected_set_expr_location (tree, location_t);
 
 #define OMP_CLAUSE_TILE_LIST(NODE) \
   OMP_CLAUSE_OPERAND (OMP_CLAUSE_SUBCODE_CHECK (NODE, OMP_CLAUSE_TILE), 0)
+#define OMP_CLAUSE_TILE_ITERVAR(NODE) \
+  OMP_CLAUSE_OPERAND (OMP_CLAUSE_SUBCODE_CHECK (NODE, OMP_CLAUSE_TILE), 1)
+#define OMP_CLAUSE_TILE_COUNT(NODE) \
+  OMP_CLAUSE_OPERAND (OMP_CLAUSE_SUBCODE_CHECK (NODE, OMP_CLAUSE_TILE), 2)
 
 #define OMP_CLAUSE__GRIDDIM__DIMENSION(NODE) \
   (OMP_CLAUSE_SUBCODE_CHECK (NODE, OMP_CLAUSE__GRIDDIM_)\
@@ -1652,6 +1668,11 @@ extern void protected_set_expr_location (tree, location_t);
   OMP_CLAUSE_OPERAND (OMP_CLAUSE_SUBCODE_CHECK (NODE, OMP_CLAUSE__GRIDDIM_), 1)
 
 /* SSA_NAME accessors.  */
+
+/* Whether SSA_NAME NODE is a virtual operand.  This simply caches the
+   information in the underlying SSA_NAME_VAR for efficiency.  */
+#define SSA_NAME_IS_VIRTUAL_OPERAND(NODE) \
+  SSA_NAME_CHECK (NODE)->base.public_flag
 
 /* Returns the IDENTIFIER_NODE giving the SSA name a name or NULL_TREE
    if there is no name associated with it.  */
@@ -1671,7 +1692,16 @@ extern void protected_set_expr_location (tree, location_t);
    ? NULL_TREE : (NODE)->ssa_name.var)
 
 #define SET_SSA_NAME_VAR_OR_IDENTIFIER(NODE,VAR) \
-  do { SSA_NAME_CHECK (NODE)->ssa_name.var = (VAR); } while (0)
+  do \
+    { \
+      tree var_ = (VAR); \
+      SSA_NAME_CHECK (NODE)->ssa_name.var = var_; \
+      SSA_NAME_IS_VIRTUAL_OPERAND (NODE) \
+	= (var_ \
+	   && TREE_CODE (var_) == VAR_DECL \
+	   && VAR_DECL_IS_VIRTUAL_OPERAND (var_)); \
+    } \
+  while (0)
 
 /* Returns the statement which defines this SSA name.  */
 #define SSA_NAME_DEF_STMT(NODE)	SSA_NAME_CHECK (NODE)->ssa_name.def_stmt
@@ -1744,6 +1774,10 @@ extern void protected_set_expr_location (tree, location_t);
 
 /* True if BLOCK has the same ranges as its BLOCK_SUPERCONTEXT.  */
 #define BLOCK_SAME_RANGE(NODE) (BLOCK_CHECK (NODE)->base.u.bits.nameless_flag)
+
+/* True if BLOCK appears in cold section.  */
+#define BLOCK_IN_COLD_SECTION_P(NODE) \
+  (BLOCK_CHECK (NODE)->base.u.bits.atomic_flag)
 
 /* An index number for this block.  These values are not guaranteed to
    be unique across functions -- whether or not they are depends on
@@ -1865,8 +1899,15 @@ extern machine_mode element_mode (const_tree t);
 #define TYPE_ATTRIBUTES(NODE) (TYPE_CHECK (NODE)->type_common.attributes)
 
 /* The alignment necessary for objects of this type.
-   The value is an int, measured in bits.  */
-#define TYPE_ALIGN(NODE) (TYPE_CHECK (NODE)->type_common.align)
+   The value is an int, measured in bits and must be a power of two.
+   We support also an "alignment" of zero.  */
+#define TYPE_ALIGN(NODE) \
+    (TYPE_CHECK (NODE)->type_common.align \
+     ? ((unsigned)1) << ((NODE)->type_common.align - 1) : 0)
+
+/* Specify that TYPE_ALIGN(NODE) is X.  */
+#define SET_TYPE_ALIGN(NODE, X) \
+    (TYPE_CHECK (NODE)->type_common.align = ffs_hwi (X))
 
 /* 1 if the alignment for this type was requested by "aligned" attribute,
    0 if it is the default for this type.  */
@@ -1951,6 +1992,7 @@ extern machine_mode element_mode (const_tree t);
 #define TYPE_LANG_FLAG_4(NODE) (TYPE_CHECK (NODE)->type_common.lang_flag_4)
 #define TYPE_LANG_FLAG_5(NODE) (TYPE_CHECK (NODE)->type_common.lang_flag_5)
 #define TYPE_LANG_FLAG_6(NODE) (TYPE_CHECK (NODE)->type_common.lang_flag_6)
+#define TYPE_LANG_FLAG_7(NODE) (TYPE_CHECK (NODE)->type_common.lang_flag_7)
 
 /* Used to keep track of visited nodes in tree traversals.  This is set to
    0 by copy_node and make_node.  */
@@ -1963,7 +2005,7 @@ extern machine_mode element_mode (const_tree t);
 
 /* For a VECTOR_TYPE, this is the number of sub-parts of the vector.  */
 #define TYPE_VECTOR_SUBPARTS(VECTOR_TYPE) \
-  (((unsigned HOST_WIDE_INT) 1) \
+  (HOST_WIDE_INT_1U \
    << VECTOR_TYPE_CHECK (VECTOR_TYPE)->type_common.precision)
 
 /* Set precision to n when we have 2^n sub-parts of the vector.  */
@@ -1992,6 +2034,19 @@ extern machine_mode element_mode (const_tree t);
    DECL_NONADDRESSABLE_P for arrays, see the definition of this flag.  */
 #define TYPE_NONALIASED_COMPONENT(NODE) \
   (ARRAY_TYPE_CHECK (NODE)->type_common.transparent_aggr_flag)
+
+/* For an ARRAY_TYPE, a RECORD_TYPE, a UNION_TYPE or a QUAL_UNION_TYPE
+   whether the array is typeless storage or the type contains a member
+   with this flag set.  Such types are exempt from type-based alias
+   analysis.  For ARRAY_TYPEs with AGGREGATE_TYPE_P element types
+   the flag should be inherited from the element type, can change
+   when type is finalized and because of that should not be used in
+   type hashing.  For ARRAY_TYPEs with non-AGGREGATE_TYPE_P element types
+   the flag should not be changed after the array is created and should
+   be used in type hashing.  */
+#define TYPE_TYPELESS_STORAGE(NODE) \
+  (TREE_CHECK4 (NODE, RECORD_TYPE, UNION_TYPE, QUAL_UNION_TYPE, \
+		ARRAY_TYPE)->type_common.typeless_storage)
 
 /* Indicated that objects of this type should be laid out in as
    compact a way as possible.  */
@@ -2306,8 +2361,16 @@ extern machine_mode element_mode (const_tree t);
 #define DECL_SIZE(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.size)
 /* Likewise for the size in bytes.  */
 #define DECL_SIZE_UNIT(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.size_unit)
-/* Holds the alignment required for the datum, in bits.  */
-#define DECL_ALIGN(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.align)
+/* Returns the alignment required for the datum, in bits.  It must
+   be a power of two, but an "alignment" of zero is supported
+   (e.g. as "uninitialized" sentinel).  */
+#define DECL_ALIGN(NODE) \
+    (DECL_COMMON_CHECK (NODE)->decl_common.align \
+     ? ((unsigned)1) << ((NODE)->decl_common.align - 1) : 0)
+/* Specify that DECL_ALIGN(NODE) is X.  */
+#define SET_DECL_ALIGN(NODE, X) \
+    (DECL_COMMON_CHECK (NODE)->decl_common.align = ffs_hwi (X))
+
 /* The alignment of NODE, in bytes.  */
 #define DECL_ALIGN_UNIT(NODE) (DECL_ALIGN (NODE) / BITS_PER_UNIT)
 /* Set if the alignment of this DECL has been set by the user, for
@@ -2318,6 +2381,8 @@ extern machine_mode element_mode (const_tree t);
    field.  Always equal to TYPE_MODE (TREE_TYPE (decl)) except for a
    FIELD_DECL.  */
 #define DECL_MODE(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.mode)
+#define SET_DECL_MODE(NODE, MODE) \
+  (DECL_COMMON_CHECK (NODE)->decl_common.mode = (MODE))
 
 /* For FUNCTION_DECL, if it is built-in, this identifies which built-in
    operation it is.  Note, however, that this field is overloaded, with
@@ -2425,8 +2490,7 @@ extern void decl_value_expr_insert (tree, tree);
 
 /* In a VAR_DECL or PARM_DECL, the location at which the value may be found,
    if transformations have made this more complicated than evaluating the
-   decl itself.  This should only be used for debugging; once this field has
-   been set, the decl itself may not legitimately appear in the function.  */
+   decl itself.  */
 #define DECL_HAS_VALUE_EXPR_P(NODE) \
   (TREE_CHECK3 (NODE, VAR_DECL, PARM_DECL, RESULT_DECL) \
    ->decl_common.decl_flag_2)
@@ -2510,7 +2574,7 @@ extern void decl_value_expr_insert (tree, tree);
 #define DECL_OFFSET_ALIGN(NODE) \
   (((unsigned HOST_WIDE_INT)1) << FIELD_DECL_CHECK (NODE)->decl_common.off_align)
 
-/* Specify that DECL_ALIGN(NODE) is a multiple of X.  */
+/* Specify that DECL_OFFSET_ALIGN(NODE) is X.  */
 #define SET_DECL_OFFSET_ALIGN(NODE, X) \
   (FIELD_DECL_CHECK (NODE)->decl_common.off_align = ffs_hwi (X) - 1)
 
@@ -3595,6 +3659,22 @@ tree_operand_check_code (const_tree __t, enum tree_code __code, int __i,
 #define double_type_node		global_trees[TI_DOUBLE_TYPE]
 #define long_double_type_node		global_trees[TI_LONG_DOUBLE_TYPE]
 
+/* Nodes for particular _FloatN and _FloatNx types in sequence.  */
+#define FLOATN_TYPE_NODE(IDX)		global_trees[TI_FLOATN_TYPE_FIRST + (IDX)]
+#define FLOATN_NX_TYPE_NODE(IDX)	global_trees[TI_FLOATN_NX_TYPE_FIRST + (IDX)]
+#define FLOATNX_TYPE_NODE(IDX)		global_trees[TI_FLOATNX_TYPE_FIRST + (IDX)]
+
+/* Names for individual types (code should normally iterate over all
+   such types; these are only for back-end use, or in contexts such as
+   *.def where iteration is not possible).  */
+#define float16_type_node		global_trees[TI_FLOAT16_TYPE]
+#define float32_type_node		global_trees[TI_FLOAT32_TYPE]
+#define float64_type_node		global_trees[TI_FLOAT64_TYPE]
+#define float128_type_node		global_trees[TI_FLOAT128_TYPE]
+#define float32x_type_node		global_trees[TI_FLOAT32X_TYPE]
+#define float64x_type_node		global_trees[TI_FLOAT64X_TYPE]
+#define float128x_type_node		global_trees[TI_FLOAT128X_TYPE]
+
 #define float_ptr_type_node		global_trees[TI_FLOAT_PTR_TYPE]
 #define double_ptr_type_node		global_trees[TI_DOUBLE_PTR_TYPE]
 #define long_double_ptr_type_node	global_trees[TI_LONG_DOUBLE_PTR_TYPE]
@@ -3604,6 +3684,8 @@ tree_operand_check_code (const_tree __t, enum tree_code __code, int __i,
 #define complex_float_type_node		global_trees[TI_COMPLEX_FLOAT_TYPE]
 #define complex_double_type_node	global_trees[TI_COMPLEX_DOUBLE_TYPE]
 #define complex_long_double_type_node	global_trees[TI_COMPLEX_LONG_DOUBLE_TYPE]
+
+#define COMPLEX_FLOATN_NX_TYPE_NODE(IDX)	global_trees[TI_COMPLEX_FLOATN_NX_TYPE_FIRST + (IDX)]
 
 #define pointer_bounds_type_node        global_trees[TI_POINTER_BOUNDS_TYPE]
 
@@ -3621,6 +3703,8 @@ tree_operand_check_code (const_tree __t, enum tree_code __code, int __i,
 #define va_list_fpr_counter_field	global_trees[TI_VA_LIST_FPR_COUNTER_FIELD]
 /* The C type `FILE *'.  */
 #define fileptr_type_node		global_trees[TI_FILEPTR_TYPE]
+/* The C type `const struct tm *'.  */
+#define const_tm_ptr_type_node		global_trees[TI_CONST_TM_PTR_TYPE]
 #define pointer_sized_int_node		global_trees[TI_POINTER_SIZED_TYPE]
 
 #define boolean_type_node		global_trees[TI_BOOLEAN_TYPE]
@@ -3968,8 +4052,8 @@ extern tree build_call_expr_loc (location_t, tree, int, ...);
 extern tree build_call_expr (tree, int, ...);
 extern tree build_call_expr_internal_loc (location_t, enum internal_fn,
 					  tree, int, ...);
-extern tree build_call_expr_internal_loc (location_t, enum internal_fn,
-					  tree, int, tree *);
+extern tree build_call_expr_internal_loc_array (location_t, enum internal_fn,
+						tree, int, const tree *);
 extern tree maybe_build_call_expr_loc (location_t, combined_fn, tree,
 				       int, ...);
 extern tree build_string_literal (int, const char *);
@@ -3990,7 +4074,7 @@ extern tree build_truth_vector_type (unsigned, unsigned);
 extern tree build_same_sized_truth_vector_type (tree vectype);
 extern tree build_opaque_vector_type (tree innertype, int nunits);
 extern tree build_index_type (tree);
-extern tree build_array_type (tree, tree);
+extern tree build_array_type (tree, tree, bool = false);
 extern tree build_nonshared_array_type (tree, tree);
 extern tree build_array_type_nelts (tree, unsigned HOST_WIDE_INT);
 extern tree build_function_type (tree, tree);
@@ -4164,6 +4248,11 @@ extern tree merge_dllimport_decl_attributes (tree, tree);
 /* Handle a "dllimport" or "dllexport" attribute.  */
 extern tree handle_dll_attribute (tree *, tree, tree, int, bool *);
 
+/* Returns true iff CAND and BASE have equivalent language-specific
+   qualifiers.  */
+
+extern bool check_lang_type (const_tree cand, const_tree base);
+
 /* Returns true iff unqualified CAND and BASE are equivalent.  */
 
 extern bool check_base_type (const_tree cand, const_tree base);
@@ -4212,12 +4301,20 @@ extern tree type_hash_canon (unsigned int, tree);
 
 extern tree convert (tree, tree);
 extern unsigned int expr_align (const_tree);
-extern tree size_in_bytes (const_tree);
+extern tree size_in_bytes_loc (location_t, const_tree);
+inline tree
+size_in_bytes (const_tree t)
+{
+  return size_in_bytes_loc (input_location, t);
+}
+
 extern HOST_WIDE_INT int_size_in_bytes (const_tree);
 extern HOST_WIDE_INT max_int_size_in_bytes (const_tree);
 extern tree bit_position (const_tree);
 extern tree byte_position (const_tree);
 extern HOST_WIDE_INT int_byte_position (const_tree);
+
+/* Type for sizes of data-type.  */
 
 #define sizetype sizetype_tab[(int) stk_sizetype]
 #define bitsizetype sizetype_tab[(int) stk_bitsizetype]
@@ -4228,12 +4325,15 @@ extern HOST_WIDE_INT int_byte_position (const_tree);
 #define bitsize_int(L) size_int_kind (L, stk_bitsizetype)
 #define sbitsize_int(L) size_int_kind (L, stk_sbitsizetype)
 
-/* Type for sizes of data-type.  */
+/* Log2 of BITS_PER_UNIT.  */
 
-#define BITS_PER_UNIT_LOG \
-  ((BITS_PER_UNIT > 1) + (BITS_PER_UNIT > 2) + (BITS_PER_UNIT > 4) \
-   + (BITS_PER_UNIT > 8) + (BITS_PER_UNIT > 16) + (BITS_PER_UNIT > 32) \
-   + (BITS_PER_UNIT > 64) + (BITS_PER_UNIT > 128) + (BITS_PER_UNIT > 256))
+#if BITS_PER_UNIT == 8
+#define LOG2_BITS_PER_UNIT 3
+#elif BITS_PER_UNIT == 16
+#define LOG2_BITS_PER_UNIT 4
+#else
+#error Unknown BITS_PER_UNIT
+#endif
 
 /* Concatenate two lists (chains of TREE_LIST nodes) X and Y
    by making the last node in X point to Y.
@@ -4623,73 +4723,10 @@ extern tree tree_strip_nop_conversions (tree);
 extern tree tree_strip_sign_nop_conversions (tree);
 extern const_tree strip_invariant_refs (const_tree);
 extern tree lhd_gcc_personality (void);
-extern void assign_assembler_name_if_neeeded (tree);
+extern void assign_assembler_name_if_needed (tree);
 extern void warn_deprecated_use (tree, tree);
 extern void cache_integer_cst (tree);
 extern const char *combined_fn_name (combined_fn);
-
-/* Return the memory model from a host integer.  */
-static inline enum memmodel
-memmodel_from_int (unsigned HOST_WIDE_INT val)
-{
-  return (enum memmodel) (val & MEMMODEL_MASK);
-}
-
-/* Return the base memory model from a host integer.  */
-static inline enum memmodel
-memmodel_base (unsigned HOST_WIDE_INT val)
-{
-  return (enum memmodel) (val & MEMMODEL_BASE_MASK);
-}
-
-/* Return TRUE if the memory model is RELAXED.  */
-static inline bool
-is_mm_relaxed (enum memmodel model)
-{
-  return (model & MEMMODEL_BASE_MASK) == MEMMODEL_RELAXED;
-}
-
-/* Return TRUE if the memory model is CONSUME.  */
-static inline bool
-is_mm_consume (enum memmodel model)
-{
-  return (model & MEMMODEL_BASE_MASK) == MEMMODEL_CONSUME;
-}
-
-/* Return TRUE if the memory model is ACQUIRE.  */
-static inline bool
-is_mm_acquire (enum memmodel model)
-{
-  return (model & MEMMODEL_BASE_MASK) == MEMMODEL_ACQUIRE;
-}
-
-/* Return TRUE if the memory model is RELEASE.  */
-static inline bool
-is_mm_release (enum memmodel model)
-{
-  return (model & MEMMODEL_BASE_MASK) == MEMMODEL_RELEASE;
-}
-
-/* Return TRUE if the memory model is ACQ_REL.  */
-static inline bool
-is_mm_acq_rel (enum memmodel model)
-{
-  return (model & MEMMODEL_BASE_MASK) == MEMMODEL_ACQ_REL;
-}
-
-/* Return TRUE if the memory model is SEQ_CST.  */
-static inline bool
-is_mm_seq_cst (enum memmodel model)
-{
-  return (model & MEMMODEL_BASE_MASK) == MEMMODEL_SEQ_CST;
-}
-
-/* Return TRUE if the memory model is a SYNC variant.  */
-static inline bool
-is_mm_sync (enum memmodel model)
-{
-  return (model & MEMMODEL_SYNC);
-}
 
 /* Compare and hash for any structure which begins with a canonical
    pointer.  Assumes all pointers are interchangeable, which is sort
@@ -4737,7 +4774,7 @@ static inline bool
 complete_or_array_type_p (const_tree type)
 {
   return COMPLETE_TYPE_P (type)
-	 || (TREE_CODE (type) == ARRAY_TYPE
+         || (TREE_CODE (type) == ARRAY_TYPE
 	     && COMPLETE_TYPE_P (TREE_TYPE (type)));
 }
 
@@ -4758,7 +4795,7 @@ extern int simple_cst_equal (const_tree, const_tree);
 namespace inchash
 {
 
-extern void add_expr (const_tree, hash &);
+extern void add_expr (const_tree, hash &, unsigned int = 0);
 
 }
 
@@ -4833,9 +4870,9 @@ extern tree array_ref_up_bound (tree);
    EXP, an ARRAY_REF or an ARRAY_RANGE_REF.  */
 extern tree array_ref_low_bound (tree);
 
-/* Returns true if REF is an array reference to an array at the end of
-   a structure.  If this is the case, the array may be allocated larger
-   than its upper bound implies.  */
+/* Returns true if REF is an array reference or a component reference
+   to an array at the end of a structure.  If this is the case, the array
+   may be allocated larger than its upper bound implies.  */
 extern bool array_at_struct_end_p (tree);
 
 /* Return a tree representing the offset, in bytes, of the field referenced
@@ -4849,6 +4886,8 @@ extern void DEBUG_FUNCTION verify_type (const_tree t);
 extern bool gimple_canonical_types_compatible_p (const_tree, const_tree,
 						 bool trust_type_canonical = true);
 extern bool type_with_interoperable_signedness (const_tree);
+extern bitmap get_nonnull_args (const_tree);
+extern int get_range_pos_neg (tree);
 
 /* Return simplified tree code of type that is used for canonical type
    merging.  */
@@ -5210,6 +5249,8 @@ namespace wi
   to_widest (const_tree);
 
   generic_wide_int <extended_tree <ADDR_MAX_PRECISION> > to_offset (const_tree);
+
+  wide_int to_wide (const_tree, unsigned int);
 }
 
 inline unsigned int
@@ -5237,6 +5278,16 @@ inline generic_wide_int <wi::extended_tree <ADDR_MAX_PRECISION> >
 wi::to_offset (const_tree t)
 {
   return t;
+}
+
+/* Convert INTEGER_CST T to a wide_int of precision PREC, extending or
+   truncating as necessary.  When extending, use sign extension if T's
+   type is signed and zero extension if T's type is unsigned.  */
+
+inline wide_int
+wi::to_wide (const_tree t, unsigned int prec)
+{
+  return wide_int::from (t, prec, TYPE_SIGN (TREE_TYPE (t)));
 }
 
 template <int N>
@@ -5332,7 +5383,7 @@ wi::max_value (const_tree type)
 inline bool
 tree_int_cst_lt (const_tree t1, const_tree t2)
 {
-  return wi::lts_p (wi::to_widest (t1), wi::to_widest (t2));
+  return wi::to_widest (t1) < wi::to_widest (t2);
 }
 
 /* Return true if INTEGER_CST T1 is less than or equal to INTEGER_CST T2,
@@ -5341,7 +5392,7 @@ tree_int_cst_lt (const_tree t1, const_tree t2)
 inline bool
 tree_int_cst_le (const_tree t1, const_tree t2)
 {
-  return wi::les_p (wi::to_widest (t1), wi::to_widest (t2));
+  return wi::to_widest (t1) <= wi::to_widest (t2);
 }
 
 /* Returns -1 if T1 < T2, 0 if T1 == T2, and 1 if T1 > T2.  T1 and T2
@@ -5367,8 +5418,7 @@ extern bool complete_ctor_at_level_p (const_tree, HOST_WIDE_INT, const_tree);
    look for the ultimate containing object, which is returned and specify
    the access position and size.  */
 extern tree get_inner_reference (tree, HOST_WIDE_INT *, HOST_WIDE_INT *,
-				 tree *, machine_mode *, int *, int *,
-				 int *, bool);
+				 tree *, machine_mode *, int *, int *, int *);
 
 extern tree build_personality_function (const char *);
 
@@ -5388,8 +5438,8 @@ extern GTY(()) struct int_n_trees_t int_n_trees[NUM_INT_N_ENTS];
 
 inline HOST_WIDE_INT
 int_bit_position (const_tree field)
-{ 
-  return (wi::lshift (wi::to_offset (DECL_FIELD_OFFSET (field)), BITS_PER_UNIT_LOG)
+{
+  return ((wi::to_offset (DECL_FIELD_OFFSET (field)) << LOG2_BITS_PER_UNIT)
 	  + wi::to_offset (DECL_FIELD_BIT_OFFSET (field))).to_shwi ();
 }
 
@@ -5413,16 +5463,6 @@ type_with_alias_set_p (const_tree t)
   return false;
 }
 
-extern location_t get_pure_location (location_t loc);
-
-/* Get the endpoint of any range encoded within location LOC.  */
-
-static inline location_t
-get_finish (location_t loc)
-{
-  return get_range_from_loc (line_table, loc).m_finish;
-}
-
 extern location_t set_block (location_t loc, tree block);
 
 extern void gt_ggc_mx (tree &);
@@ -5431,6 +5471,7 @@ extern void gt_pch_nx (tree &, gt_pointer_operator, void *);
 
 extern bool nonnull_arg_p (const_tree);
 extern bool is_redundant_typedef (const_tree);
+extern bool expr_type_first_operand_type_p (tree_code);
 
 extern location_t
 set_source_range (tree expr, location_t start, location_t finish);
@@ -5444,9 +5485,6 @@ get_decl_source_range (tree decl)
   location_t loc = DECL_SOURCE_LOCATION (decl);
   return get_range_from_loc (line_table, loc);
 }
-
-extern location_t
-make_location (location_t caret, location_t start, location_t finish);
 
 /* Return true if it makes sense to promote/demote from_type to to_type. */
 inline bool
