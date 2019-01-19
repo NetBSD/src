@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.5 2012/12/10 20:30:06 christos Exp $
+# $NetBSD: t_awk.sh,v 1.6 2019/01/19 01:02:12 christos Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -335,6 +335,30 @@ newline_rs_body() {
 		-x "printf '\n\n\nr1f1\nr1f2\n\nr2f1\nr2f2\n\n\n' | $awk '{\$1=\$1}1' RS= OFS=:"
 }
 
+atf_test_case regex_range
+
+regex_range_head() {
+	atf_set "descr" "Test awk(1) with regex range"
+}
+
+regex_range_body() {
+	atf_check \
+		-o "inline:matched\n" \
+		-x "echo '1 a' | $awk '/[[:digit:]][[:space:]][[:alpha:]]/ { print \"matched\"; }'"
+}
+
+atf_test_case regex_repeat
+
+regex_repeat_head() {
+	atf_set "descr" "Test awk(1) with regex repeat"
+}
+
+regex_repeat_body() {
+	atf_check \
+		-o "inline:matched\n" \
+		-x "echo 'aaabbbbcc' | $awk '/a{3}b{4}c{2}/ { print \"matched\"; }'"
+}
+
 atf_test_case modify_subsep
 
 modify_subsep_head() {
@@ -374,5 +398,7 @@ atf_init_test_cases() {
 	atf_add_test_case regex_reallocation_rs
 	atf_add_test_case empty_rs
 	atf_add_test_case newline_rs
+	atf_add_test_case regex_range
+	atf_add_test_case regex_repeat
 	atf_add_test_case modify_subsep
 }
