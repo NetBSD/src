@@ -1,31 +1,44 @@
-2018-10-26  Release Manager
+2018-12-06  Release Manager
 
-	* GCC 6.5.0 released.
+	* GCC 7.4.0 released.
+
+2018-01-25  Release Manager
+
+	* GCC 7.3.0 released.
+
+2017-08-14  Release Manager
+
+	* GCC 7.2.0 released.
 
 2017-07-26  Georg-Johann Lay  <avr@gjlay.de>
 
-	Backport from 2017-07-26 gcc-7-branch r250562.
+	Backport from 2017-07-21 trunk r250428.
 
 	PR lto/81487
 	* lto-plugin.c (claim_file_handler): Use xasprintf instead of
 	asprintf.
 	[hi!=0]: Swap hi and lo arguments supplied to xasprintf.
 
-2017-07-04  Release Manager
+2017-05-02  Release Manager
 
-	* GCC 6.4.0 released.
+	* GCC 7.1.0 released.
 
-2016-12-21  Release Manager
+2017-01-17  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 6.3.0 released.
+	PR other/79046
+	* configure.ac: Add GCC_BASE_VER.
+	* Makefile.am (gcc_version): Use @get_gcc_base_ver@ instead of cat to
+	get version from BASE-VER file.
+	* configure: Regenerated.
+	* Makefile.in: Regenerated.
 
-2016-08-22  Release Manager
+2017-01-04  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 6.2.0 released.
+	Update copyright years.
 
-2016-04-27  Release Manager
+2016-11-15  Matthias Klose  <doko@ubuntu.com>
 
-	* GCC 6.1.0 released.
+	* configure: Regenerate.
 
 2016-02-25  Ilya Verbin  <ilya.verbin@intel.com>
 
