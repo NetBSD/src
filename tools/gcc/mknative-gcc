@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.95 2019/01/19 17:08:39 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.96 2019/01/19 20:02:06 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -82,13 +82,18 @@ get_libgcc () {
 			SHLIB_MAPFILES SHLIB_NM_FLAGS
 		getvars gcc/Makefile \
 			NOEXCEPTION_FLAGS EXTRA_HEADERS
-		getvars gcc/Makefile \
-			enable_execute_stack \
-			unwind_header md_unwind_header \
-			sfp_machine_header thread_header
 		getlinks config.status libgcc
 	}	| sanitise_includes \
 		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch/$MACHINE_ARCH/defs.mk
+
+	cd $_TMPDIR/$_PLATFORM/libgcc
+	{
+		getvars $_PLATFORM/libgcc/Makefile \
+			enable_execute_stack \
+			unwind_header md_unwind_header \
+			sfp_machine_header thread_header
+	}	| sanitise_includes \
+		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch/$MACHINE_ARCH/gthr-defs.mk
 
 	if [ "${MACHINE_ARCH}" = "m68000" ]
 	then

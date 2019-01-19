@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2019/01/19 17:11:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2019/01/19 20:02:06 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -12,8 +12,7 @@ BUILDINCS=	basic_file.h c++allocator.h c++io.h c++locale.h
 BUILDINCS+=	messages_members.h time_members.h opt_random.h
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_host_headers}
-# XXX gthr-default.h should be a symlink to gthr-posix.h
-INCS+=		gthr-default.h gthr.h gthr-single.h gthr-posix.h
+INCS+=		gthr.h gthr-single.h gthr-posix.h
 INCS+=		${BUILDINCS}
 
 # libsupc++
@@ -27,6 +26,8 @@ INCS+=		c++config.h
 .endif
 
 INCSDIR=	/usr/include/g++/bits
+
+SYMLINKS+=	${INCSDIR}/gthr-posix.h ${INCSDIR}/gthr-default.h
 
 .include "${.CURDIR}/../Makefile.includes"
 

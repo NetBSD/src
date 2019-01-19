@@ -1,8 +1,13 @@
-#	$NetBSD: Makefile.gthr,v 1.1 2019/01/19 17:11:02 mrg Exp $
+#	$NetBSD: Makefile.gthr,v 1.2 2019/01/19 20:02:06 mrg Exp $
 
 # makefile fragment to setup files selected by configure
 
 .if ${MKGCC} != "no"
+
+LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
+
+. -include "${DIST}/../lib/libgcc/arch/${LIBGCC_MACHINE_ARCH}/gthr-defs.mk"
+
 CONFIG_LINKS= \
 	${G_enable_execute_stack}	enable-execute-stack.c \
 	${G_unwind_header}		unwind.h \
@@ -13,4 +18,5 @@ BUILDSYMLINKS+=	${CONFIG_LINKS}
 . for _src _dst in ${CONFIG_LINKS}
 DPSRCS+=	${_dst}
 . endfor
+
 .endif
