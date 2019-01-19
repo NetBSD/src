@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1094 2019/01/09 23:52:29 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1095 2019/01/19 12:58:37 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -72,6 +72,8 @@ MKGCCCMDS?=	no
 #
 .if ${HAVE_GCC} == 6
 EXTERNAL_GCC_SUBDIR?=	gcc.old
+.elif ${HAVE_GCC} == 7
+EXTERNAL_GCC_SUBDIR?=	gcc
 .else
 EXTERNAL_GCC_SUBDIR=?	/does/not/exist
 .endif
