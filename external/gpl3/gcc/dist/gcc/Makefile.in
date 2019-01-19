@@ -1911,8 +1911,9 @@ SELFTEST_FLAGS = -nostdinc -x c /dev/null -S -o /dev/null \
 # driver, cc1, or selftest data change.
 .PHONY: selftest
 selftest: s-selftest
-s-selftest: $(GCC_PASSES) cc1$(exeext) stmp-int-hdrs \
-  $(srcdir)/testsuite/selftests
+s-selftest: $(GCC_PASSES) cc1$(exeext) stmp-int-hdrs
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_s-selftest:
 	$(GCC_FOR_TARGET) $(SELFTEST_FLAGS)
 	$(STAMP) $@
 
