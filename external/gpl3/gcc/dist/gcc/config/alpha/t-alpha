@@ -1,7 +1,4 @@
-#!/bin/sh
-# Generate arm-tune.md, a file containing the tune attribute from the list of 
-# CPUs in arm-cores.def
-# Copyright (C) 2004-2016 Free Software Foundation, Inc.
+# Copyright (C) 2016-2017 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -19,11 +16,4 @@
 # along with GCC; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
 
-echo ";; -*- buffer-read-only: t -*-"
-echo ";; Generated automatically by gentune.sh from arm-cores.def"
-
-allcores=`awk -F'[(, 	]+' '/^ARM_CORE/ { cores = cores$3"," } END { print cores } ' $1`
-
-echo "(define_attr \"tune\""
-echo "	\"$allcores\"" | sed -e 's/,"$/"/' | sed -e 's/\([a-z0-9_]\+,[a-z0-9_]\+,[a-z0-9_]\+,\)/\1\n\t/g'
-echo "	(const (symbol_ref \"((enum attr_tune) arm_tune)\")))"
+PASSES_EXTRA += $(srcdir)/config/alpha/alpha-passes.def

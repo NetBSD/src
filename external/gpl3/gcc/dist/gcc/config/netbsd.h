@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -161,6 +161,20 @@ along with GCC; see the file COPYING3.  If not see
 #define STATIC_LIBASAN_LIBS "-lstdc++ -lpthread"
 #endif
 
+/* Provide a LIBGCC_SPEC appropriate for NetBSD.  */
+#ifdef NETBSD_NATIVE
+#define NETBSD_LIBGCC_SPEC	\
+  "%{!symbolic:			\
+     %{!shared:			\
+       %{!p:			\
+	 %{!pg: -lgcc}}}	\
+     %{shared: -lgcc_pic}	\
+     %{p: -lgcc_p}		\
+     %{pg: -lgcc_p}}"
+#else
+#define NETBSD_LIBGCC_SPEC "-lgcc"
+#endif
+
 /* Pass -cxx-isystem to cc1/cc1plus.  */
 #define NETBSD_CC1_AND_CC1PLUS_SPEC		\
   "%{cxx-isystem}"
@@ -170,6 +184,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef CC1PLUS_SPEC
 #define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
+
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#endif
 
 #undef TARGET_LIBC_HAS_FUNCTION
 #define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function
@@ -208,10 +226,13 @@ along with GCC; see the file COPYING3.  If not see
 #undef WINT_TYPE
 #define WINT_TYPE "int"
 
-#undef LINK_EH_SPEC
-#define LINK_EH_SPEC "--eh-frame-hdr "
-
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED
 #define USE_LD_AS_NEEDED 1
 #endif
+
+#undef  SUBTARGET_INIT_BUILTINS
+#define SUBTARGET_INIT_BUILTINS						\
+  do {									\
+    netbsd_patch_builtins ();						\
+  } while(0)

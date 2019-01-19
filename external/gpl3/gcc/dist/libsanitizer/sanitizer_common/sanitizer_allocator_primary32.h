@@ -244,7 +244,9 @@ class SizeClassAllocator32 {
     char padding[kCacheLineSize - sizeof(uptr) -
                  sizeof(IntrusiveList<TransferBatch>)];
   };
+#if _LP64
   COMPILER_CHECK(sizeof(SizeClassInfo) == kCacheLineSize);
+#endif
 
   uptr ComputeRegionId(uptr mem) {
     uptr res = mem >> kRegionSizeLog;
