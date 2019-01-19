@@ -19,4 +19,4 @@ G_SHLIB_MAPFILES=libgcc-std.ver ${GNUHOSTDIST}/libgcc/config/arm/libgcc-bpabi.ve
 G_SHLIB_NM_FLAGS=-pg
 G_NOEXCEPTION_FLAGS=-fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 G_EXTRA_HEADERS=${GNUHOSTDIST}/gcc/config/arm/mmintrin.h ${GNUHOSTDIST}/gcc/config/arm/arm_neon.h ${GNUHOSTDIST}/gcc/config/arm/arm_acle.h ${GNUHOSTDIST}/gcc/ginclude/tgmath.h ${GNUHOSTDIST}/gcc/ginclude/unwind-arm-common.h
-G_CONFIGLINKS=${GNUHOSTDIST}/libgcc/enable-execute-stack-mprotect.c  enable-execute-stack.c ${GNUHOSTDIST}/libgcc/config/arm/unwind-arm.h  unwind.h ${GNUHOSTDIST}/libgcc/config/no-unwind.h  md-unwind-support.h ${GNUHOSTDIST}/libgcc/config/arm/sfp-machine.h  sfp-machine.h ${GNUHOSTDIST}/libgcc/gthr-posix.h  gthr-default.h 
+G_CONFIG_LINKS=${GNUHOSTDIST}/libgcc/enable-execute-stack-mprotect.c  enable-execute-stack.c ${GNUHOSTDIST}/libgcc/config/arm/unwind-arm.h  unwind.h ${GNUHOSTDIST}/libgcc/config/no-unwind.h  md-unwind-support.h ${GNUHOSTDIST}/libgcc/config/arm/sfp-machine.h  sfp-machine.h ${GNUHOSTDIST}/libgcc/gthr-posix.h  gthr-default.h 
