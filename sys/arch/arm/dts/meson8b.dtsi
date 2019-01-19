@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b.dtsi,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson8b.dtsi,v 1.2 2019/01/19 21:44:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -34,5 +34,13 @@
 		reg = <0xc4300200 0x20>;
 		interrupts = <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_EDGE_RISING)>;
 		clocks = <&clkc CLKID_PERIPH>;
+	};
+
+	genfb: fb@c8006000 {
+		compatible = "amlogic,meson8b-fb";
+		reg = <0xc8006000 0x400>,	/* DMC */
+		      <0xd0040000 0x10000>,	/* HDMI */
+		      <0xd0100000 0x100000>;	/* VPU */
+		status = "disabled";
 	};
 };
