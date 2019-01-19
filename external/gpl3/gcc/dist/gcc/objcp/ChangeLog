@@ -1,22 +1,22 @@
-2018-10-26  Release Manager
+2018-12-06  Release Manager
 
-	* GCC 6.5.0 released.
+	* GCC 7.4.0 released.
 
-2017-07-04  Release Manager
+2018-01-25  Release Manager
 
-	* GCC 6.4.0 released.
+	* GCC 7.3.0 released.
 
-2016-12-21  Release Manager
+2017-08-14  Release Manager
 
-	* GCC 6.3.0 released.
+	* GCC 7.2.0 released.
 
-2016-08-22  Release Manager
+2017-05-02  Release Manager
 
-	* GCC 6.2.0 released.
+	* GCC 7.1.0 released.
 
-2016-04-27  Release Manager
+2017-01-01  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 6.1.0 released.
+	Update copyright years.
 
 2016-01-04  Jakub Jelinek  <jakub@redhat.com>
 
@@ -220,7 +220,7 @@
 2010-10-14  Iain Sandoe  <iains@gcc.gnu.org>
 
 	merge from FSF apple 'trunk' branch. 
-	2006 Fariborz Jahanian <fjahanian@apple.com>
+	2006 Fariborz Jahanian  <fjahanian@apple.com>
 	
 	Radars 4436866, 4505126, 4506903, 4517826
 	* objcp-lang.c (objcxx_init_ts): Update for property_decl.
@@ -241,7 +241,7 @@
 	(cc1objplus-checksum): Change to run checksum over object files
         and options only.
 
-2010-10-04  Andi Kleen <ak@linux.intel.com>
+2010-10-04  Andi Kleen  <ak@linux.intel.com>
 
 	* Make-lang.in (cc1objplus-dummy, cc1objplus): Add + to build rule.
 
@@ -446,7 +446,7 @@
 	* Make-lang.in (objcp/objcp-decl.o): Add dependency on
 	$(TARGET_H).
 
-2006-02-20 Rafael Ávila de Espíndola <rafael.espindola@gmail.com>
+2006-02-20  Rafael Ávila de Espíndola  <rafael.espindola@gmail.com>
 
 	* Make-lang.in (OBJ-C++): Remove
 	(.PHONY): Remove Obj-c++ and obj-C++. Add obj-c++
@@ -536,7 +536,7 @@
 	* objcp-lang.c: Likewise.
 
 
-Copyright (C) 2005-2016 Free Software Foundation, Inc.
+Copyright (C) 2005-2017 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

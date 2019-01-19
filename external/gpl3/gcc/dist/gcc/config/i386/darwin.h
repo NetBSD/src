@@ -1,5 +1,5 @@
 /* Target definitions for x86 running Darwin.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -87,8 +87,7 @@ extern int darwin_emit_branch_islands;
    or dynamic loader.  */
 #undef STACK_BOUNDARY
 #define STACK_BOUNDARY \
- ((profile_flag || (TARGET_64BIT && ix86_abi == MS_ABI)) \
-  ? 128 : BITS_PER_WORD)
+  ((profile_flag || TARGET_64BIT_MS_ABI) ? 128 : BITS_PER_WORD)
 
 #undef MAIN_STACK_BOUNDARY
 #define MAIN_STACK_BOUNDARY 128

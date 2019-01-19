@@ -1,5 +1,5 @@
 /* Passes for transactional memory support.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -165,7 +165,6 @@ get_attrs_for (const_tree x)
     {
     case FUNCTION_DECL:
       return TYPE_ATTRIBUTES (TREE_TYPE (x));
-      break;
 
     default:
       if (TYPE_P (x))
@@ -457,7 +456,7 @@ build_tm_abort_call (location_t loc, bool is_outer)
 					     | (is_outer ? AR_OUTERABORT : 0)));
 }
 
-/* Map for aribtrary function replacement under TM, as created
+/* Map for arbitrary function replacement under TM, as created
    by the tm_wrap attribute.  */
 
 struct tm_wrapper_hasher : ggc_cache_ptr_hash<tree_map>
@@ -621,7 +620,7 @@ diagnose_tm_1_op (tree *tp, int *walk_subtrees, void *data)
 		  "invalid use of volatile lvalue inside transaction");
       else if (d->func_flags & DIAG_TM_SAFE)
 	error_at (gimple_location (d->stmt),
-		  "invalid use of volatile lvalue inside %<transaction_safe%>"
+		  "invalid use of volatile lvalue inside %<transaction_safe%> "
 		  "function");
     }
 
@@ -726,7 +725,8 @@ diagnose_tm_1 (gimple_stmt_iterator *gsi, bool *handled_ops_p,
 				"atomic transaction", fn);
 		    else
 		      {
-			if (!DECL_P (fn) || DECL_NAME (fn))
+			if ((!DECL_P (fn) || DECL_NAME (fn))
+			    && TREE_CODE (fn) != SSA_NAME)
 			  error_at (gimple_location (stmt),
 				    "unsafe function call %qE within "
 				    "atomic transaction", fn);
@@ -744,7 +744,8 @@ diagnose_tm_1 (gimple_stmt_iterator *gsi, bool *handled_ops_p,
 				"%<transaction_safe%> function", fn);
 		    else
 		      {
-			if (!DECL_P (fn) || DECL_NAME (fn))
+			if ((!DECL_P (fn) || DECL_NAME (fn))
+			    && TREE_CODE (fn) != SSA_NAME)
 			  error_at (gimple_location (stmt),
 				    "unsafe function call %qE within "
 				    "%<transaction_safe%> function", fn);
@@ -1544,7 +1545,7 @@ requires_barrier (basic_block entry_block, tree x, gimple *stmt)
       x = TREE_OPERAND (TMR_BASE (x), 0);
       if (TREE_CODE (x) == PARM_DECL)
 	return false;
-      gcc_assert (TREE_CODE (x) == VAR_DECL);
+      gcc_assert (VAR_P (x));
       /* FALLTHRU */
 
     case PARM_DECL:

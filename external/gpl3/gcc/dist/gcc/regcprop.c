@@ -1,5 +1,5 @@
 /* Copy propagation on hard registers for the GNU compiler.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -23,6 +23,7 @@
 #include "backend.h"
 #include "rtl.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -393,6 +394,13 @@ maybe_mode_change (machine_mode orig_mode, machine_mode copy_mode,
 {
   if (GET_MODE_SIZE (copy_mode) < GET_MODE_SIZE (orig_mode)
       && GET_MODE_SIZE (copy_mode) < GET_MODE_SIZE (new_mode))
+    return NULL_RTX;
+
+  /* Avoid creating multiple copies of the stack pointer.  Some ports
+     assume there is one and only one stack pointer.
+
+     It's unclear if we need to do the same for other special registers.  */
+  if (regno == STACK_POINTER_REGNUM)
     return NULL_RTX;
 
   if (orig_mode == new_mode)
@@ -771,6 +779,25 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 	}
 
       set = single_set (insn);
+
+      /* Detect noop sets and remove them before processing side effects.  */
+      if (set && REG_P (SET_DEST (set)) && REG_P (SET_SRC (set)))
+	{
+	  unsigned int regno = REGNO (SET_SRC (set));
+	  rtx r1 = find_oldest_value_reg (REGNO_REG_CLASS (regno),
+					  SET_DEST (set), vd);
+	  rtx r2 = find_oldest_value_reg (REGNO_REG_CLASS (regno),
+					  SET_SRC (set), vd);
+	  if (rtx_equal_p (r1 ? r1 : SET_DEST (set), r2 ? r2 : SET_SRC (set)))
+	    {
+	      bool last = insn == BB_END (bb);
+	      delete_insn (insn);
+	      if (last)
+		break;
+	      continue;
+	    }
+	}
+
       extract_constrain_insn (insn);
       preprocess_constraints (insn);
       const operand_alternative *op_alt = which_op_alt ();
@@ -827,6 +854,12 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 		  && reg_overlap_mentioned_p (XEXP (link, 0), SET_SRC (set)))
 		set = NULL;
 	    }
+
+	  /* We need to keep CFI info correct, and the same on all paths,
+	     so we cannot normally replace the registers REG_CFA_REGISTER
+	     refers to.  Bail.  */
+	  if (REG_NOTE_KIND (link) == REG_CFA_REGISTER)
+	    goto did_replacement;
 	}
 
       /* Special-case plain move instructions, since we may well
@@ -860,7 +893,9 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 	     register in the same class.  */
 	  if (REG_P (SET_DEST (set)))
 	    {
-	      new_rtx = find_oldest_value_reg (REGNO_REG_CLASS (regno), src, vd);
+	      new_rtx = find_oldest_value_reg (REGNO_REG_CLASS (regno),
+					       src, vd);
+
 	      if (new_rtx && validate_change (insn, &SET_SRC (set), new_rtx, 0))
 		{
 		  if (dump_file)
@@ -1238,12 +1273,11 @@ pass_cprop_hardreg::execute (function *fun)
 {
   struct value_data *all_vd;
   basic_block bb;
-  sbitmap visited;
   bool analyze_called = false;
 
   all_vd = XNEWVEC (struct value_data, last_basic_block_for_fn (fun));
 
-  visited = sbitmap_alloc (last_basic_block_for_fn (fun));
+  auto_sbitmap visited (last_basic_block_for_fn (fun));
   bitmap_clear (visited);
 
   FOR_EACH_BB_FN (bb, fun)
@@ -1308,7 +1342,6 @@ pass_cprop_hardreg::execute (function *fun)
       queued_debug_insn_change_pool.release ();
     }
 
-  sbitmap_free (visited);
   free (all_vd);
   return 0;
 }

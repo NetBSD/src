@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on TI MSP430 processors.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -27,6 +27,7 @@
 #include "tree.h"
 #include "gimple-expr.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "regs.h"
 #include "emit-rtl.h"
@@ -92,8 +93,8 @@ msp430_init_machine_status (void)
 /* This is a copy of the same data structure found in gas/config/tc-msp430.c
    Also another (sort-of) copy can be found in gcc/config/msp430/t-msp430
    Keep these three structures in sync.
-   The data in this structure has been extracted from the devices.csv file
-   released by TI, updated as of March 2016.  */
+   The data in this structure has been extracted from version 1.194 of the
+   devices.csv file released by TI in September 2016.  */
 
 struct msp430_mcu_data
 {
@@ -519,6 +520,8 @@ msp430_mcu_data [] =
   { "msp430fg6626",2,8 },
   { "msp430fr2032",2,0 },
   { "msp430fr2033",2,0 },
+  { "msp430fr2110",2,0 },
+  { "msp430fr2111",2,0 },
   { "msp430fr2310",2,0 },
   { "msp430fr2311",2,0 },
   { "msp430fr2433",2,8 },
@@ -559,8 +562,6 @@ msp430_mcu_data [] =
   { "msp430fr5858",2,8 },
   { "msp430fr5859",2,8 },
   { "msp430fr5867",2,8 },
-  { "msp430fr5862",2,8 },
-  { "msp430fr5864",2,8 },
   { "msp430fr58671",2,8 },
   { "msp430fr5868",2,8 },
   { "msp430fr5869",2,8 },
@@ -571,8 +572,6 @@ msp430_mcu_data [] =
   { "msp430fr5888",2,8 },
   { "msp430fr5889",2,8 },
   { "msp430fr58891",2,8 },
-  { "msp430fr5892",2,8 },
-  { "msp430fr5894",2,8 },
   { "msp430fr5922",2,8 },
   { "msp430fr59221",2,8 },
   { "msp430fr5947",2,8 },
@@ -598,6 +597,7 @@ msp430_mcu_data [] =
   { "msp430fr59891",2,8 },
   { "msp430fr5992",2,8 },
   { "msp430fr5994",2,8 },
+  { "msp430fr59941",2,8 },
   { "msp430fr5xx_6xxgeneric",2,8 },
   { "msp430fr6820",2,8 },
   { "msp430fr6822",2,8 },
@@ -777,20 +777,21 @@ msp430_option_override (void)
 			   target_mcu, xisa ? "430X" : "430", msp430x ? "430X" : "430");
 
 		if (msp430_mcu_data[i].hwmpy == 0
-		    && msp430_hwmult_type != AUTO
-		    && msp430_hwmult_type != NONE)
+		    && msp430_hwmult_type != MSP430_HWMULT_AUTO
+		    && msp430_hwmult_type != MSP430_HWMULT_NONE)
 		  warning (0, "MCU '%s' does not have hardware multiply support, but -mhwmult is set to %s",
 			   target_mcu,
-			   msp430_hwmult_type == SMALL ? "16-bit" : msp430_hwmult_type == LARGE ? "32-bit" : "f5series");
-		else if (msp430_hwmult_type == SMALL
+			   msp430_hwmult_type == MSP430_HWMULT_SMALL ? "16-bit"
+			   : msp430_hwmult_type == MSP430_HWMULT_LARGE ? "32-bit" : "f5series");
+		else if (msp430_hwmult_type == MSP430_HWMULT_SMALL
 		    && msp430_mcu_data[i].hwmpy != 1
 		    && msp430_mcu_data[i].hwmpy != 2 )
 		  warning (0, "MCU '%s' supports %s hardware multiply, but -mhwmult is set to 16-bit",
 			   target_mcu, hwmult_name (msp430_mcu_data[i].hwmpy));
-		else if (msp430_hwmult_type == LARGE && msp430_mcu_data[i].hwmpy != 4)
+		else if (msp430_hwmult_type == MSP430_HWMULT_LARGE && msp430_mcu_data[i].hwmpy != 4)
 		  warning (0, "MCU '%s' supports %s hardware multiply, but -mhwmult is set to 32-bit",
 			   target_mcu, hwmult_name (msp430_mcu_data[i].hwmpy));
-		else if (msp430_hwmult_type == F5SERIES && msp430_mcu_data[i].hwmpy != 8)
+		else if (msp430_hwmult_type == MSP430_HWMULT_F5SERIES && msp430_mcu_data[i].hwmpy != 8)
 		  warning (0, "MCU '%s' supports %s hardware multiply, but -mhwmult is set to f5series",
 			   target_mcu, hwmult_name (msp430_mcu_data[i].hwmpy));
 	      }
@@ -801,47 +802,53 @@ msp430_option_override (void)
 
       if (i < 0)
 	{
-	  if (msp430_hwmult_type == AUTO)
+	  if (msp430_hwmult_type == MSP430_HWMULT_AUTO)
 	    {
 	      if (msp430_warn_mcu)
 		{
 		  if (target_cpu == NULL)
 		    warning (0,
-			     "Unrecognised MCU name '%s', assuming that it is just a MSP430 with no hardware multiply.\nUse the -mcpu and -mhwmult options to set these explicitly.",
+			     "Unrecognized MCU name '%s', assuming that it is "
+			     "just a MSP430 with no hardware multiply.\n"
+			     "Use the -mcpu and -mhwmult options to set "
+			     "these explicitly.",
 			     target_mcu);
 		  else
 		    warning (0,
-			     "Unrecognised MCU name '%s', assuming that it has no hardware multiply.\nUse the -mhwmult option to set this explicitly.",
+			     "Unrecognized MCU name '%s', assuming that it "
+			     "has no hardware multiply.\nUse the -mhwmult "
+			     "option to set this explicitly.",
 			     target_mcu);
 		}
 
-	      msp430_hwmult_type = NONE;
+	      msp430_hwmult_type = MSP430_HWMULT_NONE;
 	    }
 	  else if (target_cpu == NULL)
 	    {
 	      if (msp430_warn_mcu)
 		warning (0,
-			 "Unrecognised MCU name '%s', assuming that it just supports the MSP430 ISA.\nUse the -mcpu option to set the ISA explicitly.",
+			 "Unrecognized MCU name '%s', assuming that it just "
+			 "supports the MSP430 ISA.\nUse the -mcpu option to "
+			 "set the ISA explicitly.",
 			 target_mcu);
 
 	      msp430x = false;
 	    }
 	  else if (msp430_warn_mcu)
-	    warning (0,
-		     "Unrecognised MCU name '%s'.", target_mcu);
+	    warning (0, "Unrecognized MCU name '%s'.", target_mcu);
 	}
     }
 
   /* The F5 series are all able to support the 430X ISA.  */
-  if (target_cpu == NULL && target_mcu == NULL && msp430_hwmult_type == F5SERIES)
+  if (target_cpu == NULL && target_mcu == NULL && msp430_hwmult_type == MSP430_HWMULT_F5SERIES)
     msp430x = true;
 
   if (TARGET_LARGE && !msp430x)
     error ("-mlarge requires a 430X-compatible -mmcu=");
 
-  if (msp430_code_region == UPPER && ! msp430x)
+  if (msp430_code_region == MSP430_REGION_UPPER && ! msp430x)
     error ("-mcode-region=upper requires 430X-compatible cpu");
-  if (msp430_data_region == UPPER && ! msp430x)
+  if (msp430_data_region == MSP430_REGION_UPPER && ! msp430x)
     error ("-mdata-region=upper requires 430X-compatible cpu");
 
   if (flag_exceptions || flag_non_call_exceptions
@@ -898,6 +905,8 @@ msp430_hard_regno_nregs (int regno ATTRIBUTE_UNUSED,
 {
   if (mode == PSImode && msp430x)
     return 1;
+  if (mode == CPSImode && msp430x)
+    return 2;
   return ((GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1)
 	  / UNITS_PER_WORD);
 }
@@ -920,6 +929,8 @@ msp430_hard_regno_nregs_with_padding (int regno ATTRIBUTE_UNUSED,
 {
   if (mode == PSImode)
     return 2;
+  if (mode == CPSImode)
+    return 4;
   return msp430_hard_regno_nregs (regno, mode);
 }
 
@@ -1461,7 +1472,7 @@ msp430_gimplify_va_arg_expr (tree valist, tree type, gimple_seq *pre_p,
   if (boundary < TYPE_ALIGN (type))
     {
       type = build_variant_type_copy (type);
-      TYPE_ALIGN (type) = boundary;
+      SET_TYPE_ALIGN (type, boundary);
     }
 
   /* Compute the rounded size of the type.  */
@@ -1489,6 +1500,9 @@ msp430_gimplify_va_arg_expr (tree valist, tree type, gimple_seq *pre_p,
   return addr;
 }
 
+#undef TARGET_LRA_P
+#define TARGET_LRA_P hook_bool_void_false
+
 /* Addressing Modes */
 
 #undef  TARGET_LEGITIMATE_ADDRESS_P
@@ -1540,7 +1554,7 @@ msp430_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED,
     case REG:
       if (!reg_ok_for_addr (x, strict))
 	return false;
-      /* else... */
+      /* FALLTHRU */
     case CONST:
     case SYMBOL_REF:
     case CONST_INT:
@@ -1832,6 +1846,7 @@ msp430_attr (tree * node,
 
   if (args != NULL)
     {
+      /* Only the interrupt attribute takes an argument.  */
       gcc_assert (TREE_NAME_EQ (name, ATTR_INTR));
 
       tree value = TREE_VALUE (args);
@@ -1845,7 +1860,7 @@ msp430_attr (tree * node,
 	    /* Allow the attribute to be added - the linker script
 	       being used may still recognise this name.  */
 	    warning (OPT_Wattributes,
-		     "unrecognised interrupt vector argument of %qE attribute",
+		     "unrecognized interrupt vector argument of %qE attribute",
 		     name);
 	  break;
 
@@ -1878,6 +1893,9 @@ msp430_attr (tree * node,
       if (TREE_CODE (TREE_TYPE (* node)) == FUNCTION_TYPE
 	  && ! VOID_TYPE_P (TREE_TYPE (TREE_TYPE (* node))))
 	message = "interrupt handlers must be void";
+
+      if (! TREE_PUBLIC (* node))
+	message = "interrupt handlers cannot be static";
     }
   else if (TREE_NAME_EQ (name, ATTR_REENT))
     {
@@ -2103,6 +2121,13 @@ msp430_start_function (FILE *file, const char *name, tree decl)
 	{
 	  char buf[101];
 
+	  /* Interrupt vector sections should be unique, but use of weak
+	     functions implies multiple definitions.  */
+	  if (DECL_WEAK (decl))
+	    {
+	      error ("argument to interrupt attribute is unsupported for weak functions");
+	    }
+
 	  intr_vector = TREE_VALUE (intr_vector);
 
 	  /* The interrupt attribute has a vector value.  Turn this into a
@@ -2162,24 +2187,24 @@ gen_prefix (tree decl)
 
   if (TREE_CODE (decl) == FUNCTION_DECL)
     {
-      if (msp430_code_region == LOWER)
+      if (msp430_code_region == MSP430_REGION_LOWER)
 	return lower_prefix;
 
-      if (msp430_code_region == UPPER)
+      if (msp430_code_region == MSP430_REGION_UPPER)
 	return upper_prefix;
 
-      if (msp430_code_region == EITHER)
+      if (msp430_code_region == MSP430_REGION_EITHER)
 	return either_prefix;
     }
   else
     {
-      if (msp430_data_region == LOWER)
+      if (msp430_data_region == MSP430_REGION_LOWER)
 	return lower_prefix;
 
-      if (msp430_data_region == UPPER)
+      if (msp430_data_region == MSP430_REGION_UPPER)
 	return upper_prefix;
 
-      if (msp430_data_region == EITHER)
+      if (msp430_data_region == MSP430_REGION_EITHER)
 	return either_prefix;
     }
 
@@ -2350,7 +2375,7 @@ msp430_output_aligned_decl_common (FILE *                 stream,
 				   unsigned HOST_WIDE_INT size,
 				   unsigned int           align)
 {
-  if (msp430_data_region == ANY)
+  if (msp430_data_region == MSP430_REGION_ANY)
     {
       fprintf (stream, COMMON_ASM_OP);
       assemble_name (stream, name);
@@ -2366,9 +2391,9 @@ msp430_output_aligned_decl_common (FILE *                 stream,
       else
 	switch (msp430_data_region)
 	  {
-	  case UPPER: sec = get_named_section (NULL, ".upper.bss", 0); break;
-	  case LOWER: sec = get_named_section (NULL, ".lower.bss", 0); break;
-	  case EITHER: sec = get_named_section (NULL, ".either.bss", 0); break;
+	  case MSP430_REGION_UPPER: sec = get_named_section (NULL, ".upper.bss", 0); break;
+	  case MSP430_REGION_LOWER: sec = get_named_section (NULL, ".lower.bss", 0); break;
+	  case MSP430_REGION_EITHER: sec = get_named_section (NULL, ".either.bss", 0); break;
 	  default:
 	    gcc_unreachable ();
 	  }
@@ -2392,8 +2417,8 @@ msp430_do_not_relax_short_jumps (void)
      short jumps when there is a chance that the instructions will end up in a low
      section.  */
   return
-    msp430_code_region == EITHER
-    || msp430_code_region == LOWER
+    msp430_code_region == MSP430_REGION_EITHER
+    || msp430_code_region == MSP430_REGION_LOWER
     || has_attr (ATTR_EITHER, current_function_decl)
     || has_attr (ATTR_LOWER, current_function_decl);
 }
@@ -2480,7 +2505,7 @@ msp430_expand_delay_cycles (rtx arg)
     {
       if (c < 0)
 	{
-	  error ("__delay_cycles only takes non-negative cycle counts.");
+	  error ("__delay_cycles only takes non-negative cycle counts");
 	  return NULL_RTX;
 	}
     }
@@ -2500,7 +2525,7 @@ msp430_expand_delay_cycles (rtx arg)
 	  c %= 4;
 	  if ((unsigned long long) i > 0xffffffffULL)
 	    {
-	      error ("__delay_cycles is limited to 32-bit loop counts.");
+	      error ("__delay_cycles is limited to 32-bit loop counts");
 	      return NULL_RTX;
 	    }
 	}
@@ -3200,10 +3225,10 @@ msp430_use_f5_series_hwmult (void)
   static const char * cached_match = NULL;
   static bool         cached_result;
 
-  if (msp430_hwmult_type == F5SERIES)
+  if (msp430_hwmult_type == MSP430_HWMULT_F5SERIES)
     return true;
 
-  if (target_mcu == NULL || msp430_hwmult_type != AUTO)
+  if (target_mcu == NULL || msp430_hwmult_type != MSP430_HWMULT_AUTO)
     return false;
 
   if (target_mcu == cached_match)
@@ -3238,10 +3263,10 @@ use_32bit_hwmult (void)
   static bool         cached_result;
   int i;
 
-  if (msp430_hwmult_type == LARGE)
+  if (msp430_hwmult_type == MSP430_HWMULT_LARGE)
     return true;
 
-  if (target_mcu == NULL || msp430_hwmult_type != AUTO)
+  if (target_mcu == NULL || msp430_hwmult_type != MSP430_HWMULT_AUTO)
     return false;
 
   if (target_mcu == cached_match)
@@ -3267,10 +3292,10 @@ msp430_no_hwmult (void)
   static bool         cached_result;
   int i;
 
-  if (msp430_hwmult_type == NONE)
+  if (msp430_hwmult_type == MSP430_HWMULT_NONE)
     return true;
 
-  if (msp430_hwmult_type != AUTO)
+  if (msp430_hwmult_type != MSP430_HWMULT_AUTO)
     return false;
 
   if (target_mcu == NULL)
@@ -3308,7 +3333,7 @@ msp430_output_labelref (FILE *file, const char *name)
 
   /* If we have been given a specific MCU name then we may be
      able to make use of its hardware multiply capabilities.  */
-  if (msp430_hwmult_type != NONE)
+  if (msp430_hwmult_type != MSP430_HWMULT_NONE)
     {
       if (strcmp ("__mspabi_mpyi", name) == 0)
 	{

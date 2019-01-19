@@ -1,36 +1,267 @@
-2018-10-26  Release Manager
+2018-12-06  Release Manager
 
-	* GCC 6.5.0 released.
+	* GCC 7.4.0 released.
+
+2018-01-25  Release Manager
+
+	* GCC 7.3.0 released.
 
 2017-10-02  Thomas Schwinge  <thomas@codesourcery.com>
 
 	* gcc_update (files_and_dependencies): Handle libbacktrace.
 
-2017-07-04  Release Manager
+2017-08-14  Release Manager
 
-	* GCC 6.4.0 released.
+	* GCC 7.2.0 released.
 
-2016-12-21  Release Manager
+2017-05-02  Release Manager
 
-	* GCC 6.3.0 released.
+	* GCC 7.1.0 released.
 
-2016-08-22  Release Manager
+2017-05-02  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 6.2.0 released.
+	* gennews (files): Add files for GCC 7.
 
-2016-08-18  Richard Biener  <rguenther@suse.de>
+2017-04-11  Damian Rouson  <damian@sourceryinstitute.org>
 
-	PR bootstrap/77279
-	* download_prerequisites: Patch ISL 0.15 to remove trailing comma
-	which causes PR77279.
+        * download_prerequisites (md5_check): New function emulates Linux
+        'md5 --check' on macOS.  Modified script for macOS compatibility.
 
-2016-04-27  Release Manager
+2017-02-06  Palmer Dabbelt  <palmer@dabbelt.com>
 
-	* GCC 6.1.0 released.
+	* config-list.mki (LIST): Add riscv32-unknown-linux-gun and
+	riscv64-unknown-linux-gnu.
+
+2017-01-31  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* update-copyright.py (Copyright.process_file): Retain original
+	file mode.
+
+2017-01-29  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* update-copyright.py: Fix the name of this script in examples.
+
+2017-01-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* update-copyright.py: Add libhsail-rt to self.default_dirs
+	and call self.add_dir on it.  Add Intel Corporation to external
+	authors.
+
+2017-01-25  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* gcc_update (files_and_dependencies): Care for "libhsail-rt".
+
+2017-01-23  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* patch_tester.sh (TESTLOGS): Remove
+	$TARGET/libjava/testsuite/libjava.sum.
+
+2017-01-22  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* warn_summary: Remove the -java option.
+
+2017-01-20  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* update-copyright.py (LibJavaFilter): Remove.
+
+2017-01-17  Gerald Pfeifer  <gerald@pfeifer.com>	
+	
+	* gcc_update: Remove entries related to GCJ and libgcj.
+	Complete copyright years and adjust my e-mail address.
+
+2017-01-11  Richard Earnshaw  <rearnsha@arm.com>
+
+	* gcc_update: Adjust touch list for ARM.
+
+2017-01-08  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* download_ecj: Remove.
+
+2017-01-05  Martin Liska  <mliska@suse.cz>
+
+	* vimrc: Update indentation definition.
+
+2017-01-04  Jakub Jelinek  <jakub@redhat.com>
+
+	* update-copyright.py (GCCCmdLine): Add include, libcc1, libiberty,
+	libssp, libvtv and lto-plugin to default_dirs.
+
+2017-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	* update-copyright.py (TestsuiteFilter): Skip params/README.
+	(GCCCmdLine): Remove libjava and libjava/testsuite add_dir.
+
+2016-12-14  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob.py: Add new column to output and new sorting
+	option. Fix coding style to not exceed 80 characters.
+	* analyze_brprob_spec.py: Add new sorting
+	option. Fix coding style to not exceed 80 characters.
+
+2016-10-24  Moritz Klammler  <moritz@glammler.eu>
+
+	PR other/61439
+	* download_prerequisites: Conditionally verify checksums of
+	downloaded pacakges.  Add help text.  
+	* prerequisites.md5: New file.
+	* prerequisites.sha512: New file.
+
+2016-10-24  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* check_GNU_style.sh (remove_testsuite): New function.
+	Use it to remove testsuite from the diff.
+
+2016-09-23  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* dg-extract-results.sh: Revert bogus change.
+
+2016-09-20  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* dg-extract-results.py: Report DejaGnu error in the final
+	summary.
+	* dg-extract-results.sh: Likewise.
+
+2016-09-20  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* compare_tests: Take ERROR messages into account when
+          comparing.
+
+2016-08-17  Martin Liska  <mliska@suse.cz>
+
+	* mark_spam.py: Mark as spam all comments done by a creator.
+
+2016-08-15  Martin Liska  <mliska@suse.cz>
+
+	* mark_spam.py: Add error handling and reset
+	another properties of attachments and bugs.
+
+2016-08-11  Martin Liska  <mliska@suse.cz>
+
+	* mark_spam.py: Mark attachments as obsolete and rename them.
+
+2016-08-03  Eric Gallager  <egall@gwmail.gwu.edu>
+
+	* download_prerequisites: Explicitly remove existing symlinks
+	before trying to create new ones.
+
+2016-07-28  Martin Liska  <mliska@suse.cz>
+
+	* mark_spam.py: New file.
+
+2016-07-21  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob.py: If there's no loop, do not calculate
+	average number of loop iterations.
+
+2016-06-24  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob.py: Parse and display average number
+	of loop iterations.
+
+2016-06-23  Andi Kleen  <ak@linux.intel.com>
+
+	* gen_autofdo_event.py: New file to regenerate
+	gcc-auto-profile.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* config-list.mk: Stop testing mep-elf.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* config-list.mk: Stop testing avr-rtems.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* config-list.mk: Stop testing m32r-rtems.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* config-list.mk: Remove h8300-rtems support.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* config-list.mk: stop testing knetbsd.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* config-list.mk: Stop testing openbsd3.0.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* config-list.mk: Remove interix target.
+
+2016-06-21  David Edelsohn  <dje.gcc@gmail.com>
+
+	* config-list.mk: Remove rs6000-ibm-aix4.3, rs6000-ibm-aix5.1,
+	rs6000-ibm-aix5.2.
+	Rename rs6000-ibm-aix6.0 as rs6000-ibm-aix6.1.
+	Add rs6000-ibm-aix7.1.
+
+2016-06-17  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob.py: Fix columns of script output.
+
+2016-06-13  Richard Biener  <rguenther@suse.de>
+
+	* download_prerequisites (ISL): Bump version to 0.16.1
+
+2016-06-10  Alan Hayward  <alan.hayward@arm.com>
+
+	* check_GNU_style.sh: Fix paste args for BSD
+
+2016-06-09  David Malcolm  <dmalcolm@redhat.com>
+
+	* config-list.mk (LIST): Add OPT-enable-obsolete to avr-rtems,
+	h8300-rtems, m32r-rtems, mep-elf.
+
+2016-06-09  David Malcolm  <dmalcolm@redhat.com>
+
+	* config-list.mk (GCC_SRC_DIR): New variable.
+	(make-log-dir): Use GCC_SRC_DIR.
+	($(LIST)): Likewise.
+
+2016-06-09  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob_spec.py: New file.
+
+2016-06-09  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob.py: Add new argument --sorting.
+
+2016-06-09  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob.py: Cover new dump output format.
+
+2016-06-07  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* update-copyright.py (LibMudflapFilter): Remove.
+	(GCCCmdLine.__init__): Add gotools, libcc1.
+	Remove libmudflap.
+	List unhandled intl, libcilkrts, libgo, liboffloadmic,
+	maintainer-scripts.
+
+2016-05-02  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+
+	* download_prerequisites: Adjust gmp/mpfr/mpc versions.
+
+2016-04-30  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	* compare-all-tests: Remove SH5 support.
+	* config-list.mk: Likewise.
+
+2016-04-28  Martin Liska  <mliska@suse.cz>
+
+	* analyze_brprob: Remove.
+	* analyze_brprob.py: New file.
 
 2016-04-27  Jakub Jelinek  <jakub@redhat.com>
 
 	* gennews (files): Add files for GCC 6.
+
+2016-04-17  Jan Hubicka  <jh@suse.cz>
+
+	* analyze_brprob: Update comment.
 
 2016-04-13  Martin Sebor  <msebor@redhat.com>
 

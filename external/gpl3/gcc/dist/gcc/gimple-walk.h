@@ -1,5 +1,5 @@
 /* Header file for gimple statement walk support.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,6 +28,7 @@ struct walk_stmt_info
 {
   /* Points to the current statement being walked.  */
   gimple_stmt_iterator gsi;
+  gimple *stmt;
 
   /* Additional data that the callback functions may want to carry
      through the recursion.  */

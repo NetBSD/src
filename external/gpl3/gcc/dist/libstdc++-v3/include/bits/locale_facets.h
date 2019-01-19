@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 1997-2016 Free Software Foundation, Inc.
+// Copyright (C) 1997-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1128,7 +1128,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        *  @return  The converted char.
       */
       virtual char
-      do_narrow(char_type __c, char __dfault) const
+      do_narrow(char_type __c, char __dfault __attribute__((__unused__))) const
       { return __c; }
 
       /**
@@ -1155,7 +1155,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       */
       virtual const char_type*
       do_narrow(const char_type* __lo, const char_type* __hi,
-		char __dfault, char* __to) const
+		char __dfault __attribute__((__unused__)), char* __to) const
       {
 	__builtin_memcpy(__to, __lo, __hi - __lo);
 	return __hi;

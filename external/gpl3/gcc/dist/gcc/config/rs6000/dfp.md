@@ -1,5 +1,5 @@
 ;; Decimal Floating Point (DFP) patterns.
-;; Copyright (C) 2007-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
 ;; Contributed by Ben Elliston (bje@au.ibm.com) and Peter Bergner
 ;; (bergner@vnet.ibm.com).
 
@@ -173,7 +173,8 @@
    (clobber (match_scratch:TD 2 "=d"))]
   "TARGET_DFP"
   "drdpq %2,%1\;fmr %0,%2"
-  [(set_attr "type" "dfp")])
+  [(set_attr "type" "dfp")
+   (set_attr "length" "8")])
 
 (define_insn "adddd3"
   [(set (match_operand:DD 0 "gpc_reg_operand" "=d")
