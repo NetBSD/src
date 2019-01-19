@@ -1,5 +1,5 @@
 /* Subroutines for the C front end on the PowerPC architecture.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    Contributed by Zack Weinberg <zack@codesourcery.com>
    and Paolo Bonzini <bonzini@gnu.org>
@@ -25,11 +25,13 @@
 #include "coretypes.h"
 #include "target.h"
 #include "c-family/c-common.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
 #include "stor-layout.h"
 #include "c-family/c-pragma.h"
 #include "langhooks.h"
+#include "c/c-tree.h"
 
 
 
@@ -341,6 +343,71 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
 	     (define_p) ? "define" : "undef",
 	     flags, bu_mask);
 
+  /* Each of the flags mentioned below controls whether certain
+     preprocessor macros will be automatically defined when
+     preprocessing source files for compilation by this compiler.
+     While most of these flags can be enabled or disabled
+     explicitly by specifying certain command-line options when
+     invoking the compiler, there are also many ways in which these
+     flags are enabled or disabled implicitly, based on compiler
+     defaults, configuration choices, and on the presence of certain
+     related command-line options.  Many, but not all, of these
+     implicit behaviors can be found in file "rs6000.c", the
+     rs6000_option_override_internal() function.
+
+     In general, each of the flags may be automatically enabled in
+     any of the following conditions:
+
+     1. If no -mcpu target is specified on the command line and no
+	--with-cpu target is specified to the configure command line
+	and the TARGET_DEFAULT macro for this default cpu host
+	includes the flag, and the flag has not been explicitly disabled
+	by command-line options.
+
+     2. If the target specified with -mcpu=target on the command line, or
+	in the absence of a -mcpu=target command-line option, if the
+	target specified using --with-cpu=target on the configure
+	command line, is disqualified because the associated binary
+	tools (e.g. the assembler) lack support for the requested cpu,
+	and the TARGET_DEFAULT macro for this default cpu host
+	includes the flag, and the flag has not been explicitly disabled
+	by command-line options.
+
+     3. If either of the above two conditions apply except that the
+	TARGET_DEFAULT macro is defined to equal zero, and
+	TARGET_POWERPC64 and
+	a) BYTES_BIG_ENDIAN and the flag to be enabled is either
+	   MASK_PPC_GFXOPT or MASK_POWERPC64 (flags for "powerpc64"
+	   target), or
+	b) !BYTES_BIG_ENDIAN and the flag to be enabled is either
+	   MASK_POWERPC64 or it is one of the flags included in
+	   ISA_2_7_MASKS_SERVER (flags for "powerpc64le" target).
+
+     4. If a cpu has been requested with a -mcpu=target command-line option
+	and this cpu has not been disqualified due to shortcomings of the
+	binary tools, and the set of flags associated with the requested cpu
+	include the flag to be enabled.  See rs6000-cpus.def for macro
+	definitions that represent various ABI standards
+	(e.g. ISA_2_1_MASKS, ISA_3_0_MASKS_SERVER) and for a list of
+	the specific flags that are associated with each of the cpu
+	choices that can be specified as the target of a -mcpu=target
+	compile option, or as the the target of a --with-cpu=target
+	configure option.  Target flags that are specified in either
+	of these two ways are considered "implicit" since the flags
+	are not mentioned specifically by name.
+
+	Additional documentation describing behavior specific to
+	particular flags is provided below, immediately preceding the
+	use of each relevant flag.
+
+     5. If there is no -mcpu=target command-line option, and the cpu
+	requested by a --with-cpu=target command-line option has not
+	been disqualified due to shortcomings of the binary tools, and
+	the set of flags associated with the specified target include
+	the flag to be enabled.  See the notes immediately above for a
+	summary of the flags associated with particular cpu
+	definitions.  */
+
   /* rs6000_isa_flags based options.  */
   rs6000_define_or_undefine_macro (define_p, "_ARCH_PPC");
   if ((flags & OPTION_MASK_PPC_GPOPT) != 0)
@@ -361,6 +428,18 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
     rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR6X");
   if ((flags & OPTION_MASK_POPCNTD) != 0)
     rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR7");
+  /* Note that the OPTION_MASK_DIRECT_MOVE flag is automatically
+     turned on in the following condition:
+     1. TARGET_P9_DFORM_SCALAR or TARGET_P9_DFORM_VECTOR are enabled
+        and OPTION_MASK_DIRECT_MOVE is not explicitly disabled.
+        Hereafter, the OPTION_MASK_DIRECT_MOVE flag is considered to
+        have been turned on explicitly.
+     Note that the OPTION_MASK_DIRECT_MOVE flag is automatically
+     turned off in any of the following conditions:
+     1. TARGET_HARD_FLOAT, TARGET_ALTIVEC, or TARGET_VSX is explicitly
+	disabled and OPTION_MASK_DIRECT_MOVE was not explicitly
+	enabled.
+     2. TARGET_VSX is off.  */
   if ((flags & OPTION_MASK_DIRECT_MOVE) != 0)
     rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR8");
   if ((flags & OPTION_MASK_MODULO) != 0)
@@ -369,6 +448,27 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
     rs6000_define_or_undefine_macro (define_p, "_SOFT_FLOAT");
   if ((flags & OPTION_MASK_RECIP_PRECISION) != 0)
     rs6000_define_or_undefine_macro (define_p, "__RECIP_PRECISION__");
+  /* Note that the OPTION_MASK_ALTIVEC flag is automatically turned on
+     in any of the following conditions:
+     1. The command line specifies either -maltivec=le or -maltivec=be.
+     2. The operating system is Darwin and it is configured for 64
+	bit.  (See darwin_rs6000_override_options.)
+     3. The operating system is Darwin and the operating system
+	version is 10.5 or higher and the user has not explicitly
+	disabled ALTIVEC by specifying -mcpu=G3 or -mno-altivec and
+	the compiler is not producing code for integration within the
+	kernel.  (See darwin_rs6000_override_options.)
+     Note that the OPTION_MASK_ALTIVEC flag is automatically turned
+     off in any of the following conditions:
+     1. The operating system does not support saving of AltiVec
+	registers (OS_MISSING_ALTIVEC).
+     2. If an inner context (as introduced by
+	__attribute__((__target__())) or #pragma GCC target()
+	requests a target that normally enables the
+	OPTION_MASK_ALTIVEC flag but the outer-most "main target"
+	does not support the rs6000_altivec_abi, this flag is
+	turned off for the inner context unless OPTION_MASK_ALTIVEC
+	was explicitly enabled for the inner context.  */
   if ((flags & OPTION_MASK_ALTIVEC) != 0)
     {
       const char *vec_str = (define_p) ? "__VEC__=10206" : "__VEC__";
@@ -379,6 +479,36 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
       if (!flag_iso)
 	rs6000_define_or_undefine_macro (define_p, "__APPLE_ALTIVEC__");
     }
+  /* Note that the OPTION_MASK_VSX flag is automatically turned on in
+     the following conditions:
+     1. TARGET_P8_VECTOR is explicitly turned on and the OPTION_MASK_VSX
+        was not explicitly turned off.  Hereafter, the OPTION_MASK_VSX
+        flag is considered to have been explicitly turned on.
+     Note that the OPTION_MASK_VSX flag is automatically turned off in
+     the following conditions:
+     1. The operating system does not support saving of AltiVec
+	registers (OS_MISSING_ALTIVEC).
+     2. If any of the options TARGET_HARD_FLOAT, TARGET_FPRS,
+	TARGET_SINGLE_FLOAT, or TARGET_DOUBLE_FLOAT are turned off.
+	Hereafter, the OPTION_MASK_VSX flag is considered to have been
+	turned off explicitly.
+     3. If TARGET_PAIRED_FLOAT was enabled.  Hereafter, the
+	OPTION_MASK_VSX flag is considered to have been turned off
+	explicitly.
+     4. If TARGET_AVOID_XFORM is turned on explicitly at the outermost
+	compilation context, or if it is turned on by any means in an
+	inner compilation context.  Hereafter, the OPTION_MASK_VSX
+	flag is considered to have been turned off explicitly.
+     5. If TARGET_ALTIVEC was explicitly disabled.  Hereafter, the
+	OPTION_MASK_VSX flag is considered to have been turned off
+	explicitly.
+     6. If an inner context (as introduced by
+	__attribute__((__target__())) or #pragma GCC target()
+	requests a target that normally enables the
+	OPTION_MASK_VSX flag but the outer-most "main target"
+	does not support the rs6000_altivec_abi, this flag is
+	turned off for the inner context unless OPTION_MASK_VSX
+	was explicitly enabled for the inner context.  */
   if ((flags & OPTION_MASK_VSX) != 0)
     rs6000_define_or_undefine_macro (define_p, "__VSX__");
   if ((flags & OPTION_MASK_HTM) != 0)
@@ -387,24 +517,110 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
       /* Tell the user that our HTM insn patterns act as memory barriers.  */
       rs6000_define_or_undefine_macro (define_p, "__TM_FENCE__");
     }
+  /* Note that the OPTION_MASK_P8_VECTOR flag is automatically turned
+     on in the following conditions:
+     1. TARGET_P9_VECTOR is explicitly turned on and
+        OPTION_MASK_P8_VECTOR is not explicitly turned off.
+        Hereafter, the OPTION_MASK_P8_VECTOR flag is considered to
+        have been turned off explicitly.
+     Note that the OPTION_MASK_P8_VECTOR flag is automatically turned
+     off in the following conditions:
+     1. If any of TARGET_HARD_FLOAT, TARGET_ALTIVEC, or TARGET_VSX
+	were turned off explicitly and OPTION_MASK_P8_VECTOR flag was
+	not turned on explicitly.
+     2. If TARGET_ALTIVEC is turned off.  Hereafter, the
+	OPTION_MASK_P8_VECTOR flag is considered to have been turned off
+	explicitly.
+     3. If TARGET_VSX is turned off and OPTION_MASK_P8_VECTOR was not
+        explicitly enabled.  If TARGET_VSX is explicitly enabled, the
+        OPTION_MASK_P8_VECTOR flag is hereafter also considered to
+	have been turned off explicitly.  */
   if ((flags & OPTION_MASK_P8_VECTOR) != 0)
     rs6000_define_or_undefine_macro (define_p, "__POWER8_VECTOR__");
+  /* Note that the OPTION_MASK_P9_VECTOR flag is automatically turned
+     off in the following conditions:
+     1. If TARGET_P8_VECTOR is turned off and OPTION_MASK_P9_VECTOR is
+        not turned on explicitly. Hereafter, if OPTION_MASK_P8_VECTOR
+        was turned on explicitly, the OPTION_MASK_P9_VECTOR flag is
+        also considered to have been turned off explicitly.
+     Note that the OPTION_MASK_P9_VECTOR is automatically turned on
+     in the following conditions:
+     1. If TARGET_P9_DFORM_SCALAR or TARGET_P9_DFORM_VECTOR and
+        OPTION_MASK_P9_VECTOR was not turned off explicitly.
+        Hereafter, THE OPTION_MASK_P9_VECTOR flag is considered to
+        have been turned on explicitly.  */
+  if ((flags & OPTION_MASK_P9_VECTOR) != 0)
+    rs6000_define_or_undefine_macro (define_p, "__POWER9_VECTOR__");
+  /* Note that the OPTION_MASK_QUAD_MEMORY flag is automatically
+     turned off in the following conditions:
+     1. If TARGET_POWERPC64 is turned off.
+     2. If WORDS_BIG_ENDIAN is false (non-atomic quad memory
+	load/store are disabled on little endian).  */
   if ((flags & OPTION_MASK_QUAD_MEMORY) != 0)
     rs6000_define_or_undefine_macro (define_p, "__QUAD_MEMORY__");
+  /* Note that the OPTION_MASK_QUAD_MEMORY_ATOMIC flag is automatically
+     turned off in the following conditions:
+     1. If TARGET_POWERPC64 is turned off.
+     Note that the OPTION_MASK_QUAD_MEMORY_ATOMIC flag is
+     automatically turned on in the following conditions:
+     1. If TARGET_QUAD_MEMORY and this flag was not explicitly
+	disabled.  */
   if ((flags & OPTION_MASK_QUAD_MEMORY_ATOMIC) != 0)
     rs6000_define_or_undefine_macro (define_p, "__QUAD_MEMORY_ATOMIC__");
+  /* Note that the OPTION_MASK_CRYPTO flag is automatically turned off
+     in the following conditions:
+     1. If any of TARGET_HARD_FLOAT or TARGET_ALTIVEC or TARGET_VSX
+	are turned off explicitly and OPTION_MASK_CRYPTO is not turned
+	on explicitly.
+     2. If TARGET_ALTIVEC is turned off.  */
   if ((flags & OPTION_MASK_CRYPTO) != 0)
     rs6000_define_or_undefine_macro (define_p, "__CRYPTO__");
+  /* Note that the OPTION_MASK_UPPER_REGS_DF flag is automatically
+     turned on in the following conditions:
+     1. If TARGET_UPPER_REGS is explicitly turned on and
+	TARGET_VSX is turned on and OPTION_MASK_UPPER_REGS_DF is not
+	explicitly turned off.  Hereafter, the
+	OPTION_MASK_UPPER_REGS_DF flag is considered to have been
+	explicitly set.
+     Note that the OPTION_MASK_UPPER_REGS_DF flag is automatically
+     turned off in the following conditions:
+     1. If TARGET_UPPER_REGS is explicitly turned off and TARGET_VSX
+	is turned on and OPTION_MASK_UPPER_REGS_DF is not explicitly
+	turned on.  Hereafter, the OPTION_MASK_UPPER_REGS_DF flag is
+	considered to have been explicitly cleared.
+     2. If TARGET_UPPER_REGS_DF is turned on but TARGET_VSX is turned
+	off.  */
   if ((flags & OPTION_MASK_UPPER_REGS_DF) != 0)
     rs6000_define_or_undefine_macro (define_p, "__UPPER_REGS_DF__");
+  /* Note that the OPTION_MASK_UPPER_REGS_SF flag is automatically
+     turned on in the following conditions:
+     1. If TARGET_UPPER_REGS is explicitly turned on and
+	TARGET_P8_VECTOR is on and OPTION_MASK_UPPER_REGS_SF is not
+	turned off explicitly.  Hereafter, the
+	OPTION_MASK_UPPER_REGS_SF flag is considered to have been
+	explicitly set.
+     Note that the OPTION_MASK_UPPER_REGS_SF flag is automatically
+     turned off in the following conditions:
+     1. If TARGET_UPPER_REGS is explicitly turned off and
+	TARGET_P8_VECTOR is on and OPTION_MASK_UPPER_REGS_SF is not
+	turned off explicitly.  Hereafter, the
+	OPTION_MASK_UPPER_REGS_SF flag is considered to have been
+	explicitly cleared.
+     2. If TARGET_P8_VECTOR is off.  */
   if ((flags & OPTION_MASK_UPPER_REGS_SF) != 0)
     rs6000_define_or_undefine_macro (define_p, "__UPPER_REGS_SF__");
 
   /* options from the builtin masks.  */
+  /* Note that RS6000_BTM_SPE is enabled only if TARGET_SPE
+     (e.g. -mspe).  */
   if ((bu_mask & RS6000_BTM_SPE) != 0)
     rs6000_define_or_undefine_macro (define_p, "__SPE__");
+  /* Note that RS6000_BTM_PAIRED is enabled only if
+     TARGET_PAIRED_FLOAT is enabled (e.g. -mpaired).  */
   if ((bu_mask & RS6000_BTM_PAIRED) != 0)
     rs6000_define_or_undefine_macro (define_p, "__PAIRED__");
+  /* Note that RS6000_BTM_CELL is enabled only if (rs6000_cpu ==
+     PROCESSOR_CELL) (e.g. -mcpu=cell).  */
   if ((bu_mask & RS6000_BTM_CELL) != 0)
     rs6000_define_or_undefine_macro (define_p, "__PPU__");
 }
@@ -424,13 +640,23 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
     builtin_define ("__RSQRTE__");
   if (TARGET_FRSQRTES)
     builtin_define ("__RSQRTEF__");
-  if (TARGET_FLOAT128)
+  if (TARGET_FLOAT128_KEYWORD)
     builtin_define ("__FLOAT128__");
+  if (TARGET_FLOAT128_TYPE)
+    builtin_define ("__FLOAT128_TYPE__");
   if (TARGET_FLOAT128_HW)
     builtin_define ("__FLOAT128_HARDWARE__");
+  if (TARGET_LONG_DOUBLE_128 && FLOAT128_IBM_P (TFmode))
+    builtin_define ("__ibm128=long double");
 #ifdef TARGET_LIBC_PROVIDES_HWCAP_IN_TCB
   builtin_define ("__BUILTIN_CPU_SUPPORTS__");
 #endif
+
+  /* We needed to create a keyword if -mfloat128-type was used but not -mfloat,
+     so we used __ieee128.  If -mfloat128 was used, create a #define back to
+     the real keyword in case somebody used it.  */
+  if (TARGET_FLOAT128_KEYWORD)
+    builtin_define ("__ieee128=__float128");
 
   if (TARGET_EXTRA_BUILTINS && cpp_get_options (pfile)->lang != CLK_ASM)
     {
@@ -845,11 +1071,6 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_unsigned_V1TI, 0 },
   { ALTIVEC_BUILTIN_VEC_ADDC, P8V_BUILTIN_VADDCUQ,
     RS6000_BTI_V1TI, RS6000_BTI_V1TI, RS6000_BTI_V1TI, 0 },
-  { ALTIVEC_BUILTIN_VEC_ADDE, P8V_BUILTIN_VADDEUQM,
-    RS6000_BTI_unsigned_V1TI, RS6000_BTI_unsigned_V1TI,
-    RS6000_BTI_unsigned_V1TI, RS6000_BTI_unsigned_V1TI },
-  { ALTIVEC_BUILTIN_VEC_ADDE, P8V_BUILTIN_VADDEUQM,
-    RS6000_BTI_V1TI, RS6000_BTI_V1TI, RS6000_BTI_V1TI, RS6000_BTI_V1TI },
   { ALTIVEC_BUILTIN_VEC_ADDEC, P8V_BUILTIN_VADDECUQ,
     RS6000_BTI_unsigned_V1TI, RS6000_BTI_unsigned_V1TI,
     RS6000_BTI_unsigned_V1TI, RS6000_BTI_unsigned_V1TI },
@@ -1103,14 +1324,22 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUB,
     RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUB,
+    RS6000_BTI_bool_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_bool_V16QI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUH,
+    RS6000_BTI_bool_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_bool_V8HI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUH,
     RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUH,
     RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUW,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V4SI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUW,
     RS6000_BTI_bool_V4SI, RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPEQ, ALTIVEC_BUILTIN_VCMPEQUW,
     RS6000_BTI_bool_V4SI, RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPEQ, P8V_BUILTIN_VCMPEQUD,
+    RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V2DI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPEQ, P8V_BUILTIN_VCMPEQUD,
     RS6000_BTI_bool_V2DI, RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPEQ, P8V_BUILTIN_VCMPEQUD,
@@ -1948,14 +2177,6 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_VMINUB, ALTIVEC_BUILTIN_VMINUB,
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, 0 },
-  { VSX_BUILTIN_VEC_MUL, VSX_BUILTIN_XVMULSP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0 },
-  { VSX_BUILTIN_VEC_MUL, VSX_BUILTIN_XVMULDP,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0 },
-  { VSX_BUILTIN_VEC_MUL, VSX_BUILTIN_MUL_V2DI,
-    RS6000_BTI_V2DI, RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0 },
-  { VSX_BUILTIN_VEC_MUL, VSX_BUILTIN_MUL_V2DI,
-    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI, 0 },
   { ALTIVEC_BUILTIN_VEC_MULE, ALTIVEC_BUILTIN_VMULEUB,
     RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_MULE, ALTIVEC_BUILTIN_VMULESB,
@@ -1988,6 +2209,18 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_V8HI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_VMULOUB, ALTIVEC_BUILTIN_VMULOUB,
     RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { ALTIVEC_BUILTIN_VEC_NABS, ALTIVEC_BUILTIN_NABS_V16QI,
+    RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0, 0 },
+  { ALTIVEC_BUILTIN_VEC_NABS, ALTIVEC_BUILTIN_NABS_V8HI,
+    RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0, 0 },
+  { ALTIVEC_BUILTIN_VEC_NABS, ALTIVEC_BUILTIN_NABS_V4SI,
+    RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0, 0 },
+  { ALTIVEC_BUILTIN_VEC_NABS, ALTIVEC_BUILTIN_NABS_V2DI,
+    RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0, 0 },
+  { ALTIVEC_BUILTIN_VEC_NABS, ALTIVEC_BUILTIN_NABS_V4SF,
+    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
+  { ALTIVEC_BUILTIN_VEC_NABS, VSX_BUILTIN_XVNABSDP,
+    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
   { ALTIVEC_BUILTIN_VEC_NEARBYINT, VSX_BUILTIN_XVRDPI,
     RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
   { ALTIVEC_BUILTIN_VEC_NEARBYINT, VSX_BUILTIN_XVRSPI,
@@ -2114,6 +2347,8 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI, 0 },
   { ALTIVEC_BUILTIN_VEC_PACK, P8V_BUILTIN_VPKUDUM,
     RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V2DI, 0 },
+  { ALTIVEC_BUILTIN_VEC_PACK, P8V_BUILTIN_VPKUDUM,
+    RS6000_BTI_V4SF, RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0 },
   { ALTIVEC_BUILTIN_VEC_VPKUWUM, ALTIVEC_BUILTIN_VPKUWUM,
     RS6000_BTI_V8HI, RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0 },
   { ALTIVEC_BUILTIN_VEC_VPKUWUM, ALTIVEC_BUILTIN_VPKUWUM,
@@ -2196,6 +2431,18 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_VRLB, ALTIVEC_BUILTIN_VRLB,
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { P9V_BUILTIN_VEC_RLMI, P9V_BUILTIN_VRLWMI,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI },
+  { P9V_BUILTIN_VEC_RLMI, P9V_BUILTIN_VRLDMI,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI },
+  { P9V_BUILTIN_VEC_RLNM, P9V_BUILTIN_VRLWNM,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+  { P9V_BUILTIN_VEC_RLNM, P9V_BUILTIN_VRLDNM,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI,
+    RS6000_BTI_unsigned_V2DI, 0 },
   { ALTIVEC_BUILTIN_VEC_SL, ALTIVEC_BUILTIN_VSLB,
     RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_SL, ALTIVEC_BUILTIN_VSLB,
@@ -3189,6 +3436,8 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_NOT_OPAQUE },
   { ALTIVEC_BUILTIN_VEC_SLD, ALTIVEC_BUILTIN_VSLDOI_16QI,
     RS6000_BTI_bool_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_NOT_OPAQUE },
+  { ALTIVEC_BUILTIN_VEC_SLD, ALTIVEC_BUILTIN_VSLDOI_2DF,
+    RS6000_BTI_V2DF, RS6000_BTI_V2DF, RS6000_BTI_V2DF, RS6000_BTI_NOT_OPAQUE },
   { ALTIVEC_BUILTIN_VEC_ST, ALTIVEC_BUILTIN_STVX_V2DF,
     RS6000_BTI_void, RS6000_BTI_V2DF, RS6000_BTI_INTSI, ~RS6000_BTI_V2DF },
   { ALTIVEC_BUILTIN_VEC_ST, ALTIVEC_BUILTIN_STVX_V2DI,
@@ -4172,6 +4421,16 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_unsigned_V1TI, RS6000_BTI_unsigned_V1TI,
     RS6000_BTI_unsigned_V1TI, 0 },
 
+  { P9V_BUILTIN_VEC_VBPERM, P9V_BUILTIN_VBPERMD,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VBPERM, P8V_BUILTIN_VBPERMQ,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V1TI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VBPERM, P8V_BUILTIN_VBPERMQ2,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+
   { P8V_BUILTIN_VEC_VBPERMQ, P8V_BUILTIN_VBPERMQ,
     RS6000_BTI_V2DI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
   { P8V_BUILTIN_VEC_VBPERMQ, P8V_BUILTIN_VBPERMQ,
@@ -4317,10 +4576,539 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI,
     RS6000_BTI_unsigned_V4SI, 0 },
 
+  { P9V_BUILTIN_VEC_VES, P9V_BUILTIN_VESSP,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_V4SF, 0, 0 },
+  { P9V_BUILTIN_VEC_VES, P9V_BUILTIN_VESDP,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_V2DF, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VESSP, P9V_BUILTIN_VESSP,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_V4SF, 0, 0 },
+  { P9V_BUILTIN_VEC_VESDP, P9V_BUILTIN_VESDP,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_V2DF, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VEE, P9V_BUILTIN_VEESP,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_V4SF, 0, 0 },
+  { P9V_BUILTIN_VEC_VEE, P9V_BUILTIN_VEEDP,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_V2DF, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VEESP, P9V_BUILTIN_VEESP,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_V4SF, 0, 0 },
+  { P9V_BUILTIN_VEC_VEEDP, P9V_BUILTIN_VEEDP,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_V2DF, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VTDC, P9V_BUILTIN_VTDCSP,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_V4SF, RS6000_BTI_INTSI, 0 },
+  { P9V_BUILTIN_VEC_VTDC, P9V_BUILTIN_VTDCDP,
+    RS6000_BTI_bool_V2DI, RS6000_BTI_V2DF, RS6000_BTI_INTSI, 0 },
+
+  { P9V_BUILTIN_VEC_VTDCSP, P9V_BUILTIN_VTDCSP,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_V4SF, RS6000_BTI_INTSI, 0 },
+  { P9V_BUILTIN_VEC_VTDCDP, P9V_BUILTIN_VTDCDP,
+    RS6000_BTI_bool_V2DI, RS6000_BTI_V2DF, RS6000_BTI_INTSI, 0 },
+
+  { P9V_BUILTIN_VEC_VIE, P9V_BUILTIN_VIESP,
+    RS6000_BTI_V4SF, RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VIE, P9V_BUILTIN_VIESP,
+    RS6000_BTI_V4SF, RS6000_BTI_V4SF, RS6000_BTI_unsigned_V4SI, 0 },
+
+  { P9V_BUILTIN_VEC_VIE, P9V_BUILTIN_VIEDP,
+    RS6000_BTI_V2DF, RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VIE, P9V_BUILTIN_VIEDP,
+    RS6000_BTI_V2DF, RS6000_BTI_V2DF, RS6000_BTI_unsigned_V2DI, 0 },
+
+  { P9V_BUILTIN_VEC_VIESP, P9V_BUILTIN_VIESP,
+    RS6000_BTI_V4SF, RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VIESP, P9V_BUILTIN_VIESP,
+    RS6000_BTI_V4SF, RS6000_BTI_V4SF, RS6000_BTI_unsigned_V4SI, 0 },
+
+  { P9V_BUILTIN_VEC_VIEDP, P9V_BUILTIN_VIEDP,
+    RS6000_BTI_V2DF, RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VIEDP, P9V_BUILTIN_VIEDP,
+    RS6000_BTI_V2DF, RS6000_BTI_V2DF, RS6000_BTI_unsigned_V2DI, 0 },
+
+  { P9V_BUILTIN_VEC_VSTDC, P9V_BUILTIN_VSTDCSP,
+    RS6000_BTI_bool_int, RS6000_BTI_float, RS6000_BTI_INTSI, 0 },
+  { P9V_BUILTIN_VEC_VSTDC, P9V_BUILTIN_VSTDCDP,
+    RS6000_BTI_bool_int, RS6000_BTI_double, RS6000_BTI_INTSI, 0 },
+
+  { P9V_BUILTIN_VEC_VSTDCSP, P9V_BUILTIN_VSTDCSP,
+    RS6000_BTI_bool_int, RS6000_BTI_float, RS6000_BTI_INTSI, 0 },
+  { P9V_BUILTIN_VEC_VSTDCDP, P9V_BUILTIN_VSTDCDP,
+    RS6000_BTI_bool_int, RS6000_BTI_double, RS6000_BTI_INTSI, 0 },
+
+  { P9V_BUILTIN_VEC_VSTDCN, P9V_BUILTIN_VSTDCNSP,
+    RS6000_BTI_bool_int, RS6000_BTI_float, 0, 0 },
+  { P9V_BUILTIN_VEC_VSTDCN, P9V_BUILTIN_VSTDCNDP,
+    RS6000_BTI_bool_int, RS6000_BTI_double, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VSTDCNSP, P9V_BUILTIN_VSTDCNSP,
+    RS6000_BTI_bool_int, RS6000_BTI_float, 0, 0 },
+  { P9V_BUILTIN_VEC_VSTDCNDP, P9V_BUILTIN_VSTDCNDP,
+    RS6000_BTI_bool_int, RS6000_BTI_double, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VSEEDP, P9V_BUILTIN_VSEEDP,
+    RS6000_BTI_UINTSI, RS6000_BTI_double, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VSESDP, P9V_BUILTIN_VSESDP,
+    RS6000_BTI_UINTDI, RS6000_BTI_double, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VSIEDP, P9V_BUILTIN_VSIEDP,
+    RS6000_BTI_double, RS6000_BTI_UINTDI, RS6000_BTI_UINTDI, 0 },
+  { P9V_BUILTIN_VEC_VSIEDP, P9V_BUILTIN_VSIEDPF,
+    RS6000_BTI_double, RS6000_BTI_double, RS6000_BTI_UINTDI, 0 },
+
+  { P9V_BUILTIN_VEC_VSCEDPGT, P9V_BUILTIN_VSCEDPGT,
+    RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
+  { P9V_BUILTIN_VEC_VSCEDPLT, P9V_BUILTIN_VSCEDPLT,
+    RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
+  { P9V_BUILTIN_VEC_VSCEDPEQ, P9V_BUILTIN_VSCEDPEQ,
+    RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
+  { P9V_BUILTIN_VEC_VSCEDPUO, P9V_BUILTIN_VSCEDPUO,
+    RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
+
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_V16QI, ~RS6000_BTI_INTQI,
+    RS6000_BTI_unsigned_long_long, 0 },
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_unsigned_V16QI, ~RS6000_BTI_UINTQI,
+    RS6000_BTI_unsigned_long_long, 0 },
+
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_V4SI, ~RS6000_BTI_INTSI,
+    RS6000_BTI_unsigned_long_long, 0 },
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_unsigned_V4SI, ~RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_long_long, 0 },
+
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_V1TI, ~RS6000_BTI_INTTI,
+    RS6000_BTI_unsigned_long_long, 0 },
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_unsigned_V1TI, ~RS6000_BTI_UINTTI,
+    RS6000_BTI_unsigned_long_long, 0 },
+
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_V2DI, ~RS6000_BTI_long_long,
+    RS6000_BTI_unsigned_long_long, 0 },
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_unsigned_V2DI, ~RS6000_BTI_unsigned_long_long,
+    RS6000_BTI_unsigned_long_long, 0 },
+
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_V8HI, ~RS6000_BTI_INTHI,
+    RS6000_BTI_unsigned_long_long, 0 },
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_unsigned_V8HI, ~RS6000_BTI_UINTHI,
+    RS6000_BTI_unsigned_long_long, 0 },
+
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_V2DF, ~RS6000_BTI_double,
+    RS6000_BTI_unsigned_long_long, 0 },
+  { P9V_BUILTIN_VEC_LXVL, P9V_BUILTIN_LXVL,
+    RS6000_BTI_V4SF, ~RS6000_BTI_float,
+    RS6000_BTI_unsigned_long_long, 0 },
+  /* At an appropriate future time, add support for the
+     RS6000_BTI_Float16 (exact name to be determined) type here.  */
+
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_V16QI, ~RS6000_BTI_INTQI,
+    RS6000_BTI_unsigned_long_long },
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_unsigned_V16QI, ~RS6000_BTI_UINTQI,
+    RS6000_BTI_unsigned_long_long },
+
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_V4SI, ~RS6000_BTI_INTSI,
+    RS6000_BTI_unsigned_long_long },
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_unsigned_V4SI, ~RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_long_long },
+
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_V1TI, ~RS6000_BTI_INTTI,
+    RS6000_BTI_unsigned_long_long },
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_unsigned_V1TI, ~RS6000_BTI_UINTTI,
+    RS6000_BTI_unsigned_long_long },
+
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_V2DI, ~RS6000_BTI_long_long,
+    RS6000_BTI_unsigned_long_long },
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_unsigned_V2DI, ~RS6000_BTI_unsigned_long_long,
+    RS6000_BTI_unsigned_long_long },
+
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_V8HI, ~RS6000_BTI_INTHI,
+    RS6000_BTI_unsigned_long_long },
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_unsigned_V8HI, ~RS6000_BTI_UINTHI,
+    RS6000_BTI_unsigned_long_long },
+
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_V2DF, ~RS6000_BTI_double,
+    RS6000_BTI_unsigned_long_long },
+  { P9V_BUILTIN_VEC_STXVL, P9V_BUILTIN_STXVL,
+    RS6000_BTI_void, RS6000_BTI_V4SF, ~RS6000_BTI_float,
+    RS6000_BTI_unsigned_long_long },
+  /* At an appropriate future time, add support for the
+     RS6000_BTI_Float16 (exact name to be determined) type here.  */
+
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEB,
+    RS6000_BTI_bool_V16QI, RS6000_BTI_bool_V16QI,
+    RS6000_BTI_bool_V16QI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEB,
+    RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI,
+    RS6000_BTI_V16QI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEB,
+    RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEH,
+    RS6000_BTI_bool_V8HI, RS6000_BTI_bool_V8HI,
+    RS6000_BTI_bool_V8HI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEH,
+    RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI,
+    RS6000_BTI_V8HI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEH,
+    RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEW,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V4SI,
+    RS6000_BTI_bool_V4SI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEW,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_V4SI,
+    RS6000_BTI_V4SI, 0 },
+  { ALTIVEC_BUILTIN_VEC_CMPNE, P9V_BUILTIN_CMPNEW,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V16QI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_bool_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V16QI,
+    RS6000_BTI_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V16QI,
+    RS6000_BTI_bool_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V16QI,
+    RS6000_BTI_bool_V16QI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V8HI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V8HI,
+    RS6000_BTI_bool_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V8HI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V8HI,
+    RS6000_BTI_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V8HI,
+    RS6000_BTI_bool_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V8HI,
+    RS6000_BTI_bool_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_pixel_V8HI,
+    RS6000_BTI_pixel_V8HI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V4SI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_bool_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V4SI,
+    RS6000_BTI_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V4SI,
+    RS6000_BTI_bool_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V4SI,
+    RS6000_BTI_bool_V4SI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V2DI,
+    RS6000_BTI_unsigned_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V2DI,
+    RS6000_BTI_bool_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V2DI,
+    RS6000_BTI_unsigned_V2DI, 0
+  },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V2DI,
+    RS6000_BTI_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V2DI,
+    RS6000_BTI_bool_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V2DI,
+    RS6000_BTI_bool_V2DI, 0 },
+
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEFP_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0 },
+  { P9V_BUILTIN_VEC_VCMPNE_P, P9V_BUILTIN_VCMPNEDP_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V16QI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_bool_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V16QI,
+    RS6000_BTI_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V16QI,
+    RS6000_BTI_bool_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V16QI,
+    RS6000_BTI_bool_V16QI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V8HI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V8HI,
+    RS6000_BTI_bool_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V8HI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V8HI,
+    RS6000_BTI_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V8HI,
+    RS6000_BTI_bool_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V8HI,
+    RS6000_BTI_bool_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_pixel_V8HI,
+    RS6000_BTI_pixel_V8HI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V4SI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_bool_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V4SI,
+    RS6000_BTI_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V4SI,
+    RS6000_BTI_bool_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V4SI,
+    RS6000_BTI_bool_V4SI, 0 },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V2DI,
+    RS6000_BTI_unsigned_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V2DI,
+    RS6000_BTI_bool_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V2DI,
+    RS6000_BTI_unsigned_V2DI, 0
+  },
+
+  /* The following 2 entries have been deprecated.  */
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V2DI,
+    RS6000_BTI_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V2DI,
+    RS6000_BTI_bool_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAED_P,
+    RS6000_BTI_INTSI, RS6000_BTI_bool_V2DI,
+    RS6000_BTI_bool_V2DI, 0 },
+
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEFP_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0 },
+  { P9V_BUILTIN_VEC_VCMPAE_P, P9V_BUILTIN_VCMPAEDP_P,
+    RS6000_BTI_INTSI, RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0 },
+
+  { P9V_BUILTIN_VEC_VCMPNEZ_P, P9V_BUILTIN_VCMPNEZB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_INTSI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_unsigned_V16QI },
+  { P9V_BUILTIN_VEC_VCMPNEZ_P, P9V_BUILTIN_VCMPNEZB_P,
+    RS6000_BTI_INTSI, RS6000_BTI_INTSI, RS6000_BTI_V16QI, RS6000_BTI_V16QI },
+
+  { P9V_BUILTIN_VEC_VCMPNEZ_P, P9V_BUILTIN_VCMPNEZH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_INTSI, RS6000_BTI_unsigned_V8HI,
+    RS6000_BTI_unsigned_V8HI },
+  { P9V_BUILTIN_VEC_VCMPNEZ_P, P9V_BUILTIN_VCMPNEZH_P,
+    RS6000_BTI_INTSI, RS6000_BTI_INTSI, RS6000_BTI_V8HI, RS6000_BTI_V8HI },
+
+  { P9V_BUILTIN_VEC_VCMPNEZ_P, P9V_BUILTIN_VCMPNEZW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_INTSI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V4SI },
+  { P9V_BUILTIN_VEC_VCMPNEZ_P, P9V_BUILTIN_VCMPNEZW_P,
+    RS6000_BTI_INTSI, RS6000_BTI_INTSI, RS6000_BTI_V4SI, RS6000_BTI_V4SI },
+
+  { P9V_BUILTIN_VEC_CMPNEZ, P9V_BUILTIN_CMPNEZB,
+    RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI,
+    RS6000_BTI_V16QI, 0 },
+  { P9V_BUILTIN_VEC_CMPNEZ, P9V_BUILTIN_CMPNEZB,
+    RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+
+  { P9V_BUILTIN_VEC_CMPNEZ, P9V_BUILTIN_CMPNEZH,
+    RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI,
+    RS6000_BTI_V8HI, 0 },
+  { P9V_BUILTIN_VEC_CMPNEZ, P9V_BUILTIN_CMPNEZH,
+    RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+
+  { P9V_BUILTIN_VEC_CMPNEZ, P9V_BUILTIN_CMPNEZW,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_V4SI,
+    RS6000_BTI_V4SI, 0 },
+  { P9V_BUILTIN_VEC_CMPNEZ, P9V_BUILTIN_CMPNEZW,
+    RS6000_BTI_bool_V4SI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+
+  { P9V_BUILTIN_VEC_VCLZLSBB, P9V_BUILTIN_VCLZLSBB,
+    RS6000_BTI_INTSI, RS6000_BTI_V16QI, 0, 0 },
+  { P9V_BUILTIN_VEC_VCLZLSBB, P9V_BUILTIN_VCLZLSBB,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V16QI, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VCTZLSBB, P9V_BUILTIN_VCTZLSBB,
+    RS6000_BTI_INTSI, RS6000_BTI_V16QI, 0, 0 },
+  { P9V_BUILTIN_VEC_VCTZLSBB, P9V_BUILTIN_VCTZLSBB,
+    RS6000_BTI_INTSI, RS6000_BTI_unsigned_V16QI, 0, 0 },
+
+  { P9V_BUILTIN_VEC_VEXTRACT4B, P9V_BUILTIN_VEXTRACT4B,
+    RS6000_BTI_INTDI, RS6000_BTI_V16QI, RS6000_BTI_UINTSI, 0 },
+  { P9V_BUILTIN_VEC_VEXTRACT4B, P9V_BUILTIN_VEXTRACT4B,
+    RS6000_BTI_INTDI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_UINTSI, 0 },
+  { P9V_BUILTIN_VEC_EXTRACT4B, P9V_BUILTIN_EXTRACT4B,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, 0 },
+
+  { P9V_BUILTIN_VEC_VEXTULX, P9V_BUILTIN_VEXTUBLX,
+    RS6000_BTI_INTQI, RS6000_BTI_UINTSI,
+    RS6000_BTI_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VEXTULX, P9V_BUILTIN_VEXTUBLX,
+    RS6000_BTI_UINTQI, RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+
+  { P9V_BUILTIN_VEC_VEXTULX, P9V_BUILTIN_VEXTUHLX,
+    RS6000_BTI_INTHI, RS6000_BTI_UINTSI,
+    RS6000_BTI_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VEXTULX, P9V_BUILTIN_VEXTUHLX,
+    RS6000_BTI_UINTHI, RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+
+  { P9V_BUILTIN_VEC_VEXTULX, P9V_BUILTIN_VEXTUWLX,
+    RS6000_BTI_INTSI, RS6000_BTI_UINTSI,
+    RS6000_BTI_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VEXTULX, P9V_BUILTIN_VEXTUWLX,
+    RS6000_BTI_UINTSI, RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VEXTULX, P9V_BUILTIN_VEXTUWLX,
+    RS6000_BTI_float, RS6000_BTI_UINTSI,
+    RS6000_BTI_V4SF, 0 },
+
+  { P9V_BUILTIN_VEC_VEXTURX, P9V_BUILTIN_VEXTUBRX,
+    RS6000_BTI_INTQI, RS6000_BTI_UINTSI,
+    RS6000_BTI_V16QI, 0 },
+  { P9V_BUILTIN_VEC_VEXTURX, P9V_BUILTIN_VEXTUBRX,
+    RS6000_BTI_UINTQI, RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_V16QI, 0 },
+
+  { P9V_BUILTIN_VEC_VEXTURX, P9V_BUILTIN_VEXTUHRX,
+    RS6000_BTI_INTHI, RS6000_BTI_UINTSI,
+    RS6000_BTI_V8HI, 0 },
+  { P9V_BUILTIN_VEC_VEXTURX, P9V_BUILTIN_VEXTUHRX,
+    RS6000_BTI_UINTHI, RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_V8HI, 0 },
+
+  { P9V_BUILTIN_VEC_VEXTURX, P9V_BUILTIN_VEXTUWRX,
+    RS6000_BTI_INTSI, RS6000_BTI_UINTSI,
+    RS6000_BTI_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VEXTURX, P9V_BUILTIN_VEXTUWRX,
+    RS6000_BTI_UINTSI, RS6000_BTI_UINTSI,
+    RS6000_BTI_unsigned_V4SI, 0 },
+  { P9V_BUILTIN_VEC_VEXTURX, P9V_BUILTIN_VEXTUWRX,
+    RS6000_BTI_float, RS6000_BTI_UINTSI,
+    RS6000_BTI_V4SF, 0 },
+
   { P8V_BUILTIN_VEC_VGBBD, P8V_BUILTIN_VGBBD,
     RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0, 0 },
   { P8V_BUILTIN_VEC_VGBBD, P8V_BUILTIN_VGBBD,
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0, 0 },
+
+  { P9V_BUILTIN_VEC_INSERT4B, P9V_BUILTIN_INSERT4B,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_V4SI,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI },
+  { P9V_BUILTIN_VEC_INSERT4B, P9V_BUILTIN_INSERT4B,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V4SI,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI },
 
   { P8V_BUILTIN_VEC_VADDECUQ, P8V_BUILTIN_VADDECUQ,
     RS6000_BTI_V1TI, RS6000_BTI_V1TI, RS6000_BTI_V1TI, RS6000_BTI_V1TI },
@@ -4482,6 +5270,13 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
   { P9V_BUILTIN_VEC_VPRTYBQ, P9V_BUILTIN_VPRTYBQ,
     RS6000_BTI_UINTTI, RS6000_BTI_UINTTI, 0, 0 },
 
+  { P9_BUILTIN_CMPRB, P9_BUILTIN_SCALAR_CMPRB,
+    RS6000_BTI_INTSI, RS6000_BTI_UINTQI, RS6000_BTI_UINTSI, 0 },
+  { P9_BUILTIN_CMPRB2, P9_BUILTIN_SCALAR_CMPRB2,
+    RS6000_BTI_INTSI, RS6000_BTI_UINTQI, RS6000_BTI_UINTSI, 0 },
+  { P9_BUILTIN_CMPEQB, P9_BUILTIN_SCALAR_CMPEQB,
+    RS6000_BTI_INTSI, RS6000_BTI_UINTQI, RS6000_BTI_UINTDI, 0 },
+
   { P8V_BUILTIN_VEC_VPKUDUM, P8V_BUILTIN_VPKUDUM,
     RS6000_BTI_V4SI, RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0 },
   { P8V_BUILTIN_VEC_VPKUDUM, P8V_BUILTIN_VPKUDUM,
@@ -4559,6 +5354,31 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
   { P9V_BUILTIN_VEC_VSRV, P9V_BUILTIN_VSRV,
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI,
     RS6000_BTI_unsigned_V16QI, 0 },
+
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRQ_V16QI,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRQ_V16QI,
+    RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRQ_V1TI,
+    RS6000_BTI_unsigned_V1TI, RS6000_BTI_unsigned_V1TI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRQ_V1TI,
+    RS6000_BTI_V1TI, RS6000_BTI_V1TI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRD_V2DI,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRD_V2DI,
+    RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRD_V2DF,
+    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRW_V4SI,
+    RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRW_V4SI,
+    RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRW_V4SF,
+    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRH_V8HI,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0, 0 },
+  { P9V_BUILTIN_VEC_REVB, P9V_BUILTIN_XXBRH_V8HI,
+    RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0, 0 },
 
   /* Crypto builtins.  */
   { CRYPTO_BUILTIN_VPERMXOR, CRYPTO_BUILTIN_VPERMXOR_V16QI,
@@ -4741,11 +5561,280 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
  
   /* vec_lvsl and vec_lvsr are deprecated for use with LE element order.  */
   if (fcode == ALTIVEC_BUILTIN_VEC_LVSL && !VECTOR_ELT_ORDER_BIG)
-    warning (OPT_Wdeprecated, "vec_lvsl is deprecated for little endian; use \
-assignment for unaligned loads and stores");
+    warning (OPT_Wdeprecated,
+	     "vec_lvsl is deprecated for little endian; use "
+	     "assignment for unaligned loads and stores");
   else if (fcode == ALTIVEC_BUILTIN_VEC_LVSR && !VECTOR_ELT_ORDER_BIG)
-    warning (OPT_Wdeprecated, "vec_lvsr is deprecated for little endian; use \
-assignment for unaligned loads and stores");
+    warning (OPT_Wdeprecated,
+	     "vec_lvsr is deprecated for little endian; use "
+	     "assignment for unaligned loads and stores");
+
+  if (fcode == ALTIVEC_BUILTIN_VEC_MUL)
+    {
+      /* vec_mul needs to be special cased because there are no instructions
+	 for it for the {un}signed char, {un}signed short, and {un}signed int
+	 types.  */
+      if (nargs != 2)
+	{
+	  error ("vec_mul only accepts 2 arguments");
+	  return error_mark_node;
+	}
+
+      tree arg0 = (*arglist)[0];
+      tree arg0_type = TREE_TYPE (arg0);
+      tree arg1 = (*arglist)[1];
+      tree arg1_type = TREE_TYPE (arg1);
+
+      /* Both arguments must be vectors and the types must be compatible.  */
+      if (TREE_CODE (arg0_type) != VECTOR_TYPE)
+	goto bad;
+      if (!lang_hooks.types_compatible_p (arg0_type, arg1_type))
+	goto bad;
+
+      switch (TYPE_MODE (TREE_TYPE (arg0_type)))
+	{
+	  case QImode:
+	  case HImode:
+	  case SImode:
+	  case DImode:
+	  case TImode:
+	    {
+	      /* For scalar types just use a multiply expression.  */
+	      return fold_build2_loc (loc, MULT_EXPR, TREE_TYPE (arg0), arg0,
+				      fold_convert (TREE_TYPE (arg0), arg1));
+	    }
+	  case SFmode:
+	    {
+	      /* For floats use the xvmulsp instruction directly.  */
+	      tree call = rs6000_builtin_decls[VSX_BUILTIN_XVMULSP];
+	      return build_call_expr (call, 2, arg0, arg1);
+	    }
+	  case DFmode:
+	    {
+	      /* For doubles use the xvmuldp instruction directly.  */
+	      tree call = rs6000_builtin_decls[VSX_BUILTIN_XVMULDP];
+	      return build_call_expr (call, 2, arg0, arg1);
+	    }
+	  /* Other types are errors.  */
+	  default:
+	    goto bad;
+	}
+    }
+
+  if (fcode == ALTIVEC_BUILTIN_VEC_CMPNE)
+    {
+      /* vec_cmpne needs to be special cased because there are no instructions
+	 for it (prior to power 9).  */
+      if (nargs != 2)
+	{
+	  error ("vec_cmpne only accepts 2 arguments");
+	  return error_mark_node;
+	}
+
+      tree arg0 = (*arglist)[0];
+      tree arg0_type = TREE_TYPE (arg0);
+      tree arg1 = (*arglist)[1];
+      tree arg1_type = TREE_TYPE (arg1);
+
+      /* Both arguments must be vectors and the types must be compatible.  */
+      if (TREE_CODE (arg0_type) != VECTOR_TYPE)
+	goto bad;
+      if (!lang_hooks.types_compatible_p (arg0_type, arg1_type))
+	goto bad;
+
+      /* Power9 instructions provide the most efficient implementation of
+	 ALTIVEC_BUILTIN_VEC_CMPNE if the mode is not DImode or TImode
+	 or SFmode or DFmode.  */
+      if (!TARGET_P9_VECTOR
+	  || (TYPE_MODE (TREE_TYPE (arg0_type)) == DImode)
+	  || (TYPE_MODE (TREE_TYPE (arg0_type)) == TImode)
+	  || (TYPE_MODE (TREE_TYPE (arg0_type)) == SFmode)
+	  || (TYPE_MODE (TREE_TYPE (arg0_type)) == DFmode))
+	{
+	  switch (TYPE_MODE (TREE_TYPE (arg0_type)))
+	    {
+	      /* vec_cmpneq (va, vb) == vec_nor (vec_cmpeq (va, vb),
+		 vec_cmpeq (va, vb)).  */
+	      /* Note:  vec_nand also works but opt changes vec_nand's
+		 to vec_nor's anyway.  */
+	    case QImode:
+	    case HImode:
+	    case SImode:
+	    case DImode:
+	    case TImode:
+	    case SFmode:
+	    case DFmode:
+	      {
+		/* call = vec_cmpeq (va, vb)
+		   result = vec_nor (call, call).  */
+		vec<tree, va_gc> *params = make_tree_vector ();
+		vec_safe_push (params, arg0);
+		vec_safe_push (params, arg1);
+		tree call = altivec_resolve_overloaded_builtin
+		  (loc, rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_CMPEQ],
+		   params);
+		/* Use save_expr to ensure that operands used more than once
+		   that may have side effects (like calls) are only evaluated
+		   once.  */
+		call = save_expr (call);
+		params = make_tree_vector ();
+		vec_safe_push (params, call);
+		vec_safe_push (params, call);
+		return altivec_resolve_overloaded_builtin
+		  (loc, rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_NOR], params);
+	      }
+	      /* Other types are errors.  */
+	    default:
+	      goto bad;
+	    }
+	}
+      /* else, fall through and process the Power9 alternative below */
+    }
+
+  if (fcode == ALTIVEC_BUILTIN_VEC_ADDE)
+    {
+      /* vec_adde needs to be special cased because there is no instruction
+	  for the {un}signed int version.  */
+      if (nargs != 3)
+	{
+	  error ("vec_adde only accepts 3 arguments");
+	  return error_mark_node;
+	}
+
+      tree arg0 = (*arglist)[0];
+      tree arg0_type = TREE_TYPE (arg0);
+      tree arg1 = (*arglist)[1];
+      tree arg1_type = TREE_TYPE (arg1);
+      tree arg2 = (*arglist)[2];
+      tree arg2_type = TREE_TYPE (arg2);
+
+      /* All 3 arguments must be vectors of (signed or unsigned) (int or
+	 __int128) and the types must be compatible.  */
+      if (TREE_CODE (arg0_type) != VECTOR_TYPE)
+	goto bad;
+      if (!lang_hooks.types_compatible_p (arg0_type, arg1_type)
+	  || !lang_hooks.types_compatible_p (arg1_type, arg2_type))
+	goto bad;
+
+      switch (TYPE_MODE (TREE_TYPE (arg0_type)))
+	{
+	  /* For {un}signed ints,
+	     vec_adde (va, vb, carryv) == vec_add (vec_add (va, vb),
+						   vec_and (carryv, 0x1)).  */
+	  case SImode:
+	    {
+	      vec<tree, va_gc> *params = make_tree_vector ();
+	      vec_safe_push (params, arg0);
+	      vec_safe_push (params, arg1);
+	      tree add_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_ADD];
+	      tree call = altivec_resolve_overloaded_builtin (loc, add_builtin,
+							      params);
+	      tree const1 = build_int_cstu (TREE_TYPE (arg0_type), 1);
+	      tree ones_vector = build_vector_from_val (arg0_type, const1);
+	      tree and_expr = fold_build2_loc (loc, BIT_AND_EXPR, arg0_type,
+					       arg2, ones_vector);
+	      params = make_tree_vector ();
+	      vec_safe_push (params, call);
+	      vec_safe_push (params, and_expr);
+	      return altivec_resolve_overloaded_builtin (loc, add_builtin,
+							 params);
+	    }
+	  /* For {un}signed __int128s use the vaddeuqm instruction
+		directly.  */
+	  case TImode:
+	    {
+	      tree adde_bii = rs6000_builtin_decls[P8V_BUILTIN_VEC_VADDEUQM];
+	      return altivec_resolve_overloaded_builtin (loc, adde_bii,
+							 arglist);
+	    }
+
+	  /* Types other than {un}signed int and {un}signed __int128
+		are errors.  */
+	  default:
+	    goto bad;
+	}
+    }
+
+  if (fcode == ALTIVEC_BUILTIN_VEC_ADDEC)
+    {
+      /* vec_addec needs to be special cased because there is no instruction
+	for the {un}signed int version.  */
+      if (nargs != 3)
+	{
+	  error ("vec_addec only accepts 3 arguments");
+	  return error_mark_node;
+	}
+
+      tree arg0 = (*arglist)[0];
+      tree arg0_type = TREE_TYPE (arg0);
+      tree arg1 = (*arglist)[1];
+      tree arg1_type = TREE_TYPE (arg1);
+      tree arg2 = (*arglist)[2];
+      tree arg2_type = TREE_TYPE (arg2);
+
+      /* All 3 arguments must be vectors of (signed or unsigned) (int or
+	 __int128) and the types must be compatible.  */
+      if (TREE_CODE (arg0_type) != VECTOR_TYPE)
+	goto bad;
+      if (!lang_hooks.types_compatible_p (arg0_type, arg1_type)
+	  || !lang_hooks.types_compatible_p (arg1_type, arg2_type))
+	goto bad;
+
+      switch (TYPE_MODE (TREE_TYPE (arg0_type)))
+	{
+	  /* For {un}signed ints,
+	      vec_addec (va, vb, carryv) ==
+				vec_or (vec_addc (va, vb),
+					vec_addc (vec_add (va, vb),
+						  vec_and (carryv, 0x1))).  */
+	  case SImode:
+	    {
+	    /* Use save_expr to ensure that operands used more than once
+		that may have side effects (like calls) are only evaluated
+		once.  */
+	    arg0 = save_expr (arg0);
+	    arg1 = save_expr (arg1);
+	    vec<tree, va_gc> *params = make_tree_vector ();
+	    vec_safe_push (params, arg0);
+	    vec_safe_push (params, arg1);
+	    tree addc_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_ADDC];
+	    tree call1 = altivec_resolve_overloaded_builtin (loc, addc_builtin,
+							     params);
+	    params = make_tree_vector ();
+	    vec_safe_push (params, arg0);
+	    vec_safe_push (params, arg1);
+	    tree add_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_ADD];
+	    tree call2 = altivec_resolve_overloaded_builtin (loc, add_builtin,
+							     params);
+	    tree const1 = build_int_cstu (TREE_TYPE (arg0_type), 1);
+	    tree ones_vector = build_vector_from_val (arg0_type, const1);
+	    tree and_expr = fold_build2_loc (loc, BIT_AND_EXPR, arg0_type,
+					     arg2, ones_vector);
+	    params = make_tree_vector ();
+	    vec_safe_push (params, call2);
+	    vec_safe_push (params, and_expr);
+	    call2 = altivec_resolve_overloaded_builtin (loc, addc_builtin,
+							params);
+	    params = make_tree_vector ();
+	    vec_safe_push (params, call1);
+	    vec_safe_push (params, call2);
+	    tree or_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_OR];
+	    return altivec_resolve_overloaded_builtin (loc, or_builtin,
+						       params);
+	    }
+	  /* For {un}signed __int128s use the vaddecuq instruction.  */
+	  case TImode:
+	    {
+	    tree VADDECUQ_bii = rs6000_builtin_decls[P8V_BUILTIN_VEC_VADDECUQ];
+	    return altivec_resolve_overloaded_builtin (loc, VADDECUQ_bii,
+						       arglist);
+	    }
+	  /* Types other than {un}signed int and {un}signed __int128
+		are errors.  */
+	  default:
+	    goto bad;
+	}
+    }
 
   /* For now treat vec_splats and vec_promote as the same.  */
   if (fcode == ALTIVEC_BUILTIN_VEC_SPLATS
@@ -4845,9 +5934,9 @@ assignment for unaligned loads and stores");
       arg1_type = TREE_TYPE (arg1);
 
       if (TREE_CODE (arg1_type) != VECTOR_TYPE)
-	goto bad; 
+	goto bad;
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
-	goto bad; 
+	goto bad;
 
       /* If we are targeting little-endian, but -maltivec=be has been
 	 specified to override the element order, adjust the element
@@ -4860,28 +5949,95 @@ assignment for unaligned loads and stores");
 				  arg2);
 	}
 
-      /* If we can use the VSX xxpermdi instruction, use that for extract.  */
+      /* See if we can optimize vec_extracts with the current VSX instruction
+	 set.  */
       mode = TYPE_MODE (arg1_type);
-      if ((mode == V2DFmode || mode == V2DImode) && VECTOR_MEM_VSX_P (mode)
-	  && TREE_CODE (arg2) == INTEGER_CST
-	  && wi::ltu_p (arg2, 2))
+      if (VECTOR_MEM_VSX_P (mode))
+
 	{
 	  tree call = NULL_TREE;
+	  int nunits = GET_MODE_NUNITS (mode);
 
-	  if (mode == V2DFmode)
-	    call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V2DF];
-	  else if (mode == V2DImode)
-	    call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V2DI];
+	  /* If the second argument is an integer constant, if the value is in
+	     the expected range, generate the built-in code if we can.  We need
+	     64-bit and direct move to extract the small integer vectors.  */
+	  if (TREE_CODE (arg2) == INTEGER_CST && wi::ltu_p (arg2, nunits))
+	    {
+	      switch (mode)
+		{
+		default:
+		  break;
+
+		case V1TImode:
+		  call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V1TI];
+		  break;
+
+		case V2DFmode:
+		  call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V2DF];
+		  break;
+
+		case V2DImode:
+		  call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V2DI];
+		  break;
+
+		case V4SFmode:
+		  call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V4SF];
+		  break;
+
+		case V4SImode:
+		  if (TARGET_DIRECT_MOVE_64BIT)
+		    call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V4SI];
+		  break;
+
+		case V8HImode:
+		  if (TARGET_DIRECT_MOVE_64BIT)
+		    call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V8HI];
+		  break;
+
+		case V16QImode:
+		  if (TARGET_DIRECT_MOVE_64BIT)
+		    call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V16QI];
+		  break;
+		}
+	    }
+
+	  /* If the second argument is variable, we can optimize it if we are
+	     generating 64-bit code on a machine with direct move.  */
+	  else if (TREE_CODE (arg2) != INTEGER_CST && TARGET_DIRECT_MOVE_64BIT)
+	    {
+	      switch (mode)
+		{
+		default:
+		  break;
+
+		case V2DFmode:
+		  call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V2DF];
+		  break;
+
+		case V2DImode:
+		  call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V2DI];
+		  break;
+
+		case V4SFmode:
+		  call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V4SF];
+		  break;
+
+		case V4SImode:
+		  call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V4SI];
+		  break;
+
+		case V8HImode:
+		  call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V8HI];
+		  break;
+
+		case V16QImode:
+		  call = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_EXT_V16QI];
+		  break;
+		}
+	    }
 
 	  if (call)
 	    return build_call_expr (call, 2, arg1, arg2);
-	}
-      else if (mode == V1TImode && VECTOR_MEM_VSX_P (mode)
-	       && TREE_CODE (arg2) == INTEGER_CST
-	       && wi::eq_p (arg2, 0))
-	{
-	  tree call = rs6000_builtin_decls[VSX_BUILTIN_VEC_EXT_V1TI];
-	  return build_call_expr (call, 2, arg1, arg2);
 	}
 
       /* Build *(((arg1_inner_type*)&(vector type){arg1})+arg2). */
@@ -4957,9 +6113,9 @@ assignment for unaligned loads and stores");
       arg2 = (*arglist)[2];
 
       if (TREE_CODE (arg1_type) != VECTOR_TYPE)
-	goto bad; 
+	goto bad;
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
-	goto bad; 
+	goto bad;
 
       /* If we are targeting little-endian, but -maltivec=be has been
 	 specified to override the element order, adjust the element
@@ -5041,6 +6197,148 @@ assignment for unaligned loads and stores");
       return stmt;
     }
 
+  /* Expand vec_ld into an expression that masks the address and
+     performs the load.  We need to expand this early to allow
+     the best aliasing, as by the time we get into RTL we no longer
+     are able to honor __restrict__, for example.  We may want to
+     consider this for all memory access built-ins.
+
+     When -maltivec=be is specified, or the wrong number of arguments
+     is provided, simply punt to existing built-in processing.  */
+  if (fcode == ALTIVEC_BUILTIN_VEC_LD
+      && (BYTES_BIG_ENDIAN || !VECTOR_ELT_ORDER_BIG)
+      && nargs == 2)
+    {
+      tree arg0 = (*arglist)[0];
+      tree arg1 = (*arglist)[1];
+
+      /* Strip qualifiers like "const" from the pointer arg.  */
+      tree arg1_type = TREE_TYPE (arg1);
+      if (TREE_CODE (arg1_type) == ARRAY_TYPE && c_dialect_cxx ())
+	{
+	  /* Force array-to-pointer decay for C++.  */
+	  arg1 = default_conversion (arg1);
+	  arg1_type = TREE_TYPE (arg1);
+	}
+      if (!POINTER_TYPE_P (arg1_type))
+	goto bad;
+
+      tree inner_type = TREE_TYPE (arg1_type);
+      if (TYPE_QUALS (TREE_TYPE (arg1_type)) != 0)
+	{
+	  arg1_type = build_pointer_type (build_qualified_type (inner_type,
+								0));
+	  arg1 = fold_convert (arg1_type, arg1);
+	}
+
+      /* Construct the masked address.  Let existing error handling take
+	 over if we don't have a constant offset.  */
+      arg0 = fold (arg0);
+
+      if (TREE_CODE (arg0) == INTEGER_CST)
+	{
+	  if (!ptrofftype_p (TREE_TYPE (arg0)))
+	    arg0 = build1 (NOP_EXPR, sizetype, arg0);
+
+	  tree addr = fold_build2_loc (loc, POINTER_PLUS_EXPR, arg1_type,
+				       arg1, arg0);
+	  tree aligned = fold_build2_loc (loc, BIT_AND_EXPR, arg1_type, addr,
+					  build_int_cst (arg1_type, -16));
+
+	  /* Find the built-in to get the return type so we can convert
+	     the result properly (or fall back to default handling if the
+	     arguments aren't compatible).  */
+	  for (desc = altivec_overloaded_builtins;
+	       desc->code && desc->code != fcode; desc++)
+	    continue;
+
+	  for (; desc->code == fcode; desc++)
+	    if (rs6000_builtin_type_compatible (TREE_TYPE (arg0), desc->op1)
+		&& (rs6000_builtin_type_compatible (TREE_TYPE (arg1),
+						    desc->op2)))
+	      {
+		tree ret_type = rs6000_builtin_type (desc->ret_type);
+		if (TYPE_MODE (ret_type) == V2DImode)
+		  /* Type-based aliasing analysis thinks vector long
+		     and vector long long are different and will put them
+		     in distinct alias classes.  Force our return type
+		     to be a may-alias type to avoid this.  */
+		  ret_type
+		    = build_pointer_type_for_mode (ret_type, Pmode,
+						   true/*can_alias_all*/);
+		else
+		  ret_type = build_pointer_type (ret_type);
+		aligned = build1 (NOP_EXPR, ret_type, aligned);
+		tree ret_val = build_indirect_ref (loc, aligned, RO_NULL);
+		return ret_val;
+	      }
+	}
+    }
+
+  /* Similarly for stvx.  */
+  if (fcode == ALTIVEC_BUILTIN_VEC_ST
+      && (BYTES_BIG_ENDIAN || !VECTOR_ELT_ORDER_BIG)
+      && nargs == 3)
+    {
+      tree arg0 = (*arglist)[0];
+      tree arg1 = (*arglist)[1];
+      tree arg2 = (*arglist)[2];
+
+      /* Construct the masked address.  Let existing error handling take
+	 over if we don't have a constant offset.  */
+      arg1 = fold (arg1);
+
+      if (TREE_CODE (arg1) == INTEGER_CST)
+	{
+	  if (!ptrofftype_p (TREE_TYPE (arg1)))
+	    arg1 = build1 (NOP_EXPR, sizetype, arg1);
+
+	  tree arg2_type = TREE_TYPE (arg2);
+	  if (TREE_CODE (arg2_type) == ARRAY_TYPE && c_dialect_cxx ())
+	    {
+	      /* Force array-to-pointer decay for C++.  */
+	      arg2 = default_conversion (arg2);
+	      arg2_type = TREE_TYPE (arg2);
+	    }
+
+	  /* Find the built-in to make sure a compatible one exists; if not
+	     we fall back to default handling to get the error message.  */
+	  for (desc = altivec_overloaded_builtins;
+	       desc->code && desc->code != fcode; desc++)
+	    continue;
+
+	  for (; desc->code == fcode; desc++)
+	    if (rs6000_builtin_type_compatible (TREE_TYPE (arg0), desc->op1)
+		&& rs6000_builtin_type_compatible (TREE_TYPE (arg1), desc->op2)
+		&& rs6000_builtin_type_compatible (TREE_TYPE (arg2),
+						   desc->op3))
+	      {
+		tree addr = fold_build2_loc (loc, POINTER_PLUS_EXPR, arg2_type,
+					     arg2, arg1);
+		tree aligned
+		  = fold_build2_loc (loc, BIT_AND_EXPR, arg2_type,
+				     addr, build_int_cst (arg2_type, -16));
+
+		tree arg0_type = TREE_TYPE (arg0);
+		if (TYPE_MODE (arg0_type) == V2DImode)
+		  /* Type-based aliasing analysis thinks vector long
+		     and vector long long are different and will put them
+		     in distinct alias classes.  Force our address type
+		     to be a may-alias type to avoid this.  */
+		  arg0_type
+		    = build_pointer_type_for_mode (arg0_type, Pmode,
+						   true/*can_alias_all*/);
+		else
+		  arg0_type = build_pointer_type (arg0_type);
+		aligned = build1 (NOP_EXPR, arg0_type, aligned);
+		tree stg = build_indirect_ref (loc, aligned, RO_NULL);
+		tree retval = build2 (MODIFY_EXPR, TREE_TYPE (stg), stg,
+				      convert (TREE_TYPE (stg), arg0));
+		return retval;
+	      }
+	}
+    }
+
   for (n = 0;
        !VOID_TYPE_P (TREE_VALUE (fnargs)) && n < nargs;
        fnargs = TREE_CHAIN (fnargs), n++)
@@ -5079,7 +6377,7 @@ assignment for unaligned loads and stores");
 	{
           if (TYPE_READONLY (TREE_TYPE (type))
 	      && !TYPE_READONLY (TREE_TYPE (decl_type)))
-	    warning (0, "passing arg %d of %qE discards qualifiers from"
+	    warning (0, "passing arg %d of %qE discards qualifiers from "
 		        "pointer target type", n + 1, fndecl);
 	  type = build_pointer_type (build_qualified_type (TREE_TYPE (type),
 							   0));
@@ -5106,23 +6404,42 @@ assignment for unaligned loads and stores");
       return build_int_cst (NULL_TREE, TYPE_VECTOR_SUBPARTS (types[0]));
     }
 
-  for (desc = altivec_overloaded_builtins;
-       desc->code && desc->code != fcode; desc++)
-    continue;
-
-  /* For arguments after the last, we have RS6000_BTI_NOT_OPAQUE in
-     the opX fields.  */
-  for (; desc->code == fcode; desc++)
-    if ((desc->op1 == RS6000_BTI_NOT_OPAQUE
-	 || rs6000_builtin_type_compatible (types[0], desc->op1))
-	&& (desc->op2 == RS6000_BTI_NOT_OPAQUE
-	    || rs6000_builtin_type_compatible (types[1], desc->op2))
-	&& (desc->op3 == RS6000_BTI_NOT_OPAQUE
-	    || rs6000_builtin_type_compatible (types[2], desc->op3))
-	&& rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
-      return altivec_build_resolved_builtin (args, n, desc);
-
+  {
+    bool unsupported_builtin = false;
+    for (desc = altivec_overloaded_builtins;
+	 desc->code && desc->code != fcode; desc++)
+      continue;
+    
+    /* For arguments after the last, we have RS6000_BTI_NOT_OPAQUE in
+       the opX fields.  */
+    for (; desc->code == fcode; desc++)
+      {
+	if ((desc->op1 == RS6000_BTI_NOT_OPAQUE
+	     || rs6000_builtin_type_compatible (types[0], desc->op1))
+	    && (desc->op2 == RS6000_BTI_NOT_OPAQUE
+		|| rs6000_builtin_type_compatible (types[1], desc->op2))
+	    && (desc->op3 == RS6000_BTI_NOT_OPAQUE
+		|| rs6000_builtin_type_compatible (types[2], desc->op3)))
+	  {
+	    if (rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
+	      return altivec_build_resolved_builtin (args, n, desc);
+	    else
+	      unsupported_builtin = true;
+	  }
+      }
+    
+    if (unsupported_builtin)
+      {
+	const char *name = rs6000_overloaded_builtin_name (fcode);
+	error ("Builtin function %s not supported in this compiler configuration",
+	       name);
+	return error_mark_node;
+      }
+  }
  bad:
-  error ("invalid parameter combination for AltiVec intrinsic");
-  return error_mark_node;
+  {
+    const char *name = rs6000_overloaded_builtin_name (fcode);
+    error ("invalid parameter combination for AltiVec intrinsic %s", name);
+    return error_mark_node;
+  }
 }

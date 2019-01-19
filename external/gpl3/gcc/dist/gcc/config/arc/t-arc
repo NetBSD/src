@@ -1,60 +1,48 @@
-# Copyright (C) 1997, 1998, 1999, 2001, 2002, 2003,
-# 2004 Free Software Foundation, Inc.
+# GCC Makefile fragment for Synopsys DesignWare ARC.
+#
+# Copyright (C) 2016-2017 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
-# GCC is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3, or (at your option)
-# any later version.
+# GCC is free software; you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3, or (at your option) any later version.
 #
-# GCC is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
 #
-# You should have received a copy of the GNU General Public License
-# along with GCC; see the file COPYING3.  If not see
+# You should have received a copy of the GNU General Public License along
+# with GCC; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
 
-LIB1ASMSRC = arc/lib1funcs.asm
-LIB1ASMFUNCS = _mulsi3 _umulsidi3 _udivsi3 _divsi3 _umodsi3 _modsi3 _divmod_tools
+TM_H += $(srcdir)/config/arc/arc-c.def
 
-# We need libgcc routines to be mangled according to which cpu they
-# were compiled for.
-# ??? -mmangle-cpu passed by default for now.
-#LIBGCC2_CFLAGS = -g1 -O2 $(LIBGCC2_INCLUDES) $(GCC_CFLAGS) -mmangle-cpu
+driver-arc.o: $(srcdir)/config/arc/driver-arc.c \
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
-# We want fine grained libraries, so use the new code to build the
-# floating point emulation libraries.
-FPBIT = fp-bit.c
-DPBIT = dp-bit.c
+arc-c.o: $(srcdir)/config/arc/arc-c.c $(CONFIG_H) $(SYSTEM_H) \
+$(TREE_H) $(TM_H) $(TM_P_H) coretypes.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(srcdir)/config/arc/arc-c.c
 
-dp-bit.c: $(srcdir)/config/fp-bit.c
-	echo '#ifndef __big_endian__' > dp-bit.c
-	echo '#define FLOAT_BIT_ORDER_MISMATCH' >> dp-bit.c
-	echo '#endif' >> dp-bit.c
-	cat $(srcdir)/config/fp-bit.c >> dp-bit.c
+#Run `arc-cpus` if you changed something in arc-cpus.def
 
-fp-bit.c: $(srcdir)/config/fp-bit.c
-	echo '#define FLOAT' > fp-bit.c
-	echo '#ifndef __big_endian__' >> fp-bit.c
-	echo '#define FLOAT_BIT_ORDER_MISMATCH' >> fp-bit.c
-	echo '#endif' >> fp-bit.c
-	cat $(srcdir)/config/fp-bit.c >> fp-bit.c
+.PHONY: arc-cpus
 
-# .init/.fini section routines
+arc-cpus: $(srcdir)/config/arc/t-multilib \
+	$(srcdir)/config/arc/arc-tables.opt
 
-$(T)crtinit.o: $(srcdir)/config/arc/initfini.c $(GCC_PASSES) $(CONFIG_H)
-	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS) \
-	 $(MULTILIB_CFLAGS) -DCRT_INIT -finhibit-size-directive -fno-inline-functions \
-	 -g0 -c $(srcdir)/config/arc/initfini.c -o $(T)crtinit.o
+$(srcdir)/config/arc/t-multilib: $(srcdir)/config/arc/genmultilib.awk 	\
+				 $(srcdir)/config/arc/arc-cpus.def
+	$(AWK) -f $< -v FORMAT=Makefile $< $(srcdir)/config/arc/arc-cpus.def > $@
 
-$(T)crtfini.o: $(srcdir)/config/arc/initfini.c $(GCC_PASSES) $(CONFIG_H)
-	$(GCC_FOR_TARGET) $(GCC_CFLAGS) $(INCLUDES) $(CRTSTUFF_T_CFLAGS) \
-	 -DCRT_FINI $(MULTILIB_CFLAGS) -finhibit-size-directive -fno-inline-functions \
-	 -g0 -c $(srcdir)/config/arc/initfini.c -o $(T)crtfini.o
+$(srcdir)/config/arc/arc-tables.opt: $(srcdir)/config/arc/genoptions.awk \
+				 $(srcdir)/config/arc/arc-cpus.def
+	$(AWK) -f $< -v FORMAT=Makefile $< $(srcdir)/config/arc/arc-cpus.def > $@
 
-MULTILIB_OPTIONS = EB
-MULTILIB_DIRNAMES = be
-EXTRA_MULTILIB_PARTS = crtinit.o crtfini.o
+# Local Variables:
+# mode: Makefile
+# End:

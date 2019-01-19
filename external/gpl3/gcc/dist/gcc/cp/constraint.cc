@@ -1,5 +1,5 @@
 /* Processing rules for constraints.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    Contributed by Andrew Sutton (andrew.n.sutton@gmail.com)
 
 This file is part of GCC.
@@ -116,7 +116,8 @@ function_concept_check_p (tree t)
 {
   gcc_assert (TREE_CODE (t) == CALL_EXPR);
   tree fn = CALL_EXPR_FN (t);
-  if (TREE_CODE (fn) == TEMPLATE_ID_EXPR
+  if (fn != NULL_TREE
+      && TREE_CODE (fn) == TEMPLATE_ID_EXPR
       && TREE_CODE (TREE_OPERAND (fn, 0)) == OVERLOAD)
     {
       tree f1 = get_first_fn (fn);
@@ -508,7 +509,7 @@ get_variable_initializer (tree var)
 tree
 get_concept_definition (tree decl)
 {
-  if (TREE_CODE (decl) == VAR_DECL)
+  if (VAR_P (decl))
     return get_variable_initializer (decl);
   else if (TREE_CODE (decl) == FUNCTION_DECL)
     return get_returned_expression (decl);
@@ -1285,10 +1286,8 @@ finish_shorthand_constraint (tree decl, tree constr)
      the constraint an expansion. */
   tree check;
   tree tmpl = DECL_TI_TEMPLATE (con);
-  if (TREE_CODE (con) == VAR_DECL)
-    {
-      check = build_concept_check (tmpl, arg, args);
-    }
+  if (VAR_P (con))
+    check = build_concept_check (tmpl, arg, args);
   else
     {
       tree ovl = build_overload (tmpl, NULL_TREE);
@@ -2389,8 +2388,10 @@ constraints_satisfied_p (tree decl)
   tree args = NULL_TREE;
   if (tree ti = DECL_TEMPLATE_INFO (decl))
     {
-      ci = get_constraints (TI_TEMPLATE (ti));
-      args = INNERMOST_TEMPLATE_ARGS (TI_ARGS (ti));
+      tree tmpl = TI_TEMPLATE (ti);
+      ci = get_constraints (tmpl);
+      int depth = TMPL_PARMS_DEPTH (DECL_TEMPLATE_PARMS (tmpl));
+      args = get_innermost_template_args (TI_ARGS (ti), depth);
     }
   else
     {

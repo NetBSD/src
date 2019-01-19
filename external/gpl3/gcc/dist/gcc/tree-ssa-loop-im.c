@@ -1,5 +1,5 @@
 /* Loop invariant motion.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -718,7 +718,7 @@ determine_max_movement (gimple *stmt, bool must_preserve_exec)
 		return false;
 	      def_data = get_lim_data (SSA_NAME_DEF_STMT (val));
 	      if (def_data)
-		total_cost += def_data->cost;
+		lim_data->cost += def_data->cost;
 	    }
 
 	  /* We want to avoid unconditionally executing very expensive
@@ -2110,16 +2110,16 @@ record_dep_loop (struct loop *loop, im_mem_ref *ref, bool stored_p)
     loop = loop_outer (loop);
 }
 
-/* Returns true if REF is independent on all other memory references in
-   LOOP.  */
+/* Returns true if REF is independent on all other memory
+   references in LOOP.  */
 
 static bool
 ref_indep_loop_p_1 (struct loop *loop, im_mem_ref *ref, bool stored_p)
 {
+  stored_p |= (ref->stored && bitmap_bit_p (ref->stored, loop->num));
+
+  bool indep_p = true;
   bitmap refs_to_check;
-  unsigned i;
-  bitmap_iterator bi;
-  im_mem_ref *aref;
 
   if (stored_p)
     refs_to_check = &memory_accesses.refs_in_loop[loop->num];
@@ -2127,40 +2127,40 @@ ref_indep_loop_p_1 (struct loop *loop, im_mem_ref *ref, bool stored_p)
     refs_to_check = &memory_accesses.refs_stored_in_loop[loop->num];
 
   if (bitmap_bit_p (refs_to_check, UNANALYZABLE_MEM_ID))
-    return false;
-
-  EXECUTE_IF_SET_IN_BITMAP (refs_to_check, 0, i, bi)
+    indep_p = false;
+  else
     {
-      aref = memory_accesses.refs_list[i];
-      if (!refs_independent_p (ref, aref))
+      if (bitmap_bit_p (&ref->indep_loop, LOOP_DEP_BIT (loop->num, stored_p)))
+	return true;
+      if (bitmap_bit_p (&ref->dep_loop, LOOP_DEP_BIT (loop->num, stored_p)))
 	return false;
+
+      struct loop *inner = loop->inner;
+      while (inner)
+	{
+	  if (!ref_indep_loop_p_1 (inner, ref, stored_p))
+	    {
+	      indep_p = false;
+	      break;
+	    }
+	  inner = inner->next;
+	}
+
+      if (indep_p)
+	{
+	  unsigned i;
+	  bitmap_iterator bi;
+	  EXECUTE_IF_SET_IN_BITMAP (refs_to_check, 0, i, bi)
+	    {
+	      im_mem_ref *aref = memory_accesses.refs_list[i];
+	      if (!refs_independent_p (ref, aref))
+		{
+		  indep_p = false;
+		  break;
+		}
+	    }
+	}
     }
-
-  return true;
-}
-
-/* Returns true if REF is independent on all other memory references in
-   LOOP.  Wrapper over ref_indep_loop_p_1, caching its results.  */
-
-static bool
-ref_indep_loop_p_2 (struct loop *loop, im_mem_ref *ref, bool stored_p)
-{
-  stored_p |= (ref->stored && bitmap_bit_p (ref->stored, loop->num));
-
-  if (bitmap_bit_p (&ref->indep_loop, LOOP_DEP_BIT (loop->num, stored_p)))
-    return true;
-  if (bitmap_bit_p (&ref->dep_loop, LOOP_DEP_BIT (loop->num, stored_p)))
-    return false;
-
-  struct loop *inner = loop->inner;
-  while (inner)
-    {
-      if (!ref_indep_loop_p_2 (inner, ref, stored_p))
-	return false;
-      inner = inner->next;
-    }
-
-  bool indep_p = ref_indep_loop_p_1 (loop, ref, stored_p);
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file, "Querying dependencies of ref %u in loop %d: %s\n",
@@ -2199,7 +2199,7 @@ ref_indep_loop_p (struct loop *loop, im_mem_ref *ref)
 {
   gcc_checking_assert (MEM_ANALYZABLE (ref));
 
-  return ref_indep_loop_p_2 (loop, ref, false);
+  return ref_indep_loop_p_1 (loop, ref, false);
 }
 
 /* Returns true if we can perform store motion of REF from LOOP.  */
@@ -2403,10 +2403,10 @@ fill_always_executed_in_1 (struct loop *loop, sbitmap contains_call)
 static void
 fill_always_executed_in (void)
 {
-  sbitmap contains_call = sbitmap_alloc (last_basic_block_for_fn (cfun));
   basic_block bb;
   struct loop *loop;
 
+  auto_sbitmap contains_call (last_basic_block_for_fn (cfun));
   bitmap_clear (contains_call);
   FOR_EACH_BB_FN (bb, cfun)
     {
@@ -2423,8 +2423,6 @@ fill_always_executed_in (void)
 
   for (loop = current_loops->tree_root->inner; loop; loop = loop->next)
     fill_always_executed_in_1 (loop, contains_call);
-
-  sbitmap_free (contains_call);
 }
 
 
