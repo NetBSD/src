@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.20 2019/01/03 14:14:08 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.21 2019/01/19 20:56:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.20 2019/01/03 14:14:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.21 2019/01/19 20:56:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -318,7 +318,7 @@ arm_fdt_cpu_mpstart(void)
 		__asm __volatile("sev" ::: "memory");
 
 		/* Wait for AP to start */
-		for (i = 0x100000; i > 0; i--) {
+		for (i = 0x10000000; i > 0; i--) {
 			membar_consumer();
 			if (arm_cpu_hatched & __BIT(cpuindex))
 				break;

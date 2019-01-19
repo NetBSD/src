@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_fdt.c,v 1.1 2018/06/05 08:03:28 hkenken Exp $ */
+/* $NetBSD: a9tmr_fdt.c,v 1.2 2019/01/19 20:56:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.1 2018/06/05 08:03:28 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.2 2019/01/19 20:56:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,6 +55,7 @@ static int
 a9tmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
+		"arm,cortex-a5-global-timer",
 		"arm,cortex-a9-global-timer",
 		NULL
 	};
@@ -89,6 +90,9 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	void *ih = fdtbus_intr_establish(phandle, 0, IPL_CLOCK,
 	    FDT_INTR_MPSAFE, a9tmr_intr, NULL);
