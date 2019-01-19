@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mknodes.sh,v 1.3 2018/06/22 11:04:55 kre Exp $
+#	$NetBSD: mknodes.sh,v 1.4 2019/01/19 13:08:50 kre Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,11 +83,35 @@ for struct in $struct_list; do
 		IFS=' '
 		set -- $line
 		name=$1
+		case "$name" in
+		type)	if [ -n "$typetype" ] && [ "$typetype" != "$2" ]
+			then
+				echo >&2 "Conflicting type fields: node" \
+					"$struct has $2, others $typetype"
+				exit 1
+			fi
+			if [ $field -ne 1 ]
+			then
+				echo >&2 "Node $struct has type as field" \
+					"$field (should only be first)"
+				exit 1
+			fi
+			typetype=$2
+			;;
+		*)
+			if [ $field -eq 1 ]
+			then
+				echo >&2 "Node $struct does not have" \
+					"type as first field"
+				exit 1
+			fi
+			;;
+		esac
 		case $2 in
 		nodeptr ) type="union node *";;
 		nodelist ) type="struct nodelist *";;
 		string ) type="char *";;
-		int ) type="int ";;
+		int*_t | uint*_t | int ) type="$2 ";;
 		* ) name=; shift 2; type="$*";;
 		esac
 		echo "      $type$name;"
@@ -98,7 +122,7 @@ done
 echo
 echo
 echo "union node {"
-echo "      int type;"
+echo "      $typetype type;"
 for struct in $struct_list; do
 	echo "      struct $struct $struct;"
 done
@@ -200,7 +224,7 @@ while IFS=; read -r line; do
 				nodeptr ) fn="copynode(";;
 				nodelist ) fn="copynodelist(";;
 				string ) fn="nodesavestr(";;
-				int ) fn=;;
+				int*_t| uint*_t | int ) fn=;;
 				* ) continue;;
 				esac
 				f="$struct.$name"
