@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b-odroidc1.dts,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson8b-odroidc1.dts,v 1.2 2019/01/19 21:44:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,3 +28,7 @@
 
 #include_next "meson8b-odroidc1.dts"
 #include "meson8b.dtsi"
+
+&genfb {
+	status = "okay";
+};
