@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.52 2018/10/29 15:37:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.53 2019/01/19 21:19:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,10 +80,11 @@ npf_nvlist_copyin(npf_t *npf, void *data, nvlist_t **nvl)
 {
 	int error = 0;
 
-	if (npf->mbufops != NULL)
-		*nvl = (nvlist_t *)data;
-	else
+	if (npf->mbufops == NULL) {
 		error = nvlist_copyin(data, nvl, NPF_IOCTL_DATA_LIMIT);
+	} else {
+		*nvl = (nvlist_t *)data;
+	}
 	return error;
 }
 
@@ -92,8 +93,9 @@ npf_nvlist_copyout(npf_t *npf, void *data, nvlist_t *nvl)
 {
 	int error = 0;
 
-	if (npf->mbufops == NULL)
+	if (npf->mbufops == NULL) {
 		error = nvlist_copyout(data, nvl);
+	}
 	nvlist_destroy(nvl);
 	return error;
 }
@@ -178,7 +180,7 @@ npf_mk_tables(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
 
 		/* Get the entries or binary data. */
 		blob = dnvlist_get_binary(table, "data", &size, NULL, 0);
-		if (type == NPF_TABLE_CDB && (blob == NULL || size == 0)) {
+		if (type == NPF_TABLE_CONST && (blob == NULL || size == 0)) {
 			NPF_ERR_DEBUG(errdict);
 			error = EINVAL;
 			break;
@@ -408,7 +410,7 @@ npf_mk_rules(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
 
 static int __noinline
 npf_mk_natlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
-    npf_ruleset_t **ntsetp)
+    npf_tableset_t *tblset, npf_ruleset_t **ntsetp)
 {
 	const nvlist_t * const *nat_rules;
 	npf_ruleset_t *ntset;
@@ -447,6 +449,17 @@ npf_mk_natlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
 		/* If rule is named, it is a group with NAT policies. */
 		if (dnvlist_get_string(nat, "name", NULL)) {
 			continue;
+		}
+
+		/* Check the table ID. */
+		if (nvlist_exists_number(nat, "nat-table-id")) {
+			unsigned tid = nvlist_get_number(nat, "nat-table-id");
+
+			if (!npf_tableset_getbyid(tblset, tid)) {
+				NPF_ERR_DEBUG(errdict);
+				error = EINVAL;
+				break;
+			}
 		}
 
 		/* Allocate a new NAT policy and assign to the rule. */
@@ -491,7 +504,7 @@ npf_mk_connlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict,
 		}
 	}
 	if (error) {
-		npf_conn_gc(npf, cd, true, false);
+		npf_conndb_gc(npf, cd, true, false);
 		npf_conndb_destroy(cd);
 	} else {
 		*conndb = cd;
@@ -524,15 +537,15 @@ npfctl_load_nvlist(npf_t *npf, nvlist_t *npf_dict, nvlist_t *errdict)
 	if (error) {
 		goto fail;
 	}
-	error = npf_mk_natlist(npf, npf_dict, errdict, &ntset);
-	if (error) {
-		goto fail;
-	}
 	error = npf_mk_tables(npf, npf_dict, errdict, &tblset);
 	if (error) {
 		goto fail;
 	}
 	error = npf_mk_rprocs(npf, npf_dict, errdict, &rpset);
+	if (error) {
+		goto fail;
+	}
+	error = npf_mk_natlist(npf, npf_dict, errdict, tblset, &ntset);
 	if (error) {
 		goto fail;
 	}
@@ -561,11 +574,11 @@ fail:
 	 * Note: the rulesets must be destroyed first, in order to drop
 	 * any references to the tableset.
 	 */
-	if (ntset) {
-		npf_ruleset_destroy(ntset);
-	}
 	if (rlset) {
 		npf_ruleset_destroy(rlset);
+	}
+	if (ntset) {
+		npf_ruleset_destroy(ntset);
 	}
 	if (rpset) {
 		npf_rprocset_destroy(rpset);
@@ -782,17 +795,17 @@ npfctl_table(npf_t *npf, void *data)
 	char tname[NPF_TABLE_MAXNAMELEN];
 	npf_tableset_t *ts;
 	npf_table_t *t;
-	int s, error;
+	int error;
 
 	error = copyinstr(nct->nct_name, tname, sizeof(tname), NULL);
 	if (error) {
 		return error;
 	}
 
-	s = npf_config_read_enter(); /* XXX */
+	npf_config_enter(npf);
 	ts = npf_config_tableset(npf);
 	if ((t = npf_tableset_getbyname(ts, tname)) == NULL) {
-		npf_config_read_exit(s);
+		npf_config_exit(npf);
 		return EINVAL;
 	}
 
@@ -820,7 +833,8 @@ npfctl_table(npf_t *npf, void *data)
 		error = EINVAL;
 		break;
 	}
-	npf_config_read_exit(s);
+	npf_table_gc(npf, t);
+	npf_config_exit(npf);
 
 	return error;
 }

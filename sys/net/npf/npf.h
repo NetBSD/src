@@ -37,7 +37,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
-#define	NPF_VERSION		20
+#define	NPF_VERSION		21
 
 #if defined(_NPF_STANDALONE)
 #include "npf_stand.h"
@@ -223,8 +223,7 @@ bool		npf_autounload_p(void);
 #define	NPF_PRI_LAST			(-1)
 
 /* Types of code. */
-#define	NPF_CODE_NC			1
-#define	NPF_CODE_BPF			2
+#define	NPF_CODE_BPF			1
 
 /* Address translation types and flags. */
 #define	NPF_NATIN			1
@@ -234,12 +233,19 @@ bool		npf_autounload_p(void);
 #define	NPF_NAT_PORTMAP			0x02
 #define	NPF_NAT_STATIC			0x04
 
-#define	NPF_ALGO_NPT66			1
+#define	NPF_NAT_PRIVMASK		0x0f000000
+
+#define	NPF_ALGO_NONE			0
+#define	NPF_ALGO_NETMAP			1
+#define	NPF_ALGO_IPHASH			2
+#define	NPF_ALGO_RR			3
+#define	NPF_ALGO_NPT66			4
 
 /* Table types. */
-#define	NPF_TABLE_HASH			1
-#define	NPF_TABLE_TREE			2
-#define	NPF_TABLE_CDB			3
+#define	NPF_TABLE_IPSET			1
+#define	NPF_TABLE_LPM			2
+#define	NPF_TABLE_CONST			3
+#define	NPF_TABLE_IFADDR		4
 
 #define	NPF_TABLE_MAXNAMELEN		32
 

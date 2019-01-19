@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -33,189 +33,129 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.4 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.5 2019/01/19 21:19:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/atomic.h>
-#include <sys/cprng.h>
-#include <sys/hash.h>
 #include <sys/kmem.h>
+#include <sys/thmap.h>
 #endif
 
 #define __NPF_CONN_PRIVATE
 #include "npf_conn.h"
 #include "npf_impl.h"
 
-#define	CONNDB_HASH_BUCKETS	1024	/* XXX tune + make tunable */
-#define	CONNDB_HASH_MASK	(CONNDB_HASH_BUCKETS - 1)
-
-typedef struct {
-	rb_tree_t		hb_tree;
-	krwlock_t		hb_lock;
-	u_int			hb_count;
-} npf_hashbucket_t;
+#define	NPF_GC_STEP		256
 
 struct npf_conndb {
-	npf_conn_t *		cd_recent;
-	npf_conn_t *		cd_list;
-	npf_conn_t *		cd_tail;
-	uint32_t		cd_seed;
-	void *			cd_tree;
-	npf_hashbucket_t	cd_hashtbl[];
+	thmap_t *		cd_map;
+
+	/*
+	 * There are three lists for connections: new, all and G/C.
+	 *
+	 * New connections are atomically inserted into the "new-list".
+	 * The G/C worker will move them to the doubly-linked list of all
+	 * active connections.
+	 */
+	npf_conn_t *		cd_new;
+	LIST_HEAD(, npf_conn)	cd_list;
+	LIST_HEAD(, npf_conn)	cd_gclist;
+
+	/* The last inspected connection (for circular iteration). */
+	npf_conn_t *		cd_marker;
 };
-
-/*
- * Connection hash table and RB-tree helper routines.
- * Note: (node1 < node2) shall return negative.
- */
-
-static signed int
-conndb_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
-{
-	const npf_connkey_t * const ck1 = n1;
-	const npf_connkey_t * const ck2 = n2;
-	const u_int keylen = MIN(NPF_CONN_KEYLEN(ck1), NPF_CONN_KEYLEN(ck2));
-
-	KASSERT((keylen >> 2) <= NPF_CONN_NKEYWORDS);
-	return memcmp(ck1->ck_key, ck2->ck_key, keylen);
-}
-
-static signed int
-conndb_rbtree_cmp_key(void *ctx, const void *n1, const void *key)
-{
-	const npf_connkey_t * const ck1 = n1;
-	const npf_connkey_t * const ck2 = key;
-	return conndb_rbtree_cmp_nodes(ctx, ck1, ck2);
-}
-
-static const rb_tree_ops_t conndb_rbtree_ops = {
-	.rbto_compare_nodes	= conndb_rbtree_cmp_nodes,
-	.rbto_compare_key	= conndb_rbtree_cmp_key,
-	.rbto_node_offset	= offsetof(npf_connkey_t, ck_rbnode),
-	.rbto_context		= NULL
-};
-
-static npf_hashbucket_t *
-conndb_hash_bucket(npf_conndb_t *cd, const npf_connkey_t *key)
-{
-	const u_int keylen = NPF_CONN_KEYLEN(key);
-	uint32_t hash = murmurhash2(key->ck_key, keylen, cd->cd_seed);
-	return &cd->cd_hashtbl[hash & CONNDB_HASH_MASK];
-}
 
 npf_conndb_t *
 npf_conndb_create(void)
 {
-	size_t len = offsetof(npf_conndb_t, cd_hashtbl[CONNDB_HASH_BUCKETS]);
 	npf_conndb_t *cd;
 
-	cd = kmem_zalloc(len, KM_SLEEP);
-	for (u_int i = 0; i < CONNDB_HASH_BUCKETS; i++) {
-		npf_hashbucket_t *hb = &cd->cd_hashtbl[i];
+	cd = kmem_zalloc(sizeof(npf_conndb_t), KM_SLEEP);
+	cd->cd_map = thmap_create(0, NULL, THMAP_NOCOPY);
+	KASSERT(cd->cd_map != NULL);
 
-		rb_tree_init(&hb->hb_tree, &conndb_rbtree_ops);
-		rw_init(&hb->hb_lock);
-		hb->hb_count = 0;
-	}
-	cd->cd_seed = cprng_fast32();
+	LIST_INIT(&cd->cd_list);
+	LIST_INIT(&cd->cd_gclist);
 	return cd;
 }
 
 void
 npf_conndb_destroy(npf_conndb_t *cd)
 {
-	size_t len = offsetof(npf_conndb_t, cd_hashtbl[CONNDB_HASH_BUCKETS]);
+	KASSERT(cd->cd_new == NULL);
+	KASSERT(cd->cd_marker == NULL);
+	KASSERT(LIST_EMPTY(&cd->cd_list));
+	KASSERT(LIST_EMPTY(&cd->cd_gclist));
 
-	KASSERT(cd->cd_recent == NULL);
-	KASSERT(cd->cd_list == NULL);
-	KASSERT(cd->cd_tail == NULL);
-
-	for (u_int i = 0; i < CONNDB_HASH_BUCKETS; i++) {
-		npf_hashbucket_t *hb = &cd->cd_hashtbl[i];
-
-		KASSERT(hb->hb_count == 0);
-		KASSERT(!rb_tree_iterate(&hb->hb_tree, NULL, RB_DIR_LEFT));
-		rw_destroy(&hb->hb_lock);
-	}
-	kmem_free(cd, len);
+	thmap_destroy(cd->cd_map);
+	kmem_free(cd, sizeof(npf_conndb_t));
 }
 
 /*
  * npf_conndb_lookup: find a connection given the key.
  */
 npf_conn_t *
-npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *key, bool *forw)
+npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *ck, bool *forw)
 {
+	const unsigned keylen = NPF_CONN_KEYLEN(ck);
 	npf_connkey_t *foundkey;
-	npf_hashbucket_t *hb;
 	npf_conn_t *con;
 
-	/* Get a hash bucket from the cached key data. */
-	hb = conndb_hash_bucket(cd, key);
-	if (hb->hb_count == 0) {
-		return NULL;
-	}
-
-	/* Lookup the tree given the key and get the actual connection. */
-	rw_enter(&hb->hb_lock, RW_READER);
-	foundkey = rb_tree_find_node(&hb->hb_tree, key);
-	if (foundkey == NULL) {
-		rw_exit(&hb->hb_lock);
+	/*
+	 * Lookup the connection key in the key-value map.
+	 */
+	foundkey = thmap_get(cd->cd_map, ck->ck_key, keylen);
+	if (!foundkey) {
 		return NULL;
 	}
 	con = foundkey->ck_backptr;
-	*forw = (foundkey == &con->c_forw_entry);
+	KASSERT(con != NULL);
 
-	/* Acquire the reference and return the connection. */
+	/*
+	 * Acquire a reference and return the connection.
+	 */
 	atomic_inc_uint(&con->c_refcnt);
-	rw_exit(&hb->hb_lock);
+	*forw = (foundkey == &con->c_forw_entry);
 	return con;
 }
 
 /*
  * npf_conndb_insert: insert the key representing the connection.
+ *
+ * => Returns true on success and false on failure.
  */
 bool
-npf_conndb_insert(npf_conndb_t *cd, npf_connkey_t *key, npf_conn_t *con)
+npf_conndb_insert(npf_conndb_t *cd, npf_connkey_t *ck)
 {
-	npf_hashbucket_t *hb = conndb_hash_bucket(cd, key);
-	bool ok;
-
-	rw_enter(&hb->hb_lock, RW_WRITER);
-	ok = rb_tree_insert_node(&hb->hb_tree, key) == key;
-	hb->hb_count += (u_int)ok;
-	rw_exit(&hb->hb_lock);
-	return ok;
+	const unsigned keylen = NPF_CONN_KEYLEN(ck);
+	return thmap_put(cd->cd_map, ck->ck_key, keylen, ck) == ck;
 }
 
 /*
- * npf_conndb_remove: find and delete the key and return the connection
- * it represents.
+ * npf_conndb_remove: find and delete connection key, returning the
+ * connection it represents.
  */
 npf_conn_t *
-npf_conndb_remove(npf_conndb_t *cd, npf_connkey_t *key)
+npf_conndb_remove(npf_conndb_t *cd, npf_connkey_t *ck)
 {
-	npf_hashbucket_t *hb = conndb_hash_bucket(cd, key);
+	const unsigned keylen = NPF_CONN_KEYLEN(ck);
 	npf_connkey_t *foundkey;
 	npf_conn_t *con;
 
-	rw_enter(&hb->hb_lock, RW_WRITER);
-	if ((foundkey = rb_tree_find_node(&hb->hb_tree, key)) != NULL) {
-		rb_tree_remove_node(&hb->hb_tree, foundkey);
-		con = foundkey->ck_backptr;
-		hb->hb_count--;
-	} else {
-		con = NULL;
+	foundkey = thmap_del(cd->cd_map, ck->ck_key, keylen);
+	if (!foundkey) {
+		return NULL;
 	}
-	rw_exit(&hb->hb_lock);
+	con = foundkey->ck_backptr;
+	KASSERT(con != NULL);
 	return con;
 }
 
 /*
  * npf_conndb_enqueue: atomically insert the connection into the
- * singly-linked list of "recent" connections.
+ * singly-linked list of the "new" connections.
  */
 void
 npf_conndb_enqueue(npf_conndb_t *cd, npf_conn_t *con)
@@ -223,53 +163,183 @@ npf_conndb_enqueue(npf_conndb_t *cd, npf_conn_t *con)
 	npf_conn_t *head;
 
 	do {
-		head = cd->cd_recent;
+		head = cd->cd_new;
 		con->c_next = head;
-	} while (atomic_cas_ptr(&cd->cd_recent, head, con) != head);
+	} while (atomic_cas_ptr(&cd->cd_new, head, con) != head);
 }
 
 /*
- * npf_conndb_dequeue: remove the connection from a singly-linked list
- * given the previous element; no concurrent writers are allowed here.
+ * npf_conndb_update: migrate all new connections to the list of all
+ * connections; this must also be performed on npf_conndb_getlist()
+ * to provide a complete list of connections.
  */
-void
-npf_conndb_dequeue(npf_conndb_t *cd, npf_conn_t *con, npf_conn_t *prev)
+static void
+npf_conndb_update(npf_conndb_t *cd)
 {
-	if (prev == NULL) {
-		KASSERT(cd->cd_list == con);
-		cd->cd_list = con->c_next;
-	} else {
-		prev->c_next = con->c_next;
+	npf_conn_t *con;
+
+	con = atomic_swap_ptr(&cd->cd_new, NULL);
+	while (con) {
+		npf_conn_t *next = con->c_next; // union
+		LIST_INSERT_HEAD(&cd->cd_list, con, c_entry);
+		con = next;
 	}
 }
 
 /*
- * npf_conndb_getlist: atomically take the "recent" connections and add
- * them to the singly-linked list of the connections.
+ * npf_conndb_getlist: return the list of all connections.
  */
 npf_conn_t *
 npf_conndb_getlist(npf_conndb_t *cd)
 {
-	npf_conn_t *con, *prev;
-
-	con = atomic_swap_ptr(&cd->cd_recent, NULL);
-	if ((prev = cd->cd_tail) == NULL) {
-		KASSERT(cd->cd_list == NULL);
-		cd->cd_list = con;
-	} else {
-		KASSERT(prev->c_next == NULL);
-		prev->c_next = con;
-	}
-	return cd->cd_list;
+	npf_conndb_update(cd);
+	return LIST_FIRST(&cd->cd_list);
 }
 
 /*
- * npf_conndb_settail: assign a new tail of the singly-linked list.
+ * npf_conndb_getnext: return the next connection, implementing
+ * the circular iteration.
+ */
+npf_conn_t *
+npf_conndb_getnext(npf_conndb_t *cd, npf_conn_t *con)
+{
+	/* Next.. */
+	if (con == NULL || (con = LIST_NEXT(con, c_entry)) == NULL) {
+		con = LIST_FIRST(&cd->cd_list);
+	}
+	return con;
+}
+
+/*
+ * npf_conndb_gc_incr: incremental G/C of the expired connections.
+ */
+static void
+npf_conndb_gc_incr(npf_conndb_t *cd, const time_t now)
+{
+	unsigned target = NPF_GC_STEP;
+	npf_conn_t *con;
+
+	/*
+	 * Second, start from the "last" (marker) connection.
+	 * We must initialise the marker if it is not set yet.
+	 */
+	if ((con = cd->cd_marker) == NULL) {
+		con = npf_conndb_getnext(cd, NULL);
+		cd->cd_marker = con;
+	}
+
+	/*
+	 * Scan the connections:
+	 * - Limit the scan to the G/C step size.
+	 * - Stop if we scanned all of them.
+	 * - Update the marker connection.
+	 */
+	while (con && target--) {
+		npf_conn_t *next = npf_conndb_getnext(cd, con);
+
+		/*
+		 * Can we G/C this connection?
+		 */
+		if (npf_conn_expired(con, now)) {
+			/* Yes: move to the G/C list. */
+			LIST_REMOVE(con, c_entry);
+			LIST_INSERT_HEAD(&cd->cd_gclist, con, c_entry);
+			npf_conn_remove(cd, con);
+
+			/* This connection cannot be a new marker anymore. */
+			if (con == next) {
+				next = NULL;
+			}
+			if (con == cd->cd_marker) {
+				cd->cd_marker = next;
+				con = next;
+				continue;
+			}
+		}
+		con = next;
+
+		/*
+		 * Circular iteration: if we returned back to the
+		 * marker connection, then stop.
+		 */
+		if (con == cd->cd_marker) {
+			break;
+		}
+	}
+	cd->cd_marker = con;
+}
+
+/*
+ * npf_conndb_gc: garbage collect the expired connections.
+ *
+ * => Must run in a single-threaded manner.
+ * => If 'flush' is true, then destroy all connections.
+ * => If 'sync' is true, then perform passive serialisation.
  */
 void
-npf_conndb_settail(npf_conndb_t *cd, npf_conn_t *con)
+npf_conndb_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 {
-	KASSERT(con || cd->cd_list == NULL);
-	KASSERT(!con || con->c_next == NULL);
-	cd->cd_tail = con;
+	struct timespec tsnow;
+	npf_conn_t *con;
+	void *gcref;
+
+	getnanouptime(&tsnow);
+
+	/* First, migrate all new connections. */
+	mutex_enter(&npf->conn_lock);
+	npf_conndb_update(cd);
+	if (flush) {
+		/* Just unlink and move all connections to the G/C list. */
+		while ((con = LIST_FIRST(&cd->cd_list)) != NULL) {
+			LIST_REMOVE(con, c_entry);
+			LIST_INSERT_HEAD(&cd->cd_gclist, con, c_entry);
+			npf_conn_remove(cd, con);
+		}
+		cd->cd_marker = NULL;
+	} else {
+		/* Incremental G/C of the expired connections. */
+		npf_conndb_gc_incr(cd, tsnow.tv_sec);
+	}
+	mutex_exit(&npf->conn_lock);
+
+	/*
+	 * Ensure it is safe to destroy the connections.
+	 * Note: drop the conn_lock (see the lock order).
+	 */
+	gcref = thmap_stage_gc(cd->cd_map);
+	if (sync) {
+		npf_config_enter(npf);
+		npf_config_sync(npf);
+		npf_config_exit(npf);
+	}
+	thmap_gc(cd->cd_map, gcref);
+
+	/*
+	 * If there is nothing to G/C, then reduce the worker interval.
+	 * We do not go below the lower watermark.
+	 */
+	if (LIST_EMPTY(&cd->cd_gclist)) {
+		// TODO: cd->next_gc = MAX(cd->next_gc >> 1, NPF_MIN_GC_TIME);
+		return;
+	}
+
+	/*
+	 * Garbage collect all expired connections.
+	 * May need to wait for the references to drain.
+	 */
+	while ((con = LIST_FIRST(&cd->cd_gclist)) != NULL) {
+		/*
+		 * Destroy only if removed and no references.  Otherwise,
+		 * just do it next time, unless we are destroying all.
+		 */
+		if (__predict_false(con->c_refcnt)) {
+			if (!flush) {
+				break;
+			}
+			kpause("npfcongc", false, 1, NULL);
+			continue;
+		}
+		LIST_REMOVE(con, c_entry);
+		npf_conn_destroy(npf, con);
+	}
 }

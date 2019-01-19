@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
+ * Copyright (c) 2014-2018 Mindaugas Rasiukevicius <rmind at netbsd org>
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -33,11 +33,15 @@
  *
  * Overview
  *
+ *	Packets can be incoming or outgoing with respect to an interface.
  *	Connection direction is identified by the direction of its first
- *	packet.  Packets can be incoming or outgoing with respect to an
- *	interface.  To describe the packet in the context of connection
- *	direction we will use the terms "forwards stream" and "backwards
- *	stream".  All connections have two keys and thus two entries:
+ *	packet.  The meaning of incoming/outgoing packet in the context of
+ *	connection direction can be confusing.  Therefore, we will use the
+ *	terms "forwards stream" and "backwards stream", where packets in
+ *	the forwards stream mean the packets travelling in the direction
+ *	as the connection direction.
+ *
+ *	All connections have two keys and thus two entries:
  *
  *		npf_conn_t::c_forw_entry for the forwards stream and
  *		npf_conn_t::c_back_entry for the backwards stream.
@@ -98,7 +102,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.25 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.26 2019/01/19 21:19:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,7 +136,6 @@ CTASSERT(PFIL_ALL == (0x001 | 0x002));
 
 enum { CONN_TRACKING_OFF, CONN_TRACKING_ON };
 
-static void	npf_conn_destroy(npf_t *, npf_conn_t *);
 static nvlist_t *npf_conn_export(npf_t *, const npf_conn_t *);
 
 /*
@@ -201,7 +204,7 @@ npf_conn_load(npf_t *npf, npf_conndb_t *ndb, bool track)
 		 * Flush all, no sync since the caller did it for us.
 		 * Also, release the pool cache memory.
 		 */
-		npf_conn_gc(npf, odb, true, false);
+		npf_conndb_gc(npf, odb, true, false);
 		npf_conndb_destroy(odb);
 		pool_cache_invalidate(npf->conn_cache);
 	}
@@ -377,7 +380,7 @@ conn_update_atime(npf_conn_t *con)
 }
 
 /*
- * npf_conn_ok: check if the connection is active, and has the right direction.
+ * npf_conn_ok: check if the connection is active and has the right direction.
  */
 static bool
 npf_conn_ok(const npf_conn_t *con, const int di, bool forw)
@@ -571,11 +574,11 @@ npf_conn_establish(npf_cache_t *npc, int di, bool per_if)
 	 * the connection later.
 	 */
 	mutex_enter(&con->c_lock);
-	if (!npf_conndb_insert(npf->conn_db, fw, con)) {
+	if (!npf_conndb_insert(npf->conn_db, fw)) {
 		error = EISCONN;
 		goto err;
 	}
-	if (!npf_conndb_insert(npf->conn_db, bk, con)) {
+	if (!npf_conndb_insert(npf->conn_db, bk)) {
 		npf_conn_t *ret __diagused;
 		ret = npf_conndb_remove(npf->conn_db, fw);
 		KASSERT(ret == con);
@@ -603,7 +606,7 @@ err:
 	return error ? NULL : con;
 }
 
-static void
+void
 npf_conn_destroy(npf_t *npf, npf_conn_t *con)
 {
 	KASSERT(con->c_refcnt == 0);
@@ -687,7 +690,7 @@ npf_conn_setnat(const npf_cache_t *npc, npf_conn_t *con,
 	}
 
 	/* Finally, re-insert the "backwards" entry. */
-	if (!npf_conndb_insert(npf->conn_db, bk, con)) {
+	if (!npf_conndb_insert(npf->conn_db, bk)) {
 		/*
 		 * Race: we have hit the duplicate, remove the "forwards"
 		 * entry and expire our connection; it is no longer valid.
@@ -788,7 +791,7 @@ npf_conn_getnat(npf_conn_t *con, const int di, bool *forw)
 /*
  * npf_conn_expired: criterion to check if connection is expired.
  */
-static inline bool
+bool
 npf_conn_expired(const npf_conn_t *con, uint64_t tsnow)
 {
 	const int etime = npf_state_etime(&con->c_state, con->c_proto);
@@ -808,92 +811,25 @@ npf_conn_expired(const npf_conn_t *con, uint64_t tsnow)
 }
 
 /*
- * npf_conn_gc: garbage collect the expired connections.
- *
- * => Must run in a single-threaded manner.
- * => If it is a flush request, then destroy all connections.
- * => If 'sync' is true, then perform passive serialisation.
+ * npf_conn_remove: unlink the connection and mark as expired.
  */
 void
-npf_conn_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
+npf_conn_remove(npf_conndb_t *cd, npf_conn_t *con)
 {
-	npf_conn_t *con, *prev, *gclist = NULL;
-	struct timespec tsnow;
+	/* Remove both entries of the connection. */
+	mutex_enter(&con->c_lock);
+	if ((con->c_flags & CONN_REMOVED) == 0) {
+		npf_conn_t *ret __diagused;
 
-	getnanouptime(&tsnow);
-
-	/*
-	 * Scan all connections and check them for expiration.
-	 */
-	prev = NULL;
-	con = npf_conndb_getlist(cd);
-	while (con) {
-		npf_conn_t *next = con->c_next;
-
-		/* Expired?  Flushing all? */
-		if (!npf_conn_expired(con, tsnow.tv_sec) && !flush) {
-			prev = con;
-			con = next;
-			continue;
-		}
-
-		/* Remove both entries of the connection. */
-		mutex_enter(&con->c_lock);
-		if ((con->c_flags & CONN_REMOVED) == 0) {
-			npf_conn_t *ret __diagused;
-
-			ret = npf_conndb_remove(cd, &con->c_forw_entry);
-			KASSERT(ret == con);
-			ret = npf_conndb_remove(cd, &con->c_back_entry);
-			KASSERT(ret == con);
-		}
-
-		/* Flag the removal and expiration. */
-		atomic_or_uint(&con->c_flags, CONN_REMOVED | CONN_EXPIRE);
-		mutex_exit(&con->c_lock);
-
-		/* Move to the G/C list. */
-		npf_conndb_dequeue(cd, con, prev);
-		con->c_next = gclist;
-		gclist = con;
-
-		/* Next.. */
-		con = next;
-	}
-	npf_conndb_settail(cd, prev);
-
-	/*
-	 * Ensure it is safe to destroy the connections.
-	 * Note: drop the conn_lock (see the lock order).
-	 */
-	if (sync) {
-		mutex_exit(&npf->conn_lock);
-		if (gclist) {
-			npf_config_enter(npf);
-			npf_config_sync(npf);
-			npf_config_exit(npf);
-		}
+		ret = npf_conndb_remove(cd, &con->c_forw_entry);
+		KASSERT(ret == con);
+		ret = npf_conndb_remove(cd, &con->c_back_entry);
+		KASSERT(ret == con);
 	}
 
-	/*
-	 * Garbage collect all expired connections.
-	 * May need to wait for the references to drain.
-	 */
-	con = gclist;
-	while (con) {
-		npf_conn_t *next = con->c_next;
-
-		/*
-		 * Destroy only if removed and no references.
-		 * Otherwise, wait for a tiny moment.
-		 */
-		if (__predict_false(con->c_refcnt)) {
-			kpause("npfcongc", false, 1, NULL);
-			continue;
-		}
-		npf_conn_destroy(npf, con);
-		con = next;
-	}
+	/* Flag the removal and expiration. */
+	atomic_or_uint(&con->c_flags, CONN_REMOVED | CONN_EXPIRE);
+	mutex_exit(&con->c_lock);
 }
 
 /*
@@ -902,9 +838,7 @@ npf_conn_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 void
 npf_conn_worker(npf_t *npf)
 {
-	mutex_enter(&npf->conn_lock);
-	/* Note: the conn_lock will be released (sync == true). */
-	npf_conn_gc(npf, npf->conn_db, false, true);
+	npf_conndb_gc(npf, npf->conn_db, false, true);
 }
 
 /*
@@ -914,7 +848,7 @@ npf_conn_worker(npf_t *npf)
 int
 npf_conndb_export(npf_t *npf, nvlist_t *npf_dict)
 {
-	npf_conn_t *con, *prev;
+	npf_conn_t *head, *con;
 
 	/*
 	 * Note: acquire conn_lock to prevent from the database
@@ -925,20 +859,19 @@ npf_conndb_export(npf_t *npf, nvlist_t *npf_dict)
 		mutex_exit(&npf->conn_lock);
 		return 0;
 	}
-	prev = NULL;
-	con = npf_conndb_getlist(npf->conn_db);
+	head = npf_conndb_getlist(npf->conn_db);
+	con = head;
 	while (con) {
-		npf_conn_t *next = con->c_next;
 		nvlist_t *cdict;
 
 		if ((cdict = npf_conn_export(npf, con)) != NULL) {
 			nvlist_append_nvlist_array(npf_dict, "conn-list", cdict);
 			nvlist_destroy(cdict);
 		}
-		prev = con;
-		con = next;
+		if ((con = npf_conndb_getnext(npf->conn_db, con)) == head) {
+			break;
+		}
 	}
-	npf_conndb_settail(npf->conn_db, prev);
 	mutex_exit(&npf->conn_lock);
 	return 0;
 }
@@ -1069,10 +1002,10 @@ npf_conn_import(npf_t *npf, npf_conndb_t *cd, const nvlist_t *cdict,
 	fw->ck_backptr = bk->ck_backptr = con;
 
 	/* Insert the entries and the connection itself. */
-	if (!npf_conndb_insert(cd, fw, con)) {
+	if (!npf_conndb_insert(cd, fw)) {
 		goto err;
 	}
-	if (!npf_conndb_insert(cd, bk, con)) {
+	if (!npf_conndb_insert(cd, bk)) {
 		npf_conndb_remove(cd, fw);
 		goto err;
 	}

@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_bpf_test.c,v 1.9 2018/09/29 14:41:36 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +28,7 @@
  */
 
 /*
- * NPF test of BPF coprocessor.
+ * NPF tests of BPF coprocessor.
  */
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.20 2017/12/10 22:04:41 rmind Exp $
+.\"	$NetBSD: npfctl.8,v 1.21 2019/01/19 21:19:32 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,13 +119,13 @@ In table
 .Ar tid ,
 add the IP address and optionally netmask, specified by
 .Aq Ar addr/mask .
-Only tree-type tables support masks.
+Only the tables of type "lpm" support masks.
 .It Ic table Ar tid Ic rem Aq Ar addr/mask
 In table
 .Ar tid ,
 remove the IP address and optionally netmask, specified by
 .Aq Ar addr/mask .
-Only tree-type tables support masks.
+Only the tables of type "lpm" support masks.
 .It Ic table Ar tid Ic test Aq Ar addr
 Query the table
 .Ar tid
@@ -196,10 +196,10 @@ Starting the NPF packet filter:
 # npfctl show
 .Ed
 .Pp
-Addition and removal of entries in the table whose ID is 2:
+Addition and removal of entries in the table whose ID is "vip":
 .Bd -literal -offset indent
-# npfctl table 2 add 10.0.0.1
-# npfctl table 2 rem 182.168.0.0/24
+# npfctl table "vip" add 10.0.0.1
+# npfctl table "vip" rem 182.168.0.0/24
 .Ed
 .\" -----
 .Sh SEE ALSO

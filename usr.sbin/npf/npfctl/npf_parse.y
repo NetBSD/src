@@ -88,6 +88,12 @@ yyerror(const char *fmt, ...)
 
 %}
 
+/*
+ * No conflicts allowed.  Keep it this way.
+ */
+%expect 0
+%expect-rr 0
+
 %token			ALG
 %token			ALGO
 %token			ALL
@@ -99,6 +105,7 @@ yyerror(const char *fmt, ...)
 %token			BLOCK
 %token			BPFJIT
 %token			CDB
+%token			CONST
 %token			CURLY_CLOSE
 %token			CURLY_OPEN
 %token			CODE
@@ -116,15 +123,19 @@ yyerror(const char *fmt, ...)
 %token			HASH
 %token			ICMPTYPE
 %token			ID
+%token			IFADDRS
 %token			IN
 %token			INET4
 %token			INET6
-%token			IFADDRS
 %token			INTERFACE
+%token			IPHASH
+%token			IPSET
+%token			LPM
 %token			MAP
 %token			NO_PORTS
 %token			MINUS
 %token			NAME
+%token			NETMAP
 %token			NPT66
 %token			ON
 %token			OFF
@@ -142,6 +153,7 @@ yyerror(const char *fmt, ...)
 %token			RETURN
 %token			RETURNICMP
 %token			RETURNRST
+%token			ROUNDROBIN
 %token			RULESET
 %token			SEPLINE
 %token			SET
@@ -166,19 +178,19 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, some_name, table_store, dynamic_ifaddrs
-%type	<str>		proc_param_val, opt_apply, ifname, on_ifname, ifref
-%type	<num>		port, opt_final, number, afamily, opt_family
-%type	<num>		block_or_pass, rule_dir, group_dir, block_opts
-%type	<num>		maybe_not, opt_stateful, icmp_type, table_type
-%type	<num>		map_sd, map_algo, map_flags, map_type
-%type	<var>		static_ifaddrs, addr_or_ifaddr
-%type	<var>		port_range, icmp_type_and_code
-%type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
-%type	<var>		procs, proc_call, proc_param_list, proc_param
-%type	<var>		element, list_elems, list, value
+%type	<str>		addr some_name table_store dynamic_ifaddrs
+%type	<str>		proc_param_val opt_apply ifname on_ifname ifref
+%type	<num>		port opt_final number afamily opt_family
+%type	<num>		block_or_pass rule_dir group_dir block_opts
+%type	<num>		maybe_not opt_stateful icmp_type table_type
+%type	<num>		map_sd map_algo map_flags map_type
+%type	<var>		static_ifaddrs addr_or_ifaddr
+%type	<var>		port_range icmp_type_and_code
+%type	<var>		filt_addr addr_and_mask tcp_flags tcp_flags_and_mask
+%type	<var>		procs proc_call proc_param_list proc_param
+%type	<var>		element list_elems list value
 %type	<addrport>	mapseg
-%type	<filtopts>	filt_opts, all_or_filt_opts
+%type	<filtopts>	filt_opts all_or_filt_opts
 %type	<optproto>	proto opt_proto
 %type	<rulegroup>	group_opts
 %type	<tf>		onoff
@@ -311,14 +323,40 @@ table
 	;
 
 table_type
-	: HASH		{ $$ = NPF_TABLE_HASH; }
-	| TREE		{ $$ = NPF_TABLE_TREE; }
-	| CDB		{ $$ = NPF_TABLE_CDB; }
+	: IPSET		{ $$ = NPF_TABLE_IPSET; }
+	| HASH
+	{
+		warnx("warning - table type \"hash\" is deprecated and may be "
+		    "deleted in\nthe future; please use the \"ipset\" type "
+		    "instead.");
+		$$ = NPF_TABLE_IPSET;
+	}
+	| LPM		{ $$ = NPF_TABLE_LPM; }
+	| TREE
+	{
+		warnx("warning - table type \"tree\" is deprecated and may be "
+		    "deleted in\nthe future; please use the \"lpm\" type "
+		    "instead.");
+		$$ = NPF_TABLE_LPM;
+	}
+	| CONST		{ $$ = NPF_TABLE_CONST; }
+	| CDB
+	{
+		warnx("warning -- table type \"cdb\" is deprecated and may be "
+		    "deleted in\nthe future; please use the \"const\" type "
+		    "instead.");
+		$$ = NPF_TABLE_CONST;
+	}
 	;
 
 table_store
-	: TDYNAMIC	{ $$ = NULL; }
-	| TFILE STRING	{ $$ = $2; }
+	: TFILE STRING	{ $$ = $2; }
+	| TDYNAMIC
+	{
+		warnx("warning - the \"dynamic\" keyword for tables is obsolete");
+		$$ = NULL;
+	}
+	|		{ $$ = NULL; }
 	;
 
 /*
@@ -332,8 +370,11 @@ map_sd
 	;
 
 map_algo
-	: ALGO NPT66	{ $$ = NPF_ALGO_NPT66; }
-	|		{ $$ = 0; }
+	: ALGO NETMAP		{ $$ = NPF_ALGO_NETMAP; }
+	| ALGO IPHASH		{ $$ = NPF_ALGO_IPHASH; }
+	| ALGO ROUNDROBIN	{ $$ = NPF_ALGO_RR; }
+	| ALGO NPT66		{ $$ = NPF_ALGO_NPT66; }
+	|			{ $$ = 0; }
 	;
 
 map_flags
@@ -348,7 +389,7 @@ map_type
 	;
 
 mapseg
-	: addr_or_ifaddr port_range
+	: filt_addr port_range
 	{
 		$$.ap_netaddr = $1;
 		$$.ap_portrange = $2;
@@ -357,9 +398,9 @@ mapseg
 
 map
 	: MAP ifref map_sd map_algo map_flags mapseg map_type mapseg
-	  PASS opt_proto all_or_filt_opts
+	  PASS opt_family opt_proto all_or_filt_opts
 	{
-		npfctl_build_natseg($3, $7, $5, $2, &$6, &$8, &$10, &$11, $4);
+		npfctl_build_natseg($3, $7, $5, $2, &$6, &$8, &$11, &$12, $4);
 	}
 	| MAP ifref map_sd map_algo map_flags mapseg map_type mapseg
 	{
@@ -655,8 +696,6 @@ filt_opts
 filt_addr
 	: list			{ $$ = $1; }
 	| addr_or_ifaddr	{ $$ = $1; }
-	| dynamic_ifaddrs	{ $$ = npfctl_ifnet_table($1); }
-	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
 	| ANY			{ $$ = NULL; }
 	;
 
@@ -676,11 +715,7 @@ addr_and_mask
 	;
 
 addr_or_ifaddr
-	: addr_and_mask
-	{
-		assert($1 != NULL);
-		$$ = $1;
-	}
+	: addr_and_mask		{ assert($1 != NULL); $$ = $1; }
 	| static_ifaddrs
 	{
 		if (npfvar_get_count($1) != 1)
@@ -688,12 +723,13 @@ addr_or_ifaddr
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		$$ = ifna->ifna_addrs;
 	}
+	| dynamic_ifaddrs	{ $$ = npfctl_ifnet_table($1); }
+	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
 		int type = npfvar_get_type(vp, 0);
 		ifnet_addr_t *ifna;
-
 again:
 		switch (type) {
 		case NPFVAR_IDENTIFIER:
@@ -821,6 +857,9 @@ ifname
 		npfvar_t *vp = npfvar_lookup($1);
 		const int type = npfvar_get_type(vp, 0);
 		ifnet_addr_t *ifna;
+		const char *name;
+		unsigned *tid;
+		bool ifaddr;
 
 		switch (type) {
 		case NPFVAR_STRING:
@@ -833,6 +872,16 @@ ifname
 				    "multiple interfaces are not supported");
 			ifna = npfvar_get_data(vp, type, 0);
 			$$ = ifna->ifna_name;
+			break;
+		case NPFVAR_TABLE:
+			tid = npfvar_get_data(vp, type, 0);
+			name = npfctl_table_getname(npfctl_config_ref(),
+			    *tid, &ifaddr);
+			if (!ifaddr) {
+				yyerror("variable '%s' references a table "
+				    "%s instead of an interface", $1, name);
+			}
+			$$ = estrdup(name);
 			break;
 		case -1:
 			yyerror("undefined variable '%s' for interface", $1);

@@ -1,7 +1,5 @@
-/*	$NetBSD: npf_nat_test.c,v 1.10 2016/12/26 23:05:05 christos Exp $	*/
-
 /*
- * NPF NAT test.
+ * NPF NAT tests.
  *
  * Public Domain.
  */
@@ -122,6 +120,16 @@ static const struct test_case {
 		REMOTE_IP3,	10000,		PUB_IP3,	19000,
 		NPF_BINAT,	IFNAME_EXT,	PFIL_IN,
 		RESULT_PASS,	AF_INET,	LOCAL_IP3,	19000
+	},
+
+	/*
+	 * NETMAP case:
+	 *	map $ext_if static algo netmap $net_a <-> $net_b
+	 */
+	{
+		NET_A_IP1,	12345,		REMOTE_IP4,	12345,
+		NPF_BINAT,	IFNAME_EXT,	PFIL_OUT,
+		RESULT_PASS,	AF_INET,	NET_B_IP1,	12345
 	},
 
 	/*

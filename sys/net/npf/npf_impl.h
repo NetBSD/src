@@ -48,7 +48,6 @@
 #ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/rbtree.h>
 
 #include <net/bpf.h>
 #include <net/bpfjit.h>
@@ -197,6 +196,7 @@ struct npf {
 	/* Associated worker thread. */
 	unsigned		worker_id;
 	void *			worker_entry;
+	bool			sync_registered;
 
 	/* List of extensions and its lock. */
 	LIST_HEAD(, npf_ext)	ext_list;
@@ -305,6 +305,8 @@ int		npf_addr_cmp(const npf_addr_t *, const npf_netmask_t,
 		    const npf_addr_t *, const npf_netmask_t, const int);
 void		npf_addr_mask(const npf_addr_t *, const npf_netmask_t,
 		    const int, npf_addr_t *);
+void		npf_addr_bitor(const npf_addr_t *, const npf_netmask_t,
+		    const int, npf_addr_t *);
 
 int		npf_tcpsaw(const npf_cache_t *, tcp_seq *, tcp_seq *,
 		    uint32_t *);
@@ -344,8 +346,10 @@ int		npf_table_insert(npf_table_t *, const int,
 int		npf_table_remove(npf_table_t *, const int,
 		    const npf_addr_t *, const npf_netmask_t);
 int		npf_table_lookup(npf_table_t *, const int, const npf_addr_t *);
+npf_addr_t *	npf_table_getsome(npf_table_t *, const int, unsigned);
 int		npf_table_list(npf_table_t *, void *, size_t);
 int		npf_table_flush(npf_table_t *);
+void		npf_table_gc(npf_t *, npf_table_t *);
 
 /* Ruleset interface. */
 npf_ruleset_t *	npf_ruleset_create(size_t);
