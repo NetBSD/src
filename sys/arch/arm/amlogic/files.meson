@@ -1,0 +1,77 @@
+#	$NetBSD: files.meson,v 1.1 2019/01/19 20:56:03 jmcneill Exp $
+#
+# Configuration info for Amlogic Meson family SoCs
+#
+#
+
+file	arch/arm/amlogic/meson_platform.c	soc_meson
+
+# Common clocks
+define	meson_clk
+file	arch/arm/amlogic/meson_clk.c		meson_clk
+file	arch/arm/amlogic/meson_clk_div.c	meson_clk
+file	arch/arm/amlogic/meson_clk_fixed.c	meson_clk
+file	arch/arm/amlogic/meson_clk_fixed_factor.c meson_clk
+file	arch/arm/amlogic/meson_clk_gate.c	meson_clk
+file	arch/arm/amlogic/meson_clk_mpll.c	meson_clk
+file	arch/arm/amlogic/meson_clk_mux.c	meson_clk
+file	arch/arm/amlogic/meson_clk_pll.c	meson_clk
+
+# Meson8b clock controller
+device	meson8bclkc: meson_clk
+attach	meson8bclkc at fdt with meson8b_clkc
+file	arch/arm/amlogic/meson8b_clkc.c		meson8b_clkc
+
+# Meson reset controller
+device	mesonresets
+attach	mesonresets at fdt with meson_resets
+file	arch/arm/amlogic/meson_resets.c		meson_resets
+
+# UART
+device	mesonuart
+attach	mesonuart at fdt with meson_uart
+file	arch/arm/amlogic/meson_uart.c		meson_uart
+
+# GPIO
+device	mesonpinctrl: gpiobus
+attach	mesonpinctrl at fdt with meson_pinctrl
+file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
+file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
+
+# SDHC
+#device	mesonsdhc: sdmmcbus
+#attach	mesonsdhc at fdt with meson_sdhc
+#file	arch/arm/amlogic/meson_sdhc.c		meson_sdhc
+
+# SDIO
+device	mesonsdio: sdmmcbus
+attach	mesonsdio at fdt with meson_sdio
+file	arch/arm/amlogic/meson_sdio.c		meson_sdio
+
+# USB PHY
+device	mesonusbphy
+attach	mesonusbphy at fdt with meson_usbphy
+file	arch/arm/amlogic/meson_usbphy.c		meson_usbphy
+
+# RTC
+#device	mesonrtc
+#attach	mesonrtc at fdt with meson_rtc
+#file	arch/arm/amlogic/meson_rtc.c		meson_rtc
+
+# RNG
+device	mesonrng
+attach	mesonrng at fdt with meson_rng
+file	arch/arm/amlogic/meson_rng.c		meson_rng
+
+# GMAC
+attach	awge at fdt with meson_dwmac
+file	arch/arm/amlogic/meson_dwmac.c		meson_dwmac
+
+# Watchdog
+device	mesonwdt: sysmon_wdog
+attach	mesonwdt at fdt with meson_wdt
+file	arch/arm/amlogic/meson_wdt.c		meson_wdt
+
+# SOC parameters
+defflag	opt_soc.h			SOC_MESON
+defflag	opt_soc.h			SOC_MESON8B: SOC_MESON
