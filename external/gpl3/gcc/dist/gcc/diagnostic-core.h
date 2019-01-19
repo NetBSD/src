@@ -1,7 +1,7 @@
 /* Declarations of core diagnostic functionality for code that does
    not need to deal with diagnostic contexts or diagnostic info
    structures.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -65,6 +65,9 @@ extern bool warning_at (location_t, int, const char *, ...)
     ATTRIBUTE_GCC_DIAG(3,4);
 extern bool warning_at_rich_loc (rich_location *, int, const char *, ...)
     ATTRIBUTE_GCC_DIAG(3,4);
+extern bool warning_at_rich_loc_n (rich_location *, int, int, const char *,
+				  const char *, ...)
+    ATTRIBUTE_GCC_DIAG(4, 6) ATTRIBUTE_GCC_DIAG(5, 6);
 extern void error (const char *, ...) ATTRIBUTE_GCC_DIAG(1,2);
 extern void error_n (location_t, int, const char *, const char *, ...)
     ATTRIBUTE_GCC_DIAG(3,5) ATTRIBUTE_GCC_DIAG(4,5);
@@ -75,6 +78,8 @@ extern void fatal_error (location_t, const char *, ...) ATTRIBUTE_GCC_DIAG(2,3)
      ATTRIBUTE_NORETURN;
 /* Pass one of the OPT_W* from options.h as the second parameter.  */
 extern bool pedwarn (location_t, int, const char *, ...)
+     ATTRIBUTE_GCC_DIAG(3,4);
+extern bool pedwarn_at_rich_loc (rich_location *, int, const char *, ...)
      ATTRIBUTE_GCC_DIAG(3,4);
 extern bool permerror (location_t, const char *, ...) ATTRIBUTE_GCC_DIAG(2,3);
 extern bool permerror_at_rich_loc (rich_location *, const char *,

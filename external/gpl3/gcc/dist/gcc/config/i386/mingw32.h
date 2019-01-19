@@ -1,6 +1,6 @@
 /* Operating system specific defines to be used when targeting GCC for
    hosting on Windows32, using GNU tools and the Windows32 API Library.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -100,10 +100,12 @@ along with GCC; see the file COPYING3.  If not see
 #if DWARF2_UNWIND_INFO
 /* DW2-unwind is just available for 32-bit mode.  */
 #if TARGET_64BIT_DEFAULT
-#error DW2 unwind is not available for 64-bit.
-#endif
+#define SHARED_LIBGCC_UNDEFS_SPEC \
+  "%{m32: %{shared-libgcc: -u ___register_frame_info -u ___deregister_frame_info}}"
+#else
 #define SHARED_LIBGCC_UNDEFS_SPEC \
  "%{shared-libgcc: -u ___register_frame_info -u ___deregister_frame_info}"
+#endif
 #else
 #define SHARED_LIBGCC_UNDEFS_SPEC ""
 #endif
@@ -237,9 +239,6 @@ do {						         \
 #undef TARGET_N_FORMAT_TYPES
 #define TARGET_N_FORMAT_TYPES 3
 
-/* Let defaults.h definition of TARGET_USE_JCR_SECTION apply. */
-#undef TARGET_USE_JCR_SECTION
-
 #define HAVE_ENABLE_EXECUTE_STACK
 #undef  CHECK_EXECUTE_STACK_ENABLED
 #define CHECK_EXECUTE_STACK_ENABLED flag_setstackexecutable
@@ -253,5 +252,3 @@ do {						         \
 #endif
 #define LIBGCC_SONAME "libgcc_s" LIBGCC_EH_EXTN "-1.dll"
 
-/* We should find a way to not have to update this manually.  */
-#define LIBGCJ_SONAME "libgcj" /*LIBGCC_EH_EXTN*/ "-16.dll"
