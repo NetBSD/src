@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.10 2019/01/07 22:00:30 jdolecek Exp $ */
+/* $NetBSD: param.h,v 1.11 2019/01/19 09:11:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
 
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE		16384	/* default message buffer size */
+#define MSGBUFSIZE		65536	/* default message buffer size */
 #endif
 
 #define COHERENCY_UNIT		128
