@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.25 2019/01/02 14:54:54 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.26 2019/01/19 20:50:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.25 2019/01/02 14:54:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.26 2019/01/19 20:50:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,6 +343,24 @@ fdt_remove_bycompat(const char *compatible[])
 			TAILQ_REMOVE(&fdt_nodes, node, n_nodes);
 		}
 	}
+}
+
+int
+fdt_find_with_property(const char *prop, int *pindex)
+{
+	struct fdt_node *node;
+	int index = 0;
+
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
+		if (index < *pindex)
+			continue;
+		if (of_hasprop(node->n_phandle, prop)) {
+			*pindex = index;
+			return node->n_phandle;
+		}
+	}
+
+	return -1;
 }
 
 static u_int
