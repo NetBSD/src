@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.18 2018/06/20 08:03:55 hkenken Exp $	*/
+/*	$NetBSD: pl310.c,v 1.19 2019/01/19 20:52:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.18 2018/06/20 08:03:55 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.19 2019/01/19 20:52:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,17 +140,8 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
-	if (!prop_dictionary_get_uint32(dict, "offset", &off)) {
-		if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid)) {
-			/*
-			 * PL310 on Cortex-A5 is external to PERIPHBASE, so
-			 * "offset" property is required.
-			 */
-			aprint_normal(": not configured\n");
-			return;
-		}
+	if (!prop_dictionary_get_uint32(dict, "offset", &off))
 		off = mpcaa->mpcaa_off1;
-	}
 
 	arml2cc_sc = sc;
 	sc->sc_dev = self;
