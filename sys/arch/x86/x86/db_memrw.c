@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.7 2018/11/18 14:16:13 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8 2019/01/19 13:17:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7 2018/11/18 14:16:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8 2019/01/19 13:17:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -90,7 +90,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 	src = (char *)addr;
 
 	if (db_validate_address((vaddr_t)src)) {
+#ifdef DDB
 		db_printf("address %p is invalid\n", src);
+#endif
 		return;
 	}
 
@@ -111,7 +113,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 
 	while (size-- > 0) {
 		if (db_validate_address((vaddr_t)src)) {
+#ifdef DDB
 			db_printf("address %p is invalid\n", src);
+#endif
 			return;
 		}
 
@@ -144,7 +148,9 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		pte = *ppte;
 
 		if ((pte & PG_V) == 0) {
+#ifdef DDB
 			db_printf(" address %p not a valid page\n", dst);
+#endif
 			return;
 		}
 
