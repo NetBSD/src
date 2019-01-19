@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.37 2018/09/05 00:51:42 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2019/01/19 17:11:02 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -103,7 +103,6 @@ LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 .if ${HAVE_LIBGCC_EH} == "no"
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c:Nunwind-arm.c:Npr-support.c}
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T:Nlibunwind.S}
-G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
 .else
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
@@ -192,14 +191,7 @@ dp-bit.c: ${.CURDIR}/Makefile
 .include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
 
-.if ${MKGCC} != "no"
-.if defined(G_CONFIGLINKS) && !empty(G_CONFIGLINKS)
-BUILDSYMLINKS+=	${G_CONFIGLINKS}
-.for _src _dst in ${G_CONFIGLINKS}
-DPSRCS+=	${_dst}
-.endfor
-.endif
-.endif
+.include "../Makefile.gthr"
 
 EXTRA_FAKEHEADERS=	options.h libgcc_tm.h
 .include "../../Makefile.hacks"
