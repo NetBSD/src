@@ -1,6 +1,6 @@
-.\"    $NetBSD: npf.conf.5,v 1.83 2019/01/08 11:36:10 uwe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.84 2019/01/19 21:19:32 rmind Exp $
 .\"
-.\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 8, 2019
+.Dd January 14, 2019
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -86,31 +86,34 @@ and
 .Sq Li > .
 The following is an example of table definition:
 .Pp
-.Dl table <black> type hash dynamic
+.Dl table <blocklist> type ipset
 .Pp
 Currently, tables support three data storage types:
-.Cm hash ,
-.Cm tree ,
+.Cm ipset ,
+.Cm lpm ,
 or
-.Cm cdb .
-Tables can also be set as containing
-.Cm dynamic
-data or static
-.Cm file Ar filename
-data loaded from a specified file.
-Tables of type
-.Dq hash
-and
-.Dq cdb
-can only contain IP addresses, without masks.
-Only static data can be used with a storage type of
-.Dq cdb .
+.Cm const .
+The contents of the table may be pre-loaded from the specified file.
+The
+.Cm const
+tables are immutable (no insertions or deletions after loading) and
+therefore must always be loaded from a file.
 .Pp
-The specified file should contain a list of IP addresses and/or networks in the
-form of
+The specified file should contain a list of IP addresses and/or networks
+in the form of
 .Li 10.1.1.1
 or
-.Li 10.0.0.0/24
+.Li 10.0.0.0/24 .
+.Pp
+Tables of type
+.Cm ipset
+and
+.Cm const
+can only contain IP addresses (without masks).
+The
+.Cm lpm
+tables can contain networks and they will perform the longest
+prefix match on lookup.
 .Ss Interfaces
 In NPF, an interface can be referenced directly by using its name, or can be
 passed to an extraction function which will return a list of IP addresses
@@ -347,16 +350,41 @@ redirecting the public port 9022 to the port 22 of an internal host:
 .Pp
 .Dl map $ext_if dynamic proto tcp 10.1.1.2 port 22 <- $ext_if port 9022
 .Pp
-The static NAT can have different address translation algorithms, which
-can be chosen using the
+If the dynamic NAT is configured with multiple translation addresses,
+then a custom selection algorithm can be chosen using the
 .Cm algo
 keyword.
 The currently available algorithms are:
-.Bl -tag -width "Cm npt66" -offset indent
+.Bl -tag -width "Cm round-robin" -offset indent
+.It Cm ip-hash
+The translation address for a new connection is selected based on a
+hash of the original source and destination addresses.
+This algorithms attempts to keep all connections of particular client
+associated with the same translation address.
+This is the default algorithm.
+.Pp
+.It Cm round-robin
+The translation address for each new connection is selected on a
+round-robin basis.
+.El
+.Pp
+The static NAT can also have different address translation algorithms,
+chosen using the
+.Cm algo
+keyword.
+The currently available algorithms are:
+.Bl -tag -width "Cm netmap" -offset indent
+.It Cm netmap
+Network address mapping from one segment to another, leaving the host
+part as-is.
+The new address is computed as following:
+.Pp
+.Dl addr = net-addr | (orig-addr & ~mask)
 .It Cm npt66
 IPv6-to-IPv6 network prefix translation (NPTv6).
 .El
 .Pp
+If no algorithm is specified, then 1:1 address mapping is assumed.
 Currently, the static NAT algorithms do not perform port translation.
 .Ss Application Level Gateways
 Certain application layer protocols are not compatible with NAT and require
@@ -477,8 +505,8 @@ alg-name	= "icmp"
 # double quotes.
 
 table-id	= <table-name>
-table-def	= "table" table-id "type" ( "hash" | "tree" | "cdb" )
-		  ( "dynamic" | "file" path )
+table-def	= "table" table-id "type" ( "ipset" | "lpm" | "const" )
+		  [ "file" path ]
 
 # Mapping for address translation.
 
@@ -550,8 +578,8 @@ directory containing further examples
 $ext_if = { inet4(wm0) }
 $int_if = { inet4(wm1) }
 
-table <blacklist> type hash file "/etc/npf_blacklist"
-table <limited> type tree dynamic
+table <blocklist> type ipset file "/etc/npf_blocklist"
+table <limited> type lpm
 
 $services_tcp = { http, https, smtp, domain, 6000, 9022 }
 $services_udp = { domain, ntp, 6000 }
@@ -572,7 +600,7 @@ procedure "log" {
 group "external" on $ext_if {
 	pass stateful out final all
 
-	block in final from <blacklist>
+	block in final from <blocklist>
 	pass stateful in final family inet4 proto tcp to $ext_if \e
 		port ssh apply "log"
 	pass stateful in final proto tcp to $ext_if \e
