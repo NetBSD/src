@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.77 2019/01/18 17:49:55 christos Exp $
+# $NetBSD: ad.mips,v 1.78 2019/01/19 13:06:50 mrg Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
@@ -24,6 +24,9 @@
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-6/loongson.h			comp-c-include		gcc=6
 ./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-7/loongson.h			comp-c-include		gcc=7
+./usr/include/gcc-7/msa.h			comp-c-include		gcc=7
+./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
 ./usr/include/mips/aout_machdep.h		comp-obsolete		obsolete
