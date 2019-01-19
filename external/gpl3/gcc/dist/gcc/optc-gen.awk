@@ -1,4 +1,4 @@
-#  Copyright (C) 2003-2016 Free Software Foundation, Inc.
+#  Copyright (C) 2003-2017 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -326,6 +326,11 @@ for (i = 0; i < n_opts; i++) {
 			alias_data = "NULL, NULL, OPT_SPECIAL_ignore"
 		else
 			alias_data = "NULL, NULL, N_OPTS"
+		if (flag_set_p("Enum.*", flags[i])) {
+			if (!flag_set_p("RejectNegative", flags[i]) \
+			    && opts[i] ~ "^[Wfm]")
+				print "#error Enum allowing negative form"
+		}
 	} else {
 		alias_opt = nth_arg(0, alias_arg)
 		alias_posarg = nth_arg(1, alias_arg)
@@ -439,7 +444,7 @@ for (i = 0; i < n_enabledby; i++) {
             print "      if (" condition ")"
             print "        handle_generated_option (opts, opts_set,"
             print "                                 " opt_enum(thisenable[j]) ", NULL, " value ","
-            print "                                 lang_mask, kind, loc, handlers, dc);"
+            print "                                 lang_mask, kind, loc, handlers, true, dc);"
         } else {
             print "#error " thisenable[j] " does not have a Var() flag"
         }
@@ -492,7 +497,7 @@ for (i = 0; i < n_langs; i++) {
                 print "      if (!opts_set->x_" opt_var_name ")"
                 print "        handle_generated_option (opts, opts_set,"
                 print "                                 " opt_enum(thisenable_opt) ", NULL, " value ","
-                print "                                 lang_mask, kind, loc, handlers, dc);"
+                print "                                 lang_mask, kind, loc, handlers, true, dc);"
             } else {
                 print "#error " thisenable_opt " does not have a Var() flag"
             }

@@ -1,5 +1,5 @@
 /* RTL-based forward propagation pass for GNU compiler.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2017 Free Software Foundation, Inc.
    Contributed by Paolo Bonzini and Steven Bosscher.
 
 This file is part of GCC.
@@ -26,6 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "predict.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "emit-rtl.h"
@@ -118,6 +119,13 @@ static int num_changes;
 static vec<df_ref> use_def_ref;
 static vec<df_ref> reg_defs;
 static vec<df_ref> reg_defs_stack;
+
+/* The maximum number of propagations that are still allowed.  If we do
+   more propagations than originally we had uses, we must have ended up
+   in a propagation loop, as in PR79405.  Until the algorithm fwprop
+   uses can obviously not get into such loops we need a workaround like
+   this.  */
+static int propagations_left;
 
 /* The MD bitmaps are trimmed to include only live registers to cut
    memory usage on testcases like insn-recog.c.  Track live registers
@@ -354,7 +362,7 @@ canonicalize_address (rtx x)
 	  {
 	    HOST_WIDE_INT shift = INTVAL (XEXP (x, 1));
 	    PUT_CODE (x, MULT);
-	    XEXP (x, 1) = gen_int_mode ((HOST_WIDE_INT) 1 << shift,
+	    XEXP (x, 1) = gen_int_mode (HOST_WIDE_INT_1 << shift,
 					GET_MODE (x));
 	  }
 
@@ -618,6 +626,15 @@ propagate_rtx_1 (rtx *px, rtx old_rtx, rtx new_rtx, int flags)
     return true;
 
   *px = tem;
+
+  /* Allow replacements that simplify operations on a vector or complex
+     value to a component.  The most prominent case is
+     (subreg ([vec_]concat ...)).   */
+  if (REG_P (tem) && !HARD_REGISTER_P (tem)
+      && (VECTOR_MODE_P (GET_MODE (new_rtx))
+	  || COMPLEX_MODE_P (GET_MODE (new_rtx)))
+      && GET_MODE (tem) == GET_MODE_INNER (GET_MODE (new_rtx)))
+    return true;
 
   /* The replacement we made so far is valid, if all of the recursive
      replacements were valid, or we could simplify everything to
@@ -1041,9 +1058,7 @@ free_load_extend (rtx src, rtx_insn *insn)
   df_ref def, use;
 
   reg = XEXP (src, 0);
-#ifdef LOAD_EXTEND_OP
-  if (LOAD_EXTEND_OP (GET_MODE (reg)) != GET_CODE (src))
-#endif
+  if (load_extend_op (GET_MODE (reg)) != GET_CODE (src))
     return false;
 
   FOR_EACH_INSN_USE (use, insn)
@@ -1399,6 +1414,8 @@ forward_propagate_into (df_ref use)
   if (forward_propagate_and_simplify (use, def_insn, def_set)
       || forward_propagate_subreg (use, def_insn, def_set))
     {
+      propagations_left--;
+
       if (cfun->can_throw_non_call_exceptions
 	  && find_reg_note (use_insn, REG_EH_REGION, NULL_RTX)
 	  && purge_dead_edges (DF_REF_BB (use)))
@@ -1426,6 +1443,8 @@ fwprop_init (void)
   active_defs = XNEWVEC (df_ref, max_reg_num ());
   if (flag_checking)
     active_defs_check = sparseset_alloc (max_reg_num ());
+
+  propagations_left = DF_USES_TABLE_SIZE ();
 }
 
 static void
@@ -1461,7 +1480,6 @@ static unsigned int
 fwprop (void)
 {
   unsigned i;
-  bool need_cleanup = false;
 
   fwprop_init ();
 
@@ -1473,18 +1491,19 @@ fwprop (void)
 
   for (i = 0; i < DF_USES_TABLE_SIZE (); i++)
     {
+      if (!propagations_left)
+	break;
+
       df_ref use = DF_USES_GET (i);
       if (use)
 	if (DF_REF_TYPE (use) == DF_REF_REG_USE
 	    || DF_REF_BB (use)->loop_father == NULL
 	    /* The outer most loop is not really a loop.  */
 	    || loop_outer (DF_REF_BB (use)->loop_father) == NULL)
-	  need_cleanup |= forward_propagate_into (use);
+	  forward_propagate_into (use);
     }
 
   fwprop_done ();
-  if (need_cleanup)
-    cleanup_cfg (0);
   return 0;
 }
 
@@ -1528,7 +1547,6 @@ static unsigned int
 fwprop_addr (void)
 {
   unsigned i;
-  bool need_cleanup = false;
 
   fwprop_init ();
 
@@ -1536,19 +1554,19 @@ fwprop_addr (void)
      end, and we'll go through them as well.  */
   for (i = 0; i < DF_USES_TABLE_SIZE (); i++)
     {
+      if (!propagations_left)
+	break;
+
       df_ref use = DF_USES_GET (i);
       if (use)
 	if (DF_REF_TYPE (use) != DF_REF_REG_USE
 	    && DF_REF_BB (use)->loop_father != NULL
 	    /* The outer most loop is not really a loop.  */
 	    && loop_outer (DF_REF_BB (use)->loop_father) != NULL)
-	  need_cleanup |= forward_propagate_into (use);
+	  forward_propagate_into (use);
     }
 
   fwprop_done ();
-
-  if (need_cleanup)
-    cleanup_cfg (0);
   return 0;
 }
 

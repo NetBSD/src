@@ -3,7 +3,7 @@
 ;; expander, and the actual vector instructions will be in altivec.md and
 ;; vsx.md
 
-;; Copyright (C) 2009-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 ;; Contributed by Michael Meissner <meissner@linux.vnet.ibm.com>
 
 ;; This file is part of GCC.
@@ -61,6 +61,9 @@
 ;; Vector modes for 64-bit base types
 (define_mode_iterator VEC_64 [V2DI V2DF])
 
+;; Vector integer modes
+(define_mode_iterator VI [V4SI V8HI V16QI])
+
 ;; Base type from vector mode
 (define_mode_attr VEC_base [(V16QI "QI")
 			    (V8HI  "HI")
@@ -80,7 +83,8 @@
 
 ;; constants for unspec
 (define_c_enum "unspec" [UNSPEC_PREDICATE
-			 UNSPEC_REDUC])
+			 UNSPEC_REDUC
+			 UNSPEC_NEZ_P])
 
 ;; Vector reduction code iterators
 (define_code_iterator VEC_reduc [plus smin smax])
@@ -174,6 +178,8 @@
   if (VECTOR_MEM_VSX_P (<MODE>mode))
     {
       operands[1] = rs6000_address_for_altivec (operands[1]);
+      rtx and_op = XEXP (operands[1], 0);
+      gcc_assert (GET_CODE (and_op) == AND);
       emit_insn (gen_altivec_lvx_<mode> (operands[0], operands[1]));
       DONE;
     }
@@ -190,7 +196,9 @@
   if (VECTOR_MEM_VSX_P (<MODE>mode))
     {
       operands[0] = rs6000_address_for_altivec (operands[0]);
-      emit_insn (gen_altivec_stvx_<mode> (operands[0], operands[1]));
+      rtx and_op = XEXP (operands[0], 0);
+      gcc_assert (GET_CODE (and_op) == AND);
+      emit_insn (gen_altivec_stvx_<mode> (operands[1], operands[0]));
       DONE;
     }
 }")
@@ -230,7 +238,15 @@
 	(div:VEC_F (match_operand:VEC_F 1 "vfloat_operand" "")
 		   (match_operand:VEC_F 2 "vfloat_operand" "")))]
   "VECTOR_UNIT_VSX_P (<MODE>mode)"
-  "")
+{
+  if (RS6000_RECIP_AUTO_RE_P (<MODE>mode)
+      && can_create_pseudo_p () && flag_finite_math_only
+      && !flag_trapping_math && flag_reciprocal_math)
+    {
+      rs6000_emit_swdiv (operands[0], operands[1], operands[2], true);
+      DONE;
+    }
+})
 
 (define_expand "neg<mode>2"
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
@@ -364,13 +380,13 @@
 }")
 
 (define_expand "vcond<mode><mode>"
-  [(set (match_operand:VEC_I 0 "vint_operand" "")
+  [(set (match_operand:VEC_I 0 "vint_operand")
 	(if_then_else:VEC_I
 	 (match_operator 3 "comparison_operator"
-			 [(match_operand:VEC_I 4 "vint_operand" "")
-			  (match_operand:VEC_I 5 "vint_operand" "")])
-	 (match_operand:VEC_I 1 "vint_operand" "")
-	 (match_operand:VEC_I 2 "vint_operand" "")))]
+			 [(match_operand:VEC_I 4 "vint_operand")
+			  (match_operand:VEC_I 5 "vint_operand")])
+	 (match_operand:VEC_I 1 "vector_int_reg_or_same_bit")
+	 (match_operand:VEC_I 2 "vector_int_reg_or_same_bit")))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "
 {
@@ -420,13 +436,13 @@
 }")
 
 (define_expand "vcondu<mode><mode>"
-  [(set (match_operand:VEC_I 0 "vint_operand" "")
+  [(set (match_operand:VEC_I 0 "vint_operand")
 	(if_then_else:VEC_I
 	 (match_operator 3 "comparison_operator"
-			 [(match_operand:VEC_I 4 "vint_operand" "")
-			  (match_operand:VEC_I 5 "vint_operand" "")])
-	 (match_operand:VEC_I 1 "vint_operand" "")
-	 (match_operand:VEC_I 2 "vint_operand" "")))]
+			 [(match_operand:VEC_I 4 "vint_operand")
+			  (match_operand:VEC_I 5 "vint_operand")])
+	 (match_operand:VEC_I 1 "vector_int_reg_or_same_bit")
+	 (match_operand:VEC_I 2 "vector_int_reg_or_same_bit")))]
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "
 {
@@ -655,7 +671,7 @@
 ;; setting CR6 to indicate a combined status
 (define_expand "vector_eq_<mode>_p"
   [(parallel
-    [(set (reg:CC 74)
+    [(set (reg:CC CR6_REGNO)
 	  (unspec:CC [(eq:CC (match_operand:VEC_A 1 "vlogical_operand" "")
 			     (match_operand:VEC_A 2 "vlogical_operand" ""))]
 		     UNSPEC_PREDICATE))
@@ -665,9 +681,164 @@
   "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "")
 
+;; This expansion handles the V16QI, V8HI, and V4SI modes in the
+;; implementation of the vec_all_ne built-in functions on Power9.
+(define_expand "vector_ne_<mode>_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(ne:CC (match_operand:VI 1 "vlogical_operand")
+			     (match_operand:VI 2 "vlogical_operand"))]
+	   UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (ne:VI (match_dup 1)
+		 (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(lt:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))]
+  "TARGET_P9_VECTOR"
+{
+  operands[3] = gen_reg_rtx (<MODE>mode);
+})
+
+;; This expansion handles the V16QI, V8HI, and V4SI modes in the
+;; implementation of the vec_any_eq built-in functions on Power9.
+(define_expand "vector_ae_<mode>_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(ne:CC (match_operand:VI 1 "vlogical_operand")
+			     (match_operand:VI 2 "vlogical_operand"))]
+	   UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (ne:VI (match_dup 1)
+		 (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(lt:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))
+   (set (match_dup 0)
+	(xor:SI (match_dup 0)
+		(const_int 1)))]
+  "TARGET_P9_VECTOR"
+{
+  operands[3] = gen_reg_rtx (<MODE>mode);
+})
+
+;; This expansion handles the V16QI, V8HI, and V4SI modes in the
+;; implementation of the vec_all_nez and vec_any_eqz built-in
+;; functions on Power9.
+(define_expand "vector_nez_<mode>_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(unspec:VI
+		       [(match_operand:VI 1 "vlogical_operand")
+			(match_operand:VI 2 "vlogical_operand")]
+		       UNSPEC_NEZ_P)]
+	   UNSPEC_PREDICATE))
+     (set (match_operand:VI 0 "vlogical_operand")
+	  (unspec:VI [(match_dup 1)
+		      (match_dup 2)]
+	   UNSPEC_NEZ_P))])]
+  "TARGET_P9_VECTOR"
+  "")
+
+;; This expansion handles the V2DI mode in the implementation of the
+;; vec_all_ne built-in function on Power9.
+;;
+;; Since the Power9 "xvcmpne<mode>." instruction does not support DImode,
+;; this expands into the same rtl that would be used for the Power8
+;; architecture.
+(define_expand "vector_ne_v2di_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(eq:CC (match_operand:V2DI 1 "vlogical_operand")
+			     (match_operand:V2DI 2 "vlogical_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (eq:V2DI (match_dup 1)
+		   (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(eq:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))]
+  "TARGET_P9_VECTOR"
+{
+  operands[3] = gen_reg_rtx (V2DImode);
+})
+
+;; This expansion handles the V2DI mode in the implementation of the
+;; vec_any_eq built-in function on Power9.
+;;
+;; Since the Power9 "xvcmpne<mode>." instruction does not support DImode,
+;; this expands into the same rtl that would be used for the Power8
+;; architecture.
+(define_expand "vector_ae_v2di_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(eq:CC (match_operand:V2DI 1 "vlogical_operand")
+			     (match_operand:V2DI 2 "vlogical_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (eq:V2DI (match_dup 1)
+		   (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(eq:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))
+   (set (match_dup 0)
+	(xor:SI (match_dup 0)
+		(const_int 1)))]
+  "TARGET_P9_VECTOR"
+{
+  operands[3] = gen_reg_rtx (V2DImode);
+})
+
+;; This expansion handles the V4SF and V2DF modes in the Power9
+;; implementation of the vec_all_ne built-in functions.  Note that the
+;; expansions for this pattern with these modes makes no use of power9-
+;; specific instructions since there are no new power9 instructions
+;; for vector compare not equal with floating point arguments.
+(define_expand "vector_ne_<mode>_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(eq:CC (match_operand:VEC_F 1 "vlogical_operand")
+			     (match_operand:VEC_F 2 "vlogical_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (eq:VEC_F (match_dup 1)
+		    (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(eq:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))]
+  "TARGET_P9_VECTOR"
+{
+  operands[3] = gen_reg_rtx (<MODE>mode);
+})
+
+;; This expansion handles the V4SF and V2DF modes in the Power9
+;; implementation of the vec_any_eq built-in functions.  Note that the
+;; expansions for this pattern with these modes makes no use of power9-
+;; specific instructions since there are no new power9 instructions
+;; for vector compare not equal with floating point arguments.
+(define_expand "vector_ae_<mode>_p"
+  [(parallel
+    [(set (reg:CC CR6_REGNO)
+	  (unspec:CC [(eq:CC (match_operand:VEC_F 1 "vlogical_operand")
+			     (match_operand:VEC_F 2 "vlogical_operand"))]
+		     UNSPEC_PREDICATE))
+     (set (match_dup 3)
+	  (eq:VEC_F (match_dup 1)
+		    (match_dup 2)))])
+   (set (match_operand:SI 0 "register_operand" "=r")
+	(eq:SI (reg:CC CR6_REGNO)
+	       (const_int 0)))
+   (set (match_dup 0)
+	(xor:SI (match_dup 0)
+		(const_int 1)))]
+  "TARGET_P9_VECTOR"
+{
+  operands[3] = gen_reg_rtx (<MODE>mode);
+})
+
 (define_expand "vector_gt_<mode>_p"
   [(parallel
-    [(set (reg:CC 74)
+    [(set (reg:CC CR6_REGNO)
 	  (unspec:CC [(gt:CC (match_operand:VEC_A 1 "vlogical_operand" "")
 			     (match_operand:VEC_A 2 "vlogical_operand" ""))]
 		     UNSPEC_PREDICATE))
@@ -679,7 +850,7 @@
 
 (define_expand "vector_ge_<mode>_p"
   [(parallel
-    [(set (reg:CC 74)
+    [(set (reg:CC CR6_REGNO)
 	  (unspec:CC [(ge:CC (match_operand:VEC_F 1 "vfloat_operand" "")
 			     (match_operand:VEC_F 2 "vfloat_operand" ""))]
 		     UNSPEC_PREDICATE))
@@ -691,7 +862,7 @@
 
 (define_expand "vector_gtu_<mode>_p"
   [(parallel
-    [(set (reg:CC 74)
+    [(set (reg:CC CR6_REGNO)
 	  (unspec:CC [(gtu:CC (match_operand:VEC_I 1 "vint_operand" "")
 			      (match_operand:VEC_I 2 "vint_operand" ""))]
 		     UNSPEC_PREDICATE))
@@ -703,16 +874,24 @@
 
 ;; AltiVec/VSX predicates.
 
+;; This expansion is triggered during expansion of predicate built-in
+;; functions (built-ins defined with the RS6000_BUILTIN_P macro) by the
+;; altivec_expand_predicate_builtin() function when the value of the
+;; integer constant first argument equals zero (aka __CR6_EQ in altivec.h).
 (define_expand "cr6_test_for_zero"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(eq:SI (reg:CC 74)
+	(eq:SI (reg:CC CR6_REGNO)
 	       (const_int 0)))]
   "TARGET_ALTIVEC || TARGET_VSX"
   "")
 
+;; This expansion is triggered during expansion of predicate built-in
+;; functions (built-ins defined with the RS6000_BUILTIN_P macro) by the
+;; altivec_expand_predicate_builtin() function when the value of the
+;; integer constant first argument equals one (aka __CR6_EQ_REV in altivec.h).
 (define_expand "cr6_test_for_zero_reverse"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(eq:SI (reg:CC 74)
+	(eq:SI (reg:CC CR6_REGNO)
 	       (const_int 0)))
    (set (match_dup 0)
 	(xor:SI (match_dup 0)
@@ -720,16 +899,25 @@
   "TARGET_ALTIVEC || TARGET_VSX"
   "")
 
+;; This expansion is triggered during expansion of predicate built-in
+;; functions (built-ins defined with the RS6000_BUILTIN_P macro) by the
+;; altivec_expand_predicate_builtin() function when the value of the
+;; integer constant first argument equals two (aka __CR6_LT in altivec.h).
 (define_expand "cr6_test_for_lt"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(lt:SI (reg:CC 74)
+	(lt:SI (reg:CC CR6_REGNO)
 	       (const_int 0)))]
   "TARGET_ALTIVEC || TARGET_VSX"
   "")
 
+;; This expansion is triggered during expansion of predicate built-in
+;; functions (built-ins defined with the RS6000_BUILTIN_P macro) by the
+;; altivec_expand_predicate_builtin() function when the value of the
+;; integer constant first argument equals three
+;; (aka __CR6_LT_REV in altivec.h).
 (define_expand "cr6_test_for_lt_reverse"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(lt:SI (reg:CC 74)
+	(lt:SI (reg:CC CR6_REGNO)
 	       (const_int 0)))
    (set (match_dup 0)
 	(xor:SI (match_dup 0)
@@ -843,8 +1031,7 @@
    (match_operand 2 "const_int_operand" "")]
   "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
 {
-  rs6000_expand_vector_extract (operands[0], operands[1],
-				INTVAL (operands[2]));
+  rs6000_expand_vector_extract (operands[0], operands[1], operands[2]);
   DONE;
 })
 

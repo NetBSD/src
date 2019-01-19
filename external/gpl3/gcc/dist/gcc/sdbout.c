@@ -1,5 +1,5 @@
 /* Output sdb-format symbol table information from GNU compiler.
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -69,6 +69,7 @@ static GTY(()) bool sdbout_initialized;
 #include "rtl.h"
 #include "regs.h"
 #include "function.h"
+#include "memmodel.h"
 #include "emit-rtl.h"
 #include "flags.h"
 #include "insn-config.h"
@@ -115,11 +116,13 @@ static void sdbout_start_source_file	(unsigned int, const char *);
 static void sdbout_end_source_file	(unsigned int);
 static void sdbout_begin_block		(unsigned int, unsigned int);
 static void sdbout_end_block		(unsigned int, unsigned int);
-static void sdbout_source_line		(unsigned int, const char *, int, bool);
+static void sdbout_source_line		(unsigned int, unsigned int,
+					 const char *, int, bool);
 static void sdbout_end_epilogue		(unsigned int, const char *);
 static void sdbout_early_global_decl	(tree);
 static void sdbout_late_global_decl	(tree);
-static void sdbout_begin_prologue	(unsigned int, const char *);
+static void sdbout_begin_prologue	(unsigned int, unsigned int,
+					 const char *);
 static void sdbout_end_prologue		(unsigned int, const char *);
 static void sdbout_begin_function	(tree);
 static void sdbout_end_function		(unsigned int);
@@ -277,7 +280,7 @@ const struct gcc_debug_hooks sdb_debug_hooks =
 {
   sdbout_init,			         /* init */
   sdbout_finish,		         /* finish */
-  debug_nothing_void,			 /* early_finish */
+  debug_nothing_charstar,		 /* early_finish */
   debug_nothing_void,			 /* assembly_start */
   debug_nothing_int_charstar,	         /* define */
   debug_nothing_int_charstar,	         /* undef */
@@ -906,7 +909,7 @@ sdbout_toplevel_data (tree decl)
   if (DECL_IGNORED_P (decl))
     return;
 
-  gcc_assert (TREE_CODE (decl) == VAR_DECL);
+  gcc_assert (VAR_P (decl));
   gcc_assert (MEM_P (DECL_RTL (decl)));
   gcc_assert (DECL_INITIAL (decl));
 
@@ -1434,9 +1437,7 @@ sdbout_early_global_decl (tree decl ATTRIBUTE_UNUSED)
 static void
 sdbout_late_global_decl (tree decl)
 {
-  if (TREE_CODE (decl) == VAR_DECL
-      && !DECL_EXTERNAL (decl)
-      && DECL_RTL_SET_P (decl))
+  if (VAR_P (decl) && !DECL_EXTERNAL (decl) && DECL_RTL_SET_P (decl))
     {
       /* The COFF linker can move initialized global vars to the end.
 	 And that can screw up the symbol ordering.  Defer those for
@@ -1520,7 +1521,8 @@ sdbout_end_block (unsigned int line, unsigned int n ATTRIBUTE_UNUSED)
    number LINE.  */
 
 static void
-sdbout_source_line (unsigned int line, const char *filename ATTRIBUTE_UNUSED,
+sdbout_source_line (unsigned int line, unsigned int column ATTRIBUTE_UNUSED,
+		    const char *filename ATTRIBUTE_UNUSED,
                     int discriminator ATTRIBUTE_UNUSED,
                     bool is_stmt ATTRIBUTE_UNUSED)
 {
@@ -1552,7 +1554,8 @@ sdbout_begin_function (tree decl ATTRIBUTE_UNUSED)
    describe the parameter list.  */
 
 static void
-sdbout_begin_prologue (unsigned int line, const char *file ATTRIBUTE_UNUSED)
+sdbout_begin_prologue (unsigned int line, unsigned int column ATTRIBUTE_UNUSED,
+		       const char *file ATTRIBUTE_UNUSED)
 {
   sdbout_end_prologue (line, file);
 }

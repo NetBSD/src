@@ -1,6 +1,6 @@
 // Class filesystem::path -*- C++ -*-
 
-// Copyright (C) 2014-2016 Free Software Foundation, Inc.
+// Copyright (C) 2014-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -44,7 +44,7 @@
 #include <bits/stl_algobase.h>
 #include <bits/quoted_string.h>
 #include <bits/locale_conv.h>
-#if __cplusplus >= 201402L
+#if __cplusplus == 201402L
 # include <experimental/string_view>
 #endif
 
@@ -64,10 +64,10 @@ inline namespace v1
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
-#if __cplusplus >= 201402L
-  template<typename _CharT, typename _Traits = std::char_traits<_CharT>>
-    using __basic_string_view
-      = std::experimental::basic_string_view<_CharT, _Traits>;
+#if __cplusplus == 201402L
+  using std::experimental::basic_string_view;
+#elif __cplusplus > 201402L
+  using std::basic_string_view;
 #endif
 
   /**
@@ -99,7 +99,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 #if __cplusplus >= 201402L
     template<typename _CharT, typename _Traits>
       static __is_encoded_char<_CharT>
-      __is_path_src(const __basic_string_view<_CharT, _Traits>&, int);
+      __is_path_src(const basic_string_view<_CharT, _Traits>&, int);
 #endif
 
     template<typename _Unknown>
@@ -148,12 +148,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 #if __cplusplus >= 201402L
     template<typename _CharT, typename _Traits>
       static const _CharT*
-      _S_range_begin(const __basic_string_view<_CharT, _Traits>& __str)
+      _S_range_begin(const basic_string_view<_CharT, _Traits>& __str)
       { return __str.data(); }
 
     template<typename _CharT, typename _Traits>
       static const _CharT*
-      _S_range_end(const __basic_string_view<_CharT, _Traits>& __str)
+      _S_range_end(const basic_string_view<_CharT, _Traits>& __str)
       { return __str.data() + __str.size(); }
 #endif
 
@@ -271,7 +271,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     path& operator+=(const value_type* __x);
     path& operator+=(value_type __x);
 #if __cplusplus >= 201402L
-    path& operator+=(__basic_string_view<value_type> __x);
+    path& operator+=(basic_string_view<value_type> __x);
 #endif
 
     template<typename _Source>
@@ -342,7 +342,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     int compare(const string_type& __s) const;
     int compare(const value_type* __s) const;
 #if __cplusplus >= 201402L
-    int compare(const __basic_string_view<value_type> __s) const;
+    int compare(const basic_string_view<value_type> __s) const;
 #endif
 
     // decomposition
@@ -509,7 +509,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
   /// Append one path to another
   inline path operator/(const path& __lhs, const path& __rhs)
-  { return path(__lhs) /= __rhs; }
+  {
+    path __result(__lhs);
+    __result /= __rhs;
+    return __result;
+  }
 
   /// Write a path to a stream
   template<typename _CharT, typename _Traits>
@@ -804,7 +808,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
 #if __cplusplus >= 201402L
   inline path&
-  path::operator+=(__basic_string_view<value_type> __x)
+  path::operator+=(basic_string_view<value_type> __x)
   {
     _M_pathname.append(__x.data(), __x.size());
     _M_split_cmpts();
@@ -955,7 +959,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
 #if __cplusplus >= 201402L
   inline int
-  path::compare(__basic_string_view<value_type> __s) const
+  path::compare(basic_string_view<value_type> __s) const
   { return compare(path(__s)); }
 #endif
 

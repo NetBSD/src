@@ -59,6 +59,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../config/futex.m4 \
+	$(top_srcdir)/../config/hwcaps.m4 \
 	$(top_srcdir)/../config/iconv.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/lib-ld.m4 \
@@ -212,7 +213,7 @@ FGREP = @FGREP@
 GLIBCXX_INCLUDES = @GLIBCXX_INCLUDES@
 GLIBCXX_LIBS = @GLIBCXX_LIBS@
 GREP = @GREP@
-HWCAP_FLAGS = @HWCAP_FLAGS@
+HWCAP_CFLAGS = @HWCAP_CFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -226,6 +227,7 @@ LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LONG_DOUBLE_COMPAT_FLAGS = @LONG_DOUBLE_COMPAT_FLAGS@
 LTLIBICONV = @LTLIBICONV@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -295,6 +297,7 @@ dvidir = @dvidir@
 enable_shared = @enable_shared@
 enable_static = @enable_static@
 exec_prefix = @exec_prefix@
+get_gcc_base_ver = @get_gcc_base_ver@
 glibcxx_MOFILES = @glibcxx_MOFILES@
 glibcxx_PCHFLAGS = @glibcxx_PCHFLAGS@
 glibcxx_POFILES = @glibcxx_POFILES@
@@ -351,7 +354,7 @@ toplevel_builddir = @toplevel_builddir@
 toplevel_srcdir = @toplevel_srcdir@
 
 # May be used by various substitution variables.
-gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
+gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
 MAINT_CHARSET = latin1
 mkinstalldirs = $(SHELL) $(toplevel_srcdir)/mkinstalldirs
 PWD_COMMAND = $${PWDCMD-pwd}
@@ -366,7 +369,7 @@ toolexeclibdir = $(glibcxx_toolexeclibdir)
 # These bits are all figured out from configure.  Look in acinclude.m4
 # or configure.ac to see how they are set.  See GLIBCXX_EXPORT_FLAGS.
 CONFIG_CXXFLAGS = \
-	$(SECTION_FLAGS) $(HWCAP_FLAGS) -frandom-seed=$@
+	$(SECTION_FLAGS) $(HWCAP_CFLAGS) -frandom-seed=$@
 
 WARN_CXXFLAGS = \
 	$(WARN_FLAGS) $(WERROR_FLAG) -fdiagnostics-show-location=once 
@@ -402,7 +405,7 @@ cxx98_sources = \
 	compatibility.cc \
 	compatibility-debug_list.cc \
 	compatibility-debug_list-2.cc \
-	${ldbl_compat_sources} 
+	${ldbl_compat_sources}
 
 cxx11_sources = \
 	compatibility-c++0x.cc \
@@ -430,7 +433,7 @@ libstdc___la_LDFLAGS = \
 libstdc___la_LINK = $(CXXLINK) $(libstdc___la_LDFLAGS)
 
 # A note on compatibility and static libraries.
-# 
+#
 # static lib == linked against only this version, should not need compat
 # shared lib == linked against potentially all compat versions
 #
@@ -439,7 +442,7 @@ libstdc___la_LINK = $(CXXLINK) $(libstdc___la_LDFLAGS)
 #
 # In the sub-directories of libsupc++, src/c++98, src/c++11, only
 # -prefer-pic objects are generated for the convenience libraries.
-# 
+#
 # In the main src directory, make shared and static objects just for
 # the compat libraries. Shared objects are compiled with -prefer-pic
 # -D_GLIBCXX_SHARED and in the .libs sub-directory, static objects are
@@ -477,7 +480,7 @@ AM_CXXFLAGS = \
 # correct solution is to add `--tag CXX' to LTCXXCOMPILE and maybe
 # CXXLINK, just after $(LIBTOOL), so that libtool doesn't have to
 # attempt to infer which configuration to use.
-# 
+#
 # The second tag argument, `--tag disable-shared` means that libtool
 # only compiles each source once, for static objects. In actuality,
 # glibcxx_lt_pic_flag and glibcxx_compiler_shared_flag are added to
@@ -902,9 +905,9 @@ vpath % $(top_srcdir)/src/c++11
 # Use special rules for compatibility-ldbl.cc compilation, as we need to
 # pass -mlong-double-64.
 @GLIBCXX_LDBL_COMPAT_TRUE@compatibility-ldbl.lo: compatibility-ldbl.cc
-@GLIBCXX_LDBL_COMPAT_TRUE@	$(LTCXXCOMPILE) -mlong-double-64 -c $<
+@GLIBCXX_LDBL_COMPAT_TRUE@	$(LTCXXCOMPILE) $(LONG_DOUBLE_COMPAT_FLAGS) -c $<
 @GLIBCXX_LDBL_COMPAT_TRUE@compatibility-ldbl.o: compatibility-ldbl.cc
-@GLIBCXX_LDBL_COMPAT_TRUE@	$(CXXCOMPILE) -mlong-double-64 -c $<
+@GLIBCXX_LDBL_COMPAT_TRUE@	$(CXXCOMPILE) $(LONG_DOUBLE_COMPAT_FLAGS) -c $<
 
 # Use special rules for C++11 files/objects.
 compatibility-c++0x.lo: compatibility-c++0x.cc
