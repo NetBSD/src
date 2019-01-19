@@ -306,9 +306,11 @@ class SizeClassAllocator64 {
   }
   uptr SpaceEnd() const { return  SpaceBeg() + kSpaceSize; }
   // kRegionSize must be >= 2^32.
+#if _LP64
   COMPILER_CHECK((kRegionSize) >= (1ULL << (SANITIZER_WORDSIZE / 2)));
   // kRegionSize must be <= 2^36, see CompactPtrT.
   COMPILER_CHECK((kRegionSize) <= (1ULL << (SANITIZER_WORDSIZE / 2 + 4)));
+#endif
   // Call mmap for user memory with at least this size.
   static const uptr kUserMapSize = 1 << 16;
   // Call mmap for metadata memory with at least this size.
