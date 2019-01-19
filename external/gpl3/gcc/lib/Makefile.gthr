@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.gthr,v 1.1 2019/01/19 17:11:02 mrg Exp $
+
+# makefile fragment to setup files selected by configure
+
+.if ${MKGCC} != "no"
+CONFIG_LINKS= \
+	${G_enable_execute_stack}	enable-execute-stack.c \
+	${G_unwind_header}		unwind.h \
+	${G_md_unwind_header}		md-unwind-support.h \
+	${G_sfp_machine_header}		sfp-machine.h \
+	${G_thread_header}		gthr-default.h
+BUILDSYMLINKS+=	${CONFIG_LINKS}
+. for _src _dst in ${CONFIG_LINKS}
+DPSRCS+=	${_dst}
+. endfor
+.endif
