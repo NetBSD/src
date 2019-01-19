@@ -1,5 +1,5 @@
 /* Compiler driver program that can handle many languages.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -402,6 +402,7 @@ static const char *compare_debug_auxbase_opt_spec_function (int, const char **);
 static const char *pass_through_libs_spec_func (int, const char **);
 static const char *replace_extension_spec_func (int, const char **);
 static const char *greater_than_spec_func (int, const char **);
+static const char *debug_level_greater_than_spec_func (int, const char **);
 static char *convert_white_space (char *);
 
 /* The Specs Language
@@ -676,7 +677,7 @@ proper position among the other output files.  */
 
 #ifndef LIBASAN_SPEC
 #define STATIC_LIBASAN_LIBS \
-  " %{static-libasan:%:include(libsanitizer.spec)%(link_libasan)}"
+  " %{static-libasan|static:%:include(libsanitizer.spec)%(link_libasan)}"
 #ifdef LIBASAN_EARLY_SPEC
 #define LIBASAN_SPEC STATIC_LIBASAN_LIBS
 #elif defined(HAVE_LD_STATIC_DYNAMIC)
@@ -694,7 +695,7 @@ proper position among the other output files.  */
 
 #ifndef LIBTSAN_SPEC
 #define STATIC_LIBTSAN_LIBS \
-  " %{static-libtsan:%:include(libsanitizer.spec)%(link_libtsan)}"
+  " %{static-libtsan|static:%:include(libsanitizer.spec)%(link_libtsan)}"
 #ifdef LIBTSAN_EARLY_SPEC
 #define LIBTSAN_SPEC STATIC_LIBTSAN_LIBS
 #elif defined(HAVE_LD_STATIC_DYNAMIC)
@@ -712,7 +713,7 @@ proper position among the other output files.  */
 
 #ifndef LIBLSAN_SPEC
 #define STATIC_LIBLSAN_LIBS \
-  " %{static-liblsan:%:include(libsanitizer.spec)%(link_liblsan)}"
+  " %{static-liblsan|static:%:include(libsanitizer.spec)%(link_liblsan)}"
 #ifdef LIBLSAN_EARLY_SPEC
 #define LIBLSAN_SPEC STATIC_LIBLSAN_LIBS
 #elif defined(HAVE_LD_STATIC_DYNAMIC)
@@ -730,7 +731,7 @@ proper position among the other output files.  */
 
 #ifndef LIBUBSAN_SPEC
 #define STATIC_LIBUBSAN_LIBS \
-  " %{static-libubsan:%:include(libsanitizer.spec)%(link_libubsan)}"
+  " %{static-libubsan|static:%:include(libsanitizer.spec)%(link_libubsan)}"
 #ifdef HAVE_LD_STATIC_DYNAMIC
 #define LIBUBSAN_SPEC "%{static-libubsan:" LD_STATIC_OPTION \
 		     "} -lubsan %{static-libubsan:" LD_DYNAMIC_OPTION "}" \
@@ -833,14 +834,16 @@ proper position among the other output files.  */
      && defined(HAVE_AS_GDWARF2_DEBUG_FLAG) && defined(HAVE_AS_GSTABS_DEBUG_FLAG)
 #  define ASM_DEBUG_SPEC						\
       (PREFERRED_DEBUGGING_TYPE == DBX_DEBUG				\
-       ? "%{!g0:%{gdwarf*:--gdwarf2}%{!gdwarf*:%{g*:--gstabs}}}" ASM_MAP	\
-       : "%{!g0:%{gstabs*:--gstabs}%{!gstabs*:%{g*:--gdwarf2}}}" ASM_MAP)
+       ? "%{%:debug-level-gt(0):"					\
+	 "%{gdwarf*:--gdwarf2}%{!gdwarf*:%{g*:--gstabs}}}" ASM_MAP	\
+       : "%{%:debug-level-gt(0):"					\
+	 "%{gstabs*:--gstabs}%{!gstabs*:%{g*:--gdwarf2}}}" ASM_MAP)
 # else
 #  if defined(DBX_DEBUGGING_INFO) && defined(HAVE_AS_GSTABS_DEBUG_FLAG)
-#   define ASM_DEBUG_SPEC "%{g*:%{!g0:--gstabs}}" ASM_MAP
+#   define ASM_DEBUG_SPEC "%{g*:%{%:debug-level-gt(0):--gstabs}}" ASM_MAP
 #  endif
 #  if defined(DWARF2_DEBUGGING_INFO) && defined(HAVE_AS_GDWARF2_DEBUG_FLAG)
-#   define ASM_DEBUG_SPEC "%{g*:%{!g0:--gdwarf2}}" ASM_MAP
+#   define ASM_DEBUG_SPEC "%{g*:%{%:debug-level-gt(0):--gdwarf2}}" ASM_MAP
 #  endif
 # endif
 #endif
@@ -987,9 +990,18 @@ proper position among the other output files.  */
     the vtable verification runtime functions are in libstdc++, so we use
     the spec just below this one.  */
 #ifndef VTABLE_VERIFICATION_SPEC
+#if ENABLE_VTABLE_VERIFY
 #define VTABLE_VERIFICATION_SPEC "\
 %{!nostdlib:%{fvtable-verify=std: -lvtv -u_vtable_map_vars_start -u_vtable_map_vars_end}\
     %{fvtable-verify=preinit: -lvtv -u_vtable_map_vars_start -u_vtable_map_vars_end}}"
+#else
+#define VTABLE_VERIFICATION_SPEC "\
+%{fvtable-verify=none:} \
+%{fvtable-verify=std: \
+  %e-fvtable-verify=std is not supported in this configuration} \
+%{fvtable-verify=preinit: \
+  %e-fvtable-verify=preinit is not supported in this configuration}"
+#endif
 #endif
 
 #ifndef CHKP_SPEC
@@ -1110,7 +1122,8 @@ static const char *cpp_unique_options =
    in turn cause preprocessor symbols to be defined specially.  */
 static const char *cpp_options =
 "%(cpp_unique_options) %1 %{m*} %{std*&ansi&trigraphs} %{W*&pedantic*} %{w}\
- %{f*} %{g*:%{!g0:%{g*} %{!fno-working-directory:-fworking-directory}}} %{O*}\
+ %{f*} %{g*:%{%:debug-level-gt(0):%{g*}\
+ %{!fno-working-directory:-fworking-directory}}} %{O*}\
  %{undef} %{save-temps*:-fpch-preprocess}";
 
 /* This contains cpp options which are not passed when the preprocessor
@@ -1132,7 +1145,10 @@ static const char *cc1_options =
  %{-help=*:--help=%*}\
  %{!fsyntax-only:%{S:%W{o*}%{!o*:-o %b.s}}}\
  %{fsyntax-only:-o %j} %{-param*}\
- %{coverage:-fprofile-arcs -ftest-coverage}";
+ %{coverage:-fprofile-arcs -ftest-coverage}\
+ %{fprofile-arcs|fprofile-generate*|coverage:\
+   %{!fprofile-update=single:\
+     %{pthread:-fprofile-update=prefer-atomic}}}";
 
 static const char *asm_options =
 "%{-target-help:%:print-asm-header()} "
@@ -1316,12 +1332,12 @@ static const struct compiler default_compilers[] =
 		%(cpp_options) -o %{save-temps*:%b.i} %{!save-temps*:%g.i} \n\
 		    cc1 -fpreprocessed %{save-temps*:%b.i} %{!save-temps*:%g.i} \
 			%(cc1_options)\
-			%{!fsyntax-only:-o %g.s \
+			%{!fsyntax-only:%{!S:-o %g.s} \
 			    %{!fdump-ada-spec*:%{!o*:--output-pch=%i.gch}\
 					       %W{o*:--output-pch=%*}}%V}}\
 	  %{!save-temps*:%{!traditional-cpp:%{!no-integrated-cpp:\
 		cc1 %(cpp_unique_options) %(cc1_options)\
-		    %{!fsyntax-only:-o %g.s \
+		    %{!fsyntax-only:%{!S:-o %g.s} \
 		        %{!fdump-ada-spec*:%{!o*:--output-pch=%i.gch}\
 					   %W{o*:--output-pch=%*}}%V}}}}}}}", 0, 0, 0},
   {".i", "@cpp-output", 0, 0, 0},
@@ -1627,6 +1643,7 @@ static const struct spec_function static_spec_functions[] =
   { "pass-through-libs",	pass_through_libs_spec_func },
   { "replace-extension",	replace_extension_spec_func },
   { "gt",			greater_than_spec_func },
+  { "debug-level-gt",		debug_level_greater_than_spec_func },
 #ifdef EXTRA_SPEC_FUNCTIONS
   EXTRA_SPEC_FUNCTIONS
 #endif
@@ -3542,6 +3559,29 @@ save_switch (const char *opt, size_t n_args, const char *const *args,
   n_switches++;
 }
 
+/* Set the SOURCE_DATE_EPOCH environment variable to the current time if it is
+   not set already.  */
+
+static void
+set_source_date_epoch_envvar ()
+{
+  /* Array size is 21 = ceil(log_10(2^64)) + 1 to hold string representations
+     of 64 bit integers.  */
+  char source_date_epoch[21];
+  time_t tt;
+
+  errno = 0;
+  tt = time (NULL);
+  if (tt < (time_t) 0 || errno != 0)
+    tt = (time_t) 0;
+
+  snprintf (source_date_epoch, 21, "%llu", (unsigned long long) tt);
+  /* Using setenv instead of xputenv because we want the variable to remain
+     after finalizing so that it's still set in the second run when using
+     -fcompare-debug.  */
+  setenv ("SOURCE_DATE_EPOCH", source_date_epoch, 0);
+}
+
 /* Handle an option DECODED that is unknown to the option-processing
    machinery.  */
 
@@ -3740,6 +3780,10 @@ driver_handle_option (struct gcc_options *opts,
       printf ("%s\n", spec_machine);
       exit (0);
 
+    case OPT_dumpfullversion:
+      printf ("%s\n", BASEVER);
+      exit (0);
+
     case OPT__version:
       print_version = 1;
 
@@ -3842,6 +3886,7 @@ driver_handle_option (struct gcc_options *opts,
       else
 	compare_debug_opt = arg;
       save_switch (compare_debug_replacement_opt, 0, NULL, validated, true);
+      set_source_date_epoch_envvar ();
       return true;
 
     case OPT_fdiagnostics_color_:
@@ -4398,7 +4443,12 @@ process_command (unsigned int decoded_options_count,
 	    fname = xstrdup (arg);
 
           if (strcmp (fname, "-") != 0 && access (fname, F_OK) < 0)
-	    perror_with_name (fname);
+	    {
+	      if (fname[0] == '@' && access (fname + 1, F_OK) < 0)
+		perror_with_name (fname + 1);
+	      else
+		perror_with_name (fname);
+	    }
           else
 	    add_infile (arg, spec_lang);
 
@@ -8375,6 +8425,7 @@ save_string (const char *s, int len)
 {
   char *result = XNEWVEC (char, len + 1);
 
+  gcc_checking_assert (strlen (s) >= (unsigned int) len);
   memcpy (result, s, len);
   result[len] = 0;
   return result;
@@ -9833,6 +9884,27 @@ greater_than_spec_func (int argc, const char **argv)
   gcc_assert (converted != argv[argc - 1]);
 
   if (arg > lim)
+    return "";
+
+  return NULL;
+}
+
+/* Returns "" if debug_info_level is greater than ARGV[ARGC-1].
+   Otherwise, return NULL.  */
+
+static const char *
+debug_level_greater_than_spec_func (int argc, const char **argv)
+{
+  char *converted;
+
+  if (argc != 1)
+    fatal_error (input_location,
+		 "wrong number of arguments to %%:debug-level-gt");
+
+  long arg = strtol (argv[0], &converted, 10);
+  gcc_assert (converted != argv[0]);
+
+  if (debug_info_level > arg)
     return "";
 
   return NULL;
