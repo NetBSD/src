@@ -1,5 +1,3 @@
-/*	$NetBSD$	*/
-
 /*
  * Public Domain.
  */
@@ -43,10 +41,14 @@
 #define	REMOTE_IP1	"192.0.2.101"
 #define	REMOTE_IP2	"192.0.2.102"
 #define	REMOTE_IP3	"192.0.2.103"
+#define	REMOTE_IP4	"192.0.2.104"
 
 #define	LOCAL_IP6	"fd01:203:405:1::1234"
 #define	REMOTE_IP6	"2001:db8:fefe::1010"
 #define	EXPECTED_IP6	"2001:db8:1:d550::1234"
+
+#define	NET_A_IP1	"10.100.7.126"
+#define	NET_B_IP1	"10.255.7.126"
 
 #if defined(_NPF_STANDALONE)
 
@@ -60,10 +62,9 @@ struct mbuf {
 	struct {
 		int	len;
 	} m_pkthdr;
-	char *		m_data;
-	char		m_data0[MLEN];
+	void *		m_data;
+	unsigned char	m_data0[MLEN];
 };
-
 
 #define	MT_FREE			0
 #define	M_UNWRITABLE(m, l)	false
@@ -110,6 +111,7 @@ bool		npf_table_test(bool, void *, size_t);
 bool		npf_state_test(bool);
 
 bool		npf_rule_test(bool);
+bool		npf_conn_test(bool);
 bool		npf_nat_test(bool);
 
 int		npf_inet_pton(int, const char *, void *);

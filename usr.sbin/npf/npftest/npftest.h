@@ -23,6 +23,7 @@
 #define	rumpns_npf_table_test		npf_table_test
 #define	rumpns_npf_state_test		npf_state_test
 #define	rumpns_npf_rule_test		npf_rule_test
+#define	rumpns_npf_conn_test		npf_conn_test
 #define	rumpns_npf_nat_test		npf_nat_test
 #define	rumpns_npf_test_conc		npf_test_conc
 #define	rumpns_npf_test_statetrack	npf_test_statetrack
@@ -48,6 +49,7 @@ bool		rumpns_npf_table_test(bool, void *, size_t);
 bool		rumpns_npf_state_test(bool);
 
 bool		rumpns_npf_rule_test(bool);
+bool		rumpns_npf_conn_test(bool);
 bool		rumpns_npf_nat_test(bool);
 
 int		process_stream(const char *, const char *, ifnet_t *);

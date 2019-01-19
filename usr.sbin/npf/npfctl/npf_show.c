@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.26 2018/09/29 14:41:36 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.27 2019/01/19 21:19:32 rmind Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -61,11 +61,11 @@ typedef struct {
 	long		fpos;
 	u_int		flags;
 	uint32_t	curmark;
+	unsigned	level;
 } npf_conf_info_t;
 
 static npf_conf_info_t	stdout_ctx;
 
-static void	print_indent(npf_conf_info_t *, u_int);
 static void	print_linesep(npf_conf_info_t *);
 
 void
@@ -74,6 +74,7 @@ npfctl_show_init(void)
 	stdout_ctx.fp = stdout;
 	stdout_ctx.fpos = 0;
 	stdout_ctx.flags = 0;
+	stdout_ctx.level = 0;
 }
 
 /*
@@ -81,13 +82,26 @@ npfctl_show_init(void)
  */
 
 static void
-print_indent(npf_conf_info_t *ctx, u_int level)
+print_indent(npf_conf_info_t *ctx, unsigned level)
 {
-	if (level == 0) { /* XXX */
+	if (level < ctx->level) {
+		/*
+		 * Level decrease -- end of the group.
+		 * Print the group closing curly bracket.
+		 */
+		fputs("}\n", ctx->fp);
+	}
+	if (level == 0) {
+		/*
+		 * Group level -- separate groups by a trailing new line.
+		 */
 		print_linesep(ctx);
 	}
-	while (level--)
+	ctx->level = level;
+
+	while (level--) {
 		fprintf(ctx->fp, "\t");
+	}
 }
 
 static void
@@ -165,18 +179,14 @@ print_number(npf_conf_info_t *ctx __unused, const uint32_t *words)
 static char *
 print_table(npf_conf_info_t *ctx, const uint32_t *words)
 {
-	unsigned tid = words[0];
-	nl_table_t *tl;
-	char *p = NULL;
+	const unsigned tid = words[0];
+	const char *tname;
+	char *s = NULL;
+	bool ifaddr;
 
-	/* XXX: Iterating all as we need to rewind for the next call. */
-	while ((tl = npf_table_iterate(ctx->conf)) != NULL) {
-		if (!p && npf_table_getid(tl) == tid) {
-			easprintf(&p, "%s", npf_table_getname(tl));
-		}
-	}
-	assert(p != NULL);
-	return p;
+	tname = npfctl_table_getname(ctx->conf, tid, &ifaddr);
+	easprintf(&s, ifaddr ? "ifaddrs(%s)" : "<%s>", tname);
+	return s;
 }
 
 static char *
@@ -273,11 +283,11 @@ static const struct mark_keyword_mapent {
 	{ BM_ICMP_CODE,	"code %s",	NULL, 0,	print_number,	1 },
 
 	{ BM_SRC_CIDR,	"from %s",	", ", SEEN_SRC,	print_address,	6 },
-	{ BM_SRC_TABLE,	"from <%s>",	NULL, SEEN_SRC,	print_table,	1 },
+	{ BM_SRC_TABLE,	"from %s",	NULL, SEEN_SRC,	print_table,	1 },
 	{ BM_SRC_PORTS,	"%s",		", ", 0,	print_portrange,2 },
 
 	{ BM_DST_CIDR,	"to %s",	", ", SEEN_DST,	print_address,	6 },
-	{ BM_DST_TABLE,	"to <%s>",	NULL, SEEN_DST,	print_table,	1 },
+	{ BM_DST_TABLE,	"to %s",	NULL, SEEN_DST,	print_table,	1 },
 	{ BM_DST_PORTS,	"%s",		", ", 0,	print_portrange,2 },
 };
 
@@ -401,9 +411,13 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl)
 	if ((ifname = npf_rule_getinterface(rl)) != NULL) {
 		fprintf(ctx->fp, "on %s ", ifname);
 	}
-
+	if (attr == (NPF_RULE_GROUP | NPF_RULE_IN | NPF_RULE_OUT) && !ifname) {
+		/* The default group is a special case. */
+		fprintf(ctx->fp, "default ");
+	}
 	if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_GROUP) {
 		/* Group; done. */
+		fprintf(ctx->fp, "{ ");
 		goto out;
 	}
 
@@ -414,7 +428,6 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl)
 	if ((rproc = npf_rule_getproc(rl)) != NULL) {
 		fprintf(ctx->fp, "apply \"%s\" ", rproc);
 	}
-
 out:
 	npfctl_print_id(ctx, rl);
 	fputs("\n", ctx->fp);
@@ -424,8 +437,9 @@ static void
 npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 {
 	nl_rule_t *rl = (nl_nat_t *)nt;
-	const char *ifname, *seg1, *seg2, *arrow;
-	npf_addr_t addr;
+	const char *ifname, *algo, *seg1, *seg2, *arrow;
+	const npf_addr_t *addr;
+	npf_netmask_t mask;
 	in_port_t port;
 	size_t alen;
 	u_int flags;
@@ -435,10 +449,20 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 	ifname = npf_rule_getinterface(rl);
 	assert(ifname != NULL);
 
-	/* Get the translation address (and port, if used). */
-	npf_nat_getmap(nt, &addr, &alen, &port);
-	seg = npfctl_print_addrmask(alen, "%a", &addr, NPF_NO_NETMASK);
-	if (port) {
+	/* Get the translation address or table (and port, if used). */
+	addr = npf_nat_getaddr(nt, &alen, &mask);
+	if (addr) {
+		seg = npfctl_print_addrmask(alen, "%a", addr, mask);
+	} else {
+		const unsigned tid = npf_nat_gettable(nt);
+		const char *tname;
+		bool ifaddr;
+
+		tname = npfctl_table_getname(ctx->conf, tid, &ifaddr);
+		easprintf(&seg, ifaddr ? "ifaddrs(%s)" : "<%s>", tname);
+	}
+
+	if ((port = npf_nat_getport(nt)) != 0) {
 		char *p;
 		easprintf(&p, "%s port %u", seg, ntohs(port));
 		free(seg), seg = p;
@@ -460,11 +484,31 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 	}
 	flags = npf_nat_getflags(nt);
 
+	/* NAT algorithm. */
+	switch (npf_nat_getalgo(nt)) {
+	case NPF_ALGO_NETMAP:
+		algo = "algo netmap ";
+		break;
+	case NPF_ALGO_IPHASH:
+		algo = "algo ip-hash ";
+		break;
+	case NPF_ALGO_RR:
+		algo = "algo round-robin ";
+		break;
+	case NPF_ALGO_NPT66:
+		algo = "algo npt66";
+		break;
+	default:
+		algo = "";
+		break;
+	}
+
+	/* FIXME also handle "any" */
+
 	/* Print out the NAT policy with the filter criteria. */
 	fprintf(ctx->fp, "map %s %s %s%s%s %s %s pass ",
 	    ifname, (flags & NPF_NAT_STATIC) ? "static" : "dynamic",
-	    "" /* XXX algo, */,
-	    (flags & NPF_NAT_PORTS) ? "" : "no-ports ",
+	    algo, (flags & NPF_NAT_PORTS) ? "" : "no-ports ",
 	    seg1, arrow, seg2);
 	npfctl_print_filter(ctx, rl);
 	npfctl_print_id(ctx, rl);
@@ -478,9 +522,9 @@ npfctl_print_table(npf_conf_info_t *ctx, nl_table_t *tl)
 	const char *name = npf_table_getname(tl);
 	const unsigned type = npf_table_gettype(tl);
 	const char *table_types[] = {
-		[NPF_TABLE_HASH] = "hash",
-		[NPF_TABLE_TREE] = "tree",
-		[NPF_TABLE_CDB]  = "cdb",
+		[NPF_TABLE_IPSET]	= "ipset",
+		[NPF_TABLE_LPM]		= "lpm",
+		[NPF_TABLE_CONST]	= "const",
 	};
 
 	if (name[0] == '.') {
@@ -520,7 +564,7 @@ npfctl_config_show(int fd)
 		nl_rproc_t *rp;
 		nl_nat_t *nt;
 		nl_table_t *tl;
-		u_int level;
+		unsigned level;
 
 		while ((tl = npf_table_iterate(ncf)) != NULL) {
 			npfctl_print_table(ctx, tl);
@@ -542,7 +586,7 @@ npfctl_config_show(int fd)
 			print_indent(ctx, level);
 			npfctl_print_rule(ctx, rl);
 		}
-		print_linesep(ctx);
+		print_indent(ctx, 0);
 	}
 	npf_config_destroy(ncf);
 	return 0;
@@ -554,7 +598,7 @@ npfctl_ruleset_show(int fd, const char *ruleset_name)
 	npf_conf_info_t *ctx = &stdout_ctx;
 	nl_config_t *ncf;
 	nl_rule_t *rl;
-	u_int level;
+	unsigned level;
 	int error;
 
 	ncf = npf_config_create();

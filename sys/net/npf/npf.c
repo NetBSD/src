@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.36 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.37 2019/01/19 21:19:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,7 +54,6 @@ npf_sysinit(unsigned nworkers)
 	npf_bpf_sysinit();
 	npf_tableset_sysinit();
 	npf_nat_sysinit();
-	npf_alg_sysinit();
 	return npf_worker_sysinit(nworkers);
 }
 
@@ -62,7 +61,6 @@ __dso_public void
 npf_sysfini(void)
 {
 	npf_worker_sysfini();
-	npf_alg_sysfini();
 	npf_nat_sysfini();
 	npf_tableset_sysfini();
 	npf_bpf_sysfini();
