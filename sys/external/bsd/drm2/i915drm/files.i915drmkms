@@ -1,9 +1,9 @@
-#	$NetBSD: files.i915drmkms,v 1.33 2018/09/21 11:27:13 kamil Exp $
+#	$NetBSD: files.i915drmkms,v 1.34 2019/01/19 16:58:29 dholland Exp $
 
 version	20180827
 
 define	intelfbbus	{ }
-device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
+device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810, firmload
 attach	i915drmkms at pci
 
 device	intelfb: intelfbbus, drmfb, drmfb_pci, wsemuldisplaydev
