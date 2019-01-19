@@ -12,8 +12,10 @@
 
 #include "sanitizer_platform.h"
 
-#if (SANITIZER_NETBSD || SANITIZER_LINUX) && \
-    (defined(__x86_64__) || defined(__mips__) || defined(__aarch64__))
+#if (SANITIZER_LINUX || SANITIZER_NETBSD) && \
+        (defined(__x86_64__) || defined(__mips__) || \
+         defined(__aarch64__) || defined(__powerpc64__) || \
+         defined(__s390__))
 
 #include "sanitizer_stoptheworld.h"
 
@@ -40,6 +42,9 @@
 # endif
 # if !SANITIZER_NETBSD
 #  include <sys/user.h>  // for user_regs_struct
+#  if SANITIZER_ANDROID && SANITIZER_MIPS
+#    include <asm/reg.h>  // for mips SP register in sys/user.h
+#  endif
 # else
 #  define PTRACE_ATTACH PT_ATTACH
 #  define PTRACE_GETREGS PT_GETREGS
@@ -88,9 +93,9 @@ typedef struct reg user_regs_struct;
 // thread-local variables used by libc will be shared between the tracer task
 // and the thread which spawned it.
 
-COMPILER_CHECK(sizeof(SuspendedThreadID) == sizeof(pid_t));
-
 namespace __sanitizer {
+
+COMPILER_CHECK(sizeof(SuspendedThreadID) == sizeof(pid_t));
 
 // Structure for passing arguments into the tracer thread.
 struct TracerThreadArgument {
@@ -199,6 +204,7 @@ void ThreadSuspender::KillAllThreads() {
 bool ThreadSuspender::SuspendAllThreads() {
   ThreadLister thread_lister(pid_);
   bool added_threads;
+  bool first_iteration = true;
   do {
     // Run through the directory entries once.
     added_threads = false;
@@ -208,12 +214,13 @@ bool ThreadSuspender::SuspendAllThreads() {
         added_threads = true;
       tid = thread_lister.GetNextTID();
     }
-    if (thread_lister.error()) {
+    if (thread_lister.error() || (first_iteration && !added_threads)) {
       // Detach threads and fail.
       ResumeAllThreads();
       return false;
     }
     thread_lister.Reset();
+    first_iteration = false;
   } while (added_threads);
   return true;
 }
@@ -242,8 +249,8 @@ static void TracerThreadDieCallback() {
 // Signal handler to wake up suspended threads when the tracer thread dies.
 static void TracerThreadSignalHandler(int signum, void *siginfo, void *uctx) {
   SignalContext ctx = SignalContext::Create(siginfo, uctx);
-  VPrintf(1, "Tracer caught signal %d: addr=0x%zx pc=0x%zx sp=0x%zx\n",
-      signum, ctx.addr, ctx.pc, ctx.sp);
+  Printf("Tracer caught signal %d: addr=0x%zx pc=0x%zx sp=0x%zx\n", signum,
+         ctx.addr, ctx.pc, ctx.sp);
   ThreadSuspender *inst = thread_suspender_instance;
   if (inst) {
     if (signum == SIGABRT)
@@ -484,8 +491,12 @@ typedef pt_regs regs_struct;
 #  define PTRACE_REG_SP(r) (r)->gpr[PT_R1]
 # elif defined(__mips__)
 typedef struct user regs_struct;
-#  define PTRACE_REG_SP(r) (r)->regs[EF_REG29]
-# elif defined(__aarch64__)
+# if SANITIZER_ANDROID
+#  define REG_SP regs[EF_R29]
+# else
+#  define REG_SP regs[EF_REG29]
+# endif
+#elif defined(__aarch64__)
 typedef struct user_pt_regs regs_struct;
 #  define PTRACE_REG_SP(r) (r)->sp
 #  define ARCH_IOVEC_FOR_GETREGSET
@@ -494,7 +505,12 @@ typedef struct user_pt_regs regs_struct;
 typedef reg regs_struct;
 #endif
 
-#ifndef PTRACE_REG_SP
+#elif defined(__s390__)
+typedef _user_regs_struct regs_struct;
+#define REG_SP gprs[15]
+#define ARCH_IOVEC_FOR_GETREGSET
+
+#else
 #error "Unsupported architecture"
 #endif
 
@@ -531,5 +547,6 @@ uptr SuspendedThreadsList::RegisterCount() {
 }
 } // namespace __sanitizer
 
-#endif // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
-       // || defined(__aarch64__)
+#endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
+        // || defined(__aarch64__) || defined(__powerpc64__)
+        // || defined(__s390__)

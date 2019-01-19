@@ -1,5 +1,5 @@
 /* Alias analysis for GNU C
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    Contributed by John Carr (jfc@mit.edu).
 
 This file is part of GCC.
@@ -27,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "gimple.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "gimple-ssa.h"
 #include "emit-rtl.h"
@@ -125,15 +126,6 @@ struct GTY(()) alias_set_entry {
   /* The alias set number, as stored in MEM_ALIAS_SET.  */
   alias_set_type alias_set;
 
-  /* The children of the alias set.  These are not just the immediate
-     children, but, in fact, all descendants.  So, if we have:
-
-       struct T { struct S s; float f; }
-
-     continuing our example above, the children here will be all of
-     `int', `double', `float', and `struct S'.  */
-  hash_map<alias_set_hash, int> *children;
-
   /* Nonzero if would have a child of zero: this effectively makes this
      alias set the same as alias set zero.  */
   bool has_zero_child;
@@ -144,6 +136,15 @@ struct GTY(()) alias_set_entry {
   bool is_pointer;
   /* Nonzero if is_pointer or if one of childs have has_pointer set.  */
   bool has_pointer;
+
+  /* The children of the alias set.  These are not just the immediate
+     children, but, in fact, all descendants.  So, if we have:
+
+       struct T { struct S s; float f; }
+
+     continuing our example above, the children here will be all of
+     `int', `double', `float', and `struct S'.  */
+  hash_map<alias_set_hash, int> *children;
 };
 
 static int rtx_equal_for_memref_p (const_rtx, const_rtx);
@@ -310,7 +311,7 @@ ao_ref_from_mem (ao_ref *ref, const_rtx mem)
   /* If this is a reference based on a partitioned decl replace the
      base with a MEM_REF of the pointer representative we
      created during stack slot partitioning.  */
-  if (TREE_CODE (base) == VAR_DECL
+  if (VAR_P (base)
       && ! is_global_var (base)
       && cfun->gimple_df->decls_to_pointers != NULL)
     {
@@ -612,12 +613,24 @@ component_uses_parent_alias_set_from (const_tree t)
 {
   const_tree found = NULL_TREE;
 
+  if (AGGREGATE_TYPE_P (TREE_TYPE (t))
+      && TYPE_TYPELESS_STORAGE (TREE_TYPE (t)))
+    return const_cast <tree> (t);
+
   while (handled_component_p (t))
     {
       switch (TREE_CODE (t))
 	{
 	case COMPONENT_REF:
 	  if (DECL_NONADDRESSABLE_P (TREE_OPERAND (t, 1)))
+	    found = t;
+	  /* Permit type-punning when accessing a union, provided the access
+	     is directly through the union.  For example, this code does not
+	     permit taking the address of a union member and then storing
+	     through it.  Even the type-punning allowed here is a GCC
+	     extension, albeit a common and useful one; the C standard says
+	     that such accesses have implementation-defined behavior.  */
+	  else if (TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == UNION_TYPE)
 	    found = t;
 	  break;
 
@@ -862,7 +875,7 @@ get_alias_set (tree t)
       /* If we've already determined the alias set for a decl, just return
 	 it.  This is necessary for C++ anonymous unions, whose component
 	 variables don't look like union members (boo!).  */
-      if (TREE_CODE (t) == VAR_DECL
+      if (VAR_P (t)
 	  && DECL_RTL_SET_P (t) && MEM_P (DECL_RTL (t)))
 	return MEM_ALIAS_SET (DECL_RTL (t));
 
@@ -873,6 +886,10 @@ get_alias_set (tree t)
   /* Variant qualifiers don't affect the alias set, so get the main
      variant.  */
   t = TYPE_MAIN_VARIANT (t);
+
+  if (AGGREGATE_TYPE_P (t)
+      && TYPE_TYPELESS_STORAGE (t))
+    return 0;
 
   /* Always use the canonical type as well.  If this is a type that
      requires structural comparisons to identify compatible types
@@ -1390,7 +1407,7 @@ find_base_value (rtx src)
       if (GET_CODE (src) != PLUS && GET_CODE (src) != MINUS)
 	break;
 
-      /* ... fall through ...  */
+      /* fall through */
 
     case PLUS:
     case MINUS:
@@ -1699,13 +1716,7 @@ canon_rtx (rtx x)
       rtx x1 = canon_rtx (XEXP (x, 1));
 
       if (x0 != XEXP (x, 0) || x1 != XEXP (x, 1))
-	{
-	  if (CONST_INT_P (x0))
-	    return plus_constant (GET_MODE (x), x1, INTVAL (x0));
-	  else if (CONST_INT_P (x1))
-	    return plus_constant (GET_MODE (x), x0, INTVAL (x1));
-	  return gen_rtx_PLUS (GET_MODE (x), x0, x1);
-	}
+	return simplify_gen_binary (PLUS, GET_MODE (x), x0, x1);
     }
 
   /* This gives us much better alias analysis when called from
@@ -1758,7 +1769,7 @@ rtx_equal_for_memref_p (const_rtx x, const_rtx y)
       return REGNO (x) == REGNO (y);
 
     case LABEL_REF:
-      return LABEL_REF_LABEL (x) == LABEL_REF_LABEL (y);
+      return label_ref_label (x) == label_ref_label (y);
 
     case SYMBOL_REF:
       return compare_base_symbol_refs (x, y) == 1;
@@ -2091,7 +2102,7 @@ compare_base_symbol_refs (const_rtx x_base, const_rtx y_base)
         return -1;
       /* Anchors contains static VAR_DECLs and CONST_DECLs.  We are safe
 	 to ignore CONST_DECLs because they are readonly.  */
-      if (TREE_CODE (x_decl) != VAR_DECL
+      if (!VAR_P (x_decl)
 	  || (!TREE_STATIC (x_decl) && !TREE_PUBLIC (x_decl)))
 	return 0;
 
@@ -2166,7 +2177,7 @@ base_alias_check (rtx x, rtx x_base, rtx y, rtx y_base,
   /* The base addresses are different expressions.  If they are not accessed
      via AND, there is no conflict.  We can bring knowledge of object
      alignment into play here.  For example, on alpha, "char a, b;" can
-     alias one another, though "char a; long b;" cannot.  AND addesses may
+     alias one another, though "char a; long b;" cannot.  AND addresses may
      implicitly alias surrounding objects; i.e. unaligned access in DImode
      via AND address can alias all surrounding object types except those
      with aligment 8 or higher.  */
@@ -2538,7 +2549,7 @@ memrefs_conflict_p (int xsize, rtx x, int ysize, rtx y, HOST_WIDE_INT c)
     {
       HOST_WIDE_INT sc = INTVAL (XEXP (x, 1));
       unsigned HOST_WIDE_INT uc = sc;
-      if (sc < 0 && -uc == (uc & -uc))
+      if (sc < 0 && pow2_or_zerop (-uc))
 	{
 	  if (xsize > 0)
 	    xsize = -xsize;
@@ -2553,7 +2564,7 @@ memrefs_conflict_p (int xsize, rtx x, int ysize, rtx y, HOST_WIDE_INT c)
     {
       HOST_WIDE_INT sc = INTVAL (XEXP (y, 1));
       unsigned HOST_WIDE_INT uc = sc;
-      if (sc < 0 && -uc == (uc & -uc))
+      if (sc < 0 && pow2_or_zerop (-uc))
 	{
 	  if (ysize > 0)
 	    ysize = -ysize;
@@ -2667,8 +2678,8 @@ adjust_offset_for_component_ref (tree x, bool *known_p,
 
       offset_int woffset
 	= (wi::to_offset (xoffset)
-	   + wi::lrshift (wi::to_offset (DECL_FIELD_BIT_OFFSET (field)),
-			  LOG2_BITS_PER_UNIT));
+	   + (wi::to_offset (DECL_FIELD_BIT_OFFSET (field))
+	      >> LOG2_BITS_PER_UNIT));
       if (!wi::fits_uhwi_p (woffset))
 	{
 	  *known_p = false;
@@ -2758,6 +2769,14 @@ nonoverlapping_memrefs_p (const_rtx x, const_rtx y, bool loop_invariant)
       || TREE_CODE (expry) == CONST_DECL)
     return 1;
 
+  /* If one decl is known to be a function or label in a function and
+     the other is some kind of data, they can't overlap.  */
+  if ((TREE_CODE (exprx) == FUNCTION_DECL
+       || TREE_CODE (exprx) == LABEL_DECL)
+      != (TREE_CODE (expry) == FUNCTION_DECL
+	  || TREE_CODE (expry) == LABEL_DECL))
+    return 1;
+
   /* If either of the decls doesn't have DECL_RTL set (e.g. marked as
      living in multiple places), we can't tell anything.  Exception
      are FUNCTION_DECLs for which we can create DECL_RTL on demand.  */
@@ -2807,7 +2826,7 @@ nonoverlapping_memrefs_p (const_rtx x, const_rtx y, bool loop_invariant)
 
   /* Offset based disambiguation not appropriate for loop invariant */
   if (loop_invariant)
-    return 0;              
+    return 0;
 
   /* Offset based disambiguation is OK even if we do not know that the
      declarations are necessarily different
