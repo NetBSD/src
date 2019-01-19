@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.4 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.5 2019/01/19 21:19:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -74,7 +74,7 @@ lookup_ifnet_table(npf_t *npf, ifnet_t *ifp)
 	tid = npf_table_getid(t);
 
 	/* Create a new NPF table for the interface. */
-	t = npf_table_create(tname, tid, NPF_TABLE_HASH, NULL, 16);
+	t = npf_table_create(tname, tid, NPF_TABLE_IFADDR, NULL, 0);
 	if (!t) {
 		goto out;
 	}

@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_test_subr.c,v 1.13 2018/09/29 14:41:36 rmind Exp $	*/
-
 /*
  * NPF initialisation and handler routines.
  *
@@ -65,7 +63,7 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 {
 	npf_t *npf;
 
-	npf_sysinit(1);
+	npf_sysinit(0);
 	npf = npf_create(0, &npftest_mbufops, &npftest_ifops);
 	npf_thread_register(npf);
 	npf_setkernctx(npf);
