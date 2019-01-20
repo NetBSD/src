@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b-odroidc1.dts,v 1.2 2019/01/19 21:44:02 jmcneill Exp $ */
+/* $NetBSD: meson8b-odroidc1.dts,v 1.3 2019/01/20 00:44:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -31,4 +31,24 @@
 
 &genfb {
 	status = "okay";
+};
+
+&sdhc {
+	status = "okay";
+
+	pinctrl-0 = <&sdxc_c_pins>;
+	pinctrl-names = "default";
+
+	/* eMMC card */
+	emmc_card_slot: slot@2 {
+		compatible = "mmc-slot";
+		reg = <2>;
+		status = "okay";
+
+		bus-width = <8>;
+		no-sdio;
+		cap-mmc-highspeed;
+		cap-sd-highspeed;
+		disable-wp;
+	};
 };
