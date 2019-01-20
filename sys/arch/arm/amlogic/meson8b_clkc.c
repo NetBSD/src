@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b_clkc.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson8b_clkc.c,v 1.2 2019/01/20 17:28:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.2 2019/01/20 17:28:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,9 @@ __KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.1 2019/01/19 20:56:03 jmcneill Ex
 #define	HHI_SYS_CPU_CLK_CNTL1	CBUS_REG(0x57)
 #define	HHI_MPEG_CLK_CNTL	CBUS_REG(0x5d)
 #define	HHI_SYS_CPU_CLK_CNTL0	CBUS_REG(0x67)
+#define	 HHI_SYS_CPU_CLK_CNTL0_CLKSEL	__BIT(7)
+#define	 HHI_SYS_CPU_CLK_CNTL0_SOUTSEL	__BITS(3,2)
+#define	 HHI_SYS_CPU_CLK_CNTL0_PLLSEL	__BITS(1,0)
 #define	HHI_MPLL_CNTL		CBUS_REG(0xa0)
 #define	HHI_MPLL_CNTL2		CBUS_REG(0xa1)
 #define	HHI_MPLL_CNTL5		CBUS_REG(0xa4)
@@ -62,6 +65,10 @@ __KERNEL_RCSID(1, "$NetBSD: meson8b_clkc.c,v 1.1 2019/01/19 20:56:03 jmcneill Ex
 #define	HHI_MPLL_CNTL8		CBUS_REG(0xa7)
 #define	HHI_MPLL_CNTL9		CBUS_REG(0xa8)
 #define	HHI_SYS_PLL_CNTL	CBUS_REG(0xc0)
+#define	 HHI_SYS_PLL_CNTL_LOCK	__BIT(31)
+#define	 HHI_SYS_PLL_CNTL_OD	__BITS(17,16)
+#define	 HHI_SYS_PLL_CNTL_DIV	__BITS(14,9)
+#define	 HHI_SYS_PLL_CNTL_MUL	__BITS(8,0)
 
 static int meson8b_clkc_match(device_t, cfdata_t, void *);
 static void meson8b_clkc_attach(device_t, device_t, void *);
@@ -87,23 +94,92 @@ static const char *cpu_scale_out_sel_parents[] = { "cpu_in_sel", "cpu_in_div2", 
 static const char *cpu_clk_parents[] = { "xtal", "cpu_scale_out_sel" };
 static const char *periph_clk_sel_parents[] = { "cpu_clk_div2", "cpu_clk_div3", "cpu_clk_div4", "cpu_clk_div5", "cpu_clk_div6", "cpu_clk_div7", "cpu_clk_div8" };
 
+static int
+meson8b_clkc_pll_sys_set_rate(struct meson_clk_softc *sc,
+    struct meson_clk_clk *clk, u_int rate)
+{
+	struct clk *clkp, *clkp_parent;
+
+	KASSERT(clk->type == MESON_CLK_PLL);
+
+	clkp = &clk->base;
+	clkp_parent = clk_get_parent(clkp);
+	if (clkp_parent == NULL)
+		return ENXIO;
+
+	const u_int old_rate = clk_get_rate(clkp);
+	if (old_rate == rate)
+		return 0;
+
+	const u_int parent_rate = clk_get_rate(clkp_parent);
+	if (parent_rate == 0)
+		return EIO;
+
+	uint32_t cntl0 = CLK_READ(sc, HHI_SYS_CPU_CLK_CNTL0);
+	uint32_t cntl = CLK_READ(sc, HHI_SYS_PLL_CNTL);
+
+	u_int new_mul = rate / parent_rate;
+	u_int new_div = 1;
+	u_int new_od = 0;
+
+	if (rate < 600 * 1000000) {
+		new_od = 2;
+		new_mul *= 4;
+	} else if (rate < 1200 * 1000000) {
+		new_od = 1;
+		new_mul *= 2;
+	}
+
+	if ((cntl0 & HHI_SYS_CPU_CLK_CNTL0_CLKSEL) == 0)
+		return EIO;
+	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_PLLSEL) != 1)
+		return EIO;
+	if (__SHIFTOUT(cntl0, HHI_SYS_CPU_CLK_CNTL0_SOUTSEL) != 0)
+		return EIO;
+
+	cntl &= ~HHI_SYS_PLL_CNTL_MUL;
+	cntl |= __SHIFTIN(new_mul, HHI_SYS_PLL_CNTL_MUL);
+	cntl &= ~HHI_SYS_PLL_CNTL_DIV;
+	cntl |= __SHIFTIN(new_div, HHI_SYS_PLL_CNTL_DIV);
+	cntl &= ~HHI_SYS_PLL_CNTL_OD;
+	cntl |= __SHIFTIN(new_od, HHI_SYS_PLL_CNTL_OD);
+
+	/* Switch CPU to XTAL clock */
+	cntl0 &= ~HHI_SYS_CPU_CLK_CNTL0_CLKSEL;
+	CLK_WRITE(sc, HHI_SYS_CPU_CLK_CNTL0, cntl0);
+
+	delay((100 * old_rate) / parent_rate);
+
+	/* Update multiplier */
+	do {
+		CLK_WRITE(sc, HHI_SYS_PLL_CNTL, cntl);
+
+		/* Switch CPU to sys pll */
+		cntl0 |= HHI_SYS_CPU_CLK_CNTL0_CLKSEL;
+		CLK_WRITE(sc, HHI_SYS_CPU_CLK_CNTL0, cntl0);
+	} while ((CLK_READ(sc, HHI_SYS_PLL_CNTL) & HHI_SYS_PLL_CNTL_LOCK) == 0);
+
+	return 0;
+}
+
 static struct meson_clk_clk meson8b_clkc_clks[] = {
 
 	MESON_CLK_FIXED(MESON8B_CLOCK_XTAL, "xtal", 24000000),
 
-	MESON_CLK_PLL(MESON8B_CLOCK_PLL_SYS_DCO, "pll_sys_dco", "xtal",
+	MESON_CLK_PLL_RATE(MESON8B_CLOCK_PLL_SYS_DCO, "pll_sys_dco", "xtal",
 	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BIT(30)),	/* enable */
 	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BITS(8,0)),	/* m */
 	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BITS(13,9)),	/* n */
 	    MESON_CLK_PLL_REG_INVALID,				/* frac */
 	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BIT(31)),	/* l */
 	    MESON_CLK_PLL_REG(HHI_SYS_PLL_CNTL, __BIT(29)),	/* reset */
+	    meson8b_clkc_pll_sys_set_rate,
 	    0),
 
 	MESON_CLK_DIV(MESON8B_CLOCK_PLL_SYS, "sys_pll", "pll_sys_dco",
 	    HHI_SYS_PLL_CNTL,		/* reg */
 	    __BITS(17,16),		/* div */
-	    MESON_CLK_DIV_POWER_OF_TWO),
+	    MESON_CLK_DIV_POWER_OF_TWO | MESON_CLK_DIV_SET_RATE_PARENT),
 
 	MESON_CLK_MUX(MESON8B_CLOCK_CPU_IN_SEL, "cpu_in_sel", cpu_in_sel_parents,
 	    HHI_SYS_CPU_CLK_CNTL0,	/* reg */
@@ -116,7 +192,7 @@ static struct meson_clk_clk meson8b_clkc_clks[] = {
 	MESON_CLK_DIV(MESON8B_CLOCK_CPU_SCALE_DIV, "cpu_scale_div", "cpu_in_sel",
 	    HHI_SYS_CPU_CLK_CNTL1,	/* reg */
 	    __BITS(29,20),		/* div */
-	    MESON_CLK_DIV_CPU_SCALE_TABLE),
+	    MESON_CLK_DIV_CPU_SCALE_TABLE | MESON_CLK_DIV_SET_RATE_PARENT),
 
 	MESON_CLK_MUX(MESON8B_CLOCK_CPU_SCALE_OUT_SEL, "cpu_scale_out_sel", cpu_scale_out_sel_parents,
 	    HHI_SYS_CPU_CLK_CNTL0,	/* reg */
