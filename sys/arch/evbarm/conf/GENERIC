@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.21 2019/01/20 00:44:17 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.22 2019/01/20 17:58:37 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -479,6 +479,7 @@ sunxilradc*	at fdt?
 
 # RTC
 #exyortc*	at fdt?			# RTC
+mesonrtc*	at fdt?			# Amlogic Meson RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
 sunxirtc*	at fdt?			# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
