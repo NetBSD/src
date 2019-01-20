@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.2 2019/01/19 21:43:43 jmcneill Exp $
+#	$NetBSD: files.meson,v 1.3 2019/01/20 00:44:01 jmcneill Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -43,9 +43,9 @@ file	arch/arm/amlogic/meson_pinctrl.c	meson_pinctrl
 file	arch/arm/amlogic/meson8b_pinctrl.c	meson_pinctrl & soc_meson8b
 
 # SDHC
-#device	mesonsdhc: sdmmcbus
-#attach	mesonsdhc at fdt with meson_sdhc
-#file	arch/arm/amlogic/meson_sdhc.c		meson_sdhc
+device	mesonsdhc: sdmmcbus
+attach	mesonsdhc at fdt with meson_sdhc
+file	arch/arm/amlogic/meson_sdhc.c		meson_sdhc
 
 # SDIO
 device	mesonsdio: sdmmcbus

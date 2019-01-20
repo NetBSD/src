@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b.dtsi,v 1.2 2019/01/19 21:44:02 jmcneill Exp $ */
+/* $NetBSD: meson8b.dtsi,v 1.3 2019/01/20 00:44:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -41,6 +41,28 @@
 		reg = <0xc8006000 0x400>,	/* DMC */
 		      <0xd0040000 0x10000>,	/* HDMI */
 		      <0xd0100000 0x100000>;	/* VPU */
+		status = "disabled";
+	};
+};
+
+&pinctrl_cbus {
+	sdxc_c_pins: sdxc-c {
+		mux {
+			groups = "sdxc_d0_c", "sdxc_d13_c", "sdxc_d47_c", "sdxc_clk_c", "sdxc_cmd_c";
+			function = "sdxc_c";
+		};
+	};
+};
+
+&cbus {
+	sdhc: mmc@8e00 {
+		compatible = "amlogic,meson8b-sdhc";
+		reg = <0x8e00 0x30>;
+		interrupts = <GIC_SPI 78 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&clkc CLKID_SDHC>, <&clkc CLKID_FCLK_DIV3>;
+		clock-names = "core", "clkin";
+		#address-cells = <1>;
+		#size-cells = <0>;
 		status = "disabled";
 	};
 };
