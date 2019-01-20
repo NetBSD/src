@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.48 2018/10/05 18:51:52 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.49 2019/01/20 16:55:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.48 2018/10/05 18:51:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.49 2019/01/20 16:55:21 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -209,7 +209,7 @@ fpu_clear_amd(void)
 }
 
 void
-fpu_area_save(void *area)
+fpu_area_save(void *area, uint64_t xsave_features)
 {
 	clts();
 
@@ -221,16 +221,16 @@ fpu_area_save(void *area)
 		fxsave(area);
 		break;
 	case FPU_SAVE_XSAVE:
-		xsave(area, x86_xsave_features);
+		xsave(area, xsave_features);
 		break;
 	case FPU_SAVE_XSAVEOPT:
-		xsaveopt(area, x86_xsave_features);
+		xsaveopt(area, xsave_features);
 		break;
 	}
 }
 
 void
-fpu_area_restore(void *area)
+fpu_area_restore(void *area, uint64_t xsave_features)
 {
 	clts();
 
@@ -247,7 +247,7 @@ fpu_area_restore(void *area)
 	case FPU_SAVE_XSAVEOPT:
 		if (cpu_vendor == CPUVENDOR_AMD)
 			fpu_clear_amd();
-		xrstor(area, x86_xsave_features);
+		xrstor(area, xsave_features);
 		break;
 	}
 }
@@ -262,7 +262,7 @@ fpu_lwp_install(struct lwp *l)
 	KASSERT(pcb->pcb_fpcpu == NULL);
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
-	fpu_area_restore(&pcb->pcb_savefpu);
+	fpu_area_restore(&pcb->pcb_savefpu, x86_xsave_features);
 }
 
 void
@@ -532,7 +532,7 @@ fpusave_cpu(bool save)
 	pcb = lwp_getpcb(l);
 
 	if (save) {
-		fpu_area_save(&pcb->pcb_savefpu);
+		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features);
 	}
 
 	stts();
