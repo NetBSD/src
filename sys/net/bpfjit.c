@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.46 2016/07/29 20:29:38 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.47 2019/01/20 23:36:57 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2015 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.46 2016/07/29 20:29:38 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.47 2019/01/20 23:36:57 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.46 2016/07/29 20:29:38 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.47 2019/01/20 23:36:57 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: bpfjit.c,v 1.46 2016/07/29 20:29:38 alnsn Exp $");
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #else
 #include <sys/atomic.h>
 #include <sys/module.h>
