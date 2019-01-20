@@ -1,7 +1,7 @@
 /*
  *    Stack-less Just-In-Time compiler
  *
- *    Copyright 2009-2010 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -25,6 +25,7 @@
  */
 
 /* Must be the first one. Must not depend on any other include. */
+#include "sljitLir.h"
 #include "regexJIT.h"
 
 #include <stdio.h>
@@ -325,5 +326,8 @@ int main(int argc, char* argv[])
 /*	verbose_test("((a|b|c)*(xy)+)+", "asbcxyxy"); */
 
 	run_tests(tests, has_arg && argv[1][1] == 'v', has_arg && argv[1][1] == 's');
+
+	sljit_free_unused_memory_exec();
+
 	return 0;
 }
