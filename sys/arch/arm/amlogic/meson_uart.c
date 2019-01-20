@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_uart.c,v 1.2 2019/01/20 15:56:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.2 2019/01/20 15:56:40 jmcneill Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -226,8 +226,7 @@ meson_uart_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, UART_MISC_REG, misc);
 
 	control = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG);
-	control &= ~UART_CONTROL_TX_INT_EN;
-	control |= UART_CONTROL_RX_INT_EN;
+	control &= ~(UART_CONTROL_TX_INT_EN|UART_CONTROL_RX_INT_EN);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG, control);
 }
 
@@ -291,6 +290,7 @@ meson_uart_open(dev_t dev, int flag, int mode, lwp_t *l)
 	struct meson_uart_softc *sc =
 	    device_lookup_private(&mesonuart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
+	uint32_t control;
 
 	if (kauth_authorize_device_tty(l->l_cred,
 	    KAUTH_DEVICE_TTY_OPEN, tp) != 0) {
@@ -306,6 +306,10 @@ meson_uart_open(dev_t dev, int flag, int mode, lwp_t *l)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);
+
+		control = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG);
+		control |= UART_CONTROL_RX_INT_EN;
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG, control);
 	}
 	tp->t_state |= TS_CARR_ON;
 
@@ -318,9 +322,16 @@ meson_uart_close(dev_t dev, int flag, int mode, lwp_t *l)
 	struct meson_uart_softc *sc =
 	    device_lookup_private(&mesonuart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
+	uint32_t control;
 
 	tp->t_linesw->l_close(tp, flag);
 	ttyclose(tp);
+
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		control = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG);
+		control &= ~UART_CONTROL_RX_INT_EN;
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG, control);
+	}
 
 	return 0;
 }
