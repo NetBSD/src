@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.15 2019/01/13 10:07:50 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.16 2019/01/20 16:55:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.15 2019/01/13 10:07:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.16 2019/01/20 16:55:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,7 @@ struct svm_cpudata {
 	uint64_t fsbase;
 	uint64_t kernelgsbase;
 	bool ts_set;
-	struct xsave_header hfpu __aligned(16);
+	struct xsave_header hfpu __aligned(64);
 
 	/* Event state */
 	bool int_window_exit;
@@ -535,7 +535,7 @@ struct svm_cpudata {
 	uint64_t gprs[NVMM_X64_NGPR];
 	uint64_t drs[NVMM_X64_NDR];
 	uint64_t tsc_offset;
-	struct xsave_header gfpu __aligned(16);
+	struct xsave_header gfpu __aligned(64);
 };
 
 static void
@@ -779,12 +779,16 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RDX] = svm_xcr0_mask >> 32;
 		break;
 	case 0x40000000:
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RBX], "___ ", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
-	case 0x80000001: /* No SVM in ECX. The rest is tunable. */
+	case 0x80000001: /* No SVM, no RDTSCP. The rest is tunable. */
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID_SVM;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= ~CPUID_RDTSCP;
 		break;
 	default:
 		break;
@@ -1007,7 +1011,7 @@ svm_exit_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		exit->u.msr.type = NVMM_EXIT_MSR_WRMSR;
 	}
 
-	exit->u.msr.msr = cpudata->gprs[NVMM_X64_GPR_RCX];
+	exit->u.msr.msr = (cpudata->gprs[NVMM_X64_GPR_RCX] & 0xFFFFFFFF);
 
 	if (info == 1) {
 		uint64_t rdx, rax;
@@ -1092,15 +1096,15 @@ svm_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	if (x86_xsave_features != 0) {
+	cpudata->ts_set = (rcr0() & CR0_TS) != 0;
+
+	fpu_area_save(&cpudata->hfpu, svm_xcr0_mask);
+	fpu_area_restore(&cpudata->gfpu, svm_xcr0_mask);
+
+	if (svm_xcr0_mask != 0) {
 		cpudata->hxcr0 = rdxcr(0);
 		wrxcr(0, cpudata->gxcr0);
 	}
-
-	cpudata->ts_set = (rcr0() & CR0_TS) != 0;
-
-	fpu_area_save(&cpudata->hfpu);
-	fpu_area_restore(&cpudata->gfpu);
 }
 
 static void
@@ -1108,16 +1112,16 @@ svm_vcpu_guest_fpu_leave(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	fpu_area_save(&cpudata->gfpu);
-	fpu_area_restore(&cpudata->hfpu);
+	if (svm_xcr0_mask != 0) {
+		cpudata->gxcr0 = rdxcr(0);
+		wrxcr(0, cpudata->hxcr0);
+	}
+
+	fpu_area_save(&cpudata->gfpu, svm_xcr0_mask);
+	fpu_area_restore(&cpudata->hfpu, svm_xcr0_mask);
 
 	if (cpudata->ts_set) {
 		stts();
-	}
-
-	if (x86_xsave_features != 0) {
-		cpudata->gxcr0 = rdxcr(0);
-		wrxcr(0, cpudata->hxcr0);
 	}
 }
 
@@ -1580,6 +1584,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	/* Must always be set. */
 	vmcb->state.efer = EFER_SVME;
+	cpudata->gxcr0 = XCR0_X87;
 
 	/* Init XSAVE header. */
 	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
@@ -1779,13 +1784,11 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		vmcb->ctrl.v |= __SHIFTIN(state->crs[NVMM_X64_CR_CR8],
 		    VMCB_CTRL_V_TPR);
 
-		/* Clear unsupported XCR0 bits, set mandatory X87 bit. */
 		if (svm_xcr0_mask != 0) {
+			/* Clear illegal XCR0 bits, set mandatory X87 bit. */
 			cpudata->gxcr0 = state->crs[NVMM_X64_CR_XCR0];
 			cpudata->gxcr0 &= svm_xcr0_mask;
 			cpudata->gxcr0 |= XCR0_X87;
-		} else {
-			cpudata->gxcr0 = 0;
 		}
 	}
 
@@ -1846,6 +1849,11 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		fpustate = (struct fxsave *)cpudata->gfpu.xsh_fxsave;
 		fpustate->fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
 		fpustate->fx_mxcsr &= fpustate->fx_mxcsr_mask;
+
+		if (svm_xcr0_mask != 0) {
+			/* Reset XSTATE_BV, to force a reload. */
+			cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
+		}
 	}
 
 	svm_vmcb_cache_update(vmcb, flags);
