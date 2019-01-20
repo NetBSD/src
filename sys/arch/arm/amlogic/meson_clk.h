@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk.h,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_clk.h,v 1.2 2019/01/20 17:28:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -199,6 +199,7 @@ const char *meson_clk_mux_get_parent(struct meson_clk_softc *,
 	[_id] = {							\
 		.type = MESON_CLK_MUX,					\
 		.base.name = (_name),					\
+		.base.flags = CLK_SET_RATE_PARENT,			\
 		.u.mux.parents = (_parents),				\
 		.u.mux.nparents = __arraycount(_parents),		\
 		.u.mux.reg = (_reg),					\
@@ -235,6 +236,24 @@ u_int	meson_clk_pll_get_rate(struct meson_clk_softc *,
 			       struct meson_clk_clk *);
 const char *meson_clk_pll_get_parent(struct meson_clk_softc *,
 				     struct meson_clk_clk *);
+
+#define	MESON_CLK_PLL_RATE(_id, _name, _parent, _enable, _m, _n, _frac, _l,	\
+		      _reset, _setratefn, _flags)			\
+	[_id] = {							\
+		.type = MESON_CLK_PLL,					\
+		.base.name = (_name),					\
+		.u.pll.parent = (_parent),				\
+		.u.pll.enable = _enable,				\
+		.u.pll.m = _m,						\
+		.u.pll.n = _n,						\
+		.u.pll.frac = _frac,					\
+		.u.pll.l = _l,						\
+		.u.pll.reset = _reset,					\
+		.u.pll.flags = (_flags),				\
+		.set_rate = (_setratefn),				\
+		.get_rate = meson_clk_pll_get_rate,			\
+		.get_parent = meson_clk_pll_get_parent,			\
+	}
 
 #define	MESON_CLK_PLL(_id, _name, _parent, _enable, _m, _n, _frac, _l,	\
 		      _reset, _flags)					\
