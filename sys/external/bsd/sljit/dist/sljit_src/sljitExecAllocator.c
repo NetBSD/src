@@ -1,9 +1,9 @@
-/*	$NetBSD: sljitExecAllocator.c,v 1.5 2016/05/29 17:09:33 alnsn Exp $	*/
+/*	$NetBSD: sljitExecAllocator.c,v 1.6 2019/01/20 23:14:16 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
  *
- *    Copyright 2009-2012 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -88,7 +88,7 @@ static SLJIT_INLINE void* alloc_chunk(sljit_uw size)
 	return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 }
 
-static SLJIT_INLINE void free_chunk(void* chunk, sljit_uw size)
+static SLJIT_INLINE void free_chunk(void *chunk, sljit_uw size)
 {
 	SLJIT_UNUSED_ARG(size);
 	VirtualFree(chunk, 0, MEM_RELEASE);
@@ -110,12 +110,23 @@ static SLJIT_INLINE void* alloc_chunk(sljit_uw size)
 	return (void *)uvm_km_alloc(module_map, size,
 	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_EXEC);
 #else
-	void* retval = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, -1, 0);
+	void *retval;
+
+#ifdef MAP_ANON
+	retval = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, -1, 0);
+#else
+	if (dev_zero < 0) {
+		if (open_dev_zero())
+			return NULL;
+	}
+	retval = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE, dev_zero, 0);
+#endif
+
 	return (retval != MAP_FAILED) ? retval : NULL;
 #endif
 }
 
-static SLJIT_INLINE void free_chunk(void* chunk, sljit_uw size)
+static SLJIT_INLINE void free_chunk(void *chunk, sljit_uw size)
 {
 #ifdef _KERNEL
 	uvm_km_free(module_map, (vaddr_t)chunk, size, UVM_KMF_WIRED);
@@ -188,8 +199,8 @@ SLJIT_API_FUNC_ATTRIBUTE void* sljit_malloc_exec(sljit_uw size)
 	sljit_uw chunk_size;
 
 	allocator_grab_lock();
-	if (size < sizeof(struct free_block))
-		size = sizeof(struct free_block);
+	if (size < (64 - sizeof(struct block_header)))
+		size = (64 - sizeof(struct block_header));
 	size = ALIGN_SIZE(size);
 
 	free_block = free_blocks;
