@@ -1,4 +1,4 @@
-/* $NetBSD: meson_clk_div.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_clk_div.c,v 1.2 2019/01/20 17:27:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_clk_div.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_clk_div.c,v 1.2 2019/01/20 17:27:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,12 +90,11 @@ meson_clk_div_set_rate(struct meson_clk_softc *sc,
 	if (clkp_parent == NULL)
 		return ENXIO;
 
-	if (div->div == 0) {
-		if ((div->flags & MESON_CLK_DIV_SET_RATE_PARENT) != 0)
-			return clk_set_rate(clkp_parent, new_rate);
-		else
-			return ENXIO;
-	}
+	if ((div->flags & MESON_CLK_DIV_SET_RATE_PARENT) != 0)
+		return clk_set_rate(clkp_parent, new_rate);
+
+	if (div->div == 0)
+		return ENXIO;
 
 	val = CLK_READ(sc, div->reg);
 
