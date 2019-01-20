@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.20 2019/01/19 21:43:07 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.21 2019/01/20 00:44:17 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -510,6 +510,7 @@ spkr*		at audio?
 # SDMMC
 dwcmmc*		at fdt?			# DesignWare SDMMC
 mesonsdio*	at fdt?			# Amlogic Meson SDIO controller
+mesonsdhc*	at fdt?			# Amlogic Meson SDHC controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 plmmc*		at fdt?			# ARM PrimeCell MCI
 sdhc*		at fdt?			# SD Host Controller Interface
