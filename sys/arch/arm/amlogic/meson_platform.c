@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.2 2019/01/20 16:02:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.2 2019/01/20 16:02:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.1 2019/01/19 20:56:03 jmcneill 
 
 #include <evbarm/fdt/platform.h>
 #include <evbarm/fdt/machdep.h>
+
+#include <net/if_ether.h>
 
 #include <libfdt.h>
 
@@ -168,6 +170,31 @@ meson_platform_early_putchar(char c)
 static void
 meson_platform_device_register(device_t self, void *aux)
 {
+	prop_dictionary_t dict = device_properties(self);
+
+	if (device_is_a(self, "awge") && device_unit(self) == 0) {
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		if (get_bootconf_option(boot_args, "awge0.mac-address",
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd = prop_data_create_data(enaddr,
+			    sizeof(enaddr));
+			prop_dictionary_set(dict, "mac-address", pd);
+			prop_object_release(pd);
+		}
+	}
+
+	if (device_is_a(self, "genfb")) {
+		int scale, depth;
+
+		if (get_bootconf_option(boot_args, "fb.scale",
+		    BOOTOPT_TYPE_INT, &scale) && scale > 0) {
+			prop_dictionary_set_uint32(dict, "scale", scale);
+		}
+		if (get_bootconf_option(boot_args, "fb.depth",
+		    BOOTOPT_TYPE_INT, &depth)) {
+			prop_dictionary_set_uint32(dict, "depth", depth);
+		}
+	}
 }
 
 static u_int
