@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.90 2019/01/17 17:25:53 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.91 2019/01/20 15:35:24 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2257,4 +2257,9 @@ sys/dev/mii/makphyreg.h			1.7-1.9 (patch)
 	- Remove obsolete comment.
 	- Whitespace fix.
 	[msaitoh, ticket #1164]
+
+sys/external/bsd/drm2/pci/drm_pci.c		1.32
+
+	Don't try to interpret the second half of a 64-bit BAR as another one.
+	[dholland, ticket #1165]
 
