@@ -1,9 +1,9 @@
-/*	$NetBSD: sljitConfigInternal.h,v 1.10 2016/05/29 17:09:33 alnsn Exp $	*/
+/*	$NetBSD: sljitConfigInternal.h,v 1.11 2019/01/20 23:14:16 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
  *
- *    Copyright 2009-2012 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -189,16 +189,6 @@
 /* External function definitions. */
 /**********************************/
 
-#if !(defined SLJIT_STD_MACROS_DEFINED && SLJIT_STD_MACROS_DEFINED)
-
-#ifndef _KERNEL
-/* These libraries are needed for the macros below. */
-#include <stdlib.h>
-#include <string.h>
-#endif
-
-#endif /* SLJIT_STD_MACROS_DEFINED */
-
 /* General macros:
    Note: SLJIT is designed to be independent from them as possible.
 
@@ -214,8 +204,8 @@
 #define SLJIT_FREE(ptr, allocator_data) free(ptr)
 #endif
 
-#ifndef SLJIT_MEMMOVE
-#define SLJIT_MEMMOVE(dest, src, len) memmove(dest, src, len)
+#ifndef SLJIT_MEMCPY
+#define SLJIT_MEMCPY(dest, src, len) memcpy(dest, src, len)
 #endif
 
 #ifndef SLJIT_ZEROMEM
@@ -308,6 +298,13 @@
 #define SLJIT_CACHE_FLUSH(from, to) \
 	sys_icache_invalidate((char*)(from), (char*)(to) - (char*)(from))
 
+#elif (defined SLJIT_CONFIG_PPC && SLJIT_CONFIG_PPC)
+
+/* The __clear_cache() implementation of GCC is a dummy function on PowerPC. */
+#define SLJIT_CACHE_FLUSH(from, to) \
+	ppc_cache_flush((from), (to))
+#define SLJIT_CACHE_FLUSH_OWN_IMPL 1
+
 #elif (defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)))
 
 #define SLJIT_CACHE_FLUSH(from, to) \
@@ -319,13 +316,6 @@
 
 #define SLJIT_CACHE_FLUSH(from, to) \
     cacheflush((long)(from), (long)(to), 0)
-
-#elif (defined SLJIT_CONFIG_PPC && SLJIT_CONFIG_PPC)
-
-/* The __clear_cache() implementation of GCC is a dummy function on PowerPC. */
-#define SLJIT_CACHE_FLUSH(from, to) \
-	ppc_cache_flush((from), (to))
-#define SLJIT_CACHE_FLUSH_OWN_IMPL 1
 
 #elif (defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
 
@@ -549,6 +539,14 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_exec(void* ptr);
 SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void);
 #define SLJIT_MALLOC_EXEC(size) sljit_malloc_exec(size)
 #define SLJIT_FREE_EXEC(ptr) sljit_free_exec(ptr)
+
+#if (defined SLJIT_PROT_EXECUTABLE_ALLOCATOR && SLJIT_PROT_EXECUTABLE_ALLOCATOR)
+SLJIT_API_FUNC_ATTRIBUTE sljit_sw sljit_exec_offset(void* ptr);
+#define SLJIT_EXEC_OFFSET(ptr) sljit_exec_offset(ptr)
+#else
+#define SLJIT_EXEC_OFFSET(ptr) 0
+#endif
+
 #endif
 
 /**********************************************/
@@ -557,13 +555,13 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void);
 
 #if (defined SLJIT_CONFIG_X86_32 && SLJIT_CONFIG_X86_32)
 
-#define SLJIT_NUMBER_OF_REGISTERS 10
-#define SLJIT_NUMBER_OF_SAVED_REGISTERS 7
+#define SLJIT_NUMBER_OF_REGISTERS 12
+#define SLJIT_NUMBER_OF_SAVED_REGISTERS 9
 #if (defined SLJIT_X86_32_FASTCALL && SLJIT_X86_32_FASTCALL)
-#define SLJIT_LOCALS_OFFSET_BASE ((2 + 4) * sizeof(sljit_sw))
+#define SLJIT_LOCALS_OFFSET_BASE (compiler->locals_offset)
 #else
 /* Maximum 3 arguments are passed on the stack, +1 for double alignment. */
-#define SLJIT_LOCALS_OFFSET_BASE ((3 + 1 + 4) * sizeof(sljit_sw))
+#define SLJIT_LOCALS_OFFSET_BASE (compiler->locals_offset)
 #endif /* SLJIT_X86_32_FASTCALL */
 
 #elif (defined SLJIT_CONFIG_X86_64 && SLJIT_CONFIG_X86_64)
@@ -571,23 +569,23 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void);
 #ifndef _WIN64
 #define SLJIT_NUMBER_OF_REGISTERS 12
 #define SLJIT_NUMBER_OF_SAVED_REGISTERS 6
-#define SLJIT_LOCALS_OFFSET_BASE (sizeof(sljit_sw))
+#define SLJIT_LOCALS_OFFSET_BASE 0
 #else
 #define SLJIT_NUMBER_OF_REGISTERS 12
 #define SLJIT_NUMBER_OF_SAVED_REGISTERS 8
-#define SLJIT_LOCALS_OFFSET_BASE ((4 + 2) * sizeof(sljit_sw))
+#define SLJIT_LOCALS_OFFSET_BASE (compiler->locals_offset)
 #endif /* _WIN64 */
 
 #elif (defined SLJIT_CONFIG_ARM_V5 && SLJIT_CONFIG_ARM_V5) || (defined SLJIT_CONFIG_ARM_V7 && SLJIT_CONFIG_ARM_V7)
 
-#define SLJIT_NUMBER_OF_REGISTERS 11
+#define SLJIT_NUMBER_OF_REGISTERS 12
 #define SLJIT_NUMBER_OF_SAVED_REGISTERS 8
 #define SLJIT_LOCALS_OFFSET_BASE 0
 
 #elif (defined SLJIT_CONFIG_ARM_THUMB2 && SLJIT_CONFIG_ARM_THUMB2)
 
-#define SLJIT_NUMBER_OF_REGISTERS 11
-#define SLJIT_NUMBER_OF_SAVED_REGISTERS 7
+#define SLJIT_NUMBER_OF_REGISTERS 12
+#define SLJIT_NUMBER_OF_SAVED_REGISTERS 8
 #define SLJIT_LOCALS_OFFSET_BASE 0
 
 #elif (defined SLJIT_CONFIG_ARM_64 && SLJIT_CONFIG_ARM_64)
@@ -611,7 +609,7 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void);
 
 #elif (defined SLJIT_CONFIG_MIPS && SLJIT_CONFIG_MIPS)
 
-#define SLJIT_NUMBER_OF_REGISTERS 17
+#define SLJIT_NUMBER_OF_REGISTERS 21
 #define SLJIT_NUMBER_OF_SAVED_REGISTERS 8
 #if (defined SLJIT_CONFIG_MIPS_32 && SLJIT_CONFIG_MIPS_32)
 #define SLJIT_LOCALS_OFFSET_BASE (4 * sizeof(sljit_sw))
@@ -671,19 +669,26 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void);
 
 #if (defined SLJIT_DEBUG && SLJIT_DEBUG)
 
-#if !defined(SLJIT_ASSERT) || !defined(SLJIT_ASSERT_STOP)
+#if !defined(SLJIT_ASSERT) || !defined(SLJIT_UNREACHABLE)
 
 /* SLJIT_HALT_PROCESS must halt the process. */
 #ifndef SLJIT_HALT_PROCESS
+#ifdef _KERNEL
+#define SLJIT_HALT_PROCESS() \
+	panic("sljit halt");
+#else
 #include <stdlib.h>
 
 #define SLJIT_HALT_PROCESS() \
 	abort();
+#endif
 #endif /* !SLJIT_HALT_PROCESS */
 
+#ifndef _KERNEL
 #include <stdio.h>
+#endif
 
-#endif /* !SLJIT_ASSERT || !SLJIT_ASSERT_STOP */
+#endif /* !SLJIT_ASSERT || !SLJIT_UNREACHABLE */
 
 /* Feel free to redefine these two macros. */
 #ifndef SLJIT_ASSERT
@@ -695,34 +700,33 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void);
 
 #endif /* !SLJIT_ASSERT */
 
-#ifndef SLJIT_ASSERT_STOP
+#ifndef SLJIT_UNREACHABLE
 
-#define SLJIT_ASSERT_STOP() \
+#define SLJIT_UNREACHABLE() \
 	do { \
 		printf("Should never been reached " __FILE__ ":%d\n", __LINE__); \
 		SLJIT_HALT_PROCESS(); \
 	} while (0)
 
-#endif /* !SLJIT_ASSERT_STOP */
+#endif /* !SLJIT_UNREACHABLE */
 
 #else /* (defined SLJIT_DEBUG && SLJIT_DEBUG) */
 
 /* Forcing empty, but valid statements. */
 #undef SLJIT_ASSERT
-#undef SLJIT_ASSERT_STOP
+#undef SLJIT_UNREACHABLE
 
 #define SLJIT_ASSERT(x) \
 	do { } while (0)
-#define SLJIT_ASSERT_STOP() \
+#define SLJIT_UNREACHABLE() \
 	do { } while (0)
 
 #endif /* (defined SLJIT_DEBUG && SLJIT_DEBUG) */
 
 #ifndef SLJIT_COMPILE_ASSERT
 
-/* Should be improved eventually. */
 #define SLJIT_COMPILE_ASSERT(x, description) \
-	SLJIT_ASSERT(x)
+	switch(0) { case 0: case ((x) ? 1 : 0): break; }
 
 #endif /* !SLJIT_COMPILE_ASSERT */
 
