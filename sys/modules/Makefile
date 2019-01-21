@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.214 2018/12/19 13:57:52 maxv Exp $
+#	$NetBSD: Makefile,v 1.215 2019/01/21 00:21:48 alnsn Exp $
 
 .include <bsd.own.mk>
 
@@ -212,10 +212,11 @@ SUBDIR+=	ubsec		# Builds on architectures with PCI bus
 .endif
 
 .if ${MKSLJIT} != "no"
-# No modules for arm, mips and powerpc yet.
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc"
+# No modules for 32-bit arm, mips and powerpc yet.
+.if ${MACHINE_ARCH} == "aarch64" || \
+    ${MACHINE_ARCH} == "i386"    || \
+    ${MACHINE_ARCH} == "sparc"   || \
+    ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	bpfjit
 SUBDIR+=	sljit
 .endif
