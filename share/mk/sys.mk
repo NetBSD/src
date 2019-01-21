@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.137 2018/08/13 13:07:04 christos Exp $
+#	$NetBSD: sys.mk,v 1.138 2019/01/21 21:11:54 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -218,7 +218,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 	rm -f lex.yy.c
 .l.c:
 	${LEX.l} ${.IMPSRC}
-	mv lex.yy.c ${.TARGET}
+	${MV} lex.yy.c ${.TARGET}
 .l.o:
 	${LEX.l} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} lex.yy.c
@@ -232,7 +232,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 	rm -f y.tab.c
 .y.c:
 	${YACC.y} ${.IMPSRC}
-	mv y.tab.c ${.TARGET}
+	${MV} y.tab.c ${.TARGET}
 .y.o:
 	${YACC.y} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} y.tab.c
