@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/01/05 13:07:47 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2019/01/21 00:30:14 alnsn Exp $
 #
 # Public Domain.
 #
@@ -36,6 +36,15 @@ RUMPCOMP_USER_CPPFLAGS=-I${RUMPCOMP_INCS_DIR}
 
 # Link to libarm to get arm_sync_icache(2)
 LIBDPLIBS+=	arm ${NETBSDSRCDIR}/lib/libarch
+.endif
+
+.if !empty(MACHINE_ARCH:Maarch64*)
+SRCS+=			cpufunc.c
+RUMPCOMP_USER_SRCS=	sljit_rump.c
+.PATH:			${.CURDIR}/arch/aarch64
+
+RUMPCOMP_INCS_DIR:=	${.PARSEDIR}
+RUMPCOMP_USER_CPPFLAGS=-I${RUMPCOMP_INCS_DIR}
 .endif
 
 .include <bsd.lib.mk>
