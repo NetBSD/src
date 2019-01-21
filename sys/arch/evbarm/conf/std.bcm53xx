@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.18 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: std.bcm53xx,v 1.19 2019/01/21 07:29:36 skrll Exp $
 #
 # standard NetBSD/evbarm for BCM5301X options
 
@@ -8,25 +8,24 @@ include 	"arch/evbarm/conf/std.evbarm"
 # Pull in BCM53xx config definitions.
 include		"arch/evbarm/conf/files.bcm53xx"
 
-options 	SOSEND_NO_LOAN
+options 	ARM_GENERIC_TODR
+options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm53xx_intr.h>"
 options 	COM_TOLERANCE=40
-options 	FPU_VFP
 options 	CORTEX_PMC
-options 	_ARM32_NEED_BUS_DMA_BOUNCE
-options 	PMAP_NEED_ALLOC_POOLPAGE
-options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-options 	__HAVE_MM_MD_CACHE_ALIASING
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
-options 	__HAVE_CPU_COUNTER
-options 	__HAVE_PCI_CONF_HOOK
-options 	TPIDRPRW_IS_CURCPU
 options 	EVBARM_BOARDTYPE="bcm53xx"
+options 	FPU_VFP
+options 	PMAP_NEED_ALLOC_POOLPAGE
+options 	SOSEND_NO_LOAN
+options 	TPIDRPRW_IS_CURCPU
+options 	_ARM32_NEED_BUS_DMA_BOUNCE
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_MM_MD_CACHE_ALIASING
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	__HAVE_PCI_CONF_HOOK
 
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.bcm53xx"
 makeoptions	BOARDTYPE="bcm53xx"
 makeoptions	KERNEL_BASE_VIRT="0x80100000"
 makeoptions	LOADADDRESS="0x00100000"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.bcm53xx"
-
-options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm53xx_intr.h>"
-options		ARM_GENERIC_TODR
