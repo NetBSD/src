@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.209.2.13 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.209.2.14 2019/01/21 06:49:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.13 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.14 2019/01/21 06:49:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1901,7 +1901,7 @@ MODULE_CALL_HOOK_DECL(kern_proc_32_copyin_hook, int,
 MODULE_CALL_HOOK(kern_proc_32_copyin_hook, int,
     (struct proc *p, struct ps_strings *s), (p, s), enosys());
 
-MODULE_CALL_VOID_HOOK_DECL(kern_proc_32_base_hook,
+MODULE_CALL_HOOK_DECL(kern_proc_32_base_hook, void,
     (char **argv, size_t i, vaddr_t *base));
 MODULE_CALL_VOID_HOOK(kern_proc_32_base_hook,
     (char **argv, size_t i, vaddr_t *base), (argv, i, base), __nothing);

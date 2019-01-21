@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.12 2019/01/18 00:01:02 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.13 2019/01/21 06:49:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -106,10 +106,6 @@ static void (hook ## _unset)(void)				\
 
 #define MODULE_CALL_HOOK_DECL(hook, type, decl)			\
 type								\
-hook ## _call decl;
-
-#define MODULE_CALL_VOID_HOOK_DECL(hook, decl)			\
-void								\
 hook ## _call decl;
 
 #define MODULE_CALL_HOOK(hook, type, decl, args, default)	\

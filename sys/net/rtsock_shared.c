@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.1.2.5 2019/01/18 00:01:02 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.1.2.6 2019/01/21 06:49:28 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.5 2019/01/18 00:01:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.6 2019/01/21 06:49:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1299,7 +1299,7 @@ again:
 /*
  * MODULE_HOOK glue for rtsock_14_oifmsg and rtsock_14_iflist
  */
-MODULE_CALL_VOID_HOOK_DECL(rtsock_14_oifmsg_hook, (struct ifnet *ifp));
+MODULE_CALL_HOOK_DECL(rtsock_14_oifmsg_hook, void, (struct ifnet *ifp));
 
 MODULE_CALL_HOOK_DECL(rtsock_14_iflist_hook, int,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
@@ -1312,27 +1312,27 @@ MODULE_CALL_HOOK_DECL(rtsock_50_iflist_hook, int,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info, 
      size_t len));
 
-MODULE_CALL_VOID_HOOK_DECL(rtsock_50_rt_missmsg_hook,
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_missmsg_hook, void,
     (int, const struct rt_addrinfo *, int, int));
 
-MODULE_CALL_VOID_HOOK_DECL(rtsock_50_rt_ifmsg_hook, (struct ifnet *));
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_ifmsg_hook, void, (struct ifnet *));
 
-MODULE_CALL_VOID_HOOK_DECL(rtsock_50_rt_newaddrmsg_hook,
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_newaddrmsg_hook, void,
     (int, struct ifaddr *, int, struct rtentry *));
 
-MODULE_CALL_VOID_HOOK_DECL(rtsock_50_rt_ifannouncemsg_hook,
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_ifannouncemsg_hook, void,
     (struct ifnet *, int what));
 
-MODULE_CALL_VOID_HOOK_DECL(rtsock_50_rt_ieee80211msg_hook,
+MODULE_CALL_HOOK_DECL(rtsock_50_rt_ieee80211msg_hook, void,
     (struct ifnet *, int, void *, size_t));
 
-MODULE_CALL_VOID_HOOK_DECL(rtsock_50_oifmsg_hook, (struct ifnet *ifp));
+MODULE_CALL_HOOK_DECL(rtsock_50_oifmsg_hook, void, (struct ifnet *ifp));
 
 /*
  * MODULE_HOOK glue for rtsock70_newaddrmsg1, rtsock70_ifaddr_listaddr,
  * and rtsock70_ifaddr_listif
  */
-MODULE_CALL_VOID_HOOK_DECL(rtsock_70_newaddr_hook, (int, struct ifaddr *));
+MODULE_CALL_HOOK_DECL(rtsock_70_newaddr_hook, void, (int, struct ifaddr *));
 
 MODULE_CALL_HOOK_DECL(rtsock_70_iflist_hook, int,
     (struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *));
