@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.4 2018/08/12 18:39:59 jmcneill Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.5 2019/01/21 08:04:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.4 2018/08/12 18:39:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.5 2019/01/21 08:04:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -184,8 +184,8 @@ pmu_fdt_intr_distribute(const int phandle, int index, void *ih)
 			return ENXIO;
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			const uint32_t ci_mpidr =
-			    __SHIFTIN(ci->ci_data.cpu_core_id, MPIDR_AFF0) |
-			    __SHIFTIN(ci->ci_data.cpu_package_id, MPIDR_AFF1);
+			    __SHIFTIN(ci->ci_core_id, MPIDR_AFF0) |
+			    __SHIFTIN(ci->ci_package_id, MPIDR_AFF1);
 			if (ci_mpidr == mpidr) {
 				kcpuset_set(set, cpu_index(ci));
 				break;

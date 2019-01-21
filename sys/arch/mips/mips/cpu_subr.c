@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.33 2017/08/20 11:06:35 maxv Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.34 2019/01/21 08:04:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.33 2017/08/20 11:06:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.34 2019/01/21 08:04:26 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -182,9 +182,9 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	KASSERT(cpu_id != 0);
 	ci->ci_cpuid = cpu_id;
 	ci->ci_pmap_kern_segtab = &pmap_kern_segtab,
-	ci->ci_data.cpu_package_id = cpu_package_id;
-	ci->ci_data.cpu_core_id = cpu_core_id;
-	ci->ci_data.cpu_smt_id = cpu_smt_id;
+	ci->ci_package_id = cpu_package_id;
+	ci->ci_core_id = cpu_core_id;
+	ci->ci_smt_id = cpu_smt_id;
 	ci->ci_cpu_freq = cpu_info_store.ci_cpu_freq;
 	ci->ci_cctr_freq = cpu_info_store.ci_cctr_freq;
 	ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
