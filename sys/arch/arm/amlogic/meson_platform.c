@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.2 2019/01/20 16:02:32 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.3 2019/01/21 16:27:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.2 2019/01/20 16:02:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.3 2019/01/21 16:27:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -196,6 +196,57 @@ meson_platform_device_register(device_t self, void *aux)
 		}
 	}
 }
+
+#if defined(SOC_MESON8B)
+#define	MESON8B_BOOTINFO_REG	0xd901ff04
+static int
+meson8b_get_boot_id(void)
+{
+	static int boot_id = -1;
+	bus_space_tag_t bst = &arm_generic_bs_tag;
+	bus_space_handle_t bsh;
+
+	if (boot_id == -1) {
+		if (bus_space_map(bst, MESON8B_BOOTINFO_REG, 4, 0, &bsh) != 0)
+			return -1;
+
+		boot_id = (int)bus_space_read_4(bst, bsh, 0);
+
+		bus_space_unmap(bst, bsh, 4);
+	}
+
+	return boot_id;
+}
+
+static void
+meson8b_platform_device_register(device_t self, void *aux)
+{
+	device_t parent = device_parent(self);
+	char *ptr;
+
+	if (device_is_a(self, "ld") &&
+	    device_is_a(parent, "sdmmc") &&
+	    (device_is_a(device_parent(parent), "mesonsdhc") ||
+	     device_is_a(device_parent(parent), "mesonsdio"))) {
+
+		const int boot_id = meson8b_get_boot_id();
+		const bool has_rootdev = get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr) != 0;
+
+		if (!has_rootdev) {
+			char rootarg[64];
+			snprintf(rootarg, sizeof(rootarg), " root=%sa", device_xname(self));
+
+			/* Assume that SDIO is used for SD cards and SDHC is used for eMMC */
+			if (device_is_a(device_parent(parent), "mesonsdhc") && boot_id == 0)
+				strcat(boot_args, rootarg);
+			else if (device_is_a(device_parent(parent), "mesonsdio") && boot_id != 0)
+				strcat(boot_args, rootarg);
+		}
+	}
+			
+	meson_platform_device_register(self, aux);
+}
+#endif
 
 static u_int
 meson_platform_uart_freq(void)
@@ -386,7 +437,7 @@ static const struct arm_platform meson8b_platform = {
 	.ap_devmap = meson_platform_devmap,
 	.ap_bootstrap = meson8b_platform_bootstrap,
 	.ap_init_attach_args = meson_platform_init_attach_args,
-	.ap_device_register = meson_platform_device_register,
+	.ap_device_register = meson8b_platform_device_register,
 	.ap_reset = meson_platform_reset,
 	.ap_delay = a9tmr_delay,
 	.ap_uart_freq = meson_platform_uart_freq,
