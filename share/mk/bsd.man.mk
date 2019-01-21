@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.119 2017/07/14 17:30:31 jmcneill Exp $
+#	$NetBSD: bsd.man.mk,v 1.120 2019/01/21 21:11:54 christos Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -90,7 +90,7 @@ realall:	${MANPAGES}
 
 ${_MSECTIONS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
 	${_MKTARGET_FORMAT}
-	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}
 .endif # !empty(MANSUFFIX)
 
 .for F in ${MANPAGES:S/${MANSUFFIX}$//:O:u}
@@ -148,17 +148,17 @@ ${_MSECTIONS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 .if ${MKMANDOC} == yes && !defined(NOMANDOC)
 	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
 		${TOOL_MANDOC_ASCII} ${.IMPSRC} ${MANCOMPRESS} \
-		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
+		    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}; \
 	else \
 		${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
-		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
+		    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}; \
 	fi
 .elif defined(USETBL)
 	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
-	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}
 .else
 	${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
-	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}
 .endif
 
 .for F in ${CATPAGES:S/${MANSUFFIX}$//:O:u}
@@ -219,17 +219,17 @@ ${_MSECTIONS:@N@.$N.html$N@}: 				# build rule
 	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
 	    ${TOOL_MANDOC_HTML} -Oman=${HTMLLINKS},style=${HTMLSTYLE} \
 		${.IMPSRC} > ${.TARGET}.tmp && \
-		mv ${.TARGET}.tmp ${.TARGET}; \
+		${MV} ${.TARGET}.tmp ${.TARGET}; \
 	else \
 		${TOOL_ROFF_HTML} ${.IMPSRC} ${MANCOMPRESS} \
-		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
+		    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}; \
 	fi
 .elif defined(USETBL)
 	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_HTML} ${MANCOMPRESS} \
-	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}
 .else
 	${TOOL_ROFF_HTML} ${.IMPSRC} ${MANCOMPRESS} \
-	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	    > ${.TARGET}.tmp && ${MV} ${.TARGET}.tmp ${.TARGET}
 .endif
 
 .for F in ${HTMLPAGES:O:u}

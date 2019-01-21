@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.83 2016/12/21 03:00:51 christos Exp $
+#	$NetBSD: bsd.dep.mk,v 1.84 2019/01/21 21:11:54 christos Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -64,7 +64,7 @@ _MKDEP_FILEFLAGS=
 	    ${CFLAGS:M-std=*} ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
-	    mv ${.TARGET}.tmp ${.TARGET}
+	    ${MV} ${.TARGET}.tmp ${.TARGET}
 
 .m.d:
 	${_MKTARGET_CREATE}
@@ -72,7 +72,7 @@ _MKDEP_FILEFLAGS=
 	    ${OBJCFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
-	    mv ${.TARGET}.tmp ${.TARGET}
+	    ${MV} ${.TARGET}.tmp ${.TARGET}
 
 .s.d .S.d:
 	${_MKTARGET_CREATE}
@@ -80,7 +80,7 @@ _MKDEP_FILEFLAGS=
 	    ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${AFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} \
 	    ${__acpp_flags} ${.IMPSRC} && \
-	    mv ${.TARGET}.tmp ${.TARGET}
+	    ${MV} ${.TARGET}.tmp ${.TARGET}
 
 .C.d .cc.d .cpp.d .cxx.d:
 	${_MKTARGET_CREATE}
@@ -88,7 +88,7 @@ _MKDEP_FILEFLAGS=
 	    ${CXXFLAGS:M-std=*} ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
-	    mv ${.TARGET}.tmp ${.TARGET}
+	    ${MV} ${.TARGET}.tmp ${.TARGET}
 
 .endif # defined(SRCS) && !empty(SRCS)					# }
 

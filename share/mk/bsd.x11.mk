@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.127 2019/01/03 23:25:53 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.128 2019/01/21 21:11:54 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -356,7 +356,7 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,;" \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
-	mv -f ${.TARGET}.tmp ${.TARGET}
+	${MV} ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif

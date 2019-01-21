@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.80 2018/05/04 14:50:40 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.81 2019/01/21 21:11:54 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.hostinit.mk>
@@ -165,7 +165,7 @@ ${TARGETS}:	# ensure existence
 	echo '#include "nbtool_config.h"' >> ${.TARGET}.1
 	echo '#endif' >> ${.TARGET}.1
 	cat ${.TARGET} >> ${.TARGET}.1
-	mv ${.TARGET}.1 ${.TARGET}
+	${MV} ${.TARGET}.1 ${.TARGET}
 .y.c:
 	${_MKTARGET_YACC}
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
@@ -173,4 +173,4 @@ ${TARGETS}:	# ensure existence
 	echo '#include "nbtool_config.h"' >> ${.TARGET}.1
 	echo '#endif' >> ${.TARGET}.1
 	cat ${.TARGET} >> ${.TARGET}.1
-	mv ${.TARGET}.1 ${.TARGET}
+	${MV} ${.TARGET}.1 ${.TARGET}
