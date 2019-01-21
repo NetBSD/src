@@ -1,4 +1,4 @@
-# $NetBSD: t_sleep.sh,v 1.1 2012/03/30 09:27:10 jruoho Exp $
+# $NetBSD: t_sleep.sh,v 1.2 2019/01/21 13:19:18 kre Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,13 @@ fraction_body() {
 	atf_check -s exit:0 -o empty -e empty -x "sleep 0.1"
 	atf_check -s exit:0 -o empty -e empty -x "sleep 0.2"
 	atf_check -s exit:0 -o empty -e empty -x "sleep 0.3"
+
+	# check that '.' as the radix works, even when the
+	# locale is one which uses something different
+	atf_check -s exit:0 -o empty -e empty -x "LC_ALL=ru_RU.UTF-8 sleep 0.2"
+
+	# and that it is possible to use the locale's radix char (',' here)
+	atf_check -s exit:0 -o empty -e empty -x "LC_ALL=ru_RU.UTF-8 sleep 0,2"
 }
 
 atf_test_case hex
@@ -49,6 +56,8 @@ hex_head() {
 hex_body() {
 
 	atf_check -s exit:0 -o empty -e empty -x "sleep 0x01"
+	atf_check -s exit:0 -o empty -e empty -x "sleep 0x0.F"
+	atf_check -s exit:0 -o empty -e empty -x "sleep 0x.B"
 }
 
 atf_test_case nonnumeric
@@ -62,6 +71,17 @@ nonnumeric_body() {
 	atf_check -s not-exit:0 -o empty -e not-empty -x "sleep xyz"
 	atf_check -s not-exit:0 -o empty -e not-empty -x "sleep x21"
 	atf_check -s not-exit:0 -o empty -e not-empty -x "sleep  /3"
+	atf_check -s not-exit:0 -o empty -e not-empty -x "sleep 3+1"
+	atf_check -s not-exit:0 -o empty -e not-empty -x "sleep 0xFG"
+
+	# This includes using an invalid radix char for the locale in use
+	atf_check -s not-exit:0 -o empty -e not-empty -x "LC_ALL=C sleep 3,1"
+
+	# no arg at all (that's non-numeric, right?)
+	atf_check -s not-exit:0 -o empty -e not-empty -x "sleep"
+
+	# and giving 2 or more args is also invalid, even if they are numeric
+	atf_check -s not-exit:0 -o empty -e not-empty -x "sleep 1 2"
 }
 
 atf_init_test_cases() {
