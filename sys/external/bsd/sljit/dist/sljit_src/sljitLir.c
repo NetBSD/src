@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitLir.c,v 1.6 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitLir.c,v 1.7 2019/01/21 00:07:10 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -30,9 +30,11 @@
 
 #if !(defined SLJIT_STD_MACROS_DEFINED && SLJIT_STD_MACROS_DEFINED)
 
+#ifndef _KERNEL
 /* These libraries are needed for the macros below. */
 #include <stdlib.h>
 #include <string.h>
+#endif
 
 #endif /* SLJIT_STD_MACROS_DEFINED */
 
