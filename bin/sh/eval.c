@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.169 2019/01/09 10:57:43 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.170 2019/01/21 14:18:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.169 2019/01/09 10:57:43 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.170 2019/01/21 14:18:59 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1031,7 +1031,28 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			cmdentry.cmdtype = CMDBUILTIN;
 	}
 
-	if (traps_invalid && cmdentry.cmdtype != CMDSPLBLTIN)
+	/*
+	 * When traps are invalid, we permit the following:
+	 *	trap
+	 *	command trap
+	 *	eval trap
+	 *	command eval trap
+	 *	eval command trap
+	 * without zapping the traps completely, in all other cases we do.
+	 *
+	 * The test here permits eval "anything" but when evalstring() comes
+	 * back here again, the "anything" will be validated.
+	 * This means we can actually do:
+	 *	eval eval eval command eval eval command trap
+	 * as long as we end up with just "trap"
+	 *
+	 * We permit "command" by allowing CMDBUILTIN as well as CMDSPLBLTIN
+	 *
+	 * trapcmd() takes care of doing free_traps() if it is needed there.
+	 */
+	if (traps_invalid &&
+	    ((cmdentry.cmdtype!=CMDSPLBLTIN && cmdentry.cmdtype!=CMDBUILTIN) ||
+	     (cmdentry.u.bltin != trapcmd && cmdentry.u.bltin != evalcmd)))
 		free_traps();
 
 	/* Fork off a child process if necessary. */
