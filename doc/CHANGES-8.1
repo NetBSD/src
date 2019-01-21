@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.91 2019/01/20 15:35:24 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.92 2019/01/21 20:12:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2262,4 +2262,9 @@ sys/external/bsd/drm2/pci/drm_pci.c		1.32
 
 	Don't try to interpret the second half of a 64-bit BAR as another one.
 	[dholland, ticket #1165]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.74
+
+	Don't call xennet_softstart from hard interrupt; schedule softint.
+	[bouyer, ticket #1166]
 
