@@ -1,6 +1,5 @@
-#	$NetBSD: mk.bcm53xx,v 1.5 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: mk.bcm53xx,v 1.6 2019/01/21 07:26:14 skrll Exp $
 CPPFLAGS+= -mcpu=cortex-a9 -mfpu=neon
-#CPPFLAGS+= -mabi=aapcs-linux -Wa,-meabi=5
 
 .if !empty(MACHINE_ARCH:M*eb)
 EXTRA_LINKFLAGS+=	--be8
