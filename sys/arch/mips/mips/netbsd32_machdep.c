@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.15.2.10 2019/01/14 13:34:26 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.15.2.11 2019/01/21 06:49:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15.2.10 2019/01/14 13:34:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15.2.11 2019/01/21 06:49:27 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -309,7 +309,7 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 
 struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
  
-MODULE_CALL_VOID_HOOK_DECL(netbsd32_sendsig_hook,
+MODULE_CALL_HOOK_DECL(netbsd32_sendsig_hook, void,
     (const ksiginfo_t *ksi, const sigset_t *mask));
 MODULE_CALL_VOID_HOOK(netbsd32_sendsig_hook,
     (const ksiginfo_t *ksi, const sigset_t *mask), (ksi, mask),  

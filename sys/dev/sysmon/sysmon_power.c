@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.58.2.7 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.58.2.8 2019/01/21 06:49:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58.2.7 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58.2.8 2019/01/21 06:49:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -318,7 +318,7 @@ sysmon_power_event_queue_flush(void)
 /*
  * Call the compat hook function
  */
-MODULE_CALL_VOID_HOOK_DECL(compat_sysmon_power_40_hook,
+MODULE_CALL_HOOK_DECL(compat_sysmon_power_40_hook, void,
     (power_event_t *pev, struct sysmon_pswitch *pswitch, int event));
 MODULE_CALL_VOID_HOOK(compat_sysmon_power_40_hook,
     (power_event_t *pev, struct sysmon_pswitch *pswitch, int event),
