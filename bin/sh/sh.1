@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.216 2018/12/12 20:22:43 kre Exp $
+.\"	$NetBSD: sh.1,v 1.217 2019/01/21 14:09:24 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -4254,6 +4254,14 @@ This is also how the initial seed is generated, if none has been
 assigned before
 .Ev RANDOM
 is first accessed after shell initialization.
+Should the error message
+.Dq "RANDOM initialisation failed"
+appear on standard error, it indicates that the source
+of good random numbers was not available, and
+.Ev RANDOM
+has instead been seeded with a more predictable value.
+The following sequence of random numbers will
+not be as unpredictable as they otherwise would be.
 .It Ev SECONDS
 Returns the number of seconds since the current shell was started.
 If unset, it remains unset, and returns nothing, unless set again.
