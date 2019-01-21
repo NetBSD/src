@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.318 2018/08/12 11:50:51 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.319 2019/01/21 21:11:54 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -53,7 +53,7 @@ CLEANFILES+=strings
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.cc
+	@${MV} x.c x.cc
 	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
