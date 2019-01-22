@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_de2_ccu.c,v 1.1 2019/01/22 20:17:36 jmcneill Exp $ */
+/* $NetBSD: sunxi_de2_ccu.c,v 1.2 2019/01/22 21:45:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.1 2019/01/22 20:17:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.2 2019/01/22 21:45:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,18 +103,37 @@ sunxi_de2_ccu_attach(device_t parent, device_t self, void *aux)
 {
 	struct sunxi_ccu_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	const struct sunxi_de2_ccu_config *conf;
+	struct clk *clk_bus, *clk_mod;
+	struct fdtbus_reset *rst;
 
 	sc->sc_dev = self;
-	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 
-	conf = (void *)of_search_compatible(faa->faa_phandle, compat_data)->data;
+	conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_resets = conf->resets;
 	sc->sc_nresets = conf->nresets;
 	sc->sc_clks = conf->clks;
 	sc->sc_nclks = conf->nclks;
+
+	clk_bus = fdtbus_clock_get(phandle, "bus");
+	if (clk_bus == NULL || clk_enable(clk_bus) != 0) {
+		aprint_error(": couldn't enable bus clock\n");
+		return;
+	}
+	clk_mod = fdtbus_clock_get(phandle, "mod");
+	if (clk_mod == NULL || clk_enable(clk_mod) != 0) {
+		aprint_error(": couldn't enable mod clock\n");
+		return;
+	}
+	rst = fdtbus_reset_get_index(phandle, 0);
+	if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
+		aprint_error(": couldn't de-assert reset\n");
+		return;
+	}
 
 	if (sunxi_ccu_attach(sc) != 0)
 		return;
