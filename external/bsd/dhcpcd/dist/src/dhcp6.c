@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -1516,6 +1516,7 @@ dhcp6_dadcallback(void *arg)
 				if (valid)
 					dhcpcd_daemonise(ifp->ctx);
 			}
+			ipv6nd_advertise(ia);
 		}
 	}
 }
@@ -3194,7 +3195,7 @@ dhcp6_recvif(struct interface *ifp, struct dhcp6_message *r, size_t len)
 	ctx = ifp->ctx;
 	state = D6_STATE(ifp);
 	if (state == NULL || state->send == NULL) {
-		logdebug("%s: DHCPv6 reply received but not running",
+		logdebugx("%s: DHCPv6 reply received but not running",
 		    ifp->name);
 		return;
 	}
@@ -3299,14 +3300,24 @@ dhcp6_recvif(struct interface *ifp, struct dhcp6_message *r, size_t len)
 			if (dhcp6_validatelease(ifp, r, len,
 			    ctx->sfrom, NULL) == -1)
 			{
-#ifndef SMALL
-				/* PD doesn't use CONFIRM, so REBIND could
-				 * throw up an invalid prefix if we
-				 * changed link */
-				if (state->state == DH6S_REBIND &&
-				    dhcp6_hasprefixdelegation(ifp))
+				/*
+				 * If we can't use the lease, fallback to
+				 * DISCOVER and try and get a new one.
+				 *
+				 * This is needed become some servers
+				 * renumber the prefix or address
+				 * and deny the current one before it expires
+				 * rather than sending it back with a zero
+				 * lifetime along with the new prefix or
+				 * address to use.
+				 * This behavior is wrong, but moving to the
+				 * DISCOVER phase works around it.
+				 *
+				 * The currently held lease is still valid
+				 * until a new one is found.
+				 */
+				if (state->state != DH6S_DISCOVER)
 					dhcp6_startdiscover(ifp);
-#endif
 				return;
 			}
 			if (state->state == DH6S_DISCOVER)
@@ -3538,11 +3549,12 @@ dhcp6_recv(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	}
 
 	if (r->type == DHCP6_RECONFIGURE) {
-		logdebugx("%s: RECONFIGURE recv from %s,"
+		logdebugx("%s: RECONFIGURE6 recv from %s,"
 		    " sending to all interfaces",
 		    ifp->name, ctx->sfrom);
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-			if (D6_CSTATE(ifp) != NULL)
+			state = D6_CSTATE(ifp);
+			if (state != NULL && state->send != NULL)
 				dhcp6_recvif(ifp, r, len);
 		}
 		return;
@@ -3620,11 +3632,6 @@ dhcp6_listen(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &n, sizeof(n)) == -1)
 		goto errexit;
 
-#ifdef SO_RERROR
-	n = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_RERROR, &n, sizeof(n)) == -1)
-		goto errexit;
-#endif
 	memset(&sa, 0, sizeof(sa));
 	sa.sin6_family = AF_INET6;
 	sa.sin6_port = htons(DHCP6_CLIENT_PORT);
@@ -3944,6 +3951,21 @@ dhcp6_dropnondelegates(struct interface *ifp)
 
 	loginfox("%s: dropping DHCPv6 due to no valid routers", ifp->name);
 	dhcp6_drop(ifp, "EXPIRE6");
+}
+
+void
+dhcp6_abort(struct interface *ifp)
+{
+	struct dhcp6_state *state;
+	struct ipv6_addr *ia;
+
+	eloop_timeout_delete(ifp->ctx->eloop, dhcp6_start1, ifp);
+	state = D6_STATE(ifp);
+	if (state == NULL)
+		return;
+	TAILQ_FOREACH(ia, &state->addrs, next) {
+		ipv6nd_advertise(ia);
+	}
 }
 
 void
