@@ -765,7 +765,9 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #ifdef NOCARRIER_PRESERVE_IP
 					dhcpcd_drop(ifp, 0);
 #endif
+#ifdef IPV4LL
 					ipv4ll_reset(ifp);
+#endif
 				}
 			}
 			dhcpcd_initstate(ifp, 0);
