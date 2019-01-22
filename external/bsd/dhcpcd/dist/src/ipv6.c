@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -626,31 +626,18 @@ ipv6_deleteaddr(struct ipv6_addr *ia)
 			break;
 		}
 	}
+
+	/* Advertise the address if it exists on another interface. */
+	ipv6nd_advertise(ia);
 }
 
 static int
 ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 {
 	struct interface *ifp;
-	struct ipv6_state *state;
-	struct ipv6_addr *ia2;
 	uint32_t pltime, vltime;
+	bool vltime_was_zero;
 	__printflike(1, 2) void (*logfunc)(const char *, ...);
-
-	/* Ensure no other interface has this address */
-	TAILQ_FOREACH(ifp, ia->iface->ctx->ifaces, next) {
-		if (ifp == ia->iface)
-			continue;
-		state = IPV6_STATE(ifp);
-		if (state == NULL)
-			continue;
-		TAILQ_FOREACH(ia2, &state->addrs, next) {
-			if (IN6_ARE_ADDR_EQUAL(&ia2->addr, &ia->addr)) {
-				ipv6_deleteaddr(ia2);
-				break;
-			}
-		}
-	}
 
 	/* Remember the interface of the address. */
 	ifp = ia->iface;
@@ -714,7 +701,7 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 		    " seconds",
 		    ifp->name, ia->prefix_pltime, ia->prefix_vltime);
 
-
+	vltime_was_zero = ia->prefix_vltime == 0;
 	if (if_address6(RTM_NEWADDR, ia) == -1) {
 		logerr(__func__);
 		/* Restore real pltime and vltime */
@@ -777,6 +764,10 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 		TAILQ_INSERT_TAIL(&state->addrs, ia2, next);
 	}
 #endif
+
+	/* Re-advertise the preferred address to be safe. */
+	if (!vltime_was_zero)
+		ipv6nd_advertise(ia);
 
 	return 0;
 }
@@ -909,7 +900,7 @@ ipv6_findaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr, unsigned int 
 ssize_t
 ipv6_addaddrs(struct ipv6_addrhead *addrs)
 {
-	struct ipv6_addr *ap, *apn, *apf;
+	struct ipv6_addr *ap, *apn;
 	ssize_t i;
 	struct timespec now;
 
@@ -935,27 +926,6 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 		} else if (!(ap->flags & IPV6_AF_STALE) &&
 		    !IN6_IS_ADDR_UNSPECIFIED(&ap->addr))
 		{
-			apf = ipv6_findaddr(ap->iface->ctx,
-			    &ap->addr, IPV6_AF_ADDED);
-			if (apf && apf->iface != ap->iface) {
-				if (apf->iface->metric <= ap->iface->metric) {
-					loginfox("%s: preferring %s on %s",
-					    ap->iface->name,
-					    ap->saddr,
-					    apf->iface->name);
-					continue;
-				}
-				loginfox("%s: preferring %s on %s",
-				    apf->iface->name,
-				    ap->saddr,
-				    ap->iface->name);
-				if (if_address6(RTM_DELADDR, apf) == -1 &&
-				    errno != EADDRNOTAVAIL && errno != ENXIO)
-					logerr(__func__);
-				apf->flags &=
-				    ~(IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED);
-			} else if (apf)
-				apf->flags &= ~IPV6_AF_ADDED;
 			if (ap->flags & IPV6_AF_NEW)
 				i++;
 			if (!timespecisset(&now))
@@ -989,6 +959,7 @@ ipv6_freeaddr(struct ipv6_addr *ia)
 	}
 
 	eloop_q_timeout_delete(ia->iface->ctx->eloop, 0, NULL, ia);
+	free(ia->na);
 	free(ia);
 }
 
@@ -1108,6 +1079,9 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 	case RTM_DELADDR:
 		if (ia != NULL) {
 			TAILQ_REMOVE(&state->addrs, ia, next);
+			/* Advertise the address if it exists on
+			 * another interface. */
+			ipv6nd_advertise(ia);
 			/* We'll free it at the end of the function. */
 		}
 		break;
@@ -2177,13 +2151,11 @@ inet6_makeprefix(struct interface *ifp, const struct ra *rap,
 	}
 
 	/* There is no point in trying to manage a /128 prefix,
-	 * ones without a lifetime or ones not on link or delegated */
-	if (addr->prefix_len == 128 ||
-	    addr->prefix_vltime == 0 ||
-	    !(addr->flags & (IPV6_AF_ONLINK | IPV6_AF_DELEGATEDPFX)))
+	 * ones without a lifetime.  */
+	if (addr->prefix_len == 128 || addr->prefix_vltime == 0)
 		return NULL;
 
-	/* Don't install a reject route when not creating bigger prefixes */
+	/* Don't install a reject route when not creating bigger prefixes. */
 	if (addr->flags & IPV6_AF_NOREJECT)
 		return NULL;
 
@@ -2215,7 +2187,9 @@ inet6_makeprefix(struct interface *ifp, const struct ra *rap,
 #ifndef __linux__
 		sa_in6_init(&rt->rt_gateway, &in6addr_loopback);
 #endif
-	} else
+	} else if (!(addr->flags & IPV6_AF_ONLINK))
+		sa_in6_init(&rt->rt_gateway, &rap->from);
+	else
 		rt->rt_gateway.sa_family = AF_UNSPEC;
 	sa_in6_init(&rt->rt_ifa, &addr->addr);
 	return rt;
