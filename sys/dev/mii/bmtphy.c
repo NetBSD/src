@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.32 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.32 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,8 @@ bmtphyattach(device_t parent, device_t self, void *aux)
 	 * XXX Check AUX_STS_FX_MODE to set MIIF_HAVE_FIBER?
 	 */
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -164,7 +165,7 @@ static int
 bmtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -181,7 +182,7 @@ bmtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
@@ -224,17 +225,18 @@ bmtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, aux_csr;
+	uint16_t bmsr, bmcr, aux_csr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -255,7 +257,7 @@ bmtphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		aux_csr = PHY_READ(sc, MII_BMTPHY_AUX_CSR);
+		PHY_READ(sc, MII_BMTPHY_AUX_CSR, &aux_csr);
 		if (aux_csr & AUX_CSR_SPEED)
 			mii->mii_media_active |= IFM_100_TX;
 		else
@@ -274,25 +276,25 @@ bmtphy_status(struct mii_softc *sc)
 static void
 bmtphy_reset(struct mii_softc *sc)
 {
-	u_int16_t data;
+	uint16_t data;
 
 	mii_phy_reset(sc);
 
 	if (sc->mii_mpd_model == MII_MODEL_xxBROADCOM_BCM5221) {
 		/* Enable shadow register mode */
-		data = PHY_READ(sc, 0x1f);
+		PHY_READ(sc, 0x1f, &data);
 		PHY_WRITE(sc, 0x1f, data | 0x0080);
 
 		/* Enable APD (Auto PowerDetect) */
-		data = PHY_READ(sc, MII_BMTPHY_AUX2);
+		PHY_READ(sc, MII_BMTPHY_AUX2, &data);
 		PHY_WRITE(sc, MII_BMTPHY_AUX2, data | 0x0020);
 
 		/* Enable clocks across APD for Auto-MDIX functionality */
-		data = PHY_READ(sc, MII_BMTPHY_INTR);
+		PHY_READ(sc, MII_BMTPHY_INTR, &data);
 		PHY_WRITE(sc, MII_BMTPHY_INTR, data | 0x0004);
 
 		/* Disable shadow register mode */
-		data = PHY_READ(sc, 0x1f);
+		PHY_READ(sc, 0x1f, &data);
 		PHY_WRITE(sc, 0x1f, data & ~0x0080);
 	}
 }

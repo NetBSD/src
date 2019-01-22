@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.52 2018/11/16 15:06:23 jmcneill Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.53 2019/01/22 03:42:27 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.52 2018/11/16 15:06:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.53 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -267,8 +267,8 @@ static int mvgbec_print(void *, const char *);
 static int mvgbec_search(device_t, cfdata_t, const int *, void *);
 
 /* MII funcstions */
-static int mvgbec_miibus_readreg(device_t, int, int);
-static void mvgbec_miibus_writereg(device_t, int, int, int);
+static int mvgbec_miibus_readreg(device_t, int, int, uint16_t *);
+static int mvgbec_miibus_writereg(device_t, int, int, uint16_t);
 static void mvgbec_miibus_statchg(struct ifnet *);
 
 static void mvgbec_wininit(struct mvgbec_softc *, enum marvell_tags *);
@@ -516,13 +516,13 @@ mvgbec_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 }
 
 static int
-mvgbec_miibus_readreg(device_t dev, int phy, int reg)
+mvgbec_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct mvgbe_softc *sc = device_private(dev);
 	struct mvgbec_softc *csc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t smi, val;
-	int i;
+	uint32_t smi;
+	int i, rv = 0;
 
 	if (mvgbec0 == NULL) {
 		aprint_error_ifnet(ifp, "SMI mvgbec0 not found\n");
@@ -539,8 +539,8 @@ mvgbec_miibus_readreg(device_t dev, int phy, int reg)
 	}
 	if (i == MVGBE_PHY_TIMEOUT) {
 		aprint_error_ifnet(ifp, "SMI busy timeout\n");
-		mutex_exit(&csc->sc_mtx);
-		return -1;
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
 	smi =
@@ -550,35 +550,37 @@ mvgbec_miibus_readreg(device_t dev, int phy, int reg)
 	for (i = 0; i < MVGBE_PHY_TIMEOUT; i++) {
 		DELAY(1);
 		smi = MVGBE_READ(csc, MVGBE_SMI);
-		if (smi & MVGBE_SMI_READVALID)
+		if (smi & MVGBE_SMI_READVALID) {
+			*val = smi & MVGBE_SMI_DATA_MASK;
 			break;
+		}
 	}
-
-	mutex_exit(&csc->sc_mtx);
-
 	DPRINTFN(9, ("mvgbec_miibus_readreg: i=%d, timeout=%d\n",
 	    i, MVGBE_PHY_TIMEOUT));
+	if (i >= MVGBE_PHY_TIMEOUT)
+		rv = ETIMEDOUT;
 
-	val = smi & MVGBE_SMI_DATA_MASK;
+out:
+	mutex_exit(&csc->sc_mtx);
 
-	DPRINTFN(9, ("mvgbec_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
-	    phy, reg, val));
+	DPRINTFN(9, ("mvgbec_miibus_readreg phy=%d, reg=%#x, val=%#hx\n",
+	    phy, reg, *val));
 
-	return val;
+	return rv;
 }
 
-static void
-mvgbec_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+mvgbec_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct mvgbe_softc *sc = device_private(dev);
 	struct mvgbec_softc *csc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t smi;
-	int i;
+	int i, rv = 0;
 
 	if (mvgbec0 == NULL) {
 		aprint_error_ifnet(ifp, "SMI mvgbec0 not found\n");
-		return;
+		return -1;
 	}
 	csc = device_private(mvgbec0);
 
@@ -594,8 +596,8 @@ mvgbec_miibus_writereg(device_t dev, int phy, int reg, int val)
 	}
 	if (i == MVGBE_PHY_TIMEOUT) {
 		aprint_error_ifnet(ifp, "SMI busy timeout\n");
-		mutex_exit(&csc->sc_mtx);
-		return;
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
 	smi = MVGBE_SMI_PHYAD(phy) | MVGBE_SMI_REGAD(reg) |
@@ -608,10 +610,15 @@ mvgbec_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
+out:
 	mutex_exit(&csc->sc_mtx);
 
-	if (i == MVGBE_PHY_TIMEOUT)
+	if (i == MVGBE_PHY_TIMEOUT) {
 		aprint_error_ifnet(ifp, "phy write timed out\n");
+		rv = ETIMEDOUT;
+	}
+
+	return rv;
 }
 
 static void

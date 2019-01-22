@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.20 2018/10/18 13:33:10 martin Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.21 2019/01/22 03:42:25 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.20 2018/10/18 13:33:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.21 2019/01/22 03:42:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -204,12 +204,10 @@ struct sunxi_emac_softc {
 	bus_space_write_4((sc)->bst, (sc)->bsh, (reg), (val))
 
 static int
-sunxi_emac_mii_readreg(device_t dev, int phy, int reg)
+sunxi_emac_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct sunxi_emac_softc *sc = device_private(dev);
-	int retry, val;
-
-	val = 0;
+	int retry;
 
 	WR4(sc, EMAC_MII_CMD,
 	    (sc->mdc_div_ratio_m << MDC_DIV_RATIO_M_SHIFT) |
@@ -218,21 +216,23 @@ sunxi_emac_mii_readreg(device_t dev, int phy, int reg)
 	    MII_BUSY);
 	for (retry = MII_BUSY_RETRY; retry > 0; retry--) {
 		if ((RD4(sc, EMAC_MII_CMD) & MII_BUSY) == 0) {
-			val = RD4(sc, EMAC_MII_DATA);
+			*val = RD4(sc, EMAC_MII_DATA) & 0xffff;
 			break;
 		}
 		delay(10);
 	}
 
-	if (retry == 0)
+	if (retry == 0) {
 		device_printf(dev, "phy read timeout, phy=%d reg=%d\n",
 		    phy, reg);
+		return ETIMEDOUT;
+	}
 
-	return val;
+	return 0;
 }
 
-static void
-sunxi_emac_mii_writereg(device_t dev, int phy, int reg, int val)
+static int
+sunxi_emac_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct sunxi_emac_softc *sc = device_private(dev);
 	int retry;
@@ -249,9 +249,13 @@ sunxi_emac_mii_writereg(device_t dev, int phy, int reg, int val)
 		delay(10);
 	}
 
-	if (retry == 0)
+	if (retry == 0) {
 		device_printf(dev, "phy write timeout, phy=%d reg=%d\n",
 		    phy, reg);
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 static void

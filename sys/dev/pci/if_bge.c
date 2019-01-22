@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.321 2019/01/16 07:32:13 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.322 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.321 2019/01/16 07:32:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.322 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,8 +250,8 @@ static void bge_writemem_direct(struct bge_softc *, int, int);
 static void bge_writereg_ind(struct bge_softc *, int, int);
 static void bge_set_max_readrq(struct bge_softc *);
 
-static int bge_miibus_readreg(device_t, int, int);
-static void bge_miibus_writereg(device_t, int, int, int);
+static int bge_miibus_readreg(device_t, int, int, uint16_t *);
+static int bge_miibus_writereg(device_t, int, int, uint16_t);
 static void bge_miibus_statchg(struct ifnet *);
 
 #define BGE_RESET_SHUTDOWN	0
@@ -1333,15 +1333,16 @@ bge_read_eeprom(struct bge_softc *sc, void *destv, int off, int cnt)
 }
 
 static int
-bge_miibus_readreg(device_t dev, int phy, int reg)
+bge_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct bge_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	uint32_t autopoll;
+	int rv = 0;
 	int i;
 
 	if (bge_ape_lock(sc, sc->bge_phy_ape_lock) != 0)
-		return 0;
+		return -1;
 
 	/* Reading with autopolling on may trigger PCI errors */
 	autopoll = CSR_READ_4(sc, BGE_MI_MODE);
@@ -1356,21 +1357,22 @@ bge_miibus_readreg(device_t dev, int phy, int reg)
 
 	for (i = 0; i < BGE_TIMEOUT; i++) {
 		delay(10);
-		val = CSR_READ_4(sc, BGE_MI_COMM);
-		if (!(val & BGE_MICOMM_BUSY)) {
+		data = CSR_READ_4(sc, BGE_MI_COMM);
+		if (!(data & BGE_MICOMM_BUSY)) {
 			DELAY(5);
-			val = CSR_READ_4(sc, BGE_MI_COMM);
+			data = CSR_READ_4(sc, BGE_MI_COMM);
 			break;
 		}
 	}
 
 	if (i == BGE_TIMEOUT) {
 		aprint_error_dev(sc->bge_dev, "PHY read timed out\n");
-		val = 0;
-		goto done;
-	}
+		rv = ETIMEDOUT;
+	} else if ((data & BGE_MICOMM_READFAIL) != 0)
+		rv = -1;
+	else
+		*val = data & BGE_MICOMM_DATA;
 
-done:
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
 		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_SETBIT_FLUSH(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL);
@@ -1379,14 +1381,11 @@ done:
 
 	bge_ape_unlock(sc, sc->bge_phy_ape_lock);
 
-	if (val & BGE_MICOMM_READFAIL)
-		return 0;
-
-	return (val & 0xFFFF);
+	return rv;
 }
 
-static void
-bge_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct bge_softc *sc = device_private(dev);
 	uint32_t autopoll;
@@ -1394,10 +1393,10 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 &&
 	    (reg == MII_GTCR || reg == BRGPHY_MII_AUXCTL))
-		return;
+		return 0;
 
 	if (bge_ape_lock(sc, sc->bge_phy_ape_lock) != 0)
-		return;
+		return -1;
 
 	/* Reading with autopolling on may trigger PCI errors */
 	autopoll = CSR_READ_4(sc, BGE_MI_MODE);
@@ -1427,8 +1426,12 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 
 	bge_ape_unlock(sc, sc->bge_phy_ape_lock);
 
-	if (i == BGE_TIMEOUT)
+	if (i == BGE_TIMEOUT) {
 		aprint_error_dev(sc->bge_dev, "PHY read timed out\n");
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 static void
@@ -6213,6 +6216,7 @@ bge_link_upd(struct bge_softc *sc)
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	struct mii_data *mii = &sc->bge_mii;
 	uint32_t status;
+	uint16_t phyval;
 	int link;
 
 	/* Clear 'pending link event' flag */
@@ -6248,7 +6252,7 @@ bge_link_upd(struct bge_softc *sc)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 			bge_miibus_readreg(sc->bge_dev, sc->bge_phy_addr,
-			    BRGPHY_MII_ISR);
+			    BRGPHY_MII_ISR, &phyval);
 			bge_miibus_writereg(sc->bge_dev, sc->bge_phy_addr,
 			    BRGPHY_MII_IMR, BRGPHY_INTRS);
 		}

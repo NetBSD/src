@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.38 2018/09/08 13:10:08 mlelstv Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.39 2019/01/22 03:42:28 msaitoh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.38 2018/09/08 13:10:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.39 2019/01/22 03:42:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -176,8 +176,8 @@ void		 smsc_tick(void *);
 void		 smsc_tick_task(void *);
 void		 smsc_miibus_statchg(struct ifnet *);
 void		 smsc_miibus_statchg_locked(struct ifnet *);
-int		 smsc_miibus_readreg(device_t, int, int);
-void		 smsc_miibus_writereg(device_t, int, int, int);
+int		 smsc_miibus_readreg(device_t, int, int, uint16_t *);
+int		 smsc_miibus_writereg(device_t, int, int, uint16_t);
 int		 smsc_ifmedia_upd(struct ifnet *);
 void		 smsc_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void		 smsc_lock_mii(struct smsc_softc *);
@@ -261,46 +261,51 @@ smsc_wait_for_bits(struct smsc_softc *sc, uint32_t reg, uint32_t bits)
 }
 
 int
-smsc_miibus_readreg(device_t dev, int phy, int reg)
+smsc_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct smsc_softc * const sc = device_private(dev);
 	uint32_t addr;
-	uint32_t val = 0;
+	uint32_t data = 0;
+	int rv = 0;
 
 	smsc_lock_mii(sc);
 	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(sc, "MII is busy\n");
+		rv = -1;
 		goto done;
 	}
 
 	addr = (phy << 11) | (reg << 6) | SMSC_MII_READ;
 	smsc_write_reg(sc, SMSC_MII_ADDR, addr);
 
-	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0)
+	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(sc, "MII read timeout\n");
+		rv = ETIMEDOUT;
+	}
 
-	smsc_read_reg(sc, SMSC_MII_DATA, &val);
+	smsc_read_reg(sc, SMSC_MII_DATA, &data);
 
 done:
 	smsc_unlock_mii(sc);
 
-	return val & 0xffff;
+	*val = data & 0xffff;
+	return rv;
 }
 
-void
-smsc_miibus_writereg(device_t dev, int phy, int reg, int val)
+int
+smsc_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct smsc_softc * const sc = device_private(dev);
 	uint32_t addr;
 
 	if (sc->sc_phyno != phy)
-		return;
+		return -1;
 
 	smsc_lock_mii(sc);
 	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(sc, "MII is busy\n");
 		smsc_unlock_mii(sc);
-		return;
+		return -1;
 	}
 
 	smsc_write_reg(sc, SMSC_MII_DATA, val);
@@ -309,8 +314,12 @@ smsc_miibus_writereg(device_t dev, int phy, int reg, int val)
 	smsc_write_reg(sc, SMSC_MII_ADDR, addr);
 	smsc_unlock_mii(sc);
 
-	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0)
+	if (smsc_wait_for_bits(sc, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(sc, "MII write timeout\n");
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 void

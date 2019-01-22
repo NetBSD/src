@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.83 2019/01/08 03:14:51 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.84 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.83 2019/01/08 03:14:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.84 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -129,7 +129,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, anar, gtcr;
+	uint16_t bmcr, anar, gtcr;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 		/*
@@ -139,7 +139,8 @@ mii_phy_setmedia(struct mii_softc *sc)
 		 * XXX advertise PAUSE capabilities at boot time.  Maybe
 		 * XXX we should force this only once?
 		 */
-		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0 ||
+		PHY_READ(sc, MII_BMCR, &bmcr);
+		if ((bmcr & BMCR_AUTOEN) == 0 ||
 		    (sc->mii_flags & (MIIF_FORCEANEG|MIIF_DOPAUSE)))
 			(void) mii_phy_auto(sc, 1);
 		return;
@@ -263,7 +264,10 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 	if (waitfor) {
 		/* Wait 500ms for it to complete. */
 		for (i = 0; i < 500; i++) {
-			if (PHY_READ(sc, MII_BMSR) & BMSR_ACOMP)
+			uint16_t bmsr;
+
+			PHY_READ(sc, MII_BMSR, &bmsr);
+			if (bmsr & BMSR_ACOMP)
 				return (0);
 			delay(1000);
 		}
@@ -315,7 +319,7 @@ mii_phy_tick(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	/* Just bail now if the interface is down. */
 	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
@@ -338,7 +342,8 @@ mii_phy_tick(struct mii_softc *sc)
 	}
 
 	/* Read the status register twice; BMSR_LINK is latch-low. */
-	reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &reg);
+	PHY_READ(sc, MII_BMSR, &reg);
 	if (reg & BMSR_LINK) {
 		/*
 		 * Reset autonegotiation timer to 0 in case the link
@@ -379,7 +384,8 @@ mii_phy_tick(struct mii_softc *sc)
 void
 mii_phy_reset(struct mii_softc *sc)
 {
-	int reg, i;
+	int i;
+	uint16_t reg;
 
 	if (sc->mii_flags & MIIF_NOISOLATE)
 		reg = BMCR_RESET;
@@ -389,7 +395,7 @@ mii_phy_reset(struct mii_softc *sc)
 
 	/* Wait another 500ms for it to complete. */
 	for (i = 0; i < 500; i++) {
-		reg = PHY_READ(sc, MII_BMCR);
+		PHY_READ(sc, MII_BMCR, &reg);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
@@ -636,13 +642,13 @@ mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
 u_int
 mii_phy_flowstatus(struct mii_softc *sc)
 {
-	u_int anar, anlpar;
+	uint16_t anar, anlpar;
 
 	if ((sc->mii_flags & MIIF_DOPAUSE) == 0)
 		return (0);
 
-	anar = PHY_READ(sc, MII_ANAR);
-	anlpar = PHY_READ(sc, MII_ANLPAR);
+	PHY_READ(sc, MII_ANAR, &anar);
+	PHY_READ(sc, MII_ANLPAR, &anlpar);
 
 	/* For 1000baseX, the bits are in a different location. */
 	if (sc->mii_flags & MIIF_IS_1000X) {

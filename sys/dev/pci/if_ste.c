@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.52 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.53 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.52 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.53 2019/01/22 03:42:27 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -215,8 +215,8 @@ static int	ste_intr(void *);
 static void	ste_txintr(struct ste_softc *);
 static void	ste_rxintr(struct ste_softc *);
 
-static int	ste_mii_readreg(device_t, int, int);
-static void	ste_mii_writereg(device_t, int, int, int);
+static int	ste_mii_readreg(device_t, int, int, uint16_t *);
+static int	ste_mii_writereg(device_t, int, int, uint16_t);
 static void	ste_mii_statchg(struct ifnet *);
 
 static int	ste_match(device_t, cfdata_t, void *);
@@ -1597,10 +1597,10 @@ ste_set_filter(struct ste_softc *sc)
  *	Read a PHY register on the MII of the ST-201.
  */
 static int
-ste_mii_readreg(device_t self, int phy, int reg)
+ste_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 
-	return (mii_bitbang_readreg(self, &ste_mii_bitbang_ops, phy, reg));
+	return mii_bitbang_readreg(self, &ste_mii_bitbang_ops, phy, reg, val);
 }
 
 /*
@@ -1608,11 +1608,11 @@ ste_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the MII of the ST-201.
  */
-static void
-ste_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+ste_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 
-	mii_bitbang_writereg(self, &ste_mii_bitbang_ops, phy, reg, val);
+	return mii_bitbang_writereg(self, &ste_mii_bitbang_ops, phy, reg, val);
 }
 
 /*

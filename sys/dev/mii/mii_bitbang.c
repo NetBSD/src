@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.13 2019/01/08 03:03:50 msaitoh Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.14 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.13 2019/01/08 03:03:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.14 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,9 +109,11 @@ mii_bitbang_sendbits(device_t sc, mii_bitbang_ops_t ops, uint32_t data,
  *	Read a PHY register by bit-bang'ing the MII.
  */
 int
-mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
+mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg,
+	uint16_t *val)
 {
-	int val = 0, err = 0, i;
+	int err = 0, i;
+	uint16_t data = 0;
 
 	mii_bitbang_sync(sc, ops);
 
@@ -135,10 +137,10 @@ mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
 	WRITE(MDIRHOST);
 
 	for (i = 0; i < 16; i++) {
-		val <<= 1;
+		data <<= 1;
 		/* Read data prior to clock low-high transition. */
 		if (err == 0 && (READ & MDI) != 0)
-			val |= 1;
+			data |= 1;
 
 		WRITE(MDIRHOST | MDC);
 		WRITE(MDIRHOST);
@@ -147,7 +149,12 @@ mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
 	/* Set direction to host->PHY, without a clock transition. */
 	WRITE(MDIRPHY);
 
-	return (err ? 0 : val);
+	if (err == 0)
+		*val = data;
+	else
+		err = -1;
+
+	return err;
 }
 
 /*
@@ -155,9 +162,9 @@ mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
  *
  *	Write a PHY register by bit-bang'ing the MII.
  */
-void
-mii_bitbang_writereg(device_t sc, mii_bitbang_ops_t ops, int phy,
-	int reg, int val)
+int
+mii_bitbang_writereg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg,
+    uint16_t val)
 {
 
 	mii_bitbang_sync(sc, ops);
@@ -170,4 +177,6 @@ mii_bitbang_writereg(device_t sc, mii_bitbang_ops_t ops, int phy,
 	mii_bitbang_sendbits(sc, ops, val, 16);
 
 	WRITE(MDIRPHY);
+
+	return 0;
 }

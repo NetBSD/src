@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.12 2019/01/11 08:30:19 msaitoh Exp $	*/
+/*	$NetBSD: emac3.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.12 2019/01/11 08:30:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -308,37 +308,39 @@ emac3_config(const u_int8_t *eaddr)
 /*
  * PHY/MII
  */
-void
-emac3_phy_writereg(device_t self, int phy, int reg, int data)
+int
+emac3_phy_writereg(device_t self, int phy, int reg, uint16_t val)
 {
+	int rv;
 
-	if (emac3_phy_ready() != 0)
-		return;
+	if ((rv = emac3_phy_ready()) != 0)
+		return rv;
 
 	_emac3_reg_write_4(EMAC3_STACR, STACR_WRITE |
 	    ((phy << STACR_PCDASHIFT) & STACR_PCDA)  | /* command dest addr*/
 	    ((reg << STACR_PRASHIFT) & STACR_PRA) |   /* register addr */
-	    ((data << STACR_PHYDSHIFT) & STACR_PHYD)); /* data */
+	    ((val << STACR_PHYDSHIFT) & STACR_PHYD)); /* data */
 
-	if (emac3_phy_ready() != 0)
-		return;
+	return emac3_phy_ready();
 }
 
 int
-emac3_phy_readreg(device_t self, int phy, int reg)
+emac3_phy_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
+	int rv;
 
-	if (emac3_phy_ready() != 0)
-		return (0);
+	if ((rv = emac3_phy_ready()) != 0)
+		return rv;
 
 	_emac3_reg_write_4(EMAC3_STACR, STACR_READ |
 	    ((phy << STACR_PCDASHIFT) & STACR_PCDA)  | /* command dest addr*/
 	    ((reg << STACR_PRASHIFT) & STACR_PRA));   /* register addr */
 
-	if (emac3_phy_ready() != 0)
-		return (0);
+	if ((rv = emac3_phy_ready()) != 0)
+		return rv;
 
-	return ((_emac3_reg_read_4(EMAC3_STACR) >> STACR_PHYDSHIFT) & 0xffff);
+	*val =(_emac3_reg_read_4(EMAC3_STACR) >> STACR_PHYDSHIFT) & 0xffff;
+	return 0;
 }
 
 void
@@ -389,7 +391,7 @@ emac3_phy_ready(void)
 		;
 	if (retry == 0) {
 		printf("emac3: phy busy.\n");
-		return (1);
+		return ETIMEDOUT;
 	}
 
 	return (0);

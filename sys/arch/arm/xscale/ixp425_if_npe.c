@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.35 2018/12/22 14:07:53 maxv Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.36 2019/01/22 03:42:25 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.35 2018/12/22 14:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.36 2019/01/22 03:42:25 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -220,8 +220,8 @@ static uint32_t	npe_getimageid(struct npe_softc *);
 static int	npe_setloopback(struct npe_softc *, int ena);
 #endif
 
-static int	npe_miibus_readreg(device_t, int, int);
-static void	npe_miibus_writereg(device_t, int, int, int);
+static int	npe_miibus_readreg(device_t, int, int, uint16_t *);
+static int	npe_miibus_writereg(device_t, int, int, uint16_t);
 static void	npe_miibus_statchg(struct ifnet *);
 
 static int	npe_debug;
@@ -1612,45 +1612,50 @@ npe_mii_mdio_wait(struct npe_softc *sc)
 	for (i = 0; i < MAXTRIES; i++) {
 		v = npe_mii_mdio_read(sc, NPE_MAC_MDIO_CMD);
 		if ((v & NPE_MII_GO) == 0)
-			return 1;
+			return 0;
 	}
-	return 0;		/* NB: timeout */
+	return ETIMEDOUT;
 #undef MAXTRIES
 }
 
 static int
-npe_miibus_readreg(device_t self, int phy, int reg)
+npe_miibus_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct npe_softc *sc = device_private(self);
 	uint32_t v;
 
 	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT && phy != sc->sc_phy)
-		return 0xffff;
+		return -1;
 	v = (phy << NPE_MII_ADDR_SHL) | (reg << NPE_MII_REG_SHL)
 	  | NPE_MII_GO;
 	npe_mii_mdio_write(sc, NPE_MAC_MDIO_CMD, v);
-	if (npe_mii_mdio_wait(sc))
+	if (npe_mii_mdio_wait(sc) == 0)
 		v = npe_mii_mdio_read(sc, NPE_MAC_MDIO_STS);
 	else
 		v = 0xffff | NPE_MII_READ_FAIL;
-	return (v & NPE_MII_READ_FAIL) ? 0xffff : (v & 0xffff);
+
+	if ((v & NPE_MII_READ_FAIL) != 0)
+		return -1;
+
+	*val = v & 0xffff;
+	return 0;
 #undef MAXTRIES
 }
 
-static void
-npe_miibus_writereg(device_t self, int phy, int reg, int data)
+static int
+npe_miibus_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct npe_softc *sc = device_private(self);
 	uint32_t v;
 
 	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT && phy != sc->sc_phy)
-		return;
+		return -1;
 	v = (phy << NPE_MII_ADDR_SHL) | (reg << NPE_MII_REG_SHL)
-	  | data | NPE_MII_WRITE
+	  | val | NPE_MII_WRITE
 	  | NPE_MII_GO;
 	npe_mii_mdio_write(sc, NPE_MAC_MDIO_CMD, v);
-	/* XXX complain about timeout */
-	(void) npe_mii_mdio_wait(sc);
+
+	return npe_mii_mdio_wait(sc);
 }
 
 static void
