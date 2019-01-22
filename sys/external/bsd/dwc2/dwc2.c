@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.56 2019/01/22 06:42:33 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.57 2019/01/22 15:02:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.56 2019/01/22 06:42:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.57 2019/01/22 15:02:34 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -341,7 +341,6 @@ dwc2_timeout_task(void *addr)
 	DPRINTF("xfer=%p\n", xfer);
 
 	mutex_enter(&sc->sc_lock);
-	KASSERT(xfer->ux_status == USBD_TIMEOUT);
 	dwc2_abort_xfer(xfer, USBD_TIMEOUT);
 	mutex_exit(&sc->sc_lock);
 }
