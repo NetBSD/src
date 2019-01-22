@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.146 2019/01/22 03:42:28 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.147 2019/01/22 06:38:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,14 +71,13 @@
  * TODO:
  * better error messages from rxstat
  * split out if_auevar.h
- * add thread to avoid register reads from interrupt context
  * more error checks
  * investigate short rx problem
  * proper cleanup on errors
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.146 2019/01/22 03:42:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.147 2019/01/22 06:38:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
