@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.28 2019/01/21 14:29:12 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.29 2019/01/22 13:48:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -179,10 +179,11 @@ extern	int		ShNest;
 #define	DBG_HISTORY	(1LL << 16)		/* h */
 #define	DBG_SIG		(1LL << 17)		/* s */
 #define	DBG_MATCH	(1LL << 18)		/* g (glob) */
+#define	DBG_LEXER	(1LL << 19)		/* l */
 
 /*
- * reserved extras: b=builtins l=alias
- * still free:  d k n q u y
+ * reserved extras: b=builtins y=alias
+ * still free:  d k n q u
  */
 
 	/* use VTRACE(DBG_ALWAYS, (...)) to test this one */
