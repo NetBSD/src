@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.110 2019/01/18 06:04:10 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.111 2019/01/22 05:32:57 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20190116"
+#define SERVER_SOFTWARE		"bozohttpd/20190121"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -140,7 +140,6 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <strings.h>
 #include <string.h>
 #include <syslog.h>
@@ -1461,7 +1460,7 @@ check_bzredirect(bozo_httpreq_t *request)
 		*basename++ = '\0';
 		strcpy(path, dir);
 	}
-	if (bozo_check_special_files(request, basename))
+	if (bozo_check_special_files(request, basename, true))
 		return -1;
 
 	debug((httpd, DEBUG_FAT, "check_bzredirect: path %s", path));
@@ -1913,17 +1912,24 @@ bozo_process_request(bozo_httpreq_t *request)
 
 /* make sure we're not trying to access special files */
 int
-bozo_check_special_files(bozo_httpreq_t *request, const char *name)
+bozo_check_special_files(bozo_httpreq_t *request, const char *name, bool doerror)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 	size_t i;
+	int error = 0;
 
-	for (i = 0; specials[i].file; i++)
-		if (strcmp(name, specials[i].file) == 0)
-			return bozo_http_error(httpd, 403, request,
+	for (i = 0; specials[i].file; i++) {
+		if (strcmp(name, specials[i].file) == 0) {
+			if (doerror) {
+				error = bozo_http_error(httpd, 403, request,
 					       specials[i].name);
+			} else {
+				error = -1;
+			}
+		}
+	}
 
-	return 0;
+	return error;
 }
 
 /* generic header printing routine */
