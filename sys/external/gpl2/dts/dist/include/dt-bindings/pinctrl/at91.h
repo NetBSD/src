@@ -1,4 +1,4 @@
-/*	$NetBSD: at91.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: at91.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
 
 /*
  * This header provides constants for most at91 pinctrl bindings.
@@ -40,5 +40,9 @@
 #define AT91_PERIPH_B		2
 #define AT91_PERIPH_C		3
 #define AT91_PERIPH_D		4
+
+#define ATMEL_PIO_DRVSTR_LO	1
+#define ATMEL_PIO_DRVSTR_ME	2
+#define ATMEL_PIO_DRVSTR_HI	3
 
 #endif /* __DT_BINDINGS_AT91_PINCTRL_H__ */

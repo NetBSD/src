@@ -1,4 +1,4 @@
-/*	$NetBSD: ti-sysc.h,v 1.1.1.1 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: ti-sysc.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
 
 /* TI sysc interconnect target module defines */
 
@@ -16,6 +16,8 @@
 
 /* SmartReflex sysc found on 36xx and later */
 #define SYSC_OMAP3_SR_ENAWAKEUP		(1 << 26)
+
+#define SYSC_DRA7_MCAN_ENAWAKEUP	(1 << 4)
 
 /* SYSCONFIG STANDBYMODE/MIDLEMODE/SIDLEMODE supported by hardware */
 #define SYSC_IDLE_FORCE			0
