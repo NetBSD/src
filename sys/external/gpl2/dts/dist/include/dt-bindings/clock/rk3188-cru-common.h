@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3188-cru-common.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: rk3188-cru-common.h,v 1.1.1.3 2019/01/22 14:57:01 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2014 MundoReader S.L.
@@ -141,8 +141,9 @@
 #define HCLK_CIF1		470
 #define HCLK_VEPU		471
 #define HCLK_VDPU		472
+#define HCLK_HDMI		473
 
-#define CLK_NR_CLKS		(HCLK_VDPU + 1)
+#define CLK_NR_CLKS		(HCLK_HDMI + 1)
 
 /* soft-reset indices */
 #define SRST_MCORE		2

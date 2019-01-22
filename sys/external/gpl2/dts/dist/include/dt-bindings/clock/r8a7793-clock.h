@@ -1,18 +1,10 @@
-/*	$NetBSD: r8a7793-clock.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: r8a7793-clock.h,v 1.1.1.3 2019/01/22 14:57:01 jmcneill Exp $	*/
 
-/*
+/* SPDX-License-Identifier: GPL-2.0
+ *
  * r8a7793 clock definition
  *
  * Copyright (C) 2014  Renesas Electronics Corporation
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  */
 
 #ifndef __DT_BINDINGS_CLOCK_R8A7793_H__
