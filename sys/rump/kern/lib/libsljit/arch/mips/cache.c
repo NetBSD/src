@@ -1,4 +1,4 @@
-/*      $NetBSD: cache.c,v 1.1 2014/07/22 20:25:13 alnsn Exp $	*/
+/*      $NetBSD: cache.c,v 1.2 2019/01/22 00:36:02 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.1 2014/07/22 20:25:13 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.2 2019/01/22 00:36:02 alnsn Exp $");
 
 /*
  * Barebone implementation of mips cache routines for rump.
@@ -38,14 +38,14 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.1 2014/07/22 20:25:13 alnsn Exp $");
 
 #include "sljit_rump.h"
 
-static void icache_sync_range(vaddr_t, vsize_t);
+static void icache_sync_range(register_t, vsize_t);
 
 struct mips_cache_ops mips_cache_ops = {
 	.mco_icache_sync_range = &icache_sync_range
 };
 
 static void
-icache_sync_range(vaddr_t va, vsize_t sz)
+icache_sync_range(register_t va, vsize_t sz)
 {
 
 	(void)rumpcomp_sync_icache((void *)va, (uint64_t)sz);
