@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sramc.c,v 1.1 2017/10/09 15:53:28 jmcneill Exp $ */
+/* $NetBSD: sunxi_sramc.c,v 1.2 2019/01/22 16:35:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.1 2017/10/09 15:53:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.2 2019/01/22 16:35:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,13 +35,17 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.1 2017/10/09 15:53:28 jmcneill Exp
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/mutex.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 #include <arm/sunxi/sunxi_sramc.h>
 
 static const char * compatible[] = {
 	"allwinner,sun4i-a10-sram-controller",
+	"allwinner,sun50i-a64-system-control",
+	"allwinner,sun50i-h6-system-control",
 	NULL
 };
 
@@ -50,13 +54,18 @@ static const struct sunxi_sramc_area {
 	const char			*desc;
 	bus_size_t			reg;
 	uint32_t			mask;
+	u_int				flags;
+#define	SUNXI_SRAMC_F_SWAP		__BIT(0)
 } sunxi_sramc_areas[] = {
 	{ "allwinner,sun4i-a10-sram-a3-a4",
 	  "SRAM A3/A4",
-	  0x04, __BITS(5,4) },
+	  0x04, __BITS(5,4), 0 },
 	{ "allwinner,sun4i-a10-sram-d",
 	  "SRAM D",
-	  0x04, __BIT(0) }
+	  0x04, __BIT(0), 0 },
+	{ "allwinner,sun50i-a64-sram-c",
+	  "SRAM C",
+	  0x04, __BIT(24), SUNXI_SRAMC_F_SWAP },
 };
 
 struct sunxi_sramc_node {
@@ -70,6 +79,8 @@ struct sunxi_sramc_softc {
 	int				sc_phandle;
 	bus_space_tag_t			sc_bst;
 	bus_space_handle_t		sc_bsh;
+	kmutex_t			sc_lock;
+	struct syscon			sc_syscon;
 	TAILQ_HEAD(, sunxi_sramc_node)	sc_nodes;
 };
 
@@ -113,6 +124,42 @@ sunxi_sramc_init(struct sunxi_sramc_softc *sc)
 	}
 }
 
+static void
+sunxi_sramc_lock(void *priv)
+{
+	struct sunxi_sramc_softc * const sc = priv;
+
+	mutex_enter(&sc->sc_lock);
+}
+
+static void
+sunxi_sramc_unlock(void *priv)
+{
+	struct sunxi_sramc_softc * const sc = priv;
+
+	mutex_exit(&sc->sc_lock);
+}
+
+static uint32_t
+sunxi_sramc_read_4(void *priv, bus_size_t reg)
+{
+	struct sunxi_sramc_softc * const sc = priv;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	return SRAMC_READ(sc, reg);
+}
+
+static void
+sunxi_sramc_write_4(void *priv, bus_size_t reg, uint32_t val)
+{
+	struct sunxi_sramc_softc * const sc = priv;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	SRAMC_WRITE(sc, reg, val);
+}
+
 static int
 sunxi_sramc_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -142,6 +189,7 @@ sunxi_sramc_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	TAILQ_INIT(&sc->sc_nodes);
 
 	aprint_naive("\n");
@@ -151,6 +199,13 @@ sunxi_sramc_attach(device_t parent, device_t self, void *aux)
 
 	KASSERT(sramc_softc == NULL);
 	sramc_softc = sc;
+
+	sc->sc_syscon.priv = sc;
+	sc->sc_syscon.lock = sunxi_sramc_lock;
+	sc->sc_syscon.unlock = sunxi_sramc_unlock;
+	sc->sc_syscon.read_4 = sunxi_sramc_read_4;
+	sc->sc_syscon.write_4 = sunxi_sramc_write_4;
+	fdtbus_register_syscon(self, phandle, &sc->sc_syscon);
 }
 
 CFATTACH_DECL_NEW(sunxi_sramc, sizeof(struct sunxi_sramc_softc),
@@ -170,6 +225,8 @@ sunxi_sramc_map(const int node_phandle, u_int config)
 		if (node->phandle == node_phandle) {
 			if (config > __SHIFTOUT_MASK(node->area->mask))
 				return ERANGE;
+			if ((node->area->flags & SUNXI_SRAMC_F_SWAP) != 0)
+				config = !config;
 			val = SRAMC_READ(sc, node->area->reg);
 			val &= ~node->area->mask;
 			val |= __SHIFTIN(config, node->area->mask);
