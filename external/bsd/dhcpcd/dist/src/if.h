@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -197,6 +197,7 @@ int ip6_temp_valid_lifetime(const char *ifname);
 #else
 #define ip6_use_tempaddr(a) (0)
 #endif
+int ip6_forwarding(const char *ifname);
 
 int if_address6(unsigned char, const struct ipv6_addr *);
 int if_addrflags6(const struct interface *, const struct in6_addr *,

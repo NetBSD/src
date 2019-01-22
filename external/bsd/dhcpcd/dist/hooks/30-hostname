@@ -87,8 +87,8 @@ need_hostname()
 		fi
 	elif [ -n "$old_host_name" ]; then
 		if ${hfqdn}; then
-			if [ -n "$old_domain_name" -a \
-			    "$old_host_name" = "${old_host_name#*.}" ]
+			if [ -n "$old_domain_name" ] &&
+			   [ "$old_host_name" = "${old_host_name#*.}" ]
 			then
 				[ "$hostname" = \
 				    "$old_host_name.$old_domain_name" ]
@@ -131,8 +131,8 @@ set_hostname()
 		fi
 	elif [ -n "$new_host_name" ]; then
 		if ${hfqdn}; then
-			if [ -n "$new_domain_name" -a \
-			    "$new_host_name" = "${new_host_name#*.}" ]
+			if [ -n "$new_domain_name" ] &&
+			   [ "$new_host_name" = "${new_host_name#*.}" ]
 			then
 				try_hostname "$new_host_name.$new_domain_name"
 			else

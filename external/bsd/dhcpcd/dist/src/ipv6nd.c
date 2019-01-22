@@ -1,6 +1,6 @@
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -329,6 +330,135 @@ ipv6nd_sendrsprobe(void *arg)
 		ipv6nd_drop(ifp);
 		dhcp6_dropnondelegates(ifp);
 	}
+}
+
+static void
+ipv6nd_sendadvertisement(void *arg)
+{
+	struct ipv6_addr *ia = arg;
+	struct interface *ifp = ia->iface;
+	struct dhcpcd_ctx *ctx = ifp->ctx;
+	struct sockaddr_in6 dst;
+	struct cmsghdr *cm;
+	struct in6_pktinfo pi;
+	const struct rs_state *state = RS_CSTATE(ifp);
+
+	if (state == NULL || ifp->carrier == LINK_DOWN)
+		goto freeit;
+
+	memset(&dst, 0, sizeof(dst));
+	dst.sin6_family = AF_INET6;
+#ifdef SIN6_LEN
+	dst.sin6_len = sizeof(dst);
+#endif
+	dst.sin6_scope_id = ifp->index;
+	if (inet_pton(AF_INET6, ALLNODES, &dst.sin6_addr) != 1) {
+		logerr(__func__);
+		return;
+	}
+
+	ctx->sndhdr.msg_name = (void *)&dst;
+	ctx->sndhdr.msg_iov[0].iov_base = ia->na;
+	ctx->sndhdr.msg_iov[0].iov_len = ia->na_len;
+
+	/* Set the outbound interface. */
+	cm = CMSG_FIRSTHDR(&ctx->sndhdr);
+	assert(cm != NULL);
+	cm->cmsg_level = IPPROTO_IPV6;
+	cm->cmsg_type = IPV6_PKTINFO;
+	cm->cmsg_len = CMSG_LEN(sizeof(pi));
+	memset(&pi, 0, sizeof(pi));
+	pi.ipi6_ifindex = ifp->index;
+	memcpy(CMSG_DATA(cm), &pi, sizeof(pi));
+
+	logdebugx("%s: sending NA for %s", ifp->name, ia->saddr);
+	if (sendmsg(ctx->nd_fd, &ctx->sndhdr, 0) == -1)
+		logerr(__func__);
+
+	if (++ia->na_count < MAX_NEIGHBOR_ADVERTISEMENT) {
+		eloop_timeout_add_sec(ctx->eloop,
+		    state->retrans / 1000, ipv6nd_sendadvertisement, ia);
+		return;
+	}
+
+freeit:
+	free(ia->na);
+	ia->na = NULL;
+	ia->na_count = 0;
+}
+
+void
+ipv6nd_advertise(struct ipv6_addr *ia)
+{
+	struct dhcpcd_ctx *ctx;
+	struct interface *ifp;
+	struct ipv6_state *state;
+	struct ipv6_addr *iap, *iaf;
+	struct nd_neighbor_advert *na;
+
+	if (IN6_IS_ADDR_MULTICAST(&ia->addr))
+		return;
+
+	ctx = ia->iface->ctx;
+	if_sortinterfaces(ctx);
+	/* Find the most preferred address to advertise. */
+	iaf = NULL;
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		state = IPV6_STATE(ifp);
+		if (state == NULL || ifp->carrier == LINK_DOWN)
+			continue;
+
+		TAILQ_FOREACH(iap, &state->addrs, next) {
+			if (!IN6_ARE_ADDR_EQUAL(&iap->addr, &ia->addr))
+				continue;
+
+			/* Cancel any current advertisement. */
+			eloop_timeout_delete(ctx->eloop,
+			    ipv6nd_sendadvertisement, iap);
+
+			/* Don't advertise what we can't use. */
+			if (iap->prefix_vltime == 0 ||
+			    iap->addr_flags & IN6_IFF_NOTUSEABLE)
+				continue;
+
+			if (iaf == NULL)
+				iaf = iap;
+		}
+	}
+	if (iaf == NULL)
+		return;
+
+	/* Make the packet. */
+	ifp = iaf->iface;
+	iaf->na_len = sizeof(*na);
+	if (ifp->hwlen != 0)
+		iaf->na_len += (size_t)ROUNDUP8(ifp->hwlen + 2);
+	na = calloc(1, iaf->na_len);
+	if (na == NULL) {
+		logerr(__func__);
+		return;
+	}
+
+	na->nd_na_type = ND_NEIGHBOR_ADVERT;
+	na->nd_na_flags_reserved = ND_NA_FLAG_OVERRIDE;
+	if (ip6_forwarding(ifp->name) == 1)
+		na->nd_na_flags_reserved |= ND_NA_FLAG_ROUTER;
+	na->nd_na_target = ia->addr;
+
+	if (ifp->hwlen != 0) {
+		struct nd_opt_hdr *opt;
+
+		opt = (struct nd_opt_hdr *)(na + 1);
+		opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
+		opt->nd_opt_len = (uint8_t)((ROUNDUP8(ifp->hwlen + 2)) >> 3);
+		memcpy(opt + 1, ifp->hwaddr, ifp->hwlen);
+	}
+
+	iaf->na_count = 0;
+	free(iaf->na);
+	iaf->na = na;
+	eloop_timeout_delete(ctx->eloop, ipv6nd_sendadvertisement, iaf);
+	ipv6nd_sendadvertisement(iaf);
 }
 
 void
@@ -718,6 +848,7 @@ try_script:
 					return;
 			}
 		}
+		ipv6nd_advertise(ia);
 	}
 }
 
@@ -869,8 +1000,11 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 		if (rap->reachable > MAX_REACHABLE_TIME)
 			rap->reachable = 0;
 	}
-	if (nd_ra->nd_ra_retransmit)
-		rap->retrans = ntohl(nd_ra->nd_ra_retransmit);
+	if (nd_ra->nd_ra_retransmit) {
+		struct rs_state *state = RS_STATE(ifp);
+
+		state->retrans = rap->retrans = ntohl(nd_ra->nd_ra_retransmit);
+	}
 	if (rap->lifetime)
 		rap->expired = 0;
 	rap->hasdns = 0;
@@ -962,12 +1096,6 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 			if (ap == NULL) {
 				unsigned int flags;
 
-				if (!(pi.nd_opt_pi_flags_reserved &
-				    ND_OPT_PI_FLAG_AUTO) &&
-				    !(pi.nd_opt_pi_flags_reserved &
-				    ND_OPT_PI_FLAG_ONLINK))
-					continue;
-
 				flags = IPV6_AF_RAPFX;
 				if (pi.nd_opt_pi_flags_reserved &
 				    ND_OPT_PI_FLAG_AUTO &&
@@ -980,7 +1108,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 				if (ap == NULL)
 					break;
 				ap->prefix = pi_prefix;
-				ap->dadcallback = ipv6nd_dadcallback;
+				if (flags & IPV6_AF_AUTOCONF)
+					ap->dadcallback = ipv6nd_dadcallback;
 				ap->created = ap->acquired = rap->acquired;
 				TAILQ_INSERT_TAIL(&rap->addrs, ap, next);
 
@@ -990,7 +1119,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx, struct interface *ifp,
 				 * temporary address also exists then
 				 * extend the existing one rather than
 				 * create a new one */
-				if (ipv6_iffindaddr(ifp, &ap->addr,
+				if (flags & IPV6_AF_AUTOCONF &&
+				    ipv6_iffindaddr(ifp, &ap->addr,
 				    IN6_IFF_NOTUSEABLE) &&
 				    ipv6_settemptime(ap, 0))
 					new_ap = 0;
@@ -1628,6 +1758,7 @@ ipv6nd_startrs1(void *arg)
 		return;
 	}
 
+	state->retrans = RETRANS_TIMER;
 	state->rsprobes = 0;
 	ipv6nd_sendrsprobe(ifp);
 }

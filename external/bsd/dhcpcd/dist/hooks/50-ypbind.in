@@ -41,7 +41,7 @@ make_yp_binding()
 	fi
 
 	nd="$(best_domain)"
-	if [ $? = 0 -a "$nd" != "$(domainname)" ]; then
+	if [ $? = 0 ] && [ "$nd" != "$(domainname)" ]; then
 		domainname "$nd"
 		if [ -n "$ypbind_restart_cmd" ]; then
 			eval $ypbind_restart_cmd
