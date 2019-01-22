@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -318,7 +318,8 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 	if (++state->conflicts == MAX_CONFLICTS)
 		logerr("%s: failed to acquire an IPv4LL address",
 		    ifp->name);
-	astate->addr.s_addr = ipv4ll_pickaddr(astate);
+	state->pickedaddr.s_addr = ipv4ll_pickaddr(astate);
+	astate->addr = state->pickedaddr;
 	eloop_timeout_add_sec(ifp->ctx->eloop,
 		state->conflicts >= MAX_CONFLICTS ?
 		RATE_LIMIT_INTERVAL : PROBE_WAIT,
@@ -331,7 +332,7 @@ ipv4ll_arpfree(struct arp_state *astate)
 	struct ipv4ll_state *state;
 
 	state = IPV4LL_STATE(astate->iface);
-	if (state->arp == astate)
+	if (state != NULL && state->arp == astate)
 		state->arp = NULL;
 }
 
@@ -353,14 +354,11 @@ ipv4ll_start(void *arg)
 		}
 	}
 
-	if (state->arp != NULL)
-		return;
-
 	/* RFC 3927 Section 2.1 states that the random number generator
 	 * SHOULD be seeded with a value derived from persistent information
 	 * such as the IEEE 802 MAC address so that it usually picks
 	 * the same address without persistent storage. */
-	if (state->conflicts == 0) {
+	if (!state->seeded) {
 		unsigned int seed;
 		char *orig;
 
@@ -380,8 +378,11 @@ ipv4ll_start(void *arg)
 
 		/* Set back the original state until we need the seeded one. */
 		setstate(ifp->ctx->randomstate);
+		state->seeded = true;
 	}
 
+	if (state->arp != NULL)
+		return;
 	if ((astate = arp_new(ifp, NULL)) == NULL)
 		return;
 
@@ -391,8 +392,15 @@ ipv4ll_start(void *arg)
 	astate->conflicted_cb = ipv4ll_conflicted;
 	astate->free_cb = ipv4ll_arpfree;
 
+	/* Find the previosuly used address. */
+	if (state->pickedaddr.s_addr != INADDR_ANY)
+		ia = ipv4_iffindaddr(ifp, &state->pickedaddr, NULL);
+	else
+		ia = NULL;
+
 	/* Find an existing IPv4LL address and ensure we can work with it. */
-	ia = ipv4_iffindlladdr(ifp);
+	if (ia == NULL)
+		ia = ipv4_iffindlladdr(ifp);
 
 #ifdef IN_IFF_TENTATIVE
 	if (ia != NULL && ia->addr_flags & IN_IFF_DUPLICATED) {
@@ -402,7 +410,7 @@ ipv4ll_start(void *arg)
 #endif
 
 	if (ia != NULL) {
-		astate->addr = ia->addr;
+		state->pickedaddr = astate->addr = ia->addr;
 #ifdef IN_IFF_TENTATIVE
 		if (ia->addr_flags & (IN_IFF_TENTATIVE | IN_IFF_DETACHED)) {
 			loginfox("%s: waiting for DAD to complete on %s",
@@ -416,7 +424,9 @@ ipv4ll_start(void *arg)
 	}
 
 	loginfox("%s: probing for an IPv4LL address", ifp->name);
-	astate->addr.s_addr = ipv4ll_pickaddr(astate);
+	if (state->pickedaddr.s_addr == INADDR_ANY)
+		state->pickedaddr.s_addr = ipv4ll_pickaddr(astate);
+	astate->addr = state->pickedaddr;
 #ifdef IN_IFF_TENTATIVE
 	ipv4ll_probed(astate);
 #else
@@ -424,54 +434,81 @@ ipv4ll_start(void *arg)
 #endif
 }
 
-void
-ipv4ll_freedrop(struct interface *ifp, int drop)
+static void
+ipv4ll_freearp(struct interface *ifp)
 {
 	struct ipv4ll_state *state;
-	int dropped;
+
+	state = IPV4LL_STATE(ifp);
+	if (state == NULL || state->arp == NULL)
+		return;
+
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, state->arp);
+	arp_free(state->arp);
+	state->arp = NULL;
+}
+
+void
+ipv4ll_drop(struct interface *ifp)
+{
+	struct ipv4ll_state *state;
+	bool dropped = false;
+	struct ipv4_state *istate;
 
 	assert(ifp != NULL);
-	state = IPV4LL_STATE(ifp);
-	dropped = 0;
 
-	/* Free ARP state first because ipv4_deladdr might also ... */
-	if (state && state->arp) {
-		eloop_timeout_delete(ifp->ctx->eloop, NULL, state->arp);
-		arp_free(state->arp);
-		state->arp = NULL;
+	ipv4ll_freearp(ifp);
+
+#ifndef IN_IFF_TENATIVE
+	if ((ifp->options->options & DHCPCD_NODROP) == DHCPCD_NODROP)
+#endif
+		return;
+
+	state = IPV4LL_STATE(ifp);
+	if (state && state->addr != NULL) {
+		ipv4_deladdr(state->addr, 1);
+		state->addr = NULL;
+		dropped = true;
 	}
 
-	if (drop && (ifp->options->options & DHCPCD_NODROP) != DHCPCD_NODROP) {
-		struct ipv4_state *istate;
+	/* Free any other link local addresses that might exist. */
+	if ((istate = IPV4_STATE(ifp)) != NULL) {
+		struct ipv4_addr *ia, *ian;
 
-		if (state && state->addr != NULL) {
-			ipv4_deladdr(state->addr, 1);
-			state->addr = NULL;
-			dropped = 1;
-		}
-
-		/* Free any other link local addresses that might exist. */
-		if ((istate = IPV4_STATE(ifp)) != NULL) {
-			struct ipv4_addr *ia, *ian;
-
-			TAILQ_FOREACH_SAFE(ia, &istate->addrs, next, ian) {
-				if (IN_LINKLOCAL(ntohl(ia->addr.s_addr))) {
-					ipv4_deladdr(ia, 0);
-					dropped = 1;
-				}
+		TAILQ_FOREACH_SAFE(ia, &istate->addrs, next, ian) {
+			if (IN_LINKLOCAL(ntohl(ia->addr.s_addr))) {
+				ipv4_deladdr(ia, 0);
+				dropped = true;
 			}
 		}
 	}
 
-	if (state) {
-		free(state);
-		ifp->if_data[IF_DATA_IPV4LL] = NULL;
-
-		if (dropped) {
-			rt_build(ifp->ctx, AF_INET);
-			script_runreason(ifp, "IPV4LL");
-		}
+	if (dropped) {
+		rt_build(ifp->ctx, AF_INET);
+		script_runreason(ifp, "IPV4LL");
 	}
+}
+
+void
+ipv4ll_reset(struct interface *ifp)
+{
+	struct ipv4ll_state *state = IPV4LL_STATE(ifp);
+
+	if (state == NULL)
+		return;
+	state->pickedaddr.s_addr = INADDR_ANY;
+	state->seeded = false;
+}
+
+void
+ipv4ll_free(struct interface *ifp)
+{
+
+	assert(ifp != NULL);
+
+	ipv4ll_freearp(ifp);
+	free(IPV4LL_STATE(ifp));
+	ifp->if_data[IF_DATA_IPV4LL] = NULL;
 }
 
 /* This may cause issues in BSD systems, where running as a single dhcpcd
