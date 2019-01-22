@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.83 2019/01/08 06:29:35 msaitoh Exp $ */
+/* $NetBSD: if_msk.c,v 1.84 2019/01/22 03:42:27 msaitoh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.83 2019/01/08 06:29:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.84 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,8 @@ void msk_fill_rx_ring(struct sk_if_softc *);
 
 void msk_update_int_mod(struct sk_softc *, int);
 
-int msk_miibus_readreg(device_t, int, int);
-void msk_miibus_writereg(device_t, int, int, int);
+int msk_miibus_readreg(device_t, int, int, uint16_t *);
+int msk_miibus_writereg(device_t, int, int, uint16_t);
 void msk_miibus_statchg(struct ifnet *);
 
 void msk_setmulti(struct sk_if_softc *);
@@ -239,10 +239,10 @@ sk_win_write_1(struct sk_softc *sc, uint32_t reg, uint8_t x)
 }
 
 int
-msk_miibus_readreg(device_t dev, int phy, int reg)
+msk_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct sk_if_softc *sc_if = device_private(dev);
-	uint16_t val;
+	uint16_t data;
 	int i;
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
@@ -250,34 +250,33 @@ msk_miibus_readreg(device_t dev, int phy, int reg)
 
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
-		val = SK_YU_READ_2(sc_if, YUKON_SMICR);
-		if (val & YU_SMICR_READ_VALID)
+		data = SK_YU_READ_2(sc_if, YUKON_SMICR);
+		if (data & YU_SMICR_READ_VALID)
 			break;
 	}
 
 	if (i == SK_TIMEOUT) {
 		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
-		return (0);
+		return ETIMEDOUT;
 	}
 
- 	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i,
-		     SK_TIMEOUT));
+ 	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i, SK_TIMEOUT));
 
-	val = SK_YU_READ_2(sc_if, YUKON_SMIDR);
+	*val = SK_YU_READ_2(sc_if, YUKON_SMIDR);
 
-	DPRINTFN(9, ("msk_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
-		     phy, reg, val));
+	DPRINTFN(9, ("msk_miibus_readreg phy=%d, reg=%#x, val=%#hx\n",
+		phy, reg, *val));
 
-	return (val);
+	return 0;
 }
 
-void
-msk_miibus_writereg(device_t dev, int phy, int reg, int val)
+int
+msk_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
-	DPRINTFN(9, ("msk_miibus_writereg phy=%d reg=%#x val=%#x\n",
+	DPRINTFN(9, ("msk_miibus_writereg phy=%d reg=%#x val=%#hx\n",
 		     phy, reg, val));
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMIDR, val);
@@ -290,8 +289,12 @@ msk_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
-	if (i == SK_TIMEOUT)
+	if (i == SK_TIMEOUT) {
 		aprint_error_dev(sc_if->sk_dev, "phy write timed out\n");
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 void

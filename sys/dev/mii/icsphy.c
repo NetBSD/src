@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.51 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.51 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ icsphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -155,7 +156,7 @@ static int
 icsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -172,7 +173,7 @@ icsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
@@ -215,7 +216,7 @@ icsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, qpr;
+	uint16_t bmcr, qpr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -225,13 +226,13 @@ icsphy_status(struct mii_softc *sc)
 	 * and we have to read it twice to unlatch it anyhow.  This
 	 * gives us fewer register reads.
 	 */
-	qpr = PHY_READ(sc, MII_ICSPHY_QPR);		/* unlatch */
-	qpr = PHY_READ(sc, MII_ICSPHY_QPR);		/* real value */
+	PHY_READ(sc, MII_ICSPHY_QPR, &qpr);	/* unlatch */
+	PHY_READ(sc, MII_ICSPHY_QPR, &qpr);	/* real value */
 
 	if (qpr & QPR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;

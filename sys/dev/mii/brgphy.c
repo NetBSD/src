@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.78 2019/01/11 07:14:57 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.79 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.78 2019/01/11 07:14:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.79 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,9 +336,10 @@ brgphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
 	aprint_normal_dev(self, "");
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
@@ -376,7 +377,7 @@ static int
 brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg, speed, gig;
+	uint16_t reg, speed, gig;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -391,7 +392,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
@@ -472,7 +473,8 @@ setit:
 		 * Check for link.
 		 * Read the status register twice; BMSR_LINK is latch-low.
 		 */
-		reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		PHY_READ(sc, MII_BMSR, &reg);
+		PHY_READ(sc, MII_BMSR, &reg);
 		if (reg & BMSR_LINK) {
 			sc->mii_ticks = 0;
 			break;
@@ -537,16 +539,17 @@ brgphy_copper_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, bmsr, auxsts, gtsr;
+	uint16_t bmcr, bmsr, auxsts, gtsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -567,19 +570,19 @@ brgphy_copper_status(struct mii_softc *sc)
 			return;
 		}
 
-		auxsts = PHY_READ(sc, BRGPHY_MII_AUXSTS);
+		PHY_READ(sc, BRGPHY_MII_AUXSTS, &auxsts);
 
 		switch (auxsts & BRGPHY_AUXSTS_AN_RES) {
 		case BRGPHY_RES_1000FD:
 			mii->mii_media_active |= IFM_1000_T | IFM_FDX;
-			gtsr = PHY_READ(sc, MII_100T2SR);
+			PHY_READ(sc, MII_100T2SR, &gtsr);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
 
 		case BRGPHY_RES_1000HD:
 			mii->mii_media_active |= IFM_1000_T | IFM_HDX;
-			gtsr = PHY_READ(sc, MII_100T2SR);
+			PHY_READ(sc, MII_100T2SR, &gtsr);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
@@ -621,22 +624,21 @@ brgphy_fiber_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, bmsr;
+	uint16_t bmcr, bmsr, anar, anlpar, result;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_AUTOEN) {
-		int val;
-
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
@@ -645,10 +647,11 @@ brgphy_fiber_status(struct mii_softc *sc)
 
 		mii->mii_media_active |= IFM_1000_SX;
 
-		val = PHY_READ(sc, MII_ANAR) &
-		      PHY_READ(sc, MII_ANLPAR);
+		PHY_READ(sc, MII_ANAR, &anar);
+		PHY_READ(sc, MII_ANLPAR, &anlpar);
+		result = anar & anlpar;
 
-		if (val & ANAR_X_FD)
+		if (result & ANAR_X_FD)
 			mii->mii_media_active |= IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
@@ -664,26 +667,27 @@ brgphy_5708s_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, bmsr;
+	uint16_t bmcr, bmsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_AUTOEN) {
-		int xstat;
+		uint16_t xstat;
 
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 			    BRGPHY_5708S_DIG_PG0);
-			xstat = PHY_READ(sc, BRGPHY_5708S_PG0_1000X_STAT1);
+			PHY_READ(sc, BRGPHY_5708S_PG0_1000X_STAT1, &xstat);
 			if ((xstat & BRGPHY_5708S_PG0_1000X_STAT1_LINK) == 0) {
 				/* Erg, still trying, I guess... */
 				mii->mii_media_active |= IFM_NONE;
@@ -693,7 +697,7 @@ brgphy_5708s_status(struct mii_softc *sc)
 
 		PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 		    BRGPHY_5708S_DIG_PG0);
-		xstat = PHY_READ(sc, BRGPHY_5708S_PG0_1000X_STAT1);
+		PHY_READ(sc, BRGPHY_5708S_PG0_1000X_STAT1, &xstat);
 
 		switch (xstat & BRGPHY_5708S_PG0_1000X_STAT1_SPEED_MASK) {
 		case BRGPHY_5708S_PG0_1000X_STAT1_SPEED_10:
@@ -730,16 +734,17 @@ brgphy_5709s_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, bmsr, auxsts;
+	uint16_t bmcr, bmsr, auxsts;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -761,9 +766,8 @@ brgphy_5709s_status(struct mii_softc *sc)
 		}
 
 		/* 5709S has its own general purpose status registers */
-		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-		    BRGPHY_BLOCK_ADDR_GP_STATUS);
-		auxsts = PHY_READ(sc, BRGPHY_GP_STATUS_TOP_ANEG_STATUS);
+		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR, BRGPHY_BLOCK_ADDR_GP_STATUS);
+		PHY_READ(sc, BRGPHY_GP_STATUS_TOP_ANEG_STATUS, &auxsts);
 
 		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
 		    BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
@@ -801,7 +805,7 @@ brgphy_5709s_status(struct mii_softc *sc)
 int
 brgphy_mii_phy_auto(struct mii_softc *sc)
 {
-	int anar, ktcr = 0;
+	uint16_t anar, ktcr = 0;
 
 	sc->mii_ticks = 0;
 	brgphy_loop(sc);
@@ -833,12 +837,12 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 void
 brgphy_loop(struct mii_softc *sc)
 {
-	uint32_t bmsr;
+	uint16_t bmsr;
 	int i;
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_LOOP);
 	for (i = 0; i < 15000; i++) {
-		bmsr = PHY_READ(sc, MII_BMSR);
+		PHY_READ(sc, MII_BMSR, &bmsr);
 		if (!(bmsr & BMSR_LINK))
 			break;
 		DELAY(10);
@@ -849,6 +853,7 @@ static void
 brgphy_reset(struct mii_softc *sc)
 {
 	struct brgphy_softc *bsc = device_private(sc->mii_dev);
+	uint16_t reg;
 
 	mii_phy_reset(sc);
 	switch (sc->mii_mpd_oui) {
@@ -897,8 +902,7 @@ brgphy_reset(struct mii_softc *sc)
 				brgphy_ber_bug(sc);
 			else if (bsc->sc_phyflags & BGEPHYF_JITTER_BUG) {
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
-				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG,
-				    0x000a);
+				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
 
 				if (bsc->sc_phyflags
 				    & BGEPHYF_ADJUST_TRIM) {
@@ -932,9 +936,9 @@ brgphy_reset(struct mii_softc *sc)
 #if 0
 			/* Enable Link LED on Dell boxes */
 			if (bsc->sc_phyflags & BGEPHYF_NO_3LED) {
+				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL, &reg);
 				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
-				    PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
-					& ~BRGPHY_PHY_EXTCTL_3_LED);
+				    reg & ~BRGPHY_PHY_EXTCTL_3_LED);
 			}
 #endif
 		}
@@ -949,33 +953,35 @@ brgphy_reset(struct mii_softc *sc)
 			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG_PG0);
 
 			/* Enable fiber mode and autodetection */
-			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL1,
-			    PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL1) |
-			    BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN |
+			PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL1, &reg);
+			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL1, reg | 
+			    BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN | 
 			    BRGPHY_5708S_PG0_1000X_CTL1_FIBER_MODE);
 
 			/* Enable parallel detection */
-			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL2,
-			    PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL2) |
-			    BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN);
+			PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL2, &reg);
+			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL2, 
+			    reg | BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN);
 
 			/* Advertise 2.5G support through next page during autoneg */
-			if (bsc->sc_phyflags & BNX_PHY_2_5G_CAPABLE_FLAG)
-				PHY_WRITE(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1,
-				    PHY_READ(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1) |
-				    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
+			if (bsc->sc_phyflags & BNX_PHY_2_5G_CAPABLE_FLAG) {
+				PHY_READ(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1,
+				    &reg);
+				PHY_WRITE(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1, 
+				    reg | BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
+			}
 
 			/* Increase TX signal amplitude */
 			if ((_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_A0) ||
 			    (_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_B0) ||
 			    (_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_B1)) {
-				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
-				    BRGPHY_5708S_TX_MISC_PG5);
+				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
+					BRGPHY_5708S_TX_MISC_PG5);
+				PHY_READ(sc, BRGPHY_5708S_PG5_TXACTL1, &reg);
 				PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL1,
-				    PHY_READ(sc, BRGPHY_5708S_PG5_TXACTL1) &
-					~BRGPHY_5708S_PG5_TXACTL1_VCM);
-				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
-				    BRGPHY_5708S_DIG_PG0);
+				    reg & ~BRGPHY_5708S_PG5_TXACTL1_VCM);
+				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
+					BRGPHY_5708S_DIG_PG0);
 			}
 
 			/* Backplanes use special driver/pre-driver/pre-emphasis values. */
@@ -995,9 +1001,9 @@ brgphy_reset(struct mii_softc *sc)
 			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
 			    BRGPHY_BLOCK_ADDR_SERDES_DIG);
 
+			PHY_READ(sc, BRGPHY_SERDES_DIG_1000X_CTL1, &reg);
 			PHY_WRITE(sc, BRGPHY_SERDES_DIG_1000X_CTL1,
-			    (PHY_READ(sc, BRGPHY_SERDES_DIG_1000X_CTL1) &
-			    ~BRGPHY_SD_DIG_1000X_CTL1_AUTODET) |
+			    (reg & ~BRGPHY_SD_DIG_1000X_CTL1_AUTODET) |
 			    BRGPHY_SD_DIG_1000X_CTL1_FIBER);
 
 			if (bsc->sc_phyflags & BNX_PHY_2_5G_CAPABLE_FLAG) {
@@ -1009,9 +1015,10 @@ brgphy_reset(struct mii_softc *sc)
 				 * Enable autoneg "Next Page" to advertise
 				 * 2.5G support.
 				 */
+				PHY_READ(sc, BRGPHY_OVER_1G_UNFORMAT_PG1,
+				    &reg);
 				PHY_WRITE(sc, BRGPHY_OVER_1G_UNFORMAT_PG1,
-				    PHY_READ(sc, BRGPHY_OVER_1G_UNFORMAT_PG1) |
-				    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
+				    reg | BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
 			}
 
 			/*
@@ -1022,9 +1029,9 @@ brgphy_reset(struct mii_softc *sc)
 			    BRGPHY_BLOCK_ADDR_MRBE);
 
 			/* Enable MRBE speed autoneg. */
+			PHY_READ(sc, BRGPHY_MRBE_MSG_PG5_NP, &reg);
 			PHY_WRITE(sc, BRGPHY_MRBE_MSG_PG5_NP,
-			    PHY_READ(sc, BRGPHY_MRBE_MSG_PG5_NP) |
-			    BRGPHY_MRBE_MSG_PG5_NP_MBRE |
+			    reg | BRGPHY_MRBE_MSG_PG5_NP_MBRE |
 			    BRGPHY_MRBE_MSG_PG5_NP_T2);
 
 			/* Select the Clause 73 User B0 block of the AN MMD. */
@@ -1117,15 +1124,15 @@ brgphy_bcm5421_dspcode(struct mii_softc *sc)
 
 	/* Set Class A mode */
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x1007);
-	data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	PHY_READ(sc, BRGPHY_MII_AUXCTL, &data);
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0400);
 
 	/* Set FFE gamma override to -0.125 */
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0007);
-	data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	PHY_READ(sc, BRGPHY_MII_AUXCTL, &data);
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0800);
 	PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
-	data = PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT);
+	PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT, &data);
 	PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, data | 0x0200);
 }
 
@@ -1230,10 +1237,10 @@ brgphy_crc_bug(struct mii_softc *sc)
 static void
 brgphy_disable_early_dac(struct mii_softc *sc)
 {
-	uint32_t val;
+	uint16_t val;
 
 	PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x0f08);
-	val = PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT);
+	PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT, &val);
 	val &= ~(1 << 8);
 	PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, val);
 
@@ -1242,7 +1249,7 @@ brgphy_disable_early_dac(struct mii_softc *sc)
 static void
 brgphy_jumbo_settings(struct mii_softc *sc)
 {
-	uint32_t val;
+	uint16_t val;
 
 	/* Set Jumbo frame settings in the PHY. */
 	if ((sc->mii_mpd_oui == MII_OUI_BROADCOM)
@@ -1251,24 +1258,22 @@ brgphy_jumbo_settings(struct mii_softc *sc)
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x4c20);
 	} else {
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7);
-		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+		PHY_READ(sc, BRGPHY_MII_AUXCTL, &val);
 		PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
-			val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
+		    val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
 	}
 
-	val = PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL);
-	PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
-		val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
+	PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL, &val);
+	PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
 }
 
 static void
 brgphy_eth_wirespeed(struct mii_softc *sc)
 {
-	uint32_t val;
+	uint16_t val;
 
 	/* Enable Ethernet@Wirespeed */
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
-	val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-	PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
-		(val | (1 << 15) | (1 << 4)));
+	PHY_READ(sc, BRGPHY_MII_AUXCTL, &val);
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, val | (1 << 15) | (1 << 4));
 }

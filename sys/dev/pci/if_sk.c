@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.92 2019/01/08 04:18:50 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.93 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.92 2019/01/08 04:18:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.93 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,12 +189,12 @@ void sk_vpd_read(struct sk_softc *);
 
 void sk_update_int_mod(struct sk_softc *);
 
-int sk_xmac_miibus_readreg(device_t, int, int);
-void sk_xmac_miibus_writereg(device_t, int, int, int);
+int sk_xmac_miibus_readreg(device_t, int, int, uint16_t *);
+int sk_xmac_miibus_writereg(device_t, int, int, uint16_t);
 void sk_xmac_miibus_statchg(struct ifnet *);
 
-int sk_marv_miibus_readreg(device_t, int, int);
-void sk_marv_miibus_writereg(device_t, int, int, int);
+int sk_marv_miibus_readreg(device_t, int, int, uint16_t *);
+int sk_marv_miibus_writereg(device_t, int, int, uint16_t);
 void sk_marv_miibus_statchg(struct ifnet *);
 
 uint32_t sk_xmac_hash(void *);
@@ -399,7 +399,7 @@ sk_vpd_read(struct sk_softc *sc)
 }
 
 int
-sk_xmac_miibus_readreg(device_t dev, int phy, int reg)
+sk_xmac_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
@@ -407,7 +407,7 @@ sk_xmac_miibus_readreg(device_t dev, int phy, int reg)
 	DPRINTFN(9, ("sk_xmac_miibus_readreg\n"));
 
 	if (sc_if->sk_phytype == SK_PHYTYPE_XMAC && phy != 0)
-		return 0;
+		return -1;
 
 	SK_XM_WRITE_2(sc_if, XM_PHY_ADDR, reg|(phy << 8));
 	SK_XM_READ_2(sc_if, XM_PHY_DATA);
@@ -422,15 +422,16 @@ sk_xmac_miibus_readreg(device_t dev, int phy, int reg)
 		if (i == SK_TIMEOUT) {
 			aprint_error_dev(sc_if->sk_dev,
 			    "phy failed to come ready\n");
-			return 0;
+			return ETIMEDOUT;
 		}
 	}
 	DELAY(1);
-	return SK_XM_READ_2(sc_if, XM_PHY_DATA);
+	*val = SK_XM_READ_2(sc_if, XM_PHY_DATA);
+	return 0;
 }
 
-void
-sk_xmac_miibus_writereg(device_t dev, int phy, int reg, int val)
+int
+sk_xmac_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
@@ -445,7 +446,7 @@ sk_xmac_miibus_writereg(device_t dev, int phy, int reg, int val)
 
 	if (i == SK_TIMEOUT) {
 		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
-		return;
+		return ETIMEDOUT;
 	}
 
 	SK_XM_WRITE_2(sc_if, XM_PHY_DATA, val);
@@ -455,8 +456,12 @@ sk_xmac_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
-	if (i == SK_TIMEOUT)
+	if (i == SK_TIMEOUT) {
 		aprint_error_dev(sc_if->sk_dev, "phy write timed out\n");
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 void
@@ -480,10 +485,10 @@ sk_xmac_miibus_statchg(struct ifnet *ifp)
 }
 
 int
-sk_marv_miibus_readreg(device_t dev, int phy, int reg)
+sk_marv_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct sk_if_softc *sc_if = device_private(dev);
-	uint16_t val;
+	uint16_t data;
 	int i;
 
 	if (phy != 0 ||
@@ -491,7 +496,7 @@ sk_marv_miibus_readreg(device_t dev, int phy, int reg)
 	     sc_if->sk_phytype != SK_PHYTYPE_MARV_FIBER)) {
 		DPRINTFN(9, ("sk_marv_miibus_readreg (skip) phy=%d, reg=%#x\n",
 			     phy, reg));
-		return 0;
+		return -1;
 	}
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
@@ -499,34 +504,34 @@ sk_marv_miibus_readreg(device_t dev, int phy, int reg)
 
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
-		val = SK_YU_READ_2(sc_if, YUKON_SMICR);
-		if (val & YU_SMICR_READ_VALID)
+		data = SK_YU_READ_2(sc_if, YUKON_SMICR);
+		if (data & YU_SMICR_READ_VALID)
 			break;
 	}
 
 	if (i == SK_TIMEOUT) {
 		aprint_error_dev(sc_if->sk_dev, "phy failed to come ready\n");
-		return 0;
+		return ETIMEDOUT;
 	}
 
 	DPRINTFN(9, ("sk_marv_miibus_readreg: i=%d, timeout=%d\n", i,
 		     SK_TIMEOUT));
 
-	val = SK_YU_READ_2(sc_if, YUKON_SMIDR);
+	*val = SK_YU_READ_2(sc_if, YUKON_SMIDR);
 
-	DPRINTFN(9, ("sk_marv_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
-		     phy, reg, val));
+	DPRINTFN(9, ("sk_marv_miibus_readreg phy=%d, reg=%#x, val=%#hx\n",
+		     phy, reg, *val));
 
-	return val;
+	return 0;
 }
 
-void
-sk_marv_miibus_writereg(device_t dev, int phy, int reg, int val)
+int
+sk_marv_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
-	DPRINTFN(9, ("sk_marv_miibus_writereg phy=%d reg=%#x val=%#x\n",
+	DPRINTFN(9, ("sk_marv_miibus_writereg phy=%d reg=%#x val=%#hx\n",
 		     phy, reg, val));
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMIDR, val);
@@ -539,9 +544,13 @@ sk_marv_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
-	if (i == SK_TIMEOUT)
+	if (i == SK_TIMEOUT) {
 		printf("%s: phy write timed out\n",
 		    device_xname(sc_if->sk_dev));
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 void
@@ -2232,7 +2241,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 {
 	struct mii_data *mii = &sc_if->sk_mii;
 	struct ifnet *ifp = &sc_if->sk_ethercom.ec_if;
-	int status;
+	uint16_t status;
 
 
 	DPRINTFN(3, ("sk_intr_bcom\n"));
@@ -2243,8 +2252,8 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 	 * Read the PHY interrupt register to make sure
 	 * we clear any pending interrupts.
 	 */
-	status = sk_xmac_miibus_readreg(sc_if->sk_dev,
-	    SK_PHYADDR_BCOM, BRGPHY_MII_ISR);
+	sk_xmac_miibus_readreg(sc_if->sk_dev,
+	    SK_PHYADDR_BCOM, BRGPHY_MII_ISR, &status);
 
 	if (!(ifp->if_flags & IFF_RUNNING)) {
 		sk_init_xmac(sc_if);
@@ -2252,9 +2261,9 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 	}
 
 	if (status & (BRGPHY_ISR_LNK_CHG|BRGPHY_ISR_AN_PR)) {
-		int lstat;
-		lstat = sk_xmac_miibus_readreg(sc_if->sk_dev,
-		    SK_PHYADDR_BCOM, BRGPHY_MII_AUXSTS);
+		uint16_t lstat;
+		sk_xmac_miibus_readreg(sc_if->sk_dev,
+		    SK_PHYADDR_BCOM, BRGPHY_MII_AUXSTS, &lstat);
 
 		if (!(lstat & BRGPHY_AUXSTS_LINK) && sc_if->sk_link) {
 			(void)mii_mediachg(mii);
@@ -2443,6 +2452,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	if (sc_if->sk_phytype == SK_PHYTYPE_BCOM) {
 		int			i = 0;
 		uint32_t		val;
+		uint16_t		phyval;
 
 		/* Take PHY out of reset. */
 		val = sk_win_read_4(sc, SK_GPIO);
@@ -2467,8 +2477,9 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		 * registers initialized to some magic values. I don't
 		 * know what the numbers do, I'm just the messenger.
 		 */
-		if (sk_xmac_miibus_readreg(sc_if->sk_dev,
-		    SK_PHYADDR_BCOM, 0x03) == 0x6041) {
+		sk_xmac_miibus_readreg(sc_if->sk_dev,
+		    SK_PHYADDR_BCOM, 0x03, &phyval);
+		if (phyval == 0x6041) {
 			while (bhack[i].reg) {
 				sk_xmac_miibus_writereg(sc_if->sk_dev,
 				    SK_PHYADDR_BCOM, bhack[i].reg,

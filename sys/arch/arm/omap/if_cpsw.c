@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.22 2019/01/22 03:42:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.21 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.22 2019/01/22 03:42:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -155,8 +155,8 @@ static void cpsw_watchdog(struct ifnet *);
 static int cpsw_init(struct ifnet *);
 static void cpsw_stop(struct ifnet *, int);
 
-static int cpsw_mii_readreg(device_t, int, int);
-static void cpsw_mii_writereg(device_t, int, int, int);
+static int cpsw_mii_readreg(device_t, int, int, uint16_t *);
+static int cpsw_mii_writereg(device_t, int, int, uint16_t);
 static void cpsw_mii_statchg(struct ifnet *);
 
 static int cpsw_new_rxbuf(struct cpsw_softc * const, const u_int);
@@ -753,29 +753,31 @@ cpsw_mii_wait(struct cpsw_softc * const sc, int reg)
 }
 
 static int
-cpsw_mii_readreg(device_t dev, int phy, int reg)
+cpsw_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct cpsw_softc * const sc = device_private(dev);
 	uint32_t v;
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
-		return 0;
+		return -1;
 
 	cpsw_write_4(sc, MDIOUSERACCESS0, (1 << 31) |
 	    ((reg & 0x1F) << 21) | ((phy & 0x1F) << 16));
 
 	if (cpsw_mii_wait(sc, MDIOUSERACCESS0) != 0)
-		return 0;
+		return -1;
 
 	v = cpsw_read_4(sc, MDIOUSERACCESS0);
-	if (v & __BIT(29))
-		return v & 0xffff;
-	else
+	if (v & __BIT(29)) {
+		*val = v & 0xffff;
 		return 0;
+	}
+
+	return -1;
 }
 
-static void
-cpsw_mii_writereg(device_t dev, int phy, int reg, int val)
+static int
+cpsw_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct cpsw_softc * const sc = device_private(dev);
 	uint32_t v;
@@ -792,10 +794,13 @@ cpsw_mii_writereg(device_t dev, int phy, int reg, int val)
 		goto out;
 
 	v = cpsw_read_4(sc, MDIOUSERACCESS0);
-	if ((v & __BIT(29)) == 0)
+	if ((v & __BIT(29)) == 0) {
 out:
 		device_printf(sc->sc_dev, "%s error\n", __func__);
+		return -1;
+	}
 
+	return 0;
 }
 
 static void

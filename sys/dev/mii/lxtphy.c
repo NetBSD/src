@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.51 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.51 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ lxtphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
@@ -171,7 +172,7 @@ static int
 lxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -188,7 +189,7 @@ lxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
@@ -236,7 +237,7 @@ lxtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmcr, bmsr, csr;
+	uint16_t bmcr, bmsr, csr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -246,11 +247,11 @@ lxtphy_status(struct mii_softc *sc)
 	 * for media type anyhow, and the link status in the CSR
 	 * doens't latch, so fewer register reads are required.
 	 */
-	csr = PHY_READ(sc, MII_LXTPHY_CSR);
+	PHY_READ(sc, MII_LXTPHY_CSR, &csr);
 	if (csr & CSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -261,7 +262,8 @@ lxtphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_AUTOEN) {
-		bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		PHY_READ(sc, MII_BMSR, &bmsr);
+		PHY_READ(sc, MII_BMSR, &bmsr);
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
@@ -283,18 +285,20 @@ lxtphy_status(struct mii_softc *sc)
 static void
 lxtphy_reset(struct mii_softc *sc)
 {
+	uint16_t ier;
 
 	mii_phy_reset(sc);
-	PHY_WRITE(sc, MII_LXTPHY_IER,
-	    PHY_READ(sc, MII_LXTPHY_IER) & ~IER_INTEN);
+	PHY_READ(sc, MII_LXTPHY_IER, &ier);
+	ier &= ~IER_INTEN;
+	PHY_WRITE(sc, MII_LXTPHY_IER, ier);
 }
 
 static void
 lxtphy_set_tp(struct mii_softc *sc)
 {
-	int cfg;
+	uint16_t cfg;
 
-	cfg = PHY_READ(sc, MII_LXTPHY_CONFIG);
+	PHY_READ(sc, MII_LXTPHY_CONFIG, &cfg);
 	cfg &= ~CONFIG_100BASEFX;
 	PHY_WRITE(sc, MII_LXTPHY_CONFIG, cfg);
 }
@@ -302,9 +306,9 @@ lxtphy_set_tp(struct mii_softc *sc)
 static void
 lxtphy_set_fx(struct mii_softc *sc)
 {
-	int cfg;
+	uint16_t cfg;
 
-	cfg = PHY_READ(sc, MII_LXTPHY_CONFIG);
+	PHY_READ(sc, MII_LXTPHY_CONFIG, &cfg);
 	cfg |= CONFIG_100BASEFX;
 	PHY_WRITE(sc, MII_LXTPHY_CONFIG, cfg);
 }

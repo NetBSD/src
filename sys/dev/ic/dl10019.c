@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.12 2012/07/22 14:32:56 matt Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.12 2012/07/22 14:32:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.13 2019/01/22 03:42:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.12 2012/07/22 14:32:56 matt Exp $");
 #include <dev/ic/dl10019reg.h>
 #include <dev/ic/dl10019var.h>
 
-int	dl10019_mii_readreg(device_t, int, int);
-void	dl10019_mii_writereg(device_t, int, int, int);
+int	dl10019_mii_readreg(device_t, int, int, uint16_t *);
+int	dl10019_mii_writereg(device_t, int, int, uint16_t);
 void	dl10019_mii_statchg(struct ifnet *);
 
 /*
@@ -201,22 +201,19 @@ dl10019_mii_bitbang_write(device_t self, u_int32_t val)
 }
 
 int
-dl10019_mii_readreg(device_t self, int phy, int reg)
+dl10019_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct ne2000_softc *nsc = device_private(self);
 	const struct mii_bitbang_ops *ops;
-	int val;
 
 	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
 	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
-	val = mii_bitbang_readreg(self, ops, phy, reg);
-
-	return (val);
+	return mii_bitbang_readreg(self, ops, phy, reg, val);
 }
 
-void
-dl10019_mii_writereg(device_t self, int phy, int reg, int val)
+int
+dl10019_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct ne2000_softc *nsc = device_private(self);
 	const struct mii_bitbang_ops *ops;
@@ -224,7 +221,7 @@ dl10019_mii_writereg(device_t self, int phy, int reg, int val)
 	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
 	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
-	mii_bitbang_writereg(self, ops, phy, reg, val);
+	return mii_bitbang_writereg(self, ops, phy, reg, val);
 }
 
 void

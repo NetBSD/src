@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smivar.h,v 1.2 2019/01/10 05:41:10 msaitoh Exp $	*/
+/*	$NetBSD: octeon_smivar.h,v 1.3 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -44,8 +44,8 @@ struct octeon_smi_attach_args {
 
 void	octeon_smi_init(struct octeon_smi_attach_args *,
     struct octeon_smi_softc **);
-int	octeon_smi_read(struct octeon_smi_softc *, int, int);
-void	octeon_smi_write(struct octeon_smi_softc *, int, int, int);
+int	octeon_smi_read(struct octeon_smi_softc *, int, int, uint16_t *);
+int	octeon_smi_write(struct octeon_smi_softc *, int, int, uint16_t);
 void	octeon_smi_set_clock(struct octeon_smi_softc *, uint64_t);
 
 #endif

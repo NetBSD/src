@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.86 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.87 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.86 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.87 2019/01/22 03:42:26 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -80,8 +80,8 @@ int	epic_add_rxbuf(struct epic_softc *, int);
 void	epic_read_eeprom(struct epic_softc *, int, int, uint16_t *);
 void	epic_set_mchash(struct epic_softc *);
 void	epic_fixup_clock_source(struct epic_softc *);
-int	epic_mii_read(device_t, int, int);
-void	epic_mii_write(device_t, int, int, int);
+int	epic_mii_read(device_t, int, int, uint16_t *);
+int	epic_mii_write(device_t, int, int, uint16_t);
 int	epic_mii_wait(struct epic_softc *, uint32_t);
 void	epic_tick(void *);
 
@@ -1328,7 +1328,7 @@ epic_mii_wait(struct epic_softc *sc, uint32_t rw)
 	}
 	if (i == 50) {
 		printf("%s: MII timed out\n", device_xname(sc->sc_dev));
-		return 1;
+		return ETIMEDOUT;
 	}
 
 	return 0;
@@ -1338,37 +1338,42 @@ epic_mii_wait(struct epic_softc *sc, uint32_t rw)
  * Read from the MII.
  */
 int
-epic_mii_read(device_t self, int phy, int reg)
+epic_mii_read(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct epic_softc *sc = device_private(self);
+	int rv;
 
-	if (epic_mii_wait(sc, MMCTL_WRITE))
-		return 0;
+	if ((rv = epic_mii_wait(sc, MMCTL_WRITE)) != 0)
+		return rv;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MMCTL,
 	    MMCTL_ARG(phy, reg, MMCTL_READ));
 
-	if (epic_mii_wait(sc, MMCTL_READ))
-		return 0;
+	if ((rv = epic_mii_wait(sc, MMCTL_READ)) != 0)
+		return rv;
 
-	return bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MMDATA) &
-	    MMDATA_MASK;
+	*val = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MMDATA)
+	    & MMDATA_MASK;
+	return 0;
 }
 
 /*
  * Write to the MII.
  */
-void
-epic_mii_write(device_t self, int phy, int reg, int val)
+int
+epic_mii_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct epic_softc *sc = device_private(self);
+	int rv;
 
-	if (epic_mii_wait(sc, MMCTL_WRITE))
-		return;
+	if ((rv = epic_mii_wait(sc, MMCTL_WRITE)) != 0)
+		return rv;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MMDATA, val);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MMCTL,
 	    MMCTL_ARG(phy, reg, MMCTL_WRITE));
+
+	return 0;
 }
 
 /*
@@ -1422,7 +1427,8 @@ epic_mediachange(struct ifnet *ifp)
 	int media = ifm->ifm_cur->ifm_media;
 	uint32_t miicfg;
 	struct mii_softc *miisc;
-	int cfg, rc;
+	int rc;
+	uint16_t cfg;
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
@@ -1475,7 +1481,7 @@ epic_mediachange(struct ifnet *ifp)
 		/* XXX XXX assume it's a Level1 - should check */
 
 		/* We have to powerup fiber transceivers */
-		cfg = PHY_READ(miisc, MII_LXTPHY_CONFIG);
+		PHY_READ(miisc, MII_LXTPHY_CONFIG, &cfg);
 		if (IFM_SUBTYPE(media) == IFM_100_FX) {
 #ifdef EPICMEDIADEBUG
 			printf("%s: power up fiber\n", ifp->if_xname);

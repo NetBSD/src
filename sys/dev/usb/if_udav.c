@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.55 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.56 2019/01/22 03:42:28 msaitoh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.55 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.56 2019/01/22 03:42:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -112,8 +112,8 @@ Static int udav_ifmedia_change(struct ifnet *);
 Static void udav_ifmedia_status(struct ifnet *, struct ifmediareq *);
 Static void udav_lock_mii(struct udav_softc *);
 Static void udav_unlock_mii(struct udav_softc *);
-Static int udav_miibus_readreg(device_t, int, int);
-Static void udav_miibus_writereg(device_t, int, int, int);
+Static int udav_miibus_readreg(device_t, int, int, uint16_t *);
+Static int udav_miibus_writereg(device_t, int, int, uint16_t);
 Static void udav_miibus_statchg(struct ifnet *);
 Static int udav_init(struct ifnet *);
 Static void udav_setmulti(struct udav_softc *);
@@ -1484,14 +1484,13 @@ udav_unlock_mii(struct udav_softc *sc)
 }
 
 Static int
-udav_miibus_readreg(device_t dev, int phy, int reg)
+udav_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct udav_softc *sc;
-	uint8_t val[2];
-	uint16_t data16;
+	uint8_t data[2];
 
 	if (dev == NULL)
-		return 0;
+		return -1;
 
 	sc = device_private(dev);
 
@@ -1503,14 +1502,14 @@ udav_miibus_readreg(device_t dev, int phy, int reg)
 		printf("%s: %s: dying\n", device_xname(sc->sc_dev),
 		       __func__);
 #endif
-		return 0;
+		return -1;
 	}
 
 	/* XXX: one PHY only for the internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(sc->sc_dev), __func__, phy));
-		return 0;
+		return -1;
 	}
 
 	udav_lock_mii(sc);
@@ -1528,45 +1527,45 @@ udav_miibus_readreg(device_t dev, int phy, int reg)
 	UDAV_CLRBIT(sc, UDAV_EPCR, UDAV_EPCR_ERPRR);
 
 	/* retrieve the result from data registers */
-	udav_csr_read(sc, UDAV_EPDRL, val, 2);
+	udav_csr_read(sc, UDAV_EPDRL, data, 2);
 
 	udav_unlock_mii(sc);
 
-	data16 = val[0] | (val[1] << 8);
+	*val = data[0] | (data[1] << 8);
 
-	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04x\n",
-		 device_xname(sc->sc_dev), __func__, phy, reg, data16));
+	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04hx\n",
+		device_xname(sc->sc_dev), __func__, phy, reg, *val));
 
-	return data16;
+	return 0;
 }
 
-Static void
-udav_miibus_writereg(device_t dev, int phy, int reg, int data)
+Static int
+udav_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct udav_softc *sc;
-	uint8_t val[2];
+	uint8_t data[2];
 
 	if (dev == NULL)
-		return;
+		return -1;
 
 	sc = device_private(dev);
 
-	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x data=0x%04x\n",
-		 device_xname(sc->sc_dev), __func__, phy, reg, data));
+	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x val=0x%04hx\n",
+		 device_xname(sc->sc_dev), __func__, phy, reg, val));
 
 	if (sc->sc_dying) {
 #ifdef DIAGNOSTIC
 		printf("%s: %s: dying\n", device_xname(sc->sc_dev),
 		       __func__);
 #endif
-		return;
+		return -1;
 	}
 
 	/* XXX: one PHY only for the internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(sc->sc_dev), __func__, phy));
-		return;
+		return -1;
 	}
 
 	udav_lock_mii(sc);
@@ -1576,9 +1575,9 @@ udav_miibus_writereg(device_t dev, int phy, int reg, int data)
 			UDAV_EPAR_PHY_ADR0 | (reg & UDAV_EPAR_EROA_MASK));
 
 	/* put the value to the data registers */
-	val[0] = data & 0xff;
-	val[1] = (data >> 8) & 0xff;
-	udav_csr_write(sc, UDAV_EPDRL, val, 2);
+	data[0] = val & 0xff;
+	data[1] = (val >> 8) & 0xff;
+	udav_csr_write(sc, UDAV_EPDRL, data, 2);
 
 	/* select PHY operation and start write command */
 	udav_csr_write1(sc, UDAV_EPCR, UDAV_EPCR_EPOS | UDAV_EPCR_ERPRW);
@@ -1590,7 +1589,7 @@ udav_miibus_writereg(device_t dev, int phy, int reg, int data)
 
 	udav_unlock_mii(sc);
 
-	return;
+	return 0;
 }
 
 Static void

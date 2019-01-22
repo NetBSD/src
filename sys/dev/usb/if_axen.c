@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.17 2018/09/12 21:57:18 christos Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.18 2019/01/22 03:42:28 msaitoh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.17 2018/09/12 21:57:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.18 2019/01/22 03:42:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -106,8 +106,8 @@ static int	axen_ioctl(struct ifnet *, u_long, void *);
 static int	axen_init(struct ifnet *);
 static void	axen_stop(struct ifnet *, int);
 static void	axen_watchdog(struct ifnet *);
-static int	axen_miibus_readreg(device_t, int, int);
-static void	axen_miibus_writereg(device_t, int, int, int);
+static int	axen_miibus_readreg(device_t, int, int, uint16_t *);
+static int	axen_miibus_writereg(device_t, int, int, uint16_t);
 static void	axen_miibus_statchg(struct ifnet *);
 static int	axen_cmd(struct axen_softc *, int, int, int, void *);
 static int	axen_ifmedia_upd(struct ifnet *);
@@ -174,65 +174,66 @@ axen_cmd(struct axen_softc *sc, int cmd, int index, int val, void *buf)
 }
 
 static int
-axen_miibus_readreg(device_t dev, int phy, int reg)
+axen_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct axen_softc *sc = device_private(dev);
 	usbd_status err;
-	uint16_t val;
-	int ival;
+	uint16_t data;
 
 	if (sc->axen_dying) {
 		DPRINTF(("axen: dying\n"));
-		return 0;
+		return -1;
 	}
 
 	if (sc->axen_phyno != phy)
-		return 0;
+		return -1;
 
 	axen_lock_mii(sc);
-	err = axen_cmd(sc, AXEN_CMD_MII_READ_REG, reg, phy, &val);
+	err = axen_cmd(sc, AXEN_CMD_MII_READ_REG, reg, phy, &data);
 	axen_unlock_mii(sc);
 
 	if (err) {
 		aprint_error_dev(sc->axen_dev, "read PHY failed\n");
-		return -1;
+		return err;
 	}
 
-	ival = le16toh(val);
-	DPRINTFN(2,("axen_miibus_readreg: phy 0x%x reg 0x%x val 0x%x\n",
-	    phy, reg, ival));
+	*val = le16toh(data);
+	DPRINTFN(2,("axen_miibus_readreg: phy 0x%x reg 0x%x val 0x%hx\n",
+	    phy, reg, *val));
 
 	if (reg == MII_BMSR) {
-		ival &= ~BMSR_EXTCAP;
+		*val &= ~BMSR_EXTCAP;
 	}
 
-	return ival;
+	return 0;
 }
 
-static void
-axen_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+axen_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct axen_softc *sc = device_private(dev);
 	usbd_status err;
 	uint16_t uval;
 
 	if (sc->axen_dying)
-		return;
+		return -1;
 
 	if (sc->axen_phyno != phy)
-		return;
+		return -1;
 
 	uval = htole16(val);
 	axen_lock_mii(sc);
 	err = axen_cmd(sc, AXEN_CMD_MII_WRITE_REG, reg, phy, &uval);
 	axen_unlock_mii(sc);
-	DPRINTFN(2, ("axen_miibus_writereg: phy 0x%x reg 0x%x val 0x%0x\n",
+	DPRINTFN(2, ("axen_miibus_writereg: phy 0x%x reg 0x%x val 0x%04hx\n",
 	    phy, reg, val));
 
 	if (err) {
 		aprint_error_dev(sc->axen_dev, "write PHY failed\n");
-		return;
+		return err;
 	}
+
+	return 0;
 }
 
 static void
@@ -625,9 +626,9 @@ axen_ax88179_init(struct axen_softc *sc)
 #if 1 /* XXX: phy hack ? */
 	axen_miibus_writereg(sc->axen_dev, sc->axen_phyno, 0x1F, 0x0005);
 	axen_miibus_writereg(sc->axen_dev, sc->axen_phyno, 0x0C, 0x0000);
-	val = axen_miibus_readreg(sc->axen_dev, sc->axen_phyno, 0x0001);
+	axen_miibus_readreg(sc->axen_dev, sc->axen_phyno, 0x0001, &wval);
 	axen_miibus_writereg(sc->axen_dev, sc->axen_phyno, 0x01,
-	    val | 0x0080);
+	    wval | 0x0080);
 	axen_miibus_writereg(sc->axen_dev, sc->axen_phyno, 0x1F, 0x0000);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.62 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.63 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.62 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.63 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,10 +158,10 @@ tlphyattach(device_t parent, device_t self, void *aux)
 	 * the TLPHY_MEDIA_NO_10_T bit.
 	 */
 	tsc->sc_tlphycap = tlsc->tl_product->tp_tlphymedia;
-	if ((tsc->sc_tlphycap & TLPHY_MEDIA_NO_10_T) == 0)
-		sc->mii_capabilities =
-		    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	else
+	if ((tsc->sc_tlphycap & TLPHY_MEDIA_NO_10_T) == 0) {
+		PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+		sc->mii_capabilities &= ma->mii_capmask;
+	} else
 		sc->mii_capabilities = 0;
 
 
@@ -200,7 +200,7 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct tlphy_softc *tsc = (struct tlphy_softc *)sc;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0 && tsc->sc_need_acomp)
 		tlphy_acomp(tsc);
@@ -220,7 +220,7 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
@@ -286,19 +286,19 @@ tlphy_status(struct mii_softc *sc)
 {
 	struct tlphy_softc *tsc = (struct tlphy_softc *)sc;
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr, tlctrl;
+	uint16_t bmsr, bmcr, tlctrl;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
 		return;
 	}
 
-	tlctrl = PHY_READ(sc, MII_TLPHY_CTRL);
+	PHY_READ(sc, MII_TLPHY_CTRL, &tlctrl);
 	if (tlctrl & CTRL_AUISEL) {
 		if (tsc->sc_tlphycap & TLPHY_MEDIA_10_2)
 			mii->mii_media_active |= IFM_10_2;
@@ -311,8 +311,8 @@ tlphy_status(struct mii_softc *sc)
 		return;
 	}
 
-	bmsr = PHY_READ(sc, MII_BMSR) |
-	    PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
@@ -363,7 +363,7 @@ static void
 tlphy_acomp(struct tlphy_softc *tsc)
 {
 	struct mii_softc *sc = &tsc->sc_mii;
-	int aner, anlpar;
+	uint16_t aner, anar, anlpar, result;
 
 	tsc->sc_need_acomp = 0;
 
@@ -373,11 +373,12 @@ tlphy_acomp(struct tlphy_softc *tsc)
 	 * based on the link partner status.
 	 */
 
-	aner = PHY_READ(sc, MII_ANER);
+	PHY_READ(sc, MII_ANER, &aner);
 	if (aner & ANER_LPAN) {
-		anlpar = PHY_READ(sc, MII_ANLPAR) &
-		    PHY_READ(sc, MII_ANAR);
-		if (anlpar & ANAR_10_FD) {
+		PHY_READ(sc, MII_ANAR, &anar);
+		PHY_READ(sc, MII_ANLPAR, &anlpar);
+		result = anar & anlpar;
+		if (result & ANAR_10_FD) {
 			PHY_WRITE(sc, MII_BMCR, BMCR_FDX);
 			return;
 		}

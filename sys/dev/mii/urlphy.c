@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.32 2019/01/16 10:10:49 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.32 2019/01/16 10:10:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.33 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,8 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	}
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -138,7 +139,7 @@ static int
 urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->mii_dev), __func__));
 
@@ -186,7 +187,8 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		/* Read the status register twice; MSR_LINK is latch-low. */
-		reg = PHY_READ(sc, URLPHY_MSR) | PHY_READ(sc, URLPHY_MSR);
+		PHY_READ(sc, URLPHY_MSR, &reg);
+		PHY_READ(sc, URLPHY_MSR, &reg);
 		if (reg & URLPHY_MSR_LINK) {
 			/*
 			 * Reset autonegotiation timer to 0 in case the link
@@ -238,7 +240,7 @@ urlphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int msr, bmsr, bmcr;
+	uint16_t msr, bmsr, bmcr;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->mii_dev), __func__));
 
@@ -249,16 +251,18 @@ urlphy_status(struct mii_softc *sc)
 	 * The link status bit is not exist in the BMSR register,
 	 * so we need to read the MSR register to get link status.
 	 */
-	msr = PHY_READ(sc, URLPHY_MSR) | PHY_READ(sc, URLPHY_MSR);
+	PHY_READ(sc, URLPHY_MSR, &msr);
+	PHY_READ(sc, URLPHY_MSR, &msr);
 	if (msr & URLPHY_MSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	DPRINTF(("%s: %s: link %s\n", device_xname(sc->mii_dev), __func__,
 		 mii->mii_media_status & IFM_ACTIVE ? "up" : "down"));
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_AUTOEN) {
-		bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		PHY_READ(sc, MII_BMSR, &bmsr);
+		PHY_READ(sc, MII_BMSR, &bmsr);
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;

@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.16 2018/06/26 06:47:57 msaitoh Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.17 2019/01/22 03:42:25 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.16 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.17 2019/01/22 03:42:25 msaitoh Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -59,8 +59,8 @@ static void geminigmac_attach(device_t, device_t, void *);
 static int geminigmac_find(device_t, cfdata_t, const int *, void *);
 static int geminigmac_print(void *aux, const char *name);
 
-static int geminigmac_mii_readreg(device_t, int, int);
-static void geminigmac_mii_writereg(device_t, int, int, int);
+static int geminigmac_mii_readreg(device_t, int, int, uint16_t *);
+static int geminigmac_mii_writereg(device_t, int, int, uint16_t);
 
 #define	GPIO_MDIO	21
 #define	GPIO_MDCLK	22
@@ -385,14 +385,15 @@ static const struct mii_bitbang_ops geminigmac_mii_bitbang_ops = {
 };
 
 int
-geminigmac_mii_readreg(device_t dv, int phy, int reg)
+geminigmac_mii_readreg(device_t dv, int phy, int reg, uint16_t *val)
 {
 	device_t parent = device_parent(dv);
 	struct gmac_softc * const sc = device_private(parent);
 	int rv;
 
 	mutex_enter(&sc->sc_mdiolock);
-	rv = mii_bitbang_readreg(parent, &geminigmac_mii_bitbang_ops, phy, reg);
+	rv = mii_bitbang_readreg(parent, &geminigmac_mii_bitbang_ops, phy,
+	    reg, val);
 	mutex_exit(&sc->sc_mdiolock);
 
 	//aprint_debug_dev(dv, "mii_readreg(%d, %d): %#x\n", phy, reg, rv);
@@ -400,8 +401,8 @@ geminigmac_mii_readreg(device_t dv, int phy, int reg)
 	return rv;
 }
 
-void
-geminigmac_mii_writereg(device_t dv, int phy, int reg, int val)
+int
+geminigmac_mii_writereg(device_t dv, int phy, int reg, uint16_t val)
 {
 	device_t parent = device_parent(dv);
 	struct gmac_softc * const sc = device_private(parent);
@@ -409,8 +410,11 @@ geminigmac_mii_writereg(device_t dv, int phy, int reg, int val)
 	//aprint_debug_dev(dv, "mii_writereg(%d, %d, %#x)\n", phy, reg, val);
 
 	mutex_enter(&sc->sc_mdiolock);
-	mii_bitbang_writereg(parent, &geminigmac_mii_bitbang_ops, phy, reg, val);
+	rv = mii_bitbang_writereg(parent, &geminigmac_mii_bitbang_ops, phy,
+	    reg, val);
 	mutex_exit(&sc->sc_mdiolock);
+
+	return rv;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.100 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: hme.c,v 1.101 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.100 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.101 2019/01/22 03:42:26 msaitoh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -91,8 +91,8 @@ static void	hme_chipreset(struct hme_softc *);
 static void	hme_setladrf(struct hme_softc *);
 
 /* MII methods & callbacks */
-static int	hme_mii_readreg(device_t, int, int);
-static void	hme_mii_writereg(device_t, int, int, int);
+static int	hme_mii_readreg(device_t, int, int, uint16_t *);
+static int	hme_mii_writereg(device_t, int, int, uint16_t);
 static void	hme_mii_statchg(struct ifnet *);
 
 static int	hme_mediachange(struct ifnet *);
@@ -1194,18 +1194,18 @@ hme_mifinit(struct hme_softc *sc)
  * MII interface
  */
 static int
-hme_mii_readreg(device_t self, int phy, int reg)
+hme_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct hme_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
 	uint32_t v, xif_cfg, mifi_cfg;
-	int n;
+	int n, rv;
 
 	/* We can at most have two PHYs */
 	if (phy != HME_PHYAD_EXTERNAL && phy != HME_PHYAD_INTERNAL)
-		return (0);
+		return -1;
 
 	/* Select the desired PHY in the MIF configuration register */
 	v = mifi_cfg = bus_space_read_4(t, mif, HME_MIFI_CFG);
@@ -1232,8 +1232,10 @@ hme_mii_readreg(device_t self, int phy, int reg)
 	mif_mdi_bit = 1 << (8 + (1 - phy));
 	delay(100);
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	if ((v & mif_mdi_bit) == 0)
-		return (0);
+	if ((v & mif_mdi_bit) == 0) {
+		rv = -1;
+		goto out;
+	}
 #endif
 
 	/* Construct the frame command */
@@ -1248,12 +1250,13 @@ hme_mii_readreg(device_t self, int phy, int reg)
 		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
 		if (v & HME_MIF_FO_TALSB) {
-			v &= HME_MIF_FO_DATA;
+			*val = v & HME_MIF_FO_DATA;
+			rv = 0;
 			goto out;
 		}
 	}
 
-	v = 0;
+	rv = ETIMEDOUT;
 	printf("%s: mii_read timeout\n", device_xname(sc->sc_dev));
 
 out:
@@ -1261,22 +1264,22 @@ out:
 	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);
 	/* Restore XIF register */
 	bus_space_write_4(t, mac, HME_MACI_XIF, xif_cfg);
-	return (v);
+	return rv;
 }
 
-static void
-hme_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+hme_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct hme_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
 	uint32_t v, xif_cfg, mifi_cfg;
-	int n;
+	int n, rv;
 
 	/* We can at most have two PHYs */
 	if (phy != HME_PHYAD_EXTERNAL && phy != HME_PHYAD_INTERNAL)
-		return;
+		return -1;
 
 	/* Select the desired PHY in the MIF configuration register */
 	v = mifi_cfg = bus_space_read_4(t, mif, HME_MIFI_CFG);
@@ -1303,8 +1306,10 @@ hme_mii_writereg(device_t self, int phy, int reg, int val)
 	mif_mdi_bit = 1 << (8 + (1 - phy));
 	delay(100);
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	if ((v & mif_mdi_bit) == 0)
-		return;
+	if ((v & mif_mdi_bit) == 0) {
+		rv = -1;
+		goto out;
+	}
 #endif
 
 	/* Construct the frame command */
@@ -1319,16 +1324,21 @@ hme_mii_writereg(device_t self, int phy, int reg, int val)
 	for (n = 0; n < 100; n++) {
 		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
-		if (v & HME_MIF_FO_TALSB)
+		if (v & HME_MIF_FO_TALSB) {
+			rv = 0;
 			goto out;
+		}
 	}
 
+	rv = ETIMEDOUT;
 	printf("%s: mii_write timeout\n", device_xname(sc->sc_dev));
 out:
 	/* Restore MIFI_CFG register */
 	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);
 	/* Restore XIF register */
 	bus_space_write_4(t, mac, HME_MACI_XIF, xif_cfg);
+
+	return rv;
 }
 
 static void

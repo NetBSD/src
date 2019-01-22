@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.44 2018/06/26 06:47:58 msaitoh Exp $ */
+/* $NetBSD: if_aumac.c,v 1.45 2019/01/22 03:42:25 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.44 2018/06/26 06:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.45 2019/01/22 03:42:25 msaitoh Exp $");
 
 
 
@@ -188,8 +188,8 @@ static int	aumac_intr(void *);
 static int	aumac_txintr(struct aumac_softc *);
 static int	aumac_rxintr(struct aumac_softc *);
 
-static int	aumac_mii_readreg(device_t, int, int);
-static void	aumac_mii_writereg(device_t, int, int, int);
+static int	aumac_mii_readreg(device_t, int, int, uint16_t *);
+static int	aumac_mii_writereg(device_t, int, int, uint16_t);
 static void	aumac_mii_statchg(struct ifnet *);
 static int	aumac_mii_wait(struct aumac_softc *, const char *);
 
@@ -983,7 +983,7 @@ aumac_mii_wait(struct aumac_softc *sc, const char *msg)
 	}
 
 	printf("%s: MII failed to %s\n", device_xname(sc->sc_dev), msg);
-	return (1);
+	return ETIMEDOUT;
 }
 
 /*
@@ -992,21 +992,23 @@ aumac_mii_wait(struct aumac_softc *sc, const char *msg)
  *	Read a PHY register on the MII.
  */
 static int
-aumac_mii_readreg(device_t self, int phy, int reg)
+aumac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct aumac_softc *sc = device_private(self);
+	int rv;
 
-	if (aumac_mii_wait(sc, "become ready"))
-		return (0);
+	if ((rv = aumac_mii_wait(sc, "become ready")) != 0)
+		return rv;
 
 	bus_space_write_4(sc->sc_st, sc->sc_mac_sh, MAC_MIICTRL,
 	    MIICTRL_PHYADDR(phy) | MIICTRL_MIIREG(reg));
 
-	if (aumac_mii_wait(sc, "complete"))
-		return (0);
+	if ((rv = aumac_mii_wait(sc, "complete")) != 0)
+		return rv;
 
-	return (bus_space_read_4(sc->sc_st, sc->sc_mac_sh, MAC_MIIDATA) &
-	    MIIDATA_MASK);
+	*val = bus_space_read_4(sc->sc_st, sc->sc_mac_sh, MAC_MIIDATA)
+	    & MIIDATA_MASK;
+	return 0;
 }
 
 /*
@@ -1014,19 +1016,20 @@ aumac_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the MII.
  */
-static void
-aumac_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+aumac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct aumac_softc *sc = device_private(self);
+	int rv;
 
-	if (aumac_mii_wait(sc, "become ready"))
-		return;
+	if ((rv = aumac_mii_wait(sc, "become ready")) != 0)
+		return rv;
 
 	bus_space_write_4(sc->sc_st, sc->sc_mac_sh, MAC_MIIDATA, val);
 	bus_space_write_4(sc->sc_st, sc->sc_mac_sh, MAC_MIICTRL,
 	    MIICTRL_PHYADDR(phy) | MIICTRL_MIIREG(reg) | MIICTRL_MW);
 
-	(void) aumac_mii_wait(sc, "complete");
+	return aumac_mii_wait(sc, "complete");
 }
 
 /*

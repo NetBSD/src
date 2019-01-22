@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.22 2018/07/15 05:16:41 maxv Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.22 2018/07/15 05:16:41 maxv Exp $	*/
+/*	$Id: at91emac.c,v 1.23 2019/01/22 03:42:24 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.23 2019/01/22 03:42:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.22 2018/07/15 05:16:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.23 2019/01/22 03:42:24 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,8 +96,8 @@ static int      emac_intr(void* arg);
 static int	emac_gctx(struct emac_softc *);
 static int	emac_mediachange(struct ifnet *);
 static void	emac_mediastatus(struct ifnet *, struct ifmediareq *);
-int		emac_mii_readreg (device_t, int, int);
-void		emac_mii_writereg (device_t, int, int, int);
+int		emac_mii_readreg (device_t, int, int, uint16_t *);
+int		emac_mii_writereg (device_t, int, int, uint16_t);
 void		emac_statchg (struct ifnet *);
 void		emac_tick (void *);
 static int	emac_ifioctl (struct ifnet *, u_long, void *);
@@ -513,7 +513,7 @@ emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 
 int
-emac_mii_readreg(device_t self, int phy, int reg)
+emac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 #ifndef EMAC_FAST
 	struct emac_softc *sc = device_private(self);
@@ -524,11 +524,13 @@ emac_mii_readreg(device_t self, int phy, int reg)
 			     | ((reg << ETH_MAN_REGA_SHIFT) & ETH_MAN_REGA)
 			     | ETH_MAN_CODE_IEEE802_3));
 	while (!(EMAC_READ(ETH_SR) & ETH_SR_IDLE)) ;
-	return (EMAC_READ(ETH_MAN) & ETH_MAN_DATA);
+	*val = EMAC_READ(ETH_MAN) & ETH_MAN_DATA;
+
+	return 0;
 }
 
-void
-emac_mii_writereg(device_t self, int phy, int reg, int val)
+int
+emac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 #ifndef EMAC_FAST
 	struct emac_softc *sc = device_private(self);
@@ -540,6 +542,8 @@ emac_mii_writereg(device_t self, int phy, int reg, int val)
 			     | ETH_MAN_CODE_IEEE802_3
 			     | (val & ETH_MAN_DATA)));
 	while (!(EMAC_READ(ETH_SR) & ETH_SR_IDLE)) ;
+
+	return 0;
 }
 
 	

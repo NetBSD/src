@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.48 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.49 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.48 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.49 2019/01/22 03:42:26 msaitoh Exp $");
 
 #include "opt_emac.h"
 
@@ -304,8 +304,8 @@ static int	emac_txreap(struct emac_softc *);
 static void	emac_soft_reset(struct emac_softc *);
 static void	emac_smart_reset(struct emac_softc *);
 
-static int	emac_mii_readreg(device_t, int, int);
-static void	emac_mii_writereg(device_t, int, int, int);
+static int	emac_mii_readreg(device_t, int, int, uint16_t *);
+static int	emac_mii_writereg(device_t, int, int, uint16_t);
 static void	emac_mii_statchg(struct ifnet *);
 static uint32_t	emac_mii_wait(struct emac_softc *);
 static void	emac_mii_tick(void *);
@@ -1397,16 +1397,17 @@ emac_smart_reset(struct emac_softc *sc)
  */
 
 static int
-emac_mii_readreg(device_t self, int phy, int reg)
+emac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct emac_softc *sc = device_private(self);
 	uint32_t sta_reg;
+	int rv;
 
 	if (sc->sc_rmii_enable)
 		sc->sc_rmii_enable(device_parent(self), sc->sc_instance);
 
 	/* wait for PHY data transfer to complete */
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto fail;
 
 	sta_reg =
@@ -1416,34 +1417,34 @@ emac_mii_readreg(device_t self, int phy, int reg)
 	    sc->sc_stacr_bits;
 	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
 
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto fail;
 	sta_reg = EMAC_READ(sc, EMAC_STACR);
 
-	if (sc->sc_rmii_disable)
-		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
-
-	if (sta_reg & STACR_PHYE)
-		return 0;
-	return sta_reg >> STACR_PHYD_SHIFT;
+	if (sta_reg & STACR_PHYE) {
+		rv = -1;
+		goto fail;
+	}
+	*val = sta_reg >> STACR_PHYD_SHIFT;
 
 fail:
 	if (sc->sc_rmii_disable)
 		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
-	return 0;
+	return rv;
 }
 
-static void
-emac_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+emac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct emac_softc *sc = device_private(self);
 	uint32_t sta_reg;
+	int rv;
 
 	if (sc->sc_rmii_enable)
 		sc->sc_rmii_enable(device_parent(self), sc->sc_instance);
 
 	/* wait for PHY data transfer to complete */
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto out;
 
 	sta_reg =
@@ -1454,14 +1455,18 @@ emac_mii_writereg(device_t self, int phy, int reg, int val)
 	    sc->sc_stacr_bits;
 	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
 
-	if (emac_mii_wait(sc))
+	if ((rv = emac_mii_wait(sc)) != 0)
 		goto out;
-	if (EMAC_READ(sc, EMAC_STACR) & STACR_PHYE)
+	if (EMAC_READ(sc, EMAC_STACR) & STACR_PHYE) {
 		aprint_error_dev(sc->sc_dev, "MII PHY Error\n");
+		rv = -1;
+	}
 
 out:
 	if (sc->sc_rmii_disable)
 		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
+
+	return rv;
 }
 
 static void
@@ -1527,7 +1532,7 @@ emac_mii_wait(struct emac_softc *sc)
 		delay(7);
 		if (i++ > 5) {
 			aprint_error_dev(sc->sc_dev, "MII timed out\n");
-			return -1;
+			return ETIMEDOUT;
 		}
 		oc = EMAC_READ(sc, EMAC_STACR) & STACR_OC;
 	}

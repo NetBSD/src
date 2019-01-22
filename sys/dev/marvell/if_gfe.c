@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.50 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.50 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -153,8 +153,8 @@ STATIC int gfec_print(void *, const char *);
 STATIC int gfec_search(device_t, cfdata_t, const int *, void *);
 
 STATIC int gfec_enet_phy(device_t, int);
-STATIC int gfec_mii_read(device_t, int, int);
-STATIC void gfec_mii_write(device_t, int, int, int);
+STATIC int gfec_mii_read(device_t, int, int, uint16_t *);
+STATIC int gfec_mii_write(device_t, int, int, uint16_t);
 STATIC void gfec_mii_statchg(struct ifnet *);
 
 STATIC int gfe_match(device_t, cfdata_t, void *);
@@ -296,7 +296,7 @@ gfec_enet_phy(device_t dev, int unit)
 }
 
 int
-gfec_mii_read(device_t dev, int phy, int reg)
+gfec_mii_read(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct gfec_softc *csc = device_private(device_parent(dev));
 	uint32_t data;
@@ -313,7 +313,7 @@ gfec_mii_read(device_t dev, int phy, int reg)
 		aprint_error_dev(dev,
 		    "mii read for phy %d reg %d busied out\n", phy, reg);
 		mutex_exit(&csc->sc_mtx);
-		return ETH_ESMIR_Value_GET(data);
+		return ETIMEDOUT;
 	}
 
 	bus_space_write_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR,
@@ -327,18 +327,21 @@ gfec_mii_read(device_t dev, int phy, int reg)
 
 	mutex_exit(&csc->sc_mtx);
 
-	if (count == 0)
+	if (count == 0) {
 		aprint_error_dev(dev,
 		    "mii read for phy %d reg %d timed out\n", phy, reg);
+		return ETIMEDOUT;
+	}
 #if defined(GTMIIDEBUG)
 	aprint_normal_dev(dev, "mii_read(%d, %d): %#x data %#x\n",
 	    phy, reg, data, ETH_ESMIR_Value_GET(data));
 #endif
-	return ETH_ESMIR_Value_GET(data);
+	*val = ETH_ESMIR_Value_GET(data);
+	return 0;
 }
 
-void
-gfec_mii_write (device_t dev, int phy, int reg, int value)
+int
+gfec_mii_write(device_t dev, int phy, int reg, uint16_t value)
 {
 	struct gfec_softc *csc = device_private(device_parent(dev));
 	uint32_t data;
@@ -356,7 +359,7 @@ gfec_mii_write (device_t dev, int phy, int reg, int value)
 		    "mii write for phy %d reg %d busied out (busy)\n",
 		    phy, reg);
 		mutex_exit(&csc->sc_mtx);
-		return;
+		return ETIMEDOUT;
 	}
 
 	bus_space_write_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR,
@@ -370,12 +373,15 @@ gfec_mii_write (device_t dev, int phy, int reg, int value)
 
 	mutex_exit(&csc->sc_mtx);
 
-	if (count == 0)
+	if (count == 0) {
 		aprint_error_dev(dev,
 		    "mii write for phy %d reg %d timed out\n", phy, reg);
+		return ETIMEDOUT;
+	}
 #if defined(GTMIIDEBUG)
-	aprint_normal_dev(dev, "mii_write(%d, %d, %#x)\n", phy, reg, value);
+	aprint_normal_dev(dev, "mii_write(%d, %d, %#hx)\n", phy, reg, value);
 #endif
+	return 0;
 }
 
 void

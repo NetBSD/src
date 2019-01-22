@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.27 2019/01/05 07:56:07 mlelstv Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.28 2019/01/22 03:42:28 msaitoh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.27 2019/01/05 07:56:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.28 2019/01/22 03:42:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -117,8 +117,8 @@ static int	mue_wait_for_bits(struct mue_softc *sc, uint32_t, uint32_t,
 static void	mue_lock_mii(struct mue_softc *);
 static void	mue_unlock_mii(struct mue_softc *);
 
-static int	mue_miibus_readreg(device_t, int, int);
-static void	mue_miibus_writereg(device_t, int, int, int);
+static int	mue_miibus_readreg(device_t, int, int, uint16_t *);
+static int	mue_miibus_writereg(device_t, int, int, uint16_t);
 static void	mue_miibus_statchg(struct ifnet *);
 static int	mue_ifmedia_upd(struct ifnet *);
 static void	mue_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -279,18 +279,19 @@ mue_unlock_mii(struct mue_softc *sc)
 }
 
 static int
-mue_miibus_readreg(device_t dev, int phy, int reg)
+mue_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct mue_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
+	int rv = 0;
 
 	if (sc->mue_dying) {
 		DPRINTF(sc, "dying\n");
-		return 0;
+		return -1;
 	}
 
 	if (sc->mue_phyno != phy)
-		return 0;
+		return -1;
 
 	mue_lock_mii(sc);
 	if (MUE_WAIT_CLR(sc, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
@@ -304,48 +305,55 @@ mue_miibus_readreg(device_t dev, int phy, int reg)
 	    MUE_MII_ACCESS_PHYADDR(phy));
 
 	if (MUE_WAIT_CLR(sc, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
-		mue_unlock_mii(sc);
 		MUE_PRINTF(sc, "timed out\n");
-		return -1;
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
-	val = mue_csr_read(sc, MUE_MII_DATA);
+	data = mue_csr_read(sc, MUE_MII_DATA);
+	*val = data & 0xffff;
+
+out:
 	mue_unlock_mii(sc);
-	return val & 0xffff;
+	return rv;
 }
 
-static void
-mue_miibus_writereg(device_t dev, int phy, int reg, int data)
+static int
+mue_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct mue_softc *sc = device_private(dev);
+	int rv = 0;
 
 	if (sc->mue_dying) {
 		DPRINTF(sc, "dying\n");
-		return;
+		return -1;
 	}
 
 	if (sc->mue_phyno != phy) {
 		DPRINTF(sc, "sc->mue_phyno (%d) != phy (%d)\n",
 		    sc->mue_phyno, phy);
-		return;
+		return -1;
 	}
 
 	mue_lock_mii(sc);
 	if (MUE_WAIT_CLR(sc, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
-		mue_unlock_mii(sc);
 		MUE_PRINTF(sc, "not ready\n");
-		return;
+		rv = EBUSY;
+		goto out;
 	}
 
-	mue_csr_write(sc, MUE_MII_DATA, data);
+	mue_csr_write(sc, MUE_MII_DATA, val);
 	mue_csr_write(sc, MUE_MII_ACCESS, MUE_MII_ACCESS_WRITE |
 	    MUE_MII_ACCESS_BUSY | MUE_MII_ACCESS_REGADDR(reg) |
 	    MUE_MII_ACCESS_PHYADDR(phy));
 
-	if (MUE_WAIT_CLR(sc, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0))
+	if (MUE_WAIT_CLR(sc, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(sc, "timed out\n");
-
+		rv = ETIMEDOUT;
+	}
+out:
 	mue_unlock_mii(sc);
+	return rv;
 }
 
 static void

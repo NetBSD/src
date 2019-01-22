@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.10 2016/11/07 08:57:43 msaitoh Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.11 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*******************************************************************************
 
@@ -175,16 +175,25 @@
 #define IGP3_PM_CTRL	IGP3_REG(769, 20)
 #define IGP3_PM_CTRL_FORCE_PWR_DOWN		0x0020
 
+static inline int
+IGPHY_READ(struct mii_softc *sc, int reg, uint16_t *val)
+{
+	int rv;
 
-#define IGPHY_READ(sc, reg) \
-    (PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, (reg) & ~0x1f), \
-     PHY_READ(sc, (reg) & 0x1f))
+	if ((rv = PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, reg & ~0x1f)) != 0)
+		return rv;
+	return PHY_READ(sc, reg & 0x1f, val);
+}
+static inline int
+IGPHY_WRITE(struct mii_softc *sc, int reg, uint16_t val)
+{
+	int rv;
 
-#define IGPHY_WRITE(sc, reg, val) \
-    do { \
-	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, (reg) & ~0x1f); \
-	PHY_WRITE(sc, (reg) & 0x1f, val); \
-    } while (/*CONSTCOND*/0)
+	if ((rv = PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, reg & ~0x1f)) != 0)
+		return rv;
+
+	return PHY_WRITE(sc, reg & 0x1f, val);
+}
 
 #define	IGPHY_TICK_DOWNSHIFT	3
 #define	IGPHY_TICK_MAX		15
