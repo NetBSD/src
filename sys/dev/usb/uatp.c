@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.18 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.19 2019/01/22 06:47:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.18 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.19 2019/01/22 06:47:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -833,7 +833,7 @@ scale_motion(const struct uatp_softc *sc, int delta, int *remainder,
 
 	product = (delta * ((int) (*multiplier)));
 	*remainder = (product % ((int) (*divisor)));
-	return (product / ((int) (*divisor)));
+	return product / ((int) (*divisor));
 }
 
 static int
@@ -2614,7 +2614,7 @@ motion_below_threshold(struct uatp_softc *sc, unsigned int threshold,
 	x_squared = (x * x);
 	y_squared = (y * y);
 
-	return ((x_squared + y_squared) < threshold);
+	return (x_squared + y_squared) < threshold;
 }
 
 static int
