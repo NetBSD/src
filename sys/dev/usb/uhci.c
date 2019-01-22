@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.285 2019/01/22 06:42:33 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.286 2019/01/22 15:02:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.285 2019/01/22 06:42:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.286 2019/01/22 15:02:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1740,7 +1740,6 @@ uhci_timeout_task(void *addr)
 	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
-	KASSERT(xfer->ux_status == USBD_TIMEOUT);
 	uhci_abort_xfer(xfer, USBD_TIMEOUT);
 	mutex_exit(&sc->sc_lock);
 }
