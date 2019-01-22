@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: micphy.c,v 1.5 2019/01/22 17:41:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.4 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.5 2019/01/22 17:41:06 skrll Exp $");
 
 #include "opt_mii.h"
 
@@ -136,9 +136,10 @@ micphyattach(device_t parent, device_t self, void *aux)
 
 	micphy_fixup(sc, model, rev, parent);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
@@ -152,7 +153,7 @@ static int
 micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -169,7 +170,7 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return 0;
 		}
@@ -218,12 +219,12 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 static void micphy_writexreg(struct mii_softc *sc, uint32_t reg, uint32_t wval)
 {
-	int rval __debugused;
+	uint16_t rval __debugused;
 
 	PHY_WRITE(sc, XREG_CONTROL, XREG_CTL_SEL_WRITE | reg);
 	PHY_WRITE(sc, XREG_WRITE, wval);
 	PHY_WRITE(sc, XREG_CONTROL, XREG_CTL_SEL_READ | reg);
-	rval = PHY_READ(sc, XREG_READ);
+	PHY_READ(sc, XREG_READ, &rval);
 	KDASSERT(wval == rval);
 }
 
