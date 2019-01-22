@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.103 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.104 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.103 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.104 2019/01/22 03:42:26 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -133,8 +133,8 @@ static void rtk_mii_send(struct rtk_softc *, uint32_t, int);
 static int rtk_mii_readreg(struct rtk_softc *, struct rtk_mii_frame *);
 static int rtk_mii_writereg(struct rtk_softc *, struct rtk_mii_frame *);
 
-static int rtk_phy_readreg(device_t, int, int);
-static void rtk_phy_writereg(device_t, int, int, int);
+static int rtk_phy_readreg(device_t, int, int, uint16_t *);
+static int rtk_phy_writereg(device_t, int, int, uint16_t);
 static void rtk_phy_statchg(struct ifnet *);
 static void rtk_tick(void *);
 
@@ -281,7 +281,7 @@ rtk_mii_send(struct rtk_softc *sc, uint32_t bits, int cnt)
 static int
 rtk_mii_readreg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 {
-	int i, ack, s;
+	int i, ack, s, rv = 0;
 
 	s = splnet();
 
@@ -337,6 +337,7 @@ rtk_mii_readreg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 			MII_SET(RTK_MII_CLK);
 			DELAY(1);
 		}
+		rv = -1;
 		goto fail;
 	}
 
@@ -360,9 +361,7 @@ rtk_mii_readreg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 
 	splx(s);
 
-	if (ack)
-		return 1;
-	return 0;
+	return rv;
 }
 
 /*
@@ -412,16 +411,16 @@ rtk_mii_writereg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 }
 
 static int
-rtk_phy_readreg(device_t self, int phy, int reg)
+rtk_phy_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct rtk_softc *sc = device_private(self);
 	struct rtk_mii_frame frame;
-	int rval;
+	int rv;
 	int rtk8139_reg;
 
 	if ((sc->sc_quirk & RTKQ_8129) == 0) {
 		if (phy != 7)
-			return 0;
+			return -1;
 
 		switch (reg) {
 		case MII_BMCR:
@@ -439,27 +438,32 @@ rtk_phy_readreg(device_t self, int phy, int reg)
 		case MII_ANLPAR:
 			rtk8139_reg = RTK_LPAR;
 			break;
+		case MII_PHYIDR1:
+		case MII_PHYIDR2:
+			*val = 0;
+			return 0;
 		default:
 #if 0
 			printf("%s: bad phy register\n", device_xname(self));
 #endif
-			return 0;
+			return -1;
 		}
-		rval = CSR_READ_2(sc, rtk8139_reg);
-		return rval;
+		*val = CSR_READ_2(sc, rtk8139_reg);
+		return 0;
 	}
 
 	memset(&frame, 0, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
-	rtk_mii_readreg(sc, &frame);
+	rv = rtk_mii_readreg(sc, &frame);
+	*val = frame.mii_data;
 
-	return frame.mii_data;
+	return rv;
 }
 
-static void
-rtk_phy_writereg(device_t self, int phy, int reg, int data)
+static int
+rtk_phy_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct rtk_softc *sc = device_private(self);
 	struct rtk_mii_frame frame;
@@ -467,7 +471,7 @@ rtk_phy_writereg(device_t self, int phy, int reg, int data)
 
 	if ((sc->sc_quirk & RTKQ_8129) == 0) {
 		if (phy != 7)
-			return;
+			return -1;
 
 		switch (reg) {
 		case MII_BMCR:
@@ -489,19 +493,19 @@ rtk_phy_writereg(device_t self, int phy, int reg, int data)
 #if 0
 			printf("%s: bad phy register\n", device_xname(self));
 #endif
-			return;
+			return -1;
 		}
-		CSR_WRITE_2(sc, rtk8139_reg, data);
-		return;
+		CSR_WRITE_2(sc, rtk8139_reg, val);
+		return 0;
 	}
 
 	memset(&frame, 0, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
-	frame.mii_data = data;
+	frame.mii_data = val;
 
-	rtk_mii_writereg(sc, &frame);
+	return rtk_mii_writereg(sc, &frame);
 }
 
 static void

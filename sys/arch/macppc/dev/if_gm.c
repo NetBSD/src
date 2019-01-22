@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.50 2018/06/26 06:47:58 msaitoh Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.51 2019/01/22 03:42:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.50 2018/06/26 06:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.51 2019/01/22 03:42:25 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -115,8 +115,8 @@ void gmac_setladrf(struct gmac_softc *);
 int gmac_ioctl(struct ifnet *, u_long, void *);
 void gmac_watchdog(struct ifnet *);
 
-int gmac_mii_readreg(device_t, int, int);
-void gmac_mii_writereg(device_t, int, int, int);
+int gmac_mii_readreg(device_t, int, int, uint16_t *);
+int gmac_mii_writereg(device_t, int, int, uint16_t);
 void gmac_mii_statchg(struct ifnet *);
 void gmac_mii_tick(void *);
 
@@ -840,7 +840,7 @@ gmac_watchdog(struct ifnet *ifp)
 }
 
 int
-gmac_mii_readreg(device_t self, int phy, int reg)
+gmac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct gmac_softc *sc = device_private(self);
 	int i;
@@ -855,14 +855,15 @@ gmac_mii_readreg(device_t self, int phy, int reg)
 	}
 	if (i < 0) {
 		aprint_error_dev(sc->sc_dev, "gmac_mii_readreg: timeout\n");
-		return 0;
+		return ETIMEDOUT;
 	}
 
-	return gmac_read_reg(sc, GMAC_MIFFRAMEOUTPUT) & 0xffff;
+	*val = gmac_read_reg(sc, GMAC_MIFFRAMEOUTPUT) & 0xffff;
+	return 0;
 }
 
-void
-gmac_mii_writereg(device_t self, int phy, int reg, int val)
+int
+gmac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct gmac_softc *sc = device_private(self);
 	int i;
@@ -875,8 +876,12 @@ gmac_mii_writereg(device_t self, int phy, int reg, int val)
 			break;
 		delay(10);
 	}
-	if (i < 0)
+	if (i < 0) {
 		aprint_error_dev(sc->sc_dev, "gmac_mii_writereg: timeout\n");
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 void

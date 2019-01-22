@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.26 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.27 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.26 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.27 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -82,8 +82,8 @@ static int	ale_match(device_t, cfdata_t, void *);
 static void	ale_attach(device_t, device_t, void *);
 static int	ale_detach(device_t, int);
 
-static int	ale_miibus_readreg(device_t, int, int);
-static void	ale_miibus_writereg(device_t, int, int, int);
+static int	ale_miibus_readreg(device_t, int, int, uint16_t *);
+static int	ale_miibus_writereg(device_t, int, int, uint16_t);
 static void	ale_miibus_statchg(struct ifnet *);
 
 static int	ale_init(struct ifnet *);
@@ -128,20 +128,21 @@ int aledebug = 0;
 #define ALE_CSUM_FEATURES	(M_CSUM_TCPv4 | M_CSUM_UDPv4)
 
 static int
-ale_miibus_readreg(device_t dev, int phy, int reg)
+ale_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct ale_softc *sc = device_private(dev);
 	uint32_t v;
 	int i;
 
 	if (phy != sc->ale_phyaddr)
-		return 0;
+		return -1;
 
 	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
 		switch (reg) {
 		case MII_100T2CR:
 		case MII_100T2SR:
 		case MII_EXTSR:
+			*val = 0;
 			return 0;
 		default:
 			break;
@@ -160,28 +161,29 @@ ale_miibus_readreg(device_t dev, int phy, int reg)
 	if (i == 0) {
 		printf("%s: phy read timeout: phy %d, reg %d\n",
 		    device_xname(sc->sc_dev), phy, reg);
-		return 0;
+		return ETIMEDOUT;
 	}
 
-	return (v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT;
+	*val = (v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT;
+	return 0;
 }
 
-static void
-ale_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+ale_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct ale_softc *sc = device_private(dev);
 	uint32_t v;
 	int i;
 
 	if (phy != sc->ale_phyaddr)
-		return;
+		return -1;
 
 	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
 		switch (reg) {
 		case MII_100T2CR:
 		case MII_100T2SR:
 		case MII_EXTSR:
-			return;
+			return 0;
 		default:
 			break;
 		}
@@ -197,9 +199,13 @@ ale_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
-	if (i == 0)
+	if (i == 0) {
 		printf("%s: phy write timeout: phy %d, reg %d\n",
 		    device_xname(sc->sc_dev), phy, reg);
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 static void

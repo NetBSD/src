@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.5 2018/07/18 23:10:27 sevan Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.6 2019/01/22 03:42:25 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.5 2018/07/18 23:10:27 sevan Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.6 2019/01/22 03:42:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,8 +169,8 @@ static void sun4i_emac_attach(device_t, device_t, void *);
 static int sun4i_emac_intr(void *);
 static void sun4i_emac_tick(void *);
 
-static int sun4i_emac_miibus_read_reg(device_t, int, int);
-static void sun4i_emac_miibus_write_reg(device_t, int, int, int);
+static int sun4i_emac_miibus_read_reg(device_t, int, int, uint16_t *);
+static int sun4i_emac_miibus_write_reg(device_t, int, int, uint16_t);
 static void sun4i_emac_miibus_statchg(struct ifnet *);
 
 static void sun4i_emac_ifstart(struct ifnet *);
@@ -386,41 +386,49 @@ sun4i_emac_int_enable(struct sun4i_emac_softc *sc)
 }
 
 int
-sun4i_emac_miibus_read_reg(device_t self, int phy, int reg)
+sun4i_emac_miibus_read_reg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct sun4i_emac_softc * const sc = device_private(self);
 	int retry = 100;
+	int rv = 0;
 
 	sun4i_emac_write(sc, EMAC_MAC_MADR_REG, (phy << 8) | reg);
 	sun4i_emac_write(sc, EMAC_MAC_MCMD_REG, 1);
 
 	while (--retry > 0 && (sun4i_emac_read(sc, EMAC_MAC_MIND_REG) & 1) != 0)
 		delay(1000);
-	if (retry == 0)
+	if (retry == 0) {
 		device_printf(self, "PHY read timeout\n");
+		rv = ETIMEDOUT;
+	}
 
 	sun4i_emac_write(sc, EMAC_MAC_MCMD_REG, 0);
-	const uint32_t rv = sun4i_emac_read(sc, EMAC_MAC_MRDD_REG);
+	*val = sun4i_emac_read(sc, EMAC_MAC_MRDD_REG) & 0xffff;
 
 	return rv;
 }
 
-void
-sun4i_emac_miibus_write_reg(device_t self, int phy, int reg, int val)
+int
+sun4i_emac_miibus_write_reg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct sun4i_emac_softc * const sc = device_private(self);
 	int retry = 100;
+	int rv = 0;
 
 	sun4i_emac_write(sc, EMAC_MAC_MADR_REG, (phy << 8) | reg);
 	sun4i_emac_write(sc, EMAC_MAC_MCMD_REG, 1);
 
 	while (--retry > 0 && (sun4i_emac_read(sc, EMAC_MAC_MIND_REG) & 1) != 0)
 		delay(1000);
-	if (retry == 0)
+	if (retry == 0) {
 		device_printf(self, "PHY write timeout\n");
+		rv = ETIMEDOUT;
+	}
 
 	sun4i_emac_write(sc, EMAC_MAC_MCMD_REG, 0);
 	sun4i_emac_write(sc, EMAC_MAC_MWTD_REG, val);
+
+	return rv;
 }
 
 void

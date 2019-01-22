@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.110 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.111 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.110 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.111 2019/01/22 03:42:27 msaitoh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -137,8 +137,8 @@ void	tl_mii_sendbits(struct tl_softc *, uint32_t, int);
 static void ether_printheader(struct ether_header *);
 #endif
 
-int tl_mii_read(device_t, int, int);
-void tl_mii_write(device_t, int, int, int);
+int tl_mii_read(device_t, int, int, uint16_t *);
+int tl_mii_write(device_t, int, int, uint16_t);
 
 void tl_statchg(struct ifnet *);
 
@@ -833,10 +833,11 @@ tl_mii_sendbits(struct tl_softc *sc, uint32_t data, int nbits)
 }
 
 int
-tl_mii_read(device_t self, int phy, int reg)
+tl_mii_read(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct tl_softc *sc = device_private(self);
-	int val = 0, i, err;
+	uint16_t data = 0;
+	int i, err;
 
 	/*
 	 * Read the PHY register by manually driving the MII control lines.
@@ -858,20 +859,21 @@ tl_mii_read(device_t self, int phy, int reg)
 
 	/* Even if an error occurs, must still clock out the cycle. */
 	for (i = 0; i < 16; i++) {
-		val <<= 1;
+		data <<= 1;
 		netsio_clr(sc, TL_NETSIO_MCLK);
 		if (err == 0 && netsio_read(sc, TL_NETSIO_MDATA))
-			val |= 1;
+			data |= 1;
 		netsio_set(sc, TL_NETSIO_MCLK);
 	}
 	netsio_clr(sc, TL_NETSIO_MCLK);
 	netsio_set(sc, TL_NETSIO_MCLK);
 
-	return err ? 0 : val;
+	*val = data;
+	return err;
 }
 
-void
-tl_mii_write(device_t self, int phy, int reg, int val)
+int
+tl_mii_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct tl_softc *sc = device_private(self);
 
@@ -889,6 +891,8 @@ tl_mii_write(device_t self, int phy, int reg, int val)
 
 	netsio_clr(sc, TL_NETSIO_MCLK);
 	netsio_set(sc, TL_NETSIO_MCLK);
+
+	return 0;
 }
 
 void

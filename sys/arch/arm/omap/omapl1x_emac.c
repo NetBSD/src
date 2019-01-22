@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.7 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.8 2019/01/22 03:42:25 msaitoh Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -252,8 +252,8 @@ static u_int emac_free_descs(struct emac_softc * const sc,
 
 static void emac_mii_statchg(struct ifnet *ifp);
 static int emac_mii_wait(struct emac_softc * const sc);
-static int emac_mii_readreg(device_t dev, int phy, int reg);
-static void emac_mii_writereg(device_t dev, int phy, int reg, int val);
+static int emac_mii_readreg(device_t dev, int phy, int reg, uint16_t *val);
+static int emac_mii_writereg(device_t dev, int phy, int reg, uint16_t val);
 
 CFATTACH_DECL_NEW(emac, sizeof(struct emac_softc),
 		  emac_match, emac_attach, NULL, NULL);
@@ -274,7 +274,7 @@ emac_mii_wait (struct emac_softc * const sc)
 }
 
 static int
-emac_mii_readreg (device_t dev, int phy, int reg)
+emac_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	int ret = 0;
 	uint32_t v, reg_mask = 0;
@@ -310,18 +310,19 @@ emac_mii_readreg (device_t dev, int phy, int reg)
 	}
 
 	v = EMAC_READ(sc, MACMDIOUSERACCESS0);
-	if (v & USERACCESS_ACK)
-		ret = USERACCESS_DATA(v);
-	else
+	if (v & USERACCESS_ACK) {
+		*val = USERACCESS_DATA(v);
 		ret = 0;
+	} else
+		ret = -1;
 
 	mutex_spin_exit(sc->sc_mii_lock);
 
 	return ret;
 }
 
-static void
-emac_mii_writereg (device_t dev, int phy, int reg, int val)
+static int
+emac_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	int ret = 0;
 	uint32_t reg_mask = 0;
@@ -356,6 +357,8 @@ emac_mii_writereg (device_t dev, int phy, int reg, int val)
 	}
 
 	mutex_spin_exit(sc->sc_mii_lock);
+
+	return 0;
 }
 
 static void

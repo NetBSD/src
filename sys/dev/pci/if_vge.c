@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.66 2018/12/09 11:14:02 jdolecek Exp $ */
+/* $NetBSD: if_vge.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.66 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.67 2019/01/22 03:42:27 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -323,8 +323,8 @@ static uint16_t vge_read_eeprom(struct vge_softc *, int);
 
 static void vge_miipoll_start(struct vge_softc *);
 static void vge_miipoll_stop(struct vge_softc *);
-static int vge_miibus_readreg(device_t, int, int);
-static void vge_miibus_writereg(device_t, int, int, int);
+static int vge_miibus_readreg(device_t, int, int, uint16_t *);
+static int vge_miibus_writereg(device_t, int, int, uint16_t);
 static void vge_miibus_statchg(struct ifnet *);
 
 static void vge_cam_clear(struct vge_softc *);
@@ -461,16 +461,15 @@ vge_miipoll_start(struct vge_softc *sc)
 }
 
 static int
-vge_miibus_readreg(device_t dev, int phy, int reg)
+vge_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct vge_softc *sc;
 	int i, s;
-	uint16_t rval;
+	int rv = 0;
 
 	sc = device_private(dev);
-	rval = 0;
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
-		return 0;
+		return -1;
 
 	s = splnet();
 	vge_miipoll_stop(sc);
@@ -488,26 +487,27 @@ vge_miibus_readreg(device_t dev, int phy, int reg)
 			break;
 	}
 
-	if (i == VGE_TIMEOUT)
+	if (i == VGE_TIMEOUT) {
 		printf("%s: MII read timed out\n", device_xname(sc->sc_dev));
-	else
-		rval = CSR_READ_2(sc, VGE_MIIDATA);
+		rv = ETIMEDOUT;
+	} else
+		*val = CSR_READ_2(sc, VGE_MIIDATA);
 
 	vge_miipoll_start(sc);
 	splx(s);
 
-	return rval;
+	return rv;
 }
 
-static void
-vge_miibus_writereg(device_t dev, int phy, int reg, int data)
+static int
+vge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct vge_softc *sc;
-	int i, s;
+	int i, s, rv = 0;
 
 	sc = device_private(dev);
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
-		return;
+		return -1;
 
 	s = splnet();
 	vge_miipoll_stop(sc);
@@ -516,7 +516,7 @@ vge_miibus_writereg(device_t dev, int phy, int reg, int data)
 	CSR_WRITE_1(sc, VGE_MIIADDR, reg);
 
 	/* Specify the data we want to write. */
-	CSR_WRITE_2(sc, VGE_MIIDATA, data);
+	CSR_WRITE_2(sc, VGE_MIIDATA, val);
 
 	/* Issue write command. */
 	CSR_SETBIT_1(sc, VGE_MIICMD, VGE_MIICMD_WCMD);
@@ -530,10 +530,13 @@ vge_miibus_writereg(device_t dev, int phy, int reg, int data)
 
 	if (i == VGE_TIMEOUT) {
 		printf("%s: MII write timed out\n", device_xname(sc->sc_dev));
+		rv = ETIMEDOUT;
 	}
 
 	vge_miipoll_start(sc);
 	splx(s);
+
+	return rv;
 }
 
 static void

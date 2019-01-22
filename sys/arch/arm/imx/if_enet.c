@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.16 2018/12/22 13:11:37 maxv Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.17 2019/01/22 03:42:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.16 2018/12/22 13:11:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.17 2019/01/22 03:42:25 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -147,8 +147,8 @@ static void enet_stop(struct ifnet *, int);
 static void enet_watchdog(struct ifnet *);
 static void enet_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int enet_miibus_readreg(device_t, int, int);
-static void enet_miibus_writereg(device_t, int, int, int);
+static int enet_miibus_readreg(device_t, int, int, uint16_t *);
+static int enet_miibus_writereg(device_t, int, int, uint16_t);
 static void enet_miibus_statchg(struct ifnet *);
 
 static void enet_gethwaddr(struct enet_softc *, uint8_t *);
@@ -1085,11 +1085,11 @@ enet_ioctl(struct ifnet *ifp, u_long command, void *data)
  * for MII
  */
 static int
-enet_miibus_readreg(device_t dev, int phy, int reg)
+enet_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct enet_softc *sc;
 	int timeout;
-	uint32_t val, status;
+	uint32_t status;
 
 	sc = device_private(dev);
 
@@ -1110,16 +1110,15 @@ enet_miibus_readreg(device_t dev, int phy, int reg)
 	if (timeout <= 0) {
 		DEVICE_DPRINTF("MII read timeout: reg=0x%02x\n",
 		    reg);
-		val = -1;
-	} else {
-		val = ENET_REG_READ(sc, ENET_MMFR) & ENET_MMFR_DATAMASK;
-	}
+		return ETIMEDOUT;
+	} else
+		*val = ENET_REG_READ(sc, ENET_MMFR) & ENET_MMFR_DATAMASK;
 
-	return val;
+	return 0;
 }
 
-static void
-enet_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+enet_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct enet_softc *sc;
 	int timeout;
@@ -1141,9 +1140,11 @@ enet_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 	if (timeout <= 0) {
-		DEVICE_DPRINTF("MII write timeout: reg=0x%02x\n",
-		    reg);
+		DEVICE_DPRINTF("MII write timeout: reg=0x%02x\n", reg);
+		return ETIMEDOUT;
 	}
+
+	return 0;
 }
 
 static void
