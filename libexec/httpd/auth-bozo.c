@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.22 2018/11/22 08:54:08 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.23 2019/01/22 05:32:57 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -64,7 +64,7 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 		strcpy(dir, ".");
 	else {
 		*basename++ = '\0';
-		if (bozo_check_special_files(request, basename))
+		if (bozo_check_special_files(request, basename, true))
 			return 1;
 	}
 	request->hr_authrealm = bozostrdup(httpd, request, dir);
