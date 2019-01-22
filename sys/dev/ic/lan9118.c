@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.28 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.29 2019/01/22 15:34:04 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.28 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.29 2019/01/22 15:34:04 jmcneill Exp $");
 
 /*
  * The LAN9118 Family
@@ -794,7 +794,7 @@ lan9118_miibus_statchg(struct ifnet *ifp)
 }
 
 
-static uint16_t
+static int
 lan9118_mii_readreg(struct lan9118_softc *sc, int phy, int reg, uint16_t *val)
 {
 	uint32_t acc;
