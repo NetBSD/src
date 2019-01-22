@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.32.16.10 2019/01/18 08:50:57 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32.16.11 2019/01/22 07:42:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.10 2019/01/18 08:50:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.11 2019/01/22 07:42:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -349,10 +349,6 @@ stub_sysvipc50_sysctl(SYSCTLFN_ARGS)
 	return EPASSTHROUGH;
 }
 
-MODULE_CALL_HOOK_DECL(sysvipc50_sysctl_hook, int, (SYSCTLFN_PROTO));
-MODULE_CALL_HOOK(sysvipc50_sysctl_hook, int, (SYSCTLFN_ARGS),
-    (SYSCTLFN_CALL(rnode)), stub_sysvipc50_sysctl(SYSCTLFN_CALL(rnode)));
-
 static int
 sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 {
@@ -379,7 +375,8 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
  * to the non-compat sysctl code.
  */
 
-	error = sysvipc50_sysctl_hook_call(SYSCTLFN_CALL(rnode));
+	MODULE_CALL_HOOK(sysvipc50_sysctl_hook, (SYSCTLFN_CALL(rnode)),
+	    stub_sysvipc50_sysctl(SYSCTLFN_CALL(rnode)), error);
 	if (error != EPASSTHROUGH)
 		return error;
 

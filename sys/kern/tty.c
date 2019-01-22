@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.275.2.8 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.275.2.9 2019/01/22 07:42:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.8 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.9 2019/01/22 07:42:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -919,15 +919,6 @@ ttyoutput(int c, struct tty *tp)
 }
 
 /*
- * MODULE_HOOK glue for compat_60_ttioctl
- */
-MODULE_CALL_HOOK_DECL(compat_60_ttioctl_hook, int,
-    (dev_t, u_long, void *, int, struct lwp *));
-MODULE_CALL_HOOK(compat_60_ttioctl_hook, int,
-    (dev_t dev, u_long cmd, void *data, int flag, struct lwp *l),
-    (dev, cmd, data, flag, l), enosys());
-    
-/*
  * Ioctls for all tty devices.  Called after line-discipline specific ioctl
  * has been called to do discipline-specific functions and/or reject any
  * of these ioctl commands.
@@ -1422,16 +1413,16 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		/* We may have to load the compat_60 module for this. */
 		for (;;) {
 			rw_enter(&ttcompat_lock, RW_READER);
-			error = compat_60_ttioctl_hook_call(tp->t_dev, cmd,
-			    data, flag, l);
+			MODULE_CALL_HOOK(compat_60_ttioctl_hook,
+			    (tp->t_dev, cmd, data, flag, l), enosys(), error);
 			if (error != ENOSYS) {
 				break;
 			}
 			rw_exit(&ttcompat_lock);
 			(void)module_autoload("compat_60", MODULE_CLASS_EXEC);
 			rw_enter(&ttcompat_lock, RW_READER);
-			error = compat_60_ttioctl_hook_call(tp->t_dev, cmd,
-			    data, flag, l);
+			MODULE_CALL_HOOK(compat_60_ttioctl_hook,
+			    (tp->t_dev, cmd, data, flag, l), enosys(), error);
 			if (error == ENOSYS) {
 				rw_exit(&ttcompat_lock);
 				return EPASSTHROUGH;

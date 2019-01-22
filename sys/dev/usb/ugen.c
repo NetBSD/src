@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.139.2.9 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: ugen.c,v 1.139.2.10 2019/01/22 07:42:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.2.9 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.2.10 2019/01/22 07:42:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1439,11 +1439,6 @@ ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 	return usbd_get_interface_altindex(iface);
 }
 
-MODULE_CALL_HOOK_DECL(usb_subr_30_fill_hook, int,
-    (struct usbd_device *, struct usb_device_info_old *, int,
-      void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
-      int (*)(char *, size_t, int)));
-
 Static int
 ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	      void *addr, int flag, struct lwp *l)
@@ -1842,11 +1837,16 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 				     (struct usb_device_info *)addr, 0);
 		break;
 	case USB_GET_DEVICEINFO_OLD:
-		if (usb_subr_30_fill_hook_call(sc->sc_udev,
-			     (struct usb_device_info_old *)addr, 0,
-			     usbd_devinfo_vp, usbd_printBCD) == 0)
+	{
+		int ret;
+		MODULE_CALL_HOOK(usb_subr_30_fill_hook,
+		    (sc->sc_udev, (struct usb_device_info_old *)addr, 0,
+		      usbd_devinfo_vp, usbd_printBCD),
+		    enosys(), ret);
+		if (ret == 0)
 			return 0;
 		return EINVAL;
+	}
 	default:
 		return EINVAL;
 	}

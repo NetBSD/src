@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.1.2.6 2019/01/21 06:49:28 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.1.2.7 2019/01/22 07:42:41 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.6 2019/01/21 06:49:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.7 2019/01/22 07:42:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,7 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.1.2.6 2019/01/21 06:49:28 pgoyet
 #define	if_xannouncemsghdr	if_announcemsghdr50
 #define	COMPATNAME(x)	compat_50_ ## x
 #define	DOMAINNAME	"oroute"
-#define	COMPATCALL(name, args)	rtsock_50_ ## name ## _hook_call args
+#define	COMPATCALL(name, args)		\
+	MODULE_CALL_VOID_HOOK(rtsock_50_ ## name ## _hook, args, __nothing);
 #define	RTS_CTASSERT(x)	__nothing
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
@@ -1297,47 +1298,6 @@ again:
 }
 
 /*
- * MODULE_HOOK glue for rtsock_14_oifmsg and rtsock_14_iflist
- */
-MODULE_CALL_HOOK_DECL(rtsock_14_oifmsg_hook, void, (struct ifnet *ifp));
-
-MODULE_CALL_HOOK_DECL(rtsock_14_iflist_hook, int,
-    (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
-     size_t len));
-
-/*
- * MODULE_HOOK glue for rtsock_50 ifaddr_list and various message routines
- */
-MODULE_CALL_HOOK_DECL(rtsock_50_iflist_hook, int,
-    (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info, 
-     size_t len));
-
-MODULE_CALL_HOOK_DECL(rtsock_50_rt_missmsg_hook, void,
-    (int, const struct rt_addrinfo *, int, int));
-
-MODULE_CALL_HOOK_DECL(rtsock_50_rt_ifmsg_hook, void, (struct ifnet *));
-
-MODULE_CALL_HOOK_DECL(rtsock_50_rt_newaddrmsg_hook, void,
-    (int, struct ifaddr *, int, struct rtentry *));
-
-MODULE_CALL_HOOK_DECL(rtsock_50_rt_ifannouncemsg_hook, void,
-    (struct ifnet *, int what));
-
-MODULE_CALL_HOOK_DECL(rtsock_50_rt_ieee80211msg_hook, void,
-    (struct ifnet *, int, void *, size_t));
-
-MODULE_CALL_HOOK_DECL(rtsock_50_oifmsg_hook, void, (struct ifnet *ifp));
-
-/*
- * MODULE_HOOK glue for rtsock70_newaddrmsg1, rtsock70_ifaddr_listaddr,
- * and rtsock70_ifaddr_listif
- */
-MODULE_CALL_HOOK_DECL(rtsock_70_newaddr_hook, void, (int, struct ifaddr *));
-
-MODULE_CALL_HOOK_DECL(rtsock_70_iflist_hook, int,
-    (struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *));
-
-/*
  * This routine is called to generate a message from the routing
  * socket indicating that a redirect has occurred, a routing lookup
  * has failed, or that a protocol has detected timeouts to a particular
@@ -1390,8 +1350,8 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 	if (m == NULL)
 		return;
 	COMPATNAME(route_enqueue)(m, 0);
-	rtsock_14_oifmsg_hook_call(ifp);
-	rtsock_50_oifmsg_hook_call(ifp);
+	MODULE_CALL_VOID_HOOK(rtsock_14_oifmsg_hook, (ifp), __nothing);
+	MODULE_CALL_VOID_HOOK(rtsock_50_oifmsg_hook, (ifp), __nothing);
 }
 
 /*
@@ -1459,7 +1419,8 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			default:
 				panic("%s: unknown command %d", __func__, cmd);
 			}
-			rtsock_70_newaddr_hook_call(ncmd, ifa);
+			MODULE_CALL_VOID_HOOK(rtsock_70_newaddr_hook,
+			    (ncmd, ifa), __nothing);
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;

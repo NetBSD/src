@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.518.2.5 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.518.2.6 2019/01/22 07:42:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.2.5 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.2.6 2019/01/22 07:42:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1624,21 +1624,6 @@ fd_open(const char *path, int open_flags, int open_mode, int *fd)
 	return error;
 }
 
-/*
- * Check permissions, allocate an open file structure,
- * and call the device open routine if any.
- */
-static int
-stub_sys_openat_10(struct pathbuf **pb)
-{
-
-	return 0;
-}
-
-MODULE_CALL_HOOK_DECL(compat_10_openat_hook, int, (struct pathbuf **));
-MODULE_CALL_HOOK(compat_10_openat_hook, int, (struct pathbuf **pb), (pb),
-    stub_sys_openat_10(pb));
-
 static int
 do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
     int mode, int *fd)
@@ -1649,7 +1634,8 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	int error;
 
 	if (path == NULL) {
-		error = compat_10_openat_hook_call(&pb);
+		MODULE_CALL_HOOK(compat_10_openat_hook, (&pb),
+		    0, error);
 		if (error)
 			return error;
 	} else {

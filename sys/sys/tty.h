@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.94.2.3 2018/10/15 09:51:34 pgoyette Exp $	*/
+/*	$NetBSD: tty.h,v 1.94.2.4 2019/01/22 07:42:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -312,8 +312,6 @@ bool	 ttypull(struct tty *);
 
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
-
-int stub_compat_ptmioctl_60(dev_t, u_long, void *, int, struct lwp *);
 
 /* overwritten to be non-null if ptm(4) is present */
 

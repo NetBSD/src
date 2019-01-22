@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14.2.13 2019/01/18 00:01:00 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.2.14 2019/01/22 07:42:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.13 2019/01/18 00:01:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.14 2019/01/22 07:42:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,15 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.13 2019/01/18 00:01:00 pgoyette Exp
 #include <uvm/uvm_extern.h>
 
 #if defined(COMPAT_43)
-
-/*
- * Hook for calling the if43_20 compatability routine.
- *
- * XXX The if43_20 routine doesn't really have any effect, since its
- * XXX return value is ignored (see compat/common/if_43.c)!
- */
-MODULE_CALL_HOOK_DECL(if43_20_hook, int, (u_long ncmd));
-MODULE_CALL_HOOK(if43_20_hook, int, (u_long ncmd), (ncmd), enosys());
 
 /* 
  * Use a wrapper so that the compat_cvtcmd() can return a u_long
@@ -221,7 +212,7 @@ compat_cvtcmd(u_long cmd)
 		case TAPGIFNAME:
 			return ncmd;
 		default:
-			(void)if43_20_hook_call(ncmd);
+			MODULE_CALL_HOOK(if43_20_hook, (ncmd), enosys(), ncmd);
 			return ncmd;
 		}
 	}
