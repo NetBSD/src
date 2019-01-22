@@ -1,4 +1,4 @@
-/*	$NetBSD: axg-clkc.h,v 1.1.1.1 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: axg-clkc.h,v 1.1.1.2 2019/01/22 14:57:02 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
 /*
@@ -70,5 +70,9 @@
 #define CLKID_SD_EMMC_B_CLK0			59
 #define CLKID_SD_EMMC_C_CLK0			60
 #define CLKID_HIFI_PLL				69
+#define CLKID_PCIE_CML_EN0			79
+#define CLKID_PCIE_CML_EN1			80
+#define CLKID_MIPI_ENABLE			81
+#define CLKID_GEN_CLK				84
 
 #endif /* __AXG_CLKC_H */
