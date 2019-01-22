@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -88,7 +88,7 @@ duid_machineuuid(char *uuid, size_t uuid_len)
 	}
 	len = strlen(uuid) + 1;
 	fclose(fp);
-	r = 0;
+	r = len == 1 ? -1 : 0;
 #else
 	r = -1;
 	errno = ENOSYS;

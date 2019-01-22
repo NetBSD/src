@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,8 @@
 #  endif
 #endif
 
-#define ALLROUTERS "ff02::2"
+#define	ALLNODES		"ff02::1"
+#define	ALLROUTERS		"ff02::2"
 
 #define EUI64_GBIT		0x01
 #define EUI64_UBIT		0x02
@@ -168,6 +169,10 @@ struct ipv6_addr {
 
 	void (*dadcallback)(void *);
 	int dadcounter;
+
+	struct nd_neighbor_advert *na;
+	size_t na_len;
+	int na_count;
 
 #ifdef ALIAS_ADDR
 	char alias[IF_NAMESIZE];
