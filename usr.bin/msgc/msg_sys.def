@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.42 2019/01/21 20:28:08 martin Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.43 2019/01/22 18:39:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -401,6 +401,10 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 				pos--;
 			} else
 				_msg_beep();
+			break;
+		case 'l' & 0x1f:
+			endwin();
+			doupdate();
 			break;
 		case 'u' & 0x1f:	/* ^U; line kill */
 			/* kill line */
