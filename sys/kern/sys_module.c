@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.16 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.17 2019/01/22 07:42:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.16 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.17 2019/01/22 07:42:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -261,12 +261,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	return error;
 }
 
-/* MODULE_HOOK glue for modstat_80 */
-MODULE_CALL_HOOK_DECL(compat_modstat_80_hook, int,
-    (int cmd, struct iovec *iov, void *arg));
-MODULE_CALL_HOOK(compat_modstat_80_hook, int,
-    (int cmd, struct iovec *iov, void *arg), (cmd, iov, arg), enosys());
-
 int
 sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	   register_t *retval)
@@ -331,8 +325,9 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 		break;
 
 	default:
-		error = compat_modstat_80_hook_call(SCARG(uap, cmd),
-		    &iov, arg);
+
+		MODULE_CALL_HOOK(compat_modstat_80_hook,
+		    (SCARG(uap, cmd), &iov, arg), enosys(), error);
 		if (error == ENOSYS)
 			error = EINVAL;
 		break;

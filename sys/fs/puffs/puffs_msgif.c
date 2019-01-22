@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.101.10.10 2019/01/21 06:49:28 pgoyette Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.101.10.11 2019/01/22 07:42:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.10 2019/01/21 06:49:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.11 2019/01/22 07:42:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -323,21 +323,6 @@ puffs_getmsgid(struct puffs_mount *pmp)
 	return rv;
 }
 
-/* Routines to call the compat hooks */
-	/* Out-going */
-MODULE_CALL_HOOK_DECL(puffs_50_out_hook, int,
-     (struct puffs_req *oreq, struct puffs_req **creqp, ssize_t *deltap));
-MODULE_CALL_HOOK(puffs_50_out_hook, int,
-     (struct puffs_req *oreq, struct puffs_req **creqp, ssize_t *deltap),
-     (oreq, creqp, deltap), enosys());
-
-	/* Incoming */
-MODULE_CALL_HOOK_DECL(puffs_50_in_hook, void,
-     (struct puffs_req *oreq, struct puffs_req *creqp));
-MODULE_CALL_VOID_HOOK(puffs_50_in_hook,
-     (struct puffs_req *oreq, struct puffs_req *creqp),
-     (oreq, creqp), __nothing);
-
 /*
  * A word about reference counting of parks.  A reference must be taken
  * when accessing a park and additionally when it is on a queue.  So
@@ -351,6 +336,9 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	struct lwp *l = curlwp;
 	struct puffs_req *preq, *creq;
 	ssize_t delta;
+#if 1
+	int ret;
+#endif
 
 	/*
 	 * Some clients reuse a park, so reset some flags.  We might
@@ -364,14 +352,17 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 
 #if 1
 	/* check if we do compat adjustments */
-	if (pmp->pmp_docompat &&
-	    puffs_50_out_hook_call(preq, &creq, &delta) == 0) {
-		park->park_creq = park->park_preq;
-		park->park_creqlen = park->park_maxlen;
-
-		park->park_maxlen += delta;
-		park->park_copylen += delta;
-		park->park_preq = preq = creq;
+	if (pmp->pmp_docompat) {
+		MODULE_CALL_HOOK(puffs_50_out_hook, (preq, &creq, &delta),
+		    enosys(), ret);
+		if (ret == 0) {
+			park->park_creq = park->park_preq;
+			park->park_creqlen = park->park_maxlen;
+	
+			park->park_maxlen += delta;
+			park->park_copylen += delta;
+			park->park_preq = preq = creq;
+		}
 	}
 #endif
 
@@ -822,7 +813,8 @@ puffsop_msg(void *ctx, struct puffs_req *preq)
 			size_t csize;
 
 			KASSERT(pmp->pmp_docompat);
-			puffs_50_in_hook_call(preq, park->park_creq);
+			MODULE_CALL_VOID_HOOK(puffs_50_in_hook,
+			     (preq, park->park_creq), __nothing);
 			creq = park->park_creq;
 			csize = park->park_creqlen;
 			park->park_creq = park->park_preq;

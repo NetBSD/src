@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.263.2.13 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.263.2.14 2019/01/22 07:42:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.13 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.14 2019/01/22 07:42:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1126,24 +1126,6 @@ vndioctl_get(struct lwp *l, void *data, int unit, struct vattr *va)
 	}
 }
 
-MODULE_CALL_HOOK_DECL(compat_vndioctl_30_hook, int,
-    (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
-     int (*ff)(struct lwp *, void *, int, struct vattr *)));
-MODULE_CALL_HOOK(compat_vndioctl_30_hook, int,
-    (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
-     int (*ff)(struct lwp *, void *, int, struct vattr *)),
-    (cmd, l, data, unit, vattr, ff),
-    enosys());
-
-MODULE_CALL_HOOK_DECL(compat_vndioctl_50_hook, int,
-    (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
-     int (*ff)(struct lwp *, void *, int, struct vattr *)));
-MODULE_CALL_HOOK(compat_vndioctl_50_hook, int,
-    (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
-     int (*ff)(struct lwp *, void *, int, struct vattr *)),
-    (cmd, l, data, unit, vattr, ff),
-    enosys());
-
 /* ARGSUSED */
 static int
 vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -1180,8 +1162,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	default:
 		/* First check for COMPAT_50 hook */
-		error = compat_vndioctl_50_hook_call(cmd, l, data, unit,
-		    &vattr, vndioctl_get);
+		MODULE_CALL_HOOK(compat_vndioctl_50_hook,
+		    (cmd, l, data, unit, &vattr, vndioctl_get),
+		    enosys(), error);
 
 		/*
 		 * If not present, then COMPAT_30 hook also not
@@ -1195,8 +1178,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* If not already handled, try the COMPAT_30 hook */
 		if (error == EPASSTHROUGH)
-			error = compat_vndioctl_30_hook_call(cmd, l, data,
-			    unit, &vattr, vndioctl_get);
+			MODULE_CALL_HOOK(compat_vndioctl_30_hook,
+			    (cmd, l, data, unit, &vattr, vndioctl_get),
+			    enosys(), error);
 
 		/* If no COMPAT_30 module, or not handled, check writes */
 		if (error == ENOSYS || error == EPASSTHROUGH) {
