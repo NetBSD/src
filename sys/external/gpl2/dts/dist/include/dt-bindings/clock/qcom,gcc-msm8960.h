@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-msm8960.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-msm8960.h,v 1.1.1.2 2019/01/22 14:57:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
@@ -321,5 +321,7 @@
 #define CE3_SRC					303
 #define CE3_CORE_CLK				304
 #define CE3_H_CLK				305
+#define PLL16					306
+#define PLL17					307
 
 #endif

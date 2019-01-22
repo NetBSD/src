@@ -1,21 +1,11 @@
-/*	$NetBSD: thermal_exynos.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: thermal_exynos.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * thermal_exynos.h - Samsung EXYNOS TMU device tree definitions
  *
  *  Copyright (C) 2014 Samsung Electronics
  *  Lukasz Majewski <l.majewski@samsung.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
  */
 
 #ifndef _EXYNOS_THERMAL_TMU_DT_H

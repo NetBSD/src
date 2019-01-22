@@ -1,6 +1,6 @@
-/*	$NetBSD: irq.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: irq.h,v 1.1.1.3 2019/01/22 14:57:01 jmcneill Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
  * This header provides constants for most IRQ bindings.
  *
