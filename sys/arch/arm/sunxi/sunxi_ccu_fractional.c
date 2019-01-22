@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_fractional.c,v 1.2 2018/04/01 21:19:17 bouyer Exp $ */
+/* $NetBSD: sunxi_ccu_fractional.c,v 1.3 2019/01/22 23:06:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.2 2018/04/01 21:19:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.3 2019/01/22 23:06:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,10 +78,13 @@ sunxi_ccu_fractional_get_rate(struct sunxi_ccu_softc *sc,
 	if (rate == 0)
 		return 0;
 
-	if (fractional->prediv > 0)
-		rate = rate / fractional->prediv;
-
 	val = CCU_READ(sc, fractional->reg);
+
+	if (fractional->prediv != 0) {
+		rate = rate / (__SHIFTOUT(val, fractional->prediv) + 1);
+	} else if (fractional->prediv_val > 0) {
+		rate = rate / fractional->prediv_val;
+	}
 
 	if (fractional->enable && !(val & fractional->enable))
 		return 0;
@@ -91,6 +94,9 @@ sunxi_ccu_fractional_get_rate(struct sunxi_ccu_softc *sc,
 		return fractional->frac[sel];
 	}
 	m = __SHIFTOUT(val, fractional->m);
+
+	if (fractional->flags & SUNXI_CCU_FRACTIONAL_PLUSONE)
+		m++;
 
 	return rate * m;
 }
@@ -116,10 +122,19 @@ sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *sc,
 	if (parent_rate == 0)
 		return (new_rate == 0) ? 0 : ERANGE;
 
-	if (fractional->prediv > 0)
-		parent_rate = parent_rate / fractional->prediv;
-
 	val = CCU_READ(sc, fractional->reg);
+
+	if (fractional->prediv != 0) {
+		if (fractional->prediv_val > 0) {
+			val &= ~fractional->prediv;
+			val |= __SHIFTIN(fractional->prediv_val - 1,
+					 fractional->prediv);
+		}
+		parent_rate = parent_rate / (__SHIFTOUT(val, fractional->prediv) + 1);
+	} else if (fractional->prediv_val > 0) {
+		parent_rate = parent_rate / fractional->prediv_val;
+	}
+
 	for (i = 0; i < __arraycount(fractional->frac); i++) {
 		if (fractional->frac[i] == new_rate) {
 			val &= ~fractional->div_en;
@@ -149,6 +164,9 @@ sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *sc,
 	if (best_rate == 0)
 		return ERANGE;
 
+	if (fractional->flags & SUNXI_CCU_FRACTIONAL_PLUSONE)
+		best_m--;
+
 	val &= ~fractional->m;
 	val |= __SHIFTIN(best_m, fractional->m);
 	CCU_WRITE(sc, fractional->reg, val);
@@ -165,6 +183,7 @@ sunxi_ccu_fractional_round_rate(struct sunxi_ccu_softc *sc,
 	u_int parent_rate, best_rate;
 	u_int m, rate;
 	int best_diff;
+	uint32_t val;
 	int i;
 
 	clkp = &clk->base;
@@ -176,8 +195,14 @@ sunxi_ccu_fractional_round_rate(struct sunxi_ccu_softc *sc,
 	if (parent_rate == 0)
 		return 0;
 
-	if (fractional->prediv > 0)
-		parent_rate = parent_rate / fractional->prediv;
+	val = CCU_READ(sc, fractional->reg);
+
+	if (fractional->prediv_val > 0) {
+		parent_rate = parent_rate / fractional->prediv_val;
+	} else if (fractional->prediv != 0) {
+		val = CCU_READ(sc, fractional->reg);
+		parent_rate = parent_rate / (__SHIFTOUT(val, fractional->prediv) + 1);
+	}
 
 	for (i = 0; i < __arraycount(fractional->frac); i++) {
 		if (fractional->frac[i] == try_rate) {
