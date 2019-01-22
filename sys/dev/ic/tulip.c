@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.191 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.192 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.191 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.192 2019/01/22 03:42:26 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -111,14 +111,14 @@ static void	tlp_dm9102_mii_statchg(struct ifnet *);
 static void	tlp_mii_getmedia(struct tulip_softc *, struct ifmediareq *);
 static int	tlp_mii_setmedia(struct tulip_softc *);
 
-static int	tlp_bitbang_mii_readreg(device_t, int, int);
-static void	tlp_bitbang_mii_writereg(device_t, int, int, int);
+static int	tlp_bitbang_mii_readreg(device_t, int, int, uint16_t *);
+static int	tlp_bitbang_mii_writereg(device_t, int, int, uint16_t);
 
-static int	tlp_pnic_mii_readreg(device_t, int, int);
-static void	tlp_pnic_mii_writereg(device_t, int, int, int);
+static int	tlp_pnic_mii_readreg(device_t, int, int, uint16_t *);
+static int	tlp_pnic_mii_writereg(device_t, int, int, uint16_t);
 
-static int	tlp_al981_mii_readreg(device_t, int, int);
-static void	tlp_al981_mii_writereg(device_t, int, int, int);
+static int	tlp_al981_mii_readreg(device_t, int, int, uint16_t *);
+static int	tlp_al981_mii_writereg(device_t, int, int, uint16_t);
 
 static void	tlp_2114x_preinit(struct tulip_softc *);
 static void	tlp_2114x_mii_preinit(struct tulip_softc *);
@@ -3347,11 +3347,11 @@ tlp_mii_setmedia(struct tulip_softc *sc)
  *	Read a PHY register via bit-bang'ing the MII.
  */
 static int
-tlp_bitbang_mii_readreg(device_t self, int phy, int reg)
+tlp_bitbang_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct tulip_softc *sc = device_private(self);
 
-	return (mii_bitbang_readreg(self, sc->sc_bitbang_ops, phy, reg));
+	return mii_bitbang_readreg(self, sc->sc_bitbang_ops, phy, reg, val);
 }
 
 /*
@@ -3359,12 +3359,12 @@ tlp_bitbang_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register via bit-bang'ing the MII.
  */
-static void
-tlp_bitbang_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+tlp_bitbang_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct tulip_softc *sc = device_private(self);
 
-	mii_bitbang_writereg(self, sc->sc_bitbang_ops, phy, reg, val);
+	return mii_bitbang_writereg(self, sc->sc_bitbang_ops, phy, reg, val);
 }
 
 /*
@@ -3399,10 +3399,10 @@ tlp_sio_mii_bitbang_write(device_t self, uint32_t val)
  *	Read a PHY register on the Lite-On PNIC.
  */
 static int
-tlp_pnic_mii_readreg(device_t self, int phy, int reg)
+tlp_pnic_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct tulip_softc *sc = device_private(self);
-	uint32_t val;
+	uint32_t data;
 	int i;
 
 	TULIP_WRITE(sc, CSR_PNIC_MII,
@@ -3412,16 +3412,18 @@ tlp_pnic_mii_readreg(device_t self, int phy, int reg)
 
 	for (i = 0; i < 1000; i++) {
 		delay(10);
-		val = TULIP_READ(sc, CSR_PNIC_MII);
-		if ((val & PNIC_MII_BUSY) == 0) {
-			if ((val & PNIC_MII_DATA) == PNIC_MII_DATA)
-				return (0);
-			else
-				return (val & PNIC_MII_DATA);
+		data = TULIP_READ(sc, CSR_PNIC_MII);
+		if ((data & PNIC_MII_BUSY) == 0) {
+			if ((data & PNIC_MII_DATA) == PNIC_MII_DATA)
+				return -1;
+			else {
+				*val = data & PNIC_MII_DATA;
+				return 0;
+			}
 		}
 	}
 	printf("%s: MII read timed out\n", device_xname(sc->sc_dev));
-	return (0);
+	return ETIMEDOUT;
 }
 
 /*
@@ -3429,8 +3431,8 @@ tlp_pnic_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the Lite-On PNIC.
  */
-static void
-tlp_pnic_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+tlp_pnic_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct tulip_softc *sc = device_private(self);
 	int i;
@@ -3443,9 +3445,10 @@ tlp_pnic_mii_writereg(device_t self, int phy, int reg, int val)
 	for (i = 0; i < 1000; i++) {
 		delay(10);
 		if (TULIP_ISSET(sc, CSR_PNIC_MII, PNIC_MII_BUSY) == 0)
-			return;
+			return 0;
 	}
 	printf("%s: MII write timed out\n", device_xname(sc->sc_dev));
+	return ETIMEDOUT;
 }
 
 static const bus_addr_t tlp_al981_phy_regmap[] = {
@@ -3471,19 +3474,20 @@ static const int tlp_al981_phy_regmap_size = sizeof(tlp_al981_phy_regmap) /
  *	Read a PHY register on the ADMtek AL981.
  */
 static int
-tlp_al981_mii_readreg(device_t self, int phy, int reg)
+tlp_al981_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct tulip_softc *sc = device_private(self);
 
 	/* AL981 only has an internal PHY. */
 	if (phy != 0)
-		return (0);
+		return -1;
 
 	if (reg >= tlp_al981_phy_regmap_size)
-		return (0);
+		return -1;
 
-	return (bus_space_read_4(sc->sc_st, sc->sc_sh,
-	    tlp_al981_phy_regmap[reg]) & 0xffff);
+	*val = bus_space_read_4(sc->sc_st, sc->sc_sh,
+	    tlp_al981_phy_regmap[reg]) & 0xffff;
+	return 0;
 }
 
 /*
@@ -3491,20 +3495,22 @@ tlp_al981_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the ADMtek AL981.
  */
-static void
-tlp_al981_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+tlp_al981_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct tulip_softc *sc = device_private(self);
 
 	/* AL981 only has an internal PHY. */
 	if (phy != 0)
-		return;
+		return -1;
 
 	if (reg >= tlp_al981_phy_regmap_size)
-		return;
+		return -1;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh,
 	    tlp_al981_phy_regmap[reg], val);
+
+	return 0;
 }
 
 /*****************************************************************************
