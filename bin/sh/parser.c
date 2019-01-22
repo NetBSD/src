@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.163 2019/01/22 13:48:28 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.164 2019/01/22 14:32:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.163 2019/01/22 13:48:28 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.164 2019/01/22 14:32:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1066,7 +1066,7 @@ readtoken(void)
  *  have parseword (readtoken1?) handle both words and redirection.]
  */
 
-#define RETURN(token)	return lasttoken = token
+#define RETURN(token)	return lasttoken = (token)
 
 STATIC int
 xxreadtoken(void)
@@ -1240,6 +1240,7 @@ struct tokenstate {
 	unsigned short ts_varnest;	/* 64000 levels should be enough! */
 	unsigned short ts_arinest;
 	unsigned short ts_quoted;	/* 1 -> single, 2 -> double */
+	unsigned short ts_magicq;	/* heredoc or word expand */
 };
 
 #define	NQ	0x00	/* Unquoted */
@@ -1300,6 +1301,7 @@ bump_state_level(VSS *stack)
 	ts->ts_varnest = os->ts_varnest;
 	ts->ts_arinest = os->ts_arinest;	/* when appropriate	   */
 	ts->ts_syntax  = os->ts_syntax;		/*    they will be altered */
+	ts->ts_magicq  = os->ts_magicq;
 
 	return stack;
 }
@@ -1358,6 +1360,7 @@ cleanup_state_stack(VSS *stack)
 #define	varnest		(currentstate(stack)->ts_varnest)
 #define	arinest		(currentstate(stack)->ts_arinest)
 #define	quoted		(currentstate(stack)->ts_quoted)
+#define	magicq		(currentstate(stack)->ts_magicq)
 #define	TS_PUSH()	(stack = bump_state_level(stack))
 #define	TS_POP()	(stack = drop_state_level(stack))
 
@@ -1371,7 +1374,7 @@ cleanup_state_stack(VSS *stack)
  */
 static char *
 parsebackq(VSS *const stack, char * const in,
-    struct nodelist **const pbqlist, const int oldstyle, const int magicq)
+    struct nodelist **const pbqlist, const int oldstyle)
 {
 	struct nodelist **nlpp;
 	const int savepbq = parsebackquote;
@@ -1593,11 +1596,11 @@ parseredir(const char *out,  int c)
 		VTRACE(DBG_LEXER, ("is '%c'(%#.2x) ", c&0xFF, c&0x1FF));
 		switch (c) {
 		case '<':
-			if (sizeof (struct nfile) != sizeof (struct nhere)) {
+			/* if sizes differ, just discard the old one */
+			if (sizeof (struct nfile) != sizeof (struct nhere))
 				np = stalloc(sizeof(struct nhere));
-				np->nfile.fd = 0;
-			}
 			np->type = NHERE;
+			np->nhere.fd = 0;
 			heredoc = stalloc(sizeof(struct HereDoc));
 			heredoc->here = np;
 			heredoc->startline = plinno;
@@ -1817,7 +1820,7 @@ readcstyleesc(char *out)
  * That will also need fixing, someday...
  */
 STATIC int
-readtoken1(int firstc, char const *syn, int magicq)
+readtoken1(int firstc, char const *syn, int oneword)
 {
 	int c;
 	char * out;
@@ -1850,6 +1853,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 	arinest = 0;
 	parenlevel = 0;
 	elided_nl = 0;
+	magicq = oneword;
 
 	CTRACE(DBG_LEXER, ("readtoken1(%c) syntax=%s %s%s(quoted=%x)\n",
 	    firstc&0xFF, SYNTAX, magicq ? "magic quotes" : "",
@@ -1924,7 +1928,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			CVTRACE(DBG_LEXER, quotef==0, (" QF=1 "));
 			quotef = 1;	/* current token is quoted */
-			if (ISDBLQUOTE() && c != '\\' && c != '`' &&
+			if (quoted && c != '\\' && c != '`' &&
 			    c != '$' && (c != '"' || magicq)) {
 				/*
 				 * retain the \ (which we *know* needs CTLESC)
@@ -1976,7 +1980,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 				USTPUTC(CTLQUOTEEND, out);
 			continue;
 		case CDQUOTE:
-			if (magicq && arinest == 0 && varnest == 0) {
+			if (magicq && arinest == 0 /* && varnest == 0 */) {
 				VTRACE(DBG_LEXER, ("<<\">>"));
 				/* Ignore inside here document */
 				USTPUTC(c, out);
@@ -2071,7 +2075,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 			continue;
 		case CBQUOTE:	/* '`' */
 			VTRACE(DBG_LEXER, ("'`' -> parsebackq()\n"));
-			out = parsebackq(stack, out, &bqlist, 1, magicq);
+			out = parsebackq(stack, out, &bqlist, 1);
 			VTRACE(DBG_LEXER, ("parsebackq() -> readtoken1: "));
 			continue;
 		case CEOF:		/* --> c == PEOF */
@@ -2156,7 +2160,7 @@ parsesub: {
 			VTRACE(DBG_LEXER, ("\"$(\" CSUB->parsebackq()\n"));
 			out = insert_elided_nl(out);
 			pungetc();
-			out = parsebackq(stack, out, &bqlist, 0, magicq);
+			out = parsebackq(stack, out, &bqlist, 0);
 			VTRACE(DBG_LEXER, ("parseback()->readtoken1(): "));
 		}
 	} else if (c == OPENBRACE || is_name(c) || is_special(c)) {
@@ -2301,6 +2305,7 @@ parsesub: {
 			if (subtype > VSASSIGN) {	/* # ## % %% */
 				syntax = BASESYNTAX;
 				quoted = 0;
+				magicq = 0;
 			}
 			VTRACE(DBG_LEXER, (" TS_PUSH->%s vn=%d%s ",
 			    SYNTAX, varnest, quoted ? " Q" : ""));
@@ -2359,6 +2364,7 @@ parsearith: {
 		syntax = ARISYNTAX;
 		arinest = 1;
 		varnest = 0;
+		magicq = 1;
 	}
 	goto parsearith_return;
 }
