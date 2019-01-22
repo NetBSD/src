@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.14 2018/07/15 05:16:44 maxv Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.15 2019/01/22 03:42:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.14 2018/07/15 05:16:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.15 2019/01/22 03:42:26 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,8 +134,8 @@ static void	cemac_init(struct cemac_softc *);
 static int	cemac_gctx(struct cemac_softc *);
 static int	cemac_mediachange(struct ifnet *);
 static void	cemac_mediastatus(struct ifnet *, struct ifmediareq *);
-static int	cemac_mii_readreg(device_t, int, int);
-static void	cemac_mii_writereg(device_t, int, int, int);
+static int	cemac_mii_readreg(device_t, int, int, uint16_t *);
+static int	cemac_mii_writereg(device_t, int, int, uint16_t);
 static void	cemac_statchg(struct ifnet *);
 static void	cemac_tick(void *);
 static int	cemac_ifioctl(struct ifnet *, u_long, void *);
@@ -639,7 +639,7 @@ cemac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 
 static int
-cemac_mii_readreg(device_t self, int phy, int reg)
+cemac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct cemac_softc *sc;
 
@@ -651,11 +651,12 @@ cemac_mii_readreg(device_t self, int phy, int reg)
 			     | ETH_MAN_CODE_IEEE802_3));
 	while (!(CEMAC_READ(ETH_SR) & ETH_SR_IDLE));
 
-	return (CEMAC_READ(ETH_MAN) & ETH_MAN_DATA);
+	*val = CEMAC_READ(ETH_MAN) & ETH_MAN_DATA;
+	return 0;
 }
 
-static void
-cemac_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+cemac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct cemac_softc *sc;
 
@@ -667,6 +668,8 @@ cemac_mii_writereg(device_t self, int phy, int reg, int val)
 			     | ETH_MAN_CODE_IEEE802_3
 			     | (val & ETH_MAN_DATA)));
 	while (!(CEMAC_READ(ETH_SR) & ETH_SR_IDLE)) ;
+
+	return 0;
 }
 
 

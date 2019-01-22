@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.60 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.61 2019/01/22 03:42:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.60 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.61 2019/01/22 03:42:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,8 +113,8 @@ Static int url_ifmedia_change(struct ifnet *);
 Static void url_ifmedia_status(struct ifnet *, struct ifmediareq *);
 Static void url_lock_mii(struct url_softc *);
 Static void url_unlock_mii(struct url_softc *);
-Static int url_int_miibus_readreg(device_t, int, int);
-Static void url_int_miibus_writereg(device_t, int, int, int);
+Static int url_int_miibus_readreg(device_t, int, int, uint16_t *);
+Static int url_int_miibus_writereg(device_t, int, int, uint16_t);
 Static void url_miibus_statchg(struct ifnet *);
 Static int url_init(struct ifnet *);
 Static void url_setmulti(struct url_softc *);
@@ -1349,10 +1349,11 @@ url_unlock_mii(struct url_softc *sc)
 }
 
 Static int
-url_int_miibus_readreg(device_t dev, int phy, int reg)
+url_int_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct url_softc *sc;
-	uint16_t val;
+	uint16_t data;
+	int rv = 0;
 
 	if (dev == NULL)
 		return 0;
@@ -1367,14 +1368,14 @@ url_int_miibus_readreg(device_t dev, int phy, int reg)
 		printf("%s: %s: dying\n", device_xname(sc->sc_dev),
 		       __func__);
 #endif
-		return 0;
+		return -1;
 	}
 
 	/* XXX: one PHY only for the RTL8150 internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(sc->sc_dev), __func__, phy));
-		return 0;
+		return -1;
 	}
 
 	url_lock_mii(sc);
@@ -1388,7 +1389,7 @@ url_int_miibus_readreg(device_t dev, int phy, int reg)
 		break;
 	case MII_PHYIDR1:
 	case MII_PHYIDR2:
-		val = 0;
+		*val = 0;
 		goto R_DONE;
 		break;
 	case MII_ANAR:		/* Autonegotiation advertisement */
@@ -1403,50 +1404,52 @@ url_int_miibus_readreg(device_t dev, int phy, int reg)
 	default:
 		printf("%s: %s: bad register %04x\n",
 		       device_xname(sc->sc_dev), __func__, reg);
-		val = 0;
+		rv = -1;
 		goto R_DONE;
 		break;
 	}
 
 	if (reg == URL_MSR)
-		val = url_csr_read_1(sc, reg);
+		data = url_csr_read_1(sc, reg);
 	else
-		val = url_csr_read_2(sc, reg);
+		data = url_csr_read_2(sc, reg);
+	*val = data;
 
  R_DONE:
-	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04x\n",
-		 device_xname(sc->sc_dev), __func__, phy, reg, val));
+	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04hx\n",
+		 device_xname(sc->sc_dev), __func__, phy, reg, *val));
 
 	url_unlock_mii(sc);
-	return val;
+	return rv;
 }
 
-Static void
-url_int_miibus_writereg(device_t dev, int phy, int reg, int data)
+Static int
+url_int_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct url_softc *sc;
+	int rv = 0;
 
 	if (dev == NULL)
-		return;
+		return -1;
 
 	sc = device_private(dev);
 
-	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x data=0x%04x\n",
-		 device_xname(sc->sc_dev), __func__, phy, reg, data));
+	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x val=0x%04hx\n",
+		 device_xname(sc->sc_dev), __func__, phy, reg, val));
 
 	if (sc->sc_dying) {
 #ifdef DIAGNOSTIC
 		printf("%s: %s: dying\n", device_xname(sc->sc_dev),
 		       __func__);
 #endif
-		return;
+		return -1;
 	}
 
 	/* XXX: one PHY only for the RTL8150 internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(sc->sc_dev), __func__, phy));
-		return;
+		return -1;
 	}
 
 	url_lock_mii(sc);
@@ -1474,18 +1477,19 @@ url_int_miibus_writereg(device_t dev, int phy, int reg, int data)
 	default:
 		printf("%s: %s: bad register %04x\n",
 		       device_xname(sc->sc_dev), __func__, reg);
+		rv = -1;
 		goto W_DONE;
 		break;
 	}
 
 	if (reg == URL_MSR)
-		url_csr_write_1(sc, reg, data);
+		url_csr_write_1(sc, reg, val);
 	else
-		url_csr_write_2(sc, reg, data);
+		url_csr_write_2(sc, reg, val);
  W_DONE:
 
 	url_unlock_mii(sc);
-	return;
+	return rv;
 }
 
 Static void

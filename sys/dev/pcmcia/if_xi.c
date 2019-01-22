@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.84 2019/01/08 08:52:46 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.85 2019/01/22 03:42:27 msaitoh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.84 2019/01/08 08:52:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.85 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -137,8 +137,8 @@ STATIC int xi_ether_ioctl(struct ifnet *, u_long cmd, void *);
 STATIC void xi_full_reset(struct xi_softc *);
 STATIC void xi_init(struct xi_softc *);
 STATIC int xi_ioctl(struct ifnet *, u_long, void *);
-STATIC int xi_mdi_read(device_t, int, int);
-STATIC void xi_mdi_write(device_t, int, int, int);
+STATIC int xi_mdi_read(device_t, int, int, uint16_t *);
+STATIC int xi_mdi_write(device_t, int, int, uint16_t);
 STATIC int xi_mediachange(struct ifnet *);
 STATIC uint16_t xi_get(struct xi_softc *);
 STATIC void xi_reset(struct xi_softc *);
@@ -152,7 +152,9 @@ void
 xi_attach(struct xi_softc *sc, uint8_t *myea)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
+#ifdef XIDEBUG
+	uint16_t bmsr;
+#endif
 #if 0
 	/*
 	 * Configuration as advised by DINGO documentation.
@@ -230,8 +232,10 @@ xi_attach(struct xi_softc *sc, uint8_t *myea)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, xi_mediachange,
 	    ether_mediastatus);
-	DPRINTF(XID_MII | XID_CONFIG,
-	    ("xi: bmsr %x\n", xi_mdi_read(sc->sc_dev, 0, 1)));
+#ifdef XIDEBUG
+	xi_mdi_read(sc->sc_dev, 0, 1, &bmsr);
+	DPRINTF(XID_MII | XID_CONFIG, ("xi: bmsr %x\n", bmsr));
+#endif
 
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		MII_OFFSET_ANY, 0);
@@ -549,12 +553,12 @@ xi_mdi_pulse_bits(struct xi_softc *sc, uint32_t data, int len)
 
 /* Read a PHY register. */
 STATIC int
-xi_mdi_read(device_t self, int phy, int reg)
+xi_mdi_read(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct xi_softc *sc = device_private(self);
 	int i;
 	uint32_t mask;
-	uint32_t data = 0;
+	uint16_t data = 0;
 
 	PAGE(sc, 2);
 	for (i = 0; i < 32; i++)	/* Synchronize. */
@@ -572,14 +576,15 @@ xi_mdi_read(device_t self, int phy, int reg)
 	xi_mdi_idle(sc);
 
 	DPRINTF(XID_MII,
-	    ("xi_mdi_read: phy %d reg %d -> %x\n", phy, reg, data));
+	    ("xi_mdi_read: phy %d reg %d -> %04hx\n", phy, reg, data));
 
-	return (data);
+	*val = data;
+	return 0;
 }
 
 /* Write a PHY register. */
-STATIC void
-xi_mdi_write(device_t self, int phy, int reg, int value)
+STATIC int
+xi_mdi_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct xi_softc *sc = device_private(self);
 	int i;
@@ -591,11 +596,13 @@ xi_mdi_write(device_t self, int phy, int reg, int value)
 	xi_mdi_pulse_bits(sc, phy, 5);	/* PHY address */
 	xi_mdi_pulse_bits(sc, reg, 5);	/* PHY register */
 	xi_mdi_pulse_bits(sc, 0x02, 2); /* Turn around. */
-	xi_mdi_pulse_bits(sc, value, 16);	/* Write the data */
+	xi_mdi_pulse_bits(sc, val, 16);	/* Write the data */
 	xi_mdi_idle(sc);		/* Idle away. */
 
 	DPRINTF(XID_MII,
-	    ("xi_mdi_write: phy %d reg %d val %x\n", phy, reg, value));
+	    ("xi_mdi_write: phy %d reg %d val %04hx\n", phy, reg, val));
+
+	return 0;
 }
 
 STATIC void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.10 2016/11/02 07:01:54 msaitoh Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.11 2019/01/22 03:42:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.10 2016/11/02 07:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.11 2019/01/22 03:42:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ ihphyattach(device_t parent, device_t self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
-	int reg;
+	uint16_t reg;
 
 	mpd = mii_phy_match(ma, ihphys);
 	aprint_naive(": Media interface\n");
@@ -142,9 +142,10 @@ ihphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
@@ -156,7 +157,7 @@ ihphyattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Link setup (as done by Intel's Linux driver for the 82577).
 	 */
-	reg = PHY_READ(sc, IHPHY_MII_CFG);
+	PHY_READ(sc, IHPHY_MII_CFG, &reg);
 	reg |= IHPHY_CFG_TX_CRS;
 	reg |= IHPHY_CFG_DOWN_SHIFT;
 	PHY_WRITE(sc, IHPHY_MII_CFG, reg);
@@ -166,7 +167,7 @@ static int
 ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -183,7 +184,7 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return 0;
 		}
@@ -197,7 +198,7 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * If media is deselected, disable link (standby).
 		 */
-		reg = PHY_READ(sc, IHPHY_MII_ECR);
+		PHY_READ(sc, IHPHY_MII_ECR, &reg);
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_NONE)
 			reg &= ~IHPHY_ECR_LNK_EN;
 		else
@@ -240,17 +241,17 @@ static void
 ihphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int esr, bmcr, gtsr;
+	uint16_t esr, bmcr, gtsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	esr = PHY_READ(sc, IHPHY_MII_ESR);
+	PHY_READ(sc, IHPHY_MII_ESR, &esr);
 
 	if (esr & IHPHY_ESR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & (BMCR_ISO | BMCR_PDOWN)) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -271,7 +272,7 @@ ihphy_status(struct mii_softc *sc)
 	switch (esr & IHPHY_ESR_SPEED) {
 	case IHPHY_SPEED_1000:
 		mii->mii_media_active |= IFM_1000_T;
-		gtsr = PHY_READ(sc, MII_100T2SR);
+		PHY_READ(sc, MII_100T2SR, &gtsr);
 		if (gtsr & GTSR_MS_RES)
 			mii->mii_media_active |= IFM_ETH_MASTER;
 		break;
@@ -300,7 +301,8 @@ ihphy_status(struct mii_softc *sc)
 static void
 ihphy_reset(struct mii_softc *sc)
 {
-	int reg, i;
+	int i;
+	uint16_t reg;
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_ISO);
 
@@ -314,7 +316,7 @@ ihphy_reset(struct mii_softc *sc)
 
 	/* Wait another 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(sc, MII_BMCR);
+		PHY_READ(sc, MII_BMCR, &reg);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
