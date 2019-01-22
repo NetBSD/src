@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1594 2019/01/21 01:02:50 alnsn Exp $
+#	$NetBSD: 3RDPARTY,v 1.1595 2019/01/22 15:22:55 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -341,8 +341,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.8
-Current Vers:	7.0.8
+Version:	7.1.0
+Current Vers:	7.1.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
