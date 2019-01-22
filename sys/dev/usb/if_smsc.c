@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.39 2019/01/22 03:42:28 msaitoh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.40 2019/01/22 06:37:54 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.39 2019/01/22 03:42:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.40 2019/01/22 06:37:54 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1405,7 +1405,7 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
-	    		mutex_exit(&sc->sc_rxlock);
+			mutex_exit(&sc->sc_rxlock);
 			return;
 		}
 		if (usbd_ratecheck(&sc->sc_rx_notice)) {
