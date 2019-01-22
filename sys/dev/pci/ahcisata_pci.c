@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.52 2019/01/22 22:09:27 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.53 2019/01/22 22:14:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.52 2019/01/22 22:09:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.53 2019/01/22 22:14:20 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -201,6 +201,8 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON_SATA,
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_INTEL, 82801JI_SATA_AHCI,
+	    AHCI_QUIRK_BADPMP },
+	{ PCI_VENDOR_AMD, HUDSON_SATA_AHCI,
 	    AHCI_QUIRK_BADPMP },
 };
 
