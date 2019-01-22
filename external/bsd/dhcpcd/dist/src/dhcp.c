@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -1604,11 +1604,6 @@ dhcp_openudp(struct interface *ifp)
 	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1)
 		goto eexit;
-#ifdef SO_RERROR
-	n = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_RERROR, &n, sizeof(n)) == -1)
-		goto eexit;
-#endif
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(BOOTPC);
@@ -2636,6 +2631,7 @@ dhcp_reboot(struct interface *ifp)
 	 * interface gets the reply. */
 	ia = ipv4_iffindaddr(ifp, &state->lease.addr, NULL);
 	if (ia != NULL &&
+	    !(ifp->ctx->options & DHCPCD_TEST) &&
 #ifdef IN_IFF_NOTUSEABLE
 	    !(ia->addr_flags & IN_IFF_NOTUSEABLE) &&
 #endif
