@@ -1,11 +1,8 @@
-/*	$NetBSD: samsung,s2mps11.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: samsung,s2mps11.h,v 1.1.1.2 2019/01/22 14:57:02 jmcneill Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2015 Markus Reichl
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  *
  * Device Tree binding constants clocks for the Samsung S2MPS11 PMIC.
  */

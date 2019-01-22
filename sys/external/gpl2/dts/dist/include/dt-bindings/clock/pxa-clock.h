@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: pxa-clock.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
 
 /*
  * Inspired by original work from pxa2xx-regs.h by Nicolas Pitre
@@ -74,6 +74,7 @@
 #define CLK_USIM 58
 #define CLK_USIM1 59
 #define CLK_USMI0 60
-#define CLK_MAX 61
+#define CLK_OSC32k768 61
+#define CLK_MAX 62
 
 #endif

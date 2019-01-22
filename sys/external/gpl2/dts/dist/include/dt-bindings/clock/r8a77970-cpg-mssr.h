@@ -1,13 +1,9 @@
-/*	$NetBSD: r8a77970-cpg-mssr.h,v 1.1.1.1 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: r8a77970-cpg-mssr.h,v 1.1.1.2 2019/01/22 14:57:02 jmcneill Exp $	*/
 
-/*
+/* SPDX-License-Identifier: GPL-2.0+
+ *
  * Copyright (C) 2016 Renesas Electronics Corp.
  * Copyright (C) 2017 Cogent Embedded, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
  */
 #ifndef __DT_BINDINGS_CLOCK_R8A77970_CPG_MSSR_H__
 #define __DT_BINDINGS_CLOCK_R8A77970_CPG_MSSR_H__
