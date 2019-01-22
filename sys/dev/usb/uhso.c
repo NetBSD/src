@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.28 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: uhso.c,v 1.29 2019/01/22 06:47:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.28 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.29 2019/01/22 06:47:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -625,7 +625,7 @@ uhso_switch_mode(struct usbd_device *udev)
 	usbd_destroy_xfer(xfer);
 	usbd_close_pipe(pipe);
 
-	return (status == USBD_NORMAL_COMPLETION ? 0 : EIO);
+	return status == USBD_NORMAL_COMPLETION ? 0 : EIO;
 }
 
 Static int

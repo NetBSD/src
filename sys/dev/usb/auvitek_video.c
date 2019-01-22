@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.8 2018/09/03 16:29:33 riastradh Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.9 2019/01/22 06:47:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.8 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.9 2019/01/22 06:47:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ auvitek_video_attach(struct auvitek_softc *sc)
 
 	auvitek_video_rescan(sc, NULL, NULL);
 
-	return (sc->sc_videodev != NULL);
+	return sc->sc_videodev != NULL;
 }
 
 int

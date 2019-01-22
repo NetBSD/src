@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.39 2018/10/22 21:23:16 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.40 2019/01/22 06:46:21 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,21 +37,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.39 2018/10/22 21:23:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.40 2019/01/22 06:46:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/disklabel.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
