@@ -1,4 +1,4 @@
-# $NetBSD: NOCOMPAT,v 1.1.2.5 2018/12/26 14:01:31 pgoyette Exp $
+# $NetBSD: NOCOMPAT,v 1.1.2.6 2019/01/22 11:48:31 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1.2.5 $"
+#ident		"NOCOMPAT-$Revision: 1.1.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -74,8 +74,14 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # CPU-related options
-#options 	USER_LDT	# user-settable LDT; used by WINE
 options 	SVS		# Separate Virtual Space
+makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
+						# migitation
+options 	SPECTRE_V2_GCC_MITIGATION
+
+# USER_LDT. You need to disable SVS to use it.
+#options 	USER_LDT	# user-settable LDT; used by WINE
+#no options	SVS
 
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
@@ -84,8 +90,6 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 vmt0		at cpu0		# VMware Tools
-
-options 	PMC		# performance-monitoring counters support
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
@@ -110,10 +114,20 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table for CTF
+#options	KUBSAN		# Kernel Undefined Behavior Sanitizer (kUBSan)
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
+
+# Kernel Address Sanitizer (kASan). You need to disable SVS to use it.
+#makeoptions 	KASAN=1		# Kernel Address Sanitizer
+#options 	KASAN
+#no options	SVS
+
+# Kernel Info Leak Detector.
+#makeoptions 	KLEAK=1
+#options 	KLEAK
 
 # Compatibility options
 # x86_64 never shipped with a.out binaries; the two options below are
@@ -201,10 +215,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #options 	TCP_SIGNATURE	# Enable RFC-2385 TCP md5 signatures
 
@@ -238,8 +248,9 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # wscons options
 #
 # builtin terminal emulations
-#options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
+#options 	WSEMUL_DEFAULT="\"vt100\""  # NB: default is "sun" if enabled
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
@@ -278,6 +289,8 @@ config		netbsd	root on ? type ?
 
 #IPMI support
 ipmi0		at mainbus?
+ipmi_acpi*	at acpi?
+ipmi0		at ipmi_acpi?
 
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0		at mainbus0
@@ -355,8 +368,8 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-#amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
-#hpet*	at amdpcib?
+amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+hpet*	at amdpcib?
 
 pwdog*	at pci? dev ? function ?	# QUANCOM PWDOG1
 
@@ -416,7 +429,6 @@ sysbeep0	at pcppi?
 #savagedrm*	at drm?		# S3 Savage DRM driver
 #sisdrm* 	at drm?		# SiS DRM driver
 #tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
-#viadrm* 	at drm?		# VIA DRM driver
 
 # DRMKMS drivers
 i915drmkms*	at pci? dev ? function ?
@@ -425,8 +437,14 @@ intelfb*	at intelfbbus?
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
+#amdgpu*	at pci? dev ? function ?
+#amdgpufb*	at amdgpufbbus?
+
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
+
+# DRMUMS drivers
+#viadrmums*	at drm?
 
 # Cryptographic Devices
 
@@ -605,9 +623,11 @@ dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
+mfii*	at pci? dev ? function ?	# LSI MegaRAID SAS (Fusion and newer)
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
 mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II
+njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*	at pci? dev ? function ?	# Symbios 53c875 and newer SCSI
@@ -622,6 +642,7 @@ spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 # CardBus SCSI cards
 adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at cardbus? function ?	# Adaptec ADP-1480
+njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # SCSI bus support
 scsibus* at scsi?
@@ -762,6 +783,7 @@ bce*	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 bnx*	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 bwi*	at pci? dev ? function ?	# Broadcom BCM43xx wireless
+bwfm*	at pci? dev ? function ?	# Broadcom FullMAC
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -840,6 +862,7 @@ athn*	at cardbus? function ?	# Atheros AR9k (802.11a/g/n) - UNTESTED
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 fxp*	at cardbus? function ?	# Intel i8255x
+malo*	at cardbus? function ?	# Marvell Libertas Wireless
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? function ?	# Realtek 8129/8139
@@ -907,185 +930,7 @@ usb*	at ohci?
 usb*	at uhci?
 usb*	at slhci?
 
-# USB Hubs
-uhub*	at usb?
-uhub*	at uhub? port ?
-
-# USB HID device
-uhidev* at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB Touchscreens
-uts*	at uhidev? reportid ?
-wsmouse* at uts? mux 0
-
-# USB eGalax touch-panel
-uep*	at uhub? port ?
-wsmouse* at uep? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
-
-# USB serial adapter
-ucycom* at uhidev? reportid ?
-
-# USB Generic HID devices
-uhid*	at uhidev? reportid ?
-
-# USB LCDs and USB-VGA adaptors
-udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
-wsdisplay* at udl?
-
-# USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Modem
-umodem* at uhub? port ? configuration ?
-ucom*	at umodem?
-
-# Option N.V. Wireless WAN modems
-uhso*	at uhub? port ? configuration ?
-
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-wd* at umass?
-
-# USB audio
-uaudio* at uhub? port ? configuration ?
-uaudio* at usbifif?
-
-# USB MIDI
-umidi*	at uhub? port ? configuration ?
-
-# USB IrDA
-# USB-IrDA bridge spec
-uirda*	at uhub? port ? configuration ? interface ?
-irframe* at uirda?
-
-stuirda* at uhub? port ? configuration ? interface ?
-irframe* at stuirda?
-
-# SigmaTel STIr4200 USB/IrDA Bridge
-ustir*	at uhub? port ?
-irframe* at ustir?
-
-# KingSun/DonShine USB/IrDA Bridge
-udsir*	at uhub? port ?
-irframe* at udsir?
-
-# Windows Media Center IR transceiver
-irmce*	at uhub? port ?
-cir*	at irmce?
-
-# USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-axe*	at uhub? port ?		# ASIX AX88172 based adapters
-axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
-cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-#mos*	at uhub? port ?		# Moschip MCS7730/MCS7830/MCS7832 based adapters
-udav*	at uhub? port ?		# Davicom DM9601 based adapters
-url*	at uhub? port ?		# Realtek RTL8150L based adapters
-urndis* at uhub? port ? 	# Microsoft RNDIS specification
-
-# Prolific PL2301/PL2302 host-to-host adapter
-upl*	at uhub? port ?
-
-# Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
-
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-
-uipaq*	at uhub? port ?		# iPAQ PDAs
-ucom*	at uipaq? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
-
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-
-# RIM BlackBerry
-uberry* at uhub? port ?
-
-# Apple iPad
-uipad* at uhub? port ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
-# USB Handspring Visor
-uvisor* at uhub? port ?
-ucom*	at uvisor?
-
-# Kyocera AIR-EDGE PHONE
-ukyopon* at uhub? port ?
-ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
-
-# USB 802.11 adapters
-athn*	at uhub? port ?		# Atheros AR9002U
-atu*	at uhub? port ?		# Atmel at76c50x 802.11b
-otus*	at uhub? port ?		# Atheros AR9001U
-ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
-rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
-run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
-urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
-urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
-zyd*	at uhub? port ?		# Zydas ZD1211
-bwfm*	at uhub? port ?		# Broadcom FullMAC
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-usscanner* at uhub? port ?
-
-# Topfield TF5000PVR range of DVB recorders
-utoppy* at uhub? port ?
-
-# Y@P firmware loader
-uyap*	at uhub? port ?
-
-# D-Link DSB-R100 USB radio
-udsbr*	at uhub? port ?
-radio*	at udsbr?
-
-# USB Generic driver
-ugen*	at uhub? port ?
-
-# USB 3G datacards
-umodeswitch* at uhub? port ?
-u3g*	at uhub? port ?
-ucom*	at u3g?
-
-# USB generic serial port (e.g., data over cellular)
-ugensa* at uhub? port ?
-ucom*	at ugensa?
-
-# Araneus Alea I/II TRNG
-#ualea* at uhub? port ? configuration ? interface ?
-
-# IrDA and Consumer Ir devices
-
-# Toshiba Oboe
-#oboe*	at pci? dev ? function ?	# broken -- vtophys
-#irframe* at oboe?
+include "dev/usb/usbdevices.config"
 
 # PCI IEEE1394 controllers
 fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -1158,13 +1003,8 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # Video capture devices
 
-auvitek* at uhub?			# Auvitek AU0828 USB TV
 coram*	at pci? dev ? function ?	# Conexant CX23885 PCI-E TV
 cxdtv*	at pci? dev ? function ?	# Conexant CX2388[0-3] PCI TV
-emdtv*	at uhub?			# Empia EM28xx USB TV
-cir*	at emdtv?
-pseye*	at uhub?			# Sony PLAYSTATION(R) Eye webcam
-uvideo* at uhub?			# USB Video Class capture devices
 
 video*	at videobus?			# Analog capture interface
 dtv*	at dtvbus?			# Digital capture interface
@@ -1278,7 +1118,6 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	mpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -1298,11 +1137,7 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	l2tp			# L2TPv3 interface
-#pseudo-device	etherip			# Tunnel Ethernet over IP
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
-#pseudo-device	pfsync			# PF sync if
-#pseudo-device	npf			# NPF packet filter
+pseudo-device	npf			# NPF packet filter
 
 #pseudo-device	canloop			# CAN loopback interface
 
