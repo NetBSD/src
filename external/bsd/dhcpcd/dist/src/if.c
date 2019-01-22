@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -790,6 +790,9 @@ xsocket(int domain, int type, int protocol)
 #if !defined(HAVE_SOCK_CLOEXEC) || !defined(HAVE_SOCK_NONBLOCK)
 	int xflags, xtype = type;
 #endif
+#ifdef SO_RERROR
+	int on;
+#endif
 
 #ifndef HAVE_SOCK_CLOEXEC
 	if (xtype & SOCK_CLOEXEC)
@@ -812,6 +815,13 @@ xsocket(int domain, int type, int protocol)
 	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(s, F_GETFL)) == -1 ||
 	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
+#endif
+
+#ifdef SO_RERROR
+	/* Tell recvmsg(2) to return ENOBUFS if the receiving socket overflows. */
+	on = 1;
+	if (setsockopt(s, SOL_SOCKET, SO_RERROR, &on, sizeof(on)) == -1)
+		logerr("%s: SO_RERROR", __func__);
 #endif
 
 	return s;
