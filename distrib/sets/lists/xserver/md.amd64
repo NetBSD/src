@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.104 2019/01/10 23:10:23 uwe Exp $
+# $NetBSD: md.amd64,v 1.105 2019/01/22 03:11:32 kamil Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -343,6 +343,7 @@
 ./usr/X11R7/man/cat4/tdfx.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/trident.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/tseng.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/vboxvideo.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vesa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vga.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/via.0				-unknown-	obsolete
