@@ -1,4 +1,4 @@
-.\" Copyright (c) 2006-2018 Roy Marples
+.\" Copyright (c) 2006-2019 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 5, 2018
+.Dd September 15, 2018
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ which is a space or comma separated list of patterns passed to
 .Nm dhcpcd
 will arping each address in order before attempting DHCP.
 If an address is found, we will select the replying hardware address as the
-profile, otherwise the ip address.
+profile, otherwise the IP address.
 Example:
 .Pp
 .D1 interface bge0
@@ -110,7 +110,7 @@ then it means that
 .Nm dhcpcd
 could not find the correct authentication token in your configuration.
 .It Ic background
-Background immediately.
+Fork to the background immediately.
 This is useful for startup scripts which don't disable link messages for
 carrier status.
 .It Ic blacklist Ar address Ns Op /cidr
@@ -130,7 +130,7 @@ interact with a BOOTP server.
 All other DHCP options still work.
 .It Ic broadcast
 Instructs the DHCP server to broadcast replies back to the client.
-Normally this is only set for non Ethernet interfaces,
+Normally this is only set for non-Ethernet interfaces,
 such as FireWire and InfiniBand.
 In most cases,
 .Nm dhcpcd
@@ -164,7 +164,7 @@ should use with
 .Va wpa_supplicant_driver=nl80211
 .Pp
 If the hostname is set, it will be will set to the FQDN if possible as per
-RFC 4702 section 3.1.
+RFC 4702, section 3.1.
 If the FQDN option is missing,
 .Nm dhcpcd
 will still try and set a FQDN from the hostname and domain options for
@@ -172,7 +172,9 @@ consistency.
 To override this, set
 .Ic env
 .Va hostname_fqdn=[YES|NO|SERVER] .
-A value of server means just what the server says, don't manipulate it.
+A value of
+.Va SERVER
+means just what the server says, don't manipulate it.
 This could lead to an inconsistent hostname on a DHCPv4 and DHCPv6 network
 where the DHCPv4 hostname is short and the DHCPv6 has an FQDN.
 DHCPv6 has no hostname option.
@@ -252,11 +254,11 @@ back on IPv4LL.
 .It Ic inform6
 Performs a DHCPv6 Information Request.
 No address is requested or specified, but all other DHCPv6 options are allowed.
-This is normally performed automatically when the IPv6 Router Advertises
-that the client should perform this operation.
+This is normally performed automatically when an IPv6 Router Advertisement
+indicates that the client should perform this operation.
 This option is only needed when
 .Nm dhcpcd
-is not processing IPv6RA messages and the need for DHCPv6 Information Request
+is not processing IPv6 RA messages and the need for a DHCPv6 Information Request
 exists.
 .It Ic persistent
 .Nm dhcpcd
@@ -266,7 +268,7 @@ NFS or SSH clients connect to this host and they need to be notified of
 the host shutting down.
 You can use this option to stop this from happening.
 .It Ic fallback Ar profile
-Fallback to using this profile if DHCP fails.
+Fall back to using this profile if DHCP fails.
 This allows you to configure a static profile instead of using ZeroConf.
 .It Ic hostname Ar name
 Sends the hostname
@@ -277,7 +279,7 @@ If
 is an empty string then the current system hostname is sent.
 If
 .Ar name
-is a FQDN (ie, contains a .) then it will be encoded as such.
+is a FQDN (i.e., contains a .) then it will be encoded as such.
 .It Ic hostname_short
 Sends the short hostname to the DHCP server instead of the FQDN.
 This is useful because DHCP servers will not register the FQDN in their
@@ -327,10 +329,10 @@ Each assigned address will have a
 defaulting to 1.
 If the
 .Ar suffix
-is 0 then a slaac address is assigned.
+is 0 then a SLAAC address is assigned.
 You cannot assign a prefix to the requesting interface unless the
-DHCPv6 server supports
-.Li RFC6603
+DHCPv6 server supports the
+.Li RFC 6603
 Prefix Exclude Option.
 .Nm dhcpcd
 has to be running for all the interfaces it is delegating to.
@@ -385,21 +387,27 @@ Only configure IPv4.
 .It Ic ipv6only
 Only configure IPv6.
 .It Ic fqdn Op disable | none | ptr | both
-none will not ask the DHCP server to update DNS.
-ptr just asks the DHCP server to update the PTR
-record of the host in DNS whereas both also updates the A record.
-disable will disable the FQDN option.
-The default is both.
+.Ar none
+will not ask the DHCP server to update DNS.
+.Ar ptr
+just asks the DHCP server to update the PTR
+record of the host in DNS, whereas
+.Ar both
+also updates the A record.
+.Ar disable
+will disable the FQDN option.
+The default is
+.Ar both .
 .Nm dhcpcd
 itself never does any DNS updates.
 .Nm dhcpcd
 encodes the FQDN hostname as specified in
-.Li RFC1035 .
+.Li RFC 1035 .
 .It Ic interface Ar interface
 Subsequent options are only parsed for this
 .Ar interface .
 .It Ic ipv6ra_autoconf
-Generate SLAAC addresses for each Prefix advertised by a
+Generate SLAAC addresses for each Prefix advertised by an IPv6
 Router Advertisement message with the Auto flag set.
 On by default.
 .It Ic ipv6ra_noautoconf
@@ -407,7 +415,7 @@ Disables the above option.
 .It Ic ipv6ra_fork
 By default, when
 .Nm dhcpcd
-receives an IPv6 RA,
+receives an IPv6 Router Advertisement,
 .Nm dhcpcd
 will only fork to the background if the RA contains at least one unexpired
 RDNSS option and a valid prefix or no DHCPv6 instruction.
@@ -440,13 +448,13 @@ will supply a default metric of 200 +
 .Xr if_nametoindex 3 .
 An extra 100 will be added for wireless interfaces.
 .It Ic mudurl Ar url 
-Specifies the URL for a manufacturer usage description (MUD).
+Specifies the URL for a Manufacturer Usage Description (MUD).
 The description is used by upstream network devices to instantiate any
 desired access lists.
 See draft-ietf-opsawg-mud for more information.
 .It Ic noalias
-Any pre-existing IPv4 addresses existing address will be removed from the
-interface when adding a new IPv4 address.
+Any pre-existing IPv4 addresses will be removed from the interface when
+adding a new IPv4 address.
 .It Ic noarp
 Don't send any ARP requests.
 This also disables IPv4LL.
@@ -464,7 +472,8 @@ Don't start DHCP or listen to DHCP messages.
 This is only useful when allowing IPv4LL.
 .It Ic nodhcp6
 Don't start DHCPv6 or listen to DHCPv6 messages.
-Normally DHCPv6 is started by a RA instruction or configuration.
+Normally DHCPv6 is started by an IPv6 Router Advertisement instruction or
+configuration.
 .It Ic nogateway
 Don't install any default routes.
 .It Ic gateway
@@ -513,7 +522,6 @@ You can specify more
 separated by commas, spaces or more
 .Ic option
 lines.
-.Ar option
 Prepend dhcp6_ to
 .Ar option
 to request a DHCPv6 option.
@@ -545,7 +553,7 @@ To enforce that
 only responds to DHCP servers and not BOOTP servers, you can
 .Ic require
 .Ar dhcp_message_type .
-This isn't an exact science though because a BOOTP server can send DHCP like
+This isn't an exact science though because a BOOTP server can send DHCP-like
 options.
 .It Ic reject Ar option
 Reject a message that contains the
@@ -594,7 +602,7 @@ Subsequent options are only parsed for this wireless
 Selects the interface identifier used for SLAAC generated IPv6 addresses.
 If
 .Ar private
-is used, a RFC7217 address is generated.
+is used, an RFC 7217 address is generated.
 .It Ic static Ar value
 Configures a static
 .Ar value .
@@ -602,8 +610,8 @@ If you set
 .Ic ip_address
 then
 .Nm dhcpcd
-will not attempt to obtain a lease and just use the value for the address with
-an infinite lease time.
+will not attempt to obtain a lease and will just use the value for the address
+with an infinite lease time.
 If you set
 .Ic ip6_address ,
 .Nm dhcpcd
@@ -626,13 +634,15 @@ option instead of setting a static address.
 .D1 static domain_name_servers=192.168.0.1 fd51:42f8:caae:d92e::1
 .Pp
 Here is an example for PPP which gives the destination a default route.
-It uses the special destination keyword to insert the destination address
+It uses the special
+.Ar destination
+keyword to insert the destination address
 into the value.
 .D1 interface ppp0
 .D1 static ip_address=
 .D1 destination routers
 .It Ic timeout Ar seconds
-Timeout after
+Time out after
 .Ar seconds ,
 instead of the default 30.
 A setting of 0
@@ -673,7 +683,7 @@ Set un-encapsulated vendor option to hello world.
 .D1 vendor ,"hello world"
 .It Ic vendorclassid Ar string
 Set the DHCP Vendor Class.
-DHCPv6 has it's own option as shown below.
+DHCPv6 has its own option as shown below.
 The default is
 dhcpcd-<version>:<os>:<machine>:<platform>.
 For example
@@ -706,12 +716,14 @@ Use the last four bytes of the hardware address as the DHCP xid instead
 of a randomly generated number.
 .El
 .Ss Defining new options
-DHCP, ND and DHCPv6 allow for the use of custom options.
+DHCP, ND and DHCPv6 allow for the use of custom options, and RFC 3925 vendor
+options for DHCP can also be supplied.
 Each option needs to be started with the
 .Ic define ,
-.If definend
-or
+.Ic definend,
 .Ic define6
+or
+.Ic vendopt
 directive.
 This can optionally be followed by both
 .Ic embed
@@ -797,12 +809,12 @@ You can use more than one, but they must appear in the order listed below.
 .Bl -tag -width -indent
 .It Ic request
 Requests the option by default without having to be specified in user
-configuration
+configuration.
 .It Ic norequest
-This option cannot be requested, regardless of user configuration
+This option cannot be requested, regardless of user configuration.
 .It Ic optional
 This option is optional.
-Only makes sense for embedded options where like the client FQDN option where
+Only makes sense for embedded options like the client FQDN option, where
 the FQDN string itself is optional.
 .It Ic index
 The option can appear more than once and will be indexed.
@@ -842,9 +854,9 @@ An unsigned 32bit integer, 4 bytes.
 .It Ic flag
 A fixed value (1) to indicate that the option is present, 0 bytes.
 .It Ic domain
-A RFC 3397 encoded string.
+An RFC 3397 encoded string.
 .It Ic dname
-A RFC 1035 validated string.
+An RFC 1035 validated string.
 .It Ic binhex Op : Ic length
 Binary data expressed as hexadecimal.
 .It Ic embed
@@ -855,14 +867,14 @@ Contains encapsulated options (implies embed as well).
 References an option from the global definition.
 .El
 .Ss Example definition
-.D1 # DHCP option 81, Fully Qualified Domain Name, RFC4702
+.D1 # DHCP option 81, Fully Qualified Domain Name, RFC 4702
 .D1 define 81 embed fqdn
 .D1 embed byte flags
 .D1 embed byte rcode1
 .D1 embed byte rcode2
 .D1 embed domain fqdn
 .Pp
-.D1 # DHCP option 125, Vendor Specific Information Option, RFC3925
+.D1 # DHCP option 125, Vendor Specific Information Option, RFC 3925
 .D1 define 125 encap vsio
 .D1 embed uint32 enterprise_number
 .D1 # Options defined for the enterprise number
@@ -872,8 +884,10 @@ References an option from the global definition.
 .It Ic token
 Sends a plain text token the server expects and matches a token sent by
 the server.
-The tokens to not have to be the same.
-If unspecified, the token with secretid of 0 will be used in sending messages
+The tokens do not have to be the same.
+If unspecified, the token with a
+.Ar secretid
+of 0 will be used in sending messages
 and validating received messages.
 .It Ic delayedrealm
 Delayed Authentication.
@@ -886,7 +900,10 @@ and
 .Ar secretid
 in it.
 .Nm dhcpcd
-will then look for a non-expired token with a matching realm and secretid.
+will then look for an unexpired token with a matching
+.Ar realm
+and
+.Ar secretid .
 This token is used to authenticate all other messages.
 .It Ic delayed
 Same as above, but without a realm.
@@ -903,8 +920,8 @@ If none specified,
 .Ic monotonic
 is the default.
 If this is changed from what was previously used,
-or the means of calculating or storing it is broken then the DHCP server
-will probably have to have its notion of the clients Replay Detection Value
+or the means of calculating or storing it is broken, then the DHCP server
+will probably have to have its notion of the client's Replay Detection Value
 reset.
 .Bl -tag -width -indent
 .It Ic monocounter
@@ -912,7 +929,7 @@ Read the number in the file
 .Pa @DBDIR@/dhcpcd-rdm.monotonic
 and add one to it.
 .It Ic monotime
-Create a NTP timestamp from the system time.
+Create an NTP timestamp from the system time.
 .It Ic monotonic
 Same as
 .Ic monotime .
