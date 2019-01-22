@@ -1,6 +1,6 @@
 
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/socfpga_cyclone5_de0_sockit.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/socfpga_cyclone5_de0_nano_soc.dts"
 
 / {
 	soc {
