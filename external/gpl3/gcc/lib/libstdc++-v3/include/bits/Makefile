@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2019/01/19 20:02:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2019/01/22 23:55:54 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -16,8 +16,15 @@ INCS+=		gthr.h gthr-single.h gthr-posix.h
 INCS+=		${BUILDINCS}
 
 # libsupc++
-INCS+=		nested_exception.h hash_bytes.h atomic_lockfree_defines.h
-INCS+=		cxxabi_forced.h	exception_defines.h exception_ptr.h
+# XXX use bits_sup_headers from libstdc++/include/Makefile.am
+INCS+=		atomic_lockfree_defines.h \
+		cxxabi_forced.h \
+		cxxabi_init_exception.h \
+		exception.h \
+		exception_defines.h \
+		exception_ptr.h \
+		hash_bytes.h \
+		nested_exception.h
 
 .if ${MKCOMPAT} != no && !empty(MACHINE_ARCH:M*64*)
 SUBDIR+=	arch
@@ -27,7 +34,7 @@ INCS+=		c++config.h
 
 INCSDIR=	/usr/include/g++/bits
 
-SYMLINKS+=	${INCSDIR}/gthr-posix.h ${INCSDIR}/gthr-default.h
+INCSYMLINKS+=	gthr-posix.h ${INCSDIR}/gthr-default.h
 
 .include "${.CURDIR}/../Makefile.includes"
 
