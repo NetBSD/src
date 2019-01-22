@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.224 2019/01/14 17:25:12 sevan Exp $
+$NetBSD: acronyms.comp,v 1.225 2019/01/22 01:32:30 htodd Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -468,6 +468,8 @@ EMR	electro-magnetic radiation
 EMACS	Editor MACroS
 EOF	end of file
 EOI	end of interrupt
+EOIS	end of interactive support
+EOL	end of life
 EOL	end of line
 EOT	end of transmission
 EPIC	explicitly parallel instruction computing
@@ -946,6 +948,7 @@ NOC	network operations center
 NOP	no operation
 NOS	network operating system
 NP	nondeterministic polynomial time
+NRND	not recommended for new designs
 NRZ	non-return to zero
 NSA	nation-state adversary
 NSA	no such agency
