@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.15 2018/12/26 14:01:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.16 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.15 2018/12/26 14:01:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.16 2019/01/23 03:34:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1032,9 +1032,6 @@ static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	{ 0, 0, NULL }
 }; 
 
-MODULE_SET_HOOK(rnd_ioctl_50_32_hook, "rnd32_50", compat32_50_rnd_ioctl);
-MODULE_UNSET_HOOK(rnd_ioctl_50_32_hook);
-
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50, "compat_netbsd32_60,compat_50");
 
 static int
@@ -1047,14 +1044,15 @@ compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
                 ret = syscall_establish(&emul_netbsd32,
 		    compat_netbsd32_50_syscalls);
 		if (ret == 0)
-			rnd_ioctl_50_32_hook_set();
+			MODULE_SET_HOOK(rnd_ioctl_50_32_hook, "rnd32_50",
+			    compat32_50_rnd_ioctl);
 		return ret;
 
 	case MODULE_CMD_FINI:
                 ret = syscall_disestablish(&emul_netbsd32,
 		    compat_netbsd32_50_syscalls);
 		if (ret == 0)
-			rnd_ioctl_50_32_hook_unset();
+			MODULE_UNSET_HOOK(rnd_ioctl_50_32_hook);
 		return ret;
 
 	default:

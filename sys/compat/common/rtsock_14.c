@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_14.c,v 1.5.14.6 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_14.c,v 1.5.14.7 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.14.6 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.14.7 2019/01/23 03:34:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -173,23 +173,18 @@ compat_14_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 	return 0;
 }
 
-MODULE_SET_HOOK(rtsock_14_oifmsg_hook, "rts_14", compat_14_rt_oifmsg);
-MODULE_SET_HOOK(rtsock_14_iflist_hook, "rts_14", compat_14_iflist);
-MODULE_UNSET_HOOK(rtsock_14_oifmsg_hook);
-MODULE_UNSET_HOOK(rtsock_14_iflist_hook);
-
 void
 rtsock_14_init(void)
 {
 
-	rtsock_14_iflist_hook_set();
-	rtsock_14_oifmsg_hook_set();
+	MODULE_SET_HOOK(rtsock_14_oifmsg_hook, "rts_14", compat_14_rt_oifmsg);
+	MODULE_SET_HOOK(rtsock_14_iflist_hook, "rts_14", compat_14_iflist);
 }
 
 void
 rtsock_14_fini(void)
 {
 
-	rtsock_14_iflist_hook_unset();
-	rtsock_14_oifmsg_hook_unset();
+	MODULE_UNSET_HOOK(rtsock_14_oifmsg_hook);
+	MODULE_UNSET_HOOK(rtsock_14_iflist_hook);
 }

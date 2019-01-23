@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.38.2 2018/10/12 22:30:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.38.3 2019/01/23 03:34:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -121,19 +121,16 @@ compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 	return ret;
 }
 
-MODULE_SET_HOOK(rnd_ioctl_50_hook, "rnd_50", compat_50_rnd_ioctl);
-MODULE_UNSET_HOOK(rnd_ioctl_50_hook);
-
 void
 rndpseudo_50_init(void)
 {
 
-	rnd_ioctl_50_hook_set();
+	MODULE_SET_HOOK(rnd_ioctl_50_hook, "rnd_50", compat_50_rnd_ioctl);
 }
 
 void
 rndpseudo_50_fini(void)
 {
 
-	rnd_ioctl_50_hook_unset();
+	MODULE_UNSET_HOOK(rnd_ioctl_50_hook);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.2.2.4 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.2.2.5 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -264,20 +264,16 @@ int error;
 	return EPASSTHROUGH;
 }
  
-MODULE_SET_HOOK(raidframe80_ioctl_hook, "raid80", raidframe_ioctl_80);
-MODULE_UNSET_HOOK(raidframe80_ioctl_hook)
- 
 void
 raidframe_80_init(void)
 {
   
-        raidframe80_ioctl_hook_set();
+	MODULE_SET_HOOK(raidframe80_ioctl_hook, "raid80", raidframe_ioctl_80);
 }
  
 void
 raidframe_80_fini(void)
 {
  
-        raidframe80_ioctl_hook_unset();
+	MODULE_UNSET_HOOK(raidframe80_ioctl_hook)
 }
-

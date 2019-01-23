@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.6.2.6 2019/01/15 22:27:07 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.6.2.7 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.6 2019/01/15 22:27:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.6.2.7 2019/01/23 03:34:14 pgoyette Exp $");
 
 #define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
 			 * various other compat definitions - see
@@ -149,52 +149,32 @@ compat_50_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 	return 0;
 }
 
-MODULE_SET_HOOK(rtsock_50_iflist_hook, "rts_50", compat_50_iflist);
-MODULE_UNSET_HOOK(rtsock_50_iflist_hook); 
-
-MODULE_SET_HOOK(rtsock_50_oifmsg_hook, "rts_50", compat_50_rt_oifmsg);
-MODULE_UNSET_HOOK(rtsock_50_oifmsg_hook); 
-
-MODULE_SET_HOOK(rtsock_50_rt_missmsg_hook, "rts_50", compat_50_rt_missmsg);
-MODULE_UNSET_HOOK(rtsock_50_rt_missmsg_hook); 
-
-MODULE_SET_HOOK(rtsock_50_rt_ifmsg_hook, "rts_50", compat_50_rt_ifmsg);
-MODULE_UNSET_HOOK(rtsock_50_rt_ifmsg_hook); 
-
-MODULE_SET_HOOK(rtsock_50_rt_newaddrmsg_hook, "rts_50",
-    compat_50_rt_newaddrmsg);
-MODULE_UNSET_HOOK(rtsock_50_rt_newaddrmsg_hook); 
-
-MODULE_SET_HOOK(rtsock_50_rt_ifannouncemsg_hook, "rts_50",
-    compat_50_rt_ifannouncemsg);
-MODULE_UNSET_HOOK(rtsock_50_rt_ifannouncemsg_hook); 
-
-MODULE_SET_HOOK(rtsock_50_rt_ieee80211msg_hook, "rts_50",
-    compat_50_rt_ieee80211msg);
-MODULE_UNSET_HOOK(rtsock_50_rt_ieee80211msg_hook); 
-
 void
 rtsock_50_init(void)
 {
  
-	rtsock_50_iflist_hook_set();
-	rtsock_50_oifmsg_hook_set();
-	rtsock_50_rt_missmsg_hook_set();
-	rtsock_50_rt_ifmsg_hook_set();
-	rtsock_50_rt_newaddrmsg_hook_set();
-	rtsock_50_rt_ifannouncemsg_hook_set();
-	rtsock_50_rt_ieee80211msg_hook_set();
+	MODULE_SET_HOOK(rtsock_50_iflist_hook, "rts_50", compat_50_iflist);
+	MODULE_SET_HOOK(rtsock_50_oifmsg_hook, "rts_50", compat_50_rt_oifmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_missmsg_hook, "rts_50",
+	    compat_50_rt_missmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_ifmsg_hook, "rts_50", compat_50_rt_ifmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_newaddrmsg_hook, "rts_50",
+	    compat_50_rt_newaddrmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_ifannouncemsg_hook, "rts_50",
+	    compat_50_rt_ifannouncemsg);
+	MODULE_SET_HOOK(rtsock_50_rt_ieee80211msg_hook, "rts_50",
+	    compat_50_rt_ieee80211msg);
 }
  
 void
 rtsock_50_fini(void)
 {  
 
-	rtsock_50_iflist_hook_unset();
-	rtsock_50_oifmsg_hook_unset();
-	rtsock_50_rt_missmsg_hook_unset();
-	rtsock_50_rt_ifmsg_hook_unset();
-	rtsock_50_rt_newaddrmsg_hook_unset();
-	rtsock_50_rt_ifannouncemsg_hook_unset();
-	rtsock_50_rt_ieee80211msg_hook_unset();
+	MODULE_UNSET_HOOK(rtsock_50_iflist_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_oifmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_missmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_ifmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_newaddrmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_ifannouncemsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_ieee80211msg_hook); 
 }

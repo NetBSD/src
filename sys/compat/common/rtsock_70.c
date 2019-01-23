@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_70.c,v 1.2.2.4 2019/01/14 13:34:27 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_70.c,v 1.2.2.5 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.4 2019/01/14 13:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.5 2019/01/23 03:34:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -115,23 +115,19 @@ compat_70_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
 	return error;
 }
 
-MODULE_SET_HOOK(rtsock_70_newaddr_hook, "rts_70", compat_70_rt_newaddrmsg1);
-MODULE_SET_HOOK(rtsock_70_iflist_hook, "rts_70", compat_70_iflist_addr);
-MODULE_UNSET_HOOK(rtsock_70_newaddr_hook);
-MODULE_UNSET_HOOK(rtsock_70_iflist_hook);
-
 void
 rtsock_70_init(void)
 {
 
-	rtsock_70_newaddr_hook_set();
-	rtsock_70_iflist_hook_set();
+	MODULE_SET_HOOK(rtsock_70_newaddr_hook, "rts_70",
+	    compat_70_rt_newaddrmsg1);
+	MODULE_SET_HOOK(rtsock_70_iflist_hook, "rts_70", compat_70_iflist_addr);
 }
 
 void
 rtsock_70_fini(void)
 {
 
-	rtsock_70_newaddr_hook_unset();
-	rtsock_70_iflist_hook_unset();
+	MODULE_UNSET_HOOK(rtsock_70_newaddr_hook);
+	MODULE_UNSET_HOOK(rtsock_70_iflist_hook);
 }
