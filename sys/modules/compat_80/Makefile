@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.5 2019/01/23 02:15:02 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.6 2019/01/23 02:25:29 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -10,9 +10,5 @@ CPPFLAGS+=	-DCOMPAT_80
 
 SRCS+=	compat_80_mod.c
 SRCS+=	kern_mod_80.c
-
-.PATH:	${S}/dev/raidframe
-
-SRCS+=	rf_compat_80.c
 
 .include <bsd.kmodule.mk>
