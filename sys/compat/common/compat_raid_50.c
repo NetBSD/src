@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_raid_50.c,v 1.1.2.1 2018/09/22 22:21:46 pgoyette Exp $	*/
+/*	$NetBSD: compat_raid_50.c,v 1.1.2.2 2019/01/23 02:55:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_raid_50.c,v 1.1.2.1 2018/09/22 22:21:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_raid_50.c,v 1.1.2.2 2019/01/23 02:55:09 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -64,7 +64,7 @@ int compat_raid_50_fini(void)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_EXEC, compat_raid_50, "compat_50,raid");
+MODULE(MODULE_CLASS_EXEC, compat_raid_50, "compat_50,raid,compat_raid_80");
 
 static int
 compat_50_modcmd(modcmd_t cmd, void *arg)
