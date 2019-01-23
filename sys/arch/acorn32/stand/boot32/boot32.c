@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.45 2018/10/30 20:23:29 christos Exp $	*/
+/*	$NetBSD: boot32.c,v 1.46 2019/01/23 14:52:49 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -760,17 +760,57 @@ create_configuration(int argc, char **argv, int start_args)
 	}
 }
 
+int get_riscos_ver(void);
+
+#define ModuleName_UtilityModule "UtilityModule"
+
+int
+get_riscos_ver(void)
+{
+	int module, section;
+	os_error *e;
+	char *name;
+	int version;
+
+	version = 0;
+	/* Full enumeration */
+	module = 0;
+	section = -1;
+	do {
+		e = xosmodule_enumeratewithversion(&module, &section, &name,
+		    NULL, NULL, &version);
+		if (!strncmp(name, ModuleName_UtilityModule,
+		    sizeof (ModuleName_UtilityModule))) {
+			return version;
+		}
+	} while (e == NULL && section == -1);
+	return 0;
+}
+
 int main(int, char **);
 
 int
 main(int argc, char **argv)
 {
 	int howto, start_args, ret;
+	int riscosver;
 	int class;
 
+	riscosver = get_riscos_ver();
+	/*
+	 * RISC OS version is in BCD
+	 * Top 16 bits = major version
+	 * Bottom 16 bits = fractional part
+	 * e.g. 3.71 = 0x00037100
+	 */
+	
 	printf("\n\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> Booting NetBSD/acorn32 on a RiscPC/A7000/NC\n");
+	printf(">> RISC OS version: %d.%d%d\n",
+	    (riscosver >> 16) & 0xff,
+	    (riscosver >> 12) & 0xf,
+	    (riscosver >> 8) & 0xf);
 	printf("\n");
 
 	process_args(argc, argv, &howto, booted_file, &start_args);
@@ -855,9 +895,19 @@ main(int argc, char **argv)
 	/* dismount all filesystems */
 	xosfscontrol_shutdown();
 
-	os_readsysinfo_platform_class(&class, NULL, NULL);
-	if (class != osreadsysinfo_Platform_Pace) {
-		/* reset devices, well they try to anyway */
+	/*
+	 * OS_ReadSysInfo Platform class reason code not valid
+	 * on RISC OS 3.
+	 * XXX Don't know about RISC OS 4
+	 */
+	   
+	if (riscosver >= 0x40000) {
+		os_readsysinfo_platform_class(&class, NULL, NULL);
+		if (class != osreadsysinfo_Platform_Pace) {
+			/* reset devices, well try to anyway */
+			service_pre_reset();
+		}
+	} else {
 		service_pre_reset();
 	}
 
