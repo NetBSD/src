@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.10 2019/01/23 02:32:06 kre Exp $	*/
+/*	$NetBSD: expandm.c,v 1.11 2019/01/23 02:48:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.10 2019/01/23 02:32:06 kre Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.11 2019/01/23 02:48:48 kre Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -68,7 +68,19 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 		 */
 		if (__predict_false(nlen >= INT_MAX)) {
 			size_t blen = buf ? strlen(buf) : 0;
-			size_t tlen = nlen + blen;
+			size_t tlen;
+
+			/*
+			 * if we would overflow a ptrdiff_t when computing
+			 * tlen, then don't bother.  The format string is
+			 * simply too large to be converted.
+			 */
+			if (blen >= PTRDIFF_MAX ||
+			    nlen >= PTRDIFF_MAX - blen ||
+			    nlen >= SIZE_T_MAX - blen)
+				goto out;
+
+			tlen = nlen + blen;
 
 			/*
 			 * We can't exceed PTRDIFF_MAX because we would
