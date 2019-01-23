@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.225 2019/01/22 01:32:30 htodd Exp $
+$NetBSD: acronyms.comp,v 1.226 2019/01/23 16:22:14 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -667,6 +667,7 @@ IMC	integrated memory controller
 IMCR	interrupt mode configuration register
 IMR	interrupt mask register
 IMS	information management system
+IMSI	international mobile subscriber identity
 INCITS	InterNational Committee for Information Technology Standards
 IO	input/output
 IOCTL	input/output control
@@ -1135,6 +1136,7 @@ PTLA	pseudo top level aggregator
 PTP	page table page
 PTV	perceived target value
 PU	processing unit
+PUC	personal unblocking code
 PUN	physical unit number
 PV	physical volume
 PVG	physical volume group
@@ -1302,6 +1304,7 @@ SIDH	supersingular isogeny Diffie-Hellman
 SIEM	security information and event management
 SIF	source input format
 SIFS	short inter-frame space
+SIM	subscriber identity module
 SIMD	single instruction, multiple data
 SIMM	single inline memory module
 SIP	Session Initiation Protocol
@@ -1490,6 +1493,7 @@ UFS	Unix File System
 UGA	universal graphics adapter
 UI	unit interval
 UI	user interface
+UICC	universal integrated circuit card
 UID	unique identifier
 UID	user identifier
 UL	upload
