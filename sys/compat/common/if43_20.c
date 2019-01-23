@@ -1,4 +1,4 @@
-/*	$NetBSD: if43_20.c,v 1.1.2.4 2018/09/30 21:32:48 pgoyette Exp $	*/
+/*	$NetBSD: if43_20.c,v 1.1.2.5 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if43_20.c,v 1.1.2.4 2018/09/30 21:32:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if43_20.c,v 1.1.2.5 2019/01/23 03:34:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -79,19 +79,16 @@ if43_cvtcmd_20(u_long ncmd)
 	}
 }
 
-MODULE_SET_HOOK(if43_20_hook, "if4320", if43_cvtcmd_20);
-MODULE_UNSET_HOOK(if43_20_hook);
-
 void
 if43_20_init(void)
 {
 
-	if43_20_hook_set();
+	MODULE_SET_HOOK(if43_20_hook, "if4320", if43_cvtcmd_20);
 }
 
 void
 if43_20_fini(void)
 {
 
-	if43_20_hook_unset();
+	MODULE_UNSET_HOOK(if43_20_hook);
 }

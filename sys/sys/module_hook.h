@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.14 2019/01/22 07:42:42 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.15 2019/01/23 03:34:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,9 +56,7 @@ extern struct hook ## _t {					\
 } hook __cacheline_aligned;
 
 #define MODULE_SET_HOOK(hook, waitchan, func)			\
-static void hook ## _set(void);					\
-static void hook ## _set(void)					\
-{								\
+do {								\
 								\
 	KASSERT(!hook.hooked);					\
 								\
@@ -73,12 +71,10 @@ static void hook ## _set(void)					\
 								\
 	/* Let them use it */					\
 	hook.hooked = true;					\
-}
+} while /* CONSTCOND */ (0)
 
 #define MODULE_UNSET_HOOK(hook)					\
-static void (hook ## _unset)(void);				\
-static void (hook ## _unset)(void)				\
-{								\
+do {								\
 								\
 	KASSERT(kernconfig_is_held());				\
 	KASSERT(hook.hooked);					\
@@ -90,7 +86,7 @@ static void (hook ## _unset)(void)				\
 	/* Prevent new localcount_acquire calls.  */		\
 	hook.hooked = false;					\
 								\
-	/* Wait for existing localcount_acquire calls to drain.  */ \
+	/* Wait for existing localcount_acquire calls to finish.  */ \
 	pserialize_perform(hook.psz);				\
 								\
 	/* Wait for existing localcount references to drain.  */\
@@ -102,7 +98,7 @@ static void (hook ## _unset)(void)				\
 	cv_destroy(&hook.cv);					\
 	mutex_destroy(&hook.mtx);				\
 	pserialize_destroy(hook.psz);				\
-}
+} while /* CONSTCOND */ (0)
 
 #define MODULE_CALL_HOOK(hook, args, default, retval)		\
 do {								\

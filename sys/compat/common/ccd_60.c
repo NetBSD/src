@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd_60.c,v 1.1.2.8 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: ccd_60.c,v 1.1.2.9 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd_60.c,v 1.1.2.8 2018/09/18 23:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd_60.c,v 1.1.2.9 2019/01/23 03:34:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -91,19 +91,16 @@ compat_60_ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l,
 	}
 }
 
-MODULE_SET_HOOK(ccd_ioctl_60_hook, "ccd_60", compat_60_ccdioctl);
-MODULE_UNSET_HOOK(ccd_ioctl_60_hook);
-
 void
 ccd_60_init(void)
 {
 
-	ccd_ioctl_60_hook_set();
+	MODULE_SET_HOOK(ccd_ioctl_60_hook, "ccd_60", compat_60_ccdioctl);
 }
 
 void
 ccd_60_fini(void)
 {
 
-	ccd_ioctl_60_hook_unset();
+	MODULE_UNSET_HOOK(ccd_ioctl_60_hook);
 }

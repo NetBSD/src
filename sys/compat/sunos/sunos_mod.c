@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_mod.c,v 1.3.28.2 2018/10/18 22:09:56 pgoyette Exp $	*/
+/*	$NetBSD: sunos_mod.c,v 1.3.28.3 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_mod.c,v 1.3.28.2 2018/10/18 22:09:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_mod.c,v 1.3.28.3 2019/01/23 03:34:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -68,20 +68,18 @@ get_sunos_emul(const struct emul **e)
 	return 0;
 }
 
-MODULE_SET_HOOK(get_emul_sunos_hook, "sun_emul", get_sunos_emul);
-MODULE_UNSET_HOOK(get_emul_sunos_hook);
-
 static int
 compat_sunos_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		get_emul_sunos_hook_set();
+		MODULE_SET_HOOK(get_emul_sunos_hook, "sun_emul",
+		    get_sunos_emul);
 		return exec_add(&sunos_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		get_emul_sunos_hook_unset();
+		MODULE_UNSET_HOOK(get_emul_sunos_hook);
 		return exec_remove(&sunos_execsw, 1);
 
 	default:

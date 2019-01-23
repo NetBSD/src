@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.4.16.6 2019/01/13 10:49:49 pgoyette Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.4.16.7 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4.16.6 2019/01/13 10:49:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4.16.7 2019/01/23 03:34:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -118,26 +118,17 @@ compat_60_ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 }
 
-/* 
- * Hooks for compat_60 ttioctl and ptmioctl
- */
-MODULE_SET_HOOK(compat_60_ttioctl_hook, "tty_60", compat_60_ttioctl);
-MODULE_SET_HOOK(compat_60_ptmioctl_hook, "tty_60", compat_60_ptmioctl);
-MODULE_UNSET_HOOK(compat_60_ttioctl_hook);
-MODULE_UNSET_HOOK(compat_60_ptmioctl_hook);
-
-
 void
 kern_tty_60_init(void)
 {
 
-	compat_60_ttioctl_hook_set();
-	compat_60_ptmioctl_hook_set();
+	MODULE_SET_HOOK(compat_60_ttioctl_hook, "tty_60", compat_60_ttioctl);
+	MODULE_SET_HOOK(compat_60_ptmioctl_hook, "tty_60", compat_60_ptmioctl);
 }
 
 void
 kern_tty_60_fini(void)
 {
-	compat_60_ttioctl_hook_unset();
-	compat_60_ptmioctl_hook_unset();
+	MODULE_UNSET_HOOK(compat_60_ttioctl_hook);
+	MODULE_UNSET_HOOK(compat_60_ptmioctl_hook);
 }

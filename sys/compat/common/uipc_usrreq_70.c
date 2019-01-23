@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq_70.c,v 1.1.20.5 2019/01/18 00:01:01 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq_70.c,v 1.1.20.6 2019/01/23 03:34:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.5 2019/01/18 00:01:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.6 2019/01/23 03:34:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -73,19 +73,17 @@ compat_70_unp_addsockcred(struct lwp *l, struct mbuf *control)
 	return m_add(control, m);
 }
 
-MODULE_SET_HOOK(compat_70_unp_hook, "unp_70", compat_70_unp_addsockcred);
-MODULE_UNSET_HOOK(compat_70_unp_hook);
-
 void
 uipc_usrreq_70_init(void)
 {
 
-	compat_70_unp_hook_set();
+	MODULE_SET_HOOK(compat_70_unp_hook, "unp_70",
+	    compat_70_unp_addsockcred);
 }
 
 void
 uipc_usrreq_70_fini(void)
 {
 
-	compat_70_unp_hook_unset();
+	MODULE_UNSET_HOOK(compat_70_unp_hook);
 }
