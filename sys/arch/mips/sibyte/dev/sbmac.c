@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.52 2019/01/22 03:42:26 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.53 2019/01/23 07:40:05 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.52 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.53 2019/01/23 07:40:05 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -314,7 +314,7 @@ sbmac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 /*
  * Write to a PHY register through the MII.
  */
-static 
+static int
 sbmac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 
