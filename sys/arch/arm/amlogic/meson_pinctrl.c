@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -170,10 +170,9 @@ meson_pinctrl_set_config(device_t dev, const void *data, size_t len)
 	if (mux == -1)
 		return -1;
 
-	groups_len = OF_getproplen(mux, "groups");
-	if (groups_len <= 0)
+	groups = fdtbus_pinctrl_parse_groups(mux, &groups_len);
+	if (groups == NULL)
 		return -1;
-	groups = fdtbus_get_string(mux, "groups");
 
 	for (; groups_len > 0;
 	    groups_len -= strlen(groups) + 1, groups += strlen(groups) + 1) {

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.45 2019/01/19 20:50:48 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.46 2019/01/23 04:21:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/gpio.h>
 #include <sys/termios.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -292,6 +293,14 @@ pwm_tag_t	fdtbus_pwm_acquire_index(int, const char *, int);
 void		fdtbus_pinctrl_configure(void);
 int		fdtbus_pinctrl_set_config_index(int, u_int);
 int		fdtbus_pinctrl_set_config(int, const char *);
+const char *	fdtbus_pinctrl_parse_function(int);
+const void *	fdtbus_pinctrl_parse_pins(int, int *);
+const char *	fdtbus_pinctrl_parse_groups(int, int *);
+const u_int *	fdtbus_pinctrl_parse_pinmux(int, int *);
+int		fdtbus_pinctrl_parse_bias(int, int *);
+int		fdtbus_pinctrl_parse_drive(int);
+int		fdtbus_pinctrl_parse_drive_strength(int);
+int		fdtbus_pinctrl_parse_input_output(int, int *);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
 void		fdtbus_regulator_release(struct fdtbus_regulator *);
 int		fdtbus_regulator_enable(struct fdtbus_regulator *);
