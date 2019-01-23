@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.8 2019/01/14 03:30:25 kre Exp $	*/
+/*	$NetBSD: expandm.c,v 1.9 2019/01/23 02:00:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.8 2019/01/14 03:30:25 kre Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.9 2019/01/23 02:00:00 christos Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -60,16 +60,30 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 		for (char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
 
-		if (__predict_false((m - ptr) >= INT_MAX)) {
+		size_t nlen = (size_t)(m - ptr);
+		/*
+		 * we can't exceed INT_MAX because int is used as 
+		 * a format width
+		 */
+		if (__predict_false(nlen >= INT_MAX)) {
 			size_t blen = buf ? strlen(buf) : 0;
-			size_t nlen = (size_t)(m - ptr);
+			size_t tlen = nlen + blen;
 
-			nbuf = realloc(buf, blen + nlen + 1);
+			/*
+			 * We can't exceed PTRDIFF_MAX because we would
+			 * not be able to address the pointers
+			 */
+			if (tlen >= PTRDIFF_MAX) {
+				errno = EINVAL;
+				goto out;
+			}
+
+			nbuf = realloc(buf, tlen + 1);
 			if (nbuf == NULL)
 				goto out;
 
 			memcpy(nbuf + blen, ptr, nlen);
-			nbuf[blen + nlen] = '\0';
+			nbuf[tlen] = '\0';
 			ptr += nlen;
 			buf = nbuf;
 		}
