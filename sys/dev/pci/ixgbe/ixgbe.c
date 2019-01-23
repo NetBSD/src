@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.172 2019/01/23 09:01:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.173 2019/01/23 09:47:52 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -905,10 +905,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		ixgbe_check_fan_failure(adapter, esdp, FALSE);
 	}
 
-	/* Enable EEE power saving */
-	if (adapter->feat_en & IXGBE_FEATURE_EEE)
-		hw->mac.ops.setup_eee(hw, TRUE);
-
 	/* Set an initial default flow control value */
 	hw->fc.requested_mode = ixgbe_flow_control;
 
@@ -1168,6 +1164,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* Enable the optics for 82599 SFP+ fiber */
 	ixgbe_enable_tx_laser(hw);
+
+	/* Enable EEE power saving */
+	if (adapter->feat_cap & IXGBE_FEATURE_EEE)
+		hw->mac.ops.setup_eee(hw,
+		    adapter->feat_en & IXGBE_FEATURE_EEE);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
@@ -4081,6 +4082,11 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	/* Set moderation on the Link interrupt */
 	ixgbe_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
+
+	/* Enable EEE power saving */
+	if (adapter->feat_cap & IXGBE_FEATURE_EEE)
+		hw->mac.ops.setup_eee(hw,
+		    adapter->feat_en & IXGBE_FEATURE_EEE);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
