@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.17 2018/12/16 02:18:01 sevan Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.18 2019/01/23 17:36:01 martin Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ ATF_TC_BODY(no_test, tc)
 
 #include <ieeefp.h>
 
-#if __arm__ && !__SOFTFP__
+#if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
 	 * Some NEON fpus do not implement IEEE exception handling,
 	 * skip these tests if running on them and compiled for

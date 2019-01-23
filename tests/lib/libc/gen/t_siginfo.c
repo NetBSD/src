@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.32 2018/01/17 00:16:43 maya Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.33 2019/01/23 17:36:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -309,7 +309,7 @@ ATF_TC_BODY(sigfpe_flt, tc)
 
 	if (isQEMU())
 		atf_tc_skip("Test does not run correctly under QEMU");
-#if defined(__arm__) && !__SOFTFP__
+#if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
 	 * Some NEON fpus do not implement IEEE exception handling,
 	 * skip these tests if running on them and compiled for
