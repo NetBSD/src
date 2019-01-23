@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.9 2019/01/23 02:00:00 christos Exp $	*/
+/*	$NetBSD: expandm.c,v 1.10 2019/01/23 02:32:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.9 2019/01/23 02:00:00 christos Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.10 2019/01/23 02:32:06 kre Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -56,11 +56,12 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 	buf = NULL;
 	for (ptr = fmt; (m = strstr(ptr, "%m")) != NULL; ptr = m + 2) {
 		size_t cnt = 0;
+		size_t nlen;
 
 		for (char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
 
-		size_t nlen = (size_t)(m - ptr);
+		nlen = (size_t)(m - ptr);
 		/*
 		 * we can't exceed INT_MAX because int is used as 
 		 * a format width
@@ -73,10 +74,8 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 			 * We can't exceed PTRDIFF_MAX because we would
 			 * not be able to address the pointers
 			 */
-			if (tlen >= PTRDIFF_MAX) {
-				errno = EINVAL;
+			if (tlen >= PTRDIFF_MAX)
 				goto out;
-			}
 
 			nbuf = realloc(buf, tlen + 1);
 			if (nbuf == NULL)
