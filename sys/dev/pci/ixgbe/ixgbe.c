@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.171 2019/01/23 06:56:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.172 2019/01/23 09:01:24 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -876,6 +876,9 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	} else
 		adapter->num_segs = IXGBE_82598_SCATTER;
 
+	/* Ensure SW/FW semaphore is free */
+	ixgbe_init_swfw_semaphore(hw);
+
 	hw->mac.ops.set_lan_id(hw);
 	ixgbe_init_device_features(adapter);
 
@@ -901,9 +904,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		u32 esdp = IXGBE_READ_REG(hw, IXGBE_ESDP);
 		ixgbe_check_fan_failure(adapter, esdp, FALSE);
 	}
-
-	/* Ensure SW/FW semaphore is free */
-	ixgbe_init_swfw_semaphore(hw);
 
 	/* Enable EEE power saving */
 	if (adapter->feat_en & IXGBE_FEATURE_EEE)
