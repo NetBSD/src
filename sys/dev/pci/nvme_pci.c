@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.25 2018/12/07 08:52:43 msaitoh Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.26 2019/01/23 06:56:19 msaitoh Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.25 2018/12/07 08:52:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.26 2019/01/23 06:56:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,18 +160,24 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	if ((reg & PCI_COMMAND_MASTER_ENABLE) == 0) {
-		reg |= PCI_COMMAND_MASTER_ENABLE;
-        	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
-	}
-
 	/* Map registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NVME_PCI_BAR);
 	if (PCI_MAPREG_TYPE(memtype) != PCI_MAPREG_TYPE_MEM) {
 		aprint_error_dev(self, "invalid type (type=0x%x)\n", memtype);
 		return;
 	}
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if (((reg & PCI_COMMAND_MASTER_ENABLE) == 0) ||
+	    ((reg & PCI_COMMAND_MEM_ENABLE) == 0)) {
+		/*
+		 * Enable address decoding for memory range in case BIOS or
+		 * UEFI didn't set it.
+		 */
+		reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+        	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    reg);
+	}
+
 	sc->sc_iot = pa->pa_memt;
 	error = pci_mapreg_info(pa->pa_pc, pa->pa_tag, NVME_PCI_BAR,
 	    memtype, &memaddr, &sc->sc_ios, &flags);
