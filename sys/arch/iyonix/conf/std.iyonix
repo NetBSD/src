@@ -1,4 +1,4 @@
-#	$NetBSD: std.iyonix,v 1.7 2018/01/17 20:30:17 skrll Exp $
+#	$NetBSD: std.iyonix,v 1.8 2019/01/23 22:13:01 macallan Exp $
 #
 # standard NetBSD/iyonix for GENERIC options
 
@@ -18,3 +18,5 @@ options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
 # We need to configure the PCI bus.
 options 	PCI_NETBSD_CONFIGURE
 options		I80321_USE_DIRECT_WIN
+options 	__BUS_SPACE_HAS_STREAM_METHODS
+options 	__HAVE_PCI_CONF_HOOK

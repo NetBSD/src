@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_pci.c,v 1.9 2018/11/18 14:12:28 jmcneill Exp $	*/
+/*	$NetBSD: iyonix_pci.c,v 1.10 2019/01/23 22:13:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.9 2018/11/18 14:12:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_pci.c,v 1.10 2019/01/23 22:13:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ void	*iyonix_pci_intr_establish(void *, pci_intr_handle_t,
 void	iyonix_pci_intr_disestablish(void *, void *);
 void pci_conf_write_byte(pci_chipset_tag_t, pcitag_t, int, int);
 int pci_conf_read_byte(pci_chipset_tag_t, pcitag_t, int);
+int iyonix_pci_conf_hook(void *, int, int, int, pcireg_t);
 
 void
 iyonix_pci_init(pci_chipset_tag_t pc, void *cookie)
@@ -81,6 +82,7 @@ iyonix_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_intr_evcnt = iyonix_pci_intr_evcnt;
 	pc->pc_intr_establish = iyonix_pci_intr_establish;
 	pc->pc_intr_disestablish = iyonix_pci_intr_disestablish;
+	pc->pc_conf_hook = iyonix_pci_conf_hook;
 }
 
 int
@@ -182,7 +184,7 @@ pci_conf_read_byte(pci_chipset_tag_t pc, pcitag_t tag, int addr)
 }
 
 int
-pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
+iyonix_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 
 	/*
