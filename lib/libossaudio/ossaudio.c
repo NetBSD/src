@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.34 2019/01/23 00:08:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.34 2019/01/23 00:08:06 mrg Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -503,13 +503,13 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		memset(tmpsysinfo.options, 0, 8);
 		tmpsysinfo.numaudios = OSS_MAX_AUDIO_DEVS;
 		tmpsysinfo.numaudioengines = 1;
-		memset(tmpsysinfo.openedaudio, 0, 8);
+		memset(tmpsysinfo.openedaudio, 0, sizeof(tmpsysinfo.openedaudio));
 		tmpsysinfo.numsynths = 1;
 		tmpsysinfo.nummidis = -1;
 		tmpsysinfo.numtimers = -1;
 		tmpsysinfo.nummixers = 1;
 		tmpsysinfo.numcards = 1;
-		memset(tmpsysinfo.openedmidi, 0, 8);
+		memset(tmpsysinfo.openedmidi, 0, sizeof(tmpsysinfo.openedmidi));
 		*(struct oss_sysinfo *)argp = tmpsysinfo;
 		break;
 	case SNDCTL_ENGINEINFO:
