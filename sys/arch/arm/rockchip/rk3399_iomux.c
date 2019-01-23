@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_iomux.c,v 1.1 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk3399_iomux.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define RK3399_IOMUX_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.1 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -348,27 +348,24 @@ rk3399_iomux_set_mux(struct rk3399_iomux_softc *sc, u_int bank, u_int idx, u_int
 static int
 rk3399_iomux_config(struct rk3399_iomux_softc *sc, const int phandle, u_int bank, u_int idx, u_int mux)
 {
-	u_int drv;
 
-	if (of_hasprop(phandle, "bias-disable"))
-		rk3399_iomux_set_bias(sc, bank, idx, 0);
-	else if (of_hasprop(phandle, "bias-pull-up"))
-		rk3399_iomux_set_bias(sc, bank, idx, GPIO_PIN_PULLUP);
-	else if (of_hasprop(phandle, "bias-pull-down"))
-		rk3399_iomux_set_bias(sc, bank, idx, GPIO_PIN_PULLDOWN);
+	const int bias = fdtbus_pinctrl_parse_bias(phandle, NULL);
+	if (bias != -1)
+		rk3399_iomux_set_bias(sc, bank, idx, bias);
 
-	if (of_getprop_uint32(phandle, "drive-strength", &drv) == 0) {
-		if (rk3399_iomux_set_drive_strength(sc, bank, idx, drv) != 0)
-			return EINVAL;
-	}
+	const int drv = fdtbus_pinctrl_parse_drive_strength(phandle);
+	if (drv != -1 &&
+	    rk3399_iomux_set_drive_strength(sc, bank, idx, drv) != 0)
+		return EINVAL;
 
 #if notyet
-	if (of_hasprop(phandle, "input-enable"))
-		rk3399_iomux_set_direction(sc, bank, idx, GPIO_PIN_INPUT, -1);
-	else if (of_hasprop(phandle, "output-high"))
-		rk3399_iomux_set_direction(sc, bank, idx, GPIO_PIN_OUTPUT, GPIO_PIN_HIGH);
-	else if (of_hasprop(phandle, "output-low"))
-		rk3399_iomux_set_direction(sc, bank, idx, GPIO_PIN_OUTPUT, GPIO_PIN_LOW);
+	int output_value;
+	const int direction =
+	    fdtbus_pinctrl_parse_input_output(phandle, &output_value);
+	if (direction != -1) {
+		rk3399_iomux_set_direction(sc, bank, idx, direction,
+		    output_value);
+	}
 #endif
 
 	rk3399_iomux_set_mux(sc, bank, idx, mux);
