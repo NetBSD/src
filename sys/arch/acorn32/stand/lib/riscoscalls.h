@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.12 2012/05/10 10:27:10 skrll Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.13 2019/01/23 14:49:00 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -285,12 +285,15 @@ extern void os_enter_os(void);
 #define OSModule_Alloc		6
 #define OSModule_Free		7
 #define OSModule_Lookup		18
+#define OSModule_EnumerateWithVersion	20
 
 #ifndef __ASSEMBLER__
 extern os_error *xosmodule_alloc(int, void **);
 extern os_error *xosmodule_free(void *);
 extern os_error *xosmodule_lookup(char const *, int *, int *, void **, void **,
     char **);
+extern os_error *xosmodule_enumeratewithversion(int *, int *, char **, int *,
+    int *, int *);
 #endif
 
 #define OSFSControl_AddFS		12
