@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.15 2019/01/23 03:34:15 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.16 2019/01/23 03:40:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -86,7 +86,10 @@ do {								\
 	/* Prevent new localcount_acquire calls.  */		\
 	hook.hooked = false;					\
 								\
-	/* Wait for existing localcount_acquire calls to finish.  */ \
+	/*							\
+	 * Wait for localcount_acquire calls already under way	\
+	 * to finish.						\
+	 */							\
 	pserialize_perform(hook.psz);				\
 								\
 	/* Wait for existing localcount references to drain.  */\
