@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.2.2.5 2019/01/23 03:34:14 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.2.2.6 2019/01/23 20:19:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -275,5 +275,5 @@ void
 raidframe_80_fini(void)
 {
  
-	MODULE_UNSET_HOOK(raidframe80_ioctl_hook)
+	MODULE_UNSET_HOOK(raidframe80_ioctl_hook);
 }
