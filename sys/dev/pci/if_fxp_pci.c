@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.83 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.84 2019/01/23 05:50:34 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.83 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.84 2019/01/23 05:50:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,13 +190,13 @@ fxp_pci_lookup(const struct pci_attach_args *pa)
 	const struct fxp_pci_product *fpp;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return (NULL);
+		return NULL;
 
 	for (fpp = fxp_pci_products; fpp->fpp_name != NULL; fpp++)
 		if (PCI_PRODUCT(pa->pa_id) == fpp->fpp_prodid)
-			return (fpp);
+			return fpp;
 
-	return (NULL);
+	return NULL;
 }
 
 static int
@@ -205,9 +205,9 @@ fxp_pci_match(device_t parent, cfdata_t match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (fxp_pci_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -245,8 +245,7 @@ fxp_pci_confreg_restore(struct fxp_pci_softc *psc)
 	reg = pci_conf_read(psc->psc_pc, psc->psc_tag, PCI_COMMAND_STATUS_REG);
 #endif
 
-	pci_conf_write(psc->psc_pc, psc->psc_tag,
-	    PCI_COMMAND_STATUS_REG,
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_COMMAND_STATUS_REG,
 	    (reg & 0xffff0000) |
 	    (psc->psc_regs[PCI_COMMAND_STATUS_REG>>2] & 0xffff));
 	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_BHLC_REG,
@@ -312,8 +311,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Map control/status registers.
 	 */
-	ioh_valid = (pci_mapreg_map(pa, FXP_PCI_IOBA,
-	    PCI_MAPREG_TYPE_IO, 0,
+	ioh_valid = (pci_mapreg_map(pa, FXP_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
 
 	/*
@@ -542,5 +540,5 @@ fxp_pci_enable(struct fxp_softc *sc)
 	/* Now restore the configuration registers. */
 	fxp_pci_confreg_restore(psc);
 
-	return (0);
+	return 0;
 }
