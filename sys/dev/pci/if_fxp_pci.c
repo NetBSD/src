@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.84 2019/01/23 05:50:34 msaitoh Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.85 2019/01/23 06:56:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.84 2019/01/23 05:50:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.85 2019/01/23 06:56:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,6 +302,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
 	bus_addr_t addr;
+	pcireg_t csr;
 	int flags;
 	int error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -350,6 +351,15 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	if (memh_valid) {
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
+		/*
+		 * Enable address decoding for memory range in case BIOS or
+		 * UEFI didn't set it.
+		 */
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_MEM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    csr);
 	} else if (ioh_valid) {
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
