@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.170 2018/12/08 14:57:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.171 2019/01/23 06:56:19 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3420,7 +3420,7 @@ static int
 ixgbe_allocate_pci_resources(struct adapter *adapter,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype;
+	pcireg_t	memtype, csr;
 	device_t dev = adapter->dev;
 	bus_addr_t addr;
 	int flags;
@@ -3445,6 +3445,15 @@ map_err:
 			aprint_error_dev(dev, "unable to map BAR0\n");
 			return ENXIO;
 		}
+		/*
+		 * Enable address decoding for memory range in case BIOS or
+		 * UEFI don't set it.
+		 */
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_MEM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    csr);
 		break;
 	default:
 		aprint_error_dev(dev, "unexpected type on BAR0\n");
