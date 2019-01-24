@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.94.12.1 2018/07/28 04:37:43 pgoyette Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.94.12.2 2019/01/24 03:27:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.12.1 2018/07/28 04:37:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.12.2 2019/01/24 03:27:24 pgoyette Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.12.1 2018/07/28 04:37:43 p
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/cprng.h>
+#include <sys/compat_stub.h>
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
@@ -334,11 +335,7 @@ ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Eh
 		goto out;
 
 #if (ELFSIZE == 32)
-	extern const char machine32[] __weak;
-	if (machine32 != NULL)
-		m = machine32;
-	else
-		m = machine;
+	MODULE_HOOK_CALL(netbsd32_machine32_hook, (), machine, m);
 #else
 	m = machine;
 #endif

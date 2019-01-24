@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.110.14.5 2019/01/22 07:42:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.110.14.6 2019/01/24 03:27:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110.14.5 2019/01/22 07:42:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110.14.6 2019/01/24 03:27:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1016,17 +1016,23 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
 	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }
 
-void    
-netbsd32_machdep_md_init(void)
+static const char *
+netbsd32_machine32(void)
 {
-                    
-	/* nothing to do */
-}               
- 
-void    
-netbsd32_machdep_md_fini(void)
-{
-        
-	/* nothing to do */
+
+	return machine32;
 }
 
+void 
+netbsd32_machdep_md_init(void) 
+{
+
+	MODULE_SET_HOOK(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
+}
+
+void
+netbsd32_machdep_md_fini(void)
+{
+
+	MODULE_UNSET_HOOK(netbsd32_machine32_hook);
+}
