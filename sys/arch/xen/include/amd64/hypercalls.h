@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.9 2019/01/24 04:11:38 cherry Exp $ */
+/* $NetBSD: hypercalls.h,v 1.10 2019/01/24 04:16:16 cherry Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -242,9 +242,14 @@ HYPERVISOR_update_va_mapping(
 }
 
 static inline int
-HYPERVISOR_event_channel_op(void *op)
+HYPERVISOR_event_channel_op(evtchn_op_t *op)
 {
+	KASSERT(op != NULL);
+#if __XEN_INTERFACE_VERSION__ < 0x00030202
 	return _hypercall1(int, event_channel_op, op);
+#else
+	return _hypercall2(int, event_channel_op, op->cmd, &op->u);
+#endif
 }
 
 static inline int
