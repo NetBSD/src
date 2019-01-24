@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.11 2019/01/23 02:48:48 kre Exp $	*/
+/*	$NetBSD: expandm.c,v 1.12 2019/01/24 22:07:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.11 2019/01/23 02:48:48 kre Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.12 2019/01/24 22:07:14 mrg Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -81,13 +81,6 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 				goto out;
 
 			tlen = nlen + blen;
-
-			/*
-			 * We can't exceed PTRDIFF_MAX because we would
-			 * not be able to address the pointers
-			 */
-			if (tlen >= PTRDIFF_MAX)
-				goto out;
 
 			nbuf = realloc(buf, tlen + 1);
 			if (nbuf == NULL)
