@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.129 2019/01/15 18:45:51 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.130 2019/01/24 14:12:40 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5679,4 +5679,15 @@ sys/arch/sparc/sparc/pmap.c			1.366
 
 	Fix deadlocks on machines with more than two cpus.
 	[mrg, ticket #1672]
+
+regress/sys/arch/m68k/060sp/Makefile		1.15
+
+	Replace manual realdepend dependency with DPSRCS.
+	[msaitoh, ticket #1674]
+
+sys/kern/kern_ntptime.c				1.60
+
+	Zero out the ntptimeval structure to prevent a 4 byte kernel stack
+	disclosure.
+	[maxv, ticket #1675]
 
