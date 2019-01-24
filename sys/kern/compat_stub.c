@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.40 2019/01/24 03:27:24 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.41 2019/01/24 04:08:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -247,8 +247,3 @@ struct compat_70_unp_hook_t compat_70_unp_hook;
  * Hook for sysvipc50_sysctl
  */
 struct sysvipc50_sysctl_hook_t sysvipc50_sysctl_hook;
-
-/* 
- * Hook for compat32_machine32
- */
-struct netbsd32_machine32_hook_t netbsd32_machine32_hook;
