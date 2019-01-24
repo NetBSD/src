@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2018/09/23 01:33:26 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2019/01/24 02:06:35 pgoyette Exp $
 
 .include "../Makefile.inc"
-
-.PATH:	${S}/compat/common
 
 KMOD=	compat_raid_50
 
