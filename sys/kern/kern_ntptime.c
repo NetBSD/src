@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.55 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.55.12.1 2019/01/24 14:13:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.55 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.55.12.1 2019/01/24 14:13:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -239,6 +239,7 @@ static void hardupdate(long offset);
 void
 ntp_gettime(struct ntptimeval *ntv)
 {
+	memset(ntv, 0, sizeof(*ntv));
 
 	mutex_spin_enter(&timecounter_lock);
 	nanotime(&ntv->time);
