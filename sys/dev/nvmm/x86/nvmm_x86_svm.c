@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.16 2019/01/20 16:55:21 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.17 2019/01/24 13:05:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.16 2019/01/20 16:55:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.17 2019/01/24 13:05:59 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,20 +726,6 @@ svm_inject_ud(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 }
 
 static void
-svm_inject_db(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
-{
-	struct nvmm_event event;
-	int ret __diagused;
-
-	event.type = NVMM_EVENT_EXCEPTION;
-	event.vector = 1;
-	event.u.error = 0;
-
-	ret = svm_vcpu_inject(mach, vcpu, &event);
-	KASSERT(ret == 0);
-}
-
-static void
 svm_inject_gp(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 {
 	struct nvmm_event event;
@@ -751,6 +737,18 @@ svm_inject_gp(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	ret = svm_vcpu_inject(mach, vcpu, &event);
 	KASSERT(ret == 0);
+}
+
+static inline void
+svm_inkernel_advance(struct vmcb *vmcb)
+{
+	/*
+	 * Maybe we should also apply single-stepping and debug exceptions.
+	 * Matters for guest-ring3, because it can execute 'cpuid' under a
+	 * debugger.
+	 */
+	vmcb->state.rip = vmcb->ctrl.nrip;
+	vmcb->ctrl.intr &= ~VMCB_CTRL_INTR_SHADOW;
 }
 
 static void
@@ -842,12 +840,7 @@ svm_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	/* Overwrite non-tunable leaves. */
 	svm_inkernel_handle_cpuid(vcpu, eax, ecx);
 
-	/* For now we omit DBREGS. */
-	if (__predict_false(cpudata->vmcb->state.rflags & PSL_T)) {
-		svm_inject_db(mach, vcpu);
-	}
-
-	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
+	svm_inkernel_advance(cpudata->vmcb);
 	exit->reason = NVMM_EXIT_NONE;
 }
 
@@ -856,9 +849,14 @@ svm_exit_hlt(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
 
-	exit->reason = NVMM_EXIT_HLT;
-	exit->u.hlt.npc = cpudata->vmcb->ctrl.nrip;
+	if (cpudata->int_window_exit && (vmcb->state.rflags & PSL_I)) {
+		svm_event_waitexit_disable(vcpu, false);
+	}
+
+	svm_inkernel_advance(cpudata->vmcb);
+	exit->reason = NVMM_EXIT_HALTED;
 }
 
 #define SVM_EXIT_IO_PORT	__BITS(31,16)
@@ -994,7 +992,7 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	return false;
 
 handled:
-	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
+	svm_inkernel_advance(cpudata->vmcb);
 	return true;
 }
 
@@ -1060,6 +1058,13 @@ svm_exit_npf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 }
 
 static void
+svm_exit_insn(struct vmcb *vmcb, struct nvmm_exit *exit, uint64_t reason)
+{
+	exit->u.insn.npc = vmcb->ctrl.nrip;
+	exit->reason = reason;
+}
+
+static void
 svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
@@ -1084,7 +1089,7 @@ svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	cpudata->gxcr0 = val;
 
-	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
+	svm_inkernel_advance(cpudata->vmcb);
 	return;
 
 error:
@@ -1269,13 +1274,13 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			exit->reason = NVMM_EXIT_NONE;
 			break;
 		case VMCB_EXITCODE_MONITOR:
-			exit->reason = NVMM_EXIT_MONITOR;
+			svm_exit_insn(vmcb, exit, NVMM_EXIT_MONITOR);
 			break;
 		case VMCB_EXITCODE_MWAIT:
-			exit->reason = NVMM_EXIT_MWAIT;
+			svm_exit_insn(vmcb, exit, NVMM_EXIT_MWAIT);
 			break;
 		case VMCB_EXITCODE_MWAIT_CONDITIONAL:
-			exit->reason = NVMM_EXIT_MWAIT_COND;
+			svm_exit_insn(vmcb, exit, NVMM_EXIT_MWAIT_COND);
 			break;
 		case VMCB_EXITCODE_XSETBV:
 			svm_exit_xsetbv(mach, vcpu, exit);
