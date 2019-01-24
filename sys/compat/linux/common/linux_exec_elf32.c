@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.94.12.4 2019/01/24 04:37:24 pgoyette Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.94.12.5 2019/01/24 04:41:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.12.4 2019/01/24 04:37:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.12.5 2019/01/24 04:41:34 pgoyette Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.12.4 2019/01/24 04:37:24 p
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
+#include <compat/netbsd32/netbsd32.h>
 
 #define LINUX_GO_RT0_SIGNATURE
 
