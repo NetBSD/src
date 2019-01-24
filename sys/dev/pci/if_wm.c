@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.617 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.618 2019/01/24 04:50:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.617 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.618 2019/01/24 04:50:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -160,7 +160,7 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
-#define	DPRINTF(x, y)	/* nothing */
+#define	DPRINTF(x, y)	do { } while (/*CONSTCOND*/false)
 #endif /* WM_DEBUG */
 
 #ifdef NET_MPSAFE
@@ -3975,10 +3975,9 @@ wm_get_cfg_done(struct wm_softc *sc)
 				break;
 			delay(1000);
 		}
-		if (i >= WM_PHY_CFG_TIMEOUT) {
+		if (i >= WM_PHY_CFG_TIMEOUT)
 			DPRINTF(WM_DEBUG_GMII, ("%s: %s failed\n",
 				device_xname(sc->sc_dev), __func__));
-		}
 		break;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -4091,11 +4090,10 @@ wm_write_smbus_addr(struct wm_softc *sc)
 			    HV_SMB_ADDR_FREQ_LOW);
 			phy_data |= __SHIFTIN((freq & 0x02) != 0,
 			    HV_SMB_ADDR_FREQ_HIGH);
-		} else {
+		} else
 			DPRINTF(WM_DEBUG_INIT,
 			    ("%s: %s Unsupported SMB frequency in PHY\n",
 				device_xname(sc->sc_dev), __func__));
-		}
 	}
 
 	return wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_SMB_ADDR,
@@ -8955,142 +8953,142 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 static void
 wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 {
+	uint32_t status, reg;
+	bool link;
 
 	KASSERT(WM_CORE_LOCKED(sc));
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
 		__func__));
 
-	if (icr & ICR_LSC) {
-		uint32_t status = CSR_READ(sc, WMREG_STATUS);
-		uint32_t reg;
-		bool link;
-
-		link = status & STATUS_LU;
-		if (link) {
-			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
-				device_xname(sc->sc_dev),
-				(status & STATUS_FD) ? "FDX" : "HDX"));
-		} else {
-			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
+	if ((icr & ICR_LSC) == 0) {
+		if (icr & ICR_RXSEQ)
+			DPRINTF(WM_DEBUG_LINK,
+			    ("%s: LINK Receive sequence error\n",
 				device_xname(sc->sc_dev)));
-		}
-		if ((sc->sc_type == WM_T_ICH8) && (link == false))
-			wm_gig_downshift_workaround_ich8lan(sc);
+		return;
+	}
 
-		if ((sc->sc_type == WM_T_ICH8)
-		    && (sc->sc_phytype == WMPHY_IGP_3)) {
-			wm_kmrn_lock_loss_workaround_ich8lan(sc);
-		}
-		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> mii_pollstat\n",
+	/* Link status changed */
+	status = CSR_READ(sc, WMREG_STATUS);
+	link = status & STATUS_LU;
+	if (link)
+		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
+			device_xname(sc->sc_dev),
+			(status & STATUS_FD) ? "FDX" : "HDX"));
+	else
+		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
 			device_xname(sc->sc_dev)));
-		mii_pollstat(&sc->sc_mii);
-		if (sc->sc_type == WM_T_82543) {
-			int miistatus, active;
+	if ((sc->sc_type == WM_T_ICH8) && (link == false))
+		wm_gig_downshift_workaround_ich8lan(sc);
 
-			/*
-			 * With 82543, we need to force speed and
-			 * duplex on the MAC equal to what the PHY
-			 * speed and duplex configuration is.
-			 */
-			miistatus = sc->sc_mii.mii_media_status;
-
-			if (miistatus & IFM_ACTIVE) {
-				active = sc->sc_mii.mii_media_active;
-				sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
-				switch (IFM_SUBTYPE(active)) {
-				case IFM_10_T:
-					sc->sc_ctrl |= CTRL_SPEED_10;
-					break;
-				case IFM_100_TX:
-					sc->sc_ctrl |= CTRL_SPEED_100;
-					break;
-				case IFM_1000_T:
-					sc->sc_ctrl |= CTRL_SPEED_1000;
-					break;
-				default:
-					/*
-					 * fiber?
-					 * Shoud not enter here.
-					 */
-					printf("unknown media (%x)\n", active);
-					break;
-				}
-				if (active & IFM_FDX)
-					sc->sc_ctrl |= CTRL_FD;
-				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-			}
-		} else if (sc->sc_type == WM_T_PCH) {
-			wm_k1_gig_workaround_hv(sc,
-			    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
-		}
+	if ((sc->sc_type == WM_T_ICH8)
+	    && (sc->sc_phytype == WMPHY_IGP_3)) {
+		wm_kmrn_lock_loss_workaround_ich8lan(sc);
+	}
+	DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> mii_pollstat\n",
+		device_xname(sc->sc_dev)));
+	mii_pollstat(&sc->sc_mii);
+	if (sc->sc_type == WM_T_82543) {
+		int miistatus, active;
 
 		/*
-		 * I217 Packet Loss issue:
-		 * ensure that FEXTNVM4 Beacon Duration is set correctly
-		 * on power up.
-		 * Set the Beacon Duration for I217 to 8 usec
+		 * With 82543, we need to force speed and
+		 * duplex on the MAC equal to what the PHY
+		 * speed and duplex configuration is.
 		 */
-		if (sc->sc_type >= WM_T_PCH_LPT) {
-			reg = CSR_READ(sc, WMREG_FEXTNVM4);
-			reg &= ~FEXTNVM4_BEACON_DURATION;
-			reg |= FEXTNVM4_BEACON_DURATION_8US;
-			CSR_WRITE(sc, WMREG_FEXTNVM4, reg);
+		miistatus = sc->sc_mii.mii_media_status;
+
+		if (miistatus & IFM_ACTIVE) {
+			active = sc->sc_mii.mii_media_active;
+			sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
+			switch (IFM_SUBTYPE(active)) {
+			case IFM_10_T:
+				sc->sc_ctrl |= CTRL_SPEED_10;
+				break;
+			case IFM_100_TX:
+				sc->sc_ctrl |= CTRL_SPEED_100;
+				break;
+			case IFM_1000_T:
+				sc->sc_ctrl |= CTRL_SPEED_1000;
+				break;
+			default:
+				/*
+				 * fiber?
+				 * Shoud not enter here.
+				 */
+				printf("unknown media (%x)\n", active);
+				break;
+			}
+			if (active & IFM_FDX)
+				sc->sc_ctrl |= CTRL_FD;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		}
-
-		/* Work-around I218 hang issue */
-		if ((sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM) ||
-		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V) ||
-		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM3) ||
-		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V3))
-			wm_k1_workaround_lpt_lp(sc, link);
-
-		if (sc->sc_type >= WM_T_PCH_LPT) {
-			/*
-			 * Set platform power management values for Latency
-			 * Tolerance Reporting (LTR)
-			 */
-			wm_platform_pm_pch_lpt(sc,
-			    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
-		}
-
-		/* Clear link partner's EEE ability */
-		sc->eee_lp_ability = 0;
-
-		/* FEXTNVM6 K1-off workaround */
-		if (sc->sc_type == WM_T_PCH_SPT) {
-			reg = CSR_READ(sc, WMREG_FEXTNVM6);
-			if (CSR_READ(sc, WMREG_PCIEANACFG)
-			    & FEXTNVM6_K1_OFF_ENABLE)
-				reg |= FEXTNVM6_K1_OFF_ENABLE;
-			else
-				reg &= ~FEXTNVM6_K1_OFF_ENABLE;
-			CSR_WRITE(sc, WMREG_FEXTNVM6, reg);
-		}
-
-		if (!link)
-			return;
-
-		switch (sc->sc_type) {
-		case WM_T_PCH2:
-			wm_k1_workaround_lv(sc);
-			/* FALLTHROUGH */
-		case WM_T_PCH:
-			if (sc->sc_phytype == WMPHY_82578)
-				wm_link_stall_workaround_hv(sc);
-			break;
-		default:
-			break;
-		}
-
-		/* Enable/Disable EEE after link up */
-		if (sc->sc_phytype > WMPHY_82579)
-			wm_set_eee_pchlan(sc);
-
-	} else if (icr & ICR_RXSEQ) {
-		DPRINTF(WM_DEBUG_LINK, ("%s: LINK Receive sequence error\n",
-			device_xname(sc->sc_dev)));
+	} else if (sc->sc_type == WM_T_PCH) {
+		wm_k1_gig_workaround_hv(sc,
+		    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
 	}
+
+	/*
+	 * I217 Packet Loss issue:
+	 * ensure that FEXTNVM4 Beacon Duration is set correctly
+	 * on power up.
+	 * Set the Beacon Duration for I217 to 8 usec
+	 */
+	if (sc->sc_type >= WM_T_PCH_LPT) {
+		reg = CSR_READ(sc, WMREG_FEXTNVM4);
+		reg &= ~FEXTNVM4_BEACON_DURATION;
+		reg |= FEXTNVM4_BEACON_DURATION_8US;
+		CSR_WRITE(sc, WMREG_FEXTNVM4, reg);
+	}
+
+	/* Work-around I218 hang issue */
+	if ((sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM) ||
+	    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V) ||
+	    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM3) ||
+	    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V3))
+		wm_k1_workaround_lpt_lp(sc, link);
+
+	if (sc->sc_type >= WM_T_PCH_LPT) {
+		/*
+		 * Set platform power management values for Latency
+		 * Tolerance Reporting (LTR)
+		 */
+		wm_platform_pm_pch_lpt(sc,
+		    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
+	}
+
+	/* Clear link partner's EEE ability */
+	sc->eee_lp_ability = 0;
+
+	/* FEXTNVM6 K1-off workaround */
+	if (sc->sc_type == WM_T_PCH_SPT) {
+		reg = CSR_READ(sc, WMREG_FEXTNVM6);
+		if (CSR_READ(sc, WMREG_PCIEANACFG) & FEXTNVM6_K1_OFF_ENABLE)
+			reg |= FEXTNVM6_K1_OFF_ENABLE;
+		else
+			reg &= ~FEXTNVM6_K1_OFF_ENABLE;
+		CSR_WRITE(sc, WMREG_FEXTNVM6, reg);
+	}
+
+	if (!link)
+		return;
+
+	switch (sc->sc_type) {
+	case WM_T_PCH2:
+		wm_k1_workaround_lv(sc);
+		/* FALLTHROUGH */
+	case WM_T_PCH:
+		if (sc->sc_phytype == WMPHY_82578)
+			wm_link_stall_workaround_hv(sc);
+		break;
+	default:
+		break;
+	}
+
+	/* Enable/Disable EEE after link up */
+	if (sc->sc_phytype > WMPHY_82579)
+		wm_set_eee_pchlan(sc);
 }
 
 /*
@@ -9143,10 +9141,9 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 		}
 		/* Update LED */
 		wm_tbi_serdes_set_linkled(sc);
-	} else if (icr & ICR_RXSEQ) {
+	} else if (icr & ICR_RXSEQ)
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: Receive sequence error\n",
 			device_xname(sc->sc_dev)));
-	}
 }
 
 /*
@@ -9219,10 +9216,9 @@ wm_linkintr_serdes(struct wm_softc *sc, uint32_t icr)
 		}
 		/* Update LED */
 		wm_tbi_serdes_set_linkled(sc);
-	} else {
+	} else
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: Receive sequence error\n",
 		    device_xname(sc->sc_dev)));
-	}
 }
 
 /*
@@ -9264,10 +9260,9 @@ wm_intr_legacy(void *arg)
 		icr = CSR_READ(sc, WMREG_ICR);
 		if ((icr & sc->sc_icr) == 0)
 			break;
-		if (handled == 0) {
+		if (handled == 0)
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: INTx: got intr\n",device_xname(sc->sc_dev)));
-		}
 		if (rndval == 0)
 			rndval = icr;
 
@@ -11888,14 +11883,13 @@ wm_check_for_link(struct wm_softc *sc)
 			__func__));
 		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
-	} else if (signal && ((rxcw & RXCW_C) != 0)) {
+	} else if (signal && ((rxcw & RXCW_C) != 0))
 		DPRINTF(WM_DEBUG_LINK, ("%s: %s: /C/",
 			device_xname(sc->sc_dev), __func__));
-	} else {
+	else
 		DPRINTF(WM_DEBUG_LINK, ("%s: %s: linkup %08x,%08x,%08x\n",
 			device_xname(sc->sc_dev), __func__, rxcw, ctrl,
 			status));
-	}
 
 	return 0;
 }
@@ -13275,12 +13269,11 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)) {
 		/* XXX PCH_SPT? */
 		wm_nvm_read(sc, csum_wordaddr, 1, &eeprom_data);
-		if ((eeprom_data & valid_checksum) == 0) {
+		if ((eeprom_data & valid_checksum) == 0)
 			DPRINTF(WM_DEBUG_NVM,
 			    ("%s: NVM need to be updated (%04x != %04x)\n",
 				device_xname(sc->sc_dev), eeprom_data,
 				    valid_checksum));
-		}
 	}
 
 	if ((wm_debug & WM_DEBUG_NVM) != 0) {
