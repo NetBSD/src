@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.130 2018/12/22 13:11:37 maxv Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.131 2019/01/24 09:33:03 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.130 2018/12/22 13:11:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.131 2019/01/24 09:33:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -442,6 +442,12 @@ sltioctl(struct tty *tp, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
+
+	/*
+	 * XXX
+	 * This function can be called without KERNEL_LOCK when caller's
+	 * struct cdevsw is set D_MPSAFE. Is KERNEL_LOCK required?
+	 */
 
 	switch (cmd) {
 	case SLIOCGUNIT:
