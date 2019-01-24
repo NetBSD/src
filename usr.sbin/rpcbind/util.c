@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.20 2015/11/08 16:36:28 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.20.8.1 2019/01/24 13:59:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -128,14 +128,14 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 	if (serv_nbp == NULL)
 		return NULL;
 
-	serv_sa = (struct sockaddr *)serv_nbp->buf;
+	serv_sa = serv_nbp->buf;
 	if (clnt_uaddr != NULL) {
 		clnt_nbp = uaddr2taddr(nconf, clnt_uaddr);
 		if (clnt_nbp == NULL) {
 			free(serv_nbp);
 			return NULL;
 		}
-		clnt_sa = (struct sockaddr *)clnt_nbp->buf;
+		clnt_sa = clnt_nbp->buf;
 		if (clnt_sa->sa_family == AF_LOCAL) {
 			free(serv_nbp);
 			free(clnt_nbp);
@@ -143,8 +143,12 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 			return strdup(serv_uaddr);
 		}
 	} else {
-		clnt_sa = (struct sockaddr *)
-		    malloc(sizeof (struct sockaddr_storage));
+		clnt_sa = malloc(clnt->sa_len);
+		if (clnt_sa == NULL) {
+			free(serv_nbp);
+			free(clnt_nbp);
+			return 0;
+		}
 		memcpy(clnt_sa, clnt, clnt->sa_len);
 	}
 
@@ -262,7 +266,6 @@ found:
 		break;				
 #ifdef INET6
 	case AF_INET6:
-		assert(newsin6);
 		memcpy(newsin6, ifsin6, clnt_sa->sa_len);
 		newsin6->sin6_port = servsin6->sin6_port;
 		tbuf.maxlen = sizeof (struct sockaddr_storage);
