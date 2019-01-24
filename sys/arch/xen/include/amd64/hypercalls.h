@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.8 2011/12/07 16:01:39 cegger Exp $ */
+/* $NetBSD: hypercalls.h,v 1.9 2019/01/24 04:11:38 cherry Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -361,11 +361,11 @@ HYPERVISOR_nmi_op(
 	return _hypercall2(int, nmi_op, op, arg);
 }
 
-static inline unsigned long
+static inline long
 HYPERVISOR_hvm_op(
     int op, void *arg)
 {
-    return _hypercall2(unsigned long, hvm_op, op, arg);
+    return _hypercall2(long, hvm_op, op, arg);
 }
 
 static inline int
