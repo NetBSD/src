@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.62 2017/10/25 08:12:38 maya Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.63 2019/01/24 09:33:03 knakahara Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.62 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.63 2019/01/24 09:33:03 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -376,6 +376,12 @@ irframetioctl(struct tty *tp, u_long cmd, void *data, int flag,
 	int d;
 
 	DPRINTF(("%s: tp=%p\n", __func__, tp));
+
+	/*
+	 * XXX
+	 * This function can be called without KERNEL_LOCK when caller's
+	 * struct cdevsw is set D_MPSAFE. Is KERNEL_LOCK required?
+	 */
 
 	if (sc == NULL || tp != sc->sc_tp)
 		return (EPASSTHROUGH);
