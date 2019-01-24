@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.2.2.7 2019/01/24 02:06:34 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.2.2.8 2019/01/24 02:09:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 
 #include <sys/compat_stub.h>
 
