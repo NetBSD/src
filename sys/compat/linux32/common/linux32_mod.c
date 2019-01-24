@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.11.2.4 2019/01/24 06:23:26 pgoyette Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.11.2.5 2019/01/24 06:48:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11.2.4 2019/01/24 06:23:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11.2.5 2019/01/24 06:48:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -51,11 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11.2.4 2019/01/24 06:23:26 pgoyett
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/common/linux32_exec.h>
 
-#define	REQ1	"exec_elf32,compat_netbsd32,compat_linux"
-#define	REQ2	",sysv_ipc,compat_netbsd32_sysvipc,compat_sysv_50"
-#define	REQ3	",compat_netbsd32_50,compat_netbsd32_43"
+#if defined(EXEC_ELF32)
+# define       MD1     ",exec_elf32,compat_netbsd32,compat_netbsd32_sysvipc"
+#else
+# define       MD1     ""
+#endif
 
-MODULE(MODULE_CLASS_EXEC, compat_linux32, REQ1 REQ2 REQ3);
+#define	REQ1	"compat_linux,sysv_ipc,compat_sysv_50"
+#define	REQ2	",compat_netbsd32_50,compat_netbsd32_43"
+
+MODULE(MODULE_CLASS_EXEC, compat_linux32, REQ1 REQ2 MD1);
 
 static struct execsw linux32_execsw[] = {
 #if defined(EXEC_ELF32)
