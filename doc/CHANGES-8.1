@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.93 2019/01/24 14:01:10 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.94 2019/01/24 15:36:05 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2272,4 +2272,10 @@ usr.sbin/rpcbind/util.c				1.23 (adapted)
 
 	Fix wrong size allocation that triggers a buffer overflow.
 	[christos, ticket #1167]
+
+sys/kern/kern_ntptime.c				1.60
+
+	Zero out the ntptimeval structure to prevent a 4 byte kernel
+	stack disclosure.
+	[maxv, ticket #1168]
 
