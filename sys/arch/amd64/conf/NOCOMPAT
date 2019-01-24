@@ -1,18 +1,19 @@
 include "arch/amd64/conf/GENERIC"
 
-#ident		"NOCOMPAT-$Revision: 1.1.2.8 $"
+#ident		"NOCOMPAT-$Revision: 1.1.2.9 $"
 
 no options 	SYSVMSG		# System V-like message queues
 no options 	SYSVSEM		# System V-like semaphores
 no options 	SYSVSHM		# System V-like memory sharing
- 
+
+no options	COMPAT_43
+no options	COMPAT_44
+no options	COMPAT_BSDPTY
+
 # We only to use ``no options COMPAT_15'' because only COMPAT_15 is
 # explicitly enabled.  (The others are pulled in by statements in
 # sys/conf/files)
 
-#no options	COMPAT_43
-#no options	COMPAT_44
-#no options	COMPAT_BSDPTY
 #no options	COMPAT_09
 #no options	COMPAT_10
 #no options	COMPAT_11
