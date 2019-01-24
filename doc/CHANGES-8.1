@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.92 2019/01/21 20:12:40 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.93 2019/01/24 14:01:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2267,4 +2267,9 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.74
 
 	Don't call xennet_softstart from hard interrupt; schedule softint.
 	[bouyer, ticket #1166]
+
+usr.sbin/rpcbind/util.c				1.23 (adapted)
+
+	Fix wrong size allocation that triggers a buffer overflow.
+	[christos, ticket #1167]
 
