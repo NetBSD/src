@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.54 2019/01/24 04:08:09 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.55 2019/01/25 09:36:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -308,4 +308,13 @@ MODULE_HOOK(compat_70_unp_hook, struct mbuf *,
 #include <sys/sysctl.h>
 MODULE_HOOK(sysvipc50_sysctl_hook, int, (SYSCTLFN_PROTO));
 
+/* 
+ * Hook for 32-bit machine name
+ * 
+ * This probably would be better placed in compat/netbsd32/netbsd32_mod.c
+ * but the consumer code in linux32_exec_elf32.c is sometimes included in
+ * the main kernel, and not in a compat_netbsd32 module.  (In particular,
+ * this is true for i386 and sgimips.)
+ */
+MODULE_HOOK(netbsd32_machine32_hook, const char *, (void));
 #endif	/* _SYS_COMPAT_STUB_H */

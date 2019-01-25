@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.18 2019/01/24 04:08:09 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.19 2019/01/25 09:36:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1176,8 +1176,6 @@ SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
 
 MODULE_HOOK(netbsd32_sendsig_hook, void,
     (const ksiginfo_t *, const sigset_t *));
-
-MODULE_HOOK(netbsd32_machine32_hook, const char *, (void));
 
 extern struct sysent netbsd32_sysent[];
 extern const uint32_t netbsd32_sysent_nomodbits[]; 
