@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.618 2019/01/24 04:50:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.619 2019/01/25 03:50:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.618 2019/01/24 04:50:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.619 2019/01/25 03:50:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -160,7 +160,7 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
-#define	DPRINTF(x, y)	do { } while (/*CONSTCOND*/false)
+#define	DPRINTF(x, y)	__nothing
 #endif /* WM_DEBUG */
 
 #ifdef NET_MPSAFE
