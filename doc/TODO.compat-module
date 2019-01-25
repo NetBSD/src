@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.25 2019/01/18 05:53:58 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.26 2019/01/25 22:56:54 pgoyette Exp $ */
 
 DONE
 ----
@@ -101,3 +101,8 @@ TODO - Not required for branch merge
     are included in every kernel via 'options COMPAT_UTILS' in file
     sys/conf/std
 
+21. The netbsd32_machine32_hook should be moved out of the main kernel
+    and into the compat_netbsd32 module.  Unfortunately there are some
+    machines which include the consumer of this hook but do not have a
+    compat_netbsd32 module (specifically, i386 and sgimips).  This
+    should be sorted out sometime soon, but does not block merging.
