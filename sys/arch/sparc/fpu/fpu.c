@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.27.46.5 2019/01/22 07:42:40 pgoyette Exp $ */
+/*	$NetBSD: fpu.c,v 1.27.46.6 2019/01/25 09:04:51 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27.46.5 2019/01/22 07:42:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27.46.6 2019/01/25 09:04:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -141,6 +141,7 @@ fpu_cleanup(
 	struct fpemu fe;
 	u_char *fpu_codes;
 	int code = 0;
+	int ret;
 	const struct emul *sunos_emul;
 
 	MODULE_CALL_HOOK(get_emul_sunos_hook, (&sunos_emul), enosys(), ret);
