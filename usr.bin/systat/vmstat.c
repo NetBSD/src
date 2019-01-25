@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.85 2019/01/25 15:31:11 christos Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.86 2019/01/25 15:34:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.85 2019/01/25 15:31:11 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.86 2019/01/25 15:34:22 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: vmstat.c,v 1.85 2019/01/25 15:31:11 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
-#include <curses.h>
 
 #include "systat.h"
 #include "extern.h"
