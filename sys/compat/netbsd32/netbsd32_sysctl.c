@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.38.2.5 2019/01/24 04:32:41 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.38.2.6 2019/01/25 10:13:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.38.2.5 2019/01/24 04:32:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.38.2.6 2019/01/25 10:13:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.38.2.5 2019/01/24 04:32:41 pgo
 #include <sys/sysctl.h>
 #include <sys/dirent.h>
 #include <sys/ktrace.h>
-#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -123,7 +122,7 @@ void
 netbsd32_sysctl_init(void)
 {
 	const struct sysctlnode *_root = &netbsd32_sysctl_root;
-	const char *m;
+	extern const char machine32[];
 
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
@@ -171,11 +170,10 @@ netbsd32_sysctl_init(void)
 		       CTLTYPE_INT, "alignbytes", NULL,
 		       NULL, ALIGNBYTES32, NULL, 0,
 		       CTL_HW, HW_ALIGNBYTES, CTL_EOL);
-	MODULE_CALL_HOOK(netbsd32_machine32_hook, (), machine, m);
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
-		       NULL, 0, __UNCONST(m), 0,
+		       NULL, 0, __UNCONST(&machine32), 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
