@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.41 2019/01/24 04:08:09 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.42 2019/01/25 09:36:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -247,3 +247,13 @@ struct compat_70_unp_hook_t compat_70_unp_hook;
  * Hook for sysvipc50_sysctl
  */
 struct sysvipc50_sysctl_hook_t sysvipc50_sysctl_hook;
+
+/*
+ * Hook for 32-bit machine name
+ *
+ * This probably would be better placed in compat/netbsd32/netbsd32_mod.c
+ * but the consumer code in linux32_exec_elf32.c is sometimes included in
+ * the main kernel, and not in a compat_netbsd32 module.  (In particular,
+ * this is true for i386 and sgimips.)
+ */
+struct netbsd32_machine32_hook_t netbsd32_machine32_hook;

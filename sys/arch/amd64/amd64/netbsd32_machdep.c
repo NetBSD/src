@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.18 2019/01/24 04:08:09 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.19 2019/01/25 09:36:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.18 2019/01/24 04:08:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.19 2019/01/25 09:36:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.18 2019/01/24 04:08:09 
 #include <sys/ras.h>
 #include <sys/ptrace.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 
 #include <x86/fpu.h>
 #include <x86/dbregs.h>
@@ -968,8 +969,6 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
 	else
 		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, sz);
 }
-
-extern struct netbsd32_machine32_hook_t netbsd32_machine32_hook;
 
 static const char *
 netbsd32_machine32(void)
