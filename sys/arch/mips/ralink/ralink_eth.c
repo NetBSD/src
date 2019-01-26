@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.13.12.1 2018/07/28 04:37:37 pgoyette Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.13.12.2 2019/01/26 22:00:04 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.13.12.1 2018/07/28 04:37:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.13.12.2 2019/01/26 22:00:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -251,8 +251,8 @@ static void ralink_eth_mdio_enable(ralink_eth_softc_t *, bool);
 #endif
 static void ralink_eth_mii_statchg(struct ifnet *);
 static void ralink_eth_mii_tick(void *);
-static int  ralink_eth_mii_read(device_t, int, int);
-static void ralink_eth_mii_write(device_t, int, int, int);
+static int  ralink_eth_mii_read(device_t, int, int, uint16_t *);
+static int  ralink_eth_mii_write(device_t, int, int, uint16_t);
 
 CFATTACH_DECL_NEW(reth, sizeof(struct ralink_eth_softc),
     ralink_eth_match, ralink_eth_attach, ralink_eth_detach,
@@ -1688,7 +1688,7 @@ ralink_eth_mii_tick(void *arg)
  * ralink_eth_mii_read
  */
 static int
-ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
+ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg, uint16_t *val)
 {
 	ralink_eth_softc_t *sc = device_private(self);
 	KASSERT(sc != NULL);
@@ -1697,7 +1697,7 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 #endif
 #if defined(RT3050) || defined(RT3052) || defined(MT7628)
 	if (phy_addr > 5)
-		return 0;
+		return -1;
 #endif
 
 	/* We enable mdio gpio purpose register, and disable it when exit. */
@@ -1736,17 +1736,17 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 	for (;;) {
 #if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_RD_DONE) != 0) {
-			int data = PCTL1_RD_VAL(
+			*val = PCTL1_RD_VAL(
 			    sw_read(sc, RA_ETH_SW_PCTL1));
 			ralink_eth_mdio_enable(sc, false);
-			return data;
+			return 0;
 		}
 #else
 		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0) {
-			int data = MDIO_ACCESS_DATA(
+			*val = MDIO_ACCESS_DATA(
 			    fe_read(sc, RA_FE_MDIO_ACCESS));
 			ralink_eth_mdio_enable(sc, false);
-			return data;
+			return 0;
 		}
 #endif
 	}
@@ -1755,8 +1755,8 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 /*
  * ralink_eth_mii_write
  */
-static void
-ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
+static int
+ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, uint16_t val)
 {
 	ralink_eth_softc_t *sc = device_private(self);
 	KASSERT(sc != NULL);
@@ -1800,12 +1800,12 @@ ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
 #if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_WR_DONE) != 0) {
 			ralink_eth_mdio_enable(sc, false);
-			return;
+			return 0;
 		}
 #else
 		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0){
 			ralink_eth_mdio_enable(sc, false);
-			return;
+			return 0;
 		}
 #endif
 	}

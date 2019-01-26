@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.59 2017/01/11 12:19:43 joerg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.59.12.1 2019/01/26 21:59:58 pgoyette Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -169,7 +169,7 @@ ${KMOD}_tramp.S: ${KMOD}_tmp.o ${ARCHDIR}/kmodtramp.awk ${ASM_H}
 	${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
 		 ${TOOL_AWK} -f ${ARCHDIR}/kmodtramp.awk \
 		 > tmp.S && \
-	mv tmp.S ${.TARGET}
+	${MV} tmp.S ${.TARGET}
 
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${_MKTARGET_LINK}

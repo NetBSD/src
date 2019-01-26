@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.99.2.1 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.99.2.2 2019/01/26 22:00:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99.2.1 2018/09/06 06:56:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99.2.2 2019/01/26 22:00:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -704,7 +704,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 		}
 
 		/*
-		 * XXX Even with the short timeout, this will tsleep,
+		 * XXX Even with the short timeout, this will sleep,
 		 * but it should be adequately prompt in practice.
 		 */
 		n = nreq;
@@ -748,7 +748,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 
 		case USBD_INTERRUPTED:
 			/*
-			 * The tsleep in usbd_bulk_transfer was
+			 * The sleep in usbd_bulk_transfer was
 			 * interrupted.  Reflect it to the caller so
 			 * that reading can be interrupted.
 			 */

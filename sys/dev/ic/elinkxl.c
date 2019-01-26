@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.121.12.3 2018/09/06 06:55:49 pgoyette Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.121.12.4 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.12.3 2018/09/06 06:55:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.12.4 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ static bool ex_shutdown(device_t, int);
 static void ex_start(struct ifnet *);
 static void ex_txstat(struct ex_softc *);
 
-int ex_mii_readreg(device_t, int, int);
-void ex_mii_writereg(device_t, int, int, int);
+int ex_mii_readreg(device_t, int, int, uint16_t *);
+int ex_mii_writereg(device_t, int, int, uint16_t);
 void ex_mii_statchg(struct ifnet *);
 
 void ex_probemedia(struct ex_softc *);
@@ -1892,33 +1892,36 @@ ex_mii_bitbang_write(device_t self, uint32_t val)
 }
 
 int
-ex_mii_readreg(device_t v, int phy, int reg)
+ex_mii_readreg(device_t v, int phy, int reg, uint16_t *val)
 {
 	struct ex_softc *sc = device_private(v);
-	int val;
+	int rv;
 
 	if ((sc->ex_conf & EX_CONF_INTPHY) && phy != ELINK_INTPHY_ID)
-		return 0;
+		return -1;
 
 	GO_WINDOW(4);
 
-	val = mii_bitbang_readreg(v, &ex_mii_bitbang_ops, phy, reg);
+	rv = mii_bitbang_readreg(v, &ex_mii_bitbang_ops, phy, reg, val);
 
 	GO_WINDOW(1);
 
-	return (val);
+	return rv;
 }
 
-void
-ex_mii_writereg(device_t v, int phy, int reg, int data)
+int
+ex_mii_writereg(device_t v, int phy, int reg, uint16_t val)
 {
 	struct ex_softc *sc = device_private(v);
+	int rv;
 
 	GO_WINDOW(4);
 
-	mii_bitbang_writereg(v, &ex_mii_bitbang_ops, phy, reg, data);
+	rv = mii_bitbang_writereg(v, &ex_mii_bitbang_ops, phy, reg, val);
 
 	GO_WINDOW(1);
+
+	return rv;
 }
 
 void

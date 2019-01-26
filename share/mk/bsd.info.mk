@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.41 2015/12/18 18:57:56 christos Exp $
+#	$NetBSD: bsd.info.mk,v 1.41.14.1 2019/01/26 21:59:58 pgoyette Exp $
 
 .include <bsd.init.mk>
 
@@ -48,7 +48,7 @@ __infoinstall: .USE
 	${TOOL_INSTALL_INFO} -d ${INFODIRFILE} -r ${.TARGET} 2> /dev/null; \
 	${TOOL_INSTALL_INFO} -d ${INFODIRFILE} ${.TARGET};		\
 	${TOOL_SORTINFO} < ${INFODIRFILE} > ${INFODIRFILE}.tmp;		\
-	mv -f ${INFODIRFILE}.tmp ${INFODIRFILE};			\
+	${MV} ${INFODIRFILE}.tmp ${INFODIRFILE};			\
 	rm -f ${INFODIRFILE}.lock
 
 

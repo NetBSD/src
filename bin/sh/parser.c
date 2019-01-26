@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.145.2.6 2019/01/18 08:48:24 pgoyette Exp $	*/
+/*	$NetBSD: parser.c,v 1.145.2.7 2019/01/26 21:58:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.145.2.6 2019/01/18 08:48:24 pgoyette Exp $");
+__RCSID("$NetBSD: parser.c,v 1.145.2.7 2019/01/26 21:58:12 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,9 @@ __RCSID("$NetBSD: parser.c,v 1.145.2.6 2019/01/18 08:48:24 pgoyette Exp $");
 #include "show.h"
 #ifndef SMALL
 #include "myhistedit.h"
+#endif
+#ifdef DEBUG
+#include "nodenames.h"
 #endif
 
 /*
@@ -1063,7 +1066,7 @@ readtoken(void)
  *  have parseword (readtoken1?) handle both words and redirection.]
  */
 
-#define RETURN(token)	return lasttoken = token
+#define RETURN(token)	return lasttoken = (token)
 
 STATIC int
 xxreadtoken(void)
@@ -1072,6 +1075,9 @@ xxreadtoken(void)
 
 	if (tokpushback) {
 		tokpushback = 0;
+		CTRACE(DBG_LEXER,
+		    ("xxreadtoken() returns %s (%d) again\n",
+			tokname[lasttoken], lasttoken));
 		return lasttoken;
 	}
 	if (needprompt) {
@@ -1082,64 +1088,92 @@ xxreadtoken(void)
 	startlinno = plinno;
 	for (;;) {	/* until token or start of word found */
 		c = pgetc_macro();
+		CTRACE(DBG_LEXER, ("xxreadtoken() sees '%c' (%#.2x) ",
+		    c&0xFF, c&0x1FF));
 		switch (c) {
 		case ' ': case '\t': case PFAKE:
+			CTRACE(DBG_LEXER, (" ignored\n"));
 			continue;
 		case '#':
 			while ((c = pgetc()) != '\n' && c != PEOF)
 				continue;
+			CTRACE(DBG_LEXER,
+			    ("skipped comment to (not incl) \\n\n"));
 			pungetc();
 			continue;
 
 		case '\n':
 			plinno++;
+			CTRACE(DBG_LEXER, ("newline now @%d\n", plinno));
 			needprompt = doprompt;
 			RETURN(TNL);
 		case PEOF:
+			CTRACE(DBG_LEXER, ("EOF -> TEOF (return)\n"));
 			RETURN(TEOF);
 
 		case '&':
-			if (pgetc_linecont() == '&')
+			if (pgetc_linecont() == '&') {
+				CTRACE(DBG_LEXER,
+				    ("and another  -> TAND (return)\n"));
 				RETURN(TAND);
+			}
 			pungetc();
+			CTRACE(DBG_LEXER, (" -> TBACKGND (return)\n"));
 			RETURN(TBACKGND);
 		case '|':
-			if (pgetc_linecont() == '|')
+			if (pgetc_linecont() == '|') {
+				CTRACE(DBG_LEXER,
+				    ("and another  -> TOR (return)\n"));
 				RETURN(TOR);
+			}
 			pungetc();
+			CTRACE(DBG_LEXER, (" -> TPIPE (return)\n"));
 			RETURN(TPIPE);
 		case ';':
 			switch (pgetc_linecont()) {
 			case ';':
+				CTRACE(DBG_LEXER,
+				    ("and another -> TENDCASE (return)\n"));
 				RETURN(TENDCASE);
 			case '&':
+				CTRACE(DBG_LEXER,
+				    ("and '&' -> TCASEFALL (return)\n"));
 				RETURN(TCASEFALL);
 			default:
 				pungetc();
+				CTRACE(DBG_LEXER, (" -> TSEMI (return)\n"));
 				RETURN(TSEMI);
 			}
 		case '(':
+			CTRACE(DBG_LEXER, (" -> TLP (return)\n"));
 			RETURN(TLP);
 		case ')':
+			CTRACE(DBG_LEXER, (" -> TRP (return)\n"));
 			RETURN(TRP);
 
 		case '\\':
 			switch (pgetc()) {
 			case '\n':
 				startlinno = ++plinno;
+				CTRACE(DBG_LEXER, ("\\\n ignored, now @%d\n",
+				    plinno));
 				if (doprompt)
 					setprompt(2);
 				else
 					setprompt(0);
 				continue;
 			case PEOF:
+				CTRACE(DBG_LEXER,
+				  ("then EOF -> TEOF (return) '\\' dropped\n"));
 				RETURN(TEOF);
 			default:
+				CTRACE(DBG_LEXER, ("not \\\n or EOF: "));
 				pungetc();
 				break;
 			}
 			/* FALLTHROUGH */
 		default:
+			CTRACE(DBG_LEXER, ("getting a word\n"));
 			return readtoken1(c, BASESYNTAX, 0);
 		}
 	}
@@ -1206,6 +1240,7 @@ struct tokenstate {
 	unsigned short ts_varnest;	/* 64000 levels should be enough! */
 	unsigned short ts_arinest;
 	unsigned short ts_quoted;	/* 1 -> single, 2 -> double */
+	unsigned short ts_magicq;	/* heredoc or word expand */
 };
 
 #define	NQ	0x00	/* Unquoted */
@@ -1266,6 +1301,7 @@ bump_state_level(VSS *stack)
 	ts->ts_varnest = os->ts_varnest;
 	ts->ts_arinest = os->ts_arinest;	/* when appropriate	   */
 	ts->ts_syntax  = os->ts_syntax;		/*    they will be altered */
+	ts->ts_magicq  = os->ts_magicq;
 
 	return stack;
 }
@@ -1324,6 +1360,7 @@ cleanup_state_stack(VSS *stack)
 #define	varnest		(currentstate(stack)->ts_varnest)
 #define	arinest		(currentstate(stack)->ts_arinest)
 #define	quoted		(currentstate(stack)->ts_quoted)
+#define	magicq		(currentstate(stack)->ts_magicq)
 #define	TS_PUSH()	(stack = bump_state_level(stack))
 #define	TS_POP()	(stack = drop_state_level(stack))
 
@@ -1337,7 +1374,7 @@ cleanup_state_stack(VSS *stack)
  */
 static char *
 parsebackq(VSS *const stack, char * const in,
-    struct nodelist **const pbqlist, const int oldstyle, const int magicq)
+    struct nodelist **const pbqlist, const int oldstyle)
 {
 	struct nodelist **nlpp;
 	const int savepbq = parsebackquote;
@@ -1359,6 +1396,8 @@ parsebackq(VSS *const stack, char * const in,
 		cleanup_state_stack(stack);
 		parsebackquote = 0;
 		handler = savehandler;
+		CTRACE(DBG_LEXER, ("parsebackq() err (%d), unwinding\n",
+		    exception));
 		longjmp(handler->loc, 1);
 	}
 	INTOFF;
@@ -1380,7 +1419,8 @@ parsebackq(VSS *const stack, char * const in,
 		char *pstr;
 		int line1 = plinno;
 
-		VTRACE(DBG_PARSE, ("parsebackq: repackaging `` as $( )"));
+		VTRACE(DBG_PARSE|DBG_LEXER,
+		    ("parsebackq: repackaging `` as $( )"));
 		/*
 		 * Because the entire `...` is read here, we don't
 		 * need to bother the state stack.  That will be used
@@ -1388,7 +1428,7 @@ parsebackq(VSS *const stack, char * const in,
 		 */
 		STARTSTACKSTR(out);
 #ifdef DEBUG
-		for (psavelen = 0;;psavelen++) {
+		for (psavelen = 0;;psavelen++) {	/* } */
 #else
 		for (;;) {
 #endif
@@ -1397,44 +1437,58 @@ parsebackq(VSS *const stack, char * const in,
 				needprompt = 0;
 			}
 			pc = pgetc();
+			VTRACE(DBG_LEXER,
+			    ("parsebackq() got '%c'(%#.2x) in `` %s", pc&0xFF,
+				pc&0x1FF, pc == '`' ? "terminator\n" : ""));
 			if (pc == '`')
 				break;
 			switch (pc) {
 			case '\\':
 				pc = pgetc();
+				VTRACE(DBG_LEXER, ("then '%c'(%#.2x) ",
+				    pc&0xFF, pc&0x1FF));
 #ifdef DEBUG
 				psavelen++;
 #endif
 				if (pc == '\n') {   /* keep \ \n for later */
 					plinno++;
+					VTRACE(DBG_LEXER, ("@%d ", plinno));
 					needprompt = doprompt;
 				}
 				if (pc != '\\' && pc != '`' && pc != '$'
-				    && (!ISDBLQUOTE() || pc != '"'))
+				    && (!ISDBLQUOTE() || pc != '"')) {
+					VTRACE(DBG_LEXER, ("keep '\\' "));
 					STPUTC('\\', out);
+				}
 				break;
 
 			case '\n':
 				plinno++;
+				VTRACE(DBG_LEXER, ("@%d ", plinno));
 				needprompt = doprompt;
 				break;
 
 			case PEOF:
 			        startlinno = line1;
+				VTRACE(DBG_LEXER, ("EOF\n", plinno));
 				synerror("EOF in backquote substitution");
  				break;
 
 			default:
 				break;
 			}
+			VTRACE(DBG_LEXER, (".\n", plinno));
 			STPUTC(pc, out);
 		}
 		STPUTC('\0', out);
-		VTRACE(DBG_PARSE, (" read %d", psavelen));
+		VTRACE(DBG_LEXER, ("parsebackq() ``:"));
+		VTRACE(DBG_PARSE|DBG_LEXER, (" read %d", psavelen));
 		psavelen = out - stackblock();
-		VTRACE(DBG_PARSE, (" produced %d\n", psavelen));
+		VTRACE(DBG_PARSE|DBG_LEXER, (" produced %d\n", psavelen));
 		if (psavelen > 0) {
 			pstr = grabstackstr(out);
+			CTRACE(DBG_LEXER, 
+			    ("parsebackq() reprocessing as $(%s)\n", pstr));
 			setinputstring(pstr, 1, line1);
 		}
 	}
@@ -1452,7 +1506,10 @@ parsebackq(VSS *const stack, char * const in,
 		saveprompt = 0;
 
 	lno = -plinno;
+	CTRACE(DBG_LEXER, ("parsebackq() parsing embedded command list\n"));
 	n = list(0);
+	CTRACE(DBG_LEXER, ("parsebackq() parsed $() (%d -> %d)\n", -lno,
+	    lno + plinno));
 	lno += plinno;
 
 	if (oldstyle) {
@@ -1468,6 +1525,7 @@ parsebackq(VSS *const stack, char * const in,
 		 * Start reading from old file again, ignoring any pushed back
 		 * tokens left from the backquote parsing
 		 */
+		CTRACE(DBG_LEXER, ("parsebackq() back to previous input\n"));
 		popfile();
 		tokpushback = 0;
 	}
@@ -1514,10 +1572,12 @@ parseredir(const char *out,  int c)
 	fd = (*out == '\0') ? -1 : number(out);
 
 	np = stalloc(sizeof(struct nfile));
+	VTRACE(DBG_LEXER, ("parseredir after '%s%c' ", out, c));
 	if (c == '>') {
 		if (fd < 0)
 			fd = 1;
 		c = pgetc_linecont();
+		VTRACE(DBG_LEXER, ("is '%c'(%#.2x) ", c&0xFF, c&0x1FF));
 		if (c == '>')
 			np->type = NAPPEND;
 		else if (c == '|')
@@ -1526,22 +1586,27 @@ parseredir(const char *out,  int c)
 			np->type = NTOFD;
 		else {
 			np->type = NTO;
+			VTRACE(DBG_LEXER, ("unwanted ", c));
 			pungetc();
 		}
 	} else {	/* c == '<' */
 		if (fd < 0)
 			fd = 0;
-		switch (c = pgetc_linecont()) {
+		c = pgetc_linecont();
+		VTRACE(DBG_LEXER, ("is '%c'(%#.2x) ", c&0xFF, c&0x1FF));
+		switch (c) {
 		case '<':
-			if (sizeof (struct nfile) != sizeof (struct nhere)) {
+			/* if sizes differ, just discard the old one */
+			if (sizeof (struct nfile) != sizeof (struct nhere))
 				np = stalloc(sizeof(struct nhere));
-				np->nfile.fd = 0;
-			}
 			np->type = NHERE;
+			np->nhere.fd = 0;
 			heredoc = stalloc(sizeof(struct HereDoc));
 			heredoc->here = np;
 			heredoc->startline = plinno;
 			if ((c = pgetc_linecont()) == '-') {
+				CTRACE(DBG_LEXER, ("and '%c'(%#.2x) ",
+				    c & 0xFF, c & 0x1FF));
 				heredoc->striptabs = 1;
 			} else {
 				heredoc->striptabs = 0;
@@ -1559,11 +1624,15 @@ parseredir(const char *out,  int c)
 
 		default:
 			np->type = NFROM;
+			VTRACE(DBG_LEXER, ("unwanted('%c'0#.2x)", c&0xFF,
+			    c&0x1FF));
 			pungetc();
 			break;
 		}
 	}
 	np->nfile.fd = fd;
+
+	VTRACE(DBG_LEXER, (" ->%"PRIdsNT" fd=%d\n", NODETYPENAME(np->type),fd));
 
 	redirnode = np;		/* this is the "value" of TRENODE */
 }
@@ -1579,12 +1648,14 @@ readcstyleesc(char *out)
 	unsigned int v;
 
 	c = pgetc();
+	VTRACE(DBG_LEXER, ("CSTR(\\%c)(\\%#x)", c&0xFF, c&0x1FF));
 	switch (c) {
 	case '\0':
 	case PEOF:
 		synerror("Unterminated quoted string");
 	case '\n':
 		plinno++;
+		VTRACE(DBG_LEXER, ("@%d ", plinno));
 		if (doprompt)
 			setprompt(2);
 		else
@@ -1689,6 +1760,7 @@ readcstyleesc(char *out)
 		synerror("Unknown $'' escape sequence");
 	}
 	vc = (char)v;
+	VTRACE(DBG_LEXER, ("->%u(%#x)['%c']", v, v, vc&0xFF));
 
 	/*
 	 * If we managed to create a \n from a \ sequence (no matter how)
@@ -1697,6 +1769,7 @@ readcstyleesc(char *out)
 	 * causes LINENO increments.
 	 */
 	if (vc == '\n') {
+		VTRACE(DBG_LEXER, ("CTLCNL."));
 		USTPUTC(CTLCNL, out);
 		return out;
 	}
@@ -1706,6 +1779,7 @@ readcstyleesc(char *out)
 	 * POSIX says we should skip till the closing quote.
 	 */
 	if (vc == '\0') {
+		CTRACE(DBG_LEXER, ("\\0: skip to '", v, v, vc&0xFF));
 		while ((c = pgetc()) != '\'') {
 			if (c == '\\')
 				c = pgetc();
@@ -1722,6 +1796,8 @@ readcstyleesc(char *out)
 		pungetc();
 		return out;
 	}
+	CVTRACE(DBG_LEXER, NEEDESC(vc), ("CTLESC-"));
+	VTRACE(DBG_LEXER, ("'%c'(%#.2x)", vc&0xFF, vc&0x1FF));
 	if (NEEDESC(vc))
 		USTPUTC(CTLESC, out);
 	USTPUTC(vc, out);
@@ -1744,7 +1820,7 @@ readcstyleesc(char *out)
  * That will also need fixing, someday...
  */
 STATIC int
-readtoken1(int firstc, char const *syn, int magicq)
+readtoken1(int firstc, char const *syn, int oneword)
 {
 	int c;
 	char * out;
@@ -1759,6 +1835,14 @@ readtoken1(int firstc, char const *syn, int magicq)
 
 	syntax = syn;
 
+#ifdef DEBUG
+#define SYNTAX      (	syntax == BASESYNTAX ? "BASE"	:		\
+			syntax == DQSYNTAX   ? "DQ"	:		\
+			syntax == SQSYNTAX   ? "SQ"	:		\
+			syntax == ARISYNTAX  ? "ARI"	:		\
+					"???"			)
+#endif
+
 	startlinno = plinno;
 	varnest = 0;
 	quoted = 0;
@@ -1769,6 +1853,11 @@ readtoken1(int firstc, char const *syn, int magicq)
 	arinest = 0;
 	parenlevel = 0;
 	elided_nl = 0;
+	magicq = oneword;
+
+	CTRACE(DBG_LEXER, ("readtoken1(%c) syntax=%s %s%s(quoted=%x)\n",
+	    firstc&0xFF, SYNTAX, magicq ? "magic quotes" : "",
+	    ISDBLQUOTE()?" ISDBLQUOTE":"", quoted));
 
 	STARTSTACKSTR(out);
 
@@ -1778,14 +1867,18 @@ readtoken1(int firstc, char const *syn, int magicq)
 		CHECKSTRSPACE(6, out);	/* permit 6 calls to USTPUTC */
 		switch (syntax[c]) {
 		case CFAKE:
+			VTRACE(DBG_LEXER, ("CFAKE"));
 			if (syntax == BASESYNTAX && varnest == 0)
 				break;
+			VTRACE(DBG_LEXER, (","));
 			continue;
 		case CNL:	/* '\n' */
+			VTRACE(DBG_LEXER, ("CNL"));
 			if (syntax == BASESYNTAX && varnest == 0)
 				break;	/* exit loop */
 			USTPUTC(c, out);
 			plinno++;
+			VTRACE(DBG_LEXER, ("@%d,", plinno));
 			if (doprompt)
 				setprompt(2);
 			else
@@ -1797,20 +1890,27 @@ readtoken1(int firstc, char const *syn, int magicq)
 				out = readcstyleesc(out);
 				continue;
 			}
+			VTRACE(DBG_LEXER, ("ESC:"));
 			USTPUTC(CTLESC, out);
 			/* FALLTHROUGH */
 		case CWORD:
+			VTRACE(DBG_LEXER, ("'%c'", c));
 			USTPUTC(c, out);
 			continue;
 
 		case CCTL:
+			CVTRACE(DBG_LEXER, !magicq || ISDBLQUOTE(),
+			    ("%s%sESC:",!magicq?"!m":"",ISDBLQUOTE()?"DQ":""));
 			if (!magicq || ISDBLQUOTE())
 				USTPUTC(CTLESC, out);
+			VTRACE(DBG_LEXER, ("'%c'", c));
 			USTPUTC(c, out);
 			continue;
 		case CBACK:	/* backslash */
 			c = pgetc();
+			VTRACE(DBG_LEXER, ("\\'%c'(%#.2x)", c&0xFF, c&0x1FF));
 			if (c == PEOF) {
+				VTRACE(DBG_LEXER, ("EOF, keep \\ "));
 				USTPUTC('\\', out);
 				pungetc();
 				continue;
@@ -1818,14 +1918,17 @@ readtoken1(int firstc, char const *syn, int magicq)
 			if (c == '\n') {
 				plinno++;
 				elided_nl++;
+				VTRACE(DBG_LEXER, ("eli \\n (%d) @%d ",
+				    elided_nl, plinno));
 				if (doprompt)
 					setprompt(2);
 				else
 					setprompt(0);
 				continue;
 			}
+			CVTRACE(DBG_LEXER, quotef==0, (" QF=1 "));
 			quotef = 1;	/* current token is quoted */
-			if (ISDBLQUOTE() && c != '\\' && c != '`' &&
+			if (quoted && c != '\\' && c != '`' &&
 			    c != '$' && (c != '"' || magicq)) {
 				/*
 				 * retain the \ (which we *know* needs CTLESC)
@@ -1834,9 +1937,13 @@ readtoken1(int firstc, char const *syn, int magicq)
 				 * Otherwise the \ has done its work, and
 				 * is dropped.
 				 */
+				VTRACE(DBG_LEXER, ("ESC:'\\'"));
 				USTPUTC(CTLESC, out);
 				USTPUTC('\\', out);
 			}
+			CVTRACE(DBG_LEXER, NEEDESC(c) || !magicq,
+			    ("%sESC:", NEEDESC(c) ? "+" : "m"));
+			VTRACE(DBG_LEXER, ("'%c'(%#.2x)", c&0xFF, c&0x1FF));
 			if (NEEDESC(c))
 				USTPUTC(CTLESC, out);
 			else if (!magicq) {
@@ -1848,36 +1955,51 @@ readtoken1(int firstc, char const *syn, int magicq)
 			continue;
 		case CSQUOTE:
 			if (syntax != SQSYNTAX) {
+				CVTRACE(DBG_LEXER, !magicq, (" CQM "));
 				if (!magicq)
 					USTPUTC(CTLQUOTEMARK, out);
+				CVTRACE(DBG_LEXER, quotef==0, (" QF=1 "));
 				quotef = 1;
 				TS_PUSH();
 				syntax = SQSYNTAX;
 				quoted = SQ;
+				VTRACE(DBG_LEXER, (" TS_PUSH(SQ)"));
 				continue;
 			}
 			if (magicq && arinest == 0 && varnest == 0) {
 				/* Ignore inside quoted here document */
+				VTRACE(DBG_LEXER, ("<<'>>"));
 				USTPUTC(c, out);
 				continue;
 			}
 			/* End of single quotes... */
 			TS_POP();
+			VTRACE(DBG_LEXER, ("SQ TS_POP->%s ", SYNTAX));
+			CVTRACE(DBG_LEXER, syntax == BASESYNTAX, (" CQE "));
 			if (syntax == BASESYNTAX)
 				USTPUTC(CTLQUOTEEND, out);
 			continue;
 		case CDQUOTE:
-			if (magicq && arinest == 0 && varnest == 0) {
+			if (magicq && arinest == 0 /* && varnest == 0 */) {
+				VTRACE(DBG_LEXER, ("<<\">>"));
 				/* Ignore inside here document */
 				USTPUTC(c, out);
 				continue;
 			}
+			CVTRACE(DBG_LEXER, quotef==0, (" QF=1 "));
 			quotef = 1;
 			if (arinest) {
 				if (ISDBLQUOTE()) {
+					VTRACE(DBG_LEXER,
+					    (" CQE ari(%d", arinest));
 					USTPUTC(CTLQUOTEEND, out);
 					TS_POP();
+					VTRACE(DBG_LEXER, ("%d)TS_POP->%s ",
+					    arinest, SYNTAX));
 				} else {
+					VTRACE(DBG_LEXER,
+					  (" ari(%d) %s TS_PUSH->DQ CQM ",
+					   arinest, SYNTAX));
 					TS_PUSH();
 					syntax = DQSYNTAX;
 					SETDBLQUOTE();
@@ -1885,12 +2007,17 @@ readtoken1(int firstc, char const *syn, int magicq)
 				}
 				continue;
 			}
+			CVTRACE(DBG_LEXER, magicq, (" MQignDQ "));
 			if (magicq)
 				continue;
 			if (ISDBLQUOTE()) {
 				TS_POP();
+				VTRACE(DBG_LEXER,
+				    (" DQ TS_POP->%s CQE ", SYNTAX));
 				USTPUTC(CTLQUOTEEND, out);
 			} else {
+				VTRACE(DBG_LEXER,
+				    (" %s TS_POP->DQ CQM ", SYNTAX));
 				TS_PUSH();
 				syntax = DQSYNTAX;
 				SETDBLQUOTE();
@@ -1898,27 +2025,34 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			continue;
 		case CVAR:	/* '$' */
+			VTRACE(DBG_LEXER, ("'$'..."));
 			out = insert_elided_nl(out);
 			PARSESUB();		/* parse substitution */
 			continue;
 		case CENDVAR:	/* CLOSEBRACE */
 			if (varnest > 0 && !ISDBLQUOTE()) {
+				VTRACE(DBG_LEXER, ("vn=%d !DQ", varnest));
 				TS_POP();
+				VTRACE(DBG_LEXER, (" TS_POP->%s CEV ", SYNTAX));
 				USTPUTC(CTLENDVAR, out);
 			} else {
+				VTRACE(DBG_LEXER, ("'%c'", c));
 				USTPUTC(c, out);
 			}
 			out = insert_elided_nl(out);
 			continue;
 		case CLP:	/* '(' in arithmetic */
 			parenlevel++;
+			VTRACE(DBG_LEXER, ("'('(%d)", parenlevel));
 			USTPUTC(c, out);
 			continue;;
 		case CRP:	/* ')' in arithmetic */
 			if (parenlevel > 0) {
 				USTPUTC(c, out);
 				--parenlevel;
+				VTRACE(DBG_LEXER, ("')'(%d)", parenlevel));
 			} else {
+				VTRACE(DBG_LEXER, ("')'(%d)", parenlevel));
 				if (pgetc_linecont() == /*(*/ ')') {
 					out = insert_elided_nl(out);
 					if (--arinest == 0) {
@@ -1940,16 +2074,22 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			continue;
 		case CBQUOTE:	/* '`' */
-			out = parsebackq(stack, out, &bqlist, 1, magicq);
+			VTRACE(DBG_LEXER, ("'`' -> parsebackq()\n"));
+			out = parsebackq(stack, out, &bqlist, 1);
+			VTRACE(DBG_LEXER, ("parsebackq() -> readtoken1: "));
 			continue;
 		case CEOF:		/* --> c == PEOF */
+			VTRACE(DBG_LEXER, ("EOF "));
 			break;		/* will exit loop */
 		default:
+			VTRACE(DBG_LEXER, ("['%c'(%#.2x)]", c&0xFF, c&0x1FF));
 			if (varnest == 0 && !ISDBLQUOTE())
 				break;	/* exit loop */
 			USTPUTC(c, out);
+			VTRACE(DBG_LEXER, (","));
 			continue;
 		}
+		VTRACE(DBG_LEXER, (" END TOKEN\n", c&0xFF, c&0x1FF));
 		break;	/* break from switch -> break from for loop too */
 	}
 
@@ -1983,7 +2123,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 		}
 	}
 
-	VTRACE(DBG_PARSE,
+	VTRACE(DBG_PARSE|DBG_LEXER,
 	    ("readtoken1 %sword \"%s\", completed%s (%d) left %d enl\n",
 	    (quotef ? "quoted " : ""), out, (bqlist ? " with cmdsubs" : ""),
 	    len, elided_nl));
@@ -2010,16 +2150,21 @@ parsesub: {
 	static const char types[] = "}-+?=";
 
 	c = pgetc_linecont();
+	VTRACE(DBG_LEXER, ("\"$%c\"(%#.2x)", c&0xFF, c&0x1FF));
 	if (c == '(' /*)*/) {	/* $(command) or $((arith)) */
 		if (pgetc_linecont() == '(' /*')'*/ ) {
+			VTRACE(DBG_LEXER, ("\"$((\" ARITH "));
 			out = insert_elided_nl(out);
 			PARSEARITH();
 		} else {
+			VTRACE(DBG_LEXER, ("\"$(\" CSUB->parsebackq()\n"));
 			out = insert_elided_nl(out);
 			pungetc();
-			out = parsebackq(stack, out, &bqlist, 0, magicq);
+			out = parsebackq(stack, out, &bqlist, 0);
+			VTRACE(DBG_LEXER, ("parseback()->readtoken1(): "));
 		}
 	} else if (c == OPENBRACE || is_name(c) || is_special(c)) {
+		VTRACE(DBG_LEXER, (" $EXP:CTLVAR "));
 		USTPUTC(CTLVAR, out);
 		typeloc = out - stackblock();
 		USTPUTC(VSNORMAL, out);
@@ -2064,13 +2209,16 @@ parsesub: {
 			}
 			else
 				subtype = 0;
+			VTRACE(DBG_LEXER, ("${ st=%d ", subtype));
 		}
 		if (is_name(c)) {
 			p = out;
 			do {
+				VTRACE(DBG_LEXER, ("%c", c));
 				STPUTC(c, out);
 				c = pgetc_linecont();
 			} while (is_in_name(c));
+
 #if 0
 			if (out - p == 6 && strncmp(p, "LINENO", 6) == 0) {
 				int i;
@@ -2095,15 +2243,18 @@ parsesub: {
 #endif
 		} else if (is_digit(c)) {
 			do {
+				VTRACE(DBG_LEXER, ("%c", c));
 				STPUTC(c, out);
 				c = pgetc_linecont();
 			} while (subtype != VSNORMAL && is_digit(c));
 		}
 		else if (is_special(c)) {
+			VTRACE(DBG_LEXER, ("\"$%c", c));
 			USTPUTC(c, out);
 			c = pgetc_linecont();
 		}
 		else {
+			VTRACE(DBG_LEXER, ("\"$%c(%#.2x)??\n", c&0xFF,c&0x1FF));
  badsub:
 			cleanup_state_stack(stack);
 			synerror("Bad substitution");
@@ -2145,6 +2296,7 @@ parsesub: {
 			flags |= VSQUOTE;
 		if (subtype >= VSTRIMLEFT && subtype <= VSTRIMRIGHTMAX)
 			flags |= VSPATQ;
+		VTRACE(DBG_LEXER, (" st%d:%x", subtype, flags));
 		*(stackblock() + typeloc) = subtype | flags;
 		if (subtype != VSNORMAL) {
 			TS_PUSH();
@@ -2153,15 +2305,23 @@ parsesub: {
 			if (subtype > VSASSIGN) {	/* # ## % %% */
 				syntax = BASESYNTAX;
 				quoted = 0;
+				magicq = 0;
 			}
+			VTRACE(DBG_LEXER, (" TS_PUSH->%s vn=%d%s ",
+			    SYNTAX, varnest, quoted ? " Q" : ""));
 		}
 	} else if (c == '\'' && syntax == BASESYNTAX) {
 		USTPUTC(CTLQUOTEMARK, out);
+		VTRACE(DBG_LEXER, (" CSTR \"$'\" CQM "));
+		CVTRACE(DBG_LEXER, quotef==0, ("QF=1 "));
 		quotef = 1;
 		TS_PUSH();
 		syntax = SQSYNTAX;
 		quoted = CQ;
+		VTRACE(DBG_LEXER, ("%s->TS_PUSH()->SQ ", SYNTAX));
 	} else {
+		VTRACE(DBG_LEXER, ("$unk -> '$' (pushback '%c'%#.2x)",
+			c & 0xFF, c & 0x1FF));
 		USTPUTC('$', out);
 		pungetc();
 	}
@@ -2192,16 +2352,19 @@ parsearith: {
 	} else
 #endif
 	{
+		VTRACE(DBG_LEXER, (" CTLARI%c ", ISDBLQUOTE()?'"':'_'));
 		USTPUTC(CTLARI, out);
 		if (ISDBLQUOTE())
 			USTPUTC('"',out);
 		else
 			USTPUTC(' ',out);
 
+		VTRACE(DBG_LEXER, ("%s->TS_PUSH->ARI(1)", SYNTAX));
 		TS_PUSH();
 		syntax = ARISYNTAX;
 		arinest = 1;
 		varnest = 0;
+		magicq = 1;
 	}
 	goto parsearith_return;
 }
@@ -2370,6 +2533,8 @@ pgetc_linecont(void)
 		if (c == '\n') {
 			plinno++;
 			elided_nl++;
+			VTRACE(DBG_LEXER, ("\"\\n\"drop(el=%d@%d)",
+			    elided_nl, plinno));
 			if (doprompt)
 				setprompt(2);
 			else
@@ -2484,23 +2649,26 @@ expandonstack(char *ps, int cmdsub, int lineno)
 			expandarg(&n, NULL, 0);
 			result = stackblock();
 		}
-		INTOFF;
+	} else {
+		psp.v_current_parser = saveparser;
+		xflag = save_x;
+		popfilesupto(savetopfile);
+		handler = savehandler;
+
+		if (exception == EXEXIT)
+			longjmp(handler->loc, 1);
+		if (exception == EXINT)
+			exraise(SIGINT);
+		return ps;
 	}
 	psp.v_current_parser = saveparser;
 	xflag = save_x;
 	popfilesupto(savetopfile);
 	handler = savehandler;
 
-	if (exception == EXEXIT)
-		longjmp(handler->loc, 1);
 
-	if (result != NULL) {
-		INTON;
-	} else {
-		if (exception == EXINT)
-			exraise(SIGINT);
+	if (result == NULL)
 		result = ps;
-	}
 
 	return result;
 }

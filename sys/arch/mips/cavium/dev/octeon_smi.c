@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smi.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_smi.c,v 1.1.20.1 2019/01/26 22:00:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.1.20.1 2019/01/26 22:00:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,8 @@ octeon_smi_init(struct octeon_smi_attach_args *aa,
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
 int
-octeon_smi_read(struct octeon_smi_softc *sc, int phy_addr, int reg)
+octeon_smi_read(struct octeon_smi_softc *sc, int phy_addr, int reg,
+    uint16_t *val)
 {
 	uint64_t smi_rd;
 	int timo;
@@ -86,19 +87,22 @@ octeon_smi_read(struct octeon_smi_softc *sc, int phy_addr, int reg)
 	smi_rd = _SMI_RD8(sc, SMI_RD_DAT_OFFSET);
 	while (ISSET(smi_rd, SMI_RD_DAT_PENDING)) {
 		if (timo-- == 0)
-			break;
+			return ETIMEDOUT;
 		delay(10);
 		smi_rd = _SMI_RD8(sc, SMI_RD_DAT_OFFSET);
 	}
-	if (ISSET(smi_rd, SMI_RD_DAT_PENDING)) {
-		return -1;
+
+	if (ISSET(smi_rd, SMI_RD_DAT_VAL)) {
+		*val = (smi_rd & SMI_RD_DAT_DAT);
+		return 0;
 	}
 
-	return ISSET(smi_rd, SMI_RD_DAT_VAL) ? (smi_rd & SMI_RD_DAT_DAT) : 0;
+	return -1;
 }
 
-void
-octeon_smi_write(struct octeon_smi_softc *sc, int phy_addr, int reg, int value)
+int
+octeon_smi_write(struct octeon_smi_softc *sc, int phy_addr, int reg,
+    uint16_t value)
 {
 	uint64_t smi_wr;
 	int timo;
@@ -113,16 +117,17 @@ octeon_smi_write(struct octeon_smi_softc *sc, int phy_addr, int reg, int value)
 	timo = 10000;
 	smi_wr = _SMI_RD8(sc, SMI_WR_DAT_OFFSET);
 	while (ISSET(smi_wr, SMI_WR_DAT_PENDING)) {
-		if (timo-- == 0)
-			break;
+		if (timo-- == 0) {
+			/* XXX log */
+			printf("ERROR: cnmac_mii_writereg(0x%x, 0x%x, 0x%hx) "
+			    "timed out.\n", phy_addr, reg, value);
+			return ETIMEDOUT;
+		}
 		delay(10);
 		smi_wr = _SMI_RD8(sc, SMI_WR_DAT_OFFSET);
 	}
-	if (ISSET(smi_wr, SMI_WR_DAT_PENDING)) {
-		/* XXX log */
-		printf("ERROR: cnmac_mii_writereg(0x%x, 0x%x, 0x%x) timed out.\n",
-		    phy_addr, reg, value);
-	}
+
+	return 0;
 }
 
 static void

@@ -1,12 +1,8 @@
-/*	$NetBSD: r8a77995-cpg-mssr.h,v 1.1.1.1 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: r8a77995-cpg-mssr.h,v 1.1.1.1.4.1 2019/01/26 22:00:34 pgoyette Exp $	*/
 
-/*
- * Copyright (C) 2017 Glider bvba
+/* SPDX-License-Identifier: GPL-2.0+
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2017 Glider bvba
  */
 #ifndef __DT_BINDINGS_CLOCK_R8A77995_CPG_MSSR_H__
 #define __DT_BINDINGS_CLOCK_R8A77995_CPG_MSSR_H__

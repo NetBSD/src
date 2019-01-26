@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.10.1 2019/01/18 08:49:08 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.15.10.2 2019/01/26 21:59:57 pgoyette Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -37,6 +37,7 @@ COPTS.xdmauth.c=	-Wno-error	# XXX
 COPTS.xstrans.c=	-Wno-error	# XXX
 COPTS.access.c=		-Wno-error	# XXX bigreqstr.h
 COPTS.io.c=		-Wno-error	# XXX bigreqstr.h
+COPTS.backtrace.c=	-Wno-stack-protector
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

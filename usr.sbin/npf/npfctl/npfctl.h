@@ -104,6 +104,9 @@ typedef struct proc_param {
 
 enum { NPFCTL_PARSE_FILE, NPFCTL_PARSE_STRING };
 
+#define	NPF_IFNET_TABLE_PREF		".ifnet-"
+#define	NPF_IFNET_TABLE_PREFLEN		(sizeof(NPF_IFNET_TABLE_PREF) - 1)
+
 bool		join(char *, size_t, int, char **, const char *);
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
 void		npfctl_bpfjit(bool);
@@ -115,6 +118,7 @@ char *		npfctl_print_addrmask(int, const char *, const npf_addr_t *,
 		    npf_netmask_t);
 void		npfctl_note_interface(const char *);
 unsigned	npfctl_table_getid(const char *);
+const char *	npfctl_table_getname(nl_config_t *, unsigned, bool *);
 int		npfctl_protono(const char *);
 in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(int, uint8_t, const char *);

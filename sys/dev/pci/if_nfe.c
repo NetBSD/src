@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.64.2.2 2018/12/26 14:01:50 pgoyette Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.64.2.3 2019/01/26 22:00:07 pgoyette Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.64.2.2 2018/12/26 14:01:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.64.2.3 2019/01/26 22:00:07 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -78,8 +78,8 @@ void	nfe_attach(device_t, device_t, void *);
 int	nfe_detach(device_t, int);
 void	nfe_power(int, void *);
 void	nfe_miibus_statchg(struct ifnet *);
-int	nfe_miibus_readreg(device_t, int, int);
-void	nfe_miibus_writereg(device_t, int, int, int);
+int	nfe_miibus_readreg(device_t, int, int, uint16_t *);
+int	nfe_miibus_writereg(device_t, int, int, uint16_t);
 int	nfe_intr(void *);
 int	nfe_ioctl(struct ifnet *, u_long, void *);
 void	nfe_txdesc32_sync(struct nfe_softc *, struct nfe_desc32 *, int);
@@ -524,10 +524,10 @@ nfe_miibus_statchg(struct ifnet *ifp)
 }
 
 int
-nfe_miibus_readreg(device_t dev, int phy, int reg)
+nfe_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct nfe_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	int ntries;
 
 	NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
@@ -547,27 +547,28 @@ nfe_miibus_readreg(device_t dev, int phy, int reg)
 	if (ntries == 1000) {
 		DPRINTFN(2, ("%s: timeout waiting for PHY\n",
 		    device_xname(sc->sc_dev)));
-		return 0;
+		return ETIMEDOUT;
 	}
 
 	if (NFE_READ(sc, NFE_PHY_STATUS) & NFE_PHY_ERROR) {
 		DPRINTFN(2, ("%s: could not read PHY\n",
 		    device_xname(sc->sc_dev)));
-		return 0;
+		return -1;
 	}
 
-	val = NFE_READ(sc, NFE_PHY_DATA);
-	if (val != 0xffffffff && val != 0)
+	data = NFE_READ(sc, NFE_PHY_DATA);
+	if (data != 0xffffffff && data != 0)
 		sc->mii_phyaddr = phy;
 
-	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x ret 0x%x\n",
-	    device_xname(sc->sc_dev), phy, reg, val));
+	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x data 0x%x\n",
+	    device_xname(sc->sc_dev), phy, reg, data));
 
-	return val;
+	*val = data & 0x0000ffff;
+	return 0;
 }
 
-void
-nfe_miibus_writereg(device_t dev, int phy, int reg, int val)
+int
+nfe_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct nfe_softc *sc = device_private(dev);
 	uint32_t ctl;
@@ -589,10 +590,14 @@ nfe_miibus_writereg(device_t dev, int phy, int reg, int val)
 		if (!(NFE_READ(sc, NFE_PHY_CTL) & NFE_PHY_BUSY))
 			break;
 	}
+	if (ntries == 1000) {
 #ifdef NFE_DEBUG
-	if (nfedebug >= 2 && ntries == 1000)
-		printf("could not write to PHY\n");
+		if (nfedebug >= 2)
+			printf("could not write to PHY\n");
 #endif
+		return ETIMEDOUT;
+	}
+	return 0;
 }
 
 int

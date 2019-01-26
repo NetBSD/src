@@ -1,9 +1,9 @@
-/*	$NetBSD: sljitUtils.c,v 1.9 2016/05/29 17:19:01 alnsn Exp $	*/
+/*	$NetBSD: sljitUtils.c,v 1.9.16.1 2019/01/26 22:00:25 pgoyette Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
  *
- *    Copyright 2009-2012 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -249,15 +249,9 @@ static sljit_sw sljit_page_align = 0;
 SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(sljit_uw limit, sljit_uw max_limit, void *allocator_data)
 {
 	struct sljit_stack *stack;
-	union {
-		void *ptr;
-		sljit_uw uw;
-	} base;
+	void *ptr;
 #ifdef _WIN32
 	SYSTEM_INFO si;
-#endif
-#ifdef _KERNEL
-	vaddr_t v;
 #endif
 
 	SLJIT_UNUSED_ARG(allocator_data);
@@ -283,39 +277,38 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	}
 #endif
 
-	/* Align limit and max_limit. */
-	max_limit = (max_limit + sljit_page_align) & ~sljit_page_align;
-
 	stack = (struct sljit_stack*)SLJIT_MALLOC(sizeof(struct sljit_stack), allocator_data);
 	if (!stack)
 		return NULL;
 
-#ifdef _KERNEL
-	v = uvm_km_alloc(kernel_map, max_limit, PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
-	base.ptr = (void *)v;
-	if (base.ptr == NULL) {
+	/* Align max_limit. */
+	max_limit = (max_limit + sljit_page_align) & ~sljit_page_align;
+
+#ifdef _WIN32
+	ptr = VirtualAlloc(NULL, max_limit, MEM_RESERVE, PAGE_READWRITE);
+	if (!ptr) {
 		SLJIT_FREE(stack, allocator_data);
 		return NULL;
 	}
-	stack->base = base.uw;
-	stack->limit = stack->base + limit;
-	stack->max_limit = stack->base + max_limit;
-#elif defined(_WIN32)
-	base.ptr = VirtualAlloc(NULL, max_limit, MEM_RESERVE, PAGE_READWRITE);
-	if (!base.ptr) {
-		SLJIT_FREE(stack, allocator_data);
-		return NULL;
-	}
-	stack->base = base.uw;
+	stack->max_limit = (sljit_u8 *)ptr;
+	stack->base = stack->max_limit + max_limit;
 	stack->limit = stack->base;
-	stack->max_limit = stack->base + max_limit;
-	if (sljit_stack_resize(stack, stack->base + limit)) {
+	if (sljit_stack_resize(stack, stack->base - limit)) {
 		sljit_free_stack(stack, allocator_data);
 		return NULL;
 	}
+#elif defined(_KERNEL)
+	ptr = (void *)uvm_km_alloc(kernel_map, max_limit, PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
+	if (ptr == NULL) {
+		SLJIT_FREE(stack, allocator_data);
+		return NULL;
+	}
+	stack->max_limit = (sljit_u8 *)ptr;
+	stack->base = stack->max_limit + max_limit;
+	stack->limit = stack->base - limit;
 #else
 #ifdef MAP_ANON
-	base.ptr = mmap(NULL, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+	ptr = mmap(NULL, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 #else
 	if (dev_zero < 0) {
 		if (open_dev_zero()) {
@@ -323,15 +316,15 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 			return NULL;
 		}
 	}
-	base.ptr = mmap(NULL, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE, dev_zero, 0);
+	ptr = mmap(NULL, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE, dev_zero, 0);
 #endif
-	if (base.ptr == MAP_FAILED) {
+	if (ptr == MAP_FAILED) {
 		SLJIT_FREE(stack, allocator_data);
 		return NULL;
 	}
-	stack->base = base.uw;
-	stack->limit = stack->base + limit;
-	stack->max_limit = stack->base + max_limit;
+	stack->max_limit = (sljit_u8 *)ptr;
+	stack->base = stack->max_limit + max_limit;
+	stack->limit = stack->base - limit;
 #endif
 	stack->top = stack->base;
 	return stack;
@@ -339,60 +332,60 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 
 #undef PAGE_ALIGN
 
-SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* stack, void *allocator_data)
+SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack *stack, void *allocator_data)
 {
 	SLJIT_UNUSED_ARG(allocator_data);
-#ifdef _KERNEL
-	uvm_km_free(kernel_map, (vaddr_t)stack->base,
-	    stack->max_limit - stack->base, UVM_KMF_WIRED);
-#elif defined(_WIN32)
-	VirtualFree((void*)stack->base, 0, MEM_RELEASE);
+#ifdef _WIN32
+	VirtualFree((void*)stack->max_limit, 0, MEM_RELEASE);
+#elif defined(_KERNEL)
+	uvm_km_free(kernel_map, (vaddr_t)stack->max_limit,
+	    stack->base - stack->max_limit, UVM_KMF_WIRED);
 #else
-	munmap((void*)stack->base, stack->max_limit - stack->base);
+	munmap((void*)stack->max_limit, stack->base - stack->max_limit);
 #endif
 	SLJIT_FREE(stack, allocator_data);
 }
 
-SLJIT_API_FUNC_ATTRIBUTE sljit_sw SLJIT_CALL sljit_stack_resize(struct sljit_stack* stack, sljit_uw new_limit)
+SLJIT_API_FUNC_ATTRIBUTE sljit_sw SLJIT_CALL sljit_stack_resize(struct sljit_stack *stack, sljit_u8 *new_limit)
 {
-	if ((new_limit > stack->max_limit) || (new_limit < stack->base))
+#if defined(MADV_DONTNEED) || defined(POSIX_MADV_DONTNEED)
+	sljit_uw aligned_old_limit;
+	sljit_uw aligned_new_limit;
+#endif
+
+	if ((new_limit < stack->max_limit) || (new_limit >= stack->base))
 		return -1;
 #ifdef _WIN32
-	sljit_uw aligned_new_limit =
-	    (new_limit + sljit_page_align) & ~sljit_page_align;
-	sljit_uw aligned_old_limit =
-	    (stack->limit + sljit_page_align) & ~sljit_page_align;
+	aligned_new_limit = (sljit_uw)new_limit & ~sljit_page_align;
+	aligned_old_limit = ((sljit_uw)stack->limit) & ~sljit_page_align;
 	if (aligned_new_limit != aligned_old_limit) {
-		if (aligned_new_limit > aligned_old_limit) {
-			if (!VirtualAlloc((void*)aligned_old_limit, aligned_new_limit - aligned_old_limit, MEM_COMMIT, PAGE_READWRITE))
+		if (aligned_new_limit < aligned_old_limit) {
+			if (!VirtualAlloc((void*)aligned_new_limit, aligned_old_limit - aligned_new_limit, MEM_COMMIT, PAGE_READWRITE))
 				return -1;
 		}
 		else {
-			if (!VirtualFree((void*)aligned_new_limit, aligned_old_limit - aligned_new_limit, MEM_DECOMMIT))
+			if (!VirtualFree((void*)aligned_old_limit, aligned_new_limit - aligned_old_limit, MEM_DECOMMIT))
 				return -1;
 		}
 	}
 	stack->limit = new_limit;
 	return 0;
 #else
-	if (new_limit >= stack->limit) {
+	if (new_limit <= stack->limit) {
 		stack->limit = new_limit;
 		return 0;
 	}
-#if defined(POSIX_MADV_DONTNEED)
-# define MADVISE(new, old) posix_madvise((new), (old), POSIX_MADV_DONTNEED)
-#elif defined(MADV_DONTNEED)
-# define MADVISE(new, old) madvise((new), (old), MADV_DONTNEED)
+#if defined(MADV_DONTNEED) || defined(POSIX_MADV_DONTNEED)
+	aligned_new_limit = (sljit_uw)new_limit & ~sljit_page_align;
+	aligned_old_limit = ((sljit_uw)stack->limit) & ~sljit_page_align;
 #endif
-#ifdef MADVISE
-	sljit_uw aligned_new_limit =
-	    (new_limit + sljit_page_align) & ~sljit_page_align;
-	sljit_uw aligned_old_limit =
-	    (stack->limit + sljit_page_align) & ~sljit_page_align;
 	/* If madvise is available, we release the unnecessary space. */
-	if (aligned_new_limit < aligned_old_limit)
-		MADVISE((void*)aligned_new_limit,
-		    aligned_old_limit - aligned_new_limit);
+#if defined(MADV_DONTNEED)
+	if (aligned_new_limit > aligned_old_limit)
+		madvise((void*)aligned_old_limit, aligned_new_limit - aligned_old_limit, MADV_DONTNEED);
+#elif defined(POSIX_MADV_DONTNEED)
+	if (aligned_new_limit > aligned_old_limit)
+		posix_madvise((void*)aligned_old_limit, aligned_new_limit - aligned_old_limit, POSIX_MADV_DONTNEED);
 #endif
 	stack->limit = new_limit;
 	return 0;

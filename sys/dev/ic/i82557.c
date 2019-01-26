@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.148.2.1 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: i82557.c,v 1.148.2.2 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.148.2.1 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.148.2.2 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,9 +186,9 @@ void	fxp_rx_hwcksum(struct fxp_softc *,struct mbuf *,
 
 void	fxp_rxdrain(struct fxp_softc *);
 int	fxp_add_rfabuf(struct fxp_softc *, bus_dmamap_t, int);
-int	fxp_mdi_read(device_t, int, int);
+int	fxp_mdi_read(device_t, int, int, uint16_t *);
 void	fxp_statchg(struct ifnet *);
-void	fxp_mdi_write(device_t, int, int, int);
+int	fxp_mdi_write(device_t, int, int, uint16_t);
 void	fxp_autosize_eeprom(struct fxp_softc*);
 void	fxp_read_eeprom(struct fxp_softc *, uint16_t *, int, int);
 void	fxp_write_eeprom(struct fxp_softc *, uint16_t *, int, int);
@@ -2099,24 +2099,27 @@ fxp_add_rfabuf(struct fxp_softc *sc, bus_dmamap_t rxmap, int unload)
 }
 
 int
-fxp_mdi_read(device_t self, int phy, int reg)
+fxp_mdi_read(device_t self, int phy, int reg, uint16_t *value)
 {
 	struct fxp_softc *sc = device_private(self);
 	int count = 10000;
-	int value;
+	uint32_t data;
 
 	CSR_WRITE_4(sc, FXP_CSR_MDICONTROL,
 	    (FXP_MDI_READ << 26) | (reg << 16) | (phy << 21));
 
-	while (((value = CSR_READ_4(sc, FXP_CSR_MDICONTROL)) &
+	while (((data = CSR_READ_4(sc, FXP_CSR_MDICONTROL)) &
 	    0x10000000) == 0 && count--)
 		DELAY(10);
 
-	if (count <= 0)
+	if (count <= 0) {
 		log(LOG_WARNING,
 		    "%s: fxp_mdi_read: timed out\n", device_xname(self));
+		return ETIMEDOUT;
+	}
 
-	return (value & 0xffff);
+	*value = data & 0xffff;
+	return 0;
 }
 
 void
@@ -2126,23 +2129,26 @@ fxp_statchg(struct ifnet *ifp)
 	/* Nothing to do. */
 }
 
-void
-fxp_mdi_write(device_t self, int phy, int reg, int value)
+int
+fxp_mdi_write(device_t self, int phy, int reg, uint16_t value)
 {
 	struct fxp_softc *sc = device_private(self);
 	int count = 10000;
 
 	CSR_WRITE_4(sc, FXP_CSR_MDICONTROL,
-	    (FXP_MDI_WRITE << 26) | (reg << 16) | (phy << 21) |
-	    (value & 0xffff));
+	    (FXP_MDI_WRITE << 26) | (reg << 16) | (phy << 21) | value);
 
 	while ((CSR_READ_4(sc, FXP_CSR_MDICONTROL) & 0x10000000) == 0 &&
 	    count--)
 		DELAY(10);
 
-	if (count <= 0)
+	if (count <= 0) {
 		log(LOG_WARNING,
 		    "%s: fxp_mdi_write: timed out\n", device_xname(self));
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 int

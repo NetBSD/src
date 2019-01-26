@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.25.2.2 2018/10/20 06:58:15 pgoyette Exp $	*/
+/*	$NetBSD: shell.h,v 1.25.2.3 2019/01/26 21:58:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -97,7 +97,7 @@ extern	int		ShNest;
  * be increased, but that both limits the maximum value tha can be
  * used with DBG_EXTRAS(), and causes problems with verbose option naming.
  */
-#define	DBG_VBOSE_SHIFT		26
+#define	DBG_VBOSE_SHIFT		27
 #define	DBG_EXTRAS(n)	((DBG_VBOSE_SHIFT * 2) + (n))
 
 /*
@@ -179,30 +179,31 @@ extern	int		ShNest;
 #define	DBG_HISTORY	(1LL << 16)		/* h */
 #define	DBG_SIG		(1LL << 17)		/* s */
 #define	DBG_MATCH	(1LL << 18)		/* g (glob) */
+#define	DBG_LEXER	(1LL << 19)		/* l */
 
 /*
- * reserved extras: b=builtins l=alias
- * still free:  d k n q u y
+ * reserved extras: b=builtins y=alias
+ * still free:  d k n q u
  */
 
 	/* use VTRACE(DBG_ALWAYS, (...)) to test this one */
 #define	DBG_VERBOSE	(1LL << DBG_VBOSE_SHIFT)
 
-	/* DBG_EXTRAS 0 .. 11 (max) only  - non-alpha options (no VTRACE !!) */
+	/* DBG_EXTRAS 0 .. 9 (max) only  - non-alpha options (no VTRACE !!) */
 #define	DBG_U0		(1LL << DBG_EXTRAS(0))	/* 0 - ad-hoc extra flags */
 #define	DBG_U1		(1LL << DBG_EXTRAS(1))	/* 1 - for short term */
-#define	DBG_U2		(1LL << DBG_EXTRAS(2))	/* 2 - extra tracing*/
+#define	DBG_U2		(1LL << DBG_EXTRAS(2))	/* 2 - extra tracing */
+#define	DBG_U3		(1LL << DBG_EXTRAS(3))	/* 3 - when needed */
+	/* 4, 5, & 6 currently free */
+#define	DBG_LINE	(1LL << DBG_EXTRAS(7))	/* @ ($LINENO) */
+#define	DBG_PID		(1LL << DBG_EXTRAS(8))	/* $ ($$) */
+#define	DBG_NEST	(1LL << DBG_EXTRAS(9))	/* ^ */
 
-#define	DBG_LINE	(1LL << DBG_EXTRAS(9))	/* @ ($LINENO) */
-#define	DBG_PID		(1LL << DBG_EXTRAS(10))	/* $ ($$) */
-#define	DBG_NEST	(1LL << DBG_EXTRAS(11))	/* ^ */
+/* 26 lower case, 26 upper case, always, verbose, and 10 extras: 64 bits */
 
 extern void set_debug(const char *, int);
 
 #else	/* DEBUG */
-
-#define TRACE(param)			/* historic normal trace */
-#define TRACEV(param)			/* historic varargs trace */
 
 #define CTRACE(when, param)		/* conditional normal trace */
 #define CCTRACE(when, cond, param)	/* more conditional normal trace */

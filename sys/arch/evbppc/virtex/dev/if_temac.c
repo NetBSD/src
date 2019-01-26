@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.12 2016/12/15 09:28:03 ozaki-r Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.12.14.1 2019/01/26 22:00:02 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.12 2016/12/15 09:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.12.14.1 2019/01/26 22:00:02 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -204,10 +204,10 @@ static void 	temac_start(struct ifnet *);
 static void 	temac_stop(struct ifnet *, int);
 
 /* Media management. */
-static int	temac_mii_readreg(device_t, int, int);
+static int	temac_mii_readreg(device_t, int, int, uint16_t *);
 static void	temac_mii_statchg(struct ifnet *);
 static void	temac_mii_tick(void *);
-static void	temac_mii_writereg(device_t, int, int, int);
+static int	temac_mii_writereg(device_t, int, int, uint16_t);
 
 /* Indirect hooks. */
 static void 	temac_shutdown(void *);
@@ -258,21 +258,24 @@ CFATTACH_DECL_NEW(temac, sizeof(struct temac_softc),
 /*
  * Private bus utilities.
  */
-static inline void
+static inline int
 hif_wait_stat(uint32_t mask)
 {
 	int 			i = 0;
+	int			rv = 0;
 
 	while (mask != (mfidcr(IDCR_HIF_STAT) & mask)) {
 		if (i++ > 100) {
 			printf("%s: timeout waiting for 0x%08x\n",
 			    __func__, mask);
+			rv = ETIMEDOUT;
 			break;
 		}
 		delay(5);
 	}
 
 	TRACEREG(("%s: stat %#08x loops %d\n", __func__, mask, i));
+	return rv;
 }
 
 static inline void
@@ -821,23 +824,28 @@ temac_stop(struct ifnet *ifp, int disable)
 }
 
 static int
-temac_mii_readreg(device_t self, int phy, int reg)
+temac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
+	int rv;
+
 	mtidcr(IDCR_HIF_ARG0, (phy << 5) | reg);
 	mtidcr(IDCR_HIF_CTRL, TEMAC_GMI_MII_ADDR);
-	hif_wait_stat(HIF_STAT_MIIRR);
 
-	return (int)mfidcr(IDCR_HIF_ARG0);
+	if ((rv = hif_wait_stat(HIF_STAT_MIIRR)) != 0)
+		return rv;
+
+	*val = mfidcr(IDCR_HIF_ARG0) & 0xffff;
+	return 0;
 }
 
-static void
-temac_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+temac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	mtidcr(IDCR_HIF_ARG0, val);
 	mtidcr(IDCR_HIF_CTRL, TEMAC_GMI_MII_WRVAL | HIF_CTRL_WRITE);
 	mtidcr(IDCR_HIF_ARG0, (phy << 5) | reg);
 	mtidcr(IDCR_HIF_CTRL, TEMAC_GMI_MII_ADDR | HIF_CTRL_WRITE);
-	hif_wait_stat(HIF_STAT_MIIWR);
+	return hif_wait_stat(HIF_STAT_MIIWR);
 }
 
 static void

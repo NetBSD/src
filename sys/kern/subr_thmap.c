@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.3.2.2 2018/12/26 14:02:04 pgoyette Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.3.2.3 2019/01/26 22:00:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.3.2.2 2018/12/26 14:02:04 pgoyette Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.3.2.3 2019/01/26 22:00:36 pgoyette Exp $");
 
 /*
  * NetBSD kernel wrappers
@@ -233,7 +233,7 @@ static void	stage_mem_gc(thmap_t *, uintptr_t, size_t);
 static uintptr_t
 alloc_wrapper(size_t len)
 {
-	return (uintptr_t)kmem_intr_alloc(len, KM_SLEEP);
+	return (uintptr_t)kmem_intr_alloc(len, KM_NOSLEEP);
 }
 
 static void
@@ -843,7 +843,7 @@ stage_mem_gc(thmap_t *thmap, uintptr_t addr, size_t len)
 {
 	thmap_gc_t *head, *gc;
 
-	gc = kmem_intr_alloc(sizeof(thmap_gc_t), KM_SLEEP);
+	gc = kmem_intr_alloc(sizeof(thmap_gc_t), KM_NOSLEEP);
 	gc->addr = addr;
 	gc->len = len;
 retry:

@@ -1,5 +1,5 @@
 ;; Predicate definitions for Synopsys DesignWare ARC.
-;; Copyright (C) 2007-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -123,6 +123,8 @@
   int size = GET_MODE_SIZE (GET_MODE (op));
 
   op = XEXP (op, 0);
+  if (TARGET_NPS_CMEM && cmem_address (op, SImode))
+    return 0;
   switch (GET_CODE (op))
     {
     case SYMBOL_REF :
@@ -145,6 +147,11 @@
     case PLUS :
       {
 	rtx x = XEXP (op, 1);
+
+	if ((GET_CODE (XEXP (op, 0)) == MULT)
+	    && REG_P (XEXP (XEXP (op, 0), 0))
+	    && CONSTANT_P (x))
+	  return 1;
 
 	if (GET_CODE (x) == CONST)
 	  {
@@ -180,95 +187,6 @@
       && (REGNO (op) >= FIRST_PSEUDO_REGISTER
 		|| COMPACT_GP_REG_P (REGNO (op))) ;
   }
-)
-
-;; Return true if OP is an acceptable memory operand for ARCompact
-;; 16-bit load instructions.
-(define_predicate "compact_load_memory_operand"
-  (match_code "mem")
-{
-  rtx addr, plus0, plus1;
-  int size, off;
-
-  /* Eliminate non-memory operations.  */
-  if (GET_CODE (op) != MEM)
-    return 0;
-
-  /* .di instructions have no 16-bit form.  */
-  if (MEM_VOLATILE_P (op) && !TARGET_VOLATILE_CACHE_SET)
-     return 0;
-
-  if (mode == VOIDmode)
-    mode = GET_MODE (op);
-
-  size = GET_MODE_SIZE (mode);
-
-  /* dword operations really put out 2 instructions, so eliminate them.  */
-  if (size > UNITS_PER_WORD)
-    return 0;
-
-  /* Decode the address now.  */
-  addr = XEXP (op, 0);
-  switch (GET_CODE (addr))
-    {
-    case REG:
-      return (REGNO (addr) >= FIRST_PSEUDO_REGISTER
-	      || COMPACT_GP_REG_P (REGNO (addr))
-	      || (SP_REG_P (REGNO (addr)) && (size != 2)));
-	/* Reverting for the moment since ldw_s does not have sp as a valid
-	   parameter.  */
-    case PLUS:
-      plus0 = XEXP (addr, 0);
-      plus1 = XEXP (addr, 1);
-
-      if ((GET_CODE (plus0) == REG)
-	  && ((REGNO (plus0) >= FIRST_PSEUDO_REGISTER)
-	      || COMPACT_GP_REG_P (REGNO (plus0)))
-	  && ((GET_CODE (plus1) == REG)
-	      && ((REGNO (plus1) >= FIRST_PSEUDO_REGISTER)
-		  || COMPACT_GP_REG_P (REGNO (plus1)))))
-	{
-	  return 1;
-	}
-
-      if ((GET_CODE (plus0) == REG)
-	  && ((REGNO (plus0) >= FIRST_PSEUDO_REGISTER)
-	      || COMPACT_GP_REG_P (REGNO (plus0)))
-	  && (GET_CODE (plus1) == CONST_INT))
-	{
-	  off = INTVAL (plus1);
-
-	  /* Negative offset is not supported in 16-bit load/store insns.  */
-	  if (off < 0)
-	    return 0;
-
-	  switch (size)
-	    {
-	    case 1:
-	      return (off < 32);
-	    case 2:
-	      return ((off < 64) && (off % 2 == 0));
-	    case 4:
-	      return ((off < 128) && (off % 4 == 0));
-	    }
-	}
-
-      if ((GET_CODE (plus0) == REG)
-	  && ((REGNO (plus0) >= FIRST_PSEUDO_REGISTER)
-	      || SP_REG_P (REGNO (plus0)))
-	  && (GET_CODE (plus1) == CONST_INT))
-	{
-	  off = INTVAL (plus1);
-	  return ((size != 2) && (off >= 0 && off < 128) && (off % 4 == 0));
-	}
-    default:
-      break ;
-      /* TODO: 'gp' and 'pcl' are to supported as base address operand
-	       for 16-bit load instructions.  */
-    }
-  return 0;
-
-}
 )
 
 ;; Return true if OP is an acceptable memory operand for ARCompact
@@ -351,9 +269,13 @@
   switch (GET_CODE (op))
     {
     case SYMBOL_REF :
+      if (SYMBOL_REF_TLS_MODEL (op))
+	return 0;
+      return 1;
     case LABEL_REF :
+      return 1;
     case CONST :
-      return (!flag_pic || arc_legitimate_pic_operand_p(op));
+      return arc_legitimate_constant_p (mode, op);
     case CONST_INT :
       return (LARGE_INT (INTVAL (op)));
     case CONST_DOUBLE :
@@ -396,7 +318,7 @@
       /* (subreg (mem ...) ...) can occur here if the inner part was once a
 	 pseudo-reg and is now a stack slot.  */
       if (GET_CODE (SUBREG_REG (op)) == MEM)
-	return move_double_src_operand (SUBREG_REG (op), mode);
+	return address_operand (XEXP (SUBREG_REG (op), 0), mode);
       else
 	return register_operand (op, mode);
     case MEM :
@@ -451,6 +373,16 @@
 	    && (GET_CODE (XEXP (addr, 1)) != PLUS
 		|| !CONST_INT_P (XEXP (XEXP (addr, 1), 1))))
 	  return 0;
+	/* CONST_INT / CONST_DOUBLE is fine, but the PIC CONST ([..] UNSPEC))
+	   constructs are effectively indexed.  */
+	if (flag_pic)
+	  {
+	    rtx ad0 = addr;
+	    while (GET_CODE (ad0) == PLUS)
+	      ad0 = XEXP (ad0, 0);
+	    if (GET_CODE (ad0) == CONST || GET_CODE (ad0) == UNSPEC)
+	      return 0;
+	  }
 	return address_operand (addr, mode);
       }
     default :
@@ -525,11 +457,16 @@
 (define_predicate "equality_comparison_operator"
   (match_code "eq, ne"))
 
+(define_predicate "ge_lt_comparison_operator"
+  (match_code "ge, lt"))
+
 (define_predicate "brcc_nolimm_operator"
   (ior (match_test "REG_P (XEXP (op, 1))")
        (and (match_code "eq, ne, lt, ge, ltu, geu")
+	    (match_test "CONST_INT_P (XEXP (op, 1))")
 	    (match_test "u6_immediate_operand (XEXP (op, 1), SImode)"))
        (and (match_code "le, gt, leu, gtu")
+	    (match_test "CONST_INT_P (XEXP (op, 1))")
 	    (match_test "UNSIGNED_INT6 (INTVAL (XEXP (op, 1)) + 1)"))))
 
 ;; Return TRUE if this is the condition code register, if we aren't given
@@ -806,3 +743,28 @@
 (define_predicate "double_register_operand"
   (ior (match_test "even_register_operand (op, mode)")
        (match_test "arc_double_register_operand (op, mode)")))
+
+(define_predicate "cmem_address_0"
+  (and (match_code "symbol_ref")
+       (match_test "SYMBOL_REF_FLAGS (op) & SYMBOL_FLAG_CMEM")))
+
+(define_predicate "cmem_address_1"
+  (and (match_code "plus")
+       (match_test "cmem_address_0 (XEXP (op, 0), SImode)")))
+
+(define_predicate "cmem_address_2"
+  (and (match_code "const")
+       (match_test "cmem_address_1 (XEXP (op, 0), SImode)")))
+
+(define_predicate "cmem_address"
+  (ior (match_operand:SI 0 "cmem_address_0")
+       (match_operand:SI 0 "cmem_address_1")
+       (match_operand:SI 0 "cmem_address_2")))
+
+(define_predicate "short_unsigned_const_operand"
+  (and (match_code "const_int")
+       (match_test "satisfies_constraint_J16 (op)")))
+
+(define_predicate "arc_short_operand"
+  (ior (match_test "register_operand (op, mode)")
+       (match_test "short_unsigned_const_operand (op, mode)")))

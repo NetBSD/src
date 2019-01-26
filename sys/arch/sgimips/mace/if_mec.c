@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.55.14.2 2018/07/28 04:37:41 pgoyette Exp $ */
+/* $NetBSD: if_mec.c,v 1.55.14.3 2019/01/26 22:00:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.55.14.2 2018/07/28 04:37:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.55.14.3 2019/01/26 22:00:05 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -387,8 +387,8 @@ struct mec_softc {
 static int	mec_match(device_t, cfdata_t, void *);
 static void	mec_attach(device_t, device_t, void *);
 
-static int	mec_mii_readreg(device_t, int, int);
-static void	mec_mii_writereg(device_t, int, int, int);
+static int	mec_mii_readreg(device_t, int, int, uint16_t *);
+static int	mec_mii_writereg(device_t, int, int, uint16_t);
 static int	mec_mii_wait(struct mec_softc *);
 static void	mec_statchg(struct ifnet *);
 
@@ -745,16 +745,16 @@ mec_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-mec_mii_readreg(device_t self, int phy, int reg)
+mec_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct mec_softc *sc = device_private(self);
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint64_t val;
-	int i;
+	uint64_t data;
+	int i, rv;
 
-	if (mec_mii_wait(sc) != 0)
-		return 0;
+	if ((rv = mec_mii_wait(sc)) != 0)
+		return rv;
 
 	bus_space_write_8(st, sh, MEC_PHY_ADDRESS,
 	    (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & MEC_PHY_ADDR_REGISTER));
@@ -766,24 +766,27 @@ mec_mii_readreg(device_t self, int phy, int reg)
 	for (i = 0; i < 20; i++) {
 		delay(30);
 
-		val = bus_space_read_8(st, sh, MEC_PHY_DATA);
+		data = bus_space_read_8(st, sh, MEC_PHY_DATA);
 
-		if ((val & MEC_PHY_DATA_BUSY) == 0)
-			return val & MEC_PHY_DATA_VALUE;
+		if ((data & MEC_PHY_DATA_BUSY) == 0) {
+			*val = data & MEC_PHY_DATA_VALUE;
+			return 0;
+		}
 	}
-	return 0;
+	return -1;
 }
 
-static void
-mec_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+mec_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct mec_softc *sc = device_private(self);
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
+	int rv;
 
-	if (mec_mii_wait(sc) != 0) {
-		printf("timed out writing %x: %x\n", reg, val);
-		return;
+	if ((rv = mec_mii_wait(sc)) != 0) {
+		printf("timed out writing %x: %hx\n", reg, val);
+		return rv;
 	}
 
 	bus_space_write_8(st, sh, MEC_PHY_ADDRESS,
@@ -796,6 +799,8 @@ mec_mii_writereg(device_t self, int phy, int reg, int val)
 	delay(60);
 
 	mec_mii_wait(sc);
+
+	return 0;
 }
 
 static int
@@ -820,7 +825,7 @@ mec_mii_wait(struct mec_softc *sc)
 	}
 
 	printf("%s: MII timed out\n", device_xname(sc->sc_dev));
-	return 1;
+	return ETIMEDOUT;
 }
 
 static void

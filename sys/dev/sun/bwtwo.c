@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.35 2016/04/21 18:06:06 macallan Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.35.16.1 2019/01/26 22:00:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.35 2016/04/21 18:06:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.35.16.1 2019/01/26 22:00:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,6 +434,13 @@ bwtwo_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					}
 				}
 			}
+			return 0;
+		case WSDISPLAYIO_GET_FBINFO:
+			{
+				struct wsdisplayio_fbinfo *fbi = data;
+
+				return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+			}
 	}
 	return EPASSTHROUGH;
 }
@@ -441,8 +448,16 @@ bwtwo_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 paddr_t
 bwtwo_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	/* I'm not at all sure this is the right thing to do */
-	return bwtwommap(0, offset, prot); /* assume minor dev 0 for now */
+	struct vcons_data *vd = v;
+	struct bwtwo_softc *sc = vd->cookie;
+
+	if (offset < 0) return -1;
+	if (offset >= sc->sc_fb.fb_type.fb_size)
+		return -1;
+
+	return bus_space_mmap(sc->sc_bustag,
+		sc->sc_paddr, sc->sc_pixeloffset + offset,
+		prot, BUS_SPACE_MAP_LINEAR);
 }
 
 void

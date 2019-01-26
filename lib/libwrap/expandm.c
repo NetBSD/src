@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.8.2.2 2019/01/18 08:50:11 pgoyette Exp $	*/
+/*	$NetBSD: expandm.c,v 1.8.2.3 2019/01/26 21:59:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.8.2.2 2019/01/18 08:50:11 pgoyette Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.8.2.3 2019/01/26 21:59:58 pgoyette Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -56,20 +56,38 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 	buf = NULL;
 	for (ptr = fmt; (m = strstr(ptr, "%m")) != NULL; ptr = m + 2) {
 		size_t cnt = 0;
+		size_t nlen;
 
 		for (char *p = m; p >= ptr && *p == '%'; p--)
 			cnt++;
 
-		if (__predict_false((m - ptr) >= INT_MAX)) {
+		nlen = (size_t)(m - ptr);
+		/*
+		 * we can't exceed INT_MAX because int is used as 
+		 * a format width
+		 */
+		if (__predict_false(nlen >= INT_MAX)) {
 			size_t blen = buf ? strlen(buf) : 0;
-			size_t nlen = (size_t)(m - ptr);
+			size_t tlen;
 
-			nbuf = realloc(buf, blen + nlen + 1);
+			/*
+			 * if we would overflow a ptrdiff_t when computing
+			 * tlen, then don't bother.  The format string is
+			 * simply too large to be converted.
+			 */
+			if (blen >= PTRDIFF_MAX ||
+			    nlen >= PTRDIFF_MAX - blen ||
+			    nlen >= SIZE_T_MAX - blen)
+				goto out;
+
+			tlen = nlen + blen;
+
+			nbuf = realloc(buf, tlen + 1);
 			if (nbuf == NULL)
 				goto out;
 
 			memcpy(nbuf + blen, ptr, nlen);
-			nbuf[blen + nlen] = '\0';
+			nbuf[tlen] = '\0';
 			ptr += nlen;
 			buf = nbuf;
 		}

@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.19.2.4 2018/12/26 14:01:13 pgoyette Exp $
+$NetBSD: TODO.smpnet,v 1.19.2.5 2019/01/26 21:58:14 pgoyette Exp $
 
 MP-safe components
 ==================
@@ -190,3 +190,16 @@ for packet transmissions, resulting in serializing all Tx packet processing on
 the queue.  We should probably design and implement an alternative queuing
 mechanism that deals with multi-core systems at the first place, not making the
 existing ALTQ MP-safe because it's just annoying.
+
+Using kernel modules
+--------------------
+
+Please note that if you enable NET_MPSAFE in your kernel, and you use and
+loadable kernel modules (including compat_xx modules or individual network
+interface if_xxx device driver modules), you will need to build custom
+modules.  For each module you will need to add the following line to its
+Makefile:
+
+	CPPFLAGS+=	NET_MPSAFE
+
+Failure to do this may result in unpredictable behavior.

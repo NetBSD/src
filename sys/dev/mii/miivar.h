@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.62.26.1 2019/01/18 08:50:26 pgoyette Exp $	*/
+/*	$NetBSD: miivar.h,v 1.62.26.2 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -48,8 +48,8 @@ struct mii_softc;
 /*
  * Callbacks from MII layer into network interface device driver.
  */
-typedef	int (*mii_readreg_t)(device_t, int, int);
-typedef	void (*mii_writereg_t)(device_t, int, int, int);
+typedef	int (*mii_readreg_t)(device_t, int, int, uint16_t *);
+typedef	int (*mii_writereg_t)(device_t, int, int, uint16_t);
 typedef	void (*mii_statchg_t)(struct ifnet *);
 
 /*
@@ -126,8 +126,8 @@ struct mii_softc {
 	struct mii_data *mii_pdata;	/* pointer to parent's mii_data */
 
 	int mii_flags;			/* misc. flags; see below */
-	int mii_capabilities;		/* capabilities from BMSR */
-	int mii_extcapabilities;	/* extended capabilities */
+	uint16_t mii_capabilities;	/* capabilities from BMSR */
+	uint16_t mii_extcapabilities;	/* extended capabilities from EXTSR */
 	int mii_ticks;			/* MII_TICK counter */
 	int mii_anegticks;		/* ticks before retrying aneg */
 
@@ -171,9 +171,9 @@ typedef struct mii_softc mii_softc_t;
 struct mii_attach_args {
 	struct mii_data *mii_data;	/* pointer to parent data */
 	int mii_phyno;			/* MII address */
-	u_int mii_id1;			/* PHY ID register 1 */
-	u_int mii_id2;			/* PHY ID register 2 */
-	int mii_capmask;		/* capability mask from BMSR */
+	uint16_t mii_id1;		/* PHY ID register 1 */
+	uint16_t mii_id2;		/* PHY ID register 2 */
+	uint16_t mii_capmask;		/* capability mask from BMSR */
 	int mii_flags;			/* flags from parent */
 };
 typedef struct mii_attach_args mii_attach_args_t;
@@ -210,9 +210,9 @@ struct mii_media {
 
 #ifdef _KERNEL
 
-#define	PHY_READ(p, r) \
+#define	PHY_READ(p, r, v)					    \
 	(*(p)->mii_pdata->mii_readreg)(device_parent((p)->mii_dev), \
-	    (p)->mii_phy, (r))
+	    (p)->mii_phy, (r), (v))
 
 #define	PHY_WRITE(p, r, v) \
 	(*(p)->mii_pdata->mii_writereg)(device_parent((p)->mii_dev), \

@@ -1,9 +1,9 @@
-/*	$NetBSD: sljitConfig.h,v 1.14 2016/05/29 17:19:01 alnsn Exp $	*/
+/*	$NetBSD: sljitConfig.h,v 1.14.16.1 2019/01/26 22:00:25 pgoyette Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
  *
- *    Copyright 2009-2012 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -126,7 +126,7 @@
 /* --------------------------------------------------------------------- */
 
 /* If SLJIT_STD_MACROS_DEFINED is not defined, the application should
-   define SLJIT_MALLOC, SLJIT_FREE, SLJIT_MEMMOVE, and NULL. */
+   define SLJIT_MALLOC, SLJIT_FREE, SLJIT_MEMCPY, and NULL. */
 #ifndef SLJIT_STD_MACROS_DEFINED
 /* Disabled by default. */
 #define SLJIT_STD_MACROS_DEFINED 0
@@ -134,10 +134,20 @@
 
 /* Executable code allocation:
    If SLJIT_EXECUTABLE_ALLOCATOR is not defined, the application should
-   define both SLJIT_MALLOC_EXEC and SLJIT_FREE_EXEC. */
+   define SLJIT_MALLOC_EXEC, SLJIT_FREE_EXEC, and SLJIT_EXEC_OFFSET. */
 #ifndef SLJIT_EXECUTABLE_ALLOCATOR
 /* Enabled by default. */
 #define SLJIT_EXECUTABLE_ALLOCATOR 1
+
+/* When SLJIT_PROT_EXECUTABLE_ALLOCATOR is enabled SLJIT uses
+   an allocator which does not set writable and executable
+   permission flags at the same time. The trade-of is increased
+   memory consumption and disabled dynamic code modifications. */
+#ifndef SLJIT_PROT_EXECUTABLE_ALLOCATOR
+/* Disabled by default. */
+#define SLJIT_PROT_EXECUTABLE_ALLOCATOR 0
+#endif
+
 #endif
 
 /* Force cdecl calling convention even if a better calling

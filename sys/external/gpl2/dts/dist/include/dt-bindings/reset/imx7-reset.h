@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7-reset.h,v 1.1.1.1 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: imx7-reset.h,v 1.1.1.1.6.1 2019/01/26 22:00:36 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2017 Impinj, Inc.
@@ -58,7 +58,9 @@
 #define IMX7_RESET_DDRC_PRST		23
 #define IMX7_RESET_DDRC_CORE_RST	24
 
-#define IMX7_RESET_NUM			25
+#define IMX7_RESET_PCIE_CTRL_APPS_TURNOFF 25
+
+#define IMX7_RESET_NUM			26
 
 #endif
 

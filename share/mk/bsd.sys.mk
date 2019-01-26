@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.275.2.6 2019/01/18 08:50:12 pgoyette Exp $
+#	$NetBSD: bsd.sys.mk,v 1.275.2.7 2019/01/26 21:59:58 pgoyette Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -256,6 +256,7 @@ OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
 STRIP?=		strip
+MV?=		mv -f
 
 .SUFFIXES:	.o .ln .lo .c .cc .cpp .cxx .C .m ${YHEADER:D.h}
 
@@ -295,13 +296,13 @@ STRIP?=		strip
 .c.lo:
 	${_MKTARGET_COMPILE}
 	${HOST_COMPILE.c} -o ${.TARGET}.o ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-	mv ${.TARGET}.o ${.TARGET}
+	${MV} ${.TARGET}.o ${.TARGET}
 
 # C++
 .cc.lo .cpp.lo .cxx.lo .C.lo:
 	${_MKTARGET_COMPILE}
 	${HOST_COMPILE.cc} -o ${.TARGET}.o ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-	mv ${.TARGET}.o ${.TARGET}
+	${MV} ${.TARGET}.o ${.TARGET}
 
 # Assembly
 .s.o:

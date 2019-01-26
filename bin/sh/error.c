@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.41 2017/07/24 12:35:12 kre Exp $	*/
+/*	$NetBSD: error.c,v 1.41.2.1 2019/01/26 21:58:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.41 2017/07/24 12:35:12 kre Exp $");
+__RCSID("$NetBSD: error.c,v 1.41.2.1 2019/01/26 21:58:12 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ static void exverror(int, const char *, va_list) __dead;
 void
 exraise(int e)
 {
+	CTRACE(DBG_ERRS, ("exraise(%d)\n", e));
 	if (handler == NULL)
 		abort();
 	exception = e;

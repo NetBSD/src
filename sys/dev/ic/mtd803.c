@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.33.14.3 2018/09/06 06:55:49 pgoyette Exp $ */
+/* $NetBSD: mtd803.c,v 1.33.14.4 2019/01/26 22:00:06 pgoyette Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.14.3 2018/09/06 06:55:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.14.4 2019/01/26 22:00:06 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -104,8 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.14.3 2018/09/06 06:55:49 pgoyette Ex
 
 #define ETHER_CRC32(buf, len)	(ether_crc32_be((buf), (len)))
 
-int mtd_mii_readreg(device_t, int, int);
-void mtd_mii_writereg(device_t, int, int, int);
+int mtd_mii_readreg(device_t, int, int, uint16_t *);
+int mtd_mii_writereg(device_t, int, int, uint16_t);
 void mtd_mii_statchg(struct ifnet *);
 
 void mtd_start(struct ifnet *);
@@ -402,20 +402,24 @@ mtd_mii_statchg(struct ifnet *ifp)
 
 
 int
-mtd_mii_readreg(device_t self, int phy, int reg)
+mtd_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct mtd_softc *sc = device_private(self);
 
-	return (MTD_READ_2(sc, MTD_PHYBASE + reg * 2));
+	*val = MTD_READ_2(sc, MTD_PHYBASE + reg * 2);
+
+	return 0;
 }
 
 
-void
-mtd_mii_writereg(device_t self, int phy, int reg, int val)
+int
+mtd_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct mtd_softc *sc = device_private(self);
 
 	MTD_WRITE_2(sc, MTD_PHYBASE + reg * 2, val);
+
+	return 0;
 }
 
 

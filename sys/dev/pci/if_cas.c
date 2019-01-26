@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.26.14.3 2018/12/26 14:01:50 pgoyette Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.26.14.4 2019/01/26 22:00:07 pgoyette Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26.14.3 2018/12/26 14:01:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26.14.4 2019/01/26 22:00:07 pgoyette Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -141,11 +141,11 @@ void		cas_iff(struct cas_softc *);
 int		cas_encap(struct cas_softc *, struct mbuf *, u_int32_t *);
 
 /* MII methods & callbacks */
-int		cas_mii_readreg(device_t, int, int);
-void		cas_mii_writereg(device_t, int, int, int);
+int		cas_mii_readreg(device_t, int, int, uint16_t*);
+int		cas_mii_writereg(device_t, int, int, uint16_t);
 void		cas_mii_statchg(struct ifnet *);
-int		cas_pcs_readreg(device_t, int, int);
-void		cas_pcs_writereg(device_t, int, int, int);
+int		cas_pcs_readreg(device_t, int, int, uint16_t *);
+int		cas_pcs_writereg(device_t, int, int, uint16_t);
 
 int		cas_mediachange(struct ifnet *);
 void		cas_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -1535,7 +1535,7 @@ cas_mifinit(struct cas_softc *sc)
  *
  */
 int
-cas_mii_readreg(device_t self, int phy, int reg)
+cas_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct cas_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_memt;
@@ -1556,16 +1556,18 @@ cas_mii_readreg(device_t self, int phy, int reg)
 	for (n = 0; n < 100; n++) {
 		DELAY(1);
 		v = bus_space_read_4(t, mif, CAS_MIF_FRAME);
-		if (v & CAS_MIF_FRAME_TA0)
-			return (v & CAS_MIF_FRAME_DATA);
+		if (v & CAS_MIF_FRAME_TA0) {
+			*val = v & CAS_MIF_FRAME_DATA;
+			return 0;
+		}
 	}
 
 	printf("%s: mii_read timeout\n", device_xname(sc->sc_dev));
-	return (0);
+	return ETIMEDOUT;
 }
 
-void
-cas_mii_writereg(device_t self, int phy, int reg, int val)
+int
+cas_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct cas_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_memt;
@@ -1590,10 +1592,11 @@ cas_mii_writereg(device_t self, int phy, int reg, int val)
 		DELAY(1);
 		v = bus_space_read_4(t, mif, CAS_MIF_FRAME);
 		if (v & CAS_MIF_FRAME_TA0)
-			return;
+			return 0;
 	}
 
 	printf("%s: mii_write timeout\n", device_xname(sc->sc_dev));
+	return ETIMEDOUT;
 }
 
 void
@@ -1647,7 +1650,7 @@ cas_mii_statchg(struct ifnet *ifp)
 }
 
 int
-cas_pcs_readreg(device_t self, int phy, int reg)
+cas_pcs_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct cas_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_memt;
@@ -1659,7 +1662,7 @@ cas_pcs_readreg(device_t self, int phy, int reg)
 #endif
 
 	if (phy != CAS_PHYAD_EXTERNAL)
-		return (0);
+		return -1;
 
 	switch (reg) {
 	case MII_BMCR:
@@ -1675,16 +1678,18 @@ cas_pcs_readreg(device_t self, int phy, int reg)
 		reg = CAS_MII_ANLPAR;
 		break;
 	case MII_EXTSR:
-		return (EXTSR_1000XFDX|EXTSR_1000XHDX);
+		*val = EXTSR_1000XFDX | EXTSR_1000XHDX;
+		return 0;
 	default:
 		return (0);
 	}
 
-	return bus_space_read_4(t, pcs, reg);
+	*val = bus_space_read_4(t, pcs, reg) & 0xffff;
+	return 0;
 }
 
-void
-cas_pcs_writereg(device_t self, int phy, int reg, int val)
+int
+cas_pcs_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct cas_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_memt;
@@ -1698,7 +1703,7 @@ cas_pcs_writereg(device_t self, int phy, int reg, int val)
 #endif
 
 	if (phy != CAS_PHYAD_EXTERNAL)
-		return;
+		return -1;
 
 	if (reg == MII_ANAR)
 		bus_space_write_4(t, pcs, CAS_MII_CONFIG, 0);
@@ -1718,7 +1723,7 @@ cas_pcs_writereg(device_t self, int phy, int reg, int val)
 		reg = CAS_MII_ANLPAR;
 		break;
 	default:
-		return;
+		return 0;
 	}
 
 	bus_space_write_4(t, pcs, reg, val);
@@ -1729,6 +1734,8 @@ cas_pcs_writereg(device_t self, int phy, int reg, int val)
 	if (reg == CAS_MII_ANAR || reset)
 		bus_space_write_4(t, pcs, CAS_MII_CONFIG,
 		    CAS_MII_CONFIG_ENABLE);
+
+	return 0;
 }
 
 int

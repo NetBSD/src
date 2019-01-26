@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.372.8.3 2019/01/18 08:50:12 pgoyette Exp $
+#	$NetBSD: bsd.lib.mk,v 1.372.8.4 2019/01/26 21:59:58 pgoyette Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -663,7 +663,7 @@ ${_LIB.so.full}: ${_LIB.so.link} ${_LIB.so.debug}
 	(  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
 		--add-gnu-debuglink=${_LIB.so.debug} \
 		${_LIB.so.link} ${_LIB.so.full}.tmp && \
-		mv -f ${_LIB.so.full}.tmp ${_LIB.so.full} \
+		${MV} ${_LIB.so.full}.tmp ${_LIB.so.full} \
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.link}: ${_MAINLIBDEPS}
 .else # aka no MKDEBUG
@@ -678,7 +678,7 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}.tmp
 .endif
-	mv -f ${.TARGET}.tmp ${.TARGET}
+	${MV} ${.TARGET}.tmp ${.TARGET}
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
@@ -687,10 +687,10 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
     "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
 	${HOST_LN} -sf ${_LIB.so.full} ${_LIB.so.major}.tmp
-	mv -f ${_LIB.so.major}.tmp ${_LIB.so.major}
+	${MV} ${_LIB.so.major}.tmp ${_LIB.so.major}
 .endif
 	${HOST_LN} -sf ${_LIB.so.full} ${_LIB.so}.tmp
-	mv -f ${_LIB.so}.tmp ${_LIB.so}
+	${MV} ${_LIB.so}.tmp ${_LIB.so}
 
 .if !empty(LOBJS)							# {
 LLIBS?=		-lc

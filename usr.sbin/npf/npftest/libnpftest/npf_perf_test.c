@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_perf_test.c,v 1.5.12.1 2018/09/30 01:46:01 pgoyette Exp $	*/
+/*	$NetBSD: npf_perf_test.c,v 1.5.12.2 2019/01/26 22:00:39 pgoyette Exp $	*/
 
 /*
  * NPF benchmarking.

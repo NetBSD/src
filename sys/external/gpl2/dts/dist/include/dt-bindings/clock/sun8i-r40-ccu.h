@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-r40-ccu.h,v 1.1.1.1 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-r40-ccu.h,v 1.1.1.1.4.1 2019/01/26 22:00:34 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2017 Icenowy Zheng <icenowy@aosc.io>
@@ -44,6 +44,10 @@
 
 #ifndef _DT_BINDINGS_CLK_SUN8I_R40_H_
 #define _DT_BINDINGS_CLK_SUN8I_R40_H_
+
+#define CLK_PLL_VIDEO0		7
+
+#define CLK_PLL_VIDEO1		16
 
 #define CLK_CPU			24
 

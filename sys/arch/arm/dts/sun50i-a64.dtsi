@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.4.4.1 2018/05/21 04:35:59 pgoyette Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.4.4.2 2019/01/26 22:00:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -63,14 +63,6 @@
 	};
 
 	soc {
-		pwm: pwm@1c21400 {
-			compatible = "allwinner,sun50i-a64-pwm";
-			reg = <0x01c21400 0x8>;
-			clocks = <&osc24M>;
-			#pwm-cells = <3>;
-			status = "disabled";
-		};
-
 		dai: dai@1c22c00 {
 			#sound-dai-cells = <0>;
 			compatible = "allwinner,sun50i-a64-acodec-i2s";
@@ -115,11 +107,4 @@
 
 &cpu0 {
 	clocks = <&ccu 1>; /* 1=CLK_PLL_CPUX */
-};
-
-&pio {
-	pwm0_pins: pwm0 {
-		pins = "PD22";
-		function = "pwm";
-	};
 };

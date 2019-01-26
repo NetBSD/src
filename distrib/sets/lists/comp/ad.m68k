@@ -1,13 +1,15 @@
-# $NetBSD: ad.m68k,v 1.55.2.3 2018/10/20 06:58:17 pgoyette Exp $
+# $NetBSD: ad.m68k,v 1.55.2.4 2019/01/26 21:58:13 pgoyette Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.5/math-68881.h		comp-c-include		obsolete
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-4.8/math-68881.h		comp-c-include		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-5/math-68881.h		comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
-./usr/include/gcc-6/math-68881.h		comp-c-include		gcccmds,gcc=6
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-5/math-68881.h		comp-obsolete		obsolete
+./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-6/math-68881.h		comp-c-include		gcc=6
+./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-7/math-68881.h		comp-c-include		gcc=7
+./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/m68k				comp-c-include
 ./usr/include/m68k/ansi.h			comp-c-include
 ./usr/include/m68k/aout_machdep.h		comp-c-include

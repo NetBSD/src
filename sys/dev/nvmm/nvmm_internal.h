@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.1.2.3 2018/12/26 14:01:49 pgoyette Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.1.2.4 2019/01/26 22:00:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@ struct nvmm_cpu {
 	bool present;
 	nvmm_cpuid_t cpuid;
 	kmutex_t lock;
+
+	/* State buffer. */
+	void *state;
 
 	/* Last host CPU on which the VCPU ran. */
 	int hcpu_last;

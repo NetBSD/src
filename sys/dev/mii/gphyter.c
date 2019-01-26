@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.30 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.30.16.1 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.30 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.30.16.1 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ gphyterattach(device_t parent, device_t self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
-	int anar, strap;
+	uint16_t anar, strap;
 
 	mpd = mii_phy_match(ma, gphyters);
 	aprint_naive(": Media interface\n");
@@ -146,9 +146,10 @@ gphyterattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
 	/*
 	 * The Gig PHYTER seems to have the 10baseT BMSR bits
@@ -157,7 +158,7 @@ gphyterattach(device_t parent, device_t self, void *aux)
 	 * ANAR, who's 10baseT-related bits are set by strapping
 	 * pin 180, and fake the BMSR bits.
 	 */
-	anar = PHY_READ(sc, MII_ANAR);
+	PHY_READ(sc, MII_ANAR, &anar);
 	if (anar & ANAR_10)
 		sc->mii_capabilities |= (BMSR_10THDX & ma->mii_capmask);
 	if (anar & ANAR_10_FD)
@@ -171,7 +172,7 @@ gphyterattach(device_t parent, device_t self, void *aux)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
 
-	strap = PHY_READ(sc, MII_GPHYTER_STRAP);
+	PHY_READ(sc, MII_GPHYTER_STRAP, &strap);
 	aprint_normal_dev(self, "strapped to %s mode",
 	    (strap & STRAP_MS_VAL) ? "master" : "slave");
 	if (strap & STRAP_NC_MODE)
@@ -183,7 +184,7 @@ static int
 gphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	uint16_t reg;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -200,7 +201,7 @@ gphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
@@ -243,19 +244,20 @@ gphyter_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, physup, gtsr;
+	uint16_t bmsr, bmcr, physup, gtsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 
-	physup = PHY_READ(sc, MII_GPHYTER_PHY_SUP);
+	PHY_READ(sc, MII_GPHYTER_PHY_SUP, &physup);
 
 	if (physup & PHY_SUP_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -279,7 +281,7 @@ gphyter_status(struct mii_softc *sc)
 		switch (physup & (PHY_SUP_SPEED1|PHY_SUP_SPEED0)) {
 		case PHY_SUP_SPEED1:
 			mii->mii_media_active |= IFM_1000_T;
-			gtsr = PHY_READ(sc, MII_100T2SR);
+			PHY_READ(sc, MII_100T2SR, &gtsr);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
@@ -308,7 +310,8 @@ gphyter_status(struct mii_softc *sc)
 void
 gphyter_reset(struct mii_softc *sc)
 {
-	int reg, i;
+	int i;
+	uint16_t reg;
 
 	if (sc->mii_flags & MIIF_NOISOLATE)
 		reg = BMCR_RESET;
@@ -328,7 +331,7 @@ gphyter_reset(struct mii_softc *sc)
 
 	/* Wait another 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(sc, MII_BMCR);
+		PHY_READ(sc, MII_BMCR, &reg);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);

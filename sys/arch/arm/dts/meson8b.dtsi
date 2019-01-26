@@ -1,0 +1,154 @@
+/* $NetBSD: meson8b.dtsi,v 1.5.2.2 2019/01/26 22:00:00 pgoyette Exp $ */
+
+/*-
+ * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#define	CLKID_PERIPH	126
+
+/ {
+	timer@c4300200 {
+		compatible = "arm,cortex-a5-global-timer";
+		reg = <0xc4300200 0x20>;
+		interrupts = <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_EDGE_RISING)>;
+		clocks = <&clkc CLKID_PERIPH>;
+	};
+
+	genfb: fb@c8006000 {
+		compatible = "amlogic,meson8b-fb";
+		reg = <0xc8006000 0x400>,	/* DMC */
+		      <0xd0040000 0x10000>,	/* HDMI */
+		      <0xd0100000 0x100000>;	/* VPU */
+		status = "disabled";
+	};
+
+	cpu_opp_table: opp-table {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-96000000 {
+			opp-hz = /bits/ 64 <96000000>;
+			opp-microvolt = <860000>;
+		};
+		opp-192000000 {
+			opp-hz = /bits/ 64 <192000000>;
+			opp-microvolt = <860000>;
+		};
+		opp-312000000 {
+			opp-hz = /bits/ 64 <312000000>;
+			opp-microvolt = <860000>;
+		};
+		opp-408000000 {
+			opp-hz = /bits/ 64 <408000000>;
+			opp-microvolt = <860000>;
+		};
+		opp-504000000 {
+			opp-hz = /bits/ 64 <504000000>;
+			opp-microvolt = <860000>;
+		};
+		opp-600000000 {
+			opp-hz = /bits/ 64 <600000000>;
+			opp-microvolt = <860000>;
+		};
+		opp-720000000 {
+			opp-hz = /bits/ 64 <720000000>;
+			opp-microvolt = <860000>;
+		};
+		opp-816000000 {
+			opp-hz = /bits/ 64 <816000000>;
+			opp-microvolt = <900000>;
+		};
+		opp-1008000000 {
+			opp-hz = /bits/ 64 <1008000000>;
+			opp-microvolt = <1140000>;
+		};
+		opp-1200000000 {
+			opp-hz = /bits/ 64 <1200000000>;
+			opp-microvolt = <1140000>;
+		};
+		opp-1320000000 {
+			opp-hz = /bits/ 64 <1320000000>;
+			opp-microvolt = <1140000>;
+		};
+		opp-1488000000 {
+			opp-hz = /bits/ 64 <1488000000>;
+			opp-microvolt = <1140000>;
+		};
+		opp-1536000000 {
+			opp-hz = /bits/ 64 <1536000000>;
+			opp-microvolt = <1140000>;
+		};
+	};
+};
+
+&cpu0 {
+	operating-points-v2 = <&cpu_opp_table>;
+	clocks = <&clkc CLKID_CPUCLK>;
+};
+
+&cpu1 {
+	operating-points-v2 = <&cpu_opp_table>;
+	clocks = <&clkc CLKID_CPUCLK>;
+};
+
+&cpu2 {
+	operating-points-v2 = <&cpu_opp_table>;
+	clocks = <&clkc CLKID_CPUCLK>;
+};
+
+&cpu3 {
+	operating-points-v2 = <&cpu_opp_table>;
+	clocks = <&clkc CLKID_CPUCLK>;
+};
+
+&pinctrl_cbus {
+	sdxc_c_pins: sdxc-c {
+		mux {
+			groups = "sdxc_d0_c", "sdxc_d13_c", "sdxc_d47_c", "sdxc_clk_c", "sdxc_cmd_c";
+			function = "sdxc_c";
+		};
+	};
+};
+
+&cbus {
+	sdhc: mmc@8e00 {
+		compatible = "amlogic,meson8b-sdhc";
+		reg = <0x8e00 0x30>;
+		interrupts = <GIC_SPI 78 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&clkc CLKID_SDHC>, <&clkc CLKID_FCLK_DIV3>;
+		clock-names = "core", "clkin";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+};
+
+&aobus {
+	rtc: rtc@740 {
+		compatible = "amlogic,meson8b-rtc";
+		reg = <0x740 0x14>;
+		interrupts = <GIC_SPI 72 IRQ_TYPE_EDGE_RISING>;
+	};
+};

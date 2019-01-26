@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.64 2018/02/07 06:19:43 mrg Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.64.2.1 2019/01/26 22:00:37 pgoyette Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.64 2018/02/07 06:19:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.64.2.1 2019/01/26 22:00:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -439,8 +439,15 @@ ppptioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
     struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
     int error, s;
 
-    if (sc == NULL || tp != (struct tty *) sc->sc_devp)
-	return (EPASSTHROUGH);
+    if (sc == NULL)
+        return (EPASSTHROUGH);
+
+    KERNEL_LOCK(1, NULL);
+
+    if (tp != (struct tty *) sc->sc_devp) {
+        error = EPASSTHROUGH;
+        goto out;
+    }
 
     error = 0;
     switch (cmd) {
@@ -492,6 +499,8 @@ ppptioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	    pppgetm(sc);
     }
 
+ out:
+    KERNEL_UNLOCK_ONE(NULL);
     return error;
 }
 

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.2.2.4 2018/11/26 01:52:52 pgoyette Exp $
+$NetBSD: version,v 1.2.2.5 2019/01/26 22:00:37 pgoyette Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -12,3 +12,4 @@ is taken as the current.
 1.5:	EFI runtime support.
 1.6:	Add GPT support.
 1.7:	Add NFS support.
+1.8:	Add support for "bootargs" environment variable.

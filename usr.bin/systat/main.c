@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53.2.1 2018/12/26 14:02:11 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.53.2.2 2019/01/26 22:00:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.53.2.1 2018/12/26 14:02:11 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.53.2.2 2019/01/26 22:00:39 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: main.c,v 1.53.2.1 2018/12/26 14:02:11 pgoyette Exp $");
 
 #include "systat.h"
 #include "extern.h"
+#include "drvstats.h"
 
 static int     dellave;
 
@@ -78,6 +79,8 @@ int     turns = 2;	/* stay how many refresh-turns in 'all' mode? */
 int     allflag;
 int     allcounter;
 sig_atomic_t needsredraw = 0;
+float	hertz;
+double	etime;
 
 static	WINDOW *wload;			/* one line window for load average */
 
@@ -332,7 +335,6 @@ display(int signo)
 void
 redraw(void)
 {
-	resizeterm(LINES, COLS);
 	CMDLINE = LINES - 1;
 	labels();
 
@@ -416,4 +418,31 @@ nlisterr(struct nlist name_list[])
 	refresh();
 	endwin();
 	exit(1);
+}
+
+bool
+toofast(int *failcnt)
+{
+	static char pigs[] = "pigs";
+	etime = cur.cp_etime;
+	/* < 1 ticks - sleep for a tick */
+	/* this is often triggered by repeated SIGWINCH */
+	if ((etime * hertz) >= 1.0)
+		return false;
+
+	if ((*failcnt)++ <= MAXFAIL) {
+		struct timespec interval = { 0, 1000000000L / hertz };
+		while (nanosleep(&interval, &interval) == -1)
+			continue;
+		return true;
+	}
+	clear();
+	mvprintw(2, 10, "The alternate system clock has died!");
+	mvprintw(3, 10, "Reverting to ``pigs'' display.");
+	move(CMDLINE, 0);
+	refresh();
+	failcnt = 0;
+	sleep(5);
+	command(pigs);
+	return true;
 }

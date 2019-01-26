@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.13 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.13.26.1 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.13 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.13.26.1 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,16 +58,17 @@ ukphy_status(struct mii_softc *phy)
 {
 	struct mii_data *mii = phy->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, anlpar, gtcr, gtsr;
+	uint16_t bmsr, bmcr, anar, anlpar, gtcr, gtsr, result;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(phy, MII_BMSR) | PHY_READ(phy, MII_BMSR);
+	PHY_READ(phy, MII_BMSR, &bmsr);
+	PHY_READ(phy, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(phy, MII_BMCR);
+	PHY_READ(phy, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -89,12 +90,14 @@ ukphy_status(struct mii_softc *phy)
 			return;
 		}
 
-		anlpar = PHY_READ(phy, MII_ANAR) & PHY_READ(phy, MII_ANLPAR);
+		PHY_READ(phy, MII_ANAR, &anar);
+		PHY_READ(phy, MII_ANLPAR, &anlpar);
+		result = anar & anlpar;
 		if ((phy->mii_flags & MIIF_HAVE_GTCR) != 0 &&
 		    (phy->mii_extcapabilities &
 			(EXTSR_1000THDX | EXTSR_1000TFDX)) != 0) {
-			gtcr = PHY_READ(phy, MII_100T2CR);
-			gtsr = PHY_READ(phy, MII_100T2SR);
+			PHY_READ(phy, MII_100T2CR, &gtcr);
+			PHY_READ(phy, MII_100T2SR, &gtsr);
 		} else
 			gtcr = gtsr = 0;
 
@@ -103,15 +106,15 @@ ukphy_status(struct mii_softc *phy)
 		else if ((gtcr & GTCR_ADV_1000THDX) &&
 			 (gtsr & GTSR_LP_1000THDX))
 			mii->mii_media_active |= IFM_1000_T|IFM_HDX;
-		else if (anlpar & ANLPAR_TX_FD)
+		else if (result & ANLPAR_TX_FD)
 			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-		else if (anlpar & ANLPAR_T4)
+		else if (result & ANLPAR_T4)
 			mii->mii_media_active |= IFM_100_T4|IFM_HDX;
-		else if (anlpar & ANLPAR_TX)
+		else if (result & ANLPAR_TX)
 			mii->mii_media_active |= IFM_100_TX|IFM_HDX;
-		else if (anlpar & ANLPAR_10_FD)
+		else if (result & ANLPAR_10_FD)
 			mii->mii_media_active |= IFM_10_T|IFM_FDX;
-		else if (anlpar & ANLPAR_10)
+		else if (result & ANLPAR_10)
 			mii->mii_media_active |= IFM_10_T|IFM_HDX;
 		else
 			mii->mii_media_active |= IFM_NONE;

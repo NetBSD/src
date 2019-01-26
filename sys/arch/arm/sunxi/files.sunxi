@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.42.2.7 2019/01/18 08:50:15 pgoyette Exp $
+#	$NetBSD: files.sunxi,v 1.42.2.8 2019/01/26 22:00:01 pgoyette Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -296,6 +296,16 @@ file	arch/arm/sunxi/sunxi_can.c		sunxi_can
 device	sunxilradc
 attach	sunxilradc at fdt with sunxi_lradc
 file	arch/arm/sunxi/sunxi_lradc.c		sunxi_lradc
+
+# DE2 bus
+device	sunxide2bus { }: fdt, sunxi_sramc
+attach	sunxide2bus at fdt with sunxi_de2bus
+file	arch/arm/sunxi/sunxi_de2.c		sunxi_de2bus
+
+# DE2 clocks
+device	sunxide2ccu: sunxi_ccu
+attach	sunxide2ccu at fdt with sunxi_de2ccu
+file	arch/arm/sunxi/sunxi_de2_ccu.c		sunxi_de2ccu
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.5 2015/08/30 18:27:26 dholland Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.5.14.1 2019/01/26 22:00:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -128,6 +128,8 @@ cleaner(void *arg)
 	const char *the_argv[7];
 	char buf[64];
 
+	rump_pub_lwproc_newlwp(rump_sys_getpid());
+
 	/* this inspired by the cleaner code.  fixme */
 	sprintf(thepath, "/dev/r%s", args->ta_devpath+5);
 	rump_pub_etfs_register(thepath, args->ta_hostpath, RUMP_ETFS_CHR);
@@ -145,6 +147,8 @@ cleaner(void *arg)
 	opterr = 1;
 
 	lfs_cleaner_main(5, __UNCONST(the_argv));
+
+	rump_pub_lwproc_releaselwp();
 
 	return NULL;
 }

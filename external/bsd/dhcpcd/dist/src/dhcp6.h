@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -232,6 +232,7 @@ ssize_t dhcp6_env(char **, const char *, const struct interface *,
 void dhcp6_free(struct interface *);
 void dhcp6_handleifa(int, struct ipv6_addr *, pid_t);
 int dhcp6_dadcompleted(const struct interface *);
+void dhcp6_abort(struct interface *);
 void dhcp6_drop(struct interface *, const char *);
 void dhcp6_dropnondelegates(struct interface *ifp);
 int dhcp6_dump(struct interface *);

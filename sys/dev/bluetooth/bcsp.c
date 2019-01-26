@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.30 2016/08/15 08:20:11 maxv Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.30.14.1 2019/01/26 22:00:05 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.30 2016/08/15 08:20:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.30.14.1 2019/01/26 22:00:05 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -466,6 +466,12 @@ bcspioctl(struct tty *tp, u_long cmd, void *data, int flag __unused,
 {
 	struct bcsp_softc *sc = tp->t_sc;
 	int error;
+
+	/*
+	 * XXX
+	 * This function can be called without KERNEL_LOCK when caller's
+	 * struct cdevsw is set D_MPSAFE. Is KERNEL_LOCK required?
+	 */
 
 	if (sc == NULL || tp != sc->sc_tp)
 		return EPASSTHROUGH;

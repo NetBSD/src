@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.84.2.6 2019/01/18 08:50:43 pgoyette Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.84.2.7 2019/01/26 22:00:24 pgoyette Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.84.2.6 2019/01/18 08:50:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.84.2.7 2019/01/26 22:00:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -258,10 +258,10 @@ static int	axe_ioctl(struct ifnet *, u_long, void *);
 static int	axe_init(struct ifnet *);
 static void	axe_stop(struct ifnet *, int);
 static void	axe_watchdog(struct ifnet *);
-static int	axe_miibus_readreg_locked(device_t, int, int);
-static int	axe_miibus_readreg(device_t, int, int);
-static void	axe_miibus_writereg_locked(device_t, int, int, int);
-static void	axe_miibus_writereg(device_t, int, int, int);
+static int	axe_miibus_readreg_locked(device_t, int, int, uint16_t *);
+static int	axe_miibus_readreg(device_t, int, int, uint16_t *);
+static int	axe_miibus_writereg_locked(device_t, int, int, uint16_t);
+static int	axe_miibus_writereg(device_t, int, int, uint16_t);
 static void	axe_miibus_statchg(struct ifnet *);
 static int	axe_cmd(struct axe_softc *, int, int, int, void *);
 static void	axe_reset(struct axe_softc *);
@@ -326,25 +326,25 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 }
 
 static int
-axe_miibus_readreg_locked(device_t dev, int phy, int reg)
+axe_miibus_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
 	struct axe_softc *sc = device_private(dev);
 	usbd_status err;
-	uint16_t val;
+	uint16_t data;
 
 	DPRINTFN(30, "phy 0x%jx reg 0x%jx\n", phy, reg, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_SW, 0, 0, NULL);
 
-	err = axe_cmd(sc, AXE_CMD_MII_READ_REG, reg, phy, &val);
+	err = axe_cmd(sc, AXE_CMD_MII_READ_REG, reg, phy, &data);
 	axe_cmd(sc, AXE_CMD_MII_OPMODE_HW, 0, 0, NULL);
 	if (err) {
 		aprint_error_dev(sc->axe_dev, "read PHY failed\n");
-		return -1;
+		return err;
 	}
 
-	val = le16toh(val);
+	*val = le16toh(data);
 	if (AXE_IS_772(sc) && reg == MII_BMSR) {
 		/*
 		 * BMSR of AX88772 indicates that it supports extended
@@ -352,35 +352,35 @@ axe_miibus_readreg_locked(device_t dev, int phy, int reg)
 		 * reserved for embedded ethernet PHY. So clear the
 		 * extended capability bit of BMSR.
 		 */
-		 val &= ~BMSR_EXTCAP;
+		*val &= ~BMSR_EXTCAP;
 	}
 
-	DPRINTFN(30, "phy 0x%jx reg 0x%jx val %#jx", phy, reg, val, 0);
+	DPRINTFN(30, "phy 0x%jx reg 0x%jx val %#jx", phy, reg, *val, 0);
 
-	return val;
+	return 0;
 }
 
 static int
-axe_miibus_readreg(device_t dev, int phy, int reg)
+axe_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct axe_softc *sc = device_private(dev);
-	int val;
+	int rv;
 
 	if (sc->axe_dying)
-		return 0;
+		return -1;
 
 	if (sc->axe_phyno != phy)
-		return 0;
+		return -1;
 
 	axe_lock_mii(sc);
-	val = axe_miibus_readreg_locked(dev, phy, reg);
+	rv = axe_miibus_readreg_locked(dev, phy, reg, val);
 	axe_unlock_mii(sc);
 
-	return val;
+	return rv;
 }
 
-static void
-axe_miibus_writereg_locked(device_t dev, int phy, int reg, int aval)
+static int
+axe_miibus_writereg_locked(device_t dev, int phy, int reg, uint16_t aval)
 {
 	struct axe_softc *sc = device_private(dev);
 	usbd_status err;
@@ -394,24 +394,29 @@ axe_miibus_writereg_locked(device_t dev, int phy, int reg, int aval)
 
 	if (err) {
 		aprint_error_dev(sc->axe_dev, "write PHY failed\n");
-		return;
+		return err;
 	}
+
+	return 0;
 }
 
-static void
-axe_miibus_writereg(device_t dev, int phy, int reg, int aval)
+static int
+axe_miibus_writereg(device_t dev, int phy, int reg, uint16_t aval)
 {
 	struct axe_softc *sc = device_private(dev);
+	int rv;
 
 	if (sc->axe_dying)
-		return;
+		return -1;
 
 	if (sc->axe_phyno != phy)
-		return;
+		return -1;
 
 	axe_lock_mii(sc);
-	axe_miibus_writereg_locked(dev, phy, reg, aval);
+	rv = axe_miibus_writereg_locked(dev, phy, reg, aval);
 	axe_unlock_mii(sc);
+
+	return rv;
 }
 
 static void
@@ -697,8 +702,8 @@ axe_ax88178_init(struct axe_softc *sc)
 			    sc->axe_phyno, 0x1F, 0x0005);
 			axe_miibus_writereg_locked(sc->axe_dev,
 			    sc->axe_phyno, 0x0C, 0x0000);
-			val = axe_miibus_readreg_locked(sc->axe_dev,
-			    sc->axe_phyno, 0x0001);
+			axe_miibus_readreg_locked(sc->axe_dev,
+			    sc->axe_phyno, 0x0001, &val);
 			axe_miibus_writereg_locked(sc->axe_dev,
 			    sc->axe_phyno, 0x01, val | 0x0080);
 			axe_miibus_writereg_locked(sc->axe_dev,

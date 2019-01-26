@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.10.12.1 2018/09/30 01:46:01 pgoyette Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.10.12.2 2019/01/26 22:00:39 pgoyette Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -186,10 +186,10 @@ npfvar_destroy(npfvar_t *vp)
 char *
 npfvar_expand_string(const npfvar_t *vp)
 {
-	if (npfvar_get_count(vp) != 1)
+	if (npfvar_get_count(vp) != 1) {
 		yyerror("variable '%s' type '%s' has %zu elements", vp->v_key,
 		    npfvar_type(vp->v_type), npfvar_get_count(vp));
-			
+	}
 	return npfvar_get_data(vp, NPFVAR_STRING, 0);
 }
 

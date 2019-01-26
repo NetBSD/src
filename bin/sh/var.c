@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.69.2.2 2018/12/26 14:01:03 pgoyette Exp $	*/
+/*	$NetBSD: var.c,v 1.69.2.3 2019/01/26 21:58:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.69.2.2 2018/12/26 14:01:03 pgoyette Exp $");
+__RCSID("$NetBSD: var.c,v 1.69.2.3 2019/01/26 21:58:12 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1378,7 +1378,7 @@ get_lineno(struct var *vp)
 		return vp->text;
 #endif
 
-	snprintf(result, length - 1, "%.*s=%d", vp->name_len, vp->text, ln);
+	snprintf(result, length, "%.*s=%d", vp->name_len, vp->text, ln);
 	return result;
 }
 #undef result
@@ -1485,7 +1485,7 @@ get_seconds(struct var *vp)
 	if (!make_space(&buf, vp->name_len + 2 + digits_in(secs)))
 		return vp->text;
 
-	snprintf(buf.b, buf.len-1, "%.*s=%jd", vp->name_len, vp->text, secs);
+	snprintf(buf.b, buf.len, "%.*s=%jd", vp->name_len, vp->text, secs);
 	return buf.b;
 }
 
@@ -1571,7 +1571,7 @@ get_random(struct var *vp)
 	if (!make_space(&buf, vp->name_len + 2 + digits_in(random_val)))
 		return vp->text;
 
-	snprintf(buf.b, buf.len-1, "%.*s=%jd", vp->name_len, vp->text,
+	snprintf(buf.b, buf.len, "%.*s=%jd", vp->name_len, vp->text,
 	    random_val);
 
 	if (buf.b != vp->text && (vp->flags & (VTEXTFIXED|VSTACK)) == 0)

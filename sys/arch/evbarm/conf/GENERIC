@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.1.2.7 2019/01/18 08:50:16 pgoyette Exp $
+#	$NetBSD: GENERIC,v 1.1.2.8 2019/01/26 22:00:02 pgoyette Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -29,6 +29,9 @@ makeoptions	DTS="
 	exynos5422-odroidxu3-lite.dts
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
+
+	meson8b-mxq.dts
+	meson8b-odroidc1.dts
 
 	socfpga_cyclone5_de0_nano_soc.dts
 
@@ -161,6 +164,7 @@ makeoptions	DTS="
 	vexpress-v2p-ca15-tc1.dts
 "
 
+options 	CPU_CORTEXA5
 options 	CPU_CORTEXA7
 options 	CPU_CORTEXA8
 options 	CPU_CORTEXA9
@@ -175,6 +179,8 @@ options 	SOC_BCM2836
 
 options 	SOC_EXYNOS4412
 options 	SOC_EXYNOS5422
+
+options 	SOC_MESON8B
 
 options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
@@ -203,6 +209,9 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
+
+# ODROID-C1
+#options 	EARLYCONS=meson, CONSADDR=0xc81004c0
 
 # ODROID-U3
 #options 	EARLYCONS=exynos, CONSADDR=0x13810000
@@ -250,6 +259,8 @@ cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
 cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk*	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk*	at fdt? pass 3		# Exynos5422 clock controller
+meson8bclkc*	at fdt? pass 2		# Amlogic Meson8b clock controller
+mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 sun4ia10ccu*	at fdt? pass 2		# Allwinner A10/A20 CCU
 sun5ia13ccu*	at fdt? pass 2		# Allwinner A13 CCU
 sun6ia31ccu*	at fdt? pass 2		# Allwinner A31 CCU
@@ -297,6 +308,7 @@ tegratimer*	at fdt?			# Timers
 
 # Watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
+mesonwdt*	at fdt?			# Amlogic Meson watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
 watchdog*	at fdt?			# Broadcom BCM283x watchdog
 
@@ -346,6 +358,7 @@ bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
 exyopctl*	at fdt? pass 2		# Samsung Exynos GPIO
+mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
@@ -416,8 +429,9 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # UART
 com*		at fdt?			# UART
-plcom*		at fdt?			# ARM PL011 UART
 exuart*		at fdt?			# SSCOM UART
+plcom*		at fdt?			# ARM PL011 UART
+mesonuart*	at fdt?			# Amlogic Meson UART
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
@@ -455,6 +469,7 @@ spi*            at spibus?
 
 # Random number generators
 bcmrng*		at fdt?			# Broadcom BCM283x RNG
+mesonrng*	at fdt?			# Amlogic Meson RNG
 
 # Security ID EFUSE
 sunxisid*       at fdt? pass 4          # SID
@@ -464,6 +479,7 @@ sunxilradc*	at fdt?
 
 # RTC
 #exyortc*	at fdt?			# RTC
+mesonrtc*	at fdt?			# Amlogic Meson RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
 sunxirtc*	at fdt?			# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
@@ -494,12 +510,13 @@ spkr*		at audio?
 
 # SDMMC
 dwcmmc*		at fdt?			# DesignWare SDMMC
+mesonsdio*	at fdt?			# Amlogic Meson SDIO controller
+mesonsdhc*	at fdt?			# Amlogic Meson SDHC controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 plmmc*		at fdt?			# ARM PrimeCell MCI
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
-sdmmc*		at sunximmc?
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
 ld1		at sdmmc1
@@ -553,6 +570,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS
 options 	WSDISPLAY_COMPAT_USL
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_MULTICONS
 pseudo-device	wsmux
 pseudo-device	wsfont
 
@@ -576,6 +594,7 @@ tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 # USB
 exusbphy*	at fdt? pass 9		# Samsung Exynos USB2 PHY
 exusbdrdphy*	at fdt? pass 9		# Samsung Exynos USB3 DRD PHY
+mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY

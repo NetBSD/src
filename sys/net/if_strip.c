@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.108.10.3 2018/12/26 14:02:04 pgoyette Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.108.10.4 2019/01/26 22:00:37 pgoyette Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.108.10.3 2018/12/26 14:02:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.108.10.4 2019/01/26 22:00:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -639,6 +639,12 @@ striptioctl(struct tty *tp, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
+
+	/*
+	 * XXX
+	 * This function can be called without KERNEL_LOCK when caller's
+	 * struct cdevsw is set D_MPSAFE. Is KERNEL_LOCK required?
+	 */
 
 	switch (cmd) {
 	case SLIOCGUNIT:

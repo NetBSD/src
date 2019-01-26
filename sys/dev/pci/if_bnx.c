@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.63.2.3 2019/01/18 08:50:27 pgoyette Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.63.2.4 2019/01/26 22:00:07 pgoyette Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.63.2.3 2019/01/18 08:50:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.63.2.4 2019/01/26 22:00:07 pgoyette Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -316,8 +316,8 @@ void	bnx_breakpoint(struct bnx_softc *);
 uint32_t	bnx_reg_rd_ind(struct bnx_softc *, uint32_t);
 void	bnx_reg_wr_ind(struct bnx_softc *, uint32_t, uint32_t);
 void	bnx_ctx_wr(struct bnx_softc *, uint32_t, uint32_t, uint32_t);
-int	bnx_miibus_read_reg(device_t, int, int);
-void	bnx_miibus_write_reg(device_t, int, int, int);
+int	bnx_miibus_read_reg(device_t, int, int, uint16_t *);
+int	bnx_miibus_write_reg(device_t, int, int, uint16_t);
 void	bnx_miibus_statchg(struct ifnet *);
 
 /****************************************************************************/
@@ -1016,17 +1016,17 @@ bnx_ctx_wr(struct bnx_softc *sc, uint32_t cid_addr, uint32_t ctx_offset,
 /*   The value of the register.                                             */
 /****************************************************************************/
 int
-bnx_miibus_read_reg(device_t dev, int phy, int reg)
+bnx_miibus_read_reg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct bnx_softc	*sc = device_private(dev);
-	uint32_t		val, data;
-	int			i;
+	uint32_t		data;
+	int			i, rv = 0;
 
 	/* Make sure we are accessing the correct PHY address. */
 	if (phy != sc->bnx_phy_addr) {
 		DBPRINT(sc, BNX_VERBOSE,
 		    "Invalid PHY address %d for PHY read!\n", phy);
-		return 0;
+		return -1;
 	}
 
 	/*
@@ -1071,13 +1071,15 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 	if (data & BNX_EMAC_MDIO_COMM_START_BUSY) {
 		BNX_PRINTF(sc, "%s(%d): Error: PHY read timeout! phy = %d, "
 		    "reg = 0x%04X\n", __FILE__, __LINE__, phy, reg);
-		val = 0x0;
-	} else
-		val = REG_RD(sc, BNX_EMAC_MDIO_COMM);
+		rv = ETIMEDOUT;
+	} else {
+		data = REG_RD(sc, BNX_EMAC_MDIO_COMM);
+		*val = data & 0xffff;
 
-	DBPRINT(sc, BNX_EXCESSIVE,
-	    "%s(): phy = %d, reg = 0x%04X, val = 0x%04X\n", __func__, phy,
-	    (uint16_t) reg & 0xffff, (uint16_t) val & 0xffff);
+		DBPRINT(sc, BNX_EXCESSIVE,
+		    "%s(): phy = %d, reg = 0x%04X, val = 0x%04hX\n", __func__,
+		    phy, (uint16_t) reg & 0xffff, *val);
+	}
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		data = REG_RD(sc, BNX_EMAC_MDIO_MODE);
@@ -1089,7 +1091,7 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 		DELAY(40);
 	}
 
-	return (val & 0xffff);
+	return rv;
 }
 
 /****************************************************************************/
@@ -1100,23 +1102,23 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 /* Returns:                                                                 */
 /*   The value of the register.                                             */
 /****************************************************************************/
-void
-bnx_miibus_write_reg(device_t dev, int phy, int reg, int val)
+int
+bnx_miibus_write_reg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct bnx_softc	*sc = device_private(dev);
 	uint32_t		val1;
-	int			i;
+	int			i, rv = 0;
 
 	/* Make sure we are accessing the correct PHY address. */
 	if (phy != sc->bnx_phy_addr) {
 		DBPRINT(sc, BNX_WARN,
 		    "Invalid PHY address %d for PHY write!\n", phy);
-		return;
+		return -1;
 	}
 
 	DBPRINT(sc, BNX_EXCESSIVE, "%s(): phy = %d, reg = 0x%04X, "
-	    "val = 0x%04X\n", __func__,
-	    phy, (uint16_t) reg & 0xffff, (uint16_t) val & 0xffff);
+	    "val = 0x%04hX\n", __func__,
+	    phy, (uint16_t) reg & 0xffff, val);
 
 	/*
 	 * The BCM5709S PHY is an IEEE Clause 45 PHY
@@ -1156,6 +1158,7 @@ bnx_miibus_write_reg(device_t dev, int phy, int reg, int val)
 	if (val1 & BNX_EMAC_MDIO_COMM_START_BUSY) {
 		BNX_PRINTF(sc, "%s(%d): PHY write timeout!\n", __FILE__,
 		    __LINE__);
+		rv = ETIMEDOUT;
 	}
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
@@ -1167,6 +1170,8 @@ bnx_miibus_write_reg(device_t dev, int phy, int reg, int val)
 
 		DELAY(40);
 	}
+
+	return rv;
 }
 
 /****************************************************************************/

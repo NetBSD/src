@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.17.14.2 2018/12/26 14:01:50 pgoyette Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.17.14.3 2019/01/26 22:00:07 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.17.14.2 2018/12/26 14:01:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.17.14.3 2019/01/26 22:00:07 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -123,8 +123,8 @@ static void	lii_tick(void *);
 static int	lii_alloc_rings(struct lii_softc *);
 static int	lii_free_tx_space(struct lii_softc *);
 
-static int	lii_mii_readreg(device_t, int, int);
-static void	lii_mii_writereg(device_t, int, int, int);
+static int	lii_mii_readreg(device_t, int, int, uint16_t *);
+static int	lii_mii_writereg(device_t, int, int, uint16_t);
 static void	lii_mii_statchg(struct ifnet *);
 
 static int	lii_media_change(struct ifnet *);
@@ -579,62 +579,69 @@ lii_read_macaddr(struct lii_softc *sc, uint8_t *ea)
 }
 
 static int
-lii_mii_readreg(device_t dev, int phy, int reg)
+lii_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct lii_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	int i;
 
-	val = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
+	data = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
 
-	val |= MDIOC_START | MDIOC_SUP_PREAMBLE;
-	val |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
+	data |= MDIOC_START | MDIOC_SUP_PREAMBLE;
+	data |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
 
-	val |= MDIOC_READ;
+	data |= MDIOC_READ;
 
-	AT_WRITE_4(sc, ATL2_MDIOC, val);
+	AT_WRITE_4(sc, ATL2_MDIOC, data);
 
 	for (i = 0; i < MDIO_WAIT_TIMES; ++i) {
 		DELAY(2);
-		val = AT_READ_4(sc, ATL2_MDIOC);
-		if ((val & (MDIOC_START | MDIOC_BUSY)) == 0)
+		data = AT_READ_4(sc, ATL2_MDIOC);
+		if ((data & (MDIOC_START | MDIOC_BUSY)) == 0)
 			break;
 	}
 
-	if (i == MDIO_WAIT_TIMES)
+	if (i == MDIO_WAIT_TIMES) {
 		aprint_error_dev(dev, "timeout reading PHY %d reg %d\n", phy,
 		    reg);
+		return ETIMEDOUT;
+	}
 
-	return (val & 0x0000ffff);
+	*val = data & 0x0000ffff;
+	return 0;
 }
 
-static void
-lii_mii_writereg(device_t dev, int phy, int reg, int data)
+static int
+lii_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct lii_softc *sc = device_private(dev);
-	uint32_t val;
+	uint32_t data;
 	int i;
 
-	val = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
-	val |= (data & MDIOC_DATA_MASK) << MDIOC_DATA_SHIFT;
+	data = (reg & MDIOC_REG_MASK) << MDIOC_REG_SHIFT;
+	data |= (val & MDIOC_DATA_MASK) << MDIOC_DATA_SHIFT;
 
-	val |= MDIOC_START | MDIOC_SUP_PREAMBLE;
-	val |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
+	data |= MDIOC_START | MDIOC_SUP_PREAMBLE;
+	data |= MDIOC_CLK_25_4 << MDIOC_CLK_SEL_SHIFT;
 
-	/* val |= MDIOC_WRITE; */
+	/* data |= MDIOC_WRITE; */
 
-	AT_WRITE_4(sc, ATL2_MDIOC, val);
+	AT_WRITE_4(sc, ATL2_MDIOC, data);
 
 	for (i = 0; i < MDIO_WAIT_TIMES; ++i) {
 		DELAY(2);
-		val = AT_READ_4(sc, ATL2_MDIOC);
-		if ((val & (MDIOC_START | MDIOC_BUSY)) == 0)
+		data = AT_READ_4(sc, ATL2_MDIOC);
+		if ((data & (MDIOC_START | MDIOC_BUSY)) == 0)
 			break;
 	}
 
-	if (i == MDIO_WAIT_TIMES)
+	if (i == MDIO_WAIT_TIMES) {
 		aprint_error_dev(dev, "timeout writing PHY %d reg %d\n", phy,
 		    reg);
+		return ETIMEDOUT;
+	}
+
+	return 0;
 }
 
 static void
@@ -917,6 +924,7 @@ lii_intr(void *v)
 {
 	struct lii_softc *sc = v;
 	uint32_t status;
+	uint16_t tmp;
 
 	status = AT_READ_4(sc, ATL2_ISR);
 	if (status == 0)
@@ -930,7 +938,7 @@ lii_intr(void *v)
 	if (status & (ISR_PHY | ISR_MANUAL)) {
 		/* Ack PHY interrupt.  Magic register */
 		if (status & ISR_PHY)
-			(void)lii_mii_readreg(sc->sc_dev, 1, 19);
+			(void)lii_mii_readreg(sc->sc_dev, 1, 19, &tmp);
 		mii_mediachg(&sc->sc_mii);
 	}
 

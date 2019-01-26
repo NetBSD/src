@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.53.14.2 2018/09/06 06:55:37 pgoyette Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.53.14.3 2019/01/26 22:00:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.53.14.2 2018/09/06 06:55:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.53.14.3 2019/01/26 22:00:03 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -114,8 +114,8 @@ void bmac_watchdog(struct ifnet *);
 int bmac_ioctl(struct ifnet *, u_long, void *);
 void bmac_setladrf(struct bmac_softc *);
 
-int bmac_mii_readreg(device_t, int, int);
-void bmac_mii_writereg(device_t, int, int, int);
+int bmac_mii_readreg(device_t, int, int, uint16_t *);
+int bmac_mii_writereg(device_t, int, int, uint16_t);
 void bmac_mii_statchg(struct ifnet *);
 void bmac_mii_tick(void *);
 u_int32_t bmac_mbo_read(device_t);
@@ -298,13 +298,14 @@ bmac_init(struct bmac_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
 	void *data;
-	int i, tb, bmcr;
+	int i, tb;
+	uint16_t bmcr;
 	u_short *p;
 
 	bmac_reset_chip(sc);
 
 	/* XXX */
-	bmcr = bmac_mii_readreg(sc->sc_dev, 0, MII_BMCR);
+	bmac_mii_readreg(sc->sc_dev, 0, MII_BMCR, &bmcr);
 	bmcr &= ~BMCR_ISO;
 	bmac_mii_writereg(sc->sc_dev, 0, MII_BMCR, bmcr);
 
@@ -848,15 +849,15 @@ chipit:
 }
 
 int
-bmac_mii_readreg(device_t self, int phy, int reg)
+bmac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
-	return mii_bitbang_readreg(self, &bmac_mbo, phy, reg);
+	return mii_bitbang_readreg(self, &bmac_mbo, phy, reg, val);
 }
 
-void
-bmac_mii_writereg(device_t self, int phy, int reg, int val)
+int
+bmac_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
-	mii_bitbang_writereg(self, &bmac_mbo, phy, reg, val);
+	return mii_bitbang_writereg(self, &bmac_mbo, phy, reg, val);
 }
 
 u_int32_t

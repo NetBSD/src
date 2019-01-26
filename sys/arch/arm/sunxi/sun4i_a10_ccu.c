@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.6.2.2 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.6.2.3 2019/01/26 22:00:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.6.2.2 2018/04/07 04:12:12 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.6.2.3 2019/01/26 22:00:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -323,9 +323,10 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BIT(15),			/* div_en */
 	    __BIT(14),			/* frac_sel */
 	    270000000, 297000000,	/* frac values */
-	    8,				/* prediv */
-	    __BIT(31)			/* enable */
-	    ),
+	    0,				/* prediv */
+	    8,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    0),
 	SUNXI_CCU_FRACTIONAL(A10_CLK_PLL_VIDEO1, "pll_video1", "osc24m",
 	    PLL7_CFG_REG,		/* reg */
 	    __BITS(7,0),		/* m */
@@ -334,9 +335,10 @@ static struct sunxi_ccu_clk sun4i_a10_ccu_clks[] = {
 	    __BIT(15),			/* div_en */
 	    __BIT(14),			/* frac_sel */
 	    270000000, 297000000,	/* frac values */
-	    8,				/* prediv */
-	    __BIT(31)			/* enable */
-	    ),
+	    0,				/* prediv */
+	    8,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    0),
 	SUNXI_CCU_FIXED_FACTOR(A10_CLK_PLL_VIDEO0_2X,
 	    "pll_video0x2", "pll_video0",
 	    1, 2),

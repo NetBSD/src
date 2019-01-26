@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.3 2015/12/22 14:20:59 christos Exp $ */
+/* $NetBSD: t_fenv.c,v 1.3.14.1 2019/01/26 22:00:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.3 2015/12/22 14:20:59 christos Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.3.14.1 2019/01/26 22:00:38 pgoyette Exp $");
 
 #include <atf-c.h>
 
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: t_fenv.c,v 1.3 2015/12/22 14:20:59 christos Exp $");
 #include <stdlib.h>
 
 
-#if __arm__ && !__SOFTFP__
+#if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
 	 * Some NEON fpus do not implement IEEE exception handling,
 	 * skip these tests if running on them and compiled for

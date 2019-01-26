@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_rule_test.c,v 1.14.10.1 2018/09/30 01:46:01 pgoyette Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.14.10.2 2019/01/26 22:00:39 pgoyette Exp $	*/
 
 /*
- * NPF ruleset test.
+ * NPF ruleset tests.
  *
  * Public Domain.
  */
@@ -12,6 +12,9 @@
 
 #include "npf_impl.h"
 #include "npf_test.h"
+
+#define	CHECK_TRUE(x)	\
+    if (!(x)) { printf("FAIL: %s line %d\n", __func__, __LINE__); return 0; }
 
 #define	RESULT_PASS	0
 #define	RESULT_BLOCK	ENETUNREACH
@@ -129,7 +132,6 @@ npf_rule_test(bool verbose)
 	npf_t *npf = npf_getkernctx();
 	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
-	bool fail = false;
 	uint64_t id;
 	int error;
 
@@ -152,11 +154,11 @@ npf_rule_test(bool verbose)
 		}
 
 		if (verbose) {
-			printf("Rule test %d, expected %d (stateful) and %d \n"
-			    "-> returned %d and %d.\n",
+			printf("rule test %d:\texpected %d (stateful) and %d\n"
+			    "\t\t-> returned %d and %d\n",
 			    i + 1, t->stateful_ret, t->ret, serror, error);
 		}
-		fail |= (serror != t->stateful_ret || error != t->ret);
+		CHECK_TRUE(serror == t->stateful_ret && error == t->ret);
 	}
 
 	/*
@@ -164,26 +166,26 @@ npf_rule_test(bool verbose)
 	 */
 
 	error = npf_test_case(0);
-	assert(error == RESULT_PASS);
+	CHECK_TRUE(error == RESULT_PASS);
 
 	npf_config_enter(npf);
 	rlset = npf_config_ruleset(npf);
 
 	rl = npf_blockall_rule();
 	error = npf_ruleset_add(rlset, "test-rules", rl);
-	fail |= error != 0;
+	CHECK_TRUE(error == 0);
 
 	error = npf_test_case(0);
-	fail |= (error != RESULT_BLOCK);
+	CHECK_TRUE(error == RESULT_BLOCK);
 
 	id = npf_rule_getid(rl);
 	error = npf_ruleset_remove(rlset, "test-rules", id);
-	fail |= error != 0;
+	CHECK_TRUE(error == 0);
 
 	npf_config_exit(npf);
 
 	error = npf_test_case(0);
-	fail |= (error != RESULT_PASS);
+	CHECK_TRUE(error == RESULT_PASS);
 
-	return !fail;
+	return true;
 }

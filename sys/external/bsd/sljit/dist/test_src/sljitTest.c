@@ -1,9 +1,9 @@
-/*	$NetBSD: sljitTest.c,v 1.7 2016/05/29 17:09:33 alnsn Exp $	*/
+/*	$NetBSD: sljitTest.c,v 1.7.16.1 2019/01/26 22:00:25 pgoyette Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
  *
- *    Copyright 2009-2010 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -86,7 +86,7 @@ static void cond_set(struct sljit_compiler *compiler, sljit_s32 dst, sljit_sw ds
 
 	sljit_emit_op_flags(compiler, SLJIT_MOV, dst, dstw, SLJIT_UNUSED, 0, type);
 	jump = sljit_emit_jump(compiler, type);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_KEEP_FLAGS, dst, dstw, dst, dstw, SLJIT_IMM, 2);
+	sljit_emit_op2(compiler, SLJIT_ADD, dst, dstw, dst, dstw, SLJIT_IMM, 2);
 	label = sljit_emit_label(compiler);
 	sljit_set_label(jump, label);
 }
@@ -101,6 +101,9 @@ static void cond_set(struct sljit_compiler *compiler, sljit_s32 dst, sljit_sw ds
 	} \
 	memset(result, 255, size);
 
+#define FREE_EXEC(ptr) \
+	SLJIT_FREE_EXEC(((sljit_u8*)(ptr)) + SLJIT_EXEC_OFFSET(ptr));
+
 static void test_exec_allocator(void)
 {
 	/* This is not an sljit test. */
@@ -114,26 +117,26 @@ static void test_exec_allocator(void)
 	MALLOC_EXEC(ptr1, 32);
 	MALLOC_EXEC(ptr2, 512);
 	MALLOC_EXEC(ptr3, 512);
-	SLJIT_FREE_EXEC(ptr2);
-	SLJIT_FREE_EXEC(ptr3);
-	SLJIT_FREE_EXEC(ptr1);
+	FREE_EXEC(ptr2);
+	FREE_EXEC(ptr3);
+	FREE_EXEC(ptr1);
 	MALLOC_EXEC(ptr1, 262104);
 	MALLOC_EXEC(ptr2, 32000);
-	SLJIT_FREE_EXEC(ptr1);
+	FREE_EXEC(ptr1);
 	MALLOC_EXEC(ptr1, 262104);
-	SLJIT_FREE_EXEC(ptr1);
-	SLJIT_FREE_EXEC(ptr2);
+	FREE_EXEC(ptr1);
+	FREE_EXEC(ptr2);
 	MALLOC_EXEC(ptr1, 512);
 	MALLOC_EXEC(ptr2, 512);
 	MALLOC_EXEC(ptr3, 512);
-	SLJIT_FREE_EXEC(ptr2);
+	FREE_EXEC(ptr2);
 	MALLOC_EXEC(ptr2, 512);
 #if (defined SLJIT_EXECUTABLE_ALLOCATOR && SLJIT_EXECUTABLE_ALLOCATOR)
 	sljit_free_unused_memory_exec();
 #endif
-	SLJIT_FREE_EXEC(ptr3);
-	SLJIT_FREE_EXEC(ptr1);
-	SLJIT_FREE_EXEC(ptr2);
+	FREE_EXEC(ptr3);
+	FREE_EXEC(ptr1);
+	FREE_EXEC(ptr2);
 #if (defined SLJIT_UTIL_GLOBAL_LOCK && SLJIT_UTIL_GLOBAL_LOCK)
 	/* Just call the global locks. */
 	sljit_grab_lock();
@@ -409,13 +412,13 @@ static void test6(void)
 
 	sljit_emit_enter(compiler, 0, 1, 3, 1, 0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -1);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_C, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, -1);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_CARRY, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, -1);
 	sljit_emit_op2(compiler, SLJIT_ADDC, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_C, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_CARRY, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_R0, 0);
 	sljit_emit_op2(compiler, SLJIT_ADDC, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_IMM, 4);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 100);
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 2, SLJIT_R0, 0, SLJIT_IMM, 50);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_C, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 6000);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_CARRY, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 6000);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 3, SLJIT_IMM, 10);
 	sljit_emit_op2(compiler, SLJIT_SUBC, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 3, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 3, SLJIT_IMM, 5);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 100);
@@ -436,7 +439,7 @@ static void test6(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x52cd3bf4);
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 9, SLJIT_R0, 0, SLJIT_IMM, 0x3da297c6);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_RETURN_REG, 0, SLJIT_IMM, 10);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_C, SLJIT_RETURN_REG, 0, SLJIT_RETURN_REG, 0, SLJIT_IMM, 5);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_CARRY, SLJIT_RETURN_REG, 0, SLJIT_RETURN_REG, 0, SLJIT_IMM, 5);
 	sljit_emit_op2(compiler, SLJIT_SUBC, SLJIT_RETURN_REG, 0, SLJIT_RETURN_REG, 0, SLJIT_IMM, 2);
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_RETURN_REG, 0, SLJIT_RETURN_REG, 0, SLJIT_IMM, -2220);
 	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_RETURN_REG, 0);
@@ -548,41 +551,42 @@ static void test8(void)
 	sljit_emit_enter(compiler, 0, 1, 3, 2, 0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 20);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 10);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_IMM, 6, SLJIT_IMM, 5);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_IMM, 6, SLJIT_IMM, 5);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_NOT_EQUAL);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 2, SLJIT_UNUSED, 0, SLJIT_EQUAL);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 3000);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 3000);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_S1, 0, SLJIT_UNUSED, 0, SLJIT_GREATER);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 3000);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 3, SLJIT_S1, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_UNUSED, 0, SLJIT_LESS);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 4, SLJIT_R2, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_S, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, -15);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, -15);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_UNUSED, 0, SLJIT_SIG_GREATER);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 5, SLJIT_R2, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R0, 0);
-	sljit_emit_op1(compiler, SLJIT_NEG | SLJIT_SET_E | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_IMM, (sljit_sw)1 << ((sizeof(sljit_sw) << 3) - 1));
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z | SLJIT_SET_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z | SLJIT_SET_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_NEG | SLJIT_SET_Z | SLJIT_SET_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_IMM, (sljit_sw)1 << ((sizeof(sljit_sw) << 3) - 1));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 6, SLJIT_UNUSED, 0, SLJIT_OVERFLOW);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -1);
-	sljit_emit_op1(compiler, SLJIT_NOT | SLJIT_SET_E, SLJIT_R1, 0, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_NOT | SLJIT_SET_Z, SLJIT_R1, 0, SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 7, SLJIT_UNUSED, 0, SLJIT_ZERO);
-	sljit_emit_op1(compiler, SLJIT_NOT | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_NOT | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R1, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 8, SLJIT_UNUSED, 0, SLJIT_ZERO);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_IMM, 0xffff, SLJIT_R0, 0);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0xffff);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_IMM, 0xffff, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0xffff);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 9, SLJIT_UNUSED, 0, SLJIT_NOT_ZERO);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_IMM, 0xffff, SLJIT_R1, 0);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_IMM, 0xffff);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R1, 0);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), 0);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 0x1);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_IMM, 0xffff, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_IMM, 0xffff);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), 0);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 0x1);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 10, SLJIT_UNUSED, 0, SLJIT_NOT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(1) << ((sizeof(sljit_sw) << 3) - 1));
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 11, SLJIT_UNUSED, 0, SLJIT_OVERFLOW);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 12, SLJIT_UNUSED, 0, SLJIT_OVERFLOW);
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
 
@@ -808,6 +812,7 @@ static void test11(void)
 	struct sljit_const* const3;
 	struct sljit_const* const4;
 	void* value;
+	sljit_sw executable_offset;
 	sljit_uw const1_addr;
 	sljit_uw const2_addr;
 	sljit_uw const3_addr;
@@ -831,25 +836,37 @@ static void test11(void)
 
 	sljit_emit_enter(compiler, 0, 1, 3, 1, 0, 0, 0);
 
-	const1 = sljit_emit_const(compiler, SLJIT_MEM0(), (sljit_sw)&buf[0], -0x81b9);
 	SLJIT_ASSERT(!sljit_alloc_memory(compiler, 0));
 	SLJIT_ASSERT(!sljit_alloc_memory(compiler, 16 * sizeof(sljit_sw) + 1));
+
+	const1 = sljit_emit_const(compiler, SLJIT_MEM0(), (sljit_sw)&buf[0], -0x81b9);
+
 	value = sljit_alloc_memory(compiler, 16 * sizeof(sljit_sw));
-	SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
-	memset(value, 255, 16 * sizeof(sljit_sw));
+	if (value != NULL)
+	{
+		SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
+		memset(value, 255, 16 * sizeof(sljit_sw));
+	}
+
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 2);
 	const2 = sljit_emit_const(compiler, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), SLJIT_WORD_SHIFT - 1, -65535);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, (sljit_sw)&buf[0] + 2 * sizeof(sljit_sw) - 2);
 	const3 = sljit_emit_const(compiler, SLJIT_MEM1(SLJIT_R0), 0, word_value1);
+
 	value = sljit_alloc_memory(compiler, 17);
-	SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
-	memset(value, 255, 16);
+	if (value != NULL)
+	{
+		SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
+		memset(value, 255, 16);
+	}
+
 	const4 = sljit_emit_const(compiler, SLJIT_RETURN_REG, 0, 0xf7afcdb7);
 
 	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_RETURN_REG, 0);
 
 	code.code = sljit_generate_code(compiler);
 	CHECK(compiler);
+	executable_offset = sljit_get_executable_offset(compiler);
 	const1_addr = sljit_get_const_addr(const1);
 	const2_addr = sljit_get_const_addr(const2);
 	const3_addr = sljit_get_const_addr(const3);
@@ -861,10 +878,10 @@ static void test11(void)
 	FAILED(buf[1] != -65535, "test11 case 3 failed\n");
 	FAILED(buf[2] != word_value1, "test11 case 4 failed\n");
 
-	sljit_set_const(const1_addr, -1);
-	sljit_set_const(const2_addr, word_value2);
-	sljit_set_const(const3_addr, 0xbab0fea1);
-	sljit_set_const(const4_addr, -60089);
+	sljit_set_const(const1_addr, -1, executable_offset);
+	sljit_set_const(const2_addr, word_value2, executable_offset);
+	sljit_set_const(const3_addr, 0xbab0fea1, executable_offset);
+	sljit_set_const(const4_addr, -60089, executable_offset);
 
 	FAILED(code.func1((sljit_sw)&buf) != -60089, "test11 case 5 failed\n");
 	FAILED(buf[0] != -1, "test11 case 6 failed\n");
@@ -886,6 +903,7 @@ static void test12(void)
 	struct sljit_jump *jump1;
 	struct sljit_jump *jump2;
 	struct sljit_jump *jump3;
+	sljit_sw executable_offset;
 	void* value;
 	sljit_uw jump1_addr;
 	sljit_uw label1_addr;
@@ -899,14 +917,19 @@ static void test12(void)
 	buf[0] = 0;
 
 	sljit_emit_enter(compiler, 0, 2, 3, 2, 0, 0, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_S, SLJIT_UNUSED, 0, SLJIT_S1, 0, SLJIT_IMM, 10);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_GREATER, SLJIT_UNUSED, 0, SLJIT_S1, 0, SLJIT_IMM, 10);
 	jump1 = sljit_emit_jump(compiler, SLJIT_REWRITABLE_JUMP | SLJIT_SIG_GREATER);
 	/* Default handler. */
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 5);
 	jump2 = sljit_emit_jump(compiler, SLJIT_JUMP);
+
 	value = sljit_alloc_memory(compiler, 15);
-	SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
-	memset(value, 255, 15);
+	if (value != NULL)
+	{
+		SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
+		memset(value, 255, 15);
+	}
+
 	/* Handler 1. */
 	label1 = sljit_emit_label(compiler);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 6);
@@ -923,11 +946,15 @@ static void test12(void)
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
 
 	value = sljit_alloc_memory(compiler, 8);
-	SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
-	memset(value, 255, 8);
+	if (value != NULL)
+	{
+		SLJIT_ASSERT(!((sljit_sw)value & (sizeof(sljit_sw) - 1)));
+		memset(value, 255, 8);
+	}
 
 	code.code = sljit_generate_code(compiler);
 	CHECK(compiler);
+	executable_offset = sljit_get_executable_offset(compiler);
 	jump1_addr = sljit_get_jump_addr(jump1);
 	label1_addr = sljit_get_label_addr(label1);
 	label2_addr = sljit_get_label_addr(label2);
@@ -939,11 +966,11 @@ static void test12(void)
 	code.func2((sljit_sw)&buf, 11);
 	FAILED(buf[0] != 6, "test12 case 2 failed\n");
 
-	sljit_set_jump_addr(jump1_addr, label2_addr);
+	sljit_set_jump_addr(jump1_addr, label2_addr, executable_offset);
 	code.func2((sljit_sw)&buf, 12);
 	FAILED(buf[0] != 7, "test12 case 3 failed\n");
 
-	sljit_set_jump_addr(jump1_addr, label1_addr);
+	sljit_set_jump_addr(jump1_addr, label1_addr, executable_offset);
 	code.func2((sljit_sw)&buf, 13);
 	FAILED(buf[0] != 6, "test12 case 4 failed\n");
 
@@ -1001,16 +1028,18 @@ static void test13(void)
 	sljit_emit_fop1(compiler, SLJIT_NEG_F64, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_f64), SLJIT_FR4, 0);
 
 	sljit_emit_fop1(compiler, SLJIT_MOV_F64, SLJIT_FR5, 0, SLJIT_MEM1(SLJIT_S0), 0);
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_S, SLJIT_FR5, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f64));
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_GREATER_F, SLJIT_FR5, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f64));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_UNUSED, 0, SLJIT_GREATER_F64);
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_S, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f64), SLJIT_FR5, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_GREATER_F, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f64), SLJIT_FR5, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_GREATER_F64);
 	sljit_emit_fop1(compiler, SLJIT_MOV_F64, SLJIT_FR1, 0, SLJIT_FR5, 0);
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_E | SLJIT_SET_S, SLJIT_FR1, 0, SLJIT_FR1, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_EQUAL_F, SLJIT_FR1, 0, SLJIT_FR1, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S1), 2 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_EQUAL_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_LESS_F, SLJIT_FR1, 0, SLJIT_FR1, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_LESS_F64);
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_E, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f64));
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_EQUAL_F, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f64));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_EQUAL_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_NOT_EQUAL_F, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f64));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S1), 5 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_NOT_EQUAL_F64);
 
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
@@ -1146,7 +1175,7 @@ static void test15(void)
 	/* Test function call. */
 	executable_code code;
 	struct sljit_compiler* compiler = sljit_create_compiler(NULL);
-	struct sljit_jump* jump;
+	struct sljit_jump* jump = NULL;
 	sljit_sw buf[7];
 
 	if (verbose)
@@ -1211,7 +1240,7 @@ static void test15(void)
 
 	code.code = sljit_generate_code(compiler);
 	CHECK(compiler);
-	sljit_set_jump_addr(sljit_get_jump_addr(jump), SLJIT_FUNC_OFFSET(func));
+	sljit_set_jump_addr(sljit_get_jump_addr(jump), SLJIT_FUNC_OFFSET(func), sljit_get_executable_offset(compiler));
 	sljit_free_compiler(compiler);
 
 	FAILED(code.func1((sljit_sw)&buf) != -15, "test15 case 1 failed\n");
@@ -1246,10 +1275,10 @@ static void test16(void)
 	entry = sljit_emit_label(compiler);
 	sljit_emit_enter(compiler, 0, 2, 3, 2, 0, 0, 0);
 	/* If x == 0. */
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_S0, 0, SLJIT_IMM, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_S0, 0, SLJIT_IMM, 0);
 	jump1 = sljit_emit_jump(compiler, SLJIT_EQUAL);
 	/* If y == 0. */
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_S1, 0, SLJIT_IMM, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_S1, 0, SLJIT_IMM, 0);
 	jump2 = sljit_emit_jump(compiler, SLJIT_EQUAL);
 
 	/* Ack(x,y-1). */
@@ -1376,18 +1405,18 @@ static void test18(void)
 	sljit_emit_op2(compiler, SLJIT_ADD32, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 4, SLJIT_R1, 0, SLJIT_IMM, SLJIT_W(0x1120202020));
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1108080808));
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1120202020));
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1120202020));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_S1, 0, SLJIT_UNUSED, 0, SLJIT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 5, SLJIT_S1, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_R0, 0);
-	sljit_emit_op2(compiler, SLJIT_AND32 | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1120202020));
+	sljit_emit_op2(compiler, SLJIT_AND32 | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1120202020));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 6, SLJIT_UNUSED, 0, SLJIT_ZERO32);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1108080808));
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x2208080808));
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x2208080808));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 7, SLJIT_UNUSED, 0, SLJIT_LESS);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_R0, 0);
-	sljit_emit_op2(compiler, SLJIT_AND32 | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1104040404));
+	sljit_emit_op2(compiler, SLJIT_AND32 | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x1104040404));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 8, SLJIT_UNUSED, 0, SLJIT_NOT_ZERO32);
 
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, 4);
@@ -1535,7 +1564,7 @@ static void test20(void)
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_uw), SLJIT_MEM1(SLJIT_R0), offset_value, SLJIT_MEM1(SLJIT_R1), 0x1234 + sizeof(sljit_sw));
 	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_uw));
 	/* Dummy last instructions. */
-	sljit_emit_const(compiler, SLJIT_R0, 0, -9);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_S0, 0, SLJIT_IMM, 23);
 	sljit_emit_label(compiler);
 
 	code.code = sljit_generate_code(compiler);
@@ -1558,18 +1587,40 @@ static void test20(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_IMM, -1);
 	label = sljit_emit_label(compiler);
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R1), sizeof(sljit_sw), SLJIT_R2, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_R0, 0);
 	jump = sljit_emit_jump(compiler, SLJIT_NOT_EQUAL);
 	sljit_set_label(jump, label);
 
-	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
+	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_IMM, 0x5387);
 
 	code.code = sljit_generate_code(compiler);
 	CHECK(compiler);
 	sljit_free_compiler(compiler);
 
-	/* Just survive this code. */
-	code.func0();
+	FAILED(code.func0() != 0x5387, "test20 case 5 failed\n");
+
+	sljit_free_code(code.code);
+
+	compiler = sljit_create_compiler(NULL);
+	sljit_emit_enter(compiler, SLJIT_F64_ALIGNMENT, 0, 3, 0, 0, 0, SLJIT_MAX_LOCAL_SIZE);
+
+	sljit_get_local_base(compiler, SLJIT_R0, 0, SLJIT_MAX_LOCAL_SIZE - sizeof(sljit_sw));
+	sljit_get_local_base(compiler, SLJIT_R1, 0, -(sljit_sw)sizeof(sljit_sw));
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_IMM, -1);
+	label = sljit_emit_label(compiler);
+	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R1), sizeof(sljit_sw), SLJIT_R2, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_R0, 0);
+	jump = sljit_emit_jump(compiler, SLJIT_NOT_EQUAL);
+	sljit_set_label(jump, label);
+
+	sljit_get_local_base(compiler, SLJIT_R0, 0, 0);
+	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_R0, 0);
+
+	code.code = sljit_generate_code(compiler);
+	CHECK(compiler);
+	sljit_free_compiler(compiler);
+
+	FAILED(code.func0() % sizeof(sljit_f64) != 0, "test20 case 6 failed\n");
 
 	sljit_free_code(code.code);
 	successful_tests++;
@@ -1577,12 +1628,13 @@ static void test20(void)
 
 static void test21(void)
 {
-	/* Test fake enter. The parts of the jit code can be separated in the memory. */
+	/* Test set context. The parts of the jit code can be separated in the memory. */
 	executable_code code1;
 	executable_code code2;
 	struct sljit_compiler* compiler = sljit_create_compiler(NULL);
-	struct sljit_jump* jump;
+	struct sljit_jump* jump = NULL;
 	sljit_uw addr;
+	sljit_sw executable_offset;
 	sljit_sw buf[4];
 
 	if (verbose)
@@ -1598,12 +1650,16 @@ static void test21(void)
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_SP), 0, SLJIT_IMM, 10);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_MEM1(SLJIT_SP), sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_SP), 0);
+
 	jump = sljit_emit_jump(compiler, SLJIT_JUMP | SLJIT_REWRITABLE_JUMP);
 	sljit_set_target(jump, 0);
 
 	code1.code = sljit_generate_code(compiler);
 	CHECK(compiler);
+
+	executable_offset = sljit_get_executable_offset(compiler);
 	addr = sljit_get_jump_addr(jump);
+
 	sljit_free_compiler(compiler);
 
 	compiler = sljit_create_compiler(NULL);
@@ -1622,7 +1678,7 @@ static void test21(void)
 	CHECK(compiler);
 	sljit_free_compiler(compiler);
 
-	sljit_set_jump_addr(addr, SLJIT_FUNC_OFFSET(code2.code));
+	sljit_set_jump_addr(addr, SLJIT_FUNC_OFFSET(code2.code), executable_offset);
 
 	FAILED(code1.func1((sljit_sw)&buf) != 19, "test21 case 1 failed\n");
 	FAILED(buf[2] != -16, "test21 case 2 failed\n");
@@ -1678,12 +1734,14 @@ static void test22(void)
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_R2, 0, SLJIT_MEM1(SLJIT_R0), sizeof(sljit_sw));
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R1), sizeof(sljit_sw), SLJIT_R2, 0);
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R1), sizeof(sljit_sw), SLJIT_MEM1(SLJIT_R0), sizeof(sljit_sw));
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1 << SLJIT_WORD_SHIFT);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), 0, SLJIT_R2, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, sizeof(sljit_sw));
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), 0, SLJIT_R1, 0);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 2);
-	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 2 << SLJIT_WORD_SHIFT);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), 0, SLJIT_R2, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV_S16, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_IMM, -13);
 	sljit_emit_op1(compiler, SLJIT_MOVU_U16, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_s16), SLJIT_IMM, 0x1234);
@@ -1693,12 +1751,12 @@ static void test22(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0xff0000 + 8000);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 2);
 	sljit_emit_op1(compiler, SLJIT_MOV_S16, SLJIT_MEM2(SLJIT_S1, SLJIT_R1), 1, SLJIT_R0, 0);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 3);
-	sljit_emit_op1(compiler, SLJIT_MOVU_S16, SLJIT_MEM2(SLJIT_S1, SLJIT_R1), 1, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 6);
+	sljit_emit_op1(compiler, SLJIT_MOVU_S16, SLJIT_MEM2(SLJIT_S1, SLJIT_R1), 0, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV_S16, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_IMM, -9317);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R1, 0, SLJIT_S1, 0, SLJIT_IMM, 5 * sizeof(sljit_s16));
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -5);
-	sljit_emit_op1(compiler, SLJIT_MOV_U16, SLJIT_R1, 0, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), 1);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -10);
+	sljit_emit_op1(compiler, SLJIT_MOV_U16, SLJIT_R1, 0, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), 0);
 	sljit_emit_op1(compiler, SLJIT_MOV_U16, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_s16), SLJIT_R1, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV_S8, SLJIT_MEM1(SLJIT_S2), 0, SLJIT_IMM, -45);
@@ -1784,8 +1842,8 @@ static void test23(void)
 
 	sljit_emit_enter(compiler, 0, 2, 3, 3, 0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV_U32, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_IMM, 34567);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op1(compiler, SLJIT_MOVU_S32, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), 2, SLJIT_IMM, -7654);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 4);
+	sljit_emit_op1(compiler, SLJIT_MOVU_S32, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), 0, SLJIT_IMM, -7654);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, garbage);
 	sljit_emit_op1(compiler, SLJIT_MOVU_S32, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_s32));
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R0, 0);
@@ -1801,19 +1859,19 @@ static void test23(void)
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_S0), 0x7777 + 2 * sizeof(sljit_sw), SLJIT_R0, 0);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_S0, 0, SLJIT_S0, 0, SLJIT_IMM, 0x7777);
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_S0), -0x7777 + (sljit_sw)sizeof(sljit_sw), SLJIT_R0, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R1, 0, SLJIT_S0, 0, SLJIT_IMM, 16 - sizeof(sljit_sw));
+	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R1, 0, SLJIT_S0, 0, SLJIT_IMM, sizeof(sljit_sw));
 	sljit_emit_op2(compiler, SLJIT_LSHR, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, 1);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 16);
-	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R0, SLJIT_R1), 1, SLJIT_R0, 0);
-	sljit_emit_op2(compiler, SLJIT_OR, SLJIT_MEM1(SLJIT_R0), 0, SLJIT_IMM, 64, SLJIT_MEM1(SLJIT_R0), 0);
+	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R1, SLJIT_R1), 0, SLJIT_IMM, 16);
+	sljit_emit_op2(compiler, SLJIT_OR, SLJIT_MEM1(SLJIT_R1), 0, SLJIT_IMM, 64, SLJIT_MEM1(SLJIT_R1), 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R0), (sljit_sw)&buf[6], SLJIT_MEM0(), (sljit_sw)&buf[6]);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_R0), 0, SLJIT_IMM, 0x123456);
-	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_S0, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_S0, 0);
+	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_R1, 0);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, sizeof(sljit_sw));
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_S0, 0, SLJIT_S0, 0, SLJIT_IMM, 100000 * sizeof(sljit_sw));
-	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_S0), 100001 * sizeof(sljit_sw), SLJIT_S0, 0);
-	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, sizeof(sljit_sw));
+	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_S0), 100001 * sizeof(sljit_sw), SLJIT_IMM, 123456);
+	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 123);
 	sljit_emit_op1(compiler, SLJIT_MOVU_S32, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_s32), SLJIT_IMM, 0x12345678);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0x2bd700 | 243);
@@ -1832,7 +1890,7 @@ static void test23(void)
 	FAILED(buf[5] != 80, "test23 case 7 failed\n");
 	FAILED(buf[6] != 0x123456, "test23 case 8 failed\n");
 	FAILED(buf[7] != (sljit_sw)&buf[5], "test23 case 9 failed\n");
-	FAILED(buf[8] != (sljit_sw)&buf[8] - 100000 * sizeof(sljit_sw), "test23 case 10 failed\n");
+	FAILED(buf[8] != 123456 + 123, "test23 case 10 failed\n");
 
 	FAILED(ibuf[0] != 34567, "test23 case 11 failed\n");
 	FAILED(ibuf[1] != -7654, "test23 case 12 failed\n");
@@ -1917,8 +1975,8 @@ static void test24(void)
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_MEM2(SLJIT_R1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), SLJIT_WORD_SHIFT);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_S0, 0);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R1, 0, SLJIT_S0, 0, SLJIT_IMM, sizeof(sljit_sw));
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_IMM, 4);
-	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R1, SLJIT_R2), SLJIT_WORD_SHIFT, SLJIT_MEM2(SLJIT_R0, SLJIT_R2), SLJIT_WORD_SHIFT);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_IMM, 4 << SLJIT_WORD_SHIFT);
+	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM2(SLJIT_R1, SLJIT_R2), 0, SLJIT_MEM2(SLJIT_R0, SLJIT_R2), 0);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_R0, 0);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_R1, 0);
 
@@ -2131,7 +2189,7 @@ static void test27(void)
 	/* Playing with conditional flags. */
 	executable_code code;
 	struct sljit_compiler* compiler = sljit_create_compiler(NULL);
-	sljit_s8 buf[37];
+	sljit_u8 buf[37];
 	sljit_s32 i;
 
 	if (verbose)
@@ -2151,45 +2209,55 @@ static void test27(void)
 	sljit_emit_op2(compiler, SLJIT_SHL, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 20);
 	/* 0x100100000 on 64 bit machines, 0x100000 on 32 bit machines. */
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0x800000);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	sljit_emit_op0(compiler, SLJIT_NOP); /* Nop should keep the flags. */
 	SET_NEXT_BYTE(SLJIT_GREATER);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_LESS);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R1, 0, SLJIT_R1, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	sljit_emit_op0(compiler, SLJIT_NOP); /* Nop should keep the flags. */
 	SET_NEXT_BYTE(SLJIT_GREATER32);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_LESS32);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x1000);
 	sljit_emit_op2(compiler, SLJIT_SHL, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 20);
 	sljit_emit_op2(compiler, SLJIT_OR, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 0x10);
 	/* 0x100000010 on 64 bit machines, 0x10 on 32 bit machines. */
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x80);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x80);
 	SET_NEXT_BYTE(SLJIT_GREATER);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x80);
 	SET_NEXT_BYTE(SLJIT_LESS);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_R0, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x80);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x80);
 	SET_NEXT_BYTE(SLJIT_GREATER32);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x80);
 	SET_NEXT_BYTE(SLJIT_LESS32);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
 	/* 0xff..ff on all machines. */
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_R1, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS_EQUAL, SLJIT_R1, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
 	SET_NEXT_BYTE(SLJIT_LESS_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER_EQUAL, SLJIT_R1, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
 	SET_NEXT_BYTE(SLJIT_GREATER_EQUAL);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_S, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, -1);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_GREATER, SLJIT_R2, 0, SLJIT_R1, 0, SLJIT_IMM, -1);
 	SET_NEXT_BYTE(SLJIT_SIG_GREATER);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_LESS, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, -1);
 	SET_NEXT_BYTE(SLJIT_SIG_LESS);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R1, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_R2, 0, SLJIT_R1, 0, SLJIT_R0, 0);
 	SET_NEXT_BYTE(SLJIT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R1, 0, SLJIT_R0, 0);
 	SET_NEXT_BYTE(SLJIT_NOT_EQUAL);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_O | SLJIT_SET_U, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, -2);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_OVERFLOW, SLJIT_R0, 0, SLJIT_R1, 0, SLJIT_IMM, -2);
 	SET_NEXT_BYTE(SLJIT_OVERFLOW);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_NOT_OVERFLOW, SLJIT_R0, 0, SLJIT_R1, 0, SLJIT_IMM, -2);
 	SET_NEXT_BYTE(SLJIT_NOT_OVERFLOW);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER_EQUAL, SLJIT_R0, 0, SLJIT_R1, 0, SLJIT_IMM, -2);
 	SET_NEXT_BYTE(SLJIT_GREATER_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS_EQUAL, SLJIT_R0, 0, SLJIT_R1, 0, SLJIT_IMM, -2);
 	SET_NEXT_BYTE(SLJIT_LESS_EQUAL);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x80000000);
@@ -2197,61 +2265,64 @@ static void test27(void)
 	sljit_emit_op2(compiler, SLJIT_SHL, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 16);
 	/* 0x80..0 on 64 bit machines, 0 on 32 bit machines. */
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0xffffffff);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_OVERFLOW);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_NOT_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_NOT_OVERFLOW);
 	sljit_emit_op1(compiler, SLJIT_MOV_S32, SLJIT_R0, 0, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV_U32, SLJIT_R1, 0, SLJIT_R1, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_OVERFLOW32);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_NOT_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_NOT_OVERFLOW32);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_C, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op2(compiler, SLJIT_SUBC | SLJIT_SET_C, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_CARRY, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
+	sljit_emit_op2(compiler, SLJIT_SUBC | SLJIT_SET_CARRY, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0);
 	sljit_emit_op2(compiler, SLJIT_SUBC, SLJIT_R0, 0, SLJIT_IMM, 6, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOVU_U8, SLJIT_MEM1(SLJIT_S0), 1, SLJIT_R0, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -1);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_C, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op2(compiler, SLJIT_ADDC | SLJIT_SET_C, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_CARRY, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
+	sljit_emit_op2(compiler, SLJIT_ADDC | SLJIT_SET_CARRY, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
 	sljit_emit_op2(compiler, SLJIT_ADDC, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 9);
 	sljit_emit_op1(compiler, SLJIT_MOVU_U8, SLJIT_MEM1(SLJIT_S0), 1, SLJIT_R0, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1);
 	sljit_emit_op2(compiler, SLJIT_SHL, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, (8 * sizeof(sljit_sw)) - 1);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0);
 	SET_NEXT_BYTE(SLJIT_EQUAL);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R0, 0);
 	SET_NEXT_BYTE(SLJIT_EQUAL);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_ASHR | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 0);
+	sljit_emit_op2(compiler, SLJIT_ASHR | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 0);
 	SET_NEXT_BYTE(SLJIT_EQUAL);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op2(compiler, SLJIT_LSHR | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 0xffffc0);
+	sljit_emit_op2(compiler, SLJIT_LSHR | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 0xffffc0);
 	SET_NEXT_BYTE(SLJIT_NOT_EQUAL);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_PREF_SHIFT_REG, 0, SLJIT_IMM, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_ASHR | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_PREF_SHIFT_REG, 0);
+	sljit_emit_op2(compiler, SLJIT_ASHR | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_PREF_SHIFT_REG, 0);
 	SET_NEXT_BYTE(SLJIT_EQUAL);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_PREF_SHIFT_REG, 0, SLJIT_IMM, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op2(compiler, SLJIT_LSHR | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_PREF_SHIFT_REG, 0);
+	sljit_emit_op2(compiler, SLJIT_LSHR | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_PREF_SHIFT_REG, 0);
 	SET_NEXT_BYTE(SLJIT_NOT_EQUAL);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 1);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_C, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_CARRY, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUBC | SLJIT_SET_CARRY, SLJIT_R2, 0, SLJIT_IMM, 1, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV_U8, SLJIT_MEM1(SLJIT_S0), 1, SLJIT_R2, 0);
+	sljit_emit_op2(compiler, SLJIT_SUBC | SLJIT_SET_CARRY, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	sljit_emit_op2(compiler, SLJIT_SUBC, SLJIT_R2, 0, SLJIT_IMM, 1, SLJIT_R0, 0);
-	sljit_emit_op1(compiler, SLJIT_MOVU_U8, SLJIT_MEM1(SLJIT_S0), 1, SLJIT_R2, 0);
-	sljit_emit_op2(compiler, SLJIT_SUBC | SLJIT_SET_C, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
-	sljit_emit_op2(compiler, SLJIT_SUBC, SLJIT_R2, 0, SLJIT_IMM, 1, SLJIT_R0, 0);
-	sljit_emit_op1(compiler, SLJIT_MOVU_U8, SLJIT_MEM1(SLJIT_S0), 1, SLJIT_R2, 0);
+	sljit_emit_op1(compiler, SLJIT_MOVU_U8, SLJIT_MEM1(SLJIT_S0), 2, SLJIT_R2, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -34);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_S | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x1234);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x1234);
 	SET_NEXT_BYTE(SLJIT_LESS);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x1234);
 	SET_NEXT_BYTE(SLJIT_SIG_LESS);
 #if (defined SLJIT_64BIT_ARCHITECTURE && SLJIT_64BIT_ARCHITECTURE)
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x12300000000) - 43);
@@ -2259,8 +2330,9 @@ static void test27(void)
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, -43);
 #endif
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R1, 0, SLJIT_IMM, -96);
-	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_S | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_LESS32);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_SIG_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	SET_NEXT_BYTE(SLJIT_SIG_GREATER32);
 
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
@@ -2327,9 +2399,9 @@ static void test28(void)
 	/* Test mov. */
 	executable_code code;
 	struct sljit_compiler* compiler = sljit_create_compiler(NULL);
-	struct sljit_const* const1;
-	struct sljit_label* label;
-	sljit_uw label_addr;
+	struct sljit_const* const1 = NULL;
+	struct sljit_label* label = NULL;
+	sljit_uw label_addr = 0;
 	sljit_sw buf[5];
 
 	if (verbose)
@@ -2349,23 +2421,27 @@ static void test28(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R4, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw));
 	sljit_emit_op2(compiler, SLJIT_MUL, SLJIT_S3, 0, SLJIT_R3, 0, SLJIT_R4, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_S3, 0);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_S3, 0, SLJIT_IMM, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_S3, 0, SLJIT_IMM, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_S3, 0, SLJIT_UNUSED, 0, SLJIT_NOT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_S3, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_S4, 0, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw));
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_S4, 0, SLJIT_S4, 0, SLJIT_R4, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_S4, 0);
+
 	const1 = sljit_emit_const(compiler, SLJIT_S3, 0, 0);
 	sljit_emit_ijump(compiler, SLJIT_JUMP, SLJIT_S3, 0);
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_S3, 0, SLJIT_S3, 0, SLJIT_IMM, 100);
 	label = sljit_emit_label(compiler);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_S3, 0);
+
 	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_R4, 0);
 
 	code.code = sljit_generate_code(compiler);
 	CHECK(compiler);
+
 	label_addr = sljit_get_label_addr(label);
-	sljit_set_const(sljit_get_const_addr(const1), label_addr);
+	sljit_set_const(sljit_get_const_addr(const1), label_addr, sljit_get_executable_offset(compiler));
+
 	sljit_free_compiler(compiler);
 
 	FAILED(code.func1((sljit_sw)&buf) != 8, "test28 case 1 failed\n");
@@ -2572,13 +2648,13 @@ static void test30(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_UNUSED, 0, SLJIT_R2, 0);
 	sljit_emit_op1(compiler, SLJIT_NOT, SLJIT_UNUSED, 0, SLJIT_R1, 0);
 	sljit_emit_op1(compiler, SLJIT_NEG, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0);
-	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_GREATER_EQUAL, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MEM1(SLJIT_S0), 0);
 	sljit_emit_op2(compiler, SLJIT_MUL, SLJIT_UNUSED, 0, SLJIT_S0, 0, SLJIT_MEM1(SLJIT_S0), 0);
-	sljit_emit_op2(compiler, SLJIT_SHL | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_S3, 0, SLJIT_R2, 0);
-	sljit_emit_op2(compiler, SLJIT_LSHR | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 5);
+	sljit_emit_op2(compiler, SLJIT_SHL | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_S3, 0, SLJIT_R2, 0);
+	sljit_emit_op2(compiler, SLJIT_LSHR | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 5);
 	sljit_emit_op2(compiler, SLJIT_AND, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_IMM, 0xff);
-	sljit_emit_op1(compiler, SLJIT_NOT32 | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_S1, 0);
+	sljit_emit_op1(compiler, SLJIT_NOT32 | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_S1, 0);
 
 	/* Testing that any change happens. */
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_R1, 0);
@@ -2638,35 +2714,37 @@ static void test31(void)
 
 	sljit_emit_enter(compiler, 0, 1, 3, 5, 0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_IMM, -45);
+	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_MUL_NOT_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_IMM, -45);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_MUL_NOT_OVERFLOW);
+	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_MUL_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R1, 0, SLJIT_IMM, -45);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_MUL_OVERFLOW);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_S2, 0, SLJIT_IMM, big_word);
-	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_O, SLJIT_R2, 0, SLJIT_S2, 0, SLJIT_IMM, -2);
+	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_MUL_OVERFLOW, SLJIT_R2, 0, SLJIT_S2, 0, SLJIT_IMM, -2);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 33); /* Should not change flags. */
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0); /* Should not change flags. */
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_MUL_OVERFLOW);
+	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_MUL_NOT_OVERFLOW, SLJIT_R2, 0, SLJIT_S2, 0, SLJIT_IMM, -2);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_MUL_NOT_OVERFLOW);
 
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_S3, 0, SLJIT_IMM, 0x3f6b0);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_S4, 0, SLJIT_IMM, 0x2a783);
-	sljit_emit_op2(compiler, SLJIT_MUL32 | SLJIT_SET_O, SLJIT_R1, 0, SLJIT_S3, 0, SLJIT_S4, 0);
+	sljit_emit_op2(compiler, SLJIT_MUL32 | SLJIT_SET_MUL_OVERFLOW, SLJIT_R1, 0, SLJIT_S3, 0, SLJIT_S4, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_MUL_OVERFLOW32);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_R1, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R1, 0, SLJIT_IMM, big_word2);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R2, 0, SLJIT_R1, 0);
-	sljit_emit_op2(compiler, SLJIT_MUL32 | SLJIT_SET_O, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, 23);
+	sljit_emit_op2(compiler, SLJIT_MUL32 | SLJIT_SET_MUL_OVERFLOW, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, 23);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_sw), SLJIT_MUL_OVERFLOW32);
 
-	sljit_emit_op2(compiler, SLJIT_MUL32 | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -23);
+	sljit_emit_op2(compiler, SLJIT_MUL32 | SLJIT_SET_MUL_NOT_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -23);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 7 * sizeof(sljit_sw), SLJIT_MUL_NOT_OVERFLOW32);
-	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_O, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -23);
+	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_MUL_NOT_OVERFLOW, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -23);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_sw), SLJIT_MUL_NOT_OVERFLOW);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 67);
-	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_O, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, -23);
+	sljit_emit_op2(compiler, SLJIT_MUL | SLJIT_SET_MUL_OVERFLOW, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_IMM, -23);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 9 * sizeof(sljit_sw), SLJIT_R1, 0);
 
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
@@ -2755,31 +2833,40 @@ static void test32(void)
 	sljit_emit_enter(compiler, 0, 2, 1, 2, 4, 0, 0);
 
 	sljit_emit_fop1(compiler, SLJIT_MOV_F64, SLJIT_FR0, 0, SLJIT_MEM1(SLJIT_S1), 0);
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_E, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_f64), SLJIT_FR0, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_UNORDERED_F, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_f64), SLJIT_FR0, 0);
 	sljit_emit_fop1(compiler, SLJIT_MOV_F64, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S1), 2 * sizeof(sljit_f64));
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_UNORDERED_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_ORDERED_F, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_f64), SLJIT_FR0, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_ORDERED_F64);
 
 	sljit_emit_fop1(compiler, SLJIT_MOV_F64, SLJIT_FR2, 0, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_f64));
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_E | SLJIT_SET_S, SLJIT_FR1, 0, SLJIT_FR2, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_UNORDERED_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_UNORDERED_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_ORDERED_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_ORDERED_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_LESS_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_LESS_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_GREATER_EQUAL_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_GREATER_EQUAL_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_GREATER_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_sw), SLJIT_GREATER_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_LESS_EQUAL_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 7 * sizeof(sljit_sw), SLJIT_LESS_EQUAL_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_EQUAL_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_sw), SLJIT_EQUAL_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_NOT_EQUAL_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 9 * sizeof(sljit_sw), SLJIT_NOT_EQUAL_F64);
 
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_E, SLJIT_FR2, 0, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_f64));
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_UNORDERED_F, SLJIT_FR2, 0, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_f64));
 	sljit_emit_fop2(compiler, SLJIT_ADD_F64, SLJIT_FR3, 0, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_f64));
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 10 * sizeof(sljit_sw), SLJIT_UNORDERED_F64);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_EQUAL_F, SLJIT_FR2, 0, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_f64));
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 11 * sizeof(sljit_sw), SLJIT_EQUAL_F64);
 
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_S, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_f64), SLJIT_FR0, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_ORDERED_F, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_f64), SLJIT_FR0, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 12 * sizeof(sljit_sw), SLJIT_ORDERED_F64);
 
-	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_S, SLJIT_FR3, 0, SLJIT_FR2, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F64 | SLJIT_SET_UNORDERED_F, SLJIT_FR3, 0, SLJIT_FR2, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV_U8, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S1), 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S0), 13 * sizeof(sljit_sw), SLJIT_UNORDERED_F64);
 
@@ -2812,15 +2899,11 @@ static void test32(void)
 
 static void test33(void)
 {
-	/* Test keep flags. */
+	/* Test setting multiple flags. */
 	executable_code code;
 	struct sljit_compiler* compiler = sljit_create_compiler(NULL);
-	sljit_sw buf[7];
-#if (defined SLJIT_64BIT_ARCHITECTURE && SLJIT_64BIT_ARCHITECTURE)
-	sljit_sw big_word = SLJIT_W(0x8000000000000003);
-#else
-	sljit_sw big_word = 0x80000003;
-#endif
+	struct sljit_jump* jump;
+	sljit_sw buf[10];
 
 	if (verbose)
 		printf("Run test33\n");
@@ -2832,38 +2915,65 @@ static void test33(void)
 	buf[4] = 3;
 	buf[5] = 3;
 	buf[6] = 3;
+	buf[7] = 3;
+	buf[8] = 3;
+	buf[9] = 3;
 
 	FAILED(!compiler, "cannot create compiler\n");
 
 	sljit_emit_enter(compiler, 0, 1, 3, 3, 0, 0, 0);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, big_word);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_E | SLJIT_SET_C, SLJIT_R1, 0, SLJIT_R0, 0, SLJIT_IMM, big_word);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R1, 0);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 8);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_KEEP_FLAGS, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 8);
-	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_NOT_ZERO);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_ADDC | SLJIT_KEEP_FLAGS, SLJIT_R1, 0, SLJIT_R0, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_ADDC, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_R0, 0, SLJIT_IMM, 7);
 
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 8);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 8);
-	sljit_emit_op2(compiler, SLJIT_SHL | SLJIT_KEEP_FLAGS, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw));
-	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_EQUAL);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 20);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 10);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z | SLJIT_SET_LESS, SLJIT_R2, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_UNUSED, 0, SLJIT_ZERO);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, -10);
+	jump = sljit_emit_jump(compiler, SLJIT_LESS);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_IMM, 11);
+	sljit_set_label(jump, sljit_emit_label(compiler));
 
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_IMM, 0x124);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 2);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_KEEP_FLAGS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R0, 0);
-	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_NOT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z | SLJIT_SET_SIG_GREATER, SLJIT_R2, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_SIG_GREATER);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_IMM, 45);
+	jump = sljit_emit_jump(compiler, SLJIT_NOT_EQUAL);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_IMM, 55);
+	sljit_set_label(jump, sljit_emit_label(compiler));
 
-	/* PowerPC specific test. */
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -1);
-	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_C, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 2);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x80);
-	sljit_emit_op2(compiler, SLJIT_ASHR | SLJIT_KEEP_FLAGS, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0);
-	sljit_emit_op2(compiler, SLJIT_ADDC, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_sw), SLJIT_R1, 0, SLJIT_IMM, 0);
+#if (defined SLJIT_64BIT_ARCHITECTURE && SLJIT_64BIT_ARCHITECTURE)
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x8000000000000000));
+#else
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x80000000));
+#endif
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 1);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z | SLJIT_SET_NOT_OVERFLOW, SLJIT_R2, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_IMM, 33);
+	jump = sljit_emit_jump(compiler, SLJIT_NOT_OVERFLOW);
+	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_ZERO);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_IMM, 13);
+	sljit_set_label(jump, sljit_emit_label(compiler));
+
+	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x80000000));
+	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R1, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_Z | SLJIT_SET_OVERFLOW, SLJIT_R2, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R1, 0, SLJIT_IMM, 0);
+	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_NOT_ZERO);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 7 * sizeof(sljit_sw), SLJIT_IMM, 78);
+	jump = sljit_emit_jump(compiler, SLJIT_OVERFLOW32);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 7 * sizeof(sljit_sw), SLJIT_IMM, 48);
+	sljit_set_label(jump, sljit_emit_label(compiler));
+
+#if (defined SLJIT_64BIT_ARCHITECTURE && SLJIT_64BIT_ARCHITECTURE)
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x8000000000000000));
+#else
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, SLJIT_W(0x80000000));
+#endif
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_ADD | SLJIT_SET_Z | SLJIT_SET_NOT_OVERFLOW, SLJIT_R2, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_sw), SLJIT_IMM, 30);
+	jump = sljit_emit_jump(compiler, SLJIT_NOT_OVERFLOW);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_sw), SLJIT_IMM, 50);
+	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 9 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_ZERO);
+	sljit_set_label(jump, sljit_emit_label(compiler));
 
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
 
@@ -2873,13 +2983,16 @@ static void test33(void)
 
 	code.func1((sljit_sw)&buf);
 
-	FAILED(buf[0] != 6, "test33 case 1 failed\n");
-	FAILED(buf[1] != 1, "test33 case 2 failed\n");
-	FAILED(buf[2] != 8, "test33 case 3 failed\n");
-	FAILED(buf[3] != 16, "test33 case 4 failed\n");
-	FAILED(buf[4] != 1, "test33 case 5 failed\n");
-	FAILED(buf[5] != 0x125, "test33 case 6 failed\n");
-	FAILED(buf[6] != 1, "test33 case 7 failed\n");
+	FAILED(buf[0] != 0, "test33 case 1 failed\n");
+	FAILED(buf[1] != 11, "test33 case 2 failed\n");
+	FAILED(buf[2] != 1, "test33 case 3 failed\n");
+	FAILED(buf[3] != 45, "test33 case 4 failed\n");
+	FAILED(buf[4] != 13, "test33 case 5 failed\n");
+	FAILED(buf[5] != 0, "test33 case 6 failed\n");
+	FAILED(buf[6] != 0, "test33 case 7 failed\n");
+	FAILED(buf[7] != 48, "test33 case 8 failed\n");
+	FAILED(buf[8] != 50, "test33 case 9 failed\n");
+	FAILED(buf[9] != 1, "test33 case 10 failed\n");
 
 	sljit_free_code(code.code);
 	successful_tests++;
@@ -2941,7 +3054,7 @@ static void test34(void)
 
 	sljit_emit_fast_enter(compiler, SLJIT_MEM1(SLJIT_SP), sizeof(sljit_p));
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 8);
-	jump = sljit_emit_jump(compiler, SLJIT_REWRITABLE_JUMP | SLJIT_FAST_CALL);
+	jump = sljit_emit_jump(compiler, SLJIT_FAST_CALL | SLJIT_REWRITABLE_JUMP);
 	sljit_set_target(jump, SLJIT_FUNC_OFFSET(codeB.code));
 	sljit_emit_fast_return(compiler, SLJIT_MEM1(SLJIT_SP), sizeof(sljit_p));
 
@@ -3012,9 +3125,11 @@ static void test35(void)
 	executable_code codeB;
 	executable_code codeC;
 	struct sljit_compiler* compiler;
-	struct sljit_jump *jump;
+	struct sljit_jump *jump = NULL;
 	struct sljit_label* label;
-	sljit_uw return_addr, jump_addr;
+	sljit_sw executable_offset;
+	sljit_uw return_addr;
+	sljit_uw jump_addr = 0;
 	sljit_p buf[1];
 
 	if (verbose)
@@ -3029,14 +3144,17 @@ static void test35(void)
 
 	sljit_emit_fast_enter(compiler, SLJIT_MEM0(), (sljit_sw)&buf[0]);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 5);
-	jump = sljit_emit_jump(compiler, SLJIT_REWRITABLE_JUMP | SLJIT_FAST_CALL);
+
+	jump = sljit_emit_jump(compiler, SLJIT_FAST_CALL | SLJIT_REWRITABLE_JUMP);
 	sljit_set_target(jump, 0);
+
 	label = sljit_emit_label(compiler);
 	sljit_emit_fast_return(compiler, SLJIT_MEM0(), (sljit_sw)&buf[0]);
 
 	codeA.code = sljit_generate_code(compiler);
 	CHECK(compiler);
 	return_addr = sljit_get_label_addr(label) - SLJIT_RETURN_ADDRESS_OFFSET;
+	executable_offset = sljit_get_executable_offset(compiler);
 	jump_addr = sljit_get_jump_addr(jump);
 	sljit_free_compiler(compiler);
 
@@ -3052,7 +3170,8 @@ static void test35(void)
 	codeB.code = sljit_generate_code(compiler);
 	CHECK(compiler);
 	sljit_free_compiler(compiler);
-	sljit_set_jump_addr(jump_addr, SLJIT_FUNC_OFFSET(codeB.code));
+
+	sljit_set_jump_addr(jump_addr, SLJIT_FUNC_OFFSET(codeB.code), executable_offset);
 
 	/* C */
 	compiler = sljit_create_compiler(NULL);
@@ -3251,25 +3370,25 @@ static void test37(void)
 	sljit_emit_enter(compiler, 0, 2, 1, 2, 0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, BITN(27));
 	sljit_emit_op1(compiler, SLJIT_CLZ, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R0, 0);
-	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_IMM, BITN(47));
+	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_IMM, BITN(47));
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_CLZ, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw));
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -1);
-	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, 0);
 	sljit_emit_op1(compiler, SLJIT_CLZ32, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -1);
-	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_ZERO);
-	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_KEEP_FLAGS, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), 7 * sizeof(sljit_sw));
+	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), 7 * sizeof(sljit_sw));
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 7 * sizeof(sljit_sw), SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_NOT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, BITN(58));
 	sljit_emit_op1(compiler, SLJIT_CLZ, SLJIT_MEM1(SLJIT_S0), 9 * sizeof(sljit_sw), SLJIT_R0, 0);
-	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 10 * sizeof(sljit_sw));
+	sljit_emit_op1(compiler, SLJIT_CLZ | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_MEM1(SLJIT_S0), 10 * sizeof(sljit_sw));
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 10 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_NOT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
 	sljit_emit_op1(compiler, SLJIT_CLZ, SLJIT_MEM1(SLJIT_S0), 11 * sizeof(sljit_sw), SLJIT_R0, 0);
@@ -3286,9 +3405,9 @@ static void test37(void)
 #else
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, 0xc8a00000);
 #endif
-	sljit_emit_op1(compiler, SLJIT_CLZ32 | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_CLZ32 | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 13 * sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_ZERO32);
-	sljit_emit_op1(compiler, SLJIT_CLZ32 | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_CLZ32 | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 14 * sizeof(sljit_sw), SLJIT_R0, 0);
 
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
@@ -3312,7 +3431,7 @@ static void test37(void)
 	FAILED(buf[6] != 1, "test37 case 8 failed\n");
 	FAILED(buf[7] != RESN(13), "test37 case 9 failed\n");
 #if !(defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
-	FAILED(buf[8] != 0, "test37 case 10 failed\n");
+	FAILED(buf[8] != 1, "test37 case 10 failed\n");
 #endif
 	FAILED(buf[9] != RESN(58), "test37 case 11 failed\n");
 	FAILED(buf[10] != 0, "test37 case 12 failed\n");
@@ -3338,9 +3457,11 @@ static void test38(void)
 	/* Test stack utility. */
 	executable_code code;
 	struct sljit_compiler* compiler = sljit_create_compiler(NULL);
-	struct sljit_jump* alloc_fail;
+	struct sljit_jump* alloc1_fail;
 	struct sljit_jump* alloc2_fail;
 	struct sljit_jump* alloc3_fail;
+	struct sljit_jump* sanity1_fail;
+	struct sljit_jump* sanity2_fail;
 	struct sljit_jump* jump;
 	struct sljit_label* label;
 
@@ -3355,11 +3476,11 @@ static void test38(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 65536);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_IMM, 0);
 	sljit_emit_ijump(compiler, SLJIT_CALL3, SLJIT_IMM, SLJIT_FUNC_OFFSET(sljit_allocate_stack));
-	alloc_fail = sljit_emit_cmp(compiler, SLJIT_EQUAL, SLJIT_RETURN_REG, 0, SLJIT_IMM, 0);
+	alloc1_fail = sljit_emit_cmp(compiler, SLJIT_EQUAL, SLJIT_RETURN_REG, 0, SLJIT_IMM, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_S0, 0, SLJIT_RETURN_REG, 0);
 
 	/* Write 8k data. */
-	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, sizeof(sljit_sw));
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, limit), SLJIT_IMM, sizeof(sljit_sw));
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R1, 0, SLJIT_R0, 0, SLJIT_IMM, 8192);
 	label = sljit_emit_label(compiler);
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R0), sizeof(sljit_sw), SLJIT_IMM, -1);
@@ -3368,13 +3489,15 @@ static void test38(void)
 
 	/* Grow stack. */
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_S0, 0);
-	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, 65536);
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, 65536);
 	sljit_emit_ijump(compiler, SLJIT_CALL2, SLJIT_IMM, SLJIT_FUNC_OFFSET(sljit_stack_resize));
 	alloc2_fail = sljit_emit_cmp(compiler, SLJIT_NOT_EQUAL, SLJIT_RETURN_REG, 0, SLJIT_IMM, 0);
 
 	/* Write 64k data. */
-	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, sizeof(sljit_sw));
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, limit), SLJIT_IMM, sizeof(sljit_sw));
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R1, 0, SLJIT_R0, 0, SLJIT_IMM, 65536);
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R2, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, max_limit), SLJIT_IMM, sizeof(sljit_sw));
+	sanity1_fail = sljit_emit_cmp(compiler, SLJIT_NOT_EQUAL, SLJIT_R0, 0, SLJIT_R2, 0);
 	label = sljit_emit_label(compiler);
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R0), sizeof(sljit_sw), SLJIT_IMM, -1);
 	jump = sljit_emit_cmp(compiler, SLJIT_LESS, SLJIT_R0, 0, SLJIT_R1, 0);
@@ -3382,13 +3505,15 @@ static void test38(void)
 
 	/* Shrink stack. */
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_S0, 0);
-	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, 32768);
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, 32768);
 	sljit_emit_ijump(compiler, SLJIT_CALL2, SLJIT_IMM, SLJIT_FUNC_OFFSET(sljit_stack_resize));
 	alloc3_fail = sljit_emit_cmp(compiler, SLJIT_NOT_EQUAL, SLJIT_RETURN_REG, 0, SLJIT_IMM, 0);
 
 	/* Write 32k data. */
-	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, sizeof(sljit_sw));
-	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, limit), SLJIT_IMM, sizeof(sljit_sw));
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, limit), SLJIT_IMM, sizeof(sljit_sw));
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R1, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, sizeof(sljit_sw));
+	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R2, 0, SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct sljit_stack, base), SLJIT_IMM, 32768 + sizeof(sljit_sw));
+	sanity2_fail = sljit_emit_cmp(compiler, SLJIT_NOT_EQUAL, SLJIT_R0, 0, SLJIT_R2, 0);
 	label = sljit_emit_label(compiler);
 	sljit_emit_op1(compiler, SLJIT_MOVU, SLJIT_MEM1(SLJIT_R0), sizeof(sljit_sw), SLJIT_IMM, -1);
 	jump = sljit_emit_cmp(compiler, SLJIT_LESS, SLJIT_R0, 0, SLJIT_R1, 0);
@@ -3398,19 +3523,22 @@ static void test38(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0);
 	sljit_emit_ijump(compiler, SLJIT_CALL2, SLJIT_IMM, SLJIT_FUNC_OFFSET(sljit_free_stack));
 
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_RETURN_REG, 0, SLJIT_IMM, 1);
+	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_IMM, 4567);
+
 	label = sljit_emit_label(compiler);
-	sljit_set_label(alloc_fail, label);
+	sljit_set_label(alloc1_fail, label);
 	sljit_set_label(alloc2_fail, label);
 	sljit_set_label(alloc3_fail, label);
-	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
+	sljit_set_label(sanity1_fail, label);
+	sljit_set_label(sanity2_fail, label);
+	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_IMM, 0);
 
 	code.code = sljit_generate_code(compiler);
 	CHECK(compiler);
 	sljit_free_compiler(compiler);
 
 	/* Just survive this. */
-	FAILED(code.func0() != 1, "test38 case 1 failed\n");
+	FAILED(code.func0() != 4567, "test38 case 1 failed\n");
 
 	sljit_free_code(code.code);
 #endif
@@ -3499,49 +3627,51 @@ static void test40(void)
 	sljit_emit_enter(compiler, 0, 1, 3, 4, 0, 0, sizeof(sljit_sw));
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -5);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_S, SLJIT_UNUSED, 0, SLJIT_IMM, -6, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_LESS, SLJIT_UNUSED, 0, SLJIT_IMM, -6, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0x123456);
 	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_SIG_LESS);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R1, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -13);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_IMM, -13, SLJIT_R0, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_IMM, -13, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_SP), 0, SLJIT_IMM, 0);
-	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_KEEP_FLAGS, SLJIT_MEM1(SLJIT_SP), 0, SLJIT_MEM1(SLJIT_SP), 0, SLJIT_EQUAL);
-	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_EQUAL);
-	sljit_emit_op2(compiler, SLJIT_OR | SLJIT_KEEP_FLAGS, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_MEM1(SLJIT_SP), 0);
+	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_Z, SLJIT_MEM1(SLJIT_SP), 0, SLJIT_MEM1(SLJIT_SP), 0, SLJIT_EQUAL);
+	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_UNUSED, 0, SLJIT_NOT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_OR, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_MEM1(SLJIT_SP), 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_IMM, -13, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 0);
-	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_E, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_EQUAL);
+	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_Z, SLJIT_R1, 0, SLJIT_R1, 0, SLJIT_EQUAL);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 2, SLJIT_UNUSED, 0, SLJIT_EQUAL);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -13);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 3);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_S, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_LESS, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_MEM2(SLJIT_S0, SLJIT_R1), SLJIT_WORD_SHIFT, SLJIT_MEM2(SLJIT_S0, SLJIT_R1), SLJIT_WORD_SHIFT, SLJIT_SIG_LESS);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, -8);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 33);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_S1, 0, SLJIT_IMM, 0);
-	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_UNUSED, 0, SLJIT_GREATER);
-	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_KEEP_FLAGS, SLJIT_S1, 0, SLJIT_S1, 0, SLJIT_EQUAL);
+	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_UNUSED, 0, SLJIT_GREATER);
+	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_S1, 0, SLJIT_S1, 0, SLJIT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_R1, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_S3, 0, SLJIT_IMM, 0x88);
-	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_KEEP_FLAGS, SLJIT_S3, 0, SLJIT_S3, 0, SLJIT_NOT_EQUAL);
+	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_S3, 0, SLJIT_S3, 0, SLJIT_NOT_EQUAL);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 4, SLJIT_S1, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 5, SLJIT_S3, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x84);
-	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_IMM, 0x180, SLJIT_R0, 0);
-	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_E, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 6, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 6, SLJIT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_IMM, 0x180, SLJIT_R0, 0);
+	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_Z, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 6, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 6, SLJIT_EQUAL);
 	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 7, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 7, SLJIT_EQUAL);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_NOT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
+	sljit_emit_op_flags(compiler, SLJIT_OR | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_NOT_EQUAL);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 8, SLJIT_UNUSED, 0, SLJIT_NOT_EQUAL);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x123456);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
 	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_GREATER);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw) * 9, SLJIT_R0, 0);
 
@@ -3589,7 +3719,7 @@ static void test41(void)
 
 	for (i = 0; i < SLJIT_NUMBER_OF_REGISTERS; i++) {
 #if (defined SLJIT_CONFIG_X86_32 && SLJIT_CONFIG_X86_32)
-		if (SLJIT_R(i) >= SLJIT_R3 && SLJIT_R(i) <= SLJIT_R6) {
+		if (SLJIT_R(i) >= SLJIT_R3 && SLJIT_R(i) <= SLJIT_R8) {
 			SLJIT_ASSERT(sljit_get_register_index(SLJIT_R(i)) == -1);
 			continue;
 		}
@@ -4106,9 +4236,9 @@ static void test44(void)
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 2);
 	sljit_emit_op1(compiler, SLJIT_MOV_P, SLJIT_MEM2(SLJIT_S0, SLJIT_R1), SLJIT_POINTER_SHIFT, SLJIT_R0, 0);
 	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, sizeof(sljit_p));
-	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 3);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 3 << SLJIT_POINTER_SHIFT);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_S0, 0);
-	sljit_emit_op1(compiler, SLJIT_MOVU_P, SLJIT_MEM2(SLJIT_R2, SLJIT_R1), SLJIT_POINTER_SHIFT, SLJIT_R0, 0);
+	sljit_emit_op1(compiler, SLJIT_MOVU_P, SLJIT_MEM2(SLJIT_R2, SLJIT_R1), 0, SLJIT_R0, 0);
 	sljit_emit_op2(compiler, SLJIT_SUB, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_IMM, 2 * sizeof(sljit_p));
 	sljit_emit_op1(compiler, SLJIT_MOV_P, SLJIT_MEM1(SLJIT_R2), sizeof(sljit_p), SLJIT_R0, 0);
 
@@ -4197,12 +4327,13 @@ static void test45(void)
 
 	sljit_emit_fop1(compiler, SLJIT_MOV_F32, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), 0);
 	sljit_emit_fop1(compiler, SLJIT_MOV_F32, SLJIT_FR2, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f32));
-	sljit_emit_fop1(compiler, SLJIT_CMP_F32 | SLJIT_SET_E | SLJIT_SET_S, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F32 | SLJIT_SET_EQUAL_F, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_EQUAL_F32);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F32 | SLJIT_SET_LESS_F, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_sw), SLJIT_LESS_F32);
-	sljit_emit_fop1(compiler, SLJIT_CMP_F32 | SLJIT_SET_E, SLJIT_FR1, 0, SLJIT_FR2, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F32 | SLJIT_SET_EQUAL_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S1), 2 * sizeof(sljit_sw), SLJIT_EQUAL_F32);
-	sljit_emit_fop1(compiler, SLJIT_CMP_F32 | SLJIT_SET_S, SLJIT_FR1, 0, SLJIT_FR2, 0);
+	sljit_emit_fop1(compiler, SLJIT_CMP_F32 | SLJIT_SET_GREATER_EQUAL_F, SLJIT_FR1, 0, SLJIT_FR2, 0);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_sw), SLJIT_GREATER_EQUAL_F32);
 
 	jump = sljit_emit_fcmp(compiler, SLJIT_LESS_EQUAL_F32, SLJIT_FR1, 0, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_f32));
@@ -4264,44 +4395,48 @@ static void test46(void)
 	sljit_emit_enter(compiler, 0, 2, 3, 3, 0, 0, 0);
 
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R2, 0, SLJIT_IMM, -7);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 13);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 13);
 	sljit_emit_op_flags(compiler, SLJIT_MOV_S32, SLJIT_MEM0(), (sljit_sw)&buf, SLJIT_UNUSED, 0, SLJIT_LESS);
-	sljit_emit_op_flags(compiler, SLJIT_AND32, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_s32), SLJIT_GREATER);
+	sljit_emit_op_flags(compiler, SLJIT_AND32, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_s32), SLJIT_NOT_ZERO);
 
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
-	sljit_emit_op_flags(compiler, SLJIT_AND32 | SLJIT_KEEP_FLAGS, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_s32), SLJIT_EQUAL);
-	sljit_emit_op_flags(compiler, SLJIT_AND32 | SLJIT_KEEP_FLAGS, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_s32), SLJIT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
+	sljit_emit_op_flags(compiler, SLJIT_AND32 | SLJIT_SET_Z, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_s32), SLJIT_EQUAL);
+	sljit_emit_op_flags(compiler, SLJIT_AND32, SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 6 * sizeof(sljit_s32), SLJIT_NOT_EQUAL);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x1235);
-	sljit_emit_op_flags(compiler, SLJIT_AND32 | SLJIT_SET_E, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_EQUAL);
-	sljit_emit_op_flags(compiler, SLJIT_AND32, SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_s32), SLJIT_EQUAL32);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 0x1235);
+	sljit_emit_op_flags(compiler, SLJIT_AND32 | SLJIT_SET_Z, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_ZERO);
+	sljit_emit_op_flags(compiler, SLJIT_AND32, SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 8 * sizeof(sljit_s32), SLJIT_ZERO32);
 	sljit_emit_op1(compiler, SLJIT_MOV_U32, SLJIT_MEM1(SLJIT_S0), 10 * sizeof(sljit_s32), SLJIT_R0, 0);
 
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 12);
 	sljit_emit_op_flags(compiler, SLJIT_MOV_U32, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), 2, SLJIT_UNUSED, 0, SLJIT_EQUAL);
 	sljit_emit_op_flags(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_UNUSED, 0, SLJIT_EQUAL);
 	sljit_emit_op1(compiler, SLJIT_MOV_S32, SLJIT_MEM1(SLJIT_S0), 14 * sizeof(sljit_s32), SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 16);
-	sljit_emit_op_flags(compiler, SLJIT_AND32 | SLJIT_SET_E, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), 2, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), 2, SLJIT_EQUAL);
+	sljit_emit_op_flags(compiler, SLJIT_AND32 | SLJIT_SET_Z, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), 2, SLJIT_MEM2(SLJIT_S0, SLJIT_R0), 2, SLJIT_EQUAL);
 	sljit_emit_op_flags(compiler, SLJIT_MOV_U32, SLJIT_MEM1(SLJIT_S0), 18 * sizeof(sljit_s32), SLJIT_UNUSED, 0, SLJIT_NOT_EQUAL32);
 
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
-	sljit_emit_op_flags(compiler, SLJIT_XOR32 | SLJIT_KEEP_FLAGS, SLJIT_MEM1(SLJIT_S0), 20 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 20 * sizeof(sljit_s32), SLJIT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
+	sljit_emit_op_flags(compiler, SLJIT_XOR32 | SLJIT_SET_Z, SLJIT_MEM1(SLJIT_S0), 20 * sizeof(sljit_s32), SLJIT_MEM1(SLJIT_S0), 20 * sizeof(sljit_s32), SLJIT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 39);
-	sljit_emit_op_flags(compiler, SLJIT_XOR32, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_EQUAL);
+	sljit_emit_op_flags(compiler, SLJIT_XOR32, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_NOT_ZERO);
 	sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_MEM1(SLJIT_S0), 22 * sizeof(sljit_s32), SLJIT_R0, 0);
 
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, -7);
 	sljit_emit_op_flags(compiler, SLJIT_AND, SLJIT_MEM0(), (sljit_sw)&buf2, SLJIT_MEM0(), (sljit_sw)&buf2, SLJIT_GREATER);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E | SLJIT_SET_S | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 5);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_LESS, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 5);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 1);
-	sljit_emit_op_flags(compiler, SLJIT_AND | SLJIT_KEEP_FLAGS, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_SIG_LESS);
+	sljit_emit_op_flags(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_SIG_LESS);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 2);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 5);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_UNUSED, 0, SLJIT_LESS);
 	sljit_emit_op_flags(compiler, SLJIT_MOV, SLJIT_S2, 0, SLJIT_UNUSED, 0, SLJIT_NOT_EQUAL);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_LESS, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 5);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_sw), SLJIT_S2, 0);
-	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_sw), SLJIT_GREATER);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 0);
+	sljit_emit_op_flags(compiler, SLJIT_AND | SLJIT_SET_Z, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_MEM2(SLJIT_S1, SLJIT_R0), SLJIT_WORD_SHIFT, SLJIT_SIG_LESS);
+	sljit_emit_op_flags(compiler, SLJIT_OR, SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_sw), SLJIT_ZERO);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R2, 0, SLJIT_IMM, 0);
 	sljit_emit_op_flags(compiler, SLJIT_XOR, SLJIT_MEM1(SLJIT_S1), 5 * sizeof(sljit_sw), SLJIT_MEM1(SLJIT_S1), 5 * sizeof(sljit_sw), SLJIT_GREATER);
 
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
@@ -4364,7 +4499,7 @@ static void test47(void)
 
 	sljit_emit_enter(compiler, 0, 1, 3, 1, 0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0x3a5c6f);
-	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 3);
+	sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 3);
 	sljit_set_target(sljit_emit_jump(compiler, SLJIT_LESS), 0x11223344);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0xd37c10);
@@ -4991,7 +5126,7 @@ static void test53(void)
 	FAILED(!compiler, "cannot create compiler\n");
 	buf[0] = -1;
 
-	sljit_emit_enter(compiler, SLJIT_DOUBLE_ALIGNMENT, 1, 1, 1, 0, 0, 2 * sizeof(sljit_sw));
+	sljit_emit_enter(compiler, SLJIT_F64_ALIGNMENT, 1, 1, 1, 0, 0, 2 * sizeof(sljit_sw));
 
 	sljit_get_local_base(compiler, SLJIT_R0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R0, 0);
@@ -5015,7 +5150,7 @@ static void test53(void)
 	buf[0] = -1;
 
 	/* One more saved register to break the alignment on x86-32. */
-	sljit_emit_enter(compiler, SLJIT_DOUBLE_ALIGNMENT, 1, 1, 2, 0, 0, 2 * sizeof(sljit_sw));
+	sljit_emit_enter(compiler, SLJIT_F64_ALIGNMENT, 1, 1, 2, 0, 0, 2 * sizeof(sljit_sw));
 
 	sljit_get_local_base(compiler, SLJIT_R0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 0, SLJIT_R0, 0);
@@ -5043,7 +5178,9 @@ static void test54(void)
 	sljit_s32 ibuf[6];
 
 	if (verbose)
-		printf("Run test53\n");
+		printf("Run test54\n");
+
+	FAILED(!compiler, "cannot create compiler\n");
 
 	buf[0] = 98;
 	buf[1] = 0;
@@ -5064,14 +5201,15 @@ static void test54(void)
 	if (sljit_x86_is_cmov_available()) {
 		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 17);
 		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 34);
-		sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_S, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, -10);
+		sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, -10);
 		sljit_x86_emit_cmov(compiler, SLJIT_SIG_LESS, SLJIT_R0, SLJIT_R1, 0);
 		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw), SLJIT_R0, 0);
+		sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_SIG_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, -10);
 		sljit_x86_emit_cmov(compiler, SLJIT_SIG_GREATER, SLJIT_R0, SLJIT_R1, 0);
 		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 2 * sizeof(sljit_sw), SLJIT_R0, 0);
 
 		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 24);
-		sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_E, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 24);
+		sljit_emit_op2(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 24);
 		sljit_x86_emit_cmov(compiler, SLJIT_NOT_EQUAL, SLJIT_R0, SLJIT_MEM1(SLJIT_S0), 0);
 		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 3 * sizeof(sljit_sw), SLJIT_R0, 0);
 		sljit_x86_emit_cmov(compiler, SLJIT_EQUAL, SLJIT_R0, SLJIT_MEM1(SLJIT_S0), 0);
@@ -5080,14 +5218,22 @@ static void test54(void)
 		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 5 * sizeof(sljit_sw), SLJIT_R0, 0);
 
 		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, 177);
-		sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_U, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 177);
+		sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_LESS, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 177);
 		sljit_x86_emit_cmov(compiler, SLJIT_LESS32, SLJIT_R0 | SLJIT_I32_OP, SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_s32));
 		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_MEM1(SLJIT_S1), 3 * sizeof(sljit_s32), SLJIT_R0, 0);
+
+		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, 177);
+		sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_GREATER, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 177);
 		sljit_x86_emit_cmov(compiler, SLJIT_GREATER32, SLJIT_R0 | SLJIT_I32_OP, SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_s32));
 		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_MEM1(SLJIT_S1), 2 * sizeof(sljit_s32), SLJIT_R0, 0);
+
+		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R0, 0, SLJIT_IMM, 177);
+		sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_LESS_EQUAL, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 177);
 		sljit_x86_emit_cmov(compiler, SLJIT_LESS_EQUAL32, SLJIT_R0 | SLJIT_I32_OP, SLJIT_MEM1(SLJIT_S1), 4 * sizeof(sljit_s32));
 		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_MEM1(SLJIT_S1), sizeof(sljit_s32), SLJIT_R0, 0);
+
 		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_R1, 0, SLJIT_IMM, 5 * sizeof(sljit_s32));
+		sljit_emit_op2(compiler, SLJIT_SUB32 | SLJIT_SET_GREATER_EQUAL, SLJIT_UNUSED, 0, SLJIT_R0, 0, SLJIT_IMM, 1);
 		sljit_x86_emit_cmov(compiler, SLJIT_GREATER_EQUAL32, SLJIT_R0 | SLJIT_I32_OP, SLJIT_MEM2(SLJIT_S1, SLJIT_R1), 0);
 		sljit_emit_op1(compiler, SLJIT_MOV32, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_R0, 0);
 	}
@@ -5115,7 +5261,68 @@ static void test54(void)
 	}
 #endif
 
+	sljit_free_code(code.code);
+	successful_tests++;
+}
+
+static void test55(void)
+{
+	/* Check value preservation. */
+	executable_code code;
+	struct sljit_compiler* compiler = sljit_create_compiler(NULL);
+	sljit_sw buf[2];
+	sljit_s32 i;
+
+	if (verbose)
+		printf("Run test55\n");
+
 	FAILED(!compiler, "cannot create compiler\n");
+	buf[0] = 0;
+	buf[1] = 0;
+
+	sljit_emit_enter(compiler, 0, 0, SLJIT_NUMBER_OF_REGISTERS, 0, 0, 0, sizeof (sljit_sw));
+
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_SP), 0, SLJIT_IMM, 217);
+
+	/* Check 1 */
+	for (i = 0; i < SLJIT_NUMBER_OF_REGISTERS; i++)
+		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R(i), 0, SLJIT_IMM, 118);
+
+	sljit_emit_op0(compiler, SLJIT_DIVMOD_SW);
+
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
+
+	for (i = 2; i < SLJIT_NUMBER_OF_REGISTERS; i++)
+		sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_R(i), 0);
+	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_SP), 0);
+
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM0(), (sljit_sw)(buf + 0), SLJIT_R0, 0);
+
+	/* Check 2 */
+	for (i = 0; i < SLJIT_NUMBER_OF_REGISTERS; i++)
+		sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R(i), 0, SLJIT_IMM, 146);
+
+	sljit_emit_op0(compiler, SLJIT_DIV_SW);
+
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 0);
+
+	for (i = 1; i < SLJIT_NUMBER_OF_REGISTERS; i++)
+		sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_R(i), 0);
+	sljit_emit_op2(compiler, SLJIT_ADD, SLJIT_R0, 0, SLJIT_R0, 0, SLJIT_MEM1(SLJIT_SP), 0);
+
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM0(), (sljit_sw)(buf + 1), SLJIT_R0, 0);
+
+	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
+
+	code.code = sljit_generate_code(compiler);
+	CHECK(compiler);
+	sljit_free_compiler(compiler);
+
+	code.func0();
+
+	FAILED(buf[0] != (SLJIT_NUMBER_OF_REGISTERS - 2) * 118 + 217, "test55 case 1 failed\n");
+	FAILED(buf[1] != (SLJIT_NUMBER_OF_REGISTERS - 1) * 146 + 217, "test55 case 2 failed\n");
+
 	sljit_free_code(code.code);
 	successful_tests++;
 }
@@ -5187,12 +5394,13 @@ void sljit_test(int argc, char* argv[])
 	test52();
 	test53();
 	test54();
+	test55();
 
 #if (defined SLJIT_EXECUTABLE_ALLOCATOR && SLJIT_EXECUTABLE_ALLOCATOR)
 	sljit_free_unused_memory_exec();
 #endif
 
-#	define TEST_COUNT 54
+#	define TEST_COUNT 55
 
 	printf("SLJIT tests: ");
 	if (successful_tests == TEST_COUNT)

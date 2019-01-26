@@ -1,6 +1,3 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2.164.1 2019/01/26 22:00:03 pgoyette Exp $	*/
 
 #include <arm/pci_machdep.h>
-#define __HAVE_PCI_CONF_HOOK
-int pci_conf_hook(void *, int, int, int, pcireg_t);
-

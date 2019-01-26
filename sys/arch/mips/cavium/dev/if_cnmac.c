@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.8.2.2 2018/09/06 06:55:37 pgoyette Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.8.2.3 2019/01/26 22:00:04 pgoyette Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.8.2.2 2018/09/06 06:55:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.8.2.3 2019/01/26 22:00:04 pgoyette Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -115,8 +115,8 @@ static void	octeon_eth_smi_init(struct octeon_eth_softc *);
 
 static void	octeon_eth_board_mac_addr(uint8_t *, size_t, struct octeon_eth_softc *);
 
-static int	octeon_eth_mii_readreg(device_t, int, int);
-static void	octeon_eth_mii_writereg(device_t, int, int, int);
+static int	octeon_eth_mii_readreg(device_t, int, int, uint16_t *);
+static int	octeon_eth_mii_writereg(device_t, int, int, uint16_t);
 static void	octeon_eth_mii_statchg(struct ifnet *);
 
 static int	octeon_eth_mediainit(struct octeon_eth_softc *);
@@ -496,19 +496,19 @@ octeon_eth_board_mac_addr(uint8_t *enaddr, size_t size, struct octeon_eth_softc 
 /* ---- media */
 
 static int
-octeon_eth_mii_readreg(device_t self, int phy_addr, int reg)
+octeon_eth_mii_readreg(device_t self, int phy_addr, int reg, uint16_t *val)
 {
 	struct octeon_eth_softc *sc = device_private(self);
 
-	return octeon_smi_read(sc->sc_smi, phy_addr, reg);
+	return octeon_smi_read(sc->sc_smi, phy_addr, reg, val);
 }
 
-static void
-octeon_eth_mii_writereg(device_t self, int phy_addr, int reg, int value)
+static int
+octeon_eth_mii_writereg(device_t self, int phy_addr, int reg, uint16_t val)
 {
 	struct octeon_eth_softc *sc = device_private(self);
 
-	octeon_smi_write(sc->sc_smi, phy_addr, reg, value);
+	return octeon_smi_write(sc->sc_smi, phy_addr, reg, val);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.30.14.1 2018/07/28 04:37:37 pgoyette Exp $ */
+/* $Id: if_ae.c,v 1.30.14.2 2019/01/26 22:00:04 pgoyette Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.30.14.1 2018/07/28 04:37:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.30.14.2 2019/01/26 22:00:04 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -176,8 +176,8 @@ static void	ae_txintr(struct ae_softc *);
 static void	ae_mii_tick(void *);
 static void	ae_mii_statchg(struct ifnet *);
 
-static int	ae_mii_readreg(device_t, int, int);
-static void	ae_mii_writereg(device_t, int, int, int);
+static int	ae_mii_readreg(device_t, int, int, uint16_t *);
+static int	ae_mii_writereg(device_t, int, int, uint16_t);
 
 #ifdef AE_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
@@ -1866,7 +1866,7 @@ ae_mii_statchg(struct ifnet *ifp)
  *	Read a PHY register.
  */
 static int
-ae_mii_readreg(device_t self, int phy, int reg)
+ae_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct ae_softc	*sc = device_private(self);
 	uint32_t	addr;
@@ -1880,7 +1880,11 @@ ae_mii_readreg(device_t self, int phy, int reg)
 			break;
 	}
 
-	return (AE_READ(sc, CSR_MIIDATA) & 0xffff);
+	if (i >= 100000000)
+		return ETIMEDOUT;
+
+	*val = AE_READ(sc, CSR_MIIDATA) & 0xffff;
+	return 0;
 }
 
 /*
@@ -1888,8 +1892,8 @@ ae_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register.
  */
-static void
-ae_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+ae_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct ae_softc *sc = device_private(self);
 	uint32_t	addr;
@@ -1908,4 +1912,9 @@ ae_mii_writereg(device_t self, int phy, int reg, int val)
 		if ((AE_READ(sc, CSR_MIIADDR) & MIIADDR_BUSY) == 0)
 			break;
 	}
+
+	if (i >= 100000000)
+		return ETIMEDOUT;
+
+	return 0;
 }

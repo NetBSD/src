@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.167.2.1 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.167.2.2 2019/01/26 22:00:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.167.2.1 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.167.2.2 2019/01/26 22:00:07 pgoyette Exp $");
 
 
 
@@ -583,16 +583,16 @@ static void	sipcom_txintr(struct sip_softc *);
 static void	sip_rxintr(struct sip_softc *);
 static void	gsip_rxintr(struct sip_softc *);
 
-static int	sipcom_dp83820_mii_readreg(device_t, int, int);
-static void	sipcom_dp83820_mii_writereg(device_t, int, int, int);
+static int	sipcom_dp83820_mii_readreg(device_t, int, int, uint16_t *);
+static int	sipcom_dp83820_mii_writereg(device_t, int, int, uint16_t);
 static void	sipcom_dp83820_mii_statchg(struct ifnet *);
 
-static int	sipcom_sis900_mii_readreg(device_t, int, int);
-static void	sipcom_sis900_mii_writereg(device_t, int, int, int);
+static int	sipcom_sis900_mii_readreg(device_t, int, int, uint16_t *);
+static int	sipcom_sis900_mii_writereg(device_t, int, int, uint16_t);
 static void	sipcom_sis900_mii_statchg(struct ifnet *);
 
-static int	sipcom_dp83815_mii_readreg(device_t, int, int);
-static void	sipcom_dp83815_mii_writereg(device_t, int, int, int);
+static int	sipcom_dp83815_mii_readreg(device_t, int, int, uint16_t *);
+static int	sipcom_dp83815_mii_writereg(device_t, int, int, uint16_t);
 static void	sipcom_dp83815_mii_statchg(struct ifnet *);
 
 static void	sipcom_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -618,8 +618,8 @@ CFATTACH_DECL3_NEW(sip, sizeof(struct sip_softc),
  * Descriptions of the variants of the SiS900.
  */
 struct sip_variant {
-	int	(*sipv_mii_readreg)(device_t, int, int);
-	void	(*sipv_mii_writereg)(device_t, int, int, int);
+	int	(*sipv_mii_readreg)(device_t, int, int, uint16_t *);
+	int	(*sipv_mii_writereg)(device_t, int, int, uint16_t);
 	void	(*sipv_mii_statchg)(struct ifnet *);
 	void	(*sipv_set_filter)(struct sip_softc *);
 	void	(*sipv_read_macaddr)(struct sip_softc *,
@@ -3271,16 +3271,15 @@ sipcom_dp83815_set_filter(struct sip_softc *sc)
  *	Read a PHY register on the MII of the DP83820.
  */
 static int
-sipcom_dp83820_mii_readreg(device_t self, int phy, int reg)
+sipcom_dp83820_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct sip_softc *sc = device_private(self);
 
 	if (sc->sc_cfg & CFG_TBI_EN) {
 		bus_addr_t tbireg;
-		int rv;
 
 		if (phy != 0)
-			return (0);
+			return -1;
 
 		switch (reg) {
 		case MII_BMCR:		tbireg = SIP_TBICR; break;
@@ -3302,16 +3301,16 @@ sipcom_dp83820_mii_readreg(device_t self, int phy, int reg)
 			return (0);
 		}
 
-		rv = bus_space_read_4(sc->sc_st, sc->sc_sh, tbireg) & 0xffff;
+		*val = bus_space_read_4(sc->sc_st, sc->sc_sh, tbireg) & 0xffff;
 		if (tbireg == SIP_TBISR) {
 			/* LINK and ACOMP are switched! */
-			int val = rv;
+			int sr = *val;
 
-			rv = 0;
-			if (val & TBISR_MR_LINK_STATUS)
-				rv |= BMSR_LINK;
-			if (val & TBISR_MR_AN_COMPLETE)
-				rv |= BMSR_ACOMP;
+			*val = 0;
+			if (sr & TBISR_MR_LINK_STATUS)
+				*val |= BMSR_LINK;
+			if (sr & TBISR_MR_AN_COMPLETE)
+				*val |= BMSR_ACOMP;
 
 			/*
 			 * The manual claims this register reads back 0
@@ -3320,13 +3319,14 @@ sipcom_dp83820_mii_readreg(device_t self, int phy, int reg)
 			 * negotiation, so hard-code this bit in the
 			 * result.
 			 */
-			rv |= BMSR_ANEG | BMSR_EXTSTAT;
+			*val |= BMSR_ANEG | BMSR_EXTSTAT;
 		}
 
-		return (rv);
+		return 0;
 	}
 
-	return mii_bitbang_readreg(self, &sipcom_mii_bitbang_ops, phy, reg);
+	return mii_bitbang_readreg(self, &sipcom_mii_bitbang_ops, phy, reg,
+	    val);
 }
 
 /*
@@ -3334,8 +3334,8 @@ sipcom_dp83820_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the MII of the DP83820.
  */
-static void
-sipcom_dp83820_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+sipcom_dp83820_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct sip_softc *sc = device_private(self);
 
@@ -3343,21 +3343,22 @@ sipcom_dp83820_mii_writereg(device_t self, int phy, int reg, int val)
 		bus_addr_t tbireg;
 
 		if (phy != 0)
-			return;
+			return -1;
 
 		switch (reg) {
 		case MII_BMCR:		tbireg = SIP_TBICR; break;
 		case MII_ANAR:		tbireg = SIP_TANAR; break;
 		case MII_ANLPAR:	tbireg = SIP_TANLPAR; break;
 		default:
-			return;
+			return 0;
 		}
 
 		bus_space_write_4(sc->sc_st, sc->sc_sh, tbireg, val);
-		return;
+		return 0;
 	}
 
-	mii_bitbang_writereg(self, &sipcom_mii_bitbang_ops, phy, reg, val);
+	return mii_bitbang_writereg(self, &sipcom_mii_bitbang_ops, phy, reg,
+	    val);
 }
 
 /*
@@ -3457,7 +3458,7 @@ sipcom_mii_bitbang_write(device_t self, u_int32_t val)
  *	Read a PHY register on the MII.
  */
 static int
-sipcom_sis900_mii_readreg(device_t self, int phy, int reg)
+sipcom_sis900_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct sip_softc *sc = device_private(self);
 	u_int32_t enphy;
@@ -3468,7 +3469,7 @@ sipcom_sis900_mii_readreg(device_t self, int phy, int reg)
 	 */
 	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900)
 		return mii_bitbang_readreg(self, &sipcom_mii_bitbang_ops,
-		    phy, reg);
+		    phy, reg, val);
 
 #ifndef SIS900_MII_RESTRICT
 	/*
@@ -3476,7 +3477,7 @@ sipcom_sis900_mii_readreg(device_t self, int phy, int reg)
 	 * MII address 0.
 	 */
 	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
-		return (0);
+		return -1;
 #endif
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
@@ -3485,7 +3486,9 @@ sipcom_sis900_mii_readreg(device_t self, int phy, int reg)
 	do {
 		enphy = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
 	} while (enphy & ENPHY_ACCESS);
-	return ((enphy & ENPHY_PHYDATA) >> ENPHY_DATA_SHIFT);
+
+	*val = (enphy & ENPHY_PHYDATA) >> ENPHY_DATA_SHIFT;
+	return 0;
 }
 
 /*
@@ -3493,16 +3496,15 @@ sipcom_sis900_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register on the MII.
  */
-static void
-sipcom_sis900_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+sipcom_sis900_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct sip_softc *sc = device_private(self);
 	u_int32_t enphy;
 
 	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900) {
-		mii_bitbang_writereg(self, &sipcom_mii_bitbang_ops,
+		return mii_bitbang_writereg(self, &sipcom_mii_bitbang_ops,
 		    phy, reg, val);
-		return;
 	}
 
 #ifndef SIS900_MII_RESTRICT
@@ -3511,7 +3513,7 @@ sipcom_sis900_mii_writereg(device_t self, int phy, int reg, int val)
 	 * MII address 0.
 	 */
 	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
-		return;
+		return -1;
 #endif
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
@@ -3520,6 +3522,8 @@ sipcom_sis900_mii_writereg(device_t self, int phy, int reg, int val)
 	do {
 		enphy = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
 	} while (enphy & ENPHY_ACCESS);
+
+	return 0;
 }
 
 /*
@@ -3585,17 +3589,17 @@ sipcom_sis900_mii_statchg(struct ifnet *ifp)
  *	Read a PHY register on the MII.
  */
 static int
-sipcom_dp83815_mii_readreg(device_t self, int phy, int reg)
+sipcom_dp83815_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct sip_softc *sc = device_private(self);
-	u_int32_t val;
+	uint32_t data;
 
 	/*
 	 * The DP83815 only has an internal PHY.  Only allow
 	 * MII address 0.
 	 */
 	if (phy != 0)
-		return (0);
+		return -1;
 
 	/*
 	 * Apparently, after a reset, the DP83815 can take a while
@@ -3608,10 +3612,11 @@ sipcom_dp83815_mii_readreg(device_t self, int phy, int reg)
 	 * read during the PHY probe process.
 	 */
 	do {
-		val = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_NS_PHY(reg));
-	} while (reg == MII_BMSR && val == 0);
+		data = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_NS_PHY(reg));
+	} while (reg == MII_BMSR && data == 0);
 
-	return (val & 0xffff);
+	*val = data & 0xffff;
+	return 0;
 }
 
 /*
@@ -3619,8 +3624,8 @@ sipcom_dp83815_mii_readreg(device_t self, int phy, int reg)
  *
  *	Write a PHY register to the MII.
  */
-static void
-sipcom_dp83815_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+sipcom_dp83815_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct sip_softc *sc = device_private(self);
 
@@ -3629,9 +3634,11 @@ sipcom_dp83815_mii_writereg(device_t self, int phy, int reg, int val)
 	 * MII address 0.
 	 */
 	if (phy != 0)
-		return;
+		return -1;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_NS_PHY(reg), val);
+
+	return 0;
 }
 
 /*

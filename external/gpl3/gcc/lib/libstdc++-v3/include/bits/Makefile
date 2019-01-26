@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2017/11/14 00:55:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 2019/01/26 21:59:55 pgoyette Exp $
 
 .include <bsd.init.mk>
 
@@ -9,15 +9,22 @@
 GNUHOSTDIST=	${DIST}
 
 BUILDINCS=	basic_file.h c++allocator.h c++io.h c++locale.h
-BUILDINCS+=	messages_members.h time_members.h opt_random.h gthr-default.h
+BUILDINCS+=	messages_members.h time_members.h opt_random.h
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_host_headers}
 INCS+=		gthr.h gthr-single.h gthr-posix.h
 INCS+=		${BUILDINCS}
 
 # libsupc++
-INCS+=		nested_exception.h hash_bytes.h atomic_lockfree_defines.h
-INCS+=		cxxabi_forced.h	exception_defines.h exception_ptr.h
+# XXX use bits_sup_headers from libstdc++/include/Makefile.am
+INCS+=		atomic_lockfree_defines.h \
+		cxxabi_forced.h \
+		cxxabi_init_exception.h \
+		exception.h \
+		exception_defines.h \
+		exception_ptr.h \
+		hash_bytes.h \
+		nested_exception.h
 
 .if ${MKCOMPAT} != no && !empty(MACHINE_ARCH:M*64*)
 SUBDIR+=	arch
@@ -26,6 +33,8 @@ INCS+=		c++config.h
 .endif
 
 INCSDIR=	/usr/include/g++/bits
+
+INCSYMLINKS+=	gthr-posix.h ${INCSDIR}/gthr-default.h
 
 .include "${.CURDIR}/../Makefile.includes"
 
@@ -40,13 +49,6 @@ COPYHEADERS= \
 	c++io.h			${CXXDIST}/${G_CSTDIO_H} \
 	messages_members.h	${CXXDIST}/${G_CMESSAGES_H} \
 	time_members.h		${CXXDIST}/${G_CTIME_H}
-
-# gthr-default.h is a little special
-.for _src _dst in ${G_CONFIGLINKS}
-. if ${_dst} == "gthr-default.h"
-COPYHEADERS+=	${_dst} ${_src}
-. endif
-.endfor
 
 .for _h _s in ${COPYHEADERS}
 ${_h}: ${_s}

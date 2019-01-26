@@ -29,7 +29,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.4.2.1 2018/09/30 01:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.4.2.2 2019/01/26 22:00:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,7 +62,12 @@ static unsigned			npf_worker_count	__read_mostly;
 int
 npf_worker_sysinit(unsigned nworkers)
 {
-	npf_workers = kmem_zalloc(sizeof(npf_worker_t) * nworkers, KM_SLEEP);
+	if (nworkers) {
+		const size_t len = sizeof(npf_worker_t) * nworkers;
+		npf_workers = kmem_zalloc(len, KM_SLEEP);
+	} else {
+		npf_workers = NULL;
+	}
 	npf_worker_count = nworkers;
 
 	for (unsigned i = 0; i < nworkers; i++) {
@@ -100,7 +105,10 @@ npf_worker_sysfini(void)
 		cv_destroy(&wrk->worker_cv);
 		mutex_destroy(&wrk->worker_lock);
 	}
-	kmem_free(npf_workers, sizeof(npf_worker_t) * npf_worker_count);
+	if (npf_workers) {
+		const size_t len = sizeof(npf_worker_t) * npf_worker_count;
+		kmem_free(npf_workers, len);
+	}
 }
 
 void
@@ -129,9 +137,15 @@ npf_worker_testset(npf_worker_t *wrk, npf_workfunc_t find, npf_workfunc_t set)
 void
 npf_worker_register(npf_t *npf, npf_workfunc_t func)
 {
-	const unsigned idx = cprng_fast32() % npf_worker_count;
-	npf_worker_t *wrk = &npf_workers[idx];
+	npf_worker_t *wrk;
+	unsigned idx;
 
+	if (!npf_worker_count) {
+		return;
+	}
+
+	idx = cprng_fast32() % npf_worker_count;
+	wrk = &npf_workers[idx];
 	mutex_enter(&wrk->worker_lock);
 
 	npf->worker_id = idx;
@@ -149,9 +163,11 @@ npf_worker_unregister(npf_t *npf, npf_workfunc_t func)
 	npf_worker_t *wrk;
 	npf_t *instance;
 
-	if (!npf_worker_count)
+	if (!npf_worker_count) {
 		return;
+	}
 	wrk = &npf_workers[idx];
+
 	mutex_enter(&wrk->worker_lock);
 	npf_worker_testset(wrk, func, NULL);
 	if ((instance = wrk->instances) == npf) {
@@ -172,7 +188,6 @@ npf_worker(void *arg)
 	npf_worker_t *wrk = arg;
 
 	KASSERT(wrk != NULL);
-	KASSERT(!wrk->worker_exit);
 
 	while (!wrk->worker_exit) {
 		npf_t *npf;
@@ -181,6 +196,11 @@ npf_worker(void *arg)
 		while (npf) {
 			u_int i = NPF_MAX_WORKS;
 			npf_workfunc_t work;
+
+			if (!npf->sync_registered) {
+				npf_thread_register(npf);
+				npf->sync_registered = true;
+			}
 
 			/* Run the jobs. */
 			while (i--) {

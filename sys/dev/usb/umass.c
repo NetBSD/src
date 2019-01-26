@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.163.2.1 2018/11/26 01:52:47 pgoyette Exp $	*/
+/*	$NetBSD: umass.c,v 1.163.2.2 2019/01/26 22:00:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -108,8 +108,8 @@
  * umass_*_reset.
  *
  * The reason for doing this is a) CAM performs a lot better this way and b) it
- * avoids using tsleep from interrupt context (for example after a failed
- * transfer).
+ * avoids sleeping in interrupt context which is prohibited (for example after a
+ * failed transfer).
  */
 
 /*
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.163.2.1 2018/11/26 01:52:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.163.2.2 2019/01/26 22:00:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

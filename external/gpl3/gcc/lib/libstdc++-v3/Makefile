@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32.2.2 2018/11/26 01:51:07 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.32.2.3 2019/01/26 21:59:51 pgoyette Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -52,14 +52,16 @@ SHLIB_MINOR=	1
 SUBDIR=		include
 
 SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
+
+CXXFLAGS+=	-fno-implicit-templates
+CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
+CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
+CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
+
 # affects profiling; can't switch it off just for profiling easily.
 #CXXFLAGS+=	${G_SECTION_FLAGS}
 #CXXFLAGS+=	-ffunction-sections -fdata-sections 
-CXXFLAGS+=	-fno-implicit-templates -fdiagnostics-show-location=once
-CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
-CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
-# include backwards compatible code
-CPPFLAGS+=     -D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
+COPTS.bitmap_allocator.cc+=	-ffunction-sections -fdata-sections 
 
 CONF=		${DIST}/libstdc++-v3/config
 
@@ -82,8 +84,12 @@ COPTS.cxx11-locale-inst.cc +=-Wno-stack-protector
 COPTS.cxx11-wlocale-inst.cc +=-Wno-stack-protector
 COPTS.compatibility-thread-c++0x.cc += -Wno-deprecated-declarations
 COPTS.concept-inst.cc += -fimplicit-templates
+COPTS.collate_members_cow.cc += -fimplicit-templates
+COPTS.messages_members_cow.cc += -fimplicit-templates
+COPTS.monetary_members_cow.cc += -fimplicit-templates
+COPTS.numeric_members_cow.cc += -fimplicit-templates
 COPTS.hashtable_c++0x.cc += -fimplicit-templates
-COPTS.bitmap_allocator.cc += -fimplicit-templates
+COPTS.c++locale.cc += -fimplicit-templates
 COPTS.functexcept.cc += -Wno-deprecated-declarations
 COPTS.future.cc += -Wno-deprecated-declarations
 COPTS.shared_ptr.cc += -Wno-deprecated-declarations
@@ -134,18 +140,7 @@ BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
 SRCS+=	c98-codecvt.cc c11-codecvt.cc
 
-.if ${HAVE_LIBGCC_EH} == "no"
-G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
-.endif
-
-.if ${MKGCC} != "no"
-.if defined(G_CONFIGLINKS) && !empty(G_CONFIGLINKS)
-BUILDSYMLINKS+=        ${G_CONFIGLINKS}
-.for _src _dst in ${G_CONFIGLINKS}
-DPSRCS+=       ${_dst}
-.endfor
-.endif
-.endif
+.include "../Makefile.gthr"
 
 # XXX Make this either/or, not one, and maybe another
 CXX11_ALWAYS=	localename.cc \

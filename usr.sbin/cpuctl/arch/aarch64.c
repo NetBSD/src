@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.2.2.4 2018/12/26 14:02:11 pgoyette Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.2.2.5 2019/01/26 22:00:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.2.2.4 2018/12/26 14:02:11 pgoyette Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.2.2.5 2019/01/26 22:00:39 pgoyette Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -312,7 +312,7 @@ struct fieldinfo mvfr0_fieldinfo[] = {
 	{
 		.bitpos = 12, .bitwidth = 4, .name = "FPTrap",
 		.info = (const char *[16]) { /* 16=4bit */
-			[0] = "VFPv2 support exception trapping",
+			[0] = "No floating point exception trapping support",
 			[1] = "VFPv2/VFPv3/VFPv4 support exception trapping"
 		}
 	},

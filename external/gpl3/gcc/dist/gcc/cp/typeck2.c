@@ -1,6 +1,6 @@
 /* Report error messages, build initializers, and perform
    some front-end optimizations for C++ compiler.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -451,8 +451,8 @@ cxx_incomplete_type_inform (const_tree type)
    type of diagnostic (see diagnostic.def).  */
 
 void
-cxx_incomplete_type_diagnostic (const_tree value, const_tree type, 
-				diagnostic_t diag_kind)
+cxx_incomplete_type_diagnostic (location_t loc, const_tree value,
+				const_tree type, diagnostic_t diag_kind)
 {
   bool is_decl = false, complained = false;
 
@@ -474,8 +474,6 @@ cxx_incomplete_type_diagnostic (const_tree value, const_tree type,
     } 
  retry:
   /* We must print an error message.  Be clever about what it says.  */
-
-  location_t loc = EXPR_LOC_OR_LOC (value, input_location);
 
   switch (TREE_CODE (type))
     {
@@ -525,8 +523,14 @@ cxx_incomplete_type_diagnostic (const_tree value, const_tree type,
 
     case TEMPLATE_TYPE_PARM:
       if (is_auto (type))
-	emit_diagnostic (diag_kind, loc, 0,
-			 "invalid use of %<auto%>");
+	{
+	  if (CLASS_PLACEHOLDER_TEMPLATE (type))
+	    emit_diagnostic (diag_kind, loc, 0,
+			     "invalid use of placeholder %qT", type);
+	  else
+	    emit_diagnostic (diag_kind, loc, 0,
+			     "invalid use of %qT", type);
+	}
       else
 	emit_diagnostic (diag_kind, loc, 0,
 			 "invalid use of template type parameter %qT", type);
@@ -571,13 +575,14 @@ cxx_incomplete_type_diagnostic (const_tree value, const_tree type,
     }
 }
 
-/* Backward-compatibility interface to incomplete_type_diagnostic;
-   required by ../tree.c.  */
-#undef cxx_incomplete_type_error
+/* Print an error message for invalid use of an incomplete type.
+   VALUE is the expression that was used (or 0 if that isn't known)
+   and TYPE is the type that was invalid.  */
+
 void
-cxx_incomplete_type_error (const_tree value, const_tree type)
+cxx_incomplete_type_error (location_t loc, const_tree value, const_tree type)
 {
-  cxx_incomplete_type_diagnostic (value, type, DK_ERROR);
+  cxx_incomplete_type_diagnostic (loc, value, type, DK_ERROR);
 }
 
 
@@ -744,6 +749,10 @@ split_nonconstant_init (tree dest, tree init)
       DECL_INITIAL (dest) = init;
       TREE_READONLY (dest) = 0;
     }
+  else if (TREE_CODE (init) == STRING_CST
+	   && array_of_runtime_bound_p (TREE_TYPE (dest)))
+    code = build_vec_init (dest, NULL_TREE, init, /*value-init*/false,
+			   /*from array*/1, tf_warning_or_error);
   else
     code = build2 (INIT_EXPR, TREE_TYPE (dest), dest, init);
 
@@ -808,9 +817,12 @@ store_init_value (tree decl, tree init, vec<tree, va_gc>** cleanups, int flags)
       bool const_init;
       value = instantiate_non_dependent_expr (value);
       if (DECL_DECLARED_CONSTEXPR_P (decl)
-	  || DECL_IN_AGGR_P (decl))
+	  || (DECL_IN_AGGR_P (decl)
+	      && DECL_INITIALIZED_IN_CLASS_P (decl)
+	      && !DECL_VAR_DECLARED_INLINE_P (decl)))
 	{
-	  /* Diagnose a non-constant initializer for constexpr.  */
+	  /* Diagnose a non-constant initializer for constexpr variable or
+	     non-inline in-class-initialized static data member.  */
 	  if (processing_template_decl
 	      && !require_potential_constant_expression (value))
 	    value = error_mark_node;
@@ -825,13 +837,14 @@ store_init_value (tree decl, tree init, vec<tree, va_gc>** cleanups, int flags)
       const_init = (reduced_constant_expression_p (value)
 		    || error_operand_p (value));
       DECL_INITIALIZED_BY_CONSTANT_EXPRESSION_P (decl) = const_init;
-      TREE_CONSTANT (decl) = const_init && decl_maybe_constant_var_p (decl);
+      /* FIXME setting TREE_CONSTANT on refs breaks the back end.  */
+      if (TREE_CODE (type) != REFERENCE_TYPE)
+	TREE_CONSTANT (decl) = const_init && decl_maybe_constant_var_p (decl);
     }
   value = cp_fully_fold (value);
 
-  if (cxx_dialect >= cxx14 && CLASS_TYPE_P (strip_array_types (type)))
-    /* Handle aggregate NSDMI in non-constant initializers, too.  */
-    value = replace_placeholders (value, decl);
+  /* Handle aggregate NSDMI in non-constant initializers, too.  */
+  value = replace_placeholders (value, decl);
 
   /* DECL may change value; purge caches.  */
   clear_cv_and_fold_caches ();
@@ -1011,6 +1024,8 @@ digest_init_r (tree type, tree init, bool nested, int flags,
   if (TREE_CODE (init) == NON_LVALUE_EXPR)
     init = TREE_OPERAND (init, 0);
 
+  location_t loc = EXPR_LOC_OR_LOC (init, input_location);
+
   /* Initialization of an array of chars from a string constant. The initializer
      can be optionally enclosed in braces, but reshape_init has already removed
      them if they were present.  */
@@ -1019,7 +1034,7 @@ digest_init_r (tree type, tree init, bool nested, int flags,
       if (nested && !TYPE_DOMAIN (type))
 	{
 	  /* C++ flexible array members have a null domain.  */
-	  pedwarn (EXPR_LOC_OR_LOC (init, input_location), OPT_Wpedantic,
+	  pedwarn (loc, OPT_Wpedantic,
 		   "initialization of a flexible array member");
 	}
 
@@ -1035,7 +1050,7 @@ digest_init_r (tree type, tree init, bool nested, int flags,
 	      if (char_type != char_type_node)
 		{
 		  if (complain & tf_error)
-		    error ("char-array initialized from wide string");
+		    error_at (loc, "char-array initialized from wide string");
 		  return error_mark_node;
 		}
 	    }
@@ -1044,19 +1059,21 @@ digest_init_r (tree type, tree init, bool nested, int flags,
 	      if (char_type == char_type_node)
 		{
 		  if (complain & tf_error)
-		    error ("int-array initialized from non-wide string");
+		    error_at (loc,
+			      "int-array initialized from non-wide string");
 		  return error_mark_node;
 		}
 	      else if (char_type != typ1)
 		{
 		  if (complain & tf_error)
-		    error ("int-array initialized from incompatible "
-			   "wide string");
+		    error_at (loc, "int-array initialized from incompatible "
+			      "wide string");
 		  return error_mark_node;
 		}
 	    }
 
-	  if (type != TREE_TYPE (init))
+	  if (type != TREE_TYPE (init)
+	      && !variably_modified_type_p (type, NULL_TREE))
 	    {
 	      init = copy_node (init);
 	      TREE_TYPE (init) = type;
@@ -1071,7 +1088,7 @@ digest_init_r (tree type, tree init, bool nested, int flags,
 		 counted in the length of the constant, but in C++ this would
 		 be invalid.  */
 	      if (size < TREE_STRING_LENGTH (init))
-		permerror (input_location, "initializer-string for array "
+		permerror (loc, "initializer-string for array "
 			   "of chars is too long");
 	    }
 	  return init;
@@ -1124,8 +1141,8 @@ digest_init_r (tree type, tree init, bool nested, int flags,
       if (COMPOUND_LITERAL_P (init) && TREE_CODE (type) == ARRAY_TYPE)
 	{
 	  if (complain & tf_error)
-	    error ("cannot initialize aggregate of type %qT with "
-		   "a compound literal", type);
+	    error_at (loc, "cannot initialize aggregate of type %qT with "
+		      "a compound literal", type);
 
 	  return error_mark_node;
 	}
@@ -1142,8 +1159,8 @@ digest_init_r (tree type, tree init, bool nested, int flags,
 	    return init;
 
 	  if (complain & tf_error)
-	    error ("array must be initialized with a brace-enclosed"
-		   " initializer");
+	    error_at (loc, "array must be initialized with a brace-enclosed"
+		      " initializer");
 	  return error_mark_node;
 	}
 
@@ -1350,6 +1367,7 @@ process_init_constructor_record (tree type, tree init,
   gcc_assert (TREE_CODE (type) == RECORD_TYPE);
   gcc_assert (!CLASSTYPE_VBASECLASSES (type));
   gcc_assert (!TYPE_BINFO (type)
+	      || cxx_dialect >= cxx1z
 	      || !BINFO_N_BASE_BINFOS (TYPE_BINFO (type)));
   gcc_assert (!TYPE_POLYMORPHIC_P (type));
 
@@ -1367,7 +1385,9 @@ process_init_constructor_record (tree type, tree init,
       if (!DECL_NAME (field) && DECL_C_BIT_FIELD (field))
 	continue;
 
-      if (TREE_CODE (field) != FIELD_DECL || DECL_ARTIFICIAL (field))
+      if (TREE_CODE (field) != FIELD_DECL
+	  || (DECL_ARTIFICIAL (field)
+	      && !(cxx_dialect >= cxx1z && DECL_FIELD_IS_BASE (field))))
 	continue;
 
       /* If this is a bitfield, first convert to the declared type.  */
@@ -1377,7 +1397,7 @@ process_init_constructor_record (tree type, tree init,
       if (type == error_mark_node)
 	return PICFLAG_ERRONEOUS;
 
-      if (idx < vec_safe_length (CONSTRUCTOR_ELTS (init)))
+      if (idx < CONSTRUCTOR_NELTS (init))
 	{
 	  constructor_elt *ce = &(*CONSTRUCTOR_ELTS (init))[idx];
 	  if (ce->index)
@@ -1474,7 +1494,7 @@ process_init_constructor_record (tree type, tree init,
       CONSTRUCTOR_APPEND_ELT (v, field, next);
     }
 
-  if (idx < vec_safe_length (CONSTRUCTOR_ELTS (init)))
+  if (idx < CONSTRUCTOR_NELTS (init))
     {
       if (complain & tf_error)
 	error ("too many initializers for %qT", type);
@@ -1503,7 +1523,8 @@ process_init_constructor_union (tree type, tree init,
     {
       for (tree field = TYPE_FIELDS (type); field; field = TREE_CHAIN (field))
 	{
-	  if (DECL_INITIAL (field))
+	  if (TREE_CODE (field) == FIELD_DECL
+	      && DECL_INITIAL (field) != NULL_TREE)
 	    {
 	      CONSTRUCTOR_APPEND_ELT (CONSTRUCTOR_ELTS (init),
 				      field,
@@ -1707,7 +1728,10 @@ build_x_arrow (location_t loc, tree expr, tsubst_flags_t complain)
 
   if (processing_template_decl)
     {
-      if (type_dependent_expression_p (expr))
+      if (type && TREE_CODE (type) == POINTER_TYPE
+	  && !dependent_scope_p (TREE_TYPE (type)))
+	/* Pointer to current instantiation, don't treat as dependent.  */;
+      else if (type_dependent_expression_p (expr))
 	return build_min_nt_loc (loc, ARROW_EXPR, expr);
       expr = build_non_dependent_expr (expr);
     }
@@ -1891,7 +1915,7 @@ build_m_component_ref (tree datum, tree component, tsubst_flags_t complain)
 	 operand is a pointer to member function with ref-qualifier &&.  */
       if (FUNCTION_REF_QUALIFIED (type))
 	{
-	  bool lval = real_lvalue_p (datum);
+	  bool lval = lvalue_p (datum);
 	  if (lval && FUNCTION_RVALUE_QUALIFIED (type))
 	    {
 	      if (complain & tf_error)
@@ -1947,11 +1971,23 @@ build_functional_cast (tree exp, tree parms, tsubst_flags_t complain)
       return error_mark_node;
     }
 
-  if (type_uses_auto (type))
+  if (tree anode = type_uses_auto (type))
     {
-      if (complain & tf_error)
-	error ("invalid use of %<auto%>");
-      return error_mark_node;
+      if (!CLASS_PLACEHOLDER_TEMPLATE (anode))
+	{
+	  if (complain & tf_error)
+	    error ("invalid use of %qT", anode);
+	  return error_mark_node;
+	}
+      else if (!parms)
+	{
+	  if (complain & tf_error)
+	    error ("cannot deduce template arguments for %qT from ()", anode);
+	  return error_mark_node;
+	}
+      else
+	type = do_auto_deduction (type, parms, anode, complain,
+				  adc_variable_type);
     }
 
   if (processing_template_decl)

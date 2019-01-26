@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.2.2.2 2018/04/07 04:12:12 pgoyette Exp $ */
+/* $NetBSD: platform.h,v 1.2.2.3 2019/01/26 22:00:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -47,11 +47,11 @@ void fdt_add_reserved_memory_range(uint64_t, uint64_t);
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define KERNEL_VM_BASE		0xc0000000
-#define KERNEL_VM_SIZE		0x20000000 /* 0x20000000 = 512MB */
 #else
 #define KERNEL_VM_BASE		0x90000000
-#define KERNEL_VM_SIZE		0x50000000 /* 0x50000000 = 1.25GB */
 #endif
+
+#define KERNEL_VM_SIZE		(KERNEL_IO_VBASE - KERNEL_VM_BASE)
 
 #endif /* !__aarch64 */
 

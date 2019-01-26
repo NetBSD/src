@@ -91,6 +91,7 @@ for x do
 	--without-sha256) SHA2=no;;
 	--without-hmac) HMAC=no;;
 	--without-dev) DEV=no;;
+	--with-udev) DEV=yes; UDEV=yes;;
 	--without-udev) UDEV=no;;
 	--with-poll) POLL="$var";;
 	--serviceexists) SERVICEEXISTS=$var;;
@@ -98,7 +99,7 @@ for x do
 	--servicestatus) SERVICESTATUS=$var;;
 	--small) SMALL=yes;;
 	--statusarg) STATUSARG=$var;;
-	--infodir|--includedir) ;; # ignore autotools
+	--infodir) ;; # ignore autotools
 	--disable-maintainer-mode|--disable-dependency-tracking) ;;
 	--disable-silent-rules) ;;
 	-V|--version)
@@ -1344,6 +1345,10 @@ EOF
 	rm -f _udev.c _udev
 elif [ "$DEV" != no -a "$UDEV" != no ]; then
 	echo "no"
+	if [ -n "$UDEV" ]; then
+		echo "udev has been explicity requested ... aborting" >&2
+		exit 1
+	fi
 fi
 
 if [ "$DEV" = yes ]; then

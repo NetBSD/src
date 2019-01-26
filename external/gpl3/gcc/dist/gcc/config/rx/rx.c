@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on Renesas RX processors.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -31,6 +31,7 @@
 #include "tree.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "regs.h"
 #include "emit-rtl.h"
@@ -266,7 +267,7 @@ rx_is_legitimate_address (machine_mode mode, rtx x,
   return rx_small_data_operand (x);
 }
 
-/* Returns TRUE for simple memory addreses, ie ones
+/* Returns TRUE for simple memory addresses, ie ones
    that do not involve register indirect addressing
    or pre/post increment/decrement.  */
 
@@ -282,6 +283,9 @@ rx_is_restricted_memory_address (rtx mem, machine_mode mode)
     case REG:
       /* Simple memory addresses are OK.  */
       return true;
+
+    case SUBREG:
+      return RX_REG_P (SUBREG_REG (mem));
 
     case PRE_DEC:
     case POST_INC:
@@ -630,15 +634,15 @@ rx_print_operand (FILE * file, rtx op, int letter)
       gcc_assert (CONST_INT_P (op));
       switch (INTVAL (op))
 	{
-	case 0:   fprintf (file, "psw"); break;
-	case 2:   fprintf (file, "usp"); break;
-	case 3:   fprintf (file, "fpsw"); break;
-	case 4:   fprintf (file, "cpen"); break;
-	case 8:   fprintf (file, "bpsw"); break;
-	case 9:   fprintf (file, "bpc"); break;
-	case 0xa: fprintf (file, "isp"); break;
-	case 0xb: fprintf (file, "fintv"); break;
-	case 0xc: fprintf (file, "intb"); break;
+	case CTRLREG_PSW:   fprintf (file, "psw"); break;
+	case CTRLREG_USP:   fprintf (file, "usp"); break;
+	case CTRLREG_FPSW:  fprintf (file, "fpsw"); break;
+	case CTRLREG_CPEN:  fprintf (file, "cpen"); break;
+	case CTRLREG_BPSW:  fprintf (file, "bpsw"); break;
+	case CTRLREG_BPC:   fprintf (file, "bpc"); break;
+	case CTRLREG_ISP:   fprintf (file, "isp"); break;
+	case CTRLREG_FINTV: fprintf (file, "fintv"); break;
+	case CTRLREG_INTB:  fprintf (file, "intb"); break;
 	default:
 	  warning (0, "unrecognized control register number: %d - using 'psw'",
 		   (int) INTVAL (op));
@@ -1216,7 +1220,7 @@ has_func_attr (const_tree decl, const char * func_attr)
 
 /* Returns true if the provided function has the "fast_interrupt" attribute.  */
 
-static inline bool
+bool
 is_fast_interrupt_func (const_tree decl)
 {
   return has_func_attr (decl, "fast_interrupt");
@@ -1224,7 +1228,7 @@ is_fast_interrupt_func (const_tree decl)
 
 /* Returns true if the provided function has the "interrupt" attribute.  */
 
-static inline bool
+bool
 is_interrupt_func (const_tree decl)
 {
   return has_func_attr (decl, "interrupt");
@@ -3407,6 +3411,29 @@ static bool
 rx_enable_lra (void)
 {
   return TARGET_ENABLE_LRA;
+}
+
+rx_atomic_sequence::rx_atomic_sequence (const_tree fun_decl)
+{
+  if (is_fast_interrupt_func (fun_decl) || is_interrupt_func (fun_decl))
+    {
+      /* If we are inside an interrupt handler, assume that interrupts are
+	 off -- which is the default hardware behavior.  In this case, there
+	 is no need to disable the interrupts.  */
+      m_prev_psw_reg = NULL;
+    }
+  else
+    {
+      m_prev_psw_reg = gen_reg_rtx (SImode);
+      emit_insn (gen_mvfc (m_prev_psw_reg, GEN_INT (CTRLREG_PSW)));
+      emit_insn (gen_clrpsw (GEN_INT ('I')));
+    }
+}
+
+rx_atomic_sequence::~rx_atomic_sequence (void)
+{
+  if (m_prev_psw_reg != NULL)
+    emit_insn (gen_mvtc (GEN_INT (CTRLREG_PSW), m_prev_psw_reg));
 }
 
 

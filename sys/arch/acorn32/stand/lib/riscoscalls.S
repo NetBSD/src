@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.10.148.1 2018/10/20 06:58:24 pgoyette Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.10.148.2 2019/01/26 21:59:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -253,6 +253,36 @@ ENTRY(xosmodule_lookup)
 	strne	r5, [r8]
 	mov	r0, #0
 	ldmdb	fp, {r4-r8, fp, sp, pc}	
+
+ENTRY(xosmodule_enumeratewithversion)
+	mov	ip, sp
+	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r7, r0
+	mov	r8, r1
+	mov	r9, r2
+	mov	r10, r3
+	ldr	r1, [r7]
+	ldr	r2, [r8]
+	mov	r0, #OSModule_EnumerateWithVersion
+	swi	XOS_Module
+	ldmdbvs	fp, {r4-r10, fp, sp, pc}
+	str	r1, [r7]
+	str	r2, [r8]
+	teq	r9, #0
+	strne	r3, [r9]
+	teq	r9, #0
+	strne	r3, [r9]
+	teq	r10, #0
+	strne	r4, [r10]
+	ldr	r10, [fp, #4]
+	teq	r10, #0
+	strne	r5, [r10]
+	ldr	r10, [fp, #8]
+	teq	r10, #0
+	strne	r6, [r10]
+	mov	r0, #0
+	ldmdb	fp, {r4-r10, fp, sp, pc}	
 
 ENTRY(xosfscontrol_shutdown)
 	mov	ip, sp

@@ -1,5 +1,5 @@
 /* Pragma handling for GCC for Renesas / SuperH SH.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
    Contributed by Joern Rennecke <joern.rennecke@st.com>.
 
 This file is part of GCC.
@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "target.h"
 #include "c-family/c-common.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
 #include "attribs.h"
@@ -119,15 +120,6 @@ sh_cpu_cpp_builtins (cpp_reader* pfile)
 		      : TARGET_FPU_ANY ? "__SH4_SINGLE_ONLY__"
 		      : "__SH4_NOFPU__");
       break;
-    case PROCESSOR_SH5:
-      {
-	builtin_define_with_value ("__SH5__",
-				   TARGET_SHMEDIA64 ? "64" : "32", 0);
-	builtin_define_with_value ("__SHMEDIA__",
-				   TARGET_SHMEDIA ? "1" : "0", 0);
-	if (! TARGET_FPU_DOUBLE)
-	  builtin_define ("__SH4_NOFPU__");
-      }
     }
   if (TARGET_FPU_ANY)
     builtin_define ("__SH_FPU_ANY__");
