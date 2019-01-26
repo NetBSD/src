@@ -1,4 +1,4 @@
-# $NetBSD: t_trapsignal.sh,v 1.4 2018/05/27 17:04:45 kamil Exp $
+# $NetBSD: t_trapsignal.sh,v 1.5 2019/01/26 16:44:30 martin Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -172,6 +172,18 @@ trap_ignore_body()
 
 # SIGFPE
 
+fpe_available()
+{
+	if ${HELPER} fpe check > msg.$$
+	then
+		rm -f msg.$$
+	else
+		msg=$( cat msg.$$ )
+		rm -f msg.$$
+		atf_skip "$msg"
+	fi
+}
+
 atf_test_case fpe_simple
 fpe_simple()
 {
@@ -179,6 +191,7 @@ fpe_simple()
 }
 fpe_simple_body()
 {
+	fpe_available
 	atf_check -s signal:8 -o "inline:" -e "inline:" \
 		${HELPER} fpe recurse
 }
@@ -190,6 +203,7 @@ fpe_handle()
 }
 fpe_handle_body()
 {
+	fpe_available
 	atf_check -s exit:0 -o "inline:" -e "inline:got 8\n" \
 		${HELPER} fpe handle
 }
@@ -201,6 +215,7 @@ fpe_mask()
 }
 fpe_mask_body()
 {
+	fpe_available
 	atf_check -s signal:8 -o "inline:" -e "inline:" \
 		${HELPER} fpe mask
 }
@@ -212,6 +227,7 @@ fpe_handle_mask()
 }
 fpe_handle_mask_body()
 {
+	fpe_available
 	atf_check -s signal:8 -o "inline:" -e "inline:" \
 		${HELPER} fpe mask handle
 }
@@ -224,6 +240,7 @@ fpe_handle_recurse()
 
 fpe_handle_recurse_body()
 {
+	fpe_available
 	atf_check -s signal:8 -o "inline:" -e "inline:got 8\n" \
 		${HELPER} fpe handle recurse
 }
@@ -236,6 +253,7 @@ fpe_ignore()
 
 fpe_ignore_body()
 {
+	fpe_available
 	atf_check -s signal:8 -o "inline:" -e "inline:" \
 		${HELPER} fpe ignore
 }
