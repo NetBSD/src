@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.26 2019/01/25 22:56:54 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.27 2019/01/26 03:37:13 pgoyette Exp $ */
 
 DONE
 ----
@@ -106,3 +106,11 @@ TODO - Not required for branch merge
     machines which include the consumer of this hook but do not have a
     compat_netbsd32 module (specifically, i386 and sgimips).  This
     should be sorted out sometime soon, but does not block merging.
+
+22. Note that the MPSAFE kernel option is currently not specified for
+    building modules, nor is it included in any standard kernel
+    configuration files.  If you build a custom kernel with the MPSAFE
+    option set, and you also use modules (especially those modules for
+    network interface device drivers), you'll need to build custom
+    modules, too.  The MPSAFE stuff needs to be extracted out and made
+    into "hooks".
