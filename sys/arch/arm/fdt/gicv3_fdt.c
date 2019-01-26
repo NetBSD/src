@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.6 2018/11/24 22:18:57 jakllsch Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.7 2019/01/26 14:43:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.6 2018/11/24 22:18:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.7 2019/01/26 14:43:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -280,7 +280,8 @@ gicv3_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int intr = be32toh(specifier[1]);
 	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
 	const u_int trig = be32toh(specifier[2]) & 0xf;
-	const u_int level = (trig & 0x3) ? IST_EDGE : IST_LEVEL;
+	const u_int level = (trig & FDT_INTR_TYPE_DOUBLE_EDGE)
+	    ? IST_EDGE : IST_LEVEL;
 
 	const u_int mpsafe = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
