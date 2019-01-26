@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-sdm845.h,v 1.1.1.1.4.2 2018/07/28 04:38:06 pgoyette Exp $	*/
+/*	$NetBSD: qcom,gcc-sdm845.h,v 1.1.1.1.4.3 2019/01/26 22:00:34 pgoyette Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -194,6 +194,11 @@
 #define GCC_VS_CTRL_CLK_SRC					182
 #define GCC_VSENSOR_CLK_SRC					183
 #define GPLL4							184
+#define GCC_CPUSS_DVM_BUS_CLK					185
+#define GCC_CPUSS_GNOC_CLK					186
+#define GCC_QSPI_CORE_CLK_SRC					187
+#define GCC_QSPI_CORE_CLK					188
+#define GCC_QSPI_CNOC_PERIPH_AHB_CLK				189
 
 /* GCC Resets */
 #define GCC_MMSS_BCR						0

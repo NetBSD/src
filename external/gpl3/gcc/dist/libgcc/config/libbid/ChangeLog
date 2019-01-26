@@ -1,22 +1,18 @@
-2018-10-26  Release Manager
+2018-12-06  Release Manager
 
-	* GCC 6.5.0 released.
+	* GCC 7.4.0 released.
 
-2017-07-04  Release Manager
+2018-01-25  Release Manager
 
-	* GCC 6.4.0 released.
+	* GCC 7.3.0 released.
 
-2016-12-21  Release Manager
+2017-08-14  Release Manager
 
-	* GCC 6.3.0 released.
+	* GCC 7.2.0 released.
 
-2016-08-22  Release Manager
+2017-05-02  Release Manager
 
-	* GCC 6.2.0 released.
-
-2016-04-27  Release Manager
-
-	* GCC 6.1.0 released.
+	* GCC 7.1.0 released.
 
 2016-01-04  Jakub Jelinek  <jakub@redhat.com>
 
@@ -415,7 +411,7 @@
 	* inline_bid_add.h: Likewise.
 	* sqrt_macros.h: Likewise.
 
-Copyright (C) 2007-2016 Free Software Foundation, Inc.
+Copyright (C) 2007-2017 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

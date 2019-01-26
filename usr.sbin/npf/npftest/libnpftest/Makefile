@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8.24.1 2018/09/30 01:46:01 pgoyette Exp $
+# $NetBSD: Makefile,v 1.8.24.2 2019/01/26 22:00:39 pgoyette Exp $
 #
 # Public Domain
 #
@@ -14,6 +14,7 @@ SRCS+=		npf_mbuf_subr.c
 SRCS+=		npf_nbuf_test.c
 SRCS+=		npf_bpf_test.c
 SRCS+=		npf_table_test.c
+SRCS+=		npf_conn_test.c
 SRCS+=		npf_state_test.c
 SRCS+=		npf_rule_test.c
 SRCS+=		npf_nat_test.c

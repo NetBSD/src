@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.51.2.3 2018/12/26 14:01:50 pgoyette Exp $ */
+/*	$NetBSD: if_age.c,v 1.51.2.4 2019/01/26 22:00:07 pgoyette Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.51.2.3 2018/12/26 14:01:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.51.2.4 2019/01/26 22:00:07 pgoyette Exp $");
 
 #include "vlan.h"
 
@@ -80,8 +80,8 @@ static int	age_detach(device_t, int);
 
 static bool	age_resume(device_t, const pmf_qual_t *);
 
-static int	age_miibus_readreg(device_t, int, int);
-static void	age_miibus_writereg(device_t, int, int, int);
+static int	age_miibus_readreg(device_t, int, int, uint16_t *);
+static int	age_miibus_writereg(device_t, int, int, uint16_t);
 static void	age_miibus_statchg(struct ifnet *);
 
 static int	age_init(struct ifnet *);
@@ -343,14 +343,14 @@ age_detach(device_t self, int flags)
  *	Read a PHY register on the MII of the L1.
  */
 static int
-age_miibus_readreg(device_t dev, int phy, int reg)
+age_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct age_softc *sc = device_private(dev);
 	uint32_t v;
 	int i;
 
 	if (phy != sc->age_phyaddr)
-		return 0;
+		return -1;
 
 	CSR_WRITE_4(sc, AGE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
 	    MDIO_SUP_PREAMBLE | MDIO_CLK_25_4 | MDIO_REG_ADDR(reg));
@@ -364,24 +364,25 @@ age_miibus_readreg(device_t dev, int phy, int reg)
 	if (i == 0) {
 		printf("%s: phy read timeout: phy %d, reg %d\n",
 			device_xname(sc->sc_dev), phy, reg);
-		return 0;
+		return ETIMEDOUT;
 	}
 
-	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
+	*val = (v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT;
+	return 0;
 }
 
 /*
  * 	Write a PHY register on the MII of the L1.
  */
-static void
-age_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+age_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct age_softc *sc = device_private(dev);
 	uint32_t v;
 	int i;
 
 	if (phy != sc->age_phyaddr)
-		return;
+		return -1;
 
 	CSR_WRITE_4(sc, AGE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
 	    (val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
@@ -397,7 +398,10 @@ age_miibus_writereg(device_t dev, int phy, int reg, int val)
 	if (i == 0) {
 		printf("%s: phy write timeout: phy %d, reg %d\n",
 		    device_xname(sc->sc_dev), phy, reg);
+		return ETIMEDOUT;
 	}
+
+	return 0;
 }
 
 /*
@@ -629,14 +633,14 @@ age_phy_reset(struct age_softc *sc)
 		    (pn << PHY_CDTC_POFF) | PHY_CDTC_ENB);
 		for (i = 200; i > 0; i--) {
 			DELAY(1000);
-			reg = age_miibus_readreg(sc->sc_dev, sc->age_phyaddr,
-			    ATPHY_CDTC);
+			age_miibus_readreg(sc->sc_dev, sc->age_phyaddr,
+			    ATPHY_CDTC, &reg);
 			if ((reg & PHY_CDTC_ENB) == 0)
 				break;
 		}
 		DELAY(1000);
-		reg = age_miibus_readreg(sc->sc_dev, sc->age_phyaddr,
-		    ATPHY_CDTS);
+		age_miibus_readreg(sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_CDTS, &reg);
 		if ((reg & PHY_CDTS_STAT_MASK) != PHY_CDTS_STAT_OPEN) {
 			linkup++;
 			break;
@@ -651,8 +655,8 @@ age_phy_reset(struct age_softc *sc)
 		    ATPHY_DBG_DATA, 0x124E);
 		age_miibus_writereg(sc->sc_dev, sc->age_phyaddr,
 		    ATPHY_DBG_ADDR, 1);
-		reg = age_miibus_readreg(sc->sc_dev, sc->age_phyaddr,
-		    ATPHY_DBG_DATA);
+		age_miibus_readreg(sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_DATA, &reg);
 		age_miibus_writereg(sc->sc_dev, sc->age_phyaddr,
 		    ATPHY_DBG_DATA, reg | 0x03);
 		/* XXX */

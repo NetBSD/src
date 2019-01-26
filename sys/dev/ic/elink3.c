@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.140.14.3 2018/09/06 06:55:49 pgoyette Exp $	*/
+/*	$NetBSD: elink3.c,v 1.140.14.4 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140.14.3 2018/09/06 06:55:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140.14.4 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -198,8 +198,8 @@ int	ep_media_change(struct ifnet *ifp);
 void	ep_media_status(struct ifnet *ifp, struct ifmediareq *req);
 
 /* MII callbacks */
-int	ep_mii_readreg(device_t, int, int);
-void	ep_mii_writereg(device_t, int, int, int);
+int	ep_mii_readreg(device_t, int, int, uint16_t *);
+int	ep_mii_writereg(device_t, int, int, uint16_t);
 void	ep_statchg(struct ifnet *);
 
 void	ep_tick(void *);
@@ -2042,30 +2042,33 @@ ep_mii_bitbang_write(device_t self, u_int32_t val)
 }
 
 int
-ep_mii_readreg(device_t self, int phy, int reg)
+ep_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct ep_softc *sc = device_private(self);
-	int val;
+	int rv;
 
 	GO_WINDOW(4);
 
-	val = mii_bitbang_readreg(self, &ep_mii_bitbang_ops, phy, reg);
+	rv = mii_bitbang_readreg(self, &ep_mii_bitbang_ops, phy, reg, val);
 
 	GO_WINDOW(1);
 
-	return (val);
+	return rv;
 }
 
-void
-ep_mii_writereg(device_t self, int phy, int reg, int val)
+int
+ep_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct ep_softc *sc = device_private(self);
+	int rv;
 
 	GO_WINDOW(4);
 
-	mii_bitbang_writereg(self, &ep_mii_bitbang_ops, phy, reg, val);
+	rv = mii_bitbang_writereg(self, &ep_mii_bitbang_ops, phy, reg, val);
 
 	GO_WINDOW(1);
+
+	return rv;
 }
 
 void

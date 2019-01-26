@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.10 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.10.26.1 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.10 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.10.26.1 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.10 2014/06/16 16:48:16 msaitoh Exp $");
 #define	MV_PORT(sc)	((sc)->mii_phy - 16)	/* PHY # to switch port */
 #define	MV_CPU_PORT	5			/* port # of CPU port */
 
-#define	MV_READ(p, phy, r) \
-	(*(p)->mii_pdata->mii_readreg)(device_parent((p)->mii_dev), \
-	    phy, (r))
-#define	MV_WRITE(p, phy, r, v) \
-	(*(p)->mii_pdata->mii_writereg)(device_parent((p)->mii_dev), \
-	    phy, (r), (v))
+#define	MV_READ(p, phy, r, v)						\
+	(*(p)->mii_pdata->mii_readreg)(device_parent((p)->mii_dev),	\
+	    (phy), (r), (v))
+#define	MV_WRITE(p, phy, r, v)						\
+	(*(p)->mii_pdata->mii_writereg)(device_parent((p)->mii_dev),	\
+	    (phy), (r), (v))
 
 /* XXX sysctl'able */
 #define MV_ATUCTRL_ATU_SIZE_DEFAULT	2	/* 1024 entry database */
@@ -119,6 +119,7 @@ static const struct mvPhyConfig dumbConfig[] = {
 	{ 0x1d, 0x1f,		/* PHY port 5 = CPU port */
 	  MV_PORT_CONTROL_PORT_STATE_FORWARDING }
 };
+#if 0 /* XXX what are these? */
 static const struct mvPhyConfig routerConfig[] = {
 	{ 0x18, 0x2e,		/* PHY port 0 = LAN port 0 */
 	  MV_PORT_CONTROL_PORT_STATE_FORWARDING },
@@ -159,6 +160,7 @@ static const struct mvPhyConfig bridgeConfig[] = {
 #endif
 	}
 };
+#endif
 
 static void mvphy_switchconfig(struct mii_softc *, int);
 static void mvphy_flushatu(struct mii_softc *);
@@ -206,7 +208,8 @@ mvphyattach(device_t parent, device_t self, void *aux)
 	}
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -276,12 +279,12 @@ static void
 mvphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int hwstatus;
+	uint16_t hwstatus;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	hwstatus = PHY_READ(sc, MII_MV_PHY_SPECIFIC_STATUS);
+	PHY_READ(sc, MII_MV_PHY_SPECIFIC_STATUS, &hwstatus);
 	if (hwstatus & MV_STATUS_REAL_TIME_LINK_UP) {
 		mii->mii_media_status |= IFM_ACTIVE;
 		if (hwstatus & MV_STATUS_RESOLVED_SPEED_100)
@@ -332,7 +335,8 @@ mvphy_switchconfig(struct mii_softc *sc, int port)
 static void
 mvphy_flushatu(struct mii_softc *sc)
 {
-	uint16_t status;
+	int status;
+	uint16_t reg;
 	int i;
 
 	/* wait for any previous request to complete */
@@ -340,7 +344,7 @@ mvphy_flushatu(struct mii_softc *sc)
 	/* XXX timeout */
 	for (i = 0; i < 1000; i++) {
 		status = MV_READ(sc, MII_MV_SWITCH_GLOBAL_ADDR,
-				MV_ATU_OPERATION);
+		    MV_ATU_OPERATION, &reg);
 		if (MV_ATU_IS_BUSY(status))
 			break;
 	}

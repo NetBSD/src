@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.92.2.3 2018/11/26 01:49:59 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.92.2.4 2019/01/26 21:58:14 pgoyette Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -26,8 +26,6 @@ EVBARM_BOARDS.armv7hf+=		BCM5301X
 #EVBARM_BOARDS.armv7hf+= 	BCM56340
 KERNEL_SETS.armv7+=		SUNXI
 KERNEL_SETS.armv7hf+=		SUNXI
-KERNEL_SETS.armv7+=		VEXPRESS_A15
-KERNEL_SETS.armv7hf+=		VEXPRESS_A15
 .else
 IMAGEENDIAN=	le
 # little endian boards
@@ -106,8 +104,6 @@ EVBARM_BOARDS.armv7hf+=		MIRABOX
 #EVBARM_BOARDS.armv7+=		N900
 EVBARM_BOARDS.armv7+=		NETWALKER
 EVBARM_BOARDS.armv7hf+=		NETWALKER
-KERNEL_SETS.armv7+=		ODROID-C1
-KERNEL_SETS.armv7hf+=		ODROID-C1
 EVBARM_BOARDS.armv7+=		OMAP5EVM
 EVBARM_BOARDS.armv7hf+=		OMAP5EVM
 EVBARM_BOARDS.armv7+=		OVERO
@@ -120,8 +116,6 @@ EVBARM_BOARDS.armv7hf+=	 	RPI2
 #KERNEL_SETS.armv7hf+=		SUNXI
 #KERNEL_SETS.armv7+=		TEGRA
 #KERNEL_SETS.armv7hf+=		TEGRA
-KERNEL_SETS.armv7+=		VEXPRESS_A15
-KERNEL_SETS.armv7hf+=		VEXPRESS_A15
 
 KERNEL_SETS.arm64+=		GENERIC64
 .endif

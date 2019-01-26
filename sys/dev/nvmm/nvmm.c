@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.3.2.4 2019/01/18 08:50:26 pgoyette Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.3.2.5 2019/01/26 22:00:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.3.2.4 2019/01/18 08:50:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.3.2.5 2019/01/26 22:00:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ nvmm_vcpu_alloc(struct nvmm_machine *mach, struct nvmm_cpu **ret)
 
 		vcpu->present = true;
 		vcpu->cpuid = i;
+		vcpu->state = kmem_zalloc(nvmm_impl->state_size, KM_SLEEP);
 		*ret = vcpu;
 		return 0;
 	}
@@ -154,6 +155,7 @@ nvmm_vcpu_free(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 {
 	KASSERT(mutex_owned(&vcpu->lock));
 	vcpu->present = false;
+	kmem_free(vcpu->state, nvmm_impl->state_size);
 	vcpu->hcpu_last = -1;
 }
 
@@ -404,33 +406,27 @@ nvmm_vcpu_setstate(struct nvmm_ioc_vcpu_setstate *args)
 {
 	struct nvmm_machine *mach;
 	struct nvmm_cpu *vcpu;
-	void *data;
 	int error;
 
-	data = kmem_alloc(nvmm_impl->state_size, KM_SLEEP);
-
 	error = nvmm_machine_get(args->machid, &mach, false);
-	if (error) {
-		kmem_free(data, nvmm_impl->state_size);
+	if (error)
 		return error;
-	}
 
 	error = nvmm_vcpu_get(mach, args->cpuid, &vcpu);
 	if (error)
 		goto out;
 
-	error = copyin(args->state, data, nvmm_impl->state_size);
+	error = copyin(args->state, vcpu->state, nvmm_impl->state_size);
 	if (error) {
 		nvmm_vcpu_put(vcpu);
 		goto out;
 	}
 
-	(*nvmm_impl->vcpu_setstate)(vcpu, data, args->flags);
+	(*nvmm_impl->vcpu_setstate)(vcpu, vcpu->state, args->flags);
 	nvmm_vcpu_put(vcpu);
 
 out:
 	nvmm_machine_put(mach);
-	kmem_free(data, nvmm_impl->state_size);
 	return error;
 }
 
@@ -439,28 +435,22 @@ nvmm_vcpu_getstate(struct nvmm_ioc_vcpu_getstate *args)
 {
 	struct nvmm_machine *mach;
 	struct nvmm_cpu *vcpu;
-	void *data;
 	int error;
 
-	data = kmem_alloc(nvmm_impl->state_size, KM_SLEEP);
-
 	error = nvmm_machine_get(args->machid, &mach, false);
-	if (error) {
-		kmem_free(data, nvmm_impl->state_size);
+	if (error)
 		return error;
-	}
 
 	error = nvmm_vcpu_get(mach, args->cpuid, &vcpu);
 	if (error)
 		goto out;
 
-	(*nvmm_impl->vcpu_getstate)(vcpu, data, args->flags);
+	(*nvmm_impl->vcpu_getstate)(vcpu, vcpu->state, args->flags);
 	nvmm_vcpu_put(vcpu);
-	error = copyout(data, args->state, nvmm_impl->state_size);
+	error = copyout(vcpu->state, args->state, nvmm_impl->state_size);
 
 out:
 	nvmm_machine_put(mach);
-	kmem_free(data, nvmm_impl->state_size);
 	return error;
 }
 

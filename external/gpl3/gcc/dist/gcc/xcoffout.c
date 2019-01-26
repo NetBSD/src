@@ -1,5 +1,5 @@
 /* Output xcoff-format symbol table information from GNU compiler.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -327,8 +327,8 @@ xcoffout_source_file (FILE *file, const char *filename, int inline_p)
 /* Output a line number symbol entry for location (FILENAME, LINE).  */
 
 void
-xcoffout_source_line (unsigned int line, const char *filename,
-                      int discriminator ATTRIBUTE_UNUSED,
+xcoffout_source_line (unsigned int line, unsigned int column ATTRIBUTE_UNUSED,
+		      const char *filename, int discriminator ATTRIBUTE_UNUSED,
                       bool is_stmt ATTRIBUTE_UNUSED)
 {
   bool inline_p = (strcmp (xcoff_current_function_file, filename) != 0
@@ -446,6 +446,7 @@ xcoffout_declare_function (FILE *file, tree decl, const char *name)
 
 void
 xcoffout_begin_prologue (unsigned int line,
+			 unsigned int column ATTRIBUTE_UNUSED,
 			 const char *file ATTRIBUTE_UNUSED)
 {
   ASM_OUTPUT_LFB (asm_out_file, line);

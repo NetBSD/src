@@ -1,4 +1,4 @@
-# $NetBSD: t_here.sh,v 1.6 2016/03/31 16:21:52 christos Exp $
+# $NetBSD: t_here.sh,v 1.6.14.1 2019/01/26 22:00:37 pgoyette Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,10 +78,13 @@ check()
 	rm -f "${TEMP_FILE}"
 
 	# Remove newlines (use local shell for this)
-	oifs="$IFS"
-	IFS="$nl"
-	result="$(echo $result)"
-	IFS="$oifs"
+	result="$(
+		IFS="$nl"
+		set -f
+		set -- $result
+		IFS=' '
+		printf %s "$*"
+	)"
 	if [ "$2" != "$result" ]
 	then
 		echo >&2 "[$TEST_NUM] Expected output '$2', received '$result'"
@@ -472,6 +475,42 @@ quoting_body() {
 		"$Z"'\''$W'\'' ${Y%" "*} $(( X + 54321 ))
 	EOF
 	'	'5string1 line1?-line2string1 -line2 ""'\'\'' string1 66666' 0
+
+	# check that \ only quotes the magic chars, otherwise is retained
+	check 'p=A; cat <<-EOF
+		${p+\%$p\%}
+		${p+%$p%}
+	EOF
+	'	'\%A\% %A%' 0
+
+	# and check that " is not magic, so \ does not quote it
+	check 'p=A; cat <<-EOF
+		${p+\"$p\"}
+		${p+"$p"}
+	EOF
+	'	'\"A\" "A"' 0
+
+	# except in a ${var%<word>} word, base syntax reapplies, and
+	# there quotes are magic again
+	check 'p=ABCD; cat <<-EOF
+		${p%B?D}
+		${p%B\?D}
+		${p%"BCD"}
+		"${p%??}"
+		${p#"${p%??}"}
+		"${p#"${p%?"?"}"}"
+	EOF
+	'	'A ABCD A "AB" CD ""'	0
+
+	check 'p=AB??; cat <<-EOF
+		${p%B?D}
+		${p%B\??}
+		${p%"B??"}
+		"${p%??}"
+		${p#"${p%??}"}
+		"${p#"${p%?"?"}"}"
+	EOF
+	'	'AB?? A A "AB" ?? "??"'	0
 
 	results
 }

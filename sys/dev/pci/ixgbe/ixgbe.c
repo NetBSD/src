@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128.2.12 2018/12/26 14:02:01 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.13 2019/01/26 22:00:23 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -876,6 +876,9 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	} else
 		adapter->num_segs = IXGBE_82598_SCATTER;
 
+	/* Ensure SW/FW semaphore is free */
+	ixgbe_init_swfw_semaphore(hw);
+
 	hw->mac.ops.set_lan_id(hw);
 	ixgbe_init_device_features(adapter);
 
@@ -901,13 +904,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		u32 esdp = IXGBE_READ_REG(hw, IXGBE_ESDP);
 		ixgbe_check_fan_failure(adapter, esdp, FALSE);
 	}
-
-	/* Ensure SW/FW semaphore is free */
-	ixgbe_init_swfw_semaphore(hw);
-
-	/* Enable EEE power saving */
-	if (adapter->feat_en & IXGBE_FEATURE_EEE)
-		hw->mac.ops.setup_eee(hw, TRUE);
 
 	/* Set an initial default flow control value */
 	hw->fc.requested_mode = ixgbe_flow_control;
@@ -1168,6 +1164,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* Enable the optics for 82599 SFP+ fiber */
 	ixgbe_enable_tx_laser(hw);
+
+	/* Enable EEE power saving */
+	if (adapter->feat_cap & IXGBE_FEATURE_EEE)
+		hw->mac.ops.setup_eee(hw,
+		    adapter->feat_en & IXGBE_FEATURE_EEE);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
@@ -3420,7 +3421,7 @@ static int
 ixgbe_allocate_pci_resources(struct adapter *adapter,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype;
+	pcireg_t	memtype, csr;
 	device_t dev = adapter->dev;
 	bus_addr_t addr;
 	int flags;
@@ -3445,6 +3446,15 @@ map_err:
 			aprint_error_dev(dev, "unable to map BAR0\n");
 			return ENXIO;
 		}
+		/*
+		 * Enable address decoding for memory range in case BIOS or
+		 * UEFI don't set it.
+		 */
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_MEM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    csr);
 		break;
 	default:
 		aprint_error_dev(dev, "unexpected type on BAR0\n");
@@ -4072,6 +4082,11 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	/* Set moderation on the Link interrupt */
 	ixgbe_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
+
+	/* Enable EEE power saving */
+	if (adapter->feat_cap & IXGBE_FEATURE_EEE)
+		hw->mac.ops.setup_eee(hw,
+		    adapter->feat_en & IXGBE_FEATURE_EEE);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);

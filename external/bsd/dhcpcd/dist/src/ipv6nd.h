@@ -1,6 +1,6 @@
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -58,9 +58,11 @@ struct rs_state {
 	struct nd_router_solicit *rs;
 	size_t rslen;
 	int rsprobes;
+	uint32_t retrans;
 };
 
 #define	RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
+#define	RS_CSTATE(a) ((const struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
 #define	RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
 
 #ifndef MAX_RTR_SOLICITATION_DELAY
@@ -68,6 +70,7 @@ struct rs_state {
 #define	MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
 #define	RTR_SOLICITATION_INTERVAL	4	/* seconds */
 #define	MAX_RTR_SOLICITATIONS		3	/* times */
+#define	MAX_NEIGHBOR_ADVERTISEMENT	3	/* 3 transmissions */
 #endif
 
 /* On carrier up, expire known routers after RTR_CARRIER_EXPIRE seconds. */
@@ -99,6 +102,7 @@ int ipv6nd_hasra(const struct interface *);
 int ipv6nd_hasradhcp(const struct interface *);
 void ipv6nd_handleifa(int, struct ipv6_addr *, pid_t);
 int ipv6nd_dadcompleted(const struct interface *);
+void ipv6nd_advertise(struct ipv6_addr *);
 void ipv6nd_expire(struct interface *, uint32_t);
 void ipv6nd_drop(struct interface *);
 void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);

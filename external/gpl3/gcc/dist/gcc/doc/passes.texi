@@ -1,6 +1,6 @@
 @c markers: BUG TODO
 
-@c Copyright (C) 1988-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2017 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -483,6 +483,12 @@ Loop unswitching.  This pass moves the conditional jumps that are invariant
 out of the loops.  To achieve this, a duplicate of the loop is created for
 each possible outcome of conditional jump(s).  The pass is implemented in
 @file{tree-ssa-loop-unswitch.c}.
+
+Loop splitting.  If a loop contains a conditional statement that is
+always true for one part of the iteration space and false for the other
+this pass splits the loop into two, one dealing with one side the other
+only with the other, thereby removing one inner-loop conditional.  The
+pass is implemented in @file{tree-ssa-loop-split.c}.
 
 The optimizations also use various utility functions contained in
 @file{tree-ssa-loop-manip.c}, @file{cfgloop.c}, @file{cfgloopanal.c} and

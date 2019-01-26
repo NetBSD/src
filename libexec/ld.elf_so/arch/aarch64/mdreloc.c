@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.7.2.3 2018/11/26 01:52:13 pgoyette Exp $ */
+/* $NetBSD: mdreloc.c,v 1.7.2.4 2019/01/26 21:59:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.7.2.3 2018/11/26 01:52:13 pgoyette Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.7.2.4 2019/01/26 21:59:58 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,17 +70,16 @@ __RCSID("$NetBSD: mdreloc.c,v 1.7.2.3 2018/11/26 01:52:13 pgoyette Exp $");
 #include "rtld.h"
 
 struct tls_data {
-	int64_t index;
-	Obj_Entry *obj;
-	const Elf_Rela *rela;
+	size_t		td_tlsindex;
+	Elf_Addr	td_tlsoffs;
 };
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);
-void *_rtld_tlsdesc(void *);
+void *_rtld_tlsdesc_static(void *);
+void *_rtld_tlsdesc_undef(void *);
 void *_rtld_tlsdesc_dynamic(void *);
-int64_t _rtld_tlsdesc_handle(struct tls_data *, u_int);
 
 /*
  * AARCH64 PLT looks like this;
@@ -117,67 +116,63 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 static struct tls_data *
-_rtld_tlsdesc_alloc(Obj_Entry *obj, const Elf_Rela *rela)
+_rtld_tlsdesc_alloc(size_t tlsindex, Elf_Addr offs)
 {
 	struct tls_data *tlsdesc;
 
 	tlsdesc = xmalloc(sizeof(*tlsdesc));
-	tlsdesc->index = -1;
-	tlsdesc->obj = obj;
-	tlsdesc->rela = rela;
+	tlsdesc->td_tlsindex = tlsindex;
+	tlsdesc->td_tlsoffs = offs;
 
 	return tlsdesc;
 }
 
-static int64_t
-_rtld_tlsdesc_handle_locked(struct tls_data *tlsdesc, u_int flags)
+static void
+_rtld_tlsdesc_fill(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *where, u_int flags)
 {
-	const Elf_Rela *rela;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Obj_Entry *obj;
+	Elf_Addr offs = 0;
+	unsigned long symnum = ELF_R_SYM(rela->r_info);
 
-	rela = tlsdesc->rela;
-	obj = tlsdesc->obj;
+	if (symnum != 0) {
+		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
+		    flags);
+		if (def == NULL)
+			_rtld_die();
+		if (def == &_rtld_sym_zero) {
+			/* Weak undefined thread variable */
+			where[0] = (Elf_Addr)_rtld_tlsdesc_undef;
+			where[1] = rela->r_addend;
 
-	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, flags);
-	if (def == NULL)
-		_rtld_die();
+			rdbg(("TLSDESC %s (weak) in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)where[1]));
 
-	tlsdesc->index = defobj->tlsoffset + def->st_value + rela->r_addend +
-	    sizeof(struct tls_tcb);
-
-	return tlsdesc->index;
-}
-
-int64_t
-_rtld_tlsdesc_handle(struct tls_data *tlsdesc, u_int flags)
-{
-	sigset_t mask;
-
-	/* We have already found the index, return it */
-	if (tlsdesc->index >= 0)
-		return tlsdesc->index;
-
-	_rtld_exclusive_enter(&mask);
-	/* tlsdesc->index may have been set by another thread */
-	if (tlsdesc->index == -1)
-		_rtld_tlsdesc_handle_locked(tlsdesc, flags);
-	_rtld_exclusive_exit(&mask);
-
-	return tlsdesc->index;
-}
-
-static void
-_rtld_tlsdesc_fill(Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *where)
-{
-	if (ELF_R_SYM(rela->r_info) == 0) {
-		where[0] = (Elf_Addr)_rtld_tlsdesc;
-		where[1] = obj->tlsoffset + rela->r_addend +
-		    sizeof(struct tls_tcb);
+			return;
+		}
+		offs = def->st_value;
 	} else {
+		defobj = obj;
+	}
+	offs += rela->r_addend;
+
+	if (defobj->tls_done) {
+		/* Variable is in initialy allocated TLS segment */
+		where[0] = (Elf_Addr)_rtld_tlsdesc_static;
+		where[1] = defobj->tlsoffset + offs +
+		    sizeof(struct tls_tcb);
+
+		rdbg(("TLSDESC %s --> %p static",
+		    obj->path, (void *)where[1]));
+	} else {
+		/* TLS offset is unknown at load time, use dynamic resolving */
 		where[0] = (Elf_Addr)_rtld_tlsdesc_dynamic;
-		where[1] = (Elf_Addr)_rtld_tlsdesc_alloc(obj, rela);
+		where[1] = (Elf_Addr)_rtld_tlsdesc_alloc(defobj->tlsindex, offs);
+
+		rdbg(("TLSDESC %s in %s --> %p dynamic (%zu, %p)",
+		    obj->strtab + obj->symtab[symnum].st_name,
+		    obj->path, (void *)where[1], defobj->tlsindex, (void *)offs));
 	}
 }
 
@@ -276,7 +271,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLSDESC):
-			_rtld_tlsdesc_fill(obj, rela, where);
+			_rtld_tlsdesc_fill(obj, rela, where, 0);
 			break;
 
 		case R_TLS_TYPE(TLS_DTPREL):
@@ -344,7 +339,7 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 			rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 			break;
 		case R_TYPE(TLSDESC):
-			_rtld_tlsdesc_fill(obj, rela, where);
+			_rtld_tlsdesc_fill(obj, rela, where, SYMLOOK_IN_PLT);
 			break;
 		}
 	}
@@ -408,11 +403,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 			*tp = new_value;
 		break;
 	case R_TYPE(TLSDESC):
-		if (ELF_R_SYM(rela->r_info) != 0) {
-			struct tls_data *tlsdesc = (struct tls_data *)where[1];
-			if (tlsdesc->index == -1)
-				_rtld_tlsdesc_handle_locked(tlsdesc, SYMLOOK_IN_PLT);
-		}
+		_rtld_tlsdesc_fill(obj, rela, where, SYMLOOK_IN_PLT);
 		break;
 	}
 

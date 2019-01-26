@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.h,v 1.6 2009/05/12 14:31:27 cegger Exp $	*/
+/*	$NetBSD: mii_bitbang.h,v 1.6.62.1 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,5 @@ struct mii_bitbang_ops {
 
 typedef	const struct mii_bitbang_ops *mii_bitbang_ops_t;
 
-int	mii_bitbang_readreg(device_t, mii_bitbang_ops_t,
-	    int, int);
-void	mii_bitbang_writereg(device_t, mii_bitbang_ops_t,
-	    int, int, int);
+int	mii_bitbang_readreg(device_t, mii_bitbang_ops_t, int, int, uint16_t *);
+int	mii_bitbang_writereg(device_t, mii_bitbang_ops_t, int, int, uint16_t);

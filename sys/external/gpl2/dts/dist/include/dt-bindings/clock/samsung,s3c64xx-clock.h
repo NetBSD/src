@@ -1,14 +1,11 @@
-/*	$NetBSD: samsung,s3c64xx-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: samsung,s3c64xx-clock.h,v 1.1.1.1.10.1 2019/01/26 22:00:34 pgoyette Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2013 Tomasz Figa <tomasz.figa at gmail.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  * Device Tree binding constants for Samsung S3C64xx clock controller.
-*/
+ */
 
 #ifndef _DT_BINDINGS_CLOCK_SAMSUNG_S3C64XX_CLOCK_H
 #define _DT_BINDINGS_CLOCK_SAMSUNG_S3C64XX_CLOCK_H

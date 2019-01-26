@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.109.2.3 2019/01/18 08:50:26 pgoyette Exp $ */
+/*	$NetBSD: gem.c,v 1.109.2.4 2019/01/26 22:00:06 pgoyette Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.109.2.3 2019/01/18 08:50:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.109.2.4 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -111,8 +111,8 @@ int		gem_add_rxbuf(struct gem_softc *sc, int idx);
 void		gem_setladrf(struct gem_softc *);
 
 /* MII methods & callbacks */
-static int	gem_mii_readreg(device_t, int, int);
-static void	gem_mii_writereg(device_t, int, int, int);
+static int	gem_mii_readreg(device_t, int, int, uint16_t *);
+static int	gem_mii_writereg(device_t, int, int, uint16_t);
 static void	gem_mii_statchg(struct ifnet *);
 
 static int	gem_ifflags_cb(struct ethercom *);
@@ -2362,7 +2362,7 @@ gem_mifinit(struct gem_softc *sc)
  *
  */
 static int
-gem_mii_readreg(device_t self, int phy, int reg)
+gem_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct gem_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2383,16 +2383,18 @@ gem_mii_readreg(device_t self, int phy, int reg)
 	for (n = 0; n < 100; n++) {
 		DELAY(1);
 		v = bus_space_read_4(t, mif, GEM_MIF_FRAME);
-		if (v & GEM_MIF_FRAME_TA0)
-			return (v & GEM_MIF_FRAME_DATA);
+		if (v & GEM_MIF_FRAME_TA0) {
+			*val = v & GEM_MIF_FRAME_DATA;
+			return 0;
+		}
 	}
 
 	printf("%s: mii_read timeout\n", device_xname(sc->sc_dev));
-	return (0);
+	return ETIMEDOUT;
 }
 
-static void
-gem_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+gem_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct gem_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2417,10 +2419,11 @@ gem_mii_writereg(device_t self, int phy, int reg, int val)
 		DELAY(1);
 		v = bus_space_read_4(t, mif, GEM_MIF_FRAME);
 		if (v & GEM_MIF_FRAME_TA0)
-			return;
+			return 0;
 	}
 
 	printf("%s: mii_write timeout\n", device_xname(sc->sc_dev));
+	return ETIMEDOUT;
 }
 
 static void

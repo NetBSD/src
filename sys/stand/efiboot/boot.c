@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.2.5 2018/11/26 01:52:52 pgoyette Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.2.6 2019/01/26 22:00:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -73,11 +73,13 @@ static char default_device[32];
 static char initrd_path[255];
 static char dtb_path[255];
 static char netbsd_path[255];
+static char netbsd_args[255];
 
 #define	DEFTIMEOUT	5
 #define DEFFILENAME	names[0]
 
 int	set_bootfile(const char *);
+int	set_bootargs(const char *);
 
 void	command_boot(char *);
 void	command_dev(char *);
@@ -328,6 +330,15 @@ set_bootfile(const char *arg)
 	return 0;
 }
 
+int
+set_bootargs(const char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(netbsd_args))
+		return ERANGE;
+	strcpy(netbsd_args, arg);
+	return 0;
+}
+
 void
 print_banner(void)
 {
@@ -376,6 +387,15 @@ read_env(void)
 		set_default_device(s);
 		FreePool(s);
 	}
+
+	s = efi_env_get("bootargs");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting default boot args to '%s' from environment\n", s);
+#endif
+		set_bootargs(s);
+		FreePool(s);
+	}
 }
 
 void
@@ -401,7 +421,7 @@ boot(void)
 		if (c != '\r' && c != '\n' && c != '\0')
 			bootprompt(); /* does not return */
 
-		exec_netbsd(netbsd_path, "");
+		exec_netbsd(netbsd_path, netbsd_args);
 	}
 
 	bootprompt();	/* does not return */

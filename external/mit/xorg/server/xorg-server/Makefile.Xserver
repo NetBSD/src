@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.20.12.1 2019/01/18 08:49:06 pgoyette Exp $
+#	$NetBSD: Makefile.Xserver,v 1.20.12.2 2019/01/26 21:59:57 pgoyette Exp $
 
 .for _SL in \
 	mi \
@@ -74,5 +74,5 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include
 
-LDADD+=		-lm
-DPADD+=		${LIBM}
+LDADD+=		-lm -lexecinfo
+DPADD+=		${LIBM} ${LIBEXECINFO}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.21 2016/07/14 04:19:27 msaitoh Exp $	*/
+/*	$NetBSD: uyap.c,v 1.21.16.1 2019/01/26 22:00:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.21 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.21.16.1 2019/01/26 22:00:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,9 @@ uyap_match(device_t parent, cfdata_t match, void *aux)
 	/* Match the boot device. */
 	if (uaa->uaa_vendor == USB_VENDOR_SILICONPORTALS &&
 	    uaa->uaa_product == USB_PRODUCT_SILICONPORTALS_YAPPH_NF)
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void
@@ -113,7 +113,7 @@ uyap_detach(device_t self, int flags)
 	struct uyap_softc *sc = device_private(self);
 #endif
 
-	return (0);
+	return 0;
 }
 
 int

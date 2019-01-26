@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.56.2.1 2018/09/06 06:56:41 pgoyette Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.56.2.2 2019/01/26 22:00:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.56.2.1 2018/09/06 06:56:41 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.56.2.2 2019/01/26 22:00:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -313,8 +313,19 @@ ELFNAMEEND(coredump_getseghdrs)(struct uvm_coredump_state *us)
 		int i;
 
 		end -= slen;
-		if ((error = copyin_proc(ws->p, (void *)end, buf, slen)) != 0)
-			return error;
+		if ((error = copyin_proc(ws->p, (void *)end, buf, slen)) != 0) {
+			/*
+			 * In case of any errors of scanning the segments reset
+			 * their content to a default value with zeros. This is
+			 * achieved with shortening the p_filesz parameter.
+			 *
+			 * This allows to emit core(5) files for a process
+			 * regardless of its state of mappings, such as mapping
+			 * pages after EOF in a file.
+			 */
+			realsize -= slen;
+			continue;
+		}
 
 		ep = (const long *) &buf[slen / sizeof(buf[0])];
 		for (i = 0, ep--; buf <= ep; ep--, i++) {

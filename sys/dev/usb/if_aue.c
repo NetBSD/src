@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.142.2.2 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.142.2.3 2019/01/26 22:00:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,14 +71,13 @@
  * TODO:
  * better error messages from rxstat
  * split out if_auevar.h
- * add thread to avoid register reads from interrupt context
  * more error checks
  * investigate short rx problem
  * proper cleanup on errors
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.142.2.2 2018/09/06 06:56:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.142.2.3 2019/01/26 22:00:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -239,8 +238,8 @@ Static int aue_ifmedia_upd(struct ifnet *);
 
 Static int aue_eeprom_getword(struct aue_softc *, int);
 Static void aue_read_mac(struct aue_softc *, u_char *);
-Static int aue_miibus_readreg(device_t, int, int);
-Static void aue_miibus_writereg(device_t, int, int, int);
+Static int aue_miibus_readreg(device_t, int, int, uint16_t *);
+Static int aue_miibus_writereg(device_t, int, int, uint16_t);
 Static void aue_miibus_statchg(struct ifnet *);
 
 Static void aue_lock_mii(struct aue_softc *);
@@ -431,17 +430,16 @@ aue_unlock_mii(struct aue_softc *sc)
 }
 
 Static int
-aue_miibus_readreg(device_t dev, int phy, int reg)
+aue_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct aue_softc *sc = device_private(dev);
-	int			i;
-	uint16_t		val;
+	int			i, rv = 0;
 
 	if (sc->aue_dying) {
 #ifdef DIAGNOSTIC
 		printf("%s: dying\n", device_xname(sc->aue_dev));
 #endif
-		return 0;
+		return -1;
 	}
 
 #if 0
@@ -458,7 +456,7 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
 	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
 		if (phy == 3)
-			return 0;
+			return -1;
 	}
 #endif
 
@@ -473,36 +471,39 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 
 	if (i == AUE_TIMEOUT) {
 		printf("%s: MII read timed out\n", device_xname(sc->aue_dev));
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
-	val = aue_csr_read_2(sc, AUE_PHY_DATA);
+	*val = aue_csr_read_2(sc, AUE_PHY_DATA);
 
-	DPRINTFN(11,("%s: %s: phy=%d reg=%d => 0x%04x\n",
-	    device_xname(sc->aue_dev), __func__, phy, reg, val));
+	DPRINTFN(11,("%s: %s: phy=%d reg=%d => 0x%04hx\n",
+	    device_xname(sc->aue_dev), __func__, phy, reg, *val));
 
+out:
 	aue_unlock_mii(sc);
-	return val;
+	return rv;
 }
 
-Static void
-aue_miibus_writereg(device_t dev, int phy, int reg, int data)
+Static int
+aue_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct aue_softc *sc = device_private(dev);
-	int			i;
+	int			i, rv = 0;
 
 #if 0
 	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
 	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
 		if (phy == 3)
-			return;
+			return -1;
 	}
 #endif
 
-	DPRINTFN(11,("%s: %s: phy=%d reg=%d data=0x%04x\n",
-	    device_xname(sc->aue_dev), __func__, phy, reg, data));
+	DPRINTFN(11,("%s: %s: phy=%d reg=%d data=0x%04hx\n",
+	    device_xname(sc->aue_dev), __func__, phy, reg, val));
 
 	aue_lock_mii(sc);
-	aue_csr_write_2(sc, AUE_PHY_DATA, data);
+	aue_csr_write_2(sc, AUE_PHY_DATA, val);
 	aue_csr_write_1(sc, AUE_PHY_ADDR, phy);
 	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_WRITE);
 
@@ -513,8 +514,11 @@ aue_miibus_writereg(device_t dev, int phy, int reg, int data)
 
 	if (i == AUE_TIMEOUT) {
 		printf("%s: MII read timed out\n", device_xname(sc->aue_dev));
+		rv = ETIMEDOUT;
 	}
 	aue_unlock_mii(sc);
+
+	return rv;
 }
 
 Static void
@@ -549,7 +553,7 @@ aue_miibus_statchg(struct ifnet *ifp)
 	 */
 	if (!sc->aue_dying && (sc->aue_flags & LSYS)) {
 		uint16_t auxmode;
-		auxmode = aue_miibus_readreg(sc->aue_dev, 0, 0x1b);
+		aue_miibus_readreg(sc->aue_dev, 0, 0x1b, &auxmode);
 		aue_miibus_writereg(sc->aue_dev, 0, 0x1b, auxmode | 0x04);
 	}
 	DPRINTFN(5,("%s: %s: exit\n", device_xname(sc->aue_dev), __func__));

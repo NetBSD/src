@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.30.16.1 2019/01/18 08:50:26 pgoyette Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.30.16.2 2019/01/26 22:00:06 pgoyette Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30.16.1 2019/01/18 08:50:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30.16.2 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,8 @@ rlphyattach(device_t parent, device_t self, void *aux)
 	PHY_RESET(sc);
 
 	aprint_normal_dev(self, "");
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
@@ -209,16 +210,17 @@ rlphy_status(struct mii_softc *sc)
 	struct rlphy_softc *rsc = (void *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, anar, anlpar, result;
+	uint16_t bmsr, bmcr, anar, anlpar, result, reg;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -240,8 +242,8 @@ rlphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		anar = PHY_READ(sc, MII_ANAR);
-		anlpar = PHY_READ(sc, MII_ANLPAR);
+		PHY_READ(sc, MII_ANAR, &anar);
+		PHY_READ(sc, MII_ANLPAR, &anlpar);
 		result = anar & anlpar;
 		if (result != 0) {
 			if (result & ANLPAR_TX_FD)
@@ -287,12 +289,14 @@ rlphy_status(struct mii_softc *sc)
 		 *   register.
 		 */
 		if (rsc->sc_rtl8201l) {
-			if (PHY_READ(sc, 0x0019) & 0x01)
+			PHY_READ(sc, 0x0019, &reg);
+			if (reg & 0x01)
 				mii->mii_media_active |= IFM_100_TX;
 			else
 				mii->mii_media_active |= IFM_10_T;
 		} else {
-			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
+			PHY_READ(sc, RTK_MEDIASTAT, &reg);
+			if (reg & RTK_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else
 				mii->mii_media_active |= IFM_100_TX;

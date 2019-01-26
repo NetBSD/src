@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.115.2.3 2019/01/18 08:50:14 pgoyette Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.115.2.4 2019/01/26 21:59:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115.2.3 2019/01/18 08:50:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115.2.4 2019/01/26 21:59:59 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -716,8 +716,9 @@ cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
  *
  * printf isn't available to us for a number of reasons.
  *
- * -  kprint_init has been called and printf will try to take locks which we can't
- *    do just yet because bootstrap translation tables do not allowing caching.
+ * -  kprint_init has been called and printf will try to take locks which we
+ *    can't  do just yet because bootstrap translation tables do not allowing
+ *    caching.
  *
  * -  kmutex(9) relies on curcpu which isn't setup yet.
  *

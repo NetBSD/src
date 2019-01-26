@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.36.12.2 2018/07/28 04:37:28 pgoyette Exp $	*/
+/*	$NetBSD: epe.c,v 1.36.12.3 2019/01/26 22:00:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.36.12.2 2018/07/28 04:37:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.36.12.3 2019/01/26 22:00:00 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,8 +97,8 @@ static void	epe_init(struct epe_softc *);
 static int      epe_intr(void* arg);
 static int	epe_gctx(struct epe_softc *);
 static int	epe_mediachange(struct ifnet *);
-int		epe_mii_readreg (device_t, int, int);
-void		epe_mii_writereg (device_t, int, int, int);
+int		epe_mii_readreg (device_t, int, int, uint16_t *);
+int		epe_mii_writereg (device_t, int, int, uint16_t);
 void		epe_statchg (struct ifnet *);
 void		epe_tick (void *);
 static int	epe_ifioctl (struct ifnet *, u_long, void *);
@@ -452,21 +452,21 @@ epe_mediachange(struct ifnet *ifp)
 }
 
 int
-epe_mii_readreg(device_t self, int phy, int reg)
+epe_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
-	uint32_t d, v;
+	uint32_t d;
 
 	d = EPE_READ(SelfCtl);
 	EPE_WRITE(SelfCtl, d & ~SelfCtl_PSPRS); /* no preamble suppress */
 	EPE_WRITE(MIICmd, (MIICmd_READ | (phy << 5) | reg));
 	while(EPE_READ(MIISts) & MIISts_BUSY);
-	v = EPE_READ(MIIData);
+	*val = EPE_READ(MIIData) & 0xffff;
 	EPE_WRITE(SelfCtl, d); /* restore old value */
-	return v;
+	return 0;
 }
 
-void
-epe_mii_writereg(device_t self, int phy, int reg, int val)
+int
+epe_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	uint32_t d;
 
@@ -476,6 +476,8 @@ epe_mii_writereg(device_t self, int phy, int reg, int val)
 	EPE_WRITE(MIICmd, (MIICmd_WRITE | (phy << 5) | reg));
 	while(EPE_READ(MIISts) & MIISts_BUSY);
 	EPE_WRITE(SelfCtl, d); /* restore old value */
+
+	return 0;
 }
 
 	

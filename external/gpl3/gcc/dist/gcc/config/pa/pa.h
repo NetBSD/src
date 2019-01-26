@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the HP Spectrum.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2017 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) of Cygnus Support
    and Tim Moore (moore@defmacro.cs.utah.edu) of the Center for
    Software Science at the University of Utah.
@@ -92,12 +92,6 @@ extern unsigned long total_code_bytes;
    allows a difference of two symbols in the same subspace, and it doesn't
    detect the sequence as a pc-relative call.  */
 #define TARGET_LONG_PIC_SDIFF_CALL (!TARGET_GAS && TARGET_HPUX)
-
-/* Define to a C expression evaluating to true to use long PIC
-   pc-relative calls.  Long PIC pc-relative calls are only used with
-   GAS.  Currently, they are usable for calls which bind local to a
-   module but not for external calls.  */
-#define TARGET_LONG_PIC_PCREL_CALL 0
 
 /* Define to a C expression evaluating to true to use SOM secondary
    definition symbols for weak support.  Linker support for secondary

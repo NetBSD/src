@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.17.16.3 2018/09/06 06:55:50 pgoyette Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.17.16.4 2019/01/26 22:00:06 pgoyette Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.17.16.3 2018/09/06 06:55:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.17.16.4 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,8 +84,8 @@ STATIC void mvxpe_sc_lock(struct mvxpe_softc *);
 STATIC void mvxpe_sc_unlock(struct mvxpe_softc *);
 
 /* MII */
-STATIC int mvxpe_miibus_readreg(device_t, int, int);
-STATIC void mvxpe_miibus_writereg(device_t, int, int, int);
+STATIC int mvxpe_miibus_readreg(device_t, int, int, uint16_t *);
+STATIC int mvxpe_miibus_writereg(device_t, int, int, uint16_t);
 STATIC void mvxpe_miibus_statchg(struct ifnet *);
 
 /* Addres Decoding Window */
@@ -692,12 +692,12 @@ mvxpe_sc_unlock(struct mvxpe_softc *sc)
  * MII
  */
 STATIC int
-mvxpe_miibus_readreg(device_t dev, int phy, int reg)
+mvxpe_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct mvxpe_softc *sc = device_private(dev);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t smi, val;
-	int i;
+	uint32_t smi;
+	int i, rv = 0;
 
 	mutex_enter(&mii_mutex);
 
@@ -708,8 +708,8 @@ mvxpe_miibus_readreg(device_t dev, int phy, int reg)
 	}
 	if (i == MVXPE_PHY_TIMEOUT) {
 		aprint_error_ifnet(ifp, "SMI busy timeout\n");
-		mutex_exit(&mii_mutex);
-		return -1;
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
 	smi =
@@ -719,30 +719,32 @@ mvxpe_miibus_readreg(device_t dev, int phy, int reg)
 	for (i = 0; i < MVXPE_PHY_TIMEOUT; i++) {
 		DELAY(1);
 		smi = MVXPE_READ(sc, MVXPE_SMI);
-		if (smi & MVXPE_SMI_READVALID)
+		if (smi & MVXPE_SMI_READVALID) {
+			*val = smi & MVXPE_SMI_DATA_MASK;
 			break;
+		}
 	}
+	DPRINTDEV(dev, 9, "i=%d, timeout=%d\n", i, MVXPE_PHY_TIMEOUT);
+	if (i >= MVXPE_PHY_TIMEOUT)
+		rv = ETIMEDOUT;
 
+out:
 	mutex_exit(&mii_mutex);
 
-	DPRINTDEV(dev, 9, "i=%d, timeout=%d\n", i, MVXPE_PHY_TIMEOUT);
+	DPRINTDEV(dev, 9, "phy=%d, reg=%#x, val=%#hx\n", phy, reg, *val);
 
-	val = smi & MVXPE_SMI_DATA_MASK;
-
-	DPRINTDEV(dev, 9, "phy=%d, reg=%#x, val=%#x\n", phy, reg, val);
-
-	return val;
+	return rv;
 }
 
-STATIC void
-mvxpe_miibus_writereg(device_t dev, int phy, int reg, int val)
+STATIC int
+mvxpe_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct mvxpe_softc *sc = device_private(dev);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t smi;
-	int i;
+	int i, rv = 0;
 
-	DPRINTDEV(dev, 9, "phy=%d reg=%#x val=%#x\n", phy, reg, val);
+	DPRINTDEV(dev, 9, "phy=%d reg=%#x val=%#hx\n", phy, reg, val);
 
 	mutex_enter(&mii_mutex);
 
@@ -753,8 +755,8 @@ mvxpe_miibus_writereg(device_t dev, int phy, int reg, int val)
 	}
 	if (i == MVXPE_PHY_TIMEOUT) {
 		aprint_error_ifnet(ifp, "SMI busy timeout\n");
-		mutex_exit(&mii_mutex);
-		return;
+		rv = ETIMEDOUT;
+		goto out;
 	}
 
 	smi = MVXPE_SMI_PHYAD(phy) | MVXPE_SMI_REGAD(reg) |
@@ -767,10 +769,15 @@ mvxpe_miibus_writereg(device_t dev, int phy, int reg, int val)
 			break;
 	}
 
+	if (i == MVXPE_PHY_TIMEOUT) {
+		aprint_error_ifnet(ifp, "phy write timed out\n");
+		rv = ETIMEDOUT;
+	}
+
+out:
 	mutex_exit(&mii_mutex);
 
-	if (i == MVXPE_PHY_TIMEOUT)
-		aprint_error_ifnet(ifp, "phy write timed out\n");
+	return rv;
 }
 
 STATIC void

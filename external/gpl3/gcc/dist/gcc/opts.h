@@ -1,5 +1,5 @@
 /* Command line option handling.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -359,7 +359,7 @@ bool handle_generated_option (struct gcc_options *opts,
 			      size_t opt_index, const char *arg, int value,
 			      unsigned int lang_mask, int kind, location_t loc,
 			      const struct cl_option_handlers *handlers,
-			      diagnostic_context *dc);
+			      bool generated_p, diagnostic_context *dc);
 void generate_option (size_t opt_index, const char *arg, int value,
 		      unsigned int lang_mask,
 		      struct cl_decoded_option *decoded);
@@ -422,10 +422,14 @@ extern const struct sanitizer_opts_s
   const char *const name;
   unsigned int flag;
   size_t len;
+  bool can_recover;
 } sanitizer_opts[];
 
 extern void add_misspelling_candidates (auto_vec<char *> *candidates,
 					const struct cl_option *option,
 					const char *base_option);
+extern const char *candidates_list_and_hint (const char *arg, char *&str,
+					     const auto_vec <const char *> &
+					     candidates);
 
 #endif

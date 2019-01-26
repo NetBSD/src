@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_state_test.c,v 1.7 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_state_test.c,v 1.7.12.1 2019/01/26 22:00:39 pgoyette Exp $	*/
 
 /*
- * NPF state tracking test.
+ * NPF state tracking tests.
  *
  * Public Domain.
  */

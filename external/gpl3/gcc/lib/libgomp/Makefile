@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.2.1 2018/09/06 06:51:59 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.19.2.2 2019/01/26 21:59:46 pgoyette Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -90,5 +90,8 @@ libinstall::
 
 COPTS+=	-Wno-stack-protector -Wno-missing-prototypes
 COPTS.oacc-mem.c+= -Wno-pointer-arith
+
+COPTS.lock.c+=	-Wno-error=incompatible-pointer-types
+
 
 .PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix

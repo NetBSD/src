@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.6.2.4 2019/01/18 08:50:26 pgoyette Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.6.2.5 2019/01/26 22:00:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.6.2.4 2019/01/18 08:50:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.6.2.5 2019/01/26 22:00:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,7 @@ struct svm_cpudata {
 	uint64_t fsbase;
 	uint64_t kernelgsbase;
 	bool ts_set;
-	struct xsave_header hfpu __aligned(16);
+	struct xsave_header hfpu __aligned(64);
 
 	/* Event state */
 	bool int_window_exit;
@@ -535,7 +535,7 @@ struct svm_cpudata {
 	uint64_t gprs[NVMM_X64_NGPR];
 	uint64_t drs[NVMM_X64_NDR];
 	uint64_t tsc_offset;
-	struct xsave_header gfpu __aligned(16);
+	struct xsave_header gfpu __aligned(64);
 };
 
 static void
@@ -726,20 +726,6 @@ svm_inject_ud(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 }
 
 static void
-svm_inject_db(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
-{
-	struct nvmm_event event;
-	int ret __diagused;
-
-	event.type = NVMM_EVENT_EXCEPTION;
-	event.vector = 1;
-	event.u.error = 0;
-
-	ret = svm_vcpu_inject(mach, vcpu, &event);
-	KASSERT(ret == 0);
-}
-
-static void
 svm_inject_gp(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 {
 	struct nvmm_event event;
@@ -751,6 +737,18 @@ svm_inject_gp(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	ret = svm_vcpu_inject(mach, vcpu, &event);
 	KASSERT(ret == 0);
+}
+
+static inline void
+svm_inkernel_advance(struct vmcb *vmcb)
+{
+	/*
+	 * Maybe we should also apply single-stepping and debug exceptions.
+	 * Matters for guest-ring3, because it can execute 'cpuid' under a
+	 * debugger.
+	 */
+	vmcb->state.rip = vmcb->ctrl.nrip;
+	vmcb->ctrl.intr &= ~VMCB_CTRL_INTR_SHADOW;
 }
 
 static void
@@ -779,12 +777,16 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RDX] = svm_xcr0_mask >> 32;
 		break;
 	case 0x40000000:
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RBX], "___ ", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
-	case 0x80000001: /* No SVM in ECX. The rest is tunable. */
+	case 0x80000001: /* No SVM, no RDTSCP. The rest is tunable. */
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID_SVM;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= ~CPUID_RDTSCP;
 		break;
 	default:
 		break;
@@ -838,12 +840,7 @@ svm_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	/* Overwrite non-tunable leaves. */
 	svm_inkernel_handle_cpuid(vcpu, eax, ecx);
 
-	/* For now we omit DBREGS. */
-	if (__predict_false(cpudata->vmcb->state.rflags & PSL_T)) {
-		svm_inject_db(mach, vcpu);
-	}
-
-	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
+	svm_inkernel_advance(cpudata->vmcb);
 	exit->reason = NVMM_EXIT_NONE;
 }
 
@@ -852,9 +849,14 @@ svm_exit_hlt(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
 
-	exit->reason = NVMM_EXIT_HLT;
-	exit->u.hlt.npc = cpudata->vmcb->ctrl.nrip;
+	if (cpudata->int_window_exit && (vmcb->state.rflags & PSL_I)) {
+		svm_event_waitexit_disable(vcpu, false);
+	}
+
+	svm_inkernel_advance(cpudata->vmcb);
+	exit->reason = NVMM_EXIT_HALTED;
 }
 
 #define SVM_EXIT_IO_PORT	__BITS(31,16)
@@ -990,7 +992,7 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	return false;
 
 handled:
-	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
+	svm_inkernel_advance(cpudata->vmcb);
 	return true;
 }
 
@@ -1007,7 +1009,7 @@ svm_exit_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		exit->u.msr.type = NVMM_EXIT_MSR_WRMSR;
 	}
 
-	exit->u.msr.msr = cpudata->gprs[NVMM_X64_GPR_RCX];
+	exit->u.msr.msr = (cpudata->gprs[NVMM_X64_GPR_RCX] & 0xFFFFFFFF);
 
 	if (info == 1) {
 		uint64_t rdx, rax;
@@ -1049,10 +1051,16 @@ svm_exit_npf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		exit->u.mem.inst_len = cpudata->vmcb->ctrl.inst_len;
 		memcpy(exit->u.mem.inst_bytes, cpudata->vmcb->ctrl.inst_bytes,
 		    sizeof(exit->u.mem.inst_bytes));
-		exit->u.mem.npc = cpudata->vmcb->ctrl.nrip;
 	} else {
 		exit->reason = NVMM_EXIT_NONE;
 	}
+}
+
+static void
+svm_exit_insn(struct vmcb *vmcb, struct nvmm_exit *exit, uint64_t reason)
+{
+	exit->u.insn.npc = vmcb->ctrl.nrip;
+	exit->reason = reason;
 }
 
 static void
@@ -1080,7 +1088,7 @@ svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	cpudata->gxcr0 = val;
 
-	cpudata->vmcb->state.rip = cpudata->vmcb->ctrl.nrip;
+	svm_inkernel_advance(cpudata->vmcb);
 	return;
 
 error:
@@ -1092,15 +1100,15 @@ svm_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	if (x86_xsave_features != 0) {
+	cpudata->ts_set = (rcr0() & CR0_TS) != 0;
+
+	fpu_area_save(&cpudata->hfpu, svm_xcr0_mask);
+	fpu_area_restore(&cpudata->gfpu, svm_xcr0_mask);
+
+	if (svm_xcr0_mask != 0) {
 		cpudata->hxcr0 = rdxcr(0);
 		wrxcr(0, cpudata->gxcr0);
 	}
-
-	cpudata->ts_set = (rcr0() & CR0_TS) != 0;
-
-	fpu_area_save(&cpudata->hfpu);
-	fpu_area_restore(&cpudata->gfpu);
 }
 
 static void
@@ -1108,16 +1116,16 @@ svm_vcpu_guest_fpu_leave(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	fpu_area_save(&cpudata->gfpu);
-	fpu_area_restore(&cpudata->hfpu);
+	if (svm_xcr0_mask != 0) {
+		cpudata->gxcr0 = rdxcr(0);
+		wrxcr(0, cpudata->hxcr0);
+	}
+
+	fpu_area_save(&cpudata->gfpu, svm_xcr0_mask);
+	fpu_area_restore(&cpudata->hfpu, svm_xcr0_mask);
 
 	if (cpudata->ts_set) {
 		stts();
-	}
-
-	if (x86_xsave_features != 0) {
-		cpudata->gxcr0 = rdxcr(0);
-		wrxcr(0, cpudata->hxcr0);
 	}
 }
 
@@ -1265,13 +1273,13 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			exit->reason = NVMM_EXIT_NONE;
 			break;
 		case VMCB_EXITCODE_MONITOR:
-			exit->reason = NVMM_EXIT_MONITOR;
+			svm_exit_insn(vmcb, exit, NVMM_EXIT_MONITOR);
 			break;
 		case VMCB_EXITCODE_MWAIT:
-			exit->reason = NVMM_EXIT_MWAIT;
+			svm_exit_insn(vmcb, exit, NVMM_EXIT_MWAIT);
 			break;
 		case VMCB_EXITCODE_MWAIT_CONDITIONAL:
-			exit->reason = NVMM_EXIT_MWAIT_COND;
+			svm_exit_insn(vmcb, exit, NVMM_EXIT_MWAIT_COND);
 			break;
 		case VMCB_EXITCODE_XSETBV:
 			svm_exit_xsetbv(mach, vcpu, exit);
@@ -1580,6 +1588,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	/* Must always be set. */
 	vmcb->state.efer = EFER_SVME;
+	cpudata->gxcr0 = XCR0_X87;
 
 	/* Init XSAVE header. */
 	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
@@ -1779,13 +1788,11 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		vmcb->ctrl.v |= __SHIFTIN(state->crs[NVMM_X64_CR_CR8],
 		    VMCB_CTRL_V_TPR);
 
-		/* Clear unsupported XCR0 bits, set mandatory X87 bit. */
 		if (svm_xcr0_mask != 0) {
+			/* Clear illegal XCR0 bits, set mandatory X87 bit. */
 			cpudata->gxcr0 = state->crs[NVMM_X64_CR_XCR0];
 			cpudata->gxcr0 &= svm_xcr0_mask;
 			cpudata->gxcr0 |= XCR0_X87;
-		} else {
-			cpudata->gxcr0 = 0;
 		}
 	}
 
@@ -1846,6 +1853,11 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		fpustate = (struct fxsave *)cpudata->gfpu.xsh_fxsave;
 		fpustate->fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
 		fpustate->fx_mxcsr &= fpustate->fx_mxcsr_mask;
+
+		if (svm_xcr0_mask != 0) {
+			/* Reset XSTATE_BV, to force a reload. */
+			cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
+		}
 	}
 
 	svm_vmcb_cache_update(vmcb, flags);

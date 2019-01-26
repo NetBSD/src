@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.1.2.3 2019/01/18 08:50:26 pgoyette Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.1.2.4 2019/01/26 22:00:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -53,13 +53,13 @@ enum nvmm_exit_reason {
 	NVMM_EXIT_MSR		= 0x0000000000000003,
 	NVMM_EXIT_INT_READY	= 0x0000000000000004,
 	NVMM_EXIT_NMI_READY	= 0x0000000000000005,
-	NVMM_EXIT_SHUTDOWN	= 0x0000000000000006,
+	NVMM_EXIT_HALTED	= 0x0000000000000006,
+	NVMM_EXIT_SHUTDOWN	= 0x0000000000000007,
 
 	/* Instructions (x86). */
-	NVMM_EXIT_HLT		= 0x0000000000001000,
-	NVMM_EXIT_MONITOR	= 0x0000000000001001,
-	NVMM_EXIT_MWAIT		= 0x0000000000001002,
-	NVMM_EXIT_MWAIT_COND	= 0x0000000000001003,
+	NVMM_EXIT_MONITOR	= 0x0000000000001000,
+	NVMM_EXIT_MWAIT		= 0x0000000000001001,
+	NVMM_EXIT_MWAIT_COND	= 0x0000000000001002,
 
 	NVMM_EXIT_INVALID	= 0xFFFFFFFFFFFFFFFF
 };
@@ -75,7 +75,6 @@ struct nvmm_exit_memory {
 	gpaddr_t gpa;
 	uint8_t inst_len;
 	uint8_t inst_bytes[15];
-	uint64_t npc;
 };
 
 enum nvmm_exit_io_type {
@@ -106,7 +105,7 @@ struct nvmm_exit_msr {
 	uint64_t npc;
 };
 
-struct nvmm_exit_hlt {
+struct nvmm_exit_insn {
 	uint64_t npc;
 };
 
@@ -116,7 +115,7 @@ struct nvmm_exit {
 		struct nvmm_exit_memory mem;
 		struct nvmm_exit_io io;
 		struct nvmm_exit_msr msr;
-		struct nvmm_exit_hlt hlt;
+		struct nvmm_exit_insn insn;
 	} u;
 	uint64_t exitstate[8];
 };

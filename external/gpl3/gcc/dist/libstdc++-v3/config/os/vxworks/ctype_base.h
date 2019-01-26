@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 1997-2016 Free Software Foundation, Inc.
+// Copyright (C) 1997-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -25,9 +25,9 @@
 //
 // ISO C++ 14882: 22.1  Locales
 //
-  
+
 // Information extracted from target/h/ctype.h.
-  
+
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
@@ -40,7 +40,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     // NB: Offsets into ctype<char>::_M_table force a particular size
     // on the mask type. Because of this, we don't use an enum.
-    typedef unsigned char 	mask;   
+    typedef unsigned char 	mask;
     static const mask upper    	= _C_UPPER;
     static const mask lower 	= _C_LOWER;
     static const mask alpha 	= _C_UPPER | _C_LOWER;

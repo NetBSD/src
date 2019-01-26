@@ -1,15 +1,12 @@
-/*	$NetBSD: exynos5260-clk.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: exynos5260-clk.h,v 1.1.1.1.10.1 2019/01/26 22:00:34 pgoyette Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  * Author: Rahul Sharma <rahul.sharma@samsung.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  * Provides Constants for Exynos5260 clocks.
-*/
+ */
 
 #ifndef _DT_BINDINGS_CLK_EXYNOS5260_H
 #define _DT_BINDINGS_CLK_EXYNOS5260_H

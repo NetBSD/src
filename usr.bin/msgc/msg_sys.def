@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.41 2012/03/06 16:26:01 mbalmer Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.41.30.1 2019/01/26 22:00:39 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -402,6 +402,10 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 			} else
 				_msg_beep();
 			break;
+		case 'l' & 0x1f:
+			endwin();
+			doupdate();
+			break;
 		case 'u' & 0x1f:	/* ^U; line kill */
 			/* kill line */
 			len = pos = 0;
@@ -505,6 +509,10 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 			}
 			w = maxx;
 		}
+	} else if (w > 0 && def != NULL && *def != 0) {
+		size_t tl = strlen(def);
+		if (tl + 1 + 2 + val_buf_len + 1 < (unsigned)w)
+			msg_flags &= ~MSG_PROMPT_HIDE_DFLT;
 	}
 
 	if (x == -1)

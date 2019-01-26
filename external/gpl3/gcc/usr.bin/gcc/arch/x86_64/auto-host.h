@@ -35,7 +35,7 @@
 #endif
 
 
-/* Define to 1 if you want more run-time sanity checks. This one gets a grab
+/* Define to 0/1 if you want more run-time sanity checks. This one gets a grab
    bag of miscellaneous but relatively cheap checks. */
 #ifndef USED_FOR_TARGET
 #define CHECKING_P 0
@@ -110,6 +110,13 @@
 /* Define if you want more run-time sanity checks for dataflow. */
 #ifndef USED_FOR_TARGET
 /* #undef ENABLE_DF_CHECKING */
+#endif
+
+
+/* Define to 0/1 if you want extra run-time checking that might affect code
+   generation. */
+#ifndef USED_FOR_TARGET
+#define ENABLE_EXTRA_CHECKING 0
 #endif
 
 
@@ -238,6 +245,12 @@
 #endif
 
 
+/* Define 0/1 if vtable verification feature is enabled. */
+#ifndef USED_FOR_TARGET
+#define ENABLE_VTABLE_VERIFY 0
+#endif
+
+
 /* Define to 1 if installation paths should be looked up in the Windows
    Registry. Ignored on non-Windows hosts. */
 #ifndef USED_FOR_TARGET
@@ -297,7 +310,7 @@
 /* Define to the level of your assembler's compressed debug section support.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_AS_COMPRESS_DEBUG 1
+#define HAVE_AS_COMPRESS_DEBUG 2
 #endif
 
 
@@ -423,6 +436,12 @@
 #endif
 
 
+/* Define 0/1 if your assembler and linker support @GOT. */
+#ifndef USED_FOR_TARGET
+#define HAVE_AS_IX86_GOT32X 1
+#endif
+
+
 /* Define if your assembler supports HLE prefixes. */
 #ifndef USED_FOR_TARGET
 #define HAVE_AS_IX86_HLE 1
@@ -474,6 +493,13 @@
 /* Define to 1 if your assembler and linker support @tlsldmplt. */
 #ifndef USED_FOR_TARGET
 #define HAVE_AS_IX86_TLSLDMPLT 0
+#endif
+
+
+/* Define 0/1 if your assembler and linker support calling ___tls_get_addr via
+   GOT. */
+#ifndef USED_FOR_TARGET
+#define HAVE_AS_IX86_TLS_GET_ADDR_GOT 1
 #endif
 
 
@@ -639,6 +665,10 @@
 /* #undef HAVE_AS_SPARC5_VIS4 */
 #endif
 
+/* Define if your assembler supports SPARC6 instructions. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_AS_SPARC6 */
+#endif
 
 /* Define if your assembler and linker support GOTDATA_OP relocs. */
 #ifndef USED_FOR_TARGET
@@ -710,7 +740,7 @@
 
 /* Define if <time.h> defines clock_t. */
 #ifndef USED_FOR_TARGET
-#define HAVE_CLOCK_T 1
+/* #undef HAVE_CLOCK_T */
 #endif
 
 
@@ -723,33 +753,33 @@
 /* Define to 1 if we found a declaration for 'abort', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_ABORT 1
+#define HAVE_DECL_ABORT 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'asprintf', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_ASPRINTF 1
+#define HAVE_DECL_ASPRINTF 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'atof', otherwise define to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_ATOF 1
+#define HAVE_DECL_ATOF 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'atol', otherwise define to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_ATOL 1
+#define HAVE_DECL_ATOL 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'atoll', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_ATOLL 1
+#define HAVE_DECL_ATOLL 0
 #endif
 
 
@@ -763,7 +793,7 @@
 /* Define to 1 if we found a declaration for 'calloc', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_CALLOC 1
+#define HAVE_DECL_CALLOC 0
 #endif
 
 
@@ -777,14 +807,14 @@
 /* Define to 1 if we found a declaration for 'clock', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_CLOCK 1
+#define HAVE_DECL_CLOCK 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'errno', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_ERRNO 1
+#define HAVE_DECL_ERRNO 0
 #endif
 
 
@@ -811,7 +841,7 @@
 
 /* Define to 1 if we found a declaration for 'ffs', otherwise define to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_FFS 1
+#define HAVE_DECL_FFS 0
 #endif
 
 
@@ -866,7 +896,7 @@
 
 /* Define to 1 if we found a declaration for 'free', otherwise define to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_FREE 1
+#define HAVE_DECL_FREE 0
 #endif
 
 
@@ -880,63 +910,63 @@
 /* Define to 1 if we found a declaration for 'getchar_unlocked', otherwise
    define to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETCHAR_UNLOCKED 1
+#define HAVE_DECL_GETCHAR_UNLOCKED 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getcwd', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETCWD 1
+#define HAVE_DECL_GETCWD 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getc_unlocked', otherwise define
    to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETC_UNLOCKED 1
+#define HAVE_DECL_GETC_UNLOCKED 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getenv', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETENV 1
+#define HAVE_DECL_GETENV 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getopt', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETOPT 1
+#define HAVE_DECL_GETOPT 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getpagesize', otherwise define
    to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETPAGESIZE 1
+#define HAVE_DECL_GETPAGESIZE 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getrlimit', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETRLIMIT 1
+#define HAVE_DECL_GETRLIMIT 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getrusage', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETRUSAGE 1
+#define HAVE_DECL_GETRUSAGE 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'getwd', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_GETWD 1
+#define HAVE_DECL_GETWD 0
 #endif
 
 
@@ -950,125 +980,125 @@
 /* Define to 1 if we found a declaration for 'madvise', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_MADVISE 1
+#define HAVE_DECL_MADVISE 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'malloc', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_MALLOC 1
+#define HAVE_DECL_MALLOC 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'putchar_unlocked', otherwise
    define to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_PUTCHAR_UNLOCKED 1
+#define HAVE_DECL_PUTCHAR_UNLOCKED 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'putc_unlocked', otherwise define
    to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_PUTC_UNLOCKED 1
+#define HAVE_DECL_PUTC_UNLOCKED 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'realloc', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_REALLOC 1
+#define HAVE_DECL_REALLOC 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'sbrk', otherwise define to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_SBRK 1
+#define HAVE_DECL_SBRK 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'setenv', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_SETENV 1
+#define HAVE_DECL_SETENV 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'setrlimit', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_SETRLIMIT 1
+#define HAVE_DECL_SETRLIMIT 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'sigaltstack', otherwise define
    to 0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_SIGALTSTACK 1
+#define HAVE_DECL_SIGALTSTACK 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'snprintf', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_SNPRINTF 1
+#define HAVE_DECL_SNPRINTF 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'stpcpy', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STPCPY 1
+#define HAVE_DECL_STPCPY 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'strnlen', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STRNLEN 1
+#define HAVE_DECL_STRNLEN 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'strsignal', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STRSIGNAL 1
+#define HAVE_DECL_STRSIGNAL 0
 #endif
 
 
 /* Define to 1 if you have the declaration of `strstr(const char*,const
    char*)', and to 0 if you don't. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STRSTR 1
+#define HAVE_DECL_STRSTR 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'strtol', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STRTOL 1
+#define HAVE_DECL_STRTOL 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'strtoll', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STRTOLL 1
+#define HAVE_DECL_STRTOLL 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'strtoul', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STRTOUL 1
+#define HAVE_DECL_STRTOUL 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'strtoull', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_STRTOULL 1
+#define HAVE_DECL_STRTOULL 0
 #endif
 
 
@@ -1082,28 +1112,28 @@
 /* Define to 1 if we found a declaration for 'times', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_TIMES 1
+#define HAVE_DECL_TIMES 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'unsetenv', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_UNSETENV 1
+#define HAVE_DECL_UNSETENV 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'vasprintf', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_VASPRINTF 1
+#define HAVE_DECL_VASPRINTF 0
 #endif
 
 
 /* Define to 1 if we found a declaration for 'vsnprintf', otherwise define to
    0. */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_VSNPRINTF 1
+#define HAVE_DECL_VSNPRINTF 0
 #endif
 
 
@@ -1121,7 +1151,7 @@
 
 /* Define to 1 if you have the <ext/hash_map> header file. */
 #ifndef USED_FOR_TARGET
-#define HAVE_EXT_HASH_MAP 1
+/* #undef HAVE_EXT_HASH_MAP */
 #endif
 
 
@@ -1408,12 +1438,6 @@
 #endif
 
 
-/* Define if isl_options_set_schedule_serialize_sccs exists. */
-#ifndef USED_FOR_TARGET
-/* #undef HAVE_ISL_OPTIONS_SET_SCHEDULE_SERIALIZE_SCCS */
-#endif
-
-
 /* Define to 1 if you have the `kill' function. */
 #ifndef USED_FOR_TARGET
 #define HAVE_KILL 1
@@ -1472,7 +1496,7 @@
 
 /* Define to the level of your linker's compressed debug section support. */
 #ifndef USED_FOR_TARGET
-#define HAVE_LD_COMPRESS_DEBUG 1
+#define HAVE_LD_COMPRESS_DEBUG 3
 #endif
 
 
@@ -1533,6 +1557,18 @@
 /* Define 0/1 if your linker supports -pie option with copy reloc. */
 #ifndef USED_FOR_TARGET
 #define HAVE_LD_PIE_COPYRELOC 0
+#endif
+
+
+/* Define if your PowerPC linker has .gnu.attributes long double support. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_LD_PPC_GNU_ATTR_LONG_DOUBLE */
+#endif
+
+
+/* Define if your linker supports --push-state/--pop-state */
+#ifndef USED_FOR_TARGET
+#define HAVE_LD_PUSHPOPSTATE_SUPPORT 1
 #endif
 
 
@@ -1725,13 +1761,13 @@
 
 /* Define if <sys/times.h> defines struct tms. */
 #ifndef USED_FOR_TARGET
-#define HAVE_STRUCT_TMS 1
+/* #undef HAVE_STRUCT_TMS */
 #endif
 
 
 /* Define if <utility> defines std::swap. */
 #ifndef USED_FOR_TARGET
-#define HAVE_SWAP_IN_UTILITY 1
+/* #undef HAVE_SWAP_IN_UTILITY */
 #endif
 
 
@@ -1812,7 +1848,7 @@
 
 /* Define to 1 if you have the <tr1/unordered_map> header file. */
 #ifndef USED_FOR_TARGET
-#define HAVE_TR1_UNORDERED_MAP 1
+/* #undef HAVE_TR1_UNORDERED_MAP */
 #endif
 
 
@@ -1836,7 +1872,7 @@
 
 /* Define to 1 if you have the <unordered_map> header file. */
 #ifndef USED_FOR_TARGET
-#define HAVE_UNORDERED_MAP 1
+/* #undef HAVE_UNORDERED_MAP */
 #endif
 
 
@@ -1910,7 +1946,7 @@
 
 /* Define if F_SETLKW supported by fcntl. */
 #ifndef USED_FOR_TARGET
-#define HOST_HAS_F_SETLKW 1
+/* #undef HOST_HAS_F_SETLKW */
 #endif
 
 
@@ -1946,7 +1982,7 @@
 
 /* Define to the linker option to enable compressed debug sections. */
 #ifndef USED_FOR_TARGET
-#define LD_COMPRESS_DEBUG_OPTION ""
+#define LD_COMPRESS_DEBUG_OPTION "--compress-debug-sections"
 #endif
 
 
@@ -1990,7 +2026,7 @@
 
 /* Define if host mkdir takes a single argument. */
 #ifndef USED_FOR_TARGET
-/* #undef MKDIR_TAKES_ONE_ARG */
+#define MKDIR_TAKES_ONE_ARG 1
 #endif
 
 
@@ -2328,7 +2364,7 @@
 
 /* Define to `long' if <sys/resource.h> doesn't define. */
 #ifndef USED_FOR_TARGET
-/* #undef rlim_t */
+#define rlim_t long
 #endif
 
 

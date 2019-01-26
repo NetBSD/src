@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.7 2018/09/30 01:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.37.12.8 2019/01/26 22:00:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -125,13 +125,14 @@ npf_addr_cksum(uint16_t cksum, int sz, const npf_addr_t *oaddr,
  * Note: used for hash function.
  */
 uint32_t
-npf_addr_mix(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
+npf_addr_mix(const int alen, const npf_addr_t *a1, const npf_addr_t *a2)
 {
+	const int nwords = alen >> 2;
 	uint32_t mix = 0;
 
-	KASSERT(sz > 0 && a1 != NULL && a2 != NULL);
+	KASSERT(alen > 0 && a1 != NULL && a2 != NULL);
 
-	for (int i = 0; i < (sz >> 2); i++) {
+	for (int i = 0; i < nwords; i++) {
 		mix ^= a1->word32[i];
 		mix ^= a2->word32[i];
 	}
@@ -164,6 +165,36 @@ npf_addr_mask(const npf_addr_t *addr, const npf_netmask_t mask,
 			wordmask = 0;
 		}
 		out->word32[i] = addr->word32[i] & wordmask;
+	}
+}
+
+/*
+ * npf_addr_bitor: bitwise OR the host part (given the netmask).
+ * Zero mask can be used to OR the entire address.
+ */
+void
+npf_addr_bitor(const npf_addr_t *addr, const npf_netmask_t mask,
+    const int alen, npf_addr_t *out)
+{
+	const int nwords = alen >> 2;
+	uint_fast8_t length = mask;
+
+	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
+	KASSERT(length <= NPF_MAX_NETMASK);
+
+	for (int i = 0; i < nwords; i++) {
+		uint32_t wordmask;
+
+		if (length >= 32) {
+			wordmask = htonl(0xffffffff);
+			length -= 32;
+		} else if (length) {
+			wordmask = htonl(0xffffffff << (32 - length));
+			length = 0;
+		} else {
+			wordmask = 0;
+		}
+		out->word32[i] |= addr->word32[i] & ~wordmask;
 	}
 }
 
@@ -764,7 +795,6 @@ npf_napt_rwr(const npf_cache_t *npc, u_int which,
 /*
  * IPv6-to-IPv6 Network Prefix Translation (NPTv6), as per RFC 6296.
  */
-
 int
 npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
     npf_netmask_t len, uint16_t adj)

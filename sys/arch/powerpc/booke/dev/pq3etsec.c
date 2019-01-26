@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.32.2.4 2018/12/26 14:01:41 pgoyette Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.32.2.5 2019/01/26 22:00:04 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.4 2018/12/26 14:01:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.5 2019/01/26 22:00:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -408,7 +408,7 @@ pq3mdio_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-pq3mdio_mii_readreg(device_t self, int phy, int reg)
+pq3mdio_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct pq3mdio_softc * const mdio = device_private(self);
 	uint32_t miimcom = etsec_mdio_read(mdio, MIIMCOM);
@@ -424,7 +424,7 @@ pq3mdio_mii_readreg(device_t self, int phy, int reg)
 	while (etsec_mdio_read(mdio, MIIMIND) != 0) {
 			delay(1);
 	}
-	int data = etsec_mdio_read(mdio, MIIMSTAT);
+	*val = etsec_mdio_read(mdio, MIIMSTAT) &0xffff;
 
 	if (miimcom == MIIMCOM_SCAN)
 		etsec_mdio_write(mdio, MIIMCOM, miimcom);
@@ -434,11 +434,11 @@ pq3mdio_mii_readreg(device_t self, int phy, int reg)
 	    __func__, phy, reg, data);
 #endif
 	mutex_exit(mdio->mdio_lock);
-	return data;
+	return 0;
 }
 
-static void
-pq3mdio_mii_writereg(device_t self, int phy, int reg, int data)
+static int
+pq3mdio_mii_writereg(device_t self, int phy, int reg, uint16_t data)
 {
 	struct pq3mdio_softc * const mdio = device_private(self);
 	uint32_t miimcom = etsec_mdio_read(mdio, MIIMCOM);
@@ -464,6 +464,8 @@ pq3mdio_mii_writereg(device_t self, int phy, int reg, int data)
 		etsec_mdio_write(mdio, MIIMCOM, miimcom);
 
 	mutex_exit(mdio->mdio_lock);
+
+	return 0;
 }
 
 static inline void

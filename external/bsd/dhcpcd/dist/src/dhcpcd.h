@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -165,13 +165,6 @@ struct dhcpcd_ctx {
 	size_t vivso_len;
 
 	char *randomstate; /* original state */
-
-	/* Used to track the last routing message,
-	 * so we can ignore messages the parent process sent
-	 * but the child receives when forking.
-	 * getppid(2) is unreliable because we detach. */
-	pid_t ppid;	/* parent pid */
-	int pseq;	/* last seq in parent */
 
 #ifdef INET
 	struct dhcp_opt *dhcp_opts;

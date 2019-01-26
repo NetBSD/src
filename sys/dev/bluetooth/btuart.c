@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.28 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: btuart.c,v 1.28.16.1 2019/01/26 22:00:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.28 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.28.16.1 2019/01/26 22:00:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -312,6 +312,12 @@ btuartioctl(struct tty *tp, u_long cmd, void *data __unused,
 {
 	struct btuart_softc *sc = tp->t_sc;
 	int error;
+
+	/*
+	 * XXX
+	 * This function can be called without KERNEL_LOCK when caller's
+	 * struct cdevsw is set D_MPSAFE. Is KERNEL_LOCK required?
+	 */
 
 	if (sc == NULL || tp != sc->sc_tp)
 		return EPASSTHROUGH;

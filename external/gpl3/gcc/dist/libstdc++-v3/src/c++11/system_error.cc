@@ -1,6 +1,6 @@
 // <system_error> implementation file
 
-// Copyright (C) 2007-2016 Free Software Foundation, Inc.
+// Copyright (C) 2007-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -34,8 +34,8 @@
 
 namespace
 {
-  using std::string; 
-  
+  using std::string;
+
   struct generic_error_category : public std::error_category
   {
     virtual const char*
@@ -43,7 +43,7 @@ namespace
     { return "generic"; }
 
     _GLIBCXX_DEFAULT_ABI_TAG
-    virtual string 
+    virtual string
     message(int i) const
     {
       // XXX locale issues: how does one get or set loc.
@@ -339,28 +339,28 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   error_category::~error_category() noexcept = default;
 
-  const error_category& 
+  const error_category&
   _V2::system_category() noexcept { return system_category_instance; }
 
-  const error_category& 
+  const error_category&
   _V2::generic_category() noexcept { return generic_category_instance; }
-  
+
   system_error::~system_error() noexcept = default;
 
-  error_condition 
+  error_condition
   error_category::default_error_condition(int __i) const noexcept
   { return error_condition(__i, *this); }
 
-  bool 
+  bool
   error_category::equivalent(int __i,
 			     const error_condition& __cond) const noexcept
   { return default_error_condition(__i) == __cond; }
 
-  bool 
+  bool
   error_category::equivalent(const error_code& __code, int __i) const noexcept
   { return *this == __code.category() && __code.value() == __i; }
 
-  error_condition 
+  error_condition
   error_code::default_error_condition() const noexcept
   { return category().default_error_condition(value()); }
 

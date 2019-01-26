@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.28.10.1 2018/09/30 01:46:01 pgoyette Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.28.10.2 2019/01/26 22:00:39 pgoyette Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -74,19 +74,22 @@ npfctl_note_interface(const char *ifname)
 	 * string shorter than IFNAMSIZ and alphanumeric only.
 	 */
 	if (*p == '\0') {
-		goto invalid;
+		goto err;
 	}
 	while (*p) {
 		const size_t len = (ptrdiff_t)p - (ptrdiff_t)ifname;
 
 		if (!isalnum((unsigned char)*p) || len > IFNAMSIZ) {
-invalid:		yyerror("illegitimate interface name '%s'", ifname);
+			goto err;
 		}
 		p++;
 	}
 
 	/* Throw a warning, so that the user could double check. */
 	warnx("warning - unknown interface '%s'", ifname);
+	return;
+err:
+	yyerror("illegitimate interface name '%s'", ifname);
 }
 
 static unsigned long

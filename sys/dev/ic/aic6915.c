@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.35.8.1 2018/07/28 04:37:44 pgoyette Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.35.8.2 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.35.8.1 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.35.8.2 2019/01/26 22:00:06 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -83,8 +83,8 @@ static int	sf_add_rxbuf(struct sf_softc *, int);
 static uint8_t	sf_read_eeprom(struct sf_softc *, int);
 static void	sf_set_filter(struct sf_softc *);
 
-static int	sf_mii_read(device_t, int, int);
-static void	sf_mii_write(device_t, int, int, int);
+static int	sf_mii_read(device_t, int, int, uint16_t *);
+static int	sf_mii_write(device_t, int, int, uint16_t);
 static void	sf_mii_statchg(struct ifnet *);
 
 static void	sf_tick(void *);
@@ -1348,7 +1348,7 @@ sf_set_filter(struct sf_softc *sc)
  *	Read from the MII.
  */
 static int
-sf_mii_read(device_t self, int phy, int reg)
+sf_mii_read(device_t self, int phy, int reg, uint16_t *data)
 {
 	struct sf_softc *sc = device_private(self);
 	uint32_t v;
@@ -1362,12 +1362,13 @@ sf_mii_read(device_t self, int phy, int reg)
 	}
 
 	if ((v & MiiDataValid) == 0)
-		return (0);
+		return -1;
 
 	if (MiiRegDataPort(v) == 0xffff)
-		return (0);
+		return -1;
 
-	return (MiiRegDataPort(v));
+	*data = MiiRegDataPort(v);
+	return 0;
 }
 
 /*
@@ -1375,8 +1376,8 @@ sf_mii_read(device_t self, int phy, int reg)
  *
  *	Write to the MII.
  */
-static void
-sf_mii_write(device_t self, int phy, int reg, int val)
+static int
+sf_mii_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct sf_softc *sc = device_private(self);
 	int i;
@@ -1386,11 +1387,12 @@ sf_mii_write(device_t self, int phy, int reg, int val)
 	for (i = 0; i < 1000; i++) {
 		if ((sf_genreg_read(sc, SF_MII_PHY_REG(phy, reg)) &
 		     MiiBusy) == 0)
-			return;
+			return 0;
 		delay(1);
 	}
 
 	printf("%s: MII write timed out\n", device_xname(sc->sc_dev));
+	return ETIMEDOUT;
 }
 
 /*

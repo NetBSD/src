@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_iomux.c,v 1.1.2.2 2018/09/06 06:55:27 pgoyette Exp $ */
+/* $NetBSD: rk3328_iomux.c,v 1.1.2.3 2019/01/26 22:00:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3328_iomux.c,v 1.1.2.2 2018/09/06 06:55:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3328_iomux.c,v 1.1.2.3 2019/01/26 22:00:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -190,42 +190,49 @@ rk3328_iomux_set_mux(struct rk3328_iomux_softc *sc, u_int bank, u_int idx, u_int
 static int
 rk3328_iomux_config(struct rk3328_iomux_softc *sc, const int phandle, u_int bank, u_int idx, u_int mux)
 {
-	u_int drv;
 
-	if (of_hasprop(phandle, "bias-disable"))
+	const int bias = fdtbus_pinctrl_parse_bias(phandle, NULL);
+	switch (bias) {
+	case 0:
 		rk3328_iomux_set_bias(sc, bank, idx, GRF_GPIO_P_CTL_Z);
-	else if (of_hasprop(phandle, "bias-pull-up"))
+		break;
+	case GPIO_PIN_PULLUP:
 		rk3328_iomux_set_bias(sc, bank, idx, GRF_GPIO_P_CTL_PULLUP);
-	else if (of_hasprop(phandle, "bias-pull-down"))
+		break;
+	case GPIO_PIN_PULLDOWN:
 		rk3328_iomux_set_bias(sc, bank, idx, GRF_GPIO_P_CTL_PULLDOWN);
+		break;
+	}
 
-	if (of_getprop_uint32(phandle, "drive-strength", &drv) == 0) {
-		switch (drv) {
-		case 2:
-			rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_2MA);
-			break;
-		case 4:
-			rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_4MA);
-			break;
-		case 8:
-			rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_8MA);
-			break;
-		case 12:
-			rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_12MA);
-			break;
-		default:
-			aprint_error_dev(sc->sc_dev, "unsupported drive-strength %u\n", drv);
-			return EINVAL;
-		}
+	const int drv = fdtbus_pinctrl_parse_drive_strength(phandle);
+	switch (drv) {
+	case -1:
+		break;
+	case 2:
+		rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_2MA);
+		break;
+	case 4:
+		rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_4MA);
+		break;
+	case 8:
+		rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_8MA);
+		break;
+	case 12:
+		rk3328_iomux_set_drive_strength(sc, bank, idx, GRF_GPIO_E_CTL_12MA);
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev, "unsupported drive-strength %u\n", drv);
+		return EINVAL;
 	}
 
 #if notyet
-	if (of_hasprop(phandle, "input-enable"))
-		rk3328_iomux_set_direction(sc, bank, idx, GPIO_PIN_INPUT, -1);
-	else if (of_hasprop(phandle, "output-high"))
-		rk3328_iomux_set_direction(sc, bank, idx, GPIO_PIN_OUTPUT, GPIO_PIN_HIGH);
-	else if (of_hasprop(phandle, "output-low"))
-		rk3328_iomux_set_direction(sc, bank, idx, GPIO_PIN_OUTPUT, GPIO_PIN_LOW);
+	int output_value;
+	const int direction =
+	    fdtbus_pinctrl_parse_input_output(phandle, &output_value);
+	if (direction != -1) {
+		rk3328_iomux_set_direction(sc, bank, idx, direction,
+		    output_value);
+	}
 #endif
 
 	rk3328_iomux_set_mux(sc, bank, idx, mux);

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.495.2.4 2019/01/18 08:50:57 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.495.2.5 2019/01/26 22:00:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495.2.4 2019/01/18 08:50:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495.2.5 2019/01/26 22:00:36 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -617,6 +617,14 @@ main(void)
 		panic("fork init");
 
 	/*
+	 * The initproc variable cannot be initialized in start_init as there
+	 * is a race between vfs_mountroot and start_init.
+	 */
+	mutex_enter(proc_lock);
+	initproc = proc_find_raw(1);
+	mutex_exit(proc_lock);
+
+	/*
 	 * Load any remaining builtin modules, and hand back temporary
 	 * storage to the VM system.  Then require force when loading any
 	 * remaining un-init'ed built-in modules to avoid later surprises.
@@ -945,8 +953,6 @@ start_init(void *arg)
 	char *ucp, **uap, *arg0, *arg1, *argv[3];
 	char ipath[129];
 	int ipx, len;
-
-	initproc = p;
 
 	/*
 	 * Now in process 1.

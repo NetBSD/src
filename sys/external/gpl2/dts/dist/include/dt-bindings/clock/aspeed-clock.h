@@ -1,4 +1,4 @@
-/*	$NetBSD: aspeed-clock.h,v 1.1.1.1.2.3 2018/07/28 04:38:06 pgoyette Exp $	*/
+/*	$NetBSD: aspeed-clock.h,v 1.1.1.1.2.4 2019/01/26 22:00:34 pgoyette Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
 
@@ -27,7 +27,7 @@
 #define ASPEED_CLK_GATE_RSACLK		19
 #define ASPEED_CLK_GATE_UART3CLK	20
 #define ASPEED_CLK_GATE_UART4CLK	21
-#define ASPEED_CLK_GATE_SDCLKCLK	22
+#define ASPEED_CLK_GATE_SDCLK		22
 #define ASPEED_CLK_GATE_LHCCLK		23
 #define ASPEED_CLK_HPLL			24
 #define ASPEED_CLK_AHB			25

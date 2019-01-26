@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.27.4.1 2019/01/18 08:50:26 pgoyette Exp $	*/
+/*	$NetBSD: igphy.c,v 1.27.4.2 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.27.4.1 2019/01/18 08:50:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.27.4.2 2019/01/26 22:00:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -166,9 +166,10 @@ igphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
+	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
@@ -267,7 +268,7 @@ igphy_load_dspcode(struct mii_softc *sc)
 	 * Save off the current value of register 0x2F5B to be restored at
 	 * the end of this routine.
 	 */
-	reg = IGPHY_READ(sc, 0x2f5b);
+	IGPHY_READ(sc, 0x2f5b, &reg);
 
 	/* Disabled the PHY transmitter */
 	IGPHY_WRITE(sc, 0x2f5b, 0x0003);
@@ -327,9 +328,9 @@ igphy_reset(struct mii_softc *sc)
 	}
 
 	if (igsc->sc_mactype == WM_T_82547) {
-		fused = IGPHY_READ(sc, MII_IGPHY_ANALOG_SPARE_FUSE_STATUS);
+		IGPHY_READ(sc, MII_IGPHY_ANALOG_SPARE_FUSE_STATUS, &fused);
 		if ((fused & ANALOG_SPARE_FUSE_ENABLED) == 0) {
-			fused = IGPHY_READ(sc, MII_IGPHY_ANALOG_FUSE_STATUS);
+			IGPHY_READ(sc, MII_IGPHY_ANALOG_FUSE_STATUS, &fused);
 
 			fine = fused & ANALOG_FUSE_FINE_MASK;
 			coarse = fused & ANALOG_FUSE_COARSE_MASK;
@@ -374,7 +375,7 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, MII_BMCR);
+			PHY_READ(sc, MII_BMCR, &reg);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
@@ -385,7 +386,7 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		reg = PHY_READ(sc, MII_IGPHY_PORT_CTRL);
+		PHY_READ(sc, MII_IGPHY_PORT_CTRL, &reg);
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 			reg |= PSCR_AUTO_MDIX;
 			reg &= ~PSCR_FORCE_MDI_MDIX;
@@ -435,12 +436,12 @@ igphy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	pssr = PHY_READ(sc, MII_IGPHY_PORT_STATUS);
+	PHY_READ(sc, MII_IGPHY_PORT_STATUS, &pssr);
 
 	if (pssr & PSSR_LINK_UP)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, MII_BMCR);
+	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -450,7 +451,8 @@ igphy_status(struct mii_softc *sc)
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &bmsr);
+	PHY_READ(sc, MII_BMSR, &bmsr);
 
 	/*
 	 * XXX can't check if the info is valid, no
@@ -464,7 +466,7 @@ igphy_status(struct mii_softc *sc)
 		switch (pssr & PSSR_SPEED_MASK) {
 		case PSSR_SPEED_1000MBPS:
 			mii->mii_media_active |= IFM_1000_T;
-			gtsr = PHY_READ(sc, MII_100T2SR);
+			PHY_READ(sc, MII_100T2SR, &gtsr);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
@@ -510,31 +512,32 @@ igphy_smartspeed_workaround(struct mii_softc *sc)
 		return;
 	}
 
-	if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
+	PHY_READ(sc, MII_BMCR, &reg);
+	if ((reg & BMCR_AUTOEN) == 0)
 		return;
 
 	/* XXX Assume 1000TX-FDX is advertized if doing autonegotiation. */
 
-	reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	PHY_READ(sc, MII_BMSR, &reg);
+	PHY_READ(sc, MII_BMSR, &reg);
 	if ((reg & BMSR_LINK) == 0) {
 		switch (igsc->sc_smartspeed) {
 		case 0:
-			gtsr = PHY_READ(sc, MII_100T2SR);
+			PHY_READ(sc, MII_100T2SR, &gtsr);
 			if (!(gtsr & GTSR_MAN_MS_FLT))
 				break;
-			gtsr = PHY_READ(sc, MII_100T2SR);
+			PHY_READ(sc, MII_100T2SR, &gtsr);
 			if (gtsr & GTSR_MAN_MS_FLT) {
-				gtcr = PHY_READ(sc, MII_100T2CR);
+				PHY_READ(sc, MII_100T2CR, &gtcr);
 				if (gtcr & GTCR_MAN_MS) {
 					gtcr &= ~GTCR_MAN_MS;
-					PHY_WRITE(sc, MII_100T2CR,
-					    gtcr);
+					PHY_WRITE(sc, MII_100T2CR, gtcr);
 				}
 				mii_phy_auto(sc, 0);
 			}
 			break;
 		case IGPHY_TICK_DOWNSHIFT:
-			gtcr = PHY_READ(sc, MII_100T2CR);
+			PHY_READ(sc, MII_100T2CR, &gtcr);
 			gtcr |= GTCR_MAN_MS;
 			PHY_WRITE(sc, MII_100T2CR, gtcr);
 			mii_phy_auto(sc, 0);

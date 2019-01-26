@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.55.2.1 2018/11/26 01:52:47 pgoyette Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.55.2.2 2019/01/26 22:00:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.55.2.1 2018/11/26 01:52:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.55.2.2 2019/01/26 22:00:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -41,15 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.55.2.1 2018/11/26 01:52:47 pgoyet
 #include "scsibus.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
+#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/disk.h>		/* XXX */
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 /* SCSI & ATAPI */
 #include <sys/scsiio.h>
@@ -64,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.55.2.1 2018/11/26 01:52:47 pgoyet
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsi_changer.h>
 
-#include <sys/disk.h>		/* XXX */
 #include <dev/scsipi/sdvar.h>	/* XXX */
 
 /* USB */

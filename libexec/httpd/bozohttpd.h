@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.47.10.2 2018/11/26 01:52:13 pgoyette Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.47.10.3 2019/01/26 21:59:58 pgoyette Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -33,6 +33,8 @@
 #define BOZOHTTOPD_H_	1
 
 #include "netbsd_queue.h"
+
+#include <stdbool.h>
 
 #include <sys/stat.h>
 
@@ -259,7 +261,7 @@ void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 /* be sure to always return this error up */
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
-int	bozo_check_special_files(bozo_httpreq_t *, const char *) BOZO_CHECKRET;
+int	bozo_check_special_files(bozo_httpreq_t *, const char *, bool) BOZO_CHECKRET;
 char	*bozo_http_date(char *, size_t);
 void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
 			  const char *);

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-const char dhcpcd_copyright[] = "Copyright (c) 2006-2018 Roy Marples";
+const char dhcpcd_copyright[] = "Copyright (c) 2006-2019 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -314,13 +314,6 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 		return 0;
 	}
 
-	/* Store the pid and routing message seq number so we can identify
-	 * the last message successfully sent to the kernel.
-	 * This allows us to ignore all messages we sent after forking
-	 * and detaching. */
-	ctx->ppid = getpid();
-	ctx->pseq = ctx->sseq;
-
 	switch (pid = fork()) {
 	case -1:
 		logerr("%s: fork", __func__);
@@ -450,6 +443,10 @@ configure_interface1(struct interface *ifp)
 	if (!(ifo->options & DHCPCD_IPV6))
 		ifo->options &=
 		    ~(DHCPCD_IPV6RS | DHCPCD_DHCP6 | DHCPCD_WAITIP6);
+
+	if (!(ifo->options & DHCPCD_IPV6RS))
+		ifo->options &=
+		    ~(DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS);
 
 	/* We want to setup INET6 on the interface as soon as possible. */
 	if (ifp->active == IF_ACTIVE_USER &&
@@ -738,6 +735,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #endif
 			dhcp_abort(ifp);
 			ipv6nd_expire(ifp, 0);
+			dhcp6_abort(ifp);
 #else
 			dhcpcd_drop(ifp, 0);
 #endif
@@ -754,19 +752,23 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #endif
 			if (ifp->wireless) {
 				uint8_t ossid[IF_SSIDLEN];
-#ifdef NOCARRIER_PRESERVE_IP
 				size_t olen;
 
 				olen = ifp->ssid_len;
-#endif
 				memcpy(ossid, ifp->ssid, ifp->ssid_len);
 				if_getssid(ifp);
-#ifdef NOCARRIER_PRESERVE_IP
+
 				/* If we changed SSID network, drop leases */
 				if (ifp->ssid_len != olen ||
 				    memcmp(ifp->ssid, ossid, ifp->ssid_len))
+				{
+#ifdef NOCARRIER_PRESERVE_IP
 					dhcpcd_drop(ifp, 0);
 #endif
+#ifdef IPV4LL
+					ipv4ll_reset(ifp);
+#endif
+				}
 			}
 			dhcpcd_initstate(ifp, 0);
 			script_runreason(ifp, "CARRIER");

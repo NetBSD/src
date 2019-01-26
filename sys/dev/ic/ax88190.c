@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.12 2012/07/22 14:32:56 matt Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.12.38.1 2019/01/26 22:00:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.12 2012/07/22 14:32:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.12.38.1 2019/01/26 22:00:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.12 2012/07/22 14:32:56 matt Exp $");
 #include <dev/ic/ax88190reg.h>
 #include <dev/ic/ax88190var.h>
 
-static int	ax88190_mii_readreg(device_t, int, int);
-static void	ax88190_mii_writereg(device_t, int, int, int);
+static int	ax88190_mii_readreg(device_t, int, int, uint16_t *);
+static int	ax88190_mii_writereg(device_t, int, int, uint16_t);
 static void	ax88190_mii_statchg(struct ifnet *);
 
 /*
@@ -160,17 +160,20 @@ ax88190_mii_bitbang_write(device_t self, uint32_t val)
 }
 
 static int
-ax88190_mii_readreg(device_t self, int phy, int reg)
+ax88190_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 
-	return (mii_bitbang_readreg(self, &ax88190_mii_bitbang_ops, phy, reg));
+	
+	return mii_bitbang_readreg(self, &ax88190_mii_bitbang_ops, phy, reg,
+	    val);
 }
 
-static void
-ax88190_mii_writereg(device_t self, int phy, int reg, int val)
+static int
+ax88190_mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 
-	mii_bitbang_writereg(self, &ax88190_mii_bitbang_ops, phy, reg, val);
+	return mii_bitbang_writereg(self, &ax88190_mii_bitbang_ops, phy, reg,
+	    val);
 }
 
 static void

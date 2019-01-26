@@ -1,5 +1,5 @@
 /* Prototypes of target machine for GNU compiler for Xtensa.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
 This file is part of GCC.
@@ -73,5 +73,6 @@ extern void xtensa_expand_prologue (void);
 extern void xtensa_expand_epilogue (void);
 extern void order_regs_for_local_alloc (void);
 extern enum reg_class xtensa_regno_to_class (int regno);
+extern HOST_WIDE_INT xtensa_initial_elimination_offset (int from, int to);
 
 #endif /* !__XTENSA_PROTOS_H__ */

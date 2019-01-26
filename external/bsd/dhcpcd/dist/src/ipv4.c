@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -879,6 +879,9 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 		break;
 	case RTM_DELADDR:
 		if (ia == NULL)
+			return;
+		if (mask->s_addr != INADDR_ANY &&
+		    mask->s_addr != ia->mask.s_addr)
 			return;
 		TAILQ_REMOVE(&state->addrs, ia, next);
 		break;

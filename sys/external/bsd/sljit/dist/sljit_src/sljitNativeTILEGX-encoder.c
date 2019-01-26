@@ -1,10 +1,10 @@
-/*	$NetBSD: sljitNativeTILEGX-encoder.c,v 1.2 2014/06/17 19:33:20 alnsn Exp $	*/
+/*	$NetBSD: sljitNativeTILEGX-encoder.c,v 1.2.30.1 2019/01/26 22:00:25 pgoyette Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
  *
  *    Copyright 2013-2013 Tilera Corporation(jiwang@tilera.com). All rights reserved.
- *    Copyright 2009-2012 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:

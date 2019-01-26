@@ -1,5 +1,5 @@
 /* Convert function calls to rtl insns, for GNU C compiler.
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,6 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "gimple.h"
 #include "predict.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
 #include "expmed.h"
@@ -47,8 +48,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "dbgcnt.h"
 #include "rtl-iter.h"
 #include "tree-chkp.h"
+#include "tree-vrp.h"
+#include "tree-ssanames.h"
 #include "rtl-chkp.h"
-
+#include "intl.h"
 
 /* Like PREFERRED_STACK_BOUNDARY but in units of bytes, not bits.  */
 #define STACK_BYTES (PREFERRED_STACK_BOUNDARY / BITS_PER_UNIT)
@@ -183,21 +186,92 @@ static void restore_fixed_argument_area (rtx, rtx, int, int);
 
 rtx
 prepare_call_address (tree fndecl_or_type, rtx funexp, rtx static_chain_value,
-		      rtx *call_fusage, int reg_parm_seen, int sibcallp)
+		      rtx *call_fusage, int reg_parm_seen, int flags)
 {
   /* Make a valid memory address and copy constants through pseudo-regs,
      but not for a constant address if -fno-function-cse.  */
   if (GET_CODE (funexp) != SYMBOL_REF)
-    /* If we are using registers for parameters, force the
-       function address into a register now.  */
-    funexp = ((reg_parm_seen
-	       && targetm.small_register_classes_for_mode_p (FUNCTION_MODE))
-	      ? force_not_mem (memory_address (FUNCTION_MODE, funexp))
-	      : memory_address (FUNCTION_MODE, funexp));
-  else if (! sibcallp)
     {
-      if (!NO_FUNCTION_CSE && optimize && ! flag_no_function_cse)
-	funexp = force_reg (Pmode, funexp);
+      /* If it's an indirect call by descriptor, generate code to perform
+	 runtime identification of the pointer and load the descriptor.  */
+      if ((flags & ECF_BY_DESCRIPTOR) && !flag_trampolines)
+	{
+	  const int bit_val = targetm.calls.custom_function_descriptors;
+	  rtx call_lab = gen_label_rtx ();
+
+	  gcc_assert (fndecl_or_type && TYPE_P (fndecl_or_type));
+	  fndecl_or_type
+	    = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL, NULL_TREE,
+			  fndecl_or_type);
+	  DECL_STATIC_CHAIN (fndecl_or_type) = 1;
+	  rtx chain = targetm.calls.static_chain (fndecl_or_type, false);
+
+	  if (GET_MODE (funexp) != Pmode)
+	    funexp = convert_memory_address (Pmode, funexp);
+
+	  /* Avoid long live ranges around function calls.  */
+	  funexp = copy_to_mode_reg (Pmode, funexp);
+
+	  if (REG_P (chain))
+	    emit_insn (gen_rtx_CLOBBER (VOIDmode, chain));
+
+	  /* Emit the runtime identification pattern.  */
+	  rtx mask = gen_rtx_AND (Pmode, funexp, GEN_INT (bit_val));
+	  emit_cmp_and_jump_insns (mask, const0_rtx, EQ, NULL_RTX, Pmode, 1,
+				   call_lab);
+
+	  /* Statically predict the branch to very likely taken.  */
+	  rtx_insn *insn = get_last_insn ();
+	  if (JUMP_P (insn))
+	    predict_insn_def (insn, PRED_BUILTIN_EXPECT, TAKEN);
+
+	  /* Load the descriptor.  */
+	  rtx mem = gen_rtx_MEM (ptr_mode,
+				 plus_constant (Pmode, funexp, - bit_val));
+	  MEM_NOTRAP_P (mem) = 1;
+	  mem = convert_memory_address (Pmode, mem);
+	  emit_move_insn (chain, mem);
+
+	  mem = gen_rtx_MEM (ptr_mode,
+			     plus_constant (Pmode, funexp,
+					    POINTER_SIZE / BITS_PER_UNIT
+					      - bit_val));
+	  MEM_NOTRAP_P (mem) = 1;
+	  mem = convert_memory_address (Pmode, mem);
+	  emit_move_insn (funexp, mem);
+
+	  emit_label (call_lab);
+
+	  if (REG_P (chain))
+	    {
+	      use_reg (call_fusage, chain);
+	      STATIC_CHAIN_REG_P (chain) = 1;
+	    }
+
+	  /* Make sure we're not going to be overwritten below.  */
+	  gcc_assert (!static_chain_value);
+	}
+
+      /* If we are using registers for parameters, force the
+	 function address into a register now.  */
+      funexp = ((reg_parm_seen
+		 && targetm.small_register_classes_for_mode_p (FUNCTION_MODE))
+		 ? force_not_mem (memory_address (FUNCTION_MODE, funexp))
+		 : memory_address (FUNCTION_MODE, funexp));
+    }
+  else
+    {
+      /* funexp could be a SYMBOL_REF represents a function pointer which is
+	 of ptr_mode.  In this case, it should be converted into address mode
+	 to be a valid address for memory rtx pattern.  See PR 64971.  */
+      if (GET_MODE (funexp) != Pmode)
+	funexp = convert_memory_address (Pmode, funexp);
+
+      if (!(flags & ECF_SIBCALL))
+	{
+	  if (!NO_FUNCTION_CSE && optimize && ! flag_no_function_cse)
+	    funexp = force_reg (Pmode, funexp);
+	}
     }
 
   if (static_chain_value != 0
@@ -211,7 +285,10 @@ prepare_call_address (tree fndecl_or_type, rtx funexp, rtx static_chain_value,
 
       emit_move_insn (chain, static_chain_value);
       if (REG_P (chain))
-	use_reg (call_fusage, chain);
+	{
+	  use_reg (call_fusage, chain);
+	  STATIC_CHAIN_REG_P (chain) = 1;
+	}
     }
 
   return funexp;
@@ -468,15 +545,13 @@ emit_call_1 (rtx funexp, tree fntree ATTRIBUTE_UNUSED, tree fndecl ATTRIBUTE_UNU
     anti_adjust_stack (GEN_INT (n_popped));
 }
 
-/* Determine if the function identified by NAME and FNDECL is one with
-   special properties we wish to know about.
+/* Determine if the function identified by FNDECL is one with
+   special properties we wish to know about.  Modify FLAGS accordingly.
 
    For example, if the function might return more than one time (setjmp), then
-   set RETURNS_TWICE to a nonzero value.
+   set ECF_RETURNS_TWICE.
 
-   Similarly set NORETURN if the function is in the longjmp family.
-
-   Set MAY_BE_ALLOCA for any memory allocation function that might allocate
+   Set ECF_MAY_BE_ALLOCA for any memory allocation function that might allocate
    space from the stack such as alloca.  */
 
 static int
@@ -491,7 +566,7 @@ special_function_p (const_tree fndecl, int flags)
     name_decl = DECL_NAME (cgraph_node::get (fndecl)->orig_decl);
 
   if (fndecl && name_decl
-      && IDENTIFIER_LENGTH (name_decl) <= 17
+      && IDENTIFIER_LENGTH (name_decl) <= 11
       /* Exclude functions not at the file scope, or not `extern',
 	 since they are not the magic functions we would otherwise
 	 think they are.
@@ -514,47 +589,22 @@ special_function_p (const_tree fndecl, int flags)
 	  && ! strcmp (name, "alloca"))
 	flags |= ECF_MAY_BE_ALLOCA;
 
-      /* Disregard prefix _, __, __x or __builtin_.  */
+      /* Disregard prefix _ or __.  */
       if (name[0] == '_')
 	{
-	  if (name[1] == '_'
-	      && name[2] == 'b'
-	      && !strncmp (name + 3, "uiltin_", 7))
-	    tname += 10;
-	  else if (name[1] == '_' && name[2] == 'x')
-	    tname += 3;
-	  else if (name[1] == '_')
+	  if (name[1] == '_')
 	    tname += 2;
 	  else
 	    tname += 1;
 	}
 
-      if (tname[0] == 's')
-	{
-	  if ((tname[1] == 'e'
-	       && (! strcmp (tname, "setjmp")
-		   || ! strcmp (tname, "setjmp_syscall")))
-	      || (tname[1] == 'i'
-		  && ! strcmp (tname, "sigsetjmp"))
-	      || (tname[1] == 'a'
-		  && ! strcmp (tname, "savectx")))
-	    flags |= ECF_RETURNS_TWICE | ECF_LEAF;
-
-	  if (tname[1] == 'i'
-	      && ! strcmp (tname, "siglongjmp"))
-	    flags |= ECF_NORETURN;
-	}
-      else if ((tname[0] == 'q' && tname[1] == 's'
-		&& ! strcmp (tname, "qsetjmp"))
-	       || (tname[0] == 'v' && tname[1] == 'f'
-		   && ! strcmp (tname, "vfork"))
-	       || (tname[0] == 'g' && tname[1] == 'e'
-		   && !strcmp (tname, "getcontext")))
-	flags |= ECF_RETURNS_TWICE | ECF_LEAF;
-
-      else if (tname[0] == 'l' && tname[1] == 'o'
-	       && ! strcmp (tname, "longjmp"))
-	flags |= ECF_NORETURN;
+      /* ECF_RETURNS_TWICE is safe even for -ffreestanding.  */
+      if (! strcmp (tname, "setjmp")
+	  || ! strcmp (tname, "sigsetjmp")
+	  || ! strcmp (name, "savectx")
+	  || ! strcmp (name, "vfork")
+	  || ! strcmp (name, "getcontext"))
+	flags |= ECF_RETURNS_TWICE;
     }
 
   if (DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL)
@@ -617,10 +667,10 @@ setjmp_call_p (const_tree fndecl)
 }
 
 
-/* Return true if STMT is an alloca call.  */
+/* Return true if STMT may be an alloca call.  */
 
 bool
-gimple_alloca_call_p (const gimple *stmt)
+gimple_maybe_alloca_call_p (const gimple *stmt)
 {
   tree fndecl;
 
@@ -634,7 +684,31 @@ gimple_alloca_call_p (const gimple *stmt)
   return false;
 }
 
-/* Return true when exp contains alloca call.  */
+/* Return true if STMT is a builtin alloca call.  */
+
+bool
+gimple_alloca_call_p (const gimple *stmt)
+{
+  tree fndecl;
+
+  if (!is_gimple_call (stmt))
+    return false;
+
+  fndecl = gimple_call_fndecl (stmt);
+  if (fndecl && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL)
+    switch (DECL_FUNCTION_CODE (fndecl))
+      {
+      case BUILT_IN_ALLOCA:
+      case BUILT_IN_ALLOCA_WITH_ALIGN:
+        return true;
+      default:
+	break;
+      }
+
+  return false;
+}
+
+/* Return true when exp contains a builtin alloca call.  */
 
 bool
 alloca_call_p (const_tree exp)
@@ -642,8 +716,16 @@ alloca_call_p (const_tree exp)
   tree fndecl;
   if (TREE_CODE (exp) == CALL_EXPR
       && (fndecl = get_callee_fndecl (exp))
-      && (special_function_p (fndecl, 0) & ECF_MAY_BE_ALLOCA))
-    return true;
+      && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL)
+    switch (DECL_FUNCTION_CODE (fndecl))
+      {
+      case BUILT_IN_ALLOCA:
+      case BUILT_IN_ALLOCA_WITH_ALIGN:
+        return true;
+      default:
+	break;
+      }
+
   return false;
 }
 
@@ -792,11 +874,13 @@ call_expr_flags (const_tree t)
     flags = internal_fn_flags (CALL_EXPR_IFN (t));
   else
     {
-      t = TREE_TYPE (CALL_EXPR_FN (t));
-      if (t && TREE_CODE (t) == POINTER_TYPE)
-	flags = flags_from_decl_or_type (TREE_TYPE (t));
+      tree type = TREE_TYPE (CALL_EXPR_FN (t));
+      if (type && TREE_CODE (type) == POINTER_TYPE)
+	flags = flags_from_decl_or_type (TREE_TYPE (type));
       else
 	flags = 0;
+      if (CALL_EXPR_BY_DESCRIPTOR (t))
+	flags |= ECF_BY_DESCRIPTOR;
     }
 
   return flags;
@@ -1102,6 +1186,348 @@ store_unaligned_arguments_into_pseudos (struct arg_data *args, int num_actuals)
       }
 }
 
+/* The limit set by -Walloc-larger-than=.  */
+static GTY(()) tree alloc_object_size_limit;
+
+/* Initialize ALLOC_OBJECT_SIZE_LIMIT based on the -Walloc-size-larger-than=
+   setting if the option is specified, or to the maximum object size if it
+   is not.  Return the initialized value.  */
+
+static tree
+alloc_max_size (void)
+{
+  if (alloc_object_size_limit)
+    return alloc_object_size_limit;
+
+  alloc_object_size_limit = TYPE_MAX_VALUE (ssizetype);
+
+  if (!warn_alloc_size_limit)
+    return alloc_object_size_limit;
+
+  const char *optname = "-Walloc-size-larger-than=";
+
+  char *end = NULL;
+  errno = 0;
+  unsigned HOST_WIDE_INT unit = 1;
+  unsigned HOST_WIDE_INT limit
+    = strtoull (warn_alloc_size_limit, &end, 10);
+
+  /* If the value is too large to be represented use the maximum
+     representable value that strtoull sets limit to (setting
+     errno to ERANGE).  */
+
+  if (end && *end)
+    {
+      /* Numeric option arguments are at most INT_MAX.  Make it
+	 possible to specify a larger value by accepting common
+	 suffixes.  */
+      if (!strcmp (end, "kB"))
+	unit = 1000;
+      else if (!strcasecmp (end, "KiB") || !strcmp (end, "KB"))
+	unit = 1024;
+      else if (!strcmp (end, "MB"))
+	unit = HOST_WIDE_INT_UC (1000) * 1000;
+      else if (!strcasecmp (end, "MiB"))
+	unit = HOST_WIDE_INT_UC (1024) * 1024;
+      else if (!strcasecmp (end, "GB"))
+	unit = HOST_WIDE_INT_UC (1000) * 1000 * 1000;
+      else if (!strcasecmp (end, "GiB"))
+	unit = HOST_WIDE_INT_UC (1024) * 1024 * 1024;
+      else if (!strcasecmp (end, "TB"))
+	unit = HOST_WIDE_INT_UC (1000) * 1000 * 1000 * 1000;
+      else if (!strcasecmp (end, "TiB"))
+	unit = HOST_WIDE_INT_UC (1024) * 1024 * 1024 * 1024;
+      else if (!strcasecmp (end, "PB"))
+	unit = HOST_WIDE_INT_UC (1000) * 1000 * 1000 * 1000 * 1000;
+      else if (!strcasecmp (end, "PiB"))
+	unit = HOST_WIDE_INT_UC (1024) * 1024 * 1024 * 1024 * 1024;
+      else if (!strcasecmp (end, "EB"))
+	unit = HOST_WIDE_INT_UC (1000) * 1000 * 1000 * 1000 * 1000
+	  * 1000;
+      else if (!strcasecmp (end, "EiB"))
+	unit = HOST_WIDE_INT_UC (1024) * 1024 * 1024 * 1024 * 1024
+	  * 1024;
+      else
+	{
+	  /* This could mean an unknown suffix or a bad prefix, like
+	     "+-1".  */
+	  warning_at (UNKNOWN_LOCATION, 0,
+		      "invalid argument %qs to %qs",
+		      warn_alloc_size_limit, optname);
+	  /* Ignore the limit extracted by strtoull.  */
+	  unit = 0;
+	}
+    }
+
+  if (unit)
+    {
+      widest_int w = wi::mul (limit, unit);
+      if (w < wi::to_widest (alloc_object_size_limit))
+	alloc_object_size_limit
+	  = wide_int_to_tree (ptrdiff_type_node, w);
+      else
+	alloc_object_size_limit = build_all_ones_cst (size_type_node);
+    }
+
+  return alloc_object_size_limit;
+}
+
+/* Return true when EXP's range can be determined and set RANGE[] to it
+   after adjusting it if necessary to make EXP a valid size argument to
+   an allocation function declared with attribute alloc_size (whose
+   argument may be signed), or to a string manipulation function like
+   memset.  */
+
+bool
+get_size_range (tree exp, tree range[2])
+{
+  if (tree_fits_uhwi_p (exp))
+    {
+      /* EXP is a constant.  */
+      range[0] = range[1] = exp;
+      return true;
+    }
+
+  wide_int min, max;
+  enum value_range_type range_type
+    = ((TREE_CODE (exp) == SSA_NAME && INTEGRAL_TYPE_P (TREE_TYPE (exp)))
+       ? get_range_info (exp, &min, &max) : VR_VARYING);
+
+  if (range_type == VR_VARYING)
+    {
+      /* No range information available.  */
+      range[0] = NULL_TREE;
+      range[1] = NULL_TREE;
+      return false;
+    }
+
+  tree exptype = TREE_TYPE (exp);
+  unsigned expprec = TYPE_PRECISION (exptype);
+  wide_int wzero = wi::zero (expprec);
+  wide_int wmaxval = wide_int (TYPE_MAX_VALUE (exptype));
+
+  bool signed_p = !TYPE_UNSIGNED (exptype);
+
+  if (range_type == VR_ANTI_RANGE)
+    {
+      if (signed_p)
+	{
+	  if (wi::les_p (max, wzero))
+	    {
+	      /* EXP is not in a strictly negative range.  That means
+		 it must be in some (not necessarily strictly) positive
+		 range which includes zero.  Since in signed to unsigned
+		 conversions negative values end up converted to large
+		 positive values, and otherwise they are not valid sizes,
+		 the resulting range is in both cases [0, TYPE_MAX].  */
+	      min = wzero;
+	      max = wmaxval;
+	    }
+	  else if (wi::les_p (min - 1, wzero))
+	    {
+	      /* EXP is not in a negative-positive range.  That means EXP
+		 is either negative, or greater than max.  Since negative
+		 sizes are invalid make the range [MAX + 1, TYPE_MAX].  */
+	      min = max + 1;
+	      max = wmaxval;
+	    }
+	  else
+	    {
+	      max = min - 1;
+	      min = wzero;
+	    }
+	}
+      else if (wi::eq_p (wzero, min - 1))
+	{
+	  /* EXP is unsigned and not in the range [1, MAX].  That means
+	     it's either zero or greater than MAX.  Even though 0 would
+	     normally be detected by -Walloc-zero set the range to
+	     [MAX, TYPE_MAX] so that when MAX is greater than the limit
+	     the whole range is diagnosed.  */
+	  min = max + 1;
+	  max = wmaxval;
+	}
+      else
+	{
+	  max = min - 1;
+	  min = wzero;
+	}
+    }
+
+  range[0] = wide_int_to_tree (exptype, min);
+  range[1] = wide_int_to_tree (exptype, max);
+
+  return true;
+}
+
+/* Diagnose a call EXP to function FN decorated with attribute alloc_size
+   whose argument numbers given by IDX with values given by ARGS exceed
+   the maximum object size or cause an unsigned oveflow (wrapping) when
+   multiplied.  When ARGS[0] is null the function does nothing.  ARGS[1]
+   may be null for functions like malloc, and non-null for those like
+   calloc that are decorated with a two-argument attribute alloc_size.  */
+
+void
+maybe_warn_alloc_args_overflow (tree fn, tree exp, tree args[2], int idx[2])
+{
+  /* The range each of the (up to) two arguments is known to be in.  */
+  tree argrange[2][2] = { { NULL_TREE, NULL_TREE }, { NULL_TREE, NULL_TREE } };
+
+  /* Maximum object size set by -Walloc-size-larger-than= or SIZE_MAX / 2.  */
+  tree maxobjsize = alloc_max_size ();
+
+  location_t loc = EXPR_LOCATION (exp);
+
+  bool warned = false;
+
+  /* Validate each argument individually.  */
+  for (unsigned i = 0; i != 2 && args[i]; ++i)
+    {
+      if (TREE_CODE (args[i]) == INTEGER_CST)
+	{
+	  argrange[i][0] = args[i];
+	  argrange[i][1] = args[i];
+
+	  if (tree_int_cst_lt (args[i], integer_zero_node))
+	    {
+	      warned = warning_at (loc, OPT_Walloc_size_larger_than_,
+				   "%Kargument %i value %qE is negative",
+				   exp, idx[i] + 1, args[i]);
+	    }
+	  else if (integer_zerop (args[i]))
+	    {
+	      /* Avoid issuing -Walloc-zero for allocation functions other
+		 than __builtin_alloca that are declared with attribute
+		 returns_nonnull because there's no portability risk.  This
+		 avoids warning for such calls to libiberty's xmalloc and
+		 friends.
+		 Also avoid issuing the warning for calls to function named
+		 "alloca".  */
+	      if ((DECL_FUNCTION_CODE (fn) == BUILT_IN_ALLOCA
+		   && IDENTIFIER_LENGTH (DECL_NAME (fn)) != 6)
+		  || (DECL_FUNCTION_CODE (fn) != BUILT_IN_ALLOCA
+		      && !lookup_attribute ("returns_nonnull",
+					    TYPE_ATTRIBUTES (TREE_TYPE (fn)))))
+		warned = warning_at (loc, OPT_Walloc_zero,
+				     "%Kargument %i value is zero",
+				     exp, idx[i] + 1);
+	    }
+	  else if (tree_int_cst_lt (maxobjsize, args[i]))
+	    {
+	      /* G++ emits calls to ::operator new[](SIZE_MAX) in C++98
+		 mode and with -fno-exceptions as a way to indicate array
+		 size overflow.  There's no good way to detect C++98 here
+		 so avoid diagnosing these calls for all C++ modes.  */
+	      if (i == 0
+		  && !args[1]
+		  && lang_GNU_CXX ()
+		  && DECL_IS_OPERATOR_NEW (fn)
+		  && integer_all_onesp (args[i]))
+		continue;
+
+	      warned = warning_at (loc, OPT_Walloc_size_larger_than_,
+				   "%Kargument %i value %qE exceeds "
+				   "maximum object size %E",
+				   exp, idx[i] + 1, args[i], maxobjsize);
+	    }
+	}
+      else if (TREE_CODE (args[i]) == SSA_NAME
+	       && get_size_range (args[i], argrange[i]))
+	{
+	  /* Verify that the argument's range is not negative (including
+	     upper bound of zero).  */
+	  if (tree_int_cst_lt (argrange[i][0], integer_zero_node)
+	      && tree_int_cst_le (argrange[i][1], integer_zero_node))
+	    {
+	      warned = warning_at (loc, OPT_Walloc_size_larger_than_,
+				   "%Kargument %i range [%E, %E] is negative",
+				   exp, idx[i] + 1,
+				   argrange[i][0], argrange[i][1]);
+	    }
+	  else if (tree_int_cst_lt (maxobjsize, argrange[i][0]))
+	    {
+	      warned = warning_at (loc, OPT_Walloc_size_larger_than_,
+				   "%Kargument %i range [%E, %E] exceeds "
+				   "maximum object size %E",
+				   exp, idx[i] + 1,
+				   argrange[i][0], argrange[i][1],
+				   maxobjsize);
+	    }
+	}
+    }
+
+  if (!argrange[0])
+    return;
+
+  /* For a two-argument alloc_size, validate the product of the two
+     arguments if both of their values or ranges are known.  */
+  if (!warned && tree_fits_uhwi_p (argrange[0][0])
+      && argrange[1][0] && tree_fits_uhwi_p (argrange[1][0])
+      && !integer_onep (argrange[0][0])
+      && !integer_onep (argrange[1][0]))
+    {
+      /* Check for overflow in the product of a function decorated with
+	 attribute alloc_size (X, Y).  */
+      unsigned szprec = TYPE_PRECISION (size_type_node);
+      wide_int x = wi::to_wide (argrange[0][0], szprec);
+      wide_int y = wi::to_wide (argrange[1][0], szprec);
+
+      bool vflow;
+      wide_int prod = wi::umul (x, y, &vflow);
+
+      if (vflow)
+	warned = warning_at (loc, OPT_Walloc_size_larger_than_,
+			     "%Kproduct %<%E * %E%> of arguments %i and %i "
+			     "exceeds %<SIZE_MAX%>",
+			     exp, argrange[0][0], argrange[1][0],
+			     idx[0] + 1, idx[1] + 1);
+      else if (wi::ltu_p (wi::to_wide (maxobjsize, szprec), prod))
+	warned = warning_at (loc, OPT_Walloc_size_larger_than_,
+			     "%Kproduct %<%E * %E%> of arguments %i and %i "
+			     "exceeds maximum object size %E",
+			     exp, argrange[0][0], argrange[1][0],
+			     idx[0] + 1, idx[1] + 1,
+			     maxobjsize);
+
+      if (warned)
+	{
+	  /* Print the full range of each of the two arguments to make
+	     it clear when it is, in fact, in a range and not constant.  */
+	  if (argrange[0][0] != argrange [0][1])
+	    inform (loc, "argument %i in the range [%E, %E]",
+		    idx[0] + 1, argrange[0][0], argrange[0][1]);
+	  if (argrange[1][0] != argrange [1][1])
+	    inform (loc, "argument %i in the range [%E, %E]",
+		    idx[1] + 1, argrange[1][0], argrange[1][1]);
+	}
+    }
+
+  if (warned)
+    {
+      location_t fnloc = DECL_SOURCE_LOCATION (fn);
+
+      if (DECL_IS_BUILTIN (fn))
+	inform (loc,
+		"in a call to built-in allocation function %qD", fn);
+      else
+	inform (fnloc,
+		"in a call to allocation function %qD declared here", fn);
+    }
+}
+
+/* Issue an error if CALL_EXPR was flagged as requiring
+   tall-call optimization.  */
+
+static void
+maybe_complain_about_tail_call (tree call_expr, const char *reason)
+{
+  gcc_assert (TREE_CODE (call_expr) == CALL_EXPR);
+  if (!CALL_EXPR_MUST_TAIL_CALL (call_expr))
+    return;
+
+  error_at (EXPR_LOCATION (call_expr), "cannot tail-call: %s", reason);
+}
+
 /* Fill in ARGS_SIZE and ARGS array based on the parameters found in
    CALL_EXPR EXP.
 
@@ -1267,6 +1693,24 @@ initialize_argument_information (int num_actuals ATTRIBUTE_UNUSED,
 
   bitmap_obstack_release (NULL);
 
+  /* Extract attribute alloc_size and if set, store the indices of
+     the corresponding arguments in ALLOC_IDX, and then the actual
+     argument(s) at those indices in ALLOC_ARGS.  */
+  int alloc_idx[2] = { -1, -1 };
+  if (tree alloc_size
+      = (fndecl ? lookup_attribute ("alloc_size",
+				    TYPE_ATTRIBUTES (TREE_TYPE (fndecl)))
+	 : NULL_TREE))
+    {
+      tree args = TREE_VALUE (alloc_size);
+      alloc_idx[0] = TREE_INT_CST_LOW (TREE_VALUE (args)) - 1;
+      if (TREE_CHAIN (args))
+	alloc_idx[1] = TREE_INT_CST_LOW (TREE_VALUE (TREE_CHAIN (args))) - 1;
+    }
+
+  /* Array for up to the two attribute alloc_size arguments.  */
+  tree alloc_args[] = { NULL_TREE, NULL_TREE };
+
   /* I counts args in order (to be) pushed; ARGPOS counts in order written.  */
   for (argpos = 0; argpos < num_actuals; i--, argpos++)
     {
@@ -1343,7 +1787,13 @@ initialize_argument_information (int num_actuals ATTRIBUTE_UNUSED,
 	      /* We can't use sibcalls if a callee-copied argument is
 		 stored in the current function's frame.  */
 	      if (!call_from_thunk_p && DECL_P (base) && !TREE_STATIC (base))
-		*may_tailcall = false;
+		{
+		  *may_tailcall = false;
+		  maybe_complain_about_tail_call (exp,
+						  "a callee-copied argument is"
+						  " stored in the current "
+						  " function's frame");
+		}
 
 	      args[i].tree_value = build_fold_addr_expr_loc (loc,
 							 args[i].tree_value);
@@ -1406,6 +1856,9 @@ initialize_argument_information (int num_actuals ATTRIBUTE_UNUSED,
 		= build_fold_addr_expr_loc (loc, make_tree (type, copy));
 	      type = TREE_TYPE (args[i].tree_value);
 	      *may_tailcall = false;
+	      maybe_complain_about_tail_call (exp,
+					      "argument must be passed"
+					      " by copying");
 	    }
 	}
 
@@ -1494,6 +1947,20 @@ initialize_argument_information (int num_actuals ATTRIBUTE_UNUSED,
 
       targetm.calls.function_arg_advance (args_so_far, TYPE_MODE (type),
 					  type, argpos < n_named_args);
+
+      /* Store argument values for functions decorated with attribute
+	 alloc_size.  */
+      if (argpos == alloc_idx[0])
+	alloc_args[0] = args[i].tree_value;
+      else if (argpos == alloc_idx[1])
+	alloc_args[1] = args[i].tree_value;
+    }
+
+  if (alloc_args[0])
+    {
+      /* Check the arguments of functions decorated with attribute
+	 alloc_size.  */
+      maybe_warn_alloc_args_overflow (fndecl, exp, alloc_args, alloc_idx);
     }
 }
 
@@ -1769,7 +2236,7 @@ compute_argument_addresses (struct arg_data *args, rtx argblock, int num_actuals
 	  else if (CONST_INT_P (offset))
 	    {
 	      align = INTVAL (offset) * BITS_PER_UNIT | boundary;
-	      align = align & -align;
+	      align = least_bit_hwi (align);
 	    }
 	  set_mem_align (args[i].stack, align);
 
@@ -2344,6 +2811,126 @@ avoid_likely_spilled_reg (rtx x)
   return x;
 }
 
+/* Helper function for expand_call.
+   Return false is EXP is not implementable as a sibling call.  */
+
+static bool
+can_implement_as_sibling_call_p (tree exp,
+				 rtx structure_value_addr,
+				 tree funtype,
+				 int reg_parm_stack_space ATTRIBUTE_UNUSED,
+				 tree fndecl,
+				 int flags,
+				 tree addr,
+				 const args_size &args_size)
+{
+  if (!targetm.have_sibcall_epilogue ())
+    {
+      maybe_complain_about_tail_call
+	(exp,
+	 "machine description does not have"
+	 " a sibcall_epilogue instruction pattern");
+      return false;
+    }
+
+  /* Doing sibling call optimization needs some work, since
+     structure_value_addr can be allocated on the stack.
+     It does not seem worth the effort since few optimizable
+     sibling calls will return a structure.  */
+  if (structure_value_addr != NULL_RTX)
+    {
+      maybe_complain_about_tail_call (exp, "callee returns a structure");
+      return false;
+    }
+
+#ifdef REG_PARM_STACK_SPACE
+  /* If outgoing reg parm stack space changes, we can not do sibcall.  */
+  if (OUTGOING_REG_PARM_STACK_SPACE (funtype)
+      != OUTGOING_REG_PARM_STACK_SPACE (TREE_TYPE (current_function_decl))
+      || (reg_parm_stack_space != REG_PARM_STACK_SPACE (current_function_decl)))
+    {
+      maybe_complain_about_tail_call (exp,
+				      "inconsistent size of stack space"
+				      " allocated for arguments which are"
+				      " passed in registers");
+      return false;
+    }
+#endif
+
+  /* Check whether the target is able to optimize the call
+     into a sibcall.  */
+  if (!targetm.function_ok_for_sibcall (fndecl, exp))
+    {
+      maybe_complain_about_tail_call (exp,
+				      "target is not able to optimize the"
+				      " call into a sibling call");
+      return false;
+    }
+
+  /* Functions that do not return exactly once may not be sibcall
+     optimized.  */
+  if (flags & ECF_RETURNS_TWICE)
+    {
+      maybe_complain_about_tail_call (exp, "callee returns twice");
+      return false;
+    }
+  if (flags & ECF_NORETURN)
+    {
+      maybe_complain_about_tail_call (exp, "callee does not return");
+      return false;
+    }
+
+  if (TYPE_VOLATILE (TREE_TYPE (TREE_TYPE (addr))))
+    {
+      maybe_complain_about_tail_call (exp, "volatile function type");
+      return false;
+    }
+
+  /* If the called function is nested in the current one, it might access
+     some of the caller's arguments, but could clobber them beforehand if
+     the argument areas are shared.  */
+  if (fndecl && decl_function_context (fndecl) == current_function_decl)
+    {
+      maybe_complain_about_tail_call (exp, "nested function");
+      return false;
+    }
+
+  /* If this function requires more stack slots than the current
+     function, we cannot change it into a sibling call.
+     crtl->args.pretend_args_size is not part of the
+     stack allocated by our caller.  */
+  if (args_size.constant > (crtl->args.size - crtl->args.pretend_args_size))
+    {
+      maybe_complain_about_tail_call (exp,
+				      "callee required more stack slots"
+				      " than the caller");
+      return false;
+    }
+
+  /* If the callee pops its own arguments, then it must pop exactly
+     the same number of arguments as the current function.  */
+  if (targetm.calls.return_pops_args (fndecl, funtype, args_size.constant)
+      != targetm.calls.return_pops_args (current_function_decl,
+					 TREE_TYPE (current_function_decl),
+					 crtl->args.size))
+    {
+      maybe_complain_about_tail_call (exp,
+				      "inconsistent number of"
+				      " popped arguments");
+      return false;
+    }
+
+  if (!lang_hooks.decls.ok_for_sibcall (fndecl))
+    {
+      maybe_complain_about_tail_call (exp, "frontend does not support"
+					    " sibling call");
+      return false;
+    }
+
+  /* All checks passed.  */
+  return true;
+}
+
 /* Generate all the code for a CALL_EXPR exp
    and return an rtx for its value.
    Store the value in TARGET (specified as an rtx) if convenient.
@@ -2372,6 +2959,7 @@ expand_call (tree exp, rtx target, int ignore)
   /* The type of the function being called.  */
   tree fntype;
   bool try_tail_call = CALL_EXPR_TAILCALL (exp);
+  bool must_tail_call = CALL_EXPR_MUST_TAIL_CALL (exp);
   int pass;
 
   /* Register in which non-BLKmode value will be returned,
@@ -2490,6 +3078,8 @@ expand_call (tree exp, rtx target, int ignore)
     {
       fntype = TREE_TYPE (TREE_TYPE (addr));
       flags |= flags_from_decl_or_type (fntype);
+      if (CALL_EXPR_BY_DESCRIPTOR (exp))
+	flags |= ECF_BY_DESCRIPTOR;
     }
   rettype = TREE_TYPE (exp);
 
@@ -2743,45 +3333,19 @@ expand_call (tree exp, rtx target, int ignore)
       || dbg_cnt (tail_call) == false)
     try_tail_call = 0;
 
+  /* If the user has marked the function as requiring tail-call
+     optimization, attempt it.  */
+  if (must_tail_call)
+    try_tail_call = 1;
+
   /*  Rest of purposes for tail call optimizations to fail.  */
-  if (!try_tail_call
-      || !targetm.have_sibcall_epilogue ()
-      /* Doing sibling call optimization needs some work, since
-	 structure_value_addr can be allocated on the stack.
-	 It does not seem worth the effort since few optimizable
-	 sibling calls will return a structure.  */
-      || structure_value_addr != NULL_RTX
-#ifdef REG_PARM_STACK_SPACE
-      /* If outgoing reg parm stack space changes, we can not do sibcall.  */
-      || (OUTGOING_REG_PARM_STACK_SPACE (funtype)
-	  != OUTGOING_REG_PARM_STACK_SPACE (TREE_TYPE (current_function_decl)))
-      || (reg_parm_stack_space != REG_PARM_STACK_SPACE (current_function_decl))
-#endif
-      /* Check whether the target is able to optimize the call
-	 into a sibcall.  */
-      || !targetm.function_ok_for_sibcall (fndecl, exp)
-      /* Functions that do not return exactly once may not be sibcall
-	 optimized.  */
-      || (flags & (ECF_RETURNS_TWICE | ECF_NORETURN))
-      || TYPE_VOLATILE (TREE_TYPE (TREE_TYPE (addr)))
-      /* If the called function is nested in the current one, it might access
-	 some of the caller's arguments, but could clobber them beforehand if
-	 the argument areas are shared.  */
-      || (fndecl && decl_function_context (fndecl) == current_function_decl)
-      /* If this function requires more stack slots than the current
-	 function, we cannot change it into a sibling call.
-	 crtl->args.pretend_args_size is not part of the
-	 stack allocated by our caller.  */
-      || args_size.constant > (crtl->args.size
-			       - crtl->args.pretend_args_size)
-      /* If the callee pops its own arguments, then it must pop exactly
-	 the same number of arguments as the current function.  */
-      || (targetm.calls.return_pops_args (fndecl, funtype, args_size.constant)
-	  != targetm.calls.return_pops_args (current_function_decl,
-					     TREE_TYPE (current_function_decl),
-					     crtl->args.size))
-      || !lang_hooks.decls.ok_for_sibcall (fndecl))
-    try_tail_call = 0;
+  if (try_tail_call)
+    try_tail_call = can_implement_as_sibling_call_p (exp,
+						     structure_value_addr,
+						     funtype,
+						     reg_parm_stack_space,
+						     fndecl,
+						     flags, addr, args_size);
 
   /* Check if caller and callee disagree in promotion of function
      return value.  */
@@ -2811,7 +3375,13 @@ expand_call (tree exp, rtx target, int ignore)
 		  && (caller_unsignedp != callee_unsignedp
 		      || GET_MODE_BITSIZE (caller_mode)
 			 < GET_MODE_BITSIZE (callee_mode)))))
-	try_tail_call = 0;
+	{
+	  try_tail_call = 0;
+	  maybe_complain_about_tail_call (exp,
+					  "caller and callee disagree in"
+					  " promotion of function"
+					  " return value");
+	}
     }
 
   /* Ensure current function's preferred stack boundary is at least
@@ -2883,7 +3453,9 @@ expand_call (tree exp, rtx target, int ignore)
       if (pass && (flags & ECF_MALLOC))
 	start_sequence ();
 
-      if (pass == 0 && crtl->stack_protect_guard)
+      if (pass == 0
+	  && crtl->stack_protect_guard
+	  && targetm.stack_protect_runtime_enabled_p ())
 	stack_protect_epilogue ();
 
       adjusted_args_size = args_size;
@@ -3337,7 +3909,7 @@ expand_call (tree exp, rtx target, int ignore)
       after_args = get_last_insn ();
       funexp = prepare_call_address (fndecl ? fndecl : fntype, funexp,
 				     static_chain_value, &call_fusage,
-				     reg_parm_seen, pass == 0);
+				     reg_parm_seen, flags);
 
       load_register_parameters (args, num_actuals, &call_fusage, flags,
 				pass == 0, &sibcall_failure);
@@ -3709,7 +4281,13 @@ expand_call (tree exp, rtx target, int ignore)
       crtl->tail_call_emit = true;
     }
   else
-    emit_insn (normal_call_insns);
+    {
+      emit_insn (normal_call_insns);
+      if (try_tail_call)
+	/* Ideally we'd emit a message for all of the ways that it could
+	   have failed.  */
+	maybe_complain_about_tail_call (exp, "tail call production failed");
+    }
 
   currently_expanding_call--;
 
@@ -4888,7 +5466,7 @@ store_one_arg (struct arg_data *arg, rtx argblock, int flags,
 	  int pad = used - size;
 	  if (pad)
 	    {
-	      unsigned int pad_align = (pad & -pad) * BITS_PER_UNIT;
+	      unsigned int pad_align = least_bit_hwi (pad) * BITS_PER_UNIT;
 	      parm_align = MIN (parm_align, pad_align);
 	    }
 	}
@@ -4948,7 +5526,7 @@ store_one_arg (struct arg_data *arg, rtx argblock, int flags,
 	    parm_align = BITS_PER_UNIT;
 	  else if (excess)
 	    {
-	      unsigned int excess_align = (excess & -excess) * BITS_PER_UNIT;
+	      unsigned int excess_align = least_bit_hwi (excess) * BITS_PER_UNIT;
 	      parm_align = MIN (parm_align, excess_align);
 	    }
 	}
@@ -5099,3 +5677,6 @@ must_pass_in_stack_var_size_or_pad (machine_mode mode, const_tree type)
 
   return false;
 }
+
+/* Tell the garbage collector about GTY markers in this source file.  */
+#include "gt-calls.h"

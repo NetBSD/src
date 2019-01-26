@@ -6,6 +6,9 @@
 /* Define to 1 if you have the `acosl' function. */
 #undef HAVE_ACOSL
 
+/* Define to 1 if you have the `aligned_alloc' function. */
+#undef HAVE_ALIGNED_ALLOC
+
 /* Define to 1 if you have the `asinf' function. */
 #undef HAVE_ASINF
 
@@ -119,6 +122,9 @@
 
 /* Define if EWOULDBLOCK exists. */
 #undef HAVE_EWOULDBLOCK
+
+/* Define to 1 if GCC 4.6 supported std::exception_ptr for the target */
+#undef HAVE_EXCEPTION_PTR_SINCE_GCC46
 
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
@@ -285,6 +291,9 @@
 /* Define if mbstate_t exists in wchar.h. */
 #undef HAVE_MBSTATE_T
 
+/* Define to 1 if you have the `memalign' function. */
+#undef HAVE_MEMALIGN
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -308,6 +317,9 @@
 
 /* Define if poll is available in <poll.h>. */
 #undef HAVE_POLL
+
+/* Define to 1 if you have the `posix_memalign' function. */
+#undef HAVE_POSIX_MEMALIGN
 
 /* Define to 1 if you have the `powf' function. */
 #undef HAVE_POWF
@@ -442,7 +454,7 @@
 /* Define if S_IFREG is available in <sys/stat.h>. */
 #undef HAVE_S_IFREG
 
-/* Define if S_IFREG is available in <sys/stat.h>. */
+/* Define if S_ISREG is available in <sys/stat.h>. */
 #undef HAVE_S_ISREG
 
 /* Define to 1 if you have the `tanf' function. */
@@ -504,6 +516,9 @@
 
 /* Define to 1 if you have the `_acosl' function. */
 #undef HAVE__ACOSL
+
+/* Define to 1 if you have the `_aligned_malloc' function. */
+#undef HAVE__ALIGNED_MALLOC
 
 /* Define to 1 if you have the `_asinf' function. */
 #undef HAVE__ASINF
@@ -685,6 +700,9 @@
 /* Define to 1 if you have the `_tanl' function. */
 #undef HAVE__TANL
 
+/* Define to 1 if you have the `__cxa_thread_atexit' function. */
+#undef HAVE___CXA_THREAD_ATEXIT
+
 /* Define to 1 if you have the `__cxa_thread_atexit_impl' function. */
 #undef HAVE___CXA_THREAD_ATEXIT_IMPL
 
@@ -801,6 +819,9 @@
 /* Define to the letter to which size_t is mangled. */
 #undef _GLIBCXX_MANGLE_SIZE_T
 
+/* Define if C99 llrint and llround functions are missing from <math.h>. */
+#undef _GLIBCXX_NO_C99_ROUNDING_FUNCS
+
 /* Define if ptrdiff_t is int. */
 #undef _GLIBCXX_PTRDIFF_T_IS_INT
 
@@ -890,9 +911,6 @@
 
 /* Define if fchmodat is available in <sys/stat.h>. */
 #undef _GLIBCXX_USE_FCHMODAT
-
-/* Define if __float128 is supported on this host. */
-#undef _GLIBCXX_USE_FLOAT128
 
 /* Defined if gettimeofday is available. */
 #undef _GLIBCXX_USE_GETTIMEOFDAY

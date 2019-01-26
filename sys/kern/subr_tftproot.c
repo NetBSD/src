@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.21.2.1 2018/11/26 01:52:50 pgoyette Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.21.2.2 2019/01/26 22:00:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.21.2.1 2018/11/26 01:52:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.21.2.2 2019/01/26 22:00:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -246,6 +246,7 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	if (packetlen > MSIZE) {
 		DPRINTF(("%s():%d boot filename too long (%ld bytes)\n", 
 		    __func__, __LINE__, (long)namelen));
+		error = E2BIG;
 		goto out;
 	}
 

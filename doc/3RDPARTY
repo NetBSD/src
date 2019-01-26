@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1504.2.15 2019/01/18 08:48:34 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504.2.16 2019/01/26 21:58:14 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -341,8 +341,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.8
-Current Vers:	7.0.8
+Version:	7.1.0
+Current Vers:	7.1.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -1532,7 +1532,7 @@ Location:	external/cddl/osnet
 Notes:
 
 Package:	sljit
-Version:	svn revision 313
+Version:	0.93 (svn revision 333)
 Current Vers:	0.93
 Maintainer:	Zoltán Herczeg <hzmester@freemail.hu
 Archive Site:	http://sourceforge.net/projects/sljit/
@@ -1691,8 +1691,8 @@ Notes:
 external/gpl2/dtc/dtc2netbsd should be used to create directories to import
 
 Package:	dts
-Version:	4.18-rc2
-Current Vers:	4.19
+Version:	4.20.3
+Current Vers:	4.20.3
 Maintainer:	https://www.kernel.org/
 Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
 Home Page:	https://www.kernel.org/

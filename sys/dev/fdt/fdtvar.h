@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.28.2.6 2019/01/18 08:50:25 pgoyette Exp $ */
+/* $NetBSD: fdtvar.h,v 1.28.2.7 2019/01/26 22:00:06 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/gpio.h>
 #include <sys/termios.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -61,6 +62,14 @@ struct fdt_attach_args {
 
 /* flags for fdtbus_intr_establish */
 #define FDT_INTR_MPSAFE	__BIT(0)
+
+/* Interrupt trigger types defined by the FDT "interrupts" bindings. */
+#define	FDT_INTR_TYPE_POS_EDGE		__BIT(0)
+#define	FDT_INTR_TYPE_NEG_EDGE		__BIT(1)
+#define	FDT_INTR_TYPE_DOUBLE_EDGE	(FDT_INTR_TYPE_POS_EDGE | \
+					 FDT_INTR_TYPE_NEG_EDGE)
+#define	FDT_INTR_TYPE_HIGH_LEVEL	__BIT(2)
+#define	FDT_INTR_TYPE_LOW_LEVEL		__BIT(3)
 
 struct fdtbus_interrupt_controller_func {
 	void *	(*establish)(device_t, u_int *, int, int,
@@ -292,6 +301,14 @@ pwm_tag_t	fdtbus_pwm_acquire_index(int, const char *, int);
 void		fdtbus_pinctrl_configure(void);
 int		fdtbus_pinctrl_set_config_index(int, u_int);
 int		fdtbus_pinctrl_set_config(int, const char *);
+const char *	fdtbus_pinctrl_parse_function(int);
+const void *	fdtbus_pinctrl_parse_pins(int, int *);
+const char *	fdtbus_pinctrl_parse_groups(int, int *);
+const u_int *	fdtbus_pinctrl_parse_pinmux(int, int *);
+int		fdtbus_pinctrl_parse_bias(int, int *);
+int		fdtbus_pinctrl_parse_drive(int);
+int		fdtbus_pinctrl_parse_drive_strength(int);
+int		fdtbus_pinctrl_parse_input_output(int, int *);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
 void		fdtbus_regulator_release(struct fdtbus_regulator *);
 int		fdtbus_regulator_enable(struct fdtbus_regulator *);
@@ -368,6 +385,7 @@ void		fdt_add_child(device_t, int, struct fdt_attach_args *, u_int);
 
 void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);
+int		fdt_find_with_property(const char *, int *);
 int		fdtbus_print(void *, const char *);
 
 #endif /* _DEV_FDT_FDTVAR_H */

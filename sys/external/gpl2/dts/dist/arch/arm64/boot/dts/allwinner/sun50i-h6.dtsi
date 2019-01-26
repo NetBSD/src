@@ -119,9 +119,26 @@
 		ranges;
 
 		syscon: syscon@3000000 {
-			compatible = "allwinner,sun50i-h6-system-controller",
-				"syscon";
+			compatible = "allwinner,sun50i-h6-system-control",
+				     "allwinner,sun50i-a64-system-control";
 			reg = <0x03000000 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			sram_c: sram@28000 {
+				compatible = "mmio-sram";
+				reg = <0x00028000 0x1e000>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0 0x00028000 0x1e000>;
+
+				de2_sram: sram-section@0 {
+					compatible = "allwinner,sun50i-h6-sram-c",
+						     "allwinner,sun50i-a64-sram-c";
+					reg = <0x0000 0x1e000>;
+				};
+			};
 		};
 
 		ccu: clock@3001000 {
@@ -190,7 +207,8 @@
 		};
 
 		mmc0: mmc@4020000 {
-			compatible = "allwinner,sun50i-h6-mmc";
+			compatible = "allwinner,sun50i-h6-mmc",
+				     "allwinner,sun50i-a64-mmc";
 			reg = <0x04020000 0x1000>;
 			clocks = <&ccu CLK_BUS_MMC0>, <&ccu CLK_MMC0>;
 			clock-names = "ahb", "mmc";
@@ -203,7 +221,8 @@
 		};
 
 		mmc1: mmc@4021000 {
-			compatible = "allwinner,sun50i-h6-mmc";
+			compatible = "allwinner,sun50i-h6-mmc",
+				     "allwinner,sun50i-a64-mmc";
 			reg = <0x04021000 0x1000>;
 			clocks = <&ccu CLK_BUS_MMC1>, <&ccu CLK_MMC1>;
 			clock-names = "ahb", "mmc";
@@ -216,7 +235,8 @@
 		};
 
 		mmc2: mmc@4022000 {
-			compatible = "allwinner,sun50i-h6-emmc";
+			compatible = "allwinner,sun50i-h6-emmc",
+				     "allwinner,sun50i-a64-emmc";
 			reg = <0x04022000 0x1000>;
 			clocks = <&ccu CLK_BUS_MMC2>, <&ccu CLK_MMC2>;
 			clock-names = "ahb", "mmc";
@@ -455,6 +475,8 @@
 			interrupts = <GIC_SPI 107 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&r_ccu CLK_R_APB2_I2C>;
 			resets = <&r_ccu RST_R_APB2_I2C>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&r_i2c_pins>;
 			status = "disabled";
 			#address-cells = <1>;
 			#size-cells = <0>;

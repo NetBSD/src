@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73.2.2 2018/12/26 14:01:03 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.73.2.3 2019/01/26 21:58:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73.2.2 2018/12/26 14:01:03 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.73.2.3 2019/01/26 21:58:12 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,6 +248,7 @@ main(int argc, char **argv)
 #if PROFILE
 	monitor(0);
 #endif
+	line_number = plinno;
 	exitshell(exitstatus);
 	/* NOTREACHED */
 }

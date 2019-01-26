@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.9 2016/03/15 06:13:47 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.9.14.1 2019/01/26 21:59:55 pgoyette Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -36,3 +36,13 @@ STD_GNU14=	del_ops del_opvs
 .for _f in ${STD_GNU14}
 COPTS.${_f}.cc=	-std=gnu++14  -Wno-sized-deallocation
 .endfor
+
+STD_GNU1Z=	new_opa new_opant \
+		new_opva new_opvant \
+		del_opa del_opant del_opsa \
+		del_opva del_opvant del_opvsa
+
+.for _f in ${STD_GNU1Z}
+COPTS.${_f}.cc=	-std=gnu++1z
+.endfor
+

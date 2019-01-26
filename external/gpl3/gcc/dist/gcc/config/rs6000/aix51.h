@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for IBM RS/6000 POWER running AIX V5.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
    Contributed by David Edelsohn (edelsohn@gnu.org).
 
    This file is part of GCC.
@@ -100,6 +100,9 @@ do {									\
 #define TARGET_ALTIVEC 0
 #undef  TARGET_ALTIVEC_ABI
 #define TARGET_ALTIVEC_ABI 0
+#undef  TARGET_EXTRA_BUILTINS
+#define TARGET_EXTRA_BUILTINS 0
+
 
 /* Define this macro as a C expression for the initializer of an
    array of string to tell the driver program which options are
@@ -159,8 +162,6 @@ do {									\
 
 /* This target defines SUPPORTS_WEAK and TARGET_ASM_NAMED_SECTION,
    but does not have crtbegin/end.  */
-
-#define TARGET_USE_JCR_SECTION 0
 
 #define TARGET_AIX_VERSION 51
 

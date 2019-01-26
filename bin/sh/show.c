@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.47.4.3 2018/10/20 06:58:15 pgoyette Exp $	*/
+/*	$NetBSD: show.c,v 1.47.4.4 2019/01/26 21:58:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.47.4.3 2018/10/20 06:58:15 pgoyette Exp $");
+__RCSID("$NetBSD: show.c,v 1.47.4.4 2019/01/26 21:58:12 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1063,6 +1063,7 @@ static struct debug_flag {
 	{ 'h',	DBG_HISTORY	},	/* history & cmd line editing */
 	{ 'i',	DBG_INPUT	},	/* shell input routines */
 	{ 'j',	DBG_JOBS	},	/* job control, structures */
+	{ 'l',	DBG_LEXER	},	/* lexical analysis */
 	{ 'm',	DBG_MEM		},	/* memory management */
 	{ 'o',	DBG_OUTPUT	},	/* output routines */
 	{ 'p',	DBG_PROCS	},	/* process management, fork, ... */
@@ -1077,20 +1078,21 @@ static struct debug_flag {
 	{ '0',	DBG_U0		},	/* ad-hoc temp debug flag #0 */
 	{ '1',	DBG_U1		},	/* ad-hoc temp debug flag #1 */
 	{ '2',	DBG_U2		},	/* ad-hoc temp debug flag #2 */
+	{ '3',	DBG_U3		},	/* ad-hoc temp debug flag #3 */
  
 	{ '@',	DBG_LINE	},	/* prefix trace lines with line# */
 	{ '$',	DBG_PID		},	/* prefix trace lines with sh pid */
 	{ '^',	DBG_NEST	},	/* show shell nesting level */
 
-			/* alpha options only */
-	{ '_',	DBG_PARSE | DBG_EVAL | DBG_EXPAND | DBG_JOBS |
+			/* alpha options only - but not DBG_LEXER */
+	{ '_',	DBG_PARSE | DBG_EVAL | DBG_EXPAND | DBG_JOBS | DBG_SIG |
 		    DBG_PROCS | DBG_REDIR | DBG_CMDS | DBG_ERRS |
-		    DBG_WAIT | DBG_TRAP | DBG_VARS | DBG_MEM |
+		    DBG_WAIT | DBG_TRAP | DBG_VARS | DBG_MEM | DBG_MATCH |
 		    DBG_INPUT | DBG_OUTPUT | DBG_ARITH | DBG_HISTORY },
 
    /*   { '*',	DBG_ALLVERBOSE	}, 	   is handled in the code */
 
-	{ '#',	DBG_U0 | DBG_U1 | DBG_U2 },
+	{ '#',	DBG_U0 | DBG_U1 | DBG_U2 | DBG_U3 },
 
 	{ 0,	0		}
 };

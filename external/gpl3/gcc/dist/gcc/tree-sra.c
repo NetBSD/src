@@ -1,7 +1,7 @@
 /* Scalar Replacement of Aggregates (SRA) converts some structure
    references into scalar references, exposing them to the scalar
    optimizers.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Contributed by Martin Jambor <mjambor@suse.cz>
 
 This file is part of GCC.
@@ -687,7 +687,7 @@ sra_deinitialize (void)
 
 static bool constant_decl_p (tree decl)
 {
-  return TREE_CODE (decl) == VAR_DECL && DECL_IN_CONSTANT_POOL (decl);
+  return VAR_P (decl) && DECL_IN_CONSTANT_POOL (decl);
 }
 
 /* Remove DECL from candidates for SRA and write REASON to the dump file if
@@ -949,10 +949,12 @@ create_access (tree expr, gimple *stmt, bool write)
 
 /* Return true iff TYPE is scalarizable - i.e. a RECORD_TYPE or fixed-length
    ARRAY_TYPE with fields that are either of gimple register types (excluding
-   bit-fields) or (recursively) scalarizable types.  */
+   bit-fields) or (recursively) scalarizable types.  CONST_DECL must be true if
+   we are considering a decl from constant pool.  If it is false, char arrays
+   will be refused.  */
 
 static bool
-scalarizable_type_p (tree type)
+scalarizable_type_p (tree type, bool const_decl)
 {
   gcc_assert (!is_gimple_reg_type (type));
   if (type_contains_placeholder_p (type))
@@ -970,7 +972,7 @@ scalarizable_type_p (tree type)
 	    return false;
 
 	  if (!is_gimple_reg_type (ft)
-	      && !scalarizable_type_p (ft))
+	      && !scalarizable_type_p (ft, const_decl))
 	    return false;
 	}
 
@@ -978,10 +980,16 @@ scalarizable_type_p (tree type)
 
   case ARRAY_TYPE:
     {
+      HOST_WIDE_INT min_elem_size;
+      if (const_decl)
+	min_elem_size = 0;
+      else
+	min_elem_size = BITS_PER_UNIT;
+
       if (TYPE_DOMAIN (type) == NULL_TREE
 	  || !tree_fits_shwi_p (TYPE_SIZE (type))
 	  || !tree_fits_shwi_p (TYPE_SIZE (TREE_TYPE (type)))
-	  || (tree_to_shwi (TYPE_SIZE (TREE_TYPE (type))) <= 0)
+	  || (tree_to_shwi (TYPE_SIZE (TREE_TYPE (type))) <= min_elem_size)
 	  || !tree_fits_shwi_p (TYPE_MIN_VALUE (TYPE_DOMAIN (type))))
 	return false;
       if (tree_to_shwi (TYPE_SIZE (type)) == 0
@@ -995,7 +1003,7 @@ scalarizable_type_p (tree type)
 
       tree elem = TREE_TYPE (type);
       if (!is_gimple_reg_type (elem)
-	 && !scalarizable_type_p (elem))
+	  && !scalarizable_type_p (elem, const_decl))
 	return false;
       return true;
     }
@@ -1055,7 +1063,7 @@ completely_scalarize (tree base, tree decl_type, HOST_WIDE_INT offset, tree ref)
 		idx = wi::sext (idx, TYPE_PRECISION (domain));
 		max = wi::sext (max, TYPE_PRECISION (domain));
 	      }
-	    for (int el_off = offset; wi::les_p (idx, max); ++idx)
+	    for (int el_off = offset; idx <= max; ++idx)
 	      {
 		tree nref = build4 (ARRAY_REF, elemtype,
 				    ref,
@@ -1687,7 +1695,7 @@ build_ref_for_offset (location_t loc, tree base, HOST_WIDE_INT offset,
 
   misalign = (misalign + offset) & (align - 1);
   if (misalign != 0)
-    align = (misalign & -misalign);
+    align = least_bit_hwi (misalign);
   if (align != TYPE_ALIGN (exp_type))
     exp_type = build_aligned_type (exp_type, align);
 
@@ -1972,7 +1980,7 @@ find_var_candidates (void)
 
   FOR_EACH_LOCAL_DECL (cfun, i, var)
     {
-      if (TREE_CODE (var) != VAR_DECL)
+      if (!VAR_P (var))
         continue;
 
       ret |= maybe_add_sra_candidate (var);
@@ -2660,14 +2668,16 @@ analyze_all_variable_accesses (void)
       {
 	tree var = candidate (i);
 
-	if (TREE_CODE (var) == VAR_DECL
-	    && scalarizable_type_p (TREE_TYPE (var)))
+	if (VAR_P (var) && scalarizable_type_p (TREE_TYPE (var),
+						constant_decl_p (var)))
 	  {
 	    if (tree_to_uhwi (TYPE_SIZE (TREE_TYPE (var)))
 		<= max_scalarization_size)
 	      {
 		create_total_scalarization_access (var);
 		completely_scalarize (var, TREE_TYPE (var), 0, var);
+		statistics_counter_event (cfun,
+					  "Totally-scalarized aggregates", 1);
 		if (dump_file && (dump_flags & TDF_DETAILS))
 		  {
 		    fprintf (dump_file, "Will attempt to totally scalarize ");
@@ -3231,7 +3241,7 @@ sra_modify_constructor_assign (gimple *stmt, gimple_stmt_iterator *gsi)
 	return SRA_AM_MODIFIED;
     }
 
-  if (vec_safe_length (CONSTRUCTOR_ELTS (gimple_assign_rhs1 (stmt))) > 0)
+  if (CONSTRUCTOR_NELTS (gimple_assign_rhs1 (stmt)) > 0)
     {
       /* I have never seen this code path trigger but if it can happen the
 	 following should handle it gracefully.  */
@@ -5008,7 +5018,7 @@ sra_ipa_reset_debug_stmts (ipa_parm_adjustment_vec adjustments)
 							   NULL);
 		DECL_ARTIFICIAL (vexpr) = 1;
 		TREE_TYPE (vexpr) = TREE_TYPE (name);
-		DECL_MODE (vexpr) = DECL_MODE (adj->base);
+		SET_DECL_MODE (vexpr, DECL_MODE (adj->base));
 		gsi_insert_before (gsip, def_temp, GSI_SAME_STMT);
 	      }
 	    if (vexpr)
@@ -5237,7 +5247,7 @@ ipa_sra_check_caller (struct cgraph_node *node, void *data)
 	  machine_mode mode;
 	  int unsignedp, reversep, volatilep = 0;
 	  get_inner_reference (arg, &bitsize, &bitpos, &offset, &mode,
-			       &unsignedp, &reversep, &volatilep, false);
+			       &unsignedp, &reversep, &volatilep);
 	  if (bitpos % BITS_PER_UNIT)
 	    {
 	      iscc->bad_arg_alignment = true;

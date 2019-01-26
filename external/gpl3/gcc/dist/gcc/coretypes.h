@@ -1,5 +1,5 @@
 /* GCC core type declarations.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -174,6 +174,13 @@ enum offload_abi {
   OFFLOAD_ABI_ILP32
 };
 
+/* Types of profile update methods.  */
+enum profile_update {
+  PROFILE_UPDATE_SINGLE,
+  PROFILE_UPDATE_ATOMIC,
+  PROFILE_UPDATE_PREFER_ATOMIC
+};
+
 /* Types of unwind/exception handling info that can be generated.  */
 
 enum unwind_info_type
@@ -220,6 +227,30 @@ enum var_init_status
   VAR_INIT_STATUS_UNKNOWN,
   VAR_INIT_STATUS_UNINITIALIZED,
   VAR_INIT_STATUS_INITIALIZED
+};
+
+/* Names for the different levels of -Wstrict-overflow=N.  The numeric
+   values here correspond to N.  */
+enum warn_strict_overflow_code
+{
+  /* Overflow warning that should be issued with -Wall: a questionable
+     construct that is easy to avoid even when using macros.  Example:
+     folding (x + CONSTANT > x) to 1.  */
+  WARN_STRICT_OVERFLOW_ALL = 1,
+  /* Overflow warning about folding a comparison to a constant because
+     of undefined signed overflow, other than cases covered by
+     WARN_STRICT_OVERFLOW_ALL.  Example: folding (abs (x) >= 0) to 1
+     (this is false when x == INT_MIN).  */
+  WARN_STRICT_OVERFLOW_CONDITIONAL = 2,
+  /* Overflow warning about changes to comparisons other than folding
+     them to a constant.  Example: folding (x + 1 > 1) to (x > 0).  */
+  WARN_STRICT_OVERFLOW_COMPARISON = 3,
+  /* Overflow warnings not covered by the above cases.  Example:
+     folding ((x * 10) / 5) to (x * 2).  */
+  WARN_STRICT_OVERFLOW_MISC = 4,
+  /* Overflow warnings about reducing magnitude of constants in
+     comparison.  Example: folding (x + 2 > y) to (x + 1 >= y).  */
+  WARN_STRICT_OVERFLOW_MAGNITUDE = 5
 };
 
 /* The type of an alias set.  Code currently assumes that variables of
@@ -301,32 +332,22 @@ enum symbol_visibility
   VISIBILITY_INTERNAL
 };
 
-/* Suppose that higher bits are target dependent. */
-#define MEMMODEL_MASK ((1<<16)-1)
+/* enums used by the targetm.excess_precision hook.  */
 
-/* Legacy sync operations set this upper flag in the memory model.  This allows
-   targets that need to do something stronger for sync operations to
-   differentiate with their target patterns and issue a more appropriate insn
-   sequence.  See bugzilla 65697 for background.  */
-#define MEMMODEL_SYNC (1<<15)
-
-/* Memory model without SYNC bit for targets/operations that do not care.  */
-#define MEMMODEL_BASE_MASK (MEMMODEL_SYNC-1)
-
-/* Memory model types for the __atomic* builtins. 
-   This must match the order in libstdc++-v3/include/bits/atomic_base.h.  */
-enum memmodel
+enum flt_eval_method
 {
-  MEMMODEL_RELAXED = 0,
-  MEMMODEL_CONSUME = 1,
-  MEMMODEL_ACQUIRE = 2,
-  MEMMODEL_RELEASE = 3,
-  MEMMODEL_ACQ_REL = 4,
-  MEMMODEL_SEQ_CST = 5,
-  MEMMODEL_LAST = 6,
-  MEMMODEL_SYNC_ACQUIRE = MEMMODEL_ACQUIRE | MEMMODEL_SYNC,
-  MEMMODEL_SYNC_RELEASE = MEMMODEL_RELEASE | MEMMODEL_SYNC,
-  MEMMODEL_SYNC_SEQ_CST = MEMMODEL_SEQ_CST | MEMMODEL_SYNC
+  FLT_EVAL_METHOD_UNPREDICTABLE = -1,
+  FLT_EVAL_METHOD_PROMOTE_TO_FLOAT = 0,
+  FLT_EVAL_METHOD_PROMOTE_TO_DOUBLE = 1,
+  FLT_EVAL_METHOD_PROMOTE_TO_LONG_DOUBLE = 2,
+  FLT_EVAL_METHOD_PROMOTE_TO_FLOAT16 = 16
+};
+
+enum excess_precision_type
+{
+  EXCESS_PRECISION_TYPE_IMPLICIT,
+  EXCESS_PRECISION_TYPE_STANDARD,
+  EXCESS_PRECISION_TYPE_FAST
 };
 
 /* Support for user-provided GGC and PCH markers.  The first parameter

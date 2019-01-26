@@ -1,4 +1,4 @@
-/* $NetBSD: a9tmr_fdt.c,v 1.1.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: a9tmr_fdt.c,v 1.1.2.3 2019/01/26 22:00:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.1.2.2 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr_fdt.c,v 1.1.2.3 2019/01/26 22:00:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,13 +48,21 @@ static int	a9tmr_fdt_match(device_t, cfdata_t, void *);
 static void	a9tmr_fdt_attach(device_t, device_t, void *);
 
 static void	a9tmr_fdt_cpu_hatch(void *, struct cpu_info *);
+static void	a9tmr_fdt_speed_changed(device_t);
 
-CFATTACH_DECL_NEW(a9tmr_fdt, 0, a9tmr_fdt_match, a9tmr_fdt_attach, NULL, NULL);
+struct a9tmr_fdt_softc {
+	device_t	sc_dev;
+	struct clk	*sc_clk;
+};
+
+CFATTACH_DECL_NEW(a9tmr_fdt, sizeof(struct a9tmr_fdt_softc),
+    a9tmr_fdt_match, a9tmr_fdt_attach, NULL, NULL);
 
 static int
 a9tmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
+		"arm,cortex-a5-global-timer",
 		"arm,cortex-a9-global-timer",
 		NULL
 	};
@@ -66,21 +74,23 @@ a9tmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 static void
 a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 {
+	struct a9tmr_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	bus_space_handle_t bsh;
 
-	struct clk *clk = fdtbus_clock_get_index(phandle, 0);
-	if (clk == NULL) {
+	sc->sc_dev = self;
+	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
+	if (sc->sc_clk == NULL) {
 		aprint_error(": couldn't get clock\n");
 		return;
 	}
-	if (clk_enable(clk) != 0) {
+	if (clk_enable(sc->sc_clk) != 0) {
 		aprint_error(": couldn't enable clock\n");
 		return;
 	}
 
-	uint32_t rate = clk_get_rate(clk);
+	uint32_t rate = clk_get_rate(sc->sc_clk);
 	prop_dictionary_t dict = device_properties(self);
 	prop_dictionary_set_uint32(dict, "frequency", rate);
 
@@ -89,6 +99,9 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	void *ih = fdtbus_intr_establish(phandle, 0, IPL_CLOCK,
 	    FDT_INTR_MPSAFE, a9tmr_intr, NULL);
@@ -120,10 +133,25 @@ a9tmr_fdt_attach(device_t parent, device_t self, void *aux)
 
 	arm_fdt_cpu_hatch_register(self, a9tmr_fdt_cpu_hatch);
 	arm_fdt_timer_register(a9tmr_cpu_initclocks);
+
+	pmf_event_register(self, PMFE_SPEED_CHANGED, a9tmr_fdt_speed_changed, true);
 }
 
 static void
 a9tmr_fdt_cpu_hatch(void *priv, struct cpu_info *ci)
 {
 	a9tmr_init_cpu_clock(ci);
+}
+
+static void
+a9tmr_fdt_speed_changed(device_t dev)
+{
+	struct a9tmr_fdt_softc * const sc = device_private(dev);
+	prop_dictionary_t dict = device_properties(dev);
+	uint32_t rate;
+
+	rate = clk_get_rate(sc->sc_clk);
+	prop_dictionary_set_uint32(dict, "frequency", rate);
+
+	a9tmr_update_freq(rate);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: limits.h,v 1.16 2014/04/21 10:53:47 matt Exp $ */
+/* $NetBSD: limits.h,v 1.16.26.1 2019/01/26 21:59:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1988, 1993
@@ -64,16 +64,16 @@
 #define	LONG_MAX	0x7fffffffffffffffL	/* max for a long */
 #define	LONG_MIN	(-0x7fffffffffffffffL-1) /* min for a long */
 
-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
-    defined(_NETBSD_SOURCE)
-#define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
-
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
     defined(_NETBSD_SOURCE)
 #define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
 #define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
 #define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
 #endif
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+#define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
 
 #if defined(_NETBSD_SOURCE)
 #define	SSIZE_MIN	LONG_MIN	/* min value for a ssize_t */

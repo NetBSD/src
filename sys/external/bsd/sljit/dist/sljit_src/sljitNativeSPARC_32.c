@@ -1,9 +1,9 @@
-/*	$NetBSD: sljitNativeSPARC_32.c,v 1.3 2016/05/29 17:09:33 alnsn Exp $	*/
+/*	$NetBSD: sljitNativeSPARC_32.c,v 1.3.16.1 2019/01/26 22:00:25 pgoyette Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
  *
- *    Copyright 2009-2012 Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
+ *    Copyright Zoltan Herczeg (hzmester@freemail.hu). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -62,7 +62,7 @@ static SLJIT_INLINE sljit_s32 emit_single_op(struct sljit_compiler *compiler, sl
 			return push_inst(compiler, SRA | D(dst) | S1(dst) | IMM(24), DR(dst));
 		}
 		else if (dst != src2)
-			SLJIT_ASSERT_STOP();
+			SLJIT_UNREACHABLE();
 		return SLJIT_SUCCESS;
 
 	case SLJIT_MOV_U16:
@@ -73,7 +73,7 @@ static SLJIT_INLINE sljit_s32 emit_single_op(struct sljit_compiler *compiler, sl
 			return push_inst(compiler, (op == SLJIT_MOV_S16 ? SRA : SRL) | D(dst) | S1(dst) | IMM(16), DR(dst));
 		}
 		else if (dst != src2)
-			SLJIT_ASSERT_STOP();
+			SLJIT_UNREACHABLE();
 		return SLJIT_SUCCESS;
 
 	case SLJIT_NOT:
@@ -137,7 +137,7 @@ static SLJIT_INLINE sljit_s32 emit_single_op(struct sljit_compiler *compiler, sl
 		return !(flags & SET_FLAGS) ? SLJIT_SUCCESS : push_inst(compiler, SUB | SET_FLAGS | D(0) | S1(dst) | S2(0), SET_FLAGS);
 	}
 
-	SLJIT_ASSERT_STOP();
+	SLJIT_UNREACHABLE();
 	return SLJIT_SUCCESS;
 }
 
@@ -147,20 +147,22 @@ static SLJIT_INLINE sljit_s32 emit_const(struct sljit_compiler *compiler, sljit_
 	return push_inst(compiler, OR | D(dst) | S1(dst) | IMM_ARG | (init_value & 0x3ff), DR(dst));
 }
 
-SLJIT_API_FUNC_ATTRIBUTE void sljit_set_jump_addr(sljit_uw addr, sljit_uw new_addr)
+SLJIT_API_FUNC_ATTRIBUTE void sljit_set_jump_addr(sljit_uw addr, sljit_uw new_target, sljit_sw executable_offset)
 {
-	sljit_ins *inst = (sljit_ins*)addr;
+	sljit_ins *inst = (sljit_ins *)addr;
 
-	inst[0] = (inst[0] & 0xffc00000) | ((new_addr >> 10) & 0x3fffff);
-	inst[1] = (inst[1] & 0xfffffc00) | (new_addr & 0x3ff);
+	inst[0] = (inst[0] & 0xffc00000) | ((new_target >> 10) & 0x3fffff);
+	inst[1] = (inst[1] & 0xfffffc00) | (new_target & 0x3ff);
+	inst = (sljit_ins *)SLJIT_ADD_EXEC_OFFSET(inst, executable_offset);
 	SLJIT_CACHE_FLUSH(inst, inst + 2);
 }
 
-SLJIT_API_FUNC_ATTRIBUTE void sljit_set_const(sljit_uw addr, sljit_sw new_constant)
+SLJIT_API_FUNC_ATTRIBUTE void sljit_set_const(sljit_uw addr, sljit_sw new_constant, sljit_sw executable_offset)
 {
-	sljit_ins *inst = (sljit_ins*)addr;
+	sljit_ins *inst = (sljit_ins *)addr;
 
 	inst[0] = (inst[0] & 0xffc00000) | ((new_constant >> 10) & 0x3fffff);
 	inst[1] = (inst[1] & 0xfffffc00) | (new_constant & 0x3ff);
+	inst = (sljit_ins *)SLJIT_ADD_EXEC_OFFSET(inst, executable_offset);
 	SLJIT_CACHE_FLUSH(inst, inst + 2);
 }

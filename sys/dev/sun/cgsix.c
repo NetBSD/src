@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.67 2016/04/21 18:06:06 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.67.16.1 2019/01/26 22:00:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.67 2016/04/21 18:06:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.67.16.1 2019/01/26 22:00:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ struct wsscreen_descr cgsix_defaultscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	NULL,		/* textops */
 	8, 16,	/* font width/height */
-	WSSCREEN_WSCOLORS,	/* capabilities */
+	WSSCREEN_WSCOLORS | WSSCREEN_RESIZE | WSSCREEN_UNDERLINE,
 	NULL	/* modecookie */
 };
 
@@ -562,6 +562,8 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	sc->sc_gc.gc_bitblt = cgsix_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = CG6_ALU_COPY;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	if(isconsole) {
 		/* we mess with cg6_console_screen only once */
@@ -1024,7 +1026,7 @@ cgsixmmap(dev_t dev, off_t off, int prot)
 {
 	struct cgsix_softc *sc = device_lookup_private(&cgsix_cd, minor(dev));
 	struct mmo *mo;
-	u_int u, sz;
+	u_int u, sz, flags;
 	static struct mmo mmo[] = {
 		{ CG6_USER_RAM, 0, CGSIX_RAM_OFFSET },
 
@@ -1053,12 +1055,18 @@ cgsixmmap(dev_t dev, off_t off, int prot)
 		if ((u_long)off < mo->mo_uaddr)
 			continue;
 		u = off - mo->mo_uaddr;
-		sz = mo->mo_size ? mo->mo_size : 
-		    sc->sc_ramsize;
+		if (mo->mo_size == 0) {
+			flags = BUS_SPACE_MAP_LINEAR |
+				BUS_SPACE_MAP_PREFETCHABLE;
+			sz = sc->sc_ramsize;
+		} else {
+			flags = BUS_SPACE_MAP_LINEAR;
+			sz = mo->mo_size;
+		}
 		if (u < sz) {
 			return (bus_space_mmap(sc->sc_bustag,
 				sc->sc_paddr, u+mo->mo_physoff,
-				prot, BUS_SPACE_MAP_LINEAR));
+				prot, flags));
 		}
 	}
 
@@ -1161,7 +1169,8 @@ cgsix_mmap(void *v, void *vs, off_t offset, int prot)
 
 	if (offset < sc->sc_ramsize) {
 		return bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
-		    CGSIX_RAM_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR);
+		    CGSIX_RAM_OFFSET + offset, prot,
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 	}
 	return -1;
 }
@@ -1241,12 +1250,14 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	av = sc->sc_ramsize - (sc->sc_height * sc->sc_stride);
 	ri->ri_flg = RI_CENTER  | RI_8BIT_IS_RGB;
 	if (av > (128 * 1024)) {
-		ri->ri_flg |= RI_ENABLE_ALPHA;
+		ri->ri_flg |= RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 	}
 	ri->ri_bits = sc->sc_fb.fb_pixels;
-	
+	scr->scr_flags |= VCONS_LOADFONT;
+
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE |
+		      WSSCREEN_UNDERLINE | WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 

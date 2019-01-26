@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.3.4.1 2018/05/21 04:35:59 pgoyette Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.3.4.2 2019/01/26 22:00:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.3.4.1 2018/05/21 04:35:59 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.3.4.2 2019/01/26 22:00:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.3.4.1 2018/05/21 04:35:59 pgoye
 #define	PLL_AUDIO_CTRL_REG	0x008
 #define	PLL_PERIPH0_CTRL_REG	0x028
 #define	PLL_PERIPH1_CTRL_REG	0x02c
+#define	PLL_DE_CTRL_REG		0x048
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
 #define	AHB2_CFG_REG		0x05c
@@ -59,6 +60,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.3.4.1 2018/05/21 04:35:59 pgoye
 #define	USBPHY_CFG_REG		0x0cc
 #define	DRAM_CFG_REG		0x0f4
 #define	MBUS_RST_REG		0x0fc
+#define	DE_CLK_REG		0x104
 #define	AC_DIG_CLK_REG		0x140
 #define	BUS_SOFT_RST_REG0	0x2c0
 #define	BUS_SOFT_RST_REG1	0x2c4
@@ -143,6 +145,7 @@ static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mmc_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
 static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
+static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
 
 static const struct sunxi_ccu_nkmp_tbl sun50i_a64_cpux_table[] = {
 	{ 60000000, 9, 0, 0, 2 },
@@ -259,6 +262,19 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO_4X, "pll_audio_4x", "pll_audio_base", 1, 4),
 	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO_8X, "pll_audio_8x", "pll_audio_base", 1, 8),
 
+	SUNXI_CCU_FRACTIONAL(A64_CLK_PLL_DE, "pll_de", "hosc",
+	    DE_CLK_REG,			/* reg */
+	    __BITS(14,8),		/* m */
+	    16,				/* m_min */
+	    50,				/* m_max */
+	    __BIT(24),			/* div_en */
+	    __BIT(25),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    __BITS(3,0),		/* prediv */
+	    2,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_FRACTIONAL_PLUSONE),
+
 	SUNXI_CCU_PREDIV(A64_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
 	    __BITS(7,6),	/* prediv */
@@ -317,6 +333,13 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
 	    SUNXI_CCU_DIV_TIMES_TWO),
+
+	SUNXI_CCU_DIV_GATE(A64_CLK_DE, "de", de_parents,
+	    DE_CLK_REG,		/* reg */
+	    __BITS(3,0),	/* div */
+	    __BITS(26,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
 
 	SUNXI_CCU_GATE(A64_CLK_AC_DIG, "ac-dig", "pll_audio",
 	    AC_DIG_CLK_REG, 31),

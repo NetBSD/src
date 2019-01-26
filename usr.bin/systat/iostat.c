@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.38 2017/07/15 08:22:23 mlelstv Exp $	*/
+/*	$NetBSD: iostat.c,v 1.38.4.1 2019/01/26 22:00:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.38 2017/07/15 08:22:23 mlelstv Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.38.4.1 2019/01/26 22:00:39 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: iostat.c,v 1.38 2017/07/15 08:22:23 mlelstv Exp $");
 #include "drvstats.h"
 
 static  int linesperregion;
-static	double etime;
 static  int numbers = 0;		/* default display bar graphs */
 static  int secs = 0;			/* default seconds shown */
 static  int read_write = 0;		/* default read/write shown */

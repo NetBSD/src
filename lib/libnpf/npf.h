@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -77,7 +77,7 @@ int		npf_ruleset_remove(int, const char *, uint64_t);
 int		npf_ruleset_remkey(int, const char *, const void *, size_t);
 int		npf_ruleset_flush(int, const char *);
 
-nl_ext_t *	npf_ext_construct(const char *name);
+nl_ext_t *	npf_ext_construct(const char *);
 void		npf_ext_param_u32(nl_ext_t *, const char *, uint32_t);
 void		npf_ext_param_bool(nl_ext_t *, const char *, bool);
 void		npf_ext_param_string(nl_ext_t *, const char *, const char *);
@@ -98,10 +98,14 @@ int		npf_rproc_extcall(nl_rproc_t *, nl_ext_t *);
 bool		npf_rproc_exists_p(nl_config_t *, const char *);
 int		npf_rproc_insert(nl_config_t *, nl_rproc_t *);
 
-nl_nat_t *	npf_nat_create(int, unsigned, const char *,
-		    int, npf_addr_t *, npf_netmask_t, in_port_t);
+nl_nat_t *	npf_nat_create(int, unsigned, const char *);
 int		npf_nat_insert(nl_config_t *, nl_nat_t *, int);
 int		npf_nat_lookup(int, int, npf_addr_t *[2], in_port_t [2], int, int);
+int		npf_nat_setaddr(nl_nat_t *, int, npf_addr_t *, npf_netmask_t);
+int		npf_nat_setport(nl_nat_t *, in_port_t);
+int		npf_nat_settable(nl_nat_t *, unsigned);
+int		npf_nat_setalgo(nl_nat_t *, unsigned);
+int		npf_nat_setnpt66(nl_nat_t *, uint16_t);
 
 nl_table_t *	npf_table_create(const char *, unsigned, int);
 int		npf_table_add_entry(nl_table_t *, int,
@@ -130,10 +134,10 @@ int		npf_table_gettype(nl_table_t *);
 nl_nat_t *	npf_nat_iterate(nl_config_t *);
 int		npf_nat_gettype(nl_nat_t *);
 unsigned	npf_nat_getflags(nl_nat_t *);
-void		npf_nat_getmap(nl_nat_t *, npf_addr_t *, size_t *, in_port_t *);
-
-int		npf_nat_setalgo(nl_nat_t *, unsigned);
-int		npf_nat_setnpt66(nl_nat_t *, uint16_t);
+const npf_addr_t *npf_nat_getaddr(nl_nat_t *, size_t *, npf_netmask_t *);
+in_port_t	npf_nat_getport(nl_nat_t *);
+unsigned	npf_nat_gettable(nl_nat_t *);
+unsigned	npf_nat_getalgo(nl_nat_t *);
 
 nl_rproc_t *	npf_rproc_iterate(nl_config_t *);
 const char *	npf_rproc_getname(nl_rproc_t *);

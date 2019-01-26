@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.25 2017/11/23 02:39:28 kre Exp $
+# $NetBSD: bsd.test.mk,v 1.25.2.1 2019/01/26 21:59:58 pgoyette Exp $
 #
 
 .include <bsd.init.mk>
@@ -52,7 +52,7 @@ ${_T}: ${TESTS_SH_SRC_${_T}}
 	echo '#! /usr/bin/atf-sh' >${.TARGET}.tmp
 	cat ${.ALLSRC} >>${.TARGET}.tmp
 	chmod +x ${.TARGET}.tmp
-	mv ${.TARGET}.tmp ${.TARGET}
+	${MV} ${.TARGET}.tmp ${.TARGET}
 .  endfor
 .endif
 
@@ -91,7 +91,7 @@ Atffile: Makefile
 	do \
 	    echo "tp: $${tp}"; \
 	done; } >Atffile.tmp
-	@mv Atffile.tmp Atffile
+	@${MV} Atffile.tmp Atffile
 .  endif
 .endif
 
@@ -126,7 +126,7 @@ Kyuafile: Makefile
 	        done; \
 	    fi; \
 	} >Kyuafile.tmp
-	@mv Kyuafile.tmp Kyuafile
+	@${MV} Kyuafile.tmp Kyuafile
 .  endif
 .endif
 

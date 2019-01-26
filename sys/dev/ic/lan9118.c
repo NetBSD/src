@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.26.8.1 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.26.8.2 2019/01/26 22:00:06 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.26.8.1 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.26.8.2 2019/01/26 22:00:06 pgoyette Exp $");
 
 /*
  * The LAN9118 Family
@@ -90,12 +90,12 @@ static void lan9118_watchdog(struct ifnet *);
 static int lan9118_ifm_change(struct ifnet *);
 static void lan9118_ifm_status(struct ifnet *, struct ifmediareq *);
 
-static int lan9118_miibus_readreg(device_t, int, int);
-static void lan9118_miibus_writereg(device_t, int, int, int);
+static int lan9118_miibus_readreg(device_t, int, int, uint16_t *);
+static int lan9118_miibus_writereg(device_t, int, int, uint16_t);
 static void lan9118_miibus_statchg(struct ifnet *);
 
-static uint16_t lan9118_mii_readreg(struct lan9118_softc *, int, int);
-static void lan9118_mii_writereg(struct lan9118_softc *, int, int, uint16_t);
+static int lan9118_mii_readreg(struct lan9118_softc *, int, int, uint16_t *);
+static int lan9118_mii_writereg(struct lan9118_softc *, int, int, uint16_t);
 static uint32_t lan9118_mac_readreg(struct lan9118_softc *, int);
 static void lan9118_mac_writereg(struct lan9118_softc *, int, uint32_t);
 
@@ -764,16 +764,16 @@ lan9118_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 
 static int
-lan9118_miibus_readreg(device_t dev, int phy, int reg)
+lan9118_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 
-	return lan9118_mii_readreg(device_private(dev), phy, reg);
+	return lan9118_mii_readreg(device_private(dev), phy, reg, val);
 }
-static void
-lan9118_miibus_writereg(device_t dev, int phy, int reg, int val)
+static int
+lan9118_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 
-	lan9118_mii_writereg(device_private(dev), phy, reg, val);
+	return lan9118_mii_writereg(device_private(dev), phy, reg, val);
 }
 
 static void
@@ -794,8 +794,8 @@ lan9118_miibus_statchg(struct ifnet *ifp)
 }
 
 
-static uint16_t
-lan9118_mii_readreg(struct lan9118_softc *sc, int phy, int reg)
+static int
+lan9118_mii_readreg(struct lan9118_softc *sc, int phy, int reg, uint16_t *val)
 {
 	uint32_t acc;
 
@@ -805,10 +805,11 @@ lan9118_mii_readreg(struct lan9118_softc *sc, int phy, int reg)
 	lan9118_mac_writereg(sc, LAN9118_MII_ACC, acc);
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
-	return lan9118_mac_readreg(sc, LAN9118_MII_DATA);
+	*val = lan9118_mac_readreg(sc, LAN9118_MII_DATA) & 0xffff;
+	return 0;
 }
 
-static void
+static int
 lan9118_mii_writereg(struct lan9118_softc *sc, int phy, int reg, uint16_t val)
 {
 	uint32_t acc;
@@ -821,6 +822,8 @@ lan9118_mii_writereg(struct lan9118_softc *sc, int phy, int reg, uint16_t val)
 	lan9118_mac_writereg(sc, LAN9118_MII_ACC, acc);
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
+
+	return 0;
 }
 
 static uint32_t

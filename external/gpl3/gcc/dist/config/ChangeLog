@@ -1,27 +1,92 @@
-2018-10-26  Release Manager
+2018-12-06  Release Manager
 
-	* GCC 6.5.0 released.
+	* GCC 7.4.0 released.
 
-2017-07-04  Release Manager
+2018-06-22  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 6.4.0 released.
+	Backported from mainline
+	2018-04-18  David Malcolm  <dmalcolm@redhat.com>
 
-2017-01-24  Uros Bizjak  <ubizjak@gmail.com>
+	PR jit/85384
+	* acx.m4 (GCC_BASE_VER): Remove \$\$ from sed expression.
+
+2018-01-25  Release Manager
+
+	* GCC 7.3.0 released.
+
+2017-08-14  Release Manager
+
+	* GCC 7.2.0 released.
+
+2017-05-02  Release Manager
+
+	* GCC 7.1.0 released.
+
+2017-02-13  Richard Biener  <rguenther@suse.de>
+
+	* isl.m4: Remove support for ISL 0.14.
+
+2017-01-19  Uros Bizjak  <ubizjak@gmail.com>
 
 	PR target/78478
 	* ax_check_define.m4: New file.
 
-2016-12-21  Release Manager
+2017-01-17  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 6.3.0 released.
+	PR other/79046
+	* acx.m4 (GCC_BASE_VER): New m4 function.
+	(ACX_TOOL_DIRS): Require GCC_BASE_VER, for
+	--with-gcc-major-version-only use just major number from BASE-VER.
 
-2016-08-22  Release Manager
+2017-01-06  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
-	* GCC 6.2.0 released.
+	PR go/78978
+	* hwcaps.m4 (GCC_CHECK_ASSEMBLER_HWCAP): New macro.
 
-2016-04-27  Release Manager
+2017-01-04  Alan Modra  <amodra@gmail.com>
 
-	* GCC 6.1.0 released.
+	* picflag.m4: Remove stray \xA0 in comment.
+
+2016-12-12  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* hwcaps.m4: New file.
+
+2016-12-08  Alan Modra  <amodra@gmail.com>
+
+	* elf.m4: Revert 2016-06-21 change.
+	* picflag.m4: Likewise.  Revert 2016-04-30 change too.
+	* override.m4 (AC_PROG_LEX): Import 2016-01-18 binutils fix
+	for PR binutils/19481.
+
+2016-12-02  Maxim Ostapenko  <m.ostapenko@samsung.com>
+
+	* bootstrap-asan.mk: Replace LSAN_OPTIONS=detect_leaks=0 with
+	ASAN_OPTIONS=detect_leaks=0:use_odr_indicator=1.
+
+2016-12-01  Ma Jiang  <ma.jiang@zte.com.cn>
+
+	* acx.m4: Change "tail +16c" to "tail -c +17".
+
+2016-12-01  Matthias Klose  <doko@ubuntu.com>
+
+	* pkg.m4: Remove.
+
+2016-11-30  Matthias Klose  <doko@ubuntu.com>
+
+	* pkg.m4: New file.
+
+2016-11-15  Matthias Klose  <doko@ubuntu.com>
+
+	multi.m4: Don't set GCJ.
+
+2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* elf.m4: Remove interix support.
+	* picflag.m4: Likewise.
+
+2016-04-30  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	* picflag.m4:  Remove SH5 support.
 
 2015-10-21  Maxim Ostapenko  <m.ostapenko@partner.samsung.com>
 

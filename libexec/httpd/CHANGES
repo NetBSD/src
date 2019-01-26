@@ -1,4 +1,8 @@
-$NetBSD: CHANGES,v 1.25.10.3 2019/01/18 08:50:11 pgoyette Exp $
+$NetBSD: CHANGES,v 1.25.10.4 2019/01/26 21:59:58 pgoyette Exp $
+
+changes in bozohttpd 20190121:
+	o  don't display special files in the directory index.  they aren't
+	   served, but links to them are generated.
 
 changes in bozohttpd 20190116:
 	o  fix CGI '+' parameter handling, some error checking, and a double

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.25.14.3 2019/01/18 08:50:11 pgoyette Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.25.14.4 2019/01/26 21:59:58 pgoyette Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -146,6 +146,9 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		if (strcmp(name, ".") == 0 ||
 		    (strcmp(name, "..") != 0 &&
 		     httpd->hide_dots && name[0] == '.'))
+			continue;
+
+		if (bozo_check_special_files(request, name, false))
 			continue;
 
 		snprintf(buf, sizeof buf, "%s/%s", dirpath, name);

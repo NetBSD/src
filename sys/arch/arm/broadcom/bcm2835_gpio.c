@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.6.2.2 2018/09/30 01:45:37 pgoyette Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.6.2.3 2019/01/26 22:00:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.6.2.2 2018/09/30 01:45:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.6.2.3 2019/01/26 22:00:00 pgoyette Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -567,19 +567,19 @@ bcmgpio_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int type = be32toh(specifier[1]) & 0xf;
 
 	switch (type) {
-	case 0x1:
+	case FDT_INTR_TYPE_POS_EDGE:
 		eint_flags |= BCMGPIO_INTR_POS_EDGE;
 		break;
-	case 0x2:
+	case FDT_INTR_TYPE_NEG_EDGE:
 		eint_flags |= BCMGPIO_INTR_NEG_EDGE;
 		break;
-	case 0x3:
+	case FDT_INTR_TYPE_DOUBLE_EDGE:
 		eint_flags |= BCMGPIO_INTR_POS_EDGE | BCMGPIO_INTR_NEG_EDGE;
 		break;
-	case 0x4:
+	case FDT_INTR_TYPE_HIGH_LEVEL:
 		eint_flags |= BCMGPIO_INTR_HIGH_LEVEL;
 		break;
-	case 0x8:
+	case FDT_INTR_TYPE_LOW_LEVEL:
 		eint_flags |= BCMGPIO_INTR_LOW_LEVEL;
 		break;
 	default:

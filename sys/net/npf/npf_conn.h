@@ -50,10 +50,11 @@ typedef struct npf_connkey npf_connkey_t;
 #define	NPF_CONN_KEYLEN(key)	(8 + (2 * NPF_CONN_GETALEN(key)))
 
 struct npf_connkey {
-	/* Entry node and back-pointer to the actual connection. */
-	rb_node_t		ck_rbnode;
-	uint32_t		ck_key[NPF_CONN_NKEYWORDS];
-	npf_conn_t *		ck_backptr;
+	/*
+	 * Back-pointer to the actual connection and the compacted key.
+	 */
+	npf_conn_t *	ck_backptr;
+	uint32_t	ck_key[NPF_CONN_NKEYWORDS];
 };
 
 /*
@@ -63,16 +64,22 @@ struct npf_connkey {
 struct npf_conn {
 	/*
 	 * Connection "forwards" and "backwards" entries, plus the
-	 * interface ID (if zero, then the state is global).
+	 * interface ID (if zero, then the state is global) and flags.
 	 */
 	npf_connkey_t		c_forw_entry;
 	npf_connkey_t		c_back_entry;
 	u_int			c_proto;
 	u_int			c_ifid;
-
-	/* Flags and entry in the connection database or G/C list. */
 	u_int			c_flags;
-	npf_conn_t *		c_next;
+
+	/*
+	 * Entry in the connection database/list.  The entry is
+	 * protected by npf_t::conn_lock.
+	 */
+	union {
+		npf_conn_t *		c_next;
+		LIST_ENTRY(npf_conn)	c_entry;
+	};
 
 	/* Associated rule procedure or NAT (if any). */
 	npf_rproc_t *		c_rproc;
@@ -109,6 +116,7 @@ npf_conn_t *	npf_conn_lookup(const npf_cache_t *, const int, bool *);
 npf_conn_t *	npf_conn_inspect(npf_cache_t *, const int, int *);
 npf_conn_t *	npf_conn_establish(npf_cache_t *, int, bool);
 void		npf_conn_release(npf_conn_t *);
+void		npf_conn_destroy(npf_t *, npf_conn_t *);
 void		npf_conn_expire(npf_conn_t *);
 bool		npf_conn_pass(const npf_conn_t *, npf_match_info_t *,
 		    npf_rproc_t **);
@@ -117,7 +125,8 @@ void		npf_conn_setpass(npf_conn_t *, const npf_match_info_t *,
 int		npf_conn_setnat(const npf_cache_t *, npf_conn_t *,
 		    npf_nat_t *, u_int);
 npf_nat_t *	npf_conn_getnat(npf_conn_t *, const int, bool *);
-void		npf_conn_gc(npf_t *, npf_conndb_t *, bool, bool);
+bool		npf_conn_expired(const npf_conn_t *, uint64_t);
+void		npf_conn_remove(npf_conndb_t *, npf_conn_t *);
 void		npf_conn_worker(npf_t *);
 int		npf_conn_import(npf_t *, npf_conndb_t *, const nvlist_t *,
 		    npf_ruleset_t *);
@@ -130,17 +139,14 @@ void		npf_conn_print(const npf_conn_t *);
 npf_conndb_t *	npf_conndb_create(void);
 void		npf_conndb_destroy(npf_conndb_t *);
 
-npf_conn_t *	npf_conndb_lookup(npf_conndb_t *, const npf_connkey_t *,
-		    bool *);
-bool		npf_conndb_insert(npf_conndb_t *, npf_connkey_t *,
-		    npf_conn_t *);
+npf_conn_t *	npf_conndb_lookup(npf_conndb_t *, const npf_connkey_t *, bool *);
+bool		npf_conndb_insert(npf_conndb_t *, npf_connkey_t *);
 npf_conn_t *	npf_conndb_remove(npf_conndb_t *, npf_connkey_t *);
 
 void		npf_conndb_enqueue(npf_conndb_t *, npf_conn_t *);
-void		npf_conndb_dequeue(npf_conndb_t *, npf_conn_t *,
-		    npf_conn_t *);
 npf_conn_t *	npf_conndb_getlist(npf_conndb_t *);
-void		npf_conndb_settail(npf_conndb_t *, npf_conn_t *);
+npf_conn_t *	npf_conndb_getnext(npf_conndb_t *, npf_conn_t *);
 int		npf_conndb_export(npf_t *, nvlist_t *);
+void		npf_conndb_gc(npf_t *, npf_conndb_t *, bool, bool);
 
 #endif	/* _NPF_CONN_H_ */

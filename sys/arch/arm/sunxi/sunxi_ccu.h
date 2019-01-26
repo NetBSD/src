@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.15.4.4 2019/01/18 08:50:15 pgoyette Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.15.4.5 2019/01/26 22:00:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -369,7 +369,10 @@ struct sunxi_ccu_fractional {
 	uint32_t	frac_sel;
 	uint32_t	frac[2];
 	uint32_t	prediv;
+	uint32_t	prediv_val;
 	uint32_t	enable;
+	uint32_t	flags;
+#define	SUNXI_CCU_FRACTIONAL_PLUSONE	__BIT(0)
 };
 
 int	sunxi_ccu_fractional_enable(struct sunxi_ccu_softc *,
@@ -384,7 +387,8 @@ const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 				    struct sunxi_ccu_clk *);
 
 #define	SUNXI_CCU_FRACTIONAL(_id, _name, _parent, _reg, _m, _m_min, _m_max, \
-		     _div_en, _frac_sel, _frac0, _frac1, _prediv, _enable) \
+		     _div_en, _frac_sel, _frac0, _frac1, _prediv, _prediv_val, \
+		     _enable, _flags)					\
 	[_id] = {							\
 		.type = SUNXI_CCU_FRACTIONAL,				\
 		.base.name = (_name),					\
@@ -394,6 +398,7 @@ const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 		.u.fractional.m_min = (_m_min),				\
 		.u.fractional.m_max = (_m_max),				\
 		.u.fractional.prediv = (_prediv),			\
+		.u.fractional.prediv_val = (_prediv_val),		\
 		.u.fractional.div_en = (_div_en),			\
 		.u.fractional.frac_sel = (_frac_sel),			\
 		.u.fractional.frac[0] = (_frac0),			\

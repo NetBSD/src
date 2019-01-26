@@ -1,6 +1,6 @@
 /*
  * Linux interface driver for dhcpcd
- * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -294,6 +294,9 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 	struct priv *priv;
 	struct sockaddr_nl snl;
 	socklen_t len;
+#ifdef NETLINK_BROADCAST_ERROR
+	int on = 1;
+#endif
 
 	/* Open the link socket first so it gets pid() for the socket.
 	 * Then open our persistent route socket so we get a unique
@@ -311,6 +314,10 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 	ctx->link_fd = _open_link_socket(&snl, NETLINK_ROUTE);
 	if (ctx->link_fd == -1)
 		return -1;
+#ifdef NETLINK_BROADCAST_ERROR
+	setsockopt(ctx->link_fd, SOL_NETLINK, NETLINK_BROADCAST_ERROR,
+	    &on, sizeof(on));
+#endif
 
 	if ((priv = calloc(1, sizeof(*priv))) == NULL)
 		return -1;
@@ -847,7 +854,6 @@ send_netlink(struct dhcpcd_ctx *ctx, struct interface *ifp,
 		struct priv *priv;
 
 		priv = (struct priv *)ctx->priv;
-		ctx->sseq = ctx->seq;
 		r = get_netlink(ctx, priv->sndrcv_iov, ifp, s, 0, callback);
 	} else
 		r = -1;
@@ -1750,4 +1756,18 @@ ip6_temp_valid_lifetime(const char *ifname)
 	return val < 0 ? TEMP_VALID_LIFETIME : val;
 }
 #endif /* IPV6_MANAGETEMPADDR */
+
+int
+ip6_forwarding(const char *ifname)
+{
+	char path[256];
+	int val;
+
+	if (ifname == NULL)
+		ifname = "all";
+	snprintf(path, sizeof(path), "%s/%s/forwarding", prefix, ifname);
+	val = check_proc_int(path);
+	return val == -1 ? 0 : val;
+}
+
 #endif /* INET6 */

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.19.2.2 2018/06/25 07:25:40 pgoyette Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.19.2.3 2019/01/26 22:00:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.19.2.2 2018/06/25 07:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.19.2.3 2019/01/26 22:00:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -458,19 +458,19 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int type = be32toh(specifier[2]) & 0xf;
 
 	switch (type) {
-	case 0x1:
+	case FDT_INTR_TYPE_POS_EDGE:
 		mode = SUNXI_GPIO_INT_MODE_POS_EDGE;
 		break;
-	case 0x2:
+	case FDT_INTR_TYPE_NEG_EDGE:
 		mode = SUNXI_GPIO_INT_MODE_NEG_EDGE;
 		break;
-	case 0x3:
+	case FDT_INTR_TYPE_DOUBLE_EDGE:
 		mode = SUNXI_GPIO_INT_MODE_DOUBLE_EDGE;
 		break;
-	case 0x4:
+	case FDT_INTR_TYPE_HIGH_LEVEL:
 		mode = SUNXI_GPIO_INT_MODE_HIGH_LEVEL;
 		break;
-	case 0x8:
+	case FDT_INTR_TYPE_LOW_LEVEL:
 		mode = SUNXI_GPIO_INT_MODE_LOW_LEVEL;
 		break;
 	default:
@@ -582,7 +582,7 @@ sunxi_pinctrl_parse_function(int phandle)
 {
 	const char *function;
 
-	function = fdtbus_get_string(phandle, "function");
+	function = fdtbus_pinctrl_parse_function(phandle);
 	if (function != NULL)
 		return function;
 
@@ -592,13 +592,12 @@ sunxi_pinctrl_parse_function(int phandle)
 static const char *
 sunxi_pinctrl_parse_pins(int phandle, int *pins_len)
 {
+	const char *pins;
 	int len;
 
-	len = OF_getproplen(phandle, "pins");
-	if (len > 0) {
-		*pins_len = len;
-		return fdtbus_get_string(phandle, "pins");
-	}
+	pins = fdtbus_pinctrl_parse_pins(phandle, pins_len);
+	if (pins != NULL)
+		return pins;
 
 	len = OF_getproplen(phandle, "allwinner,pins");
 	if (len > 0) {
@@ -613,15 +612,13 @@ static int
 sunxi_pinctrl_parse_bias(int phandle)
 {
 	u_int pull;
-	int bias = -1;
+	int bias;
 
-	if (of_hasprop(phandle, "bias-disable"))
-		bias = 0;
-	else if (of_hasprop(phandle, "bias-pull-up"))
-		bias = GPIO_PIN_PULLUP;
-	else if (of_hasprop(phandle, "bias-pull-down"))
-		bias = GPIO_PIN_PULLDOWN;
-	else if (of_getprop_uint32(phandle, "allwinner,pull", &pull) == 0) {
+	bias = fdtbus_pinctrl_parse_bias(phandle, NULL);
+	if (bias != -1)
+		return bias;
+
+	if (of_getprop_uint32(phandle, "allwinner,pull", &pull) == 0) {
 		switch (pull) {
 		case 0:
 			bias = 0;
@@ -643,7 +640,8 @@ sunxi_pinctrl_parse_drive_strength(int phandle)
 {
 	int val;
 
-	if (of_getprop_uint32(phandle, "drive-strength", &val) == 0)
+	val = fdtbus_pinctrl_parse_drive_strength(phandle);
+	if (val != -1)
 		return val;
 
 	if (of_getprop_uint32(phandle, "allwinner,drive", &val) == 0)

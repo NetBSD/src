@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.7.4.6 2018/12/26 14:01:35 pgoyette Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.7.4.7 2019/01/26 22:00:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.7.4.6 2018/12/26 14:01:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.7.4.7 2019/01/26 22:00:02 pgoyette Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -300,7 +300,6 @@ initarm(void *arg)
 	nitrogen6_setup_iomux();
 
 	consinit();
-//XXXNH
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
 #ifdef NO_POWERSAVE

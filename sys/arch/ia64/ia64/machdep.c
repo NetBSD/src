@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.12.1 2018/11/26 01:52:25 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.12.2 2019/01/26 22:00:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -119,6 +119,12 @@
 #include <dev/cons.h>
 #include <dev/mm.h>
 
+#ifdef DEBUG
+#define	DPRINTF(fmt, args...)	printf("%s: " fmt, __func__, ##args)
+#else
+#define	DPRINTF(fmt, args...)	((void)0)
+#endif
+     
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
@@ -387,12 +393,6 @@ ia64_init(void)
 	vaddr_t v;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
-
-	/*
-	 * TODO: Disable interrupts, floating point etc.
-	 * Maybe flush cache and tlb
-	 */
-
 	ia64_set_fpsr(IA64_FPSR_DEFAULT);
 
 	/*
@@ -514,10 +514,8 @@ ia64_init(void)
 
 	for (md = efi_md_first(); md != NULL; md = efi_md_next(md)) {
 
-#ifdef DEBUG
-		printf("MD %p: type %d pa 0x%lx cnt 0x%lx\n", md,
-		    md->md_type, md->md_phys, md->md_pages);
-#endif
+		DPRINTF("MD %p: type %d pa 0x%lx cnt 0x%lx\n", md,
+			md->md_type, md->md_phys, md->md_pages);
 
 		pfn0 = ia64_btop(round_page(md->md_phys));
 		pfn1 = ia64_btop(trunc_page(md->md_phys + md->md_pages * 4096));
@@ -553,17 +551,15 @@ ia64_init(void)
 			 * Must compute the location of the kernel
 			 * within the segment.
 			 */
-#ifdef DEBUG
-			printf("Descriptor %p contains kernel\n", md);
-#endif
+			DPRINTF("Descriptor %p contains kernel\n", md);
+
 			if (pfn0 < kernstartpfn) {
 				/*
 				 * There is a chunk before the kernel.
 				 */
-#ifdef DEBUG
-				printf("Loading chunk before kernel: "
-				       "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
-#endif
+				DPRINTF("Loading chunk before kernel: "
+					"0x%lx / 0x%lx\n", pfn0, kernstartpfn);
+
 				uvm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
 
@@ -572,10 +568,8 @@ ia64_init(void)
 				/*
 				 * There is a chunk after the kernel.
 				 */
-#ifdef DEBUG
-				printf("Loading chunk after kernel: "
-				       "0x%lx / 0x%lx\n", kernendpfn, pfn1);
-#endif
+				DPRINTF("Loading chunk after kernel: "
+					"0x%lx / 0x%lx\n", kernendpfn, pfn1);
 
 				uvm_page_physload(kernendpfn, pfn1,
 				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
@@ -585,10 +579,8 @@ ia64_init(void)
 			/*
 			 * Just load this cluster as one chunk.
 			 */
-#ifdef DEBUG
-			printf("Loading descriptor %p: 0x%lx / 0x%lx\n",
-			    md, pfn0, pfn1);
-#endif
+			DPRINTF("Loading descriptor %p: 0x%lx / 0x%lx\n",
+				md, pfn0, pfn1);
 
 			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
 			    VM_FREELIST_DEFAULT);
@@ -600,21 +592,16 @@ ia64_init(void)
 		panic("can't happen: system seems to have no memory!");
 
 	/*
-	 * Initialize the virtual memory system.
-	 */
-
-	pmap_bootstrap();
-
-	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	msgbufaddr = (void *) uvm_pageboot_alloc(MSGBUFSIZE);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
-	 * Init mapping for u page(s) for proc 0
+	 * Init mapping for u page(s) for proc 0.  use memory area
+	 * already set up in locore.S
 	 */
-	v = uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	v = (vaddr_t)&kstack;
 	uvm_lwp_setuarea(&lwp0, v);
 
 	/*
@@ -622,6 +609,8 @@ ia64_init(void)
 	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
 	lwp0.l_md.md_tf = (struct trapframe *)(v + UAREA_TF_OFFSET);
+	lwp0.l_md.md_tf->tf_length = sizeof(struct trapframe);
+	lwp0.l_md.md_tf->tf_flags = FRAME_SYSCALL;
 
 	lwp0.l_md.user_stack = NULL;
 	lwp0.l_md.user_stack_size = 0;
@@ -630,8 +619,6 @@ ia64_init(void)
 	pcb0->pcb_special.sp = v + UAREA_SP_OFFSET;
 	pcb0->pcb_special.bspstore = v + UAREA_BSPSTORE_OFFSET;
 	
-	mutex_init(&pcb0->pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
-
 	/*
 	 * Setup global data for the bootstrap cpu.
 	 */
@@ -643,9 +630,8 @@ ia64_init(void)
 	ia64_set_k4((uint64_t) ci);
 	ci->ci_cpuid = cpu_number();
 
-
 	/*
-	 * Initialise process context. XXX: This should really be in cpu_switch
+	 * Initialise process context. XXX: This should really be in cpu_switchto
 	 */
 	ci->ci_curlwp = &lwp0;
 
@@ -662,6 +648,8 @@ ia64_init(void)
 	ia64_set_tpr(0);
 	ia64_srlz_d();
 
+	mutex_init(&pcb0->pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
+
 	/*
 	 * Save our current context so that we have a known (maybe even
 	 * sane) context as the initial context for new threads that are
@@ -670,6 +658,11 @@ ia64_init(void)
 	if (savectx(pcb0))
 		panic("savectx failed");
 
+	/*
+	 * Initialize the virtual memory system.
+	 */
+	pmap_bootstrap();
+	
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */

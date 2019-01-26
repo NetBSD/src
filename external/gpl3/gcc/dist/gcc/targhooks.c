@@ -1,5 +1,5 @@
 /* Default target hook functions.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -55,8 +55,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "tree-ssa-alias.h"
 #include "gimple-expr.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
+#include "tree-vrp.h"
 #include "tree-ssanames.h"
 #include "optabs.h"
 #include "regs.h"
@@ -74,6 +76,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "opts.h"
 #include "gimplify.h"
+#include "predict.h"
+#include "params.h"
+#include "real.h"
 
 
 bool
@@ -459,6 +464,94 @@ default_libgcc_floating_mode_supported_p (machine_mode mode)
     }
 }
 
+/* Return the machine mode to use for the type _FloatN, if EXTENDED is
+   false, or _FloatNx, if EXTENDED is true, or VOIDmode if not
+   supported.  */
+machine_mode
+default_floatn_mode (int n, bool extended)
+{
+  if (extended)
+    {
+      machine_mode cand1 = VOIDmode, cand2 = VOIDmode;
+      switch (n)
+	{
+	case 32:
+#ifdef HAVE_DFmode
+	  cand1 = DFmode;
+#endif
+	  break;
+
+	case 64:
+#ifdef HAVE_XFmode
+	  cand1 = XFmode;
+#endif
+#ifdef HAVE_TFmode
+	  cand2 = TFmode;
+#endif
+	  break;
+
+	case 128:
+	  break;
+
+	default:
+	  /* Those are the only valid _FloatNx types.  */
+	  gcc_unreachable ();
+	}
+      if (cand1 != VOIDmode
+	  && REAL_MODE_FORMAT (cand1)->ieee_bits > n
+	  && targetm.scalar_mode_supported_p (cand1)
+	  && targetm.libgcc_floating_mode_supported_p (cand1))
+	return cand1;
+      if (cand2 != VOIDmode
+	  && REAL_MODE_FORMAT (cand2)->ieee_bits > n
+	  && targetm.scalar_mode_supported_p (cand2)
+	  && targetm.libgcc_floating_mode_supported_p (cand2))
+	return cand2;
+    }
+  else
+    {
+      machine_mode cand = VOIDmode;
+      switch (n)
+	{
+	case 16:
+	  /* Always enable _Float16 if we have basic support for the mode.
+	     Targets can control the range and precision of operations on
+	     the _Float16 type using TARGET_C_EXCESS_PRECISION.  */
+#ifdef HAVE_HFmode
+	  cand = HFmode;
+#endif
+	  break;
+
+	case 32:
+#ifdef HAVE_SFmode
+	  cand = SFmode;
+#endif
+	  break;
+
+	case 64:
+#ifdef HAVE_DFmode
+	  cand = DFmode;
+#endif
+	  break;
+
+	case 128:
+#ifdef HAVE_TFmode
+	  cand = TFmode;
+#endif
+	  break;
+
+	default:
+	  break;
+	}
+      if (cand != VOIDmode
+	  && REAL_MODE_FORMAT (cand)->ieee_bits == n
+	  && targetm.scalar_mode_supported_p (cand)
+	  && targetm.libgcc_floating_mode_supported_p (cand))
+	return cand;
+    }
+  return VOIDmode;
+}
+
 /* Make some target macros useable by target-independent code.  */
 bool
 targhook_words_big_endian (void)
@@ -564,8 +657,6 @@ default_builtin_vectorization_cost (enum vect_cost_for_stmt type_of_cost,
                                     tree vectype,
                                     int misalign ATTRIBUTE_UNUSED)
 {
-  unsigned elements;
-
   switch (type_of_cost)
     {
       case scalar_stmt:
@@ -589,8 +680,7 @@ default_builtin_vectorization_cost (enum vect_cost_for_stmt type_of_cost,
         return 3;
 
       case vec_construct:
-	elements = TYPE_VECTOR_SUBPARTS (vectype);
-	return elements / 2 + 1;
+	return TYPE_VECTOR_SUBPARTS (vectype) - 1;
 
       default:
         gcc_unreachable ();
@@ -918,7 +1008,7 @@ default_ira_change_pseudo_allocno_class (int regno ATTRIBUTE_UNUSED,
 extern bool
 default_lra_p (void)
 {
-  return false;
+  return true;
 }
 
 int
@@ -1050,14 +1140,9 @@ default_vector_alignment (const_tree type)
 /* By default assume vectors of element TYPE require a multiple of the natural
    alignment of TYPE.  TYPE is naturally aligned if IS_PACKED is false.  */
 bool
-default_builtin_vector_alignment_reachable (const_tree type, bool is_packed)
+default_builtin_vector_alignment_reachable (const_tree /*type*/, bool is_packed)
 {
-  if (is_packed)
-    return false;
-
-  /* If TYPE can be differently aligned in field context we have to punt
-     as TYPE may have wrong TYPE_ALIGN here (PR79278).  */
-  return min_align_of_type (CONST_CAST_TREE (type)) == TYPE_ALIGN_UNIT (type);
+  return ! is_packed;
 }
 
 /* By default, assume that a target supports any factor of misalignment
@@ -1301,6 +1386,15 @@ default_addr_space_debug (addr_space_t as)
   return as;
 }
 
+/* The default hook implementation for TARGET_ADDR_SPACE_DIAGNOSE_USAGE.
+   Don't complain about any address space.  */
+
+void
+default_addr_space_diagnose_usage (addr_space_t, location_t)
+{
+}
+	 
+
 /* The default hook for TARGET_ADDR_SPACE_CONVERT. This hook should never be
    called for targets with only a generic address space.  */
 
@@ -1489,25 +1583,40 @@ default_use_by_pieces_infrastructure_p (unsigned HOST_WIDE_INT size,
 
   switch (op)
     {
-      case CLEAR_BY_PIECES:
-	max_size = STORE_MAX_PIECES;
-	ratio = CLEAR_RATIO (speed_p);
-	break;
-      case MOVE_BY_PIECES:
-	max_size = MOVE_MAX_PIECES;
-	ratio = get_move_ratio (speed_p);
-	break;
-      case SET_BY_PIECES:
-	max_size = STORE_MAX_PIECES;
-	ratio = SET_RATIO (speed_p);
-	break;
-      case STORE_BY_PIECES:
-	max_size = STORE_MAX_PIECES;
-	ratio = get_move_ratio (speed_p);
-	break;
+    case CLEAR_BY_PIECES:
+      max_size = STORE_MAX_PIECES;
+      ratio = CLEAR_RATIO (speed_p);
+      break;
+    case MOVE_BY_PIECES:
+      max_size = MOVE_MAX_PIECES;
+      ratio = get_move_ratio (speed_p);
+      break;
+    case SET_BY_PIECES:
+      max_size = STORE_MAX_PIECES;
+      ratio = SET_RATIO (speed_p);
+      break;
+    case STORE_BY_PIECES:
+      max_size = STORE_MAX_PIECES;
+      ratio = get_move_ratio (speed_p);
+      break;
+    case COMPARE_BY_PIECES:
+      max_size = COMPARE_MAX_PIECES;
+      /* Pick a likely default, just as in get_move_ratio.  */
+      ratio = speed_p ? 15 : 3;
+      break;
     }
 
-  return move_by_pieces_ninsns (size, alignment, max_size + 1) < ratio;
+  return by_pieces_ninsns (size, alignment, max_size + 1, op) < ratio;
+}
+
+/* This hook controls code generation for expanding a memcmp operation by
+   pieces.  Return 1 for the normal pattern of compare/jump after each pair
+   of loads, or a higher number to reduce the number of branches.  */
+
+int
+default_compare_by_pieces_branch_ratio (machine_mode)
+{
+  return 1;
 }
 
 bool
@@ -1863,7 +1972,7 @@ std_gimplify_va_arg_expr (tree valist, tree type, gimple_seq *pre_p,
   if (boundary < TYPE_ALIGN (type))
     {
       type = build_variant_type_copy (type);
-      TYPE_ALIGN (type) = boundary;
+      SET_TYPE_ALIGN (type, boundary);
     }
 
   /* Compute the rounded size of the type.  */
@@ -1970,6 +2079,42 @@ bool
 default_optab_supported_p (int, machine_mode, machine_mode, optimization_type)
 {
   return true;
+}
+
+/* Default implementation of TARGET_MAX_NOCE_IFCVT_SEQ_COST.  */
+
+unsigned int
+default_max_noce_ifcvt_seq_cost (edge e)
+{
+  bool predictable_p = predictable_edge_p (e);
+
+  enum compiler_param param
+    = (predictable_p
+       ? PARAM_MAX_RTL_IF_CONVERSION_PREDICTABLE_COST
+       : PARAM_MAX_RTL_IF_CONVERSION_UNPREDICTABLE_COST);
+
+  /* If we have a parameter set, use that, otherwise take a guess using
+     BRANCH_COST.  */
+  if (global_options_set.x_param_values[param])
+    return PARAM_VALUE (param);
+  else
+    return BRANCH_COST (true, predictable_p) * COSTS_N_INSNS (3);
+}
+
+/* Default implementation of TARGET_MIN_ARITHMETIC_PRECISION.  */
+
+unsigned int
+default_min_arithmetic_precision (void)
+{
+  return WORD_REGISTER_OPERATIONS ? BITS_PER_WORD : BITS_PER_UNIT;
+}
+
+/* Default implementation of TARGET_C_EXCESS_PRECISION.  */
+
+enum flt_eval_method
+default_excess_precision (enum excess_precision_type ATTRIBUTE_UNUSED)
+{
+  return FLT_EVAL_METHOD_PROMOTE_TO_FLOAT;
 }
 
 #include "gt-targhooks.h"

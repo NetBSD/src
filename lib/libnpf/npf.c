@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.43.12.1 2018/09/30 01:45:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.43.12.2 2019/01/26 21:59:57 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -736,8 +736,7 @@ npf_rproc_getname(nl_rproc_t *rp)
  */
 
 nl_nat_t *
-npf_nat_create(int type, unsigned flags, const char *ifname,
-    int af, npf_addr_t *addr, npf_netmask_t mask, in_port_t port)
+npf_nat_create(int type, unsigned flags, const char *ifname)
 {
 	nl_rule_t *rl;
 	nvlist_t *rule_dict;
@@ -756,17 +755,6 @@ npf_nat_create(int type, unsigned flags, const char *ifname,
 	/* Translation type and flags. */
 	nvlist_add_number(rule_dict, "type", type);
 	nvlist_add_number(rule_dict, "flags", flags);
-
-	/* Translation IP and mask. */
-	if (!_npf_add_addr(rule_dict, "nat-ip", af, addr)) {
-		npf_rule_destroy(rl);
-		return NULL;
-	}
-	nvlist_add_number(rule_dict, "nat-mask", (uint32_t)mask);
-
-	/* Translation port (for redirect case). */
-	nvlist_add_number(rule_dict, "nat-port", port);
-
 	return (nl_nat_t *)rl;
 }
 
@@ -785,6 +773,32 @@ npf_nat_iterate(nl_config_t *ncf)
 {
 	unsigned level;
 	return _npf_rule_iterate1(ncf, "nat", &level);
+}
+
+int
+npf_nat_setaddr(nl_nat_t *nt, int af, npf_addr_t *addr, npf_netmask_t mask)
+{
+	/* Translation IP and mask. */
+	if (!_npf_add_addr(nt->rule_dict, "nat-ip", af, addr)) {
+		return nvlist_error(nt->rule_dict);
+	}
+	nvlist_add_number(nt->rule_dict, "nat-mask", (uint32_t)mask);
+	return nvlist_error(nt->rule_dict);
+}
+
+int
+npf_nat_setport(nl_nat_t *nt, in_port_t port)
+{
+	/* Translation port (for redirect case). */
+	nvlist_add_number(nt->rule_dict, "nat-port", port);
+	return nvlist_error(nt->rule_dict);
+}
+
+int
+npf_nat_settable(nl_nat_t *nt, unsigned tid)
+{
+	nvlist_add_number(nt->rule_dict, "nat-table-id", tid);
+	return nvlist_error(nt->rule_dict);
 }
 
 int
@@ -818,12 +832,38 @@ npf_nat_getflags(nl_nat_t *nt)
 	return dnvlist_get_number(nt->rule_dict, "flags", 0);
 }
 
-void
-npf_nat_getmap(nl_nat_t *nt, npf_addr_t *addr, size_t *alen, in_port_t *port)
+unsigned
+npf_nat_getalgo(nl_nat_t *nt)
 {
-	const void *data = nvlist_get_binary(nt->rule_dict, "nat-ip", alen);
-	memcpy(addr, data, *alen);
-	*port = (uint16_t)dnvlist_get_number(nt->rule_dict, "nat-port", 0);
+	return dnvlist_get_number(nt->rule_dict, "nat-algo", 0);
+}
+
+const npf_addr_t *
+npf_nat_getaddr(nl_nat_t *nt, size_t *alen, npf_netmask_t *mask)
+{
+	const void *data;
+
+	if (nvlist_exists(nt->rule_dict, "nat-ip")) {
+		data = nvlist_get_binary(nt->rule_dict, "nat-ip", alen);
+		*mask = nvlist_get_number(nt->rule_dict, "nat-mask");
+	} else {
+		data = NULL;
+		*alen = 0;
+		*mask = NPF_NO_NETMASK;
+	}
+	return data;
+}
+
+in_port_t
+npf_nat_getport(nl_nat_t *nt)
+{
+	return (uint16_t)dnvlist_get_number(nt->rule_dict, "nat-port", 0);
+}
+
+unsigned
+npf_nat_gettable(nl_nat_t *nt)
+{
+	return dnvlist_get_number(nt->rule_dict, "nat-table-id", 0);
 }
 
 /*
@@ -969,7 +1009,7 @@ npf_table_insert(nl_config_t *ncf, nl_table_t *tl)
 	if (_npf_dataset_lookup(ncf->ncf_dict, "tables", "name", name)) {
 		return EEXIST;
 	}
-	if (dnvlist_get_number(tl->table_dict, "type", 0) == NPF_TABLE_CDB) {
+	if (dnvlist_get_number(tl->table_dict, "type", 0) == NPF_TABLE_CONST) {
 		if ((error = _npf_table_build(tl)) != 0) {
 			return error;
 		}
