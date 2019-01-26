@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.1,v 1.25 2019/01/26 15:19:08 kre Exp $
+.\"	$NetBSD: sleep.1,v 1.26 2019/01/26 15:20:50 kre Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,15 +60,6 @@ any fractional seconds will be ignored.
 Permitting non-integral delays is a non-portable extension,
 and its use will decrease the probability that
 a shell script will execute properly on another system.
-.Pp
-If the request is for more than a little over 135 years
-.Nm
-will pause forever.
-If the computer is still running when the
-.Nm
-should have terminated,
-.Nm
-will need to be killed by outside intervention.
 .Pp
 When the
 .Dv SIGINFO
@@ -158,6 +149,21 @@ The
 command is expected to be
 .St -p1003.2
 compatible.
+.Sh BUGS
+This
+.Nm
+command cannot handle requests for durations
+much longer than about 250 billion years.
+Any such attempt will result in an error,
+and immediate termination.
+It is suggested that when there is a need
+for sleeps exceeding this period, the
+.Nm
+command be executed in a loop, with each
+individual
+.Nm
+invocation limited to 200 billion years
+approximately.
 .Sh HISTORY
 A
 .Nm
@@ -167,3 +173,5 @@ Processing fractional seconds, and processing the
 .Ic seconds
 argument respecting the current locale, was added in
 .Nx 1.3 .
+The ability to sleep for extended periods appeared in
+.Nx 9 .
