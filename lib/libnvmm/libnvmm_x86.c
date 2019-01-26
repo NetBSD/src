@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.15 2019/01/13 10:43:22 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.16 2019/01/26 14:44:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -2071,12 +2071,14 @@ node_regmodrm(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		instr->emul = group11[instr->regmodrm.reg].emul;
 	}
 
-	reg = get_register_reg(instr, opcode);
-	if (reg == NULL) {
-		return -1;
+	if (!opcode->immediate) {
+		reg = get_register_reg(instr, opcode);
+		if (reg == NULL) {
+			return -1;
+		}
+		strg->type = STORE_REG;
+		strg->u.reg = reg;
 	}
-	strg->type = STORE_REG;
-	strg->u.reg = reg;
 
 	if (has_sib(instr)) {
 		/* Overwrites RM */
