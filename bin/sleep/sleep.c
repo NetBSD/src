@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.27 2019/01/26 15:20:50 kre Exp $ */
+/* $NetBSD: sleep.c,v 1.28 2019/01/26 18:14:22 martin Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.27 2019/01/26 15:20:50 kre Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.28 2019/01/26 18:14:22 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,8 @@ report(const time_t remain, const time_t original, const char * const msg)
 	else if (remain < 2000)
 		warnx("Between %ld and %ld seconds left"
 		    " out of the original %g%s",
-		    remain, remain + 1, (double)original, msg);
+		    (long)remain, (long)remain + 1, (double)original,
+		    msg);
 	else if ((original - remain) < 100000 && (original-remain) < original/8)
 		warnx("Have waited only %d seconds of the original %g",
 			(int)(original - remain), (double)original);
