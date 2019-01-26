@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.46 2019/01/23 04:21:55 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.47 2019/01/26 14:38:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -62,6 +62,14 @@ struct fdt_attach_args {
 
 /* flags for fdtbus_intr_establish */
 #define FDT_INTR_MPSAFE	__BIT(0)
+
+/* Interrupt trigger types defined by the FDT "interrupts" bindings. */
+#define	FDT_INTR_TYPE_POS_EDGE		__BIT(0)
+#define	FDT_INTR_TYPE_NEG_EDGE		__BIT(1)
+#define	FDT_INTR_TYPE_DOUBLE_EDGE	(FDT_INTR_TYPE_POS_EDGE | \
+					 FDT_INTR_TYPE_NEG_EDGE)
+#define	FDT_INTR_TYPE_HIGH_LEVEL	__BIT(2)
+#define	FDT_INTR_TYPE_LOW_LEVEL		__BIT(3)
 
 struct fdtbus_interrupt_controller_func {
 	void *	(*establish)(device_t, u_int *, int, int,

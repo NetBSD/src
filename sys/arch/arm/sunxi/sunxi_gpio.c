@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.22 2019/01/23 04:21:54 thorpej Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.23 2019/01/26 14:38:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.22 2019/01/23 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.23 2019/01/26 14:38:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -458,19 +458,19 @@ sunxi_gpio_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int type = be32toh(specifier[2]) & 0xf;
 
 	switch (type) {
-	case 0x1:
+	case FDT_INTR_TYPE_POS_EDGE:
 		mode = SUNXI_GPIO_INT_MODE_POS_EDGE;
 		break;
-	case 0x2:
+	case FDT_INTR_TYPE_NEG_EDGE:
 		mode = SUNXI_GPIO_INT_MODE_NEG_EDGE;
 		break;
-	case 0x3:
+	case FDT_INTR_TYPE_DOUBLE_EDGE:
 		mode = SUNXI_GPIO_INT_MODE_DOUBLE_EDGE;
 		break;
-	case 0x4:
+	case FDT_INTR_TYPE_HIGH_LEVEL:
 		mode = SUNXI_GPIO_INT_MODE_HIGH_LEVEL;
 		break;
-	case 0x8:
+	case FDT_INTR_TYPE_LOW_LEVEL:
 		mode = SUNXI_GPIO_INT_MODE_LOW_LEVEL;
 		break;
 	default:

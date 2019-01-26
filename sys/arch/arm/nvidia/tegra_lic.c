@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_lic.c,v 1.5 2017/05/26 20:08:02 jmcneill Exp $ */
+/* $NetBSD: tegra_lic.c,v 1.6 2019/01/26 14:38:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.5 2017/05/26 20:08:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.6 2019/01/26 14:38:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -142,7 +142,8 @@ tegra_lic_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int intr = be32toh(specifier[1]);
 	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
 	const u_int trig = be32toh(specifier[2]) & 0xf;
-	const u_int level = (trig & 0x3) ? IST_EDGE : IST_LEVEL;
+	const u_int level = (trig & FDT_INTR_TYPE_DOUBLE_EDGE)
+	    ? IST_EDGE : IST_LEVEL;
 
 	return intr_establish(irq, ipl, level | iflags, func, arg);
 }
