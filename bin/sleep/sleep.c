@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.26 2019/01/26 15:19:08 kre Exp $ */
+/* $NetBSD: sleep.c,v 1.27 2019/01/26 15:20:50 kre Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.26 2019/01/26 15:19:08 kre Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.27 2019/01/26 15:20:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,8 @@ main(int argc, char *argv[])
 	 * into the floating point conversion path if the input
 	 * is hex (the 'x' in 0xA is not a digit).  Then if
 	 * strtod() handles hex (on NetBSD it does) so will we.
+	 * That path is also taken for scientific notation (1.2e+3)
+	 * and when the input is simply nonsense.
 	 */
 	fracflag = 0;
 	arg = *argv;
@@ -132,19 +134,21 @@ main(int argc, char *argv[])
 			val = strtod_l(arg, &temp, LC_C_LOCALE);
 		if (val < 0 || temp == arg || *temp != '\0')
 			usage();
+
 		ival = floor(val);
 		fval = (1000000000 * (val-ival));
-		if (ival  >= (double)UINT_MAX)
-			ntime.tv_sec = (double)UINT_MAX;
-		else
-			ntime.tv_sec = ival;
+		ntime.tv_sec = ival;
+		if ((double)ntime.tv_sec != ival)
+			errx(1, "requested delay (%s) out of range", arg);
 		ntime.tv_nsec = fval;
+
 		if (ntime.tv_sec == 0 && ntime.tv_nsec == 0)
 			return EXIT_SUCCESS;	/* was 0.0 or underflowed */
 	} else {
 		ntime.tv_sec = strtol(arg, &temp, 10);
 		if (ntime.tv_sec < 0 || temp == arg || *temp != '\0')
 			usage();
+
 		if (ntime.tv_sec == 0)
 			return EXIT_SUCCESS;
 		ntime.tv_nsec = 0;
@@ -166,28 +170,21 @@ main(int argc, char *argv[])
 			} else
 				err(EXIT_FAILURE, "nanosleep failed");
 		}
-	} else {
-		delay = (unsigned long)ntime.tv_sec;
+	} else while (ntime.tv_sec > 0) {
+		delay = (unsigned int)ntime.tv_sec;
 
-		if ((time_t)delay != ntime.tv_sec ||
-		    delay > UINT_MAX - 86400) {
-			for (;;) {
-				pause();
-				if (report_requested) {
-					warnx("Waiting for the end of time");
-					report_requested = 0;
-				} else
-					break;
-			}
-		} else {
-			while ((delay = sleep(delay)) != 0) {
-				if (report_requested) {
-					report((time_t)delay, original, "");
-					report_requested = 0;
-				} else
-					break;
-			}
-		}
+		if ((time_t)delay != ntime.tv_sec || delay > 30 * 86400)
+			delay = 30 * 86400;
+
+		ntime.tv_sec -= delay;
+		delay = sleep(delay);
+		ntime.tv_sec += delay;
+
+		if (delay != 0 && report_requested) {
+			report(ntime.tv_sec, original, "");
+			report_requested = 0;
+		} else
+			break;
 	}
 
 	return EXIT_SUCCESS;
@@ -202,10 +199,16 @@ report(const time_t remain, const time_t original, const char * const msg)
 		warnx("In the final moments of the original"
 		    " %ld%s second%s", (long)original, msg,
 		    original == 1 && *msg == '\0' ? "" : "s");
-	else
+	else if (remain < 2000)
 		warnx("Between %ld and %ld seconds left"
-		    " out of the original %ld%s",
-		    remain, remain + 1, (long)original, msg);
+		    " out of the original %g%s",
+		    remain, remain + 1, (double)original, msg);
+	else if ((original - remain) < 100000 && (original-remain) < original/8)
+		warnx("Have waited only %d seconds of the original %g",
+			(int)(original - remain), (double)original);
+	else
+		warnx("Approximately %g seconds left out of the original %g",
+			(double)remain, (double)original);
 }
 
 static void
