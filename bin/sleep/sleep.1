@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.1,v 1.24 2017/07/03 21:33:24 wiz Exp $
+.\"	$NetBSD: sleep.1,v 1.25 2019/01/26 15:19:08 kre Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)sleep.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd August 12, 2016
+.Dd January 26, 2019
 .Dt SLEEP 1
 .Os
 .Sh NAME
@@ -44,9 +44,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility
-suspends execution for a minimum of
-.Ar seconds .
+utility suspends execution for a minimum of
+.Ar seconds
+seconds, then exits.
 It is usually used to schedule the execution of other commands (see
 .Sx EXAMPLES
 below).
@@ -55,12 +55,24 @@ Note: The
 .Nx
 .Nm
 command will accept and honor a non-integer number of specified seconds.
-This is a non-portable extension, and its use will nearly guarantee that
-a shell script will not execute properly on another system.
+Note however, that if the request is for much more than 2.5 hours,
+any fractional seconds will be ignored.
+Permitting non-integral delays is a non-portable extension,
+and its use will decrease the probability that
+a shell script will execute properly on another system.
+.Pp
+If the request is for more than a little over 135 years
+.Nm
+will pause forever.
+If the computer is still running when the
+.Nm
+should have terminated,
+.Nm
+will need to be killed by outside intervention.
 .Pp
 When the
 .Dv SIGINFO
-signal is received, the estimate of the amount of seconds left to
+signal is received, an estimate of the number of seconds remaining to
 sleep is printed on the standard output.
 .Sh EXIT STATUS
 The
@@ -77,15 +89,16 @@ An error occurred.
 .Sh EXAMPLES
 To schedule the execution of a command for 1800 seconds later:
 .Pp
-.Dl (sleep 1800; sh command_file >& errors)&
+.Dl (sleep 1800; sh command_file >errors 2>&1)&
 .Pp
 This incantation would wait half an hour before
-running the script command_file.
+running the script
+.Dq command_file .
 (See the
 .Xr at 1
 utility.)
 .Pp
-To reiteratively run a command (with
+To repeatedly run a command (using
 .Xr csh 1 ) :
 .Pp
 .Bd -literal -offset indent -compact
@@ -107,12 +120,36 @@ running is taking longer than expected to process a series of
 files, and it would be nice to have
 another program start processing the files created by the first
 program as soon as it is finished (when zzz.rawdata is created).
-The script checks every five minutes for the file zzz.rawdata,
-when the file is found, then another portion processing
+The script checks every five minutes for the file zzz.rawdata.
+When the file is found, processing the generated files (*.rawdata)
 is done courteously by sleeping for 70 seconds in between each
 awk job.
+.Pp
+To wait until a particular time, the following,
+with some error checking added, might be used (using
+.Xr sh 1
+on
+.Nx ) :
+.Bd -literal -offset indent
+END=$(( $( date -d "$1" +%s ) - START_TIME ))
+while [ "${SECONDS}" -lt "${END}" ]
+do
+	sleep "$((END - SECONDS))"
+done
+.Ed
+.Pp
+where the argument
+.Sq \&$1
+specifies the desired date and time in any format the
+.Fl d
+option to the
+.Xr date 1
+command accepts.
 .Sh SEE ALSO
 .Xr at 1 ,
+.Xr csh 1 ,
+.Xr date 1 ,
+.Xr sh 1 ,
 .Xr nanosleep 2 ,
 .Xr sleep 3
 .Sh STANDARDS
@@ -126,3 +163,7 @@ A
 .Nm
 utility appeared in
 .At v4 .
+Processing fractional seconds, and processing the
+.Ic seconds
+argument respecting the current locale, was added in
+.Nx 1.3 .
