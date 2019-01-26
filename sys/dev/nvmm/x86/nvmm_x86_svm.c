@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.17 2019/01/24 13:05:59 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.18 2019/01/26 15:12:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.17 2019/01/24 13:05:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.18 2019/01/26 15:12:20 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,7 +1051,6 @@ svm_exit_npf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		exit->u.mem.inst_len = cpudata->vmcb->ctrl.inst_len;
 		memcpy(exit->u.mem.inst_bytes, cpudata->vmcb->ctrl.inst_bytes,
 		    sizeof(exit->u.mem.inst_bytes));
-		exit->u.mem.npc = cpudata->vmcb->ctrl.nrip;
 	} else {
 		exit->reason = NVMM_EXIT_NONE;
 	}

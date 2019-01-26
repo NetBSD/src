@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.3 2019/01/24 13:05:59 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.4 2019/01/26 15:12:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@ struct nvmm_exit_memory {
 	gpaddr_t gpa;
 	uint8_t inst_len;
 	uint8_t inst_bytes[15];
-	uint64_t npc;
 };
 
 enum nvmm_exit_io_type {
