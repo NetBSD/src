@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.30 2019/01/27 02:08:51 pgoyette Exp $	*/
+/*	$NetBSD: defs.h,v 1.31 2019/01/27 04:15:11 oster Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -359,14 +359,6 @@ int  clean_xfer_dir;
 #define SYSINST_FTP_DIR		"pub/NetBSD-daily/" REL_PATH "/latest"
 #else
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
-#endif
-#endif
-
-#if !defined(ARCH_SUBDIR)
-#define	ARCH_SUBDIR	MACH
-#endif
-#if !defined(PKG_ARCH_SUBDIR)
-#define	PKG_ARCH_SUBDIR	MACH
 #endif
 #endif
 
