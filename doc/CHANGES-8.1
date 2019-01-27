@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.94 2019/01/24 15:36:05 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.95 2019/01/27 18:47:59 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2278,4 +2278,46 @@ sys/kern/kern_ntptime.c				1.60
 	Zero out the ntptimeval structure to prevent a 4 byte kernel
 	stack disclosure.
 	[maxv, ticket #1168]
+
+lib/libc/gen/popen.c				1.36
+
+	Use a mutex instead of an rwlock to assure thread safety.
+	[christos, ticket #1170]
+
+sys/dev/pci/if_fxp_pci.c			1.84,1.85
+sys/dev/pci/ixgbe/ixgbe.c			1.171
+sys/dev/pci/ixgbe/ixv.c				1.108
+sys/dev/pci/nvme_pci.c				1.26
+sys/dev/pci/xhci_pci.c				1.16,1.21
+
+	Style/cleanup/remove debug code.
+	Explicitly enable address decoding if the firmware did not do it.
+	[msaitoh, ticket #1172]
+
+sys/arch/alpha/alpha/machdep.c			1.352
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.117
+sys/arch/arm/arm/sig_machdep.c			1.51
+sys/arch/hppa/hppa/sig_machdep.c		1.26
+sys/arch/i386/i386/machdep.c			1.813
+sys/arch/m68k/m68k/sig_machdep.c		1.50
+sys/arch/mips/mips/netbsd32_machdep.c		1.16
+sys/arch/mips/mips/sig_machdep.c		1.24
+sys/arch/powerpc/powerpc/sig_machdep.c		1.46
+sys/arch/riscv/riscv/sig_machdep.c		1.2
+sys/arch/sh3/sh3/sh3_machdep.c			1.106
+sys/arch/sparc64/sparc64/machdep.c		1.289
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.111
+sys/arch/usermode/target/i386/cpu_i386.c	1.8
+sys/arch/usermode/target/x86_64/cpu_x86_64.c	1.7
+sys/arch/vax/vax/sig_machdep.c			1.23
+
+	Fix widespread leak in the sendsig_siginfo() functions.
+	sigframe_siginfo has padding, so zero it out properly.
+	[maxv, ticket #1173]
+
+sys/arch/amd64/include/vmparam.h		1.50
+
+	Increase VM_PHYSSEG_MAX from 32 to 64.
+	Heavily fragmented memory maps have been discovered in the wild.
+	[maxv, ticket #1174]
 
