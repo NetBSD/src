@@ -1,6 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.26 2019/01/27 02:08:35 pgoyette Exp $	*/
-
-/* asctime and asctime_r a la POSIX and ISO C, except pad years before 1000.  */
+/*	$NetBSD: asctime.c,v 1.27 2019/01/27 02:40:49 dholland Exp $	*/
 
 /* asctime and asctime_r a la POSIX and ISO C, except pad years before 1000.  */
 
@@ -20,7 +18,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.26 2019/01/27 02:08:35 pgoyette Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.27 2019/01/27 02:40:49 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
