@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.117 2018/08/09 06:26:47 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.118 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -324,7 +324,6 @@ usbd_status	usbd_reattach_device(device_t, struct usbd_device *,
 				     int, const int *);
 
 void		usbd_remove_device(struct usbd_device *, struct usbd_port *);
-int		usbd_printBCD(char *, size_t, int);
 usbd_status	usbd_fill_iface_data(struct usbd_device *, int, int);
 void		usb_free_device(struct usbd_device *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.133 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.133 2019/01/27 02:08:43 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -243,6 +243,9 @@ module_free(module_t *mod)
 {
 
 	specificdata_fini(module_specificdata_domain, &mod->mod_sdref);
+	if (mod->mod_required)
+		kmem_free(mod->mod_required, mod->mod_arequired *
+		    sizeof(module_t *));
 	kmem_free(mod, sizeof(*mod));
 }
 
@@ -252,7 +255,7 @@ module_free(module_t *mod)
 static void
 module_require_force(struct module *mod)
 {
-	mod->mod_flags |= MODFLG_MUST_FORCE;
+	SET(mod->mod_flags, MODFLG_MUST_FORCE);
 }
 
 /*
@@ -573,7 +576,7 @@ module_init_class(modclass_t modclass)
 			 * (If the module has previously been set to
 			 * MODFLG_MUST_FORCE, don't try to override that!)
 			 */
-			if ((mod->mod_flags & MODFLG_MUST_FORCE) ||
+			if (ISSET(mod->mod_flags, MODFLG_MUST_FORCE) ||
 			    module_do_builtin(mod, mi->mi_name, NULL,
 			    NULL) != 0) {
 				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
@@ -738,9 +741,8 @@ module_lookup(const char *name)
 	KASSERT(kernconfig_is_held());
 
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
-		if (strcmp(mod->mod_info->mi_name, name) == 0) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0)
 			break;
-		}
 	}
 
 	return mod;
@@ -798,12 +800,37 @@ module_enqueue(module_t *mod)
 
 		/* Add references to the requisite modules. */
 		for (i = 0; i < mod->mod_nrequired; i++) {
-			KASSERT(mod->mod_required[i] != NULL);
-			mod->mod_required[i]->mod_refcnt++;
+			KASSERT((*mod->mod_required)[i] != NULL);
+			(*mod->mod_required)[i]->mod_refcnt++;
 		}
 	}
 	module_count++;
 	module_gen++;
+}
+
+/*
+ * Our array of required module pointers starts with zero entries.  If we
+ * need to add a new entry, and the list is already full, we reallocate a
+ * larger array, adding MAXMODDEPS entries.
+ */
+static void
+alloc_required(module_t *mod)
+{
+	module_t *(*new)[], *(*old)[];
+	int areq;
+	int i;
+
+	if (mod->mod_nrequired >= mod->mod_arequired) {
+		areq = mod->mod_arequired + MAXMODDEPS;
+		old = mod->mod_required;
+		new = kmem_zalloc(areq * sizeof(module_t *), KM_SLEEP);
+		for (i = 0; i < mod->mod_arequired; i++)
+			(*new)[i] = (*old)[i];
+		mod->mod_required = new;
+		if (old)
+			kmem_free(old, mod->mod_arequired * sizeof(module_t *));
+		mod->mod_arequired = areq;
+	}
 }
 
 /*
@@ -853,14 +880,17 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 		 * cases (such as nfsserver + nfs), the dependee can be
 		 * succesfully linked without the dependencies.
 		 */
-		module_error("%s: can't find builtin dependency `%s'",
-		    pmod->mod_info->mi_name, name);
+		module_error("built-in module %s can't find builtin "
+		    "dependency `%s'", pmod->mod_info->mi_name, name);
 		return ENOENT;
 	}
 
 	/*
 	 * Initialize pre-requisites.
 	 */
+	KASSERT(mod->mod_required == NULL);
+	KASSERT(mod->mod_arequired == 0);
+	KASSERT(mod->mod_nrequired == 0);
 	if (mi->mi_required != NULL) {
 		for (s = mi->mi_required; *s != '\0'; s = p) {
 			if (*s == ',')
@@ -872,17 +902,14 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 			strlcpy(buf, s, len);
 			if (buf[0] == '\0')
 				break;
-			if (mod->mod_nrequired == MAXMODDEPS - 1) {
-				module_error("%s: too many required modules "
-				    "%d >= %d", pmod->mod_info->mi_name,
-				    mod->mod_nrequired, MAXMODDEPS - 1);
-				return EINVAL;
-			}
+			alloc_required(mod);
 			error = module_do_builtin(mod, buf, &mod2, NULL);
 			if (error != 0) {
-				return error;
+				module_error("built-in module %s prerequisite "
+				    "%s failed, error %d", name, buf, error);
+				goto fail;
 			}
-			mod->mod_required[mod->mod_nrequired++] = mod2;
+			(*mod->mod_required)[mod->mod_nrequired++] = mod2;
 		}
 	}
 
@@ -894,9 +921,9 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	module_active = prev_active;
 	if (error != 0) {
-		module_error("builtin module `%s' "
-		    "failed to init, error %d", mi->mi_name, error);
-		return error;
+		module_error("built-in module %s failed its MODULE_CMD_INIT, "
+		    "error %d", mi->mi_name, error);
+		goto fail;
 	}
 
 	/* load always succeeds after this point */
@@ -908,6 +935,15 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	}
 	module_enqueue(mod);
 	return 0;
+
+ fail:
+	if (mod->mod_required)
+		kmem_free(mod->mod_required, mod->mod_arequired *
+		    sizeof(module_t *));
+	mod->mod_arequired = 0;
+	mod->mod_nrequired = 0;
+	mod->mod_required = NULL;
+	return error;
 }
 
 /*
@@ -921,13 +957,19 @@ module_do_load(const char *name, bool isdep, int flags,
 	       prop_dictionary_t props, module_t **modp, modclass_t modclass,
 	       bool autoload)
 {
-#define MODULE_MAX_DEPTH 6
-
+	/* The pending list for this level of recursion */
 	TAILQ_HEAD(pending_t, module);
-	static int depth = 0;
-	static struct pending_t *pending_lists[MODULE_MAX_DEPTH];
 	struct pending_t *pending;
 	struct pending_t new_pending = TAILQ_HEAD_INITIALIZER(new_pending);
+
+	/* The stack of pending lists */
+	static SLIST_HEAD(pend_head, pend_entry) pend_stack =
+		SLIST_HEAD_INITIALIZER(pend_stack);
+	struct pend_entry {
+		SLIST_ENTRY(pend_entry) pe_entry;
+		struct pending_t *pe_pending;
+	} my_pend_entry;
+
 	modinfo_t *mi;
 	module_t *mod, *mod2, *prev_active;
 	prop_dictionary_t filedict;
@@ -942,27 +984,20 @@ module_do_load(const char *name, bool isdep, int flags,
 	error = 0;
 
 	/*
-	 * Avoid recursing too far.
-	 */
-	if (++depth > MODULE_MAX_DEPTH) {
-		module_error("recursion too deep for `%s' %d > %d", name,
-		    depth, MODULE_MAX_DEPTH);
-		depth--;
-		return EMLINK;
-	}
-
-	/*
-	 * Set up the pending list for this depth.  If this is a
-	 * recursive entry, then use same list as for outer call,
-	 * else use the locally allocated list.  In either case,
-	 * remember which one we're using.
+	 * Set up the pending list for this entry.  If this is an
+	 * internal entry (for a dependency), then use the same list
+	 * as for the outer call;  otherwise, it's an external entry
+	 * (possibly recursive, ie a module's xxx_modcmd(init, ...)
+	 * routine called us), so use the locally allocated list.  In
+	 * either case, add it to our stack.
 	 */
 	if (isdep) {
-		KASSERT(depth > 1);
-		pending = pending_lists[depth - 2];
+		KASSERT(SLIST_FIRST(&pend_stack) != NULL);
+		pending = SLIST_FIRST(&pend_stack)->pe_pending;
 	} else
 		pending = &new_pending;
-	pending_lists[depth - 1] = pending;
+	my_pend_entry.pe_pending = pending;
+	SLIST_INSERT_HEAD(&pend_stack, &my_pend_entry, pe_entry);
 
 	/*
 	 * Search the list of disabled builtins first.
@@ -973,17 +1008,17 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 	}
 	if (mod) {
-		if ((mod->mod_flags & MODFLG_MUST_FORCE) &&
-		    (flags & MODCTL_LOAD_FORCE) == 0) {
+		if (ISSET(mod->mod_flags, MODFLG_MUST_FORCE) &&
+		    !ISSET(flags, MODCTL_LOAD_FORCE)) {
 			if (!autoload) {
 				module_error("use -f to reinstate "
 				    "builtin module `%s'", name);
 			}
-			depth--;
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			return EPERM;
 		} else {
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			error = module_do_builtin(mod, name, modp, props);
-			depth--;
 			return error;
 		}
 	}
@@ -1011,14 +1046,14 @@ module_do_load(const char *name, bool isdep, int flags,
 			}
 			module_print("%s module `%s' already loaded",
 			    isdep ? "dependent" : "requested", name);
-			depth--;
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			return EEXIST;
 		}
 
 		mod = module_newmodule(MODULE_SOURCE_FILESYS);
 		if (mod == NULL) {
 			module_error("out of memory for `%s'", name);
-			depth--;
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			return ENOMEM;
 		}
 
@@ -1037,8 +1072,8 @@ module_do_load(const char *name, bool isdep, int flags,
 				module_error("vfs load failed for `%s', "
 				    "error %d", name, error);
 #endif
+			SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 			module_free(mod);
-			depth--;
 			return error;
 		}
 		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
@@ -1064,7 +1099,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
 		module_error("module `%s' built for `%d', system `%d'",
 		    mi->mi_name, mi->mi_version, __NetBSD_Version__);
-		if ((flags & MODCTL_LOAD_FORCE) != 0) {
+		if (ISSET(flags, MODCTL_LOAD_FORCE)) {
 			module_error("forced load, system may be unstable");
 		} else {
 			error = EPROGMISMATCH;
@@ -1106,6 +1141,8 @@ module_do_load(const char *name, bool isdep, int flags,
 			module_error("module with name `%s' already loaded",
 			    mod2->mod_info->mi_name);
 			error = EEXIST;
+			if (modp != NULL)
+				*modp = mod2;
 			goto fail;
 		}
 	}
@@ -1129,6 +1166,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * Now try to load any requisite modules.
 	 */
 	if (mi->mi_required != NULL) {
+		mod->mod_arequired = 0;
 		for (s = mi->mi_required; *s != '\0'; s = p) {
 			if (*s == ',')
 				s++;
@@ -1146,13 +1184,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			strlcpy(buf, s, len);
 			if (buf[0] == '\0')
 				break;
-			if (mod->mod_nrequired == MAXMODDEPS - 1) {
-				error = EINVAL;
-				module_error("too many required modules "
-				    "%d >= %d", mod->mod_nrequired,
-				    MAXMODDEPS - 1);
-				goto fail;
-			}
+			alloc_required(mod);
 			if (strcmp(buf, mi->mi_name) == 0) {
 				error = EDEADLK;
 				module_error("self-dependency detected for "
@@ -1167,7 +1199,7 @@ module_do_load(const char *name, bool isdep, int flags,
 				    buf, error);
 				goto fail;
 			}
-			mod->mod_required[mod->mod_nrequired++] = mod2;
+			(*mod->mod_required)[mod->mod_nrequired++] = mod2;
 		}
 	}
 
@@ -1190,6 +1222,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			goto fail;
 		}
 	}
+
 	prev_active = module_active;
 	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, filedict ? filedict : props);
@@ -1231,10 +1264,10 @@ module_do_load(const char *name, bool isdep, int flags,
 		 * a short delay unless auto-unload is disabled.
 		 */
 		mod->mod_autotime = time_second + module_autotime;
-		mod->mod_flags |= MODFLG_AUTO_LOADED;
+		SET(mod->mod_flags, MODFLG_AUTO_LOADED);
 		module_thread_kick();
 	}
-	depth--;
+	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 	module_print("module `%s' loaded successfully", mi->mi_name);
 	module_callback_load(mod);
 	return 0;
@@ -1249,8 +1282,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		filedict = NULL;
 	}
 	TAILQ_REMOVE(pending, mod, mod_chain);
+	SLIST_REMOVE_HEAD(&pend_stack, pe_entry);
 	module_free(mod);
-	depth--;
 	return error;
 }
 
@@ -1305,14 +1338,24 @@ module_do_unload(const char *name, bool load_requires_force)
 	module_count--;
 	TAILQ_REMOVE(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {
-		mod->mod_required[i]->mod_refcnt--;
+		(*mod->mod_required)[i]->mod_refcnt--;
 	}
 	module_print("unloaded module `%s'", name);
 	if (mod->mod_kobj != NULL) {
 		kobj_unload(mod->mod_kobj);
 	}
 	if (mod->mod_source == MODULE_SOURCE_KERNEL) {
-		mod->mod_nrequired = 0; /* will be re-parsed */
+		if (mod->mod_required != NULL) {
+			/*
+			 * release "required" resources - will be re-parsed
+			 * if the module is re-enabled
+			 */
+			kmem_free(mod->mod_required,
+			    mod->mod_arequired * sizeof(module_t *));
+			mod->mod_nrequired = 0;
+			mod->mod_arequired = 0;
+			mod->mod_required = NULL;
+		}
 		if (load_requires_force)
 			module_require_force(mod);
 		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
@@ -1410,8 +1453,8 @@ module_fetch_info(module_t *mod)
 		return error;
 	}
 	if (size != sizeof(modinfo_t **)) {
-		module_error("`link_set_modules' section wrong size %zu != %zu",
-		    size, sizeof(modinfo_t **));
+		module_error("`link_set_modules' section wrong size "
+		    "(got %zu, wanted %zu)", size, sizeof(modinfo_t **));
 		return ENOEXEC;
 	}
 	mod->mod_info = *(modinfo_t **)addr;
@@ -1460,7 +1503,7 @@ module_thread(void *cookie)
 			if (mod->mod_source == MODULE_SOURCE_KERNEL)
 				continue;
 			/* skip modules that weren't auto-loaded */
-			if ((mod->mod_flags & MODFLG_AUTO_LOADED) == 0)
+			if (!ISSET(mod->mod_flags, MODFLG_AUTO_LOADED))
 				continue;
 
 			if (uvmexp.free < uvmexp.freemin) {

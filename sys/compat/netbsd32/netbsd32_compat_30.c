@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.32 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.33 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,10 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.32 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.33 2019/01/27 02:08:40 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include <opt_ntp.h>
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+#include <sys/mount.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -44,16 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.32 2018/09/03 16:29:29 rias
 #include <sys/namei.h>
 #include <sys/statvfs.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/compat_stub.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
-
 
 int
 compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getdents_args *uap, register_t *retval)
@@ -292,4 +300,84 @@ compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
 	NETBSD32TO64_UAP(flags);
 	return (compat_30_sys_fhopen(l, &ua, retval));
+}
+
+#ifdef NTP
+int
+compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_ntp_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_ntptimevalp_t) ntvp;
+	} */
+	struct netbsd32_ntptimeval30 ntv32;
+	struct ntptimeval ntv;
+	int error = 0;
+
+	if (vec_ntp_gettime == NULL)
+		return EINVAL;
+
+	if (SCARG_P32(uap, ntvp)) {
+		(*vec_ntp_gettime)(&ntv);
+
+		memset(&ntv32, 0, sizeof(ntv32));
+		ntv32.time.tv_sec = ntv.time.tv_sec;
+		ntv32.time.tv_usec = ntv.time.tv_nsec / 1000;
+		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
+		ntv32.esterror = (netbsd32_long)ntv.esterror;
+		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
+	}
+	if (!error) {
+		*retval = (*vec_ntp_timestatus)();
+	}
+
+	return (error);
+}
+#endif
+
+static struct syscall_package compat_netbsd32_30_syscalls[] = {
+	{ NETBSD32_SYS_compat_30_netbsd32_getdents, 0,
+	    (sy_call_t *)compat_30_netbsd32_getdents }, 
+	{ NETBSD32_SYS_compat_30_netbsd32___stat13, 0,
+	    (sy_call_t *)compat_30_netbsd32___stat13 }, 
+	{ NETBSD32_SYS_compat_30_netbsd32___fstat13, 0,
+	    (sy_call_t *)compat_30_netbsd32___fstat13 }, 
+	{ NETBSD32_SYS_compat_30_netbsd32___lstat13, 0,
+	    (sy_call_t *)compat_30_netbsd32___lstat13 }, 
+	{ NETBSD32_SYS_compat_30_netbsd32_fhstat, 0,
+	    (sy_call_t *)compat_30_netbsd32_fhstat }, 
+	{ NETBSD32_SYS_compat_30_netbsd32_fhstatvfs1, 0,
+	    (sy_call_t *)compat_30_netbsd32_fhstatvfs1 }, 
+	{ NETBSD32_SYS_compat_30_netbsd32_socket, 0,
+	    (sy_call_t *)compat_30_netbsd32_socket }, 
+	{ NETBSD32_SYS_compat_30_netbsd32_getfh, 0,
+	    (sy_call_t *)compat_30_netbsd32_getfh }, 
+	{ NETBSD32_SYS_compat_30_netbsd32___fhstat30, 0,
+	    (sy_call_t *)compat_30_netbsd32___fhstat30 }, 
+	{ NETBSD32_SYS_compat_30_netbsd32_fhopen, 0,
+	    (sy_call_t *)compat_30_netbsd32_fhopen }, 
+#ifdef NTP
+	{ NETBSD32_SYS_compat_30_netbsd32_ntp_gettime, 0,
+	    (sy_call_t *)compat_30_netbsd32_ntp_gettime }, 
+#endif
+	{ 0, 0, NULL }
+};
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_30, "compat_netbsd32_40,compat_30");
+
+static int
+compat_netbsd32_30_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(&emul_netbsd32,
+		    compat_netbsd32_30_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(&emul_netbsd32,
+		    compat_netbsd32_30_syscalls);
+
+	default:
+		return ENOTTY;
+	}
 }

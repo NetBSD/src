@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.27 2019/01/18 07:05:36 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.28 2019/01/27 02:08:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.27 2019/01/18 07:05:36 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28 2019/01/27 02:08:36 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"

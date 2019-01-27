@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.31 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.32 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.319 2018/08/08 01:16:01 djm Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.31 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.32 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: readpassphrase.c,v 1.8 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: readpassphrase.c,v 1.9 2019/01/27 02:08:33 pgoyette Exp $	*/
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.7 2001/08/07 19:34:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
-__RCSID("$NetBSD: readpassphrase.c,v 1.8 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: readpassphrase.c,v 1.9 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <ctype.h>
 #include <errno.h>

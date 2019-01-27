@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.27 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.28 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: monitor.c,v 1.186 2018/07/20 03:46:34 djm Exp $ */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.27 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.28 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>

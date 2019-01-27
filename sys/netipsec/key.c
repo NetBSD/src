@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.260 2018/12/26 08:58:51 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.261 2019/01/27 02:08:48 pgoyette Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.260 2018/12/26 08:58:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.261 2019/01/27 02:08:48 pgoyette Exp $");
 
 /*
  * This code is referred to RFC 2367

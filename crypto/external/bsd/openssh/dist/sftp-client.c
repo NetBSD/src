@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.21 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.22 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: sftp-client.c,v 1.130 2018/07/31 03:07:24 djm Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.21 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.22 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>

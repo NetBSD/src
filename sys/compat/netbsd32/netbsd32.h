@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.120 2018/11/25 17:58:29 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.121 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -46,6 +46,8 @@
 #include <sys/shm.h>
 #include <sys/ucontext.h>
 #include <sys/ucred.h>
+#include <sys/module_hook.h>
+
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/signal.h>
@@ -1171,4 +1173,38 @@ struct iovec *netbsd32_get_iov(struct netbsd32_iovec *, int, struct iovec *,
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
 #endif /* SYSCTL_SETUP_PROTO */
+
+MODULE_HOOK(netbsd32_sendsig_hook, void,
+    (const ksiginfo_t *, const sigset_t *));
+
+extern struct sysent netbsd32_sysent[];
+extern const uint32_t netbsd32_sysent_nomodbits[]; 
+#ifdef SYSCALL_DEBUG 
+extern const char * const netbsd32_syscallnames[];
+#endif
+
+extern struct sysctlnode netbsd32_sysctl_root;
+
+struct netbsd32_modctl_args;
+MODULE_HOOK(compat32_80_modctl_hook, int,
+    (struct lwp *, const struct netbsd32_modctl_args *, register_t *));
+
+/*
+ * Finally, declare emul_netbsd32 as this is needed in lots of
+ * places when calling syscall_{,dis}establish()
+ */
+
+extern struct emul emul_netbsd32;
+extern char netbsd32_sigcode[], netbsd32_esigcode[];
+
+/*
+ * Prototypes for MD initialization routines
+ */
+void netbsd32_machdep_md_init(void);
+void netbsd32_machdep_md_fini(void);
+void netbsd32_machdep_md_13_init(void);
+void netbsd32_machdep_md_13_fini(void);
+void netbsd32_machdep_md_16_init(void);
+void netbsd32_machdep_md_16_fini(void);
+
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.12 2018/12/05 22:42:27 jmcneill Exp $
+#	$NetBSD: files.aarch64,v 1.13 2019/01/27 02:08:36 pgoyette Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -127,8 +127,6 @@ file	arch/aarch64/aarch64/efi_machdep.c		efi_runtime
 include "compat/netbsd32/files.netbsd32"
 file	arch/aarch64/aarch64/netbsd32_machdep.c		compat_netbsd32
 file	arch/aarch64/aarch64/netbsd32_syscall.c		compat_netbsd32
-#file	arch/aarch64/aarch32/compat_13_machdep.c	compat_13 & compat_netbsd32
-#file	arch/aarch64/aarch32/compat_16_machdep.c	compat_16 & compat_netbsd32
 
 # Linux binary compatibility (COMPAT_LINUX)
 #include "compat/ossaudio/files.ossaudio"

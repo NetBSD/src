@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80 2018/01/06 16:41:23 kamil Exp $
+	$NetBSD: syscalls.master,v 1.81 2019/01/27 02:08:40 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -259,10 +259,15 @@
 159	STD		{ int|sunos_sys||unmount(char *path); }
 160	NOARGS		{ int|async||daemon(void); }
 161	NOARGS		{ int|compat_30_sys||getfh(char *fname, fhandle_t *fhp); }
+#ifdef COMPAT_09
 162	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
 163	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
 			    int len); }
+#else
+162	UNIMPL		compat_09_sys_getdomainname
+163	UNIMPL		compat_09_sys_setdomainname
+#endif
 164	UNIMPL		rtschedule
 165	STD		{ int|sunos_sys||quotactl(int cmd, char *special, \
 			    int uid, void *addr); }
@@ -271,19 +276,19 @@
 			    int flags, void *data); }
 168	STD		{ int|sunos_sys||ustat(int dev, \
 			    struct sunos_ustat *buf); }
-#ifdef SYSVSEM
+#if defined(SYSVSEM) && defined(COMPAT_10)
 169	NOARGS		{ int|compat_10_sys||semsys(int which, int a2, int a3, \
 			    int a4, int a5); }
 #else
 169	UNIMPL		semsys
 #endif
-#ifdef SYSVMSG
+#if defined(SYSVMSG) && defined(COMPAT_10)
 170	NOARGS		{ int|compat_10_sys||msgsys(int which, int a2, int a3, \
 			    int a4, int a5, int a6); }
 #else
 170	UNIMPL		msgsys
 #endif
-#ifdef SYSVSHM
+#if defined(SYSVSHM) && defined(COMPAT_10)
 171	NOARGS		{ int|compat_10_sys||shmsys(int which, int a2, int a3, \
 			    int a4); }
 #else

@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.6 2019/01/14 14:55:37 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.7 2019/01/27 02:08:42 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.6 2019/01/14 14:55:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.7 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -853,4 +853,3 @@ virtio_pci_modcmd(modcmd_t cmd, void *opaque)
 
 	return error;
 }
-

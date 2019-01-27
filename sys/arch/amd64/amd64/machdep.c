@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.323 2018/12/10 15:08:23 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.324 2019/01/27 02:08:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2018/12/10 15:08:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.324 2019/01/27 02:08:37 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"

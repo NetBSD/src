@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.7 2018/12/12 00:48:43 alnsn Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.8 2019/01/27 02:08:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.7 2018/12/12 00:48:43 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.8 2019/01/27 02:08:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

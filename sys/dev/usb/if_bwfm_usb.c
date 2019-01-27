@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.8 2018/09/01 22:01:03 riastradh Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.9 2019/01/27 02:08:42 pgoyette Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.8 2018/09/01 22:01:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.9 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

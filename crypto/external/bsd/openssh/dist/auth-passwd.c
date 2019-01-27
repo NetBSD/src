@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.10 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: auth-passwd.c,v 1.47 2018/07/09 21:26:02 markus Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.10 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>

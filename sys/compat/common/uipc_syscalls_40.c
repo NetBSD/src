@@ -1,9 +1,13 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.17 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.17 2019/01/27 02:08:39 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 /*
  * System call interface to the socket abstraction.
@@ -15,11 +19,14 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christ
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/errno.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
+
+#include <compat/common/compat_mod.h>
 
 /*
  * Return interface configuration
@@ -29,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.16 2018/04/12 18:50:13 christ
  */
 /*ARGSUSED*/
 static int
-compat_ifconf(struct lwp *l, u_long cmd, void *data)
+compat_ifconf(u_long cmd, void *data)
 {
 	struct oifconf *ifc = data;
 	struct ifnet *ifp;
@@ -158,14 +165,16 @@ release_exit:
 	return error;
 }
 
-void
+void      
 uipc_syscalls_40_init(void)
 {
-	vec_compat_ifconf = compat_ifconf;
+ 
+	MODULE_SET_HOOK(uipc_syscalls_40_hook, "uipc40", compat_ifconf);
 }
-
+ 
 void
 uipc_syscalls_40_fini(void)
 {
-	vec_compat_ifconf = (void *)enosys;
+ 
+	MODULE_UNSET_HOOK(uipc_syscalls_40_hook);
 }

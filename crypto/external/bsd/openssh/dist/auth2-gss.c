@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-gss.c,v 1.12 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: auth2-gss.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: auth2-gss.c,v 1.29 2018/07/31 03:10:27 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-gss.c,v 1.12 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: auth2-gss.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
 
 #ifdef GSSAPI
 

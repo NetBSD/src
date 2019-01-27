@@ -1,4 +1,4 @@
-/*	$NetBSD: xmss_wots.c,v 1.3 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: xmss_wots.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: xmss_wots.c,v 1.3 2018/04/10 00:10:49 djm Exp $ */
 
 /*
@@ -8,7 +8,7 @@ Joost Rijneveld
 Public domain.
 */
 #include "includes.h"
-__RCSID("$NetBSD: xmss_wots.c,v 1.3 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: xmss_wots.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <stdlib.h>
 #include <stdint.h>

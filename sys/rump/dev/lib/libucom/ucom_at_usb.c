@@ -1,7 +1,10 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.9 2018/12/12 00:48:43 alnsn Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.10 2019/01/27 02:08:48 pgoyette Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom_at_usb.c,v 1.9 2018/12/12 00:48:43 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom_at_usb.c,v 1.10 2019/01/27 02:08:48 pgoyette Exp $");
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ucom_at_usb.c,v 1.10 2019/01/27 02:08:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

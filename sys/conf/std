@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.22 2016/11/02 00:11:59 pgoyette Exp $
+# $NetBSD: std,v 1.23 2019/01/27 02:08:41 pgoyette Exp $
 #
 # standard MI 'options'
 #
@@ -32,6 +32,11 @@ options	PTRACE_HOOKS	# Include ptrace hooks
 options	COREDUMP	# allow processes to coredump.
 options	AIO		# POSIX asynchronous I/O
 options	MQUEUE		# POSIX message queues
+
+# Common compatibility functions. They happen to be needed even when
+# no compatibility option is explicitly enabled.
+#
+options        COMPAT_UTILS
 
 #
 # Security model.

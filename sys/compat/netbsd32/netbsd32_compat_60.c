@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_60.c,v 1.3 2017/12/06 04:12:25 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_60.c,v 1.4 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,20 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.3 2017/12/06 04:12:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.4 2019/01/27 02:08:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
 #include <sys/lwp.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-
-
 
 int
 compat_60_netbsd32__lwp_park(struct lwp *l,
@@ -84,4 +85,31 @@ compat_60_netbsd32__lwp_park(struct lwp *l,
 
 	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp,
 	    SCARG_P32(uap, hint));
+}
+
+static struct syscall_package compat_netbsd32_60_syscalls[] = {
+	{ NETBSD32_SYS_compat_60_netbsd32__lwp_park, 0,
+	    (sy_call_t *)compat_60_netbsd32__lwp_park },
+	{ 0, 0, NULL }
+}; 
+
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_60, "compat_netbsd32_80,compat_60");
+
+static int
+compat_netbsd32_60_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(&emul_netbsd32,
+		    compat_netbsd32_60_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(&emul_netbsd32,
+		    compat_netbsd32_60_syscalls);
+
+	default:
+		return ENOTTY;
+	}
 }

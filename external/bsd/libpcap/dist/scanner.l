@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.l,v 1.10 2018/09/03 15:26:43 christos Exp $	*/
+/*	$NetBSD: scanner.l,v 1.11 2019/01/27 02:08:34 pgoyette Exp $	*/
 
 %top {
 /* Must come first for _LARGE_FILE_API on AIX. */
@@ -87,7 +87,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scanner.l,v 1.10 2018/09/03 15:26:43 christos Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.11 2019/01/27 02:08:34 pgoyette Exp $");
 
 #include <ctype.h>
 #include <string.h>

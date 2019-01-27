@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.140 2018/08/10 21:47:16 pgoyette Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.141 2019/01/27 02:08:49 pgoyette Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.140 2018/08/10 21:47:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.141 2019/01/27 02:08:49 pgoyette Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -7244,7 +7244,8 @@ struct sysent rump_sysent[] = {
 		.sy_call = (sy_call_t *)rumpns_enosys,
 	},		/* 174 = pwrite */
 	{
-		.sy_call = (sy_call_t *)rumpns_enosys,
+		.sy_flags = SYCALL_NOSYS,
+		.sy_call = (sy_call_t *)rumpns_sys_nomodule,
 },		/* 175 = ntp_gettime */
 #if defined(NTP) || !defined(_KERNEL_OPT)
 	{
@@ -7833,22 +7834,28 @@ struct sysent rump_sysent[] = {
 		.sy_call = (sy_call_t *)rumpns_enosys,
 	},		/* 329 = filler */
 	{
-		.sy_call = (sy_call_t *)rumpns_enosys,
+		.sy_flags = SYCALL_NOSYS,
+		.sy_call = (sy_call_t *)rumpns_sys_nomodule,
 },		/* 330 = sa_register */
 	{
-		.sy_call = (sy_call_t *)rumpns_enosys,
+		.sy_flags = SYCALL_NOSYS,
+		.sy_call = (sy_call_t *)rumpns_sys_nomodule,
 },		/* 331 = sa_stacks */
 	{
-		.sy_call = (sy_call_t *)rumpns_enosys,
+		.sy_flags = SYCALL_NOSYS,
+		.sy_call = (sy_call_t *)rumpns_sys_nomodule,
 },		/* 332 = sa_enable */
 	{
-		.sy_call = (sy_call_t *)rumpns_enosys,
+		.sy_flags = SYCALL_NOSYS,
+		.sy_call = (sy_call_t *)rumpns_sys_nomodule,
 },		/* 333 = sa_setconcurrency */
 	{
-		.sy_call = (sy_call_t *)rumpns_enosys,
+		.sy_flags = SYCALL_NOSYS,
+		.sy_call = (sy_call_t *)rumpns_sys_nomodule,
 },		/* 334 = sa_yield */
 	{
-		.sy_call = (sy_call_t *)rumpns_enosys,
+		.sy_flags = SYCALL_NOSYS,
+		.sy_call = (sy_call_t *)rumpns_sys_nomodule,
 },		/* 335 = sa_preempt */
 	{
 		.sy_flags = SYCALL_NOSYS,

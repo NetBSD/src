@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.c,v 1.7 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: cleanup.c,v 1.5 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: cleanup.c,v 1.7 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: cleanup.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/types.h>
 

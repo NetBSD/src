@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.19 2018/12/28 15:06:07 kardel Exp $ */
+/* $NetBSD: mpii.c,v 1.20 2019/01/27 02:08:42 pgoyette Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.19 2018/12/28 15:06:07 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.20 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include "bio.h"
 

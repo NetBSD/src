@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.40 2019/01/22 06:37:54 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.41 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.40 2019/01/22 06:37:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.41 2019/01/27 02:08:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

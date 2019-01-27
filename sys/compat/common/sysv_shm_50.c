@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_50.c,v 1.3 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: sysv_shm_50.c,v 1.4 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_50.c,v 1.3 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_50.c,v 1.4 2019/01/27 02:08:39 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.25 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.26 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: readconf.c,v 1.297 2018/08/12 20:19:13 djm Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.25 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.26 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $	*/
+/*	$NetBSD: sunos_mod.c,v 1.4 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,19 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_mod.c,v 1.4 2019/01/27 02:08:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/signalvar.h>
+#include <sys/compat_stub.h>
 
 #include <machine/sunos_machdep.h>
 
 #include <compat/sunos/sunos_exec.h>
 
-MODULE(MODULE_CLASS_EXEC, compat_sunos, "compat,exec_aout");
+MODULE(MODULE_CLASS_EXEC, compat_sunos, "compat,compat_util,exec_aout");
 
 static struct execsw sunos_execsw = {
 	.es_hdrsz = SUNOS_AOUT_HDR_SIZE,
@@ -60,14 +61,25 @@ static struct execsw sunos_execsw = {
 };
 
 static int
+get_sunos_emul(const struct emul **e)
+{
+
+	*e = &emul_sunos;
+	return 0;
+}
+
+static int
 compat_sunos_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		MODULE_SET_HOOK(get_emul_sunos_hook, "sun_emul",
+		    get_sunos_emul);
 		return exec_add(&sunos_execsw, 1);
 
 	case MODULE_CMD_FINI:
+		MODULE_UNSET_HOOK(get_emul_sunos_hook);
 		return exec_remove(&sunos_execsw, 1);
 
 	default:

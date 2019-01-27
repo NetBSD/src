@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2018/06/21 10:41:45 kamil Exp $
+#	$NetBSD: Makefile,v 1.4 2019/01/27 02:08:50 pgoyette Exp $
+
+NOSANITIZER=		# defined
 
 NOSANITIZER=		# defined
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.18 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.19 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: misc.c,v 1.131 2018/07/27 05:13:02 dtucker Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.18 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>

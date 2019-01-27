@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.2 2018/01/20 01:32:45 mrg Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.3 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -31,12 +31,16 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+
+#include <sys/compat_stub.h>
 
 #include <dev/raidframe/raidframeio.h>
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
 #include "rf_compat80.h"
+#include "rf_compat80_mod.h"
 #include "rf_kintf.h"
 
 int
@@ -216,4 +220,79 @@ rf_config80(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	RF_Free(k80_cfg, sizeof(RF_Config_t80));
 	*k_cfgp = k_cfg;
 	return 0;
+}
+
+int
+raidframe_ioctl_80(int cmd, int initted, RF_Raid_t *raidPtr, int unit,
+    void *data, RF_Config_t **k_cfg)  
+{
+int error;
+ 
+	switch (cmd) {
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
+	case RAIDFRAME_GET_INFO80:
+	case RAIDFRAME_GET_COMPONENT_LABEL80:
+		if (initted == 0)
+			return ENXIO;
+		break;
+	case RAIDFRAME_CONFIGURE80:
+		break;
+	case RAIDFRAME_FAIL_DISK80:
+		return EPASSTHROUGH;
+	default:
+		return EINVAL;
+	}
+
+	switch (cmd) {
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
+		return rf_check_recon_status_ext80(raidPtr, data);
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
+		return rf_check_parityrewrite_status_ext80(raidPtr, data);
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
+		return rf_check_copyback_status_ext80(raidPtr, data);
+	case RAIDFRAME_GET_INFO80:
+		return rf_get_info80(raidPtr, data);
+	case RAIDFRAME_GET_COMPONENT_LABEL80:
+		return rf_get_component_label80(raidPtr, data);
+	case RAIDFRAME_CONFIGURE80:
+		error = rf_config80(raidPtr, unit, data, k_cfg);
+		if (error != 0)
+			return error;
+		return EAGAIN;  /* flag mainline to call generic config */ 
+	}
+	return EPASSTHROUGH;
+}
+ 
+void
+raidframe_80_init(void)
+{
+  
+	MODULE_SET_HOOK(raidframe80_ioctl_hook, "raid80", raidframe_ioctl_80);
+}
+ 
+void
+raidframe_80_fini(void)
+{
+ 
+	MODULE_UNSET_HOOK(raidframe80_ioctl_hook);
+}
+
+MODULE(MODULE_CLASS_EXEC, compat_raid_80, "raid,compat_80");
+
+static int
+compat_raid_80_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		raidframe_80_init();
+		return 0;
+	case MODULE_CMD_FINI:
+		raidframe_80_fini();
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

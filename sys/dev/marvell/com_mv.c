@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.11 2018/12/11 19:40:54 martin Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.12 2019/01/27 02:08:42 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.11 2018/12/11 19:40:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.12 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

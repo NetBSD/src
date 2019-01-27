@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.75 2018/07/15 05:16:45 maxv Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.76 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.75 2018/07/15 05:16:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.76 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include "rtl80x9.h"
 

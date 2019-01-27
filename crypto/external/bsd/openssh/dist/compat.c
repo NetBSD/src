@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.19 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: compat.c,v 1.113 2018/08/13 02:41:05 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.19 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.20 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>

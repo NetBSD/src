@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.7 2018/12/27 09:55:27 mrg Exp $ */
+/* $NetBSD: db_trace.c,v 1.8 2019/01/27 02:08:36 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.7 2018/12/27 09:55:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8 2019/01/27 02:08:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

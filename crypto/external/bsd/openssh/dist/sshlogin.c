@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.10 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: sshlogin.c,v 1.33 2018/07/09 21:26:02 markus Exp $ */
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.10 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>

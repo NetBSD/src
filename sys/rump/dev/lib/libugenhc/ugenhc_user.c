@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc_user.c,v 1.2 2018/12/12 00:48:43 alnsn Exp $	*/
+/*	$NetBSD: ugenhc_user.c,v 1.3 2019/01/27 02:08:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc_user.c,v 1.2 2018/12/12 00:48:43 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc_user.c,v 1.3 2019/01/27 02:08:49 pgoyette Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>

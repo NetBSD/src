@@ -1,4 +1,4 @@
-/*     $NetBSD: mnttab.c,v 1.3 2018/05/28 21:05:09 chs Exp $  */
+/*     $NetBSD: mnttab.c,v 1.4 2019/01/27 02:08:34 pgoyette Exp $  */
 
 /*-
  * Copyright (c) 2006 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD: head/cddl/compat/opensolaris/misc/mnttab.c 209962 2010-07-12 23:49:04Z mm $");
-__RCSID("$NetBSD: mnttab.c,v 1.3 2018/05/28 21:05:09 chs Exp $");
+__RCSID("$NetBSD: mnttab.c,v 1.4 2019/01/27 02:08:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/statvfs.h>

@@ -1,4 +1,6 @@
-#	$NetBSD: files.nouveau,v 1.23 2018/10/14 17:25:21 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.24 2019/01/27 02:08:43 pgoyette Exp $
+
+version	20180827
 
 version	20180827
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.40 2016/08/06 15:13:13 maxv Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.41 2019/01/27 02:08:40 pgoyette Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.40 2016/08/06 15:13:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.41 2019/01/27 02:08:40 pgoyette Exp $");
 
 #define	ELFSIZE		32
 
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.40 2016/08/06 15:13:13 max
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/namei.h>
+#include <sys/compat_stub.h>
 
 #include <compat/common/compat_util.h>
 
@@ -108,9 +109,11 @@ int
 ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 				  void *eh, char *itp, vaddr_t *pos)
 {
+	const char *m;
+
  	if (itp && epp->ep_interp == NULL) {
-		extern const char machine32[];
-		(void)compat_elf_check_interp(epp, itp, machine32);
+		MODULE_CALL_HOOK(netbsd32_machine32_hook, (), machine, m);
+		(void)compat_elf_check_interp(epp, itp, m);
 	}
 #ifdef _LP64
 	epp->ep_flags |= EXEC_32 | EXEC_FORCEAUX;

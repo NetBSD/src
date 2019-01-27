@@ -1,4 +1,4 @@
-/*	$NetBSD: virtif_user.c,v 1.4 2018/12/12 00:48:44 alnsn Exp $	*/
+/*	$NetBSD: virtif_user.c,v 1.5 2019/01/27 02:08:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtif_user.c,v 1.4 2018/12/12 00:48:44 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtif_user.c,v 1.5 2019/01/27 02:08:50 pgoyette Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>

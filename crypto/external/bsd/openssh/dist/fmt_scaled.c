@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_scaled.c,v 1.7 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: fmt_scaled.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $	*/
 /*	$OpenBSD: fmt_scaled.c,v 1.9 2007/03/20 03:42:52 tedu Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: fmt_scaled.c,v 1.7 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: fmt_scaled.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $");
 
 #ifndef HAVE_FMT_SCALED
 #include <stdio.h>

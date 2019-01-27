@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.46 2014/11/09 17:48:07 maxv Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.47 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.47 2019/01/27 02:08:39 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,82 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46 2014/11/09 17:48:07 maxv Exp $"
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>
+#include <sys/module.h>
 
 #include <compat/common/compat_util.h>
-
-void
-emul_find_root(struct lwp *l, struct exec_package *epp)
-{
-	struct vnode *vp;
-	const char *emul_path;
-
-	if (epp->ep_emul_root != NULL)
-		/* We've already found it */
-		return;
-
-	emul_path = epp->ep_esch->es_emul->e_path;
-	if (emul_path == NULL)
-		/* Emulation doesn't have a root */
-		return;
-
-	if (namei_simple_kernel(emul_path, NSM_FOLLOW_NOEMULROOT, &vp) != 0)
-		/* emulation root doesn't exist */
-		return;
-
-	epp->ep_emul_root = vp;
-}
-
-/*
- * Search the alternate path for dynamic binary interpreter. If not found
- * there, check if the interpreter exists in within 'proper' tree.
- */
-int
-emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
-{
-	int error;
-	struct pathbuf *pb;
-	struct nameidata nd;
-	unsigned int flags;
-
-	pb = pathbuf_create(itp);
-	if (pb == NULL) {
-		return ENOMEM;
-	}
-
-	/* If we haven't found the emulation root already, do so now */
-	/* Maybe we should remember failures somehow ? */
-	if (epp->ep_esch->es_emul->e_path != 0 && epp->ep_emul_root == NULL)
-		emul_find_root(l, epp);
-
-	if (epp->ep_interp != NULL)
-		vrele(epp->ep_interp);
-
-	/* We need to use the emulation root for the new program,
-	 * not the one for the current process. */
-	if (epp->ep_emul_root == NULL)
-		flags = FOLLOW;
-	else {
-		nd.ni_erootdir = epp->ep_emul_root;
-		/* hack: Pass in the emulation path for ktrace calls */
-		nd.ni_next = epp->ep_esch->es_emul->e_path;
-		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
-	}
-
-	NDINIT(&nd, LOOKUP, flags, pb);
-	error = namei(&nd);
-	if (error != 0) {
-		epp->ep_interp = NULL;
-		pathbuf_destroy(pb);
-		return error;
-	}
-
-	/* Save interpreter in case we actually need to load it */
-	epp->ep_interp = nd.ni_vp;
-
-	pathbuf_destroy(pb);
-
-	return 0;
-}
 
 /*
  * Translate one set of flags to another, based on the entries in
@@ -228,4 +159,19 @@ compat_elf_check_interp(struct exec_package *epp,
 		}
 	}
 	return error;
+}
+
+MODULE(MODULE_CLASS_MISC, compat_util, NULL);
+
+int
+compat_util_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

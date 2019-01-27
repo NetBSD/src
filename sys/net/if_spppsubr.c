@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.180 2018/03/30 13:29:19 mlelstv Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.181 2019/01/27 02:08:48 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.180 2018/03/30 13:29:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.181 2019/01/27 02:08:48 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.180 2018/03/30 13:29:19 mlelstv Ex
 #include <sys/module.h>
 #include <sys/workqueue.h>
 #include <sys/atomic.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -5911,52 +5912,17 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
-#if defined(COMPAT_50) || defined(MODULAR)
-	case __SPPPGETIDLETO50:
-	    {
-	    	struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
-
-		SPPP_LOCK(sp, RW_READER);
-		to->idle_seconds = (uint32_t)sp->pp_idle_timeout;
-		SPPP_UNLOCK(sp);
-	    }
-	    break;
-	case __SPPPSETIDLETO50:
-	    {
-		struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
-
-		SPPP_LOCK(sp, RW_WRITER);
-		sp->pp_idle_timeout = (time_t)to->idle_seconds;
-		SPPP_UNLOCK(sp);
-	    }
-	    break;
-	case __SPPPGETKEEPALIVE50:
-	    {
-	    	struct spppkeepalivesettings50 *settings =
-		     (struct spppkeepalivesettings50*)data;
-
-		SPPP_LOCK(sp, RW_READER);
-		settings->maxalive = sp->pp_maxalive;
-		settings->max_noreceive = (uint32_t)sp->pp_max_noreceive;
-		SPPP_UNLOCK(sp);
-	    }
-	    break;
-	case __SPPPSETKEEPALIVE50:
-	    {
-	    	struct spppkeepalivesettings50 *settings =
-		     (struct spppkeepalivesettings50*)data;
-
-		SPPP_LOCK(sp, RW_WRITER);
-		sp->pp_maxalive = settings->maxalive;
-		sp->pp_max_noreceive = (time_t)settings->max_noreceive;
-		SPPP_UNLOCK(sp);
-	    }
-	    break;
-#endif /* COMPAT_50 || MODULAR */
 	default:
-		return (EINVAL);
-	}
+	    {
+		int ret;
 
+		MODULE_CALL_HOOK(sppp_params_50_hook, (sp, cmd, data),
+		    enosys(), ret);
+		if (ret != ENOSYS)
+			return ret;
+		return (EINVAL);
+	    }
+	}
 	return (0);
 }
 

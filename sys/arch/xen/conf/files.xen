@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.175 2018/12/25 11:56:14 mlelstv Exp $
+#	$NetBSD: files.xen,v 1.176 2019/01/27 02:08:39 pgoyette Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -331,6 +331,8 @@ file	arch/amd64/amd64/compat_16_machdep.c	compat_16
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
 file	arch/amd64/amd64/netbsd32_machdep.c	compat_netbsd32
+file	arch/amd64/amd64/netbsd32_machdep_13.c	compat_netbsd32 & compat_13
+file	arch/amd64/amd64/netbsd32_machdep_16.c	compat_netbsd32 & compat_16
 file	arch/amd64/amd64/netbsd32_sigcode.S	compat_netbsd32 & compat_16
 file	arch/amd64/amd64/netbsd32_syscall.c	compat_netbsd32
 

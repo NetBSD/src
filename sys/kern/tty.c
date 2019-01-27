@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.277 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: tty.c,v 1.278 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.277 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.278 2019/01/27 02:08:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.277 2018/09/03 16:29:35 riastradh Exp $");
 #include <sys/ioctl_compat.h>
 #include <sys/module.h>
 #include <sys/bitops.h>
+#include <sys/compat_stub.h>
 
 #ifdef COMPAT_60
 #include <compat/sys/ttycom.h>
@@ -209,7 +210,8 @@ struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
 krwlock_t ttcompat_lock;
-int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
+
+struct ptm_pty *ptm = NULL;
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -1408,24 +1410,24 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		default:
 			break;
 		}
-#ifdef COMPAT_60
-		error = compat_60_ttioctl(tp, cmd, data, flag, l);
-		if (error != EPASSTHROUGH)
-			return error;
-#endif /* COMPAT_60 */
-		/* We may have to load the compat module for this. */
+		/* We may have to load the compat_60 module for this. */
 		for (;;) {
 			rw_enter(&ttcompat_lock, RW_READER);
-			if (ttcompatvec != NULL) {
+			MODULE_CALL_HOOK(compat_60_ttioctl_hook,
+			    (tp->t_dev, cmd, data, flag, l), enosys(), error);
+			if (error != ENOSYS) {
 				break;
 			}
 			rw_exit(&ttcompat_lock);
-			(void)module_autoload("compat", MODULE_CLASS_ANY);
-			if (ttcompatvec == NULL) {
+			(void)module_autoload("compat_60", MODULE_CLASS_EXEC);
+			rw_enter(&ttcompat_lock, RW_READER);
+			MODULE_CALL_HOOK(compat_60_ttioctl_hook,
+			    (tp->t_dev, cmd, data, flag, l), enosys(), error);
+			if (error == ENOSYS) {
+				rw_exit(&ttcompat_lock);
 				return EPASSTHROUGH;
 			}
 		}
-		error = (*ttcompatvec)(tp, cmd, data, flag, l);
 		rw_exit(&ttcompat_lock);
 		return error;
 	}

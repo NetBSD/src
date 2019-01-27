@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.67 2018/12/09 19:21:16 jdolecek Exp $	*/
+/*	$NetBSD: i2c.c,v 1.68 2019/01/27 02:08:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.67 2018/12/09 19:21:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.68 2019/01/27 02:08:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

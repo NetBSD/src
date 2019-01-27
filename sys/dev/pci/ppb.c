@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.64 2018/12/07 09:36:26 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.65 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.64 2018/12/07 09:36:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.65 2019/01/27 02:08:42 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ppb.h"
+#endif
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"

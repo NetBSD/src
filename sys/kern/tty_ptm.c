@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.38 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.38 2019/01/27 02:08:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,12 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 
 #include <miscfs/specfs/specdev.h>
 
-#ifdef COMPAT_60
 #include <compat/sys/ttycom.h>
-#endif /* COMPAT_60 */
 
 #include "ioconf.h"
 
@@ -85,7 +84,6 @@ const struct cdevsw ptm_cdevsw = {
 };
 #else
 
-static struct ptm_pty *ptm;
 int pts_major, ptc_major;
 
 static dev_t pty_getfree(void);
@@ -405,11 +403,10 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			goto bad2;
 		return 0;
 	default:
-#ifdef COMPAT_60
-		error = compat_60_ptmioctl(dev, cmd, data, flag, l);
+		MODULE_CALL_HOOK(compat_60_ptmioctl_hook,
+		    (dev, cmd, data, flag, l), EPASSTHROUGH, error);
 		if (error != EPASSTHROUGH)
 			return error;
-#endif /* COMPAT_60 */
 		DPRINTF(("ptmioctl EINVAL\n"));
 		return EINVAL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.23 2018/10/02 22:40:28 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.24 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: serverloop.c,v 1.209 2018/07/27 05:13:02 dtucker Exp $ */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.23 2018/10/02 22:40:28 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.24 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>

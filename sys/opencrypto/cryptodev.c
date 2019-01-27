@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.98 2018/02/08 09:05:20 dholland Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.99 2019/01/27 02:08:48 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.99 2019/01/27 02:08:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98 2018/02/08 09:05:20 dholland Exp 
 #include <sys/atomic.h>
 #include <sys/stat.h>
 #include <sys/module.h>
+#include <sys/compat_stub.h> 
 
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
@@ -93,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98 2018/02/08 09:05:20 dholland Exp 
 #endif
 
 #include <opencrypto/cryptodev.h>
+#include <opencrypto/ocryptodev.h>
 #include <opencrypto/cryptodev_internal.h>
 #include <opencrypto/xform.h>
 
@@ -195,10 +197,6 @@ static int	cryptodevkey_mcb(void *);
 static int 	cryptodev_getmstatus(struct fcrypt *, struct crypt_result *,
     int);
 static int	cryptodev_getstatus(struct fcrypt *, struct crypt_result *);
-
-#ifdef COMPAT_50
-extern int	ocryptof_ioctl(struct file *, u_long, void *);
-#endif
 
 /*
  * sysctl-able control variables for /dev/crypto now defined in crypto.c:
@@ -441,12 +439,13 @@ reterr:
 		error = cryptodev_getstatus(fcr, (struct crypt_result *)data);
 		break;
 	default:
-#ifdef COMPAT_50
 		/* Check for backward compatible commands */
-		error = ocryptof_ioctl(fp, cmd, data);
-#else
-		return EINVAL;
-#endif
+
+		MODULE_CALL_HOOK(ocryptof_50_hook, (fp, cmd, data),
+		    enosys(), error);
+		if (error == ENOSYS)
+			error = EINVAL;
+		return error;
 	}
 	return error;
 }

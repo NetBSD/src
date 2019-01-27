@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv84_fence.c,v 1.5 2018/08/27 07:38:42 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv84_fence.c,v 1.6 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv84_fence.c,v 1.5 2018/08/27 07:38:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv84_fence.c,v 1.6 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include "nouveau_drm.h"
 #include "nouveau_dma.h"

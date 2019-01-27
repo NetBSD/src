@@ -1,4 +1,6 @@
-/*	$NetBSD: localtime.c,v 1.114 2019/01/01 03:04:56 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.115 2019/01/27 02:08:35 pgoyette Exp $	*/
+
+/* Convert timestamp from time_t to struct tm.  */
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +14,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.114 2019/01/01 03:04:56 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.115 2019/01/27 02:08:35 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

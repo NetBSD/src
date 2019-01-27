@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.26 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.27 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: session.c,v 1.305 2018/07/25 13:56:23 deraadt Exp $ */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.26 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.27 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>

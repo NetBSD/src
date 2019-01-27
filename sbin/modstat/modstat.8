@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.22 2016/09/12 06:54:00 wiz Exp $
+.\" $NetBSD: modstat.8,v 1.23 2019/01/27 02:08:36 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 12, 2016
+.Dd September 8, 2018
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -40,8 +40,8 @@
 .Nd display status of loaded kernel modules
 .Sh SYNOPSIS
 .Nm
-.Op Fl Aaen
-.Op Ar name
+.Op Fl Aaek
+.Op Fl n Ar name | name
 .Sh DESCRIPTION
 The
 .Nm
@@ -97,7 +97,7 @@ The module flags:
 .It Dv a
 Module is auto-loaded.
 .It Dv f
-Required the
+Requires the
 .Xr modload 8
 flag
 .Fl f

@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.22 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: kex.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: kex.c,v 1.141 2018/07/09 13:37:10 sf Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.22 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/param.h>	/* MAX roundup */
 #include <signal.h>

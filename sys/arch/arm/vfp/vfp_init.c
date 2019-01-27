@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.59 2018/08/15 06:00:02 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.60 2019/01/27 02:08:37 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.59 2018/08/15 06:00:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.60 2019/01/27 02:08:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

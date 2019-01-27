@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.30 2019/01/09 04:01:20 mrg Exp $
+#	$NetBSD: files.kern,v 1.31 2019/01/27 02:08:43 pgoyette Exp $
 
 #
 # kernel sources
@@ -7,14 +7,13 @@ define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
 defflag	opt_script.h			SETUIDSCRIPTS FDSCRIPTS
 defflag					KASLR
-file	compat/common/compat_util.c	kern
-file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c		kern
 file	conf/param.c			kern
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
+file	kern/compat_stub.c		kern
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
 file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
@@ -111,6 +110,7 @@ file	kern/subr_device.c		kern
 file	kern/subr_devsw.c		kern
 file	kern/subr_disk.c		kern
 file	kern/subr_disk_open.c		kern
+file	kern/subr_emul.c		kern
 file	kern/subr_evcnt.c		kern
 file	kern/subr_exec_fd.c		kern
 file	kern/subr_extent.c		kern

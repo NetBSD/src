@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.78 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.79 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.78 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.79 2019/01/27 02:08:43 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_script.h"
+#endif
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"

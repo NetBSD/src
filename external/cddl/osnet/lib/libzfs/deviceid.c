@@ -1,4 +1,4 @@
-/*	$NetBSD: deviceid.c,v 1.4 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: deviceid.c,v 1.5 2019/01/27 02:08:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: head/cddl/compat/opensolaris/misc/deviceid.c 238112 2012-07-04 17:36:26Z pjd $"); */
-__RCSID("$NetBSD: deviceid.c,v 1.4 2018/05/28 21:05:09 chs Exp $");
+__RCSID("$NetBSD: deviceid.c,v 1.5 2019/01/27 02:08:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

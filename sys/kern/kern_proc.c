@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.224 2018/12/10 14:46:24 maxv Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.225 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.224 2018/12/10 14:46:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.225 2019/01/27 02:08:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -105,13 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.224 2018/12/10 14:46:24 maxv Exp $")
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 #include <sys/cpu.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
-
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32.h>
-#endif
 
 /*
  * Process lists.
@@ -1898,22 +1895,16 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 int
 copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
 {
+#if !defined(_RUMPKERNEL)
+	int retval;
 
-#ifdef COMPAT_NETBSD32
 	if (p->p_flag & PK_32) {
-		struct ps_strings32 arginfo32;
-
-		int error = copyin_proc(p, (void *)p->p_psstrp, &arginfo32,
-		    sizeof(arginfo32));
-		if (error)
-			return error;
-		arginfo->ps_argvstr = (void *)(uintptr_t)arginfo32.ps_argvstr;
-		arginfo->ps_nargvstr = arginfo32.ps_nargvstr;
-		arginfo->ps_envstr = (void *)(uintptr_t)arginfo32.ps_envstr;
-		arginfo->ps_nenvstr = arginfo32.ps_nenvstr;
-		return 0;
+		MODULE_CALL_HOOK(kern_proc_32_copyin_hook, (p, arginfo),
+		    enosys(), retval);
+		return retval;
 	}
-#endif
+#endif /* !defined(_RUMPKERNEL) */
+
 	return copyin_proc(p, (void *)p->p_psstrp, arginfo, sizeof(*arginfo));
 }
 
@@ -2122,14 +2113,12 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 			i = 0;
 		}
 
-#ifdef COMPAT_NETBSD32
-		if (p->p_flag & PK_32) {
-			netbsd32_charp *argv32;
-
-			argv32 = (netbsd32_charp *)argv;
-			base = (vaddr_t)NETBSD32PTR64(argv32[i++]);
-		} else
-#endif
+#if !defined(_RUMPKERNEL)
+		if (p->p_flag & PK_32)
+			MODULE_CALL_HOOK(kern_proc_32_base_hook,
+			    (argv, i++), 0, base);
+		else
+#endif /* !defined(_RUMPKERNEL) */
 			base = (vaddr_t)argv[i++];
 		loaded -= entry_len;
 

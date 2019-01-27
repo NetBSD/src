@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mqueue.c,v 1.6 2015/12/01 23:56:43 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mqueue.c,v 1.7 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.6 2015/12/01 23:56:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.7 2019/01/27 02:08:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.6 2015/12/01 23:56:43 pgoyette
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-
-extern struct emul emul_netbsd32;
 
 int
 netbsd32_mq_open(struct lwp *l, const struct netbsd32_mq_open_args *uap,

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 2018/07/26 09:29:08 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.115 2019/01/27 02:08:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2018/07/26 09:29:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2019/01/27 02:08:37 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -351,6 +351,11 @@ trap(struct trapframe *frame)
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 #if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
+
+/*
+ * XXX This code currently not included in loadable module;  it is
+ * only included in built-in modules.
+ */
 	{
 		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
 		const size_t sz = sizeof(lcall);
