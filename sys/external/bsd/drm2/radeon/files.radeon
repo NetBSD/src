@@ -1,6 +1,4 @@
-#	$NetBSD: files.radeon,v 1.23 2019/01/27 02:08:43 pgoyette Exp $
-
-version	20180827
+#	$NetBSD: files.radeon,v 1.24 2019/01/27 05:05:37 kre Exp $
 
 version	20180827
 
