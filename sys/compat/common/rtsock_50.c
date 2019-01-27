@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.7 2018/05/10 09:33:46 nonaka Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.8 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,23 +61,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.7 2018/05/10 09:33:46 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.8 2019/01/27 02:08:39 pgoyette Exp $");
 
-#ifdef _KERNEL_OPT
-#include "opt_compat_netbsd.h"
-#endif
+#define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
+			 * various other compat definitions - see
+			 * sys/net/rtsock_shared.c for details
+			 */
 
-/*
- * COMPAT_50 and COMPAT_RTSOCK must be defined for rtsock.c regardless of
- * the currently enabled options.
- */
-#ifndef COMPAT_50
-#define COMPAT_50
-#endif
-
-#define	COMPAT_RTSOCK
-
-#include <net/rtsock.c>
+#include <net/rtsock_shared.c>
+#include <compat/net/route_50.h>
 
 void
 compat_50_rt_oifmsg(struct ifnet *ifp)
@@ -155,4 +147,34 @@ compat_50_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 		return error;
 	w->w_where = (char *)w->w_where + len;
 	return 0;
+}
+
+void
+rtsock_50_init(void)
+{
+ 
+	MODULE_SET_HOOK(rtsock_50_iflist_hook, "rts_50", compat_50_iflist);
+	MODULE_SET_HOOK(rtsock_50_oifmsg_hook, "rts_50", compat_50_rt_oifmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_missmsg_hook, "rts_50",
+	    compat_50_rt_missmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_ifmsg_hook, "rts_50", compat_50_rt_ifmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_newaddrmsg_hook, "rts_50",
+	    compat_50_rt_newaddrmsg);
+	MODULE_SET_HOOK(rtsock_50_rt_ifannouncemsg_hook, "rts_50",
+	    compat_50_rt_ifannouncemsg);
+	MODULE_SET_HOOK(rtsock_50_rt_ieee80211msg_hook, "rts_50",
+	    compat_50_rt_ieee80211msg);
+}
+ 
+void
+rtsock_50_fini(void)
+{  
+
+	MODULE_UNSET_HOOK(rtsock_50_iflist_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_oifmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_missmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_ifmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_newaddrmsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_ifannouncemsg_hook); 
+	MODULE_UNSET_HOOK(rtsock_50_rt_ieee80211msg_hook); 
 }

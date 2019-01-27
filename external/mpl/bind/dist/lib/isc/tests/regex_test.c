@@ -1,4 +1,4 @@
-/*	$NetBSD: regex_test.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: regex_test.c,v 1.4 2019/01/27 02:08:35 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1132,6 +1132,8 @@ regex_validate(void **state) {
 		}
 		assert_int_equal(r, tests[i].expect);
 	}
+
+	return (cmocka_run_group_tests(tests, NULL, NULL));
 }
 
 int

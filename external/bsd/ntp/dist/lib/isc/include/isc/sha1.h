@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.5 2018/09/29 21:52:32 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.6 2019/01/27 02:08:34 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 
 /* Id */
 
-/*	$NetBSD: sha1.h,v 1.5 2018/09/29 21:52:32 christos Exp $	*/
+/*	$NetBSD: sha1.h,v 1.6 2019/01/27 02:08:34 pgoyette Exp $	*/
 
 /*! \file isc/sha1.h
  * \brief SHA-1 in C

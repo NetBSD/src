@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.12 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: hostfile.c,v 1.73 2018/07/16 03:09:13 djm Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.12 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 

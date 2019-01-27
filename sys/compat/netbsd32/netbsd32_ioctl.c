@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.100 2018/11/25 17:58:29 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.101 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.100 2018/11/25 17:58:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.101 2019/01/27 02:08:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.100 2018/11/25 17:58:29 mlelstv
 #include <sys/exec_elf.h>
 #include <sys/ksyms.h>
 #include <sys/drvctlio.h>
+#include <sys/compat_stub.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -1047,12 +1048,15 @@ netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
 	struct timex ntv;
 	int error;
 
+	if (vec_ntp_adjtime1 == NULL)
+		return EINVAL;
+
 	error = copyin(args->tp, &ntv32, sizeof(ntv32));
 	if (error)
 		return (error);
 
 	netbsd32_to_timex(&ntv32, &ntv);
-	ntp_adjtime1(&ntv);
+	(*vec_ntp_adjtime1)(&ntv);
 	netbsd32_from_timex(&ntv, &ntv32);
 
 	error = copyout(&ntv32, args->tp, sizeof(ntv));

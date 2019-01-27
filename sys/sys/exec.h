@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.153 2018/04/27 18:33:24 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.154 2019/01/27 02:08:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -315,6 +315,12 @@ int      exec_makepathbuf(struct lwp *, const char *, enum uio_seg,
     struct pathbuf **, size_t *);
 
 extern int	maxexec;
+
+/*
+ * Utility functions
+ */
+void emul_find_root(struct lwp *, struct exec_package *);
+int emul_find_interp(struct lwp *, struct exec_package *, const char *);
 
 #endif /* _KERNEL */
 

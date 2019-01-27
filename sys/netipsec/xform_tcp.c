@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.21 2018/05/14 02:16:29 ozaki-r Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.22 2019/01/27 02:08:48 pgoyette Exp $ */
 /*	$FreeBSD: xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.21 2018/05/14 02:16:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.22 2019/01/27 02:08:48 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"

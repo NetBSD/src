@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.22 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: channels.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: channels.c,v 1.384 2018/07/27 12:03:17 markus Exp $ */
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.22 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdhc.c,v 1.12 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: kexdhc.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: kexdhc.c,v 1.22 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhc.c,v 1.12 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: kexdhc.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/dh.h>

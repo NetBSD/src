@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.2 2012/10/19 17:16:55 apb Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.3 2019/01/27 02:08:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct compat_60_ptmget {
 #define COMPAT_60_TIOCPTSNAME 	 _IOR('t', 72, struct compat_60_ptmget)
 
 #ifdef _KERNEL
-int compat_60_ttioctl(struct tty *, u_long, void *, int, struct lwp *);
+int compat_60_ttioctl(dev_t, u_long, void *, int, struct lwp *);
 int compat_60_ptmioctl(dev_t, u_long, void *, int, struct lwp *);
 #endif
 

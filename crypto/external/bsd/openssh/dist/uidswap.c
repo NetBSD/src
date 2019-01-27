@@ -1,4 +1,4 @@
-/*	$NetBSD: uidswap.c,v 1.8 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: uidswap.c,v 1.9 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: uidswap.c,v 1.41 2018/07/18 11:34:04 dtucker Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: uidswap.c,v 1.8 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: uidswap.c,v 1.9 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/param.h>
 #include <errno.h>
 #include <pwd.h>

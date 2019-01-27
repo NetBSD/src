@@ -1,4 +1,4 @@
-/*	$NetBSD: query_test.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: query_test.c,v 1.4 2019/01/27 02:08:35 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

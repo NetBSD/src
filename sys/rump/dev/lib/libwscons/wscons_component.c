@@ -1,7 +1,10 @@
-/*	$NetBSD: wscons_component.c,v 1.3 2018/12/12 00:48:43 alnsn Exp $	*/
+/*	$NetBSD: wscons_component.c,v 1.4 2019/01/27 02:08:49 pgoyette Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wscons_component.c,v 1.3 2018/12/12 00:48:43 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons_component.c,v 1.4 2019/01/27 02:08:49 pgoyette Exp $");
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wscons_component.c,v 1.4 2019/01/27 02:08:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.187 2018/11/08 04:30:37 roy Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.188 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.187 2018/11/08 04:30:37 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.188 2019/01/27 02:08:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -123,10 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.187 2018/11/08 04:30:37 roy Exp $"
 #include <sys/uidinfo.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
+#include <sys/compat_stub.h>
 
-#ifdef COMPAT_70
 #include <compat/sys/socket.h>
-#endif
 
 /*
  * Unix communications domain.
@@ -196,6 +195,20 @@ static kcondvar_t unp_thread_cv;
 static lwp_t *unp_thread_lwp;
 static SLIST_HEAD(,file) unp_thread_discard;
 static int unp_defer;
+
+/* Compat interface */
+
+struct mbuf * stub_compat_70_unp_addsockcred(lwp_t *, struct mbuf *);
+
+struct mbuf * stub_compat_70_unp_addsockcred(struct lwp *lwp,
+    struct mbuf *control)
+{
+
+/* just copy our initial argument */
+	return control;
+}
+
+bool *compat70_ocreds_valid = false;
 
 /*
  * Initialize Unix protocols.
@@ -336,10 +349,9 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
 		control = unp_addsockcred(curlwp, control);
-#ifdef COMPAT_SOCKCRED70
 	if (unp->unp_conn->unp_flags & UNP_OWANTCRED)
-		control = compat_70_unp_addsockcred(curlwp, control);
-#endif
+		MODULE_CALL_HOOK(compat_70_unp_hook, (curlwp, control),
+		    stub_compat_70_unp_addsockcred(curlwp, control), control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		unp_dispose(control);
@@ -514,16 +526,16 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
 			control = unp_addsockcred(l, control);
 		}
-#ifdef COMPAT_SOCKCRED70
 		if (unp->unp_conn->unp_flags & UNP_OWANTCRED) {
 			/*
 			 * Credentials are passed only once on
 			 * SOCK_STREAM and SOCK_SEQPACKET.
 			 */
 			unp->unp_conn->unp_flags &= ~UNP_OWANTCRED;
-			control = compat_70_unp_addsockcred(l, control);
+			MODULE_CALL_HOOK(compat_70_unp_hook, (curlwp, control),
+			    stub_compat_70_unp_addsockcred(curlwp, control),
+			    control);
 		}
-#endif
 		/*
 		 * Send to paired receive port, and then reduce
 		 * send buffer hiwater marks to maintain backpressure.
@@ -597,11 +609,14 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 	case PRCO_SETOPT:
 		switch (sopt->sopt_name) {
+		case LOCAL_OCREDS:
+			if (!*compat70_ocreds_valid)  {
+				error = ENOPROTOOPT;
+				break;
+			}
+			/* FALLTHROUGH */
 		case LOCAL_CREDS:
 		case LOCAL_CONNWAIT:
-#ifdef COMPAT_SOCKCRED70
-		case LOCAL_OCREDS:
-#endif
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
@@ -618,11 +633,9 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			case LOCAL_CONNWAIT:
 				OPTSET(UNP_CONNWAIT);
 				break;
-#ifdef COMPAT_SOCKCRED70
 			case LOCAL_OCREDS:
 				OPTSET(UNP_OWANTCRED);
 				break;
-#endif
 			}
 			break;
 #undef OPTSET
@@ -650,12 +663,13 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			optval = OPTBIT(UNP_WANTCRED);
 			error = sockopt_setint(sopt, optval);
 			break;
-#ifdef COMPAT_SOCKCRED70
 		case LOCAL_OCREDS:
-			optval = OPTBIT(UNP_OWANTCRED);
-			error = sockopt_setint(sopt, optval);
-			break;
-#endif
+			if (*compat70_ocreds_valid) {
+				optval = OPTBIT(UNP_OWANTCRED);
+				error = sockopt_setint(sopt, optval);
+				break;
+			}
+			/* FALLTHROUGH */
 #undef OPTBIT
 
 		default:

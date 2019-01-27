@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.22 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: ssh-keyscan.c,v 1.120 2018/06/06 18:29:18 markus Exp $ */
 
 /*
@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.22 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

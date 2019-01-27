@@ -1,4 +1,4 @@
-/*	$NetBSD: db_panic.c,v 1.8 2018/05/27 12:24:36 uwe Exp $	*/
+/*	$NetBSD: db_panic.c,v 1.9 2019/01/27 02:08:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002, 2006, 2007, 2009, 2013 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.8 2018/05/27 12:24:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.9 2019/01/27 02:08:41 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/cpu.h>
