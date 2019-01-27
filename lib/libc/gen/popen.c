@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.35 2015/02/02 22:07:05 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.35.8.1 2019/01/27 18:25:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.35 2015/02/02 22:07:05 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.35.8.1 2019/01/27 18:25:52 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,20 @@ static struct pid {
 } *pidlist; 
 	
 #ifdef _REENTRANT
-static rwlock_t pidlist_lock = RWLOCK_INITIALIZER;
+static  mutex_t pidlist_mutex = MUTEX_INITIALIZER;
+# define MUTEX_LOCK() \
+    do { \
+	    if (__isthreaded) \
+		    mutex_lock(&pidlist_mutex); \
+    } while (/*CONSTCOND*/0)
+# define MUTEX_UNLOCK() \
+    do { \
+	    if (__isthreaded) \
+		    mutex_unlock(&pidlist_mutex); \
+    } while (/*CONSTCOND*/0)
+#else
+# define MUTEX_LOCK() __nothing
+# define MUTEX_UNLOCK() __nothing
 #endif
 
 static struct pid *
@@ -183,17 +196,13 @@ popen(const char *cmd, const char *type)
 	if ((cur = pdes_get(pdes, &type)) == NULL)
 		return NULL;
 
-#ifdef _REENTRANT
-	(void)rwlock_rdlock(&pidlist_lock);
-#endif
+	MUTEX_LOCK();
 	(void)__readlockenv();
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
 		serrno = errno;
 		(void)__unlockenv();
-#ifdef _REENTRANT
-		(void)rwlock_unlock(&pidlist_lock);
-#endif
+		MUTEX_UNLOCK();
 		pdes_error(pdes, cur);
 		errno = serrno;
 		return NULL;
@@ -208,9 +217,7 @@ popen(const char *cmd, const char *type)
 
 	pdes_parent(pdes, cur, pid, type);
 
-#ifdef _REENTRANT
-	(void)rwlock_unlock(&pidlist_lock);
-#endif
+	MUTEX_UNLOCK();
 
 	return cur->fp;
 }
@@ -228,15 +235,11 @@ popenve(const char *cmd, char *const *argv, char *const *envp, const char *type)
 	if ((cur = pdes_get(pdes, &type)) == NULL)
 		return NULL;
 
-#ifdef _REENTRANT
-	(void)rwlock_rdlock(&pidlist_lock);
-#endif
+	MUTEX_LOCK();
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
 		serrno = errno;
-#ifdef _REENTRANT
-		(void)rwlock_unlock(&pidlist_lock);
-#endif
+		MUTEX_UNLOCK();
 		pdes_error(pdes, cur);
 		errno = serrno;
 		return NULL;
@@ -250,9 +253,7 @@ popenve(const char *cmd, char *const *argv, char *const *envp, const char *type)
 
 	pdes_parent(pdes, cur, pid, type);
 
-#ifdef _REENTRANT
-	(void)rwlock_unlock(&pidlist_lock);
-#endif
+	MUTEX_UNLOCK();
 
 	return cur->fp;
 }
@@ -271,18 +272,14 @@ pclose(FILE *iop)
 
 	_DIAGASSERT(iop != NULL);
 
-#ifdef _REENTRANT
-	rwlock_wrlock(&pidlist_lock);
-#endif
+	MUTEX_LOCK();
 
 	/* Find the appropriate file pointer. */
 	for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)
 		if (cur->fp == iop)
 			break;
 	if (cur == NULL) {
-#ifdef _REENTRANT
-		(void)rwlock_unlock(&pidlist_lock);
-#endif
+		MUTEX_UNLOCK();
 		errno = ESRCH;
 		return -1;
 	}
@@ -295,9 +292,7 @@ pclose(FILE *iop)
 	else
 		last->next = cur->next;
 
-#ifdef _REENTRANT
-	(void)rwlock_unlock(&pidlist_lock);
-#endif
+	MUTEX_UNLOCK();
 
 	do {
 		pid = waitpid(cur->pid, &pstat, 0);
