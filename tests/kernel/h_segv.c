@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.11 2019/01/26 16:44:30 martin Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.12 2019/01/27 16:29:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.11 2019/01/26 16:44:30 martin Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.12 2019/01/27 16:29:56 christos Exp $");
 
 #define	__TEST_FENV
 
@@ -39,7 +39,9 @@ __RCSID("$NetBSD: h_segv.c,v 1.11 2019/01/26 16:44:30 martin Exp $");
 
 #include <err.h>
 #include <fenv.h>
+#if (__arm__ && !__SOFTFP__) || __aarch64__
 #include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
