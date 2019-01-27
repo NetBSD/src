@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.14 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.14.6.1 2019/01/27 18:43:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.14 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.14.6.1 2019/01/27 18:43:09 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -177,6 +177,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sfp--;
 
+	memset(&sf, 0, sizeof(sf));
 	netbsd32_si_to_si32(&sf.sf_si, (const siginfo_t *)&ksi->ksi_info);
 
         /* Build stack frame for signal trampoline. */
@@ -196,7 +197,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ? _UC_SETSTACK : _UC_CLRSTACK);
 	sf.sf_uc.uc_sigmask = *mask;
 	sf.sf_uc.uc_link = (intptr_t)l->l_ctxlink;
-	memset(&sf.sf_uc.uc_stack, 0, sizeof(sf.sf_uc.uc_stack));
 	sfsz = offsetof(struct sigframe_siginfo32, sf_uc.uc_mcontext);
 	if (p->p_md.md_abi == _MIPS_BSD_API_O32)
 		sfsz += sizeof(mcontext_o32_t);

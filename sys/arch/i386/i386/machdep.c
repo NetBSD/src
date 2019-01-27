@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.782.6.6 2018/06/09 15:12:21 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.782.6.7 2019/01/27 18:43:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.782.6.6 2018/06/09 15:12:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.782.6.7 2019/01/27 18:43:08 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -739,6 +739,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	fp--;
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_signum = sig;
 	frame.sf_sip = &fp->sf_si;
@@ -749,7 +750,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 
 	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.49 2012/05/21 14:15:18 martin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.49.32.1 2019/01/27 18:43:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.49 2012/05/21 14:15:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.49.32.1 2019/01/27 18:43:08 martin Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -159,6 +159,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	fp--;
 
+	memset(&kf, 0, sizeof(kf));
 	kf.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	kf.sf_signum = sig;
 	kf.sf_sip = &fp->sf_si;
@@ -169,7 +170,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	kf.sf_uc.uc_link = l->l_ctxlink;
 	kf.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&kf.sf_uc.uc_stack, 0, sizeof(kf.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &kf.sf_uc.uc_mcontext, &kf.sf_uc.uc_flags);

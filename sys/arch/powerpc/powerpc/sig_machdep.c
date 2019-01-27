@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.45 2017/03/05 16:09:26 chs Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.45.6.1 2019/01/27 18:43:08 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.45 2017/03/05 16:09:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.45.6.1 2019/01/27 18:43:08 martin Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -89,10 +89,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sp &= ~(CALLFRAMELEN-1);
 
 	/* Save register context. */
+	memset(&uc, 0, sizeof(uc));
 	uc.uc_flags = _UC_SIGMASK;
 	uc.uc_sigmask = *mask;
 	uc.uc_link = l->l_ctxlink;
-	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 	sendsig_reset(l, ksi->ksi_signo);
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);

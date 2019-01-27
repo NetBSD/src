@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef COMPATNAME1
-__RCSID("$NetBSD: sig_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: sig_machdep.c,v 1.1.12.1 2019/01/27 18:43:09 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -93,6 +93,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sf--;		// allocate sigframe
 
+	memset(&ksf, 0, sizeof(ksf));
 	COPY_SIGINFO(&ksf, ksi);
 	ksf.sf_uc.uc_flags = _UC_SIGMASK
 	    | (l->l_sigstk.ss_flags & SS_ONSTACK ? _UC_SETSTACK : _UC_CLRSTACK);
