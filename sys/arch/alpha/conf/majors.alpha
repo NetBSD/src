@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.32 2019/01/27 08:53:29 maxv Exp $
+#	$NetBSD: majors.alpha,v 1.33 2019/01/27 17:59:22 dholland Exp $
 #
 # Device majors for alpha
 #
@@ -35,6 +35,7 @@ device-major	fd		char 34  block 0	fdc
 device-major	ipl		char 35			ipfilter
 device-major	wd		char 36  block 4	wd
 device-major	se		char 37			se
+#device-major	obsolete	char 38			obsolete (satlink)
 device-major	rnd		char 39			rnd
 #device-major	obsolete	char 40			obsolete
 device-major	scsibus		char 42			scsibus
