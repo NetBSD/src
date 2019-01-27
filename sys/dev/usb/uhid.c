@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.102 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: uhid.c,v 1.103 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.102 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.103 2019/01/27 02:08:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.102 2018/09/03 16:29:34 riastradh Exp $")
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/intr.h>
+#include <sys/compat_stub.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -652,13 +653,15 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 		usbd_fill_deviceinfo(sc->sc_hdev.sc_parent->sc_udev,
 				     (struct usb_device_info *)addr, 0);
 		break;
-#ifdef COMPAT_30
 	case USB_GET_DEVICEINFO_OLD:
-		usbd_fill_deviceinfo_old(sc->sc_hdev.sc_parent->sc_udev,
-					 (struct usb_device_info_old *)addr, 0);
-
+		MODULE_CALL_HOOK(usb_subr_30_fill_hook,
+                    (sc->sc_hdev.sc_parent->sc_udev,
+		      (struct usb_device_info_old *)addr, 0,
+                      usbd_devinfo_vp, usbd_printBCD),
+                    enosys(), err);
+		if (err == 0)
+			return 0;
 		break;
-#endif
 	case USB_GET_STRING_DESC:
 	    {
 		struct usb_string_desc *si = (struct usb_string_desc *)addr;

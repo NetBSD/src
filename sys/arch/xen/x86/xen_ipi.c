@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.29 2018/12/24 14:55:42 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.30 2019/01/27 02:08:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,12 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.29 2018/12/24 14:55:42 cherry Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.30 2019/01/27 02:08:39 pgoyette Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.29 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.30 2019/01/27 02:08:39 pgoyette Exp $");
+
+#include "opt_ddb.h"
 
 #include "opt_ddb.h"
 

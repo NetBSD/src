@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.31 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.32 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.284 2018/08/13 02:41:05 djm Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.31 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.32 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>

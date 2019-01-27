@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.9 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.9 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include <linux/err.h>		/* XXX */
 

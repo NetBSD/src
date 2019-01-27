@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey.c,v 1.17 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: sshkey.c,v 1.18 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: sshkey.c,v 1.66 2018/07/03 13:20:25 djm Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.17 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.18 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <netinet/in.h>

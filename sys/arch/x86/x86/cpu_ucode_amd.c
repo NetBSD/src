@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.8 2018/03/17 15:56:32 christos Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.9 2019/01/27 02:08:39 pgoyette Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,10 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.8 2018/03/17 15:56:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.9 2019/01/27 02:08:39 pgoyette Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_syscall_stats.c,v 1.4 2018/12/22 20:49:19 christos Exp $	*/
+/*	$NetBSD: subr_syscall_stats.c,v 1.5 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_syscall_stats.c,v 1.4 2018/12/22 20:49:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_syscall_stats.c,v 1.5 2019/01/27 02:08:43 pgoyette Exp $");
 
 #include "opt_syscall_stats.h"
 

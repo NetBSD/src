@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.5 2018/09/03 16:29:24 riastradh Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.6 2019/01/27 02:08:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.5 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.6 2019/01/27 02:08:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

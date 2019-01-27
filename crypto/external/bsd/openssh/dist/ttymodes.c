@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymodes.c,v 1.10 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: ttymodes.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: ttymodes.c,v 1.34 2018/07/09 21:20:26 markus Exp $ */
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ttymodes.c,v 1.10 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: ttymodes.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <errno.h>

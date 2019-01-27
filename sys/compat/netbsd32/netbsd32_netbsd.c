@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.222 2018/12/24 21:27:05 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.223 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.222 2018/12/24 21:27:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.223 2019/01/27 02:08:40 pgoyette Exp $");
+
+/*
+ * below are all the standard NetBSD system calls, in the 32bit
+ * environment, with the necessary conversions to 64bit before calling
+ * the real syscall.  anything that needs special attention is handled
+ * elsewhere - this file should only contain structure assignment and
+ * calls to the original function.
+ */
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -94,11 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.222 2018/12/24 21:27:05 mrg Ex
 #include <ddb/ddbvar.h>
 #endif
 
-extern struct sysent netbsd32_sysent[];
-extern const uint32_t netbsd32_sysent_nomodbits[];
-#ifdef SYSCALL_DEBUG
-extern const char * const netbsd32_syscallnames[];
-#endif
 #ifdef __HAVE_SYSCALL_INTERN
 void netbsd32_syscall_intern(struct proc *);
 #else
@@ -106,13 +109,6 @@ void syscall(void);
 #endif
 
 #define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
-
-#ifdef COMPAT_16
-extern char netbsd32_sigcode[], netbsd32_esigcode[];
-struct uvm_object *emul_netbsd32_object;
-#endif
-
-extern struct sysctlnode netbsd32_sysctl_root;
 
 #ifdef MODULAR
 #include <compat/netbsd32/netbsd32_syscalls_autoload.c>
@@ -139,15 +135,9 @@ struct emul emul_netbsd32 = {
 #endif
 	.e_sendsig =		netbsd32_sendsig,
 	.e_trapsignal =		trapsignal,
-#ifdef COMPAT_16
-	.e_sigcode =		netbsd32_sigcode,
-	.e_esigcode =		netbsd32_esigcode,
-	.e_sigobject =		&emul_netbsd32_object,
-#else
 	.e_sigcode =		NULL,
 	.e_esigcode =		NULL,
 	.e_sigobject =		NULL,
-#endif
 	.e_setregs =		netbsd32_setregs,
 	.e_proc_exec =		NULL,
 	.e_proc_fork =		NULL,

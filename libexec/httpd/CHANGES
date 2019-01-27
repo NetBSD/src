@@ -1,4 +1,37 @@
-$NetBSD: CHANGES,v 1.37 2019/01/22 05:32:57 mrg Exp $
+$NetBSD: CHANGES,v 1.38 2019/01/27 02:08:36 pgoyette Exp $
+
+changes in bozohttpd 20190121:
+	o  don't display special files in the directory index.  they aren't
+	   served, but links to them are generated.
+
+changes in bozohttpd 20190116:
+	o  fix CGI '+' parameter handling, some error checking, and a double
+	   free.  from rajeev_v_pillai@yahoo.com
+	o  more directory indexing clean up.  from rajeev_v_pillai@yahoo.com
+
+changes in bozohttpd 20181215:
+	o  fix .htpasswd bypass for authenticated users.  reported by JP,
+	   from leot@netbsd.org
+	o  avoid possible null dereference when receiving a big request that
+	   timeout.  reported by maya@netbsd.org, from leot@netbsd.org
+	o  fix handling of -T option, from leot@netbsd.org
+	o  cleanups and portability improvements, from maya@netbsd.org
+	o  change directory indexing to use html tables, from
+	   rajeev_v_pillai@yahoo.com
+
+changes in bozohttpd 20181125:
+	o  fixes for option parsing introduced in bozohttpd 20181123
+
+changes in bozohttpd 20181121:
+	o  add url remap support via .bzremap file, from martin@netbsd.org
+	o  handle redirections for any protocol, not just http:
+	o  fix a denial of service attack against header contents, which
+	   is now bounded at 16KiB.  reported by JP
+	o  reduce default timeouts, and add expand timeouts to handle the
+	   initial line, each header, and the total time spent
+	o  add -T option to expose new timeout settings
+	o  minor RFC fixes related to timeout handling
+	o  fix special file (.htpasswd, .bz*) bypass.  reported by JP
 
 changes in bozohttpd 20190121:
 	o  don't display special files in the directory index.  they aren't

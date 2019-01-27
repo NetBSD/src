@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.37 2018/05/10 02:36:07 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.38 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.37 2018/05/10 02:36:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.38 2019/01/27 02:08:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -41,10 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.37 2018/05/10 02:36:07 chri
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
@@ -215,4 +218,36 @@ compat_20_netbsd32_fhstatfs(struct lwp *l, const struct compat_20_netbsd32_fhsta
 	NETBSD32TOP_UAP(flags, int);
 #endif
 	return (compat_30_sys_fhstatvfs1(l, &ua, retval));
+}
+
+static struct syscall_package compat_netbsd32_20_syscalls[] = {
+	{ NETBSD32_SYS_compat_20_netbsd32_statfs, 0,
+	    (sy_call_t *)compat_20_netbsd32_statfs },
+	{ NETBSD32_SYS_compat_20_netbsd32_fstatfs, 0,
+	    (sy_call_t *)compat_20_netbsd32_fstatfs },
+	{ NETBSD32_SYS_compat_20_netbsd32_fhstatfs, 0,
+	    (sy_call_t *)compat_20_netbsd32_fhstatfs },
+	{ NETBSD32_SYS_compat_20_netbsd32_getfsstat, 0,
+	    (sy_call_t *)compat_20_netbsd32_getfsstat },
+	{ 0, 0, NULL }
+};
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_20, "compat_netbsd32_30,compat_20");
+
+static int
+compat_netbsd32_20_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(&emul_netbsd32,
+		    compat_netbsd32_20_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(&emul_netbsd32,
+		    compat_netbsd32_20_syscalls);
+
+	default:
+		return ENOTTY;
+	}
 }

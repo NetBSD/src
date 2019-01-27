@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.4 2015/10/22 15:18:25 christos Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.5 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4 2015/10/22 15:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.5 2019/01/27 02:08:39 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -41,11 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4 2015/10/22 15:18:25 christos Exp $");
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+#include <sys/compat_stub.h>
 
 #include <sys/tty.h>
-#include <compat/sys/ttycom.h>
 
-#ifdef COMPAT_60
+#include <compat/common/compat_mod.h>
+#include <compat/sys/ttycom.h>
 
 /* convert struct ptmget to struct compat_60_ptmget */
 static int
@@ -92,14 +93,14 @@ compat_60_ptmget_ioctl(dev_t dev, u_long cmd, void *data, int flag,
  * COMPAT_60 versions of ttioctl and ptmioctl.
  */
 int
-compat_60_ttioctl(struct tty *tp, u_long cmd, void *data, int flag,
+compat_60_ttioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 
 	switch (cmd) {
 	case COMPAT_60_TIOCPTMGET:
 	case COMPAT_60_TIOCPTSNAME:
-		return compat_60_ptmget_ioctl(tp->t_dev, cmd, data, flag, l);
+		return compat_60_ptmget_ioctl(dev, cmd, data, flag, l);
 	default:
 		return EPASSTHROUGH;
 	}
@@ -117,4 +118,17 @@ compat_60_ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 }
 
-#endif /* COMPAT_60 */
+void
+kern_tty_60_init(void)
+{
+
+	MODULE_SET_HOOK(compat_60_ttioctl_hook, "tty_60", compat_60_ttioctl);
+	MODULE_SET_HOOK(compat_60_ptmioctl_hook, "tty_60", compat_60_ptmioctl);
+}
+
+void
+kern_tty_60_fini(void)
+{
+	MODULE_UNSET_HOOK(compat_60_ttioctl_hook);
+	MODULE_UNSET_HOOK(compat_60_ptmioctl_hook);
+}

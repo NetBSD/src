@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.3 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: sshkey-xmss.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: sshkey-xmss.c,v 1.3 2018/07/09 21:59:10 markus Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.3 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>

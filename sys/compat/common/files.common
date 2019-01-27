@@ -1,0 +1,133 @@
+#	$NetBSD: files.common,v 1.2 2019/01/27 02:08:39 pgoyette Exp $
+
+#
+# Generic utility files, used by various compat options.
+#
+define	compat_netbsd_util
+file	compat/common/compat_exec.c		compat_utils
+file	compat/common/compat_util.c		compat_utils
+
+#
+# Sources for syscall and ioctl compatibility across the versions.
+#
+
+# Compatibility code for 4.3BSD
+file	compat/common/compat_43_mod.c		compat_43
+file	compat/common/kern_exit_43.c		compat_43
+file	compat/common/kern_info_43.c		compat_43
+file	compat/common/kern_resource_43.c	compat_43
+file	compat/common/kern_sig_43.c		compat_43
+file	compat/common/tty_43.c			compat_43
+file	compat/common/uipc_syscalls_43.c	compat_43
+file	compat/common/vfs_syscalls_43.c		compat_43
+file	compat/common/vm_43.c			compat_43
+file	compat/common/if_43.c			compat_43
+
+# Compatibility code for NetBSD 0.9
+file	compat/common/compat_09_mod.c		compat_09
+file	compat/common/kern_info_09.c		compat_09
+file	compat/common/compat_sysctl_09_43.c	compat_09 | compat_43
+
+# Compatability code for NetBSD 1.0
+file	compat/common/compat_10_mod.c		compat_10
+file	compat/common/vfs_syscalls_10.c		compat_10
+
+# Compatibility code for NetBSD 1.2
+file	compat/common/compat_12_mod.c		compat_12
+file	compat/common/kern_xxx_12.c		compat_12
+file	compat/common/vfs_syscalls_12.c		compat_12
+file	compat/common/vm_12.c			compat_12
+
+# Compatibility code for NetBSD 1.3
+file	compat/common/compat_13_mod.c		compat_13
+file	compat/common/kern_sig_13.c		compat_13
+file	compat/common/uvm_13.c			compat_13
+
+# Compatibility code for NetBSD 1.4
+file	compat/common/compat_14_mod.c		compat_14
+file	compat/common/rtsock_14.c		compat_14
+
+# Compatibility code for NetBSD 1.6
+file	compat/common/compat_16_mod.c		compat_16
+file	compat/common/kern_sig_16.c		compat_16
+
+# Compatibility code for NetBSD 2.0
+file	compat/common/compat_20_mod.c		compat_20
+file	compat/common/vfs_syscalls_20.c		compat_20
+file	compat/common/if43_20.c			compat_20
+file	compat/common/ieee80211_20.c		compat_20
+
+# Compatibility code for NetBSD 3.0
+file	compat/common/compat_30_mod.c		compat_30
+file	compat/common/kern_time_30.c		compat_30
+file	compat/common/vfs_syscalls_30.c		compat_30
+file	compat/common/uipc_syscalls_30.c	compat_30
+file	compat/common/bio_30.c			compat_30
+file	compat/common/vnd_30.c			compat_30
+file	compat/common/usb_subr_30.c		compat_30
+
+# Compatibility code for NetBSD 4.0
+file	compat/common/compat_40_mod.c		compat_40
+file	compat/common/vfs_syscalls_40.c		compat_40
+file	compat/common/uipc_syscalls_40.c	compat_40
+file	compat/common/sysmon_power_40.c		compat_40
+
+# Compatibility code for NetBSD 5.0
+file	compat/common/compat_50_mod.c		compat_50
+file	compat/common/kern_50.c			compat_50
+file	compat/common/kern_time_50.c		compat_50
+file	compat/common/kern_select_50.c		compat_50
+file	compat/common/rndpseudo_50.c		compat_50
+file	compat/common/rtsock_50.c		compat_50
+file	compat/common/vfs_syscalls_50.c		compat_50
+file	compat/common/uipc_syscalls_50.c	compat_50
+file	compat/common/vnd_50.c			compat_50
+file	compat/common/clockctl_50.c		compat_50
+file	compat/common/if_spppsubr50.c		compat_50
+file	compat/common/uvm_50.c			compat_50
+
+# Compatibility code for NetBSD 6.0
+file	compat/common/compat_60_mod.c		compat_60
+file	compat/common/kern_sa_60.c		compat_60
+file	compat/common/tty_60.c			compat_60
+file	compat/common/kern_time_60.c		compat_60
+file	compat/common/kern_cpu_60.c		compat_60
+file	compat/common/ccd_60.c			compat_60
+
+# Compatibility code for NetBSD 7.0
+file	compat/common/compat_70_mod.c		compat_70
+file	compat/common/rtsock_70.c		compat_70
+file	compat/common/uipc_usrreq_70.c		compat_70
+
+# Compatability code for NetBSD 8.0
+file	compat/common/compat_80_mod.c		compat_80
+file	compat/common/kern_mod_80.c		compat_80
+
+#
+# Sources for sysv ipc compatibility across the versions.
+#
+
+# Module interface for sysv ipc compatability options
+
+# Compatibility code for NetBSD 1.0
+file	compat/common/compat_sysv_10_mod.c	compat_10 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/kern_ipc_10.c		compat_10 &
+						  (sysvmsg | sysvshm | sysvsem)
+
+# Compatibility code for NetBSD 1.4
+file	compat/common/compat_sysv_14_mod.c	compat_14 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/sysv_msg_14.c		compat_14 & sysvmsg
+file	compat/common/sysv_sem_14.c		compat_14 & sysvsem
+file	compat/common/sysv_shm_14.c		compat_14 & sysvshm
+
+# Compatibility code for NetBSD 5.0
+file	compat/common/compat_sysv_50_mod.c	compat_50 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/sysv_ipc_50.c		compat_50 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/sysv_msg_50.c		compat_50 & sysvmsg
+file	compat/common/sysv_sem_50.c		compat_50 & sysvsem
+file	compat/common/sysv_shm_50.c		compat_50 & sysvshm
+

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2018/11/26 08:48:43 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.3 2019/01/27 02:08:46 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -13,8 +13,5 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 .PATH:	${S}/compat/netbsd32
 
 SRCS+=	netbsd32_ipc.c
-SRCS+=	netbsd32_compat_10.c
-SRCS+=	netbsd32_compat_14.c
-SRCS+=	netbsd32_compat_50_sysv.c
 
 .include <bsd.kmodule.mk>

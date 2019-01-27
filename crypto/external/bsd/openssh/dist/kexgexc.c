@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgexc.c,v 1.12 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: kexgexc.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: kexgexc.c,v 1.27 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.12 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
