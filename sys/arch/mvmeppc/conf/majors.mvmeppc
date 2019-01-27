@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvmeppc,v 1.23 2019/01/27 08:53:30 maxv Exp $
+#	$NetBSD: majors.mvmeppc,v 1.24 2019/01/27 17:59:23 dholland Exp $
 #
 # Device majors for mvmeppc
 #
@@ -31,6 +31,7 @@ device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 
 device-major	ipl		char 44			ipfilter
+#device-major	obsolete	char 45			obsolete (satlink)
 device-major	rnd		char 46			rnd
 
 device-major	scsibus		char 50			scsibus

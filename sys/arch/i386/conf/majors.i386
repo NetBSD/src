@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.49 2019/01/27 08:53:30 maxv Exp $
+#	$NetBSD: majors.i386,v 1.50 2019/01/27 17:59:23 dholland Exp $
 #
 # Device majors for i386
 #
@@ -41,6 +41,7 @@ device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd	vector=8:8
 device-major	audio		char 42			audio
 device-major	ipl		char 44			ipfilter
+#device-major	obsolete	char 45			obsolete (satlink)
 device-major	rnd		char 46			rnd
 device-major	wsdisplay	char 47			wsdisplay
 device-major	wskbd		char 48			wskbd
