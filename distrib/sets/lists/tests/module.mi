@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.15 2019/01/25 18:33:58 christos Exp $
+# $NetBSD: module.mi,v 1.16 2019/01/27 16:32:52 christos Exp $
 #
 # These are only made for ports doing modules.
 #
@@ -20,6 +20,6 @@
 ./usr/tests/modules/t_klua_pr_52864 		tests-sys-tests		atf,rump
 ./usr/tests/modules/t_modctl			tests-sys-tests		atf,rump
 ./usr/tests/modules/t_modload			tests-sys-tests		atf,rump
-./usr/tests/modules/t_threadpool		tests-sys-tests		atf,compattestfile
-./usr/tests/modules/threadpool_tester		tests-sys-tests		atf,compattestfile
-./usr/tests/modules/threadpool_tester/threadpool_tester.kmod tests-sys-tests	atf,compattestfile
+./usr/tests/modules/t_threadpool		tests-sys-tests		atf,rump
+./usr/tests/modules/threadpool_tester		tests-sys-tests		atf,rump
+./usr/tests/modules/threadpool_tester/threadpool_tester.kmod tests-sys-tests	atf,rump
