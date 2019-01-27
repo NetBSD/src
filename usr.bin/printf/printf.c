@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.47 2019/01/26 15:22:54 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.48 2019/01/27 12:03:09 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.47 2019/01/26 15:22:54 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.48 2019/01/27 12:03:09 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -682,7 +682,7 @@ getdouble(void)
 		return (double) *((*gargv++)+1);
 
 	errno = 0;
-	val = strtod_l(*gargv, &ep, LC_C_LOCALE);
+	val = strtod(*gargv, &ep);
 	check_conversion(*gargv++, ep);
 	return val;
 }
