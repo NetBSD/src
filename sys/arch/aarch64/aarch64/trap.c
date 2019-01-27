@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.15 2019/01/27 02:08:36 pgoyette Exp $ */
+/* $NetBSD: trap.c,v 1.16 2019/01/27 04:49:12 dholland Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,10 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.15 2019/01/27 02:08:36 pgoyette Exp $");
-
-#include "opt_arm_intr_impl.h"
-#include "opt_compat_netbsd32.h"
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.16 2019/01/27 04:49:12 dholland Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
