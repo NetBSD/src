@@ -1,5 +1,6 @@
+/* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.48 2019/01/27 02:08:50 pgoyette Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.49 2019/01/27 05:15:32 dholland Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
