@@ -1,7 +1,4 @@
-/* $NetBSD: cpuio.h,v 1.9 2019/01/27 02:08:41 pgoyette Exp $ */
-
-#ifndef _SYS_COMPAT_CPUIO_H_
-#define _SYS_COMPAT_CPUIO_H_
+/* $NetBSD: cpuio.h,v 1.10 2019/01/27 02:58:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
