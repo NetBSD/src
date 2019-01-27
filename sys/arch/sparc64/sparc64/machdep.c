@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.287 2016/11/04 18:09:14 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.287.8.1 2019/01/27 18:43:08 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287 2016/11/04 18:09:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287.8.1 2019/01/27 18:43:08 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -451,12 +451,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate an aligned sigframe */
 	fp = (void *)((u_long)(fp - 1) & ~0x0f);
 
+	memset(&uc, 0, sizeof(uc));
 	uc.uc_flags = _UC_SIGMASK |
 	    ((l->l_sigstk.ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = l->l_ctxlink;
-	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.110 2016/10/19 09:44:01 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.110.8.1 2019/01/27 18:43:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110 2016/10/19 09:44:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.110.8.1 2019/01/27 18:43:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -212,6 +212,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * and then copy it out.  We probably ought to just build it
 	 * directly in user space....
 	 */
+	memset(&sf, 0, sizeof(sf));
 	sf.sf_signo = sig;
 	sf.sf_code = (u_int)ksi->ksi_trap;
 #if defined(COMPAT_SUNOS) || defined(MODULAR)
