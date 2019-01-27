@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.18 2018/11/08 12:04:48 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.19 2019/01/27 18:35:19 martin Exp $*/
 
 /******************************************************************************
 
@@ -1403,7 +1403,7 @@ static int
 ixv_allocate_pci_resources(struct adapter *adapter,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype;
+	pcireg_t	memtype, csr;
 	device_t        dev = adapter->dev;
 	bus_addr_t addr;
 	int flags;
@@ -1428,6 +1428,15 @@ map_err:
 			aprint_error_dev(dev, "unable to map BAR0\n");
 			return ENXIO;
 		}
+		/*
+		 * Enable address decoding for memory range in case it's not
+		 * set.
+		 */
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_MEM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    csr);
 		break;
 	default:
 		aprint_error_dev(dev, "unexpected type on BAR0\n");
