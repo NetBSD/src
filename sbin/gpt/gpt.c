@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.76 2018/10/14 20:10:49 mlelstv Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.77 2019/01/27 13:16:05 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -279,7 +279,7 @@ gpt_write(gpt_t gpt, map_t map)
 }
 
 static int
-gpt_mbr(gpt_t gpt, off_t lba)
+gpt_mbr(gpt_t gpt, off_t lba, unsigned int *next_index, off_t ext_offset)
 {
 	struct mbr *mbr;
 	map_t m, p;
@@ -345,20 +345,22 @@ gpt_mbr(gpt_t gpt, off_t lba)
 			    (uintmax_t)lba);
 			continue;
 		}
-		/* start is relative to the offset of the MBR itself. */
-		start += lba;
 		if (gpt->verbose > 2)
 			gpt_msg(gpt, "MBR part: flag=%#x type=%d, start=%ju, "
 			    "size=%ju", mbr->mbr_part[i].part_flag,
 			    mbr->mbr_part[i].part_typ,
 			    (uintmax_t)start, (uintmax_t)size);
-		if (mbr->mbr_part[i].part_typ != MBR_PTYPE_EXT_LBA) {
+		if (!MBR_IS_EXTENDED(mbr->mbr_part[i].part_typ)) {
+			start += lba;
 			m = map_add(gpt, start, size, MAP_TYPE_MBR_PART, p, 0);
 			if (m == NULL)
 				return -1;
-			m->map_index = i + 1;
+			m->map_index = *next_index;
+			(*next_index)++;
 		} else {
-			if (gpt_mbr(gpt, start) == -1)
+			start += ext_offset;
+			if (gpt_mbr(gpt, start, next_index,
+			    ext_offset ? ext_offset : start) == -1)
 				return -1;
 		}
 	}
@@ -479,7 +481,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	int mode, found;
 	off_t devsz;
 	gpt_t gpt;
-
+	unsigned int index;
 
 	if ((gpt = calloc(1, sizeof(*gpt))) == NULL) {
 		if (!(flags & GPT_QUIET))
@@ -567,7 +569,8 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	if (map_init(gpt, devsz) == -1)
 		goto close;
 
-	if (gpt_mbr(gpt, 0LL) == -1)
+	index = 1;
+	if (gpt_mbr(gpt, 0LL, &index, 0U) == -1)
 		goto close;
 	if ((found = gpt_gpt(gpt, 1LL, 1)) == -1)
 		goto close;
