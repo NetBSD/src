@@ -1,10 +1,4 @@
-/*	$NetBSD: stm32-pinfunc.h,v 1.2 2019/01/27 02:08:43 pgoyette Exp $	*/
-
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
-/*
- * Copyright (C) STMicroelectronics 2017 - All Rights Reserved
- * Author: Torgue Alexandre <alexandre.torgue@st.com> for STMicroelectronics.
- */
+/*	$NetBSD: stm32-pinfunc.h,v 1.3 2019/01/27 05:07:46 kre Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
 /*
