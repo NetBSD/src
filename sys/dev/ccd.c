@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.176 2018/03/18 20:33:52 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.177 2019/01/27 02:08:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.176 2018/03/18 20:33:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.177 2019/01/27 02:08:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.176 2018/03/18 20:33:52 christos Exp $");
 #include <sys/kthread.h>
 #include <sys/bufq.h>
 #include <sys/sysctl.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1080,7 +1081,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = ccdunit(dev);
 	int i, j, lookedup = 0, error = 0;
-	int part, pmask, make;
+	int part, pmask, make, hook;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	kauth_cred_t uc;
@@ -1096,7 +1097,10 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		make = 1;
 		break;
 	default:
-		if ((*compat_ccd_ioctl_60)(0, cmd, NULL, 0, NULL, NULL) == 0)
+		MODULE_CALL_HOOK(ccd_ioctl_60_hook,
+				 (0, cmd, NULL, 0, NULL, NULL),
+				 enosys(), hook);
+		if (hook == 0)
 			make = 1;
 		else
 			make = 0;
@@ -1107,7 +1111,9 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return ENOENT;
 	uc = kauth_cred_get();
 
-	error = (*compat_ccd_ioctl_60)(dev, cmd, data, flag, l, ccdioctl);
+	MODULE_CALL_HOOK(ccd_ioctl_60_hook,
+			 (dev, cmd, data, flag, l, ccdioctl),
+			 enosys(), error);
 	if (error != ENOSYS)
 		return error;
 

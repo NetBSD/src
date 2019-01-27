@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.22 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: sshconnect.c,v 1.304 2018/07/27 05:34:42 dtucker Exp $ */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.22 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.23 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>

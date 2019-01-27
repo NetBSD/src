@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_40.c,v 1.4 2015/10/23 19:40:10 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls_40.c,v 1.5 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,12 +63,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.4 2015/10/23 19:40:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.5 2019/01/27 02:08:39 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+
+#include <compat/common/compat_mod.h>
+
+static const struct syscall_package vfs_syscalls_40_syscalls[] = {
+	{ SYS_compat_40_mount, 0, (sy_call_t *)compat_40_sys_mount },
+	{ 0, 0, NULL },
+};
 
 int
 compat_40_sys_mount(struct lwp *l, const struct compat_40_sys_mount_args *uap, register_t *retval)
@@ -83,4 +96,18 @@ compat_40_sys_mount(struct lwp *l, const struct compat_40_sys_mount_args *uap, r
 
 	return do_sys_mount(l, SCARG(uap, type), UIO_USERSPACE, SCARG(uap, path),
 	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE, 0, &dummy);
+}
+
+int
+vfs_syscalls_40_init(void)
+{
+
+	return syscall_establish(NULL, vfs_syscalls_40_syscalls);
+}
+
+int
+vfs_syscalls_40_fini(void)
+{
+
+	return syscall_disestablish(NULL, vfs_syscalls_40_syscalls);
 }

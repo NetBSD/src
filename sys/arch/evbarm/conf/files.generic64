@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.9 2018/10/21 00:56:44 jmcneill Exp $
+#	$NetBSD: files.generic64,v 1.10 2019/01/27 02:08:38 pgoyette Exp $
 #
 # A generic (aarch64) kernel configuration info
 #

@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.322 2018/08/10 21:47:16 pgoyette Exp $ */
+/* $NetBSD: init_sysent.c,v 1.323 2019/01/27 02:08:43 pgoyette Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.322 2018/08/10 21:47:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.323 2019/01/27 02:08:43 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_ntp.h"
@@ -897,7 +897,7 @@ struct sysent sysent[] = {
 	{
 		ns(struct compat_30_sys_ntp_gettime_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)compat_30(sys_ntp_gettime)
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 175 = compat_30_ntp_gettime */
 #if defined(NTP) || !defined(_KERNEL_OPT)
 	{
@@ -1597,26 +1597,26 @@ struct sysent sysent[] = {
 	{
 		ns(struct compat_60_sys_sa_register_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)compat_60(sys_sa_register)
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 330 = compat_60_sa_register */
 	{
 		ns(struct compat_60_sys_sa_stacks_args),
 		.sy_flags = SYCALL_ARG_PTR,
-		.sy_call = (sy_call_t *)compat_60(sys_sa_stacks)
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 331 = compat_60_sa_stacks */
 	{
-		.sy_call = (sy_call_t *)compat_60(sys_sa_enable)
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 332 = compat_60_sa_enable */
 	{
 		ns(struct compat_60_sys_sa_setconcurrency_args),
-		.sy_call = (sy_call_t *)compat_60(sys_sa_setconcurrency)
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 333 = compat_60_sa_setconcurrency */
 	{
-		.sy_call = (sy_call_t *)compat_60(sys_sa_yield)
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 334 = compat_60_sa_yield */
 	{
 		ns(struct compat_60_sys_sa_preempt_args),
-		.sy_call = (sy_call_t *)compat_60(sys_sa_preempt)
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 335 = compat_60_sa_preempt */
 	{
 		.sy_call = sys_nosys,

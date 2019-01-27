@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.11 2017/07/28 17:14:04 riastradh Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.12 2019/01/27 02:08:48 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11 2017/07/28 17:14:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.12 2019/01/27 02:08:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11 2017/07/28 17:14:04 riastradh Ex
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/atomic.h>
+#include <sys/compat_stub.h> 
+#include <sys/module.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
@@ -104,7 +106,8 @@ static int	ocryptodev_op(struct csession *, struct ocrypt_op *,
 static int	ocryptodev_mop(struct fcrypt *, struct ocrypt_n_op *, int,
 		    struct lwp *);
 static int	ocryptodev_session(struct fcrypt *, struct osession_op *);
-static int	ocryptodev_msession(struct fcrypt *, struct osession_n_op *, int);
+static int	ocryptodev_msession(struct fcrypt *, struct osession_n_op *,
+		    int);
 
 int
 ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
@@ -174,7 +177,8 @@ mbail:
 		error = copyin(omop->reqs, ocnop,
 		    (omop->count * sizeof(struct ocrypt_n_op)));
 		if(!error) {
-			error = ocryptodev_mop(fcr, ocnop, omop->count, curlwp);
+			error = ocryptodev_mop(fcr, ocnop, omop->count,
+			    curlwp);
 			if (!error) {
 				error = copyout(ocnop, omop->reqs, 
 				    (omop->count * sizeof(struct ocrypt_n_op)));
@@ -209,9 +213,8 @@ ocryptodev_op(struct csession *cse, struct ocrypt_op *ocop, struct lwp *l)
 };
 
 static int 
-ocryptodev_mop(struct fcrypt *fcr, 
-              struct ocrypt_n_op *ocnop,
-              int count, struct lwp *l)
+ocryptodev_mop(struct fcrypt *fcr, struct ocrypt_n_op *ocnop, int count,
+    struct lwp *l)
 {
 	int res;
 
@@ -242,7 +245,7 @@ ocryptodev_mop(struct fcrypt *fcr,
 
 
 static int
-ocryptodev_session(struct fcrypt *fcr, struct osession_op *osop) 
+ocryptodev_session(struct fcrypt *fcr, struct osession_op *osop)
 {
 	struct session_op sop;
 	int res;
@@ -283,3 +286,36 @@ ocryptodev_msession(struct fcrypt *fcr, struct osession_n_op *osn_ops,
 
 	return 0;
 }
+
+static void
+crypto_50_init(void)
+{
+
+	MODULE_SET_HOOK(ocryptof_50_hook, "cryp50", ocryptof_ioctl);
+}
+
+static void
+crypto_50_fini(void)
+{
+
+	MODULE_UNSET_HOOK(ocryptof_50_hook);
+}
+
+MODULE(MODULE_CLASS_EXEC, compat_crypto_50, "crypto,compat_50");
+ 
+static int
+compat_crypto_50_modcmd(modcmd_t cmd, void *arg)
+{
+ 
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		crypto_50_init();
+		return 0;
+	case MODULE_CMD_FINI:
+		crypto_50_fini();
+		return 0;
+	default: 
+		return ENOTTY;
+	}
+}
+

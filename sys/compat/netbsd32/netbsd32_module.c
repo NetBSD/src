@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.7 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.8 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.7 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.8 2019/01/27 02:08:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -45,12 +45,21 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.7 2018/09/03 16:29:29 riastrad
 static int
 modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 {
+	int ms_cnt;
 	modstat_t *ms, *mso;
+	size_t ms_len;
+	int req_cnt;
+	char *req, *reqo;
+	size_t req_len;
+	char *out_p;
+	size_t out_s;
+
 	modinfo_t *mi;
 	module_t *mod;
 	vaddr_t addr;
 	size_t size;
-	size_t mslen;
+	size_t used;
+	int off;
 	int error;
 	bool stataddr;
 
@@ -60,16 +69,54 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	stataddr = (error == 0);
 
 	kernconfig_lock();
-	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
-	mso = kmem_zalloc(mslen, KM_SLEEP);
-	ms = mso;
+	ms_cnt = 0;
+	req_len = 1;
+
+	/*
+	 * Count up the number of modstat_t needed, and total size of
+	 * require_module lists on both active and built-in lists
+	 */
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		ms_cnt++;
+		mi = mod->mod_info;
+		if (mi->mi_required != NULL) {
+			req_cnt++;
+			req_len += strlen(mi->mi_required) + 1;
+		}
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		ms_cnt++;
+		mi = mod->mod_info;
+		if (mi->mi_required != NULL) {
+			req_cnt++;
+			req_len += strlen(mi->mi_required) + 1;
+		}
+	}
+
+	/* Allocate internal buffers to hold all the output data */
+	ms_len = ms_cnt * sizeof(modstat_t);
+	ms = kmem_zalloc(ms_len, KM_SLEEP);
+	req = kmem_zalloc(req_len, KM_SLEEP);
+
+	mso = ms;
+	reqo = req++;
+	off = 1;
+
+	/*
+	 * Load data into our internal buffers for both active and
+	 * build-in module lists
+	 */
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		mi = mod->mod_info;
 		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
 		if (mi->mi_required != NULL) {
-			strlcpy(ms->ms_required, mi->mi_required,
-			    sizeof(ms->ms_required));
-		}
+			ms->ms_reqoffset = off;
+			used = strlcpy(req,  mi->mi_required, req_len - off);
+			KASSERTMSG(used < req_len - off, "reqlist grew!");
+			off = used + 1;
+			req += used + 1;
+		} else
+			ms->ms_reqoffset = 0;
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
 			ms->ms_addr = addr;
@@ -85,9 +132,13 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 		mi = mod->mod_info;
 		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
 		if (mi->mi_required != NULL) {
-			strlcpy(ms->ms_required, mi->mi_required,
-			    sizeof(ms->ms_required));
-		}
+			ms->ms_reqoffset = off;
+			used = strlcpy(req,  mi->mi_required, req_len - off);
+			KASSERTMSG(used < req_len - off, "reqlist grew!");
+			off += used + 1;
+			req += used + 1;
+		} else
+			ms->ms_reqoffset = 0;
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
 			ms->ms_addr = addr;
@@ -100,15 +151,53 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 		ms++;
 	}
 	kernconfig_unlock();
-	error = copyout(mso, NETBSD32PTR64(iov->iov_base),
-	    uimin(mslen - sizeof(modstat_t), iov->iov_len));
-	kmem_free(mso, mslen);
+
+	/*
+	 * Now copyout our internal buffers back to userland
+	 */
+	out_p = NETBSD32PTR64(iov->iov_base);
+	out_s = iov->iov_len;
+	size = sizeof(ms_cnt);
+
+	/* Copy out the count of modstat_t */
+	if (out_s) {
+		size = uimin(sizeof(ms_cnt), out_s);
+		error = copyout(&ms_cnt, out_p, size);
+		out_p += size;
+		out_s -= size;
+	}
+	/* Copy out the modstat_t array */
+	if (out_s && error == 0) {
+		size = uimin(ms_len, out_s);
+		error = copyout(mso, out_p, size);
+		out_p += size;
+		out_s -= size;
+	}
+	/* Copy out the "required" strings */
+	if (out_s && error == 0) {
+		size = uimin(req_len, out_s);
+		error = copyout(reqo, out_p, size);
+		out_p += size;
+		out_s -= size;
+	}
+	kmem_free(mso, ms_len);
+	kmem_free(reqo, req_len);
+
+	/* Finally, update the userland copy of the iovec's length */
 	if (error == 0) {
-		iov->iov_len = mslen - sizeof(modstat_t);
+		iov->iov_len = ms_len + req_len + sizeof(ms_cnt);
 		error = copyout(iov, arg, sizeof(*iov));
 	}
 
 	return error;
+}
+
+int
+compat32_80_modctl_compat_stub(struct lwp *lwp,
+    const struct netbsd32_modctl_args *uap, register_t *result)
+{
+
+	return EPASSTHROUGH;
 }
 
 int
@@ -129,6 +218,11 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 #endif
 
 	arg = SCARG_P32(uap, arg);
+
+	MODULE_CALL_HOOK(compat32_80_modctl_hook, (lwp, uap, result),
+	    enosys(), error);
+	if (error != EPASSTHROUGH && error != ENOSYS)
+		return error;
 
 	switch (SCARG(uap, cmd)) {
 	case MODCTL_LOAD:

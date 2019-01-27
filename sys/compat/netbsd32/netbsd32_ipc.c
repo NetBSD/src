@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.18 2015/12/03 10:38:21 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.19 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18 2015/12/03 10:38:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.19 2019/01/27 02:08:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18 2015/12/03 10:38:21 pgoyette E
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
-extern struct emul emul_netbsd32;
-
 #define _PKG_ENTRY(name)	\
 	{ NETBSD32_SYS_ ## name, 0, (sy_call_t *)name }
 
@@ -66,15 +64,6 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 	_PKG_ENTRY(netbsd32_semget),
 	_PKG_ENTRY(netbsd32_semop),
 	_PKG_ENTRY(netbsd32_semconfig),
-#if defined(COMPAT_10)
-	_PKG_ENTRY2(compat_10_osemsys, compat_10_netbsd32_semsys),
-#endif
-#if defined(COMPAT_14)
-	_PKG_ENTRY(compat_14_netbsd32___semctl),
-#endif
-#if defined(COMPAT_50)
-	_PKG_ENTRY(compat_50_netbsd32___semctl14),
-#endif
 #endif /* SYSVSEM */
 
 #if defined(SYSVSHM)
@@ -82,15 +71,6 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 	_PKG_ENTRY(netbsd32___shmctl50),
 	_PKG_ENTRY(netbsd32_shmdt),
 	_PKG_ENTRY(netbsd32_shmget),
-#if defined(COMPAT_10)
-	_PKG_ENTRY2(compat_10_oshmsys, compat_10_netbsd32_shmsys),
-#endif
-#if defined(COMPAT_14)
-	_PKG_ENTRY(compat_14_netbsd32_shmctl),
-#endif
-#if defined(COMPAT_50)
-	_PKG_ENTRY(compat_50_netbsd32___shmctl13),
-#endif
 #endif /* SYSVSHM */
 
 #if defined(SYSVMSG)
@@ -98,20 +78,12 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 	_PKG_ENTRY(netbsd32_msgget),
 	_PKG_ENTRY(netbsd32_msgsnd),
 	_PKG_ENTRY(netbsd32_msgrcv),
-#if defined(COMPAT_10)
-	_PKG_ENTRY2(compat_10_omsgsys, compat_10_netbsd32_msgsys),
-#endif
-#if defined(COMPAT_14)
-	_PKG_ENTRY(compat_14_netbsd32_msgctl),
-#endif
-#if defined(COMPAT_50)
-	_PKG_ENTRY(compat_50_netbsd32___msgctl13),
-#endif
 #endif /* SYSVMSG */
 	{ 0, 0, NULL }
 };
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_sysvipc, "sysv_ipc,compat_netbsd32");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_sysvipc,
+    "compat_netbsd32,sysv_ipc");
 
 static int
 compat_netbsd32_sysvipc_modcmd(modcmd_t cmd, void *arg)

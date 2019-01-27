@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.4 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,12 +39,16 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+
+#include <sys/compat_stub.h>
 
 #include <dev/raidframe/raidframeio.h>
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
 #include "rf_compat50.h"
+#include "rf_compat50_mod.h"
 #include "rf_debugMem.h"
 
 typedef struct RF_Config50_s {
@@ -213,4 +217,57 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 out:
 	RF_Free(d_cfg, sizeof(RF_DeviceConfig50_t));
 	return error;
+}
+
+int
+raidframe_ioctl_50(int cmd, int initted, RF_Raid_t *raidPtr, int unit,
+    void *data, RF_Config_t **k_cfg)
+{
+	int error;
+
+	switch (cmd) {
+	case RAIDFRAME_GET_INFO50:
+		if (initted == 0)
+			return ENXIO;
+		return rf_get_info50(raidPtr, data);
+
+	case RAIDFRAME_CONFIGURE50:
+		error = rf_config50(raidPtr, unit, data, k_cfg);
+		if (error != 0)
+			return error;
+		return EAGAIN;	/* flag mainline to call generic config */
+	}
+	return EPASSTHROUGH;
+}
+
+void
+raidframe_50_init(void)
+{
+
+	MODULE_SET_HOOK(raidframe50_ioctl_hook, "raid50", raidframe_ioctl_50);
+}
+
+void
+raidframe_50_fini(void)
+{
+
+	MODULE_UNSET_HOOK(raidframe50_ioctl_hook);
+}
+
+MODULE(MODULE_CLASS_EXEC, compat_raid_50, "raid,compat_50,compat_raid_80");
+
+static int
+compat_raid_50_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		raidframe_50_init();
+		return 0;
+	case MODULE_CMD_FINI:
+		raidframe_50_fini();
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

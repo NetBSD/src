@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.32 2018/10/30 14:35:16 riastradh Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.33 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.32 2018/10/30 14:35:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.33 2019/01/27 02:08:39 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
 #include "opt_aio.h"
 #include "opt_ntp.h"
 #include "opt_mqueue.h"
@@ -56,9 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.32 2018/10/30 14:35:16 riastradh 
 #include <sys/clockctl.h>
 #include <sys/aio.h>
 #include <sys/poll.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
+#include <sys/compat_stub.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
@@ -68,6 +72,39 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.32 2018/10/30 14:35:16 riastradh 
 #include <compat/sys/clockctl.h>
 
 struct timeval50 boottime50; 
+
+static struct sysctllog *kern_time_50_clog = NULL;
+
+static const struct syscall_package kern_time_50_syscalls[] = {
+	{ SYS_compat_50_clock_gettime, 0,
+	    (sy_call_t *)compat_50_sys_clock_gettime },  
+	{ SYS_compat_50_clock_settime, 0,
+	    (sy_call_t *)compat_50_sys_clock_settime },
+        { SYS_compat_50_clock_getres, 0,
+	    (sy_call_t *)compat_50_sys_clock_getres},
+	{ SYS_compat_50_nanosleep, 0, (sy_call_t *)compat_50_sys_nanosleep },
+	{ SYS_compat_50_gettimeofday, 0,
+	    (sy_call_t *)compat_50_sys_gettimeofday },     
+	{ SYS_compat_50_settimeofday, 0,
+	    (sy_call_t *)compat_50_sys_settimeofday },
+	{ SYS_compat_50_adjtime, 0, (sy_call_t *)compat_50_sys_adjtime },
+	{ SYS_compat_50_setitimer, 0, (sy_call_t *)compat_50_sys_setitimer },
+	{ SYS_compat_50_getitimer, 0, (sy_call_t *)compat_50_sys_getitimer },
+	{ SYS_compat_50_aio_suspend, 0,
+	    (sy_call_t *)compat_50_sys_aio_suspend },
+	{ SYS_compat_50_mq_timedsend, 0,
+	    (sy_call_t *)compat_50_sys_mq_timedsend },
+        { SYS_compat_50_mq_timedreceive, 0,
+	    (sy_call_t *)compat_50_sys_mq_timedreceive },
+	{ SYS_compat_50_getrusage, 0, (sy_call_t *)compat_50_sys_getrusage },
+	{ SYS_compat_50_timer_settime, 0,
+	    (sy_call_t *)compat_50_sys_timer_settime },
+        { SYS_compat_50_timer_gettime, 0,
+	    (sy_call_t *)compat_50_sys_timer_gettime },
+	{ SYS_compat_50___ntp_gettime30, 0,
+	    (sy_call_t *)compat_50_sys___ntp_gettime30 },
+	{ 0, 0, NULL }
+}; 
 
 int
 compat_50_sys_clock_gettime(struct lwp *l,
@@ -516,7 +553,9 @@ int
 compat_50_sys___ntp_gettime30(struct lwp *l,
     const struct compat_50_sys___ntp_gettime30_args *uap, register_t *retval)
 {
-#ifdef NTP
+	if (vec_ntp_gettime == NULL)
+		return ENOSYS;		/* No NTP available in kernel */
+
 	/* {
 		syscallarg(struct ntptimeval *) ntvp;
 	} */
@@ -525,7 +564,7 @@ compat_50_sys___ntp_gettime30(struct lwp *l,
 	int error;
 
 	if (SCARG(uap, ntvp)) {
-		ntp_gettime(&ntv);
+		(*vec_ntp_gettime)(&ntv);
 		memset(&ntv50, 0, sizeof(ntv50));
 		timespec_to_timespec50(&ntv.time, &ntv50.time);
 		ntv50.maxerror = ntv.maxerror;
@@ -537,14 +576,11 @@ compat_50_sys___ntp_gettime30(struct lwp *l,
 		if (error)
 			return error;
 	}
-	*retval = ntp_timestatus();
+	*retval = (*vec_ntp_timestatus)();
 	return 0;
-#else
-	return ENOSYS;
-#endif
 }
 
-void
+static void
 compat_sysctl_time(struct sysctllog **clog)
 {
 	struct timeval tv;
@@ -559,3 +595,29 @@ compat_sysctl_time(struct sysctllog **clog)
 		NULL, 0, &boottime50, sizeof(boottime50),
 		CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
 }
+
+int             
+kern_time_50_init(void)
+{               
+	int error;
+
+	compat_sysctl_time(&kern_time_50_clog);
+
+	error = syscall_establish(NULL, kern_time_50_syscalls);
+	if (error != 0)
+		sysctl_teardown(&kern_time_50_clog);
+
+	return error;
+}       
+        
+int
+kern_time_50_fini(void)
+{               
+	int error;
+
+	error = syscall_disestablish(NULL, kern_time_50_syscalls);
+	if (error == 0)
+		sysctl_teardown(&kern_time_50_clog);
+
+	return error;
+} 

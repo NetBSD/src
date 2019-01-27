@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.16 2018/12/23 20:27:23 jakllsch Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.16 2018/12/23 20:27:23 jakllsch Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $");
 /* Id: main.c,v 1.61 2017/12/04 17:50:02 erik.b.andersen Exp  */
 
 #include <signal.h>

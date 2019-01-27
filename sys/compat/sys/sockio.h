@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.12 2018/04/15 22:13:36 pgoyette Exp $	*/
+/*	$NetBSD: sockio.h,v 1.13 2019/01/27 02:08:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -180,17 +180,5 @@ struct oifdatareq {
 		(ni)->ifi_lastchange.tv_nsec = \
 		    (oi)->ifi_lastchange.tv_usec * 1000; \
 	} while (/*CONSTCOND*/0)
-
-#ifdef _KERNEL
-
-extern int (*vec_compat_ifconf)(struct lwp *, u_long, void *);
-extern int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *);
-
-void uipc_syscalls_40_init(void);
-void uipc_syscalls_40_fini(void);
-void uipc_syscalls_50_init(void);
-void uipc_syscalls_50_fini(void);
-
-#endif
 
 #endif /* _COMPAT_SYS_SOCKIO_H_ */

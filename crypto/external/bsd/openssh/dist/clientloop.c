@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.24 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.25 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: clientloop.c,v 1.317 2018/07/11 18:53:29 markus Exp $ */
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.24 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.25 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>

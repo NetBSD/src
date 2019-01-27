@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.15 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: ssh-pkcs11.c,v 1.16 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: ssh-pkcs11.c,v 1.26 2018/02/07 02:06:51 jsing Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.15 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.16 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>

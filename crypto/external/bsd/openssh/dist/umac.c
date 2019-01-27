@@ -1,4 +1,4 @@
-/*	$NetBSD: umac.c,v 1.16 2018/08/26 07:46:37 christos Exp $	*/
+/*	$NetBSD: umac.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: umac.c,v 1.17 2018/04/10 00:10:49 djm Exp $ */
 
 /* -----------------------------------------------------------------------
@@ -68,7 +68,7 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.16 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.17 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_50.c,v 1.1 2018/03/15 03:13:51 christos Exp $	*/
+/*	$NetBSD: uvm_50.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_50.c,v 1.1 2018/03/15 03:13:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_50.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #if defined(_KERNEL) || defined(_MODULE)
 #if defined(_KERNEL_OPT)

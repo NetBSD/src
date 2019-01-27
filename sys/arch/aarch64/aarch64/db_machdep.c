@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.13 2018/12/27 09:55:27 mrg Exp $ */
+/* $NetBSD: db_machdep.c,v 1.14 2019/01/27 02:08:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.13 2018/12/27 09:55:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14 2019/01/27 02:08:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"

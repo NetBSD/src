@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.24 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.25 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.231 2018/05/11 03:38:51 djm Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.24 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.25 2019/01/27 02:08:33 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>

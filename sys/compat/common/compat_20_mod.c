@@ -1,10 +1,10 @@
-/*	$NetBSD: if_43.h,v 1.1 2016/11/05 23:30:22 pgoyette Exp $	*/
+/*	$NetBSD: compat_20_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
+ * This code is derived from software developed for The NetBSD Foundation
  * by Paul Goyette
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,71 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_COMPAT_IF_43_H_
-#define	_COMPAT_IF_43_H_
+/*
+ * Linkage for the compat module: spaghetti.
+ */
 
-#if defined(COMPAT_43)
-extern u_long (*vec_compat_cvtcmd)(u_long); 
-extern int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, 
-    void *, struct lwp *);
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_20_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
 
-void if_43_init(void);
-void if_43_fini(void);
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
 #endif
 
-#endif /* !_COMPAT_IF_43_H_ */
+#include <sys/systm.h>
+#include <sys/module.h>
+#include <sys/sysctl.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
+#include <sys/syscallargs.h>
+
+#include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
+
+int
+compat_20_init(void)
+{
+	int error = 0;
+
+	error = vfs_syscalls_20_init();
+	if (error != 0)
+		return error;
+
+	if43_20_init();
+	ieee80211_20_init();
+
+	return error;
+}
+
+int
+compat_20_fini(void)
+{
+	int error = 0;
+
+	ieee80211_20_fini();
+	if43_20_fini();
+
+	error = vfs_syscalls_20_fini();
+	if (error != 0) {
+		if43_20_init();
+		ieee80211_20_init();
+	}
+
+	return error;
+}
+
+MODULE(MODULE_CLASS_EXEC, compat_20, "compat_30");
+
+static int
+compat_20_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return compat_20_init();
+	case MODULE_CMD_FINI:
+		return compat_20_fini();
+	default:
+		return ENOTTY;
+	}
+}

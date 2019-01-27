@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.19 2018/08/27 15:11:17 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.20 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.

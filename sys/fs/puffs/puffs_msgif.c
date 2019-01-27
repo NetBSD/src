@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.101 2017/04/17 08:31:01 hannken Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.102 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101 2017/04/17 08:31:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.102 2019/01/27 02:08:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101 2017/04/17 08:31:01 hannken Ex
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/atomic.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm.h>
 
@@ -335,6 +336,9 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	struct lwp *l = curlwp;
 	struct puffs_req *preq, *creq;
 	ssize_t delta;
+#if 1
+	int ret;
+#endif
 
 	/*
 	 * Some clients reuse a park, so reset some flags.  We might
@@ -348,13 +352,17 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 
 #if 1
 	/* check if we do compat adjustments */
-	if (pmp->pmp_docompat && puffs_compat_outgoing(preq, &creq, &delta)) {
-		park->park_creq = park->park_preq;
-		park->park_creqlen = park->park_maxlen;
-
-		park->park_maxlen += delta;
-		park->park_copylen += delta;
-		park->park_preq = preq = creq;
+	if (pmp->pmp_docompat) {
+		MODULE_CALL_HOOK(puffs_50_out_hook, (preq, &creq, &delta),
+		    enosys(), ret);
+		if (ret == 0) {
+			park->park_creq = park->park_preq;
+			park->park_creqlen = park->park_maxlen;
+	
+			park->park_maxlen += delta;
+			park->park_copylen += delta;
+			park->park_preq = preq = creq;
+		}
 	}
 #endif
 
@@ -805,7 +813,8 @@ puffsop_msg(void *ctx, struct puffs_req *preq)
 			size_t csize;
 
 			KASSERT(pmp->pmp_docompat);
-			puffs_compat_incoming(preq, park->park_creq);
+			MODULE_CALL_VOID_HOOK(puffs_50_in_hook,
+			     (preq, park->park_creq), __nothing);
 			creq = park->park_creq;
 			csize = park->park_creqlen;
 			park->park_creq = park->park_preq;

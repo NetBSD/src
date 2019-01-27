@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.67 2018/12/24 15:57:15 maxv Exp $	*/
+/*	$NetBSD: keysock.c,v 1.68 2019/01/27 02:08:48 pgoyette Exp $	*/
 /*	$FreeBSD: keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.67 2018/12/24 15:57:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.68 2019/01/27 02:08:48 pgoyette Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 

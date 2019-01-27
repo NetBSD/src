@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.90 2018/07/03 18:09:28 jdolecek Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.91 2019/01/27 02:08:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.90 2018/07/03 18:09:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.91 2019/01/27 02:08:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -51,13 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.90 2018/07/03 18:09:28 jdolecek Exp 
 #include <sys/rndsink.h>
 #include <sys/rndsource.h>
 #include <sys/rngtest.h>
+#include <sys/file.h>
 #include <sys/systm.h>
+#include <sys/module_hook.h>
+#include <sys/compat_stub.h>
 
 #include <dev/rnd_private.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/rnd.h>
-#endif
 
 #if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
 #include <machine/cpu_rng.h>
@@ -1493,11 +1492,16 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-#ifdef COMPAT_50
-		return compat_50_rnd_ioctl(fp, cmd, addr);
-#else
-		return ENOTTY;
+		MODULE_CALL_HOOK(rnd_ioctl_50_hook, (fp, cmd, addr),
+		    enosys(), ret);
+#if defined(_LP64)
+		if (ret == ENOSYS)
+			MODULE_CALL_HOOK(rnd_ioctl_50_32_hook, (fp, cmd, addr),
+			    enosys(), ret);
 #endif
+		if (ret == ENOSYS)
+			ret = ENOTTY;
+		return ret;
 	}
 
 	switch (cmd) {
