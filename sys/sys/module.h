@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.43 2019/01/27 02:08:50 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.44 2019/01/27 18:29:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -246,22 +246,6 @@ enum modctl {
 	MODCTL_EXISTS,		/* enum: 0: load, 1: autoload */
 	MODCTL_STAT		/* struct iovec *buffer */
 };
-
-/*
- * This structure intentionally has the same layout for 32 and 64
- * bit builds.
- */
-typedef struct omodstat {
-	char		oms_name[MAXMODNAME];
-	char		oms_required[MAXMODNAME * MAXMODDEPS];
-	uint64_t	oms_addr;
-	modsrc_t	oms_source;
-	modclass_t	oms_class;
-	u_int		oms_size;
-	u_int		oms_refcnt;
-	u_int		oms_flags;
-	u_int		oms_reserved[3];
-} omodstat_t;
 
 /*
  * This structure is used with the newer version of MODCTL_STAT, which
