@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.24 2018/09/23 09:21:03 maxv Exp $
+#	$NetBSD: majors.prep,v 1.25 2019/01/27 08:53:30 maxv Exp $
 #
 # Device majors for prep
 #
@@ -40,7 +40,6 @@ device-major	vnd		char 41  block 14	vnd
 device-major	audio		char 42			audio
 
 device-major	ipl		char 44			ipfilter
-device-major	satlink		char 45			satlink
 device-major	rnd		char 46			rnd
 device-major	wsdisplay	char 47			wsdisplay
 device-major	wskbd		char 48			wskbd
