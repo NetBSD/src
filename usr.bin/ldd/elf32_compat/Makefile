@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/01/27 02:08:51 pgoyette Exp $
-
-NOSANITIZER=		# defined
+#	$NetBSD: Makefile,v 1.4 2019/01/27 05:15:42 kre Exp $
 
 NOSANITIZER=		# defined
 
