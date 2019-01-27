@@ -1,6 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 2019/01/27 02:08:33 pgoyette Exp $	*/
-
-/* Id: defs.h,v 1.60 2017/12/04 17:50:02 erik.b.andersen Exp  */
+/*	$NetBSD: defs.h,v 1.15 2019/01/27 04:25:37 dholland Exp $	*/
 
 /* Id: defs.h,v 1.60 2017/12/04 17:50:02 erik.b.andersen Exp  */
 
