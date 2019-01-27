@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.179 2019/01/27 02:08:50 pgoyette Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.180 2019/01/27 05:22:19 kre Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.179 2019/01/27 02:08:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.180 2019/01/27 05:22:19 kre Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -427,7 +427,7 @@ swapent_cvt(struct swapent *se, const struct swapdev *sdp, int inuse)
 	strcpy(se->se_path, sdp->swd_path);
 }
 
-int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *) =  
+int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *) =
     (void *)enosys;
 int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *) =
     (void *)enosys;
@@ -708,7 +708,7 @@ out:
  * ensure it would fit in the stackgap in any case.
  */
 int
-uvm_swap_stats(char *ptr, int misc, 
+uvm_swap_stats(char *ptr, int misc,
     void (*f)(void *, const struct swapent *), size_t len,
     register_t *retval)
 {
