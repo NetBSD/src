@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.31 2018/09/23 09:21:02 maxv Exp $
+#	$NetBSD: majors.evbmips,v 1.32 2019/01/27 08:53:29 maxv Exp $
 #
 # Device majors for evbmips
 #
@@ -36,7 +36,6 @@ device-major	fd		char 34  block 0	fdc
 device-major	ipl		char 35			ipfilter
 device-major	wd		char 36  block 4	wd
 device-major	se		char 37			se
-device-major	satlink		char 38			satlink
 device-major	rnd		char 39			rnd
 
 device-major	scsibus		char 42			scsibus

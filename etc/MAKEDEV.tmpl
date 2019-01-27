@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.196 2018/11/07 07:43:07 maxv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.197 2019/01/27 08:53:28 maxv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -268,7 +268,6 @@
 #	radio*	radio devices
 #	random	Random number generator
 #	rtc*	RealTimeClock
-#	satlink* PlanetConnect satellite receiver driver
 #	scsibus* SCSI busses
 #	se*	SCSI Ethernet
 #	ses*	SES/SAF-TE SCSI Devices
@@ -1599,11 +1598,6 @@ apm)
 		# hpcmips uses `apmdev_chr' instead of `apm_chr'
 	mkdev apm	c %apmdev_chr% 0 644
 	mkdev apmctl	c %apmdev_chr% 8 644
-	;;
-
-satlink[0-9]*)
-	unit=${i#satlink}
-	mkdev satlink$unit c %satlink_chr% $unit 444
 	;;
 
 random)

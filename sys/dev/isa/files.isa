@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.171 2018/09/22 16:22:23 maxv Exp $
+#	$NetBSD: files.isa,v 1.172 2019/01/27 08:53:30 maxv Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -369,13 +369,6 @@ file	dev/isa/aria.c			aria
 device	cms: midibus
 attach	cms at isa
 file	dev/isa/cms.c			cms
-
-#
-# PlanetConnect satellite receiver driver.
-#
-device	satlink: isadma
-attach	satlink at isa
-file	dev/isa/satlink.c		satlink			needs-flag
 
 # ISA PC keyboard controller
 defflag opt_pckbc.h			PCKBCNOTEST

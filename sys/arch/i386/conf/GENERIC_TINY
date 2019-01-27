@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.161 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: GENERIC_TINY,v 1.162 2019/01/27 08:53:30 maxv Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -494,13 +494,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
-
-
-# Miscellaneous Devices
-
-# Planetconnect Satellite receiver driver.
-#satlink0 at isa? port 0x300 drq 1
-
 
 # Pull in optional local configuration
 cinclude "arch/i386/conf/GENERIC.local"

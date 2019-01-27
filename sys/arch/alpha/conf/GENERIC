@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.387 2019/01/27 02:08:37 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.388 2019/01/27 08:53:29 maxv Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.387 $"
+ident		"GENERIC-$Revision: 1.388 $"
 
 maxusers 32
 
@@ -457,7 +457,6 @@ uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 pcic0	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at	isa? port 0x3e2 iomem 0xcc000 iosiz 0x10000
 pcmcia*	at	pcic? controller ? socket ?
-#satlink0 at	isa? port 0x300 drq 1		# PlanetConnect Satellite receiver.
 
 # EISA devices
 ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
