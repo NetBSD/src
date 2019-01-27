@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.13 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: fabs.S,v 1.14 2019/01/27 02:42:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,11 +32,7 @@
 #include <machine/asm.h>
 #include <machine/math.h>
 
-RCSID("$NetBSD: fabs.S,v 1.13 2019/01/27 02:08:35 pgoyette Exp $")
-
-#ifndef __HAVE_LONG_DOUBLE
-STRONG_ALIAS(fabsl, fabs)
-#endif
+RCSID("$NetBSD: fabs.S,v 1.14 2019/01/27 02:42:32 dholland Exp $")
 
 #ifndef __HAVE_LONG_DOUBLE
 STRONG_ALIAS(fabsl, fabs)
