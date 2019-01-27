@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.8.6.1 2018/09/27 14:52:27 martin Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.8.6.2 2019/01/27 18:35:19 martin Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.8.6.1 2018/09/27 14:52:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.8.6.2 2019/01/27 18:35:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,15 +132,17 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	/* Check for quirks */
 	sc->sc_quirks = 0;
 
-	/* check if memory space access is enabled */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-#ifdef DEBUG
-	printf("%s: csr: %08x\n", __func__, csr);
-#endif
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
-		sc->sc_ios = 0;
-		aprint_error_dev(self, "memory access is disabled\n");
-		return;
+		/*
+		 * Enable address decoding for memory range in case BIOS or
+		 * UEFI didn't set it.
+		 */
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_MEM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    csr);
 	}
 
 	/* map MMIO registers */
