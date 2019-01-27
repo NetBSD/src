@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.12 2019/01/27 08:53:30 maxv Exp $
+#	$NetBSD: majors.powerpc,v 1.13 2019/01/27 17:59:23 dholland Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -80,6 +80,7 @@ device-major	altq		char 77			altq
 device-major	joy		char 78			joy
 
 device-major	gtmpsc		char 80			gtmpsc
+#device-major	obsolete	char 81			obsolete (satlink)
 
 device-major	nsmb		char 98			nsmb
 device-major	xlcom		char 99			xlcom
