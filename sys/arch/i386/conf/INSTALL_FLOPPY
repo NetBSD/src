@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.47 2018/12/12 06:29:37 maxv Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.48 2019/01/27 08:53:30 maxv Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -716,9 +716,6 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 
 # Miscellaneous Devices
-
-# Planetconnect Satellite receiver driver.
-#satlink0 at isa? port 0x300 drq 1
 
 # Virtio devices
 virtio*	at pci? dev ? function ?	# Virtio PCI device

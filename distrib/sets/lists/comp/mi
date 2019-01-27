@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2252 2019/01/24 21:51:15 mrg Exp $
+#	$NetBSD: mi,v 1.2253 2019/01/27 08:53:28 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -583,7 +583,7 @@
 ./usr/include/dev/isa/pcppireg.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/pcppivar.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/pssreg.h			comp-obsolete		obsolete
-./usr/include/dev/isa/satlinkio.h		comp-c-include
+./usr/include/dev/isa/satlinkio.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/satlinkreg.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/sbdspvar.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/sbreg.h			comp-obsolete		obsolete

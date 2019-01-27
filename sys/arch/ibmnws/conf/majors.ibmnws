@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.16 2018/12/19 13:57:47 maxv Exp $
+#	$NetBSD: majors.ibmnws,v 1.17 2019/01/27 08:53:30 maxv Exp $
 #
 # Device majors for ibmnws
 #
@@ -31,7 +31,6 @@ device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 device-major	audio		char 42			audio
 device-major	ipl		char 44			ipfilter
-device-major	satlink		char 45			satlink
 device-major	rnd		char 46			rnd
 device-major	wsdisplay	char 47			wsdisplay
 device-major	wskbd		char 48			wskbd
