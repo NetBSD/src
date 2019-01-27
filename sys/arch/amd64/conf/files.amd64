@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.110 2018/12/22 07:45:58 cherry Exp $
+#	$NetBSD: files.amd64,v 1.111 2019/01/27 02:08:37 pgoyette Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -145,6 +145,8 @@ file	arch/amd64/amd64/compat_16_machdep.c	compat_16
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
 file	arch/amd64/amd64/netbsd32_machdep.c	compat_netbsd32
+file	arch/amd64/amd64/netbsd32_machdep_13.c	compat_netbsd32 & compat_13
+file	arch/amd64/amd64/netbsd32_machdep_16.c	compat_netbsd32 & compat_16
 file	arch/amd64/amd64/netbsd32_sigcode.S	compat_netbsd32 & compat_16
 file	arch/amd64/amd64/netbsd32_syscall.c	compat_netbsd32
 

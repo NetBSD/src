@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo_50.c,v 1.2 2012/08/03 07:51:21 matt Exp $	*/
+/*	$NetBSD: rndpseudo_50.c,v 1.3 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,18 +30,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2 2012/08/03 07:51:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.3 2019/01/27 02:08:39 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
 #endif
 
 #include <sys/param.h>
 #include <sys/file.h>
 
 #include <sys/rnd.h>
+#include <sys/module_hook.h>
+#include <sys/compat_stub.h>
+
 #include <compat/sys/rnd.h>
+#include <compat/common/compat_mod.h>
 
 /*
  * Convert from rndsource_t to rndsource50_t, for the results from
@@ -56,22 +59,6 @@ rndsource_to_rndsource50(rndsource_t *r, rndsource50_t *r50)
 	r50->type = r->type;
 	r50->flags = r->flags;
 }
-
-#if defined(COMPAT_NETBSD32) && defined(_LP64)
-/*
- * Convert from rndsource_t to rndsource50_32_t, for the results from
- * RNDGETNUM50_32 and RNDGETNAME50_32.
- */
-static void
-rndsource_to_rndsource50_32(rndsource_t *r, rndsource50_32_t *r50_32)
-{
-	memset(r50_32, 0, sizeof(*r50_32));
-	strlcpy(r50_32->name, r->name, sizeof(r50_32->name));
-	r50_32->total = r->total;
-	r50_32->type = r->type;
-	r50_32->flags = r->flags;
-}
-#endif /* COMPAT_NETBSD32 */
 
 /*
  * COMPAT_50 handling for rnd_ioctl.  This is called from rnd_ioctl.
@@ -110,33 +97,6 @@ compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 	}
 
-#if defined(COMPAT_NETBSD32) && defined(_LP64)
-	case RNDGETSRCNUM50_32:
-	{
-		rndstat_t rstbuf = {.start = 0};
-		rndstat50_32_t *rst50_32 = (rndstat50_32_t *)addr;
-		int count;
-
-		if (rst50_32->count > RND_MAXSTATCOUNT50)
-			return (EINVAL);
-
-		rstbuf.start = rst50_32->start;
-		rstbuf.count = rst50_32->count;
-
-		ret = (fp->f_ops->fo_ioctl)(fp, RNDGETSRCNUM, &rstbuf);
-		if (ret != 0)
-			return ret;
-
-		for (count = 0; count < rst50_32->count; count++) {
-			rndsource_to_rndsource50_32(&rstbuf.source[count],
-			    &rst50_32->source[count]);
-		}
-		rst50_32->count = rstbuf.count;
-
-		break;
-	}
-#endif /* COMPAT_NETBSD32 */
-
 	case RNDGETSRCNAME50:
 	{
 		rndstat_name_t rstnmbuf = {.name[0] = 0};
@@ -154,29 +114,23 @@ compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 	}
 
-#if defined(COMPAT_NETBSD32) && defined(_LP64)
-	case RNDGETSRCNAME50_32:
-	{
-		rndstat_name_t rstnmbuf = {.name[0] = 0};
-		rndstat_name50_32_t *rstnm50_32;
-		rstnm50_32 = (rndstat_name50_32_t *)addr;
-
-		strlcpy(rstnmbuf.name, rstnm50_32->name, sizeof(rstnmbuf.name));
-
-		ret = (fp->f_ops->fo_ioctl)(fp, RNDGETSRCNAME, &rstnmbuf);
-		if (ret != 0)
-			return ret;
-
-		rndsource_to_rndsource50_32(&rstnmbuf.source,
-		    &rstnm50_32->source);
-
-		break;
-	}
-#endif
-
 	default:
 		return ENOTTY;
 	}
 
 	return ret;
+}
+
+void
+rndpseudo_50_init(void)
+{
+
+	MODULE_SET_HOOK(rnd_ioctl_50_hook, "rnd_50", compat_50_rnd_ioctl);
+}
+
+void
+rndpseudo_50_fini(void)
+{
+
+	MODULE_UNSET_HOOK(rnd_ioctl_50_hook);
 }

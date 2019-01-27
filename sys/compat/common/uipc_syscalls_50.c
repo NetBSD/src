@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.6 2018/09/12 02:24:25 msaitoh Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.7 2019/01/27 02:08:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.6 2018/09/12 02:24:25 msaitoh Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,12 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.6 2018/09/12 02:24:25 msaitoh
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/time.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 
 #include <compat/sys/time.h>
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
+
+#include <compat/common/compat_mod.h>
 
 /*ARGSUSED*/
 static int
@@ -109,11 +115,13 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 void
 uipc_syscalls_50_init(void)
 {
-	vec_compat_ifdatareq = compat_ifdatareq;
+
+	MODULE_SET_HOOK(uipc_syscalls_50_hook, "uipc50", compat_ifdatareq);
 }
 
 void
 uipc_syscalls_50_fini(void)
 {
-	vec_compat_ifdatareq = (void *)enosys;
+ 
+	MODULE_UNSET_HOOK(uipc_syscalls_50_hook);
 }

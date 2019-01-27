@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.6 2018/09/15 23:03:27 ryo Exp $ */
+/* $NetBSD: db_interface.c,v 1.7 2019/01/27 02:08:36 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2018/09/15 23:03:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7 2019/01/27 02:08:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.33 2018/12/26 08:01:40 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.34 2019/01/27 02:08:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,14 +36,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.33 2018/12/26 08:01:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.34 2019/01/27 02:08:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include <opt_ntp.h>
 #endif
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -59,16 +62,22 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.33 2018/12/26 08:01:40 mrg 
 #include <sys/namei.h>
 #include <sys/statvfs.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/rnd.h>
+#include <sys/compat_stub.h>
+#include <sys/module_hook.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/time.h>
+#include <compat/sys/rnd.h>
 
 #if defined(COMPAT_50)
 
@@ -924,4 +933,130 @@ compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quota
 	return (compat_50_sys_quotactl(l, &ua, retval));
 }
 
+#ifdef NTP
+int
+compat_50_netbsd32_ntp_gettime(struct lwp *l,
+    const struct compat_50_netbsd32_ntp_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_ntptimeval50p_t) ntvp;
+	} */
+	struct netbsd32_ntptimeval50 ntv32;
+	struct ntptimeval ntv;
+	int error = 0;
+
+	if (vec_ntp_gettime == NULL)
+		return EINVAL;
+
+	if (SCARG_P32(uap, ntvp)) {
+		(*vec_ntp_gettime)(&ntv);
+
+		memset(&ntv32, 0, sizeof(ntv32));
+		ntv32.time.tv_sec = (int32_t)ntv.time.tv_sec;
+		ntv32.time.tv_nsec = ntv.time.tv_nsec;
+		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
+		ntv32.esterror = (netbsd32_long)ntv.esterror;
+		ntv32.tai = (netbsd32_long)ntv.tai;
+		ntv32.time_state = ntv.time_state;
+		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
+	}
+	if (!error) {
+		*retval = (*vec_ntp_timestatus)();
+	}
+
+	return (error);
+}
+#endif
+
+static struct syscall_package compat_netbsd32_50_syscalls[] = {
+	{ NETBSD32_SYS_compat_50_netbsd32_mknod, 0,
+	    (sy_call_t *)compat_50_netbsd32_mknod }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_select, 0,
+	    (sy_call_t *)compat_50_netbsd32_select }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_gettimeofday, 0,
+	    (sy_call_t *)compat_50_netbsd32_gettimeofday }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_settimeofday, 0,
+	    (sy_call_t *)compat_50_netbsd32_settimeofday }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_utimes, 0,
+	    (sy_call_t *)compat_50_netbsd32_utimes }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_futimes, 0,
+	    (sy_call_t *)compat_50_netbsd32_futimes }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_adjtime, 0,
+	    (sy_call_t *)compat_50_netbsd32_adjtime }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_clock_gettime, 0,
+	    (sy_call_t *)compat_50_netbsd32_clock_gettime }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_clock_settime, 0,
+	    (sy_call_t *)compat_50_netbsd32_clock_settime }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_clock_getres, 0,
+	    (sy_call_t *)compat_50_netbsd32_clock_getres }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_timer_settime, 0,
+	    (sy_call_t *)compat_50_netbsd32_timer_settime }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_timer_gettime, 0,
+	    (sy_call_t *)compat_50_netbsd32_timer_gettime }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_nanosleep, 0,
+	    (sy_call_t *)compat_50_netbsd32_nanosleep }, 
+	{ NETBSD32_SYS_compat_50_netbsd32___sigtimedwait, 0,
+	    (sy_call_t *)compat_50_netbsd32___sigtimedwait }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_lutimes, 0,
+	    (sy_call_t *)compat_50_netbsd32_lutimes }, 
+	{ NETBSD32_SYS_compat_50_netbsd32__lwp_park, 0,
+	    (sy_call_t *)compat_50_netbsd32__lwp_park }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_kevent, 0,
+	    (sy_call_t *)compat_50_netbsd32_kevent }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_pselect, 0,
+	    (sy_call_t *)compat_50_netbsd32_pselect }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_pollts, 0,
+	    (sy_call_t *)compat_50_netbsd32_pollts }, 
+	{ NETBSD32_SYS_compat_50_netbsd32___stat30, 0,
+	    (sy_call_t *)compat_50_netbsd32___stat30 }, 
+	{ NETBSD32_SYS_compat_50_netbsd32___fstat30, 0,
+	    (sy_call_t *)compat_50_netbsd32___fstat30 }, 
+	{ NETBSD32_SYS_compat_50_netbsd32___lstat30, 0,
+	    (sy_call_t *)compat_50_netbsd32___lstat30 }, 
+	{ NETBSD32_SYS_compat_50_netbsd32___fhstat40, 0,
+	    (sy_call_t *)compat_50_netbsd32___fhstat40 }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_wait4, 0,
+	    (sy_call_t *)compat_50_netbsd32_wait4 }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_getrusage, 0,
+	    (sy_call_t *)compat_50_netbsd32_getrusage }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_setitimer, 0,
+	    (sy_call_t *)compat_50_netbsd32_setitimer }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_getitimer, 0,
+	    (sy_call_t *)compat_50_netbsd32_getitimer }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_quotactl, 0,
+	    (sy_call_t *)compat_50_netbsd32_quotactl }, 
+#ifdef NTP
+	{ NETBSD32_SYS_compat_50_netbsd32_ntp_gettime, 0,
+	    (sy_call_t *)compat_50_netbsd32_ntp_gettime }, 
+#endif
+	{ 0, 0, NULL }
+}; 
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50, "compat_netbsd32_60,compat_50");
+
+static int
+compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
+{
+	int ret;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+                ret = syscall_establish(&emul_netbsd32,
+		    compat_netbsd32_50_syscalls);
+		if (ret == 0)
+			MODULE_SET_HOOK(rnd_ioctl_50_32_hook, "rnd32_50",
+			    compat32_50_rnd_ioctl);
+		return ret;
+
+	case MODULE_CMD_FINI:
+                ret = syscall_disestablish(&emul_netbsd32,
+		    compat_netbsd32_50_syscalls);
+		if (ret == 0)
+			MODULE_UNSET_HOOK(rnd_ioctl_50_32_hook);
+		return ret;
+
+	default:
+		return ENOTTY;
+	}
+}
 #endif /* COMPAT_50 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.443 2018/12/21 08:58:08 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.444 2019/01/27 02:08:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.443 2018/12/21 08:58:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.444 2019/01/27 02:08:48 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.443 2018/12/21 08:58:08 msaitoh Exp $");
 #include <sys/xcall.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -244,13 +245,6 @@ static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
 
 static void if_sysctl_setup(struct sysctllog **);
-
-/* Compatibility vector functions */
-u_long (*vec_compat_cvtcmd)(u_long) = NULL;
-int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
-	struct lwp *) = NULL;
-int (*vec_compat_ifconf)(struct lwp *, u_long, void *) = (void *)enosys;
-int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *) = (void *)enosys;
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -3131,15 +3125,11 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
-	int error = 0;
-#if defined(COMPAT_OSOCK) || defined(COMPAT_OIFREQ)
+	int error = 0, hook;
 	u_long ocmd = cmd;
-#endif
 	short oif_flags;
-#ifdef COMPAT_OIFREQ
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
-#endif
 	int r;
 	struct psref psref;
 	int bound;
@@ -3150,26 +3140,27 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCINITIFADDR:
 		return EPERM;
 	default:
-		error = (*vec_compat_ifconf)(l, cmd, data);
+		MODULE_CALL_HOOK(uipc_syscalls_40_hook, (cmd, data), enosys(),
+		    error);
 		if (error != ENOSYS)
 			return error;
-		error = (*vec_compat_ifdatareq)(l, cmd, data);
+		MODULE_CALL_HOOK(uipc_syscalls_50_hook, (l, cmd, data),
+		    enosys(), error);
 		if (error != ENOSYS)
 			return error;
+		error = 0;
 		break;
 	}
 
 	ifr = data;
-#ifdef COMPAT_OIFREQ
-	if (vec_compat_cvtcmd) {
-		cmd = (*vec_compat_cvtcmd)(cmd);
+	MODULE_CALL_HOOK(if_43_cvtcmd_hook, (&cmd, ocmd), enosys(), hook);
+	if (hook != ENOSYS) {
 		if (cmd != ocmd) {
 			oifr = data;
 			data = ifr = &ifrb;
 			ifreqo2n(oifr, ifr);
 		}
 	}
-#endif
 
 	switch (cmd) {
 	case SIOCIFCREATE:
@@ -3263,11 +3254,9 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = EOPNOTSUPP;
 	else {
 		KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
-#ifdef COMPAT_OSOCK
-		if (vec_compat_ifioctl != NULL)
-			error = (*vec_compat_ifioctl)(so, ocmd, cmd, data, l);
-		else
-#endif
+		MODULE_CALL_HOOK(if_43_ifioctl_hook,
+			     (so, ocmd, cmd, data, l), enosys(), error);
+		if (error == ENOSYS)
 			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
 			    cmd, data, ifp);
 		KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp);
@@ -3280,10 +3269,8 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			splx(s);
 		}
 	}
-#ifdef COMPAT_OIFREQ
 	if (cmd != ocmd)
 		ifreqn2o(oifr, ifr);
-#endif
 
 	IFNET_UNLOCK(ifp);
 	KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(ifp);
@@ -3418,31 +3405,29 @@ int
 ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 {
 	uint8_t len = sizeof(ifr->ifr_ifru.ifru_space);
-#ifdef COMPAT_OIFREQ
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
 	u_long ocmd = cmd;
+	int hook;
 
-	if (vec_compat_cvtcmd) {
-		    cmd = (*vec_compat_cvtcmd)(cmd);
-		    if (cmd != ocmd) {
-			    oifr = (struct oifreq *)(void *)ifr;
-			    ifr = &ifrb;
-			    ifreqo2n(oifr, ifr);
-			    len = sizeof(oifr->ifr_addr);
-		    }
+	MODULE_CALL_HOOK(if_43_cvtcmd_hook, (&cmd, ocmd), enosys(), hook);
+	if (hook != ENOSYS) {
+		if (cmd != ocmd) {
+			oifr = (struct oifreq *)(void *)ifr;
+			ifr = &ifrb;
+			ifreqo2n(oifr, ifr);
+				len = sizeof(oifr->ifr_addr);
+		}
 	}
-#endif
+
 	if (len < sa->sa_len)
 		return EFBIG;
 
 	memset(&ifr->ifr_addr, 0, len);
 	sockaddr_copy(&ifr->ifr_addr, len, sa);
 
-#ifdef COMPAT_OIFREQ
 	if (cmd != ocmd)
 		ifreqn2o(oifr, ifr);
-#endif
 	return 0;
 }
 

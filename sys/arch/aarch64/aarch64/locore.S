@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32 2018/12/13 10:44:25 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.33 2019/01/27 02:08:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -39,7 +39,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.32 2018/12/13 10:44:25 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.33 2019/01/27 02:08:36 pgoyette Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -547,7 +547,6 @@ ENTRY_NP(uartputs)
 	ldp	x19, lr, [sp], #16
 	ret
 END(uartputs)
-
 
 /*
  * print x0 in 16 widths hexadecimal.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.7 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: msg.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: msg.c,v 1.17 2018/07/09 21:59:10 markus Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: msg.c,v 1.7 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.8 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 

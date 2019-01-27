@@ -1,7 +1,5 @@
-/*	$NetBSD: queue.h,v 1.5 2018/09/29 21:52:34 christos Exp $	*/
-
 /*	$OpenBSD: queue.h,v 1.16 2000/09/07 19:47:59 art Exp $	*/
-/*	$NetBSD: queue.h,v 1.5 2018/09/29 21:52:34 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.6 2019/01/27 02:08:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993

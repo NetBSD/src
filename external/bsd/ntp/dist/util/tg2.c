@@ -1,4 +1,4 @@
-/*	$NetBSD: tg2.c,v 1.5 2018/09/29 21:52:35 christos Exp $	*/
+/*	$NetBSD: tg2.c,v 1.6 2019/01/27 02:08:34 pgoyette Exp $	*/
 
 /*
  * tg.c generate WWV or IRIG signals for test
@@ -52,6 +52,12 @@
  * should be readily portable to other hardware and operating systems.
  *
  * $Log: tg2.c,v $
+ * Revision 1.6  2019/01/27 02:08:34  pgoyette
+ * Merge the [pgoyette-compat] branch
+ *
+ * Revision 1.4.14.1  2018/09/30 01:45:29  pgoyette
+ * Ssync with HEAD
+ *
  * Revision 1.5  2018/09/29 21:52:35  christos
  * merge conflicts
  *

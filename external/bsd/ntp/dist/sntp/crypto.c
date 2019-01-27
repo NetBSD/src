@@ -1,4 +1,12 @@
-/*	$NetBSD: crypto.c,v 1.15 2018/09/29 21:52:34 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.16 2019/01/27 02:08:34 pgoyette Exp $	*/
+
+/*
+ * HMS: we need to test:
+ * - OpenSSL versions, if we are building with them
+ * - our versions
+ *
+ * We may need to test with(out) OPENSSL separately.
+ */
 
 /*
  * HMS: we need to test:

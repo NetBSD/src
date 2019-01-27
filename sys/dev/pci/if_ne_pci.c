@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.39 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.40 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.39 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.40 2019/01/27 02:08:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

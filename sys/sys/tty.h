@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.94 2017/10/31 10:45:19 martin Exp $	*/
+/*	$NetBSD: tty.h,v 1.95 2019/01/27 02:08:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -313,7 +313,10 @@ bool	 ttypull(struct tty *);
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
 
-extern int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
+/* overwritten to be non-null if ptm(4) is present */
+
+struct ptm_pty;
+extern struct ptm_pty *ptm;
 
 unsigned char tty_getctrlchar(struct tty *, unsigned /*which*/);
 void tty_setctrlchar(struct tty *, unsigned /*which*/, unsigned char /*val*/);

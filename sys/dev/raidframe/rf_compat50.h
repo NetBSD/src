@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.h,v 1.2 2015/09/06 06:01:00 dholland Exp $	*/
+/*	$NetBSD: rf_compat50.h,v 1.3 2019/01/27 02:08:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,5 +46,7 @@
 
 int rf_config50(RF_Raid_t *, int, void *, RF_Config_t **);
 int rf_get_info50(RF_Raid_t *, void *);
+
+int raidframe_ioctl_50(int, int, RF_Raid_t *, int, void *, RF_Config_t **);
 
 #endif /* _RF_COMPAT50_H_ */

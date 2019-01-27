@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.51 2019/01/01 03:04:56 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.52 2019/01/27 02:08:35 pgoyette Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.51 2019/01/01 03:04:56 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.52 2019/01/27 02:08:35 pgoyette Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED

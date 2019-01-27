@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.21 2018/08/26 07:46:36 christos Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.22 2019/01/27 02:08:33 pgoyette Exp $	*/
 /* $OpenBSD: auth2-pubkey.c,v 1.84 2018/08/23 03:01:08 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.21 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.22 2019/01/27 02:08:33 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
