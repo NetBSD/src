@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.3 2019/01/27 02:08:43 pgoyette Exp $	*/
+/*	$NetBSD: print.c,v 1.4 2019/01/27 04:17:39 oster Exp $	*/
 
 /*++
 
@@ -532,7 +532,6 @@ Returns:
     _PoolCatPrint (fmt, args, &spc, _PoolPrint);
     return spc.str;
 }
->>>>>>> 1.1.1.1.34.1
 
 CHAR16 *
 PoolPrint (
