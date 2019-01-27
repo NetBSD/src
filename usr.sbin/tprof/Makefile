@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/01/27 02:08:51 pgoyette Exp $
-
-.PATH:	${.CURDIR}/arch
+#	$NetBSD: Makefile,v 1.9 2019/01/27 05:12:30 kre Exp $
 
 .PATH:	${.CURDIR}/arch
 
