@@ -1,4 +1,4 @@
-#	$NetBSD: majors.riscv,v 1.4 2019/01/27 08:53:30 maxv Exp $
+#	$NetBSD: majors.riscv,v 1.5 2019/01/27 17:59:23 dholland Exp $
 #
 # Device majors for evbmips
 #
@@ -10,6 +10,7 @@ device-major	audio		char 24			audio
 device-major	com		char 26			com
 device-major	lpt		char 31			lpt
 device-major	ipl		char 35			ipfilter
+#device-major	obsolete	char 38			obsolete (satlink)
 
 device-major	esh		char 44			esh
 device-major	midi		char 49			midi
