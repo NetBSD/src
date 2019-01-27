@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.4 2019/01/27 02:08:36 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5 2019/01/27 19:13:04 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2019/01/27 02:08:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2019/01/27 19:13:04 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -308,7 +308,7 @@ startlwp32(void *arg)
 int
 cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 {
-	struct proc * const p = l->l_proc;
+	struct proc * const p __diagused = l->l_proc;
 	const uint32_t spsr = mcp->__gregs[_REG_CPSR];
 
 	KASSERT(p->p_flag & PK_32);
