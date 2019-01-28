@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.262 2018/10/14 17:37:40 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.263 2019/01/28 15:56:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.262 2018/10/14 17:37:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.263 2019/01/28 15:56:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -2130,7 +2130,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 */
 		if (error == 0) {
 			KASSERTMSG(pnode->sysctl_parent == snode,
-			    "sysctl parent mis-match");
+			    "sysctl parent mis-match pnode %s, snode %s",
+			    pnode->sysctl_name, snode->sysctl_name);
 			if (log != NULL)
 				sysctl_log_add(log, pnode);
 			if (cnode != NULL)
