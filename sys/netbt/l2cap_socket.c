@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.35 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.36 2019/01/28 12:53:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.35 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.36 2019/01/28 12:53:01 martin Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -338,10 +338,8 @@ l2cap_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
 
-	if (m)
-		m_freem(m);
-	if (control)
-		m_freem(control);
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }
