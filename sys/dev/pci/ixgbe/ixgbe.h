@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.14 2018/08/07 13:33:23 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.15 2019/01/28 13:03:02 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -451,6 +451,14 @@ struct ixgbe_vf {
 	uint16_t api_ver;
 };
 
+/*
+ * NetBSD: For trafic class
+ * Crrently, the following structure is only for statistics.
+ */
+struct ixgbe_tc {
+	char             evnamebuf[32];
+};
+
 /* Our adapter structure */
 struct adapter {
 	struct ixgbe_hw		hw;
@@ -602,6 +610,9 @@ struct adapter {
 	/* Feature capable/enabled flags.  See ixgbe_features.h */
 	u32                     feat_cap;
 	u32                     feat_en;
+
+	/* Traffic classes */
+	struct ixgbe_tc tcs[IXGBE_DCB_MAX_TRAFFIC_CLASS];
 
 	struct sysctllog	*sysctllog;
 	const struct sysctlnode *sysctltop;

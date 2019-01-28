@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.26 2019/01/27 18:35:19 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.27 2019/01/28 13:03:02 martin Exp $ */
 
 /******************************************************************************
 
@@ -873,6 +873,9 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	} else
 		adapter->num_segs = IXGBE_82598_SCATTER;
 
+	/* Ensure SW/FW semaphore is free */
+	ixgbe_init_swfw_semaphore(hw);
+
 	hw->mac.ops.set_lan_id(hw);
 	ixgbe_init_device_features(adapter);
 
@@ -898,13 +901,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		u32 esdp = IXGBE_READ_REG(hw, IXGBE_ESDP);
 		ixgbe_check_fan_failure(adapter, esdp, FALSE);
 	}
-
-	/* Ensure SW/FW semaphore is free */
-	ixgbe_init_swfw_semaphore(hw);
-
-	/* Enable EEE power saving */
-	if (adapter->feat_en & IXGBE_FEATURE_EEE)
-		hw->mac.ops.setup_eee(hw, TRUE);
 
 	/* Set an initial default flow control value */
 	hw->fc.requested_mode = ixgbe_flow_control;
@@ -1147,6 +1143,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* Enable the optics for 82599 SFP+ fiber */
 	ixgbe_enable_tx_laser(hw);
+
+	/* Enable EEE power saving */
+	if (adapter->feat_cap & IXGBE_FEATURE_EEE)
+		hw->mac.ops.setup_eee(hw,
+		    adapter->feat_en & IXGBE_FEATURE_EEE);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
@@ -1535,6 +1536,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	u32                   missed_rx = 0, bprc, lxon, lxoff, total;
 	u64                   total_missed_rx = 0;
 	uint64_t              crcerrs, rlec;
+	int		      i, j;
 
 	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
 	stats->crcerrs.ev_count += crcerrs;
@@ -1545,8 +1547,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
 	/* 16 registers */
-	for (int i = 0; i < __arraycount(stats->qprc); i++) {
-		int j = i % adapter->num_queues;
+	for (i = 0; i < __arraycount(stats->qprc); i++) {
+		j = i % adapter->num_queues;
 
 		stats->qprc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
 		stats->qptc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
@@ -1557,36 +1559,35 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	}
 
 	/* 8 registers */
-	for (int i = 0; i < __arraycount(stats->mpc); i++) {
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
 		uint32_t mp;
-		int j = i % adapter->num_queues;
 
 		/* MPC */
 		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
 		/* global total per queue */
-		stats->mpc[j].ev_count += mp;
+		stats->mpc[i].ev_count += mp;
 		/* running comprehensive total for stats display */
 		total_missed_rx += mp;
 
 		if (hw->mac.type == ixgbe_mac_82598EB)
-			stats->rnbc[j].ev_count
+			stats->rnbc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
 
-		stats->pxontxc[j].ev_count
+		stats->pxontxc[i].ev_count
 		    += IXGBE_READ_REG(hw, IXGBE_PXONTXC(i));
-		stats->pxofftxc[j].ev_count
+		stats->pxofftxc[i].ev_count
 		    += IXGBE_READ_REG(hw, IXGBE_PXOFFTXC(i));
 		if (hw->mac.type >= ixgbe_mac_82599EB) {
-			stats->pxonrxc[j].ev_count
+			stats->pxonrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXONRXCNT(i));
-			stats->pxoffrxc[j].ev_count
+			stats->pxoffrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXCNT(i));
-			stats->pxon2offc[j].ev_count
+			stats->pxon2offc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXON2OFFCNT(i));
 		} else {
-			stats->pxonrxc[j].ev_count
+			stats->pxonrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXONRXC(i));
-			stats->pxoffrxc[j].ev_count
+			stats->pxoffrxc[i].ev_count
 			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXC(i));
 		}
 	}
@@ -1736,6 +1737,43 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	evcnt_attach_dynamic(&adapter->phy_sicount, EVCNT_TYPE_INTR,
 	    NULL, xname, "external PHY softint");
 
+	/* Max number of traffic class is 8 */
+	KASSERT(IXGBE_DCB_MAX_TRAFFIC_CLASS == 8);
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+		snprintf(adapter->tcs[i].evnamebuf,
+		    sizeof(adapter->tcs[i].evnamebuf), "%s tc%d",
+		    xname, i);
+		if (i < __arraycount(stats->mpc)) {
+			evcnt_attach_dynamic(&stats->mpc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "RX Missed Packet Count");
+			if (hw->mac.type == ixgbe_mac_82598EB)
+				evcnt_attach_dynamic(&stats->rnbc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->tcs[i].evnamebuf,
+				    "Receive No Buffers");
+		}
+		if (i < __arraycount(stats->pxontxc)) {
+			evcnt_attach_dynamic(&stats->pxontxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxontxc");
+			evcnt_attach_dynamic(&stats->pxonrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxonrxc");
+			evcnt_attach_dynamic(&stats->pxofftxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxofftxc");
+			evcnt_attach_dynamic(&stats->pxoffrxc[i],
+			    EVCNT_TYPE_MISC, NULL, adapter->tcs[i].evnamebuf,
+			    "pxoffrxc");
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				evcnt_attach_dynamic(&stats->pxon2offc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->tcs[i].evnamebuf,
+			    "pxon2offc");
+		}
+	}
+
 	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 #ifdef LRO
 		struct lro_ctrl *lro = &rxr->lro;
@@ -1824,35 +1862,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-		if (i < __arraycount(stats->mpc)) {
-			evcnt_attach_dynamic(&stats->mpc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "RX Missed Packet Count");
-			if (hw->mac.type == ixgbe_mac_82598EB)
-				evcnt_attach_dynamic(&stats->rnbc[i],
-				    EVCNT_TYPE_MISC, NULL,
-				    adapter->queues[i].evnamebuf,
-				    "Receive No Buffers");
-		}
-		if (i < __arraycount(stats->pxontxc)) {
-			evcnt_attach_dynamic(&stats->pxontxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxontxc");
-			evcnt_attach_dynamic(&stats->pxonrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxonrxc");
-			evcnt_attach_dynamic(&stats->pxofftxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxofftxc");
-			evcnt_attach_dynamic(&stats->pxoffrxc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "pxoffrxc");
-			if (hw->mac.type >= ixgbe_mac_82599EB)
-				evcnt_attach_dynamic(&stats->pxon2offc[i],
-				    EVCNT_TYPE_MISC, NULL,
-				    adapter->queues[i].evnamebuf,
-			    "pxon2offc");
-		}
 		if (i < __arraycount(stats->qprc)) {
 			evcnt_attach_dynamic(&stats->qprc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
@@ -2012,6 +2021,7 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	struct rx_ring *rxr = adapter->rx_rings;
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
+	int i;
 
 	adapter->efbig_tx_dma_setup.ev_count = 0;
 	adapter->mbuf_defrag_failed.ev_count = 0;
@@ -2028,8 +2038,24 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	adapter->msf_sicount.ev_count = 0;
 	adapter->phy_sicount.ev_count = 0;
 
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
+		if (i < __arraycount(stats->mpc)) {
+			stats->mpc[i].ev_count = 0;
+			if (hw->mac.type == ixgbe_mac_82598EB)
+				stats->rnbc[i].ev_count = 0;
+		}
+		if (i < __arraycount(stats->pxontxc)) {
+			stats->pxontxc[i].ev_count = 0;
+			stats->pxonrxc[i].ev_count = 0;
+			stats->pxofftxc[i].ev_count = 0;
+			stats->pxoffrxc[i].ev_count = 0;
+			if (hw->mac.type >= ixgbe_mac_82599EB)
+				stats->pxon2offc[i].ev_count = 0;
+		}
+	}
+
 	txr = adapter->tx_rings;
-	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		adapter->queues[i].irqs.ev_count = 0;
 		adapter->queues[i].handleq.ev_count = 0;
 		adapter->queues[i].req.ev_count = 0;
@@ -2048,19 +2074,6 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 		txr->q_enomem_tx_dma_setup = 0;
 		txr->q_tso_err = 0;
 
-		if (i < __arraycount(stats->mpc)) {
-			stats->mpc[i].ev_count = 0;
-			if (hw->mac.type == ixgbe_mac_82598EB)
-				stats->rnbc[i].ev_count = 0;
-		}
-		if (i < __arraycount(stats->pxontxc)) {
-			stats->pxontxc[i].ev_count = 0;
-			stats->pxonrxc[i].ev_count = 0;
-			stats->pxofftxc[i].ev_count = 0;
-			stats->pxoffrxc[i].ev_count = 0;
-			if (hw->mac.type >= ixgbe_mac_82599EB)
-				stats->pxon2offc[i].ev_count = 0;
-		}
 		if (i < __arraycount(stats->qprc)) {
 			stats->qprc[i].ev_count = 0;
 			stats->qptc[i].ev_count = 0;
@@ -3458,6 +3471,7 @@ ixgbe_detach(device_t dev, int flags)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	u32	ctrl_ext;
+	int i;
 
 	INIT_DEBUGOUT("ixgbe_detach: begin");
 	if (adapter->osdep.attached == false)
@@ -3525,18 +3539,7 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&adapter->msf_sicount);
 	evcnt_detach(&adapter->phy_sicount);
 
-	txr = adapter->tx_rings;
-	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
-		evcnt_detach(&adapter->queues[i].irqs);
-		evcnt_detach(&adapter->queues[i].handleq);
-		evcnt_detach(&adapter->queues[i].req);
-		evcnt_detach(&txr->no_desc_avail);
-		evcnt_detach(&txr->total_packets);
-		evcnt_detach(&txr->tso_tx);
-#ifndef IXGBE_LEGACY_TX
-		evcnt_detach(&txr->pcq_drops);
-#endif
-
+	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
 		if (i < __arraycount(stats->mpc)) {
 			evcnt_detach(&stats->mpc[i]);
 			if (hw->mac.type == ixgbe_mac_82598EB)
@@ -3550,6 +3553,20 @@ ixgbe_detach(device_t dev, int flags)
 			if (hw->mac.type >= ixgbe_mac_82599EB)
 				evcnt_detach(&stats->pxon2offc[i]);
 		}
+	}
+
+	txr = adapter->tx_rings;
+	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		evcnt_detach(&adapter->queues[i].irqs);
+		evcnt_detach(&adapter->queues[i].handleq);
+		evcnt_detach(&adapter->queues[i].req);
+		evcnt_detach(&txr->no_desc_avail);
+		evcnt_detach(&txr->total_packets);
+		evcnt_detach(&txr->tso_tx);
+#ifndef IXGBE_LEGACY_TX
+		evcnt_detach(&txr->pcq_drops);
+#endif
+
 		if (i < __arraycount(stats->qprc)) {
 			evcnt_detach(&stats->qprc[i]);
 			evcnt_detach(&stats->qptc[i]);
@@ -3623,7 +3640,7 @@ ixgbe_detach(device_t dev, int flags)
 
 	ixgbe_free_transmit_structures(adapter);
 	ixgbe_free_receive_structures(adapter);
-	for (int i = 0; i < adapter->num_queues; i++) {
+	for (i = 0; i < adapter->num_queues; i++) {
 		struct ix_queue * que = &adapter->queues[i];
 		mutex_destroy(&que->dc_mtx);
 	}
@@ -3999,6 +4016,11 @@ ixgbe_init_locked(struct adapter *adapter)
 
 	/* Set moderation on the Link interrupt */
 	ixgbe_eitr_write(adapter, adapter->vector, IXGBE_LINK_ITR);
+
+	/* Enable EEE power saving */
+	if (adapter->feat_cap & IXGBE_FEATURE_EEE)
+		hw->mac.ops.setup_eee(hw,
+		    adapter->feat_en & IXGBE_FEATURE_EEE);
 
 	/* Enable power to the phy. */
 	ixgbe_set_phy_power(hw, TRUE);
