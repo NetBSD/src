@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.27 2019/01/27 18:29:10 christos Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.28 2019/01/28 16:55:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.27 2019/01/27 18:29:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.28 2019/01/28 16:55:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -117,7 +117,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	int ms_cnt;
 	modstat_t *ms, *mso;
 	size_t ms_len;
-	int req_cnt;
 	char *req, *reqo;
 	size_t req_len;
 	char *out_p;
@@ -149,7 +148,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		ms_cnt++;
 		mi = mod->mod_info;
 		if (mi->mi_required != NULL) {
-			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
 		}
 	}
@@ -157,7 +155,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		ms_cnt++;
 		mi = mod->mod_info;
 		if (mi->mi_required != NULL) {
-			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
 		}
 	}
