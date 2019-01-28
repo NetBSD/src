@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.4 2019/01/28 21:13:58 christos Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.5 2019/01/28 21:16:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ MODULE_HOOK(sctp_delete_ip_address, int, struct ifaddr *);
 
 
 /*
- * usb devinfo compatability
+ * usb devinfo compatibility
  */
 
 struct usbd_device;
@@ -100,14 +100,14 @@ MODULE_HOOK(clockctl_ioctl_50_hook, int,
     (dev_t, u_long, void *, int, struct lwp *));
 
 /*
- * if_sppp device compatability ioctl subroutine
+ * if_sppp device compatibility ioctl subroutine
  */
 
 struct sppp;
 MODULE_HOOK(sppp_params_50_hook, int, (struct sppp *, u_long, void *));
 
 /*
- * cryptodev compatability ioctl
+ * cryptodev compatibility ioctl
  */
 
 struct fcrypt;
@@ -119,7 +119,7 @@ struct kmutex_t;
 MODULE_HOOK(ocryptof_50_hook, int, (struct file *, u_long, void *));
 
 /*
- * raidframe compatability
+ * raidframe compatibility
  */
 
 struct RF_Config_s;
@@ -130,7 +130,7 @@ MODULE_HOOK(raidframe80_ioctl_hook, int,
     (int, int, struct RF_Raid_s *, int, void *, struct RF_Config_s **));
 
 /*
- * puffs compatability
+ * puffs compatibility
  */
 
 struct puffs_req;
@@ -140,7 +140,7 @@ MODULE_HOOK(puffs_50_in_hook, void,
     (struct puffs_req *, struct puffs_req *));			/* incoming */
 
 /*
- * wsevents compatability
+ * wsevents compatibility
  */
 
 struct wscons_event;
@@ -149,7 +149,7 @@ MODULE_HOOK(wsevent_50_copyout_events_hook, int,
     (const struct wscons_event *, int, struct uio *));
 
 /*
- * sysmon_power compatability
+ * sysmon_power compatibility
  */
 
 struct power_event;
@@ -165,29 +165,29 @@ MODULE_HOOK(compat_bio_30_hook, int,
     (void *, u_long, void *, int(*)(void *, u_long, void *)));
 
 /*
- * vnd_30 ioctl compatability
+ * vnd_30 ioctl compatibility
  */
 struct vattr;
 MODULE_HOOK(compat_vndioctl_30_hook, int, (u_long, struct lwp *, void *, int,
     struct vattr *, int (*)(struct lwp *, void *, int, struct vattr *)));
 
 /*
- * vnd_50 ioctl compatability
+ * vnd_50 ioctl compatibility
  */
 struct vattr;
 MODULE_HOOK(compat_vndioctl_50_hook, int, (u_long, struct lwp *, void *, int,
     struct vattr *, int (*)(struct lwp *, void *, int, struct vattr *)));
 
 /*
- * ieee80211 ioctl compatability
+ * ieee80211 ioctl compatibility
  */
 struct ieee80211com;
 
 MODULE_HOOK(ieee80211_20_ioctl_hook, int,
-    (struct ieee80211com *ic, u_long cmd, void *data));
+    (struct ieee80211com *, u_long, void *));
 
 /*
- * if_43 compatability
+ * if_43 compatibility
  */
 struct socket;
 
@@ -196,7 +196,7 @@ MODULE_HOOK(if_43_ifioctl_hook, int,
     (struct socket *, u_long, u_long, void *, struct lwp *));
 
 /*
- * if43_20 compatability
+ * if43_20 compatibility
  */
 MODULE_HOOK(if43_20_hook, int, (u_long));
 
@@ -209,19 +209,19 @@ MODULE_HOOK(compat_43_ttioctl_hook, int,
     (struct tty *, u_long, void *, int, struct lwp *));
 
 /*
- * uipc_syscalls_40 compatability
+ * uipc_syscalls_40 compatibility
  */
 
 MODULE_HOOK(uipc_syscalls_40_hook, int, (u_long, void *));
 
 /*
- * uipc_syscalls_50 compatability
+ * uipc_syscalls_50 compatibility
  */
 
 MODULE_HOOK(uipc_syscalls_50_hook, int, (struct lwp *, u_long, void *));
 
 /*
- * rtsock 14 compatability
+ * rtsock 14 compatibility
  */
 struct ifnet;
 struct rt_walkarg;
