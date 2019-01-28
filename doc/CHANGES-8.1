@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.95 2019/01/27 18:47:59 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.96 2019/01/28 13:03:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2320,4 +2320,12 @@ sys/arch/amd64/include/vmparam.h		1.50
 	Increase VM_PHYSSEG_MAX from 32 to 64.
 	Heavily fragmented memory maps have been discovered in the wild.
 	[maxv, ticket #1174]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.168,1.172,1.173
+sys/dev/pci/ixgbe/ixgbe.h			1.52
+
+	- Add new read only sysctl node "tc" for the traffic class.
+	- Initialize swfw semaphore at better location.
+	- Initialize EEE correctly.
+	[msaitoh, ticket #1171]
 
