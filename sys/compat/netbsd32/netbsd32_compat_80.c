@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_80.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_80.c,v 1.3 2019/01/28 01:09:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.3 2019/01/28 01:09:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.2 2019/01/27 02:08:40 pgoye
 #include <sys/kobj.h>
 
 #include <compat/sys/siginfo.h>
+
+#include <compat/sys/module.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
