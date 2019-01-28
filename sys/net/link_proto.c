@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.36 2017/04/06 03:55:00 ozaki-r Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.37 2019/01/28 12:53:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.36 2017/04/06 03:55:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.37 2019/01/28 12:53:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -400,6 +400,9 @@ static int
 link_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
+
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }
