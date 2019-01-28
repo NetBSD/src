@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.278 2019/01/27 02:08:43 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.279 2019/01/28 15:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.278 2019/01/27 02:08:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.279 2019/01/28 15:46:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -209,7 +209,6 @@ static void *tty_sigsih;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
-krwlock_t ttcompat_lock;
 
 struct ptm_pty *ptm = NULL;
 
@@ -1410,25 +1409,18 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		default:
 			break;
 		}
+
 		/* We may have to load the compat_60 module for this. */
-		for (;;) {
-			rw_enter(&ttcompat_lock, RW_READER);
-			MODULE_CALL_HOOK(compat_60_ttioctl_hook,
-			    (tp->t_dev, cmd, data, flag, l), enosys(), error);
-			if (error != ENOSYS) {
-				break;
-			}
-			rw_exit(&ttcompat_lock);
-			(void)module_autoload("compat_60", MODULE_CLASS_EXEC);
-			rw_enter(&ttcompat_lock, RW_READER);
-			MODULE_CALL_HOOK(compat_60_ttioctl_hook,
-			    (tp->t_dev, cmd, data, flag, l), enosys(), error);
-			if (error == ENOSYS) {
-				rw_exit(&ttcompat_lock);
-				return EPASSTHROUGH;
-			}
-		}
-		rw_exit(&ttcompat_lock);
+		(void)module_autoload("compat_60", MODULE_CLASS_EXEC);
+		MODULE_CALL_HOOK(compat_60_ttioctl_hook,
+		    (tp, cmd, data, flag, l), enosys(), error);
+		if (error != EPASSTHROUGH)
+			return error;
+
+		/* We may have to load the compat_43 module for this. */
+		(void)module_autoload("compat_43", MODULE_CLASS_EXEC);
+		MODULE_CALL_HOOK(compat_43_ttioctl_hook,
+		    (tp, cmd, data, flag, l), enosys(), error);
 		return error;
 	}
 	return (0);
@@ -2928,7 +2920,6 @@ tty_init(void)
 {
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
-	rw_init(&ttcompat_lock);
 	tty_sigsih = softint_establish(SOFTINT_CLOCK, ttysigintr, NULL);
 	KASSERT(tty_sigsih != NULL);
 
