@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.31 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.32 2019/01/28 15:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.31 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.32 2019/01/28 15:46:49 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -78,9 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.31 2019/01/27 02:08:39 pgoyette Exp $")
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/compat_stub.h>
+#include <sys/module_hook.h>
 #include <sys/ioctl_compat.h>
 
 #include <compat/common/compat_mod.h>
+#include <compat/sys/ttycom.h>
 
 int ttydebug = 0;
 
@@ -114,11 +117,11 @@ static const int compatspcodes[] = {
 static int ttcompatgetflags(struct tty *);
 static void ttcompatsetflags(struct tty *, struct termios *);
 static void ttcompatsetlflags(struct tty *, struct termios *);
-int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
 /*ARGSUSED*/
 int
-ttcompat(struct tty *tp, u_long com, void *data, int flag, struct lwp *l)
+compat_43_ttioctl(struct tty *tp, u_long com, void *data, int flag,
+    struct lwp *l)
 {
 
 	switch (com) {
@@ -513,15 +516,15 @@ ttcompatsetlflags(struct tty *tp, struct termios *t)
 }
 
 int
-tty_43_init(void)
+kern_tty_43_init(void)
 {
-
+	MODULE_SET_HOOK(compat_43_ttioctl_hook, "tty_43", compat_43_ttioctl);
 	return 0;
 }
 
 int
-tty_43_fini(void)
+kern_tty_43_fini(void)
 {
-
+	MODULE_UNSET_HOOK(compat_43_ttioctl_hook);
 	return 0;
 }
