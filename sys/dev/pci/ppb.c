@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.65 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: ppb.c,v 1.66 2019/01/28 04:09:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.65 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.66 2019/01/28 04:09:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"
@@ -357,6 +357,11 @@ ppbattach(device_t parent, device_t self, void *aux)
 		    device_xname(sc->sc_dev), "Data Link Layer State Changed");
 	}
 #endif /* PPB_USEINTR */
+
+	/* Enable bus master. */
+	reg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    reg | PCI_COMMAND_MASTER_ENABLE);
 
 	if (!pmf_device_register(self, ppb_suspend, ppb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
