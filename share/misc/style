@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.53 2016/05/23 11:41:06 salazar Exp $ */
+/* $NetBSD: style,v 1.54 2019/01/28 17:29:44 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.53 2016/05/23 11:41:06 salazar Exp $");
+__RCSID("$NetBSD: style,v 1.54 2019/01/28 17:29:44 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -152,6 +152,16 @@ enum enumtype {
 	ONE,
 	TWO
 } et;
+
+/*
+ * Sometimes we want a macro to be conditionally defined for debugging
+ * and expand to nothing (but still as statement) when we are not debugging:
+ */
+#ifdef FOO_DEBUG
+# define DPRINTF(...) printf(__VA_ARGS__)
+#else
+# define DPRINTF(...) __nothing
+#endif
 
 /*
  * When declaring variables in structures, declare them organized by use in
