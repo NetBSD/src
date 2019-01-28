@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2018/12/22 07:45:58 cherry Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2019/01/28 21:19:09 bad Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2018/12/22 07:45:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2019/01/28 21:19:09 bad Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -99,6 +99,12 @@ extern void platform_init(void);
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <i386/pci/pcibios.h>
+#endif
+
+#ifdef DEBUG_GEOM
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
 #endif
 
 /*
@@ -170,8 +176,10 @@ cpu_bootconf(void)
 	union xen_cmdline_parseinfo xcp;
 	static char bootspecbuf[sizeof(xcp.xcp_bootdev)];
 
-	if (booted_device)
+	if (booted_device) {
+		DPRINTF(("%s: preset booted_device: %s\n", __func__, device_xname(booted_device)));
 		return;
+	}
 
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
@@ -197,17 +205,22 @@ cpu_bootconf(void)
 			continue;
 
 		if (is_disk && strlen(xcp.xcp_bootdev) > strlen(devname)) {
+			/* XXX check device_cfdata as in x86_autoconf.c? */
 			booted_partition = toupper(
 				xcp.xcp_bootdev[strlen(devname)]) - 'A';
+			DPRINTF(("%s: booted_partition: %d\n", __func__, booted_partition));
 		}
 
 		booted_device = dv;
+		booted_method = "bootinfo/bootdev";
 		break;
 	}
 	deviter_release(&di);
 
-	if (booted_device)
+	if (booted_device) {
+		DPRINTF(("%s: booted_device: %s\n", __func__, device_xname(booted_device)));
 		return;
+	}
 
 	/*
 	 * not a boot device name, pass through to MI code
@@ -215,6 +228,8 @@ cpu_bootconf(void)
 	if (xcp.xcp_bootdev[0] != '\0') {
 		strlcpy(bootspecbuf, xcp.xcp_bootdev, sizeof(bootspecbuf));
 		bootspec = bootspecbuf;
+		booted_method = "bootinfo/bootspec";
+		DPRINTF(("%s: bootspec: %s\n", __func__, bootspec));
 		return;
 	}
 }
@@ -359,7 +374,6 @@ found:
 static int
 is_valid_disk(device_t dv)
 {
-
 	if (device_class(dv) != DV_DISK)
 		return (0);
 
