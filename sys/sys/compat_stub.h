@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.2 2019/01/27 02:08:50 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.3 2019/01/28 15:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -202,6 +202,14 @@ MODULE_HOOK(if_43_ifioctl_hook, int,
 MODULE_HOOK(if43_20_hook, int, (u_long));
 
 /*
+ * tty 43 ioctl compatibility
+ */
+struct tty;
+
+MODULE_HOOK(compat_43_ttioctl_hook, int,
+    (struct tty *, u_long, void *, int, struct lwp *));
+
+/*
  * uipc_syscalls_40 compatability
  */
 
@@ -285,7 +293,7 @@ MODULE_HOOK(rnd_ioctl_50_32_hook, int, (struct file *, u_long, void *));
  * Hooks for compat_60 ttioctl and ptmioctl
  */
 MODULE_HOOK(compat_60_ttioctl_hook, int,
-    (dev_t, u_long, void *, int, struct lwp *));
+    (struct tty *, u_long, void *, int, struct lwp *));
 MODULE_HOOK(compat_60_ptmioctl_hook, int,
     (dev_t, u_long, void *, int, struct lwp *));
 
