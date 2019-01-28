@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2496 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2497 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -312,13 +312,13 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		NETMAP algorithm for static NAT, lock-free lookup for 'ipset'
 		tables, lock-free state lookup, incremental state G/C, etc).
 		[rmind 20190119]
-	dhcpcd: Import dhcpcd-7.1.0 (roy 20190122)
-	kernel: Remove the satlink driver. (maxv 20190127)
+	dhcpcd: Import dhcpcd-7.1.0. [roy 20190122]
+	kernel: Remove the satlink driver. [maxv 20190127]
 	kernel: Merged [pgoyette-compat] branch - for details, see
 		src/doc/TODO.compat-module.  Includes splitting of the
 		monolithic compat-netbsd module into several version-
 		specific modules, introduction of MP-safe module hook
 		mechanism, and removal of various limitations within
-		the kernel module framework. (pgoyette 20190127)
+		the kernel module framework. [pgoyette 20190127]
 	macppc: Include EDID block for Clamshell iBook G3 displays.
 		[sevan 20190128]
