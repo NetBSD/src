@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.23 2018/12/19 13:57:49 maxv Exp $
+#	$NetBSD: majors.next68k,v 1.24 2019/01/28 02:28:59 dholland Exp $
 #
 # Device majors for next68k
 #
@@ -24,6 +24,7 @@ device-major	filedesc	char 21
 device-major	bpf		char 22			bpfilter
 
 device-major	tun		char 24			tun
+#device-major	obsolete	char 25			obsolete (lkm)
 
 device-major	md		char 32  block 13	md
 device-major	ss		char 33			ss
@@ -37,11 +38,14 @@ device-major	raid		char 40  block 20	raid
 device-major	wsdisplay	char 41			wsdisplay
 device-major	wskbd		char 42			wskbd
 device-major	wsmouse		char 43			wsmouse
+#device-major	obsolete	char 44			obsolete (compat_svr4)
 device-major	wsmux		char 45			wsmux
 device-major	clockctl	char 46			clockctl
+#device-major	obsolete	char 47			obsolete (systrace)
 device-major	cgd		char 48  block 21	cgd
 device-major	ksyms		char 49			ksyms
 device-major	wsfont		char 50			wsfont
+#device-major	obsolete	char 51			obsolete (opencrypto)
 
 device-major	nsmb		char 98			nsmb
 

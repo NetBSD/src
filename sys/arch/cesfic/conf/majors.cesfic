@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.21 2011/06/30 20:09:21 wiz Exp $
+#	$NetBSD: majors.cesfic,v 1.22 2019/01/28 02:28:57 dholland Exp $
 #
 # Device majors for cesfic
 #
@@ -17,14 +17,18 @@ device-major	zstty		char 10			zstty
 device-major	filedesc	char 11
 device-major	bpf		char 12			bpfilter
 device-major	tun		char 13			tun
+#device-major	obsolete	char 14			obsolete (lkm)
 device-major	md		char 15  block 3	md
 device-major	raid		char 16  block 5	raid
 device-major	sd		char 17  block 6	sd
 
 device-major	rnd		char 21			rnd
 device-major	clockctl	char 22			clockctl
+#device-major	obsolete	char 23			obsolete (systrace)
 device-major	cgd		char 24  block 4	cgd
 device-major	ksyms		char 25			ksyms
+#device-major	obsolete	char 26			obsolete (pf)
+#device-major	obsolete	char 27			obsolete (opencrypto)
 
 device-major	nsmb		char 98			nsmb
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.20 2011/06/30 20:09:33 wiz Exp $
+#	$NetBSD: majors.mipsco,v 1.21 2019/01/28 02:28:59 dholland Exp $
 #
 # Device majors for mipsco
 #
@@ -23,6 +23,7 @@ device-major	tun		char 25			tun
 
 device-major	log		char 33
 
+#device-major	obsolete	char 45			obsolete (lkm)
 device-major	ipl		char 46			ipfilter
 device-major	rnd		char 47			rnd
 device-major	filedesc	char 48
@@ -39,7 +40,10 @@ device-major	ses		char 58			ses
 device-major	scsibus		char 73			scsibus
 device-major	raid		char 74  block 32	raid
 device-major	clockctl	char 75			clockctl
+#device-major	obsolete	char 76			obsolete (systrace)
 device-major	ksyms		char 77			ksyms
+#device-major	obsolete	char 78			obsolete (pf)
+#device-major	obsolete	char 79			obsolete (opencrypto)
 
 device-major	nsmb		char 98			nsmb
 

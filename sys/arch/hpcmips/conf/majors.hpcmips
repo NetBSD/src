@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.32 2018/09/23 09:21:02 maxv Exp $
+#	$NetBSD: majors.hpcmips,v 1.33 2019/01/28 02:28:58 dholland Exp $
 #
 # Device majors for hpcmips
 #
@@ -44,14 +44,22 @@ device-major	ucom		char 37			ucom
 device-major	wsmux		char 38			wsmux
 device-major	urio		char 39			urio
 device-major	uscanner	char 40			uscanner
+#device-major	obsolete	char 41			obsolete (isdn)
+#device-major	obsolete	char 42			obsolete (isdnctl)
+#device-major	obsolete	char 43			obsolete (isdnbchan)
+#device-major	obsolete	char 44			obsolete (isdntrc)
+#device-major	obsolete	char 45			obsolete (isdntel)
 device-major	clockctl	char 46			clockctl
+#device-major	obsolete	char 47			obsolete (lkm)
 device-major	audio		char 48			audio
+#device-major	obsolete	char 49			obsolete (systrace)
 device-major	cgd		char 50  block 10	cgd
 device-major	apmdev		char 51			apmdev
 device-major	midi		char 52			midi
 device-major	sequencer	char 53			sequencer
 device-major	pci		char 54			pci
 device-major	ksyms		char 55			ksyms
+#device-major	obsolete	char 100		obsolete (flash)
 device-major	vr4181aiu	char 101		vr4181aiu
 device-major	wsfont		char 102		wsfont
 device-major	ses		char 103		ses
