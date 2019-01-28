@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.226 2019/01/23 16:22:14 dholland Exp $
+$NetBSD: acronyms.comp,v 1.227 2019/01/28 12:09:20 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -372,6 +372,7 @@ DMT	discrete multitone modulation
 DMU	data management layer
 DNARD	Digital network appliance reference design
 DND	drag and drop
+DNLC	directory name lookup cache
 DNS	Domain Name System
 DNSSEC	DNS Security Extensions
 DOE	distributed object environment
@@ -1087,6 +1088,7 @@ PM	power management
 PM	{phase,pulse} modulation
 PMC	performance monitoring counters
 PME	power management event
+PMEG	page map entry group
 PMI	performance monitoring infrastructure
 PMI	platform management interrupt
 PMIO	port-mapped input/output
@@ -1388,6 +1390,7 @@ STD	state transition diagram
 STOMP	Streaming Text Oriented Messaging Protocol
 STP	Spanning Tree Protocol
 STP	shielded twisted pair
+SUN	Stanford University Network
 SUS	Single Unix Specification
 SUT	system under test
 SVG	scalable vector graphics
