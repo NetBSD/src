@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.358 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.359 2019/01/28 21:14:08 bad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.358 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.359 2019/01/28 21:14:08 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -466,8 +466,15 @@ rf_autoconfig(device_t self)
 
 static int
 rf_containsboot(RF_Raid_t *r, device_t bdv) {
-	const char *bootname = device_xname(bdv);
-	size_t len = strlen(bootname);
+	const char *bootname;
+	size_t len;
+
+	/* if bdv is NULL, the set can't contain it. exit early. */
+	if (bdv == NULL)
+		return 0;
+
+	bootname = device_xname(bdv);
+	len = strlen(bootname);
 
 	for (int col = 0; col < r->numCol; col++) {
 		const char *devname = r->Disks[col].devname;
@@ -506,8 +513,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		    cset->ac->clabel->autoconfigure == 1) {
 			sc = rf_auto_config_set(cset);
 			if (sc != NULL) {
-				aprint_debug("raid%d: configured ok\n",
-				    sc->sc_unit);
+				aprint_debug("raid%d: configured ok, rootable %d\n",
+				    sc->sc_unit, cset->rootable);
 				if (cset->rootable) {
 					rsc = sc;
 					num_root++;
@@ -531,8 +538,10 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	/* if the user has specified what the root device should be
 	   then we don't touch booted_device or boothowto... */
 
-	if (rootspec != NULL)
+	if (rootspec != NULL) {
+		DPRINTF("%s: rootspec %s\n", __func__, rootspec);
 		return;
+	}
 
 	/* we found something bootable... */
 
@@ -574,9 +583,12 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			candidate_root = dksc->sc_dev;
 		DPRINTF("%s: candidate root=%p\n", __func__, candidate_root);
 		DPRINTF("%s: booted_device=%p root_partition=%d "
-		   "contains_boot=%d\n", __func__, booted_device,
-		   rsc->sc_r.root_partition,
-		   rf_containsboot(&rsc->sc_r, booted_device));
+			"contains_boot=%d",
+		    __func__, booted_device, rsc->sc_r.root_partition,
+			   rf_containsboot(&rsc->sc_r, booted_device));
+		/* XXX the check for booted_device == NULL can probably be
+		 * dropped, now that rf_containsboot handles that case.
+		 */
 		if (booted_device == NULL ||
 		    rsc->sc_r.root_partition == 1 ||
 		    rf_containsboot(&rsc->sc_r, booted_device)) {
