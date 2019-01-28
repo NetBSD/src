@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.37 2018/12/19 13:57:49 maxv Exp $
+#	$NetBSD: majors.sparc,v 1.38 2019/01/28 02:29:00 dholland Exp $
 #
 # Device majors for sparc
 #
@@ -44,6 +44,7 @@ device-major	lpt		char 37			lpt
 device-major	cgfour		char 39			cgfour
 
 device-major	xd		char 42	 block 10	xd
+#device-major	obsolete	char 43			obsolete (compat_svr4)
 
 device-major	vcoda		char 47			vcoda
 
@@ -62,6 +63,11 @@ device-major	altq		char 68			altq
 device-major	audio		char 69			audio
 device-major	openprom	char 70
 device-major	tctrl		char 71			tctrl
+#device-major	obsolete	char 72			obsolete (isdn)
+#device-major	obsolete	char 73			obsolete (isdnctl)
+#device-major	obsolete	char 74			obsolete (isdnbchan)
+#device-major	obsolete	char 75			obsolete (isdntrc)
+#device-major	obsolete	char 76			obsolete (isdntel)
 # sparc64: device-major	sabtty	char 77			sabtty
 # sparc64: device-major	usb	char 78			usb
 # sparc64: device-major	uhid	char 79			uhid
@@ -91,6 +97,7 @@ device-major	bpp		char 107		bpp
 device-major	tcx		char 109		tcx
 device-major	vnd		char 110 block 8	vnd
 device-major	tun		char 111		tun
+#device-major	obsolete	char 112		obsolete (lkm)
 
 device-major	rnd		char 119		rnd
 device-major	scsibus		char 120		scsibus
@@ -99,10 +106,13 @@ device-major	pnozz		char 122		pnozz
 device-major	pci		char 123		pci
 device-major	clcd		char 124		clcd
 device-major	clockctl	char 125		clockctl
+#device-major	obsolete	char 126		obsolete (systrace)
 device-major	cgd		char 127 block 26	cgd
 device-major	kttcp		char 128		kttcp
 device-major	dmoverio	char 129		dmoverio
-# major 130 free (ex veriexec which is now a MI major)
+# veriexec got moved to a MI major number
+#device-major	obsolete	char 130		obsolete (veriexec)
+#device-major	obsolete	char 131		obsolete (fwiso)
 device-major	dpt		char 132		dpt
 device-major	twe		char 133		twe
 device-major	nsmb		char 134		nsmb		
@@ -111,6 +121,7 @@ device-major	sysmon		char 135		sysmon
 device-major	ksyms		char 136		ksyms
 
 device-major	joy		char 137		joy
+#device-major	obsolete	char 138		obsolete (opencrypto)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

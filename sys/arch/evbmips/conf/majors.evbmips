@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.33 2019/01/27 17:59:23 dholland Exp $
+#	$NetBSD: majors.evbmips,v 1.34 2019/01/28 02:28:58 dholland Exp $
 #
 # Device majors for evbmips
 #
@@ -18,6 +18,8 @@ device-major	bpf		char 11			bpfilter
 device-major	st		char 12  block 2	st
 device-major	cd		char 13  block 3	cd
 device-major	ch		char 14			ch
+
+#device-major	obsolete	char 16			obsolete (lkm)
 
 device-major	sbjcn		char 17			jtagconsole
 device-major	sbscn		char 17			sbscn & !jtagconsole
@@ -39,6 +41,7 @@ device-major	se		char 37			se
 #device-major	obsolete	char 38			obsolete (satlink)
 device-major	rnd		char 39			rnd
 
+#device-major	obsolete	char 41			obsolete (spkr)
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid
 device-major	esh		char 44			esh
@@ -48,6 +51,11 @@ device-major	ulpt		char 47			ulpt
 device-major	ugen		char 48			ugen
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer
+#device-major	obsolete	char 51			obsolete (isdn)
+#device-major	obsolete	char 52			obsolete (isdnctl)
+#device-major	obsolete	char 53			obsolete (isdnbchan)
+#device-major	obsolete	char 54			obsolete (isdntrc)
+#device-major	obsolete	char 55			obsolete (isdntel)
 device-major	wsmux		char 56			wsmux
 device-major	ucom		char 57			ucom
 device-major	ses		char 58			ses
@@ -61,19 +69,22 @@ device-major	mlx		char 65			mlx
 device-major	pci		char 66			pci
 
 device-major	clockctl	char 69			clockctl
+#device-major	obsolete	char 70			obsolete (systrace)
 device-major	kttcp		char 71			kttcp
 device-major	wsfont		char 72			wsfont
 
 # obsolete, probably can be safely removed after 4.0 branch
-#device-major	aucom		char 73			aucom
+#device-major	obsolete	char 73			obsolete (aucom)
 
 device-major	sysmon		char 74			sysmon
 device-major	cgd		char 75  block 18	cgd
 device-major	ksyms		char 76			ksyms
 device-major	uart		char 77			uart
+#device-major	obsolete	char 78			obsolete (opencrypto)
 
 device-major	nsmb		char 98			nsmb
 device-major	athflash	char 99			athflash
+#device-major	obsolete	char 100 block 19	obsolete (spiflash)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

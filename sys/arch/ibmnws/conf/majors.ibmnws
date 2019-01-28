@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.18 2019/01/27 17:59:23 dholland Exp $
+#	$NetBSD: majors.ibmnws,v 1.19 2019/01/28 02:28:58 dholland Exp $
 #
 # Device majors for ibmnws
 #
@@ -26,10 +26,13 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
+#device-major	obsolete	char 28			obsolete (lkm)
+
 
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 device-major	audio		char 42			audio
+#device-major	obsolete	char 43			obsolete (compat_svr4)
 device-major	ipl		char 44			ipfilter
 #device-major	obsolete	char 45			obsolete (satlink)
 device-major	rnd		char 46			rnd
@@ -44,9 +47,15 @@ device-major	scsibus		char 61			scsibus
 device-major	raid		char 62  block 18	raid
 
 device-major	wsmux		char 65			wsmux
+#device-major	obsolete	char 66			obsolete (isdn)
+#device-major	obsolete	char 67			obsolete (isdnctl)
+#device-major	obsolete	char 68			obsolete (isdnbchan)
+#device-major	obsolete	char 69			obsolete (isdntrc)
+#device-major	obsolete	char 70			obsolete (isdntel)
 device-major	wsfont		char 71			wsfont
 device-major	pci		char 72			pci
 device-major	clockctl	char 73			clockctl
+#device-major	obsolete	char 74			obsolete (systrace)
 device-major	cgd		char 75  block 19	cgd
 device-major	ksyms		char 76			ksyms
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.13 2019/01/27 17:59:23 dholland Exp $
+#	$NetBSD: majors.powerpc,v 1.14 2019/01/28 02:29:00 dholland Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -35,6 +35,7 @@ device-major	aed		char 28			aed
 device-major	vcoda		char 29			vcoda
 
 device-major	wd		char 30  block 10	wd
+#device-major	obsolete	char 31			obsolete (lkm)
 device-major	filedesc	char 32
 device-major	nvram		char 33			nvram
 device-major	scsibus		char 34			scsibus
@@ -59,11 +60,17 @@ device-major	sequencer	char 50			sequencer
 device-major	urio		char 51			urio
 device-major	uscanner	char 52			uscanner
 device-major	openfirm	char 53			openfirm
+#device-major	obsolete	char 54			obsolete (isdn)
+#device-major	obsolete	char 55			obsolete (isdnctl)
+#device-major	obsolete	char 56			obsolete (isdnbchan)
+#device-major	obsolete	char 57			obsolete (isdntrc)
+#device-major	obsolete	char 58			obsolete (isdntel)
 device-major	ld		char 59  block 13	ld
 
 device-major	pci		char 60			pci
 device-major	clockctl	char 61			clockctl
 device-major	sysmon		char 62			sysmon
+#device-major	obsolete	char 63			obsolete (systrace)
 device-major	apm		char 64			apm
 device-major	kttcp		char 65			kttcp
 device-major	cgd		char 66  block 14	cgd
@@ -78,7 +85,7 @@ device-major	dmoverio	char 75			dmoverio
 device-major	twe		char 76			twe
 device-major	altq		char 77			altq
 device-major	joy		char 78			joy
-
+#device-major	obsolete	char 79			obsolete (spkr)
 device-major	gtmpsc		char 80			gtmpsc
 #device-major	obsolete	char 81			obsolete (satlink)
 
