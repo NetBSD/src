@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1224 2019/01/27 22:06:07 pgoyette Exp $
+#	$NetBSD: files,v 1.1225 2019/01/28 00:00:18 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -151,8 +151,8 @@ defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_FREEBSD: COMPAT_09 COMPAT_NETBSD_43
-defflag				COMPAT_LINUX: COMPAT_NETBSD COMPAT_NETBSD_43
+defflag				COMPAT_FREEBSD: COMPAT_09, COMPAT_NETBSD_43
+defflag				COMPAT_LINUX: COMPAT_NETBSD, COMPAT_NETBSD_43
 defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS: COMPAT_30
 defflag				COMPAT_ULTRIX: COMPAT_50
