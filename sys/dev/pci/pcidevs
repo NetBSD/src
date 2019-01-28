@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1359 2019/01/26 18:30:48 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1360 2019/01/28 03:37:27 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1002,6 +1002,24 @@ product AMD F15_30_HB	0x1424	Family15h Host Bridge
 product AMD F15_30_RP_5	0x1425	Family15h Root Port
 product AMD F15_30_RP_6	0x1426	Family15h Root Port
 product AMD F16_GPPB	0x1439	Family16h GPP Bridge
+product AMD F17_RC	0x1450	Family17h Root Complex
+product AMD F17_IOMMU	0x1451	Family17h IOMMU
+product AMD F17_PCIE_1	0x1452	Family17h PCIE
+product AMD F17_PCIE_2	0x1453	Family17h PCIE
+product AMD F17_PCIE_3	0x1454	Family17h PCIE
+product AMD F17_HDA	0x1457	Family17h HD Audio
+product AMD F17_XHCI	0x145c	Family17h xHCI
+product AMD F17_XHCI_2	0x145f	Family17h xHCI
+product AMD F17_DF_1	0x1460	Family17h Data Fabric
+product AMD F17_DF_2	0x1461	Family17h Data Fabric
+product AMD F17_DF_3	0x1462	Family17h Data Fabric
+product AMD F17_DF_4	0x1463	Family17h Data Fabric
+product AMD F17_DF_5	0x1464	Family17h Data Fabric
+product AMD F17_DF_6	0x1465	Family17h Data Fabric
+product AMD F17_DF_7	0x1466	Family17h Data Fabric
+product AMD F17_DF_8	0x1467	Family17h Data Fabric
+product AMD F17_PCIE_4	0x1470	Family17h PCIE
+product AMD F17_PCIE_5	0x1471	Family17h PCIE
 product AMD F14_RC	0x1510	Family14h Root Complex
 product AMD F16_HT	0x1530	Family16h HyperTransport Configuration
 product AMD F16_ADDR	0x1531	Family16h Address Map Configuration
@@ -1033,6 +1051,21 @@ product AMD F16_30_DRAM	0x1582	Family16h DRAM Configuration
 product AMD F16_30_NB	0x1583	Family16h North Bridge Configuration
 product AMD F16_30_CSTATE	0x1584	Family16h CPU C-state Configuration
 product AMD F16_30_MISC	0x1585	Family16h Miscellaneous Configuration
+product AMD F17_1X_RC	0x15d0	Family17h/1xh Root Complex
+product AMD F17_1X_IOMMU 0x15d1	Family17h/1xh IOMMU
+product AMD F17_1X_PCIE_1 0x15d3 Family17h/1xh PCIE
+product AMD F17_1X_PCIE_2 0x15db Family17h/1xh PCIE
+product AMD F17_1X_PCIE_3 0x15dc Family17h/1xh PCIE
+product AMD F17_1X_XHCI_1 0x15e0 Family17h/1xh xHCI
+product AMD F17_1X_XHCI_2 0x15e1 Family17h/1xh xHCI
+product AMD F17_1X_DF_0	0x15e8	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_1	0x15e9	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_2	0x15ea	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_3	0x15eb	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_4	0x15ec	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_5	0x15ed	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_6	0x15ee	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_7	0x15ef	Family17h/1xh Data Fabric
 product AMD F15_HT	0x1600	Family15h HyperTransport Configuration
 product AMD F15_ADDR	0x1601	Family15h Address Map Configuration
 product AMD F15_DRAM	0x1602	Family15h DRAM Configuration
