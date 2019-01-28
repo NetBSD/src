@@ -1,4 +1,4 @@
-/*	$NetBSD: static_edid.c,v 1.2 2019/01/28 02:25:01 sevan Exp $ */
+/*	$NetBSD: static_edid.c,v 1.3 2019/01/28 02:45:13 sevan Exp $ */
 
 /*-
  * Copyright (c) 2011 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: static_edid.c,v 1.2 2019/01/28 02:25:01 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: static_edid.c,v 1.3 2019/01/28 02:45:13 sevan Exp $");
 #include <sys/param.h>
 
 /* EDID blocks for some known hardware that doesn't provide its own */
@@ -55,6 +55,10 @@ uint8_t edid_pismo[128] = {
 /* 78 */	0x43, 0x44, 0x0a, 0x20, 0x20, 0x20, 0x00, 0x52
 };
 
+/*
+ * iBook G3 Clamshell, obtained from the 2nd revision (firewire).
+ * Should work on the 1st revision.
+ */
 uint8_t edid_clamshell[128] = {
 /* 00 */	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 /* 08 */	0x06, 0x10, 0x05, 0x9c, 0x01, 0x01, 0x01, 0x01,
