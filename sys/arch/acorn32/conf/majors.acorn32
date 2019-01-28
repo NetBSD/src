@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.26 2018/09/23 09:21:01 maxv Exp $
+#	$NetBSD: majors.acorn32,v 1.27 2019/01/28 02:28:56 dholland Exp $
 #
 # Device majors for acorn32
 #
@@ -7,12 +7,15 @@ device-major	mem		char 0
 device-major	swap		char 1   block 1	vmswap
 device-major	cons		char 2
 device-major	ctty		char 3
+#device-major	obsolete	char 4			obsolete (physcon)
 
 device-major	log		char 5
 device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
 device-major	lpt		char 8			lpt
-
+#device-major	obsolete	char 9			obsolete (qms)
+#device-major	obsolete	char 10			obsolete (beep)
+#device-major	obsolete	char 11			obsolete (kbd)
 device-major	com		char 12			com
 
 device-major	wd		char 16  block 16	wd
@@ -33,7 +36,14 @@ device-major	ss		char 29			ss
 device-major	bpf		char 32			bpfilter
 device-major	tun		char 33			tun
 device-major	filedesc	char 34
+#device-major	obsolete	char 35			obsolete (lkm)
 device-major	audio		char 36			audio
+#device-major	obsolete	char 37			obsolete (vidcconsole)
+
+#device-major	obsolete	char 40			obsolete (opms)
+
+#device-major	obsolete	char 42			obsolete (iic)
+#device-major	obsolete	char 43			obsolete (rtc)
 
 device-major	ipl		char 46			ipfilter
 
@@ -52,10 +62,18 @@ device-major	raid		char 71  block 71	raid
 
 device-major	wsmux		char 73			wsmux
 
+#device-major	obsolete	char 79			obsolete (isdn)
+#device-major	obsolete	char 80			obsolete (isdnctl)
+#device-major	obsolete	char 81			obsolete (isdnbchan)
+#device-major	obsolete	char 82			obsolete (isdntrc)
+#device-major	obsolete	char 83			obsolete (isdntel)
 device-major	clockctl	char 84			clockctl
+#device-major	obsolete	char 85			obsolete (systrace)
 device-major	ksyms		char 86			ksyms
 device-major	wsfont		char 87			wsfont
 device-major	nsmb		char 88			nsmb
+#device-major	obsolete	char 89			obsolete (pf)
+#device-major	obsolete	char 90			obsolete (opencrypto)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
