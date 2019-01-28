@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.227 2019/01/28 12:09:20 sevan Exp $
+$NetBSD: acronyms.comp,v 1.228 2019/01/28 12:17:28 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1292,7 +1292,7 @@ SDT	syntax-directed translation
 SEA	synchronous external abort
 SEGV	segmentation violation
 SEO	search engine optimization
-SES	scsi enclosure services
+SES	SCSI enclosure services
 SFC	sequential function chart
 SFI	simple firmware interface
 SFI	software fault isolation
@@ -1371,7 +1371,7 @@ SQCIF	sub quarter common intermediate format
 SQL	Structured Query Language
 SRAM	static random access memory
 SRC	sample rate conversion
-SRP	scsi rdma protocol
+SRP	SCSI RDMA protocol
 SS	self-snoop
 SS	stack segment
 SSA	static single assignment
