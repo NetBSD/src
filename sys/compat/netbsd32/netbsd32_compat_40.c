@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_40.c,v 1.3 2019/01/28 13:13:02 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_40.c,v 1.4 2019/01/28 18:53:52 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -29,11 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_40.c,v 1.3 2019/01/28 13:13:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_40.c,v 1.4 2019/01/28 18:53:52 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
