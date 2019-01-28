@@ -1,4 +1,4 @@
-#	$NetBSD: majors.zaurus,v 1.8 2018/09/23 09:21:03 maxv Exp $
+#	$NetBSD: majors.zaurus,v 1.9 2019/01/28 02:29:01 dholland Exp $
 #
 # Device majors for zaurus
 #
@@ -37,6 +37,7 @@ device-major	ses		char 30			ses
 device-major	bpf		char 32			bpfilter
 device-major	tun		char 33			tun
 device-major	filedesc	char 34
+#device-major	obsolete	char 35			obsolete (lkm)
 device-major	audio		char 36			audio
 device-major	vidcconsole	char 37			vidcconsole
 
@@ -72,6 +73,11 @@ device-major	urio		char 75			urio
 device-major	uscanner	char 76			uscanner
 device-major	openfirm	char 77			openfirm
 device-major	biconsdev	char 78			biconsdev
+#device-major	obsolete	char 79			obsolete (isdn)
+#device-major	obsolete	char 80			obsolete (isdnctl)
+#device-major	obsolete	char 81			obsolete (isdnbchan)
+#device-major	obsolete	char 82			obsolete (isdntrc)
+#device-major	obsolete	char 83			obsolete (isdntel)
 device-major	sacom		char 84			sacom
 device-major	mly		char 85			mly
 device-major	wsfont		char 86			wsfont
@@ -86,6 +92,7 @@ device-major	clockctl	char 94			clockctl
 device-major	irframe		char 95			irframedrv
 device-major	cir		char 96			cir
 device-major	radio		char 97			radio
+#device-major	obsolete	char 98			obsolete (systrace)
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
 device-major	sysmon		char 101		sysmon
@@ -93,6 +100,7 @@ device-major	dmoverio	char 102		dmoverio
 device-major	apmdev		char 103		apmdev
 device-major	sscom		char 104		sscom
 device-major	ksyms		char 105		ksyms
+#device-major	obsolete	char 106		obsolete (isdnbchan)
 device-major	epcom		char 107		epcom
 device-major	tslcd		char 108		tslcd
 device-major	twe		char 109  		twe

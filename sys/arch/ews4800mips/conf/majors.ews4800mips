@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ews4800mips,v 1.5 2011/06/30 20:09:30 wiz Exp $
+#	$NetBSD: majors.ews4800mips,v 1.6 2019/01/28 02:28:58 dholland Exp $
 #
 # Device majors for ews4800mips
 #
@@ -11,6 +11,7 @@ device-major	filedesc	char 4
 device-major	log		char 5
 device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
+#device-major	obsolete	char 8			obsolete (lkm)
 device-major	zstty		char 9			zstty
 
 device-major	md		char 12  block 6	md
@@ -33,6 +34,7 @@ device-major	wskbd		char 28			wskbd
 device-major	wsmouse		char 29			wsmouse
 device-major	wsmux		char 30			wsmux
 device-major	clockctl	char 38			clockctl
+#device-major	obsolete	char 39			obsolete (systrace)
 device-major	cgd		char 40  block 10	cgd
 device-major	ksyms		char 41			ksyms
 device-major	wsfont		char 42			wsfont

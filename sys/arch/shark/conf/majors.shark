@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.28 2017/02/17 19:43:40 macallan Exp $
+#	$NetBSD: majors.shark,v 1.29 2019/01/28 02:29:00 dholland Exp $
 #
 # Device majors for shark
 #
@@ -27,10 +27,15 @@ device-major	cgd		char 22  block 22	cgd
 device-major	sd		char 24  block 24	sd
 device-major	st		char 25  block 25	st
 device-major	cd		char 26  block 26	cd
-
+#device-major	obsolete	char 27			obsolete (ses)
+#device-major	obsolete	char 28			obsolete (uk)
+#device-major	obsolete	char 29			obsolete (ch)
+#device-major	obsolete	char 30			obsolete (ss)
+#device-major	obsolete	char 31			obsolete (scsibus)
 device-major	bpf		char 32			bpfilter
 device-major	tun		char 33			tun
 device-major	filedesc	char 34
+#device-major	obsolete	char 35			obsolete (lkm)
 device-major	audio		char 36			audio
 
 device-major	opms		char 40			opms
@@ -59,7 +64,9 @@ device-major	wsmux		char 73			wsmux
 device-major	openfirm	char 77			openfirm | ofwgencfg
 
 device-major	clockctl	char 84			clockctl
+#device-major	obsolete	char 85			obsolete (systrace)
 device-major	ksyms		char 86			ksyms
+#device-major	obsolete	char 87			obsolete (pf)
 device-major	pci		char 88			pci
 
 device-major	nsmb		char 98			nsmb

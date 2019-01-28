@@ -1,4 +1,4 @@
-#	$NetBSD: majors.landisk,v 1.8 2015/04/23 23:22:52 pgoyette Exp $
+#	$NetBSD: majors.landisk,v 1.9 2019/01/28 02:28:59 dholland Exp $
 #
 # Device majors for landisk
 #
@@ -28,6 +28,7 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
+#device-major	obsolete	char 28			obsolete (lkm)
 
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
@@ -42,6 +43,7 @@ device-major	raid		char 49  block 18	raid
 device-major	esh		char 50			esh
 device-major	wdog		char 51			wdog
 device-major	clockctl	char 52			clockctl
+#device-major	obsolete	char 53			obsolete (systrace)
 device-major	cgd		char 54  block 19	cgd
 device-major	sysmon		char 55			sysmon
 

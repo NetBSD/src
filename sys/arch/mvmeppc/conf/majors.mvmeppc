@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvmeppc,v 1.24 2019/01/27 17:59:23 dholland Exp $
+#	$NetBSD: majors.mvmeppc,v 1.25 2019/01/28 02:28:59 dholland Exp $
 #
 # Device majors for mvmeppc
 #
@@ -26,10 +26,12 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
+#device-major	obsolete	char 28			obsolete (lkm)
 
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 
+#device-major	obsolete	char 43			obsolete (compat_svr4)
 device-major	ipl		char 44			ipfilter
 #device-major	obsolete	char 45			obsolete (satlink)
 device-major	rnd		char 46			rnd
@@ -37,9 +39,17 @@ device-major	rnd		char 46			rnd
 device-major	scsibus		char 50			scsibus
 device-major	raid		char 51  block 18	raid
 
+#device-major	obsolete	char 53			obsolete (isdn)
+#device-major	obsolete	char 54			obsolete (isdnctl)
+#device-major	obsolete	char 55			obsolete (isdnbchan)
+#device-major	obsolete	char 56			obsolete (isdntrc)
+#device-major	obsolete	char 57			obsolete (isdntel)
 device-major	clockctl	char 58			clockctl
+#device-major	obsolete	char 59			obsolete (systrace)
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
+#device-major	obsolete	char 62			obsolete (pf)
+#device-major	obsolete	char 63			obsolete (opencrypto)
 
 device-major	nsmb		char 98			nsmb
 
