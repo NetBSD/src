@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_43_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: compat_43_mod.c,v 1.3 2019/01/28 15:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.3 2019/01/28 15:46:49 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -67,7 +67,7 @@ compat_43_init(void)
 	if (error != 0)
 		goto out6;
 
-	error = tty_43_init();
+	error = kern_tty_43_init();
 	if (error != 0)
 		goto out5;
 
@@ -96,7 +96,7 @@ compat_43_init(void)
  out3:
 	uipc_syscalls_43_fini();
  out4:
-	tty_43_fini();
+	kern_tty_43_fini();
  out5:
 	kern_sig_43_fini();
  out6:
@@ -130,7 +130,7 @@ compat_43_fini(void)
 	if (error != 0)
 		goto out6;
 
-	error = tty_43_fini();
+	error = kern_tty_43_fini();
 	if (error != 0)
 		goto out5;
 
@@ -159,7 +159,7 @@ compat_43_fini(void)
  out3:
 	kern_sig_43_init();
  out4:
-	tty_43_init();
+	kern_tty_43_init();
  out5:
 	uipc_syscalls_43_init();
  out6:

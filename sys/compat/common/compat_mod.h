@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.3 2019/01/28 15:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -176,8 +176,8 @@ int kern_resource_43_init(void);
 int kern_resource_43_fini(void);
 int kern_sig_43_init(void);
 int kern_sig_43_fini(void);
-int tty_43_init(void);
-int tty_43_fini(void);
+int kern_tty_43_init(void);
+int kern_tty_43_fini(void);
 int uipc_syscalls_43_init(void);
 int uipc_syscalls_43_fini(void);
 int vfs_syscalls_43_init(void);
