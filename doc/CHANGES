@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2495 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2496 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -320,3 +320,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		specific modules, introduction of MP-safe module hook
 		mechanism, and removal of various limitations within
 		the kernel module framework. (pgoyette 20190127)
+	macppc: Include EDID block for Clamshell iBook G3 displays.
+		[sevan 20190128]
