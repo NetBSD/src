@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.61 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.62 2019/01/28 21:13:58 christos Exp $");
 #endif
 
 /*
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.61 2019/01/27 02:08:48 pgoyett
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 #include <sys/compat_stub.h>
  
 #include <net/if.h>
@@ -2851,22 +2852,10 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 		break;
 	case OSIOCG80211STATS:
 	case OSIOCG80211ZSTATS:
-	    {
-		struct ieee80211_ostats ostats;
-
-		ifr = (struct ifreq *)data;
-		s = splnet();
-		MODULE_CALL_HOOK(ieee80211_ostats_hook,
-		    (&ostats, &ic->ic_stats), enosys(), error);
-		if (error == ENOSYS)
-			error = EINVAL;
-		if (error == 0)
-			error = copyout(&ostats, ifr->ifr_data, sizeof(ostats));
-		if (error == 0 && cmd == OSIOCG80211ZSTATS)
-			(void)memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
-		splx(s);
+		(void)module_autoload("compat_20", MODULE_CLASS_EXEC);
+		MODULE_CALL_HOOK(ieee80211_20_ioctl_hook, (ic, cmd, data),
+		    enosys(), error);
 		break;
-	    }
 	case SIOCG80211ZSTATS:
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
