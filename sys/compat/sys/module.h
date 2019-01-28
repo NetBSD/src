@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.1 2019/01/27 18:29:10 christos Exp $	*/
+/*	$NetBSD: module.h,v 1.2 2019/01/28 01:01:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_COMPAT_MODULE_H_
-#define _SYS_COMPAT_MODULE_H_
+#ifndef _COMPAT_SYS_MODULE_H_
+#define _COMPAT_SYS_MODULE_H_
 
 /*
  * This structure intentionally has the same layout for 32 and 64
@@ -45,4 +45,4 @@ typedef struct omodstat {
 	u_int		oms_reserved[3];
 } omodstat_t;
 
-#endif	/* !_SYS_COMPAT_MODULE_H_ */
+#endif	/* !_COMPAT_SYS_MODULE_H_ */
