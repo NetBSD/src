@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_20.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_20.c,v 1.3 2019/01/28 21:13:58 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.3 2019/01/28 21:13:58 christos Exp $");
 #endif
 
 /*
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.2 2019/01/27 02:08:39 pgoyette Ex
 
 #include <compat/sys/sockio.h>
 
-static int
+static void
 ieee80211_get_ostats(struct ieee80211_ostats *ostats,
     struct ieee80211_stats *stats)
 {
@@ -90,20 +90,41 @@ ieee80211_get_ostats(struct ieee80211_ostats *ostats,
 	COPYSTATS(ostats, stats, is_rx_deauth, is_rx_unauth);
 	COPYSTATS1(ostats, stats, is_tx_nombuf, is_tx_nobuf, is_tx_badcipher);
 	COPYSTATS(ostats, stats, is_scan_active, is_crypto_tkip);
+}
 
-	return 0;
+static int
+ieee80211_20_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
+{
+	struct ieee80211_ostats ostats;
+	struct ifreq *ifr;
+	int s, error;
+
+	switch (cmd) {
+	case OSIOCG80211STATS:
+	case OSIOCG80211ZSTATS:
+		s = splnet();
+		ifr = (struct ifreq *)data;
+		ieee80211_get_ostats(&ostats, &ic->ic_stats);
+		error = copyout(&ostats, ifr->ifr_data, sizeof(ostats));
+		if (error == 0 && cmd == OSIOCG80211ZSTATS)
+			(void)memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
+		splx(s);
+		return error;
+	default:
+		return EPASSTHROUGH;
+	}
 }
 
 void
 ieee80211_20_init(void)
 {
 
-	MODULE_SET_HOOK(ieee80211_ostats_hook, "ieee20", ieee80211_get_ostats);
+	MODULE_SET_HOOK(ieee80211_20_ioctl_hook, "ieee20", ieee80211_20_ioctl);
 }
 
 void
 ieee80211_20_fini(void)
 {
 
-	MODULE_UNSET_HOOK(ieee80211_ostats_hook);
+	MODULE_UNSET_HOOK(ieee80211_20_ioctl_hook);
 }
