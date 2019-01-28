@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.347 2019/01/27 10:27:18 pgoyette Exp $
+#	$NetBSD: BRANCHES,v 1.348 2019/01/28 00:43:54 jdolecek Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1150,8 +1150,6 @@ Notes:		Integration of FreeBSD's kqueue(2) mechanism, with various
 		local internal changes to better suit NetBSD, and
 		enhancements such as looking up filters by name or
 		number, and dynamic registration of "user" filters.
-		The work is complete as is, but is awaiting more
-		feedback from various kernel gurus before going mainline.
 
 Branch:		ktrace-lwp
 Description:	ktrace support for lwp ids.
