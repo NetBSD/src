@@ -1,4 +1,4 @@
-#	$NetBSD: majors.riscv,v 1.6 2019/01/27 18:00:06 dholland Exp $
+#	$NetBSD: majors.riscv,v 1.7 2019/01/28 02:29:00 dholland Exp $
 #
 # Device majors for riscv
 #
@@ -12,9 +12,15 @@ device-major	lpt		char 31			lpt
 device-major	ipl		char 35			ipfilter
 #device-major	obsolete	char 38			obsolete (satlink)
 
+#device-major	obsolete	char 41			obsolete (spkr)
 device-major	esh		char 44			esh
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer
+#device-major	obsolete	char 51			obsolete (isdn)
+#device-major	obsolete	char 52			obsolete (isdnctl)
+#device-major	obsolete	char 53			obsolete (isdnbchan)
+#device-major	obsolete	char 54			obsolete (isdntrc)
+#device-major	obsolete	char 55			obsolete (isdntel)
 device-major	cy		char 60			cy
 device-major	cz		char 61			cz
 device-major	altq		char 64			altq

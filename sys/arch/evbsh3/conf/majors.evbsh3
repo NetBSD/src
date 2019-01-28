@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.20 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: majors.evbsh3,v 1.21 2019/01/28 02:28:58 dholland Exp $
 #
 # Device majors for evbsh3
 #
@@ -29,6 +29,8 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
+#device-major	obsolete	char 28			obsolete (lkm)
+
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 device-major	audio		char 42			audio
@@ -42,8 +44,11 @@ device-major	raid		char 49  block 18	raid
 device-major	esh		char 50			esh
 device-major	wdog		char 51			wdog
 device-major	clockctl	char 52			clockctl
+#device-major	obsolete	char 53			obsolete (systrace)
 device-major	cgd		char 54  block 19	cgd
 device-major	ksyms		char 55			ksyms
+#device-major	obsolete	char 56			obsolete (pf)
+#device-major	obsolete	char 57			obsolete (opencrypto)
 
 device-major	ld		char 69  block 20	ld
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.31 2019/01/27 17:59:22 dholland Exp $
+#	$NetBSD: majors.amd64,v 1.32 2019/01/28 02:28:56 dholland Exp $
 #
 # Device majors for amd64
 #
@@ -14,7 +14,7 @@ device-major	log		char 7
 device-major	com		char 8			com
 device-major	fd		char 9   block 2	fdc
 device-major	wt		char 10  block 3	wt
-#device-major	scd		char 11  block 15	scd
+#device-major	obsolete	char 11  block 15	obsolete (scd)
 device-major	pc		char 12			pc
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st
@@ -29,17 +29,26 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
+#device-major	obsolete	char 27			obsolete (spkr)
+#device-major	obsolete	char 28			obsolete (lkm)
+
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 device-major	audio		char 42			audio
+#device-major	obsolete	char 43			obsolete (compat_svr4)
 device-major	ipl		char 44			ipfilter
 #device-major	obsolete	char 45			obsolete (satlink)
 device-major	rnd		char 46			rnd
 device-major	wsdisplay	char 47			wsdisplay
 device-major	wskbd		char 48			wskbd
 device-major	wsmouse		char 49			wsmouse
+#device-major	obsolete	char 50			obsolete (isdn)
+#device-major	obsolete	char 51			obsolete (isdnctl)
+#device-major	obsolete	char 52			obsolete (isdnbchan)
+#device-major	obsolete	char 53			obsolete (isdntrc)
+#device-major	obsolete	char 54			obsolete (isdntel)
 device-major	usb		char 55			usb
 device-major	uhid		char 56			uhid
 device-major	ulpt		char 57			ulpt
@@ -65,6 +74,7 @@ device-major	iop		char 76			iop
 device-major	altq		char 77			altq
 device-major	mlx		char 78			mlx
 device-major	clockctl	char 79			clockctl
+#device-major	obsolete	char 80			obsolete (systrace)
 device-major	cgd		char 81  block 20	cgd
 device-major	agp		char 82			agp
 device-major	pci		char 83			pci

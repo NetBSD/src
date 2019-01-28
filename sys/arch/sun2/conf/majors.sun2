@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun2,v 1.21 2018/12/19 13:57:50 maxv Exp $
+#	$NetBSD: majors.sun2,v 1.22 2019/01/28 02:29:00 dholland Exp $
 #
 # Device majors for sun2
 #
@@ -44,15 +44,20 @@ device-major	ch		char 59			ch
 device-major	ss		char 60			ss
 device-major	uk		char 61			uk
 
+#device-major	obsolete	char 72			obsolete (lkm)
 
 device-major	rnd		char 80			rnd
 device-major	scsibus		char 81			scsibus
 device-major	raid		char 82  block 25	raid
+#device-major	obsolete	char 83			obsolete (compat_svr4)
 
 device-major	pcons		char 88			pcons
 device-major	clockctl	char 89			clockctl
+#device-major	obsolete	char 90			obsolete (systrace)
 device-major	cgd		char 91  block 26	cgd
 device-major	ksyms		char 92			ksyms
+#device-major	obsolete	char 93			obsolete (pf)
+#device-major	obsolete	char 94			obsolete (opencrypto)
 
 device-major	nsmb		char 98			nsmb
 

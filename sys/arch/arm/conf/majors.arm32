@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.38 2018/09/23 09:21:01 maxv Exp $
+#	$NetBSD: majors.arm32,v 1.39 2019/01/28 02:28:57 dholland Exp $
 #
 # Device majors for arm32
 #
@@ -13,7 +13,7 @@ device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
 device-major	lpt		char 8			lpt
 device-major	qms		char 9			qms
-
+#device-major	obsolete	char 10			obsolete (beep)
 device-major	kbd		char 11			kbd
 device-major	com		char 12			com
 
@@ -37,10 +37,13 @@ device-major	ses		char 30			ses
 device-major	bpf		char 32			bpfilter
 device-major	tun		char 33			tun
 device-major	filedesc	char 34
+#device-major	obsolete	char 35			obsolete (lkm)
 device-major	audio		char 36			audio
 device-major	vidcconsole	char 37			vidcconsole
 
 device-major	opms		char 40			opms
+#device-major	obsolete	char 42			obsolete (iic)
+#device-major	obsolete	char 43			obsolete (rt)
 
 device-major	ipl		char 46			ipfilter
 
@@ -72,6 +75,11 @@ device-major	urio		char 75			urio
 device-major	uscanner	char 76			uscanner
 device-major	openfirm	char 77			openfirm
 device-major	biconsdev	char 78			biconsdev
+#device-major	obsolete	char 79			obsolete (isdn)
+#device-major	obsolete	char 80			obsolete (isdnctl)
+#device-major	obsolete	char 81			obsolete (isdnbchan)
+#device-major	obsolete	char 82			obsolete (isdntrc)
+#device-major	obsolete	char 83			obsolete (isdntel)
 device-major	sacom		char 84			sacom
 device-major	mly		char 85			mly
 device-major	wsfont		char 86			wsfont
@@ -95,6 +103,7 @@ device-major	apm		char 103		apm
 device-major	sscom		char 104		sscom
 device-major	imxcom		char 104		imxuart
 device-major	ksyms		char 105		ksyms
+#device-major	obsolete	char 106		obsolete (pf,isdnbchan)
 device-major	epcom		char 107		epcom
 device-major	tslcd		char 108		tslcd
 device-major	twe		char 109  		twe

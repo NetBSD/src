@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.33 2018/09/23 09:21:02 maxv Exp $
+#	$NetBSD: majors.evbppc,v 1.34 2019/01/28 02:28:58 dholland Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -33,6 +33,7 @@ device-major	md		char 27  block 9	md
 #				char 28
 device-major	vcoda		char 29			vcoda
 device-major	wd		char 30  block 10	wd
+#device-major	obsolete	char 31			obsolete (lkm)
 device-major	filedesc	char 32
 #				char 33
 device-major	scsibus		char 34			scsibus
@@ -55,10 +56,16 @@ device-major	sequencer	char 50			sequencer
 device-major	urio		char 51			urio
 device-major	uscanner	char 52			uscanner
 #				char 53
+#device-major	obsolete	char 54			obsolete (isdn)
+#device-major	obsolete	char 55			obsolete (isdnctl)
+#device-major	obsolete	char 56			obsolete (isdnbchan)
+#device-major	obsolete	char 57			obsolete (isdntrc)
+#device-major	obsolete	char 58			obsolete (isdntel)
 device-major	ld		char 59  block 13	ld
 device-major	pci		char 60			pci
 device-major	clockctl	char 61			clockctl
 device-major	sysmon		char 62			sysmon
+#device-major	obsolete	char 63			obsolete (systrace)
 #				char 64
 device-major	kttcp		char 65			kttcp
 device-major	cgd		char 66  block 14	cgd

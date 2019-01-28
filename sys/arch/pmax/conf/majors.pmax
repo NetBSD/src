@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmax,v 1.22 2016/10/21 18:11:59 flxd Exp $
+#	$NetBSD: majors.pmax,v 1.23 2019/01/28 02:29:00 dholland Exp $
 #
 # Device majors for pmax
 #
@@ -17,6 +17,7 @@ device-major	sd		char 9   block 19	sd
 device-major	vnd		char 11  block 2	vnd
 device-major	bpf		char 12			bpfilter
 
+#device-major	obsolete	char 15			obsolete (dtop)
 device-major	dz		char 16			dz
 device-major	zstty		char 17			zstty
 
@@ -33,6 +34,8 @@ device-major	ch		char 54			ch
 device-major	uk		char 55			uk
 device-major	rz		char 56  block 21	rz
 
+#device-major	obsolete	char 85			obsolete (rasterconsole)
+#device-major	obsolete	char 86			obsolete (fb)
 device-major	ccd		char 87  block 24	ccd
 device-major	wsdisplay	char 88			wsdisplay
 device-major	wskbd		char 89			wskbd
@@ -40,6 +43,7 @@ device-major	wsmouse		char 90			wsmouse
 device-major	ipl		char 91			ipfilter
 device-major	rnd		char 92			rnd
 device-major	tun		char 93			tun
+#device-major	obsolete	char 94			obsolete (lkm)
 device-major	scsibus		char 95			scsibus
 device-major	raid		char 96  block 32	raid
 device-major	md		char 97  block 17	md
@@ -48,9 +52,11 @@ device-major	audio		char 99			audio
 device-major	clockctl	char 100		clockctl
 device-major	wsmux		char 101		wsmux
 device-major	wsfont		char 102		wsfont
+#device-major	obsolete	char 103		obsolete (systrace)
 device-major	cgd		char 104  block 33	cgd
 device-major	ksyms		char 105		ksyms
 device-major	nsmb		char 106		nsmb
+#device-major	obsolete	char 107		obsolete (opencrypto)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

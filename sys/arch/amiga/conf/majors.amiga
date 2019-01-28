@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.25 2018/12/19 13:57:45 maxv Exp $
+#	$NetBSD: majors.amiga,v 1.26 2019/01/28 02:28:56 dholland Exp $
 #
 # Device majors for amiga
 #
@@ -27,6 +27,7 @@ device-major	st		char 20  block 5	st
 device-major	filedesc	char 21
 device-major	bpf		char 22			bpfilter
 device-major	tun		char 23			tun
+#device-major	obsolete	char 24			obsolete (lkm)
 
 device-major	msc		char 31			msc
 device-major	com		char 32			com
@@ -41,15 +42,22 @@ device-major	audio		char 41			audio
 device-major	rnd		char 42			rnd
 device-major	md		char 43  block 15	md
 device-major	scsibus		char 44			scsibus
+#device-major	obsolete	char 45			obsolete (isdn)
+#device-major	obsolete	char 46			obsolete (isdnctl)
+#device-major	obsolete	char 47			obsolete (isdnbchan)
+#device-major	obsolete	char 48			obsolete (isdntrc)
+#device-major	obsolete	char 49			obsolete (isdntel)
 device-major	raid		char 50  block 16	raid
+#device-major	obsolete	char 51			obsolete (compat_svr4)
 device-major	wd		char 52  block 17	wd
 device-major	wsdisplay	char 53			wsdisplay
 device-major	wskbd		char 54			wskbd
 device-major	clockctl	char 55			clockctl
+#device-major	obsolete	char 56			obsolete (systrace)
 device-major	cgd		char 57  block 18	cgd
 device-major	ksyms		char 58			ksyms
 device-major	nsmb		char 59			nsmb
-
+#device-major	obsolete	char 60			obsolete (opencrypto)
 device-major	wsmouse		char 61			wsmouse
 device-major	wsfont		char 62			wsfont
 device-major	wsmux		char 63			wsmux

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.30 2018/12/19 13:57:49 maxv Exp $
+#	$NetBSD: majors.sgimips,v 1.31 2019/01/28 02:29:00 dholland Exp $
 #
 # Device majors for sgimips
 #
@@ -24,6 +24,7 @@ device-major	ctty		char 21
 device-major	pts		char 22			pty
 device-major	ptc		char 23			pty
 device-major	log		char 24
+#device-major	obsolete	char 25			obsolete (lkm)
 device-major	filedesc	char 26
 device-major	bpf		char 27			bpfilter
 device-major	tun		char 28			tun
@@ -36,6 +37,12 @@ device-major	scsibus		char 34			scsibus
 device-major	zstty		char 35			zstty
 device-major	com		char 36			com
 device-major	arcbios		char 37
+#device-major	obsolete	char 38			obsolete (isdn)
+#device-major	obsolete	char 39			obsolete (isdnctl)
+#device-major	obsolete	char 40			obsolete (isdnbchan)
+#device-major	obsolete	char 41			obsolete (isdntrc)
+#device-major	obsolete	char 42			obsolete (isdntel)
+#device-major	obsolete	char 43			obsolete (compat_svr4)
 device-major	ses		char 44			ses
 
 device-major	wsdisplay	char 50			wsdisplay
@@ -45,6 +52,9 @@ device-major	wsmux		char 53			wsmux
 device-major	wsfont		char 54			wsfont
 
 device-major	clockctl	char 60			clockctl
+#device-major	obsolete	char 61			obsolete (compat_irix)
+#device-major	obsolete	char 62			obsolete (compat_irix)
+#device-major	obsolete	char 63			obsolete (systrace)
 device-major	audio		char 64			audio
 device-major	pci		char 65			pci
 device-major	irframe		char 66			irframedrv

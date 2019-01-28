@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.26 2019/01/27 17:59:22 dholland Exp $
+#	$NetBSD: majors.algor,v 1.27 2019/01/28 02:28:56 dholland Exp $
 #
 # Device majors for algor
 #
@@ -19,6 +19,7 @@ device-major	st		char 12  block 2	st
 device-major	cd		char 13  block 3	cd
 device-major	ch		char 14			ch
 
+#device-major	obsolete	char 16			obsolete (lkm)
 
 device-major	audio		char 24			audio
 device-major	wsdisplay	char 25			wsdisplay
@@ -37,6 +38,7 @@ device-major	se		char 37			se
 #device-major	obsolete	char 38			obsolete (satlink)
 device-major	rnd		char 39			rnd
 
+#device-major	obsolete	char 41			obsolete (spkr)
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid
 device-major	esh		char 44			esh
@@ -46,6 +48,11 @@ device-major	ulpt		char 47			ulpt
 device-major	ugen		char 48			ugen
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer
+#device-major	obsolete	char 51			obsolete (isdn)
+#device-major	obsolete	char 52			obsolete (isdnctl)
+#device-major	obsolete	char 53			obsolete (isdnbchan)
+#device-major	obsolete	char 54			obsolete (isdntrc)
+#device-major	obsolete	char 55			obsolete (isdntel)
 device-major	wsmux		char 56			wsmux
 device-major	ucom		char 57			ucom
 device-major	ses		char 58			ses
@@ -57,6 +64,7 @@ device-major	uscanner	char 63			uscanner
 device-major	altq		char 64			altq
 device-major	mlx		char 65			mlx
 device-major	clockctl	char 66			clockctl
+#device-major	obsolete	char 67			obsolete (systrace)
 device-major	cgd		char 68  block 18	cgd
 device-major	ksyms		char 69			ksyms
 device-major	wsfont		char 70			wsfont
