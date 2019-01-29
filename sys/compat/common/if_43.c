@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.18 2019/01/29 04:10:10 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.19 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.18 2019/01/29 04:10:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.19 2019/01/29 09:28:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -299,8 +299,8 @@ int
 if_43_init(void)
 {
 
-	MODULE_SET_HOOK(if_43_cvtcmd_hook, "if_43", do_compat_cvtcmd);
-	MODULE_SET_HOOK(if_43_ifioctl_hook, "if_43", compat_ifioctl);
+	MODULE_SET_HOOK(if_cvtcmd_43_hook, "if_43", do_compat_cvtcmd);
+	MODULE_SET_HOOK(if_ifioctl_43_hook, "if_43", compat_ifioctl);
 	return 0;
 }
 
@@ -308,8 +308,8 @@ int
 if_43_fini(void)
 {
 
-	MODULE_UNSET_HOOK(if_43_cvtcmd_hook);
-	MODULE_UNSET_HOOK(if_43_ifioctl_hook);
+	MODULE_UNSET_HOOK(if_cvtcmd_43_hook);
+	MODULE_UNSET_HOOK(if_ifioctl_43_hook);
 	return 0;
 }
 #endif /* defined(COMPAT_43) */

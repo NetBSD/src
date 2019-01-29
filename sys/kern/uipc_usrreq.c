@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.188 2019/01/27 02:08:43 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.189 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.188 2019/01/27 02:08:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.189 2019/01/29 09:28:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -350,7 +350,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
 		control = unp_addsockcred(curlwp, control);
 	if (unp->unp_conn->unp_flags & UNP_OWANTCRED)
-		MODULE_CALL_HOOK(compat_70_unp_hook, (curlwp, control),
+		MODULE_CALL_HOOK(uipc_unp_70_hook, (curlwp, control),
 		    stub_compat_70_unp_addsockcred(curlwp, control), control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
@@ -532,7 +532,7 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			 * SOCK_STREAM and SOCK_SEQPACKET.
 			 */
 			unp->unp_conn->unp_flags &= ~UNP_OWANTCRED;
-			MODULE_CALL_HOOK(compat_70_unp_hook, (curlwp, control),
+			MODULE_CALL_HOOK(uipc_unp_70_hook, (curlwp, control),
 			    stub_compat_70_unp_addsockcred(curlwp, control),
 			    control);
 		}

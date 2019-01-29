@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.225 2019/01/27 02:08:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.226 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.225 2019/01/27 02:08:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.226 2019/01/29 09:28:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1899,7 +1899,7 @@ copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
 	int retval;
 
 	if (p->p_flag & PK_32) {
-		MODULE_CALL_HOOK(kern_proc_32_copyin_hook, (p, arginfo),
+		MODULE_CALL_HOOK(kern_proc32_copyin_hook, (p, arginfo),
 		    enosys(), retval);
 		return retval;
 	}
@@ -2115,7 +2115,7 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 
 #if !defined(_RUMPKERNEL)
 		if (p->p_flag & PK_32)
-			MODULE_CALL_HOOK(kern_proc_32_base_hook,
+			MODULE_CALL_HOOK(kern_proc32_base_hook,
 			    (argv, i++), 0, base);
 		else
 #endif /* !defined(_RUMPKERNEL) */
