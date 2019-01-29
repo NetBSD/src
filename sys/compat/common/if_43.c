@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.16 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.17 2019/01/29 04:01:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.16 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.17 2019/01/29 04:01:45 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -212,8 +212,13 @@ compat_cvtcmd(u_long cmd)
 		case TAPGIFNAME:
 			return ncmd;
 		default:
-			MODULE_CALL_HOOK(if43_20_hook, (ncmd), enosys(), ncmd);
-			return ncmd;
+		    {	int rv;
+
+			MODULE_CALL_HOOK(if43_20_hook, (ncmd), enosys(), rv);
+			if (rv == 0)
+				return ncmd;
+			return cmd;
+		    }
 		}
 	}
 }
