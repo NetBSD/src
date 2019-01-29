@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.103 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: uhid.c,v 1.104 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.103 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.104 2019/01/29 09:28:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -654,7 +654,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 				     (struct usb_device_info *)addr, 0);
 		break;
 	case USB_GET_DEVICEINFO_OLD:
-		MODULE_CALL_HOOK(usb_subr_30_fill_hook,
+		MODULE_CALL_HOOK(usb_subr_fill_30_hook,
                     (sc->sc_hdev.sc_parent->sc_udev,
 		      (struct usb_device_info_old *)addr, 0,
                       usbd_devinfo_vp, usbd_printBCD),

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_14.c,v 1.6 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_14.c,v 1.7 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.6 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.7 2019/01/29 09:28:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -177,14 +177,14 @@ void
 rtsock_14_init(void)
 {
 
-	MODULE_SET_HOOK(rtsock_14_oifmsg_hook, "rts_14", compat_14_rt_oifmsg);
-	MODULE_SET_HOOK(rtsock_14_iflist_hook, "rts_14", compat_14_iflist);
+	MODULE_SET_HOOK(rtsock_oifmsg_14_hook, "rts_14", compat_14_rt_oifmsg);
+	MODULE_SET_HOOK(rtsock_iflist_14_hook, "rts_14", compat_14_iflist);
 }
 
 void
 rtsock_14_fini(void)
 {
 
-	MODULE_UNSET_HOOK(rtsock_14_oifmsg_hook);
-	MODULE_UNSET_HOOK(rtsock_14_iflist_hook);
+	MODULE_UNSET_HOOK(rtsock_oifmsg_14_hook);
+	MODULE_UNSET_HOOK(rtsock_iflist_14_hook);
 }

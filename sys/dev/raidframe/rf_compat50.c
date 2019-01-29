@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.4 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.5 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -244,14 +244,14 @@ void
 raidframe_50_init(void)
 {
 
-	MODULE_SET_HOOK(raidframe50_ioctl_hook, "raid50", raidframe_ioctl_50);
+	MODULE_SET_HOOK(raidframe_ioctl_50_hook, "raid50", raidframe_ioctl_50);
 }
 
 void
 raidframe_50_fini(void)
 {
 
-	MODULE_UNSET_HOOK(raidframe50_ioctl_hook);
+	MODULE_UNSET_HOOK(raidframe_ioctl_50_hook);
 }
 
 MODULE(MODULE_CLASS_EXEC, compat_raid_50, "raid,compat_50,compat_raid_80");

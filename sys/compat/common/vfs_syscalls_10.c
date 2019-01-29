@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_syscalls_10.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/* $NetBSD: vfs_syscalls_10.c,v 1.3 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_10.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_10.c,v 1.3 2019/01/29 09:28:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -55,11 +55,11 @@ real_sys_openat_10(struct pathbuf **pb)
 void vfs_syscalls_10_init(void)
 {
 
-	MODULE_SET_HOOK(compat_10_openat_hook, "openat_10", real_sys_openat_10);
+	MODULE_SET_HOOK(vfs_openat_10_hook, "openat_10", real_sys_openat_10);
 }
 
 void vfs_syscalls_10_fini(void)
 {
 
-	MODULE_UNSET_HOOK(compat_10_openat_hook);
+	MODULE_UNSET_HOOK(vfs_openat_10_hook);
 }

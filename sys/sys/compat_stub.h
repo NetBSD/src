@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.7 2019/01/29 04:54:42 pgoyette Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.8 2019/01/29 09:28:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -84,11 +84,11 @@ struct usb_device_info_old;
 struct usb_event;
 struct usb_event_old;
 struct uio;
-MODULE_HOOK(usb_subr_30_fill_hook, int,
+MODULE_HOOK(usb_subr_fill_30_hook, int,
     (struct usbd_device *, struct usb_device_info_old *, int,
       void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
       int (*)(char *, size_t, int)));
-MODULE_HOOK(usb_subr_30_copy_hook, int,
+MODULE_HOOK(usb_subr_copy_30_hook, int,
     (struct usb_event *, struct usb_event_old *, struct uio *));
 
 /*
@@ -130,9 +130,9 @@ MODULE_HOOK(ocryptof_50_hook, int, (struct file *, u_long, void *));
 
 struct RF_Config_s;
 struct RF_Raid_s;
-MODULE_HOOK(raidframe50_ioctl_hook, int,
+MODULE_HOOK(raidframe_ioctl_50_hook, int,
     (int, int, struct RF_Raid_s *, int, void *, struct RF_Config_s **));
-MODULE_HOOK(raidframe80_ioctl_hook, int,
+MODULE_HOOK(raidframe_ioctl_80_hook, int,
     (int, int, struct RF_Raid_s *, int, void *, struct RF_Config_s **));
 
 /*
@@ -140,9 +140,9 @@ MODULE_HOOK(raidframe80_ioctl_hook, int,
  */
 
 struct puffs_req;
-MODULE_HOOK(puffs_50_out_hook, int,
+MODULE_HOOK(puffs_out_50_hook, int,
     (struct puffs_req *, struct puffs_req **, ssize_t *));	/* outgoing */
-MODULE_HOOK(puffs_50_in_hook, void,
+MODULE_HOOK(puffs_in_50_hook, void,
     (struct puffs_req *, struct puffs_req *));			/* incoming */
 
 /*
@@ -151,7 +151,7 @@ MODULE_HOOK(puffs_50_in_hook, void,
 
 struct wscons_event;
 struct uio;
-MODULE_HOOK(wsevent_50_copyout_events_hook, int,
+MODULE_HOOK(wscons_copyout_events_50_hook, int,
     (const struct wscons_event *, int, struct uio *));
 
 /*
@@ -189,7 +189,7 @@ MODULE_HOOK(compat_vndioctl_50_hook, int, (u_long, struct lwp *, void *, int,
  */
 struct ieee80211com;
 
-MODULE_HOOK(ieee80211_20_ioctl_hook, int,
+MODULE_HOOK(ieee80211_ioctl_20_hook, int,
     (struct ieee80211com *, u_long, void *));
 
 /*
@@ -197,8 +197,8 @@ MODULE_HOOK(ieee80211_20_ioctl_hook, int,
  */
 struct socket;
 
-MODULE_HOOK(if_43_cvtcmd_hook, int, (u_long *, u_long));
-MODULE_HOOK(if_43_ifioctl_hook, int,
+MODULE_HOOK(if_cvtcmd_43_hook, int, (u_long *, u_long));
+MODULE_HOOK(if_ifioctl_43_hook, int,
     (struct socket *, u_long, u_long, void *, struct lwp *));
 
 /*
@@ -211,7 +211,7 @@ MODULE_HOOK(if43_cvtcmd_20_hook, int, (u_long));
  */
 struct tty;
 
-MODULE_HOOK(compat_43_ttioctl_hook, int,
+MODULE_HOOK(tty_ttioctl_43_hook, int,
     (struct tty *, u_long, void *, int, struct lwp *));
 
 /*
@@ -232,8 +232,8 @@ MODULE_HOOK(uipc_syscalls_50_hook, int, (struct lwp *, u_long, void *));
 struct ifnet;
 struct rt_walkarg;
 struct rt_addrinfo;
-MODULE_HOOK(rtsock_14_oifmsg_hook, void, (struct ifnet *));
-MODULE_HOOK(rtsock_14_iflist_hook, int,
+MODULE_HOOK(rtsock_oifmsg_14_hook, void, (struct ifnet *));
+MODULE_HOOK(rtsock_iflist_14_hook, int,
     (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t));
 
 /*
@@ -242,24 +242,24 @@ MODULE_HOOK(rtsock_14_iflist_hook, int,
 
 struct rtentry;
 struct ifaddr;
-MODULE_HOOK(rtsock_50_oifmsg_hook, void, (struct ifnet *));
-MODULE_HOOK(rtsock_50_iflist_hook, int,
+MODULE_HOOK(rtsock_oifmsg_50_hook, void, (struct ifnet *));
+MODULE_HOOK(rtsock_iflist_50_hook, int,
     (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t));
-MODULE_HOOK(rtsock_50_rt_missmsg_hook, void,
+MODULE_HOOK(rtsock_rt_missmsg_50_hook, void,
     (int, const struct rt_addrinfo *, int, int));
-MODULE_HOOK(rtsock_50_rt_ifmsg_hook, void, (struct ifnet *));
-MODULE_HOOK(rtsock_50_rt_newaddrmsg_hook, void,
+MODULE_HOOK(rtsock_rt_ifmsg_50_hook, void, (struct ifnet *));
+MODULE_HOOK(rtsock_rt_newaddrmsg_50_hook, void,
     (int, struct ifaddr *, int, struct rtentry *));
-MODULE_HOOK(rtsock_50_rt_ifannouncemsg_hook, void, (struct ifnet *, int));
-MODULE_HOOK(rtsock_50_rt_ieee80211msg_hook, void,
+MODULE_HOOK(rtsock_rt_ifannouncemsg_50_hook, void, (struct ifnet *, int));
+MODULE_HOOK(rtsock_rt_ieee80211msg_50_hook, void,
     (struct ifnet *, int, void *, size_t));
 
 /*
  * Hooks for rtsock_70
  */
 struct ifaddr;
-MODULE_HOOK(rtsock_70_newaddr_hook, void, (int, struct ifaddr *));
-MODULE_HOOK(rtsock_70_iflist_hook, int,
+MODULE_HOOK(rtsock_newaddr_70_hook, void, (int, struct ifaddr *));
+MODULE_HOOK(rtsock_iflist_70_hook, int,
     (struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *));
 
 /*
@@ -277,9 +277,9 @@ extern int kern_sig_43_pgid_mask;
  * Hooks for kern_proc.c for netbsd32 compat
  */
 struct ps_strings;
-MODULE_HOOK(kern_proc_32_copyin_hook, int,
+MODULE_HOOK(kern_proc32_copyin_hook, int,
     (struct proc *, struct ps_strings *));
-MODULE_HOOK(kern_proc_32_base_hook, vaddr_t, (char **, size_t));
+MODULE_HOOK(kern_proc32_base_hook, vaddr_t, (char **, size_t));
 
 /*
  * Hook to allow sparc fpu code to see if a process is using sunos
@@ -292,34 +292,34 @@ MODULE_HOOK(get_emul_sunos_hook, int, (const struct emul **));
  * Hooks for rnd_ioctl_50
  */
 MODULE_HOOK(rnd_ioctl_50_hook, int, (struct file *, u_long, void *));
-MODULE_HOOK(rnd_ioctl_50_32_hook, int, (struct file *, u_long, void *));
+MODULE_HOOK(rnd_ioctl32_50_hook, int, (struct file *, u_long, void *));
 
 /*
  * Hooks for compat_60 ttioctl and ptmioctl
  */
-MODULE_HOOK(compat_60_ttioctl_hook, int,
+MODULE_HOOK(tty_ttioctl_60_hook, int,
     (struct tty *, u_long, void *, int, struct lwp *));
-MODULE_HOOK(compat_60_ptmioctl_hook, int,
+MODULE_HOOK(tty_ptmioctl_60_hook, int,
     (dev_t, u_long, void *, int, struct lwp *));
 
 /*
  * Hook for compat_10 openat
  */
 struct pathbuf;
-MODULE_HOOK(compat_10_openat_hook, int, (struct pathbuf **));
+MODULE_HOOK(vfs_openat_10_hook, int, (struct pathbuf **));
 
 /*
  * Hook for compat_70_unp_addsockcred
  */
 struct mbuf;
-MODULE_HOOK(compat_70_unp_hook, struct mbuf *,
+MODULE_HOOK(uipc_unp_70_hook, struct mbuf *,
     (struct lwp *, struct mbuf *));
 
 /*
  * Hook for sysvipc50 sysctl
  */
 #include <sys/sysctl.h>
-MODULE_HOOK(sysvipc50_sysctl_hook, int, (SYSCTLFN_PROTO));
+MODULE_HOOK(sysvipc_sysctl_50_hook, int, (SYSCTLFN_PROTO));
 
 /* 
  * Hook for 32-bit machine name

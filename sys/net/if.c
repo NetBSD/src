@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.444 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.445 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.444 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.445 2019/01/29 09:28:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3153,7 +3153,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 	ifr = data;
-	MODULE_CALL_HOOK(if_43_cvtcmd_hook, (&cmd, ocmd), enosys(), hook);
+	MODULE_CALL_HOOK(if_cvtcmd_43_hook, (&cmd, ocmd), enosys(), hook);
 	if (hook != ENOSYS) {
 		if (cmd != ocmd) {
 			oifr = data;
@@ -3254,7 +3254,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = EOPNOTSUPP;
 	else {
 		KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
-		MODULE_CALL_HOOK(if_43_ifioctl_hook,
+		MODULE_CALL_HOOK(if_ifioctl_43_hook,
 			     (so, ocmd, cmd, data, l), enosys(), error);
 		if (error == ENOSYS)
 			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
@@ -3410,7 +3410,7 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 	u_long ocmd = cmd;
 	int hook;
 
-	MODULE_CALL_HOOK(if_43_cvtcmd_hook, (&cmd, ocmd), enosys(), hook);
+	MODULE_CALL_HOOK(if_cvtcmd_43_hook, (&cmd, ocmd), enosys(), hook);
 	if (hook != ENOSYS) {
 		if (cmd != ocmd) {
 			oifr = (struct oifreq *)(void *)ifr;

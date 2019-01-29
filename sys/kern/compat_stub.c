@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.5 2019/01/29 04:10:10 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.6 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ void (*vec_sctp_delete_ip_address)(struct ifaddr *) = NULL;
 /*
  * usb device_info compatability
  */
-struct usb_subr_30_fill_hook_t usb_subr_30_fill_hook;
-struct usb_subr_30_copy_hook_t usb_subr_30_copy_hook;
+struct usb_subr_fill_30_hook_t usb_subr_fill_30_hook;
+struct usb_subr_copy_30_hook_t usb_subr_copy_30_hook;
 
 /*
  * ccd device compatability ioctl
@@ -112,15 +112,15 @@ struct ocryptof_50_hook_t ocryptof_50_hook;
 /*
  * raidframe compatability
  */
-struct raidframe50_ioctl_hook_t raidframe50_ioctl_hook;
-struct raidframe80_ioctl_hook_t raidframe80_ioctl_hook;
+struct raidframe_ioctl_50_hook_t raidframe_ioctl_50_hook;
+struct raidframe_ioctl_80_hook_t raidframe_ioctl_80_hook;
 
 /*
  * puffs compatability
  */
 
-struct puffs_50_out_hook_t puffs_50_out_hook;
-struct puffs_50_in_hook_t puffs_50_in_hook;
+struct puffs_out_50_hook_t puffs_out_50_hook;
+struct puffs_in_50_hook_t puffs_in_50_hook;
 
 /* XXX
 int (*puffs50_compat_outgoing)(struct puffs_req *, struct puffs_req **,
@@ -132,7 +132,7 @@ void (*puffs50_compat_incoming)(struct puffs_req *, struct puffs_req *) =
 /*
  * wsevents compatability
  */
-struct wsevent_50_copyout_events_hook_t wsevent_50_copyout_events_hook;
+struct wscons_copyout_events_50_hook_t wscons_copyout_events_50_hook;
 
 /*
  * sysmon_power compatability
@@ -153,13 +153,13 @@ struct compat_vndioctl_50_hook_t compat_vndioctl_50_hook;
 /*
  * ieee80211 ioctl compatability
  */
-struct ieee80211_20_ioctl_hook_t ieee80211_20_ioctl_hook;
+struct ieee80211_ioctl_20_hook_t ieee80211_ioctl_20_hook;
 
 /*
  * if_43 compatability
  */
-struct if_43_cvtcmd_hook_t if_43_cvtcmd_hook;
-struct if_43_ifioctl_hook_t if_43_ifioctl_hook;
+struct if_cvtcmd_43_hook_t if_cvtcmd_43_hook;
+struct if_ifioctl_43_hook_t if_ifioctl_43_hook;
 
 /*
  * if43_cvtcmd_20 compatability
@@ -169,7 +169,7 @@ struct if43_cvtcmd_20_hook_t if43_cvtcmd_20_hook;
 /* 
  * tty 43 ioctl compatibility
  */
-struct compat_43_ttioctl_hook_t compat_43_ttioctl_hook;
+struct tty_ttioctl_43_hook_t tty_ttioctl_43_hook;
 
 /*
  * uipc_syscalls_40 compatability
@@ -184,25 +184,25 @@ struct uipc_syscalls_50_hook_t uipc_syscalls_50_hook;
 /*
  * rtsock 14 compatability
  */
-struct rtsock_14_oifmsg_hook_t rtsock_14_oifmsg_hook;
-struct rtsock_14_iflist_hook_t rtsock_14_iflist_hook;
+struct rtsock_oifmsg_14_hook_t rtsock_oifmsg_14_hook;
+struct rtsock_iflist_14_hook_t rtsock_iflist_14_hook;
 
 /*
  * rtsock 50 compatability
  */
-struct rtsock_50_iflist_hook_t rtsock_50_iflist_hook;
-struct rtsock_50_oifmsg_hook_t rtsock_50_oifmsg_hook;
-struct rtsock_50_rt_missmsg_hook_t rtsock_50_rt_missmsg_hook;
-struct rtsock_50_rt_ifmsg_hook_t rtsock_50_rt_ifmsg_hook;
-struct rtsock_50_rt_ifannouncemsg_hook_t rtsock_50_rt_ifannouncemsg_hook;
-struct rtsock_50_rt_newaddrmsg_hook_t rtsock_50_rt_newaddrmsg_hook;
-struct rtsock_50_rt_ieee80211msg_hook_t rtsock_50_rt_ieee80211msg_hook;
+struct rtsock_iflist_50_hook_t rtsock_iflist_50_hook;
+struct rtsock_oifmsg_50_hook_t rtsock_oifmsg_50_hook;
+struct rtsock_rt_missmsg_50_hook_t rtsock_rt_missmsg_50_hook;
+struct rtsock_rt_ifmsg_50_hook_t rtsock_rt_ifmsg_50_hook;
+struct rtsock_rt_ifannouncemsg_50_hook_t rtsock_rt_ifannouncemsg_50_hook;
+struct rtsock_rt_newaddrmsg_50_hook_t rtsock_rt_newaddrmsg_50_hook;
+struct rtsock_rt_ieee80211msg_50_hook_t rtsock_rt_ieee80211msg_50_hook;
 
 /*
  * rtsock 70 compatability
  */
-struct rtsock_70_newaddr_hook_t rtsock_70_newaddr_hook;
-struct rtsock_70_iflist_hook_t rtsock_70_iflist_hook;
+struct rtsock_newaddr_70_hook_t rtsock_newaddr_70_hook;
+struct rtsock_iflist_70_hook_t rtsock_iflist_70_hook;
 
 /*
  * modctl handler for old style OSTAT
@@ -217,8 +217,8 @@ int kern_sig_43_pgid_mask = ~0;
 /*
  * hook for kern_proc_32
  */
-struct kern_proc_32_copyin_hook_t kern_proc_32_copyin_hook;
-struct kern_proc_32_base_hook_t kern_proc_32_base_hook;
+struct kern_proc32_copyin_hook_t kern_proc32_copyin_hook;
+struct kern_proc32_base_hook_t kern_proc32_base_hook;
 
 /*
  * Hook for sparc fpu code to check if a process is running 
@@ -230,28 +230,28 @@ struct get_emul_sunos_hook_t get_emul_sunos_hook;
  * Hook for rnd_ioctl_50 callbacks
  */
 struct rnd_ioctl_50_hook_t rnd_ioctl_50_hook;
-struct rnd_ioctl_50_32_hook_t rnd_ioctl_50_32_hook;
+struct rnd_ioctl32_50_hook_t rnd_ioctl32_50_hook;
 
 /* 
  * Hooks for compat_60 ttioctl and ptmioctl
  */
-struct compat_60_ttioctl_hook_t compat_60_ttioctl_hook;
-struct compat_60_ptmioctl_hook_t compat_60_ptmioctl_hook;
+struct tty_ttioctl_60_hook_t tty_ttioctl_60_hook;
+struct tty_ptmioctl_60_hook_t tty_ptmioctl_60_hook;
 
 /*
  * Hook for compat_10 openat
  */
-struct compat_10_openat_hook_t compat_10_openat_hook;
+struct vfs_openat_10_hook_t vfs_openat_10_hook;
 
 /*
  * Hook for compat_70_unp_addsockcred
  */
-struct compat_70_unp_hook_t compat_70_unp_hook;
+struct uipc_unp_70_hook_t uipc_unp_70_hook;
 
 /*
  * Hook for sysvipc50_sysctl
  */
-struct sysvipc50_sysctl_hook_t sysvipc50_sysctl_hook;
+struct sysvipc_sysctl_50_hook_t sysvipc_sysctl_50_hook;
 
 /*
  * Hook for 32-bit machine name

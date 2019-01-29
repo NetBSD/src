@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.32 2019/01/28 15:46:49 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.33 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.32 2019/01/28 15:46:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.33 2019/01/29 09:28:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -518,13 +518,13 @@ ttcompatsetlflags(struct tty *tp, struct termios *t)
 int
 kern_tty_43_init(void)
 {
-	MODULE_SET_HOOK(compat_43_ttioctl_hook, "tty_43", compat_43_ttioctl);
+	MODULE_SET_HOOK(tty_ttioctl_43_hook, "tty_43", compat_43_ttioctl);
 	return 0;
 }
 
 int
 kern_tty_43_fini(void)
 {
-	MODULE_UNSET_HOOK(compat_43_ttioctl_hook);
+	MODULE_UNSET_HOOK(tty_ttioctl_43_hook);
 	return 0;
 }

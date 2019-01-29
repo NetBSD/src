@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.2 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.3 2019/01/29 09:28:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.2 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.3 2019/01/29 09:28:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.2 2019/01/27 02:08:48 pgoyette E
 #define	COMPATNAME(x)	compat_50_ ## x
 #define	DOMAINNAME	"oroute"
 #define	COMPATCALL(name, args)		\
-	MODULE_CALL_VOID_HOOK(rtsock_50_ ## name ## _hook, args, __nothing);
+	MODULE_CALL_VOID_HOOK(rtsock_ ## name ## _50_hook, args, __nothing);
 #define	RTS_CTASSERT(x)	__nothing
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
@@ -1108,7 +1108,7 @@ rt_getlen(int type)
 	case RTM_ODELADDR:
 	case RTM_ONEWADDR:
 	case RTM_OCHGADDR:
-		if (rtsock_70_iflist_hook.hooked)
+		if (rtsock_iflist_70_hook.hooked)
 			return sizeof(struct ifa_msghdr70);
 		else {
 #ifdef RTSOCK_DEBUG
@@ -1123,7 +1123,7 @@ rt_getlen(int type)
 		return sizeof(struct ifa_xmsghdr);
 
 	case RTM_OOIFINFO:
-		if (rtsock_14_iflist_hook.hooked)
+		if (rtsock_iflist_14_hook.hooked)
 			return sizeof(struct if_msghdr14);
 		else {
 #ifdef RTSOCK_DEBUG
@@ -1134,7 +1134,7 @@ rt_getlen(int type)
 		}
 
 	case RTM_OIFINFO:
-		if (rtsock_50_iflist_hook.hooked)
+		if (rtsock_iflist_50_hook.hooked)
 			return sizeof(struct if_msghdr50);
 		else {
 #ifdef RTSOCK_DEBUG
@@ -1350,8 +1350,8 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 	if (m == NULL)
 		return;
 	COMPATNAME(route_enqueue)(m, 0);
-	MODULE_CALL_VOID_HOOK(rtsock_14_oifmsg_hook, (ifp), __nothing);
-	MODULE_CALL_VOID_HOOK(rtsock_50_oifmsg_hook, (ifp), __nothing);
+	MODULE_CALL_VOID_HOOK(rtsock_oifmsg_14_hook, (ifp), __nothing);
+	MODULE_CALL_VOID_HOOK(rtsock_oifmsg_50_hook, (ifp), __nothing);
 }
 
 /*
@@ -1419,7 +1419,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			default:
 				panic("%s: unknown command %d", __func__, cmd);
 			}
-			MODULE_CALL_VOID_HOOK(rtsock_70_newaddr_hook,
+			MODULE_CALL_VOID_HOOK(rtsock_newaddr_70_hook,
 			    (ncmd, ifa), __nothing);
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			KASSERT(ifp->if_dl != NULL);

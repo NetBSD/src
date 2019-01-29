@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.359 2019/01/28 21:14:08 bad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.360 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.359 2019/01/28 21:14:08 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.360 2019/01/29 09:28:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1132,7 +1132,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * * If compat code returns EAGAIN, we need to finish via config
 	 * * Otherwise the cmd has been handled and we just return
 	 */
-	MODULE_CALL_HOOK(raidframe50_ioctl_hook,
+	MODULE_CALL_HOOK(raidframe_ioctl_50_hook,
 	    (cmd, (rs->sc_flags & RAIDF_INITED),raidPtr, unit, data, &k_cfg),
 	    enosys(), retcode);
 	if (retcode == ENOSYS)
@@ -1142,7 +1142,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	else if (retcode != EPASSTHROUGH)
 		return retcode;
 
-	MODULE_CALL_HOOK(raidframe80_ioctl_hook,
+	MODULE_CALL_HOOK(raidframe_ioctl_80_hook,
 	    (cmd, (rs->sc_flags & RAIDF_INITED),raidPtr, unit, data, &k_cfg),
 	    enosys(), retcode);
 	if (retcode == ENOSYS)
