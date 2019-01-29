@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.4 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.5 2019/01/29 23:42:06 oster Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -242,7 +242,7 @@ int error;
 	case RAIDFRAME_FAIL_DISK80:
 		return EPASSTHROUGH;
 	default:
-		return EINVAL;
+		return EPASSTHROUGH;
 	}
 
 	switch (cmd) {
