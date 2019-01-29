@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.4 2019/01/28 21:13:58 christos Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.5 2019/01/29 04:10:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -162,9 +162,9 @@ struct if_43_cvtcmd_hook_t if_43_cvtcmd_hook;
 struct if_43_ifioctl_hook_t if_43_ifioctl_hook;
 
 /*
- * if43_20 compatability
+ * if43_cvtcmd_20 compatability
  */
-struct if43_20_hook_t if43_20_hook;
+struct if43_cvtcmd_20_hook_t if43_cvtcmd_20_hook;
 
 /* 
  * tty 43 ioctl compatibility
