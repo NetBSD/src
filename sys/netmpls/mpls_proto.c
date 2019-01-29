@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.30.8.1 2017/10/24 08:55:55 snj Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.30.8.2 2019/01/29 07:04:09 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.30.8.1 2017/10/24 08:55:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.30.8.2 2019/01/29 07:04:09 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -220,6 +220,9 @@ static int
 mpls_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
+
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }
