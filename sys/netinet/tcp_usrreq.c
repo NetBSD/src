@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.200.2.3 2017/09/11 05:46:43 snj Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.200.2.4 2019/01/29 07:57:00 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.200.2.3 2017/09/11 05:46:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.200.2.4 2019/01/29 07:57:00 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1210,14 +1210,18 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	int error = 0;
 	int s;
 
-	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0)
+	if ((error = tcp_getpcb(so, &inp, &in6p, &tp)) != 0) {
+		m_freem(m);
+		m_freem(control);
 		return error;
+	}
 
 	ostate = tcp_debug_capture(tp, PRU_SENDOOB);
 
 	s = splsoftnet();
 	if (sbspace(&so->so_snd) < -512) {
 		m_freem(m);
+		m_freem(control);
 		splx(s);
 		return ENOBUFS;
 	}
@@ -1236,6 +1240,7 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 	tp->t_force = 0;
 	tcp_debug_trace(so, tp, ostate, PRU_SENDOOB);
 	splx(s);
+	m_freem(control);
 
 	return error;
 }
