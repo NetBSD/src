@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.33 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.33.10.1 2019/01/29 08:12:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.33 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.33.10.1 2019/01/29 08:12:17 msaitoh Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -340,10 +340,8 @@ sco_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
 
-	if (m)
-		m_freem(m);
-	if (control)
-		m_freem(control);
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }
