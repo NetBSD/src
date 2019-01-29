@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.70 2016/12/08 05:16:33 ozaki-r Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.70.8.1 2019/01/29 07:04:09 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.70 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.70.8.1 2019/01/29 07:04:09 msaitoh Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -518,8 +518,8 @@ ddp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
 
-	if (m)
-		m_freem(m);
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }

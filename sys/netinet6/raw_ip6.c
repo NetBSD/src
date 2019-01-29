@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.157.2.4 2018/04/09 13:34:10 bouyer Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.157.2.5 2019/01/29 07:04:09 msaitoh Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.157.2.4 2018/04/09 13:34:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.157.2.5 2019/01/29 07:04:09 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -924,8 +924,8 @@ rip6_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
 
-	if (m)
-	 	m_freem(m);
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }

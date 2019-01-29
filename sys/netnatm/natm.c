@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.53 2016/10/03 11:06:06 ozaki-r Exp $	*/
+/*	$NetBSD: natm.c,v 1.53.8.1 2019/01/29 07:04:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.53 2016/10/03 11:06:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.53.8.1 2019/01/29 07:04:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -414,6 +414,9 @@ static int
 natm_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
+
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }
