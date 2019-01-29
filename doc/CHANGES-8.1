@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.96 2019/01/28 13:03:57 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.97 2019/01/29 07:05:00 msaitoh Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2329,3 +2329,21 @@ sys/dev/pci/ixgbe/ixgbe.h			1.52
 	- Initialize EEE correctly.
 	[msaitoh, ticket #1171]
 
+sys/net/link_proto.c				1.37
+sys/netatalk/ddp_usrreq.c			1.72
+sys/netbt/hci_socket.c				1.46
+sys/netbt/l2cap_socket.c			1.36
+sys/netbt/rfcomm_socket.c			1.38
+sys/netbt/sco_socket.c				1.38
+sys/netinet/sctp_usrreq.c			1.14
+sys/netinet/tcp_usrreq.c			1.223
+sys/netinet6/raw_ip6.c				1.173
+sys/netinet6/sctp6_usrreq.c			1.17
+sys/netinet6/udp6_usrreq.c			1.146
+sys/netmpls/mpls_proto.c			1.32
+sys/netnatm/natm.c				patch
+
+	Fix memory leaks pointed out by Ilja Van Sprundel: all
+	sendoob() functions are expted to free both passed
+	mbuf chains.
+	[martin, ticket #1175]
