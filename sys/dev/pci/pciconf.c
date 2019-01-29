@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.37 2014/09/05 05:29:16 matt Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.38 2019/01/29 05:09:35 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.37 2014/09/05 05:29:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.38 2019/01/29 05:09:35 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -855,6 +855,7 @@ configure_bridge(pciconf_dev_t *pd)
 	pciconf_bus_t	*pb;
 	pcireg_t	io, iohigh, mem, cmd;
 	int		rv;
+	bool		isprefetchmem64;
 
 	pb = pd->ppb;
 	/* Configure I/O base & limit*/
@@ -919,8 +920,9 @@ configure_bridge(pciconf_dev_t *pd)
 		mem_limit = 0x000000;
 	}
 	mem = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHMEM_REG);
+	isprefetchmem64 = PCI_BRIDGE_PREFETCHMEM_64BITS(mem);
 #if ULONG_MAX > 0xffffffff
-	if (!PCI_BRIDGE_PREFETCHMEM_64BITS(mem) && mem_limit > 0xFFFFFFFFULL) {
+	if (!isprefetchmem64 && mem_limit > 0xFFFFFFFFULL) {
 		printf("Bus %d bridge does not support 64-bit PMEM.  ",
 		    pb->busno);
 		printf("Disabling prefetchable-MEM accesses\n");
@@ -936,7 +938,7 @@ configure_bridge(pciconf_dev_t *pd)
 	/*
 	 * XXX -- 64-bit systems need a lot more than just this...
 	 */
-	if (PCI_BRIDGE_PREFETCHMEM_64BITS(mem)) {
+	if (isprefetchmem64) {
 		mem_base  = (uint64_t) mem_base  >> 32;
 		mem_limit = (uint64_t) mem_limit >> 32;
 		pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHBASE32_REG,
