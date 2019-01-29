@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.36 2019/01/29 08:10:34 msaitoh Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.37 2019/01/29 08:31:23 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -415,6 +415,6 @@ sys/netmpls/mpls_proto.c			1.32
 sys/netnatm/natm.c				patch
 
 	Fix memory leaks pointed out by Ilja Van Sprundel: all
-	sendoob() functions are expted to free both passed
+	sendoob() functions are expected to free both passed
 	mbuf chains.
 	[martin, ticket #1676]
