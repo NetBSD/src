@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.130 2019/01/24 14:12:40 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.131 2019/01/29 08:09:45 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5691,3 +5691,19 @@ sys/kern/kern_ntptime.c				1.60
 	disclosure.
 	[maxv, ticket #1675]
 
+sys/net/link_proto.c				1.37
+sys/netatalk/ddp_usrreq.c			1.72
+sys/netbt/hci_socket.c				1.46
+sys/netbt/l2cap_socket.c			1.36
+sys/netbt/rfcomm_socket.c			1.38
+sys/netbt/sco_socket.c				1.38
+sys/netinet/tcp_usrreq.c			1.223 via patch
+sys/netinet6/raw_ip6.c				1.173
+sys/netinet6/udp6_usrreq.c			1.146
+sys/netmpls/mpls_proto.c			1.32
+sys/netnatm/natm.c				patch
+
+	Fix memory leaks pointed out by Ilja Van Sprundel: all
+	sendoob() functions are expted to free both passed
+	mbuf chains.
+	[martin, ticket #1676]
