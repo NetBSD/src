@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.6 2019/01/28 15:46:49 christos Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.7 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.6 2019/01/28 15:46:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.7 2019/01/29 09:28:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -123,13 +123,13 @@ void
 kern_tty_60_init(void)
 {
 
-	MODULE_SET_HOOK(compat_60_ttioctl_hook, "tty_60", compat_60_ttioctl);
-	MODULE_SET_HOOK(compat_60_ptmioctl_hook, "tty_60", compat_60_ptmioctl);
+	MODULE_SET_HOOK(tty_ttioctl_60_hook, "tty_60", compat_60_ttioctl);
+	MODULE_SET_HOOK(tty_ptmioctl_60_hook, "tty_60", compat_60_ptmioctl);
 }
 
 void
 kern_tty_60_fini(void)
 {
-	MODULE_UNSET_HOOK(compat_60_ttioctl_hook);
-	MODULE_UNSET_HOOK(compat_60_ptmioctl_hook);
+	MODULE_UNSET_HOOK(tty_ttioctl_60_hook);
+	MODULE_UNSET_HOOK(tty_ptmioctl_60_hook);
 }

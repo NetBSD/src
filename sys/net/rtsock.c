@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.245 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.246 2019/01/29 09:28:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.245 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.246 2019/01/29 09:28:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -324,7 +324,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			switch (type) {
 			case NET_RT_OIFLIST: /* old _70 */
-				if (!rtsock_70_iflist_hook.hooked) {
+				if (!rtsock_iflist_70_hook.hooked) {
 					error = EINVAL;
 					break;
 				}
@@ -333,11 +333,11 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 				error = sysctl_iflist_if(ifp, w, &info, len);
 				break;
 			case NET_RT_OOIFLIST: /* old _50 */
-				MODULE_CALL_HOOK(rtsock_50_iflist_hook,
+				MODULE_CALL_HOOK(rtsock_iflist_50_hook,
 				    (ifp, w, &info, len), enosys(), error);
 				break;
 			case NET_RT_OOOIFLIST: /* old _14 */
-				MODULE_CALL_HOOK(rtsock_14_iflist_hook,
+				MODULE_CALL_HOOK(rtsock_iflist_14_hook,
 				   (ifp, w, &info, len), enosys(), error);
 				break;
 			default:
@@ -367,7 +367,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			case NET_RT_OIFLIST:
 			case NET_RT_OOIFLIST:
 			case NET_RT_OOOIFLIST:
-				MODULE_CALL_HOOK(rtsock_70_iflist_hook,
+				MODULE_CALL_HOOK(rtsock_iflist_70_hook,
 				    (w, ifa, &info), enosys(), error);
 				break;
 			default:
