@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.5 2019/01/29 23:42:06 oster Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.6 2019/01/29 23:57:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -226,7 +226,7 @@ int
 raidframe_ioctl_80(int cmd, int initted, RF_Raid_t *raidPtr, int unit,
     void *data, RF_Config_t **k_cfg)  
 {
-int error;
+	int error;
  
 	switch (cmd) {
 	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
