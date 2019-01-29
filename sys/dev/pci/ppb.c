@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.66 2019/01/28 04:09:51 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.67 2019/01/29 09:25:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.66 2019/01/28 04:09:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.67 2019/01/29 09:25:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"
@@ -222,6 +222,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 #endif
 	pcireg_t busdata, reg;
+	bool second_configured = false;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -358,10 +359,72 @@ ppbattach(device_t parent, device_t self, void *aux)
 	}
 #endif /* PPB_USEINTR */
 
-	/* Enable bus master. */
-	reg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    reg | PCI_COMMAND_MASTER_ENABLE);
+	/* Configuration test */
+	if (PPB_BUSINFO_SECONDARY(busdata) != 0) {
+		uint32_t base, limit;
+
+		/* I/O region test */
+		reg = pci_conf_read(pc, pa->pa_tag, PCI_BRIDGE_STATIO_REG);
+		base = (reg & PCI_BRIDGE_STATIO_IOBASE_MASK) << 8;
+		limit = ((reg >> PCI_BRIDGE_STATIO_IOLIMIT_SHIFT)
+		    & PCI_BRIDGE_STATIO_IOLIMIT_MASK) << 8;
+		limit |= 0x00000fff;
+		if (PCI_BRIDGE_IO_32BITS(reg)) {
+			reg = pci_conf_read(pc, pa->pa_tag,
+			    PCI_BRIDGE_IOHIGH_REG);
+			base |= ((reg >> PCI_BRIDGE_IOHIGH_BASE_SHIFT)
+			    & 0xffff) << 16;
+			limit |= ((reg >> PCI_BRIDGE_IOHIGH_LIMIT_SHIFT)
+			    & 0xffff) << 16;
+		}
+		if (base < limit) {
+			second_configured = true;
+			goto configure;
+		}
+
+		/* Non-prefetchable memory region test */
+		reg = pci_conf_read(pc, pa->pa_tag, PCI_BRIDGE_MEMORY_REG);
+		base = ((reg >> PCI_BRIDGE_MEMORY_BASE_SHIFT)
+		    & PCI_BRIDGE_MEMORY_BASE_MASK) << 20;
+		limit = (((reg >> PCI_BRIDGE_MEMORY_LIMIT_SHIFT)
+		    & PCI_BRIDGE_MEMORY_LIMIT_MASK) << 20) | 0x000fffff;
+		if (base < limit) {
+			second_configured = true;
+			goto configure;
+		}
+
+		/* Prefetchable memory region test */
+		reg = pci_conf_read(pc, pa->pa_tag,
+		    PCI_BRIDGE_PREFETCHMEM_REG);
+		base = ((reg >> PCI_BRIDGE_PREFETCHMEM_BASE_SHIFT)
+		    & PCI_BRIDGE_PREFETCHMEM_BASE_MASK) << 20;
+		limit = (((reg >> PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT)
+			& PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK) << 20) | 0x000fffff;
+		if (PCI_BRIDGE_PREFETCHMEM_64BITS(reg)) {
+			reg = pci_conf_read(pc, pa->pa_tag,
+			    PCI_BRIDGE_IOHIGH_REG);
+			base |= (uint64_t)pci_conf_read(pc, pa->pa_tag,
+			    PCI_BRIDGE_PREFETCHBASE32_REG) << 32;
+			limit |= (uint64_t)pci_conf_read(pc, pa->pa_tag,
+			    PCI_BRIDGE_PREFETCHLIMIT32_REG) << 32;
+		}
+		if (base < limit) {
+			second_configured = true;
+			goto configure;
+		}
+	}
+
+configure:
+	/*
+	 * If the secondary bus is configured and the bus mastering is not
+	 * enabled, enable it.
+	 */
+	if (second_configured) {
+		reg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+		if ((reg & PCI_COMMAND_MASTER_ENABLE) == 0)
+			pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+			    reg | PCI_COMMAND_MASTER_ENABLE);
+	}
 
 	if (!pmf_device_register(self, ppb_suspend, ppb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
