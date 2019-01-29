@@ -32,14 +32,14 @@ Tasks remaining, first couple seem most important:
 - implement ld.elf_so, MK_DYNAMICROOT
 - fix memory detection, on real hardware doesn't find all memory
 - implement interrupts (sacpi & pci), can be mostly from freebsd?
-- MKLINT and MKGDB for ia64?
+- MKGDB for ia64
 - implement fp[gs]etsticky, [make|get|set|swap]context
 - floating point, fenv functions were imported from freebsd, but haven't been tested
 - implement core_machdep.c
 - implement __cloneS ptrace.S sbrk.S shmat.S
 - implement kvm_ia64.c
 - implement pmc (performance monitoring counters) for ia64 pmc registers
-- cpuctl
+- implement ia64 md code for cpuctl, intrctl as needed
 - optional(?) mutex.h/lock_stubs.S, mutex_enter()/mutex_exit() __HAVE_MUTEX_STUBS
        mutex_spin_enter()/mutex_spin_exit() __HAVE_SPIN_MUTEX_STUBS
 - rwlock.h rw_enter(),rw_exit(),rw_tryenter() __HAVE_RW_STUBS, implemented already?
@@ -63,6 +63,7 @@ Tasks remaining, first couple seem most important:
 - add ia32 emulation, port from freebsd
 - add rump stuff/MKRUMP
 - create install EFI/cdrom/netbsd
+- fix ski to run on other archs beside i386, or at least amd64
 
 Pie in the sky
 - Xen and itanium!
