@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.40 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.40.6.1 2019/01/29 08:09:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.40 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.40.6.1 2019/01/29 08:09:00 msaitoh Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -712,10 +712,8 @@ hci_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 {
 	KASSERT(solocked(so));
 
-	if (m)
-		m_freem(m);
-	if (control)
-		m_freem(control);
+	m_freem(m);
+	m_freem(control);
 
 	return EOPNOTSUPP;
 }
