@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.34 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.35 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.34 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.35 2019/01/29 09:28:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1044,7 +1044,7 @@ compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
                 ret = syscall_establish(&emul_netbsd32,
 		    compat_netbsd32_50_syscalls);
 		if (ret == 0)
-			MODULE_SET_HOOK(rnd_ioctl_50_32_hook, "rnd32_50",
+			MODULE_SET_HOOK(rnd_ioctl32_50_hook, "rnd32_50",
 			    compat32_50_rnd_ioctl);
 		return ret;
 
@@ -1052,7 +1052,7 @@ compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
                 ret = syscall_disestablish(&emul_netbsd32,
 		    compat_netbsd32_50_syscalls);
 		if (ret == 0)
-			MODULE_UNSET_HOOK(rnd_ioctl_50_32_hook);
+			MODULE_UNSET_HOOK(rnd_ioctl32_50_hook);
 		return ret;
 
 	default:

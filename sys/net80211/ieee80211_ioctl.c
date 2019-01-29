@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.62 2019/01/28 21:13:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.63 2019/01/29 09:28:51 pgoyette Exp $");
 #endif
 
 /*
@@ -2853,7 +2853,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 	case OSIOCG80211STATS:
 	case OSIOCG80211ZSTATS:
 		(void)module_autoload("compat_20", MODULE_CLASS_EXEC);
-		MODULE_CALL_HOOK(ieee80211_20_ioctl_hook, (ic, cmd, data),
+		MODULE_CALL_HOOK(ieee80211_ioctl_20_hook, (ic, cmd, data),
 		    enosys(), error);
 		break;
 	case SIOCG80211ZSTATS:

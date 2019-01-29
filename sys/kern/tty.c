@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.279 2019/01/28 15:46:49 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.280 2019/01/29 09:28:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.279 2019/01/28 15:46:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.280 2019/01/29 09:28:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1412,14 +1412,14 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* We may have to load the compat_60 module for this. */
 		(void)module_autoload("compat_60", MODULE_CLASS_EXEC);
-		MODULE_CALL_HOOK(compat_60_ttioctl_hook,
+		MODULE_CALL_HOOK(tty_ttioctl_60_hook,
 		    (tp, cmd, data, flag, l), enosys(), error);
 		if (error != EPASSTHROUGH)
 			return error;
 
 		/* We may have to load the compat_43 module for this. */
 		(void)module_autoload("compat_43", MODULE_CLASS_EXEC);
-		MODULE_CALL_HOOK(compat_43_ttioctl_hook,
+		MODULE_CALL_HOOK(tty_ttioctl_43_hook,
 		    (tp, cmd, data, flag, l), enosys(), error);
 		return error;
 	}
