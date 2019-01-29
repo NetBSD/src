@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.97 2019/01/29 07:05:00 msaitoh Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.98 2019/01/29 08:29:52 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2344,6 +2344,6 @@ sys/netmpls/mpls_proto.c			1.32
 sys/netnatm/natm.c				patch
 
 	Fix memory leaks pointed out by Ilja Van Sprundel: all
-	sendoob() functions are expted to free both passed
+	sendoob() functions are expected to free both passed
 	mbuf chains.
 	[martin, ticket #1175]
