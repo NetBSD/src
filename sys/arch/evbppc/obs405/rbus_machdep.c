@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.9 2012/04/09 14:44:01 kiyohara Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.10 2019/01/29 22:59:03 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -45,7 +45,7 @@
 #include "opt_pci.h"
 
 #ifndef PCI_NETBSD_CONFIGURE
-#error requird macro PCI_NETBSD_CONFIGURE
+#error requires macro PCI_NETBSD_CONFIGURE
 #endif
 
 #ifdef RBUS_DEBUG
