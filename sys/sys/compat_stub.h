@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.6 2019/01/29 04:10:10 pgoyette Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.7 2019/01/29 04:54:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,12 @@
 
 #include <sys/module_hook.h>
 #include <sys/param.h>
+
+/*
+ * NOTE: If you make changes here, please remember to update the
+ * kernel version number in sys/param.h to ensure that kernel
+ * and modules stay in sync.
+ */
 
 /*
  * Routine hooks for compat_50___sys_ntp_gettime
