@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.39 2015/03/18 13:23:49 manu Exp $	*/
+/*	$NetBSD: args.c,v 1.40 2019/01/30 01:40:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.39 2015/03/18 13:23:49 manu Exp $");
+__RCSID("$NetBSD: args.c,v 1.40 2019/01/30 01:40:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -447,7 +447,7 @@ static const struct ioflag {
 	{ "direct",	O_DIRECT,	C_IFLAG|C_OFLAG	},
 	{ "directory",	O_DIRECTORY,	C_NONE		},
 	{ "dsync",	O_DSYNC,	C_OFLAG		},
-	{ "excl",	O_EXCL,		C_IFLAG|C_OFLAG	},
+	{ "excl",	O_EXCL,		C_OFLAG		},
 	{ "exlock",	O_EXLOCK,	C_IFLAG|C_OFLAG	},
 	{ "noctty",	O_NOCTTY,	C_IFLAG|C_OFLAG	},
 	{ "nofollow",	O_NOFOLLOW,	C_IFLAG|C_OFLAG	},
@@ -456,11 +456,10 @@ static const struct ioflag {
 	{ "rdonly",	O_RDONLY,	C_IFLAG		},
 	{ "rdwr",	O_RDWR,		C_IFLAG		},
 	{ "rsync",	O_RSYNC,	C_IFLAG		},
-	{ "search",	O_SEARCH,	C_IFLAG|C_OFLAG	},
 	{ "shlock",	O_SHLOCK,	C_IFLAG|C_OFLAG	},
 	{ "sync",	O_SYNC,		C_IFLAG|C_OFLAG	},
-	{ "trunc",	O_TRUNC,	C_IFLAG|C_OFLAG	},
-	{ "wronly",	O_WRONLY,	C_NONE		},
+	{ "trunc",	O_TRUNC,	C_OFLAG		},
+	{ "wronly",	O_WRONLY,	C_OFLAG		},
 };
 
 static u_int
