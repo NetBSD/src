@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons_util.c,v 1.2 2011/05/25 06:01:39 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons_util.c,v 1.3 2019/01/30 11:24:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Michael Lorenz
@@ -26,6 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_wsdisplay_compat.h"
+#endif
+
 /* some utility functions for use with vcons */
 #include <sys/param.h>
 #include <sys/stdint.h>
@@ -48,6 +52,10 @@ vcons_replay_msgbuf(struct vcons_screen *scr)
 	int status = scr->scr_status;
 	int rptr = msgbufp->msg_bufr;
 
+#ifdef WSDISPLAY_MULTICONS
+	wsdisplay_multicons_suspend(true);
+#endif
+
 	scr->scr_status &= ~VCONS_IS_VISIBLE;
 	while (rptr != msgbufp->msg_bufx) {
 		cnputc(msgbufp->msg_bufc[rptr]);
@@ -57,4 +65,8 @@ vcons_replay_msgbuf(struct vcons_screen *scr)
 	}
 	scr->scr_status = status;
 	vcons_update_screen(scr);
+
+#ifdef WSDISPLAY_MULTICONS
+	wsdisplay_multicons_suspend(false);
+#endif
 }
