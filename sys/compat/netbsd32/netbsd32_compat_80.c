@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_80.c,v 1.3 2019/01/28 01:09:52 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_80.c,v 1.4 2019/01/30 02:00:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.3 2019/01/28 01:09:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.4 2019/01/30 02:00:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.3 2019/01/28 01:09:52 pgoye
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-
-#ifdef COMPAT_80
 
 int netbsd32_80_modctl(struct lwp *, const struct netbsd32_modctl_args *,
 	register_t *);
@@ -197,4 +195,3 @@ compat_netbsd32_80_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
-#endif	/* COMPAT_80 */
