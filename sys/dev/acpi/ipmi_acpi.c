@@ -1,4 +1,4 @@
-/* $NetBSD: ipmi_acpi.c,v 1.2 2018/12/26 06:45:58 mlelstv Exp $ */
+/* $NetBSD: ipmi_acpi.c,v 1.3 2019/01/30 20:20:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi_acpi.c,v 1.2 2018/12/26 06:45:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi_acpi.c,v 1.3 2019/01/30 20:20:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,8 +121,6 @@ ipmi_acpi_attach(device_t parent, device_t self, void *opaque)
 			aprint_error_dev(self, "no resources\n");
 			return;
 		}
-
-		acpi_resource_print(self, &res);
 
 		io = acpi_res_io(&res, 0);
 		mem = acpi_res_mem(&res, 0);
