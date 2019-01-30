@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.21 2011/07/03 02:18:21 matt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.21.40.1 2019/01/30 13:29:52 martin Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21.40.1 2019/01/30 13:29:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -164,6 +164,7 @@ setupstack_siginfo3(const struct ksiginfo *ksi, const sigset_t *mask, int vers,
 	/*
 	 * Arguments given to the signal handler.
 	 */
+	memset(&tramp, 0, sizeof(tramp));
 	tramp.narg = 3;
 	tramp.sig = ksi->ksi_signo;
 	sp -= sizeof(uc);		tramp.ucp = sp;
@@ -171,10 +172,10 @@ setupstack_siginfo3(const struct ksiginfo *ksi, const sigset_t *mask, int vers,
 	sp -= sizeof(tramp);
 
 	/* Save register context.  */
+	memset(&uc, 0, sizeof(uc));
 	uc.uc_flags = _UC_SIGMASK;
 	uc.uc_sigmask = *mask;
 	uc.uc_link = l->l_ctxlink;
-	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 	sendsig_reset(l, ksi->ksi_signo);
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);

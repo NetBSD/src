@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.92 2014/02/15 22:20:41 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.92.12.1 2019/01/30 13:29:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92 2014/02/15 22:20:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.12.1 2019/01/30 13:29:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -189,6 +189,8 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		fp = (struct netbsd32_sigframe_sigcontext *)tf->tf_rsp;
 	fp--;
 
+	memset(&frame, 0, sizeof(frame));
+
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 	case 0:
@@ -316,6 +318,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		break;
 	}
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint32_t)(uintptr_t)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_signum = sig;
 	frame.sf_sip = (uint32_t)(uintptr_t)&fp->sf_si;
@@ -326,7 +329,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
 	mutex_exit(p->p_lock);
