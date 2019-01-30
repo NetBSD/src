@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.35 2019/01/30 01:40:02 mrg Exp $
+.\"	$NetBSD: dd.1,v 1.36 2019/01/30 10:28:50 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -484,13 +484,13 @@ Use Alternative I/O.
 .It Cm async
 Use
 .Dv SIGIO
-signalling for I/O.
+signaling for I/O.
 .It Cm cloexec
 Set the close-on-exec flag.
 .It Cm direct
 Directly access the data, skipping any caches.
 .It Cm directory
-Not avaiable for
+Not available for
 .Nm .
 .It Cm exlock
 Atomically obtain an exclusive lock.
@@ -508,7 +508,7 @@ instead of raising
 .It Cm shlock
 Atomically obtain a shared lock.
 .It Cm sync
-All I/O will be performed with full synchronisation.
+All I/O will be performed with full synchronization.
 .El
 .Pp
 The flags that apply to only input are:
@@ -518,7 +518,7 @@ Set the read-only flag.
 .It Cm rdwr
 Set the read and write flags.
 .It Cm rsync
-Enable read synchronisation, if the
+Enable read synchronization, if the
 .Cm sync
 option is also set.
 .El
@@ -530,14 +530,13 @@ Append to the output by default.
 .It Cm creat
 Create the output file.
 .It Cm dsync
-Wait for all data to be syncronously written.
+Wait for all data to be synchronously written.
 .It Cm excl
 Ensure that output is to a new file.
 .It Cm trunc
 Truncate the output file before writing.
 .It Cm wronly
 Set the write-only flag.
-.Pp
 .El
 See
 .Xr open 2
