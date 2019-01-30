@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.767 2018/12/29 06:29:29 maya Exp $
+$NetBSD: usbdevs,v 1.768 2019/01/30 19:15:12 jakllsch Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -288,6 +288,7 @@ vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
 vendor CYBERPOWER	0x0764  CyberPower Systems, Inc.
+vendor XRITE		0x0765	X-Rite
 vendor SURECOM		0x0769	Surecom Technology
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
@@ -374,6 +375,7 @@ vendor AGILENT		0x0957	Agilent Technologies
 vendor GUDE		0x0959	Gude ADS
 vendor PORTSMITH	0x095a	Portsmith
 vendor ACERW		0x0967	Acer
+vendor GRETAGMACBETH	0x0971	GretagMacbeth
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
 vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
@@ -1701,6 +1703,9 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
 /* GREENHOUSE products */
 product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
+
+/* GretagMacbeth products */
+product GRETAGMACBETH HUEY	0x2005	Huey
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
@@ -3497,6 +3502,10 @@ product WISTRONNEWEB AR5523_2_NF 0x0829	AR5523
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	IMAGING DEVICE
 product XIRLINK PCCAM		0x8080	IBM PC Camera
+
+/* X-Rite products */
+product XRITE HUEY_1		0x5001	Huey
+product XRITE HUEY_2		0x5010	Huey
 
 /* Conexant */
 product CONEXANT MODEM_1	0x1329	USB Modem
