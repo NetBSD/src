@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.12 2019/01/27 16:29:56 christos Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.13 2019/01/30 12:16:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.12 2019/01/27 16:29:56 christos Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.13 2019/01/30 12:16:28 martin Exp $");
 
 #define	__TEST_FENV
 
@@ -113,12 +113,12 @@ check_fpe(void)
 {
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
-	 * Some NEON fpus do not implement IEEE exception handling,
-	 * skip these tests if running on them and compiled for
+	 * Some NEON fpus do not trap on IEEE 754 FP excpeptions.
+	 * Skip these tests if running on them and compiled for
 	 * hard float.
 	 */
 	if (0 == fpsetmask(fpsetmask(FP_X_INV))) {
-		printf("FPU does not implement exception handling\n");
+		printf("FPU does not implement traps on FP exceptions\n");
 		exit(EXIT_FAILURE);
 	}
 #endif
