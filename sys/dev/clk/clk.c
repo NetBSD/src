@@ -1,4 +1,4 @@
-/* $NetBSD: clk.c,v 1.5 2018/06/12 23:08:37 jmcneill Exp $ */
+/* $NetBSD: clk.c,v 1.6 2019/01/30 01:20:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.5 2018/06/12 23:08:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.6 2019/01/30 01:20:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -196,7 +196,8 @@ clk_get(struct clk_domain *domain, const char *name)
 void
 clk_put(struct clk *clk)
 {
-	return clk->domain->funcs->put(clk->domain->priv, clk);
+	if (clk->domain->funcs->put)
+		clk->domain->funcs->put(clk->domain->priv, clk);
 }
 
 u_int
