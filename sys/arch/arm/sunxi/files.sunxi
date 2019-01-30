@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.60 2019/01/22 20:17:36 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.61 2019/01/30 01:24:00 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -306,6 +306,36 @@ file	arch/arm/sunxi/sunxi_de2.c		sunxi_de2bus
 device	sunxide2ccu: sunxi_ccu
 attach	sunxide2ccu at fdt with sunxi_de2ccu
 file	arch/arm/sunxi/sunxi_de2_ccu.c		sunxi_de2ccu
+
+# DE2 mixer
+device	sunximixer: drmkms
+attach	sunximixer at fdt with sunxi_mixer
+file	arch/arm/sunxi/sunxi_mixer.c		sunxi_mixer
+
+# DE2 timing controller
+device	sunxilcdc: drmkms
+attach	sunxilcdc at fdt with sunxi_lcdc
+file	arch/arm/sunxi/sunxi_lcdc.c		sunxi_lcdc
+
+# Display Pipeline
+define	sunxifbbus { }
+device	sunxidrm: drmkms, ddc_read_edid, sunxifbbus
+attach	sunxidrm at fdt with sunxi_drm
+file	arch/arm/sunxi/sunxi_drm.c		sunxi_drm
+
+# DRM framebuffer console
+device	sunxifb: sunxifbbus, drmfb, wsemuldisplaydev
+attach	sunxifb at sunxifbbus with sunxi_fb
+file	arch/arm/sunxi/sunxi_fb.c		sunxi_fb
+
+# Allwinner HDMI (Designware based)
+attach	dwhdmi at fdt with sunxi_dwhdmi
+file	arch/arm/sunxi/sunxi_dwhdmi.c		sunxi_dwhdmi
+
+# Allwinner HDMI TX PHY
+device	sunxihdmiphy: drmkms
+attach	sunxihdmiphy at fdt with sunxi_hdmiphy
+file	arch/arm/sunxi/sunxi_hdmiphy.c		sunxi_hdmiphy | sunxi_dwhdmi
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
