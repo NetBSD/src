@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.124 2018/08/15 06:13:56 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.125 2019/01/30 02:02:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -1024,6 +1024,13 @@ gtmr_cntv_cval_read(void)
 {
 
 	return armreg_cntv_cval_read();
+}
+
+static inline void
+gtmr_cntv_cval_write(uint64_t val)
+{
+
+	armreg_cntv_cval_write(val);
 }
 
 #endif /* _KERNEL */
