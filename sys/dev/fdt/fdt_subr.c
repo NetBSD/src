@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.26 2019/01/27 09:19:36 rin Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.27 2019/01/30 00:56:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.26 2019/01/27 09:19:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.27 2019/01/30 00:56:47 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -289,10 +289,12 @@ fdtbus_get_reg64(int phandle, u_int index, uint64_t *paddr, uint64_t *psize)
 
 	if (paddr) {
 		*paddr = fdtbus_decode_range(OF_parent(phandle), addr);
+#ifdef FDTBUS_DEBUG
 		const char *name = fdt_get_name(fdtbus_get_data(),
 		    fdtbus_phandle2offset(phandle), NULL);
-		aprint_debug("fdt: [%s] decoded addr #%u: %" PRIx64
+		printf("fdt: [%s] decoded addr #%u: %" PRIx64
 		    " -> %" PRIx64 "\n", name, index, addr, *paddr);
+#endif
 	}
 	if (psize)
 		*psize = size;
