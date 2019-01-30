@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.102.4.1 2015/12/26 22:14:41 snj Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.102.4.2 2019/01/30 13:27:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.102.4.1 2015/12/26 22:14:41 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.102.4.2 2019/01/30 13:27:28 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -363,13 +363,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp = getframe(l, sig, &onstack);
 	--fp;
 
+	memset(&frame, 0, sizeof(frame));
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK;
-	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
