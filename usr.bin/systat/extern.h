@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.46 2016/10/22 22:02:55 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.46.6.1 2019/01/30 13:46:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,10 +33,12 @@
 
 #include <sys/cdefs.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <kvm.h>
 
 #define ADJINETCTR(c, o, n, e)	(c.e = n.e - o.e)
 #define xADJINETCTR(c, o, n, e)	(c[e] = n[e] - o[e])
+#define MAXFAIL	5
 
 extern struct	command global_commands[];
 extern struct	mode *curmode;
@@ -60,6 +62,8 @@ extern char	*memf;
 extern int	allflag;
 extern int	turns;
 extern gid_t	egid;
+extern float	hertz;
+extern double	etime;
 
 struct inpcb;
 #ifdef INET6
@@ -210,6 +214,7 @@ void	 tcp_boot(char *);
 void	 tcp_run(char *);
 void	 tcp_time(char *);
 void	 tcp_zero(char *);
+bool	 toofast(int *);
 void	 vmstat_boot(char *);
 void	 vmstat_run(char *);
 void	 vmstat_time(char *);

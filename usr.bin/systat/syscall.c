@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2014/02/19 20:42:14 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9.18.1 2019/01/30 13:46:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syscall.c,v 1.9 2014/02/19 20:42:14 dsl Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.9.18.1 2019/01/30 13:46:25 martin Exp $");
 
 /* System call stats */
 
@@ -75,7 +75,6 @@ static int show = SHOW_COUNTS;
 static void getinfo(struct Info *, int);
 
 static	char buf[32];
-static	float hertz;
 
 static size_t counts_mib_len, times_mib_len;
 static int counts_mib[4], times_mib[4];
@@ -146,8 +145,6 @@ labelsyscall(void)
 	labelvmstat_top();
 }
 
-#define MAXFAIL 5
-
 static void
 putuint64(uint64_t v, int row, int col, int width)
 {
@@ -186,7 +183,6 @@ showsyscall(void)
 	uint64_t v;
 	static int failcnt = 0;
 	static int relabel = 0;
-	static char pigs[] = "pigs";
 	uint64_t itime;
 
 	if (relabel) {
@@ -196,21 +192,8 @@ showsyscall(void)
 
 	cpuswap();
 	if (display_mode == TIME) {
-		etime = cur.cp_etime;
-		/* < 5 ticks - ignore this trash */
-		if ((etime * hertz) < 1.0) {
-			if (failcnt++ <= MAXFAIL)
-				return;
-			clear();
-			mvprintw(2, 10, "The alternate system clock has died!");
-			mvprintw(3, 10, "Reverting to ``pigs'' display.");
-			move(CMDLINE, 0);
-			refresh();
-			failcnt = 0;
-			sleep(5);
-			command(pigs);
+		if (toofast(&failcnt))
 			return;
-		}
 	} else
 		etime = 1.0;
 	itime = etime * 100;
