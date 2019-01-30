@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_phy.c,v 1.2 2018/06/30 20:34:43 jmcneill Exp $ */
+/* $NetBSD: fdt_phy.c,v 1.3 2019/01/30 01:24:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.2 2018/06/30 20:34:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.3 2019/01/30 01:24:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -170,6 +170,12 @@ fdtbus_phy_put(struct fdtbus_phy *phy)
 
 	pc->pc_funcs->release(pc->pc_dev, phy->phy_priv);
 	kmem_free(phy, sizeof(*phy));
+}
+
+device_t
+fdtbus_phy_device(struct fdtbus_phy *phy)
+{
+	return phy->phy_pc->pc_dev;
 }
 
 int
