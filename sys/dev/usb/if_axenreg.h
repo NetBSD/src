@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.3 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.4 2019/01/30 11:13:25 rin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 #define   AXEN_RXHDR_L4_TYPE_TCP	0x4
 
 /* L3 packet type (2bit) */
-#define AXEN_RXHDR_L3_TYPE_MASK	0x00000600
+#define AXEN_RXHDR_L3_TYPE_MASK	0x00000060
 #define AXEN_RXHDR_L3_TYPE_OFFSET	5
 #define   AXEN_RXHDR_L3_TYPE_UNDEF	0x0
 #define   AXEN_RXHDR_L3_TYPE_IPV4	0x1

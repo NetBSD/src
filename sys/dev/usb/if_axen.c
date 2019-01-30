@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.18 2019/01/22 03:42:28 msaitoh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.19 2019/01/30 11:13:25 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.18 2019/01/22 03:42:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.19 2019/01/30 11:13:25 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -70,8 +70,6 @@ int	axendebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-#define AXEN_TOE	/* enable checksum offload function */
-
 /*
  * Various supported device vendors/products.
  */
@@ -98,6 +96,7 @@ static int	axen_rx_list_init(struct axen_softc *);
 static struct mbuf *axen_newbuf(void);
 static int	axen_encap(struct axen_softc *, struct mbuf *, int);
 static void	axen_rxeof(struct usbd_xfer *, void *, usbd_status);
+static int	axen_csum_flags_rx(struct ifnet *, uint32_t);
 static void	axen_txeof(struct usbd_xfer *, void *, usbd_status);
 static void	axen_tick(void *);
 static void	axen_tick_task(void *);
@@ -122,6 +121,7 @@ static void	axen_lock_mii(struct axen_softc *);
 static void	axen_unlock_mii(struct axen_softc *);
 
 static void	axen_ax88179_init(struct axen_softc *);
+static void	axen_setcoe(struct axen_softc *);
 
 /* Get exclusive access to the MII registers */
 static void
@@ -569,21 +569,7 @@ axen_ax88179_init(struct axen_softc *sc)
 
 	/* Set RX/TX configuration. */
 	/* Offloadng enable */
-#ifdef AXEN_TOE
-	val = AXEN_RXCOE_IPv4 | AXEN_RXCOE_TCPv4 | AXEN_RXCOE_UDPv4 |
-	      AXEN_RXCOE_TCPv6 | AXEN_RXCOE_UDPv6;
-#else
-	val = AXEN_RXCOE_OFF;
-#endif
-	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_RX_COE, &val);
-
-#ifdef AXEN_TOE
-	val = AXEN_TXCOE_IPv4 | AXEN_TXCOE_TCPv4 | AXEN_TXCOE_UDPv4 |
-	      AXEN_TXCOE_TCPv6 | AXEN_TXCOE_UDPv6;
-#else
-	val = AXEN_TXCOE_OFF;
-#endif
-	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_TX_COE, &val);
+	axen_setcoe(sc);
 
 	/* Set RX control register */
 	ctl = AXEN_RXCTL_IPE | AXEN_RXCTL_DROPCRCERR | AXEN_RXCTL_AUTOB;
@@ -631,6 +617,50 @@ axen_ax88179_init(struct axen_softc *sc)
 	    wval | 0x0080);
 	axen_miibus_writereg(sc->axen_dev, sc->axen_phyno, 0x1F, 0x0000);
 #endif
+}
+
+static void
+axen_setcoe(struct axen_softc *sc)
+{
+	struct ifnet *ifp = GET_IFP(sc);
+	uint64_t enabled = ifp->if_capenable;
+	uint8_t val;
+
+	if (enabled & (IFCAP_CSUM_IPv4_Rx |
+	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
+	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx)) {
+		val = 0;
+		if (enabled & IFCAP_CSUM_IPv4_Rx)
+			val |= AXEN_RXCOE_IPv4;
+		if (enabled & IFCAP_CSUM_TCPv4_Rx)
+			val |= AXEN_RXCOE_TCPv4;
+		if (enabled & IFCAP_CSUM_UDPv4_Rx)
+			val |= AXEN_RXCOE_UDPv4;
+		if (enabled & IFCAP_CSUM_TCPv6_Rx)
+			val |= AXEN_RXCOE_TCPv6;
+		if (enabled & IFCAP_CSUM_UDPv6_Rx)
+			val |= AXEN_RXCOE_UDPv6;
+	} else
+		val = AXEN_RXCOE_OFF;
+	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_RX_COE, &val);
+
+	if (enabled & (IFCAP_CSUM_IPv4_Tx |
+	     IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx |
+	     IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx)) {
+		val = 0;
+		if (enabled & IFCAP_CSUM_IPv4_Tx)
+			val |= AXEN_TXCOE_IPv4;
+		if (enabled & IFCAP_CSUM_TCPv4_Tx)
+			val |= AXEN_TXCOE_TCPv4;
+		if (enabled & IFCAP_CSUM_UDPv4_Tx)
+			val |= AXEN_TXCOE_UDPv4;
+		if (enabled & IFCAP_CSUM_TCPv6_Tx)
+			val |= AXEN_TXCOE_TCPv6;
+		if (enabled & IFCAP_CSUM_UDPv6_Tx)
+			val |= AXEN_TXCOE_UDPv6;
+	} else
+		val = AXEN_TXCOE_OFF;
+	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_TX_COE, &val);
 }
 
 static int
@@ -767,13 +797,11 @@ axen_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	sc->axen_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
-#ifdef AXEN_TOE
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx |
 	    IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx |
 	    IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx |
 	    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_TCPv6_Tx |
 	    IFCAP_CSUM_UDPv6_Rx | IFCAP_CSUM_UDPv6_Tx;
-#endif
 
 	/* Initialize MII/media info. */
 	mii = &sc->axen_mii;
@@ -1079,27 +1107,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = pkt_len - 6;
 
-#ifdef AXEN_TOE
-		/* cheksum err */
-		if ((pkt_hdr & AXEN_RXHDR_L3CSUM_ERR) ||
-		    (pkt_hdr & AXEN_RXHDR_L4CSUM_ERR)) {
-			aprint_error_dev(sc->axen_dev,
-			    "checksum err (pkt#%d)\n", pkt_count);
-			goto nextpkt;
-		} else {
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-		}
-
-		int l4_type = (pkt_hdr & AXEN_RXHDR_L4_TYPE_MASK) >>
-		    AXEN_RXHDR_L4_TYPE_OFFSET;
-
-		if ((l4_type == AXEN_RXHDR_L4_TYPE_TCP) ||
-		    (l4_type == AXEN_RXHDR_L4_TYPE_UDP)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4 |
-			    M_CSUM_UDPv4; /* XXX v6? */
-		}
-#endif
-
+		m->m_pkthdr.csum_flags = axen_csum_flags_rx(ifp, pkt_hdr);
 		memcpy(mtod(m, char *), buf + 2, pkt_len - 6);
 
 		/* push the packet up */
@@ -1129,6 +1137,51 @@ done:
 	usbd_transfer(xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n",device_xname(sc->axen_dev),__func__));
+}
+
+static int
+axen_csum_flags_rx(struct ifnet *ifp, uint32_t pkt_hdr)
+{
+	int enabled_flags = ifp->if_csum_flags_rx;
+	int csum_flags = 0;
+	int l3_type, l4_type;
+
+	if (enabled_flags == 0)
+		return 0;
+
+	l3_type = (pkt_hdr & AXEN_RXHDR_L3_TYPE_MASK) >>
+	    AXEN_RXHDR_L3_TYPE_OFFSET;
+
+	if (l3_type == AXEN_RXHDR_L3_TYPE_IPV4)
+		csum_flags |= M_CSUM_IPv4;
+
+	l4_type = (pkt_hdr & AXEN_RXHDR_L4_TYPE_MASK) >>
+	    AXEN_RXHDR_L4_TYPE_OFFSET;
+
+	switch (l4_type) {
+	case AXEN_RXHDR_L4_TYPE_TCP:
+		if (l3_type == AXEN_RXHDR_L3_TYPE_IPV4)
+			csum_flags |= M_CSUM_TCPv4;
+		else
+			csum_flags |= M_CSUM_TCPv6;
+		break;
+	case AXEN_RXHDR_L4_TYPE_UDP:
+		if (l3_type == AXEN_RXHDR_L3_TYPE_IPV4)
+			csum_flags |= M_CSUM_UDPv4;
+		else
+			csum_flags |= M_CSUM_UDPv6;
+		break;
+	default:
+		break;
+	}
+
+	csum_flags &= enabled_flags;
+	if ((csum_flags & M_CSUM_IPv4) && (pkt_hdr & AXEN_RXHDR_L3CSUM_ERR))
+		csum_flags |= M_CSUM_IPv4_BAD;
+	if ((csum_flags & ~M_CSUM_IPv4) && (pkt_hdr & AXEN_RXHDR_L4CSUM_ERR))
+		csum_flags |= M_CSUM_TCP_UDP_BAD;
+
+	return csum_flags;
 }
 
 /*
@@ -1437,9 +1490,19 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 
 		error = 0;
-
-		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)
+		switch(cmd) {
+		case SIOCADDMULTI:
+		case SIOCDELMULTI:
 			axen_iff(sc);
+			break;
+		case SIOCSIFCAP:
+			axen_lock_mii(sc);
+			axen_setcoe(sc);
+			axen_unlock_mii(sc);
+			break;
+		default:
+			break;
+		}
 		break;
 	}
 	splx(s);
