@@ -61,7 +61,6 @@ Tasks remaining, first couple seem most important:
 - write console and/or X framebuffer driver.  freebsd has vgapci
   device that may be portable
 - add ia32 emulation, port from freebsd
-- add rump stuff/MKRUMP
 - create install EFI/cdrom/netbsd
 - fix ski to run on other archs beside i386, or at least amd64
 
