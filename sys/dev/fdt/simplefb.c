@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.6 2018/07/23 00:51:40 macallan Exp $ */
+/* $NetBSD: simplefb.c,v 1.7 2019/01/30 00:55:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.6 2018/07/23 00:51:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.7 2019/01/30 00:55:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -199,6 +199,7 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 
 #ifdef WSDISPLAY_MULTICONS
 	const bool is_console = true;
+	genfb_cnattach();
 #else
 	const bool is_console = phandle == simplefb_console_phandle;
 	if (is_console)
