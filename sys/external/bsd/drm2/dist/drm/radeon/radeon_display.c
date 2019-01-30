@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_display.c,v 1.9 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: radeon_display.c,v 1.10 2019/01/30 01:11:08 mrg Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.9 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.10 2019/01/30 01:11:08 mrg Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -188,36 +188,12 @@ static void legacy_crtc_load_lut(struct drm_crtc *crtc)
 		dac2_cntl |= RADEON_DAC2_PALETTE_ACC_CTL;
 	WREG32(RADEON_DAC_CNTL2, dac2_cntl);
 
-	/*
-	 * At least the RV100 [vendor 1002 product 515e (rev. 0x02)]
-	 * has an old style palette
-	 */
-	if (rdev->family < CHIP_RV280) {
-#ifdef notyet
-		/*
-		 * Leave CLUT alone for now. The code below gives us a
-		 * nice 444 grayscale, but we are not in true color mode
-		 * anymore and I don't have any docs how to do this right.
-		 */
-		WREG8(RADEON_PALETTE_INDEX, 0);
-		for (i = 0; i < 256; i++) {
-#define R(x) (radeon_crtc->lut_r[i] >> 2)
-#define G(x) (radeon_crtc->lut_g[i] >> 2)
-#define B(x) (radeon_crtc->lut_b[i] >> 2)
-			WREG32(RADEON_PALETTE_DATA, ((R(i) << 16)
-				| (G(i) << 8) | B(i)) << 4);
-		}
-#else
-		printf("%s: unknown DAC, can't set lookup table\n", __func__);
-#endif
-	} else {
-		WREG8(RADEON_PALETTE_INDEX, 0);
-		for (i = 0; i < 256; i++) {
-			WREG32(RADEON_PALETTE_30_DATA,
-				     (radeon_crtc->lut_r[i] << 20) |
-				     (radeon_crtc->lut_g[i] << 10) |
-				     (radeon_crtc->lut_b[i] << 0));
-		}
+	WREG8(RADEON_PALETTE_INDEX, 0);
+	for (i = 0; i < 256; i++) {
+		WREG32(RADEON_PALETTE_30_DATA,
+			     (radeon_crtc->lut_r[i] << 20) |
+			     (radeon_crtc->lut_g[i] << 10) |
+			     (radeon_crtc->lut_b[i] << 0));
 	}
 }
 
