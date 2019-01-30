@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1227 2019/01/28 01:00:23 pgoyette Exp $
+#	$NetBSD: files,v 1.1228 2019/01/30 01:19:49 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1479,6 +1479,10 @@ file	dev/led.c			leds
 # IPMI
 device	ipmi: sysmon_envsys, sysmon_wdog
 attach	ipmi at ipmibus
+
+# Designware HDMI TX
+device	dwhdmi: edid, videomode, drmkms, drmkms_i2c
+file	dev/ic/dw_hdmi.c		dwhdmi
 
 #
 # File systems
