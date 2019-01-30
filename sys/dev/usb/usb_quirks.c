@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.90 2018/11/15 02:35:23 manu Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.91 2019/01/30 19:57:48 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.90 2018/11/15 02:35:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.91 2019/01/30 19:57:48 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -186,6 +186,8 @@ Static const struct usbd_quirk_entry {
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_CYBERPOWER,	USB_PRODUCT_CYBERPOWER_UPS,		ANY,
 	{ UQ_HID_IGNORE, NULL }},
+ { USB_VENDOR_GRETAGMACBETH,	ANY,					ANY,
+	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_MGE,		USB_PRODUCT_MGE_UPS1,			ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_MGE,		USB_PRODUCT_MGE_UPS2,			ANY,
@@ -201,6 +203,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_SILABS,		USB_PRODUCT_SILABS_EC3,			ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_TI,		USB_PRODUCT_TI_MSP430,			ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { USB_VENDOR_XRITE,		ANY,					ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_KYE,		USB_PRODUCT_KYE_NICHE,			0x100,
 	{ UQ_NO_SET_PROTO, NULL }},
