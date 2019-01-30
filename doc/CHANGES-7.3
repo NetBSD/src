@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.37 2019/01/29 08:31:23 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.38 2019/01/30 13:28:09 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -418,3 +418,23 @@ sys/netnatm/natm.c				patch
 	sendoob() functions are expected to free both passed
 	mbuf chains.
 	[martin, ticket #1676]
+
+sys/arch/alpha/alpha/machdep.c			1.352
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.117
+sys/arch/arm/arm/sig_machdep.c			1.51
+sys/arch/hppa/hppa/sig_machdep.c		1.26
+sys/arch/i386/i386/machdep.c			1.813
+sys/arch/m68k/m68k/sig_machdep.c		1.50
+sys/arch/mips/mips/netbsd32_machdep.c		1.16
+sys/arch/mips/mips/sig_machdep.c		1.24
+sys/arch/powerpc/powerpc/sig_machdep.c		1.46
+sys/arch/sh3/sh3/sh3_machdep.c			1.106
+sys/arch/sparc64/sparc64/machdep.c		1.289
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.111
+sys/arch/usermode/target/i386/cpu_i386.c	1.8
+sys/arch/usermode/target/x86_64/cpu_x86_64.c	1.7
+sys/arch/vax/vax/sig_machdep.c			1.23
+
+	Fix widespread leak in the sendsig_siginfo() functions.
+	[maxv, ticket #1677]
+
