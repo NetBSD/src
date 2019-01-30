@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.1 2018/04/03 12:40:20 bouyer Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.2 2019/01/30 01:24:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.1 2018/04/03 12:40:20 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.2 2019/01/30 01:24:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,20 @@ fdt_endpoint_get_from_index(struct fdt_device_ports *device_ports,
 }
 
 struct fdt_endpoint *
+fdt_endpoint_remote_from_index(struct fdt_device_ports *device_ports,
+    int port_index, int ep_index)
+{
+	struct fdt_endpoint *ep;
+
+	ep = fdt_endpoint_get_from_index(device_ports, port_index,
+	    ep_index);
+	if (ep == NULL)
+		return NULL;
+
+	return fdt_endpoint_remote(ep);
+}
+
+struct fdt_endpoint *
 fdt_endpoint_remote(struct fdt_endpoint *ep)
 {
 	return ep->ep_rep;
@@ -154,6 +168,12 @@ fdt_endpoint_is_enabled(struct fdt_endpoint *ep)
 	return ep->ep_enabled;
 }
 
+enum endpoint_type
+fdt_endpoint_type(struct fdt_endpoint *ep)
+{
+	return ep->ep_type;
+}
+
 int
 fdt_endpoint_activate(struct fdt_endpoint *ep, bool activate)
 {
@@ -170,11 +190,28 @@ fdt_endpoint_activate(struct fdt_endpoint *ep, bool activate)
 		return EBUSY;
 
 	rdp = rep->ep_port->port_dp;
+device_printf(rdp->dp_dev, "activating port %d endpoint %d\n",
+    fdt_endpoint_port_index(rep), fdt_endpoint_index(rep));
 	if (rdp->dp_ep_activate)
 		error = rdp->dp_ep_activate(rdp->dp_dev, rep, activate);
 
 	if (error == 0)
 		rep->ep_active = ep->ep_active = activate;
+	return error;
+}
+
+int
+fdt_endpoint_activate_direct(struct fdt_endpoint *ep, bool activate)
+{
+	struct fdt_device_ports *dp;
+	int error = 0;
+
+	dp = ep->ep_port->port_dp;
+device_printf(dp->dp_dev, "activating port %d endpoint %d (direct)\n",
+    fdt_endpoint_port_index(ep), fdt_endpoint_index(ep));
+	if (dp->dp_ep_activate)
+		error = dp->dp_ep_activate(dp->dp_dev, ep, activate);
+
 	return error;
 }
 

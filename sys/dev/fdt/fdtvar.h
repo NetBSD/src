@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.47 2019/01/26 14:38:30 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.48 2019/01/30 01:24:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -280,6 +280,7 @@ int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
 int		fdtbus_get_phandle(int, const char *);
 int		fdtbus_get_phandle_from_native(int);
 i2c_tag_t	fdtbus_get_i2c_tag(int);
+i2c_tag_t	fdtbus_i2c_acquire(int, const char *);
 void *		fdtbus_intr_establish(int, u_int, int, int,
 		    int (*func)(void *), void *arg);
 void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
@@ -344,6 +345,7 @@ int		fdtbus_reset_deassert(struct fdtbus_reset *);
 struct fdtbus_phy *fdtbus_phy_get(int, const char *);
 struct fdtbus_phy *fdtbus_phy_get_index(int, u_int);
 void		fdtbus_phy_put(struct fdtbus_phy *);
+device_t	fdtbus_phy_device(struct fdtbus_phy *);
 int		fdtbus_phy_enable(struct fdtbus_phy *, bool);
 
 struct fdtbus_mmc_pwrseq *fdtbus_mmc_pwrseq_get(int);

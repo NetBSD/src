@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.5 2018/09/26 20:03:36 jakllsch Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.6 2019/01/30 01:24:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.5 2018/09/26 20:03:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.6 2019/01/30 01:24:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,6 +87,18 @@ fdtbus_get_i2c_tag(int phandle)
 		return NULL;
 
 	return i2c->i2c_funcs->get_tag(i2c->i2c_dev);
+}
+
+i2c_tag_t
+fdtbus_i2c_acquire(int phandle, const char *prop)
+{
+	int i2c_phandle;
+
+	i2c_phandle = fdtbus_get_phandle(phandle, prop);
+	if (i2c_phandle == -1)
+		return NULL;
+
+	return fdtbus_get_i2c_tag(i2c_phandle);
 }
 
 device_t
