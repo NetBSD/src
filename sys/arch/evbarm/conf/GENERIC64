@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.76 2019/01/30 01:26:18 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.77 2019/01/30 11:25:40 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -359,14 +359,14 @@ tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
 hdmicec*	at hdmicecbus?
 
 # Display
-#dispcon*	at fdt?			# Display connector devices
-#dwhdmi* 	at fdt?			# Designware HDMI TX
-#sunxide2bus*	at fdt? pass 4		# Allwinner DE2 bus
-#sunxidrm*	at fdt?	pass 5		# Allwinner Display Pipeline
-#sunxifb*	at sunxidrm?		# Allwinner DRM framebuffer
-#sunxihdmiphy*	at fdt? pass 9		# Allwinner HDMI TX PHY
-#sunxilcdc*	at fdt?			# Allwinner DE2 timing controller
-#sunximixer*	at fdt?			# Allwinner DE2 mixer
+dispcon*	at fdt?			# Display connector devices
+dwhdmi* 	at fdt?			# Designware HDMI TX
+sunxide2bus*	at fdt? pass 4		# Allwinner DE2 bus
+sunxidrm*	at fdt?	pass 5		# Allwinner Display Pipeline
+sunxifb*	at sunxidrm?		# Allwinner DRM framebuffer
+sunxihdmiphy*	at fdt? pass 9		# Allwinner HDMI TX PHY
+sunxilcdc*	at fdt?			# Allwinner DE2 timing controller
+sunximixer*	at fdt?			# Allwinner DE2 mixer
 #tegradrm*	at fdt?			# NVIDIA Tegra Display
 #tegrafb*	at tegrafbbus?
 genfb*		at fdt?			# Simple Framebuffer
