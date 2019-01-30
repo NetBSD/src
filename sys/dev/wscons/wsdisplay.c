@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.150 2019/01/30 02:43:47 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.151 2019/01/30 10:54:52 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.150 2019/01/30 02:43:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.151 2019/01/30 10:54:52 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -966,12 +966,10 @@ wsdisplay_preattach(const struct wsscreen_descr *type, void *cookie,
 void
 wsdisplay_cndetach(void)
 {
-	if (wsdisplay_console_initted > 0) {
-		cn_tab = wsdisplay_ocn;
-		wsdisplay_console_initted = 0;
-		wsdisplay_console_attached = 0;
-		wsdisplay_console_device = NULL;
-	}
+	KASSERT(wsdisplay_console_initted == 2);
+
+	cn_tab = wsdisplay_ocn;
+	wsdisplay_console_initted = 0;
 }
 
 /*
