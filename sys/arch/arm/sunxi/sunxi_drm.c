@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.1 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.2 2019/01/30 02:44:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.1 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.2 2019/01/30 02:44:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,11 +55,6 @@ static TAILQ_HEAD(, sunxi_drm_endpoint) sunxi_drm_endpoints =
 
 static const char * const compatible[] = {
 	"allwinner,sun50i-a64-display-engine",
-	NULL
-};
-
-static const char * fb_compatible[] = {
-	"allwinner,simple-framebuffer",
 	NULL
 };
 
@@ -139,8 +134,6 @@ sunxi_drm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ddev->bus_dmat = sc->sc_dmat;
 	sc->sc_ddev->dmat = sc->sc_ddev->bus_dmat;
 	sc->sc_ddev->dmat_subregion_p = false;
-
-	fdt_remove_bycompat(fb_compatible);
 
 	config_defer(self, sunxi_drm_init);
 }
