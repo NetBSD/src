@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.10 2019/01/22 23:06:49 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.11 2019/01/30 01:24:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.10 2019/01/22 23:06:49 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.11 2019/01/30 01:24:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,8 +42,10 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.10 2019/01/22 23:06:49 jmcneill
 
 #define	PLL_CPUX_CTRL_REG	0x000
 #define	PLL_AUDIO_CTRL_REG	0x008
+#define	PLL_VIDEO0_CTRL_REG	0x010
 #define	PLL_PERIPH0_CTRL_REG	0x028
 #define	PLL_PERIPH1_CTRL_REG	0x02c
+#define	PLL_VIDEO1_CTRL_REG	0x030
 #define	PLL_DE_CTRL_REG		0x048
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
@@ -61,7 +63,10 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.10 2019/01/22 23:06:49 jmcneill
 #define	DRAM_CFG_REG		0x0f4
 #define	MBUS_RST_REG		0x0fc
 #define	DE_CLK_REG		0x104
+#define	TCON1_CLK_REG		0x11c
 #define	AC_DIG_CLK_REG		0x140
+#define	HDMI_CLK_REG		0x150
+#define	HDMI_SLOW_CLK_REG	0x154
 #define	BUS_SOFT_RST_REG0	0x2c0
 #define	BUS_SOFT_RST_REG1	0x2c4
 #define	BUS_SOFT_RST_REG2	0x2c8
@@ -146,6 +151,8 @@ static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mmc_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
 static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
+static const char *hdmi_parents[] = { "pll_video0", "pll_video1" };
+static const char *tcon1_parents[] = { "pll_video0", NULL, "pll_video1", NULL };
 
 static const struct sunxi_ccu_nkmp_tbl sun50i_a64_cpux_table[] = {
 	{ 60000000, 9, 0, 0, 2 },
@@ -262,8 +269,36 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO_4X, "pll_audio_4x", "pll_audio_base", 1, 4),
 	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_AUDIO_8X, "pll_audio_8x", "pll_audio_base", 1, 8),
 
+	SUNXI_CCU_FRACTIONAL(A64_CLK_PLL_VIDEO0, "pll_video0", "hosc",
+	    PLL_VIDEO0_CTRL_REG,	/* reg */
+	    __BITS(14,8),		/* m */
+	    16,				/* m_min */
+	    50,				/* m_max */
+	    __BIT(24),			/* div_en */
+	    __BIT(25),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    __BITS(3,0),		/* prediv */
+	    4,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
+
+	SUNXI_CCU_FIXED_FACTOR(A64_CLK_PLL_VIDEO0_2X, "pll_video0_2x", "pll_video0", 1, 2),
+
+	SUNXI_CCU_FRACTIONAL(A64_CLK_PLL_VIDEO1, "pll_video1", "hosc",
+	    PLL_VIDEO1_CTRL_REG,	/* reg */
+	    __BITS(14,8),		/* m */
+	    16,				/* m_min */
+	    50,				/* m_max */
+	    __BIT(24),			/* div_en */
+	    __BIT(25),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    __BITS(3,0),		/* prediv */
+	    4,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
+
 	SUNXI_CCU_FRACTIONAL(A64_CLK_PLL_DE, "pll_de", "hosc",
-	    DE_CLK_REG,			/* reg */
+	    PLL_DE_CTRL_REG,		/* reg */
 	    __BITS(14,8),		/* m */
 	    16,				/* m_min */
 	    50,				/* m_max */
@@ -273,7 +308,7 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(3,0),		/* prediv */
 	    2,				/* prediv_val */
 	    __BIT(31),			/* enable */
-	    SUNXI_CCU_FRACTIONAL_PLUSONE),
+	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
 
 	SUNXI_CCU_PREDIV(A64_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
@@ -345,6 +380,23 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    AC_DIG_CLK_REG, 31),
 	SUNXI_CCU_GATE(A64_CLK_AC_DIG_4X, "ac-dig-4x", "pll_audio_4x",
 	    AC_DIG_CLK_REG, 30),
+
+	SUNXI_CCU_DIV_GATE(A64_CLK_HDMI, "hdmi", hdmi_parents,
+	    HDMI_CLK_REG,	/* reg */
+	    __BITS(3,0),	/* div */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	   0),
+
+	SUNXI_CCU_GATE(A64_CLK_HDMI_DDC, "hdmi-ddc", "hosc",
+	    HDMI_SLOW_CLK_REG, 31),
+
+	SUNXI_CCU_DIV_GATE(A64_CLK_TCON1, "tcon1", tcon1_parents,
+	    TCON1_CLK_REG,	/* reg */
+	    __BITS(3,0),	/* div */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
 
 	SUNXI_CCU_GATE(A64_CLK_BUS_MIPI_DSI, "bus-mipi-dsi", "ahb1",
 	    BUS_CLK_GATING_REG0, 1),
@@ -481,6 +533,10 @@ sun50i_a64_ccu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": A64 CCU\n");
+
+	/* Set DE parent to PLL_DE */
+	clk_set_parent(&sc->sc_clks[A64_CLK_DE].base, &sc->sc_clks[A64_CLK_PLL_DE].base);
+	clk_set_rate(&sc->sc_clks[A64_CLK_PLL_DE].base, 420000000);
 
 	sunxi_ccu_print(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.h,v 1.1 2018/04/03 12:40:20 bouyer Exp $	*/
+/*	$NetBSD: fdt_port.h,v 1.2 2019/01/30 01:24:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #ifndef _DEV_FDT_FDT_PORT_H_
 #define _DEV_FDT_FDT_PORT_H_
 
+struct drm_device;
+
 struct fdt_port;
 struct fdt_endpoint;
 
@@ -63,6 +65,11 @@ enum endpoint_type {
 	EP_OTHER = 0,
 	EP_CONNECTOR,
 	EP_PANEL,
+
+	EP_DRM_BRIDGE,		/* struct drm_bridge */
+	EP_DRM_CONNECTOR,	/* struct drm_connector */
+	EP_DRM_CRTC,		/* struct drm_crtc */
+	EP_DRM_ENCODER,		/* struct drm_encoder */
 };
 
 
@@ -79,15 +86,19 @@ struct fdt_endpoint *fdt_endpoint_get_from_phandle(int);
 struct fdt_endpoint *fdt_endpoint_get_from_index(struct fdt_device_ports *,
 							int, int);
 struct fdt_endpoint *fdt_endpoint_remote(struct fdt_endpoint *);
+struct fdt_endpoint *fdt_endpoint_remote_from_index(struct fdt_device_ports *,
+							int, int);
 
 /*
  * get informations/data for a given endpoint
  */
 int fdt_endpoint_port_index(struct fdt_endpoint *);
 int fdt_endpoint_index(struct fdt_endpoint *);
+int fdt_endpoint_phandle(struct fdt_endpoint *);
 device_t fdt_endpoint_device(struct fdt_endpoint *);
 bool fdt_endpoint_is_active(struct fdt_endpoint *);
 bool fdt_endpoint_is_enabled(struct fdt_endpoint *);
+enum endpoint_type fdt_endpoint_type(struct fdt_endpoint *);
 /*
  * call dp_ep_get_data() for the endpoint. The returned pointer is
  * type of driver-specific.
@@ -99,6 +110,12 @@ void * fdt_endpoint_get_data(struct fdt_endpoint *);
  * called for the remote endpoint
  */
 int fdt_endpoint_activate(struct fdt_endpoint *, bool);
+
+/*
+ * Activate/deactive an endpoint by direct reference.
+ */
+int fdt_endpoint_activate_direct(struct fdt_endpoint *, bool);
+
 /*
  * Enable/disable an endpoint. This causes dp_ep_enable() to be called for
  * the remote endpoint

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.20 2019/01/22 23:06:49 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.21 2019/01/30 01:24:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -373,6 +373,7 @@ struct sunxi_ccu_fractional {
 	uint32_t	enable;
 	uint32_t	flags;
 #define	SUNXI_CCU_FRACTIONAL_PLUSONE	__BIT(0)
+#define	SUNXI_CCU_FRACTIONAL_SET_ENABLE	__BIT(1)
 };
 
 int	sunxi_ccu_fractional_enable(struct sunxi_ccu_softc *,
