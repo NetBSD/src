@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_fb.c,v 1.2 2019/01/30 02:44:19 jmcneill Exp $ */
+/* $NetBSD: sunxi_fb.c,v 1.3 2019/01/30 10:55:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,15 +29,13 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_fb.c,v 1.2 2019/01/30 02:44:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_fb.c,v 1.3 2019/01/30 10:55:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 
 #include <dev/fdt/fdtvar.h>
-
-#include <dev/wscons/wsdisplayvar.h>
 
 #include <drm/drmP.h>
 #include <drm/drmfb.h>
@@ -96,7 +94,6 @@ sunxi_fb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	const bool is_console = true;
 	prop_dictionary_set_bool(dict, "is_console", is_console);
-	wsdisplay_cndetach();
 #endif
 
 	const struct drmfb_attach_args da = {
