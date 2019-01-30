@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.98 2019/01/29 08:29:52 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.99 2019/01/30 13:56:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2347,3 +2347,14 @@ sys/netnatm/natm.c				patch
 	sendoob() functions are expected to free both passed
 	mbuf chains.
 	[martin, ticket #1175]
+
+usr.bin/systat/extern.h				1.47
+usr.bin/systat/iostat.c				1.39
+usr.bin/systat/main.c				1.55
+usr.bin/systat/syscall.c			1.10
+usr.bin/systat/vmstat.c				1.85
+usr.bin/systat/vmstat.c				1.86
+
+	Fixe terminal resize handling in some systat(1) screens.
+	[christos, ticket #1176]
+
