@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.34 2017/07/04 06:48:15 wiz Exp $
+.\"	$NetBSD: dd.1,v 1.35 2019/01/30 01:40:02 mrg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd August 18, 2016
+.Dd January 29, 2019
 .Dt DD 1
 .Os
 .Sh NAME
@@ -97,13 +97,9 @@ Use comma-separated
 when calling
 .Xr open 2
 for the input file.
-The possible values are
-.Va O_
-flags documented in
-.Xr open 2 ,
-specified as lowercase and with the leading
-.Va O_
-removed.
+See the
+.Sx INPUT AND OUTPUT FLAGS
+section for details.
 Default value is
 .Va rdonly .
 .It Cm iseek= Ns Ar n
@@ -203,9 +199,9 @@ but for the call to
 on the output file.
 The default value is
 .Va creat ,
-which should be explicitly added in
+which must be explicitly added in
 .Cm oflag
-in order to output to a nonexistent file.
+if this option is used in order to output to a nonexistent file.
 The default or specified value is or'ed with
 .Va rdwr
 for a first
@@ -220,7 +216,10 @@ is automatically added if none of
 .Cm seek ,
 or
 .Cm conv=notrunc
-operands are used,
+operands are used.
+See the
+.Sx INPUT AND OUTPUT FLAGS
+section for details.
 .It Cm oseek= Ns Ar n
 Seek on the output file
 .Ar n
@@ -475,6 +474,76 @@ be written to the standard error output
 in the same format as the standard completion message and
 .Nm
 will exit.
+.Sh INPUT AND OUTPUT FLAGS
+There are flags valid for input only, for output only, or for either.
+.Pp
+The flags that apply to both input and output are:
+.Bl -tag -width directory
+.It Cm alt_io
+Use Alternative I/O.
+.It Cm async
+Use
+.Dv SIGIO
+signalling for I/O.
+.It Cm cloexec
+Set the close-on-exec flag.
+.It Cm direct
+Directly access the data, skipping any caches.
+.It Cm directory
+Not avaiable for
+.Nm .
+.It Cm exlock
+Atomically obtain an exclusive lock.
+.It Cm noctty
+Do not consider the file as a potential controlling tty.
+.It Cm nofollow
+Do not follow symbolic links.
+.It Cm nonblock
+Do not block on open or I/O requests.
+.It Cm nosigpipe
+Return
+.Er EPIPE
+instead of raising
+.Dv SIGPIPE .
+.It Cm shlock
+Atomically obtain a shared lock.
+.It Cm sync
+All I/O will be performed with full synchronisation.
+.El
+.Pp
+The flags that apply to only input are:
+.Bl -tag -width directory
+.It Cm rdonly
+Set the read-only flag.
+.It Cm rdwr
+Set the read and write flags.
+.It Cm rsync
+Enable read synchronisation, if the
+.Cm sync
+option is also set.
+.El
+.Pp
+The flags that apply to only output are:
+.Bl -tag -width directory
+.It Cm append
+Append to the output by default.
+.It Cm creat
+Create the output file.
+.It Cm dsync
+Wait for all data to be syncronously written.
+.It Cm excl
+Ensure that output is to a new file.
+.It Cm trunc
+Truncate the output file before writing.
+.It Cm wronly
+Set the write-only flag.
+.Pp
+.El
+See
+.Xr open 2
+and
+.Xr ioctl 2
+for more details.
 .Sh EXIT STATUS
 .Ex -std dd
 .Sh EXAMPLES
