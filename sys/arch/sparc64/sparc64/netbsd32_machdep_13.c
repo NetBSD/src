@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_13.c,v 1.2 2019/01/27 02:08:38 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_13.c,v 1.3 2019/01/30 10:11:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.2 2019/01/27 02:08:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.3 2019/01/30 10:11:11 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -83,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.2 2019/01/27 02:08:38 pgoy
 #include <machine/netbsd32_machdep.h>
 #include <machine/userret.h>
 
+#ifdef DEBUG
+#include <sparc64/sparc64/sigdebug.h>
+#endif
+
 int
 compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigreturn_args *uap, register_t *retval)
 {
@@ -108,7 +112,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("%s: %s[%d], sigcntxp %p\n", __func__,
+		printf("%s: %s[%d], sigcntxp %u\n", __func__,
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 		if (sigdebug & SDB_DDB) Debugger();
 	}
@@ -133,7 +137,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	if (((sc.sc_pc | sc.sc_npc) & 3) != 0)
 #ifdef DEBUG
 	{
-		printf("%s: pc %p or npc %p invalid\n",
+		printf("%s: pc %d or npc %d invalid\n",
 		   __func__, sc.sc_pc, sc.sc_npc);
 		Debugger();
 		return (EINVAL);
@@ -150,7 +154,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	tf->tf_out[6] = (int64_t)sc.sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("%s: return trapframe pc=%p sp=%p tstate=%x\n", __func__,
+		printf("%s: return trapframe pc=%d sp=%d tstate=%x\n", __func__,
 		       (int)tf->tf_pc, (int)tf->tf_out[6], (int)tf->tf_tstate);
 		if (sigdebug & SDB_DDB) Debugger();
 	}
