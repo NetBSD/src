@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.38 2018/11/15 17:15:52 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.39 2019/01/30 02:01:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.38 2018/11/15 17:15:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.39 2019/01/30 02:01:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -171,8 +171,8 @@ gtmr_read_cntvct(struct gtmr_softc *sc)
 		u_int bits;
 		do {
 			val = gtmr_cntvct_read();
-			bits = val & __BITS(10,0);
-		} while (bits == 0 || bits == __BITS(10,0));
+			bits = val & __BITS(9,0);
+		} while (bits == 0 || bits == __BITS(9,0));
 		return val;
 	}
 
@@ -298,7 +298,12 @@ gtmr_intr(void *arg)
 	} else {
 		delta = 0;
 	}
-	gtmr_cntv_tval_write(sc->sc_autoinc - delta);
+
+	if (ISSET(sc->sc_flags, GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER)) {
+		gtmr_cntv_cval_write(now + sc->sc_autoinc - delta);
+	} else {
+		gtmr_cntv_tval_write(sc->sc_autoinc - delta);
+	}
 
 	ci->ci_lastintr = now;
 
