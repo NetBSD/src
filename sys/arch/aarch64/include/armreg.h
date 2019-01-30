@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.22 2018/12/13 10:44:25 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.23 2019/01/30 02:02:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1155,6 +1155,13 @@ gtmr_cntv_cval_read(void)
 {
 
 	return reg_cntv_cval_el0_read();
+}
+
+static __inline void
+gtmr_cntv_cval_write(uint64_t val)
+{
+
+	reg_cntv_cval_el0_write(val);
 }
 #endif /* _KERNEL */
 
