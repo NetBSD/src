@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.81.8.1 2017/07/25 01:43:37 snj Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.81.8.2 2019/01/30 13:46:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.81.8.1 2017/07/25 01:43:37 snj Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.81.8.2 2019/01/30 13:46:25 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -80,8 +80,6 @@ static int ucount(void);
 
 static	char buf[26];
 static	u_int64_t temp;
-double etime;
-static	float hertz;
 static	int nintr;
 static	long *intrloc;
 static	char **intrname;
@@ -412,7 +410,6 @@ labelvmstat(void)
 			{temp = (s).fld; (s).fld -= (s1).fld; \
 			if (display_mode == TIME) (s1).fld = temp; \
 			putint((int)((float)(s).fld/etime + 0.5), l, c, w);}
-#define MAXFAIL 5
 
 static	char cpuchar[CPUSTATES] = { '=' , '>', '-', '%', ' ' };
 static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_INTR, CP_IDLE };
@@ -475,7 +472,6 @@ showvmstat(void)
 	static int failcnt = 0;
 	static int relabel = 0;
 	static int last_disks = 0;
-	static char pigs[] = "pigs";
 
 	if (relabel) {
 		labelvmstat();
@@ -485,21 +481,8 @@ showvmstat(void)
 	cpuswap();
 	if (display_mode == TIME) {
 		drvswap();
-		etime = cur.cp_etime;
-		/* < 5 ticks - ignore this trash */
-		if ((etime * hertz) < 1.0) {
-			if (failcnt++ <= MAXFAIL)
-				return;
-			clear();
-			mvprintw(2, 10, "The alternate system clock has died!");
-			mvprintw(3, 10, "Reverting to ``pigs'' display.");
-			move(CMDLINE, 0);
-			refresh();
-			failcnt = 0;
-			sleep(5);
-			command(pigs);
+		if (toofast(&failcnt))
 			return;
-		}
 	} else
 		etime = 1.0;
 
