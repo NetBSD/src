@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1096 2019/01/29 19:40:42 scole Exp $
+#	$NetBSD: bsd.own.mk,v 1.1097 2019/01/30 22:51:33 scole Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1104,11 +1104,6 @@ USE_LIBCSANITIZER?=	undefined
 #
 # Exceptions to the above:
 #
-
-# Rump doesn't work yet on ia64
-.if ${MACHINE} == "ia64"
-MKRUMP=		no
-.endif
 
 # RUMP uses -nostdinc which coverity does not like
 # It also does not use many new files, so disable it
