@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.3 2019/01/21 16:27:48 jmcneill Exp $ */
+/* $NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.3 2019/01/21 16:27:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.4 2019/01/31 13:06:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -397,15 +397,16 @@ cpu_enable_meson8b(int phandle)
 ARM_CPU_METHOD(meson8b, "amlogic,meson8b-smp", cpu_enable_meson8b);
 #endif
 
-static void
+static int
 meson_mpstart(void)
 {
+	int ret = 0;
 #ifdef MULTIPROCESSOR
 	const bus_addr_t cbar = armreg_cbar_read();
 	bus_space_tag_t bst = &arm_generic_bs_tag;
 
 	if (cbar == 0)
-		return;
+		return ret;
 
 	const bus_space_handle_t scu_bsh =
 	    cbar - MESON8B_ARM_PBASE + MESON8B_ARM_VBASE;
@@ -414,7 +415,7 @@ meson_mpstart(void)
 	const u_int ncpus = (scu_cfg & SCU_CFG_CPUMAX) + 1;
 
 	if (ncpus < 2)
-		return;
+		return ret;
 
 	/*
 	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
@@ -427,8 +428,9 @@ meson_mpstart(void)
 
 	armv7_dcache_wbinv_all();
 
-	arm_fdt_cpu_mpstart();
+	ret = arm_fdt_cpu_mpstart();
 #endif
+	return ret;
 }
 
 
