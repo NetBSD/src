@@ -20,7 +20,7 @@
      defined(__powerpc__) || defined(__hppa__) || defined(__m68k__) || \
      defined(__mc68010__) || defined(__powerpc64__) || defined(__sparc__) || \
      defined(__alpha__) || defined(__vax__) || defined(__sh3__) || \
-     defined(__ia64__)) || \
+     defined(__ia64__) || \
      defined(__s390__))
 # define CAN_SANITIZE_UB 1
 #elif defined(_WIN32)

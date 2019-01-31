@@ -699,6 +699,7 @@ static void Atexit(void) {
 #endif
 
 #if ASAN_INTERCEPT___CXA_ATEXIT
+#if !SANITIZER_NETBSD
 static void AtCxaAtexit(void *unused) {
   (void)unused;
   StopInitOrderChecking();

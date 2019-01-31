@@ -40,12 +40,7 @@
 // GLIBC 2.20+ sys/user does not include asm/ptrace.h
 #  include <asm/ptrace.h>
 # endif
-# if !SANITIZER_NETBSD
-#  include <sys/user.h>  // for user_regs_struct
-#  if SANITIZER_ANDROID && SANITIZER_MIPS
-#    include <asm/reg.h>  // for mips SP register in sys/user.h
-#  endif
-# else
+# if SANITIZER_NETBSD
 #  define PTRACE_ATTACH PT_ATTACH
 #  define PTRACE_GETREGS PT_GETREGS
 #  define PTRACE_KILL PT_KILL
@@ -55,6 +50,11 @@
 #  include <machine/reg.h>
 typedef struct reg user_regs;
 typedef struct reg user_regs_struct;
+# else
+#  include <sys/user.h>  // for user_regs_struct
+#  if SANITIZER_ANDROID && SANITIZER_MIPS
+#   include <asm/reg.h>  // for mips SP register in sys/user.h
+#  endif
 # endif
 #endif
 #include <sys/wait.h> // for signal-related stuff
@@ -476,34 +476,39 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
 typedef pt_regs regs_struct;
 #  define PTRACE_REG_SP(r) (r)->ARM_sp
 # endif
+
 #elif SANITIZER_LINUX
 # if defined(__arm__)
 typedef user_regs regs_struct;
 #  define PTRACE_REG_SP(r) (r)->uregs[13]
+
 # elif defined(__i386__)
 typedef user_regs_struct regs_struct;
 #  define PTRACE_REG_SP(r) (r)->esp
+
 # elif defined(__x86_64__)
 typedef user_regs_struct regs_struct;
 #  define PTRACE_REG_SP(r) (r)->rsp
+
 # elif defined(__powerpc__) || defined(__powerpc64__)
 typedef pt_regs regs_struct;
 #  define PTRACE_REG_SP(r) (r)->gpr[PT_R1]
 # elif defined(__mips__)
+
 typedef struct user regs_struct;
-# if SANITIZER_ANDROID
-#  define REG_SP regs[EF_R29]
-# else
-#  define REG_SP regs[EF_REG29]
-# endif
-#elif defined(__aarch64__)
+#  if SANITIZER_ANDROID
+#   define REG_SP regs[EF_R29]
+#  else
+#   define REG_SP regs[EF_REG29]
+#  endif
+# elif defined(__aarch64__)
+
 typedef struct user_pt_regs regs_struct;
 #  define PTRACE_REG_SP(r) (r)->sp
 #  define ARCH_IOVEC_FOR_GETREGSET
 # endif
 #elif SANITIZER_NETBSD 
 typedef reg regs_struct;
-#endif
 
 #elif defined(__s390__)
 typedef _user_regs_struct regs_struct;
