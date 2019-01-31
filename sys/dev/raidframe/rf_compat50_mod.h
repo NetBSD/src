@@ -1,4 +1,4 @@
-/* $NetBSD: rf_compat50_mod.h,v 1.2 2019/01/27 02:08:42 pgoyette Exp $	*/
+/* $NetBSD: rf_compat50_mod.h,v 1.3 2019/01/31 12:31:50 christos Exp $	*/
 
 
 /*-
@@ -35,5 +35,7 @@
 
 void raidframe_50_fini(void);
 void raidframe_50_init(void);
+
+int raidframe_ioctl_50(u_long, int, RF_Raid_t *, int, void *, RF_Config_t **);
 
 #endif	/* _RF_COMPAT50_MOD_H_ */
