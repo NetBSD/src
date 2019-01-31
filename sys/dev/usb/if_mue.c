@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.29 2019/01/30 11:11:45 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.30 2019/01/31 05:25:48 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.29 2019/01/30 11:11:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.30 2019/01/31 05:25:48 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1077,6 +1077,7 @@ mue_detach(device_t self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		mue_stop(ifp, 1);
 
+	callout_destroy(&sc->mue_stat_ch);
 	rnd_detach_source(&sc->mue_rnd_source);
 	mii_detach(&sc->mue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->mue_mii.mii_media, IFM_INST_ANY);
