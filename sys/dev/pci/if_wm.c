@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.621 2019/01/31 05:20:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.622 2019/01/31 05:48:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.621 2019/01/31 05:20:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.622 2019/01/31 05:48:32 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12186,9 +12186,9 @@ wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		status = CSR_READ(sc, WMREG_STATUS);
 		if (((status & STATUS_2P5_SKU) != 0)
 		    && ((status & STATUS_2P5_SKU_OVER) == 0)) {
-			ifmr->ifm_active |= IFM_2500_SX; /* XXX KX */
+			ifmr->ifm_active |= IFM_2500_KX;
 		} else
-			ifmr->ifm_active |= IFM_1000_SX; /* XXX KX */
+			ifmr->ifm_active |= IFM_1000_KX;
 	} else {
 		switch (__SHIFTOUT(reg, PCS_LSTS_SPEED)) {
 		case PCS_LSTS_SPEED_10:
