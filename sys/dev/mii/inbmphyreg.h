@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.16 2019/01/07 01:43:22 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.17 2019/01/31 05:20:49 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2015, Intel Corporation 
 All rights reserved.
@@ -81,15 +81,21 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Extended Management Interface (EMI) Registers */
 #define I82579_EMI_ADDR	0x10
 #define I82579_EMI_DATA	0x11
+#define I82579_LPI_UPDATE_TIMER	0x4805 /* in 40ns units + 40 ns base value */
+#define I82579_MSE_THRESHOLD	0x084F /* 82579 Mean Square Error Threshold */
+#define I82577_MSE_THRESHOLD	0x0887 /* 82577 Mean Square Error Threshold */
+#define I82579_MSE_LINK_DOWN	0x2411 /* MSE count before dropping link */
 #define I82579_EEE_ADVERTISEMENT 0x040e  /* IEEE MMD Register 7.60 */
 #define I82579_EEE_LP_ABILITY	0x040f   /* IEEE MMD Register 7.61 */
 #define I82579_EEE_PCS_STATUS	0x182e
+#define I82579_RX_CONFIG	0x3412 /* Receive configuration */
 #define I82579_LPI_PLL_SHUT	0x4412
-#define I82579_LPI_PLL_SHUT_100		__BIT(2) /* 100M LPI PLL Shut Enable */
+#define I82579_LPI_PLL_SHUT_100	__BIT(2) /* 100M LPI PLL Shut Enable */
 #define I217_EEE_PCS_STATUS	0x9401   /* IEEE MMD Register 3.1 */
 #define I217_EEE_CAPABILITY	0x8000   /* IEEE MMD Register 3.20 */
 #define I217_EEE_ADVERTISEMENT	0x8001   /* IEEE MMD Register 7.60 */
 #define I217_EEE_LP_ABILITY	0x8002   /* IEEE MMD Register 7.61 */
+#define I217_RX_CONFIG		0xb20c   /* Receive configuration */
 
 /* BM PHY Copper Specific Status */
 #define BM_CS_STATUS		BME1000_REG(0, 17)
@@ -134,6 +140,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	CV_SMB_CTRL_FORCE_SMBUS	__BIT(0)
 
 #define	HV_PM_CTRL		BME1000_REG(770, 17)
+#define HV_PM_CTRL_K1_CLK_REQ	__BIT(9)
 #define	HV_PM_CTRL_K1_ENA	__BIT(14)
 
 #define	I217_INBAND_CTRL	BME1000_REG(770, 18)
@@ -154,12 +161,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	I217_MEMPWR		BME1000_REG(772, 26)
 #define	I217_MEMPWR_DISABLE_SMB_RELEASE		0x0010
 
+#define I217_PLL_CLOCK_GATE_REG	BME1000_REG(772, 28)
+#define I217_PLL_CLOCK_GATE_MASK	0x07FF
+
 #define	I217_CFGREG		BME1000_REG(772, 29)
 #define I217_CGFREG_ENABLE_MTA_RESET	0x0002
 
 #define HV_MUX_DATA_CTRL	BME1000_REG(776, 16)
 #define HV_MUX_DATA_CTRL_FORCE_SPEED	(1 << 2)
 #define HV_MUX_DATA_CTRL_GEN_TO_MAC	(1 << 10)
+
+#define I219_UNKNOWN1		BME1000_REG(776, 20)
 
 #define I218_ULP_CONFIG1	BME1000_REG(779, 16)
 #define I218_ULP_CONFIG1_START		__BIT(0)

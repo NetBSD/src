@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.111 2018/12/20 09:32:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.112 2019/01/31 05:20:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -906,7 +906,8 @@ struct livengood_tcpip_ctxdesc {
 #define	DEFAULT_80003ES2LAN_TCTL_EXT_GCEX 0x00010000
 
 #define	WMREG_TIPG	0x0410	/* Transmit IPG Register */
-#define	TIPG_IPGT(x)	(x)		/* IPG transmit time */
+#define	TIPG_IPGT_MASK	__BITS(0, 9)	/* IPG transmit time MASK */
+#define	TIPG_IPGT(x)	__SHIFTIN((x), TIPG_IPGT_MASK) /* IPG transmit time */
 #define	TIPG_IPGR1(x)	((x) << 10)	/* IPG receive time 1 */
 #define	TIPG_IPGR2(x)	((x) << 20)	/* IPG receive time 2 */
 #define	TIPG_WM_DFLT	(TIPG_IPGT(0x0a) | TIPG_IPGR1(0x02) | TIPG_IPGR2(0x0a))
