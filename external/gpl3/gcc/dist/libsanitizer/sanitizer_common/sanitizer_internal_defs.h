@@ -50,6 +50,11 @@
 # define __has_feature(x) 0
 #endif
 
+// Outside of namespace below as we need <sys/types.h>
+#if SANITIZER_NETBSD
+#include <sys/types.h>
+#endif
+
 // For portability reasons we do not include stddef.h, stdint.h or any other
 // system header, but we do need some basic types that are not defined
 // in a portable way by the language itself.
@@ -102,7 +107,6 @@ typedef uptr OFF_T;
 typedef u64  OFF64_T;
 
 #if SANITIZER_NETBSD
-#include <sys/types.h>
 typedef size_t operator_new_size_type;
 #else
 #if (SANITIZER_WORDSIZE == 64) || SANITIZER_MAC
@@ -116,7 +120,6 @@ typedef u32 operator_new_size_type;
 # endif
 #endif
 #endif
-}  // namespace __sanitizer
 
 
 // ----------- ATTENTION -------------
