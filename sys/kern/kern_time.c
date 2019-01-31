@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.193 2018/11/29 17:40:12 maxv Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.194 2019/01/31 20:09:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.193 2018/11/29 17:40:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.194 2019/01/31 20:09:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -524,6 +524,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if (olddelta) {
+		memset(olddelta, 0, sizeof(*olddelta));
 		mutex_spin_enter(&timecounter_lock);
 		olddelta->tv_sec = time_adjtime / 1000000;
 		olddelta->tv_usec = time_adjtime % 1000000;
