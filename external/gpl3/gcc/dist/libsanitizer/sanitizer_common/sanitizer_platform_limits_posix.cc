@@ -138,10 +138,9 @@
 # endif
 # ifdef __arm__
 typedef struct user_fpregs elf_fpregset_t;
-#   define ARM_VFPREGS_SIZE_ASAN (32 * 8 /*fpregs*/ + 4 /*fpscr*/)
-#   if !defined(ARM_VFPREGS_SIZE)
-#     define ARM_VFPREGS_SIZE ARM_VFPREGS_SIZE_ASAN
-#   endif
+#  define ARM_VFPREGS_SIZE_ASAN (32 * 8 /*fpregs*/ + 4 /*fpscr*/)
+#  if !defined(ARM_VFPREGS_SIZE)
+#   define ARM_VFPREGS_SIZE ARM_VFPREGS_SIZE_ASAN
 #  endif
 # endif
 #endif

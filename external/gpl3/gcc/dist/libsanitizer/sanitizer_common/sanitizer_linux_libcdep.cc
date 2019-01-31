@@ -159,9 +159,7 @@ bool SanitizerGetThreadName(char *name, int max_len) {
 
 #if !SANITIZER_FREEBSD && !SANITIZER_NETBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 static uptr g_tls_size;
-#endif
 
-#if !SANITIZER_FREEBSD && !SANITIZER_NETBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 #if defined(__mips__) || defined(__powerpc64__)
 // TlsPreTcbSize includes size of struct pthread_descr and size of tcb
 // head structure. It lies before the static tls blocks.
@@ -179,7 +177,6 @@ static uptr TlsPreTcbSize() {
   return kTlsPreTcbSize;
 }
 #endif
-#endif // !SANITIZER_FREEBSD && !SANITIZER_NETBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 
 void InitTlsSize() {
 // all current supported platforms have 16 bytes stack alignment
@@ -214,7 +211,6 @@ void InitTlsSize() {
   if (tls_align < kStackAlign)
     tls_align = kStackAlign;
   g_tls_size = RoundUpTo(tls_size, tls_align);
-#endif  // !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_NETBSD && !SANITIZER_GO
 }
 #else
 void InitTlsSize() { }
