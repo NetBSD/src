@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.13 2019/01/31 13:06:10 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.14 2019/01/31 13:16:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.13 2019/01/31 13:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.14 2019/01/31 13:16:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -152,7 +152,7 @@ vexpress_a15_smp_init(void)
 			break;
 	}
 	if (i == 0) {
-		aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
+		aprint_error("WARNING: AP failed to start\n");
 		ret++;
 	}
 
