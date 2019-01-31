@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.23 2019/01/31 15:26:24 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.24 2019/01/31 15:27:57 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.23 2019/01/31 15:26:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.24 2019/01/31 15:27:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1081,12 +1081,13 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
 		   device_xname(sc->axen_dev), pkt_count, pkt_hdr, pkt_len));
 
-		if ((pkt_hdr & AXEN_RXHDR_CRC_ERR) ||
-	    	    (pkt_hdr & AXEN_RXHDR_DROP_ERR)) {
+		if (pkt_hdr & (AXEN_RXHDR_CRC_ERR | AXEN_RXHDR_DROP_ERR)) {
 	    		ifp->if_ierrors++;
 			/* move to next pkt header */
-			DPRINTF(("%s: crc err (pkt#%d)\n",
-			    device_xname(sc->axen_dev), pkt_count));
+			DPRINTF(("%s: %s err (pkt#%d)\n",
+			    device_xname(sc->axen_dev),
+			    (pkt_hdr & AXEN_RXHDR_CRC_ERR) ? "crc" : "drop",
+			    pkt_count));
 			goto nextpkt;
 		}
 
