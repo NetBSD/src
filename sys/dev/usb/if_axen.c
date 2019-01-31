@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.19 2019/01/30 11:13:25 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.20 2019/01/31 15:21:05 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.19 2019/01/30 11:13:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.20 2019/01/31 15:21:05 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -568,9 +568,6 @@ axen_ax88179_init(struct axen_softc *sc)
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_PAUSE_HIGH_WATERMARK, &val);
 
 	/* Set RX/TX configuration. */
-	/* Offloadng enable */
-	axen_setcoe(sc);
-
 	/* Set RX control register */
 	ctl = AXEN_RXCTL_IPE | AXEN_RXCTL_DROPCRCERR | AXEN_RXCTL_AUTOB;
 	ctl |= AXEN_RXCTL_ACPT_PHY_MCAST | AXEN_RXCTL_ACPT_ALL_MCAST;
@@ -626,41 +623,35 @@ axen_setcoe(struct axen_softc *sc)
 	uint64_t enabled = ifp->if_capenable;
 	uint8_t val;
 
-	if (enabled & (IFCAP_CSUM_IPv4_Rx |
-	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
-	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx)) {
-		val = 0;
-		if (enabled & IFCAP_CSUM_IPv4_Rx)
-			val |= AXEN_RXCOE_IPv4;
-		if (enabled & IFCAP_CSUM_TCPv4_Rx)
-			val |= AXEN_RXCOE_TCPv4;
-		if (enabled & IFCAP_CSUM_UDPv4_Rx)
-			val |= AXEN_RXCOE_UDPv4;
-		if (enabled & IFCAP_CSUM_TCPv6_Rx)
-			val |= AXEN_RXCOE_TCPv6;
-		if (enabled & IFCAP_CSUM_UDPv6_Rx)
-			val |= AXEN_RXCOE_UDPv6;
-	} else
-		val = AXEN_RXCOE_OFF;
+	axen_lock_mii(sc);
+
+	val = AXEN_RXCOE_OFF;
+	if (enabled & IFCAP_CSUM_IPv4_Rx)
+		val |= AXEN_RXCOE_IPv4;
+	if (enabled & IFCAP_CSUM_TCPv4_Rx)
+		val |= AXEN_RXCOE_TCPv4;
+	if (enabled & IFCAP_CSUM_UDPv4_Rx)
+		val |= AXEN_RXCOE_UDPv4;
+	if (enabled & IFCAP_CSUM_TCPv6_Rx)
+		val |= AXEN_RXCOE_TCPv6;
+	if (enabled & IFCAP_CSUM_UDPv6_Rx)
+		val |= AXEN_RXCOE_UDPv6;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_RX_COE, &val);
 
-	if (enabled & (IFCAP_CSUM_IPv4_Tx |
-	     IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx |
-	     IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx)) {
-		val = 0;
-		if (enabled & IFCAP_CSUM_IPv4_Tx)
-			val |= AXEN_TXCOE_IPv4;
-		if (enabled & IFCAP_CSUM_TCPv4_Tx)
-			val |= AXEN_TXCOE_TCPv4;
-		if (enabled & IFCAP_CSUM_UDPv4_Tx)
-			val |= AXEN_TXCOE_UDPv4;
-		if (enabled & IFCAP_CSUM_TCPv6_Tx)
-			val |= AXEN_TXCOE_TCPv6;
-		if (enabled & IFCAP_CSUM_UDPv6_Tx)
-			val |= AXEN_TXCOE_UDPv6;
-	} else
-		val = AXEN_TXCOE_OFF;
+	val = AXEN_TXCOE_OFF;
+	if (enabled & IFCAP_CSUM_IPv4_Tx)
+		val |= AXEN_TXCOE_IPv4;
+	if (enabled & IFCAP_CSUM_TCPv4_Tx)
+		val |= AXEN_TXCOE_TCPv4;
+	if (enabled & IFCAP_CSUM_UDPv4_Tx)
+		val |= AXEN_TXCOE_UDPv4;
+	if (enabled & IFCAP_CSUM_TCPv6_Tx)
+		val |= AXEN_TXCOE_TCPv6;
+	if (enabled & IFCAP_CSUM_UDPv6_Tx)
+		val |= AXEN_TXCOE_UDPv6;
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_TX_COE, &val);
+
+	axen_unlock_mii(sc);
 }
 
 static int
@@ -1391,6 +1382,9 @@ axen_init(struct ifnet *ifp)
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_UNK_28, &bval);
 	axen_unlock_mii(sc);
 
+	/* Configure offloading engine. */
+	axen_setcoe(sc);
+
 	/* Program promiscuous mode and multicast filters. */
 	axen_iff(sc);
 
@@ -1496,9 +1490,7 @@ axen_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			axen_iff(sc);
 			break;
 		case SIOCSIFCAP:
-			axen_lock_mii(sc);
 			axen_setcoe(sc);
-			axen_unlock_mii(sc);
 			break;
 		default:
 			break;
