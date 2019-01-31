@@ -188,9 +188,11 @@ gen_exp (rtx x, enum rtx_code subroutine_type, char *used)
 	printf ("const_true_rtx");
       else
 	{
-	  printf ("GEN_INT (HOST_WIDE_INT_C (");
+	  printf ("GEN_INT (");
+	  printf ("HOST_WIDE_INT_C (");
 	  printf (HOST_WIDE_INT_PRINT_DEC, INTVAL (x));
-	  printf ("))");
+	  printf (")");
+	  printf (")");
 	}
       return;
 
