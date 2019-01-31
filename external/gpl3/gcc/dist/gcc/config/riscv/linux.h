@@ -1,6 +1,5 @@
 /* Definitions for RISC-V GNU/Linux systems with ELF format.
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,43 +17,41 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#undef WCHAR_TYPE
-#define WCHAR_TYPE "int"
-
-#undef WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE 32
-
 #define TARGET_OS_CPP_BUILTINS()				\
   do {								\
     GNU_USER_TARGET_OS_CPP_BUILTINS();				\
-    /* The GNU C++ standard library requires this.  */		\
-    if (c_dialect_cxx ())					\
-      builtin_define ("_GNU_SOURCE");				\
   } while (0)
 
-#undef SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
+#define GLIBC_DYNAMIC_LINKER "/lib/ld-linux-riscv" XLEN_SPEC "-" ABI_SPEC ".so.1"
 
-#define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
+#define MUSL_ABI_SUFFIX \
+  "%{mabi=ilp32:-sf}" \
+  "%{mabi=ilp32f:-sp}" \
+  "%{mabi=ilp32d:}" \
+  "%{mabi=lp64:-sf}" \
+  "%{mabi=lp64f:-sp}" \
+  "%{mabi=lp64d:}" \
 
-/* Borrowed from sparc/linux.h */
-#undef LINK_SPEC
-#define LINK_SPEC \
-  "%{shared:-shared} \
+#undef MUSL_DYNAMIC_LINKER
+#define MUSL_DYNAMIC_LINKER "/lib/ld-musl-riscv" XLEN_SPEC MUSL_ABI_SUFFIX ".so.1"
+
+/* Because RISC-V only has word-sized atomics, it requries libatomic where
+   others do not.  So link libatomic by default, as needed.  */
+#undef LIB_SPEC
+#ifdef LD_AS_NEEDED_OPTION
+#define LIB_SPEC GNU_USER_TARGET_LIB_SPEC \
+  " %{pthread:" LD_AS_NEEDED_OPTION " -latomic " LD_NO_AS_NEEDED_OPTION "}"
+#else
+#define LIB_SPEC GNU_USER_TARGET_LIB_SPEC " -latomic "
+#endif
+
+#define ICACHE_FLUSH_FUNC "__riscv_flush_icache"
+
+#define LINK_SPEC "\
+-melf" XLEN_SPEC "lriscv \
+%{shared} \
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
       -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
-      %{static:-static}}"
-
-#undef LIB_SPEC
-#define LIB_SPEC "\
-%{pthread:-lpthread} \
-%{shared:-lc} \
-%{!shared: \
-  %{profile:-lc_p} %{!profile:-lc}}"
-
-/* Similar to standard Linux, but adding -ffast-math support.  */
-#undef  ENDFILE_SPEC
-#define ENDFILE_SPEC \
-   "%{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
+    %{static:-static}}"
