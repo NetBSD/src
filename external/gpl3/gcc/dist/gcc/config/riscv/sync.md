@@ -1,6 +1,6 @@
 ;; Machine description for RISC-V atomic operations.
-;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
-;; Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
+;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Contributed by Andrew Waterman (andrew@sifive.com).
 ;; Based on MIPS target for GNU compiler.
 
 ;; This file is part of GCC.
@@ -46,26 +46,14 @@
   DONE;
 })
 
+;; Until the RISC-V memory model (hence its mapping from C++) is finalized,
+;; conservatively emit a full FENCE.
 (define_insn "mem_thread_fence_1"
   [(set (match_operand:BLK 0 "" "")
 	(unspec:BLK [(match_dup 0)] UNSPEC_MEMORY_BARRIER))
    (match_operand:SI 1 "const_int_operand" "")] ;; model
   ""
-{
-  switch (INTVAL (operands[1]))
-    {
-    case MEMMODEL_SEQ_CST:
-    case MEMMODEL_ACQ_REL:
-      return "fence rw,rw";
-    case MEMMODEL_ACQUIRE:
-    case MEMMODEL_CONSUME:
-      return "fence r,rw";
-    case MEMMODEL_RELEASE:
-      return "fence rw,w";
-    default:
-      gcc_unreachable();
-    }
-})
+  "fence\tiorw,iorw")
 
 ;; Atomic memory operations.
 
@@ -77,7 +65,8 @@
        (match_operand:SI 2 "const_int_operand")]      ;; model
       UNSPEC_ATOMIC_STORE))]
   "TARGET_ATOMIC"
-  "amoswap.<amo>%A2 zero,%z1,%0")
+  "%F2amoswap.<amo>%A2 zero,%z1,%0"
+  [(set (attr "length") (const_int 8))])
 
 (define_insn "atomic_<atomic_optab><mode>"
   [(set (match_operand:GPR 0 "memory_operand" "+A")
@@ -87,7 +76,8 @@
 	   (match_operand:SI 2 "const_int_operand")] ;; model
 	 UNSPEC_SYNC_OLD_OP))]
   "TARGET_ATOMIC"
-  "amo<insn>.<amo>%A2 zero,%z1,%0")
+  "%F2amo<insn>.<amo>%A2 zero,%z1,%0"
+  [(set (attr "length") (const_int 8))])
 
 (define_insn "atomic_fetch_<atomic_optab><mode>"
   [(set (match_operand:GPR 0 "register_operand" "=&r")
@@ -99,7 +89,8 @@
 	   (match_operand:SI 3 "const_int_operand")] ;; model
 	 UNSPEC_SYNC_OLD_OP))]
   "TARGET_ATOMIC"
-  "amo<insn>.<amo>%A3 %0,%z2,%1")
+  "%F3amo<insn>.<amo>%A3 %0,%z2,%1"
+  [(set (attr "length") (const_int 8))])
 
 (define_insn "atomic_exchange<mode>"
   [(set (match_operand:GPR 0 "register_operand" "=&r")
@@ -108,9 +99,10 @@
 	   (match_operand:SI 3 "const_int_operand")] ;; model
 	  UNSPEC_SYNC_EXCHANGE))
    (set (match_dup 1)
-        (match_operand:GPR 2 "register_operand" "0"))]
+	(match_operand:GPR 2 "register_operand" "0"))]
   "TARGET_ATOMIC"
-  "amoswap.<amo>%A3 %0,%z2,%1")
+  "%F3amoswap.<amo>%A3 %0,%z2,%1"
+  [(set (attr "length") (const_int 8))])
 
 (define_insn "atomic_cas_value_strong<mode>"
   [(set (match_operand:GPR 0 "register_operand" "=&r")
@@ -123,8 +115,8 @@
 	 UNSPEC_COMPARE_AND_SWAP))
    (clobber (match_scratch:GPR 6 "=&r"))]
   "TARGET_ATOMIC"
-  "1: lr.<amo>%A5 %0,%1; bne %0,%z2,1f; sc.<amo>%A4 %6,%z3,%1; bnez %6,1b; 1:"
-  [(set (attr "length") (const_int 16))])
+  "%F5 1: lr.<amo>%A5 %0,%1; bne %0,%z2,1f; sc.<amo>%A4 %6,%z3,%1; bnez %6,1b; 1:"
+  [(set (attr "length") (const_int 20))])
 
 (define_expand "atomic_compare_and_swap<mode>"
   [(match_operand:SI 0 "register_operand" "")   ;; bool output
@@ -146,13 +138,17 @@
     {
       rtx difference = gen_rtx_MINUS (<MODE>mode, operands[1], operands[3]);
       compare = gen_reg_rtx (<MODE>mode);
-      emit_insn (gen_rtx_SET (VOIDmode, compare, difference));
+      emit_insn (gen_rtx_SET (compare, difference));
     }
 
-  rtx eq = gen_rtx_EQ (<MODE>mode, compare, const0_rtx);
-  rtx result = gen_reg_rtx (<MODE>mode);
-  emit_insn (gen_rtx_SET (VOIDmode, result, eq));
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], gen_lowpart (SImode, result)));
+  if (word_mode != <MODE>mode)
+    {
+      rtx reg = gen_reg_rtx (word_mode);
+      emit_insn (gen_rtx_SET (reg, gen_rtx_SIGN_EXTEND (word_mode, compare)));
+      compare = reg;
+    }
+
+  emit_insn (gen_rtx_SET (operands[0], gen_rtx_EQ (SImode, compare, const0_rtx)));
   DONE;
 })
 

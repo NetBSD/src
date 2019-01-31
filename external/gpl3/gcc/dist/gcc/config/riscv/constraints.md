@@ -1,6 +1,6 @@
 ;; Constraint definitions for RISC-V target.
-;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
-;; Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
+;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Contributed by Andrew Waterman (andrew@sifive.com).
 ;; Based on MIPS target for GNU compiler.
 ;;
 ;; This file is part of GCC.
@@ -24,18 +24,15 @@
 (define_register_constraint "f" "TARGET_HARD_FLOAT ? FP_REGS : NO_REGS"
   "A floating-point register (if available).")
 
-(define_register_constraint "b" "ALL_REGS"
+(define_register_constraint "j" "SIBCALL_REGS"
   "@internal")
 
-(define_register_constraint "j" "T_REGS"
+;; Avoid using register t0 for JALR's argument, because for some
+;; microarchitectures that is a return-address stack hint.
+(define_register_constraint "l" "JALR_REGS"
   "@internal")
 
-;; Integer constraints
-
-(define_constraint "Z"
-  "@internal"
-  (and (match_code "const_int")
-       (match_test "1")))
+;; General constraints
 
 (define_constraint "I"
   "An I-type 12-bit signed immediate."
@@ -47,18 +44,17 @@
   (and (match_code "const_int")
        (match_test "ival == 0")))
 
-;; Floating-point constraints
+(define_constraint "K"
+  "A 5-bit unsigned immediate for CSR access instructions."
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (ival, 0, 31)")))
 
+;; Floating-point constant +0.0, used for FCVT-based moves when FMV is
+;; not available in RV32.
 (define_constraint "G"
-  "Floating-point zero."
+  "@internal"
   (and (match_code "const_double")
        (match_test "op == CONST0_RTX (mode)")))
-
-;; General constraints
-
-(define_constraint "Q"
-  "@internal"
-  (match_operand 0 "const_arith_operand"))
 
 (define_memory_constraint "A"
   "An address that is held in a general-purpose register."
@@ -68,23 +64,15 @@
 (define_constraint "S"
   "@internal
    A constant call address."
-  (and (match_operand 0 "call_insn_operand")
-       (match_test "CONSTANT_P (op)")))
+  (match_operand 0 "absolute_symbolic_operand"))
+
+(define_constraint "U"
+  "@internal
+   A PLT-indirect call address."
+  (match_operand 0 "plt_symbolic_operand"))
 
 (define_constraint "T"
   "@internal
    A constant @code{move_operand}."
   (and (match_operand 0 "move_operand")
        (match_test "CONSTANT_P (op)")))
-
-(define_memory_constraint "W"
-  "@internal
-   A memory address based on a member of @code{BASE_REG_CLASS}."
-  (and (match_code "mem")
-       (match_operand 0 "memory_operand")))
-
-(define_constraint "YG"
-  "@internal
-   A vector zero."
-  (and (match_code "const_vector")
-       (match_test "op == CONST0_RTX (mode)")))

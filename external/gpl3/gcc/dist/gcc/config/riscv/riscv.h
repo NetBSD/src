@@ -1,6 +1,6 @@
 /* Definition of RISC-V target for GNU compiler.
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
-   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target for GNU compiler.
 
 This file is part of GCC.
@@ -19,89 +19,13 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* TARGET_HARD_FLOAT and TARGET_SOFT_FLOAT reflect whether the FPU is
-   directly accessible, while the command-line options select
-   TARGET_HARD_FLOAT_ABI and TARGET_SOFT_FLOAT_ABI to reflect the ABI
-   in use.  */
-#define TARGET_HARD_FLOAT TARGET_HARD_FLOAT_ABI
-#define TARGET_SOFT_FLOAT TARGET_SOFT_FLOAT_ABI
+#ifndef GCC_RISCV_H
+#define GCC_RISCV_H
+
+#include "config/riscv/riscv-opts.h"
 
 /* Target CPU builtins.  */
-#define TARGET_CPU_CPP_BUILTINS()					\
-  do									\
-    {									\
-      builtin_assert ("machine=riscv");                        	        \
-									\
-      builtin_assert ("cpu=riscv");					\
-      builtin_define ("__riscv__");     				\
-      builtin_define ("__riscv");     					\
-      builtin_define ("_riscv");					\
-									\
-      if (TARGET_64BIT)							\
-	{								\
-	  builtin_define ("__riscv64");					\
-	  builtin_define ("_RISCV_SIM=_ABI64");			        \
-	}								\
-      else						        	\
-	builtin_define ("_RISCV_SIM=_ABI32");			        \
-									\
-      builtin_define ("_ABI32=1");					\
-      builtin_define ("_ABI64=3");					\
-									\
-									\
-      builtin_define_with_int_value ("_RISCV_SZINT", INT_TYPE_SIZE);	\
-      builtin_define_with_int_value ("_RISCV_SZLONG", LONG_TYPE_SIZE);	\
-      builtin_define_with_int_value ("_RISCV_SZPTR", POINTER_SIZE);	\
-      builtin_define_with_int_value ("_RISCV_FPSET", 32);		\
-									\
-      if (TARGET_ATOMIC) {                                              \
-        builtin_define ("__riscv_atomic");                              \
-      }                                                                 \
-                                                                        \
-      /* These defines reflect the ABI in use, not whether the  	\
-	 FPU is directly accessible.  */				\
-      if (TARGET_HARD_FLOAT_ABI) {					\
-	builtin_define ("__riscv_hard_float");				\
-	if (TARGET_FDIV) {						\
-	  builtin_define ("__riscv_fdiv");				\
-	  builtin_define ("__riscv_fsqrt");				\
-	}								\
-      } else								\
-	builtin_define ("__riscv_soft_float");				\
-									\
-      /* The base RISC-V ISA is always little-endian. */		\
-      builtin_define_std ("RISCVEL");					\
-      builtin_define ("_RISCVEL");					\
-									\
-      /* Macros dependent on the C dialect.  */				\
-      if (preprocessing_asm_p ())					\
-	{								\
-	  builtin_define_std ("LANGUAGE_ASSEMBLY");			\
-	  builtin_define ("_LANGUAGE_ASSEMBLY");			\
-	}								\
-      else if (c_dialect_cxx ())					\
-	{								\
-	  builtin_define ("_LANGUAGE_C_PLUS_PLUS");			\
-	  builtin_define ("__LANGUAGE_C_PLUS_PLUS");			\
-	  builtin_define ("__LANGUAGE_C_PLUS_PLUS__");			\
-	}								\
-      else								\
-	{								\
-	  builtin_define_std ("LANGUAGE_C");				\
-	  builtin_define ("_LANGUAGE_C");				\
-	}								\
-      if (c_dialect_objc ())						\
-	{								\
-	  builtin_define ("_LANGUAGE_OBJECTIVE_C");			\
-	  builtin_define ("__LANGUAGE_OBJECTIVE_C");			\
-	  /* Bizarre, but needed at least for Irix.  */			\
-	  builtin_define_std ("LANGUAGE_C");				\
-	  builtin_define ("_LANGUAGE_C");				\
-	}								\
-      if (riscv_cmodel == CM_MEDANY)					\
-	builtin_define ("_RISCV_CMODEL_MEDANY");			\
-    }									\
-  while (0)
+#define TARGET_CPU_CPP_BUILTINS() riscv_cpu_cpp_builtins (pfile)
 
 /* Default target_flags if no switches are specified  */
 
@@ -109,107 +33,42 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_DEFAULT 0
 #endif
 
-#ifndef RISCV_ARCH_STRING_DEFAULT
-#define RISCV_ARCH_STRING_DEFAULT "IMAFD"
-#endif
-
 #ifndef RISCV_TUNE_STRING_DEFAULT
 #define RISCV_TUNE_STRING_DEFAULT "rocket"
 #endif
 
-#ifndef TARGET_64BIT_DEFAULT
-#define TARGET_64BIT_DEFAULT 1
-#endif
-
-#if TARGET_64BIT_DEFAULT
-# define MULTILIB_ARCH_DEFAULT "m64"
-# define OPT_ARCH64 "!m32"
-# define OPT_ARCH32 "m32"
-#else
-# define MULTILIB_ARCH_DEFAULT "m32"
-# define OPT_ARCH64 "m64"
-# define OPT_ARCH32 "!m64"
-#endif
-
-#ifndef MULTILIB_DEFAULTS
-#define MULTILIB_DEFAULTS \
-    { MULTILIB_ARCH_DEFAULT }
-#endif
-
-
 /* Support for a compile-time default CPU, et cetera.  The rules are:
    --with-arch is ignored if -march is specified.
-   --with-tune is ignored if -mtune is specified.
-   --with-float is ignored if -mhard-float or -msoft-float are specified. */
+   --with-abi is ignored if -mabi is specified.
+   --with-tune is ignored if -mtune is specified.  */
 #define OPTION_DEFAULT_SPECS \
-  {"arch_32", "%{" OPT_ARCH32 ":%{m32}}" }, \
-  {"arch_64", "%{" OPT_ARCH64 ":%{m64}}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
-  {"float", "%{!msoft-float:%{!mhard-float:-m%(VALUE)-float}}" }, \
-
-#define DRIVER_SELF_SPECS ""
+  {"arch", "%{!march=*:-march=%(VALUE)}" }, \
+  {"abi", "%{!mabi=*:-mabi=%(VALUE)}" }, \
 
 #ifdef IN_LIBGCC2
 #undef TARGET_64BIT
 /* Make this compile time constant for libgcc2 */
-#ifdef __riscv64
-#define TARGET_64BIT		1
-#else
-#define TARGET_64BIT		0
-#endif
+#define TARGET_64BIT           (__riscv_xlen == 64)
 #endif /* IN_LIBGCC2 */
-
-/* Tell collect what flags to pass to nm.  */
-#ifndef NM_FLAGS
-#define NM_FLAGS "-Bn"
-#endif
 
 #undef ASM_SPEC
 #define ASM_SPEC "\
 %(subtarget_asm_debugging_spec) \
-%{m32} %{m64} %{!m32:%{!m64: %(asm_abi_default_spec)}} \
-%{fPIC|fpic|fPIE|fpie:-fpic} \
+%{" FPIE_OR_FPIC_SPEC ":-fpic} \
 %{march=*} \
+%{mabi=*} \
 %(subtarget_asm_spec)"
 
-/* Extra switches sometimes passed to the linker.  */
-
-#ifndef LINK_SPEC
-#define LINK_SPEC "\
-%{!T:-dT riscv.ld} \
-%{m64:-melf64lriscv} \
-%{m32:-melf32lriscv} \
-%{shared}"
-#endif  /* LINK_SPEC defined */
-
-/* This macro defines names of additional specifications to put in the specs
-   that can be used in various specifications like CC1_SPEC.  Its definition
-   is an initializer with a subgrouping for each command option.
-
-   Each subgrouping contains a string constant, that defines the
-   specification name, and a string constant that used by the GCC driver
-   program.
-
-   Do not define this macro if it does not need to do anything.  */
-
-#define EXTRA_SPECS							\
-  { "asm_abi_default_spec", "-" MULTILIB_ARCH_DEFAULT },		\
-  SUBTARGET_EXTRA_SPECS
-
-#ifndef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS
-#endif
-
 #define TARGET_DEFAULT_CMODEL CM_MEDLOW
-
-/* By default, turn on GDB extensions.  */
-#define DEFAULT_GDB_EXTENSIONS 1
 
 #define LOCAL_LABEL_PREFIX	"."
 #define USER_LABEL_PREFIX	""
 
-#define DWARF2_DEBUGGING_INFO 1
-#define DWARF2_ASM_LINE_DEBUG_INFO 0
+/* Offsets recorded in opcodes are a multiple of this alignment factor.
+   The default for this in 64-bit mode is 8, which causes problems with
+   SFmode register saves.  */
+#define DWARF_CIE_DATA_ALIGNMENT -4
 
 /* The mapping from gcc register number to DWARF 2 CFA column number.  */
 #define DWARF_FRAME_REGNUM(REGNO) \
@@ -217,12 +76,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* The DWARF 2 CFA column which tracks the return address.  */
 #define DWARF_FRAME_RETURN_COLUMN RETURN_ADDR_REGNUM
-
-/* Don't emit .cfi_sections, as it does not work */
-#undef HAVE_GAS_CFI_SECTIONS_DIRECTIVE
-#define HAVE_GAS_CFI_SECTIONS_DIRECTIVE 0
-
-/* Before the prologue, RA lives in r31.  */
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (VOIDmode, RETURN_ADDR_REGNUM)
 
 /* Describe how we implement __builtin_eh_return.  */
@@ -245,53 +98,39 @@ along with GCC; see the file COPYING3.  If not see
 #define MIN_UNITS_PER_WORD 4
 #endif
 
-/* We currently require both or neither of the `F' and `D' extensions. */
-#define UNITS_PER_FPREG 8
+/* The `Q' extension is not yet supported.  */
+#define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
 
-/* If FP regs aren't wide enough for a given FP argument, it is passed in
-   integer registers. */
-#define MIN_FPRS_PER_FMT 1
-
-/* The largest size of value that can be held in floating-point
-   registers and moved with a single instruction.  */
-#define UNITS_PER_HWFPVALUE \
-  (TARGET_SOFT_FLOAT_ABI ? 0 : UNITS_PER_FPREG)
-
-/* The largest size of value that can be held in floating-point
-   registers.  */
-#define UNITS_PER_FPVALUE			\
-  (TARGET_SOFT_FLOAT_ABI ? 0			\
-   : LONG_DOUBLE_TYPE_SIZE / BITS_PER_UNIT)
-
-/* The number of bytes in a double.  */
-#define UNITS_PER_DOUBLE (TYPE_PRECISION (double_type_node) / BITS_PER_UNIT)
+/* The largest type that can be passed in floating-point registers.  */
+#define UNITS_PER_FP_ARG					\
+  (riscv_abi == ABI_ILP32 || riscv_abi == ABI_LP64 ? 0 :	\
+   riscv_abi == ABI_ILP32F || riscv_abi == ABI_LP64F ? 4 : 8)	\
 
 /* Set the sizes of the core types.  */
 #define SHORT_TYPE_SIZE 16
 #define INT_TYPE_SIZE 32
-#define LONG_TYPE_SIZE (TARGET_64BIT ? 64 : 32)
 #define LONG_LONG_TYPE_SIZE 64
+#define POINTER_SIZE (riscv_abi >= ABI_LP64 ? 64 : 32)
+#define LONG_TYPE_SIZE POINTER_SIZE
 
 #define FLOAT_TYPE_SIZE 32
 #define DOUBLE_TYPE_SIZE 64
-/* XXX The ABI says long doubles are IEEE-754-2008 float128s. */
-#define LONG_DOUBLE_TYPE_SIZE 64
-
-#ifdef IN_LIBGCC2
-# define LIBGCC2_LONG_DOUBLE_TYPE_SIZE LONG_DOUBLE_TYPE_SIZE
-#endif
+#define LONG_DOUBLE_TYPE_SIZE 128
 
 /* Allocation boundary (in *bits*) for storing arguments in argument list.  */
 #define PARM_BOUNDARY BITS_PER_WORD
 
 /* Allocation boundary (in *bits*) for the code of a function.  */
-#define FUNCTION_BOUNDARY 32
+#define FUNCTION_BOUNDARY (TARGET_RVC ? 16 : 32)
 
 /* There is no point aligning anything to a rounder boundary than this.  */
 #define BIGGEST_ALIGNMENT 128
 
-/* All accesses must be aligned.  */
-#define STRICT_ALIGNMENT 1
+/* The user-level ISA permits unaligned accesses, but they are not required
+   of the privileged architecture.  */
+#define STRICT_ALIGNMENT TARGET_STRICT_ALIGN
+
+#define SLOW_UNALIGNED_ACCESS(MODE, ALIGN) riscv_slow_unaligned_access
 
 /* Define this if you wish to imitate the way many other C compilers
    handle alignment of bitfields and the structures that contain
@@ -343,7 +182,6 @@ along with GCC; see the file COPYING3.  If not see
    cause character arrays to be word-aligned so that `strcpy' calls
    that copy constants to character arrays can be done inline.  */
 
-#undef DATA_ALIGNMENT
 #define DATA_ALIGNMENT(TYPE, ALIGN)					\
   ((((ALIGN) < BITS_PER_WORD)						\
     && (TREE_CODE (TYPE) == ARRAY_TYPE					\
@@ -359,13 +197,12 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Define if operations between registers always perform the operation
    on the full register even if a narrower mode is specified.  */
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 /* When in 64-bit mode, move insns will sign extend SImode and CCmode
    moves.  All other references are zero extended.  */
 #define LOAD_EXTEND_OP(MODE) \
-  (TARGET_64BIT && ((MODE) == SImode || (MODE) == CCmode) \
-   ? SIGN_EXTEND : ZERO_EXTEND)
+  (TARGET_64BIT && (MODE) == SImode ? SIGN_EXTEND : ZERO_EXTEND)
 
 /* Define this macro if it is advisable to hold scalars in registers
    in a wider mode than that declared by the program.  In such cases,
@@ -375,23 +212,25 @@ along with GCC; see the file COPYING3.  If not see
 
 #define PROMOTE_MODE(MODE, UNSIGNEDP, TYPE)	\
   if (GET_MODE_CLASS (MODE) == MODE_INT		\
-      && GET_MODE_SIZE (MODE) < 4)		\
+      && GET_MODE_SIZE (MODE) < UNITS_PER_WORD)	\
     {						\
-      (MODE) = Pmode;				\
+      if ((MODE) == SImode)			\
+	(UNSIGNEDP) = 0;			\
+      (MODE) = word_mode;			\
     }
 
 /* Pmode is always the same as ptr_mode, but not always the same as word_mode.
    Extensions of pointers to word_mode must be signed.  */
 #define POINTERS_EXTEND_UNSIGNED false
 
-/* RV32 double-precision FP <-> integer moves go through memory */
-#define SECONDARY_MEMORY_NEEDED(CLASS1,CLASS2,MODE) \
- (!TARGET_64BIT && GET_MODE_SIZE (MODE) == 8 && \
-   (((CLASS1) == FP_REGS && (CLASS2) != FP_REGS) \
-   || ((CLASS2) == FP_REGS && (CLASS1) != FP_REGS)))
+/* When floating-point registers are wider than integer ones, moves between
+   them must go through memory.  */
+#define SECONDARY_MEMORY_NEEDED(CLASS1,CLASS2,MODE)	\
+  (GET_MODE_SIZE (MODE) > UNITS_PER_WORD		\
+   && ((CLASS1) == FP_REGS) != ((CLASS2) == FP_REGS))
 
 /* Define if loading short immediate values into registers sign extends.  */
-#define SHORT_IMMEDIATES_SIGN_EXTEND
+#define SHORT_IMMEDIATES_SIGN_EXTEND 1
 
 /* Standard register usage.  */
 
@@ -399,54 +238,40 @@ along with GCC; see the file COPYING3.  If not see
 
    - 32 integer registers
    - 32 floating point registers
-   - 32 vector integer registers
-   - 32 vector floating point registers
    - 2 fake registers:
 	- ARG_POINTER_REGNUM
 	- FRAME_POINTER_REGNUM */
 
 #define FIRST_PSEUDO_REGISTER 66
 
-/* x0, sp, gp, and tp are fixed. */
+/* x0, sp, gp, and tp are fixed.  */
 
 #define FIXED_REGISTERS							\
-{ /* General registers.  */                                             \
+{ /* General registers.  */						\
   1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
-  /* Floating-point registers.  */                                      \
+  /* Floating-point registers.  */					\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
-  /* Others.  */                                                        \
-  1, 1 \
+  /* Others.  */							\
+  1, 1									\
 }
-
 
 /* a0-a7, t0-a6, fa0-fa7, and ft0-ft11 are volatile across calls.
    The call RTLs themselves clobber ra.  */
 
 #define CALL_USED_REGISTERS						\
-{ /* General registers.  */                                             \
+{ /* General registers.  */						\
   1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Floating-point registers.  */                                      \
+  /* Floating-point registers.  */					\
   1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Others.  */                                                        \
-  1, 1 \
+  /* Others.  */							\
+  1, 1									\
 }
 
-#define CALL_REALLY_USED_REGISTERS                                      \
-{ /* General registers.  */                                             \
-  1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
-  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Floating-point registers.  */                                      \
-  1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
-  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Others.  */                                                        \
-  1, 1 \
-}
-
-/* Internal macros to classify an ISA register's type. */
+/* Internal macros to classify an ISA register's type.  */
 
 #define GP_REG_FIRST 0
 #define GP_REG_LAST  31
@@ -469,23 +294,19 @@ along with GCC; see the file COPYING3.  If not see
 
 #define FP_REG_RTX_P(X) (REG_P (X) && FP_REG_P (REGNO (X)))
 
-/* Return coprocessor number from register number.  */
-
-#define COPNUM_AS_CHAR_FROM_REGNUM(REGNO) 				\
-  (COP0_REG_P (REGNO) ? '0' : COP2_REG_P (REGNO) ? '2'			\
-   : COP3_REG_P (REGNO) ? '3' : '?')
-
-
 #define HARD_REGNO_NREGS(REGNO, MODE) riscv_hard_regno_nregs (REGNO, MODE)
 
 #define HARD_REGNO_MODE_OK(REGNO, MODE)					\
-  riscv_hard_regno_mode_ok[ (int)(MODE) ][ (REGNO) ]
+  riscv_hard_regno_mode_ok_p (REGNO, MODE)
 
-#define MODES_TIEABLE_P(MODE1, MODE2)					\
-  ((MODE1) == (MODE2) || (GET_MODE_CLASS (MODE1) == MODE_INT		\
-			  && GET_MODE_CLASS (MODE2) == MODE_INT))
+/* Don't allow floating-point modes to be tied, since type punning of
+   single-precision and double-precision is implementation defined.  */
+#define MODES_TIEABLE_P(MODE1, MODE2)			\
+  ((MODE1) == (MODE2)					\
+   || !(GET_MODE_CLASS (MODE1) == MODE_FLOAT		\
+	&& GET_MODE_CLASS (MODE2) == MODE_FLOAT))
 
-/* Use s0 as the frame pointer if it is so requested. */
+/* Use s0 as the frame pointer if it is so requested.  */
 #define HARD_FRAME_POINTER_REGNUM 8
 #define STACK_POINTER_REGNUM 2
 #define THREAD_POINTER_REGNUM 4
@@ -495,11 +316,8 @@ along with GCC; see the file COPYING3.  If not see
 #define ARG_POINTER_REGNUM 64
 #define FRAME_POINTER_REGNUM 65
 
-#define HARD_FRAME_POINTER_IS_FRAME_POINTER 0
-#define HARD_FRAME_POINTER_IS_ARG_POINTER 0
-
 /* Register in which static-chain is passed to a function.  */
-#define STATIC_CHAIN_REGNUM GP_TEMP_FIRST
+#define STATIC_CHAIN_REGNUM (GP_TEMP_FIRST + 2)
 
 /* Registers used as temporaries in prologue/epilogue code.
 
@@ -509,15 +327,24 @@ along with GCC; see the file COPYING3.  If not see
    the frame pointer, the EH stack adjustment, or the EH data registers. */
 
 #define RISCV_PROLOGUE_TEMP_REGNUM (GP_TEMP_FIRST + 1)
-#define RISCV_EPILOGUE_TEMP_REGNUM RISCV_PROLOGUE_TEMP_REGNUM
-
 #define RISCV_PROLOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP_REGNUM)
-#define RISCV_EPILOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_EPILOGUE_TEMP_REGNUM)
 
-#define FUNCTION_PROFILER(STREAM, LABELNO)	\
-{						\
-    sorry ("profiler support for RISC-V");	\
-}
+#define MCOUNT_NAME "_mcount"
+
+#define NO_PROFILE_COUNTERS 1
+
+/* Emit rtl for profiling.  Output assembler code to FILE
+   to call "_mcount" for profiling a function entry.  */
+#define PROFILE_HOOK(LABEL)						\
+  {									\
+    rtx fun, ra;							\
+    ra = get_hard_reg_initial_val (Pmode, RETURN_ADDR_REGNUM);		\
+    fun = gen_rtx_SYMBOL_REF (Pmode, MCOUNT_NAME);			\
+    emit_library_call (fun, LCT_NORMAL, VOIDmode, 1, ra, Pmode);	\
+  }
+
+/* All the work done in PROFILE_HOOK, but still required.  */
+#define FUNCTION_PROFILER(STREAM, LABELNO) do { } while (0)
 
 /* Define this macro if it is as good or better to call a constant
    function address than to call an address kept in a register.  */
@@ -546,10 +373,11 @@ along with GCC; see the file COPYING3.  If not see
 enum reg_class
 {
   NO_REGS,			/* no registers in set */
-  T_REGS,			/* registers used by indirect sibcalls */
+  SIBCALL_REGS,			/* registers used by indirect sibcalls */
+  JALR_REGS,			/* registers used by indirect calls */
   GR_REGS,			/* integer registers */
-  FP_REGS,			/* floating point registers */
-  FRAME_REGS,			/* $arg and $frame */
+  FP_REGS,			/* floating-point registers */
+  FRAME_REGS,			/* arg pointer and frame pointer */
   ALL_REGS,			/* all registers */
   LIM_REG_CLASSES		/* max value + 1 */
 };
@@ -565,7 +393,8 @@ enum reg_class
 #define REG_CLASS_NAMES							\
 {									\
   "NO_REGS",								\
-  "T_REGS",								\
+  "SIBCALL_REGS",							\
+  "JALR_REGS",								\
   "GR_REGS",								\
   "FP_REGS",								\
   "FRAME_REGS",								\
@@ -583,10 +412,11 @@ enum reg_class
    sub-initializer must be suitable as an initializer for the type
    `HARD_REG_SET' which is defined in `hard-reg-set.h'.  */
 
-#define REG_CLASS_CONTENTS									\
-{												\
+#define REG_CLASS_CONTENTS						\
+{									\
   { 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
-  { 0xf00000e0, 0x00000000, 0x00000000 },	/* T_REGS */		\
+  { 0xf00000c0, 0x00000000, 0x00000000 },	/* SIBCALL_REGS */	\
+  { 0xffffffc0, 0x00000000, 0x00000000 },	/* JALR_REGS */		\
   { 0xffffffff, 0x00000000, 0x00000000 },	/* GR_REGS */		\
   { 0x00000000, 0xffffffff, 0x00000000 },	/* FP_REGS */		\
   { 0x00000000, 0x00000000, 0x00000003 },	/* FRAME_REGS */	\
@@ -620,13 +450,13 @@ enum reg_class
 #define REG_ALLOC_ORDER							\
 { \
   /* Call-clobbered GPRs.  */						\
-  15, 14, 13, 12, 11, 10, 16, 17, 5, 6, 7, 28, 29, 30, 31, 1,		\
+  15, 14, 13, 12, 11, 10, 16, 17, 6, 28, 29, 30, 31, 5, 7, 1,		\
   /* Call-saved GPRs.  */						\
   8, 9, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,	       			\
   /* GPRs that can never be exposed to the register allocator.  */	\
   0, 2, 3, 4,								\
   /* Call-clobbered FPRs.  */						\
-  32, 33, 34, 35, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47, 48, 49,	\
+  47, 46, 45, 44, 43, 42, 32, 33, 34, 35, 36, 37, 38, 39, 48, 49,	\
   60, 61, 62, 63,							\
   /* Call-saved FPRs.  */						\
   40, 41, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,			\
@@ -635,47 +465,23 @@ enum reg_class
   64, 65								\
 }
 
-/* True if VALUE is a signed 16-bit number.  */
+/* True if VALUE is a signed 12-bit number.  */
 
-#include "opcode-riscv.h"
 #define SMALL_OPERAND(VALUE) \
-  ((unsigned HOST_WIDE_INT) (VALUE) + RISCV_IMM_REACH/2 < RISCV_IMM_REACH)
+  ((unsigned HOST_WIDE_INT) (VALUE) + IMM_REACH/2 < IMM_REACH)
 
 /* True if VALUE can be loaded into a register using LUI.  */
 
-#define LUI_OPERAND(VALUE)					\
-  (((VALUE) | ((1UL<<31) - RISCV_IMM_REACH)) == ((1UL<<31) - RISCV_IMM_REACH) \
-   || ((VALUE) | ((1UL<<31) - RISCV_IMM_REACH)) + RISCV_IMM_REACH == 0)
-
-/* Return a value X with the low 16 bits clear, and such that
-   VALUE - X is a signed 16-bit value.  */
-
-#define SMALL_INT(X) SMALL_OPERAND (INTVAL (X))
-#define LUI_INT(X) LUI_OPERAND (INTVAL (X))
-
-/* The HI and LO registers can only be reloaded via the general
-   registers.  Condition code registers can only be loaded to the
-   general registers, and from the floating point registers.  */
-
-#define SECONDARY_INPUT_RELOAD_CLASS(CLASS, MODE, X)			\
-  riscv_secondary_reload_class (CLASS, MODE, X, true)
-#define SECONDARY_OUTPUT_RELOAD_CLASS(CLASS, MODE, X)			\
-  riscv_secondary_reload_class (CLASS, MODE, X, false)
-
-/* Return the maximum number of consecutive registers
-   needed to represent mode MODE in a register of class CLASS.  */
-
-#define CLASS_MAX_NREGS(CLASS, MODE) riscv_class_max_nregs (CLASS, MODE)
-
-/* It is undefined to interpret an FP register in a different format than
-   that which it was created to be. */
+#define LUI_OPERAND(VALUE)						\
+  (((VALUE) | ((1UL<<31) - IMM_REACH)) == ((1UL<<31) - IMM_REACH)	\
+   || ((VALUE) | ((1UL<<31) - IMM_REACH)) + IMM_REACH == 0)
 
 #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS) \
   reg_classes_intersect_p (FP_REGS, CLASS)
 
 /* Stack layout; function entry, exit and calling.  */
 
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 
 #define FRAME_GROWS_DOWNWARD 1
 
@@ -713,7 +519,7 @@ enum reg_class
    point values.  */
 
 #define GP_RETURN GP_ARG_FIRST
-#define FP_RETURN ((TARGET_SOFT_FLOAT) ? GP_RETURN : FP_ARG_FIRST)
+#define FP_RETURN (UNITS_PER_FP_ARG == 0 ? GP_RETURN : FP_ARG_FIRST)
 
 #define MAX_ARGS_IN_REGISTERS 8
 
@@ -724,6 +530,10 @@ enum reg_class
 #define GP_TEMP_FIRST (GP_REG_FIRST + 5)
 #define FP_ARG_FIRST (FP_REG_FIRST + 10)
 #define FP_ARG_LAST  (FP_ARG_FIRST + MAX_ARGS_IN_REGISTERS - 1)
+
+#define CALLEE_SAVED_REG_NUMBER(REGNO)			\
+  ((REGNO) >= 8 && (REGNO) <= 9 ? (REGNO) - 8 :		\
+   (REGNO) >= 18 && (REGNO) <= 27 ? (REGNO) - 16 : -1)
 
 #define LIBCALL_VALUE(MODE) \
   riscv_function_value (NULL_TREE, NULL_TREE, MODE)
@@ -737,22 +547,17 @@ enum reg_class
    We have no FP argument registers when soft-float.  When FP registers
    are 32 bits, we can't directly reference the odd numbered ones.  */
 
-/* Accept arguments in a0-a7 and/or fa0-fa7. */
-#define FUNCTION_ARG_REGNO_P(N)					\
-  (IN_RANGE((N), GP_ARG_FIRST, GP_ARG_LAST)			\
-   || IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST))
-
-/* The ABI views the arguments as a structure, of which the first 8
-   words go in registers and the rest go on the stack.  If I < 8, N, the Ith
-   word might go in the Ith integer argument register or the Ith
-   floating-point argument register. */
+/* Accept arguments in a0-a7, and in fa0-fa7 if permitted by the ABI.  */
+#define FUNCTION_ARG_REGNO_P(N)						\
+  (IN_RANGE ((N), GP_ARG_FIRST, GP_ARG_LAST)				\
+   || (UNITS_PER_FP_ARG && IN_RANGE ((N), FP_ARG_FIRST, FP_ARG_LAST)))
 
 typedef struct {
   /* Number of integer registers used so far, up to MAX_ARGS_IN_REGISTERS. */
   unsigned int num_gprs;
 
-  /* Number of words passed on the stack.  */
-  unsigned int stack_words;
+  /* Number of floating-point registers used so far, likewise.  */
+  unsigned int num_fprs;
 } CUMULATIVE_ARGS;
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
@@ -764,16 +569,8 @@ typedef struct {
 
 #define EPILOGUE_USES(REGNO)	((REGNO) == RETURN_ADDR_REGNUM)
 
-/* ABI requires 16-byte alignment, even on ven on RV32. */
+/* ABI requires 16-byte alignment, even on RV32. */
 #define RISCV_STACK_ALIGN(LOC) (((LOC) + 15) & -16)
-
-#define NO_PROFILE_COUNTERS 1
-
-/* Define this macro if the code for function profiling should come
-   before the function prologue.  Normally, the profiling code comes
-   after.  */
-
-/* #define PROFILE_BEFORE_PROLOGUE */
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in
@@ -786,7 +583,10 @@ typedef struct {
 /* Trampolines are a block of code followed by two pointers.  */
 
 #define TRAMPOLINE_CODE_SIZE 16
-#define TRAMPOLINE_SIZE (TRAMPOLINE_CODE_SIZE + POINTER_SIZE * 2)
+#define TRAMPOLINE_SIZE		\
+  ((Pmode == SImode)		\
+   ? TRAMPOLINE_CODE_SIZE	\
+   : (TRAMPOLINE_CODE_SIZE + POINTER_SIZE * 2))
 #define TRAMPOLINE_ALIGNMENT POINTER_SIZE
 
 /* Addressing modes, and classification of registers for them.  */
@@ -816,7 +616,6 @@ typedef struct {
 
 #define REG_OK_FOR_INDEX_P(X) 0
 
-
 /* Maximum number of registers that can appear in a valid memory address.  */
 
 #define MAX_REGS_PER_ADDRESS 1
@@ -834,19 +633,26 @@ typedef struct {
   else									\
     asm_fprintf ((FILE), "%U%s", (NAME))
 
-/* This flag marks functions that cannot be lazily bound.  */
-#define SYMBOL_FLAG_BIND_NOW (SYMBOL_FLAG_MACH_DEP << 1)
-#define SYMBOL_REF_BIND_NOW_P(RTX) \
-  ((SYMBOL_REF_FLAGS (RTX) & SYMBOL_FLAG_BIND_NOW) != 0)
-
 #define JUMP_TABLES_IN_TEXT_SECTION 0
 #define CASE_VECTOR_MODE SImode
 #define CASE_VECTOR_PC_RELATIVE (riscv_cmodel != CM_MEDLOW)
 
+/* The load-address macro is used for PC-relative addressing of symbols
+   that bind locally.  Don't use it for symbols that should be addressed
+   via the GOT.  Also, avoid it for CM_MEDLOW, where LUI addressing
+   currently results in more opportunities for linker relaxation.  */
+#define USE_LOAD_ADDRESS_MACRO(sym)					\
+  (!TARGET_EXPLICIT_RELOCS &&						\
+   ((flag_pic								\
+     && ((SYMBOL_REF_P (sym) && SYMBOL_REF_LOCAL_P (sym))		\
+	 || ((GET_CODE (sym) == CONST)					\
+	     && SYMBOL_REF_P (XEXP (XEXP (sym, 0),0))			\
+	     && SYMBOL_REF_LOCAL_P (XEXP (XEXP (sym, 0),0)))))		\
+     || riscv_cmodel == CM_MEDANY))
+
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
 #define DEFAULT_SIGNED_CHAR 0
 
-/* Consider using fld/fsd to move 8 bytes at a time for RV32IFD. */
 #define MOVE_MAX UNITS_PER_WORD
 #define MAX_MOVE_MAX 8
 
@@ -854,18 +660,13 @@ typedef struct {
 
 #define SHIFT_COUNT_TRUNCATED 1
 
-/* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
-   is done just by pretending it is already truncated.  */
-#define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC) \
-  (TARGET_64BIT ? ((INPREC) <= 32 || (OUTPREC) < 32) : 1)
+#define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC) 1
 
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
    between pointers and any other objects of this machine mode.  */
 
-#ifndef Pmode
-#define Pmode (TARGET_64BIT ? DImode : SImode)
-#endif
+#define Pmode word_mode
 
 /* Give call MEMs SImode since it is the "most permissive" mode
    for both 32-bit and 64-bit targets.  */
@@ -1045,88 +846,63 @@ while (0)
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE (POINTER_SIZE == 64 ? "long int" : "int")
 
-/* The maximum number of bytes that can be copied by one iteration of
-   a movmemsi loop; see riscv_block_move_loop.  */
-#define RISCV_MAX_MOVE_BYTES_PER_LOOP_ITER (UNITS_PER_WORD * 4)
+/* If a memory-to-memory move would take MOVE_RATIO or more simple
+   move-instruction pairs, we will do a movmem or libcall instead.  */
 
-/* The maximum number of bytes that can be copied by a straight-line
-   implementation of movmemsi; see riscv_block_move_straight.  We want
-   to make sure that any loop-based implementation will iterate at
-   least twice.  */
-#define RISCV_MAX_MOVE_BYTES_STRAIGHT (RISCV_MAX_MOVE_BYTES_PER_LOOP_ITER * 2)
-
-/* The base cost of a memcpy call, for MOVE_RATIO and friends. */
-
-#define RISCV_CALL_RATIO 6
-
-/* Any loop-based implementation of movmemsi will have at least
-   RISCV_MAX_MOVE_BYTES_STRAIGHT / UNITS_PER_WORD memory-to-memory
-   moves, so allow individual copies of fewer elements.
-
-   When movmemsi is not available, use a value approximating
-   the length of a memcpy call sequence, so that move_by_pieces
-   will generate inline code if it is shorter than a function call.
-   Since move_by_pieces_ninsns counts memory-to-memory moves, but
-   we'll have to generate a load/store pair for each, halve the
-   value of RISCV_CALL_RATIO to take that into account.  */
-
-#define MOVE_RATIO(speed)				\
-  (HAVE_movmemsi					\
-   ? RISCV_MAX_MOVE_BYTES_STRAIGHT / MOVE_MAX		\
-   : RISCV_CALL_RATIO / 2)
-
-/* movmemsi is meant to generate code that is at least as good as
-   move_by_pieces.  However, movmemsi effectively uses a by-pieces
-   implementation both for moves smaller than a word and for word-aligned
-   moves of no more than RISCV_MAX_MOVE_BYTES_STRAIGHT bytes.  We should
-   allow the tree-level optimisers to do such moves by pieces, as it
-   often exposes other optimization opportunities.  We might as well
-   continue to use movmemsi at the rtl level though, as it produces
-   better code when scheduling is disabled (such as at -O).  */
-
-#define MOVE_BY_PIECES_P(SIZE, ALIGN)				\
-  (HAVE_movmemsi						\
-   ? (!currently_expanding_to_rtl				\
-      && ((ALIGN) < BITS_PER_WORD				\
-	  ? (SIZE) < UNITS_PER_WORD				\
-	  : (SIZE) <= RISCV_MAX_MOVE_BYTES_STRAIGHT))		\
-   : (move_by_pieces_ninsns (SIZE, ALIGN, MOVE_MAX_PIECES + 1)	\
-      < (unsigned int) MOVE_RATIO (false)))
+#define MOVE_RATIO(speed) (CLEAR_RATIO (speed) / 2)
 
 /* For CLEAR_RATIO, when optimizing for size, give a better estimate
    of the length of a memset call, but use the default otherwise.  */
 
-#define CLEAR_RATIO(speed)\
-  ((speed) ? 15 : RISCV_CALL_RATIO)
+#define CLEAR_RATIO(speed) ((speed) ? 16 : 6)
 
 /* This is similar to CLEAR_RATIO, but for a non-zero constant, so when
    optimizing for size adjust the ratio to account for the overhead of
    loading the constant and replicating it across the word.  */
 
-#define SET_RATIO(speed) \
-  ((speed) ? 15 : RISCV_CALL_RATIO - 2)
-
-/* STORE_BY_PIECES_P can be used when copying a constant string, but
-   in that case each word takes 3 insns (lui, ori, sw), or more in
-   64-bit mode, instead of 2 (lw, sw).  For now we always fail this
-   and let the move_by_pieces code copy the string from read-only
-   memory.  In the future, this could be tuned further for multi-issue
-   CPUs that can issue stores down one pipe and arithmetic instructions
-   down another; in that case, the lui/ori/sw combination would be a
-   win for long enough strings.  */
-
-#define STORE_BY_PIECES_P(SIZE, ALIGN) 0
-
-#ifndef HAVE_AS_TLS
-#define HAVE_AS_TLS 0
-#endif
+#define SET_RATIO(speed) (CLEAR_RATIO (speed) - ((speed) ? 0 : 2))
 
 #ifndef USED_FOR_TARGET
-
 extern const enum reg_class riscv_regno_to_class[];
 extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
-extern const char* riscv_hi_relocs[];
+extern bool riscv_slow_unaligned_access;
 #endif
 
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL) \
   (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4)
+
+#define XLEN_SPEC \
+  "%{march=rv32*:32}" \
+  "%{march=rv64*:64}" \
+
+#define ABI_SPEC \
+  "%{mabi=ilp32:ilp32}" \
+  "%{mabi=ilp32f:ilp32f}" \
+  "%{mabi=ilp32d:ilp32d}" \
+  "%{mabi=lp64:lp64}" \
+  "%{mabi=lp64f:lp64f}" \
+  "%{mabi=lp64d:lp64d}" \
+
+#define STARTFILE_PREFIX_SPEC 			\
+   "/lib" XLEN_SPEC "/" ABI_SPEC "/ "		\
+   "/usr/lib" XLEN_SPEC "/" ABI_SPEC "/ "	\
+   "/lib/ "					\
+   "/usr/lib/ "
+
+/* ISA constants needed for code generation.  */
+#define OPCODE_LW    0x2003
+#define OPCODE_LD    0x3003
+#define OPCODE_AUIPC 0x17
+#define OPCODE_JALR  0x67
+#define OPCODE_LUI   0x37
+#define OPCODE_ADDI  0x13
+#define SHIFT_RD  7
+#define SHIFT_RS1 15
+#define SHIFT_IMM 20
+#define IMM_BITS 12
+
+#define IMM_REACH (1LL << IMM_BITS)
+#define CONST_HIGH_PART(VALUE) (((VALUE) + (IMM_REACH/2)) & ~(IMM_REACH-1))
+#define CONST_LOW_PART(VALUE) ((VALUE) - CONST_HIGH_PART (VALUE))
+
+#endif /* ! GCC_RISCV_H */
