@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.221 2018/12/04 16:53:44 plunky Exp $
+# $NetBSD: postinstall,v 1.222 2019/01/31 10:06:32 msaitoh Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2229,7 +2229,10 @@ do_varshm()
 	failed=0
 
 	[ -f "${DEST_DIR}/etc/fstab" ] || return 0
-	if ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
+	if ${GREP} -E "^var_shm_symlink" "${DEST_DIR}/etc/rc.conf" >/dev/null 2>&1;
+	then
+		failed=0;
+	elif ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
 	then
 		failed=0;
 	else
