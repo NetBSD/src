@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.152.6.1 2018/12/07 13:27:19 martin Exp $	*/
+/*	$NetBSD: pci.c,v 1.152.6.2 2019/01/31 06:02:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152.6.1 2018/12/07 13:27:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152.6.2 2019/01/31 06:02:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1221,16 +1221,36 @@ pci_child_suspend(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
+static void
+pci_pme_check_and_clear(device_t dv, pci_chipset_tag_t pc, pcitag_t tag,
+    int off)
+{
+	pcireg_t pmcsr;
+
+	pmcsr = pci_conf_read(pc, tag, off + PCI_PMCSR);
+
+	if (pmcsr & PCI_PMCSR_PME_STS) {
+		/* Clear W1C bit */
+		pmcsr |= PCI_PMCSR_PME_STS;
+		pci_conf_write(pc, tag, off + PCI_PMCSR, pmcsr);
+		aprint_verbose_dev(dv, "Clear PME# now\n");
+	}
+}
+
 static bool
 pci_child_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pci_child_power *priv = device_pmf_bus_private(dv);
 
-	if (priv->p_has_pm &&
-	    pci_set_powerstate_int(priv->p_pc, priv->p_tag,
-	    PCI_PMCSR_STATE_D0, priv->p_pm_offset, priv->p_pm_cap)) {
-		aprint_error_dev(dv, "unsupported state, continuing.\n");
-		return false;
+	if (priv->p_has_pm) {
+		if (pci_set_powerstate_int(priv->p_pc, priv->p_tag,
+		    PCI_PMCSR_STATE_D0, priv->p_pm_offset, priv->p_pm_cap)) {
+			aprint_error_dev(dv,
+			    "unsupported state, continuing.\n");
+			return false;
+		}
+		pci_pme_check_and_clear(dv, priv->p_pc, priv->p_tag,
+		    priv->p_pm_offset);
 	}
 
 	pci_conf_restore(priv->p_pc, priv->p_tag, &priv->p_pciconf);
@@ -1286,6 +1306,7 @@ pci_child_register(device_t child)
 		priv->p_has_pm = true;
 		priv->p_pm_offset = off;
 		priv->p_pm_cap = reg;
+		pci_pme_check_and_clear(child, priv->p_pc, priv->p_tag, off);
 	} else {
 		priv->p_has_pm = false;
 		priv->p_pm_offset = -1;
