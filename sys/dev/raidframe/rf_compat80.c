@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.6 2019/01/29 23:57:01 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.7 2019/01/31 12:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -223,7 +223,7 @@ rf_config80(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 }
 
 int
-raidframe_ioctl_80(int cmd, int initted, RF_Raid_t *raidPtr, int unit,
+raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
     void *data, RF_Config_t **k_cfg)  
 {
 	int error;

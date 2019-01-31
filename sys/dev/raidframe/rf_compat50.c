@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.5 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.6 2019/01/31 12:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ out:
 }
 
 int
-raidframe_ioctl_50(int cmd, int initted, RF_Raid_t *raidPtr, int unit,
+raidframe_ioctl_50(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
     void *data, RF_Config_t **k_cfg)
 {
 	int error;
