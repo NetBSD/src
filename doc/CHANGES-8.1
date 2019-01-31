@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.99 2019/01/30 13:56:10 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.100 2019/01/31 06:46:52 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2357,4 +2357,52 @@ usr.bin/systat/vmstat.c				1.86
 
 	Fixe terminal resize handling in some systat(1) screens.
 	[christos, ticket #1176]
+
+sys/dev/mii/rgephy.c				1.45
+sys/dev/mii/urlphy.c				1.32
+
+	Pass flags correctly.
+	[msaitoh, ticket #1177]
+
+sys/dev/pci/pci.c				1.154
+
+	Clearing PCI_PMCSR_PME_STS(W1C) bit is required to stop asserting PME#.
+	This change would prevent unexpected rebooting from shutdown -p or
+	unexpected resuming from suspend.
+	[msaitoh, ticket #1178]
+
+sys/dev/pci/if_wm.c				1.603-1.605,1.607-1.611,1.613,1.615,1.618-1.620 via patch
+sys/dev/pci/if_wmreg.h				1.110-1.111
+sys/dev/pci/if_wmvar.h				1.40-1.42
+sys/dev/mii/inbmphyreg.h			1.13-1.15
+
+	- Add some code for suspend/resume:
+	  - Rename wm_smbustopci() to wm_init_phy_workarounds_pchlan(). It will
+	    also called when resume.
+	  - Call wm_phy_resetisblocked() after PHY reset in
+	    wm_init_phy_workarounds_pchlan() to wait for the PHY to quiesce to
+	    an accessible state.
+	  - Add new wm_resume_workarounds_pchlan() function and use it in
+	    wm_resume(). This workaround is only for PCH2 and newer.
+	  - Don't call wm_disable_aspm() neither in wm_attach() nor in
+	    wm_resume() but in wm_reset().
+	  - Do some initialization in wm_resume() when IFF_UP is NOT set.
+	  - Don't continue when it failed to acquire semaphore in
+	    wm_ulp_disable().
+	- Print CLSEM workaround bit correctly.
+	- Fix availability detection of WoL on some chips.
+	- Print the WUS (WakeUp Status) register bits when resume.
+	- Don't setup WoL on non-WoL capable port.
+	- Setup PHY wakeup feature on PCH and newer. Tested on Thinkpad X220.
+	- Remove an extra register read in
+	  wm_kmrn_lock_loss_workaround_ich8lan().
+	- Don't leave the MDICNFG register modified when the Power Management
+	  capability offset can't get.
+	- Reduce indent level of wm_linkintr_gmii(). No functional change.
+	- 80003's SERDES is not the same as 82575's but the same as legacy
+	  devices. Use the old methods on 80003.
+	- Use __nothing for null DPRINTF().
+	- Rename functions. Add comment.
+	[msaitoh, ticket #1179]
+
 
