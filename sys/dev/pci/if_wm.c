@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.622 2019/01/31 05:48:32 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.623 2019/01/31 15:30:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.622 2019/01/31 05:48:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.623 2019/01/31 15:30:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -15396,32 +15396,55 @@ static int
 wm_hv_phy_workarounds_ich8lan(struct wm_softc *sc)
 {
 	device_t dev = sc->sc_dev;
-	uint16_t phy_data;
+	struct mii_data *mii = &sc->sc_mii;
+	struct mii_softc *child;
+	uint16_t phy_data, phyrev = 0;
+	int phytype = sc->sc_phytype;
 	int rv;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(dev), __func__));
 	KASSERT(sc->sc_type == WM_T_PCH);
 
-	if (sc->sc_phytype == WMPHY_82577)
+	/* Set MDIO slow mode before any other MDIO access */
+	if (phytype == WMPHY_82577)
 		if ((rv = wm_set_mdio_slow_mode_hv(sc)) != 0)
 			return rv;
 
-	/* XXX (PCH rev.2) && (82577 && (phy rev 2 or 3)) */
+	child = LIST_FIRST(&sc->sc_mii.mii_phys);
+	if (child != NULL)
+		phyrev = child->mii_mpd_rev;
 
 	/* (82577 && (phy rev 1 or 2)) || (82578 & phy rev 1)*/
+	if ((child != NULL) &&
+	    (((phytype == WMPHY_82577) && ((phyrev == 1) || (phyrev == 2))) ||
+		((phytype == WMPHY_82578) && (phyrev == 1)))) {
+		/* Disable generation of early preamble (0x4431) */
+		rv = mii->mii_readreg(dev, 2, BM_RATE_ADAPTATION_CTRL,
+		    &phy_data);
+		if (rv != 0)
+			return rv;
+		phy_data &= ~(BM_RATE_ADAPTATION_CTRL_RX_RXDV_PRE |
+		    BM_RATE_ADAPTATION_CTRL_RX_CRS_PRE);
+		rv = mii->mii_writereg(dev, 2, BM_RATE_ADAPTATION_CTRL,
+		    phy_data);
+		if (rv != 0)
+			return rv;
+
+		/* Preamble tuning for SSC */
+		rv = mii->mii_writereg(dev, 2, HV_KMRN_FIFO_CTRLSTA, 0xa204);
+		if (rv != 0)
+			return rv;
+	}
 
 	/* 82578 */
-	if (sc->sc_phytype == WMPHY_82578) {
-		struct mii_softc *child;
-
+	if (phytype == WMPHY_82578) {
 		/*
 		 * Return registers to default by doing a soft reset then
 		 * writing 0x3140 to the control register
 		 * 0x3140 == BMCR_SPEED0 | BMCR_AUTOEN | BMCR_FDX | BMCR_SPEED1
 		 */
-		child = LIST_FIRST(&sc->sc_mii.mii_phys);
-		if ((child != NULL) && (child->mii_mpd_rev < 2)) {
+		if ((child != NULL) && (phyrev < 2)) {
 			PHY_RESET(child);
 			rv = sc->sc_mii.mii_writereg(dev, 2, MII_BMCR,
 			    0x3140);

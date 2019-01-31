@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.17 2019/01/31 05:20:49 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.18 2019/01/31 15:30:23 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2015, Intel Corporation 
 All rights reserved.
@@ -138,6 +138,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define	CV_SMB_CTRL		BME1000_REG(BM_PORT_CTRL_PAGE, 23)
 #define	CV_SMB_CTRL_FORCE_SMBUS	__BIT(0)
+
+#define	BM_RATE_ADAPTATION_CTRL	BME1000_REG(BM_PORT_CTRL_PAGE, 25)
+#define	BM_RATE_ADAPTATION_CTRL_RX_RXDV_PRE	__BIT(8)
+#define	BM_RATE_ADAPTATION_CTRL_RX_CRS_PRE	__BIT(7)
+
+/* KMRN FIFO Control and Status */
+#define HV_KMRN_FIFO_CTRLSTA			BME1000_REG(770, 16)
+#define HV_KMRN_FIFO_CTRLSTA_PREAMBLE_MASK	0x7000
+#define HV_KMRN_FIFO_CTRLSTA_PREAMBLE_SHIFT	12
 
 #define	HV_PM_CTRL		BME1000_REG(770, 17)
 #define HV_PM_CTRL_K1_CLK_REQ	__BIT(9)
