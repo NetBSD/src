@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.520 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.521 2019/01/31 02:27:06 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.520 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.521 2019/01/31 02:27:06 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1631,6 +1631,7 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	file_t *dfp = NULL;
 	struct vnode *dvp = NULL;
 	struct pathbuf *pb;
+	const char *pathstring = NULL;
 	int error;
 
 	if (path == NULL) {
@@ -1643,7 +1644,14 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 			return error;
 	}
 
-	if (fdat != AT_FDCWD) {
+	pathstring = pathbuf_stringcopy_get(pb);
+
+	/* 
+	 * fdat is ignored if:
+	 * 1) if fdat is AT_FDCWD, which means use current directory as base.
+	 * 2) if path is absolute, then fdat is useless.
+	 */
+	if (fdat != AT_FDCWD && pathstring[0] != '/') {
 		/* fd_getvnode() will use the descriptor for us */
 		if ((error = fd_getvnode(fdat, &dfp)) != 0)
 			goto out;
@@ -1656,6 +1664,7 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	if (dfp != NULL)
 		fd_putfile(fdat);
 out:
+	pathbuf_stringcopy_put(pb, pathstring);
 	pathbuf_destroy(pb);
 	return error;
 }
