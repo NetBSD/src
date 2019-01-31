@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $ */
+/* $NetBSD: sun8i_h3_gpio.c,v 1.3 2019/01/31 00:27:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Emmanuel Vadot <manu@freebsd.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_gpio.c,v 1.2 2018/04/03 16:01:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_gpio.c,v 1.3 2019/01/31 00:27:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,8 @@ static const struct sunxi_gpio_pins h3_pins[] = {
 };
 
 static const struct sunxi_gpio_pins h3_r_pins[] = {
-	{"PL0",  0, 0,  {"gpio_in", "gpio_out", "s_twi", NULL, NULL, NULL, "irq", NULL}, 6, 0},
-	{"PL1",  0, 1,  {"gpio_in", "gpio_out", "s_twi", NULL, NULL, NULL, "irq", NULL}, 6, 1},
+	{"PL0",  0, 0,  {"gpio_in", "gpio_out", "s_i2c", NULL, NULL, NULL, "irq", NULL}, 6, 0},
+	{"PL1",  0, 1,  {"gpio_in", "gpio_out", "s_i2c", NULL, NULL, NULL, "irq", NULL}, 6, 1},
 	{"PL2",  0, 2,  {"gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "irq", NULL}, 6, 2},
 	{"PL3",  0, 3,  {"gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, "irq", NULL}, 6, 3},
 	{"PL4",  0, 4,  {"gpio_in", "gpio_out", "s_jtag", NULL, NULL, NULL, "irq", NULL}, 6, 4},
