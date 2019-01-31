@@ -1,6 +1,6 @@
-/*	$NetBSD: inbmphyreg.h,v 1.9.8.3 2018/12/04 11:21:32 martin Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.9.8.4 2019/01/31 06:43:48 martin Exp $	*/
 /*******************************************************************************
-Copyright (c) 2001-2005, Intel Corporation 
+Copyright (c) 2001-2015, Intel Corporation 
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
@@ -39,12 +39,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	_DEV_MII_INBMPHYREG_H_
 
 /* Bits...
- * 15-5: page
- * 4-0: register offset
+ * 31-16: register offset (high)
+ * 15-5:  page
+ * 4-0:   register offset (low)
  */
-#define BME1000_PAGE_SHIFT        5
+#define BME1000_PAGE_SHIFT	5
+#define BM_PHY_UPPER_SHIFT	21
 #define BME1000_REG(page, reg)    \
-        (((page) << BME1000_PAGE_SHIFT) | ((reg) & MII_ADDRMASK))
+        (((reg) & MII_ADDRMASK) | 			\
+	    (((page) & 0xffff) << BME1000_PAGE_SHIFT) |	\
+	    (((reg) & ~MII_ADDRMASK) << (BM_PHY_UPPER_SHIFT - BME1000_PAGE_SHIFT)))
 
 #define BME1000_MAX_MULTI_PAGE_REG     0xf   /* Registers equal on all pages */
 
@@ -52,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	((uint16_t)(((offset) >> BME1000_PAGE_SHIFT) & 0xffff))
 #define	BM_PHY_REG_NUM(offset)				\
 	((uint16_t)((offset) & MII_ADDRMASK)		\
-	| (((offset) >> (21 - BME1000_PAGE_SHIFT)) & ~MII_ADDRMASK))
+	| (((offset) >> (BM_PHY_UPPER_SHIFT - BME1000_PAGE_SHIFT)) & ~MII_ADDRMASK))
 
 /* BME1000 Specific Registers */
 #define BME1000_PHY_SPEC_CTRL	BME1000_REG(0, 16) /* PHY Specific Control */
@@ -126,6 +130,20 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	IGP3_KMRN_DIAG		BME1000_REG(770, 19)
 #define	IGP3_KMRN_DIAG_PCS_LOCK_LOSS	(1 << 1)
 
+#define	I217_LPI_GPIO_CTRL	BME1000_REG(772, 18)
+#define	I217_LPI_GPIO_CTRL_AUTO_EN_LPI	__BIT(11)
+
+#define	I82579_LPI_CTRL		BME1000_REG(772, 20)
+#define	I82579_LPI_CTRL_ENABLE	__BITS(14, 13)
+#define	I82579_LPI_CTRL_EN_100	__BIT(13)
+#define	I82579_LPI_CTRL_EN_1000	__BIT(14)
+
+#define	I217_MEMPWR		BME1000_REG(772, 26)
+#define	I217_MEMPWR_DISABLE_SMB_RELEASE		0x0010
+
+#define	I217_CFGREG		BME1000_REG(772, 29)
+#define I217_CGFREG_ENABLE_MTA_RESET	0x0002
+
 #define HV_MUX_DATA_CTRL	BME1000_REG(776, 16)
 #define HV_MUX_DATA_CTRL_FORCE_SPEED	(1 << 2)
 #define HV_MUX_DATA_CTRL_GEN_TO_MAC	(1 << 10)
@@ -142,6 +160,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #define I218_ULP_CONFIG1_DIS_SMB_PERST	__BIT(12)
 
 #define	BM_WUC_PAGE		800
+
+#define	BM_RCTL			BME1000_REG(BM_WUC_PAGE, 0)
+#define BM_RCTL_UPE		0x0001 /* Unicast Promiscuous Mode */
+#define BM_RCTL_MPE		0x0002 /* Multicast Promiscuous Mode */
+#define BM_RCTL_MO_SHIFT	3      /* Multicast Offset Shift */
+#define BM_RCTL_MO_MASK		(3 << 3) /* Multicast Offset Mask */
+#define BM_RCTL_BAM		0x0020 /* Broadcast Accept Mode */
+#define BM_RCTL_PMCF		0x0040 /* Pass MAC Control Frames */
+#define BM_RCTL_RFCE		0x0080 /* Rx Flow Control Enable */
+
 #define	BM_WUC			BME1000_REG(BM_WUC_PAGE, 1)
 #define	BM_WUC_ADDRESS_OPCODE	0x11
 #define	BM_WUC_DATA_OPCODE	0x12
@@ -150,5 +178,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	BM_WUC_ENABLE_BIT	(1 << 2)
 #define	BM_WUC_HOST_WU_BIT	(1 << 4)
 #define	BM_WUC_ME_WU_BIT	(1 << 5)
+
+#define	BM_WUFC			BME1000_REG(BM_WUC_PAGE, 2)
+
+#define	I217_PROXY_CTRL		BME1000_REG(BM_WUC_PAGE, 70)
+#define I217_PROXY_CTRL_AUTO_DISABLE	0x0080
+
+#define BM_RAR_L(_i)		(BME1000_REG(BM_WUC_PAGE, 16 + ((_i) << 2)))
+#define BM_RAR_M(_i)		(BME1000_REG(BM_WUC_PAGE, 17 + ((_i) << 2)))
+#define BM_RAR_H(_i)		(BME1000_REG(BM_WUC_PAGE, 18 + ((_i) << 2)))
+#define BM_RAR_CTRL(_i)		(BME1000_REG(BM_WUC_PAGE, 19 + ((_i) << 2)))
+#define BM_MTA(_i)		(BME1000_REG(BM_WUC_PAGE, 128 + ((_i) << 1)))
 
 #endif /* _DEV_MII_INBMPHYREG_H_ */
