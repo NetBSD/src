@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.21 2019/01/31 15:22:56 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.22 2019/01/31 15:24:13 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.21 2019/01/31 15:22:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.22 2019/01/31 15:24:13 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1256,15 +1256,8 @@ axen_tick_task(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (sc->axen_link == 0 &&
-	    (mii->mii_media_status & IFM_ACTIVE) != 0 &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-		DPRINTF(("%s: %s: got link\n", device_xname(sc->axen_dev),
-		    __func__));
-		sc->axen_link++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			axen_start(ifp);
-	}
+	if (sc->axen_link == 0)
+		axen_miibus_statchg(ifp);
 
 	callout_schedule(&sc->axen_stat_ch, hz);
 
