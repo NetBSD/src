@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.15 2018/01/12 18:22:35 jakllsch Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.16 2019/01/31 01:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.15 2018/01/12 18:22:35 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.16 2019/01/31 01:49:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,13 +43,16 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.15 2018/01/12 18:22:35 jakllsch E
 
 #define	PLL_CPUX_CTRL_REG	0x000
 #define	PLL_AUDIO_CTRL_REG	0x008
+#define	PLL_VIDEO_CTRL_REG	0x010
 #define	PLL_PERIPH0_CTRL_REG	0x028
+#define	PLL_DE_CTRL_REG		0x048
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
 #define	AHB2_CFG_REG		0x05c
 #define	 AHB2_CLK_CFG		__BITS(1,0)
 #define	 AHB2_CLK_CFG_PLL_PERIPH0_2	1
 #define	BUS_CLK_GATING_REG0	0x060
+#define	BUS_CLK_GATING_REG1	0x064
 #define	BUS_CLK_GATING_REG2	0x068
 #define	BUS_CLK_GATING_REG3	0x06c
 #define	BUS_CLK_GATING_REG4	0x070
@@ -61,7 +64,11 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.15 2018/01/12 18:22:35 jakllsch E
 #define	SPI1_CLK_REG		0x0a4
 #define	USBPHY_CFG_REG		0x0cc
 #define	MBUS_RST_REG		0x0fc
+#define	DE_CLK_REG		0x104
+#define	TCON0_CLK_REG		0x118
 #define	AC_DIG_CLK_REG		0x140
+#define	HDMI_CLK_REG		0x150
+#define	HDMI_SLOW_CLK_REG	0x154
 #define	BUS_SOFT_RST_REG0	0x2c0
 #define	BUS_SOFT_RST_REG1	0x2c4
 #define	BUS_SOFT_RST_REG2	0x2c8
@@ -149,6 +156,9 @@ static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 static const char *ths_parents[] = { "hosc" };
+static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
+static const char *hdmi_parents[] = { "pll_video" };
+static const char *tcon0_parents[] = { "pll_video" };
 
 static const struct sunxi_ccu_nkmp_tbl sun8i_h3_cpux_table[] = {
 	{ 60000000, 9, 0, 0, 2 },
@@ -250,6 +260,21 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NKMP_DIVIDE_BY_TWO),
 
+	SUNXI_CCU_FIXED_FACTOR(H3_CLK_PLL_PERIPH0_2X, "pll_periph0_2x", "pll_periph0", 1, 2),
+
+	SUNXI_CCU_FRACTIONAL(H3_CLK_PLL_VIDEO, "pll_video", "hosc",
+	    PLL_VIDEO_CTRL_REG,		/* reg */
+	    __BITS(14,8),		/* m */
+	    16,				/* m_min */
+	    50,				/* m_max */
+	    __BIT(24),			/* div_en */
+	    __BIT(25),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    __BITS(3,0),		/* prediv */
+	    4,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
+
 	SUNXI_CCU_NKMP_TABLE(H3_CLK_PLL_AUDIO_BASE, "pll_audio", "hosc",
 	    PLL_AUDIO_CTRL_REG,		/* reg */
 	    __BITS(14,8),		/* n */
@@ -260,6 +285,19 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    __BIT(28),			/* lock */
 	    sun8i_h3_ac_dig_table,	/* table */
 	    0),
+
+	SUNXI_CCU_FRACTIONAL(H3_CLK_PLL_DE, "pll_de", "hosc",
+	    PLL_DE_CTRL_REG,		/* reg */
+	    __BITS(14,8),		/* m */
+	    16,				/* m_min */
+	    50,				/* m_max */
+	    __BIT(24),			/* div_en */
+	    __BIT(25),			/* frac_sel */
+	    270000000, 297000000,	/* frac values */
+	    __BITS(3,0),		/* prediv */
+	    2,				/* prediv_val */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
 
 	SUNXI_CCU_PREDIV(H3_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
@@ -297,6 +335,13 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
 	    SUNXI_CCU_DIV_TIMES_TWO),
+
+	SUNXI_CCU_DIV_GATE(H3_CLK_DE, "de", de_parents,
+	    DE_CLK_REG,		/* reg */
+	    __BITS(3,0),	/* div */
+	    __BITS(26,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
 
 	SUNXI_CCU_NM(H3_CLK_MMC0, "mmc0", mod_parents,
 	    SDMMC0_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
@@ -338,6 +383,23 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	SUNXI_CCU_GATE(H3_CLK_AC_DIG, "ac_dig", "pll_audio",
 	    AC_DIG_CLK_REG, 31),
 
+	SUNXI_CCU_DIV_GATE(H3_CLK_HDMI, "hdmi", hdmi_parents,
+	    HDMI_CLK_REG,	/* reg */
+	    __BITS(3,0),	/* div */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
+
+	SUNXI_CCU_GATE(H3_CLK_HDMI_DDC, "hdmi-ddc", "hosc",
+	    HDMI_SLOW_CLK_REG, 31),
+
+	SUNXI_CCU_DIV_GATE(H3_CLK_TCON0, "tcon0", tcon0_parents,
+	    TCON0_CLK_REG,	/* reg */
+	    __BITS(3,0),	/* div */
+	    __BITS(26,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
+
 	SUNXI_CCU_GATE(H3_CLK_BUS_DMA, "bus-dma", "ahb1",
 	    BUS_CLK_GATING_REG0, 6),
 	SUNXI_CCU_GATE(H3_CLK_BUS_MMC0, "bus-mmc0", "ahb1",
@@ -370,6 +432,21 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    BUS_CLK_GATING_REG0, 30),
 	SUNXI_CCU_GATE(H3_CLK_BUS_OHCI3, "bus-ohci3", "ahb2",
 	    BUS_CLK_GATING_REG0, 31),
+
+	SUNXI_CCU_GATE(H3_CLK_BUS_GPU, "bus-gpu", "ahb1",
+	    BUS_CLK_GATING_REG1, 20),
+	SUNXI_CCU_GATE(H3_CLK_BUS_DE, "bus-de", "ahb1",
+	    BUS_CLK_GATING_REG1, 12),
+	SUNXI_CCU_GATE(H3_CLK_BUS_HDMI, "bus-hdmi", "ahb1",
+	    BUS_CLK_GATING_REG1, 11),
+	SUNXI_CCU_GATE(H3_CLK_BUS_TVE, "bus-tve", "ahb1",
+	    BUS_CLK_GATING_REG1, 9),
+	SUNXI_CCU_GATE(H3_CLK_BUS_DEINTERLACE, "bus-deinterlace", "ahb1",
+	    BUS_CLK_GATING_REG1, 5),
+	SUNXI_CCU_GATE(H3_CLK_BUS_TCON1, "bus-tcon1", "ahb1",
+	    BUS_CLK_GATING_REG1, 4),
+	SUNXI_CCU_GATE(H3_CLK_BUS_TCON0, "bus-tcon0", "ahb1",
+	    BUS_CLK_GATING_REG1, 3),
 
 	SUNXI_CCU_GATE(H3_CLK_BUS_CODEC, "bus-codec", "apb1",
 	    BUS_CLK_GATING_REG2, 0),

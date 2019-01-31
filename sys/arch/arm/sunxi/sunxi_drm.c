@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.3 2019/01/30 10:55:44 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.4 2019/01/31 01:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.3 2019/01/30 10:55:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.4 2019/01/31 01:49:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,7 @@ static TAILQ_HEAD(, sunxi_drm_endpoint) sunxi_drm_endpoints =
     TAILQ_HEAD_INITIALIZER(sunxi_drm_endpoints);
 
 static const char * const compatible[] = {
+	"allwinner,sun8i-h3-display-engine",
 	"allwinner,sun50i-a64-display-engine",
 	NULL
 };

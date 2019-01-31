@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_de2_ccu.c,v 1.2 2019/01/22 21:45:39 jmcneill Exp $ */
+/* $NetBSD: sunxi_de2_ccu.c,v 1.3 2019/01/31 01:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.2 2019/01/22 21:45:39 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.3 2019/01/31 01:49:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,11 @@ static void sunxi_de2_ccu_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(sunxi_de2ccu, sizeof(struct sunxi_ccu_softc),
 	sunxi_de2_ccu_match, sunxi_de2_ccu_attach, NULL, NULL);
 
+static struct sunxi_ccu_reset sun8i_h3_de2_ccu_resets[] = {
+	SUNXI_CCU_RESET(DE2_RST_MIXER0, 0x08, 0),
+	SUNXI_CCU_RESET(DE2_RST_WB, 0x08, 2),
+};
+
 static struct sunxi_ccu_reset sun50i_a64_de2_ccu_resets[] = {
 	SUNXI_CCU_RESET(DE2_RST_MIXER0, 0x08, 0),
 	SUNXI_CCU_RESET(DE2_RST_MIXER1, 0x08, 1),
@@ -54,7 +59,7 @@ static struct sunxi_ccu_reset sun50i_a64_de2_ccu_resets[] = {
 
 static const char *mod_parents[] = { "mod" };
 
-static struct sunxi_ccu_clk sun50i_a64_de2_ccu_clks[] = {
+static struct sunxi_ccu_clk sun8i_h3_de2_ccu_clks[] = {
 	SUNXI_CCU_GATE(DE2_CLK_BUS_MIXER0, "bus-mixer0", "bus", 0x04, 0),
 	SUNXI_CCU_GATE(DE2_CLK_BUS_MIXER1, "bus-mixer1", "bus", 0x04, 1),
 	SUNXI_CCU_GATE(DE2_CLK_BUS_WB, "bus-wb", "bus", 0x04, 2),
@@ -78,15 +83,24 @@ struct sunxi_de2_ccu_config {
 	u_int			nclks;
 };
 
+static const struct sunxi_de2_ccu_config sun8i_h3_de2_config = {
+	.resets = sun8i_h3_de2_ccu_resets,
+	.nresets = __arraycount(sun8i_h3_de2_ccu_resets),
+	.clks = sun8i_h3_de2_ccu_clks,
+	.nclks = __arraycount(sun8i_h3_de2_ccu_clks),
+};
+
 static const struct sunxi_de2_ccu_config sun50i_a64_de2_config = {
 	.resets = sun50i_a64_de2_ccu_resets,
 	.nresets = __arraycount(sun50i_a64_de2_ccu_resets),
-	.clks = sun50i_a64_de2_ccu_clks,
-	.nclks = __arraycount(sun50i_a64_de2_ccu_clks),
+	.clks = sun8i_h3_de2_ccu_clks,
+	.nclks = __arraycount(sun8i_h3_de2_ccu_clks),
 };
 
 static const struct of_compat_data compat_data[] = {
+	{ "allwinner,sun8i-h3-de2-clk",		(uintptr_t)&sun8i_h3_de2_config },
 	{ "allwinner,sun50i-a64-de2-clk",	(uintptr_t)&sun50i_a64_de2_config },
+	{ "allwinner,sun50i-h5-de2-clk",	(uintptr_t)&sun50i_a64_de2_config },
 	{ NULL }
 };
 

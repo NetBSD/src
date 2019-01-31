@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmiphy.c,v 1.1 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_hdmiphy.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.1 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,21 +102,22 @@ struct sunxi_hdmiphy_softc;
 static int sunxi_hdmiphy_match(device_t, cfdata_t, void *);
 static void sunxi_hdmiphy_attach(device_t, device_t, void *);
 
-static void sun50i_a64_hdmiphy_init(struct sunxi_hdmiphy_softc *);
-static int sun50i_a64_hdmiphy_config(struct sunxi_hdmiphy_softc *, u_int);
+static void sun8i_h3_hdmiphy_init(struct sunxi_hdmiphy_softc *);
+static int sun8i_h3_hdmiphy_config(struct sunxi_hdmiphy_softc *, u_int);
 
 struct sunxi_hdmiphy_data {
 	void	(*init)(struct sunxi_hdmiphy_softc *);
 	int	(*config)(struct sunxi_hdmiphy_softc *, u_int);
 };
 
-static const struct sunxi_hdmiphy_data sun50i_a64_hdmiphy_data = {
-	.init = sun50i_a64_hdmiphy_init,
-	.config = sun50i_a64_hdmiphy_config,
+static const struct sunxi_hdmiphy_data sun8i_h3_hdmiphy_data = {
+	.init = sun8i_h3_hdmiphy_init,
+	.config = sun8i_h3_hdmiphy_config,
 };
 
 static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun50i-a64-hdmi-phy",	(uintptr_t)&sun50i_a64_hdmiphy_data },
+	{ "allwinner,sun8i-h3-hdmi-phy",	(uintptr_t)&sun8i_h3_hdmiphy_data },
+	{ "allwinner,sun50i-a64-hdmi-phy",	(uintptr_t)&sun8i_h3_hdmiphy_data },
 	{ NULL }
 };
 
@@ -201,7 +202,7 @@ sunxi_hdmiphy_dump(struct sunxi_hdmiphy_softc *sc)
 #endif
 
 static void
-sun50i_a64_hdmiphy_init(struct sunxi_hdmiphy_softc *sc)
+sun8i_h3_hdmiphy_init(struct sunxi_hdmiphy_softc *sc)
 {
 	uint32_t val;
 	int retry;
@@ -266,7 +267,7 @@ sun50i_a64_hdmiphy_init(struct sunxi_hdmiphy_softc *sc)
 /*
  * The following table is based on data from the "HDMI TX PHY S40 Specification".
  */
-static const struct sun50i_a64_hdmiphy_init {
+static const struct sun8i_h3_hdmiphy_init {
 	/* PLL Recommended Configuration */
 	uint32_t pll_cfg1;
 	uint32_t pll_cfg2;
@@ -277,7 +278,7 @@ static const struct sun50i_a64_hdmiphy_init {
 	uint32_t ana_cfg3;
 	bool ana_cfg2_rcal_200;
 	u_int b_offset;
-} sun50i_a64_hdmiphy_inittab[] = {
+} sun8i_h3_hdmiphy_inittab[] = {
 	/* 27 MHz */
 	[0] = {
 		.pll_cfg1 = 0x3ddc5040,	.pll_cfg2 = 0x8008430a,	.pll_cfg3 = 0x1,
@@ -304,9 +305,9 @@ static const struct sun50i_a64_hdmiphy_init {
 };
 
 static int
-sun50i_a64_hdmiphy_config(struct sunxi_hdmiphy_softc *sc, u_int rate)
+sun8i_h3_hdmiphy_config(struct sunxi_hdmiphy_softc *sc, u_int rate)
 {
-	const struct sun50i_a64_hdmiphy_init *inittab;
+	const struct sun8i_h3_hdmiphy_init *inittab;
 	u_int init_index, b_out, prediv;
 	uint32_t val, rcalib;
 
@@ -324,7 +325,7 @@ sun50i_a64_hdmiphy_config(struct sunxi_hdmiphy_softc *sc, u_int rate)
 		init_index++;
 	if (rate > 148500000)
 		init_index++;
-	inittab = &sun50i_a64_hdmiphy_inittab[init_index];
+	inittab = &sun8i_h3_hdmiphy_inittab[init_index];
 
 	val = PHY_READ(sc, PLL_CFG2);
 	prediv = val & PLL_CFG2_PREDIV;

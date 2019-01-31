@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.1 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.1 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ enum {
 };
 
 static const char * const compatible[] = {
+	"allwinner,sun8i-h3-dw-hdmi",
 	"allwinner,sun50i-a64-dw-hdmi",
 	NULL
 };
