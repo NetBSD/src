@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.19 2018/10/18 09:01:53 skrll Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.20 2019/01/31 13:06:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.19 2018/10/18 09:01:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.20 2019/01/31 13:06:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,9 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.19 2018/10/18 09:01:53 skrll Exp 
 
 #define EVP_RESET_VECTOR_0_REG	0x100
 
-void
+int
 tegra124_mpstart(void)
 {
+	int ret = 0;
+
 #if defined(MULTIPROCESSOR)
 	bus_space_tag_t bst = &arm_generic_bs_tag;
 	bus_space_handle_t bsh;
@@ -74,10 +76,16 @@ tegra124_mpstart(void)
 	tegra_pmc_power(PMC_PARTID_CPU2, true); started |= __BIT(2);
 	tegra_pmc_power(PMC_PARTID_CPU3, true); started |= __BIT(3);
 
-	for (u_int i = 0x10000000; i > 0; i--) {
+	u_int i;
+	for (i = 0x10000000; i > 0; i--) {
 		arm_dmb();
 		if (arm_cpu_hatched == started)
 			break;
 	}
+	if (i == 0) {
+		ret++;
+		aprint_error("cpu%d: WARNING: AP failed to start\n", i;
+	}
 #endif
+	return ret;
 }

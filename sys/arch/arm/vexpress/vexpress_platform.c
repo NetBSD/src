@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.12 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.13 2019/01/31 13:06:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.12 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.13 2019/01/31 13:06:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,9 +115,10 @@ vexpress_platform_early_putchar(char c)
 }
 
 
-static void
+static int
 vexpress_a15_smp_init(void)
 {
+	int ret = 0;
 #ifdef MULTIPROCESSOR
 	bus_space_tag_t gicd_bst = &armv7_generic_bs_tag;
 	bus_space_handle_t gicd_bsh;
@@ -144,15 +145,21 @@ vexpress_a15_smp_init(void)
 	bus_space_write_4(gicd_bst, gicd_bsh, GICD_SGIR, sgir);
 
 	/* Wait for APs to start */
-	for (u_int i = 0x10000000; i > 0; i--) {
+	u_int i;
+	for (i = 0x10000000; i > 0; i--) {
 		arm_dmb();
 		if (arm_cpu_hatched == started)
 			break;
+	}
+	if (i == 0) {
+		aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
+		ret++;
 	}
 
 	/* Disable GIC distributor */
 	bus_space_write_4(gicd_bst, gicd_bsh, GICD_CTRL, 0);
 #endif
+	return ret;
 }
 
 

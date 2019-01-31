@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.9 2018/11/02 18:13:11 aymeric Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.10 2019/01/31 13:06:10 skrll Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.9 2018/11/02 18:13:11 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.10 2019/01/31 13:06:10 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -76,12 +76,13 @@ cycv_platform_bootstrap(void)
 	arm_fdt_cpu_bootstrap();
 }
 
-static void
+static int
 cycv_mpstart(void)
 {
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh_rst;
 	bus_space_handle_t bsh_scu;
+	int ret = 0;
 
 	bus_space_map(bst, CYCV_RSTMGR_BASE, CYCV_RSTMGR_SIZE, 0, &bsh_rst);
 	bus_space_map(bst, CYCV_SCU_BASE, CYCV_SCU_SIZE, 0, &bsh_scu);
@@ -110,11 +111,18 @@ cycv_mpstart(void)
 			~CYCV_RSTMGR_MPUMODRST_CPU1);
 
 	/* Wait for secondary processor to start */
-	for (int i = 0x10000000; i > 0; i--) {
+	int i;
+	for (i = 0x10000000; i > 0; i--) {
 		membar_consumer();
 		if (arm_cpu_hatched == (1 << 1))
 			break;
 	}
+	if (i == 0) {
+		aprint_error("cpu%d: WARNING: AP failed to start\n", 1);
+		ret++;
+	}
+
+	return ret;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.24 2019/01/27 04:53:59 dholland Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.25 2019/01/31 13:06:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.24 2019/01/27 04:53:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.25 2019/01/31 13:06:10 skrll Exp $");
 
 /* XXXJDM
  * Booting a CA7 core on Exynos5422 is currently broken, disable starting CA7 secondaries.
@@ -91,9 +91,10 @@ void exynos_platform_early_putchar(char);
 #define	EXYNOS5800_SYSRAM_SIZE		0x1000
 #define	 EXYNOS5800_SYSRAM_HOTPLUG		0x001c
 
-static void
+static int
 exynos5800_mpstart(void)
 {
+	int ret = 0;
 #if defined(MULTIPROCESSOR)
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t pmu_bsh, sysram_bsh;
@@ -108,7 +109,7 @@ exynos5800_mpstart(void)
 	const int cpus = OF_finddevice("/cpus");
 	if (cpus == -1) {
 		aprint_error("%s: no /cpus node found\n", __func__);
-		return;
+		return ret;
 	}
 
 	/* MPIDR affinity levels of boot processor. */
@@ -180,8 +181,10 @@ exynos5800_mpstart(void)
 			if (arm_cpu_hatched & __BIT(cpuindex))
 				break;
 		}
-		if (n == 0)
+		if (n == 0) {
+			ret++;
 			aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
+		}
 
 		cpuindex++;
 	}
@@ -189,6 +192,7 @@ exynos5800_mpstart(void)
 	bus_space_unmap(bst, sysram_bsh, EXYNOS5800_SYSRAM_SIZE);
 	bus_space_unmap(bst, pmu_bsh, EXYNOS5800_PMU_SIZE);
 #endif
+	return ret;
 }
 
 static struct of_compat_data mp_compat_data[] = {
@@ -196,18 +200,20 @@ static struct of_compat_data mp_compat_data[] = {
 	{ NULL }
 };
 
-static void
+static int
 exynos_platform_mpstart(void)
 {
 
-	void (*mp_start)(void) = NULL;
+	int (*mp_start)(void) = NULL;
 
 	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
 	if (cd)
-		mp_start = (void (*)(void))cd->data;
+		mp_start = (int (*)(void))cd->data;
 
 	if (mp_start)
-		mp_start();
+		return mp_start();
+
+	return 0;
 }
 
 static void
