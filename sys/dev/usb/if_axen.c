@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.22 2019/01/31 15:24:13 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.23 2019/01/31 15:26:24 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.22 2019/01/31 15:24:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.23 2019/01/31 15:26:24 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -354,32 +354,38 @@ axen_iff(struct axen_softc *sc)
 	axen_lock_mii(sc);
 	axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_MAC_RXCTL, &wval);
 	rxmode = le16toh(wval);
-	rxmode &= ~(AXEN_RXCTL_ACPT_ALL_MCAST | AXEN_RXCTL_ACPT_PHY_MCAST |
-		  AXEN_RXCTL_PROMISC);
+	rxmode &= ~(AXEN_RXCTL_ACPT_ALL_MCAST | AXEN_RXCTL_PROMISC |
+	    AXEN_RXCTL_ACPT_MCAST);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	/*
-	 * Always accept broadcast frames.
-	 * Always accept frames destined to our station address.
-	 */
-	rxmode |= AXEN_RXCTL_ACPT_BCAST;
-
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0 /* XXX */) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		rxmode |= AXEN_RXCTL_ACPT_ALL_MCAST | AXEN_RXCTL_ACPT_PHY_MCAST;
-		if (ifp->if_flags & IFF_PROMISC)
-			rxmode |= AXEN_RXCTL_PROMISC;
+	if (ifp->if_flags & IFF_PROMISC) {
+		DPRINTF(("%s: promisc\n", device_xname(sc->axen_dev)));
+		rxmode |= AXEN_RXCTL_PROMISC;
+allmulti:	ifp->if_flags |= IFF_ALLMULTI;
+		rxmode |= AXEN_RXCTL_ACPT_ALL_MCAST
+		/* | AXEN_RXCTL_ACPT_PHY_MCAST */;
 	} else {
-		rxmode |= AXEN_RXCTL_ACPT_ALL_MCAST | AXEN_RXCTL_ACPT_PHY_MCAST;
-
 		/* now program new ones */
+		DPRINTF(("%s: initializing hash table\n",
+		    device_xname(sc->axen_dev)));
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
+				DPRINTF(("%s: allmulti\n",
+				    device_xname(sc->axen_dev)));
+				memset(hashtbl, 0, sizeof(hashtbl));
+				goto allmulti;
+			}
 			h = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN) >> 26;
 			hashtbl[h / 8] |= 1 << (h % 8);
+			DPRINTF(("%s: %s added\n",
+			    device_xname(sc->axen_dev),
+			    ether_sprintf(enm->enm_addrlo)));
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		rxmode |= AXEN_RXCTL_ACPT_MCAST;
 	}
 
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE_FILTER, 8, AXEN_FILTER_MULTI, hashtbl);
@@ -570,7 +576,6 @@ axen_ax88179_init(struct axen_softc *sc)
 	/* Set RX/TX configuration. */
 	/* Set RX control register */
 	ctl = AXEN_RXCTL_IPE | AXEN_RXCTL_DROPCRCERR | AXEN_RXCTL_AUTOB;
-	ctl |= AXEN_RXCTL_ACPT_PHY_MCAST | AXEN_RXCTL_ACPT_ALL_MCAST;
 	wval = htole16(ctl);
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MAC_RXCTL, &wval);
 
