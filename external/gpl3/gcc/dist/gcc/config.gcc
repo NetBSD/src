@@ -323,8 +323,6 @@ arc*-*-*)
 	;;
 arm*-*-*)
 	cpu_type=arm
-	# XXXMRG -- still need this?
-	need_64bit_hwint=yes
 	extra_objs="arm-builtins.o aarch-common.o"
 	extra_headers="mmintrin.h arm_neon.h arm_acle.h arm_fp16.h arm_cmse.h"
 	target_type_format_char='%'
@@ -1549,15 +1547,8 @@ i[34567]86-*-netbsdelf*)
 	tmake_file="${tmake_file} i386/t-crtstuff"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	;;
-i[34567]86-*-netbsd*)
-	tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h i386/gstabs.h netbsd.h netbsd-aout.h i386/netbsd.h"
-	tmake_file="${tmake_file} t-netbsd"
-	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
-	extra_parts=""
-	use_collect2=yes
-	;;
 x86_64-*-netbsd*)
-	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd.h netbsd-stdint.h netbsd-elf.h i386/x86-64.h i386/netbsd64.h"
+	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${nbsd_tm_file} i386/x86-64.h i386/netbsd64.h"
 	tmake_file="${tmake_file} i386/t-netbsd64"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	;;
@@ -2164,7 +2155,7 @@ riscv*-*-elf* | riscv*-*-rtems*)
 	;;
 riscv*-*-netbsd*)				# NetBSD RISC-V
 	# XXXMRG not ported yet, copied from old config
-	tm_file="elfos.h ${tm_file} netbsd.h netbsd-elf.h riscv/netbsd.h"
+	tm_file="elfos.h ${tm_file} ${nbsd_tm_file} riscv/netbsd.h"
 	case ${target} in
 	  riscv32*) tm_defines="${tm_defines} TARGET_64BIT_DEFAULT=0" ;;
 	  *) tmake_file="${tmake_file} riscv/t-netbsd64" ;;
@@ -2480,7 +2471,7 @@ or1k*-*-linux-*)
 	esac
 	;;
 or1k*-*-netbsd*)
-	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h netbsd-stdint.h or1k/netbsd.h"
+	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} or1k/netbsd.h"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	case ${target} in
 	  or1knd-*) tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF" ;;
@@ -4513,30 +4504,6 @@ case "${target}" in
 			exit 1
 		    fi
 		fi
-		;;
-
-	riscv*-*-*)
-		supported_defaults="abi arch arch_32 arch_64 float tune tune_32 tune_64"
-
-		case ${with_float} in
-		"" | soft | hard)
-			# OK
-			;;
-		*)
-			echo "Unknown floating point type used in --with-float=$with_float" 1>&2
-			exit 1
-			;;
-		esac
-
-		case ${with_abi} in
-		"" | 32 | 64)
-			# OK
-			;;
-		*)
-			echo "Unknown ABI used in --with-abi=$with_abi" 1>&2
-			exit 1
-			;;
-		esac
 		;;
 
 	s390*-*-*)
