@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.57 2018/12/23 11:45:39 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.58 2019/01/31 13:26:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.57 2018/12/23 11:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.58 2019/01/31 13:26:21 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -545,12 +545,15 @@ initarm(void *arg)
 	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
 	     nfdt_physmem);
 
+	error = 0;
 	if ((boothowto & RB_MD1) == 0) {
 		VPRINTF("mpstart\n");
 		if (plat->ap_mpstart)
-			plat->ap_mpstart();
+			error = plat->ap_mpstart();
 	}
 
+	if (error)
+		return sp;
 	/*
 	 * Now we have APs started the pages used for stacks and L1PT can
 	 * be given to uvm
