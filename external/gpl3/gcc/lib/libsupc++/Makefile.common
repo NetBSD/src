@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.10 2019/01/22 23:55:54 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.11 2019/01/31 06:50:51 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -12,7 +12,7 @@ LIBSTDCXX_MACHINE_ARCH=${MLIBDIR}
 LIBSTDCXX_MACHINE_ARCH=${GCC_MACHINE_ARCH}
 .endif
 
-LIBSTDCXXSRCS=	${G_SRC_SOURCES} ${G_CPP98_SOURCES} ${G_CPP11_SOURCES}
+LIBSTDCXXSRCS=	${G_SRC_SOURCES} ${G_CPP98_SOURCES} ${G_CPP11_SOURCES} ${G_FILESYSTEM_SOURCES}
 LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
 
 CPPFLAGS+=	-I${DIST}/gcc
@@ -24,25 +24,44 @@ CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
 
 CPPFLAGS.cp-demangle.c=-DIN_GLIBCPP_V3
 
-STD_GNU11=	bad_array_length bad_array_new \
-		eh_aux_runtime eh_ptr eh_terminate eh_throw \
-		guard atexit_thread nested_exception \
-		new_handler new_op new_opnt
+STD_GNU11=	\
+		bad_array_length \
+		bad_array_new \
+		eh_aux_runtime \
+		eh_ptr \
+		eh_terminate \
+		eh_throw \
+		guard \
+		atexit_thread \
+		nested_exception \
+		new_handler \
+		new_op \
+		new_opnt
+
 .for _f in ${STD_GNU11}
 COPTS.${_f}.cc=	-std=gnu++11
 .endfor
 
-STD_GNU14=	del_ops del_opvs
+STD_GNU14=	\
+		del_ops \
+		del_opvs
+
 .for _f in ${STD_GNU14}
 COPTS.${_f}.cc=	-std=gnu++14  -Wno-sized-deallocation
 .endfor
 
-STD_GNU1Z=	new_opa new_opant \
-		new_opva new_opvant \
-		del_opa del_opant del_opsa \
-		del_opva del_opvant del_opvsa
+STD_GNU1Z=	\
+		new_opa \
+		new_opant \
+		new_opva \
+		new_opvant \
+		del_opa \
+		del_opant \
+		del_opsa \
+		del_opva \
+		del_opvant \
+		del_opvsa
 
 .for _f in ${STD_GNU1Z}
 COPTS.${_f}.cc=	-std=gnu++1z
 .endfor
-
