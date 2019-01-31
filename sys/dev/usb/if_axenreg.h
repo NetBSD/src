@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.4 2019/01/30 11:13:25 rin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.5 2019/01/31 15:26:24 rin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -153,7 +153,7 @@
 #define     AXEN_RXCTL_ACPT_ALL_MCAST		  0x0002
 #define     AXEN_RXCTL_HA8B			  0x0004
 #define     AXEN_RXCTL_AUTOB			  0x0008
-#define     AXEN_RXCTL_ACPT_BCAST		  0x0010
+#define     AXEN_RXCTL_ACPT_MCAST		  0x0010
 #define     AXEN_RXCTL_ACPT_PHY_MCAST		  0x0020
 #define     AXEN_RXCTL_START			  0x0080
 #define     AXEN_RXCTL_DROPCRCERR		  0x0100
