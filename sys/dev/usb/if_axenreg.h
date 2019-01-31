@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.5 2019/01/31 15:26:24 rin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.6 2019/01/31 15:27:57 rin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
  *                     |    |     ++-----L3_type (1:ipv4, 0/2:ipv6)
  *        pkt_len(13)  |    |     ||+ ++-L4_type(0: icmp, 1: UDP, 4: TCP)
  * |765|43210 76543210|7654 3210 7654 3210|
- *  |+-Drop_err               |+-L4_err |+-L4_CSUM_ERR
- *  +--crc_err                +--L3_err +--L3_CSUM_ERR
+ *  | +-crc_err               |+-L4_err |+-L4_CSUM_ERR
+ *  +--drop_err                +--L3_err +--L3_CSUM_ERR
  *
  * ex) pkt_hdr 0x00680820
  *      drop_err, crc_err: none
@@ -55,8 +55,8 @@
  *  0x0850: ipv6 tcp (ssh)		0000 1000 0101 0000
  */
 
-#define	AXEN_RXHDR_CRC_ERR	(1 << 31)
-#define	AXEN_RXHDR_DROP_ERR	(1 << 30)
+#define	AXEN_RXHDR_DROP_ERR	(1 << 31)
+#define	AXEN_RXHDR_CRC_ERR	(1 << 29)
 #define AXEN_RXHDR_MCAST	(1 << 15)
 #define AXEN_RXHDR_RX_OK	(1 << 11)
 #define	AXEN_RXHDR_L3_ERR	(1 << 9)
