@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.27 2018/12/13 01:40:02 jakllsch Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.28 2019/01/31 18:21:21 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.27 2018/12/13 01:40:02 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.28 2019/01/31 18:21:21 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -117,6 +117,9 @@ int	uchcomdebug = 0;
 
 #define UCHCOMIBUFSIZE 256
 #define UCHCOMOBUFSIZE 256
+
+#define UCHCOM_RESET_VALUE	0x501F
+#define UCHCOM_RESET_INDEX	0xD90A
 
 struct uchcom_softc
 {
@@ -763,27 +766,9 @@ static int
 reset_chip(struct uchcom_softc *sc)
 {
 	usbd_status err;
-	uint8_t lcr, lcr2, pre, div;
-	uint16_t val=0, idx=0;
 
-	err = read_reg(sc, UCHCOM_REG_LCR, &lcr, UCHCOM_REG_LCR2, &lcr2);
-	if (err)
-		goto failed;
-
-	err = read_reg(sc, UCHCOM_REG_BPS_PRE, &pre, UCHCOM_REG_BPS_DIV, &div);
-	if (err)
-		goto failed;
-
-	val |= (uint16_t)lcr << 8;
-	val |= 0x9c;	/* magic from vendor Linux and Android drivers */
-	idx |= pre & 0x07;
-	idx |= (uint16_t)div << 8;
-	idx |= UCHCOM_BPS_PRE_IMM;
-
-	DPRINTF(("%s: reset v=0x%04X, i=0x%04X\n",
-		 device_xname(sc->sc_dev), val, idx));
-
-	err = generic_control_out(sc, UCHCOM_REQ_RESET, val, idx);
+	err = generic_control_out(sc, UCHCOM_REQ_RESET,
+	    UCHCOM_RESET_VALUE, UCHCOM_RESET_INDEX);
 	if (err)
 		goto failed;
 
