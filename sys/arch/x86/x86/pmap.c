@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.316 2019/01/17 14:24:51 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.317 2019/01/31 20:42:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316 2019/01/17 14:24:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317 2019/01/31 20:42:31 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3662,6 +3662,23 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, pt_entry_t *optep)
 	return 0;
 }
 
+static inline void
+pmap_pp_remove_ent(struct pmap *pmap, struct vm_page *ptp, pt_entry_t opte,
+    vaddr_t va)
+{
+	struct pmap *pmap2;
+	pt_entry_t *ptes;
+	pd_entry_t * const *pdes;
+
+	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
+	pmap_stats_update_bypte(pmap, 0, opte);
+	ptp->wire_count--;
+	if (ptp->wire_count <= 1) {
+		pmap_free_ptp(pmap, ptp, va, ptes, pdes);
+	}
+	pmap_unmap_ptes(pmap, pmap2);
+}
+
 static void
 pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 {
@@ -3708,20 +3725,9 @@ startover:
 
 		/* Update the PTP reference count. Free if last reference. */
 		if (ptp != NULL) {
-			struct pmap *pmap2;
-			pt_entry_t *ptes;
-			pd_entry_t * const *pdes;
-
 			KASSERT(pmap != pmap_kernel());
-
 			pmap_tlb_shootnow();
-			pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
-			pmap_stats_update_bypte(pmap, 0, opte);
-			ptp->wire_count--;
-			if (ptp->wire_count <= 1) {
-				pmap_free_ptp(pmap, ptp, va, ptes, pdes);
-			}
-			pmap_unmap_ptes(pmap, pmap2);
+			pmap_pp_remove_ent(pmap, ptp, opte, va);
 			pmap_destroy(pmap);
 		} else {
 			KASSERT(pmap == pmap_kernel());
