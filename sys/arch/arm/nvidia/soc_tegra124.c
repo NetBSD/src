@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.20 2019/01/31 13:06:10 skrll Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.21 2019/01/31 13:19:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.20 2019/01/31 13:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.21 2019/01/31 13:19:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,7 +84,7 @@ tegra124_mpstart(void)
 	}
 	if (i == 0) {
 		ret++;
-		aprint_error("cpu%d: WARNING: AP failed to start\n", i;
+		aprint_error("cpu%d: WARNING: AP failed to start\n", i);
 	}
 #endif
 	return ret;
