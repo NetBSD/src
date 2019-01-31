@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.33.6.3 2018/08/11 14:47:32 martin Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.33.6.4 2019/01/31 06:43:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@
 	"\15" "PCIX"	"\16" "CSA"	"\17" "PCIE"	"\20" "SGMII"	\
 	"\21" "NEWQUEUE" "\22" "ASF_FIRM" "\23" "ARC_SUBSYS" "\24" "AMT" \
 	"\25" "MANAGE"	"\26" "WOL"	"\27" "EEE"	"\30" "ATTACHED" \
-	"\31" "MDIC_WA"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA" "\40" "CLSEMWA"
+	"\31" "MDIC_WA"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA" "\34" "CLSEMWA"
 
 /*
  * Variations of Intel gigabit Ethernet controller:
@@ -166,17 +166,17 @@ typedef enum {
 	WMPHY_M88,
 	WMPHY_IGP,
 	WMPHY_IGP_2,
-	WMPHY_GG82563,
-	WMPHY_IGP_3,
-	WMPHY_IFE,
-	WMPHY_BM,
-	WMPHY_82577,
-	WMPHY_82578,
-	WMPHY_82579,
-	WMPHY_I217,
-	WMPHY_82580,
+	WMPHY_GG82563,	/* 82563: 80003 */
+	WMPHY_IGP_3,	/* 82566: 82575, 82576, ICH8, ICH9 */
+	WMPHY_IFE,	/* 82562 */
+	WMPHY_BM,	/* 82567: ICH8 ICH9 ICH10 */
+	WMPHY_82577,	/* 82577: PCH */
+	WMPHY_82578,	/* 82578: PCH */
+	WMPHY_82579,	/* 82579: PCH2 */
+	WMPHY_I217,	/* I217:  _LPT, I218: _LPT, I219: _SPT _CNP */
+	WMPHY_82580,	/* 82580: 82580 or I350 */
 	WMPHY_VF,
-	WMPHY_I210
+	WMPHY_I210	/* I210: I210 I211 */
 } wm_phy_type;
 
 
