@@ -1,4 +1,4 @@
-/* $NetBSD: rf_compat80_mod.h,v 1.2 2019/01/27 02:08:42 pgoyette Exp $	*/
+/* $NetBSD: rf_compat80_mod.h,v 1.3 2019/01/31 12:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 struct RF_Raid_s;
 struct RF_Config_s;
 
-int raidframe_ioctl_80(int, int, struct RF_Raid_s *, int, void *,
+int raidframe_ioctl_80(u_long, int, struct RF_Raid_s *, int, void *,
     struct RF_Config_s **);
 
 void raidframe_80_init(void);
