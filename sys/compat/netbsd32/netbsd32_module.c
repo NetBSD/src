@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.8 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.9 2019/01/31 16:03:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.8 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.9 2019/01/31 16:03:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -48,7 +48,6 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	int ms_cnt;
 	modstat_t *ms, *mso;
 	size_t ms_len;
-	int req_cnt;
 	char *req, *reqo;
 	size_t req_len;
 	char *out_p;
@@ -80,7 +79,6 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 		ms_cnt++;
 		mi = mod->mod_info;
 		if (mi->mi_required != NULL) {
-			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
 		}
 	}
@@ -88,7 +86,6 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 		ms_cnt++;
 		mi = mod->mod_info;
 		if (mi->mi_required != NULL) {
-			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
 		}
 	}
