@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.31 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.31.10.1 2019/01/31 05:59:55 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.31 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.31.10.1 2019/01/31 05:59:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &urlphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	/* Don't do loopback on this PHY. */
