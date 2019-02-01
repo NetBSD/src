@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.94 2019/02/01 05:44:29 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.95 2019/02/01 11:35:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -263,7 +263,15 @@ struct pmap {
 
 	/* Used by NVMM. */
 	int (*pm_enter)(struct pmap *, vaddr_t, paddr_t, vm_prot_t, u_int);
+	bool (*pm_extract)(struct pmap *, vaddr_t, paddr_t *);
 	void (*pm_remove)(struct pmap *, vaddr_t, vaddr_t);
+	int (*pm_sync_pv)(struct vm_page *, vaddr_t, paddr_t, int, uint8_t *,
+	    pt_entry_t *);
+	void (*pm_pp_remove_ent)(struct pmap *, struct vm_page *, pt_entry_t,
+	    vaddr_t);
+	void (*pm_write_protect)(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
+	void (*pm_unwire)(struct pmap *, vaddr_t);
+
 	void (*pm_tlb_flush)(struct pmap *);
 	void *pm_data;
 };
