@@ -1,23 +1,25 @@
-#	$NetBSD: Makefile,v 1.3 2016/03/18 17:52:30 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2019/02/01 10:34:19 mrg Exp $
 
 NOMAN=1
 PROG=		lto-wrapper
+# XXX pullout from LTO_WRAPPER_OBJS
 SRCS=		lto-wrapper.c \
-		collect-utils.c
-CPPFLAGS+=	-DPREFIX=\"/usr\"
+		collect-utils.c \
+		ggc-none.o
 
-.include "../Makefile.backend"
-.include "../Makefile.backtrace"
+BINDIR=		/usr/libexec
+
+CPPFLAGS+=	-DPREFIX=\"/usr\" -I${GCCARCH} -I${G_ALL_CPPFLAGS}
+
+.include "../Makefile.prog"
+.include "../Makefile.target-defines"
 .include "../Makefile.common-target"
+.include "../Makefile.common"
 .include "../Makefile.libcpp"
+.include "../Makefile.backtrace"
+.include "../Makefile.libiberty"
 
 COPTS.lto-wrapper.c=	-Wno-stack-protector
-
-
-DPADD+=                 ${LIBIBERTYOBJ}/libiberty.a
-LDADD+=                 ${LIBIBERTYOBJ}/libiberty.a
-
-# VER_CPPFLAGS from Makefile.inc
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/03/24 00:02:52 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2019/02/01 10:34:18 mrg Exp $
 
 PROG=		cc1plus
 SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -30,10 +30,6 @@ CHECKSUM_OBJS= ${LIBBACKTRACEOBJ}/libbacktrace.a \
 
 # XXX check this out
 # LDFLAGS+=   -rdynamic
-
-## VER_CPPFLAGS from Makefile.inc
-#CPPFLAGS.c-cppbuiltin.c=	${VER_CPPFLAGS}
-#c-cppbuiltin.c: ${GCCARCH}/defs.mk
 
 # YUCK.  but see timevar.h:POP_TIMEVAR_AND_RETURN
 CFLAGS+=	-Wno-error # not good enough: -Wno-return-type
