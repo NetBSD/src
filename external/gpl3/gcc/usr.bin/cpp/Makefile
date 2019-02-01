@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/03/15 19:12:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2019/02/01 10:36:33 mrg Exp $
 
 PROG=		cpp
 SRCS=		cppspec.c ${G_GCC_OBJS:.o=.c}
@@ -18,7 +18,11 @@ INFOFLAGS=	-I${DIST}/gcc/doc -I${DIST}/gcc/doc/include -I.
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
+.include <bsd.own.mk>
+
+ADD_FRONTEND_LIBRARY=	no
 .include "../Makefile.frontend"
+.include "../Makefile.driver"
 
 ${SRCS}: ${GCCARCH}/defs.mk
 
@@ -29,3 +33,6 @@ COPTS.gcc.c=	-Wno-stack-protector
 .PATH: ${DIST}/gcc ${DIST}/gcc/c-family ${DIST}/gcc/doc
 
 cpp.info: gcc-vers.texi
+
+# XXX - driver-i386.o isn't built otherwise
+${PROG}: ${OBJS}
