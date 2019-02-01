@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.93 2018/12/17 06:58:54 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.94 2019/02/01 05:44:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -111,6 +111,7 @@
 
 #if defined(_KERNEL)
 #include <sys/kcpuset.h>
+#include <x86/pmap_pv.h>
 #include <uvm/pmap/pmap_pvt.h>
 
 #define BTSEG_NONE	0
@@ -306,11 +307,11 @@ extern long nkptp[PTP_LEVELS];
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
-#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
+#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PP_ATTRS_M)
+#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PP_ATTRS_U)
 #define pmap_copy(DP,SP,D,L,S)		__USE(L)
-#define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
-#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
+#define pmap_is_modified(pg)		pmap_test_attrs(pg, PP_ATTRS_M)
+#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PP_ATTRS_U)
 #define pmap_move(DP,SP,D,L,S)
 #define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
 #define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)
@@ -436,7 +437,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_clear_attrs(pg, PG_RW);
+			(void)pmap_clear_attrs(pg, PP_ATTRS_W);
 		} else {
 			pmap_page_remove(pg);
 		}
@@ -453,7 +454,7 @@ pmap_pv_protect(paddr_t pa, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_pv_clear_attrs(pa, PG_RW);
+			(void)pmap_pv_clear_attrs(pa, PP_ATTRS_W);
 		} else {
 			pmap_pv_remove(pa);
 		}
