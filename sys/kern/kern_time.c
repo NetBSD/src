@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.179.8.4 2018/12/27 12:00:10 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.179.8.5 2019/02/01 11:06:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.8.4 2018/12/27 12:00:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.8.5 2019/02/01 11:06:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -388,6 +388,7 @@ sys___gettimeofday50(struct lwp *l, const struct sys___gettimeofday50_args *uap,
 	struct timezone tzfake;
 
 	if (SCARG(uap, tp)) {
+		memset(&atv, 0, sizeof(atv));
 		microtime(&atv);
 		error = copyout(&atv, SCARG(uap, tp), sizeof(atv));
 		if (error)
@@ -487,6 +488,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if (olddelta) {
+		memset(olddelta, 0, sizeof(*olddelta));
 		mutex_spin_enter(&timecounter_lock);
 		olddelta->tv_sec = time_adjtime / 1000000;
 		olddelta->tv_usec = time_adjtime % 1000000;
