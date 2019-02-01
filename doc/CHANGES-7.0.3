@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.133 2019/01/30 13:33:34 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.134 2019/02/01 11:12:55 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5726,4 +5726,9 @@ sys/arch/vax/vax/sig_machdep.c			1.23
 
 	Fix widespread leak in the sendsig_siginfo() functions.
 	[maxv, ticket #1677]
+
+sys/kern/kern_time.c				1.190,1.194
+
+	Fix kernel info leaks.
+	[maxv, ticket #1678]
 
