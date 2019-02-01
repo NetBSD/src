@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/10/06 02:58:32 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2019/02/01 10:39:48 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -7,8 +7,10 @@ LIBISPRIVATE=	yes
 
 LIB=		common-target
 
+# XXX pullout OBJS-libcommon-target
 SRCS=		prefix.c params.c opts.c opts-common.c options.c vec.c \
 		hooks.c common-targhooks.c hash-table.c file-find.c \
+		spellcheck.c selftest.c \
 		${G_common_out_file:T}
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \

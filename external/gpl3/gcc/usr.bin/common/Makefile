@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2018/02/04 10:16:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2019/02/01 10:39:48 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -7,17 +7,20 @@ LIBISPRIVATE=	yes
 
 LIB=		common
 
+# XXX pullout OBJS-libcommon-target
 SRCS=		diagnostic.c \
 		diagnostic-color.c \
 		diagnostic-show-locus.o \
+		edit-context.o \
 		pretty-print.c \
-		vec.c \
 		intl.c \
+		vec.c \
 		input.c \
 		version.c \
 		hash-table.c \
 		ggc-none.c \
-		memory-block.cc
+		memory-block.cc \
+		selftest.cc
 
 # XXX make sure this doesn't have more than it needs
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
