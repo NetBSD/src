@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.228 2019/01/28 12:17:28 sevan Exp $
+$NetBSD: acronyms.comp,v 1.229 2019/02/01 21:23:22 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -844,6 +844,7 @@ MESI	modified, exclusive, shared, invalid
 MFC	merge from current
 MFC	Microsoft Foundation Classes
 MFM	modified frequency modulation
+MFU	most frequently used
 MI	machine-independent
 MIB	management information base
 MIC	message integrity {check,code}
