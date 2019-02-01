@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.96 2019/01/19 20:02:06 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.97 2019/02/01 09:27:23 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -178,9 +178,9 @@ get_libbacktrace () {
 
 	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
-		<$_TMPDIR/$_subdir/config.h
+		<$_TMPDIR/$_PLATFORM/$_subdir/config.h
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/backtrace-supported.h \
-		<$_TMPDIR/$_subdir/backtrace-supported.h
+		<$_TMPDIR/$_PLATFORM/$_subdir/backtrace-supported.h
 }
 
 ##### lib/libobjc #####
@@ -256,6 +256,9 @@ get_libstdcxx_v3 () {
 			GLIBCXX_ABI_FLAGS libc__98convenience_la_SOURCES | \
 			sed -e 's/^G_libc__98convenience_la_SOURCES=/G_CPP98_SOURCES=/' \
 			    -e 's/codecvt.cc/c98-codecvt.cc/'
+		getvars $_PLATFORM/libstdc++-v3/src/filesystem/Makefile \
+			libstdc__fs_la_SOURCES | \
+			sed -e 's/^G_libstdc__fs_la_SOURCES=/G_FILESYSTEM_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/Makefile ATOMICITY_SRCDIR \
 			BASIC_FILE_CC CLOCALE_CC CCODECVT_CC CCOLLATE_CC \
 			CCTYPE_CC  CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC \
