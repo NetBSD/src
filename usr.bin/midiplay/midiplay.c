@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.32 2018/05/03 05:14:55 wiz Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.33 2019/02/01 08:37:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.32 2018/05/03 05:14:55 wiz Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.33 2019/02/01 08:37:21 mrg Exp $");
 #endif
 
 
@@ -677,7 +677,8 @@ playdata(u_char *buf, u_int tot, const char *name)
 					}
 					break;
 				}
-				/* Sorry, can't do this yet; FALLTHROUGH */
+				/* Sorry, can't do this yet */
+				/* FALLTHROUGH */
 			default:
 				if (verbose)
 					printf("MIDI event 0x%02x ignored\n",
