@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.67 2018/12/20 15:16:07 tih Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.68 2019/02/01 03:20:35 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.67 2018/12/20 15:16:07 tih Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.68 2019/02/01 03:20:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -813,15 +813,44 @@ urtwn_free_tx_list(struct urtwn_softc *sc)
 	}
 }
 
+static int
+urtwn_tx_beacon(struct urtwn_softc *sc, struct mbuf *m,
+    struct ieee80211_node *ni)
+{
+	struct urtwn_tx_data *data =
+	    urtwn_get_tx_data(sc, sc->ac2idx[WME_AC_VO]);
+	return urtwn_tx(sc, m, ni, data);
+}
+
 static void
 urtwn_task(void *arg)
 {
 	struct urtwn_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct urtwn_host_cmd_ring *ring = &sc->cmdq;
 	struct urtwn_host_cmd *cmd;
 	int s;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
+	if (ic->ic_state == IEEE80211_S_RUN && 
+	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
+	    ic->ic_opmode == IEEE80211_M_IBSS)) {
+
+		struct mbuf *m = ieee80211_beacon_alloc(ic, ic->ic_bss,
+		    &sc->sc_bo);
+		if (m == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate beacon");
+		}
+
+		if (urtwn_tx_beacon(sc, m, ic->ic_bss) != 0) {
+			m_freem(m);
+			aprint_error_dev(sc->sc_dev, "could not send beacon");
+		}
+
+		/* beacon is no longer needed */
+		m_freem(m);
+	}
 
 	/* Process host commands. */
 	s = splusb();
