@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.11 2018/06/29 04:02:10 thorpej Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.12 2019/02/01 03:20:35 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -196,6 +196,8 @@ struct urtwn_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 	bool				sc_running;
+
+	struct ieee80211_beacon_offsets sc_bo;
 };
 
 #endif /* _IF_URTWNVAR_H_ */
