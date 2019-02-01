@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.9 2011/02/28 21:08:46 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.10 2019/02/01 09:06:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -113,8 +113,8 @@ donewfs(const atf_tc_t *tc, void **argp,
 		close(pipes[0]);
 		if (dup2(pipes[1], 3) == -1)
 			err(1, "dup2");
-		if (execvp(nfsdargv[0], nfsdargv) == -1)
-			err(1, "execvp");
+		execvp(nfsdargv[0], nfsdargv);
+		err(1, "execvp");
 	case -1:
 		return errno;
 	default:
