@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2019/01/31 08:42:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.39 2019/02/01 10:37:13 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -47,7 +47,7 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .include "${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	8
-SHLIB_MINOR=	1
+SHLIB_MINOR=	2
 
 SUBDIR=		include
 
@@ -153,31 +153,8 @@ CXX11_ALWAYS=	localename.cc \
 		compatibility-condvar.cc \
 		ios_failure.cc
 
-.for _s in ${G_CPP11_SOURCES:M*.cc} ${CXX11_ALWAYS}
+.for _s in ${CXX11_ALWAYS}
 COPTS.${_s}+= -std=gnu++11
-.endfor
-
-.for _s in ${G_FILESYSTEM_SOURCES:M*.cc}
-COPTS.${_s}+= -std=gnu++14
-.endfor
-
-CXX98_ALWAYS=	collate_members_cow.cc \
-		messages_members_cow.cc \
-		monetary_members_cow.cc \
-		numeric_members_cow.cc \
-		atomicity.cc \
-		collate_members.cc \
-		messages_members.cc \
-		monetary_members.cc \
-		numeric_members.cc \
-		time_members.cc \
-		basic_file.cc \
-		c++locale.cc
-
-.for _s in ${CXX98_ALWAYS}
-. if empty(COPTS.${_s}:M-std=*)
-#COPTS.${_s}+= -std=gnu++98
-. endif
 .endfor
 
 COPTS.cp-demangle.c += -Wno-unused-function
