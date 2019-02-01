@@ -1,4 +1,4 @@
-/*	$NetBSD: gcore.c,v 1.11 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: gcore.c,v 1.12 2019/02/01 08:29:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gcore.c,v 1.11 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: gcore.c,v 1.12 2019/02/01 08:29:04 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ main(int argc, char **argv)
 
 		errno = 0;
 		lval = strtoul(argv[c], &ep, 0);
-		if (argv[c] == '\0' || *ep)
+		if (argv[c] == NULL || *ep)
 			errx(1, "`%s' is not a number.", argv[c]);
 
 		if (errno == ERANGE && lval == ULONG_MAX)

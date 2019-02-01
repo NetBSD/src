@@ -1,4 +1,4 @@
-/* $NetBSD: tabs.c,v 1.4 2011/09/16 15:39:29 joerg Exp $ */
+/* $NetBSD: tabs.c,v 1.5 2019/02/01 08:29:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2008 \
 The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: tabs.c,v 1.4 2011/09/16 15:39:29 joerg Exp $");
+__RCSID("$NetBSD: tabs.c,v 1.5 2019/02/01 08:29:04 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -112,7 +112,7 @@ main(int argc, char **argv)
 		if (arg[0] == '\0') 
 			usage();
 		if (arg[0] == '-' && arg[1] == '\0') {
-			if (argv[i + 1] != '\0')
+			if (argv[i + 1] != NULL)
 				tabs = argv[i + 1];
 			break;
 		}
