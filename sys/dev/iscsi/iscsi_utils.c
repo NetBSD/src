@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.24 2017/12/03 19:07:10 christos Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.25 2019/02/01 08:33:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -422,7 +422,7 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 
 	case CCBDISP_SCSIPI:
 		iscsi_done(ccb);
-		/* FALLTRHOUGH */
+		/* FALLTHROUGH */
 	case CCBDISP_FREE:
 		free_ccb(ccb);
 		break;
