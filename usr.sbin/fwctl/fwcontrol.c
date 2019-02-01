@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.16 2011/10/17 16:50:47 mbalmer Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.17 2019/02/01 08:29:04 mrg Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 //__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
-__RCSID("$NetBSD: fwcontrol.c,v 1.16 2011/10/17 16:50:47 mbalmer Exp $");
+__RCSID("$NetBSD: fwcontrol.c,v 1.17 2019/02/01 08:29:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -117,7 +117,7 @@ str2node(int fd, const char *nodestr)
 	int i;
 	long node;
 
-	if (nodestr == '\0')
+	if (nodestr == NULL)
 		return -1;
 
 	/*
