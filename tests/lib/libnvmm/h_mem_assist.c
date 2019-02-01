@@ -290,6 +290,8 @@ extern uint8_t test6_begin, test6_end;
 extern uint8_t test7_begin, test7_end;
 extern uint8_t test8_begin, test8_end;
 extern uint8_t test9_begin, test9_end;
+extern uint8_t test10_begin, test10_end;
+extern uint8_t test11_begin, test11_end;
 
 static const struct test tests[] = {
 	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004 },
@@ -301,6 +303,8 @@ static const struct test tests[] = {
 	{ "test7 - STOS", &test7_begin, &test7_end, 0x00123456 },
 	{ "test8 - LODS", &test8_begin, &test8_end, 0x12345678 },
 	{ "test9 - MOVS", &test9_begin, &test9_end, 0x12345678 },
+	{ "test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078 },
+	{ "test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678 },
 	{ NULL, NULL, NULL, -1 }
 };
 

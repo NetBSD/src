@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.17 2019/01/27 02:08:35 pgoyette Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.18 2019/02/01 06:49:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -1489,7 +1489,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_RAX, 0x00000000FFFFFFFF }, /* RAX */
+			[7] = { NVMM_X64_GPR_RAX, 0xFFFFFFFFFFFFFFFF }, /* RAX */
 		},
 		[0b001] = {
 			[0] = { NVMM_X64_GPR_RCX, 0x00000000000000FF }, /* CL */
@@ -1499,7 +1499,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_RCX, 0x00000000FFFFFFFF }, /* RCX */
+			[7] = { NVMM_X64_GPR_RCX, 0xFFFFFFFFFFFFFFFF }, /* RCX */
 		},
 		[0b010] = {
 			[0] = { NVMM_X64_GPR_RDX, 0x00000000000000FF }, /* DL */
@@ -1509,7 +1509,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_RDX, 0x00000000FFFFFFFF }, /* RDX */
+			[7] = { NVMM_X64_GPR_RDX, 0xFFFFFFFFFFFFFFFF }, /* RDX */
 		},
 		[0b011] = {
 			[0] = { NVMM_X64_GPR_RBX, 0x00000000000000FF }, /* BL */
@@ -1519,7 +1519,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_RBX, 0x00000000FFFFFFFF }, /* RBX */
+			[7] = { NVMM_X64_GPR_RBX, 0xFFFFFFFFFFFFFFFF }, /* RBX */
 		},
 		[0b100] = {
 			[0] = { -1, 0 }, /* SPECIAL */
@@ -1572,7 +1572,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R8, 0x00000000FFFFFFFF }, /* R8 */
+			[7] = { NVMM_X64_GPR_R8, 0xFFFFFFFFFFFFFFFF }, /* R8 */
 		},
 		[0b001] = {
 			[0] = { NVMM_X64_GPR_R9, 0x00000000000000FF }, /* R9B */
@@ -1582,7 +1582,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R9, 0x00000000FFFFFFFF }, /* R9 */
+			[7] = { NVMM_X64_GPR_R9, 0xFFFFFFFFFFFFFFFF }, /* R9 */
 		},
 		[0b010] = {
 			[0] = { NVMM_X64_GPR_R10, 0x00000000000000FF }, /* R10B */
@@ -1592,7 +1592,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R10, 0x00000000FFFFFFFF }, /* R10 */
+			[7] = { NVMM_X64_GPR_R10, 0xFFFFFFFFFFFFFFFF }, /* R10 */
 		},
 		[0b011] = {
 			[0] = { NVMM_X64_GPR_R11, 0x00000000000000FF }, /* R11B */
@@ -1602,7 +1602,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R11, 0x00000000FFFFFFFF }, /* R11 */
+			[7] = { NVMM_X64_GPR_R11, 0xFFFFFFFFFFFFFFFF }, /* R11 */
 		},
 		[0b100] = {
 			[0] = { NVMM_X64_GPR_R12, 0x00000000000000FF }, /* R12B */
@@ -1612,7 +1612,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R12, 0x00000000FFFFFFFF }, /* R12 */
+			[7] = { NVMM_X64_GPR_R12, 0xFFFFFFFFFFFFFFFF }, /* R12 */
 		},
 		[0b101] = {
 			[0] = { NVMM_X64_GPR_R13, 0x00000000000000FF }, /* R13B */
@@ -1622,7 +1622,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R13, 0x00000000FFFFFFFF }, /* R13 */
+			[7] = { NVMM_X64_GPR_R13, 0xFFFFFFFFFFFFFFFF }, /* R13 */
 		},
 		[0b110] = {
 			[0] = { NVMM_X64_GPR_R14, 0x00000000000000FF }, /* R14B */
@@ -1632,7 +1632,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R14, 0x00000000FFFFFFFF }, /* R14 */
+			[7] = { NVMM_X64_GPR_R14, 0xFFFFFFFFFFFFFFFF }, /* R14 */
 		},
 		[0b111] = {
 			[0] = { NVMM_X64_GPR_R15, 0x00000000000000FF }, /* R15B */
@@ -1642,7 +1642,7 @@ static const struct x86_reg gpr_map[2][8][8] = {
 			[4] = { -1, 0 },
 			[5] = { -1, 0 },
 			[6] = { -1, 0 },
-			[7] = { NVMM_X64_GPR_R15, 0x00000000FFFFFFFF }, /* R15 */
+			[7] = { NVMM_X64_GPR_R15, 0xFFFFFFFFFFFFFFFF }, /* R15 */
 		},
 	}
 };
@@ -2267,12 +2267,17 @@ node_secondary_opcode(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 	instr->operand_size = get_operand_size(fsm, instr);
 	instr->address_size = get_address_size(fsm, instr);
 
+	if (fsm->is64bit && (instr->operand_size == 4)) {
+		/* Zero-extend to 64 bits. */
+		instr->zeroextend_mask = ~size_to_mask(4);
+	}
+
 	if (opcode->flags & FLAG_ze) {
 		/*
 		 * Compute the mask for zero-extend. Update the operand size,
 		 * we move fewer bytes.
 		 */
-		instr->zeroextend_mask = size_to_mask(instr->operand_size);
+		instr->zeroextend_mask |= size_to_mask(instr->operand_size);
 		instr->zeroextend_mask &= ~size_to_mask(opcode->defsize);
 		instr->operand_size = opcode->defsize;
 	}

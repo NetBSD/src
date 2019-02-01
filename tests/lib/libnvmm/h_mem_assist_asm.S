@@ -36,6 +36,8 @@
 	.globl	test7_begin, test7_end
 	.globl	test8_begin, test8_end
 	.globl	test9_begin, test9_end
+	.globl	test10_begin, test10_end
+	.globl	test11_begin, test11_end
 	.text
 	.code64
 
@@ -177,3 +179,26 @@ test9_begin:
 	TEST_END
 test9_end:
 
+	.align	64
+test10_begin:
+	movq	$0x1000,%rax
+	movq	$0x12345678,(%rax)
+
+	movq	$0xFFFFFFFFFFFFFFFF,%rbx
+	movzxb	(%rax),%ebx
+	movq	%rbx,(%rax)
+
+	TEST_END
+test10_end:
+
+	.align	64
+test11_begin:
+	movq	$0x1000,%rax
+	movq	$0x12345678,(%rax)
+
+	movq	$0xFFFFFFFFFFFFFFFF,%rbx
+	movzxw	(%rax),%rbx
+	movq	%rbx,(%rax)
+
+	TEST_END
+test11_end:
