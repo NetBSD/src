@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2018/07/01 17:41:50 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2019/02/01 10:39:03 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 LIBISCXX = yes
@@ -26,6 +26,8 @@ UBSAN_SRCS= \
 .for _s in ubsan_handlers_cxx ubsan_type_hash ubsan_type_hash_itanium
 COPTS.${_s}.cc+=-frtti
 .endfor
+
+COPTS.ubsan_handlers_cxx.cc+= -Wno-error=maybe-uninitialized
 
 LIB=	ubsan
 SRCS+=	${UBSAN_SRCS}
