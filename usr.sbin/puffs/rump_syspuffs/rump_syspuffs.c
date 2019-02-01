@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.12 2011/08/31 13:32:39 joerg Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.13 2019/02/01 09:06:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -113,8 +113,8 @@ mount_syspuffs_parseargs(int argc, char *argv[],
 			err(1, "setenv");
 
 		argv++;
-		if (execvp(argv[0], argv) == -1)
-			err(1, "execvp");
+		(void)execvp(argv[0], argv);
+		err(1, "execvp");
 		/*NOTREACHED*/
 	case -1:
 		err(1, "fork");

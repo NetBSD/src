@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.11 2013/09/09 19:47:38 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.12 2019/02/01 09:06:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -277,8 +277,8 @@ donewfs(const atf_tc_t *tc, void **argp,
 		if (setenv("PUFFS_COMFD", comfd, 1) == -1)
 			return errno;
 
-		if (execvp(theargv[0], theargv) == -1)
-			return errno;
+		execvp(theargv[0], theargv);
+		return errno;
 	case -1:
 		return errno;
 	default:
