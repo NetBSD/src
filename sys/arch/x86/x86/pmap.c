@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.317 2019/01/31 20:42:31 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.318 2019/02/01 05:44:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317 2019/01/31 20:42:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2019/02/01 05:44:29 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3388,6 +3388,32 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	}
 }
 
+static inline uint8_t
+pmap_pte_to_pp_attrs(pt_entry_t pte)
+{
+	uint8_t ret = 0;
+	if (pte & PG_M)
+		ret |= PP_ATTRS_M;
+	if (pte & PG_U)
+		ret |= PP_ATTRS_U;
+	if (pte & PG_RW)
+		ret |= PP_ATTRS_W;
+	return ret;
+}
+
+static inline pt_entry_t
+pmap_pp_attrs_to_pte(uint8_t attrs)
+{
+	pt_entry_t pte = 0;
+	if (attrs & PP_ATTRS_M)
+		pte |= PG_M;
+	if (attrs & PP_ATTRS_U)
+		pte |= PG_U;
+	if (attrs & PP_ATTRS_W)
+		pte |= PG_RW;
+	return pte;
+}
+
 /*
  * pmap_remove_pte: remove a single PTE from a PTP.
  *
@@ -3461,7 +3487,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	/* Sync R/M bits. */
-	pp->pp_attrs |= opte;
+	pp->pp_attrs |= pmap_pte_to_pp_attrs(opte);
 	pve = pmap_remove_pv(pp, ptp, va);
 
 	if (pve) {
@@ -3573,13 +3599,15 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 }
 
 /*
- * pmap_sync_pv: clear pte bits and return the old value of the pte.
+ * pmap_sync_pv: clear pte bits and return the old value of the pp_attrs.
  *
+ * => The 'clearbits' parameter is either ~0 or PP_ATTRS_...
  * => Caller should disable kernel preemption.
  * => issues tlb shootdowns if necessary.
  */
 static int
-pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, pt_entry_t *optep)
+pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
+    pt_entry_t *optep)
 {
 	struct pmap *pmap;
 	struct vm_page *ptp;
@@ -3597,7 +3625,11 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, pt_entry_t *optep)
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	pmap = ptp_to_pmap(ptp);
 
-	KASSERT(clearbits == ~0 || (clearbits & ~(PG_M | PG_U | PG_RW)) == 0);
+	if (clearbits != ~0) {
+		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
+		clearbits = pmap_pp_attrs_to_pte(clearbits);
+	}
+
 	KASSERT(kpreempt_disabled());
 
 	ptep = pmap_map_pte(pmap, ptp, va);
@@ -3658,7 +3690,9 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, pt_entry_t *optep)
 	}
 	pmap_unmap_pte();
 
-	*optep = opte;
+	*oattrs = pmap_pte_to_pp_attrs(opte);
+	if (optep != NULL)
+		*optep = opte;
 	return 0;
 }
 
@@ -3685,6 +3719,7 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 	struct pv_pte *pvpte;
 	struct pv_entry *killlist = NULL;
 	struct vm_page *ptp;
+	uint8_t oattrs;
 	int count;
 
 	count = SPINLOCK_BACKOFF_MIN;
@@ -3707,7 +3742,7 @@ startover:
 			pmap_reference(pmap);
 		}
 
-		error = pmap_sync_pv(pvpte, pa, ~0, &opte);
+		error = pmap_sync_pv(pvpte, pa, ~0, &oattrs, &opte);
 		if (error == EAGAIN) {
 			int hold_count;
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
@@ -3719,7 +3754,7 @@ startover:
 			goto startover;
 		}
 
-		pp->pp_attrs |= opte;
+		pp->pp_attrs |= oattrs;
 		va = pvpte->pte_va;
 		pve = pmap_remove_pv(pp, ptp, va);
 
@@ -3794,6 +3829,7 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 {
 	struct pmap_page *pp;
 	struct pv_pte *pvpte;
+	uint8_t oattrs;
 	u_int result;
 	paddr_t pa;
 
@@ -3806,15 +3842,14 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	pa = VM_PAGE_TO_PHYS(pg);
 	kpreempt_disable();
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
-		pt_entry_t opte;
 		int error;
 
 		if ((pp->pp_attrs & testbits) != 0) {
 			break;
 		}
-		error = pmap_sync_pv(pvpte, pa, 0, &opte);
+		error = pmap_sync_pv(pvpte, pa, 0, &oattrs, NULL);
 		if (error == 0) {
-			pp->pp_attrs |= opte;
+			pp->pp_attrs |= oattrs;
 		}
 	}
 	result = pp->pp_attrs & testbits;
@@ -3832,6 +3867,7 @@ static bool
 pmap_pp_clear_attrs(struct pmap_page *pp, paddr_t pa, unsigned clearbits)
 {
 	struct pv_pte *pvpte;
+	uint8_t oattrs;
 	u_int result;
 	int count;
 
@@ -3839,10 +3875,9 @@ pmap_pp_clear_attrs(struct pmap_page *pp, paddr_t pa, unsigned clearbits)
 	kpreempt_disable();
 startover:
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
-		pt_entry_t opte;
 		int error;
 
-		error = pmap_sync_pv(pvpte, pa, clearbits, &opte);
+		error = pmap_sync_pv(pvpte, pa, clearbits, &oattrs, NULL);
 		if (error == EAGAIN) {
 			int hold_count;
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
@@ -3850,7 +3885,7 @@ startover:
 			KERNEL_LOCK(hold_count, curlwp);
 			goto startover;
 		}
-		pp->pp_attrs |= opte;
+		pp->pp_attrs |= oattrs;
 	}
 	result = pp->pp_attrs & clearbits;
 	pp->pp_attrs &= ~clearbits;
@@ -4254,7 +4289,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		}
 
 		old_pve = pmap_remove_pv(old_pp, ptp, va);
-		old_pp->pp_attrs |= opte;
+		old_pp->pp_attrs |= pmap_pte_to_pp_attrs(opte);
 	}
 
 	/*
