@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2019/01/19 12:58:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.89 2019/02/01 09:27:23 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -39,7 +39,8 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--disable-libstdcxx-dual-abi \
 			--enable-__cxa_atexit \
 			--enable-libstdcxx-time=rt \
-			--enable-libstdcxx-threads
+			--enable-libstdcxx-threads \
+			--with-diagnostics-color=auto-if-env
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 .endif
@@ -47,7 +48,9 @@ COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 .endif
 
-COMMON_CONFIGURE_ARGS+= --with-diagnostics-color=auto-if-env
+.if ${HAVE_GCC} >= 7
+COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
+.endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
 CONFIGURE_ARGS+= \
@@ -94,6 +97,7 @@ MKNATIVE_TARGET=	gcc6
 
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libstdc++-v3 \
+	configure-target-libbacktrace \
 	configure-target-libobjc
 
 BINENV=		/usr/bin/env -i
@@ -105,7 +109,7 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			CFLAGS_FOR_BUILD="-I${TOOLDIR}/include" \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
-			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
+			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include' '-I${DESTDIR}/usr/include/g++/bits \
 			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
 			AS=${AS:Q} AWK=${TOOL_AWK:Q} LD=${LD:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
@@ -185,14 +189,15 @@ NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \
 			--disable-libstdcxx-pch \
-			--disable-libstdcxx-dual-abi \
 			--build=`${GCCDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--with-sysroot=${DESTDIR}
 MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
-	mkdir .native 2>/dev/null || true
+	mkdir .native .native/gcc .native/gcc/include 2>/dev/null || true
+	# If this fails, gthreads won't be configured initially, but reconfig will.
+	-cp ${DESTDIR}/usr/include/g++/bits/gthr-default.h .native/gcc/include
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} \
 			${HOST_SH} ${GNUHOSTDIST}/configure \
