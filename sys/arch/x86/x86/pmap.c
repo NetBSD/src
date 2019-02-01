@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.318 2019/02/01 05:44:29 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.319 2019/02/01 11:35:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2019/02/01 05:44:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.319 2019/02/01 11:35:13 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2387,8 +2387,14 @@ pmap_create(void)
 	pmap->pm_flags = 0;
 	pmap->pm_gc_ptp = NULL;
 
+	/* Used by NVMM. */
 	pmap->pm_enter = NULL;
+	pmap->pm_extract = NULL;
 	pmap->pm_remove = NULL;
+	pmap->pm_sync_pv = NULL;
+	pmap->pm_pp_remove_ent = NULL;
+	pmap->pm_write_protect = NULL;
+	pmap->pm_unwire = NULL;
 	pmap->pm_tlb_flush = NULL;
 	pmap->pm_data = NULL;
 
@@ -2542,7 +2548,11 @@ pmap_destroy(struct pmap *pmap)
 
 	pmap_free_ptps(pmap->pm_gc_ptp);
 
-	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
+	if (__predict_false(pmap->pm_enter != NULL)) {
+		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
+	} else {
+		pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
+	}
 
 #ifdef USER_LDT
 	if (pmap->pm_ldt != NULL) {
@@ -3050,6 +3060,10 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	paddr_t pa;
 	lwp_t *l;
 	bool hard, rv;
+
+	if (__predict_false(pmap->pm_extract != NULL)) {
+		return (*pmap->pm_extract)(pmap, va, pap);
+	}
 
 #ifdef __HAVE_DIRECT_MAP
 	if (va >= PMAP_DIRECT_BASE && va < PMAP_DIRECT_END) {
@@ -3625,6 +3639,11 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	pmap = ptp_to_pmap(ptp);
 
+	if (__predict_false(pmap->pm_sync_pv != NULL)) {
+		return (*pmap->pm_sync_pv)(ptp, va, pa, clearbits, oattrs,
+		    optep);
+	}
+
 	if (clearbits != ~0) {
 		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
 		clearbits = pmap_pp_attrs_to_pte(clearbits);
@@ -3762,7 +3781,11 @@ startover:
 		if (ptp != NULL) {
 			KASSERT(pmap != pmap_kernel());
 			pmap_tlb_shootnow();
-			pmap_pp_remove_ent(pmap, ptp, opte, va);
+			if (__predict_false(pmap->pm_pp_remove_ent != NULL)) {
+				(*pmap->pm_pp_remove_ent)(pmap, ptp, opte, va);
+			} else {
+				pmap_pp_remove_ent(pmap, ptp, opte, va);
+			}
 			pmap_destroy(pmap);
 		} else {
 			KASSERT(pmap == pmap_kernel());
@@ -3980,6 +4003,11 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
 
+	if (__predict_false(pmap->pm_write_protect != NULL)) {
+		(*pmap->pm_write_protect)(pmap, sva, eva, prot);
+		return;
+	}
+
 	bit_rem = 0;
 	if (!(prot & VM_PROT_WRITE))
 		bit_rem = PG_RW;
@@ -4047,6 +4075,11 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	pt_entry_t *ptes, *ptep, opte;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
+
+	if (__predict_false(pmap->pm_unwire != NULL)) {
+		(*pmap->pm_unwire)(pmap, va);
+		return;
+	}
 
 	/* Acquire pmap. */
 	kpreempt_disable();
@@ -4545,6 +4578,13 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
+			if (__predict_false(pm->pm_enter != NULL)) {
+				/*
+				 * Not a native pmap, the kernel is not mapped,
+				 * so nothing to synchronize.
+				 */
+				continue;
+			}
 			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
 			    &kpm->pm_pdir[PDIR_SLOT_KERN + old],
 			    newpdes * sizeof(pd_entry_t));
