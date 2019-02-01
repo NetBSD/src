@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.100 2019/01/31 06:46:52 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.101 2019/02/01 11:26:13 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2405,4 +2405,15 @@ sys/dev/mii/inbmphyreg.h			1.13-1.15
 	- Rename functions. Add comment.
 	[msaitoh, ticket #1179]
 
+sys/kern/kern_time.c				1.190,1.194
+
+	Fix kernel info leaks.
+	[maxv, ticket #1180]
+
+sys/dev/pci/ppb.c				1.66,1.67
+
+	If the secondary bus is configured and the bus mastering is
+	not enabled, enable it in case BIOS, UEFI or firmware don't
+	do it.
+	[msaitoh, ticket #1181]
 
