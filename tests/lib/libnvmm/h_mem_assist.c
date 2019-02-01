@@ -60,7 +60,7 @@ init_seg(struct nvmm_x64_state_seg *seg, int type, int sel)
 	seg->attrib.lng = 1;
 	seg->attrib.def32 = 0;
 	seg->attrib.gran = 1;
-	seg->limit = 0xFFFFFFFF;
+	seg->limit = 0x0000FFFF;
 	seg->base = 0x00000000;
 }
 
@@ -81,10 +81,10 @@ reset_machine(struct nvmm_machine *mach)
 	init_seg(&state.segs[NVMM_X64_SEG_GS], SDT_MEMRWA, GSEL(GDATA_SEL, SEL_KPL));
 
 	/* Blank. */
-	init_seg(&state.segs[NVMM_X64_SEG_GDT], 0, 0x0000);
-	init_seg(&state.segs[NVMM_X64_SEG_IDT], 0, 0x0000);
-	init_seg(&state.segs[NVMM_X64_SEG_LDT], 0, 0x0000);
-	init_seg(&state.segs[NVMM_X64_SEG_TR], 0, 0x0000);
+	init_seg(&state.segs[NVMM_X64_SEG_GDT], 0, 0);
+	init_seg(&state.segs[NVMM_X64_SEG_IDT], 0, 0);
+	init_seg(&state.segs[NVMM_X64_SEG_LDT], SDT_SYSLDT, 0);
+	init_seg(&state.segs[NVMM_X64_SEG_TR], SDT_SYS386BSY, 0);
 
 	/* Protected mode enabled. */
 	state.crs[NVMM_X64_CR_CR0] = CR0_PG|CR0_PE|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM;
