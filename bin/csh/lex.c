@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.33 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: lex.c,v 1.34 2019/02/01 08:29:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.33 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.34 2019/02/01 08:29:03 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1323,7 +1323,7 @@ top:
 	}
     }
     if (alvec) {
-	if ((alvecp = *alvec) != '\0') {
+	if ((alvecp = *alvec) != NULL) {
 	    alvec++;
 	    goto top;
 	}
@@ -1346,7 +1346,7 @@ top:
 	    doneinp = 1;
 	    reset();
 	}
-	if ((evalp = *evalvec) != '\0') {
+	if ((evalp = *evalvec) != NULL) {
 	    evalvec++;
 	    goto top;
 	}

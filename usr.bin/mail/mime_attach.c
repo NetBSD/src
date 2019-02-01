@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.19 2017/11/09 20:27:50 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.20 2019/02/01 08:29:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.19 2017/11/09 20:27:50 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.20 2019/02/01 08:29:04 mrg Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -1018,7 +1018,7 @@ mime_attach_optargs(struct name *optargs)
 			argc = getrawlist(np->n_name,
 			    argv, (int)__arraycount(argv));
 		else {
-			if (np->n_name == '\0')
+			if (np->n_name == NULL)
 				argc = 0;
 			else {
 				argc = 1;
