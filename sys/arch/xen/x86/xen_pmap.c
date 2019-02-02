@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.27 2018/07/26 17:20:09 maxv Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.28 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.27 2018/07/26 17:20:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.28 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -132,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.27 2018/07/26 17:20:09 maxv Exp $");
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
 
-#include <xen/xen-public/xen.h>
+#include <xen/include/public/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/xenpmap.h>
 

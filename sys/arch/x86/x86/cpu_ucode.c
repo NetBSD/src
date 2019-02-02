@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode.c,v 1.10 2019/01/27 02:08:39 pgoyette Exp $ */
+/* $NetBSD: cpu_ucode.c,v 1.11 2019/02/02 12:32:55 cherry Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.10 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.11 2019/02/02 12:32:55 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_cpu_ucode.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_ucode.c,v 1.10 2019/01/27 02:08:39 pgoyette Exp 
 #include <x86/cpu_ucode.h>
 
 #ifdef XEN
-#include <xen/xen-public/xen.h>
+#include <xen/include/public/xen.h>
 #include <xen/hypervisor.h>
 #endif
 

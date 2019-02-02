@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.174 2018/08/12 15:31:01 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.175 2019/02/02 12:32:54 cherry Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -276,8 +276,8 @@
 
 #ifdef XEN
 #define __ASSEMBLY__
-#include <xen/xen-public/elfnote.h>
-#include <xen/xen-public/xen.h>
+#include <xen/include/public/elfnote.h>
+#include <xen/include/public/xen.h>
 #define ELFNOTE(name, type, desctype, descdata...) \
 .pushsection .note.name			;	\
   .align 4				;	\

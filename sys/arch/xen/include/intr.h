@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.51 2018/12/25 06:50:12 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.52 2019/02/02 12:32:55 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -36,7 +36,8 @@
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
-#include <xen/xen-public/xen.h>
+#include <xen/include/public/xen.h>
+#include <xen/include/public/event_channel.h>
 #include <x86/intr.h>
 #include <xen/xen.h>
 #include <xen/hypervisor.h>

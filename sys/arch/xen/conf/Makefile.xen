@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.47 2018/09/22 12:24:04 rin Exp $
+#	$NetBSD: Makefile.xen,v 1.48 2019/02/02 12:32:54 cherry Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -42,7 +42,7 @@ ARCH_INC=	$S/arch/xen/include/${XEN_BUILD}
 ##
 CPPFLAGS+=	-D${XEN_BUILD}
 AFLAGS+=	-x assembler-with-cpp ${DBG} -D__XEN__
-EXTRA_INCLUDES=	-I${.CURDIR}/xen-ma
+EXTRA_INCLUDES=	-I${.CURDIR}/xen-ma -I$S/external/mit/xen-include-public/dist/
 
 .if ${XEN_BUILD} == "amd64"
 DEFCOPTS=	-O2 -fno-omit-frame-pointer

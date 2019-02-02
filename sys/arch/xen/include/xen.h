@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.41 2018/10/10 04:16:58 cherry Exp $	*/
+/*	$NetBSD: xen.h,v 1.42 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*
  *
@@ -341,7 +341,7 @@ xen_atomic_clear_bit(volatile void *ptr, unsigned long bitno)
 
 void	wbinvd(void);
 
-#include <xen/xen-public/features.h>
+#include <xen/include/public/features.h>
 #include <sys/systm.h>
 
 extern bool xen_feature_tables[];

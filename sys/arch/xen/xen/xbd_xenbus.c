@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.91 2018/12/24 14:55:42 cherry Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.92 2019/02/02 12:32:55 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.91 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.92 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -76,8 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.91 2018/12/24 14:55:42 cherry Exp $
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen-public/io/blkif.h>
-#include <xen/xen-public/io/protocols.h>
+#include <xen/include/public/io/blkif.h>
+#include <xen/include/public/io/protocols.h>
 
 #include <xen/xenbus.h>
 #include "locators.h"

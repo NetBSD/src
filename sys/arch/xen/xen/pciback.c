@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.18 2018/12/24 14:55:42 cherry Exp $      */
+/*      $NetBSD: pciback.c,v 1.19 2019/02/02 12:32:55 cherry Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.18 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.19 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.18 2018/12/24 14:55:42 cherry Exp $");
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen-public/io/pciif.h>
+#include <xen/include/public/io/pciif.h>
 #include <xen/xenbus.h>
 
 #include <sys/stat.h>

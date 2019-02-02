@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.19 2018/07/26 15:38:26 maxv Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.20 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.19 2018/07/26 15:38:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.20 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.19 2018/07/26 15:38:26 maxv Exp $"
 
 #include <xen/hypervisor.h>
 #include <xen/shutdown_xenbus.h>
-#include <xen/xen-public/version.h>
+#include <xen/include/public/version.h>
 
 #define DPRINTK(x) printk x
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.47 2018/12/24 14:55:42 cherry Exp $	*/
+/*	$NetBSD: xencons.c,v 1.48 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.47 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.48 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.47 2018/12/24 14:55:42 cherry Exp $");
 #include <xen/evtchn.h>
 #include <uvm/uvm.h>
 #include <machine/pmap.h>
-#include <xen/xen-public/io/console.h>
+#include <xen/include/public/io/console.h>
 
 #include <dev/cons.h>
 

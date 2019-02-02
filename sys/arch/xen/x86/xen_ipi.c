@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.31 2019/01/27 05:08:58 dholland Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.32 2019/02/02 12:32:55 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.31 2019/01/27 05:08:58 dholland Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.32 2019/02/02 12:32:55 cherry Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.31 2019/01/27 05:08:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.32 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.31 2019/01/27 05:08:58 dholland Exp $"
 #include <xen/intr.h>
 #include <xen/intrdefs.h>
 #include <xen/hypervisor.h>
-#include <xen/xen-public/vcpu.h>
+#include <xen/include/public/vcpu.h>
 
 #ifdef DDB
 extern void ddb_ipi(struct trapframe);

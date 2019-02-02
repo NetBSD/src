@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.101 2018/12/25 06:50:11 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.102 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,8 +69,8 @@
 #include <sys/device_if.h> /* for device_t */
 
 #ifdef XEN
-#include <xen/xen-public/xen.h>
-#include <xen/xen-public/event_channel.h>
+#include <xen/include/public/xen.h>
+#include <xen/include/public/event_channel.h>
 #include <sys/mutex.h>
 #endif /* XEN */
 

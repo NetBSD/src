@@ -1,10 +1,12 @@
-# $NetBSD: std.xen,v 1.8 2016/09/23 22:07:12 joerg Exp $
+# $NetBSD: std.xen,v 1.9 2019/02/02 12:32:54 cherry Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
 
 machine xen i386
 include		"conf/std"	# MI standard options
+
+options 	__XEN_INTERFACE_VERSION__=0x00030201 # Xen 3.1 interface
 
 options 	EXEC_AOUT	# exec a.out binaries
 options 	EXEC_ELF32	# exec ELF binaries
