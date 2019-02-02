@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1199 2019/01/19 13:06:50 mrg Exp $
+# $NetBSD: mi,v 1.1200 2019/02/02 22:39:32 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1077,6 +1077,7 @@
 ./usr/include/dev				base-c-usr
 ./usr/include/dev/apm				base-c-usr
 ./usr/include/dev/ata				base-c-usr
+./usr/include/dev/bluetooth			comp-c-usr
 ./usr/include/dev/dec				base-c-usr
 ./usr/include/dev/dm	                        base-c-usr
 ./usr/include/dev/dmover			base-c-usr
