@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.76 2018/12/25 06:50:12 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.77 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76 2018/12/25 06:50:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.77 2019/02/02 12:32:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76 2018/12/25 06:50:12 cherry Exp $");
 
 #include <xen/evtchn.h>
 #include <xen/hypervisor.h>
-#include <xen/xen-public/vcpu.h>
+#include <xen/include/public/vcpu.h>
 #include <xen/xen.h>
 
 #include <x86/rtc.h>
