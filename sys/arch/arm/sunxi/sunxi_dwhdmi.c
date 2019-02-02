@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.3 2019/02/02 17:35:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.3 2019/02/02 17:35:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,6 +61,7 @@ struct sunxi_dwhdmi_softc {
 	struct dwhdmi_softc	sc_base;
 	int			sc_phandle;
 	struct fdtbus_phy	*sc_phy;
+	struct fdtbus_regulator	*sc_regulator;
 
 	struct fdt_device_ports	sc_ports;
 	struct drm_display_mode	sc_curmode;
@@ -104,6 +105,15 @@ sunxi_dwhdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	if (sc->sc_phy == NULL) {
 		device_printf(dev, "couldn't find hdmi-phy\n");
 		return ENXIO;
+	}
+
+	sc->sc_regulator = fdtbus_regulator_acquire(sc->sc_phandle, "hvcc-supply");
+	if (sc->sc_regulator != NULL) {
+		error = fdtbus_regulator_enable(sc->sc_regulator);
+		if (error != 0) {
+			device_printf(dev, "couldn't enable supply\n");
+			return error;
+		}
 	}
 
 	error = dwhdmi_bind(&sc->sc_base, encoder);
