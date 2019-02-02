@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.14 2018/08/27 15:32:39 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.15 2019/02/02 21:46:27 mrg Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.14 2018/08/27 15:32:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.15 2019/02/02 21:46:27 mrg Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -1624,10 +1624,6 @@ bool ttm_mem_reg_is_pci(struct ttm_bo_device *bdev, struct ttm_mem_reg *mem)
 
 void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 {
-#ifndef __NetBSD__
-	struct ttm_bo_device *bdev = bo->bdev;
-#endif
-
 #ifdef __NetBSD__
 	if (bo->mem.bus.is_iomem) {
 		paddr_t start, end, pa;
@@ -1654,6 +1650,8 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 		mutex_exit(bo->uvmobj.vmobjlock);
 	}
 #else
+	struct ttm_bo_device *bdev = bo->bdev;
+
 	drm_vma_node_unmap(&bo->vma_node, bdev->dev_mapping);
 #endif
 	ttm_mem_io_free_vm(bo);
