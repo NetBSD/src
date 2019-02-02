@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.47 2019/02/02 12:32:55 cherry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.48 2019/02/02 14:50:15 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -80,7 +80,7 @@ struct xen_npx_attach_args {
 #define	s32 int32_t
 #define	s64 int64_t
 
-#include <external/bsd/common/include/asm/barrier.h> /* Linux mb() and friends */
+#include <sys/atomic.h>
 
 #include <xen/include/public/xen.h>
 #include <xen/include/public/sched.h>
@@ -93,6 +93,18 @@ struct xen_npx_attach_args {
 #include <xen/include/public/memory.h>
 #include <xen/include/public/io/netif.h>
 #include <xen/include/public/io/blkif.h>
+
+/* Undo namespace damage from xen/include/public/io/ring.h
+ * The proper fix is to get upstream to stop assuming that all OSs use
+ * mb(), rmb(), wmb().
+ */
+#undef xen_mb
+#undef xen_rmb
+#undef xen_wmb
+
+#define xen_mb()  membar_sync()
+#define xen_rmb() membar_producer()
+#define xen_wmb() membar_consumer()
 
 #include <machine/hypercalls.h>
 
