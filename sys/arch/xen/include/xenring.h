@@ -1,4 +1,4 @@
-/* $NetBSD: xenring.h,v 1.2 2019/02/02 14:50:15 cherry Exp $ */
+/* $NetBSD: xenring.h,v 1.3 2019/02/02 15:09:32 cherry Exp $ */
 
 /*
  * Glue goop for xbd ring request/response protocol structures.
@@ -10,7 +10,7 @@
 #ifndef _XEN_RING_H
 #define _XEN_RING_H
 
-#if (__XEN_INTERFACE_VERSION__ >= 0x00030201) &&
+#if (__XEN_INTERFACE_VERSION__ >= 0x00030201) && \
 	(__XEN_INTERFACE_VERSION < 0x00030208)
 
 #include <xen/include/public/io/ring.h>
