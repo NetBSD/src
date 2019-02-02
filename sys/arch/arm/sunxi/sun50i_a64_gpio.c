@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_gpio.c,v 1.3 2018/05/06 10:34:23 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_gpio.c,v 1.4 2019/02/02 17:26:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_gpio.c,v 1.3 2018/05/06 10:34:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun50i_a64_gpio.c,v 1.4 2019/02/02 17:26:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,28 +66,28 @@ static const struct sunxi_gpio_pins a64_pins[] = {
 	{ "PC15", 2, 15,  { "gpio_in", "gpio_out", "nand", "mmc2" } },
 	{ "PC16", 2, 16,  { "gpio_in", "gpio_out", "nand", "mmc2" } },
 
-	{ "PD0",  3, 0,   { "gpio_in", "gpio_out", "lcd", "uart3", "spi1", "ccir" } },
-	{ "PD1",  3, 1,   { "gpio_in", "gpio_out", "lcd", "uart3", "spi1", "ccir" } },
-	{ "PD2",  3, 2,   { "gpio_in", "gpio_out", "lcd", "uart4", "spi1", "ccir" } },
-	{ "PD3",  3, 3,   { "gpio_in", "gpio_out", "lcd", "uart4", "spi1", "ccir" } },
-	{ "PD4",  3, 4,   { "gpio_in", "gpio_out", "lcd", "uart4", "spi1", "ccir" } },
-	{ "PD5",  3, 5,   { "gpio_in", "gpio_out", "lcd", "uart4", "spi1", "ccir" } },
-	{ "PD6",  3, 6,   { "gpio_in", "gpio_out", "lcd", NULL, NULL, "ccir" } },
-	{ "PD7",  3, 7,   { "gpio_in", "gpio_out", "lcd", NULL, NULL, "ccir" } },
-	{ "PD8",  3, 8,   { "gpio_in", "gpio_out", "lcd", NULL, "emac", "ccir" } },
-	{ "PD9",  3, 9,   { "gpio_in", "gpio_out", "lcd", NULL, "emac", "ccir" } },
-	{ "PD10", 3, 10,  { "gpio_in", "gpio_out", "lcd", NULL, "emac" } },
-	{ "PD11", 3, 11,  { "gpio_in", "gpio_out", "lcd", NULL, "emac" } },
-	{ "PD12", 3, 12,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD13", 3, 13,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD14", 3, 14,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD15", 3, 15,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac", "ccir" } },
-	{ "PD16", 3, 16,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac", "ccir" } },
-	{ "PD17", 3, 17,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD18", 3, 18,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD19", 3, 19,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD20", 3, 20,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
-	{ "PD21", 3, 21,  { "gpio_in", "gpio_out", "lcd", "lvds", "emac" } },
+	{ "PD0",  3, 0,   { "gpio_in", "gpio_out", "lcd0", "uart3", "spi1", "ccir" } },
+	{ "PD1",  3, 1,   { "gpio_in", "gpio_out", "lcd0", "uart3", "spi1", "ccir" } },
+	{ "PD2",  3, 2,   { "gpio_in", "gpio_out", "lcd0", "uart4", "spi1", "ccir" } },
+	{ "PD3",  3, 3,   { "gpio_in", "gpio_out", "lcd0", "uart4", "spi1", "ccir" } },
+	{ "PD4",  3, 4,   { "gpio_in", "gpio_out", "lcd0", "uart4", "spi1", "ccir" } },
+	{ "PD5",  3, 5,   { "gpio_in", "gpio_out", "lcd0", "uart4", "spi1", "ccir" } },
+	{ "PD6",  3, 6,   { "gpio_in", "gpio_out", "lcd0", NULL, NULL, "ccir" } },
+	{ "PD7",  3, 7,   { "gpio_in", "gpio_out", "lcd0", NULL, NULL, "ccir" } },
+	{ "PD8",  3, 8,   { "gpio_in", "gpio_out", "lcd0", NULL, "emac", "ccir" } },
+	{ "PD9",  3, 9,   { "gpio_in", "gpio_out", "lcd0", NULL, "emac", "ccir" } },
+	{ "PD10", 3, 10,  { "gpio_in", "gpio_out", "lcd0", NULL, "emac" } },
+	{ "PD11", 3, 11,  { "gpio_in", "gpio_out", "lcd0", NULL, "emac" } },
+	{ "PD12", 3, 12,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
+	{ "PD13", 3, 13,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
+	{ "PD14", 3, 14,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
+	{ "PD15", 3, 15,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac", "ccir" } },
+	{ "PD16", 3, 16,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac", "ccir" } },
+	{ "PD17", 3, 17,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
+	{ "PD18", 3, 18,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
+	{ "PD19", 3, 19,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
+	{ "PD20", 3, 20,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
+	{ "PD21", 3, 21,  { "gpio_in", "gpio_out", "lcd0", "lvds", "emac" } },
 	{ "PD22", 3, 22,  { "gpio_in", "gpio_out", "pwm", NULL, "emac" } },
 	{ "PD23", 3, 23,  { "gpio_in", "gpio_out", NULL, NULL, "emac" } },
 	{ "PD24", 3, 24,  { "gpio_in", "gpio_out" } },
