@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.10 2019/01/24 04:16:16 cherry Exp $ */
+/* $NetBSD: hypercalls.h,v 1.11 2019/02/02 12:32:55 cherry Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -404,7 +404,7 @@ HYPERVISOR_dom0_op(
 }
 #endif	/* __XEN_INTERFACE_VERSION__ */
 
-#include <xen/xen-public/arch-x86/xen-mca.h>
+#include <xen/include/public/arch-x86/xen-mca.h>
 
 static inline int
 HYPERVISOR_machine_check(struct xen_mc *mc)

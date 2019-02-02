@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.46 2018/10/26 05:33:21 cherry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.47 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -80,17 +80,19 @@ struct xen_npx_attach_args {
 #define	s32 int32_t
 #define	s64 int64_t
 
-#include <xen/xen-public/xen.h>
-#include <xen/xen-public/sched.h>
-#include <xen/xen-public/platform.h>
+#include <external/bsd/common/include/asm/barrier.h> /* Linux mb() and friends */
+
+#include <xen/include/public/xen.h>
+#include <xen/include/public/sched.h>
+#include <xen/include/public/platform.h>
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
-#include <xen/xen-public/dom0_ops.h>
+#include <xen/include/public/dom0_ops.h>
 #endif
-#include <xen/xen-public/event_channel.h>
-#include <xen/xen-public/physdev.h>
-#include <xen/xen-public/memory.h>
-#include <xen/xen-public/io/netif.h>
-#include <xen/xen-public/io/blkif.h>
+#include <xen/include/public/event_channel.h>
+#include <xen/include/public/physdev.h>
+#include <xen/include/public/memory.h>
+#include <xen/include/public/io/netif.h>
+#include <xen/include/public/io/blkif.h>
 
 #include <machine/hypercalls.h>
 
