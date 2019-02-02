@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.266 2019/01/19 13:06:50 mrg Exp $
+# $NetBSD: md.amd64,v 1.267 2019/02/02 22:39:32 mrg Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -604,6 +604,8 @@
 ./usr/include/gcc-7/adxintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/ammintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/avx2intrin.h		comp-c-include		gcc=7
+./usr/include/gcc-7/avx5124fmapsintrin.h	comp-c-include		gcc=7
+./usr/include/gcc-7/avx5124vnniwintrin.h	comp-c-include		gcc=7
 ./usr/include/gcc-7/avx512bwintrin.h		comp-c-include		gcc=7
 ./usr/include/gcc-7/avx512cdintrin.h		comp-c-include		gcc=7
 ./usr/include/gcc-7/avx512dqintrin.h		comp-c-include		gcc=7
@@ -617,6 +619,7 @@
 ./usr/include/gcc-7/avx512vlbwintrin.h		comp-c-include		gcc=7
 ./usr/include/gcc-7/avx512vldqintrin.h		comp-c-include		gcc=7
 ./usr/include/gcc-7/avx512vlintrin.h		comp-c-include		gcc=7
+./usr/include/gcc-7/avx512vpopcntdqintrin.h	comp-c-include		gcc=7
 ./usr/include/gcc-7/avxintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/bmi2intrin.h		comp-c-include		gcc=7
 ./usr/include/gcc-7/bmiintrin.h			comp-c-include		gcc=7
@@ -646,6 +649,7 @@
 ./usr/include/gcc-7/prfchwintrin.h		comp-c-include		gcc=7
 ./usr/include/gcc-7/rdseedintrin.h		comp-c-include		gcc=7
 ./usr/include/gcc-7/rtmintrin.h			comp-c-include		gcc=7
+./usr/include/gcc-7/sgxintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/shaintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/smmintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/tbmintrin.h			comp-c-include		gcc=7
