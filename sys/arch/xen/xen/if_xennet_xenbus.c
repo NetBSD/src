@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.82 2018/12/24 14:55:42 cherry Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.83 2019/02/02 12:32:55 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.82 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.83 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.82 2018/12/24 14:55:42 cherry
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen-public/io/netif.h>
+#include <xen/include/public/io/netif.h>
 #include <xen/xenpmap.h>
 
 #include <xen/xenbus.h>

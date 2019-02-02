@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.13 2011/12/07 15:47:42 cegger Exp $ */
+/* $NetBSD: xenbus.h,v 1.14 2019/02/02 12:32:55 cherry Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -34,10 +34,10 @@
 
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <xen/xen-public/xen.h>
-#include <xen/xen-public/io/xenbus.h>
-#include <xen/xen-public/io/xs_wire.h>
-#include <xen/xen-public/grant_table.h>	/* for grant_ref_t */
+#include <xen/include/public/xen.h>
+#include <xen/include/public/io/xenbus.h>
+#include <xen/include/public/io/xs_wire.h>
+#include <xen/include/public/grant_table.h>	/* for grant_ref_t */
 
 /* xenbus to hypervisor attach */
 struct xenbus_attach_args {

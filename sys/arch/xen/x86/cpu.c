@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.127 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.128 2019/02/02 12:32:55 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.127 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.128 2019/02/02 12:32:55 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.127 2018/09/03 16:29:29 riastradh Exp $");
 #include <x86/fpu.h>
 
 #include <xen/xen.h>
-#include <xen/xen-public/vcpu.h>
+#include <xen/include/public/vcpu.h>
 #include <xen/vcpuvar.h>
 
 #if NLAPIC > 0
