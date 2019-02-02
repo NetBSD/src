@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.72 2019/02/02 04:52:16 isaki Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.73 2019/02/02 05:02:03 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.72 2019/02/02 04:52:16 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.73 2019/02/02 05:02:03 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -509,12 +509,12 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error) {
-			DPRINTF(("%s: DSP_SETFRAGMENT %d\n",
+			DPRINTF(("%s: SNDCTL_DSP_SETFRAGMENT %d\n",
 			     __func__, error));
 			goto out;
 		}
 		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17) {
-			DPRINTF(("%s: DSP_SETFRAGMENT bad ival%d\n",
+			DPRINTF(("%s: SNDCTL_DSP_SETFRAGMENT bad ival%d\n",
 			     __func__, idat));
 			error = EINVAL;
 			goto out;
@@ -657,7 +657,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		idat = 1;
 		error = ioctlf(fp, FIONBIO, &idat);
 		if (error) {
-			DPRINTF(("%s: SENDCLT_DSP_NONBLOCK %d\n",
+			DPRINTF(("%s: FIONBIO %d\n",
 			     __func__, error));
 			goto out;
 		}
