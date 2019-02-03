@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.7 2010/12/13 01:45:39 christos Exp $	*/
+/*	$NetBSD: privsep.c,v 1.8 2019/02/03 10:48:47 mrg Exp $	*/
 /*	$OpenBSD: privsep.c,v 1.16 2006/10/25 20:55:04 moritz Exp $	*/
 
 /*
@@ -332,6 +332,7 @@ may_read(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			return (1);
 		default:
@@ -355,6 +356,7 @@ must_read(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			_exit(0);
 		default:
@@ -377,6 +379,7 @@ must_write(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			_exit(0);
 		default:
