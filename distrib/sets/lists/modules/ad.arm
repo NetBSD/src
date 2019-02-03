@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.11 2019/01/27 02:08:33 pgoyette Exp $
+# $NetBSD: ad.arm,v 1.12 2019/02/03 08:02:58 pgoyette Exp $
 
 ./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod base-kernel-modules	kmod
@@ -34,6 +34,8 @@
 ./@MODULEDIR@/compat_netbsd32_nfssrv/compat_netbsd32_nfssrv.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_ptrace		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_ptrace/compat_netbsd32_ptrace.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/compat_netbsd32_raid		base-kernel-modules	kmod
+./@MODULEDIR@/compat_netbsd32_raid/compat_netbsd32_raid.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc/compat_netbsd32_sysvipc.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc_10	base-kernel-modules	kmod
