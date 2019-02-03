@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.4 2012/01/04 16:09:43 drochner Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.5 2019/02/03 12:02:22 mrg Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -58,7 +58,7 @@ ipsecsetup(int af, int fd, const char *policy)
 	char *p0, *p;
 	int error;
 
-	if (!policy || policy == '\0')
+	if (!policy || *policy == '\0')
 		p0 = p = strdup("in entrust; out entrust");
 	else
 		p0 = p = strdup(policy);
