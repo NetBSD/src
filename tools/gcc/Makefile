@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2019/02/01 09:27:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.90 2019/02/03 11:57:25 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -197,7 +197,7 @@ MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	mkdir .native .native/gcc .native/gcc/include 2>/dev/null || true
 	# If this fails, gthreads won't be configured initially, but reconfig will.
-	-cp ${DESTDIR}/usr/include/g++/bits/gthr-default.h .native/gcc/include
+	cp ${DESTDIR}/usr/include/g++/bits/gthr-default.h .native/gcc/include || true
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} \
 			${HOST_SH} ${GNUHOSTDIST}/configure \
