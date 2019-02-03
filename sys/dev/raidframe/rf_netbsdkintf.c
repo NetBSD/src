@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.361 2019/02/03 08:02:24 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.362 2019/02/03 11:03:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.361 2019/02/03 08:02:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.362 2019/02/03 11:03:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.361 2019/02/03 08:02:24 pgoyett
 
 #ifdef _LP64
 #ifndef COMPAT_NETBSD32
-#define COMPAT_NETBSD32
+#define COMPAT_NETBSD32	1
 #endif
 #include "rf_compat32.h"
 #endif
