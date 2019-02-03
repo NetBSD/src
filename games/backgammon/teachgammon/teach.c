@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.24 2013/09/13 20:46:50 joerg Exp $	*/
+/*	$NetBSD: teach.c,v 1.25 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: teach.c,v 1.24 2013/09/13 20:46:50 joerg Exp $");
+__RCSID("$NetBSD: teach.c,v 1.25 2019/02/03 03:19:25 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -98,34 +98,42 @@ main(int argc __unused, char *argv[])
 			if ((i = wrtext(intro2)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 3:
 			if ((i = wrtext(moves)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 4:
 			if ((i = wrtext(removepiece)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 5:
 			if ((i = wrtext(hits)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 6:
 			if ((i = wrtext(endgame)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 7:
 			if ((i = wrtext(doubl)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 8:
 			if ((i = wrtext(stragy)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 9:
 			if ((i = wrtext(prog)) != 0)
 				break;
 
+			/* FALLTHROUGH */
 		case 10:
 			if ((i = wrtext(lastch)) != 0)
 				break;

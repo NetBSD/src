@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sendrecv.c,v 1.5 2018/11/06 17:55:04 christos Exp $	*/
+/*	$NetBSD: t_sendrecv.c,v 1.6 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sendrecv.c,v 1.5 2018/11/06 17:55:04 christos Exp $");
+__RCSID("$NetBSD: t_sendrecv.c,v 1.6 2019/02/03 03:19:28 mrg Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -134,6 +134,7 @@ sendrecv(int rerror)
 	case -1:
 		ATF_REQUIRE_MSG(errno == 0,
 		    "socketpair failed (%s)", strerror(errno));
+		__unreachable();
 		/*NOTREACHED*/
 	case 0:
 		sched_yield();

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.59 2012/02/25 17:22:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.60 2019/02/03 03:19:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.59 2012/02/25 17:22:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.60 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -348,9 +348,10 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 
 			break;
 
-		case ACPI_STATE_C3: /* FALLTHROUGH */
+		case ACPI_STATE_C3:
 			state.cs_flags = ACPICPU_FLAG_C_BM_STS;
 
+			/* FALLTHROUGH */
 		default:
 
 			if ((sc->sc_flags & ACPICPU_FLAG_C_FFH) == 0) {

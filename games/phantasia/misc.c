@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.21 2011/09/01 07:18:50 plunky Exp $	*/
+/*	$NetBSD: misc.c,v 1.22 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -729,6 +729,7 @@ altercoordinates(double xnew, double ynew, int operation)
 		ynew = Player.p_y - ROLL(1.0, 5.0);
 		/* fall through for check */
 
+		/* FALLTHROUGH */
 	case A_SPECIFIC:	/* just move player */
 		if (Beyond && fabs(xnew) < D_BEYOND && fabs(ynew) < D_BEYOND)
 			/*

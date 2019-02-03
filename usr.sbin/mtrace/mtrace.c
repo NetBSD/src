@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.41 2016/03/13 19:47:59 christos Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.42 2019/02/03 03:19:31 mrg Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.41 2016/03/13 19:47:59 christos Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.42 2019/02/03 03:19:31 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1672,8 +1672,11 @@ logit(int severity, int syserr, const char *format, ...)
 
     switch (debug) {
 	case 0: if (severity > LOG_WARNING) return;
+		/* FALLTHROUGH */
 	case 1: if (severity > LOG_NOTICE) return;
+		/* FALLTHROUGH */
 	case 2: if (severity > LOG_INFO  ) return;
+		/* FALLTHROUGH */
 	default:
 	    if (severity == LOG_WARNING)
 		fprintf(stderr, "warning - ");

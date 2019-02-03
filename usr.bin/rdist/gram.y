@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.13 2009/04/13 04:35:36 lukem Exp $	*/
+/*	$NetBSD: gram.y,v 1.14 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: gram.y,v 1.13 2009/04/13 04:35:36 lukem Exp $");
+__RCSID("$NetBSD: gram.y,v 1.14 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,8 +219,10 @@ again:
 			;
 		if (c == EOF)
 			return(0);
+		/* FALLTHROUGH */
 	case '\n':
 		yylineno++;
+		/* FALLTHROUGH */
 	case ' ':
 	case '\t':  /* skip blanks */
 		goto again;

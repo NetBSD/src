@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.130 2018/11/05 10:27:06 martin Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.131 2019/02/03 03:19:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.130 2018/11/05 10:27:06 martin Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.131 2019/02/03 03:19:31 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -2333,6 +2333,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 		    (buffer->host ? buffer->host : buffer->recvhost),
 		    buffer->timestamp);
 		ADDEV();
+		/* FALLTHROUGH */
 	case F_USERS: /* fallthrough */
 		/* filter non-ASCII */
 		p = line;

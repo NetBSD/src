@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.73 2019/02/02 05:02:03 isaki Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.74 2019/02/03 03:19:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.73 2019/02/02 05:02:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.74 2019/02/03 03:19:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -230,7 +230,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, idat, error));
 			goto out;
 		}
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_RATE:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {
@@ -372,7 +372,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_BITS:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {
@@ -449,7 +449,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case OSS_SOUND_PCM_READ_CHANNELS:
 		error = ioctlf(fp, AUDIO_GETBUFINFO, &tmpinfo);
 		if (error) {

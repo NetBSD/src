@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.14 2016/06/05 18:35:32 dholland Exp $	*/
+/*	$NetBSD: lexi.c,v 1.15 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lexi.c,v 1.14 2016/06/05 18:35:32 dholland Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.15 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -313,6 +313,7 @@ lexi(void)
 				 * Next time around, we will want to know that we have had a
 				 * 'struct'
 				 */
+				/* FALLTHROUGH */
 			case 4:/* one of the declaration keywords */
 				if (ps.p_l_follow) {
 					ps.cast_mask |= 1 << ps.p_l_follow;
@@ -329,6 +330,7 @@ lexi(void)
 
 			case 7:
 				ps.sizeof_keyword = true;
+				/* FALLTHROUGH */
 			default:	/* all others are treated like any
 					 * other identifier */
 				return (ident);

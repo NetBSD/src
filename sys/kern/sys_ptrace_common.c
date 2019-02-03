@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.46 2018/11/29 11:45:52 maxv Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.47 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.46 2018/11/29 11:45:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.47 2019/02/03 03:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -240,6 +240,7 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 			break;
 		}
 #endif
+		/* FALLTHROUGH */
 	case PT_TRACE_ME:
 	case PT_ATTACH:
 	case PT_WRITE_I:
@@ -1295,6 +1296,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case PT_SETSTEP:
 		write = 1;
 
+		/* FALLTHROUGH */
 	case PT_CLEARSTEP:
 		/* write = 0 done above. */
 		if ((error = ptrace_update_lwp(t, &lt, data)) != 0)

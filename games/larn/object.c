@@ -1,10 +1,10 @@
-/*	$NetBSD: object.c,v 1.16 2012/06/19 05:30:43 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.17 2019/02/03 03:19:25 mrg Exp $	*/
 
 /* object.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: object.c,v 1.16 2012/06/19 05:30:43 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.17 2019/02/03 03:19:25 mrg Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -148,6 +148,7 @@ lookforobject(void)
 		item[playerx][playery] = OTELEPORTER;
 		know[playerx][playery] = 1;
 
+		/* FALLTHROUGH */
 	case OTELEPORTER:
 		lprcat("\nZaaaappp!  You've been teleported!\n");
 		beep();
@@ -404,6 +405,7 @@ lookforobject(void)
 		item[playerx][playery] = OTRAPARROW;
 		know[playerx][playery] = 0;
 
+		/* FALLTHROUGH */
 	case OTRAPARROW:
 		lprcat("\nYou are hit by an arrow");
 		beep();		/* for an arrow trap */
@@ -418,6 +420,7 @@ lookforobject(void)
 		item[playerx][playery] = ODARTRAP;
 		know[playerx][playery] = 0;
 
+		/* FALLTHROUGH */
 	case ODARTRAP:
 		lprcat("\nYou are hit by a dart");
 		beep();		/* for a dart trap */
@@ -434,6 +437,7 @@ lookforobject(void)
 		item[playerx][playery] = OTRAPDOOR;
 		know[playerx][playery] = 1;
 
+		/* FALLTHROUGH */
 	case OTRAPDOOR:
 		lastnum = 272;	/* a trap door */
 		if ((level == MAXLEVEL - 1) || (level == MAXLEVEL + MAXVLEVEL - 1)) {

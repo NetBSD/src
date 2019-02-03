@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.50 2019/01/22 03:42:27 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.51 2019/02/03 03:19:27 mrg Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.50 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.51 2019/02/03 03:19:27 mrg Exp $");
 
 #include "vlan.h"
 
@@ -297,6 +297,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 		if (pci_mapreg_map(pa, BCE_PCI_BAR0, memtype, 0, &sc->bce_btag,
 		    &sc->bce_bhandle, &memaddr, &memsize) == 0)
 			break;
+		/* FALLTHROUGH */
 	default:
 		aprint_error_dev(self, "unable to find mem space\n");
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.30 2016/12/12 15:58:44 maya Exp $	*/
+/*	$NetBSD: state.c,v 1.31 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.30 2016/12/12 15:58:44 maya Exp $");
+__RCSID("$NetBSD: state.c,v 1.31 2019/02/03 03:19:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -531,6 +531,7 @@ willoption(int option)
 			slctab[SLC_XON].defset.flag |= SLC_DEFAULT;
 			slctab[SLC_XOFF].defset.flag &= ~SLC_LEVELBITS;
 			slctab[SLC_XOFF].defset.flag |= SLC_DEFAULT;
+			/* FALLTHROUGH */
 		case TELOPT_TTYPE:
 		case TELOPT_SGA:
 		case TELOPT_NAWS:

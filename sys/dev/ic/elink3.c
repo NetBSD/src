@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.144 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: elink3.c,v 1.145 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.144 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.145 2019/02/03 03:19:27 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -1683,6 +1683,7 @@ epioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 
+		/* FALLTHROUGH */
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 

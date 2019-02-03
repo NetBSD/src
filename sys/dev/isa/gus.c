@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.113 2018/06/23 06:57:24 maxv Exp $	*/
+/*	$NetBSD: gus.c,v 1.114 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.113 2018/06/23 06:57:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.114 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1558,6 +1558,7 @@ gus_dmaout_dointr(struct gus_softc *sc)
 				(sc->sc_nbufs - 1) * sc->sc_chanblocksize - 2,
 				guspeek(iot, ioh2,
 					sc->sc_gusaddr + sc->sc_chanblocksize - 2));
+			/* FALLTHROUGH */
 		case AUDIO_ENCODING_ALAW:
 		case AUDIO_ENCODING_ULAW:
 		byte:

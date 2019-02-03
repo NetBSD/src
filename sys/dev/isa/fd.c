@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.112 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: fd.c,v 1.113 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.112 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.113 2019/02/03 03:19:27 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1235,6 +1235,7 @@ loop:
 
 	case IOTIMEDOUT:
 		isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
+		/* FALLTHROUGH */
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
