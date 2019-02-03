@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.90 2018/06/09 23:45:56 christos Exp $
+#	$NetBSD: Makefile,v 1.91 2019/02/03 03:20:24 thorpej Exp $
 #
 
 NOSANITIZER=	# defined
@@ -66,6 +66,7 @@ SRCS+=	pthread_specific.c
 SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
 SRCS+=	res_state.c
+.PATH: ${.CURDIR}/../librt
 SRCS+=	sem.c
 # Architecture-dependent files
 .if exists(${ARCHDIR}/pthread_md.S)

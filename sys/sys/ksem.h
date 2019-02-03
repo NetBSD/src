@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.14 2012/11/25 01:05:04 christos Exp $	*/
+/*	$NetBSD: ksem.h,v 1.15 2019/02/03 03:20:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -38,8 +38,11 @@ struct timespec;
 
 typedef struct ksem {
 	LIST_ENTRY(ksem)	ks_entry;	/* global list entry */
+	struct proc *		ks_pshared_proc;/* owner of pshared sem */
+	intptr_t		ks_pshared_id;	/* global id for pshared sem */
 	kmutex_t		ks_lock;	/* lock on this ksem */
 	kcondvar_t		ks_cv;		/* condition variable */
+	u_int			ks_pshared_fd;	/* fd in owning proc */
 	u_int			ks_ref;		/* number of references */
 	u_int			ks_value;	/* current value */
 	u_int			ks_waiters;	/* number of waiters */
@@ -51,13 +54,21 @@ typedef struct ksem {
 	gid_t			ks_gid;		/* creator gid */
 } ksem_t;
 
-int do_ksem_init(struct lwp *, unsigned int, intptr_t *, copyout_t);
+int do_ksem_init(struct lwp *, unsigned int, intptr_t *, copyin_t, copyout_t);
 int do_ksem_open(struct lwp *, const char *, int, mode_t, unsigned int,
     intptr_t *, copyout_t);
 int do_ksem_wait(struct lwp *, intptr_t, bool, struct timespec *);
 
 extern int	ksem_max;
-#endif
+#endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_LIBC)
+#define	KSEM_PSHARED		0x50535244U	/* 'PSRD' */
+
+#define	KSEM_MARKER_MASK	0xff000001U
+#define	KSEM_MARKER_MIN		0x01000001U
+#define	KSEM_PSHARED_MARKER	0x70000001U	/* 'p' << 24 | 1 */
+#endif /* _KERNEL || _LIBC */
 
 #ifdef _LIBC
 __BEGIN_DECLS
