@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.13 2015/11/28 09:04:34 plunky Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.14 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.13 2015/11/28 09:04:34 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.14 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -168,6 +168,7 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 		}
 
 		/* else fall through and look it up */
+		/* FALLTHROUGH */
 	case SIOCGBTINFO:
 	case SIOCSBTFLAGS:
 	case SIOCSBTPOLICY:
@@ -203,8 +204,9 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 			break;
 		}
 
-		/* and fall through to */
+		/* FALLTHROUGH */
 	case SIOCGBTINFO:	/* get unit info */
+		/* FALLTHROUGH */
 	case SIOCGBTINFOA:	/* get info by address */
 		memset(btr, 0, sizeof(struct btreq));
 		strlcpy(btr->btr_name, device_xname(unit->hci_dev), HCI_DEVNAME_SIZE);

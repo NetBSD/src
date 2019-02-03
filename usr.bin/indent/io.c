@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.17 2016/02/25 13:23:27 ginsbach Exp $	*/
+/*	$NetBSD: io.c,v 1.18 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.17 2016/02/25 13:23:27 ginsbach Exp $");
+__RCSID("$NetBSD: io.c,v 1.18 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -232,6 +232,7 @@ dump_line(void)
 									break;
 								case '\\':
 									putc('\\', output);
+									/* FALLTHROUGH */
 								default:
 									putc(*follow, output);
 								}

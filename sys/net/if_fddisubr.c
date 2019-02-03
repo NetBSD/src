@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.109 2018/05/09 06:35:10 maxv Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.110 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.109 2018/05/09 06:35:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.110 2019/02/03 03:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -358,6 +358,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		/*FALLTHROUGH*/
 	}
 
+		/*FALLTHROUGH*/
 	case AF_LINK:
 	{
 		const struct fddi_header *fh1 =

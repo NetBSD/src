@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.176 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: usb.c,v 1.177 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.176 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.177 2019/02/03 03:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -671,7 +671,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	case sizeof(struct usb_event_old):
 		ueo = kmem_zalloc(sizeof(struct usb_event_old), KM_SLEEP);
 		useold = 1;
-		/* FALLTHRU */
+		/* FALLTHROUGH */
 	case sizeof(struct usb_event):
 		ue = usb_alloc_event();
 		break;
@@ -884,6 +884,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 		if (error)
 			goto fail;
+		break;
 	}
 
 	case USB_DEVICESTATS:
