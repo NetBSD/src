@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2014/03/22 23:10:36 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2019/02/03 10:45:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2014/03/22 23:10:36 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2019/02/03 10:45:58 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -465,7 +465,7 @@ main(int argc __unused, char **argv)
 		mflag = 0;
 		l = bar + 7 * cturn;
 		for (i = bar; i != l; i += cturn)
-			if (board[i] * cturn)
+			if (board[i] && cturn)
 				mflag++;
 
 		/* compute game value */
