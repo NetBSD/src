@@ -1,4 +1,4 @@
-/* $NetBSD: anxedp.c,v 1.1 2019/02/03 13:17:12 jmcneill Exp $ */
+/* $NetBSD: anxedp.c,v 1.2 2019/02/03 13:56:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.1 2019/02/03 13:17:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.2 2019/02/03 13:56:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,6 +111,22 @@ anxedp_write(struct anxedp_softc *sc, u_int off, uint8_t reg, uint8_t val)
 	(void)iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr + off, reg, val, I2C_F_POLL);
 }
 
+static int
+anxedp_connector_dpms(struct drm_connector *connector, int mode)
+{
+	int error;
+
+	if (mode != DRM_MODE_DPMS_ON)
+		pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
+
+	error = drm_helper_connector_dpms(connector, mode);
+
+	if (mode == DRM_MODE_DPMS_ON)
+		pmf_event_inject(NULL, PMFE_DISPLAY_ON);
+		
+	return error;
+}
+
 static enum drm_connector_status
 anxedp_connector_detect(struct drm_connector *connector, bool force)
 {
@@ -125,7 +141,7 @@ anxedp_connector_destroy(struct drm_connector *connector)
 }
 
 static const struct drm_connector_funcs anxedp_connector_funcs = {
-	.dpms = drm_helper_connector_dpms,
+	.dpms = anxedp_connector_dpms,
 	.detect = anxedp_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = anxedp_connector_destroy,
