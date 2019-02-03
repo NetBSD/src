@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2018/01/18 00:32:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/03 08:02:25 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -27,8 +27,7 @@ SRCS+=	rf_raid4.c              rf_raid5.c             rf_raid5_rotatedspare.c
 SRCS+=	rf_reconbuffer.c        rf_reconmap.c          rf_reconstruct.c
 SRCS+=	rf_reconutil.c          rf_revent.c            rf_shutdown.c
 SRCS+=	rf_sstf.c               rf_states.c            rf_stripelocks.c
-SRCS+=	rf_strutils.c           rf_utils.c             rf_compat50.c
-SRCS+=	rf_compat80.c
+SRCS+=	rf_strutils.c           rf_utils.c
 
 CPPFLAGS+=	-DRAID_AUTOCONFIG=1
 
@@ -42,15 +41,13 @@ CPPFLAGS+=	-DRF_INCLUDE_INTERDECLUSTER=1
 CPPFLAGS+=	-DRF_INCLUDE_PARITY_DECLUSTERING=1
 CPPFLAGS+=	-DRF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
-CPPFLAGS+=	-DCOMPAT_50
-CPPFLAGS+=	-DCOMPAT_80
-
-.if ${MACHINE_CPU} == "sparc64" || \
-    ${MACHINE_CPU} == "x86_64" || \
-    ${MACHINE_CPU} == "mips64"
-SRCS+=	rf_compat32.c
-CPPFLAGS+=	-DCOMPAT_NETBSD32
-.endif
+#XXX
+#.if ${MACHINE_CPU} == "sparc64" || \
+#    ${MACHINE_CPU} == "x86_64" || \
+#    ${MACHINE_CPU} == "mips64"
+#SRCS+=	rf_compat32.c
+#CPPFLAGS+=	-DCOMPAT_NETBSD32
+#.endif
 
 
 .include <bsd.kmodule.mk>
