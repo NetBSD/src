@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.5 2019/02/03 12:18:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.5 2019/02/03 12:18:21 mrg Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021
@@ -746,6 +746,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	case 0:
 	case 0xff:
 		snprintf(modelstr, sizeof(modelstr), "Engineering Sample");
+		break;
 	case 13:
 	case 20:
 	case 21:
