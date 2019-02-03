@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: common.h,v 1.2 2019/02/03 12:03:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -70,8 +70,8 @@ struct defined_value {
 void	log_init(int);
 void	log_set_peer_name(const char *);
 void	log_set_peer_addr(const char *);
-void	log_err(int, const char *, ...) __printflike(2, 3);
-void	log_errx(int, const char *, ...) __printflike(2, 3);
+void	log_err(int, const char *, ...) __printflike(2, 3) __dead;
+void	log_errx(int, const char *, ...) __printflike(2, 3) __dead;
 void	log_warn(const char *, ...) __printflike(1, 2);
 void	log_warnx(const char *, ...) __printflike(1, 2);
 void	log_debugx(const char *, ...) __printflike(1, 2);
