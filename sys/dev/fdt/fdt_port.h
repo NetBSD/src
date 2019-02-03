@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.h,v 1.2 2019/01/30 01:24:00 jmcneill Exp $	*/
+/*	$NetBSD: fdt_port.h,v 1.3 2019/02/03 12:53:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ enum endpoint_type {
 	EP_DRM_CONNECTOR,	/* struct drm_connector */
 	EP_DRM_CRTC,		/* struct drm_crtc */
 	EP_DRM_ENCODER,		/* struct drm_encoder */
+	EP_DRM_PANEL,		/* struct drm_panel */
 };
 
 
