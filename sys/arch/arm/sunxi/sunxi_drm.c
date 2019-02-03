@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.4 2019/01/31 01:49:28 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.5 2019/02/03 15:43:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.4 2019/01/31 01:49:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.5 2019/02/03 15:43:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,6 +121,8 @@ sunxi_drm_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_drm_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	struct drm_driver * const driver = &sunxi_drm_driver;
+	prop_dictionary_t dict = device_properties(self);
+	bool is_disabled;
 
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
@@ -128,6 +130,12 @@ sunxi_drm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = faa->faa_phandle;
 
 	aprint_naive("\n");
+
+	if (prop_dictionary_get_bool(dict, "disabled", &is_disabled) && is_disabled) {
+		aprint_normal(": Display Engine Pipeline (disabled)\n");
+		return;
+	}
+
 	aprint_normal(": Display Engine Pipeline\n");
 
 	sc->sc_ddev = drm_dev_alloc(driver, sc->sc_dev);
