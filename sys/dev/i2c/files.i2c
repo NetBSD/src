@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.97 2018/12/14 22:05:36 macallan Exp $
+#	$NetBSD: files.i2c,v 1.98 2019/02/03 13:17:12 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -357,3 +357,8 @@ device	rkreg: rkpmic
 attach	rkpmic at iic
 attach	rkreg at rkpmic
 file	dev/i2c/rkpmic.c			rkpmic
+
+# Analogix ANX6345 eDP transmitter
+device	anxedp: edid, videomode, drmkms, drmkms_i2c
+attach	anxedp at iic
+file	dev/i2c/anxedp.c			anxedp
