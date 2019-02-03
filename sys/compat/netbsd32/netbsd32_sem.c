@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.11 2014/09/19 17:25:33 matt Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.12 2019/02/03 03:20:23 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.11 2014/09/19 17:25:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.12 2019/02/03 03:20:23 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,21 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.11 2014/09/19 17:25:33 matt Exp $
 #include <compat/netbsd32/netbsd32_conv.h>
 
 static int
+netbsd32_ksem_copyin(const void *src, void *dst, size_t size)
+{
+	intptr_t *argp = dst;
+	netbsd32_intptr_t arg32;
+	int error;
+
+	KASSERT(size == sizeof(intptr_t));
+
+	if ((error = copyin(src, &arg32, sizeof(arg32))) != 0)
+		return error;
+	*argp = arg32;
+	return 0;
+}
+
+static int
 netbsd32_ksem_copyout(const void *src, void *dst, size_t size)
 {
 	const intptr_t *idp = src;
@@ -53,6 +68,7 @@ netbsd32_ksem_copyout(const void *src, void *dst, size_t size)
 	KASSERT(size == sizeof(intptr_t));
 
 	/* Returning a kernel pointer to userspace sucks badly :-( */
+	/* (Luckily, it's not actually a pointer. --thorpej */
 	id32 = (netbsd32_intptr_t)*idp;
 	return copyout(&id32, outidp, sizeof(id32));
 }
@@ -66,7 +82,7 @@ netbsd32__ksem_init(struct lwp *l, const struct netbsd32__ksem_init_args *uap, r
 	} */
 
 	return do_ksem_init(l, SCARG(uap, value),
-	    SCARG_P32(uap, idp), netbsd32_ksem_copyout);
+	    SCARG_P32(uap, idp), netbsd32_ksem_copyin, netbsd32_ksem_copyout);
 }
 
 int
