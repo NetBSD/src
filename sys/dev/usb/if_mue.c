@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.30 2019/01/31 05:25:48 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.31 2019/02/03 13:11:07 mlelstv Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.30 2019/01/31 05:25:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.31 2019/02/03 13:11:07 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -897,6 +897,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	struct mii_data	*mii;
 	struct ifnet *ifp;
 	usbd_status err;
+	const char *descr;
 	uint8_t i;
 	int s;
 
@@ -932,12 +933,19 @@ mue_attach(device_t parent, device_t self, void *aux)
 	sc->mue_product = uaa->uaa_product;
 	sc->mue_flags = MUE_LOOKUP(uaa)->mue_flags;
 
+	sc->mue_id_rev = mue_csr_read(sc, MUE_ID_REV);
+
 	/* Decide on what our bufsize will be. */
-	if (sc->mue_flags & LAN7500)
+	if (sc->mue_flags & LAN7500) {
 		sc->mue_rxbufsz = (sc->mue_udev->ud_speed == USB_SPEED_HIGH) ?
 		    MUE_7500_HS_RX_BUFSIZE : MUE_7500_FS_RX_BUFSIZE;
-	else
+		sc->mue_rx_list_cnt = 1;
+		sc->mue_tx_list_cnt = 1;
+	} else {
 		sc->mue_rxbufsz = MUE_7800_RX_BUFSIZE;
+		sc->mue_rx_list_cnt = MUE_RX_LIST_CNT;
+		sc->mue_tx_list_cnt = MUE_TX_LIST_CNT;
+	}
 	sc->mue_txbufsz = MUE_TX_BUFSIZE;
 
 	/* Find endpoints. */
@@ -974,10 +982,10 @@ mue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* A Microchip chip was detected.  Inform the world. */
-	if (sc->mue_flags & LAN7500)
-		aprint_normal_dev(self, "LAN7500\n");
-	else
-		aprint_normal_dev(self, "LAN7800\n");
+	descr = (sc->mue_flags & LAN7500) ? "LAN7500" : "LAN7800";
+	aprint_normal_dev(self, "%s id 0x%x rev 0x%x\n", descr,
+		(unsigned)__SHIFTOUT(sc->mue_id_rev, MUE_ID_REV_ID),
+		(unsigned)__SHIFTOUT(sc->mue_id_rev, MUE_ID_REV_REV));
 
 	if (mue_get_macaddr(sc, dict)) {
 		aprint_error_dev(self, "failed to read MAC address\n");
@@ -1125,7 +1133,7 @@ mue_rx_list_init(struct mue_softc *sc)
 	int err;
 
 	cd = &sc->mue_cdata;
-	for (i = 0; i < __arraycount(cd->mue_rx_chain); i++) {
+	for (i = 0; i < sc->mue_rx_list_cnt; i++) {
 		c = &cd->mue_rx_chain[i];
 		c->mue_sc = sc;
 		c->mue_idx = i;
@@ -1150,7 +1158,7 @@ mue_tx_list_init(struct mue_softc *sc)
 	int err;
 
 	cd = &sc->mue_cdata;
-	for (i = 0; i < __arraycount(cd->mue_tx_chain); i++) {
+	for (i = 0; i < sc->mue_tx_list_cnt; i++) {
 		c = &cd->mue_tx_chain[i];
 		c->mue_sc = sc;
 		c->mue_idx = i;
@@ -1198,7 +1206,7 @@ mue_startup_rx_pipes(struct mue_softc *sc)
 	size_t i;
 
 	/* Start up the receive pipe. */
-	for (i = 0; i < __arraycount(sc->mue_cdata.mue_rx_chain); i++) {
+	for (i = 0; i < sc->mue_rx_list_cnt; i++) {
 		c = &sc->mue_cdata.mue_rx_chain[i];
 		usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, sc->mue_rxbufsz,
 		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, mue_rxeof);
@@ -1458,11 +1466,6 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (__predict_false(sc->mue_dying)) {
 		DPRINTF(sc, "dying\n");
-		return;
-	}
-
-	if (__predict_false(!(ifp->if_flags & IFF_RUNNING))) {
-		DPRINTF(sc, "not running\n");
 		return;
 	}
 
@@ -1790,7 +1793,7 @@ mue_start(struct ifnet *ifp)
 	}
 
 	idx = cd->mue_tx_prod;
-	while (cd->mue_tx_cnt < MUE_TX_LIST_CNT) {
+	while ((unsigned)cd->mue_tx_cnt < sc->mue_tx_list_cnt) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
@@ -1804,13 +1807,13 @@ mue_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m, BPF_D_OUT);
 		m_freem(m);
 
-		idx = (idx + 1) % MUE_TX_LIST_CNT;
+		idx = (idx + 1) % sc->mue_tx_list_cnt;
 		cd->mue_tx_cnt++;
 
 	}
 	cd->mue_tx_prod = idx;
 
-	if (cd->mue_tx_cnt >= MUE_TX_LIST_CNT)
+	if ((unsigned)cd->mue_tx_cnt >= sc->mue_tx_list_cnt)
 		ifp->if_flags |= IFF_OACTIVE;
 
 	/* Set a timeout in case the chip goes out to lunch. */
@@ -1841,7 +1844,7 @@ mue_stop(struct ifnet *ifp, int disable __unused)
 		}
 
 	/* Free RX resources. */
-	for (i = 0; i < __arraycount(sc->mue_cdata.mue_rx_chain); i++)
+	for (i = 0; i < sc->mue_rx_list_cnt; i++)
 		if (sc->mue_cdata.mue_rx_chain[i].mue_xfer != NULL) {
 			usbd_destroy_xfer(
 			    sc->mue_cdata.mue_rx_chain[i].mue_xfer);
@@ -1849,7 +1852,7 @@ mue_stop(struct ifnet *ifp, int disable __unused)
 		}
 
 	/* Free TX resources. */
-	for (i = 0; i < __arraycount(sc->mue_cdata.mue_tx_chain); i++)
+	for (i = 0; i < sc->mue_tx_list_cnt; i++)
 		if (sc->mue_cdata.mue_tx_chain[i].mue_xfer != NULL) {
 			usbd_destroy_xfer(
 			    sc->mue_cdata.mue_tx_chain[i].mue_xfer);
