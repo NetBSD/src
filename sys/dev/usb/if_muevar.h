@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muevar.h,v 1.5 2019/01/31 05:25:07 rin Exp $	*/
+/*	$NetBSD: if_muevar.h,v 1.6 2019/02/03 13:11:07 mlelstv Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ struct mue_softc {
 
 	uint16_t		mue_product;
 	uint16_t		mue_flags;
+	uint32_t		mue_id_rev;
 
 	int			mue_if_flags;
 	int			mue_refcnt;
@@ -121,6 +122,9 @@ struct mue_softc {
 	uint32_t		mue_rxbufsz;
 	uint32_t		mue_txbufsz;
 	int			mue_link;
+
+	unsigned		mue_rx_list_cnt;
+	unsigned		mue_tx_list_cnt;
 };
 
 #endif /* _IF_MUEVAR_H_ */
