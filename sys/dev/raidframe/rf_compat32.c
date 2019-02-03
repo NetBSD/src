@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.c,v 1.1 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_compat32.c,v 1.2 2019/02/03 08:02:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+#include <sys/compat_stub.h>
 
 #include <dev/raidframe/raidframeio.h>
 #include <dev/raidframe/raidframevar.h>
@@ -113,3 +115,37 @@ rf_config_netbsd32(void *data, RF_Config_t *k_cfg)
 	RF_Free(cfg32, sizeof(RF_Config_t32));
 	return rv;
 }
+
+static void
+raidframe_netbsd32_init(void)
+{
+  
+	MODULE_SET_HOOK(raidframe_netbsd32_config_hook, "raid32",
+	    rf_config_netbsd32);
+}
+ 
+static void
+raidframe_netbsd32_fini(void)
+{
+ 
+	MODULE_UNSET_HOOK(raidframe_netbsd32_config_hook);
+}
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_raid, "raid,compat_netbsd32");
+
+static int
+compat_netbsd32_raid_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		raidframe_netbsd32_init();
+		return 0;
+	case MODULE_CMD_FINI:
+		raidframe_netbsd32_fini();
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+

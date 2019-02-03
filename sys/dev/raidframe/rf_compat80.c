@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.7 2019/01/31 12:31:50 christos Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.8 2019/02/03 08:02:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -265,14 +265,14 @@ raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
 	return EPASSTHROUGH;
 }
  
-void
+static void
 raidframe_80_init(void)
 {
   
 	MODULE_SET_HOOK(raidframe_ioctl_80_hook, "raid80", raidframe_ioctl_80);
 }
  
-void
+static void
 raidframe_80_fini(void)
 {
  

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.9 2019/01/31 12:31:50 christos Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.10 2019/02/03 08:02:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -130,10 +130,14 @@ MODULE_HOOK(ocryptof_50_hook, int, (struct file *, u_long, void *));
 
 struct RF_Config_s;
 struct RF_Raid_s;
+struct RF_Config_s;
 MODULE_HOOK(raidframe_ioctl_50_hook, int,
     (u_long, int, struct RF_Raid_s *, int, void *, struct RF_Config_s **));
 MODULE_HOOK(raidframe_ioctl_80_hook, int,
     (u_long, int, struct RF_Raid_s *, int, void *, struct RF_Config_s **));
+MODULE_HOOK(raidframe_netbsd32_config_hook, int,
+    (void *, struct RF_Config_s *));
+
 
 /*
  * puffs compatibility

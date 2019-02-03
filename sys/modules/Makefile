@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.216 2019/01/27 02:08:43 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.217 2019/02/03 08:02:25 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -290,6 +290,7 @@ SUBDIR+=	compat_netbsd32_sysvipc
 SUBDIR+=	compat_netbsd32_sysvipc_10
 SUBDIR+=	compat_netbsd32_sysvipc_14
 SUBDIR+=	compat_netbsd32_sysvipc_50
+SUBDIR+=	compat_netbsd32_raid
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"

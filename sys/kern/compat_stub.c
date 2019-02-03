@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.6 2019/01/29 09:28:50 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.7 2019/02/03 08:02:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ struct ocryptof_50_hook_t ocryptof_50_hook;
  */
 struct raidframe_ioctl_50_hook_t raidframe_ioctl_50_hook;
 struct raidframe_ioctl_80_hook_t raidframe_ioctl_80_hook;
+struct raidframe_netbsd32_config_hook_t raidframe_netbsd32_config_hook;
 
 /*
  * puffs compatability
