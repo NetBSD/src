@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.13 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: room.c,v 1.14 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: room.c,v 1.13 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: room.c,v 1.14 2019/02/03 03:19:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -571,6 +571,7 @@ CH:
 				opt_go(++i);
 				break;
 			}
+			/* FALLTHROUGH */
 		default:
 			if (options[i].is_bool) {
 				sound_bell();

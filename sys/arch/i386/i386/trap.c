@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.296 2018/07/26 09:29:08 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.297 2019/02/03 03:19:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.296 2018/07/26 09:29:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.297 2019/02/03 03:19:26 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -461,6 +461,7 @@ kernelfault:
 		}
 	}
 #endif
+		/* FALLTHROUGH */
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:

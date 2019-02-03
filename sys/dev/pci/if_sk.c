@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.93 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.94 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.93 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.94 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -902,11 +902,14 @@ out:
 		case 4:
 			bus_dmamap_unload(sc->sc_dmatag,
 			    sc_if->sk_cdata.sk_rx_jumbo_map);
+			/* FALLTHROUGH */
 		case 3:
 			bus_dmamap_destroy(sc->sc_dmatag,
 			    sc_if->sk_cdata.sk_rx_jumbo_map);
+			/* FALLTHROUGH */
 		case 2:
 			bus_dmamem_unmap(sc->sc_dmatag, kva, SK_JMEM);
+			/* FALLTHROUGH */
 		case 1:
 			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 			break;
@@ -1608,6 +1611,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 				   memtype, 0, &sc->sk_btag, &sc->sk_bhandle,
 				   &iobase, &iosize) == 0)
 			break;
+		/* FALLTHROUGH */
 	default:
 		aprint_error_dev(sc->sk_dev, "can't find mem space\n");
 		return;

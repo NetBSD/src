@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.19 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: lprm.c,v 1.20 2019/02/03 03:19:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.19 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.20 2019/02/03 03:19:31 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ main(int argc, char *argv[])
 					users = -1;
 					break;
 				}
+				/* FALLTHROUGH */
 			default:
 				usage();
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.11 2013/10/18 20:47:06 christos Exp $	*/
+/*	$NetBSD: deroff.c,v 1.12 2019/02/03 03:19:29 mrg Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deroff.c,v 1.11 2013/10/18 20:47:06 christos Exp $");
+__RCSID("$NetBSD: deroff.c,v 1.12 2019/02/03 03:19:29 mrg Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -635,6 +635,7 @@ sw:
 		if (C != '(')
 			return;
 
+		/* FALLTHROUGH */
 	case '(':
 		if (msflag) {
 			if (C == 'e') {

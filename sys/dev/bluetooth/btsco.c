@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.36 2017/06/01 02:45:09 chs Exp $	*/
+/*	$NetBSD: btsco.c,v 1.37 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.36 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.37 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -632,7 +632,7 @@ btsco_open(void *hdl, int flags)
 	case BTSCO_CLOSED:		/* disconnected */
 		err = sc->sc_err;
 
-		/* fall through to */
+		/* FALLTHROUGH */
 	case BTSCO_WAIT_CONNECT:	/* error */
 		if (sc->sc_sco != NULL)
 			sco_detach_pcb(&sc->sc_sco);

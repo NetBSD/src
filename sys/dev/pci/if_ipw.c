@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.71 2018/12/22 14:07:53 maxv Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.72 2019/02/03 03:19:27 mrg Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.71 2018/12/22 14:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.72 2019/02/03 03:19:27 mrg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1685,7 +1685,7 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			sc->sc_fwname = "ipw2100-1.2.fw";
 
 		ipw_free_firmware(sc);
-		/* FALLTRHOUGH */
+		/* FALLTHROUGH */
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 		if (error != ENETRESET)

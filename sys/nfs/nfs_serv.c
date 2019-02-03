@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.175 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.176 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.175 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.176 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1467,6 +1467,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 				error = EEXIST;
 				break;
 			}
+			/* FALLTHROUGH */
 		case NFSV3CREATE_UNCHECKED:
 			nfsm_srvsattr(&va);
 			break;
