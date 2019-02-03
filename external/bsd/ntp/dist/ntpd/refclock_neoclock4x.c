@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.9 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.10 2019/02/03 10:48:47 mrg Exp $	*/
 
 /*
  *
@@ -727,7 +727,7 @@ neoclock4x_control(int unit,
   if(NULL != out)
     {
       char *tt;
-      char tmpbuf[80];
+      char tmpbuf[199];
 
       out->kv_list = (struct ctl_var *)0;
       out->type    = REFCLK_NEOCLOCK4X;
@@ -768,13 +768,13 @@ neoclock4x_control(int unit,
       else
         snprintf(tt, 39, "dststatus=\"unknown\"");
       tt = add_var(&out->kv_list, 80, RO|DEF);
-      snprintf(tt, 79, "firmware=\"%s\"", up->firmware);
+      snprintf(tt, 99, "firmware=\"%s\"", up->firmware);
       tt = add_var(&out->kv_list, 40, RO|DEF);
       snprintf(tt, 39, "firmwaretag=\"%c\"", up->firmwaretag);
       tt = add_var(&out->kv_list, 80, RO|DEF);
-      snprintf(tt, 79, "driver version=\"%s\"", NEOCLOCK4X_DRIVER_VERSION);
+      snprintf(tt, 99, "driver version=\"%s\"", NEOCLOCK4X_DRIVER_VERSION);
       tt = add_var(&out->kv_list, 80, RO|DEF);
-      snprintf(tt, 79, "serialnumber=\"%s\"", up->serial);
+      snprintf(tt, 99, "serialnumber=\"%s\"", up->serial);
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.16 2012/10/13 20:36:06 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.17 2019/02/03 10:48:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.16 2012/10/13 20:36:06 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.17 2019/02/03 10:48:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ scorehand(const CARD hand[], CARD starter, int n, BOOLEAN crb,
 	int hscore;
 	BOOLEAN flag;
 	CARD h[(CINHAND + 1)];
-	char buf[32];
+	char buf[52];
 
 	explan[0] = '\0';	/* initialize explanation */
 	hscore = 0;

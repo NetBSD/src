@@ -1,4 +1,4 @@
-/*	$NetBSD: arm.c,v 1.2 2018/01/16 08:23:18 mrg Exp $	*/
+/*	$NetBSD: arm.c,v 1.3 2019/02/03 10:48:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arm.c,v 1.2 2018/01/16 08:23:18 mrg Exp $");
+__RCSID("$NetBSD: arm.c,v 1.3 2019/02/03 10:48:47 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -168,7 +168,7 @@ print_features(const char *cpuname, const char *setname,
 		for (u_int j = 0; isar != 0 && j < 8; j++, isar >>= 4) {
 			const char *name = NULL;
 			const char *value = "";
-			char namebuf[12], valuebuf[12], tmpbuf[30];
+			char namebuf[24], valuebuf[12], tmpbuf[30];
 			if ((isar & 0x0f) == 0
 			    && (id_present == NULL
 				|| (id_present[i] & (1 << j))) == 0) {

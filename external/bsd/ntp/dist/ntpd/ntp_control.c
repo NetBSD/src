@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.21 2018/09/29 21:52:33 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.22 2019/02/03 10:48:47 mrg Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -1900,7 +1900,11 @@ ctl_putsys(
 	)
 {
 	l_fp tmp;
+#ifndef HAVE_UNAME
 	char str[256];
+#else
+	char str[sizeof utsnamebuf.sysname + sizeof utsnamebuf.release];
+#endif
 	u_int u;
 	double kb;
 	double dtemp;

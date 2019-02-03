@@ -1,4 +1,4 @@
-/*	$NetBSD: h_gai.c,v 1.1 2011/01/12 02:58:40 pgoyette Exp $	*/
+/*	$NetBSD: h_gai.c,v 1.2 2019/02/03 10:48:47 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, and 2002 WIDE Project.
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 	extern int optind;
 	extern char *optarg;
 	int c;
-	char nbuf[10];
+	char nbuf[14];
 
 	memset(&ai, 0, sizeof(ai));
 	ai.ai_family = PF_UNSPEC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.26 2014/03/28 17:53:47 apb Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.27 2019/02/03 10:48:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.26 2014/03/28 17:53:47 apb Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.27 2019/02/03 10:48:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,7 @@ try(struct ship *f, struct ship *t,
     int ma, int ta, bool af, int vma, int dir, int *high, int rakeme)
 {
 	int new, n;
-	char st[4];
+	char st[11];
 #define rakeyou (gunsbear(f, t) && !gunsbear(t, f))
 
 	if ((n = str_end(temp)) < '1' || n > '9')

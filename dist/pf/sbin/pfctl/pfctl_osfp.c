@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_osfp.c,v 1.7 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: pfctl_osfp.c,v 1.8 2019/02/03 10:48:47 mrg Exp $	*/
 /*	$OpenBSD: pfctl_osfp.c,v 1.15 2006/12/13 05:10:15 itojun Exp $ */
 
 /*
@@ -724,7 +724,7 @@ fingerprint_name_entry(struct name_list *list, char *name)
 void
 print_name_list(int opts, struct name_list *nml, const char *prefix)
 {
-	char newprefix[32];
+	char newprefix[33];
 	struct name_entry *nm;
 
 	LIST_FOREACH(nm, nml, nm_entry) {
