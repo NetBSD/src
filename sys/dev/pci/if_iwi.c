@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.110 2018/12/22 14:07:53 maxv Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.111 2019/02/03 03:19:27 mrg Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.110 2018/12/22 14:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.111 2019/02/03 03:19:27 mrg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1942,8 +1942,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = iwi_cache_firmware(sc);
 		if (error)
  			break;
- 		/* FALLTRHOUGH */
 
+		/* FALLTHROUGH */
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
 

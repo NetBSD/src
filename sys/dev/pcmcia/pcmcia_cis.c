@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.55 2009/05/12 14:42:19 cegger Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.56 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.55 2009/05/12 14:42:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.56 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,6 +408,7 @@ pcmcia_scan_cis(device_t dev,
 				 * function.  This tuple has structural and
 				 * semantic content.
 				 */
+				/* FALLTHROUGH */
 			default:
 				{
 					if ((*fct) (&tuple, arg)) {

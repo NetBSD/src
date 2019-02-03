@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.322 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.323 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.322 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.323 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1631,11 +1631,14 @@ out:
 		case 4:
 			bus_dmamap_unload(sc->bge_dmatag,
 			    sc->bge_cdata.bge_rx_jumbo_map);
+			/* FALLTHROUGH */
 		case 3:
 			bus_dmamap_destroy(sc->bge_dmatag,
 			    sc->bge_cdata.bge_rx_jumbo_map);
+			/* FALLTHROUGH */
 		case 2:
 			bus_dmamem_unmap(sc->bge_dmatag, kva, BGE_JMEM);
+			/* FALLTHROUGH */
 		case 1:
 			bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 			break;
@@ -3478,6 +3481,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 			}
 		}
 #endif
+		/* FALLTHROUGH */
 	default:
 		aprint_error_dev(sc->bge_dev, "can't find mem space\n");
 		return;

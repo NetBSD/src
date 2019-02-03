@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.20 2019/01/27 02:08:42 pgoyette Exp $ */
+/* $NetBSD: mpii.c,v 1.21 2019/02/03 03:19:27 mrg Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.20 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.21 2019/02/03 03:19:27 mrg Exp $");
 
 #include "bio.h"
 
@@ -3264,6 +3264,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 		switch(sie->scsi_status) {
 		case MPII_SCSIIO_STATUS_CHECK_COND:
 			xs->error = XS_SENSE;
+			/* FALLTHROUGH */
 		case MPII_SCSIIO_STATUS_GOOD:
 			xs->resid = xs->datalen - le32toh(sie->transfer_count);
 			break;

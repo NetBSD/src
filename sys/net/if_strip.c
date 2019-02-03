@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.112 2019/01/24 09:33:03 knakahara Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.113 2019/02/03 03:19:28 mrg Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.112 2019/01/24 09:33:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.113 2019/02/03 03:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1011,8 +1011,7 @@ stripinput(int c, struct tty *tp)
 		if (sc->sc_mp - sc->sc_pktstart == 0)
 			break;
 
-	/* Fall through to */
-
+		/* FALLTHROUGH */
 	default:
 		if (sc->sc_mp < sc->sc_ep) {
 			*sc->sc_mp++ = c;
@@ -1743,6 +1742,7 @@ StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
 			/* else, we only have one so far, so switch to Stuff_Diff code */
 			code = Stuff_Diff; /* and fall through to Stuff_Diff case below */
 
+			/* FALLTHROUGH */
 		case Stuff_Diff:	/* Stuff_Diff: We have at least two *different* bytes encoded */
 			/* If this is a zero, must encode a Stuff_DiffZero, and begin a new block */
 			if (*src == 0)

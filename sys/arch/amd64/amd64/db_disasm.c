@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.25 2018/09/08 12:40:17 maxv Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.26 2019/02/03 03:19:26 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.25 2018/09/08 12:40:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26 2019/02/03 03:19:26 mrg Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -1466,6 +1466,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 				db_printf("$%s", tbuf);
 				break;
 			}
+			/* FALLTHROUGH */
 		case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, false);/* unsigned */

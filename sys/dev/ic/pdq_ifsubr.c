@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.60 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.61 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.60 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.61 2019/02/03 03:19:27 mrg Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -609,55 +609,43 @@ pdq_os_memalloc_contig(
     }
 
     switch (steps) {
-	case 11: {
+	case 11:
 	    bus_dmamap_unload(sc->sc_dmatag, sc->sc_cbmap);
-	    /* FALL THROUGH */
-	}
-	case 10: {
+	    /* FALLTHROUGH */
+	case 10:
 	    bus_dmamap_destroy(sc->sc_dmatag, sc->sc_cbmap);
-	    /* FALL THROUGH */
-	}
-	case 9: {
+	    /* FALLTHROUGH */
+	case 9:
 	    bus_dmamem_unmap(sc->sc_dmatag,
 			     (void *)pdq->pdq_cbp, sizeof(*pdq->pdq_cbp));
-	    /* FALL THROUGH */
-	}
-	case 8: {
+	    /* FALLTHROUGH */
+	case 8:
 	    bus_dmamap_unload(sc->sc_dmatag, sc->sc_uimap);
-	    /* FALL THROUGH */
-	}
-	case 7: {
+	    /* FALLTHROUGH */
+	case 7:
 	    bus_dmamap_destroy(sc->sc_dmatag, sc->sc_uimap);
-	    /* FALL THROUGH */
-	}
-	case 6: {
+	    /* FALLTHROUGH */
+	case 6:
 	    bus_dmamem_unmap(sc->sc_dmatag,
 			     (void *) pdq->pdq_unsolicited_info.ui_events,
 			     PDQ_OS_PAGESIZE);
-	    /* FALL THROUGH */
-	}
-	case 5: {
+	    /* FALLTHROUGH */
+	case 5:
 	    bus_dmamem_free(sc->sc_dmatag, ui_segs, ui_nsegs);
-	    /* FALL THROUGH */
-	}
-	case 4: {
+	    /* FALLTHROUGH */
+	case 4:
 	    bus_dmamap_unload(sc->sc_dmatag, sc->sc_dbmap);
-	    /* FALL THROUGH */
-	}
-	case 3: {
+	    /* FALLTHROUGH */
+	case 3:
 	    bus_dmamap_destroy(sc->sc_dmatag, sc->sc_dbmap);
-	    /* FALL THROUGH */
-	}
-	case 2: {
+	    /* FALLTHROUGH */
+	case 2:
 	    bus_dmamem_unmap(sc->sc_dmatag,
 			     (void *) pdq->pdq_dbp,
 			     sizeof(*pdq->pdq_dbp));
-	    /* FALL THROUGH */
-	}
-	case 1: {
+	    /* FALLTHROUGH */
+	case 1:
 	    bus_dmamem_free(sc->sc_dmatag, db_segs, db_nsegs);
-	    /* FALL THROUGH */
-	}
     }
 
     return not_ok;

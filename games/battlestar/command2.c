@@ -1,4 +1,4 @@
-/*	$NetBSD: command2.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: command2.c,v 1.4 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command2.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: command2.c,v 1.4 2019/02/03 03:19:25 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -271,6 +271,7 @@ murder(void)
 				puts("Your fantasy is over.");
 				die();
 			}
+			/* FALLTHROUGH */
 		case -1:
 			puts("Kill what?");
 			break;

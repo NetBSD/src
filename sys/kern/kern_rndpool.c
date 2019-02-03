@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.17 2018/09/03 16:29:35 riastradh Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.18 2019/02/03 03:19:28 mrg Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.17 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.18 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/rndpool.h>
@@ -182,10 +182,13 @@ rndpool_add_data(rndpool_t *rp,
 		switch (len) {
 		case 3:
 			val = *buf++;
+			/* FALLTHROUGH */
 		case 2:
 			val = val << 8 | *buf++;
+			/* FALLTHROUGH */
 		case 1:
 			val = val << 8 | *buf++;
+			/* FALLTHROUGH */
 		}
 
 		rndpool_add_one_word(rp, val);

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.221 2018/12/21 05:50:19 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.222 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.221 2018/12/21 05:50:19 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.222 2019/02/03 03:19:29 mrg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.221 2018/12/21 05:50:19 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.222 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2400,8 +2400,10 @@ VarHash(char *str)
 	    break;
 	case 3:
 	    k |= (ustr[2] << 16);
+	    /* FALLTHROUGH */
 	case 2:
 	    k |= (ustr[1] << 8);
+	    /* FALLTHROUGH */
 	case 1:
 	    k |= ustr[0];
 	    len = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.91 2019/01/08 08:47:21 msaitoh Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.92 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.91 2019/01/08 08:47:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.92 2019/02/03 03:19:27 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -895,6 +895,7 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCADDMULTI\n", ifp->if_xname));
+		/* FALLTHROUGH */
 	case SIOCDELMULTI:
 		if (cmd == SIOCDELMULTI)
 			RAY_DPRINTF(("%s: ioctl: cmd SIOCDELMULTI\n",
@@ -907,6 +908,7 @@ ray_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCSIFMEDIA:
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCSIFMEDIA\n", ifp->if_xname));
+		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
 		if (cmd == SIOCGIFMEDIA)
 			RAY_DPRINTF(("%s: ioctl: cmd SIOCGIFMEDIA\n",

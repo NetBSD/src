@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.90 2018/09/03 16:29:31 riastradh Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.91 2019/02/03 03:19:27 mrg Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.90 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.91 2019/02/03 03:19:27 mrg Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -1217,6 +1217,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 		    ASYNC_EVENT_XFER_MODE, &xm);
 		break;
 	}
+	/* FALLTHROUGH */
 	case ISPASYNC_BUS_RESET:
 		va_start(ap, cmd);
 		bus = va_arg(ap, int);

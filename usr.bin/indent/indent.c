@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.23 2016/09/05 00:40:29 sevan Exp $	*/
+/*	$NetBSD: indent.c,v 1.24 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.23 2016/09/05 00:40:29 sevan Exp $");
+__RCSID("$NetBSD: indent.c,v 1.24 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -346,6 +346,7 @@ main(int argc, char **argv)
 			case newline:
 				++line_no;
 				flushed_nl = true;
+				/* FALLTHROUGH */
 			case form_feed:
 				break;	/* form feeds and newlines found here
 					 * will be ignored */
@@ -365,6 +366,7 @@ main(int argc, char **argv)
 					goto sw_buffer;	/* go to common code to
 							 * get out of this loop */
 				}
+				/* FALLTHROUGH */
 			case comment:	/* we have a comment, so we must copy
 					 * it into the buffer */
 				if (!flushed_nl || sc_end != 0) {
@@ -406,6 +408,7 @@ main(int argc, char **argv)
 						fill_buffer();
 					break;
 				}
+				/* FALLTHROUGH */
 			default:	/* it is the start of a normal
 					 * statment */
 				if (flushed_nl)	/* if we flushed a newline,
