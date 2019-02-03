@@ -1,7 +1,7 @@
-/* $NetBSD: t_sem.c,v 1.3 2017/01/14 20:58:20 christos Exp $ */
+/* $NetBSD: t_sem.c,v 1.4 2019/02/03 03:20:24 thorpej Exp $ */
 
 /*
- * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2010, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,10 +56,11 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2008, 2010\
+__COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.3 2017/01/14 20:58:20 christos Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.4 2019/02/03 03:20:24 thorpej Exp $");
 
+#include <sys/mman.h>
 #include <sys/wait.h>
 
 #include <errno.h>
@@ -173,11 +174,152 @@ ATF_TC_CLEANUP(child, tc)
 	(void)sem_unlink("/sem_a");
 }
 
+ATF_TC_WITH_CLEANUP(pshared);
+ATF_TC_HEAD(pshared, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks using pshared unnamed "
+	    "semaphores to synchronize a master with multiple slave processes");
+}
+
+struct shared_region {
+	sem_t	the_sem;
+};
+
+static struct shared_region *
+get_shared_region(int o_flags)
+{
+
+	int fd = shm_open("/shm_semtest_a", o_flags, 0644);
+	ATF_REQUIRE(fd != -1);
+
+	ATF_REQUIRE_EQ(ftruncate(fd, sizeof(struct shared_region)), 0);
+
+	void *rv = mmap(NULL, sizeof(struct shared_region),
+	    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	ATF_REQUIRE(rv != MAP_FAILED);
+
+	(void)close(fd);
+
+	return rv;
+}
+
+static void
+put_shared_region(struct shared_region *r)
+{
+	ATF_REQUIRE_EQ(munmap(r, sizeof(struct shared_region)), 0);
+}
+
+ATF_TC_BODY(pshared, tc)
+{
+	struct shared_region *master_region, *slave_region;;
+
+	if (sysconf(_SC_SEMAPHORES) == -1)
+		atf_tc_skip("POSIX semaphores not supported");
+
+	/*
+	 * Create a shared memory region to contain the pshared
+	 * semaphore, create the semaphore there, and then detach
+	 * from the shared memory region to ensure that our child
+	 * processes will be getting at it from scratch.
+	 */
+	master_region = get_shared_region(O_RDWR | O_CREAT | O_EXCL);
+	ATF_REQUIRE(sem_init(&master_region->the_sem, 1, 0) == 0);
+	put_shared_region(master_region);
+
+	/*
+	 * Now execute a test that's essentially equivalent to the
+	 * "child" test above, but using the pshared semaphore in the
+	 * shared memory region.
+	 */
+	
+	pid_t pid, children[NCHILDREN];
+	unsigned i, j;
+	int status;
+
+	for (j = 1; j <= 2; j++) {
+		for (i = 0; i < NCHILDREN; i++) {
+			switch ((pid = fork())) {
+			case -1:
+				atf_tc_fail("fork() returned -1");
+			case 0:
+				slave_region = get_shared_region(O_RDWR);
+				printf("PID %d waiting for semaphore...\n",
+				    getpid());
+				ATF_REQUIRE_MSG(sem_wait(&slave_region->the_sem)
+				    == 0,
+				    "sem_wait failed; iteration %d", j);
+				printf("PID %d got semaphore\n", getpid());
+				_exit(0);
+			default:
+				children[i] = pid;
+				break;
+			}
+		}
+
+		master_region = get_shared_region(O_RDWR);
+
+		for (i = 0; i < NCHILDREN; i++) {
+			sleep(1);
+			printf("main loop %d: posting...\n", j);
+			ATF_REQUIRE_EQ(sem_post(&master_region->the_sem), 0);
+		}
+
+		put_shared_region(master_region);
+
+		for (i = 0; i < NCHILDREN; i++) {
+			ATF_REQUIRE_EQ(waitpid(children[i], &status, 0), children[i]);
+			ATF_REQUIRE(WIFEXITED(status));
+			ATF_REQUIRE_EQ(WEXITSTATUS(status), 0);
+		}
+	}
+
+	master_region = get_shared_region(O_RDWR);
+	ATF_REQUIRE_EQ(sem_destroy(&master_region->the_sem), 0);
+	put_shared_region(master_region);
+
+	ATF_REQUIRE_EQ(shm_unlink("/shm_semtest_a"), 0);
+}
+ATF_TC_CLEANUP(pshared, tc)
+{
+	/*
+	 * The kernel will g/c the pshared semaphore when the process that
+	 * created it exits, so no need to include that in the cleanup here.
+	 */
+	(void)shm_unlink("/shm_semtest_a");
+}
+
+ATF_TC_WITH_CLEANUP(invalid_ops);
+ATF_TC_HEAD(invalid_ops, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Validates behavior when calling "
+	    "bad operations for the semaphore type");
+}
+ATF_TC_BODY(invalid_ops, tc)
+{
+	sem_t *sem;
+	sem_t the_sem;
+
+	sem = sem_open("/sem_c", O_CREAT | O_EXCL, 0644, 0);
+	ATF_REQUIRE(sem != SEM_FAILED);
+	ATF_REQUIRE(sem_destroy(sem) == -1 && errno == EINVAL);
+	ATF_REQUIRE_EQ(sem_close(sem), 0);
+
+	ATF_REQUIRE_EQ(sem_init(&the_sem, 0, 0), 0);
+	ATF_REQUIRE(sem_close(&the_sem) == -1 && errno == EINVAL);
+	ATF_REQUIRE_EQ(sem_destroy(&the_sem), 0);
+}
+ATF_TC_CLEANUP(invalid_ops, tc)
+{
+	(void)sem_unlink("/sem_c");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, basic);
 	ATF_TP_ADD_TC(tp, child);
+	ATF_TP_ADD_TC(tp, pshared);
+	ATF_TP_ADD_TC(tp, invalid_ops);
 
 	return atf_no_error();
 }
