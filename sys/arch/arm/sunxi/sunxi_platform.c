@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.34 2019/01/03 14:44:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.35 2019/02/03 15:43:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.34 2019/01/03 14:44:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.35 2019/02/03 15:43:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -201,6 +201,7 @@ static void
 sunxi_platform_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t prop = device_properties(self);
+	int val;
 
 	if (device_is_a(self, "rgephy")) {
 		/* Pine64+ and NanoPi NEO Plus2 gigabit ethernet workaround */
@@ -223,6 +224,12 @@ sunxi_platform_device_register(device_t self, void *aux)
 		if (of_match_compatible(OF_finddevice("/"), compat)) {
 			prop_dictionary_set_bool(prop, "sun50i-a64-unstable-timer", true);
 		}
+	}
+
+	if (device_is_a(self, "sunxidrm")) {
+		if (get_bootconf_option(boot_args, "nomodeset", BOOTOPT_TYPE_BOOLEAN, &val))
+			if (val)
+				prop_dictionary_set_bool(prop, "disabled", true);
 	}
 }
 
