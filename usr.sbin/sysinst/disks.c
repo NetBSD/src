@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.28 2018/11/27 17:13:41 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.29 2019/02/03 10:48:47 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,7 @@
 /* Disk descriptions */
 struct disk_desc {
 	char	dd_name[SSTRSIZE];
-	char	dd_descr[70];
+	char	dd_descr[256];
 	bool	dd_no_mbr, dd_no_part;
 	uint	dd_cyl;
 	uint	dd_head;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.25 2011/09/06 18:29:35 joerg Exp $	*/
+/*	$NetBSD: rusers.c,v 1.26 2019/02/03 10:48:47 mrg Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.25 2011/09/06 18:29:35 joerg Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.26 2019/02/03 10:48:47 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -163,7 +163,7 @@ rusers_reply(char *replyp, struct netbuf *raddrp, struct netconfig *nconf)
 	
 	for (x = 0; x < up->uia_cnt; x++) {
 		unsigned int minutes;
-		char	date[26], idle[8];
+		char	date[26], idle[11];
 		char	remote[HOSTWID + 3];		/* "(" host ")" \0 */
 		char	local[HOSTWID + LINEWID + 2];	/* host ":" line \0 */
 		time_t	uttime;

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.13 2018/04/07 00:19:53 christos Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.14 2019/02/03 10:48:47 mrg Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -1012,7 +1012,7 @@ static void
 jjy_synctime ( struct peer *peer, struct refclockproc *pp, struct jjyunit *up )
 {
 
-	char	sLog [ 80 ], cStatus ;
+	char	sLog [ 192 ], cStatus ;
 	const char	*pStatus ;
 
 	pp->year   = up->year ;
@@ -1167,7 +1167,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 	struct peer	    *peer;
 
 	char *		pBuf ;
-	char		sLog [ 100 ] ;
+	char		sLog [ 192 ] ;
 	int 		iLen ;
 	int 		rc ;
 
@@ -1463,7 +1463,7 @@ jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 	struct refclockproc *pp ;
 	struct peer         *peer ;
 
-	char	*pBuf, sLog [ 100 ] ;
+	char	*pBuf, sLog [ 192 ] ;
 	int 	iLen ;
 	int 	rc ;
 
@@ -2346,7 +2346,7 @@ jjy_receive_seiko_tsys_tdc_300 ( struct recvbuf *rbufp )
 	struct refclockproc	*pp ;
 	struct jjyunit		*up ;
 
-	char	*pBuf, sLog [ 100 ] ;
+	char	*pBuf, sLog [ 192 ] ;
 	int	iLen, i ;
 	int	rc, iWeekday ;
 	time_t	now ;
@@ -2695,7 +2695,7 @@ static int
 jjy_start_telephone ( int unit, struct peer *peer, struct jjyunit *up )
 {
 
-	char	sLog [ 80 ], sFirstThreeDigits [ 4 ] ;
+	char	sLog [ 192 ], sFirstThreeDigits [ 4 ] ;
 	int	iNumberOfDigitsOfPhoneNumber, iCommaCount, iCommaPosition ;
 	size_t  i ;
 	size_t	iFirstThreeDigitsCount ;
@@ -3404,7 +3404,7 @@ teljjy_conn_data ( struct peer *peer, struct refclockproc *pp, struct jjyunit *u
 
 	char	*pBuf ;
 	int	iLen, rc ;
-	char	sLog [ 80 ] ;
+	char	sLog [ 192 ] ;
 	char	bAdjustment ;
 
 
