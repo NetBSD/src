@@ -1376,7 +1376,7 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag(void *context) {
   uptr err = ucontext->uc_mcontext.gregs[REG_ERR];
 #endif
   return err & PF_WRITE ? WRITE : READ;
-#elif defined(__arm__)
+#elif defined(__arm__) && !SANITIZER_NETBSD
   static const uptr FSR_WRITE = 1U << 11;
   uptr fsr = ucontext->uc_mcontext.error_code;
   return fsr & FSR_WRITE ? WRITE : READ;
