@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.77 2019/01/30 11:25:40 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.78 2019/02/03 13:18:52 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -359,6 +359,7 @@ tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
 hdmicec*	at hdmicecbus?
 
 # Display
+anxedp*		at iic?			# Analogix eDP TX
 dispcon*	at fdt?			# Display connector devices
 dwhdmi* 	at fdt?			# Designware HDMI TX
 sunxide2bus*	at fdt? pass 4		# Allwinner DE2 bus
