@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2254 2019/02/02 22:39:32 mrg Exp $
+#	$NetBSD: mi,v 1.2255 2019/02/03 03:28:04 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1160,7 +1160,7 @@
 ./usr/include/g++/cxxabi-forced.h		comp-obsolete 		obsolete
 ./usr/include/g++/cxxabi.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/debug/assertions.h		comp-cxx-include	gcc=7,cxx,libstdcxx
+./usr/include/g++/debug/assertions.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/bitset			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/debug.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/deque			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1173,7 +1173,7 @@
 ./usr/include/g++/debug/hash_multiset.h		comp-obsolete		obsolete
 ./usr/include/g++/debug/hash_set		comp-obsolete		obsolete
 ./usr/include/g++/debug/hash_set.h		comp-obsolete		obsolete
-./usr/include/g++/debug/helper_functions.h	comp-cxx-include	gcc=7,cxx,libstdcxx
+./usr/include/g++/debug/helper_functions.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/list			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/macros.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/map			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1193,7 +1193,7 @@
 ./usr/include/g++/debug/safe_unordered_container.tcc	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/set			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/set.h			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/debug/stl_iterator.h		comp-cxx-include	gcc=7,cxx,libstdcxx
+./usr/include/g++/debug/stl_iterator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/string			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/unordered_map		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/unordered_set		comp-cxx-include	gcc,cxx,libstdcxx
