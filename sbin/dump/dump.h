@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.54 2015/11/16 17:06:47 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.55 2019/02/03 12:17:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -224,7 +224,7 @@ void	startnewtape(int);
 void	trewind(int);
 void	writerec(const char *, int);
 
-void	Exit(int);
+void	Exit(int) __dead;
 void	dumpabort(int);
 void	getfstab(void);
 
