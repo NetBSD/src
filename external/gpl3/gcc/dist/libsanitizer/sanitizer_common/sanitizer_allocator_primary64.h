@@ -325,7 +325,7 @@ class SizeClassAllocator64 {
     uptr num_releases;
   };
 
-  struct RegionInfo {
+  struct ALIGNED(kCacheLineSize) RegionInfo {
     BlockingMutex mutex;
     uptr num_freed_chunks;  // Number of elements in the freearray.
     uptr mapped_free_array;  // Bytes mapped for freearray.
