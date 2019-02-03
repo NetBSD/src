@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/02/03 08:02:25 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.4 2019/02/03 09:32:07 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -40,14 +40,5 @@ CPPFLAGS+=	-DRF_INCLUDE_CHAINDECLUSTER=1
 CPPFLAGS+=	-DRF_INCLUDE_INTERDECLUSTER=1
 CPPFLAGS+=	-DRF_INCLUDE_PARITY_DECLUSTERING=1
 CPPFLAGS+=	-DRF_INCLUDE_PARITY_DECLUSTERING_DS=1
-
-#XXX
-#.if ${MACHINE_CPU} == "sparc64" || \
-#    ${MACHINE_CPU} == "x86_64" || \
-#    ${MACHINE_CPU} == "mips64"
-#SRCS+=	rf_compat32.c
-#CPPFLAGS+=	-DCOMPAT_NETBSD32
-#.endif
-
 
 .include <bsd.kmodule.mk>
