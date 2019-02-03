@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.37 2017/01/10 21:14:51 christos Exp $  */
+/*      $NetBSD: ps.c,v 1.38 2019/02/03 10:48:47 mrg Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.37 2017/01/10 21:14:51 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.38 2019/02/03 10:48:47 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -340,7 +340,7 @@ time2str(struct kinfo_proc2 *kp)
 {	       
 	long secs;
 	long psecs;     /* "parts" of a second. first micro, then centi */
-	static char timestr[10];
+	static char timestr[18];
 
 	/* XXX - I don't like this. */
 	if (kp->p_stat == SZOMB) {
