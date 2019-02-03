@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.39 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: interwave.c,v 1.40 2019/02/03 11:15:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.39 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.40 2019/02/03 11:15:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1325,6 +1325,7 @@ iw_get_port(void *addr, mixer_ctrl_t *cp)
 			cp->un.value.level[1] = sc->sc_linein.volr;
 			error = 0;
 		}
+		break;
 	case IW_REC_LVL:
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			cp->un.value.num_channels = 2;
