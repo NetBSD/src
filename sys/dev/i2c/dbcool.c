@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.52 2018/06/26 06:03:57 thorpej Exp $ */
+/*	$NetBSD: dbcool.c,v 1.53 2019/02/03 11:58:02 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.52 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.53 2019/02/03 11:58:02 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,8 +825,13 @@ dbcool_detach(device_t self, int flags)
 	return 0;
 }
 
-/* On suspend, we save the state of the SHDN bit, then set it */
-bool dbcool_pmf_suspend(device_t dev, const pmf_qual_t *qual)
+/*
+ * On suspend, we save the state of the SHDN bit, then set it
+ * On resume, we restore the previous state of the SHDN bit (which
+ * we saved in sc_suspend)
+ */
+static bool
+dbcool_do_pmf(device_t dev, const pmf_qual_t *qual, bool suspend)
 {
 	struct dbcool_softc *sc = device_private(dev);
 	uint8_t reg, bit, cfg;
@@ -842,34 +847,29 @@ bool dbcool_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 		bit = DBCOOL_CFG2_SHDN;
 	}
 	cfg = sc->sc_dc.dc_readreg(&sc->sc_dc, reg);
-	sc->sc_suspend = cfg & bit;
-	cfg |= bit;
+	if (suspend) {
+		sc->sc_suspend = (cfg & bit) != 0;
+		cfg |= bit;
+	} else {
+		cfg &= sc->sc_suspend ? bit : 0;
+	}
 	sc->sc_dc.dc_writereg(&sc->sc_dc, reg, cfg);
 
 	return true;
 }
 
-/* On resume, we restore the previous state of the SHDN bit (which
-   we saved in sc_suspend) */
-bool dbcool_pmf_resume(device_t dev, const pmf_qual_t *qual)
+bool
+dbcool_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 {
-	struct dbcool_softc *sc = device_private(dev);
-	uint8_t reg, cfg;
 
-	if ((sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_SHDN) == 0)
-		return true;
+	return dbcool_do_pmf(dev, qual, true);
+}
 
-	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADT7466) {
-		reg = DBCOOL_ADT7466_CONFIG2;
-	} else {
-		reg = DBCOOL_CONFIG2_REG;
-	}
-	cfg = sc->sc_dc.dc_readreg(&sc->sc_dc, reg);
-	cfg &= ~sc->sc_suspend;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg, cfg);
+bool
+dbcool_pmf_resume(device_t dev, const pmf_qual_t *qual)
+{
 
-	return true;
-
+	return dbcool_do_pmf(dev, qual, false);
 }
 
 uint8_t
