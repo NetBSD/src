@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.19 2018/10/14 08:27:39 maxv Exp $	*/
+/*	$NetBSD: setkey.c,v 1.20 2019/02/03 10:23:42 mrg Exp $	*/
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ sendkeyshort(u_int type)
 	sendkeymsg((char *)&msg, sizeof(msg));
 }
 
-static void
+static void __dead
 promisc(void)
 {
 	struct sadb_msg msg;
