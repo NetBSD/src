@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muereg.h,v 1.4 2018/12/11 13:35:02 rin Exp $	*/
+/*	$NetBSD: if_muereg.h,v 1.5 2019/02/03 13:11:07 mlelstv Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #define MUE_UR_READREG		0xa1
 
 /* registers */
+#define MUE_ID_REV			0x000
 #define MUE_INT_STATUS			0x00c
 #define MUE_HW_CFG			0x010
 #define MUE_PMT_CTL			0x014
@@ -80,6 +81,10 @@
 #define MUE_7800_ADDR_FILTX_BASE	0x400
 #define MUE_7800_ADDR_FILTX(i)		(MUE_7800_ADDR_FILTX_BASE + 8 * (i))
 #define MUE_NUM_ADDR_FILTX		33
+
+/* device ID and revision register */
+#define MUE_ID_REV_ID		__BITS(16,31)
+#define MUE_ID_REV_REV		__BITS(0,15)
 
 /* hardware configuration register */
 #define MUE_HW_CFG_SRST		0x00000001
