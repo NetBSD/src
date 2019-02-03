@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.6 2011/02/24 09:38:57 hannken Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.7 2019/02/03 12:17:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ int
 snap_open(char *file, char *backup, time_t *snap_date, char **snap_dev)
 {
 	int i, n, fd, israw, fsinternal, dounlink;
-	char path[MAXPATHLEN], fss_dev[14], *cp;
+	char path[MAXPATHLEN], fss_dev[20], *cp;
 	dev_t mountdev;
 	struct fss_set fss;
 	struct fss_get fsg;
