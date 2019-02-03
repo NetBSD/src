@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.50 2013/06/15 01:27:19 christos Exp $	*/
+/*	$NetBSD: traverse.c,v 1.51 2019/02/03 12:17:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.50 2013/06/15 01:27:19 christos Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.51 2019/02/03 12:17:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,7 @@ mapfiles(ino_t maxino, u_int64_t *tape_size, char *diskname, char * const *dirv)
 			case FTS_NS:
 				msg("Can't fts_read %s: %s\n", entry->fts_path,
 				    strerror(errno));
+				/* FALLTHROUGH */
 			case FTS_DP:		/* already seen dir */
 				continue;
 			}
