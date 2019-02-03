@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.17 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.18 2019/02/03 03:19:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.17 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.18 2019/02/03 03:19:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ linux_ioctl_hdio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		error = linux_machdepioctl(l, uap, retval);
 		if (error == 0)
 			break;
+		/* FALLTHROUGH */
 	case LINUX_HDIO_GETGEO_BIG_RAW:
 		error = ioctlf(fp, DIOCGDINFO, &label);
 		error1 = ioctlf(fp, DIOCGPARTINFO, &pi);

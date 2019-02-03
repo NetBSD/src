@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2009/08/31 08:27:16 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -108,11 +108,13 @@ main(int argc, char **argv)
 		case 'a':	/* all users */
 			activelist();
 			cleanup(TRUE);
+			__unreachable();
 			/* NOTREACHED */
 
 		case 'p':	/* purge old players */
 			purgeoldplayers();
 			cleanup(TRUE);
+			__unreachable();
 			/* NOTREACHED */
 
 		case 'S':	/* set 'Wizard' */
@@ -126,11 +128,13 @@ main(int argc, char **argv)
 		case 'm':	/* monsters */
 			monstlist();
 			cleanup(TRUE);
+			__unreachable();
 			/* NOTREACHED */
 
 		case 'b':	/* scoreboard */
 			scorelist();
 			cleanup(TRUE);
+			__unreachable();
 			/* NOTREACHED */
 		}
 
@@ -143,15 +147,18 @@ main(int argc, char **argv)
 	if (examine) {
 		changestats(FALSE);
 		cleanup(TRUE);
+		__unreachable();
 		/* NOTREACHED */
 	}
 	if (!noheader) {
 		titlelist();
 		purgeoldplayers();	/* clean up old characters */
 	}
-	if (headeronly)
+	if (headeronly) {
 		cleanup(TRUE);
-	/* NOTREACHED */
+		__unreachable();
+		/* NOTREACHED */
+	}
 
 	do
 		/* get the player structure filled */
@@ -167,6 +174,7 @@ main(int argc, char **argv)
 
 		case 'Q':
 			cleanup(TRUE);
+			__unreachable();
 			/* NOTREACHED */
 
 		default:
@@ -544,6 +552,7 @@ procmain(void)
 
 	case '5':		/* good-bye */
 		leavegame();
+		__unreachable();
 		/* NOTREACHED */
 
 	case '6':		/* cloak */

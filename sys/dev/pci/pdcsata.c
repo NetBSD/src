@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.30 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.31 2019/02/03 03:19:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.30 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.31 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -355,6 +355,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    2;
 		sc->sc_wdcdev.sc_atac.atac_probe = wdc_drvprobe;
 
+		/* FALLTHROUGH */
 	default:
 		aprint_error("unknown promise product 0x%x\n",
 		    sc->sc_pp->ide_product);

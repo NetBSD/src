@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.32 2013/10/18 20:41:49 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.33 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.32 2013/10/18 20:41:49 christos Exp $");
+__RCSID("$NetBSD: server.c,v 1.33 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,6 +231,7 @@ server(void)
 
 		default:
 			error("server: unknown command '%s'\n", cp);
+			/* FALLTHROUGH */
 		case '\0':
 			continue;
 		}
@@ -1542,7 +1543,7 @@ response(void)
 
 	default:
 		s--;
-		/* fall into... */
+		/* FALLTHROUGH */
 	case '\1':
 	case '\2':
 		nerrs++;

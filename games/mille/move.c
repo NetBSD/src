@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.18 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: move.c,v 1.19 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.18 2011/08/31 16:24:56 plunky Exp $");
+__RCSID("$NetBSD: move.c,v 1.19 2019/02/03 03:19:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,12 +232,15 @@ mustpick:
 	  case C_200:
 		if (pp->nummiles[C_200] == 2)
 			return error("only two 200's per hand");
+		/* FALLTHROUGH */
 	  case C_100:	case C_75:
 		if (pp->speed == C_LIMIT)
 			return error("limit of 50");
+		/* FALLTHROUGH */
 	  case C_50:
 		if (pp->mileage + Value[card] > End)
 			return error("puts you over %d", End);
+		/* FALLTHROUGH */
 	  case C_25:
 		if (!pp->can_go)
 			return error("cannot move now");

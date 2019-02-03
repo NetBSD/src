@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.27 2014/03/23 00:07:15 dholland Exp $	*/
+/*	$NetBSD: quiz.c,v 1.28 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.27 2014/03/23 00:07:15 dholland Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.28 2019/02/03 03:19:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -318,6 +318,7 @@ next_cat(const char *s)
 		case ':':
 			if (!esc)
 				return (s);
+			/* FALLTHROUGH */
 		default:
 			esc = 0;
 			break;

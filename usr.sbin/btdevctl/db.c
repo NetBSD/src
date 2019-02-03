@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.4 2007/08/17 17:59:16 pavel Exp $	*/
+/*	$NetBSD: db.c,v 1.5 2019/02/03 03:19:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.4 2007/08/17 17:59:16 pavel Exp $");
+__RCSID("$NetBSD: db.c,v 1.5 2019/02/03 03:19:30 mrg Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -77,7 +77,9 @@ db_get(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 			obj = prop_dictionary_get(db, "btdevctl-version");
 			switch(prop_number_integer_value(obj)) {
 			case 0: db_update0();
+				/* FALLTHROUGH */
 			case 1: db_update1();
+				/* FALLTHROUGH */
 			case BTDEVCTL_VERSION:
 				break;
 

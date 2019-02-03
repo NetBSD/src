@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.128 2018/06/26 06:48:00 msaitoh Exp $ */
+/* $NetBSD: rtw.c,v 1.129 2019/02/03 03:19:27 mrg Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.128 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.129 2019/02/03 03:19:27 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -4281,6 +4281,7 @@ rtw_detach(struct rtw_softc *sc)
 		callout_stop(&sc->sc_scan_ch);
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
+		/*FALLTHROUGH*/
 	case FINISH_LED_ATTACH:
 		rtw_led_detach(&sc->sc_led_state);
 		/*FALLTHROUGH*/

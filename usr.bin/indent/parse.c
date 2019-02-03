@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7 2003/08/07 11:14:09 agc Exp $	*/
+/*	$NetBSD: parse.c,v 1.8 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.7 2003/08/07 11:14:09 agc Exp $");
+__RCSID("$NetBSD: parse.c,v 1.8 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -125,6 +125,7 @@ parse(int tk)
 	case ifstmt:		/* scanned if (...) */
 		if (ps.p_stack[ps.tos] == elsehead && ps.else_if)	/* "else if ..." */
 			ps.i_l_follow = ps.il[ps.tos];
+		/* FALLTHROUGH */
 	case dolit:		/* 'do' */
 	case forstmt:		/* for (...) */
 		ps.p_stack[++ps.tos] = tk;
@@ -327,6 +328,7 @@ reduce(void)
 				/* <switch> <stmt> */
 				case_ind = ps.cstk[ps.tos - 1];
 
+				/* FALLTHROUGH */
 			case decl:	/* finish of a declaration */
 			case elsehead:
 				/* <<if> <stmt> else> <stmt> */

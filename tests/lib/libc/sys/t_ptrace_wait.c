@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.69 2019/01/22 03:47:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.70 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.69 2019/01/22 03:47:45 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.70 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,6 +113,7 @@ traceme_raise(int sigval)
 		case SIGKILL:
 			/* NOTREACHED */
 			FORKEE_ASSERTX(0 && "This shall not be reached");
+			__unreachable();
 		default:
 			DPRINTF("Before exiting of the child process\n");
 			_exit(exitval);
@@ -800,6 +801,7 @@ traceme_vfork_raise(int sigval)
 		case SIGHUP:
 			/* NOTREACHED */
 			FORKEE_ASSERTX(0 && "This shall not be reached");
+			__unreachable();
 		default:
 			DPRINTF("Before exiting of the child process\n");
 			_exit(exitval);

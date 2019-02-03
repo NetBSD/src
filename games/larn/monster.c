@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.18 2012/06/19 05:30:43 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.19 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.18 2012/06/19 05:30:43 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.19 2019/02/03 03:19:25 mrg Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -1011,20 +1011,28 @@ dirsub(int *x, int *y)
 		switch (ttgetch()) {
 		case 'b':
 			i++;
+			/* FALLTHROUGH */
 		case 'n':
 			i++;
+			/* FALLTHROUGH */
 		case 'y':
 			i++;
+			/* FALLTHROUGH */
 		case 'u':
 			i++;
+			/* FALLTHROUGH */
 		case 'h':
 			i++;
+			/* FALLTHROUGH */
 		case 'k':
 			i++;
+			/* FALLTHROUGH */
 		case 'l':
 			i++;
+			/* FALLTHROUGH */
 		case 'j':
 			i++;
+			/* FALLTHROUGH */
 			goto out;
 		};
 out:

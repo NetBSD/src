@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.26 2018/06/25 14:29:17 christos Exp $	*/
+/*	$NetBSD: jot.c,v 1.27 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.26 2018/06/25 14:29:17 christos Exp $");
+__RCSID("$NetBSD: jot.c,v 1.27 2019/02/03 03:19:29 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -190,6 +190,7 @@ getargs(int argc, char *argv[])
 				    argv[3]);
 			have |= STEP;
 		}
+		/* FALLTHROUGH */
 	case 3:
 		if (!is_default(argv[2])) {
 			if (!sscanf(argv[2], "%lf", &ender))
@@ -198,6 +199,7 @@ getargs(int argc, char *argv[])
 			if (prec < 0)
 				n = getprec(argv[2]);
 		}
+		/* FALLTHROUGH */
 	case 2:
 		if (!is_default(argv[1])) {
 			if (!sscanf(argv[1], "%lf", &begin))
@@ -208,6 +210,7 @@ getargs(int argc, char *argv[])
 			if (n > prec)		/* maximum precision */
 				prec = n;
 		}
+		/* FALLTHROUGH */
 	case 1:
 		if (!is_default(argv[0])) {
 			reps = strtoul(argv[0], &ep, 0);
@@ -216,6 +219,7 @@ getargs(int argc, char *argv[])
 				    argv[0]);
 			have |= REPS;
 		}
+		/* FALLTHROUGH */
 	case 0:
 		break;
 	default:

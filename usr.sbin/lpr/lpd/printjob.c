@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.56 2011/08/30 19:27:37 joerg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.57 2019/02/03 03:19:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.56 2011/08/30 19:27:37 joerg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.57 2019/02/03 03:19:30 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -605,6 +605,7 @@ print(int format, char *file)
 			return(ERROR);
 		}
 		fi = p[0];			/* use pipe for input */
+		/* FALLTHROUGH */
 	case 'f':	/* print plain text file */
 		prog = IF;
 		av[1] = width;
@@ -850,6 +851,7 @@ sendit(char *file)
 				return(REPRINT);
 			case ACCESS:
 				sendmail(logname, ACCESS);
+				/* FALLTHROUGH */
 			case ERROR:
 				err = ERROR;
 			}

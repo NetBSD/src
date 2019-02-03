@@ -1,4 +1,4 @@
-/*	$NetBSD: movem.c,v 1.9 2012/06/19 05:30:43 dholland Exp $	*/
+/*	$NetBSD: movem.c,v 1.10 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * movem.c (move monster)		Larn is copyrighted 1986 by Noah Morgan.
@@ -12,7 +12,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: movem.c,v 1.9 2012/06/19 05:30:43 dholland Exp $");
+__RCSID("$NetBSD: movem.c,v 1.10 2019/02/03 03:19:25 mrg Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -185,6 +185,7 @@ movemt(int i, int j)
 				case OMIRROR:
 					if (mitem[m][k] == VAMPIRE)
 						goto smm;
+					/* FALLTHROUGH */
 				default:
 					screen[m][k] = 0;
 					break;
@@ -437,6 +438,7 @@ movsphere(void)
 		case 1:
 		case 2:	/* change direction to a random one */
 			sp->dir = rnd(8);
+			/* FALLTHROUGH */
 		default:	/* move in normal direction */
 			dir = sp->dir;
 			len = sp->lifetime;

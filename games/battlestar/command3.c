@@ -1,4 +1,4 @@
-/*	$NetBSD: command3.c,v 1.4 2018/02/04 08:48:05 mrg Exp $	*/
+/*	$NetBSD: command3.c,v 1.5 2019/02/03 03:19:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command3.c,v 1.4 2018/02/04 08:48:05 mrg Exp $");
+__RCSID("$NetBSD: command3.c,v 1.5 2019/02/03 03:19:25 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -145,9 +145,11 @@ bury(void)
 			case NORMGOD:
 				printf("She screams as you wrestle her into ");
 				puts("the hole.");
+				/* FALLTHROUGH */
 			case TIMER:
 				power += 7;
 				ego -= 10;
+				/* FALLTHROUGH */
 			case AMULET:
 			case MEDALION:
 			case TALISMAN:

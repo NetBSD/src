@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.322 2018/11/30 15:05:35 mlelstv Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.323 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.322 2018/11/30 15:05:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.323 2019/02/03 03:19:28 mrg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -1154,6 +1154,7 @@ sched_pstats(void)
 					if (l->l_slptime > 1) {
 						break;
 					}
+					/* FALLTHROUGH */
 				case LSRUN:
 				case LSONPROC:
 				case LSIDL:

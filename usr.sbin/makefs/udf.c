@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.18 2017/02/08 21:33:12 christos Exp $ */
+/* $NetBSD: udf.c,v 1.19 2019/02/03 03:19:31 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.18 2017/02/08 21:33:12 christos Exp $");
+__RCSID("$NetBSD: udf.c,v 1.19 2019/02/03 03:19:31 mrg Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -201,7 +201,7 @@ udf_emulate_discinfo(fsinfo_t *fsopts, struct mmc_discinfo *di,
 	case 0x10:	/* DVDROM */
 	case 0x40:	/* BDROM */
 		req_enable |= FORMAT_READONLY;
-		/* FALLTROUGH */
+		/* FALLTHROUGH */
 	case 0x01:	/* disc */
 		/* set up a disc info profile for partitions/files */
 		di->mmc_class	= MMC_CLASS_DISC;
@@ -878,6 +878,7 @@ udf_estimate_walk(fsinfo_t *fsopts,
 		case S_IFDIR:
 			if (strcmp(cur->name, ".") == 0)
 				continue;
+			/* FALLTHROUGH */
 		case S_IFLNK:
 		case S_IFREG:
 			/* create dummy FID to see how long name will become */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.31 2017/12/26 08:30:58 kamil Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.32 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.31 2017/12/26 08:30:58 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.32 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,6 +257,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 		flg |= F_WAIT;
 		/* Fall into F_SETLK */
 
+		/* FALLTHROUGH */
 	case F_SETLK:
 		switch (fl->l_type) {
 		case F_RDLCK:

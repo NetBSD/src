@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.50 2018/12/09 11:14:02 jdolecek Exp $ */
+/*	$NetBSD: if_dge.c,v 1.51 2019/02/03 03:19:27 mrg Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.50 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.51 2019/02/03 03:19:27 mrg Exp $");
 
 
 
@@ -535,10 +535,13 @@ out:
 		switch (state) {
 		case 4:
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_bugmap);
+			/* FALLTHROUGH */
 		case 3:
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_bugmap);
+			/* FALLTHROUGH */
 		case 2:
 			bus_dmamem_unmap(sc->sc_dmat, kva, DGE_RXMEM);
+			/* FALLTHROUGH */
 		case 1:
 			bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 			break;

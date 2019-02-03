@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.15 2011/09/06 18:28:58 joerg Exp $	*/
+/*	$NetBSD: rs.c,v 1.16 2019/02/03 03:19:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.15 2011/09/06 18:28:58 joerg Exp $");
+__RCSID("$NetBSD: rs.c,v 1.16 2019/02/03 03:19:30 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,11 +400,13 @@ getargs(int ac, char *av[])
 			switch (*p) {
 			case 'T':
 				flags |= MTRANSPOSE;
+				/* FALLTHROUGH */
 			case 't':
 				flags |= TRANSPOSE;
 				break;
 			case 'c':		/* input col. separator */
 				flags |= ONEISEPONLY;
+				/* FALLTHROUGH */
 			case 's':		/* one or more allowed */
 				if (p[1])
 					isep = *++p;
@@ -413,6 +415,7 @@ getargs(int ac, char *av[])
 				break;
 			case 'C':
 				flags |= ONEOSEPONLY;
+				/* FALLTHROUGH */
 			case 'S':
 				if (p[1])
 					osep = *++p;
@@ -426,6 +429,7 @@ getargs(int ac, char *av[])
 				break;
 			case 'K':			/* skip N lines */
 				flags |= SKIPPRINT;
+				/* FALLTHROUGH */
 			case 'k':			/* skip, do not print */
 				p = getnum(&skip, p, 0);
 				if (!skip)
@@ -457,6 +461,7 @@ getargs(int ac, char *av[])
 				break;
 			case 'H':			/* print shape only */
 				flags |= DETAILSHAPE;
+				/* FALLTHROUGH */
 			case 'h':
 				flags |= SHAPEONLY;
 				break;
@@ -485,10 +490,13 @@ getargs(int ac, char *av[])
 	switch (ac) {
 	/*case 3:
 		opages = atoi(av[2]);*/
+		/* FALLTHROUGH */
 	case 2:
 		ocols = atoi(av[1]);
+		/* FALLTHROUGH */
 	case 1:
 		orows = atoi(av[0]);
+		/* FALLTHROUGH */
 	case 0:
 		break;
 	default:

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.52 2015/07/28 05:09:34 dholland Exp $	 */
+/* $NetBSD: main.c,v 1.53 2019/02/03 03:19:26 mrg Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -217,6 +217,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	case 0:
 		if (preen)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
+		/* FALLTHROUGH */
 	case -1:
 		return FSCK_EXIT_OK;
 	}

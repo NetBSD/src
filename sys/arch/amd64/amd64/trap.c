@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.115 2019/01/27 02:08:37 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.116 2019/02/03 03:19:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2019/01/27 02:08:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2019/02/03 03:19:26 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -376,6 +376,7 @@ trap(struct trapframe *frame)
 		}
 	}
 #endif
+		/* FALLTHROUGH */
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:

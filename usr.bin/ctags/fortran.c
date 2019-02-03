@@ -1,4 +1,4 @@
-/*	$NetBSD: fortran.c,v 1.11 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: fortran.c,v 1.12 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fortran.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: fortran.c,v 1.11 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: fortran.c,v 1.12 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ PF_funcs(void)
 		case 's':
 			if (cicmp("subroutine"))
 				break;
+			/* FALLTHROUGH */
 		default:
 			continue;
 		}

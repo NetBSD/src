@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.57 2019/01/19 21:19:32 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.58 2019/02/03 03:19:31 mrg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -651,6 +651,7 @@ npfctl_conn_list(int fd, int argc, char **argv)
 			break;
 		case 'h':
 			header = false;
+			break;
 		case 'i':
 			f.ifname = optarg;
 			break;

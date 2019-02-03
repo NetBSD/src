@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.27 2018/02/04 09:01:13 mrg Exp $	*/
+/*	$NetBSD: mapper.c,v 1.28 2019/02/03 03:19:31 mrg Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -173,8 +173,11 @@ logit(int severity, int syserr, const char *format, ...)
 
     switch (debug) {
 	case 0: if (severity > LOG_WARNING) return;
+		/* FALLTHROUGH */
 	case 1: if (severity > LOG_NOTICE ) return;
+		/* FALLTHROUGH */
 	case 2: if (severity > LOG_INFO   ) return;
+		/* FALLTHROUGH */
 	default:
 	    fmt[0] = '\0';
 	    if (severity == LOG_WARNING)

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.55 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.56 2019/02/03 03:19:27 mrg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.55 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.56 2019/02/03 03:19:27 mrg Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -2439,6 +2439,7 @@ common_ioctl(bktr_ptr_t bktr, ioctl_cmd_t cmd, void *arg)
 			break;
 		  }
 
+			/* FALLTHROUGH */
 		default:
 			return(EINVAL);
 		}

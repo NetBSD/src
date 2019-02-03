@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.167 2019/01/22 06:40:49 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.168 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.167 2019/01/22 06:40:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.168 2019/02/03 03:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1249,7 +1249,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			    (uintptr_t)sc, 0, 0, 0);
 		}
 
-		/* FALLTHROUGH if no data phase, err == 0 */
+		/* if no data phase, err == 0 */
+		/* FALLTHROUGH */
 	case TSTATE_BBB_DATA:
 		/* Command transport phase error handling (ignored if no data
 		 * phase (fallthrough from previous state)) */
@@ -1282,7 +1283,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			}
 		}
 
-		/* FALLTHROUGH, err == 0 (no data phase or successful) */
+		/* err == 0 (no data phase or successful) */
+		/* FALLTHROUGH */
 	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
 		if (sc->transfer_dir == DIR_IN)
 			memcpy(sc->transfer_data, sc->datain_buffer,
@@ -1292,7 +1294,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 					umass_dump_buffer(sc, sc->transfer_data,
 						sc->transfer_datalen, 48));
 
-		/* FALLTHROUGH, err == 0 (no data phase or successful) */
+		/* err == 0 (no data phase or successful) */
+		/* FALLTHROUGH */
 	case TSTATE_BBB_SCLEAR: /* stall clear after status phase */
 		/* Reading of CSW after bulk stall condition in data phase
 		 * (TSTATE_BBB_DATA2) or bulk-in stall condition after
@@ -1719,7 +1722,8 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			    (uintptr_t)sc, 0, 0, 0);
 		}
 
-		/* FALLTHROUGH if no data phase, err == 0 */
+		/* if no data phase, err == 0 */
+		/* FALLTHROUGH */
 	case TSTATE_CBI_DATA:
 		/* Command transport phase error handling (ignored if no data
 		 * phase (fallthrough from previous state)) */

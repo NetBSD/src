@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.160 2018/03/16 17:25:04 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.161 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.160 2018/03/16 17:25:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.161 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -804,6 +804,7 @@ nfssvc_nfsd(struct nfssvc_copy_ops *ops, struct nfsd_srvargs *nsd,
 					nfsrv_updatecache(nd, true, mreq);
 					nd->nd_mrep = NULL;
 				}
+				/* FALLTHROUGH */
 			case RC_REPLY:
 				m = mreq;
 				siz = 0;

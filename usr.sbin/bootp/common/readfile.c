@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.20 2017/01/11 12:18:22 joerg Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.21 2019/02/03 03:19:30 mrg Exp $");
 #endif
 
 
@@ -603,6 +603,7 @@ read_entry(FILE *fp, char *buffer, unsigned int *bufsiz)
 			}
 		}
 		/* fall through if "other" character */
+		/* FALLTHROUGH */
 	default:
 		*buffer++ = c;			/* Store other characters */
 		length++;

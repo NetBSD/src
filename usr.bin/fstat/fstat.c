@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.111 2016/12/30 21:08:23 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.112 2019/02/03 03:19:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.111 2016/12/30 21:08:23 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.112 2019/02/03 03:19:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1071,6 +1071,7 @@ socktrans(struct socket *sock, int i)
 		switch (proto.pr_protocol) {
 		case IPPROTO_UDP:
 			isdgram = true;
+			/* FALLTHROUGH */
 		case IPPROTO_TCP:
 			if (so.so_pcb == NULL)
 				break;
@@ -1094,6 +1095,7 @@ socktrans(struct socket *sock, int i)
 		switch (proto.pr_protocol) {
 		case IPPROTO_UDP:
 			isdgram = true;
+			/* FALLTHROUGH */
 		case IPPROTO_TCP:
 			if (so.so_pcb == NULL)
 				break;

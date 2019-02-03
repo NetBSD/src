@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.29 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.30 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.29 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.30 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ atapi_interpret_sense(struct scsipi_xfer *xs)
 	switch (key) {
 		case SKEY_RECOVERED_ERROR:
 			msg = "soft error (corrected)";
+			/* FALLTHROUGH */
 		case SKEY_NO_SENSE:
 			if (xs->resid == xs->datalen)
 				xs->resid = 0;  /* not short read */

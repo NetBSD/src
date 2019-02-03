@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.51 2017/05/04 16:26:10 sevan Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.52 2019/02/03 03:19:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1285,6 +1285,7 @@ denyone(TREE * t, void *v __unused)
 		}
 		if (update)
 			t->Tflags |= FUPDATE;
+		/* FALLTHROUGH */
 	case S_IFDIR:
 		t->Tuid = sbuf.st_uid;
 		t->Tgid = sbuf.st_gid;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.11 2011/08/30 21:03:31 joerg Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.12 2019/02/03 03:19:31 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ main(int argc, char **argv)
 			break;
 		case 'L':
 			recursive++;
+			/* FALLTHROUGH */
 		case 'l':
 			list++;
 			break;

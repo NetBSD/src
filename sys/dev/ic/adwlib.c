@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.41 2013/09/12 11:23:37 martin Exp $        */
+/* $NetBSD: adwlib.c,v 1.42 2019/02/03 03:19:27 mrg Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.41 2013/09/12 11:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.42 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,12 +463,15 @@ XXX	  TODO!!!	if (ASC_PCI_ID2FUNC(sc->cfg.pci_slot_info) != 0) {
 		case 3:
 			/* Enable manual control with low on / high on. */
 			sc->cfg.termination |= ADW_TERM_CTL_L;
+			/* FALLTHROUGH */
 		case 2:
 			/* Enable manual control with low off / high on. */
 			sc->cfg.termination |= ADW_TERM_CTL_H;
+			/* FALLTHROUGH */
 		case 1:
 			/* Enable manual control with low off / high off. */
 			sc->cfg.termination |= ADW_TERM_CTL_SEL;
+			/* FALLTHROUGH */
 		case 0:
 			break;
 		default:

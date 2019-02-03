@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.234 2018/03/24 08:08:19 mlelstv Exp $ */
+/*	$NetBSD: st.c,v 1.235 2019/02/03 03:19:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.234 2018/03/24 08:08:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.235 2019/02/03 03:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1459,6 +1459,7 @@ stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 			break;
 		case MTBSF:	/* backward space file */
 			number = -number;
+			/* FALLTHROUGH */
 		case MTFSF:	/* forward space file */
 			error = st_check_eod(st, FALSE, &nmarks, flags);
 			if (!error)
@@ -1467,6 +1468,7 @@ stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 			break;
 		case MTBSR:	/* backward space record */
 			number = -number;
+			/* FALLTHROUGH */
 		case MTFSR:	/* forward space record */
 			error = st_check_eod(st, true, &nmarks, flags);
 			if (!error)

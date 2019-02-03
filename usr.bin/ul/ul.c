@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.19 2016/06/23 03:58:13 abhinav Exp $	*/
+/*	$NetBSD: ul.c,v 1.20 2019/02/03 03:19:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.19 2016/06/23 03:58:13 abhinav Exp $");
+__RCSID("$NetBSD: ul.c,v 1.20 2019/02/03 03:19:30 mrg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -222,6 +222,7 @@ filter(FILE *f)
 			obuf[col].c_mode |= UNDERL | mode;
 		else
 			obuf[col].c_char = '_';
+		/* FALLTHROUGH */
 	case ' ':
 		col++;
 		if (col > maxcol)

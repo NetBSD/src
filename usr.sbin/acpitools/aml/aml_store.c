@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_store.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_store.c,v 1.2 2019/02/03 03:19:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_store.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_store.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: aml_store.c,v 1.2 2019/02/03 03:19:30 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -348,6 +348,7 @@ aml_store_to_name(struct aml_environ *env, union aml_object *obj,
 	case aml_t_num:
 		if (name == &env->tempname)
 			break;
+		/* FALLTHROUGH */
 	default:
 		aml_store_to_object(env, obj, name->property);
 		break;

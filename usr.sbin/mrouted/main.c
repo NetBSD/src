@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2011/08/31 16:24:59 plunky Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2019/02/03 03:19:31 mrg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.25 2011/08/31 16:24:59 plunky Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.26 2019/02/03 03:19:31 mrg Exp $");
 #endif
 
 #include <ctype.h>
@@ -643,7 +643,9 @@ logit(int severity, int syserr, const char *format, ...)
     switch (debug) {
 	case 0: break;
 	case 1: if (severity > LOG_NOTICE) break;
+		/* FALLTHROUGH */
 	case 2: if (severity > LOG_INFO  ) break;
+		/* FALLTHROUGH */
 	default:
 	    gettimeofday(&now,NULL);
 	    t = now.tv_sec;

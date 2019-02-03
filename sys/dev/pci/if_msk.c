@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.85 2019/01/27 02:08:42 pgoyette Exp $ */
+/* $NetBSD: if_msk.c,v 1.86 2019/02/03 03:19:27 mrg Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.85 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.86 2019/02/03 03:19:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,11 +657,14 @@ out:
 		case 4:
 			bus_dmamap_unload(sc->sc_dmatag,
 			    sc_if->sk_cdata.sk_rx_jumbo_map);
+			/* FALLTHROUGH */
 		case 3:
 			bus_dmamap_destroy(sc->sc_dmatag,
 			    sc_if->sk_cdata.sk_rx_jumbo_map);
+			/* FALLTHROUGH */
 		case 2:
 			bus_dmamem_unmap(sc->sc_dmatag, kva, MSK_JMEM);
+			/* FALLTHROUGH */
 		case 1:
 			bus_dmamem_free(sc->sc_dmatag,
 			    &sc_if->sk_cdata.sk_jumbo_seg,
