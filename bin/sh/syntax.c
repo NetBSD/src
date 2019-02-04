@@ -1,7 +1,7 @@
-/*	$NetBSD: syntax.c,v 1.7 2018/12/03 06:40:26 kre Exp $	*/
+/*	$NetBSD: syntax.c,v 1.8 2019/02/04 09:56:48 kre Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syntax.c,v 1.7 2018/12/03 06:40:26 kre Exp $");
+__RCSID("$NetBSD: syntax.c,v 1.8 2019/02/04 09:56:48 kre Exp $");
 
 #include <limits.h>
 #include "shell.h"
@@ -19,6 +19,7 @@ __RCSID("$NetBSD: syntax.c,v 1.7 2018/12/03 06:40:26 kre Exp $");
 /* syntax table used when not in quotes */
 const char basesyntax[258] = { CFAKE, CEOF,
     set_range(CTL_FIRST, CTL_LAST, CCTL)
+/* Note code assumes that only the above are CCTL in basesyntax */
     set('\n', CNL)
     set('\\', CBACK)
     set('\'', CSQUOTE)
@@ -61,6 +62,7 @@ const char dqsyntax[258] = { CFAKE, CEOF,
 
 /* syntax table used when in single quotes */
 const char sqsyntax[258] = { CFAKE, CEOF,
+/* CCTL includes anything that might perhaps need to be escaped if quoted */
     set_range(CTL_FIRST, CTL_LAST, CCTL)
     set('\n', CNL)
     set('\'', CSQUOTE)
