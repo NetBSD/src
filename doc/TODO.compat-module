@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.3 2019/01/31 03:25:29 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.4 2019/02/04 00:03:24 pgoyette Exp $ */
 
 DONE
 ----
@@ -113,3 +113,10 @@ TODO - Not required for branch merge
     network interface device drivers), you'll need to build custom
     modules, too.  The MPSAFE stuff needs to be extracted out and made
     into "hooks".
+
+23. The raidframe-netbsd32 compat code needs to be better separated
+    from the main raidframe module.  The current mechanism requires us
+    to include compat/netbsd32/netbsd32.h in rf_netbsdkintf.c which
+    requires us to explicitly #define COMPAT_NETBSD32 to get various
+    structure definitions which conflicts with possible definitions of
+    COMPAT_NETBSD32 in opt_compat_netbsd32.h
