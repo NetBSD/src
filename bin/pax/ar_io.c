@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.58 2017/10/02 21:57:59 joerg Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.59 2019/02/04 04:36:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.58 2017/10/02 21:57:59 joerg Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.59 2019/02/04 04:36:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1631,7 +1631,7 @@ void
 ar_summary(int n)
 {
 	time_t secs;
-	char buf[BUFSIZ];
+	char buf[4096];
 	char tbuf[MAXPATHLEN/4];	/* XXX silly size! */
 	char s1buf[MAXPATHLEN/8];	/* XXX very silly size! */
 	char s2buf[MAXPATHLEN/8];	/* XXX very silly size! */
