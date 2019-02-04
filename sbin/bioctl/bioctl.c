@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.17 2015/01/16 20:12:28 christos Exp $ */
+/* $NetBSD: bioctl.c,v 1.18 2019/02/04 04:36:41 mrg Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.17 2015/01/16 20:12:28 christos Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.18 2019/02/04 04:36:41 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -237,7 +237,7 @@ bio_show_volumes(struct biotmp *bt)
 	struct bioc_vol 	bv;
 	const char 		*status, *rtypestr, *stripestr;
 	char 			size[64], percent[16], seconds[20];
-	char 			rtype[16], stripe[16], tmp[32];
+	char 			rtype[16], stripe[16], tmp[48];
 
 	rtypestr = stripestr = NULL;
 
@@ -345,7 +345,7 @@ bio_show_disks(struct biotmp *bt)
 {
 	struct bioc_disk 	bd;
 	const char 		*status;
-	char 			size[64], serial[32], scsiname[16];
+	char 			size[64], serial[32], scsiname[34];
 
 	memset(&bd, 0, sizeof(bd));
 	bd.bd_cookie = bl.bl_cookie;
