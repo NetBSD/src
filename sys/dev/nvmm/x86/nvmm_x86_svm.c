@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.18 2019/01/26 15:12:20 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.19 2019/02/04 12:11:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.18 2019/01/26 15:12:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.19 2019/02/04 12:11:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,20 +938,15 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
+	struct vmcb *vmcb = cpudata->vmcb;
 	uint64_t val;
 	size_t i;
 
 	switch (exit->u.msr.type) {
 	case NVMM_EXIT_MSR_RDMSR:
-		if (exit->u.msr.msr == MSR_CR_PAT) {
-			val = cpudata->vmcb->state.g_pat;
-			cpudata->vmcb->state.rax = (val & 0xFFFFFFFF);
-			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
-			goto handled;
-		}
 		if (exit->u.msr.msr == MSR_NB_CFG) {
 			val = NB_CFG_INITAPICCPUIDLO;
-			cpudata->vmcb->state.rax = (val & 0xFFFFFFFF);
+			vmcb->state.rax = (val & 0xFFFFFFFF);
 			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
@@ -959,7 +954,7 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			if (msr_ignore_list[i] != exit->u.msr.msr)
 				continue;
 			val = 0;
-			cpudata->vmcb->state.rax = (val & 0xFFFFFFFF);
+			vmcb->state.rax = (val & 0xFFFFFFFF);
 			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
@@ -967,18 +962,14 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	case NVMM_EXIT_MSR_WRMSR:
 		if (exit->u.msr.msr == MSR_EFER) {
 			if (__predict_false(exit->u.msr.val & ~EFER_VALID)) {
-				svm_inject_gp(mach, vcpu);
-				goto handled;
+				goto error;
 			}
-			if ((cpudata->vmcb->state.efer ^ exit->u.msr.val) &
+			if ((vmcb->state.efer ^ exit->u.msr.val) &
 			     EFER_TLB_FLUSH) {
 				cpudata->tlb_want_flush = true;
 			}
-			cpudata->vmcb->state.efer = exit->u.msr.val | EFER_SVME;
-			goto handled;
-		}
-		if (exit->u.msr.msr == MSR_CR_PAT) {
-			cpudata->vmcb->state.g_pat = exit->u.msr.val;
+			vmcb->state.efer = exit->u.msr.val | EFER_SVME;
+			vmcb->ctrl.vmcb_clean &= ~VMCB_CTRL_VMCB_CLEAN_CR;
 			goto handled;
 		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
@@ -993,6 +984,10 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 handled:
 	svm_inkernel_advance(cpudata->vmcb);
+	return true;
+
+error:
+	svm_inject_gp(mach, vcpu);
 	return true;
 }
 
@@ -1557,6 +1552,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	 *  - SYSENTER_EIP [read, write]
 	 *  - FSBASE [read, write]
 	 *  - GSBASE [read, write]
+	 *  - PAT [read, write]
 	 *  - TSC [read]
 	 *
 	 * Intercept the rest.
@@ -1573,6 +1569,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_SYSENTER_EIP, true, true);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_FSBASE, true, true);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_GSBASE, true, true);
+	svm_vcpu_msr_allow(cpudata->msrbm, MSR_CR_PAT, true, true);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_TSC, true, false);
 	vmcb->ctrl.msrpm_base_pa = cpudata->msrbm_pa;
 
