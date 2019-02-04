@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2018/09/05 17:10:27 christos Exp $	
+# $NetBSD: Makefile,v 1.22 2019/02/04 04:05:16 mrg Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -6,6 +6,10 @@ USE_FORT?= yes	# network protocol library
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
 			-Wno-unneeded-internal-declaration
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.gencode.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -I${.OBJDIR}
 

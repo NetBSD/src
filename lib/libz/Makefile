@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2017/01/10 01:28:03 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2019/02/04 04:05:16 mrg Exp $
 
 WARNS=	3
 
@@ -28,6 +28,11 @@ FILESOWN_zlib.pc=	${BINOWN}
 FILESGRP_zlib.pc=	${BINGRP}
 FILESMODE_zlib.pc=	${NONBINMODE}
 FILESDIR_zlib.pc=	/usr/lib/pkgconfig
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.infback.c+=	-Wno-error=implicit-fallthrough
+COPTS.inflate.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.lib.mk>
 

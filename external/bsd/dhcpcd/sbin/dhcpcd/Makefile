@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2018/02/02 01:02:39 mrg Exp $
+# $NetBSD: Makefile,v 1.44 2019/02/04 04:05:15 mrg Exp $
 #
 
 WARNS?=		6
@@ -74,9 +74,15 @@ ${f}:	${f}.in
 	${TOOL_SED} ${SED_SYS} ${DIST}/src/${f}.in > $@
 .endfor
 
-# XXXGCC5
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 5 && ${ACTIVE_CC} == "gcc"
-COPTS.if-bsd.c+=  -Wno-error=sign-conversion
+.if defined(HAVE_GCC) && ${ACTIVE_CC} == "gcc"
+. if ${HAVE_GCC} >= 6
+COPTS.if-bsd.c+=	-Wno-error=sign-conversion
+. endif
+. if ${HAVE_GCC} >= 7
+COPTS.dhcp6.c+=		-Wno-error=implicit-fallthrough
+COPTS.if-options.c+=	-Wno-error=implicit-fallthrough
+COPTS.if.c+=		-Wno-error=implicit-fallthrough
+. endif
 .endif
 
 .include <bsd.prog.mk>
