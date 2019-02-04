@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.217 2019/01/21 14:09:24 kre Exp $
+.\"	$NetBSD: sh.1,v 1.218 2019/02/04 11:16:41 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd December 12, 2018
+.Dd February 04, 2019
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -129,6 +129,9 @@ a login shell.
 This is normally done automatically by the system
 when the user first logs in.
 A login shell first reads commands
+(as if by using the
+.Dq \&.
+command)
 from the files
 .Pa /etc/profile
 and
@@ -149,12 +152,18 @@ the shell then performs parameter and arithmetic
 expansion on the value of
 .Ev ENV ,
 (these are described later)
-and then reads commands from the file name that results.
-If
+and if no errors occurred,
+then reads commands from the file name that results.
+Note that no error messages result from these
+expansions, to verify that
 .Ev ENV
-contains a command substitution, or one of the
-other expansions fails, or if there are no expansions
-to expand, the value of
+is correct, as desired, use:
+.Dl eval printf '%s\e\en' Dq \&${ENV}
+Otherwise if
+.Ev ENV
+appears to contain a command substitution,
+which is not performed here,
+or if there were no expansions to expand, the value of
 .Ev ENV
 is used as the file name.
 .Pp
@@ -4060,6 +4069,11 @@ Names the file sourced at startup by the shell.
 Unused by this shell after initialization,
 but is usually passed through the environment to
 descendant shells.
+See the
+.Sx Invocation
+section above for details of how
+.Ev ENV
+is processed and used.
 .It Ev EUSER
 Set to the login name of the effective user id running the shell,
 as returned by
@@ -4105,7 +4119,6 @@ This is normally set to
 .Aq tab ,
 and
 .Aq newline .
-See the
 .Sx White Space Splitting
 section for more details.
 .It Ev LANG
@@ -4188,8 +4201,13 @@ If
 .Ic promptcmds
 is not set and the prompt string uses command substitution,
 the prompt used will be an appropriate error string.
-For other expansion errors, a message will be output,
-and the unexpanded string will then be used as the prompt.
+For other expansion errors, the prompt will become an
+empty string, without an error message.
+To verify parsing of
+.Ev PS1 ,
+the method suggested for
+.Ev ENV
+can be used.
 .It Ev PS2
 The secondary prompt string, which defaults to
 .Dq Li "> " .
@@ -4198,9 +4216,9 @@ After expansion (as for
 it is written whenever more input is required to complete the
 current command.
 .It Ev PS4
-Output, after expansion like
+is Output, after expansion like
 .Ev PS1 ,
-before each line when execution trace
+as a prefix for each line when execution trace
 .Ic ( set Fl x )
 is enabled.
 .Ev PS4
