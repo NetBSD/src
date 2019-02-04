@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.67 2018/03/24 19:41:35 nakayama Exp $   */
+/*      $NetBSD: raidctl.c,v 1.68 2019/02/04 09:31:22 mrg Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.67 2018/03/24 19:41:35 nakayama Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.68 2019/02/04 09:31:22 mrg Exp $");
 #endif
 
 
@@ -83,7 +83,7 @@ static  void check_status(int,int);
 static  void check_parity(int,int, char *);
 static  void do_meter(int, u_long);
 static  void get_bar(char *, double, int);
-static  void get_time_string(char *, int);
+static  void get_time_string(char *, size_t, int);
 static  void rf_output_pmstat(int, int);
 static  void rf_pm_configure(int, int, char *, int[]);
 static  unsigned int xstrtouint(const char *);
@@ -1076,7 +1076,7 @@ do_meter(int fd, u_long option)
 			last_eta = simple_eta;
 		}
 
-		get_time_string(eta_buffer, simple_eta);
+		get_time_string(eta_buffer, sizeof eta_buffer, simple_eta);
 
 		fprintf(stdout,"\r%3d%% |%s| ETA: %s %c",
 			percent_done,bar_buffer,eta_buffer,tbits[tbit_value]);
@@ -1126,32 +1126,42 @@ get_bar(char *string, double percent, int max_strlen)
 }
 
 static void
-get_time_string(char *string, int simple_time)
+get_time_string(char *string, size_t len, int simple_time)
 {
 	int minutes, seconds, hours;
-	char hours_buffer[5];
+	char hours_buffer[8];
 	char minutes_buffer[5];
 	char seconds_buffer[5];
 
 	if (simple_time >= 0) {
 
-		minutes = (int) simple_time / 60;
-		seconds = ((int)simple_time - 60*minutes);
+		minutes = simple_time / 60;
+		seconds = simple_time - 60*minutes;
 		hours = minutes / 60;
 		minutes = minutes - 60*hours;
+#if defined(__GNUC__)
+		/*
+		 * snprintf() truncation checker fails to detect that seconds
+		 * and minutes will be 0-59 range.
+		 */
+		if (minutes < 0 || minutes > 60)
+			minutes = 60;
+		if (seconds < 0 || seconds > 60)
+			seconds = 60;
+#endif
 		
 		if (hours > 0) {
-			snprintf(hours_buffer,5,"%02d:",hours);
+			snprintf(hours_buffer,sizeof hours_buffer,"%02d:",hours);
 		} else {
-			snprintf(hours_buffer,5,"   ");
+			snprintf(hours_buffer,sizeof hours_buffer,"   ");
 		}
 		
-		snprintf(minutes_buffer,5,"%02d:",minutes);
-		snprintf(seconds_buffer,5,"%02d",seconds);
-		snprintf(string,1024,"%s%s%s",
+		snprintf(minutes_buffer,sizeof minutes_buffer,"%02d:",minutes);
+		snprintf(seconds_buffer,sizeof seconds_buffer,"%02d",seconds);
+		snprintf(string,len,"%s%s%s",
 			 hours_buffer, minutes_buffer, seconds_buffer);
 	} else {
-		snprintf(string,1024,"   --:--");
+		snprintf(string,len,"   --:--");
 	}
 	
 }
