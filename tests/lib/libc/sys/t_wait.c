@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.8 2017/01/13 19:28:55 christos Exp $ */
+/* $NetBSD: t_wait.c,v 1.9 2019/02/04 09:35:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.8 2017/01/13 19:28:55 christos Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.9 2019/02/04 09:35:11 mrg Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -76,11 +76,12 @@ ATF_TC_BODY(wait6_exited, tc)
 	pid_t pid;
 
 	switch (pid = fork()) {
-	case -1:
-		ATF_REQUIRE(pid > 0);
 	case 0:
 		exit(0x5a5a5a5a);
 		/*NOTREACHED*/
+	case -1:
+		ATF_REQUIRE(pid > 0);
+		__unreachable();
 	default:
 		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
 		ATF_REQUIRE(WIFEXITED(st) && WEXITSTATUS(st) == 0x5a);
@@ -114,6 +115,7 @@ ATF_TC_BODY(wait6_terminated, tc)
 		/*FALLTHROUGH*/
 	case -1:
 		ATF_REQUIRE(pid > 0);
+		__unreachable();
 	default:
 		ATF_REQUIRE(kill(pid, SIGTERM) == 0);
 		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
@@ -150,6 +152,7 @@ ATF_TC_BODY(wait6_coredumped, tc)
 		/*FALLTHROUGH*/
 	case -1:
 		ATF_REQUIRE(pid > 0);
+		__unreachable();
 	default:
 		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGSEGV
@@ -186,6 +189,7 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 		/*FALLTHROUGH*/
 	case -1:
 		ATF_REQUIRE(pid > 0);
+		__unreachable();
 	default:
 		ATF_REQUIRE(kill(pid, SIGSTOP) == 0);
 		ATF_REQUIRE(wait6(P_PID, pid, &st, WSTOPPED, &wru, &si) == pid);
@@ -252,6 +256,7 @@ ATF_TC_BODY(wait6_stopgo_loop, tc)
 		/*FALLTHROUGH*/
 	case -1:
 		ATF_REQUIRE(pid > 0);
+		__unreachable();
 	}
 
 	printf("Before loop of SIGSTOP/SIGCONT sequence %zu times\n", N);
