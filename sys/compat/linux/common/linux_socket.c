@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.143 2018/11/14 17:51:37 hannken Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.144 2019/02/04 04:37:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.143 2018/11/14 17:51:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.144 2019/02/04 04:37:50 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1829,7 +1829,7 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 	struct msghdr *msg = &bmsg.msg_hdr;
 	int error, s;
 	struct mbuf *from, *control;
-	struct timespec ts, now;
+	struct timespec ts = {0}, now;
 	struct linux_timespec lts;
 	unsigned int vlen, flags, dg;
 
