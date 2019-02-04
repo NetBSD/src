@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.5 2019/02/03 15:43:57 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.6 2019/02/04 12:10:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.5 2019/02/03 15:43:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.6 2019/02/04 12:10:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,10 @@ static void	sunxi_drm_init(device_t);
 
 static int	sunxi_drm_set_busid(struct drm_device *, struct drm_master *);
 
+static uint32_t	sunxi_drm_get_vblank_counter(struct drm_device *, unsigned int);
+static int	sunxi_drm_enable_vblank(struct drm_device *, unsigned int);
+static void	sunxi_drm_disable_vblank(struct drm_device *, unsigned int);
+
 static int	sunxi_drm_load(struct drm_device *, unsigned long);
 static int	sunxi_drm_unload(struct drm_device *);
 
@@ -88,11 +92,9 @@ static struct drm_driver sunxi_drm_driver = {
 	.dumb_map_offset = drm_gem_cma_dumb_map_offset,
 	.dumb_destroy = drm_gem_dumb_destroy,
 
-#if notyet
 	.get_vblank_counter = sunxi_drm_get_vblank_counter,
 	.enable_vblank = sunxi_drm_enable_vblank,
 	.disable_vblank = sunxi_drm_disable_vblank,
-#endif
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
@@ -233,12 +235,23 @@ sunxi_drm_fb_create(struct drm_device *ddev, struct drm_file *file,
 	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
 	fb->obj = to_drm_gem_cma_obj(gem_obj);
 	fb->base.pitches[0] = cmd->pitches[0];
+	fb->base.pitches[1] = cmd->pitches[1];
+	fb->base.pitches[2] = cmd->pitches[2];
 	fb->base.offsets[0] = cmd->offsets[0];
+	fb->base.offsets[1] = cmd->offsets[2];
+	fb->base.offsets[2] = cmd->offsets[1];
 	fb->base.width = cmd->width;
 	fb->base.height = cmd->height;
 	fb->base.pixel_format = cmd->pixel_format;
-	drm_fb_get_bpp_depth(cmd->pixel_format, &fb->base.depth,
-	    &fb->base.bits_per_pixel);
+	fb->base.bits_per_pixel = drm_format_plane_cpp(fb->base.pixel_format, 0) * 8;
+
+	switch (fb->base.pixel_format) {
+	case DRM_FORMAT_XRGB8888:
+		fb->base.depth = 32;
+		break;
+	default:
+		break;
+	}
 
 	error = drm_framebuffer_init(ddev, &fb->base, &sunxi_drm_framebuffer_funcs);
 	if (error != 0)
@@ -372,6 +385,10 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 
 	drm_fb_helper_initial_config(&fbdev->helper, 32);
 
+	/* XXX */
+	ddev->irq_enabled = true;
+	drm_vblank_init(ddev, num_crtc);
+
 	return 0;
 
 drmerr:
@@ -379,6 +396,50 @@ drmerr:
 	kmem_free(fbdev, sizeof(*fbdev));
 
 	return error;
+}
+
+static uint32_t
+sunxi_drm_get_vblank_counter(struct drm_device *ddev, unsigned int crtc)
+{
+	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
+
+	if (crtc >= __arraycount(sc->sc_vbl))
+		return 0;
+
+	if (sc->sc_vbl[crtc].get_vblank_counter == NULL)
+		return 0;
+
+	return sc->sc_vbl[crtc].get_vblank_counter(sc->sc_vbl[crtc].priv);
+}
+
+static int
+sunxi_drm_enable_vblank(struct drm_device *ddev, unsigned int crtc)
+{
+	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
+
+	if (crtc >= __arraycount(sc->sc_vbl))
+		return 0;
+
+	if (sc->sc_vbl[crtc].enable_vblank == NULL)
+		return 0;
+
+	sc->sc_vbl[crtc].enable_vblank(sc->sc_vbl[crtc].priv);
+
+	return 0;
+}
+
+static void
+sunxi_drm_disable_vblank(struct drm_device *ddev, unsigned int crtc)
+{
+	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
+
+	if (crtc >= __arraycount(sc->sc_vbl))
+		return;
+
+	if (sc->sc_vbl[crtc].disable_vblank == NULL)
+		return;
+
+	sc->sc_vbl[crtc].disable_vblank(sc->sc_vbl[crtc].priv);
 }
 
 static int

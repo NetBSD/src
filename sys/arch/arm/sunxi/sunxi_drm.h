@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.h,v 1.1 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.h,v 1.2 2019/02/04 12:10:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -44,6 +44,15 @@
 
 struct sunxi_framebuffer;
 
+#define	SUNXI_DRM_MAX_CRTC	2
+
+struct sunxi_drm_vblank {
+	void			*priv;
+	void			(*enable_vblank)(void *);
+	void			(*disable_vblank)(void *);
+	uint32_t		(*get_vblank_counter)(void *);
+};
+
 struct sunxi_drm_softc {
 	device_t		sc_dev;
 	struct drm_device	*sc_ddev;
@@ -52,6 +61,8 @@ struct sunxi_drm_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	int			sc_phandle;
+
+	struct sunxi_drm_vblank	sc_vbl[SUNXI_DRM_MAX_CRTC];
 };
 
 struct sunxi_drm_framebuffer {

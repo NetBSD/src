@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.3 2019/02/03 13:15:19 jmcneill Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.4 2019/02/04 12:10:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.3 2019/02/03 13:15:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.4 2019/02/04 12:10:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,11 +43,17 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.3 2019/02/03 13:15:19 jmcneill Exp 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
 
+#include <arm/sunxi/sunxi_drm.h>
+
 #define	TCON_GCTL_REG		0x000
 #define	 TCON_GCTL_TCON_EN			__BIT(31)
 #define	 TCON_GCTL_GAMMA_EN			__BIT(30)
 #define	 TCON_GCTL_IO_MAP_SEL			__BIT(0)
 #define	TCON_GINT0_REG		0x004
+#define	 TCON_GINT0_TCON0_VB_INT_EN		__BIT(31)
+#define	 TCON_GINT0_TCON1_VB_INT_EN		__BIT(30)
+#define	 TCON_GINT0_TCON0_VB_INT_FLAG		__BIT(15)
+#define	 TCON_GINT0_TCON1_VB_INT_FLAG		__BIT(14)
 #define	TCON_GINT1_REG		0x008
 #define	 TCON_GINT1_TCON1_LINE_INT_NUM		__BITS(11,0)
 
@@ -129,6 +135,8 @@ struct sunxi_lcdc_softc {
 	struct drm_connector	sc_connector;
 
 	struct fdt_device_ports	sc_ports;
+
+	uint32_t		sc_vbl_counter;
 };
 
 #define	to_sunxi_lcdc_encoder(x)	container_of(x, struct sunxi_lcdc_encoder, base)
@@ -336,6 +344,50 @@ sunxi_lcdc_encoder_mode(struct fdt_endpoint *out_ep)
 	}
 }
 
+static uint32_t
+sunxi_lcdc_get_vblank_counter(void *priv)
+{
+	struct sunxi_lcdc_softc * const sc = priv;
+
+	return sc->sc_vbl_counter;
+}
+
+static void
+sunxi_lcdc_enable_vblank(void *priv)
+{
+	struct sunxi_lcdc_softc * const sc = priv;
+        const int crtc_index = ffs32(sc->sc_encoder.base.possible_crtcs) - 1;
+
+	if (crtc_index == 0)
+		TCON_WRITE(sc, TCON_GINT0_REG, TCON_GINT0_TCON0_VB_INT_EN);
+	else
+		TCON_WRITE(sc, TCON_GINT0_REG, TCON_GINT0_TCON1_VB_INT_EN);
+}
+
+static void
+sunxi_lcdc_disable_vblank(void *priv)
+{
+	struct sunxi_lcdc_softc * const sc = priv;
+
+	TCON_WRITE(sc, TCON_GINT0_REG, 0);
+}
+
+static void
+sunxi_lcdc_setup_vblank(struct sunxi_lcdc_softc *sc)
+{
+        const int crtc_index = ffs32(sc->sc_encoder.base.possible_crtcs) - 1;
+	struct drm_device *ddev = sc->sc_encoder.base.dev;
+	struct sunxi_drm_softc *drm_sc;
+
+	KASSERT(ddev != NULL);
+
+	drm_sc = device_private(ddev->dev);
+	drm_sc->sc_vbl[crtc_index].priv = sc;
+	drm_sc->sc_vbl[crtc_index].get_vblank_counter = sunxi_lcdc_get_vblank_counter;
+	drm_sc->sc_vbl[crtc_index].enable_vblank = sunxi_lcdc_enable_vblank;
+	drm_sc->sc_vbl[crtc_index].disable_vblank = sunxi_lcdc_disable_vblank;
+}
+
 static int
 sunxi_lcdc_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 {
@@ -364,6 +416,8 @@ sunxi_lcdc_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		    sunxi_lcdc_encoder_mode(out_ep));
 		drm_encoder_helper_add(&sc->sc_encoder.base, &sunxi_lcdc_tcon0_helper_funcs);
 
+		sunxi_lcdc_setup_vblank(sc);
+
 		return fdt_endpoint_activate(out_ep, activate);
 	}
 
@@ -372,6 +426,8 @@ sunxi_lcdc_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		drm_encoder_init(crtc->dev, &sc->sc_encoder.base, &sunxi_lcdc_funcs,
 		    sunxi_lcdc_encoder_mode(out_ep));
 		drm_encoder_helper_add(&sc->sc_encoder.base, &sunxi_lcdc_tcon1_helper_funcs);
+
+		sunxi_lcdc_setup_vblank(sc);
 
 		return fdt_endpoint_activate(out_ep, activate);
 	}
@@ -385,6 +441,28 @@ sunxi_lcdc_ep_get_data(device_t dev, struct fdt_endpoint *ep)
 	struct sunxi_lcdc_softc * const sc = device_private(dev);
 
 	return &sc->sc_encoder;
+}
+
+static int
+sunxi_lcdc_intr(void *priv)
+{
+	struct sunxi_lcdc_softc * const sc = priv;
+	uint32_t val;
+	int rv = 0;
+
+	const int crtc_index = ffs32(sc->sc_encoder.base.possible_crtcs) - 1;
+	const uint32_t status_mask = crtc_index == 0 ?
+	    TCON_GINT0_TCON0_VB_INT_FLAG : TCON_GINT0_TCON1_VB_INT_FLAG;
+
+	val = TCON_READ(sc, TCON_GINT0_REG);
+	if ((val & status_mask) != 0) {
+		TCON_WRITE(sc, TCON_GINT0_REG, val & ~status_mask);
+		atomic_inc_32(&sc->sc_vbl_counter);
+		drm_handle_vblank(sc->sc_encoder.base.dev, crtc_index);
+		rv = 1;
+	}
+
+	return rv;
 }
 
 static int
@@ -402,12 +480,19 @@ sunxi_lcdc_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct fdtbus_reset *rst;
+	char intrstr[128];
 	struct clk *clk;
 	bus_addr_t addr;
 	bus_size_t size;
+	void *ih;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": couldn't decode interrupt\n");
 		return;
 	}
 
@@ -447,6 +532,15 @@ sunxi_lcdc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_activate = sunxi_lcdc_ep_activate;
 	sc->sc_ports.dp_ep_get_data = sunxi_lcdc_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_ENCODER);
+
+	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    sunxi_lcdc_intr, sc);
+	if (ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
 
 CFATTACH_DECL_NEW(sunxi_lcdc, sizeof(struct sunxi_lcdc_softc),
