@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.32 2012/01/09 16:36:48 christos Exp $	*/
+/*	$NetBSD: utility.c,v 1.33 2019/02/04 04:36:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.32 2012/01/09 16:36:48 christos Exp $");
+__RCSID("$NetBSD: utility.c,v 1.33 2019/02/04 04:36:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -717,7 +717,7 @@ printsub(
 		    break;
 		}
 		{
-		    char tbuf[32];
+		    char tbuf[40];
 
 		    (void)snprintf(tbuf, sizeof tbuf, "%s%s%s%s%s",
 			pointer[2]&MODE_EDIT ? "|EDIT" : "",
