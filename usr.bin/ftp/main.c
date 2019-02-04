@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.125 2018/03/04 19:57:41 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.126 2019/02/04 04:09:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2015 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.125 2018/03/04 19:57:41 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.126 2019/02/04 04:09:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -660,7 +660,7 @@ cmdscanner(void)
 			case -2:	/* error */
 				if (fromatty)
 					putc('\n', ttyout);
-				quit(0, NULL);
+				justquit();
 				/* NOTREACHED */
 			case -3:	/* too long; try again */
 				fputs("Sorry, input line is too long.\n",
@@ -682,7 +682,7 @@ cmdscanner(void)
 			if (buf == NULL || num == 0) {
 				if (fromatty)
 					putc('\n', ttyout);
-				quit(0, NULL);
+				justquit();
 			}
 			if (num >= sizeof(line)) {
 				fputs("Sorry, input line is too long.\n",
