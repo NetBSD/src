@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2018/06/10 17:55:11 christos Exp $
+#	$NetBSD: Makefile,v 1.61 2019/02/04 03:58:41 mrg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -44,6 +44,10 @@ COPTS.var.c += -Wno-format-nonliteral
 CPPFLAGS+= -DUSE_EMALLOC
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+.endif
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.arch.c += -Wno-error=format-truncation
 .endif
 
 # A simple unit-test driver to help catch regressions
