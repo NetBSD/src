@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.189 2019/01/29 09:28:50 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.190 2019/02/04 10:11:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.189 2019/01/29 09:28:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.190 2019/02/04 10:11:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -669,9 +669,8 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				error = sockopt_setint(sopt, optval);
 				break;
 			}
-			/* FALLTHROUGH */
 #undef OPTBIT
-
+			/* FALLTHROUGH */
 		default:
 			error = ENOPROTOOPT;
 			break;
