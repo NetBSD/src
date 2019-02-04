@@ -1,4 +1,4 @@
-/*	$NetBSD: comp.c,v 1.13 2009/05/25 23:44:04 dholland Exp $	*/
+/*	$NetBSD: comp.c,v 1.14 2019/02/04 03:29:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: comp.c,v 1.13 2009/05/25 23:44:04 dholland Exp $");
+__RCSID("$NetBSD: comp.c,v 1.14 2019/02/04 03:29:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,8 @@ calcmove(void)
 	CARD		card;
 	int		*value;
 	PLAY		*pp, *op;
-	bool		foundend, cango, canstop, foundlow;
+	bool		foundend, canstop, foundlow;
+	int		cango;
 	unsigned int	i, count200, badcount, nummin, nummax, diff;
 	int		curmin, curmax;
 	CARD		safe, oppos;
@@ -217,6 +218,7 @@ okay:
 					*value = 0;
 					break;
 				}
+				/* FALLTHROUGH */
 			  case C_75:	case C_100:
 				*value = (Value[card] >> 3);
 				if (pp->speed == C_LIMIT)
@@ -423,6 +425,7 @@ onecard(const PLAY *pp)
 				card = (End - pp->mileage == 75 ? C_75 : C_100);
 			if (spd == C_LIMIT)
 				return Numseen[S_RIGHT_WAY] == 0;
+			/* FALLTHROUGH */
 		  case 50:
 		  case 25:
 			if (card == -1)
