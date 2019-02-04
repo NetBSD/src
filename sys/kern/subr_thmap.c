@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.4 2019/01/19 20:42:54 rmind Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.5 2019/02/04 08:00:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.4 2019/01/19 20:42:54 rmind Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.5 2019/02/04 08:00:27 mrg Exp $");
 
 /*
  * NetBSD kernel wrappers
@@ -499,7 +499,7 @@ again:
 		thmap->ops->free(nptr, THMAP_INODE_LEN);
 		return false;
 	}
-	if (!atomic_cas_ptr_p(&thmap->root[i], THMAP_NULL, nptr)) {
+	if (!atomic_cas_ptr_p(&thmap->root[i], NULL, nptr)) {
 		goto again;
 	}
 	return true;
