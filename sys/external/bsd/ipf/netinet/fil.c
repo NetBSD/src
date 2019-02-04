@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.24 2018/07/11 05:25:46 maxv Exp $	*/
+/*	$NetBSD: fil.c,v 1.25 2019/02/04 07:59:01 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.24 2018/07/11 05:25:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.25 2019/02/04 07:59:01 mrg Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -1267,6 +1267,7 @@ ipf_pr_icmp(fr_info_t *fin)
 			}
 		}
 #endif
+		/* FALLTHROUGH */
 	case ICMP_SOURCEQUENCH :
 	case ICMP_REDIRECT :
 	case ICMP_TIMXCEED :
