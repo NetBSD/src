@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2019/01/05 06:59:46 maya Exp $
+#	$NetBSD: Makefile,v 1.57 2019/02/04 09:51:47 mrg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -76,5 +76,10 @@ DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .for f in commands telnet terminal utilities
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
+
+# Has fallthru comment that is missed
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.telnet.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.prog.mk>
