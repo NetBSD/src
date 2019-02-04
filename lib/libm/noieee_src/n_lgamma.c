@@ -1,4 +1,4 @@
-/*      $NetBSD: n_lgamma.c,v 1.6 2006/11/24 21:15:54 wiz Exp $ */
+/*      $NetBSD: n_lgamma.c,v 1.7 2019/02/04 03:30:20 mrg Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -221,15 +221,15 @@ CONTINUE:
 		t = .5*t*t;
 		z = 1.0;
 		switch (x_int) {
-		case 6:	z  = (y + 5);
-		case 5:	z *= (y + 4);
-		case 4:	z *= (y + 3);
+		case 6:	z  = (y + 5); /* FALLTHROUGH */
+		case 5:	z *= (y + 4); /* FALLTHROUGH */
+		case 4:	z *= (y + 3); /* FALLTHROUGH */
 		case 3:	z *= (y + 2);
 			rr = __log__D(z);
 			rr.b += a0_lo; rr.a += a0_hi;
 			return(((r+rr.b)+t+rr.a));
 		case 2: return(((r+a0_lo)+t)+a0_hi);
-		case 0: r -= log1p(x);
+		case 0: r -= log1p(x); /* FALLTHROUGH */
 		default: rr = __log__D(x);
 			rr.a -= a0_hi; rr.b -= a0_lo;
 			return(((r - rr.b) + t) - rr.a);
@@ -246,9 +246,9 @@ CONTINUE:
 		q = hi*t;
 		z = 1.0;
 		switch (x_int) {
-		case 6:	z  = (y + 5);
-		case 5:	z *= (y + 4);
-		case 4:	z *= (y + 3);
+		case 6:	z  = (y + 5); /* FALLTHROUGH */
+		case 5:	z *= (y + 4); /* FALLTHROUGH */
+		case 4:	z *= (y + 3); /* FALLTHROUGH */
 		case 3:	z *= (y + 2);
 			rr = __log__D(z);
 			r += rr.b; r += q;
