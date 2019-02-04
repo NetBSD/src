@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.12 2011/08/07 06:03:45 dholland Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.13 2019/02/04 03:33:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.12 2011/08/07 06:03:45 dholland Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.13 2019/02/04 03:33:15 mrg Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -539,7 +539,7 @@ eatcorpse(struct obj *otmp)
 		pline("You turn to stone.");
 		killer = "dead cockatrice";
 		done("died");
-		/* NOTREACHED */
+		break;
 	case 'a':
 		if (Stoned) {
 			pline("What a pity - you just destroyed a future piece of art!");
