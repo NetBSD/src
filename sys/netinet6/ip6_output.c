@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.216 2018/12/22 14:28:57 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.217 2019/02/04 10:48:46 mrg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.216 2018/12/22 14:28:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.217 2019/02/04 10:48:46 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1702,9 +1702,9 @@ else 					\
 				error = ipsec_set_policy(in6p,
 				    sopt->sopt_data, sopt->sopt_size,
 				    kauth_cred_get());
-				break;
-			}
-			/*FALLTHROUGH*/
+			} else
+				error = ENOPROTOOPT;
+			break;
 #endif /* IPSEC */
 
 		default:
@@ -1910,9 +1910,9 @@ else 					\
 				    sopt->sopt_size, &m);
 				if (!error)
 					error = sockopt_setmbuf(sopt, m);
-				break;
-			}
-			/*FALLTHROUGH*/
+			} else
+				error = ENOPROTOOPT;
+			break;
 #endif /* IPSEC */
 
 		default:
