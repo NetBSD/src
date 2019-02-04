@@ -1,7 +1,7 @@
-/*	$NetBSD: t_rpc.c,v 1.10 2016/08/27 14:36:22 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.11 2019/02/04 04:20:13 mrg Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.10 2016/08/27 14:36:22 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.11 2019/02/04 04:20:13 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,7 +17,10 @@ __RCSID("$NetBSD: t_rpc.c,v 1.10 2016/08/27 14:36:22 christos Exp $");
 #ifndef TEST
 #include <atf-c.h>
 
-#define ERRX(ev, msg, ...)	ATF_REQUIRE_MSG(0, msg, __VA_ARGS__)
+#define ERRX(ev, msg, ...)	do {			\
+	ATF_REQUIRE_MSG(0, msg, __VA_ARGS__);		\
+	return ev;					\
+} while(/*CONSTCOND*/0)
 
 #define SKIPX(ev, msg, ...)	do {			\
 	atf_tc_skip(msg, __VA_ARGS__);			\
