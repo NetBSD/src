@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2017/05/21 15:28:39 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2019/02/04 04:05:16 mrg Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -65,6 +65,13 @@ CPPFLAGS+=-DISC_PLATFORM_NEEDIN6ADDRANY
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
+.endif
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.configfile.c+=		-Wno-error=implicit-fallthrough
+COPTS.libopts.c+=		-Wno-error=implicit-fallthrough
+COPTS.ntp_loopfilter.c+=	-Wno-error=implicit-fallthrough
+COPTS.refclock_ulink.c+=	-Wno-error=implicit-fallthrough
 .endif
 
 .endif

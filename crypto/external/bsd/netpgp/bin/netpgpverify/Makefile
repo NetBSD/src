@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/04/17 19:50:27 agc Exp $
+#	$NetBSD: Makefile,v 1.16 2019/02/04 04:05:15 mrg Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -25,6 +25,12 @@ WARNS=	5
 EXTDIST=${.CURDIR}/../../dist
 
 .PATH: ${EXTDIST}/src/netpgpverify
+
+.include <bsd.own.mk>
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.prog.mk>
 
