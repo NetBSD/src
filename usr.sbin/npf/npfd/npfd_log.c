@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.12 2017/10/16 11:17:45 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.13 2019/02/04 08:21:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.12 2017/10/16 11:17:45 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.13 2019/02/04 08:21:12 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -190,7 +190,9 @@ fix:
 rename:
 	fclose(fp);
 	char tmp[MAXPATHLEN];
-	snprintf(tmp, sizeof(tmp), "%s.XXXXXX", ctx->path);
+	if (snprintf(tmp, sizeof(tmp), "%s.XXXXXX", ctx->path) > MAXPATHLEN)
+		syslog(LOG_ERR, "Temp file truncated: `%s' does not fit",
+		       ctx->path);
 	int fd;
 	if ((fd = mkstemp(tmp)) == -1) {
 		syslog(LOG_ERR, "Can't make temp file `%s': %m", tmp);
