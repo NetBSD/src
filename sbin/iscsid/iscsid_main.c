@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.11 2016/05/30 21:58:32 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.12 2019/02/04 08:21:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ create_node_name(void)
 	uint32_t hid = 0;
 	size_t siz;
 	int mib[2];
+	int total;
 	unsigned char *s;
 
 	(void) memset(&snp, 0x0, sizeof(snp));
@@ -109,8 +110,12 @@ create_node_name(void)
 	for (s = snp.InitiatorAlias; *s; s++)
 		if (!isalnum((unsigned char) *s) && *s != '-' && *s != '.' && *s != ':')
 			*s = '-';
-	snprintf((char *)snp.InitiatorName, sizeof(snp.InitiatorName),
+	total = snprintf((char *)snp.InitiatorName, sizeof(snp.InitiatorName),
 		"iqn.1994-04.org.netbsd:iscsi.%s:%u", snp.InitiatorAlias, hid);
+	if ((size_t)total > sizeof(snp.InitiatorName)) {
+		printf("Warning: iSCSI Node InitiatorName too long to set InitiatorAlias!\n");
+		return ISCSID_STATUS_NO_INITIATOR_NAME;
+	}
 
 	ioctl(driver, ISCSI_SET_NODE_NAME, &snp);
 	return snp.status;
