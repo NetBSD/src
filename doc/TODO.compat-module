@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.4 2019/02/04 00:03:24 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.5 2019/02/04 22:00:51 mrg Exp $ */
 
 DONE
 ----
@@ -116,7 +116,8 @@ TODO - Not required for branch merge
 
 23. The raidframe-netbsd32 compat code needs to be better separated
     from the main raidframe module.  The current mechanism requires us
-    to include compat/netbsd32/netbsd32.h in rf_netbsdkintf.c which
-    requires us to explicitly #define COMPAT_NETBSD32 to get various
-    structure definitions which conflicts with possible definitions of
-    COMPAT_NETBSD32 in opt_compat_netbsd32.h
+    to include compat/netbsd32/netbsd32.h in rf_netbsdkintf.c to get
+    various structure definitions.  This should all be handled in the
+    compat module, but requires that the code in the ioctl switch be
+    moved into a function so the compat code can call it directly and
+    handle the ioctl commands entirely.
