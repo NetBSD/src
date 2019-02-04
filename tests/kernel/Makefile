@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.57 2019/02/03 03:20:24 thorpej Exp $
+# $NetBSD: Makefile,v 1.58 2019/02/04 05:24:18 mrg Exp $
 
 NOMAN=		# defined
 
@@ -65,6 +65,11 @@ CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE -D_KERNTYPES
 t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 	${HOST_SH} ${.ALLSRC} ${.TARGET}
 CPPFLAGS.t_subr_prf.c=	-Wno-pointer-sign	# XXX platform vs kernel SHA2
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+# Test explicitly tests failure modes.
+CPPFLAGS.t_subr_prf.c+=	-Wno-error=format-truncation
+.endif
 
 CLEANFILES+=	t_subr_prf.c
 
