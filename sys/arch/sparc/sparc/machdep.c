@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.328 2016/12/10 10:41:07 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.329 2019/02/04 03:32:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328 2016/12/10 10:41:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.329 2019/02/04 03:32:27 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -3143,10 +3143,7 @@ mm_md_readwrite(dev_t dev, struct uio *uio)
 	case DEV_EEPROM:
 		if (cputyp == CPU_SUN4)
 			return eeprom_uio(uio);
-		else
 #endif
-		return ENXIO;
-	default:
-		return ENXIO;
 	}
+	return ENXIO;
 }
