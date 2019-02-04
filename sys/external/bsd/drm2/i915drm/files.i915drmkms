@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.36 2019/01/27 05:00:48 kre Exp $
+#	$NetBSD: files.i915drmkms,v 1.37 2019/02/04 08:18:07 mrg Exp $
 
 version	20180827
 
@@ -23,6 +23,10 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
 
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sprite.c"+="${${ACTIVE_CC} == gcc:? -Wno-maybe-uninitialized :}"
+
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_ddi.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} == 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} == 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} == 7:? -Wno-error=implicit-fallthrough :}"
 
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci.c		i915drmkms
