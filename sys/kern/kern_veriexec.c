@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.18 2017/11/07 18:35:57 christos Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.19 2019/02/04 09:54:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.18 2017/11/07 18:35:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.19 2019/02/04 09:54:47 mrg Exp $");
 
 #include "opt_veriexec.h"
 
@@ -649,6 +649,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		veriexec_file_report(vfe, "Not-evaluated status "
 		    "post evaluation; inconsistency detected.", name,
 		    NULL, REPORT_ALWAYS|REPORT_PANIC);
+		__builtin_unreachable();
 		/* NOTREACHED */
 
 	case FINGERPRINT_VALID:
