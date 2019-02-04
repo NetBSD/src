@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2018/01/18 00:32:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2019/02/04 21:57:48 mrg Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/raidframe
@@ -33,6 +33,11 @@ SRCS+=	rf_compat50.c
 
 .if !empty(RUMP_NBCOMPAT:M80)
 SRCS+=	rf_compat80.c
+.endif
+
+.include "${.CURDIR}/../../../../compat/netbsd32/netbsd32.mk"
+.if ${COMPAT_USE_NETBSD32} != "no"
+CPPFLAGS.rf_netbsdkintf.c+=	-DCOMPAT_NETBSD32
 .endif
 
 .include <bsd.lib.mk>

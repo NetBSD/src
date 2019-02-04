@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/02/03 09:32:07 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.5 2019/02/04 21:57:48 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -40,5 +40,10 @@ CPPFLAGS+=	-DRF_INCLUDE_CHAINDECLUSTER=1
 CPPFLAGS+=	-DRF_INCLUDE_INTERDECLUSTER=1
 CPPFLAGS+=	-DRF_INCLUDE_PARITY_DECLUSTERING=1
 CPPFLAGS+=	-DRF_INCLUDE_PARITY_DECLUSTERING_DS=1
+
+.include "${.CURDIR}/../../compat/netbsd32/netbsd32.mk"
+.if ${COMPAT_USE_NETBSD32} != "no"
+CPPFLAGS.rf_netbsdkintf.c+=	-DCOMPAT_NETBSD32
+.endif
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.217 2019/02/03 08:02:25 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.218 2019/02/04 21:57:48 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -272,10 +272,9 @@ SUBDIR+=	wmihp
 SUBDIR+=	wmimsi
 .endif
 
-.if ${MACHINE_ARCH} == "x86_64" \
-    || ${MACHINE_CPU} == "arm" \
-    || ${MACHINE_ARCH} == "sparc64" \
-    || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
+.include "${.CURDIR}/../compat/netbsd32/netbsd32.mk"
+.if ${COMPAT_USE_NETBSD32} != "no"
+
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_09	compat_netbsd32_12
 SUBDIR+=	compat_netbsd32_13	compat_netbsd32_16
@@ -291,10 +290,11 @@ SUBDIR+=	compat_netbsd32_sysvipc_10
 SUBDIR+=	compat_netbsd32_sysvipc_14
 SUBDIR+=	compat_netbsd32_sysvipc_50
 SUBDIR+=	compat_netbsd32_raid
-.endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
+.endif
+
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
