@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/01/27 05:17:48 kre Exp $
+#	$NetBSD: Makefile,v 1.6 2019/02/04 00:05:20 mrg Exp $
 
 NOSANITIZER=		# defined
 
@@ -17,9 +17,11 @@ EXTRA_LIBS+=	${LIB_ELF32DIR}/libldd_elf32.a
 CPPFLAGS.ldd.c+= -DELF64_ONLY
 .endif
 
-.if (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
+.if ${MKCOMPAT} != "no"
+. if (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
 LIB_ELF32COMPATDIR!=	cd ${.CURDIR}/../elf32_compat && ${PRINTOBJDIR}
 EXTRA_LIBS+=		${LIB_ELF32COMPATDIR}/libldd_elf32_compat.a
+. endif
 .endif
 
 .if ${OBJECT_FMTS:Melf64} != ""
