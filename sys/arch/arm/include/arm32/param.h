@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 2017/06/09 01:16:54 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.26 2019/02/04 13:06:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -98,7 +98,7 @@
 #define arm_btop(x)			((unsigned)(x) >> PGSHIFT)
 #define arm_ptob(x)			((unsigned)(x) << PGSHIFT)
 #define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
-    
+
 #ifdef _KERNEL
 #ifndef _LOCORE
 #ifndef __HIDE_DELAY
