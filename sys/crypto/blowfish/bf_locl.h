@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_locl.h,v 1.5 2009/06/30 13:14:40 pooka Exp $	*/
+/*	$NetBSD: bf_locl.h,v 1.6 2019/02/04 08:23:53 mrg Exp $	*/
 /*	$KAME: bf_locl.h,v 1.5 2000/08/31 06:03:48 itojun Exp $	*/
 
 /* crypto/bf/bf_local.h */
@@ -78,14 +78,14 @@
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((BF_LONG)(*(--(c))))<<24L; \
-			case 7: l2|=((BF_LONG)(*(--(c))))<<16L; \
-			case 6: l2|=((BF_LONG)(*(--(c))))<< 8L; \
-			case 5: l2|=((BF_LONG)(*(--(c))));     \
-			case 4: l1 =((BF_LONG)(*(--(c))))<<24L; \
-			case 3: l1|=((BF_LONG)(*(--(c))))<<16L; \
-			case 2: l1|=((BF_LONG)(*(--(c))))<< 8L; \
-			case 1: l1|=((BF_LONG)(*(--(c))));     \
+			case 8: l2 =((BF_LONG)(*(--(c))))<<24L; /* FALLTHROUGH */ \
+			case 7: l2|=((BF_LONG)(*(--(c))))<<16L; /* FALLTHROUGH */ \
+			case 6: l2|=((BF_LONG)(*(--(c))))<< 8L; /* FALLTHROUGH */ \
+			case 5: l2|=((BF_LONG)(*(--(c))));     /* FALLTHROUGH */ \
+			case 4: l1 =((BF_LONG)(*(--(c))))<<24L; /* FALLTHROUGH */ \
+			case 3: l1|=((BF_LONG)(*(--(c))))<<16L; /* FALLTHROUGH */ \
+			case 2: l1|=((BF_LONG)(*(--(c))))<< 8L; /* FALLTHROUGH */ \
+			case 1: l1|=((BF_LONG)(*(--(c))));     /* FALLTHROUGH */ \
 				} \
 			}
 
@@ -100,14 +100,14 @@
 #define l2cn(l1,l2,c,n)	{ \
 			c+=n; \
 			switch (n) { \
-			case 8: *(--(c))=(unsigned char)(((l2)>>24L)&0xff); \
-			case 7: *(--(c))=(unsigned char)(((l2)>>16L)&0xff); \
-			case 6: *(--(c))=(unsigned char)(((l2)>> 8L)&0xff); \
-			case 5: *(--(c))=(unsigned char)(((l2)     )&0xff); \
-			case 4: *(--(c))=(unsigned char)(((l1)>>24L)&0xff); \
-			case 3: *(--(c))=(unsigned char)(((l1)>>16L)&0xff); \
-			case 2: *(--(c))=(unsigned char)(((l1)>> 8L)&0xff); \
-			case 1: *(--(c))=(unsigned char)(((l1)     )&0xff); \
+			case 8: *(--(c))=(unsigned char)(((l2)>>24L)&0xff); /* FALLTHROUGH */ \
+			case 7: *(--(c))=(unsigned char)(((l2)>>16L)&0xff); /* FALLTHROUGH */ \
+			case 6: *(--(c))=(unsigned char)(((l2)>> 8L)&0xff); /* FALLTHROUGH */ \
+			case 5: *(--(c))=(unsigned char)(((l2)     )&0xff); /* FALLTHROUGH */ \
+			case 4: *(--(c))=(unsigned char)(((l1)>>24L)&0xff); /* FALLTHROUGH */ \
+			case 3: *(--(c))=(unsigned char)(((l1)>>16L)&0xff); /* FALLTHROUGH */ \
+			case 2: *(--(c))=(unsigned char)(((l1)>> 8L)&0xff); /* FALLTHROUGH */ \
+			case 1: *(--(c))=(unsigned char)(((l1)     )&0xff); /* FALLTHROUGH */ \
 				} \
 			}
 
@@ -116,14 +116,14 @@
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((BF_LONG)(*(--(c))))    ; \
-			case 7: l2|=((BF_LONG)(*(--(c))))<< 8; \
-			case 6: l2|=((BF_LONG)(*(--(c))))<<16; \
-			case 5: l2|=((BF_LONG)(*(--(c))))<<24; \
-			case 4: l1 =((BF_LONG)(*(--(c))))    ; \
-			case 3: l1|=((BF_LONG)(*(--(c))))<< 8; \
-			case 2: l1|=((BF_LONG)(*(--(c))))<<16; \
-			case 1: l1|=((BF_LONG)(*(--(c))))<<24; \
+			case 8: l2 =((BF_LONG)(*(--(c))))    ; /* FALLTHROUGH */ \
+			case 7: l2|=((BF_LONG)(*(--(c))))<< 8; /* FALLTHROUGH */ \
+			case 6: l2|=((BF_LONG)(*(--(c))))<<16; /* FALLTHROUGH */ \
+			case 5: l2|=((BF_LONG)(*(--(c))))<<24; /* FALLTHROUGH */ \
+			case 4: l1 =((BF_LONG)(*(--(c))))    ; /* FALLTHROUGH */ \
+			case 3: l1|=((BF_LONG)(*(--(c))))<< 8; /* FALLTHROUGH */ \
+			case 2: l1|=((BF_LONG)(*(--(c))))<<16; /* FALLTHROUGH */ \
+			case 1: l1|=((BF_LONG)(*(--(c))))<<24; /* FALLTHROUGH */ \
 				} \
 			}
 
@@ -131,14 +131,14 @@
 #define l2nn(l1,l2,c,n)	{ \
 			c+=n; \
 			switch (n) { \
-			case 8: *(--(c))=(unsigned char)(((l2)    )&0xff); \
-			case 7: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); \
-			case 6: *(--(c))=(unsigned char)(((l2)>>16)&0xff); \
-			case 5: *(--(c))=(unsigned char)(((l2)>>24)&0xff); \
-			case 4: *(--(c))=(unsigned char)(((l1)    )&0xff); \
-			case 3: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
-			case 2: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
-			case 1: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
+			case 8: *(--(c))=(unsigned char)(((l2)    )&0xff); /* FALLTHROUGH */ \
+			case 7: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); /* FALLTHROUGH */ \
+			case 6: *(--(c))=(unsigned char)(((l2)>>16)&0xff); /* FALLTHROUGH */ \
+			case 5: *(--(c))=(unsigned char)(((l2)>>24)&0xff); /* FALLTHROUGH */ \
+			case 4: *(--(c))=(unsigned char)(((l1)    )&0xff); /* FALLTHROUGH */ \
+			case 3: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); /* FALLTHROUGH */ \
+			case 2: *(--(c))=(unsigned char)(((l1)>>16)&0xff); /* FALLTHROUGH */ \
+			case 1: *(--(c))=(unsigned char)(((l1)>>24)&0xff); /* FALLTHROUGH */ \
 				} \
 			}
 
