@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2018/11/06 06:17:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.52 2019/02/04 08:15:51 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -506,6 +506,8 @@ ${G_out_file:T:.c=.o}: insn-target-def.h target-hooks-def.h tm-constrs.h
 
 # XXX make all hooks generated for now.
 final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-hooks-def.h
+
+COPTS.ira-color.c+= -Wno-error=int-in-bool-context
 
 .if ${MACHINE_CPU} == "arm"
 # XXX insn-recog.c:10304:7: error: this decimal constant is unsigned only in ISO C90 [-Werror]
