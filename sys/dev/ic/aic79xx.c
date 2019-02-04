@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.50 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.51 2019/02/04 10:09:31 mrg Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.50 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.51 2019/02/04 10:09:31 mrg Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -1401,6 +1401,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 			switch (scb->hscb->task_management) {
 			case SIU_TASKMGMT_ABORT_TASK:
 				tag = SCB_GET_TAG(scb);
+				/* FALLTHROUGH */
 			case SIU_TASKMGMT_ABORT_TASK_SET:
 			case SIU_TASKMGMT_CLEAR_TASK_SET:
 				lun = scb->hscb->lun;
@@ -1411,6 +1412,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 				break;
 			case SIU_TASKMGMT_LUN_RESET:
 				lun = scb->hscb->lun;
+				/* FALLTHROUGH */
 			case SIU_TASKMGMT_TARGET_RESET:
 			{
 				struct ahd_devinfo devinfo;
@@ -5515,8 +5517,8 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 				       &sns_map->dmasegs, sns_map->nseg);
 			free(sns_map, M_DEVBUF);
 		}
-		/* FALLTHROUGH */
 	}
+	/* FALLTHROUGH */
 	case 2:
 	{
 		struct map_node *sg_map;
@@ -5529,8 +5531,8 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 				       &sg_map->dmasegs, sg_map->nseg);
 			free(sg_map, M_DEVBUF);
 		}
-		/* FALLTHROUGH */
 	}
+	/* FALLTHROUGH */
 	case 1:
 	{
 		struct map_node *hscb_map;
@@ -5543,8 +5545,8 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 				       &hscb_map->dmasegs, hscb_map->nseg);
 			free(hscb_map, M_DEVBUF);
 		}
-		/* FALLTHROUGH */
 	}
+	/* FALLTHROUGH */
 	case 0:
 		break;
 	}
@@ -6175,6 +6177,7 @@ ahd_init(struct ahd_softc *ahd)
 		case FLX_CSTAT_OVER:
 		case FLX_CSTAT_UNDER:
 			warn_user++;
+			/* FALLTHROUGH */
 		case FLX_CSTAT_INVALID:
 		case FLX_CSTAT_OKAY:
 			if (warn_user == 0 && bootverbose == 0)
@@ -7341,8 +7344,8 @@ ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 			if ((scb->flags & SCB_ACTIVE) == 0)
 				printf("Inactive SCB in Waiting List\n");
 			ahd_done(ahd, scb);
-			/* FALLTHROUGH */
 		}
+		/* FALLTHROUGH */
 		case SEARCH_REMOVE:
 			ahd_rem_wscb(ahd, scbid, prev, next, tid);
 			if (prev == SCB_LIST_NULL)
@@ -7350,6 +7353,7 @@ ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 			break;
 		case SEARCH_PRINT:
 			printf("0x%x ", scbid);
+			/* FALLTHROUGH */
 		case SEARCH_COUNT:
 			prev = scbid;
 			break;
@@ -8505,8 +8509,8 @@ ahd_download_instr(struct ahd_softc *ahd, u_int instrptr, uint8_t *dconsts)
 	{
 		fmt3_ins = &instr.format3;
 		fmt3_ins->address = ahd_resolve_seqaddr(ahd, fmt3_ins->address);
-		/* FALLTHROUGH */
 	}
+	/* FALLTHROUGH */
 	case AIC_OP_OR:
 	case AIC_OP_AND:
 	case AIC_OP_XOR:
