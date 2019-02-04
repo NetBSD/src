@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.21 2019/01/27 02:08:33 pgoyette Exp $	*/
+/*	$NetBSD: scp.c,v 1.22 2019/02/04 04:36:41 mrg Exp $	*/
 /* $OpenBSD: scp.c,v 1.197 2018/06/01 04:31:48 dtucker Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.21 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: scp.c,v 1.22 2019/02/04 04:36:41 mrg Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -911,7 +911,7 @@ rsource(char *name, struct stat *statp)
 {
 	DIR *dirp;
 	struct dirent *dp;
-	char *last, *vect[1], path[PATH_MAX];
+	char *last, *vect[1], path[PATH_MAX + 20];
 
 	if (!(dirp = opendir(name))) {
 		run_err("%s: %s", name, strerror(errno));
