@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.29 2015/05/29 12:26:28 christos Exp $	*/
+/*	$NetBSD: gettext.c,v 1.30 2019/02/04 08:21:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.29 2015/05/29 12:26:28 christos Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.30 2019/02/04 08:21:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -329,8 +329,10 @@ lookup_mofile(char *buf, size_t len, const char *dir, const char *lpath,
 			continue;
 #endif
 
-		snprintf(buf, len, "%s/%s/%s/%s.mo", dir, p,
+		int rv = snprintf(buf, len, "%s/%s/%s/%s.mo", dir, p,
 		    category, domainname);
+		if (rv > (int)len)
+			return NULL;
 		if (stat(buf, &st) < 0)
 			continue;
 		if ((st.st_mode & S_IFMT) != S_IFREG)
@@ -942,7 +944,7 @@ dcngettext(const char *domainname, const char *msgid1, const char *msgid2,
 	   unsigned long int n, int category)
 {
 	const char *msgid;
-	char path[PATH_MAX];
+	char path[PATH_MAX+1];
 	const char *lpath;
 	static char olpath[PATH_MAX];
 	const char *cname = NULL;
