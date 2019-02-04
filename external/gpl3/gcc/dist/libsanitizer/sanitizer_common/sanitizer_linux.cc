@@ -297,7 +297,11 @@ uptr internal_lstat(const char *path, void *buf) {
 }
 
 uptr internal_fstat(fd_t fd, void *buf) {
-#if SANITIZER_FREEBSD || SANITIZER_NETBSD || SANITIZER_LINUX_USES_64BIT_SYSCALLS
+#if SANITIZER_FREEBSD || SANITIZER_NETBSD
+  return internal_syscall(SYSCALL(fstat), fd, (uptr)buf);
+#elif SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+  return = internal_syscall(SYSCALL(fstat), fd, &kbuf);
+#elif SANITIZER_LINUX_USES_64BIT_SYSCALLS
 # if SANITIZER_MIPS64
   // For mips64, fstat syscall fills buffer in the format of kernel_stat
   struct kernel_stat kbuf;
