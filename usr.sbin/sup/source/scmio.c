@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.22 2013/03/08 20:56:44 christos Exp $	*/
+/*	$NetBSD: scmio.c,v 1.23 2019/02/04 01:07:34 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -434,11 +434,11 @@ readdata(size_t count, void *vdata, bool push)
 	char *data = vdata;
 
 	if (push) {
-		if (bufptr + count < buffer)
+		if (bufptr - count < buffer)
 			return (scmerr(-1, "No space in buffer %zu", count));
 		bufptr -= count;
 		bufcnt += count;
-		memcpy(bufptr, data, -count);
+		memcpy(bufptr, data, count);
 		return (SCMOK);
 	}
 	if (count == 0 && data == NULL) {
