@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.48 2019/02/02 14:50:15 cherry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.49 2019/02/04 18:14:53 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -94,6 +94,7 @@ struct xen_npx_attach_args {
 #include <xen/include/public/io/netif.h>
 #include <xen/include/public/io/blkif.h>
 
+#if __XEN_INTERFACE_VERSION < 0x00030208
 /* Undo namespace damage from xen/include/public/io/ring.h
  * The proper fix is to get upstream to stop assuming that all OSs use
  * mb(), rmb(), wmb().
@@ -105,6 +106,7 @@ struct xen_npx_attach_args {
 #define xen_mb()  membar_sync()
 #define xen_rmb() membar_producer()
 #define xen_wmb() membar_consumer()
+#endif /* __XEN_INTERFACE_VERSION */
 
 #include <machine/hypercalls.h>
 
