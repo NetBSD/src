@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.80 2012/07/04 06:09:37 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.81 2019/02/04 04:09:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ void	pswitch(int);
 void	put(int, char **);
 void	pwd(int, char **);
 void	quit(int, char **);
+void	justquit(void) __dead;
 void	quote(int, char **);
 void	quote1(const char *, int, char **);
 void	recvrequest(const char *, const char *, const char *,
