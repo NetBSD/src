@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.198 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.199 2019/02/04 04:18:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.198 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.199 2019/02/04 04:18:59 mrg Exp $");
 
 #include "veriexec.h"
 
@@ -762,7 +762,7 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 		}
 		if (com == FIONBIO || com == FIOASYNC)	/* XXX */
 			return (0);			/* XXX */
-		/* fall into ... */
+		/* FALLTHROUGH */
 	case VFIFO:
 	case VCHR:
 	case VBLK:
