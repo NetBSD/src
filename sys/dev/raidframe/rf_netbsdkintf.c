@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.362 2019/02/03 11:03:53 martin Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.363 2019/02/04 21:57:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,10 +101,11 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.362 2019/02/03 11:03:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.363 2019/02/04 21:57:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
+#include "opt_compat_netbsd32.h"
 #endif
 
 #include <sys/param.h>
@@ -150,10 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.362 2019/02/03 11:03:53 martin 
 
 #include "rf_compat80.h"
 
-#ifdef _LP64
-#ifndef COMPAT_NETBSD32
-#define COMPAT_NETBSD32	1
-#endif
+#ifdef COMPAT_NETBSD32
 #include "rf_compat32.h"
 #endif
 
@@ -1112,7 +1110,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_PARITYMAP_GET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 	case RAIDFRAME_GET_INFO32:
 #endif
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
@@ -1162,7 +1160,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* configure the system */
 	case RAIDFRAME_CONFIGURE:
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 	case RAIDFRAME_CONFIGURE32:
 #endif
 
@@ -1179,7 +1177,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (k_cfg == NULL) {
 			return (ENOMEM);
 		}
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 		if (cmd == RAIDFRAME_CONFIGURE32 &&
 		    (l->l_proc->p_flag & PK_32) != 0)
 			MODULE_CALL_HOOK(raidframe_netbsd32_config_hook,
@@ -1487,21 +1485,21 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return(retcode);
 
 	case RAIDFRAME_GET_INFO:
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 	case RAIDFRAME_GET_INFO32:
-#endif	/* LP64 */
+#endif
 		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
 			  (RF_DeviceConfig_t *));
 		if (d_cfg == NULL)
 			return (ENOMEM);
 		retcode = rf_get_info(raidPtr, d_cfg);
 		if (retcode == 0) {
-#ifdef _LP64
+#ifdef COMPAT_NETBSD32
 			if (raidframe_netbsd32_config_hook.hooked &&
 			    cmd == RAIDFRAME_GET_INFO32)
 				ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
 			else
-#endif	/* _LP64 */
+#endif
 				ucfgp = *(RF_DeviceConfig_t **)data;
 			retcode = copyout(d_cfg, ucfgp, sizeof(RF_DeviceConfig_t));
 		}
