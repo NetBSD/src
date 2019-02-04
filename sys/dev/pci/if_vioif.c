@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.46 2019/01/14 15:00:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.47 2019/02/04 02:49:28 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.46 2019/01/14 15:00:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.47 2019/02/04 02:49:28 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1029,6 +1029,8 @@ vioif_init(struct ifnet *ifp)
 	}
 
 	virtio_reinit_end(vsc);
+
+	if (sc->sc_has_ctrl)
 		virtio_start_vq_intr(vsc, ctrlq->ctrlq_vq);
 
 	r = vioif_ctrl_mq_vq_pairs_set(sc, sc->sc_req_nvq_pairs);
