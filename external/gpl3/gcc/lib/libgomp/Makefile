@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2019/02/03 12:11:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2019/02/04 03:01:52 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -11,16 +11,11 @@ NOLINT=	# defined
 
 DIST=	${GCCDIST}
 
-LIB=	gomp
-# XXX mknative-gcc should pull out libgomp_la_SOURCES
-SRCS= \
-	alloc.c atomic.c barrier.c critical.c env.c error.c \
-	icv.c icv-device.c iter.c iter_ull.c loop.c loop_ull.c ordered.c \
-	parallel.c sections.c single.c task.c team.c work.c lock.c mutex.c \
-	proc.c sem.c bar.c ptrlock.c time.c fortran.c affinity.c target.c \
-	splay-tree.c libgomp-plugin.c oacc-parallel.c oacc-host.c oacc-init.c \
-	oacc-mem.c oacc-async.c oacc-plugin.c oacc-cuda.c priority_queue.c
 
+LIB=	gomp
+
+.include "${.CURDIR}/defs.mk"
+SRCS=	${G_libgomp_la_SOURCES}
 
 GOMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
 ARCHDIR=		${.CURDIR}/arch/${GOMP_MACHINE_ARCH}
