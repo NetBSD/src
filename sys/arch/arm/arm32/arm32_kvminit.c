@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.48 2018/11/13 20:48:14 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.49 2019/02/04 13:08:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.48 2018/11/13 20:48:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.49 2019/02/04 13:08:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -672,8 +672,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    kernel_l2pt[idx].pv_pa, kernel_base + idx * L2_S_SEGSIZE);
 	}
 
-	VPRINTF("%s: kernel_vm_base %lx KERNEL_L2PT_KERNEL_NUM %zu\n", __func__,
-	    kernel_vm_base, KERNEL_L2PT_KERNEL_NUM);
+	VPRINTF("%s: kernel_vm_base %lx KERNEL_L2PT_VMDATA_NUM %d\n", __func__,
+	    kernel_vm_base, KERNEL_L2PT_VMDATA_NUM);
 
 	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; idx++) {
 		pmap_link_l2pt(l1pt_va, kernel_vm_base + idx * L2_S_SEGSIZE,
