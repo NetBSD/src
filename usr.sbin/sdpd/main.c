@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2011/08/31 13:32:41 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2019/02/04 04:56:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2004 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.9 2011/08/31 13:32:41 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2019/02/04 04:56:35 mrg Exp $");
 
 #include <errno.h>
 #include <grp.h>
@@ -53,7 +53,7 @@ static bool	drop_root	(char const *user, char const *group);
 static void	sighandler	(int s);
 __dead static void	usage		(void);
 
-static bool	done;
+static unsigned	done;
 
 /*
  * Bluetooth Service Discovery Procotol (SDP) daemon
