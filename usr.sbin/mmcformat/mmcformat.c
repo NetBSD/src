@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.4 2013/10/19 17:16:37 christos Exp $ */
+/* $NetBSD: mmcformat.c,v 1.5 2019/02/04 09:53:41 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -765,6 +765,7 @@ main(int argc, char *argv[])
 			case 'h' :
 			case 'H' :
 				display_usage = 1;
+				break;
 			case 'I' :
 				inquiry = 1;
 				break;
@@ -792,10 +793,10 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 
-	if ((!blank && !format && !grow_session && !grow_spare) &&
-	    (!expert && !inquiry)) {
-		fprintf(stderr, "%s : at least one of -B, -F, -G, -S, -X or -I "
-				"needs to be specified\n\n", progname);
+	if (!blank && !format && !grow_session && !grow_spare &&
+	    !expert && !inquiry && !display_usage) {
+		fprintf(stderr, "%s : at least one of -B, -F, -G, -h, -H -S, "
+				"-X or -I needs to be specified\n\n", progname);
 		return usage(progname);
 	}
 
