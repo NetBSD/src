@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ubsan.c,v 1.2 2019/02/03 10:45:58 mrg Exp $	*/
+/*	$NetBSD: t_ubsan.c,v 1.3 2019/02/04 03:10:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ubsan.c,v 1.2 2019/02/03 10:45:58 mrg Exp $");
+__RCSID("$NetBSD: t_ubsan.c,v 1.3 2019/02/04 03:10:33 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -376,7 +376,7 @@ test_mul_overflow_signed(void)
 	volatile int a = INT_MAX;
 	volatile int b = atoi("2");
 
-	raise((a && b) ? SIGSEGV : SIGBUS);
+	raise((a * b) ? SIGSEGV : SIGBUS);
 }
 
 UBSAN_TC_BODY(mul_overflow_signed, tc)
