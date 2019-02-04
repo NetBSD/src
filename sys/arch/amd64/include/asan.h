@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.1 2018/10/31 06:26:26 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.2 2019/02/04 15:07:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -165,7 +165,9 @@ static inline bool
 __md_unwind_end(const char *name)
 {
 	if (!strcmp(name, "syscall") ||
+	    !strcmp(name, "alltraps") ||
 	    !strcmp(name, "handle_syscall") ||
+	    !strncmp(name, "Xtrap", 5) ||
 	    !strncmp(name, "Xintr", 5) ||
 	    !strncmp(name, "Xhandle", 7) ||
 	    !strncmp(name, "Xresume", 7) ||
