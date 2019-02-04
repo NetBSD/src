@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2017/02/22 12:17:16 maya Exp $
+# $NetBSD: Makefile,v 1.5 2019/02/04 04:05:16 mrg Exp $
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -28,5 +28,11 @@ log.c \
 poll.c \
 select.c \
 signal.c
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
+COPTS.bufferevent_filter.c += -Wno-error=implicit-fallthrough
+COPTS.evdns.c += -Wno-error=implicit-fallthrough
+COPTS.event.c += -Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/03/23 15:42:40 christos Exp $	
+#	$NetBSD: Makefile,v 1.2 2019/02/04 04:05:16 mrg Exp $	
 
 .include <bsd.own.mk>
 WARNS=5
@@ -19,5 +19,11 @@ MAN=	pdisk.8
 CPPFLAGS+=	-I${SRCDIR}
 
 CPPFLAGS+=	-D__unix__
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.file_media.c+=	-Wno-error=implicit-fallthrough
+COPTS.pathname.c+=	-Wno-error=implicit-fallthrough
+COPTS.pdisk.c+=		-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.prog.mk>

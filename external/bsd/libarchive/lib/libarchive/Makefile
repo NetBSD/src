@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2018/02/04 03:19:52 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2019/02/04 04:05:15 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -440,5 +440,12 @@ MLINKS+=	archive_write_set_options.3 archive_write_set_format_option.3
 MLINKS+=	archive_write_set_options.3 archive_write_set_option.3
 MLINKS+=	archive_write_set_passphrase.3 archive_write_set_passphrase_callback.3
 MLINKS+=	libarchive.3 archive.3
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
+COPTS.archive_acl.c += -Wno-error=implicit-fallthrough
+COPTS.archive_read.c += -Wno-error=implicit-fallthrough
+COPTS.archive_read_support_format_7zip.c += -Wno-error=implicit-fallthrough
+COPTS.archive_read_support_format_mtree.c += -Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.lib.mk>
