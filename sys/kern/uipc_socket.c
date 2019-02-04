@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.268 2018/12/22 14:28:56 maxv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.269 2019/02/04 04:18:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.268 2018/12/22 14:28:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.269 2019/02/04 04:18:27 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1844,7 +1844,9 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	}
 #endif /* COMPAT_50 */
 
+		/*FALLTHROUGH*/
 	case SO_SNDTIMEO:
+		/*FALLTHROUGH*/
 	case SO_RCVTIMEO:
 		if (error)
 			error = sockopt_get(sopt, &tv, sizeof(tv));
