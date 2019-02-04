@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.21 2018/08/19 23:50:27 kre Exp $	*/
+/*	$NetBSD: error.h,v 1.22 2019/02/04 11:16:41 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,6 +60,9 @@
 struct jmploc {
 	jmp_buf loc;
 };
+
+extern volatile int errors_suppressed;
+extern const char * volatile currentcontext;
 
 extern struct jmploc *handler;
 extern int exception;

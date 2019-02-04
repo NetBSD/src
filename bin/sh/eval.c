@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.170 2019/01/21 14:18:59 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.171 2019/02/04 11:16:41 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.170 2019/01/21 14:18:59 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.171 2019/02/04 11:16:41 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1499,6 +1499,23 @@ dotcmd(int argc, char **argv)
 		popstackmark(&smark);
 	}
 	return exitstatus;
+}
+
+/*
+ * allow dotfile function nesting to be manipulated
+ * (for read_profile).  This allows profile files to
+ * be treated as if they were used as '.' commands,
+ * (approximately) and in particular, for "return" to work.
+ */
+int
+set_dot_funcnest(int new)
+{
+	int rv = dot_funcnest;
+
+	if (new >= 0)
+		dot_funcnest = new;
+
+	return rv;
 }
 
 /*
