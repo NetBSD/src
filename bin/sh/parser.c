@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.164 2019/01/22 14:32:17 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.165 2019/02/04 11:16:41 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.164 2019/01/22 14:32:17 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.165 2019/02/04 11:16:41 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2621,12 +2621,14 @@ expandonstack(char *ps, int cmdsub, int lineno)
 	struct jmploc *const savehandler = handler;
 	struct parsefile *const savetopfile = getcurrentfile();
 	const int save_x = xflag;
+	const int save_e_s = errors_suppressed;
 	struct parse_state new_state = init_parse_state;
 	struct parse_state *const saveparser = psp.v_current_parser;
 	const char *result = NULL;
 
 	if (!setjmp(jmploc.loc)) {
 		handler = &jmploc;
+		errors_suppressed = 1;
 
 		psp.v_current_parser = &new_state;
 		setinputstring(ps, 1, lineno);
@@ -2654,18 +2656,19 @@ expandonstack(char *ps, int cmdsub, int lineno)
 		xflag = save_x;
 		popfilesupto(savetopfile);
 		handler = savehandler;
+		errors_suppressed = save_e_s;
 
 		if (exception == EXEXIT)
 			longjmp(handler->loc, 1);
 		if (exception == EXINT)
 			exraise(SIGINT);
-		return ps;
+		return "";
 	}
 	psp.v_current_parser = saveparser;
 	xflag = save_x;
 	popfilesupto(savetopfile);
 	handler = savehandler;
-
+	errors_suppressed = save_e_s;
 
 	if (result == NULL)
 		result = ps;
