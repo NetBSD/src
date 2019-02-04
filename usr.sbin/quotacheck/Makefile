@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/03/06 23:07:23 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2019/02/04 09:51:48 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -12,5 +12,11 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/sbin/fsck -I${NETBSDSRCDIR}/usr.bin/quota
 .PATH:	${NETBSDSRCDIR}/sbin/fsck ${NETBSDSRCDIR}/sys/ufs/ffs ${NETBSDSRCDIR}/usr.bin/quota
 SRCS+=  quotautil.c
 
+.include <bsd.own.mk>
+
+# Has fallthru comment that is missed
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.quotacheck.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.prog.mk>
