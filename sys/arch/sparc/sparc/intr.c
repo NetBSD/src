@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.119 2017/12/02 00:48:05 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.120 2019/02/04 09:57:39 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119 2017/12/02 00:48:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.120 2019/02/04 09:57:39 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -366,10 +366,14 @@ xcallintr(void *v)
 	if (v != xcallintr)
 		cpuinfo.ci_sintrcnt[13].ev_count++;
 
+	/*
+	 * This happens when the remote CPU is slow at responding and the
+	 * caller gave up, and has given up the mutex.
+	 */
 	if (mutex_owned(&xpmsg_mutex) == 0) {
 		cpuinfo.ci_xpmsg_mutex_not_held.ev_count++;
 #ifdef DEBUG
-		printf("%s: mutex not held\n", __func__);
+		printf("%s: cpu%d mutex not held\n", __func__, cpu_number());
 #endif
 		cpuinfo.msg.complete = 1;
 		kpreempt_enable();
