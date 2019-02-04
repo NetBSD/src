@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.129 2018/12/03 06:41:30 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.130 2019/02/04 09:56:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.129 2018/12/03 06:41:30 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.130 2019/02/04 09:56:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -938,17 +938,39 @@ evalvar(const char *p, int flag)
 		} else {
 
 			if (subtype == VSLENGTH) {
-				for (;*val; val++)
+				for (; *val; val++)
 					varlen++;
 			} else if (quotes && varflags & VSQUOTE) {
+				/*
+				 * If we are going to look for magic in the
+				 * value (quotes is set) and the expansion
+				 * occurs inside "" (VSQUOTE) then any char
+				 * that has any potential special meaning
+				 * needs to have that meaning suppressed,
+				 * so supply a CTLESC prefix for it.
+				 */
 				for (; (c = *val) != '\0'; val++) {
 					if (NEEDESC(c))
 						STPUTC(CTLESC, expdest);
 					STPUTC(c, expdest);
 				}
 			} else {
-				while (*val)
-					STPUTC(*val++, expdest);
+				/*
+				 * We are going to rmescapes() later,
+				 * so make sure that any data char that
+				 * might be mistaken for one of our CTLxxx
+				 * magic chars is protected ... always.
+				 *
+				 * In BASESYNTAX only our internal CTLxxx
+				 * chars are CCTL, in other syntaxes other
+				 * chars are added (we could also use
+				 * ARISYNTAX, but this is safer)
+				 */
+				for (; (c = *val) != '\0'; val++) {
+					if (BASESYNTAX[c] == CCTL)
+						STPUTC(CTLESC, expdest);
+					STPUTC(c, expdest);
+				}
 			}
 		}
 	}
@@ -1968,7 +1990,7 @@ rmescapes(char *str)
 	char *p, *q;
 
 	p = str;
-	while (*p != CTLESC && !IS_BORING(*p)) {
+	while (BASESYNTAX[(int)*p] != CCTL) {
 		if (*p++ == '\0')
 			return;
 	}
@@ -1985,6 +2007,10 @@ rmescapes(char *str)
 		}
 		if (*p == CTLESC)
 			p++;
+#ifdef DEBUG
+		else if (BASESYNTAX[(int)*p] == CCTL)
+			abort();
+#endif
 		*q++ = *p++;
 	}
 	*q = '\0';
@@ -2007,7 +2033,7 @@ rmescapes_nl(char *str)
 	int nls = 0, holdnl = 0, holdlast;
 
 	p = str;
-	while (*p != CTLESC && !IS_BORING(*p)) {
+	while (BASESYNTAX[(int)*p] != CCTL) {
 		if (*p++ == '\0')
 			return;
 	}
@@ -2031,6 +2057,10 @@ rmescapes_nl(char *str)
 		}
 		if (*p == CTLESC)
 			p++;
+#ifdef DEBUG
+		else if (BASESYNTAX[(int)*p] == CCTL)
+			abort();
+#endif
 
 		holdlast = holdnl;
 		holdnl = is_in_name(*p);	/* letters, digits, _ */
