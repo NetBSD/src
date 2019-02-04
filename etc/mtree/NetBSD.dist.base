@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.186 2019/02/02 22:39:33 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.187 2019/02/04 03:26:53 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -114,6 +114,7 @@
 ./usr/include/dev/ata
 ./usr/include/dev/bluetooth
 ./usr/include/dev/dec
+./usr/include/dev/dm
 ./usr/include/dev/dmover
 ./usr/include/dev/dtv
 ./usr/include/dev/filemon
