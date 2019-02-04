@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.42 2019/02/02 12:32:55 cherry Exp $	*/
+/*	$NetBSD: xen.h,v 1.43 2019/02/04 18:14:53 cherry Exp $	*/
 
 /*
  *
@@ -121,6 +121,12 @@ void printk(const char *, ...);
 
 /* Everything below this point is not included by assembler (.S) files. */
 #ifndef _LOCORE
+
+/* Version Specific Glue */
+#if __XEN_INTERFACE_VERSION__ >= 0x00030203
+#define console_mfn    console.domU.mfn
+#define console_evtchn console.domU.evtchn
+#endif
 
 /* some function prototypes */
 void trap_init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.81 2018/07/29 08:02:24 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.82 2019/02/04 18:14:53 cherry Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.81 2018/07/29 08:02:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.82 2019/02/04 18:14:53 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -349,7 +349,7 @@ xen_mcast_invlpg(vaddr_t va, kcpuset_t *kc)
 
 	op.cmd = MMUEXT_INVLPG_MULTI;
 	op.arg1.linear_addr = va;
-	op.arg2.vcpumask = &xcpumask.xcpum_xm;
+	set_xen_guest_handle(op.arg2.vcpumask, &xcpumask.xcpum_xm);
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic(__func__);
@@ -381,7 +381,7 @@ xen_mcast_tlbflush(kcpuset_t *kc)
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_MULTI;
-	op.arg2.vcpumask = &xcpumask.xcpum_xm;
+	set_xen_guest_handle(op.arg2.vcpumask, &xcpumask.xcpum_xm);
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic(__func__);
