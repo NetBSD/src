@@ -1,4 +1,4 @@
-/*	$NetBSD: s_copysignl.c,v 1.5 2015/05/14 19:26:12 joerg Exp $	*/
+/*	$NetBSD: s_copysignl.c,v 1.6 2019/02/04 04:37:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,11 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_copysignl.c,v 1.5 2015/05/14 19:26:12 joerg Exp $");
+__RCSID("$NetBSD: s_copysignl.c,v 1.6 2019/02/04 04:37:50 mrg Exp $");
 #include "namespace.h"
 
 #include <math.h>
 #include <machine/ieee.h>
+#include <string.h>
 
 #if defined(__HAVE_LONG_DOUBLE) || defined(__HAVE_IBM_LONGDOUBLE)
 
@@ -61,6 +62,8 @@ copysignl(long double x, long double y)
 {
 	union ldbl_u ux, uy;
 
+	memset(&ux, 0, sizeof ux);
+	memset(&uy, 0, sizeof uy);
 	ux.ldblu_ld = x;
 	uy.ldblu_ld = y;
 	ux.ldblu_d[0] = copysign(ux.ldblu_d[0], uy.ldblu_d[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.4 2019/02/04 04:37:50 mrg Exp $	*/
 
 /*
  * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.4 2019/02/04 04:37:50 mrg Exp $");
 
 
 /*!
@@ -939,7 +939,7 @@ build_temporary6(struct in6_addr *addr,
 		 const struct data_string *input) {
 	static u_int32_t history[2];
 	static u_int32_t counter = 0;
-	unsigned char md[16];
+	unsigned char md[16] = {0};
 	unsigned int len;
 
 	/*
