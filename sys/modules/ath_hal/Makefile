@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/28 15:48:19 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.5 2019/02/04 08:36:43 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -95,6 +95,11 @@ SRCS+=	ar2133.c \
 	ar9285_reset.c
 
 .include "Makefile.inc"
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.ar5212_xmit.c+=	-Wno-error=implicit-fallthrough
+COPTS.ar5416_xmit.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.kmodule.mk>
 KMODSCRIPT=	${S}/modules/ath_hal/ath_hal.ldscript
