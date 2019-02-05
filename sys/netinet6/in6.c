@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.272 2018/11/29 09:54:23 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.273 2019/02/05 04:48:47 mrg Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.272 2018/11/29 09:54:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.273 2019/02/05 04:48:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -531,10 +531,11 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			error = EADDRNOTAVAIL;
 			goto out;
 		}
-		/* FALLTHROUGH */
 #ifdef OSIOCAIFADDR_IN6
+		/* FALLTHROUGH */
 	case OSIOCAIFADDR_IN6:
 #endif
+		/* FALLTHROUGH */
 	case SIOCAIFADDR_IN6:
 		/*
 		 * We always require users to specify a valid IPv6 address for
@@ -674,8 +675,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 #ifdef OSIOCAIFADDR_IN6
 	case OSIOCAIFADDR_IN6:
 		in6_aliasreq50_to_in6_aliasreq(ifra);
-		/*FALLTHROUGH*/
 #endif
+		/*FALLTHROUGH*/
 	case SIOCAIFADDR_IN6:
 	{
 		struct in6_addrlifetime *lt;
