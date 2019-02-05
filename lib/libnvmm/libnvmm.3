@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.10 2019/02/05 13:56:32 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.11 2019/02/05 15:03:35 wiz Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -377,7 +377,6 @@ During VM exits, a partial VCPU state area is provided in
 see
 .Sx Exit Reasons
 below for details.
-
 .Ss Exit Reasons
 The
 .Cd nvmm_exit
@@ -499,7 +498,8 @@ or
 .Fn nvmm_assist_mem
 are invoked.
 VMM software that does not intend to use either of these assists can put
-NULL in the callbacks.
+.Dv NULL
+in the callbacks.
 .Ss I/O Assist
 When a VM exit occurs with reason
 .Cd NVMM_EXIT_IO ,
