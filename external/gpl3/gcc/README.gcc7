@@ -1,4 +1,4 @@
-$NetBSD: README.gcc7,v 1.3 2019/02/04 03:19:23 mrg Exp $
+$NetBSD: README.gcc7,v 1.4 2019/02/05 07:43:08 mrg Exp $
 
 new stuff (from gcc 5):
 	cc1objcplus
@@ -27,7 +27,7 @@ atf:		does atf run / compare well
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 ------------	-----	-------	------	----------	------------	----	---
 aarch64		y	?	y	y		n[2]		?	?
-alpha		y	?	y	y		?		?	?
+alpha		y	?	y	y		y		y	?
 arm		?	?	?	?		?		?	?
 armeb		?	?	?	?		?		?	?
 earm		?	?	?	?		?		?	?
@@ -44,21 +44,21 @@ earmv7		?	?	?	?		?		?	?
 earmv7eb	?	?	?	?		?		?	?
 earmv7hf	?	?	?	?		?		?	?
 earmv7hfeb	?	?	?	?		?		?	?
-hppa		y	?	?	y		?		?	?
-i386		y	builds	?	y		y		?	?
+hppa		y	n[6]	y	y		n[7]		?	?
+i386		y	y	y	y		y		y	?
 ia64		y	?	?	y		?		?	?
 m68000		n[4]	?	?	?		?		?	?
-m68k		?	?	?	?		?		?	?
+m68k		y	?	y	y		?		?	?
 mipseb		y	?	?	y		?		?	?
 mipsel		y	?	?	y		?		?	?
 mips64eb	y	y	y	y		y		y	?
 mips64el	y	?	?	y		?		?	?
-powerpc		?	?	?	?		?		?	?
+powerpc		y	y	y	y		y		y	?
 powerpc64	?	?	?	?		?		?	?
-sh3eb		y	?	?	y		?		?	?
-sh3el		y	?	?	y		?		?	?
+sh3eb		y	?	y	y		?		?	?
+sh3el		y	?	y	y		?		?	?
 sparc		y	y	y	y		y		y	?
-sparc64		y	?	?	n[1]		?		?	?
+sparc64		y	y	y	y[1]		n[8]		y	?
 vax		y	?	?	y		y/n[3]		?	?
 x86_64		y	y	y	y		y		y	y
 --
@@ -69,7 +69,8 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[1] - sparc64-gcc gets ICE at startup
+[1] - sparc64-gcc gets ICE at startup.  because sizeof(ufast8/16/32) != sizeof(sfast8/16/32)
+	-- uncommited hack to workaround it seems to work fine.
 [2] - __curbrk won't link libc.so
 [3] - gcc can't be built: 
 	/usr/src6/external/gpl3/gcc/dist/gcc/calls.c:1361:1: error: unrecognizable insn:
@@ -85,3 +86,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
     - the rest of the world builds fine.
 [4] - ar: netbsd.o: No such file or directory
 [5] - libstdc++ eh_personality.cc ends up with refs to arm eabi specific functions that are in libunwind for us
+[6] - uncommited changes that need confirming.
+[7] - ramdisk fails:  32,nbmakefs: Writing inode 1562 (work/./usr/mdec/boot), bytes 229376 + 4096: No space left on device
+[8] - ramdisk fails:  32,nbmakefs: Writing inode 1026 (work/./usr/share/zoneinfo/US/Alaska), bytes 0 + 2380: No space left on device
+
