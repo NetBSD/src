@@ -1,4 +1,4 @@
-/* $NetBSD: brk.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: brk.S,v 1.2 2019/02/05 13:02:35 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ _C_LABEL(__minbrk):
  * Change the data segment size
  */
 ENTRY(_brk)
-	adr	x9, _C_LABEL(__minbrk)
+	adrp	x9, _C_LABEL(__minbrk)
 	ldr	x10, [x9, #:lo12:_C_LABEL(__minbrk)]
 
 	/*
@@ -63,7 +63,7 @@ ENTRY(_brk)
 	_INVOKE_CERROR()
 
 	/* Store the new address in curbrk */
-	adr	x9, _C_LABEL(__curbrk)
+	adrp	x9, _C_LABEL(__curbrk)
 	str	x11, [x9, #:lo12:_C_LABEL(__curbrk)]
 
 	/* Return 0 for success */
