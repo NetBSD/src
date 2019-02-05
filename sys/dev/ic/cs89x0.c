@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.41 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.42 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.41 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.42 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -399,8 +399,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	ifp->if_ioctl = cs_ioctl;
 	ifp->if_stop = cs_stop;
 	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS |
-	    IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */

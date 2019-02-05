@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.60 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.61 2019/02/05 06:17:01 msaitoh Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.60 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.61 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -108,8 +108,7 @@ mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
 	ifp->if_start = mb8795_start;
 	ifp->if_ioctl = mb8795_ioctl;
 	ifp->if_watchdog = mb8795_watchdog;
-	ifp->if_flags =
-		IFF_BROADCAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST;
 
 	/* Initialize media goo. */
 	ifmedia_init(&sc->sc_media, 0, mb8795_mediachange,
