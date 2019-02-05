@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.7 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.8 2019/02/05 08:02:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.7 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.8 2019/02/05 08:02:19 mrg Exp $");
+
+/* XXX this code likely needs work */
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -388,9 +390,11 @@ nandemulator_command(device_t self, uint8_t command)
 		break;
 	case ONFI_PAGE_PROGRAM:
 		sc->sc_register_writable = true;
+		/* FALLTHROUGH */
 	case ONFI_READ:
 	case ONFI_BLOCK_ERASE:
 		sc->sc_address_counter = 0;
+		/* FALLTHROUGH */
 	case ONFI_READ_ID:
 	case ONFI_READ_PARAMETER_PAGE:
 		sc->sc_io_len = 0;
