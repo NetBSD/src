@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.164 2018/06/26 06:48:00 msaitoh Exp $  */
+/*	$NetBSD: atw.c,v 1.165 2019/02/05 06:17:02 msaitoh Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.164 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.165 2019/02/05 06:17:02 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -766,8 +766,7 @@ atw_attach(struct atw_softc *sc)
 
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST |
-	    IFF_NOTRAILERS;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_ioctl = atw_ioctl;
 	ifp->if_start = atw_start;
 	ifp->if_watchdog = atw_watchdog;

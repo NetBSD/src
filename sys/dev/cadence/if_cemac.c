@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.15 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.16 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.15 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.16 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -605,7 +605,7 @@ cemac_init(struct cemac_softc *sc)
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
-        ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
         ifp->if_ioctl = cemac_ifioctl;
         ifp->if_start = cemac_ifstart;
         ifp->if_watchdog = cemac_ifwatchdog;

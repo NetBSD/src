@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.73 2018/06/26 06:48:00 msaitoh Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.74 2019/02/05 06:17:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.73 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.74 2019/02/05 06:17:02 msaitoh Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -191,7 +191,7 @@ bah_attach_subr(struct bah_softc *sc)
 	ifp->if_watchdog  = bah_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 
 	ifp->if_mtu = ARCMTU;
 

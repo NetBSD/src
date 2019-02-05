@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.43 2018/10/14 00:10:11 tsutsui Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.44 2019/02/05 06:17:01 msaitoh Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.43 2018/10/14 00:10:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.44 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -210,8 +210,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
 	ifp->if_start = snstart;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = snwatchdog;
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);

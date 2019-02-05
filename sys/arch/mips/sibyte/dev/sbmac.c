@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.53 2019/01/23 07:40:05 msaitoh Exp $ */
+/* $NetBSD: sbmac.c,v 1.54 2019/02/05 06:17:01 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.53 2019/01/23 07:40:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.54 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -2314,8 +2314,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 
 	ifp->if_softc = sc;
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
-	    IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = sbmac_ioctl;
 	ifp->if_start = sbmac_start;
 	ifp->if_watchdog = sbmac_watchdog;
