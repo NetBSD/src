@@ -1261,14 +1261,584 @@ zfsctl_umount_snapshots(vfs_t *vfsp, int fflags, cred_t *cr)
 
 #ifdef __NetBSD__
 
+#include <sys/fstrans.h>
+#include <sys/malloc.h>
 #include <sys/pathname.h>
+#include <miscfs/genfs/genfs.h>
 #include <sys/zfs_context.h>
 #include <sys/zfs_ctldir.h>
+#include <sys/dsl_dataset.h>
+#include <sys/zap.h>
+
+struct zfsctl_root {
+	timestruc_t zc_cmtime;
+};
+
+struct sfs_node_key {
+	uint64_t parent_id;
+	uint64_t id;
+};
+struct sfs_node {
+	struct sfs_node_key sn_key;
+#define sn_parent_id sn_key.parent_id
+#define sn_id sn_key.id
+	lwp_t *sn_mounting;
+};
+
+#define ZFS_SNAPDIR_NAME "snapshot"
+
+#define VTOSFS(vp) ((struct sfs_node *)((vp)->v_data))
+
+#define SFS_NODE_ASSERT(vp) \
+	do { \
+		struct sfs_node *np = VTOSFS(vp); \
+		ASSERT((vp)->v_op == zfs_sfsop_p); \
+		ASSERT((vp)->v_type == VDIR); \
+	} while (/*CONSTCOND*/ 0)
 
 static int (**zfs_sfsop_p)(void *);
 
-static const struct vnodeopv_entry_desc zfs_sfsop_entries[] = {
+/*
+ * Mount a snapshot.  Cannot use do_sys_umount() as it
+ * doesn't allow its "path" argument from SYSSPACE.
+ */
+static int
+sfs_snapshot_mount(vnode_t *vp, const char *snapname)
+{
+	struct sfs_node *node = VTOSFS(vp);
+	zfsvfs_t *zfsvfs = vp->v_vfsp->vfs_data;
+	vfs_t *vfsp;
+	char *path, *osname;
+	int error;
+	extern int zfs_domount(vfs_t *, char *);
+
+	path = PNBUF_GET();
+	osname = PNBUF_GET();
+
+	dmu_objset_name(zfsvfs->z_os, path);
+	snprintf(osname, MAXPATHLEN, "%s@%s", path, snapname);
+	snprintf(path, MAXPATHLEN,
+	    "%s/" ZFS_CTLDIR_NAME "/" ZFS_SNAPDIR_NAME "/%s",
+	    vp->v_vfsp->mnt_stat.f_mntonname, snapname);
+
+	vfsp = vfs_mountalloc(vp->v_vfsp->mnt_op, vp);
+	if (vfsp == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+	vfsp->mnt_op->vfs_refcount++;
+	vfsp->mnt_stat.f_owner = 0;
+	vfsp->mnt_flag = MNT_RDONLY | MNT_NOSUID | MNT_IGNORE;
+
+	mutex_enter(&vfsp->mnt_updating);
+
+	error = zfs_domount(vfsp, osname);
+	if (error)
+		goto out;
+
+	vfs_getnewfsid(vfsp);
+	strlcpy(vfsp->mnt_stat.f_mntfromname, osname,
+	    sizeof(vfsp->mnt_stat.f_mntfromname));
+	set_statvfs_info(path, UIO_SYSSPACE, vfsp->mnt_stat.f_mntfromname,
+	    UIO_SYSSPACE, vfsp->mnt_op->vfs_name, vfsp, curlwp);
+
+	vfsp->mnt_lower = vp->v_vfsp;
+
+	mountlist_append(vfsp);
+	vref(vp);
+	vp->v_mountedhere = vfsp;
+
+	mutex_exit(&vfsp->mnt_updating);
+	(void) VFS_STATVFS(vfsp, &vfsp->mnt_stat);
+
+out:;
+	if (error && vfsp) {
+		mutex_exit(&vfsp->mnt_updating);
+		fstrans_unmount(vfsp);
+		vfs_rele(vfsp);
+	}
+	PNBUF_PUT(osname);
+	PNBUF_PUT(path);
+
+	return error;
+}
+
+static int
+sfs_lookup_snapshot(vnode_t *dvp, struct componentname *cnp, vnode_t **vpp)
+{
+	zfsvfs_t *zfsvfs = dvp->v_vfsp->vfs_data;
+	vnode_t *vp;
+	struct sfs_node *node;
+	struct sfs_node_key key;
+	char snapname[ZFS_MAX_DATASET_NAME_LEN];
+	int error;
+
+	/* Retrieve the snapshot object id and the to be mounted on vnode. */
+	if (cnp->cn_namelen >= sizeof(snapname))
+		return ENOENT;
+
+	strlcpy(snapname, cnp->cn_nameptr, cnp->cn_namelen + 1);
+	error = dsl_dataset_snap_lookup( dmu_objset_ds(zfsvfs->z_os),
+	    snapname, &key.id);
+	if (error)
+		return error;
+	key.parent_id = ZFSCTL_INO_SNAPDIR;
+	error = vcache_get(zfsvfs->z_vfs, &key, sizeof(key), vpp);
+	if (error)
+		return error;
+
+	/* Handle case where the vnode is currently mounting. */
+	vp = *vpp;
+	mutex_enter(vp->v_interlock);
+	node = VTOSFS(vp);
+	if (node->sn_mounting) {
+		if (node->sn_mounting == curlwp)
+			error = 0;
+		else
+			error = ERESTART;
+		mutex_exit(vp->v_interlock);
+		if (error)
+			yield();
+		return error;
+	}
+
+	/* If not yet mounted mount the snapshot. */
+	if (vp->v_mountedhere == NULL) {
+		ASSERT(node->sn_mounting == NULL);
+		node->sn_mounting = curlwp;
+		mutex_exit(vp->v_interlock);
+
+		VOP_UNLOCK(dvp, 0);
+		error = sfs_snapshot_mount(vp, snapname);
+		if (vn_lock(dvp, LK_EXCLUSIVE) != 0) {
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			error = ENOENT;
+		}
+
+		mutex_enter(vp->v_interlock);
+		if ((node = VTOSFS(vp)))
+			node->sn_mounting = NULL;
+		mutex_exit(vp->v_interlock);
+
+		if (error) {
+			vrele(vp);
+			*vpp = NULL;
+			return error;
+		}
+	} else
+		mutex_exit(vp->v_interlock);
+
+	/* Return the mounted root rather than the covered mount point.  */
+	ASSERT(vp->v_mountedhere);
+	error = VFS_ROOT(vp->v_mountedhere, vpp);
+	vrele(vp);
+	if (error)
+		return error;
+
+	/*
+	 * Fix up the root vnode mounted on .zfs/snapshot/<snapname>
+	 *
+	 * Here we make .zfs/snapshot/<snapname> accessible over NFS
+	 * without requiring manual mounts of <snapname>.
+	 */
+	if (((*vpp)->v_vflag & VV_ROOT)) {
+		ASSERT(VTOZ(*vpp)->z_zfsvfs != zfsvfs);
+		VTOZ(*vpp)->z_zfsvfs->z_parent = zfsvfs;
+		(*vpp)->v_vflag &= ~VV_ROOT;
+	}
+	VOP_UNLOCK(*vpp, 0);
+
+	return 0;
+}
+
+static int
+sfs_lookup(void *v)
+{
+	struct vop_lookup_v2_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+	vnode_t *dvp = ap->a_dvp;
+	vnode_t **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
+	zfsvfs_t *zfsvfs = dvp->v_vfsp->vfs_data;
+	struct sfs_node *dnode = VTOSFS(dvp);
+	int error;
+
+	SFS_NODE_ASSERT(dvp);
+	ZFS_ENTER(zfsvfs);
+
+	/*
+	 * No CREATE, DELETE or RENAME.
+	 */
+	if ((cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop != LOOKUP) {
+		ZFS_EXIT(zfsvfs);
+
+		return ENOTSUP;
+	}
+
+	/*
+	 * Handle DOT and DOTDOT.
+	 */
+	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
+		vref(dvp);
+		*vpp = dvp;
+		ZFS_EXIT(zfsvfs);
+
+		return 0;
+	}
+	if ((cnp->cn_flags & ISDOTDOT)) {
+		if (dnode->sn_parent_id == 0) {
+			error = vcache_get(zfsvfs->z_vfs,
+			    &zfsvfs->z_root, sizeof(zfsvfs->z_root), vpp);
+		} else if (dnode->sn_parent_id == ZFSCTL_INO_ROOT) {
+			error = zfsctl_root(zfsvfs, vpp);
+		} else if (dnode->sn_parent_id == ZFSCTL_INO_SNAPDIR) {
+			error = zfsctl_snapshot(zfsvfs, vpp);
+		} else {
+			error = ENOENT;
+		}
+		ZFS_EXIT(zfsvfs);
+
+		return error;
+	}
+
+	/*
+	 * Lookup in ".zfs".
+	 */
+	if (dnode->sn_id == ZFSCTL_INO_ROOT) {
+		if (cnp->cn_namelen == strlen(ZFS_SNAPDIR_NAME) &&
+		    strncmp(cnp->cn_nameptr, ZFS_SNAPDIR_NAME,
+		    cnp->cn_namelen) == 0) {
+			error = zfsctl_snapshot(zfsvfs, vpp);
+		} else {
+			error = ENOENT;
+		}
+		ZFS_EXIT(zfsvfs);
+
+		return error;
+	}
+
+	/*
+	 * Lookup in ".zfs/snapshot".
+	 */
+	if (dnode->sn_id == ZFSCTL_INO_SNAPDIR) {
+		error = sfs_lookup_snapshot(dvp, cnp, vpp);
+		ZFS_EXIT(zfsvfs);
+
+		return error;
+	}
+
+	vprint("sfs_lookup: unexpected node for lookup", dvp);
+	ZFS_EXIT(zfsvfs);
+
+	return ENOENT;
+}
+
+static int
+sfs_open(void *v)
+{
+	struct vop_open_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	zfsvfs_t *zfsvfs = ap->a_vp->v_vfsp->vfs_data;
+	int error = 0;
+
+	SFS_NODE_ASSERT(ap->a_vp);
+	ZFS_ENTER(zfsvfs);
+
+	if (ap->a_mode & FWRITE)
+		error = EACCES;
+
+	ZFS_EXIT(zfsvfs);
+
+	return error;
+}
+
+static int
+sfs_close(void *v)
+{
+	struct vop_close_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	zfsvfs_t *zfsvfs = ap->a_vp->v_vfsp->vfs_data;
+
+	SFS_NODE_ASSERT(ap->a_vp);
+	ZFS_ENTER(zfsvfs);
+
+	ZFS_EXIT(zfsvfs);
+
+	return 0;
+}
+
+static int
+sfs_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	zfsvfs_t *zfsvfs = ap->a_vp->v_vfsp->vfs_data;
+	int error = 0;
+
+	SFS_NODE_ASSERT(ap->a_vp);
+	ZFS_ENTER(zfsvfs);
+
+	if (ap->a_mode & FWRITE)
+		error = EACCES;
+
+	ZFS_EXIT(zfsvfs);
+
+	return error;
+}
+
+static int
+sfs_getattr(void *v)
+{
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
+	struct sfs_node *node = VTOSFS(vp);
+	struct vattr *vap = ap->a_vap;
+	zfsvfs_t *zfsvfs = vp->v_vfsp->vfs_data;
+	dsl_dataset_t *ds = dmu_objset_ds(zfsvfs->z_os);
+	timestruc_t now;
+	uint64_t snap_count;
+	int error;
+
+	SFS_NODE_ASSERT(vp);
+	ZFS_ENTER(zfsvfs);
+
+	vap->va_type = VDIR;
+	vap->va_mode = S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP |
+	    S_IROTH | S_IXOTH;
+	vap->va_nlink = 2;
+	vap->va_uid = 0;
+	vap->va_gid = 0;
+	vap->va_fsid = vp->v_vfsp->mnt_stat.f_fsidx.__fsid_val[0];
+	vap->va_fileid = node->sn_id;
+	vap->va_size = 0;
+	vap->va_blocksize = 0;
+	gethrestime(&now);
+	vap->va_atime = now;
+	vap->va_ctime = zfsvfs->z_ctldir->zc_cmtime;
+	vap->va_mtime = vap->va_ctime;
+	vap->va_birthtime = vap->va_ctime;
+	vap->va_gen = 0;
+	vap->va_flags = 0;
+	vap->va_rdev = 0;
+	vap->va_bytes = 0;
+	vap->va_filerev = 0;
+
+	switch (node->sn_id){
+	case ZFSCTL_INO_ROOT:
+		vap->va_nlink += 1; /* snapdir */
+		vap->va_size = vap->va_nlink;
+		break;
+	case ZFSCTL_INO_SNAPDIR:
+		if (dsl_dataset_phys(ds)->ds_snapnames_zapobj) {
+			error = zap_count(
+			    dmu_objset_pool(ds->ds_objset)->dp_meta_objset,
+			    dsl_dataset_phys(ds)->ds_snapnames_zapobj,
+			    &snap_count);
+			if (error)
+				return error;
+			vap->va_nlink += snap_count;
+		}
+		vap->va_size = vap->va_nlink;
+		break;
+	}
+
+	ZFS_EXIT(zfsvfs);
+
+	return 0;
+}
+
+static int
+sfs_readdir_one(struct vop_readdir_args *ap, struct dirent *dp,
+    const char *name, ino_t ino, off_t *offp)
+{
+	int error;
+
+	dp->d_fileno = ino;
+	dp->d_type = DT_DIR;
+	strlcpy(dp->d_name, name, sizeof(dp->d_name));
+	dp->d_namlen = strlen(dp->d_name);
+	dp->d_reclen = _DIRENT_SIZE(dp);
+
+	if (ap->a_uio->uio_resid < dp->d_reclen)
+		return ENAMETOOLONG;
+	if (ap->a_uio->uio_offset > *offp) {
+		*offp += dp->d_reclen;
+		return 0;
+	}
+
+	error = uiomove(dp, dp->d_reclen, UIO_READ, ap->a_uio);
+	if (error)
+		return error;
+	if (ap->a_ncookies)
+		(*ap->a_cookies)[(*ap->a_ncookies)++] = *offp;
+	*offp += dp->d_reclen;
+
+	return 0;
+}
+
+static int
+sfs_readdir(void *v)
+{
+	struct vop_readdir_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+		int *a_eofflag;
+		off_t **a_cookies;
+		int *a_ncookies;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
+	struct sfs_node *node = VTOSFS(vp);
+	zfsvfs_t *zfsvfs = vp->v_vfsp->vfs_data;
+	struct dirent *dp;
+	uint64_t parent;
+	off_t offset;
+	int error, ncookies;
+
+	SFS_NODE_ASSERT(ap->a_vp);
+	ZFS_ENTER(zfsvfs);
+ 
+	parent = node->sn_parent_id == 0 ? zfsvfs->z_root : node->sn_parent_id;
+	dp = kmem_alloc(sizeof(*dp), KM_SLEEP);
+	if (ap->a_ncookies) {
+		ncookies = ap->a_uio->uio_resid / _DIRENT_MINSIZE(dp);
+		*ap->a_ncookies = 0;
+		*ap->a_cookies = malloc(ncookies * sizeof (off_t),
+		    M_TEMP, M_WAITOK);
+	}
+
+	offset = 0;
+	error = sfs_readdir_one(ap, dp, ".", node->sn_id, &offset);
+	if (error == 0)
+		error = sfs_readdir_one(ap, dp, "..", parent, &offset);
+	if (error == 0 && node->sn_id == ZFSCTL_INO_ROOT) {
+		error = sfs_readdir_one(ap, dp, ZFS_SNAPDIR_NAME,
+		    ZFSCTL_INO_SNAPDIR, &offset);
+	} else if (error == 0 && node->sn_id == ZFSCTL_INO_SNAPDIR) {
+		char snapname[ZFS_MAX_DATASET_NAME_LEN];
+		uint64_t cookie, id;
+
+		cookie = 0;
+		for (;;) {
+			dsl_pool_config_enter(dmu_objset_pool(zfsvfs->z_os),
+			    FTAG);
+			error = dmu_snapshot_list_next(zfsvfs->z_os,
+			    sizeof(snapname), snapname, &id, &cookie, NULL);
+			dsl_pool_config_exit(dmu_objset_pool(zfsvfs->z_os),
+			    FTAG);
+			if (error) {
+				if (error == ENOENT)
+					error = 0;
+				break;
+			}
+			error = sfs_readdir_one(ap, dp, snapname, id, &offset);
+			if (error)
+				break;
+		}
+	}
+
+	if (ap->a_eofflag && error == 0)
+		*ap->a_eofflag = 1;
+
+	if (error == ENAMETOOLONG)
+		error = 0;
+
+	if (ap->a_ncookies && error) {
+		free(*ap->a_cookies, M_TEMP);
+		*ap->a_ncookies = 0;
+		*ap->a_cookies = NULL;
+	}
+	kmem_free(dp, sizeof(*dp));
+
+	ZFS_EXIT(zfsvfs);
+
+	return error;
+}
+
+static int
+sfs_inactive(void *v)
+{
+	struct vop_inactive_v2_args /* {
+		struct vnode *a_vp;
+		bool *a_recycle;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
+	struct sfs_node *node = VTOSFS(vp);
+
+	SFS_NODE_ASSERT(vp);
+
+	*ap->a_recycle = (node->sn_parent_id == ZFSCTL_INO_SNAPDIR);
+
+	return 0;
+}
+
+static int
+sfs_reclaim(void *v)
+{
+	struct vop_reclaim_v2_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
+	struct sfs_node *node = VTOSFS(vp);
+
+	SFS_NODE_ASSERT(ap->a_vp);
+
+	vp->v_data = NULL;
+	VOP_UNLOCK(vp, 0);
+
+	kmem_free(node, sizeof(*node));
+
+	return 0;
+}
+
+static int
+sfs_print(void *v)
+{
+	struct vop_print_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct sfs_node *node = VTOSFS(ap->a_vp);
+
+	SFS_NODE_ASSERT(ap->a_vp);
+
+	printf("\tid %" PRIu64 ", parent %" PRIu64 "\n",
+	    node->sn_id, node->sn_parent_id);
+
+	return 0;
+}
+
+const struct vnodeopv_entry_desc zfs_sfsop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
+	{ &vop_lookup_desc,		sfs_lookup },
+	{ &vop_open_desc,		sfs_open },
+	{ &vop_close_desc,		sfs_close },
+	{ &vop_access_desc,		sfs_access },
+	{ &vop_getattr_desc,		sfs_getattr },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
+	{ &vop_readdir_desc,		sfs_readdir },
+	{ &vop_inactive_desc,		sfs_inactive },
+	{ &vop_reclaim_desc,		sfs_reclaim },
+	{ &vop_seek_desc,		genfs_seek },
+	{ &vop_putpages_desc,		genfs_null_putpages },
+	{ &vop_islocked_desc,		genfs_islocked },
+	{ &vop_print_desc,		sfs_print },
 	{ NULL, NULL }
 };
 
@@ -1289,36 +1859,88 @@ int
 zfsctl_loadvnode(vfs_t *vfsp, vnode_t *vp,
     const void *key, size_t key_len, const void **new_key)
 {
+	struct sfs_node_key node_key;
+	struct sfs_node *node;
 
-	return EINVAL;
+	if (key_len != sizeof(node_key))
+		return EINVAL;
+	if ((vfsp->mnt_iflag & IMNT_UNMOUNT))
+		return ENOENT;
+
+	memcpy(&node_key, key, key_len);
+
+	node = kmem_alloc(sizeof(*node), KM_SLEEP);
+
+	node->sn_mounting = NULL;
+	node->sn_key = node_key;
+
+	vp->v_data = node;
+	vp->v_op = zfs_sfsop_p;
+	vp->v_tag = VT_ZFS;
+	vp->v_type = VDIR;
+	uvm_vnp_setsize(vp, 0);
+
+	*new_key = &node->sn_key;
+
+	return 0;
 }
 
+/*
+ * Return the ".zfs" vnode.
+ */
 int
-zfsctl_root(zfsvfs_t *zfsvfs, vnode_t **znode)
+zfsctl_root(zfsvfs_t *zfsvfs, vnode_t **vpp)
 {
+	struct sfs_node_key key = {
+		.parent_id = 0,
+		.id = ZFSCTL_INO_ROOT
+	};
 
-	return ENOENT;
+	return vcache_get(zfsvfs->z_vfs, &key, sizeof(key), vpp);
 }
 
+/*
+ * Return the ".zfs/snapshot" vnode.
+ */
 int
-zfsctl_snapshot(zfsvfs_t *zfsvfs, vnode_t **znode)
+zfsctl_snapshot(zfsvfs_t *zfsvfs, vnode_t **vpp)
 {
+	struct sfs_node_key key = {
+		.parent_id = ZFSCTL_INO_ROOT,
+		.id = ZFSCTL_INO_SNAPDIR
+	};
 
-	return ENOENT;
+	return vcache_get(zfsvfs->z_vfs, &key, sizeof(key), vpp);
 }
 
 void
 zfsctl_create(zfsvfs_t *zfsvfs)
 {
+	vnode_t *vp;
+	struct zfsctl_root *zc;
+	uint64_t crtime[2];
+
+	zc = kmem_alloc(sizeof(*zc), KM_SLEEP);
+
+	VERIFY(0 == VFS_ROOT(zfsvfs->z_vfs, &vp));
+	VERIFY(0 == sa_lookup(VTOZ(vp)->z_sa_hdl, SA_ZPL_CRTIME(zfsvfs),
+	    &crtime, sizeof(crtime)));
+	vput(vp);
+
+	ZFS_TIME_DECODE(&zc->zc_cmtime, crtime);
 
 	ASSERT(zfsvfs->z_ctldir == NULL);
+	zfsvfs->z_ctldir = zc;
 }
 
 void
 zfsctl_destroy(zfsvfs_t *zfsvfs)
 {
+	struct zfsctl_root *zc = zfsvfs->z_ctldir;
 
-	ASSERT(zfsvfs->z_ctldir == NULL);
+	ASSERT(zfsvfs->z_ctldir);
+ 	zfsvfs->z_ctldir = NULL;
+	kmem_free(zc, sizeof(*zc));
 }
 
 int
@@ -1331,14 +1953,55 @@ zfsctl_lookup_objset(vfs_t *vfsp, uint64_t objsetid, zfsvfs_t **zfsvfsp)
 int
 zfsctl_umount_snapshots(vfs_t *vfsp, int fflags, cred_t *cr)
 {
+	char snapname[ZFS_MAX_DATASET_NAME_LEN];
+	zfsvfs_t *zfsvfs = vfsp->vfs_data;
+	struct mount *mp;
+	vnode_t *vp;
+	struct sfs_node_key key;
+	uint64_t cookie;
+	int error;
 
-	return 0;
+	ASSERT(zfsvfs->z_ctldir);
+
+	cookie = 0;
+	key.parent_id = ZFSCTL_INO_SNAPDIR;
+	for (;;) {
+		dsl_pool_config_enter(dmu_objset_pool(zfsvfs->z_os), FTAG);
+		error = dmu_snapshot_list_next(zfsvfs->z_os, sizeof(snapname),
+		    snapname, &key.id, &cookie, NULL);
+		dsl_pool_config_exit(dmu_objset_pool(zfsvfs->z_os), FTAG);
+		if (error) {
+			if (error == ENOENT)
+				error = 0;
+			break;
+		}
+
+		error = vcache_get(zfsvfs->z_vfs, &key, sizeof(key), &vp);
+		if (error == ENOENT)
+			continue;
+		else if (error)
+			break;
+
+		mp = vp->v_mountedhere;
+		if (mp == NULL) {
+			vrele(vp);
+			continue;
+		}
+
+		error = dounmount(mp, fflags, curthread);
+		vrele(vp);
+		if (error)
+			break;
+	}
+	ASSERT((fflags & MS_FORCE) == 0 || error == 0);
+
+	return (error);
 }
 
 boolean_t
 zfsctl_is_node(vnode_t *vp)
 {
 
-	return B_FALSE;
+	return (vp->v_op == zfs_sfsop_p);
 }
 #endif /* __NetBSD__ */
