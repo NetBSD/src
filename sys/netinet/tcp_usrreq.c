@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.223 2019/01/28 12:53:01 martin Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.224 2019/02/05 04:48:47 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.223 2019/01/28 12:53:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.224 2019/02/05 04:48:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1689,8 +1689,8 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 
 		in6_sin6_2_sin_in_sock((struct sockaddr *)&sa[0]);
 		in6_sin6_2_sin_in_sock((struct sockaddr *)&sa[1]);
-		/*FALLTHROUGH*/
 #endif /* INET6 */
+		/*FALLTHROUGH*/
 	case PF_INET:
 		si4[0] = (struct sockaddr_in*)&sa[0];
 		si4[1] = (struct sockaddr_in*)&sa[1];
