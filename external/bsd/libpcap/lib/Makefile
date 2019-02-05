@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2019/02/04 04:05:16 mrg Exp $	
+# $NetBSD: Makefile,v 1.23 2019/02/05 07:45:35 mrg Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -174,5 +174,9 @@ tokdefs.h: grammar.h
 
 CLEANFILES+=	tokdefs.h scanner.h
 COPTS.bpf_image.c = -Wno-format-nonliteral
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.pcap.c+=	-Wno-error=format-truncation
+.endif
 
 .include <bsd.lib.mk>
