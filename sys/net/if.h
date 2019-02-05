@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.266 2018/10/18 11:34:54 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.267 2019/02/05 06:17:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -412,7 +412,7 @@ typedef struct ifnet {
 #define	IFF_DEBUG	0x0004		/* turn on debugging */
 #define	IFF_LOOPBACK	0x0008		/* is a loopback net */
 #define	IFF_POINTOPOINT	0x0010		/* interface is point-to-point link */
-#define	IFF_NOTRAILERS	0x0020		/* avoid use of trailers */
+/*			0x0020		   was IFF_NOTRAILERS */
 #define	IFF_RUNNING	0x0040		/* resources allocated */
 #define	IFF_NOARP	0x0080		/* no address resolution protocol */
 #define	IFF_PROMISC	0x0100		/* receive all packets */

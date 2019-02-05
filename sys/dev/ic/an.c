@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.69 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: an.c,v 1.70 2019/02/05 06:17:02 msaitoh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.69 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.70 2019/02/05 06:17:02 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -258,7 +258,7 @@ an_attach(struct an_softc *sc)
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_SIMPLEX |
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX |
 	    IFF_MULTICAST | IFF_ALLMULTI;
 	ifp->if_ioctl = an_ioctl;
 	ifp->if_start = an_start;

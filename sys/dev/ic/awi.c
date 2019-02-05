@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.94 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: awi.c,v 1.95 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.94 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.95 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -217,11 +217,7 @@ awi_attach(struct awi_softc *sc)
 		return error;
 	}
 	ifp->if_softc = sc;
-	ifp->if_flags =
-#ifdef IFF_NOTRAILERS
-	    IFF_NOTRAILERS |
-#endif
-	    IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_ioctl = awi_ioctl;
 	ifp->if_start = awi_start;
 	ifp->if_watchdog = awi_watchdog;
