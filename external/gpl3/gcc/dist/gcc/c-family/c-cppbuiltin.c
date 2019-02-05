@@ -512,22 +512,35 @@ builtin_define_stdint_macros (void)
       builtin_define_type_max ("__UINT_LEAST64_MAX__", uint_least64_type_node);
       builtin_define_constants ("__UINT64_C", uint_least64_type_node);
     }
+/*
+ * NetBSD/sparc64 long ago defined signed and unsigned fast{8,16,32} to be
+ * different to the common sparc64 definitions, and they are not the same
+ * size for the same bitsize.  GCC 7 introduced checks that they are the
+ * same size below that trigger here.
+ *
+ * NETBSD_TOOLS/NETBSD_NATIVE is wrong for this, but it will do for now.
+ */
+#if defined(NETBSD_TOOLS) || defined(NETBSD_NATIVE)
+#define builtin_define_type_width_nb(a,b,c)	builtin_define_type_width(a,b,NULL_TREE)
+#else
+#define builtin_define_type_width_nb(a,b,c)	builtin_define_type_width(a,b,c)
+#endif
   if (int_fast8_type_node)
     {
       builtin_define_type_max ("__INT_FAST8_MAX__", int_fast8_type_node);
-      builtin_define_type_width ("__INT_FAST8_WIDTH__", int_fast8_type_node,
+      builtin_define_type_width_nb ("__INT_FAST8_WIDTH__", int_fast8_type_node,
 				 uint_fast8_type_node);
     }
   if (int_fast16_type_node)
     {
       builtin_define_type_max ("__INT_FAST16_MAX__", int_fast16_type_node);
-      builtin_define_type_width ("__INT_FAST16_WIDTH__", int_fast16_type_node,
+      builtin_define_type_width_nb ("__INT_FAST16_WIDTH__", int_fast16_type_node,
 				 uint_fast16_type_node);
     }
   if (int_fast32_type_node)
     {
       builtin_define_type_max ("__INT_FAST32_MAX__", int_fast32_type_node);
-      builtin_define_type_width ("__INT_FAST32_WIDTH__", int_fast32_type_node,
+      builtin_define_type_width_nb ("__INT_FAST32_WIDTH__", int_fast32_type_node,
 				 uint_fast32_type_node);
     }
   if (int_fast64_type_node)
@@ -536,6 +549,7 @@ builtin_define_stdint_macros (void)
       builtin_define_type_width ("__INT_FAST64_WIDTH__", int_fast64_type_node,
 				 uint_fast64_type_node);
     }
+#undef builtin_define_type_width_nb
   if (uint_fast8_type_node)
     builtin_define_type_max ("__UINT_FAST8_MAX__", uint_fast8_type_node);
   if (uint_fast16_type_node)
