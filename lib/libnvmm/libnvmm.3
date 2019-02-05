@@ -1,6 +1,6 @@
-.\"	$NetBSD: libnvmm.3,v 1.9 2019/01/07 22:17:02 wiz Exp $
+.\"	$NetBSD: libnvmm.3,v 1.10 2019/02/05 13:56:32 maxv Exp $
 .\"
-.\" Copyright (c) 2018 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 7, 2019
+.Dd February 5, 2019
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -96,10 +96,13 @@ A virtual machine is described by an opaque structure,
 VMM software should not attempt to modify this structure directly, and should
 use the API provided by
 .Nm
-to handle virtual machines.
+to manage virtual machines.
 .Pp
 .Fn nvmm_capability
 gets the capabilities of NVMM.
+See
+.Sx NVMM Capability
+below for details.
 .Pp
 .Fn nvmm_machine_create
 creates a virtual machine in the kernel.
@@ -157,6 +160,17 @@ argument is the address of a state area, and
 is the bitmap of the components that are to be set.
 See
 .Sx VCPU State Area
+below for details.
+.Pp
+.Fn nvmm_vcpu_inject
+injects into the CPU identified by
+.Fa cpuid
+of the machine
+.Fa mach
+an event described by
+.Fa event .
+See
+.Sx Event Injection
 below for details.
 .Pp
 .Fn nvmm_vcpu_run
@@ -282,17 +296,88 @@ For example, the
 field indicates the maximum number of virtual machines supported, while
 .Cd max_vcpus
 indicates the maximum number of VCPUs supported per virtual machine.
+.Ss Guest-Host Mappings
+Each virtual machine has an associated guest physical memory.
+VMM software is allowed to modify this guest physical memory by mapping
+it into some parts of its virtual address space.
+.Pp
+VMM software should follow the following steps to achieve that:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Call
+.Fn nvmm_hva_map
+to create in the host's virtual address space an area of memory that can
+be shared with a guest.
+Typically, the
+.Fa hva
+parameter will be a pointer to an area that was previously mapped via
+.Fn mmap .
+.Fn nvmm_hva_map
+will replace the content of the area, and will make it read-write (but not
+executable).
+.It
+Make available in the guest an area of guest physical memory, by calling
+.Fn nvmm_gpa_map
+and passing in the
+.Fa hva
+parameter the value that was previously given to
+.Fn nvmm_hva_map .
+.Fn nvmm_gpa_map
+does not replace the content of any memory, it only creates a direct link
+from
+.Fa gpa
+into
+.Fa hva .
+.Fn nvmm_gpa_unmap
+removes this link without modifying
+.Fa hva .
+.El
+.Pp
+The guest will then be able to use the guest physical address passed in the
+.Fa gpa
+parameter of
+.Fn nvmm_gpa_map .
+Each change the guest makes in
+.Fa gpa
+will be reflected in the host's
+.Fa hva ,
+and vice versa.
+.Pp
+It is illegal for VMM software to use
+.Fn munmap
+on an area that was mapped via
+.Fn nvmm_hva_map .
 .Ss VCPU State Area
 A VCPU state area is a structure that entirely defines the content of the
 registers of a VCPU.
 Only one such structure exists, for x86:
 .Bd -literal
 struct nvmm_x64_state {
-	...
+	struct nvmm_x64_state_seg segs[NVMM_X64_NSEG];
+	uint64_t gprs[NVMM_X64_NGPR];
+	uint64_t crs[NVMM_X64_NCR];
+	uint64_t drs[NVMM_X64_NDR];
+	uint64_t msrs[NVMM_X64_NMSR];
+	uint64_t misc[NVMM_X64_NMISC];
+	struct fxsave fpu;
 };
 .Ed
 .Pp
 Refer to functional examples to see precisely how to use this structure.
+.Pp
+A VCPU state area is divided in sub-states.
+A
+.Fa flags
+parameter is used to set and get the VCPU state; it acts as a bitmap which
+indicates which sub-states to set or get.
+.Pp
+During VM exits, a partial VCPU state area is provided in
+.Va exitstate ,
+see
+.Sx Exit Reasons
+below for details.
+
 .Ss Exit Reasons
 The
 .Cd nvmm_exit
@@ -307,7 +392,8 @@ enum nvmm_exit_reason {
 	NVMM_EXIT_MSR		= 0x0000000000000003,
 	NVMM_EXIT_INT_READY	= 0x0000000000000004,
 	NVMM_EXIT_NMI_READY	= 0x0000000000000005,
-	NVMM_EXIT_SHUTDOWN	= 0x0000000000000006,
+	NVMM_EXIT_HALTED	= 0x0000000000000006,
+	NVMM_EXIT_SHUTDOWN	= 0x0000000000000007,
 
 	/* Instructions (x86). */
 	...
@@ -392,6 +478,28 @@ and NVMM will cause a VM exit with reason
 or
 .Cd NVMM_EXIT_NMI_READY
 to indicate that VMM software can now reinject the desired event.
+.Ss Assist Callbacks
+In order to assist emulation of certain operations,
+.Nm
+requires VMM software to register, via
+.Fn nvmm_callbacks_register ,
+a set of callbacks described in the following structure:
+.Bd -literal
+struct nvmm_callbacks {
+	void (*io)(struct nvmm_io *);
+	void (*mem)(struct nvmm_mem *);
+};
+.Ed
+.Pp
+These callbacks are used by
+.Nm
+each time
+.Fn nvmm_assist_io
+or
+.Fn nvmm_assist_mem
+are invoked.
+VMM software that does not intend to use either of these assists can put
+NULL in the callbacks.
 .Ss I/O Assist
 When a VM exit occurs with reason
 .Cd NVMM_EXIT_IO ,
