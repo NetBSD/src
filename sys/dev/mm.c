@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.23 2018/12/05 18:16:51 christos Exp $	*/
+/*	$NetBSD: mm.c,v 1.24 2019/02/05 11:33:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.23 2018/12/05 18:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.24 2019/02/05 11:33:13 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -359,10 +359,11 @@ mm_readwrite(dev_t dev, struct uio *uio, int flags)
 			if (uio->uio_rw == UIO_WRITE) {
 				return ENOSPC;
 			}
-			/*FALLTHROUGH*/
 #if defined(COMPAT_16) && defined(__arm)
+			/* FALLTHROUGH */
 		case _DEV_ZERO_oARM:
 #endif
+		/* FALLTHROUGH */
 		case DEV_ZERO:
 			error = dev_zero_readwrite(uio, iov);
 			break;
