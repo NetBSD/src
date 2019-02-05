@@ -1,4 +1,4 @@
-.\"	$NetBSD: en.4,v 1.14 2017/08/01 11:11:17 wiz Exp $
+.\"	$NetBSD: en.4,v 1.15 2019/02/05 06:17:00 msaitoh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)en.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd February 5, 2019
 .Dt EN 4 vax
 .Os
 .Sh NAME
@@ -85,21 +85,6 @@ the two's complement of the value).
 Use the value calculated in step 3 to delay before retransmitting
 the packet.
 .El
-The interface handles both Internet and
-.Tn NS
-protocol families.
-It normally tries to use a
-.Dq trailer
-encapsulation
-to minimize copying data on input and output.
-The use of trailers is negotiated with
-.Tn ARP .
-This negotiation may be disabled, on a per-interface basis,
-by setting the
-.Dv IFF_NOTRAILERS
-flag with an
-.Dv SIOCSIFFLAGS
-.Xr ioctl 2 .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It en%d: output error.

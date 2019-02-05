@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.88 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.88 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -188,8 +188,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	ifp->if_start = mb86960_start;
 	ifp->if_ioctl = mb86960_ioctl;
 	ifp->if_watchdog = mb86960_watchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 #if FE_DEBUG >= 3

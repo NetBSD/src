@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.30 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.31 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.30 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.31 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -219,7 +219,7 @@ ec_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = ec_ioctl;
 	ifp->if_init = ec_init;
 	ifp->if_watchdog = ec_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 
         /* Initialize ifmedia structures. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.85 2019/01/22 03:42:27 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.86 2019/02/05 06:17:03 msaitoh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.85 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.86 2019/02/05 06:17:03 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -210,8 +210,7 @@ xi_attach(struct xi_softc *sc, uint8_t *myea)
 	ifp->if_start = xi_start;
 	ifp->if_ioctl = xi_ioctl;
 	ifp->if_watchdog = xi_watchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_NOTRAILERS | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* 802.1q capability */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.113 2019/01/22 03:42:26 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.114 2019/02/05 06:17:02 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.113 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.114 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -534,8 +534,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	/* Initialize ifnet structure. */
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
 #if 0
 	/*

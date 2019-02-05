@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.61 2019/02/03 03:19:27 mrg Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.62 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.61 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.62 2019/02/05 06:17:02 msaitoh Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -470,9 +470,6 @@ pdq_ifioctl(
     return error;
 }
 
-#ifndef IFF_NOTRAILERS
-#define	IFF_NOTRAILERS	0
-#endif
 
 void
 pdq_ifattach(
@@ -481,7 +478,7 @@ pdq_ifattach(
 {
     struct ifnet *ifp = &sc->sc_if;
 
-    ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+    ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
 #if (defined(__FreeBSD__) && BSD >= 199506) || defined(__NetBSD__)
     ifp->if_watchdog = pdq_ifwatchdog;

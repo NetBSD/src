@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.103 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.104 2019/02/05 06:17:02 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.103 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.104 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -308,8 +308,7 @@ iyattach(device_t parent, device_t self, void *aux)
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iystart;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS
-	    | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
 	sc->doing_mc_setup = 0;
 

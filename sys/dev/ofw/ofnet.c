@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.61 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.62 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.61 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.62 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -132,7 +132,7 @@ ofnet_attach(device_t parent, device_t self, void *aux)
 	ifp->if_start = ofnet_start;
 	ifp->if_ioctl = ofnet_ioctl;
 	ifp->if_watchdog = ofnet_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);

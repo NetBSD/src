@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.54 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: lance.c,v 1.55 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.54 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.55 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,8 +175,7 @@ lance_config(struct lance_softc *sc)
 	ifp->if_watchdog = lance_watchdog;
 	ifp->if_init = lance_init;
 	ifp->if_stop = lance_stop;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef LANCE_REVC_BUG
 	ifp->if_flags &= ~IFF_MULTICAST;
 #endif

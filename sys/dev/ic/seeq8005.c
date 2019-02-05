@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.60 2018/09/03 16:29:31 riastradh Exp $ */
+/* $NetBSD: seeq8005.c,v 1.61 2019/02/05 06:17:02 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.60 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.61 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	ifp->if_init = ea_init;
 	ifp->if_stop = ea_stop;
 	ifp->if_watchdog = ea_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	if (sc->sc_variant == SEEQ_8004)
 		ifp->if_flags |= IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);

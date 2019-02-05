@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.23 2019/01/22 03:42:24 msaitoh Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.23 2019/01/22 03:42:24 msaitoh Exp $	*/
+/*	$Id: at91emac.c,v 1.24 2019/02/05 06:17:00 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.24 2019/02/05 06:17:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.23 2019/01/22 03:42:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.24 2019/02/05 06:17:00 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -479,7 +479,7 @@ emac_init(struct emac_softc *sc)
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
         strcpy(ifp->if_xname, device_xname(sc->sc_dev));
-        ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
         ifp->if_ioctl = emac_ifioctl;
         ifp->if_start = emac_ifstart;
         ifp->if_watchdog = emac_ifwatchdog;

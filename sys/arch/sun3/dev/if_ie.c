@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.66 2018/09/03 16:29:28 riastradh Exp $ */
+/*	$NetBSD: if_ie.c,v 1.67 2019/02/05 06:17:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.66 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.67 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -343,8 +343,7 @@ ie_attach(struct ie_softc *sc)
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
 	/* Attach the interface. */
 	if_attach(ifp);
