@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.4 2019/02/05 00:21:35 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.4 2019/02/05 00:21:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -222,29 +222,6 @@ struct sunxi_mixer_softc {
 #define	to_sunxi_mixer_crtc(x)		container_of(x, struct sunxi_mixer_crtc, base)
 #define	to_sunxi_mixer_overlay(x)	container_of(x, struct sunxi_mixer_overlay, base)
 
-static void
-sunxi_mixer_destroy(struct drm_crtc *crtc)
-{
-	drm_crtc_cleanup(crtc);
-}
-
-static const struct drm_crtc_funcs sunxi_mixer_crtc_funcs = {
-	.set_config = drm_crtc_helper_set_config,
-	.destroy = sunxi_mixer_destroy,
-};
-
-static void
-sunxi_mixer_dpms(struct drm_crtc *crtc, int mode)
-{
-}
-
-static bool
-sunxi_mixer_mode_fixup(struct drm_crtc *crtc,
-    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
-{
-	return true;
-}
-
 static int
 sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
     int x, int y, int atomic)
@@ -265,6 +242,54 @@ sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	OVL_UI_WRITE(sc, OVL_UI_TOP_LADD(0), laddr);
 
 	return 0;
+}
+
+static void
+sunxi_mixer_destroy(struct drm_crtc *crtc)
+{
+	drm_crtc_cleanup(crtc);
+}
+
+static int
+sunxi_mixer_page_flip(struct drm_crtc *crtc, struct drm_framebuffer *fb,
+    struct drm_pending_vblank_event *event, uint32_t flags)
+{
+	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
+	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
+	unsigned long irqflags;
+
+	drm_crtc_wait_one_vblank(crtc);
+
+	sunxi_mixer_mode_do_set_base(crtc, fb, 0, 0, true);
+
+	/* Commit settings */
+	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
+
+	if (event) {
+		spin_lock_irqsave(&crtc->dev->event_lock, irqflags);
+		drm_send_vblank_event(crtc->dev, drm_crtc_index(crtc), event);
+		spin_unlock_irqrestore(&crtc->dev->event_lock, irqflags);
+	}
+
+	return 0;
+}
+
+static const struct drm_crtc_funcs sunxi_mixer_crtc_funcs = {
+	.set_config = drm_crtc_helper_set_config,
+	.page_flip = sunxi_mixer_page_flip,
+	.destroy = sunxi_mixer_destroy,
+};
+
+static void
+sunxi_mixer_dpms(struct drm_crtc *crtc, int mode)
+{
+}
+
+static bool
+sunxi_mixer_mode_fixup(struct drm_crtc *crtc,
+    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+{
+	return true;
 }
 
 static int
