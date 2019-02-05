@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1099 2019/02/04 00:34:12 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1100 2019/02/05 04:47:59 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -320,7 +320,7 @@ TOOL_CXX.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-p++
 #
 DESTDIR?=
 
-# Don't append another copy of sysroot (coming from COMPATCPPFLAGS etc.
+# Don't append another copy of sysroot (coming from COMPATCPPFLAGS etc.)
 # because it confuses Coverity. Still we need to cov-configure specially
 # for each specific sysroot argument.
 .if !defined(HOSTPROG) && !defined(HOSTLIB)
@@ -627,7 +627,9 @@ OBJECT_FMTS=
 OBJECT_FMTS+=	elf32
 .endif
 .if	${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH:M*64*} != ""
+. if !(${MKCOMPAT:Uno} == "no" && ${MACHINE_CPU} == "mips")
 OBJECT_FMTS+=	elf64
+. endif
 .endif
 
 # OBJCOPY flags to create a.out binaries for old firmware
