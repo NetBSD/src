@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.10 2019/02/05 19:42:31 christos Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.11 2019/02/05 23:28:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -40,10 +40,80 @@
 
 #include "rf_raid.h"
 #include "rf_compat80.h"
-#include "rf_compat80_mod.h"
 #include "rf_kintf.h"
 
-int
+/* NetBSD 8.99.x removed the row, raidPtr and next members */
+struct rf_recon_req80 {
+	RF_RowCol_t row, col;
+	RF_ReconReqFlags_t flags;
+	void   *raidPtr;	/* used internally; need not be set at ioctl
+				 * time */
+	struct rf_recon_req *next;	/* used internally; need not be set at
+					 * ioctl time */
+};
+
+/* NetBSD 8.99.x made this structure alignment neutral */
+typedef struct RF_RaidDisk_s80 {
+        char    devname[56];    /* name of device file */
+        RF_DiskStatus_t status; /* whether it is up or down */
+        RF_RowCol_t spareRow;   /* if in status "spared", this identifies the
+                                 * spare disk */
+        RF_RowCol_t spareCol;   /* if in status "spared", this identifies the
+                                 * spare disk */
+        RF_SectorCount_t numBlocks;     /* number of blocks, obtained via READ
+                                         * CAPACITY */
+        int     blockSize;
+        RF_SectorCount_t partitionSize; /* The *actual* and *full* size of
+                                           the partition, from the disklabel */
+        int     auto_configured;/* 1 if this component was autoconfigured.
+                                   0 otherwise. */
+        dev_t   dev;
+} RF_RaidDisk_t80;
+
+typedef struct RF_DeviceConfig_s80 {
+	u_int   rows;
+	u_int   cols;
+	u_int   maxqdepth;
+	int     ndevs;
+	RF_RaidDisk_t80 devs[RF_MAX_DISKS];
+	int     nspares;
+	RF_RaidDisk_t80 spares[RF_MAX_DISKS];
+} RF_DeviceConfig_t80;
+
+typedef struct RF_Config_s80 {
+	RF_RowCol_t numRow, numCol, numSpare;	/* number of rows, columns,
+						 * and spare disks */
+	dev_t   devs[RF_MAXROW][RF_MAXCOL];	/* device numbers for disks
+						 * comprising array */
+	char    devnames[RF_MAXROW][RF_MAXCOL][50];	/* device names */
+	dev_t   spare_devs[RF_MAXSPARE];	/* device numbers for spare
+						 * disks */
+	char    spare_names[RF_MAXSPARE][50];	/* device names */
+	RF_SectorNum_t sectPerSU;	/* sectors per stripe unit */
+	RF_StripeNum_t SUsPerPU;/* stripe units per parity unit */
+	RF_StripeNum_t SUsPerRU;/* stripe units per reconstruction unit */
+	RF_ParityConfig_t parityConfig;	/* identifies the RAID architecture to
+					 * be used */
+	RF_DiskQueueType_t diskQueueType;	/* 'f' = fifo, 'c' = cvscan,
+						 * not used in kernel */
+	char    maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
+					 * disk.  not used in kernel. */
+	char    debugVars[RF_MAXDBGV][50];	/* space for specifying debug
+						 * variables & their values */
+	unsigned int layoutSpecificSize;	/* size in bytes of
+						 * layout-specific info */
+	void   *layoutSpecific;	/* a pointer to a layout-specific structure to
+				 * be copied in */
+	int     force;                          /* if !0, ignore many fatal
+						   configuration conditions */
+	/*
+	   "force" is used to override cases where the component labels would
+	   indicate that configuration should not proceed without user
+	   intervention
+	 */
+} RF_Config_t80;
+
+static int
 rf_check_recon_status_ext80(RF_Raid_t *raidPtr, void *data)
 {
 	RF_ProgressInfo_t info, **infoPtr = data;
@@ -52,7 +122,7 @@ rf_check_recon_status_ext80(RF_Raid_t *raidPtr, void *data)
 	return copyout(&info, *infoPtr, sizeof info);
 }
 
-int
+static int
 rf_check_parityrewrite_status_ext80(RF_Raid_t *raidPtr, void *data)
 {
 	RF_ProgressInfo_t info, **infoPtr = data;
@@ -61,7 +131,7 @@ rf_check_parityrewrite_status_ext80(RF_Raid_t *raidPtr, void *data)
 	return copyout(&info, *infoPtr, sizeof info);
 }
 
-int
+static int
 rf_check_copyback_status_ext80(RF_Raid_t *raidPtr, void *data)
 {
 	RF_ProgressInfo_t info, **infoPtr = data;
@@ -87,7 +157,7 @@ rf_copy_raiddisk80(RF_RaidDisk_t *disk, RF_RaidDisk_t80 *disk80)
 	disk80->dev = disk->dev;
 }
 
-int
+static int
 rf_get_info80(RF_Raid_t *raidPtr, void *data)
 {
 	RF_DeviceConfig_t *config;
@@ -124,7 +194,7 @@ rf_get_info80(RF_Raid_t *raidPtr, void *data)
 	return rv;
 }
 
-int
+static int
 rf_get_component_label80(RF_Raid_t *raidPtr, void *data)
 {
 	RF_ComponentLabel_t **clabel_ptr = (RF_ComponentLabel_t **)data;
@@ -151,17 +221,18 @@ rf_get_component_label80(RF_Raid_t *raidPtr, void *data)
 	return retcode;
 }
 
-int
-rf_config80(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
+static int
+rf_config80(struct raid_softc *rs, void *data)
 {
 	RF_Config_t80 *u80_cfg, *k80_cfg;
 	RF_Config_t *k_cfg;
+	RF_Raid_t *raidPtr = rf_get_raid(rs);
 	size_t i, j;
 	int error;
 
 	if (raidPtr->valid) {
 		/* There is a valid RAID set running on this unit! */
-		printf("raid%d: Device already configured!\n", unit);
+		printf("raid%d: Device already configured!\n", rf_get_unit(rs));
 		return EINVAL;
 	}
 
@@ -218,8 +289,7 @@ rf_config80(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	k_cfg->force = k80_cfg->force;
 
 	RF_Free(k80_cfg, sizeof(RF_Config_t80));
-	*k_cfgp = k_cfg;
-	return 0;
+	return rf_construct(rs, k_cfg);
 }
 
 static int
@@ -232,11 +302,10 @@ rf_fail_disk80(RF_Raid_t *raidPtr, struct rf_recon_req80 *req80)
 	return rf_fail_disk(raidPtr, &req);
 }
 
-int
-raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
-    void *data, RF_Config_t **k_cfg)  
+static int
+raidframe_ioctl_80(struct raid_softc *rs, u_long cmd, void *data)
 {
-	int error;
+	RF_Raid_t *raidPtr = rf_get_raid(rs);
  
 	switch (cmd) {
 	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
@@ -244,7 +313,7 @@ raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
 	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
 	case RAIDFRAME_GET_INFO80:
 	case RAIDFRAME_GET_COMPONENT_LABEL80:
-		if (initted == 0)
+		if (!rf_inited(rs))
 			return ENXIO;
 		break;
 	case RAIDFRAME_CONFIGURE80:
@@ -266,10 +335,7 @@ raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
 	case RAIDFRAME_GET_COMPONENT_LABEL80:
 		return rf_get_component_label80(raidPtr, data);
 	case RAIDFRAME_CONFIGURE80:
-		error = rf_config80(raidPtr, unit, data, k_cfg);
-		if (error != 0)
-			return error;
-		return EAGAIN;  /* flag mainline to call generic config */ 
+		return rf_config80(rs, data);
 	case RAIDFRAME_FAIL_DISK80:
 		return rf_fail_disk80(raidPtr, data);
 	default:
