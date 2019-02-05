@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.49 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.49 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -320,7 +320,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 	ifp->if_start = sq_start;
 	ifp->if_ioctl = sq_ioctl;
 	ifp->if_watchdog = sq_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.46 2018/06/26 06:47:57 msaitoh Exp $ */
+/*	$NetBSD: if_qn.c,v 1.47 2019/02/05 06:17:00 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.46 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.47 2019/02/05 06:17:00 msaitoh Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -230,7 +230,7 @@ qnattach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = qnwatchdog;
 	ifp->if_start = qnstart;
 	/* XXX IFF_MULTICAST */
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	ifp->if_mtu = ETHERMTU;
 
 	/* Attach the interface. */

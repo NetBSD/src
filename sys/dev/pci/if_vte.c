@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.22 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.23 2019/02/05 06:17:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.22 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.23 2019/02/05 06:17:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	sc->vte_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
         strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
-        ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
         ifp->if_ioctl = vte_ifioctl;
         ifp->if_start = vte_ifstart;
         ifp->if_watchdog = vte_ifwatchdog;

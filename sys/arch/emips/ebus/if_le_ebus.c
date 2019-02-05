@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.16 2018/06/26 06:47:58 msaitoh Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.17 2019/02/05 06:17:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.16 2018/06/26 06:47:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.17 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -190,8 +190,7 @@ enic_attach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = enic_watchdog;
 	ifp->if_init = enic_init;
 	ifp->if_stop = enic_stop;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */

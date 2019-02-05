@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.79 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.80 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.79 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.80 2019/02/05 06:17:02 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -242,8 +242,7 @@ i82586_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr,
 	ifp->if_init = i82586_init;
 	ifp->if_stop = i82586_stop;
 	ifp->if_watchdog = i82586_watchdog;
-	ifp->if_flags =
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
         /* Initialize media goo. */

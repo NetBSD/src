@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.28 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.29 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.28 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.29 2019/02/05 06:17:02 msaitoh Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -270,7 +270,7 @@ mb86950_config(struct mb86950_softc *sc, int *media,
 	ifp->if_start = mb86950_start;
 	ifp->if_ioctl = mb86950_ioctl;
 	ifp->if_watchdog = mb86950_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 
 	IFQ_SET_READY(&ifp->if_snd);
 

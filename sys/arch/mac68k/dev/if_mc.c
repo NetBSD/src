@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.48 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.49 2019/02/05 06:17:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.48 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.49 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -151,8 +151,7 @@ mcsetup(struct mc_softc	*sc, u_int8_t *lladdr)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = mcioctl;
 	ifp->if_start = mcstart;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = mcwatchdog;
 
 	if_attach(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.15 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.16 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -435,8 +435,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	ifp->if_ioctl = dme_ioctl;
 	ifp->if_stop = dme_stop;
 	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS | IFF_BROADCAST |
-			IFF_MULTICAST;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */

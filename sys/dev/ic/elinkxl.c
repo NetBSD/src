@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.126 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.127 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.126 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.127 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,8 +404,7 @@ ex_config(struct ex_softc *sc)
 	ifp->if_watchdog = ex_watchdog;
 	ifp->if_init = ex_init;
 	ifp->if_stop = ex_stop;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
 	IFQ_SET_READY(&ifp->if_snd);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.42 2018/06/26 06:47:57 msaitoh Exp $ */
+/* $NetBSD: if_ie.c,v 1.43 2019/02/05 06:17:00 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.42 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.43 2019/02/05 06:17:00 msaitoh Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -447,7 +447,7 @@ ieattach(device_t parent, device_t self, void *aux)
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST;
 	
 	/* Signed, dated then sent */
         if_attach (ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.27 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.28 2019/02/05 06:17:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.27 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.28 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -220,8 +220,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_init	= smap_init;
 	ifp->if_stop	= smap_stop;
 	ifp->if_watchdog= smap_watchdog;
-	ifp->if_flags	= IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
-	    IFF_MULTICAST;
+	ifp->if_flags	= IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* ifmedia setup. */

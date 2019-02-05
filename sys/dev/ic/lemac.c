@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.49 2018/06/26 06:48:00 msaitoh Exp $ */
+/* $NetBSD: lemac.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.49 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.50 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -985,11 +985,7 @@ lemac_ifattach(
     ifp->if_start = lemac_ifstart;
     ifp->if_ioctl = lemac_ifioctl;
 
-    ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX
-#ifdef IFF_NOTRAILERS
-	| IFF_NOTRAILERS
-#endif
-	| IFF_MULTICAST;
+    ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
     if (sc->sc_flags & LEMAC_ALIVE) {
 	int media;

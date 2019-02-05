@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.91 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.92 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.91 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.92 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -126,8 +126,7 @@ dp8390_config(struct dp8390_softc *sc)
 	ifp->if_ioctl = dp8390_ioctl;
 	if (ifp->if_watchdog == NULL)
 		ifp->if_watchdog = dp8390_watchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Print additional info when attached. */

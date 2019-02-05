@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.95 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.96 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.95 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.96 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -452,7 +452,7 @@ egattach(device_t parent, device_t self, void *aux)
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Now we can attach the interface. */

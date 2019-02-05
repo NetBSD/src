@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.98 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.99 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.98 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.99 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -300,8 +300,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 	ifp->if_start = smc91cxx_start;
 	ifp->if_ioctl = smc91cxx_ioctl;
 	ifp->if_watchdog = smc91cxx_watchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.51 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: tropic.c,v 1.52 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.51 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.52 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -329,7 +329,7 @@ tr_attach(struct tr_softc *sc)
 		ifp->if_start = tr_start;
 	else
 		ifp->if_start = tr_oldstart;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST;
 	ifp->if_watchdog = tr_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 

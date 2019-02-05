@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.39 2019/01/22 03:42:25 msaitoh Exp $	*/
+/*	$NetBSD: epe.c,v 1.40 2019/02/05 06:17:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.39 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.40 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -429,7 +429,7 @@ epe_init(struct epe_softc *sc)
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
         strcpy(ifp->if_xname, device_xname(sc->sc_dev));
-        ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+        ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
         ifp->if_ioctl = epe_ifioctl;
         ifp->if_start = epe_ifstart;
         ifp->if_watchdog = epe_ifwatchdog;

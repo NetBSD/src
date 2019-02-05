@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.28 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.29 2019/02/05 06:17:01 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.28 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.29 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -361,8 +361,7 @@ netdock_setup(struct netdock_softc *sc, u_int8_t *lladdr)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = netdock_ioctl;
 	ifp->if_start = netdock_start;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_watchdog = netdock_watchdog;
 
 	if_attach(ifp);

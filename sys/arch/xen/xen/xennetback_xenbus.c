@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.73 2018/12/24 14:55:42 cherry Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.74 2019/02/05 06:17:02 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.73 2018/12/24 14:55:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.74 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -298,8 +298,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
 	xneti->xni_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
-	ifp->if_flags =
-	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
 	    uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;

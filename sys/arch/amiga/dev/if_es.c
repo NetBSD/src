@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.60 2018/09/03 16:29:22 riastradh Exp $ */
+/*	$NetBSD: if_es.c,v 1.61 2019/02/05 06:17:00 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.60 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.61 2019/02/05 06:17:00 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -174,8 +174,7 @@ esattach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
 	ifp->if_watchdog = eswatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
-	    IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
 	ifmedia_init(&sc->sc_media, 0, esmediachange, esmediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);

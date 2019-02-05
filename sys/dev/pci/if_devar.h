@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.61 2019/01/08 06:17:40 msaitoh Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.62 2019/02/05 06:17:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -942,7 +942,6 @@ static tulip_softc_t *tulips[TULIP_MAX_DEVICES];
 #define TULIP_IFP_TO_SOFTC(ifp) ((tulip_softc_t *)((ifp)->if_softc))
 #define	tulip_intrfunc_t	void
 #define	TULIP_VOID_INTRFUNC
-#define	IFF_NOTRAILERS		0
 #define	CLBYTES			PAGE_SIZE
 #if 0
 #define	TULIP_KVATOPHYS(sc, va)	kvtop(va)

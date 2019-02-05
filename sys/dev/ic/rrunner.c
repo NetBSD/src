@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.88 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.88 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.89 2019/02/05 06:17:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -405,7 +405,7 @@ eshconfig(struct esh_softc *sc)
 	ifp->if_start = eshstart;
 	ifp->if_ioctl = eshioctl;
 	ifp->if_watchdog = eshwatchdog;
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS | IFF_NOARP;
+	ifp->if_flags = IFF_SIMPLEX | IFF_NOARP;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);

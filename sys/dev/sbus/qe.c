@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.70 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: qe.c,v 1.71 2019/02/05 06:17:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.70 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.71 2019/02/05 06:17:03 msaitoh Exp $");
 
 #define QEDEBUG
 
@@ -300,8 +300,7 @@ qeattach(device_t parent, device_t self, void *aux)
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
 	ifp->if_watchdog = qewatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
-	    IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */

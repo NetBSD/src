@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.157 2019/01/08 06:17:40 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.158 2019/02/05 06:17:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.157 2019/01/08 06:17:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.158 2019/02/05 06:17:03 msaitoh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5007,16 +5007,13 @@ tulip_ifwatchdog_wrapper(int unit)
 #ifdef printf
 #undef printf
 #endif
-#if !defined(IFF_NOTRAILERS)
-#define IFF_NOTRAILERS		0
-#endif
 
 static void
 tulip_attach(tulip_softc_t * const sc)
 {
 	struct ifnet * const ifp = &sc->tulip_if;
 
-	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = tulip_ifioctl;
 	ifp->if_start = tulip_ifstart;
 	ifp->if_watchdog = tulip_ifwatchdog;

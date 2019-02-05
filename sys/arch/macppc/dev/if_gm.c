@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.51 2019/01/22 03:42:25 msaitoh Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.52 2019/02/05 06:17:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.51 2019/01/22 03:42:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.52 2019/02/05 06:17:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -226,8 +226,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = gmac_ioctl;
 	ifp->if_start = gmac_start;
 	ifp->if_watchdog = gmac_watchdog;
-	ifp->if_flags =
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	mii->mii_ifp = ifp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.101 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: hme.c,v 1.102 2019/02/05 06:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.101 2019/01/22 03:42:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.102 2019/02/05 06:17:02 msaitoh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -232,8 +232,7 @@ hme_config(struct hme_softc *sc)
 	ifp->if_ioctl = hme_ioctl;
 	ifp->if_init = hme_init;
 	ifp->if_watchdog = hme_watchdog;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_capabilities |=
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |

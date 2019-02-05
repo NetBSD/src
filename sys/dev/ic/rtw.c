@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.129 2019/02/03 03:19:27 mrg Exp $ */
+/* $NetBSD: rtw.c,v 1.130 2019/02/05 06:17:02 msaitoh Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.129 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.130 2019/02/05 06:17:02 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -3817,8 +3817,7 @@ rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 {
 	(void)strlcpy(ifp->if_xname, dvname, IFNAMSIZ);
 	ifp->if_softc = softc;
-	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST |
-	    IFF_NOTRAILERS;
+	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_ioctl = rtw_ioctl;
 	ifp->if_start = rtw_start;
 	ifp->if_watchdog = rtw_watchdog;

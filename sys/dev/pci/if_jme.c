@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.37 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.38 2019/02/05 06:17:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.37 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.38 2019/02/05 06:17:03 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -481,7 +481,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 
 
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
-	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = jme_ifioctl;
 	ifp->if_start = jme_ifstart;
 	ifp->if_watchdog = jme_ifwatchdog;
