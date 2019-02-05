@@ -1,4 +1,4 @@
-$NetBSD: README.gcc7,v 1.6 2019/02/05 11:44:18 mrg Exp $
+$NetBSD: README.gcc7,v 1.7 2019/02/05 12:08:12 mrg Exp $
 
 new stuff (from gcc 5):
 	cc1objcplus
@@ -54,7 +54,7 @@ mipsel		y	?	?	y		?		?	?
 mips64eb	y	y	y	y		y		y	?
 mips64el	y	?	?	y		?		?	?
 powerpc		y	y	y	y		y		y	?
-powerpc64	n[9]	?	?	?		?		?	?
+powerpc64	y	?	y	y		?		?	?
 sh3eb		y	?	y	y		?		?	?
 sh3el		y	?	y	y		?		?	?
 sparc		y	y	y	y		y		y	?
@@ -89,6 +89,3 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [6] - uncommited changes that need confirming.
 [7] - ramdisk fails:  32,nbmakefs: Writing inode 1562 (work/./usr/mdec/boot), bytes 229376 + 4096: No space left on device
 [8] - ramdisk fails:  32,nbmakefs: Writing inode 1026 (work/./usr/share/zoneinfo/US/Alaska), bytes 0 + 2380: No space left on device
-[9] - gcc doesn't build:
-	/usr/src6/tools/gcc/../../external/gpl3/gcc/dist/gcc/stor-layout.c:722:29: error: macro "ADJUST_FIELD_ALIGN" passed 3 arguments, but takes just 2
-
