@@ -44,7 +44,13 @@ extern "C" {
 
 void zfsctl_create(zfsvfs_t *);
 void zfsctl_destroy(zfsvfs_t *);
+#ifdef __NetBSD__
+int zfsctl_loadvnode(vfs_t *, vnode_t *, const void *, size_t, const void **);
+int zfsctl_root(zfsvfs_t *, vnode_t **);
+int zfsctl_snapshot(zfsvfs_t *, vnode_t **);
+#else
 int zfsctl_root(zfsvfs_t *, int, vnode_t **);
+#endif
 void zfsctl_init(void);
 void zfsctl_fini(void);
 boolean_t zfsctl_is_node(vnode_t *);
