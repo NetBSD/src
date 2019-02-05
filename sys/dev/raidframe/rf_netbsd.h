@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.31 2019/02/05 17:13:37 christos Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.32 2019/02/05 23:28:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,5 +104,10 @@ typedef struct RF_ConfigSet_s {
 } RF_ConfigSet_t;
 
 int rf_fail_disk(RF_Raid_t *, struct rf_recon_req *);
+
+int rf_inited(const struct raid_softc *);
+int rf_get_unit(const struct raid_softc *);
+RF_Raid_t *rf_get_raid(struct raid_softc *);
+int rf_construct(struct raid_softc *, RF_Config_t *);
 
 #endif /* _RF__RF_NETBSDSTUFF_H_ */

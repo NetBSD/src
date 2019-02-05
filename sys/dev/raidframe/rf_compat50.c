@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.7 2019/02/03 08:02:24 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.8 2019/02/05 23:28:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 
 #include "rf_raid.h"
 #include "rf_compat50.h"
-#include "rf_compat50_mod.h"
 #include "rf_debugMem.h"
 
 typedef struct RF_Config50_s {
@@ -105,17 +104,18 @@ rf_disk_to_disk50(RF_RaidDisk50_t *d50, const RF_RaidDisk_t *d)
         d50->dev = d->dev;
 }
 
-int
-rf_config50(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
+static int
+rf_config50(struct raid_softc *rs, void *data)
 {
 	RF_Config50_t *u50_cfg, *k50_cfg;
 	RF_Config_t *k_cfg;
+	RF_Raid_t *raidPtr = rf_get_raid(rs);
 	size_t i, j;
 	int error;
 
 	if (raidPtr->valid) {
 		/* There is a valid RAID set running on this unit! */
-		printf("raid%d: Device already configured!\n", unit);
+		printf("raid%d: Device already configured!\n", rf_get_unit(rs));
 		return EINVAL;
 	}
 
@@ -172,11 +172,10 @@ rf_config50(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	k_cfg->force = k50_cfg->force;
 
 	RF_Free(k50_cfg, sizeof(RF_Config50_t));
-	*k_cfgp = k_cfg;
-	return 0;
+	return rf_construct(rs, k_cfg);
 }
 
-int
+static int
 rf_get_info50(RF_Raid_t *raidPtr, void *data)
 {
 	RF_DeviceConfig50_t **ucfgp = data, *d_cfg;
@@ -219,25 +218,22 @@ out:
 	return error;
 }
 
-int
-raidframe_ioctl_50(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
-    void *data, RF_Config_t **k_cfg)
+static int
+raidframe_ioctl_50(struct raid_softc *rs, u_long cmd, void *data)
 {
-	int error;
+	RF_Raid_t *raidPtr = rf_get_raid(rs);
 
 	switch (cmd) {
 	case RAIDFRAME_GET_INFO50:
-		if (initted == 0)
+		if (!rf_inited(rs))
 			return ENXIO;
 		return rf_get_info50(raidPtr, data);
 
 	case RAIDFRAME_CONFIGURE50:
-		error = rf_config50(raidPtr, unit, data, k_cfg);
-		if (error != 0)
-			return error;
-		return EAGAIN;	/* flag mainline to call generic config */
+		return rf_config50(rs, data);
+	default:
+		return EPASSTHROUGH;
 	}
-	return EPASSTHROUGH;
 }
 
 static void
