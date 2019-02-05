@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.142 2018/09/18 06:19:28 mrg Exp $ */
+/* $NetBSD: wskbd.c,v 1.143 2019/02/05 10:04:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.142 2018/09/18 06:19:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.143 2019/02/05 10:04:49 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1547,7 +1547,9 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 			} else {
 				return (0);
 			}
-		}
+		} else
+			update_modifier(sc->id, *type, 0, MOD_COMMAND);
+		break;
 
 	case KS_Cmd_ScrollSlowUp:
 	case KS_Cmd_ScrollSlowDown:
@@ -1566,7 +1568,9 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 			} else {
 				return (0);
 			}
-		}
+		} else
+			update_modifier(sc->id, *type, 0, MOD_COMMAND);
+		break;
 #endif
 
 	case KS_Cmd:
