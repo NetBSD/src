@@ -123,6 +123,12 @@ extern int dot_symbols;
 	      rs6000_isa_flags &= ~OPTION_MASK_RELOCATABLE;	\
 	      error (INVALID_64BIT, "relocatable");		\
 	    }							\
+	  if (ELFv2_ABI_CHECK)					\
+	    {							\
+	      rs6000_current_abi = ABI_ELFv2;			\
+	      if (dot_symbols)					\
+		error ("-mcall-aixdesc incompatible with -mabi=elfv2"); \
+	    }							\
 	  if (rs6000_isa_flags & OPTION_MASK_EABI)		\
 	    {							\
 	      rs6000_isa_flags &= ~OPTION_MASK_EABI;		\
@@ -210,7 +216,7 @@ extern int dot_symbols;
 #endif
 
 #define ASM_SPEC32 "-a32 \
-%{mrelocatable} %{mrelocatable-lib} %{fpic|fpie|fPIC|fPIE:-K PIC} \
+%{mrelocatable} %{mrelocatable-lib} %{" FPIE_OR_FPIC_SPEC ":-K PIC} \
 %{memb|msdata=eabi: -memb}"
 
 #define ASM_SPEC64 "-a64"
@@ -256,15 +262,18 @@ extern int dot_symbols;
 
 #endif
 
+/* Use standard DWARF numbering for DWARF debugging information.  */
+#define RS6000_USE_DWARF_NUMBERING
+
 /* PowerPC64 NetBSD word-aligns FP doubles when -malign-power is given.  */
 #undef  ADJUST_FIELD_ALIGN
-#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED) \
-  ((TARGET_ALTIVEC && TREE_CODE (TREE_TYPE (FIELD)) == VECTOR_TYPE)	\
-   ? 128								\
-   : (TARGET_64BIT							\
-      && TARGET_ALIGN_NATURAL == 0					\
-      && TYPE_MODE (strip_array_types (TREE_TYPE (FIELD))) == DFmode)	\
-   ? MIN ((COMPUTED), 32)						\
+#define ADJUST_FIELD_ALIGN(FIELD, TYPE, COMPUTED) \
+  (rs6000_special_adjust_field_align_p ((TYPE), (COMPUTED))		\
+   ? 128                                                                \
+   : (TARGET_64BIT                                                      \
+      && TARGET_ALIGN_NATURAL == 0                                      \
+      && TYPE_MODE (strip_array_types (TYPE)) == DFmode)   		\
+   ? MIN ((COMPUTED), 32)                                               \
    : (COMPUTED))
 
 /* PowerPC64 NetBSD increases natural record alignment to doubleword if
@@ -391,7 +400,7 @@ extern int dot_symbols;
 #define MINIMAL_TOC_SECTION_ASM_OP \
   (TARGET_64BIT						\
    ? "\t.section\t\".toc1\",\"aw\""			\
-   : ((TARGET_RELOCATABLE || flag_pic)			\
+   : (flag_pic						\
       ? "\t.section\t\".got2\",\"aw\""			\
       : "\t.section\t\".got1\",\"aw\""))
 
@@ -591,7 +600,6 @@ extern int dot_symbols;
 			&& ! TARGET_NO_FP_IN_TOC)))			\
 	       || (!TARGET_64BIT					\
 		   && !TARGET_NO_FP_IN_TOC				\
-		   && !TARGET_RELOCATABLE				\
 		   && SCALAR_FLOAT_MODE_P (GET_MODE (X))		\
 		   && BITS_PER_WORD == HOST_BITS_PER_INT)))))
 
@@ -600,7 +608,7 @@ extern int dot_symbols;
    true if the symbol may be affected by dynamic relocations.  */
 #undef	ASM_PREFERRED_EH_DATA_FORMAT
 #define	ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL) \
-  ((TARGET_64BIT || flag_pic || TARGET_RELOCATABLE)			\
+  (TARGET_64BIT || flag_pic						\
    ? (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel		\
       | (TARGET_64BIT ? DW_EH_PE_udata8 : DW_EH_PE_sdata4))		\
    : DW_EH_PE_absptr)
