@@ -49,7 +49,7 @@
 
 static char iobuf[IO_SIZE];
 
-static uint8_t *databuf;
+static char *databuf;
 static uint8_t *instbuf;
 
 static void
