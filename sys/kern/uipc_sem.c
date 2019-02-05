@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.52 2019/02/03 03:20:23 thorpej Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.53 2019/02/05 07:14:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.52 2019/02/03 03:20:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.53 2019/02/05 07:14:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -840,12 +840,18 @@ ksem_close_fop(file_t *fp)
 {
 	ksem_t *ks = fp->f_ksem;
 
-	if (ks->ks_pshared_id != 0 && ks->ks_pshared_proc != curproc) {
-		/* Do nothing if this is not the creator. */
-		return 0;
+	mutex_enter(&ks->ks_lock);
+
+	if (ks->ks_pshared_id) {
+		if (ks->ks_pshared_proc != curproc) {
+			/* Do nothing if this is not the creator. */
+			mutex_exit(&ks->ks_lock);
+			return 0;
+		}
+		/* Mark this semaphore as dead. */
+		ks->ks_pshared_proc = NULL;
 	}
 
-	mutex_enter(&ks->ks_lock);
 	ksem_release(ks, -1);
 	return 0;
 }
