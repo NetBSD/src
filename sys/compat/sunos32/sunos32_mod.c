@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_mod.c,v 1.4 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: sunos32_mod.c,v 1.5 2019/02/05 00:32:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.4 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.5 2019/02/05 00:32:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.4 2019/01/27 02:08:40 pgoyette Exp
 #include <compat/netbsd32/netbsd32_exec.h>
 
 MODULE(MODULE_CLASS_EXEC, compat_sunos,
-    "compat,compat_util,compat_netbsd32,exec_aout");
+    "compat_09,compat_util,compat_netbsd32,exec_aout");
 
 static struct execsw sunos_execsw = {
 	.es_hdrsz = SUNOS32_AOUT_HDR_SIZE,
