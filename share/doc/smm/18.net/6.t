@@ -1,4 +1,4 @@
-.\"	$NetBSD: 6.t,v 1.5 2003/08/07 10:30:55 agc Exp $
+.\"	$NetBSD: 6.t,v 1.6 2019/02/05 19:53:13 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -447,14 +447,22 @@ The state of an interface and certain characteristics are stored in
 the \fIif_flags\fP field.  The following values are possible:
 .DS
 ._d
-#define	IFF_UP	0x1	/* interface is up */
-#define	IFF_BROADCAST	0x2	/* broadcast is possible */
-#define	IFF_DEBUG	0x4	/* turn on debugging */
-#define	IFF_LOOPBACK	0x8	/* is a loopback net */
-#define	IFF_POINTOPOINT	0x10	/* interface is point-to-point link */
-#define	IFF_NOTRAILERS	0x20	/* avoid use of trailers */
-#define	IFF_RUNNING	0x40	/* resources allocated */
-#define	IFF_NOARP	0x80	/* no address resolution protocol */
+#define	IFF_UP		0x0001		/* interface is up */
+#define	IFF_BROADCAST	0x0002		/* broadcast address valid */
+#define	IFF_DEBUG	0x0004		/* turn on debugging */
+#define	IFF_LOOPBACK	0x0008		/* is a loopback net */
+#define	IFF_POINTOPOINT	0x0010		/* interface is point-to-point link */
+.\" #define	IFF_NOTRAILERS	0x0020		/* avoid use of trailers */
+#define	IFF_RUNNING	0x0040		/* resources allocated */
+#define	IFF_NOARP	0x0080		/* no address resolution protocol */
+#define	IFF_PROMISC	0x0100		/* receive all packets */
+#define	IFF_ALLMULTI	0x0200		/* receive all multicast packets */
+#define	IFF_OACTIVE	0x0400		/* transmission in progress */
+#define	IFF_SIMPLEX	0x0800		/* can't hear own transmissions */
+#define	IFF_LINK0	0x1000		/* per link layer defined bit */
+#define	IFF_LINK1	0x2000		/* per link layer defined bit */
+#define	IFF_LINK2	0x4000		/* per link layer defined bit */
+#define	IFF_MULTICAST	0x8000		/* supports multicast */
 .DE
 If the interface is connected to a network which supports transmission
 of \fIbroadcast\fP packets, the IFF_BROADCAST flag will be set and
@@ -467,12 +475,14 @@ and the local address of the interface, \fIif_addr\fP, are used in
 filtering incoming packets.  The interface sets IFF_RUNNING after
 it has allocated system resources and posted an initial read on the
 device it manages.  This state bit is used to avoid multiple allocation
-requests when an interface's address is changed.  The IFF_NOTRAILERS
-flag indicates the interface should refrain from using a \fItrailer\fP
-encapsulation on outgoing packets, or (where per-host negotiation
-of trailers is possible) that trailer encapsulations should not be requested;
-\fItrailer\fP protocols are described
-in section 14.  The IFF_NOARP flag indicates the interface should not
+requests when an interface's address is changed.
+.\" The IFF_NOTRAILERS
+.\" flag indicates the interface should refrain from using a \fItrailer\fP
+.\" encapsulation on outgoing packets, or (where per-host negotiation
+.\" of trailers is possible) that trailer encapsulations should not be
+.\" requested; \fItrailer\fP protocols are described
+.\" in section 14.
+The IFF_NOARP flag indicates the interface should not
 use an ``address resolution protocol'' in mapping internetwork addresses
 to local network addresses.
 .PP
