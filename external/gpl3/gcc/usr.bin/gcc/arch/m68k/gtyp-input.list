@@ -20,7 +20,10 @@ SRCDIR/gcc/../include/splay-tree.h
 SRCDIR/gcc/bitmap.h
 SRCDIR/gcc/wide-int.h
 SRCDIR/gcc/alias.h
+SRCDIR/gcc/cilk.h
+SRCDIR/gcc/cilk-common.c
 SRCDIR/gcc/coverage.c
+
 SRCDIR/gcc/rtl.h
 SRCDIR/gcc/optabs.h
 SRCDIR/gcc/tree.h
@@ -67,6 +70,7 @@ SRCDIR/gcc/expr.c
 SRCDIR/gcc/expr.h
 SRCDIR/gcc/function.c
 SRCDIR/gcc/except.c
+SRCDIR/gcc/ggc-tests.c
 SRCDIR/gcc/gcse.c
 SRCDIR/gcc/godump.c
 SRCDIR/gcc/lists.c
@@ -95,8 +99,10 @@ SRCDIR/gcc/tree-scalar-evolution.c
 SRCDIR/gcc/tree-ssa-operands.h
 SRCDIR/gcc/tree-profile.c
 SRCDIR/gcc/tree-nested.c
+SRCDIR/gcc/omp-offload.h
+SRCDIR/gcc/omp-offload.c
+SRCDIR/gcc/omp-expand.c
 SRCDIR/gcc/omp-low.c
-SRCDIR/gcc/omp-low.h
 SRCDIR/gcc/targhooks.c
 SRCDIR/gcc/config/m68k/m68k.c
 SRCDIR/gcc/passes.c
@@ -105,6 +111,7 @@ SRCDIR/gcc/cgraphclones.c
 SRCDIR/gcc/tree-phinodes.c
 SRCDIR/gcc/tree-ssa-alias.h
 SRCDIR/gcc/tree-ssanames.h
+SRCDIR/gcc/tree-vrp.h
 SRCDIR/gcc/ipa-prop.h
 SRCDIR/gcc/trans-mem.c
 SRCDIR/gcc/lto-streamer.h
@@ -118,7 +125,11 @@ SRCDIR/gcc/sanopt.c
 SRCDIR/gcc/sancov.c
 SRCDIR/gcc/ipa-devirt.c
 SRCDIR/gcc/internal-fn.h
-SRCDIR/gcc/hsa.c
+SRCDIR/gcc/hsa-common.c
+SRCDIR/gcc/calls.c
+[brig]
+SRCDIR/gcc/brig/brig-lang.c
+SRCDIR/gcc/brig/brig-c.h
 [c]
 SRCDIR/gcc/c/c-lang.c
 SRCDIR/gcc/c/c-tree.h
@@ -130,6 +141,7 @@ SRCDIR/gcc/c-family/c-cppbuiltin.c
 SRCDIR/gcc/c-family/c-pragma.h
 SRCDIR/gcc/c-family/c-pragma.c
 SRCDIR/gcc/c/c-objc-common.c
+SRCDIR/gcc/c/c-parser.h
 SRCDIR/gcc/c/c-parser.c
 SRCDIR/gcc/c/c-lang.h
 [cp]
@@ -179,6 +191,7 @@ SRCDIR/gcc/objc/objc-runtime-shared-support.c
 SRCDIR/gcc/objc/objc-gnu-runtime-abi-01.c
 SRCDIR/gcc/objc/objc-next-runtime-abi-01.c
 SRCDIR/gcc/objc/objc-next-runtime-abi-02.c
+SRCDIR/gcc/c/c-parser.h
 SRCDIR/gcc/c/c-parser.c
 SRCDIR/gcc/c/c-tree.h
 SRCDIR/gcc/c/c-decl.c
