@@ -1346,6 +1346,7 @@ void internal_join_thread(void *th) {}
 #endif
 
 #if defined(__aarch64__)
+#if SANITIZER_LINUX
 // Android headers in the older NDK releases miss this definition.
 struct __sanitizer_esr_context {
   struct _aarch64_ctx head;
@@ -1366,6 +1367,11 @@ static bool Aarch64GetESR(ucontext_t *ucontext, u64 *esr) {
   }
   return false;
 }
+#else
+static bool Aarch64GetESR(ucontext_t *ucontext, u64 *esr) {
+  return false;
+}
+#endif
 #endif
 
 SignalContext::WriteFlag SignalContext::GetWriteFlag(void *context) {
