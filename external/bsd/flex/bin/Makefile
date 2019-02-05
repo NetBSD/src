@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.12 2018/12/23 16:27:17 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2019/02/05 07:47:15 mrg Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -70,5 +70,12 @@ scan.c: scan.l
 .endif
 
 scan.o yylex.o: parse.h
+
+# Ugh. Generates too large offsets with -O2.
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+. if ${MACHINE_CPU} == "m68k" && empty(CFLAGS:M-O0)
+COPTS.scan.c+=        -O1
+. endif
+.endif
 
 .include <bsd.prog.mk>
