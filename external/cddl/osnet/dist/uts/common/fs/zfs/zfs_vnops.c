@@ -1929,9 +1929,8 @@ specvp_check(vnode_t **vpp, cred_t *cr)
  */
 /* ARGSUSED */
 static int
-zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct pathname *pnp,
-    int flags, vnode_t *rdir, cred_t *cr, caller_context_t *ct,
-    int *direntflags, pathname_t *realpnp)
+zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, int flags,
+    struct componentname *cnp, int nameiop, cred_t *cr)
 {
 	znode_t *zdp = VTOZ(dvp);
 	znode_t *zp;
@@ -2036,6 +2035,29 @@ zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct pathname *pnp,
 	    NULL, U8_VALIDATE_ENTIRE, &error) < 0) {
 		ZFS_EXIT(zfsvfs);
 		return (EILSEQ);
+	}
+
+	/*
+	 * First handle the special cases.
+	 */
+	if ((cnp->cn_flags & ISDOTDOT) != 0) {
+		/*
+		 * If we are a snapshot mounted under .zfs, return
+		 * the vp for the snapshot directory.
+		 */
+		if (zdp->z_id == zfsvfs->z_root && zfsvfs->z_parent != zfsvfs) {
+			ZFS_EXIT(zfsvfs);
+			error = zfsctl_snapshot(zfsvfs->z_parent, vpp);
+
+			return (error);
+		}
+	}
+	if (zfs_has_ctldir(zdp) && strcmp(nm, ZFS_CTLDIR_NAME) == 0) {
+		ZFS_EXIT(zfsvfs);
+		if ((cnp->cn_flags & ISLASTCN) != 0 && nameiop != LOOKUP)
+			return (SET_ERROR(ENOTSUP));
+		error = zfsctl_root(zfsvfs, vpp);
+		return (error);
 	}
 
 	error = zfs_dirlook(zdp, nm, &zp);
@@ -3047,11 +3069,22 @@ zfs_getattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr,
 #endif
 #ifdef __FreeBSD__
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	vap->va_nodeid = zp->z_id;
 #endif
 #ifdef __NetBSD__
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
-#endif
 	vap->va_nodeid = zp->z_id;
+	/*
+	 * If we are a snapshot mounted under .zfs, return
+	 * the object id of the snapshot to make getcwd happy.
+	 */
+	if (zp->z_id == zfsvfs->z_root && zfsvfs->z_parent != zfsvfs) {
+		vnode_t *cvp = vp->v_mount->mnt_vnodecovered;
+
+		if (cvp && zfsctl_is_node(cvp))
+			vap->va_nodeid = dmu_objset_id(zfsvfs->z_os);
+	}
+#endif
 	if ((vp->v_flag & VROOT) && zfs_show_ctldir(zp))
 		links = zp->z_links + 1;
 	else
@@ -5139,8 +5172,7 @@ zfs_netbsd_lookup(void *v)
 		nm = short_nm;
 	(void)strlcpy(nm, cnp->cn_nameptr, cnp->cn_namelen + 1);
 
-	error = zfs_lookup(dvp, nm, vpp, NULL, 0, NULL, cnp->cn_cred, NULL,
-	    NULL, NULL);
+	error = zfs_lookup(dvp, nm, vpp, 0, cnp, cnp->cn_nameiop, cnp->cn_cred);
 
 	if (nm != short_nm)
 		PNBUF_PUT(nm);

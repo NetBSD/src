@@ -3881,7 +3881,7 @@ zfs_ioc_rename(zfs_cmd_t *zc)
 	char *at;
 	boolean_t allow_mounted = B_TRUE;
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 	allow_mounted = (zc->zc_cookie & 2) != 0;
 #endif
 

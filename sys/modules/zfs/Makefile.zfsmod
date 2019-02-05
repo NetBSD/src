@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfsmod,v 1.8 2018/08/18 11:57:57 christos Exp $
+#	$NetBSD: Makefile.zfsmod,v 1.9 2019/02/05 09:54:36 hannken Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -112,10 +112,6 @@ SRCS+=	zrlock.c
 #SRCS+=	zutil.c
 SRCS+=	zvol.c
 SRCS+= 	zfs_acl.c
-
-.PATH: ${ZFSDIR}/sys/kern
-
-SRCS+=	zfs_stub.c
 
 WARNS=		0
 

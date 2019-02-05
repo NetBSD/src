@@ -54,6 +54,7 @@
 #include <sys/kidmap.h>
 
 #ifdef __NetBSD__
+#include <sys/zfs_ctldir.h>
 #include <miscfs/specfs/specdev.h>
 
 extern int (**zfs_vnodeop_p)(void *);
@@ -835,7 +836,9 @@ zfs_loadvnode(struct mount *mp, struct vnode *vp,
 	sa_handle_t *hdl;
 	znode_t *zp;
 
-	KASSERT(key_len == sizeof(obj_num));
+	if (key_len != sizeof(obj_num))
+		return zfsctl_loadvnode(mp, vp, key, key_len, new_key);
+
 	memcpy(&obj_num, key, key_len);
 
 	zfsvfs = mp->mnt_data;

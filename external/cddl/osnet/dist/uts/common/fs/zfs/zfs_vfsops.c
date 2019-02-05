@@ -146,9 +146,11 @@ void zfs_init(void);
 void zfs_fini(void);
 
 extern const struct vnodeopv_desc zfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc zfs_sfsop_opv_desc;
 
 static const struct vnodeopv_desc * const zfs_vnodeop_descs[] = {
 	&zfs_vnodeop_opv_desc,
+	&zfs_sfsop_opv_desc,
 	NULL,
 };
 
@@ -185,9 +187,11 @@ zfs_sync_selector(void *cl, struct vnode *vp)
 	znode_t *zp;
 
 	/*
-	 * Skip the vnode/inode if inaccessible, or if the
+	 * Skip the vnode/inode if inaccessible, is control node or if the
 	 * atime is clean.
 	 */
+	if (zfsctl_is_node(vp))
+		return false;
 	zp = VTOZ(vp);
 	return zp != NULL && vp->v_type != VNON && zp->z_atime_dirty != 0
 	    && !zp->z_unlinked;
@@ -1302,7 +1306,11 @@ zfs_set_fuid_feature(zfsvfs_t *zfsvfs)
 	zfsvfs->z_use_sa = USE_SA(zfsvfs->z_version, zfsvfs->z_os);
 }
 
+#ifdef __NetBSD__
+int
+#else
 static int
+#endif
 zfs_domount(vfs_t *vfsp, char *osname)
 {
 	uint64_t recordsize, fsid_guid;

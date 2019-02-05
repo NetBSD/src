@@ -1261,8 +1261,79 @@ zfsctl_umount_snapshots(vfs_t *vfsp, int fflags, cred_t *cr)
 
 #ifdef __NetBSD__
 
+#include <sys/pathname.h>
 #include <sys/zfs_context.h>
 #include <sys/zfs_ctldir.h>
+
+static int (**zfs_sfsop_p)(void *);
+
+static const struct vnodeopv_entry_desc zfs_sfsop_entries[] = {
+	{ &vop_default_desc,		vn_default_error },
+	{ NULL, NULL }
+};
+
+const struct vnodeopv_desc zfs_sfsop_opv_desc =
+	{ &zfs_sfsop_p, zfs_sfsop_entries };
+
+void
+zfsctl_init(void)
+{
+}
+
+void
+zfsctl_fini(void)
+{
+}
+
+int
+zfsctl_loadvnode(vfs_t *vfsp, vnode_t *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+
+	return EINVAL;
+}
+
+int
+zfsctl_root(zfsvfs_t *zfsvfs, vnode_t **znode)
+{
+
+	return ENOENT;
+}
+
+int
+zfsctl_snapshot(zfsvfs_t *zfsvfs, vnode_t **znode)
+{
+
+	return ENOENT;
+}
+
+void
+zfsctl_create(zfsvfs_t *zfsvfs)
+{
+
+	ASSERT(zfsvfs->z_ctldir == NULL);
+}
+
+void
+zfsctl_destroy(zfsvfs_t *zfsvfs)
+{
+
+	ASSERT(zfsvfs->z_ctldir == NULL);
+}
+
+int
+zfsctl_lookup_objset(vfs_t *vfsp, uint64_t objsetid, zfsvfs_t **zfsvfsp)
+{
+
+	return EINVAL;
+}
+
+int
+zfsctl_umount_snapshots(vfs_t *vfsp, int fflags, cred_t *cr)
+{
+
+	return 0;
+}
 
 boolean_t
 zfsctl_is_node(vnode_t *vp)
