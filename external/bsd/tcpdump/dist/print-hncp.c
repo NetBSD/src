@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-hncp.c,v 1.4 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-hncp.c,v 1.5 2019/02/05 07:27:46 mrg Exp $");
 #endif
 
 /* \summary: Home Networking Control Protocol (HNCP) printer */
@@ -177,7 +177,7 @@ format_256(const u_char *data)
     static char buf[4][64+5];
     static int i = 0;
     i = (i + 1) % 4;
-    snprintf(buf[i], 28, "%016" PRIx64 "%016" PRIx64 "%016" PRIx64 "%016" PRIx64,
+    snprintf(buf[i], sizeof buf[i], "%016" PRIx64 "%016" PRIx64 "%016" PRIx64 "%016" PRIx64,
          EXTRACT_64BITS(data),
          EXTRACT_64BITS(data + 8),
          EXTRACT_64BITS(data + 16),
