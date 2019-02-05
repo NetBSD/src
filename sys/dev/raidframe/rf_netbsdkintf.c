@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.363 2019/02/04 21:57:47 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.364 2019/02/05 09:28:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.363 2019/02/04 21:57:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.364 2019/02/05 09:28:00 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -152,7 +152,11 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.363 2019/02/04 21:57:47 mrg Exp
 #include "rf_compat80.h"
 
 #ifdef COMPAT_NETBSD32
+#ifdef _LP64
 #include "rf_compat32.h"
+#define RAID_COMPAT32
+#define RAID_COMPAT32
+#endif
 #endif
 
 #include "ioconf.h"
@@ -1110,7 +1114,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_PARITYMAP_GET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
-#ifdef COMPAT_NETBSD32
+#ifdef RAID_COMPAT32
 	case RAIDFRAME_GET_INFO32:
 #endif
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
@@ -1160,7 +1164,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* configure the system */
 	case RAIDFRAME_CONFIGURE:
-#ifdef COMPAT_NETBSD32
+#ifdef RAID_COMPAT32
 	case RAIDFRAME_CONFIGURE32:
 #endif
 
@@ -1177,7 +1181,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (k_cfg == NULL) {
 			return (ENOMEM);
 		}
-#ifdef COMPAT_NETBSD32
+#ifdef RAID_COMPAT32
 		if (cmd == RAIDFRAME_CONFIGURE32 &&
 		    (l->l_proc->p_flag & PK_32) != 0)
 			MODULE_CALL_HOOK(raidframe_netbsd32_config_hook,
@@ -1485,7 +1489,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return(retcode);
 
 	case RAIDFRAME_GET_INFO:
-#ifdef COMPAT_NETBSD32
+#ifdef RAID_COMPAT32
 	case RAIDFRAME_GET_INFO32:
 #endif
 		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
@@ -1494,7 +1498,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (ENOMEM);
 		retcode = rf_get_info(raidPtr, d_cfg);
 		if (retcode == 0) {
-#ifdef COMPAT_NETBSD32
+#ifdef RAID_COMPAT32
 			if (raidframe_netbsd32_config_hook.hooked &&
 			    cmd == RAIDFRAME_GET_INFO32)
 				ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
