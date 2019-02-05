@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.67 2017/08/21 09:00:21 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.68 2019/02/05 09:49:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.67 2017/08/21 09:00:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.68 2019/02/05 09:49:44 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -835,10 +835,9 @@ err_unmounted:
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
 {
-	mount_iterator_t *iter;
-	struct mount *cmp;
 	vnode_t *coveredvp;
 	int error, async, used_syncer, used_extattr;
+	const bool was_suspended = fstrans_is_owner(mp);
 
 #if NVERIEXEC > 0
 	error = veriexec_unmountchk(mp);
@@ -846,21 +845,11 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 #endif /* NVERIEXEC > 0 */
 
-	/*
-	 * No unmount below layered mounts.
-	 */
-	mountlist_iterator_init(&iter);
-	while ((cmp = mountlist_iterator_next(iter)) != NULL) {
-		if (cmp->mnt_lower == mp) {
-			mountlist_iterator_destroy(iter);
-			return EBUSY;
+	if (!was_suspended) {
+		error = vfs_suspend(mp, 0);
+		if (error) {
+			return error;
 		}
-	}
-	mountlist_iterator_destroy(iter);
-
-	error = vfs_suspend(mp, 0);
-	if (error) {
-		return error;
 	}
 
 	KASSERT((mp->mnt_iflag & IMNT_GONE) == 0);
@@ -888,7 +877,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 			vfs_syncer_add_to_worklist(mp);
 		mp->mnt_flag |= async;
 		mutex_exit(&mp->mnt_updating);
-		vfs_resume(mp);
+		if (!was_suspended)
+			vfs_resume(mp);
 		if (used_extattr) {
 			if (start_extattr(mp) != 0)
 				mp->mnt_flag &= ~MNT_EXTATTR;
@@ -905,7 +895,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 * vfs_busy() from succeeding.
 	 */
 	mp->mnt_iflag |= IMNT_GONE;
-	vfs_resume(mp);
+	if (!was_suspended)
+		vfs_resume(mp);
 
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
 		vn_lock(coveredvp, LK_EXCLUSIVE | LK_RETRY);
