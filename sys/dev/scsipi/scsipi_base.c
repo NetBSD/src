@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.180 2018/11/24 18:15:23 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.181 2019/02/05 11:11:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.180 2018/11/24 18:15:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.181 2019/02/05 11:11:32 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -947,6 +947,8 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				 */
 				xs->resid = 0;	/* not short read */
 			}
+			error = 0;
+			break;
 		case SKEY_EQUAL:
 			error = 0;
 			break;
