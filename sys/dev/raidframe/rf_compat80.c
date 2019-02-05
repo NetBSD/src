@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.8 2019/02/03 08:02:24 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.9 2019/02/05 17:13:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -222,6 +222,16 @@ rf_config80(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 	return 0;
 }
 
+static int
+rf_fail_disk80(RF_Raid_t *raidPtr, struct rf_recon_req80 *req80)
+{
+	struct rf_recon_req req = {
+		.col = req80.col,
+		.flags = req80.flags,
+	};
+	return rf_fail_disk(raidPtr, &req);
+}
+
 int
 raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
     void *data, RF_Config_t **k_cfg)  
@@ -238,9 +248,8 @@ raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
 			return ENXIO;
 		break;
 	case RAIDFRAME_CONFIGURE80:
-		break;
 	case RAIDFRAME_FAIL_DISK80:
-		return EPASSTHROUGH;
+		break;
 	default:
 		return EPASSTHROUGH;
 	}
@@ -261,8 +270,12 @@ raidframe_ioctl_80(u_long cmd, int initted, RF_Raid_t *raidPtr, int unit,
 		if (error != 0)
 			return error;
 		return EAGAIN;  /* flag mainline to call generic config */ 
+	case RAIDFRAME_FAIL_DISK80:
+		return rf_fail_disk80(raidPtr, data);
+	default:
+		/* abort really */
+		return EPASSTHROUGH;
 	}
-	return EPASSTHROUGH;
 }
  
 static void
