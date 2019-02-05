@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2012/03/23 21:29:44 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/05 08:08:59 mrg Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -39,6 +39,13 @@ ipf_l.h: lexer.h
 BINDIR=		/sbin
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=	-static
+.endif
+
+# Ugh. Generates too large offsets with -O2.
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+. if ${MACHINE_CPU} == "m68k" && empty(CFLAGS:M-O0)
+COPTS.ipf_y.c+=	-O1
+. endif
 .endif
 
 .include <bsd.prog.mk>
