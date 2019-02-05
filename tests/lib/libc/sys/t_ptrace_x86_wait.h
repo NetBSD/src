@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.7 2018/05/26 20:27:48 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.8 2019/02/05 02:57:10 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -405,14 +405,17 @@ dbregs_trap_variable(int reg, int cond, int len, bool write)
 		dr7.bits.global_dr0_breakpoint = 1;
 		dr7.bits.condition_dr0 = cond;
 		dr7.bits.len_dr0 = len;
+		break;
 	case 1:
 		dr7.bits.global_dr1_breakpoint = 1;
 		dr7.bits.condition_dr1 = cond;
 		dr7.bits.len_dr1 = len;
+		break;
 	case 2:
 		dr7.bits.global_dr2_breakpoint = 1;
 		dr7.bits.condition_dr2 = cond;
 		dr7.bits.len_dr2 = len;
+		break;
 	case 3:
 		dr7.bits.global_dr3_breakpoint = 1;
 		dr7.bits.condition_dr3 = cond;
