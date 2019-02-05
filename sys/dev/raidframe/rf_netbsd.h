@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.30 2013/04/27 21:18:42 christos Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.31 2019/02/05 17:13:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -102,5 +102,7 @@ typedef struct RF_ConfigSet_s {
 	int rootable;               /* Set to 1 if this set can be root */
 	struct RF_ConfigSet_s *next;
 } RF_ConfigSet_t;
+
+int rf_fail_disk(RF_Raid_t *, struct rf_recon_req *);
 
 #endif /* _RF__RF_NETBSDSTUFF_H_ */
