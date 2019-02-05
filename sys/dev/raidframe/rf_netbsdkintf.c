@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.365 2019/02/05 09:45:38 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.366 2019/02/05 17:13:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.365 2019/02/05 09:45:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.366 2019/02/05 17:13:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -149,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.365 2019/02/05 09:45:38 mrg Exp
 #include "rf_parityscan.h"
 #include "rf_threadstuff.h"
 
+#include "rf_compat50.h"
 #include "rf_compat80.h"
 
 #ifdef COMPAT_NETBSD32
@@ -1049,6 +1050,145 @@ raid_detach_unlocked(struct raid_softc *rs)
 	return 0;
 }
 
+static bool
+rf_must_be_initialized(const struct raid_softc *rs, u_long cmd)
+{
+	switch (cmd) {
+	case RAIDFRAME_ADD_HOT_SPARE:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
+	case RAIDFRAME_CHECK_PARITY:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
+	case RAIDFRAME_CHECK_RECON_STATUS:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
+	case RAIDFRAME_COPYBACK:
+	case RAIDFRAME_DELETE_COMPONENT:
+	case RAIDFRAME_FAIL_DISK:
+	case RAIDFRAME_FAIL_DISK80:
+	case RAIDFRAME_GET_ACCTOTALS:
+	case RAIDFRAME_GET_COMPONENT_LABEL:
+	case RAIDFRAME_GET_COMPONENT_LABEL80:
+	case RAIDFRAME_GET_INFO:
+#ifdef RAID_COMPAT32
+	case RAIDFRAME_GET_INFO32:
+#endif
+	case RAIDFRAME_GET_INFO50:
+	case RAIDFRAME_GET_INFO80:
+	case RAIDFRAME_GET_SIZE:
+	case RAIDFRAME_INCORPORATE_HOT_SPARE:
+	case RAIDFRAME_INIT_LABELS:
+	case RAIDFRAME_KEEP_ACCTOTALS:
+	case RAIDFRAME_PARITYMAP_GET_DISABLE:
+	case RAIDFRAME_PARITYMAP_SET_DISABLE:
+	case RAIDFRAME_PARITYMAP_SET_PARAMS:
+	case RAIDFRAME_PARITYMAP_STATUS:
+	case RAIDFRAME_REBUILD_IN_PLACE:
+	case RAIDFRAME_REMOVE_HOT_SPARE:
+	case RAIDFRAME_RESET_ACCTOTALS:
+	case RAIDFRAME_REWRITEPARITY:
+	case RAIDFRAME_SET_AUTOCONFIG:
+	case RAIDFRAME_SET_COMPONENT_LABEL:
+	case RAIDFRAME_SET_ROOT:
+		return (rs->sc_flags & RAIDF_INITED) != 0;
+	}
+	return false;
+}
+
+/*
+ * Really this should be done as part of the default in the ioctl
+ * switch like other compat code, but it is too messy to do that
+ * right now, so we list all the compat ioctls we know about,
+ * and load appropriately.
+ *
+ * XXX[1] what about combinations of compat32 and compat80 ioctls?
+ * XXX[2] what about autoloading the compat32 code? Is there a compat32
+ * ioctl module? Should there be one?
+ */
+static int
+rf_handle_compat(struct raid_softc *rs, int unit, u_long cmd, void *data,
+    RF_Config_t **k_cfg)
+{
+	RF_Raid_t *raidPtr = &rs->sc_r;
+	int retcode = EPASSTHROUGH;
+	switch (cmd) {
+	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
+	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT80:
+	case RAIDFRAME_CONFIGURE80:
+	case RAIDFRAME_FAIL_DISK80:
+	case RAIDFRAME_GET_COMPONENT_LABEL80:
+	case RAIDFRAME_GET_INFO80:
+		module_autoload("compat_raid_80", MODULE_CLASS_EXEC);
+		MODULE_CALL_HOOK(raidframe_ioctl_80_hook, (cmd,
+		    (rs->sc_flags & RAIDF_INITED), raidPtr, unit, data, k_cfg),
+		    enosys(), retcode);
+		break;
+	case RAIDFRAME_CONFIGURE50:
+	case RAIDFRAME_GET_INFO50:
+		module_autoload("compat_raid_50", MODULE_CLASS_EXEC);
+		MODULE_CALL_HOOK(raidframe_ioctl_50_hook, (cmd,
+		    (rs->sc_flags & RAIDF_INITED), raidPtr, unit, data, k_cfg),
+		    enosys(), retcode);
+		break;
+	default:
+		break;
+	}
+	return retcode;
+}
+
+int
+rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
+{
+	struct rf_recon_req_internal *rrint;
+
+	if (raidPtr->Layout.map->faultsTolerated == 0) {
+		/* Can't do this on a RAID 0!! */
+		return EINVAL;
+	}
+
+	if (rr->col < 0 || rr->col >= raidPtr->numCol) {
+		/* bad column */
+		return EINVAL;
+	}
+
+	rf_lock_mutex2(raidPtr->mutex);
+	if (raidPtr->status == rf_rs_reconstructing) {
+		/* you can't fail a disk while we're reconstructing! */
+		/* XXX wrong for RAID6 */
+		goto out;
+	}
+	if ((raidPtr->Disks[rr->col].status == rf_ds_optimal) &&
+	    (raidPtr->numFailures > 0)) {
+		/* some other component has failed.  Let's not make
+		   things worse. XXX wrong for RAID6 */
+		goto out;
+	}
+	if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
+		/* Can't fail a spared disk! */
+		goto out;
+	}
+	rf_unlock_mutex2(raidPtr->mutex);
+
+	/* make a copy of the recon request so that we don't rely on
+	 * the user's buffer */
+	RF_Malloc(rrint, sizeof(*rrint), (struct rf_recon_req_internal *));
+	if (rrint == NULL)
+		return(ENOMEM);
+	rrint->col = rr->col;
+	rrint->flags = rr->flags;
+	rrint->raidPtr = raidPtr;
+
+	return RF_CREATE_THREAD(raidPtr->recon_thread, rf_ReconThread,
+	    rrint, "raid_recon");
+out:
+	rf_unlock_mutex2(raidPtr->mutex);
+	return EINVAL;
+}
+
 static int
 raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
@@ -1061,12 +1201,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	RF_Raid_t *raidPtr;
 	RF_RaidDisk_t *diskPtr;
 	RF_AccTotals_t *totals;
-	RF_DeviceConfig_t *d_cfg, *ucfgp;
+	RF_DeviceConfig_t *d_cfg, *ucfgp = data;
 	u_char *specific_buf;
 	int retcode = 0;
 	int column;
 /*	int raidid; */
-	struct rf_recon_req *rr;
 	struct rf_recon_req_internal *rrint;
 	RF_ComponentLabel_t *clabel;
 	RF_ComponentLabel_t *ci_label;
@@ -1076,100 +1215,38 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	if ((rs = raidget(unit, false)) == NULL)
 		return ENXIO;
+
 	dksc = &rs->sc_dksc;
 	raidPtr = &rs->sc_r;
 
 	db1_printf(("raidioctl: %d %d %d %lu\n", (int) dev,
-		(int) DISKPART(dev), (int) unit, cmd));
+	    (int) DISKPART(dev), (int) unit, cmd));
 
 	/* Must be initialized for these... */
-	switch (cmd) {
-	case RAIDFRAME_REWRITEPARITY:
-	case RAIDFRAME_GET_INFO:
-	case RAIDFRAME_RESET_ACCTOTALS:
-	case RAIDFRAME_GET_ACCTOTALS:
-	case RAIDFRAME_KEEP_ACCTOTALS:
-	case RAIDFRAME_GET_SIZE:
-	case RAIDFRAME_FAIL_DISK:
-	case RAIDFRAME_COPYBACK:
-	case RAIDFRAME_CHECK_RECON_STATUS:
-	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
-	case RAIDFRAME_GET_COMPONENT_LABEL:
-	case RAIDFRAME_SET_COMPONENT_LABEL:
-	case RAIDFRAME_ADD_HOT_SPARE:
-	case RAIDFRAME_REMOVE_HOT_SPARE:
-	case RAIDFRAME_INIT_LABELS:
-	case RAIDFRAME_REBUILD_IN_PLACE:
-	case RAIDFRAME_CHECK_PARITY:
-	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
-	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
-	case RAIDFRAME_CHECK_COPYBACK_STATUS:
-	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
-	case RAIDFRAME_SET_AUTOCONFIG:
-	case RAIDFRAME_SET_ROOT:
-	case RAIDFRAME_DELETE_COMPONENT:
-	case RAIDFRAME_INCORPORATE_HOT_SPARE:
-	case RAIDFRAME_PARITYMAP_STATUS:
-	case RAIDFRAME_PARITYMAP_GET_DISABLE:
-	case RAIDFRAME_PARITYMAP_SET_DISABLE:
-	case RAIDFRAME_PARITYMAP_SET_PARAMS:
-#ifdef RAID_COMPAT32
-	case RAIDFRAME_GET_INFO32:
-#endif
-		if ((rs->sc_flags & RAIDF_INITED) == 0)
-			return (ENXIO);
+	if (rf_must_be_initialized(rs, cmd))
+		return ENXIO;
+
+	switch (retcode = rf_handle_compat(rs, unit, cmd, data, &k_cfg)) {
+	case EPASSTHROUGH:
+		/* Not compat, keep going */
+		retcode = 0;
+		break;
+	case EAGAIN:
+		goto config;
+	default:
+		/* compat but could not handle it or load the module */
+		return retcode;
 	}
-
-	/*
-	 * Handle compat ioctl calls
-	 *
-	 * * If compat code is not loaded, stub returns ENOSYS and we just
-	 *   check the "native" cmd's
-	 * * If compat code is loaded but does not recognize the cmd, it
-	 *   returns EPASSTHROUGH, and we just check the "native" cmd's
-	 * * If compat code returns EAGAIN, we need to finish via config
-	 * * Otherwise the cmd has been handled and we just return
-	 */
-	module_autoload("compat_raid_50", MODULE_CLASS_EXEC);
-	MODULE_CALL_HOOK(raidframe_ioctl_50_hook,
-	    (cmd, (rs->sc_flags & RAIDF_INITED),raidPtr, unit, data, &k_cfg),
-	    enosys(), retcode);
-	if (retcode == ENOSYS)
-		retcode = 0;
-	else if (retcode == EAGAIN)
-		goto config;
-	else if (retcode != EPASSTHROUGH)
-		return retcode;
-
-	module_autoload("compat_raid_80", MODULE_CLASS_EXEC);
-	MODULE_CALL_HOOK(raidframe_ioctl_80_hook,
-	    (cmd, (rs->sc_flags & RAIDF_INITED),raidPtr, unit, data, &k_cfg),
-	    enosys(), retcode);
-	if (retcode == ENOSYS)
-		retcode = 0;
-	else if (retcode == EAGAIN)
-		goto config;
-	else if (retcode != EPASSTHROUGH)
-		return retcode;
-
-	/*
-	 * XXX
-	 * Handling of FAIL_DISK80 command requires us to retain retcode's
-	 * value of EPASSTHROUGH.  If you add more compat code later, make
-	 * sure you don't overwrite retcode and break this!
-	 */
-
+		
 	switch (cmd) {
-
 		/* configure the system */
 	case RAIDFRAME_CONFIGURE:
 #ifdef RAID_COMPAT32
 	case RAIDFRAME_CONFIGURE32:
 #endif
-
 		if (raidPtr->valid) {
 			/* There is a valid RAID set running on this unit! */
-			printf("raid%d: Device already configured!\n",unit);
+			printf("raid%d: Device already configured!\n", unit);
 			return(EINVAL);
 		}
 
@@ -1487,28 +1564,25 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					   rrint, "raid_reconip");
 		return(retcode);
 
-	case RAIDFRAME_GET_INFO:
 #ifdef RAID_COMPAT32
 	case RAIDFRAME_GET_INFO32:
+		if (!raidframe_netbsd32_config_hook.hooked)
+			return ENOSYS;
+		ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
+		/*FALLTHROUGH*/
 #endif
+	case RAIDFRAME_GET_INFO:
 		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
 			  (RF_DeviceConfig_t *));
 		if (d_cfg == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 		retcode = rf_get_info(raidPtr, d_cfg);
 		if (retcode == 0) {
-#ifdef RAID_COMPAT32
-			if (raidframe_netbsd32_config_hook.hooked &&
-			    cmd == RAIDFRAME_GET_INFO32)
-				ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
-			else
-#endif
-				ucfgp = *(RF_DeviceConfig_t **)data;
-			retcode = copyout(d_cfg, ucfgp, sizeof(RF_DeviceConfig_t));
+		    retcode = copyout(d_cfg, ucfgp, sizeof(*d_cfg));
 		}
 		RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
 
-		return (retcode);
+		return retcode;
 
 	case RAIDFRAME_CHECK_PARITY:
 		*(int *) data = raidPtr->parity_good;
@@ -1551,66 +1625,18 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_GET_ACCTOTALS:
 		totals = (RF_AccTotals_t *) data;
 		*totals = raidPtr->acc_totals;
-		return (0);
+		return 0;
 
 	case RAIDFRAME_KEEP_ACCTOTALS:
 		raidPtr->keep_acc_totals = *(int *)data;
-		return (0);
+		return 0;
 
 	case RAIDFRAME_GET_SIZE:
 		*(int *) data = raidPtr->totalSectors;
-		return (0);
+		return 0;
 
-		/* fail a disk & optionally start reconstruction */
-	case RAIDFRAME_FAIL_DISK80:
-		/* Check if we called compat code for this cmd */
-		if (retcode != EPASSTHROUGH)
-			return EINVAL;
-		/* FALLTHRU */
 	case RAIDFRAME_FAIL_DISK:
-		if (raidPtr->Layout.map->faultsTolerated == 0) {
-			/* Can't do this on a RAID 0!! */
-			return(EINVAL);
-		}
-
-		rr = (struct rf_recon_req *) data;
-		if (rr->col < 0 || rr->col >= raidPtr->numCol)
-			return (EINVAL);
-
-		rf_lock_mutex2(raidPtr->mutex);
-		if (raidPtr->status == rf_rs_reconstructing) {
-			/* you can't fail a disk while we're reconstructing! */
-			/* XXX wrong for RAID6 */
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if ((raidPtr->Disks[rr->col].status ==
-		     rf_ds_optimal) && (raidPtr->numFailures > 0)) {
-			/* some other component has failed.  Let's not make
-			   things worse. XXX wrong for RAID6 */
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
-			/* Can't fail a spared disk! */
-			rf_unlock_mutex2(raidPtr->mutex);
-			return (EINVAL);
-		}
-		rf_unlock_mutex2(raidPtr->mutex);
-
-		/* make a copy of the recon request so that we don't rely on
-		 * the user's buffer */
-		RF_Malloc(rrint, sizeof(*rrint), (struct rf_recon_req_internal *));
-		if (rrint == NULL)
-			return(ENOMEM);
-		rrint->col = rr->col;
-		rrint->flags = rr->flags;
-		rrint->raidPtr = raidPtr;
-
-		retcode = RF_CREATE_THREAD(raidPtr->recon_thread,
-					   rf_ReconThread,
-					   rrint, "raid_recon");
-		return (0);
+		return rf_fail_disk(raidPtr, data);
 
 		/* invoke a copyback operation after recon on whatever disk
 		 * needs it, if any */
