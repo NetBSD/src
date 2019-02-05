@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.9 2019/02/05 17:13:37 christos Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.10 2019/02/05 19:42:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -226,8 +226,8 @@ static int
 rf_fail_disk80(RF_Raid_t *raidPtr, struct rf_recon_req80 *req80)
 {
 	struct rf_recon_req req = {
-		.col = req80.col,
-		.flags = req80.flags,
+		.col = req80->col,
+		.flags = req80->flags,
 	};
 	return rf_fail_disk(raidPtr, &req);
 }
