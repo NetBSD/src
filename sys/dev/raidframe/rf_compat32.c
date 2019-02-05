@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.c,v 1.2 2019/02/03 08:02:24 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat32.c,v 1.3 2019/02/05 23:28:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -38,6 +38,7 @@
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
+#include "rf_kintf.h"
 #include "rf_compat32.h"
 
 #include <compat/netbsd32/netbsd32.h>
@@ -77,58 +78,104 @@ typedef struct RF_Config_s32 {
 	   indicate that configuration should not proceed without user
 	   intervention
 	 */
-} RF_Config_t32 ;
+} RF_Config_t32;
 
-int
-rf_config_netbsd32(void *data, RF_Config_t *k_cfg)
+static int
+rf_config_netbsd32(struct raid_softc *rs, void *data)
 {
-	RF_Config_t32 *u_cfg = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
-	struct RF_Config_s32 *cfg32;
+	RF_Config_t32 *u_cfg32 = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
+	RF_Config_t *k_cfg;
+	RF_Config_t32 *k_cfg32;
 	int rv;
 
-	RF_Malloc(cfg32, sizeof(RF_Config_t), (RF_Config_t32 *));
-	if (cfg32 == NULL)
-		return (ENOMEM);
+	RF_Malloc(k_cfg32, sizeof(RF_Config_t32), (RF_Config_t32 *));
+	if (k_cfg32 == NULL)
+		return ENOMEM;
 
-	rv = copyin(u_cfg, cfg32, sizeof(RF_Config_t32));
-	if (rv)
-		goto out;
+	rv = copyin(u_cfg32, k_cfg32, sizeof(RF_Config_t32));
+	if (rv) {
+		RF_Free(k_cfg32, sizeof(RF_Config_t32));
+		return ENOMEM;
+	}
 
-	k_cfg->numCol = cfg32->numCol;
-	k_cfg->numSpare = cfg32->numSpare;
-	memcpy(k_cfg->devs, cfg32->devs, sizeof(k_cfg->devs));
-	memcpy(k_cfg->devnames, cfg32->devnames, sizeof(k_cfg->devnames));
-	memcpy(k_cfg->spare_devs, cfg32->spare_devs, sizeof(k_cfg->spare_devs));
-	memcpy(k_cfg->spare_names, cfg32->spare_names, sizeof(k_cfg->spare_names));
-	k_cfg->sectPerSU = cfg32->sectPerSU;
-	k_cfg->SUsPerPU = cfg32->SUsPerPU;
-	k_cfg->SUsPerRU = cfg32->SUsPerRU;
-	k_cfg->parityConfig = cfg32->parityConfig;
-	memcpy(k_cfg->diskQueueType, cfg32->diskQueueType, sizeof(k_cfg->diskQueueType));
-	k_cfg->maxOutstandingDiskReqs = cfg32->maxOutstandingDiskReqs;
-	memcpy(k_cfg->debugVars, cfg32->debugVars, sizeof(k_cfg->debugVars));
-	k_cfg->layoutSpecificSize = cfg32->layoutSpecificSize;
-	k_cfg->layoutSpecific = NETBSD32PTR64(cfg32->layoutSpecific);
-	k_cfg->force = cfg32->force;
+	RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
+	if (k_cfg == NULL) {
+		RF_Free(k_cfg32, sizeof(RF_Config_t32));
+		RF_Free(k_cfg, sizeof(RF_Config_t));
+	}
+	k_cfg->numCol = k_cfg32->numCol;
+	k_cfg->numSpare = k_cfg32->numSpare;
+	memcpy(k_cfg->devs, k_cfg32->devs, sizeof(k_cfg->devs));
+	memcpy(k_cfg->devnames, k_cfg32->devnames, sizeof(k_cfg->devnames));
+	memcpy(k_cfg->spare_devs, k_cfg32->spare_devs,
+	    sizeof(k_cfg->spare_devs));
+	memcpy(k_cfg->spare_names, k_cfg32->spare_names,
+	    sizeof(k_cfg->spare_names));
+	k_cfg->sectPerSU = k_cfg32->sectPerSU;
+	k_cfg->SUsPerPU = k_cfg32->SUsPerPU;
+	k_cfg->SUsPerRU = k_cfg32->SUsPerRU;
+	k_cfg->parityConfig = k_cfg32->parityConfig;
+	memcpy(k_cfg->diskQueueType, k_cfg32->diskQueueType,
+	    sizeof(k_cfg->diskQueueType));
+	k_cfg->maxOutstandingDiskReqs = k_cfg32->maxOutstandingDiskReqs;
+	memcpy(k_cfg->debugVars, k_cfg32->debugVars, sizeof(k_cfg->debugVars));
+	k_cfg->layoutSpecificSize = k_cfg32->layoutSpecificSize;
+	k_cfg->layoutSpecific = NETBSD32PTR64(k_cfg32->layoutSpecific);
+	k_cfg->force = k_cfg32->force;
 
- out:
-	RF_Free(cfg32, sizeof(RF_Config_t32));
-	return rv;
+	return rf_construct(rs, k_cfg);
 }
+
+static int
+rf_get_info_netbsd32(RF_Raid_t *raidPtr, void *data)
+{
+	int retcode;
+	void *ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
+
+	RF_DeviceConfig_t *d_cfg;
+	RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t), (RF_DeviceConfig_t *));
+	if (d_cfg == NULL)
+		return ENOMEM;
+
+	retcode = rf_get_info(raidPtr, d_cfg);
+	if (retcode == 0) {
+	    retcode = copyout(d_cfg, ucfgp, sizeof(*d_cfg));
+	}
+	RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
+	return retcode;
+}
+
+static int
+raidframe_netbsd32_ioctl(struct raid_softc *rs, u_long cmd, void *data)
+{
+	RF_Raid_t *raidPtr = rf_get_raid(rs);
+ 
+	switch (cmd) {
+	case RAIDFRAME_GET_INFO32:
+		if (!rf_inited(rs) == 0)
+			return ENXIO;
+		return rf_get_info_netbsd32(raidPtr, data);
+	case RAIDFRAME_CONFIGURE32:
+		return rf_config_netbsd32(rs, data);
+	default:
+		return EPASSTHROUGH;
+	}
+}
+
 
 static void
 raidframe_netbsd32_init(void)
 {
   
-	MODULE_SET_HOOK(raidframe_netbsd32_config_hook, "raid32",
-	    rf_config_netbsd32);
+	MODULE_SET_HOOK(raidframe_netbsd32_ioctl_hook, "raid32",
+	    raidframe_netbsd32_ioctl);
 }
  
 static void
 raidframe_netbsd32_fini(void)
 {
  
-	MODULE_UNSET_HOOK(raidframe_netbsd32_config_hook);
+	MODULE_UNSET_HOOK(raidframe_netbsd32_ioctl_hook);
 }
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_raid, "raid,compat_netbsd32");
