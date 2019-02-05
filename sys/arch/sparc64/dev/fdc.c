@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.45 2018/09/03 16:29:27 riastradh Exp $	*/
+/*	$NetBSD: fdc.c,v 1.46 2019/02/05 06:10:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.45 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.46 2019/02/05 06:10:53 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2010,12 +2010,13 @@ loop:
 	case RECALWAIT:
 		callout_stop(&fdc->sc_timo_ch);
 		fdc->sc_state = RECALCOMPLETE;
-		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
+		if ((fdc->sc_flags & FDC_NEEDHEADSETTLE) != 0) {
 			/* allow 1/30 second for heads to settle */
 			callout_reset(&fdc->sc_intr_ch, hz / 30,
 			    fdcpseudointr, fdc);
 			return 1;		/* will return later */
 		}
+		/* FALLTHROUGH */
 
 	case RECALCOMPLETE:
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
