@@ -5680,7 +5680,8 @@ zfs_netbsd_reclaim(void *v)
 		}
 	}
 
-	zil_commit(zfsvfs->z_log, zp->z_id);
+	if (zfsvfs->z_log)
+		zil_commit(zfsvfs->z_log, zp->z_id);
 
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
