@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.31 2019/02/05 06:17:03 msaitoh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.32 2019/02/06 04:14:03 msaitoh Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.31 2019/02/05 06:17:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.32 2019/02/06 04:14:03 msaitoh Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -203,6 +203,7 @@ static const u_int8_t cas_promdat2[] = {
 	PCI_CLASS_NETWORK		/* class code */
 };
 
+#define CAS_LMA_MAXNUM	4
 int
 cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa,
     uint8_t *enaddr)
@@ -212,10 +213,11 @@ cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa,
 	bus_space_handle_t romh;
 	bus_space_tag_t romt;
 	bus_size_t romsize = 0;
+	uint8_t enaddrs[CAS_LMA_MAXNUM][ETHER_ADDR_LEN];
 	u_int8_t buf[32], *desc;
 	pcireg_t address;
-	int dataoff, vpdoff, len;
-	int rv = -1;
+	int dataoff, vpdoff, len, lma = 0;
+	int i, rv = -1;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_ROM, PCI_MAPREG_TYPE_MEM, 0,
 	    &romt, &romh, NULL, &romsize))
@@ -297,8 +299,11 @@ next:
 				continue;
 			desc += strlen("local-mac-address") + 1;
 				
-			memcpy(enaddr, desc, ETHER_ADDR_LEN);
+			memcpy(enaddrs[lma], desc, ETHER_ADDR_LEN);
+			lma++;
 			rv = 0;
+			if (lma == CAS_LMA_MAXNUM)
+				break;
 		}
 		break;
 
@@ -306,6 +311,19 @@ next:
 		goto fail;
 	}
 
+	i = 0;
+	/*
+	 * Multi port card has bridge chip. The device number is fixed:
+	 * e.g.
+	 * p0: 005:00:0
+	 * p1: 005:01:0
+	 * p2: 006:02:0
+	 * p3: 006:03:0
+	 */
+	if ((lma > 1) && (pa->pa_device < CAS_LMA_MAXNUM)
+	    && (pa->pa_device < lma))
+		i = pa->pa_device;
+	memcpy(enaddr, enaddrs[i], ETHER_ADDR_LEN);
  fail:
 	if (romsize != 0)
 		bus_space_unmap(romt, romh, romsize);
