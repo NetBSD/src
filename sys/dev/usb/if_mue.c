@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.38 2019/02/06 08:38:41 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.39 2019/02/06 09:15:01 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.38 2019/02/06 08:38:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.39 2019/02/06 09:15:01 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1306,7 +1306,7 @@ mue_prepare_tso(struct mue_softc *sc, struct mbuf *m)
 	uint16_t type, len = 0;
 	int off;
 
-	if (__predict_true(m->m_len >= sizeof(*eh))) {
+	if (__predict_true((unsigned)m->m_len >= sizeof(*eh))) {
 		eh = mtod(m, struct ether_header *);
 		type = eh->ether_type;
 	} else
@@ -1329,14 +1329,14 @@ mue_prepare_tso(struct mue_softc *sc, struct mbuf *m)
 	}
 
 	if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
-		if (__predict_true(m->m_len >= off + sizeof(*ip))) {
+		if (__predict_true((unsigned)m->m_len >= off + sizeof(*ip))) {
 			ip = (void *)(mtod(m, char *) + off);
 			ip->ip_len = 0;
 		} else
 			m_copyback(m, off + offsetof(struct ip, ip_len),
 			    sizeof(len), &len);
 	} else {
-		if (__predict_true(m->m_len >= off + sizeof(*ip6))) {
+		if (__predict_true((unsigned)m->m_len >= off + sizeof(*ip6))) {
 			ip6 = (void *)(mtod(m, char *) + off);
 			ip6->ip6_plen = 0;
 		} else
