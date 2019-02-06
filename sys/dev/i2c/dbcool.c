@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.53 2019/02/03 11:58:02 mrg Exp $ */
+/*	$NetBSD: dbcool.c,v 1.54 2019/02/06 08:37:12 martin Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.53 2019/02/03 11:58:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.54 2019/02/06 08:37:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1884,7 +1884,7 @@ dbcool_chip_ident(struct dbcool_chipset *dc)
 			return i;
 		}
 
-	aprint_verbose("dbcool_chip_ident: addr 0x%02x c_id 0x%02x d_id 0x%02x"
+	aprint_debug("dbcool_chip_ident: addr 0x%02x c_id 0x%02x d_id 0x%02x"
 			" r_id 0x%02x: No match.\n", dc->dc_addr, c_id, d_id,
 			r_id);
 
