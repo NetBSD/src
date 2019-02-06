@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.139 2019/02/04 04:09:13 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.140 2019/02/06 07:56:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.139 2019/02/04 04:09:13 mrg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.140 2019/02/06 07:56:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1781,6 +1781,11 @@ justquit(void)
 {
 
 	quit(0, NULL);
+	/*
+	 * quit is not __dead, but for our invocation it never will return,
+	 * but some compilers are not smart enough to find this out.
+	 */
+	exit(0);
 }
 
 /*
