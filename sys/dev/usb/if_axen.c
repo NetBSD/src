@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.24 2019/01/31 15:27:57 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.25 2019/02/06 07:28:01 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.24 2019/01/31 15:27:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.25 2019/02/06 07:28:01 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1124,9 +1124,6 @@ nextpkt:
 	} while( pkt_count > 0);
 
 done:
-	/* clear buffer for next transaction */
-	memset(c->axen_buf, 0, sc->axen_bufsz);
-
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, c, c->axen_buf, sc->axen_bufsz,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axen_rxeof);
