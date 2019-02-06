@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.35 2018/10/19 06:16:14 skrll Exp $
+#	$NetBSD: EXYNOS,v 1.36 2019/02/06 11:58:30 rin Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -109,6 +109,11 @@ xhci*		at fdt?			# XHCI
 usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
+
 midi*		at midibus?
+
+rgephy*		at mii? phy ?
+rlphy*		at mii? phy ?
+ukphy*		at mii? phy ?
 
 cinclude "arch/evbarm/conf/EXYNOS.local"

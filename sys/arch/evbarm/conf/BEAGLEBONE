@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.46 2018/11/13 11:00:55 mlelstv Exp $
+#	$NetBSD: BEAGLEBONE,v 1.47 2019/02/06 11:58:30 rin Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -170,12 +170,12 @@ scsibus*	at scsi?
 # SCSI devices
 sd*		at scsibus? target ? lun ?      # SCSI disk drives
 
-# USB Ethernet adapters
-axe*		at uhub? port ? configuration ? interface ?
-
 # Ethernet
 cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 40
-ukphy*		at mii?
+
+rgephy*		at mii? phy ?
+rlphy*		at mii? phy ?
+ukphy*		at mii? phy ?
 
 # Pseudo-Devices
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64_USB,v 1.1 2016/11/04 19:18:50 flxd Exp $
+# $NetBSD: GENERIC64_USB,v 1.2 2019/02/06 11:58:32 rin Exp $
 #
 # GENERIC64 kernel with USB
 
@@ -13,4 +13,9 @@ gpio*	at gpiobus?
 usb*	at slhci?
 
 include	"dev/usb/usbdevices.config"
+
 midi*	at midibus?
+
+rgephy*	at mii? phy ?
+rlphy*	at mii? phy ?
+ukphy*	at mii? phy ?

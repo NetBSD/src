@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.8 2017/03/20 14:06:43 skrll Exp $
+#	$NetBSD: KOBO,v 1.9 2019/02/06 11:58:30 rin Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -125,6 +125,8 @@ include "dev/usb/usbdevices.config"
 
 midi*		at midibus?
 
+rgephy*		at mii? phy ?
+rlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 # local configuration

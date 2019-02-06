@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.36 2017/08/07 09:24:43 hkenken Exp $
+#	$NetBSD: NETWALKER,v 1.37 2019/02/06 11:58:30 rin Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -138,6 +138,8 @@ include "dev/usb/usbdevices.config"
 
 midi*		at midibus?
 
+rgephy*		at mii? phy ?
+rlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 # IPUv3 LCD Controller

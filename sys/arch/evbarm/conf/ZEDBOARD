@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ZEDBOARD,v 1.4 2018/06/05 08:03:28 hkenken Exp $
+#	$NetBSD: ZEDBOARD,v 1.5 2019/02/06 11:58:31 rin Exp $
 #
 #	ZedBoard -- Xilinx Zynq Eval Board Kernel
 #
@@ -94,5 +94,8 @@ cemac0		at axi? addr 0xe000b000 irq 54
 
 # MII/PHY support
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
+rlphy* at mii? phy ?			# Realtek 8139/8201L PHYs
+ukphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 
 cinclude "arch/evbarm/conf/ZEDBOARD.local"

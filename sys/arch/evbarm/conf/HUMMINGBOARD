@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HUMMINGBOARD,v 1.6 2018/10/18 09:01:53 skrll Exp $
+#	$NetBSD: HUMMINGBOARD,v 1.7 2019/02/06 11:58:30 rin Exp $
 #
 #	Hummingboard -- Freescale i.MX6 Eval Board Kernel
 #
@@ -122,6 +122,8 @@ enet0		at axi? addr 0x02188000 irq 150		# iMX6 SoC Ethernet
 
 # MII/PHY support
 atphy*	at mii? phy ?			# Attansic/Atheros PHYs
+rgephy*	at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # SD/MMC
