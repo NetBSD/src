@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.40 2019/02/06 22:42:11 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.41 2019/02/06 22:54:41 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.40 2019/02/06 22:42:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.41 2019/02/06 22:54:41 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1240,8 +1240,7 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 		      M_CSUM_TCPv6 | M_CSUM_UDPv6);
 
 	len = m->m_pkthdr.len;
-	if (__predict_false((!tso && 
-				(unsigned)len > MUE_FRAME_LEN(ifp->if_mtu)) ||
+	if (__predict_false((!tso && len > (int)MUE_FRAME_LEN(ifp->if_mtu)) ||
 			    ( tso && len > MUE_TSO_FRAME_LEN))) {
 		MUE_PRINTF(sc, "packet length %d\n too long", len);
 		return EINVAL;
@@ -1306,7 +1305,7 @@ mue_prepare_tso(struct mue_softc *sc, struct mbuf *m)
 	uint16_t type, len = 0;
 	int off;
 
-	if (__predict_true((unsigned)m->m_len >= sizeof(*eh))) {
+	if (__predict_true(m->m_len >= (int)sizeof(*eh))) {
 		eh = mtod(m, struct ether_header *);
 		type = eh->ether_type;
 	} else
@@ -1329,14 +1328,14 @@ mue_prepare_tso(struct mue_softc *sc, struct mbuf *m)
 	}
 
 	if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
-		if (__predict_true((unsigned)m->m_len >= off + sizeof(*ip))) {
+		if (__predict_true(m->m_len >= off + (int)sizeof(*ip))) {
 			ip = (void *)(mtod(m, char *) + off);
 			ip->ip_len = 0;
 		} else
 			m_copyback(m, off + offsetof(struct ip, ip_len),
 			    sizeof(len), &len);
 	} else {
-		if (__predict_true((unsigned)m->m_len >= off + sizeof(*ip6))) {
+		if (__predict_true(m->m_len >= off + (int)sizeof(*ip6))) {
 			ip6 = (void *)(mtod(m, char *) + off);
 			ip6->ip6_plen = 0;
 		} else
@@ -1822,7 +1821,7 @@ mue_start(struct ifnet *ifp)
 	}
 
 	idx = cd->mue_tx_prod;
-	while ((unsigned)cd->mue_tx_cnt < sc->mue_tx_list_cnt) {
+	while (cd->mue_tx_cnt < (int)sc->mue_tx_list_cnt) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
@@ -1842,7 +1841,7 @@ mue_start(struct ifnet *ifp)
 	}
 	cd->mue_tx_prod = idx;
 
-	if ((unsigned)cd->mue_tx_cnt >= sc->mue_tx_list_cnt)
+	if (cd->mue_tx_cnt >= (int)sc->mue_tx_list_cnt)
 		ifp->if_flags |= IFF_OACTIVE;
 
 	/* Set a timeout in case the chip goes out to lunch. */
