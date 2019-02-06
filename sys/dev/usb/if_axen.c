@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.32 2019/02/06 08:04:08 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.33 2019/02/06 08:06:59 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.32 2019/02/06 08:04:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.33 2019/02/06 08:06:59 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -987,6 +987,8 @@ axen_tx_list_init(struct axen_softc *sc)
 		}
 	}
 
+	cd->axen_tx_prod = cd->axen_tx_cnt = 0;
+
 	return 0;
 }
 
@@ -1197,6 +1199,7 @@ axen_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct axen_chain *c = (struct axen_chain *)priv;
 	struct axen_softc *sc = c->axen_sc;
+	struct axen_cdata *cd = &sc->axen_cdata;
 	struct ifnet *ifp = GET_IFP(sc);
 	int s;
 
@@ -1204,7 +1207,8 @@ axen_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		return;
 
 	s = splnet();
-
+	KASSERT(cd->axen_tx_cnt > 0);
+	cd->axen_tx_cnt--;
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			splx(s);
@@ -1328,18 +1332,16 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 		return EIO;
 	}
 
-	sc->axen_cdata.axen_tx_cnt++;
-
 	return 0;
 }
 
 static void
 axen_start(struct ifnet *ifp)
 {
-	struct axen_softc *sc;
+	struct axen_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-
-	sc = ifp->if_softc;
+	struct axen_cdata *cd = &sc->axen_cdata;
+	int idx;
 
 	if (sc->axen_link == 0)
 		return;
@@ -1347,24 +1349,33 @@ axen_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING)
 		return;
 
-	IFQ_POLL(&ifp->if_snd, m);
-	if (m == NULL)
-		return;
+	idx = cd->axen_tx_prod;
+	while (cd->axen_tx_cnt < AXEN_TX_LIST_CNT) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 
-	if (axen_encap(sc, m, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
-		return;
+		if (axen_encap(sc, m, idx)) {
+			ifp->if_flags |= IFF_OACTIVE; /* XXX */
+			ifp->if_oerrors++;
+			break;
+		}
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		/*
+		 * If there's a BPF listener, bounce a copy of this frame
+		 * to him.
+		 */
+		bpf_mtap(ifp, m, BPF_D_OUT);
+		m_freem(m);
+
+		idx = (idx + 1) % AXEN_TX_LIST_CNT;
+		cd->axen_tx_cnt++;
 	}
-	IFQ_DEQUEUE(&ifp->if_snd, m);
+	cd->axen_tx_prod = idx;
 
-	/*
-	 * If there's a BPF listener, bounce a copy of this frame
-	 * to him.
-	 */
-	bpf_mtap(ifp, m, BPF_D_OUT);
-	m_freem(m);
-
-	ifp->if_flags |= IFF_OACTIVE;
+	if (cd->axen_tx_cnt >= AXEN_TX_LIST_CNT)
+		ifp->if_flags |= IFF_OACTIVE;
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.

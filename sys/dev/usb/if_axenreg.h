@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.8 2019/02/06 07:56:14 rin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.9 2019/02/06 08:06:59 rin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -210,8 +210,12 @@
 
 #define AXEN_TIMEOUT		1000
 
-#define AXEN_RX_LIST_CNT	1
-#define AXEN_TX_LIST_CNT	1
+#ifndef AXEN_RX_LIST_CNT
+#define AXEN_RX_LIST_CNT	4	/* 22 for SS mode in Linux driver */
+#endif
+#ifndef AXEN_TX_LIST_CNT
+#define AXEN_TX_LIST_CNT	4	/* 60 */
+#endif
 
 
 #define AXEN_CONFIG_NO		1
