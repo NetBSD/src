@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.7 2019/02/06 07:28:34 rin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.8 2019/02/06 07:56:14 rin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -295,7 +295,8 @@ struct axen_softc {
 
 	int			axen_phyno;
 	struct timeval		axen_rx_notice;
-	u_int			axen_bufsz;
+	u_int			axen_rx_bufsz;
+	u_int			axen_tx_bufsz;
 	int			axen_rev;
 
 #define sc_if	axen_ec.ec_if
