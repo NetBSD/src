@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.368 2019/02/06 02:49:09 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.369 2019/02/06 02:49:50 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.368 2019/02/06 02:49:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.369 2019/02/06 02:49:50 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1067,7 +1067,7 @@ rf_must_be_initialized(const struct raid_softc *rs, u_long cmd)
 	case RAIDFRAME_SET_AUTOCONFIG:
 	case RAIDFRAME_SET_COMPONENT_LABEL:
 	case RAIDFRAME_SET_ROOT:
-		return (rs->sc_flags & RAIDF_INITED) != 0;
+		return (rs->sc_flags & RAIDF_INITED) == 0;
 	}
 	return false;
 }
