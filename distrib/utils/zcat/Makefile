@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2017/01/12 01:58:03 christos Exp $
+# $NetBSD: Makefile,v 1.18 2019/02/06 09:17:18 mrg Exp $
 # Small zcat (i.e. for install media)
 #
 
@@ -25,6 +25,10 @@ SRCS+=		malloc.c	# small
 CPPFLAGS+=	-I${LIBC}/include
 CPPFLAGS+=	-Dsnprintf=snprintf_ss -Dsprintf=sprintf_ss
 CPPFLAGS+=	-Dstrerror=strerror_ss
+
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+COPTS.inflate.c+=	-Wno-error=implicit-fallthrough
+.endif
 
 .include <bsd.prog.mk>
 
