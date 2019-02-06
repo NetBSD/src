@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.49 2019/02/04 13:08:43 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.50 2019/02/06 13:20:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.49 2019/02/04 13:08:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.50 2019/02/06 13:20:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -831,9 +831,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		}
 	}
 
-	// The amount we can direct is limited by the start of the
-	// virtual part of the kernel address space.  Don't overrun
-	// into it.
+	/*
+	 * The amount we can direct map is limited by the start of the
+	 * virtual part of the kernel address space.  Don't overrun
+	 * into it.
+	 */
 	if (mapallmem_p && cur_pv.pv_va + cur_pv.pv_size > kernel_vm_base) {
 		cur_pv.pv_size = kernel_vm_base - cur_pv.pv_va;
 	}
