@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.38 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: MV2120,v 1.39 2019/02/06 11:58:30 rin Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -196,6 +196,9 @@ pcf8563rtc* at iic? addr 0x51
 
 # MII/PHY support
 makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+rgephy*	at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ATA (IDE) bus support
 atabus*	at ata?
