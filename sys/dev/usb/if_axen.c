@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.30 2019/02/06 07:59:24 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.31 2019/02/06 08:01:24 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.30 2019/02/06 07:59:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.31 2019/02/06 08:01:24 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1305,7 +1305,8 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 
 	hdr.plen = htole32(m->m_pkthdr.len);
 
-	hdr.gso = 0; /* disable segmentation offloading */
+	hdr.gso = (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) ?
+	    m->m_pkthdr.segsz : 0;
 	if ((length % boundary) == 0) {
 		DPRINTF(("%s: boundary hit\n", device_xname(sc->axen_dev)));
 		hdr.gso |= 0x80008000;	/* XXX enable padding */
