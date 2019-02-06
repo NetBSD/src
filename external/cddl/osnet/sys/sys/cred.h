@@ -1,4 +1,4 @@
-/*	$NetBSD: cred.h,v 1.5 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: cred.h,v 1.6 2019/02/06 17:56:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -66,7 +66,7 @@ crgetgroups(cred_t *cr)
 {
 	static gid_t gids[NGROUPS_MAX];
 
-	memset(gids, 0, NGROUPS_MAX);
+	memset(gids, 0, sizeof(gids));
 	if (kauth_cred_getgroups(cr, gids, NGROUPS_MAX, UIO_SYSSPACE) != 0) 
 		return NULL;
 	
