@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.34 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: wstsc.c,v 1.35 2019/02/06 04:07:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.34 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.35 2019/02/06 04:07:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ wstsc_dma_xfer_in2(struct sci_softc *dev, int len, register u_short *buf,
 			}
 		}
 #else
-		while (!(*sci_csr * SCI_CSR_DREQ))
+		while (!(*sci_csr & SCI_CSR_DREQ))
 			;
 #endif
 
