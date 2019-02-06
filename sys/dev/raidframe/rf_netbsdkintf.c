@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.367 2019/02/05 23:28:02 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.368 2019/02/06 02:49:09 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.367 2019/02/05 23:28:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.368 2019/02/06 02:49:09 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -182,7 +182,6 @@ static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
     dev_t, RF_SectorNum_t, RF_SectorCount_t, void *, void (*) (struct buf *),
     void *, int, struct proc *);
-struct raid_softc;
 static void raidinit(struct raid_softc *);
 static int raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp);
 static int rf_get_component_caches(RF_Raid_t *raidPtr, int *);
@@ -249,26 +248,6 @@ static struct dkdriver rf_dkdriver = {
 	.d_lastclose = raid_lastclose,
 	.d_minphys = minphys
 };
-
-struct raid_softc {
-	struct dk_softc sc_dksc;
-	int	sc_unit;
-	int     sc_flags;	/* flags */
-	int     sc_cflags;	/* configuration flags */
-	kmutex_t sc_mutex;	/* interlock mutex */
-	kcondvar_t sc_cv;	/* and the condvar */
-	uint64_t sc_size;	/* size of the raid device */
-	char    sc_xname[20];	/* XXX external name */
-	RF_Raid_t sc_r;
-	LIST_ENTRY(raid_softc) sc_link;
-};
-/* sc_flags */
-#define RAIDF_INITED		0x01	/* unit has been initialized */
-#define RAIDF_SHUTDOWN		0x02	/* unit is being shutdown */
-#define RAIDF_DETACH  		0x04	/* detach after final close */
-#define RAIDF_WANTED		0x08	/* someone waiting to obtain a lock */
-#define RAIDF_LOCKED		0x10	/* unit is locked */
-#define RAIDF_UNIT_CHANGED	0x20	/* unit is being changed */
 
 #define	raidunit(x)	DISKUNIT(x)
 #define	raidsoftc(dev)	(((struct raid_softc *)device_private(dev))->sc_r.softc)
@@ -458,6 +437,11 @@ rf_autoconfig(device_t self)
 int
 rf_inited(const struct raid_softc *rs) {
 	return (rs->sc_flags & RAIDF_INITED) != 0;
+}
+
+RF_Raid_t *
+rf_get_raid(struct raid_softc *rs) {
+	return &rs->sc_r;
 }
 
 int

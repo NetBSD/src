@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.46 2019/01/08 07:18:18 mrg Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.47 2019/02/06 02:49:09 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -305,4 +305,33 @@ struct RF_Raid_s {
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 	struct rf_paritymap *parity_map;
 };
+
+struct raid_softc {
+	struct dk_softc sc_dksc;
+	int	sc_unit;
+	int     sc_flags;	/* flags */
+	int     sc_cflags;	/* configuration flags */
+	kmutex_t sc_mutex;	/* interlock mutex */
+	kcondvar_t sc_cv;	/* and the condvar */
+	uint64_t sc_size;	/* size of the raid device */
+	char    sc_xname[20];	/* XXX external name */
+	RF_Raid_t sc_r;
+	LIST_ENTRY(raid_softc) sc_link;
+};
+/* sc_flags */
+#define RAIDF_INITED		0x01	/* unit has been initialized */
+#define RAIDF_SHUTDOWN		0x02	/* unit is being shutdown */
+#define RAIDF_DETACH  		0x04	/* detach after final close */
+#define RAIDF_WANTED		0x08	/* someone waiting to obtain a lock */
+#define RAIDF_LOCKED		0x10	/* unit is locked */
+#define RAIDF_UNIT_CHANGED	0x20	/* unit is being changed */
+
+
+int rf_fail_disk(RF_Raid_t *, struct rf_recon_req *);
+
+int rf_inited(const struct raid_softc *);
+int rf_get_unit(const struct raid_softc *);
+RF_Raid_t *rf_get_raid(struct raid_softc *);
+int rf_construct(struct raid_softc *, RF_Config_t *);
+
 #endif				/* !_RF__RF_RAID_H_ */
