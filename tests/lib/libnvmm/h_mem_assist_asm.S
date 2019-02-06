@@ -185,7 +185,7 @@ test10_begin:
 	movq	$0x12345678,(%rax)
 
 	movq	$0xFFFFFFFFFFFFFFFF,%rbx
-	movzxb	(%rax),%ebx
+	movzbl	(%rax),%ebx
 	movq	%rbx,(%rax)
 
 	TEST_END
@@ -197,7 +197,7 @@ test11_begin:
 	movq	$0x12345678,(%rax)
 
 	movq	$0xFFFFFFFFFFFFFFFF,%rbx
-	movzxw	(%rax),%rbx
+	movzwq	(%rax),%rbx
 	movq	%rbx,(%rax)
 
 	TEST_END
