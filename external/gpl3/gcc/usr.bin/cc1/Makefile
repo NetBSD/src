@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/02/01 10:34:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2019/02/06 16:57:30 christos Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -29,6 +29,7 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 # LDFLAGS+=	-rdynamic
 
 COPTS.c-ada-spec.c=	-Wno-stack-protector
+COPTS.c-attribs.c=	-Wno-stack-protector
 COPTS.c-aux-info.c=	-Wno-stack-protector
 COPTS.c-common.c=	-Wno-stack-protector
 COPTS.c-cppbuiltin.c=	-Wno-stack-protector
