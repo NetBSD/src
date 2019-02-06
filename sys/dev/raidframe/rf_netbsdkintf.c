@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.369 2019/02/06 02:49:50 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.370 2019/02/06 03:01:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.369 2019/02/06 02:49:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.370 2019/02/06 03:01:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1399,7 +1399,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	RF_Raid_t *raidPtr;
 	RF_AccTotals_t *totals;
 	RF_SingleComponent_t component;
-	RF_DeviceConfig_t *d_cfg, *ucfgp = data;
+	RF_DeviceConfig_t *d_cfg;
 	int retcode = 0;
 	int column;
 	RF_ComponentLabel_t *clabel;
@@ -1519,7 +1519,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return ENOMEM;
 		retcode = rf_get_info(raidPtr, d_cfg);
 		if (retcode == 0) {
-		    retcode = copyout(d_cfg, ucfgp, sizeof(*d_cfg));
+			retcode = copyout(d_cfg, data, sizeof(*d_cfg));
 		}
 		RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
 		return retcode;
