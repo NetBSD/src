@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.31 2019/02/03 13:11:07 mlelstv Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.32 2019/02/06 08:16:49 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.31 2019/02/03 13:11:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.32 2019/02/06 08:16:49 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1267,6 +1267,9 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	memcpy(c->mue_buf, &hdr, sizeof(hdr)); 
 	m_copydata(m, 0, len, c->mue_buf + sizeof(hdr));
 
+	if (__predict_false(c->mue_xfer == NULL))
+		return EIO;	/* XXX plugged out or down */
+
 	usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, len + sizeof(hdr),
 	    USBD_FORCE_SHORT_XFER, 10000, mue_txeof);
 
@@ -1471,6 +1474,8 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		DPRINTF(sc, "%s\n", usbd_errstr(status));
+		if (status == USBD_INVAL)
+			return;	/* XXX plugged out or down */
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 		if (usbd_ratecheck(&sc->mue_rx_notice))
@@ -1833,6 +1838,7 @@ mue_stop(struct ifnet *ifp, int disable __unused)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	callout_stop(&sc->mue_stat_ch);
+	sc->mue_link = 0;
 
         /* Stop transfers. */
 	for (i = 0; i < __arraycount(sc->mue_ep); i++)
@@ -1868,8 +1874,6 @@ mue_stop(struct ifnet *ifp, int disable __unused)
 				    i, usbd_errstr(err));
 			sc->mue_ep[i] = NULL;
 		}
-
-	sc->mue_link = 0; /* XXX */
 
 	DPRINTF(sc, "done\n");
 }

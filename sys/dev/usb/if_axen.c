@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.33 2019/02/06 08:06:59 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.34 2019/02/06 08:16:49 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.33 2019/02/06 08:06:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.34 2019/02/06 08:16:49 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1021,6 +1021,8 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
+		if (status == USBD_INVAL)
+			return;	/* XXX plugged out or down */
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 		if (usbd_ratecheck(&sc->axen_rx_notice)) {
@@ -1322,6 +1324,9 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 	memcpy(c->axen_buf, &hdr, sizeof(hdr));
 	m_copydata(m, 0, m->m_pkthdr.len, c->axen_buf + sizeof(hdr));
 
+	if (__predict_false(c->axen_xfer == NULL))
+		return EIO;	/* XXX plugged out or down */
+
 	usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, length,
 	    USBD_FORCE_SHORT_XFER, 10000, axen_txeof);
 
@@ -1581,6 +1586,7 @@ axen_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	callout_stop(&sc->axen_stat_ch);
+	sc->axen_link = 0;
 
 	/* Stop transfers. */
 	if (sc->axen_ep[AXEN_ENDPT_RX] != NULL) {
@@ -1653,8 +1659,6 @@ axen_stop(struct ifnet *ifp, int disable)
 		}
 		sc->axen_ep[AXEN_ENDPT_INTR] = NULL;
 	}
-
-	sc->axen_link = 0;
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_axen, NULL);
