@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.26 2019/02/06 07:31:38 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.27 2019/02/06 07:35:46 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.26 2019/02/06 07:31:38 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.27 2019/02/06 07:35:46 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1527,6 +1527,7 @@ static void
 axen_stop(struct ifnet *ifp, int disable)
 {
 	struct axen_softc *sc = ifp->if_softc;
+	struct axen_chain *c;
 	usbd_status err;
 	int i;
 	uint16_t rxmode, wval;
@@ -1575,17 +1576,19 @@ axen_stop(struct ifnet *ifp, int disable)
 
 	/* Free RX resources. */
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_rx_chain[i].axen_xfer != NULL) {
-			usbd_destroy_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_rx_chain[i].axen_xfer = NULL;
+		c = &sc->axen_cdata.axen_rx_chain[i];
+		if (c->axen_xfer != NULL) {
+			usbd_destroy_xfer(c->axen_xfer);
+			c->axen_xfer = NULL;
 		}
 	}
 
 	/* Free TX resources. */
 	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_tx_chain[i].axen_xfer != NULL) {
-			usbd_destroy_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
+		c = &sc->axen_cdata.axen_tx_chain[i];
+		if (c->axen_xfer != NULL) {
+			usbd_destroy_xfer(c->axen_xfer);
+			c->axen_xfer = NULL;
 		}
 	}
 
