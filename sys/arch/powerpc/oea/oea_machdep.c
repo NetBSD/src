@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.75 2018/07/15 05:16:44 maxv Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.76 2019/02/06 07:32:50 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.75 2018/07/15 05:16:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.76 2019/02/06 07:32:50 mrg Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -260,15 +260,14 @@ oea_init(void (*handler)(void))
 #if defined(DDB) || defined(KGDB)
 		case EXC_RUNMODETRC:
 #ifdef PPC_OEA601
-			if (cpuvers != MPC601) {
+			if (cpuvers != MPC601)
 #endif
+			{
 				size = (size_t)trapsize;
 				memcpy((void *)exc, trapcode, size);
 				break;
-#ifdef PPC_OEA601
 			}
 			/* FALLTHROUGH */
-#endif
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
