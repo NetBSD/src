@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.68 2019/02/04 09:31:22 mrg Exp $   */
+/*      $NetBSD: raidctl.c,v 1.69 2019/02/06 22:38:10 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.68 2019/02/04 09:31:22 mrg Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.69 2019/02/06 22:38:10 oster Exp $");
 #endif
 
 
@@ -823,7 +823,7 @@ init_component_labels(int fd, int serial_number)
 	component_label.status = 0;
 	
 	do_ioctl( fd, RAIDFRAME_INIT_LABELS, &component_label,
-		  "RAIDFRAME_SET_COMPONENT_LABEL");
+		  "RAIDFRAME_INIT_LABELS");
 }
 
 static void
