@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.c,v 1.3 2019/02/05 23:28:02 christos Exp $	*/
+/*	$NetBSD: rf_compat32.c,v 1.4 2019/02/06 15:39:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -152,7 +152,7 @@ raidframe_netbsd32_ioctl(struct raid_softc *rs, u_long cmd, void *data)
  
 	switch (cmd) {
 	case RAIDFRAME_GET_INFO32:
-		if (!rf_inited(rs) == 0)
+		if (!rf_inited(rs))
 			return ENXIO;
 		return rf_get_info_netbsd32(raidPtr, data);
 	case RAIDFRAME_CONFIGURE32:
