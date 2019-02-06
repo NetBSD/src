@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.35 2019/02/06 08:26:30 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.36 2019/02/06 08:28:11 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.35 2019/02/06 08:26:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.36 2019/02/06 08:28:11 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -933,7 +933,6 @@ mue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	usb_init_task(&sc->mue_tick_task, mue_tick_task, sc, 0);
-	usb_init_task(&sc->mue_stop_task, (void (*)(void *))mue_stop, sc, 0);
 
 #define MUE_IFACE_IDX	0
 	err = usbd_device2interface_handle(dev, MUE_IFACE_IDX, &sc->mue_iface);
@@ -1090,8 +1089,6 @@ mue_detach(device_t self, int flags)
 	 */
 	usb_rem_task_wait(sc->mue_udev, &sc->mue_tick_task, USB_TASKQ_DRIVER,
 	    NULL);
-	usb_rem_task_wait(sc->mue_udev, &sc->mue_stop_task, USB_TASKQ_DRIVER,
-	    NULL);
 
 	s = splusb();
 
@@ -1149,7 +1146,6 @@ mue_rx_list_init(struct mue_softc *sc)
 	for (i = 0; i < sc->mue_rx_list_cnt; i++) {
 		c = &cd->mue_rx_chain[i];
 		c->mue_sc = sc;
-		c->mue_idx = i;
 		if (c->mue_xfer == NULL) {
 			err = usbd_create_xfer(sc->mue_ep[MUE_ENDPT_RX],
 			    sc->mue_rxbufsz, 0, 0, &c->mue_xfer);
@@ -1174,7 +1170,6 @@ mue_tx_list_init(struct mue_softc *sc)
 	for (i = 0; i < sc->mue_tx_list_cnt; i++) {
 		c = &cd->mue_tx_chain[i];
 		c->mue_sc = sc;
-		c->mue_idx = i;
 		if (c->mue_xfer == NULL) {
 			err = usbd_create_xfer(sc->mue_ep[MUE_ENDPT_TX],
 			    sc->mue_txbufsz, USBD_FORCE_SHORT_XFER, 0,
