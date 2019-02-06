@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.371 2019/02/06 03:37:13 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.372 2019/02/06 23:00:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.371 2019/02/06 03:37:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.372 2019/02/06 23:00:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1153,6 +1153,8 @@ rf_copyinspecificbuf(RF_Config_t *k_cfg)
 static int
 rf_getConfiguration(struct raid_softc *rs, void *data, RF_Config_t **k_cfg)
 {
+	RF_Config_t *u_cfg = *((RF_Config_t **) data);
+
 	if (rs->sc_r.valid) {
 		/* There is a valid RAID set running on this unit! */
 		printf("raid%d: Device already configured!\n", rs->sc_unit);
@@ -1165,7 +1167,7 @@ rf_getConfiguration(struct raid_softc *rs, void *data, RF_Config_t **k_cfg)
 	if (*k_cfg == NULL) {
 		return ENOMEM;
 	}
-	int retcode = copyin(data, k_cfg, sizeof(RF_Config_t));
+	int retcode = copyin(u_cfg, k_cfg, sizeof(RF_Config_t));
 	if (retcode == 0)
 		return 0;
 	RF_Free(*k_cfg, sizeof(RF_Config_t));
@@ -1707,6 +1709,13 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return retcode;
 #endif
 	default:
+		/*
+		 * Don't bother trying to load compat modules
+		 * if it is not our ioctl. This is more efficient
+		 * and makes rump tests not depend on compat code
+		 */
+		if (IOCGROUP(cmd) != 'r')
+			break;
 #ifdef _LP64
 		if ((l->l_proc->p_flag & PK_32) != 0) {
 			module_autoload("compat_netbsd32_raid",
