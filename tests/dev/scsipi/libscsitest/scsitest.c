@@ -1,4 +1,4 @@
-/*	$NetBSD: scsitest.c,v 1.2 2014/04/25 00:24:39 pooka Exp $	*/
+/*	$NetBSD: scsitest.c,v 1.3 2019/02/06 09:16:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.2 2014/04/25 00:24:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.3 2019/02/06 09:16:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -123,9 +123,9 @@ scsitest_request(struct scsipi_channel *chan,
 		memset(inqbuf, 0, sizeof(*inqbuf));
 		inqbuf->device = T_CDROM;
 		inqbuf->dev_qual2 = SID_REMOVABLE;
-		strcpy(inqbuf->vendor, "RUMPHOBO");
-		strcpy(inqbuf->product, "It's a LIE");
-		strcpy(inqbuf->revision, "0.00");
+		strncpy(inqbuf->vendor, "RUMPHOBO", sizeof inqbuf->vendor);
+		strncpy(inqbuf->product, "It's a LIE", sizeof inqbuf->product);
+		strncpy(inqbuf->revision, "0.00", sizeof inqbuf->revision);
 		break;
 	}
 	case READ_CD_CAPACITY: {
