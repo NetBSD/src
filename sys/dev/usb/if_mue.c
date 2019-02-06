@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.34 2019/02/06 08:23:08 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.35 2019/02/06 08:26:30 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.34 2019/02/06 08:23:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.35 2019/02/06 08:26:30 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1703,7 +1703,6 @@ static int
 mue_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mue_softc *sc = ifp->if_softc;
-	struct ifreq /*const*/ *ifr = data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1728,10 +1727,6 @@ mue_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		sc->mue_if_flags = ifp->if_flags;
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->mue_mii.mii_media, cmd);
 		break;
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
