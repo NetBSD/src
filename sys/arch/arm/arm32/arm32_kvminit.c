@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.50 2019/02/06 13:20:29 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.51 2019/02/06 13:22:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.50 2019/02/06 13:20:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.51 2019/02/06 13:22:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -212,8 +212,8 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 #endif
 	paddr_t kernelend = KERN_VTOPHYS(kendva);
 
-	VPRINTF("%s: memstart=%#lx, memsize=%#lx\n",
-	    __func__, memstart, memsize);
+	VPRINTF("%s: memstart=%#lx, memsize=%#lx\n", __func__,
+	    memstart, memsize);
 	VPRINTF("%s: kernelstart=%#lx, kernelend=%#lx\n", __func__,
 	    kernelstart, kernelend);
 
@@ -720,7 +720,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	data.pv_pa = text.pv_pa + textsize;
 	data.pv_va = text.pv_va + textsize;
 	data.pv_size = totalsize - textsize;
-	data.pv_prot = VM_PROT_READ|VM_PROT_WRITE;
+	data.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
 	data.pv_cache = PTE_CACHE;
 
 	VPRINTF("%s: adding chunk for kernel data/bss %#lx..%#lx (VA %#lx)\n",
