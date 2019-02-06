@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.46 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: NSLU2,v 1.47 2019/02/06 11:58:30 rin Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -191,10 +191,12 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
+ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # MII/PHY support
-rlphy*	at mii? phy ?		# Realtek RTL8201
+rgephy*	at mii? phy ?		# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
 ukphy*	at mii? phy ?		# Generic/Unknown PHY
 
 # USB 802.11 adapters

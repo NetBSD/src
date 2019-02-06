@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.64 2017/10/24 22:38:32 sevan Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.65 2019/02/06 11:58:30 rin Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -161,6 +161,8 @@ include "dev/usb/usbdevices.config"
 
 midi*		at midibus?
 
+rgephy*		at mii? phy ?
+rlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 # Hardware clocking and power management

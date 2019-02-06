@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.10 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: LINKITSMART7688,v 1.11 2019/02/06 11:58:31 rin Exp $
 #
 # MediaTek MT7688
 #
@@ -181,6 +181,8 @@ reth*		at mainbus?
 options 	RALINK_ETH_MACADDR="00:00:aa:bb:cc:dd"	# according to u-boot env
 
 # MII/PHY support
+rgephy*	at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI/PCIe support

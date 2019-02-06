@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.40 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: HPT5325,v 1.41 2019/02/06 11:58:30 rin Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -174,7 +174,10 @@ mvsata* at mvsoc? offset ? irq ?
 # On-chip Gigabit Ethernet Controller Interface
 mvgbec* at mvsoc? offset ?
 mvgbe*	at mvgbec? port ? irq ?
+
 makphy* at mii? phy ?
+rgephy* at mii? phy ?
+rlphy* at mii? phy ?
 ukphy* at mii? phy ?
 
 # On-chip USB 2.0 Interface
@@ -302,6 +305,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
+ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
