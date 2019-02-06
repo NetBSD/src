@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.59 2016/09/05 00:40:30 sevan Exp $	*/
+/*	$NetBSD: tip.c,v 1.60 2019/02/06 14:08:50 rin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.59 2016/09/05 00:40:30 sevan Exp $");
+__RCSID("$NetBSD: tip.c,v 1.60 2019/02/06 14:08:50 rin Exp $");
 #endif /* not lint */
 
 /*
@@ -358,11 +358,11 @@ tipin(void)
 		    gch && gch == character(value(RAISECHAR))) {
 			setboolean(value(RAISE), !boolean(value(RAISE)));
 			continue;
-		} else if (gch == '\r') {
+		} else if (gch == '\r' || gch == '\n') {
 			bol = 1;
 			xpwrite(FD, &gch, 1);
 			if (boolean(value(HALFDUPLEX)))
-				(void)printf("\r\n");
+				(void)printf("%s\n", gch == '\r' ? "\r" : "");
 			continue;
 		} else if (!cumode && gch && gch == character(value(FORCE)))
 			gch = getchar()&STRIP_PAR;
