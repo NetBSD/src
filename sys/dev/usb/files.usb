@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.153 2018/10/24 07:42:12 jdolecek Exp $
+#	$NetBSD: files.usb,v 1.154 2019/02/06 11:55:06 rin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -388,6 +388,11 @@ file	dev/usb/if_otus.c		otus
 device	umb: ifnet
 attach	umb at usbifif
 file	dev/usb/if_umb.c		umb
+
+# RealTek RTL8152 and RTL8153
+device	ure: arp, ether, ifnet, mii, mii_phy
+attach	ure at usbdevif
+file	dev/usb/if_ure.c		ure
 
 # Serial drivers
 # Modems

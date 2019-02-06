@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.218 2019/02/04 21:57:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.219 2019/02/06 11:55:06 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -88,6 +88,7 @@ SUBDIR+=	if_srt
 SUBDIR+=	if_stf
 SUBDIR+=	if_strip
 SUBDIR+=	if_tun tun
+SUBDIR+=	if_ure
 SUBDIR+=	if_vlan
 SUBDIR+=	iic
 SUBDIR+=	ip_ecn
