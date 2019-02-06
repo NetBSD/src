@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.623 2019/01/31 15:30:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.624 2019/02/06 07:20:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.623 2019/01/31 15:30:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.624 2019/02/06 07:20:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3641,6 +3641,8 @@ wm_rar_count(struct wm_softc *sc)
 		size = WM_RAL_TABSIZE_PCH_LPT;
 		break;
 	case WM_T_82575:
+	case WM_T_I210:
+	case WM_T_I211:
 		size = WM_RAL_TABSIZE_82575;
 		break;
 	case WM_T_82576:
