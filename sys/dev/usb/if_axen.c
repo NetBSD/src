@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.31 2019/02/06 08:01:24 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.32 2019/02/06 08:04:08 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.31 2019/02/06 08:01:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.32 2019/02/06 08:04:08 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1033,6 +1033,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	if (total_len < sizeof(pkt_hdr)) {
+		aprint_error_dev(sc->axen_dev, "rxeof: too short transfer\n");
 		ifp->if_ierrors++;
 		goto done;
 	}
@@ -1054,6 +1055,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 
 	/* sanity check */
 	if (hdr_offset > total_len) {
+		aprint_error_dev(sc->axen_dev, "rxeof: invalid hdr offset\n");
 		ifp->if_ierrors++;
 		usbd_delay_ms(sc->axen_udev, 100);
 		goto done;
