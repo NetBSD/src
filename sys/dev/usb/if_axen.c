@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.29 2019/02/06 07:56:14 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.30 2019/02/06 07:59:24 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.29 2019/02/06 07:56:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.30 2019/02/06 07:59:24 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1047,7 +1047,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	hdr_offset = (uint16_t)(rx_hdr >> 16);
 	pkt_count  = (uint16_t)(rx_hdr & 0xffff);
 
-	if (total_len > sc->axen_bufsz) {
+	if (total_len > sc->axen_rx_bufsz) {
 		aprint_error_dev(sc->axen_dev, "rxeof: too large transfer\n");
 		goto done;
 	}
