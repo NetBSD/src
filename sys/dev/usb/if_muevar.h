@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muevar.h,v 1.6 2019/02/03 13:11:07 mlelstv Exp $	*/
+/*	$NetBSD: if_muevar.h,v 1.7 2019/02/06 08:28:11 rin Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -26,8 +26,6 @@ struct mue_chain {
 	struct mue_softc	*mue_sc;
 	struct usbd_xfer	*mue_xfer;
 	char			*mue_buf;
-	int			mue_accum;
-	int			mue_idx;
 };
 
 struct mue_cdata {
@@ -40,9 +38,7 @@ struct mue_cdata {
 #endif
 	struct mue_chain	mue_rx_chain[MUE_RX_LIST_CNT];
 	int			mue_tx_prod;
-	int			mue_tx_cons;
 	int			mue_tx_cnt;
-	int			mue_rx_prod;
 };
 
 struct mue_rxbuf_hdr {
@@ -103,11 +99,11 @@ struct mue_softc {
 	struct usbd_interface	*mue_iface;
 
 	struct usb_task		mue_tick_task;
-	struct usb_task		mue_stop_task;
 
 	kmutex_t		mue_mii_lock;
 
 	struct timeval		mue_rx_notice;
+	struct timeval		mue_tx_notice;
 
 	uint16_t		mue_product;
 	uint16_t		mue_flags;
