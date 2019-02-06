@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.25 2012/10/24 13:07:46 royger Exp $      */
+/*      $NetBSD: xengnt.c,v 1.26 2019/02/06 12:24:46 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.25 2012/10/24 13:07:46 royger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.26 2019/02/06 12:24:46 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,22 +174,44 @@ xengnt_more_entries(void)
 	if (pages == NULL)
 		return ENOMEM;
 
-	setup.dom = DOMID_SELF;
-	setup.nr_frames = nframes_new;
-	set_xen_guest_handle(setup.frame_list, pages);
+	if (xen_feature(XENFEAT_auto_translated_physmap)) {
+		/*
+		 * Note: Although we allocate space for the entire
+		 * table, in this mode we only update one entry at a
+		 * time.
+		 */
+		struct vm_page *pg;
+		struct xen_add_to_physmap xmap;
 
-	/*
-	 * setup the grant table, made of nframes_new frames
-	 * and return the list of their virtual addresses
-	 * in 'pages'
-	 */
-	if (HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1) != 0)
-		panic("%s: setup table failed", __func__);
-	if (setup.status != GNTST_okay) {
-		aprint_error("%s: setup table returned %d\n",
-		    __func__, setup.status);
-		free(pages, M_DEVBUF);
-		return ENOMEM;
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE|UVM_PGA_ZERO);
+		pages[gnt_nr_grant_frames] = atop(uvm_vm_page_to_phys(pg));
+
+		xmap.domid = DOMID_SELF;
+		xmap.space = XENMAPSPACE_grant_table;
+		xmap.idx = gnt_nr_grant_frames;
+		xmap.gpfn = pages[gnt_nr_grant_frames];
+
+		if (HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xmap) < 0)
+			panic("%s: Unable to register HYPERVISOR_shared_info\n", __func__);
+
+	} else {
+		setup.dom = DOMID_SELF;
+		setup.nr_frames = nframes_new;
+		set_xen_guest_handle(setup.frame_list, pages);
+
+		/*
+		 * setup the grant table, made of nframes_new frames
+		 * and return the list of their virtual addresses
+		 * in 'pages'
+		 */
+		if (HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1) != 0)
+			panic("%s: setup table failed", __func__);
+		if (setup.status != GNTST_okay) {
+			aprint_error("%s: setup table returned %d\n",
+			    __func__, setup.status);
+			free(pages, M_DEVBUF);
+			return ENOMEM;
+		}
 	}
 
 	DPRINTF(("xengnt_more_entries: map 0x%lx -> %p\n",
