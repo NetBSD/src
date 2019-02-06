@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.51 2019/02/06 13:22:54 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.52 2019/02/06 13:28:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.51 2019/02/06 13:22:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.52 2019/02/06 13:28:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -190,12 +190,12 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 */
 #if defined(__HAVE_GENERIC_START)
 	extern char KERNEL_BASE_virt[];
-	extern char ARM_BOOTSTRAP_LxPT[];
+	extern char const __stop__init_memory[];
 
 	VPRINTF("%s: kern_vtopdiff=%#lx\n", __func__, kern_vtopdiff);
 
 	vaddr_t kstartva = trunc_page((vaddr_t)KERNEL_BASE_virt);
-	vaddr_t kendva = round_page((vaddr_t)ARM_BOOTSTRAP_LxPT + L1_TABLE_SIZE);
+	vaddr_t kendva = round_page((vaddr_t)__stop__init_memory);
 
 	kernelstart = KERN_VTOPHYS(kstartva);
 
