@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.36 2019/02/06 08:28:11 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.37 2019/02/06 08:31:38 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.36 2019/02/06 08:28:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.37 2019/02/06 08:31:38 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -146,7 +146,7 @@ static int	mue_open_pipes(struct mue_softc *);
 static void	mue_startup_rx_pipes(struct mue_softc *);
 
 static int	mue_encap(struct mue_softc *, struct mbuf *, int);
-static void	mue_tx_offload(struct mue_softc *, struct mbuf *);
+static int	mue_prepare_tso(struct mue_softc *, struct mbuf *);
 
 static void	mue_setmulti(struct mue_softc *);
 static void	mue_sethwcsum(struct mue_softc *);
@@ -1230,7 +1230,7 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	usbd_status err;
 	struct mue_txbuf_hdr hdr;
 	uint32_t tx_cmd_a, tx_cmd_b;
-	int csum, len;
+	int csum, len, rv;
 	bool tso, ipe, tpe;
 
 	csum = m->m_pkthdr.csum_flags;
@@ -1260,7 +1260,9 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 			tx_cmd_b = MUE_TX_MSS_MIN;
 		tx_cmd_b <<= MUE_TX_CMD_B_MSS_SHIFT;
 		KASSERT((tx_cmd_b & ~MUE_TX_CMD_B_MSS_MASK) == 0);
-		mue_tx_offload(sc, m);
+		rv = mue_prepare_tso(sc, m);
+		if (__predict_false(rv))
+			return rv;
 	} else {
 		if (ipe)
 			tx_cmd_a |= MUE_TX_CMD_A_IPE;
@@ -1292,38 +1294,56 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	return 0;
 }
 
-static void
-mue_tx_offload(struct mue_softc *sc, struct mbuf *m)
+/*
+ * L3 length field should be cleared.
+ */
+static int
+mue_prepare_tso(struct mue_softc *sc, struct mbuf *m)
 {
 	struct ether_header *eh;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
+	uint16_t type, len = 0;
 	int off;
 
-	eh = mtod(m, struct ether_header *);
-	switch (htons(eh->ether_type)) {
+	if (__predict_true(m->m_len >= sizeof(*eh))) {
+		eh = mtod(m, struct ether_header *);
+		type = eh->ether_type;
+	} else
+		m_copydata(m, offsetof(struct ether_header, ether_type),
+		    sizeof(type), &type);
+	switch (type = htons(type)) {
 	case ETHERTYPE_IP:
 	case ETHERTYPE_IPV6:
 		off = ETHER_HDR_LEN;
 		break;
 	case ETHERTYPE_VLAN:
-		/* XXX not yet supported */
 		off = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 	default:
-		/* XXX */
-		panic("%s: unsupported ethertype\n", __func__);
-		/* NOTREACHED */
+		if (usbd_ratecheck(&sc->mue_tx_notice))
+			MUE_PRINTF(sc, "dropping invalid frame "
+			    "type 0x%04hx csum_flags 0x%08x\n", 
+			    type, m->m_pkthdr.csum_flags);
+		return EINVAL;
 	}
 
-	/* Packet length should be cleared. */
 	if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
-		ip = (void *)(mtod(m, char *) + off);
-		ip->ip_len = 0;
+		if (__predict_true(m->m_len >= off + sizeof(*ip))) {
+			ip = (void *)(mtod(m, char *) + off);
+			ip->ip_len = 0;
+		} else
+			m_copyback(m, off + offsetof(struct ip, ip_len),
+			    sizeof(len), &len);
 	} else {
-		ip6 = (void *)(mtod(m, char *) + off);
-		ip6->ip6_plen = 0;
+		if (__predict_true(m->m_len >= off + sizeof(*ip6))) {
+			ip6 = (void *)(mtod(m, char *) + off);
+			ip6->ip6_plen = 0;
+		} else
+			m_copyback(m, off + offsetof(struct ip6_hdr, ip6_plen),
+			    sizeof(len), &len);
 	}
+	return 0;
 }
 
 static void
