@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.34 2019/02/06 08:16:49 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.35 2019/02/06 08:38:41 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.34 2019/02/06 08:16:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.35 2019/02/06 08:38:41 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1025,10 +1025,9 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			return;	/* XXX plugged out or down */
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		if (usbd_ratecheck(&sc->axen_rx_notice)) {
+		if (usbd_ratecheck(&sc->axen_rx_notice))
 			aprint_error_dev(sc->axen_dev, "usb errors on rx: %s\n",
 			    usbd_errstr(status));
-		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->axen_ep[AXEN_ENDPT_RX]);
 		goto done;
@@ -1217,8 +1216,9 @@ axen_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			return;
 		}
 		ifp->if_oerrors++;
-		aprint_error_dev(sc->axen_dev, "usb error on tx: %s\n",
-		    usbd_errstr(status));
+		if (usbd_ratecheck(&sc->axen_tx_notice))
+			aprint_error_dev(sc->axen_dev, "usb error on tx: %s\n",
+			    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->axen_ep[AXEN_ENDPT_TX]);
 		splx(s);
