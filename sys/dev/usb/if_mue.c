@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.37 2019/02/06 08:31:38 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.38 2019/02/06 08:38:41 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.37 2019/02/06 08:31:38 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.38 2019/02/06 08:38:41 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1634,7 +1634,8 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			return;
 		}
 		ifp->if_oerrors++;
-		MUE_PRINTF(sc, "%s\n", usbd_errstr(status));
+		if (usbd_ratecheck(&sc->mue_tx_notice))
+			MUE_PRINTF(sc, "%s\n", usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(
 			    sc->mue_ep[MUE_ENDPT_TX]);
