@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.118 2019/01/27 02:08:33 pgoyette Exp $
+# $NetBSD: mi,v 1.119 2019/02/06 11:55:05 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -230,6 +230,8 @@
 ./@MODULEDIR@/if_strip/if_strip.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_tun				base-kernel-modules	kmod
 ./@MODULEDIR@/if_tun/if_tun.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_ure				base-kernel-modules	kmod
+./@MODULEDIR@/if_ure/if_ure.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_vioif				base-obsolete		obsolete
 ./@MODULEDIR@/if_vioif/if_vioif.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/if_vlan				base-kernel-modules	kmod

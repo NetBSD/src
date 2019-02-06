@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2497 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2498 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -322,3 +322,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		the kernel module framework. [pgoyette 20190127]
 	macppc: Include EDID block for Clamshell iBook G3 displays.
 		[sevan 20190128]
+	ure(4): Add driver for Realtek RTL8152/RTL8153 from OpenBSD.
+		[rin 20190206]
