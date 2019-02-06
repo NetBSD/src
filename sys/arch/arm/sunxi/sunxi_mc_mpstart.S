@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mc_mpstart.S,v 1.1 2019/01/03 11:01:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_mc_mpstart.S,v 1.2 2019/02/06 13:15:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -42,7 +42,7 @@
 	.global _C_LABEL(sunxi_mc_mpstart)
 _C_LABEL(sunxi_mc_mpstart):
 
-	adr     R_TMP1, sunxi_mc_mpstart 
+	adr     R_TMP1, sunxi_mc_mpstart
 	ldr     R_VTOPDIFF, =sunxi_mc_mpstart
 	sub     R_VTOPDIFF, R_VTOPDIFF, R_TMP1
 
