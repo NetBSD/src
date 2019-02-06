@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/02/01 10:39:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2019/02/06 04:00:43 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 LIBISCXX = yes
@@ -11,17 +11,16 @@ LIBISCXX = yes
 .PATH: ${SANITIZER}/ubsan
 
 UBSAN_SRCS= \
-	ubsan_diag.o \
-	ubsan_flags.o \
-	ubsan_handlers.o \
-	ubsan_handlers_cxx.o \
-	ubsan_init.o \
-	ubsan_init_standalone.o \
-	ubsan_type_hash.o \
-	ubsan_type_hash_itanium.o \
-	ubsan_type_hash_win.o \
-	ubsan_value.o
-
+	ubsan_diag.cc \
+	ubsan_flags.cc \
+	ubsan_handlers.cc \
+	ubsan_handlers_cxx.cc \
+	ubsan_init.cc \
+	ubsan_type_hash.cc \
+	ubsan_type_hash_itanium.cc \
+	ubsan_type_hash_win.cc \
+	ubsan_value.cc \
+	ubsan_init_standalone.cc
 
 .for _s in ubsan_handlers_cxx ubsan_type_hash ubsan_type_hash_itanium
 COPTS.${_s}.cc+=-frtti

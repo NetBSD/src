@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.6 2018/07/01 17:41:49 christos Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.7 2019/02/06 04:00:43 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -10,59 +10,55 @@ interception_type_test.cc \
 interception_win.cc
 
 SANITIZER_SRCS+= \
-sanitizer_allocator.cc \
-sanitizer_common.cc \
-sanitizer_common_libcdep.cc \
-sanitizer_coverage_libcdep.cc \
-sanitizer_coverage_mapping_libcdep.cc \
-sanitizer_deadlock_detector1.cc \
-sanitizer_deadlock_detector2.cc \
-sanitizer_flags.cc \
-sanitizer_flag_parser.cc \
-sanitizer_libc.cc \
-sanitizer_libignore.cc \
-sanitizer_linux.cc \
-sanitizer_linux_libcdep.cc \
-sanitizer_mac.cc \
-sanitizer_persistent_allocator.cc \
-sanitizer_platform_limits_linux.cc \
-sanitizer_platform_limits_posix.cc \
-sanitizer_posix.cc \
-sanitizer_posix_libcdep.cc \
-sanitizer_printf.cc \
-sanitizer_procmaps_common.cc \
-sanitizer_procmaps_netbsd.cc \
-sanitizer_procmaps_freebsd.cc \
-sanitizer_procmaps_linux.cc \
-sanitizer_procmaps_mac.cc \
-sanitizer_stackdepot.cc \
-sanitizer_stacktrace.cc \
-sanitizer_stacktrace_libcdep.cc \
-sanitizer_stacktrace_printer.cc \
-sanitizer_stoptheworld_linux_libcdep.cc \
-sanitizer_suppressions.cc \
-sanitizer_symbolizer.cc \
-sanitizer_symbolizer_libbacktrace.cc \
-sanitizer_symbolizer_libcdep.cc \
-sanitizer_symbolizer_mac.cc \
-sanitizer_symbolizer_posix_libcdep.cc \
-sanitizer_symbolizer_win.cc \
-sanitizer_thread_registry.cc \
-sanitizer_tls_get_addr.cc \
-sanitizer_unwind_linux_libcdep.cc \
-sanitizer_win.cc
-
-.PATH: ${SANITIZER}/ubsan
-UBSAN_SRCS+= \
-ubsan_diag.cc \
-ubsan_init.cc \
-ubsan_flags.cc \
-ubsan_value.cc
+	sanitizer_allocator.cc \
+	sanitizer_common.cc \
+	sanitizer_common_libcdep.cc \
+	sanitizer_coverage_libcdep.cc \
+	sanitizer_coverage_mapping_libcdep.cc \
+	sanitizer_deadlock_detector1.cc \
+	sanitizer_deadlock_detector2.cc \
+	sanitizer_flags.cc \
+	sanitizer_flag_parser.cc \
+	sanitizer_libc.cc \
+	sanitizer_libignore.cc \
+	sanitizer_linux.cc \
+	sanitizer_linux_libcdep.cc \
+	sanitizer_linux_s390.cc \
+	sanitizer_mac.cc \
+	sanitizer_persistent_allocator.cc \
+	sanitizer_platform_limits_linux.cc \
+	sanitizer_platform_limits_posix.cc \
+	sanitizer_posix.cc \
+	sanitizer_posix_libcdep.cc \
+	sanitizer_printf.cc \
+	sanitizer_procmaps_common.cc \
+	sanitizer_procmaps_freebsd.cc \
+	sanitizer_procmaps_netbsd.cc \
+	sanitizer_procmaps_linux.cc \
+	sanitizer_procmaps_mac.cc \
+	sanitizer_stackdepot.cc \
+	sanitizer_stacktrace.cc \
+	sanitizer_stacktrace_libcdep.cc \
+	sanitizer_symbolizer_mac.cc \
+	sanitizer_stacktrace_printer.cc \
+	sanitizer_stoptheworld_linux_libcdep.cc \
+	sanitizer_suppressions.cc \
+	sanitizer_symbolizer.cc \
+	sanitizer_symbolizer_libbacktrace.cc \
+	sanitizer_symbolizer_libcdep.cc \
+	sanitizer_symbolizer_posix_libcdep.cc \
+	sanitizer_symbolizer_win.cc \
+	sanitizer_termination.cc \
+	sanitizer_thread_registry.cc \
+	sanitizer_tls_get_addr.cc \
+	sanitizer_unwind_linux_libcdep.cc \
+	sanitizer_win.cc
 
 # The linux build does this to avoid preinit sections on shared libraries
 CSHLIBFLAGS+= -DPIC
 
-SRCS+=	${INTERCEPTION_SRCS} ${SANITIZER_SRCS} ${UBSAN_SRCS}
+#SRCS+=	${INTERCEPTION_SRCS} ${SANITIZER_SRCS} ${UBSAN_SRCS}
+SRCS+=	${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
 CPPFLAGS+=-I${SANITIZER}/include -I${SANITIZER}
 CPPFLAGS.sanitizer_netbsd.cc+=-I${GCCDIST}/gcc/ginclude
 CPPFLAGS+=-D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS
