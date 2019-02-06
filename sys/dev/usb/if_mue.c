@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.39 2019/02/06 09:15:01 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.40 2019/02/06 22:42:11 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.39 2019/02/06 09:15:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.40 2019/02/06 22:42:11 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -364,17 +364,17 @@ mue_miibus_statchg(struct ifnet *ifp)
 	uint32_t flow, threshold;
 
 	if (ifp == NULL) {
-		DPRINTF(sc, "ifp not ready\n");
-		return;
-	}
-
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		DPRINTF(sc, "not running\n");
+		printf("%s: ifp not ready\n", __func__);
 		return;
 	}
 
 	sc = ifp->if_softc;
 	mii = GET_MII(sc);
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		DPRINTF(sc, "not running\n");
+		return;
+	}
 
 	if (mii == NULL) {
 		DPRINTF(sc, "mii not ready\n");
