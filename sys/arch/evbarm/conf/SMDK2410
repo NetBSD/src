@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.69 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: SMDK2410,v 1.70 2019/02/06 11:58:30 rin Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -262,6 +262,8 @@ ustir* at uhub? port ?
 irframe* at ustir?
 
 # MII/PHY support
+rgephy*	at mii? phy ?		# Realtek 8169S/8110S/8211 PHYs
+rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
 ukphy*	at mii? phy ?		# generic unknown PHYs
 urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
 
@@ -271,6 +273,7 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
+ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter
