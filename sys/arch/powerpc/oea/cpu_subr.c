@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.98 2019/01/06 11:20:53 phx Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.99 2019/02/06 07:32:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.98 2019/01/06 11:20:53 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.99 2019/02/06 07:32:50 mrg Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -1133,6 +1133,7 @@ cpu_get_dfs(void)
 	case MPC7448:
 		if (mfspr(SPR_HID1) & HID1_DFS4)
 			return 4;
+		/* FALLTHROUGH */
 	case MPC7447A:
 		if (mfspr(SPR_HID1) & HID1_DFS2)
 			return 2;
@@ -1155,6 +1156,7 @@ cpu_set_dfs(int div)
 	switch (vers) {
 	case MPC7448:
 		dfs_mask |= HID1_DFS4;
+		/* FALLTHROUGH */
 	case MPC7447A:
 		dfs_mask |= HID1_DFS2;
 		break;
