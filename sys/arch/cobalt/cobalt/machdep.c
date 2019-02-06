@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2018/01/20 13:56:08 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2019/02/06 21:42:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2018/01/20 13:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2019/02/06 21:42:46 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -399,7 +399,7 @@ decode_bootstring(void)
 
 	/* break apart bootstring on ' ' boundries and itterate */
 	work = strtok_light(bootstring, ' ');
-	while (work != '\0') {
+	while (work != NULL) {
 		/* if starts with '-', we got options, walk its decode */
 		if (work[0] == '-') {
 			i = 1;
@@ -410,7 +410,7 @@ decode_bootstring(void)
 		} else
 
 		/* if it has a '=' its an assignment, switch and set */
-		if ((equ = strchr(work, '=')) != '\0') {
+		if ((equ = strchr(work, '=')) != NULL) {
 			if (memcmp("nfsroot=", work, 8) == 0) {
 				nfsroot_bstr = (equ + 1);
 			} else
