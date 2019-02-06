@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.33 2019/02/06 08:20:23 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.34 2019/02/06 08:23:08 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.33 2019/02/06 08:20:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.34 2019/02/06 08:23:08 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -359,12 +359,25 @@ out:
 static void
 mue_miibus_statchg(struct ifnet *ifp)
 {
-	struct mue_softc *sc = ifp->if_softc;
-	struct mii_data *mii = GET_MII(sc);
+	struct mue_softc *sc;
+	struct mii_data *mii;
 	uint32_t flow, threshold;
 
-	if (mii == NULL || ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0) {
-		DPRINTF(sc, "not ready\n");
+	if (ifp == NULL) {
+		DPRINTF(sc, "ifp not ready\n");
+		return;
+	}
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		DPRINTF(sc, "not running\n");
+		return;
+	}
+
+	sc = ifp->if_softc;
+	mii = GET_MII(sc);
+
+	if (mii == NULL) {
+		DPRINTF(sc, "mii not ready\n");
 		return;
 	}
 
@@ -1900,8 +1913,8 @@ static void
 mue_tick_task(void *xsc)
 {
 	struct mue_softc *sc = xsc;
-	struct ifnet *ifp = GET_IFP(sc);
-	struct mii_data *mii = GET_MII(sc);
+	struct ifnet *ifp;
+	struct mii_data *mii;
 	int s;
 
 	if (sc == NULL)
@@ -1909,6 +1922,9 @@ mue_tick_task(void *xsc)
 
 	if (sc->mue_dying)
 		return;
+
+	ifp = GET_IFP(sc);
+	mii = GET_MII(sc);
 
 	s = splnet();
 	mii_tick(mii);
