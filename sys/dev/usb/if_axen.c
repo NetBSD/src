@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.28 2019/02/06 07:48:33 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.29 2019/02/06 07:56:14 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.28 2019/02/06 07:48:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.29 2019/02/06 07:56:14 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.28 2019/02/06 07:48:33 rin Exp $");
 #include <net/if_media.h>
 
 #include <net/bpf.h>
+
+#include <netinet/in.h>		/* XXX for netinet/ip.h */
+#include <netinet/ip.h>		/* XXX for IP_MAXPACKET */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -718,15 +721,19 @@ axen_attach(device_t parent, device_t self, void *aux)
 	/* decide on what our bufsize will be */
 	switch (sc->axen_udev->ud_speed) {
 	case USB_SPEED_SUPER:
-		sc->axen_bufsz = AXEN_BUFSZ_SS * 1024;
+		sc->axen_rx_bufsz = AXEN_BUFSZ_SS * 1024;
 		break;
 	case USB_SPEED_HIGH:
-		sc->axen_bufsz = AXEN_BUFSZ_HS * 1024;
+		sc->axen_rx_bufsz = AXEN_BUFSZ_HS * 1024;
 		break;
 	default:
-		sc->axen_bufsz = AXEN_BUFSZ_LS * 1024;
+		sc->axen_rx_bufsz = AXEN_BUFSZ_LS * 1024;
 		break;
 	}
+
+	sc->axen_tx_bufsz = IP_MAXPACKET +
+	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN +
+	    sizeof(struct axen_sframe_hdr);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -791,7 +798,10 @@ axen_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	sc->axen_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx |
+
+	/* Adapter does not support TSOv6 (They call it LSOv2). */
+	ifp->if_capabilities |= IFCAP_TSOv4 |
+	    IFCAP_CSUM_IPv4_Rx  | IFCAP_CSUM_IPv4_Tx  |
 	    IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx |
 	    IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx |
 	    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_TCPv6_Tx |
@@ -943,7 +953,7 @@ axen_rx_list_init(struct axen_softc *sc)
 		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_RX],
-			    sc->axen_bufsz, 0, 0, &c->axen_xfer);
+			    sc->axen_rx_bufsz, 0, 0, &c->axen_xfer);
 			if (err)
 				return err;
 			c->axen_buf = usbd_get_buffer(c->axen_xfer);
@@ -969,7 +979,7 @@ axen_tx_list_init(struct axen_softc *sc)
 		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_TX],
-			    sc->axen_bufsz, USBD_FORCE_SHORT_XFER, 0,
+			    sc->axen_tx_bufsz, USBD_FORCE_SHORT_XFER, 0,
 			    &c->axen_xfer);
 			if (err)
 				return err;
@@ -1124,7 +1134,7 @@ nextpkt:
 
 done:
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, c, c->axen_buf, sc->axen_bufsz,
+	usbd_setup_xfer(xfer, c, c->axen_buf, sc->axen_rx_bufsz,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axen_rxeof);
 	usbd_transfer(xfer);
 
@@ -1291,6 +1301,7 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 	}
 
 	length = m->m_pkthdr.len + sizeof(hdr);
+	KASSERT(length <= sc->axen_tx_bufsz);
 
 	hdr.plen = htole32(m->m_pkthdr.len);
 
@@ -1437,7 +1448,7 @@ axen_init(struct ifnet *ifp)
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
 		c = &sc->axen_cdata.axen_rx_chain[i];
 
-		usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, sc->axen_bufsz,
+		usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, sc->axen_rx_bufsz,
 		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axen_rxeof);
 		usbd_transfer(c->axen_xfer);
 	}
