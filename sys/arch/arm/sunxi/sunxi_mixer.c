@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.6 2019/02/06 03:07:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.6 2019/02/06 03:07:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
+#include <sys/sysctl.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -47,13 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp
 
 #include <arm/sunxi/sunxi_drm.h>
 
+#define	MIXER_CURSOR_MAXWIDTH	256
+#define	MIXER_CURSOR_MAXHEIGHT	256
+
 #define	SUNXI_MIXER_FREQ	432000000
 
 #define	GLB_BASE		0x00000
 #define	BLD_BASE		0x01000
 #define	OVL_BASE(n)		(0x02000 + (n) * 0x1000)
-#define	OVL_V_BASE		OVL_BASE(0)
-#define	OVL_UI_BASE		OVL_BASE(1)
 #define	VSU_BASE		0x20000
 #define	CSC_BASE(n)		((n) == 0 ? 0xaa050 : 0xa0000)
 
@@ -67,11 +69,20 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp
 
 /* BLD registers */
 #define	BLD_FILL_COLOR_CTL	0x000
+#define	 BLD_FILL_COLOR_CTL_P3_EN		__BIT(11)
+#define	 BLD_FILL_COLOR_CTL_P2_EN		__BIT(10)
 #define	 BLD_FILL_COLOR_CTL_P1_EN		__BIT(9)
 #define	 BLD_FILL_COLOR_CTL_P0_EN		__BIT(8)
+#define	 BLD_FILL_COLOR_CTL_P3_FCEN		__BIT(3)
+#define	 BLD_FILL_COLOR_CTL_P2_FCEN		__BIT(2)
+#define	 BLD_FILL_COLOR_CTL_P1_FCEN		__BIT(1)
+#define	 BLD_FILL_COLOR_CTL_P0_FCEN		__BIT(0)
+#define	BLD_FILL_COLOR(n)	(0x004 + (n) * 0x10)
 #define	BLD_CH_ISIZE(n)		(0x008 + (n) * 0x10)
 #define	BLD_CH_OFFSET(n)	(0x00c + (n) * 0x10)
 #define	BLD_CH_RTCTL		0x080
+#define	 BLD_CH_RTCTL_P3			__BITS(15,12)
+#define	 BLD_CH_RTCTL_P2			__BITS(11,8)
 #define	 BLD_CH_RTCTL_P1			__BITS(7,4)
 #define	 BLD_CH_RTCTL_P0			__BITS(3,0)
 #define	BLD_SIZE		0x08c
@@ -88,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp
 #define	  OVL_V_ATTCTL_LAY_FBFMT_YUV422		0x06
 #define	  OVL_V_ATTCTL_LAY_FBFMT_YUV420		0x0a
 #define	  OVL_V_ATTCTL_LAY_FBFMT_YUV411		0x0e
+#define	  OVL_V_ATTCTL_LAY_FBFMT_ARGB_8888	0x00
 #define	  OVL_V_ATTCTL_LAY_FBFMT_XRGB_8888	0x04
 #define	 OVL_V_ATTCTL_LAY0_EN			__BIT(0)
 #define	OVL_V_MBSIZE(n)		(0x004 + (n) * 0x30)
@@ -112,13 +124,16 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.5 2019/02/05 21:01:38 jmcneill Exp
 /* OVL_UI registers */
 #define	OVL_UI_ATTR_CTL(n)	(0x000 + (n) * 0x20)
 #define	 OVL_UI_ATTR_CTL_LAY_FBFMT		__BITS(12,8)
+#define	  OVL_UI_ATTR_CTL_LAY_FBFMT_ARGB_8888	0x00
 #define	  OVL_UI_ATTR_CTL_LAY_FBFMT_XRGB_8888	0x04
 #define	 OVL_UI_ATTR_CTL_LAY_EN			__BIT(0)
 #define	OVL_UI_MBSIZE(n)	(0x004 + (n) * 0x20)
 #define	OVL_UI_COOR(n)		(0x008 + (n) * 0x20)
 #define	OVL_UI_PITCH(n)		(0x00c + (n) * 0x20)
 #define	OVL_UI_TOP_LADD(n)	(0x010 + (n) * 0x20)
+#define	OVL_UI_FILL_COLOR(n)	(0x018 + (n) * 0x20)
 #define	OVL_UI_TOP_HADD		0x080
+#define	 OVL_UI_TOP_HADD_LAYER1	__BITS(15,8)
 #define	 OVL_UI_TOP_HADD_LAYER0	__BITS(7,0)
 #define	OVL_UI_SIZE		0x088
 
@@ -158,11 +173,11 @@ enum {
 	MIXER_PORT_OUTPUT = 1,
 };
 
-static const char * const compatible[] = {
-	"allwinner,sun8i-h3-de2-mixer-0",
-	"allwinner,sun50i-a64-de2-mixer-0",
-	"allwinner,sun50i-a64-de2-mixer-1",
-	NULL
+static const struct of_compat_data compat_data[] = {
+	{ "allwinner,sun8i-h3-de2-mixer-0",	3 },
+	{ "allwinner,sun50i-a64-de2-mixer-0",	3 },
+	{ "allwinner,sun50i-a64-de2-mixer-1",	1 },
+	{ NULL }
 };
 
 struct sunxi_mixer_softc;
@@ -172,7 +187,7 @@ struct sunxi_mixer_crtc {
 	struct sunxi_mixer_softc *sc;
 };
 
-struct sunxi_mixer_overlay {
+struct sunxi_mixer_plane {
 	struct drm_plane	base;
 	struct sunxi_mixer_softc *sc;
 };
@@ -183,8 +198,10 @@ struct sunxi_mixer_softc {
 	bus_space_handle_t	sc_bsh;
 	int			sc_phandle;
 
+	u_int			sc_ovl_ui_count;
+
 	struct sunxi_mixer_crtc	sc_crtc;
-	struct sunxi_mixer_overlay sc_overlay;
+	struct sunxi_mixer_plane sc_overlay;
 
 	struct fdt_device_ports	sc_ports;
 };
@@ -200,14 +217,14 @@ struct sunxi_mixer_softc {
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, BLD_BASE + (reg), (val))
 
 #define	OVL_V_READ(sc, reg)				\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, OVL_V_BASE + (reg))
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, OVL_BASE(0) + (reg))
 #define	OVL_V_WRITE(sc, reg, val)			\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, OVL_V_BASE + (reg), (val))
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, OVL_BASE(0) + (reg), (val))
 
-#define	OVL_UI_READ(sc, reg)				\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, OVL_UI_BASE + (reg))
-#define	OVL_UI_WRITE(sc, reg, val)			\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, OVL_UI_BASE + (reg), (val))
+#define	OVL_UI_READ(sc, n, reg)				\
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, OVL_BASE((n) + 1) + (reg))
+#define	OVL_UI_WRITE(sc, n, reg, val)			\
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, OVL_BASE((n) + 1) + (reg), (val))
 
 #define	VSU_READ(sc, reg)				\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, VSU_BASE + (reg))
@@ -220,7 +237,7 @@ struct sunxi_mixer_softc {
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, CSC_BASE(n) + (reg), (val))
 
 #define	to_sunxi_mixer_crtc(x)		container_of(x, struct sunxi_mixer_crtc, base)
-#define	to_sunxi_mixer_overlay(x)	container_of(x, struct sunxi_mixer_overlay, base)
+#define	to_sunxi_mixer_plane(x)	container_of(x, struct sunxi_mixer_plane, base)
 
 static int
 sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
@@ -231,6 +248,7 @@ sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	struct sunxi_drm_framebuffer *sfb = atomic?
 	    to_sunxi_drm_framebuffer(fb) :
 	    to_sunxi_drm_framebuffer(crtc->primary->fb);
+	uint32_t val;
 
 	uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
 
@@ -238,8 +256,11 @@ sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	uint32_t laddr = paddr & 0xffffffff;
 
 	/* Framebuffer start address */
-	OVL_UI_WRITE(sc, OVL_UI_TOP_HADD, haddr);
-	OVL_UI_WRITE(sc, OVL_UI_TOP_LADD(0), laddr);
+	val = OVL_UI_READ(sc, 0, OVL_UI_TOP_HADD);
+	val &= ~OVL_UI_TOP_HADD_LAYER0;
+	val |= __SHIFTIN(haddr, OVL_UI_TOP_HADD_LAYER0);
+	OVL_UI_WRITE(sc, 0, OVL_UI_TOP_HADD, val);
+	OVL_UI_WRITE(sc, 0, OVL_UI_TOP_LADD(0), laddr);
 
 	return 0;
 }
@@ -274,10 +295,137 @@ sunxi_mixer_page_flip(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	return 0;
 }
 
+static int
+sunxi_mixer_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
+    uint32_t handle, uint32_t width, uint32_t height)
+{
+	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
+	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
+	struct drm_gem_object *gem_obj = NULL;
+	struct drm_gem_cma_object *obj;
+	uint32_t val;
+	int error;
+
+	/* Only mixers with more than one UI layer can support hardware cursors */
+	if (sc->sc_ovl_ui_count <= 1)
+		return -EINVAL;
+
+	if (handle == 0) {
+		val = BLD_READ(sc, BLD_FILL_COLOR_CTL);
+		val &= ~BLD_FILL_COLOR_CTL_P2_EN;
+		val |= BLD_FILL_COLOR_CTL_P2_FCEN;
+		BLD_WRITE(sc, BLD_FILL_COLOR_CTL, val);
+
+		error = 0;
+		goto done;
+	}
+
+	/* Arbitrary limits, the hardware layer can do 8192x8192 */
+	if (width > MIXER_CURSOR_MAXWIDTH || height > MIXER_CURSOR_MAXHEIGHT) {
+		DRM_ERROR("Cursor dimension %ux%u not supported\n", width, height);
+		error = -EINVAL;
+		goto done;
+	}
+
+	gem_obj = drm_gem_object_lookup(crtc->dev, file_priv, handle);
+	if (gem_obj == NULL) {
+		DRM_ERROR("Cannot find cursor object %#x for crtc %d\n",
+		    handle, drm_crtc_index(crtc));
+		error = -ENOENT;
+		goto done;
+	}
+	obj = to_drm_gem_cma_obj(gem_obj);
+
+	if (obj->base.size < width * height * 4) {
+		DRM_ERROR("Cursor buffer is too small\n");
+		error = -ENOMEM;
+		goto done;
+	}
+
+	uint64_t paddr = (uint64_t)obj->dmamap->dm_segs[0].ds_addr;
+	uint32_t haddr = (paddr >> 32) & OVL_UI_TOP_HADD_LAYER0;
+	uint32_t laddr = paddr & 0xffffffff;
+
+	/* Framebuffer start address */
+	val = OVL_UI_READ(sc, 1, OVL_UI_TOP_HADD);
+	val &= ~OVL_UI_TOP_HADD_LAYER0;
+	val |= __SHIFTIN(haddr, OVL_UI_TOP_HADD_LAYER0);
+	OVL_UI_WRITE(sc, 1, OVL_UI_TOP_HADD, val);
+	OVL_UI_WRITE(sc, 1, OVL_UI_TOP_LADD(0), laddr);
+
+	const uint32_t size = ((height - 1) << 16) | (width - 1);
+	const uint32_t offset = (crtc->cursor_y << 16) | crtc->cursor_x;
+	const uint32_t crtc_size = ((crtc->primary->fb->height - 1) << 16) |
+	    (crtc->primary->fb->width - 1);
+
+	/* Enable cursor in ARGB8888 mode */
+	val = OVL_UI_ATTR_CTL_LAY_EN |
+	      __SHIFTIN(OVL_UI_ATTR_CTL_LAY_FBFMT_ARGB_8888, OVL_UI_ATTR_CTL_LAY_FBFMT);
+	OVL_UI_WRITE(sc, 1, OVL_UI_ATTR_CTL(0), val);
+	/* Set UI overlay layer size */
+	OVL_UI_WRITE(sc, 1, OVL_UI_MBSIZE(0), size);
+	/* Set UI overlay offset */
+	OVL_UI_WRITE(sc, 1, OVL_UI_COOR(0), offset);
+	/* Set UI overlay line size */
+	OVL_UI_WRITE(sc, 1, OVL_UI_PITCH(0), width * 4);
+	/* Set UI overlay window size */
+	OVL_UI_WRITE(sc, 1, OVL_UI_SIZE, crtc_size);
+
+	/* Set blender 2 input size */
+	BLD_WRITE(sc, BLD_CH_ISIZE(2), crtc_size);
+	/* Set blender 2 offset */
+	BLD_WRITE(sc, BLD_CH_OFFSET(2), 0);
+	/* Route channel 2 to pipe 2 */
+	val = BLD_READ(sc, BLD_CH_RTCTL);
+	val &= ~BLD_CH_RTCTL_P2;
+	val |= __SHIFTIN(2, BLD_CH_RTCTL_P2);
+	BLD_WRITE(sc, BLD_CH_RTCTL, val);
+
+	/* Enable pipe 2 */
+	val = BLD_READ(sc, BLD_FILL_COLOR_CTL);
+	val |= BLD_FILL_COLOR_CTL_P2_EN;
+	val &= ~BLD_FILL_COLOR_CTL_P2_FCEN;
+	BLD_WRITE(sc, BLD_FILL_COLOR_CTL, val);
+
+	error = 0;
+
+done:
+	if (error == 0) {
+		/* Commit settings */
+		GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
+	}
+
+	if (gem_obj != NULL)
+		drm_gem_object_unreference_unlocked(gem_obj);
+
+	return error;
+}
+
+static int
+sunxi_mixer_cursor_move(struct drm_crtc *crtc, int x, int y)
+{
+	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
+	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
+
+	crtc->cursor_x = x & 0xffff;
+	crtc->cursor_y = y & 0xffff;
+
+	const uint32_t offset = (crtc->cursor_y << 16) | crtc->cursor_x;
+
+	OVL_UI_WRITE(sc, 1, OVL_UI_COOR(0), offset);
+
+	/* Commit settings */
+	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
+
+	return 0;
+}
+
 static const struct drm_crtc_funcs sunxi_mixer_crtc_funcs = {
 	.set_config = drm_crtc_helper_set_config,
-	.page_flip = sunxi_mixer_page_flip,
 	.destroy = sunxi_mixer_destroy,
+	.page_flip = sunxi_mixer_page_flip,
+	.cursor_set = sunxi_mixer_cursor_set,
+	.cursor_move = sunxi_mixer_cursor_move,
 };
 
 static void
@@ -300,6 +448,7 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
 	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
 	uint32_t val;
+	u_int fbfmt;
 
 	const uint32_t size = ((adjusted_mode->vdisplay - 1) << 16) |
 			      (adjusted_mode->hdisplay - 1);
@@ -325,18 +474,21 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	/* Set blender output size */
 	BLD_WRITE(sc, BLD_SIZE, size);
 
-	/* Enable UI overlay in XRGB8888 mode */
-	val = OVL_UI_ATTR_CTL_LAY_EN |
-	      __SHIFTIN(OVL_UI_ATTR_CTL_LAY_FBFMT_XRGB_8888, OVL_UI_ATTR_CTL_LAY_FBFMT);
-	OVL_UI_WRITE(sc, OVL_UI_ATTR_CTL(0), val);
+	/* Enable UI overlay */
+	if (crtc->primary->fb->pixel_format == DRM_FORMAT_XRGB8888)
+		fbfmt = OVL_UI_ATTR_CTL_LAY_FBFMT_XRGB_8888;
+	else
+		fbfmt = OVL_UI_ATTR_CTL_LAY_FBFMT_ARGB_8888;
+	val = OVL_UI_ATTR_CTL_LAY_EN | __SHIFTIN(fbfmt, OVL_UI_ATTR_CTL_LAY_FBFMT);
+	OVL_UI_WRITE(sc, 0, OVL_UI_ATTR_CTL(0), val);
 	/* Set UI overlay layer size */
-	OVL_UI_WRITE(sc, OVL_UI_MBSIZE(0), size);
+	OVL_UI_WRITE(sc, 0, OVL_UI_MBSIZE(0), size);
 	/* Set UI overlay offset */
-	OVL_UI_WRITE(sc, OVL_UI_COOR(0), offset);
+	OVL_UI_WRITE(sc, 0, OVL_UI_COOR(0), offset);
 	/* Set UI overlay line size */
-	OVL_UI_WRITE(sc, OVL_UI_PITCH(0), adjusted_mode->hdisplay * 4);
+	OVL_UI_WRITE(sc, 0, OVL_UI_PITCH(0), adjusted_mode->hdisplay * 4);
 	/* Set UI overlay window size */
-	OVL_UI_WRITE(sc, OVL_UI_SIZE, size);
+	OVL_UI_WRITE(sc, 0, OVL_UI_SIZE, size);
 
 	sunxi_mixer_mode_do_set_base(crtc, old_fb, x, y, 0);
 
@@ -418,6 +570,7 @@ static bool
 sunxi_mixer_overlay_rgb(uint32_t drm_format)
 {
 	switch (drm_format) {
+	case DRM_FORMAT_ARGB8888:
 	case DRM_FORMAT_XRGB8888:
 		return true;
 	default:
@@ -429,6 +582,7 @@ static u_int
 sunxi_mixer_overlay_format(uint32_t drm_format)
 {
 	switch (drm_format) {
+	case DRM_FORMAT_ARGB8888:	return OVL_V_ATTCTL_LAY_FBFMT_ARGB_8888;
 	case DRM_FORMAT_XRGB8888:	return OVL_V_ATTCTL_LAY_FBFMT_XRGB_8888;
 	case DRM_FORMAT_VYUY:		return OVL_V_ATTCTL_LAY_FBFMT_VYUY;
 	case DRM_FORMAT_YVYU:		return OVL_V_ATTCTL_LAY_FBFMT_YVYU;
@@ -888,7 +1042,7 @@ sunxi_mixer_overlay_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
     struct drm_framebuffer *fb, int crtc_x, int crtc_y, u_int crtc_w, u_int crtc_h,
     uint32_t src_x, uint32_t src_y, uint32_t src_w, uint32_t src_h)
 {
-	struct sunxi_mixer_overlay *overlay = to_sunxi_mixer_overlay(plane);
+	struct sunxi_mixer_plane *overlay = to_sunxi_mixer_plane(plane);
 	struct sunxi_mixer_softc * const sc = overlay->sc;
 	struct sunxi_drm_framebuffer *sfb = to_sunxi_drm_framebuffer(fb);
 	uint32_t val;
@@ -967,7 +1121,7 @@ sunxi_mixer_overlay_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 static int
 sunxi_mixer_overlay_disable_plane(struct drm_plane *plane)
 {
-	struct sunxi_mixer_overlay *overlay = to_sunxi_mixer_overlay(plane);
+	struct sunxi_mixer_plane *overlay = to_sunxi_mixer_plane(plane);
 	struct sunxi_mixer_softc * const sc = overlay->sc;
 	uint32_t val;
 
@@ -990,6 +1144,7 @@ static const struct drm_plane_funcs sunxi_mixer_overlay_funcs = {
 };
 
 static uint32_t sunxi_mixer_overlay_formats[] = {
+	DRM_FORMAT_ARGB8888,
 	DRM_FORMAT_XRGB8888,
 #if notyet
 	DRM_FORMAT_VYUY,
@@ -1007,6 +1162,7 @@ sunxi_mixer_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 {
 	struct sunxi_mixer_softc * const sc = device_private(dev);
 	struct drm_device *ddev;
+	bus_size_t reg;
 
 	if (!activate)
 		return EINVAL;
@@ -1019,6 +1175,14 @@ sunxi_mixer_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 
 	sc->sc_crtc.sc = sc;
 	sc->sc_overlay.sc = sc;
+
+	/* Initialize registers */
+	for (reg = 0; reg < 0xc000; reg += 4)
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, reg, 0);
+	BLD_WRITE(sc, BLD_CTL(0), 0x03010301);
+	BLD_WRITE(sc, BLD_CTL(1), 0x03010301);
+	BLD_WRITE(sc, BLD_CTL(2), 0x03010301);
+	BLD_WRITE(sc, BLD_CTL(3), 0x03010301);
 
 	drm_crtc_init(ddev, &sc->sc_crtc.base, &sunxi_mixer_crtc_funcs);
 	drm_crtc_helper_add(&sc->sc_crtc.base, &sunxi_mixer_crtc_helper_funcs);
@@ -1044,7 +1208,7 @@ sunxi_mixer_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -1091,6 +1255,7 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_ovl_ui_count = of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": Display Engine Mixer\n");

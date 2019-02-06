@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.6 2019/02/04 12:10:13 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.7 2019/02/06 03:07:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.6 2019/02/04 12:10:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.7 2019/02/06 03:07:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -247,6 +247,7 @@ sunxi_drm_fb_create(struct drm_device *ddev, struct drm_file *file,
 
 	switch (fb->base.pixel_format) {
 	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_ARGB8888:
 		fb->base.depth = 32;
 		break;
 	default:
