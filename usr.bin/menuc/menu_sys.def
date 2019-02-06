@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.64 2019/01/09 19:43:37 martin Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.65 2019/02/06 20:08:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -807,6 +807,15 @@ set_menu_numopts(int menu, int numopts)
 {
 
 	MENUS(menu).numopts = numopts;
+}
+
+menudesc *
+get_menudesc(int menu)
+{
+	if (menu < 0 || menu >= num_menus)
+		return NULL;
+
+	return &MENUS(menu);
 }
 
 /* Control L is end of standard routines, remaining only for dynamic. */
