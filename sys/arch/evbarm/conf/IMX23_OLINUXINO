@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.17 2017/09/14 07:58:40 mrg Exp $
+# $Id: IMX23_OLINUXINO,v 1.18 2019/02/06 11:58:30 rin Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -89,6 +89,8 @@ include "dev/usb/usbdevices.config"
 
 midi*		at midibus?
 
+rgephy*		at mii? phy ?
+rlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 options 	MEMSIZE=64
