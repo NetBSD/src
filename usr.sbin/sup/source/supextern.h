@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.25 2019/02/03 12:13:37 mrg Exp $	*/
+/*	$NetBSD: supextern.h,v 1.26 2019/02/06 15:43:13 christos Exp $	*/
 
 struct stat;
 
@@ -43,7 +43,7 @@ void path(const char *, char *, char *);
 
 /* quit.c */
 void quit(int, const char *, ...)
-	__attribute__((__format__(__printf__, 2, 3))) __dead;
+	__attribute__((__format__(__printf__, 2, 3)));
 
 /* read_line.c */
 char *read_line(FILE *, size_t *, size_t *, const char[3], int);
