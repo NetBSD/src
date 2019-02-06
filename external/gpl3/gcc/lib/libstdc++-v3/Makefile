@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2019/02/01 10:37:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.40 2019/02/06 02:55:54 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -33,7 +33,7 @@ libstdc++.a:: libstdc++-symbols.ver
 
 LDFLAGS+=	-Wl,-O1 \
 		-Wl,--gc-sections \
-		-Wl,--version-script=libstdc++-symbols.ver
+		-Wl,--version-script=${.CURDIR}/libstdc++-symbols.ver
 .endif
 
 CXXFLAGS.clang+=	-stdlib=libstdc++ -std=c++11 -D_GLIBCXX_ABI_TAG_CXX11=
