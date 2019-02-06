@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.32 2019/02/06 08:16:49 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.33 2019/02/06 08:20:23 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.32 2019/02/06 08:16:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.33 2019/02/06 08:20:23 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1829,6 +1829,7 @@ static void
 mue_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct mue_softc *sc = ifp->if_softc;
+	struct mue_chain *c;
 	usbd_status err;
 	size_t i;
 
@@ -1850,20 +1851,22 @@ mue_stop(struct ifnet *ifp, int disable __unused)
 		}
 
 	/* Free RX resources. */
-	for (i = 0; i < sc->mue_rx_list_cnt; i++)
-		if (sc->mue_cdata.mue_rx_chain[i].mue_xfer != NULL) {
-			usbd_destroy_xfer(
-			    sc->mue_cdata.mue_rx_chain[i].mue_xfer);
-			sc->mue_cdata.mue_rx_chain[i].mue_xfer = NULL;
+	for (i = 0; i < sc->mue_rx_list_cnt; i++) {
+		c = &sc->mue_cdata.mue_rx_chain[i];
+		if (c->mue_xfer != NULL) {
+			usbd_destroy_xfer(c->mue_xfer);
+			c->mue_xfer = NULL;
 		}
+	}
 
 	/* Free TX resources. */
-	for (i = 0; i < sc->mue_tx_list_cnt; i++)
-		if (sc->mue_cdata.mue_tx_chain[i].mue_xfer != NULL) {
-			usbd_destroy_xfer(
-			    sc->mue_cdata.mue_tx_chain[i].mue_xfer);
-			sc->mue_cdata.mue_tx_chain[i].mue_xfer = NULL;
+	for (i = 0; i < sc->mue_tx_list_cnt; i++) {
+		c = &sc->mue_cdata.mue_tx_chain[i];
+		if (c->mue_xfer != NULL) {
+			usbd_destroy_xfer(c->mue_xfer);
+			c->mue_xfer = NULL;
 		}
+	}
 
 	/* Close pipes */
 	for (i = 0; i < __arraycount(sc->mue_ep); i++)
