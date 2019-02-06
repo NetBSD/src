@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_sramc.c,v 1.3 2019/01/31 01:49:12 jmcneill Exp $ */
+/* $NetBSD: sunxi_sramc.c,v 1.4 2019/02/06 22:50:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.3 2019/01/31 01:49:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.4 2019/02/06 22:50:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_sramc.c,v 1.3 2019/01/31 01:49:12 jmcneill Exp
 #include <arm/sunxi/sunxi_sramc.h>
 
 static const char * compatible[] = {
-	"allwinner,sun4i-a10-sram-controller",
+	"allwinner,sun4i-a10-sram-controller",	/* old compat string */
+	"allwinner,sun4i-a10-system-control",
 	"allwinner,sun8i-h3-system-control",
 	"allwinner,sun50i-a64-system-control",
 	"allwinner,sun50i-h6-system-control",
