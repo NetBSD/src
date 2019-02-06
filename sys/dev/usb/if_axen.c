@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.27 2019/02/06 07:35:46 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.28 2019/02/06 07:48:33 rin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.27 2019/02/06 07:35:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.28 2019/02/06 07:48:33 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1277,23 +1277,32 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 
 	c = &sc->axen_cdata.axen_tx_chain[idx];
 
-	boundary = (sc->axen_udev->ud_speed == USB_SPEED_HIGH) ? 512 : 64;
+	/* XXX Is this need? */
+	switch (sc->axen_udev->ud_speed) {
+	case USB_SPEED_SUPER:
+		boundary = 4096;
+		break;
+	case USB_SPEED_HIGH:
+		boundary = 512;
+		break;
+	default:
+		boundary = 64;
+		break;
+	}
+
+	length = m->m_pkthdr.len + sizeof(hdr);
 
 	hdr.plen = htole32(m->m_pkthdr.len);
+
 	hdr.gso = 0; /* disable segmentation offloading */
+	if ((length % boundary) == 0) {
+		DPRINTF(("%s: boundary hit\n", device_xname(sc->axen_dev)));
+		hdr.gso |= 0x80008000;	/* XXX enable padding */
+	}
+	hdr.gso = htole32(hdr.gso);
 
 	memcpy(c->axen_buf, &hdr, sizeof(hdr));
-	length = sizeof(hdr);
-
-	m_copydata(m, 0, m->m_pkthdr.len, c->axen_buf + length);
-	length += m->m_pkthdr.len;
-
-	if ((length % boundary) == 0) {
-		hdr.plen = 0x0;
-		hdr.gso |= 0x80008000;  /* enable padding */
-		memcpy(c->axen_buf + length, &hdr, sizeof(hdr));
-		length += sizeof(hdr);
-	}
+	m_copydata(m, 0, m->m_pkthdr.len, c->axen_buf + sizeof(hdr));
 
 	usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, length,
 	    USBD_FORCE_SHORT_XFER, 10000, axen_txeof);
