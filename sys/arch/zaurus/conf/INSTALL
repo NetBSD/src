@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.38 2019/02/07 20:33:44 rin Exp $
+# $NetBSD: INSTALL,v 1.39 2019/02/07 20:56:27 rin Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -77,6 +77,16 @@ no wsmouse* at ums?
 no ugen*
 
 no uk* at scsibus?
+
+no acphy*
+no amhphy*
+no bmtphy*
+no glxtphy*
+no gphyter*
+no makphy*
+no tlphy*
+no tqphy*
+no urlphy*
 
 no pseudo-device	vnd
 no options 		VND_COMPRESSION

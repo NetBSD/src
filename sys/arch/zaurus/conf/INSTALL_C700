@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_C700,v 1.8 2019/02/07 20:33:44 rin Exp $
+# $NetBSD: INSTALL_C700,v 1.9 2019/02/07 20:56:27 rin Exp $
 #
 # INSTALL config file (C700 with memory disk root)
 #
@@ -39,7 +39,6 @@ no cd*
 
 no aue*
 no axe*
-no axen*
 no cdce*
 no cue*
 no kue*
@@ -47,5 +46,3 @@ no mue*
 no udav*
 no ure*
 no url*
-no urndis*
-no usmsc*
