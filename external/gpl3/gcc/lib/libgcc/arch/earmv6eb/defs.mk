@@ -5,7 +5,7 @@
 G_INCLUDES=-I. -I. -I../.././gcc -I${GNUHOSTDIST}/libgcc -I${GNUHOSTDIST}/libgcc/. -I${GNUHOSTDIST}/libgcc/../gcc -I${GNUHOSTDIST}/libgcc/../include 
 G_INTERNAL_CFLAGS=-g -O2 -O2  -DIN_GCC    -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include   -fPIC -g -DIN_LIBGCC2 -fbuilding-libgcc -fno-stack-protector   -fPIC -I. -I. -I../.././gcc -I${GNUHOSTDIST}/libgcc -I${GNUHOSTDIST}/libgcc/. -I${GNUHOSTDIST}/libgcc/../gcc -I${GNUHOSTDIST}/libgcc/../include  -DHAVE_CC_TLS 
 G_LIB2ADD= ${GNUHOSTDIST}/libgcc/config/arm/unaligned-funcs.c enable-execute-stack.c
-G_LIB2ADDEH=${GNUHOSTDIST}/libgcc/config/arm/unwind-arm.c ${GNUHOSTDIST}/libgcc/config/arm/libunwind.S ${GNUHOSTDIST}/libgcc/config/arm/pr-support.c ${GNUHOSTDIST}/libgcc/unwind-c.c ${GNUHOSTDIST}/libgcc/emutls.c
+G_LIB2ADDEH=${GNUHOSTDIST}/libgcc/unwind-dw2.c ${GNUHOSTDIST}/libgcc/unwind-dw2-fde-dip.c ${GNUHOSTDIST}/libgcc/unwind-sjlj.c ${GNUHOSTDIST}/libgcc/unwind-c.c ${GNUHOSTDIST}/libgcc/emutls.c
 G_LIB2ADD_ST=
 G_LIB1ASMFUNCS=_thumb1_case_sqi _thumb1_case_uqi _thumb1_case_shi _thumb1_case_uhi _thumb1_case_si _dvmd_tls _bb_init_func _call_via_rX _interwork_call_via_rX _clzsi2 _clzdi2 _ctzsi2
 G_LIB1ASMSRC=arm/lib1funcs.S
@@ -18,4 +18,4 @@ G_SHLIB_MKMAP_OPTS=
 G_SHLIB_MAPFILES=libgcc-std.ver ${GNUHOSTDIST}/libgcc/config/arm/libgcc-bpabi.ver
 G_SHLIB_NM_FLAGS=-pg
 G_NOEXCEPTION_FLAGS=-fno-exceptions -fno-rtti -fasynchronous-unwind-tables
-G_EXTRA_HEADERS=${GNUHOSTDIST}/gcc/config/arm/mmintrin.h ${GNUHOSTDIST}/gcc/config/arm/arm_neon.h ${GNUHOSTDIST}/gcc/config/arm/arm_acle.h ${GNUHOSTDIST}/gcc/config/arm/arm_fp16.h ${GNUHOSTDIST}/gcc/config/arm/arm_cmse.h ${GNUHOSTDIST}/gcc/ginclude/tgmath.h ${GNUHOSTDIST}/gcc/ginclude/unwind-arm-common.h
+G_EXTRA_HEADERS=${GNUHOSTDIST}/gcc/config/arm/mmintrin.h ${GNUHOSTDIST}/gcc/config/arm/arm_neon.h ${GNUHOSTDIST}/gcc/config/arm/arm_acle.h ${GNUHOSTDIST}/gcc/config/arm/arm_fp16.h ${GNUHOSTDIST}/gcc/config/arm/arm_cmse.h ${GNUHOSTDIST}/gcc/ginclude/tgmath.h
