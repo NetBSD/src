@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.75 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: umidi.c,v 1.76 2019/02/07 13:20:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.75 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.76 2019/02/07 13:20:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -462,7 +462,8 @@ umidi_detach(device_t self, int flags)
 	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = 1;
 	if (--sc->sc_refcnt >= 0)
-		usb_detach_wait(sc->sc_dev, &sc->sc_detach_cv, &sc->sc_lock);
+		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
+			aprint_error_dev(self, ": didn't detach\n");
 	mutex_exit(&sc->sc_lock);
 
 	detach_all_mididevs(sc, flags);
@@ -549,7 +550,7 @@ umidi_close(void *addr)
 		close_in_jack(mididev->in_jack);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 
 	mididev->opened = 0;
 	mididev->closing = 0;
@@ -1786,7 +1787,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	}
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 
 	return 0;
 }

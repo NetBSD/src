@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.57 2019/01/22 06:46:21 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.58 2019/02/07 13:20:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.57 2019/01/22 06:46:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.58 2019/02/07 13:20:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -144,7 +144,7 @@ umass_scsi_attach(struct umass_softc *sc)
 		scsiprint);
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 	mutex_exit(&sc->sc_lock);
 
 
@@ -177,7 +177,7 @@ umass_atapi_attach(struct umass_softc *sc)
 		atapiprint);
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 	mutex_exit(&sc->sc_lock);
 
 	return 0;
