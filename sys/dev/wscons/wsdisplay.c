@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.153 2019/02/03 03:19:28 mrg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.154 2019/02/07 06:10:29 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.153 2019/02/03 03:19:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.154 2019/02/07 06:10:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -289,9 +289,9 @@ wsscreen_getc_poll(void *priv)
 		struct tty *tp = scr->scr_tty;
 		do {
 			c = wsdisplay_ocn->cn_getc(wsdisplay_ocn->cn_dev);
-			if (c != -1)
+			if (c >= 0)
 				(*tp->t_linesw->l_rint)((unsigned char)c, tp);
-		} while (c != -1);
+		} while (c >= 0);
 	}
 
 	callout_schedule(&scr->scr_getc_ch, mstohz(10));
