@@ -45,6 +45,7 @@
 #define ELOOP_QUEUE 3
 #include "common.h"
 #include "dhcpcd.h"
+#include "dhcp-common.h"
 #include "dhcp6.h"
 #include "eloop.h"
 #include "if.h"
@@ -328,7 +329,9 @@ ipv6nd_sendrsprobe(void *arg)
 	else {
 		logwarnx("%s: no IPv6 Routers available", ifp->name);
 		ipv6nd_drop(ifp);
+#ifdef DHCP6
 		dhcp6_dropnondelegates(ifp);
+#endif
 	}
 }
 
@@ -343,7 +346,7 @@ ipv6nd_sendadvertisement(void *arg)
 	struct in6_pktinfo pi;
 	const struct rs_state *state = RS_CSTATE(ifp);
 
-	if (state == NULL || ifp->carrier == LINK_DOWN)
+	if (state == NULL || ifp->carrier <= LINK_DOWN)
 		goto freeit;
 
 	memset(&dst, 0, sizeof(dst));
@@ -405,7 +408,7 @@ ipv6nd_advertise(struct ipv6_addr *ia)
 	iaf = NULL;
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		state = IPV6_STATE(ifp);
-		if (state == NULL || ifp->carrier == LINK_DOWN)
+		if (state == NULL || ifp->carrier <= LINK_DOWN)
 			continue;
 
 		TAILQ_FOREACH(iap, &state->addrs, next) {
@@ -855,7 +858,10 @@ try_script:
 #ifndef DHCP6
 /* If DHCPv6 is compiled out, supply a shim to provide an error message
  * if IPv6RA requests DHCPv6. */
-#undef dhcp6_start
+enum DH6S {
+	DH6S_REQUEST,
+	DH6S_INFORM,
+};
 static int
 dhcp6_start(__unused struct interface *ifp, __unused enum DH6S init_state)
 {
@@ -1239,8 +1245,10 @@ handle_flag:
 		if (new_data && dhcp6_start(ifp, DH6S_INFORM) == -1)
 			LOG_DHCP6("dhcp6_start: %s", ifp->name);
 	} else {
+#ifdef DHCP6
 		if (new_data)
 			logdebugx("%s: No DHCPv6 instruction in RA", ifp->name);
+#endif
 nodhcp6:
 		if (ifp->ctx->options & DHCPCD_TEST) {
 			eloop_exit(ifp->ctx->eloop, EXIT_SUCCESS);
@@ -1451,19 +1459,21 @@ ipv6nd_expirera(void *arg)
 	struct interface *ifp;
 	struct ra *rap, *ran;
 	struct timespec now, lt, expire, next;
-	uint8_t expired, anyvalid, valid, validone;
+	bool expired, valid, validone;
 	struct ipv6_addr *ia;
+#ifdef DHCP6
+	bool anyvalid = false;
+#endif
 
 	ifp = arg;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	expired = 0;
+	expired = false;
 	timespecclear(&next);
 
-	anyvalid = 0;
 	TAILQ_FOREACH_SAFE(rap, ifp->ctx->ra_routers, next, ran) {
 		if (rap->iface != ifp)
 			continue;
-		valid = validone = 0;
+		valid = validone = false;
 		if (rap->lifetime) {
 			lt.tv_sec = (time_t)rap->lifetime;
 			lt.tv_nsec = 0;
@@ -1477,7 +1487,7 @@ ipv6nd_expirera(void *arg)
 					rap->lifetime = 0;
 				}
 			} else {
-				valid = 1;
+				valid = true;
 				timespecsub(&expire, &now, &lt);
 				if (!timespecisset(&next) ||
 				    timespeccmp(&next, &lt, >))
@@ -1492,7 +1502,7 @@ ipv6nd_expirera(void *arg)
 			if (ia->prefix_vltime == 0)
 				continue;
 			if (ia->prefix_vltime == ND6_INFINITE_LIFETIME) {
-				validone = 1;
+				validone = true;
 				continue;
 			}
 			lt.tv_sec = (time_t)ia->prefix_vltime;
@@ -1510,13 +1520,13 @@ ipv6nd_expirera(void *arg)
 				ia->prefix_vltime = ia->prefix_pltime = 0;
 				ia->flags &=
 				    ~(IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED);
-				expired = 1;
+				expired = true;
 			} else {
 				timespecsub(&expire, &now, &lt);
 				if (!timespecisset(&next) ||
 				    timespeccmp(&next, &lt, >))
 					next = lt;
-				validone = 1;
+				validone = true;
 			}
 		}
 
@@ -1529,8 +1539,10 @@ ipv6nd_expirera(void *arg)
 		 * as well punt it. */
 		if (!valid && !validone)
 			ipv6nd_free_ra(rap);
+#ifdef DHCP6
 		else
-			anyvalid = 1;
+			anyvalid = true;
+#endif
 	}
 
 	if (timespecisset(&next))
@@ -1541,9 +1553,11 @@ ipv6nd_expirera(void *arg)
 		script_runreason(ifp, "ROUTERADVERT");
 	}
 
+#ifdef DHCP6
 	/* No valid routers? Kill any DHCPv6. */
 	if (!anyvalid)
 		dhcp6_dropnondelegates(ifp);
+#endif
 }
 
 void

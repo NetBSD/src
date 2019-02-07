@@ -239,8 +239,9 @@ detect_init()
 		_service_exists="/usr/bin/systemctl --quiet is-enabled \$1.service"
 		_service_status="/usr/bin/systemctl --quiet is-active \$1.service"
 		_service_cmd="/usr/bin/systemctl \$2 \$1.service"
-	elif [ -x /sbin/rc-service ] && [ -s /libexec/rc/init.d/softlevel ] ||
-	     [ -s /run/openrc/softlevel ]
+	elif [ -x /sbin/rc-service ] &&
+	     { [ -s /libexec/rc/init.d/softlevel ] ||
+	     [ -s /run/openrc/softlevel ]; }
 	then
 		_service_exists="/sbin/rc-service -e \$1"
 		_service_cmd="/sbin/rc-service \$1 -- -D \$2"
