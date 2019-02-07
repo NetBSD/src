@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.14 2019/01/22 06:47:20 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.15 2019/02/07 12:41:21 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.14 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.15 2019/02/07 12:41:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -341,7 +341,7 @@ uyurex_set_mode(struct uyurex_softc *sc, uint8_t val)
 	}
 
 	/* wait ack */
-	tsleep(&sc->sc_sme, 0, "uyurex", (1000*hz+999)/1000 + 1);
+	kpause("uyurexsm", false, (1000*hz+999)/1000 + 1, NULL);
 }
 
 void
@@ -359,7 +359,7 @@ uyurex_read_value_request(struct uyurex_softc *sc)
 		return;
 
 	/* wait till sensor data are updated, 500ms will be enough */
-	tsleep(&sc->sc_sme, 0, "uyurex", (500*hz+999)/1000 + 1);
+	kpause("uyurexrd", false, (500*hz+999)/1000 + 1, NULL);
 }
 
 void
@@ -382,5 +382,5 @@ uyurex_write_value_request(struct uyurex_softc *sc, uint32_t val)
 		return;
 
 	/* wait till sensor data are updated, 250ms will be enough */
-	tsleep(&sc->sc_sme, 0, "uyurex", (250*hz+999)/1000 + 1);
+	kpause("uyurexwr", false, (250*hz+999)/1000 + 1, NULL);
 }
