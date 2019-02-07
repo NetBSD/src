@@ -139,11 +139,6 @@ void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
     int, pid_t);
 
 void ipv4_free(struct interface *);
-#else
-#define ipv4_sortinterfaces(a) {}
-#define ipv4_applyaddr(a) {}
-#define ipv4_free(a) {}
-#define ipv4_hasaddr(a) (0)
-#endif
+#endif /* INET */
 
-#endif
+#endif /* IPV4_H */
