@@ -541,6 +541,7 @@ set_option_space(struct dhcpcd_ctx *ctx,
 		return arg + strlen("nd_");
 	}
 
+#ifdef DHCP6
 	if (strncmp(arg, "dhcp6_", strlen("dhcp6_")) == 0) {
 		*d = ctx->dhcp6_opts;
 		*dl = ctx->dhcp6_opts_len;
@@ -552,6 +553,7 @@ set_option_space(struct dhcpcd_ctx *ctx,
 		*reject = ifo->rejectmask6;
 		return arg + strlen("dhcp6_");
 	}
+#endif
 #endif
 
 #ifdef INET
@@ -1420,9 +1422,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			ia->sla = NULL;
 #endif
 		}
+
+#ifdef SMALL
+		break;
+#else
 		if (ia->ia_type != D6_OPTION_IA_PD)
 			break;
-#ifndef SMALL
+
 		for (p = fp; p; p = fp) {
 			fp = strwhite(p);
 			if (fp) {
@@ -2430,8 +2436,10 @@ read_config(struct dhcpcd_ctx *ctx,
 #ifdef INET6
 		ctx->nd_opts = ifo->nd_override;
 		ctx->nd_opts_len = ifo->nd_override_len;
+#ifdef DHCP6
 		ctx->dhcp6_opts = ifo->dhcp6_override;
 		ctx->dhcp6_opts_len = ifo->dhcp6_override_len;
+#endif
 #else
 		for (i = 0, opt = ifo->nd_override;
 		    i < ifo->nd_override_len;
