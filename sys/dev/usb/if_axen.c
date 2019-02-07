@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.35 2019/02/06 08:38:41 rin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.36 2019/02/07 10:36:20 mlelstv Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.35 2019/02/06 08:38:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.36 2019/02/07 10:36:20 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1291,7 +1291,7 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 	struct axen_chain *c;
 	usbd_status err;
 	struct axen_sframe_hdr hdr;
-	int length, boundary;
+	u_int length, boundary;
 
 	c = &sc->axen_cdata.axen_tx_chain[idx];
 

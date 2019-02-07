@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urevar.h,v 1.1 2019/02/06 11:55:06 rin Exp $	*/
+/*	$NetBSD: if_urevar.h,v 1.2 2019/02/07 10:36:20 mlelstv Exp $	*/
 /*	$OpenBSD: if_urereg.h,v 1.5 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -118,7 +118,7 @@ struct ure_softc {
 
 	struct timeval		ure_rx_notice;
 	struct timeval		ure_tx_notice;
-	int			ure_bufsz;
+	u_int			ure_bufsz;
 
 	int			ure_phyno;
 
