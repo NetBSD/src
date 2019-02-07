@@ -49,9 +49,10 @@
 #define IF_ACTIVE	1
 #define IF_ACTIVE_USER	2
 
-#define LINK_UP		1
-#define LINK_UNKNOWN	0
-#define LINK_DOWN	-1
+#define	LINK_UP		1
+#define	LINK_UNKNOWN	0
+#define	LINK_DOWN	-1
+#define	LINK_DOWN_IFFUP	-2
 
 #define IF_DATA_IPV4	0
 #define IF_DATA_ARP	1
@@ -84,8 +85,9 @@ struct interface {
 	unsigned short vlanid;
 	unsigned int metric;
 	int carrier;
-	int wireless;
-	uint8_t ssid[IF_SSIDLEN + 1]; /* NULL terminated */
+	bool media_valid;
+	bool wireless;
+	uint8_t ssid[IF_SSIDLEN];
 	unsigned int ssid_len;
 
 	char profile[PROFILE_LEN];
@@ -198,8 +200,10 @@ struct dhcpcd_ctx {
 
 	struct dhcp_opt *nd_opts;
 	size_t nd_opts_len;
+#ifdef DHCP6
 	struct dhcp_opt *dhcp6_opts;
 	size_t dhcp6_opts_len;
+#endif
 
 #ifndef __linux__
 	int ra_global;

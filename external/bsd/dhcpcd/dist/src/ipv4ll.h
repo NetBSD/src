@@ -71,12 +71,6 @@ int ipv4ll_recvrt(int, const struct rt *);
 void ipv4ll_reset(struct interface *);
 void ipv4ll_drop(struct interface *);
 void ipv4ll_free(struct interface *);
-#else
-#define	IPV4LL_STATE_RUNNING(ifp)	(0)
-#define	ipv4ll_subnetroute(route, ifp)	(0)
-#define	ipv4ll_defaultroute(route, ifp)	(0)
-#define	ipv4ll_handlert(a, b, c)	(0)
-#define	ipv4ll_free(a)			{}
 #endif
 
 #endif

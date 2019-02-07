@@ -197,7 +197,6 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 		close(priv->pf_inet6_fd);
 }
 
-#if defined(INET) || defined(INET6)
 static void
 if_linkaddr(struct sockaddr_dl *sdl, const struct interface *ifp)
 {
@@ -208,7 +207,6 @@ if_linkaddr(struct sockaddr_dl *sdl, const struct interface *ifp)
 	sdl->sdl_nlen = sdl->sdl_alen = sdl->sdl_slen = 0;
 	sdl->sdl_index = (unsigned short)ifp->index;
 }
-#endif
 
 #if defined(SIOCG80211NWID) || defined(SIOCGETVLAN)
 static int if_direct_ioctl(int s, const char *ifname,
@@ -359,7 +357,6 @@ get_addrs(int type, const void *data, const struct sockaddr **sa)
 	}
 }
 
-#if defined(INET) || defined(INET6)
 static struct interface *
 if_findsdl(struct dhcpcd_ctx *ctx, const struct sockaddr_dl *sdl)
 {
@@ -504,7 +501,17 @@ if_route(unsigned char cmd, const struct rt *rt)
 		    !sa_is_loopback(&rt->rt_gateway))
 		{
 			rtm->rtm_index = (unsigned short)rt->rt_ifp->index;
-#ifdef __OpenBSD__
+/*
+ * OpenBSD rejects the message for on-link routes.
+ * FreeBSD-12 kernel apparently panics.
+ * I can't replicate the panic, but better safe than sorry!
+ * https://roy.marples.name/archives/dhcpcd-discuss/0002286.html
+ *
+ * Neither OS currently allows IPv6 address sharing anyway, so let's
+ * try to encourage someone to fix that by logging a waring during compile.
+ */
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#warning OS does not allow IPv6 address sharing
 			if (!gateway_unspec || rt->rt_dest.sa_family!=AF_INET6)
 #endif
 			rtm->rtm_addrs |= RTA_IFP;
@@ -687,8 +694,6 @@ if_initrt(struct dhcpcd_ctx *ctx, int af)
 	free(buf);
 	return 0;
 }
-
-#endif
 
 #ifdef INET
 int
@@ -951,16 +956,22 @@ if_ifinfo(struct dhcpcd_ctx *ctx, const struct if_msghdr *ifm)
 	if ((ifp = if_findindex(ctx->ifaces, ifm->ifm_index)) == NULL)
 		return;
 
-	/* If we get LINK_STATE_UNKNOWN here, it means the interface
-	 * doesn't support reporting carrier state.
-	 * As such, we need to rely on IFF_UP.
-	 * Even if LINK_STATE_UP is reported, we also need IFF_UP as well
-	 * so for dhcpcd they are equivalent and we only need to check
-	 * LINK_STATE_DOWN. */
-	if (ifm->ifm_data.ifi_link_state == LINK_STATE_DOWN)
-		link_state = LINK_DOWN;
-	else
+	switch (ifm->ifm_data.ifi_link_state) {
+	case LINK_STATE_UNKNOWN:
+		if (ifp->media_valid) {
+			link_state = LINK_DOWN;
+			break;
+		}
+		/* Interface does not report media state, so we have
+		 * to rely on IFF_UP. */
+		/* FALLTHROUGH */
+	case LINK_STATE_UP:
 		link_state = ifm->ifm_flags & IFF_UP ? LINK_UP : LINK_DOWN;
+		break;
+	default:
+		link_state = LINK_DOWN;
+		break;
+	}
 
 	dhcpcd_handlecarrier(ctx, link_state,
 	    (unsigned int)ifm->ifm_flags, ifp->name);
