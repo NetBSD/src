@@ -1,8 +1,10 @@
-# $NetBSD: ad.mips,v 1.78 2019/01/19 13:06:50 mrg Exp $
+# $NetBSD: ad.mips,v 1.79 2019/02/07 00:04:56 mrg Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
 -./usr/lib/64/libgomp.so.1.1
+-./usr/lib/64/libgomp.so.2
+-./usr/lib/64/libgomp.so.2.0
 -./usr/lib/64/libgomp_p.a
 -./usr/lib/64/libgomp_pic.a
 ./usr/bin/elf2aout				comp-obsolete		obsolete
