@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2019/02/04 08:15:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.53 2019/02/07 05:28:38 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -526,7 +526,9 @@ COPTS.insn-recog.c+=-Wno-error
 .if ${GCC_MACHINE_ARCH} == "vax"
 CPPFLAGS+=-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
 COPTS.builtins.c+=-O0
+COPTS.calls.c+=-O0
 COPTS.convert.c+=-O0
+COPTS.data-streamer-out.c+=-O0
 COPTS.dwarf2out.c+=-O0
 COPTS.dse.c+=-O0					# XXX port-vax/51967
 COPTS.expmed.c+=-O0
@@ -548,10 +550,12 @@ COPTS.targhooks.c+=-O0
 COPTS.tree-affine.c+=-O0
 COPTS.tree-cfg.c+=-O0
 COPTS.tree-eh.c+=-O0
+COPTS.tree-if-conv.c+=-O0
 COPTS.tree-object-size.c+=-O0
 COPTS.tree-parloops.c+=-O0
 COPTS.tree-predcom.c+=-O0
 COPTS.tree-pretty-print.c+=-O0
+COPTS.tree-ssa.c+=-O0
 COPTS.tree-ssa-alias.c+=-O0
 COPTS.tree-ssa-ccp.c+=-O0
 COPTS.tree-ssa-forwprop.c+=-O0
@@ -564,12 +568,14 @@ COPTS.tree-ssa-reassoc.c+=-O0
 COPTS.tree-ssa-uninit.c+=-O0
 COPTS.tree-switch-conversion.c+=-O0
 COPTS.tree-vect-data-refs.c+=-O0
+COPTS.tree-vect-loop.c+=-O0
 COPTS.tree-vect-loop-manip.c+=-O0
 COPTS.tree-vect-patterns.c+=-O0
 COPTS.tree-vect-stmts.c+=-O0
 COPTS.tree-vrp.c+=-O0
 COPTS.tree.c+=-O0
 COPTS.ubsan.c+=-O0
+COPTS.web.c+=-O0
 COPTS.varasm.c+=-O0
 COPTS.wide-int.cc+=-O0
 .else
