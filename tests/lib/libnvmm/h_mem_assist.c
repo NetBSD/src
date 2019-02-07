@@ -292,10 +292,13 @@ extern uint8_t test8_begin, test8_end;
 extern uint8_t test9_begin, test9_end;
 extern uint8_t test10_begin, test10_end;
 extern uint8_t test11_begin, test11_end;
+extern uint8_t test12_begin, test12_end;
+extern uint8_t test13_begin, test13_end;
+extern uint8_t test14_begin, test14_end;
 
 static const struct test tests[] = {
 	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004 },
-	{ "test2 - OR",  &test2_begin, &test2_end, 0x14FF },
+	{ "test2 - OR",  &test2_begin, &test2_end, 0x16FF },
 	{ "test3 - AND", &test3_begin, &test3_end, 0x1FC0 },
 	{ "test4 - XOR", &test4_begin, &test4_end, 0x10CF },
 	{ "test5 - Address Sizes", &test5_begin, &test5_end, 0x1F00 },
@@ -305,6 +308,9 @@ static const struct test tests[] = {
 	{ "test9 - MOVS", &test9_begin, &test9_end, 0x12345678 },
 	{ "test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078 },
 	{ "test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678 },
+	{ "test12 - CMP", &test12_begin, &test12_end, 0x00000001 },
+	{ "test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF },
+	{ "test14 - TEST", &test14_begin, &test14_end, 0x00000001 },
 	{ NULL, NULL, NULL, -1 }
 };
 
