@@ -1169,7 +1169,7 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 	struct ipv6_addr *lla;
 	int s;
 
-	if (!callback && ifp->carrier == LINK_DOWN)
+	if (!callback && ifp->carrier <= LINK_DOWN)
 		return 0;
 
 	memset(&dst, 0, sizeof(dst));
@@ -1262,7 +1262,7 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 		}
 
 logsend:
-		if (ifp->carrier != LINK_DOWN)
+		if (ifp->carrier > LINK_DOWN)
 			logdebugx("%s: %s %s (xid 0x%02x%02x%02x),"
 			    " next in %0.1f seconds",
 			    ifp->name,
@@ -1286,7 +1286,7 @@ logsend:
 		}
 	}
 
-	if (ifp->carrier == LINK_DOWN)
+	if (ifp->carrier <= LINK_DOWN)
 		return 0;
 
 	/* Update the elapsed time */
@@ -3416,6 +3416,8 @@ dhcp6_recvif(struct interface *ifp, struct dhcp6_message *r, size_t len)
 			break;
 		}
 		return;
+#else
+		break;
 #endif
 	default:
 		logerrx("%s: invalid DHCP6 type %s (%d)",

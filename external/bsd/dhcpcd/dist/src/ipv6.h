@@ -140,6 +140,7 @@
 #  define IN6_IFF_DETACHED	0
 #endif
 
+#ifdef INET6
 TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 struct ipv6_addr {
 	TAILQ_ENTRY(ipv6_addr) next;
@@ -223,7 +224,6 @@ struct ipv6_state {
 	((const struct ipv6_state *)(ifp)->if_data[IF_DATA_IPV6])
 #define IPV6_STATE_RUNNING(ifp) ipv6_staticdadcompleted((ifp))
 
-#ifdef INET6
 
 int ipv6_init(struct dhcpcd_ctx *);
 int ipv6_makestableprivate(struct in6_addr *addr,
@@ -282,16 +282,6 @@ int ipv6_startstatic(struct interface *);
 ssize_t ipv6_env(char **, const char *, const struct interface *);
 void ipv6_ctxfree(struct dhcpcd_ctx *);
 bool inet6_getroutes(struct dhcpcd_ctx *, struct rt_head *);
+#endif /* INET6 */
 
-#else
-#define ipv6_start(a) (-1)
-#define ipv6_startstatic(a)
-#define ipv6_staticdadcompleted(a) (0)
-#define ipv6_hasaddr(a) (0)
-#define ipv6_free_ll_callbacks(a) {}
-#define ipv6_free(a) {}
-#define ipv6_ctxfree(a) {}
-#define ipv6_gentempifid(a) {}
-#endif
-
-#endif
+#endif /* INET6_H */
