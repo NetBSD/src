@@ -412,7 +412,8 @@ arm*-*-netbsdelf*)
 	case ${host} in
 	arm*-*-netbsdelf-*eabi*)
 	  tmake_file="${tmake_file} arm/t-netbsd-eabi"
-	  unwind_header=config/arm/unwind-arm.h
+	  # GCC 7 vs NetBSD/eabi -> avoid arm unwinder
+	  # unwind_header=config/arm/unwind-arm.h
 	;;
 	*)
 	  tmake_file="${tmake_file} arm/t-netbsd t-slibgcc-gld-nover"
