@@ -6,9 +6,11 @@ LIB1ASMFUNCS += _dvmd_tls _bb_init_func _call_via_rX _interwork_call_via_rX \
 # Add the BPABI C functions.
 LIB2ADD +=    $(srcdir)/config/arm/unaligned-funcs.c
 
-LIB2ADDEH = $(srcdir)/config/arm/unwind-arm.c \
-  $(srcdir)/config/arm/libunwind.S \
-  $(srcdir)/config/arm/pr-support.c $(srcdir)/unwind-c.c
+#LIB2ADDEH = $(srcdir)/config/arm/unwind-arm.c \
+#  $(srcdir)/config/arm/libunwind.S \
+#  $(srcdir)/config/arm/pr-support.c $(srcdir)/unwind-c.c
+
+LIB2FUNCS_EXCLUDE = _ctors
 
 # Add the BPABI names.
 SHLIB_MAPFILES += $(srcdir)/config/arm/libgcc-bpabi.ver
