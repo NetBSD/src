@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.624 2019/02/06 07:20:13 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.625 2019/02/07 04:03:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.624 2019/02/06 07:20:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.625 2019/02/07 04:03:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -15028,7 +15028,7 @@ wm_enable_wakeup(struct wm_softc *sc)
 			goto pme;
 	} else {
 		/* Enable wakeup by the MAC */
-		CSR_WRITE(sc, WMREG_WUC, WUC_PME_EN);
+		CSR_WRITE(sc, WMREG_WUC, WUC_APME | WUC_PME_EN);
 		CSR_WRITE(sc, WMREG_WUFC, WUFC_MAG);
 	}
 
