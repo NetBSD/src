@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.94 2019/02/05 10:54:14 mrg Exp $
+# $NetBSD: ad.arm,v 1.95 2019/02/07 10:45:48 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
@@ -424,7 +424,7 @@
 ./usr/include/gcc-7/arm_neon.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/mmintrin.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
-./usr/include/gcc-7/unwind-arm-common.h		comp-c-include		gcc=7,eabi
+./usr/include/gcc-7/unwind-arm-common.h		comp-c-include		obsolete,gcc=7,eabi
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/aout_machdep.h		comp-obsolete		obsolete
