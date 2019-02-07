@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.101 2019/02/01 11:26:13 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.102 2019/02/07 06:15:54 msaitoh Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2417,3 +2417,11 @@ sys/dev/pci/ppb.c				1.66,1.67
 	do it.
 	[msaitoh, ticket #1181]
 
+sys/dev/usb/usbdevs				1.753
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+sys/dev/usb/if_axen.c				1.14
+share/man/man4/axen.4				1.7
+
+	Andrius V in Pr kern/53461: add D-Link DUB-1312
+	[martin, ticket #1182]
