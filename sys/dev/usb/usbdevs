@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.736.2.2 2018/11/12 16:01:35 martin Exp $
+$NetBSD: usbdevs,v 1.736.2.3 2019/02/07 06:13:26 msaitoh Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1373,6 +1373,7 @@ product DISPLAYLINK FYDVI	0x8060	DisplayLink FY-DVI
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
 product DLINK DUBE100		0x1a00	10/100 ethernet adapter
 product DLINK DUBE100C1		0x1a02	DUB-E100 rev C1
+product DLINK DUB1312		0x4a00	DUB-1312
 product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
 product DLINK DWL120E		0x3200	DWL-120 rev E
 product DLINK DWA130C		0x3301	DWA-130 rev C
