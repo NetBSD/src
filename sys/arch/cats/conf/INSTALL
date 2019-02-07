@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.108 2019/02/06 11:58:30 rin Exp $
+#	$NetBSD: INSTALL,v 1.109 2019/02/07 23:11:10 mrg Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -84,7 +84,7 @@ include 	"conf/compat_netbsd13.config"
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=4800	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=5000	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
