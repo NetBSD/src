@@ -130,6 +130,14 @@
 # endif
 #endif
 
+#ifndef __fallthrough
+# if __GNUC__ >= 7
+#  define __fallthrough __attribute__((fallthrough))
+# else
+#  define __fallthrough
+# endif
+#endif
+
 /*
  * Compile Time Assertion.
  */

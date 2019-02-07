@@ -28,6 +28,8 @@
 #ifndef IPV6ND_H
 #define IPV6ND_H
 
+#ifdef INET6
+
 #include <time.h>
 
 #include "config.h"
@@ -87,7 +89,6 @@ struct rs_state {
 #define	IPV6ND_REACHABLE		(1 << 0)
 #define	IPV6ND_ROUTER			(1 << 1)
 
-#ifdef INET6
 void ipv6nd_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 void ipv6nd_startrs(struct interface *);
@@ -106,12 +107,6 @@ void ipv6nd_advertise(struct ipv6_addr *);
 void ipv6nd_expire(struct interface *, uint32_t);
 void ipv6nd_drop(struct interface *);
 void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
-#else
-#define ipv6nd_startrs(a) {}
-#define ipv6nd_free(a) {}
-#define ipv6nd_hasra(a) (0)
-#define ipv6nd_dadcompleted(a) (0)
-#define ipv6nd_expire(a, b) {}
-#endif
+#endif /* INET6 */
 
-#endif
+#endif /* IPV6ND_H */
