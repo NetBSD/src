@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2018/01/20 13:56:09 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.4 2019/02/07 04:31:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,14 +32,6 @@
 
 #ifndef _COBALT_BUS_DEFS_H_
 #define _COBALT_BUS_DEFS_H_
-
-/*
- * Bus address and size types
- */
-typedef paddr_t bus_addr_t;
-typedef psize_t bus_size_t;
-#define	PRIxBUSADDR	PRIxPADDR
-#define	PRIxBUSSIZE	PRIxPSIZE
 
 #include <mips/locore.h>
 
