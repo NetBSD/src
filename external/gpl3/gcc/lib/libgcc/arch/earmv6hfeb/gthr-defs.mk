@@ -3,7 +3,7 @@
 # Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp 
 #
 G_enable_execute_stack=enable-execute-stack-mprotect.c
-G_unwind_header=config/arm/unwind-arm.h
+G_unwind_header=unwind-generic.h
 G_md_unwind_header=no-unwind.h
 G_sfp_machine_header=arm/sfp-machine.h
 G_thread_header=gthr-posix.h
