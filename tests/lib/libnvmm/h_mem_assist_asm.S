@@ -38,6 +38,9 @@
 	.globl	test9_begin, test9_end
 	.globl	test10_begin, test10_end
 	.globl	test11_begin, test11_end
+	.globl	test12_begin, test12_end
+	.globl	test13_begin, test13_end
+	.globl	test14_begin, test14_end
 	.text
 	.code64
 
@@ -73,6 +76,10 @@ test2_begin:
 	orb	%bl,(%rax)
 	movq	$0x0400,%rcx
 	orw	%cx,(%rax)
+
+	movq	$0x0200,%rcx
+	orq	(%rax),%rcx
+	movq	%rcx,(%rax)
 
 	TEST_END
 test2_end:
@@ -202,3 +209,85 @@ test11_begin:
 
 	TEST_END
 test11_end:
+
+	.align	64
+test12_begin:
+	movq	$0x1000,%rax
+	movq	$0xFFFFFFFFF2345678,(%rax)
+
+	cmpb	$0x78,(%rax)
+	jne	.L12_failure
+	cmpb	$0x77,(%rax)
+	jl	.L12_failure
+	cmpb	$0x79,(%rax)
+	jg	.L12_failure
+
+	cmpw	$0x5678,(%rax)
+	jne	.L12_failure
+	cmpw	$0x5677,(%rax)
+	jl	.L12_failure
+	cmpw	$0x5679,(%rax)
+	jg	.L12_failure
+
+	cmpl	$0xF2345678,(%rax)
+	jne	.L12_failure
+	cmpl	$0xF2345677,(%rax)
+	jl	.L12_failure
+	cmpl	$0xF2345679,(%rax)
+	jg	.L12_failure
+
+	cmpq	$0xFFFFFFFFF2345678,(%rax)
+	jne	.L12_failure
+	cmpq	$0xFFFFFFFFF2345677,(%rax)
+	jl	.L12_failure
+	cmpq	$0xFFFFFFFFF2345679,(%rax)
+	jg	.L12_failure
+
+.L12_success:
+	movq	$1,(%rax)
+	TEST_END
+.L12_failure:
+	movq	$0,(%rax)
+	TEST_END
+test12_end:
+
+	.align	64
+test13_begin:
+	movq	$0x1000,%rax
+	movq	$0x000000001000A0FF,(%rax)
+
+	movq	$0xFFFF,%rcx
+	subb	%cl,(%rax)
+
+	movq	$0xA000,%rcx
+	subw	%cx,(%rax)
+
+	movq	$0x0000000F1000A0FF,%rcx
+	subq	(%rax),%rcx
+
+	movq	%rcx,(%rax)
+
+	TEST_END
+test13_end:
+
+	.align	64
+test14_begin:
+	movq	$0x1000,%rax
+	movq	$0xA0FF,(%rax)
+
+	testb	$0x0F,(%rax)
+	jz	.L14_failure
+
+	testw	$0x0F00,(%rax)
+	jnz	.L14_failure
+
+	testl	$0xA000,(%rax)
+	jz	.L14_failure
+
+.L14_success:
+	movq	$1,(%rax)
+	TEST_END
+.L14_failure:
+	movq	$0,(%rax)
+	TEST_END
+test14_end:
