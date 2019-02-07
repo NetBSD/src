@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.42 2017/07/28 19:26:16 maxv Exp $
+# $NetBSD: RAMDISK3X,v 1.43 2019/02/07 04:33:58 mrg Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -41,7 +41,7 @@ options 	INET		# IP protocol stack support
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=1200	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=1320	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support
