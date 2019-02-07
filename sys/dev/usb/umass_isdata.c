@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.40 2019/01/22 06:46:21 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.41 2019/02/07 13:48:27 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.40 2019/01/22 06:46:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.41 2019/02/07 13:48:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.40 2019/01/22 06:46:21 skrll Exp 
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -196,7 +196,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	struct uisdata_softc *scbus;
 	struct isd200_config *cf;
 
-	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
+	scbus = kmem_zalloc(sizeof(*scbus), KM_SLEEP);
 	sc->bus = &scbus->base;
 	cf = &scbus->sc_isd_config;
 
@@ -209,7 +209,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	err = usbd_do_request(sc->sc_udev, &req, cf);
 	if (err) {
 		sc->bus = NULL;
-		free(scbus, M_DEVBUF);
+		kmem_free(scbus, sizeof(*scbus));
 		return EIO;
 	}
 	DPRINTF(("umass_wd_attach info:\n  EventNotification=0x%02x "
