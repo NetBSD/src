@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.37 2019/02/07 22:13:52 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.38 2019/02/07 22:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.37 2019/02/07 22:13:52 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.38 2019/02/07 22:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -474,6 +474,8 @@ p_ere_exp(
 		REQUIRE(!MORE() || !isdigit((unsigned char)PEEK()), REG_BADRPT);
 		/* FALLTHROUGH */
 	default:
+		if (p->error != 0)
+			return;
 		ordinary(p, c);
 		break;
 	}
@@ -692,6 +694,8 @@ p_simp_re(
 		REQUIRE(starordinary, REG_BADRPT);
 		/* FALLTHROUGH */
 	default:
+		if (p->error != 0)
+			return(0);
 		ordinary(p, c &~ BACKSL);
 		break;
 	}
