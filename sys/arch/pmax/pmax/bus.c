@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.3 2017/07/16 17:35:20 christos Exp $	*/
+/*	$NetBSD: bus.c,v 1.4 2019/02/07 04:32:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.3 2017/07/16 17:35:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.4 2019/02/07 04:32:38 mrg Exp $");
 
 #include "opt_cputype.h"
 
@@ -62,8 +62,10 @@ struct mips_bus_dma_tag pmax_default_bus_dma_tag = {
 };
 
 static void normal_bus_mem_init(bus_space_tag_t, void *);
+#ifdef MIPS1
 static void _bus_dmamap_sync_r3k(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 				 bus_size_t, int);
+#endif
 #if 0
 static void _bus_dmamap_sync_r4k(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 				 bus_size_t, int);
