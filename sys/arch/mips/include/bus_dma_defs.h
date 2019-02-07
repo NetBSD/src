@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma_defs.h,v 1.3 2016/07/30 06:28:05 matt Exp $ */
+/* $NetBSD: bus_dma_defs.h,v 1.4 2019/02/07 04:32:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
+#define	BUS_DMA_PREFETCHABLE	0x800	/* hint: map non-cached but allow 
+					 * things like write combining */
 
 /*
  * Private flags stored in the DMA map.
