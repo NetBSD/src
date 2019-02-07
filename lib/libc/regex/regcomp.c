@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.36 2015/09/12 19:08:47 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.37 2019/02/07 22:13:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.36 2015/09/12 19:08:47 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.37 2019/02/07 22:13:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1007,7 +1007,7 @@ p_b_coll_elem(
 	}
 	len = p->next - sp;
 	for (cp = cnames; cp->name != NULL; cp++)
-		if (strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
+		if (strncmp(cp->name, sp, len) == 0 && strlen(cp->name) == len)
 			return(cp->code);	/* known name */
 	if (len == 1)
 		return(*sp);	/* single character */
