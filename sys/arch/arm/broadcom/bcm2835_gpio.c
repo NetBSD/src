@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.9 2019/01/26 14:38:29 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.10 2019/02/07 21:16:35 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.9 2019/01/26 14:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.10 2019/02/07 21:16:35 mlelstv Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -288,7 +288,10 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			sc->sc_gpio_pins[pin].pin_caps = GPIO_PIN_INPUT |
 				GPIO_PIN_OUTPUT |
 				GPIO_PIN_PUSHPULL | GPIO_PIN_TRISTATE |
-				GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+				GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN |
+				GPIO_PIN_ALT0 | GPIO_PIN_ALT1 |
+				GPIO_PIN_ALT2 | GPIO_PIN_ALT3 |
+				GPIO_PIN_ALT4 | GPIO_PIN_ALT5;
 			sc->sc_gpio_pins[pin].pin_intrcaps =
 				GPIO_INTR_POS_EDGE |
 				GPIO_INTR_NEG_EDGE |
@@ -299,11 +302,11 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			/* read initial state */
 			sc->sc_gpio_pins[pin].pin_state =
 				bcm2835gpio_gpio_pin_read(sc, pin);
-			DPRINTF(1, ("%s: attach pin %d\n", device_xname(sc->sc_dev), pin));
+			aprint_debug_dev(sc->sc_dev, "attach pin %d\n", pin);
 		} else {
 			sc->sc_gpio_pins[pin].pin_caps = 0;
 			sc->sc_gpio_pins[pin].pin_state = 0;
-  			DPRINTF(1, ("%s: skip pin %d - func = 0x%x\n", device_xname(sc->sc_dev), pin, func));
+			aprint_debug_dev(sc->sc_dev, "skip pin %d - func = %x\n", pin, func);
 		}
 	}
 
@@ -329,7 +332,7 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 			    MIN((bank * 32) + 31, BCMGPIO_MAXPINS),
 			    intrstr);
 		} else {
-			aprint_normal_dev(self,
+			aprint_error_dev(self,
 			    "failed to establish interrupt for pins %d..%d\n",
 			    bank * 32,
 			    MIN((bank * 32) + 31, BCMGPIO_MAXPINS));
@@ -787,17 +790,49 @@ bcm2835gpio_gpio_pin_ctl(void *arg, int pin, int flags)
 {
 	struct bcmgpio_softc *sc = arg;
 	uint32_t cmd;
+	uint32_t altmask = GPIO_PIN_ALT0 | GPIO_PIN_ALT1 |
+	                   GPIO_PIN_ALT2 | GPIO_PIN_ALT3 |
+	                   GPIO_PIN_ALT4 | GPIO_PIN_ALT5;
 
 	DPRINTF(2, ("%s: gpio_ctl pin %d flags 0x%x\n", device_xname(sc->sc_dev), pin, flags));
 
 	mutex_enter(&sc->sc_lock);
 	if (flags & (GPIO_PIN_OUTPUT|GPIO_PIN_INPUT)) {
-		if ((flags & GPIO_PIN_INPUT) || !(flags & GPIO_PIN_OUTPUT)) {
+		if ((flags & GPIO_PIN_INPUT) != 0) {
 			/* for safety INPUT will overide output */
 			bcm283x_pin_setfunc(sc, pin, BCM2835_GPIO_IN);
 		} else {
 			bcm283x_pin_setfunc(sc, pin, BCM2835_GPIO_OUT);
 		}
+	} else if ((flags & altmask) != 0) {
+		u_int func;
+
+		switch (flags & altmask) {
+		case GPIO_PIN_ALT0:
+			func = BCM2835_GPIO_ALT0;
+			break;
+		case GPIO_PIN_ALT1:
+			func = BCM2835_GPIO_ALT1;
+			break;
+		case GPIO_PIN_ALT2:
+			func = BCM2835_GPIO_ALT2;
+			break;
+		case GPIO_PIN_ALT3:
+			func = BCM2835_GPIO_ALT3;
+			break;
+		case GPIO_PIN_ALT4:
+			func = BCM2835_GPIO_ALT4;
+			break;
+		case GPIO_PIN_ALT5:
+			func = BCM2835_GPIO_ALT5;
+			break;
+		default:
+			/* ignored below */
+			func = BCM2835_GPIO_IN;
+			break;
+		}
+		if (func != BCM2835_GPIO_IN)
+			bcm283x_pin_setfunc(sc, pin, func);
 	}
 
 	if (flags & (GPIO_PIN_PULLUP|GPIO_PIN_PULLDOWN)) {
