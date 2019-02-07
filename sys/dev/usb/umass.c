@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.171 2019/02/07 13:37:44 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.172 2019/02/07 13:43:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.171 2019/02/07 13:37:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.172 2019/02/07 13:43:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -271,12 +271,9 @@ const struct umass_wire_methods umass_cbi_methods = {
 
 #ifdef UMASS_DEBUG
 /* General debugging functions */
-Static void umass_bbb_dump_cbw(struct umass_softc *sc,
-				umass_bbb_cbw_t *cbw);
-Static void umass_bbb_dump_csw(struct umass_softc *sc,
-				umass_bbb_csw_t *csw);
-Static void umass_dump_buffer(struct umass_softc *sc, uint8_t *buffer,
-				int buflen, int printlen);
+Static void umass_bbb_dump_cbw(struct umass_softc *, umass_bbb_cbw_t *);
+Static void umass_bbb_dump_csw(struct umass_softc *, umass_bbb_csw_t *);
+Static void umass_dump_buffer(struct umass_softc *, uint8_t *, int, int);
 #endif
 
 
