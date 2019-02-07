@@ -11,7 +11,7 @@ makeoptions	COPTS="-Os -mmemcpy"
 options         MEMORY_DISK_HOOKS
 options         MEMORY_DISK_IS_ROOT     # force root on memory disk
 options         MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options         MEMORY_DISK_ROOT_SIZE=6400 # size of memory disk in blocks (3200k)
+options         MEMORY_DISK_ROOT_SIZE=6600 # size of memory disk in blocks (3300k)
 options         MEMORY_DISK_RBFLAGS=RB_SINGLE   # boot in single-user mode
 
 # shrink kernel since ARC BIOS seems to have 8MB limit
