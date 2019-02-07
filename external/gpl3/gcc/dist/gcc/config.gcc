@@ -2018,7 +2018,7 @@ m68010-*-netbsdelf* | m68k-*-netbsdelf* | m5407-*-netbsdelf*)
 		;;
 	m68010*)
 		target_cpu_default="m68010"
-		tmake_file="m68k/t-m68kelf m68k/t-m68010-netbsd"
+		tmake_file="${tmake_file} m68k/t-m68kelf m68k/t-m68010-netbsd"
 		default_m68k_cpu=68010
 		tmake_file="${tmake_file} m68k/t-floatlib"
 		;;
