@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.727.2.2 2018/11/12 16:02:17 martin Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727.2.3 2019/02/07 06:13:50 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.2 2018/11/12 16:01:35 martin Exp
+ *	NetBSD: usbdevs,v 1.736.2.3 2019/02/07 06:13:26 msaitoh Exp
  */
 
 /*
@@ -1380,6 +1380,7 @@
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
 #define	USB_PRODUCT_DLINK_DUBE100	0x1a00		/* 10/100 ethernet adapter */
 #define	USB_PRODUCT_DLINK_DUBE100C1	0x1a02		/* DUB-E100 rev C1 */
+#define	USB_PRODUCT_DLINK_DUB1312	0x4a00		/* DUB-1312 */
 #define	USB_PRODUCT_DLINK_DSB650TX4	0x200c		/* 10/100 ethernet adapter */
 #define	USB_PRODUCT_DLINK_DWL120E	0x3200		/* DWL-120 rev E */
 #define	USB_PRODUCT_DLINK_DWA130C	0x3301		/* DWA-130 rev C */
