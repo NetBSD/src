@@ -78,12 +78,20 @@ if_free(struct interface *ifp)
 
 	if (ifp == NULL)
 		return;
+#ifdef IPV4LL
 	ipv4ll_free(ifp);
+#endif
+#ifdef INET
 	dhcp_free(ifp);
 	ipv4_free(ifp);
+#endif
+#ifdef DHCP6
 	dhcp6_free(ifp);
+#endif
+#ifdef INET6
 	ipv6nd_free(ifp);
 	ipv6_free(ifp);
+#endif
 	rt_freeif(ifp);
 	free_options(ifp->ctx, ifp->options);
 	free(ifp);
@@ -147,9 +155,13 @@ if_carrier(struct interface *ifp)
 	strlcpy(ifmr.ifm_name, ifp->name, sizeof(ifmr.ifm_name));
 	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFMEDIA, &ifmr) != -1 &&
 	    ifmr.ifm_status & IFM_AVALID)
+	{
+		ifp->media_valid = true;
 		r = (ifmr.ifm_status & IFM_ACTIVE) ? LINK_UP : LINK_DOWN;
-	else
+	} else {
+		ifp->media_valid = false;
 		r = ifr.ifr_flags & IFF_RUNNING ? LINK_UP : LINK_UNKNOWN;
+	}
 #else
 	r = ifr.ifr_flags & IFF_RUNNING ? LINK_UP : LINK_DOWN;
 #endif
@@ -462,7 +474,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			case IFT_PPP: /* FALLTHROUGH */
 #endif
 #ifdef IFT_PROPVIRTUAL
-			case IFT_PROPVIRTUAL: /* FALLTHROUGH */
+			case IFT_PROPVIRTUAL:
 #endif
 #if defined(IFT_BRIDGE) || defined(IFT_PPP) || defined(IFT_PROPVIRTUAL)
 				/* Don't allow unless explicit */
@@ -476,6 +488,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 					    ifp->name);
 					active = IF_INACTIVE;
 				}
+				__fallthrough; /* Appease gcc-7 */
 				/* FALLTHROUGH */
 #endif
 #ifdef IFT_L2VLAN
@@ -584,7 +597,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		 * we can work them out. */
 		ifp->metric = 200 + ifp->index;
 		if (if_getssid(ifp) != -1) {
-			ifp->wireless = 1;
+			ifp->wireless = true;
 			ifp->metric += 100;
 		}
 #endif
@@ -726,19 +739,24 @@ if_cmp(const struct interface *si, const struct interface *ti)
 		return -1;
 	if (si->carrier < ti->carrier)
 		return 1;
-
+#ifdef INET
 	if (D_STATE_RUNNING(si) && !D_STATE_RUNNING(ti))
 		return -1;
 	if (!D_STATE_RUNNING(si) && D_STATE_RUNNING(ti))
 		return 1;
+#endif
+#ifdef INET6
 	if (RS_STATE_RUNNING(si) && !RS_STATE_RUNNING(ti))
 		return -1;
 	if (!RS_STATE_RUNNING(si) && RS_STATE_RUNNING(ti))
 		return 1;
+#endif
+#ifdef DHCP6
 	if (D6_STATE_RUNNING(si) && !D6_STATE_RUNNING(ti))
 		return -1;
 	if (!D6_STATE_RUNNING(si) && D6_STATE_RUNNING(ti))
 		return 1;
+#endif
 
 #ifdef INET
 	/* Special attention needed here due to states and IPv4LL. */
