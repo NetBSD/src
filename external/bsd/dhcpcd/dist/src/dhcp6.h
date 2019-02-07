@@ -55,6 +55,8 @@
 #define DHCP6_RECONFIGURE_REQ	18
 #define DHCP6_RECONFIGURE_REPLY	19
 
+#ifdef DHCP6
+
 #define D6_OPTION_CLIENTID		1
 #define D6_OPTION_SERVERID		2
 #define D6_OPTION_IA_NA			3
@@ -216,7 +218,6 @@ struct dhcp6_state {
 	(D6_CSTATE((ifp)) &&						       \
 	D6_CSTATE((ifp))->reason && dhcp6_dadcompleted((ifp)))
 
-#ifdef DHCP6
 void dhcp6_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 const struct ipv6_addr *dhcp6_iffindaddr(const struct interface *ifp,
@@ -236,20 +237,6 @@ void dhcp6_abort(struct interface *);
 void dhcp6_drop(struct interface *, const char *);
 void dhcp6_dropnondelegates(struct interface *ifp);
 int dhcp6_dump(struct interface *);
-#else
-#define dhcp6_printoptions(a, b, c) {}
-#define dhcp6_iffindaddr(a, b, c) (NULL)
-#define dhcp6_findaddr(a, b, c) (NULL)
-#define dhcp6_find_delegates(a) {}
-#define dhcp6_start(a, b) (0)
-#define dhcp6_reboot(a) {}
-#define dhcp6_renew(a) {}
-#define dhcp6_env(a, b, c, d, e) (0)
-#define dhcp6_free(a) {}
-#define dhcp6_dadcompleted(a) (0)
-#define dhcp6_drop(a, b) {}
-#define dhcp6_dropnondelegates(a) {}
-#define dhcp6_dump(a) (-1)
-#endif
+#endif /* DHCP6 */
 
-#endif
+#endif /* DHCP6_H */
