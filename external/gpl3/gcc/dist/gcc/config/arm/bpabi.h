@@ -185,7 +185,9 @@
 /* The BPABI specifies the use of .{init,fini}_array.  Therefore, we
    do not want GCC to put anything into the .{init,fini} sections.  */
 #undef INIT_SECTION_ASM_OP
+#define INIT_SECTION_ASM_OP ""
 #undef FINI_SECTION_ASM_OP
+#define FINI_SECTION_ASM_OP ""
 #define INIT_ARRAY_SECTION_ASM_OP ARM_EABI_CTORS_SECTION_OP
 #define FINI_ARRAY_SECTION_ASM_OP ARM_EABI_DTORS_SECTION_OP
 
