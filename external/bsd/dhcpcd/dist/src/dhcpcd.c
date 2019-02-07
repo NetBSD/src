@@ -52,6 +52,7 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2019 Roy Marples";
 #include "common.h"
 #include "control.h"
 #include "dev.h"
+#include "dhcp-common.h"
 #include "dhcpcd.h"
 #include "dhcp6.h"
 #include "duid.h"
@@ -151,6 +152,7 @@ free_globals(struct dhcpcd_ctx *ctx)
 		free(ctx->nd_opts);
 		ctx->nd_opts = NULL;
 	}
+#ifdef DHCP6
 	if (ctx->dhcp6_opts) {
 		for (opt = ctx->dhcp6_opts;
 		    ctx->dhcp6_opts_len > 0;
@@ -159,6 +161,7 @@ free_globals(struct dhcpcd_ctx *ctx)
 		free(ctx->dhcp6_opts);
 		ctx->dhcp6_opts = NULL;
 	}
+#endif
 #endif
 	if (ctx->vivso) {
 		for (opt = ctx->vivso;
@@ -205,18 +208,39 @@ int
 dhcpcd_ifafwaiting(const struct interface *ifp)
 {
 	unsigned long long opts;
+	bool foundany = false;
 
 	if (ifp->active != IF_ACTIVE_USER)
 		return AF_MAX;
 
+#define DHCPCD_WAITALL	(DHCPCD_WAITIP4 | DHCPCD_WAITIP6)
 	opts = ifp->options->options;
-	if (opts & DHCPCD_WAITIP4 && !ipv4_hasaddr(ifp))
-		return AF_INET;
-	if (opts & DHCPCD_WAITIP6 && !ipv6_hasaddr(ifp))
-		return AF_INET6;
-	if (opts & DHCPCD_WAITIP &&
-	    !(opts & (DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) &&
-	    !ipv4_hasaddr(ifp) && !ipv6_hasaddr(ifp))
+#ifdef INET
+	if (opts & DHCPCD_WAITIP4 ||
+	    (opts & DHCPCD_WAITIP && !(opts & DHCPCD_WAITALL)))
+	{
+		bool foundaddr = ipv4_hasaddr(ifp);
+
+		if (opts & DHCPCD_WAITIP4 && !foundaddr)
+			return AF_INET;
+		if (foundaddr)
+			foundany = true;
+	}
+#endif
+#ifdef INET6
+	if (opts & DHCPCD_WAITIP6 ||
+	    (opts & DHCPCD_WAITIP && !(opts & DHCPCD_WAITALL)))
+	{
+		bool foundaddr = ipv6_hasaddr(ifp);
+
+		if (opts & DHCPCD_WAITIP6 && !foundaddr)
+			return AF_INET;
+		if (foundaddr)
+			foundany = true;
+	}
+#endif
+
+	if (opts & DHCPCD_WAITIP && !(opts & DHCPCD_WAITALL) && !foundany)
 		return AF_UNSPEC;
 	return AF_MAX;
 }
@@ -233,12 +257,16 @@ dhcpcd_afwaiting(const struct dhcpcd_ctx *ctx)
 
 	opts = ctx->options;
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+#ifdef INET
 		if (opts & (DHCPCD_WAITIP | DHCPCD_WAITIP4) &&
 		    ipv4_hasaddr(ifp))
 			opts &= ~(DHCPCD_WAITIP | DHCPCD_WAITIP4);
+#endif
+#ifdef INET6
 		if (opts & (DHCPCD_WAITIP | DHCPCD_WAITIP6) &&
 		    ipv6_hasaddr(ifp))
 			opts &= ~(DHCPCD_WAITIP | DHCPCD_WAITIP6);
+#endif
 		if (!(opts & DHCPCD_WAITOPTS))
 			break;
 	}
@@ -529,7 +557,7 @@ configure_interface1(struct interface *ifp)
 		ifo->options |= DHCPCD_IAID;
 	}
 
-#ifdef INET6
+#ifdef DHCP6
 	if (ifo->ia_len == 0 && ifo->options & DHCPCD_IPV6 &&
 	    ifp->name[0] != '\0')
 	{
@@ -727,18 +755,30 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 		if (ifp->carrier != LINK_DOWN) {
 			if (ifp->carrier == LINK_UP)
 				loginfox("%s: carrier lost", ifp->name);
-			ifp->carrier = LINK_DOWN;
+#ifdef NOCARRIER_PRESERVE_IP
+			if (ifp->flags & IFF_UP)
+				ifp->carrier = LINK_DOWN_IFFUP;
+			else
+#endif
+				ifp->carrier = LINK_DOWN;
 			script_runreason(ifp, "NOCARRIER");
 #ifdef NOCARRIER_PRESERVE_IP
+			if (ifp->flags & IFF_UP) {
 #ifdef ARP
-			arp_drop(ifp);
+				arp_drop(ifp);
 #endif
-			dhcp_abort(ifp);
-			ipv6nd_expire(ifp, 0);
-			dhcp6_abort(ifp);
-#else
-			dhcpcd_drop(ifp, 0);
+#ifdef INET
+				dhcp_abort(ifp);
 #endif
+#ifdef INET6
+				ipv6nd_expire(ifp, 0);
+#endif
+#ifdef DHCP6
+				dhcp6_abort(ifp);
+#endif
+			} else
+#endif
+				dhcpcd_drop(ifp, 0);
 		}
 	} else if (carrier == LINK_UP && ifp->flags & IFF_UP) {
 		if (ifp->carrier != LINK_UP) {
@@ -772,6 +812,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			}
 			dhcpcd_initstate(ifp, 0);
 			script_runreason(ifp, "CARRIER");
+#ifdef INET6
 #ifdef NOCARRIER_PRESERVE_IP
 			/* Set any IPv6 Routers we remembered to expire
 			 * faster than they would normally as we
@@ -780,6 +821,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #endif
 			/* RFC4941 Section 3.5 */
 			ipv6_gentempifid(ifp);
+#endif
 			dhcpcd_startinterface(ifp);
 		}
 	}
@@ -885,10 +927,12 @@ dhcpcd_startinterface(void *arg)
 #endif
 	}
 
+#ifdef INET6
 	if (ifo->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
 		logerr("%s: ipv6_start", ifp->name);
 		ifo->options &= ~DHCPCD_IPV6;
 	}
+
 	if (ifo->options & DHCPCD_IPV6) {
 		if (ifp->active == IF_ACTIVE_USER) {
 			ipv6_startstatic(ifp);
@@ -897,7 +941,7 @@ dhcpcd_startinterface(void *arg)
 				ipv6nd_startrs(ifp);
 		}
 
-
+#ifdef DHCP6
 		if (ifo->options & DHCPCD_DHCP6) {
 			dhcp6_find_delegates(ifp);
 
@@ -914,7 +958,9 @@ dhcpcd_startinterface(void *arg)
 					logerr("%s: dhcp6_start", ifp->name);
 			}
 		}
+#endif
 	}
+#endif
 
 #ifdef INET
 	if (ifo->options & DHCPCD_IPV4 && ifp->active == IF_ACTIVE_USER) {
@@ -1173,8 +1219,12 @@ if_reboot(struct interface *ifp, int argc, char **argv)
 	oldopts = ifp->options->options;
 	script_runreason(ifp, "RECONFIGURE");
 	dhcpcd_initstate1(ifp, argc, argv, 0);
+#ifdef INET
 	dhcp_reboot_newopts(ifp, oldopts);
+#endif
+#ifdef DHCP6
 	dhcp6_reboot(ifp);
+#endif
 	dhcpcd_prestartinterface(ifp);
 }
 
@@ -1212,8 +1262,10 @@ reconf_reboot(struct dhcpcd_ctx *ctx, int action, int argc, char **argv, int oi)
 		if (ifp->active == IF_ACTIVE_USER) {
 			if (action)
 				if_reboot(ifp, argc, argv);
+#ifdef INET
 			else
 				ipv4_applyaddr(ifp);
+#endif
 		} else if (i != argc) {
 			ifp->active = IF_ACTIVE_USER;
 			dhcpcd_initstate1(ifp, argc, argv, 0);
@@ -1252,11 +1304,17 @@ dhcpcd_ifrenew(struct interface *ifp)
 	    ifp->carrier == LINK_DOWN)
 		return;
 
+#ifdef INET
 	dhcp_renew(ifp);
+#endif
+#ifdef INET6
 #define DHCPCD_RARENEW (DHCPCD_IPV6 | DHCPCD_IPV6RS)
 	if ((ifp->options->options & DHCPCD_RARENEW) == DHCPCD_RARENEW)
 		ipv6nd_startrs(ifp);
+#endif
+#ifdef DHCP6
 	dhcp6_renew(ifp);
+#endif
 }
 
 static void
@@ -1338,16 +1396,24 @@ dhcpcd_getinterfaces(void *arg)
 		if (!ifp->active)
 			continue;
 		len++;
+#ifdef INET
 		if (D_STATE_RUNNING(ifp))
 			len++;
+#endif
+#ifdef IPV4LL
 		if (IPV4LL_STATE_RUNNING(ifp))
 			len++;
+#endif
+#ifdef INET6
 		if (IPV6_STATE_RUNNING(ifp))
 			len++;
 		if (RS_STATE_RUNNING(ifp))
 			len++;
+#endif
+#ifdef DHCP6
 		if (D6_STATE_RUNNING(ifp))
 			len++;
+#endif
 	}
 	if (write(fd->fd, &len, sizeof(len)) != sizeof(len))
 		return;
@@ -1666,9 +1732,11 @@ main(int argc, char **argv)
 			printf("\nND options:\n");
 			ipv6nd_printoptions(&ctx,
 			    ifo->nd_override, ifo->nd_override_len);
+#ifdef DHCP6
 			printf("\nDHCPv6 options:\n");
 			dhcp6_printoptions(&ctx,
 			    ifo->dhcp6_override, ifo->dhcp6_override_len);
+#endif
 		}
 #endif
 		goto exit_success;
@@ -1795,12 +1863,22 @@ printpidfile:
 		configure_interface(ifp, ctx.argc, ctx.argv, 0);
 		i = 0;
 		if (family == 0 || family == AF_INET) {
+#ifdef INET
 			if (dhcp_dump(ifp) == -1)
 				i = -1;
+#else
+			if (family == AF_INET)
+				logerrx("No INET support");
+#endif
 		}
 		if (family == 0 || family == AF_INET6) {
+#ifdef DHCP6
 			if (dhcp6_dump(ifp) == -1)
 				i = -1;
+#else
+			if (family == AF_INET6)
+				logerrx("No DHCP6 support");
+#endif
 		}
 		if (i == -1)
 			goto exit_failure;
@@ -2059,7 +2137,9 @@ exit1:
 	}
 	if_closesockets(&ctx);
 	free_globals(&ctx);
+#ifdef INET6
 	ipv6_ctxfree(&ctx);
+#endif
 	dev_stop(&ctx);
 	eloop_free(ctx.eloop);
 	free(ctx.iov[0].iov_base);
