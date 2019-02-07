@@ -400,7 +400,7 @@ arp_announce(struct arp_state *astate)
 }
 
 void
-arp_announceaddr(struct dhcpcd_ctx *ctx, struct in_addr *ia)
+arp_announceaddr(struct dhcpcd_ctx *ctx, const struct in_addr *ia)
 {
 	struct interface *ifp;
 	struct ipv4_addr *iaf;
@@ -424,7 +424,7 @@ arp_announceaddr(struct dhcpcd_ctx *ctx, struct in_addr *ia)
 }
 
 void
-arp_ifannounceaddr(struct interface *ifp, struct in_addr *ia)
+arp_ifannounceaddr(struct interface *ifp, const struct in_addr *ia)
 {
 	struct arp_state *astate;
 

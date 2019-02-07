@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <netinet/in.h>
@@ -882,10 +883,14 @@ ipv6_findaddrmatch(const struct ipv6_addr *addr, const struct in6_addr *match,
 struct ipv6_addr *
 ipv6_findaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr, unsigned int flags)
 {
-	struct ipv6_addr *dap, *nap;
+	struct ipv6_addr *nap;
+#ifdef DHCP6
+	struct ipv6_addr *dap;
+#endif
 
-	dap = dhcp6_findaddr(ctx, addr, flags);
 	nap = ipv6nd_findaddr(ctx, addr, flags);
+#ifdef DHCP6
+	dap = dhcp6_findaddr(ctx, addr, flags);
 	if (!dap && !nap)
 		return NULL;
 	if (dap && !nap)
@@ -895,6 +900,9 @@ ipv6_findaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr, unsigned int 
 	if (nap->iface->metric < dap->iface->metric)
 		return nap;
 	return dap;
+#else
+	return nap;
+#endif
 }
 
 ssize_t
@@ -1183,8 +1191,10 @@ ipv6_hasaddr(const struct interface *ifp)
 
 	if (ipv6nd_iffindaddr(ifp, NULL, 0) != NULL)
 		return 1;
+#ifdef DHCP6
 	if (dhcp6_iffindaddr(ifp, NULL, 0) != NULL)
 		return 1;
+#endif
 	return 0;
 }
 
@@ -2269,6 +2279,7 @@ inet6_raroutes(struct rt_head *routes, struct dhcpcd_ctx *ctx, int expired,
 	return 0;
 }
 
+#ifdef DHCP6
 static int
 inet6_dhcproutes(struct rt_head *routes, struct dhcpcd_ctx *ctx,
     enum DH6S dstate)
@@ -2292,6 +2303,7 @@ inet6_dhcproutes(struct rt_head *routes, struct dhcpcd_ctx *ctx,
 	}
 	return 0;
 }
+#endif
 
 bool
 inet6_getroutes(struct dhcpcd_ctx *ctx, struct rt_head *routes)
@@ -2307,6 +2319,7 @@ inet6_getroutes(struct dhcpcd_ctx *ctx, struct rt_head *routes)
 	if (inet6_raroutes(routes, ctx, 0, &have_default) == -1)
 		return false;
 
+#ifdef DHCP6
 	/* We have no way of knowing if prefixes added by DHCP are reachable
 	 * or not, so we have to assume they are.
 	 * Add bound before delegated so we can prefer interfaces better */
@@ -2314,6 +2327,7 @@ inet6_getroutes(struct dhcpcd_ctx *ctx, struct rt_head *routes)
 		return false;
 	if (inet6_dhcproutes(routes, ctx, DH6S_DELEGATED) == -1)
 		return false;
+#endif
 
 #ifdef HAVE_ROUTE_METRIC
 	/* If we have an unreachable router, we really do need to remove the

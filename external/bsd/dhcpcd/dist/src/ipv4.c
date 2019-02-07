@@ -200,8 +200,10 @@ ipv4_hasaddr(const struct interface *ifp)
 {
 	const struct dhcp_state *dstate;
 
+#ifdef IPV4LL
 	if (IPV4LL_STATE_RUNNING(ifp))
 		return 1;
+#endif
 
 	dstate = D_CSTATE(ifp);
 	return (dstate &&
@@ -425,20 +427,25 @@ bool
 inet_getroutes(struct dhcpcd_ctx *ctx, struct rt_head *routes)
 {
 	struct interface *ifp;
+#ifdef IPV4LL
 	struct rt def;
 	bool have_default;
+#endif
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		if (!ifp->active)
 			continue;
 		if (inet_dhcproutes(routes, ifp) == -1)
 			return false;
+#ifdef IPV4LL
 		if (ipv4ll_subnetroute(routes, ifp) == -1)
 			return false;
+#endif
 		if (inet_routerhostroute(routes, ifp) == -1)
 			return false;
 	}
 
+#ifdef IPV4LL
 	/* If there is no default route, see if we can use an IPv4LL one. */
 	memset(&def, 0, sizeof(def));
 	def.rt_dest.sa_family = AF_INET;
@@ -450,6 +457,7 @@ inet_getroutes(struct dhcpcd_ctx *ctx, struct rt_head *routes)
 				break;
 		}
 	}
+#endif
 
 	return true;
 }
@@ -698,15 +706,12 @@ ipv4_applyaddr(void *arg)
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 		{
 			if (state->added) {
-				struct in_addr addr;
-
-				addr = lease->addr;
 				delete_address(ifp);
 				rt_build(ifp->ctx, AF_INET);
 #ifdef ARP
 				/* Announce the preferred address to
 				 * kick ARP caches. */
-				arp_announceaddr(ifp->ctx, &addr);
+				arp_announceaddr(ifp->ctx, &lease->addr);
 #endif
 			}
 			script_runreason(ifp, state->reason);
