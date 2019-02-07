@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2019/02/05 11:37:18 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.6 2019/02/07 23:53:20 mrg Exp $
 
 DIST=	${NETBSDSRCDIR}/external/bsd/pkg_install/dist
 
@@ -11,6 +11,8 @@ CPPFLAGS+=-DSYSCONFDIR='"/etc"'
 
 WARNS=	4
 CWARNFLAGS+=	-Wno-missing-noreturn
+
+.include <bsd.own.mk>
 
 # show_version() does not return
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
