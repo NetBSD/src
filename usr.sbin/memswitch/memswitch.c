@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.15 2018/01/26 09:38:26 christos Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.16 2019/02/08 08:41:11 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
  * SRAMDEBUG -- works on other (faster) platforms;
  *   store in a regular file instead of actual non-volatile static RAM.
  */
+#include <sys/stat.h>
 #define PATH_RAMFILE "/tmp/sramfile"
 #endif
 
