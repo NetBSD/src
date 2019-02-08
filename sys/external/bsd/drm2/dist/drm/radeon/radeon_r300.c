@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r300.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_r300.c,v 1.2 2019/02/08 04:11:53 mrg Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r300.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r300.c,v 1.2 2019/02/08 04:11:53 mrg Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/slab.h>
@@ -846,7 +846,7 @@ static int r300_packet0_check(struct radeon_cs_parser *p,
 					  ((idx_value >> 21) & 0xF));
 				return -EINVAL;
 			}
-			/* Pass through. */
+			/* FALLTHROUGH */
 		case 6:
 			track->cb[i].cpp = 4;
 			break;
@@ -997,7 +997,7 @@ static int r300_packet0_check(struct radeon_cs_parser *p,
 				return -EINVAL;
 			}
 			/* The same rules apply as for DXT3/5. */
-			/* Pass through. */
+			/* FALLTHROUGH */
 		case R300_TX_FORMAT_DXT3:
 		case R300_TX_FORMAT_DXT5:
 			track->textures[i].cpp = 1;
