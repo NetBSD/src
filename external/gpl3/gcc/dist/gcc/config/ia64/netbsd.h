@@ -47,6 +47,3 @@ Boston, MA 02111-1307, USA.  */
 /* Attempt to enable execute permissions on the stack.  */
 #define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
 #endif
-
-/* Don't have TFmode support (yet?). */
-#define IA64_NO_LIBGCC_TFMODE
