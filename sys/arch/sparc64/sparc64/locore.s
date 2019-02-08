@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.417 2019/02/08 19:45:24 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.418 2019/02/08 20:14:51 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -7506,6 +7506,21 @@ Lstick_ovflw:
 	 mov	%o4, %o2
 	retl
 	 wr	%o2, STICK_CMPR
+
+/*
+ * next_stick_init()
+ *
+ * Sets the %stick_cmpr register to the value retrieved from %stick so
+ * next_stick() does not spend too much time in the function when called
+ * for the first time.
+ */
+ENTRY(next_stick_init)
+	rd	STICK, %o0
+	mov	1, %o1		! Mask off high bits of the register
+	sllx	%o1, 63, %o1
+	andn	%o0, %o1, %o0
+	retl
+	 wr	%o0, STICK_CMPR
 
 ENTRY(setjmp)
 	save	%sp, -CC64FSZ, %sp	! Need a frame to return to.
