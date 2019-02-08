@@ -44,7 +44,7 @@ G_tm_defines=LIBC_GLIBC=1 LIBC_UCLIBC=2 LIBC_BIONIC=3 LIBC_MUSL=4 NETBSD_ENABLE_
 G_host_xm_file=
 G_host_xm_defines=
 G_tm_p_file=
-G_target_cpu_default=TARGET_CPU_arm6
+G_target_cpu_default=TARGET_CPU_arm9e
 G_TM_H=tm.h      options.h ${GNUHOSTDIST}/gcc/config/dbxelf.h ${GNUHOSTDIST}/gcc/config/elfos.h ${GNUHOSTDIST}/gcc/config/netbsd.h ${GNUHOSTDIST}/gcc/config/netbsd-stdint.h ${GNUHOSTDIST}/gcc/config/netbsd-elf.h ${GNUHOSTDIST}/gcc/config/arm/elf.h ${GNUHOSTDIST}/gcc/config/arm/bpabi.h ${GNUHOSTDIST}/gcc/config/arm/netbsd-elf.h ${GNUHOSTDIST}/gcc/config/arm/netbsd-eabi.h ${GNUHOSTDIST}/gcc/config/arm/aout.h ${GNUHOSTDIST}/gcc/config/arm/arm.h ${GNUHOSTDIST}/gcc/config/initfini-array.h ${GNUHOSTDIST}/gcc/defaults.h insn-constants.h insn-flags.h options.h flag-types.h  ${GNUHOSTDIST}/gcc/config/arm/arm-opts.h ${GNUHOSTDIST}/gcc/config/arm/arm-cpu.h
 G_ALL_OPT_FILES=${GNUHOSTDIST}/gcc/brig/lang.opt ${GNUHOSTDIST}/gcc/lto/lang.opt ${GNUHOSTDIST}/gcc/c-family/c.opt ${GNUHOSTDIST}/gcc/common.opt ${GNUHOSTDIST}/gcc/config/arm/arm-tables.opt ${GNUHOSTDIST}/gcc/config/arm/arm.opt ${GNUHOSTDIST}/gcc/config/netbsd.opt ${GNUHOSTDIST}/gcc/config/netbsd-elf.opt
 G_tm_file_list=options.h ${GNUHOSTDIST}/gcc/config/dbxelf.h ${GNUHOSTDIST}/gcc/config/elfos.h ${GNUHOSTDIST}/gcc/config/netbsd.h ${GNUHOSTDIST}/gcc/config/netbsd-stdint.h ${GNUHOSTDIST}/gcc/config/netbsd-elf.h ${GNUHOSTDIST}/gcc/config/arm/elf.h ${GNUHOSTDIST}/gcc/config/arm/bpabi.h ${GNUHOSTDIST}/gcc/config/arm/netbsd-elf.h ${GNUHOSTDIST}/gcc/config/arm/netbsd-eabi.h ${GNUHOSTDIST}/gcc/config/arm/aout.h ${GNUHOSTDIST}/gcc/config/arm/arm.h ${GNUHOSTDIST}/gcc/config/initfini-array.h ${GNUHOSTDIST}/gcc/defaults.h

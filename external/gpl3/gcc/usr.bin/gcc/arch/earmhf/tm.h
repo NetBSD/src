@@ -4,7 +4,7 @@
 
 #ifndef GCC_TM_H
 #define GCC_TM_H
-#define TARGET_CPU_DEFAULT (TARGET_CPU_arm6)
+#define TARGET_CPU_DEFAULT (TARGET_CPU_arm9e)
 #ifndef LIBC_GLIBC
 # define LIBC_GLIBC 1
 #endif
