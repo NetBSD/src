@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2499 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2500 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -254,6 +254,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Add NVMM, the NetBSD virtualization driver, with initial
 		support for x86. [maxv 20181107]
 	aarch64: Add support for kASan. [maxv 20181108]
+	gcc: Import GCC 6.5.  [mrg 20181103]
 	aarch64: Add support for ARM Server Base System Architecture (SBSA).
 		The SBSA is a hardware system architecture for servers based on
 		64-bit ARM processors. The Server Base Boot Requirements (SBBR)
@@ -283,7 +284,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	threadpool(9): Added threadpool(9) API. [thorpej 20181224]
 	systat(1): Extend vmstat display for better insight about bufcache.
 		[sevan 20181226]
-	arm: Support kernel crash dumps on 64 bit platforms.  [mrg 20181227]
+	aarch64: Support kernel crash dumps on arm64 platforms.  [mrg 20181227]
 	kernel: Remove M_ALIGN, MH_ALIGN, M_COPY_PKTHDR and M_MOVE_PKTHDR.
 		[maxv 20181228]
 	cgdroot: Support mounting boot partition from a wedge labelled cgd.conf.
@@ -312,6 +313,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		NETMAP algorithm for static NAT, lock-free lookup for 'ipset'
 		tables, lock-free state lookup, incremental state G/C, etc).
 		[rmind 20190119]
+	gcc: Import GCC 7.4.  [mrg 20190119]
 	dhcpcd: Import dhcpcd-7.1.0. [roy 20190122]
 	kernel: Remove the satlink driver. [maxv 20190127]
 	kernel: Merged [pgoyette-compat] branch - for details, see
