@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.418 2019/02/08 20:14:51 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.419 2019/02/08 20:34:23 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -7513,6 +7513,9 @@ Lstick_ovflw:
  * Sets the %stick_cmpr register to the value retrieved from %stick so
  * next_stick() does not spend too much time in the function when called
  * for the first time.
+ * This has been observed on (at least) a SPARC-T5 (sun4v) system where
+ * the %stick_cmpr ends up being less than the %stick value and then
+ * the stickitr() interrupt is never triggered.
  */
 ENTRY(next_stick_init)
 	rd	STICK, %o0
