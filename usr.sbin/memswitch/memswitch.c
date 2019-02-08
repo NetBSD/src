@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.16 2019/02/08 08:41:11 isaki Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.17 2019/02/08 08:55:35 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -196,41 +196,37 @@ show_all(void)
 void
 modify_single(const char *expr)
 {
-	int i, l, n;
-	char *class = NULL, *node = NULL;
+	int i;
+	char *buf;
+	char *p;
+	const char *class;
+	const char *node;
 	const char *value;
 	char valuestr[MAXVALUELEN];
 
-	l = 0;
-	n = strlen(expr);
-	for (i = 0; i < n; i++) {
-		if (expr[i] == '.') {
-			l = i + 1;
-			class = alloca(l);
-			if (class == 0)
-				err(1, "alloca");
-			strncpy(class, expr, i);
-			class[i] = 0;
+	buf = strdup(expr);
+	if (buf == NULL)
+		err(EXIT_FAILURE, "strdup failed");
+
+	p = buf;
+	for (class = p; *p; p++) {
+		if (*p == '.') {
+			*p++ = '\0';
 			break;
 		}
 	}
-	if (i >= n)
-		errx(1, "Invalid expression: %s", expr);
 
-	for ( ; i < n; i++) {
-		if (expr[i] == '=') {
-			node = alloca(i - l + 1);
-			if (node == 0)
-				err(1, "alloca");
-			strncpy(node, &(expr[l]), i - l);
-			node[i - l] = 0;
+	for (node = p; *p; p++) {
+		if (*p == '=') {
+			*p++ = '\0';
 			break;
 		}
 	}
-	if (i >= n)
-		errx(1, "Invalid expression: %s", expr);
 
-	value = &(expr[++i]);
+	value = p;
+
+	if (class[0] == '\0' || node[0] == '\0' || value[0] == '\0')
+		errx(1, "Invalid expression: %s", expr);
 
 	for (i = 0; i < number_of_props; i++) {
 		if (strcmp(properties[i].class, class) == 0 &&
@@ -248,7 +244,7 @@ modify_single(const char *expr)
 		errx(1, "No such property: %s.%s", class, node);
 	}
 
-	return;
+	free(buf);
 }
 
 void
