@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.52 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.53 2019/02/08 09:17:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.52 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.53 2019/02/08 09:17:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,8 @@ static const struct mii_phydesc makphys[] = {
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116R,
 	  MII_STR_xxMARVELL_E1116R },
 
-	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116R_29,
-	  MII_STR_xxMARVELL_E1116R_29 },
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1318S,
+	  MII_STR_xxMARVELL_E1318S },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1118,
 	  MII_STR_xxMARVELL_E1118 },
@@ -142,6 +142,9 @@ static const struct mii_phydesc makphys[] = {
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149R,
 	  MII_STR_xxMARVELL_E1149R },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1240,
+	  MII_STR_xxMARVELL_E1240 },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1512,
 	  MII_STR_xxMARVELL_E1512 },
