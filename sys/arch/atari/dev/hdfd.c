@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.83 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.84 2019/02/08 08:47:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.83 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.84 2019/02/08 08:47:35 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -335,7 +335,7 @@ int	fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
 static void	fdgetdisklabel(struct fd_softc *, dev_t);
 static void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *, int);
 
-inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 int
 fdcprobe(device_t parent, cfdata_t cf, void *aux)
@@ -592,7 +592,7 @@ fdc_ctrl_intr(struct clockframe frame)
 	}
 }
 
-inline struct fd_type *
+static struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
