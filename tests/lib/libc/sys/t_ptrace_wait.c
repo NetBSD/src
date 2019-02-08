@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.73 2019/02/08 00:29:41 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.74 2019/02/08 00:31:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.73 2019/02/08 00:29:41 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.74 2019/02/08 00:31:46 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2830,7 +2830,7 @@ ATF_TC(test);								\
 ATF_TC_HEAD(test, tc)							\
 {									\
         atf_tc_set_md_var(tc, "descr",					\
-            "Verify " #N " (PT_SETSTEP set to: " #setstep);		\
+            "Verify " #N " (PT_SETSTEP set to: " #setstep ")");		\
 }									\
 									\
 ATF_TC_BODY(test, tc)							\
