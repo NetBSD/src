@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2019/02/06 04:00:43 mrg Exp $
+# $NetBSD: Makefile,v 1.28 2019/02/08 22:06:12 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
@@ -42,6 +42,7 @@ ASAN_SRCS= \
 LIB=	asan
 SRCS+=	${ASAN_SRCS} lsan_common.cc lsan_common_linux.cc
 LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
+CPPFLAGS+=-DCAN_SANITIZE_UB=0
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.asan_allocator.cc += -O1
