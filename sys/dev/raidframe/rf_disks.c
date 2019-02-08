@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.89 2017/01/13 13:01:13 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.89.8.1 2019/02/08 16:03:04 martin Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.89 2017/01/13 13:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.89.8.1 2019/02/08 16:03:04 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -705,7 +705,7 @@ rf_handle_hosed(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, int hosed_column,
     int again)
 {
 	printf("Hosed component: %s\n", &cfgPtr->devnames[0][hosed_column][0]);
-	if (!cfgPtr->force)
+	if (cfgPtr->force)
 		return;
 
 	/* we'll fail this component, as if there are
