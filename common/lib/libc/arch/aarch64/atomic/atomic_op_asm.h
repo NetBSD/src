@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_op_asm.h,v 1.2 2019/02/06 05:33:14 ryo Exp $ */
+/* $NetBSD: atomic_op_asm.h,v 1.3 2019/02/08 06:56:56 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@ END(_atomic_##OP##_8)
 ENTRY_NP(_atomic_##OP##_8_nv)						;\
 	mov	x4, x0			/* need r0 for return value */	;\
 1:	ldxrb	w0, [x4]		/* load old value */		;\
-	INSN	w2, w0, w1		/* calc new (return) value */	;\
-	stxrb	w3, w2, [x4]		/* try to store */		;\
+	INSN	w0, w0, w1		/* calc new (return) value */	;\
+	stxrb	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
+	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_8_nv)
 
@@ -71,10 +71,10 @@ END(_atomic_##OP##_16)
 ENTRY_NP(_atomic_##OP##_16_nv)						;\
 	mov	x4, x0			/* need r0 for return value */	;\
 1:	ldxrh	w0, [x4]		/* load old value */		;\
-	INSN	w2, w0, w1		/* calc new (return) value */	;\
-	stxrh	w3, w2, [x4]		/* try to store */		;\
+	INSN	w0, w0, w1		/* calc new (return) value */	;\
+	stxrh	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
+	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_16_nv)
 
