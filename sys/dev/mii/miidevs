@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.132 2018/12/28 05:04:35 msaitoh Exp $
+$NetBSD: miidevs,v 1.133 2019/02/08 09:16:11 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -277,11 +277,12 @@ model xxMARVELL E1512		0x001d Marvell 88E151[0248] Gigabit PHY
 model xxMARVELL E1340M		0x001f Marvell 88E1340 Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1118		0x0022 Marvell 88E1118 Gigabit PHY
+model xxMARVELL E1240		0x0023 Marvell 88E1240 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
 model xxMARVELL E1149R		0x0025 Marvell 88E1149R Quad Gigabit PHY
 model xxMARVELL E3016		0x0026 Marvell 88E3016 10/100 Fast Ethernet PHY
 model xxMARVELL PHYG65G		0x0027 Marvell PHYG65G Gigabit PHY
-model xxMARVELL E1116R_29	0x0029 Marvell 88E1116R Gigabit PHY
+model xxMARVELL E1318S		0x0029 Marvell 88E1318S Gigabit PHY
 model xxMARVELL E1543		0x002a Marvell 88E154[358] Alaska Quad Port Gb PHY
 model MARVELL E1000_0		0x0000 Marvell 88E1000 Gigabit PHY
 model MARVELL E1011		0x0002 Marvell 88E1011 Gigabit PHY
