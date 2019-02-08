@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.416 2019/02/08 19:26:25 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.417 2019/02/08 19:45:24 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -227,6 +227,18 @@
 	LDPTR	[\reg + %lo(CPUINFO_VA + CI_TSB_DMMU)], \reg
 	.endm
 
+	.macro sun4v_tl1_uspill_normal
+	ba,a,pt	%xcc, pcbspill_normals
+	 nop
+	.align 128
+	.endm
+
+	.macro sun4v_tl1_uspill_other
+	ba,a,pt	%xcc, pcbspill_others
+	 nop
+	.align 128
+	.endm
+	
 #endif
 		
 #if 1
@@ -1155,17 +1167,17 @@ _C_LABEL(trapbase_sun4v):
 	sun4v_trap_entry 56					! 0x034-0x06b
 	VTRAP(T_FDMMU_PROT, sun4v_tl1_dtsb_prot)		! 0x06c
 	sun4v_trap_entry 19					! 0x06d-0x07f
-	SPILL64(uspill8_sun4vt1,ASI_AIUS)			! 0x080 spill_0_normal -- save user windows
-	SPILL32(uspill4_sun4vt1,ASI_AIUS)			! 0x084 spill_1_normal
-	SPILLBOTH(uspill8_sun4vt1,uspill4_sun4vt1,ASI_AIUS)	! 0x088 spill_2_normal
+	sun4v_tl1_uspill_normal					! 0x080 spill_0_normal -- save user windows
+	sun4v_tl1_uspill_normal					! 0x084 spill_1_normal
+	sun4v_tl1_uspill_normal					! 0x088 spill_2_normal
 	sun4v_trap_entry_spill_fill_fail 1			! 0x08c spill_3_normal
 	SPILL64(kspill8_sun4vt1,ASI_N)				! 0x090 spill_4_normal -- save supervisor windows
 	SPILL32(kspill4_sun4vt1,ASI_N)				! 0x094 spill_5_normal
 	SPILLBOTH(kspill8_sun4vt1,kspill4_sun4vt1,ASI_N)	! 0x098 spill_6_normal
 	sun4v_trap_entry_spill_fill_fail 1			! 0x09c spill_7_normal
-	SPILL64(uspillk8_sun4vt1,ASI_AIUS)			! 0x0a0 spill_0_other -- save user windows in nucleus mode
-	SPILL32(uspillk4_sun4vt1,ASI_AIUS)			! 0x0a4 spill_1_other
-	SPILLBOTH(uspillk8_sun4vt1,uspillk4_sun4vt1,ASI_AIUS)	! 0x0a8 spill_2_other
+	sun4v_tl1_uspill_other					! 0x0a0 spill_0_other -- save user windows in nucleus mode
+	sun4v_tl1_uspill_other					! 0x0a4 spill_1_other
+	sun4v_tl1_uspill_other					! 0x0a8 spill_2_other
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0ac spill_3_other
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0b0 spill_4_other
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0b4 spill_5_other
