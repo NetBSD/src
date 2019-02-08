@@ -1,0 +1,48 @@
+/* $NetBSD: sun50i-h5-libretech-all-h3-cc.dts,v 1.1 2019/02/08 00:50:45 macallan Exp $ */
+
+/*-
+ * Copyright (c) 2019 Michael Lorenz
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/allwinner/sun50i-h5-libretech-all-h3-cc.dts"
+#include "sun50i-h5.dtsi"
+
+&reg_vdd_cpux {
+	regulator-min-microvolt = <1100000>;
+	regulator-max-microvolt = <1100000>;
+};
+
+&cpu0 {
+	cpu-supply = <&reg_vdd_cpux>;
+	operating-points = <
+		/* kHz    uV */
+		1152000 1100000
+		1104000 1100000
+		1008000 1100000
+		816000  1100000
+		648000	1100000
+		408000	1100000
+		>;
+};
