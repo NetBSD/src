@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.81 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: fd.c,v 1.82 2019/02/08 08:47:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.81 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.82 2019/02/08 08:47:35 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -191,7 +191,7 @@ static void	fdcattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(fdc, sizeof(struct fdc_softc),
     fdcmatch, fdcattach, NULL, NULL);
 
-static inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -644,7 +644,7 @@ fd_shutdown(device_t self, int howto)
 	return true;
 }
 
-static inline struct fd_type *
+static struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
