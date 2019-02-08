@@ -1,4 +1,4 @@
-$NetBSD: README.gcc7,v 1.9 2019/02/06 11:54:02 mrg Exp $
+$NetBSD: README.gcc7,v 1.10 2019/02/08 02:04:29 mrg Exp $
 
 new stuff (from gcc 5):
 	cc1objcplus
@@ -26,36 +26,36 @@ aarch64		y	y	y	y		y		y	?	n
 alpha		y	y	y	y		y		y	?	n
 arm		y	y	y	y		y		y	?	n
 armeb		y	y	y	y		y		?	?	n
-earm		y	?	?	y		?		?	?	?
-earmeb		y	?	?	y		?		?	?	?
-earmhf		y	?	?	y		?		?	?	?
-earmhfeb	y	?	?	y		?		?	?	?
-earmv4		y	y	n[5]	y		?		?	?	?
-earmv4eb	y	?	?	y		?		?	?	?
-earmv6		y	?	?	y		?		?	?	?
-earmv6eb	y	?	?	y		?		?	?	?
-earmv6hf	y	?	?	y		?		?	?	?
-earmv6hfeb	y	?	?	y		?		?	?	?
-earmv7		y	?	?	y		?		?	?	?
-earmv7eb	y	?	?	y		?		?	?	?
-earmv7hf	y	?	?	y		?		?	?	?
-earmv7hfeb	y	?	?	y		?		?	?	?
+earmv4		y	y	y	y		y		y	???	y
+earmv4eb	y	?	y	y		?		?	?	?
+earm		y	?	y	y		?		?	?	?
+earmeb		y	?	y	y		?		?	?	?
+earmhf		y	?	y	y		?		?	?	?
+earmhfeb	y	?	y	y		?		?	?	?
+earmv6		y	?	y	y		?		?	?	?
+earmv6eb	y	?	y	y		?		?	?	?
+earmv6hf	y	?	y	y		?		?	?	?
+earmv6hfeb	y	?	y	y		?		?	?	?
+earmv7		y	?	y	y		?		?	?	?
+earmv7eb	y	?	y	y		?		?	?	?
+earmv7hf	y	?	y	y		?		?	?	?
+earmv7hfeb	y	?	y	y		?		?	?	?
 hppa		y	y	y	y		y		?	?	n
 i386		y	y	y	y		y		y	?	n
 ia64		y	?	?	y		n[2]		?	?	?
-m68000		n[4]	?	?	?		?		?	?	?
-m68k		y	?	y	y		?		?	?	?
-mipseb		y	?	?	y		?		?	?	?
-mipsel		y	?	?	y		?		?	?	?
+m68000		y	y	y	y		y		?	?	?
+m68k		y	y	y	y		y[1]		?	?	?
+mipseb		y	y	y	y		y		?	?	n
+mipsel		y	y	y	y		y		?	?	n
 mips64eb	y	y	y	y		y		y	?	n
-mips64el	y	?	?	y		?		?	?	?
+mips64el	y	y	y	y		y		?	?	n
 powerpc		y	y	y	y		y		y	?	n
 powerpc64	y	?	y	y		n[9]		?	?	?
-sh3eb		y	n[6]	y	y		?		?	?	?
-sh3el		y	n[6]	y	y		?		?	?	?
+sh3eb		y	y	y	y		y		?	?	n
+sh3el		y	y	y	y		y		?	?	n
 sparc		y	y	y	y		y		y	?	n
-sparc64		y	y	y	y[1]		y		y	?	?
-vax		y	?	?	y		y/n[3]		?	?	?
+sparc64		y	y	y	y		y		y	?	n
+vax		y	y	y	y		y		?	?	?
 x86_64		y	y	y	y		y		y	y	n
 --
 or1k		
@@ -65,59 +65,42 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[1] - sparc64-gcc gets ICE at startup.  because sizeof(ufast8/16/32) != sizeof(sfast8/16/32)
-	-- commited hack to workaround it seems to work fine.
+[1] - mac68k/intr.c has uncommited change.
 [2] - libgcc_s.so: undefined reference to `__netf2'
-[3] - gcc can't be built:
-	/usr/src6/external/gpl3/gcc/dist/gcc/calls.c:1361:1: error: unrecognizable insn:
-	[ .. ]
-	/usr/src6/external/gpl3/gcc/dist/gcc/calls.c:1361:1: internal compiler error: in extract_insn, at recog.c:2311
-    - the rest of the world builds fine.
-[4] - ar: netbsd.o: No such file or directory
-[5] - libstdc++ eh_personality.cc ends up with refs to arm eabi specific functions that are in libunwind for us
-	-- patch dist/gcc/ginclude/unwind-arm-common.h to disable __ARM_EABI_UNWINDER__ on netbsd seems to work
-		-> nope. requires more patching, and then still _Unwind_VRS_Get/_Unwind_VRS_Set are used.
-[6] - libkern.a(udivmoddi4.o): in function `__udivmoddi4':
-      udivmoddi4.c:190: undefined reference to `abort'
 [9] - /usr/src6/external/gpl3/gcc/dist/libgcc/libgcc2.c:2036:1: error: unrecognizable insn:
-
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
 values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted)
 
 CPU		platform list
 ---		-------- ----
-		acorn32		cats		epoc32		evbarm		hpcarm		iyonix		netwinder	shark 		zaurus
-arm:		?		?		?		?		?		?		?		y		?
-earmv4:		?		?		?		?		?		-		?		?		-
-earm:		-		-		-		?		-		?		-		-		?
+		acorn32		cats		epoc32		evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
+arm:		?		?		?		?		?		?		?		?		y		?
+earmv4:		y		y		y		k		k		y		-		y		y		-
+earm:		-		-		-		y		y		-		y		-		-		k
+earmhf:		-		-		-		r		y		-		-		-		-		-
+earmv6:		-		-		-		k		k		-		-		-		-		-
+earmv6hf:	-		-		-		k		k		-		-		-		-		-
+earmv7:		-		-		-		k		k		-		-		-		-		-
+earmv7hf:	-		-		-		k		k		-		-		-		-		-
 
 		amiga		atari		cesfic		hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3		x68k
-m68k:		y		y		k		y		y		n[2]		y		y		y		n[3] 		n[1]
+m68k:		y		y		k		y		y		y[1]		y		y		y		y 		y
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
-mipseb:		?		y		y		r		r		r
+mipseb:		y		y		y		y		y		y
 
-		evbmips		algor		arc		cobalt		hpcmips		playstation2	pmax
-mipsel:		?		y		r		?		y		r		?
+		evbmips		algor		arc		cobalt		hpcmips		pmax
+mipsel:		y		y		y		y		y		y
 
-		algor		arc		cobalt		evbmips		pmax		sgimips
-mips64eb:	-		-		-		n[4]		-		n[4]
-mips64el:	?		?		?		n[4]		?
+		algor		evbmips		pmax
+mips64eb:	-		y		-
+mips64el:	y		y		y
 
 		amigappc	bebox		evbppc		ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
 powerpc:	y		y		y		y		y		y		y		y		y		y
-powerpc64:	-		-		?		-		?		-		?		-		-		-
+powerpc64:	-		-		?[9]		-		?[9]		-		?[9]		-		-		-
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
-sh3eb:		-		n[4]		-		-		?
-sh3el:		n[4]		?		?		?		-
-
-[1] - memswitch.c
-	/usr/src6/usr.sbin/memswitch/memswitch.c:231:4: error: 'strncpy': specified size 4294967295 exceeds maximum object size 2147483647 [-Werror=stringop-overflow=]
-[2] - /usr/src6/sys/arch/mac68k/mac68k/intr.c:135:2: note: in expansion of macro 'memcpy'
-      /usr/src6/sys/lib/libkern/libkern.h:380:26: error: '__builtin_memcpy' writing 53 bytes into a region of size 4 overflows the destination [-Werror=stringop-overflow=]
-[3] - nbmakefs: Writing inode 4 (dir), bytes 0 + 2560: No space left on device
-[4] - ./usr/lib/64/libgomp.so.2
-      ========  end of 1 missing files  ==========
-
+sh3eb:		-		y		-		-		y
+sh3el:		y		y		y		y		-
