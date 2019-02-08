@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2019/02/07 05:28:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.54 2019/02/08 03:59:34 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -48,7 +48,7 @@ CPPFLAGS.cppbuiltin.c+=	-DBASEVER="\"${BASEVER}"\"
 # Independent generation programs.
 #
 CLEANFILES+=	gengenrtl genrtl.h \
-		gengtype gtyp-gen.h gtype-desc.c gtype-desc.h \
+		gengtype gtyp-gen.h gtype-brig.h gtype-desc.c gtype-desc.h \
 		gtype-c.h gtype-cp.h gtype-f.h gtype-objc.h \
 		genflags genflags.h \
 		gencheck tree-check.h \
@@ -404,7 +404,8 @@ insn-attrtab.c: genattrtab ${G_md_file} insn-conditions.md
 	./genattrtab ${G_md_file} insn-conditions.md \
 		-A${.TARGET}.tmp -Dinsn-dfatab.c.tmp -Linsn-latencytab.c.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
-CLEANFILES+=	insn-attrtab.c insn-dfatab.c insn-latencytab.c
+CLEANFILES+=	insn-attrtab.c insn-dfatab.c insn-latencytab.c \
+		insn-dfatab.c.tmp insn-latencytab.c.tmp
 
 # genopinit has two output files
 insn-opinit.h: insn-opinit.c
@@ -414,7 +415,7 @@ insn-opinit.c: genopinit ${G_md_file} insn-conditions.md
 	./genopinit ${G_md_file} insn-conditions.md \
 		-hinsn-opinit.h.tmp -c${.TARGET}.tmp && \
 	mv ${.TARGET}.tmp ${.TARGET}
-CLEANFILES+=	insn-opinit.h insn-opinit.c
+CLEANFILES+=	insn-opinit.h insn-opinit.c insn-opinit.h.tmp
 
 LDFLAGS.genautomata+=	-lm
 
