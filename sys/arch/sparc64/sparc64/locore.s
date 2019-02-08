@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.415 2018/11/04 20:02:07 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.416 2019/02/08 19:26:25 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3034,7 +3034,7 @@ sun4v_tl0_dtsb_prot:
 
 #	btst	SUN4V_TLB_REAL_W|SUN4V_TLB_W, %g4	! Is it a ref fault?
 	mov	1, %g2
-	sllx	%g2, 61, %g2
+	sllx	%g2, 61, %g2			! %g2 is now SUN4V_TLB_REAL_W
 	or	%g2, SUN4V_TLB_W, %g2
 	btst	%g2, %g4
 	bz,pn	%xcc, sun4v_datatrap			! No -- really fault
@@ -3263,7 +3263,7 @@ sun4v_tl1_dtsb_prot:
 
 #	btst	SUN4V_TLB_REAL_W|SUN4V_TLB_W, %g4	! Is it a ref fault?
 	mov	1, %g2
-	sllx	%g2, 61, %g2
+	sllx	%g2, 61, %g2			! %g2 is now SUN4V_TLB_REAL_W
 	or	%g2, SUN4V_TLB_W, %g2
 	btst	%g2, %g4
 	bz,pn	%xcc, sun4v_tl1_ptbl_miss		! No -- really fault
