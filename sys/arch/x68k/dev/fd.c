@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.121 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: fd.c,v 1.122 2019/02/08 08:47:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.121 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.122 2019/02/08 08:47:35 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -315,7 +315,7 @@ void fdctimeout(void *);
 void fdcpseudointr(void *);
 void fdcretry(struct fdc_softc *);
 void fdfinish(struct fd_softc *, struct buf *);
-struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 static int fdcpoll(struct fdc_softc *);
 static int fdgetdisklabel(struct fd_softc *, dev_t);
@@ -670,7 +670,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 }
 
-struct fd_type *
+static struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	size_t type = FDTYPE(dev);

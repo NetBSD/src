@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48 2018/09/03 16:29:23 riastradh Exp $	*/
+/*	$NetBSD: fd.c,v 1.49 2019/02/08 08:47:35 mrg Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.49 2019/02/08 08:47:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,7 @@ static void fdctimeout(void *);
 static void fdcpseudointr(void *);
 static void fdcretry(struct fdc_softc *);
 static void fdfinish(struct fd_softc *, struct buf *);
-static inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 static void fd_mountroot_hook(device_t);
 
 /*
@@ -419,7 +419,7 @@ fd_nvtotype(char *fdc, int nvraminfo, int drive)
 }
 #endif
 
-static inline const struct fd_type *
+static const struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
