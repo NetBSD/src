@@ -1146,6 +1146,7 @@ arm*-*-netbsdelf*)
 	armv4*) with_cpu=${with_cpu:-strongarm};;
 	armv6*) with_cpu=${with_cpu:-arm1176jzf-s};;
 	armv7*) with_cpu=${with_cpu:-cortex-a8};;
+	arm*) with_cpu=${with_cpu:-arm9e};;
 	esac
 	target_cpu_cname="$with_cpu"
 	;;
