@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.57 2016/05/18 07:59:30 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.58 2019/02/08 20:09:24 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -382,6 +382,9 @@ SPARC64_RDCONST64_DEF(rdpr, ver, %ver)		/* getver() */
 /* System Tick Register (ASR 24) */
 SPARC64_RDASR64_DEF(stick, STICK)		/* getstick() */
 SPARC64_WRASR64_DEF(stick, STICK)		/* setstick() */
+
+/* System Tick Compare Register (ASR 25) */
+SPARC64_RDASR64_DEF(stickcmpr, STICK_CMPR)	/* getstickcmpr() */
 
 /* Some simple macros to check the cpu type. */
 #define GETVER_CPU_MASK()	((getver() & VER_MASK) >> VER_MASK_SHIFT)
