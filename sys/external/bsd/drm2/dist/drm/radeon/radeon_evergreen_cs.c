@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen_cs.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_evergreen_cs.c,v 1.2 2019/02/08 04:11:53 mrg Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_cs.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_cs.c,v 1.2 2019/02/08 04:11:53 mrg Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"
@@ -1335,6 +1335,7 @@ static int evergreen_cs_handle_reg(struct radeon_cs_parser *p, u32 reg, u32 idx)
 			return -EINVAL;
 		}
 		ib[idx] += (u32)((reloc->gpu_offset >> 8) & 0xffffffff);
+		break;
 	case CB_TARGET_MASK:
 		track->cb_target_mask = radeon_get_ib_value(p, idx);
 		track->cb_dirty = true;

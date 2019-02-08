@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r420.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_r420.c,v 1.2 2019/02/08 04:11:53 mrg Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r420.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r420.c,v 1.2 2019/02/08 04:11:53 mrg Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/slab.h>
@@ -115,6 +115,7 @@ void r420_pipes_init(struct radeon_device *rdev)
 	default:
 		/* force to 1 pipe */
 		num_pipes = 1;
+		/* FALLTHROUGH */
 	case 1:
 		tmp = (0 << 1);
 		break;
