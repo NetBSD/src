@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.102 2019/02/07 06:15:54 msaitoh Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.103 2019/02/08 16:05:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2425,3 +2425,10 @@ share/man/man4/axen.4				1.7
 
 	Andrius V in Pr kern/53461: add D-Link DUB-1312
 	[martin, ticket #1182]
+
+sys/dev/raidframe/rf_disks.c			1.90
+
+	PR/53956: raidframe fails to create new raid set on disks.
+	[christos, ticket #1183]
+
+
