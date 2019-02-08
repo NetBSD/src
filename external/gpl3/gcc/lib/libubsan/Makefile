@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2019/02/06 04:00:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2019/02/08 22:06:12 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 LIBISCXX = yes
@@ -31,5 +31,6 @@ COPTS.ubsan_handlers_cxx.cc+= -Wno-error=maybe-uninitialized
 LIB=	ubsan
 SRCS+=	${UBSAN_SRCS}
 LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
+CPPFLAGS+=-DCAN_SANITIZE_UB=1
 
 .include <bsd.lib.mk>
