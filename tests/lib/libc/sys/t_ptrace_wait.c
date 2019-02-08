@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.72 2019/02/07 23:03:33 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.73 2019/02/08 00:29:41 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.72 2019/02/07 23:03:33 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.73 2019/02/08 00:29:41 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2824,119 +2824,32 @@ ptrace_step(int N, int setstep)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define PTRACE_STEP(test, N, setstep)					\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+        atf_tc_set_md_var(tc, "descr",					\
+            "Verify " #N " (PT_SETSTEP set to: " #setstep);		\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+        ptrace_step(N, setstep);					\
+}
+
+PTRACE_STEP(step1, 1, 0)
+PTRACE_STEP(step2, 2, 0)
+PTRACE_STEP(step3, 3, 0)
+PTRACE_STEP(step4, 4, 0)
+PTRACE_STEP(setstep1, 1, 1)
+PTRACE_STEP(setstep2, 2, 1)
+PTRACE_STEP(setstep3, 3, 1)
+PTRACE_STEP(setstep4, 4, 1)
 #endif
 
-#if defined(PT_STEP)
-ATF_TC(step1);
-ATF_TC_HEAD(step1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify single PT_STEP call");
-}
-
-ATF_TC_BODY(step1, tc)
-{
-	ptrace_step(1, 0);
-}
-#endif
-
-#if defined(PT_STEP)
-ATF_TC(step2);
-ATF_TC_HEAD(step2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_STEP called twice");
-}
-
-ATF_TC_BODY(step2, tc)
-{
-	ptrace_step(2, 0);
-}
-#endif
-
-#if defined(PT_STEP)
-ATF_TC(step3);
-ATF_TC_HEAD(step3, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_STEP called three times");
-}
-
-ATF_TC_BODY(step3, tc)
-{
-	ptrace_step(3, 0);
-}
-#endif
-
-#if defined(PT_STEP)
-ATF_TC(step4);
-ATF_TC_HEAD(step4, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_STEP called four times");
-}
-
-ATF_TC_BODY(step4, tc)
-{
-	ptrace_step(4, 0);
-}
-#endif
-
-#if defined(PT_STEP)
-ATF_TC(setstep1);
-ATF_TC_HEAD(setstep1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify single PT_SETSTEP call");
-}
-
-ATF_TC_BODY(setstep1, tc)
-{
-	ptrace_step(1, 1);
-}
-#endif
-
-#if defined(PT_STEP)
-ATF_TC(setstep2);
-ATF_TC_HEAD(setstep2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_SETSTEP called twice");
-}
-
-ATF_TC_BODY(setstep2, tc)
-{
-	ptrace_step(2, 1);
-}
-#endif
-
-#if defined(PT_STEP)
-ATF_TC(setstep3);
-ATF_TC_HEAD(setstep3, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_SETSTEP called three times");
-}
-
-ATF_TC_BODY(setstep3, tc)
-{
-	ptrace_step(3, 1);
-}
-#endif
-
-#if defined(PT_STEP)
-ATF_TC(setstep4);
-ATF_TC_HEAD(setstep4, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_SETSTEP called four times");
-}
-
-ATF_TC_BODY(setstep4, tc)
-{
-	ptrace_step(4, 1);
-}
-#endif
+/// ----------------------------------------------------------------------------
 
 ATF_TC(kill1);
 ATF_TC_HEAD(kill1, tc)
