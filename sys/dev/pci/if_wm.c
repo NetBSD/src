@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.625 2019/02/07 04:03:24 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.626 2019/02/08 06:33:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -75,15 +75,14 @@
  *	- Check XXX'ed comments
  *	- TX Multi queue improvement (refine queue selection logic)
  *	- Split header buffer for newer descriptors
- *	- EEE (Energy Efficiency Ethernet)
+ *	- EEE (Energy Efficiency Ethernet) for I354
  *	- Virtual Function
  *	- Set LED correctly (based on contents in EEPROM)
  *	- Rework how parameters are loaded from the EEPROM.
- *	- Image Unique ID
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.625 2019/02/07 04:03:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.626 2019/02/08 06:33:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1476,7 +1475,7 @@ static const struct wm_product {
 	  WM_T_I210,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_WOF,
-	  "I210 Ethernet (FLASH less)",
+	  "I210 Ethernet (Copper, FLASH less)",
 	  WM_T_I210,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_FIBER,
@@ -1488,11 +1487,15 @@ static const struct wm_product {
 	  WM_T_I210,		WMP_F_SERDES },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES_WOF,
-	  "I210 Gigabit Ethernet (FLASH less)",
+	  "I210 Gigabit Ethernet (SERDES, FLASH less)",
 	  WM_T_I210,		WMP_F_SERDES },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SGMII,
 	  "I210 Gigabit Ethernet (SGMII)",
+	  WM_T_I210,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SGMII_WOF,
+	  "I210 Gigabit Ethernet (SGMII, FLASH less)",
 	  WM_T_I210,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I211_COPPER,
@@ -15179,6 +15182,8 @@ wm_set_eee_i350(struct wm_softc *sc)
 	uint32_t ipcnfg_mask
 	    = IPCNFG_EEE_1G_AN | IPCNFG_EEE_100M_AN | IPCNFG_10BASE_TE;
 	uint32_t eeer_mask = EEER_TX_LPI_EN | EEER_RX_LPI_EN | EEER_LPI_FC;
+
+	KASSERT(sc->sc_mediatype == WM_MEDIATYPE_COPPER);
 
 	ipcnfg = CSR_READ(sc, WMREG_IPCNFG);
 	eeer = CSR_READ(sc, WMREG_EEER);
