@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.329 2018/12/30 23:19:40 christos Exp $
+#	$NetBSD: build.sh,v 1.330 2019/02/08 02:05:32 mrg Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -638,23 +638,23 @@ MACHINE=epoc32		MACHINE_ARCH=arm
 MACHINE=epoc32		MACHINE_ARCH=earmv4	ALIAS=eepoc32 DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evboarm-el
 MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evboarm-eb
-MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el DEFAULT
-MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb
-MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el
-MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv4	ALIAS=evbearmv4-el
-MACHINE=evbarm		MACHINE_ARCH=earmv4eb	ALIAS=evbearmv4-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv5	ALIAS=evbearmv5-el
-MACHINE=evbarm		MACHINE_ARCH=earmv5eb	ALIAS=evbearmv5-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv6	ALIAS=evbearmv6-el
-MACHINE=evbarm		MACHINE_ARCH=earmv6hf	ALIAS=evbearmv6hf-el
-MACHINE=evbarm		MACHINE_ARCH=earmv6eb	ALIAS=evbearmv6-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv6hfeb	ALIAS=evbearmv6hf-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el
-MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb
-MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el
-MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb
-MACHINE=evbarm		MACHINE_ARCH=aarch64	ALIAS=evbarm64-el ALIAS=evbarm64 DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el	ALIAS=evbarm-el DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=earmeb	ALIAS=evbearm-eb	ALIAS=evbarm-eb
+MACHINE=evbarm		MACHINE_ARCH=earmhf	ALIAS=evbearmhf-el	ALIAS=evbarmhf-el
+MACHINE=evbarm		MACHINE_ARCH=earmhfeb	ALIAS=evbearmhf-eb	ALIAS=evbarmhf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv4	ALIAS=evbearmv4-el	ALIAS=evbarmv4-el
+MACHINE=evbarm		MACHINE_ARCH=earmv4eb	ALIAS=evbearmv4-eb	ALIAS=evbarmv4-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv5	ALIAS=evbearmv5-el	ALIAS=evbarmv5-el
+MACHINE=evbarm		MACHINE_ARCH=earmv5eb	ALIAS=evbearmv5-eb	ALIAS=evbarmv5-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6	ALIAS=evbearmv6-el	ALIAS=evbarmv6-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6hf	ALIAS=evbearmv6hf-el	ALIAS=evbarmv6hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv6eb	ALIAS=evbearmv6-eb	ALIAS=evbarmv6-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv6hfeb	ALIAS=evbearmv6hf-eb	ALIAS=evbarmv6hf-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el	ALIAS=evbarmv7-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb	ALIAS=evbarmv7-eb
+MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el	ALIAS=evbarmv7hf-el
+MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb	ALIAS=evbarmv7hf-eb
+MACHINE=evbarm		MACHINE_ARCH=aarch64	ALIAS=evbarm64-el	ALIAS=evbarm64 DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=aarch64eb	ALIAS=evbarm64-eb
 MACHINE=evbcf		MACHINE_ARCH=coldfire
 MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
@@ -1936,7 +1936,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.329 2018/12/30 23:19:40 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.330 2019/02/08 02:05:32 mrg Exp $
 # with these arguments: ${_args}
 #
 
