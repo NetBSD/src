@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.74 2019/02/08 00:31:46 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.75 2019/02/08 03:08:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.74 2019/02/08 00:31:46 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.75 2019/02/08 03:08:00 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2851,62 +2851,8 @@ PTRACE_STEP(setstep4, 4, 1)
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(kill1);
-ATF_TC_HEAD(kill1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that PT_CONTINUE with SIGKILL terminates child");
-}
-
-ATF_TC_BODY(kill1, tc)
-{
-	const int sigval = SIGSTOP, sigsent = SIGKILL;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		/* NOTREACHED */
-		FORKEE_ASSERTX(0 &&
-		    "Child should be terminated by a signal from its parent");
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_signaled(status, sigsent, 0);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(kill2);
-ATF_TC_HEAD(kill2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that PT_KILL terminates child");
-}
-
-ATF_TC_BODY(kill2, tc)
+static void
+ptrace_kill(const char *type)
 {
 	const int sigval = SIGSTOP;
 	pid_t child, wpid;
@@ -2934,9 +2880,15 @@ ATF_TC_BODY(kill2, tc)
 
 	validate_status_stopped(status, sigval);
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_KILL, child, (void*)1, 0) != -1);
+	DPRINTF("Before killing the child process with %s\n", type);
+	if (strcmp(type, "ptrace(PT_KILL)") == 0) {
+		SYSCALL_REQUIRE(ptrace(PT_KILL, child, (void*)1, 0) != -1);
+	} else if (strcmp(type, "kill(SIGKILL)") == 0) {
+		kill(child, SIGKILL);
+	} else if (strcmp(type, "killpg(SIGKILL)") == 0) {
+		setpgid(child, 0);
+		killpg(getpgid(child), SIGKILL);
+	}
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
@@ -2946,6 +2898,27 @@ ATF_TC_BODY(kill2, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define PTRACE_KILL(test, type)						\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+        atf_tc_set_md_var(tc, "descr",					\
+            "Verify killing the child with " type);			\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+        ptrace_kill(type);						\
+}
+
+// PT_CONTINUE with SIGKILL is covered by traceme_sendsignal_simple1
+PTRACE_KILL(kill1, "ptrace(PT_KILL)")
+PTRACE_KILL(kill2, "kill(SIGKILL)")
+PTRACE_KILL(kill3, "killpg(SIGKILL)")
+
+/// ----------------------------------------------------------------------------
 
 ATF_TC(lwpinfo1);
 ATF_TC_HEAD(lwpinfo1, tc)
@@ -5520,6 +5493,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, kill1);
 	ATF_TP_ADD_TC(tp, kill2);
+	ATF_TP_ADD_TC(tp, kill3);
 
 	ATF_TP_ADD_TC(tp, lwpinfo1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, lwpinfo2);
