@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.171 2019/02/04 11:16:41 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.172 2019/02/09 03:35:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.171 2019/02/04 11:16:41 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.172 2019/02/09 03:35:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -545,19 +545,19 @@ evalsubshell(union node *n, int flags)
 		outxc('\n');
 		flushout(outx);
 	}
+	INTOFF;
 	if ((!backgnd && flags & EV_EXIT && !have_traps()) ||
 	    forkshell(jp = makejob(n, 1), n, backgnd?FORK_BG:FORK_FG) == 0) {
-		INTON;
 		if (backgnd)
 			flags &=~ EV_TESTED;
 		redirect(n->nredir.redirect, REDIR_KEEP);
-		evaltree(n->nredir.n, flags | EV_EXIT);   /* never returns */
-	} else if (!backgnd) {
-		INTOFF;
-		exitstatus = waitforjob(jp);
 		INTON;
-	} else
+		evaltree(n->nredir.n, flags | EV_EXIT);   /* never returns */
+	} else if (backgnd)
 		exitstatus = 0;
+	else
+		exitstatus = waitforjob(jp);
+	INTON;
 
 	if (!backgnd && xflag && n->nredir.redirect) {
 		outxstr(expandstr(ps4val(), line_number));
@@ -714,11 +714,9 @@ evalpipe(union node *n)
 		close(pip[1]);
 	}
 	if (n->npipe.backgnd == 0) {
-		INTOFF;
 		exitstatus = waitforjob(jp);
 		CTRACE(DBG_EVAL, ("evalpipe:  job done exit status %d\n",
 		    exitstatus));
-		INTON;
 	} else
 		exitstatus = 0;
 	INTON;

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.103 2018/12/03 02:38:30 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.104 2019/02/09 03:35:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.103 2018/12/03 02:38:30 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.104 2019/02/09 03:35:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,8 +277,8 @@ do_fgcmd(const char *arg_ptr)
 		error("Cannot set tty process group (%s) at %d",
 		    strerror(errno), __LINE__);
 	}
-	restartjob(jp);
 	INTOFF;
+	restartjob(jp);
 	status = waitforjob(jp);
 	INTON;
 	return status;
@@ -1110,7 +1110,6 @@ forkshell(struct job *jp, union node *n, int mode)
 	case -1:
 		serrno = errno;
 		VTRACE(DBG_JOBS, ("Fork failed, errno=%d\n", serrno));
-		INTON;
 		error("Cannot fork (%s)", strerror(serrno));
 		break;
 	case 0:
