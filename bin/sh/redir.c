@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.63 2019/02/09 03:35:55 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.64 2019/02/09 09:34:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.63 2019/02/09 03:35:55 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.64 2019/02/09 09:34:43 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,6 +425,7 @@ openhere(const union node *redir)
 			xwrite(pip[1], redir->nhere.doc->narg.text, len);
 		else
 			expandhere(redir->nhere.doc, pip[1]);
+		VTRACE(DBG_PROCS|DBG_REDIR, ("wrote here doc.  exiting\n"));
 		_exit(0);
 	}
 	VTRACE(DBG_REDIR, ("openhere (closing %d)", pip[1]));
