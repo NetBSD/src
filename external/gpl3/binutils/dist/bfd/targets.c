@@ -1168,7 +1168,6 @@ static const bfd_target * const _bfd_target_vector[] =
 	&rl78_elf32_vec,
 
 #ifdef BFD64
-        &riscv_elf64_vec,
 	&rs6000_xcoff64_vec,
 	&rs6000_xcoff64_aix_vec,
 #endif
