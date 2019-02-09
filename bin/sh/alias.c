@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.20 2018/12/03 06:40:26 kre Exp $	*/
+/*	$NetBSD: alias.c,v 1.21 2019/02/09 09:11:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.20 2018/12/03 06:40:26 kre Exp $");
+__RCSID("$NetBSD: alias.c,v 1.21 2019/02/09 09:11:07 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ STATIC void list_aliases(void);
 STATIC int unalias(char *);
 STATIC struct alias **freealias(struct alias **, int);
 STATIC struct alias **hashalias(const char *);
-STATIC size_t countaliases(void);
+STATIC int countaliases(void);
 
 STATIC
 void
@@ -196,13 +196,13 @@ by_name(const void *a, const void *b)
 STATIC void
 list_aliases(void)
 {
-	size_t i, j, n;
+	int i, j, n;
 	const struct alias **aliases;
 	const struct alias *ap;
 
 	INTOFF;
 	n = countaliases();
-	aliases = ckmalloc(n * sizeof aliases[0]);
+	aliases = stalloc(n * (int)(sizeof aliases[0]));
 
 	j = 0;
 	for (i = 0; i < ATABSIZE; i++)
@@ -221,7 +221,7 @@ list_aliases(void)
 		out1c('\n');
 	}
 
-	ckfree(aliases);
+	stunalloc(aliases);
 }
 
 /*
@@ -230,7 +230,7 @@ list_aliases(void)
  * Use this opportunity to clean up any of those
  * zombies that are no longer needed.
  */
-STATIC size_t
+STATIC int
 countaliases(void)
 {
 	struct alias *ap, **app;
