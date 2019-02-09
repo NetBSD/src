@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.76 2019/02/09 03:35:55 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.77 2019/02/09 09:38:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.76 2019/02/09 03:35:55 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.77 2019/02/09 09:38:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -562,13 +562,19 @@ char *
 lookupvar(const char *name)
 {
 	struct var *v;
+	char *p;
 
 	v = find_var(name, NULL, NULL);
 	if (v == NULL || v->flags & VUNSET)
 		return NULL;
-	if (v->rfunc && (v->flags & VFUNCREF) != 0)
-		return (*v->rfunc)(v) + v->name_len + 1;
-	return v->text + v->name_len + 1;
+	if (v->rfunc && (v->flags & VFUNCREF) != 0) {
+		p = (*v->rfunc)(v);
+		if (p == NULL)
+			return NULL;
+	} else
+		p = v->text;
+
+	return p + v->name_len + 1;
 }
 
 
@@ -584,6 +590,7 @@ bltinlookup(const char *name, int doall)
 {
 	struct strlist *sp;
 	struct var *v;
+	char *p;
 
 	for (sp = cmdenviron ; sp ; sp = sp->next) {
 		if (strequal(sp->text, name))
@@ -594,9 +601,15 @@ bltinlookup(const char *name, int doall)
 
 	if (v == NULL || v->flags & VUNSET || (!doall && !(v->flags & VEXPORT)))
 		return NULL;
-	if (v->rfunc && (v->flags & VFUNCREF) != 0)
-		return (*v->rfunc)(v) + v->name_len + 1;
-	return v->text + v->name_len + 1;
+
+	if (v->rfunc && (v->flags & VFUNCREF) != 0) {
+		p = (*v->rfunc)(v);
+		if (p == NULL)
+			return NULL;
+	} else
+		p = v->text;
+
+	return p + v->name_len + 1;
 }
 
 
@@ -626,9 +639,11 @@ environment(void)
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next)
 			if ((vp->flags & (VEXPORT|VUNSET)) == VEXPORT) {
-				if (vp->rfunc && (vp->flags & VFUNCREF))
-					*ep++ = (*vp->rfunc)(vp);
-				else
+				if (vp->rfunc && (vp->flags & VFUNCREF)) {
+					*ep = (*vp->rfunc)(vp);
+					if (*ep != NULL)
+						ep++;
+				} else
 					*ep++ = vp->text;
 				VTRACE(DBG_VARS, ("environment: %s\n", ep[-1]));
 			}
@@ -763,16 +778,20 @@ showvar(struct var *vp, const char *cmd, const char *xtra, int show_value)
 {
 	const char *p;
 
+	p = vp->text;
+	if (vp->rfunc && (vp->flags & VFUNCREF) != 0) {
+		p = (*vp->rfunc)(vp);
+		if (p == NULL) {
+			if (!(show_value & 2))
+				return;
+			p = vp->text;
+			show_value = 0;
+		}
+	}
 	if (cmd)
 		out1fmt("%s ", cmd);
 	if (xtra)
 		out1fmt("%s ", xtra);
-	p = vp->text;
-	if (vp->rfunc && (vp->flags & VFUNCREF) != 0) {
-		p = (*vp->rfunc)(vp);
-		if (p == NULL)
-			p = vp->text;
-	}
 	for ( ; *p != '=' ; p++)
 		out1c(*p);
 	if (!(vp->flags & VUNSET) && show_value) {
