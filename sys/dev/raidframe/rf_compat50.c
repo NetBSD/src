@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.8 2019/02/05 23:28:02 christos Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.9 2019/02/09 03:33:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -123,18 +123,18 @@ rf_config50(struct raid_softc *rs, void *data)
 	/* data points to a pointer to the configuration structure */
 
 	u50_cfg = *((RF_Config50_t **) data);
-	RF_Malloc(k50_cfg, sizeof(RF_Config50_t), (RF_Config50_t *));
+	k50_cfg = RF_Malloc(sizeof(*k50_cfg));
 	if (k50_cfg == NULL)
 		return ENOMEM;
 
-	error = copyin(u50_cfg, k50_cfg, sizeof(RF_Config50_t));
+	error = copyin(u50_cfg, k50_cfg, sizeof(*k50_cfg));
 	if (error) {
-		RF_Free(k50_cfg, sizeof(RF_Config50_t));
+		RF_Free(k50_cfg, sizeof(*k50_cfg));
 		return error;
 	}
-	RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
+	k_cfg = RF_Malloc(sizeof(*k_cfg));
 	if (k_cfg == NULL) {
-		RF_Free(k50_cfg, sizeof(RF_Config50_t));
+		RF_Free(k50_cfg, sizeof(*k50_cfg));
 		return ENOMEM;
 	}
 
@@ -171,7 +171,7 @@ rf_config50(struct raid_softc *rs, void *data)
 	k_cfg->layoutSpecific = k50_cfg->layoutSpecific;
 	k_cfg->force = k50_cfg->force;
 
-	RF_Free(k50_cfg, sizeof(RF_Config50_t));
+	RF_Free(k50_cfg, sizeof(*k50_cfg));
 	return rf_construct(rs, k_cfg);
 }
 
@@ -185,7 +185,7 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 	if (!raidPtr->valid)
 		return ENODEV;
 
-	RF_Malloc(d_cfg, sizeof(RF_DeviceConfig50_t), (RF_DeviceConfig50_t *));
+	d_cfg = RF_Malloc(sizeof(*d_cfg));
 
 	if (d_cfg == NULL)
 		return ENOMEM;
@@ -211,10 +211,10 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 	for (j = d_cfg->cols, i = 0; i < d_cfg->nspares; i++, j++)
 		rf_disk_to_disk50(&d_cfg->spares[i], &raidPtr->Disks[j]);
 
-	error = copyout(d_cfg, *ucfgp, sizeof(RF_DeviceConfig50_t));
+	error = copyout(d_cfg, *ucfgp, sizeof(**ucfgp));
 
 out:
-	RF_Free(d_cfg, sizeof(RF_DeviceConfig50_t));
+	RF_Free(d_cfg, sizeof(*d_cfg));
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.134 2019/01/08 07:18:18 mrg Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.135 2019/02/09 03:34:00 christos Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.134 2019/01/08 07:18:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.135 2019/02/09 03:34:00 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -587,7 +587,7 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc->status = 0;
 	desc->numRetries = 0;
 #if RF_ACC_TRACE > 0
-	memset((char *) &desc->tracerec, 0, sizeof(RF_AccTraceEntry_t));
+	memset(&desc->tracerec, 0, sizeof(desc->tracerec));
 #endif
 	desc->callbackFunc = NULL;
 	desc->callbackArg = NULL;
