@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.805 2019/02/03 03:20:23 thorpej Exp $
+# $NetBSD: mi,v 1.806 2019/02/09 00:14:43 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3698,6 +3698,7 @@
 ./usr/tests/usr.bin/cc/t_asan_poison		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_asan_uaf		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_hello			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_libgomp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_ubsan_int_add_overflow		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_ubsan_int_divzero		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_ubsan_int_neg_overflow		tests-usr.bin-tests	compattestfile,atf
