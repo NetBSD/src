@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.22 2014/03/23 09:30:59 christos Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.23 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.22 2014/03/23 09:30:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.23 2019/02/09 03:34:00 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -411,7 +411,7 @@ rf_RecoveryEFunc(RF_DagNode_t *node)
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
 
-	memset((char *) node->results[0], 0,
+	memset(node->results[0], 0,
 	    rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
 	if (node->dagHdr->status == rf_enable) {
 		RF_ETIMER_START(timer);
@@ -482,8 +482,6 @@ rf_doubleEOdecode(
 	short  *P;
 
 	RF_ASSERT(bytesPerEU % sizeof(short) == 0);
-	RF_Malloc(P, bytesPerEU, (short *));
-	RF_Malloc(temp, bytesPerEU, (short *));
 #elif RF_EO_MATRIX_DIM == 17
 	int     longsPerEU = bytesPerEU / sizeof(long);
 	long   *rrdbuf_current, *pbuf_current, *ebuf_current;
@@ -492,13 +490,11 @@ rf_doubleEOdecode(
 	long   *P;
 
 	RF_ASSERT(bytesPerEU % sizeof(long) == 0);
-	RF_Malloc(P, bytesPerEU, (long *));
-	RF_Malloc(temp, bytesPerEU, (long *));
 #endif
+	P = RF_Malloc(bytesPerEU);
+	temp = RF_Malloc(bytesPerEU);
 	RF_ASSERT(*((long *) dest[0]) == 0);
 	RF_ASSERT(*((long *) dest[1]) == 0);
-	memset((char *) P, 0, bytesPerEU);
-	memset((char *) temp, 0, bytesPerEU);
 	RF_ASSERT(*P == 0);
 	/* calculate the 'P' parameter, which, not parity, is the Xor of all
 	 * elements in the last two column, ie. 'E' and 'parity' colume, see
@@ -680,11 +676,11 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 			ndataParam = i;
 			break;
 		}
-	RF_Malloc(buf, numDataCol * sizeof(char *), (char **));
+	buf = RF_Malloc(numDataCol * sizeof(*buf));
 	if (ndataParam != 0) {
-		RF_Malloc(suoff, ndataParam * sizeof(long), (long *));
-		RF_Malloc(suend, ndataParam * sizeof(long), (long *));
-		RF_Malloc(prmToCol, ndataParam * sizeof(long), (long *));
+		suoff = RF_Malloc(ndataParam * sizeof(*suoff));
+		suend = RF_Malloc(ndataParam * sizeof(*suend));
+		prmToCol = RF_Malloc(ndataParam * sizeof(*prmToCol));
 	}
 	if (asmap->failedPDAs[1] &&
 	    (asmap->failedPDAs[1]->numSector + asmap->failedPDAs[0]->numSector < secPerSU)) {
@@ -788,22 +784,19 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 		if (nresults == 1) {
 			dest[0] = (char *)((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
 			/* Always malloc temp buffer to dest[1]  */
-			RF_Malloc(dest[1], bytesPerSector, (char *));
-			memset(dest[1], 0, bytesPerSector);
+			dest[1] = RF_Malloc(bytesPerSector);
 			mallc_two = 1;
 		} else {
 			if (fsuoff[0] <= sector && sector < fsuend[0])
 				dest[0] = (char *)((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
 			else {
-				RF_Malloc(dest[0], bytesPerSector, (char *));
-				memset(dest[0], 0, bytesPerSector);
+				dest[0] = RF_Malloc(bytesPerSector);
 				mallc_one = 1;
 			}
 			if (fsuoff[1] <= sector && sector < fsuend[1])
 				dest[1] = (char *)((RF_PhysDiskAddr_t *) node->results[1])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[1]);
 			else {
-				RF_Malloc(dest[1], bytesPerSector, (char *));
-				memset(dest[1], 0, bytesPerSector);
+				dest[1] = RF_Malloc(bytesPerSector);
 				mallc_two = 1;
 			}
 			RF_ASSERT(mallc_one == 0 || mallc_two == 0);
@@ -874,7 +867,7 @@ rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 						 * case, the other failed SU
 						 * is not being accessed */
 	RF_ETIMER_START(timer);
-	RF_Malloc(buf, numDataCol * sizeof(char *), (char **));
+	buf = RF_Malloc(numDataCol * sizeof(*buf));
 
 	ppda = node->results[0];/* Instead of being buffers, node->results[0]
 				 * and [1] are Ppda and Epda  */
@@ -915,12 +908,10 @@ rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	fcol[1] = i;
 	/* assign temporary space to put recovered failed SU */
 	numbytes = fpda->numSector * bytesPerSector;
-	RF_Malloc(olddata[0], numbytes, (char *));
-	RF_Malloc(olddata[1], numbytes, (char *));
+	olddata[0] = RF_Malloc(numbytes);
+	olddata[1] = RF_Malloc(numbytes);
 	dest[0] = olddata[0];
 	dest[1] = olddata[1];
-	memset(olddata[0], 0, numbytes);
-	memset(olddata[1], 0, numbytes);
 	/* Begin the recovery decoding, initially buf[j],  ebuf, pbuf, dest[j]
 	 * have already pointed at the beginning of each source buffers and
 	 * destination buffers */

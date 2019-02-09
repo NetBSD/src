@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.34 2011/05/01 01:09:05 mrg Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.35 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.34 2011/05/01 01:09:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.35 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -220,8 +220,9 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 
 	mcpair = rf_AllocMCPair();
 	rf_MakeAllocList(alloclist);
-	RF_MallocAndAdd(bf, numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol), (char *), alloclist);
-	RF_MallocAndAdd(pbuf, numbytes, (char *), alloclist);
+	bf = RF_MallocAndAdd(numbytes
+	    * (layoutPtr->numDataCol + layoutPtr->numParityCol), alloclist);
+	pbuf = RF_MallocAndAdd(numbytes, alloclist);
 	end_p = bf + bytesPerStripe;
 
 	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, bf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
@@ -253,7 +254,7 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 
 	/* fire off the DAG */
 #if RF_ACC_TRACE > 0
-	memset((char *) &tracerec, 0, sizeof(tracerec));
+	memset(&tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
 #endif
 #if 0
@@ -299,7 +300,7 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 #if RF_ACC_TRACE > 0
-		memset((char *) &tracerec, 0, sizeof(tracerec));
+		memset(&tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 #endif
 #if 0

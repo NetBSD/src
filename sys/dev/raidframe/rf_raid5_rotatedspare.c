@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.13 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.14 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.13 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.14 2019/02/09 03:34:00 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -64,7 +64,7 @@ rf_ConfigureRAID5_RS(
 	RF_RowCol_t i, j, startdisk;
 
 	/* create a RAID level 5 configuration structure */
-	RF_MallocAndAdd(info, sizeof(RF_Raid5RSConfigInfo_t), (RF_Raid5RSConfigInfo_t *), raidPtr->cleanupList);
+	info = RF_MallocAndAdd(sizeof(*info), raidPtr->cleanupList);
 	if (info == NULL)
 		return (ENOMEM);
 	layoutPtr->layoutSpecificInfo = (void *) info;

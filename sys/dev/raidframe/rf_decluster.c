@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.25 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.26 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.25 2018/01/18 00:32:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.26 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -89,7 +89,7 @@ rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	numCompleteSpareRegionsPerDisk = 0;
 
 	/* 1. create layout specific structure */
-	RF_MallocAndAdd(info, sizeof(RF_DeclusteredConfigInfo_t), (RF_DeclusteredConfigInfo_t *), raidPtr->cleanupList);
+	info = RF_MallocAndAdd(sizeof(*info), raidPtr->cleanupList);
 	if (info == NULL)
 		return (ENOMEM);
 	layoutPtr->layoutSpecificInfo = (void *) info;
@@ -614,7 +614,7 @@ rf_InstallSpareTable(RF_Raid_t *raidPtr, RF_RowCol_t fcol)
 	RF_SparetWait_t *req;
 	int     retcode;
 
-	RF_Malloc(req, sizeof(*req), (RF_SparetWait_t *));
+	req = RF_Malloc(sizeof(*req));
 	req->C = raidPtr->numCol;
 	req->G = raidPtr->Layout.numDataCol + raidPtr->Layout.numParityCol;
 	req->fcol = fcol;
@@ -643,20 +643,23 @@ rf_SetSpareTable(RF_Raid_t *raidPtr, void *data)
 
 	/* what we need to copyin is a 2-d array, so first copyin the user
 	 * pointers to the rows in the table */
-	RF_Malloc(ptrs, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *), (RF_SpareTableEntry_t **));
-	retcode = copyin((void *) data, (void *) ptrs, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *));
+	size_t ptrslen = info->TablesPerSpareRegion * sizeof(*ptrs);
+	ptrs = RF_Malloc(ptrslen);
+	retcode = copyin(data, ptrs, ptrslen);
 
 	if (retcode)
 		return (retcode);
 
 	/* now allocate kernel space for the row pointers */
-	RF_Malloc(info->SpareTable, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *), (RF_SpareTableEntry_t **));
+	info->SpareTable = RF_Malloc(info->TablesPerSpareRegion *
+	    sizeof(*info->SpareTable));
 
 	/* now allocate kernel space for each row in the table, and copy it in
 	 * from user space */
+	size_t len = info->BlocksPerTable * sizeof(**info->SpareTable);
 	for (i = 0; i < info->TablesPerSpareRegion; i++) {
-		RF_Malloc(info->SpareTable[i], info->BlocksPerTable * sizeof(RF_SpareTableEntry_t), (RF_SpareTableEntry_t *));
-		retcode = copyin(ptrs[i], info->SpareTable[i], info->BlocksPerTable * sizeof(RF_SpareTableEntry_t));
+		info->SpareTable[i] = RF_Malloc(len);
+		retcode = copyin(ptrs[i], info->SpareTable[i], len);
 		if (retcode) {
 			info->SpareTable = NULL;	/* blow off the memory
 							 * we've allocated */
@@ -665,7 +668,7 @@ rf_SetSpareTable(RF_Raid_t *raidPtr, void *data)
 	}
 
 	/* free up the temporary array we used */
-	RF_Free(ptrs, info->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *));
+	RF_Free(ptrs, ptrslen);
 
 	return (0);
 }

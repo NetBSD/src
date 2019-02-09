@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.21 2014/03/23 09:30:59 christos Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.22 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.21 2014/03/23 09:30:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.22 2019/02/09 03:34:00 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -102,8 +102,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 
 	/* alloc the Wnd nodes, the xor node, and the Lpo node */
 	nWndNodes = asmap->numStripeUnitsAccessed;
-	RF_MallocAndAdd(nodes, (nWndNodes + 6) * sizeof(RF_DagNode_t),
-			(RF_DagNode_t *), allocList);
+	nodes = RF_MallocAndAdd((nWndNodes + 6) * sizeof(*nodes), allocList);
 	i = 0;
 	wndNodes = &nodes[i];
 	i += nWndNodes;
@@ -126,8 +125,8 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 
 	rf_MapUnaccessedPortionOfStripe(raidPtr, layoutPtr, asmap, dag_h, new_asm_h, &nRodNodes, &sosBuffer, &eosBuffer, allocList);
 	if (nRodNodes > 0)
-		RF_MallocAndAdd(rodNodes, nRodNodes * sizeof(RF_DagNode_t),
-				(RF_DagNode_t *), allocList);
+		rodNodes = RF_MallocAndAdd(nRodNodes * sizeof(*rodNodes),
+		      allocList);
 
 	/* begin node initialization */
 	rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, nRodNodes + 1, 0, 0, 0, dag_h, "Nil", allocList);
@@ -186,8 +185,8 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 		if (((RF_PhysDiskAddr_t *) rodNodes[i].params[0].p)->numSector == raidPtr->Layout.sectorsPerStripeUnit)
 			break;
 	if (i == nRodNodes) {
-		RF_MallocAndAdd(xorNode->results[0],
-				rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit), (void *), allocList);
+		xorNode->results[0] = RF_MallocAndAdd(rf_RaidAddressToByte(
+		    raidPtr, raidPtr->Layout.sectorsPerStripeUnit), allocList);
 	} else {
 		xorNode->results[0] = rodNodes[i].params[1].p;
 	}
@@ -368,8 +367,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	dag_h->numSuccedents = 1;
 
 	/* Step 2. create the nodes */
-	RF_MallocAndAdd(nodes, totalNumNodes * sizeof(RF_DagNode_t),
-			(RF_DagNode_t *), allocList);
+	nodes = RF_MallocAndAdd(totalNumNodes * sizeof(*nodes), allocList);
 	i = 0;
 	blockNode = &nodes[i];
 	i += 1;

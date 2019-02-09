@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.11 2019/02/05 23:28:02 christos Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.12 2019/02/09 03:33:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -119,7 +119,7 @@ rf_check_recon_status_ext80(RF_Raid_t *raidPtr, void *data)
 	RF_ProgressInfo_t info, **infoPtr = data;
 
 	rf_check_recon_status_ext(raidPtr, &info);
-	return copyout(&info, *infoPtr, sizeof info);
+	return copyout(&info, *infoPtr, sizeof(info));
 }
 
 static int
@@ -128,7 +128,7 @@ rf_check_parityrewrite_status_ext80(RF_Raid_t *raidPtr, void *data)
 	RF_ProgressInfo_t info, **infoPtr = data;
 
 	rf_check_parityrewrite_status_ext(raidPtr, &info);
-	return copyout(&info, *infoPtr, sizeof info);
+	return copyout(&info, *infoPtr, sizeof(info));
 }
 
 static int
@@ -137,7 +137,7 @@ rf_check_copyback_status_ext80(RF_Raid_t *raidPtr, void *data)
 	RF_ProgressInfo_t info, **infoPtr = data;
 
 	rf_check_copyback_status_ext(raidPtr, &info);
-	return copyout(&info, *infoPtr, sizeof info);
+	return copyout(&info, *infoPtr, sizeof(info));
 }
 
 static void
@@ -145,7 +145,7 @@ rf_copy_raiddisk80(RF_RaidDisk_t *disk, RF_RaidDisk_t80 *disk80)
 {
 
 	/* Be sure the padding areas don't have kernel memory. */
-	memset(disk80, 0, sizeof *disk80);
+	memset(disk80, 0, sizeof(*disk80));
 	memcpy(disk80->devname, disk->devname, sizeof(disk80->devname));
 	disk80->status = disk->status;
 	disk80->spareRow = 0;
@@ -164,13 +164,13 @@ rf_get_info80(RF_Raid_t *raidPtr, void *data)
 	RF_DeviceConfig_t80 *config80, **configPtr80 = data;
 	int rv;
 
-	RF_Malloc(config, sizeof *config, (RF_DeviceConfig_t *));
+	config = RF_Malloc(sizeof(*config));
 	if (config == NULL)
-		return (ENOMEM);
-	RF_Malloc(config80, sizeof *config80, (RF_DeviceConfig_t80 *));
+		return ENOMEM;
+	config80 = RF_Malloc(sizeof(*config80));
 	if (config80 == NULL) {
-		RF_Free(config, sizeof(RF_DeviceConfig_t))
-		return (ENOMEM);
+		RF_Free(config, sizeof(*config));
+		return ENOMEM;
 	}
 	rv = rf_get_info(raidPtr, config);
 	if (rv == 0) {
@@ -186,10 +186,10 @@ rf_get_info80(RF_Raid_t *raidPtr, void *data)
 			rf_copy_raiddisk80(&config->spares[i],
 					   &config80->spares[i]);
 		}
-		rv = copyout(config80, *configPtr80, sizeof *config80);
+		rv = copyout(config80, *configPtr80, sizeof(*config80));
 	}
-	RF_Free(config, sizeof(RF_DeviceConfig_t));
-	RF_Free(config80, sizeof(RF_DeviceConfig_t80));
+	RF_Free(config, sizeof(*config));
+	RF_Free(config80, sizeof(*config80));
 
 	return rv;
 }
@@ -205,7 +205,7 @@ rf_get_component_label80(RF_Raid_t *raidPtr, void *data)
 	 * Perhaps there should be an option to skip the in-core
 	 * copy and hit the disk, as with disklabel(8).
 	 */
-	RF_Malloc(clabel, sizeof(*clabel), (RF_ComponentLabel_t *));
+	clabel = RF_Malloc(sizeof(*clabel));
 	if (clabel == NULL)
 		return ENOMEM;
 	retcode = copyin(*clabel_ptr, clabel, sizeof(*clabel));
@@ -240,18 +240,18 @@ rf_config80(struct raid_softc *rs, void *data)
 	/* data points to a pointer to the configuration structure */
 
 	u80_cfg = *((RF_Config_t80 **) data);
-	RF_Malloc(k80_cfg, sizeof(RF_Config_t80), (RF_Config_t80 *));
+	k80_cfg = RF_Malloc(sizeof(*k80_cfg));
 	if (k80_cfg == NULL)
 		return ENOMEM;
 
-	error = copyin(u80_cfg, k80_cfg, sizeof(RF_Config_t80));
+	error = copyin(u80_cfg, k80_cfg, sizeof(*k80_cfg));
 	if (error) {
-		RF_Free(k80_cfg, sizeof(RF_Config_t80));
+		RF_Free(k80_cfg, sizeof(*k80_cfg));
 		return error;
 	}
-	RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
+	k_cfg = RF_Malloc(sizeof(*k_cfg));
 	if (k_cfg == NULL) {
-		RF_Free(k80_cfg, sizeof(RF_Config_t80));
+		RF_Free(k80_cfg, sizeof(*k80_cfg));
 		return ENOMEM;
 	}
 
@@ -288,7 +288,7 @@ rf_config80(struct raid_softc *rs, void *data)
 	k_cfg->layoutSpecific = k80_cfg->layoutSpecific;
 	k_cfg->force = k80_cfg->force;
 
-	RF_Free(k80_cfg, sizeof(RF_Config_t80));
+	RF_Free(k80_cfg, sizeof(*k80_cfg));
 	return rf_construct(rs, k_cfg);
 }
 
