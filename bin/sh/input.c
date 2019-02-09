@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.70 2019/02/09 03:35:55 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.71 2019/02/09 09:20:47 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.70 2019/02/09 03:35:55 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.71 2019/02/09 09:20:47 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,22 +216,22 @@ preadfd(void)
 
 
 	if (nr <= 0) {
-                if (nr < 0) {
-                        if (errno == EINTR)
-                                goto retry;
-                        if (parsefile->fd == 0 && errno == EWOULDBLOCK) {
-                                int flags = fcntl(0, F_GETFL, 0);
+		if (nr < 0) {
+			if (errno == EINTR)
+				goto retry;
+			if (parsefile->fd == 0 && errno == EWOULDBLOCK) {
+				int flags = fcntl(0, F_GETFL, 0);
 
-                                if (flags >= 0 && flags & O_NONBLOCK) {
-                                        flags &=~ O_NONBLOCK;
-                                        if (fcntl(0, F_SETFL, flags) >= 0) {
+				if (flags >= 0 && flags & O_NONBLOCK) {
+					flags &=~ O_NONBLOCK;
+					if (fcntl(0, F_SETFL, flags) >= 0) {
 						out2str("sh: turning off NDELAY mode\n");
-                                                goto retry;
-                                        }
-                                }
-                        }
-                }
-                nr = -1;
+						goto retry;
+					}
+				}
+			}
+		}
+		nr = -1;
 	}
 	return nr;
 }
