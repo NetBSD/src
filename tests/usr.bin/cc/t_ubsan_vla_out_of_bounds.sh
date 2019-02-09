@@ -1,3 +1,5 @@
+#	$NetBSD: t_ubsan_vla_out_of_bounds.sh,v 1.6 2019/02/09 00:13:19 mrg Exp $
+#
 # Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
