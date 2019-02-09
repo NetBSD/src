@@ -169,7 +169,7 @@ __gthrw(pthread_setschedparam)
    makes std::call_once() so we do the same.
 */
 
-#if defined(__FreeBSD__) || (defined(__sun) && defined(__svr4__)) || defined(__NetBSD)
+#if defined(__FreeBSD__) || (defined(__sun) && defined(__svr4__)) || defined(__NetBSD__)
 
 static volatile int __gthread_active = -1;
 
