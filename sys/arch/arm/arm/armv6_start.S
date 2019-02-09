@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.6 2019/02/06 14:12:25 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.7 2019/02/09 07:19:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -162,6 +162,9 @@ ENTRY_NP(generic_start)
 #ifdef VERBOSE_INIT_ARM
 	VPRINTF("\n\rmidr :")
 	mrc	p15, 0, r0, c0, c0, 0	// MIDR
+	VPRINTX(r0)
+	VPRINTF("\n\rrevidr: ")
+	mrc	p15, 0, r0, c0, c0, 6	// REVIDR
 	VPRINTX(r0)
 	VPRINTF("\n\rmpidr:")
 	mrc	p15, 0, r0, c0, c0, 5	// MPIDR
