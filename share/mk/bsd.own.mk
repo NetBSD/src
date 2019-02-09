@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1103 2019/02/09 00:59:30 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1104 2019/02/09 21:05:48 maya Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -64,6 +64,7 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_CPU} == "i386"	|| \
     ${MACHINE_CPU} == "mips"	|| \
     ${MACHINE_ARCH} == "powerpc"	|| \
+    ${MACHINE_CPU} == "riscv"	|| \
     ${MACHINE_CPU} == "sparc"	|| \
     ${MACHINE_CPU} == "sparc64"	|| \
     ${MACHINE_CPU} == "x86_64"
