@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.173 2019/02/09 09:15:22 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.174 2019/02/09 09:17:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.173 2019/02/09 09:15:22 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.174 2019/02/09 09:17:59 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -976,6 +976,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		 */
 		cmdentry.cmdtype = CMDBUILTIN;
 		cmdentry.u.bltin = bltincmd;
+		VTRACE(DBG_CMDS, ("No command name, assume \"comamnd\"\n"));
 	} else {
 		static const char PATH[] = "PATH=";
 
@@ -991,6 +992,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			int argsused, use_syspath;
 
 			find_command(argv[0], &cmdentry, cmd_flags, path);
+			VTRACE(DBG_CMDS, ("Command %s type %d\n", argv[0],
+			    cmdentry.cmdtype));
 #if 0
 			/*
 			 * This short circuits all of the processing that
@@ -1010,10 +1013,13 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			if (cmdentry.cmdtype != CMDBUILTIN ||
 			    cmdentry.u.bltin != bltincmd)
 				break;
+			VTRACE(DBG_CMDS, ("Command \"command\"\n"));
 			cmd_flags |= DO_NOFUNC;
 			argsused = parse_command_args(argc, argv, &use_syspath);
 			if (argsused == 0) {
 				/* use 'type' builtin to display info */
+				VTRACE(DBG_CMDS,
+				    ("Command \"command\" -> \"type\"\n"));
 				cmdentry.u.bltin = typecmd;
 				break;
 			}
@@ -1118,6 +1124,9 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			default:
 				VFORK_UNDO();
 						/* restore from vfork(2) */
+				CTRACE(DBG_PROCS|DBG_CMDS,
+				    ("parent after vfork - vforked=%d\n",
+				      vforked));
 				handler = savehandler;
 				poplocalvars();
 				localvars = savelocalvars;
@@ -1146,6 +1155,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 #endif
 			if (forkshell(jp, cmd, mode) != 0)
 				goto parent;	/* at end of routine */
+			CTRACE(DBG_PROCS|DBG_CMDS, ("Child sets EV_EXIT\n"));
 			flags |= EV_EXIT;
 			FORCEINTON;
 #ifdef DO_SHAREDVFORK
