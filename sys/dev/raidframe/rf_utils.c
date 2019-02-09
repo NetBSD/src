@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.16 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.17 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.16 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.17 2019/02/09 03:34:00 christos Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"
@@ -46,10 +46,9 @@ rf_make_2d_array(int b, int k, RF_AllocListElem_t *allocList)
 {
 	RF_RowCol_t **retval, i;
 
-	RF_MallocAndAdd(retval, b * sizeof(RF_RowCol_t *), (RF_RowCol_t **), allocList);
+	retval = RF_MallocAndAdd(b * sizeof(*retval), allocList);
 	for (i = 0; i < b; i++) {
-		RF_MallocAndAdd(retval[i], k * sizeof(RF_RowCol_t), (RF_RowCol_t *), allocList);
-		(void) memset((char *) retval[i], 0, k * sizeof(RF_RowCol_t));
+		retval[i] = RF_MallocAndAdd(k * sizeof(*retval[i]), allocList);
 	}
 	return (retval);
 }
@@ -73,8 +72,7 @@ rf_make_1d_array(int c, RF_AllocListElem_t *allocList)
 {
 	RF_RowCol_t *retval;
 
-	RF_MallocAndAdd(retval, c * sizeof(RF_RowCol_t), (RF_RowCol_t *), allocList);
-	(void) memset((char *) retval, 0, c * sizeof(RF_RowCol_t));
+	retval = RF_MallocAndAdd(c * sizeof(*retval), allocList);
 	return (retval);
 }
 

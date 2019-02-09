@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.34 2011/05/11 06:20:33 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.35 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.34 2011/05/11 06:20:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.35 2019/02/09 03:34:00 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -97,9 +97,7 @@ rf_ConfigureParityLogging(
 	raidPtr->numSectorsPerLog = RF_DEFAULT_NUM_SECTORS_PER_LOG;
 
 	/* create a parity logging configuration structure */
-	RF_MallocAndAdd(info, sizeof(RF_ParityLoggingConfigInfo_t),
-			(RF_ParityLoggingConfigInfo_t *),
-			raidPtr->cleanupList);
+	info = RF_MallocAndAdd(sizeof(*info), raidPtr->cleanupList);
 	if (info == NULL)
 		return (ENOMEM);
 	layoutPtr->layoutSpecificInfo = (void *) info;
@@ -202,9 +200,8 @@ rf_ConfigureParityLogging(
 	/* create region information structs */
 	printf("Allocating %d bytes for in-core parity region info\n",
 	       (int) (rf_numParityRegions * sizeof(RF_RegionInfo_t)));
-	RF_Malloc(raidPtr->regionInfo,
-		  (rf_numParityRegions * sizeof(RF_RegionInfo_t)),
-		  (RF_RegionInfo_t *));
+	raidPtr->regionInfo = RF_Malloc(
+	    rf_numParityRegions * sizeof(*raidPtr->regionInfo));
 	if (raidPtr->regionInfo == NULL)
 		return (ENOMEM);
 
@@ -228,17 +225,17 @@ rf_ConfigureParityLogging(
 	       raidPtr->numParityLogs * raidPtr->numSectorsPerLog *
 	       raidPtr->bytesPerSector,
 	       raidPtr->numParityLogs);
-	RF_Malloc(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs *
-		  raidPtr->numSectorsPerLog * raidPtr->bytesPerSector,
-		  (void *));
+	raidPtr->parityLogBufferHeap = RF_Malloc(raidPtr->numParityLogs
+	    * raidPtr->numSectorsPerLog * raidPtr->bytesPerSector);
 	if (raidPtr->parityLogBufferHeap == NULL)
 		return (ENOMEM);
 	lHeapPtr = raidPtr->parityLogBufferHeap;
 	rf_init_mutex2(raidPtr->parityLogPool.mutex, IPL_VM);
 	for (i = 0; i < raidPtr->numParityLogs; i++) {
 		if (i == 0) {
-			RF_Malloc(raidPtr->parityLogPool.parityLogs,
-				  sizeof(RF_ParityLog_t), (RF_ParityLog_t *));
+			raidPtr->parityLogPool.parityLogs =
+			    RF_Malloc(
+			    sizeof(*raidPtr->parityLogPool.parityLogs));
 			if (raidPtr->parityLogPool.parityLogs == NULL) {
 				RF_Free(raidPtr->parityLogBufferHeap,
 					raidPtr->numParityLogs *
@@ -248,8 +245,7 @@ rf_ConfigureParityLogging(
 			}
 			l = raidPtr->parityLogPool.parityLogs;
 		} else {
-			RF_Malloc(l->next, sizeof(RF_ParityLog_t),
-				  (RF_ParityLog_t *));
+			l->next = RF_Malloc(sizeof(*l->next));
 			if (l->next == NULL) {
 				RF_Free(raidPtr->parityLogBufferHeap,
 					raidPtr->numParityLogs *
@@ -270,9 +266,8 @@ rf_ConfigureParityLogging(
 		l->bufPtr = lHeapPtr;
 		lHeapPtr = (char *)lHeapPtr + raidPtr->numSectorsPerLog *
 			raidPtr->bytesPerSector;
-		RF_Malloc(l->records, (raidPtr->numSectorsPerLog *
-				       sizeof(RF_ParityLogRecord_t)),
-			  (RF_ParityLogRecord_t *));
+		l->records = RF_Malloc(raidPtr->numSectorsPerLog *
+		    sizeof(*l->records));
 		if (l->records == NULL) {
 			RF_Free(raidPtr->parityLogBufferHeap,
 				raidPtr->numParityLogs *
@@ -310,9 +305,9 @@ rf_ConfigureParityLogging(
 	printf("Allocating %d bytes for regionBufferPool\n",
 	       (int) (raidPtr->regionBufferPool.totalBuffers *
 		      sizeof(void *)));
-	RF_Malloc(raidPtr->regionBufferPool.buffers,
-		  raidPtr->regionBufferPool.totalBuffers * sizeof(void *),
-		  (void **));
+	raidPtr->regionBufferPool.buffers =  RF_Malloc(
+	    raidPtr->regionBufferPool.totalBuffers *
+	    sizeof(*raidPtr->regionBufferPool.buffers));
 	if (raidPtr->regionBufferPool.buffers == NULL) {
 		return (ENOMEM);
 	}
@@ -320,9 +315,8 @@ rf_ConfigureParityLogging(
 		printf("Allocating %d bytes for regionBufferPool#%d\n",
 		       (int) (raidPtr->regionBufferPool.bufferSize *
 			      sizeof(char)), i);
-		RF_Malloc(raidPtr->regionBufferPool.buffers[i],
-			  raidPtr->regionBufferPool.bufferSize * sizeof(char),
-			  (void *));
+		raidPtr->regionBufferPool.buffers[i] =
+		    RF_Malloc(raidPtr->regionBufferPool.bufferSize);
 		if (raidPtr->regionBufferPool.buffers[i] == NULL) {
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->regionBufferPool.buffers[i],
@@ -360,9 +354,9 @@ rf_ConfigureParityLogging(
 	       (int) (raidPtr->parityBufferPool.totalBuffers *
 		      sizeof(void *)),
 	       raidPtr->parityBufferPool.totalBuffers );
-	RF_Malloc(raidPtr->parityBufferPool.buffers,
-		  raidPtr->parityBufferPool.totalBuffers * sizeof(void *),
-		  (void **));
+	raidPtr->parityBufferPool.buffers = RF_Malloc(
+	    raidPtr->parityBufferPool.totalBuffers * 
+	    sizeof(*raidPtr->parityBufferPool.buffers));
 	if (raidPtr->parityBufferPool.buffers == NULL) {
 		return (ENOMEM);
 	}
@@ -370,9 +364,8 @@ rf_ConfigureParityLogging(
 		printf("Allocating %d bytes for parityBufferPool#%d\n",
 		       (int) (raidPtr->parityBufferPool.bufferSize *
 			      sizeof(char)),i);
-		RF_Malloc(raidPtr->parityBufferPool.buffers[i],
-			  raidPtr->parityBufferPool.bufferSize * sizeof(char),
-			  (void *));
+		raidPtr->parityBufferPool.buffers[i] = RF_Malloc(
+		    raidPtr->parityBufferPool.bufferSize);
 		if (raidPtr->parityBufferPool.buffers == NULL) {
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->parityBufferPool.buffers[i],
@@ -443,10 +436,9 @@ rf_ConfigureParityLogging(
 		printf("Allocating %d bytes for region %d\n",
 		       (int) (raidPtr->regionInfo[i].capacity *
 			   sizeof(RF_DiskMap_t)), i);
-		RF_Malloc(raidPtr->regionInfo[i].diskMap,
-			  (raidPtr->regionInfo[i].capacity *
-			   sizeof(RF_DiskMap_t)),
-			  (RF_DiskMap_t *));
+		raidPtr->regionInfo[i].diskMap = RF_Malloc(
+		    raidPtr->regionInfo[i].capacity *
+		    sizeof(*raidPtr->regionInfo[i].diskMap));
 		if (raidPtr->regionInfo[i].diskMap == NULL) {
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);

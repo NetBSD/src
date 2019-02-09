@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.50 2014/06/14 07:39:00 hannken Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.51 2019/02/09 03:33:59 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.50 2014/06/14 07:39:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.51 2019/02/09 03:33:59 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -185,10 +185,11 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 		return;
 	}
 	/* get a buffer to hold one SU  */
-	RF_Malloc(databuf, rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit), (char *));
+	databuf = RF_Malloc(rf_RaidAddressToByte(raidPtr,
+	    raidPtr->Layout.sectorsPerStripeUnit));
 
 	/* create a descriptor */
-	RF_Malloc(desc, sizeof(*desc), (RF_CopybackDesc_t *));
+	desc = RF_Malloc(sizeof(*desc));
 	desc->raidPtr = raidPtr;
 	desc->status = 0;
 	desc->fcol = fcol;
