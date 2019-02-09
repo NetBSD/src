@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.121 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.122 2019/02/09 11:30:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -76,10 +76,16 @@ typedef uint32_t netbsd32_uintptr_t;
 
 /*
  * machine dependant section; must define:
- *	netbsd32_pointer_t
+ *	NETBSD32_POINTER_TYPE
  *		- 32-bit pointer type, normally uint32_t but can be int32_t
  *		  for platforms which rely on sign-extension of pointers
  *		  such as SH-5.
+ *                eg:	#define NETBSD32_POINTER_TYPE uint32_t
+ *	netbsd32_pointer_t
+ *		- a typedef'd struct with the above as an "i32" member.
+ *                eg:	typedef struct {
+ *				NETBSD32_POINTER_TYPE i32;
+ *			} netbsd32_pointer_t;
  *	NETBSD32PTR64(p32)
  *		- Translate a 32-bit pointer into something valid in a
  *		  64-bit context.
@@ -100,11 +106,6 @@ typedef uint32_t netbsd32_uintptr_t;
  */
 #include <machine/netbsd32_machdep.h>
 
-/* netbsd32_machdep.h will have (typically) defined:
-#define NETBSD32_POINTER_TYPE uint32_t
-typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
-*/
-
 /*
  * Conversion functions for the rest of the compat32 code:
  *
@@ -119,12 +120,33 @@ typedef	struct { NETBSD32_POINTER_TYPE i32; } netbsd32_pointer_t;
  */
 #define	NETBSD32PTR64(p32)		NETBSD32IPTR64((p32).i32)
 #define	NETBSD32PTR32(p32, p64)		((p32).i32 = NETBSD32PTR32I(p64))
-#define	NETBSD32PTR32PLUS(p32, incr)	((p32).i32 += incr)
+#define	NETBSD32PTR32PLUS(p32, incr)	netbsd32_ptr32_incr(&p32, incr)
+#define	NETBSD32PTR32I(p32)		netbsd32_ptr32i(p32)
+#define	NETBSD32IPTR64(p32)		netbsd32_iptr64(p32)
 
 static __inline NETBSD32_POINTER_TYPE
-NETBSD32PTR32I(const void *p64) { return (uintptr_t)p64; }
+netbsd32_ptr32i(const void *p64)
+{
+	uintptr_t u64 = (uintptr_t)p64;
+	KASSERT(u64 == (NETBSD32_POINTER_TYPE)u64);
+	return u64;
+}
+
 static __inline void *
-NETBSD32IPTR64(NETBSD32_POINTER_TYPE p32) { return (void *)(intptr_t)p32; }
+netbsd32_iptr64(NETBSD32_POINTER_TYPE p32)
+{
+	return (void *)(intptr_t)p32;
+}
+
+static __inline netbsd32_pointer_t
+netbsd32_ptr32_incr(netbsd32_pointer_t *p32, uint32_t incr)
+{
+	netbsd32_pointer_t n32 = *p32;
+
+	n32.i32 += incr;
+	KASSERT(NETBSD32PTR64(n32) > NETBSD32PTR64(*p32));
+	return *p32 = n32;
+}
 
 /* Nothing should be using the raw type, so kill it */
 #undef NETBSD32_POINTER_TYPE
