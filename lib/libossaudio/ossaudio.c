@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.4.1 2019/02/09 14:43:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.33.4.1 2019/02/09 14:43:07 martin Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -411,11 +411,11 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
-		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
-		    tmpinfo.blocksize;
+		bufinfo.fragments = tmpinfo.hiwat - (tmpinfo.play.seek
+		    + tmpinfo.blocksize - 1) / tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
+		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize
+		    - tmpinfo.play.seek;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_GETISPACE:
