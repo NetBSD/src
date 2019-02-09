@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.7 2018/09/03 21:54:57 maya Exp $
+#	$NetBSD: t_hello.sh,v 1.8 2019/02/09 02:36:28 mrg Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,7 @@ hello_head() {
 }
 
 atf_test_case hello_profile
-hello_head() {
+hello_profile_head() {
 	atf_set "descr" "compile and run \"hello world\" with profiling option"
 	atf_set "require.progs" "cc"
 }
