@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.99 2019/02/04 01:46:59 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.100 2019/02/09 03:57:00 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -217,7 +217,7 @@ get_libstdcxx_v3 () {
 
 	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
 
-	_build_headers="c++config.h cxxabi_tweaks.h gthr-posix.h gthr-single.h gthr.h"
+	_build_headers="c++config.h cxxabi_tweaks.h"
 	_headers1="c_base_headers_extra_install"
 	_headers1="$_headers1 tr1_headers tr2_headers decimal_headers c_compatibility_headers_install"
 	_headers1="$_headers1 debug_headers parallel_headers"
