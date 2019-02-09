@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.32 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.33 2019/02/09 07:48:39 rin Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.32 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.33 2019/02/09 07:48:39 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.32 2019/01/22 03:42:27 msaitoh Exp $");
 
 struct rlphy_softc {
 	struct mii_softc sc_mii;
-	int sc_rtl8201l;
+	int sc_rtl8201;
 };
 
 int	rlphymatch(device_t, cfdata_t, void *);
@@ -79,6 +79,8 @@ const struct mii_phy_funcs rlphy_funcs = {
 static const struct mii_phydesc rlphys[] = {
 	{ MII_OUI_yyREALTEK,		MII_MODEL_yyREALTEK_RTL8201L,
 	  MII_STR_yyREALTEK_RTL8201L },
+	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8201E,
+	  MII_STR_REALTEK_RTL8201E },
 	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
 	  MII_STR_ICPLUS_IP101 },
 
@@ -122,8 +124,12 @@ rlphyattach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
-		rsc->sc_rtl8201l = 1;
+		rsc->sc_rtl8201 = 1;
 		aprint_normal(": %s, rev. %d\n", MII_STR_yyREALTEK_RTL8201L,
+		    MII_REV(ma->mii_id2));
+	} else if (MII_MODEL(ma->mii_id2) == MII_MODEL_REALTEK_RTL8201E) {
+		rsc->sc_rtl8201 = 1;
+		aprint_normal(": %s, rev. %d\n", MII_STR_REALTEK_RTL8201E,
 		    MII_REV(ma->mii_id2));
 	} else
 		aprint_normal(": Realtek internal PHY\n");
@@ -279,7 +285,7 @@ rlphy_status(struct mii_softc *sc)
 		 * To determine the link speed, we have to do one
 		 * of two things:
 		 *
-		 * - If this is a standalone RealTek RTL8201(L) PHY,
+		 * - If this is a standalone RealTek RTL8201 PHY,
 		 *   we can determine the link speed by testing bit 0
 		 *   in the magic, vendor-specific register at offset
 		 *   0x19.
@@ -288,7 +294,7 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (rsc->sc_rtl8201l) {
+		if (rsc->sc_rtl8201) {
 			PHY_READ(sc, 0x0019, &reg);
 			if (reg & 0x01)
 				mii->mii_media_active |= IFM_100_TX;
