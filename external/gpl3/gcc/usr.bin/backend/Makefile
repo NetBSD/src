@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2019/02/08 03:59:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.55 2019/02/09 21:03:24 maya Exp $
 
 LIBISPRIVATE=	yes
 
@@ -443,7 +443,8 @@ cfn-operators.pd: gencfn-macros
 CLEANFILES+=	case-cfn-macros.h.tmp case-cfn-macros.h \
 		cfn-operators.pd.tmp cfn-operators.pd
 
-CASECFNDEPS=	aarch64-builtins.c arm-builtins.c i386.c rs6000.c builtins.c \
+CASECFNDEPS=	aarch64-builtins.c arm-builtins.c i386.c rs6000.c \
+		riscv-builtins.c builtins.c \
 		fold-const.c tree-ssa-math-opts.c tree-ssa-reassoc.c \
 		tree-vect-patterns.c tree-vrp.c generic-match-head.c \
 		gimple-match-head.c ChangeLog-2015 fold-const-call.c \

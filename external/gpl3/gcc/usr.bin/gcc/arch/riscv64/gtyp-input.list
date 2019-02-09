@@ -106,6 +106,7 @@ SRCDIR/gcc/target-globals.h
 SRCDIR/gcc/ipa-inline.h
 SRCDIR/gcc/asan.c
 SRCDIR/gcc/tsan.c
+SRCDIR/gcc/config/riscv/riscv-builtins.c
 [c]
 SRCDIR/gcc/c/c-lang.c
 SRCDIR/gcc/c/c-tree.h
