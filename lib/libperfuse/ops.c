@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.85 2018/11/16 02:39:02 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.86 2019/02/09 02:22:45 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -105,6 +105,9 @@ const int vttoif_tab[9] = {
 #define IFTOVT(mode) (iftovt_tab[((mode) & S_IFMT) >> 12])
 #define VTTOIF(indx) (vttoif_tab[(int)(indx)])
 
+#define PN_ISDIR(opc) \
+	(puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR)
+
 #if 0
 static void 
 print_node(const char *func, puffs_cookie_t opc)
@@ -141,7 +144,7 @@ perfuse_node_close_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 	pn = (struct puffs_node *)opc;
 	pnd = PERFUSE_NODE_DATA(pn);
 
-	if (puffs_pn_getvap(pn)->va_type == VDIR) {
+	if (PN_ISDIR(opc)) {
 		op = FUSE_RELEASEDIR;
 		mode = FREAD;
 	} else {
@@ -479,13 +482,14 @@ node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
 	PERFUSE_NODE_DATA(pn)->pnd_fuse_nlookup++;
+	PERFUSE_NODE_DATA(pn)->pnd_puffs_nlookup++;
 
 	*pnp = pn;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
 		DPRINTF("%s: opc = %p, looked up opc = %p, "
-			"nodeid = 0x%"PRIx64" file = \"%s\"\n", __func__, 
+			"nodeid = 0x%"PRIx64" file = \"%s\"\n", __func__,
 			(void *)opc, pn, feo->nodeid, path);
 #endif
 
@@ -533,6 +537,7 @@ node_mk_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	pn = perfuse_new_pn(pu, pcn->pcn_name, opc);
 	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
+	PERFUSE_NODE_DATA(pn)->pnd_fuse_nlookup++;
 	PERFUSE_NODE_DATA(pn)->pnd_puffs_nlookup++;
 	perfuse_node_cache(ps, pn);
 
@@ -1138,6 +1143,7 @@ perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 		break;
 	}
 
+	PERFUSE_NODE_DATA(pn)->pnd_fuse_nlookup++;
 	PERFUSE_NODE_DATA(pn)->pnd_puffs_nlookup++;
 
 	error = 0;
@@ -1247,6 +1253,7 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	pn = perfuse_new_pn(pu, name, opc);
 	perfuse_new_fh((puffs_cookie_t)pn, foo->fh, FWRITE);
 	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
+	PERFUSE_NODE_DATA(pn)->pnd_fuse_nlookup++;
 	PERFUSE_NODE_DATA(pn)->pnd_puffs_nlookup++;
 	perfuse_node_cache(ps, pn);
 
@@ -1355,11 +1362,9 @@ perfuse_node_open2(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	int op;
 	struct fuse_open_in *foi;
 	struct fuse_open_out *foo;
-	struct puffs_node *pn;
 	int error;
 	
 	ps = puffs_getspecific(pu);
-	pn = (struct puffs_node *)opc;
 	pnd = PERFUSE_NODE_DATA(opc);
 	error = 0;
 
@@ -1368,7 +1373,7 @@ perfuse_node_open2(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 
 	node_ref(opc);
 
-	if (puffs_pn_getvap(pn)->va_type == VDIR)
+	if (PN_ISDIR(opc))
 		op = FUSE_OPENDIR;
 	else
 		op = FUSE_OPEN;
@@ -1592,9 +1597,9 @@ perfuse_node_getattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
 	fgi->getattr_flags = 0; 
 	fgi->dummy = 0;
-	fgi->fh = 0;
+	fgi->fh = FUSE_UNKNOWN_FH;
 
-	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
+	if (!PN_ISDIR(opc) && PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
 		fgi->fh = perfuse_get_fh(opc, FREAD);
 		fgi->getattr_flags |= FUSE_GETATTR_FH;
 	}
@@ -1728,7 +1733,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	
 	node_ref(opc);
 	
-	if (pnd->pnd_flags & PND_WFH)
+	if (!PN_ISDIR(opc) && pnd->pnd_flags & PND_WFH)
 		fh = perfuse_get_fh(opc, FWRITE);
 	else
 		fh = FUSE_UNKNOWN_FH;
@@ -1954,7 +1959,7 @@ perfuse_node_poll(struct puffs_usermount *pu, puffs_cookie_t opc, int *events)
  	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_POLL, sizeof(*fpi), NULL);
 	fpi = GET_INPAYLOAD(ps, pm, fuse_poll_in);
-	fpi->fh = perfuse_get_fh(opc, FREAD);
+	fpi->fh = PN_ISDIR(opc) ? FUSE_UNKNOWN_FH : perfuse_get_fh(opc, FREAD);
 	fpi->kh = 0;
 	fpi->flags = 0;
 
@@ -2010,7 +2015,7 @@ perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	node_ref(opc);
 
-	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
+	if (PN_ISDIR(opc))
 		op = FUSE_FSYNCDIR;
 	else 		/* VREG but also other types such as VLNK */
 		op = FUSE_FSYNC;
@@ -2513,7 +2518,7 @@ perfuse_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 			goto out;
 	}
 
-	fh = perfuse_get_fh(opc, FREAD);
+	fh = perfuse_get_fh(opc, FREAD); 
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
@@ -2971,15 +2976,24 @@ perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * expect one. E.g.: if we provide none, GlusterFS logs an error
 	 * "0-glusterfs-fuse: xl is NULL"
 	 *
+	 * There is one exception with directories where filehandle
+	 * is not included, because libfuse uses different filehandle
+	 * in opendir/releasedir/readdir/fsyncdir compared to other 
+	 * operations. Who locks a directory anyway?
+	 *
 	 * We need the read file handle if the file is open read only,
 	 * in order to support shared locks on read-only files.
 	 * NB: The kernel always sends advlock for read-only
 	 * files at exit time when the process used lock, see
 	 * sys_exit -> exit1 -> fd_free -> fd_close -> VOP_ADVLOCK
 	 */
-	if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH) {
-		error = EBADF;
-		goto out;
+	if (!PN_ISDIR(opc)) {
+		if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH) {
+			error = EBADF;
+			goto out;
+		}
+	} else {
+		fh = FUSE_UNKNOWN_FH;
 	}
 
 	ps = puffs_getspecific(pu);
@@ -3076,6 +3090,7 @@ perfuse_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 	struct perfuse_node_data *pnd;
 	const struct vattr *vap;
 	perfuse_msg_t *pm;
+	uint64_t fh;
 	struct fuse_read_in *fri;
 	struct fuse_out_header *foh;
 	size_t readen;
@@ -3092,6 +3107,8 @@ perfuse_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 	if (vap->va_type == VDIR)
 		return EISDIR;
 
+	fh =  perfuse_get_fh(opc, FREAD); /* Cannot be VDIR */
+
 	do {
 		size_t max_read;
 
@@ -3102,7 +3119,7 @@ perfuse_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 		 */
 		pm = ps->ps_new_msg(pu, opc, FUSE_READ, sizeof(*fri), pcr);
 		fri = GET_INPAYLOAD(ps, pm, fuse_read_in);
-		fri->fh = perfuse_get_fh(opc, FREAD);
+		fri->fh = fh;
 		fri->offset = offset;
 		fri->size = (uint32_t)MIN(*resid, max_read);
 		fri->read_flags = 0; /* XXX Unused by libfuse? */
@@ -3163,6 +3180,7 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct perfuse_node_data *pnd;
 	struct vattr *vap;
 	perfuse_msg_t *pm;
+	uint64_t fh;
 	struct fuse_write_in *fwi;
 	struct fuse_write_out *fwo;
 	size_t data_len;
@@ -3218,6 +3236,8 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 			(void *)opc, vap->va_size);
 #endif
 
+	fh = perfuse_get_fh(opc, FWRITE); /* Cannot be VDIR */
+
 	do {
 		size_t max_write;
 		/*
@@ -3241,7 +3261,7 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 */
 		pm = ps->ps_new_msg(pu, opc, FUSE_WRITE, payload_len, pcr);
 		fwi = GET_INPAYLOAD(ps, pm, fuse_write_in);
-		fwi->fh = perfuse_get_fh(opc, FWRITE);
+		fwi->fh = fh;
 		fwi->offset = offset;
 		fwi->size = (uint32_t)data_len;
 		fwi->write_flags = (fwi->size % sysconf(_SC_PAGESIZE)) ? 0 : 1;
@@ -3255,7 +3275,7 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_FH)
 			DPRINTF("%s: opc = %p, nodeid = 0x%"PRIx64", "
-				"fh = 0x%"PRIx64"\n", __func__, 
+				"fh = 0x%"PRIx64"\n", __func__,
 				(void *)opc, pnd->pnd_nodeid, fwi->fh);
 #endif
 		if ((error = xchg_msg(pu, opc, pm, 
@@ -3288,7 +3308,7 @@ out:
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RESIZE) {
 		if (offset > (off_t)vap->va_size)
-			DPRINTF("<< %s %p %" PRIu64 " -> %lld\n", __func__, 
+			DPRINTF("<< %s %p %" PRIu64 " -> %lld\n", __func__,
 				(void *)opc, vap->va_size, (long long)offset);
 		else
 			DPRINTF("<< %s %p \n", __func__, (void *)opc);
@@ -3650,7 +3670,7 @@ perfuse_node_fallocate(struct puffs_usermount *pu, puffs_cookie_t opc,
 	pm = ps->ps_new_msg(pu, opc, FUSE_FALLOCATE, sizeof(*fai), NULL);
 
 	fai = GET_INPAYLOAD(ps, pm, fuse_fallocate_in);
-	fai->fh = perfuse_get_fh(opc, FWRITE);
+	fai->fh = PN_ISDIR(opc) ? FUSE_UNKNOWN_FH : perfuse_get_fh(opc, FWRITE);
 	fai->offset = off;
 	fai->length = len;
 	fai->mode = 0;
