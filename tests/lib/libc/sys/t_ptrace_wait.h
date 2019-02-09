@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.12 2018/08/13 21:49:37 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.13 2019/02/09 23:10:42 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -501,6 +501,16 @@ check_happy(unsigned n)
 
 		n = total;
 	}
+}
+
+static void *
+infinite_thread(void *arg __unused)
+{
+
+        while (true)
+                continue;
+
+        __unreachable();
 }
 
 #if defined(HAVE_DBREGS)
