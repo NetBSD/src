@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.75 2019/02/08 03:08:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.76 2019/02/09 23:03:01 scole Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.75 2019/02/08 03:08:00 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.76 2019/02/09 23:03:01 scole Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2613,7 +2613,7 @@ BYTES_TRANSFER(bytes_transfer_piod_read_auxv, PIOD_READ_AUXV, 4096, AUXV)
 
 /// ----------------------------------------------------------------------------
 
-#if defined(HAVE_GPREGS) || defined(HAVE_FPGPREGS)
+#if defined(HAVE_GPREGS) || defined(HAVE_FPREGS)
 static void
 access_regs(const char *regset, const char *aux)
 {
@@ -2625,12 +2625,12 @@ access_regs(const char *regset, const char *aux)
 #endif
 #if defined(HAVE_GPREGS)
 	struct reg gpr;
+	register_t rgstr;
 #endif
 #if defined(HAVE_FPREGS)
 	struct fpreg fpr;
 #endif
-	register_t rgstr;
-
+	
 #if !defined(HAVE_GPREGS)
 	if (strcmp(regset, "regs") == 0)
 		atf_tc_fail("Impossible test scenario!");
