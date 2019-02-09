@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.15 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.16 2019/02/09 03:33:59 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.15 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.16 2019/02/09 03:33:59 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -70,7 +70,7 @@ rf_ConfigureChainDecluster(RF_ShutdownList_t **listp,
 	RF_RowCol_t i;
 
 	/* create a Chained Declustering configuration structure */
-	RF_MallocAndAdd(info, sizeof(RF_ChaindeclusterConfigInfo_t), (RF_ChaindeclusterConfigInfo_t *), raidPtr->cleanupList);
+	info = RF_MallocAndAdd(sizeof(*info), raidPtr->cleanupList);
 	if (info == NULL)
 		return (ENOMEM);
 	layoutPtr->layoutSpecificInfo = (void *) info;

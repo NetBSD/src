@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.34 2011/05/03 08:18:43 mrg Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.35 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.34 2011/05/03 08:18:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.35 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -102,9 +102,7 @@ rf_MakeParityStripeStatusTable(RF_Raid_t *raidPtr)
 	RF_PSStatusHeader_t *pssTable;
 	int     i;
 
-	RF_Malloc(pssTable,
-		  raidPtr->pssTableSize * sizeof(RF_PSStatusHeader_t),
-		  (RF_PSStatusHeader_t *));
+	pssTable = RF_Malloc(raidPtr->pssTableSize * sizeof(*pssTable));
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		rf_init_mutex2(pssTable[i].mutex, IPL_VM);
 		rf_init_cond2(pssTable[i].cond, "rfpsslk");
@@ -272,7 +270,7 @@ rf_AllocPSStatus(RF_Raid_t *raidPtr)
 	RF_ReconParityStripeStatus_t *p;
 
 	p = pool_get(&rf_pools.pss, PR_WAITOK);
-	memset(p, 0, sizeof(RF_ReconParityStripeStatus_t));
+	memset(p, 0, sizeof(*p));
 	return (p);
 }
 
