@@ -1,4 +1,4 @@
-.\" $NetBSD: ure.4,v 1.2 2019/02/06 11:57:17 wiz Exp $
+.\" $NetBSD: ure.4,v 1.3 2019/02/09 07:54:51 rin Exp $
 .\" $OpenBSD: ure.4,v 1.5 2017/04/16 20:26:34 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/ure.4 291557 2015-12-01 05:12:13Z kevlo $
 .\"
-.Dd February 6, 2019
+.Dd February 9, 2019
 .Dt URE 4
 .Os
 .Sh NAME
@@ -41,8 +41,17 @@
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the RealTek
-RTL8152 USB Fast Ethernet and RTL8153 USB Gigabit Ethernet controller
-chips.
+RTL8152 USB Fast Ethernet devices including:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Cable Matters 202023 USB 2.0 to 10/100 Fast Ethernet Network Adapter
+.El
+.Pp
+and RTL8153 USB Gigabit Ethernet devices including:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Anker A7611 Aluminum USB 3.0 to Ethernet Adapter
+.El
 .Pp
 The RTL8152 contains an integrated Fast Ethernet MAC, which supports
 both 10 and 100Mbps speeds in either full or half duplex.
