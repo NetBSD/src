@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.32 2018/08/22 20:08:54 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.33 2019/02/09 03:35:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.32 2018/08/22 20:08:54 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.33 2019/02/09 03:35:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,9 +141,11 @@ stalloc(int nbytes)
 		stackp = sp;
 		INTON;
 	}
+	INTOFF;
 	p = stacknxt;
 	stacknxt += nbytes;
 	stacknleft -= nbytes;
+	INTON;
 	return p;
 }
 
@@ -176,8 +178,10 @@ setstackmark(struct stackmark *mark)
 void
 popstackmark(struct stackmark *mark)
 {
+	INTOFF;
 	markp = mark->marknext;		/* delete mark from the list */
 	rststackmark(mark);		/* and reset stack */
+	INTON;
 }
 
 /* reset the shell stack to its state recorded in the stack mark */
@@ -260,8 +264,10 @@ void
 grabstackblock(int len)
 {
 	len = SHELL_ALIGN(len);
+	INTOFF;
 	stacknxt += len;
 	stacknleft -= len;
+	INTON;
 }
 
 /*

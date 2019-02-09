@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.75 2019/01/21 13:27:29 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.76 2019/02/09 03:35:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.75 2019/01/21 13:27:29 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.76 2019/02/09 03:35:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1342,16 +1342,17 @@ make_space(struct space_reserved *m, int bytes)
 		return 1;
 
 	bytes = SHELL_ALIGN(bytes);
+	INTOFF;
 	/* not ckrealloc() - we want failure, not error() here */
 	p = realloc(m->b, bytes);
-	if (p == NULL)	/* what we had should still be there */
-		return 0;
+	if (p != NULL) {
+		m->b = p;
+		m->len = bytes;
+		m->b[bytes - 1] = '\0';
+	}
+	INTON;
 
-	m->b = p;
-	m->len = bytes;
-	m->b[bytes - 1] = '\0';
-
-	return 1;
+	return p != NULL;
 }
 #endif
 
@@ -1428,8 +1429,8 @@ get_tod(struct var *vp)
 
 	if (tz != NULL) {
 		if (tzs.b == NULL || strcmp(tzs.b, tz) != 0) {
+			INTOFF;
 			if (make_space(&tzs, strlen(tz) + 1)) {
-				INTOFF;
 				strcpy(tzs.b, tz);
 				if (last_zone)
 					tzfree(last_zone);
@@ -1450,8 +1451,10 @@ get_tod(struct var *vp)
 		if (tmp == NULL) {
 			if (buf.len >= vp->name_len+2+(int)(sizeof t_err - 1)) {
 				strcpy(buf.b + vp->name_len + 1, t_err);
-				if (zone && zone != last_zone)
+				if (zone && zone != last_zone) {
 					tzfree(zone);
+					INTON;
+				}
 				return buf.b;
 			}
 			len = vp->name_len + 4 + sizeof t_err - 1;
@@ -1459,16 +1462,20 @@ get_tod(struct var *vp)
 		}
 		if (strftime_z(zone, buf.b + vp->name_len + 1,
 		     buf.len - vp->name_len - 2, fmt, tmp)) {
-			if (zone && zone != last_zone)
+			if (zone && zone != last_zone) {
 				tzfree(zone);
+				INTON;
+			}
 			return buf.b;
 		}
 		if (len >= 4096)	/* Let's be reasonable */
 			break;
 		len <<= 1;
 	}
-	if (zone && zone != last_zone)
+	if (zone && zone != last_zone) {
 		tzfree(zone);
+		INTON;
+	}
 	return vp->text;
 }
 
@@ -1509,9 +1516,11 @@ get_euser(struct var *vp)
 		return vp->text;
 
 	if (make_space(&buf, vp->name_len + 2 + strlen(pw->pw_name))) {
+		INTOFF;
 		lastuid = euid;
 		snprintf(buf.b, buf.len, "%.*s=%s", vp->name_len, vp->text,
 		    pw->pw_name);
+		INTON;
 		return buf.b;
 	}
 
@@ -1543,6 +1552,7 @@ get_random(struct var *vp)
 			 * initialisation (without pre-seeding),
 			 * or explictly requesting a truly random seed.
 			 */
+			INTOFF;
 			fd = open("/dev/urandom", 0);
 			if (fd == -1) {
 				out2str("RANDOM initialisation failed\n");
@@ -1555,6 +1565,7 @@ get_random(struct var *vp)
 				} while (n != sizeof random_val);
 				close(fd);
 			}
+			INTON;
 		} else
 			/* good enough for today */
 			random_val = strtoimax(vp->text+vp->name_len+1,NULL,0);
@@ -1574,10 +1585,12 @@ get_random(struct var *vp)
 	snprintf(buf.b, buf.len, "%.*s=%jd", vp->name_len, vp->text,
 	    random_val);
 
+	INTOFF;
 	if (buf.b != vp->text && (vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 		free(vp->text);
 	vp->flags |= VTEXTFIXED;
 	vp->text = buf.b;
+	INTON;
 
 	return vp->text;
 #undef random
