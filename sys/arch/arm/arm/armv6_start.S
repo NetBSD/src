@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.7 2019/02/09 07:19:02 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.8 2019/02/09 07:20:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -634,7 +634,7 @@ armv7_init:
 	.ltorg
 
 /*
- * Transititions the CPU to using the TTB passed in r0.
+ * Transitions the CPU to using the TTB passed in r0.
  *
  * Uses the following callee saved registers:
  *
