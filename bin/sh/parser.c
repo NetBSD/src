@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.165 2019/02/04 11:16:41 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.166 2019/02/09 09:50:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.165 2019/02/04 11:16:41 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.166 2019/02/09 09:50:31 kre Exp $");
 #endif
 #endif /* not lint */
 
+#include <limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 
 #include "shell.h"
 #include "parser.h"
@@ -1569,9 +1570,13 @@ parseredir(const char *out,  int c)
 	union node *np;
 	int fd;
 
-	fd = (*out == '\0') ? -1 : number(out);
-
 	np = stalloc(sizeof(struct nfile));
+
+	fd = (*out == '\0') ? -1 : number(out);		/* number(out) >= 0 */
+	np->nfile.fd = fd;	/* do this again later with updated fd */
+	if (fd != np->nfile.fd)
+		error("file descriptor (%d) out of range", fd);
+
 	VTRACE(DBG_LEXER, ("parseredir after '%s%c' ", out, c));
 	if (c == '>') {
 		if (fd < 0)
