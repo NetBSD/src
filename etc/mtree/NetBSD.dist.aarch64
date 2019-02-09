@@ -1,4 +1,0 @@
-# $NetBSD: NetBSD.dist.aarch64,v 1.4 2018/07/17 00:50:56 christos Exp $
-
-./usr/include/g++/bits/arm
-./usr/include/g++/bits/aarch64
