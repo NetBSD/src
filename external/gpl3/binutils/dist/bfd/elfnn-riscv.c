@@ -24,12 +24,10 @@
 
 #include "sysdep.h"
 #include "bfd.h"
-#include "libiberty.h"
 #include "libbfd.h"
-#include "bfd_stdint.h"
-#include "elf-bfd.h"
 #include "bfdlink.h"
-#include "objalloc.h"
+#include "genlink.h"
+#include "elf-bfd.h"
 #include "elfxx-riscv.h"
 #include "elf/riscv.h"
 #include "opcode/riscv.h"
@@ -351,7 +349,6 @@ riscv_elf_create_dynamic_sections (bfd *dynobj,
   if (!_bfd_elf_create_dynamic_sections (dynobj, info))
     return FALSE;
 
-  htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
   if (!bfd_link_pic (info))
     {
       htab->sdyntdata =

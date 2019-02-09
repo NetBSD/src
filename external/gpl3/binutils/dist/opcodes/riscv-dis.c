@@ -29,7 +29,6 @@
 #include "elf/riscv.h"
 
 #include <stdint.h>
-
 #include <ctype.h>
 
 struct riscv_private_data

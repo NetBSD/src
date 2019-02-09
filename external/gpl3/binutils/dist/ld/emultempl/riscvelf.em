@@ -20,18 +20,7 @@
 
 fragment <<EOF
 
-#include "sysdep.h"
-#include "bfd.h"
-#include "bfdlink.h"
-#include "getopt.h"
-
-#include "ld.h"
 #include "ldmain.h"
-#include "ldmisc.h"
-#include "ldexp.h"
-#include "ldlang.h"
-#include "ldfile.h"
-#include "ldemul.h"
 #include "ldctor.h"
 #include "elf/riscv.h"
 #include "elfxx-riscv.h"
