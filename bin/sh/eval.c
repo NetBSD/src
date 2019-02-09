@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.172 2019/02/09 03:35:55 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.173 2019/02/09 09:15:22 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.172 2019/02/09 03:35:55 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.173 2019/02/09 09:15:22 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -841,7 +841,6 @@ parse_command_args(int argc, char **argv, int *use_syspath)
 }
 
 int vforked = 0;
-extern char *trap[];
 
 /*
  * Execute a simple command.
