@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2019/01/29 19:59:10 mgorny Exp $
+# $NetBSD: Makefile,v 1.7 2019/02/09 00:12:14 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ TESTS_SH=	#
 TESTS_SH+=	$(ASAN_TESTS)
 TESTS_SH+=	$(UBSAN_TESTS)
 TESTS_SH+=	t_hello
+TESTS_SH+=	t_libgomp
 
 .for test in ${ASAN_TESTS}
 TESTS_SH_SRC_${test}=	asan_common.subr ${test}.sh
