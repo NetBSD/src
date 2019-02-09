@@ -38,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
     /* The GNU C++ standard library requires this.  */		\
     if (c_dialect_cxx ())					\
       builtin_define ("_GNU_SOURCE");				\
-    if (!TARGET_HARD_FLOAT_ABI)					\
+    if (!TARGET_HARD_FLOAT)					\
       builtin_define ("_SOFT_FLOAT");				\
   } while (0)
 
@@ -97,9 +97,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
-
-#define INTPTR_TYPE PTRDIFF_TYPE
-#define UINTPTR_TYPE SIZE_TYPE
 
 #undef INTMAX_TYPE
 #define INTMAX_TYPE "long long int"
