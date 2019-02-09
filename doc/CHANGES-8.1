@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.103 2019/02/08 16:05:46 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.104 2019/02/09 14:43:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2430,5 +2430,11 @@ sys/dev/raidframe/rf_disks.c			1.90
 
 	PR/53956: raidframe fails to create new raid set on disks.
 	[christos, ticket #1183]
+
+lib/libossaudio/ossaudio.c			1.35
+sys/compat/ossaudio/ossaudio.c			1.71
+
+	Fix SNDCTL_DSP_GETOSPACE.
+	[isaki, ticket #1185]
 
 
