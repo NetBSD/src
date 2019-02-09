@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.81 2019/02/04 11:16:41 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.82 2019/02/09 09:33:20 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.81 2019/02/04 11:16:41 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.82 2019/02/09 09:33:20 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,6 +244,10 @@ main(int argc, char **argv)
 	if (sflag || minusc == NULL) {
  state4:	/* XXX ??? - why isn't this before the "if" statement */
 		cmdloop(1);
+		if (iflag) {
+			out2str("\n");
+			flushout(&errout);
+		}
 	}
 #if PROFILE
 	monitor(0);
