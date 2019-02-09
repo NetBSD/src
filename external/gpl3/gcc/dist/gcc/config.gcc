@@ -2164,6 +2164,7 @@ riscv*-*-netbsd*)				# NetBSD RISC-V
 	  *) tmake_file="${tmake_file} riscv/t-netbsd64" ;;
 	esac
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+	tmake_file="${tmake_file} riscv/t-riscv"
 	gnu_ld=yes
 	gas=yes
 	gcc_cv_initfini_array=yes
