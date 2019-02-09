@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.121 2014/11/14 14:29:16 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.122 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.121 2014/11/14 14:29:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.122 2019/02/09 03:34:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -169,8 +169,7 @@ AllocRaidReconDesc(RF_Raid_t *raidPtr, RF_RowCol_t col,
 
 	RF_RaidReconDesc_t *reconDesc;
 
-	RF_Malloc(reconDesc, sizeof(RF_RaidReconDesc_t),
-		  (RF_RaidReconDesc_t *));
+	reconDesc = RF_Malloc(sizeof(*reconDesc));
 	reconDesc->raidPtr = raidPtr;
 	reconDesc->col = col;
 	reconDesc->spareDiskPtr = spareDiskPtr;
@@ -579,7 +578,8 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	raidPtr->accumXorTimeUs = 0;
 #if RF_ACC_TRACE > 0
 	/* create one trace record per physical disk */
-	RF_Malloc(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
+	raidPtr->recon_tracerecs =
+	    RF_Malloc(raidPtr->numCol * sizeof(*raidPtr->recon_tracerecs));
 #endif
 
 	/* quiesce the array prior to starting recon.  this is needed
@@ -1220,7 +1220,7 @@ IssueNextReadRequest(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	rbuf->parityStripeID = ctrl->curPSID;
 	rbuf->which_ru = ctrl->ru_count;
 #if RF_ACC_TRACE > 0
-	memset((char *) &raidPtr->recon_tracerecs[col], 0,
+	memset(&raidPtr->recon_tracerecs[col], 0,
 	    sizeof(raidPtr->recon_tracerecs[col]));
 	raidPtr->recon_tracerecs[col].reconacc = 1;
 	RF_ETIMER_START(raidPtr->recon_tracerecs[col].recon_timer);

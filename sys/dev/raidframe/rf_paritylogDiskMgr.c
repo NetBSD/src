@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.28 2011/05/11 06:20:33 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.29 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.28 2011/05/11 06:20:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.29 2019/02/09 03:34:00 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -134,8 +134,6 @@ ReadRegionLog(
 				      RF_IO_NORMAL_PRIORITY);
 
 	/* create and initialize PDA for the core log */
-	/* RF_Malloc(*rrd_pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t
-	 * *)); */
 	*rrd_pda = rf_AllocPDAList(1);
 	rf_MapLogParityLogging(raidPtr, regionID, 0,
 			       &((*rrd_pda)->col), &((*rrd_pda)->startSector));
@@ -146,8 +144,7 @@ ReadRegionLog(
 		printf("set rrd_pda->next to NULL\n");
 	}
 	/* initialize DAG parameters */
-	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	memset((char *) tracerec, 0, sizeof(RF_AccTraceEntry_t));
+	tracerec = RF_Malloc(sizeof(*tracerec));
 	(*rrd_dag_h)->tracerec = tracerec;
 	rrd_rdNode = (*rrd_dag_h)->succedents[0]->succedents[0];
 	rrd_rdNode->params[0].p = *rrd_pda;
@@ -187,9 +184,6 @@ WriteCoreLog(
 				      rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 	    "Wcl", *fwr_alloclist, RF_DAG_FLAGS_NONE, RF_IO_NORMAL_PRIORITY);
 
-	/* create and initialize PDA for the region log */
-	/* RF_Malloc(*fwr_pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t
-	 * *)); */
 	*fwr_pda = rf_AllocPDAList(1);
 	regionOffset = log->diskOffset;
 	rf_MapLogParityLogging(raidPtr, regionID, regionOffset,
@@ -198,8 +192,7 @@ WriteCoreLog(
 	(*fwr_pda)->numSector = raidPtr->numSectorsPerLog;
 
 	/* initialize DAG parameters */
-	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	memset((char *) tracerec, 0, sizeof(RF_AccTraceEntry_t));
+	tracerec = RF_Malloc(sizeof(*tracerec));
 	(*fwr_dag_h)->tracerec = tracerec;
 	fwr_wrNode = (*fwr_dag_h)->succedents[0]->succedents[0];
 	fwr_wrNode->params[0].p = *fwr_pda;
@@ -239,8 +232,6 @@ ReadRegionParity(
 				      RF_IO_NORMAL_PRIORITY);
 
 	/* create and initialize PDA for region parity */
-	/* RF_Malloc(*prd_pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t
-	 * *)); */
 	*prd_pda = rf_AllocPDAList(1);
 	rf_MapRegionParity(raidPtr, regionID,
 			   &((*prd_pda)->col), &((*prd_pda)->startSector),
@@ -253,8 +244,7 @@ ReadRegionParity(
 		printf("set prd_pda->next to NULL\n");
 	}
 	/* initialize DAG parameters */
-	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	memset((char *) tracerec, 0, sizeof(RF_AccTraceEntry_t));
+	tracerec = RF_Malloc(sizeof(*tracerec));
 	(*prd_dag_h)->tracerec = tracerec;
 	prd_rdNode = (*prd_dag_h)->succedents[0]->succedents[0];
 	prd_rdNode->params[0].p = *prd_pda;
@@ -297,16 +287,13 @@ WriteRegionParity(
 				      RF_IO_NORMAL_PRIORITY);
 
 	/* create and initialize PDA for region parity */
-	/* RF_Malloc(*pwr_pda, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t
-	 * *)); */
 	*pwr_pda = rf_AllocPDAList(1);
 	rf_MapRegionParity(raidPtr, regionID,
 			   &((*pwr_pda)->col), &((*pwr_pda)->startSector),
 			   &((*pwr_pda)->numSector));
 
 	/* initialize DAG parameters */
-	RF_Malloc(tracerec,sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-	memset((char *) tracerec, 0, sizeof(RF_AccTraceEntry_t));
+	tracerec = RF_Malloc(sizeof(*tracerec));
 	(*pwr_dag_h)->tracerec = tracerec;
 	pwr_wrNode = (*pwr_dag_h)->succedents[0]->succedents[0];
 	pwr_wrNode->params[0].p = *pwr_pda;

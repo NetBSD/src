@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.32 2011/05/05 08:21:29 mrg Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.33 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.32 2011/05/05 08:21:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.33 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -199,9 +199,7 @@ rf_MakeLockTable(void)
 	RF_LockTableEntry_t *lockTable;
 	int     i;
 
-	RF_Malloc(lockTable,
-		  ((int) rf_lockTableSize) * sizeof(RF_LockTableEntry_t),
-		  (RF_LockTableEntry_t *));
+	lockTable = RF_Malloc(rf_lockTableSize * sizeof(*lockTable));
 	if (lockTable == NULL)
 		return (NULL);
 	for (i = 0; i < rf_lockTableSize; i++) {

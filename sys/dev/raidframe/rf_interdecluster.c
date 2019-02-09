@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.14 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.15 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.14 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.15 2019/02/09 03:34:00 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -73,8 +73,7 @@ rf_ConfigureInterDecluster(
 	RF_RowCol_t i, tmp, SUs_per_region;
 
 	/* create an Interleaved Declustering configuration structure */
-	RF_MallocAndAdd(info, sizeof(RF_InterdeclusterConfigInfo_t), (RF_InterdeclusterConfigInfo_t *),
-	    raidPtr->cleanupList);
+	info = RF_MallocAndAdd(sizeof(*info), raidPtr->cleanupList);
 	if (info == NULL)
 		return (ENOMEM);
 	layoutPtr->layoutSpecificInfo = (void *) info;

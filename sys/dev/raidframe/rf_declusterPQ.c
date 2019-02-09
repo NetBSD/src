@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.16 2014/03/23 09:30:59 christos Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.17 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  *--------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.16 2014/03/23 09:30:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.17 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -87,7 +87,7 @@ rf_ConfigureDeclusteredPQ(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		return (EINVAL);
 	}
 	/* 1. create layout specific structure */
-	RF_MallocAndAdd(info, sizeof(RF_DeclusteredConfigInfo_t), (RF_DeclusteredConfigInfo_t *), raidPtr->cleanupList);
+	info = RF_MallocAndAdd(sizeof(*info), raidPtr->cleanupList);
 	if (info == NULL)
 		return (ENOMEM);
 	layoutPtr->layoutSpecificInfo = (void *) info;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.33 2014/03/23 03:42:39 christos Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.34 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.33 2014/03/23 03:42:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.34 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -116,6 +116,8 @@ rf_CreateDegradedWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  *
  * DAG creation code begins here
  */
+#define BUF_ALLOC(num) \
+  RF_MallocAndAdd(rf_RaidAddressToByte(raidPtr, num), allocList)
 
 
 
@@ -380,8 +382,8 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	/* fill in the Wnq Node */
 	if (nfaults == 2) {
 		{
-			RF_MallocAndAdd(parityPDA, sizeof(RF_PhysDiskAddr_t),
-			    (RF_PhysDiskAddr_t *), allocList);
+			parityPA = RF_MallocAndAdd(sizeof(*parityPA),
+			    allocList);
 			parityPDA->col = asmap->qInfo->col;
 			parityPDA->startSector = ((asmap->qInfo->startSector / sectorsPerSU)
 			    * sectorsPerSU) + (failedPDA->startSector % sectorsPerSU);
@@ -390,8 +392,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 			rf_InitNode(wnqNode, rf_wait, RF_FALSE, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 			    rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, "Wnq", allocList);
 			wnqNode->params[0].p = parityPDA;
-			RF_MallocAndAdd(xorNode->results[1],
-			    rf_RaidAddressToByte(raidPtr, failedPDA->numSector), (char *), allocList);
+			xorNode->results[1] = BUF_ALLOC(failedPDA->numSector);
 			wnqNode->params[1].p = xorNode->results[1];
 			wnqNode->params[2].v = parityStripeID;
 			wnqNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
@@ -564,7 +565,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
   pda_p->startSector = ((asmap->if->startSector / secPerSU) * secPerSU) + start; \
   pda_p->numSector = num; \
   pda_p->next = NULL; \
-  RF_MallocAndAdd(pda_p->bufPtr,rf_RaidAddressToByte(raidPtr,num),(char *), allocList)
+  pda_p->bufPtr = BUF_ALLOC(num)
 #if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
 void
 rf_WriteGenerateFailedAccessASMs(
@@ -596,7 +597,7 @@ rf_WriteGenerateFailedAccessASMs(
 	if (asmap->numDataFailed == 1) {
 		PDAPerDisk = 1;
 		state = 1;
-		RF_MallocAndAdd(*pqpdap, 2 * sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+		*pqpdap = RF_MallocAndAdd(2 * sizeof(**pqpdap), allocList);
 		pda_p = *pqpdap;
 		/* build p */
 		CONS_PDA(parityInfo, fone_start, fone->numSector);
@@ -610,7 +611,8 @@ rf_WriteGenerateFailedAccessASMs(
 		if (fone->numSector + ftwo->numSector > secPerSU) {
 			PDAPerDisk = 1;
 			state = 2;
-			RF_MallocAndAdd(*pqpdap, 2 * sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+			*pqpdap = RF_MallocAndAdd(2 * sizeof(**pqpdap),
+			    allocList);
 			pda_p = *pqpdap;
 			CONS_PDA(parityInfo, 0, secPerSU);
 			pda_p->type = RF_PDA_TYPE_PARITY;
@@ -621,7 +623,8 @@ rf_WriteGenerateFailedAccessASMs(
 			PDAPerDisk = 2;
 			state = 3;
 			/* four of them, fone, then ftwo */
-			RF_MallocAndAdd(*pqpdap, 4 * sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+			*pqpdap = RF_MallocAndAdd(4 * sizeof(*pqpdap), 
+			    allocList);
 			pda_p = *pqpdap;
 			CONS_PDA(parityInfo, fone_start, fone->numSector);
 			pda_p->type = RF_PDA_TYPE_PARITY;
@@ -646,8 +649,7 @@ rf_WriteGenerateFailedAccessASMs(
 
 	/* allocate up our list of pda's */
 
-	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t),
-			(RF_PhysDiskAddr_t *), allocList);
+	pda_p = RF_MallocAndAdd(napdas * sizeof(*pda_p), allocList);
 	*pdap = pda_p;
 
 	/* linkem together */
@@ -669,17 +671,17 @@ rf_WriteGenerateFailedAccessASMs(
 			pda_p->numSector = fone->numSector;
 			pda_p->raidAddress += fone_start;
 			pda_p->startSector += fone_start;
-			RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
+			pda_p->bufPtr = BUF_ALLOC(pda_p->numSector);
 			break;
 		case 2:	/* full stripe */
 			pda_p->numSector = secPerSU;
-			RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, secPerSU), (char *), allocList);
+			pda_p->bufPtr = BUF_ALLOC(secPerSU);
 			break;
 		case 3:	/* two slabs */
 			pda_p->numSector = fone->numSector;
 			pda_p->raidAddress += fone_start;
 			pda_p->startSector += fone_start;
-			RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
+			pda_p->bufPtr = BUF_ALLOC(pda_p->numSector);
 			pda_p++;
 			pda_p->type = RF_PDA_TYPE_DATA;
 			pda_p->raidAddress = sosAddr + (i * secPerSU);
@@ -687,7 +689,7 @@ rf_WriteGenerateFailedAccessASMs(
 			pda_p->numSector = ftwo->numSector;
 			pda_p->raidAddress += ftwo_start;
 			pda_p->startSector += ftwo_start;
-			RF_MallocAndAdd(pda_p->bufPtr, rf_RaidAddressToByte(raidPtr, pda_p->numSector), (char *), allocList);
+			pda_p->bufPtr = BUF_ALLOC(pda_p->numSector);
 			break;
 		default:
 			RF_PANIC();
@@ -750,7 +752,7 @@ rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	nWriteNodes = nWudNodes + 2 * nPQNodes;
 	nNodes = 4 + nReadNodes + nWriteNodes;
 
-	RF_MallocAndAdd(nodes, nNodes * sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	nodes = RF_MallocAndAdd(nNodes * sizeof(*nodes), allocList);
 	blockNode = nodes;
 	unblockNode = blockNode + 1;
 	termNode = unblockNode + 1;

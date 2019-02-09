@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.16 2011/08/31 18:31:02 plunky Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.17 2019/02/09 03:33:59 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.16 2011/08/31 18:31:02 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.17 2019/02/09 03:33:59 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
@@ -326,8 +326,7 @@ rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
 	long    range = 2;	/* Currently no mechanism to change these */
 	long    penalty = sectPerDisk / 5;
 
-	RF_MallocAndAdd(hdr, sizeof(RF_CvscanHeader_t), (RF_CvscanHeader_t *), clList);
-	memset((char *) hdr, 0, sizeof(RF_CvscanHeader_t));
+	hdr = RF_MallocAndAdd(sizeof(*hdr), clList);
 	hdr->range_for_avg = RF_MAX(range, 1);
 	hdr->change_penalty = RF_MAX(penalty, 0);
 	hdr->direction = rf_cvscan_RIGHT;

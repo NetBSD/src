@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.373 2019/02/07 03:03:00 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.374 2019/02/09 03:34:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.373 2019/02/07 03:03:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.374 2019/02/09 03:34:00 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1107,7 +1107,7 @@ rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
 
 	/* make a copy of the recon request so that we don't rely on
 	 * the user's buffer */
-	RF_Malloc(rrint, sizeof(*rrint), (struct rf_recon_req_internal *));
+	rrint = RF_Malloc(sizeof(*rrint));
 	if (rrint == NULL)
 		return(ENOMEM);
 	rrint->col = rr->col;
@@ -1134,7 +1134,7 @@ rf_copyinspecificbuf(RF_Config_t *k_cfg)
 	}
 
 	u_char *specific_buf;
-	RF_Malloc(specific_buf, k_cfg->layoutSpecificSize, (u_char *));
+	specific_buf =  RF_Malloc(k_cfg->layoutSpecificSize);
 	if (specific_buf == NULL)
 		return ENOMEM;
 
@@ -1163,7 +1163,7 @@ rf_getConfiguration(struct raid_softc *rs, void *data, RF_Config_t **k_cfg)
 
 	/* copy-in the configuration information */
 	/* data points to a pointer to the configuration structure */
-	RF_Malloc(*k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
+	*k_cfg = RF_Malloc(sizeof(**k_cfg));
 	if (*k_cfg == NULL) {
 		return ENOMEM;
 	}
@@ -1358,7 +1358,7 @@ rf_rebuild_in_place(RF_Raid_t *raidPtr, RF_SingleComponent_t *componentPtr)
 	rf_unlock_mutex2(raidPtr->mutex);
 
 	struct rf_recon_req_internal *rrint;
-	RF_Malloc(rrint, sizeof(*rrint), (struct rf_recon_req_internal *));
+	rrint = RF_Malloc(sizeof(*rrint));
 	if (rrint == NULL)
 		return ENOMEM;
 
@@ -1516,8 +1516,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case RAIDFRAME_GET_INFO:
 		ucfgp = *(RF_DeviceConfig_t **)data;
-		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
-			  (RF_DeviceConfig_t *));
+		d_cfg = RF_Malloc(sizeof(*d_cfg));
 		if (d_cfg == NULL)
 			return ENOMEM;
 		retcode = rf_get_info(raidPtr, d_cfg);
@@ -1680,7 +1679,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* wakes up a process waiting on SPARET_WAIT and puts an error
 		 * code in it that will cause the dameon to exit */
 	case RAIDFRAME_ABORT_SPARET_WAIT:
-		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
+		waitreq = RF_Malloc(sizeof(*waitreq));
 		waitreq->fcol = -1;
 		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_wait_queue;
@@ -1698,7 +1697,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* respond to the requestor.  the return status of the spare
 		 * table installation is passed in the "fcol" field */
-		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
+		waitred = RF_Malloc(sizeof(*waitreq));
 		waitreq->fcol = retcode;
 		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_resp_queue;

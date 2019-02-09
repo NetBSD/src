@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.90 2019/02/08 13:37:46 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.91 2019/02/09 03:34:00 christos Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.90 2019/02/08 13:37:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.91 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -321,19 +321,17 @@ rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 
 	/* We allocate RF_MAXSPARE on the first row so that we
 	   have room to do hot-swapping of spares */
-	RF_MallocAndAdd(raidPtr->Disks, (raidPtr->numCol + RF_MAXSPARE) *
-			sizeof(RF_RaidDisk_t), (RF_RaidDisk_t *),
-			raidPtr->cleanupList);
+	raidPtr->Disks = RF_MallocAndAdd((raidPtr->numCol + RF_MAXSPARE) *
+	    sizeof(*raidPtr->Disks), raidPtr->cleanupList);
 	if (raidPtr->Disks == NULL) {
 		ret = ENOMEM;
 		goto fail;
 	}
 
 	/* get space for device specific stuff.. */
-	RF_MallocAndAdd(raidPtr->raid_cinfo,
-			(raidPtr->numCol + RF_MAXSPARE) *
-			sizeof(struct raidcinfo), (struct raidcinfo *),
-			raidPtr->cleanupList);
+	raidPtr->raid_cinfo = RF_MallocAndAdd(
+	    (raidPtr->numCol + RF_MAXSPARE) * sizeof(*raidPtr->raid_cinfo),
+	    raidPtr->cleanupList);
 
 	if (raidPtr->raid_cinfo == NULL) {
 		ret = ENOMEM;

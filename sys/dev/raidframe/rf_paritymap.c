@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.8 2011/04/27 07:55:15 mrg Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.9 2019/02/09 03:34:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.8 2011/04/27 07:55:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.9 2019/02/09 03:34:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -231,8 +231,7 @@ void
 rf_paritymap_invalidate(struct rf_paritymap *pm)
 {
 	mutex_enter(&pm->lock);
-	memset(pm->disk_boot, ~(unsigned char)0,
-	    sizeof(struct rf_paritymap_ondisk));
+	memset(pm->disk_boot, (unsigned char)~0, sizeof(*pm->disk_boot));
 	mutex_exit(&pm->lock);
 }
 
@@ -241,8 +240,7 @@ void
 rf_paritymap_forceclean(struct rf_paritymap *pm)
 {
 	mutex_enter(&pm->lock);
-	memset(pm->disk_boot, (unsigned char)0,
-	    sizeof(struct rf_paritymap_ondisk));
+	memset(pm->disk_boot, 0, sizeof(*pm->disk_boot));
 	mutex_exit(&pm->lock);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.36 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.37 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.36 2018/01/18 00:32:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.37 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -73,11 +73,11 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 
 	/* make and zero the global reconstruction structure and the per-disk
 	 * structure */
-	RF_Malloc(reconCtrlPtr, sizeof(RF_ReconCtrl_t), (RF_ReconCtrl_t *));
+	reconCtrlPtr = RF_Malloc(sizeof(*reconCtrlPtr));
 
 	/* note: this zeros the perDiskInfo */
-	RF_Malloc(reconCtrlPtr->perDiskInfo, raidPtr->numCol *
-		  sizeof(RF_PerDiskReconCtrl_t), (RF_PerDiskReconCtrl_t *));
+	reconCtrlPtr->perDiskInfo = RF_Malloc(raidPtr->numCol *
+	    sizeof(*reconCtrlPtr->perDiskInfo));
 	reconCtrlPtr->reconDesc = reconDesc;
 	reconCtrlPtr->fcol = fcol;
 	reconCtrlPtr->spareCol = scol;
@@ -232,7 +232,7 @@ rf_MakeReconBuffer(RF_Raid_t *raidPtr, RF_RowCol_t col, RF_RbufType_t type)
 	u_int   recon_buffer_size = rf_RaidAddressToByte(raidPtr, layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit);
 
 	t = pool_get(&rf_pools.reconbuffer, PR_WAITOK);
-	RF_Malloc(t->buffer, recon_buffer_size, (void *));
+	t->buffer = RF_Malloc(recon_buffer_size);
 	t->raidPtr = raidPtr;
 	t->col = col;
 	t->priority = RF_IO_RECON_PRIORITY;

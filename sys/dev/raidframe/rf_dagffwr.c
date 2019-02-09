@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.34 2013/09/15 12:41:17 martin Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.35 2019/02/09 03:34:00 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.34 2013/09/15 12:41:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.35 2019/02/09 03:34:00 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -125,6 +125,8 @@ rf_CreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  *
  * DAG creation code begins here
  */
+#define BUF_ALLOC(num) \
+  RF_MallocAndAdd(rf_RaidAddressToByte(raidPtr, num), allocList)
 
 
 /******************************************************************************
@@ -382,9 +384,8 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	         * to get smashed during the P and Q calculation, guaranteeing
 	         * one would be wrong.
 	         */
-		RF_MallocAndAdd(xorNode->results[1],
-				rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit),
-				(void *), allocList);
+		xorNode->results[1] =
+		    BUF_ALLOC(raidPtr->Layout.sectorsPerStripeUnit);
 		rf_InitNode(wnqNode, rf_wait, RF_FALSE, rf_DiskWriteFunc,
 			    rf_DiskWriteUndoFunc, rf_GenericWakeupFunc,
 			    1, 1, 4, 0, dag_h, "Wnq", allocList);

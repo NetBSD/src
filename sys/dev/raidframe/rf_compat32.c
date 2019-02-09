@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.c,v 1.4 2019/02/06 15:39:41 christos Exp $	*/
+/*	$NetBSD: rf_compat32.c,v 1.5 2019/02/09 03:33:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -88,7 +88,7 @@ rf_config_netbsd32(struct raid_softc *rs, void *data)
 	RF_Config_t32 *k_cfg32;
 	int rv;
 
-	RF_Malloc(k_cfg32, sizeof(RF_Config_t32), (RF_Config_t32 *));
+	k_cfg32 = RF_Malloc(sizeof(*k_cfg32));
 	if (k_cfg32 == NULL)
 		return ENOMEM;
 
@@ -98,7 +98,7 @@ rf_config_netbsd32(struct raid_softc *rs, void *data)
 		return ENOMEM;
 	}
 
-	RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
+	k_cfg = RF_Malloc(sizeof(*k_cfg));
 	if (k_cfg == NULL) {
 		RF_Free(k_cfg32, sizeof(RF_Config_t32));
 		RF_Free(k_cfg, sizeof(RF_Config_t));
@@ -132,8 +132,7 @@ rf_get_info_netbsd32(RF_Raid_t *raidPtr, void *data)
 	int retcode;
 	void *ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
 
-	RF_DeviceConfig_t *d_cfg;
-	RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t), (RF_DeviceConfig_t *));
+	RF_DeviceConfig_t *d_cfg = RF_Malloc(sizeof(*d_cfg));
 	if (d_cfg == NULL)
 		return ENOMEM;
 
