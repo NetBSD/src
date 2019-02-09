@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.43 2018/12/30 05:05:21 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.44 2019/02/09 16:00:41 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.43 2018/12/30 05:05:21 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.44 2019/02/09 16:00:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -717,7 +717,7 @@ acpi_print_hest_generic_v2(ACPI_HEST_GENERIC_V2 *data)
 
 	printf("\tError Status Address");
 	acpi_print_gas(&data->ReadAckRegister);
-	printf("\tRead Ack Preserve=0x%016jx\n",
+	printf("\n\tRead Ack Preserve=0x%016jx\n",
 	    (uintmax_t)data->ReadAckPreserve);
 	printf("\tRead Ack Write=0x%016jx\n",
 	    (uintmax_t)data->ReadAckWrite);
@@ -2050,7 +2050,7 @@ acpi_handle_hpet(ACPI_TABLE_HEADER *sdp)
 	printf("\tHPET Number=%d\n", hpet->Sequence);
 	printf("\tADDR=");
 	acpi_print_gas(&hpet->Address);
-	printf("\tHW Rev=0x%x\n", hpet->Id & ACPI_HPET_ID_HARDWARE_REV_ID);
+	printf("\n\tHW Rev=0x%x\n", hpet->Id & ACPI_HPET_ID_HARDWARE_REV_ID);
 	printf("\tComparators=%d\n", (hpet->Id & ACPI_HPET_ID_COMPARATORS) >>
 	    8);
 	printf("\tCounter Size=%d\n", hpet->Id & ACPI_HPET_ID_COUNT_SIZE_CAP ?
@@ -2385,13 +2385,14 @@ acpi_print_native_lpit(ACPI_LPIT_NATIVE *nl)
 {
 	printf("\tEntryTrigger=");
 	acpi_print_gas(&nl->EntryTrigger);
-	printf("\tResidency=%u\n", nl->Residency);
+	printf("\n\tResidency=%u\n", nl->Residency);
 	printf("\tLatency=%u\n", nl->Latency);
 	if (nl->Header.Flags & ACPI_LPIT_NO_COUNTER)
 		printf("\tResidencyCounter=Not Present");
 	else {
 		printf("\tResidencyCounter=");
 		acpi_print_gas(&nl->ResidencyCounter);
+		printf("\n");
 	}
 	if (nl->CounterFrequency)
 		printf("\tCounterFrequency=%ju\n", nl->CounterFrequency);
@@ -3818,8 +3819,9 @@ acpi_handle_wdrt(ACPI_TABLE_HEADER *sdp)
 
 	printf("\tControl Register=");
 	acpi_print_gas(&wdrt->ControlRegister);
-	printf("\tCount Register=");
+	printf("\n\tCount Register=");
 	acpi_print_gas(&wdrt->CountRegister);
+	printf("\n");
 	acpi_print_pci(wdrt->PciVendorId, wdrt->PciDeviceId,
 	    wdrt->PciSegment, wdrt->PciBus, wdrt->PciDevice, wdrt->PciFunction);
 
