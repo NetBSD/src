@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2017/08/15 10:11:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.38 2019/02/09 02:04:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,10 @@ EXTRA_DIST_FILES+=	NetBSD.dist.dtrace
 
 .if ${MKEXTSRC} != "no"
 EXTRA_DIST_FILES+=	NetBSD.dist.extsrc
+.endif
+
+.if ${MKISCSI} != "no"
+EXTRA_DIST_FILES+=	NetBSD.dist.iscsi
 .endif
 
 NetBSD.dist:	NetBSD.dist.tmp
