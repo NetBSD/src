@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.mips64el,v 1.10 2015/06/19 18:16:06 matt Exp $
+#	$NetBSD: NetBSD.compat.mips64el,v 1.1 2019/02/09 21:43:23 mrg Exp $
 
 ./usr/include/g++/bits/mips64
 ./usr/include/g++/bits/mips32
