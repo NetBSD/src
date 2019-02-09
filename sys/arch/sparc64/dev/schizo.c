@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.40 2019/02/05 06:10:53 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.41 2019/02/09 11:27:05 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.40 2019/02/05 06:10:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.41 2019/02/09 11:27:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -263,6 +263,8 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal_dev(sc->sc_dev, " ");
+	if (sc->sc_tomatillo)
+		is->is_flags |= IOMMU_SYNC_BEFORE_UNMAP;
 	schizo_init_iommu(sc, pbm);
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);

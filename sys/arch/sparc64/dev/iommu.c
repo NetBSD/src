@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.114 2018/09/03 16:29:27 riastradh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.115 2019/02/09 11:27:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.114 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.115 2019/02/09 11:27:05 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -748,10 +748,21 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	/* Flush the iommu */
 	if (!map->_dm_dvmastart)
 		panic("%s: error dvmastart is zero!\n", __func__);
-	iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
 
-	/* Flush the caches */
-	bus_dmamap_unload(t->_parent, map);
+	if (is->is_flags & IOMMU_SYNC_BEFORE_UNMAP) {
+
+		/* Flush the caches */
+		bus_dmamap_unload(t->_parent, map);
+
+		iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
+
+	} else {
+
+		iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
+
+		/* Flush the caches */
+		bus_dmamap_unload(t->_parent, map);
+	}
 
 	mutex_enter(&is->is_lock);
 	error = extent_free(is->is_dvmamap, map->_dm_dvmastart,

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.22 2015/09/03 19:43:35 palle Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.23 2019/02/09 11:27:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -59,6 +59,7 @@ struct iommu_state {
 	int			is_flags;
 #define IOMMU_FLUSH_CACHE	0x00000001
 #define IOMMU_TSBSIZE_IN_PTSB	0x00000002	/* PCIe */
+#define IOMMU_SYNC_BEFORE_UNMAP	0x00000004
 
 	struct strbuf_ctl	*is_sb[2];	/* Streaming buffers if any */
 
