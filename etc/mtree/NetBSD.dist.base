@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.192 2019/02/08 08:51:42 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.193 2019/02/09 02:04:19 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -128,7 +128,6 @@
 ./usr/include/dev/ieee1394
 ./usr/include/dev/ir
 ./usr/include/dev/isa
-./usr/include/dev/iscsi
 ./usr/include/dev/ofw
 ./usr/include/dev/pci
 ./usr/include/dev/pckbc
