@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.70 2017/03/24 14:32:29 nat Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.70.6.1 2019/02/09 14:43:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70 2017/03/24 14:32:29 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.6.1 2019/02/09 14:43:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -619,11 +619,12 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		}
 		setblocksize(fp, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
-		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
+		bufinfo.fragments = tmpinfo.hiwat -
+		    (tmpinfo.play.seek + tmpinfo.blocksize - 1) /
 		    tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
+		bufinfo.bytes =
+		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_GETOSPACE = %d\n",
