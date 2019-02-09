@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.2 2019/02/06 22:54:41 rin Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.3 2019/02/09 07:50:47 rin Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
@@ -29,7 +29,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.2 2019/02/06 22:54:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.3 2019/02/09 07:50:47 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1158,8 +1158,10 @@ ure_attach(device_t parent, device_t self, void *aux)
 		/* fake addr?  or just fail? */
 		break;
 	}
-	aprint_normal_dev(self, "%sver %04x\n",
-	    sc->ure_chip != 0 ? "" : "unknown", ver);
+	aprint_normal_dev(self, "RTL%d %sver %04x\n",
+	    (sc->ure_flags & URE_FLAG_8152) ? 8152 : 8153,
+	    (sc->ure_chip != 0) ? "" : "unknown ",
+	    ver);
 
 	if (sc->ure_flags & URE_FLAG_8152)
 		ure_rtl8152_init(sc);
