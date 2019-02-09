@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2256 2019/02/04 03:26:27 mrg Exp $
+#	$NetBSD: mi,v 1.2257 2019/02/09 23:26:35 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2056,8 +2056,6 @@
 ./usr/include/gcc-5/mwaitxintrin.h		comp-obsolete		obsolete
 ./usr/include/gcc-5/nmmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/omp.h			comp-obsolete		obsolete
-./usr/include/gcc-5/omp.h			comp-obsolete		obsolete
-./usr/include/gcc-5/openacc.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/openacc.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/popcntintrin.h		comp-obsolete		obsolete
@@ -2070,7 +2068,6 @@
 ./usr/include/gcc-5/sanitizer/tsan_interface_atomic.h	comp-obsolete		obsolete
 ./usr/include/gcc-5/shaintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/smmintrin.h			comp-obsolete		obsolete
-./usr/include/gcc-5/stdatomic.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/stdatomic.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/tbmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
@@ -11845,18 +11842,18 @@
 ./usr/share/man/cat9/tc_wmb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tcp_congctl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool.0		comp-sys-catman		.cat
+./usr/share/man/cat9/threadpool_cancel_job.0	comp-sys-catman		.cat
+./usr/share/man/cat9/threadpool_cancel_job_async.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/threadpool_get.0		comp-sys-catman		.cat
-./usr/share/man/cat9/threadpool_put.0		comp-sys-catman		.cat
+./usr/share/man/cat9/threadpool_job_destroy.0	comp-sys-catman		.cat
+./usr/share/man/cat9/threadpool_job_done.0	comp-sys-catman		.cat
+./usr/share/man/cat9/threadpool_job_init.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool_percpu_get.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool_percpu_put.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool_percpu_ref.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool_percpu_ref_remote.0 comp-sys-catman	.cat
-./usr/share/man/cat9/threadpool_job_init.0	comp-sys-catman		.cat
-./usr/share/man/cat9/threadpool_job_destroy.0	comp-sys-catman		.cat
-./usr/share/man/cat9/threadpool_job_done.0	comp-sys-catman		.cat
+./usr/share/man/cat9/threadpool_put.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/threadpool_schedule_job.0	comp-sys-catman		.cat
-./usr/share/man/cat9/threadpool_cancel_job.0	comp-sys-catman		.cat
-./usr/share/man/cat9/threadpool_cancel_job_async.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/tick.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tickadj.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/time.0			comp-obsolete		obsolete
@@ -19678,18 +19675,18 @@
 ./usr/share/man/html9/tc_wmb.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tcp_congctl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool.html		comp-sys-htmlman	html
+./usr/share/man/html9/threadpool_cancel_job.html comp-sys-htmlman	html
+./usr/share/man/html9/threadpool_cancel_job_async.html comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_get.html	comp-sys-htmlman	html
-./usr/share/man/html9/threadpool_put.html	comp-sys-htmlman	html
+./usr/share/man/html9/threadpool_job_destroy.html comp-sys-htmlman	html
+./usr/share/man/html9/threadpool_job_done.html	comp-sys-htmlman	html
+./usr/share/man/html9/threadpool_job_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_percpu_get.html comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_percpu_put.html comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_percpu_ref.html comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_percpu_ref_remote.html comp-sys-htmlman html
-./usr/share/man/html9/threadpool_job_init.html	comp-sys-htmlman	html
-./usr/share/man/html9/threadpool_job_destroy.html comp-sys-htmlman	html
-./usr/share/man/html9/threadpool_job_done.html	comp-sys-htmlman	html
+./usr/share/man/html9/threadpool_put.html	comp-sys-htmlman	html
 ./usr/share/man/html9/threadpool_schedule_job.html comp-sys-htmlman	html
-./usr/share/man/html9/threadpool_cancel_job.html comp-sys-htmlman	html
-./usr/share/man/html9/threadpool_cancel_job_async.html comp-sys-htmlman	html
 ./usr/share/man/html9/tick.html			comp-sys-htmlman	html
 ./usr/share/man/html9/tickadj.html		comp-sys-htmlman	html
 ./usr/share/man/html9/time_second.html		comp-sys-htmlman	html
@@ -27711,18 +27708,18 @@
 ./usr/share/man/man9/tc_wmb.9			comp-sys-man		.man
 ./usr/share/man/man9/tcp_congctl.9		comp-sys-man		.man
 ./usr/share/man/man9/threadpool.9		comp-sys-man		.man
+./usr/share/man/man9/threadpool_cancel_job.9	comp-sys-man		.man
+./usr/share/man/man9/threadpool_cancel_job_async.9 comp-sys-man		.man
 ./usr/share/man/man9/threadpool_get.9		comp-sys-man		.man
-./usr/share/man/man9/threadpool_put.9		comp-sys-man		.man
+./usr/share/man/man9/threadpool_job_destroy.9	comp-sys-man		.man
+./usr/share/man/man9/threadpool_job_done.9	comp-sys-man		.man
+./usr/share/man/man9/threadpool_job_init.9	comp-sys-man		.man
 ./usr/share/man/man9/threadpool_percpu_get.9	comp-sys-man		.man
 ./usr/share/man/man9/threadpool_percpu_put.9	comp-sys-man		.man
 ./usr/share/man/man9/threadpool_percpu_ref.9	comp-sys-man		.man
 ./usr/share/man/man9/threadpool_percpu_ref_remote.9 comp-sys-man	.man
-./usr/share/man/man9/threadpool_job_init.9	comp-sys-man		.man
-./usr/share/man/man9/threadpool_job_destroy.9	comp-sys-man		.man
-./usr/share/man/man9/threadpool_job_done.9	comp-sys-man		.man
+./usr/share/man/man9/threadpool_put.9		comp-sys-man		.man
 ./usr/share/man/man9/threadpool_schedule_job.9	comp-sys-man		.man
-./usr/share/man/man9/threadpool_cancel_job.9	comp-sys-man		.man
-./usr/share/man/man9/threadpool_cancel_job_async.9 comp-sys-man		.man
 ./usr/share/man/man9/tick.9			comp-sys-man		.man
 ./usr/share/man/man9/tickadj.9			comp-sys-man		.man
 ./usr/share/man/man9/time.9			comp-obsolete		obsolete
