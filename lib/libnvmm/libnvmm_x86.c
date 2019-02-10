@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.19 2019/02/07 10:58:45 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.20 2019/02/10 19:30:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -2584,7 +2584,7 @@ x86_decode(uint8_t *inst_bytes, size_t inst_len, struct x86_instr *instr,
 
 #define EXEC_INSTR(sz, instr)						\
 static uint##sz##_t							\
-exec_##instr####sz(uint##sz##_t op1, uint##sz##_t op2, uint64_t *rflags)\
+exec_##instr##sz(uint##sz##_t op1, uint##sz##_t op2, uint64_t *rflags)	\
 {									\
 	uint##sz##_t res;						\
 	__asm __volatile (						\
