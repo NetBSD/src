@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.h,v 1.3 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.h,v 1.4 2019/02/10 19:23:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,4 +31,7 @@
  */
 
 int umass_scsi_attach(struct umass_softc *);
+void umass_scsi_detach(struct umass_softc *);
+
 int umass_atapi_attach(struct umass_softc *);
+void umass_atapi_detach(struct umass_softc *);
