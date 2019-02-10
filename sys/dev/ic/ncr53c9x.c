@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.150 2019/02/03 03:19:27 mrg Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.151 2019/02/10 17:13:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.150 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.151 2019/02/10 17:13:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -843,12 +843,10 @@ ncr53c9x_get_ecb(struct ncr53c9x_softc *sc, int flags)
 	int s;
 
 	s = splbio();
-	ecb = pool_get(&ecb_pool, PR_NOWAIT);
-	splx(s);
-	if (ecb) {
-		memset(ecb, 0, sizeof(*ecb));
+	ecb = pool_get(&ecb_pool, PR_NOWAIT | PR_ZERO);
+	if (ecb)
 		ecb->flags |= ECB_ALLOC;
-	}
+	splx(s);
 	return ecb;
 }
 
