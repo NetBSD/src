@@ -1,7 +1,7 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.8 2019/02/05 02:57:10 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.9 2019/02/10 02:13:45 kamil Exp $	*/
 
 /*-
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

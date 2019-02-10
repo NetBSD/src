@@ -1,7 +1,7 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.77 2019/02/10 02:04:06 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.78 2019/02/10 02:13:45 kamil Exp $	*/
 
 /*-
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.77 2019/02/10 02:04:06 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.78 2019/02/10 02:13:45 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
