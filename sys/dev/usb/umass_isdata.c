@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.41 2019/02/07 13:48:27 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.42 2019/02/10 19:23:55 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.41 2019/02/07 13:48:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.42 2019/02/10 19:23:55 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -244,6 +244,9 @@ umass_isdata_detach(struct umass_softc *sc)
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 
 	ata_channel_destroy(&scbus->sc_channel);
+
+	kmem_free(scbus, sizeof(*scbus));
+	sc->bus = NULL;
 }
 
 void
