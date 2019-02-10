@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.11 2019/02/02 12:32:55 cherry Exp $ */
+/* $NetBSD: hypercalls.h,v 1.12 2019/02/10 11:10:34 cherry Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -320,8 +320,18 @@ static inline int
 HYPERVISOR_suspend(
 	unsigned long srec)
 {
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_suspend,
+	};
+
+	return _hypercall3(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason, srec);
+#else
 	return _hypercall3(int, sched_op, SCHEDOP_shutdown,
 				 SHUTDOWN_suspend, srec);
+#endif
 }
 
 static inline long
@@ -342,21 +352,51 @@ static inline long
 HYPERVISOR_shutdown(
 	void)
 {
-	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_poweroff);
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_poweroff,
+	};
+
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason);
+#else
+-	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_poweroff);
+#endif
 }
 
 static inline long
 HYPERVISOR_crash(
 	void)
 {
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_crash,
+	};
+
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason);
+#else
 	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_crash);
+#endif
 }
 
 static inline long
 HYPERVISOR_reboot(
 	void)
 {
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+	struct sched_shutdown shutdown_reason = {
+		.reason = SHUTDOWN_reboot,
+	};
+
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown,
+	    &shutdown_reason);
+#else
 	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_reboot);
+#endif
 }
 
 static inline int
