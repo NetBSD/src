@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.104 2019/02/09 14:43:40 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.105 2019/02/10 13:41:35 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2437,4 +2437,13 @@ sys/compat/ossaudio/ossaudio.c			1.71
 	Fix SNDCTL_DSP_GETOSPACE.
 	[isaki, ticket #1185]
 
+lib/libperfuse/debug.c				1.13
+lib/libperfuse/ops.c				1.85
+lib/libperfuse/ops.c				1.86
+lib/libperfuse/perfuse.c			1.41
+lib/libperfuse/perfuse_priv.h			1.37
+
+	Use reclaim2 to fix reclaim/lookup race conditions.
+	Fix directory filehandle usage with libufse. Fix lookup count.
+	[manu, ticket #1186]
 
