@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.54 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.55 2019/02/10 17:13:33 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.54 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.55 2019/02/10 17:13:33 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -367,11 +367,10 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 {
 	RF_DiskQueueData_t *p;
 
-	p = pool_get(&rf_pools.dqd, waitflag);
+	p = pool_get(&rf_pools.dqd, waitflag | PR_ZERO);
 	if (p == NULL)
 		return (NULL);
 
-	memset(p, 0, sizeof(*p));
 	if (waitflag == PR_WAITOK) {
 		p->bp = getiobuf(NULL, true);
 	} else {

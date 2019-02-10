@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.231 2018/12/23 12:15:01 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.232 2019/02/10 17:13:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.231 2018/12/23 12:15:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.232 2019/02/10 17:13:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -959,8 +959,11 @@ pool_get(struct pool *pp, int flags)
 	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
 	FREECHECK_OUT(&pp->pr_freecheck, v);
 	pool_redzone_fill(pp, v);
-	pool_kleak_fill(pp, v);
-	return (v);
+	if (flags & PR_ZERO)
+		memset(v, 0, pp->pr_size);
+	else
+		pool_kleak_fill(pp, v);
+	return v;
 }
 
 /*

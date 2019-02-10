@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.45 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.46 2019/02/10 17:13:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.45 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.46 2019/02/10 17:13:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -180,9 +180,7 @@ dmio_state_get(void)
 {
 	struct dmio_state *ds;
 
-	ds = pool_get(&dmio_state_pool, PR_WAITOK);
-
-	memset(ds, 0, sizeof(*ds));
+	ds = pool_get(&dmio_state_pool, PR_WAITOK | PR_ZERO);
 
 	getnanotime(&ds->ds_btime);
 	ds->ds_atime = ds->ds_mtime = ds->ds_btime;

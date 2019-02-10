@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.55 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.56 2019/02/10 17:13:33 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.55 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.56 2019/02/10 17:13:33 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -254,11 +254,7 @@ rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 RF_DagHeader_t *
 rf_AllocDAGHeader(void)
 {
-	RF_DagHeader_t *dh;
-
-	dh = pool_get(&rf_pools.dagh, PR_WAITOK);
-	memset(dh, 0, sizeof(*dh));
-	return (dh);
+	return pool_get(&rf_pools.dagh, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -270,11 +266,7 @@ rf_FreeDAGHeader(RF_DagHeader_t * dh)
 RF_DagNode_t *
 rf_AllocDAGNode(void)
 {
-	RF_DagNode_t *node;
-
-	node = pool_get(&rf_pools.dagnode, PR_WAITOK);
-	memset(node, 0, sizeof(*node));
-	return (node);
+	return pool_get(&rf_pools.dagnode, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -292,12 +284,7 @@ rf_FreeDAGNode(RF_DagNode_t *node)
 RF_DagList_t *
 rf_AllocDAGList(void)
 {
-	RF_DagList_t *dagList;
-
-	dagList = pool_get(&rf_pools.daglist, PR_WAITOK);
-	memset(dagList, 0, sizeof(*dagList));
-
-	return (dagList);
+	return pool_get(&rf_pools.daglist, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -309,11 +296,7 @@ rf_FreeDAGList(RF_DagList_t *dagList)
 void *
 rf_AllocDAGPCache(void)
 {
-	void *p;
-	p = pool_get(&rf_pools.dagpcache, PR_WAITOK);
-	memset(p, 0, RF_DAGPCACHE_SIZE);
-
-	return (p);
+	return pool_get(&rf_pools.dagpcache, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -325,12 +308,7 @@ rf_FreeDAGPCache(void *p)
 RF_FuncList_t *
 rf_AllocFuncList(void)
 {
-	RF_FuncList_t *funcList;
-
-	funcList = pool_get(&rf_pools.funclist, PR_WAITOK);
-	memset(funcList, 0, sizeof(*funcList));
-
-	return (funcList);
+	return pool_get(&rf_pools.funclist, PR_WAITOK | PR_ZERO);
 }
 
 void
