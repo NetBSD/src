@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.16 2019/01/03 10:26:41 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.17 2019/02/10 08:39:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.16 2019/01/03 10:26:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.17 2019/02/10 08:39:48 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -192,6 +192,7 @@ static const char * const bcm2835_sources[BCM2835_NIRQ] = {
 static const char * const bcm2836mp_sources[BCM2836_NIRQPERCPU] = {
 	"cntpsirq",	"cntpnsirq",	"cnthpirq",	"cntvirq",
 	"mailbox0",	"mailbox1",	"mailbox2",	"mailbox3",
+	"gpu",		"pmu"
 };
 
 #define	BCM2836_INTBIT_GPUPENDING	__BIT(8)
