@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.46 2016/12/24 14:04:10 abhinav Exp $
+.\"	$NetBSD: pool.9,v 1.47 2019/02/10 17:15:45 christos Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 15, 2015
+.Dd February 10, 2019
 .Dt POOL 9
 .Os
 .Sh NAME
@@ -167,6 +167,10 @@ will return
 .Dv NULL
 without waiting, allowing the caller to do its own garbage collection;
 however, it will still wait if the pool is not yet at its hard limit.
+If the
+.Dv PR_ZERO
+flag is specified, then the memory returned will be zeroed first using
+.Xr memset 3 .
 .El
 .Ss RETURNING ITEMS TO A POOL
 .Fn pool_put
