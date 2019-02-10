@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.59 2019/02/07 13:48:27 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.60 2019/02/10 19:23:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.59 2019/02/07 13:48:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.60 2019/02/10 19:23:55 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -151,6 +151,15 @@ umass_scsi_attach(struct umass_softc *sc)
 
 	return 0;
 }
+
+void
+umass_scsi_detach(struct umass_softc *sc)
+{
+	struct umass_scsipi_softc *scbus = (struct umass_scsipi_softc *)sc->bus;
+
+	kmem_free(scbus, sizeof(*scbus));
+	sc->bus = NULL;
+}
 #endif
 
 #if NATAPIBUS > 0
@@ -182,6 +191,15 @@ umass_atapi_attach(struct umass_softc *sc)
 	mutex_exit(&sc->sc_lock);
 
 	return 0;
+}
+
+void
+umass_atapi_detach(struct umass_softc *sc)
+{
+	struct umass_scsipi_softc *scbus = (struct umass_scsipi_softc *)sc->bus;
+
+	kmem_free(scbus, sizeof(*scbus));
+	sc->bus = NULL;
 }
 #endif
 
