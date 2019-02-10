@@ -1,7 +1,7 @@
-/*	$NetBSD: t_ptrace_i386_wait.h,v 1.2 2017/12/14 22:06:54 christos Exp $	*/
+/*	$NetBSD: t_ptrace_i386_wait.h,v 1.3 2019/02/10 02:13:45 kamil Exp $	*/
 
 /*-
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
