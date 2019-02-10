@@ -1,4 +1,4 @@
-/* $NetBSD: crti.S,v 1.1 2014/09/19 17:36:25 matt Exp $ */
+/* $NetBSD: crti.S,v 1.2 2019/02/10 07:28:06 maya Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,11 +31,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crti.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+RCSID("$NetBSD: crti.S,v 1.2 2019/02/10 07:28:06 maya Exp $")
 
 #include "sysident.S"
 
 /*
- * Since OR1K for NetBSD uses .init_array/.fini_array,
+ * Since RISC-V for NetBSD uses .init_array/.fini_array,
  * there is no need for .init/.fini
  */
