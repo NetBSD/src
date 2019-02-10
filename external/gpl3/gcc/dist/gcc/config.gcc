@@ -2157,8 +2157,8 @@ riscv*-*-elf* | riscv*-*-rtems*)
 	gcc_cv_initfini_array=yes
 	;;
 riscv*-*-netbsd*)				# NetBSD RISC-V
-	# XXXMRG not ported yet, copied from old config
 	tm_file="elfos.h ${tm_file} ${nbsd_tm_file} riscv/netbsd.h"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	case ${target} in
 	  riscv32*) tm_defines="${tm_defines} TARGET_64BIT_DEFAULT=0" ;;
 	  *) tmake_file="${tmake_file} riscv/t-netbsd64" ;;
