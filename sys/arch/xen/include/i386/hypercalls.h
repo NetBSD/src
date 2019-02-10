@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.18 2019/02/02 12:32:55 cherry Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.19 2019/02/10 11:10:34 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -368,9 +368,21 @@ HYPERVISOR_shutdown(void)
     long ret;
     unsigned long ign1, ign2;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_poweroff
+    };
+
     _hypercall(__HYPERVISOR_sched_op,
-	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_poweroff)),
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#else
+     _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_poweroff)),
+ 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+#endif	
 
     return ret;
 }
@@ -381,9 +393,20 @@ HYPERVISOR_crash(void)
     long ret;
     unsigned long ign1, ign2;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_crash
+    };
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#else
     _hypercall(__HYPERVISOR_sched_op,
 	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_crash)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#endif
 
     return ret;
 }
@@ -394,9 +417,20 @@ HYPERVISOR_reboot(void)
     long ret;
     unsigned long ign1, ign2;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_reboot
+    };
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#else
     _hypercall(__HYPERVISOR_sched_op,
 	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_reboot)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+#endif
 
     return ret;
 }
@@ -407,9 +441,20 @@ HYPERVISOR_suspend(unsigned long srec)
     long ret;
     unsigned long ign1, ign2, ign3;
 
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+
+    struct sched_shutdown shutdown_reason = {
+	    .reason = SHUTDOWN_suspend
+    };
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2"  (&shutdown_reason), "3" (srec)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
+#else
     _hypercall(__HYPERVISOR_sched_op,
 	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_suspend), "3" (srec)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
+#endif
 
     return ret;
 }
