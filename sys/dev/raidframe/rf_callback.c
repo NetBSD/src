@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.22 2009/03/15 17:17:23 cegger Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.23 2019/02/10 17:13:33 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.22 2009/03/15 17:17:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.23 2019/02/10 17:13:33 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -71,10 +71,7 @@ rf_ConfigureCallback(RF_ShutdownList_t **listp)
 RF_CallbackDesc_t *
 rf_AllocCallbackDesc(void)
 {
-	RF_CallbackDesc_t *p;
-
-	p = pool_get(&rf_pools.callback, PR_WAITOK);
-	return (p);
+	return pool_get(&rf_pools.callback, PR_WAITOK);
 }
 
 void

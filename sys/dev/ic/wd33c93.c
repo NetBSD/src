@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.27 2018/02/08 09:05:19 dholland Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.28 2019/02/10 17:13:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.27 2018/02/08 09:05:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.28 2019/02/10 17:13:33 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -570,7 +570,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 			panic("wd33c93_scsicmd: busy");
 
 		s = splbio();
-		acb = (struct wd33c93_acb *)pool_get(&wd33c93_pool, PR_NOWAIT);
+		acb = pool_get(&wd33c93_pool, PR_NOWAIT);
 		splx(s);
 
 		if (acb == NULL) {

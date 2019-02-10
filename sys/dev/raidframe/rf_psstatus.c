@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.35 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.36 2019/02/10 17:13:33 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.35 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.36 2019/02/10 17:13:33 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -267,11 +267,7 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 RF_ReconParityStripeStatus_t *
 rf_AllocPSStatus(RF_Raid_t *raidPtr)
 {
-	RF_ReconParityStripeStatus_t *p;
-
-	p = pool_get(&rf_pools.pss, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
-	return (p);
+	return pool_get(&rf_pools.pss, PR_WAITOK | PR_ZERO);
 }
 
 void
