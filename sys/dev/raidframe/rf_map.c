@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.48 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.49 2019/02/10 17:13:33 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.48 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.49 2019/02/10 17:13:33 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -376,12 +376,7 @@ rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 RF_AccessStripeMapHeader_t *
 rf_AllocAccessStripeMapHeader(void)
 {
-	RF_AccessStripeMapHeader_t *p;
-
-	p = pool_get(&rf_pools.asm_hdr, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
-
-	return (p);
+	return pool_get(&rf_pools.asm_hdr, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -394,12 +389,7 @@ rf_FreeAccessStripeMapHeader(RF_AccessStripeMapHeader_t *p)
 RF_VoidFunctionPointerListElem_t *
 rf_AllocVFPListElem(void)
 {
-	RF_VoidFunctionPointerListElem_t *p;
-
-	p = pool_get(&rf_pools.vfple, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
-
-	return (p);
+	return pool_get(&rf_pools.vfple, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -413,12 +403,7 @@ rf_FreeVFPListElem(RF_VoidFunctionPointerListElem_t *p)
 RF_VoidPointerListElem_t *
 rf_AllocVPListElem(void)
 {
-	RF_VoidPointerListElem_t *p;
-
-	p = pool_get(&rf_pools.vple, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
-
-	return (p);
+	return pool_get(&rf_pools.vple, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -431,12 +416,7 @@ rf_FreeVPListElem(RF_VoidPointerListElem_t *p)
 RF_ASMHeaderListElem_t *
 rf_AllocASMHeaderListElem(void)
 {
-	RF_ASMHeaderListElem_t *p;
-
-	p = pool_get(&rf_pools.asmhle, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
-
-	return (p);
+	return pool_get(&rf_pools.asmhle, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -449,12 +429,7 @@ rf_FreeASMHeaderListElem(RF_ASMHeaderListElem_t *p)
 RF_FailedStripe_t *
 rf_AllocFailedStripeStruct(void)
 {
-	RF_FailedStripe_t *p;
-
-	p = pool_get(&rf_pools.fss, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
-
-	return (p);
+	return pool_get(&rf_pools.fss, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -470,12 +445,7 @@ rf_FreeFailedStripeStruct(RF_FailedStripe_t *p)
 RF_PhysDiskAddr_t *
 rf_AllocPhysDiskAddr(void)
 {
-	RF_PhysDiskAddr_t *p;
-
-	p = pool_get(&rf_pools.pda, PR_WAITOK);
-	memset(p, 0, sizeof(*p));
-
-	return (p);
+	return pool_get(&rf_pools.pda, PR_WAITOK | PR_ZERO);
 }
 /* allocates a list of PDAs, locking the free list only once when we
  * have to call calloc, we do it one component at a time to simplify
