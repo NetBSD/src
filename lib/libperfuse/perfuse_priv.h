@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.36 2014/10/31 15:12:15 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.36.8.1 2019/02/10 13:40:41 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -93,7 +93,6 @@ struct perfuse_state {
 	struct perfuse_node_hashlist *ps_nidhash;
 	int ps_nnidhash;
 	int ps_nodecount;
-	int ps_nodeleakcount;
 	int ps_xchgcount;
 };
 
@@ -145,7 +144,6 @@ struct perfuse_node_data {
 #define PND_REMOVED		0x020	/* Node was removed */
 #define PND_INWRITE		0x040	/* write in progress */
 #define PND_INOPEN		0x100	/* open in progress */
-#define PND_NODELEAK		0x200	/* node reclaim ignored */
 #define PND_INVALID		0x400	/* node freed, usage is a bug */
 #define PND_INRESIZE		0x800	/* resize in progress */
 
@@ -247,6 +245,7 @@ int perfuse_node_readdir(struct puffs_usermount *,
 int perfuse_node_readlink(struct puffs_usermount *,
     puffs_cookie_t, const struct puffs_cred *, char *, size_t *);
 int perfuse_node_reclaim(struct puffs_usermount *, puffs_cookie_t);
+int perfuse_node_reclaim2(struct puffs_usermount *, puffs_cookie_t, int);
 int perfuse_node_inactive(struct puffs_usermount *, puffs_cookie_t);
 int perfuse_node_print(struct puffs_usermount *, puffs_cookie_t);
 int perfuse_node_pathconf(struct puffs_usermount *,
