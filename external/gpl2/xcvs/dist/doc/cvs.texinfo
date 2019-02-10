@@ -4,14 +4,14 @@
 @macro copyleftnotice
 @noindent
 Copyright @copyright{} 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-                       2001, 2002, 2003, 2004, 2005
+                       2001, 2002, 2003, 2004, 2005, 2006
                        Free Software Foundation, Inc.
 
 @multitable @columnfractions .12 .88
 @item Portions
-@item @tab Copyright @copyright{} 1999, 2000, 2001, 2002, 2003, 2004, 2005
-                                  Derek R. Price,
-@item @tab Copyright @copyright{} 2002, 2003, 2004, 2005
+@item @tab Copyright @copyright{} 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+				  2006 Derek R. Price,
+@item @tab Copyright @copyright{} 2002, 2003, 2004, 2005, 2006
                                   Ximbiot @url{http://ximbiot.com},
 @item @tab Copyright @copyright{} 1992, 1993, 1999 Signum Support AB,
 @item @tab and Copyright @copyright{} others.
@@ -8117,6 +8117,7 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * Global options::              Options you give to the left of cvs_command
 * Common options::              Options you give to the right of cvs_command
 * Date input formats::		Acceptable formats for date specifications
+* add::                         Add files and directories to the repository
 * admin::                       Administration
 * annotate::                    What revision modified each line of a file?
 * checkout::                    Checkout sources for editing
@@ -8129,6 +8130,7 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * ls & rls::                    List files in the repository
 * rdiff::                       'patch' format diffs between releases
 * release::                     Indicate that a directory is no longer in use
+* remove::                      Remove files from active development
 * server & pserver::            Act as a server for a client on stdin/stdout
 * update::                      Bring work tree in sync with repository
 @end menu
@@ -8762,6 +8764,98 @@ and @code{update}.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @include getdate-cvs.texi
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node add
+@appendixsec add---Add files and directories to the repository
+@cindex add (subcommand)
+
+@itemize @bullet
+@item
+Synopsis: add [-k rcs-kflag] [-m message] files...
+@item
+Requires: repository, working directory.
+@item
+Changes: repository, working directory.
+@end itemize
+
+The @code{add} command is used to present new files
+and directories for addition into the @sc{cvs}
+repository.  When @code{add} is used on a directory,
+a new directory is created in the repository
+immediately.  When used on a file, only the working
+directory is updated.  Changes to the repository are
+not made until the @code{commit} command is used on
+the newly added file. 
+
+The @code{add} command also resurrects files that
+have been previously removed.  This can be done
+before or after the @code{commit} command is used
+to finalize the removal of files.  Resurrected files
+are restored into the working directory at the time
+the @code{add} command is executed.
+
+@menu
+* add options::             add options
+* add examples::            add examples
+@end menu
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node add options
+@appendixsubsec add options
+
+These standard options are supported by @code{add}
+(@pxref{Common options}, for a complete description of
+them):
+
+@table @code
+@item -k @var{kflag}
+Process keywords according to @var{kflag}.  See
+@ref{Keyword substitution}.
+This option is sticky; future updates of
+this file in this working directory will use the same
+@var{kflag}.  The @code{status} command can be viewed
+to see the sticky options.  For more information on
+the @code{status} command, @xref{Invoking CVS}.
+
+@item -m @var{message}
+Use @var{message} as the log message, instead of
+invoking an editor.
+@end table
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node add examples
+@appendixsubsec add examples
+
+@appendixsubsubsec Adding a directory
+
+@example
+$ mkdir doc
+$ cvs add doc
+Directory /path/to/repository/doc added to the repository
+@end example
+
+@appendixsubsubsec Adding a file
+
+@example
+
+$ >TODO
+$ cvs add TODO
+cvs add: scheduling file `TODO' for addition
+cvs add: use 'cvs commit' to add this file permanently
+@end example
+
+@appendixsubsubsec Undoing a @code{remove} command
+
+@example
+$ rm -f makefile
+$ cvs remove makefile
+cvs remove: scheduling `makefile' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+$ cvs add makefile
+U makefile
+cvs add: makefile, version 1.2, resurrected
+@end example
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node admin
@@ -11348,6 +11442,112 @@ $ cvs release -d tc
 You have [0] altered files in this repository.
 Are you sure you want to release (and delete) directory `tc': y
 $
+@end example
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node remove
+@appendixsec remove---Remove files from active use
+@cindex remove (subcommand)
+
+@itemize @bullet
+@item
+Synopsis: remove [-flR] [files...]
+@item
+Requires: repository, working directory.
+@item
+Changes: working directory.
+@end itemize
+
+The @code{remove} command is used to remove unwanted
+files from active use.  The user normally deletes the
+files from the working directory prior to invocation
+of the @code{remove} command.  Only the working
+directory is updated.  Changes to the repository are
+not made until the @code{commit} command is run.
+
+The @code{remove} command does not delete files from
+from the repository.  @sc{cvs} keeps all historical
+data in the repository so that it is possible to
+reconstruct previous states of the projects under
+revision control.
+
+To undo @sc{cvs} @code{remove} or to resurrect files
+that were previously removed, @xref{add}.
+
+@menu
+* remove options::             remove options
+* remove examples::            remove examples
+@end menu
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node remove options
+@appendixsubsec remove options
+
+These standard options are supported by @code{remove}
+(@pxref{Common options} for a complete description of
+them):
+
+@table @code
+@item -l
+Local; run only in current working directory.  See @ref{Recursive behavior}.
+
+@item -R
+Process directories recursively.  See @ref{Recursive behavior}.
+
+@end table
+
+In addition, these options are also supported:
+
+@table @code
+@item -f
+Note that this is not the standard behavior of
+the @samp{-f} option as defined in @ref{Common options}.
+
+Delete files before removing them.
+
+Entire directory hierarchies are easily removed
+using @samp{-f}, but take note that it is not as
+easy to resurrect directory hierarchies as it is
+to remove them.
+
+@end table
+
+@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+@node remove examples
+@appendixsubsec remove examples
+
+@appendixsubsubsec Removing a file
+
+@example
+$ cvs remove remove.me
+cvs remove: file `remove.me' still in working directory
+cvs remove: 1 file exists; remove it first
+$ rm -f remove.me
+$ cvs remove remove.me
+cvs remove: scheduling `remove.me' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+
+$ ls remove.it
+remove.it
+$ cvs remove -f remove.it
+cvs remove: scheduling `remove.it' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+@end example
+
+@appendixsubsubsec Removing entire directories
+@example
+$ tree -d a
+a
+|-- CVS
+`-- b
+    `-- CVS
+
+3 directories
+$ cvs remove -f a
+cvs remove: Removing a
+cvs remove: Removing a/b
+cvs remove: scheduling `a/b/c' for removal
+cvs remove: use 'cvs commit' to remove this file permanently
 @end example
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
