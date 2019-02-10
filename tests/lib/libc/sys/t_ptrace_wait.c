@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.76 2019/02/09 23:03:01 scole Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.77 2019/02/10 02:04:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.76 2019/02/09 23:03:01 scole Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.77 2019/02/10 02:04:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.76 2019/02/09 23:03:01 scole Exp $");
 #include <err.h>
 #include <errno.h>
 #include <lwp.h>
+#include <pthread.h>
 #include <sched.h>
 #include <signal.h>
 #include <stdint.h>
@@ -2920,22 +2921,23 @@ PTRACE_KILL(kill3, "killpg(SIGKILL)")
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(lwpinfo1);
-ATF_TC_HEAD(lwpinfo1, tc)
+static void
+traceme_lwpinfo(const int threads)
 {
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify basic LWPINFO call for single thread (PT_TRACE_ME)");
-}
-
-ATF_TC_BODY(lwpinfo1, tc)
-{
-	const int exitval = 5;
 	const int sigval = SIGSTOP;
+	const int sigval2 = SIGINT;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	struct ptrace_lwpinfo info = {0, 0};
+	struct ptrace_lwpinfo lwp = {0, 0};
+	struct ptrace_siginfo info;
+
+	/* Maximum number of supported threads in this test */
+	pthread_t t[3];
+	int n, rv;
+
+	ATF_REQUIRE((int)__arraycount(t) >= threads);
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -2946,8 +2948,16 @@ ATF_TC_BODY(lwpinfo1, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		for (n = 0; n < threads; n++) {
+			rv = pthread_create(&t[n], NULL, infinite_thread, NULL);
+			FORKEE_ASSERT(rv == 0);
+		}
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval2));
+		FORKEE_ASSERT(raise(sigval2) == 0);
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "Not reached");
 	}
 	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
@@ -2956,23 +2966,33 @@ ATF_TC_BODY(lwpinfo1, tc)
 
 	validate_status_stopped(status, sigval);
 
-	DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
-	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	DPRINTF("Assert that there exists a thread\n");
-	ATF_REQUIRE(info.pl_lwpid > 0);
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+	DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &lwp, sizeof(lwp)) != -1);
+
+	DPRINTF("Assert that there exists a single thread only\n");
+	ATF_REQUIRE(lwp.pl_lwpid > 0);
 
 	DPRINTF("Assert that lwp thread %d received event PL_EVENT_SIGNAL\n",
-	    info.pl_lwpid);
-	ATF_REQUIRE_EQ_MSG(info.pl_event, PL_EVENT_SIGNAL,
-	    "Received event %d != expected event %d",
-	    info.pl_event, PL_EVENT_SIGNAL);
+	    lwp.pl_lwpid);
+	FORKEE_ASSERT_EQ(lwp.pl_event, PL_EVENT_SIGNAL);
 
 	DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
-	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &info, sizeof(info)) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &lwp, sizeof(lwp)) != -1);
 
-	DPRINTF("Assert that there are no more lwp threads in child\n");
-	ATF_REQUIRE_EQ(info.pl_lwpid, 0);
+	DPRINTF("Assert that there exists a single thread only\n");
+	ATF_REQUIRE_EQ(lwp.pl_lwpid, 0);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -2981,44 +3001,118 @@ ATF_TC_BODY(lwpinfo1, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_exited(status, exitval);
+	validate_status_stopped(status, sigval2);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval2);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+	memset(&lwp, 0, sizeof(lwp));
+
+	for (n = 0; n <= threads; n++) {
+		DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
+		SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &lwp, sizeof(lwp)) != -1);
+		DPRINTF("LWP=%d\n", lwp.pl_lwpid);
+
+		DPRINTF("Assert that the thread exists\n");
+		ATF_REQUIRE(lwp.pl_lwpid > 0);
+
+		DPRINTF("Assert that lwp thread %d received expected event\n",
+		    lwp.pl_lwpid);
+		FORKEE_ASSERT_EQ(lwp.pl_event, info.psi_lwpid == lwp.pl_lwpid ?
+		    PL_EVENT_SIGNAL : PL_EVENT_NONE);
+	}
+	DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &lwp, sizeof(lwp)) != -1);
+	DPRINTF("LWP=%d\n", lwp.pl_lwpid);
+
+	DPRINTF("Assert that there are no more threads\n");
+	ATF_REQUIRE_EQ(lwp.pl_lwpid, 0);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, SIGKILL) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_signaled(status, SIGKILL, 0);
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(lwpinfo2);
-ATF_TC_HEAD(lwpinfo2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify basic LWPINFO call for single thread (PT_ATTACH from "
-	    "tracer)");
+#define TRACEME_LWPINFO(test, threads)					\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify LWPINFO with the child with " #threads		\
+	    " spawned extra threads");					\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	traceme_lwpinfo(threads);					\
 }
 
-ATF_TC_BODY(lwpinfo2, tc)
+TRACEME_LWPINFO(traceme_lwpinfo0, 0)
+TRACEME_LWPINFO(traceme_lwpinfo1, 1)
+TRACEME_LWPINFO(traceme_lwpinfo2, 2)
+TRACEME_LWPINFO(traceme_lwpinfo3, 3)
+
+/// ----------------------------------------------------------------------------
+
+#if defined(TWAIT_HAVE_PID)
+static void
+attach_lwpinfo(const int threads)
 {
+	const int sigval = SIGINT;
 	struct msg_fds parent_tracee, parent_tracer;
-	const int exitval_tracee = 5;
 	const int exitval_tracer = 10;
 	pid_t tracee, tracer, wpid;
 	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	struct ptrace_lwpinfo info = {0, 0};
+	struct ptrace_lwpinfo lwp = {0, 0};
+	struct ptrace_siginfo info;
+
+	/* Maximum number of supported threads in this test */
+	pthread_t t[3];
+	int n, rv;
 
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
-
 		/* Wait for message from the parent */
 		CHILD_TO_PARENT("tracee ready", parent_tracee, msg);
-		CHILD_FROM_PARENT("tracee exit", parent_tracee, msg);
 
-		_exit(exitval_tracee);
+		CHILD_FROM_PARENT("spawn threads", parent_tracee, msg);
+
+		for (n = 0; n < threads; n++) {
+			rv = pthread_create(&t[n], NULL, infinite_thread, NULL);
+			FORKEE_ASSERT(rv == 0);
+		}
+
+		CHILD_TO_PARENT("tracee exit", parent_tracee, msg);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "Not reached");
 	}
 	PARENT_FROM_CHILD("tracee ready", parent_tracee, msg);
 
@@ -3035,37 +3129,106 @@ ATF_TC_BODY(lwpinfo2, tc)
 
 		forkee_status_stopped(status, SIGSTOP);
 
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
+		    "tracee");
+		FORKEE_ASSERT(
+		    ptrace(PT_GET_SIGINFO, tracee, &info, sizeof(info)) != -1);
+
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		    "si_errno=%#x\n",
+		    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+		    info.psi_siginfo.si_errno);
+
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_signo, SIGSTOP);
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, SI_USER);
+
 		DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
-		FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &info, sizeof(info))
+		FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &lwp, sizeof(lwp))
 		    != -1);
 
 		DPRINTF("Assert that there exists a thread\n");
-		FORKEE_ASSERTX(info.pl_lwpid > 0);
+		FORKEE_ASSERTX(lwp.pl_lwpid > 0);
 
 		DPRINTF("Assert that lwp thread %d received event "
-		    "PL_EVENT_SIGNAL\n", info.pl_lwpid);
-		FORKEE_ASSERT_EQ(info.pl_event, PL_EVENT_SIGNAL);
+		    "PL_EVENT_SIGNAL\n", lwp.pl_lwpid);
+		FORKEE_ASSERT_EQ(lwp.pl_event, PL_EVENT_SIGNAL);
 
-		DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
-		FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &info, sizeof(info))
+		DPRINTF("Before calling ptrace(2) with PT_LWPINFO for "
+		    "tracee\n");
+		FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &lwp, sizeof(lwp))
 		    != -1);
 
-		DPRINTF("Assert that there are no more lwp threads in child\n");
-		FORKEE_ASSERTX(info.pl_lwpid == 0);
+		DPRINTF("Assert that there are no more lwp threads in "
+		    "tracee\n");
+		FORKEE_ASSERT_EQ(lwp.pl_lwpid, 0);
 
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
 		/* Inform parent that tracer has attached to tracee */
 		CHILD_TO_PARENT("tracer ready", parent_tracer, msg);
+
 		/* Wait for parent */
 		CHILD_FROM_PARENT("tracer wait", parent_tracer, msg);
+
+		/* Wait for tracee and assert that it raised a signal */
+		FORKEE_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
+
+		forkee_status_stopped(status, SIGINT);
+
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
+		    "child");
+		FORKEE_ASSERT(
+		    ptrace(PT_GET_SIGINFO, tracee, &info, sizeof(info)) != -1);
+
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		    "si_errno=%#x\n",
+		    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+		    info.psi_siginfo.si_errno);
+
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_signo, sigval);
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+		memset(&lwp, 0, sizeof(lwp));
+
+		for (n = 0; n <= threads; n++) {
+			DPRINTF("Before calling ptrace(2) with PT_LWPINFO for "
+			    "child\n");
+			FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &lwp,
+			    sizeof(lwp)) != -1);
+			DPRINTF("LWP=%d\n", lwp.pl_lwpid);
+
+			DPRINTF("Assert that the thread exists\n");
+			FORKEE_ASSERT(lwp.pl_lwpid > 0);
+
+			DPRINTF("Assert that lwp thread %d received expected "
+			    "event\n", lwp.pl_lwpid);
+			FORKEE_ASSERT_EQ(lwp.pl_event,
+			    info.psi_lwpid == lwp.pl_lwpid ?
+			    PL_EVENT_SIGNAL : PL_EVENT_NONE);
+		}
+		DPRINTF("Before calling ptrace(2) with PT_LWPINFO for "
+		    "tracee\n");
+		FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &lwp, sizeof(lwp))
+		    != -1);
+		DPRINTF("LWP=%d\n", lwp.pl_lwpid);
+
+		DPRINTF("Assert that there are no more threads\n");
+		FORKEE_ASSERT_EQ(lwp.pl_lwpid, 0);
+
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, SIGKILL)
+		    != -1);
 
 		/* Wait for tracee and assert that it exited */
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		forkee_status_exited(status, exitval_tracee);
+		forkee_status_signaled(status, SIGKILL, 0);
 
 		DPRINTF("Before exiting of the tracer process\n");
 		_exit(exitval_tracer);
@@ -3074,18 +3237,13 @@ ATF_TC_BODY(lwpinfo2, tc)
 	DPRINTF("Wait for the tracer to attach to the tracee\n");
 	PARENT_FROM_CHILD("tracer ready", parent_tracer, msg);
 
+	DPRINTF("Resume the tracee and spawn threads\n");
+	PARENT_TO_CHILD("spawn threads", parent_tracee, msg);
+
 	DPRINTF("Resume the tracee and let it exit\n");
-	PARENT_TO_CHILD("tracee exit", parent_tracee, msg);
+	PARENT_FROM_CHILD("tracee exit", parent_tracee, msg);
 
-	DPRINTF("Detect that tracee is zombie\n");
-	await_zombie(tracee);
-
-	DPRINTF("Assert that there is no status about tracee - "
-	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(
-	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
-
-	DPRINTF("Resume the tracer and let it detect exited tracee\n");
+	DPRINTF("Resume the tracer and let it detect multiple threads\n");
 	PARENT_TO_CHILD("tracer wait", parent_tracer, msg);
 
 	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
@@ -3100,12 +3258,35 @@ ATF_TC_BODY(lwpinfo2, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
 	    tracee);
 
-	validate_status_exited(status, exitval_tracee);
+	validate_status_signaled(status, SIGKILL, 0);
 
 	msg_close(&parent_tracer);
 	msg_close(&parent_tracee);
 }
+
+#define ATTACH_LWPINFO(test, threads)					\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify LWPINFO with the child with " #threads		\
+	    " spawned extra threads (tracer is not the original "	\
+	    "parent)");							\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	attach_lwpinfo(threads);					\
+}
+
+ATTACH_LWPINFO(attach_lwpinfo0, 0)
+ATTACH_LWPINFO(attach_lwpinfo1, 1)
+ATTACH_LWPINFO(attach_lwpinfo2, 2)
+ATTACH_LWPINFO(attach_lwpinfo3, 3)
 #endif
+
+/// ----------------------------------------------------------------------------
 
 ATF_TC(siginfo1);
 ATF_TC_HEAD(siginfo1, tc)
@@ -5495,8 +5676,15 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, kill2);
 	ATF_TP_ADD_TC(tp, kill3);
 
-	ATF_TP_ADD_TC(tp, lwpinfo1);
-	ATF_TP_ADD_TC_HAVE_PID(tp, lwpinfo2);
+	ATF_TP_ADD_TC(tp, traceme_lwpinfo0);
+	ATF_TP_ADD_TC(tp, traceme_lwpinfo1);
+	ATF_TP_ADD_TC(tp, traceme_lwpinfo2);
+	ATF_TP_ADD_TC(tp, traceme_lwpinfo3);
+
+	ATF_TP_ADD_TC_HAVE_PID(tp, attach_lwpinfo0);
+	ATF_TP_ADD_TC_HAVE_PID(tp, attach_lwpinfo1);
+	ATF_TP_ADD_TC_HAVE_PID(tp, attach_lwpinfo2);
+	ATF_TP_ADD_TC_HAVE_PID(tp, attach_lwpinfo3);
 
 	ATF_TP_ADD_TC(tp, siginfo1);
 	ATF_TP_ADD_TC(tp, siginfo2);
