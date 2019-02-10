@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.12 2012/07/21 05:49:42 manu Exp $ */
+/*  $NetBSD: debug.c,v 1.12.24.1 2019/02/10 13:40:41 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -270,7 +270,6 @@ perfuse_trace_dump(struct puffs_usermount *pu, FILE *fp)
 	fprintf(fp, "\n\nGlobal statistics\n");
 	fprintf(fp, "Nodes: %d\n", ps->ps_nodecount);
 	fprintf(fp, "Exchanges: %d\n", ps->ps_xchgcount);
-	fprintf(fp, "Nodes possibly leaked: %d\n", ps->ps_nodeleakcount);
 	
 	(void)fflush(fp);
 	return;
