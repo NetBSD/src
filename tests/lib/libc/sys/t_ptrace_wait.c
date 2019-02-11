@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.79 2019/02/11 04:13:28 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.80 2019/02/11 04:20:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.79 2019/02/11 04:13:28 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.80 2019/02/11 04:20:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3414,7 +3414,6 @@ PTRACE_SIGINFO(siginfo_set_faked, true)
 
 /// ----------------------------------------------------------------------------
 
-
 ATF_TC(siginfo4);
 ATF_TC_HEAD(siginfo4, tc)
 {
@@ -3473,171 +3472,6 @@ ATF_TC_BODY(siginfo4, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-
-#if defined(TWAIT_HAVE_PID)
-ATF_TC(siginfo5);
-ATF_TC_HEAD(siginfo5, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that fork(2) is intercepted by ptrace(2) with EVENT_MASK "
-	    "set to PTRACE_FORK and reports correct signal information");
-}
-
-ATF_TC_BODY(siginfo5, tc)
-{
-	const int exitval = 5;
-	const int exitval2 = 15;
-	const int sigval = SIGSTOP;
-	pid_t child, child2, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_state_t state;
-	const int slen = sizeof(state);
-	ptrace_event_t event;
-	const int elen = sizeof(event);
-	struct ptrace_siginfo info;
-
-	memset(&info, 0, sizeof(info));
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT((child2 = fork()) != -1);
-
-		if (child2 == 0)
-			_exit(exitval2);
-
-		FORKEE_REQUIRE_SUCCESS
-		    (wpid = TWAIT_GENERIC(child2, &status, 0), child2);
-
-		forkee_status_exited(status, exitval2);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	DPRINTF("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
-
-	DPRINTF("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_FORK;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-        DPRINTF("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
-               "pe_report_event=PTRACE_FORK, state.pe_other_pid=child2) and "
-               "for child2 (TRAP_CHLD, pe_report_event=PTRACE_FORK, "
-                "state.pe_other_pid=child)\n", child);
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	DPRINTF("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_CHLD);
-
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
-
-	child2 = state.pe_other_pid;
-	DPRINTF("Reported PTRACE_FORK event with forkee %d\n", child2);
-
-	DPRINTF("Before calling %s() for the forkee %d of the child %d\n",
-	    TWAIT_FNAME, child2, child);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	DPRINTF("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_CHLD);
-
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
-	ATF_REQUIRE_EQ(state.pe_other_pid, child);
-
-	DPRINTF("Before resuming the forkee process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the forkee - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
-	    child2);
-
-	validate_status_exited(status, exitval2);
-
-	DPRINTF("Before calling %s() for the forkee - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD,
-	    wpid = TWAIT_GENERIC(child2, &status, 0));
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGCHLD\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGCHLD);
-
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	DPRINTF("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGCHLD);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, CLD_EXITED);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
 
 #if defined(PT_STEP)
 ATF_TC(siginfo6);
@@ -5576,7 +5410,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, siginfo_set_faked);
 
 	ATF_TP_ADD_TC(tp, siginfo4);
-	ATF_TP_ADD_TC_HAVE_PID(tp, siginfo5);
 	ATF_TP_ADD_TC_PT_STEP(tp, siginfo6);
 
 	ATF_TP_ADD_TC(tp, lwp_create1);
