@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.48 2018/12/02 08:19:44 cherry Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.49 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.48 2018/12/02 08:19:44 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.49 2019/02/11 14:59:33 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -399,7 +399,7 @@ static const char *
 x86_pci_intx_create_intrid(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
     size_t len)
 {
-#if !defined(XEN)
+#if !defined(XENPV)
 	int pin, irq;
 	struct pic *pic;
 
@@ -417,7 +417,7 @@ x86_pci_intx_create_intrid(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf
 	return intr_create_intrid(irq, pic, pin, buf, len);
 #else
 	return pci_intr_string(pc, ih, buf, len);
-#endif /* !XEN */
+#endif /* !XENPV */
 }
 
 static void

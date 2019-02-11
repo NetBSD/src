@@ -1,7 +1,8 @@
-# $NetBSD: XEN3_DOMU,v 1.87 2018/08/14 06:04:24 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.88 2019/02/11 14:59:32 cherry Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
+options		XENPV		# PV domU support
 options 	MULTIPROCESSOR
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
@@ -10,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.87 $"
+#ident		"XEN3_DOMU-$Revision: 1.88 $"
 
 maxusers	32		# estimated number of users
 

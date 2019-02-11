@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.79 2018/12/25 06:50:11 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.80 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.79 2018/12/25 06:50:11 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.80 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -141,7 +141,7 @@ dtrace_invop_calltrap_addr:
 	.text
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
 /*
@@ -884,7 +884,7 @@ LABEL(x2apic_level_stubs)
 	.long _C_LABEL(Xresume_x2apic_level31)
 END(x2apic_level_stubs)
 #endif
-#endif /* XEN */
+#endif /* XENPV */
 
 #if defined(XEN)
 #define voidop(num)

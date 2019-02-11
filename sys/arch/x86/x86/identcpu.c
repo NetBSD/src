@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.86 2019/01/13 12:16:58 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.87 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.86 2019/01/13 12:16:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.87 2019/02/11 14:59:33 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -730,7 +730,7 @@ cpu_probe_vortex86(struct cpu_info *ci)
 static void
 cpu_probe_old_fpu(struct cpu_info *ci)
 {
-#if defined(__i386__) && !defined(XEN)
+#if defined(__i386__) && !defined(XENPV)
 
 	clts();
 	fninit();
@@ -744,7 +744,7 @@ cpu_probe_old_fpu(struct cpu_info *ci)
 #endif
 }
 
-#ifndef XEN
+#ifndef XENPV
 static void
 cpu_probe_fpu_leak(struct cpu_info *ci)
 {
@@ -793,7 +793,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
 
-#ifndef XEN
+#ifndef XENPV
 	cpu_probe_fpu_leak(ci);
 #endif
 
@@ -831,7 +831,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
 
-#ifdef XEN
+#ifdef XENPV
 	/*
 	 * Xen kernel can disable XSAVE via "no-xsave" option, in that case
 	 * XSAVE instructions like xrstor become privileged and trigger
@@ -1040,7 +1040,7 @@ cpu_identify(struct cpu_info *ci)
 		aprint_error("WARNING: BUGGY CYRIX CACHE\n");
 	}
 
-#if !defined(XEN) || defined(DOM0OPS)       /* on Xen rdmsr is for Dom0 only */
+#if !defined(XENPV) || defined(DOM0OPS)       /* on Xen PV rdmsr is for Dom0 only */
 	if (cpu_vendor == CPUVENDOR_AMD     /* check enablement of an */
 	    && device_unit(ci->ci_dev) == 0 /* AMD feature only once */
 	    && ((cpu_feature[3] & CPUID_SVM) == CPUID_SVM)) {

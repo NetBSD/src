@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.95 2019/02/01 11:35:13 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.96 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -528,7 +528,7 @@ vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_cpu_init_late(struct cpu_info *);
 bool	sse2_idlezero_page(void *);
 
-#ifdef XEN
+#ifdef XENPV
 #include <sys/bitops.h>
 
 #define XPTE_MASK	L1_FRAME
@@ -559,7 +559,7 @@ xpmap_ptetomach(pt_entry_t *pte)
 
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
-#endif	/* XEN */
+#endif	/* XENPV */
 
 /* pmap functions with machine addresses */
 void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);

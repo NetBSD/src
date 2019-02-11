@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.320 2019/02/02 12:32:55 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.321 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.320 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.321 2019/02/11 14:59:33 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -320,7 +320,7 @@ paddr_t lowmem_rsvd __read_mostly;
 paddr_t avail_start __read_mostly; /* PA of first available physical page */
 paddr_t avail_end __read_mostly; /* PA of last available physical page */
 
-#ifdef XEN
+#ifdef XENPV
 paddr_t pmap_pa_start; /* PA of first physical page for this domain */
 paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 #endif
@@ -399,7 +399,7 @@ static bool pmap_initialized __read_mostly = false; /* pmap_init done yet? */
 static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
 static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 
-#ifndef XEN
+#ifndef XENPV
 /*
  * LAPIC virtual address, and fake physical address.
  */
@@ -428,7 +428,7 @@ vaddr_t pmap_direct_end __read_mostly;
  */
 static pt_entry_t *early_zero_pte;
 static void pmap_vpage_cpualloc(struct cpu_info *);
-#ifdef XEN
+#ifdef XENPV
 char *early_zerop; /* also referenced from xen_locore() */
 #else
 static char *early_zerop;
@@ -475,10 +475,10 @@ static void pmap_init_pcpu(void);
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
-#if !defined(XEN)
+#if !defined(XENPV)
 static void pmap_remap_global(void);
 #endif
-#ifndef XEN
+#ifndef XENPV
 static void pmap_init_lapic(void);
 static void pmap_remap_largepages(void);
 #endif
@@ -684,7 +684,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
 	*pmap2 = curpmap;
 	*ptepp = PTE_BASE;
 
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] == L4_BASE);
 	ci->ci_normal_pdes[PTP_LEVELS - 2] = pmap->pm_pdir;
 	*pdeppp = ci->ci_normal_pdes;
@@ -711,7 +711,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 
 	ci = curcpu();
 
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] != L4_BASE);
 	ci->ci_normal_pdes[PTP_LEVELS - 2] = L4_BASE;
 #endif
@@ -1122,7 +1122,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * operation of the system.
 	 */
 
-#if !defined(XEN)
+#if !defined(XENPV)
 	/*
 	 * Begin to enable global TLB entries if they are supported.
 	 * The G bit has no effect until the CR4_PGE bit is set in CR4,
@@ -1137,7 +1137,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 	/*
 	 * Enable large pages if they are supported.
 	 */
@@ -1156,7 +1156,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		pmap_remap_largepages();
 	}
 	pmap_init_lapic();
-#endif /* !XEN */
+#endif /* !XENPV */
 
 #ifdef __HAVE_PCPU_AREA
 	pmap_init_pcpu();
@@ -1178,7 +1178,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * when it's called for the first time.
 		 * XXXfvdl fix this for MULTIPROCESSOR later.
 		 */
-#ifdef XEN
+#ifdef XENPV
 		/* early_zerop initialized in xen_locore() */
 #else
 		early_zerop = (void *)bootspace.spareva;
@@ -1187,7 +1187,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 #endif
 
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 	extern vaddr_t xen_dummy_page;
 	paddr_t xen_dummy_user_pgd;
 
@@ -1263,7 +1263,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	pmap_maxkvaddr = kva;
 }
 
-#ifndef XEN
+#ifndef XENPV
 static void
 pmap_init_lapic(void)
 {
@@ -1585,7 +1585,7 @@ pmap_init_directmap(struct pmap *kpm)
 }
 #endif /* __HAVE_DIRECT_MAP */
 
-#if !defined(XEN)
+#if !defined(XENPV)
 /*
  * Remap all of the virtual pages created so far with the PG_G bit.
  */
@@ -1630,7 +1630,7 @@ pmap_remap_global(void)
 }
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 /*
  * Remap several kernel segments with large pages. We cover as many pages as we
  * can. Called only once at boot time, if the CPU supports large pages.
@@ -1700,7 +1700,7 @@ pmap_remap_largepages(void)
 		}
 	}
 }
-#endif /* !XEN */
+#endif /* !XENPV */
 
 /*
  * pmap_init: called from uvm_init, our job is to get the pmap system ready
@@ -1725,7 +1725,7 @@ pmap_init(void)
 	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
 	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
 
-#ifdef XEN
+#ifdef XENPV
 	/*
 	 * pool_cache(9) should not touch cached objects, since they
 	 * are pinned on xen and R/O for the domU
@@ -1764,7 +1764,7 @@ pmap_init(void)
 	pmap_initialized = true;
 }
 
-#ifndef XEN
+#ifndef XENPV
 /*
  * pmap_cpu_init_late: perform late per-CPU initialization.
  */
@@ -2046,7 +2046,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		 * On Xen-amd64 or SVS, we need to sync the top level page
 		 * directory on each CPU.
 		 */
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 		if (level == PTP_LEVELS - 1) {
 			xen_kpm_sync(pmap, index);
 		}
@@ -2061,7 +2061,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		pmap_tlb_shootdown(pmap, invaladdr + index * PAGE_SIZE,
 		    opde, TLBSHOOT_FREE_PTP1);
 
-#if defined(XEN)
+#if defined(XENPV)
 		pmap_tlb_shootnow();
 #endif
 
@@ -2150,7 +2150,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 		 * On Xen-amd64 or SVS, we need to sync the top level page
 		 * directory on each CPU.
 		 */
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 		if (i == PTP_LEVELS) {
 			xen_kpm_sync(pmap, index);
 		}
@@ -2210,10 +2210,10 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	vaddr_t object;
 	int i;
 
-#if !defined(XEN) || !defined(__x86_64__)
+#if !defined(XENPV) || !defined(__x86_64__)
 	int npde;
 #endif
-#ifdef XEN
+#ifdef XENPV
 	int s;
 #endif
 
@@ -2223,7 +2223,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	 * NOTE: The `pmaps_lock' is held when the PDP is allocated.
 	 */
 
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 	/* Fetch the physical address of the page directory */
 	(void)pmap_extract(pmap_kernel(), (vaddr_t)pdir, &pdirpa);
 
@@ -2242,7 +2242,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	 */
 	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
 	     (pd_entry_t)-1 & PG_FRAME;
-#else /* XEN && __x86_64__*/
+#else /* XENPV && __x86_64__*/
 	object = (vaddr_t)v;
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* Fetch the physical address of the page directory */
@@ -2251,7 +2251,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		/* Put in recursive PDE to map the PTEs */
 		pdir[PDIR_SLOT_PTE + i] = pmap_pa2pte(pdirpa) | PG_V |
 		    pmap_pg_nx;
-#ifndef XEN
+#ifndef XENPV
 		pdir[PDIR_SLOT_PTE + i] |= PG_KW;
 #endif
 	}
@@ -2276,9 +2276,9 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #ifdef KASAN
 	slotspace_copy(SLAREA_ASAN, pdir, PDP_BASE);
 #endif
-#endif /* XEN  && __x86_64__*/
+#endif /* XENPV  && __x86_64__*/
 
-#ifdef XEN
+#ifdef XENPV
 	s = splvm();
 	object = (vaddr_t)v;
 	pmap_protect(pmap_kernel(), object, object + (PAGE_SIZE * PDP_SIZE),
@@ -2307,7 +2307,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 #endif
 	splx(s);
-#endif /* XEN */
+#endif /* XENPV */
 
 	return 0;
 }
@@ -2318,7 +2318,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 static void
 pmap_pdp_dtor(void *arg, void *v)
 {
-#ifdef XEN
+#ifdef XENPV
 	paddr_t pdirpa = 0;	/* XXX: GCC */
 	vaddr_t object = (vaddr_t)v;
 	int i;
@@ -2339,7 +2339,7 @@ pmap_pdp_dtor(void *arg, void *v)
 		xen_bcast_invlpg((vaddr_t)object);
 	}
 	splx(s);
-#endif  /* XEN */
+#endif  /* XENPV */
 }
 
 #ifdef PAE
@@ -2400,7 +2400,7 @@ pmap_create(void)
 
 	kcpuset_create(&pmap->pm_cpus, true);
 	kcpuset_create(&pmap->pm_kernel_cpus, true);
-#ifdef XEN
+#ifdef XENPV
 	kcpuset_create(&pmap->pm_xen_ptp_cpus, true);
 #endif
 	/* init the LDT */
@@ -2473,7 +2473,7 @@ pmap_check_inuse(struct pmap *pmap)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_pmap == pmap)
 			panic("destroying pmap being used");
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 		for (int i = 0; i < PDIR_SLOT_USERLIM; i++) {
 			if (pmap->pm_pdir[i] != 0 &&
 			    ci->ci_kpm_pdir[i] == pmap->pm_pdir[i]) {
@@ -2577,7 +2577,7 @@ pmap_destroy(struct pmap *pmap)
 	}
 	kcpuset_destroy(pmap->pm_cpus);
 	kcpuset_destroy(pmap->pm_kernel_cpus);
-#ifdef XEN
+#ifdef XENPV
 	kcpuset_destroy(pmap->pm_xen_ptp_cpus);
 #endif
 
@@ -2792,14 +2792,14 @@ pmap_activate(struct lwp *l)
 	ci->ci_want_pmapload = 1;
 }
 
-#if defined(XEN) && defined(__x86_64__)
+#if defined(XENPV) && defined(__x86_64__)
 #define	KASSERT_PDIRPA(pmap) \
 	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd || \
 	    pmap == pmap_kernel())
 #elif defined(PAE)
 #define	KASSERT_PDIRPA(pmap) \
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]))
-#elif !defined(XEN)
+#elif !defined(XENPV)
 #define	KASSERT_PDIRPA(pmap) \
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()))
 #else
@@ -2879,7 +2879,7 @@ pmap_load(void)
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_HIGH);
-#ifdef XEN
+#ifdef XENPV
 	/* Check to see if interrupts are enabled (ie; no events are masked) */
 	KASSERT(x86_read_psl() == 0);
 #else
@@ -2934,7 +2934,7 @@ pmap_load(void)
 #endif
 
 #ifdef i386
-#ifndef XEN
+#ifndef XENPV
 	ci->ci_tss->tss.tss_ldt = pmap->pm_ldt_sel;
 	ci->ci_tss->tss.tss_cr3 = pcb->pcb_cr3;
 #endif
@@ -3134,7 +3134,7 @@ vtophys(vaddr_t va)
 
 __strict_weak_alias(pmap_extract_ma, pmap_extract);
 
-#ifdef XEN
+#ifdef XENPV
 /*
  * vtomach: virtual address to machine address.  For use by
  * machine-dependent code only.
@@ -3167,7 +3167,7 @@ pmap_zero_page(paddr_t pa)
 #if defined(__HAVE_DIRECT_MAP)
 	pagezero(PMAP_DIRECT_MAP(pa));
 #else
-#if defined(XEN)
+#if defined(XENPV)
 	if (XEN_VERSION_SUPPORTED(3, 4))
 		xen_pagezero(pa);
 #endif
@@ -3191,7 +3191,7 @@ pmap_zero_page(paddr_t pa)
 
 	memset((void *)zerova, 0, PAGE_SIZE);
 
-#if defined(DIAGNOSTIC) || defined(XEN)
+#if defined(DIAGNOSTIC) || defined(XENPV)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
@@ -3232,7 +3232,7 @@ pmap_pageidlezero(paddr_t pa)
 
 	rv = sse2_idlezero_page((void *)zerova);
 
-#if defined(DIAGNOSTIC) || defined(XEN)
+#if defined(DIAGNOSTIC) || defined(XENPV)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
@@ -3250,7 +3250,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 
 	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 #else
-#if defined(XEN)
+#if defined(XENPV)
 	if (XEN_VERSION_SUPPORTED(3, 4)) {
 		xen_copy_page(srcpa, dstpa);
 		return;
@@ -3280,7 +3280,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 
 	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 
-#if defined(DIAGNOSTIC) || defined(XEN)
+#if defined(DIAGNOSTIC) || defined(XENPV)
 	pmap_pte_set(srcpte, 0);
 	pmap_pte_set(dstpte, 0);
 	pmap_pte_flush();
@@ -3302,7 +3302,7 @@ pmap_map_ptp(struct vm_page *ptp)
 
 	KASSERT(kpreempt_disabled());
 
-#ifndef XEN
+#ifndef XENPV
 	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U | PG_M;
 #else
 	const pd_entry_t pteflags = PG_V | pmap_pg_nx | PG_U | PG_M;
@@ -3325,7 +3325,7 @@ static void
 pmap_unmap_ptp(void)
 {
 #ifndef __HAVE_DIRECT_MAP
-#if defined(DIAGNOSTIC) || defined(XEN)
+#if defined(DIAGNOSTIC) || defined(XENPV)
 	struct cpu_info *ci;
 	pt_entry_t *pte;
 
@@ -4164,7 +4164,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	    pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]),
 	    "%s: missing kernel PTP for va=%#" PRIxVADDR, __func__, va);
 
-#ifdef XEN
+#ifdef XENPV
 	KASSERT(domid == DOMID_SELF || pa == 0);
 #endif
 
@@ -4185,7 +4185,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		}
 	}
 
-#ifdef XEN
+#ifdef XENPV
 	if (domid != DOMID_SELF)
 		new_pg = NULL;
 	else
@@ -4267,7 +4267,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		if (((opte ^ npte) & (PG_FRAME | PG_V)) == 0) {
 			npte |= opte & (PG_U | PG_M);
 		}
-#if defined(XEN)
+#if defined(XENPV)
 		if (domid != DOMID_SELF) {
 			/* pmap_pte_cas with error handling */
 			int s = splvm();
@@ -4287,7 +4287,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 			}
 			break;
 		}
-#endif /* defined(XEN) */
+#endif /* defined(XENPV) */
 	} while (pmap_pte_cas(ptep, opte, npte) != opte);
 
 	/*
@@ -4379,7 +4379,7 @@ pmap_get_physpage(void)
 #if defined(__HAVE_DIRECT_MAP)
 		pagezero(PMAP_DIRECT_MAP(pa));
 #else
-#if defined(XEN)
+#if defined(XENPV)
 		if (XEN_VERSION_SUPPORTED(3, 4)) {
 			xen_pagezero(pa);
 			return pa;
@@ -4391,7 +4391,7 @@ pmap_get_physpage(void)
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
-#if defined(DIAGNOSTIC) || defined(XEN)
+#if defined(DIAGNOSTIC) || defined(XENPV)
 		pmap_pte_set(early_zero_pte, 0);
 		pmap_pte_flush();
 #endif /* defined(DIAGNOSTIC) */
@@ -4428,7 +4428,7 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 	unsigned long index, endindex;
 	int level;
 	pd_entry_t *pdep;
-#ifdef XEN
+#ifdef XENPV
 	int s = splvm(); /* protect xpq_* */
 #endif
 
@@ -4448,7 +4448,7 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 			pte = pmap_pa2pte(pa) | PG_V | PG_RW;
 			pmap_pte_set(&pdep[i], pte);
 
-#ifdef XEN
+#ifdef XENPV
 			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
 				if (__predict_true(
 				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
@@ -4477,7 +4477,7 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 		}
 		pmap_pte_flush();
 	}
-#ifdef XEN
+#ifdef XENPV
 	splx(s);
 #endif
 }
@@ -4493,7 +4493,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *kpm = pmap_kernel();
 	struct pmap *cpm;
-#if !defined(XEN) || !defined(__x86_64__)
+#if !defined(XENPV) || !defined(__x86_64__)
 	struct pmap *pm;
 	long old;
 #endif
@@ -4511,7 +4511,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	}
 
 	maxkvaddr = x86_round_pdr(maxkvaddr);
-#if !defined(XEN) || !defined(__x86_64__)
+#if !defined(XENPV) || !defined(__x86_64__)
 	old = nkptp[PTP_LEVELS - 1];
 #endif
 
@@ -4526,7 +4526,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
 
-#ifdef XEN
+#ifdef XENPV
 	/* only pmap_kernel(), or the per-cpu map, has kernel entries */
 	cpm = kpm;
 #else
@@ -4549,7 +4549,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * If the number of top level entries changed, update all pmaps.
 	 */
 	if (needed_kptp[PTP_LEVELS - 1] != 0) {
-#ifdef XEN
+#ifdef XENPV
 #ifdef __x86_64__
 		/* nothing, kernel entries are never entered in user pmap */
 #else
@@ -4567,7 +4567,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		}
 		mutex_exit(&pmaps_lock);
 #endif /* __x86_64__ */
-#else /* XEN */
+#else /* XENPV */
 		size_t newpdes;
 		newpdes = nkptp[PTP_LEVELS - 1] - old;
 		if (cpm != kpm) {

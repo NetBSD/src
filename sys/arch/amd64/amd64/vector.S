@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.65 2018/12/25 06:50:11 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.66 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ IDTVEC_END(intr_lapic_ltimer)
 
 #endif /* NLAPIC > 0 */
 
-#ifndef XEN
+#ifndef XENPV
 /*
  * TLB shootdown handler.
  */
@@ -298,11 +298,11 @@ IDTVEC(intr_x2apic_tlb)
 IDTVEC_END(intr_x2apic_tlb)
 	TEXT_USER_END
 
-#endif /* !XEN */
+#endif /* !XENPV */
 
 #define voidop(num)
 
-#ifndef XEN
+#ifndef XENPV
 
 /*
  * This macro defines the generic stub code. Its arguments modify it
@@ -643,7 +643,7 @@ INTRSTUB_ARRAY_32(x2apic_edge)
 INTRSTUB_ARRAY_32(x2apic_level)
 #endif
 
-#endif /* !defined(XEN) */
+#endif /* !defined(XENPV) */
 
 #if defined(XEN)
 /* Resume/recurse procedures for spl() */

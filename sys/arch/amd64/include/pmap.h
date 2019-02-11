@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.58 2018/11/19 20:44:51 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.59 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -79,7 +79,7 @@
 #endif
 
 #include <uvm/uvm_object.h>
-#ifdef XEN
+#ifdef XENPV
 #include <xen/xenfunc.h>
 #include <xen/xenpmap.h>
 #endif
@@ -99,7 +99,7 @@
 
 #define NL4_SLOT_DIRECT		32
 
-#ifndef XEN
+#ifndef XENPV
 #define L4_SLOT_PTE		slotspace.area[SLAREA_PTE].sslot
 #else
 #define L4_SLOT_PTE		509
@@ -118,7 +118,7 @@
  * PDP_BASE: the base VA of the recursive mapping of the PTD
  */
 
-#ifndef XEN
+#ifndef XENPV
 extern pt_entry_t *pte_base;
 #define PTE_BASE	pte_base
 #else
@@ -180,7 +180,7 @@ extern bool svs_enabled;
 
 #include <x86/pmap.h>
 
-#ifndef XEN
+#ifndef XENPV
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PG_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)

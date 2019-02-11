@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.68 2018/01/04 20:38:31 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.69 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.68 2018/01/04 20:38:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.69 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -55,7 +55,7 @@ typedef struct {
 } gdt_bitmap_t;
 
 /* size of GDT in bytes */
-#ifdef XEN
+#ifdef XENPV
 const size_t gdt_size = FIRST_RESERVED_GDT_BYTE;
 #else
 const size_t gdt_size = MAXGDTSIZ;
@@ -64,7 +64,7 @@ const size_t gdt_size = MAXGDTSIZ;
 /* bitmap of busy slots */
 static gdt_bitmap_t gdt_bitmap;
 
-#ifndef XEN
+#ifndef XENPV
 static int ldt_count;	/* number of LDTs */
 static int ldt_max = 1000;/* max number of LDTs */
 static void setgdt(int, const void *, size_t, int, int, int, int);
@@ -76,7 +76,7 @@ void gdt_init(void);
 void
 update_descriptor(union descriptor *table, union descriptor *entry)
 {
-#ifndef XEN
+#ifndef XENPV
 	*table = *entry;
 #else
 	paddr_t pa;
@@ -89,7 +89,7 @@ update_descriptor(union descriptor *table, union descriptor *entry)
 #endif
 }
 
-#ifndef XEN
+#ifndef XENPV
 /*
  * Called on a newly-allocated GDT slot, so no race between CPUs.
  */
@@ -190,7 +190,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 void
 gdt_init_cpu(struct cpu_info *ci)
 {
-#ifndef XEN
+#ifndef XENPV
 	struct region_descriptor region;
 
 	setregion(&region, ci->ci_gdt, gdt_size - 1);
@@ -227,7 +227,7 @@ gdt_init_cpu(struct cpu_info *ci)
 #endif
 }
 
-#ifndef XEN
+#ifndef XENPV
 static int
 gdt_get_slot(void)
 {

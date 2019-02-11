@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.26 2018/06/17 15:46:39 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.27 2019/02/11 14:59:32 cherry Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -8,7 +8,7 @@
 #include "opt_xen.h"
 #endif
 
-#if !defined(XEN)
+#if !defined(XENPV)
 #define CLI(reg)	cli
 #define STI(reg)	sti
 #else

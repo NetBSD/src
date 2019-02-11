@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.35 2018/09/23 00:59:59 cherry Exp $	*/
+/*	$NetBSD: segments.h,v 1.36 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
  */
 
 #define ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
-#ifdef XEN
+#ifdef XENPV
 #define SEL_KPL		3		/* kernel privilege level */
 #define SEL_XPL		0		/* Xen Hypervisor privilege level */
 #else
@@ -107,7 +107,7 @@
 #define ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define SEL_LDT		4		/* local descriptor table */
 
-#ifdef XEN
+#ifdef XENPV
 #define IOPL_KPL	1
 #else
 #define IOPL_KPL	SEL_KPL
@@ -136,7 +136,7 @@
 #define LSEL(s,r)	((s) | r | SEL_LDT)
 
 #define USERMODE(c)		(ISPL(c) == SEL_UPL)
-#ifdef XEN
+#ifdef XENPV
 /*
  * As KPL == UPL, Xen emulate interrupt in kernel context by pushing
  * a fake CS with XPL privilege
@@ -233,11 +233,11 @@ struct region_descriptor {
 } __packed;
 
 #ifdef _KERNEL
-#ifdef XEN
+#ifdef XENPV
 typedef struct trap_info idt_descriptor_t;
 #else
 typedef struct gate_descriptor idt_descriptor_t; 
-#endif /* XEN */
+#endif /* XENPV */
 extern idt_descriptor_t *idt;
 extern char *gdtstore;
 extern char *ldtstore;

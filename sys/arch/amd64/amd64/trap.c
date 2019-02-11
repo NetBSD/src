@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2019/02/03 03:19:26 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.117 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2019/02/03 03:19:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2019/02/03 03:19:26 mrg Exp $");
 
 #include <x86/nmi.h>
 
-#ifndef XEN
+#ifndef XENPV
 #include "isa.h"
 #endif
 
@@ -590,7 +590,7 @@ faultcommon:
 				 * the copy functions, and so visible
 				 * to cpu_kpreempt_exit().
 				 */
-#ifndef XEN
+#ifndef XENPV
 				x86_disable_intr();
 #endif
 				l->l_nopreempt--;
@@ -598,7 +598,7 @@ faultcommon:
 				    pfail) {
 					return;
 				}
-#ifndef XEN
+#ifndef XENPV
 				x86_enable_intr();
 #endif
 				/*

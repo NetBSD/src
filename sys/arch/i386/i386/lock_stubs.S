@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.29 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.30 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.29 2018/07/14 14:29:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.30 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -223,7 +223,7 @@ ENTRY(rw_tryenter)
 	jmp	3b
 END(rw_tryenter)
 
-#ifndef __XEN__
+#ifndef XENPV
 
 /*
  * void mutex_spin_enter(kmutex_t *mtx);
@@ -307,7 +307,7 @@ LABEL(i686_mutex_spin_exit_patch)
 LABEL(i686_mutex_spin_exit_end)
 END(i686_mutex_spin_exit)
 
-#else	/* !__XEN__ */
+#else	/* !XENPV */
 
 /* For now; strong alias not working for some reason. */
 ENTRY(mutex_spin_enter)
@@ -316,7 +316,7 @@ ENTRY(mutex_spin_enter)
 ENTRY(mutex_spin_exit)
 	jmp	_C_LABEL(mutex_vector_exit)
 
-#endif	/* !__XEN__ */
+#endif	/* !XENPV */
 
 #endif	/* !LOCKDEBUG */
 

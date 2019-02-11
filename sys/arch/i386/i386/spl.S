@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.46 2018/12/26 11:12:57 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.47 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.46 2018/12/26 11:12:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.47 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -67,7 +67,7 @@ ENTRY(splraise)
 	ret
 END(splraise)
 
-#ifndef XEN
+#ifndef XENPV
 
 /*
  * void spllower(int s);
@@ -144,7 +144,7 @@ LABEL(cx8_spllower_patch)
 LABEL(cx8_spllower_end)
 END(cx8_spllower)
 
-#endif /* XEN */
+#endif /* XENPV */
 
 /*
  * void Xspllower(int s);
@@ -181,15 +181,15 @@ IDTVEC(spllower)
 	 * from Xdoreti via iret. So we have to always disable interrupts here
 	 * for Xen.
 	 */
-#ifndef XEN
+#ifndef XENPV
 	CLI(%eax)
 #endif
 .Lspllower_resume:
-#ifdef XEN
+#ifdef XENPV
 	CLI(%eax)
 #endif
 #if defined(DEBUG)
-#ifndef XEN
+#ifndef XENPV
 	pushf
 	popl	%eax
 	testl	$PSL_I,%eax
@@ -199,9 +199,9 @@ IDTVEC(spllower)
 	movb	EVTCHN_UPCALL_MASK(%eax),%al
 	andb	%al,%al
 	jz	.Lspllower_panic
-#endif /* XEN */
+#endif /* XENPV */
 #endif /* defined(DEBUG) */
-#if !defined(XEN)
+#if !defined(XENPV)
 	movl	%ebx,%eax			/* get cpl */
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax		/* any non-masked bits left? */
@@ -258,7 +258,7 @@ IDTVEC_END(spllower)
  * called with interrupt disabled.
  */
 IDTVEC(doreti)
-#ifndef XEN
+#ifndef XENPV
 	IDEPTH_DECR
 	popl	%ebx			/* get previous priority */
 #endif
@@ -266,7 +266,7 @@ IDTVEC(doreti)
 	movl	$.Ldoreti_resume,%esi	/* address to resume loop at */
 .Ldoreti_resume:
 #if defined(DEBUG)
-#ifndef XEN
+#ifndef XENPV
 	pushf
 	popl	%eax
 	testl	$PSL_I,%eax
@@ -276,9 +276,9 @@ IDTVEC(doreti)
 	movb	EVTCHN_UPCALL_MASK(%eax),%al
 	andb	%al,%al
 	jz	.Ldoreti_panic
-#endif /* XEN */
+#endif /* XENPV */
 #endif /* defined(DEBUG) */
-#if !defined(XEN)
+#if !defined(XENPV)
 	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax

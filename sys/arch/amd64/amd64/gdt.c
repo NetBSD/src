@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.45 2018/01/05 08:04:20 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.46 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45 2018/01/05 08:04:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.46 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45 2018/01/05 08:04:20 maxv Exp $");
 
 #include <machine/gdt.h>
 
-#ifdef XEN
+#ifdef XENPV
 #include <xen/hypervisor.h>
 #endif
 
@@ -67,7 +67,7 @@ typedef struct {
 } gdt_bitmap_t;
 
 /* size of GDT in bytes */
-#ifdef XEN
+#ifdef XENPV
 const size_t gdt_size = FIRST_RESERVED_GDT_BYTE;
 #else
 const size_t gdt_size = MAXGDTSIZ;
@@ -76,7 +76,7 @@ const size_t gdt_size = MAXGDTSIZ;
 /* bitmap of busy slots */
 static gdt_bitmap_t gdt_bitmap;
 
-#if defined(USER_LDT) || !defined(XEN)
+#if defined(USER_LDT) || !defined(XENPV)
 static void set_sys_gdt(int, void *, size_t, int, int, int);
 #endif
 
@@ -88,7 +88,7 @@ update_descriptor(void *tp, void *ep)
 	table = tp;
 	entry = ep;
 
-#ifndef XEN
+#ifndef XENPV
 	*table = *entry;
 #else
 	paddr_t pa;
@@ -99,7 +99,7 @@ update_descriptor(void *tp, void *ep)
 #endif
 }
 
-#if defined(USER_LDT) || !defined(XEN)
+#if defined(USER_LDT) || !defined(XENPV)
 /*
  * Called on a newly-allocated GDT slot, so no race between CPUs.
  */
@@ -122,7 +122,7 @@ set_sys_gdt(int slot, void *base, size_t limit, int type, int dpl, int gran)
 		update_descriptor(&ci->ci_gdt[idx + 1], &d.bits[1]);
 	}
 }
-#endif	/* USER_LDT || !XEN */
+#endif	/* USER_LDT || !XENPV */
 
 /*
  * Initialize the GDT. We already have a gdtstore, which was temporarily used
@@ -165,7 +165,7 @@ gdt_init(void)
 	/* Copy the initial bootstrap GDT into the new area. */
 	memcpy(gdtstore, old_gdt, DYNSEL_START);
 	ci->ci_gdt = (void *)gdtstore;
-#ifndef XEN
+#ifndef XENPV
 	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
 	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
 #endif
@@ -218,7 +218,7 @@ gdt_init_cpu(struct cpu_info *ci)
 	lgdt(&region);
 }
 
-#if !defined(XEN) || defined(USER_LDT)
+#if !defined(XENPV) || defined(USER_LDT)
 static int
 gdt_get_slot(void)
 {
@@ -250,7 +250,7 @@ gdt_put_slot(int slot)
 int
 tss_alloc(struct x86_64_tss *tss)
 {
-#ifndef XEN
+#ifndef XENPV
 	int slot;
 
 	mutex_enter(&cpu_lock);
@@ -271,7 +271,7 @@ tss_alloc(struct x86_64_tss *tss)
 void
 tss_free(int sel)
 {
-#ifndef XEN
+#ifndef XENPV
 	mutex_enter(&cpu_lock);
 	gdt_put_slot(IDXDYNSEL(sel));
 	mutex_exit(&cpu_lock);
@@ -307,7 +307,7 @@ ldt_free(int sel)
 }
 #endif
 
-#ifdef XEN
+#ifdef XENPV
 void
 lgdt(struct region_descriptor *desc)
 {

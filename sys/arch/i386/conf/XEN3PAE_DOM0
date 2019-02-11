@@ -1,9 +1,10 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.12 2019/02/06 11:58:31 rin Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.13 2019/02/11 14:59:32 cherry Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
 include 	"arch/xen/conf/std.xen"
 
+options		XENPV		# PV dom0 support
 #options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary

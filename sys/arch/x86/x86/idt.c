@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.9 2018/10/18 04:14:07 cherry Exp $	*/
+/*	$NetBSD: idt.c,v 1.10 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.9 2018/10/18 04:14:07 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.10 2019/02/11 14:59:33 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ idt_descriptor_t *idt;
 static char idt_allocmap[NIDT];
 
 /* Normalise across XEN PV and native */
-#if defined(XEN)
+#if defined(XENPV)
 
 void
 set_idtgate(struct trap_info *xen_idd, void *function, int ist,
@@ -146,7 +146,7 @@ unset_idtgate(struct trap_info *xen_idd)
 	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ);
 #endif /* __x86_64 */
 }
-#else /* XEN */
+#else /* XENPV */
 void
 set_idtgate(struct gate_descriptor *idd, void *function, int ist, int type, int dpl, int sel)
 {
@@ -157,7 +157,7 @@ unset_idtgate(struct gate_descriptor *idd)
 {
 	unsetgate(idd);
 }
-#endif /* XEN */
+#endif /* XENPV */
 
 /*
  * Allocate an IDT vector slot within the given range.

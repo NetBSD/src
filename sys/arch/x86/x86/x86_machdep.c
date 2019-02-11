@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.121 2018/12/24 22:05:45 cherry Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.122 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.121 2018/12/24 22:05:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.122 2019/02/11 14:59:33 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -461,7 +461,7 @@ void
 x86_cpu_idle_init(void)
 {
 
-#ifndef XEN
+#ifndef XENPV
 	if ((cpu_feature[1] & CPUID2_MONITOR) == 0 ||
 	    cpu_vendor == CPUVENDOR_AMD)
 		x86_cpu_idle_set(x86_cpu_idle_halt, "halt", true);
@@ -491,7 +491,7 @@ x86_cpu_idle_set(void (*func)(void), const char *text, bool ipi)
 	(void)strlcpy(x86_cpu_idle_text, text, sizeof(x86_cpu_idle_text));
 }
 
-#ifndef XEN
+#ifndef XENPV
 
 #define KBTOB(x)	((size_t)(x) * 1024UL)
 #define MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
@@ -948,7 +948,7 @@ init_x86_vm(paddr_t pa_kend)
 	return 0;
 }
 
-#endif /* !XEN */
+#endif /* !XENPV */
 
 void
 init_x86_msgbuf(void)
@@ -1092,7 +1092,7 @@ machdep_init(void)
 void
 x86_startup(void)
 {
-#if !defined(XEN)
+#if !defined(XENPV)
 	nmi_init();
 #endif
 }
@@ -1150,7 +1150,7 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-#ifndef XEN
+#ifndef XENPV
 static int
 sysctl_machdep_tsc_enable(SYSCTLFN_ARGS)
 {
@@ -1195,7 +1195,7 @@ const_sysctl(struct sysctllog **clog, const char *name, int type,
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 	extern uint64_t tsc_freq;
-#ifndef XEN
+#ifndef XENPV
 	extern int tsc_user_enabled;
 #endif
 	extern int sparse_dump;
@@ -1247,7 +1247,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
 		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-#ifndef XEN
+#ifndef XENPV
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "tsc_user_enable",
@@ -1271,12 +1271,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_CREATE, CTL_EOL);
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 	void sysctl_speculation_init(struct sysctllog **);
 	sysctl_speculation_init(clog);
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 	void sysctl_eagerfpu_init(struct sysctllog **);
 	sysctl_eagerfpu_init(clog);
 #endif
@@ -1298,7 +1298,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	const_sysctl(clog, "xsave_features", CTLTYPE_QUAD, x86_xsave_features,
 	    CPU_XSAVE_FEATURES);
 
-#ifndef XEN
+#ifndef XENPV
 	const_sysctl(clog, "biosbasemem", CTLTYPE_INT, biosbasemem,
 	    CPU_BIOSBASEMEM);
 	const_sysctl(clog, "biosextmem", CTLTYPE_INT, biosextmem,
@@ -1307,7 +1307,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 /* Here for want of a better place */
-#if defined(DOM0OPS) || !defined(XEN)
+#if defined(DOM0OPS) || !defined(XENPV)
 struct pic *
 intr_findpic(int num)
 {

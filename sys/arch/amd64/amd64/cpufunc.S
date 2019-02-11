@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.35 2019/01/06 14:35:31 cherry Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.36 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ ENTRY(x86_mfence)
 	ret
 END(x86_mfence)
 
-#ifndef XEN
+#ifndef XENPV
 ENTRY(invlpg)
 	invlpg	(%rdi)
 	ret
@@ -158,7 +158,7 @@ END(rcr8)
  *
  * If PGE is not in use, we reload CR3.
  */
-#ifndef XEN
+#ifndef XENPV
 ENTRY(tlbflushg)
 	movq	%cr4, %rax
 	testq	$CR4_PGE, %rax
@@ -262,7 +262,7 @@ ENTRY(x86_write_flags)
 END(x86_write_flags)
 
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
-#endif /* XEN */
+#endif /* XENPV */
 
 ENTRY(rdmsr)
 	movq	%rdi, %rcx
@@ -352,7 +352,7 @@ ENTRY(msr_onfault)
 	ret
 END(msr_onfault)
 
-#ifndef XEN
+#ifndef XENPV
 ENTRY(wbinvd)
 	wbinvd
 	ret
@@ -434,7 +434,7 @@ END(__byte_swap_u16_variable)
  * is necessary, since the actual descriptor data is not changed except by
  * process creation and exit, both of which clean up via task switches.
  */
-#ifndef XEN
+#ifndef XENPV
 ENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movq	%rdi,%rax
@@ -754,7 +754,7 @@ ENTRY(setfs)
 	ret
 END(setfs)
 
-#ifndef XEN
+#ifndef XENPV
 ENTRY(setusergs)
 	CLI(ax)
 	swapgs

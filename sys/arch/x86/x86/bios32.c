@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.2 2017/08/15 06:37:50 maxv Exp $	*/
+/*	$NetBSD: bios32.c,v 1.3 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2 2017/08/15 06:37:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.3 2019/02/11 14:59:33 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ bios32_init(void)
 #endif
 
 	/* see if we have SMBIOS extensions */
-#ifndef XEN
+#ifndef XENPV
 	if (efi_probe()) {
 		p = efi_getcfgtbl(&EFI_UUID_SMBIOS3);
 		if (p != NULL && smbios3_check_header(p)) {
@@ -289,7 +289,7 @@ smbios2_map_kva(const uint8_t *p)
 	smbios_entry.count = sh->count;
 
 	for (; pa < end; pa+= NBPG, eva+= NBPG)
-#ifdef XEN
+#ifdef XENPV
 		pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
 #else
 		pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
@@ -343,7 +343,7 @@ smbios3_map_kva(const uint8_t *p)
 	smbios_entry.count = UINT16_MAX;
 
 	for (; pa < end; pa += NBPG, eva += NBPG)
-#ifdef XEN
+#ifdef XENPV
 		pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
 #else
 		pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);

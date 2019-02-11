@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.121 2018/11/19 20:44:51 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.122 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -77,10 +77,10 @@
 #endif
 
 #include <uvm/uvm_object.h>
-#ifdef XEN
+#ifdef XENPV
 #include <xen/xenfunc.h>
 #include <xen/xenpmap.h>
-#endif /* XEN */
+#endif /* XENPV */
 
 /*
  * see pte.h for a description of i386 MMU terminology and hardware
@@ -256,15 +256,15 @@
 #define NKL2_START_ENTRIES	0	/* XXX computed on runtime */
 #define NKL1_START_ENTRIES	0	/* XXX unused */
 
-#ifndef XEN
+#ifndef XENPV
 #define NTOPLEVEL_PDES		(PAGE_SIZE * PDP_SIZE / (sizeof (pd_entry_t)))
-#else	/* !XEN */
+#else	/* !XENPV */
 #ifdef  PAE
 #define NTOPLEVEL_PDES		1964	/* 1964-2047 reserved by Xen */
 #else	/* PAE */
 #define NTOPLEVEL_PDES		1008	/* 1008-1023 reserved by Xen */
 #endif	/* PAE */
-#endif  /* !XEN */
+#endif  /* !XENPV */
 #define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
 
 #define PTP_MASK_INITIALIZER	{ L1_MASK, L2_MASK }
@@ -287,7 +287,7 @@
 
 #include <x86/pmap.h>
 
-#ifndef XEN
+#ifndef XENPV
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PG_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
@@ -311,7 +311,7 @@
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #endif /* PAE */
 
-#else /* XEN */
+#else /* XENPV */
 extern kmutex_t pte_lock;
 
 static __inline pt_entry_t

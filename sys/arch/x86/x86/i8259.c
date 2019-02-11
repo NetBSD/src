@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.22 2018/12/25 06:50:12 cherry Exp $	*/
+/*	$NetBSD: i8259.c,v 1.23 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.22 2018/12/25 06:50:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.23 2019/02/11 14:59:33 cherry Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ i8259_reinit_irqs(void)
 {
 	int irqs, irq;
 	struct cpu_info *ci = &cpu_info_primary;
-#if !defined(XEN)
+#if !defined(XENPV)
 	const size_t array_count = __arraycount(ci->ci_isources);
 #else
 	const size_t array_count = __arraycount(ci->ci_xsources);
@@ -243,7 +243,7 @@ i8259_reinit_irqs(void)
 
 	irqs = 0;
 	for (irq = 0; irq < array_len; irq++)
-#if !defined(XEN)		
+#if !defined(XENPV)		
 		if (ci->ci_isources[irq] != NULL)
 #else
 		if (ci->ci_xsources[irq] != NULL)
