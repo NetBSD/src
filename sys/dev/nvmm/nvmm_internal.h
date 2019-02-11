@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.3 2019/01/26 15:25:51 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.4 2019/02/11 07:07:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define NVMM_MAX_MACHINES	128
 #define NVMM_MAX_VCPUS		256
 #define NVMM_MAX_SEGS		32
-#define NVMM_MAX_RAM		(4UL * (1 << 30))
+#define NVMM_MAX_RAM		(128ULL * (1 << 30))
 
 struct nvmm_cpu {
 	/* Shared. */
