@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.105 2019/02/10 13:41:35 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.106 2019/02/11 13:45:33 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2446,4 +2446,33 @@ lib/libperfuse/perfuse_priv.h			1.37
 	Use reclaim2 to fix reclaim/lookup race conditions.
 	Fix directory filehandle usage with libufse. Fix lookup count.
 	[manu, ticket #1186]
+
+sys/arch/x86/include/specialreg.h		1.138
+usr.sbin/cpuctl/arch/i386.c			1.92
+
+	- Add new CPUID flags WAITPKG, CLDEMOTE, MOVDIRI, MOVDIR64B and
+	   IA32_CORE_CAPABILITIES.
+	- Add Ice Lake and Tremont.
+	- Fix performance monitoring bitstring format.
+	[msaitoh, ticket #1187]
+
+sys/dev/pci/pcidevs				1.1357,1.1359-1.1362
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	- Add yet another Intel Core QuickPath Generic Non-Core Register.
+	- Add some RADEON devices.
+	- Add AMD Family 17h devices.
+	- Add NetXen's vendor ID and devices.
+	- Add Sun Neptune.
+	- Add Some Freescale MPC834x devices.
+	- Add Intel I210 SGMII Flash-less device.
+	[msaitoh, ticket #1188]
+
+sys/dev/pci/if_wm.c				1.622,1.624,1.625
+
+	We now have IFM_2500_KX and IFM_1000_KX, so use them.
+	I21[01]'s RAL size is not 15 but 16.
+	Fix a bug that WOL didn't work on some chips.
+	[msaitoh, ticket #1189]
 
