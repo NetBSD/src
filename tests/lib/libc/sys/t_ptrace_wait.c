@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.80 2019/02/11 04:20:06 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.81 2019/02/11 05:51:20 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.80 2019/02/11 04:20:06 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.81 2019/02/11 05:51:20 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2757,6 +2757,7 @@ ptrace_step(int N, int setstep)
 	int status;
 #endif
 	int happy;
+	struct ptrace_siginfo info;
 
 #if defined(__arm__)
 	/* PT_STEP not supported on arm 32-bit */
@@ -2786,6 +2787,14 @@ ptrace_step(int N, int setstep)
 
 	validate_status_stopped(status, sigval);
 
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
 	while (N --> 0) {
 		if (setstep) {
 			DPRINTF("Before resuming the child process where it "
@@ -2807,6 +2816,14 @@ ptrace_step(int N, int setstep)
 		    child);
 
 		validate_status_stopped(status, SIGTRAP);
+
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+		DPRINTF("Before checking siginfo_t\n");
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_TRACE);
 
 		if (setstep) {
 			SYSCALL_REQUIRE(ptrace(PT_CLEARSTEP, child, 0, 0) != -1);
@@ -3472,94 +3489,6 @@ ATF_TC_BODY(siginfo4, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-
-#if defined(PT_STEP)
-ATF_TC(siginfo6);
-ATF_TC_HEAD(siginfo6, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify single PT_STEP call with signal information check");
-}
-
-ATF_TC_BODY(siginfo6, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	int happy;
-	struct ptrace_siginfo info;
-
-#if defined(__arm__)
-	/* PT_STEP not supported on arm 32-bit */
-	atf_tc_expect_fail("PR kern/52119");
-#endif
-
-	memset(&info, 0, sizeof(info));
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		happy = check_happy(100);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT_EQ(happy, check_happy(100));
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	DPRINTF("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent (use PT_STEP)\n");
-	SYSCALL_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	DPRINTF("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_TRACE);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
 
 volatile lwpid_t the_lwp_id = 0;
 
@@ -5410,7 +5339,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, siginfo_set_faked);
 
 	ATF_TP_ADD_TC(tp, siginfo4);
-	ATF_TP_ADD_TC_PT_STEP(tp, siginfo6);
 
 	ATF_TP_ADD_TC(tp, lwp_create1);
 
