@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.101 2015/11/06 15:30:59 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.102 2019/02/11 07:51:46 macallan Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2015/11/06 15:30:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2019/02/11 07:51:46 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -305,12 +305,13 @@ fpusave_lwp(struct lwp *l, bool save)
 	}
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		int spincount;
+		int spincount, retrycount=0;
 
 		if (ci == curcpu() || !CPUSET_HAS(cpus_active, ci->ci_index))
 			continue;
 		if (ci->ci_fplwp != l)
 			continue;
+again:
 		sparc64_send_ipi(ci->ci_cpuid, save ?
 				 sparc64_ipi_save_fpstate :
 				 sparc64_ipi_drop_fpstate, (uintptr_t)l, 0);
@@ -319,9 +320,13 @@ fpusave_lwp(struct lwp *l, bool save)
 		while (ci->ci_fplwp == l) {
 			membar_Sync();
 			spincount++;
-			if (spincount > 10000000)
-				panic("fpusave_lwp ipi didn't");
+			if (spincount > 10000000) {
+				printf("fpusave_lwp ipi didn't (%d)\n", retrycount);
+				retrycount++;
+				goto again;
+			}
 		}
+		if (retrycount > 0) printf("spincount %d\n", spincount);
 		break;
 	}
 #else
