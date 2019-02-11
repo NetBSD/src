@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.12 2018/12/04 12:03:43 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.13 2019/02/11 13:37:57 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.12 2018/12/04 12:02:12 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.13 2019/02/11 13:34:09 martin Exp
  */
 
 /*
@@ -664,6 +664,7 @@
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
+#define	PCI_VENDOR_NETXEN	0x4040		/* NetXen */
 #define	PCI_VENDOR_QINHENG	0x4348		/* Nanjing QinHeng Electronics */
 #define	PCI_VENDOR_ICOMPRESSION	0x4444		/* Conexant (iCompression) */
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
@@ -1009,6 +1010,24 @@
 #define	PCI_PRODUCT_AMD_F15_30_RP_5	0x1425		/* Family15h Root Port */
 #define	PCI_PRODUCT_AMD_F15_30_RP_6	0x1426		/* Family15h Root Port */
 #define	PCI_PRODUCT_AMD_F16_GPPB	0x1439		/* Family16h GPP Bridge */
+#define	PCI_PRODUCT_AMD_F17_RC	0x1450		/* Family17h Root Complex */
+#define	PCI_PRODUCT_AMD_F17_IOMMU	0x1451		/* Family17h IOMMU */
+#define	PCI_PRODUCT_AMD_F17_PCIE_1	0x1452		/* Family17h PCIE */
+#define	PCI_PRODUCT_AMD_F17_PCIE_2	0x1453		/* Family17h PCIE */
+#define	PCI_PRODUCT_AMD_F17_PCIE_3	0x1454		/* Family17h PCIE */
+#define	PCI_PRODUCT_AMD_F17_HDA	0x1457		/* Family17h HD Audio */
+#define	PCI_PRODUCT_AMD_F17_XHCI	0x145c		/* Family17h xHCI */
+#define	PCI_PRODUCT_AMD_F17_XHCI_2	0x145f		/* Family17h xHCI */
+#define	PCI_PRODUCT_AMD_F17_DF_1	0x1460		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_DF_2	0x1461		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_DF_3	0x1462		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_DF_4	0x1463		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_DF_5	0x1464		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_DF_6	0x1465		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_DF_7	0x1466		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_DF_8	0x1467		/* Family17h Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_PCIE_4	0x1470		/* Family17h PCIE */
+#define	PCI_PRODUCT_AMD_F17_PCIE_5	0x1471		/* Family17h PCIE */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
 #define	PCI_PRODUCT_AMD_F16_HT	0x1530		/* Family16h HyperTransport Configuration */
 #define	PCI_PRODUCT_AMD_F16_ADDR	0x1531		/* Family16h Address Map Configuration */
@@ -1040,6 +1059,21 @@
 #define	PCI_PRODUCT_AMD_F16_30_NB	0x1583		/* Family16h North Bridge Configuration */
 #define	PCI_PRODUCT_AMD_F16_30_CSTATE	0x1584		/* Family16h CPU C-state Configuration */
 #define	PCI_PRODUCT_AMD_F16_30_MISC	0x1585		/* Family16h Miscellaneous Configuration */
+#define	PCI_PRODUCT_AMD_F17_1X_RC	0x15d0		/* Family17h/1xh Root Complex */
+#define	PCI_PRODUCT_AMD_F17_1X_IOMMU	0x15d1		/* Family17h/1xh IOMMU */
+#define	PCI_PRODUCT_AMD_F17_1X_PCIE_1	0x15d3		/* Family17h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_F17_1X_PCIE_2	0x15db		/* Family17h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_F17_1X_PCIE_3	0x15dc		/* Family17h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_F17_1X_XHCI_1	0x15e0		/* Family17h/1xh xHCI */
+#define	PCI_PRODUCT_AMD_F17_1X_XHCI_2	0x15e1		/* Family17h/1xh xHCI */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_0	0x15e8		/* Family17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_1	0x15e9		/* Family17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_2	0x15ea		/* Family17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_3	0x15eb		/* Family17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_4	0x15ec		/* Family17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_5	0x15ed		/* Family17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_6	0x15ee		/* Family17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_F17_1X_DF_7	0x15ef		/* Family17h/1xh Data Fabric */
 #define	PCI_PRODUCT_AMD_F15_HT	0x1600		/* Family15h HyperTransport Configuration */
 #define	PCI_PRODUCT_AMD_F15_ADDR	0x1601		/* Family15h Address Map Configuration */
 #define	PCI_PRODUCT_AMD_F15_DRAM	0x1602		/* Family15h DRAM Configuration */
@@ -1583,7 +1617,44 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD8600	0x6610		/* Radeon HD 8600 */
 #define	PCI_PRODUCT_ATI_RADEON_HD8570	0x6611		/* Radeon HD 8570 */
 #define	PCI_PRODUCT_ATI_RADEON_HD8500	0x6613		/* Radeon HD 8500 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6970	0x6718		/* Radeon HD 6970 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6950	0x6719		/* Radeon HD 6950 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6990_1	0x671c		/* Radeon HD 6990 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6990_2	0x671d		/* Radeon HD 6990 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6930	0x671f		/* Radeon HD 6930 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6970M	0x6720		/* Radeon HD 6970M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6900M	0x6725		/* Radeon HD 6900M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6870	0x6738		/* Radeon HD 6870 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6850	0x6739		/* Radeon HD 6850 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6790	0x673e		/* Radeon HD 6790 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6730M	0x6740		/* Radeon HD 6730M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6600M	0x6741		/* Radeon HD 6600M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6610M	0x6742		/* Radeon HD 6610M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6650A	0x6750		/* Radeon HD 6650A */
+#define	PCI_PRODUCT_ATI_RADEON_HD7670A	0x6751		/* Radeon HD 7670A */
+#define	PCI_PRODUCT_ATI_RADEON_HD6670	0x6758		/* Radeon HD 6670 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6570	0x6759		/* Radeon HD 6570 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7570	0x675d		/* Radeon HD 7570 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6510	0x675f		/* Radeon HD 6510 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6400M	0x6760		/* Radeon HD 6400M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6430M	0x6761		/* Radeon HD 6430M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6400M_1	0x6764		/* Radeon HD 6400M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6400M_2	0x6765		/* Radeon HD 6400M */
+#define	PCI_PRODUCT_ATI_RADEON_HD6450A	0x6770		/* Radeon HD 6450A */
+#define	PCI_PRODUCT_ATI_RADEON_HD8490	0x6771		/* Radeon HD 8490 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7450A	0x6772		/* Radeon HD 7450A */
+#define	PCI_PRODUCT_ATI_RADEON_HD7470	0x6778		/* Radeon HD 7470 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6450	0x6779		/* Radeon HD 6450 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7450	0x677b		/* Radeon HD 7450 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7970	0x6798		/* Radeon HD 7970 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7900	0x6799		/* Radeon HD 7900 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7950	0x679a		/* Radeon HD 7950 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7990	0x679b		/* Radeon HD 7990 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7870XT	0x679e		/* Radeon HD 7870 XT */
+#define	PCI_PRODUCT_ATI_RADEON_RX470	0x67df		/* Radeon RX470 */
 #define	PCI_PRODUCT_ATI_RADEON_RX460	0x67ef		/* Radeon RX460 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7970M	0x6800		/* Radeon HD 7970M */
+#define	PCI_PRODUCT_ATI_RADEON_HD8970M	0x6801		/* Radeon HD 8970M */
 #define	PCI_PRODUCT_ATI_RADEON_HD8800M	0x682b		/* Radeon HD 8800M */
 #define	PCI_PRODUCT_ATI_RADEON_HD7730M	0x682f		/* Radeon HD 7730M */
 #define	PCI_PRODUCT_ATI_RADEON_HD7800M	0x6830		/* Radeon HD 7800M */
@@ -1668,6 +1739,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD54XX_HDA	0xaa68		/* Radeon HD 54xx Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD7700_HDA	0xaab0		/* Radeon HD 7700 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_RX460_HDA	0xaae0		/* Radeon RX460 HD Audio */
+#define	PCI_PRODUCT_ATI_RADEON_RX470_HDA	0xaaf0		/* Radeon RX470 HD Audio */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
@@ -2521,6 +2593,14 @@
 #define	PCI_PRODUCT_FREESCALE_P2020	0x0071		/* P2020 */
 #define	PCI_PRODUCT_FREESCALE_P2010E	0x0078		/* P2010E */
 #define	PCI_PRODUCT_FREESCALE_P2010	0x0079		/* P2010 */
+#define	PCI_PRODUCT_FREESCALE_MPC8349E	0x0080		/* MPC8349E */
+#define	PCI_PRODUCT_FREESCALE_MPC8349	0x0081		/* MPC8349 */
+#define	PCI_PRODUCT_FREESCALE_MPC8347E_TBGA	0x0082		/* MPC8347E TBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8347_TBGA	0x0083		/* MPC8347 TBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8347E_PBGA	0x0084		/* MPC8347E PBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8347_PBGA	0x0085		/* MPC8347 PBGA */
+#define	PCI_PRODUCT_FREESCALE_MPC8343E	0x0086		/* MPC8343E */
+#define	PCI_PRODUCT_FREESCALE_MPC8343	0x0087		/* MPC8343 */
 #define	PCI_PRODUCT_FREESCALE_P1020E	0x0100		/* P1021E */
 #define	PCI_PRODUCT_FREESCALE_P1020	0x0101		/* P1020 */
 #define	PCI_PRODUCT_FREESCALE_P1021E	0x0102		/* P1021E */
@@ -3415,6 +3495,7 @@
 #define	PCI_PRODUCT_INTEL_I219_LM5	0x15e3		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_C3K_X553_SGMII	0x15e4		/* C3000 X553 1GbE SGMII (10G SKU) */
 #define	PCI_PRODUCT_INTEL_C3K_X553_SGMII_L	0x15e5		/* C3000 X553 1GbE SGMII (non-10G SKU) */
+#define	PCI_PRODUCT_INTEL_I210_SGMII_WOF	0x15f6		/* I210 Ethernet (SGMII) */
 #define	PCI_PRODUCT_INTEL_CORE5G_HB_1	0x1604		/* Core 5G Host Bridge */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT1	0x1606		/* HD Graphics (GT1) */
 #define	PCI_PRODUCT_INTEL_CORE5G_HDA_1	0x160c		/* Core 5G HD Audio */
@@ -4154,6 +4235,7 @@
 #define	PCI_PRODUCT_INTEL_XE55_QP_REG	0x2c40		/* Xeon 5500 QuickPath Generic Non-Core Register */
 #define	PCI_PRODUCT_INTEL_CORE_QP_REG_2	0x2c51		/* Core i7-800 and i5-700 QuickPath Generic Non-Core Register */
 #define	PCI_PRODUCT_INTEL_CORE_QP_REG_1	0x2c61		/* Core i5-600, i3-500 and Pentium 6000 QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_CORE_QP_REG_3	0x2c62		/* Core QuickPath Generic Non-Core Register */
 #define	PCI_PRODUCT_INTEL_XE56_QP_REG	0x2c70		/* Xeon 5600 QuickPath Generic Non-Core Register */
 #define	PCI_PRODUCT_INTEL_CORE_QP_SAD_2	0x2c81		/* Core i7-800 and i5-700 QuickPath Generic System Address Decoder */
 #define	PCI_PRODUCT_INTEL_CORE_QPI_LINK_2	0x2c90		/* Core i7-800 and i5-700 QPI Link */
@@ -5942,6 +6024,16 @@
 /* Network Security Technologies */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
 
+/* NetXen Inc products */
+#define	PCI_PRODUCT_NETXEN_NXB_10GXxR	0x0001		/* NXB-10GXxR */
+#define	PCI_PRODUCT_NETXEN_NXB_10GCX4	0x0002		/* NXB-10GCX4 */
+#define	PCI_PRODUCT_NETXEN_NXB_4GCU	0x0003		/* NXB-4GCU */
+#define	PCI_PRODUCT_NETXEN_NXB_IMEZ	0x0004		/* IMEZ 10GbE */
+#define	PCI_PRODUCT_NETXEN_NXB_HMEZ	0x0005		/* HMEZ 10GbE */
+#define	PCI_PRODUCT_NETXEN_NXB_IMEZ_2	0x0024		/* IMEZ 10GbE Mgmt */
+#define	PCI_PRODUCT_NETXEN_NXB_HMEZ_2	0x0025		/* HMEZ 10GbE Mgmt */
+#define	PCI_PRODUCT_NETXEN_NX3031	0x0100		/* NX3031 */
+
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 Host-PCI Bridge */
 
@@ -7074,6 +7166,7 @@
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 #define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
 #define	PCI_PRODUCT_SUN_CASSINI	0xabba		/* Cassini Gigabit Ethernet */
+#define	PCI_PRODUCT_SUN_NEPTUNE	0xabcd		/* Neptune */
 
 /* Sundance Technology products */
 #define	PCI_PRODUCT_SUNDANCETI_IP100A	0x0200		/* IP100A 10/100 Ethernet */
