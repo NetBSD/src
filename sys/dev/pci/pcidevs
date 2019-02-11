@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1289.2.12 2018/12/04 12:02:12 martin Exp $
+$NetBSD: pcidevs,v 1.1289.2.13 2019/02/11 13:34:09 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -657,6 +657,7 @@ vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
+vendor NETXEN		0x4040	NetXen
 vendor QINHENG		0x4348	Nanjing QinHeng Electronics
 vendor ICOMPRESSION	0x4444	Conexant (iCompression)
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
@@ -1002,6 +1003,24 @@ product AMD F15_30_HB	0x1424	Family15h Host Bridge
 product AMD F15_30_RP_5	0x1425	Family15h Root Port
 product AMD F15_30_RP_6	0x1426	Family15h Root Port
 product AMD F16_GPPB	0x1439	Family16h GPP Bridge
+product AMD F17_RC	0x1450	Family17h Root Complex
+product AMD F17_IOMMU	0x1451	Family17h IOMMU
+product AMD F17_PCIE_1	0x1452	Family17h PCIE
+product AMD F17_PCIE_2	0x1453	Family17h PCIE
+product AMD F17_PCIE_3	0x1454	Family17h PCIE
+product AMD F17_HDA	0x1457	Family17h HD Audio
+product AMD F17_XHCI	0x145c	Family17h xHCI
+product AMD F17_XHCI_2	0x145f	Family17h xHCI
+product AMD F17_DF_1	0x1460	Family17h Data Fabric
+product AMD F17_DF_2	0x1461	Family17h Data Fabric
+product AMD F17_DF_3	0x1462	Family17h Data Fabric
+product AMD F17_DF_4	0x1463	Family17h Data Fabric
+product AMD F17_DF_5	0x1464	Family17h Data Fabric
+product AMD F17_DF_6	0x1465	Family17h Data Fabric
+product AMD F17_DF_7	0x1466	Family17h Data Fabric
+product AMD F17_DF_8	0x1467	Family17h Data Fabric
+product AMD F17_PCIE_4	0x1470	Family17h PCIE
+product AMD F17_PCIE_5	0x1471	Family17h PCIE
 product AMD F14_RC	0x1510	Family14h Root Complex
 product AMD F16_HT	0x1530	Family16h HyperTransport Configuration
 product AMD F16_ADDR	0x1531	Family16h Address Map Configuration
@@ -1033,6 +1052,21 @@ product AMD F16_30_DRAM	0x1582	Family16h DRAM Configuration
 product AMD F16_30_NB	0x1583	Family16h North Bridge Configuration
 product AMD F16_30_CSTATE	0x1584	Family16h CPU C-state Configuration
 product AMD F16_30_MISC	0x1585	Family16h Miscellaneous Configuration
+product AMD F17_1X_RC	0x15d0	Family17h/1xh Root Complex
+product AMD F17_1X_IOMMU 0x15d1	Family17h/1xh IOMMU
+product AMD F17_1X_PCIE_1 0x15d3 Family17h/1xh PCIE
+product AMD F17_1X_PCIE_2 0x15db Family17h/1xh PCIE
+product AMD F17_1X_PCIE_3 0x15dc Family17h/1xh PCIE
+product AMD F17_1X_XHCI_1 0x15e0 Family17h/1xh xHCI
+product AMD F17_1X_XHCI_2 0x15e1 Family17h/1xh xHCI
+product AMD F17_1X_DF_0	0x15e8	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_1	0x15e9	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_2	0x15ea	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_3	0x15eb	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_4	0x15ec	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_5	0x15ed	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_6	0x15ee	Family17h/1xh Data Fabric
+product AMD F17_1X_DF_7	0x15ef	Family17h/1xh Data Fabric
 product AMD F15_HT	0x1600	Family15h HyperTransport Configuration
 product AMD F15_ADDR	0x1601	Family15h Address Map Configuration
 product AMD F15_DRAM	0x1602	Family15h DRAM Configuration
@@ -1576,7 +1610,44 @@ product ATI RADEON_HD8530M	0x6607	Radeon HD 8530M
 product ATI RADEON_HD8600	0x6610	Radeon HD 8600
 product ATI RADEON_HD8570	0x6611	Radeon HD 8570
 product ATI RADEON_HD8500	0x6613	Radeon HD 8500
+product ATI RADEON_HD6970	0x6718	Radeon HD 6970
+product ATI RADEON_HD6950	0x6719	Radeon HD 6950
+product ATI RADEON_HD6990_1	0x671c	Radeon HD 6990
+product ATI RADEON_HD6990_2	0x671d	Radeon HD 6990
+product ATI RADEON_HD6930	0x671f	Radeon HD 6930
+product ATI RADEON_HD6970M	0x6720	Radeon HD 6970M
+product ATI RADEON_HD6900M	0x6725	Radeon HD 6900M
+product ATI RADEON_HD6870	0x6738	Radeon HD 6870
+product ATI RADEON_HD6850	0x6739	Radeon HD 6850
+product ATI RADEON_HD6790	0x673e	Radeon HD 6790
+product ATI RADEON_HD6730M	0x6740	Radeon HD 6730M
+product ATI RADEON_HD6600M	0x6741	Radeon HD 6600M
+product ATI RADEON_HD6610M	0x6742	Radeon HD 6610M
+product ATI RADEON_HD6650A	0x6750	Radeon HD 6650A
+product ATI RADEON_HD7670A	0x6751	Radeon HD 7670A
+product ATI RADEON_HD6670	0x6758	Radeon HD 6670
+product ATI RADEON_HD6570	0x6759	Radeon HD 6570
+product ATI RADEON_HD7570	0x675d	Radeon HD 7570
+product ATI RADEON_HD6510	0x675f	Radeon HD 6510
+product ATI RADEON_HD6400M	0x6760	Radeon HD 6400M
+product ATI RADEON_HD6430M	0x6761	Radeon HD 6430M
+product ATI RADEON_HD6400M_1	0x6764	Radeon HD 6400M
+product ATI RADEON_HD6400M_2	0x6765	Radeon HD 6400M
+product ATI RADEON_HD6450A	0x6770	Radeon HD 6450A
+product ATI RADEON_HD8490	0x6771	Radeon HD 8490
+product ATI RADEON_HD7450A	0x6772	Radeon HD 7450A
+product ATI RADEON_HD7470	0x6778	Radeon HD 7470
+product ATI RADEON_HD6450	0x6779	Radeon HD 6450
+product ATI RADEON_HD7450	0x677b	Radeon HD 7450
+product ATI RADEON_HD7970	0x6798	Radeon HD 7970
+product ATI RADEON_HD7900	0x6799	Radeon HD 7900
+product ATI RADEON_HD7950	0x679a	Radeon HD 7950
+product ATI RADEON_HD7990	0x679b	Radeon HD 7990
+product ATI RADEON_HD7870XT	0x679e	Radeon HD 7870 XT
+product ATI RADEON_RX470	0x67df	Radeon RX470
 product ATI RADEON_RX460	0x67ef	Radeon RX460
+product ATI RADEON_HD7970M	0x6800	Radeon HD 7970M
+product ATI RADEON_HD8970M	0x6801	Radeon HD 8970M
 product ATI RADEON_HD8800M	0x682b	Radeon HD 8800M
 product ATI RADEON_HD7730M	0x682f	Radeon HD 7730M
 product ATI RADEON_HD7800M	0x6830	Radeon HD 7800M
@@ -1661,6 +1732,7 @@ product ATI RADEON_HD5600_HDMI	0xaa60	Redwood HDMI Audio
 product ATI RADEON_HD54XX_HDA	0xaa68	Radeon HD 54xx Audio
 product ATI RADEON_HD7700_HDA	0xaab0	Radeon HD 7700 HD Audio
 product ATI RADEON_RX460_HDA	0xaae0	Radeon RX460 HD Audio
+product ATI RADEON_RX470_HDA	0xaaf0	Radeon RX470 HD Audio
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -2514,6 +2586,14 @@ product FREESCALE P2020E	0x0070	P2020E
 product FREESCALE P2020		0x0071	P2020
 product FREESCALE P2010E	0x0078	P2010E
 product FREESCALE P2010		0x0079	P2010
+product FREESCALE MPC8349E	0x0080	MPC8349E
+product FREESCALE MPC8349	0x0081	MPC8349
+product FREESCALE MPC8347E_TBGA	0x0082	MPC8347E TBGA
+product FREESCALE MPC8347_TBGA	0x0083	MPC8347 TBGA
+product FREESCALE MPC8347E_PBGA	0x0084	MPC8347E PBGA
+product FREESCALE MPC8347_PBGA	0x0085	MPC8347 PBGA
+product FREESCALE MPC8343E	0x0086	MPC8343E
+product FREESCALE MPC8343	0x0087	MPC8343
 product FREESCALE P1020E	0x0100	P1021E
 product FREESCALE P1020		0x0101	P1020
 product FREESCALE P1021E	0x0102	P1021E
@@ -3408,6 +3488,7 @@ product INTEL I219_V4		0x15d8	I219-V Ethernet Connection
 product INTEL I219_LM5		0x15e3	I219-LM Ethernet Connection
 product INTEL C3K_X553_SGMII	0x15e4	C3000 X553 1GbE SGMII (10G SKU)
 product INTEL C3K_X553_SGMII_L	0x15e5	C3000 X553 1GbE SGMII (non-10G SKU)
+product INTEL I210_SGMII_WOF	0x15f6	I210 Ethernet (SGMII)
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
@@ -4147,6 +4228,7 @@ product INTEL XE55_IMC_CH2_THERM 0x2c33	Xeon 5500 IMC Channel 2 Thermal Control
 product INTEL XE55_QP_REG	0x2c40	Xeon 5500 QuickPath Generic Non-Core Register
 product INTEL CORE_QP_REG_2	0x2c51	Core i7-800 and i5-700 QuickPath Generic Non-Core Register
 product INTEL CORE_QP_REG_1	0x2c61	Core i5-600, i3-500 and Pentium 6000 QuickPath Generic Non-Core Register
+product INTEL CORE_QP_REG_3	0x2c62	Core QuickPath Generic Non-Core Register
 product INTEL XE56_QP_REG	0x2c70	Xeon 5600 QuickPath Generic Non-Core Register
 product INTEL CORE_QP_SAD_2	0x2c81	Core i7-800 and i5-700 QuickPath Generic System Address Decoder
 product INTEL CORE_QPI_LINK_2	0x2c90	Core i7-800 and i5-700 QPI Link
@@ -5935,6 +6017,16 @@ product NETMOS MCS9990	0x9990	MCS9990 Quad USB 2.0 Port
 /* Network Security Technologies */
 product NETSEC 7751		0x7751	7751
 
+/* NetXen Inc products */
+product NETXEN NXB_10GXxR	0x0001	NXB-10GXxR
+product NETXEN NXB_10GCX4	0x0002	NXB-10GCX4
+product NETXEN NXB_4GCU		0x0003	NXB-4GCU
+product NETXEN NXB_IMEZ		0x0004	IMEZ 10GbE
+product NETXEN NXB_HMEZ		0x0005	HMEZ 10GbE
+product NETXEN NXB_IMEZ_2	0x0024	IMEZ 10GbE Mgmt
+product NETXEN NXB_HMEZ_2	0x0025	HMEZ 10GbE Mgmt
+product NETXEN NX3031		0x0100	NX3031
+
 /* NexGen products */
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
 
@@ -7067,6 +7159,7 @@ product SUN MS_IIep	0x9000	microSPARC IIep PCI
 product SUN US_IIi	0xa000	UltraSPARC IIi PCI
 product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 product SUN CASSINI	0xabba	Cassini Gigabit Ethernet
+product SUN NEPTUNE	0xabcd	Neptune
 
 /* Sundance Technology products */
 product SUNDANCETI IP100A	0x0200	IP100A 10/100 Ethernet
