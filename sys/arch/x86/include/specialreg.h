@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.9 2018/12/27 12:17:19 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.10 2019/02/11 13:23:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -398,6 +398,7 @@
 #define CPUID_SEF_UMIP		__BIT(2)  /* User-Mode Instruction prevention */
 #define CPUID_SEF_PKU		__BIT(3)  /* Protection Keys for User-mode pages */
 #define CPUID_SEF_OSPKE		__BIT(4)  /* OS has set CR4.PKE to ena. protec. keys */
+#define CPUID_SEF_WAITPKG	__BIT(5)  /* TPAUSE,UMONITOR,UMWAIT */
 #define CPUID_SEF_AVX512_VBMI2	__BIT(6)  /* AVX-512 Vector Byte Manipulation 2 */
 #define CPUID_SEF_GFNI		__BIT(8)
 #define CPUID_SEF_VAES		__BIT(9)
@@ -407,16 +408,20 @@
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
 #define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
+#define CPUID_SEF_CLDEMOTE	__BIT(25) /* Cache line demote */
+#define CPUID_SEF_MOVDIRI	__BIT(27) /* MOVDIRI instruction */
+#define CPUID_SEF_MOVDIR64B	__BIT(28) /* MOVDIR64B instruction */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
 
 #define CPUID_SEF_FLAGS1	"\177\20" \
 	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	\
-	"b\4OSPKE\0"			"b\6AVX512_VBMI2\0"		\
+	"b\4OSPKE\0"	"b\5WAITPKG\0"	"b\6AVX512_VBMI2\0"		      \
 	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
 	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
 	"f\21\5MAWAU\0"							\
 					"b\26RDPID\0"			\
-					"b\36SGXLC\0"
+			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	\
+	"b\34MOVDIR64B\0"		"b\36SGXLC\0"
 
 /* %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
@@ -425,12 +430,13 @@
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 #define CPUID_SEF_L1D_FLUSH	__BIT(28) /* IA32_FLUSH_CMD MSR */
 #define CPUID_SEF_ARCH_CAP	__BIT(29) /* IA32_ARCH_CAPABILITIES */
+#define CPUID_SEF_CORE_CAP	__BIT(30) /* IA32_CORE_CAPABILITIES */
 #define CPUID_SEF_SSBD		__BIT(31) /* Speculative Store Bypass Disable */
 
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
 					"\33" "IBRS"	"\34" "STIBP"	\
-	"\35" "L1D_FLUSH" "\36" "ARCH_CAP"		"\40" "SSBD"
+	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
 
 /*
  * Intel CPUID Architectural Performance Monitoring Fn0000000a
