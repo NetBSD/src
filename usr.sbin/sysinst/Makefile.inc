@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2019/02/04 10:22:15 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2019/02/11 19:15:38 martin Exp $
 #
 # Makefile for sysinst
 
@@ -117,11 +117,6 @@ COPTS.msg_defs.c += -Wno-format-nonliteral
 COPTS.bsddisklabel.c += -Wno-format-nonliteral
 COPTS.md.c += -Wno-format-nonliteral
 COPTS.partman.c += -Wno-format-nonliteral -Wno-stack-protector
-
-# Lots of warnings
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.partman.c+=	-Wno-error=format-truncation
-.endif
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
