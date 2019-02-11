@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.4 2018/12/04 11:52:57 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.5 2019/02/11 13:23:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.4 2018/12/04 11:52:57 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.5 2019/02/11 13:23:03 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -382,7 +382,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x5f] = "Atom (Goldmont, Denverton)",
 				[0x66] = "Future Core (Cannon Lake)",
 				[0x7a] = "Atom (Goldmont Plus)",
+				[0x7e] = "Future Core (Ice Lake)",
 				[0x85] = "Xeon Phi 7215, 7285, 7295 (Knights Mill)",
+				[0x86] = "Atom (Tremont)",
 				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
 				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake)",
 			},
