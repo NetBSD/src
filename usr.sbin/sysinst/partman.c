@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.27 2019/02/11 19:58:22 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.28 2019/02/11 20:03:28 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1934,8 +1934,6 @@ pm_getrefdev(pm_devs_t *pm_cur)
 					pm_cur->diskdev_descr[
 					    sizeof(pm_cur->diskdev_descr)-1]
 					    = 0;
-				pm_cur->diskdev_descr[
-				    sizeof(pm_cur->diskdev_descr)-1] = 0;
 				break;
 			}
 	} else if (! strncmp(pm_cur->diskdev, "raid", 4)) {
