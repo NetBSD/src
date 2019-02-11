@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.17 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.18 2019/02/11 17:28:52 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.17 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.18 2019/02/11 17:28:52 cherry Exp $");
 #endif
 
 /*
@@ -345,13 +345,8 @@ IDTVEC_END(trap17)
 IDTVEC_END(trap16)
 IDTVEC_END(trap15)
 IDTVEC_END(trap14)
-#ifndef XENPV
 IDTVEC_END(trap13)
 IDTVEC_END(trap12)
-#else
-IDTVEC_END(trap13)
-IDTVEC_END(trap12)
-#endif
 IDTVEC_END(trap11)
 
 IDTVEC(exceptions)
