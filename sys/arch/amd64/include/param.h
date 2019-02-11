@@ -1,8 +1,8 @@
-/*	$NetBSD: param.h,v 1.28 2019/01/07 22:00:30 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.29 2019/02/11 14:59:32 cherry Exp $	*/
 
 #ifdef __x86_64__
 
-#ifndef XEN
+#ifndef XENPV
 /* Must be defined before cpu.h */
 #define	MAXCPUS		256
 #endif

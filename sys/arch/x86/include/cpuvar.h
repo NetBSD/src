@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.50 2017/05/23 08:54:39 nonaka Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.51 2019/02/11 14:59:32 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -68,11 +68,11 @@
 
 struct cpu_info;
 struct cpu_functions {
-#ifndef XEN
+#ifndef XENPV
 	int (*start)(struct cpu_info *, paddr_t);
-#else /* XEN */
+#else /* XENPV */
    	int (*start)(struct cpu_info *, vaddr_t);
-#endif /* XEN */
+#endif /* XENPV */
 	int (*stop)(struct cpu_info *);
 	void (*cleanup)(struct cpu_info *);
 };
@@ -115,7 +115,7 @@ void cpu_init_first(void);
 void x86_cpu_idle_init(void);
 void x86_cpu_idle_halt(void);
 void x86_cpu_idle_mwait(void);
-#ifdef XEN
+#ifdef XENPV
 void x86_cpu_idle_xen(void);
 #endif
 

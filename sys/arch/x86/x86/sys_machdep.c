@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.50 2018/11/08 10:55:41 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.51 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.50 2018/11/08 10:55:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.51 2019/02/11 14:59:33 cherry Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.50 2018/11/08 10:55:41 maxv Exp $"
 #include <machine/sysarch.h>
 #include <machine/mtrr.h>
 
-#if defined(__x86_64__) || defined(XEN)
+#if defined(__x86_64__) || defined(XENPV)
 #undef	IOPERM	/* not implemented */
 #else
 #define	IOPERM
 #endif
 
-#if defined(XEN) && defined(USER_LDT)
-#error "USER_LDT not supported on XEN"
+#if defined(XENPV) && defined(USER_LDT)
+#error "USER_LDT not supported on XENPV"
 #endif
 
 extern struct vm_map *kernel_map;
@@ -359,7 +359,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 {
 	int error;
 	struct x86_iopl_args ua;
-#ifdef XEN
+#ifdef XENPV
 	int iopl;
 #else
 	struct trapframe *tf = l->l_md.md_regs;
@@ -373,7 +373,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
 
-#ifdef XEN
+#ifdef XENPV
 	if (ua.iopl)
 		iopl = SEL_UPL;
 	else
@@ -605,7 +605,7 @@ x86_set_sdbase32(void *arg, char which, lwp_t *l, bool direct)
 		    sizeof(struct segment_descriptor));
 		if (l == curlwp) {
 			update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &usd);
-#if defined(__x86_64__) && defined(XEN)
+#if defined(__x86_64__) && defined(XENPV)
 			setusergs(GSEL(GUGS_SEL, SEL_UPL));
 #endif
 		}

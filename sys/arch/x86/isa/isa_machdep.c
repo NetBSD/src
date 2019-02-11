@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.43 2018/12/25 06:50:12 cherry Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.44 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.43 2018/12/25 06:50:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.44 2019/02/11 14:59:33 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
-#if !defined(XEN)
+#if !defined(XENPV)
 		isp = ci->ci_isources[i];
 #else
 		isp = ci->ci_xsources[i];
@@ -248,7 +248,7 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 void
 isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
-#if !defined(XEN)
+#if !defined(XENPV)
 	struct intrhand *ih = arg;
 
 	if (!LEGAL_IRQ(ih->ih_pin))

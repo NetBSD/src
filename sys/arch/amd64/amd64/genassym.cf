@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.72 2019/02/02 12:32:54 cherry Exp $
+#	$NetBSD: genassym.cf,v 1.73 2019/02/11 14:59:32 cherry Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
-if !defined(XEN)
+if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
@@ -359,9 +359,11 @@ define CPU_INFO_XMASK		offsetof(struct cpu_info, ci_xmask)
 define CPU_INFO_XUNMASK		offsetof(struct cpu_info, ci_xunmask)
 define CPU_INFO_XSOURCES	offsetof(struct cpu_info, ci_xsources)
 define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
+ifdef XENPV
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
 define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
 define __HYPERVISOR_iret	__HYPERVISOR_iret
+endif /* XENPV */
 endif
 
 define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES

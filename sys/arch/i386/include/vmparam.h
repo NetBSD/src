@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.85 2017/06/23 21:28:38 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.86 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -122,7 +122,7 @@
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
-#ifdef XEN
+#ifdef XENPV
 #define	VM_PHYSSEG_MAX		1
 #define	VM_NFREELIST		1
 #else
@@ -131,7 +131,7 @@
 #define	VM_FREELIST_FIRST16	3
 #define	VM_FREELIST_FIRST1G	2
 #define	VM_FREELIST_FIRST4G	1
-#endif /* XEN */
+#endif /* XENPV */
 #define	VM_FREELIST_DEFAULT	0
 
 #endif /* _I386_VMPARAM_H_ */
