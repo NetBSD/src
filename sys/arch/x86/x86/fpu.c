@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.49 2019/01/20 16:55:21 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.50 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.49 2019/01/20 16:55:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.50 2019/02/11 14:59:33 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -121,7 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.49 2019/01/20 16:55:21 maxv Exp $");
 #include <x86/cpu.h>
 #include <x86/fpu.h>
 
-#ifdef XEN
+#ifdef XENPV
 #define clts() HYPERVISOR_fpu_taskswitch(0)
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
@@ -152,7 +152,7 @@ fpuinit(struct cpu_info *ci)
 void
 fpuinit_mxcsr_mask(void)
 {
-#ifndef XEN
+#ifndef XENPV
 	union savefpu fpusave __aligned(16);
 	u_long psl;
 
@@ -569,7 +569,7 @@ fpusave_lwp(struct lwp *l, bool save)
 			break;
 		}
 		splx(s);
-#ifdef XEN
+#ifdef XENPV
 		if (xen_send_ipi(oci, XEN_IPI_SYNCH_FPU) != 0) {
 			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
 			    cpu_name(oci));

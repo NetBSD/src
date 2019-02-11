@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.27 2019/01/06 14:35:31 cherry Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.28 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.27 2019/01/06 14:35:31 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.28 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -65,13 +65,13 @@ ENTRY(x86_mfence)
 	ret
 END(x86_mfence)
 
-#ifndef XEN
+#ifndef XENPV
 ENTRY(lidt)
 	movl	4(%esp), %eax
 	lidt	(%eax)
 	ret
 END(lidt)
-#endif /* XEN */
+#endif /* XENPV */
 
 ENTRY(rcr3)
 	movl	%cr3, %eax
@@ -102,10 +102,10 @@ ENTRY(x86_write_flags)
 	ret
 END(x86_write_flags)
 
-#ifndef XEN
+#ifndef XENPV
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
 STRONG_ALIAS(x86_read_psl,x86_read_flags)
-#endif	/* XEN */
+#endif	/* XENPV */
 
 ENTRY(rdmsr)
 	movl	4(%esp), %ecx

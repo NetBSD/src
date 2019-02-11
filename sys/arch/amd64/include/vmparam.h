@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.50 2019/01/17 19:26:03 maxv Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.51 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -125,7 +125,7 @@
  * MIN = VA_SIGN_NEG(L4_SLOT_KERN * NBPD_L4)
  * MAX = MIN + NKL4_MAX_ENTRIES * NBPD_L4
  */
-#ifndef XEN
+#ifndef XENPV
 #define VM_MIN_KERNEL_ADDRESS_DEFAULT	0xffff800000000000
 #define VM_MAX_KERNEL_ADDRESS_DEFAULT	0xffffa00000000000
 #else

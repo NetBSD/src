@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.41 2018/08/12 13:31:16 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.42 2019/02/11 14:59:32 cherry Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -13,7 +13,7 @@
  * and system calls. Currently all the same; will diverge later.
  */
 
-#ifdef XEN
+#ifdef XENPV
 #define HYPERVISOR_iret hypercall_page + (__HYPERVISOR_iret * 32)
 /* Xen do not need swapgs, done by hypervisor */
 #define swapgs
@@ -29,7 +29,7 @@
  	movq CPUVAR(VCPU),%r ## temp_reg ;			\
 	movb $0,EVTCHN_UPCALL_MASK(%r ## temp_reg);
 
-#else /* XEN */
+#else /* XENPV */
 #define	XEN_ONLY2(x,y)
 #define	NOT_XEN(x)	x
 #define CLI(temp_reg) cli
