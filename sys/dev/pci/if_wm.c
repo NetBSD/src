@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.29 2019/01/31 06:43:48 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.30 2019/02/11 13:44:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.29 2019/01/31 06:43:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.30 2019/02/11 13:44:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3597,6 +3597,8 @@ wm_rar_count(struct wm_softc *sc)
 		size = WM_RAL_TABSIZE_PCH_LPT;
 		break;
 	case WM_T_82575:
+	case WM_T_I210:
+	case WM_T_I211:
 		size = WM_RAL_TABSIZE_82575;
 		break;
 	case WM_T_82576:
@@ -11895,9 +11897,9 @@ wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		status = CSR_READ(sc, WMREG_STATUS);
 		if (((status & STATUS_2P5_SKU) != 0)
 		    && ((status & STATUS_2P5_SKU_OVER) == 0)) {
-			ifmr->ifm_active |= IFM_2500_SX; /* XXX KX */
+			ifmr->ifm_active |= IFM_2500_KX;
 		} else
-			ifmr->ifm_active |= IFM_1000_SX; /* XXX KX */
+			ifmr->ifm_active |= IFM_1000_KX;
 	} else {
 		switch (__SHIFTOUT(reg, PCS_LSTS_SPEED)) {
 		case PCS_LSTS_SPEED_10:
@@ -14700,7 +14702,7 @@ wm_enable_wakeup(struct wm_softc *sc)
 			goto pme;
 	} else {
 		/* Enable wakeup by the MAC */
-		CSR_WRITE(sc, WMREG_WUC, WUC_PME_EN);
+		CSR_WRITE(sc, WMREG_WUC, WUC_APME | WUC_PME_EN);
 		CSR_WRITE(sc, WMREG_WUFC, WUFC_MAG);
 	}
 
