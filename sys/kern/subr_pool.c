@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.232 2019/02/10 17:13:33 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.233 2019/02/11 11:12:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.232 2019/02/10 17:13:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.233 2019/02/11 11:12:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -575,6 +575,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_roflags = flags;
 	pp->pr_flags = 0;
 	pp->pr_size = prsize;
+	pp->pr_reqsize = size;
 	pp->pr_align = align;
 	pp->pr_wchan = wchan;
 	pp->pr_alloc = palloc;
@@ -960,7 +961,7 @@ pool_get(struct pool *pp, int flags)
 	FREECHECK_OUT(&pp->pr_freecheck, v);
 	pool_redzone_fill(pp, v);
 	if (flags & PR_ZERO)
-		memset(v, 0, pp->pr_size);
+		memset(v, 0, pp->pr_reqsize);
 	else
 		pool_kleak_fill(pp, v);
 	return v;
@@ -2820,7 +2821,6 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 #endif
 
 	if (pp->pr_roflags & PR_NOTOUCH) {
-		pp->pr_reqsize = 0;
 		pp->pr_redzone = false;
 		return;
 	}
@@ -2830,7 +2830,6 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 	 * there's naturally space in the padding for a red zone.
 	 */
 	if (pp->pr_size - requested_size >= redzsz) {
-		pp->pr_reqsize = requested_size;
 		pp->pr_reqsize_with_redzone = requested_size + redzsz;
 		pp->pr_redzone = true;
 		return;
@@ -2844,12 +2843,10 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 	if (nsz <= pp->pr_alloc->pa_pagesz) {
 		/* Ok, we can */
 		pp->pr_size = nsz;
-		pp->pr_reqsize = requested_size;
 		pp->pr_reqsize_with_redzone = requested_size + redzsz;
 		pp->pr_redzone = true;
 	} else {
 		/* No space for a red zone... snif :'( */
-		pp->pr_reqsize = 0;
 		pp->pr_redzone = false;
 		printf("pool redzone disabled for '%s'\n", pp->pr_wchan);
 	}
