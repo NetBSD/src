@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.26 2019/02/11 19:15:38 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.27 2019/02/11 19:58:22 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -255,19 +255,24 @@ pm_edit(int menu_entries_count, void (*menu_fmt)(menudesc *, int, void *),
 static void
 pm_getdevstring(char *buf, int len, pm_devs_t *pm_cur, int num)
 {
-	int i;
+	int i, r;
 
 	if (pm_cur->isspecial)
 		snprintf(buf, len, "%s", pm_cur->diskdev);
-	else if (num + 'a' < 'a' || num + 'a' > 'a' + MAXPARTITIONS)
-		snprintf(buf, len, "%sd", pm_cur->diskdev);
-	else if (pm_cur->gpt) {
+	else if (num + 'a' < 'a' || num + 'a' > 'a' + MAXPARTITIONS) {
+		r = snprintf(buf, len-1, "%sd", pm_cur->diskdev);
+		if (r >= len)
+			buf[len] = 0;
+	} else if (pm_cur->gpt) {
 		for (i = 0; i < MAX_WEDGES; i++)
 			if (wedges[i].pm == pm_cur &&
 				wedges[i].ptn == num)
 				snprintf(buf, len, "dk%d", i); // XXX: xxx
-	} else
-		snprintf(buf, len, "%s%c", pm_cur->diskdev, num + 'a');
+	} else {
+		r = snprintf(buf, len-1, "%s%c", pm_cur->diskdev, num + 'a');
+		if (r >= len)
+			buf[len] = 0;
+	}
 
 	return;
 }
@@ -1918,7 +1923,8 @@ pm_getrefdev(pm_devs_t *pm_cur)
  		for (i = 0; i < MAX_VND; i++)
 			if (vnds[i].blocked && vnds[i].node == dev_num) {
 				pm_cur->refdev = &vnds[i];
-				pm_getdevstring(dev, SSTRSIZE, vnds[i].pm, vnds[i].pm_part);
+				pm_getdevstring(dev, SSTRSIZE, vnds[i].pm,
+				    vnds[i].pm_part);
 				r = snprintf(pm_cur->diskdev_descr,
 				    sizeof(pm_cur->diskdev_descr)-1,
 				    "%s (%s, %s)",
