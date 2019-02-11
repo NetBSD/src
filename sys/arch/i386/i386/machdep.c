@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.814 2018/12/10 15:08:23 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.815 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.814 2018/12/10 15:08:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.815 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -227,13 +227,13 @@ extern struct bootspace bootspace;
 
 extern paddr_t lowmem_rsvd;
 extern paddr_t avail_start, avail_end;
-#ifdef XEN
+#ifdef XENPV
 extern paddr_t pmap_pa_start, pmap_pa_end;
 void hypervisor_callback(void);
 void failsafe_callback(void);
 #endif
 
-#ifdef XEN
+#ifdef XENPV
 void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #else
@@ -259,7 +259,7 @@ int *esym;
 int *eblob;
 extern int boothowto;
 
-#ifndef XEN
+#ifndef XENPV
 
 /* Base memory reported by BIOS. */
 #ifndef REALBASEMEM
@@ -376,7 +376,7 @@ native_loader(int bl_boothowto, int bl_bootdev,
 #undef RELOC
 }
 
-#endif /* XEN */
+#endif /* XENPV */
 
 /*
  * Machine-dependent startup code
@@ -446,7 +446,7 @@ cpu_startup(void)
 	i386_proc0_pcb_ldt_init();
 
 	cpu_init_tss(&cpu_info_primary);
-#ifndef XEN
+#ifndef XENPV
 	ltr(cpu_info_primary.ci_tss_sel);
 #endif
 
@@ -470,7 +470,7 @@ i386_proc0_pcb_ldt_init(void)
 	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 	pcb->pcb_dbregs = NULL;
 
-#ifndef XEN
+#ifndef XENPV
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 #else
 	HYPERVISOR_fpu_taskswitch(1);
@@ -478,7 +478,7 @@ i386_proc0_pcb_ldt_init(void)
 #endif
 }
 
-#ifdef XEN
+#ifdef XENPV
 /* used in assembly */
 void i386_switch_context(lwp_t *);
 void i386_tls_switch(lwp_t *);
@@ -530,13 +530,13 @@ i386_tls_switch(lwp_t *l)
 			  (union descriptor *) &pcb->pcb_gsd);
 
 }
-#endif /* XEN */
+#endif /* XENPV */
 
 /* XXX */
 #define IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
 
-#ifndef XEN
+#ifndef XENPV
 static void	tss_init(struct i386tss *, void *, void *);
 
 static void
@@ -605,7 +605,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	    GSEL(GIPITSS_SEL, SEL_KPL));
 #endif
 }
-#endif /* XEN */
+#endif /* XENPV */
 
 /*
  * Set up TSS and I/O bitmap.
@@ -619,14 +619,14 @@ cpu_init_tss(struct cpu_info *ci)
 	    sizeof(struct cpu_tss), 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 
 	cputss->tss.tss_iobase = IOMAP_INVALOFF << 16;
-#ifndef XEN
+#ifndef XENPV
 	cputss->tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	cputss->tss.tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
 	cputss->tss.tss_cr3 = rcr3();
 #endif
 
 	ci->ci_tss = cputss;
-#ifndef XEN
+#ifndef XENPV
 	ci->ci_tss_sel = tss_alloc(&cputss->tss);
 #endif
 }
@@ -801,7 +801,7 @@ haltsys:
 #else
 		__USE(s);
 #endif
-#ifdef XEN
+#ifdef XENPV
 		HYPERVISOR_shutdown();
 		for (;;);
 #endif
@@ -958,7 +958,7 @@ setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
 /* XXX */
 extern vector IDTVEC(syscall);
 extern vector *IDTVEC(exceptions)[];
-#ifdef XEN
+#ifdef XENPV
 extern union descriptor tmpgdt[];
 #endif
 
@@ -976,7 +976,7 @@ initgdt(union descriptor *tgdt)
 	KASSERT(tgdt != NULL);
 
 	gdtstore = tgdt;
-#ifdef XEN
+#ifdef XENPV
 	u_long	frames[16];
 #else
 	struct region_descriptor region;
@@ -1004,10 +1004,10 @@ initgdt(union descriptor *tgdt)
 	setsegment(&gdtstore[GCPU_SEL].sd, &cpu_info_primary,
 	    sizeof(struct cpu_info) - 1, SDT_MEMRWA, SEL_KPL, 1, 0);
 
-#ifndef XEN
+#ifndef XENPV
 	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
-#else /* !XEN */
+#else /* !XENPV */
 	/*
 	 * We jumpstart the bootstrap process a bit so we can update
 	 * page permissions. This is done redundantly later from
@@ -1041,10 +1041,10 @@ initgdt(union descriptor *tgdt)
 		panic("HYPERVISOR_set_gdt failed!\n");
 
 	lgdt_finish();
-#endif /* !XEN */
+#endif /* !XENPV */
 }
 
-#ifndef XEN
+#ifndef XENPV
 static void
 init386_pte0(void)
 {
@@ -1058,7 +1058,7 @@ init386_pte0(void)
 	/* make sure it is clean before using */
 	memset((void *)vaddr, 0, PAGE_SIZE);
 }
-#endif /* !XEN */
+#endif /* !XENPV */
 
 static void
 init386_ksyms(void)
@@ -1133,7 +1133,7 @@ init386(paddr_t first_avail)
 {
 	extern void consinit(void);
 	int x;
-#ifndef XEN
+#ifndef XENPV
 	extern paddr_t local_apic_pa;
 	union descriptor *tgdt;
 	struct region_descriptor region;
@@ -1146,7 +1146,7 @@ init386(paddr_t first_avail)
 
 	KASSERT(first_avail % PAGE_SIZE == 0);
 
-#ifdef XEN
+#ifdef XENPV
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
@@ -1155,7 +1155,7 @@ init386(paddr_t first_avail)
 
 	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
-#ifndef XEN
+#ifndef XENPV
 	cpu_speculation_init(&cpu_info_primary);
 #endif
 
@@ -1166,11 +1166,11 @@ init386(paddr_t first_avail)
 #endif
 
 	pcb = lwp_getpcb(&lwp0);
-#ifdef XEN
+#ifdef XENPV
 	pcb->pcb_cr3 = PDPpaddr;
 #endif
 
-#if defined(PAE) && !defined(XEN)
+#if defined(PAE) && !defined(XENPV)
 	/*
 	 * Save VA and PA of L3 PD of boot processor (for Xen, this is done
 	 * in xen_locore())
@@ -1190,7 +1190,7 @@ init386(paddr_t first_avail)
 
 	avail_start = first_avail;
 
-#ifndef XEN
+#ifndef XENPV
 	/*
 	 * Low memory reservations:
 	 * Page 0:	BIOS data
@@ -1201,7 +1201,7 @@ init386(paddr_t first_avail)
 	 * Page 5:	Temporary page directory
 	 */
 	lowmem_rsvd = 6 * PAGE_SIZE;
-#else /* !XEN */
+#else /* !XENPV */
 	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 
@@ -1227,7 +1227,7 @@ init386(paddr_t first_avail)
 	initgdt(gdtstore);
 
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
-#endif /* XEN */
+#endif /* XENPV */
 
 #if NISA > 0 || NPCI > 0
 	x86_bus_space_init();
@@ -1245,13 +1245,13 @@ init386(paddr_t first_avail)
 	 */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
-#ifndef XEN
+#ifndef XENPV
 	/* Initialize the memory clusters. */
 	init_x86_clusters();
 
 	/* Internalize the physical pages into the VM system. */
 	init_x86_vm(avail_start);
-#else /* !XEN */
+#else /* !XENPV */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
@@ -1268,11 +1268,11 @@ init386(paddr_t first_avail)
 			panic("tmpgdt page relaim RW update failed.\n");
 		}
 	}
-#endif /* !XEN */
+#endif /* !XENPV */
 
 	init_x86_msgbuf();
 
-#if !defined(XEN) && NBIOSCALL > 0
+#if !defined(XENPV) && NBIOSCALL > 0
 	/*
 	 * XXX Remove this
 	 *
@@ -1291,7 +1291,7 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 	pmap_kenter_pa(local_apic_va, local_apic_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
@@ -1311,7 +1311,7 @@ init386(paddr_t first_avail)
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 	idt = (idt_descriptor_t *)idt_vaddr;
 
-#ifndef XEN	
+#ifndef XENPV	
 	tgdt = gdtstore;
 	gdtstore = (union descriptor *)gdt_vaddr;
 	ldtstore = (union descriptor *)ldt_vaddr;
@@ -1326,7 +1326,7 @@ init386(paddr_t first_avail)
 	    GSEL(GCODE_SEL, SEL_KPL), (unsigned long)failsafe_callback);
 
 	ldtstore = (union descriptor *)ldt_vaddr;
-#endif /* XEN */
+#endif /* XENPV */
 
 	/* make ldt gates and memory segments */
 	ldtstore[LUCODE_SEL] = gdtstore[GUCODE_SEL];
@@ -1337,21 +1337,21 @@ init386(paddr_t first_avail)
 	for (x = 0; x < 32; x++) {
 		/* Reset to default. Special cases below */
 		int sel;
-#ifdef XEN		
+#ifdef XENPV		
 		sel = SEL_XEN;
 #else
 		sel = SEL_KPL;
-#endif /* XEN */
+#endif /* XENPV */
 
 		idt_vec_reserve(x);
 
  		switch (x) {
-#ifdef XEN
+#ifdef XENPV
 		case 2:  /* NMI */
 		case 18: /* MCA */
 			sel |= 0x4; /* Auto EOI/mask */
 			break;
-#endif /* XEN */
+#endif /* XENPV */
 		case 3:
 		case 4:
 			sel = SEL_UPL;
@@ -1368,7 +1368,7 @@ init386(paddr_t first_avail)
 	set_idtgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 
-#ifndef XEN
+#ifndef XENPV
 	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
 #endif
@@ -1385,7 +1385,7 @@ init386(paddr_t first_avail)
 	mca_busprobe();
 #endif
 
-#ifdef XEN
+#ifdef XENPV
 	events_default_setup();
 #else
 	intr_default_setup();
@@ -1425,10 +1425,10 @@ init386(paddr_t first_avail)
 void
 cpu_reset(void)
 {
-#ifdef XEN
+#ifdef XENPV
 	HYPERVISOR_reboot();
 	for (;;);
-#else /* XEN */
+#else /* XENPV */
 	struct region_descriptor region;
 
 	x86_disable_intr();
@@ -1481,7 +1481,7 @@ cpu_reset(void)
 #endif
 
 	for (;;);
-#endif /* XEN */
+#endif /* XENPV */
 }
 
 void

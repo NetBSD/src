@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.67 2018/09/23 15:28:49 cherry Exp $	*/
+/*	$NetBSD: segments.h,v 1.68 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,19 +89,19 @@
  */
 
 #define ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
-#ifndef XEN
+#ifndef XENPV
 #define SEL_KPL		0		/* kernel privilege level */
 #else
 #define SEL_XEN		0		/* Xen privilege level */
 #define SEL_KPL		1		/* kernel privilege level */
-#endif /* XEN */
+#endif /* XENPV */
 #define SEL_UPL		3		/* user privilege level */
 #define SEL_RPL		3		/* requester's privilege level mask */
-#ifdef XEN
+#ifdef XENPV
 #define CHK_UPL		2		/* user privilege level mask */
 #else
 #define CHK_UPL		SEL_RPL
-#endif /* XEN */
+#endif /* XENPV */
 #define ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define SEL_LDT		4		/* local descriptor table */
 
@@ -191,11 +191,11 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-#ifdef XEN
+#ifdef XENPV
 typedef struct trap_info idt_descriptor_t;
 #else
 typedef struct gate_descriptor idt_descriptor_t; 
-#endif /* XEN */
+#endif /* XENPV */
 extern idt_descriptor_t *idt;
 extern union descriptor *gdtstore, *ldtstore;
 

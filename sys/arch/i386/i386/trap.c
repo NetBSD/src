@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.297 2019/02/03 03:19:26 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.298 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.297 2019/02/03 03:19:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.298 2019/02/11 14:59:32 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -129,7 +129,7 @@ dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
-#ifndef XEN
+#ifndef XENPV
 int ss_shadow(struct trapframe *tf);
 #endif
 
@@ -240,7 +240,7 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
-#ifndef XEN
+#ifndef XENPV
 int
 ss_shadow(struct trapframe *tf)
 {
@@ -678,7 +678,7 @@ faultcommon:
 				 * the copy functions, and so visible
 				 * to cpu_kpreempt_exit().
 				 */
-#ifndef XEN
+#ifndef XENPV
 				x86_disable_intr();
 #endif
 				l->l_nopreempt--;
@@ -686,7 +686,7 @@ faultcommon:
 				    pfail) {
 					return;
 				}
-#ifndef XEN
+#ifndef XENPV
 				x86_enable_intr();
 #endif
 				/*

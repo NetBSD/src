@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.45 2018/08/12 06:11:47 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.46 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  * handler.
  */
 
-#ifdef	XEN
+#ifdef	XENPV
 #define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
 #else
 #define	PRE_TRAP
@@ -179,7 +179,7 @@ IDTVEC_END(trap00)
  * to contain secrets.
  */
 IDTVEC(trap01)
-#ifndef XEN
+#ifndef XENPV
 	subq	$(TF_REGSIZE+16),%rsp
 
 	/* We clobber only RDX, RCX and RAX. */
@@ -247,7 +247,7 @@ IDTVEC_END(trap01)
  * running in kernel mode with a userland %gs.
  */
 IDTVEC(trap02)
-#if defined(XEN)
+#if defined(XENPV)
 	ZTRAP(T_NMI)
 #else
 	ZTRAP_NJ(T_NMI)
@@ -346,7 +346,7 @@ IDTVEC_END(trap07)
  * of it. So don't enable interrupts.
  */
 IDTVEC(trap08)
-#if defined(XEN)
+#if defined(XENPV)
 	TRAP(T_DOUBLEFLT)
 #else
 	TRAP_NJ(T_DOUBLEFLT)
@@ -390,7 +390,7 @@ IDTVEC(trap10)
 	TRAP(T_TSSFLT)
 IDTVEC_END(trap10)
 
-#ifdef XEN
+#ifdef XENPV
 /*
  * I don't believe XEN generates in-kernel traps for the
  * equivalent of iret, if it does this code would be needed
