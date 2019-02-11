@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.81 2019/02/11 05:51:20 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.82 2019/02/11 05:59:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.81 2019/02/11 05:51:20 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.82 2019/02/11 05:59:00 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3431,14 +3431,14 @@ PTRACE_SIGINFO(siginfo_set_faked, true)
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(siginfo4);
-ATF_TC_HEAD(siginfo4, tc)
+ATF_TC(traceme_exec);
+ATF_TC_HEAD(traceme_exec, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Detect SIGTRAP TRAP_EXEC from tracee");
 }
 
-ATF_TC_BODY(siginfo4, tc)
+ATF_TC_BODY(traceme_exec, tc)
 {
 	const int sigval = SIGTRAP;
 	pid_t child, wpid;
@@ -3489,6 +3489,8 @@ ATF_TC_BODY(siginfo4, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+/// ----------------------------------------------------------------------------
 
 volatile lwpid_t the_lwp_id = 0;
 
@@ -5338,7 +5340,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, siginfo_set_unmodified);
 	ATF_TP_ADD_TC(tp, siginfo_set_faked);
 
-	ATF_TP_ADD_TC(tp, siginfo4);
+	ATF_TP_ADD_TC(tp, traceme_exec);
 
 	ATF_TP_ADD_TC(tp, lwp_create1);
 
