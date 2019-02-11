@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.6 2018/11/20 19:02:07 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.7 2019/02/11 20:40:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -224,7 +224,7 @@ set_ptn_size(menudesc *m, void *arg)
 	if (size == 0)
 		size = p->dflt_size;
 	size /= sizemult;
-	snprintf(dflt, sizeof dflt, "%" PRIi64 "%s",
+	trunc_snprintf(dflt, sizeof dflt, "%" PRIi64 "%s",
 	    size, p == pi->pool_part ? "+" : "");
 
 	for (;;) {
