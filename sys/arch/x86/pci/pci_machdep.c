@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.83 2018/07/10 06:44:49 maxv Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.84 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.83 2018/07/10 06:44:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.84 2019/02/11 14:59:33 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.83 2018/07/10 06:44:49 maxv Exp $"
 #include <dev/pci/puccn.h>
 #endif
 
-#ifndef XEN
+#ifndef XENPV
 #include <x86/efi.h>
 #endif
 
@@ -1095,7 +1095,7 @@ device_pci_register(device_t dev, void *aux)
 			if (bin->addr.tag == ((b << 8) | (d << 3) | f))
 				return dev;
 
-#ifndef XEN
+#ifndef XENPV
 			/*
 			 * efiboot reports parent ppb bus/device/function.
 			 */

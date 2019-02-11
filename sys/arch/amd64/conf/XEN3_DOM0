@@ -1,7 +1,8 @@
-# $NetBSD: XEN3_DOM0,v 1.165 2019/02/06 11:58:30 rin Exp $
+# $NetBSD: XEN3_DOM0,v 1.166 2019/02/11 14:59:32 cherry Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
+options		XENPV		# PV dom0 support
 #options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
@@ -10,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.165 $"
+#ident		"XEN3_DOM0-$Revision: 1.166 $"
 
 maxusers	32		# estimated number of users
 

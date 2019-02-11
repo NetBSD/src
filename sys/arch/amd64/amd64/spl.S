@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.38 2018/12/26 11:12:57 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.39 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -308,7 +308,7 @@ IDTVEC(spllower)
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		/* address to resume loop at */
 1:	movl	%ebx,%eax		/* get cpl */
-#if !defined(XEN)
+#if !defined(XENPV)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
@@ -352,7 +352,7 @@ IDTVEC(doreti)
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
-#if !defined(XEN)
+#if !defined(XENPV)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax

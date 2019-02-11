@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.40 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.41 2019/02/11 14:59:33 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.40 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.41 2019/02/11 14:59:33 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ x86_bus_space_init(void)
 	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-#ifdef XEN
+#ifdef XENPV
 	/* We are privileged guest os - should have IO privileges. */
 	if (xendomain_is_privileged()) {
 		struct physdev_op physop;
@@ -143,7 +143,7 @@ x86_bus_space_init(void)
 			panic("Unable to obtain IOPL, "
 			    "despite being SIF_PRIVILEGED");
 	}
-#endif	/* XEN */
+#endif	/* XENPV */
 }
 
 void
@@ -209,12 +209,12 @@ bus_space_reservation_map(bus_space_tag_t t, bus_space_reservation_t *bsr,
 		return 0;
 	}
 
-#ifndef XEN
+#ifndef XENPV
 	if (bpa >= IOM_BEGIN && (bpa + size) != 0 && (bpa + size) <= IOM_END) {
 		*bshp = (bus_space_handle_t)ISA_HOLE_VADDR(bpa);
 		return 0;
 	}
-#endif	/* !XEN */
+#endif	/* !XENPV */
 
 	/*
 	 * For memory space, map the bus physical address to
@@ -445,11 +445,11 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 		panic("x86_mem_add_mapping: overflow");
 #endif
 
-#ifdef XEN
+#ifdef XENPV
 	if (bpa >= IOM_BEGIN && (bpa + size) != 0 && (bpa + size) <= IOM_END) {
 		sva = (vaddr_t)ISA_HOLE_VADDR(pa);
 	} else
-#endif	/* XEN */
+#endif	/* XENPV */
 	{
 		sva = uvm_km_alloc(kernel_map, endpa - pa, 0,
 		    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);

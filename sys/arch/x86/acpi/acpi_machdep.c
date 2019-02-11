@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.21 2018/11/22 15:06:00 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.22 2019/02/11 14:59:32 cherry Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.21 2018/11/22 15:06:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.22 2019/02/11 14:59:32 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ acpi_md_OsGetRootPointer(void)
 	ACPI_PHYSICAL_ADDRESS PhysicalAddress;
 	ACPI_STATUS Status;
 
-#ifndef XEN
+#ifndef XENPV
 	/* If EFI is available, attempt to use it to locate the ACPI table. */
 	if (efi_probe()) {
 		PhysicalAddress = efi_getcfgtblpa(&EFI_UUID_ACPI20);
@@ -385,7 +385,7 @@ acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
 	uint32_t type;
 	int i, n;
 
-#ifndef XEN
+#ifndef XENPV
 	if (lookup_bootinfo(BTINFO_EFIMEMMAP) != NULL)
 		bim = efi_get_e820memmap();
 	else
@@ -482,14 +482,14 @@ acpi_md_callback(struct acpi_softc *sc)
 #endif
 	mpacpi_find_interrupts(sc);
 
-#ifndef XEN
+#ifndef XENPV
 	acpi_md_sleep_init();
 #endif
 
 	acpimcfg_init(x86_bus_space_mem, &acpi_md_mcfg_ops);
 }
 
-#ifndef XEN
+#ifndef XENPV
 void
 device_acpi_register(device_t dev, void *aux)
 {

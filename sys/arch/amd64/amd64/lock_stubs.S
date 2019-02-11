@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.30 2018/12/25 06:50:11 cherry Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.31 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ ENTRY(mutex_spin_exit)
 	jnz	1f
 	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
-#if !defined(XEN)
+#if !defined(XENPV)
 	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
 	CLI(ax)
 	testl	CPU_INFO_IPENDING(%r8), %esi
@@ -165,7 +165,7 @@ ENTRY(mutex_spin_exit)
 	cmpl	%edx,%ecx			/* new level is lower? */
 	jae	2f
 1:
-#if !defined(XEN)
+#if !defined(XENPV)
 	movl	CPU_INFO_IPENDING(%rsi),%eax
 	testl	%eax,CPU_INFO_IUNMASK(%rsi,%rcx,4)/* deferred interrupts? */
 	jnz	3f

@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.139 2019/02/08 04:06:00 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.140 2019/02/11 14:59:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -167,12 +167,12 @@
 	"\35" "HTT"	"\36" "TM"	"\37" "IA64"	"\40" "SBF"
 
 /* Blacklists of CPUID flags - used to mask certain features */
-#ifdef XEN
+#ifdef XENPV
 /* Not on Xen */
 #define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR)
 #else
 #define CPUID_FEAT_BLACKLIST	 0
-#endif /* XEN */
+#endif /* XENPV */
 
 /*
  * CPUID "features" bits in Fn00000001 %ecx
