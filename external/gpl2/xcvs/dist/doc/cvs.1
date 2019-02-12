@@ -3900,7 +3900,7 @@ Requires: repository, working directory.
 .IP "\(bu" 2
 Changes: working directory.
 .SP
-After you\(aqve run checkout to create your private copy
+After you\(aqve run \fBcheckout\fR to create your private copy
 of source from the common repository, other developers
 will continue changing the central source.  From time
 to time, when it is convenient in your development
@@ -3954,19 +3954,6 @@ Local; run only in current working directory.  see node `Recursive behavior\(aq 
 Prune empty directories.  See see node `Moving directories\(aq in the CVS manual.
 .SP
 .IP "" 0
-\fB-t\fR
-.IP "" 2
-Preserve source timestamps.  Unlike \fBcheckout\fR where files are created
-using the original timestamp of the file in the repository, \fBupdate\fR
-updates files using the current time of the machine.  This is convenient
-because updated files appear newer than any other files on the system so
-.BR make ( 1 )
-knows that are their corresponding built artifacts are out of date and
-they will get rebuilt.  The \fB-t\fR flag instead preserves the timestamps
-of the original repository files, behaving exactly like \fBcheckout\fR.
-This is useful for maintaining a tree in the original checked-out state.
-.SP
-.IP "" 0
 \fB-p\fR
 .IP "" 2
 Pipe files to the standard output.
@@ -3985,6 +3972,18 @@ and \fItag\fR is a branch tag, the version from the branch \fItag\fR as it
 existed on \fIdate\fR.  This option is sticky, and implies \fB-P\fR.
 See see node `Sticky tags\(aq in the CVS manual, for more information on sticky tags/dates. Also
 see see node `Common options\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-t\fR
+.IP "" 2
+Preserve source timestamps.  Unlike \fBcheckout\fR, where files are created
+using the original timestamp of the file in the repository, \fBupdate\fR
+updates files using the current time of the machine.  This is convenient
+because updated files appear newer than any other files on the system so
+\fBmake(1)\fR knows that their corresponding built artifacts are out of date
+and they will get rebuilt.  The \fB-t\fR flag instead preserves the timestamps
+of the original repository files, behaving exactly like \fBcheckout\fR.
+This is useful for maintaining a tree in the original checked-out state.
 .SP
 These special options are also available with
 \fBupdate\fR.
