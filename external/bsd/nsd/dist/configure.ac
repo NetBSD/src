@@ -3,8 +3,9 @@ dnl Some global settings
 dnl
 
 sinclude(acx_nlnetlabs.m4)
+sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.1.24,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.26,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -230,6 +231,28 @@ if test $ac_cv_c_unused_attribute = yes; then
 fi
 ])dnl
 
+AC_DEFUN([CHECK_NORETURN_ATTRIBUTE],
+[AC_REQUIRE([AC_PROG_CC])
+AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "noreturn" attribute)
+AC_CACHE_VAL(ac_cv_c_noreturn_attribute,
+[ac_cv_c_noreturn_attribute=no
+AC_TRY_COMPILE(
+[ #include <stdio.h>
+__attribute__((noreturn)) void f(int x) { printf("%d", x); }
+], [
+   f(1);
+],
+[ac_cv_c_noreturn_attribute="yes"],
+[ac_cv_c_noreturn_attribute="no"])
+])
+
+AC_MSG_RESULT($ac_cv_c_noreturn_attribute)
+if test $ac_cv_c_noreturn_attribute = yes; then
+  AC_DEFINE(HAVE_ATTR_NORETURN, 1, [Whether the C compiler accepts the "noreturn" attribute])
+  AC_DEFINE(ATTR_NORETURN, [__attribute__((__noreturn__))], [apply the noreturn attribute to a function that exits the program])
+fi
+])dnl End of CHECK_NORETURN_ATTRIBUTE
+
 AC_DEFUN([CHECK_COMPILER_FLAG],
 [
 AC_REQUIRE([AC_PROG_CC])
@@ -296,6 +319,7 @@ AC_TYPE_OFF_T
 
 AC_CHECK_FORMAT_ATTRIBUTE
 AC_CHECK_UNUSED_ATTRIBUTE
+CHECK_NORETURN_ATTRIBUTE
 ACX_CHECK_MEMCMP_SIGNED
 AC_CHECK_CTIME_R
 
@@ -905,6 +929,26 @@ case "$enable_packed" in
 	;;
 esac
 
+# check for dnstap if requested
+dt_DNSTAP([${localstatedir}/run/nsd-dnstap.sock],
+    [
+        AC_DEFINE([USE_DNSTAP], [1], [Define to 1 to enable dnstap support])
+        AC_SUBST([ENABLE_DNSTAP], [1])
+
+        AC_SUBST([opt_dnstap_socket_path])
+        ACX_ESCAPE_BACKSLASH($opt_dnstap_socket_path, hdr_dnstap_socket_path)
+        AC_DEFINE_UNQUOTED(DNSTAP_SOCKET_PATH,
+            ["$hdr_dnstap_socket_path"], [default dnstap socket path])
+
+        AC_SUBST([DNSTAP_SRC], ["dnstap/dnstap.c dnstap/dnstap.pb-c.c dnstap/dnstap_collector.c"])
+        AC_SUBST([DNSTAP_OBJ], ["dnstap.o dnstap_collector.o dnstap.pb-c.o"])
+	dnstap_config="dnstap/dnstap_config.h"
+    ],
+    [
+        AC_SUBST([ENABLE_DNSTAP], [0])
+    ]
+)
+
 # Include systemd.m4 - begin
 sinclude(systemd.m4)
 # Include systemd.m4 - end
@@ -1109,5 +1153,5 @@ if test "$enable_checking" = "yes"; then
         echo "************************************************"
 fi
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile $dnstap_config])
 AC_OUTPUT

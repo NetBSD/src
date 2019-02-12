@@ -78,7 +78,6 @@ nsd_options_create(region_type* region)
 	opt->port = UDP_PORT;
 /* deprecated?	opt->port = TCP_PORT; */
 	opt->reuseport = 0;
-	opt->use_systemd = 0;
 	opt->statistics = 0;
 	opt->chroot = 0;
 	opt->username = USER;
@@ -98,6 +97,16 @@ nsd_options_create(region_type* region)
 	opt->rrl_ratelimit = RRL_LIMIT/2;
 	opt->rrl_whitelist_ratelimit = RRL_WLIST_LIMIT/2;
 #  endif
+#endif
+#ifdef USE_DNSTAP
+	opt->dnstap_enable = 0;
+	opt->dnstap_socket_path = DNSTAP_SOCKET_PATH;
+	opt->dnstap_send_identity = 0;
+	opt->dnstap_send_version = 0;
+	opt->dnstap_identity = NULL;
+	opt->dnstap_version = NULL;
+	opt->dnstap_log_auth_query_messages = 0;
+	opt->dnstap_log_auth_response_messages = 0;
 #endif
 	opt->zonefiles_check = 1;
 	if(opt->database == NULL || opt->database[0] == 0)

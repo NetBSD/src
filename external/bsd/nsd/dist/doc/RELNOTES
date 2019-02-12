@@ -1,5 +1,50 @@
 NSD RELEASE NOTES
 
+4.1.26
+================
+FEATURES:
+	- DNSTAP support for NSD, --enable-dnstap and then config in nsd.conf.
+	- Support SO_REUSEPORT_LB in FreeBSD 12 with the reuseport: yes
+	  option in nsd.conf.
+	- Added nsd-control changezone.  nsd-control changezone name pattern
+	  allows the change of a zone pattern option without downtime for
+	  the zone, in one operation.
+BUG FIXES:
+	- Fix #4194: Zone file parser derailed by non-FQDN names in RHS of
+	  DNSSEC RRs.
+	- Fix #4202: nsd-control delzone incorrect exit code on error.
+	- Tab style fix to use tab for 8 spaces, from Xiaobo Liu.
+	- Fix #4205: enable-recvmmsg in mixed IPv4/IPv6 environment fails.
+	  This sets the msg_hdr.msg_namelen correctly after receipt.
+	- Fix to not set GLOB_NOSORT so the nsd.conf include: files are
+	  sorted and in a predictable order.
+	- Fix #3433: document that reconfig does not change per-zone stats.
+
+
+4.1.25
+================
+FEATURES:
+	- nsd-control prints neater errors for file failures.
+BUG FIXES:
+	- Fix that nsec3 precompile deletion happens before the RRs of
+	  the zone are deleted.
+	- Fix printout of accepted remote control connection for unix sockets.
+	- Fix use_systemd typo/leftover in remote.c.
+	- Fix codingstyle in nsd-checkconf.c in patch from Sharp Liu.
+	- append_trailing_slash has one implementation and is not repeated
+	  differently.
+	- Fix coding style in nsd.c
+	- Fix to combine the same error function into one, from Xiaobo Liu.
+	- Fix initialisation in remote.c.
+	- please clang analyzer and fix parse of IPSECKEY with bad gateway.
+	- Fix nsd-checkconf fail on bad zone name.
+	- Annotate exit functions with noreturn.
+	- Remove unused if clause during server service startup.
+	- Fix #4156: Fix systemd service manager state change notification
+	  When it is compiled, systemd readiness signalling is enabled.
+	  The option in nsd.conf is not used, it is ignored when read.
+
+
 4.1.24
 ================
 FEATURES:

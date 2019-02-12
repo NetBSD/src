@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* apply the noreturn attribute to a function that exits the program */
+#undef ATTR_NORETURN
+
 /* Define this to enable BIND8 like NSTATS & XSTATS. */
 #undef BIND8_STATS
 
@@ -18,6 +21,9 @@
 
 /* Pathname to the NSD database */
 #undef DBFILE
+
+/* default dnstap socket path */
+#undef DNSTAP_SOCKET_PATH
 
 /* Define to the default maximum message length with EDNS. */
 #undef EDNS_MAX_MESSAGE_LEN
@@ -42,6 +48,9 @@
 
 /* Whether the C compiler accepts the "format" attribute */
 #undef HAVE_ATTR_FORMAT
+
+/* Whether the C compiler accepts the "noreturn" attribute */
+#undef HAVE_ATTR_NORETURN
 
 /* Whether the C compiler accepts the "unused" attribute */
 #undef HAVE_ATTR_UNUSED
@@ -503,6 +512,9 @@
 
 /* the user name to drop privileges to */
 #undef USER
+
+/* Define to 1 to enable dnstap support */
+#undef USE_DNSTAP
 
 /* Define if you want to use internal select based events */
 #undef USE_MINI_EVENT
