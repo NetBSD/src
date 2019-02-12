@@ -1,5 +1,98 @@
-6 August 2018: Wouter
+29 November 2018: Wouter
+	- Tag for 4.1.26rc1.
+
+27 November 2018: Wouter
+	- Fix parsezone failure in 4194 fix.
+
+26 November 2018: Wouter
+	- Fix to not set GLOB_NOSORT so the nsd.conf include: files are
+	  sorted and in a predictable order.
+	- Added nsd-control changezone.  nsd-control changezone name pattern
+	  allows the change of a zone pattern option without downtime for
+	  the zone, in one operation.
+	- Fix #3433: document that reconfig does not change per-zone stats.
+
+20 November 2018: Wouter
+	- Fix #4205: enable-recvmmsg in mixed IPv4/IPv6 environment fails.
+	  This sets the msg_hdr.msg_namelen correctly after receipt.
+
+19 November 2018: Wouter
+	- Support SO_REUSEPORT_LB in FreeBSD 12 with the reuseport: yes
+	  option in nsd.conf.
+	- Fix #4202: nsd-control delzone incorrect exit code on error.
+	- Tab style fix to use tab for 8 spaces, from Xiaobo Liu.
+
+25 October 2018: Wouter
+	- Adjust dnstap socket path for chroot.
+
+22 October 2018: Wouter
+	- Fix #4194: Zone file parser derailed by non-FQDN names in RHS of
+	  DNSSEC RRs.
+	- Fix some more, neater code and checks for domain length limit.
+	- check that the dnstap socket file can be opened and exists, print
+	  error if not.
+
+4 October 2018: Wouter
+	- dnstap work, the dnstap.proto is a copy of the file from Unbound,
+	  also dnstap.m4 configure include file.
+	- dnstap collector: free eventbase and memclean nicer.
+	- dnstap collector: send data and read it in collector.
+	- dnstap/dnstap.c and .h from Unbound's contribution from
+	  Farsight Security, added to then adapt it for dnstap logging in NSD.
+	- dnstap.c with auth query and auth response, and called from
+	  the collector.
+	- dnstap work, config nsd.conf parse.
+	- dnstap example config.
+
+25 September 2018: Wouter
+	- NSD 4.1.25 released, trunk has 4.1.26 in development.
+
+18 September 2018: Wouter
+	- tag for NSD 4.1.25rc1.
+
+17 September 2018: Wouter
+	- Fix #4156: Fix systemd service manager state change notification
+
+14 September 2018: Wouter
+	- Remove unused if clause during server service startup.
+
+13 September 2018: Wouter
+	- Fix typo in clang analysis test.
+	- Annotate exit functions with noreturn.
+	- nsd-control prints neater errors for file failures.
+
+12 September 2018: Wouter
+	- clang analysis test.
+
+11 September 2018: Wouter
+	- Fix to combine the same error function into one, from Xiaobo Liu.
+	- Fix initialisation in remote.c.
+	- please clang analyzer and fix parse of IPSECKEY with bad gateway.
+	- Fix unit test code for clang analyzer.
+	- Fix nsd-checkconf fail on bad zone name.
+
+10 September 2018: Wouter
+	- Fix coding style in nsd.c
+
+7 September 2018: Wouter
+	- append_trailing_slash has one implementation and is not repeated
+	  differently.
+
+4 September 2018: Wouter
+	- Fix codingstyle in nsd-checkconf.c in patch from Sharp Liu.
+
+15 August 2018: Wouter
+	- Fix use_systemd typo/leftover in remote.c.
+
+13 August 2018: Wouter
 	- tag for 4.1.24 release.
+	- trunk is 4.1.25 in development.
+	- Fix that nsec3 precompile deletion happens before the RRs of
+	  the zone are deleted.
+	- Fix printout of accepted remote control connection for unix sockets.
+
+6 August 2018: Wouter
+	- tag for 4.1.24rc1 release.
 
 30 July 2018: Wouter
 	- Tag for NSD 4.1.23 release, trunk is 4.1.24, includes
