@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.29 2019/02/11 20:40:18 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.30 2019/02/12 18:32:15 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -260,14 +260,14 @@ pm_getdevstring(char *buf, int len, pm_devs_t *pm_cur, int num)
 	if (pm_cur->isspecial)
 		snprintf(buf, len, "%s", pm_cur->diskdev);
 	else if (num + 'a' < 'a' || num + 'a' > 'a' + MAXPARTITIONS) {
-		trunc_snprintf(buf, len, "%sd", pm_cur->diskdev);
+		snprintf(buf, len, "%sd", pm_cur->diskdev);
 	} else if (pm_cur->gpt) {
 		for (i = 0; i < MAX_WEDGES; i++)
 			if (wedges[i].pm == pm_cur &&
 				wedges[i].ptn == num)
 				snprintf(buf, len, "dk%d", i); // XXX: xxx
 	} else {
-		trunc_snprintf(buf, len, "%s%c", pm_cur->diskdev, num + 'a');
+		snprintf(buf, len, "%s%c", pm_cur->diskdev, num + 'a');
 	}
 
 	return;
@@ -1903,7 +1903,7 @@ pm_getrefdev(pm_devs_t *pm_cur)
 		for (i = 0; i < MAX_CGD; i++)
 			if (cgds[i].blocked && cgds[i].node == dev_num) {
 				pm_cur->refdev = &cgds[i];
-				trunc_snprintf(pm_cur->diskdev_descr,
+				snprintf(pm_cur->diskdev_descr,
 				    sizeof(pm_cur->diskdev_descr),
 				    "%s (%s, %s-%d)",
 				    pm_cur->diskdev_descr, cgds[i].pm_name,
@@ -1917,7 +1917,7 @@ pm_getrefdev(pm_devs_t *pm_cur)
 				pm_cur->refdev = &vnds[i];
 				pm_getdevstring(dev, SSTRSIZE, vnds[i].pm,
 				    vnds[i].pm_part);
-				trunc_snprintf(pm_cur->diskdev_descr,
+				snprintf(pm_cur->diskdev_descr,
 				    sizeof(pm_cur->diskdev_descr),
 				    "%s (%s, %s)",
 				    pm_cur->diskdev_descr, dev,
@@ -1937,7 +1937,7 @@ pm_getrefdev(pm_devs_t *pm_cur)
 						else
 							num_devs++;
 					}
-				trunc_snprintf(pm_cur->diskdev_descr,
+				snprintf(pm_cur->diskdev_descr,
 					sizeof(pm_cur->diskdev_descr),
 					"%s (lvl %d, %d disks, %d spare)", pm_cur->diskdev_descr,
 					raids[i].raid_level, num_devs, num_devs_s);
@@ -2191,7 +2191,7 @@ pm_mount(pm_devs_t *pm_cur, int part_num)
 	if (strlen(pm_cur->bsdlabel[part_num].mounted) > 0)
 		return 0;
 
-	trunc_snprintf(buf, sizeof(buf), "/tmp/%s%c", pm_cur->diskdev,
+	snprintf(buf, sizeof(buf), "/tmp/%s%c", pm_cur->diskdev,
 	    part_num + 'a');
 	if (! dir_exists_p(buf))
 		run_program(RUN_DISPLAY | RUN_PROGRESS, "/bin/mkdir -p %s", buf);
@@ -2539,7 +2539,7 @@ pm_menufmt(menudesc *m, int opt, void *arg)
 				pm_cur->bsdlabel[part_num].pi_size / (MEG / pm_cur->sectorsize));
 			break;
 		case PM_SPEC_T:
-			trunc_snprintf(buf, sizeof(buf), "%s: %s",
+			snprintf(buf, sizeof(buf), "%s: %s",
 			    pm_cur->diskdev_descr,
 			    pm_cur->bsdlabel[0].pi_mount);
 			wprintw(m->mw, "%-33.32s %-22.21s %11luM", buf,
