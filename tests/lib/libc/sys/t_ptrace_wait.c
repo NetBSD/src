@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.83 2019/02/12 06:00:05 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.84 2019/02/12 21:35:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.83 2019/02/12 06:00:05 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.84 2019/02/12 21:35:35 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3708,15 +3708,15 @@ TRACE_THREADS(trace_thread4, true, true)
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(signal1);
-ATF_TC_HEAD(signal1, tc)
+ATF_TC(signal_mask_unrelated);
+ATF_TC_HEAD(signal_mask_unrelated, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify that masking single unrelated signal does not stop tracer "
 	    "from catching other signals");
 }
 
-ATF_TC_BODY(signal1, tc)
+ATF_TC_BODY(signal_mask_unrelated, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -3776,6 +3776,8 @@ ATF_TC_BODY(signal1, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+/// ----------------------------------------------------------------------------
 
 ATF_TC(signal2);
 ATF_TC_HEAD(signal2, tc)
@@ -5369,7 +5371,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, trace_thread3);
 	ATF_TP_ADD_TC(tp, trace_thread4);
 
-	ATF_TP_ADD_TC(tp, signal1);
+	ATF_TP_ADD_TC(tp, signal_mask_unrelated);
+
 	ATF_TP_ADD_TC(tp, signal2);
 	ATF_TP_ADD_TC(tp, signal3);
 	ATF_TP_ADD_TC_PT_STEP(tp, signal4);
