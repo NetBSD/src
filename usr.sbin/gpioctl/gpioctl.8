@@ -1,4 +1,4 @@
-.\" $NetBSD: gpioctl.8,v 1.20 2014/03/18 18:20:46 riastradh Exp $
+.\" $NetBSD: gpioctl.8,v 1.21 2019/02/12 21:41:38 mlelstv Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -141,6 +141,8 @@ invert input
 invert output
 .It pulsate
 pulsate output at a hardware-defined frequency and duty cycle
+.It alt0 - alt7
+select alternate pin function 0 to 7
 .El
 .Pp
 Note that not all the flags may be supported by the particular GPIO controller.
