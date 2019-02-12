@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.263 2019/01/14 00:13:18 mrg Exp $
+# $NetBSD: GENERIC,v 1.264 2019/02/12 07:15:58 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.263 $"
+#ident 		"GENERIC-$Revision: 1.264 $"
 
 maxusers	32
 
@@ -182,6 +182,7 @@ file-system	TMPFS		# Efficient memory file-system
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
