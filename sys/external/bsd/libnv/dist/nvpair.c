@@ -1,4 +1,4 @@
-/*	$NetBSD: nvpair.c,v 1.4 2019/02/12 12:49:23 rmind Exp $	*/
+/*	$NetBSD: nvpair.c,v 1.5 2019/02/12 12:52:49 rmind Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvpair.c 335382 2018-06-19 18:43:02Z lwhsu $");
 #else
-__RCSID("$NetBSD: nvpair.c,v 1.4 2019/02/12 12:49:23 rmind Exp $");
+__RCSID("$NetBSD: nvpair.c,v 1.5 2019/02/12 12:52:49 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2099,6 +2099,7 @@ nvpair_free(nvpair_t *nvp)
 	case NV_TYPE_DESCRIPTOR_ARRAY:
 		for (i = 0; i < nvp->nvp_nitems; i++)
 			close(((int *)(intptr_t)nvp->nvp_data)[i]);
+		nv_free((int *)(intptr_t)nvp->nvp_data);
 		break;
 #endif
 	case NV_TYPE_NVLIST:
