@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.13 2018/12/26 11:12:57 cherry Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.14 2019/02/12 08:04:53 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.13 2018/12/26 11:12:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.14 2019/02/12 08:04:53 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,17 +66,14 @@ __KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.13 2018/12/26 11:12:57 cherry Exp $")
 #include <dev/pci/ppbreg.h>
 #endif
 
-void xen_disable_intr(void);
-void xen_enable_intr(void);
-u_long xen_read_psl(void);
-void xen_write_psl(u_long);
-
 /*
  * Restore a value to cpl (unmasking interrupts).  If any unmasked
  * interrupts are pending, call Xspllower() to process them.
  */
+void xen_spllower(int nlevel);
+
 void
-spllower(int nlevel)
+xen_spllower(int nlevel)
 {
 	struct cpu_info *ci = curcpu();
 	uint32_t xmask;
@@ -186,7 +183,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		return rih;
 	} 	/* Else we assume pintr */
 
-#if NPCI > 0 || NISA > 0
+#if (NPCI > 0 || NISA > 0) && defined(XENPV) /* XXX: support PVHVM pirq */
 	struct pintrhand *pih;
 	int gsi;
 	int vector, evtchn;
@@ -306,8 +303,9 @@ redzone_const_or_zero(int x)
 }
 #endif
 
+void xen_cpu_intr_init(struct cpu_info *);
 void
-cpu_intr_init(struct cpu_info *ci)
+xen_cpu_intr_init(struct cpu_info *ci)
 {
 	int i; /* XXX: duplicate */
 
@@ -393,8 +391,10 @@ legacy_intr_string(int ih, char *buf, size_t len, struct pic *pic)
 	return buf;
 }
 
+const char * xintr_string(intr_handle_t ih, char *buf, size_t len);
+
 const char *
-intr_string(intr_handle_t ih, char *buf, size_t len)
+xintr_string(intr_handle_t ih, char *buf, size_t len)
 {
 #if NIOAPIC > 0
 	struct ioapic_softc *pic;
@@ -420,7 +420,7 @@ intr_string(intr_handle_t ih, char *buf, size_t len)
 		snprintf(buf, len, "irq %d", APIC_IRQ_LEGACY_IRQ(ih));
 
 #elif NLAPIC > 0
-	snprintf(buf, len, "irq %d" APIC_IRQ_LEGACY_IRQ(ih));
+	snprintf(buf, len, "irq %d", APIC_IRQ_LEGACY_IRQ(ih));
 #else
 	snprintf(buf, len, "irq %d", (int) ih);
 #endif
@@ -432,8 +432,11 @@ intr_string(intr_handle_t ih, char *buf, size_t len)
  * Create an interrupt id such as "ioapic0 pin 9". This interrupt id is used
  * by MI code and intrctl(8).
  */
+const char * xen_intr_create_intrid(int legacy_irq, struct pic *pic,
+    int pin, char *buf, size_t len);
+
 const char *
-intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t len)
+xen_intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t len)
 {
 	int ih = 0;
 
@@ -487,14 +490,19 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t l
 	return NULL; /* No pic found! */
 }
 
-__weak_alias(x86_disable_intr, xen_disable_intr);
-__weak_alias(x86_enable_intr, xen_enable_intr);
-__weak_alias(x86_read_psl, xen_read_psl);
-__weak_alias(x86_write_psl, xen_write_psl);
+#if !defined(XENPVHVM)
+__strong_alias(spllower, xen_spllower);
+__strong_alias(x86_disable_intr, xen_disable_intr);
+__strong_alias(x86_enable_intr, xen_enable_intr);
+__strong_alias(x86_read_psl, xen_read_psl);
+__strong_alias(x86_write_psl, xen_write_psl);
 
-__weak_alias(intr_establish, xen_intr_establish);
-__weak_alias(intr_establish_xname, xen_intr_establish_xname);
-__weak_alias(intr_disestablish, xen_intr_disestablish);
-__weak_alias(cpu_intr_redistribute, xen_cpu_intr_redistribute);
-__weak_alias(cpu_intr_count, xen_cpu_intr_count);
-
+__strong_alias(intr_string, xintr_string);
+__strong_alias(intr_create_intrid, xen_intr_create_intrid);
+__strong_alias(intr_establish, xen_intr_establish);
+__strong_alias(intr_establish_xname, xen_intr_establish_xname);
+__strong_alias(intr_disestablish, xen_intr_disestablish);
+__strong_alias(cpu_intr_redistribute, xen_cpu_intr_redistribute);
+__strong_alias(cpu_intr_count, xen_cpu_intr_count);
+__strong_alias(cpu_intr_init, xen_cpu_intr_init);
+#endif /* !XENPVHVM */
