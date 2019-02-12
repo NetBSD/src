@@ -11595,14 +11595,14 @@ supported beginning with @sc{cvs} release 1.12.13.
 
 @itemize @bullet
 @item
-update [-ACdflPpR] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files@dots{}
+update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files@dots{}
 @item
 Requires: repository, working directory.
 @item
 Changes: working directory.
 @end itemize
 
-After you've run checkout to create your private copy
+After you've run @code{checkout} to create your private copy
 of source from the common repository, other developers
 will continue changing the central source.  From time
 to time, when it is convenient in your development
@@ -11666,6 +11666,16 @@ and @var{tag} is a branch tag, the version from the branch @var{tag} as it
 existed on @var{date}.  This option is sticky, and implies @samp{-P}.
 See @ref{Sticky tags}, for more information on sticky tags/dates. Also
 see @ref{Common options}.
+
+@item -t
+Preserve source timestamps.  Unlike @code{checkout}, where files are created
+using the original timestamp of the file in the repository, @code{update}
+updates files using the current time of the machine.  This is convenient
+because updated files appear newer than any other files on the system so
+@code{make(1)} knows that their corresponding built artifacts are out of date
+and they will get rebuilt.  The @samp{-t} flag instead preserves the timestamps
+of the original repository files, behaving exactly like @code{checkout}.
+This is useful for maintaining a tree in the original checked-out state.
 @end table
 
 @need 800
