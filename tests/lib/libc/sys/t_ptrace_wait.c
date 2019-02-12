@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.82 2019/02/11 05:59:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.83 2019/02/12 06:00:05 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.82 2019/02/11 05:59:00 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.83 2019/02/12 06:00:05 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3492,26 +3492,23 @@ ATF_TC_BODY(traceme_exec, tc)
 
 /// ----------------------------------------------------------------------------
 
-volatile lwpid_t the_lwp_id = 0;
+static volatile int done;
+
+static void *
+trace_threads_cb(void *arg __unused)
+{
+
+	done++;
+
+	while (done < 3)
+		continue;
+
+	return NULL;
+}
 
 static void
-lwp_main_func(void *arg)
+trace_threads(bool trace_create, bool trace_exit)
 {
-	the_lwp_id = _lwp_self();
-	_lwp_exit();
-}
-
-ATF_TC(lwp_create1);
-ATF_TC_HEAD(lwp_create1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that 1 LWP creation is intercepted by ptrace(2) with "
-	    "EVENT_MASK set to PTRACE_LWP_CREATE");
-}
-
-ATF_TC_BODY(lwp_create1, tc)
-{
-	const int exitval = 5;
 	const int sigval = SIGSTOP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
@@ -3521,10 +3518,17 @@ ATF_TC_BODY(lwp_create1, tc)
 	const int slen = sizeof(state);
 	ptrace_event_t event;
 	const int elen = sizeof(event);
-	ucontext_t uc;
+	struct ptrace_siginfo info;
+
+	pthread_t t[3];
+	int rv;
+	size_t n;
 	lwpid_t lid;
-	static const size_t ssize = 16*1024;
-	void *stack;
+
+	/* Track created and exited threads */
+	bool traced_lwps[__arraycount(t)];
+
+	atf_tc_skip("PR kern/51995");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -3535,24 +3539,26 @@ ATF_TC_BODY(lwp_create1, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("Before allocating memory for stack in child\n");
-		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
+		for (n = 0; n < __arraycount(t); n++) {
+			rv = pthread_create(&t[n], NULL, trace_threads_cb,
+			    NULL);
+			FORKEE_ASSERT(rv == 0);
+		}
 
-		DPRINTF("Before making context for new lwp in child\n");
-		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
+		for (n = 0; n < __arraycount(t); n++) {
+			rv = pthread_join(t[n], NULL);
+			FORKEE_ASSERT(rv == 0);
+		}
 
-		DPRINTF("Before creating new in child\n");
-		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
+		/*
+		 * There is race between _exit() and pthread_join() detaching
+		 * a thread. For simplicity kill the process after detecting
+		 * LWP events.
+		 */
+		while (true)
+			continue;
 
-		DPRINTF("Before waiting for lwp %d to exit\n", lid);
-		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
-
-		DPRINTF("Before verifying that reported %d and running lid %d "
-		    "are the same\n", lid, the_lwp_id);
-		FORKEE_ASSERT_EQ(lid, the_lwp_id);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		FORKEE_ASSERT(0 && "Not reached");
 	}
 	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
@@ -3561,139 +3567,146 @@ ATF_TC_BODY(lwp_create1, tc)
 
 	validate_status_stopped(status, sigval);
 
-	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_LWP_CREATE;
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+	DPRINTF("Set LWP event mask for the child %d\n", child);
+	memset(&event, 0, sizeof(event));
+	if (trace_create)
+		event.pe_set_event |= PTRACE_LWP_CREATE;
+	if (trace_exit)
+		event.pe_set_event |= PTRACE_LWP_EXIT;
 	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGTRAP\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+	memset(traced_lwps, 0, sizeof(traced_lwps));
 
-	validate_status_stopped(status, SIGTRAP);
+	for (n = 0; n < (trace_create ? __arraycount(t) : 0); n++) {
+		DPRINTF("Before calling %s() for the child - expected stopped "
+		    "SIGTRAP\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		    child);
 
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+		validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_CREATE);
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
+		    "child\n");
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	lid = state.pe_lwp;
-	DPRINTF("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		    "si_errno=%#x\n",
+		    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+		    info.psi_siginfo.si_errno);
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_LWP);
 
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 
-	validate_status_exited(status, exitval);
+		ATF_REQUIRE_EQ_MSG(state.pe_report_event, PTRACE_LWP_CREATE,
+		    "%d != %d", state.pe_report_event, PTRACE_LWP_CREATE);
 
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
+		lid = state.pe_lwp;
+		DPRINTF("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
 
-ATF_TC(lwp_exit1);
-ATF_TC_HEAD(lwp_exit1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that 1 LWP creation is intercepted by ptrace(2) with "
-	    "EVENT_MASK set to PTRACE_LWP_EXIT");
-}
+		traced_lwps[lid - 1] = true;
 
-ATF_TC_BODY(lwp_exit1, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	ptrace_state_t state;
-	const int slen = sizeof(state);
-	ptrace_event_t event;
-	const int elen = sizeof(event);
-	ucontext_t uc;
-	lwpid_t lid;
-	static const size_t ssize = 16*1024;
-	void *stack;
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before allocating memory for stack in child\n");
-		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
-
-		DPRINTF("Before making context for new lwp in child\n");
-		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
-
-		DPRINTF("Before creating new in child\n");
-		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
-
-		DPRINTF("Before waiting for lwp %d to exit\n", lid);
-		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
-
-		DPRINTF("Before verifying that reported %d and running lid %d "
-		    "are the same\n", lid, the_lwp_id);
-		FORKEE_ASSERT_EQ(lid, the_lwp_id);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+	for (n = 0; n < (trace_exit ? __arraycount(t) : 0); n++) {
+		DPRINTF("Before calling %s() for the child - expected stopped "
+		    "SIGTRAP\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		    child);
 
-	validate_status_stopped(status, sigval);
+		validate_status_stopped(status, SIGTRAP);
 
-	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_LWP_EXIT;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
+		    "child\n");
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		    "si_errno=%#x\n",
+		    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+		    info.psi_siginfo.si_errno);
 
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGTRAP\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_LWP);
 
-	validate_status_stopped(status, SIGTRAP);
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 
-	SYSCALL_REQUIRE(
-	    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+		ATF_REQUIRE_EQ_MSG(state.pe_report_event, PTRACE_LWP_EXIT,
+		    "%d != %d", state.pe_report_event, PTRACE_LWP_EXIT);
 
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_EXIT);
+		lid = state.pe_lwp;
+		DPRINTF("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
 
-	lid = state.pe_lwp;
-	DPRINTF("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
+		if (trace_create) {
+			ATF_REQUIRE(traced_lwps[lid - 1] == true);
+			traced_lwps[lid - 1] = false;
+		}
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	}
+
+	kill(child, SIGKILL);
 
 	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_exited(status, exitval);
+	validate_status_signaled(status, SIGKILL, 0);
 
 	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define TRACE_THREADS(test, trace_create, trace_exit)			\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+        atf_tc_set_md_var(tc, "descr",					\
+            "Verify spawning threads with%s tracing LWP create and"	\
+	    "with%s tracing LWP exit", trace_create ? "" : "out",	\
+	    trace_exit ? "" : "out");					\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+        trace_threads(trace_create, trace_exit);			\
+}
+
+TRACE_THREADS(trace_thread1, false, false)
+TRACE_THREADS(trace_thread2, false, true)
+TRACE_THREADS(trace_thread3, true, false)
+TRACE_THREADS(trace_thread4, true, true)
+
+/// ----------------------------------------------------------------------------
 
 ATF_TC(signal1);
 ATF_TC_HEAD(signal1, tc)
@@ -4416,6 +4429,15 @@ ATF_TC_BODY(signal8, tc)
 	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+volatile lwpid_t the_lwp_id = 0;
+
+static void
+lwp_main_func(void *arg)
+{
+	the_lwp_id = _lwp_self();
+	_lwp_exit();
 }
 
 ATF_TC(signal9);
@@ -5342,9 +5364,10 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, traceme_exec);
 
-	ATF_TP_ADD_TC(tp, lwp_create1);
-
-	ATF_TP_ADD_TC(tp, lwp_exit1);
+	ATF_TP_ADD_TC(tp, trace_thread1);
+	ATF_TP_ADD_TC(tp, trace_thread2);
+	ATF_TP_ADD_TC(tp, trace_thread3);
+	ATF_TP_ADD_TC(tp, trace_thread4);
 
 	ATF_TP_ADD_TC(tp, signal1);
 	ATF_TP_ADD_TC(tp, signal2);
