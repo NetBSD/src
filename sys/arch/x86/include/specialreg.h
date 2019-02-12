@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.10 2019/02/11 13:23:03 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.11 2019/02/12 09:27:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -464,8 +464,8 @@
 #define CPUID_PERF_BRMISPRRETR	__BIT(6)       /* No branch mispredict retry */
 
 #define CPUID_PERF_FLAGS1	"\177\20"				      \
-	"b\0\1CORECYCL\0" "b\1\1INSTRETRY\0" "b\2\1REFCYCL\0" "b\3\1LLCREF\0" \
-	"b\4\1LLCMISS\0" "b\5\1BRINSRETR\0" "b\6\1BRMISPRRETR\0"
+	"b\0CORECYCL\0" "b\1INSTRETRY\0" "b\2REFCYCL\0" "b\3LLCREF\0" \
+	"b\4LLCMISS\0" "b\5BRINSRETR\0" "b\6BRMISPRRETR\0"
 
 /* %edx */
 #define CPUID_PERF_NFFPC	__BITS(4, 0)   /* Num of fixed-funct perfcnt */
