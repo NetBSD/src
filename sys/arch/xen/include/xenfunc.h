@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.16 2018/07/26 15:46:09 maxv Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.17 2019/02/12 08:04:53 cherry Exp $	*/
 
 /*
  *
@@ -35,6 +35,11 @@
 #include <xen/evtchn.h>
 #include <xen/xenpmap.h>
 #include <machine/pte.h>
+
+void xen_disable_intr(void);
+void xen_enable_intr(void);
+u_long xen_read_psl(void);
+void xen_write_psl(u_long);
 
 void xen_set_ldt(vaddr_t, uint32_t);
 #endif /* _XEN_XENFUNC_H_ */
