@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_impl.h,v 1.5 2018/09/23 19:07:10 rmind Exp $	*/
+/*	$NetBSD: nv_impl.h,v 1.6 2019/02/12 12:49:23 rmind Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -125,6 +125,7 @@ bool nvlist_move_nvpair(nvlist_t *nvl, nvpair_t *nvp);
 
 void nvlist_set_parent(nvlist_t *nvl, nvpair_t *parent);
 void nvlist_set_array_next(nvlist_t *nvl, nvpair_t *ele);
+nvpair_t *nvlist_get_array_next_nvpair(nvlist_t *nvl);
 
 const nvpair_t *nvlist_get_nvpair(const nvlist_t *nvl, const char *name);
 

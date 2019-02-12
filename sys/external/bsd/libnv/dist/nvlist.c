@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist.c,v 1.6 2018/09/22 17:13:30 rmind Exp $	*/
+/*	$NetBSD: nvlist.c,v 1.7 2019/02/12 12:49:23 rmind Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvlist.c 335347 2018-06-18 22:57:32Z oshogbo $");
 #else
-__RCSID("$NetBSD: nvlist.c,v 1.6 2018/09/22 17:13:30 rmind Exp $");
+__RCSID("$NetBSD: nvlist.c,v 1.7 2019/02/12 12:49:23 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -267,6 +267,15 @@ nvlist_set_array_next(nvlist_t *nvl, nvpair_t *ele)
 	}
 
 	nvl->nvl_array_next = ele;
+}
+
+nvpair_t *
+nvlist_get_array_next_nvpair(nvlist_t *nvl)
+{
+
+	NVLIST_ASSERT(nvl);
+
+	return (nvl->nvl_array_next);
 }
 
 bool
