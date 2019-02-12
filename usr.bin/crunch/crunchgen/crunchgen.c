@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.89 2018/07/26 08:57:32 wiz Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.90 2019/02/12 10:16:58 mrg Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.89 2018/07/26 08:57:32 wiz Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.90 2019/02/12 10:16:58 mrg Exp $");
 #endif
 
 #include <stdlib.h>
@@ -961,6 +961,15 @@ top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "LDSTATIC=-static%s\n\n", pie ? " -pie" : "");
     fprintf(outmk, "PROG=%s\n\n", execfname);
+
+    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS=-R .eh_frame_hdr -R .note -R .note.netbsd.pax -R .ident -R .comment -R .copyright\n\n");
+
+    fprintf(outmk, ".if ${MACHINE} != \"sparc\" && ${MACHINE} != \"sparc64\"\n");
+    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS+=-R .eh_frame\n");
+    fprintf(outmk, ".endif\n");
+    fprintf(outmk, ".if ${MACHINE} != \"sparc64\"\n");
+    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS+=-R .note.netbsd.mcmodel\n");
+    fprintf(outmk, ".endif\n\n");
     
     fprintf(outmk, "all: ${PROG}.crunched\n");
     fprintf(outmk, "${PROG}.crunched: ${SUBMAKE_TARGETS} .WAIT ${PROG}.strip\n");
@@ -969,7 +978,7 @@ top_makefile_rules(FILE *outmk)
     fprintf(outmk, "\t@[ -f ${PROG}.unstripped -a ! ${PROG} -nt ${PROG}.unstripped ] || { \\\n");
     fprintf(outmk, "\t\t${_MKSHMSG:Uecho} \"  strip \" ${PROG}; \\\n");
     fprintf(outmk, "\t\tcp ${PROG} ${PROG}.unstripped && \\\n");
-    fprintf(outmk, "\t\t${OBJCOPY} -S -R .eh_frame -R .eh_frame_hdr -R .note -R .note.netbsd.mcmodel -R .note.netbsd.pax -R .ident -R .comment -R .copyright ${PROG} && \\\n");
+    fprintf(outmk, "\t\t${OBJCOPY} -S ${OBJCOPY_REMOVE_FLAGS} ${PROG} && \\\n");
     fprintf(outmk, "\t\ttouch ${PROG}.unstripped; \\\n");
     fprintf(outmk, "\t}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
