@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.34 2018/12/25 06:50:12 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.35 2019/02/12 07:58:26 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.34 2018/12/25 06:50:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.35 2019/02/12 07:58:26 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.34 2018/12/25 06:50:12 cher
 #include "isa.h"
 #include "pci.h"
 
+#ifdef XENPV
 /*
  * arch-dependent p2m frame lists list (L3 and L2)
  * used by Xen for save/restore mappings
@@ -84,6 +85,8 @@ static int l2_p2m_page_size; /* size of L2 page, in pages */
 
 static void build_p2m_frame_list_list(void);
 static void update_p2m_frame_list_list(void);
+
+#endif
 
 // #define PORT_DEBUG 4
 // #define EARLY_DEBUG_EVENT
@@ -434,21 +437,26 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 void
 hypervisor_machdep_attach(void)
 {
+#ifdef XENPV
  	/* dom0 does not require the arch-dependent P2M translation table */
 	if (!xendomain_is_dom0()) {
 		build_p2m_frame_list_list();
 		sysctl_xen_suspend_setup();
 	}
+#endif
 }
 
 void
 hypervisor_machdep_resume(void)
 {
+#ifdef XENPV
 	/* dom0 does not require the arch-dependent P2M translation table */
 	if (!xendomain_is_dom0())
 		update_p2m_frame_list_list();
+#endif
 }
 
+#ifdef XENPV
 /*
  * Generate the p2m_frame_list_list table,
  * needed for guest save/restore
@@ -532,3 +540,4 @@ update_p2m_frame_list_list(void)
         HYPERVISOR_shared_info->arch.max_pfn = max_pfn;
 
 }
+#endif /* XENPV */
