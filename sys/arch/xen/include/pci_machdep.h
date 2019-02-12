@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.19 2017/07/16 06:14:24 cherry Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.20 2019/02/12 07:58:26 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -66,7 +66,7 @@ typedef intr_handle_t pci_intr_handle_t;
 
 #include "opt_xen.h"
 
-#ifndef DOM0OPS
+#if !defined(DOM0OPS) && defined(XENPV)
 int		xpci_enumerate_bus(struct pci_softc *, const int *,
 		   int (*)(const struct pci_attach_args *),
 		   struct pci_attach_args *);
