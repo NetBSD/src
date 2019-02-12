@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.20 2019/02/11 20:40:18 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.21 2019/02/12 18:32:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1882,20 +1882,3 @@ msg_display_subst(const char *master, size_t argc, ...)
 	free(args);
 }
 
-/*
- * like snprintf, but always terminates the output
- */
-void
-trunc_snprintf(char * restrict str, size_t size,
-     const char * restrict format, ...)
-{
-	int r;
-	va_list ap;
-
-	va_start(ap, format);
-	r = vsnprintf(str, size, format, ap);
-	va_end(ap);
-
-	if (r >= (int)size)
-		str[size-1] = 0;
-}
