@@ -1,4 +1,4 @@
-/*	$NetBSD: nvpair.c,v 1.3 2018/09/08 14:32:25 christos Exp $	*/
+/*	$NetBSD: nvpair.c,v 1.4 2019/02/12 12:49:23 rmind Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvpair.c 335382 2018-06-19 18:43:02Z lwhsu $");
 #else
-__RCSID("$NetBSD: nvpair.c,v 1.3 2018/09/08 14:32:25 christos Exp $");
+__RCSID("$NetBSD: nvpair.c,v 1.4 2019/02/12 12:49:23 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -251,8 +251,16 @@ nvpair_remove_nvlist_array(nvpair_t *nvp)
 	nvlarray = __DECONST(nvlist_t **,
 	    nvpair_get_nvlist_array(nvp, &count));
 	for (i = 0; i < count; i++) {
-		nvlist_set_array_next(nvlarray[i], NULL);
-		nvlist_set_parent(nvlarray[i], NULL);
+		nvlist_t *nvl;
+		nvpair_t *nnvp;
+
+		nvl = nvlarray[i];
+		nnvp = nvlist_get_array_next_nvpair(nvl);
+		if (nnvp != NULL) {
+			nvpair_free_structure(nnvp);
+		}
+		nvlist_set_array_next(nvl, NULL);
+		nvlist_set_parent(nvl, NULL);
 	}
 }
 
@@ -1216,8 +1224,7 @@ nvpair_create_stringv(const char *name, const char *valuefmt, va_list valueap)
 	if (len < 0)
 		return (NULL);
 	nvp = nvpair_create_string(name, str);
-	if (nvp == NULL)
-		nv_free(str);
+	nv_free(str);
 	return (nvp);
 }
 #endif
