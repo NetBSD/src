@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.141 2018/12/25 06:50:12 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.142 2019/02/12 03:13:50 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.141 2018/12/25 06:50:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.142 2019/02/12 03:13:50 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1131,7 +1131,7 @@ intr_string(intr_handle_t ih, char *buf, size_t len)
 		snprintf(buf, len, "irq %d", APIC_IRQ_LEGACY_IRQ(ih));
 
 #elif NLAPIC > 0
-	snprintf(buf, len, "irq %d" APIC_IRQ_LEGACY_IRQ(ih));
+	snprintf(buf, len, "irq %d", APIC_IRQ_LEGACY_IRQ(ih));
 #else
 	snprintf(buf, len, "irq %d", (int) ih);
 #endif
