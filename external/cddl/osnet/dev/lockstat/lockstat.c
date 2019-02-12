@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.9 2018/05/28 21:05:03 chs Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.10 2019/02/12 14:31:45 rin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.9 2018/05/28 21:05:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10 2019/02/12 14:31:45 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/proc.h>
@@ -210,7 +210,7 @@ static int
 lockstat_fini(void)
 {
 	int error;
-	bool ok __diagused;
+	bool ok __debugused;
 
 	error = dtrace_unregister(lockstat_id);
 	if (error) {
