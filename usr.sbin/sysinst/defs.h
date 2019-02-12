@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.32 2019/02/11 20:40:18 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.33 2019/02/12 18:32:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -561,9 +561,6 @@ void	do_reinstall_sets(void);
 void	restore_etc(void);
 
 /* from util.c */
-/* like snprintf, but always terminates the output */
-void trunc_snprintf(char * restrict str, size_t size,
-    const char * restrict format, ...) __printflike(3, 4);
 char*	str_arg_subst(const char *, size_t, const char **);
 void	msg_display_subst(const char *, size_t, ...);
 int	ask_yesno(const char *);
