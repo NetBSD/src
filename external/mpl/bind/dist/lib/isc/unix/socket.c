@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.5 2019/01/27 01:51:00 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.6 2019/02/12 02:38:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2866,24 +2866,20 @@ dispatch_recv(isc__socket_t *sock) {
 		internal_recv(sock);
 		return;
 	}
-#if 0
+
+	LOCK(&sock->lock);
 	INSIST(!sock->pending_recv);
-#else
-	// XXX: locking
-	if (sock->pending_recv)
-		return;
-#endif
 
 	sender = sock->fdwatchtask;
 	sock->pending_recv = 1;
 	iev = &sock->readable_ev;
 
-	sock->references++;
+	isc_refcount_increment(&sock->references);
 	iev->ev_sender = sock;
 	iev->ev_action = internal_fdwatch_read;
 	iev->ev_arg = sock;
-
-	isc_task_send(sender, (isc_event_t **)&iev);
+	UNLOCK(&sock->lock);
+	internal_fdwatch_read(sender, iev);
 }
 
 static void
@@ -2896,18 +2892,21 @@ dispatch_send(isc__socket_t *sock) {
 		return;
 	}
 
+	LOCK(&sock->lock);
+
 	INSIST(!sock->pending_send);
 
 	sender = sock->fdwatchtask;
 	sock->pending_send = 1;
 	iev = &sock->writable_ev;
 
-	sock->references++;
+	isc_refcount_increment(&sock->references);
 	iev->ev_sender = sock;
 	iev->ev_action = internal_fdwatch_write;
 	iev->ev_arg = sock;
 
-	isc_task_send(sender, (isc_event_t **)&iev);
+	UNLOCK(&sock->lock);
+	internal_fdwatch_write(sender, iev);
 }
 
 /*
@@ -3374,9 +3373,7 @@ internal_fdwatch_write(isc_task_t *me, isc_event_t *ev) {
 
 	sock->pending_send = 0;
 
-	INSIST(sock->references > 0);
-	sock->references--;  /* the internal event is done with this socket */
-	if (sock->references == 0) {
+	if (isc_refcount_decrement(&sock->references) == 0) {
 		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
@@ -3408,16 +3405,14 @@ internal_fdwatch_read(isc_task_t *me, isc_event_t *ev) {
 		   "internal_fdwatch_read: task %p got event %p", me, ev);
 
 	INSIST(sock->pending_recv == 1);
-	sock->pending_recv = 0;
 
 	UNLOCK(&sock->lock);
 	more_data = (sock->fdwatchcb)(me, (isc_socket_t *)sock,
 				      sock->fdwatcharg, ISC_SOCKFDWATCH_READ);
 	LOCK(&sock->lock);
 
-	INSIST(sock->references > 0);
-	sock->references--;  /* the internal event is done with this socket */
-	if (sock->references == 0) {
+	sock->pending_recv = 0;
+	if (isc_refcount_decrement(&sock->references) == 0) {
 		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
