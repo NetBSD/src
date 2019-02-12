@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1597 2019/02/07 21:40:40 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1598 2019/02/12 16:13:23 prlw1 Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -154,7 +154,7 @@ Use cleantags to import
 run configure and update config files in include
 
 Package:	nsd
-Version:	4.1.24
+Version:	4.1.26
 Current Vers:	4.1.26
 Maintainer:	Christos Zoulas
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
