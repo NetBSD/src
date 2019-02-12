@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.11 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.12 2019/02/12 14:40:38 rjs Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.11 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.12 2019/02/12 14:40:38 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1156,6 +1156,7 @@ sctp_process_cookie_existing(struct mbuf *m, int iphlen, int offset,
 #endif
 				return (NULL);
 			}
+			/* FALLTHROUGH */
 			/* intentional fall through to below... */
 
 		case SCTP_STATE_COOKIE_ECHOED:
