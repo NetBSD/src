@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.20 2019/02/10 19:30:28 christos Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.21 2019/02/12 14:50:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -2958,7 +2958,7 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 static int
 fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
 {
-	uint8_t inst_bytes[15], byte;
+	uint8_t inst_bytes[5], byte;
 	size_t i, fetchsize;
 	gvaddr_t gva;
 	int ret, seg;
