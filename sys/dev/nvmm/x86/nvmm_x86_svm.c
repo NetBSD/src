@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.19 2019/02/04 12:11:18 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.20 2019/02/12 14:54:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.19 2019/02/04 12:11:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.20 2019/02/12 14:54:59 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1194,12 +1194,6 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		tlb_need_flush = true;
 	}
 
-	if (cpudata->tlb_want_flush || tlb_need_flush) {
-		vmcb->ctrl.tlb_ctrl = svm_ctrl_tlb_flush;
-	} else {
-		vmcb->ctrl.tlb_ctrl = 0;
-	}
-
 	if (vcpu->hcpu_last != hcpu) {
 		vmcb->ctrl.tsc_offset = cpudata->tsc_offset +
 		    curcpu()->ci_data.cpu_cc_skew;
@@ -1210,6 +1204,12 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	svm_vcpu_guest_misc_enter(vcpu);
 
 	while (1) {
+		if (cpudata->tlb_want_flush || tlb_need_flush) {
+			vmcb->ctrl.tlb_ctrl = svm_ctrl_tlb_flush;
+		} else {
+			vmcb->ctrl.tlb_ctrl = 0;
+		}
+
 		s = splhigh();
 		svm_vcpu_guest_fpu_enter(vcpu);
 		svm_vmrun(cpudata->vmcb_pa, cpudata->gprs);
@@ -1219,9 +1219,8 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		svm_vmcb_cache_default(vmcb);
 
 		if (vmcb->ctrl.exitcode != VMCB_EXITCODE_INVALID) {
-			if (cpudata->tlb_want_flush) {
-				cpudata->tlb_want_flush = false;
-			}
+			cpudata->tlb_want_flush = false;
+			tlb_need_flush = false;
 			vcpu->hcpu_last = hcpu;
 		}
 
