@@ -1,6 +1,9 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* apply the noreturn attribute to a function that exits the program */
+#define ATTR_NORETURN __attribute__((__noreturn__))
+
 /* Define this to enable BIND8 like NSTATS & XSTATS. */
 #define BIND8_STATS /**/
 
@@ -19,6 +22,9 @@
 
 /* Pathname to the NSD database */
 #define DBFILE CHROOTDIR "/var/db/nsd/nsd.db"
+
+/* default dnstap socket path */
+/* #undef DNSTAP_SOCKET_PATH */
 
 /* Define to the default maximum message length with EDNS. */
 #define EDNS_MAX_MESSAGE_LEN 4096
@@ -43,6 +49,9 @@
 
 /* Whether the C compiler accepts the "format" attribute */
 #define HAVE_ATTR_FORMAT 1
+
+/* Whether the C compiler accepts the "noreturn" attribute */
+#define HAVE_ATTR_NORETURN 1
 
 /* Whether the C compiler accepts the "unused" attribute */
 #define HAVE_ATTR_UNUSED 1
@@ -78,7 +87,7 @@
 #define HAVE_ENDPWENT 1
 
 /* Define to 1 if you have the `ERR_load_crypto_strings' function. */
-#define HAVE_ERR_LOAD_CRYPTO_STRINGS 1
+/* #undef HAVE_ERR_LOAD_CRYPTO_STRINGS */
 
 /* Define to 1 if you have the `event_base_free' function. */
 #define HAVE_EVENT_BASE_FREE 1
@@ -96,7 +105,7 @@
 #define HAVE_EVENT_H 1
 
 /* Define to 1 if you have the `EVP_cleanup' function. */
-#define HAVE_EVP_CLEANUP 1
+/* #undef HAVE_EVP_CLEANUP */
 
 /* Define to 1 if you have the `ev_default_loop' function. */
 /* #undef HAVE_EV_DEFAULT_LOOP */
@@ -141,10 +150,10 @@
 #define HAVE_GRP_H 1
 
 /* Define to 1 if you have the `HMAC_CTX_new' function. */
-#define HAVE_HMAC_CTX_NEW	1
+#define HAVE_HMAC_CTX_NEW 1
 
 /* Define to 1 if you have the `HMAC_CTX_reset' function. */
-#define HAVE_HMAC_CTX_RESET	1
+#define HAVE_HMAC_CTX_RESET 1
 
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
@@ -205,12 +214,10 @@
 #define HAVE_OPENSSL_ERR_H 1
 
 /* Define to 1 if you have the `OPENSSL_init_crypto' function. */
-/* #undef HAVE_OPENSSL_INIT_CRYPTO */
+#define HAVE_OPENSSL_INIT_CRYPTO 1
 
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
-/* #undef HAVE_OPENSSL_INIT_SSL */
-
- /* Define to 1 if you have the <openssl/rand.h> header file. */
+#define HAVE_OPENSSL_INIT_SSL 1
 
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #define HAVE_OPENSSL_RAND_H 1
@@ -444,7 +451,7 @@
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.1.24"
+#define PACKAGE_STRING "NSD 4.1.26"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -453,7 +460,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.1.24"
+#define PACKAGE_VERSION "4.1.26"
 
 /* Define this to use packed structure alignment. */
 /* #undef PACKED_STRUCTS */
@@ -508,6 +515,9 @@
 
 /* the user name to drop privileges to */
 #define USER "_nsd"
+
+/* Define to 1 to enable dnstap support */
+/* #undef USE_DNSTAP */
 
 /* Define if you want to use internal select based events */
 /* #undef USE_MINI_EVENT */
