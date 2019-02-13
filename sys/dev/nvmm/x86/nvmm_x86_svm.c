@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.20 2019/02/12 14:54:59 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.21 2019/02/13 07:04:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.20 2019/02/12 14:54:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.21 2019/02/13 07:04:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1157,10 +1157,6 @@ svm_vcpu_guest_misc_enter(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	cpudata->star = rdmsr(MSR_STAR);
-	cpudata->lstar = rdmsr(MSR_LSTAR);
-	cpudata->cstar = rdmsr(MSR_CSTAR);
-	cpudata->sfmask = rdmsr(MSR_SFMASK);
 	cpudata->fsbase = rdmsr(MSR_FSBASE);
 	cpudata->kernelgsbase = rdmsr(MSR_KERNELGSBASE);
 }
@@ -1592,6 +1588,12 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	/* Bluntly hide the host TSC. */
 	cpudata->tsc_offset = rdtsc();
+
+	/* These MSRs are static. */
+	cpudata->star = rdmsr(MSR_STAR);
+	cpudata->lstar = rdmsr(MSR_LSTAR);
+	cpudata->cstar = rdmsr(MSR_CSTAR);
+	cpudata->sfmask = rdmsr(MSR_SFMASK);
 }
 
 static int
