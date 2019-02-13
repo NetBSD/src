@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.136 2019/02/13 03:54:16 msaitoh Exp $
+$NetBSD: miidevs,v 1.137 2019/02/13 04:02:11 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -145,8 +145,8 @@ model ATTANSIC AR8035		0x0007 Atheros AR8035 10/100/1000 PHY
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
 model ALTIMA ACXXX		0x0001 ACXXX 10/100 media interface
-model ALTIMA AC101		0x0021 AC101 10/100 media interface
 model ALTIMA AC101L		0x0012 AC101L 10/100 media interface
+model ALTIMA AC101		0x0021 AC101 10/100 media interface
 /* AMD Am79C87[45] have ALTIMA OUI */
 model ALTIMA Am79C875		0x0014 Am79C875 10/100 media interface
 model ALTIMA Am79C874		0x0021 Am79C874 10/100 media interface
@@ -161,9 +161,9 @@ model yyAMD 79c901home		0x0039 Am79C901 HomePNA 1.0 interface
 /* Broadcom Corp. PHYs */
 model xxBROADCOM 3C905B		0x0012 Broadcom 3c905B internal PHY
 model xxBROADCOM 3C905C		0x0017 Broadcom 3c905C internal PHY
+model xxBROADCOM BCM5221	0x001e BCM5221 10/100 media interface
 model xxBROADCOM BCM5201	0x0021 BCM5201 10/100 media interface
 model xxBROADCOM BCM5214	0x0028 BCM5214 Quad 10/100 media interface
-model xxBROADCOM BCM5221	0x001e BCM5221 10/100 media interface
 model xxBROADCOM BCM5222	0x0032 BCM5222 Dual 10/100 media interface
 model xxBROADCOM BCM4401	0x0036 BCM4401 10/100 media interface
 model xxBROADCOM BCM5365	0x0037 BCM5365 10/100 5-port PHY switch
@@ -264,12 +264,12 @@ model JMICRON JMC260		0x0022 JMC260 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
-model LEVEL1 LXT971		0x000e LXT971/2 10/100 media interface
-model LEVEL1 LXT973		0x0021 LXT973 10/100 Dual PHY
+model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT974		0x0004 LXT974 10/100 Quad PHY
 model LEVEL1 LXT975		0x0005 LXT975 10/100 Quad PHY
-model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
+model LEVEL1 LXT971		0x000e LXT971/2 10/100 media interface
+model LEVEL1 LXT973		0x0021 LXT973 10/100 Dual PHY
 
 /* Marvell Semiconductor PHYs */
 model xxMARVELL E1000		0x0000 Marvell 88E1000 Gigabit PHY
@@ -332,8 +332,8 @@ model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 /* RDC Semiconductor PHYs */
 model RDC R6040			0x0003 R6040 10/100 media interface
 /* RealTek PHYs */
-model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
+model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
 model REALTEK RTL8251		0x0000 RTL8251 1000BASE-T media interface
 model REALTEK RTL8201E		0x0008 RTL8201E 10/100 media interface
 model REALTEK RTL8169S		0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
