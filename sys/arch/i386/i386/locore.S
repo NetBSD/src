@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.163 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: locore.S,v 1.164 2019/02/13 05:36:59 cherry Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.163 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.164 2019/02/13 05:36:59 cherry Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -241,6 +241,20 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.163 2019/02/11 14:59:32 cherry Exp $");
 	addl	$PDE_SIZE,%ebx		; \
 	loop	1b			;
 
+
+#ifdef XEN
+/*
+ * Unfortunately, the Xen codebase uses nonstandard preprocessing tools.
+ * See: https://xenbits.xen.org/gitweb/?p=xen.git&a=search&h=HEAD&st=grep&s=__UnDeF__
+ * for a fine selection of examples.
+ *
+ * What this means for us here is that we can't include the standard
+ * xen.h header in assembler code.
+ *
+ * So we have to manually define, and keep track of the values we need, ourselves.
+ */
+#define __HYPERVISOR_xen_version          17
+#endif	/* XEN */
 
 #ifdef XENPV
 /*
@@ -916,9 +930,12 @@ END(start)
 #if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
-.org HYPERCALL_PAGE_OFFSET
-ENTRY(hypercall_page)
-.skip 0x1000
+.align HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page) /* Returns -1, on HYPERVISOR_xen_version() */
+.skip	(__HYPERVISOR_xen_version*32), 0x90
+	movl	$-1, %eax
+	retl
+.align HYPERCALL_PAGE_OFFSET, 0x90
 END(hypercall_page)
 
 #ifdef XENPV
