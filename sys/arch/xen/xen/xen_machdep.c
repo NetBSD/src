@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.20 2019/02/02 12:32:55 cherry Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.21 2019/02/13 06:52:43 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.20 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.21 2019/02/13 06:52:43 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -80,6 +80,7 @@ u_int	tsc_get_timecount(struct timecounter *);
 
 bool xen_suspend_allow;
 
+#ifdef XENPV
 extern uint64_t tsc_freq;	/* XXX */
 
 static int sysctl_xen_suspend(SYSCTLFN_ARGS);
@@ -419,6 +420,7 @@ xen_suspend_domain(void)
 	aprint_verbose("domain resumed\n");
 
 }
+#endif /* XENPV */
 
 #define PRINTK_BUFSIZE 1024
 void
