@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.11 2018/06/04 21:35:29 christos Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.12 2019/02/13 08:46:40 rin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -424,7 +424,8 @@ dtrace_trap(struct trapframe *frame, u_int type)
 	 */
 	nofault = (cpu_core[cpuid].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0;
 	if (nofault) {
-		KASSERTMSG((read_eflags() & PSL_I) == 0, "interrupts enabled");
+		KASSERTMSG((x86_read_flags() & PSL_I) == 0,
+		    "interrupts enabled");
 
 		/*
 		 * There are only a couple of trap types that are expected.
