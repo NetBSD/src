@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.31 2019/01/27 02:08:43 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.32 2019/02/13 18:04:35 kamil Exp $
 
 #
 # kernel sources
@@ -228,3 +228,4 @@ prefix	../common/lib/libc/misc
 file	ubsan.c				kubsan
 prefix
 makeoptions	kubsan	CFLAGS+="-fsanitize=undefined"
+makeoptions	kubsan	CPPFLAGS+="-DACPI_MISALIGNMENT_NOT_SUPPORTED"
