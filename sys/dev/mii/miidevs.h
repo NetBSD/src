@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.137 2019/02/09 07:46:07 rin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.138 2019/02/13 03:54:53 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.133 2019/02/08 09:16:11 msaitoh Exp
+ *	NetBSD: miidevs,v 1.136 2019/02/13 03:54:16 msaitoh Exp
  */
 
 /*-
@@ -57,16 +57,25 @@
  */
 
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
+#define	MII_OUI_VITESSE	0x0001c1	/* Vitesse */
+#define	MII_OUI_TRIDIUM	0x0001f0	/* Tridium */
+#define	MII_OUI_DATATRACK	0x0002c6	/* Data Track Technology */
 #define	MII_OUI_CICADA	0x0003f1	/* Cicada Semiconductor */
 #define	MII_OUI_AGERE	0x00053d	/* Agere */
+#define	MII_OUI_NETAS	0x0009c3	/* Netas */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
+#define	MII_OUI_RALINK	0x000c43	/* Ralink Technology */
+#define	MII_OUI_ASIX	0x000ec6	/* ASIX */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_MICREL	0x0010a1	/* Micrel */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
+#define	MII_OUI_SUNPLUS	0x001105	/* Sunplus Technology */
 #define	MII_OUI_ATHEROS	0x001374	/* Atheros */
+#define	MII_OUI_RALINK2	0x0017a5	/* Ralink Technology */
 #define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
+#define	MII_OUI_VIA	0x004063	/* VIA Technologies */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
@@ -83,9 +92,11 @@
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
 #define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
+#define	MII_OUI_ADMTEK	0x00e092	/* ADMtek */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
+#define	MII_OUI_BROADCOM4	0x18c086	/* Broadcom Corporation */
 
 /* Some Intel 82553's use an alternative OUI. */
 #define	MII_OUI_xxINTEL	0x001f00	/* Intel */
@@ -264,6 +275,8 @@
 #define	MII_STR_BROADCOM3_BCM57765	"BCM57765 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM3_BCM5720C	0x0036
 #define	MII_STR_BROADCOM3_BCM5720C	"BCM5720C 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM4_BCM5725C	0x0038
+#define	MII_STR_BROADCOM4_BCM5725C	"BCM5725C 1000BASE-T media interface"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
 #define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
@@ -527,6 +540,16 @@
 #define	MII_STR_xxTSC_78Q2120	"78Q2120 10/100 media interface"
 #define	MII_MODEL_xxTSC_78Q2121	0x0015
 #define	MII_STR_xxTSC_78Q2121	"78Q2121 100BASE-TX media interface"
+
+/* VIA Technologies PHYs */
+#define	MII_MODEL_VIA_VT6103	0x0032
+#define	MII_STR_VIA_VT6103	"VT6103 10/100 PHY"
+#define	MII_MODEL_VIA_VT6103_2	0x0034
+#define	MII_STR_VIA_VT6103_2	"VT6103 10/100 PHY"
+
+/* Vitesse PHYs */
+#define	MII_MODEL_VITESSE_VSC8601	0x0002
+#define	MII_STR_VITESSE_VSC8601	"VSC8601 10/100/1000 PHY"
 
 /* XaQti Corp. PHYs */
 #define	MII_MODEL_xxXAQTI_XMACII	0x0000
