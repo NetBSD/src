@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.139 2019/02/13 04:35:58 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.140 2019/02/13 08:40:14 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.139 2019/02/13 04:35:28 msaitoh Exp
+ *	NetBSD: miidevs,v 1.140 2019/02/13 08:39:55 msaitoh Exp
  */
 
 /*-
@@ -303,12 +303,12 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8244	0x002c
+#define	MII_STR_CICADA_CS8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_VSC8221	0x0015
 #define	MII_STR_xxCICADA_VSC8221	"Vitesse VSC8221 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
 #define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
-#define	MII_MODEL_xxCICADA_VSC8244	0x002c
-#define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
