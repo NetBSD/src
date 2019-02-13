@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.134 2019/02/09 07:45:34 rin Exp $
+$NetBSD: miidevs,v 1.135 2019/02/13 03:44:55 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ $NetBSD: miidevs,v 1.134 2019/02/09 07:45:34 rin Exp $
  */
 
 oui AMD				0x00001a	Advanced Micro Devices
+oui VITESSE			0x0001c1	Vitesse
 oui CICADA			0x0003f1	Cicada Semiconductor
 oui AGERE			0x00053d	Agere
 oui BROADCOM2			0x000af7	Broadcom Corporation
@@ -60,6 +61,7 @@ oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui ATHEROS			0x001374	Atheros
 oui BROADCOM3			0x001be9	Broadcom Corporation
 oui LEVEL1			0x00207b	Level 1
+oui VIA				0x004063	VIA Technologies
 oui MARVELL			0x005043	Marvell Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
@@ -77,8 +79,10 @@ oui PMCSIERRA			0x00e004	PMC-Sierra
 oui SIS				0x00e006	Silicon Integrated Systems
 oui REALTEK			0x00e04c	RealTek
 oui XAQTI			0x00e0ae	XaQti Corp.
+oui ASIX			0x000ec6	ASIX
 oui NATSEMI			0x080017	National Semiconductor
 oui TI				0x080028	Texas Instruments
+oui BROADCOM4			0x18c086	Broadcom Corporation
 
 /* Some Intel 82553's use an alternative OUI. */
 oui xxINTEL			0x001f00	Intel
@@ -194,6 +198,7 @@ model BROADCOM3 BCM5717C	0x0020 BCM5717C 1000BASE-T media interface
 model BROADCOM3 BCM5719C	0x0022 BCM5719C 1000BASE-T media interface
 model BROADCOM3 BCM57765	0x0024 BCM57765 1000BASE-T media interface
 model BROADCOM3 BCM5720C	0x0036 BCM5720C 1000BASE-T media interface
+model BROADCOM4 BCM5725C	0x0038 BCM5725C 1000BASE-T media interface
 model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
@@ -346,6 +351,13 @@ model TI TNETE2101		0x0003 TNETE2101 media interface
 /* TDK Semiconductor PHYs */
 model xxTSC 78Q2120		0x0014 78Q2120 10/100 media interface
 model xxTSC 78Q2121		0x0015 78Q2121 100BASE-TX media interface
+
+/* VIA Technologies PHYs */
+model VIA VT6103		0x0032	VT6103 10/100 PHY
+model VIA VT6103_2		0x0034	VT6103 10/100 PHY
+
+/* Vitesse PHYs */
+model VITESSE VSC8601		0x0002	VSC8601 10/100/1000 PHY
 
 /* XaQti Corp. PHYs */
 model xxXAQTI XMACII		0x0000 XaQti Corp. XMAC II gigabit interface
