@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.70 2019/02/02 12:32:55 cherry Exp $ */
+/* $NetBSD: hypervisor.c,v 1.71 2019/02/13 06:52:43 cherry Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.70 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.71 2019/02/13 06:52:43 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,20 +373,22 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 static bool
 hypervisor_suspend(device_t dev, const pmf_qual_t *qual)
 {
+#ifdef XENPV
 	events_suspend();
 	xengnt_suspend();
-
+#endif
 	return true;
 }
 
 static bool
 hypervisor_resume(device_t dev, const pmf_qual_t *qual)
 {
+#ifdef XENPV
 	hypervisor_machdep_resume();
 
 	xengnt_resume();
 	events_resume();
-
+#endif
 	return true;
 }
 

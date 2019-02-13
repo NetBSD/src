@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.40 2018/07/26 17:20:08 maxv Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.41 2019/02/13 06:52:43 cherry Exp $	*/
 
 /*
  *
@@ -72,6 +72,7 @@ void xen_kpm_sync(struct pmap *, int);
 #define xpq_queue_pin_l4_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L4_TABLE)
 
+#ifdef XENPV
 extern unsigned long *xpmap_phys_to_machine_mapping;
 
 static __inline paddr_t
@@ -120,6 +121,8 @@ xpmap_ptom_isvalid(paddr_t ppa)
 	    xpmap_phys_to_machine_mapping[ppa >> PAGE_SHIFT]
 	    != INVALID_P2M_ENTRY);
 }
+
+#endif /* XENPV */
 
 static inline void
 MULTI_update_va_mapping(
