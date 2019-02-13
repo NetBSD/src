@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.58 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.59 2019/02/13 05:28:50 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -71,9 +71,7 @@
  */
 
 struct intrstub {
-#if !defined(XENPV)
 	void *ist_entry;
-#endif
 	void *ist_recurse;
 	void *ist_resume;
 };
