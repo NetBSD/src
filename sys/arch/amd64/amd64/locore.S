@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.176 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: locore.S,v 1.177 2019/02/13 05:36:59 cherry Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -278,6 +278,8 @@
 #define __ASSEMBLY__
 #include <xen/include/public/elfnote.h>
 #include <xen/include/public/xen.h>
+#endif	/* XEN */
+
 #ifdef XENPV	
 #define ELFNOTE(name, type, desctype, descdata...) \
 .pushsection .note.name			;	\
@@ -312,7 +314,6 @@
 	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
 #endif
 #endif  /* XENPV */	
-#endif	/* XEN */
 
 /*
  * Initialization
@@ -979,9 +980,12 @@ END(start)
 #if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
-.org HYPERCALL_PAGE_OFFSET
-ENTRY(hypercall_page)
-.skip 0x1000
+.align HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page) /* Returns -1, on HYPERVISOR_xen_version() */
+.skip	(__HYPERVISOR_xen_version*32), 0x90
+	movq	$-1, %rax
+	retq
+.align HYPERCALL_PAGE_OFFSET, 0x90
 END(hypercall_page)
 #endif /* XEN */
 
