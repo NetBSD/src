@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.2 2018/12/23 12:15:01 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.3 2019/02/13 14:55:29 kamil Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.2 2018/12/23 12:15:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.3 2019/02/13 14:55:29 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,7 +166,7 @@ kasan_init(void)
 static void
 kasan_report(unsigned long addr, size_t size, bool write, unsigned long pc)
 {
-	printf("kASan: Unauthorized Access In %p: Addr %p [%zu byte%s, %s]\n",
+	printf("ASan: Unauthorized Access In %p: Addr %p [%zu byte%s, %s]\n",
 	    (void *)pc, (void *)addr, size, (size > 1 ? "s" : ""),
 	    (write ? "write" : "read"));
 	kasan_md_unwind();
