@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.6 2019/01/26 15:25:51 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.7 2019/02/13 16:03:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.6 2019/01/26 15:25:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.7 2019/02/13 16:03:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.6 2019/01/26 15:25:51 maxv Exp $");
 static struct nvmm_machine machines[NVMM_MAX_MACHINES];
 
 static const struct nvmm_impl *nvmm_impl_list[] = {
-	&nvmm_x86_svm	/* x86 AMD SVM */
+	&nvmm_x86_svm,	/* x86 AMD SVM */
+	&nvmm_x86_vmx	/* x86 Intel VMX */
 };
 
 static const struct nvmm_impl *nvmm_impl = NULL;
