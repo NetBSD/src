@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.21 2019/02/13 07:04:12 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.22 2019/02/13 10:55:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.21 2019/02/13 07:04:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.22 2019/02/13 10:55:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,12 +688,12 @@ svm_vcpu_inject(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		err = 0;
 		break;
 	case NVMM_EVENT_INTERRUPT_SW:
-		type = SVM_EVENT_TYPE_SW_INT;
-		err = 0;
-		break;
+		return EINVAL;
 	case NVMM_EVENT_EXCEPTION:
 		type = SVM_EVENT_TYPE_EXC;
 		if (event->vector == 2 || event->vector >= 32)
+			return EINVAL;
+		if (event->vector == 3 || event->vector == 0)
 			return EINVAL;
 		err = svm_event_has_error(event->vector);
 		break;
