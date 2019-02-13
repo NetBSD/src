@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.4 2019/02/04 22:07:41 mrg Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.5 2019/02/13 17:17:02 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.4 2019/02/04 22:07:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.5 2019/02/13 17:17:02 kamil Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.4 2019/02/04 22:07:41 mrg Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.5 2019/02/13 17:17:02 kamil Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -110,7 +110,7 @@ __RCSID("$NetBSD: ubsan.c,v 1.4 2019/02/04 22:07:41 mrg Exp $");
 
 #define NUMBER_SIGNED_BIT	1U
 
-#if __SIZEOF_INT128__
+#ifdef __SIZEOF_INT128__
 typedef __int128 longest;
 typedef unsigned __int128 ulongest;
 #else
@@ -1192,6 +1192,7 @@ Report(bool isFatal, const char *pFormat, ...)
 	}
 	if (isFatal || ISSET(ubsan_flags, UBSAN_ABORT)) {
 		abort();
+		__unreachable();
 		/* NOTREACHED */
 	}
 #endif
@@ -1291,6 +1292,7 @@ DeserializeNumberSigned(char *pBuffer, size_t zBUfferLength, struct CTypeDescrip
 	switch (zDeserializeTypeWidth(pType)) {
 	default:
 		ASSERT(0 && "Invalid codepath");
+		__unreachable();
 		/* NOTREACHED */
 #ifdef __SIZEOF_INT128__
 	case WIDTH_128:
@@ -1298,8 +1300,11 @@ DeserializeNumberSigned(char *pBuffer, size_t zBUfferLength, struct CTypeDescrip
 		break;
 #endif
 	case WIDTH_64:
+		/* FALLTHROUGH */
 	case WIDTH_32:
+		/* FALLTHROUGH */
 	case WIDTH_16:
+		/* FALLTHROUGH */
 	case WIDTH_8:
 		snprintf(pBuffer, zBUfferLength, "%" PRId64, STATIC_CAST(int64_t, L));
 		break;
@@ -1318,6 +1323,7 @@ DeserializeNumberUnsigned(char *pBuffer, size_t zBUfferLength, struct CTypeDescr
 	switch (zDeserializeTypeWidth(pType)) {
 	default:
 		ASSERT(0 && "Invalid codepath");
+		__unreachable();
 		/* NOTREACHED */
 #ifdef __SIZEOF_INT128__
 	case WIDTH_128:
@@ -1325,8 +1331,11 @@ DeserializeNumberUnsigned(char *pBuffer, size_t zBUfferLength, struct CTypeDescr
 		break;
 #endif
 	case WIDTH_64:
+		/* FALLTHROUGH */
 	case WIDTH_32:
+		/* FALLTHROUGH */
 	case WIDTH_16:
+		/* FALLTHROUGH */
 	case WIDTH_8:
 		snprintf(pBuffer, zBUfferLength, "%" PRIu64, STATIC_CAST(uint64_t, L));
 		break;
@@ -1358,7 +1367,9 @@ DeserializeFloatOverPointer(char *pBuffer, size_t zBUfferLength, struct CTypeDes
 	switch (zDeserializeTypeWidth(pType)) {
 #ifdef __HAVE_LONG_DOUBLE
 	case WIDTH_128:
+		/* FALLTHROUGH */
 	case WIDTH_96:
+		/* FALLTHROUGH */
 	case WIDTH_80:
 		memcpy(&LD, pNumber, sizeof(long double));
 		snprintf(pBuffer, zBUfferLength, "%Lg", LD);
@@ -1512,7 +1523,9 @@ DeserializeNumberFloat(char *szLocation, char *pBuffer, size_t zBUfferLength, st
 		/* NOTREACHED */
 #ifdef __HAVE_LONG_DOUBLE
 	case WIDTH_128:
+		/* FALLTHROUGH */
 	case WIDTH_96:
+		/* FALLTHROUGH */
 	case WIDTH_80:
 		DeserializeFloatOverPointer(pBuffer, zBUfferLength, pType, REINTERPRET_CAST(unsigned long *, ulNumber));
 		break;
@@ -1524,6 +1537,7 @@ DeserializeNumberFloat(char *szLocation, char *pBuffer, size_t zBUfferLength, st
 		}
 		/* FALLTHROUGH */
 	case WIDTH_32:
+		/* FALLTHROUGH */
 	case WIDTH_16:
 		DeserializeFloatInlined(pBuffer, zBUfferLength, pType, ulNumber);
 		break;
