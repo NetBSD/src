@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.66 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.67 2019/02/13 05:01:57 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -631,19 +631,7 @@ LABEL(name ## _stubs)				; \
 	INTRSTUB_ENTRY(name ## 31)		; \
 END(name ## _stubs)
 
-	.section .rodata
-
-INTRSTUB_ARRAY_16(legacy)
-
-#if NIOAPIC > 0
-INTRSTUB_ARRAY_32(ioapic_edge)
-INTRSTUB_ARRAY_32(ioapic_level)
-
-INTRSTUB_ARRAY_32(x2apic_edge)
-INTRSTUB_ARRAY_32(x2apic_level)
-#endif
-
-#endif /* !defined(XENPV) */
+#endif /* !XENPV */
 
 #if defined(XEN)
 /* Resume/recurse procedures for spl() */
@@ -715,39 +703,49 @@ XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 
+/* On Xen, the xenev_stubs are purely for spl entry, since there is no
+ * vector based mechanism. We however provide the entrypoint to ensure
+ * that native and Xen struct intrstub ; definitions are uniform.
+ */
+panicmsg:	.ascii "vector Xen event entry path entered."
+LABEL(entry_xenev)
+	movq $panicmsg, %rdi
+	callq _C_LABEL(panic)
+END(entry_xenev)
+
 LABEL(xenev_stubs)
-	.quad _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
-	.quad _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
-	.quad _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
-	.quad _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
-	.quad _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
-	.quad _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
-	.quad _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
-	.quad _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
-	.quad _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
-	.quad _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
-	.quad _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
-	.quad _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
-	.quad _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
-	.quad _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
-	.quad _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
-	.quad _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
-	.quad _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
-	.quad _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
-	.quad _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
-	.quad _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
-	.quad _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
-	.quad _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
-	.quad _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
-	.quad _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
-	.quad _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
-	.quad _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
-	.quad _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
-	.quad _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
-	.quad _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
-	.quad _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
-	.quad _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
-	.quad _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
+	.quad entry_xenev, _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
 END(xenev_stubs)
 
 /*
@@ -759,6 +757,7 @@ ENTRY(hypervisor_callback)
 	movq	(%rsp),%rcx
 	movq	8(%rsp),%r11
 	addq	$16,%rsp
+IDTVEC(hypervisor_pvhvm_callback)
 	pushq	$0		/* Dummy error code */
 	pushq	$T_ASTFLT
 	INTRENTRY
@@ -770,8 +769,11 @@ ENTRY(hypervisor_callback)
 	jnz	doreti_checkast
 1:
 	INTRFASTEXIT
+IDTVEC_END(hypervisor_pvhvm_callback)
 END(hypervisor_callback)
+#endif
 
+#ifdef XENPV
 /* Panic? */
 ENTRY(failsafe_callback)
 	movq	(%rsp),%rcx
@@ -787,4 +789,17 @@ ENTRY(failsafe_callback)
 /*	jmp	HYPERVISOR_iret */
 END(failsafe_callback)
 
-#endif	/* !XEN */
+#else	/* XENPV */
+
+	.section .rodata
+
+INTRSTUB_ARRAY_16(legacy)
+
+#if NIOAPIC > 0
+INTRSTUB_ARRAY_32(ioapic_edge)
+INTRSTUB_ARRAY_32(ioapic_level)
+
+INTRSTUB_ARRAY_32(x2apic_edge)
+INTRSTUB_ARRAY_32(x2apic_level)
+#endif
+#endif /* !XENPV */
