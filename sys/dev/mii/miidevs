@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.138 2019/02/13 04:15:01 msaitoh Exp $
+$NetBSD: miidevs,v 1.139 2019/02/13 04:35:28 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -221,8 +221,8 @@ model CICADA VSC8211		0x000b Cicada VSC8211 10/100/1000TX PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 model xxCICADA VSC8221		0x0015 Vitesse VSC8221 10/100/1000BASE-T PHY
-model xxCICADA VSC8244		0x002c Vitesse VSC8244 Quad 10/100/1000BASE-T PHY
 model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
+model xxCICADA VSC8244		0x002c Vitesse VSC8244 Quad 10/100/1000BASE-T PHY
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
@@ -340,6 +340,7 @@ model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* RDC Semiconductor PHYs */
 model RDC R6040			0x0003 R6040 10/100 media interface
+
 /* RealTek PHYs */
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
 model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
