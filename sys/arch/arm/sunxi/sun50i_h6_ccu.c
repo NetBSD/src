@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_h6_ccu.c,v 1.2 2019/02/13 18:18:38 jakllsch Exp $ */
+/* $NetBSD: sun50i_h6_ccu.c,v 1.3 2019/02/13 18:31:11 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.2 2019/02/13 18:18:38 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.3 2019/02/13 18:31:11 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.2 2019/02/13 18:18:38 jakllsch E
 
 #define	PLL_CPUX_CTRL_REG	0x000
 #define	PLL_PERI0_CTRL_REG	0x020
+#define	PSI_AHB1_AHB2_CFG_REG	0x510
 #define	AHB3_CFG_REG		0x51c
 #define	APB2_CFG_REG		0x524
 #define	MBUS_CFG_REG		0x540
@@ -81,6 +82,9 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.2 2019/02/13 18:18:38 jakllsch E
 #define	USB1_CLK_REG		0xa74
 #define	USB3_CLK_REG		0xa7c
 #define	USB_BGR_REG		0xa8c
+#define	PCIE_REF_CLK_REG	0xab0
+#define	PCIE_AXI_CLK_REG	0xab4
+#define	PCIE_AUX_CLK_REG	0xab8
 #define	PCIE_BGR_REG		0xabc
 #define	HDMI_BGR_REG		0xb1c
 #define	DISPLAY_IF_TOP_BGR_REG	0xb5c
@@ -210,6 +214,9 @@ static struct sunxi_ccu_reset sun50i_h6_ccu_resets[] = {
 static const char *ahb3_parents[] = { "hosc", "losc", "psi", "pll_periph0" };
 static const char *apb2_parents[] = { "hosc", "losc", "psi", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
+static const char *hosc_parent[] = { "hosc" };
+static const char *pll_periph0_parent[] = { "pll_periph0" };
+static const char *psi_ahb1_ahb2_parents[] = { "hosc", "losc", "iosc", "pll_periph0" };
 
 static struct sunxi_ccu_clk sun50i_h6_ccu_clks[] = {
 	SUNXI_CCU_FIXED_FACTOR(H6_CLK_OSC12M, "osc12m", "hosc", 2, 1),
@@ -330,6 +337,37 @@ static struct sunxi_ccu_clk sun50i_h6_ccu_clks[] = {
 
 	SUNXI_CCU_GATE(H6_CLK_BUS_EMAC, "bus-emac", "ahb3",
 	    EMAC_BGR_REG, 0),
+
+	SUNXI_CCU_FIXED_FACTOR(H6_CLK_PCIE_REF_100M, "pcie_ref_100M",
+	    "pll_periph0_4x", 24, 1),
+	SUNXI_CCU_GATE(H6_CLK_PCIE_REF, "pcie_ref", "pcie_ref_100M",
+	    PCIE_REF_CLK_REG, 31),
+	SUNXI_CCU_GATE(H6_CLK_PCIE_REF_OUT, "pcie_ref_out", "pcie_ref",
+	    PCIE_REF_CLK_REG, 30),
+
+	SUNXI_CCU_NM(H6_CLK_PSI_AHB1_AHB2, "psi_ahb1_ahb2",
+	    psi_ahb1_ahb2_parents,
+	    PSI_AHB1_AHB2_CFG_REG,	/* reg */
+	    __BITS(9,8),	/* n */
+	    __BITS(1,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    0,			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+	SUNXI_CCU_DIV_GATE(H6_CLK_PCIE_MAXI, "pcie_maxi", pll_periph0_parent,
+	    PCIE_AXI_CLK_REG,	/* reg */
+	    __BITS(3,0),	/* div */
+	    0,			/* sel */
+	    __BIT(31),		/* enable */
+	    SUNXI_CCU_DIV_ZERO_IS_ONE),
+	SUNXI_CCU_DIV_GATE(H6_CLK_PCIE_AUX, "pcie_aux", hosc_parent,
+	    PCIE_AUX_CLK_REG,	/* reg */
+	    __BITS(4,0),	/* div */
+	    0,			/* sel */
+	    __BIT(31),		/* enable */
+	    SUNXI_CCU_DIV_ZERO_IS_ONE),
+
+	SUNXI_CCU_GATE(H6_CLK_BUS_PCIE, "bus_pcie", "psi_ahb1_ahb2",
+	    PCIE_BGR_REG, 0),
 };
 
 static int
