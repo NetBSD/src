@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_h6_ccu.c,v 1.1 2018/05/01 19:53:14 jmcneill Exp $ */
+/* $NetBSD: sun50i_h6_ccu.c,v 1.2 2019/02/13 18:18:38 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.1 2018/05/01 19:53:14 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.2 2019/02/13 18:18:38 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_h6_ccu.c,v 1.1 2018/05/01 19:53:14 jmcneill E
 #include <arm/sunxi/sunxi_ccu.h>
 #include <arm/sunxi/sun50i_h6_ccu.h>
 
+#define	PLL_CPUX_CTRL_REG	0x000
 #define	PLL_PERI0_CTRL_REG	0x020
 #define	AHB3_CFG_REG		0x51c
 #define	APB2_CFG_REG		0x524
@@ -212,6 +213,17 @@ static const char *mod_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" 
 
 static struct sunxi_ccu_clk sun50i_h6_ccu_clks[] = {
 	SUNXI_CCU_FIXED_FACTOR(H6_CLK_OSC12M, "osc12m", "hosc", 2, 1),
+
+	SUNXI_CCU_NKMP_TABLE(H6_CLK_PLL_CPUX, "pll_cpux", "hosc",
+	    PLL_CPUX_CTRL_REG,		/* reg */
+	    __BITS(15,8),		/* n */
+	    0,				/* k */
+	    __BITS(1,0),		/* m */
+	    __BITS(17,16),		/* p */
+	    __BIT(31),			/* enable */
+	    __BIT(28),			/* lock */
+	    NULL,			/* table */
+	    SUNXI_CCU_NKMP_SCALE_CLOCK | SUNXI_CCU_NKMP_FACTOR_P_POW2),
 
 	SUNXI_CCU_NKMP(H6_CLK_PLL_PERIPH0_4X, "pll_periph0_4x", "hosc",
 	    PLL_PERI0_CTRL_REG,		/* reg */
