@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.96 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97 2019/02/13 08:38:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -369,6 +369,8 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 u_int		x86_mmap_flags(paddr_t);
 
 bool		pmap_is_curpmap(struct pmap *);
+
+void		pmap_ept_transform(struct pmap *);
 
 #ifndef __HAVE_DIRECT_MAP
 void		pmap_vpage_cpu_init(struct cpu_info *);
