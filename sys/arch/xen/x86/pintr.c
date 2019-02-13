@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.9 2018/10/10 02:34:08 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.10 2019/02/13 06:15:51 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -135,17 +135,19 @@ __KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.9 2018/10/10 02:34:08 cherry Exp $");
 /* XXX: todo - compat with lapic.c and XEN for x2apic */
 bool x2apic_mode __read_mostly = false;
 /* for x86/i8259.c */
-struct intrstub legacy_stubs[NUM_LEGACY_IRQS] = {{0,0}};
+struct intrstub legacy_stubs[NUM_LEGACY_IRQS] = {{0,0,0}};
 /* for x86/ioapic.c */
-struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
-struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
-struct intrstub x2apic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
-struct intrstub x2apic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
+struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0,0,0}};
+struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0,0}};
+struct intrstub x2apic_edge_stubs[MAX_INTR_SOURCES] = {{0,0,0}};
+struct intrstub x2apic_level_stubs[MAX_INTR_SOURCES] = {{0,0,0}};
 #include <machine/i82093var.h>
+#endif /* NIOAPIC */
+
 int irq2port[NR_EVENT_CHANNELS] = {0}; /* actually port + 1, so that 0 is invaid */
 static int irq2vect[256] = {0};
 static int vect2irq[256] = {0};
-#endif /* NIOAPIC */
+
 #if NACPICA > 0
 #include <machine/mpconfig.h>
 #include <machine/mpacpi.h>
