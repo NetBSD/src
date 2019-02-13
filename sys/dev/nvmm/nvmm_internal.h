@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.4 2019/02/11 07:07:37 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.5 2019/02/13 16:03:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -109,5 +109,6 @@ int nvmm_vcpu_get(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_cpu **);
 void nvmm_vcpu_put(struct nvmm_cpu *);
 
 extern const struct nvmm_impl nvmm_x86_svm;
+extern const struct nvmm_impl nvmm_x86_vmx;
 
 #endif /* _NVMM_INTERNAL_H_ */
