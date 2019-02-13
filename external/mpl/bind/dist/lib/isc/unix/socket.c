@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.6 2019/02/12 02:38:55 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.7 2019/02/13 01:16:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -351,14 +351,6 @@ struct isc__socket {
 	char				name[16];
 	void *				tag;
 
-	/*
-	 * Internal events.  Posted when a descriptor is readable or
-	 * writable.  These are statically allocated and never freed.
-	 * They will be set to non-purgable before use.
-	 */
-	intev_t			readable_ev;
-	intev_t			writable_ev;
-
 	ISC_LIST(isc_socketevent_t)		send_list;
 	ISC_LIST(isc_socketevent_t)		recv_list;
 	ISC_LIST(isc_socket_newconnev_t)	accept_list;
@@ -366,9 +358,7 @@ struct isc__socket {
 
 	isc_sockaddr_t		peer_address;       /* remote address */
 
-	unsigned int		pending_recv : 1,
-				pending_send : 1,
-				listener : 1,       /* listener socket */
+	unsigned int		listener : 1,       /* listener socket */
 				connected : 1,
 				connecting : 1,     /* connect pending */
 				bound : 1,          /* bound to local addr */
@@ -380,10 +370,10 @@ struct isc__socket {
 	unsigned char		overflow; /* used for MSG_TRUNC fake */
 #endif
 
-        void                    *fdwatcharg;    
-        isc_sockfdwatch_t       fdwatchcb;
-        int                     fdwatchflags;
-        isc_task_t              *fdwatchtask;
+	void			*fdwatcharg;
+	isc_sockfdwatch_t	fdwatchcb;
+	int			fdwatchflags;
+	isc_task_t              *fdwatchtask;
 	unsigned int		dscp;
 };
 
@@ -474,8 +464,8 @@ static void internal_accept(isc__socket_t *);
 static void internal_connect(isc__socket_t *);
 static void internal_recv(isc__socket_t *);
 static void internal_send(isc__socket_t *);
-static void internal_fdwatch_write(isc_task_t *, isc_event_t *);
-static void internal_fdwatch_read(isc_task_t *, isc_event_t *);
+static void internal_fdwatch_write(isc__socket_t *);
+static void internal_fdwatch_read(isc__socket_t *);
 static void process_cmsg(isc__socket_t *, struct msghdr *, isc_socketevent_t *);
 static void build_msghdr_send(isc__socket_t *, char *, isc_socketevent_t *,
 			      struct msghdr *, struct iovec *, size_t *);
@@ -1962,8 +1952,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	ISC_LIST_INIT(sock->accept_list);
 	ISC_LIST_INIT(sock->connect_list);
 	sock->listener = 0;
-	sock->pending_recv = 0;
-	sock->pending_send = 0;
 	sock->connected = 0;
 	sock->connecting = 0;
 	sock->bound = 0;
@@ -1973,16 +1961,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	 * Initialize the lock.
 	 */
 	isc_mutex_init(&sock->lock);
-
-	/*
-	 * Initialize readable and writable events.
-	 */
-	ISC_EVENT_INIT(&sock->readable_ev, sizeof(intev_t),
-		       ISC_EVENTATTR_NOPURGE, NULL, ISC_SOCKEVENT_INTR,
-		       NULL, sock, sock, NULL, NULL);
-	ISC_EVENT_INIT(&sock->writable_ev, sizeof(intev_t),
-		       ISC_EVENTATTR_NOPURGE, NULL, ISC_SOCKEVENT_INTW,
-		       NULL, sock, sock, NULL, NULL);
 
 	sock->common.magic = ISCAPI_SOCKET_MAGIC;
 	sock->common.impmagic = SOCKET_MAGIC;
@@ -2005,8 +1983,6 @@ free_socket(isc__socket_t **socketp) {
 	INSIST(VALID_SOCKET(sock));
 	INSIST(isc_refcount_current(&sock->references) == 0);
 	INSIST(!sock->connecting);
-	INSIST(!sock->pending_recv);
-	INSIST(!sock->pending_send);
 	INSIST(ISC_LIST_EMPTY(sock->recv_list));
 	INSIST(ISC_LIST_EMPTY(sock->send_list));
 	INSIST(ISC_LIST_EMPTY(sock->accept_list));
@@ -2820,8 +2796,6 @@ isc_socket_close(isc_socket_t *sock0) {
 	REQUIRE(sock->fd >= 0 && sock->fd < (int)sock->manager->maxsocks);
 
 	INSIST(!sock->connecting);
-	INSIST(!sock->pending_recv);
-	INSIST(!sock->pending_send);
 	INSIST(ISC_LIST_EMPTY(sock->recv_list));
 	INSIST(ISC_LIST_EMPTY(sock->send_list));
 	INSIST(ISC_LIST_EMPTY(sock->accept_list));
@@ -2849,64 +2823,22 @@ isc_socket_close(isc_socket_t *sock0) {
 	return (ISC_R_SUCCESS);
 }
 
-/*
- * I/O is possible on a given socket.  Schedule an event to this task that
- * will call an internal function to do the I/O.  This will charge the
- * task with the I/O operation and let our select loop handler get back
- * to doing something real as fast as possible.
- *
- * The socket and manager must be locked before calling this function.
- */
 static void
 dispatch_recv(isc__socket_t *sock) {
-	intev_t *iev;
-	isc_task_t *sender;
-
 	if (sock->type != isc_sockettype_fdwatch) {
 		internal_recv(sock);
-		return;
+	} else {
+		internal_fdwatch_read(sock);
 	}
-
-	LOCK(&sock->lock);
-	INSIST(!sock->pending_recv);
-
-	sender = sock->fdwatchtask;
-	sock->pending_recv = 1;
-	iev = &sock->readable_ev;
-
-	isc_refcount_increment(&sock->references);
-	iev->ev_sender = sock;
-	iev->ev_action = internal_fdwatch_read;
-	iev->ev_arg = sock;
-	UNLOCK(&sock->lock);
-	internal_fdwatch_read(sender, iev);
 }
 
 static void
 dispatch_send(isc__socket_t *sock) {
-	intev_t *iev;
-	isc_task_t *sender;
-
 	if (sock->type != isc_sockettype_fdwatch) {
 		internal_send(sock);
-		return;
+	} else {
+		internal_fdwatch_write(sock);
 	}
-
-	LOCK(&sock->lock);
-
-	INSIST(!sock->pending_send);
-
-	sender = sock->fdwatchtask;
-	sock->pending_send = 1;
-	iev = &sock->writable_ev;
-
-	isc_refcount_increment(&sock->references);
-	iev->ev_sender = sock;
-	iev->ev_action = internal_fdwatch_write;
-	iev->ev_arg = sock;
-
-	UNLOCK(&sock->lock);
-	internal_fdwatch_write(sender, iev);
 }
 
 /*
@@ -3347,31 +3279,20 @@ internal_send(isc__socket_t *sock) {
 }
 
 static void
-internal_fdwatch_write(isc_task_t *me, isc_event_t *ev) {
-	isc__socket_t *sock;
+internal_fdwatch_write(isc__socket_t *sock)
+{
 	int more_data;
 
-	INSIST(ev->ev_type == ISC_SOCKEVENT_INTW);
-
-	/*
-	 * Find out what socket this is and lock it.
-	 */
-	sock = (isc__socket_t *)ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
 
 	LOCK(&sock->lock);
-	socket_log(sock, NULL, IOEVENT,
-		   isc_msgcat, ISC_MSGSET_SOCKET, ISC_MSG_INTERNALSEND,
-		   "internal_fdwatch_write: task %p got event %p", me, ev);
-
-	INSIST(sock->pending_send == 1);
-
+	isc_refcount_increment(&sock->references);
 	UNLOCK(&sock->lock);
-	more_data = (sock->fdwatchcb)(me, (isc_socket_t *)sock,
-				      sock->fdwatcharg, ISC_SOCKFDWATCH_WRITE);
-	LOCK(&sock->lock);
 
-	sock->pending_send = 0;
+	more_data = (sock->fdwatchcb)(sock->fdwatchtask, (isc_socket_t *)sock,
+				      sock->fdwatcharg, ISC_SOCKFDWATCH_WRITE);
+
+	LOCK(&sock->lock);
 
 	if (isc_refcount_decrement(&sock->references) == 0) {
 		UNLOCK(&sock->lock);
@@ -3387,31 +3308,21 @@ internal_fdwatch_write(isc_task_t *me, isc_event_t *ev) {
 }
 
 static void
-internal_fdwatch_read(isc_task_t *me, isc_event_t *ev) {
-	isc__socket_t *sock;
+internal_fdwatch_read(isc__socket_t *sock)
+{
 	int more_data;
 
-	INSIST(ev->ev_type == ISC_SOCKEVENT_INTR);
-
-	/*
-	 * Find out what socket this is and lock it.
-	 */
-	sock = (isc__socket_t *)ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
 
 	LOCK(&sock->lock);
-	socket_log(sock, NULL, IOEVENT,
-		   isc_msgcat, ISC_MSGSET_SOCKET, ISC_MSG_INTERNALRECV,
-		   "internal_fdwatch_read: task %p got event %p", me, ev);
-
-	INSIST(sock->pending_recv == 1);
-
+	isc_refcount_increment(&sock->references);
 	UNLOCK(&sock->lock);
-	more_data = (sock->fdwatchcb)(me, (isc_socket_t *)sock,
+
+	more_data = (sock->fdwatchcb)(sock->fdwatchtask, (isc_socket_t *)sock,
 				      sock->fdwatcharg, ISC_SOCKFDWATCH_READ);
+
 	LOCK(&sock->lock);
 
-	sock->pending_recv = 0;
 	if (isc_refcount_decrement(&sock->references) == 0) {
 		UNLOCK(&sock->lock);
 		destroy(&sock);
@@ -5759,14 +5670,6 @@ isc_socketmgr_renderxml(isc_socketmgr_t *mgr0, xmlTextWriterPtr writer) {
 		}
 
 		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "states"));
-		if (sock->pending_recv)
-			TRY0(xmlTextWriterWriteElement(writer,
-						ISC_XMLCHAR "state",
-						ISC_XMLCHAR "pending-receive"));
-		if (sock->pending_send)
-			TRY0(xmlTextWriterWriteElement(writer,
-						  ISC_XMLCHAR "state",
-						  ISC_XMLCHAR "pending-send"));
 		if (sock->listener)
 			TRY0(xmlTextWriterWriteElement(writer,
 						       ISC_XMLCHAR "state",
@@ -5874,18 +5777,6 @@ isc_socketmgr_renderjson(isc_socketmgr_t *mgr0, json_object *stats) {
 		states = json_object_new_array();
 		CHECKMEM(states);
 		json_object_object_add(entry, "states", states);
-
-		if (sock->pending_recv) {
-			obj = json_object_new_string("pending-receive");
-			CHECKMEM(obj);
-			json_object_array_add(states, obj);
-		}
-
-		if (sock->pending_send) {
-			obj = json_object_new_string("pending-send");
-			CHECKMEM(obj);
-			json_object_array_add(states, obj);
-		}
 
 		if (sock->listener) {
 			obj = json_object_new_string("listener");
@@ -6042,12 +5933,10 @@ isc_socket_fdwatchpoke(isc_socket_t *sock0, int flags)
 
 	if ((flags & (ISC_SOCKFDWATCH_READ | ISC_SOCKFDWATCH_WRITE)) != 0) {
 		LOCK(&sock->lock);
-		if (((flags & ISC_SOCKFDWATCH_READ) != 0) &&
-		    !sock->pending_recv)
+		if ((flags & ISC_SOCKFDWATCH_READ) != 0)
 			select_poke(sock->manager, sock->threadid, sock->fd,
 				    SELECT_POKE_READ);
-		if (((flags & ISC_SOCKFDWATCH_WRITE) != 0) &&
-		    !sock->pending_send)
+		if ((flags & ISC_SOCKFDWATCH_WRITE) != 0)
 			select_poke(sock->manager, sock->threadid, sock->fd,
 				    SELECT_POKE_WRITE);
 		UNLOCK(&sock->lock);
