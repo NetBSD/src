@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.27 2018/12/11 13:31:20 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.28 2019/02/13 21:40:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,7 +94,7 @@ struct parse_state {
 	int ps_checkkwd;		/* word expansion flags, see below */
 	struct nodelist *ps_backquotelist; /* list of cmdsubs to process */
 	union node *ps_redirnode;	/* node for current redirect */
-	struct HereDoc *ps_heredoc;	/* current heredoc << beign parsed */
+	struct HereDoc *ps_heredoc;	/* current heredoc << being parsed */
 	int ps_quoteflag;		/* set if (part) of token was quoted */
 	int ps_startlinno;		/* line # where last token started */
 	int ps_funclinno;		/* line # of the current function */
@@ -104,7 +104,7 @@ struct parse_state {
 /*
  * The parser references the elements of struct parse_state quite
  * frequently - they used to be simple globals, so one memory ref
- * per access, adding an indirect through global ptr would not be
+ * per access, adding an indirect through a global ptr would not be
  * nice.   The following gross hack allows most of that cost to be
  * avoided, by allowing the compiler to understand that the global
  * pointer is in fact constant in any function, and so its value can
@@ -135,7 +135,6 @@ extern union parse_state_p psp;
 #define	tokpushback	(current_parser->ps_tokpushback)
 #define	checkkwd	(current_parser->ps_checkkwd)
 
-#define	noalias		(current_parser->ps_noalias)
 #define	heredoclist	(current_parser->ps_heredoclist)
 #define	parsebackquote	(current_parser->ps_parsebackquote)
 #define	doprompt	(current_parser->ps_doprompt)
