@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.135 2019/02/13 03:44:55 msaitoh Exp $
+$NetBSD: miidevs,v 1.136 2019/02/13 03:54:16 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -51,14 +51,21 @@ $NetBSD: miidevs,v 1.135 2019/02/13 03:44:55 msaitoh Exp $
 
 oui AMD				0x00001a	Advanced Micro Devices
 oui VITESSE			0x0001c1	Vitesse
+oui TRIDIUM			0x0001f0	Tridium
+oui DATATRACK			0x0002c6	Data Track Technology
 oui CICADA			0x0003f1	Cicada Semiconductor
 oui AGERE			0x00053d	Agere
+oui NETAS			0x0009c3	Netas
 oui BROADCOM2			0x000af7	Broadcom Corporation
+oui RALINK			0x000c43	Ralink Technology
+oui ASIX			0x000ec6	ASIX
 oui BROADCOM			0x001018	Broadcom Corporation
 oui MICREL			0x0010a1	Micrel
 oui ALTIMA			0x0010a9	Altima Communications
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
+oui SUNPLUS			0x001105	Sunplus Technology
 oui ATHEROS			0x001374	Atheros
+oui RALINK2			0x0017a5	Ralink Technology
 oui BROADCOM3			0x001be9	Broadcom Corporation
 oui LEVEL1			0x00207b	Level 1
 oui VIA				0x004063	VIA Technologies
@@ -78,8 +85,8 @@ oui JMICRON			0x00d831	JMicron
 oui PMCSIERRA			0x00e004	PMC-Sierra
 oui SIS				0x00e006	Silicon Integrated Systems
 oui REALTEK			0x00e04c	RealTek
+oui ADMTEK			0x00e092	ADMtek
 oui XAQTI			0x00e0ae	XaQti Corp.
-oui ASIX			0x000ec6	ASIX
 oui NATSEMI			0x080017	National Semiconductor
 oui TI				0x080028	Texas Instruments
 oui BROADCOM4			0x18c086	Broadcom Corporation
