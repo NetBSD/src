@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.268 2019/02/14 12:49:28 wiz Exp $
+# $NetBSD: md.amd64,v 1.269 2019/02/14 20:42:40 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -917,16 +917,11 @@
 ./usr/libdata/ldscripts/elf_x86_64.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.x		comp-obsolete		binutils=231
-./usr/libdata/ldscripts/i386nbsd.x		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/i386nbsd.xbn		comp-obsolete		binutils=231
-./usr/libdata/ldscripts/i386nbsd.xbn		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/i386nbsd.xn		comp-obsolete		binutils=231
-./usr/libdata/ldscripts/i386nbsd.xn		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/i386nbsd.xr		comp-obsolete		binutils=231
-./usr/libdata/ldscripts/i386nbsd.xr		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/i386nbsd.xu		comp-obsolete		binutils=231
-./usr/libdata/ldscripts/i386nbsd.xu		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.x		comp-obsolete		obsolete
+./usr/libdata/ldscripts/i386nbsd.xbn		comp-obsolete		obsolete
+./usr/libdata/ldscripts/i386nbsd.xn		comp-obsolete		obsolete
+./usr/libdata/ldscripts/i386nbsd.xr		comp-obsolete		obsolete
+./usr/libdata/ldscripts/i386nbsd.xu		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lnvmm.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib		lint
 ./usr/share/ldscripts/elf_i386.x		comp-obsolete		obsolete
