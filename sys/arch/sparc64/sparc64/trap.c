@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.189 2018/12/19 13:57:50 maxv Exp $ */
+/*	$NetBSD: trap.c,v 1.190 2019/02/14 20:09:40 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.189 2018/12/19 13:57:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.190 2019/02/14 20:09:40 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -717,6 +717,10 @@ dopanic:
 #ifdef DEBUG
 		if (!CPU_ISSUN4V) {
 			isfsr = ldxa(SFSR, ASI_IMMU);
+		} else {
+		  paddr_t mmu_fsa_ifa = cpus->ci_mmufsa
+		    + offsetof(struct mmufsa, ifa);
+			isfsr = ldxa(mmu_fsa_ifa, ASI_PHYS_CACHED);
 		}
 #endif
 		/* 
@@ -731,10 +735,34 @@ dopanic:
 		
 #ifdef DEBUG
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
-		printf("Alignment error: pid=%d.%d comm=%s dsfsr=%08x:%08x "
-		       "dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
-		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, fmt64(dsfsr), fmt64(dsfar),
-		       fmt64(isfsr), pc);
+		if (!CPU_ISSUN4V) {
+			printf("Alignment error: pid=%d.%d comm=%s dsfsr=%08x:%08x "
+			       "dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
+			       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, fmt64(dsfsr), fmt64(dsfar),
+			       fmt64(isfsr), pc);
+		} else {
+		  
+			printf("Alignment error: pid=%d.%d comm=%s pc=%lx\n",
+			       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, pc);
+			paddr_t mmufsa_ift_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, ift);
+			paddr_t mmufsa_ifa_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, ifa);
+			paddr_t mmufsa_ifc_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, ifc);
+			paddr_t mmufsa_dft_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dft);
+			paddr_t mmufsa_dfa_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dfa);
+			paddr_t mmufsa_dfc_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dfc);
+			int64_t ift = ldxa(mmufsa_ift_addr, ASI_PHYS_CACHED);
+			printf("ift = %016lx\n", ift);
+			int64_t ifa = ldxa(mmufsa_ifa_addr, ASI_PHYS_CACHED);
+			printf("ifa = %016lx\n", ifa);
+			int64_t ifc = ldxa(mmufsa_ifc_addr, ASI_PHYS_CACHED);
+			printf("ifc = %016lx\n", ifc);
+			int64_t dft = ldxa(mmufsa_dft_addr, ASI_PHYS_CACHED);
+			printf("dft = %016lx\n", dft);
+			int64_t dfa = ldxa(mmufsa_dfa_addr, ASI_PHYS_CACHED);
+			printf("dfa = %016lx\n", dfa);
+			int64_t dfc = ldxa(mmufsa_dfc_addr, ASI_PHYS_CACHED);
+			printf("dfc = %016lx\n", dfc);
+		}
 #endif
 		
 #if defined(DDB) && defined(DEBUG)
