@@ -1,0 +1,423 @@
+#	$NetBSD: IYONIX,v 1.1 2019/02/14 21:47:52 macallan Exp $
+#
+# GENERIC machine description file
+#
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include	"arch/evbarm/conf/std.iyonix"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.1 $"
+
+maxusers	32		# estimated number of users
+
+options 	MSGBUFSIZE=65536
+
+# CPU options
+
+# For XScale systems
+options 	CPU_XSCALE_80321	# Support the XScale core
+makeoptions	CPUFLAGS="-mcpu=xscale"
+
+# Architecture options
+options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
+#options 	HZ=512
+makeoptions	CPUFLAGS="-mcpu=xscale"
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+#options 	KTRACE		# system call tracing via ktrace(1)
+
+
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+
+# Device options
+
+# Console options.  The default console is speed is 115200 baud.
+#options 	CONSPEED=9600		# Console speed
+
+# Miscellaneous kernel options
+options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	IRQSTATS	# manage IRQ statistics
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+options 	PCIVERBOSE	# Verbose PCI descriptions
+options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+
+options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Development and Debugging options
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	DDB_KEYCODE=0x40
+#options 	KGDB		# remote debugger
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
+#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+
+#options 	PMAP_INCLUDE_PTE_SYNC
+#options 	LOCKDEBUG
+
+
+# Compatibility options
+
+include 	"conf/compat_netbsd70.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+
+# File systems
+file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
+#file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+#file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/ptm support
+file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
+file-system     FILECORE        # Acorn filecore file system
+
+# File system options
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	NFSSERVER	# Network File System server
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+options 	DKWEDGE_AUTODISCOVER
+options 	DKWEDGE_METHOD_BSDLABEL
+#options 	DKWEDGE_METHOD_MBR
+
+options 	INSECURE
+
+# Kernel root file system and dump configuration.
+#config		netbsd	root on ? type ?
+#config		netbsd	root on wd1a type ffs
+#config		netbsd	root on wm0 type nfs
+config		netbsd	root on "wedge:system/a" type ffs
+
+#
+# Device configuration
+#
+
+mainbus0 at root
+
+cpu0 at mainbus?
+
+# i80321 I/O Processor peripheral support
+iopxs*          at mainbus?
+
+iopaau*         at iopxs?               # Application Accelerator Unit
+iopiic*         at iopxs?               # I2C Controller Unit(s) 
+iic0            at iopiic?
+iic1            at iopiic?
+iopwdog*        at iopxs?               # Watchdog timer
+pci0            at iopxs? bus ?         # PCI/PCI-X support
+
+# The curious can see their RAM timings.
+spdmem* at iic1 addr 0x56
+
+# onboard RTC. RISC OS starts counting years at 2000
+dsrtc0 	at iic0 addr 0x68
+
+# PCI bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+#puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+
+#options COMCONSOLE
+
+# VGA
+#vga*            at pci? dev ? function ?
+genfb*		at pci? dev ? function ?
+#options 	GENFB_PCI_DEBUG
+#gffb*		at pci? dev ? function ?
+
+# these exist but aren't configured by RISC OS
+#alipm*		at pci?
+#iic*		at alipm?
+
+# Display
+wsdisplay0      at wsemuldisplaydev? console 1
+wsdisplay*      at wsemuldisplaydev?
+
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# vt100 terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_GO_MONO12x23
+options		WSDISPLAY_SCROLLSUPPORT
+options 	VCONS_DRAW_INTR
+options 	RASOPS_DEFAULT_WIDTH=100
+options 	RASOPS_DEFAULT_HEIGHT=30
+
+# IDE and related devices
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+#pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+mvsata* 	at pci? dev ? function ?
+
+# ATA (IDE) bus support
+atabus* at ata?
+#options	ATADEBUG
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+wd*	at atabus? drive ? flags 0x0000
+
+# ATAPI bus support
+atapibus* at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+# XXX No DMA on IDE devices for now
+cd*	at atapibus? drive ? flags 0x0ff0	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+
+# Network Interfaces
+
+# onboard ethernet
+wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+
+# MII/PHY support
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+
+# USB Controller and Devices
+
+# Iyonix ships with an ehci/ohci card
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+ohci*	at pci?	dev ? function ?	# Open Host Controller
+#uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+
+# USB bus support
+usb*	at ehci?
+usb*	at ohci?
+#usb*	at uhci?
+#usb*	at slhci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# USB eGalax touch-panel
+#uep*	at uhub? port ?
+#wsmouse* at uep? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+
+# USB MIDI
+#umidi* at uhub? port ? configuration ?
+
+# USB Ethernet adapters
+#axe*	at uhub? port ?		# ASIX AX88172 based adapters
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+# USB Generic driver
+#ugen*	at uhub? port ?
+
+
+# Iyonix onboard audio
+autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
+
+# Audio support
+audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
+
+# On-board device support
+
+obio*	at mainbus?
+com1	at obio? addr 0x900003e8 xint 1 # on-board UART
+com0	at obio? addr 0x900002f8 xint 1 # on-board UART
+#com*	at obio? addr 0x900003e8 xint 1 # on-board UART
+#com*	at obio? addr 0x900003f8 xint 1 # on-board UART
+
+# Pseudo-Devices
+
+#pseudo-device 	crypto		# /dev/crypto device
+#pseudo-device	swcrypto	# software crypto implementation
+
+# disk/mass storage pseudo-devices
+
+pseudo-device	fss			# file system snapshot device
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	npf			# NPF packet filter
+pseudo-device	loop			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f#
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+# srt is EXPERIMENTAL
+#pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+#options       FILEASSOC               # fileassoc(9) - required for Veriexec
+                                       # and PAX_SEGVGUARD
+
+# Veriexec
+#pseudo-device veriexec
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+
+#options PAX_MPROTECT=0                        # PaX mprotect(2) restrictions
