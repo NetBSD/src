@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.149 2019/01/10 18:41:56 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.150 2019/02/14 20:09:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.149 2019/01/10 18:41:56 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.150 2019/02/14 20:09:12 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1590,7 +1590,7 @@ history_list(void)
 		return NULL;
 
 	if ((nlp = el_realloc(_history_listp,
-	    (size_t)history_length * sizeof(*nlp))) == NULL)
+	    ((size_t)history_length + 1) * sizeof(*nlp))) == NULL)
 		return NULL;
 	_history_listp = nlp;
 
@@ -1607,6 +1607,7 @@ history_list(void)
 		if (i++ == history_length)
 			abort();
 	} while (history(h, &ev, H_PREV) == 0);
+	_history_listp[i] = NULL;
 	return _history_listp;
 }
 
