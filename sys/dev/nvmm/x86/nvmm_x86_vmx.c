@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.1 2019/02/13 16:03:16 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.2 2019/02/14 09:37:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.1 2019/02/13 16:03:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.2 2019/02/14 09:37:31 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,9 +674,9 @@ struct vmx_cpudata {
 };
 
 static const struct {
-	uint16_t selector;
-	uint16_t attrib;
-	uint32_t limit;
+	uint64_t selector;
+	uint64_t attrib;
+	uint64_t limit;
 	uint64_t base;
 } vmx_guest_segs[NVMM_X64_NSEG] = {
 	[NVMM_X64_SEG_ES] = {
@@ -2113,7 +2113,8 @@ vmx_vcpu_setstate_seg(struct nvmm_x64_state_seg *segs, int idx)
 	    __SHIFTIN(segs[idx].attrib.avl, VMX_SEG_ATTRIB_AVL) |
 	    __SHIFTIN(segs[idx].attrib.lng, VMX_SEG_ATTRIB_LONG) |
 	    __SHIFTIN(segs[idx].attrib.def32, VMX_SEG_ATTRIB_DEF32) |
-	    __SHIFTIN(segs[idx].attrib.gran, VMX_SEG_ATTRIB_GRAN);
+	    __SHIFTIN(segs[idx].attrib.gran, VMX_SEG_ATTRIB_GRAN) |
+	    (!segs[idx].attrib.p ? VMX_SEG_ATTRIB_UNUSABLE : 0);
 
 	if (idx != NVMM_X64_SEG_GDT && idx != NVMM_X64_SEG_IDT) {
 		vmx_vmwrite(vmx_guest_segs[idx].selector, segs[idx].selector);
@@ -2142,6 +2143,9 @@ vmx_vcpu_getstate_seg(struct nvmm_x64_state_seg *segs, int idx)
 	segs[idx].attrib.lng = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_LONG);
 	segs[idx].attrib.def32 = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DEF32);
 	segs[idx].attrib.gran = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_GRAN);
+	if (attrib & VMX_SEG_ATTRIB_UNUSABLE) {
+		segs[idx].attrib.p = 0;
+	}
 }
 
 static inline bool
