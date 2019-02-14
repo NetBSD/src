@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.84 2019/02/12 21:35:35 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.85 2019/02/14 05:38:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.84 2019/02/12 21:35:35 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.85 2019/02/14 05:38:45 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -179,6 +179,11 @@ TRACEME_RAISE(traceme_raise2, SIGSTOP) /* non-maskable */
 TRACEME_RAISE(traceme_raise3, SIGABRT) /* regular abort trap */
 TRACEME_RAISE(traceme_raise4, SIGHUP)  /* hangup */
 TRACEME_RAISE(traceme_raise5, SIGCONT) /* continued? */
+TRACEME_RAISE(traceme_raise6, SIGTRAP) /* crash signal */
+TRACEME_RAISE(traceme_raise7, SIGBUS) /* crash signal */
+TRACEME_RAISE(traceme_raise8, SIGILL) /* crash signal */
+TRACEME_RAISE(traceme_raise9, SIGFPE) /* crash signal */
+TRACEME_RAISE(traceme_raise10, SIGSEGV) /* crash signal */
 
 /// ----------------------------------------------------------------------------
 
@@ -392,6 +397,11 @@ ATF_TC_BODY(test, tc)							\
 TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle1, SIGABRT) /* abort trap */
 TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle2, SIGHUP)  /* hangup */
 TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle3, SIGCONT) /* continued? */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle4, SIGTRAP) /* crash sig. */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle5, SIGBUS) /* crash sig. */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle6, SIGILL) /* crash sig. */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle7, SIGFPE) /* crash sig. */
+TRACEME_SENDSIGNAL_HANDLE(traceme_sendsignal_handle8, SIGSEGV) /* crash sig. */
 
 /// ----------------------------------------------------------------------------
 
@@ -475,6 +485,11 @@ ATF_TC_BODY(test, tc)							\
 TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked1, SIGABRT) /* abort trap */
 TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked2, SIGHUP)  /* hangup */
 TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked3, SIGCONT) /* continued? */
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked4, SIGTRAP) /* crash sig. */
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked5, SIGBUS) /* crash sig. */
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked6, SIGILL) /* crash sig. */
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked7, SIGFPE) /* crash sig. */
+TRACEME_SENDSIGNAL_MASKED(traceme_sendsignal_masked8, SIGSEGV) /* crash sig. */
 
 /// ----------------------------------------------------------------------------
 
@@ -560,6 +575,11 @@ ATF_TC_BODY(test, tc)							\
 TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored1, SIGABRT) /* abort */
 TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored2, SIGHUP)  /* hangup */
 TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored3, SIGCONT) /* continued */
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored4, SIGTRAP) /* crash s. */
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored5, SIGBUS) /* crash s. */
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored6, SIGILL) /* crash s. */
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored7, SIGFPE) /* crash s. */
+TRACEME_SENDSIGNAL_IGNORED(traceme_sendsignal_ignored8, SIGSEGV) /* crash s. */
 
 /// ----------------------------------------------------------------------------
 
@@ -571,7 +591,21 @@ traceme_sendsignal_simple(int sigsent)
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
-	int expect_core = (sigsent == SIGABRT) ? 1 : 0;
+	int expect_core;
+
+	switch (sigsent) {
+	case SIGABRT:
+	case SIGTRAP:
+	case SIGBUS:
+	case SIGILL:
+	case SIGFPE:
+	case SIGSEGV:
+		expect_core = 1;
+		break;
+	default:
+		expect_core = 0;
+		break;
+	}
 #endif
 	struct ptrace_siginfo info;
 
@@ -678,6 +712,11 @@ TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple2, SIGSTOP) /* non-maskable*/
 TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple3, SIGABRT) /* abort trap */
 TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple4, SIGHUP)  /* hangup */
 TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple5, SIGCONT) /* continued? */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple6, SIGTRAP) /* crash sig. */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple7, SIGBUS) /* crash sig. */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple8, SIGILL) /* crash sig. */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple9, SIGFPE) /* crash sig. */
+TRACEME_SENDSIGNAL_SIMPLE(traceme_sendsignal_simple10, SIGSEGV) /* crash sig. */
 
 /// ----------------------------------------------------------------------------
 
@@ -748,7 +787,23 @@ traceme_vfork_raise(int sigval)
 	int rv;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
-	int expect_core = (sigval == SIGABRT) ? 1 : 0;
+
+	/* volatile workarounds GCC -Werror=clobbered */
+	volatile int expect_core;
+
+	switch (sigval) {
+	case SIGABRT:
+	case SIGTRAP:
+	case SIGBUS:
+	case SIGILL:
+	case SIGFPE:
+	case SIGSEGV:
+		expect_core = 1;
+		break;
+	default:
+		expect_core = 0;
+		break;
+	}
 #endif
 
 	/*
@@ -805,6 +860,11 @@ traceme_vfork_raise(int sigval)
 		case SIGKILL:
 		case SIGABRT:
 		case SIGHUP:
+		case SIGTRAP:
+		case SIGBUS:
+		case SIGILL:
+		case SIGFPE:
+		case SIGSEGV:
 			/* NOTREACHED */
 			FORKEE_ASSERTX(0 && "This shall not be reached");
 			__unreachable();
@@ -822,6 +882,11 @@ traceme_vfork_raise(int sigval)
 	case SIGKILL:
 	case SIGABRT:
 	case SIGHUP:
+	case SIGTRAP:
+	case SIGBUS:
+	case SIGILL:
+	case SIGFPE:
+	case SIGSEGV:
 		validate_status_signaled(status, sigval, expect_core);
 		break;
 	case SIGSTOP:
@@ -866,6 +931,11 @@ TRACEME_VFORK_RAISE(traceme_vfork_raise5, SIGTTOU) /* ignored in vfork(2) */
 TRACEME_VFORK_RAISE(traceme_vfork_raise6, SIGABRT) /* regular abort trap */
 TRACEME_VFORK_RAISE(traceme_vfork_raise7, SIGHUP)  /* hangup */
 TRACEME_VFORK_RAISE(traceme_vfork_raise8, SIGCONT) /* continued? */
+TRACEME_VFORK_RAISE(traceme_vfork_raise9, SIGTRAP) /* crash signal */
+TRACEME_VFORK_RAISE(traceme_vfork_raise10, SIGBUS) /* crash signal */
+TRACEME_VFORK_RAISE(traceme_vfork_raise11, SIGILL) /* crash signal */
+TRACEME_VFORK_RAISE(traceme_vfork_raise12, SIGFPE) /* crash signal */
+TRACEME_VFORK_RAISE(traceme_vfork_raise13, SIGSEGV) /* crash signal */
 
 /// ----------------------------------------------------------------------------
 
@@ -5180,6 +5250,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_raise3);
 	ATF_TP_ADD_TC(tp, traceme_raise4);
 	ATF_TP_ADD_TC(tp, traceme_raise5);
+	ATF_TP_ADD_TC(tp, traceme_raise6);
+	ATF_TP_ADD_TC(tp, traceme_raise7);
+	ATF_TP_ADD_TC(tp, traceme_raise8);
+	ATF_TP_ADD_TC(tp, traceme_raise9);
+	ATF_TP_ADD_TC(tp, traceme_raise10);
 
 	ATF_TP_ADD_TC(tp, traceme_crash_trap);
 	ATF_TP_ADD_TC(tp, traceme_crash_segv);
@@ -5190,20 +5265,40 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle1);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle2);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle3);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle4);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle5);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle6);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle7);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle8);
 
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked1);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked2);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked3);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked4);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked5);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked6);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked7);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_masked8);
 
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored1);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored2);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored3);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored4);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored5);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored6);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored7);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_ignored8);
 
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple1);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple2);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple3);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple4);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple5);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple6);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple7);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple8);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple9);
+	ATF_TP_ADD_TC(tp, traceme_sendsignal_simple10);
 
 	ATF_TP_ADD_TC(tp, traceme_pid1_parent);
 
@@ -5215,6 +5310,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise6);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise7);
 	ATF_TP_ADD_TC(tp, traceme_vfork_raise8);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise9);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise10);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise11);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise12);
+	ATF_TP_ADD_TC(tp, traceme_vfork_raise13);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_crash_trap);
 	ATF_TP_ADD_TC(tp, traceme_vfork_crash_segv);
