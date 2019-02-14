@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.35 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.36 2019/02/14 07:12:40 cherry Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2019/02/14 07:12:40 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -52,9 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2019/02/11 14:59:32 cherry Exp
 #include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
 #include <machine/cpuvar.h>
+#if NIOAPIC > 0
 #include <machine/i82093var.h>
+#endif
+#if NLAPIC > 0
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
+#endif
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -145,7 +149,9 @@ db_suspend_others(void)
 #ifdef XENPV
 		xen_broadcast_ipi(XEN_IPI_DDB);
 #else
+#if NLAPIC > 0
 		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+#endif
 #endif /* XENPV */
 	}
 	ddb_mp_online = x86_mp_online;
