@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.81 2019/02/13 05:01:58 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.82 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.81 2019/02/13 05:01:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.82 2019/02/14 08:18:25 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1092,7 +1092,8 @@ critical_region_fixup:
 IDTVEC_END(hypervisor_pvhvm_callback)
 END(hypervisor_callback)
 
-
+#endif /* XEN */
+#ifdef XENPV	
 /*
  * Hypervisor uses this for application faults while it executes.
  */
@@ -1105,4 +1106,4 @@ ENTRY(failsafe_callback)
 	iret
 END(failsafe_callback)
 
-#endif /* XEN */
+#endif /* XENPV */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.325 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.326 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.325 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326 2019/02/14 08:18:25 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -193,7 +193,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.325 2019/02/11 14:59:32 cherry Exp $")
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#endif
+#include <xen/include/public/version.h>
+#include <xen/include/public/vcpu.h>
+#endif /* XEN */
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -1693,7 +1695,7 @@ init_x86_64(paddr_t first_avail)
 	svs_init();
 #endif
 	cpu_init_msrs(&cpu_info_primary, true);
-#ifndef XENPV
+#ifndef XEN
 	cpu_speculation_init(&cpu_info_primary);
 #endif
 
@@ -1905,6 +1907,7 @@ init_x86_64(paddr_t first_avail)
 	    (unsigned long) Xsyscall))
 		panic("HYPERVISOR_set_callbacks() failed");
 #endif /* XENPV */
+
 	cpu_init_idt();
 
 	init_x86_64_ksyms();

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_mainbus.c,v 1.5 2019/02/13 09:57:46 cherry Exp $	*/
+/*	$NetBSD: xen_mainbus.c,v 1.6 2019/02/14 08:18:26 cherry Exp $	*/
 /*	NetBSD: mainbus.c,v 1.19 2017/05/23 08:54:39 nonaka Exp 	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.5 2019/02/13 09:57:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.6 2019/02/14 08:18:26 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.5 2019/02/13 09:57:46 cherry Exp $
 #endif
 #endif
 
-#if defined(MPBIOS) || NACPICA > 0
+#if defined(XENPV) && (defined(MPBIOS) || NACPICA > 0)
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;

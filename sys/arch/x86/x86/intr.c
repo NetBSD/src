@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.142 2019/02/12 03:13:50 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.143 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.142 2019/02/12 03:13:50 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.143 2019/02/14 08:18:25 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1256,6 +1256,13 @@ cpu_intr_init(struct cpu_info *ci)
 #endif
 
 	ci->ci_idepth = -1;
+
+#ifdef XENPVHVM
+	ci->ci_xunmask[0] = 0xfffffffe;
+	for (int i = 1; i < NIPL; i++)
+		ci->ci_xunmask[i] = ci->ci_xunmask[i - 1] & ~(1 << i);
+#endif
+
 }
 
 #if defined(INTRDEBUG) || defined(DDB)

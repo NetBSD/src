@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.14 2019/02/12 08:04:53 cherry Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.15 2019/02/14 08:18:26 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.14 2019/02/12 08:04:53 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.15 2019/02/14 08:18:26 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.14 2019/02/12 08:04:53 cherry Exp $")
 #include <sys/cpu.h>
 
 #include <xen/evtchn.h>
+#include <xen/xenfunc.h>
 
 #include <uvm/uvm.h>
 

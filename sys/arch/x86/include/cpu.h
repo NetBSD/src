@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.104 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,7 +138,9 @@ struct cpu_info {
 	uint64_t ci_scratch;
 	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
+#ifndef XENPV
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+#endif
 #if defined(XEN)
 	struct intrsource *ci_xsources[NIPL];
 	uint32_t	ci_xmask[NIPL];
@@ -271,6 +273,8 @@ struct cpu_info {
 #endif	/* defined(__x86_64__) */
 
 	size_t		ci_xpq_idx;
+#endif /* XENPV */
+
 	/* Xen raw system time at which we last ran hardclock.  */
 	uint64_t	ci_xen_hardclock_systime_ns;
 
@@ -304,7 +308,6 @@ struct cpu_info {
 	struct evcnt	ci_xen_raw_systime_backwards_evcnt;
 	struct evcnt	ci_xen_systime_backwards_hardclock_evcnt;
 	struct evcnt	ci_xen_missed_hardclock_evcnt;
-#endif /* XENPV */
 #else   /* XEN */
 	struct evcnt ci_ipi_events[X86_NIPI];
 #endif	/* XEN */
@@ -482,6 +485,7 @@ typedef enum vm_guest {
 	VM_GUEST_NO = 0,
 	VM_GUEST_VM,
 	VM_GUEST_XEN,
+	VM_GUEST_XENPVHVM,
 	VM_GUEST_HV,
 	VM_GUEST_VMWARE,
 	VM_GUEST_KVM,
@@ -502,20 +506,19 @@ void	lgdt_finish(void);
 struct pcb;
 void	savectx(struct pcb *);
 void	lwp_trampoline(void);
-#ifdef XENPV
-void	startrtclock(void);
+#ifdef XEN
+void	xen_startrtclock(void);
 void	xen_delay(unsigned int);
 void	xen_initclocks(void);
 void	xen_suspendclocks(struct cpu_info *);
 void	xen_resumeclocks(struct cpu_info *);
-#else
+#endif /* XEN */
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
-#endif
 
 /* cpu.c */
 void	cpu_probe_features(struct cpu_info *);

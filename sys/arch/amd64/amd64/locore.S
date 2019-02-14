@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.177 2019/02/13 05:36:59 cherry Exp $	*/
+/*	$NetBSD: locore.S,v 1.178 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1112,7 +1112,7 @@ ENTRY(cpu_switchto)
 .Lskip_svs:
 #endif
 
-#ifndef XENPV
+#ifndef XEN
 	movq	%r13,%rdi
 	movq	%r12,%rsi
 	callq	_C_LABEL(speculation_barrier)

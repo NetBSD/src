@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.177 2019/02/14 06:59:24 cherry Exp $
+#	$NetBSD: files.xen,v 1.178 2019/02/14 08:18:26 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -38,7 +38,9 @@ defparam		PCI_CONF_MODE
 
 file	arch/xen/x86/autoconf.c		xenpv
 ifdef i386
+file	arch/i386/i386/autoconf.c	xenpvhvm
 file	arch/i386/i386/aout_machdep.c	exec_aout
+file	arch/i386/i386/i386func.S	machdep & xenpvhvm
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
@@ -62,6 +64,8 @@ file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
 file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
 
 elifdef amd64
+file	arch/amd64/amd64/autoconf.c		xenpvhvm
+file	arch/amd64/amd64/amd64func.S		machdep & xenpvhvm
 file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
@@ -80,11 +84,13 @@ file	kern/subr_disk_mbr.c		disk
 file	uvm/pmap/pmap_pvt.c
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
+file	arch/x86/x86/efi.c		machdep
+file	arch/x86/x86/errata.c		machdep
 file	arch/x86/x86/fpu.c
 file	arch/x86/x86/dbregs.c
 file	arch/xen/x86/hypervisor_machdep.c
 file	arch/x86/x86/kgdb_machdep.c	kgdb
-# file 	arch/x86/x86/mtrr_i686.c	mtrr
+file 	arch/x86/x86/mtrr_i686.c	mtrr & (dom0ops | xenpvhvm)
 file	arch/x86/x86/syscall.c
 file	arch/xen/x86/x86_xpmap.c	xenpv
 file	arch/xen/x86/xen_pmap.c		xenpv
@@ -97,10 +103,11 @@ file	arch/x86/x86/cpu_ucode_intel.c	dom0ops & cpu_ucode needs-flag
 file	arch/x86/x86/compat_60_cpu_ucode.c      compat_60 & dom0ops & cpu_ucode
 
 
-file	arch/xen/xen/xen_machdep.c	xenpv
+file	arch/xen/xen/xen_machdep.c
 
 file	arch/xen/xen/clock.c		xenpv
-file	arch/x86/isa/rtc.c		dom0ops
+file	arch/x86/isa/clock.c		xenpvhvm
+file	arch/x86/isa/rtc.c		dom0ops | xenpvhvm
 file	arch/xen/xen/evtchn.c
 
 file	arch/xen/xen/xengnt.c
@@ -136,16 +143,20 @@ file	arch/x86/x86/core_machdep.c	coredump
 file	arch/xen/x86/xen_bus_dma.c	machdep & xenpv
 file	arch/x86/x86/bus_space.c	machdep
 file	arch/xen/x86/consinit.c		machdep & xenpv
+file	arch/x86/x86/consinit.c		machdep & xenpvhvm
 file	arch/x86/x86/identcpu.c		machdep
 file	arch/xen/x86/pintr.c		machdep & dom0ops & xenpv
 file	arch/xen/x86/xen_ipi.c		multiprocessor & xenpv
 file	arch/x86/x86/idt.c		machdep
+file	arch/x86/x86/intr.c		machdep & xenpvhvm
+file	arch/x86/x86/ipi.c		xenpvhvm
 file	arch/x86/x86/pmap.c		machdep
 file	arch/x86/x86/x86_tlb.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c	machdep
 file	arch/x86/x86/tsc.c		machdep
 file	arch/x86/x86/vm_machdep.c	machdep
+file	arch/x86/x86/x86_autoconf.c	machdep & xenpvhvm
 file	arch/x86/x86/x86_machdep.c	machdep
 file	arch/x86/x86/cpu_topology.c	machdep
 file	arch/x86/x86/platform.c		machdep
@@ -169,9 +180,15 @@ define xendevbus {}
 # System bus types
 #
 
-device mainbus: cpubus, ioapicbus, hypervisorbus, bios32, ipmibus, acpibus
+device mainbus: isabus, pcibus, cpubus, ioapicbus, hypervisorbus, bios32, ipmibus, acpibus
 attach	mainbus at root
 file	arch/xen/x86/xen_mainbus.c		mainbus
+ifdef  	amd64
+file	arch/amd64/amd64/amd64_mainbus.c	mainbus & xenpvhvm
+elifdef i386
+file	arch/i386/i386/i386_mainbus.c		mainbus & xenpvhvm
+file	dev/eisa/eisabusprint.c			xenpvhvm
+endif
 file	arch/x86/x86/mainbus.c			mainbus
 
 # Xen hypervisor
@@ -255,7 +272,7 @@ include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/xen/xen/xen_acpi_machdep.c	acpi & xenpv
 file	arch/x86/x86/mpacpi.c		acpi
-file	arch/x86/x86/i8259.c		dom0ops
+file	arch/x86/x86/i8259.c		xenpvhvm | dom0ops
 
 # Stubs for x86 routines not included in the system
 file	arch/x86/x86/x86_stub.c
@@ -290,6 +307,7 @@ attach cpu at cpubus
 device vcpu
 attach vcpu at xendevbus
 file	arch/xen/x86/cpu.c		xenpv & vcpu
+file 	arch/x86/x86/cpu.c			xenpvhvm
 
 # CPU features
 #
@@ -376,10 +394,12 @@ include	"dev/pcmcia/files.pcmcia"
 defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
-file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
-file	arch/x86/pci/pci_intr_machdep.c	hypervisor & pci
-file	arch/x86/isa/isa_machdep.c	hypervisor & dom0ops
-file	arch/xen/xen/xenevt.c		xenevt & dom0ops
+file	arch/x86/pci/pci_machdep.c	(xenpvhvm | hypervisor) & pci & ( dom0ops | xenpvhvm )
+file	arch/x86/pci/pci_intr_machdep.c	(xenpvhvm | hypervisor) & pci
+file	arch/x86/pci/pci_msi_machdep.c	hypervisor & xenpvhvm & pci & ! no_pci_msi_msix
+file	arch/x86/pci/msipic.c		hypervisor & xenpvhvm & pci & ! no_pci_msi_msix
+file	arch/x86/isa/isa_machdep.c	(xenpvhvm | hypervisor) & ( dom0ops | xenpvhvm )
+file	arch/xen/xen/xenevt.c		xenevt & (dom0ops | xenpvhvm)
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet
 file	arch/xen/xen/xbdback_xenbus.c xbdback

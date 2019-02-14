@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.122 2019/02/11 14:59:33 cherry Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.123 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.122 2019/02/11 14:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.123 2019/02/14 08:18:25 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1271,12 +1271,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_CREATE, CTL_EOL);
 #endif
 
-#ifndef XENPV
+#ifndef XEN
 	void sysctl_speculation_init(struct sysctllog **);
 	sysctl_speculation_init(clog);
 #endif
 
-#ifndef XENPV
+#ifndef XEN
 	void sysctl_eagerfpu_init(struct sysctllog **);
 	sysctl_eagerfpu_init(clog);
 #endif

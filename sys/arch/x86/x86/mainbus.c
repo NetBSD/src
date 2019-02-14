@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2018/12/22 08:35:04 maxv Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 2019/02/14 08:18:25 cherry Exp $ */
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2018/12/22 08:35:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2019/02/14 08:18:25 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,13 +86,13 @@ CFATTACH_DECL2_NEW(mainbus, sizeof(struct mainbus_softc),
     NULL, NULL,
     mainbus_rescan, mainbus_childdetached);
 
-#if defined(__i386__) && !defined(XEN)
+#if defined(__i386__) && !defined(XENPV)
 void i386_mainbus_childdetached(device_t, device_t);
 int  i386_mainbus_rescan(device_t, const char *, const int *);
 void i386_mainbus_attach(device_t, device_t, void *);
 #endif
 
-#if defined(__x86_64__) && !defined(XEN)
+#if defined(__x86_64__) && !defined(XENPV)
 void amd64_mainbus_attach(device_t, device_t, void *);
 #endif
 
@@ -220,18 +220,20 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-#if defined(XEN)
+#if defined(XENPV)
 	if (xendomain_is_dom0()) {
-#endif
+#endif /* XENPV */
 		x86_cpubus_attach(self);
 
-#if defined(__i386__) && !defined(XEN)
+#if defined(__i386__) && !defined(XENPV)
 		i386_mainbus_attach(parent, self, aux);
-#elif defined(__x86_64__) && !defined(XEN)
+#elif defined(__x86_64__) && !defined(XENPV)
 		amd64_mainbus_attach(parent, self, aux);
 #endif
-#if defined(XEN)
+#if defined(XENPV)
 	}
+#endif /* XENPV */
+#if defined(XEN)
 	xen_mainbus_attach(parent, self, aux);
 #endif
 }

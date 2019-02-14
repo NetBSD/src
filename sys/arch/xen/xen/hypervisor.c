@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.71 2019/02/13 06:52:43 cherry Exp $ */
+/* $NetBSD: hypervisor.c,v 1.72 2019/02/14 08:18:26 cherry Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.71 2019/02/13 06:52:43 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.72 2019/02/14 08:18:26 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,30 @@ struct  x86_isa_chipset x86_isa_chipset;
 #endif
 #endif
 
+#if defined(XENPVHVM)
+#include <xen/include/public/arch-x86/cpuid.h>
+#include <xen/include/public/hvm/hvm_op.h>
+#include <xen/include/public/hvm/params.h>
+#include <xen/include/public/vcpu.h>
+
+#include <x86/bootinfo.h>
+
+#define	IDTVEC(name)	__CONCAT(X, name)
+typedef void (vector)(void);
+extern vector IDTVEC(syscall);
+extern vector IDTVEC(syscall32);
+extern vector IDTVEC(osyscall);
+extern vector *x86_exceptions[];
+
+extern vector IDTVEC(hypervisor_pvhvm_callback);
+extern volatile struct xencons_interface *xencons_interface; /* XXX */
+extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
+
+volatile shared_info_t *HYPERVISOR_shared_info __read_mostly;
+paddr_t HYPERVISOR_shared_info_pa;
+union start_info_union start_info_union __aligned(PAGE_SIZE);
+#endif
+
 int xen_version;
 
 /* power management, for save/restore */
@@ -176,9 +200,245 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct hypervisor_attach_args *haa = aux;
 
-	if (strncmp(haa->haa_busname, "hypervisor", sizeof("hypervisor")) == 0)
-		return 1;
-	return 0;
+	/* Attach path sanity check */
+	if (strncmp(haa->haa_busname, "hypervisor", sizeof("hypervisor")) != 0)
+		return 0;
+
+#if defined(XENPVHVM)
+	/*
+	 * The strategy here is to setup hypercall and all PVHVM
+	 * interfaces on match, or fail to match.
+	 * Ideally this should happen under attach, but it's too late
+	 * then and there's no way to bailout.
+	 *
+	 * If match fails, hypervisor does not attach, and the domain
+	 * can boot with the minimal PC AT ISA configuration just
+	 * enough to attach wd(4) and mount the rootfs.
+	 */
+	int vec;
+	extern vaddr_t hypercall_page;
+
+	if (vm_guest == VM_GUEST_XEN) {
+		aprint_normal("%s: Identified Guest XEN in HVM mode.\n",
+		    haa->haa_busname);
+
+		u_int descs[4];
+		x86_cpuid(XEN_CPUID_LEAF(2), descs);
+
+		/* 
+		 * Given 32 bytes per hypercall stub, and an optimistic number
+		 * of 100 hypercalls ( the current max is 55), there shouldn't
+		 * be any reason to spill over the arbitrary number of 1
+		 * hypercall page. This is what we allocate in locore.S
+		 * anyway. Make sure the allocation matches the registration.
+		 */
+
+		KASSERT(descs[0] == 1);
+
+		/* XXX: vtophys(&hypercall_page) */
+		wrmsr(descs[1], (uintptr_t)&hypercall_page - KERNBASE);
+
+		vm_guest = VM_GUEST_XENPVHVM; /* Be more specific */
+
+	} else {
+		aprint_normal("%s: Xen HVM mode not identified. Exiting.\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	if (-1 != HYPERVISOR_xen_version(XENVER_version, NULL)) {
+		printf("%s: detected functional hypercall page.\n",
+		    haa->haa_busname);
+
+		xen_init_features();
+	}
+
+	/* Init various preset boot time data structures  */
+
+	/* XEN xenstore shared page address, event channel */
+	struct xen_hvm_param xen_hvm_param;
+
+	xen_hvm_param.domid = DOMID_SELF;
+	xen_hvm_param.index = HVM_PARAM_STORE_PFN;
+	
+	if ( HYPERVISOR_hvm_op(HVMOP_get_param, &xen_hvm_param) < 0) {
+		aprint_error("%s: Unable to obtain xenstore page address\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	/* Re-use PV field */
+	xen_start_info.store_mfn = xen_hvm_param.value;
+
+	pmap_kenter_pa((vaddr_t) xenstore_interface, ptoa(xen_start_info.store_mfn),
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
+
+	xen_hvm_param.domid = DOMID_SELF;
+	xen_hvm_param.index = HVM_PARAM_STORE_EVTCHN;
+
+	if ( HYPERVISOR_hvm_op(HVMOP_get_param, &xen_hvm_param) < 0) {
+		aprint_error("%s: Unable to obtain xenstore event channel\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	xen_start_info.store_evtchn = xen_hvm_param.value;
+
+	xen_hvm_param.domid = DOMID_SELF;
+	xen_hvm_param.index = HVM_PARAM_CONSOLE_PFN;
+	
+	if ( HYPERVISOR_hvm_op(HVMOP_get_param, &xen_hvm_param) < 0) {
+		aprint_error("%s: Unable to obtain xencons page address\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	/* Re-use PV field */
+	xen_start_info.console.domU.mfn = xen_hvm_param.value;
+
+	pmap_kenter_pa((vaddr_t) xencons_interface, ptoa(xen_start_info.console.domU.mfn),
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
+
+	xen_hvm_param.domid = DOMID_SELF;
+	xen_hvm_param.index = HVM_PARAM_CONSOLE_EVTCHN;
+
+	if ( HYPERVISOR_hvm_op(HVMOP_get_param, &xen_hvm_param) < 0) {
+		aprint_error("%s: Unable to obtain xencons event channel\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	xen_start_info.console.domU.evtchn = xen_hvm_param.value;
+
+	/* HYPERVISOR_shared_info */
+	struct xen_add_to_physmap xmap = {
+		.domid = DOMID_SELF,
+		.space = XENMAPSPACE_shared_info,
+		.idx = 0, /* Important - XEN checks for this */
+		.gpfn = atop(HYPERVISOR_shared_info_pa)
+	};
+
+	if (HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xmap) < 0) {
+		aprint_error("%s: Unable to register HYPERVISOR_shared_info\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	/* HYPERVISOR_shared_info va,pa has been allocated in pmap_bootstrap() */
+	pmap_kenter_pa((vaddr_t) HYPERVISOR_shared_info,
+	    HYPERVISOR_shared_info_pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+
+	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
+
+	/*
+	 * First register callback: here's why
+	 * http://xenbits.xen.org/gitweb/?p=xen.git;a=commit;h=7b5b8ca7dffde866d851f0b87b994e0b13e5b867
+	 */
+
+	/*
+	 * Check for XENFEAT_hvm_callback_vector. Can't proceed
+	 * without it.
+	 */
+	if (!xen_feature(XENFEAT_hvm_callback_vector)) {
+		aprint_error("%s: XENFEAT_hvm_callback_vector"
+		    "not available, cannot proceed", haa->haa_busname);
+		
+		return 0;
+	}
+
+	/* Register event callback handler. */
+
+	/* We don't really care where it is, as long as it's free */
+	vec = idt_vec_alloc(129, 255);
+
+	idt_vec_set(vec, &IDTVEC(hypervisor_pvhvm_callback));
+
+	cpu_init_idt(); /* XXX remove and use only native one below ? */
+
+	xen_hvm_param.domid = DOMID_SELF;
+	xen_hvm_param.index = HVM_PARAM_CALLBACK_IRQ;
+
+	/* val[63:56] = 2, val[7:0] = vec */
+	xen_hvm_param.value = ((int64_t)0x2 << 56) | vec;
+
+	if (HYPERVISOR_hvm_op(HVMOP_set_param, &xen_hvm_param) < 0) {
+		aprint_error("%s: Unable to register event callback vector\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	/* Print out value. */
+	xen_hvm_param.domid = DOMID_SELF;
+	xen_hvm_param.index = HVM_PARAM_CALLBACK_IRQ;
+	xen_hvm_param.value = 0;
+
+	if (HYPERVISOR_hvm_op(HVMOP_get_param, &xen_hvm_param) < 0) {
+		printf("%s: Unable to get event callback vector\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	/*
+	 * Afterwards vector callback is done, register VCPU info
+	 * page. Here's why:
+	 * http://xenbits.xen.org/gitweb/?p=xen.git;a=commit;h=7b5b8ca7dffde866d851f0b87b994e0b13e5b867
+	 * XXX: Ideally this should happen at vcpu attach.
+	 */
+	struct vcpu_register_vcpu_info vrvi;
+
+	paddr_t vcpu_info_pa = HYPERVISOR_shared_info_pa +
+	    offsetof(struct shared_info, vcpu_info);
+	
+	vrvi.mfn = atop(vcpu_info_pa);
+	vrvi.offset = vcpu_info_pa - trunc_page(vcpu_info_pa);
+
+	if (HYPERVISOR_vcpu_op(VCPUOP_register_vcpu_info, curcpu()->ci_cpuid /* VCPU0 */,
+		&vrvi) < 0) {
+		aprint_error("%s: Unable to register vcpu info page\n",
+		    haa->haa_busname);
+		return 0;
+	}
+
+	/*
+	 * Set the boot device to xbd0a.
+	 * We claim this is a reasonable default which is picked up
+	 * later as the rootfs device.
+	 *
+	 * We need to do this because the HVM domain loader uses the
+	 * regular BIOS based native boot(8) procedure, which sets the
+	 * boot device to the native driver/partition of whatever was
+	 * detected by the native bootloader.
+	 */
+
+	struct btinfo_rootdevice bi;
+	snprintf(bi.devname, 6, "xbd0a");
+	bi.common.type = BTINFO_ROOTDEVICE;
+	bi.common.len = sizeof(struct btinfo_rootdevice);
+
+	/* From i386/multiboot.c */
+	/*	$NetBSD: hypervisor.c,v 1.72 2019/02/14 08:18:26 cherry Exp $	*/
+	int i, len;
+	vaddr_t data;
+	extern struct bootinfo	bootinfo;
+	struct bootinfo *bip = (struct bootinfo *)&bootinfo;
+	len = bi.common.len;
+
+	data = (vaddr_t)&bip->bi_data;
+	for (i = 0; i < bip->bi_nentries; i++) {
+		struct btinfo_common *tmp;
+
+		tmp = (struct btinfo_common *)data;
+		data += tmp->len;
+	}
+	if (data + len < (vaddr_t)&bip->bi_data + sizeof(bip->bi_data)) {
+		memcpy((void *)data, &bi, len);
+		bip->bi_nentries++;
+	}
+
+#endif /* XENPVHVM */
+
+	/* If we got here, it must mean we matched */
+	return 1;
 }
 
 #ifdef MULTIPROCESSOR
