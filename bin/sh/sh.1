@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.219 2019/02/04 12:18:36 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.220 2019/02/14 11:15:24 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd February 4, 2019
+.Dd February 14, 2019
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -3351,6 +3351,39 @@ positional parameters (
 .Dq Li $# )
 before the shift.
 .\"
+.It Ic specialvar Ar variable ...
+For each
+.Ar variable
+name given,
+if the variable named is one which,
+in this
+.Nm ,
+could be treated as a special variable,
+then cause that
+.Ar variable
+to be made special, undoing any effects of an earlier
+.Ic unset
+or assignment to the variable.
+If all
+.Ar variable Ns s
+given are recognized special variables in this
+.Nm
+the
+.Ic specialvar
+command will exit with status 0, otherwise 1.
+Invalid usage will result in an exit status of 2.
+.Pp
+Note that all variables capable of being special are created
+that way, this command is not required to cause that to happen.
+However should such a variable be imported from the environment,
+that will cause (for those special variables so designated)
+the special effects for that variable to be lost.
+Consequently, as the contents of the environment cannot be controlled,
+any script which desires to make use of the properties
+of most of the special variables should use this command,
+naming the variables required,
+to ensure that their special properties are available.
+.\"
 .It Ic times
 Prints two lines to standard output.
 Each line contains two accumulated time values, expressed
@@ -4093,6 +4126,9 @@ is expanded, so changes to the shell's execution identity
 cause updates without further action.
 If unset, it returns nothing.
 If set it loses its special properties, and is simply a variable.
+See the
+.Ic specialvar
+built-in command for remedial action.
 .It Ev HISTSIZE
 The number of lines in the history buffer for the shell.
 .It Ev HOME
@@ -4112,6 +4148,9 @@ is expanded, so changes to the system's name are reflected
 without further action.
 If unset, it returns nothing.
 If set it loses its special properties, and is simply a variable.
+See the
+.Ic specialvar
+built-in command for remedial action.
 .It Ev IFS
 Input Field Separators.
 This is normally set to
@@ -4284,6 +4323,9 @@ not be as unpredictable as they otherwise would be.
 Returns the number of seconds since the current shell was started.
 If unset, it remains unset, and returns nothing, unless set again.
 If set, it loses its special properties, and becomes a normal variable.
+See the
+.Ic specialvar
+built-in command for remedial action.
 .It Ev START_TIME
 Initialized by the shell to the number of seconds since the Epoch
 (see
@@ -4318,6 +4360,9 @@ If unset
 .Ev ToD
 returns nothing.
 If set, it loses its special properties, and becomes a normal variable.
+See the
+.Ic specialvar
+built-in command for remedial action.
 .It Ev ToD_FORMAT
 Can be set to the
 .Xr strftime 3

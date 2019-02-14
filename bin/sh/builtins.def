@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: builtins.def,v 1.25 2017/05/15 20:00:36 kre Exp $
+#	$NetBSD: builtins.def,v 1.26 2019/02/14 11:15:24 kre Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -76,6 +76,9 @@ setcmd		-s set
 fdflagscmd	fdflags
 setvarcmd	setvar
 shiftcmd	-s shift
+#ifndef SMALL
+specialvarcmd	specialvar
+#endif
 timescmd	-s times
 trapcmd		-s trap
 truecmd		-s : -u true

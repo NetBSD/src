@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.77 2019/02/09 09:38:11 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.78 2019/02/14 11:15:24 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.77 2019/02/09 09:38:11 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.78 2019/02/14 11:15:24 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,6 +194,7 @@ STATIC int strequal(const char *, const char *);
 STATIC struct var *find_var(const char *, struct var ***, int *);
 STATIC void showvar(struct var *, const char *, const char *, int);
 static void export_usage(const char *) __dead;
+STATIC int makespecial(const char *);
 
 /*
  * Initialize the varable symbol tables and import the environment
@@ -1614,6 +1615,48 @@ get_random(struct var *vp)
 	return vp->text;
 #undef random
 #undef srandom
+}
+
+STATIC int
+makespecial(const char *name)
+{
+	const struct varinit *ip;
+	struct var *vp;
+
+	CTRACE(DBG_VARS, ("makespecial('%s') -> ", name));
+	for (ip = varinit ; (vp = ip->var) != NULL ; ip++) {
+		if (strequal(ip->text, name)) {
+			if (!(ip->flags & VFUNCREF)) {
+				CTRACE(DBG_VARS, ("+1\n"));
+				return 1;
+			}
+			INTOFF;
+			vp->flags &= ~VUNSET;
+			vp->v_u = ip->v_u;
+			INTON;
+			CTRACE(DBG_VARS, ("0\n"));
+			return 0;
+		}
+	}
+	CTRACE(DBG_VARS, ("1\n"));
+	return 1;
+}
+
+int
+specialvarcmd(int argc, char **argv)
+{
+	int res = 0;
+	char **ap;
+
+	(void) nextopt("");
+
+	if (!*argptr)
+		error("Usage: specialvar var...");
+
+	for (ap = argptr; *ap ; ap++)
+		res |= makespecial(*ap);
+
+	return res;
 }
 
 #endif /* SMALL */
