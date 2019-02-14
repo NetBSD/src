@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1362 2019/02/08 06:29:08 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1363 2019/02/14 03:25:47 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5814,6 +5814,8 @@ product NETVIN 5000	0x5000	5000 Ethernet
 
 /* Newbridge / Tundra products */
 product NEWBRIDGE CA91CX42		0x0000	Universe VME Bridge
+product NEWBRIDGE TSI381		0x8111	Tsi381 PCIE-PCI
+product NEWBRIDGE PEB383		0x8113	PEB383 PCIE-PCI
 product NEWBRIDGE CA91L826A		0x0826	QSpan II PCI Bridge
 product NEWBRIDGE CA91L8260		0x8260	PowerSpan PCI Bridge
 product NEWBRIDGE CA91L8261		0x8261	PowerSpan II PCI Bridge
