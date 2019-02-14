@@ -1,0 +1,20 @@
+#	$NetBSD: std.iyonix,v 1.1 2019/02/14 21:47:52 macallan Exp $
+#
+# standard NetBSD/iyonix for GENERIC options
+
+machine	evbarm arm
+include		"arch/evbarm/conf/std.evbarm"	# arch standard options
+
+# Pull in Iyonix config definitions.
+include		"arch/evbarm/conf/files.iyonix"
+
+options 	KERNEL_BASE_EXT=0xf0000000
+makeoptions 	LOADADDRESS="0xf0000000"
+
+options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
+
+# We need to configure the PCI bus.
+options 	PCI_NETBSD_CONFIGURE
+options		I80321_USE_DIRECT_WIN
+options 	__BUS_SPACE_HAS_STREAM_METHODS
+options 	__HAVE_PCI_CONF_HOOK
