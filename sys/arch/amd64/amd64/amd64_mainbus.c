@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.5 2019/02/14 07:12:40 cherry Exp $	*/
 /*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.4 2018/12/22 08:35:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.5 2019/02/14 07:12:40 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ amd64_mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-#if NPCI > 0 || NACPICA > 0 || NIPMI > 0
+#if NISA > 0 || NPCI > 0 || NACPICA > 0 || NIPMI > 0
 	union amd64_mainbus_attach_args mba;
 #endif
 
