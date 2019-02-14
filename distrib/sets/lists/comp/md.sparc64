@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.206 2019/02/05 06:14:55 mrg Exp $
+# $NetBSD: md.sparc64,v 1.207 2019/02/14 20:42:40 christos Exp $
 ./usr/include/g++/bits/sparc			comp-c-include
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc,compat
 ./usr/include/g++/bits/sparc64			comp-c-include
@@ -183,8 +183,8 @@
 ./usr/libdata/ldscripts/elf64_sparc.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf64_sparc.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf64_sparc.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/sparcnbsd.x		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/sparcnbsd.xbn		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/sparcnbsd.xn		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/sparcnbsd.xr		comp-util-bin		binutils=227
-./usr/libdata/ldscripts/sparcnbsd.xu		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/sparcnbsd.x		comp-obsolete		obsolete
+./usr/libdata/ldscripts/sparcnbsd.xbn		comp-obsolete		obsolete
+./usr/libdata/ldscripts/sparcnbsd.xn		comp-obsolete		obsolete
+./usr/libdata/ldscripts/sparcnbsd.xr		comp-obsolete		obsolete
+./usr/libdata/ldscripts/sparcnbsd.xu		comp-obsolete		obsolete
