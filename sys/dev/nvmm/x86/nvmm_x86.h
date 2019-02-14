@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.4 2019/02/13 06:32:45 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.5 2019/02/14 14:30:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -98,11 +98,10 @@
 #define NVMM_X64_NMSR			10
 
 /* Misc. */
-#define NVMM_X64_MISC_CPL		0
-#define NVMM_X64_MISC_INT_SHADOW	1
-#define NVMM_X64_MISC_INT_WINDOW_EXIT	2
-#define NVMM_X64_MISC_NMI_WINDOW_EXIT	3
-#define NVMM_X64_NMISC			4
+#define NVMM_X64_MISC_INT_SHADOW	0
+#define NVMM_X64_MISC_INT_WINDOW_EXIT	1
+#define NVMM_X64_MISC_NMI_WINDOW_EXIT	2
+#define NVMM_X64_NMISC			3
 
 #ifndef ASM_NVMM
 

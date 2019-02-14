@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.2 2019/02/14 09:37:31 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.3 2019/02/14 14:30:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.2 2019/02/14 09:37:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.3 2019/02/14 14:30:20 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1430,18 +1430,13 @@ vmx_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	uint16_t val;
-	uint64_t ss;
 
 	exit->reason = NVMM_EXIT_NONE;
 
 	val = (cpudata->gprs[NVMM_X64_GPR_RDX] << 32) |
 	    (cpudata->gprs[NVMM_X64_GPR_RAX] & 0xFFFFFFFF);
 
-	vmx_vmread(VMCS_GUEST_SS_SELECTOR, &ss);
-
 	if (__predict_false(cpudata->gprs[NVMM_X64_GPR_RCX] != 0)) {
-		goto error;
-	} else if (__predict_false((ss & SEL_UPL) != 0)) {
 		goto error;
 	} else if (__predict_false((val & ~vmx_xcr0_mask) != 0)) {
 		goto error;
@@ -2276,8 +2271,6 @@ vmx_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	}
 
 	if (flags & NVMM_X64_STATE_MISC) {
-		// XXX CPL? not sure
-
 		vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
 		intstate &= ~(INT_STATE_STI|INT_STATE_MOVSS);
 		if (state->misc[NVMM_X64_MISC_INT_SHADOW]) {
@@ -2391,8 +2384,6 @@ vmx_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	}
 
 	if (flags & NVMM_X64_STATE_MISC) {
-		// XXX CPL? not sure
-
 		vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
 		state->misc[NVMM_X64_MISC_INT_SHADOW] =
 		    (intstate & (INT_STATE_STI|INT_STATE_MOVSS)) != 0;

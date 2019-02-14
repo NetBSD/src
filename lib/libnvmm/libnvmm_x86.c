@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.21 2019/02/12 14:50:21 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.22 2019/02/14 14:30:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ nvmm_vcpu_dump(struct nvmm_machine *mach, nvmm_cpuid_t cpuid)
 	printf("| -> CR3=%p\n", (void *)state.crs[NVMM_X64_CR_CR3]);
 	printf("| -> CR4=%p\n", (void *)state.crs[NVMM_X64_CR_CR4]);
 	printf("| -> CR8=%p\n", (void *)state.crs[NVMM_X64_CR_CR8]);
-	printf("| -> CPL=%p\n", (void *)state.misc[NVMM_X64_MISC_CPL]);
 
 	return 0;
 }
