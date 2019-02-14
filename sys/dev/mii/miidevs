@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.140 2019/02/13 08:39:55 msaitoh Exp $
+$NetBSD: miidevs,v 1.141 2019/02/14 04:34:37 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -132,6 +132,15 @@ model AGERE ET1011		0x0004 Agere ET1011 10/100/1000baseT PHY
 /* Asix semiconductor PHYs */
 model xxASIX AX88X9X		0x0031 Ax88x9x internal PHY
 
+/* Altima Communications PHYs */
+/* Don't know the model for ACXXX */
+model ALTIMA ACXXX		0x0001 ACXXX 10/100 media interface
+model ALTIMA AC101L		0x0012 AC101L 10/100 media interface
+model ALTIMA AC101		0x0021 AC101 10/100 media interface
+/* AMD Am79C87[45] have ALTIMA OUI */
+model ALTIMA Am79C875		0x0014 Am79C875 10/100 media interface
+model ALTIMA Am79C874		0x0021 Am79C874 10/100 media interface
+
 /* Atheros PHYs */
 model ATHEROS F1		0x0001 F1 10/100/1000 PHY
 model ATHEROS F2		0x0002 F2 10/100 PHY
@@ -141,15 +150,6 @@ model ATTANSIC L1		0x0001 L1 10/100/1000 PHY
 model ATTANSIC L2		0x0002 L2 10/100 PHY
 model ATTANSIC AR8021		0x0004 Atheros AR8021 10/100/1000 PHY
 model ATTANSIC AR8035		0x0007 Atheros AR8035 10/100/1000 PHY
-
-/* Altima Communications PHYs */
-/* Don't know the model for ACXXX */
-model ALTIMA ACXXX		0x0001 ACXXX 10/100 media interface
-model ALTIMA AC101L		0x0012 AC101L 10/100 media interface
-model ALTIMA AC101		0x0021 AC101 10/100 media interface
-/* AMD Am79C87[45] have ALTIMA OUI */
-model ALTIMA Am79C875		0x0014 Am79C875 10/100 media interface
-model ALTIMA Am79C874		0x0021 Am79C874 10/100 media interface
 
 /* Advanced Micro Devices PHYs */
 /* see Davicom DM9101 for Am79C873 */
