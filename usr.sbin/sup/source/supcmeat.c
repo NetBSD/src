@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.42 2013/04/09 16:39:20 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.43 2019/02/14 20:19:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -371,17 +371,21 @@ setup(TREE * t)
 	case FSETUPSAME:
 		notify(1, "Attempt to upgrade from same host to same directory");
 		done(FDONESRVERROR, "Overwrite error");
+		break;
 	case FSETUPHOST:
 		notify(1, "This host has no permission to access %s",
 		    collname);
 		done(FDONESRVERROR, "Permission denied");
+		break;
 	case FSETUPOLD:
 		notify(1, "This version of SUP is too old for the fileserver");
 		done(FDONESRVERROR, "Obsolete client");
+		break;
 	case FSETUPRELEASE:
 		notify(1, "Invalid release %s for collection %s",
 		    release == NULL ? DEFRELEASE : release, collname);
 		done(FDONESRVERROR, "Invalid release");
+		break;
 	case FSETUPBUSY:
 		vnotify(0, "Fileserver is currently busy");
 		t->Tmode = SCMOK;
