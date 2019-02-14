@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2007/11/22 16:17:02 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2019/02/14 06:59:24 cherry Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -29,10 +29,13 @@
 #if !defined(_VMPARAM_H_)
 #include <amd64/vmparam.h>
 
+#ifdef XENPV
 #undef VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX	1
 
 #undef VM_NFREELIST
 #undef VM_FREELIST_FIRST16
 #define	VM_NFREELIST	1
+#endif /* XENPV */
 #endif /* _VMPARAM_H_ */
+

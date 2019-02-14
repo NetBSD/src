@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.9 2008/01/23 19:46:45 bouyer Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.10 2019/02/14 06:59:24 cherry Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -29,6 +29,7 @@
 #include <uvm/uvm_extern.h>
 #include "opt_xen.h"
 
+#ifdef XENPV
 #define	_BUS_PHYS_TO_BUS(pa)	((bus_addr_t)xpmap_ptom(pa))
 #define	_BUS_BUS_TO_PHYS(ba)	((paddr_t)xpmap_mtop(ba))
 #define	_BUS_VIRT_TO_BUS(pm, va) _bus_virt_to_bus((pm), (va))
@@ -65,5 +66,6 @@ int _xen_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
 #else
 #define _BUS_AVAIL_END ((bus_addr_t)0xffffffff)
 #endif
-
+#endif /* XENPV */
 #include <x86/bus_private.h>
+
