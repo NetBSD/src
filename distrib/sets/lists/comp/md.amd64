@@ -1,5 +1,4 @@
-# $NetBSD: md.amd64,v 1.267 2019/02/02 22:39:32 mrg Exp $
-
+# $NetBSD: md.amd64,v 1.268 2019/02/14 12:49:28 wiz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -333,6 +332,8 @@
 ./usr/include/clang-5.0/xsaveoptintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-5.0/xsavesintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/xtestintrin.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-7.0/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-7.0/adxintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/avx2intrin.h		comp-c-include		llvm
@@ -379,8 +380,8 @@
 ./usr/include/clang-7.0/lwpintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/lzcntintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/mm3dnow.h		comp-c-include		llvm
-./usr/include/clang-7.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-7.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/movdirintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/mwaitxintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/nmmintrin.h		comp-c-include		llvm
@@ -401,9 +402,7 @@
 ./usr/include/clang-7.0/vpclmulqdqintrin.h	comp-c-include		llvm
 ./usr/include/clang-7.0/waitpkgintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/wbnoinvdintrin.h	comp-c-include		llvm
-./usr/include/clang-7.0/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-7.0/wmmintrin.h		comp-c-include		llvm
-./usr/include/clang-7.0/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-7.0/x86intrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/xmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/xopintrin.h		comp-c-include		llvm
@@ -412,6 +411,11 @@
 ./usr/include/clang-7.0/xsaveoptintrin.h	comp-c-include		llvm
 ./usr/include/clang-7.0/xsavesintrin.h		comp-c-include		llvm
 ./usr/include/clang-7.0/xtestintrin.h		comp-c-include		llvm
+./usr/include/dev/nvmm				comp-c-include
+./usr/include/dev/nvmm/nvmm.h			comp-c-include
+./usr/include/dev/nvmm/nvmm_ioctl.h		comp-c-include
+./usr/include/dev/nvmm/x86			comp-c-include
+./usr/include/dev/nvmm/x86/nvmm_x86.h		comp-c-include
 ./usr/include/emmintrin.h			comp-obsolete		obsolete
 ./usr/include/g++/bits/i386			comp-c-include		compat
 ./usr/include/g++/bits/i386/c++config.h		comp-c-include		gcc,compat
@@ -740,11 +744,6 @@
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mm_malloc.h			comp-obsolete		obsolete
 ./usr/include/mmintrin.h			comp-obsolete		obsolete
-./usr/include/dev/nvmm				comp-c-include
-./usr/include/dev/nvmm/nvmm.h			comp-c-include
-./usr/include/dev/nvmm/nvmm_ioctl.h		comp-c-include
-./usr/include/dev/nvmm/x86			comp-c-include
-./usr/include/dev/nvmm/x86/nvmm_x86.h		comp-c-include
 ./usr/include/nvmm.h				comp-c-include
 ./usr/include/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/x64_64				comp-obsolete		obsolete
@@ -918,10 +917,15 @@
 ./usr/libdata/ldscripts/elf_x86_64.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.x		comp-obsolete		binutils=231
 ./usr/libdata/ldscripts/i386nbsd.x		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xbn		comp-obsolete		binutils=231
 ./usr/libdata/ldscripts/i386nbsd.xbn		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xn		comp-obsolete		binutils=231
 ./usr/libdata/ldscripts/i386nbsd.xn		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xr		comp-obsolete		binutils=231
 ./usr/libdata/ldscripts/i386nbsd.xr		comp-util-bin		binutils=227
+./usr/libdata/ldscripts/i386nbsd.xu		comp-obsolete		binutils=231
 ./usr/libdata/ldscripts/i386nbsd.xu		comp-util-bin		binutils=227
 ./usr/libdata/lint/llib-lnvmm.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib		lint
