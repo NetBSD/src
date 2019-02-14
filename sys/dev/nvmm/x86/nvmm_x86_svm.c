@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.22 2019/02/13 10:55:13 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.23 2019/02/14 14:30:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.22 2019/02/13 10:55:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.23 2019/02/14 14:30:20 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,10 +575,6 @@ svm_vmcb_cache_update(struct vmcb *vmcb, uint64_t flags)
 		/* CR for EFER, NP for PAT. */
 		vmcb->ctrl.vmcb_clean &=
 		    ~(VMCB_CTRL_VMCB_CLEAN_CR | VMCB_CTRL_VMCB_CLEAN_NP);
-	}
-	if (flags & NVMM_X64_STATE_MISC) {
-		/* SEG for CPL. */
-		vmcb->ctrl.vmcb_clean &= ~VMCB_CTRL_VMCB_CLEAN_SEG;
 	}
 }
 
@@ -1764,6 +1760,8 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		    &vmcb->state.ldt);
 		svm_vcpu_setstate_seg(&state->segs[NVMM_X64_SEG_TR],
 		    &vmcb->state.tr);
+
+		vmcb->state.cpl = state->segs[NVMM_X64_SEG_SS].attrib.dpl;
 	}
 
 	CTASSERT(sizeof(cpudata->gprs) == sizeof(state->gprs));
@@ -1822,8 +1820,6 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	}
 
 	if (flags & NVMM_X64_STATE_MISC) {
-		vmcb->state.cpl = state->misc[NVMM_X64_MISC_CPL];
-
 		if (state->misc[NVMM_X64_MISC_INT_SHADOW]) {
 			vmcb->ctrl.intr |= VMCB_CTRL_INTR_SHADOW;
 		} else {
@@ -1889,6 +1885,8 @@ svm_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 		    &vmcb->state.ldt);
 		svm_vcpu_getstate_seg(&state->segs[NVMM_X64_SEG_TR],
 		    &vmcb->state.tr);
+
+		state->segs[NVMM_X64_SEG_SS].attrib.dpl = vmcb->state.cpl;
 	}
 
 	CTASSERT(sizeof(cpudata->gprs) == sizeof(state->gprs));
@@ -1940,8 +1938,6 @@ svm_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	}
 
 	if (flags & NVMM_X64_STATE_MISC) {
-		state->misc[NVMM_X64_MISC_CPL] = vmcb->state.cpl;
-
 		state->misc[NVMM_X64_MISC_INT_SHADOW] =
 		    (vmcb->ctrl.intr & VMCB_CTRL_INTR_SHADOW) != 0;
 		state->misc[NVMM_X64_MISC_INT_WINDOW_EXIT] =
