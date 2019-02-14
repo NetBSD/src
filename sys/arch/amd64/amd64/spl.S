@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.39 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.40 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -211,7 +211,9 @@ IDTVEC(resume_preempt)
 	cli
 	jmp	*%r13			/* back to Xdoreti */
 IDTVEC_END(resume_preempt)
+#endif /* XEN */
 
+#ifndef XENPV
 /*
  * void spllower(int s);
  *
@@ -279,7 +281,7 @@ LABEL(cx8_spllower_patch)
 END(cx8_spllower_patch)
 END(cx8_spllower)
 LABEL(cx8_spllower_end)
-#endif /* !XEN */
+#endif /* !XENPV */
 
 /*
  * void Xspllower(int s);
