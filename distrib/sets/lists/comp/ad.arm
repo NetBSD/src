@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.95 2019/02/07 10:45:48 mrg Exp $
+# $NetBSD: ad.arm,v 1.96 2019/02/14 20:42:40 christos Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
@@ -784,11 +784,11 @@
 ./usr/libdata/ldscripts/armelfb_nbsd_eabihf.xsw	-unknown-		binutils,eabi
 ./usr/libdata/ldscripts/armelfb_nbsd_eabihf.xu	-unknown-		binutils,eabi
 ./usr/libdata/ldscripts/armelfb_nbsd_eabihf.xw	-unknown-		binutils,eabi
-./usr/libdata/ldscripts/armnbsd.x		-unknown-		binutils=227
-./usr/libdata/ldscripts/armnbsd.xbn		-unknown-		binutils=227
-./usr/libdata/ldscripts/armnbsd.xn		-unknown-		binutils=227
-./usr/libdata/ldscripts/armnbsd.xr		-unknown-		binutils=227
-./usr/libdata/ldscripts/armnbsd.xu		-unknown-		binutils=227
+./usr/libdata/ldscripts/armnbsd.x		comp-obsolete		obsolete
+./usr/libdata/ldscripts/armnbsd.xbn		comp-obsolete		obsolete
+./usr/libdata/ldscripts/armnbsd.xn		comp-obsolete		obsolete
+./usr/libdata/ldscripts/armnbsd.xr		comp-obsolete		obsolete
+./usr/libdata/ldscripts/armnbsd.xu		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-larm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-larm32.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lpmc.ln			comp-obsolete		obsolete
