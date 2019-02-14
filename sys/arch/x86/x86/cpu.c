@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.165 2019/02/14 07:12:40 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.166 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.165 2019/02/14 07:12:40 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.166 2019/02/14 08:18:25 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -691,8 +691,10 @@ cpu_boot_secondary_processors(void)
 	kcpuset_t *cpus;
 	u_long i;
 
+#ifndef XEN
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch(false);
+#endif
 
 	kcpuset_create(&cpus, true);
 	kcpuset_set(cpus, cpu_index(curcpu()));

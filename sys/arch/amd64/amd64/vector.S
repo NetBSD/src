@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.67 2019/02/13 05:01:57 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.68 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -771,7 +771,7 @@ IDTVEC(hypervisor_pvhvm_callback)
 	INTRFASTEXIT
 IDTVEC_END(hypervisor_pvhvm_callback)
 END(hypervisor_callback)
-#endif
+#endif /* XEN */
 
 #ifdef XENPV
 /* Panic? */

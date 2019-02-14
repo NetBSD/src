@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.815 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.816 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.815 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.816 2019/02/14 08:18:25 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1044,7 +1044,7 @@ initgdt(union descriptor *tgdt)
 #endif /* !XENPV */
 }
 
-#ifndef XENPV
+#if !defined(XENPV)  && NBIOSCALL > 0
 static void
 init386_pte0(void)
 {
@@ -1155,7 +1155,7 @@ init386(paddr_t first_avail)
 
 	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
-#ifndef XENPV
+#ifndef XEN
 	cpu_speculation_init(&cpu_info_primary);
 #endif
 
