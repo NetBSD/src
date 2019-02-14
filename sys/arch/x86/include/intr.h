@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.59 2019/02/13 05:28:50 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.60 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -117,9 +117,10 @@ struct intrsource {
  */
 
 struct intrhand {
-#if defined(XENPV)
+#if defined(XEN)
 	/*
 	 * Note: This is transitional and will go away.
+	 * The only current consumer is xen_intr_disestablish()
 	 *
 	 * We ought to use a union here, but too much effort.
 	 * We use this field to tear down the cookie handed to us

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322 2019/02/13 08:38:25 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.323 2019/02/14 08:18:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322 2019/02/13 08:38:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.323 2019/02/14 08:18:25 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1233,6 +1233,17 @@ pmap_bootstrap(vaddr_t kva_start)
 	pentium_idt_vaddr = pmap_bootstrap_valloc(1);
 #endif
 
+#if defined(XENPVHVM)
+	/* XXX: move to hypervisor.c with appropriate API adjustments */
+	extern paddr_t HYPERVISOR_shared_info_pa;
+	extern volatile struct xencons_interface *xencons_interface; /* XXX */
+	extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
+
+	HYPERVISOR_shared_info = (void *) pmap_bootstrap_valloc(1);
+	HYPERVISOR_shared_info_pa = pmap_bootstrap_palloc(1);
+	xencons_interface = (void *) pmap_bootstrap_valloc(1);
+	xenstore_interface = (void *) pmap_bootstrap_valloc(1);
+#endif
 	/*
 	 * Now we reserve some VM for mapping pages when doing a crash dump.
 	 */
