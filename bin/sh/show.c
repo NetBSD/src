@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.52 2019/01/22 13:48:28 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.53 2019/02/14 13:27:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.52 2019/01/22 13:48:28 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.53 2019/02/14 13:27:59 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -645,7 +645,8 @@ sharg(union node *arg, TFILE *fp)
 	for (p = arg->narg.text ; *p ; p++) {
 		switch (*p) {
 		case CTLESC:
-			trace_putc('\\', fp);
+			if (BASESYNTAX[p[1]] != CCTL)
+				trace_putc('\\', fp);
 			trace_putc(*++p, fp);
 			break;
 
