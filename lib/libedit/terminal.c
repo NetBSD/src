@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.34 2018/11/24 12:17:35 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.35 2019/02/15 23:20:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.34 2018/11/24 12:17:35 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.35 2019/02/15 23:20:35 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -419,7 +419,7 @@ terminal_rebuffer_display(EditLine *el)
 	return 0;
 }
 
-static wchar_t **
+static wint_t **
 terminal_alloc_buffer(EditLine *el)
 {
 	wint_t **b;
