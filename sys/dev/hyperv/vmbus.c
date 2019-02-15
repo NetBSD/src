@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.2 2019/02/15 16:37:54 hannken Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.1 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.2 2019/02/15 16:37:54 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1020,7 +1020,7 @@ vmbus_channel_add(struct vmbus_channel *nch)
 {
 	struct vmbus_softc *sc = nch->ch_sc;
 	struct vmbus_channel *ch;
-	u_int refs;
+	u_int refs __diagused;
 
 	if (nch->ch_id == 0) {
 		device_printf(sc->sc_dev, "got channel 0 offer, discard\n");
