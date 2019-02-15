@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.10 2016/01/26 22:52:14 christos Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.11 2019/02/15 20:48:57 kamil Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.10 2016/01/26 22:52:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.11 2019/02/15 20:48:57 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -262,13 +262,13 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 	switch (Width) {
 	case 8:
 		tmp = pci_conf_read(pc, tag, Register & ~3);
-		tmp &= ~(0xff << ((Register & 3) * 8));
+		tmp &= ~(0xffu << ((Register & 3) * 8));
 		tmp |= (Value << ((Register & 3) * 8));
 		break;
 
 	case 16:
 		tmp = pci_conf_read(pc, tag, Register & ~3);
-		tmp &= ~(0xffff << ((Register & 3) * 8));
+		tmp &= ~(0xffffu << ((Register & 3) * 8));
 		tmp |= (Value << ((Register & 3) * 8));
 		break;
 
