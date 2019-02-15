@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.82 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.83 2019/02/15 08:54:01 nonaka Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.82 2019/02/14 08:18:25 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.83 2019/02/15 08:54:01 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -85,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.82 2019/02/14 08:18:25 cherry Exp $");
 
 #include "ioapic.h"
 #include "lapic.h"
+#ifndef XEN
+#include "hyperv.h"
+#endif
 
 #include "assym.h"
 
@@ -317,6 +320,45 @@ IDTVEC(resume_lapic_ltimer)
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
 	INTRFASTEXIT
 IDTVEC_END(resume_lapic_ltimer)
+
+#if NHYPERV > 0
+	/*
+	 * Hyper-V event channel upcall interrupt handler.
+	 * Only used when the hypervisor supports direct vector callbacks.
+	 */
+IDTVEC(recurse_hyperv_hypercall)
+	INTR_RECURSE_HWFRAME
+	pushl	$0
+	pushl	$T_ASTFLT
+	INTRENTRY
+	jmp	1f
+IDTVEC_END(recurse_hyperv_hypercall)
+IDTVEC(intr_hyperv_hypercall)
+	pushl	$0
+	pushl	$T_ASTFLT
+	INTRENTRY
+	movl	CPUVAR(ILEVEL),%ebx
+	cmpl	$IPL_NET,%ebx
+	jae	2f
+	jmp	1f
+IDTVEC_END(intr_hyperv_hypercall)
+IDTVEC(resume_hyperv_hypercall)
+1:
+	pushl	%ebx
+	IDEPTH_INCR
+	movl	$IPL_NET,CPUVAR(ILEVEL)
+	sti
+	pushl	%esp
+	call	_C_LABEL(hyperv_hypercall_intr)
+	addl	$4,%esp
+	cli
+	jmp	_C_LABEL(Xdoreti)
+2:
+	orl	$(1 << LIR_HV),CPUVAR(IPENDING)
+	INTRFASTEXIT
+IDTVEC_END(resume_hyperv_hypercall)
+#endif	/* NHYPERV > 0 */
+
 #endif /* NLAPIC > 0 */
 
 
