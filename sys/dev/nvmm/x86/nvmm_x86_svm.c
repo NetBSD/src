@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.23 2019/02/14 14:30:20 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.24 2019/02/15 13:17:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.23 2019/02/14 14:30:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.24 2019/02/15 13:17:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.23 2019/02/14 14:30:20 maxv Exp $
 #include <x86/specialreg.h>
 #include <x86/pmap.h>
 #include <x86/dbregs.h>
+#include <x86/cpu_counter.h>
 #include <machine/cpuvar.h>
 
 #include <dev/nvmm/nvmm.h>
@@ -965,7 +966,14 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 				cpudata->tlb_want_flush = true;
 			}
 			vmcb->state.efer = exit->u.msr.val | EFER_SVME;
-			vmcb->ctrl.vmcb_clean &= ~VMCB_CTRL_VMCB_CLEAN_CR;
+			svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_CR);
+			goto handled;
+		}
+		if (exit->u.msr.msr == MSR_TSC) {
+			cpudata->tsc_offset = exit->u.msr.val - cpu_counter();
+			vmcb->ctrl.tsc_offset = cpudata->tsc_offset +
+			    curcpu()->ci_data.cpu_cc_skew;
+			svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_I);
 			goto handled;
 		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
@@ -1582,8 +1590,8 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
 	cpudata->gfpu.xsh_xcomp_bv = 0;
 
-	/* Bluntly hide the host TSC. */
-	cpudata->tsc_offset = rdtsc();
+	/* Set guest TSC to zero, more or less. */
+	cpudata->tsc_offset = -cpu_counter();
 
 	/* These MSRs are static. */
 	cpudata->star = rdmsr(MSR_STAR);
