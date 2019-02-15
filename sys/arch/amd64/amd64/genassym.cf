@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.73 2019/02/11 14:59:32 cherry Exp $
+#	$NetBSD: genassym.cf,v 1.74 2019/02/15 08:54:01 nonaka Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -317,11 +317,13 @@ define	IS_LWP			offsetof(struct intrsource, is_lwp)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
+define	IPL_NET			IPL_NET
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
+define	LIR_HV			LIR_HV
 
 define	SIR_NET			SIR_NET
 define	SIR_CLOCK		SIR_CLOCK

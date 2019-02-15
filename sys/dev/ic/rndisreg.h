@@ -1,4 +1,4 @@
-/*	$NetBSD: rndisreg.h,v 1.1 2019/02/14 03:33:55 nonaka Exp $ */
+/*	$NetBSD: rndisreg.h,v 1.2 2019/02/15 08:54:02 nonaka Exp $ */
 /*	NetBSD: if_urndisreg.h,v 1.4 2018/11/09 21:57:09 maya Exp */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
@@ -24,15 +24,20 @@
 #ifndef _DEV_IC_RNDISREG_H_
 #define _DEV_IC_RNDISREG_H_
 
-#define RNDIS_STATUS_BUFFER_OVERFLOW 	0x80000005L
-#define RNDIS_STATUS_FAILURE 		0xC0000001L
-#define RNDIS_STATUS_INVALID_DATA 	0xC0010015L
-#define RNDIS_STATUS_MEDIA_CONNECT 	0x4001000BL
-#define RNDIS_STATUS_MEDIA_DISCONNECT 	0x4001000CL
-#define RNDIS_STATUS_NOT_SUPPORTED 	0xC00000BBL
-#define RNDIS_STATUS_PENDING 		STATUS_PENDING /* XXX */
-#define RNDIS_STATUS_RESOURCES 		0xC000009AL
-#define RNDIS_STATUS_SUCCESS 		0x00000000L
+/* Canonical major/minor version as of 22th Aug. 2016. */
+#define RNDIS_VERSION_MAJOR		0x00000001
+#define RNDIS_VERSION_MINOR		0x00000000
+
+#define RNDIS_STATUS_SUCCESS		0x00000000L
+#define RNDIS_STATUS_PENDING		0x00000103L
+#define RNDIS_STATUS_MEDIA_CONNECT	0x4001000BL
+#define RNDIS_STATUS_MEDIA_DISCONNECT	0x4001000CL
+#define RNDIS_STATUS_OFFLOAD_CURRENT_CONFIG	0x40020006
+#define RNDIS_STATUS_BUFFER_OVERFLOW	0x80000005L
+#define RNDIS_STATUS_FAILURE		0xC0000001L
+#define RNDIS_STATUS_RESOURCES		0xC000009AL
+#define RNDIS_STATUS_NOT_SUPPORTED	0xC00000BBL
+#define RNDIS_STATUS_INVALID_DATA	0xC0010015L
 
 #define	OID_GEN_SUPPORTED_LIST		0x00010101
 #define	OID_GEN_HARDWARE_STATUS		0x00010102
@@ -79,6 +84,8 @@
 #define	OID_802_3_XMIT_TIMES_CRS_LOST	0x01020206
 #define	OID_802_3_XMIT_LATE_COLLISIONS	0x01020207
 
+#define OID_TCP_OFFLOAD_PARAMETERS	0xFC01020C
+
 #define RNDIS_MEDIUM_802_3		0x00000000
 
 #define RNDIS_MAJOR_VERSION		0x00000001U
@@ -87,6 +94,14 @@
 /* Device flags */
 #define RNDIS_DF_CONNECTIONLESS		0x00000001
 #define RNDIS_DF_CONNECTION_ORIENTED	0x00000002
+
+/*
+ * Common RNDIS message header.
+ */
+struct rndis_msghdr {
+	uint32_t	rm_type;
+	uint32_t	rm_len;
+};
 
 /*
  * RNDIS data message
@@ -107,6 +122,27 @@ struct rndis_packet_msg {
 	uint32_t	rm_vchandle;
 	uint32_t	rm_reserved;
 };
+
+/* Per-packet-info for RNDIS data message */
+struct rndis_pktinfo {
+	uint32_t	rm_size;
+	uint32_t	rm_type;
+	uint32_t	rm_pktinfooffset;
+	uint8_t		rm_data[0];
+};
+
+#define NDIS_PKTINFO_TYPE_CSUM		0
+#define NDIS_PKTINFO_TYPE_IPSEC		1
+#define NDIS_PKTINFO_TYPE_LSO		2
+#define NDIS_PKTINFO_TYPE_CLASSIFY	3
+/* reserved 4 */
+#define NDIS_PKTINFO_TYPE_SGLIST	5
+#define NDIS_PKTINFO_TYPE_VLAN		6
+#define NDIS_PKTINFO_TYPE_ORIG		7
+#define NDIS_PKTINFO_TYPE_PKT_CANCELID	8
+#define NDIS_PKTINFO_TYPE_ORIG_NBLIST	9
+#define NDIS_PKTINFO_TYPE_CACHE_NBLIST	10
+#define NDIS_PKTINFO_TYPE_PKT_PAD	11
 
 /*
  * RNDIS control messages
@@ -263,9 +299,8 @@ struct rndis_keepalive_comp {
 #define RNDIS_PACKET_TYPE_MAC_FRAME		0x00008000
 
 /* Rndis offsets */
-#define RNDIS_HEADER_OFFSET	(sizeof(uint32_t) * 2)
+#define RNDIS_HEADER_OFFSET	(sizeof(struct rndis_msghdr))
 #define RNDIS_DATA_OFFSET	(sizeof(struct rndis_packet_msg) - \
-				 offsetof(struct rndis_packet_msg, \
-				 rm_dataoffset))
+				    RNDIS_HEADER_OFFSET)
 
 #endif /* _DEV_IC_RNDISREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.68 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.69 2019/02/15 08:54:01 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@
 #include "ioapic.h"
 #include "lapic.h"
 #include "assym.h"
+#ifndef XEN
+#include "hyperv.h"
+#endif
 
 	.text
 
@@ -261,6 +264,48 @@ IDTVEC(intr_lapic_ltimer)
 	jmp	_C_LABEL(Xhandle_lapic_ltimer)
 IDTVEC_END(intr_lapic_ltimer)
 	TEXT_USER_END
+
+#if NHYPERV > 0
+	/*
+	 * Hyper-V event channel upcall interrupt handler.
+	 * Only used when the hypervisor supports direct vector callbacks.
+	 */
+IDTVEC(recurse_hyperv_hypercall)
+	INTR_RECURSE_HWFRAME
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTR_RECURSE_ENTRY
+	jmp	1f
+IDTVEC_END(recurse_hyperv_hypercall)
+NENTRY(handle_hyperv_hypercall)
+	movl	CPUVAR(ILEVEL),%ebx
+	cmpl	$IPL_NET,%ebx
+	jae	2f
+	jmp	1f
+END(handle_hyperv_hypercall)
+IDTVEC(resume_hyperv_hypercall)
+1:
+	incl	CPUVAR(IDEPTH)
+	movl	$IPL_NET,CPUVAR(ILEVEL)
+	sti
+	pushq	%rbx
+	movq	%rsp,%rsi
+	call	_C_LABEL(hyperv_hypercall_intr)
+	jmp	_C_LABEL(Xdoreti)
+2:
+	orl	$(1 << LIR_HV),CPUVAR(IPENDING)
+	INTRFASTEXIT
+IDTVEC_END(resume_hyperv_hypercall)
+
+	TEXT_USER_BEGIN
+IDTVEC(intr_hyperv_hypercall)
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
+	jmp	_C_LABEL(handle_hyperv_hypercall)
+IDTVEC_END(intr_hyperv_hypercall)
+	TEXT_USER_END
+#endif	/* NHYPERV > 0 */
 
 #endif /* NLAPIC > 0 */
 

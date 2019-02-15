@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.104 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.105 2019/02/15 08:54:01 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -519,6 +519,8 @@ void	startrtclock(void);
 void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+unsigned int gettick(void);
+extern void (*x86_delay)(unsigned int);
 
 /* cpu.c */
 void	cpu_probe_features(struct cpu_info *);
