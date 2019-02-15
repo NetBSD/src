@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.87 2019/02/15 04:11:39 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.88 2019/02/15 05:06:38 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.87 2019/02/15 04:11:39 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.88 2019/02/15 05:06:38 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -507,6 +507,252 @@ TRACEME_CRASH(traceme_crash_segv, SIGSEGV)
 TRACEME_CRASH(traceme_crash_ill, SIGILL)
 TRACEME_CRASH(traceme_crash_fpe, SIGFPE)
 TRACEME_CRASH(traceme_crash_bus, SIGBUS)
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_signalmasked_crash(int sig)
+{
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct ptrace_siginfo info;
+	sigset_t intmask;
+
+#ifndef PTRACE_ILLEGAL_ASM
+	if (sig == SIGILL)
+		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
+#endif
+
+	memset(&info, 0, sizeof(info));
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		sigemptyset(&intmask);
+		sigaddset(&intmask, sig);
+		sigprocmask(SIG_BLOCK, &intmask, NULL);
+
+		DPRINTF("Before executing a trap\n");
+		switch (sig) {
+		case SIGTRAP:
+			trigger_trap();
+			break;
+		case SIGSEGV:
+			trigger_segv();
+			break;
+		case SIGILL:
+			trigger_ill();
+			break;
+		case SIGFPE:
+			trigger_fpe();
+			break;
+		case SIGBUS:
+			trigger_bus();
+			break;
+		default:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		}
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "This shall not be reached");
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sig);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	switch (sig) {
+	case SIGTRAP:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		break;
+	case SIGSEGV:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		break;
+	case SIGILL:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
+		break;
+	case SIGFPE:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
+		break;
+	case SIGBUS:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		break;
+	}
+
+
+
+	SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_signaled(status, SIGKILL, 0);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_SIGNALMASKED_CRASH(test, sig)				\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify masked crash signal " #sig " in a child after "	\
+	    "PT_TRACE_ME is delivered to its tracer");			\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	traceme_signalmasked_crash(sig);				\
+}
+
+TRACEME_SIGNALMASKED_CRASH(traceme_signalmasked_crash_trap, SIGTRAP)
+TRACEME_SIGNALMASKED_CRASH(traceme_signalmasked_crash_segv, SIGSEGV)
+TRACEME_SIGNALMASKED_CRASH(traceme_signalmasked_crash_ill, SIGILL)
+TRACEME_SIGNALMASKED_CRASH(traceme_signalmasked_crash_fpe, SIGFPE)
+TRACEME_SIGNALMASKED_CRASH(traceme_signalmasked_crash_bus, SIGBUS)
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_signalignored_crash(int sig)
+{
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct sigaction sa;
+	struct ptrace_siginfo info;
+
+#ifndef PTRACE_ILLEGAL_ASM
+	if (sig == SIGILL)
+		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
+#endif
+
+	memset(&info, 0, sizeof(info));
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = SIG_IGN;
+		sigemptyset(&sa.sa_mask);
+
+		FORKEE_ASSERT(sigaction(sig, &sa, NULL) != -1);
+
+		DPRINTF("Before executing a trap\n");
+		switch (sig) {
+		case SIGTRAP:
+			trigger_trap();
+			break;
+		case SIGSEGV:
+			trigger_segv();
+			break;
+		case SIGILL:
+			trigger_ill();
+			break;
+		case SIGFPE:
+			trigger_fpe();
+			break;
+		case SIGBUS:
+			trigger_bus();
+			break;
+		default:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		}
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "This shall not be reached");
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sig);
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+	switch (sig) {
+	case SIGTRAP:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+		break;
+	case SIGSEGV:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+		break;
+	case SIGILL:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
+		break;
+	case SIGFPE:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
+		break;
+	case SIGBUS:
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+		break;
+	}
+
+	SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_signaled(status, SIGKILL, 0);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_SIGNALIGNORED_CRASH(test, sig)				\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify ignored crash signal " #sig " in a child after "	\
+	    "PT_TRACE_ME is delivered to its tracer"); 			\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	traceme_signalignored_crash(sig);				\
+}
+
+TRACEME_SIGNALIGNORED_CRASH(traceme_signalignored_crash_trap, SIGTRAP)
+TRACEME_SIGNALIGNORED_CRASH(traceme_signalignored_crash_segv, SIGSEGV)
+TRACEME_SIGNALIGNORED_CRASH(traceme_signalignored_crash_ill, SIGILL)
+TRACEME_SIGNALIGNORED_CRASH(traceme_signalignored_crash_fpe, SIGFPE)
+TRACEME_SIGNALIGNORED_CRASH(traceme_signalignored_crash_bus, SIGBUS)
 
 /// ----------------------------------------------------------------------------
 
@@ -5428,6 +5674,18 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_crash_ill);
 	ATF_TP_ADD_TC(tp, traceme_crash_fpe);
 	ATF_TP_ADD_TC(tp, traceme_crash_bus);
+
+	ATF_TP_ADD_TC(tp, traceme_signalmasked_crash_trap);
+	ATF_TP_ADD_TC(tp, traceme_signalmasked_crash_segv);
+	ATF_TP_ADD_TC(tp, traceme_signalmasked_crash_ill);
+	ATF_TP_ADD_TC(tp, traceme_signalmasked_crash_fpe);
+	ATF_TP_ADD_TC(tp, traceme_signalmasked_crash_bus);
+
+	ATF_TP_ADD_TC(tp, traceme_signalignored_crash_trap);
+	ATF_TP_ADD_TC(tp, traceme_signalignored_crash_segv);
+	ATF_TP_ADD_TC(tp, traceme_signalignored_crash_ill);
+	ATF_TP_ADD_TC(tp, traceme_signalignored_crash_fpe);
+	ATF_TP_ADD_TC(tp, traceme_signalignored_crash_bus);
 
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle1);
 	ATF_TP_ADD_TC(tp, traceme_sendsignal_handle2);
