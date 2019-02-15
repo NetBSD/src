@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.190 2019/02/14 20:09:40 palle Exp $ */
+/*	$NetBSD: trap.c,v 1.191 2019/02/15 16:36:33 hannken Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.190 2019/02/14 20:09:40 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191 2019/02/15 16:36:33 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -625,6 +625,7 @@ dopanic:
 		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm,
 		       pc, type, type < N_TRAP_TYPES ? trap_type[type] : T);
 #endif
+		/* FALLTHROUGH */
 	case T_ILLINST:
 #if defined(DDB) && defined(DEBUG)
 		if (trapdebug & TDB_STOPSIG)
