@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.6 2019/02/06 03:07:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.7 2019/02/16 16:20:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.6 2019/02/06 03:07:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.7 2019/02/16 16:20:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -420,12 +420,18 @@ sunxi_mixer_cursor_move(struct drm_crtc *crtc, int x, int y)
 	return 0;
 }
 
-static const struct drm_crtc_funcs sunxi_mixer_crtc_funcs = {
+static const struct drm_crtc_funcs sunxi_mixer0_crtc_funcs = {
 	.set_config = drm_crtc_helper_set_config,
 	.destroy = sunxi_mixer_destroy,
 	.page_flip = sunxi_mixer_page_flip,
 	.cursor_set = sunxi_mixer_cursor_set,
 	.cursor_move = sunxi_mixer_cursor_move,
+};
+
+static const struct drm_crtc_funcs sunxi_mixer1_crtc_funcs = {
+	.set_config = drm_crtc_helper_set_config,
+	.destroy = sunxi_mixer_destroy,
+	.page_flip = sunxi_mixer_page_flip,
 };
 
 static void
@@ -1184,7 +1190,10 @@ sunxi_mixer_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	BLD_WRITE(sc, BLD_CTL(2), 0x03010301);
 	BLD_WRITE(sc, BLD_CTL(3), 0x03010301);
 
-	drm_crtc_init(ddev, &sc->sc_crtc.base, &sunxi_mixer_crtc_funcs);
+	if (sc->sc_ovl_ui_count > 1)
+		drm_crtc_init(ddev, &sc->sc_crtc.base, &sunxi_mixer0_crtc_funcs);
+	else
+		drm_crtc_init(ddev, &sc->sc_crtc.base, &sunxi_mixer1_crtc_funcs);
 	drm_crtc_helper_add(&sc->sc_crtc.base, &sunxi_mixer_crtc_helper_funcs);
 
 	drm_universal_plane_init(ddev, &sc->sc_overlay.base,
