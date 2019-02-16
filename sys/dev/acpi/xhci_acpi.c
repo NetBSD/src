@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.3 2019/02/16 23:28:56 tron Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.3 2019/02/16 23:28:56 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.2 2018/11/16 23:18:17 jmcneill Exp $
 #include <dev/acpi/acpi_usb.h>
 
 static const char * const compatible[] = {
-	"PNP0D10",	/* EHCI-compliant USB controller without standard debug */
-	"PNP0D15",	/* EHCI-compliant USB controller with standard debug */
+	"PNP0D10",	/* XHCI-compliant USB controller without standard debug */
+	"PNP0D15",	/* XHCI-compliant USB controller with standard debug */
 	NULL
 };
 
