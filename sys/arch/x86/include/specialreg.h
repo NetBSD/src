@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.140 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.141 2019/02/16 12:05:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -768,7 +768,16 @@
 #define MSR_THERM_STATUS	0x19c
 #define MSR_THERM2_CTL		0x19d	/* Pentium M */
 #define MSR_MISC_ENABLE		0x1a0
-#define 	IA32_MISC_MWAIT_EN	0x40000
+#define 	IA32_MISC_FAST_STR_EN	__BIT(0)
+#define 	IA32_MISC_ATCC_EN	__BIT(3)
+#define 	IA32_MISC_PERFMON_EN	__BIT(7)
+#define 	IA32_MISC_BTS_UNAVAIL	__BIT(11)
+#define 	IA32_MISC_PEBS_UNAVAIL	__BIT(12)
+#define 	IA32_MISC_EISST_EN	__BIT(16)
+#define 	IA32_MISC_MWAIT_EN	__BIT(18)
+#define 	IA32_MISC_LIMIT_CPUID	__BIT(22)
+#define 	IA32_MISC_XTPR_DIS	__BIT(23)
+#define 	IA32_MISC_XD_DIS	__BIT(34)
 #define MSR_TEMPERATURE_TARGET	0x1a2
 #define MSR_DEBUGCTLMSR		0x1d9
 #define MSR_LASTBRANCHFROMIP	0x1db
