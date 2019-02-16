@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.4 2019/02/15 13:17:05 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.5 2019/02/16 12:05:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.4 2019/02/15 13:17:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.5 2019/02/16 12:05:30 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -665,6 +665,7 @@ struct vmx_cpudata {
 	/* Guest state */
 	struct msr_entry *gmsr;
 	paddr_t gmsr_pa;
+	uint64_t gmsr_misc_enable;
 	uint64_t gcr2;
 	uint64_t gcr8;
 	uint64_t gxcr0;
@@ -1361,6 +1362,12 @@ vmx_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
+		if (exit->u.msr.msr == MSR_MISC_ENABLE) {
+			val = cpudata->gmsr_misc_enable;
+			cpudata->gprs[NVMM_X64_GPR_RAX] = (val & 0xFFFFFFFF);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
+			goto handled;
+		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
 			if (msr_ignore_list[i] != exit->u.msr.msr)
 				continue;
@@ -1379,6 +1386,10 @@ vmx_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 		if (exit->u.msr.msr == MSR_CR_PAT) {
 			vmx_vmwrite(VMCS_GUEST_IA32_PAT, exit->u.msr.val);
+			goto handled;
+		}
+		if (exit->u.msr.msr == MSR_MISC_ENABLE) {
+			/* Don't care. */
 			goto handled;
 		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
@@ -2006,6 +2017,13 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	    EPTP_FLAGS_AD |
 	    mach->vm->vm_map.pmap->pm_pdirpa[0];
 	vmx_vmwrite(VMCS_EPTP, eptp);
+
+	/* Init IA32_MISC_ENABLE. */
+	cpudata->gmsr_misc_enable = rdmsr(MSR_MISC_ENABLE);
+	cpudata->gmsr_misc_enable &=
+	    ~(IA32_MISC_PERFMON_EN|IA32_MISC_EISST_EN|IA32_MISC_MWAIT_EN);
+	cpudata->gmsr_misc_enable |=
+	    (IA32_MISC_BTS_UNAVAIL|IA32_MISC_PEBS_UNAVAIL);
 
 	/* Must always be set. */
 	vmx_vmwrite(VMCS_GUEST_CR4, CR4_VMXE);
