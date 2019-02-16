@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.50 2019/02/16 06:51:04 isaki Exp $
+.\"	$NetBSD: audio.9,v 1.51 2019/02/16 07:00:56 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,7 +133,9 @@ recording data will be thrown away.
 The fields of
 .Va audio_hw_if
 are described in some more detail below.
-Some fields are optional and can be set to NULL if not needed.
+Some fields are optional and can be set to
+.Dv NULL
+if not needed.
 .Bl -tag -width indent
 .It Dv int open(void *hdl, int flags)
 optional, is called when the audio device is opened.
@@ -414,7 +416,9 @@ is used instead (with the same arguments but the first two).
 The reason for using a device dependent routine instead of
 .Xr malloc 9
 is that some buses need special allocation to do DMA.
-Returns the address of the buffer, or NULL on failure.
+Returns the address of the buffer, or
+.Dv NULL
+on failure.
 .It Dv void freem(void *hdl, void *addr, size_t size)
 optional, is called to free memory allocated by
 .Va allocm .
