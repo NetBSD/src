@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.49 2018/12/02 09:22:30 isaki Exp $
+.\"	$NetBSD: audio.9,v 1.50 2019/02/16 06:51:04 isaki Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,11 +104,8 @@ when the latter calls
 .Va audio_attach_mi .
 This call should be
 .Bd -literal
-    void
-    audio_attach_mi(ahwp, hdl, dev)
-	struct audio_hw_if *ahwp;
-	void *hdl;
-	struct device *dev;
+    device_t
+    audio_attach_mi(const struct audio_hw_if *ahwp, void *hdl, device_t dev);
 .Ed
 .Pp
 The
@@ -136,7 +133,7 @@ recording data will be thrown away.
 The fields of
 .Va audio_hw_if
 are described in some more detail below.
-Some fields are optional and can be set to 0 if not needed.
+Some fields are optional and can be set to NULL if not needed.
 .Bl -tag -width indent
 .It Dv int open(void *hdl, int flags)
 optional, is called when the audio device is opened.
@@ -417,7 +414,7 @@ is used instead (with the same arguments but the first two).
 The reason for using a device dependent routine instead of
 .Xr malloc 9
 is that some buses need special allocation to do DMA.
-Returns the address of the buffer, or 0 on failure.
+Returns the address of the buffer, or NULL on failure.
 .It Dv void freem(void *hdl, void *addr, size_t size)
 optional, is called to free memory allocated by
 .Va allocm .
