@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.25 2019/02/16 12:40:31 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.26 2019/02/16 12:58:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.25 2019/02/16 12:40:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.26 2019/02/16 12:58:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,7 +772,7 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		}
 		switch (ecx) {
 		case 0:
-			cpudata->gprs[NVMM_X64_GPR_RAX] = svm_xcr0_mask & 0xFFFFFFFF;
+			cpudata->vmcb->state.rax = svm_xcr0_mask & 0xFFFFFFFF;
 			if (cpudata->gxcr0 & XCR0_SSE) {
 				cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct fxsave);
 			} else {
@@ -783,7 +783,7 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 			cpudata->gprs[NVMM_X64_GPR_RDX] = svm_xcr0_mask >> 32;
 			break;
 		case 1:
-			cpudata->gprs[NVMM_X64_GPR_RAX] &= ~CPUID_PES1_XSAVES;
+			cpudata->vmcb->state.rax &= ~CPUID_PES1_XSAVES;
 			break;
 		}
 		break;
