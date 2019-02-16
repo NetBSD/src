@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.273 2018/05/27 01:14:51 christos Exp $
+.\"	$NetBSD: make.1,v 1.274 2019/02/16 07:41:12 gutteridge Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 26, 2018
+.Dd February 16, 2019
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -2403,9 +2403,9 @@ file).
 .Sh BUGS
 The
 .Nm
-syntax is difficult to parse without actually acting of the data.
-For instance finding the end of a variable use should involve scanning each
-the modifiers using the correct terminator for each field.
+syntax is difficult to parse without actually acting on the data.
+For instance, finding the end of a variable's use should involve scanning
+each of the modifiers, using the correct terminator for each field.
 In many places
 .Nm
 just counts {} and () in order to find the end of a variable expansion.
