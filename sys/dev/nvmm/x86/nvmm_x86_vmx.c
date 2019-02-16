@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.5 2019/02/16 12:05:30 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.6 2019/02/16 12:40:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.5 2019/02/16 12:05:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.6 2019/02/16 12:40:31 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,6 +984,7 @@ static void
 vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	uint64_t cr4;
 
 	switch (eax) {
 	case 0x00000001:
@@ -995,6 +996,12 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		      CPUID2_PCID|CPUID2_DEADLINE);
 		cpudata->gprs[NVMM_X64_GPR_RDX] &=
 		    ~(CPUID_DS|CPUID_ACPI|CPUID_TM);
+
+		/* CPUID2_OSXSAVE depends on CR4. */
+		vmx_vmread(VMCS_GUEST_CR4, &cr4);
+		if (!(cr4 & CR4_OSXSAVE)) {
+			cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID2_OSXSAVE;
+		}
 		break;
 	case 0x00000005:
 	case 0x00000006:
@@ -1010,18 +1017,25 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		      CPUID_SEF_SSBD);
 		break;
 	case 0x0000000D:
-		if (ecx != 0 || vmx_xcr0_mask == 0) {
+		if (vmx_xcr0_mask == 0) {
 			break;
 		}
-		cpudata->gprs[NVMM_X64_GPR_RAX] = vmx_xcr0_mask & 0xFFFFFFFF;
-		if (cpudata->gxcr0 & XCR0_SSE) {
-			cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct fxsave);
-		} else {
-			cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct save87);
+		switch (ecx) {
+		case 0:
+			cpudata->gprs[NVMM_X64_GPR_RAX] = vmx_xcr0_mask & 0xFFFFFFFF;
+			if (cpudata->gxcr0 & XCR0_SSE) {
+				cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct fxsave);
+			} else {
+				cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct save87);
+			}
+			cpudata->gprs[NVMM_X64_GPR_RBX] += 64; /* XSAVE header */
+			cpudata->gprs[NVMM_X64_GPR_RCX] = sizeof(struct fxsave);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = vmx_xcr0_mask >> 32;
+			break;
+		case 1:
+			cpudata->gprs[NVMM_X64_GPR_RAX] &= ~CPUID_PES1_XSAVES;
+			break;
 		}
-		cpudata->gprs[NVMM_X64_GPR_RBX] += 64; /* XSAVE header */
-		cpudata->gprs[NVMM_X64_GPR_RCX] = sizeof(struct fxsave);
-		cpudata->gprs[NVMM_X64_GPR_RDX] = vmx_xcr0_mask >> 32;
 		break;
 	case 0x40000000:
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
