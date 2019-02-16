@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.65 2019/02/06 20:08:15 martin Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.66 2019/02/16 18:57:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -688,7 +688,7 @@ void
 process_menu(int num, void *arg)
 {
 	int sel = 0;
-	int req;
+	int req, rv;
 	menu_ent *opt;
 
 	menudesc *m;
@@ -754,8 +754,13 @@ process_menu(int num, void *arg)
 			continue;
 		if (opt->opt_flags & OPT_ENDWIN)
 			endwin();
-		if (opt->opt_action && (*opt->opt_action)(m, arg))
-			break;
+		if (opt->opt_action) {
+			rv = (*opt->opt_action)(m, arg);
+			if (rv == -1)
+				continue;
+			else if (rv != 0)
+				break;
+		}
 
 		if (opt->opt_menu != -1) {
 			if (!(opt->opt_flags & OPT_SUB)) {

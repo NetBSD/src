@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.34 2019/01/04 15:27:19 martin Exp $
+.\"	$NetBSD: menuc.1,v 1.35 2019/02/16 18:57:21 martin Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -539,6 +539,30 @@ is the text for the exit line of the menu.
 If it's null, string
 .Dq Exit
 is used.
+.Sh MENU ITEM ACTIONS
+When creating dynamic menus, the programer supplies function pointers
+for the menu items
+.Dv opt_action
+member.
+This functions return one of three possible values:
+.Bl -tag -width "-1" -compact
+.It 0
+process sub menu (if set) and continue with the current (or new) menu
+as usual.
+.It 1
+exit the current menu.
+This is equivalen to specifying
+.Dq exit
+in a non-dynamic menu specification.
+.It -1
+do not handle the current item any further and restart handling the (same)
+menu.
+This return value is used when actions modify the menu definition on the
+fly, e.g. adding or removing additional menu items.
+The action may set
+.Dq cur_sel
+to jump to an arbitrary menu item (in the modified menu).
+.El
 .Sh MENU ITEM EXPANSION
 With the
 .Ic enable expansion
