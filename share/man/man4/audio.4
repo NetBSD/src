@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.86 2018/05/28 00:18:05 nat Exp $
+.\"	$NetBSD: audio.4,v 1.87 2019/02/16 06:50:14 isaki Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -270,9 +270,10 @@ This command will select the audio channel for subsequent ioctl calls.
 This command stops all playback and recording, clears all queued
 buffers, resets error counters, and restarts recording and playback as
 appropriate for the current sampling mode.
+.It Dv AUDIO_PERROR (int)
 .It Dv AUDIO_RERROR (int)
-This command fetches the count of dropped input samples into its integer
-argument.
+This command fetches the count of dropped output (input)
+samples into its integer argument.
 There is no information regarding when in the sample stream
 they were dropped.
 .It Dv AUDIO_WSEEK (u_long)
@@ -292,8 +293,6 @@ typedef struct audio_device {
         char config[MAX_AUDIO_DEV_LEN];
 } audio_device_t;
 .Ed
-.It Dv AUDIO_GETFD (int)
-The command returns the current setting of the full duplex mode.
 .It Dv AUDIO_GETENC (audio_encoding_t)
 This command is used iteratively to fetch sample encoding names and
 format ids into the input/output audio_encoding_t argument.
@@ -312,6 +311,8 @@ To query
 all the supported encodings, start with an index field of 0 and
 continue with successive encodings (1, 2, ...) until the command returns
 an error.
+.It Dv AUDIO_GETFD (int)
+The command returns the current setting of the full duplex mode.
 .It Dv AUDIO_SETFD (int)
 This command sets the device into full-duplex operation if its integer
 argument has a non-zero value, or into half-duplex operation if it
