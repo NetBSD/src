@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.24 2019/02/15 13:17:05 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.25 2019/02/16 12:40:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.24 2019/02/15 13:17:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.25 2019/02/16 12:40:31 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -752,26 +752,40 @@ static void
 svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
+	uint64_t cr4;
 
 	switch (eax) {
-	case 0x00000001: /* APIC number in RBX. The rest is tunable. */
+	case 0x00000001:
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= ~CPUID_LOCAL_APIC_ID;
 		cpudata->gprs[NVMM_X64_GPR_RBX] |= __SHIFTIN(vcpu->cpuid,
 		    CPUID_LOCAL_APIC_ID);
+
+		/* CPUID2_OSXSAVE depends on CR4. */
+		cr4 = cpudata->vmcb->state.cr4;
+		if (!(cr4 & CR4_OSXSAVE)) {
+			cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID2_OSXSAVE;
+		}
 		break;
-	case 0x0000000D: /* FPU description. Not tunable. */
-		if (ecx != 0 || svm_xcr0_mask == 0) {
+	case 0x0000000D:
+		if (svm_xcr0_mask == 0) {
 			break;
 		}
-		cpudata->vmcb->state.rax = svm_xcr0_mask & 0xFFFFFFFF;
-		if (cpudata->gxcr0 & XCR0_SSE) {
-			cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct fxsave);
-		} else {
-			cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct save87);
+		switch (ecx) {
+		case 0:
+			cpudata->gprs[NVMM_X64_GPR_RAX] = svm_xcr0_mask & 0xFFFFFFFF;
+			if (cpudata->gxcr0 & XCR0_SSE) {
+				cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct fxsave);
+			} else {
+				cpudata->gprs[NVMM_X64_GPR_RBX] = sizeof(struct save87);
+			}
+			cpudata->gprs[NVMM_X64_GPR_RBX] += 64; /* XSAVE header */
+			cpudata->gprs[NVMM_X64_GPR_RCX] = sizeof(struct fxsave);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = svm_xcr0_mask >> 32;
+			break;
+		case 1:
+			cpudata->gprs[NVMM_X64_GPR_RAX] &= ~CPUID_PES1_XSAVES;
+			break;
 		}
-		cpudata->gprs[NVMM_X64_GPR_RBX] += 64; /* XSAVE header */
-		cpudata->gprs[NVMM_X64_GPR_RCX] = sizeof(struct fxsave);
-		cpudata->gprs[NVMM_X64_GPR_RDX] = svm_xcr0_mask >> 32;
 		break;
 	case 0x40000000:
 		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
@@ -781,7 +795,7 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RCX], "NVMM", 4);
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
-	case 0x80000001: /* No SVM, no RDTSCP. The rest is tunable. */
+	case 0x80000001:
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= ~CPUID_SVM;
 		cpudata->gprs[NVMM_X64_GPR_RDX] &= ~CPUID_RDTSCP;
 		break;
