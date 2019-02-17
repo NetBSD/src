@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/10/13 14:15:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2019/02/17 13:21:55 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -20,5 +20,7 @@ CPPFLAGS+=	-DPAX_ASLR
 
 .PATH:	${S}/kern
 SRCS=	exec_elf32.c core_elf32.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
