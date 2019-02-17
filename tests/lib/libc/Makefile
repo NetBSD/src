@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.48 2018/08/03 04:24:41 kamil Exp $
+# $NetBSD: Makefile,v 1.49 2019/02/17 12:24:17 isaki Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
 
 SUBDIR+=	tls_dso .WAIT sync
 
+TESTS_SUBDIRS+=	atomic
 TESTS_SUBDIRS+=	c063 db gen hash inet locale misc net regex rpc setjmp stdlib
 TESTS_SUBDIRS+=	stdio string sys termios time tls ttyio
 
