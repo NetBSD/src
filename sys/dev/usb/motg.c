@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.24 2019/01/22 06:39:24 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.25 2019/02/17 04:17:52 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.24 2019/01/22 06:39:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.25 2019/02/17 04:17:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -760,7 +760,8 @@ motg_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	struct motg_softc *sc = MOTG_BUS2SC(bus);
 
 #ifdef DIAGNOSTIC
-	if (xfer->ux_state != XFER_BUSY) {
+	if (xfer->ux_state != XFER_BUSY &&
+	    xfer->ux_status != USBD_NOT_STARTED) {
 		printf("motg_freex: xfer=%p not busy, 0x%08x\n", xfer,
 		       xfer->ux_state);
 	}
