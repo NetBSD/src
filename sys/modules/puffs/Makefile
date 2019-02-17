@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2019/02/04 12:08:03 pgoyette Exp $
+# $NetBSD: Makefile,v 1.4 2019/02/17 04:05:56 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -6,5 +6,7 @@
 
 KMOD=	puffs
 SRCS=	puffs_node.c puffs_msgif.c puffs_subr.c puffs_vfsops.c puffs_vnops.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

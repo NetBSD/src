@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/11/25 02:42:35 cube Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/17 04:05:56 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -6,5 +6,7 @@
 
 KMOD=	ppp_deflate
 SRCS=	ppp-deflate.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

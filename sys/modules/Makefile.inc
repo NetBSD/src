@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.7 2019/02/17 03:57:31 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2019/02/17 04:05:41 rin Exp $
 
 S!=		cd ${.PARSEDIR}/..;pwd
 CPPFLAGS+=	-I${NETBSDSRCDIR}/common/include
 USE_FORT=	no
-WARNS?=		3
+WARNS?=		5
 
 # inexpensive kernel consistency checks
 # XXX to be commented out on release branch

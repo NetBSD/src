@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/19 02:50:44 rmind Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/17 04:05:54 rin Exp $
 #
 .include "../Makefile.inc"
 
@@ -6,5 +6,7 @@
 
 KMOD=	mqueue
 SRCS=	sys_mqueue.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

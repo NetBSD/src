@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/01/27 02:08:46 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:45 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -11,5 +11,7 @@ CPPFLAGS+=	-DCOMPAT_43
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 SRCS+=	netbsd32_compat_43.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
