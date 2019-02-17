@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.90 2019/02/17 04:57:09 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.91 2019/02/17 05:21:49 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.90 2019/02/17 04:57:09 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.91 2019/02/17 05:21:49 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4417,74 +4417,6 @@ ATF_TC_BODY(signal_mask_unrelated, tc)
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(signal3);
-ATF_TC_HEAD(signal3, tc)
-{
-	atf_tc_set_md_var(tc, "timeout", "5");
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that masking SIGTRAP in tracee does not stop tracer from "
-	    "catching software breakpoints");
-}
-
-ATF_TC_BODY(signal3, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	const int sigmasked = SIGTRAP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	sigset_t intmask;
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		sigemptyset(&intmask);
-		sigaddset(&intmask, sigmasked);
-		sigprocmask(SIG_BLOCK, &intmask, NULL);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before raising software breakpoint from child\n");
-		trigger_trap();
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigmasked);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_signaled(status, SIGKILL, 0);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
 #if defined(PT_STEP)
 ATF_TC(signal4);
 ATF_TC_HEAD(signal4, tc)
@@ -6012,7 +5944,6 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, signal_mask_unrelated);
 
-	ATF_TP_ADD_TC(tp, signal3);
 	ATF_TP_ADD_TC_PT_STEP(tp, signal4);
 	ATF_TP_ADD_TC(tp, signal5);
 	ATF_TP_ADD_TC_HAVE_PID(tp, signal6);
