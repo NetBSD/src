@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.126 2018/12/16 14:03:37 hannken Exp $	*/
+/*      $NetBSD: hijack.c,v 1.127 2019/02/17 23:35:50 bad Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.126 2018/12/16 14:03:37 hannken Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.127 2019/02/17 23:35:50 bad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -89,7 +89,10 @@ __RCSID("$NetBSD: hijack.c,v 1.126 2018/12/16 14:03:37 hannken Exp $");
 enum dualcall {
 	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
 	DUALCALL_IOCTL, DUALCALL_FCNTL,
-	DUALCALL_SOCKET, DUALCALL_ACCEPT, DUALCALL_PACCEPT,
+	DUALCALL_SOCKET, DUALCALL_ACCEPT,
+#ifndef __linux__
+	DUALCALL_PACCEPT,
+#endif
 	DUALCALL_BIND, DUALCALL_CONNECT,
 	DUALCALL_GETPEERNAME, DUALCALL_GETSOCKNAME, DUALCALL_LISTEN,
 	DUALCALL_RECVFROM, DUALCALL_RECVMSG,
@@ -272,7 +275,9 @@ struct sysnames {
 } syscnames[] = {
 	{ DUALCALL_SOCKET,	S(REALSOCKET),	RSYS_NAME(SOCKET)	},
 	{ DUALCALL_ACCEPT,	"accept",	RSYS_NAME(ACCEPT)	},
+#ifndef __linux__
 	{ DUALCALL_PACCEPT,	"paccept",	RSYS_NAME(PACCEPT)	},
+#endif
 	{ DUALCALL_BIND,	"bind",		RSYS_NAME(BIND)		},
 	{ DUALCALL_CONNECT,	"connect",	RSYS_NAME(CONNECT)	},
 	{ DUALCALL_GETPEERNAME,	"getpeername",	RSYS_NAME(GETPEERNAME)	},
@@ -1382,6 +1387,7 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	return fd;
 }
 
+#ifndef __linux__
 int
 paccept(int s, struct sockaddr *addr, socklen_t *addrlen,
     const sigset_t * restrict sigmask, int flags)
@@ -1410,6 +1416,7 @@ paccept(int s, struct sockaddr *addr, socklen_t *addrlen,
 
 	return fd;
 }
+#endif
 
 /*
  * ioctl() and fcntl() are varargs calls and need special treatment.
