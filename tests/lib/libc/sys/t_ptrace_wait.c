@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.91 2019/02/17 05:21:49 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.92 2019/02/17 09:29:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.91 2019/02/17 05:21:49 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.92 2019/02/17 09:29:35 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1582,6 +1582,179 @@ TRACEME_VFORK_CRASH(traceme_vfork_crash_segv, SIGSEGV)
 TRACEME_VFORK_CRASH(traceme_vfork_crash_ill, SIGILL)
 TRACEME_VFORK_CRASH(traceme_vfork_crash_fpe, SIGFPE)
 TRACEME_VFORK_CRASH(traceme_vfork_crash_bus, SIGBUS)
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_vfork_signalmasked_crash(int sig)
+{
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	sigset_t intmask;
+
+#ifndef PTRACE_ILLEGAL_ASM
+	if (sig == SIGILL)
+		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
+#endif
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = vfork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		sigemptyset(&intmask);
+		sigaddset(&intmask, sig);
+		sigprocmask(SIG_BLOCK, &intmask, NULL);
+
+		DPRINTF("Before executing a trap\n");
+		switch (sig) {
+		case SIGTRAP:
+			trigger_trap();
+			break;
+		case SIGSEGV:
+			trigger_segv();
+			break;
+		case SIGILL:
+			trigger_ill();
+			break;
+		case SIGFPE:
+			trigger_fpe();
+			break;
+		case SIGBUS:
+			trigger_bus();
+			break;
+		default:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		}
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "This shall not be reached");
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_signaled(status, sig, 1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_VFORK_SIGNALMASKED_CRASH(test, sig)			\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify PT_TRACE_ME followed by a crash signal " #sig " in a " \
+	    "vfork(2)ed child with a masked signal");			\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	traceme_vfork_signalmasked_crash(sig);				\
+}
+
+TRACEME_VFORK_SIGNALMASKED_CRASH(traceme_vfork_signalmasked_crash_trap, SIGTRAP)
+TRACEME_VFORK_SIGNALMASKED_CRASH(traceme_vfork_signalmasked_crash_segv, SIGSEGV)
+TRACEME_VFORK_SIGNALMASKED_CRASH(traceme_vfork_signalmasked_crash_ill, SIGILL)
+TRACEME_VFORK_SIGNALMASKED_CRASH(traceme_vfork_signalmasked_crash_fpe, SIGFPE)
+TRACEME_VFORK_SIGNALMASKED_CRASH(traceme_vfork_signalmasked_crash_bus, SIGBUS)
+
+/// ----------------------------------------------------------------------------
+
+static void
+traceme_vfork_signalignored_crash(int sig)
+{
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct sigaction sa;
+
+#ifndef PTRACE_ILLEGAL_ASM
+	if (sig == SIGILL)
+		atf_tc_skip("PTRACE_ILLEGAL_ASM not defined");
+#endif
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = vfork()) != -1);
+	if (child == 0) {
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = SIG_IGN;
+		sigemptyset(&sa.sa_mask);
+
+		FORKEE_ASSERT(sigaction(sig, &sa, NULL) != -1);
+
+		DPRINTF("Before executing a trap\n");
+		switch (sig) {
+		case SIGTRAP:
+			trigger_trap();
+			break;
+		case SIGSEGV:
+			trigger_segv();
+			break;
+		case SIGILL:
+			trigger_ill();
+			break;
+		case SIGFPE:
+			trigger_fpe();
+			break;
+		case SIGBUS:
+			trigger_bus();
+			break;
+		default:
+			/* NOTREACHED */
+			FORKEE_ASSERTX(0 && "This shall not be reached");
+		}
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 && "This shall not be reached");
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_signaled(status, sig, 1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#define TRACEME_VFORK_SIGNALIGNORED_CRASH(test, sig)			\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify PT_TRACE_ME followed by a crash signal " #sig " in a " \
+	    "vfork(2)ed child with ignored signal");			\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	traceme_vfork_signalignored_crash(sig);				\
+}
+
+TRACEME_VFORK_SIGNALIGNORED_CRASH(traceme_vfork_signalignored_crash_trap,
+    SIGTRAP)
+TRACEME_VFORK_SIGNALIGNORED_CRASH(traceme_vfork_signalignored_crash_segv,
+    SIGSEGV)
+TRACEME_VFORK_SIGNALIGNORED_CRASH(traceme_vfork_signalignored_crash_ill,
+    SIGILL)
+TRACEME_VFORK_SIGNALIGNORED_CRASH(traceme_vfork_signalignored_crash_fpe,
+    SIGFPE)
+TRACEME_VFORK_SIGNALIGNORED_CRASH(traceme_vfork_signalignored_crash_bus,
+    SIGBUS)
 
 /// ----------------------------------------------------------------------------
 
@@ -5792,6 +5965,18 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_vfork_crash_ill);
 	ATF_TP_ADD_TC(tp, traceme_vfork_crash_fpe);
 	ATF_TP_ADD_TC(tp, traceme_vfork_crash_bus);
+
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalmasked_crash_trap);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalmasked_crash_segv);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalmasked_crash_ill);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalmasked_crash_fpe);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalmasked_crash_bus);
+
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalignored_crash_trap);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalignored_crash_segv);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalignored_crash_ill);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalignored_crash_fpe);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalignored_crash_bus);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_exec);
 
