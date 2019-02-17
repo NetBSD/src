@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2019/02/08 03:59:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.43 2019/02/17 00:05:11 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -147,6 +147,7 @@ SRCS+=	c98-codecvt.cc c11-codecvt.cc
 .include "../Makefile.gthr"
 
 # XXX Make this either/or, not one, and maybe another
+# XXX pull out libstdc++/Makefile/cxx11_sources for many of these.
 CXX11_ALWAYS=	localename.cc \
 		locale_init.cc \
 		compatibility-c++0x.cc \
@@ -158,6 +159,15 @@ CXX11_ALWAYS=	localename.cc \
 
 .for _s in ${CXX11_ALWAYS}
 COPTS.${_s}+= -std=gnu++11
+.endfor
+
+# XXX pull out libstdc++/Makefile/cxx98_sources for many of these.
+CXX98_ALWAYS=	compatibility.cc \
+		compatibility-debug_list.cc \
+		compatibility-debug_list-2.cc
+
+.for _s in ${CXX98_ALWAYS}
+COPTS.${_s}+= -std=gnu++98
 .endfor
 
 COPTS.cp-demangle.c += -Wno-unused-function
