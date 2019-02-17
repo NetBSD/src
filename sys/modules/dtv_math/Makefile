@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/08/09 01:42:25 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:05:48 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,5 @@
 
 KMOD=	dtv_math
 SRCS=	dtv_math.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

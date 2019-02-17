@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/28 18:14:12 ahoka Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:49 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=	flash
 IOCONF=	flash.ioconf
 SRCS=	flash.c flash_io.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/12 19:07:14 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.6 2019/02/17 04:05:49 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -10,5 +10,7 @@ SRCS=	ext2fs_alloc.c ext2fs_balloc.c ext2fs_bmap.c ext2fs_bswap.c \
 	ext2fs_extents.c ext2fs_inode.c ext2fs_lookup.c ext2fs_readwrite.c \
 	ext2fs_rename.c ext2fs_subr.c ext2fs_vfsops.c ext2fs_vnops.c \
 	ext2fs_xattr.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

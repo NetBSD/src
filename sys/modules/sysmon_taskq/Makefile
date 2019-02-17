@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2015/04/23 23:22:28 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:05:58 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,9 @@
 KMOD=	sysmon_taskq
 
 SRCS=	sysmon_taskq.c
+
+.if ${ACTIVE_CC} == "clang"
+COPTS.sysmon_taskq.c+=	-Wno-missing-noreturn
+.endif
 
 .include <bsd.kmodule.mk>

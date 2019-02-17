@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/05/26 12:56:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:59 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -6,6 +6,8 @@
 
 KMOD=	umap
 SRCS=	umap_vfsops.c umap_vnops.c umap_subr.c
+
+WARNS=	3
 
 CWARNFLAGS.clang=	-Wno-conversion
 

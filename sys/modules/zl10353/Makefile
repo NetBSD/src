@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/08/29 11:14:15 jruoho Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:06:01 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,5 @@
 
 KMOD=	zl10353
 SRCS=	zl10353.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>
