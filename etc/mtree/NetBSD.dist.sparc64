@@ -1,0 +1,4 @@
+#	$NetBSD: NetBSD.dist.sparc64,v 1.12 2019/02/17 05:29:08 mrg Exp $
+
+./usr/include/sparc
+./usr/include/sparc64
