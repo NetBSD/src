@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.88 2019/02/15 05:06:38 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.89 2019/02/17 04:19:39 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.88 2019/02/15 05:06:38 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.89 2019/02/17 04:19:39 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -513,12 +513,19 @@ TRACEME_CRASH(traceme_crash_bus, SIGBUS)
 static void
 traceme_signalmasked_crash(int sig)
 {
+	const int sigval = SIGSTOP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
 	struct ptrace_siginfo info;
 	sigset_t intmask;
+	struct kinfo_proc2 kp;
+	size_t len = sizeof(kp);
+
+	int name[6];
+	const size_t namelen = __arraycount(name);
+	ki_sigset_t kp_sigmask;
 
 #ifndef PTRACE_ILLEGAL_ASM
 	if (sig == SIGILL)
@@ -526,6 +533,8 @@ traceme_signalmasked_crash(int sig)
 #endif
 
 	memset(&info, 0, sizeof(info));
+
+	atf_tc_expect_fail("Unexpected sigmask reset on crash under debugger");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -536,6 +545,9 @@ traceme_signalmasked_crash(int sig)
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sig);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
 
 		DPRINTF("Before executing a trap\n");
 		switch (sig) {
@@ -567,6 +579,38 @@ traceme_signalmasked_crash(int sig)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
+	validate_status_stopped(status, sigval);
+
+	name[0] = CTL_KERN,
+	name[1] = KERN_PROC2,
+	name[2] = KERN_PROC_PID;
+	name[3] = child;
+	name[4] = sizeof(kp);
+	name[5] = 1;
+
+	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+
+	kp_sigmask = kp.p_sigmask;
+
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(
+	    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+	DPRINTF("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
 	validate_status_stopped(status, sig);
 
 	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child");
@@ -577,6 +621,20 @@ traceme_signalmasked_crash(int sig)
 	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
+
+	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+
+	DPRINTF("kp_sigmask="
+	    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
+	    kp_sigmask.__bits[0], kp_sigmask.__bits[1], kp_sigmask.__bits[2],
+	    kp_sigmask.__bits[3]);
+
+	DPRINTF("kp.p_sigmask="
+	    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
+	    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
+	    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
+
+	ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask, sizeof(kp_sigmask)));
 
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
 	switch (sig) {
@@ -596,8 +654,6 @@ traceme_signalmasked_crash(int sig)
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 		break;
 	}
-
-
 
 	SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
 
