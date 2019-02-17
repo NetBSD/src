@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.23 2019/02/15 16:42:27 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.24 2019/02/17 20:25:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -2233,14 +2233,14 @@ node_regmodrm(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		strg->u.reg = reg;
 	}
 
+	/* The displacement applies to RM. */
+	strm->disp.type = get_disp_type(instr);
+
 	if (has_sib(instr)) {
 		/* Overwrites RM */
 		fsm_advance(fsm, 1, node_sib);
 		return 0;
 	}
-
-	/* The displacement applies to RM. */
-	strm->disp.type = get_disp_type(instr);
 
 	if (is_rip_relative(fsm, instr)) {
 		/* Overwrites RM */
