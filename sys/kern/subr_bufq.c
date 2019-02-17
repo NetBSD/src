@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.26 2018/01/23 22:08:55 pgoyette Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.27 2019/02/17 23:17:41 bad Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.26 2018/01/23 22:08:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.27 2019/02/17 23:17:41 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 	int error = 0;
 	u_int gen;
 	bool found_exact;
-	char module_name[MAXPATHLEN];
+	char strategy_module_name[MAXPATHLEN];
 
 	KASSERT((flags & BUFQ_EXACT) == 0 || strategy != BUFQ_STRAT_ANY);
 
@@ -179,10 +179,12 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 			break;
 
 		/* Try to autoload the bufq strategy module */
-		strlcpy(module_name, "bufq_", sizeof(module_name));
-		strlcat(module_name, strategy, sizeof(module_name));
+		strlcpy(strategy_module_name, "bufq_",
+			sizeof(strategy_module_name));
+		strlcat(strategy_module_name, strategy,
+			sizeof(strategy_module_name));
 		mutex_exit(&bufq_mutex);
-		(void) module_autoload(module_name, MODULE_CLASS_BUFQ);
+		(void) module_autoload(strategy_module_name, MODULE_CLASS_BUFQ);
 		mutex_enter(&bufq_mutex);
 	} while (gen != module_gen);
 
