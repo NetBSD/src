@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.10 2019/02/06 08:38:41 rin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.11 2019/02/17 09:33:19 rin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -243,17 +243,13 @@ struct axen_chain {
 	struct axen_softc	*axen_sc;
 	struct usbd_xfer	*axen_xfer;
 	uint8_t			*axen_buf;
-	int			axen_accum;
-	int			axen_idx;
 };
 
 struct axen_cdata {
 	struct axen_chain	axen_tx_chain[AXEN_TX_LIST_CNT];
 	struct axen_chain	axen_rx_chain[AXEN_RX_LIST_CNT];
 	int			axen_tx_prod;
-	int			axen_tx_cons;
 	int			axen_tx_cnt;
-	int			axen_rx_prod;
 };
 
 struct axen_qctrl {
