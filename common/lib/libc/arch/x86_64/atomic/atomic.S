@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.17 2014/05/22 15:23:11 uebayasi Exp $	*/
+/*	$NetBSD: atomic.S,v 1.18 2019/02/17 07:34:44 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -345,6 +345,7 @@ ALIAS(atomic_inc_ulong_nv,_atomic_inc_64_nv)
 ALIAS(atomic_inc_ptr_nv,_atomic_inc_64_nv)
 
 ALIAS(atomic_or_32,_atomic_or_32)
+ALIAS(atomic_or_64,_atomic_or_64)
 ALIAS(atomic_or_uint,_atomic_or_32)
 ALIAS(atomic_or_ulong,_atomic_or_64)
 ALIAS(atomic_or_ptr,_atomic_or_64)
