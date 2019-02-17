@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.69 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: lapic.c,v 1.70 2019/02/17 05:06:16 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.69 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.70 2019/02/17 05:06:16 nonaka Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -604,11 +604,9 @@ extern void (*initclock_func)(void); /* XXX put in header file */
 void
 lapic_calibrate_timer(struct cpu_info *ci)
 {
-	struct timecounter *tc;
-	timecounter_get_t *tick_func;
-	unsigned int tval, mask, delta, initial_counter, initial_lapic;
-	unsigned int cur_counter, cur_lapic;
-	uint64_t seen, end, tmp, freq;
+	unsigned int seen, delta, initial_i8254, initial_lapic;
+	unsigned int cur_i8254, cur_lapic;
+	uint64_t tmp;
 	int i;
 	char tbuf[9];
 
@@ -616,19 +614,6 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		goto calibrate_done;
 
 	aprint_debug_dev(ci->ci_dev, "calibrating local timer\n");
-
-	tc = timecounter;
-	if (tc->tc_quality <= 0) {
-		tick_func = (timecounter_get_t *)gettick;
-		tval = rtclock_tval;
-		mask = ~0u;
-		freq = TIMER_FREQ;
-	} else {
-		tick_func = tc->tc_get_timecount;
-		tval = mask = tc->tc_counter_mask;
-		freq = tc->tc_frequency;
-	}
-	end = freq / 100;
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
@@ -641,22 +626,22 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	x86_disable_intr();
 
 	initial_lapic = lapic_gettick();
-	initial_counter = tick_func(tc) & mask;
+	initial_i8254 = gettick();
 
-	for (seen = 0; seen < end; seen += delta) {
-		cur_counter = tick_func(tc) & mask;
-		if (cur_counter > initial_counter)
-			delta = tval - (cur_counter - initial_counter);
+	for (seen = 0; seen < TIMER_FREQ / 100; seen += delta) {
+		cur_i8254 = gettick();
+		if (cur_i8254 > initial_i8254)
+			delta = rtclock_tval - (cur_i8254 - initial_i8254);
 		else
-			delta = initial_counter - cur_counter;
-		initial_counter = cur_counter;
+			delta = initial_i8254 - cur_i8254;
+		initial_i8254 = cur_i8254;
 	}
 	cur_lapic = lapic_gettick();
 
 	x86_enable_intr();
 
 	tmp = initial_lapic - cur_lapic;
-	lapic_per_second = (tmp * freq + seen / 2) / seen;
+	lapic_per_second = (tmp * TIMER_FREQ + seen / 2) / seen;
 
 calibrate_done:
 	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
