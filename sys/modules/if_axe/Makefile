@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/02/02 19:43:07 tls Exp $
+# $NetBSD: Makefile,v 1.3 2019/02/17 04:05:51 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,8 +7,6 @@
 KMOD=	if_axe
 IOCONF=	if_axe.ioconf
 SRCS=	if_axe.c
-
-WARNS=	4
 
 CPPFLAGS+=	-DINET
 

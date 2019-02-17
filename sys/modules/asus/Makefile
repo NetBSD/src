@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/02/16 08:08:14 jruoho Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:43 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,5 @@
 KMOD=	asus
 IOCONF=	asus.ioconf
 SRCS=	asus_acpi.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

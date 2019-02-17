@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/11/17 17:16:24 bad Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/17 04:05:59 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=	ubsec
 IOCONF=	ubsec.ioconf
 SRCS=	ubsec.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

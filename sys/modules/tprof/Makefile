@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/08/20 11:05:01 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:59 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -9,5 +9,7 @@ CPPFLAGS+=
 KMOD=	tprof
 IOCONF=	tprof.ioconf
 SRCS=	tprof.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

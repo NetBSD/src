@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/08/01 14:43:54 maxv Exp $
+#	$NetBSD: Makefile,v 1.6 2019/02/17 04:05:45 rin Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -19,5 +19,7 @@ SRCS+=	freebsd_sysctl.c freebsd_sysent.c freebsd_mod.c
 CPPFLAGS+=	-DEXEC_ELF32
 SRCS+=	freebsd_machdep.c freebsd_syscall.c freebsd_sigcode.S
 .endif
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
