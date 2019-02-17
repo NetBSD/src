@@ -1,5 +1,0 @@
-#	$NetBSD: NetBSD.compat.mips64eb,v 1.1 2019/02/09 21:43:23 mrg Exp $
-
-./usr/include/g++/bits/mips64
-./usr/include/g++/bits/mips32
-./usr/include/g++/bits/mipso32
