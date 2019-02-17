@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2018/11/26 15:02:11 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.9 2019/02/17 04:05:45 rin Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -28,5 +28,7 @@ SRCS+=	linux32_syscall.c linux32_uid16.c
 .PATH:	${S}/compat/linux/common
 SRCS+=	linux_oldmmap.c linux_exec_elf32.c
 .endif
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

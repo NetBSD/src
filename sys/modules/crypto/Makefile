@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/01/27 02:08:47 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.6 2019/02/17 04:05:46 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -9,5 +9,7 @@ CPPFLAGS+=	-DCOMPAT_50
 KMOD=	crypto
 IOCONF=	crypto.ioconf
 SRCS=	cryptodev.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

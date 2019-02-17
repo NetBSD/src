@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/08/07 01:59:43 pgoyette Exp $
+# $NetBSD: Makefile,v 1.3 2019/02/17 04:05:52 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -10,5 +10,7 @@ SRCS=		if_pppoe.c
 
 CPPFLAGS+=	-DPPPOE_SERVER
 CPPFLAGS+=	-DPPPOE_TERM_UNKNOWN_SESSIONS
+
+WARNS=		3
 
 .include <bsd.kmodule.mk>

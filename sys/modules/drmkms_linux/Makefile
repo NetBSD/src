@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2018/08/28 03:41:40 riastradh Exp $
+# $NetBSD: Makefile,v 1.12 2019/02/17 04:05:47 rin Exp $
 
 #
 # At some point this needs to turn into linux.kmod and a proper home for it
@@ -33,5 +33,7 @@ SRCS+=	linux_reservation.c
 SRCS+=	linux_work.c		# XXX Move me to linux.kmod.
 SRCS+=	linux_writecomb.c
 SRCS+=	linux_ww_mutex.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/05/19 13:41:21 ad Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:44 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=	cd9660
 SRCS=	cd9660_bmap.c cd9660_lookup.c cd9660_node.c cd9660_rrip.c \
 	cd9660_util.c cd9660_vfsops.c cd9660_vnops.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

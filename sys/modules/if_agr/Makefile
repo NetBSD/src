@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2018/01/16 07:34:12 knakahara Exp $
+# $NetBSD: Makefile,v 1.3 2019/02/17 04:05:51 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -26,5 +26,7 @@ if_agrsubr.c \
 if_agrtimer.c 
 
 CPPFLAGS+=	-DINET -DNVLAN=1
+
+WARNS=		3
 
 .include <bsd.kmodule.mk>

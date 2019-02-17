@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/02/24 12:17:51 he Exp $
+#	$NetBSD: Makefile,v 1.5 2019/02/17 04:05:45 rin Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -34,5 +34,7 @@ SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c linux_commons.c
 SRCS+=	linux_exec_machdep.c linux_exec_elf64.c
 SRCS+=	linux_sigcode.S linux_syscall.c linux_trap.c
 .endif
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

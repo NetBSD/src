@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/04/01 17:48:39 riastradh Exp $
+# $NetBSD: Makefile,v 1.3 2019/02/17 04:05:43 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -6,8 +6,6 @@
 
 KMOD=	apple_smc
 SRCS=	apple_smc.c
-
-WARNS=	4
 
 # XXX What's the right thing here?
 CPPFLAGS+=	-DDIAGNOSTIC

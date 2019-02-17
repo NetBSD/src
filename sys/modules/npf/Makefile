@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2018/09/29 14:41:35 rmind Exp $
+# $NetBSD: Makefile,v 1.23 2019/02/17 04:05:55 rin Exp $
 #
 # Public Domain.
 #
@@ -18,5 +18,7 @@ SRCS+=		nvlist.c nvpair.c nv_kern_netbsd.c dnvlist.c
 
 CPPFLAGS+=	-DINET6
 CPPFLAGS+=	-I${S}/external/bsd/libnv/dist
+
+WARNS=		3
 
 .include <bsd.kmodule.mk>

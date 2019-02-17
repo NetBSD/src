@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/08/28 15:48:19 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2019/02/17 04:05:46 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=	dbcool
 IOCONF=	dbcool.ioconf
 SRCS=	dbcool.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
