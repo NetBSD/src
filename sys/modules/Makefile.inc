@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.6 2011/09/11 18:38:02 mbalmer Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2019/02/17 03:57:31 rin Exp $
 
 S!=		cd ${.PARSEDIR}/..;pwd
 CPPFLAGS+=	-I${NETBSDSRCDIR}/common/include
 USE_FORT=	no
 WARNS?=		3
+
+# inexpensive kernel consistency checks
+# XXX to be commented out on release branch
+CPPFLAGS+=	-DDIAGNOSTIC
 
 .if !empty(IOCONF)
 _BSD_IOCONF_MK_USER_=1
