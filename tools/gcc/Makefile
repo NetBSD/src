@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.90 2019/02/03 11:57:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.91 2019/02/17 00:22:53 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -187,7 +187,6 @@ EXTRA_GCC_TARGETS=	i386-builtin-types.inc
 
 NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
-			--disable-symvers \
 			--disable-libstdcxx-pch \
 			--build=`${GCCDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
