@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.287 2018/09/16 20:21:56 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.288 2019/02/17 04:17:52 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.287 2018/09/16 20:21:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.288 2019/02/17 04:17:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1083,7 +1083,8 @@ ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
 	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 
-	KASSERTMSG(xfer->ux_state == XFER_BUSY,
+	KASSERTMSG(xfer->ux_state == XFER_BUSY ||
+	    xfer->ux_status == USBD_NOT_STARTED,
 	    "xfer=%p not busy, 0x%08x\n", xfer, xfer->ux_state);
 #ifdef DIAGNOSTIC
 	xfer->ux_state = XFER_FREE;
