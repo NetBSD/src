@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2019/02/04 08:18:08 mrg Exp $
+# $NetBSD: Makefile,v 1.3 2019/02/17 04:05:57 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -14,6 +14,8 @@ SRCS+=	savage_state.c
 
 CPPFLAGS+=	-I${S}/external/bsd/drm/dist/bsd-core \
 		-I${S}/external/bsd/drm/dist/shared-core
+
+WARNS=	3
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
 COPTS.savage_state.c+=	-Wno-error=implicit-fallthrough

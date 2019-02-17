@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/19 19:19:09 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/17 04:06:00 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -21,5 +21,7 @@ SRCS+=	v7fs_io_kern.c
 SRCS+=	v7fs_extern.c
 SRCS+=	v7fs_vnops.c
 SRCS+=	v7fs_vfsops.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

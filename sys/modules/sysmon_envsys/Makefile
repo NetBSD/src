@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2015/04/23 23:22:27 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:05:58 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -10,5 +10,7 @@ SRCS=	sysmon_envsys.c
 SRCS+=	sysmon_envsys_events.c
 SRCS+=	sysmon_envsys_tables.c
 SRCS+=	sysmon_envsys_util.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

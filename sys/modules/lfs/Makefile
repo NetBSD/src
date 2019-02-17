@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2015/05/31 15:48:02 hannken Exp $
+#	$NetBSD: Makefile,v 1.9 2019/02/17 04:05:53 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -15,5 +15,7 @@ SRCS=	lfs_vfsops.c lfs_vnops.c lfs_subr.c lfs_alloc.c lfs_balloc.c \
 
 SRCS+=	ulfs_bmap.c ulfs_dirhash.c ulfs_inode.c ulfs_lookup.c \
 	ulfs_snapshot.c ulfs_vfsops.c ulfs_vnops.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

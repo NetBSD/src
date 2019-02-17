@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/11 18:04:32 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/17 04:05:48 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,5 @@ SRCS+=	emdtv_board.c
 SRCS+=	emdtv_dtv.c
 SRCS+=	emdtv_i2c.c
 SRCS+=	emdtv_ir.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

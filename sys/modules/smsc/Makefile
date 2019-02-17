@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/07/31 16:19:21 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:05:58 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -9,7 +9,5 @@ IOCONF=	smsc.ioconf
 SRCS=	smsc.c
 
 #CPPFLAGS+=-DLMDEBUG
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

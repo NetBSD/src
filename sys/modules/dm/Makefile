@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2015/08/20 11:05:01 christos Exp $
+# $NetBSD: Makefile,v 1.7 2019/02/17 04:05:47 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -18,6 +18,8 @@ SUBDIR+= dm_target_mirror
 SUBDIR+= dm_target_snapshot
 SUBDIR+= dm_target_zero
 .endif
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
 .include <bsd.subdir.mk>

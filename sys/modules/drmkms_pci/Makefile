@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2018/08/28 03:48:38 riastradh Exp $
+# $NetBSD: Makefile,v 1.9 2019/02/17 04:05:47 rin Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -17,5 +17,7 @@ SRCS+=	linux_pci.c
 SRCS+=	drm_agpsupport.c
 SRCS+=	drm_pci.c
 SRCS+=	drm_pci_module.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

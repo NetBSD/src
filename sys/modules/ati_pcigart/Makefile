@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/08/28 15:56:21 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:05:43 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -9,5 +9,7 @@ KMOD=   ati_pcigart
 SRCS=	ati_pcigart.c
 
 CPPFLAGS+=	-I${S}/external/bsd/drm/dist/shared-core
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

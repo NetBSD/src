@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/02/13 16:03:16 maxv Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:55 rin Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -16,5 +16,7 @@ SRCS=	nvmm.c
 SRCS+=	nvmm_x86_svm.c nvmm_x86_svmfunc.S
 SRCS+=	nvmm_x86_vmx.c nvmm_x86_vmxfunc.S
 .endif
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

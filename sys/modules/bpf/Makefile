@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/06/07 01:06:27 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.6 2019/02/17 04:05:44 rin Exp $
 #
 
 .include "../Makefile.inc"
@@ -7,5 +7,7 @@
 
 KMOD=	bpf
 SRCS=	bpf.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

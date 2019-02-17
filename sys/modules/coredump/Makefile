@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/03/22 02:00:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2019/02/17 04:05:46 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -22,5 +22,7 @@ SRCS+=	uvm_coredump.c
 .PATH: ${S}/arch/powerpc/powerpc
 .endif
 SRCS+=	core_machdep.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

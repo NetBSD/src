@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/08/07 08:24:23 hannken Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:48 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -6,5 +6,7 @@
 
 KMOD=	efs
 SRCS=	efs_genfs.c efs_subr.c efs_vfsops.c efs_vnops.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

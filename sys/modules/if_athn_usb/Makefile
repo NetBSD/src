@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/03/30 18:59:38 christos Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:05:51 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -17,7 +17,7 @@ SRCS+=	arn9285.c
 SRCS+=	arn9287.c
 SRCS+=	arn9380.c
 
-WARNS=	4
+WARNS=	3
 
 CPPFLAGS+=	-DINET
 CPPFLAGS+=	-DNATHN_USB=1

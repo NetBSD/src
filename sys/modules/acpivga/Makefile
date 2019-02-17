@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/02/16 08:01:53 jruoho Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/17 04:05:42 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,5 @@
 KMOD=	acpivga
 IOCONF=	acpivga.ioconf
 SRCS=	acpi_display.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

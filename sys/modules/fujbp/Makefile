@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/02/20 08:37:50 jruoho Exp $
+# $NetBSD: Makefile,v 1.2 2019/02/17 04:05:49 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,5 @@
 KMOD=	fujbp
 IOCONF=	fujbp.ioconf
 SRCS=	fujbp_acpi.c
-
-WARNS=	4
 
 .include <bsd.kmodule.mk>

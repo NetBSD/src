@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2015/11/15 03:12:14 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/17 04:06:00 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -11,5 +11,7 @@ CPPFLAGS+=      -DWAPBL
 #CWARNFLAGS.clang=	-Wno-conversion
 
 SRCS=	vfs_wapbl.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>

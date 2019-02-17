@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.solmod,v 1.5 2018/05/28 21:05:01 chs Exp $
+#	$NetBSD: Makefile.solmod,v 1.6 2019/02/17 04:05:58 rin Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -63,8 +63,7 @@ SRCS+=	taskq.c
 SRCS+=	vfs.c
 SRCS+=	zone.c
 
-WARNS=		0
-NOGCCERROR=	yes
+WARNS=		1
 
 CWARNFLAGS+=	-Wall
 CWARNFLAGS+=	-Wno-unknown-pragmas

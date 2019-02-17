@@ -64,4 +64,6 @@ EXPORT_SYMS=	dtrace_register \
 		dtrace_unregister \
 		dtrace_probe_lookup
 
+WARNS=		3
+
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2019/01/27 02:08:45 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.23 2019/02/17 04:05:45 rin Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -61,5 +61,7 @@ SRCS+=	netbsd32_machdep.c
 .PATH:	${S}/arch/arm/arm32
 SRCS+=	netbsd32_machdep.c
 .endif
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
