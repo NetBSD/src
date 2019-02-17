@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.100 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.101 2019/02/17 04:17:52 rin Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.100 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.101 2019/02/17 04:17:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -811,7 +811,8 @@ slhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	slhci_mem_use(bus, -1);
 #endif
 #ifdef DIAGNOSTIC
-	if (xfer->ux_state != XFER_BUSY) {
+	if (xfer->ux_state != XFER_BUSY &&
+	    xfer->ux_status != USBD_NOT_STARTED) {
 		struct slhci_softc *sc = SLHCI_BUS2SC(bus);
 		printf("%s: slhci_freex: xfer=%p not busy, %#08x halted\n",
 		    SC_NAME(sc), xfer, xfer->ux_state);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.105 2019/01/22 15:02:33 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.106 2019/02/17 04:17:52 rin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.105 2019/01/22 15:02:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.106 2019/02/17 04:17:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2284,7 +2284,8 @@ xhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 #ifdef DIAGNOSTIC
-	if (xfer->ux_state != XFER_BUSY) {
+	if (xfer->ux_state != XFER_BUSY &&
+	    xfer->ux_status != USBD_NOT_STARTED) {
 		DPRINTFN(0, "xfer=%#jx not busy, 0x%08jx",
 		    (uintptr_t)xfer, xfer->ux_state, 0, 0);
 	}

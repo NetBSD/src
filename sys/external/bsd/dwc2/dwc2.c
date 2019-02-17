@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.57 2019/01/22 15:02:34 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.58 2019/02/17 04:17:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.57 2019/01/22 15:02:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.58 2019/02/17 04:17:52 rin Exp $");
 
 #include "opt_usb.h"
 
@@ -235,7 +235,8 @@ dwc2_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	DPRINTFN(10, "\n");
 
 #ifdef DIAGNOSTIC
-	if (xfer->ux_state != XFER_BUSY) {
+	if (xfer->ux_state != XFER_BUSY &&
+	    xfer->ux_status != USBD_NOT_STARTED) {
 		DPRINTF("xfer=%p not busy, 0x%08x\n", xfer, xfer->ux_state);
 	}
 	xfer->ux_state = XFER_FREE;
