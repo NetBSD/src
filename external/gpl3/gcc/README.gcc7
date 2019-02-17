@@ -1,4 +1,4 @@
-$NetBSD: README.gcc7,v 1.11 2019/02/09 01:29:38 mrg Exp $
+$NetBSD: README.gcc7,v 1.12 2019/02/17 06:22:58 mrg Exp $
 
 new stuff (from gcc 5):
 	cc1objcplus
@@ -6,7 +6,6 @@ new stuff (from gcc 5):
 	libmpx
 	liboffloadmic
 	libvtv
-	libitm
 
 arch/feature list.
 
@@ -22,40 +21,40 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
-aarch64		y	y	y	y		y		y	?	y
+aarch64		y	y	y	y		y		y	y	y
 alpha		y	y	y	y		y		y	?	y
 arm		y	y	y	y		y		y	?	n
 armeb		y	y	y	y		y		?	?	n
-earmv4		y	y	y	y		y		y	???	y
-earmv4eb	y	?	y	y		?		?	?	?
-earm		y	?	y	y		?		?	?	?
-earmeb		y	?	y	y		?		?	?	?
-earmhf		y	?	y	y		?		?	?	?
-earmhfeb	y	?	y	y		?		?	?	?
-earmv6		y	?	y	y		?		?	?	?
-earmv6eb	y	?	y	y		?		?	?	?
-earmv6hf	y	?	y	y		?		?	?	?
-earmv6hfeb	y	?	y	y		?		?	?	?
-earmv7		y	?	y	y		?		?	?	?
-earmv7eb	y	?	y	y		?		?	?	?
-earmv7hf	y	?	y	y		?		?	?	?
-earmv7hfeb	y	?	y	y		?		?	?	?
-hppa		y	y	y	y		y		?	?	y
-i386		y	y	y	y		y		y	?	y
+earmv4		y	y	y	y		y		y	???	n
+earmv4eb	y	?	y	y		?		?	?	n
+earm		y	?	y	y		?		?	?	n
+earmeb		y	?	y	y		?		?	?	n
+earmhf		y	?	y	y		?		?	?	n
+earmhfeb	y	?	y	y		?		?	?	n
+earmv6		y	?	y	y		?		?	?	n
+earmv6eb	y	?	y	y		?		?	?	n
+earmv6hf	y	?	y	y		?		?	?	n
+earmv6hfeb	y	?	y	y		?		?	?	n
+earmv7		y	?	y	y		?		?	?	n
+earmv7eb	y	?	y	y		?		?	?	n
+earmv7hf	y	?	y	y		?		?	?	n
+earmv7hfeb	y	?	y	y		?		?	?	n
+hppa		y	y	y	y		y		?	?	n
+i386		y	y	y	y		y		y	y	y
 ia64		y	?	?	y		n[2]		?	?	?
 m68000		y	y	y	y		y		?	?	?
-m68k		y	y	y	y		y[1]		?	?	?
+m68k		y	y	y	y		y[1]		y	?	?
 mipseb		y	y	y	y		y		?	?	y
 mipsel		y	y	y	y		y		?	?	y
-mips64eb	y	y	y	y		y		y	?	y
+mips64eb	y	y	y	y		y		y	y	y
 mips64el	y	y	y	y		y		?	?	y
-powerpc		y	y	y	y		y		y	?	n
+powerpc		y	y	y	y		y		y	?	y
 powerpc64	y	?	y	y		n[9]		?	?	?
 sh3eb		y	y	y	y		y		?	?	n
-sh3el		y	y	y	y		y		?	?	n
+sh3el		y	y	y	y		y		y	?	n
 sparc		y	y	y	y		y		y	?	y
 sparc64		y	y	y	y		y		y	?	y
-vax		y	y	y	y		y		?	?	?
+vax		y	y	y	y		y		n[3]	?	?
 x86_64		y	y	y	y		y		y	y	y
 --
 or1k		
@@ -67,6 +66,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 [1] - mac68k/intr.c has uncommited change.
 [2] - libgcc_s.so: undefined reference to `__netf2'
+[3] - vax dynamic seems busted, but /rescue works
 [9] - /usr/src6/external/gpl3/gcc/dist/libgcc/libgcc2.c:2036:1: error: unrecognizable insn:
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
