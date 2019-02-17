@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.265 2018/09/18 02:00:06 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.266 2019/02/17 04:17:52 rin Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.265 2018/09/18 02:00:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.266 2019/02/17 04:17:52 rin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1562,9 +1562,10 @@ ehci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	struct ehci_softc *sc = EHCI_BUS2SC(bus);
 	struct ehci_xfer *ex __diagused = EHCI_XFER2EXFER(xfer);
 
-	KASSERTMSG(xfer->ux_state == XFER_BUSY, "xfer %p state %d\n", xfer,
-	    xfer->ux_state);
-	KASSERT(ex->ex_isdone);
+	KASSERTMSG(xfer->ux_state == XFER_BUSY ||
+	    xfer->ux_status == USBD_NOT_STARTED,
+	    "xfer %p state %d\n", xfer, xfer->ux_state);
+	KASSERT(ex->ex_isdone || xfer->ux_status == USBD_NOT_STARTED);
 
 #ifdef DIAGNOSTIC
 	xfer->ux_state = XFER_FREE;

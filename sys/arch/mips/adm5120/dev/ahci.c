@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: ahci.c,v 1.17 2019/02/17 04:17:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.17 2019/02/17 04:17:52 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,8 @@ ahci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	DPRINTF(D_MEM, ("SLfreex"));
 
 #ifdef DIAGNOSTIC
-	if (xfer->ux_state != XFER_BUSY) {
+	if (xfer->ux_state != XFER_BUSY &&
+	    xfer->ux_status != USBD_NOT_STARTED) {
 		printf("ahci_freex: xfer=%p not busy, 0x%08x\n",
 			xfer, xfer->ux_state);
 		return;
