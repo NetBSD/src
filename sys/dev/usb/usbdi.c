@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.181 2019/01/10 22:13:07 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.182 2019/02/17 04:17:31 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.181 2019/01/10 22:13:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.182 2019/02/17 04:17:31 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -884,9 +884,13 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 		USBHIST_LOG(usbdebug, "pipe = %#jx xfer = %#jx "
 		    "(methods = %#jx)", (uintptr_t)pipe, (uintptr_t)xfer,
 		    (uintptr_t)pipe->up_methods, 0);
-		/* Make the HC abort it (and invoke the callback). */
-		pipe->up_methods->upm_abort(xfer);
-		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
+		if (xfer->ux_status == USBD_NOT_STARTED) {
+			SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
+		} else {
+			/* Make the HC abort it (and invoke the callback). */
+			pipe->up_methods->upm_abort(xfer);
+			/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
+		}
 	}
 	pipe->up_aborting = 0;
 	return USBD_NORMAL_COMPLETION;
