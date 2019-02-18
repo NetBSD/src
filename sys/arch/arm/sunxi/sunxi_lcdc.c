@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.4 2019/02/04 12:10:13 jmcneill Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.5 2019/02/18 02:42:27 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.4 2019/02/04 12:10:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.5 2019/02/18 02:42:27 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -244,13 +244,13 @@ sunxi_lcdc_tcon0_commit(struct drm_encoder *encoder)
 	TCON_WRITE(sc, TCON0_IO_POL_REG, val);
 
 	if (sc->sc_clk_ch[0] != NULL) {
-		error = clk_set_rate(sc->sc_clk_ch[1], mode->crtc_clock * 1000);
+		error = clk_set_rate(sc->sc_clk_ch[0], mode->crtc_clock * 1000);
 		if (error != 0) {
 			device_printf(sc->sc_dev, "failed to set CH0 PLL rate to %u Hz: %d\n",
 			    mode->crtc_clock * 1000, error);
 			return;
 		}
-		error = clk_enable(sc->sc_clk_ch[1]);
+		error = clk_enable(sc->sc_clk_ch[0]);
 		if (error != 0) {
 			device_printf(sc->sc_dev, "failed to enable CH0 PLL: %d\n", error);
 			return;
