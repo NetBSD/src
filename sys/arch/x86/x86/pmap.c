@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.323 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.324 2019/02/18 19:03:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.323 2019/02/14 08:18:25 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.324 2019/02/18 19:03:12 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5557,7 +5557,8 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 	pmap_unmap_pte();
 
 	*oattrs = pmap_ept_to_pp_attrs(opte);
-	*optep = opte;
+	if (optep != NULL)
+		*optep = opte;
 	return 0;
 }
 
