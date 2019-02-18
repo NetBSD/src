@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.63 2018/12/19 13:57:48 maxv Exp $
+#	$NetBSD: files.mvme68k,v 1.64 2019/02/18 01:12:23 thorpej Exp $
 
 # config file for mvme68k
 
@@ -97,6 +97,7 @@ file arch/mvme68k/mvme68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file arch/mvme68k/mvme68k/trap.c
 file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c			ddb | kgdb
+file arch/m68k/m68k/m68k_trap.c
 file arch/m68k/m68k/pmap_motorola.c
 file arch/m68k/m68k/procfs_machdep.c		procfs
 file arch/m68k/m68k/sys_machdep.c

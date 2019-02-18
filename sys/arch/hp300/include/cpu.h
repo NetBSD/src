@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70 2018/08/22 01:05:22 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71 2019/02/18 01:12:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,7 +120,6 @@ extern	uint8_t *intiobase, *intiolimit, *extiobase;
 extern	void (*vectab[])(void);
 
 /* locore.s functions */
-int	suline(void *, void *);
 void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));
