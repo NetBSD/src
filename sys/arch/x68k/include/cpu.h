@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2018/08/22 01:05:23 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 2019/02/18 01:12:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,7 +123,6 @@ extern uint8_t *intiolimit;
 void	dumpsys(void);
 
 /* locore.s functions */
-int	suline(void *, void *);
 void	loadustp(int);
 
 /* machdep.c functions */
