@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/01/09 16:55:23 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2019/02/18 19:30:18 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -43,6 +43,13 @@ SRCS=		assertions.c base32.c base64.c bind9.c buffer.c \
 CPPFLAGS.net.c=	-Wno-error
 SRCS+=		ipv6.c
 .endif
+
+# On certain flavors of arm we don't have native atomics only ones
+# libcall ones which are inefficient. But this should not be an
+# error anyway.
+CPPFLAGS.mem.c+= ${${ACTIVE_CC} == "clang":? -Wno-error-atomic-alignment :}
+
+
 
 LDADD+=-lz
 DPADD+=${LIBZ}
