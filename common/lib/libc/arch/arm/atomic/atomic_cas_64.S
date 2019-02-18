@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.10 2014/03/05 17:20:48 matt Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.11 2019/02/18 11:22:56 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,6 +70,8 @@ ENTRY_NP(_atomic_cas_64)
 END(_atomic_cas_64)
 
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
+ATOMIC_OP_ALIAS(atomic_cas_64_ni,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_64_ni,_atomic_cas_64)
 CRT_ALIAS(__sync_val_compare_and_swap_8,_atomic_cas_64)
 
 #endif /* _ARM_ARCH_6 */
