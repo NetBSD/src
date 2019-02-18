@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.24 2018/09/24 00:42:34 christos Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.25 2019/02/18 23:23:41 christos Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.24 2018/09/24 00:42:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.25 2019/02/18 23:23:41 christos Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -5318,6 +5318,7 @@ intel_display_port_power_domain(struct intel_encoder *intel_encoder)
 	case INTEL_OUTPUT_UNKNOWN:
 		/* Only DDI platforms should ever use this output type */
 		WARN_ON_ONCE(!HAS_DDI(dev));
+		/*FALLTHROUGH*/
 	case INTEL_OUTPUT_DISPLAYPORT:
 	case INTEL_OUTPUT_HDMI:
 	case INTEL_OUTPUT_EDP:
@@ -5352,6 +5353,7 @@ intel_display_port_aux_power_domain(struct intel_encoder *intel_encoder)
 		 * run the DP detection too.
 		 */
 		WARN_ON_ONCE(!HAS_DDI(dev));
+		/*FALLTHROUGH*/
 	case INTEL_OUTPUT_DISPLAYPORT:
 	case INTEL_OUTPUT_EDP:
 		intel_dig_port = enc_to_dig_port(&intel_encoder->base);
@@ -6922,6 +6924,7 @@ static int pnv_get_display_clock_speed(struct drm_device *dev)
 		return 200000;
 	default:
 		DRM_ERROR("Unknown pnv display core clock 0x%04x\n", gcfgc);
+		/*FALLTHROUGH*/
 	case GC_DISPLAY_CLOCK_133_MHZ_PNV:
 		return 133333;
 	case GC_DISPLAY_CLOCK_167_MHZ_PNV:
@@ -9957,6 +9960,7 @@ static bool haswell_get_pipe_config(struct intel_crtc *crtc,
 		switch (tmp & TRANS_DDI_EDP_INPUT_MASK) {
 		default:
 			WARN(1, "unknown pipe linked to edp transcoder\n");
+			/*FALLTHROUGH*/
 		case TRANS_DDI_EDP_INPUT_A_ONOFF:
 		case TRANS_DDI_EDP_INPUT_A_ON:
 			trans_edp_pipe = PIPE_A;
@@ -12248,6 +12252,7 @@ static bool check_digital_port_conflicts(struct drm_atomic_state *state)
 		case INTEL_OUTPUT_UNKNOWN:
 			if (WARN_ON(!HAS_DDI(dev)))
 				break;
+			/*FALLTHROUGH*/
 		case INTEL_OUTPUT_DISPLAYPORT:
 		case INTEL_OUTPUT_HDMI:
 		case INTEL_OUTPUT_EDP:

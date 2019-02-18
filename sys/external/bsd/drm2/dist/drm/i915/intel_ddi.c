@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ddi.c,v 1.8 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: intel_ddi.c,v 1.9 2019/02/18 23:23:41 christos Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.8 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.9 2019/02/18 23:23:41 christos Exp $");
 
 #include <linux/math64.h>
 
@@ -2228,6 +2228,7 @@ static uint32_t translate_signal_level(int signal_levels)
 	default:
 		DRM_DEBUG_KMS("Unsupported voltage swing/pre-emphasis level: 0x%x\n",
 			      signal_levels);
+		/*FALLTHROUGH*/
 	case DP_TRAIN_VOLTAGE_SWING_LEVEL_0 | DP_TRAIN_PRE_EMPH_LEVEL_0:
 		level = 0;
 		break;
