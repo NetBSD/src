@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.13 2018/10/08 17:58:52 christos Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.14 2019/02/18 23:23:41 christos Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.13 2018/10/08 17:58:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.14 2019/02/18 23:23:41 christos Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -1469,7 +1469,8 @@ nouveau_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_reg *mem)
 		if (drm->device.info.family < NV_DEVICE_INFO_V0_TESLA || !node->memtype)
 			/* untiled */
 			break;
-		/* fallthrough, tiled memory */
+		/* FALLTHROUGH */
+		/* tiled memory */
 	case TTM_PL_VRAM:
 		mem->bus.offset = mem->start << PAGE_SHIFT;
 		mem->bus.base = device->func->resource_addr(device, 1);
