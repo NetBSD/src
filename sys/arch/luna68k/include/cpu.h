@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.35 2018/08/22 01:05:22 msaitoh Exp $ */
+/* $NetBSD: cpu.h,v 1.36 2019/02/18 01:12:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,7 +120,6 @@ extern	u_int intiobase_phys, intiotop_phys;	/* XXX */
 void	dumpsys(void);
 
 /* locore.s functions */
-int	suline(void *, void *);
 void	loadustp(int);
 
 /* machdep.c functions */

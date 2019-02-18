@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.30 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: frame.h,v 1.31 2019/02/18 01:12:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -216,6 +216,10 @@ void	*getframe(struct lwp *, int, int *);
 void	buildcontext(struct lwp *, void *, void *);
 #ifdef COMPAT_16
 void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#endif
+
+#ifdef M68040
+int	m68040_writeback(struct frame *, int);
 #endif
 
 #if defined(__mc68010__)

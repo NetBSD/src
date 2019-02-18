@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2018/08/22 01:05:22 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72 2019/02/18 01:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,7 +164,6 @@ void	doboot(void);
 void	loadustp(int);
 void	physcopyseg(paddr_t, paddr_t);
 u_int	probeva(u_int, u_int);
-int	suline(void *, void *);
 
 /*
  * Prototypes from machdep.c:

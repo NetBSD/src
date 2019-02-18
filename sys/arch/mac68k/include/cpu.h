@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.100 2018/08/22 01:05:22 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.101 2019/02/18 01:12:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -289,7 +289,6 @@ int	mac68k_ring_bell(int, int, int);
 u_int	get_mapping(void);
 
 /* locore.s functions */
-int	suline(void *, void *);
 void	loadustp(int);
 
 /* fpu.c */
