@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.155 2019/02/17 12:24:17 isaki Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.156 2019/02/18 00:42:54 rin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -75,6 +75,7 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
 ./usr/libdata/debug/usr/tests/lib/libbpfjit
 ./usr/libdata/debug/usr/tests/lib/libc
+./usr/libdata/debug/usr/tests/lib/libc/atomic
 ./usr/libdata/debug/usr/tests/lib/libc/c063
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.807 2019/02/17 12:24:17 isaki Exp $
+# $NetBSD: mi,v 1.808 2019/02/18 00:42:55 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -89,6 +89,7 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libbpfjit				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libc/atomic				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug		compattestfile,atf
