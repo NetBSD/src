@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.8 2012/10/13 19:19:39 dholland Exp $	*/
+/*	$NetBSD: check.c,v 1.9 2019/02/18 19:35:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)check.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: check.c,v 1.8 2012/10/13 19:19:39 dholland Exp $");
+__RCSID("$NetBSD: check.c,v 1.9 2019/02/18 19:35:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ getmove(struct move *mm)
 					bflag = pnum;
 				return;
 			}
+			/*FALLTHROUGH*/
 		case -4:
 		case 0:
 			if (tflag)
