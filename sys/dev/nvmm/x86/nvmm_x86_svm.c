@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.26 2019/02/16 12:58:13 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.27 2019/02/18 12:17:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.26 2019/02/16 12:58:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.27 2019/02/18 12:17:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1048,25 +1048,18 @@ svm_exit_npf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	gpaddr_t gpa = cpudata->vmcb->ctrl.exitinfo2;
-	int error;
 
-	error = uvm_fault(&mach->vm->vm_map, gpa, VM_PROT_ALL);
-
-	if (error) {
-		exit->reason = NVMM_EXIT_MEMORY;
-		if (cpudata->vmcb->ctrl.exitinfo1 & PGEX_W)
-			exit->u.mem.perm = NVMM_EXIT_MEMORY_WRITE;
-		else if (cpudata->vmcb->ctrl.exitinfo1 & PGEX_X)
-			exit->u.mem.perm = NVMM_EXIT_MEMORY_EXEC;
-		else
-			exit->u.mem.perm = NVMM_EXIT_MEMORY_READ;
-		exit->u.mem.gpa = gpa;
-		exit->u.mem.inst_len = cpudata->vmcb->ctrl.inst_len;
-		memcpy(exit->u.mem.inst_bytes, cpudata->vmcb->ctrl.inst_bytes,
-		    sizeof(exit->u.mem.inst_bytes));
-	} else {
-		exit->reason = NVMM_EXIT_NONE;
-	}
+	exit->reason = NVMM_EXIT_MEMORY;
+	if (cpudata->vmcb->ctrl.exitinfo1 & PGEX_W)
+		exit->u.mem.perm = NVMM_EXIT_MEMORY_WRITE;
+	else if (cpudata->vmcb->ctrl.exitinfo1 & PGEX_X)
+		exit->u.mem.perm = NVMM_EXIT_MEMORY_EXEC;
+	else
+		exit->u.mem.perm = NVMM_EXIT_MEMORY_READ;
+	exit->u.mem.gpa = gpa;
+	exit->u.mem.inst_len = cpudata->vmcb->ctrl.inst_len;
+	memcpy(exit->u.mem.inst_bytes, cpudata->vmcb->ctrl.inst_bytes,
+	    sizeof(exit->u.mem.inst_bytes));
 }
 
 static void

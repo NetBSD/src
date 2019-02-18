@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.7 2019/02/13 16:03:16 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.8 2019/02/18 12:17:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.7 2019/02/13 16:03:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.8 2019/02/18 12:17:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,6 +478,24 @@ out:
 	return error;
 }
 
+static void
+nvmm_do_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    struct nvmm_exit *exit)
+{
+	struct vmspace *vm = mach->vm;
+
+	while (1) {
+		(*nvmm_impl->vcpu_run)(mach, vcpu, exit);
+
+		if (__predict_true(exit->reason != NVMM_EXIT_MEMORY)) {
+			break;
+		}
+		if (uvm_fault(&vm->vm_map, exit->u.mem.gpa, VM_PROT_ALL)) {
+			break;
+		}
+	}
+}
+
 static int
 nvmm_vcpu_run(struct nvmm_ioc_vcpu_run *args)
 {
@@ -493,7 +511,7 @@ nvmm_vcpu_run(struct nvmm_ioc_vcpu_run *args)
 	if (error)
 		goto out;
 
-	(*nvmm_impl->vcpu_run)(mach, vcpu, &args->exit);
+	nvmm_do_vcpu_run(mach, vcpu, &args->exit);
 	nvmm_vcpu_put(vcpu);
 
 out:
