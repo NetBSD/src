@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.4 2019/02/18 23:19:36 christos Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  *          Roy Spliet
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.4 2019/02/18 23:19:36 christos Exp $");
 
 #define gt215_clk(p) container_of((p), struct gt215_clk, base)
 #include "gt215.h"
@@ -135,8 +135,9 @@ read_pll(struct gt215_clk *clk, int idx, u32 pll)
 		sclk = read_clk(clk, 0x10 + idx, false);
 	}
 
-	if (M * P)
-		return sclk * N / (M * P);
+	u32 mp = M * P;
+	if (mp != 0)
+		return sclk * N / mp;
 
 	return 0;
 }
