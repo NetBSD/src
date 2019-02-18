@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.17 2011/06/12 03:35:40 rmind Exp $
+#	$NetBSD: files.cesfic,v 1.18 2019/02/18 01:12:22 thorpej Exp $
 #
 # cesfic-specific configuration info
 
@@ -58,6 +58,7 @@ file	arch/cesfic/cesfic/trap.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
