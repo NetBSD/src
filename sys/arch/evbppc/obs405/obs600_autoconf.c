@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.7 2013/11/21 13:52:27 kiyohara Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.8 2019/02/18 06:27:10 msaitoh Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.7 2013/11/21 13:52:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.8 2019/02/18 06:27:10 msaitoh Exp $");
 
 #include "dwctwo.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.7 2013/11/21 13:52:27 kiyohara
 #include <dev/usb/usbdivar.h>
 
 #include <dwc2/dwc2.h>
+#include <dwc2/dwc2var.h>
 #include "dwc2_core.h"
 
 /* This parameters was set from u-boot. */
