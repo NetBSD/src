@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.22 2012/06/03 21:42:46 joerg Exp $	*/
+/*	$NetBSD: devname.c,v 1.23 2019/02/18 20:27:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: devname.c,v 1.22 2012/06/03 21:42:46 joerg Exp $");
+__RCSID("$NetBSD: devname.c,v 1.23 2019/02/18 20:27:20 christos Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -95,7 +95,7 @@ devname_ptslookup(dev_t dev, mode_t type, char *path, size_t len)
 	if (type != S_IFCHR || pts == NODEVMAJOR || major(dev) != pts)
 		return ENOENT;
 
-	rv = snprintf(path, len, "%s%d", _PATH_DEV_PTS + sizeof(_PATH_DEV) - 1,
+	rv = snprintf(path, len, "%s%d", &_PATH_DEV_PTS[sizeof(_PATH_DEV) - 1],
 	    minor(dev));
 	if (rv < 0 || (size_t)rv >= len)
 		return ERANGE;
