@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.6 2019/02/16 12:40:31 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.7 2019/02/18 12:17:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.6 2019/02/16 12:40:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.7 2019/02/18 12:17:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1495,26 +1495,19 @@ vmx_exit_epf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 {
 	uint64_t perm;
 	gpaddr_t gpa;
-	int error;
 
 	vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &gpa);
 
-	error = uvm_fault(&mach->vm->vm_map, gpa, VM_PROT_ALL);
-
-	if (error) {
-		exit->reason = NVMM_EXIT_MEMORY;
-		vmx_vmread(VMCS_EXIT_QUALIFICATION, &perm);
-		if (perm & VMX_EPT_VIOLATION_WRITE)
-			exit->u.mem.perm = NVMM_EXIT_MEMORY_WRITE;
-		else if (perm & VMX_EPT_VIOLATION_EXECUTE)
-			exit->u.mem.perm = NVMM_EXIT_MEMORY_EXEC;
-		else
-			exit->u.mem.perm = NVMM_EXIT_MEMORY_READ;
-		exit->u.mem.gpa = gpa;
-		exit->u.mem.inst_len = 0;
-	} else {
-		exit->reason = NVMM_EXIT_NONE;
-	}
+	exit->reason = NVMM_EXIT_MEMORY;
+	vmx_vmread(VMCS_EXIT_QUALIFICATION, &perm);
+	if (perm & VMX_EPT_VIOLATION_WRITE)
+		exit->u.mem.perm = NVMM_EXIT_MEMORY_WRITE;
+	else if (perm & VMX_EPT_VIOLATION_EXECUTE)
+		exit->u.mem.perm = NVMM_EXIT_MEMORY_EXEC;
+	else
+		exit->u.mem.perm = NVMM_EXIT_MEMORY_READ;
+	exit->u.mem.gpa = gpa;
+	exit->u.mem.inst_len = 0;
 }
 
 static void
