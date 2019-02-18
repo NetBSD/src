@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.34 2018/12/19 13:57:49 maxv Exp $
+#	$NetBSD: files.news68k,v 1.35 2019/02/18 01:12:24 thorpej Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -23,6 +23,7 @@ file	arch/news68k/news68k/romcalls.S
 file	arch/news68k/news68k/trap.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
