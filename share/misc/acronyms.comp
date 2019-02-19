@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.230 2019/02/19 13:51:17 sevan Exp $
+$NetBSD: acronyms.comp,v 1.231 2019/02/19 16:31:38 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -289,6 +289,7 @@ CSR	control [and] status registers
 CSRG	Computer Systems Research Group
 CSS	cascading style sheets
 CSV	comma-separated values
+CTF	compact c type format
 CTM	close to metal
 CTR	counter [mode]
 CTS	clear to send
@@ -1091,8 +1092,8 @@ PMC	performance monitoring counters
 PME	power management event
 PMEG	page map entry group
 PMI	performance monitoring infrastructure
-PMIC	power management integrated circut
 PMI	platform management interrupt
+PMIC	power management integrated circut
 PMIO	port-mapped input/output
 PMT	photo-multiplier tube
 PMU	performance monitoring units
