@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.11.8.5 2019/02/19 15:05:52 martin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.11.8.6 2019/02/19 15:09:51 martin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.5 2019/02/19 15:05:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.6 2019/02/19 15:09:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -950,7 +950,6 @@ axen_rx_list_init(struct axen_softc *sc)
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
 		c = &cd->axen_rx_chain[i];
 		c->axen_sc = sc;
-		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_RX],
 			    sc->axen_rx_bufsz, 0, 0, &c->axen_xfer);
@@ -976,7 +975,6 @@ axen_tx_list_init(struct axen_softc *sc)
 	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
 		c = &cd->axen_tx_chain[i];
 		c->axen_sc = sc;
-		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_TX],
 			    sc->axen_tx_bufsz, USBD_FORCE_SHORT_XFER, 0,
@@ -1021,10 +1019,9 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		if (usbd_ratecheck(&sc->axen_rx_notice)) {
+		if (usbd_ratecheck(&sc->axen_rx_notice))
 			aprint_error_dev(sc->axen_dev, "usb errors on rx: %s\n",
 			    usbd_errstr(status));
-		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->axen_ep[AXEN_ENDPT_RX]);
 		goto done;
@@ -1033,6 +1030,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	if (total_len < sizeof(pkt_hdr)) {
+		aprint_error_dev(sc->axen_dev, "rxeof: too short transfer\n");
 		ifp->if_ierrors++;
 		goto done;
 	}
@@ -1054,6 +1052,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 
 	/* sanity check */
 	if (hdr_offset > total_len) {
+		aprint_error_dev(sc->axen_dev, "rxeof: invalid hdr offset\n");
 		ifp->if_ierrors++;
 		usbd_delay_ms(sc->axen_udev, 100);
 		goto done;
@@ -1090,12 +1089,13 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
 		   device_xname(sc->axen_dev), pkt_count, pkt_hdr, pkt_len));
 
-		if ((pkt_hdr & AXEN_RXHDR_CRC_ERR) ||
-	    	    (pkt_hdr & AXEN_RXHDR_DROP_ERR)) {
+		if (pkt_hdr & (AXEN_RXHDR_CRC_ERR | AXEN_RXHDR_DROP_ERR)) {
 	    		ifp->if_ierrors++;
 			/* move to next pkt header */
-			DPRINTF(("%s: crc err (pkt#%d)\n",
-			    device_xname(sc->axen_dev), pkt_count));
+			DPRINTF(("%s: %s err (pkt#%d)\n",
+			    device_xname(sc->axen_dev),
+			    (pkt_hdr & AXEN_RXHDR_CRC_ERR) ? "crc" : "drop",
+			    pkt_count));
 			goto nextpkt;
 		}
 
@@ -1208,8 +1208,9 @@ axen_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			return;
 		}
 		ifp->if_oerrors++;
-		aprint_error_dev(sc->axen_dev, "usb error on tx: %s\n",
-		    usbd_errstr(status));
+		if (usbd_ratecheck(&sc->axen_tx_notice))
+			aprint_error_dev(sc->axen_dev, "usb error on tx: %s\n",
+			    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->axen_ep[AXEN_ENDPT_TX]);
 		splx(s);
@@ -1547,6 +1548,7 @@ static void
 axen_stop(struct ifnet *ifp, int disable)
 {
 	struct axen_softc *sc = ifp->if_softc;
+	struct axen_chain *c;
 	usbd_status err;
 	int i;
 	uint16_t rxmode, wval;
@@ -1595,17 +1597,19 @@ axen_stop(struct ifnet *ifp, int disable)
 
 	/* Free RX resources. */
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_rx_chain[i].axen_xfer != NULL) {
-			usbd_destroy_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_rx_chain[i].axen_xfer = NULL;
+		c = &sc->axen_cdata.axen_rx_chain[i];
+		if (c->axen_xfer != NULL) {
+			usbd_destroy_xfer(c->axen_xfer);
+			c->axen_xfer = NULL;
 		}
 	}
 
 	/* Free TX resources. */
 	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_tx_chain[i].axen_xfer != NULL) {
-			usbd_destroy_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
+		c = &sc->axen_cdata.axen_tx_chain[i];
+		if (c->axen_xfer != NULL) {
+			usbd_destroy_xfer(c->axen_xfer);
+			c->axen_xfer = NULL;
 		}
 	}
 

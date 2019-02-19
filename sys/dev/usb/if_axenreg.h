@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.3.10.1 2019/02/19 15:05:52 martin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.3.10.2 2019/02/19 15:09:51 martin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
  *                     |    |     ++-----L3_type (1:ipv4, 0/2:ipv6)
  *        pkt_len(13)  |    |     ||+ ++-L4_type(0: icmp, 1: UDP, 4: TCP)
  * |765|43210 76543210|7654 3210 7654 3210|
- *  |+-Drop_err               |+-L4_err |+-L4_CSUM_ERR
- *  +--crc_err                +--L3_err +--L3_CSUM_ERR
+ *  | +-crc_err               |+-L4_err |+-L4_CSUM_ERR
+ *  +--drop_err                +--L3_err +--L3_CSUM_ERR
  *
  * ex) pkt_hdr 0x00680820
  *      drop_err, crc_err: none
@@ -55,8 +55,8 @@
  *  0x0850: ipv6 tcp (ssh)		0000 1000 0101 0000
  */
 
-#define	AXEN_RXHDR_CRC_ERR	(1 << 31)
-#define	AXEN_RXHDR_DROP_ERR	(1 << 30)
+#define	AXEN_RXHDR_DROP_ERR	(1 << 31)
+#define	AXEN_RXHDR_CRC_ERR	(1 << 29)
 #define AXEN_RXHDR_MCAST	(1 << 15)
 #define AXEN_RXHDR_RX_OK	(1 << 11)
 #define	AXEN_RXHDR_L3_ERR	(1 << 9)
@@ -239,17 +239,13 @@ struct axen_chain {
 	struct axen_softc	*axen_sc;
 	struct usbd_xfer	*axen_xfer;
 	uint8_t			*axen_buf;
-	int			axen_accum;
-	int			axen_idx;
 };
 
 struct axen_cdata {
 	struct axen_chain	axen_tx_chain[AXEN_TX_LIST_CNT];
 	struct axen_chain	axen_rx_chain[AXEN_RX_LIST_CNT];
 	int			axen_tx_prod;
-	int			axen_tx_cons;
 	int			axen_tx_cnt;
-	int			axen_rx_prod;
 };
 
 struct axen_qctrl {
@@ -296,6 +292,7 @@ struct axen_softc {
 	uint8_t			axen_ipgs[3];
 	int			axen_phyno;
 	struct timeval		axen_rx_notice;
+	struct timeval		axen_tx_notice;
 	u_int			axen_rx_bufsz;
 	u_int			axen_tx_bufsz;
 	int			axen_rev;
