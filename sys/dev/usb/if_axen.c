@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.11.8.3 2019/02/07 06:14:34 msaitoh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.11.8.4 2019/02/19 14:51:24 martin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.3 2019/02/07 06:14:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.4 2019/02/19 14:51:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -587,7 +587,6 @@ axen_ax88179_init(struct axen_softc *sc)
 	/* Set RX control register */
 	ctl = AXEN_RXCTL_IPE | AXEN_RXCTL_DROPCRCERR | AXEN_RXCTL_AUTOB;
 	ctl |= AXEN_RXCTL_ACPT_PHY_MCAST | AXEN_RXCTL_ACPT_ALL_MCAST;
-	ctl |= AXEN_RXCTL_START;
 	wval = htole16(ctl);
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MAC_RXCTL, &wval);
 
@@ -1212,15 +1211,8 @@ axen_tick_task(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (sc->axen_link == 0 &&
-	    (mii->mii_media_status & IFM_ACTIVE) != 0 &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-		DPRINTF(("%s: %s: got link\n", device_xname(sc->axen_dev),
-		    __func__));
-		sc->axen_link++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			axen_start(ifp);
-	}
+	if (sc->axen_link == 0)
+		axen_miibus_statchg(ifp);
 
 	callout_schedule(&sc->axen_stat_ch, hz);
 
@@ -1479,8 +1471,18 @@ axen_stop(struct ifnet *ifp, int disable)
 	struct axen_softc *sc = ifp->if_softc;
 	usbd_status err;
 	int i;
+	uint16_t rxmode, wval;
 
 	axen_reset(sc);
+
+	/* Disable receiver, set RX mode */
+	axen_lock_mii(sc);
+	axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_MAC_RXCTL, &wval);
+	rxmode = le16toh(wval);
+	rxmode &= ~AXEN_RXCTL_START;
+	wval = htole16(rxmode);
+	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MAC_RXCTL, &wval);
+	axen_unlock_mii(sc);
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
