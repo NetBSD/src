@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.524 2019/02/05 13:50:10 kamil Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.525 2019/02/19 06:55:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.524 2019/02/05 13:50:10 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.525 2019/02/19 06:55:28 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -275,6 +275,15 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	    (mp->mnt_flag & MNT_RDONLY) == 0 &&
 	    (mp->mnt_iflag & IMNT_CAN_RWTORO) == 0) {
 		error = EOPNOTSUPP;	/* Needs translation */
+		goto out;
+	}
+
+	/*
+	 * Enabling MNT_UNION requires a covered mountpoint and
+	 * must not happen on the root mount.
+	 */
+	if ((flags & MNT_UNION) != 0 && mp->mnt_vnodecovered == NULLVP) {
+		error = EOPNOTSUPP;
 		goto out;
 	}
 
