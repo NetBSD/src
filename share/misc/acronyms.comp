@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.229 2019/02/01 21:23:22 sevan Exp $
+$NetBSD: acronyms.comp,v 1.230 2019/02/19 13:51:17 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1091,6 +1091,7 @@ PMC	performance monitoring counters
 PME	power management event
 PMEG	page map entry group
 PMI	performance monitoring infrastructure
+PMIC	power management integrated circut
 PMI	platform management interrupt
 PMIO	port-mapped input/output
 PMT	photo-multiplier tube
