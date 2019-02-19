@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sdvo.c,v 1.11 2019/02/18 23:23:41 christos Exp $	*/
+/*	$NetBSD: intel_sdvo.c,v 1.12 2019/02/19 00:30:16 christos Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -28,7 +28,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.11 2019/02/18 23:23:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.12 2019/02/19 00:30:16 christos Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -1278,7 +1278,6 @@ static void intel_sdvo_pre_enable(struct intel_encoder *intel_encoder)
 	switch (crtc->config->pixel_multiplier) {
 	default:
 		WARN(1, "unknown pixel multiplier specified\n");
-		/*FALLTHROUGH*/
 	case 1: rate = SDVO_CLOCK_RATE_MULT_1X; break;
 	case 2: rate = SDVO_CLOCK_RATE_MULT_2X; break;
 	case 4: rate = SDVO_CLOCK_RATE_MULT_4X; break;
@@ -2229,19 +2228,14 @@ intel_sdvo_guess_ddc_bus(struct intel_sdvo *sdvo)
 	switch (sdvo->controlled_output) {
 	case SDVO_OUTPUT_LVDS1:
 		mask |= SDVO_OUTPUT_LVDS1;
-		/*FALLTHROUGH*/
 	case SDVO_OUTPUT_LVDS0:
 		mask |= SDVO_OUTPUT_LVDS0;
-		/*FALLTHROUGH*/
 	case SDVO_OUTPUT_TMDS1:
 		mask |= SDVO_OUTPUT_TMDS1;
-		/*FALLTHROUGH*/
 	case SDVO_OUTPUT_TMDS0:
 		mask |= SDVO_OUTPUT_TMDS0;
-		/*FALLTHROUGH*/
 	case SDVO_OUTPUT_RGB1:
 		mask |= SDVO_OUTPUT_RGB1;
-		/*FALLTHROUGH*/
 	case SDVO_OUTPUT_RGB0:
 		mask |= SDVO_OUTPUT_RGB0;
 		break;
