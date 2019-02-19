@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29 2010/12/20 00:25:36 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.30 2019/02/19 00:34:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2010/12/20 00:25:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2019/02/19 00:34:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,9 @@ void	intr_computeipl(void);
 void
 intr_init(void)
 {
-	extern long	intrnames;
+	extern char	intrnames[MAX_INAME_LENGTH];
+	extern char	eintrnames[] __diagused;
 	const char	*inames;
-	char		*g_inames;
 
 	ipl2psl_table[IPL_NONE]       = 0;
 	ipl2psl_table[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
@@ -111,7 +111,6 @@ intr_init(void)
 	ipl2psl_table[IPL_SOFTBIO]    = PSL_S|PSL_IPL1;
 	ipl2psl_table[IPL_HIGH]       = PSL_S|PSL_IPL7;
 
-	g_inames = (char *) &intrnames;
 	if (mac68k_machine.aux_interrupts) {
 		inames = AUX_INAMES;
 
@@ -132,7 +131,9 @@ intr_init(void)
 		}
 	}
 
-	memcpy(g_inames, inames, MAX_INAME_LENGTH);
+	KASSERT(MAX_INAME_LENGTH <=
+		((uintptr_t)eintrnames - (uintptr_t)intrnames));
+	memcpy(intrnames, inames, MAX_INAME_LENGTH);
 
 	intr_computeipl();
 
