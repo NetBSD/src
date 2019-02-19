@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.53 2019/02/08 09:17:12 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.54 2019/02/19 05:47:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.53 2019/02/08 09:17:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.54 2019/02/19 05:47:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,15 +168,30 @@ static const struct mii_phydesc makphys[] = {
 #define MAKARG_PDOWN	true	/* Power DOWN */
 #define MAKARG_PUP	false	/* Power UP */
 
+static bool
+makphy_isi210(device_t parent, struct mii_attach_args *ma)
+{
+
+	/* I21[01]'s model number is 0 */
+	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxMARVELL)
+	    && (MII_MODEL(ma->mii_id2) == 0)
+	    && (device_is_a(parent, "wm")))
+		return true;
+	return false;
+}
+
 static int
 makphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, makphys) != NULL)
-		return (10);
+		return 10;
 
-	return (0);
+	if (makphy_isi210(parent, ma))
+		return 10;
+		
+	return 0;
 }
 
 static void
@@ -186,11 +201,18 @@ makphyattach(device_t parent, device_t self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
+	const char *name;
 	uint16_t reg;
 
 	mpd = mii_phy_match(ma, makphys);
 	aprint_naive(": Media interface\n");
-	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
+	if (mpd)
+		name = mpd->mpd_name;
+	else if (makphy_isi210(parent, ma))
+		name = MII_STR_xxMARVELL_I210;
+	else
+		panic("Unknown PHY");
+	aprint_normal(": %s, rev. %d\n", name, MII_REV(ma->mii_id2));
 
 	sc->mii_dev = self;
 	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
@@ -316,7 +338,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	uint16_t bmcr;
 
 	if (!device_is_active(sc->mii_dev))
-		return (ENXIO);
+		return ENXIO;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -324,7 +346,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not polling our PHY instance, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 		break;
 
 	case MII_MEDIACHG:
@@ -335,7 +357,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			PHY_READ(sc, MII_BMCR, &bmcr);
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_ISO);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -367,15 +389,15 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not currently selected, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
+			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+			return 0;
 		break;
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		return (0);
+		return 0;
 	}
 
 	/* Update the media status. */
@@ -383,7 +405,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	mii_phy_update(sc, cmd);
-	return (0);
+	return 0;
 }
 
 static void
