@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.107 2019/02/12 09:28:51 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.108 2019/02/19 15:13:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2475,4 +2475,28 @@ sys/dev/pci/if_wm.c				1.622,1.624,1.625
 	I21[01]'s RAL size is not 15 but 16.
 	Fix a bug that WOL didn't work on some chips.
 	[msaitoh, ticket #1189]
+
+sys/dev/usb/if_axen.c				1.21,1.22
+
+	axen(4): improve stability.
+	[rin, ticket #1190]
+
+sys/dev/usb/if_axen.c				1.19,1.20,1.23,1.25,
+						1.28-1.31,1.36
+sys/dev/usb/if_axenreg.h			1.4,1.5,1.8
+
+	axen(4): improve performance, support TSOv4.
+	[rin, ticket #1191]
+
+sys/dev/usb/if_axen.c				1.24,1.27,1.32,1.35,1.37
+sys/dev/usb/if_axenreg.h			1.10-1.11
+sys/dev/usb/if_axenreg.h			1.6
+
+	axen(4): style and cosmetic changes to reduce diff to head.
+	[rin, ticket #1192]
+
+sys/arch/evbppc/obs405/obs600_autoconf.c	1.8
+
+	Fix compile error.
+	[msaitoh, ticket #1193]
 
