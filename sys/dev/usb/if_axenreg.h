@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.3 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.3.10.1 2019/02/19 15:05:52 martin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 #define   AXEN_RXHDR_L4_TYPE_TCP	0x4
 
 /* L3 packet type (2bit) */
-#define AXEN_RXHDR_L3_TYPE_MASK	0x00000600
+#define AXEN_RXHDR_L3_TYPE_MASK	0x00000060
 #define AXEN_RXHDR_L3_TYPE_OFFSET	5
 #define   AXEN_RXHDR_L3_TYPE_UNDEF	0x0
 #define   AXEN_RXHDR_L3_TYPE_IPV4	0x1
@@ -153,7 +153,7 @@
 #define     AXEN_RXCTL_ACPT_ALL_MCAST		  0x0002
 #define     AXEN_RXCTL_HA8B			  0x0004
 #define     AXEN_RXCTL_AUTOB			  0x0008
-#define     AXEN_RXCTL_ACPT_BCAST		  0x0010
+#define     AXEN_RXCTL_ACPT_MCAST		  0x0010
 #define     AXEN_RXCTL_ACPT_PHY_MCAST		  0x0020
 #define     AXEN_RXCTL_START			  0x0080
 #define     AXEN_RXCTL_DROPCRCERR		  0x0100
@@ -296,7 +296,8 @@ struct axen_softc {
 	uint8_t			axen_ipgs[3];
 	int			axen_phyno;
 	struct timeval		axen_rx_notice;
-	u_int			axen_bufsz;
+	u_int			axen_rx_bufsz;
+	u_int			axen_tx_bufsz;
 	int			axen_rev;
 
 #define sc_if	axen_ec.ec_if
