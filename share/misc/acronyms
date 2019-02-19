@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.276 2018/12/12 22:27:03 dholland Exp $
+$NetBSD: acronyms,v 1.277 2019/02/19 13:51:16 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -98,6 +98,7 @@ COTS	commercial off-the-shelf
 CPC	cost per click
 CPE	customer premises equipment
 CRM	customer relationship management
+CTF	capture the flag
 CTN	can't talk now
 CU	see you
 CUL	see you later
