@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.242 2019/01/03 10:16:43 maxv Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.243 2019/02/20 19:42:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.242 2019/01/03 10:16:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.243 2019/02/20 19:42:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,7 +750,7 @@ fd_dup2(file_t *fp, unsigned newfd, int flags)
 	fdfile_t *ff;
 	fdtab_t *dt;
 
-	if (flags & ~(O_CLOEXEC|O_NONBLOCK))
+	if (flags & ~(O_CLOEXEC|O_NONBLOCK|O_NOSIGPIPE))
 		return EINVAL;
 	/*
 	 * Ensure there are enough slots in the descriptor table,
@@ -791,7 +791,7 @@ fd_dup2(file_t *fp, unsigned newfd, int flags)
 	mutex_exit(&fdp->fd_lock);
 
 	dt->dt_ff[newfd]->ff_exclose = (flags & O_CLOEXEC) != 0;
-	fp->f_flag |= flags & FNONBLOCK;
+	fp->f_flag |= flags & (FNONBLOCK|FNOSIGPIPE);
 	/* Slot is now allocated.  Insert copy of the file. */
 	fd_affix(curproc, fp, newfd);
 	if (ff != NULL) {
