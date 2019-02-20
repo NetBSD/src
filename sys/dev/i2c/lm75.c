@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.33 2018/06/26 06:03:57 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.34 2019/02/20 18:19:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.33 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.34 2019/02/20 18:19:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ static int	sysctl_lm75_temp(SYSCTLFN_ARGS);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ "i2c-lm75",			0 },
+	{ "lm75",			0 },
 	{ "ds1775",			0 },
 	/*
 	 * see XXX in _attach() below: add code once non-lm75 matches are
