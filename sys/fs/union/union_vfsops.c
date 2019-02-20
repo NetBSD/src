@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.78 2017/04/01 19:35:56 riastradh Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.79 2019/02/20 10:05:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.78 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.79 2019/02/20 10:05:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,13 +246,12 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	mp->mnt_data = um;
 	vfs_getnewfsid(mp);
+	mp->mnt_lower = um->um_uppervp->v_mount;
 
 	error = set_statvfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		goto bad;
-
-	mp->mnt_lower = um->um_uppervp->v_mount;
 
 	switch (um->um_op) {
 	case UNMNT_ABOVE:
