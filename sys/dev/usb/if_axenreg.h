@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.3.10.2 2019/02/19 15:09:51 martin Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.3.10.3 2019/02/20 09:49:48 martin Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -289,7 +289,6 @@ struct axen_softc {
 
 	int			axen_link;
 
-	uint8_t			axen_ipgs[3];
 	int			axen_phyno;
 	struct timeval		axen_rx_notice;
 	struct timeval		axen_tx_notice;
