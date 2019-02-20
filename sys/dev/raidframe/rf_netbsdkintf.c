@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.374 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.375 2019/02/20 10:04:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.374 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.375 2019/02/20 10:04:28 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -2838,6 +2838,7 @@ rf_find_raid_components(void)
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
 
 			if (error) {
@@ -2858,7 +2859,6 @@ rf_find_raid_components(void)
 					printf("RAIDframe: can't get disk size"
 					    " for dev %s (%d)\n",
 					    device_xname(dv), error);
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 				vput(vp);
 				continue;
@@ -2870,19 +2870,18 @@ rf_find_raid_components(void)
 				if (error) {
 					printf("RAIDframe: can't get wedge info for "
 					    "dev %s (%d)\n", device_xname(dv), error);
-					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 					vput(vp);
 					continue;
 				}
 
 				if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0) {
-					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 					vput(vp);
 					continue;
 				}
 					
+				VOP_UNLOCK(vp);
 				ac_list = rf_get_component(ac_list, dev, vp,
 				    device_xname(dv), dkw.dkw_size, numsecs, secsize);
 				rf_part_found = 1; /*There is a raid component on this disk*/
@@ -2903,7 +2902,6 @@ rf_find_raid_components(void)
 
 			/* don't need this any more.  We'll allocate it again
 			   a little later if we really do... */
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 			vput(vp);
 
@@ -2922,12 +2920,14 @@ rf_find_raid_components(void)
 				if (bdevvp(dev, &vp))
 					panic("RAID can't alloc vnode");
 
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_OPEN(vp, FREAD, NOCRED);
 				if (error) {
 					/* Whatever... */
 					vput(vp);
 					continue;
 				}
+				VOP_UNLOCK(vp);
 				snprintf(cname, sizeof(cname), "%s%c",
 				    device_xname(dv), 'a' + i);
 				ac_list = rf_get_component(ac_list, dev, vp, cname,
@@ -2949,12 +2949,15 @@ rf_find_raid_components(void)
 				if (bdevvp(dev, &vp))
 					panic("RAID can't alloc vnode");
 
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
 				error = VOP_OPEN(vp, FREAD, NOCRED);
 				if (error) {
 					/* Whatever... */
 					vput(vp);
 					continue;
 				}
+				VOP_UNLOCK(vp);
 				snprintf(cname, sizeof(cname), "%s%c",
 				    device_xname(dv), 'a' + RAW_PART);
 				ac_list = rf_get_component(ac_list, dev, vp, cname,
