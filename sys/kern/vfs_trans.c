@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.51 2018/10/05 09:51:55 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.52 2019/02/20 10:07:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.51 2018/10/05 09:51:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.52 2019/02/20 10:07:27 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -104,6 +104,8 @@ static bool cow_state_change_done(const struct mount *);
 static void cow_change_enter(const struct mount *);
 static void cow_change_done(const struct mount *);
 
+extern struct mount *dead_rootmount;
+
 /*
  * Initialize.
  */
@@ -135,8 +137,6 @@ fstrans_normalize_mount(struct mount *mp)
 	while (mp && mp->mnt_lower)
 		mp = mp->mnt_lower;
 	if (mp == NULL)
-		return NULL;
-	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
 		return NULL;
 	return mp;
 }
@@ -182,7 +182,6 @@ fstrans_mount_dtor(struct mount *mp)
 	KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
 	KASSERT(LIST_FIRST(&fmi->fmi_cow_handler) == NULL);
 
-	mp->mnt_iflag &= ~IMNT_HAS_TRANS;
 	mp->mnt_transinfo = NULL;
 
 	mutex_exit(&fstrans_mount_lock);
@@ -207,7 +206,6 @@ fstrans_mount(struct mount *mp)
 
 	mutex_enter(&fstrans_mount_lock);
 	mp->mnt_transinfo = newfmi;
-	mp->mnt_iflag |= IMNT_HAS_TRANS;
 	mutex_exit(&fstrans_mount_lock);
 
 	vfs_ref(mp);
@@ -221,9 +219,6 @@ fstrans_mount(struct mount *mp)
 void
 fstrans_unmount(struct mount *mp)
 {
-
-	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
-		return;
 
 	KASSERT(mp->mnt_transinfo != NULL);
 
@@ -361,6 +356,11 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	struct fstrans_lwp_info *fli;
 	struct fstrans_mount_info *fmi;
 
+#ifndef FSTRANS_DEAD_ENABLED
+	if (mp == dead_rootmount)
+		return 0;
+#endif
+
 	if ((lmp = fstrans_normalize_mount(mp)) == NULL)
 		return 0;
 
@@ -444,6 +444,11 @@ fstrans_done(struct mount *mp)
 	struct fstrans_lwp_info *fli;
 	struct fstrans_mount_info *fmi;
 
+#ifndef FSTRANS_DEAD_ENABLED
+	if (mp == dead_rootmount)
+		return;
+#endif
+
 	if ((mp = fstrans_normalize_mount(mp)) == NULL)
 		return;
 	if ((fli = fstrans_get_lwp_info(mp, false)) == NULL)
@@ -481,6 +486,8 @@ int
 fstrans_is_owner(struct mount *mp)
 {
 	struct fstrans_lwp_info *fli;
+
+	KASSERT(mp != dead_rootmount);
 
 	if ((mp = fstrans_normalize_mount(mp)) == NULL)
 		return 0;
@@ -532,6 +539,8 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 	enum fstrans_state old_state;
 	struct fstrans_mount_info *fmi;
 
+	KASSERT(mp != dead_rootmount);
+
 	fmi = mp->mnt_transinfo;
 	old_state = fmi->fmi_state;
 	if (old_state == new_state)
@@ -574,6 +583,8 @@ fstrans_getstate(struct mount *mp)
 {
 	struct fstrans_mount_info *fmi;
 
+	KASSERT(mp != dead_rootmount);
+
 	fmi = mp->mnt_transinfo;
 	KASSERT(fmi != NULL);
 
@@ -587,6 +598,8 @@ int
 vfs_suspend(struct mount *mp, int nowait)
 {
 	int error;
+
+	KASSERT(mp != dead_rootmount);
 
 	if ((mp = fstrans_normalize_mount(mp)) == NULL)
 		return EOPNOTSUPP;
@@ -608,6 +621,8 @@ vfs_suspend(struct mount *mp, int nowait)
 void
 vfs_resume(struct mount *mp)
 {
+
+	KASSERT(mp != dead_rootmount);
 
 	mp = fstrans_normalize_mount(mp);
 	KASSERT(mp != NULL);
@@ -702,8 +717,7 @@ fscow_establish(struct mount *mp, int (*func)(void *, struct buf *, bool),
 	struct fstrans_mount_info *fmi;
 	struct fscow_handler *newch;
 
-	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
-		return EINVAL;
+	KASSERT(mp != dead_rootmount);
 
 	fmi = mp->mnt_transinfo;
 	KASSERT(fmi != NULL);
@@ -729,8 +743,7 @@ fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *, bool),
 	struct fstrans_mount_info *fmi;
 	struct fscow_handler *hp = NULL;
 
-	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
-		return EINVAL;
+	KASSERT(mp != dead_rootmount);
 
 	fmi = mp->mnt_transinfo;
 	KASSERT(fmi != NULL);
@@ -773,7 +786,7 @@ fscow_run(struct buf *bp, bool data_valid)
 		mp = spec_node_getmountedfs(bp->b_vp);
 	else
 		mp = bp->b_vp->v_mount;
-	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0) {
+	if (mp == NULL || mp == dead_rootmount) {
 		bp->b_flags |= B_COWDONE;
 		return 0;
 	}

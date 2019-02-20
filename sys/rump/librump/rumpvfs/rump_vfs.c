@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.87 2017/04/01 19:35:57 riastradh Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.88 2019/02/20 10:07:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.87 2017/04/01 19:35:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.88 2019/02/20 10:07:27 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -122,12 +122,12 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	}
 
 	bufq_init();
+	fstrans_init();
 	vfsinit();
 	bufinit();
 	cwd_sys_init();
 	lf_init();
 	spec_init();
-	fstrans_init();
 
 	root_device = &rump_rootdev;
 

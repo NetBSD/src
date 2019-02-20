@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.68 2019/02/05 09:49:44 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.69 2019/02/20 10:07:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.68 2019/02/05 09:49:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.69 2019/02/20 10:07:27 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -149,7 +149,6 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 {
 	struct mount *mp;
 	int error __diagused;
-	extern struct vfsops dead_vfsops;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
 	mp->mnt_op = vfsops;
@@ -159,10 +158,9 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
-	if (vfsops != &dead_vfsops) {
-		error = fstrans_mount(mp);
-		KASSERT(error == 0);
-	}
+
+	error = fstrans_mount(mp);
+	KASSERT(error == 0);
 
 	mutex_enter(&mountgen_lock);
 	mp->mnt_gen = mountgen++;

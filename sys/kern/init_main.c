@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.502 2019/01/23 13:38:30 kamil Exp $	*/
+/*	$NetBSD: init_main.c,v 1.503 2019/02/20 10:07:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.502 2019/01/23 13:38:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.503 2019/02/20 10:07:27 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -466,11 +466,12 @@ main(void)
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
-	vfsinit();
-	lf_init();
 
 	/* Initialize fstrans. */
 	fstrans_init();
+
+	vfsinit();
+	lf_init();
 
 	/* Initialize the file descriptor system. */
 	fd_sys_init();
