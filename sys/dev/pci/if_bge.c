@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.325 2019/02/20 08:03:58 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.326 2019/02/20 15:56:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.325 2019/02/20 08:03:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.326 2019/02/20 15:56:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,12 +318,14 @@ static const struct bge_product {
 	{ VIDDID(BROADCOM, BCM5700),	"Broadcom BCM5700 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5701),	"Broadcom BCM5701 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5702),	"Broadcom BCM5702 Gigabit" },
+	{ VIDDID(BROADCOM, BCM5702FE),	"Broadcom BCM5702FE Fast" },
 	{ VIDDID(BROADCOM, BCM5702X),	"Broadcom BCM5702X Gigabit" },
 	{ VIDDID(BROADCOM, BCM5703),	"Broadcom BCM5703 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5703X),	"Broadcom BCM5703X Gigabit" },
 	{ VIDDID(BROADCOM, BCM5703_ALT),"Broadcom BCM5703 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5704C),	"Broadcom BCM5704C Dual Gigabit" },
 	{ VIDDID(BROADCOM, BCM5704S),	"Broadcom BCM5704S Dual Gigabit" },
+	{ VIDDID(BROADCOM, BCM5704S_ALT),"Broadcom BCM5704S Dual Gigabit" },
 	{ VIDDID(BROADCOM, BCM5705),	"Broadcom BCM5705 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5705F),	"Broadcom BCM5705F Gigabit" },
 	{ VIDDID(BROADCOM, BCM5705K),	"Broadcom BCM5705K Gigabit" },
@@ -393,6 +395,7 @@ static const struct bge_product {
 	{ VIDDID(BROADCOM, BCM57791),	"Broadcom BCM57791 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57795),	"Broadcom BCM57795 Gigabit" },
 	{ VIDDID(SCHNEIDERKOCH, SK_9DX1),"SysKonnect SK-9Dx1 Gigabit" },
+	{ VIDDID(SCHNEIDERKOCH, SK_9MXX),"SysKonnect SK-9Mxx Gigabit" },
 	{ VIDDID(3COM, 3C996),		"3Com 3c996 Gigabit" },
 	{ VIDDID(FUJITSU4, PW008GE4),	"Fujitsu PW008GE4 Gigabit" },
 	{ VIDDID(FUJITSU4, PW008GE5),	"Fujitsu PW008GE5 Gigabit" },
