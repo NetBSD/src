@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/01/27 02:08:45 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.3 2019/02/20 05:11:30 rin Exp $
 
 .include "../Makefile.inc"
 
@@ -21,6 +21,10 @@ SRCS+=  netbsd32_machdep_13.c
 .if ${MACHINE_ARCH} == "arm"
 .PATH:	${S}/arch/arm/arm32
 SRCS+=  netbsd32_machdep_13.c
+.endif
+
+.if !empty(MACHINE_ARCH:Mmips64*)
+WARNS=	3
 .endif
 
 .include <bsd.kmodule.mk>
