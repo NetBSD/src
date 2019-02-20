@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.94 2017/04/11 07:51:37 hannken Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.95 2019/02/20 10:06:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.94 2017/04/11 07:51:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.95 2019/02/20 10:06:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,7 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * that the node create call will work.
 	 */
 	vfs_getnewfsid(mp);
+	mp->mnt_lower = lowerrootvp->v_mount;
 
 	nmp->nullm_size = sizeof(struct null_node);
 	nmp->nullm_tag = VT_NULL;
@@ -175,7 +176,6 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		return error;
 
-	mp->mnt_lower = lowerrootvp->v_mount;
 	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	return 0;
