@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.18 2018/12/28 21:51:49 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.19 2019/02/20 04:32:51 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -212,3 +212,10 @@ christos and pgoyette.
     Additional difficulties arise when the module which defines the
     weak symbol gets unloaded.  Then, you would need to re-run the
     linker and _unresolve_ the weak symbol which is no longer defined.
+
+22. A fairly large number of modules still require a maximum warning
+    level of WARNS=3 due to signed-vs-unsigned integer comparisons.  We
+    really ought to clean these up.  (I haven't looked at them in any
+    detail, but I have to wonder how code that compiles cleanly in a
+    normal kernel has these issues when compiled in a module, when both
+    are done with WARNS=5).
