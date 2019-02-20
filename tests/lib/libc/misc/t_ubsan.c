@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ubsan.c,v 1.3 2019/02/04 03:10:33 mrg Exp $	*/
+/*	$NetBSD: t_ubsan.c,v 1.4 2019/02/20 09:50:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ubsan.c,v 1.3 2019/02/04 03:10:33 mrg Exp $");
+__RCSID("$NetBSD: t_ubsan.c,v 1.4 2019/02/20 09:50:09 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -295,7 +295,7 @@ UBSAN_TC_HEAD(load_invalid_value_bool, tc)
 static void
 test_load_invalid_value_bool(void)
 {
-	volatile int a = atoi("10");
+	volatile int a = INT_MAX - atoi("10");
 	volatile bool b = *(REINTERPRET_CAST(volatile bool *, &a));
 
 	raise(b ? SIGSEGV : SIGBUS);
