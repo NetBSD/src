@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.176 2019/02/03 03:19:28 mrg Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.177 2019/02/20 10:05:20 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.176 2019/02/03 03:19:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.177 2019/02/20 10:05:20 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.176 2019/02/03 03:19:28 mrg Exp $");
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
@@ -1957,12 +1958,13 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 		}
 		return (0);
 	}
+	localfs = fromnd.ni_dvp->v_mount;
+	fstrans_start(localfs);
 	if (fromnd.ni_dvp != fromnd.ni_vp) {
 		VOP_UNLOCK(fromnd.ni_dvp);
 	}
 	fvp = fromnd.ni_vp;
 
-	localfs = fvp->v_mount;
 	error = VFS_RENAMELOCK_ENTER(localfs);
 	if (error) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
@@ -2130,6 +2132,7 @@ out1:
 	pathbuf_destroy(fromnd.ni_pathbuf);
 	fromnd.ni_pathbuf = NULL;
 	fromnd.ni_cnd.cn_nameiop = 0;
+	fstrans_done(localfs);
 	localfs = NULL;
 	nfsm_reply(2 * NFSX_WCCDATA(v3));
 	if (v3) {
@@ -2153,6 +2156,7 @@ nfsmout:
 	}
 	if (localfs) {
 		VFS_RENAMELOCK_EXIT(localfs);
+		fstrans_done(localfs);
 	}
 	if (fromnd.ni_cnd.cn_nameiop) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.525 2019/02/19 06:55:28 mlelstv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.526 2019/02/20 10:05:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.525 2019/02/19 06:55:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.526 2019/02/20 10:05:20 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4224,9 +4224,18 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 */
 	fdvp = fnd.ni_dvp;
 	fvp = fnd.ni_vp;
+	mp = fdvp->v_mount;
 	KASSERT(fdvp != NULL);
 	KASSERT(fvp != NULL);
 	KASSERT((fdvp == fvp) || (VOP_ISLOCKED(fdvp) == LK_EXCLUSIVE));
+	/*
+	 * Bracket the operation with fstrans_start()/fstrans_done().
+	 *
+	 * Inside the bracket this file system cannot be unmounted so
+	 * a vnode on this file system cannot change its v_mount.
+	 * A vnode on another file system may still change to dead mount.
+	 */
+	fstrans_start(mp);
 
 	/*
 	 * Make sure neither fdvp nor fvp is locked.
@@ -4311,38 +4320,16 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	}
 
 	/*
-	 * Get the mount point.  If the file system has been unmounted,
-	 * which it may be because we're not holding any vnode locks,
-	 * then v_mount will be NULL.  We're not really supposed to
-	 * read v_mount without holding the vnode lock, but since we
-	 * have fdvp referenced, if fdvp->v_mount changes then at worst
-	 * it will be set to NULL, not changed to another mount point.
-	 * And, of course, since it is up to the file system to
-	 * determine the real lock order, we can't lock both fdvp and
-	 * tdvp at the same time.
-	 */
-	mp = fdvp->v_mount;
-	if (mp == NULL) {
-		error = ENOENT;
-		goto abort1;
-	}
-
-	/*
-	 * Make sure the mount points match.  Again, although we don't
-	 * hold any vnode locks, the v_mount fields may change -- but
-	 * at worst they will change to NULL, so this will never become
-	 * a cross-device rename, because we hold vnode references.
+	 * Make sure the mount points match.  Although we don't hold
+	 * any vnode locks, the v_mount on fdvp file system are stable.
 	 *
-	 * XXX Because nothing is locked and the compiler may reorder
-	 * things here, unmounting the file system at an inopportune
-	 * moment may cause rename to fail with EXDEV when it really
-	 * should fail with ENOENT.
+	 * Unmounting another file system at an inopportune moment may
+	 * cause tdvp to disappear and change its v_mount to dead.
+	 *
+	 * So in either case different v_mount means cross-device rename.
 	 */
+	KASSERT(mp != NULL);
 	tmp = tdvp->v_mount;
-	if (tmp == NULL) {
-		error = ENOENT;
-		goto abort1;
-	}
 
 	if (mp != tmp) {
 		error = EXDEV;
@@ -4497,6 +4484,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 * destroy the pathbufs.
 	 */
 	VFS_RENAMELOCK_EXIT(mp);
+	fstrans_done(mp);
 	goto out2;
 
 abort3:	if ((tvp != NULL) && (tvp != tdvp))
@@ -4510,6 +4498,7 @@ abort1:	VOP_ABORTOP(tdvp, &tnd.ni_cnd);
 abort0:	VOP_ABORTOP(fdvp, &fnd.ni_cnd);
 	vrele(fdvp);
 	vrele(fvp);
+	fstrans_done(mp);
 out2:	pathbuf_destroy(tpb);
 out1:	pathbuf_destroy(fpb);
 out0:	return error;
