@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.52 2019/02/20 10:07:27 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.53 2019/02/20 10:08:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.52 2019/02/20 10:07:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.53 2019/02/20 10:08:37 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -186,8 +186,8 @@ fstrans_mount_dtor(struct mount *mp)
 
 	mutex_exit(&fstrans_mount_lock);
 
+	kmem_free(mp, sizeof(*mp));
 	kmem_free(fmi, sizeof(*fmi));
-	vfs_rele(mp);
 }
 
 /*
@@ -207,8 +207,6 @@ fstrans_mount(struct mount *mp)
 	mutex_enter(&fstrans_mount_lock);
 	mp->mnt_transinfo = newfmi;
 	mutex_exit(&fstrans_mount_lock);
-
-	vfs_ref(mp);
 
 	return 0;
 }
@@ -719,8 +717,11 @@ fscow_establish(struct mount *mp, int (*func)(void *, struct buf *, bool),
 
 	KASSERT(mp != dead_rootmount);
 
+	mutex_enter(&fstrans_mount_lock);
 	fmi = mp->mnt_transinfo;
 	KASSERT(fmi != NULL);
+	fmi->fmi_ref_cnt += 1;
+	mutex_exit(&fstrans_mount_lock);
 
 	newch = kmem_alloc(sizeof(*newch), KM_SLEEP);
 	newch->ch_func = func;
@@ -757,6 +758,8 @@ fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *, bool),
 		kmem_free(hp, sizeof(*hp));
 	}
 	cow_change_done(mp);
+
+	fstrans_mount_dtor(mp);
 
 	return hp ? 0 : EINVAL;
 }

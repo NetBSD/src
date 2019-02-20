@@ -1261,7 +1261,6 @@ zfsctl_umount_snapshots(vfs_t *vfsp, int fflags, cred_t *cr)
 
 #ifdef __NetBSD__
 
-#include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/pathname.h>
 #include <miscfs/genfs/genfs.h>
@@ -1354,7 +1353,6 @@ sfs_snapshot_mount(vnode_t *vp, const char *snapname)
 out:;
 	if (error && vfsp) {
 		mutex_exit(&vfsp->mnt_updating);
-		fstrans_unmount(vfsp);
 		vfs_rele(vfsp);
 	}
 	PNBUF_PUT(osname);

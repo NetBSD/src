@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.69 2019/02/20 10:07:27 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.70 2019/02/20 10:08:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.69 2019/02/20 10:07:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.70 2019/02/20 10:08:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -297,7 +297,13 @@ vfs_rele(struct mount *mp)
 	if (mp->mnt_op != NULL) {
 		vfs_delref(mp->mnt_op);
 	}
-	kmem_free(mp, sizeof(*mp));
+	fstrans_unmount(mp);
+	/*
+	 * Final free of mp gets done from fstrans_mount_dtor().
+	 *
+	 * Prevents this memory to be reused as a mount before
+	 * fstrans releases all references to it.
+	 */
 }
 
 /*
@@ -818,7 +824,6 @@ err_mounted:
 err_unmounted:
 	vp->v_mountedhere = NULL;
 	mutex_exit(&mp->mnt_updating);
-	fstrans_unmount(mp);
 	vfs_rele(mp);
 
 	return error;
@@ -906,7 +911,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		panic("unmount: dangling vnode");
 	vfs_hooks_unmount(mp);
 
-	fstrans_unmount(mp);
 	vfs_rele(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP) {
 		vrele(coveredvp);
