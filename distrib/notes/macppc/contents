@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.15 2018/11/13 18:48:25 scole Exp $
+.\"	$NetBSD: contents,v 1.16 2019/02/20 00:10:26 sevan Exp $
 .\"
 .\" Copyright (c) 1999-2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,6 +98,21 @@ A gzipped
 kernel containing code only for PowerPC 601 machines, Open Firmware
 1.0.5, 1.1.22, 2.0.x, and 2.4 systems (i.e. those that have floppy drives).
 It has a RAM-disk installer.
+.
+.			It Pa netbsd-POWERMAC_G5.gz
+.
+A gzipped
+.Nx
+kernel containing code only for uniprocessor PowerPC 970FX and 970MP machines.
+It is intended for netbooting, uncompressed, via TFTP.
+.
+.			It Pa netbsd-POWERMAC_G5.MP.gz
+.
+A gzipped
+.Nx
+kernel containing code only for multi-processor PowerPC 970FX and 970MP
+machines.
+It is intended for netbooting, uncompressed, via TFTP.
 .
 .
 .		tag) \" binary/kernel/
