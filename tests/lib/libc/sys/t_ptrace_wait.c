@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.92 2019/02/17 09:29:35 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.93 2019/02/20 05:20:05 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.92 2019/02/17 09:29:35 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.93 2019/02/20 05:20:05 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1904,7 +1904,7 @@ unrelated_tracer_sees_crash(int sig)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		validate_status_stopped(status, sig);
+		forkee_status_stopped(status, sig);
 
 		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for the "
 		    "traced process\n");
@@ -1916,31 +1916,31 @@ unrelated_tracer_sees_crash(int sig)
 		    "si_errno=%#x\n", info.psi_siginfo.si_signo,
 		    info.psi_siginfo.si_code, info.psi_siginfo.si_errno);
 
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sig);
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_signo, sig);
 		switch (sig) {
 		case SIGTRAP:
-			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
+			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
 			break;
 		case SIGSEGV:
-			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
+			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, SEGV_MAPERR);
 			break;
 		case SIGILL:
-			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
+			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, ILL_PRVOPC);
 			break;
 		case SIGFPE:
-			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
+			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, FPE_INTDIV);
 			break;
 		case SIGBUS:
-			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
+			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, BUS_ADRERR);
 			break;
 		}
 
 		FORKEE_ASSERT(ptrace(PT_KILL, tracee, NULL, 0) != -1);
 		DPRINTF("Before calling %s() for the tracee\n", TWAIT_FNAME);
-		TWAIT_REQUIRE_SUCCESS(
+		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		validate_status_signaled(status, SIGKILL, 0);
+		forkee_status_signaled(status, SIGKILL, 0);
 
 		DPRINTF("Before calling %s() for tracee\n", TWAIT_FNAME);
 		TWAIT_REQUIRE_FAILURE(ECHILD,
