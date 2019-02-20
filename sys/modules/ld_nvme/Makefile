@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/27 03:53:08 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2019/02/20 00:55:03 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -8,5 +8,7 @@ KMOD=	ld_nvme
 IOCONF=	ld_nvme.ioconf
 
 SRCS+=	ld_nvme.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
