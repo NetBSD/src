@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.102 2019/02/20 10:06:33 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.103 2019/02/20 10:07:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.102 2019/02/20 10:06:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.103 2019/02/20 10:07:27 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -382,7 +382,7 @@ vfs_vnode_sysinit(void)
 
 	dead_rootmount = vfs_mountalloc(&dead_vfsops, NULL);
 	KASSERT(dead_rootmount != NULL);
-	dead_rootmount->mnt_iflag = IMNT_MPSAFE;
+	dead_rootmount->mnt_iflag |= IMNT_MPSAFE;
 
 	mutex_init(&vdrain_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&lru_free_list);
@@ -1030,8 +1030,7 @@ void
 vgone(vnode_t *vp)
 {
 
-	KASSERT((vp->v_mount->mnt_iflag & IMNT_HAS_TRANS) == 0 ||
-	    fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	mutex_enter(vp->v_interlock);
@@ -1684,8 +1683,7 @@ vcache_make_anon(vnode_t *vp)
 	bool recycle;
 
 	KASSERT(vp->v_type == VBLK || vp->v_type == VCHR);
-	KASSERT((vp->v_mount->mnt_iflag & IMNT_HAS_TRANS) == 0 ||
-	    fstrans_is_owner(vp->v_mount));
+	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
 	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
 
 	/* Remove from vnode cache. */
