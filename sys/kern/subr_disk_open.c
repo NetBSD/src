@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.13 2015/12/08 20:36:15 christos Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.14 2019/02/20 10:02:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.13 2015/12/08 20:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.14 2019/02/20 10:02:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -65,6 +65,7 @@ opendisk(device_t dv)
 	if (bdevvp(dev, &tmpvn))
 		panic("%s: can't alloc vnode for %s", __func__,
 		    device_xname(dv));
+	vn_lock(tmpvn, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(tmpvn, FREAD | FSILENT, NOCRED);
 	if (error) {
 		/*
