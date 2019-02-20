@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.99 2017/04/11 07:51:37 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.100 2019/02/20 10:06:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99 2017/04/11 07:51:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.100 2019/02/20 10:06:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,8 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * that the node create call will work.
 	 */
 	vfs_getnewfsid(mp);
+	mp->mnt_lower = lowerrootvp->v_mount;
+
 	amp->umapm_size = sizeof(struct umap_node);
 	amp->umapm_tag = VT_UMAP;
 	amp->umapm_bypass = umap_bypass;
@@ -224,7 +226,6 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		return error;
 
-	mp->mnt_lower = lowerrootvp->v_mount;
 	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 #ifdef UMAPFS_DIAGNOSTIC
