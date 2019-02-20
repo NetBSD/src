@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.11.8.6 2019/02/19 15:09:51 martin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.11.8.7 2019/02/20 09:49:48 martin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.6 2019/02/19 15:09:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.7 2019/02/20 09:49:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -271,9 +271,8 @@ axen_miibus_statchg(struct ifnet *ifp)
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
 		val |= AXEN_MEDIUM_FDX;
 
-	val |= (AXEN_MEDIUM_RECV_EN | AXEN_MEDIUM_ALWAYS_ONE);
-	val |= (AXEN_MEDIUM_RXFLOW_CTRL_EN | AXEN_MEDIUM_TXFLOW_CTRL_EN);
-
+	val |= AXEN_MEDIUM_RXFLOW_CTRL_EN | AXEN_MEDIUM_TXFLOW_CTRL_EN |
+	    AXEN_MEDIUM_RECV_EN;
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
 	case IFM_1000_T:
 		val |= AXEN_MEDIUM_GIGA | AXEN_MEDIUM_EN_125MHZ;
@@ -588,9 +587,9 @@ axen_ax88179_init(struct axen_softc *sc)
 	DPRINTF(("axen: Monitor mode = 0x%02x\n", val));
 
 	/* set medium type */
-	ctl = AXEN_MEDIUM_GIGA | AXEN_MEDIUM_FDX | AXEN_MEDIUM_ALWAYS_ONE |
-	      AXEN_MEDIUM_RXFLOW_CTRL_EN | AXEN_MEDIUM_TXFLOW_CTRL_EN;
-	ctl |= AXEN_MEDIUM_RECV_EN;
+	ctl = AXEN_MEDIUM_GIGA | AXEN_MEDIUM_FDX | AXEN_MEDIUM_EN_125MHZ |
+	    AXEN_MEDIUM_RXFLOW_CTRL_EN | AXEN_MEDIUM_TXFLOW_CTRL_EN |
+	    AXEN_MEDIUM_RECV_EN;
 	wval = htole16(ctl);
 	DPRINTF(("axen: set to medium mode: 0x%04x\n", ctl));
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_MEDIUM_STATUS, &wval);
