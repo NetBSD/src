@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.108 2019/02/19 15:13:03 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.109 2019/02/20 09:51:25 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2499,4 +2499,10 @@ sys/arch/evbppc/obs405/obs600_autoconf.c	1.8
 
 	Fix compile error.
 	[msaitoh, ticket #1193]
+
+sys/dev/usb/if_axen.c				1.26
+sys/dev/usb/if_axenreg.h			1.7
+
+	axen(4): improve RX stability and small cosmetic changes.
+	[rin, ticket #1194]
 
