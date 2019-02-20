@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ubsan.c,v 1.4 2019/02/20 09:50:09 kamil Exp $	*/
+/*	$NetBSD: t_ubsan.c,v 1.5 2019/02/20 11:40:41 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ubsan.c,v 1.4 2019/02/20 09:50:09 kamil Exp $");
+__RCSID("$NetBSD: t_ubsan.c,v 1.5 2019/02/20 11:40:41 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -318,7 +318,7 @@ static void
 test_load_invalid_value_enum(void)
 {
 	enum e { e1, e2, e3, e4 };
-	volatile int a = atoi("10");
+	volatile int a = INT_MAX - atoi("10");
 	volatile enum e E = *(REINTERPRET_CAST(volatile enum e*, &a));
 
 	raise((E == e1) ? SIGSEGV : SIGBUS);
