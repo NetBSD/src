@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.93 2019/02/20 05:20:05 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.94 2019/02/20 07:18:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.93 2019/02/20 05:20:05 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.94 2019/02/20 07:18:18 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1822,8 +1822,9 @@ ATF_TC_BODY(traceme_vfork_exec, tc)
 
 #if defined(TWAIT_HAVE_PID)
 static void
-unrelated_tracer_sees_crash(int sig)
+unrelated_tracer_sees_crash(int sig, bool masked, bool ignored)
 {
+	const int sigval = SIGSTOP;
 	struct msg_fds parent_tracee, parent_tracer;
 	const int exitval = 10;
 	pid_t tracee, tracer, wpid;
@@ -1831,7 +1832,16 @@ unrelated_tracer_sees_crash(int sig)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
+	struct sigaction sa;
 	struct ptrace_siginfo info;
+	sigset_t intmask;
+	struct kinfo_proc2 kp;
+	size_t len = sizeof(kp);
+
+	int name[6];
+	const size_t namelen = __arraycount(name);
+	ki_sigset_t kp_sigmask;
+	ki_sigset_t kp_sigignore;
 
 #ifndef PTRACE_ILLEGAL_ASM
 	if (sig == SIGILL)
@@ -1840,12 +1850,32 @@ unrelated_tracer_sees_crash(int sig)
 
 	memset(&info, 0, sizeof(info));
 
+	if (masked || ignored)
+		atf_tc_expect_fail("Unexpected sigmask reset on crash under "
+		    "debugger");
+
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 		// Wait for parent to let us crash
 		CHILD_FROM_PARENT("exit tracee", parent_tracee, msg);
+
+		if (masked) {
+			sigemptyset(&intmask);
+			sigaddset(&intmask, sig);
+			sigprocmask(SIG_BLOCK, &intmask, NULL);
+		}
+
+		if (ignored) {
+			memset(&sa, 0, sizeof(sa));
+			sa.sa_handler = SIG_IGN;
+			sigemptyset(&sa.sa_mask);
+			FORKEE_ASSERT(sigaction(sig, &sa, NULL) != -1);
+		}
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
 
 		DPRINTF("Before executing a trap\n");
 		switch (sig) {
@@ -1891,6 +1921,19 @@ unrelated_tracer_sees_crash(int sig)
 
 		forkee_status_stopped(status, SIGSTOP);
 
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for the "
+		    "traced process\n");
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_SIGINFO, tracee, &info, sizeof(info)) != -1);
+
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		    "si_errno=%#x\n", info.psi_siginfo.si_signo,
+		    info.psi_siginfo.si_code, info.psi_siginfo.si_errno);
+
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_signo, SIGSTOP);
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, SI_USER);
+
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
@@ -1899,6 +1942,43 @@ unrelated_tracer_sees_crash(int sig)
 
 		/* Wait for parent to tell use that tracee should have exited */
 		CHILD_FROM_PARENT("wait for tracee exit", parent_tracer, msg);
+
+		/* Wait for tracee and assert that it exited */
+		FORKEE_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
+
+		forkee_status_stopped(status, sigval);
+
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for the "
+		    "traced process\n");
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_SIGINFO, tracee, &info, sizeof(info)) != -1);
+
+		DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+		DPRINTF("Signal properties: si_signo=%#x si_code=%#x "
+		    "si_errno=%#x\n", info.psi_siginfo.si_signo,
+		    info.psi_siginfo.si_code, info.psi_siginfo.si_errno);
+
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_signo, sigval);
+		FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+		name[0] = CTL_KERN,
+		name[1] = KERN_PROC2,
+		name[2] = KERN_PROC_PID;
+		name[3] = tracee;
+		name[4] = sizeof(kp);
+		name[5] = 1;
+
+		FORKEE_ASSERT_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+
+		if (masked)
+			kp_sigmask = kp.p_sigmask;
+
+		if (ignored)
+			kp_sigignore = kp.p_sigignore;
+
+		/* Resume tracee with PT_CONTINUE */
+		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
 		/* Wait for tracee and assert that it exited */
 		FORKEE_REQUIRE_SUCCESS(
@@ -1917,6 +1997,43 @@ unrelated_tracer_sees_crash(int sig)
 		    info.psi_siginfo.si_code, info.psi_siginfo.si_errno);
 
 		FORKEE_ASSERT_EQ(info.psi_siginfo.si_signo, sig);
+
+		FORKEE_ASSERT_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+
+		if (masked) {
+			DPRINTF("kp_sigmask="
+			    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02"
+			    PRIx32 "\n",
+			    kp_sigmask.__bits[0], kp_sigmask.__bits[1],
+			    kp_sigmask.__bits[2], kp_sigmask.__bits[3]);
+
+			DPRINTF("kp.p_sigmask="
+			    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02"
+			    PRIx32 "\n",
+			    kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
+			    kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
+
+			FORKEE_ASSERTX(!memcmp(&kp_sigmask, &kp.p_sigmask,
+			    sizeof(kp_sigmask)));
+		}
+
+		if (ignored) {
+			DPRINTF("kp_sigignore="
+			    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02"
+			    PRIx32 "\n",
+			    kp_sigignore.__bits[0], kp_sigignore.__bits[1],
+			    kp_sigignore.__bits[2], kp_sigignore.__bits[3]);
+
+			DPRINTF("kp.p_sigignore="
+			    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02"
+			    PRIx32 "\n",
+			    kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
+			    kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
+
+			FORKEE_ASSERTX(!memcmp(&kp_sigignore, &kp.p_sigignore,
+			    sizeof(kp_sigignore)));
+		}
+
 		switch (sig) {
 		case SIGTRAP:
 			FORKEE_ASSERT_EQ(info.psi_siginfo.si_code, TRAP_BRKPT);
@@ -1941,10 +2058,6 @@ unrelated_tracer_sees_crash(int sig)
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
 		forkee_status_signaled(status, SIGKILL, 0);
-
-		DPRINTF("Before calling %s() for tracee\n", TWAIT_FNAME);
-		TWAIT_REQUIRE_FAILURE(ECHILD,
-		    wpid = TWAIT_GENERIC(tracee, &status, 0));
 
 		/* Inform parent that tracer is exiting normally */
 		CHILD_TO_PARENT("tracer done", parent_tracer, msg);
@@ -1992,14 +2105,14 @@ ATF_TC(test);								\
 ATF_TC_HEAD(test, tc)							\
 {									\
 	atf_tc_set_md_var(tc, "descr",					\
-	    "Assert that an unrelated tracer sees crash signal from the " \
-	    "debuggee");						\
+	    "Assert that an unrelated tracer sees crash signal from "	\
+	    "the debuggee");						\
 }									\
 									\
 ATF_TC_BODY(test, tc)							\
 {									\
 									\
-	unrelated_tracer_sees_crash(sig);				\
+	unrelated_tracer_sees_crash(sig, false, false);			\
 }
 
 UNRELATED_TRACER_SEES_CRASH(unrelated_tracer_sees_crash_trap, SIGTRAP)
@@ -2007,6 +2120,58 @@ UNRELATED_TRACER_SEES_CRASH(unrelated_tracer_sees_crash_segv, SIGSEGV)
 UNRELATED_TRACER_SEES_CRASH(unrelated_tracer_sees_crash_ill, SIGILL)
 UNRELATED_TRACER_SEES_CRASH(unrelated_tracer_sees_crash_fpe, SIGFPE)
 UNRELATED_TRACER_SEES_CRASH(unrelated_tracer_sees_crash_bus, SIGBUS)
+
+#define UNRELATED_TRACER_SEES_SIGNALMASKED_CRASH(test, sig)		\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Assert that an unrelated tracer sees crash signal from "	\
+	    "the debuggee with masked signal");				\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	unrelated_tracer_sees_crash(sig, true, false);			\
+}
+
+UNRELATED_TRACER_SEES_SIGNALMASKED_CRASH(
+    unrelated_tracer_sees_signalmasked_crash_trap, SIGTRAP)
+UNRELATED_TRACER_SEES_SIGNALMASKED_CRASH(
+    unrelated_tracer_sees_signalmasked_crash_segv, SIGSEGV)
+UNRELATED_TRACER_SEES_SIGNALMASKED_CRASH(
+    unrelated_tracer_sees_signalmasked_crash_ill, SIGILL)
+UNRELATED_TRACER_SEES_SIGNALMASKED_CRASH(
+    unrelated_tracer_sees_signalmasked_crash_fpe, SIGFPE)
+UNRELATED_TRACER_SEES_SIGNALMASKED_CRASH(
+    unrelated_tracer_sees_signalmasked_crash_bus, SIGBUS)
+
+#define UNRELATED_TRACER_SEES_SIGNALIGNORED_CRASH(test, sig)		\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Assert that an unrelated tracer sees crash signal from "	\
+	    "the debuggee with signal ignored");			\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	unrelated_tracer_sees_crash(sig, false, true);			\
+}
+
+UNRELATED_TRACER_SEES_SIGNALIGNORED_CRASH(
+    unrelated_tracer_sees_signalignored_crash_trap, SIGTRAP)
+UNRELATED_TRACER_SEES_SIGNALIGNORED_CRASH(
+    unrelated_tracer_sees_signalignored_crash_segv, SIGSEGV)
+UNRELATED_TRACER_SEES_SIGNALIGNORED_CRASH(
+    unrelated_tracer_sees_signalignored_crash_ill, SIGILL)
+UNRELATED_TRACER_SEES_SIGNALIGNORED_CRASH(
+    unrelated_tracer_sees_signalignored_crash_fpe, SIGFPE)
+UNRELATED_TRACER_SEES_SIGNALIGNORED_CRASH(
+    unrelated_tracer_sees_signalignored_crash_bus, SIGBUS)
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -5985,6 +6150,28 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_sees_crash_ill);
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_sees_crash_fpe);
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_sees_crash_bus);
+
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalmasked_crash_trap);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalmasked_crash_segv);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalmasked_crash_ill);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalmasked_crash_fpe);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalmasked_crash_bus);
+
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalignored_crash_trap);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalignored_crash_segv);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalignored_crash_ill);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalignored_crash_fpe);
+	ATF_TP_ADD_TC_HAVE_PID(tp,
+	    unrelated_tracer_sees_signalignored_crash_bus);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, tracer_sees_terminaton_before_the_parent);
 	ATF_TP_ADD_TC_HAVE_PID(tp, tracer_sysctl_lookup_without_duplicates);
