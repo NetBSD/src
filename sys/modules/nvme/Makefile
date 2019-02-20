@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2017/12/03 11:49:32 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5 2019/02/20 01:20:16 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=	nvme
 IOCONF=	nvme.ioconf
 SRCS=	nvme.c nvme_pci.c
+
+WARNS=	3
 
 .include <bsd.kmodule.mk>
