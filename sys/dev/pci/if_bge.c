@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.326 2019/02/20 15:56:51 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.327 2019/02/20 17:00:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.326 2019/02/20 15:56:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.327 2019/02/20 17:00:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,6 +343,8 @@ static const struct bge_product {
 	{ VIDDID(BROADCOM, BCM5721),	"Broadcom BCM5721 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5722),	"Broadcom BCM5722 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5723),	"Broadcom BCM5723 Gigabit" },
+	{ VIDDID(BROADCOM, BCM5725),	"Broadcom BCM5725 Gigabit" },
+	{ VIDDID(BROADCOM, BCM5727),	"Broadcom BCM5727 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5750),	"Broadcom BCM5750 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5751),	"Broadcom BCM5751 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5751F),	"Broadcom BCM5751F Gigabit" },
@@ -361,6 +363,7 @@ static const struct bge_product {
 	{ VIDDID(BROADCOM, BCM5761E),	"Broadcom BCM5761E Gigabit" },
 	{ VIDDID(BROADCOM, BCM5761S),	"Broadcom BCM5761S Gigabit" },
 	{ VIDDID(BROADCOM, BCM5761SE),	"Broadcom BCM5761SE Gigabit" },
+	{ VIDDID(BROADCOM, BCM5762),	"Broadcom BCM5762 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5764),	"Broadcom BCM5764 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5780),	"Broadcom BCM5780 Gigabit" },
 	{ VIDDID(BROADCOM, BCM5780S),	"Broadcom BCM5780S Gigabit" },
@@ -383,13 +386,16 @@ static const struct bge_product {
 	{ VIDDID(BROADCOM, BCM57760),	"Broadcom BCM57760 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57761),	"Broadcom BCM57761 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57762),	"Broadcom BCM57762 Gigabit" },
+	{ VIDDID(BROADCOM, BCM57764),	"Broadcom BCM57764 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57765),	"Broadcom BCM57765 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57766),	"Broadcom BCM57766 Gigabit" },
+	{ VIDDID(BROADCOM, BCM57767),	"Broadcom BCM57767 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57780),	"Broadcom BCM57780 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57781),	"Broadcom BCM57781 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57782),	"Broadcom BCM57782 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57785),	"Broadcom BCM57785 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57786),	"Broadcom BCM57786 Gigabit" },
+	{ VIDDID(BROADCOM, BCM57787),	"Broadcom BCM57787 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57788),	"Broadcom BCM57788 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57790),	"Broadcom BCM57790 Gigabit" },
 	{ VIDDID(BROADCOM, BCM57791),	"Broadcom BCM57791 Gigabit" },
@@ -470,6 +476,8 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5755_C0, "BCM5755 C0" },
 	{ BGE_CHIPID_BCM5761_A0, "BCM5761 A0" },
 	{ BGE_CHIPID_BCM5761_A1, "BCM5761 A1" },
+	{ BGE_CHIPID_BCM5762_A0, "BCM5762 A0" },
+	{ BGE_CHIPID_BCM5762_B0, "BCM5762 B0" },
 	{ BGE_CHIPID_BCM5784_A0, "BCM5784 A0" },
 	{ BGE_CHIPID_BCM5784_A1, "BCM5784 A1" },
 	{ BGE_CHIPID_BCM5784_B0, "BCM5784 B0" },
@@ -517,6 +525,7 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5717, "unknown BCM5717" },
 	{ BGE_ASICREV_BCM5719, "unknown BCM5719" },
 	{ BGE_ASICREV_BCM5720, "unknown BCM5720" },
+	{ BGE_ASICREV_BCM5762, "unknown BCM5762" },
 
 	{ 0, NULL }
 };
@@ -2218,7 +2227,8 @@ bge_chipinit(struct bge_softc *sc)
 		 * disabled.
 		 */
 		if (!BGE_IS_57765_FAMILY(sc) &&
-		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717)
+		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
+		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5762)
 			dma_rw_ctl |= BGE_PCIDMARWCTL_TAGGED_STATUS_WA;
 	}
 
@@ -2229,7 +2239,8 @@ bge_chipinit(struct bge_softc *sc)
 	 * Set up general mode register.
 	 */
 	mode_ctl = BGE_DMA_SWAP_OPTIONS;
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762) {
 		/* Retain Host-2-BMC settings written by APE firmware. */
 		mode_ctl |= CSR_READ_4(sc, BGE_MODE_CTL) &
 		    (BGE_MODECTL_BYTESWAP_B2HRX_DATA |
@@ -2295,7 +2306,7 @@ bge_blockinit(struct bge_softc *sc)
 	bus_size_t rcb_addr;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	bge_hostaddr taddr;
-	uint32_t	dmactl, mimode, val;
+	uint32_t	dmactl, rdmareg, mimode, val;
 	int		i, limit;
 
 	/*
@@ -2580,7 +2591,8 @@ bge_blockinit(struct bge_softc *sc)
 		limit = BGE_TX_RINGS_EXTSSRAM_MAX;
 	} else if (BGE_IS_5717_PLUS(sc)) {
 		limit = BGE_TX_RINGS_5717_MAX;
-	} else if (BGE_IS_57765_FAMILY(sc)) {
+	} else if (BGE_IS_57765_FAMILY(sc) ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762) {
 		limit = BGE_TX_RINGS_57765_MAX;
 	} else
 		limit = 1;
@@ -2620,6 +2632,7 @@ bge_blockinit(struct bge_softc *sc)
 	} else if (BGE_IS_5700_FAMILY(sc))
 		limit = BGE_RX_RINGS_MAX;
 	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762 ||
 	    BGE_IS_57765_FAMILY(sc))
 		limit = 4;
 	else
@@ -2663,7 +2676,8 @@ bge_blockinit(struct bge_softc *sc)
 	/* 5718 step 26, 57XX step 55 */
 	/* Set inter-packet gap */
 	val = 0x2620;
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762)
 		val |= CSR_READ_4(sc, BGE_TX_LENGTHS) &
 		    (BGE_TXLEN_JMB_FRM_LEN_MSK | BGE_TXLEN_CNT_DN_VAL_MSK);
 	CSR_WRITE_4(sc, BGE_TX_LENGTHS, val);
@@ -2847,7 +2861,8 @@ bge_blockinit(struct bge_softc *sc)
 			val |= BGE_RDMAMODE_TSO6_ENABLE;
 	}
 
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762) {
 		val |= CSR_READ_4(sc, BGE_RDMA_MODE) &
 		    BGE_RDMAMODE_H2BNC_VLAN_DET;
 		/*
@@ -2862,12 +2877,17 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780 ||
 	    BGE_IS_57765_PLUS(sc)) {
-		dmactl = CSR_READ_4(sc, BGE_RDMA_RSRVCTRL);
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762)
+			rdmareg = BGE_RDMA_RSRVCTRL_REG2;
+		else
+			rdmareg = BGE_RDMA_RSRVCTRL;
+		dmactl = CSR_READ_4(sc, rdmareg);
 		/*
 		 * Adjust tx margin to prevent TX data corruption and
 		 * fix internal FIFO overflow.
 		 */
-		if (sc->bge_chipid == BGE_CHIPID_BCM5719_A0) {
+		if (sc->bge_chipid == BGE_CHIPID_BCM5719_A0 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762) {
 			dmactl &= ~(BGE_RDMA_RSRVCTRL_FIFO_LWM_MASK |
 			    BGE_RDMA_RSRVCTRL_FIFO_HWM_MASK |
 			    BGE_RDMA_RSRVCTRL_TXMRGN_MASK);
@@ -2880,7 +2900,7 @@ bge_blockinit(struct bge_softc *sc)
 		 * The fix is to limit the number of RX BDs
 		 * the hardware would fetch at a fime.
 		 */
-		CSR_WRITE_4(sc, BGE_RDMA_RSRVCTRL, dmactl |
+		CSR_WRITE_4(sc, rdmareg, dmactl |
 		    BGE_RDMA_RSRVCTRL_FIFO_OFLW_FIX);
 	}
 
@@ -2898,14 +2918,18 @@ bge_blockinit(struct bge_softc *sc)
 		    CSR_READ_4(sc, BGE_RDMA_LSO_CRPTEN_CTRL) |
 		    BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_BD_512 |
 		    BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_LSO_4K);
+	} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762) {
+		CSR_WRITE_4(sc, BGE_RDMA_LSO_CRPTEN_CTRL_REG2,
+		    CSR_READ_4(sc, BGE_RDMA_LSO_CRPTEN_CTRL_REG2) |
+		    BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_BD_4K |
+		    BGE_RDMA_LSO_CRPTEN_CTRL_BLEN_LSO_4K);
 	}
 	/* Turn on read DMA state machine */
 	CSR_WRITE_4_FLUSH(sc, BGE_RDMA_MODE, val);
 	/* 5718 step 52 */
 	delay(40);
 
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+	if (sc->bge_flags & BGEF_RDMA_BUG) {
 		for (i = 0; i < BGE_NUM_RDMA_CHANNELS / 2; i++) {
 			val = CSR_READ_4(sc, BGE_RDMA_LENGTH + i * 4);
 			if ((val & 0xFFFF) > BGE_FRAMELEN)
@@ -3066,6 +3090,12 @@ bge_chipid(const struct pci_attach_args *pa)
 		case PCI_PRODUCT_BROADCOM_BCM5718:
 		case PCI_PRODUCT_BROADCOM_BCM5719:
 		case PCI_PRODUCT_BROADCOM_BCM5720:
+		case PCI_PRODUCT_BROADCOM_BCM5725:
+		case PCI_PRODUCT_BROADCOM_BCM5727:
+		case PCI_PRODUCT_BROADCOM_BCM5762:
+		case PCI_PRODUCT_BROADCOM_BCM57764:
+		case PCI_PRODUCT_BROADCOM_BCM57767:
+		case PCI_PRODUCT_BROADCOM_BCM57787:
 			id = pci_conf_read(pa->pa_pc, pa->pa_tag,
 			    BGE_PCI_GEN2_PRODID_ASICREV);
 			break;
@@ -3279,16 +3309,27 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5720:
 		sc->bge_flags |= BGEF_5717_PLUS;
 		/* FALLTHROUGH */
+	case BGE_ASICREV_BCM5762:
 	case BGE_ASICREV_BCM57765:
 	case BGE_ASICREV_BCM57766:
 		if (!BGE_IS_5717_PLUS(sc))
 			sc->bge_flags |= BGEF_57765_FAMILY;
 		sc->bge_flags |= BGEF_57765_PLUS | BGEF_5755_PLUS |
 		    BGEF_575X_PLUS | BGEF_5705_PLUS | BGEF_JUMBO_CAPABLE;
-		/* Jumbo frame on BCM5719 A0 does not work. */
-		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719) &&
-		    (sc->bge_chipid == BGE_CHIPID_BCM5719_A0))
-			sc->bge_flags &= ~BGEF_JUMBO_CAPABLE;
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+			/*
+			 * Enable work around for DMA engine miscalculation
+			 * of TXMBUF available space.
+			 */
+			sc->bge_flags |= BGEF_RDMA_BUG;
+
+			if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719) &&
+			    (sc->bge_chipid == BGE_CHIPID_BCM5719_A0)) {
+				/* Jumbo frame on BCM5719 A0 does not work. */
+				sc->bge_flags &= ~BGEF_JUMBO_CAPABLE;
+			}
+		}
 		break;
 	case BGE_ASICREV_BCM5755:
 	case BGE_ASICREV_BCM5761:
@@ -3325,6 +3366,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5719:
 	case BGE_ASICREV_BCM5720:
 	case BGE_ASICREV_BCM5761:
+	case BGE_ASICREV_BCM5762:
 		sc->bge_flags |= BGEF_APE;
 		break;
 	}
@@ -4731,6 +4773,32 @@ bge_stats_update_regs(struct bge_softc *sc)
 	}
 	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS);
 	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_OUT_OF_BDS);
+
+	if (sc->bge_flags & BGEF_RDMA_BUG) {
+		uint32_t val, ucast, mcast, bcast;
+
+		ucast = CSR_READ_4(sc, BGE_MAC_STATS +
+		    offsetof(struct bge_mac_stats_regs, ifHCOutUcastPkts));
+		mcast = CSR_READ_4(sc, BGE_MAC_STATS +
+		    offsetof(struct bge_mac_stats_regs, ifHCOutMulticastPkts));
+		bcast = CSR_READ_4(sc, BGE_MAC_STATS +
+		    offsetof(struct bge_mac_stats_regs, ifHCOutBroadcastPkts));
+
+		/*
+		 * If controller transmitted more than BGE_NUM_RDMA_CHANNELS
+		 * frames, it's safe to disable workaround for DMA engine's
+		 * miscalculation of TXMBUF space.
+		 */
+		if (ucast + mcast + bcast > BGE_NUM_RDMA_CHANNELS) {
+			val = CSR_READ_4(sc, BGE_RDMA_LSO_CRPTEN_CTRL);
+			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719)
+				val &= ~BGE_RDMA_TX_LENGTH_WA_5719;
+			else
+				val &= ~BGE_RDMA_TX_LENGTH_WA_5720;
+			CSR_WRITE_4(sc, BGE_RDMA_LSO_CRPTEN_CTRL, val);
+			sc->bge_flags &= ~BGEF_RDMA_BUG;
+		}
+	}
 }
 
 static void
@@ -5512,7 +5580,8 @@ bge_init(struct ifnet *ifp)
 	if (BGE_IS_5755_PLUS(sc) ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
 		mode |= BGE_TXMODE_MBUF_LOCKUP_FIX;
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762) {
 		mode &= ~(BGE_TXMODE_JMB_FRM_LEN | BGE_TXMODE_CNT_DN_MODE);
 		mode |= CSR_READ_4(sc, BGE_TX_MODE) &
 		    (BGE_TXMODE_JMB_FRM_LEN | BGE_TXMODE_CNT_DN_MODE);
@@ -5528,6 +5597,8 @@ bge_init(struct ifnet *ifp)
 	mode = CSR_READ_4(sc, BGE_RX_MODE);
 	if (BGE_IS_5755_PLUS(sc))
 		mode |= BGE_RXMODE_IPV6_ENABLE;
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5762)
+		mode |= BGE_RXMODE_IPV4_FRAG_FIX;
 	CSR_WRITE_4_FLUSH(sc, BGE_RX_MODE, mode | BGE_RXMODE_ENABLE);
 	/* 5718 step 66 */
 	DELAY(10);
