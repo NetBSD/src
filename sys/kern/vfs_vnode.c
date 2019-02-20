@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.101 2019/01/01 10:06:54 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.102 2019/02/20 10:06:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.101 2019/01/01 10:06:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.102 2019/02/20 10:06:33 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1162,6 +1162,8 @@ vcache_dealloc(vnode_impl_t *vip)
 	KASSERT(mutex_owned(&vcache_lock));
 
 	vp = VIMPL_TO_VNODE(vip);
+	vfs_ref(dead_rootmount);
+	vfs_insmntque(vp, dead_rootmount);
 	mutex_enter(vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
 	VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
