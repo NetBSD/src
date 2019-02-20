@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.190 2019/02/04 10:11:34 mrg Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.191 2019/02/20 09:59:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.190 2019/02/04 10:11:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.191 2019/02/20 09:59:39 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.190 2019/02/04 10:11:34 mrg Exp $"
 #include <sys/compat_stub.h>
 
 #include <compat/sys/socket.h>
+#include <compat/net/route_70.h>
 
 /*
  * Unix communications domain.
@@ -208,7 +209,7 @@ struct mbuf * stub_compat_70_unp_addsockcred(struct lwp *lwp,
 	return control;
 }
 
-bool *compat70_ocreds_valid = false;
+bool compat70_ocreds_valid = false;
 
 /*
  * Initialize Unix protocols.
@@ -610,7 +611,7 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	case PRCO_SETOPT:
 		switch (sopt->sopt_name) {
 		case LOCAL_OCREDS:
-			if (!*compat70_ocreds_valid)  {
+			if (!compat70_ocreds_valid)  {
 				error = ENOPROTOOPT;
 				break;
 			}
@@ -664,7 +665,7 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_setint(sopt, optval);
 			break;
 		case LOCAL_OCREDS:
-			if (*compat70_ocreds_valid) {
+			if (compat70_ocreds_valid) {
 				optval = OPTBIT(UNP_OWANTCRED);
 				error = sockopt_setint(sopt, optval);
 				break;
