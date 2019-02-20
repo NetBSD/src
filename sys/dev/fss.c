@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.106 2018/08/29 09:04:40 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.107 2019/02/20 10:03:25 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.106 2018/08/29 09:04:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.107 2019/02/20 10:03:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,8 +398,7 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_enter(&sc->sc_slock);
 		if ((flag & FWRITE) == 0) {
 			error = EPERM;
-		} else if (sc->sc_state != FSS_ACTIVE &&
-		    sc->sc_state != FSS_ERROR) {
+		} else if (sc->sc_state != FSS_ACTIVE) {
 			error = EBUSY;
 		} else {
 			sc->sc_state = FSS_DESTROYING;
@@ -509,7 +508,7 @@ fss_error(struct fss_softc *sc, const char *msg)
 
 	KASSERT(mutex_owned(&sc->sc_slock));
 
-	if (sc->sc_state == FSS_ERROR)
+	if ((sc->sc_flags & FSS_ERROR))
 		return;
 
 	aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
@@ -518,7 +517,7 @@ fss_error(struct fss_softc *sc, const char *msg)
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
 		mutex_enter(&sc->sc_slock);
 	}
-	sc->sc_state = FSS_ERROR;
+	sc->sc_flags |= FSS_ERROR;
 }
 
 /*
@@ -944,7 +943,8 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 
 	mutex_enter(&sc->sc_slock);
-	if ((sc->sc_flags & FSS_PERSISTENT) == 0 && sc->sc_state != FSS_ERROR) {
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0 &&
+	    (sc->sc_flags & FSS_ERROR) == 0) {
 		mutex_exit(&sc->sc_slock);
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
 	} else {

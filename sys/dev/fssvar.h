@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.31 2018/08/29 09:04:40 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.32 2019/02/20 10:03:25 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -137,8 +137,7 @@ typedef enum {
 	FSS_IDLE,			/* Device is unconfigured */
 	FSS_CREATING,			/* Device is currently configuring */
 	FSS_ACTIVE,			/* Device is configured */
-	FSS_DESTROYING,			/* Device is currently unconfiguring */
-	FSS_ERROR			/* Device had errors */
+	FSS_DESTROYING			/* Device is currently unconfiguring */
 } fss_state_t;
 
 struct fss_softc {
@@ -148,6 +147,7 @@ struct fss_softc {
 	kcondvar_t	sc_cache_cv;	/* Signals free cache slot */
 	fss_state_t	sc_state;	/* Current state */
 	volatile int	sc_flags;	/* Flags */
+#define FSS_ERROR	0x01		/* Device had errors. */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
 #define FSS_PERSISTENT	0x20		/* File system internal snapshot */
 #define FSS_CDEV_OPEN	0x40		/* character device open */
