@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.6 2019/02/21 03:37:19 mrg Exp $	*/
+/*	$NetBSD: ipc.h,v 1.7 2019/02/21 08:25:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,6 +46,12 @@
 
 #ifndef _COMPAT_SYS_IPC_H_
 #define _COMPAT_SYS_IPC_H_
+
+#ifdef _KERNEL
+#include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
 
 __BEGIN_DECLS
 /*
