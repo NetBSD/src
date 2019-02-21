@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.8 2019/02/03 03:20:24 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.9 2019/02/21 21:33:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.8 2019/02/03 03:20:24 thorpej Exp $");
+__RCSID("$NetBSD: sem.c,v 1.9 2019/02/21 21:33:34 christos Exp $");
 
 #ifndef __LIBPTHREAD_SOURCE__
 /*
@@ -93,6 +93,7 @@ __RCSID("$NetBSD: sem.c,v 1.8 2019/02/03 03:20:24 thorpej Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <semaphore.h>
 #include <stdarg.h>
 
@@ -104,8 +105,10 @@ __RCSID("$NetBSD: sem.c,v 1.8 2019/02/03 03:20:24 thorpej Exp $");
 #define	SEM_MAGIC		0x90af0421U
 #define	SEM_MAGIC_NAMED		(SEM_MAGIC ^ SEM_NAMED)
 
-#define	SEM_IS_KSEMID(k)	((((intptr_t)(k)) & KSEM_MARKER_MASK)	\
+#define	SEMID_IS_KSEMID(id)	(((uint32_t)(id) & KSEM_MARKER_MASK)	\
 						== KSEM_PSHARED_MARKER)
+#define	SEM_IS_KSEMID(k)	SEMID_IS_KSEMID((intptr_t)(k))	
+			
 
 #define	SEM_IS_UNNAMED(k)	(SEM_IS_KSEMID(k) ||			\
 				 (k)->ksem_magic == SEM_MAGIC)
@@ -177,16 +180,16 @@ sem_alloc(unsigned int value, intptr_t semid, unsigned int magic, sem_t *semp)
 	sem_t sem;
 
 	if (value > SEM_VALUE_MAX)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((sem = malloc(sizeof(struct _sem_st))) == NULL)
-		return (ENOSPC);
+		return ENOSPC;
 
 	sem->ksem_magic = magic;
 	sem->ksem_semid = semid;
  
 	*semp = sem;
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -197,7 +200,7 @@ sem_init(sem_t *sem, int pshared, unsigned int value)
 	int error;
 
 	if (_ksem_init(value, &semid) == -1)
-		return (-1);
+		return -1;
 
 	/*
 	 * pshared anonymous semaphores are treated a little differently.
@@ -213,22 +216,22 @@ sem_init(sem_t *sem, int pshared, unsigned int value)
 	 * non-pshared semaphores.
 	 */
 	if (pshared) {
-		if ((semid & KSEM_MARKER_MASK) != KSEM_PSHARED_MARKER) {
+		if (!SEMID_IS_KSEMID(semid)) {
 			_ksem_destroy(semid);
 			errno = ENOTSUP;
-			return (-1);
+			return -1;
 		}
 		*sem = (sem_t)semid;
-		return (0);
+		return 0;
 	}
 
 	if ((error = sem_alloc(value, semid, SEM_MAGIC, sem)) != 0) {
 		_ksem_destroy(semid);
 		errno = error;
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -239,7 +242,7 @@ sem_destroy(sem_t *sem)
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || !SEM_MAGIC_OK(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 #endif
 
@@ -248,13 +251,14 @@ sem_destroy(sem_t *sem)
 	} else {
 		if (SEM_IS_NAMED(*sem)) {
 			errno = EINVAL;
-			return (-1);
+			return -1;
 		}
 
 		error = _ksem_destroy((*sem)->ksem_semid);
 		save_errno = errno;
 		sem_free(*sem);
-		errno = save_errno;
+		if (error == -1)
+			errno = save_errno;
 	}
 
 	return error;
@@ -285,7 +289,7 @@ sem_open(const char *name, int oflag, ...)
 	 * we'll just merge duplicate IDs into our list.
 	 */
 	if (_ksem_open(name, oflag, mode, value, &semid) == -1)
-		return (SEM_FAILED);
+		return SEM_FAILED;
 
 	/*
 	 * Search for a duplicate ID, we must return the same sem_t *
@@ -295,7 +299,7 @@ sem_open(const char *name, int oflag, ...)
 	LIST_FOREACH(s, &named_sems, ksem_list) {
 		if (s->ksem_semid == semid) {
 			UNLOCK_NAMED_SEMS();
-			return (s->ksem_identity);
+			return s->ksem_identity;
 		}
 	}
 
@@ -310,7 +314,7 @@ sem_open(const char *name, int oflag, ...)
 	UNLOCK_NAMED_SEMS();
 	(*sem)->ksem_identity = sem;
 
-	return (sem);
+	return sem;
 
  bad:
 	UNLOCK_NAMED_SEMS();
@@ -321,7 +325,7 @@ sem_open(const char *name, int oflag, ...)
 		free(sem);
 	}
 	errno = error;
-	return (SEM_FAILED);
+	return SEM_FAILED;
 }
 
 int
@@ -332,13 +336,13 @@ sem_close(sem_t *sem)
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || !SEM_MAGIC_OK(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 #endif
 
 	if (!SEM_IS_NAMED(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 
 	LOCK_NAMED_SEMS();
@@ -348,7 +352,8 @@ sem_close(sem_t *sem)
 	UNLOCK_NAMED_SEMS();
 	sem_free(*sem);
 	free(sem);
-	errno = save_errno;
+	if (error == -1)
+		errno = save_errno;
 	return error;
 }
 
@@ -356,7 +361,7 @@ int
 sem_unlink(const char *name)
 {
 
-	return (_ksem_unlink(name));
+	return _ksem_unlink(name);
 }
 
 int
@@ -366,11 +371,11 @@ sem_wait(sem_t *sem)
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || !SEM_MAGIC_OK(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 #endif
 
-	return (_ksem_wait(sem_to_semid(sem)));
+	return _ksem_wait(sem_to_semid(sem));
 }
 
 int
@@ -380,11 +385,11 @@ sem_timedwait(sem_t *sem, const struct timespec * __restrict abstime)
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || !SEM_MAGIC_OK(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 #endif
 
-	return (_ksem_timedwait(sem_to_semid(sem), abstime));
+	return _ksem_timedwait(sem_to_semid(sem), abstime);
 }
 
 int
@@ -394,11 +399,11 @@ sem_trywait(sem_t *sem)
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || !SEM_MAGIC_OK(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 #endif
 
-	return (_ksem_trywait(sem_to_semid(sem)));
+	return _ksem_trywait(sem_to_semid(sem));
 }
 
 int
@@ -408,11 +413,11 @@ sem_post(sem_t *sem)
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || !SEM_MAGIC_OK(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 #endif
 
-	return (_ksem_post(sem_to_semid(sem)));
+	return _ksem_post(sem_to_semid(sem));
 }
 
 int
@@ -422,9 +427,9 @@ sem_getvalue(sem_t * __restrict sem, int * __restrict sval)
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || !SEM_MAGIC_OK(*sem)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 #endif
 
-	return (_ksem_getvalue(sem_to_semid(sem), sval));
+	return _ksem_getvalue(sem_to_semid(sem), sval);
 }
