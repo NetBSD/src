@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.46 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.47 2019/02/21 15:41:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.46 2019/01/22 03:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.47 2019/02/21 15:41:56 msaitoh Exp $");
 
 
 /*
@@ -125,7 +125,6 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	rev = MII_REV(ma->mii_id2);
 	mpd = mii_phy_match(ma, rgephys);
 	aprint_naive(": Media interface\n");
-	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, rev);
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
@@ -133,6 +132,15 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
 	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
+
+	if (sc->mii_mpd_model == MII_MODEL_REALTEK_RTL8169S) {
+		aprint_normal(": RTL8211");
+		if (sc->mii_mpd_rev != 0)
+			aprint_normal("%c",'@' + sc->mii_mpd_rev);
+		aprint_normal(" 1000BASE-T media interface\n");
+	} else
+		aprint_normal(": %s, rev. %d\n", mpd->mpd_name, rev);
+
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
