@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.27 2019/02/18 12:17:45 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.28 2019/02/21 11:58:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.27 2019/02/18 12:17:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.28 2019/02/21 11:58:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +502,7 @@ static const size_t svm_conf_sizes[NVMM_X86_NCONF] = {
 struct svm_cpudata {
 	/* General */
 	bool shared_asid;
-	bool tlb_want_flush;
+	bool gtlb_want_flush;
 
 	/* VMCB */
 	struct vmcb *vmcb;
@@ -977,7 +977,7 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			}
 			if ((vmcb->state.efer ^ exit->u.msr.val) &
 			     EFER_TLB_FLUSH) {
-				cpudata->tlb_want_flush = true;
+				cpudata->gtlb_want_flush = true;
 			}
 			vmcb->state.efer = exit->u.msr.val | EFER_SVME;
 			svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_CR);
@@ -1185,21 +1185,30 @@ svm_vcpu_guest_misc_leave(struct nvmm_cpu *vcpu)
 	wrmsr(MSR_KERNELGSBASE, cpudata->kernelgsbase);
 }
 
+/* -------------------------------------------------------------------------- */
+
+static inline void
+svm_gtlb_catchup(struct nvmm_cpu *vcpu, int hcpu)
+{
+	struct svm_cpudata *cpudata = vcpu->cpudata;
+
+	if (vcpu->hcpu_last != hcpu || cpudata->shared_asid) {
+		cpudata->gtlb_want_flush = true;
+	}
+}
+
 static int
 svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct vmcb *vmcb = cpudata->vmcb;
-	bool tlb_need_flush = false;
 	int hcpu, s;
 
 	kpreempt_disable();
 	hcpu = cpu_number();
 
-	if (vcpu->hcpu_last != hcpu || cpudata->shared_asid) {
-		tlb_need_flush = true;
-	}
+	svm_gtlb_catchup(vcpu, hcpu);
 
 	if (vcpu->hcpu_last != hcpu) {
 		vmcb->ctrl.tsc_offset = cpudata->tsc_offset +
@@ -1211,7 +1220,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	svm_vcpu_guest_misc_enter(vcpu);
 
 	while (1) {
-		if (cpudata->tlb_want_flush || tlb_need_flush) {
+		if (cpudata->gtlb_want_flush) {
 			vmcb->ctrl.tlb_ctrl = svm_ctrl_tlb_flush;
 		} else {
 			vmcb->ctrl.tlb_ctrl = 0;
@@ -1226,8 +1235,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		svm_vmcb_cache_default(vmcb);
 
 		if (vmcb->ctrl.exitcode != VMCB_EXITCODE_INVALID) {
-			cpudata->tlb_want_flush = false;
-			tlb_need_flush = false;
+			cpudata->gtlb_want_flush = false;
 			vcpu->hcpu_last = hcpu;
 		}
 
@@ -1751,7 +1759,7 @@ svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	struct fxsave *fpustate;
 
 	if (svm_state_tlb_flush(vmcb, state, flags)) {
-		cpudata->tlb_want_flush = true;
+		cpudata->gtlb_want_flush = true;
 	}
 
 	if (flags & NVMM_X64_STATE_SEGS) {
@@ -1985,7 +1993,7 @@ svm_tlb_flush(struct pmap *pm)
 		if (error)
 			continue;
 		cpudata = vcpu->cpudata;
-		cpudata->tlb_want_flush = true;
+		cpudata->gtlb_want_flush = true;
 		nvmm_vcpu_put(vcpu);
 	}
 }
