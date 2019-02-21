@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.9 2019/02/21 12:17:52 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.10 2019/02/21 13:25:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.9 2019/02/21 12:17:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.10 2019/02/21 13:25:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2655,23 +2655,6 @@ vmx_ident(void)
 		return false;
 	}
 
-	msr = rdmsr(MSR_IA32_VMX_EPT_VPID_CAP);
-	if ((msr & IA32_VMX_EPT_VPID_WALKLENGTH_4) == 0) {
-		return false;
-	}
-	if ((msr & IA32_VMX_EPT_VPID_INVEPT) == 0) {
-		return false;
-	}
-	if ((msr & IA32_VMX_EPT_VPID_INVVPID) == 0) {
-		return false;
-	}
-	if ((msr & IA32_VMX_EPT_VPID_FLAGS_AD) == 0) {
-		return false;
-	}
-	if (!(msr & IA32_VMX_EPT_VPID_UC) && !(msr & IA32_VMX_EPT_VPID_WB)) {
-		return false;
-	}
-
 	/* PG and PE are reported, even if Unrestricted Guests is supported. */
 	vmx_cr0_fixed0 = rdmsr(MSR_IA32_VMX_CR0_FIXED0) & ~(CR0_PG|CR0_PE);
 	vmx_cr0_fixed1 = rdmsr(MSR_IA32_VMX_CR0_FIXED1) | (CR0_PG|CR0_PE);
@@ -2721,6 +2704,23 @@ vmx_ident(void)
 	    VMX_EXIT_CTLS_ONE, VMX_EXIT_CTLS_ZERO,
 	    &vmx_exit_ctls);
 	if (ret == -1) {
+		return false;
+	}
+
+	msr = rdmsr(MSR_IA32_VMX_EPT_VPID_CAP);
+	if ((msr & IA32_VMX_EPT_VPID_WALKLENGTH_4) == 0) {
+		return false;
+	}
+	if ((msr & IA32_VMX_EPT_VPID_INVEPT) == 0) {
+		return false;
+	}
+	if ((msr & IA32_VMX_EPT_VPID_INVVPID) == 0) {
+		return false;
+	}
+	if ((msr & IA32_VMX_EPT_VPID_FLAGS_AD) == 0) {
+		return false;
+	}
+	if (!(msr & IA32_VMX_EPT_VPID_UC) && !(msr & IA32_VMX_EPT_VPID_WB)) {
 		return false;
 	}
 
