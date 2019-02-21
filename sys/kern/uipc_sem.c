@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.53 2019/02/05 07:14:32 thorpej Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.54 2019/02/21 21:49:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.53 2019/02/05 07:14:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.54 2019/02/21 21:49:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -471,7 +471,7 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 		atomic_dec_uint(&l->l_proc->p_nsems);
 		if (kname != NULL)
 			kmem_free(kname, len);
-		return -1;
+		return ENOSPC;
 	}
 
 	ks = kmem_zalloc(sizeof(ksem_t), KM_SLEEP);
