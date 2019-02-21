@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.5 2018/12/27 09:57:16 maxv Exp $	*/
+/*	$NetBSD: msg.h,v 1.6 2019/02/21 03:37:19 mrg Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -91,6 +91,7 @@ static __inline void
 __msqid_ds13_to_native(const struct msqid_ds13 *omsqbuf, struct msqid_ds *msqbuf)
 {
 
+	memset(msqbuf, 0, sizeof *msqbuf);
 	msqbuf->msg_perm = omsqbuf->msg_perm;
 
 #define	CVT(x)	msqbuf->x = omsqbuf->x
@@ -133,6 +134,7 @@ static __inline void
 __msqid_ds14_to_native(const struct msqid_ds14 *omsqbuf, struct msqid_ds *msqbuf)
 {
 
+	memset(msqbuf, 0, sizeof *msqbuf);
 	__ipc_perm14_to_native(&omsqbuf->msg_perm, &msqbuf->msg_perm);
 
 #define	CVT(x)	msqbuf->x = omsqbuf->x
@@ -150,7 +152,7 @@ static __inline void
 __native_to_msqid_ds14(const struct msqid_ds *msqbuf, struct msqid_ds14 *omsqbuf)
 {
 
-	memset(omsqbuf, 0, sizeof(*omsqbuf));
+	memset(omsqbuf, 0, sizeof *omsqbuf);
 	__native_to_ipc_perm14(&msqbuf->msg_perm, &omsqbuf->msg_perm);
 
 #define	CVT(x)	omsqbuf->x = msqbuf->x

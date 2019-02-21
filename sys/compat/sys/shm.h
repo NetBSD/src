@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.7 2009/04/01 21:15:23 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.8 2019/02/21 03:37:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -111,6 +111,7 @@ static __inline void
 __native_to_shmid_ds14(const struct shmid_ds *shmbuf, struct shmid_ds14 *oshmbuf)
 {
 
+	memset(oshmbuf, 0, sizeof *oshmbuf);
 	__native_to_ipc_perm14(&shmbuf->shm_perm, &oshmbuf->shm_perm);
 
 #define	CVT(x)	oshmbuf->x = shmbuf->x
@@ -147,6 +148,7 @@ static __inline void
 __native_to_shmid_ds13(const struct shmid_ds *shmbuf, struct shmid_ds13 *oshmbuf)
 {
 
+	memset(oshmbuf, 0, sizeof *oshmbuf);
 	oshmbuf->shm_perm = shmbuf->shm_perm;
 
 #define	CVT(x)	oshmbuf->x = shmbuf->x
