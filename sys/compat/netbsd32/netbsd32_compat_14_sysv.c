@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14_sysv.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_14_sysv.c,v 1.3 2019/02/21 03:37:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14_sysv.c,v 1.2 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14_sysv.c,v 1.3 2019/02/21 03:37:19 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -76,6 +76,7 @@ static inline void
 native_to_netbsd32_ipc_perm14(struct ipc_perm *perm, struct netbsd32_ipc_perm14 *operm)
 {
 
+	memset(operm, 0, sizeof *operm);
 #define	CVT(x)	operm->x = perm->x
 	CVT(uid);
 	CVT(gid);
@@ -112,7 +113,7 @@ static inline void
 native_to_netbsd32_msqid_ds14(struct msqid_ds *msqbuf, struct netbsd32_msqid_ds14 *omsqbuf)
 {
 
-	memset(omsqbuf, 0, sizeof(*omsqbuf));
+	memset(omsqbuf, 0, sizeof *omsqbuf);
 	native_to_netbsd32_ipc_perm14(&msqbuf->msg_perm, &omsqbuf->msg_perm);
 
 #define	CVT(x)	omsqbuf->x = msqbuf->x
@@ -150,6 +151,7 @@ static inline void
 native_to_netbsd32_semid_ds14(struct semid_ds *sembuf, struct netbsd32_semid_ds14 *osembuf)
 {
 
+	memset(osembuf, 0, sizeof *osembuf);
 	native_to_netbsd32_ipc_perm14(&sembuf->sem_perm, &osembuf->sem_perm);
 
 #define	CVT(x)	osembuf->x = sembuf->x
@@ -180,6 +182,7 @@ static inline void
 native_to_netbsd32_shmid_ds14(struct shmid_ds *shmbuf, struct netbsd32_shmid_ds14 *oshmbuf)
 {
 
+	memset(oshmbuf, 0, sizeof *oshmbuf);
 	native_to_netbsd32_ipc_perm14(&shmbuf->shm_perm, &oshmbuf->shm_perm);
 
 #define	CVT(x)	oshmbuf->x = shmbuf->x
