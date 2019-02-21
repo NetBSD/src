@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.231 2019/02/19 16:31:38 sevan Exp $
+$NetBSD: acronyms.comp,v 1.232 2019/02/21 01:20:45 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -919,6 +919,7 @@ MVCC	multiversion concurrency control
 MWE	module width encoding
 MX	mail exchange
 NACK	negative acknowledgement
+NAK	negative acknowledgement
 NAN	not a number
 NAPT	Network Address Port Translation
 NAS	network attached storage
