@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.8 2019/02/21 11:58:04 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.9 2019/02/21 12:17:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.8 2019/02/21 11:58:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.9 2019/02/21 12:17:52 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,7 +627,7 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 struct vmx_machdata {
 	bool cpuidpresent[VMX_NCPUIDS];
 	struct nvmm_x86_conf_cpuid cpuid[VMX_NCPUIDS];
-	kcpuset_t *ept_want_flush;
+	volatile uint64_t mach_htlb_gen;
 };
 
 static const size_t vmx_conf_sizes[NVMM_X86_NCONF] = {
@@ -638,6 +638,8 @@ struct vmx_cpudata {
 	/* General */
 	uint64_t asid;
 	bool gtlb_want_flush;
+	uint64_t vcpu_htlb_gen;
+	kcpuset_t *htlb_want_flush;
 
 	/* VMCS */
 	struct vmcs *vmcs;
@@ -1510,6 +1512,8 @@ vmx_exit_epf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->u.mem.inst_len = 0;
 }
 
+/* -------------------------------------------------------------------------- */
+
 static void
 vmx_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
@@ -1601,7 +1605,7 @@ vmx_vcpu_guest_misc_leave(struct nvmm_cpu *vcpu)
 	wrmsr(MSR_KERNELGSBASE, cpudata->kernelgsbase);
 }
 
-/* --------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 #define VMX_INVVPID_ADDRESS		0
 #define VMX_INVVPID_CONTEXT		1
@@ -1621,6 +1625,49 @@ vmx_gtlb_catchup(struct nvmm_cpu *vcpu, int hcpu)
 	}
 }
 
+static inline void
+vmx_htlb_catchup(struct nvmm_cpu *vcpu, int hcpu)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	struct ept_desc ept_desc;
+
+	if (__predict_true(!kcpuset_isset(cpudata->htlb_want_flush, hcpu))) {
+		return;
+	}
+
+	vmx_vmread(VMCS_EPTP, &ept_desc.eptp);
+	ept_desc.mbz = 0;
+	vmx_invept(vmx_ept_flush_op, &ept_desc);
+	kcpuset_clear(cpudata->htlb_want_flush, hcpu);
+}
+
+static inline uint64_t
+vmx_htlb_flush(struct vmx_machdata *machdata, struct vmx_cpudata *cpudata)
+{
+	struct ept_desc ept_desc;
+	uint64_t machgen;
+
+	machgen = machdata->mach_htlb_gen;
+	if (__predict_true(machgen == cpudata->vcpu_htlb_gen)) {
+		return machgen;
+	}
+
+	kcpuset_copy(cpudata->htlb_want_flush, kcpuset_running);
+
+	vmx_vmread(VMCS_EPTP, &ept_desc.eptp);
+	ept_desc.mbz = 0;
+	vmx_invept(vmx_ept_flush_op, &ept_desc);
+
+	return machgen;
+}
+
+static inline void
+vmx_htlb_flush_ack(struct vmx_cpudata *cpudata, uint64_t machgen)
+{
+	cpudata->vcpu_htlb_gen = machgen;
+	kcpuset_clear(cpudata->htlb_want_flush, cpu_number());
+}
+
 static int
 vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
@@ -1628,10 +1675,10 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	struct vmx_machdata *machdata = mach->machdata;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	struct vpid_desc vpid_desc;
-	struct ept_desc ept_desc;
 	struct cpu_info *ci;
 	uint64_t exitcode;
 	uint64_t intstate;
+	uint64_t machgen;
 	int hcpu, s, ret;
 	bool launched = false;
 
@@ -1640,13 +1687,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	hcpu = cpu_number();
 
 	vmx_gtlb_catchup(vcpu, hcpu);
-
-	if (__predict_false(kcpuset_isset(machdata->ept_want_flush, hcpu))) {
-		vmx_vmread(VMCS_EPTP, &ept_desc.eptp);
-		ept_desc.mbz = 0;
-		vmx_invept(vmx_ept_flush_op, &ept_desc);
-		kcpuset_clear(machdata->ept_want_flush, hcpu);
-	}
+	vmx_htlb_catchup(vcpu, hcpu);
 
 	if (vcpu->hcpu_last != hcpu) {
 		vmx_vmwrite(VMCS_HOST_TR_SELECTOR, ci->ci_tss_sel);
@@ -1670,6 +1711,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 
 		s = splhigh();
+		machgen = vmx_htlb_flush(machdata, cpudata);
 		vmx_vcpu_guest_fpu_enter(vcpu);
 		lcr2(cpudata->gcr2);
 		if (launched) {
@@ -1679,6 +1721,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 		cpudata->gcr2 = rcr2();
 		vmx_vcpu_guest_fpu_leave(vcpu);
+		vmx_htlb_flush_ack(cpudata, machgen);
 		splx(s);
 
 		if (__predict_false(ret != 0)) {
@@ -2089,6 +2132,8 @@ vmx_vcpu_create(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	if (error)
 		goto error;
 
+	kcpuset_create(&cpudata->htlb_want_flush, true);
+
 	/* Init the VCPU info. */
 	vmx_vcpu_init(mach, vcpu);
 
@@ -2119,6 +2164,8 @@ vmx_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmcs_enter(vcpu);
 	vmx_asid_free(vcpu);
 	vmx_vmcs_leave(vcpu);
+
+	kcpuset_destroy(cpudata->htlb_want_flush);
 
 	vmx_memfree(cpudata->vmcs_pa, (vaddr_t)cpudata->vmcs, VMCS_NPAGES);
 	vmx_memfree(cpudata->msrbm_pa, (vaddr_t)cpudata->msrbm, MSRBM_NPAGES);
@@ -2450,23 +2497,11 @@ vmx_tlb_flush(struct pmap *pm)
 {
 	struct nvmm_machine *mach = pm->pm_data;
 	struct vmx_machdata *machdata = mach->machdata;
-	struct nvmm_cpu *vcpu;
-	int error;
-	size_t i;
 
-	kcpuset_atomicly_merge(machdata->ept_want_flush, kcpuset_running);
+	atomic_inc_64(&machdata->mach_htlb_gen);
 
-	/*
-	 * Not as dumb as it seems. We want to make sure that when we leave
-	 * this function, each VCPU got halted at some point, and possibly
-	 * resumed with the updated kcpuset.
-	 */
-	for (i = 0; i < NVMM_MAX_VCPUS; i++) {
-		error = nvmm_vcpu_get(mach, i, &vcpu);
-		if (error)
-			continue;
-		nvmm_vcpu_put(vcpu);
-	}
+	/* Generates IPIs, which cause #VMEXITs. */
+	pmap_tlb_shootdown(pmap_kernel(), -1, PG_G, TLBSHOOT_UPDATE);
 }
 
 static void
@@ -2483,11 +2518,10 @@ vmx_machine_create(struct nvmm_machine *mach)
 	pmap->pm_tlb_flush = vmx_tlb_flush;
 
 	machdata = kmem_zalloc(sizeof(struct vmx_machdata), KM_SLEEP);
-	kcpuset_create(&machdata->ept_want_flush, true);
 	mach->machdata = machdata;
 
-	/* Start with an EPT flush everywhere. */
-	kcpuset_copy(machdata->ept_want_flush, kcpuset_running);
+	/* Start with an hTLB flush everywhere. */
+	machdata->mach_htlb_gen = 1;
 }
 
 static void
@@ -2495,7 +2529,6 @@ vmx_machine_destroy(struct nvmm_machine *mach)
 {
 	struct vmx_machdata *machdata = mach->machdata;
 
-	kcpuset_destroy(machdata->ept_want_flush);
 	kmem_free(machdata, sizeof(struct vmx_machdata));
 }
 
