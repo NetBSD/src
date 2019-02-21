@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.324 2019/02/18 19:03:12 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.325 2019/02/21 14:31:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.324 2019/02/18 19:03:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.325 2019/02/21 14:31:54 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3643,24 +3643,24 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
 	pt_entry_t expect;
 	bool need_shootdown;
 
-	expect = pmap_pa2pte(pa) | PG_V;
 	ptp = pvpte->pte_ptp;
 	va = pvpte->pte_va;
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	pmap = ptp_to_pmap(ptp);
+	KASSERT(kpreempt_disabled());
 
 	if (__predict_false(pmap->pm_sync_pv != NULL)) {
 		return (*pmap->pm_sync_pv)(ptp, va, pa, clearbits, oattrs,
 		    optep);
 	}
 
+	expect = pmap_pa2pte(pa) | PG_V;
+
 	if (clearbits != ~0) {
 		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
 		clearbits = pmap_pp_attrs_to_pte(clearbits);
 	}
-
-	KASSERT(kpreempt_disabled());
 
 	ptep = pmap_map_pte(pmap, ptp, va);
 	do {
@@ -5487,12 +5487,7 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 	bool need_shootdown;
 
 	expect = pmap_pa2pte(pa) | EPT_R;
-	KASSERT(ptp == NULL || ptp->uobject != NULL);
-	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	pmap = ptp_to_pmap(ptp);
-
-	KASSERT(clearbits == ~0 || (clearbits & ~(EPT_D | EPT_A | EPT_W)) == 0);
-	KASSERT(kpreempt_disabled());
 
 	if (clearbits != ~0) {
 		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
