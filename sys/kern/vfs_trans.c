@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.54 2019/02/20 10:09:45 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.55 2019/02/21 08:52:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.54 2019/02/20 10:09:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.55 2019/02/21 08:52:53 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -677,7 +677,8 @@ vfs_suspend(struct mount *mp, int nowait)
 	struct fstrans_lwp_info *fli;
 	int error;
 
-	KASSERT(mp != dead_rootmount);
+	if (mp == dead_rootmount)
+		return EOPNOTSUPP;
 
 	fli = fstrans_get_lwp_info(mp, true);
 	mp = fli->fli_mount;
