@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.7 2019/02/18 12:17:45 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.8 2019/02/21 11:58:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.7 2019/02/18 12:17:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.8 2019/02/21 11:58:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,7 +637,7 @@ static const size_t vmx_conf_sizes[NVMM_X86_NCONF] = {
 struct vmx_cpudata {
 	/* General */
 	uint64_t asid;
-	bool tlb_want_flush;
+	bool gtlb_want_flush;
 
 	/* VMCS */
 	struct vmcs *vmcs;
@@ -1601,6 +1601,8 @@ vmx_vcpu_guest_misc_leave(struct nvmm_cpu *vcpu)
 	wrmsr(MSR_KERNELGSBASE, cpudata->kernelgsbase);
 }
 
+/* --------------------------------------------------------------------- */
+
 #define VMX_INVVPID_ADDRESS		0
 #define VMX_INVVPID_CONTEXT		1
 #define VMX_INVVPID_ALL			2
@@ -1609,13 +1611,22 @@ vmx_vcpu_guest_misc_leave(struct nvmm_cpu *vcpu)
 #define VMX_INVEPT_CONTEXT		1
 #define VMX_INVEPT_ALL			2
 
+static inline void
+vmx_gtlb_catchup(struct nvmm_cpu *vcpu, int hcpu)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+
+	if (vcpu->hcpu_last != hcpu) {
+		cpudata->gtlb_want_flush = true;
+	}
+}
+
 static int
 vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
 	struct vmx_machdata *machdata = mach->machdata;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	bool tlb_need_flush = false;
 	struct vpid_desc vpid_desc;
 	struct ept_desc ept_desc;
 	struct cpu_info *ci;
@@ -1628,15 +1639,13 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	ci = curcpu();
 	hcpu = cpu_number();
 
+	vmx_gtlb_catchup(vcpu, hcpu);
+
 	if (__predict_false(kcpuset_isset(machdata->ept_want_flush, hcpu))) {
 		vmx_vmread(VMCS_EPTP, &ept_desc.eptp);
 		ept_desc.mbz = 0;
 		vmx_invept(vmx_ept_flush_op, &ept_desc);
 		kcpuset_clear(machdata->ept_want_flush, hcpu);
-	}
-
-	if (vcpu->hcpu_last != hcpu) {
-		tlb_need_flush = true;
 	}
 
 	if (vcpu->hcpu_last != hcpu) {
@@ -1653,12 +1662,11 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	vmx_vcpu_guest_misc_enter(vcpu);
 
 	while (1) {
-		if (cpudata->tlb_want_flush || tlb_need_flush) {
+		if (cpudata->gtlb_want_flush) {
 			vpid_desc.vpid = cpudata->asid;
 			vpid_desc.addr = 0;
 			vmx_invvpid(vmx_tlb_flush_op, &vpid_desc);
-			cpudata->tlb_want_flush = false;
-			tlb_need_flush = false;
+			cpudata->gtlb_want_flush = false;
 		}
 
 		s = splhigh();
@@ -2217,7 +2225,7 @@ vmx_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
 	vmx_vmcs_enter(vcpu);
 
 	if (vmx_state_tlb_flush(state, flags)) {
-		cpudata->tlb_want_flush = true;
+		cpudata->gtlb_want_flush = true;
 	}
 
 	if (flags & NVMM_X64_STATE_SEGS) {
