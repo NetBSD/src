@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.140 2019/01/27 02:47:26 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.141 2019/02/21 21:34:05 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -327,7 +327,7 @@
  * We use ((void)0) instead of do {} while (0) so that it
  * works on , expressions.
  */
-#define __nothing	((void)0)
+#define __nothing	(/*LINTED*/(void)0)
 
 #if defined(__cplusplus)
 #define	__BEGIN_EXTERN_C	extern "C" {
