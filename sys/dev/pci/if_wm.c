@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.626 2019/02/08 06:33:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.627 2019/02/21 08:10:22 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.626 2019/02/08 06:33:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.627 2019/02/21 08:10:22 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2994,6 +2994,8 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_rx_xon);
 	evcnt_detach(&sc->sc_ev_rx_macctl);
 #endif /* WM_EVENT_COUNTERS */
+
+	rnd_detach_source(&sc->rnd_source);
 
 	/* Tell the firmware about the release */
 	WM_CORE_LOCK(sc);
