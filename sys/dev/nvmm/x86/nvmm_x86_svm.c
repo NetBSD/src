@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.28 2019/02/21 11:58:04 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.29 2019/02/21 12:17:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.28 2019/02/21 11:58:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.29 2019/02/21 12:17:52 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,6 +493,7 @@ static uint64_t svm_xcr0_mask __read_mostly;
 struct svm_machdata {
 	bool cpuidpresent[SVM_NCPUIDS];
 	struct nvmm_x86_conf_cpuid cpuid[SVM_NCPUIDS];
+	volatile uint64_t mach_htlb_gen;
 };
 
 static const size_t svm_conf_sizes[NVMM_X86_NCONF] = {
@@ -503,6 +504,7 @@ struct svm_cpudata {
 	/* General */
 	bool shared_asid;
 	bool gtlb_want_flush;
+	uint64_t vcpu_htlb_gen;
 
 	/* VMCB */
 	struct vmcb *vmcb;
@@ -1101,6 +1103,8 @@ error:
 	svm_inject_gp(mach, vcpu);
 }
 
+/* -------------------------------------------------------------------------- */
+
 static void
 svm_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
@@ -1197,18 +1201,57 @@ svm_gtlb_catchup(struct nvmm_cpu *vcpu, int hcpu)
 	}
 }
 
+static inline void
+svm_htlb_catchup(struct nvmm_cpu *vcpu, int hcpu)
+{
+	/*
+	 * Nothing to do. If an hTLB flush was needed, either the VCPU was
+	 * executing on this hCPU and the hTLB already got flushed, or it
+	 * was executing on another hCPU in which case the catchup is done
+	 * in svm_gtlb_catchup().
+	 */
+}
+
+static inline uint64_t
+svm_htlb_flush(struct svm_machdata *machdata, struct svm_cpudata *cpudata)
+{
+	struct vmcb *vmcb = cpudata->vmcb;
+	uint64_t machgen;
+
+	machgen = machdata->mach_htlb_gen;
+	if (__predict_true(machgen == cpudata->vcpu_htlb_gen)) {
+		return machgen;
+	}
+
+	vmcb->ctrl.tlb_ctrl = svm_ctrl_tlb_flush;
+	return machgen;
+}
+
+static inline void
+svm_htlb_flush_ack(struct svm_cpudata *cpudata, uint64_t machgen)
+{
+	struct vmcb *vmcb = cpudata->vmcb;
+
+	if (__predict_true(vmcb->ctrl.exitcode != VMCB_EXITCODE_INVALID)) {
+		cpudata->vcpu_htlb_gen = machgen;
+	}
+}
+
 static int
 svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_exit *exit)
 {
+	struct svm_machdata *machdata = mach->machdata;
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct vmcb *vmcb = cpudata->vmcb;
+	uint64_t machgen;
 	int hcpu, s;
 
 	kpreempt_disable();
 	hcpu = cpu_number();
 
 	svm_gtlb_catchup(vcpu, hcpu);
+	svm_htlb_catchup(vcpu, hcpu);
 
 	if (vcpu->hcpu_last != hcpu) {
 		vmcb->ctrl.tsc_offset = cpudata->tsc_offset +
@@ -1227,9 +1270,11 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 
 		s = splhigh();
+		machgen = svm_htlb_flush(machdata, cpudata);
 		svm_vcpu_guest_fpu_enter(vcpu);
 		svm_vmrun(cpudata->vmcb_pa, cpudata->gprs);
 		svm_vcpu_guest_fpu_leave(vcpu);
+		svm_htlb_flush_ack(cpudata, machgen);
 		splx(s);
 
 		svm_vmcb_cache_default(vmcb);
@@ -1982,30 +2027,28 @@ static void
 svm_tlb_flush(struct pmap *pm)
 {
 	struct nvmm_machine *mach = pm->pm_data;
-	struct svm_cpudata *cpudata;
-	struct nvmm_cpu *vcpu;
-	int error;
-	size_t i;
+	struct svm_machdata *machdata = mach->machdata;
 
-	/* Request TLB flushes. */
-	for (i = 0; i < NVMM_MAX_VCPUS; i++) {
-		error = nvmm_vcpu_get(mach, i, &vcpu);
-		if (error)
-			continue;
-		cpudata = vcpu->cpudata;
-		cpudata->gtlb_want_flush = true;
-		nvmm_vcpu_put(vcpu);
-	}
+	atomic_inc_64(&machdata->mach_htlb_gen);
+
+	/* Generates IPIs, which cause #VMEXITs. */
+	pmap_tlb_shootdown(pmap_kernel(), -1, PG_G, TLBSHOOT_UPDATE);
 }
 
 static void
 svm_machine_create(struct nvmm_machine *mach)
 {
+	struct svm_machdata *machdata;
+
 	/* Fill in pmap info. */
 	mach->vm->vm_map.pmap->pm_data = (void *)mach;
 	mach->vm->vm_map.pmap->pm_tlb_flush = svm_tlb_flush;
 
-	mach->machdata = kmem_zalloc(sizeof(struct svm_machdata), KM_SLEEP);
+	machdata = kmem_zalloc(sizeof(struct svm_machdata), KM_SLEEP);
+	mach->machdata = machdata;
+
+	/* Start with an hTLB flush everywhere. */
+	machdata->mach_htlb_gen = 1;
 }
 
 static void
