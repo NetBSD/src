@@ -1,0 +1,27 @@
+Known issues in NVMM, low priority in most cases.
+
+====== KERNEL NVMM DRIVER ======
+
+ * Currently you can't modunload NVMM while a VM is running, otherwise you hit
+   a panic. See TODO in nvmm_fini().
+
+ * Maybe we will want a way to return to userland when the guest TPR changes.
+   On Intel that's not complicated, but on old AMD CPUs, we need to disassemble
+   the instruction, and I don't like that.
+
+ * Maybe we shouldn't modify the INT/NMI windows during event injection. The
+   virtualizer is supposed to inject the event only when these windows allow
+   it. (Eg Qemu does.)
+
+ * We need a cleaner way to handle CPUID exits. It is not complicated to solve,
+   but I'm still not sure which design is the cleanest.
+
+ * Same for the MSRs.
+
+====== LIBNVMM ======
+
+ * There are still a few twisted corner cases we don't handle in the instruction
+   emulator. For example if the guest makes an MMIO access relative to RSP, we
+   must base the GVA on %SS and not %DS. This is tiring, and in practice, no
+   guest is dumb enough to perform such accesses.
+
