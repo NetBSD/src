@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.20 2018/12/15 18:03:17 gson Exp $
+#	$NetBSD: Makefile.bootimage,v 1.21 2019/02/22 22:13:58 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -240,7 +240,7 @@ ${TARGETFS}: prepare_md_post
 .endfor
 .if defined(SECONDARY_BOOT)
 	@echo Copying secondary boot...
-	${INSTALL} ${COPY} -m 0644 ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
+	${INSTALL} ${COPY} -m 0444 ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
 .endif
 	@echo Preparing /etc/fstab ...
 	${TOOL_SED} < ${FSTAB_IN} > ${WORKFSTAB}
@@ -258,7 +258,7 @@ ${TARGETFS}: prepare_md_post
 	fi
 	${MKDIR} ${MKDIRPERM} ${WORKDIR}/${_TARGET}
 	(cd ${_SRCDIR} ;						\
-	    ${TOOL_PAX} -rw -pe	-v ${PAX_TIMESTAMP}			\
+	    ${TOOL_PAX} ${PAX_TIMESTAMP} -rw -pe -v			\
 	    ${IMGDIR_EXCLUDE}						\
 	    . ${.OBJDIR}/${WORKDIR}/${_TARGET} )
 .endfor
@@ -271,8 +271,8 @@ ${TARGETFS}: prepare_md_post
 		false; 							\
 	fi
 	@if [ -f ${_SRC} ]; then 					\
-		echo ${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET};		\
-		${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET};			\
+		echo ${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET}; \
+		${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET}; \
 	fi
 .endfor
 .endif
@@ -370,9 +370,9 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 .endif
 	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
 	    ${CAT} - ${TARGETFS} > ${WORKIMG}
-.else
+.else	# USE_MBR == "no"
 	${INSTALL} ${COPY} -m 0644 ${TARGETFS} ${WORKIMG}
-.endif
+.endif	# USE_MBR != "no"
 .if ${OMIT_SWAPIMG} == "no"
 	${DD} if=/dev/zero of=${WORKSWAP} seek=$$((${SWAPSECTORS} - 1)) count=1
 	${CAT} ${WORKSWAP} >> ${WORKIMG}

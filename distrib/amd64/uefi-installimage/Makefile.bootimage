@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.9 2018/12/15 18:03:17 gson Exp $
+#	$NetBSD: Makefile.bootimage,v 1.10 2019/02/22 22:13:58 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -224,8 +224,6 @@ SETS_DEFAULT+=	xbase xcomp xetc xfont xserver
 .endif
 
 KERN_SET?=	kern-GENERIC
-COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
-TAR_SUFF=	${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 SETS?=		${SETS_DEFAULT}
 IMG_SETS=	${KERN_SET} ${SETS}
 SETS_DIR?=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
@@ -241,6 +239,8 @@ WORKFSTAB?=	work.fstab
 WORKRCCONF?=	work.rc.conf
 WORKFS?=        work.rootfs
 TARGETFS?=      imgroot.fs
+COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
+TAR_SUFF=	${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 
 CLEANFILES+=	${WORKSPEC} ${WORKFSTAB} ${WORKRCCONF} ${WORKFS}
 CLEANFILES+=	${TARGETFS}
@@ -373,7 +373,8 @@ WORKLABEL?=	work.diskproto
 WORKIMG?=	work.img
 EFIWORKDIR?=	work.efidir
 
-CLEANFILES+=	${WORKMBR} ${WORKSWAP} ${WORKEFI} ${WORKGPT}
+CLEANFILES+=	${WORKMBR} ${WORKSWAP}
+CLEANFILES+=	${WORKEFI} ${WORKGPT}
 CLEANFILES+=	${WORKLABEL}.tmp ${WORKLABEL}
 CLEANFILES+=	${WORKIMG} ${IMGBASE}.img
 
@@ -423,7 +424,7 @@ ${IMGBASE}.img:	${TARGETFS}
 	    count=2048
 	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
 	    ${CAT} - ${WORKEFI} ${TARGETFS} ${WORKGPT} > ${WORKIMG}
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2				\
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2		\
 	    -c ${.OBJDIR}/${WORKDIR}/usr/mdec/gptmbr.bin
 	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} set -a bootme -i 2
 .else	# USE_GPT == "no"
