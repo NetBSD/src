@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.10 2019/02/21 13:25:44 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.11 2019/02/22 12:24:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.10 2019/02/21 13:25:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.11 2019/02/22 12:24:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1154,6 +1154,7 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	uint64_t type, gpr, cr0;
+	uint64_t efer, ctls1;
 
 	type = __SHIFTOUT(qual, VMX_QUAL_CR_TYPE);
 	if (type != CR_TYPE_WRITE) {
@@ -1174,6 +1175,25 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	if (vmx_check_cr(cr0, vmx_cr0_fixed0, vmx_cr0_fixed1) == -1) {
 		return -1;
+	}
+
+	/*
+	 * XXX Handle 32bit PAE paging, need to set PDPTEs, fetched manually
+	 * from CR3.
+	 */
+
+	if (cr0 & CR0_PG) {
+		vmx_vmread(VMCS_ENTRY_CTLS, &ctls1);
+		vmx_vmread(VMCS_GUEST_IA32_EFER, &efer);
+		if (efer & EFER_LME) {
+			ctls1 |= ENTRY_CTLS_LONG_MODE;
+			efer |= EFER_LMA;
+		} else {
+			ctls1 &= ~ENTRY_CTLS_LONG_MODE;
+			efer &= ~EFER_LMA;
+		}
+		vmx_vmwrite(VMCS_GUEST_IA32_EFER, efer);
+		vmx_vmwrite(VMCS_ENTRY_CTLS, ctls1);
 	}
 
 	vmx_vmwrite(VMCS_GUEST_CR0, cr0);
@@ -2043,7 +2063,7 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VMX_MSRLIST_EXIT_NMSR);
 
 	/* Force CR0_NW and CR0_CD to zero, CR0_ET to one. */
-	vmx_vmwrite(VMCS_CR0_MASK, CR0_NW|CR0_CD);
+	vmx_vmwrite(VMCS_CR0_MASK, CR0_NW|CR0_CD|CR0_ET);
 	vmx_vmwrite(VMCS_CR0_SHADOW, CR0_ET);
 
 	/* Force CR4_VMXE to zero. */
