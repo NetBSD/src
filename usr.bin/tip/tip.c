@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.60 2019/02/06 14:08:50 rin Exp $	*/
+/*	$NetBSD: tip.c,v 1.61 2019/02/22 22:25:22 uwe Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.60 2019/02/06 14:08:50 rin Exp $");
+__RCSID("$NetBSD: tip.c,v 1.61 2019/02/22 22:25:22 uwe Exp $");
 #endif /* not lint */
 
 /*
@@ -304,7 +304,7 @@ prompt(const char *s, char *volatile p, size_t l)
 	unraw();
 	(void)printf("%s", s);
 	if (setjmp(promptbuf) == 0)
-		while ((c = getchar()) != -1 && (*p = c) != '\n' &&
+		while ((c = getchar()) != EOF && (*p = c) != '\n' &&
 		    b + l > p)
 			p++;
 	*p = '\0';
@@ -330,6 +330,22 @@ intprompt(int dummy __unused)
 }
 
 /*
+ * getchar() wrapper that checks for EOF on the local end.
+ */
+static char
+xgetchar(void)
+{
+	int c = getchar();
+	if (__predict_false(c == EOF)) {
+		cleanup(SIGHUP);
+		/* NOTREACHED */
+	}
+
+	return (char)c & STRIP_PAR;
+}
+
+
+/*
  * ****TIPIN   TIPIN****
  */
 static void
@@ -350,7 +366,7 @@ tipin(void)
 	}
 
 	for (;;) {
-		gch = getchar()&STRIP_PAR;
+		gch = xgetchar();
 		if ((gch == character(value(ESCAPE))) && bol) {
 			if (!(gch = escape()))
 				continue;
@@ -365,7 +381,7 @@ tipin(void)
 				(void)printf("%s\n", gch == '\r' ? "\r" : "");
 			continue;
 		} else if (!cumode && gch && gch == character(value(FORCE)))
-			gch = getchar()&STRIP_PAR;
+			gch = xgetchar();
 		bol = any(gch, value(EOL));
 		if (boolean(value(RAISE)) && islower((unsigned char)gch))
 			gch = toupper((unsigned char)gch);
@@ -386,7 +402,7 @@ escape(void)
 	esctable_t *p;
 	char c = character(value(ESCAPE));
 
-	gch = (getchar()&STRIP_PAR);
+	gch = xgetchar();
 	for (p = etable; p->e_char; p++)
 		if (p->e_char == gch) {
 			if ((p->e_flags&PRIV) && uid)
