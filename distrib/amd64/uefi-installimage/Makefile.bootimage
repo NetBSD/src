@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.10 2019/02/22 22:13:58 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.11 2019/02/22 22:20:18 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -211,8 +211,8 @@ BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} - ${EFISECTORS} - 2048
 FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS}
 SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} + ${EFISECTORS}
 
-BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 2 | awk '/^GUID/ {print $$2}'`
-SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | awk '/^GUID/ {print $$2}'`
+BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 2 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
+SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
 .endif
 
 #
