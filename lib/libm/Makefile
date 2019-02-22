@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.205 2018/11/07 04:00:12 riastradh Exp $
+#  $NetBSD: Makefile,v 1.206 2019/02/22 18:17:22 maya Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -14,6 +14,7 @@
 #
 
 NOSANITIZER=		# defined
+COPTS+=			${${ACTIVE_CC} == "gcc":? -frounding-math :}
 
 #
 # There are two options in making libm at fdlibm compile time:
