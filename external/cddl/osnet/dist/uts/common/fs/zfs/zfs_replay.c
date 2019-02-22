@@ -501,6 +501,9 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 			name = (char *)start;
 
 		cn.cn_nameptr = name;
+#ifdef __NetBSD__
+		cn.cn_namelen = strlen(name);
+#endif
 		error = VOP_CREATE(ZTOV(dzp), &vp, &cn, &xva.xva_vattr /*,vflg*/);
 		break;
 	case TX_MKDIR_ATTR:
@@ -519,6 +522,9 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 			name = (char *)(lr + 1);
 
 		cn.cn_nameptr = name;
+#ifdef __NetBSD__
+		cn.cn_namelen = strlen(name);
+#endif
 		error = VOP_MKDIR(ZTOV(dzp), &vp, &cn, &xva.xva_vattr /*,vflg*/);
 		break;
 	case TX_MKXATTR:
@@ -528,6 +534,9 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 		name = (char *)(lr + 1);
 		link = name + strlen(name) + 1;
 		cn.cn_nameptr = name;
+#ifdef __NetBSD__
+		cn.cn_namelen = strlen(name);
+#endif
 		error = VOP_SYMLINK(ZTOV(dzp), &vp, &cn, &xva.xva_vattr, link /*,vflg*/);
 		break;
 	default:
@@ -585,7 +594,7 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 		goto fail;
 	}
 #ifdef __NetBSD__
-	VOP_UNLOCK(vp, 0);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 #endif
 
 	switch ((int)lr->lr_common.lrc_txtype) {
@@ -596,11 +605,12 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 		error = VOP_RMDIR(ZTOV(dzp), vp, &cn /*,vflg*/);
 		break;
 	default:
+#ifdef __NetBSD__
+		vput(vp);
+#endif
 		error = SET_ERROR(ENOTSUP);
 	}
-#ifdef __NetBSD__
-	vrele(vp);
-#else
+#ifndef __NetBSD__
 	vput(vp);
 #endif
 	VOP_UNLOCK(ZTOV(dzp), 0);
@@ -635,6 +645,9 @@ zfs_replay_link(zfsvfs_t *zfsvfs, lr_link_t *lr, boolean_t byteswap)
 		vflg |= FIGNORECASE;
 
 	cn.cn_nameptr = name;
+#ifdef __NetBSD__
+	cn.cn_namelen = strlen(name);
+#endif
 	cn.cn_cred = kcred;
 #ifndef __NetBSD__
 	cn.cn_thread = curthread;
@@ -698,7 +711,9 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(sdzp), 0);
 	if (error != 0)
 		goto fail;
+#ifndef __NetBSD__
 	VOP_UNLOCK(svp, 0);
+#endif
 
 	tcn.cn_nameptr = tname;
 	tcn.cn_namelen = strlen(tname);
@@ -718,7 +733,8 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 		goto fail;
 	}
 #ifdef __NetBSD__
-	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
+	if (tvp != NULL)
+		vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 #endif
 
 	error = VOP_RENAME(ZTOV(sdzp), svp, &scn, ZTOV(tdzp), tvp, &tcn /*,vflg*/);
