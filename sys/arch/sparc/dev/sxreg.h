@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.16 2017/12/08 22:28:54 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.17 2019/02/22 23:01:25 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #define SX_ID			0x00000028
 #define SX_R0_INIT		0x0000002c
 #define SX_SOFTRESET		0x00000030
+#define SX_SYNC			0x00000034	/* write will stall CPU until */
+						/* SX is idle		      */
 /* write registers directly, only when processor is stopped */
 #define SX_DIRECT_R0		0x00000100
 #define SX_DIRECT_R1		0x00000104	/* and so on until R127 */
@@ -73,10 +75,39 @@
 #define SX_EE5		0x00000010	/* alignment violation */
 #define SX_EE6		0x00000020	/* illegal instruction queue write */
 #define SX_EI		0x00000080	/* interrupt on error */
+/*
+ * XXX
+ * the following bit definitions are from the SX manual. They're defined in a
+ * different way in SunOS's sxreg.h, the hardware seems to follow the latter.
+ */
+#if 0
 #define SX_PB		0x00001000	/* enable page bound checking */
 #define SX_WO		0x00002000	/* write occured ( by SX ) */
 #define SX_GO		0x00004000	/* start/stop the processor */
 #define SX_MT		0x00008000	/* instruction queue is empty */
+#endif
+
+#define SX_PB		0x00000400	/* enable page bound checking */
+#define SX_WO		0x00000800	/* write occured ( by SX ) */
+#define SX_GO		0x00001000	/* start/stop the processor */
+#define SX_JB		0x00002000	/* Jammed/Busy specifies the type of events */
+					/* which increment the SX timer */
+#define SX_MT		0x00004000	/* instruction queue is empty */
+#define SX_BZ		0x00008000	/* Busy bit. When set it indicates that SX */
+					/* is processing an instruction or an */
+					/* instruction is pending in the Q      */
+#define SX_B0MOD	0x00010000	/* When set by SX it indicates that a write */
+					/* to bank zero of the SX registers (0-31) */
+					/* occured */
+#define SX_B1MOD	0x00020000	/* When set by SX it indicates that a write */
+					/* to bank 1 of the SX registers (32-63) */
+					/* occured */
+#define SX_B2MOD	0x00040000	/* When set by SX it indicates that a write */
+					/* to bank 2 of the SX registers (64-95) */
+					/* occured */
+#define SX_B3MOD	0x00080000	/* When set by SX it indicates that a write */
+					/* to bank 3 of the SX registers (96-127) */
+					/* occured */
 
 /* SX_ERROR */
 #define SX_SE1		0x00000001	/* illegal instruction */
@@ -87,13 +118,29 @@
 #define SX_SE6		0x00000020	/* illegal instruction queue write */
 #define SX_SI		0x00000080	/* interrupt on error */
 
-/* SX_ID */
+/* SX_ID from the manual */
+#if 0
 #define SX_ARCHITECTURE_MASK	0x000000ff
 #define SX_CHIP_REVISION	0x0000ff00
+#endif
+
+#define SX_ARCHITECTURE_MASK	0x00000003
+#define SX_CHIP_REVISION	0x000000f8
 
 /* SX_DIAGNOSTICS */
 #define SX_IQ_FIFO_ACCESS	0x00000001	/* allow memory instructions
 						 * in SX_INSTRUCTIONS */
+#define SX_SERIAL_INSTRUCTIONS	0x00000002	/* force inst. serializing */
+#define SX_RAM_PAGE_CROSS	0x00000004	/* indicates page crossing */
+#define SX_ARRAY_CONSTRAINING	0x00000008	/* When set constrains VRAM */
+						/* array offset effective */
+						/* address calculation  */
+#define SX_UPG_MPG_DISABLE	0x00000010	/* When set, disables page */
+						/* cross input into ld/st */
+						/* state machines */
+#define SX_DIAG_INIT		0x4804		/* Setting of the diag reg */
+						/* upon reset */
+
 
 /*
  * memory referencing instructions are written to 0x800000000 + PA
