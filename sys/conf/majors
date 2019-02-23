@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.82 2019/02/23 07:33:20 mlelstv Exp $
+# $NetBSD: majors,v 1.83 2019/02/23 12:25:33 kamil Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -81,3 +81,5 @@ device-major gpiopps   char 344            gpiopps
 device-major nvmm      char 345            nvmm
 device-major kcov      char 346            kcov
 device-major spi       char 347		   spi
+# Majors 348-350 are reserved for HAXM (pkgsrc/emulators/haxm)
+# Major 351 is reserved for sys/modules/examples
