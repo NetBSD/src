@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.326 2019/02/23 10:43:37 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.327 2019/02/23 10:59:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.326 2019/02/23 10:43:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.327 2019/02/23 10:59:12 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -287,14 +287,6 @@ struct evcnt pmap_ldt_evcnt;
 /*
  * PAT
  */
-#define	PATENTRY(n, type)	(type << ((n) * 8))
-#define	PAT_UC		0x0ULL
-#define	PAT_WC		0x1ULL
-#define	PAT_WT		0x4ULL
-#define	PAT_WP		0x5ULL
-#define	PAT_WB		0x6ULL
-#define	PAT_UCMINUS	0x7ULL
-
 static bool cpu_pat_enabled __read_mostly = false;
 
 /*
