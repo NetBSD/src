@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.9,v 1.1 2019/02/23 10:43:25 mlelstv Exp $
+.\"	$NetBSD: spi.9,v 1.2 2019/02/23 17:37:10 wiz Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation
 .\" All rights reserved.
@@ -40,6 +40,7 @@
 .Nm spi_send ,
 .Nm spi_recv ,
 .Nm spi_send_recv
+.Nd Serial Peripheral Interface (SPI) kernel interface
 .Sh SYNOPSIS
 .In dev/spi/spivar.h
 .Ft int
@@ -128,8 +129,8 @@ of bytes is shifted in and out.
 .It Fn spi_transfer_add "st" "chunk"
 Append a chunk to transfer structure.
 .It Fn spi_wait "st"
-Wait for a transfer to complete. When the transfer has failed
-for some reason, the field
+Wait for a transfer to complete.
+When the transfer has failed for some reason, the field
 .Va st->st_errno
 is set to a non-zero value.
 .It Fn spi_done "st" "err"
@@ -149,13 +150,11 @@ Prepares a chunk for sending data, queues a transfer and
 waits for it to complete.
 .It Fn spi_send_recv "sh" "scnt" "snd" "rcnt" "rcv"
 Prepares two chunks for sending data first and then receiving
-an answer,
-queues a transfer and waits for it to complete.
+an answer, queues a transfer and waits for it to complete.
 This is not a full-duplex operation.
 .El
 .Sh SEE ALSO
 .Xr spi 4
-.Rs
 .Sh HISTORY
 The
 .Nm spi
