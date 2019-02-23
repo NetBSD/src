@@ -214,6 +214,7 @@ ATF_TC_BODY(kcov_enable_no_disable_no_close, tc)
 	ATF_CHECK(ioctl(fd, KCOV_IOC_ENABLE) == 0);
 }
 
+#ifdef __HAVE_ATOMIC64_OPS
 static void *
 common_head(int *fdp)
 {
@@ -297,6 +298,7 @@ ATF_TC_BODY(kcov_thread, tc)
 
 	common_tail(fd, buf);
 }
+#endif
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -309,7 +311,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, kcov_enable_no_disable);
 	ATF_TP_ADD_TC(tp, kcov_enable_no_disable_no_close);
 	ATF_TP_ADD_TC(tp, kcov_mmap_enable_thread_close);
+#ifdef __HAVE_ATOMIC64_OPS
 	ATF_TP_ADD_TC(tp, kcov_basic);
 	ATF_TP_ADD_TC(tp, kcov_thread);
+#endif
 	return atf_no_error();
 }
