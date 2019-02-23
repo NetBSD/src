@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.627 2019/02/21 08:10:22 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.628 2019/02/23 11:41:08 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.627 2019/02/21 08:10:22 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.628 2019/02/23 11:41:08 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8988,13 +8988,14 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 	/* Link status changed */
 	status = CSR_READ(sc, WMREG_STATUS);
 	link = status & STATUS_LU;
-	if (link)
+	if (link) {
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
 			device_xname(dev),
 			(status & STATUS_FD) ? "FDX" : "HDX"));
-	else
+	} else {
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
 			device_xname(dev)));
+	}
 	if ((sc->sc_type == WM_T_ICH8) && (link == false))
 		wm_gig_downshift_workaround_ich8lan(sc);
 
@@ -12010,13 +12011,14 @@ wm_check_for_link(struct wm_softc *sc)
 			__func__));
 		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
-	} else if (signal && ((rxcw & RXCW_C) != 0))
+	} else if (signal && ((rxcw & RXCW_C) != 0)) {
 		DPRINTF(WM_DEBUG_LINK, ("%s: %s: /C/",
 			device_xname(sc->sc_dev), __func__));
-	else
+	} else {
 		DPRINTF(WM_DEBUG_LINK, ("%s: %s: linkup %08x,%08x,%08x\n",
 			device_xname(sc->sc_dev), __func__, rxcw, ctrl,
 			status));
+	}
 
 	return 0;
 }
