@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.8 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.9 2019/02/23 17:18:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.8 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.9 2019/02/23 17:18:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -408,7 +408,7 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": GMAC\n");
 
-	if (dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102) != 0)
+	if (dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_150_250M_DIV102) != 0)
 		return;
 
 	if (fdtbus_intr_establish(phandle, 0, IPL_NET, 0, rk_gmac_intr, sc) == NULL) {

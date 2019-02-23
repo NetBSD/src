@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.2 2017/10/07 19:42:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.3 2019/02/23 17:18:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.2 2017/10/07 19:42:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.3 2019/02/23 17:18:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,7 +182,7 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 	if (sunxi_gmac_reset(phandle) != 0)
 		aprint_error_dev(self, "PHY reset failed\n");
 
-	dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102);
+	dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_150_250M_DIV102);
 }
 
 CFATTACH_DECL_NEW(sunxi_gmac, sizeof(struct dwc_gmac_softc),
