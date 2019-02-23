@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.1 2019/01/19 20:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -187,7 +187,7 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 	if (meson_dwmac_reset(phandle) != 0)
 		aprint_error_dev(self, "PHY reset failed\n");
 
-	dwc_gmac_attach(sc, GMAC_MII_CLK_100_150M_DIV62);
+	dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_100_150M_DIV62);
 }
 
 CFATTACH_DECL_NEW(meson_dwmac, sizeof(struct dwc_gmac_softc),
