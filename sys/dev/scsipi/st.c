@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.236 2019/02/12 13:43:40 kardel Exp $ */
+/*	$NetBSD: st.c,v 1.237 2019/02/23 11:57:41 kamil Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.236 2019/02/12 13:43:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.237 2019/02/23 11:57:41 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1114,7 +1114,7 @@ ststrategy(struct buf *bp)
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
 		SC_DEBUG(periph, SCSIPI_DB3,
-			 ("EINVAL: ststrategy negative blockcount %ld\n", bp->b_blkno));
+			 ("EINVAL: ststrategy negative blockcount %" PRId64 "\n", bp->b_blkno));
 		bp->b_error = EINVAL;
 		goto abort;
 	}
