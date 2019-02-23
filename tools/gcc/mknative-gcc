@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.100 2019/02/09 03:57:00 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.101 2019/02/23 06:54:45 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -233,10 +233,15 @@ get_libstdcxx_v3 () {
 
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/gstdint.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/gstdint.h
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/symver-config.h \
+		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
 
 	{
 		getvars $_PLATFORM/libstdc++-v3/Makefile \
 			port_specific_symbol_files
+		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
+			cxx11_sources \
+			cxx98_sources
 
 		# libsupc++
 		getvars $_PLATFORM/libstdc++-v3/libsupc++/Makefile \
