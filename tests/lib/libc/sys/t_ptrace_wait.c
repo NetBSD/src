@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.95 2019/02/20 09:25:11 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.96 2019/02/23 18:07:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.95 2019/02/20 09:25:11 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.96 2019/02/23 18:07:47 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1758,21 +1758,24 @@ TRACEME_VFORK_SIGNALIGNORED_CRASH(traceme_vfork_signalignored_crash_bus,
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(traceme_vfork_exec);
-ATF_TC_HEAD(traceme_vfork_exec, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify PT_TRACE_ME followed by exec(3) in a vfork(2)ed child");
-}
-
-ATF_TC_BODY(traceme_vfork_exec, tc)
+static void
+traceme_vfork_exec(bool masked, bool ignored)
 {
 	const int sigval = SIGTRAP;
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
+	struct sigaction sa;
 	struct ptrace_siginfo info;
+	sigset_t intmask;
+	struct kinfo_proc2 kp;
+	size_t len = sizeof(kp);
+
+	int name[6];
+	const size_t namelen = __arraycount(name);
+	ki_sigset_t kp_sigmask;
+	ki_sigset_t kp_sigignore;
 
 	memset(&info, 0, sizeof(info));
 
@@ -1781,6 +1784,19 @@ ATF_TC_BODY(traceme_vfork_exec, tc)
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		if (masked) {
+			sigemptyset(&intmask);
+			sigaddset(&intmask, sigval);
+			sigprocmask(SIG_BLOCK, &intmask, NULL);
+		}
+
+		if (ignored) {
+			memset(&sa, 0, sizeof(sa));
+			sa.sa_handler = SIG_IGN;
+			sigemptyset(&sa.sa_mask);
+			FORKEE_ASSERT(sigaction(sigval, &sa, NULL) != -1);
+		}
 
 		DPRINTF("Before calling execve(2) from child\n");
 		execlp("/bin/echo", "/bin/echo", NULL);
@@ -1794,6 +1810,55 @@ ATF_TC_BODY(traceme_vfork_exec, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
+
+	name[0] = CTL_KERN,
+	name[1] = KERN_PROC2,
+	name[2] = KERN_PROC_PID;
+	name[3] = getpid();
+	name[4] = sizeof(kp);
+	name[5] = 1;
+
+	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+
+	if (masked)
+		kp_sigmask = kp.p_sigmask;
+
+	if (ignored)
+		kp_sigignore = kp.p_sigignore;
+
+	name[3] = getpid();
+
+	ATF_REQUIRE_EQ(sysctl(name, namelen, &kp, &len, NULL, 0), 0);
+
+	if (masked) {
+		DPRINTF("kp_sigmask="
+		    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
+		    kp_sigmask.__bits[0], kp_sigmask.__bits[1],
+		    kp_sigmask.__bits[2], kp_sigmask.__bits[3]);
+
+	        DPRINTF("kp.p_sigmask="
+	            "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
+	            kp.p_sigmask.__bits[0], kp.p_sigmask.__bits[1],
+	            kp.p_sigmask.__bits[2], kp.p_sigmask.__bits[3]);
+
+		ATF_REQUIRE(!memcmp(&kp_sigmask, &kp.p_sigmask,
+		    sizeof(kp_sigmask)));
+	}
+
+	if (ignored) {
+		DPRINTF("kp_sigignore="
+		    "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
+		    kp_sigignore.__bits[0], kp_sigignore.__bits[1],
+		    kp_sigignore.__bits[2], kp_sigignore.__bits[3]);
+
+	        DPRINTF("kp.p_sigignore="
+	            "%#02" PRIx32 "%02" PRIx32 "%02" PRIx32 "%02" PRIx32"\n",
+	            kp.p_sigignore.__bits[0], kp.p_sigignore.__bits[1],
+	            kp.p_sigignore.__bits[2], kp.p_sigignore.__bits[3]);
+
+		ATF_REQUIRE(!memcmp(&kp_sigignore, &kp.p_sigignore,
+		    sizeof(kp_sigignore)));
+	}
 
 	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
 	SYSCALL_REQUIRE(
@@ -1817,6 +1882,26 @@ ATF_TC_BODY(traceme_vfork_exec, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define TRACEME_VFORK_EXEC(test, masked, ignored)			\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify PT_TRACE_ME followed by exec(3) in a vfork(2)ed "	\
+	    "child%s%s", masked ? " with masked signal" : "",		\
+	    masked ? " with ignored signal" : "");			\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+									\
+	traceme_vfork_exec(masked, ignored);				\
+}
+
+TRACEME_VFORK_EXEC(traceme_vfork_exec, false, false)
+TRACEME_VFORK_EXEC(traceme_vfork_signalmasked_exec, true, false)
+TRACEME_VFORK_EXEC(traceme_vfork_signalignored_exec, false, true)
 
 /// ----------------------------------------------------------------------------
 
@@ -6169,6 +6254,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme_vfork_signalignored_crash_bus);
 
 	ATF_TP_ADD_TC(tp, traceme_vfork_exec);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalmasked_exec);
+	ATF_TP_ADD_TC(tp, traceme_vfork_signalignored_exec);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_sees_crash_trap);
 	ATF_TP_ADD_TC_HAVE_PID(tp, unrelated_tracer_sees_crash_segv);
