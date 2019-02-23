@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.109 2019/02/20 09:51:25 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.110 2019/02/23 06:59:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -2505,4 +2505,23 @@ sys/dev/usb/if_axenreg.h			1.7
 
 	axen(4): improve RX stability and small cosmetic changes.
 	[rin, ticket #1194]
+
+sys/compat/linux/common/linux_ipc.c		1.56
+sys/compat/linux32/common/linux32_ipccall.c	1.12
+sys/compat/netbsd32/netbsd32_compat_14.c	1.28
+sys/compat/netbsd32/netbsd32_compat_14.c	1.29
+sys/compat/netbsd32/netbsd32_conv.h		1.38
+sys/compat/sys/ipc.h				1.6
+sys/compat/sys/ipc.h				1.7
+sys/compat/sys/msg.h				1.6
+sys/compat/sys/sem.h				1.7
+sys/compat/sys/shm.h				1.8
+sys/kern/sysv_msg.c				1.73
+sys/kern/sysv_sem.c				1.96
+sys/kern/sysv_shm.c				1.133
+
+	Fix kernel stack and kernel adddress leaks in msgctl, semctl, and
+	shmctl system calls, for native as well as for the netbsd32, linux,
+	and linux32 compatibility calls.
+	[mrg, ticket #1195]
 
