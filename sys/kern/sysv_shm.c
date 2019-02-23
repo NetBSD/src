@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.131 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.131.10.1 2019/02/23 06:58:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131 2015/11/26 13:15:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131.10.1 2019/02/23 06:58:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -557,7 +557,16 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
 			break;
-		memcpy(shmbuf, shmseg, sizeof(struct shmid_ds));
+		memset(shmbuf, 0, sizeof *shmbuf);
+		shmbuf->shm_perm = shmseg->shm_perm;
+		shmbuf->shm_perm.mode &= 0777;
+		shmbuf->shm_segsz = shmseg->shm_segsz;
+		shmbuf->shm_lpid = shmseg->shm_lpid;
+		shmbuf->shm_cpid = shmseg->shm_cpid;
+		shmbuf->shm_nattch = shmseg->shm_nattch;
+		shmbuf->shm_atime = shmseg->shm_atime;
+		shmbuf->shm_dtime = shmseg->shm_dtime;
+		shmbuf->shm_ctime = shmseg->shm_ctime;
 		break;
 	case IPC_SET:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)

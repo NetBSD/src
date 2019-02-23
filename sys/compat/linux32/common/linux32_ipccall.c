@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.11 2010/05/29 18:55:34 dholland Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.11.52.1 2019/02/23 06:58:14 martin Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.11 2010/05/29 18:55:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.11.52.1 2019/02/23 06:58:14 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -157,13 +157,14 @@ linux32_sys_ipc(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	default:
 		return ENOSYS;
 	}
-
 }
 
 #if defined(SYSVSEM) || defined (SYSVMSG) || defined(SYSVSHM)
 static void
 bsd_to_linux32_ipc_perm(struct ipc_perm *bpp, struct linux32_ipc_perm *lpp)
 {
+
+	memset(lpp, 0, sizeof *lpp);
 	lpp->l_key = bpp->_key;
 	lpp->l_uid = bpp->uid;
 	lpp->l_gid = bpp->gid; 
@@ -176,6 +177,7 @@ bsd_to_linux32_ipc_perm(struct ipc_perm *bpp, struct linux32_ipc_perm *lpp)
 static void
 linux32_to_bsd_ipc_perm(struct linux32_ipc_perm *lpp, struct ipc_perm *bpp)
 {
+
 	bpp->_key = lpp->l_key;
 	bpp->uid = lpp->l_uid;
 	bpp->gid = lpp->l_gid; 
@@ -188,6 +190,8 @@ linux32_to_bsd_ipc_perm(struct linux32_ipc_perm *lpp, struct ipc_perm *bpp)
 static void
 bsd_to_linux32_ipc64_perm(struct ipc_perm *bpp, struct linux32_ipc64_perm *lpp)
 {
+
+	memset(lpp, 0, sizeof *lpp);
 	lpp->l_key = bpp->_key;
 	lpp->l_uid = bpp->uid;
 	lpp->l_gid = bpp->gid;
@@ -200,6 +204,7 @@ bsd_to_linux32_ipc64_perm(struct ipc_perm *bpp, struct linux32_ipc64_perm *lpp)
 static void
 linux32_to_bsd_ipc64_perm(struct linux32_ipc64_perm *lpp, struct ipc_perm *bpp)
 {
+
 	bpp->_key = lpp->l_key;
 	bpp->uid = lpp->l_uid;
 	bpp->gid = lpp->l_gid;
@@ -214,16 +219,19 @@ linux32_to_bsd_ipc64_perm(struct linux32_ipc64_perm *lpp, struct ipc_perm *bpp)
 static void
 bsd_to_linux32_semid_ds(struct semid_ds *bsp, struct linux32_semid_ds *lsp)
 {
+
+	memset(lsp, 0, sizeof *lsp);
 	bsd_to_linux32_ipc_perm(&bsp->sem_perm, &lsp->l_sem_perm);
 	lsp->l_sem_otime = bsp->sem_otime;
 	lsp->l_sem_ctime = bsp->sem_ctime;
 	lsp->l_sem_nsems = bsp->sem_nsems;
-	NETBSD32PTR32(lsp->l_sem_base, bsp->_sem_base);
 }
 
 static void
 bsd_to_linux32_semid64_ds(struct semid_ds *bsp, struct linux32_semid64_ds *lsp)
 {
+
+	memset(lsp, 0, sizeof *lsp);
 	bsd_to_linux32_ipc64_perm(&bsp->sem_perm, &lsp->l_sem_perm);
 	lsp->l_sem_otime = bsp->sem_otime;
 	lsp->l_sem_ctime = bsp->sem_ctime;
@@ -237,7 +245,6 @@ linux32_to_bsd_semid_ds(struct linux32_semid_ds *lsp, struct semid_ds *bsp)
 	bsp->sem_otime = lsp->l_sem_otime;
 	bsp->sem_ctime = lsp->l_sem_ctime;
 	bsp->sem_nsems = lsp->l_sem_nsems;
-	bsp->_sem_base = NETBSD32PTR64(lsp->l_sem_base);
 }
 
 static void
@@ -428,8 +435,6 @@ linux32_to_bsd_msqid_ds(struct linux32_msqid_ds *lmp, struct msqid_ds *bmp)
 
 	memset(bmp, 0, sizeof(*bmp));
 	linux32_to_bsd_ipc_perm(&lmp->l_msg_perm, &bmp->msg_perm);
-	bmp->_msg_first = NETBSD32PTR64(lmp->l_msg_first);
-	bmp->_msg_last = NETBSD32PTR64(lmp->l_msg_last);
 	bmp->_msg_cbytes = lmp->l_msg_cbytes;
 	bmp->msg_qnum = lmp->l_msg_qnum;
 	bmp->msg_qbytes = lmp->l_msg_qbytes;
@@ -444,12 +449,11 @@ static void
 linux32_to_bsd_msqid64_ds(struct linux32_msqid64_ds *lmp, struct msqid_ds *bmp)
 {
 
-	memset(bmp, 0, sizeof(*bmp));
 	linux32_to_bsd_ipc64_perm(&lmp->l_msg_perm, &bmp->msg_perm);
+	bmp->_msg_cbytes = lmp->l_msg_cbytes;
 	bmp->msg_stime = lmp->l_msg_stime;
 	bmp->msg_rtime = lmp->l_msg_rtime;
 	bmp->msg_ctime = lmp->l_msg_ctime;
-	bmp->_msg_cbytes = lmp->l_msg_cbytes;
 	bmp->msg_qnum = lmp->l_msg_qnum;
 	bmp->msg_qbytes = lmp->l_msg_qbytes;
 	bmp->msg_lspid = lmp->l_msg_lspid;
@@ -462,8 +466,6 @@ bsd_to_linux32_msqid_ds(struct msqid_ds *bmp, struct linux32_msqid_ds *lmp)
 
 	memset(lmp, 0, sizeof(*lmp));
 	bsd_to_linux32_ipc_perm(&bmp->msg_perm, &lmp->l_msg_perm);
-	NETBSD32PTR32(lmp->l_msg_first, bmp->_msg_first);
-	NETBSD32PTR32(lmp->l_msg_last, bmp->_msg_last);
 	lmp->l_msg_cbytes = bmp->_msg_cbytes;
 	lmp->l_msg_qnum = bmp->msg_qnum;
 	lmp->l_msg_qbytes = bmp->msg_qbytes;
@@ -480,10 +482,10 @@ bsd_to_linux32_msqid64_ds(struct msqid_ds *bmp, struct linux32_msqid64_ds *lmp)
 
 	memset(lmp, 0, sizeof(*lmp));
 	bsd_to_linux32_ipc64_perm(&bmp->msg_perm, &lmp->l_msg_perm);
+	lmp->l_msg_cbytes = bmp->_msg_cbytes;
 	lmp->l_msg_stime = bmp->msg_stime;
 	lmp->l_msg_rtime = bmp->msg_rtime;
 	lmp->l_msg_ctime = bmp->msg_ctime;
-	lmp->l_msg_cbytes = bmp->_msg_cbytes;
 	lmp->l_msg_qnum = bmp->msg_qnum;
 	lmp->l_msg_qbytes = bmp->msg_qbytes;
 	lmp->l_msg_lspid = bmp->msg_lspid;
@@ -550,6 +552,8 @@ linux32_msgctl(struct lwp *l, const struct linux32_sys_ipc_args *uap, register_t
 static void
 bsd_to_linux32_shmid_ds(struct shmid_ds *bsp, struct linux32_shmid_ds *lsp)
 {
+
+	memset(lsp, 0, sizeof *lsp);
 	bsd_to_linux32_ipc_perm(&bsp->shm_perm, &lsp->l_shm_perm);
 	lsp->l_shm_segsz = bsp->shm_segsz;
 	lsp->l_shm_atime = bsp->shm_atime;
@@ -558,12 +562,12 @@ bsd_to_linux32_shmid_ds(struct shmid_ds *bsp, struct linux32_shmid_ds *lsp)
 	lsp->l_shm_cpid = bsp->shm_cpid;
 	lsp->l_shm_lpid = bsp->shm_lpid;
 	lsp->l_shm_nattch = bsp->shm_nattch;
-	NETBSD32PTR32(lsp->l_private2, bsp->_shm_internal);
 }
 
 static void
 linux32_to_bsd_shmid_ds(struct linux32_shmid_ds *lsp, struct shmid_ds *bsp)
 {
+
 	linux32_to_bsd_ipc_perm(&lsp->l_shm_perm, &bsp->shm_perm);
 	bsp->shm_segsz = lsp->l_shm_segsz;
 	bsp->shm_atime = lsp->l_shm_atime;
@@ -572,12 +576,13 @@ linux32_to_bsd_shmid_ds(struct linux32_shmid_ds *lsp, struct shmid_ds *bsp)
 	bsp->shm_cpid = lsp->l_shm_cpid;
 	bsp->shm_lpid = lsp->l_shm_lpid;
 	bsp->shm_nattch = lsp->l_shm_nattch;
-	bsp->_shm_internal = NETBSD32PTR64(lsp->l_private2);
 }
 
 static void
 bsd_to_linux32_shmid64_ds(struct shmid_ds *bsp, struct linux32_shmid64_ds *lsp)
 {
+
+	memset(lsp, 0, sizeof *lsp);
 	bsd_to_linux32_ipc64_perm(&bsp->shm_perm, &lsp->l_shm_perm);
 	lsp->l_shm_segsz = bsp->shm_segsz;
 	lsp->l_shm_atime = bsp->shm_atime;
@@ -586,12 +591,12 @@ bsd_to_linux32_shmid64_ds(struct shmid_ds *bsp, struct linux32_shmid64_ds *lsp)
 	lsp->l_shm_cpid = bsp->shm_cpid;
 	lsp->l_shm_lpid = bsp->shm_lpid;
 	lsp->l_shm_nattch = bsp->shm_nattch;
-	lsp->l___unused5 = NETBSD32PTR32I(bsp->_shm_internal);
 }
 
 static void
 linux32_to_bsd_shmid64_ds(struct linux32_shmid64_ds *lsp, struct shmid_ds *bsp)
 {
+
 	linux32_to_bsd_ipc64_perm(&lsp->l_shm_perm, &bsp->shm_perm);
 	bsp->shm_segsz = lsp->l_shm_segsz; 
 	bsp->shm_atime = lsp->l_shm_atime;
@@ -600,7 +605,6 @@ linux32_to_bsd_shmid64_ds(struct linux32_shmid64_ds *lsp, struct shmid_ds *bsp)
 	bsp->shm_cpid = lsp->l_shm_cpid;
 	bsp->shm_lpid = lsp->l_shm_lpid; 
 	bsp->shm_nattch = lsp->l_shm_nattch;
-	bsp->_shm_internal = NETBSD32IPTR64(lsp->l___unused5);
 }
 
 static int
