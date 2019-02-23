@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.30 2019/02/23 08:19:16 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.31 2019/02/23 12:27:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.30 2019/02/23 08:19:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.31 2019/02/23 12:27:00 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1539,7 +1539,7 @@ svm_state_tlb_flush(const struct vmcb *vmcb, const struct nvmm_x64_state *state,
 }
 
 static void
-svm_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
+svm_vcpu_setstate(struct nvmm_cpu *vcpu, const void *data, uint64_t flags)
 {
 	const struct nvmm_x64_state *state = data;
 	struct svm_cpudata *cpudata = vcpu->cpudata;
@@ -1924,10 +1924,6 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmcb->ctrl.enable1 = VMCB_CTRL_ENABLE_NP;
 	vmcb->ctrl.n_cr3 = mach->vm->vm_map.pmap->pm_pdirpa[0];
 
-	/* Must always be set. */
-	vmcb->state.efer = EFER_SVME;
-	cpudata->gxcr0 = XCR0_X87;
-
 	/* Init XSAVE header. */
 	cpudata->gfpu.xsh_xstate_bv = svm_xcr0_mask;
 	cpudata->gfpu.xsh_xcomp_bv = 0;
@@ -1940,6 +1936,9 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	cpudata->lstar = rdmsr(MSR_LSTAR);
 	cpudata->cstar = rdmsr(MSR_CSTAR);
 	cpudata->sfmask = rdmsr(MSR_SFMASK);
+
+	/* Install the RESET state. */
+	svm_vcpu_setstate(vcpu, &nvmm_x86_reset_state, NVMM_X64_STATE_ALL);
 }
 
 static int
