@@ -1,4 +1,4 @@
-.\"	$NetBSD: kcov.4,v 1.1 2019/02/23 03:10:06 kamil Exp $
+.\"	$NetBSD: kcov.4,v 1.2 2019/02/23 17:33:01 wiz Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -55,7 +55,8 @@ The buffer can be accessed using
 .Xr mmap 2
 whereas the returned pointer must be interpreted as an array of
 .Vt kcov_int_t
-entries. Note that kcov_int_t is volatile.
+entries.
+Note that kcov_int_t is volatile.
 The first entry contains the number of entries in the array,
 excluding the first entry.
 .It Dv KCOV_IOC_ENABLE Fa void
@@ -126,8 +127,8 @@ main(void)
 .Sh HISTORY
 The
 .Nm
-driver was initially developed in Linux. A driver based on the same concept
-was then implemented in
+driver was initially developed in Linux.
+A driver based on the same concept was then implemented in
 .Nx 9 .
 .Sh AUTHORS
 .An Siddharth Muralee Aq Mt siddharth.muralee@gmail.com
