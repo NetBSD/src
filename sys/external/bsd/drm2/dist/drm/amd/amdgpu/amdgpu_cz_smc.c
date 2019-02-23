@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cz_smc.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cz_smc.c,v 1.2 2019/02/23 19:36:15 kamil Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_smc.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_smc.c,v 1.2 2019/02/23 19:36:15 kamil Exp $");
 
 #include <linux/firmware.h>
 #include <asm/byteorder.h>
@@ -251,6 +251,7 @@ static int cz_smu_check_finished(struct amdgpu_device *adev,
 	case AMDGPU_UCODE_ID_CP_PFP:
 		if (adev->smu.fw_flags & AMDGPU_CPPFP_UCODE_LOADED)
 			return 0;
+		break;
 	case AMDGPU_UCODE_ID_CP_ME:
 		if (adev->smu.fw_flags & AMDGPU_CPME_UCODE_LOADED)
 			return 0;
