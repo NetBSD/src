@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_display.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_display.c,v 1.5 2019/02/23 19:56:51 kamil Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_display.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_display.c,v 1.5 2019/02/23 19:56:51 kamil Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -101,7 +101,8 @@ static void amdgpu_flip_work_func(struct work_struct *__work)
 	 * In practice this won't execute very often unless on very fast
 	 * machines because the time window for this to happen is very small.
 	 */
-	while (amdgpuCrtc->enabled && --repcnt) {
+	if (amdgpuCrtc->enabled) {
+	while (--repcnt) {
 		/* GET_DISTANCE_TO_VBLANKSTART returns distance to real vblank
 		 * start in hpos, and to the "fudged earlier" vblank start in
 		 * vpos.
@@ -134,6 +135,7 @@ static void amdgpu_flip_work_func(struct work_struct *__work)
 				 "hpos %d\n", work->crtc_id, min_udelay,
 				 vblank->framedur_ns / 1000,
 				 vblank->linedur_ns / 1000, stat, vpos, hpos);
+	}
 
 	/* do the flip (mmio) */
 	adev->mode_info.funcs->page_flip(adev, work->crtc_id, work->base);
