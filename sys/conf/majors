@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.80 2018/11/07 07:43:07 maxv Exp $
+# $NetBSD: majors,v 1.81 2019/02/23 03:10:06 kamil Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -79,3 +79,4 @@ device-major qemufwcfg char 342		   qemufwcfg
 device-major autofs    char 343		   autofs
 device-major gpiopps   char 344            gpiopps
 device-major nvmm      char 345            nvmm
+device-major kcov      char 346            kcov

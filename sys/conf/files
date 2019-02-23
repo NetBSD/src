@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1229 2019/02/12 07:16:56 mrg Exp $
+#	$NetBSD: files,v 1.1230 2019/02/23 03:10:06 kamil Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -31,6 +31,7 @@ defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
 defflag				KASAN
 defflag				KLEAK
+defflag				KCOV
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 

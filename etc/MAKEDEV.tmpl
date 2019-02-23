@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.197 2019/01/27 08:53:28 maxv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.198 2019/02/23 03:10:06 kamil Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2207,6 +2207,10 @@ nvmm)
 autofs)
 	mkdev autofs c %autofs_chr% 0 600
 	;;
+
+kcov)
+        mkdev kcov c %kcov_chr% 0
+        ;;
 
 midevend)
 %MI_DEVICES_END%
