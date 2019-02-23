@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.13 2019/02/23 10:43:36 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.14 2019/02/23 12:27:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.13 2019/02/23 10:43:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.14 2019/02/23 12:27:00 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2026,7 +2026,7 @@ vmx_state_tlb_flush(const struct nvmm_x64_state *state, uint64_t flags)
 }
 
 static void
-vmx_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
+vmx_vcpu_setstate(struct nvmm_cpu *vcpu, const void *data, uint64_t flags)
 {
 	const struct nvmm_x64_state *state = data;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
@@ -2409,11 +2409,6 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	cpudata->gmsr_misc_enable |=
 	    (IA32_MISC_BTS_UNAVAIL|IA32_MISC_PEBS_UNAVAIL);
 
-	/* Must always be set. */
-	vmx_vmwrite(VMCS_GUEST_CR4, CR4_VMXE);
-	vmx_vmwrite(VMCS_GUEST_CR0, CR0_NE);
-	cpudata->gxcr0 = XCR0_X87;
-
 	/* Init XSAVE header. */
 	cpudata->gfpu.xsh_xstate_bv = vmx_xcr0_mask;
 	cpudata->gfpu.xsh_xcomp_bv = 0;
@@ -2425,6 +2420,9 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	cpudata->star = rdmsr(MSR_STAR);
 	cpudata->cstar = rdmsr(MSR_CSTAR);
 	cpudata->sfmask = rdmsr(MSR_SFMASK);
+
+	/* Install the RESET state. */
+	vmx_vcpu_setstate(vcpu, &nvmm_x86_reset_state, NVMM_X64_STATE_ALL);
 
 	vmx_vmcs_leave(vcpu);
 }
