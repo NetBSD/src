@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.2 2019/02/23 12:03:07 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.3 2019/02/23 12:07:40 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
-#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/condvar.h>
 #include <sys/kmem.h>
