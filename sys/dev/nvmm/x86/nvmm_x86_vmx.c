@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.12 2019/02/23 08:19:16 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.13 2019/02/23 10:43:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.12 2019/02/23 08:19:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.13 2019/02/23 10:43:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,6 +550,8 @@ static uint64_t vmx_cr0_fixed0 __read_mostly;
 static uint64_t vmx_cr0_fixed1 __read_mostly;
 static uint64_t vmx_cr4_fixed0 __read_mostly;
 static uint64_t vmx_cr4_fixed1 __read_mostly;
+
+extern bool pmap_ept_has_ad;
 
 #define VMX_PINBASED_CTLS_ONE	\
 	(PIN_CTLS_INT_EXITING| \
@@ -2396,7 +2398,7 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	eptp =
 	    __SHIFTIN(vmx_eptp_type, EPTP_TYPE) |
 	    __SHIFTIN(4-1, EPTP_WALKLEN) |
-	    EPTP_FLAGS_AD |
+	    (pmap_ept_has_ad ? EPTP_FLAGS_AD : 0) |
 	    mach->vm->vm_map.pmap->pm_pdirpa[0];
 	vmx_vmwrite(VMCS_EPTP, eptp);
 
@@ -2725,8 +2727,10 @@ vmx_ident(void)
 	if ((msr & IA32_VMX_EPT_VPID_INVVPID) == 0) {
 		return false;
 	}
-	if ((msr & IA32_VMX_EPT_VPID_FLAGS_AD) == 0) {
-		return false;
+	if ((msr & IA32_VMX_EPT_VPID_FLAGS_AD) != 0) {
+		pmap_ept_has_ad = true;
+	} else {
+		pmap_ept_has_ad = false;
 	}
 	if (!(msr & IA32_VMX_EPT_VPID_UC) && !(msr & IA32_VMX_EPT_VPID_WB)) {
 		return false;
