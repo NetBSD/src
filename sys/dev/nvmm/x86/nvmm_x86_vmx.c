@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.11 2019/02/22 12:24:34 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.12 2019/02/23 08:19:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.11 2019/02/22 12:24:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.12 2019/02/23 08:19:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1911,6 +1911,351 @@ vmx_memfree(paddr_t pa, vaddr_t va, size_t npages)
 /* -------------------------------------------------------------------------- */
 
 static void
+vmx_vcpu_msr_allow(uint8_t *bitmap, uint64_t msr, bool read, bool write)
+{
+	uint64_t byte;
+	uint8_t bitoff;
+
+	if (msr < 0x00002000) {
+		/* Range 1 */
+		byte = ((msr - 0x00000000) / 8) + 0;
+	} else if (msr >= 0xC0000000 && msr < 0xC0002000) {
+		/* Range 2 */
+		byte = ((msr - 0xC0000000) / 8) + 1024;
+	} else {
+		panic("%s: wrong range", __func__);
+	}
+
+	bitoff = (msr & 0x7);
+
+	if (read) {
+		bitmap[byte] &= ~__BIT(bitoff);
+	}
+	if (write) {
+		bitmap[2048 + byte] &= ~__BIT(bitoff);
+	}
+}
+
+#define VMX_SEG_ATTRIB_TYPE		__BITS(4,0)
+#define VMX_SEG_ATTRIB_DPL		__BITS(6,5)
+#define VMX_SEG_ATTRIB_P		__BIT(7)
+#define VMX_SEG_ATTRIB_AVL		__BIT(12)
+#define VMX_SEG_ATTRIB_LONG		__BIT(13)
+#define VMX_SEG_ATTRIB_DEF32		__BIT(14)
+#define VMX_SEG_ATTRIB_GRAN		__BIT(15)
+#define VMX_SEG_ATTRIB_UNUSABLE		__BIT(16)
+
+static void
+vmx_vcpu_setstate_seg(const struct nvmm_x64_state_seg *segs, int idx)
+{
+	uint64_t attrib;
+
+	attrib =
+	    __SHIFTIN(segs[idx].attrib.type, VMX_SEG_ATTRIB_TYPE) |
+	    __SHIFTIN(segs[idx].attrib.dpl, VMX_SEG_ATTRIB_DPL) |
+	    __SHIFTIN(segs[idx].attrib.p, VMX_SEG_ATTRIB_P) |
+	    __SHIFTIN(segs[idx].attrib.avl, VMX_SEG_ATTRIB_AVL) |
+	    __SHIFTIN(segs[idx].attrib.lng, VMX_SEG_ATTRIB_LONG) |
+	    __SHIFTIN(segs[idx].attrib.def32, VMX_SEG_ATTRIB_DEF32) |
+	    __SHIFTIN(segs[idx].attrib.gran, VMX_SEG_ATTRIB_GRAN) |
+	    (!segs[idx].attrib.p ? VMX_SEG_ATTRIB_UNUSABLE : 0);
+
+	if (idx != NVMM_X64_SEG_GDT && idx != NVMM_X64_SEG_IDT) {
+		vmx_vmwrite(vmx_guest_segs[idx].selector, segs[idx].selector);
+		vmx_vmwrite(vmx_guest_segs[idx].attrib, attrib);
+	}
+	vmx_vmwrite(vmx_guest_segs[idx].limit, segs[idx].limit);
+	vmx_vmwrite(vmx_guest_segs[idx].base, segs[idx].base);
+}
+
+static void
+vmx_vcpu_getstate_seg(struct nvmm_x64_state_seg *segs, int idx)
+{
+	uint64_t attrib = 0;
+
+	if (idx != NVMM_X64_SEG_GDT && idx != NVMM_X64_SEG_IDT) {
+		vmx_vmread(vmx_guest_segs[idx].selector, &segs[idx].selector);
+		vmx_vmread(vmx_guest_segs[idx].attrib, &attrib);
+	}
+	vmx_vmread(vmx_guest_segs[idx].limit, &segs[idx].limit);
+	vmx_vmread(vmx_guest_segs[idx].base, &segs[idx].base);
+
+	segs[idx].attrib.type = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_TYPE);
+	segs[idx].attrib.dpl = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DPL);
+	segs[idx].attrib.p = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_P);
+	segs[idx].attrib.avl = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_AVL);
+	segs[idx].attrib.lng = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_LONG);
+	segs[idx].attrib.def32 = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DEF32);
+	segs[idx].attrib.gran = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_GRAN);
+	if (attrib & VMX_SEG_ATTRIB_UNUSABLE) {
+		segs[idx].attrib.p = 0;
+	}
+}
+
+static inline bool
+vmx_state_tlb_flush(const struct nvmm_x64_state *state, uint64_t flags)
+{
+	uint64_t cr0, cr3, cr4, efer;
+
+	if (flags & NVMM_X64_STATE_CRS) {
+		vmx_vmread(VMCS_GUEST_CR0, &cr0);
+		if ((cr0 ^ state->crs[NVMM_X64_CR_CR0]) & CR0_TLB_FLUSH) {
+			return true;
+		}
+		vmx_vmread(VMCS_GUEST_CR3, &cr3);
+		if (cr3 != state->crs[NVMM_X64_CR_CR3]) {
+			return true;
+		}
+		vmx_vmread(VMCS_GUEST_CR4, &cr4);
+		if ((cr4 ^ state->crs[NVMM_X64_CR_CR4]) & CR4_TLB_FLUSH) {
+			return true;
+		}
+	}
+
+	if (flags & NVMM_X64_STATE_MSRS) {
+		vmx_vmread(VMCS_GUEST_IA32_EFER, &efer);
+		if ((efer ^
+		     state->msrs[NVMM_X64_MSR_EFER]) & EFER_TLB_FLUSH) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static void
+vmx_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
+{
+	const struct nvmm_x64_state *state = data;
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	struct fxsave *fpustate;
+	uint64_t ctls1, intstate;
+
+	vmx_vmcs_enter(vcpu);
+
+	if (vmx_state_tlb_flush(state, flags)) {
+		cpudata->gtlb_want_flush = true;
+	}
+
+	if (flags & NVMM_X64_STATE_SEGS) {
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_CS);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_DS);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_ES);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_FS);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_GS);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_SS);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_GDT);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_IDT);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_LDT);
+		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_TR);
+	}
+
+	CTASSERT(sizeof(cpudata->gprs) == sizeof(state->gprs));
+	if (flags & NVMM_X64_STATE_GPRS) {
+		memcpy(cpudata->gprs, state->gprs, sizeof(state->gprs));
+
+		vmx_vmwrite(VMCS_GUEST_RIP, state->gprs[NVMM_X64_GPR_RIP]);
+		vmx_vmwrite(VMCS_GUEST_RSP, state->gprs[NVMM_X64_GPR_RSP]);
+		vmx_vmwrite(VMCS_GUEST_RFLAGS, state->gprs[NVMM_X64_GPR_RFLAGS]);
+	}
+
+	if (flags & NVMM_X64_STATE_CRS) {
+		/*
+		 * CR0_NE and CR4_VMXE are mandatory.
+		 */
+		vmx_vmwrite(VMCS_GUEST_CR0,
+		    state->crs[NVMM_X64_CR_CR0] | CR0_NE);
+		cpudata->gcr2 = state->crs[NVMM_X64_CR_CR2];
+		vmx_vmwrite(VMCS_GUEST_CR3, state->crs[NVMM_X64_CR_CR3]); // XXX PDPTE?
+		vmx_vmwrite(VMCS_GUEST_CR4,
+		    state->crs[NVMM_X64_CR_CR4] | CR4_VMXE);
+		cpudata->gcr8 = state->crs[NVMM_X64_CR_CR8];
+
+		if (vmx_xcr0_mask != 0) {
+			/* Clear illegal XCR0 bits, set mandatory X87 bit. */
+			cpudata->gxcr0 = state->crs[NVMM_X64_CR_XCR0];
+			cpudata->gxcr0 &= vmx_xcr0_mask;
+			cpudata->gxcr0 |= XCR0_X87;
+		}
+	}
+
+	CTASSERT(sizeof(cpudata->drs) == sizeof(state->drs));
+	if (flags & NVMM_X64_STATE_DRS) {
+		memcpy(cpudata->drs, state->drs, sizeof(state->drs));
+
+		cpudata->drs[NVMM_X64_DR_DR6] &= 0xFFFFFFFF;
+		vmx_vmwrite(VMCS_GUEST_DR7, cpudata->drs[NVMM_X64_DR_DR7]);
+	}
+
+	if (flags & NVMM_X64_STATE_MSRS) {
+		cpudata->gmsr[VMX_MSRLIST_STAR].val =
+		    state->msrs[NVMM_X64_MSR_STAR];
+		cpudata->gmsr[VMX_MSRLIST_LSTAR].val =
+		    state->msrs[NVMM_X64_MSR_LSTAR];
+		cpudata->gmsr[VMX_MSRLIST_CSTAR].val =
+		    state->msrs[NVMM_X64_MSR_CSTAR];
+		cpudata->gmsr[VMX_MSRLIST_SFMASK].val =
+		    state->msrs[NVMM_X64_MSR_SFMASK];
+		cpudata->gmsr[VMX_MSRLIST_KERNELGSBASE].val =
+		    state->msrs[NVMM_X64_MSR_KERNELGSBASE];
+
+		vmx_vmwrite(VMCS_GUEST_IA32_EFER,
+		    state->msrs[NVMM_X64_MSR_EFER]);
+		vmx_vmwrite(VMCS_GUEST_IA32_PAT,
+		    state->msrs[NVMM_X64_MSR_PAT]);
+		vmx_vmwrite(VMCS_GUEST_IA32_SYSENTER_CS,
+		    state->msrs[NVMM_X64_MSR_SYSENTER_CS]);
+		vmx_vmwrite(VMCS_GUEST_IA32_SYSENTER_ESP,
+		    state->msrs[NVMM_X64_MSR_SYSENTER_ESP]);
+		vmx_vmwrite(VMCS_GUEST_IA32_SYSENTER_EIP,
+		    state->msrs[NVMM_X64_MSR_SYSENTER_EIP]);
+
+		/* ENTRY_CTLS_LONG_MODE must match EFER_LMA. */
+		vmx_vmread(VMCS_ENTRY_CTLS, &ctls1);
+		if (state->msrs[NVMM_X64_MSR_EFER] & EFER_LMA) {
+			ctls1 |= ENTRY_CTLS_LONG_MODE;
+		} else {
+			ctls1 &= ~ENTRY_CTLS_LONG_MODE;
+		}
+		vmx_vmwrite(VMCS_ENTRY_CTLS, ctls1);
+	}
+
+	if (flags & NVMM_X64_STATE_MISC) {
+		vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
+		intstate &= ~(INT_STATE_STI|INT_STATE_MOVSS);
+		if (state->misc[NVMM_X64_MISC_INT_SHADOW]) {
+			intstate |= INT_STATE_MOVSS;
+		}
+		vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY, intstate);
+
+		if (state->misc[NVMM_X64_MISC_INT_WINDOW_EXIT]) {
+			vmx_event_waitexit_enable(vcpu, false);
+		} else {
+			vmx_event_waitexit_disable(vcpu, false);
+		}
+
+		if (state->misc[NVMM_X64_MISC_NMI_WINDOW_EXIT]) {
+			vmx_event_waitexit_enable(vcpu, true);
+		} else {
+			vmx_event_waitexit_disable(vcpu, true);
+		}
+	}
+
+	CTASSERT(sizeof(cpudata->gfpu.xsh_fxsave) == sizeof(state->fpu));
+	if (flags & NVMM_X64_STATE_FPU) {
+		memcpy(cpudata->gfpu.xsh_fxsave, &state->fpu,
+		    sizeof(state->fpu));
+
+		fpustate = (struct fxsave *)cpudata->gfpu.xsh_fxsave;
+		fpustate->fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
+		fpustate->fx_mxcsr &= fpustate->fx_mxcsr_mask;
+
+		if (vmx_xcr0_mask != 0) {
+			/* Reset XSTATE_BV, to force a reload. */
+			cpudata->gfpu.xsh_xstate_bv = vmx_xcr0_mask;
+		}
+	}
+
+	vmx_vmcs_leave(vcpu);
+}
+
+static void
+vmx_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
+{
+	struct nvmm_x64_state *state = (struct nvmm_x64_state *)data;
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	uint64_t intstate;
+
+	vmx_vmcs_enter(vcpu);
+
+	if (flags & NVMM_X64_STATE_SEGS) {
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_CS);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_DS);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_ES);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_FS);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_GS);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_SS);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_GDT);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_IDT);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_LDT);
+		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_TR);
+	}
+
+	CTASSERT(sizeof(cpudata->gprs) == sizeof(state->gprs));
+	if (flags & NVMM_X64_STATE_GPRS) {
+		memcpy(state->gprs, cpudata->gprs, sizeof(state->gprs));
+
+		vmx_vmread(VMCS_GUEST_RIP, &state->gprs[NVMM_X64_GPR_RIP]);
+		vmx_vmread(VMCS_GUEST_RSP, &state->gprs[NVMM_X64_GPR_RSP]);
+		vmx_vmread(VMCS_GUEST_RFLAGS, &state->gprs[NVMM_X64_GPR_RFLAGS]);
+	}
+
+	if (flags & NVMM_X64_STATE_CRS) {
+		vmx_vmread(VMCS_GUEST_CR0, &state->crs[NVMM_X64_CR_CR0]);
+		state->crs[NVMM_X64_CR_CR2] = cpudata->gcr2;
+		vmx_vmread(VMCS_GUEST_CR3, &state->crs[NVMM_X64_CR_CR3]);
+		vmx_vmread(VMCS_GUEST_CR4, &state->crs[NVMM_X64_CR_CR4]);
+		state->crs[NVMM_X64_CR_CR8] = cpudata->gcr8;
+		state->crs[NVMM_X64_CR_XCR0] = cpudata->gxcr0;
+
+		/* Hide VMXE. */
+		state->crs[NVMM_X64_CR_CR4] &= ~CR4_VMXE;
+	}
+
+	CTASSERT(sizeof(cpudata->drs) == sizeof(state->drs));
+	if (flags & NVMM_X64_STATE_DRS) {
+		memcpy(state->drs, cpudata->drs, sizeof(state->drs));
+
+		vmx_vmread(VMCS_GUEST_DR7, &state->drs[NVMM_X64_DR_DR7]);
+	}
+
+	if (flags & NVMM_X64_STATE_MSRS) {
+		state->msrs[NVMM_X64_MSR_STAR] =
+		    cpudata->gmsr[VMX_MSRLIST_STAR].val;
+		state->msrs[NVMM_X64_MSR_LSTAR] =
+		    cpudata->gmsr[VMX_MSRLIST_LSTAR].val;
+		state->msrs[NVMM_X64_MSR_CSTAR] =
+		    cpudata->gmsr[VMX_MSRLIST_CSTAR].val;
+		state->msrs[NVMM_X64_MSR_SFMASK] =
+		    cpudata->gmsr[VMX_MSRLIST_SFMASK].val;
+		state->msrs[NVMM_X64_MSR_KERNELGSBASE] =
+		    cpudata->gmsr[VMX_MSRLIST_KERNELGSBASE].val;
+
+		vmx_vmread(VMCS_GUEST_IA32_EFER,
+		    &state->msrs[NVMM_X64_MSR_EFER]);
+		vmx_vmread(VMCS_GUEST_IA32_PAT,
+		    &state->msrs[NVMM_X64_MSR_PAT]);
+		vmx_vmread(VMCS_GUEST_IA32_SYSENTER_CS,
+		    &state->msrs[NVMM_X64_MSR_SYSENTER_CS]);
+		vmx_vmread(VMCS_GUEST_IA32_SYSENTER_ESP,
+		    &state->msrs[NVMM_X64_MSR_SYSENTER_ESP]);
+		vmx_vmread(VMCS_GUEST_IA32_SYSENTER_EIP,
+		    &state->msrs[NVMM_X64_MSR_SYSENTER_EIP]);
+	}
+
+	if (flags & NVMM_X64_STATE_MISC) {
+		vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
+		state->misc[NVMM_X64_MISC_INT_SHADOW] =
+		    (intstate & (INT_STATE_STI|INT_STATE_MOVSS)) != 0;
+
+		state->misc[NVMM_X64_MISC_INT_WINDOW_EXIT] =
+		    cpudata->int_window_exit;
+		state->misc[NVMM_X64_MISC_NMI_WINDOW_EXIT] =
+		    cpudata->nmi_window_exit;
+	}
+
+	CTASSERT(sizeof(cpudata->gfpu.xsh_fxsave) == sizeof(state->fpu));
+	if (flags & NVMM_X64_STATE_FPU) {
+		memcpy(&state->fpu, cpudata->gfpu.xsh_fxsave,
+		    sizeof(state->fpu));
+	}
+
+	vmx_vmcs_leave(vcpu);
+}
+
+/* -------------------------------------------------------------------------- */
+
+static void
 vmx_asid_alloc(struct nvmm_cpu *vcpu)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
@@ -1953,47 +2298,6 @@ vmx_asid_free(struct nvmm_cpu *vcpu)
 	mutex_enter(&vmx_asidlock);
 	vmx_asidmap[oct] &= ~__BIT(bit);
 	mutex_exit(&vmx_asidlock);
-}
-
-static void
-vmx_init_asid(uint32_t maxasid)
-{
-	size_t allocsz;
-
-	mutex_init(&vmx_asidlock, MUTEX_DEFAULT, IPL_NONE);
-
-	vmx_maxasid = maxasid;
-	allocsz = roundup(maxasid, 8) / 8;
-	vmx_asidmap = kmem_zalloc(allocsz, KM_SLEEP);
-
-	/* ASID 0 is reserved for the host. */
-	vmx_asidmap[0] |= __BIT(0);
-}
-
-static void
-vmx_vcpu_msr_allow(uint8_t *bitmap, uint64_t msr, bool read, bool write)
-{
-	uint64_t byte;
-	uint8_t bitoff;
-
-	if (msr < 0x00002000) {
-		/* Range 1 */
-		byte = ((msr - 0x00000000) / 8) + 0;
-	} else if (msr >= 0xC0000000 && msr < 0xC0002000) {
-		/* Range 2 */
-		byte = ((msr - 0xC0000000) / 8) + 1024;
-	} else {
-		panic("%s: wrong range", __func__);
-	}
-
-	bitoff = (msr & 0x7);
-
-	if (read) {
-		bitmap[byte] &= ~__BIT(bitoff);
-	}
-	if (write) {
-		bitmap[2048 + byte] &= ~__BIT(bitoff);
-	}
 }
 
 static void
@@ -2192,322 +2496,6 @@ vmx_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_memfree(cpudata->gmsr_pa, (vaddr_t)cpudata->gmsr, 1);
 	uvm_km_free(kernel_map, (vaddr_t)cpudata,
 	    roundup(sizeof(*cpudata), PAGE_SIZE), UVM_KMF_WIRED);
-}
-
-#define VMX_SEG_ATTRIB_TYPE		__BITS(4,0)
-#define VMX_SEG_ATTRIB_DPL		__BITS(6,5)
-#define VMX_SEG_ATTRIB_P		__BIT(7)
-#define VMX_SEG_ATTRIB_AVL		__BIT(12)
-#define VMX_SEG_ATTRIB_LONG		__BIT(13)
-#define VMX_SEG_ATTRIB_DEF32		__BIT(14)
-#define VMX_SEG_ATTRIB_GRAN		__BIT(15)
-#define VMX_SEG_ATTRIB_UNUSABLE		__BIT(16)
-
-static void
-vmx_vcpu_setstate_seg(struct nvmm_x64_state_seg *segs, int idx)
-{
-	uint64_t attrib;
-
-	attrib =
-	    __SHIFTIN(segs[idx].attrib.type, VMX_SEG_ATTRIB_TYPE) |
-	    __SHIFTIN(segs[idx].attrib.dpl, VMX_SEG_ATTRIB_DPL) |
-	    __SHIFTIN(segs[idx].attrib.p, VMX_SEG_ATTRIB_P) |
-	    __SHIFTIN(segs[idx].attrib.avl, VMX_SEG_ATTRIB_AVL) |
-	    __SHIFTIN(segs[idx].attrib.lng, VMX_SEG_ATTRIB_LONG) |
-	    __SHIFTIN(segs[idx].attrib.def32, VMX_SEG_ATTRIB_DEF32) |
-	    __SHIFTIN(segs[idx].attrib.gran, VMX_SEG_ATTRIB_GRAN) |
-	    (!segs[idx].attrib.p ? VMX_SEG_ATTRIB_UNUSABLE : 0);
-
-	if (idx != NVMM_X64_SEG_GDT && idx != NVMM_X64_SEG_IDT) {
-		vmx_vmwrite(vmx_guest_segs[idx].selector, segs[idx].selector);
-		vmx_vmwrite(vmx_guest_segs[idx].attrib, attrib);
-	}
-	vmx_vmwrite(vmx_guest_segs[idx].limit, segs[idx].limit);
-	vmx_vmwrite(vmx_guest_segs[idx].base, segs[idx].base);
-}
-
-static void
-vmx_vcpu_getstate_seg(struct nvmm_x64_state_seg *segs, int idx)
-{
-	uint64_t attrib = 0;
-
-	if (idx != NVMM_X64_SEG_GDT && idx != NVMM_X64_SEG_IDT) {
-		vmx_vmread(vmx_guest_segs[idx].selector, &segs[idx].selector);
-		vmx_vmread(vmx_guest_segs[idx].attrib, &attrib);
-	}
-	vmx_vmread(vmx_guest_segs[idx].limit, &segs[idx].limit);
-	vmx_vmread(vmx_guest_segs[idx].base, &segs[idx].base);
-
-	segs[idx].attrib.type = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_TYPE);
-	segs[idx].attrib.dpl = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DPL);
-	segs[idx].attrib.p = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_P);
-	segs[idx].attrib.avl = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_AVL);
-	segs[idx].attrib.lng = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_LONG);
-	segs[idx].attrib.def32 = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_DEF32);
-	segs[idx].attrib.gran = __SHIFTOUT(attrib, VMX_SEG_ATTRIB_GRAN);
-	if (attrib & VMX_SEG_ATTRIB_UNUSABLE) {
-		segs[idx].attrib.p = 0;
-	}
-}
-
-static inline bool
-vmx_state_tlb_flush(struct nvmm_x64_state *state, uint64_t flags)
-{
-	uint64_t cr0, cr3, cr4, efer;
-
-	if (flags & NVMM_X64_STATE_CRS) {
-		vmx_vmread(VMCS_GUEST_CR0, &cr0);
-		if ((cr0 ^ state->crs[NVMM_X64_CR_CR0]) & CR0_TLB_FLUSH) {
-			return true;
-		}
-		vmx_vmread(VMCS_GUEST_CR3, &cr3);
-		if (cr3 != state->crs[NVMM_X64_CR_CR3]) {
-			return true;
-		}
-		vmx_vmread(VMCS_GUEST_CR4, &cr4);
-		if ((cr4 ^ state->crs[NVMM_X64_CR_CR4]) & CR4_TLB_FLUSH) {
-			return true;
-		}
-	}
-
-	if (flags & NVMM_X64_STATE_MSRS) {
-		vmx_vmread(VMCS_GUEST_IA32_EFER, &efer);
-		if ((efer ^
-		     state->msrs[NVMM_X64_MSR_EFER]) & EFER_TLB_FLUSH) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-static void
-vmx_vcpu_setstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
-{
-	struct nvmm_x64_state *state = (struct nvmm_x64_state *)data;
-	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	struct fxsave *fpustate;
-	uint64_t ctls1, intstate;
-
-	vmx_vmcs_enter(vcpu);
-
-	if (vmx_state_tlb_flush(state, flags)) {
-		cpudata->gtlb_want_flush = true;
-	}
-
-	if (flags & NVMM_X64_STATE_SEGS) {
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_CS);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_DS);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_ES);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_FS);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_GS);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_SS);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_GDT);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_IDT);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_LDT);
-		vmx_vcpu_setstate_seg(state->segs, NVMM_X64_SEG_TR);
-	}
-
-	CTASSERT(sizeof(cpudata->gprs) == sizeof(state->gprs));
-	if (flags & NVMM_X64_STATE_GPRS) {
-		memcpy(cpudata->gprs, state->gprs, sizeof(state->gprs));
-
-		vmx_vmwrite(VMCS_GUEST_RIP, state->gprs[NVMM_X64_GPR_RIP]);
-		vmx_vmwrite(VMCS_GUEST_RSP, state->gprs[NVMM_X64_GPR_RSP]);
-		vmx_vmwrite(VMCS_GUEST_RFLAGS, state->gprs[NVMM_X64_GPR_RFLAGS]);
-	}
-
-	if (flags & NVMM_X64_STATE_CRS) {
-		/* These bits are mandatory. */
-		state->crs[NVMM_X64_CR_CR4] |= CR4_VMXE;
-		state->crs[NVMM_X64_CR_CR0] |= CR0_NE;
-
-		vmx_vmwrite(VMCS_GUEST_CR0, state->crs[NVMM_X64_CR_CR0]);
-		cpudata->gcr2 = state->crs[NVMM_X64_CR_CR2];
-		vmx_vmwrite(VMCS_GUEST_CR3, state->crs[NVMM_X64_CR_CR3]); // XXX PDPTE?
-		vmx_vmwrite(VMCS_GUEST_CR4, state->crs[NVMM_X64_CR_CR4]);
-		cpudata->gcr8 = state->crs[NVMM_X64_CR_CR8];
-
-		if (vmx_xcr0_mask != 0) {
-			/* Clear illegal XCR0 bits, set mandatory X87 bit. */
-			cpudata->gxcr0 = state->crs[NVMM_X64_CR_XCR0];
-			cpudata->gxcr0 &= vmx_xcr0_mask;
-			cpudata->gxcr0 |= XCR0_X87;
-		}
-	}
-
-	CTASSERT(sizeof(cpudata->drs) == sizeof(state->drs));
-	if (flags & NVMM_X64_STATE_DRS) {
-		memcpy(cpudata->drs, state->drs, sizeof(state->drs));
-
-		cpudata->drs[NVMM_X64_DR_DR6] &= 0xFFFFFFFF;
-		vmx_vmwrite(VMCS_GUEST_DR7, cpudata->drs[NVMM_X64_DR_DR7]);
-	}
-
-	if (flags & NVMM_X64_STATE_MSRS) {
-		cpudata->gmsr[VMX_MSRLIST_STAR].val =
-		    state->msrs[NVMM_X64_MSR_STAR];
-		cpudata->gmsr[VMX_MSRLIST_LSTAR].val =
-		    state->msrs[NVMM_X64_MSR_LSTAR];
-		cpudata->gmsr[VMX_MSRLIST_CSTAR].val =
-		    state->msrs[NVMM_X64_MSR_CSTAR];
-		cpudata->gmsr[VMX_MSRLIST_SFMASK].val =
-		    state->msrs[NVMM_X64_MSR_SFMASK];
-		cpudata->gmsr[VMX_MSRLIST_KERNELGSBASE].val =
-		    state->msrs[NVMM_X64_MSR_KERNELGSBASE];
-
-		vmx_vmwrite(VMCS_GUEST_IA32_EFER,
-		    state->msrs[NVMM_X64_MSR_EFER]);
-		vmx_vmwrite(VMCS_GUEST_IA32_PAT,
-		    state->msrs[NVMM_X64_MSR_PAT]);
-		vmx_vmwrite(VMCS_GUEST_IA32_SYSENTER_CS,
-		    state->msrs[NVMM_X64_MSR_SYSENTER_CS]);
-		vmx_vmwrite(VMCS_GUEST_IA32_SYSENTER_ESP,
-		    state->msrs[NVMM_X64_MSR_SYSENTER_ESP]);
-		vmx_vmwrite(VMCS_GUEST_IA32_SYSENTER_EIP,
-		    state->msrs[NVMM_X64_MSR_SYSENTER_EIP]);
-
-		/* ENTRY_CTLS_LONG_MODE must match EFER_LMA. */
-		vmx_vmread(VMCS_ENTRY_CTLS, &ctls1);
-		if (state->msrs[NVMM_X64_MSR_EFER] & EFER_LMA) {
-			ctls1 |= ENTRY_CTLS_LONG_MODE;
-		} else {
-			ctls1 &= ~ENTRY_CTLS_LONG_MODE;
-		}
-		vmx_vmwrite(VMCS_ENTRY_CTLS, ctls1);
-	}
-
-	if (flags & NVMM_X64_STATE_MISC) {
-		vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
-		intstate &= ~(INT_STATE_STI|INT_STATE_MOVSS);
-		if (state->misc[NVMM_X64_MISC_INT_SHADOW]) {
-			intstate |= INT_STATE_MOVSS;
-		}
-		vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY, intstate);
-
-		if (state->misc[NVMM_X64_MISC_INT_WINDOW_EXIT]) {
-			vmx_event_waitexit_enable(vcpu, false);
-		} else {
-			vmx_event_waitexit_disable(vcpu, false);
-		}
-
-		if (state->misc[NVMM_X64_MISC_NMI_WINDOW_EXIT]) {
-			vmx_event_waitexit_enable(vcpu, true);
-		} else {
-			vmx_event_waitexit_disable(vcpu, true);
-		}
-	}
-
-	CTASSERT(sizeof(cpudata->gfpu.xsh_fxsave) == sizeof(state->fpu));
-	if (flags & NVMM_X64_STATE_FPU) {
-		memcpy(cpudata->gfpu.xsh_fxsave, &state->fpu,
-		    sizeof(state->fpu));
-
-		fpustate = (struct fxsave *)cpudata->gfpu.xsh_fxsave;
-		fpustate->fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
-		fpustate->fx_mxcsr &= fpustate->fx_mxcsr_mask;
-
-		if (vmx_xcr0_mask != 0) {
-			/* Reset XSTATE_BV, to force a reload. */
-			cpudata->gfpu.xsh_xstate_bv = vmx_xcr0_mask;
-		}
-	}
-
-	vmx_vmcs_leave(vcpu);
-}
-
-static void
-vmx_vcpu_getstate(struct nvmm_cpu *vcpu, void *data, uint64_t flags)
-{
-	struct nvmm_x64_state *state = (struct nvmm_x64_state *)data;
-	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	uint64_t intstate;
-
-	vmx_vmcs_enter(vcpu);
-
-	if (flags & NVMM_X64_STATE_SEGS) {
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_CS);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_DS);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_ES);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_FS);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_GS);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_SS);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_GDT);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_IDT);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_LDT);
-		vmx_vcpu_getstate_seg(state->segs, NVMM_X64_SEG_TR);
-	}
-
-	CTASSERT(sizeof(cpudata->gprs) == sizeof(state->gprs));
-	if (flags & NVMM_X64_STATE_GPRS) {
-		memcpy(state->gprs, cpudata->gprs, sizeof(state->gprs));
-
-		vmx_vmread(VMCS_GUEST_RIP, &state->gprs[NVMM_X64_GPR_RIP]);
-		vmx_vmread(VMCS_GUEST_RSP, &state->gprs[NVMM_X64_GPR_RSP]);
-		vmx_vmread(VMCS_GUEST_RFLAGS, &state->gprs[NVMM_X64_GPR_RFLAGS]);
-	}
-
-	if (flags & NVMM_X64_STATE_CRS) {
-		vmx_vmread(VMCS_GUEST_CR0, &state->crs[NVMM_X64_CR_CR0]);
-		state->crs[NVMM_X64_CR_CR2] = cpudata->gcr2;
-		vmx_vmread(VMCS_GUEST_CR3, &state->crs[NVMM_X64_CR_CR3]);
-		vmx_vmread(VMCS_GUEST_CR4, &state->crs[NVMM_X64_CR_CR4]);
-		state->crs[NVMM_X64_CR_CR8] = cpudata->gcr8;
-		state->crs[NVMM_X64_CR_XCR0] = cpudata->gxcr0;
-
-		/* Hide VMXE. */
-		state->crs[NVMM_X64_CR_CR4] &= ~CR4_VMXE;
-	}
-
-	CTASSERT(sizeof(cpudata->drs) == sizeof(state->drs));
-	if (flags & NVMM_X64_STATE_DRS) {
-		memcpy(state->drs, cpudata->drs, sizeof(state->drs));
-
-		vmx_vmread(VMCS_GUEST_DR7, &state->drs[NVMM_X64_DR_DR7]);
-	}
-
-	if (flags & NVMM_X64_STATE_MSRS) {
-		state->msrs[NVMM_X64_MSR_STAR] =
-		    cpudata->gmsr[VMX_MSRLIST_STAR].val;
-		state->msrs[NVMM_X64_MSR_LSTAR] =
-		    cpudata->gmsr[VMX_MSRLIST_LSTAR].val;
-		state->msrs[NVMM_X64_MSR_CSTAR] =
-		    cpudata->gmsr[VMX_MSRLIST_CSTAR].val;
-		state->msrs[NVMM_X64_MSR_SFMASK] =
-		    cpudata->gmsr[VMX_MSRLIST_SFMASK].val;
-		state->msrs[NVMM_X64_MSR_KERNELGSBASE] =
-		    cpudata->gmsr[VMX_MSRLIST_KERNELGSBASE].val;
-
-		vmx_vmread(VMCS_GUEST_IA32_EFER,
-		    &state->msrs[NVMM_X64_MSR_EFER]);
-		vmx_vmread(VMCS_GUEST_IA32_PAT,
-		    &state->msrs[NVMM_X64_MSR_PAT]);
-		vmx_vmread(VMCS_GUEST_IA32_SYSENTER_CS,
-		    &state->msrs[NVMM_X64_MSR_SYSENTER_CS]);
-		vmx_vmread(VMCS_GUEST_IA32_SYSENTER_ESP,
-		    &state->msrs[NVMM_X64_MSR_SYSENTER_ESP]);
-		vmx_vmread(VMCS_GUEST_IA32_SYSENTER_EIP,
-		    &state->msrs[NVMM_X64_MSR_SYSENTER_EIP]);
-	}
-
-	if (flags & NVMM_X64_STATE_MISC) {
-		vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY, &intstate);
-		state->misc[NVMM_X64_MISC_INT_SHADOW] =
-		    (intstate & (INT_STATE_STI|INT_STATE_MOVSS)) != 0;
-
-		state->misc[NVMM_X64_MISC_INT_WINDOW_EXIT] =
-		    cpudata->int_window_exit;
-		state->misc[NVMM_X64_MISC_NMI_WINDOW_EXIT] =
-		    cpudata->nmi_window_exit;
-	}
-
-	CTASSERT(sizeof(cpudata->gfpu.xsh_fxsave) == sizeof(state->fpu));
-	if (flags & NVMM_X64_STATE_FPU) {
-		memcpy(&state->fpu, cpudata->gfpu.xsh_fxsave,
-		    sizeof(state->fpu));
-	}
-
-	vmx_vmcs_leave(vcpu);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2745,6 +2733,21 @@ vmx_ident(void)
 	}
 
 	return true;
+}
+
+static void
+vmx_init_asid(uint32_t maxasid)
+{
+	size_t allocsz;
+
+	mutex_init(&vmx_asidlock, MUTEX_DEFAULT, IPL_NONE);
+
+	vmx_maxasid = maxasid;
+	allocsz = roundup(maxasid, 8) / 8;
+	vmx_asidmap = kmem_zalloc(allocsz, KM_SLEEP);
+
+	/* ASID 0 is reserved for the host. */
+	vmx_asidmap[0] |= __BIT(0);
 }
 
 static void
