@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.71 2016/09/05 14:13:50 christos Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.71.8.1 2019/02/23 06:58:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.71 2016/09/05 14:13:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.71.8.1 2019/02/23 06:58:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -566,7 +566,16 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 			MSG_PRINTF(("requester doesn't have read access\n"));
 			break;
 		}
-		memcpy(msqbuf, msqptr, sizeof(struct msqid_ds));
+		memset(msqbuf, 0, sizeof *msqbuf);
+		msqbuf->msg_perm = msqptr->msg_perm;
+		msqbuf->msg_perm.mode &= 0777;
+		msqbuf->msg_qnum = msqptr->msg_qnum;
+		msqbuf->msg_qbytes = msqptr->msg_qbytes;
+		msqbuf->msg_lspid = msqptr->msg_lspid;
+		msqbuf->msg_lrpid = msqptr->msg_lrpid;
+		msqbuf->msg_stime = msqptr->msg_stime;
+		msqbuf->msg_rtime = msqptr->msg_rtime;
+		msqbuf->msg_ctime = msqptr->msg_ctime;
 		break;
 
 	default:

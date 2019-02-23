@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.55 2011/05/28 23:24:58 alnsn Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.55.48.1 2019/02/23 06:58:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.55 2011/05/28 23:24:58 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.55.48.1 2019/02/23 06:58:14 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -117,6 +117,7 @@ void
 bsd_to_linux_ipc_perm(struct ipc_perm *bpp, struct linux_ipc_perm *lpp)
 {
 
+	memset(lpp, 0, sizeof *lpp);
 	lpp->l_key = bpp->_key;
 	lpp->l_uid = bpp->uid;
 	lpp->l_gid = bpp->gid;
@@ -129,6 +130,8 @@ bsd_to_linux_ipc_perm(struct ipc_perm *bpp, struct linux_ipc_perm *lpp)
 void
 bsd_to_linux_ipc64_perm(struct ipc_perm *bpp, struct linux_ipc64_perm *lpp)
 {
+
+	memset(lpp, 0, sizeof *lpp);
 	lpp->l_key = bpp->_key;
 	lpp->l_uid = bpp->uid;
 	lpp->l_gid = bpp->gid;
@@ -152,16 +155,19 @@ bsd_to_linux_ipc64_perm(struct ipc_perm *bpp, struct linux_ipc64_perm *lpp)
 void
 bsd_to_linux_semid_ds(struct semid_ds *bs, struct linux_semid_ds *ls)
 {
+
+	memset(ls, 0, sizeof *ls);
 	bsd_to_linux_ipc_perm(&bs->sem_perm, &ls->l_sem_perm);
 	ls->l_sem_otime = bs->sem_otime;
 	ls->l_sem_ctime = bs->sem_ctime;
 	ls->l_sem_nsems = bs->sem_nsems;
-	ls->l_sem_base = bs->_sem_base;
 }
 
 void
 bsd_to_linux_semid64_ds(struct semid_ds *bs, struct linux_semid64_ds *ls)
 {
+
+	memset(ls, 0, sizeof *ls);
 	bsd_to_linux_ipc64_perm(&bs->sem_perm, &ls->l_sem_perm);
 	ls->l_sem_otime = bs->sem_otime;
 	ls->l_sem_ctime = bs->sem_ctime;
@@ -171,16 +177,17 @@ bsd_to_linux_semid64_ds(struct semid_ds *bs, struct linux_semid64_ds *ls)
 void
 linux_to_bsd_semid_ds(struct linux_semid_ds *ls, struct semid_ds *bs)
 {
+
 	linux_to_bsd_ipc_perm(&ls->l_sem_perm, &bs->sem_perm);
 	bs->sem_otime = ls->l_sem_otime;
 	bs->sem_ctime = ls->l_sem_ctime;
 	bs->sem_nsems = ls->l_sem_nsems;
-	bs->_sem_base = ls->l_sem_base;
 }
 
 void
 linux_to_bsd_semid64_ds(struct linux_semid64_ds *ls, struct semid_ds *bs)
 {
+
 	linux_to_bsd_ipc64_perm(&ls->l_sem_perm, &bs->sem_perm);
 	bs->sem_otime = ls->l_sem_otime;
 	bs->sem_ctime = ls->l_sem_ctime;
@@ -308,8 +315,6 @@ linux_to_bsd_msqid_ds(struct linux_msqid_ds *lmp, struct msqid_ds *bmp)
 
 	memset(bmp, 0, sizeof(*bmp));
 	linux_to_bsd_ipc_perm(&lmp->l_msg_perm, &bmp->msg_perm);
-	bmp->_msg_first = lmp->l_msg_first;
-	bmp->_msg_last = lmp->l_msg_last;
 	bmp->_msg_cbytes = lmp->l_msg_cbytes;
 	bmp->msg_qnum = lmp->l_msg_qnum;
 	bmp->msg_qbytes = lmp->l_msg_qbytes;
@@ -326,10 +331,10 @@ linux_to_bsd_msqid64_ds(struct linux_msqid64_ds *lmp, struct msqid_ds *bmp)
 
 	memset(bmp, 0, sizeof(*bmp));
 	linux_to_bsd_ipc64_perm(&lmp->l_msg_perm, &bmp->msg_perm);
+	bmp->_msg_cbytes = lmp->l_msg_cbytes;
 	bmp->msg_stime = lmp->l_msg_stime;
 	bmp->msg_rtime = lmp->l_msg_rtime;
 	bmp->msg_ctime = lmp->l_msg_ctime;
-	bmp->_msg_cbytes = lmp->l_msg_cbytes;
 	bmp->msg_qnum = lmp->l_msg_qnum;
 	bmp->msg_qbytes = lmp->l_msg_qbytes;
 	bmp->msg_lspid = lmp->l_msg_lspid;
@@ -342,8 +347,6 @@ bsd_to_linux_msqid_ds(struct msqid_ds *bmp, struct linux_msqid_ds *lmp)
 
 	memset(lmp, 0, sizeof(*lmp));
 	bsd_to_linux_ipc_perm(&bmp->msg_perm, &lmp->l_msg_perm);
-	lmp->l_msg_first = bmp->_msg_first;
-	lmp->l_msg_last = bmp->_msg_last;
 	lmp->l_msg_cbytes = bmp->_msg_cbytes;
 	lmp->l_msg_qnum = bmp->msg_qnum;
 	lmp->l_msg_qbytes = bmp->msg_qbytes;
@@ -360,6 +363,7 @@ bsd_to_linux_msqid64_ds(struct msqid_ds *bmp, struct linux_msqid64_ds *lmp)
 
 	memset(lmp, 0, sizeof(*lmp));
 	bsd_to_linux_ipc64_perm(&bmp->msg_perm, &lmp->l_msg_perm);
+	lmp->l_msg_cbytes = bmp->_msg_cbytes;
 	lmp->l_msg_stime = bmp->msg_stime;
 	lmp->l_msg_rtime = bmp->msg_rtime;
 	lmp->l_msg_ctime = bmp->msg_ctime;
@@ -504,7 +508,6 @@ linux_to_bsd_shmid_ds(struct linux_shmid_ds *lsp, struct shmid_ds *bsp)
 	bsp->shm_atime = lsp->l_shm_atime;
 	bsp->shm_dtime = lsp->l_shm_dtime;
 	bsp->shm_ctime = lsp->l_shm_ctime;
-	bsp->_shm_internal = lsp->l_private2;	/* XXX Oh well. */
 }
 
 void
@@ -519,13 +522,13 @@ linux_to_bsd_shmid64_ds(struct linux_shmid64_ds *lsp, struct shmid_ds *bsp)
 	bsp->shm_atime = lsp->l_shm_atime;
 	bsp->shm_dtime = lsp->l_shm_dtime;
 	bsp->shm_ctime = lsp->l_shm_ctime;
-	bsp->_shm_internal = (void*)lsp->l___unused5;	/* XXX Oh well. */
 }
 
 void
 bsd_to_linux_shmid_ds(struct shmid_ds *bsp, struct linux_shmid_ds *lsp)
 {
 
+	memset(lsp, 0, sizeof *lsp);
 	bsd_to_linux_ipc_perm(&bsp->shm_perm, &lsp->l_shm_perm);
 	lsp->l_shm_segsz = bsp->shm_segsz;
 	lsp->l_shm_lpid = bsp->shm_lpid;
@@ -534,12 +537,13 @@ bsd_to_linux_shmid_ds(struct shmid_ds *bsp, struct linux_shmid_ds *lsp)
 	lsp->l_shm_atime = bsp->shm_atime;
 	lsp->l_shm_dtime = bsp->shm_dtime;
 	lsp->l_shm_ctime = bsp->shm_ctime;
-	lsp->l_private2 = bsp->_shm_internal;	/* XXX */
 }
 
 void
 bsd_to_linux_shmid64_ds(struct shmid_ds *bsp, struct linux_shmid64_ds *lsp)
 {
+
+	memset(lsp, 0, sizeof *lsp);
 	bsd_to_linux_ipc64_perm(&bsp->shm_perm, &lsp->l_shm_perm);
 	lsp->l_shm_segsz = bsp->shm_segsz;
 	lsp->l_shm_lpid = bsp->shm_lpid;
@@ -548,7 +552,6 @@ bsd_to_linux_shmid64_ds(struct shmid_ds *bsp, struct linux_shmid64_ds *lsp)
 	lsp->l_shm_atime = bsp->shm_atime;
 	lsp->l_shm_dtime = bsp->shm_dtime;
 	lsp->l_shm_ctime = bsp->shm_ctime;
-	lsp->l___unused5 = (u_long)bsp->_shm_internal;	/* XXX */
 }
 
 /*

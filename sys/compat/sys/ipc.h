@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.4 2011/05/24 18:29:23 joerg Exp $	*/
+/*	$NetBSD: ipc.h,v 1.4.48.1 2019/02/23 06:58:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,6 +47,12 @@
 #ifndef _COMPAT_SYS_IPC_H_
 #define _COMPAT_SYS_IPC_H_
 
+#ifdef _KERNEL
+#include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
+
 __BEGIN_DECLS
 /*
  * Old IPC permission structure used before NetBSD 1.5.
@@ -68,6 +74,7 @@ static __inline void
 __ipc_perm14_to_native(const struct ipc_perm14 *operm, struct ipc_perm *perm)
 {
 
+	memset(perm, 0, sizeof *perm);
 #define	CVT(x)	perm->x = operm->x
 	CVT(uid);
 	CVT(gid);
@@ -81,6 +88,7 @@ static inline void
 __native_to_ipc_perm14(const struct ipc_perm *perm, struct ipc_perm14 *operm)
 {
 
+	memset(operm, 0, sizeof *operm);
 #define	CVT(x)	operm->x = perm->x
 	CVT(uid);
 	CVT(gid);

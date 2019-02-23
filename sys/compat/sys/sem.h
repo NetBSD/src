@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.6 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.6.58.1 2019/02/23 06:58:14 martin Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -75,6 +75,7 @@ static __inline void
 __native_to_semid_ds13(const struct semid_ds *sembuf, struct semid_ds13 *osembuf)
 {
 
+	memset(osembuf, 0, sizeof *osembuf);
 	osembuf->sem_perm = sembuf->sem_perm;
 
 #define	CVT(x)	osembuf->x = sembuf->x
@@ -103,6 +104,7 @@ static __inline void
 __native_to_semid_ds14(const struct semid_ds *sembuf, struct semid_ds14 *osembuf)
 {
 
+	memset(osembuf, 0, sizeof *osembuf);
 	__native_to_ipc_perm14(&sembuf->sem_perm, &osembuf->sem_perm);
 
 #define	CVT(x)	osembuf->x = sembuf->x
