@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.1 2019/02/23 03:10:06 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.2 2019/02/23 12:03:07 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ __sanitizer_cov_trace_pc(void)
 
 	idx = kd->buf[0];
 	if (idx < kd->bufnent) {
-		kd->buf[idx+1] = (kcov_int_t)__builtin_return_address(0);
+		kd->buf[idx+1] = (intptr_t)__builtin_return_address(0);
 		kd->buf[0]++;
 	}
 }
