@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1200 2019/02/02 22:39:32 mrg Exp $
+# $NetBSD: mi,v 1.1201 2019/02/23 10:43:25 mlelstv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1112,6 +1112,7 @@
 ./usr/include/dev/rcons				base-obsolete		obsolete
 ./usr/include/dev/sbus				base-c-usr
 ./usr/include/dev/scsipi			base-c-usr
+./usr/include/dev/spi				base-c-usr
 ./usr/include/dev/sun				base-c-usr
 ./usr/include/dev/tc				base-c-usr
 ./usr/include/dev/usb				base-c-usr
