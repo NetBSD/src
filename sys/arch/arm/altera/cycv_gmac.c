@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_gmac.c,v 1.1 2018/09/19 17:31:38 aymeric Exp $ */
+/* $NetBSD: cycv_gmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.1 2018/09/19 17:31:38 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.2 2019/02/23 17:18:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,7 +136,7 @@ cycv_gmac_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	dwc_gmac_attach(sc, GMAC_MII_CLK_150_250M_DIV102);
+	dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_150_250M_DIV102);
 }
 
 CFATTACH_DECL_NEW(cycv_gmac, sizeof(struct dwc_gmac_softc),
