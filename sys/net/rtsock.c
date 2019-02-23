@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.163.4.1 2018/11/28 16:32:14 martin Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.163.4.2 2019/02/23 07:14:40 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.163.4.1 2018/11/28 16:32:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.163.4.2 2019/02/23 07:14:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1408,6 +1408,8 @@ again:
 	w.w_needed = 0 - w.w_given;
 	w.w_where = where;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
 	switch (w.w_op) {
 
@@ -1434,6 +1436,8 @@ again:
 		break;
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 
 	/* check to see if we couldn't allocate memory with NOWAIT */
 	if (error == ENOBUFS && w.w_tmem == 0 && w.w_tmemneeded)
